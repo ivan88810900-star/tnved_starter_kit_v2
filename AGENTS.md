@@ -1,5 +1,146 @@
 # AGENTS.md — Мультиагентный pipeline для ВЭД-платформы
 
+**Binding contract** для Codex (technical lead), Cursor (implementation), Ivan (product owner).
+Workflow kit: `docs/ai-workflow/`.
+
+---
+
+## Project
+
+Монорепозиторий платформы таможенного оформления (ВЭД, ЕАЭС).
+
+| Область | Путь | Статус |
+|---------|------|--------|
+| **Основной backend** | `customs-clear/backend/` | Product engine (FastAPI) |
+| **Основной frontend** | `customs-clear/frontend/` | React 18 + Vite |
+| Desktop | `customs-clear/desktop/` | Electron |
+| **Legacy backend** | `backend/` (корень) | Тонкий facade / legacy — **не расширять** |
+| Альтернативные UI | `frontend/web/`, `frontend/app/` | Старые/параллельные — только по явной задаче |
+
+**Правило:** новая бизнес-логика → `customs-clear/backend/app/services/`. Роутеры → `customs-clear/backend/app/api/`.
+
+---
+
+## Current architecture direction
+
+### NTM v2 — целевая архитектура
+
+- Таблицы: `ntm_measures_v2`, `ntm_applicability_rules_v2`
+- **Applicability:**
+  - `definite` — может влиять на enforcement
+  - `possible` — только advisory
+  - `needs_clarification` — только advisory
+
+**Enforcement (broker / missing / status):**
+
+- Только `applicability = definite` → `required_permit_types`, `missing_permit_types`, `ERROR` / `status`
+- `possible` и `needs_clarification` → `advisory_requirements` (и UI advisory), **никогда** не поднимают ERROR сами по себе
+
+### Official contours vs legacy
+
+| Слой | `source_kind` (примеры) | Роль |
+|------|-------------------------|------|
+| Official contours | `official_sgr_registry`, … | Будущий **source of truth** (курируемые датасеты) |
+| Legacy rules | `legacy_non_tariff_rules` | Переходный слой, **не** нормативная истина |
+| Legacy measures | импорт из layers | Переходный слой |
+| Catalog / triggers | runtime layers | До полной миграции |
+
+- **source_kind isolation** обязателен: не смешивать official и legacy в одном broker-решении без явного merge-policy в PR
+- **Feature flags** (`NTM_V2_*`, `NTM_V2_OFFICIAL_SGR_ADVISORY_ENABLED`, …): **default OFF**, пока Ivan не утвердил включение
+- Official SGR в advisory ≠ broker; отдельные PR для enforcement
+
+---
+
+## AI team workflow
+
+| Роль | Инструмент | Ответственность |
+|------|------------|-----------------|
+| **Cursor** | Cursor IDE / Cloud Agents | Код, тесты, PR с отчётом |
+| **Codex** | ChatGPT Codex + GitHub | Ревью PR, следующие задачи, Decision Memo |
+| **Ivan** | GitHub merge, issues | Утверждение merge и стратегии |
+| **Strategic ChatGPT review** | Внешний чат | Арбитраж Decision Memo |
+
+Цикл: `docs/ai-workflow/WORKFLOW.md`.
+
+---
+
+## Codex responsibilities
+
+1. Проверять последний PR / изменения в `main`.
+2. Сверять с issue и **acceptance criteria**.
+3. Проверять: тесты, миграции Alembic, feature flags, архитектуру NTM v2, секреты.
+4. Если работа корректна и следующий шаг очевиден → создать **Cursor Task** issue (`cursor-task`).
+5. Если баг или пробел → **corrective** Cursor Task (`cursor-task` / `cursor-fix`).
+6. Если стратегическая развилка → **Decision Memo** (`needs-ivan-decision`), **не** выбирать направление молча.
+
+Чеклист: `docs/ai-workflow/CODEX_REVIEW_CHECKLIST.md`.
+
+---
+
+## When to create a Decision Memo
+
+Обязательно, если:
+
+- несколько архитектурных вариантов с разной стоимостью;
+- решение влияет на семантику продукта (что видит пользователь / таможня);
+- enforcement vs advisory неочевидны;
+- важна legal/compliance интерпретация (ТН ВЭД, СГР, ТР ТС);
+- локальный фикс маскирует системную проблему;
+- меняется API, модель данных или source of truth;
+- следующий шаг — **выбор направления**, а не реализация известного fix.
+
+Шаблон: `docs/ai-workflow/DECISION_MEMO_TEMPLATE.md`, GitHub issue template `Decision Memo`.
+
+---
+
+## Cursor task standards
+
+Каждая задача для Cursor (issue или markdown) содержит:
+
+- **Goal** — один измеримый результат
+- **Context** — почему сейчас, ссылки на PR/issue
+- **Scope** — in / out
+- **Files / areas to inspect**
+- **Required behavior**
+- **Tests** — pytest, curl, сценарии
+- **Do not do** — legacy, broker, флаги, scope creep
+- **Acceptance criteria** — чеклист
+- **Report format** — см. PR template
+
+Шаблон: `docs/ai-workflow/CURSOR_TASK_TEMPLATE.md`.
+
+---
+
+## Review checklist (binding)
+
+- [ ] Без unrelated refactor
+- [ ] Без скрытых semantic changes (advisory → ERROR)
+- [ ] Feature flag discipline (default OFF)
+- [ ] Без client-side AI keys; без секретов в diff
+- [ ] Без расширения legacy `backend/` без явного согласования
+- [ ] `possible` / `needs_clarification` не в broker
+- [ ] `source_kind` isolation сохранён
+- [ ] Импортеры идемпотентны
+- [ ] Миграции только Alembic, аккуратные
+- [ ] PR report полный (см. ниже)
+
+Полный список: `docs/ai-workflow/CODEX_REVIEW_CHECKLIST.md`.
+
+---
+
+## Reporting (каждый PR)
+
+1. **Changed files** (группировка по областям)
+2. **What changed** — по смыслу, не только diff
+3. **Before / after** — поведение API/UX
+4. **Tests run** — команды и результат
+5. **Risks / limitations**
+6. **Recommended next step** — для Codex / Ivan
+
+Template: `.github/PULL_REQUEST_TEMPLATE.md`.
+
+---
+
 ## Контекст проекта
 
 Платформа автоматизации таможенного оформления (ВЭД) на базе ЕАЭС.
@@ -272,3 +413,4 @@ curl -s -X POST http://127.0.0.1:8001/api/non_tariff/check \
 | 2026-05 | AGENT-01 | SS_DOMAINS/DS_DOMAINS по Решению ЕЭК №620 |
 | 2026-05 | AGENT-01 | noise-разметка (526 шумных записей) |
 | 2026-05 | AGENT-01 | Регрессия: 13/14 ✅ |
+| 2026-05 | Workflow | AI workflow kit: Codex/Cursor/Ivan, issue & PR templates |
