@@ -1,0 +1,14 @@
+# CustomsClear — правила для Cursor AI
+
+## Стек
+- Backend: Python 3.11 + FastAPI + SQLAlchemy + pdfplumber
+- Frontend: React 18 + TypeScript + shadcn/ui + Tailwind
+- ИИ: Anthropic Claude API (claude-sonnet-4-20250514)
+
+## Правила
+- Все комментарии и переменные окружения — на русском
+- Все API-ответы — в формате JSON с полем 'status'
+- Для Claude API всегда использовать claude_service.py, не вызывать API напрямую
+- Обработка ошибок обязательна для всех endpoint
+- Логировать все операции с файлами
+

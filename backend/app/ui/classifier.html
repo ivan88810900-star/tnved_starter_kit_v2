@@ -1,0 +1,148 @@
+<!doctype html><meta charset="utf-8">
+<title>ТН ВЭД Классификатор</title>
+<style>
+body{font:14px/1.4 system-ui, sans-serif; margin:24px; max-width:900px}
+.card{border:1px solid #ddd; border-radius:12px; padding:16px; margin:12px 0}
+.row{display:flex; gap:8px; margin-bottom:12px}
+input{flex:1; padding:10px; border:1px solid #ccc; border-radius:8px}
+button{padding:10px 14px; border:0; border-radius:8px; cursor:pointer}
+pre{white-space:pre-wrap; word-break:break-word; background:#fafafa; padding:12px; border-radius:8px}
+.badge{display:inline-block; padding:2px 6px; border-radius:6px; background:#eef}
+.small{color:#666; font-size:12px}
+.suggest{border:1px solid #eee; border-radius:10px; max-height:280px; overflow:auto; margin-top:6px}
+.suggest div{padding:8px 10px; cursor:pointer}
+.suggest div:hover{background:#f5f7ff}
+</style>
+
+<h2>ТН ВЭД Классификатор</h2>
+<div class="card">
+  <div class="row">
+    <input id="code" placeholder="введите код (напр. 7009) или слово" oninput="typeahead()"
+           onkeydown="if(event.key==='Enter'){go()}">
+    <button onclick="go()">Проверить</button>
+  </div>
+  <div id="sug" class="suggest" style="display:none"></div>
+  <div id="res"></div>
+</div>
+
+<script>
+let timer=null;
+function norm(x){ return (x||'').replace(/\./g,'').trim(); }
+function nextLen(n){ if(n<=2)return 4; if(n<=4)return 6; if(n<=6)return 8; return 10; }
+
+async function typeahead(){
+  clearTimeout(timer);
+  timer=setTimeout(async ()=>{
+    const q=document.getElementById('code').value;
+    if(!q || q.length<2){ document.getElementById('sug').style.display='none'; return; }
+    const r=await fetch('/codes/suggest?q='+encodeURIComponent(q));
+    if(!r.ok){ document.getElementById('sug').style.display='none'; return; }
+    const j=await r.json();
+    const box=document.getElementById('sug');
+    if(!j.suggest || j.suggest.length===0){ box.style.display='none'; return; }
+    box.innerHTML = j.suggest.map(s=>(
+      `<div onclick="pick('${s.code}')"><b>${s.code}</b> — ${s.title_ru||''}</div>`
+    )).join('');
+    box.style.display='block';
+  }, 180);
+}
+
+function pick(c){
+  document.getElementById('code').value=c;
+  document.getElementById('sug').style.display='none';
+  go();
+}
+
+async function go(){
+  const raw=document.getElementById('code').value;
+  const c=norm(raw);
+  const out=document.getElementById('res');
+  document.getElementById('sug').style.display='none';
+  if(!c){ out.innerHTML='<span class="small">Введите код...</span>'; return; }
+
+  // если длина < 10 — показываем все позиции под префиксом
+  if([2,4,6,8].includes(c.length)){
+    const r = await fetch('/codes/list?prefix='+encodeURIComponent(c));
+    if(!r.ok){ out.innerHTML='<span class="small">Код не найден</span>'; return; }
+    const j = await r.json();
+    const make = arr => arr.map(x => `<div onclick="pick('${x.code}')" style="padding:6px 8px;cursor:pointer"><b>${x.code}</b> — ${x.title_ru||''}</div>`).join('') || '<div class="small">нет</div>';
+    out.innerHTML = `
+      <div><span class="badge">Префикс</span> <b>${j.prefix || '—'}</b></div>
+      <div class="card">
+        <div><b>4 знака</b> (${j.counts["4"]})</div>
+        <div class="suggest">${make(j.items["4"])}</div>
+      </div>
+      <div class="card">
+        <div><b>6 знаков</b> (${j.counts["6"]})</div>
+        <div class="suggest">${make(j.items["6"])}</div>
+      </div>
+      <div class="card">
+        <div><b>8 знаков</b> (${j.counts["8"]})</div>
+        <div class="suggest">${make(j.items["8"])}</div>
+      </div>
+      <div class="card">
+        <div><b>10 знаков</b> (${j.counts["10"]})</div>
+        <div class="suggest">${make(j.items["10"])}</div>
+      </div>
+    `;
+    return;
+  }
+
+  // 10 знаков — полный расчёт
+  const r=await fetch('/classify/'+c);
+  if(!r.ok){ out.innerHTML='<span class="small">Код не найден</span>'; return; }
+  const j=await r.json();
+  const duty = j.duty?.duty || 'N/A';
+  const vat  = j.vat?.rate ?? '—';
+  const vsrc = j.vat?.source || '';
+  out.innerHTML = `
+    <div><span class="badge">Код</span> <b>${j.hs_code}</b></div>
+    <div><span class="badge">Наименование</span> ${j.title||'—'}</div>
+    <div><span class="badge">Пошлина</span> ${duty}</div>
+    <div><span class="badge">НДС</span> ${vat}% <span class="small">(${vsrc})</span></div>
+    <div class="small">Примечания (глава ${j.hs_code.slice(0,2)}): ${j.notes?.length || 0} шт.</div>
+  `;
+}
+</script>
+<!doctype html><meta charset="utf-8">
+<title>ТН ВЭД Классификатор</title>
+<style>
+body{font:14px/1.4 system-ui, sans-serif; margin:24px; max-width:900px}
+.card{border:1px solid #ddd; border-radius:12px; padding:16px; margin:12px 0}
+.row{display:flex; gap:8px; margin-bottom:12px}
+input{flex:1; padding:10px; border:1px solid #ccc; border-radius:8px}
+button{padding:10px 14px; border:0; border-radius:8px; cursor:pointer}
+pre{white-space:pre-wrap; word-break:break-word; background:#fafafa; padding:12px; border-radius:8px}
+.badge{display:inline-block; padding:2px 6px; border-radius:6px; background:#eef}
+.small{color:#666; font-size:12px}
+</style>
+<h2>ТН ВЭД Классификатор</h2>
+<div class="card">
+  <div class="row">
+    <input id="code" placeholder="введите код, например 7009100000">
+    <button onclick="go()">Проверить</button>
+  </div>
+  <div id="res"></div>
+</div>
+<script>
+async function go(){
+  const code = document.getElementById('code').value.trim();
+  const box = document.getElementById('res');
+  if(!code){ box.innerHTML = '<span class="small">Введите код...</span>'; return; }
+  const r = await fetch('/classify/'+encodeURIComponent(code));
+  if(!r.ok){ box.innerHTML = '<span class="small">Код не найден</span>'; return; }
+  const j = await r.json();
+  const vat = j.vat?.rate, vsrc = j.vat?.source;
+  const duty = j.duty?.duty || 'N/A';
+  box.innerHTML = `
+    <div><span class="badge">Код</span> <b>${j.hs_code}</b></div>
+    <div><span class="badge">Наименование</span> ${j.title || '—'}</div>
+    <div><span class="badge">Пошлина</span> ${duty}</div>
+    <div><span class="badge">НДС</span> ${vat}% <span class="small">(${vsrc})</span></div>
+    <div class="small">Примечания (глава ${j.hs_code.slice(0,2)}): ${j.notes?.length || 0} шт.</div>
+  `;
+}
+</script>
+
+
+

@@ -1,0 +1,22 @@
+# Конфигурация источников данных для TN VED Pro
+# Разрешённые домены (без них загрузчик не работает)
+allowed_domains:
+  - eec.eaeunion.org
+  - www.eurasiancommission.org
+  - customs.gov.ru
+  - data.gov.ru
+  - minprirody.gov.ru
+
+datasets:
+  tariff_cet:
+    name: "Единый таможенный тариф (ЕТТ ЕАЭС)"
+    authority: "ЕЭК"
+    version: "2025-01-01"
+    file_type: "PDF"
+    local_path: "data/raw/tariff_cet/2025-01-01/"
+    urls:
+      - "https://eec.eaeunion.org/upload/files/catr/ett/%d0%9e%d0%9f%d0%98_%d1%81%d0%be%d0%ba%d1%80%d0%b0%d1%89%d0%b5%d0%bd%d0%b8%d1%8f_%d0%b4%d0%be%d0%bf.%d0%b5%d0%b4.%d0%b8%d0%b7%d0%bc.pdf"
+    save_as:
+      - "%d0%9e%d0%9f%d0%98_%d1%81%d0%be%d0%ba%d1%80%d0%b0%d1%89%d0%b5%d0%bd%d0%b8%d1%8f_%d0%b4%d0%be%d0%bf.%d0%b5%d0%b4.%d0%b8%d0%b7%d0%bc.pdf"
+    checksum:
+      - "b05cb8061d0854d121ac86d0d2ee5663ed185cc9c3915ed586de2d8173a666a8"

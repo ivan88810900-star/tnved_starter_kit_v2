@@ -1,0 +1,4 @@
+# Опционально: векторный RAG (ChromaDB). После установки:
+#   export RAG_CHROMA_PATH=./data/chroma_rag
+#   PYTHONPATH=. python3 scripts/ingest_rag_chroma.py
+chromadb>=0.5.0

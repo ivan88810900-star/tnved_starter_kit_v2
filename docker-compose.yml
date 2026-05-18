@@ -1,0 +1,28 @@
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: tnved
+      POSTGRES_USER: app
+      POSTGRES_PASSWORD: app
+    ports:
+      - "5432:5432"
+    volumes:
+      - dbdata:/var/lib/postgresql/data
+
+  api:
+    build: .
+    environment:
+      DB_URL: postgresql+psycopg2://app:app@db:5432/tnved
+      AI_PROVIDER: openai
+      AI_MODEL: gpt-4.1
+      AI_API_KEY: ${AI_API_KEY}
+    depends_on:
+      - db
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+
+volumes:
+  dbdata:

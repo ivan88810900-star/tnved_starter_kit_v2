@@ -1,0 +1,20 @@
+[
+  {
+    "brand_name": "APPLE",
+    "hs_code_prefix": "8517",
+    "reg_number": "ТРОИС-10001",
+    "right_holder": "Apple Inc."
+  },
+  {
+    "brand_name": "SAMSUNG",
+    "hs_code_prefix": "8517",
+    "reg_number": "ТРОИС-10002",
+    "right_holder": "Samsung Electronics Co., Ltd."
+  },
+  {
+    "brand_name": "NIKE",
+    "hs_code_prefix": "6403",
+    "reg_number": "ТРОИС-20001",
+    "right_holder": "Nike Innovate C.V."
+  }
+]
