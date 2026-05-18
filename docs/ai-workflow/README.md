@@ -23,6 +23,7 @@
 
 | Файл | Назначение |
 |------|------------|
+| **[CURRENT_PROJECT_FOCUS.md](./CURRENT_PROJECT_FOCUS.md)** | **Активный стратегический фокус (читать первым)** |
 | [WORKFLOW.md](./WORKFLOW.md) | Полный цикл и правила эскалации |
 | [SETUP_CODEX_CURSOR_WORKFLOW.md](./SETUP_CODEX_CURSOR_WORKFLOW.md) | Настройка для Ivan (Codex Review, Automations, Cursor) |
 | [CODEX_REVIEW_CHECKLIST.md](./CODEX_REVIEW_CHECKLIST.md) | Обязательный чеклист ревью Codex |

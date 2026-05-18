@@ -13,6 +13,19 @@
 6. Ivan merges or sends Decision Memo to strategic ChatGPT review
 ```
 
+## Current Project Focus
+
+The repository maintains a live strategic focus document:
+
+`docs/ai-workflow/CURRENT_PROJECT_FOCUS.md`
+
+Codex uses it to determine the next recommended implementation task.
+This prevents older backlog items or archived priorities (for example AGENT-04 frontend verification) from overriding the currently approved workstream.
+
+When `Status: Active`, Codex Automation and manual Codex review must read this file **before** drafting the next `cursor-task`.
+
+---
+
 ## Правило Decision Memo
 
 Если создан issue с label `needs-ivan-decision` (Decision Memo):

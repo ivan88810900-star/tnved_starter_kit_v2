@@ -62,6 +62,22 @@ Workflow kit: `docs/ai-workflow/`.
 
 Цикл: `docs/ai-workflow/WORKFLOW.md`.
 
+Актуальный стратегический фокус: `docs/ai-workflow/CURRENT_PROJECT_FOCUS.md`.
+
+---
+
+## Active project focus
+
+Before proposing a next task, Codex must read:
+
+- `docs/ai-workflow/CURRENT_PROJECT_FOCUS.md`
+
+If that file has **Status: Active**, it is the **primary source** for next-step planning and takes precedence over older backlog-style **AGENT-01…05** priorities (including «Текущий приоритет» ниже), unless the issue or Ivan explicitly reprioritizes.
+
+If repository state and `CURRENT_PROJECT_FOCUS.md` conflict, Codex must create a **Decision Memo** instead of silently choosing a direction.
+
+Cursor should read the same file when picking up a `cursor-task` without a fully specified scope.
+
 ---
 
 ## Codex responsibilities
@@ -369,10 +385,12 @@ AGENT-03 (Search) ────────────────────�
 AGENT-05 (Data sync) ── обновляет данные для всех
 ```
 
-**Текущий приоритет:**
+**Текущий приоритет (исторический backlog AGENT-ов):**
 1. 🔧 AGENT-01 — закрыть оставшиеся 7 кейсов до 14/14
 2. 🔧 AGENT-04 — поднять frontend и подключить к API
 3. 📋 AGENT-05 — настроить периодическую синхронизацию
+
+> **Активная очередь задач** задаётся в `docs/ai-workflow/CURRENT_PROJECT_FOCUS.md` (если `Status: Active`), а не этим списком. AGENT-04 frontend verification не является top priority, пока focus не переключён явно.
 
 ---
 
@@ -414,3 +432,4 @@ curl -s -X POST http://127.0.0.1:8001/api/non_tariff/check \
 | 2026-05 | AGENT-01 | noise-разметка (526 шумных записей) |
 | 2026-05 | AGENT-01 | Регрессия: 13/14 ✅ |
 | 2026-05 | Workflow | AI workflow kit: Codex/Cursor/Ivan, issue & PR templates |
+| 2026-05-18 | Workflow | CURRENT_PROJECT_FOCUS.md — official SGR dataset workstream |

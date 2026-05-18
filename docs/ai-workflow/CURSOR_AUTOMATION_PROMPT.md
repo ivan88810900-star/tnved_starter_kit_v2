@@ -9,6 +9,7 @@ Read the issue carefully and implement only that scope.
 
 Follow:
 - AGENTS.md
+- docs/ai-workflow/CURRENT_PROJECT_FOCUS.md (if Status: Active)
 - the issue acceptance criteria
 - existing code style
 

@@ -9,6 +9,13 @@ Focus on the latest open pull request or, if there is none, the latest merged Cu
 
 Use AGENTS.md and docs/ai-workflow/CODEX_REVIEW_CHECKLIST.md as binding guidance.
 
+Before deciding the next task, read:
+- `docs/ai-workflow/CURRENT_PROJECT_FOCUS.md`
+
+If it is active, use it as the primary source of current direction.
+Do not propose unrelated backlog work (for example AGENT-04 frontend verification) unless the current focus explicitly allows it.
+If the focus appears stale or inconsistent with the repository, draft a Decision Memo.
+
 Your job:
 1. Determine whether the latest Cursor work is correct, scoped, and safe.
 2. Check whether tests, migrations, feature flags, and architecture direction are adequate.
