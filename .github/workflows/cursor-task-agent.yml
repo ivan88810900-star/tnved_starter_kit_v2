@@ -109,14 +109,14 @@ jobs:
         if: steps.existing_pr.outputs.count == '0'
         id: git_commit
         run: |
-          if git diff --quiet && git diff --cached --quiet; then
+          git add -A
+          if git diff --cached --quiet; then
             echo "changed=false" >> "${GITHUB_OUTPUT}"
-            echo "No working tree changes after agent run."
+            echo "No changes produced by Cursor agent."
             exit 0
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -A
           git commit -m "Implement cursor-task issue #${{ steps.issue_ctx.outputs.issue_number }}"
           echo "changed=true" >> "${GITHUB_OUTPUT}"
 
