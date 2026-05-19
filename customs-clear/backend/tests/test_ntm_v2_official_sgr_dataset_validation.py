@@ -29,7 +29,7 @@ def test_seed_passes_validator_without_errors(valid_payload: dict) -> None:
     result = validate_official_sgr_dataset(valid_payload)
     assert result["valid"] is True
     assert result["error_count"] == 0
-    assert result["summary"]["total_rules"] >= 40
+    assert result["summary"]["total_rules"] >= 47
     assert result["warning_count"] == 0
 
 
@@ -92,6 +92,49 @@ def test_dataset_report_sanity_all_pass(valid_payload: dict) -> None:
     report = build_official_sgr_dataset_report(valid_payload, run_sanity=True)
     assert report["validation"]["valid"] is True
     assert report["sanity_passed"] is True
+    batch = report["coverage"]["section_ii_batch_issue3"]
+    assert batch["complete"] is True
+    assert batch["missing_prefixes"] == []
+
+
+ISSUE3_RULES = {
+    "7306": "eec299-7306-drinking-water-pipes",
+    "5910": "eec299-5910-food-conveyor-belts",
+    "3926": "eec299-3926-section-ii-related",
+}
+
+
+def _rule_matched(ev: dict, rule_id: str) -> bool:
+    return any(m.get("rule_id") == rule_id for m in ev.get("matched_rules") or [])
+
+
+@pytest.mark.parametrize(
+    ("hs", "desc", "rule_key", "expect"),
+    [
+        ("7306100000", "Труба для хозпитьевого водоснабжения", "7306", True),
+        ("7306100000", "Труба для нефтепровода", "7306", False),
+        ("5910000000", "Лента конвейерная для контакта с пищевыми продуктами", "5910", True),
+        ("5910000000", "Ткань прорезиненная техническая", "5910", False),
+        ("3926909709", "Изделие для контакта с пищевыми продуктами", "3926", True),
+        ("3926909709", "Пластиковая заглушка техническая", "3926", False),
+    ],
+)
+def test_issue3_batch_description_gates(
+    valid_payload: dict,
+    hs: str,
+    desc: str,
+    rule_key: str,
+    expect: bool,
+) -> None:
+    ev = evaluate_official_sgr_from_seed_payload(valid_payload, hs, desc)
+    assert _rule_matched(ev, ISSUE3_RULES[rule_key]) is expect
+    assert ev["has_definite_sgr"] is False
+
+
+def test_issue3_rules_are_advisory_only(valid_payload: dict) -> None:
+    for rule_id in ISSUE3_RULES.values():
+        row = next(r for r in valid_payload["rules"] if r["rule_id"] == rule_id)
+        assert row["applicability"] in ("possible", "needs_clarification")
 
 
 @pytest.mark.parametrize(

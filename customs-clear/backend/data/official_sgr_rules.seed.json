@@ -1,9 +1,9 @@
 {
   "source_document": "Решение ЕЭК №299 (Перечень I, раздел II — товары, подлежащие государственной регистрации; п. 6–11)",
-  "source_revision": "official-sgr-contour-v2-curated-2026-05-issue1",
+  "source_revision": "official-sgr-contour-v2-curated-2026-05-issue3",
   "source_url": "https://eec.eaeunion.org/",
-  "dataset_version": "v2-curated-issue1",
-  "curation_note": "Курируемый seed по публичному тексту Раздела II и сопутствующим позициям Перечня I (спецпитание, БАД). Не автоматический полный парсинг PDF/ТН ВЭД.",
+  "dataset_version": "v2-curated-issue3",
+  "curation_note": "Курируемый seed по публичному тексту Раздела II и сопутствующим позициям Перечня I (спецпитание, БАД). Не автоматический полный парсинг PDF/ТН ВЭД. Партия issue3: 7306, 5910, 3926.",
   "rules": [
     {
       "rule_id": "eec299-3808-disinfectants",
@@ -550,6 +550,55 @@
       "title": "Зубные щётки (не заявленные как детские/подростковые)",
       "evidence": "Раздел II п. 10; 9603 21",
       "notes": "Исключения для детского ассортимента — по документам изготовителя"
+    },
+    {
+      "rule_id": "eec299-3926-section-ii-related",
+      "category": "food_contact_and_hygiene",
+      "hs_scope": "3926",
+      "hs_scope_mode": "prefix",
+      "permit_type": "СГР",
+      "applicability": "needs_clarification",
+      "requires_manual_review": true,
+      "title": "Прочие изделия из пластмасс (отнесение к п.6–11 раздела II)",
+      "description_contains_any": [
+        "пищев",
+        "питьев",
+        "хозпитьев",
+        "водоснабж",
+        "гигиен",
+        "санитар",
+        "дезинфици",
+        "моющ",
+        "чистящ"
+      ],
+      "evidence": "Раздел II п. 11; из 3926 (изделия, относящиеся к п.6, 9–11)",
+      "notes": "Широкий HS; только при маркерах пищевого/ХВС контакта или гигиены/бытхимии; не игрушки 9503"
+    },
+    {
+      "rule_id": "eec299-5910-food-conveyor-belts",
+      "category": "food_contact_and_hygiene",
+      "hs_scope": "5910",
+      "hs_scope_mode": "prefix",
+      "permit_type": "СГР",
+      "applicability": "possible",
+      "requires_manual_review": true,
+      "title": "Ленты конвейерные текстильные для контакта с пищей",
+      "description_contains_any": ["конвейер", "лента", "лент", "пищев", "контакт с пищ"],
+      "evidence": "Раздел II п. 11; 5910 00 (ленты конвейерные для пищевых продуктов)",
+      "notes": "Не все материалы 5910; только конвейерные ленты с пищевым назначением"
+    },
+    {
+      "rule_id": "eec299-7306-drinking-water-pipes",
+      "category": "water_treatment",
+      "hs_scope": "7306",
+      "hs_scope_mode": "prefix",
+      "permit_type": "СГР",
+      "applicability": "possible",
+      "requires_manual_review": true,
+      "title": "Трубы/профили стальные для хозпитьевого водоснабжения",
+      "description_contains_any": ["питьев", "хозпитьев", "водоснабж", "питьевая вода"],
+      "evidence": "Раздел II п. 10; из 7306 (контакт с питьевой водой в ХПВ)",
+      "notes": "Промышленные трубопроводы без маркеров ХПВ — не матчится"
     }
   ]
 }
