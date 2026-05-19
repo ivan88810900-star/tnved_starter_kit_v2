@@ -73,9 +73,22 @@ def _rule_description_matches(description_match_json: Any, description: str) -> 
         return True
     if not isinstance(description_match_json, dict):
         return True
-    mode = description_match_json.get("mode")
+    dm = description_match_json
+    mode = dm.get("mode")
+    contains = dm.get("description_contains_any") or dm.get("substrings")
+    requires = dm.get("description_requires_any")
+    excludes = dm.get("exclude_if_contains_any")
+    if mode in ("official_sgr", "official_sgr_and") or requires or excludes:
+        from .ntm_v2_official_sgr_import import official_sgr_description_matches
+
+        return official_sgr_description_matches(
+            description,
+            description_contains_any=contains if isinstance(contains, list) else None,
+            description_requires_any=requires if isinstance(requires, list) else None,
+            exclude_if_contains_any=excludes if isinstance(excludes, list) else None,
+        )
     if mode == "any_substring":
-        subs = description_match_json.get("substrings") or []
+        subs = dm.get("substrings") or []
         dl = (description or "").lower()
         return any(str(s).lower() in dl for s in subs)
     return True

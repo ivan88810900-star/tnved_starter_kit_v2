@@ -53,16 +53,53 @@ def official_advisory_reason_for_applicability(applicability: str) -> str:
     return advisory_reason_for_applicability(app)
 
 
+def _normalize_desc_markers(values: Any) -> list[str]:
+    return [str(x).lower() for x in (values or []) if str(x).strip()]
+
+
+def official_sgr_description_matches(
+    description: str,
+    *,
+    description_contains_any: list[str] | None = None,
+    description_requires_any: list[str] | None = None,
+    exclude_if_contains_any: list[str] | None = None,
+) -> bool:
+    """
+    Description gate для official SGR.
+
+    - ``description_contains_any``: хотя бы один маркер категории товара (OR).
+    - ``description_requires_any``: хотя бы один обязательный маркер (AND с contains).
+    - ``exclude_if_contains_any``: любой маркер исключает правило.
+    - Без positive gates (только exclusions): ``True``, если exclusion не сработал
+      (exclude-only HS rules).
+    """
+    desc_l = (description or "").lower()
+    excludes = _normalize_desc_markers(exclude_if_contains_any)
+    if any(x in desc_l for x in excludes if x):
+        return False
+    contains = _normalize_desc_markers(description_contains_any)
+    requires = _normalize_desc_markers(description_requires_any)
+    if requires and not any(x in desc_l for x in requires if x):
+        return False
+    if contains and not any(x in desc_l for x in contains if x):
+        return False
+    return True
+
+
 def _desc_match_json(rule_row: dict[str, Any]) -> dict[str, Any] | None:
     contains = [str(x).strip() for x in (rule_row.get("description_contains_any") or []) if str(x).strip()]
+    requires = [str(x).strip() for x in (rule_row.get("description_requires_any") or []) if str(x).strip()]
     excludes = [str(x).strip() for x in (rule_row.get("exclude_if_contains_any") or []) if str(x).strip()]
-    if not contains and not excludes:
+    if not contains and not requires and not excludes:
         return None
     payload: dict[str, Any] = {"mode": "official_sgr"}
     if contains:
         payload["description_contains_any"] = contains
         payload["mode"] = "any_substring"
         payload["substrings"] = contains
+    if requires:
+        payload["description_requires_any"] = requires
+        payload["mode"] = "official_sgr_and"
     if excludes:
         payload["exclude_if_contains_any"] = excludes
     payload["official_payload"] = {
@@ -238,15 +275,18 @@ def official_sgr_seed_rule_matches_position(
     hs_mode = str(row.get("hs_scope_mode") or "prefix").strip() or "prefix"
     norm = normalize_hs_code(hs_code)
     desc_l = (description or "").lower()
-    excludes = [str(x).lower() for x in (row.get("exclude_if_contains_any") or [])]
-    if any(x in desc_l for x in excludes if x):
-        return False
-    contains = [str(x).lower() for x in (row.get("description_contains_any") or []) if str(x).strip()]
+    contains = row.get("description_contains_any")
+    requires = row.get("description_requires_any")
+    excludes = row.get("exclude_if_contains_any")
+    has_desc_gate = bool(_normalize_desc_markers(contains) or _normalize_desc_markers(requires) or _normalize_desc_markers(excludes))
 
     if hs_mode == "description_only":
-        if not contains:
-            return False
-        return any(x in desc_l for x in contains if x)
+        return official_sgr_description_matches(
+            description,
+            description_contains_any=contains if isinstance(contains, list) else None,
+            description_requires_any=requires if isinstance(requires, list) else None,
+            exclude_if_contains_any=excludes if isinstance(excludes, list) else None,
+        )
 
     if not norm:
         return False
@@ -254,8 +294,13 @@ def official_sgr_seed_rule_matches_position(
         return False
     if hs_scope and not norm.startswith(hs_scope):
         return False
-    if contains:
-        return any(x in desc_l for x in contains if x)
+    if has_desc_gate:
+        return official_sgr_description_matches(
+            description,
+            description_contains_any=contains if isinstance(contains, list) else None,
+            description_requires_any=requires if isinstance(requires, list) else None,
+            exclude_if_contains_any=excludes if isinstance(excludes, list) else None,
+        )
     return bool(hs_scope)
 
 
@@ -313,16 +358,23 @@ def official_sgr_rule_matches_position(
     if not _rule_hs_matches(norm, rule):
         return False
 
-    desc_l = (description or "").lower()
     dm = rule.description_match_json if isinstance(rule.description_match_json, dict) else {}
-    excludes = [str(x).lower() for x in (dm.get("exclude_if_contains_any") or [])]
-    if any(x in desc_l for x in excludes if x):
-        return False
-
-    contains = [str(x).lower() for x in (dm.get("description_contains_any") or dm.get("substrings") or [])]
+    contains = dm.get("description_contains_any") or dm.get("substrings")
+    requires = dm.get("description_requires_any")
+    excludes = dm.get("exclude_if_contains_any")
+    has_desc_gate = bool(
+        _normalize_desc_markers(contains)
+        or _normalize_desc_markers(requires)
+        or _normalize_desc_markers(excludes)
+    )
     hp = normalize_hs_code(rule.hs_code)
-    if contains:
-        return any(x in desc_l for x in contains if x)
+    if has_desc_gate:
+        return official_sgr_description_matches(
+            description,
+            description_contains_any=contains if isinstance(contains, list) else None,
+            description_requires_any=requires if isinstance(requires, list) else None,
+            exclude_if_contains_any=excludes if isinstance(excludes, list) else None,
+        )
     if hp:
         return True
     return False

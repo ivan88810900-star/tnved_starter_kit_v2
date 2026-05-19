@@ -17,15 +17,20 @@ PROHIBITED_DEFINITE_HS_PREFIXES = frozenset(
 
 WIDE_HS_LEN_WARNING = 4
 
+# Узкие товарные позиции Перечня II, где ``definite`` по HS допустим без description-маркеров.
+DEFINITE_NARROW_HS_ALLOWLIST = frozenset({"3808"})
+
 
 def _rule_signature(row: dict[str, Any]) -> tuple[Any, ...]:
     desc = tuple(sorted(str(x).lower() for x in (row.get("description_contains_any") or [])))
+    req = tuple(sorted(str(x).lower() for x in (row.get("description_requires_any") or [])))
     excl = tuple(sorted(str(x).lower() for x in (row.get("exclude_if_contains_any") or [])))
     return (
         normalize_hs_code(str(row.get("hs_scope") or "")),
         str(row.get("hs_scope_mode") or "prefix"),
         str(row.get("applicability") or ""),
         desc,
+        req,
         excl,
     )
 
@@ -96,19 +101,22 @@ def validate_official_sgr_dataset(payload: dict[str, Any]) -> dict[str, Any]:
                     "message": "при hs_scope_mode=description_only hs_scope должен быть пустым",
                 }
             )
-        if hs_mode in ("prefix", "exact") and not hs_scope and not row.get("description_contains_any"):
+        if hs_mode in ("prefix", "exact") and not hs_scope and not row.get("description_contains_any") and not row.get(
+            "description_requires_any"
+        ):
             errors.append(
                 {
                     "code": "empty_rule",
                     "path": path,
                     "rule_id": rule_id,
-                    "message": "правило без hs_scope и без description_contains_any",
+                    "message": "правило без hs_scope и без description-маркеров",
                 }
             )
 
         contains = [str(x).strip() for x in (row.get("description_contains_any") or []) if str(x).strip()]
+        requires = [str(x).strip() for x in (row.get("description_requires_any") or []) if str(x).strip()]
         excludes = [str(x).strip() for x in (row.get("exclude_if_contains_any") or []) if str(x).strip()]
-        if contains:
+        if contains or requires:
             description_based += 1
         elif hs_scope:
             hs_only += 1
@@ -155,6 +163,7 @@ def validate_official_sgr_dataset(payload: dict[str, Any]) -> dict[str, Any]:
                 and len(hs_scope) <= WIDE_HS_LEN_WARNING
                 and not contains
                 and hs_mode != "description_only"
+                and hs_scope not in DEFINITE_NARROW_HS_ALLOWLIST
             ):
                 warnings.append(
                     {
@@ -177,6 +186,8 @@ def validate_official_sgr_dataset(payload: dict[str, Any]) -> dict[str, Any]:
         "description_based_rules": description_based,
         "hs_only_rules": hs_only,
         "by_category": dict(sorted(categories.items())),
+        "warnings_by_code": _count_warning_codes(warnings),
+        "definite_narrow_hs_allowlist": sorted(DEFINITE_NARROW_HS_ALLOWLIST),
         "source_document": str(payload.get("source_document") or ""),
         "source_revision": str(payload.get("source_revision") or ""),
         "dataset_version": str(payload.get("dataset_version") or ""),
@@ -184,6 +195,14 @@ def validate_official_sgr_dataset(payload: dict[str, Any]) -> dict[str, Any]:
     }
     valid = not errors
     return _result(valid, errors, warnings, summary)
+
+
+def _count_warning_codes(warnings: list[Any]) -> dict[str, int]:
+    out: dict[str, int] = {}
+    for w in warnings:
+        code = str(w.get("code") or "other")
+        out[code] = out.get(code, 0) + 1
+    return out
 
 
 def _result(

@@ -29,7 +29,14 @@ def test_seed_passes_validator_without_errors(valid_payload: dict) -> None:
     result = validate_official_sgr_dataset(valid_payload)
     assert result["valid"] is True
     assert result["error_count"] == 0
-    assert result["summary"]["total_rules"] >= 30
+    assert result["summary"]["total_rules"] >= 40
+    assert result["warning_count"] == 0
+
+
+def test_3808_definite_no_wide_hs_warning(valid_payload: dict) -> None:
+    result = validate_official_sgr_dataset(valid_payload)
+    wide = [w for w in result["warnings"] if w.get("rule_id") == "eec299-3808-disinfectants"]
+    assert wide == []
 
 
 def test_duplicate_rule_id_detected(valid_payload: dict) -> None:
@@ -115,6 +122,46 @@ def test_seed_evaluate_matrix(
 def test_mineral_water_needs_clarification(valid_payload: dict) -> None:
     ev = evaluate_official_sgr_from_seed_payload(valid_payload, "2201900000", "минеральная вода лечебная")
     assert any(m["applicability"] == "needs_clarification" for m in ev["matched_rules"])
+
+
+CHILD_DIAPERS_RULE_ID = "eec299-9619-child-diapers-clarify"
+
+
+def _child_diapers_rule_matched(ev: dict) -> bool:
+    return any(m.get("rule_id") == CHILD_DIAPERS_RULE_ID for m in ev.get("matched_rules") or [])
+
+
+def test_child_diapers_needs_clarification_not_definite(valid_payload: dict) -> None:
+    ev = evaluate_official_sgr_from_seed_payload(valid_payload, "9619000000", "Подгузники детские")
+    assert ev["has_definite_sgr"] is False
+    assert _child_diapers_rule_matched(ev)
+    assert any(m["applicability"] == "needs_clarification" for m in ev["matched_rules"])
+
+
+@pytest.mark.parametrize(
+    ("description", "expect_child_rule"),
+    [
+        ("детские подгузники", True),
+        ("пеленки для младенцев", True),
+        ("подгузники для взрослых", False),
+        ("подгузники", False),
+    ],
+)
+def test_child_diapers_9619_description_gates(
+    valid_payload: dict,
+    description: str,
+    expect_child_rule: bool,
+) -> None:
+    ev = evaluate_official_sgr_from_seed_payload(valid_payload, "9619000000", description)
+    assert _child_diapers_rule_matched(ev) is expect_child_rule
+    if expect_child_rule:
+        child = next(m for m in ev["matched_rules"] if m["rule_id"] == CHILD_DIAPERS_RULE_ID)
+        assert child["applicability"] == "needs_clarification"
+
+
+def test_antifreeze_3820_possible(valid_payload: dict) -> None:
+    ev = evaluate_official_sgr_from_seed_payload(valid_payload, "3820000000", "Антифриз")
+    assert any(m["applicability"] == "possible" for m in ev["matched_rules"])
 
 
 @pytest.fixture
