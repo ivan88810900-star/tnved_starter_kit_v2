@@ -21,7 +21,9 @@ from app.services.ntm_v2_official_sgr_import import (
     evaluate_official_sgr_for_position,
     import_official_sgr_rules_to_ntm_v2,
     load_official_sgr_payload,
+    official_sgr_description_matches,
     official_sgr_rule_matches_position,
+    official_sgr_seed_rule_matches_position,
 )
 
 
@@ -148,6 +150,71 @@ def test_child_diapers_9619_imported_rule_gates(
 ) -> None:
     ev = evaluate_official_sgr_for_position("9619000000", description)
     assert _child_diapers_import_matched(ev) is expect_child_rule
+
+
+EXCLUDE_ONLY_TEST_ROW = {
+    "rule_id": "test-exclude-only-hs",
+    "hs_scope": "9619",
+    "hs_scope_mode": "prefix",
+    "permit_type": "СГР",
+    "applicability": "possible",
+    "title": "Test exclude-only HS rule",
+    "evidence": "test",
+    "exclude_if_contains_any": ["взросл"],
+}
+
+
+@pytest.mark.parametrize(
+    ("description", "expect"),
+    [
+        ("товар", True),
+        ("детское средство", True),
+        ("товар для взрослых", False),
+    ],
+)
+def test_official_sgr_description_matches_exclude_only(description: str, expect: bool) -> None:
+    assert (
+        official_sgr_description_matches(
+            description,
+            exclude_if_contains_any=["взросл"],
+        )
+        is expect
+    )
+
+
+@pytest.mark.parametrize(
+    ("description", "expect"),
+    [
+        ("товар", True),
+        ("детское средство", True),
+        ("товар для взрослых", False),
+    ],
+)
+def test_exclude_only_hs_seed_rule_matches(description: str, expect: bool) -> None:
+    assert (
+        official_sgr_seed_rule_matches_position(EXCLUDE_ONLY_TEST_ROW, "9619000000", description)
+        is expect
+    )
+
+
+def test_exclude_only_hs_imported_rule_matches(memory_sessionmaker: sessionmaker) -> None:
+    payload = {
+        "source_document": "test",
+        "rules": [EXCLUDE_ONLY_TEST_ROW],
+    }
+    import_official_sgr_rules_to_ntm_v2(payload)
+    with memory_sessionmaker() as s:
+        rule = s.scalar(
+            select(NtmApplicabilityRuleV2).where(
+                NtmApplicabilityRuleV2.rule_import_key
+                == f"{OFFICIAL_SGR_SOURCE_KIND}|rule:test-exclude-only-hs"
+            )
+        )
+        assert rule is not None
+        assert official_sgr_rule_matches_position(rule, "9619000000", "товар") is True
+        assert official_sgr_rule_matches_position(rule, "9619000000", "детское средство") is True
+        assert official_sgr_rule_matches_position(rule, "9619000000", "товар для взрослых") is False
+        assert official_sgr_rule_matches_position(rule, "8508110000", "товар") is False
 
 
 def test_diagnostics_toy_shows_legacy_extra_sgr(

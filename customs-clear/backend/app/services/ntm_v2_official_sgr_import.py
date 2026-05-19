@@ -70,6 +70,8 @@ def official_sgr_description_matches(
     - ``description_contains_any``: хотя бы один маркер категории товара (OR).
     - ``description_requires_any``: хотя бы один обязательный маркер (AND с contains).
     - ``exclude_if_contains_any``: любой маркер исключает правило.
+    - Без positive gates (только exclusions): ``True``, если exclusion не сработал
+      (exclude-only HS rules).
     """
     desc_l = (description or "").lower()
     excludes = _normalize_desc_markers(exclude_if_contains_any)
@@ -81,7 +83,7 @@ def official_sgr_description_matches(
         return False
     if contains and not any(x in desc_l for x in contains if x):
         return False
-    return bool(requires or contains)
+    return True
 
 
 def _desc_match_json(rule_row: dict[str, Any]) -> dict[str, Any] | None:
