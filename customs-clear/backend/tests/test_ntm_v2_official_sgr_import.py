@@ -125,6 +125,31 @@ def test_needs_clarification_bad_description(official_sgr_imported: dict) -> Non
     assert any(r["applicability"] == "needs_clarification" for r in ev["matched_rules"])
 
 
+CHILD_DIAPERS_IMPORT_KEY = f"{OFFICIAL_SGR_SOURCE_KIND}|rule:eec299-9619-child-diapers-clarify"
+
+
+def _child_diapers_import_matched(ev: dict) -> bool:
+    return any(m.get("rule_import_key") == CHILD_DIAPERS_IMPORT_KEY for m in ev.get("matched_rules") or [])
+
+
+@pytest.mark.parametrize(
+    ("description", "expect_child_rule"),
+    [
+        ("детские подгузники", True),
+        ("пеленки для младенцев", True),
+        ("подгузники для взрослых", False),
+        ("подгузники", False),
+    ],
+)
+def test_child_diapers_9619_imported_rule_gates(
+    official_sgr_imported: dict,
+    description: str,
+    expect_child_rule: bool,
+) -> None:
+    ev = evaluate_official_sgr_for_position("9619000000", description)
+    assert _child_diapers_import_matched(ev) is expect_child_rule
+
+
 def test_diagnostics_toy_shows_legacy_extra_sgr(
     memory_sessionmaker: sessionmaker,
     official_sgr_imported: dict,

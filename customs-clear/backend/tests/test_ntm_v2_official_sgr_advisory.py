@@ -201,3 +201,28 @@ def test_get_advisory_official_helper_returns_definite(
     rows = get_advisory_official_sgr_requirements_v2("3808990000", "Дезинфицирующее средство")
     assert any(r.get("applicability") == "definite" for r in rows)
     assert all(r.get("used_for_missing_check") is False for r in rows)
+
+
+CHILD_DIAPERS_TITLE = "Детские подгузники/пеленки (по описанию)"
+
+
+@pytest.mark.parametrize(
+    ("description", "expect_child_advisory"),
+    [
+        ("детские подгузники", True),
+        ("пеленки для младенцев", True),
+        ("подгузники для взрослых", False),
+        ("подгузники", False),
+    ],
+)
+def test_child_diapers_9619_official_advisory_gates(
+    official_and_legacy_imported: None,
+    description: str,
+    expect_child_advisory: bool,
+) -> None:
+    rows = get_advisory_official_sgr_requirements_v2("9619000000", description)
+    child_rows = [r for r in rows if r.get("rule_name") == CHILD_DIAPERS_TITLE]
+    assert bool(child_rows) is expect_child_advisory
+    if expect_child_advisory:
+        assert child_rows[0]["applicability"] == "needs_clarification"
+        assert child_rows[0]["used_for_missing_check"] is False

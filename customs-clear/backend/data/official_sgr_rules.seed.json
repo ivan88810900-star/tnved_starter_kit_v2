@@ -520,9 +520,11 @@
       "applicability": "needs_clarification",
       "requires_manual_review": true,
       "title": "Детские подгузники/пеленки (по описанию)",
-      "description_contains_any": ["детск", "подгузник", "пеленк", "младен", "baby"],
+      "description_contains_any": ["подгузник", "пеленк"],
+      "description_requires_any": ["детск", "младен", "baby"],
+      "exclude_if_contains_any": ["взросл"],
       "evidence": "Раздел II п. 10; 9619 00 (детская гигиена)",
-      "notes": "Отдельно от взрослых изделий 9619; не игрушки 9503"
+      "notes": "Требует маркер товара (подгузник/пеленка) И детский маркер; не для взрослых"
     },
     {
       "rule_id": "eec299-3306-child-oral-clarify",

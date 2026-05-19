@@ -97,6 +97,12 @@ def _run_sanity_checks(payload: dict[str, Any]) -> list[dict[str, Any]]:
             "expect": {"needs_clarification": True},
         },
         {
+            "id": "adult_diapers_9619_no_child_clarify",
+            "hs_code": "9619000000",
+            "description": "Подгузники для взрослых",
+            "expect": {"needs_clarification": False},
+        },
+        {
             "id": "solvent_3814_clarify",
             "hs_code": "3814000000",
             "description": "Растворитель для удаления краски",
