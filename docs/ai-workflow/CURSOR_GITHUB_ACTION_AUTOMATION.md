@@ -12,7 +12,7 @@ Codex (or Ivan) creates GitHub Issue with label cursor-task
         ↓
 .github/workflows/cursor-task-agent.yml (on: issues labeled)
         ↓
-Cursor CLI: agent -p --force  (restricted: files only)
+Cursor CLI: cursor-agent -p --force  (restricted: files only)
         ↓
 Workflow: commit → push → gh pr create
         ↓
@@ -38,6 +38,8 @@ Configure: **Repository → Settings → Secrets and variables → Actions → N
 If the secret is missing, the workflow fails immediately with a clear error (no API call).
 
 **Never** commit API keys. They are not printed in logs.
+
+CLI binary: **`cursor-agent`** (official install path). Override via env `CURSOR_AGENT_BIN` if needed.
 
 ## Workflow permissions
 
@@ -71,7 +73,7 @@ Per [Cursor restricted-autonomy pattern](https://cursor.com/docs/cli/github-acti
 | Step | Who |
 |------|-----|
 | Read issue, `AGENTS.md`, `CURRENT_PROJECT_FOCUS.md` | Cursor CLI |
-| Edit files, run tests in repo | Cursor CLI (`agent -p --force`) |
+| Edit files, run tests in repo | Cursor CLI (`cursor-agent -p --force`) |
 | Branch / commit / push / open PR | GitHub Actions (deterministic) |
 
 Prompt is built in `scripts/automation/run_cursor_task_from_issue.py`.
@@ -100,7 +102,7 @@ python3 scripts/automation/prepare_cursor_task_branch.py issue-context.json
 | Path | Role |
 |------|------|
 | `.github/workflows/cursor-task-agent.yml` | Workflow |
-| `scripts/automation/run_cursor_task_from_issue.py` | Prompt + `agent -p --force` |
+| `scripts/automation/run_cursor_task_from_issue.py` | Prompt + `cursor-agent -p --force` |
 | `scripts/automation/prepare_cursor_task_branch.py` | Branch name helper |
 | `scripts/automation/render_cursor_task_pr_body.py` | PR body template |
 | `scripts/automation/run_cursor_task_from_issue.sh` | Shell wrapper |
@@ -124,7 +126,7 @@ Automation uses **`Relates to #<n>`** by default, not `Closes #<n>`, unless the 
 | Fails on first step | `CURSOR_API_KEY` secret |
 | Skipped run | Open PR already exists for `cursor/issue-<n>-*` |
 | No file changes | Issue scope unclear; read agent log in workflow run |
-| `agent: not found` | Install step failed; see Cursor install docs |
+| `cursor-agent: not found` | Install step failed; see Cursor install docs |
 
 ## Related docs
 

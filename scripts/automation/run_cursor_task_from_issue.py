@@ -10,6 +10,8 @@ import sys
 from pathlib import Path
 from typing import Any
 
+DEFAULT_CURSOR_AGENT_BIN = "cursor-agent"
+
 
 def _repo_root() -> Path:
     return Path(__file__).resolve().parents[2]
@@ -79,7 +81,7 @@ def run_agent(prompt: str) -> None:
         print("::error::CURSOR_API_KEY is not set", file=sys.stderr)
         sys.exit(1)
 
-    agent_bin = os.environ.get("CURSOR_AGENT_BIN", "agent")
+    agent_bin = os.environ.get("CURSOR_AGENT_BIN", DEFAULT_CURSOR_AGENT_BIN)
     cmd = [agent_bin, "-p", "--force", "--output-format", "text", prompt]
     print(f"Running: {agent_bin} -p --force (prompt length={len(prompt)} chars)")
     subprocess.run(cmd, check=True)

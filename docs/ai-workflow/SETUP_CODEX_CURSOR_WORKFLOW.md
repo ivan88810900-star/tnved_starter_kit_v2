@@ -40,7 +40,7 @@
 1. См. **[CURSOR_GITHUB_ACTION_AUTOMATION.md](./CURSOR_GITHUB_ACTION_AUTOMATION.md)**.
 2. Добавьте secret **`CURSOR_API_KEY`** в репозитории GitHub.
 3. Workflow `.github/workflows/cursor-task-agent.yml` срабатывает при label **`cursor-task`** на issue.
-4. Агент (`agent -p --force`) меняет файлы; workflow делает commit, push и открывает PR.
+4. Агент (`cursor-agent -p --force`) меняет файлы; workflow делает commit, push и открывает PR.
 
 Опционально (legacy): Cursor Cloud Agents / Automations в UI — промпт в [CURSOR_AUTOMATION_PROMPT.md](./CURSOR_AUTOMATION_PROMPT.md), если Environment снова заработает.
 
