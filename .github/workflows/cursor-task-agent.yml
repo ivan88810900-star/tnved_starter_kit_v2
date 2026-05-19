@@ -1,0 +1,160 @@
+# Cursor Task automation: issue label `cursor-task` → Cursor CLI agent → branch + PR.
+# Docs: docs/ai-workflow/CURSOR_GITHUB_ACTION_AUTOMATION.md
+# Official: https://cursor.com/docs/cli/github-actions
+
+name: Cursor Task Agent
+
+on:
+  issues:
+    types: [labeled]
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+concurrency:
+  group: cursor-task-issue-${{ github.event.issue.number }}
+  cancel-in-progress: false
+
+jobs:
+  cursor-task:
+    if: github.event.label.name == 'cursor-task'
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+
+    steps:
+      - name: Require CURSOR_API_KEY secret
+        env:
+          CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
+        run: |
+          if [ -z "${CURSOR_API_KEY}" ]; then
+            echo "::error::Repository secret CURSOR_API_KEY is not configured."
+            echo "Add it under Settings → Secrets and variables → Actions."
+            echo "See docs/ai-workflow/CURSOR_GITHUB_ACTION_AUTOMATION.md"
+            exit 1
+          fi
+
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Write issue context
+        id: issue_ctx
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const issue = context.payload.issue;
+            const ctx = {
+              number: issue.number,
+              title: issue.title || '',
+              body: issue.body || '',
+              html_url: issue.html_url,
+            };
+            fs.writeFileSync('issue-context.json', JSON.stringify(ctx, null, 2));
+            const slug = (ctx.title || 'task')
+              .toLowerCase()
+              .replace(/[^a-z0-9]+/g, '-')
+              .replace(/^-|-$/g, '')
+              .slice(0, 40) || 'task';
+            core.setOutput('branch_name', `cursor/issue-${ctx.number}-${slug}`);
+            core.setOutput('issue_number', String(ctx.number));
+
+      - name: Detect existing open PR for this issue
+        id: existing_pr
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          ISSUE_NUM="${{ steps.issue_ctx.outputs.issue_number }}"
+          BRANCH_PREFIX="cursor/issue-${ISSUE_NUM}-"
+          COUNT=$(gh pr list --state open --json headRefName \
+            --jq "[.[] | select(.headRefName | startswith(\"${BRANCH_PREFIX}\"))] | length")
+          echo "count=${COUNT}" >> "${GITHUB_OUTPUT}"
+          if [ "${COUNT}" -gt 0 ]; then
+            gh issue comment "${ISSUE_NUM}" --body \
+              "⏭️ **Cursor Task automation skipped** — an open PR already exists for this issue (branch prefix \`${BRANCH_PREFIX}*\`)."
+          fi
+
+      - name: Comment on issue (run started)
+        if: steps.existing_pr.outputs.count == '0'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh issue comment "${{ steps.issue_ctx.outputs.issue_number }}" --body \
+            "🤖 **Cursor Task automation started** (workflow run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})."
+
+      - name: Create task branch
+        if: steps.existing_pr.outputs.count == '0'
+        run: |
+          git checkout -B "${{ steps.issue_ctx.outputs.branch_name }}"
+
+      - name: Install Cursor CLI
+        if: steps.existing_pr.outputs.count == '0'
+        run: |
+          curl https://cursor.com/install -fsS | bash
+          echo "$HOME/.cursor/bin" >> "${GITHUB_PATH}"
+          agent --version || true
+
+      - name: Run Cursor agent (headless)
+        if: steps.existing_pr.outputs.count == '0'
+        env:
+          CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
+          ISSUE_CONTEXT_PATH: issue-context.json
+        run: |
+          python3 scripts/automation/run_cursor_task_from_issue.py
+
+      - name: Commit changes
+        if: steps.existing_pr.outputs.count == '0'
+        id: git_commit
+        run: |
+          if git diff --quiet && git diff --cached --quiet; then
+            echo "changed=false" >> "${GITHUB_OUTPUT}"
+            echo "No working tree changes after agent run."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Implement cursor-task issue #${{ steps.issue_ctx.outputs.issue_number }}"
+          echo "changed=true" >> "${GITHUB_OUTPUT}"
+
+      - name: Push branch
+        if: steps.existing_pr.outputs.count == '0' && steps.git_commit.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git push --force-with-lease origin "${{ steps.issue_ctx.outputs.branch_name }}"
+
+      - name: Open pull request
+        if: steps.existing_pr.outputs.count == '0' && steps.git_commit.outputs.changed == 'true'
+        id: open_pr
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 scripts/automation/render_cursor_task_pr_body.py issue-context.json \
+            "Cursor agent run in CI (see workflow run logs for commands executed)." \
+            > pr-body.md
+          PR_URL=$(gh pr create \
+            --base main \
+            --head "${{ steps.issue_ctx.outputs.branch_name }}" \
+            --title "Cursor task: #${{ steps.issue_ctx.outputs.issue_number }} ${{ github.event.issue.title }}" \
+            --body-file pr-body.md)
+          echo "url=${PR_URL}" >> "${GITHUB_OUTPUT}"
+
+      - name: Comment on issue (PR opened)
+        if: steps.existing_pr.outputs.count == '0' && steps.git_commit.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh issue comment "${{ steps.issue_ctx.outputs.issue_number }}" --body \
+            "✅ **Cursor Task automation finished** — PR opened: ${{ steps.open_pr.outputs.url }}"
+
+      - name: Comment on issue (no changes)
+        if: steps.existing_pr.outputs.count == '0' && steps.git_commit.outputs.changed == 'false'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh issue comment "${{ steps.issue_ctx.outputs.issue_number }}" --body \
+            "⚠️ **Cursor Task automation finished** — the agent made no file changes. Check workflow logs or refine the issue body."

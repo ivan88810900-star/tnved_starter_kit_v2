@@ -7,7 +7,7 @@
 2. Codex creates:
    - Cursor Task issue, if next step is obvious
    - Decision Memo issue, if strategic choice is needed
-3. Cursor implements Cursor Task
+3. Cursor implements Cursor Task (via [GitHub Action + Cursor CLI](./CURSOR_GITHUB_ACTION_AUTOMATION.md))
 4. Cursor opens PR with full report
 5. Codex reviews PR
 6. Ivan merges or sends Decision Memo to strategic ChatGPT review
