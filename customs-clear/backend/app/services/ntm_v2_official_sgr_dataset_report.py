@@ -84,6 +84,30 @@ def _run_sanity_checks(payload: dict[str, Any]) -> list[dict[str, Any]]:
             "description": "Средство моющее для посуды",
             "expect": {"has_possible": True},
         },
+        {
+            "id": "antifreeze_3820_possible",
+            "hs_code": "3820000000",
+            "description": "Антифриз готовый",
+            "expect": {"has_possible": True},
+        },
+        {
+            "id": "child_diapers_9619_clarify",
+            "hs_code": "9619000000",
+            "description": "Подгузники детские одноразовые",
+            "expect": {"needs_clarification": True},
+        },
+        {
+            "id": "solvent_3814_clarify",
+            "hs_code": "3814000000",
+            "description": "Растворитель для удаления краски",
+            "expect": {"needs_clarification": True},
+        },
+        {
+            "id": "intimate_cosmetics_3304_clarify",
+            "hs_code": "3304990000",
+            "description": "Средство интимной гигиены",
+            "expect": {"needs_clarification": True, "has_definite_sgr": False},
+        },
     ]
     out: list[dict[str, Any]] = []
     for case in cases:
@@ -130,11 +154,19 @@ def build_official_sgr_dataset_report(
         "hs_prefixes": _hs_prefixes_from_rules(rules),
         "hs_prefix_count": len(_hs_prefixes_from_rules(rules)),
         "categories": validation["summary"].get("by_category") or {},
+        "warnings_by_code": validation["summary"].get("warnings_by_code") or {},
+        "validation_warning_count": validation.get("warning_count", 0),
     }
     report: dict[str, Any] = {
         "validation": validation,
         "summary": validation["summary"],
         "coverage": coverage,
+        "quality": {
+            "valid": validation.get("valid"),
+            "error_count": validation.get("error_count"),
+            "warning_count": validation.get("warning_count"),
+            "warnings": validation.get("warnings") or [],
+        },
     }
     if run_sanity:
         report["sanity_examples"] = _run_sanity_checks(data)

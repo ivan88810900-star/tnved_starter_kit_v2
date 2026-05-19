@@ -17,6 +17,9 @@ PROHIBITED_DEFINITE_HS_PREFIXES = frozenset(
 
 WIDE_HS_LEN_WARNING = 4
 
+# Узкие товарные позиции Перечня II, где ``definite`` по HS допустим без description-маркеров.
+DEFINITE_NARROW_HS_ALLOWLIST = frozenset({"3808"})
+
 
 def _rule_signature(row: dict[str, Any]) -> tuple[Any, ...]:
     desc = tuple(sorted(str(x).lower() for x in (row.get("description_contains_any") or [])))
@@ -155,6 +158,7 @@ def validate_official_sgr_dataset(payload: dict[str, Any]) -> dict[str, Any]:
                 and len(hs_scope) <= WIDE_HS_LEN_WARNING
                 and not contains
                 and hs_mode != "description_only"
+                and hs_scope not in DEFINITE_NARROW_HS_ALLOWLIST
             ):
                 warnings.append(
                     {
@@ -177,6 +181,8 @@ def validate_official_sgr_dataset(payload: dict[str, Any]) -> dict[str, Any]:
         "description_based_rules": description_based,
         "hs_only_rules": hs_only,
         "by_category": dict(sorted(categories.items())),
+        "warnings_by_code": _count_warning_codes(warnings),
+        "definite_narrow_hs_allowlist": sorted(DEFINITE_NARROW_HS_ALLOWLIST),
         "source_document": str(payload.get("source_document") or ""),
         "source_revision": str(payload.get("source_revision") or ""),
         "dataset_version": str(payload.get("dataset_version") or ""),
@@ -184,6 +190,14 @@ def validate_official_sgr_dataset(payload: dict[str, Any]) -> dict[str, Any]:
     }
     valid = not errors
     return _result(valid, errors, warnings, summary)
+
+
+def _count_warning_codes(warnings: list[Any]) -> dict[str, int]:
+    out: dict[str, int] = {}
+    for w in warnings:
+        code = str(w.get("code") or "other")
+        out[code] = out.get(code, 0) + 1
+    return out
 
 
 def _result(

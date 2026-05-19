@@ -1,8 +1,8 @@
 {
   "source_document": "Решение ЕЭК №299 (Перечень I, раздел II — товары, подлежащие государственной регистрации; п. 6–11)",
-  "source_revision": "official-sgr-contour-v2-curated-2026-05",
+  "source_revision": "official-sgr-contour-v2-curated-2026-05-issue1",
   "source_url": "https://eec.eaeunion.org/",
-  "dataset_version": "v2-curated",
+  "dataset_version": "v2-curated-issue1",
   "curation_note": "Курируемый seed по публичному тексту Раздела II и сопутствующим позициям Перечня I (спецпитание, БАД). Не автоматический полный парсинг PDF/ТН ВЭД.",
   "rules": [
     {
@@ -411,6 +411,143 @@
       "description_contains_any": ["интимн", "тату", "перманентный макияж", "от выпадения волос"],
       "evidence": "Перечень I / спецкатегории косметики",
       "notes": "Не definite по одному HS 3304"
+    },
+    {
+      "rule_id": "eec299-3210-paints-retail",
+      "category": "household_chemicals",
+      "hs_scope": "3210",
+      "hs_scope_mode": "prefix",
+      "permit_type": "СГР",
+      "applicability": "possible",
+      "requires_manual_review": true,
+      "title": "Краски и лаки прочие (розница)",
+      "evidence": "Раздел II п. 7; 3210 00",
+      "notes": "Бытовые ЛКМ; не все подгруппы"
+    },
+    {
+      "rule_id": "eec299-3214-mastics",
+      "category": "household_chemicals",
+      "hs_scope": "3214",
+      "hs_scope_mode": "prefix",
+      "permit_type": "СГР",
+      "applicability": "possible",
+      "requires_manual_review": true,
+      "title": "Мастики, шпатлёвки, составы для отделки",
+      "evidence": "Раздел II п. 7; 3214",
+      "notes": "Готовые составы для малярных/отделочных работ"
+    },
+    {
+      "rule_id": "eec299-3809-finishing-agents",
+      "category": "household_chemicals",
+      "hs_scope": "3809",
+      "hs_scope_mode": "prefix",
+      "permit_type": "СГР",
+      "applicability": "possible",
+      "requires_manual_review": true,
+      "title": "Средства отделочные для текстиля/кожи/прочих отраслей",
+      "evidence": "Раздел II п. 7; 3809",
+      "notes": "Не сырьё для производства"
+    },
+    {
+      "rule_id": "eec299-3814-solvents",
+      "category": "chemicals_hazardous",
+      "hs_scope": "3814",
+      "hs_scope_mode": "prefix",
+      "permit_type": "СГР",
+      "applicability": "needs_clarification",
+      "requires_manual_review": true,
+      "title": "Растворители и разбавители (бытовые/готовые)",
+      "description_contains_any": ["растворител", "разбавител", "удалени", "краск", "лак"],
+      "evidence": "Раздел II п. 8; 3814 00",
+      "notes": "Только готовые составы п. 6–11 по документам изготовителя"
+    },
+    {
+      "rule_id": "eec299-3820-antifreeze",
+      "category": "household_chemicals",
+      "hs_scope": "3820",
+      "hs_scope_mode": "prefix",
+      "permit_type": "СГР",
+      "applicability": "possible",
+      "requires_manual_review": true,
+      "title": "Жидкости антиобледенительные готовые",
+      "evidence": "Раздел II п. 7; 3820 00",
+      "notes": "Готовые антифризы/антиобледенители розничной фасовки"
+    },
+    {
+      "rule_id": "eec299-2202-flavored-water",
+      "category": "beverages_water",
+      "hs_scope": "2202",
+      "hs_scope_mode": "prefix",
+      "permit_type": "СГР",
+      "applicability": "needs_clarification",
+      "requires_manual_review": true,
+      "title": "Вода и напитки безалкогольные с добавками",
+      "description_contains_any": ["минеральн", "лечеб", "детск", "витамин", "энергет"],
+      "evidence": "Перечень I; 2202 (минеральная/спецвода с добавками)",
+      "notes": "Обычные безалкогольные напитки без спецпризнаков — не матчится"
+    },
+    {
+      "rule_id": "eec299-8413-food-water-pumps",
+      "category": "water_treatment",
+      "hs_scope": "8413",
+      "hs_scope_mode": "prefix",
+      "permit_type": "СГР",
+      "applicability": "possible",
+      "requires_manual_review": true,
+      "title": "Насосы для пищевых сред и ХВС",
+      "description_contains_any": ["питьев", "хозпитьев", "пищев", "водоснабж"],
+      "evidence": "Раздел II п. 9; 8413",
+      "notes": "Контакт с пищевыми средами или ХВС"
+    },
+    {
+      "rule_id": "eec299-4810-food-contact-paper",
+      "category": "food_contact_and_hygiene",
+      "hs_scope": "4810",
+      "hs_scope_mode": "prefix",
+      "permit_type": "СГР",
+      "applicability": "possible",
+      "requires_manual_review": true,
+      "title": "Бумага/картон для контакта с пищей",
+      "evidence": "Раздел II п. 11; 4810",
+      "notes": "Упаковка и материалы для контакта с пищевыми продуктами"
+    },
+    {
+      "rule_id": "eec299-9619-child-diapers-clarify",
+      "category": "personal_hygiene_adult",
+      "hs_scope": "9619",
+      "hs_scope_mode": "prefix",
+      "permit_type": "СГР",
+      "applicability": "needs_clarification",
+      "requires_manual_review": true,
+      "title": "Детские подгузники/пеленки (по описанию)",
+      "description_contains_any": ["детск", "подгузник", "пеленк", "младен", "baby"],
+      "evidence": "Раздел II п. 10; 9619 00 (детская гигиена)",
+      "notes": "Отдельно от взрослых изделий 9619; не игрушки 9503"
+    },
+    {
+      "rule_id": "eec299-3306-child-oral-clarify",
+      "category": "cosmetics_children",
+      "hs_scope": "3306",
+      "hs_scope_mode": "prefix",
+      "permit_type": "СГР",
+      "applicability": "needs_clarification",
+      "requires_manual_review": true,
+      "title": "Средства гигиены полости рта для детей",
+      "description_contains_any": ["детск", "дет", "младен", "baby"],
+      "evidence": "Раздел II п. 10; 3306 (детский ассортимент)",
+      "notes": "Взрослые средства 3306 — отдельное правило possible"
+    },
+    {
+      "rule_id": "eec299-960321-toothbrushes",
+      "category": "personal_hygiene_adult",
+      "hs_scope": "960321",
+      "hs_scope_mode": "prefix",
+      "permit_type": "СГР",
+      "applicability": "possible",
+      "requires_manual_review": true,
+      "title": "Зубные щётки (не заявленные как детские/подростковые)",
+      "evidence": "Раздел II п. 10; 9603 21",
+      "notes": "Исключения для детского ассортимента — по документам изготовителя"
     }
   ]
 }

@@ -80,8 +80,8 @@ def test_applicability_preserved(memory_sessionmaker: sessionmaker, official_sgr
             .count()
         )
     assert definite >= 2
-    assert possible >= 12
-    assert clarify >= 6
+    assert possible >= 15
+    assert clarify >= 8
 
 
 def test_toy_9503007500_no_definite_sgr(official_sgr_imported: dict) -> None:
