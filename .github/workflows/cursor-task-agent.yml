@@ -69,7 +69,7 @@ jobs:
         run: |
           ISSUE_NUM="${{ steps.issue_ctx.outputs.issue_number }}"
           BRANCH_PREFIX="cursor/issue-${ISSUE_NUM}-"
-          COUNT=$(gh pr list --state open --json headRefName \
+          COUNT=$(gh pr list --state open --limit 1000 --json headRefName \
             --jq "[.[] | select(.headRefName | startswith(\"${BRANCH_PREFIX}\"))] | length")
           echo "count=${COUNT}" >> "${GITHUB_OUTPUT}"
           if [ "${COUNT}" -gt 0 ]; then
