@@ -22,9 +22,10 @@ def _commit_step_run_block() -> str:
 def test_commit_step_stages_before_no_change_check() -> None:
     block = _commit_step_run_block()
     add_pos = block.find("git add -A")
+    validate_pos = block.find("validate_cursor_task_staged_changes.py")
     cached_check_pos = block.find("git diff --cached --quiet")
-    assert add_pos != -1 and cached_check_pos != -1
-    assert add_pos < cached_check_pos, "git add -A must run before staged diff check"
+    assert add_pos != -1 and validate_pos != -1 and cached_check_pos != -1
+    assert add_pos < validate_pos < cached_check_pos
 
 
 def test_commit_step_does_not_use_worktree_only_quiet_check() -> None:

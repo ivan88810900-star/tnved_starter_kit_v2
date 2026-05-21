@@ -39,9 +39,37 @@ Configure: **Repository → Settings → Secrets and variables → Actions → N
 
 If the secret is missing, the workflow fails immediately with a clear error (no API call).
 
-**Never** commit API keys. They are not printed in logs.
+**Never** commit API keys. They are not printed in logs. The agent step runs without `GITHUB_TOKEN`/`GH_TOKEN` in its environment; staged diff is scanned for secret markers and literal `CURSOR_API_KEY` values before commit.
 
 CLI binary: **`cursor-agent`** (official install path). Override via env `CURSOR_AGENT_BIN` if needed.
+
+## Trusted actors
+
+Write-enabled automation runs only when **`github.actor`** is in the allowlist:
+
+| Source | Value |
+|--------|--------|
+| Default | `ivan88810900-star` |
+| Optional repo variable | `CURSOR_TASK_TRUSTED_ACTORS` — comma-separated logins, e.g. `ivan88810900-star,another-maintainer` |
+
+If a user with triage permission adds `cursor-task` but is not trusted, the workflow comments on the issue and **does not** checkout, run the agent, commit, push, or open a PR.
+
+## Git credential boundary
+
+- `actions/checkout` uses **`persist-credentials: false`** so the Cursor agent step does not receive stored git push credentials.
+- **Push** uses `gh auth setup-git` only in the controlled push step (after staged validation).
+- Issue title/body remain untrusted prompt input; combine with trusted-actor gate and staged denylist.
+
+## Staged denylist / secret scan
+
+After `git add -A`, `validate_cursor_task_staged_changes.py` blocks commit if staged paths or diff contain:
+
+- `.env`, `.env.*`, `*.db`, `*.sqlite`, `*.log`, `logs/`, `tmp/`, workflow artifact names, `.cursor/` runtime paths
+- Obvious secret markers (`CURSOR_API_KEY=`, `GEMINI_API_KEY=`, `TOKEN=`, …) or literal `CURSOR_API_KEY` value in diff
+
+## Failure comments
+
+If the job fails after authorization (install, agent, validation, commit, push, PR create), a final step comments on the source issue with the **workflow run URL** and a failure status.
 
 ## Shell safety (issue title/body)
 
@@ -118,6 +146,8 @@ python3 scripts/automation/prepare_cursor_task_branch.py issue-context.json
 |------|------|
 | `.github/workflows/cursor-task-agent.yml` | Workflow |
 | `scripts/automation/run_cursor_task_from_issue.py` | Prompt + `cursor-agent -p --force` |
+| `scripts/automation/authorize_cursor_task_actor.py` | Trusted-actor logic (unit-tested; workflow inlines equivalent bash) |
+| `scripts/automation/validate_cursor_task_staged_changes.py` | Pre-commit staged denylist + secret scan |
 | `scripts/automation/prepare_cursor_task_branch.py` | Branch name helper |
 | `scripts/automation/render_cursor_task_pr_body.py` | PR body template |
 | `scripts/automation/run_cursor_task_from_issue.sh` | Shell wrapper |
@@ -129,9 +159,21 @@ Automation uses **`Relates to #<n>`** by default, not `Closes #<n>`, unless the 
 ## After merge (manual)
 
 1. Add `CURSOR_API_KEY` in GitHub Secrets (if not already).
-2. Create a test issue from template **Cursor Task**, add label `cursor-task`.
-3. Watch **Actions → Cursor Task Agent** and confirm PR + issue comments.
-4. Codex review → Ivan merge.
+2. Optional: set repo variable `CURSOR_TASK_TRUSTED_ACTORS` for extra maintainers.
+3. Create a test issue from template **Cursor Task**, add label `cursor-task` (as a trusted actor).
+4. Watch **Actions → Cursor Task Agent** and confirm PR + issue comments.
+5. Codex review → Ivan merge.
+
+### First E2E checklist
+
+| Scenario | Expected |
+|----------|----------|
+| Malicious title/body in issue | Treated as text only; PR title/body via Python renderers; no shell injection |
+| True no-op (agent changes nothing) | No commit; issue comment “no file changes” |
+| Add-only file | Staged, validated, committed, PR opened |
+| Modify-only / delete-only | Same commit path after validation |
+| Unauthorized labeler | Skip message; no agent/commit/PR |
+| Forced failure after “started” | Issue comment with workflow run URL |
 
 ## Troubleshooting
 
