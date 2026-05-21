@@ -43,21 +43,23 @@ def test_duplicate_pr_guard_scopes_to_repository_owner() -> None:
     assert "--repo" in guard_block
 
 
-def test_duplicate_pr_guard_uses_explicit_gh_repo_before_checkout() -> None:
-    text = WORKFLOW.read_text(encoding="utf-8")
-    job_env = text.split("jobs:", 1)[1].split("\n    steps:", 1)[0]
+def test_job_sets_explicit_gh_repo_context() -> None:
+    job_env = WORKFLOW.read_text(encoding="utf-8").split("jobs:", 1)[1].split(
+        "\n    steps:", 1
+    )[0]
     assert "GH_REPO: ${{ github.repository }}" in job_env
 
-    guard_block = _duplicate_guard_block()
-    assert "gh pr list --state open --limit 1000" in guard_block
-    checkout_pos = text.find("uses: actions/checkout@v4")
-    duplicate_pos = text.find("Detect existing open PR for this issue")
-    assert duplicate_pos != -1 and checkout_pos != -1
-    assert duplicate_pos < checkout_pos, "duplicate guard must run before checkout"
 
-    pre_checkout = text[:checkout_pos]
-    assert "gh pr list" in pre_checkout
-    assert "GH_REPO: ${{ github.repository }}" in pre_checkout.split("steps:", 1)[0]
+def test_checkout_runs_before_duplicate_count_script() -> None:
+    text = WORKFLOW.read_text(encoding="utf-8")
+    checkout_pos = text.find("uses: actions/checkout@v4")
+    count_pos = text.find("count_cursor_task_duplicate_prs.py")
+    authorize_pos = text.find("Authorize trusted actor")
+    duplicate_pos = text.find("Detect existing open PR for this issue")
+    assert checkout_pos != -1 and count_pos != -1
+    assert authorize_pos < checkout_pos < duplicate_pos < count_pos
+    checkout_block = text[checkout_pos : checkout_pos + 400]
+    assert "persist-credentials: false" in checkout_block
 
 
 def test_fork_pr_with_colliding_branch_is_not_duplicate() -> None:

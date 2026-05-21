@@ -29,6 +29,13 @@ def test_checkout_disables_persist_credentials() -> None:
     assert "persist-credentials: false" in text
 
 
+def test_checkout_precedes_repo_automation_scripts() -> None:
+    text = WORKFLOW.read_text(encoding="utf-8")
+    checkout_pos = text.find("uses: actions/checkout@v4")
+    assert checkout_pos < text.find("count_cursor_task_duplicate_prs.py")
+    assert checkout_pos < text.find("run_cursor_task_from_issue.py")
+
+
 def test_trusted_actor_gate_in_workflow() -> None:
     text = WORKFLOW.read_text(encoding="utf-8")
     auth_block = _step_block(text, "Authorize trusted actor")

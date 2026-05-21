@@ -110,6 +110,13 @@ jobs:
           gh issue comment "${ISSUE_NUMBER}" --body \
             "🚫 **Cursor Task automation skipped** — actor \`${GITHUB_ACTOR}\` is not in the trusted allowlist. Only maintainers listed in \`CURSOR_TASK_TRUSTED_ACTORS\` (default: \`ivan88810900-star\`) may run write-enabled automation."
 
+      - uses: actions/checkout@v4
+        if: steps.authorize.outputs.authorized == 'true'
+        with:
+          ref: main
+          fetch-depth: 0
+          persist-credentials: false
+
       - name: Detect existing open PR for this issue
         id: existing_pr
         if: steps.authorize.outputs.authorized == 'true'
@@ -134,13 +141,6 @@ jobs:
             gh issue comment "${ISSUE_NUM}" --body \
               "⏭️ **Cursor Task automation skipped** — an open PR already exists for this issue (branch prefix \`${BRANCH_PREFIX}*\`)."
           fi
-
-      - uses: actions/checkout@v4
-        if: steps.authorize.outputs.authorized == 'true' && steps.existing_pr.outputs.count == '0'
-        with:
-          ref: main
-          fetch-depth: 0
-          persist-credentials: false
 
       - name: Comment on issue (run started)
         if: steps.authorize.outputs.authorized == 'true' && steps.existing_pr.outputs.count == '0'

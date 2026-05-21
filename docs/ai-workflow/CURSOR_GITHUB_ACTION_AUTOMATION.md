@@ -106,7 +106,7 @@ Example: issue `#3` → `cursor/issue-3-official-sgr-section-ii-batch`
 ## Duplicate protection
 
 1. **Concurrency** — one run per issue number (`cursor-task-issue-<n>`).
-2. **Open PR check** — `gh pr list --limit 1000` (not default ~30); counts only open PRs whose `headRefName` starts with `cursor/issue-<n>-` **and** whose head repository owner/name match the current repository (fork PRs with colliding branch names are ignored). If count > 0, the run is skipped and the issue is commented. This step runs **before** `actions/checkout`; job-level `GH_REPO` supplies explicit repo context so GitHub CLI does not rely on a local git remote.
+2. **Open PR check** — after trusted-actor authorization and `actions/checkout` (`persist-credentials: false`), `gh pr list --limit 1000` + `count_cursor_task_duplicate_prs.py`; counts only open PRs whose `headRefName` starts with `cursor/issue-<n>-` **and** whose head repository owner/name match the current repository (fork PRs with colliding branch names are ignored). Job-level `GH_REPO` keeps GitHub CLI repo context explicit.
 3. **Label-only trigger** — removing/re-adding `cursor-task` can re-run; duplicate PR check still applies.
 
 ## What the agent is allowed to do
