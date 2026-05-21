@@ -45,10 +45,14 @@ CLI binary: **`cursor-agent`** (official install path). Override via env `CURSOR
 
 Issue **title** and **body** are untrusted user input. The workflow does **not** embed `${{ github.event.issue.title }}` or `body` in `run:` shell scripts.
 
-- `actions/github-script` writes `issue-context.json` (JSON-escaped).
+- `actions/github-script` writes issue context to `$RUNNER_TEMP/cursor-task/issue-context.json` (JSON-escaped; not in repo root).
 - PR title: `scripts/automation/render_cursor_task_pr_title.py` → `$PR_TITLE` for `gh pr create`.
-- PR body: `render_cursor_task_pr_body.py` + `--body-file`.
+- PR body: `render_cursor_task_pr_body.py` + `--body-file` (also under runner temp).
 - Step outputs (`issue_number`, `branch_name`) use `env:` bridges, not inline `${{ ... }}` inside shell commands.
+
+## Runtime artifacts (not committed)
+
+Workflow temp files (`issue-context.json`, `open-prs.json`, `pr-body.md`) are created under **`$RUNNER_TEMP/cursor-task/`**, outside the checked-out repository. `git add -A` therefore stages only Cursor agent changes in the repo, not CI payload or duplicate-guard JSON.
 
 ## Workflow permissions
 
