@@ -1,0 +1,251 @@
+# Cursor Task automation: issue label `cursor-task` → Cursor CLI agent → branch + PR.
+# Docs: docs/ai-workflow/CURSOR_GITHUB_ACTION_AUTOMATION.md
+# Official: https://cursor.com/docs/cli/github-actions
+
+name: Cursor Task Agent
+
+on:
+  issues:
+    types: [labeled]
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+concurrency:
+  group: cursor-task-issue-${{ github.event.issue.number }}
+  cancel-in-progress: false
+
+jobs:
+  cursor-task:
+    if: github.event.label.name == 'cursor-task' && !github.event.issue.pull_request
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      GH_REPO: ${{ github.repository }}
+      CURSOR_TASK_TEMP: ${{ runner.temp }}/cursor-task
+      ISSUE_CONTEXT_PATH: ${{ runner.temp }}/cursor-task/issue-context.json
+      OPEN_PRS_PATH: ${{ runner.temp }}/cursor-task/open-prs.json
+      PR_BODY_PATH: ${{ runner.temp }}/cursor-task/pr-body.md
+      WORKFLOW_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+    steps:
+      - name: Require CURSOR_API_KEY secret
+        env:
+          CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
+        run: |
+          if [ -z "${CURSOR_API_KEY}" ]; then
+            echo "::error::Repository secret CURSOR_API_KEY is not configured."
+            echo "Add it under Settings → Secrets and variables → Actions."
+            echo "See docs/ai-workflow/CURSOR_GITHUB_ACTION_AUTOMATION.md"
+            exit 1
+          fi
+
+      - name: Prepare automation temp directory
+        run: mkdir -p "${CURSOR_TASK_TEMP}"
+
+      - name: Write issue context
+        id: issue_ctx
+        uses: actions/github-script@v7
+        env:
+          ISSUE_CONTEXT_PATH: ${{ env.ISSUE_CONTEXT_PATH }}
+        with:
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+            const issue = context.payload.issue;
+            const ctxPath = process.env.ISSUE_CONTEXT_PATH;
+            const ctx = {
+              number: issue.number,
+              title: issue.title || '',
+              body: issue.body || '',
+              html_url: issue.html_url,
+            };
+            fs.mkdirSync(path.dirname(ctxPath), { recursive: true });
+            fs.writeFileSync(ctxPath, JSON.stringify(ctx, null, 2));
+            const slug = (ctx.title || 'task')
+              .toLowerCase()
+              .replace(/[^a-z0-9]+/g, '-')
+              .replace(/^-|-$/g, '')
+              .slice(0, 40) || 'task';
+            core.setOutput('branch_name', `cursor/issue-${ctx.number}-${slug}`);
+            core.setOutput('issue_number', String(ctx.number));
+
+      - name: Authorize trusted actor
+        id: authorize
+        env:
+          GITHUB_ACTOR: ${{ github.actor }}
+          CURSOR_TASK_TRUSTED_ACTORS: ${{ vars.CURSOR_TASK_TRUSTED_ACTORS }}
+        run: |
+          AUTHORIZED=false
+          if [ "${GITHUB_ACTOR}" = "ivan88810900-star" ]; then
+            AUTHORIZED=true
+          fi
+          if [ -n "${CURSOR_TASK_TRUSTED_ACTORS}" ]; then
+            IFS=',' read -ra EXTRA_ACTORS <<< "${CURSOR_TASK_TRUSTED_ACTORS}"
+            for actor in "${EXTRA_ACTORS[@]}"; do
+              actor="${actor#"${actor%%[![:space:]]*}"}"
+              actor="${actor%"${actor##*[![:space:]]}"}"
+              if [ -n "${actor}" ] && [ "${GITHUB_ACTOR}" = "${actor}" ]; then
+                AUTHORIZED=true
+              fi
+            done
+          fi
+          if [ "${AUTHORIZED}" = true ]; then
+            echo "authorized=true" >> "${GITHUB_OUTPUT}"
+            echo "Authorized actor: ${GITHUB_ACTOR}"
+          else
+            echo "authorized=false" >> "${GITHUB_OUTPUT}"
+            echo "::warning::Actor ${GITHUB_ACTOR} is not in cursor-task trusted allowlist."
+          fi
+
+      - name: Comment on issue (unauthorized actor)
+        if: steps.authorize.outputs.authorized != 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ISSUE_NUMBER: ${{ steps.issue_ctx.outputs.issue_number }}
+          GITHUB_ACTOR: ${{ github.actor }}
+        run: |
+          gh issue comment "${ISSUE_NUMBER}" --body \
+            "🚫 **Cursor Task automation skipped** — actor \`${GITHUB_ACTOR}\` is not in the trusted allowlist. Only maintainers listed in \`CURSOR_TASK_TRUSTED_ACTORS\` (default: \`ivan88810900-star\`) may run write-enabled automation."
+
+      - uses: actions/checkout@v4
+        if: steps.authorize.outputs.authorized == 'true'
+        with:
+          ref: main
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Detect existing open PR for this issue
+        id: existing_pr
+        if: steps.authorize.outputs.authorized == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ISSUE_NUMBER: ${{ steps.issue_ctx.outputs.issue_number }}
+          REPOSITORY_OWNER: ${{ github.repository_owner }}
+        run: |
+          ISSUE_NUM="${ISSUE_NUMBER}"
+          REPO_NAME="${GITHUB_REPOSITORY#*/}"
+          BRANCH_PREFIX="cursor/issue-${ISSUE_NUM}-"
+          gh pr list --state open --limit 1000 \
+            --json headRefName,headRepositoryOwner,headRepository \
+            > "${OPEN_PRS_PATH}"
+          COUNT=$(python3 scripts/automation/count_cursor_task_duplicate_prs.py \
+            --branch-prefix "${BRANCH_PREFIX}" \
+            --owner "${REPOSITORY_OWNER}" \
+            --repo "${REPO_NAME}" \
+            "${OPEN_PRS_PATH}")
+          echo "count=${COUNT}" >> "${GITHUB_OUTPUT}"
+          if [ "${COUNT}" -gt 0 ]; then
+            gh issue comment "${ISSUE_NUM}" --body \
+              "⏭️ **Cursor Task automation skipped** — an open PR already exists for this issue (branch prefix \`${BRANCH_PREFIX}*\`)."
+          fi
+
+      - name: Comment on issue (run started)
+        if: steps.authorize.outputs.authorized == 'true' && steps.existing_pr.outputs.count == '0'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ISSUE_NUMBER: ${{ steps.issue_ctx.outputs.issue_number }}
+        run: |
+          gh issue comment "${ISSUE_NUMBER}" --body \
+            "🤖 **Cursor Task automation started** (workflow run: ${WORKFLOW_RUN_URL})."
+
+      - name: Create task branch
+        if: steps.authorize.outputs.authorized == 'true' && steps.existing_pr.outputs.count == '0'
+        env:
+          BRANCH_NAME: ${{ steps.issue_ctx.outputs.branch_name }}
+        run: |
+          git checkout -B "${BRANCH_NAME}"
+
+      - name: Install Cursor CLI
+        if: steps.authorize.outputs.authorized == 'true' && steps.existing_pr.outputs.count == '0'
+        run: |
+          curl https://cursor.com/install -fsS | bash
+          echo "$HOME/.cursor/bin" >> "${GITHUB_PATH}"
+          cursor-agent --version
+
+      - name: Run Cursor agent (headless)
+        if: steps.authorize.outputs.authorized == 'true' && steps.existing_pr.outputs.count == '0'
+        env:
+          CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
+        run: |
+          env -u GITHUB_TOKEN -u GH_TOKEN \
+            CURSOR_API_KEY="${CURSOR_API_KEY}" \
+            ISSUE_CONTEXT_PATH="${ISSUE_CONTEXT_PATH}" \
+            python3 scripts/automation/run_cursor_task_from_issue.py
+
+      - name: Commit changes
+        if: steps.authorize.outputs.authorized == 'true' && steps.existing_pr.outputs.count == '0'
+        id: git_commit
+        env:
+          ISSUE_NUMBER: ${{ steps.issue_ctx.outputs.issue_number }}
+          CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
+        run: |
+          git add -A
+          python3 scripts/automation/validate_cursor_task_staged_changes.py
+          if git diff --cached --quiet; then
+            echo "changed=false" >> "${GITHUB_OUTPUT}"
+            echo "No changes produced by Cursor agent."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "Implement cursor-task issue #${ISSUE_NUMBER}"
+          echo "changed=true" >> "${GITHUB_OUTPUT}"
+
+      - name: Push branch
+        if: steps.authorize.outputs.authorized == 'true' && steps.existing_pr.outputs.count == '0' && steps.git_commit.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BRANCH_NAME: ${{ steps.issue_ctx.outputs.branch_name }}
+        run: |
+          gh auth setup-git
+          git push --force-with-lease origin "${BRANCH_NAME}"
+
+      - name: Open pull request
+        if: steps.authorize.outputs.authorized == 'true' && steps.existing_pr.outputs.count == '0' && steps.git_commit.outputs.changed == 'true'
+        id: open_pr
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BRANCH_NAME: ${{ steps.issue_ctx.outputs.branch_name }}
+        run: |
+          python3 scripts/automation/render_cursor_task_pr_body.py "${ISSUE_CONTEXT_PATH}" \
+            --workflow-run-url "${WORKFLOW_RUN_URL}" \
+            --test-status "See workflow run logs for agent commands and test output." \
+            > "${PR_BODY_PATH}"
+          PR_TITLE=$(python3 scripts/automation/render_cursor_task_pr_title.py "${ISSUE_CONTEXT_PATH}")
+          PR_URL=$(gh pr create \
+            --base main \
+            --head "${BRANCH_NAME}" \
+            --title "${PR_TITLE}" \
+            --body-file "${PR_BODY_PATH}")
+          echo "url=${PR_URL}" >> "${GITHUB_OUTPUT}"
+
+      - name: Comment on issue (PR opened)
+        if: steps.authorize.outputs.authorized == 'true' && steps.existing_pr.outputs.count == '0' && steps.git_commit.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ISSUE_NUMBER: ${{ steps.issue_ctx.outputs.issue_number }}
+          PR_URL: ${{ steps.open_pr.outputs.url }}
+        run: |
+          gh issue comment "${ISSUE_NUMBER}" --body \
+            "✅ **Cursor Task automation finished** — PR opened: ${PR_URL}"
+
+      - name: Comment on issue (no changes)
+        if: steps.authorize.outputs.authorized == 'true' && steps.existing_pr.outputs.count == '0' && steps.git_commit.outputs.changed == 'false'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ISSUE_NUMBER: ${{ steps.issue_ctx.outputs.issue_number }}
+        run: |
+          gh issue comment "${ISSUE_NUMBER}" --body \
+            "⚠️ **Cursor Task automation finished** — the agent made no file changes. Check workflow logs or refine the issue body."
+
+      - name: Comment on issue (workflow failed)
+        if: failure() && steps.authorize.outputs.authorized == 'true' && steps.issue_ctx.outputs.issue_number != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ISSUE_NUMBER: ${{ steps.issue_ctx.outputs.issue_number }}
+        run: |
+          gh issue comment "${ISSUE_NUMBER}" --body \
+            "❌ **Cursor Task automation failed** — see workflow logs: ${WORKFLOW_RUN_URL}"

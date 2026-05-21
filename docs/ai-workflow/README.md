@@ -15,7 +15,7 @@
 
 1. Codex смотрит последний PR / состояние проекта.
 2. Codex создаёт **Cursor Task** (очевидный следующий шаг) или **Decision Memo** (нужен выбор).
-3. Cursor реализует задачу и открывает PR с полным отчётом.
+3. Cursor реализует задачу (GitHub Action **Cursor Task Agent** + Cursor CLI) и открывает PR с полным отчётом.
 4. Codex ревьюит PR по чеклисту.
 5. Ivan мержит или отправляет Decision Memo в стратегический ChatGPT review.
 
@@ -30,7 +30,8 @@
 | [CURSOR_TASK_TEMPLATE.md](./CURSOR_TASK_TEMPLATE.md) | Шаблон задачи для Cursor |
 | [DECISION_MEMO_TEMPLATE.md](./DECISION_MEMO_TEMPLATE.md) | Шаблон стратегического решения |
 | [CODEX_AUTOMATION_PROMPT.md](./CODEX_AUTOMATION_PROMPT.md) | Промпт для Codex Automation |
-| [CURSOR_AUTOMATION_PROMPT.md](./CURSOR_AUTOMATION_PROMPT.md) | Промпт для Cursor Cloud Agents |
+| [CURSOR_AUTOMATION_PROMPT.md](./CURSOR_AUTOMATION_PROMPT.md) | Промпт для ручного / Cloud Agents (legacy) |
+| **[CURSOR_GITHUB_ACTION_AUTOMATION.md](./CURSOR_GITHUB_ACTION_AUTOMATION.md)** | **Активная автоматизация: label `cursor-task` → Cursor CLI в GitHub Actions** |
 | [GITHUB_LABELS.md](./GITHUB_LABELS.md) | Рекомендуемые labels |
 
 Корневой контракт для всех агентов: **[AGENTS.md](../../AGENTS.md)**.

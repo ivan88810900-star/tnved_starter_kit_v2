@@ -33,25 +33,29 @@
 
 **Права:** создание issues в репозитории (не merge без вас).
 
-## 4. Cursor Cloud Agents / Automations
+## 4. Cursor Task automation (GitHub Actions + CLI)
 
-1. Откройте **Cursor** → **Settings** → **Integrations** → **GitHub**.
-2. Подключите тот же аккаунт и выберите **tnved_starter_kit_v2**.
-3. **Cloud Agents** (или Automations): создайте правило.
-4. Вставьте промпт из [CURSOR_AUTOMATION_PROMPT.md](./CURSOR_AUTOMATION_PROMPT.md).
-5. Триггер: новый или обновлённый issue с label `cursor-task`, без `blocked`.
+**Активный путь** (вместо Cloud Agents Environment, который может не сохраняться в UI с ошибкой `501`):
 
-**Что делает Cursor:**
+1. См. **[CURSOR_GITHUB_ACTION_AUTOMATION.md](./CURSOR_GITHUB_ACTION_AUTOMATION.md)**.
+2. Добавьте secret **`CURSOR_API_KEY`** в репозитории GitHub.
+3. Workflow `.github/workflows/cursor-task-agent.yml` срабатывает при label **`cursor-task`** на issue.
+4. Агент (`cursor-agent -p --force`) меняет файлы; workflow делает commit, push и открывает PR.
 
-- Берёт старейший открытый `cursor-task`.
-- Делает ветку + PR по шаблону.
-- В PR пишет полный отчёт и ссылается на issue.
+Опционально (legacy): Cursor Cloud Agents / Automations в UI — промпт в [CURSOR_AUTOMATION_PROMPT.md](./CURSOR_AUTOMATION_PROMPT.md), если Environment снова заработает.
+
+**Что делает автоматизация:**
+
+- Берёт issue с label `cursor-task`.
+- Читает `AGENTS.md` и `CURRENT_PROJECT_FOCUS.md` (через prompt).
+- Делает ветку `cursor/issue-<n>-<slug>` + PR.
+- Комментирует issue о старте/результате.
 
 ## 5. Ваш цикл (Ivan)
 
 | Шаг | Действие |
 |-----|----------|
-| Утро / после automation | Посмотреть новые issues: `cursor-task` или `needs-ivan-decision` |
+| Утро / после automation | Посмотреть новые issues: `cursor-task` или `needs-ivan-decision`; Actions → **Cursor Task Agent** |
 | Decision Memo | Скопировать в Strategic ChatGPT → получить решение → комментарий в issue |
 | После PR Cursor | Дождаться Codex review или запустить вручную |
 | Merge | Только когда PR с `ready-for-ivan-review` или вы согласны с отчётом |
@@ -67,8 +71,8 @@
 ## 7. Проверка, что всё работает
 
 1. Создайте тестовый issue **Cursor Task** (шаблон в GitHub → New issue → Cursor Task).
-2. Запустите Cursor Automation или попросите Cursor в чате выполнить issue.
-3. Убедитесь, что открылся PR с заполненным template.
+2. Добавьте label **`cursor-task`** (или создайте issue с этим label).
+3. Убедитесь, что workflow **Cursor Task Agent** завершился и открыл PR.
 4. Попросите Codex сделать review по чеклисту.
 
 Поддержка: [WORKFLOW.md](./WORKFLOW.md), [README.md](./README.md).
