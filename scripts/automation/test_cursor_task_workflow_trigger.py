@@ -33,6 +33,11 @@ def test_workflow_trigger_includes_opened_and_labeled() -> None:
     assert "labeled" in on_block
 
 
+def test_workflow_trigger_excludes_edited() -> None:
+    on_block = _workflow_on_block()
+    assert "edited" not in on_block
+
+
 def test_job_if_checks_issue_labels_not_only_event_label() -> None:
     job_if = _cursor_task_job_if()
     assert "github.event.label.name" not in job_if

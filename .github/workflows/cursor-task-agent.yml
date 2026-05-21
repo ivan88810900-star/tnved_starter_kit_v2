@@ -6,7 +6,7 @@ name: Cursor Task Agent
 
 on:
   issues:
-    types: [opened, edited, labeled]
+    types: [opened, labeled]
 
 permissions:
   contents: write
