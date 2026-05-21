@@ -67,11 +67,19 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           ISSUE_NUMBER: ${{ steps.issue_ctx.outputs.issue_number }}
+          REPOSITORY_OWNER: ${{ github.repository_owner }}
         run: |
           ISSUE_NUM="${ISSUE_NUMBER}"
+          REPO_NAME="${GITHUB_REPOSITORY#*/}"
           BRANCH_PREFIX="cursor/issue-${ISSUE_NUM}-"
-          COUNT=$(gh pr list --state open --limit 1000 --json headRefName \
-            --jq "[.[] | select(.headRefName | startswith(\"${BRANCH_PREFIX}\"))] | length")
+          gh pr list --state open --limit 1000 \
+            --json headRefName,headRepositoryOwner,headRepository \
+            > open-prs.json
+          COUNT=$(python3 scripts/automation/count_cursor_task_duplicate_prs.py \
+            --branch-prefix "${BRANCH_PREFIX}" \
+            --owner "${REPOSITORY_OWNER}" \
+            --repo "${REPO_NAME}" \
+            open-prs.json)
           echo "count=${COUNT}" >> "${GITHUB_OUTPUT}"
           if [ "${COUNT}" -gt 0 ]; then
             gh issue comment "${ISSUE_NUM}" --body \
