@@ -41,6 +41,15 @@ If the secret is missing, the workflow fails immediately with a clear error (no 
 
 CLI binary: **`cursor-agent`** (official install path). Override via env `CURSOR_AGENT_BIN` if needed.
 
+## Shell safety (issue title/body)
+
+Issue **title** and **body** are untrusted user input. The workflow does **not** embed `${{ github.event.issue.title }}` or `body` in `run:` shell scripts.
+
+- `actions/github-script` writes `issue-context.json` (JSON-escaped).
+- PR title: `scripts/automation/render_cursor_task_pr_title.py` → `$PR_TITLE` for `gh pr create`.
+- PR body: `render_cursor_task_pr_body.py` + `--body-file`.
+- Step outputs (`issue_number`, `branch_name`) use `env:` bridges, not inline `${{ ... }}` inside shell commands.
+
 ## Workflow permissions
 
 ```yaml
