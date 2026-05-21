@@ -6,7 +6,7 @@ name: Cursor Task Agent
 
 on:
   issues:
-    types: [labeled]
+    types: [opened, edited, labeled]
 
 permissions:
   contents: write
@@ -19,7 +19,9 @@ concurrency:
 
 jobs:
   cursor-task:
-    if: github.event.label.name == 'cursor-task' && !github.event.issue.pull_request
+    if: >-
+      !github.event.issue.pull_request &&
+      contains(toJson(github.event.issue.labels.*.name), '"cursor-task"')
     runs-on: ubuntu-latest
     timeout-minutes: 90
     env:

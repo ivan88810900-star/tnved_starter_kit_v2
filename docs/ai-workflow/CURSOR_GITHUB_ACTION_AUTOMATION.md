@@ -10,7 +10,7 @@ Production path for implementing issues labeled **`cursor-task`**.
 ```text
 Codex (or Ivan) creates GitHub Issue with label cursor-task
         ↓
-.github/workflows/cursor-task-agent.yml (on: issues labeled)
+.github/workflows/cursor-task-agent.yml (on: issues opened/edited/labeled)
         ↓
 Cursor CLI: cursor-agent -p --force  (restricted: files only)
         ↓
@@ -23,11 +23,11 @@ Codex review → Ivan merge
 
 | Event | Condition |
 |-------|-----------|
-| `issues` / `labeled` | Label name is exactly `cursor-task` |
+| `issues` / `opened`, `edited`, `labeled` | Issue labels include `cursor-task` |
 
-The workflow does **not** run on other labels or on issue open/edit without the label.
+The job runs when the issue **already has** the `cursor-task` label (including issues created by Codex with the label attached at creation time). It does **not** depend on `github.event.label.name` from a `labeled` event only.
 
-**Issues only:** labeling a **Pull Request** with `cursor-task` does **not** start the workflow (`!github.event.issue.pull_request`). Only ordinary GitHub Issues are eligible. This avoids running the write-enabled Cursor agent against PR body text.
+**Issues only:** labeling a **Pull Request** with `cursor-task` does **not** start the agent (`!github.event.issue.pull_request`). Only ordinary GitHub Issues are eligible. This avoids running the write-enabled Cursor agent against PR body text.
 
 ## Required secret
 
