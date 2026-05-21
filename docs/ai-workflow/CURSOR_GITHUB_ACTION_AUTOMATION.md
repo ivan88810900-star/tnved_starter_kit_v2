@@ -27,6 +27,8 @@ Codex review → Ivan merge
 
 The workflow does **not** run on other labels or on issue open/edit without the label.
 
+**Issues only:** labeling a **Pull Request** with `cursor-task` does **not** start the workflow (`!github.event.issue.pull_request`). Only ordinary GitHub Issues are eligible. This avoids running the write-enabled Cursor agent against PR body text.
+
 ## Required secret
 
 | Secret | Description |
