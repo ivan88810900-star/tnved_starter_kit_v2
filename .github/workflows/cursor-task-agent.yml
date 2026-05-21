@@ -23,6 +23,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 90
     env:
+      GH_REPO: ${{ github.repository }}
       CURSOR_TASK_TEMP: ${{ runner.temp }}/cursor-task
       ISSUE_CONTEXT_PATH: ${{ runner.temp }}/cursor-task/issue-context.json
       OPEN_PRS_PATH: ${{ runner.temp }}/cursor-task/open-prs.json

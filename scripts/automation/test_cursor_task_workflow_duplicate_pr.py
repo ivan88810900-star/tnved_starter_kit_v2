@@ -43,6 +43,23 @@ def test_duplicate_pr_guard_scopes_to_repository_owner() -> None:
     assert "--repo" in guard_block
 
 
+def test_duplicate_pr_guard_uses_explicit_gh_repo_before_checkout() -> None:
+    text = WORKFLOW.read_text(encoding="utf-8")
+    job_env = text.split("jobs:", 1)[1].split("\n    steps:", 1)[0]
+    assert "GH_REPO: ${{ github.repository }}" in job_env
+
+    guard_block = _duplicate_guard_block()
+    assert "gh pr list --state open --limit 1000" in guard_block
+    checkout_pos = text.find("uses: actions/checkout@v4")
+    duplicate_pos = text.find("Detect existing open PR for this issue")
+    assert duplicate_pos != -1 and checkout_pos != -1
+    assert duplicate_pos < checkout_pos, "duplicate guard must run before checkout"
+
+    pre_checkout = text[:checkout_pos]
+    assert "gh pr list" in pre_checkout
+    assert "GH_REPO: ${{ github.repository }}" in pre_checkout.split("steps:", 1)[0]
+
+
 def test_fork_pr_with_colliding_branch_is_not_duplicate() -> None:
     prs = [
         {
