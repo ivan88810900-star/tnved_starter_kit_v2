@@ -29,6 +29,13 @@ const APPLICABILITY_BADGE: Record<string, string> = {
 const SOURCE_LABELS: Record<string, string> = {
   official_sgr_registry: 'Официальный нормативный контур',
   legacy_non_tariff_rules: 'Историческое правило (подсказка)',
+  legacy_non_tariff_measures: 'Legacy меры (справочно)',
+  tr_ts_catalog: 'ТР ТС каталог',
+  broker_catalog_layers: 'Каталог нетарифных требований',
+  runtime_triggers: 'Триггер по описанию товара',
+  sensitive_override: 'Чувствительная группа товара',
+  domain_default: 'Доменная форма подтверждения (ЕЭК №620)',
+  non_tariff_measures: 'Нетарифные меры (runtime)',
 };
 
 type Props = {

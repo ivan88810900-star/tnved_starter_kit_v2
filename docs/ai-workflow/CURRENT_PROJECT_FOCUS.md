@@ -6,70 +6,65 @@ Active
 
 ## Last updated
 
-2026-05-18
+2026-05-25
 
 ## Strategic direction
 
-The current active workstream is the transition from legacy non-tariff heuristics toward official, validated NTM v2 normative datasets.
+The current active workstream is the **CustomsClear MVP application**: end-to-end product slices for TN VED usage, normative requirements, payments, sanctions/risk, and an AI assistant grounded in internal modules.
+
+Official SGR and NTM v2 normative datasets remain important **data contours**, but the top priority is shipping user-facing MVP blocks — starting with the normative requirements block.
 
 ## What has already been completed
 
-- NTM v2 storage model:
-  - `ntm_measures_v2`
-  - `ntm_applicability_rules_v2`
-- Applicability model:
-  - `definite`
-  - `possible`
-  - `needs_clarification`
-- Migration of:
-  - TR TS catalog
-  - NTM layers
-  - legacy non-tariff rules
-  - legacy non-tariff measures
-- Safe enforcement policy:
-  - legacy rules import as `possible`
-  - only `definite` may affect missing-check
-  - legacy measures enforcement limited to vet/phyto
-- Advisory requirements UI/API
-- Official SGR contour:
-  - `official_sgr_registry`
-  - importer
-  - diagnostics
-  - advisory integration (`NTM_V2_OFFICIAL_SGR_ADVISORY_ENABLED`, default OFF)
-  - initial curated `data/official_sgr_rules.seed.json`
-  - dataset validator and CLI report (`validate_official_sgr_dataset`, `run_ntm_v2_official_sgr_dataset_report.py`)
+- NTM v2 storage model and applicability semantics (`definite` / `possible` / `needs_clarification`)
+- Safe enforcement policy: only `definite` in broker; official SGR advisory-only by default
+- Advisory requirements UI/API foundation
+- Official SGR contour: importer, diagnostics, seed dataset, validator
+- Normative requirements block MVP (backend aggregation + frontend block on NonTariff/compliance)
 
 ## Current top priority
 
-Continue improving the **official SGR normative dataset**: expand and curate `official_sgr_rules.seed.json`, strengthen validation and diagnostics for completeness and safety, and keep official SGR **out of broker/enforcement** until a separate approved workstream.
+**CustomsClear MVP application workstream** — deliver integrated product slices in this order:
+
+1. ~~Product readiness audit~~ (ongoing reference)
+2. **Normative block end-to-end** — required / missing / advisory documents, source labels, applicability, evidence
+3. TN VED + preliminary decisions — search, code card, related decisions
+4. Smart payments — duty/VAT/excise/fees with explanation
+5. Sanctions/risk checks — lists, matches, severity
+6. AI assistant — answers grounded in internal modules, cites sources
+
+Parallel (not blocking MVP UI): continue curating `official_sgr_rules.seed.json` and validation — **without** enabling official SGR broker enforcement until a separate approved workstream.
 
 ## Next recommended implementation tasks
 
-When the dataset PR above is merged, the next Cursor tasks should stay on the same workstream until Ivan reprioritizes, for example:
+After normative block MVP is merged:
 
-- Add or refine rules in `data/official_sgr_rules.seed.json` (ЕЭК №299, раздел II / related contours)
+- TN VED search + code card with related preliminary decisions and evidence
+- Smart payment explanation block (reuse calculator/compliance surfaces)
+- Sanctions/risk check slice
+- Assistant grounding on normative + payments modules
+
+Official SGR dataset tasks (when not conflicting with MVP slices):
+
+- Expand `data/official_sgr_rules.seed.json` (ЕЭК №299 and related contours)
 - Extend `validate_official_sgr_dataset(...)` and dataset report coverage
-- Regression tests for:
-  - toys `9503` — no official SGR
-  - adult cosmetics `3304` — no `definite` without child/special markers
-  - child/special SGR cases with correct applicability
-  - idempotent import of the seed
+- Regression: toys `9503`, adult cosmetics `3304`, child/special SGR cases
 
 ## What is not the next priority
 
-- **Frontend verification (AGENT-04)** is not the current top workstream unless explicitly reprioritized in this file or a Decision Memo.
-- Do not jump to official SGR **enforcement** in broker / missing-check.
-- Do not move broad legacy SGR heuristics into broker as “official”.
-- Do not expand unrelated product areas while this workstream is active.
+- Official SGR **enforcement** in broker / missing-check (separate Decision Memo required)
+- Broad legacy SGR heuristics promoted to broker as “official”
+- Unrelated refactors or legacy root `backend/` expansion
+- Broad UI redesign outside MVP slices
 
 ## When to create a Decision Memo
 
 Create a Decision Memo instead of a Cursor Task if:
 
-- expanding SGR requires a legal/product interpretation not already encoded in the seed;
-- there are multiple plausible data-model or import approaches;
-- a category should be `definite` vs `possible` and evidence is ambiguous;
-- the roadmap should switch away from official SGR dataset work (e.g. to frontend or enforcement).
+- product wording or legal interpretation is ambiguous (e.g. advisory vs blocking UI);
+- expanding SGR requires legal/product interpretation not encoded in seed;
+- API contract changes break backward compatibility;
+- roadmap should switch away from CustomsClear MVP (e.g. to enforcement-only workstream).
 
 ## How agents use this file
 

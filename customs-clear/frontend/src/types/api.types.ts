@@ -613,6 +613,30 @@ export type AdvisoryRequirement = {
   note?: string | null;
 };
 
+export type NormativeDocument = {
+  permit_type: string;
+  tr_ts?: string | null;
+  source?: string;
+  source_label?: string | null;
+  applicability?: string;
+  reason?: string | null;
+  used_for_missing_check?: boolean;
+  rule_name?: string | null;
+};
+
+export type NormativeRequirementsBlockData = {
+  status?: string;
+  hs_code?: string;
+  description?: string;
+  required_documents: NormativeDocument[];
+  missing_documents: NormativeDocument[];
+  advisory_requirements: AdvisoryRequirement[];
+  sources_summary?: string[];
+  empty_message?: string | null;
+  tr_ts?: string[];
+  notes?: string[];
+};
+
 export interface AssistantNonTariffResult {
   status: 'OK' | 'WARNING' | 'ERROR' | 'UNKNOWN' | string;
   hs_code: string;
@@ -624,6 +648,7 @@ export interface AssistantNonTariffResult {
   required_permit_types?: string[];
   permits?: PermitVerificationResult[];
   missing_permit_types?: string[];
+  normative_block?: NormativeRequirementsBlockData;
   advisory_requirements?: AdvisoryRequirement[];
   notes?: string[];
   rule_sources?: AssistantRuleSource[];

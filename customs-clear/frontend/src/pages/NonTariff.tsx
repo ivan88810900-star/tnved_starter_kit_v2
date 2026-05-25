@@ -1,21 +1,9 @@
 import React, { useState } from 'react';
 import { api } from '../api/client';
 import { getUserFacingApiError } from '../api/error';
-import {
-  AdvisoryRequirementsBlock,
-  type AdvisoryRequirement,
-} from '../components/nonTariff/AdvisoryRequirementsBlock';
-
-/** Не показываем служебные метки версии нормативки конечному пользователю. */
-function normativeRevisionLabel(revision: string | undefined | null): string | null {
-  const r = (revision || '').trim();
-  if (!r) return null;
-  const low = r.toLowerCase();
-  if (low.includes('seed') || low.includes('fallback') || low.includes('example') || low.includes('import-xlsx')) {
-    return null;
-  }
-  return r;
-}
+import { NormativeRequirementsBlock } from '../components/nonTariff/NormativeRequirementsBlock';
+import { normativeBlockFromNonTariff } from '../components/nonTariff/normativeBlockHelpers';
+import type { AdvisoryRequirement, NormativeRequirementsBlockData } from '../types/api.types';
 
 type Permit = { type: string; number: string };
 
@@ -74,6 +62,7 @@ type ComplianceItem = {
     required_permit_types: string[];
     permits: PermitRegistryRow[];
     missing_permit_types: string[];
+    normative_block?: NormativeRequirementsBlockData;
     advisory_requirements?: AdvisoryRequirement[];
     notes: string[];
     rule_sources: {
@@ -428,19 +417,8 @@ export const NonTariff: React.FC = () => {
                   )}
                 </div>
 
-                {/* Non-tariff: required vs provided */}
-                {item.non_tariff.required_permit_types?.length > 0 && (
-                  <div className="text-slate-600">
-                    Требуются: {item.non_tariff.required_permit_types.join(', ')}
-                  </div>
-                )}
-                {item.non_tariff.missing_permit_types?.length > 0 && (
-                  <div className="text-red-700 font-medium">
-                    Не хватает: {item.non_tariff.missing_permit_types.join(', ')}
-                  </div>
-                )}
-
-                <AdvisoryRequirementsBlock items={item.non_tariff.advisory_requirements ?? []} />
+                {/* Normative requirements block */}
+                <NormativeRequirementsBlock block={normativeBlockFromNonTariff(item.non_tariff)} />
 
                 {/* Проверка реестра */}
                 {item.permits_verification && item.permits_verification.summary.checked > 0 && (
