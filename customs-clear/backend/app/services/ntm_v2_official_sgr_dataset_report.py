@@ -162,6 +162,12 @@ def _run_sanity_checks(payload: dict[str, Any]) -> list[dict[str, Any]]:
             "expect": {"has_any_match": False},
         },
         {
+            "id": "industrial_water_supply_7306_no_match",
+            "hs_code": "7306100000",
+            "description": "Труба стальная для промышленного водоснабжения",
+            "expect": {"has_any_match": False},
+        },
+        {
             "id": "food_conveyor_belt_5910_possible",
             "hs_code": "5910000000",
             "description": "Лента конвейерная для контакта с пищевыми продуктами",
@@ -171,6 +177,12 @@ def _run_sanity_checks(payload: dict[str, Any]) -> list[dict[str, Any]]:
             "id": "technical_fabric_5910_no_match",
             "hs_code": "5910000000",
             "description": "Ткань прорезиненная техническая",
+            "expect": {"has_any_match": False},
+        },
+        {
+            "id": "industrial_conveyor_belt_5910_no_match",
+            "hs_code": "5910000000",
+            "description": "Лента конвейерная промышленная для угольного транспорта",
             "expect": {"has_any_match": False},
         },
         {
