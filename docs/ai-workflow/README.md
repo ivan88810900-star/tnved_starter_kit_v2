@@ -37,3 +37,9 @@
 Корневой контракт для всех агентов: **[AGENTS.md](../../AGENTS.md)**.
 
 GitHub: issue templates в `.github/ISSUE_TEMPLATE/`, PR template в `.github/PULL_REQUEST_TEMPLATE.md`.
+
+## Заметки по автоматизации
+
+| Дата | Событие |
+|------|---------|
+| 2026-05-25 | **E2E smoke test** автоматизации Cursor GitHub Action (issue [#6](https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/6)): label `cursor-task` → Cursor CLI в Actions → docs-only PR в `main`. Изменения только в `docs/ai-workflow/`. |
