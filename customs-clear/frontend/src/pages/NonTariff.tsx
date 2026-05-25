@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { api } from '../api/client';
 import { getUserFacingApiError } from '../api/error';
+import { CC_NORMATIVE_PREFILL_KEY } from '../constants/homeNav';
 import { NormativeRequirementsBlock } from '../components/nonTariff/NormativeRequirementsBlock';
 import { normativeBlockFromNonTariff } from '../components/nonTariff/normativeBlockHelpers';
 import type { AdvisoryRequirement, NormativeRequirementsBlockData } from '../types/api.types';
@@ -138,6 +139,19 @@ export const NonTariff: React.FC = () => {
   const [saveComplianceHistory, setSaveComplianceHistory] = useState(false);
   const [complianceDocId, setComplianceDocId] = useState(() => localStorage.getItem('cc_last_ingested_id') || '');
   const [complianceUserRef, setComplianceUserRef] = useState(() => localStorage.getItem('cc_client_id') || '');
+
+  React.useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem(CC_NORMATIVE_PREFILL_KEY);
+      if (!raw) return;
+      sessionStorage.removeItem(CC_NORMATIVE_PREFILL_KEY);
+      const parsed = JSON.parse(raw) as { hs_code?: string; description?: string };
+      if (parsed.hs_code?.trim()) setHsCode(parsed.hs_code.trim());
+      if (parsed.description?.trim()) setDescription(parsed.description.trim());
+    } catch {
+      /* ignore */
+    }
+  }, []);
 
   const addPermit = () => setPermits((p) => [...p, { type: 'ДС', number: '' }]);
   const removePermit = (i: number) => setPermits((p) => p.filter((_, j) => j !== i));

@@ -105,6 +105,33 @@ export interface TnvedContext {
   source_revision: string;
 }
 
+export interface TnvedClassificationDecisionItem {
+  id: number;
+  kind: 'classification';
+  hs_code: string;
+  decision_number: string;
+  issue_date: string;
+  product_name: string;
+  target_entity: string;
+  description: string;
+  source: string;
+}
+
+export interface TnvedPreliminaryDecisionRow {
+  id: number;
+  kind: 'preliminary';
+  hs_code: string;
+  description: string;
+  source: string;
+}
+
+export interface TnvedPreliminaryDecisionsBlock {
+  classification_decisions: TnvedClassificationDecisionItem[];
+  preliminary_decisions: TnvedPreliminaryDecisionRow[];
+  total_count: number;
+  empty_message: string;
+}
+
 // ---------------------------------------------------------------------------
 // Finance / search / sources
 // ---------------------------------------------------------------------------

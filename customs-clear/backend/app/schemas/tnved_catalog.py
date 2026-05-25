@@ -66,6 +66,39 @@ class SectionOut(BaseModel):
     notes: str = ""
 
 
+class ClassificationDecisionOut(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+
+    id: int
+    kind: str = "classification"
+    hs_code: str = ""
+    decision_number: str = ""
+    issue_date: str = ""
+    product_name: str = ""
+    target_entity: str = ""
+    description: str = ""
+    source: str = "fts"
+
+
+class PreliminaryDecisionOut(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+
+    id: int
+    kind: str = "preliminary"
+    hs_code: str = ""
+    description: str = ""
+    source: str = "ifcg"
+
+
+class PreliminaryDecisionsBlockOut(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+
+    classification_decisions: list[ClassificationDecisionOut] = Field(default_factory=list)
+    preliminary_decisions: list[PreliminaryDecisionOut] = Field(default_factory=list)
+    total_count: int = 0
+    empty_message: str = ""
+
+
 class TnvedCommodityDetailsResponse(BaseModel):
     model_config = ConfigDict(extra="ignore")
 
@@ -81,5 +114,6 @@ class TnvedCommodityDetailsResponse(BaseModel):
     notes_combined: str = ""
     non_tariff_measures: list[NonTariffMeasureOut] = Field(default_factory=list)
     intellectual_properties: list[IntellectualPropertyOut] = Field(default_factory=list)
+    preliminary_decisions: PreliminaryDecisionsBlockOut = Field(default_factory=PreliminaryDecisionsBlockOut)
     chapter: ChapterOut
     section: SectionOut

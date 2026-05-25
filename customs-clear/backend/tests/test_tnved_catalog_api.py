@@ -10,6 +10,7 @@ try:
     from app.db import SessionLocal
     from app.api.tnved_catalog import _format_duty
     from app.main import app
+    from app.models.core import ClassificationDecision, PreliminaryDecision
     from app.models.tnved import Chapter, Commodity, Section
     from app.services.normative_store import init_db
 
@@ -57,6 +58,23 @@ class TnvedCatalogApiTests(unittest.TestCase):
                     import_duty="5 %",
                 )
             )
+            db.add(
+                ClassificationDecision(
+                    hs_code="9901210000",
+                    product_name="Тестовый товар для ПКР",
+                    description="Описание решения ФТС",
+                    target_entity="Тестовый товар",
+                    decision_number="TST-PKR-990121",
+                    issue_date="2024-01-15",
+                )
+            )
+            db.add(
+                PreliminaryDecision(
+                    hs_code="9901210000",
+                    description="Предварительное решение IFCG для теста",
+                    source="ifcg",
+                )
+            )
             db.commit()
             cls._section_id = sec.id
             cls._chapter_id = ch.id
@@ -70,6 +88,12 @@ class TnvedCatalogApiTests(unittest.TestCase):
             ch_ids = [r[0] for r in db.query(Chapter.id).filter(Chapter.section_id == sid).all()]
             for cid in ch_ids:
                 db.query(Commodity).filter(Commodity.chapter_id == cid).delete()
+            db.query(ClassificationDecision).filter(
+                ClassificationDecision.decision_number == "TST-PKR-990121"
+            ).delete()
+            db.query(PreliminaryDecision).filter(
+                PreliminaryDecision.description == "Предварительное решение IFCG для теста"
+            ).delete()
             db.query(Chapter).filter(Chapter.section_id == sid).delete()
             db.query(Section).filter(Section.id == sid).delete()
             db.commit()
@@ -106,6 +130,28 @@ class TnvedCatalogApiTests(unittest.TestCase):
         self.assertIn("notes_combined", d)
         self.assertIn("Раздел", d["notes_combined"])
         self.assertIn("Группа", d["notes_combined"])
+        self.assertIn("preliminary_decisions", d)
+        block = d["preliminary_decisions"]
+        self.assertGreaterEqual(block.get("total_count", 0), 1)
+        cls_items = block.get("classification_decisions") or []
+        self.assertTrue(any(x.get("decision_number") == "TST-PKR-990121" for x in cls_items))
+
+    def test_preliminary_decisions_endpoint(self):
+        r = self.client.get("/api/v1/tnved/9901210000/preliminary-decisions")
+        self.assertEqual(r.status_code, 200)
+        body = r.json()
+        self.assertEqual(body.get("status"), "OK")
+        block = body.get("preliminary_decisions") or {}
+        self.assertGreaterEqual(block.get("total_count", 0), 2)
+        prelim = block.get("preliminary_decisions") or []
+        self.assertTrue(any("IFCG" in (x.get("description") or "") for x in prelim))
+
+    def test_preliminary_decisions_empty_message(self):
+        r = self.client.get("/api/v1/tnved/9999999999/preliminary-decisions")
+        self.assertEqual(r.status_code, 200)
+        block = r.json().get("preliminary_decisions") or {}
+        self.assertEqual(block.get("total_count"), 0)
+        self.assertTrue(block.get("empty_message"))
 
     def test_detail_4_digit_row(self):
         r = self.client.get("/api/v1/tnved/9901")
