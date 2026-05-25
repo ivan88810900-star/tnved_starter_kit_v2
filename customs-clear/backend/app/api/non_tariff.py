@@ -38,6 +38,48 @@ class NonTariffRequest(BaseModel):
     items: List[NonTariffItemIn]
 
 
+class NormativeBlockItemIn(BaseModel):
+    hs_code: str
+    description: str = ""
+    country: str | None = None
+    permits: List[PermitIn] = []
+
+
+class NormativeBlockRequest(BaseModel):
+    items: List[NormativeBlockItemIn]
+
+
+@router.post("/normative-block")
+async def non_tariff_normative_block(
+    req: NormativeBlockRequest,
+    _user: dict = Depends(require_authenticated_user),
+) -> JSONResponse:
+    """Продуктовый блок нормативных требований по позициям (без расчёта платежей)."""
+    if not req.items:
+        raise HTTPException(status_code=400, detail="Список позиций пуст")
+    results: List[Dict[str, Any]] = []
+    for item in req.items:
+        nt = await check_position_non_tariff(
+            item.hs_code,
+            item.description,
+            item.country,
+            [{"type": p.type, "number": p.number} for p in item.permits],
+        )
+        results.append(
+            {
+                "hs_code": item.hs_code,
+                "description": item.description,
+                "country": item.country,
+                "non_tariff_status": nt.get("status"),
+                "normative_block": nt.get("normative_block") or {},
+            }
+        )
+    errors = any(r["non_tariff_status"] == "ERROR" for r in results)
+    warnings = any(r["non_tariff_status"] == "WARNING" for r in results)
+    overall = "ERROR" if errors else ("WARNING" if warnings else "OK")
+    return JSONResponse({"status": overall, "items": results})
+
+
 @router.post("/check")
 async def non_tariff_check(
     req: NonTariffRequest,
