@@ -3,8 +3,9 @@ import { api } from '../api/client';
 import { getUserFacingApiError } from '../api/error';
 import { CC_NORMATIVE_PREFILL_KEY } from '../constants/homeNav';
 import { NormativeRequirementsBlock } from '../components/nonTariff/NormativeRequirementsBlock';
+import { SanctionsRiskBlock } from '../components/nonTariff/SanctionsRiskBlock';
 import { normativeBlockFromNonTariff } from '../components/nonTariff/normativeBlockHelpers';
-import type { AdvisoryRequirement, NormativeRequirementsBlockData } from '../types/api.types';
+import type { AdvisoryRequirement, NormativeRequirementsBlockData, SanctionsRiskBlockData } from '../types/api.types';
 
 type Permit = { type: string; number: string };
 
@@ -64,6 +65,7 @@ type ComplianceItem = {
     permits: PermitRegistryRow[];
     missing_permit_types: string[];
     normative_block?: NormativeRequirementsBlockData;
+    risk_block?: SanctionsRiskBlockData;
     advisory_requirements?: AdvisoryRequirement[];
     notes: string[];
     rule_sources: {
@@ -433,6 +435,9 @@ export const NonTariff: React.FC = () => {
 
                 {/* Normative requirements block */}
                 <NormativeRequirementsBlock block={normativeBlockFromNonTariff(item.non_tariff)} />
+
+                {/* Sanctions / risk block */}
+                <SanctionsRiskBlock block={item.non_tariff.risk_block} />
 
                 {/* Проверка реестра */}
                 {item.permits_verification && item.permits_verification.summary.checked > 0 && (

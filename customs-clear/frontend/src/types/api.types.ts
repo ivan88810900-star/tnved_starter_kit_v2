@@ -664,6 +664,43 @@ export type NormativeRequirementsBlockData = {
   notes?: string[];
 };
 
+export type SanctionsRiskSignal = {
+  category: string;
+  severity: 'clear' | 'low' | 'medium' | 'high' | 'unknown' | 'manual_review_required' | string;
+  source: string;
+  source_label?: string;
+  authority_level?: string | null;
+  matched_entity?: string | null;
+  matched_hs_prefix?: string | null;
+  explanation: string;
+  legal_ref?: string | null;
+};
+
+export type SanctionsRiskSourceCoverage = {
+  source_id: string;
+  title: string;
+  coverage_status: string;
+  record_count?: number | null;
+  manual_review_required?: boolean;
+  authority_level?: string | null;
+};
+
+export type SanctionsRiskBlockData = {
+  status?: string;
+  overall_severity?: SanctionsRiskSignal['severity'];
+  hs_code?: string;
+  description?: string;
+  country?: string | null;
+  destination_country?: string | null;
+  counterparty_name?: string | null;
+  signals?: SanctionsRiskSignal[];
+  warnings?: string[];
+  source_coverage?: SanctionsRiskSourceCoverage[];
+  coverage_complete?: boolean;
+  empty_message?: string | null;
+  disclaimer?: string;
+};
+
 export interface AssistantNonTariffResult {
   status: 'OK' | 'WARNING' | 'ERROR' | 'UNKNOWN' | string;
   hs_code: string;
@@ -676,6 +713,7 @@ export interface AssistantNonTariffResult {
   permits?: PermitVerificationResult[];
   missing_permit_types?: string[];
   normative_block?: NormativeRequirementsBlockData;
+  risk_block?: SanctionsRiskBlockData;
   advisory_requirements?: AdvisoryRequirement[];
   notes?: string[];
   rule_sources?: AssistantRuleSource[];

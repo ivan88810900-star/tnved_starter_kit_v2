@@ -15,10 +15,11 @@ import { getUserFacingApiError } from '../../api/error';
 import { useAssistantSurfaceVisible } from '../../context/ClientCapabilitiesContext';
 import { CC_NORMATIVE_PREFILL_KEY } from '../../constants/homeNav';
 import { NormativeRequirementsBlock } from '../nonTariff/NormativeRequirementsBlock';
+import { SanctionsRiskBlock } from '../nonTariff/SanctionsRiskBlock';
 import { normativeBlockFromNonTariff } from '../nonTariff/normativeBlockHelpers';
 import { PreliminaryDecisionsBlock } from './PreliminaryDecisionsBlock';
 import { SmartPaymentsBlock } from '../payments/SmartPaymentsBlock';
-import type { NormativeRequirementsBlockData } from '../../types/api.types';
+import type { NormativeRequirementsBlockData, SanctionsRiskBlockData } from '../../types/api.types';
 import { ArrowUpRight, FileCheck2, FolderKanban, Scale, ShieldCheck } from 'lucide-react';
 
 const REFERENCE_NT_SECTION_TITLES = new Set([
@@ -48,6 +49,9 @@ export const ProductDetails: React.FC<Props> = ({ selectedCode }) => {
   const [normativeBlock, setNormativeBlock] = React.useState<NormativeRequirementsBlockData | null>(null);
   const [normativeLoading, setNormativeLoading] = React.useState(false);
   const [normativeError, setNormativeError] = React.useState<string | null>(null);
+  const [riskBlock, setRiskBlock] = React.useState<SanctionsRiskBlockData | null>(null);
+  const [riskLoading, setRiskLoading] = React.useState(false);
+  const [riskError, setRiskError] = React.useState<string | null>(null);
   const assistantVisible = useAssistantSurfaceVisible();
 
   const chatStorageKey = React.useMemo(
@@ -141,6 +145,9 @@ export const ProductDetails: React.FC<Props> = ({ selectedCode }) => {
     setNormativeBlock(null);
     setNormativeError(null);
     setNormativeLoading(false);
+    setRiskBlock(null);
+    setRiskError(null);
+    setRiskLoading(false);
   }, [selectedCode]);
 
   React.useEffect(() => {
@@ -177,6 +184,46 @@ export const ProductDetails: React.FC<Props> = ({ selectedCode }) => {
       })
       .finally(() => {
         if (!cancelled) setNormativeLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [activeTab, detail?.code, detail?.description, detail?.name]);
+
+  React.useEffect(() => {
+    if (activeTab !== 'normative' || !detail?.code) return;
+    let cancelled = false;
+    setRiskLoading(true);
+    setRiskError(null);
+    api
+      .post<{ status: string; items: Array<{ risk_block?: SanctionsRiskBlockData }> }>(
+        '/non_tariff/risk-block',
+        {
+          items: [
+            {
+              hs_code: detail.code,
+              description: (detail.name ?? detail.description ?? '').trim(),
+              country: 'CN',
+            },
+          ],
+        },
+      )
+      .then(({ data }) => {
+        if (cancelled) return;
+        setRiskBlock(data.items?.[0]?.risk_block ?? null);
+      })
+      .catch((e: unknown) => {
+        if (cancelled) return;
+        setRiskBlock(null);
+        const status = axios.isAxiosError(e) ? e.response?.status : undefined;
+        if (status === 401) {
+          setRiskError('Войдите в систему, чтобы загрузить блок санкций/рисков.');
+        } else {
+          setRiskError(getUserFacingApiError(e, 'Не удалось загрузить санкции и риски.'));
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setRiskLoading(false);
       });
     return () => {
       cancelled = true;
@@ -599,6 +646,15 @@ export const ProductDetails: React.FC<Props> = ({ selectedCode }) => {
               Нормативный блок пуст для этого кода. Запустите полную проверку на странице «Нетарифка».
             </p>
           ) : null}
+          {riskLoading ? (
+            <p className="text-sm text-gray-500">Загрузка блока санкций и рисков…</p>
+          ) : riskError ? (
+            <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+              <p>{riskError}</p>
+            </div>
+          ) : (
+            <SanctionsRiskBlock block={riskBlock} title="Санкции и риски" />
+          )}
         </section>
       ) : null}
 

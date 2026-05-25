@@ -34,6 +34,8 @@ class TestRegulatorySourceRegistry(unittest.TestCase):
             "pravo_gov_publication",
             "eec_sgr_decision_299",
             "fsa_registry_evidence",
+            "ofac_sdn_list",
+            "eu_sanctions_list",
         }
         self.assertTrue(required.issubset(ids))
 
