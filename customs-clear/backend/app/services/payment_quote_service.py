@@ -231,7 +231,7 @@ def _build_warnings(line_items: list[PaymentQuoteLineItem], raw: dict[str, Any])
                 PaymentQuoteWarning(
                     code=f"{item.code}_{item.status}",
                     message=item.reason or f"Строка «{item.label}»: данные неполные.",
-                    severity="warning" if item.status == "unknown" else "info",
+                    severity="warning",
                 )
             )
 
@@ -421,7 +421,7 @@ def build_payment_quote(payload: dict[str, Any]) -> PaymentQuoteResponse:
     warnings = _build_warnings(line_items, raw)
     assumptions = _build_assumptions(payload, raw)
 
-    uncertain_statuses = {"manual_review_required", "unknown", "embargo"}
+    uncertain_statuses = {"manual_review_required", "unknown", "not_configured", "embargo"}
     blocking_codes = {"excise", "antidumping", "special_duty"}
     has_uncertain = any(
         item.status in uncertain_statuses and item.code in blocking_codes for item in line_items
