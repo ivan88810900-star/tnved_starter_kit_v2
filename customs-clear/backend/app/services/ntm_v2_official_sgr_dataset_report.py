@@ -12,6 +12,9 @@ from .ntm_v2_official_sgr_import import (
     load_official_sgr_payload,
 )
 
+# Префиксы целевой curated-партии (issue #3 / Section II batch).
+SECTION_II_BATCH_ISSUE3_PREFIXES: tuple[str, ...] = ("7306", "5910", "3926")
+
 
 def _hs_prefixes_from_rules(rules: list[dict[str, Any]]) -> list[str]:
     prefixes: set[str] = set()
@@ -20,6 +23,38 @@ def _hs_prefixes_from_rules(rules: list[dict[str, Any]]) -> list[str]:
         if hs:
             prefixes.add(hs)
     return sorted(prefixes)
+
+
+def _rule_ids_for_hs_prefix(rules: list[dict[str, Any]], prefix: str) -> list[str]:
+    out: list[str] = []
+    for row in rules:
+        hs = str(row.get("hs_scope") or "").strip()
+        if hs.startswith(prefix):
+            rid = str(row.get("rule_id") or "").strip()
+            if rid:
+                out.append(rid)
+    return sorted(out)
+
+
+def _coverage_issue3_batch(rules: list[dict[str, Any]]) -> dict[str, Any]:
+    all_prefixes = _hs_prefixes_from_rules(rules)
+    covered: list[str] = []
+    missing: list[str] = []
+    rule_ids_by_prefix: dict[str, list[str]] = {}
+    for prefix in SECTION_II_BATCH_ISSUE3_PREFIXES:
+        ids = _rule_ids_for_hs_prefix(rules, prefix)
+        rule_ids_by_prefix[prefix] = ids
+        if any(p == prefix or p.startswith(prefix) for p in all_prefixes):
+            covered.append(prefix)
+        else:
+            missing.append(prefix)
+    return {
+        "target_prefixes": list(SECTION_II_BATCH_ISSUE3_PREFIXES),
+        "covered_prefixes": covered,
+        "missing_prefixes": missing,
+        "rule_ids_by_prefix": rule_ids_by_prefix,
+        "complete": not missing,
+    }
 
 
 def _run_sanity_checks(payload: dict[str, Any]) -> list[dict[str, Any]]:
@@ -114,6 +149,42 @@ def _run_sanity_checks(payload: dict[str, Any]) -> list[dict[str, Any]]:
             "description": "Средство интимной гигиены",
             "expect": {"needs_clarification": True, "has_definite_sgr": False},
         },
+        {
+            "id": "drinking_water_pipe_7306_possible",
+            "hs_code": "7306100000",
+            "description": "Труба стальная для хозпитьевого водоснабжения",
+            "expect": {"has_possible": True, "rule_id": "eec299-7306-drinking-water-pipes"},
+        },
+        {
+            "id": "industrial_pipe_7306_no_match",
+            "hs_code": "7306100000",
+            "description": "Труба стальная для нефтепровода",
+            "expect": {"has_any_match": False},
+        },
+        {
+            "id": "food_conveyor_belt_5910_possible",
+            "hs_code": "5910000000",
+            "description": "Лента конвейерная для контакта с пищевыми продуктами",
+            "expect": {"has_possible": True, "rule_id": "eec299-5910-food-conveyor-belts"},
+        },
+        {
+            "id": "technical_fabric_5910_no_match",
+            "hs_code": "5910000000",
+            "description": "Ткань прорезиненная техническая",
+            "expect": {"has_any_match": False},
+        },
+        {
+            "id": "plastic_food_contact_3926_clarify",
+            "hs_code": "3926909709",
+            "description": "Изделие пластмассовое для контакта с пищевыми продуктами",
+            "expect": {"needs_clarification": True, "rule_id": "eec299-3926-section-ii-related"},
+        },
+        {
+            "id": "plastic_technical_3926_no_match",
+            "hs_code": "3926909709",
+            "description": "Пластиковая заглушка техническая",
+            "expect": {"has_any_match": False},
+        },
     ]
     out: list[dict[str, Any]] = []
     for case in cases:
@@ -141,6 +212,9 @@ def _run_sanity_checks(payload: dict[str, Any]) -> list[dict[str, Any]]:
         if "has_possible" in exp:
             poss = any(m.get("applicability") == "possible" for m in matched)
             checks["has_possible"] = poss == exp["has_possible"]
+        if "rule_id" in exp:
+            rid = exp["rule_id"]
+            checks["rule_id"] = any(str(m.get("rule_id")) == rid for m in matched)
         row["checks"] = checks
         row["passed"] = all(checks.values()) if checks else True
         out.append(row)
@@ -162,6 +236,7 @@ def build_official_sgr_dataset_report(
         "categories": validation["summary"].get("by_category") or {},
         "warnings_by_code": validation["summary"].get("warnings_by_code") or {},
         "validation_warning_count": validation.get("warning_count", 0),
+        "section_ii_batch_issue3": _coverage_issue3_batch(rules),
     }
     report: dict[str, Any] = {
         "validation": validation,
