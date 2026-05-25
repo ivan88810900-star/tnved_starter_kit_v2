@@ -43,3 +43,4 @@ GitHub: issue templates в `.github/ISSUE_TEMPLATE/`, PR template в `.github/PU
 | Дата | Событие |
 |------|---------|
 | 2026-05-25 | **E2E smoke test** автоматизации Cursor GitHub Action (issue [#6](https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/6)): label `cursor-task` → Cursor CLI в Actions → docs-only PR в `main`. Изменения только в `docs/ai-workflow/`. |
+| 2026-05-25 | **E2E smoke test** автоматического создания PR (issue [#12](https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/12)): после push ветки workflow открывает PR с ссылкой на issue; изменения только в `docs/ai-workflow/`. |
