@@ -21,6 +21,7 @@ from ..db import SessionLocal
 from ..models.tnved import Chapter, Commodity, IntellectualProperty, NonTariffMeasure, Section, SpecialDuty, VatPreference
 from ..schemas.tnved_catalog import TnvedCommodityDetailsResponse
 from ..services.normative_store import find_rate_for_hs
+from ..services.tnved_code_card import find_preliminary_decisions_for_hs
 from ..services.preview_cache_revision import (
     bump_preview_cache_revision,
     read_preview_cache_revision_marker,
@@ -1105,6 +1106,16 @@ def reference_by_code(
 # Карточка позиции по коду
 # ---------------------------------------------------------------------------
 
+@router.get("/{code}/preliminary-decisions")
+def preliminary_decisions_by_code(code: str, db: Session = Depends(get_db)) -> JSONResponse:
+    """Предварительные решения по коду ТН ВЭД (отдельный лёгкий эндпоинт)."""
+    norm = _digits(code)
+    if len(norm) not in (4, 10):
+        raise HTTPException(status_code=400, detail="Ожидается код ТН ВЭД из 4 или 10 цифр")
+    block = find_preliminary_decisions_for_hs(db, norm.zfill(10) if len(norm) == 10 else norm.zfill(4))
+    return JSONResponse({"status": "OK", "code": _pad_code(code), "preliminary_decisions": block})
+
+
 @router.get("/{code}", response_model=TnvedCommodityDetailsResponse)
 def get_commodity_by_code(code: str, db: Session = Depends(get_db)) -> dict[str, Any]:
     """
@@ -1190,6 +1201,7 @@ def get_commodity_by_code(code: str, db: Session = Depends(get_db)) -> dict[str,
         }
         for r in trois_rows
     ]
+    preliminary_decisions = find_preliminary_decisions_for_hs(db, out_code)
 
     return {
         "status": "OK",
@@ -1204,6 +1216,7 @@ def get_commodity_by_code(code: str, db: Session = Depends(get_db)) -> dict[str,
         "notes_combined": notes_text,
         "non_tariff_measures": non_tariff_measures,
         "intellectual_properties": intellectual_properties,
+        "preliminary_decisions": preliminary_decisions,
         "chapter": {"id": ch.id, "code": ch.code, "title": ch.title or "", "notes": ch.notes or ""},
         "section": {"id": sec.id, "roman_number": sec.roman_number, "title": sec.title or "", "notes": sec.notes or ""},
     }

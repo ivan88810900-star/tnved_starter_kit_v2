@@ -41,7 +41,7 @@ export const Dictionary: React.FC = () => {
         <div className="shrink-0 border-b border-slate-100 bg-slate-50 px-6 py-4">
           <p className="text-[11px] font-semibold uppercase tracking-widest text-gray-500">Справочник ТН ВЭД</p>
           <p className="mt-0.5 text-xs text-gray-500">
-            Выберите 10-значный код для открытия полной справки по платежам, нетарифным мерам и примечаниям.
+            Выберите 10-значный код для карточки товара: платежи, нетарифные меры, предварительные решения и ссылка на нормативный блок.
           </p>
         </div>
         <div className="min-h-0 h-[calc(100vh-13.5rem)] overflow-hidden px-5 py-4">

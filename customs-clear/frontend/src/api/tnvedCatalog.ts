@@ -99,6 +99,34 @@ export type TnvedCommodityDetail = {
   }>;
   chapter: { id: number; code: string; title: string; notes: string };
   section: { id: number; roman_number: string; title: string; notes: string };
+  preliminary_decisions?: TnvedPreliminaryDecisionsBlock;
+};
+
+export type TnvedClassificationDecision = {
+  id: number;
+  kind: 'classification';
+  hs_code: string;
+  decision_number: string;
+  issue_date: string;
+  product_name: string;
+  target_entity: string;
+  description: string;
+  source: string;
+};
+
+export type TnvedPreliminaryDecisionItem = {
+  id: number;
+  kind: 'preliminary';
+  hs_code: string;
+  description: string;
+  source: string;
+};
+
+export type TnvedPreliminaryDecisionsBlock = {
+  classification_decisions: TnvedClassificationDecision[];
+  preliminary_decisions: TnvedPreliminaryDecisionItem[];
+  total_count: number;
+  empty_message: string;
 };
 
 export type TnvedImportReference = {
@@ -184,6 +212,19 @@ export async function fetchTnvedImportReference(code: string, country = ''): Pro
   const qs = country ? `?country=${encodeURIComponent(country.toUpperCase())}` : '';
   const { data } = await api.get<TnvedImportReference>(`${PREFIX}/reference/${encodeURIComponent(norm)}${qs}`);
   return data;
+}
+
+export async function fetchPreliminaryDecisions(code: string): Promise<TnvedPreliminaryDecisionsBlock> {
+  const norm = code.replace(/\D/g, '');
+  const { data } = await api.get<{ status: string; preliminary_decisions: TnvedPreliminaryDecisionsBlock }>(
+    `${PREFIX}/${encodeURIComponent(norm)}/preliminary-decisions`,
+  );
+  return data.preliminary_decisions ?? {
+    classification_decisions: [],
+    preliminary_decisions: [],
+    total_count: 0,
+    empty_message: '',
+  };
 }
 
 // ---------------------------------------------------------------------------

@@ -1,5 +1,6 @@
 import React from 'react';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 import { api } from '../../api/client';
 import type { TnvedCommodityDetail, TnvedImportReference } from '../../api/tnvedCatalog';
 import { fetchCommodityByCode, fetchTnvedImportReference, formatCode, isFullTnvedCode } from '../../api/tnvedCatalog';
@@ -12,7 +13,12 @@ import { formatTnvedCommodityName } from '../../utils/tnvedDisplayText';
 import { formatLinks, splitReadableParagraphs } from '../../utils/formatLinks';
 import { getUserFacingApiError } from '../../api/error';
 import { useAssistantSurfaceVisible } from '../../context/ClientCapabilitiesContext';
-import { FileCheck2, FolderKanban, ShieldCheck } from 'lucide-react';
+import { CC_NORMATIVE_PREFILL_KEY } from '../../constants/homeNav';
+import { NormativeRequirementsBlock } from '../nonTariff/NormativeRequirementsBlock';
+import { normativeBlockFromNonTariff } from '../nonTariff/normativeBlockHelpers';
+import { PreliminaryDecisionsBlock } from './PreliminaryDecisionsBlock';
+import type { NormativeRequirementsBlockData } from '../../types/api.types';
+import { ArrowUpRight, FileCheck2, FolderKanban, Scale, ShieldCheck } from 'lucide-react';
 
 const REFERENCE_NT_SECTION_TITLES = new Set([
   'Запреты и лицензии',
@@ -26,6 +32,8 @@ type Props = {
 
 export const ProductDetails: React.FC<Props> = ({ selectedCode }) => {
   type ChatMsg = { role: 'user' | 'assistant'; text: string };
+  type DetailTab = 'payments' | 'nonTariff' | 'decisions' | 'normative' | 'notes';
+  const navigate = useNavigate();
   const [detail, setDetail] = React.useState<TnvedCommodityDetail | null>(null);
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
@@ -35,7 +43,10 @@ export const ProductDetails: React.FC<Props> = ({ selectedCode }) => {
   const [chatError, setChatError] = React.useState<string | null>(null);
   const [reference, setReference] = React.useState<TnvedImportReference | null>(null);
   const [referenceLoading, setReferenceLoading] = React.useState(false);
-  const [activeTab, setActiveTab] = React.useState<'payments' | 'nonTariff' | 'notes'>('payments');
+  const [activeTab, setActiveTab] = React.useState<DetailTab>('payments');
+  const [normativeBlock, setNormativeBlock] = React.useState<NormativeRequirementsBlockData | null>(null);
+  const [normativeLoading, setNormativeLoading] = React.useState(false);
+  const [normativeError, setNormativeError] = React.useState<string | null>(null);
   const assistantVisible = useAssistantSurfaceVisible();
 
   const chatStorageKey = React.useMemo(
@@ -126,7 +137,50 @@ export const ProductDetails: React.FC<Props> = ({ selectedCode }) => {
 
   React.useEffect(() => {
     setActiveTab('payments');
+    setNormativeBlock(null);
+    setNormativeError(null);
+    setNormativeLoading(false);
   }, [selectedCode]);
+
+  React.useEffect(() => {
+    if (activeTab !== 'normative' || !detail?.code) return;
+    let cancelled = false;
+    setNormativeLoading(true);
+    setNormativeError(null);
+    api
+      .post<{ status: string; items: Array<{ normative_block?: NormativeRequirementsBlockData }> }>(
+        '/non_tariff/normative-block',
+        {
+          items: [
+            {
+              hs_code: detail.code,
+              description: (detail.name ?? detail.description ?? '').trim(),
+            },
+          ],
+        },
+      )
+      .then(({ data }) => {
+        if (cancelled) return;
+        const item = data.items?.[0];
+        setNormativeBlock(normativeBlockFromNonTariff(item) ?? item?.normative_block ?? null);
+      })
+      .catch((e: unknown) => {
+        if (cancelled) return;
+        setNormativeBlock(null);
+        const status = axios.isAxiosError(e) ? e.response?.status : undefined;
+        if (status === 401) {
+          setNormativeError('Войдите в систему, чтобы загрузить нормативный блок, или откройте полную проверку на странице «Нетарифка».');
+        } else {
+          setNormativeError(getUserFacingApiError(e, 'Не удалось загрузить нормативные требования.'));
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setNormativeLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [activeTab, detail?.code, detail?.description, detail?.name]);
 
   // Пусто — приглашение
   if (!selectedCode) {
@@ -247,6 +301,28 @@ export const ProductDetails: React.FC<Props> = ({ selectedCode }) => {
   };
 
   const paymentSections = (reference?.sections ?? []).filter((s) => /пошлин|ндс|акциз/i.test(s.title));
+  const preliminaryBlock = detail.preliminary_decisions ?? null;
+  const sectionLabel = detail.section
+    ? `Раздел ${detail.section.roman_number}${detail.section.title ? ` — ${detail.section.title}` : ''}`
+    : null;
+  const chapterLabel = detail.chapter
+    ? `Группа ${detail.chapter.code}${detail.chapter.title ? ` — ${detail.chapter.title}` : ''}`
+    : null;
+
+  const openNormativeCheck = () => {
+    try {
+      sessionStorage.setItem(
+        CC_NORMATIVE_PREFILL_KEY,
+        JSON.stringify({
+          hs_code: detail.code,
+          description: (detail.name ?? detail.description ?? '').trim(),
+        }),
+      );
+    } catch {
+      /* ignore */
+    }
+    navigate('/non-tariff');
+  };
 
   return (
     <div className="space-y-6 bg-white text-gray-900">
@@ -262,6 +338,12 @@ export const ProductDetails: React.FC<Props> = ({ selectedCode }) => {
           </h2>
         ) : (
           <p className="mt-4 text-sm italic text-gray-400">Описание отсутствует</p>
+        )}
+        {(sectionLabel || chapterLabel) && (
+          <div className="mt-3 space-y-1 rounded-lg border border-slate-100 bg-slate-50 px-3 py-2 text-sm text-slate-700">
+            {sectionLabel ? <p>{sectionLabel}</p> : null}
+            {chapterLabel ? <p>{chapterLabel}</p> : null}
+          </div>
         )}
         {unit && (
           <p className="mt-2 text-sm text-gray-500">
@@ -304,6 +386,36 @@ export const ProductDetails: React.FC<Props> = ({ selectedCode }) => {
           onClick={() => setActiveTab('nonTariff')}
         >
           Нетарифное регулирование
+        </button>
+        <button
+          type="button"
+          className={`rounded-lg border px-3 py-2 text-sm font-medium transition ${
+            activeTab === 'decisions'
+              ? 'border-blue-200 bg-blue-50 text-blue-800'
+              : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
+          }`}
+          onClick={() => setActiveTab('decisions')}
+        >
+          <span className="inline-flex items-center gap-1.5">
+            <Scale className="h-4 w-4" aria-hidden />
+            Предварительные решения
+            {(preliminaryBlock?.total_count ?? 0) > 0 ? (
+              <span className="rounded-full bg-indigo-100 px-1.5 py-0.5 text-[10px] font-semibold text-indigo-800">
+                {preliminaryBlock?.total_count}
+              </span>
+            ) : null}
+          </span>
+        </button>
+        <button
+          type="button"
+          className={`rounded-lg border px-3 py-2 text-sm font-medium transition ${
+            activeTab === 'normative'
+              ? 'border-blue-200 bg-blue-50 text-blue-800'
+              : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
+          }`}
+          onClick={() => setActiveTab('normative')}
+        >
+          Нормативные требования
         </button>
         <button
           type="button"
@@ -433,6 +545,55 @@ export const ProductDetails: React.FC<Props> = ({ selectedCode }) => {
             )}
           </section>
         </div>
+      ) : null}
+
+      {activeTab === 'decisions' ? (
+        <section>
+          <h3 className="mb-3 text-xs font-bold uppercase tracking-wide text-gray-600 border-b border-gray-200 pb-2">
+            Предварительные и классификационные решения
+          </h3>
+          <PreliminaryDecisionsBlock block={preliminaryBlock} loading={loading} />
+        </section>
+      ) : null}
+
+      {activeTab === 'normative' ? (
+        <section className="space-y-4">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-gray-200 pb-3">
+            <h3 className="text-xs font-bold uppercase tracking-wide text-gray-600">
+              Нормативные требования по коду
+            </h3>
+            <button
+              type="button"
+              onClick={openNormativeCheck}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-indigo-200 bg-indigo-50 px-3 py-2 text-sm font-medium text-indigo-800 hover:bg-indigo-100"
+            >
+              Полная проверка на «Нетарифке»
+              <ArrowUpRight className="h-4 w-4" aria-hidden />
+            </button>
+          </div>
+          {normativeLoading ? (
+            <p className="text-sm text-gray-500">Загрузка нормативного блока…</p>
+          ) : normativeError ? (
+            <div className="space-y-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+              <p>{normativeError}</p>
+              <button
+                type="button"
+                onClick={openNormativeCheck}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-amber-300 bg-white px-3 py-2 text-sm font-medium text-amber-900 hover:bg-amber-100"
+              >
+                Открыть проверку с этим кодом
+                <ArrowUpRight className="h-4 w-4" aria-hidden />
+              </button>
+            </div>
+          ) : (
+            <NormativeRequirementsBlock block={normativeBlock} title="Нормативные требования" />
+          )}
+          {!normativeLoading && !normativeError && !normativeBlock ? (
+            <p className="text-sm italic text-gray-500">
+              Нормативный блок пуст для этого кода. Запустите полную проверку на странице «Нетарифка».
+            </p>
+          ) : null}
+        </section>
       ) : null}
 
       {activeTab === 'notes' ? (
