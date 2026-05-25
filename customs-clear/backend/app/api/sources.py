@@ -7,6 +7,10 @@ from fastapi import APIRouter, File, Header, HTTPException, Query, UploadFile
 from fastapi.responses import FileResponse, JSONResponse
 
 from ..services.normative_store import get_integrated_data_stats, get_normative_data_hints, list_source_status, list_sync_log
+from ..services.regulatory_source_completeness import (
+    list_registry_snapshot,
+    run_regulatory_source_completeness_report,
+)
 from ..services.normative_bundle import import_normative_bundle_bytes
 from ..services.source_import import import_normative_file
 from ..services.source_sync import sync_all_sources, sync_normative_bundle_url
@@ -39,6 +43,18 @@ async def sources_status() -> JSONResponse:
             "hints": get_normative_data_hints(),
         }
     )
+
+
+@router.get("/registry")
+async def sources_registry() -> JSONResponse:
+    """Статический реестр нормативных источников с уровнями полномочий (без DB-проб)."""
+    return JSONResponse(list_registry_snapshot())
+
+
+@router.get("/completeness")
+async def sources_completeness() -> JSONResponse:
+    """Gap-отчёт полноты нормативных источников: missing/stale/partial/parser_failed."""
+    return JSONResponse(run_regulatory_source_completeness_report())
 
 
 @router.get("/log")
