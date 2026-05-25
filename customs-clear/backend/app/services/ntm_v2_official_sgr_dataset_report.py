@@ -15,6 +15,9 @@ from .ntm_v2_official_sgr_import import (
 # Префиксы целевой curated-партии (issue #3 / Section II batch).
 SECTION_II_BATCH_ISSUE3_PREFIXES: tuple[str, ...] = ("7306", "5910", "3926")
 
+# Префиксы curated-партии issue #17 (Section II batch).
+SECTION_II_BATCH_ISSUE17_PREFIXES: tuple[str, ...] = ("5903", "5906", "7307", "6307")
+
 
 def _hs_prefixes_from_rules(rules: list[dict[str, Any]]) -> list[str]:
     prefixes: set[str] = set()
@@ -36,12 +39,15 @@ def _rule_ids_for_hs_prefix(rules: list[dict[str, Any]], prefix: str) -> list[st
     return sorted(out)
 
 
-def _coverage_issue3_batch(rules: list[dict[str, Any]]) -> dict[str, Any]:
+def _coverage_section_ii_batch(
+    rules: list[dict[str, Any]],
+    target_prefixes: tuple[str, ...],
+) -> dict[str, Any]:
     all_prefixes = _hs_prefixes_from_rules(rules)
     covered: list[str] = []
     missing: list[str] = []
     rule_ids_by_prefix: dict[str, list[str]] = {}
-    for prefix in SECTION_II_BATCH_ISSUE3_PREFIXES:
+    for prefix in target_prefixes:
         ids = _rule_ids_for_hs_prefix(rules, prefix)
         rule_ids_by_prefix[prefix] = ids
         if any(p == prefix or p.startswith(prefix) for p in all_prefixes):
@@ -49,12 +55,20 @@ def _coverage_issue3_batch(rules: list[dict[str, Any]]) -> dict[str, Any]:
         else:
             missing.append(prefix)
     return {
-        "target_prefixes": list(SECTION_II_BATCH_ISSUE3_PREFIXES),
+        "target_prefixes": list(target_prefixes),
         "covered_prefixes": covered,
         "missing_prefixes": missing,
         "rule_ids_by_prefix": rule_ids_by_prefix,
         "complete": not missing,
     }
+
+
+def _coverage_issue3_batch(rules: list[dict[str, Any]]) -> dict[str, Any]:
+    return _coverage_section_ii_batch(rules, SECTION_II_BATCH_ISSUE3_PREFIXES)
+
+
+def _coverage_issue17_batch(rules: list[dict[str, Any]]) -> dict[str, Any]:
+    return _coverage_section_ii_batch(rules, SECTION_II_BATCH_ISSUE17_PREFIXES)
 
 
 def _run_sanity_checks(payload: dict[str, Any]) -> list[dict[str, Any]]:
@@ -209,6 +223,66 @@ def _run_sanity_checks(payload: dict[str, Any]) -> list[dict[str, Any]]:
             "description": "Пластиковая заглушка техническая",
             "expect": {"has_any_match": False},
         },
+        {
+            "id": "drinking_water_fitting_7307_possible",
+            "hs_code": "7307920000",
+            "description": "Фитинг стальной для хозпитьевого водоснабжения",
+            "expect": {"has_possible": True, "rule_id": "eec299-7307-drinking-water-fittings"},
+        },
+        {
+            "id": "industrial_fitting_7307_no_match",
+            "hs_code": "7307920000",
+            "description": "Фитинг стальной для нефтепровода",
+            "expect": {"has_any_match": False},
+        },
+        {
+            "id": "industrial_water_fitting_7307_no_match",
+            "hs_code": "7307920000",
+            "description": "Соединение стальное для промышленного водоснабжения",
+            "expect": {"has_any_match": False},
+        },
+        {
+            "id": "food_contact_coated_fabric_5903_possible",
+            "hs_code": "5903200000",
+            "description": "Ткань с пропиткой для контакта с пищевыми продуктами",
+            "expect": {"has_possible": True, "rule_id": "eec299-5903-food-contact-coated-fabrics"},
+        },
+        {
+            "id": "industrial_coated_fabric_5903_no_match",
+            "hs_code": "5903200000",
+            "description": "Ткань пропитанная техническая промышленная",
+            "expect": {"has_any_match": False},
+        },
+        {
+            "id": "food_contact_rubberized_fabric_5906_possible",
+            "hs_code": "5906100000",
+            "description": "Ткань прорезиненная для контакта с пищевыми продуктами",
+            "expect": {"has_possible": True, "rule_id": "eec299-5906-food-contact-rubberized-fabrics"},
+        },
+        {
+            "id": "industrial_rubberized_fabric_5906_no_match",
+            "hs_code": "5906100000",
+            "description": "Ткань прорезиненная техническая промышленная",
+            "expect": {"has_any_match": False},
+        },
+        {
+            "id": "sanitary_textile_6307_clarify",
+            "hs_code": "6307909801",
+            "description": "Маска медицинская одноразовая",
+            "expect": {"needs_clarification": True, "rule_id": "eec299-6307-sanitary-textile-articles"},
+        },
+        {
+            "id": "industrial_textile_6307_no_match",
+            "hs_code": "6307909801",
+            "description": "Текстильное изделие промышленное техническое",
+            "expect": {"has_any_match": False},
+        },
+        {
+            "id": "dress_pattern_6307_no_match",
+            "hs_code": "6307900000",
+            "description": "Выкройка платья для пошива",
+            "expect": {"has_any_match": False},
+        },
     ]
     out: list[dict[str, Any]] = []
     for case in cases:
@@ -261,6 +335,7 @@ def build_official_sgr_dataset_report(
         "warnings_by_code": validation["summary"].get("warnings_by_code") or {},
         "validation_warning_count": validation.get("warning_count", 0),
         "section_ii_batch_issue3": _coverage_issue3_batch(rules),
+        "section_ii_batch_issue17": _coverage_issue17_batch(rules),
     }
     report: dict[str, Any] = {
         "validation": validation,

@@ -1,9 +1,9 @@
 {
   "source_document": "Решение ЕЭК №299 (Перечень I, раздел II — товары, подлежащие государственной регистрации; п. 6–11)",
-  "source_revision": "official-sgr-contour-v2-curated-2026-05-issue3",
+  "source_revision": "official-sgr-contour-v2-curated-2026-05-issue17",
   "source_url": "https://eec.eaeunion.org/",
-  "dataset_version": "v2-curated-issue3",
-  "curation_note": "Курируемый seed по публичному тексту Раздела II и сопутствующим позициям Перечня I (спецпитание, БАД). Не автоматический полный парсинг PDF/ТН ВЭД. Партия issue3: 7306, 5910, 3926.",
+  "dataset_version": "v2-curated-issue17",
+  "curation_note": "Курируемый seed по публичному тексту Раздела II и сопутствующим позициям Перечня I (спецпитание, БАД). Не автоматический полный парсинг PDF/ТН ВЭД. Партия issue3: 7306, 5910, 3926. Партия issue17: 5903, 5906, 7307, 6307.",
   "rules": [
     {
       "rule_id": "eec299-3808-disinfectants",
@@ -603,6 +603,65 @@
       "exclude_if_contains_any": ["нефтепровод", "газопровод", "технологическ"],
       "evidence": "Раздел II п. 10; из 7306 (контакт с питьевой водой в ХПВ)",
       "notes": "Маркер ХПВ/питьевой воды обязателен; «водоснабж» без ХПВ/питьевых маркеров — не матчится"
+    },
+    {
+      "rule_id": "eec299-7307-drinking-water-fittings",
+      "category": "water_treatment",
+      "hs_scope": "7307",
+      "hs_scope_mode": "prefix",
+      "permit_type": "СГР",
+      "applicability": "possible",
+      "requires_manual_review": true,
+      "title": "Фитинги/соединения стальные для хозпитьевого водоснабжения",
+      "description_contains_any": ["фитинг", "соединен", "муфт", "отвод", "тройник", "питьев", "хозпитьев", "водоснабж"],
+      "description_requires_any": ["питьев", "хозпитьев", "питьевая вода", "хпв"],
+      "exclude_if_contains_any": ["нефтепровод", "газопровод", "технологическ"],
+      "evidence": "Раздел II п. 9–10; из 7307 (контакт с питьевой водой в ХПВ)",
+      "notes": "Маркер ХПВ/питьевой воды обязателен; промышленные фитинги без ХПВ — не матчится"
+    },
+    {
+      "rule_id": "eec299-5903-food-contact-coated-fabrics",
+      "category": "food_contact_and_hygiene",
+      "hs_scope": "5903",
+      "hs_scope_mode": "prefix",
+      "permit_type": "СГР",
+      "applicability": "possible",
+      "requires_manual_review": true,
+      "title": "Ткани с покрытием/пропиткой для контакта с пищей",
+      "description_contains_any": ["ткан", "полотн", "пленк", "пропит", "ламинир", "контакт с пищ", "пищев"],
+      "description_requires_any": ["пищев", "контакт с пищ", "питьев", "санитар", "гигиен", "хозпитьев", "пищевой"],
+      "exclude_if_contains_any": ["промышленн", "техническ", "строительн", "кровел", "геотекстил"],
+      "evidence": "Раздел II п. 11; из 5903 (материалы для контакта с пищевыми продуктами)",
+      "notes": "Широкий HS; только при пищевых/санитарных маркерах; промышленные технические ткани — не матчится"
+    },
+    {
+      "rule_id": "eec299-5906-food-contact-rubberized-fabrics",
+      "category": "food_contact_and_hygiene",
+      "hs_scope": "5906",
+      "hs_scope_mode": "prefix",
+      "permit_type": "СГР",
+      "applicability": "possible",
+      "requires_manual_review": true,
+      "title": "Ткани прорезиненные для контакта с пищей/санитарного назначения",
+      "description_contains_any": ["прорезинен", "резинов", "ткан", "полотн", "контакт с пищ", "пищев"],
+      "description_requires_any": ["пищев", "контакт с пищ", "питьев", "санитар", "гигиен", "хозпитьев", "пищевой"],
+      "exclude_if_contains_any": ["промышленн", "техническ", "конвейер", "лента", "шахт", "нефте"],
+      "evidence": "Раздел II п. 11; из 5906 (прорезиненные ткани для пищевого/санитарного контакта)",
+      "notes": "Отдельно от 5910 (ленты конвейерные); промышленные прорезиненные ткани — не матчится"
+    },
+    {
+      "rule_id": "eec299-6307-sanitary-textile-articles",
+      "category": "personal_hygiene_adult",
+      "hs_scope": "6307",
+      "hs_scope_mode": "prefix",
+      "permit_type": "СГР",
+      "applicability": "needs_clarification",
+      "requires_manual_review": true,
+      "title": "Пошивные текстильные изделия санитарно-гигиенического назначения",
+      "description_contains_any": ["гигиен", "санитар", "медицин", "маск", "простын", "пеленк", "салфет", "полотенц", "хирургич"],
+      "exclude_if_contains_any": ["промышленн", "техническ", "уборочн", "декор", "штор", "украшен", "выкройк"],
+      "evidence": "Раздел II п. 10; из 6307 (изделия гигиенического назначения)",
+      "notes": "Широкий HS; только при маркерах гигиены/санитарии; пошивочные заготовки и декор — не матчится"
     }
   ]
 }
