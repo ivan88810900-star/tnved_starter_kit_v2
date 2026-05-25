@@ -74,11 +74,36 @@ class TestRegulatorySourceRegistry(unittest.TestCase):
         self.assertEqual(row["parser_status"], "runtime_only")
 
     def test_fts_official_not_covered_by_mirror_rows(self) -> None:
-        """ПКР в classification_decisions (Alta/seed) не должны закрывать official FTS gap."""
+        """ПКР Alta (без префикса FCS-) не должны попадать в official FCS probe."""
+        from app.db import SessionLocal
+        from app.models.core import ClassificationDecision
+        from app.services.regulatory_source_completeness import _count_db_probe
+
+        with SessionLocal() as db:
+            exists = (
+                db.query(ClassificationDecision.id)
+                .filter(ClassificationDecision.decision_number == "ALTA-MIRROR-PROBE-TEST")
+                .first()
+            )
+            if not exists:
+                db.add(
+                    ClassificationDecision(
+                        hs_code="8471300000",
+                        product_name="Зеркало Alta",
+                        description="Тест зеркала",
+                        target_entity="Ноутбук",
+                        decision_number="ALTA-MIRROR-PROBE-TEST",
+                        issue_date="2020-01-01",
+                    )
+                )
+                db.commit()
+        self.assertEqual(_count_db_probe("classification_decisions_official_fts"), _count_fcs_official_only())
+
         entry = get_registry_entry("fts_preliminary_classification")
         assert entry is not None
         row = diagnose_source_entry(entry, status_by_code={})
-        self.assertNotEqual(row["coverage_status"], "present")
+        if _count_fcs_official_only() == 0:
+            self.assertNotEqual(row["coverage_status"], "present")
         self.assertTrue(row["manual_review_required"])
 
     def test_tks_mirror_uses_fts_alta_source_probe(self) -> None:
@@ -92,6 +117,12 @@ class TestRegulatorySourceRegistry(unittest.TestCase):
         row = diagnose_source_entry(entry, status_by_code={})
         self.assertFalse(row["is_source_of_truth"])
         self.assertTrue(row["manual_review_required"])
+
+
+def _count_fcs_official_only() -> int:
+    from app.services.fcs_preliminary_sync import count_fcs_official_decisions
+
+    return count_fcs_official_decisions()
 
 
 class TestRegulatorySourceCompletenessApi(unittest.TestCase):

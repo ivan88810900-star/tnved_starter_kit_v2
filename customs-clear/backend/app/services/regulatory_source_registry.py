@@ -94,12 +94,14 @@ REGULATORY_SOURCE_REGISTRY: tuple[RegulatorySourceEntry, ...] = (
         authority_level="official_binding",
         official_url="https://customs.gov.ru/document",
         description="ПКР и решения о классификации ФТС России.",
+        local_paths=("data/fixtures/fcs_preliminary_decisions.sample.json",),
         db_probe="classification_decisions_official_fts",
-        sync_script=None,
+        source_status_code="FCS_PRELIMINARY",
+        sync_script="sync_fcs_predecisions.py",
         min_document_count=1,
         known_gaps=(
-            "Текущий импорт идёт через коммерческое зеркало (TKS/Alta); "
-            "прямой официальный фид ФТС не подключён.",
+            "MVP: детерминированный импорт из fixture; полный официальный фид ФТС — scheduled sync.",
+            "Коммерческие зеркала (TKS/Alta) не закрывают official gap.",
         ),
         manual_review_default=True,
     ),
