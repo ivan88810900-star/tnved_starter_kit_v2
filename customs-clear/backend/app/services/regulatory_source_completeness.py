@@ -46,8 +46,19 @@ def _count_db_probe(probe: str | None) -> int | None:
         if probe == "classification_decisions":
             return db.query(ClassificationDecision).count()
         if probe == "classification_decisions_official_fts":
-            # Официальный фид ФТС не подключён; зеркальные ПКР не считаем official coverage.
-            return 0
+            from ..models.core import PreliminaryDecision
+
+            fcs_cls = (
+                db.query(ClassificationDecision)
+                .filter(ClassificationDecision.decision_number.like("FCS-%"))
+                .count()
+            )
+            fcs_pre = (
+                db.query(PreliminaryDecision)
+                .filter(PreliminaryDecision.source == "fcs_official")
+                .count()
+            )
+            return fcs_cls + fcs_pre
         if probe == "classification_decisions_tks":
             return (
                 db.query(ClassificationDecision)
@@ -312,7 +323,8 @@ def run_regulatory_source_completeness_report() -> dict[str, Any]:
             "Каждая запись реестра содержит sync_script — точка входа для следующих cursor-task на bulk download.",
             "source_status_code связывает отчёт с POST /api/sources/sync и sync_log.",
             "official_sgr: sync_sgr_registry.py (OData/CSV) + import_official_sgr_rules_to_ntm_v2.py для curated NTM v2.",
-            "ПКР: замена commercial_mirror на официальный фид ФТС — отдельная задача без смены broker.",
+            "ПКР FCS: scripts/sync_fcs_predecisions.py (fixture MVP) → source_status FCS_PRELIMINARY; "
+            "scheduled sync может подключить официальный фид без смены broker.",
         ],
     }
 
