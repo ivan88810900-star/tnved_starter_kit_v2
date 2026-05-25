@@ -86,6 +86,18 @@ If a user with triage permission adds `cursor-task` but is not trusted, the work
 - **Push** uses `gh auth setup-git` only in the controlled push step (after staged validation).
 - Issue title/body remain untrusted prompt input; combine with trusted-actor gate and staged denylist.
 
+## Checkout / sparse checkout
+
+The workflow uses **sparse checkout** (cone mode) to materialize only project paths needed for Cursor Task automation:
+
+- `.github/`, `scripts/`, `docs/`, `AGENTS.md`
+- `customs-clear/backend/app`, `tests`, `scripts`, `data`, `alembic`
+- `customs-clear/frontend`
+
+**Excluded:** `customs-clear/backend/downloads/tamdoc_archive/` — archived HTML downloads with very long filenames can break checkout on GitHub-hosted runners (`File name too long`).
+
+Automation tasks should not rely on that archive by default. Data/archive-heavy tasks may need a dedicated workflow or local execution.
+
 ## Staged denylist / secret scan
 
 After `git add -A`, `validate_cursor_task_staged_changes.py` blocks commit if staged paths or diff contain:
