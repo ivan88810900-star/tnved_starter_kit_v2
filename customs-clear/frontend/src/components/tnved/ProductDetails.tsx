@@ -17,6 +17,7 @@ import { CC_NORMATIVE_PREFILL_KEY } from '../../constants/homeNav';
 import { NormativeRequirementsBlock } from '../nonTariff/NormativeRequirementsBlock';
 import { normativeBlockFromNonTariff } from '../nonTariff/normativeBlockHelpers';
 import { PreliminaryDecisionsBlock } from './PreliminaryDecisionsBlock';
+import { SmartPaymentsBlock } from '../payments/SmartPaymentsBlock';
 import type { NormativeRequirementsBlockData } from '../../types/api.types';
 import { ArrowUpRight, FileCheck2, FolderKanban, Scale, ShieldCheck } from 'lucide-react';
 
@@ -432,13 +433,18 @@ export const ProductDetails: React.FC<Props> = ({ selectedCode }) => {
 
       {activeTab === 'payments' ? (
         <div className="space-y-4">
+          <SmartPaymentsBlock
+            hsCode={detail.code}
+            description={(detail.name ?? detail.description ?? '').trim()}
+          />
+
           <section className="rounded-xl border-2 border-blue-100 bg-blue-50 px-5 py-4">
-            <p className="mb-1 text-xs font-bold uppercase tracking-wide text-blue-700">Ставка ввозной пошлины</p>
+            <p className="mb-1 text-xs font-bold uppercase tracking-wide text-blue-700">Ставка ввозной пошлины (справочник)</p>
             <p className="font-mono text-2xl font-bold text-blue-900">{dutyLabel}</p>
           </section>
 
           <section className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-4">
-            <h3 className="mb-2 text-xs font-bold uppercase tracking-wide text-gray-600">НДС и акциз</h3>
+            <h3 className="mb-2 text-xs font-bold uppercase tracking-wide text-gray-600">НДС и акциз (справочные тексты)</h3>
             {referenceLoading ? (
               <p className="text-sm text-gray-500">Подготовка данных по платежам…</p>
             ) : paymentSections.length > 0 ? (

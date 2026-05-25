@@ -33,6 +33,7 @@ from .api import (
     assistant,
     auth,
     calculator,
+    payments,
     classify,
     classify_feedback,
     compliance,
@@ -188,6 +189,7 @@ app.include_router(
 )
 app.include_router(trois.router, prefix="/api/trois", tags=["trois"])
 app.include_router(calculator.router, prefix="/api/calculator", tags=["calculator"])
+app.include_router(payments.router, prefix="/api/payments", tags=["payments"])
 app.include_router(currency.router, prefix="/api/currency", tags=["currency"])
 app.include_router(finance.router, prefix="/api/v1/finance", tags=["finance"])
 app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
