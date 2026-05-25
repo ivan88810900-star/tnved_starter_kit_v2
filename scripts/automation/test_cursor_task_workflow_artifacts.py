@@ -43,7 +43,7 @@ def test_workflow_does_not_write_artifacts_to_repo_root() -> None:
 
 def test_github_script_writes_issue_context_via_env_path() -> None:
     text = WORKFLOW.read_text(encoding="utf-8")
-    block = text.split("- name: Write issue context", 1)[1].split("- name: Detect", 1)[0]
+    block = text.split("- name: Resolve issue context", 1)[1].split("- name: Authorize", 1)[0]
     assert "ISSUE_CONTEXT_PATH" in block
     assert "process.env.ISSUE_CONTEXT_PATH" in block
 

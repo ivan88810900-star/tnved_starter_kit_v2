@@ -24,12 +24,36 @@ Codex review → Ivan merge
 | Event | Condition |
 |-------|-----------|
 | `issues` / `opened`, `labeled` | Issue labels include `cursor-task` |
+| `workflow_dispatch` | Input `issue_number`; issue fetched via API and validated |
 
 The job runs when the issue **already has** the `cursor-task` label (including issues created by Codex with the label attached at creation time). It does **not** depend on `github.event.label.name` from a `labeled` event only.
 
 `edited` is **not** a trigger: otherwise any issue author could retrigger runs (and pre-auth comments/minutes) on every edit after a maintainer added `cursor-task`. Re-run requires removing/re-adding the label (`labeled`) or a new labeled issue (`opened` with label).
 
 **Issues only:** labeling a **Pull Request** with `cursor-task` does **not** start the agent (`!github.event.issue.pull_request`). Only ordinary GitHub Issues are eligible. This avoids running the write-enabled Cursor agent against PR body text.
+
+**Manual fallback:** `workflow_dispatch` with input `issue_number` runs the same pipeline when GitHub does not deliver an `issues` event run. The resolve step fetches the issue via GitHub API and applies the same label / PR / closed checks.
+
+## Manual fallback run
+
+Primary trigger remains `issues: opened` and `issues: labeled`. Use manual dispatch when relabeling does not create a workflow run (observed on some private-repo setups).
+
+```bash
+gh workflow run cursor-task-agent.yml \
+  --repo ivan88810900-star/tnved_starter_kit_v2 \
+  -f issue_number=6
+```
+
+`issue_number` must be a **positive integer** with no extra characters (e.g. `6` is valid; `6.9`, `6abc`, `0`, `-1`, `006` are rejected fail-fast before any GitHub API call).
+
+```bash
+gh run list \
+  --repo ivan88810900-star/tnved_starter_kit_v2 \
+  --workflow cursor-task-agent.yml \
+  --limit 10
+```
+
+The dispatch run uses the same trusted-actor gate, duplicate guard, staged validation, and git credential boundaries as automatic runs. Only trusted actors may start `workflow_dispatch`.
 
 ## Required secret
 

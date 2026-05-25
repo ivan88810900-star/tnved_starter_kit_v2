@@ -7,6 +7,12 @@ name: Cursor Task Agent
 on:
   issues:
     types: [opened, labeled]
+  workflow_dispatch:
+    inputs:
+      issue_number:
+        description: GitHub issue number to run cursor-task automation for
+        required: true
+        type: number
 
 permissions:
   contents: write
@@ -14,14 +20,18 @@ permissions:
   issues: write
 
 concurrency:
-  group: cursor-task-issue-${{ github.event.issue.number }}
+  group: cursor-task-issue-${{ github.event.issue.number || github.event.inputs.issue_number }}
   cancel-in-progress: false
 
 jobs:
   cursor-task:
     if: >-
-      !github.event.issue.pull_request &&
-      contains(toJson(github.event.issue.labels.*.name), '"cursor-task"')
+      (
+        github.event_name == 'issues' &&
+        !github.event.issue.pull_request &&
+        contains(toJson(github.event.issue.labels.*.name), '"cursor-task"')
+      ) ||
+      github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 90
     env:
@@ -47,25 +57,65 @@ jobs:
       - name: Prepare automation temp directory
         run: mkdir -p "${CURSOR_TASK_TEMP}"
 
-      - name: Write issue context
+      - name: Resolve issue context
         id: issue_ctx
         uses: actions/github-script@v7
         env:
           ISSUE_CONTEXT_PATH: ${{ env.ISSUE_CONTEXT_PATH }}
+          DISPATCH_ISSUE_NUMBER: ${{ github.event.inputs.issue_number }}
         with:
           script: |
             const fs = require('fs');
             const path = require('path');
-            const issue = context.payload.issue;
+
             const ctxPath = process.env.ISSUE_CONTEXT_PATH;
+            fs.mkdirSync(path.dirname(ctxPath), { recursive: true });
+
+            let issue;
+            if (context.eventName === 'workflow_dispatch') {
+              const rawIssueNumber = String(process.env.DISPATCH_ISSUE_NUMBER || '');
+              if (!/^[1-9][0-9]*$/.test(rawIssueNumber)) {
+                core.setFailed(
+                  `Invalid issue_number: ${rawIssueNumber}. Expected a positive integer without leading zeros.`
+                );
+                return;
+              }
+              const issueNumber = Number(rawIssueNumber);
+              const { data } = await github.rest.issues.get({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issueNumber,
+              });
+              issue = data;
+            } else {
+              issue = context.payload.issue;
+            }
+
+            const labelNames = (issue.labels || []).map((label) =>
+              typeof label === 'string' ? label : label.name
+            );
+
+            if (issue.pull_request) {
+              core.setFailed('Target is a pull request, not an ordinary issue.');
+              return;
+            }
+            if (issue.state === 'closed') {
+              core.setFailed(`Issue #${issue.number} is closed.`);
+              return;
+            }
+            if (!labelNames.includes('cursor-task')) {
+              core.setFailed(`Issue #${issue.number} does not have label cursor-task.`);
+              return;
+            }
+
             const ctx = {
               number: issue.number,
               title: issue.title || '',
               body: issue.body || '',
               html_url: issue.html_url,
             };
-            fs.mkdirSync(path.dirname(ctxPath), { recursive: true });
             fs.writeFileSync(ctxPath, JSON.stringify(ctx, null, 2));
+
             const slug = (ctx.title || 'task')
               .toLowerCase()
               .replace(/[^a-z0-9]+/g, '-')
@@ -73,9 +123,11 @@ jobs:
               .slice(0, 40) || 'task';
             core.setOutput('branch_name', `cursor/issue-${ctx.number}-${slug}`);
             core.setOutput('issue_number', String(ctx.number));
+            core.setOutput('valid', 'true');
 
       - name: Authorize trusted actor
         id: authorize
+        if: steps.issue_ctx.outcome == 'success'
         env:
           GITHUB_ACTOR: ${{ github.actor }}
           CURSOR_TASK_TRUSTED_ACTORS: ${{ vars.CURSOR_TASK_TRUSTED_ACTORS }}
@@ -103,7 +155,7 @@ jobs:
           fi
 
       - name: Comment on issue (unauthorized actor)
-        if: steps.authorize.outputs.authorized != 'true'
+        if: steps.issue_ctx.outcome == 'success' && steps.authorize.outputs.authorized != 'true'
         env:
           GH_TOKEN: ${{ github.token }}
           ISSUE_NUMBER: ${{ steps.issue_ctx.outputs.issue_number }}
