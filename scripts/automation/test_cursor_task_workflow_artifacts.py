@@ -23,12 +23,24 @@ def _run_blocks(text: str) -> str:
     return "\n".join(chunks)
 
 
-def test_job_env_uses_runner_temp_for_artifacts() -> None:
+def test_job_env_does_not_use_runner_temp_expression() -> None:
     text = WORKFLOW.read_text(encoding="utf-8")
-    assert "CURSOR_TASK_TEMP: ${{ runner.temp }}/cursor-task" in text
-    assert "ISSUE_CONTEXT_PATH: ${{ runner.temp }}/cursor-task/issue-context.json" in text
-    assert "OPEN_PRS_PATH: ${{ runner.temp }}/cursor-task/open-prs.json" in text
-    assert "PR_BODY_PATH: ${{ runner.temp }}/cursor-task/pr-body.md" in text
+    job_env = text.split("jobs:", 1)[1].split("\n    steps:", 1)[0]
+    assert "runner.temp" not in job_env
+
+
+def test_initialize_runtime_paths_step_uses_runner_temp_shell_env() -> None:
+    text = WORKFLOW.read_text(encoding="utf-8")
+    block = text.split("- name: Initialize runtime paths", 1)[1].split("- name: Resolve issue context", 1)[0]
+    assert '${RUNNER_TEMP}/cursor-task' in block
+    assert "GITHUB_ENV" in block
+    assert "ISSUE_CONTEXT_PATH=" in block
+    assert "OPEN_PRS_PATH=" in block
+    assert "PR_BODY_PATH=" in block
+    resolve_pos = text.find("- name: Resolve issue context")
+    init_pos = text.find("- name: Initialize runtime paths")
+    assert init_pos != -1 and resolve_pos != -1
+    assert init_pos < resolve_pos
 
 
 def test_workflow_does_not_write_artifacts_to_repo_root() -> None:
