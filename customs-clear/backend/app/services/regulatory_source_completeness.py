@@ -45,10 +45,21 @@ def _count_db_probe(probe: str | None) -> int | None:
             return db.query(TrTsAct).count()
         if probe == "classification_decisions":
             return db.query(ClassificationDecision).count()
+        if probe == "classification_decisions_official_fts":
+            # Официальный фид ФТС не подключён; зеркальные ПКР не считаем official coverage.
+            return 0
         if probe == "classification_decisions_tks":
             return (
                 db.query(ClassificationDecision)
                 .filter(ClassificationDecision.decision_number.isnot(None))
+                .count()
+            )
+        if probe == "preliminary_decisions_fts_alta":
+            from ..models.core import PreliminaryDecision
+
+            return (
+                db.query(PreliminaryDecision)
+                .filter(PreliminaryDecision.source == "fts_alta")
                 .count()
             )
         if probe == "customs_case_law_eec":

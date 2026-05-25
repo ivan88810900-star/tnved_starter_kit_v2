@@ -73,6 +73,19 @@ class TestRegulatorySourceRegistry(unittest.TestCase):
         self.assertEqual(row["coverage_status"], "not_applicable")
         self.assertEqual(row["parser_status"], "runtime_only")
 
+    def test_fts_official_not_covered_by_mirror_rows(self) -> None:
+        """ПКР в classification_decisions (Alta/seed) не должны закрывать official FTS gap."""
+        entry = get_registry_entry("fts_preliminary_classification")
+        assert entry is not None
+        row = diagnose_source_entry(entry, status_by_code={})
+        self.assertNotEqual(row["coverage_status"], "present")
+        self.assertTrue(row["manual_review_required"])
+
+    def test_tks_mirror_uses_fts_alta_source_probe(self) -> None:
+        entry = get_registry_entry("tks_predecisions_mirror")
+        assert entry is not None
+        self.assertEqual(entry.db_probe, "preliminary_decisions_fts_alta")
+
     def test_commercial_mirror_flagged_manual_review(self) -> None:
         entry = get_registry_entry("tks_predecisions_mirror")
         assert entry is not None
