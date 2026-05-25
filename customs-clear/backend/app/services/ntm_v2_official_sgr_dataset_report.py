@@ -162,6 +162,18 @@ def _run_sanity_checks(payload: dict[str, Any]) -> list[dict[str, Any]]:
             "expect": {"has_any_match": False},
         },
         {
+            "id": "industrial_water_supply_7306_no_match",
+            "hs_code": "7306100000",
+            "description": "Труба стальная для промышленного водоснабжения",
+            "expect": {"has_any_match": False},
+        },
+        {
+            "id": "hvs_pipe_with_industrial_context_7306_possible",
+            "hs_code": "7306100000",
+            "description": "Труба для хозпитьевого водоснабжения промышленного объекта",
+            "expect": {"has_possible": True, "rule_id": "eec299-7306-drinking-water-pipes"},
+        },
+        {
             "id": "food_conveyor_belt_5910_possible",
             "hs_code": "5910000000",
             "description": "Лента конвейерная для контакта с пищевыми продуктами",
@@ -172,6 +184,18 @@ def _run_sanity_checks(payload: dict[str, Any]) -> list[dict[str, Any]]:
             "hs_code": "5910000000",
             "description": "Ткань прорезиненная техническая",
             "expect": {"has_any_match": False},
+        },
+        {
+            "id": "industrial_conveyor_belt_5910_no_match",
+            "hs_code": "5910000000",
+            "description": "Лента конвейерная промышленная для угольного транспорта",
+            "expect": {"has_any_match": False},
+        },
+        {
+            "id": "technical_food_contact_belt_5910_possible",
+            "hs_code": "5910000000",
+            "description": "Лента конвейерная техническая для контакта с пищевыми продуктами",
+            "expect": {"has_possible": True, "rule_id": "eec299-5910-food-conveyor-belts"},
         },
         {
             "id": "plastic_food_contact_3926_clarify",
