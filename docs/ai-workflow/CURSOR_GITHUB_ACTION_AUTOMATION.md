@@ -192,7 +192,7 @@ python3 scripts/automation/prepare_cursor_task_branch.py issue-context.json
 
 ## PR body policy
 
-Automation uses **`Relates to #<n>`** by default, not `Closes #<n>`, unless the agent/issue explicitly requires closure and Ivan/Codex confirm in review.
+Generated cursor-task PR bodies include **`Closes #<n>`** so the source issue closes automatically when Ivan merges the PR.
 
 ## After merge (manual)
 

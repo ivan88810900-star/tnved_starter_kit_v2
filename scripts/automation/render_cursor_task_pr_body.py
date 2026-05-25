@@ -79,7 +79,7 @@ Automated implementation for **Cursor Task** issue #{n} via GitHub Actions + Cur
 - Codex review per `docs/ai-workflow/CODEX_REVIEW_CHECKLIST.md`
 - Ivan merge when `ready-for-ivan-review`
 
-Relates to #{n}
+Closes #{n}
 """.strip()
 
 
