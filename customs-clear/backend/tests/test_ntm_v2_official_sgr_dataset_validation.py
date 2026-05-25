@@ -29,7 +29,7 @@ def test_seed_passes_validator_without_errors(valid_payload: dict) -> None:
     result = validate_official_sgr_dataset(valid_payload)
     assert result["valid"] is True
     assert result["error_count"] == 0
-    assert result["summary"]["total_rules"] >= 47
+    assert result["summary"]["total_rules"] >= 51
     assert result["warning_count"] == 0
 
 
@@ -95,6 +95,9 @@ def test_dataset_report_sanity_all_pass(valid_payload: dict) -> None:
     batch = report["coverage"]["section_ii_batch_issue3"]
     assert batch["complete"] is True
     assert batch["missing_prefixes"] == []
+    batch17 = report["coverage"]["section_ii_batch_issue17"]
+    assert batch17["complete"] is True
+    assert batch17["missing_prefixes"] == []
 
 
 ISSUE3_RULES = {
@@ -139,6 +142,59 @@ def test_issue3_rules_are_advisory_only(valid_payload: dict) -> None:
     for rule_id in ISSUE3_RULES.values():
         row = next(r for r in valid_payload["rules"] if r["rule_id"] == rule_id)
         assert row["applicability"] in ("possible", "needs_clarification")
+
+
+ISSUE17_RULES = {
+    "7307": "eec299-7307-drinking-water-fittings",
+    "5903": "eec299-5903-food-contact-coated-fabrics",
+    "5906": "eec299-5906-food-contact-rubberized-fabrics",
+    "6307": "eec299-6307-sanitary-textile-articles",
+}
+
+
+@pytest.mark.parametrize(
+    ("hs", "desc", "rule_key", "expect"),
+    [
+        ("7307920000", "Фитинг для хозпитьевого водоснабжения", "7307", True),
+        ("7307920000", "Фитинг для нефтепровода", "7307", False),
+        ("7307920000", "Соединение для промышленного водоснабжения", "7307", False),
+        ("7307920000", "Муфта для хозпитьевого водоснабжения промышленного объекта", "7307", True),
+        ("5903200000", "Ткань с пропиткой для контакта с пищевыми продуктами", "5903", True),
+        ("5903200000", "Ткань пропитанная техническая промышленная", "5903", False),
+        ("5903200000", "Полотно ламинированное строительное", "5903", False),
+        ("5906100000", "Ткань прорезиненная для контакта с пищевыми продуктами", "5906", True),
+        ("5906100000", "Ткань прорезиненная техническая промышленная", "5906", False),
+        ("5906100000", "Лента конвейерная прорезиненная промышленная", "5906", False),
+        ("6307909801", "Маска медицинская одноразовая", "6307", True),
+        ("6307909801", "Текстильное изделие промышленное техническое", "6307", False),
+        ("6307900000", "Выкройка платья для пошива", "6307", False),
+    ],
+)
+def test_issue17_batch_description_gates(
+    valid_payload: dict,
+    hs: str,
+    desc: str,
+    rule_key: str,
+    expect: bool,
+) -> None:
+    ev = evaluate_official_sgr_from_seed_payload(valid_payload, hs, desc)
+    assert _rule_matched(ev, ISSUE17_RULES[rule_key]) is expect
+    assert ev["has_definite_sgr"] is False
+
+
+def test_issue17_rules_are_advisory_only(valid_payload: dict) -> None:
+    for rule_id in ISSUE17_RULES.values():
+        row = next(r for r in valid_payload["rules"] if r["rule_id"] == rule_id)
+        assert row["applicability"] in ("possible", "needs_clarification")
+
+
+def test_issue17_batch_coverage_in_report(valid_payload: dict) -> None:
+    report = build_official_sgr_dataset_report(valid_payload, run_sanity=False)
+    batch = report["coverage"]["section_ii_batch_issue17"]
+    assert batch["target_prefixes"] == ["5903", "5906", "7307", "6307"]
+    assert set(batch["covered_prefixes"]) == {"5903", "5906", "7307", "6307"}
+    for prefix, rule_id in ISSUE17_RULES.items():
+        assert rule_id in batch["rule_ids_by_prefix"][prefix]
 
 
 @pytest.mark.parametrize(
