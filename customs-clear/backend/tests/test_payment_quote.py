@@ -51,8 +51,13 @@ class PaymentQuoteServiceTests(unittest.TestCase):
         self.assertEqual(vat.status, "applied")
         self.assertGreater(vat.amount_rub or 0, 0)
         self.assertEqual(fee.status, "applied")
-        self.assertIsNotNone(quote.total_payable_rub)
-        self.assertGreater(quote.total_payable_rub or 0, 0)
+        special = self._line(quote, "special_duty")
+        if special.status == "not_configured":
+            self.assertIsNone(quote.total_payable_rub)
+            self.assertTrue(any(w.code == "special_duty_not_configured" for w in quote.warnings))
+        else:
+            self.assertIsNotNone(quote.total_payable_rub)
+            self.assertGreater(quote.total_payable_rub or 0, 0)
 
     def test_excise_applied_for_beer(self):
         quote = self._quote(hs_code="2203009900", customs_value=200_000)
@@ -84,12 +89,14 @@ class PaymentQuoteServiceTests(unittest.TestCase):
         self.assertGreater(ad.amount_rub or 0, 0)
         self.assertIsNotNone(quote.total_payable_rub)
 
-    def test_special_duty_not_configured_or_explicit(self):
+    def test_special_duty_not_configured_blocks_final_total(self):
         quote = self._quote(hs_code="8517120000", customs_value=50_000, country="CN")
         spec = self._line(quote, "special_duty")
         self.assertIn(spec.status, {"not_configured", "not_applicable", "applied", "manual_review_required"})
         if spec.status == "not_configured":
             self.assertIsNone(spec.amount_rub)
+            self.assertIsNone(quote.total_payable_rub)
+            self.assertTrue(any(w.code == "special_duty_not_configured" for w in quote.warnings))
 
     def test_assumptions_and_sources_present(self):
         quote = self._quote(country="DE", quantity=10)
@@ -122,6 +129,9 @@ class PaymentQuoteApiTests(unittest.TestCase):
         self.assertGreater(len(body["line_items"]), 0)
         self.assertIn("warnings", body)
         self.assertIn("assumptions", body)
+        special = next(x for x in body["line_items"] if x["code"] == "special_duty")
+        if special["status"] == "not_configured":
+            self.assertIsNone(body["total_payable_rub"])
 
     def test_api_quote_antidumping_manual_review(self):
         r = self.client.post(
