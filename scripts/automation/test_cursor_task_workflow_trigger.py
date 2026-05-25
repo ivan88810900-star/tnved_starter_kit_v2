@@ -68,6 +68,18 @@ def test_resolve_issue_context_fetches_dispatch_issue_via_api() -> None:
     assert "workflow_dispatch" in block
     assert "github.rest.issues.get" in block
     assert "DISPATCH_ISSUE_NUMBER" in block
+    assert "/^[1-9][0-9]*$/.test(rawIssueNumber)" in block
+    assert "parseInt(process.env.DISPATCH_ISSUE_NUMBER" not in block
+
+
+def test_resolve_issue_context_validates_dispatch_issue_number_before_api() -> None:
+    text = WORKFLOW.read_text(encoding="utf-8")
+    block = text.split("- name: Resolve issue context", 1)[1].split("- name: Authorize", 1)[0]
+    dispatch_block = block.split("if (context.eventName === 'workflow_dispatch')", 1)[1]
+    api_pos = dispatch_block.find("github.rest.issues.get")
+    regex_pos = dispatch_block.find("/^[1-9][0-9]*$/.test(rawIssueNumber)")
+    assert regex_pos != -1 and api_pos != -1
+    assert regex_pos < api_pos
 
 
 def test_resolve_issue_context_validates_label_pr_and_closed() -> None:

@@ -42,7 +42,11 @@ Primary trigger remains `issues: opened` and `issues: labeled`. Use manual dispa
 gh workflow run cursor-task-agent.yml \
   --repo ivan88810900-star/tnved_starter_kit_v2 \
   -f issue_number=6
+```
 
+`issue_number` must be a **positive integer** with no extra characters (e.g. `6` is valid; `6.9`, `6abc`, `0`, `-1`, `006` are rejected fail-fast before any GitHub API call).
+
+```bash
 gh run list \
   --repo ivan88810900-star/tnved_starter_kit_v2 \
   --workflow cursor-task-agent.yml \

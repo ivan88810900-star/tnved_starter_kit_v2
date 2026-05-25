@@ -73,11 +73,14 @@ jobs:
 
             let issue;
             if (context.eventName === 'workflow_dispatch') {
-              const issueNumber = parseInt(process.env.DISPATCH_ISSUE_NUMBER || '', 10);
-              if (!issueNumber) {
-                core.setFailed('workflow_dispatch requires input issue_number');
+              const rawIssueNumber = String(process.env.DISPATCH_ISSUE_NUMBER || '');
+              if (!/^[1-9][0-9]*$/.test(rawIssueNumber)) {
+                core.setFailed(
+                  `Invalid issue_number: ${rawIssueNumber}. Expected a positive integer without leading zeros.`
+                );
                 return;
               }
+              const issueNumber = Number(rawIssueNumber);
               const { data } = await github.rest.issues.get({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
