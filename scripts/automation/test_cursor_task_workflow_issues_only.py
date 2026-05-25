@@ -24,3 +24,4 @@ def test_cursor_task_workflow_restricts_to_issues_only() -> None:
     assert "!github.event.issue.pull_request" in job_if
     assert "github.event.issue.labels" in job_if
     assert "cursor-task" in job_if
+    assert "workflow_dispatch" in job_if
