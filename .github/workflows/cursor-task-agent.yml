@@ -36,10 +36,6 @@ jobs:
     timeout-minutes: 90
     env:
       GH_REPO: ${{ github.repository }}
-      CURSOR_TASK_TEMP: ${{ runner.temp }}/cursor-task
-      ISSUE_CONTEXT_PATH: ${{ runner.temp }}/cursor-task/issue-context.json
-      OPEN_PRS_PATH: ${{ runner.temp }}/cursor-task/open-prs.json
-      PR_BODY_PATH: ${{ runner.temp }}/cursor-task/pr-body.md
       WORKFLOW_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
 
     steps:
@@ -54,8 +50,16 @@ jobs:
             exit 1
           fi
 
-      - name: Prepare automation temp directory
-        run: mkdir -p "${CURSOR_TASK_TEMP}"
+      - name: Initialize runtime paths
+        run: |
+          CURSOR_TASK_TEMP="${RUNNER_TEMP}/cursor-task"
+          mkdir -p "${CURSOR_TASK_TEMP}"
+          {
+            echo "CURSOR_TASK_TEMP=${CURSOR_TASK_TEMP}"
+            echo "ISSUE_CONTEXT_PATH=${CURSOR_TASK_TEMP}/issue-context.json"
+            echo "OPEN_PRS_PATH=${CURSOR_TASK_TEMP}/open-prs.json"
+            echo "PR_BODY_PATH=${CURSOR_TASK_TEMP}/pr-body.md"
+          } >> "${GITHUB_ENV}"
 
       - name: Resolve issue context
         id: issue_ctx
