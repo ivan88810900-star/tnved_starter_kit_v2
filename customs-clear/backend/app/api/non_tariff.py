@@ -49,6 +49,18 @@ class NormativeBlockRequest(BaseModel):
     items: List[NormativeBlockItemIn]
 
 
+class RiskBlockItemIn(BaseModel):
+    hs_code: str
+    description: str = ""
+    country: str | None = None
+    destination_country: str | None = None
+    counterparty_name: str | None = None
+
+
+class RiskBlockRequest(BaseModel):
+    items: List[RiskBlockItemIn]
+
+
 @router.post("/normative-block")
 async def non_tariff_normative_block(
     req: NormativeBlockRequest,
@@ -77,6 +89,43 @@ async def non_tariff_normative_block(
     errors = any(r["non_tariff_status"] == "ERROR" for r in results)
     warnings = any(r["non_tariff_status"] == "WARNING" for r in results)
     overall = "ERROR" if errors else ("WARNING" if warnings else "OK")
+    return JSONResponse({"status": overall, "items": results})
+
+
+@router.post("/risk-block")
+async def non_tariff_risk_block(
+    req: RiskBlockRequest,
+    _user: dict = Depends(require_authenticated_user),
+) -> JSONResponse:
+    """Продуктовый блок санкций/рисков по позициям (без расчёта платежей)."""
+    if not req.items:
+        raise HTTPException(status_code=400, detail="Список позиций пуст")
+    from ..services.sanctions_risk_block import build_sanctions_risk_block
+
+    results: List[Dict[str, Any]] = []
+    for item in req.items:
+        block = build_sanctions_risk_block(
+            hs_code=item.hs_code,
+            description=item.description,
+            country=item.country,
+            destination_country=item.destination_country,
+            counterparty_name=item.counterparty_name,
+        )
+        results.append(
+            {
+                "hs_code": item.hs_code,
+                "description": item.description,
+                "country": item.country,
+                "counterparty_name": item.counterparty_name,
+                "risk_block": block.model_dump(),
+            }
+        )
+    order = {"CRITICAL": 3, "MANUAL_REVIEW": 2, "WARNING": 1, "OK": 0}
+    overall = "OK"
+    for r in results:
+        st = str((r.get("risk_block") or {}).get("status") or "OK")
+        if order.get(st, 0) > order.get(overall, 0):
+            overall = st
     return JSONResponse({"status": overall, "items": results})
 
 

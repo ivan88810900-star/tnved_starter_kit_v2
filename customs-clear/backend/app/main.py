@@ -44,6 +44,7 @@ from .api import (
     non_tariff,
     permits,
     regulatory,
+    risk,
     search,
     sources,
     trois,
@@ -199,6 +200,7 @@ app.include_router(assistant.router, prefix="/api/assistant", tags=["assistant"]
 app.include_router(assistant.chat_router, prefix="/api/v1/assistant", tags=["assistant-v1"])
 app.include_router(sources.router, prefix="/api/sources", tags=["sources"])
 app.include_router(compliance.router, prefix="/api/compliance", tags=["compliance"])
+app.include_router(risk.router, prefix="/api/risk", tags=["risk"])
 app.include_router(search.router, prefix="/api/search", tags=["search"])
 app.include_router(permits.router, prefix="/api/permits", tags=["permits"])
 app.include_router(alta_integrations.router, prefix="/api/integrations/alta", tags=["integrations-alta"])

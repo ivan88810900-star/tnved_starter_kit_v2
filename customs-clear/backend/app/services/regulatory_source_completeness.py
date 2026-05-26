@@ -118,6 +118,26 @@ def _count_db_probe(probe: str | None) -> int | None:
         if probe == "permits_fsa_usage":
             # Нет отдельной таблицы bulk — маркер «runtime-only»
             return -1
+        if probe == "ofac_sdn_list":
+            from ..models.core import OfacSdnList
+
+            return db.query(OfacSdnList).count()
+        if probe == "eu_sanctions_list":
+            from ..models.core import EuSanctionsList
+
+            return db.query(EuSanctionsList).count()
+        if probe == "sanction_import_risks":
+            from ..models.core import SanctionImportRisk
+
+            return db.query(SanctionImportRisk).count()
+        if probe == "country_risks":
+            from ..models.core import CountryRisk
+
+            return db.query(CountryRisk).count()
+        if probe == "geo_special_duties":
+            from ..models.core import GeoSpecialDuty
+
+            return db.query(GeoSpecialDuty).count()
     return None
 
 

@@ -16,6 +16,7 @@ from .non_tariff_rules import (
 from .normative_store import extract_tr_ts_act_codes, find_normative_notes_for_hs, lookup_tr_ts_acts_by_codes
 from .ntm_effective_requirements import build_effective_requirements
 from .normative_requirements_block import build_normative_requirements_block
+from .sanctions_risk_block import build_sanctions_risk_block
 from .permits_service import check_permits
 from .regulatory_layer import get_regulatory_documents_for_hs
 from .tr_ts_catalog import TR_TS_FULL_NAMES, get_full_ntm_requirements
@@ -444,4 +445,9 @@ async def check_position_non_tariff(
             legacy_v2_rules=legacy_v2_rules_informational,
         )
     result["normative_block"] = build_normative_requirements_block(result)
+    result["risk_block"] = build_sanctions_risk_block(
+        hs_code=hs_code,
+        description=description or "",
+        country=country,
+    ).model_dump()
     return result
