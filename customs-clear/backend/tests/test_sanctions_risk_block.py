@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+
 import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
@@ -53,7 +55,7 @@ def test_missing_sources_yield_manual_review(memory_sessionmaker: sessionmaker) 
     assert any("не настроены" in w.lower() or "ручная" in w.lower() for w in block.warnings)
 
 
-def test_clear_no_match_with_fixture_coverage(memory_sessionmaker: sessionmaker) -> None:
+def test_no_match_with_fixture_coverage_stays_manual_review(memory_sessionmaker: sessionmaker) -> None:
     with memory_sessionmaker() as db:
         load_sanctions_risk_fixture(db)
         block = build_sanctions_risk_block(
@@ -63,9 +65,11 @@ def test_clear_no_match_with_fixture_coverage(memory_sessionmaker: sessionmaker)
             db=db,
         )
     assert block.coverage_complete is True
-    assert block.overall_severity in {"clear", "low"}
-    assert block.status in {"OK", "WARNING"}
+    assert block.overall_severity == "manual_review_required"
+    assert block.status == "MANUAL_REVIEW"
     assert not block.signals
+    assert block.empty_message
+    assert any("manual-review" in w.lower() or "seed" in w.lower() for w in block.warnings)
 
 
 def test_positive_hs_sanction_match(memory_sessionmaker: sessionmaker) -> None:
@@ -132,6 +136,17 @@ def test_stale_partial_source_not_presented_as_clear(memory_sessionmaker: sessio
         )
     assert block.overall_severity == "manual_review_required"
     assert block.coverage_complete is False
+
+
+def test_product_details_does_not_hardcode_cn_country() -> None:
+    product_details = (
+        Path(__file__).resolve().parents[2]
+        / "frontend/src/components/tnved/ProductDetails.tsx"
+    )
+    source = product_details.read_text(encoding="utf-8")
+    risk_section = source.split("/non_tariff/risk-block", 1)[1].split(".then(", 1)[0]
+    assert "country: 'CN'" not in risk_section
+    assert 'country: "CN"' not in risk_section
 
 
 def test_risk_api_endpoint(memory_sessionmaker: sessionmaker) -> None:

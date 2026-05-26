@@ -79,6 +79,12 @@ _EMPTY_CLEAR_MESSAGE = (
     "Покрытие ограничено — при необходимости выполните расширенную проверку."
 )
 
+_MANUAL_REVIEW_NO_MATCH_MESSAGE = (
+    "По доступным локальным источникам (seed/fixture/manual-review) "
+    "явных санкционных сигналов не выявлено. "
+    "Источники требуют ручной верификации — результат не является «без риска»."
+)
+
 _COVERAGE_INCOMPLETE_MESSAGE = (
     "Источники санкционных данных не настроены или неполны для данной проверки. "
     "Результат не может быть интерпретирован как «без риска» — требуется ручная проверка."
@@ -301,6 +307,10 @@ def build_sanctions_risk_block(
         sanction_docs, _blocking = _check_sanction_risks(hs, country, item_data or None, session)
         signals = [_doc_to_signal(d) for d in sanction_docs]
 
+        manual_review_present = [
+            r for r in coverage_rows if r.manual_review_required and r.coverage_status == "present"
+        ]
+
         if signals:
             overall = _max_severity([s.severity for s in signals])
             empty_message = None
@@ -308,17 +318,16 @@ def build_sanctions_risk_block(
             overall = "manual_review_required"
             empty_message = _COVERAGE_INCOMPLETE_MESSAGE
             warnings.append(_COVERAGE_INCOMPLETE_MESSAGE)
+        elif manual_review_present:
+            overall = "manual_review_required"
+            empty_message = _MANUAL_REVIEW_NO_MATCH_MESSAGE
+            warnings.append(
+                "Данные санкционных источников имеют статус sample/seed/manual-review: "
+                "отсутствие совпадений не означает отсутствие риска."
+            )
         else:
             overall = "clear"
             empty_message = _EMPTY_CLEAR_MESSAGE
-
-        stale_like = [r for r in coverage_rows if r.manual_review_required and r.coverage_status != "present"]
-        if stale_like and overall == "clear":
-            overall = "low"
-            warnings.append(
-                "Часть санкционных источников помечена как требующая ручной верификации — "
-                "результат «без сигналов» не означает полное юридическое покрытие."
-            )
 
         block_status = _status_from_severity(overall)
 

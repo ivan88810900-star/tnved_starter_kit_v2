@@ -203,7 +203,6 @@ export const ProductDetails: React.FC<Props> = ({ selectedCode }) => {
             {
               hs_code: detail.code,
               description: (detail.name ?? detail.description ?? '').trim(),
-              country: 'CN',
             },
           ],
         },
