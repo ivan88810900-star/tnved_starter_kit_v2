@@ -113,24 +113,63 @@ def _source_configured(
     return any_configured, ", ".join(labels) if labels else None, authority
 
 
-def _sample_missing_codes(limit: int = 5) -> list[str]:
-    """Примеры 10-значных кодов каталога без строки hs_rates."""
-    with SessionLocal() as db:
+def _hs_rate_lookup_sets(db) -> frozenset[str]:
+    """Объединённый набор hs_code/hs_prefix для проверки покрытия (как find_rate_for_hs)."""
+    merged: set[str] = set()
+    for hs_code, hs_prefix in db.query(HsRate.hs_code, HsRate.hs_prefix).all():
+        if hs_code:
+            merged.add(_digits(hs_code))
+        if hs_prefix:
+            merged.add(_digits(hs_prefix))
+    return frozenset(merged)
+
+
+def _code_covered_by_hs_rates(code: str, lookup: frozenset[str]) -> bool:
+    c = _digits(code)
+    if len(c) < 10:
+        return False
+    for length in (10, 8, 6, 4, 2):
+        if len(c) >= length and c[:length] in lookup:
+            return True
+    return False
+
+
+def _full_tnved_duty_coverage(db) -> tuple[int, int, list[str]]:
+    """
+    Полное покрытие 10-значных кодов каталога ставками hs_rates (точное + префикс 10→2).
+
+    Returns (covered_count, total_count, missing_samples up to 5).
+    """
+    lookup = _hs_rate_lookup_sets(db)
+    commodity_codes = [
+        _digits(c)
+        for (c,) in db.query(Commodity.code).filter(func.length(Commodity.code) >= 10).all()
+        if _digits(c) and len(_digits(c)) >= 10
+    ]
+    if not commodity_codes:
         commodity_codes = [
             _digits(c)
-            for (c,) in db.query(Commodity.code).filter(func.length(Commodity.code) >= 10).limit(500).all()
-            if _digits(c)
+            for (c,) in db.query(TnvedEntry.hs_code).filter(TnvedEntry.level >= 10).all()
+            if _digits(c) and len(_digits(c)) >= 10
         ]
-        if not commodity_codes:
-            commodity_codes = [
-                _digits(c)
-                for (c,) in db.query(TnvedEntry.hs_code).filter(TnvedEntry.level >= 10).limit(500).all()
-                if _digits(c)
-            ]
-        if not commodity_codes:
-            return []
-        hs_set = {_digits(r.hs_code) for r in db.query(HsRate.hs_code).all()}
-        missing = [c for c in commodity_codes if c not in hs_set and not any(c.startswith(p) for p in hs_set)]
+    unique = sorted(set(commodity_codes))
+    if not unique:
+        return 0, 0, []
+
+    missing_samples: list[str] = []
+    covered = 0
+    for code in unique:
+        if _code_covered_by_hs_rates(code, lookup):
+            covered += 1
+        elif len(missing_samples) < 5:
+            missing_samples.append(code)
+    return covered, len(unique), missing_samples
+
+
+def _sample_missing_codes(limit: int = 5) -> list[str]:
+    """Примеры кодов без hs_rates — только иллюстрация, не основание для status."""
+    with SessionLocal() as db:
+        _covered, _total, missing = _full_tnved_duty_coverage(db)
         return missing[:limit]
 
 
@@ -188,21 +227,12 @@ def diagnose_duty_rates() -> CoverageDomainSummary:
     with SessionLocal() as db:
         hs_count = db.query(HsRate).count()
         duty_rules = db.query(HsDutyRule).count()
-        commodity_total = db.query(Commodity).count()
-        ten_digit_commodities = (
-            db.query(Commodity)
-            .filter(func.length(Commodity.code) >= 10)
-            .count()
-        )
+        covered_codes, total_codes, missing_samples = _full_tnved_duty_coverage(db)
 
     label, authority = _registry_label("eec_ett_tnved")
     eec = _lookup_source_status("EEC_ETT")
     last_ok = _latest_sync_ok("EEC_ETT")
     gaps: list[str] = []
-    missing_samples = _sample_missing_codes()
-
-    covered = hs_count
-    total = max(ten_digit_commodities, commodity_total, hs_count)
 
     if hs_count == 0:
         status = "missing"
@@ -213,9 +243,15 @@ def diagnose_duty_rates() -> CoverageDomainSummary:
     elif hs_count < _EXPECTED_HS_RATES_MIN:
         status = "partial"
         gaps.append(f"Мало строк hs_rates ({hs_count} < {_EXPECTED_HS_RATES_MIN}).")
-    elif missing_samples and ten_digit_commodities > hs_count:
+    elif total_codes > 0 and covered_codes < total_codes:
         status = "partial"
-        gaps.append("Часть кодов каталога не имеет строки hs_rates.")
+        gaps.append(
+            f"Покрыто hs_rates: {covered_codes}/{total_codes} полных кодов каталога "
+            f"(без ставки: {total_codes - covered_codes})."
+        )
+    elif total_codes == 0 and hs_count < _EXPECTED_HS_RATES_MIN:
+        status = "partial"
+        gaps.append("Нет 10-значных кодов в каталоге для проверки полноты покрытия.")
     else:
         status = "present"
 
@@ -226,8 +262,8 @@ def diagnose_duty_rates() -> CoverageDomainSummary:
     return CoverageDomainSummary(
         status=status,
         count=hs_count,
-        covered_codes=covered,
-        total_codes=total if total else None,
+        covered_codes=covered_codes if total_codes else hs_count,
+        total_codes=total_codes if total_codes else None,
         manual_review_required=manual,
         source_label=label or "hs_rates / hs_duty_rules (ЕТТ ЕАЭС)",
         authority_level=authority,
@@ -390,6 +426,36 @@ def diagnose_trade_remedies() -> CoverageDomainSummary:
     )
 
 
+_CBR_SYNC_SOURCE_CODES: tuple[str, ...] = ("CBR", "CBRF", "EXCHANGE_RATES", "cbr_exchange_rates")
+
+
+def _rates_match_fallback_constants(rows: list[ExchangeRate]) -> bool:
+    """True, если все TRACKED-валюты совпадают с константами FALLBACK (типичный offline upsert)."""
+    by_code = {r.currency_code: float(r.rate) for r in rows if r.currency_code in TRACKED}
+    if len(by_code) < len(TRACKED):
+        return False
+    return all(abs(by_code[code] - FALLBACK[code]) <= 0.001 for code in TRACKED)
+
+
+def _cbr_sync_proven() -> tuple[bool, str | None]:
+    """Доказательство успешного CBR sync — только sync-log / source_status, не updated_at."""
+    for code in _CBR_SYNC_SOURCE_CODES:
+        synced_at = _latest_sync_ok(code)
+        if synced_at:
+            return True, synced_at
+    for code in _CBR_SYNC_SOURCE_CODES:
+        st = _lookup_source_status(code)
+        if st and not st.is_stale and (st.revision or "") not in (
+            "unavailable",
+            "seed",
+            "unknown",
+            "fallback",
+        ):
+            if st.synced_at:
+                return True, st.synced_at.isoformat()
+    return False, None
+
+
 def diagnose_exchange_rates() -> CoverageDomainSummary:
     with SessionLocal() as db:
         rows = db.query(ExchangeRate).order_by(ExchangeRate.updated_at.desc()).all()
@@ -397,32 +463,55 @@ def diagnose_exchange_rates() -> CoverageDomainSummary:
     tracked_present = {r.currency_code for r in rows if r.currency_code in TRACKED}
     latest_at: datetime | None = max((r.updated_at for r in rows if r.updated_at), default=None)
     gaps: list[str] = []
+    notes: list[str] = []
+    cbr_proven, cbr_sync_at = _cbr_sync_proven()
+    matches_fallback = _rates_match_fallback_constants(rows)
 
     if not rows:
         status = "missing"
         gaps.append("Таблица exchange_rates пуста — используется только FALLBACK из кода.")
+        authority = "official_reference"
     elif len(tracked_present) < len(TRACKED):
         status = "partial"
         missing_ccy = sorted(set(TRACKED) - tracked_present)
         gaps.append(f"Нет курсов для: {', '.join(missing_ccy)}.")
+        authority = "official_reference"
     elif latest_at and latest_at < datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(
         days=_EXCHANGE_RATE_STALE_DAYS
     ):
         status = "stale"
         gaps.append(f"Последнее обновление старше {_EXCHANGE_RATE_STALE_DAYS} дней.")
+        authority = "official_reference"
+    elif matches_fallback:
+        status = "partial"
+        gaps.append(
+            "Курсы в exchange_rates совпадают с константами FALLBACK — "
+            "нет доказательства успешного CBR sync."
+        )
+        authority = "legacy_seed"
+        notes.append("Вероятный источник: fallback/local constant, не live ЦБ.")
+    elif not cbr_proven:
+        status = "manual_review_required"
+        gaps.append(
+            "Нельзя подтвердить, что exchange_rates загружены из успешного CBR sync "
+            "(в модели нет поля source; нет записи sync-log/source_status)."
+        )
+        authority = "official_reference"
+        notes.append("Свежие строки в БД ≠ официальное покрытие ЦБ без provenance.")
     else:
         status = "present"
+        authority = "official_binding"
 
-    manual = status in {"missing", "partial", "stale"}
+    manual = status in {"missing", "partial", "stale", "manual_review_required"}
     return CoverageDomainSummary(
         status=status,
         count=len(rows),
         manual_review_required=manual,
-        source_label="ЦБ РФ (CBR XML) + local_cache fallback",
-        authority_level="official_binding",
-        last_successful_sync_at=latest_at.isoformat() if latest_at else None,
+        source_label="ЦБ РФ (CBR XML) — требуется подтверждённый sync",
+        authority_level=authority,
+        last_successful_sync_at=cbr_sync_at or (latest_at.isoformat() if latest_at else None),
         gaps=gaps,
-        notes=[f"FALLBACK в коде: {', '.join(sorted(FALLBACK))}"] if not rows else [],
+        notes=notes or ([f"FALLBACK в коде: {', '.join(sorted(FALLBACK))}"] if not rows else []),
     )
 
 

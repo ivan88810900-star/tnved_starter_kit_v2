@@ -198,12 +198,53 @@ class TestPaymentDataCoverageFreshExchangeRates(unittest.TestCase):
     def tearDown(self) -> None:
         self._patch.stop()
 
-    def test_fresh_exchange_rates_present(self) -> None:
+    def test_fresh_exchange_rates_without_cbr_proof_not_present(self) -> None:
         from app.services.payment_data_coverage import diagnose_exchange_rates
 
         fx = diagnose_exchange_rates()
-        self.assertEqual(fx.status, "present")
-        self.assertIsNotNone(fx.last_successful_sync_at)
+        self.assertNotEqual(fx.status, "present")
+        self.assertIn(fx.status, ("partial", "manual_review_required"))
+        self.assertTrue(fx.manual_review_required)
+        self.assertNotEqual(fx.authority_level, "official_binding")
+
+
+class TestPaymentDataCoverageFullDutyScan(unittest.TestCase):
+    """Полный проход по каталогу: gap вне sample-окна → partial, не present."""
+
+    def setUp(self) -> None:
+        self.sm = _memory_sessionmaker()
+        base = 6_000_000_000
+        with self.sm() as db:
+            for i in range(600):
+                code = f"{base + i:010d}"
+                db.add(TnvedEntry(hs_code=code, level=10, title=f"pos {i}"))
+            for i in range(500):
+                code = f"{base + i:010d}"
+                db.add(
+                    HsRate(
+                        hs_code=code,
+                        hs_prefix=code,
+                        duty_rate="5%",
+                        vat_import_rate=22.0,
+                    )
+                )
+            db.commit()
+
+        self._patch = unittest.mock.patch(
+            "app.services.payment_data_coverage.SessionLocal",
+            self.sm,
+        )
+        self._patch.start()
+
+    def tearDown(self) -> None:
+        self._patch.stop()
+
+    def test_partial_when_gap_outside_sample_window(self) -> None:
+        duty = diagnose_duty_rates()
+        self.assertEqual(duty.status, "partial")
+        self.assertEqual(duty.covered_codes, 500)
+        self.assertEqual(duty.total_codes, 600)
+        self.assertEqual(len(duty.missing_samples or []), 5)
 
 
 @unittest.skipUnless(_API_OK, "fastapi not installed")
