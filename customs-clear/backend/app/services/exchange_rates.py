@@ -51,6 +51,11 @@ async def fetch_cbr_rates() -> tuple[str, dict[str, tuple[float, float]]]:
     return _parse_cbr_xml(resp.text)
 
 
+def _missing_tracked_currencies(rows: dict[str, tuple[float, float]]) -> list[str]:
+    """Валюты TRACKED, отсутствующие в ответе CBR XML (до добивки FALLBACK в upsert)."""
+    return [code for code in TRACKED if code not in rows]
+
+
 def _upsert_rates(rows: dict[str, tuple[float, float]]) -> int:
     changed = 0
     now = utc_now_naive()
@@ -125,6 +130,20 @@ def _record_cbrf_sync_fallback(error: str, rows_updated: int) -> None:
 async def update_exchange_rates_from_cbrf() -> dict[str, object]:
     try:
         date_key, rows = await fetch_cbr_rates()
+        missing = _missing_tracked_currencies(rows)
+        if missing:
+            changed = _upsert_rates(rows)
+            _record_cbrf_sync_fallback(
+                f"CBRF XML incomplete, missing tracked currencies: {', '.join(missing)}",
+                changed,
+            )
+            return {
+                "status": "OK",
+                "source": "fallback",
+                "date": date_key,
+                "updated": changed,
+                "missing_currencies": missing,
+            }
         changed = _upsert_rates(rows)
         _record_cbrf_sync_success(date_key, changed)
         return {"status": "OK", "source": "CBRF", "date": date_key, "updated": changed}

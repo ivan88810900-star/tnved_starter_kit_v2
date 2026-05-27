@@ -331,6 +331,52 @@ class TestExchangeRatesCbrfProvenanceRecording(unittest.IsolatedAsyncioTestCase)
             patch_norm.stop()
             patch_ex.stop()
 
+    async def test_partial_cbr_xml_does_not_record_ok_provenance(self) -> None:
+        sm = _memory_sessionmaker()
+        partial_rows = {"USD": (95.0, 1.0), "EUR": (101.0, 1.0)}
+
+        patch_ex = unittest.mock.patch("app.services.exchange_rates.SessionLocal", sm)
+        patch_norm = unittest.mock.patch("app.services.normative_store.SessionLocal", sm)
+        patch_fetch = unittest.mock.patch(
+            "app.services.exchange_rates.fetch_cbr_rates",
+            unittest.mock.AsyncMock(return_value=("2026-05-21", partial_rows)),
+        )
+        patch_ex.start()
+        patch_norm.start()
+        patch_fetch.start()
+        try:
+            result = await update_exchange_rates_from_cbrf()
+            self.assertEqual(result["source"], "fallback")
+            self.assertEqual(result.get("missing_currencies"), ["CNY", "BYN", "KZT"])
+
+            with sm() as db:
+                ok_logs = (
+                    db.query(SyncLog)
+                    .filter(
+                        SyncLog.source_code == CBRF_SOURCE_CODE,
+                        SyncLog.status == "OK",
+                    )
+                    .count()
+                )
+                self.assertEqual(ok_logs, 0)
+
+            patch_cov = unittest.mock.patch(
+                "app.services.payment_data_coverage.SessionLocal",
+                sm,
+            )
+            patch_cov.start()
+            try:
+                fx = diagnose_exchange_rates()
+                self.assertNotEqual(fx.status, "present")
+                self.assertIn(fx.status, ("partial", "manual_review_required"))
+                self.assertNotEqual(fx.authority_level, "official_binding")
+            finally:
+                patch_cov.stop()
+        finally:
+            patch_fetch.stop()
+            patch_norm.stop()
+            patch_ex.stop()
+
 
 class TestPaymentDataCoverageFullDutyScan(unittest.TestCase):
     """Полный проход по каталогу: gap вне sample-окна → partial, не present."""
