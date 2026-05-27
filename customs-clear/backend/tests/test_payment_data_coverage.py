@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import unittest
 import unittest.mock
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
@@ -243,6 +243,62 @@ class TestPaymentDataCoverageFreshExchangeRates(unittest.TestCase):
         self.assertEqual(fx.status, "present")
         self.assertEqual(fx.authority_level, "official_binding")
         self.assertFalse(fx.manual_review_required)
+
+    def test_stale_source_status_overrides_older_ok_sync_log(self) -> None:
+        """Свежий fallback/stale SourceStatus не должен перебиваться старым SyncLog OK."""
+        t0 = datetime.now(timezone.utc).replace(tzinfo=None)
+        t1 = t0 + timedelta(minutes=5)
+        with self.sm() as db:
+            for row in db.query(ExchangeRate).all():
+                row.updated_at = t1
+                row.rate = 90.0 + hash(row.currency_code) % 7
+            db.add(
+                SourceStatus(
+                    source_code=CBRF_SOURCE_CODE,
+                    source_name="CBRF test",
+                    source_url="https://www.cbr.ru/",
+                    revision="cbrf:2026-05-20",
+                    synced_at=t0,
+                    is_stale=False,
+                    note="old ok",
+                )
+            )
+            db.add(
+                SyncLog(
+                    source_code=CBRF_SOURCE_CODE,
+                    synced_at=t0,
+                    status="OK",
+                    revision="cbrf:2026-05-20",
+                    rows_affected=5,
+                    note="old ok",
+                )
+            )
+            db.commit()
+            st = (
+                db.query(SourceStatus)
+                .filter(SourceStatus.source_code == CBRF_SOURCE_CODE)
+                .one()
+            )
+            st.revision = "fallback"
+            st.is_stale = True
+            st.synced_at = t1
+            st.note = "newer fallback"
+            db.add(
+                SyncLog(
+                    source_code=CBRF_SOURCE_CODE,
+                    synced_at=t1,
+                    status="ERROR",
+                    revision="fallback",
+                    rows_affected=5,
+                    note="newer fallback",
+                )
+            )
+            db.commit()
+
+        fx = diagnose_exchange_rates()
+        self.assertNotEqual(fx.status, "present")
+        self.assertIn(fx.status, ("partial", "manual_review_required"))
+        self.assertNotEqual(fx.authority_level, "official_binding")
 
     def test_fallback_constants_not_present(self) -> None:
         now = datetime.now(timezone.utc).replace(tzinfo=None)

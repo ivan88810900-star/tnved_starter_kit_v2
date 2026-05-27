@@ -426,7 +426,37 @@ def diagnose_trade_remedies() -> CoverageDomainSummary:
     )
 
 
-_CBR_SYNC_SOURCE_CODES: tuple[str, ...] = ("CBR", "CBRF", "EXCHANGE_RATES", "cbr_exchange_rates")
+_CBR_SYNC_SOURCE_CODES: tuple[str, ...] = ("CBRF", "cbr_exchange_rates", "CBR", "EXCHANGE_RATES")
+_INVALID_CBR_REVISIONS: frozenset[str] = frozenset(
+    {"unavailable", "seed", "unknown", "fallback", "partial"}
+)
+
+
+def _source_status_proves_cbr(st: SourceStatus | None) -> tuple[bool, str | None]:
+    """Latest SourceStatus — primary truth for CBRF provenance."""
+    if st is None:
+        return False, None
+    revision = (st.revision or "").strip().lower()
+    if st.is_stale or revision in _INVALID_CBR_REVISIONS:
+        return False, None
+    if revision.startswith("cbrf:"):
+        synced = st.synced_at.isoformat() if st.synced_at else None
+        return True, synced
+    return False, None
+
+
+def _latest_sync_log_proves_cbr(code: str) -> tuple[bool, str | None]:
+    """Только самый свежий log-entry; старый OK не перебивает новый ERROR/fallback."""
+    rows = list_sync_log(source_code=code, limit=1)
+    if not rows:
+        return False, None
+    row = rows[0]
+    status = (row.get("status") or "").upper()
+    revision = (row.get("revision") or "").strip().lower()
+    synced_at = row.get("synced_at")
+    if status == "OK" and revision.startswith("cbrf:") and revision not in _INVALID_CBR_REVISIONS:
+        return True, synced_at
+    return False, synced_at
 
 
 def _rates_match_fallback_constants(rows: list[ExchangeRate]) -> bool:
@@ -438,21 +468,21 @@ def _rates_match_fallback_constants(rows: list[ExchangeRate]) -> bool:
 
 
 def _cbr_sync_proven() -> tuple[bool, str | None]:
-    """Доказательство успешного CBR sync — только sync-log / source_status, не updated_at."""
-    for code in _CBR_SYNC_SOURCE_CODES:
-        synced_at = _latest_sync_ok(code)
-        if synced_at:
-            return True, synced_at
+    """
+    CBR proof только при актуальном (latest) успешном состоянии CBRF.
+
+    SourceStatus имеет приоритет; при stale/fallback/error не смотрим старые OK в SyncLog.
+    """
     for code in _CBR_SYNC_SOURCE_CODES:
         st = _lookup_source_status(code)
-        if st and not st.is_stale and (st.revision or "") not in (
-            "unavailable",
-            "seed",
-            "unknown",
-            "fallback",
-        ):
-            if st.synced_at:
-                return True, st.synced_at.isoformat()
+        if st is not None:
+            proven, synced_at = _source_status_proves_cbr(st)
+            if proven:
+                return True, synced_at
+            return False, None
+        proven, synced_at = _latest_sync_log_proves_cbr(code)
+        if proven:
+            return True, synced_at
     return False, None
 
 
