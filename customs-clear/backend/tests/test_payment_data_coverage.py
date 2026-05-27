@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import unittest
 import unittest.mock
-from datetime import datetime
+from datetime import datetime, timezone
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
@@ -15,9 +15,11 @@ from app.main import app
 from app.models.core import ExchangeRate, GeoSpecialDuty, HsRate, SourceStatus, SyncLog, TnvedEntry
 from app.models.tnved import Chapter, Commodity, HsDutyRule, Section, SpecialDuty, VatPreference
 from app.services.normative_store import init_db
+from app.services.exchange_rates import CBRF_SOURCE_CODE, FALLBACK, TRACKED, update_exchange_rates_from_cbrf
 from app.services.payment_data_coverage import (
     diagnose_duty_rates,
     diagnose_excise,
+    diagnose_exchange_rates,
     diagnose_trade_remedies,
     run_payment_data_coverage_report,
 )
@@ -176,9 +178,9 @@ class TestPaymentDataCoverageUnknownTradeRemedySources(unittest.TestCase):
 class TestPaymentDataCoverageFreshExchangeRates(unittest.TestCase):
     def setUp(self) -> None:
         self.sm = _memory_sessionmaker()
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc).replace(tzinfo=None)
         with self.sm() as db:
-            for code in ("USD", "EUR", "CNY", "BYN", "KZT"):
+            for code in TRACKED:
                 db.add(
                     ExchangeRate(
                         currency_code=code,
@@ -189,23 +191,145 @@ class TestPaymentDataCoverageFreshExchangeRates(unittest.TestCase):
                 )
             db.commit()
 
-        self._patch = unittest.mock.patch(
+        self._patch_cov = unittest.mock.patch(
             "app.services.payment_data_coverage.SessionLocal",
             self.sm,
         )
-        self._patch.start()
+        self._patch_norm = unittest.mock.patch(
+            "app.services.normative_store.SessionLocal",
+            self.sm,
+        )
+        self._patch_cov.start()
+        self._patch_norm.start()
 
     def tearDown(self) -> None:
-        self._patch.stop()
+        self._patch_norm.stop()
+        self._patch_cov.stop()
 
     def test_fresh_exchange_rates_without_cbr_proof_not_present(self) -> None:
-        from app.services.payment_data_coverage import diagnose_exchange_rates
-
         fx = diagnose_exchange_rates()
         self.assertNotEqual(fx.status, "present")
         self.assertIn(fx.status, ("partial", "manual_review_required"))
         self.assertTrue(fx.manual_review_required)
         self.assertNotEqual(fx.authority_level, "official_binding")
+
+    def test_cbrf_provenance_allows_present(self) -> None:
+        now = datetime.now(timezone.utc).replace(tzinfo=None)
+        with self.sm() as db:
+            db.add(
+                SourceStatus(
+                    source_code=CBRF_SOURCE_CODE,
+                    source_name="CBRF test",
+                    source_url="https://www.cbr.ru/",
+                    revision="cbrf:2026-05-21",
+                    synced_at=now,
+                    is_stale=False,
+                    note="test",
+                )
+            )
+            db.add(
+                SyncLog(
+                    source_code=CBRF_SOURCE_CODE,
+                    synced_at=now,
+                    status="OK",
+                    revision="cbrf:2026-05-21",
+                    rows_affected=5,
+                    note="test",
+                )
+            )
+            db.commit()
+
+        fx = diagnose_exchange_rates()
+        self.assertEqual(fx.status, "present")
+        self.assertEqual(fx.authority_level, "official_binding")
+        self.assertFalse(fx.manual_review_required)
+
+    def test_fallback_constants_not_present(self) -> None:
+        now = datetime.now(timezone.utc).replace(tzinfo=None)
+        with self.sm() as db:
+            db.query(ExchangeRate).delete()
+            for code in TRACKED:
+                db.add(
+                    ExchangeRate(
+                        currency_code=code,
+                        rate=FALLBACK[code],
+                        nominal=1.0,
+                        updated_at=now,
+                    )
+                )
+            db.commit()
+
+        fx = diagnose_exchange_rates()
+        self.assertNotEqual(fx.status, "present")
+        self.assertIn(fx.status, ("partial", "manual_review_required"))
+        self.assertTrue(fx.manual_review_required)
+
+
+class TestExchangeRatesCbrfProvenanceRecording(unittest.IsolatedAsyncioTestCase):
+    async def test_successful_update_records_provenance_and_allows_present(self) -> None:
+        sm = _memory_sessionmaker()
+        live_rows = {code: (90.0 + idx, 1.0) for idx, code in enumerate(TRACKED)}
+
+        patch_ex = unittest.mock.patch("app.services.exchange_rates.SessionLocal", sm)
+        patch_norm = unittest.mock.patch("app.services.normative_store.SessionLocal", sm)
+        patch_fetch = unittest.mock.patch(
+            "app.services.exchange_rates.fetch_cbr_rates",
+            unittest.mock.AsyncMock(return_value=("2026-05-21", live_rows)),
+        )
+        patch_ex.start()
+        patch_norm.start()
+        patch_fetch.start()
+        try:
+            result = await update_exchange_rates_from_cbrf()
+            self.assertEqual(result["source"], "CBRF")
+
+            patch_cov = unittest.mock.patch(
+                "app.services.payment_data_coverage.SessionLocal",
+                sm,
+            )
+            patch_cov.start()
+            try:
+                fx = diagnose_exchange_rates()
+                self.assertEqual(fx.status, "present")
+                self.assertEqual(fx.authority_level, "official_binding")
+            finally:
+                patch_cov.stop()
+        finally:
+            patch_fetch.stop()
+            patch_norm.stop()
+            patch_ex.stop()
+
+    async def test_fallback_update_does_not_allow_present(self) -> None:
+        sm = _memory_sessionmaker()
+
+        patch_ex = unittest.mock.patch("app.services.exchange_rates.SessionLocal", sm)
+        patch_norm = unittest.mock.patch("app.services.normative_store.SessionLocal", sm)
+        patch_fetch = unittest.mock.patch(
+            "app.services.exchange_rates.fetch_cbr_rates",
+            unittest.mock.AsyncMock(side_effect=RuntimeError("network down")),
+        )
+        patch_ex.start()
+        patch_norm.start()
+        patch_fetch.start()
+        try:
+            result = await update_exchange_rates_from_cbrf()
+            self.assertEqual(result["source"], "fallback")
+
+            patch_cov = unittest.mock.patch(
+                "app.services.payment_data_coverage.SessionLocal",
+                sm,
+            )
+            patch_cov.start()
+            try:
+                fx = diagnose_exchange_rates()
+                self.assertNotEqual(fx.status, "present")
+                self.assertIn(fx.status, ("partial", "manual_review_required"))
+            finally:
+                patch_cov.stop()
+        finally:
+            patch_fetch.stop()
+            patch_norm.stop()
+            patch_ex.stop()
 
 
 class TestPaymentDataCoverageFullDutyScan(unittest.TestCase):

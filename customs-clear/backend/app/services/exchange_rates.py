@@ -10,6 +10,8 @@ from ..db import SessionLocal
 from ..models.core import ExchangeRate
 
 CBR_DAILY_URL = "https://www.cbr.ru/scripts/XML_daily.asp"
+CBRF_SOURCE_CODE = "CBRF"
+CBRF_SOURCE_NAME = "Курсы валют ЦБ РФ (XML daily)"
 TRACKED = ("USD", "EUR", "CNY", "BYN", "KZT")
 FALLBACK: dict[str, float] = {
     "USD": 92.0,
@@ -75,14 +77,61 @@ def _upsert_rates(rows: dict[str, tuple[float, float]]) -> int:
     return changed
 
 
+def _record_cbrf_sync_success(date_key: str, rows_updated: int) -> None:
+    """Provenance для payment_data_coverage: успешный live CBRF sync."""
+    from .normative_store import append_sync_log, upsert_source_status
+
+    revision = f"cbrf:{date_key}"
+    note = f"CBRF XML sync OK, currencies={len(TRACKED)}, updated={rows_updated}"
+    upsert_source_status(
+        source_code=CBRF_SOURCE_CODE,
+        source_name=CBRF_SOURCE_NAME,
+        source_url=CBR_DAILY_URL,
+        revision=revision,
+        is_stale=False,
+        note=note,
+    )
+    append_sync_log(
+        source_code=CBRF_SOURCE_CODE,
+        status="OK",
+        revision=revision,
+        rows_affected=rows_updated,
+        note=note,
+    )
+
+
+def _record_cbrf_sync_fallback(error: str, rows_updated: int) -> None:
+    """Provenance при fallback — не считается official CBR coverage."""
+    from .normative_store import append_sync_log, upsert_source_status
+
+    note = f"CBRF fetch failed, used FALLBACK constants: {error[:200]}"
+    upsert_source_status(
+        source_code=CBRF_SOURCE_CODE,
+        source_name=CBRF_SOURCE_NAME,
+        source_url=CBR_DAILY_URL,
+        revision="fallback",
+        is_stale=True,
+        note=note,
+    )
+    append_sync_log(
+        source_code=CBRF_SOURCE_CODE,
+        status="ERROR",
+        revision="fallback",
+        rows_affected=rows_updated,
+        note=note,
+    )
+
+
 async def update_exchange_rates_from_cbrf() -> dict[str, object]:
     try:
         date_key, rows = await fetch_cbr_rates()
         changed = _upsert_rates(rows)
+        _record_cbrf_sync_success(date_key, changed)
         return {"status": "OK", "source": "CBRF", "date": date_key, "updated": changed}
-    except Exception:
+    except Exception as exc:
         fallback_rows = {k: (v, 1.0) for k, v in FALLBACK.items() if k in TRACKED}
         changed = _upsert_rates(fallback_rows)
+        _record_cbrf_sync_fallback(str(exc), changed)
         return {"status": "OK", "source": "fallback", "date": datetime.now().strftime("%Y-%m-%d"), "updated": changed}
 
 
