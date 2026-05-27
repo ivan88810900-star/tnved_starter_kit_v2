@@ -11,6 +11,7 @@ from ..services.regulatory_source_completeness import (
     list_registry_snapshot,
     run_regulatory_source_completeness_report,
 )
+from ..services.payment_data_coverage import run_payment_data_coverage_report
 from ..services.normative_bundle import import_normative_bundle_bytes
 from ..services.source_import import import_normative_file
 from ..services.source_sync import sync_all_sources, sync_normative_bundle_url
@@ -55,6 +56,12 @@ async def sources_registry() -> JSONResponse:
 async def sources_completeness() -> JSONResponse:
     """Gap-отчёт полноты нормативных источников: missing/stale/partial/parser_failed."""
     return JSONResponse(run_regulatory_source_completeness_report())
+
+
+@router.get("/payment-coverage")
+async def sources_payment_coverage() -> JSONResponse:
+    """Диагностика покрытия ТН ВЭД, тарифов, НДС, акциза, торговых мер и курсов валют."""
+    return JSONResponse(run_payment_data_coverage_report())
 
 
 @router.get("/log")
