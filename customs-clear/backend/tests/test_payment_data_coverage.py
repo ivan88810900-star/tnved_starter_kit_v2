@@ -300,6 +300,38 @@ class TestPaymentDataCoverageFreshExchangeRates(unittest.TestCase):
         self.assertIn(fx.status, ("partial", "manual_review_required"))
         self.assertNotEqual(fx.authority_level, "official_binding")
 
+    def test_newest_sync_log_across_aliases_blocks_stale_ok(self) -> None:
+        """Свежий ERROR под CBRF не перебивается старым OK под CBR/EXCHANGE_RATES."""
+        t0 = datetime.now(timezone.utc).replace(tzinfo=None)
+        t1 = t0 + timedelta(minutes=10)
+        with self.sm() as db:
+            db.add(
+                SyncLog(
+                    source_code="CBR",
+                    synced_at=t0,
+                    status="OK",
+                    revision="cbrf:2026-05-01",
+                    rows_affected=5,
+                    note="stale ok under alias CBR",
+                )
+            )
+            db.add(
+                SyncLog(
+                    source_code=CBRF_SOURCE_CODE,
+                    synced_at=t1,
+                    status="ERROR",
+                    revision="fallback",
+                    rows_affected=5,
+                    note="newer fallback under CBRF",
+                )
+            )
+            db.commit()
+
+        fx = diagnose_exchange_rates()
+        self.assertNotEqual(fx.status, "present")
+        self.assertIn(fx.status, ("partial", "manual_review_required"))
+        self.assertNotEqual(fx.authority_level, "official_binding")
+
     def test_fallback_constants_not_present(self) -> None:
         now = datetime.now(timezone.utc).replace(tzinfo=None)
         with self.sm() as db:

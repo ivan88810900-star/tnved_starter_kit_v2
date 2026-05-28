@@ -445,18 +445,58 @@ def _source_status_proves_cbr(st: SourceStatus | None) -> tuple[bool, str | None
     return False, None
 
 
-def _latest_sync_log_proves_cbr(code: str) -> tuple[bool, str | None]:
-    """Только самый свежий log-entry; старый OK не перебивает новый ERROR/fallback."""
-    rows = list_sync_log(source_code=code, limit=1)
-    if not rows:
+def _parse_sync_log_synced_at(raw: str | None) -> datetime | None:
+    if not raw:
+        return None
+    try:
+        return datetime.fromisoformat(str(raw).replace("Z", "+00:00")).replace(tzinfo=None)
+    except ValueError:
+        return None
+
+
+def _sync_log_row_proves_cbr(row: dict[str, Any] | None) -> tuple[bool, str | None]:
+    """Provenance только если эта (latest) запись — успешный CBRF sync."""
+    if not row:
         return False, None
-    row = rows[0]
     status = (row.get("status") or "").upper()
     revision = (row.get("revision") or "").strip().lower()
     synced_at = row.get("synced_at")
     if status == "OK" and revision.startswith("cbrf:") and revision not in _INVALID_CBR_REVISIONS:
         return True, synced_at
     return False, synced_at
+
+
+def _newest_cbr_source_status() -> SourceStatus | None:
+    """Самый свежий SourceStatus среди CBR aliases (если есть)."""
+    newest: SourceStatus | None = None
+    newest_at: datetime | None = None
+    for code in _CBR_SYNC_SOURCE_CODES:
+        st = _lookup_source_status(code)
+        if st is None:
+            continue
+        at = st.synced_at
+        if newest is None or (at is not None and (newest_at is None or at > newest_at)):
+            newest = st
+            newest_at = at
+    return newest
+
+
+def _newest_cbr_sync_log_entry() -> dict[str, Any] | None:
+    """Самая свежая SyncLog-запись среди всех CBR aliases — одно решение, без старых OK."""
+    newest: dict[str, Any] | None = None
+    newest_at: datetime | None = None
+    for code in _CBR_SYNC_SOURCE_CODES:
+        rows = list_sync_log(source_code=code, limit=1)
+        if not rows:
+            continue
+        row = rows[0]
+        at = _parse_sync_log_synced_at(row.get("synced_at"))
+        if newest is None or (at is not None and (newest_at is None or at > newest_at)):
+            newest = row
+            newest_at = at
+        elif newest is None and at is None:
+            newest = row
+    return newest
 
 
 def _rates_match_fallback_constants(rows: list[ExchangeRate]) -> bool:
@@ -471,19 +511,13 @@ def _cbr_sync_proven() -> tuple[bool, str | None]:
     """
     CBR proof только при актуальном (latest) успешном состоянии CBRF.
 
-    SourceStatus имеет приоритет; при stale/fallback/error не смотрим старые OK в SyncLog.
+    SourceStatus (newest among aliases) имеет приоритет.
+    Без SourceStatus — одна newest SyncLog среди всех aliases; старый OK под другим code не учитывается.
     """
-    for code in _CBR_SYNC_SOURCE_CODES:
-        st = _lookup_source_status(code)
-        if st is not None:
-            proven, synced_at = _source_status_proves_cbr(st)
-            if proven:
-                return True, synced_at
-            return False, None
-        proven, synced_at = _latest_sync_log_proves_cbr(code)
-        if proven:
-            return True, synced_at
-    return False, None
+    st = _newest_cbr_source_status()
+    if st is not None:
+        return _source_status_proves_cbr(st)
+    return _sync_log_row_proves_cbr(_newest_cbr_sync_log_entry())
 
 
 def diagnose_exchange_rates() -> CoverageDomainSummary:
