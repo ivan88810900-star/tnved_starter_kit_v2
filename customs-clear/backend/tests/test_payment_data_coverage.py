@@ -295,6 +295,41 @@ class TestPaymentDataCoverageFreshExchangeRates(unittest.TestCase):
         self.assertIn(fx.status, ("partial", "manual_review_required"))
         self.assertNotEqual(fx.authority_level, "official_binding")
 
+    def test_stale_provenance_does_not_prove_newer_mixed_rates(self) -> None:
+        """Старый cbrf:* SourceStatus не доказывает exchange_rates, обновлённые позже (mixed)."""
+        t0 = datetime.now(timezone.utc).replace(tzinfo=None)
+        t1 = t0 + timedelta(hours=1)
+        with self.sm() as db:
+            db.add(
+                SourceStatus(
+                    source_code=CBRF_SOURCE_CODE,
+                    source_name="CBRF test",
+                    source_url="https://www.cbr.ru/",
+                    revision="cbrf:2026-05-01",
+                    synced_at=t0,
+                    is_stale=False,
+                    note="old ok provenance",
+                )
+            )
+            for code in TRACKED:
+                rate = FALLBACK[code] if code in ("CNY", "BYN") else 95.5
+                row = (
+                    db.query(ExchangeRate)
+                    .filter(ExchangeRate.currency_code == code)
+                    .one()
+                )
+                row.rate = rate
+                row.updated_at = t1
+            db.commit()
+
+        fx = diagnose_exchange_rates()
+        self.assertNotEqual(fx.status, "present")
+        self.assertIn(fx.status, ("partial", "manual_review_required"))
+        self.assertNotEqual(fx.authority_level, "official_binding")
+        self.assertTrue(
+            any("старее" in g.lower() or "provenance" in g.lower() for g in fx.gaps)
+        )
+
     def test_newest_sync_log_across_aliases_blocks_stale_ok(self) -> None:
         """Свежий ERROR под CBRF не перебивается старым OK под CBR/EXCHANGE_RATES."""
         t0 = datetime.now(timezone.utc).replace(tzinfo=None)

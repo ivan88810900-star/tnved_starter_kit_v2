@@ -430,6 +430,8 @@ _CBR_SYNC_SOURCE_CODES: tuple[str, ...] = ("CBRF", "cbr_exchange_rates", "CBR", 
 _INVALID_CBR_REVISIONS: frozenset[str] = frozenset(
     {"unavailable", "seed", "unknown", "fallback", "partial"}
 )
+# Допуск: provenance и upsert rates в одном sync-проходе (секундная точность SQLite).
+_CBR_PROVENANCE_RATES_TOLERANCE_SECONDS = 2
 
 
 def _source_status_proves_cbr(st: SourceStatus | None) -> tuple[bool, str | None]:
@@ -507,28 +509,56 @@ def _rates_match_fallback_constants(rows: list[ExchangeRate]) -> bool:
     return all(abs(by_code[code] - FALLBACK[code]) <= 0.001 for code in TRACKED)
 
 
-def _cbr_sync_proven() -> tuple[bool, str | None]:
+def _provenance_covers_rates(
+    proven_at: datetime | None,
+    rates_updated_at: datetime | None,
+) -> bool:
+    """Provenance должна быть не старее последнего обновления exchange_rates (mixed fallback)."""
+    if proven_at is None:
+        return False
+    if rates_updated_at is None:
+        return True
+    tolerance = timedelta(seconds=_CBR_PROVENANCE_RATES_TOLERANCE_SECONDS)
+    return proven_at >= rates_updated_at - tolerance
+
+
+def _cbr_sync_proven(rates_updated_at: datetime | None = None) -> tuple[bool, str | None]:
     """
     CBR proof только при актуальном (latest) успешном состоянии CBRF.
 
     SourceStatus (newest among aliases) имеет приоритет.
-    Без SourceStatus — одна newest SyncLog среди всех aliases; старый OK под другим code не учитывается.
+    Без SourceStatus — одна newest SyncLog среди всех aliases.
+    Provenance не старее latest exchange_rates.updated_at (старый OK не доказывает mixed rows).
     """
     st = _newest_cbr_source_status()
     if st is not None:
-        return _source_status_proves_cbr(st)
-    return _sync_log_row_proves_cbr(_newest_cbr_sync_log_entry())
+        proven, synced_at = _source_status_proves_cbr(st)
+        if proven and not _provenance_covers_rates(st.synced_at, rates_updated_at):
+            return False, synced_at
+        return proven, synced_at
+
+    row = _newest_cbr_sync_log_entry()
+    proven, synced_at = _sync_log_row_proves_cbr(row)
+    if proven:
+        proven_dt = _parse_sync_log_synced_at(synced_at)
+        if not _provenance_covers_rates(proven_dt, rates_updated_at):
+            return False, synced_at
+    return proven, synced_at
 
 
 def diagnose_exchange_rates() -> CoverageDomainSummary:
     with SessionLocal() as db:
         rows = db.query(ExchangeRate).order_by(ExchangeRate.updated_at.desc()).all()
 
-    tracked_present = {r.currency_code for r in rows if r.currency_code in TRACKED}
-    latest_at: datetime | None = max((r.updated_at for r in rows if r.updated_at), default=None)
+    tracked_rows = [r for r in rows if r.currency_code in TRACKED]
+    tracked_present = {r.currency_code for r in tracked_rows}
+    latest_at: datetime | None = max(
+        (r.updated_at for r in tracked_rows if r.updated_at),
+        default=max((r.updated_at for r in rows if r.updated_at), default=None),
+    )
     gaps: list[str] = []
     notes: list[str] = []
-    cbr_proven, cbr_sync_at = _cbr_sync_proven()
+    cbr_proven, cbr_sync_at = _cbr_sync_proven(latest_at)
     matches_fallback = _rates_match_fallback_constants(rows)
 
     if not rows:
@@ -556,12 +586,18 @@ def diagnose_exchange_rates() -> CoverageDomainSummary:
         notes.append("Вероятный источник: fallback/local constant, не live ЦБ.")
     elif not cbr_proven:
         status = "manual_review_required"
-        gaps.append(
-            "Нельзя подтвердить, что exchange_rates загружены из успешного CBR sync "
-            "(в модели нет поля source; нет записи sync-log/source_status)."
-        )
+        if latest_at and cbr_sync_at:
+            gaps.append(
+                "CBR provenance старее последнего обновления exchange_rates — "
+                "старый OK не доказывает текущие (в т.ч. mixed/fallback) строки."
+            )
+        else:
+            gaps.append(
+                "Нельзя подтвердить, что exchange_rates загружены из успешного CBR sync "
+                "(в модели нет поля source; нет записи sync-log/source_status)."
+            )
         authority = "official_reference"
-        notes.append("Свежие строки в БД ≠ официальное покрытие ЦБ без provenance.")
+        notes.append("Свежие строки в БД ≠ официальное покрытие ЦБ без актуальной provenance.")
     else:
         status = "present"
         authority = "official_binding"
