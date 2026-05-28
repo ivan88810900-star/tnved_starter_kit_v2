@@ -58,17 +58,30 @@ def _memory_sessionmaker():
     return sessionmaker(bind=engine, autocommit=False, autoflush=False)
 
 
+def _start_coverage_db_patches(sm: sessionmaker) -> tuple[unittest.mock._patch, unittest.mock._patch]:
+    """Hermetic DB: payment_data_coverage + normative_store (list_sync_log)."""
+    patch_cov = unittest.mock.patch("app.services.payment_data_coverage.SessionLocal", sm)
+    patch_norm = unittest.mock.patch("app.services.normative_store.SessionLocal", sm)
+    patch_cov.start()
+    patch_norm.start()
+    return patch_cov, patch_norm
+
+
+def _stop_coverage_db_patches(
+    patch_cov: unittest.mock._patch,
+    patch_norm: unittest.mock._patch,
+) -> None:
+    patch_norm.stop()
+    patch_cov.stop()
+
+
 class TestPaymentDataCoverageEmptyDb(unittest.TestCase):
     def setUp(self) -> None:
         self.sm = _memory_sessionmaker()
-        self._patch_session = unittest.mock.patch(
-            "app.services.payment_data_coverage.SessionLocal",
-            self.sm,
-        )
-        self._patch_session.start()
+        self._patch_cov, self._patch_norm = _start_coverage_db_patches(self.sm)
 
     def tearDown(self) -> None:
-        self._patch_session.stop()
+        _stop_coverage_db_patches(self._patch_cov, self._patch_norm)
 
     def test_empty_db_summary_is_missing_or_not_configured(self) -> None:
         report = run_payment_data_coverage_report()
@@ -110,14 +123,10 @@ class TestPaymentDataCoveragePartialRates(unittest.TestCase):
             )
             db.commit()
 
-        self._patch = unittest.mock.patch(
-            "app.services.payment_data_coverage.SessionLocal",
-            self.sm,
-        )
-        self._patch.start()
+        self._patch_cov, self._patch_norm = _start_coverage_db_patches(self.sm)
 
     def tearDown(self) -> None:
-        self._patch.stop()
+        _stop_coverage_db_patches(self._patch_cov, self._patch_norm)
 
     def test_partial_duty_rates_with_gaps(self) -> None:
         duty = diagnose_duty_rates()
@@ -158,14 +167,10 @@ class TestPaymentDataCoverageUnknownTradeRemedySources(unittest.TestCase):
             )
             db.commit()
 
-        self._patch = unittest.mock.patch(
-            "app.services.payment_data_coverage.SessionLocal",
-            self.sm,
-        )
-        self._patch.start()
+        self._patch_cov, self._patch_norm = _start_coverage_db_patches(self.sm)
 
     def tearDown(self) -> None:
-        self._patch.stop()
+        _stop_coverage_db_patches(self._patch_cov, self._patch_norm)
 
     def test_unknown_trade_remedy_source_not_present(self) -> None:
         trade = diagnose_trade_remedies()
@@ -191,20 +196,10 @@ class TestPaymentDataCoverageFreshExchangeRates(unittest.TestCase):
                 )
             db.commit()
 
-        self._patch_cov = unittest.mock.patch(
-            "app.services.payment_data_coverage.SessionLocal",
-            self.sm,
-        )
-        self._patch_norm = unittest.mock.patch(
-            "app.services.normative_store.SessionLocal",
-            self.sm,
-        )
-        self._patch_cov.start()
-        self._patch_norm.start()
+        self._patch_cov, self._patch_norm = _start_coverage_db_patches(self.sm)
 
     def tearDown(self) -> None:
-        self._patch_norm.stop()
-        self._patch_cov.stop()
+        _stop_coverage_db_patches(self._patch_cov, self._patch_norm)
 
     def test_fresh_exchange_rates_without_cbr_proof_not_present(self) -> None:
         fx = diagnose_exchange_rates()
@@ -371,17 +366,13 @@ class TestExchangeRatesCbrfProvenanceRecording(unittest.IsolatedAsyncioTestCase)
             result = await update_exchange_rates_from_cbrf()
             self.assertEqual(result["source"], "CBRF")
 
-            patch_cov = unittest.mock.patch(
-                "app.services.payment_data_coverage.SessionLocal",
-                sm,
-            )
-            patch_cov.start()
+            patch_cov, patch_norm_diag = _start_coverage_db_patches(sm)
             try:
                 fx = diagnose_exchange_rates()
                 self.assertEqual(fx.status, "present")
                 self.assertEqual(fx.authority_level, "official_binding")
             finally:
-                patch_cov.stop()
+                _stop_coverage_db_patches(patch_cov, patch_norm_diag)
         finally:
             patch_fetch.stop()
             patch_norm.stop()
@@ -403,17 +394,13 @@ class TestExchangeRatesCbrfProvenanceRecording(unittest.IsolatedAsyncioTestCase)
             result = await update_exchange_rates_from_cbrf()
             self.assertEqual(result["source"], "fallback")
 
-            patch_cov = unittest.mock.patch(
-                "app.services.payment_data_coverage.SessionLocal",
-                sm,
-            )
-            patch_cov.start()
+            patch_cov, patch_norm_diag = _start_coverage_db_patches(sm)
             try:
                 fx = diagnose_exchange_rates()
                 self.assertNotEqual(fx.status, "present")
                 self.assertIn(fx.status, ("partial", "manual_review_required"))
             finally:
-                patch_cov.stop()
+                _stop_coverage_db_patches(patch_cov, patch_norm_diag)
         finally:
             patch_fetch.stop()
             patch_norm.stop()
@@ -448,18 +435,14 @@ class TestExchangeRatesCbrfProvenanceRecording(unittest.IsolatedAsyncioTestCase)
                 )
                 self.assertEqual(ok_logs, 0)
 
-            patch_cov = unittest.mock.patch(
-                "app.services.payment_data_coverage.SessionLocal",
-                sm,
-            )
-            patch_cov.start()
+            patch_cov, patch_norm_diag = _start_coverage_db_patches(sm)
             try:
                 fx = diagnose_exchange_rates()
                 self.assertNotEqual(fx.status, "present")
                 self.assertIn(fx.status, ("partial", "manual_review_required"))
                 self.assertNotEqual(fx.authority_level, "official_binding")
             finally:
-                patch_cov.stop()
+                _stop_coverage_db_patches(patch_cov, patch_norm_diag)
         finally:
             patch_fetch.stop()
             patch_norm.stop()
@@ -488,14 +471,10 @@ class TestPaymentDataCoverageFullDutyScan(unittest.TestCase):
                 )
             db.commit()
 
-        self._patch = unittest.mock.patch(
-            "app.services.payment_data_coverage.SessionLocal",
-            self.sm,
-        )
-        self._patch.start()
+        self._patch_cov, self._patch_norm = _start_coverage_db_patches(self.sm)
 
     def tearDown(self) -> None:
-        self._patch.stop()
+        _stop_coverage_db_patches(self._patch_cov, self._patch_norm)
 
     def test_partial_when_gap_outside_sample_window(self) -> None:
         duty = diagnose_duty_rates()
