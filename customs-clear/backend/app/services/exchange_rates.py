@@ -127,31 +127,71 @@ def _record_cbrf_sync_fallback(error: str, rows_updated: int) -> None:
     )
 
 
+def _safe_record_provenance(record_fn, *args: object, **kwargs: object) -> str | None:
+    """Запись provenance не должна ломать уже сохранённые live rates."""
+    try:
+        record_fn(*args, **kwargs)
+        return None
+    except Exception as exc:
+        return str(exc)
+
+
+def _apply_fallback_exchange_rates(error: str) -> dict[str, object]:
+    """CBR fetch/parse/upsert failed — записать FALLBACK в exchange_rates."""
+    fallback_rows = {k: (v, 1.0) for k, v in FALLBACK.items() if k in TRACKED}
+    changed = _upsert_rates(fallback_rows)
+    _safe_record_provenance(_record_cbrf_sync_fallback, error, changed)
+    return {
+        "status": "OK",
+        "source": "fallback",
+        "date": datetime.now().strftime("%Y-%m-%d"),
+        "updated": changed,
+    }
+
+
 async def update_exchange_rates_from_cbrf() -> dict[str, object]:
     try:
         date_key, rows = await fetch_cbr_rates()
-        missing = _missing_tracked_currencies(rows)
-        if missing:
-            changed = _upsert_rates(rows)
-            _record_cbrf_sync_fallback(
-                f"CBRF XML incomplete, missing tracked currencies: {', '.join(missing)}",
-                changed,
-            )
-            return {
-                "status": "OK",
-                "source": "fallback",
-                "date": date_key,
-                "updated": changed,
-                "missing_currencies": missing,
-            }
-        changed = _upsert_rates(rows)
-        _record_cbrf_sync_success(date_key, changed)
-        return {"status": "OK", "source": "CBRF", "date": date_key, "updated": changed}
     except Exception as exc:
-        fallback_rows = {k: (v, 1.0) for k, v in FALLBACK.items() if k in TRACKED}
-        changed = _upsert_rates(fallback_rows)
-        _record_cbrf_sync_fallback(str(exc), changed)
-        return {"status": "OK", "source": "fallback", "date": datetime.now().strftime("%Y-%m-%d"), "updated": changed}
+        return _apply_fallback_exchange_rates(str(exc))
+
+    missing = _missing_tracked_currencies(rows)
+    if missing:
+        changed = _upsert_rates(rows)
+        _safe_record_provenance(
+            _record_cbrf_sync_fallback,
+            f"CBRF XML incomplete, missing tracked currencies: {', '.join(missing)}",
+            changed,
+        )
+        return {
+            "status": "OK",
+            "source": "fallback",
+            "date": date_key,
+            "updated": changed,
+            "missing_currencies": missing,
+        }
+
+    try:
+        changed = _upsert_rates(rows)
+    except Exception as exc:
+        return _apply_fallback_exchange_rates(f"CBR rates upsert failed: {exc}")
+
+    provenance_error = _safe_record_provenance(_record_cbrf_sync_success, date_key, changed)
+    result: dict[str, object] = {
+        "status": "OK",
+        "source": "CBRF",
+        "date": date_key,
+        "updated": changed,
+        "provenance_recorded": provenance_error is None,
+    }
+    if provenance_error:
+        result["provenance_error"] = provenance_error
+        _safe_record_provenance(
+            _record_cbrf_sync_fallback,
+            f"provenance write failed (live CBR rates kept): {provenance_error}",
+            changed,
+        )
+    return result
 
 
 def get_rates_map() -> dict[str, float]:

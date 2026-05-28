@@ -406,6 +406,51 @@ class TestExchangeRatesCbrfProvenanceRecording(unittest.IsolatedAsyncioTestCase)
             patch_norm.stop()
             patch_ex.stop()
 
+    async def test_provenance_write_failure_does_not_clobber_live_cbr_rates(self) -> None:
+        sm = _memory_sessionmaker()
+        live_rows = {code: (50.0 + idx * 3.7, 1.0) for idx, code in enumerate(TRACKED)}
+
+        patch_ex = unittest.mock.patch("app.services.exchange_rates.SessionLocal", sm)
+        patch_norm = unittest.mock.patch("app.services.normative_store.SessionLocal", sm)
+        patch_fetch = unittest.mock.patch(
+            "app.services.exchange_rates.fetch_cbr_rates",
+            unittest.mock.AsyncMock(return_value=("2026-05-21", live_rows)),
+        )
+        patch_record_ok = unittest.mock.patch(
+            "app.services.exchange_rates._record_cbrf_sync_success",
+            side_effect=RuntimeError("provenance db lock"),
+        )
+        patch_ex.start()
+        patch_norm.start()
+        patch_fetch.start()
+        patch_record_ok.start()
+        try:
+            result = await update_exchange_rates_from_cbrf()
+            self.assertEqual(result["source"], "CBRF")
+            self.assertFalse(result.get("provenance_recorded"))
+            self.assertIn("provenance_error", result)
+
+            with sm() as db:
+                usd = (
+                    db.query(ExchangeRate)
+                    .filter(ExchangeRate.currency_code == "USD")
+                    .one()
+                )
+                self.assertAlmostEqual(float(usd.rate), live_rows["USD"][0], places=4)
+                self.assertNotAlmostEqual(float(usd.rate), FALLBACK["USD"], places=4)
+
+            patch_cov, patch_norm_diag = _start_coverage_db_patches(sm)
+            try:
+                fx = diagnose_exchange_rates()
+                self.assertNotEqual(fx.status, "present")
+            finally:
+                _stop_coverage_db_patches(patch_cov, patch_norm_diag)
+        finally:
+            patch_record_ok.stop()
+            patch_fetch.stop()
+            patch_norm.stop()
+            patch_ex.stop()
+
     async def test_partial_cbr_xml_does_not_record_ok_provenance(self) -> None:
         sm = _memory_sessionmaker()
         partial_rows = {"USD": (95.0, 1.0), "EUR": (101.0, 1.0)}
