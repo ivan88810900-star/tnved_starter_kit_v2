@@ -74,9 +74,15 @@ def _eec_proven() -> tuple[bool, str | None]:
     if st is None:
         return False, None
     revision = (st.revision or "").strip().lower()
-    if st.is_stale or revision in _INVALID_EEC_REVISIONS:
-        return False, st.synced_at.isoformat() if st.synced_at else None
-    return True, st.synced_at.isoformat() if st.synced_at else None
+    synced = st.synced_at.isoformat() if st.synced_at else None
+    # Reject stale, явные invalid токены и любые seed/fallback/legacy/versioned ревизии.
+    if (
+        st.is_stale
+        or revision in _INVALID_EEC_REVISIONS
+        or _is_seed_or_fallback_revision(revision)
+    ):
+        return False, synced
+    return True, synced
 
 
 def _local_path_present(rel_path: str) -> bool:

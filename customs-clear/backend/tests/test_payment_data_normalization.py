@@ -70,14 +70,14 @@ def _stop_db_patches(*patches: unittest.mock._patch) -> None:
         p.stop()
 
 
-def _add_eec_proven(db) -> None:
+def _add_eec_proven(db, revision: str = "ett:2026-05-01") -> None:
     now = datetime.now(timezone.utc).replace(tzinfo=None)
     db.add(
         SourceStatus(
             source_code="EEC_ETT",
             source_name="EEC ETT test",
             source_url="https://eec.eaeunion.org/",
-            revision="ett:2026-05-01",
+            revision=revision,
             synced_at=now,
             is_stale=False,
             note="test",
@@ -389,6 +389,68 @@ class TestPaymentNormalizationVatSeedRates(unittest.TestCase):
         self.assertIn(vat.coverage_status, ("partial", "manual_review_required"))
         self.assertTrue(vat.manual_review_required)
         self.assertTrue(any("seed" in g.lower() for g in vat.known_gaps))
+
+
+class TestPaymentNormalizationSeedEecRevision(unittest.TestCase):
+    """P1: versioned seed/fallback EEC_ETT revision не доказывает present."""
+
+    def test_duty_not_present_with_versioned_seed_eec(self) -> None:
+        sm = _memory_sessionmaker()
+        base = 9_300_000_000
+        with sm() as db:
+            _add_eec_proven(db, revision="seed-2026-03")
+            for i in range(120):
+                code = f"{base + i:010d}"
+                db.add(TnvedEntry(hs_code=code, level=10, title=f"s {i}"))
+                db.add(
+                    HsRate(
+                        hs_code=code,
+                        hs_prefix=code[:4],
+                        duty_rate="5%",
+                        vat_import_rate=22.0,
+                        source_revision="ett:2026-05-01",
+                    )
+                )
+            db.commit()
+        patches = _start_db_patches(sm)
+        try:
+            duty = normalize_import_duty()
+        finally:
+            _stop_db_patches(*patches)
+        self.assertNotEqual(duty.coverage_status, "present")
+        self.assertIn(duty.coverage_status, ("partial", "manual_review_required", "stale"))
+        self.assertTrue(duty.manual_review_required)
+
+    def test_vat_not_present_with_fallback_eec(self) -> None:
+        sm = _memory_sessionmaker()
+        with sm() as db:
+            _add_eec_proven(db, revision="fallback:cbrf")
+            db.add(
+                HsRate(
+                    hs_code="3004909200",
+                    hs_prefix="3004",
+                    duty_rate="0%",
+                    vat_import_rate=10.0,
+                    vat_rule="reduced10",
+                    source_revision="ett:2026-05-01",
+                )
+            )
+            db.add(
+                VatPreference(
+                    hs_code_prefix="3004",
+                    vat_rate=10,
+                    decree_info="TEST-PP",
+                )
+            )
+            db.commit()
+        patches = _start_db_patches(sm)
+        try:
+            vat = normalize_vat()
+        finally:
+            _stop_db_patches(*patches)
+        self.assertNotEqual(vat.coverage_status, "present")
+        self.assertIn(vat.coverage_status, ("partial", "manual_review_required"))
+        self.assertTrue(vat.manual_review_required)
 
 
 @unittest.skipUnless(_API_OK, "fastapi not installed")
