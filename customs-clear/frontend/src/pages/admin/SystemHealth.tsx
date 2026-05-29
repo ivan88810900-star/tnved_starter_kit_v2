@@ -75,6 +75,45 @@ function redisLabel(data: Overview): string {
   return 'не задан';
 }
 
+type PaymentCoverageSummary = {
+  status?: string;
+  generated_at?: string;
+  summary?: Record<
+    string,
+    {
+      status?: string;
+      count?: number;
+      manual_review_required?: boolean;
+      gaps?: string[];
+    }
+  >;
+  smart_payments?: {
+    status?: string;
+    can_produce_final_total?: boolean;
+    can_produce_estimate?: boolean;
+    blocking_domains?: string[];
+  };
+  next_actions?: string[];
+};
+
+function coverageStatusClass(status?: string): string {
+  switch (status) {
+    case 'present':
+      return 'text-emerald-400';
+    case 'partial':
+    case 'manual_review_required':
+      return 'text-amber-300';
+    case 'stale':
+      return 'text-orange-300';
+    case 'missing':
+    case 'not_configured':
+    case 'parser_failed':
+      return 'text-red-300';
+    default:
+      return 'text-slate-400';
+  }
+}
+
 /** Админ-сводка: #/admin/system, в меню не показывается. */
 export function SystemHealth() {
   const [data, setData] = useState<Overview | null>(null);
@@ -84,6 +123,8 @@ export function SystemHealth() {
   const [syncErr, setSyncErr] = useState<string | null>(null);
   const [syncLoading, setSyncLoading] = useState(false);
   const [syncActionLoading, setSyncActionLoading] = useState(false);
+  const [paymentCoverage, setPaymentCoverage] = useState<PaymentCoverageSummary | null>(null);
+  const [paymentCoverageErr, setPaymentCoverageErr] = useState<string | null>(null);
 
   const loadSync = useCallback(async () => {
     const token = getAdminToken().trim();
@@ -127,6 +168,17 @@ export function SystemHealth() {
     }
   }, [loadSync]);
 
+  const loadPaymentCoverage = useCallback(async () => {
+    setPaymentCoverageErr(null);
+    try {
+      const { data: cov } = await api.get<PaymentCoverageSummary>('/sources/payment-coverage');
+      setPaymentCoverage(cov);
+    } catch (e) {
+      setPaymentCoverageErr(getApiErrorMessage(e, 'Ошибка загрузки payment-coverage'));
+      setPaymentCoverage(null);
+    }
+  }, []);
+
   const load = useCallback(async () => {
     setLoading(true);
     setErr(null);
@@ -151,7 +203,8 @@ export function SystemHealth() {
 
   useEffect(() => {
     void load();
-  }, [load]);
+    void loadPaymentCoverage();
+  }, [load, loadPaymentCoverage]);
 
   useEffect(() => {
     void loadSync();
@@ -198,6 +251,53 @@ export function SystemHealth() {
           {[1, 2, 3, 4].map((i) => (
             <div key={i} className="cc-skeleton h-20 rounded-xl" />
           ))}
+        </div>
+      )}
+
+      {(paymentCoverage || paymentCoverageErr) && (
+        <div className="rounded-xl border border-violet-500/20 bg-violet-950/20 px-3 py-3">
+          <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-violet-300/90">
+            Покрытие ТН ВЭД и платежей
+          </div>
+          {paymentCoverageErr && (
+            <div className="mt-2 text-[11px] text-amber-200/90">{paymentCoverageErr}</div>
+          )}
+          {paymentCoverage?.summary && (
+            <div className="mt-2 space-y-2 text-[11px] text-slate-300">
+              <div className="flex flex-wrap gap-x-4 gap-y-1">
+                {(['tnved_entries', 'duty_rates', 'vat_rates', 'excise', 'trade_remedies', 'exchange_rates'] as const).map(
+                  (key) => {
+                    const row = paymentCoverage.summary?.[key];
+                    if (!row) return null;
+                    return (
+                      <span key={key}>
+                        {key}:{' '}
+                        <span className={coverageStatusClass(row.status)}>{row.status ?? '—'}</span>
+                      </span>
+                    );
+                  },
+                )}
+              </div>
+              {paymentCoverage.smart_payments && (
+                <div className="text-slate-400">
+                  Smart Payments:{' '}
+                  <span className={coverageStatusClass(paymentCoverage.smart_payments.status)}>
+                    {paymentCoverage.smart_payments.status ?? '—'}
+                  </span>
+                  {' · '}
+                  финальный итог:{' '}
+                  {paymentCoverage.smart_payments.can_produce_final_total ? 'да' : 'нет'}
+                </div>
+              )}
+              {(paymentCoverage.next_actions?.length ?? 0) > 0 && (
+                <ul className="list-inside list-disc text-[10px] text-slate-500">
+                  {paymentCoverage.next_actions!.slice(0, 3).map((line, i) => (
+                    <li key={i}>{line}</li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )}
         </div>
       )}
 
