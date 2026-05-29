@@ -285,6 +285,112 @@ class TestPaymentNormalizationSeedNotPresent(unittest.TestCase):
         self.assertTrue(any("seed" in g.lower() for g in duty.known_gaps))
 
 
+class TestPaymentNormalizationVersionedSeed(unittest.TestCase):
+    """P1 #1: версионированные seed-ревизии (seed-2026-03) считаются seed."""
+
+    def setUp(self) -> None:
+        self.sm = _memory_sessionmaker()
+        base = 8_500_000_000
+        with self.sm() as db:
+            _add_eec_proven(db)
+            for i in range(150):
+                code = f"{base + i:010d}"
+                db.add(TnvedEntry(hs_code=code, level=10, title=f"v {i}"))
+                db.add(
+                    HsRate(
+                        hs_code=code,
+                        hs_prefix=code[:4],
+                        duty_rate="0%",
+                        vat_import_rate=22.0,
+                        source_revision="seed-2026-03",
+                    )
+                )
+            db.commit()
+        self._patches = _start_db_patches(self.sm)
+
+    def tearDown(self) -> None:
+        _stop_db_patches(*self._patches)
+
+    def test_versioned_seed_not_present(self) -> None:
+        duty = normalize_import_duty()
+        self.assertNotEqual(duty.coverage_status, "present")
+        self.assertEqual(duty.coverage_status, "partial")
+        self.assertEqual(duty.normalized_snapshot["hs_rates_seed"], 150)
+        self.assertTrue(any("seed" in g.lower() for g in duty.known_gaps))
+
+
+class TestPaymentNormalizationDutyNoCatalog(unittest.TestCase):
+    """P1 #2: 100+ hs_rates без каталога ТН ВЭД → не present."""
+
+    def setUp(self) -> None:
+        self.sm = _memory_sessionmaker()
+        base = 9_100_000_000
+        with self.sm() as db:
+            _add_eec_proven(db)
+            for i in range(120):
+                code = f"{base + i:010d}"
+                db.add(
+                    HsRate(
+                        hs_code=code,
+                        hs_prefix=code[:4],
+                        duty_rate="5%",
+                        vat_import_rate=22.0,
+                        source_revision="ett:2026-05-01",
+                    )
+                )
+            db.commit()
+        self._patches = _start_db_patches(self.sm)
+
+    def tearDown(self) -> None:
+        _stop_db_patches(*self._patches)
+
+    def test_no_catalog_not_present(self) -> None:
+        duty = normalize_import_duty()
+        self.assertNotEqual(duty.coverage_status, "present")
+        self.assertIn(duty.coverage_status, ("partial", "manual_review_required"))
+        self.assertTrue(duty.manual_review_required)
+        self.assertIsNone(duty.total_catalog_codes)
+        self.assertTrue(any("catalog" in g.lower() for g in duty.known_gaps))
+
+
+class TestPaymentNormalizationVatSeedRates(unittest.TestCase):
+    """P1 #3: seed-only hs_rates + vat_preferences + EEC OK → VAT не present."""
+
+    def setUp(self) -> None:
+        self.sm = _memory_sessionmaker()
+        with self.sm() as db:
+            _add_eec_proven(db)
+            db.add(
+                HsRate(
+                    hs_code="3004909200",
+                    hs_prefix="3004",
+                    duty_rate="0%",
+                    vat_import_rate=10.0,
+                    vat_rule="reduced10",
+                    source_revision="seed-2026-03",
+                )
+            )
+            db.add(
+                VatPreference(
+                    hs_code_prefix="3004",
+                    vat_rate=10,
+                    decree_info="TEST-PP",
+                )
+            )
+            db.commit()
+        self._patches = _start_db_patches(self.sm)
+
+    def tearDown(self) -> None:
+        _stop_db_patches(*self._patches)
+
+    def test_vat_not_present_when_rates_seed(self) -> None:
+        vat = normalize_vat()
+        self.assertNotEqual(vat.coverage_status, "present")
+        self.assertIn(vat.coverage_status, ("partial", "manual_review_required"))
+        self.assertTrue(vat.manual_review_required)
+        self.assertTrue(any("seed" in g.lower() for g in vat.known_gaps))
+
+
 @unittest.skipUnless(_API_OK, "fastapi not installed")
 class TestPaymentNormalizationApi(unittest.TestCase):
     @classmethod

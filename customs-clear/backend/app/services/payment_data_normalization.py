@@ -5,7 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-from sqlalchemy import func, or_
+from sqlalchemy import func
 
 from ..db import SessionLocal
 from ..models.core import GeoSpecialDuty, HsRate, SourceStatus
@@ -30,8 +30,21 @@ from .payment_data_coverage import (
 from .regulatory_source_registry import AUTHORITY_LEVEL_LABELS, get_registry_entry
 
 _BACKEND_ROOT = Path(__file__).resolve().parent.parent.parent
-_SEED_REVISIONS = frozenset({"seed", "", "unknown", "fallback"})
+# Exact seed/fallback/ambiguous tokens (для legacy совместимости и явных значений).
+_SEED_REVISIONS = frozenset(
+    {"seed", "", "unknown", "ambiguous", "legacy", "legacy_seed", "fallback"}
+)
+# Префиксы версионированных seed/fallback ревизий: seed-2026-03, fallback:cbrf, legacy-… и т.п.
+_SEED_REVISION_PREFIXES = ("seed-", "seed:", "seed_", "fallback-", "fallback:", "fallback_", "legacy-", "legacy_")
 _INVALID_EEC_REVISIONS = frozenset({"unavailable", "seed", "unknown", "fallback", "partial"})
+
+
+def _is_seed_or_fallback_revision(revision: str | None) -> bool:
+    """Seed/fallback/legacy/ambiguous detection по pattern/prefix, не только exact match."""
+    rev = (revision or "").strip().lower()
+    if rev in _SEED_REVISIONS:
+        return True
+    return any(rev.startswith(p) for p in _SEED_REVISION_PREFIXES)
 
 _STATUS_RANK: dict[str, int] = {
     "missing": 0,
@@ -101,11 +114,12 @@ def _source_ref(
 
 def _hs_rate_stats(db) -> dict[str, int]:
     total = db.query(HsRate).count()
-    seed = (
-        db.query(HsRate)
-        .filter(or_(HsRate.source_revision.in_(tuple(_SEED_REVISIONS)), HsRate.source_revision.is_(None)))
-        .count()
-    )
+    seed = 0
+    for revision, count in (
+        db.query(HsRate.source_revision, func.count()).group_by(HsRate.source_revision).all()
+    ):
+        if _is_seed_or_fallback_revision(revision):
+            seed += int(count or 0)
     excise = db.query(HsRate).filter(HsRate.excise_type.in_(("percent", "fixed"))).count()
     ad_flag = db.query(HsRate).filter(HsRate.has_antidumping.is_(True)).count()
     ad_typed = db.query(HsRate).filter(HsRate.antidumping_type.in_(("percent", "fixed"))).count()
@@ -154,10 +168,13 @@ def normalize_import_duty() -> PaymentDomainNormalization:
     elif duty_rules == 0 and seed_total > 0:
         status = "partial"
         gaps.append("hs_duty_rules пуст при seed hs_rates — ставки не верифицированы структурно.")
+    elif not total:
+        status = "manual_review_required"
+        gaps.append(
+            "Нет каталога ТН ВЭД (10-знаков) для подтверждения полноты покрытия пошлин "
+            "(no TN VED 10-digit catalog coverage available) — present недопустим."
+        )
     elif total > 0 and covered == total and eec_ok and seed_total < hs_total:
-        status = "present"
-        manual = False
-    elif duty_cov.status == "present" and eec_ok and seed_total < max(hs_total, 1):
         status = "present"
         manual = False
     else:
@@ -212,6 +229,8 @@ def normalize_vat() -> PaymentDomainNormalization:
     gaps = list(vat_cov.gaps)
     manual = True
     hs_total = stats["hs_rates_total"]
+    seed_total = stats["hs_rates_seed"]
+    seed_only = hs_total > 0 and seed_total >= hs_total
     has_prefs = pref_count > 0
     has_rules = stats["hs_rates_vat_rule"] > 0 or stats["hs_rates_vat_non_default"] > 0
 
@@ -223,10 +242,16 @@ def normalize_vat() -> PaymentDomainNormalization:
     elif not eec_ok:
         status = "partial"
         gaps.append("НДС-контур без подтверждённого EEC_ETT — консервативно partial.")
+    elif seed_only:
+        status = "manual_review_required"
+        gaps.append(
+            "Базовые ставки hs_rates помечены seed/fallback — НДС не подтверждён как "
+            "official present, даже при наличии vat_preferences."
+        )
     elif has_prefs and eec_ok:
         status = "present"
         manual = False
-    elif has_rules and eec_ok and stats["hs_rates_seed"] < hs_total:
+    elif has_rules and eec_ok and seed_total < hs_total:
         status = "present"
         manual = False
     else:
