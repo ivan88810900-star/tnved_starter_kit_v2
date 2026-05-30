@@ -12,6 +12,7 @@ from ..services.regulatory_source_completeness import (
     run_regulatory_source_completeness_report,
 )
 from ..services.payment_data_coverage import run_payment_data_coverage_report
+from ..services.payment_data_normalization import run_payment_data_normalization_report
 from ..services.normative_bundle import import_normative_bundle_bytes
 from ..services.source_import import import_normative_file
 from ..services.source_sync import sync_all_sources, sync_normative_bundle_url
@@ -62,6 +63,12 @@ async def sources_completeness() -> JSONResponse:
 async def sources_payment_coverage() -> JSONResponse:
     """Диагностика покрытия ТН ВЭД, тарифов, НДС, акциза, торговых мер и курсов валют."""
     return JSONResponse(run_payment_data_coverage_report())
+
+
+@router.get("/payment-normalization")
+async def sources_payment_normalization() -> JSONResponse:
+    """Readiness-отчёт нормализации платёжных источников (пошлина, НДС, акциз, антидемпинг)."""
+    return JSONResponse(run_payment_data_normalization_report())
 
 
 @router.get("/log")
