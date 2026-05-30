@@ -344,7 +344,63 @@ class TestPaymentIngestionInheritedBundleRevision(unittest.TestCase):
         }
         result = self._parse_bundle(payload)
         self.assertEqual(result["status"], "manual_review_required")
-        self.assertEqual(result.get("reason"), "all_rates_seed_revision")
+        self.assertEqual(result.get("reason"), "explicit_unsafe_row_revision")
+        self.assertIn("seed-2026-03", result.get("unsafe_row_revisions", []))
+
+    def test_mixed_official_and_explicit_seed_row_blocked(self) -> None:
+        payload = {
+            "format": "customs_clear_normative_bundle",
+            "revision": "ett:2026-05-01",
+            "rates": [
+                {"hs_code": "8471300000", "hs_prefix": "8471", "duty_rate": "5%"},
+                {"hs_code": "8528720001", "hs_prefix": "8528", "duty_rate": "10%", "source_revision": "seed-2026-03"},
+            ],
+            "tnved": [],
+        }
+        result = self._parse_bundle(payload)
+        self.assertEqual(result["status"], "manual_review_required")
+        self.assertEqual(result.get("reason"), "explicit_unsafe_row_revision")
+        self.assertIn("seed-2026-03", result.get("unsafe_row_revisions", []))
+
+    def test_explicit_demo_row_revision_blocked(self) -> None:
+        payload = {
+            "format": "customs_clear_normative_bundle",
+            "revision": "ett:2026-05-01",
+            "rates": [
+                {"hs_code": "8471300000", "hs_prefix": "8471", "duty_rate": "5%", "source_revision": "demo-2026"},
+            ],
+            "tnved": [],
+        }
+        result = self._parse_bundle(payload)
+        self.assertEqual(result["status"], "manual_review_required")
+        self.assertEqual(result.get("reason"), "explicit_unsafe_row_revision")
+
+    def test_explicit_example_row_revision_blocked(self) -> None:
+        payload = {
+            "format": "customs_clear_normative_bundle",
+            "revision": "ett:2026-05-01",
+            "rates": [
+                {"hs_code": "8471300000", "hs_prefix": "8471", "duty_rate": "5%", "source_revision": "example-2026"},
+            ],
+            "tnved": [],
+        }
+        result = self._parse_bundle(payload)
+        self.assertEqual(result["status"], "manual_review_required")
+        self.assertEqual(result.get("reason"), "explicit_unsafe_row_revision")
+
+    def test_explicit_official_row_revision_parsed(self) -> None:
+        payload = {
+            "format": "customs_clear_normative_bundle",
+            "revision": "ett:2026-05-01",
+            "rates": [
+                {"hs_code": "8471300000", "hs_prefix": "8471", "duty_rate": "5%", "source_revision": "ett:2026-05-01"},
+                {"hs_code": "8528720001", "hs_prefix": "8528", "duty_rate": "10%"},
+            ],
+            "tnved": [],
+        }
+        result = self._parse_bundle(payload)
+        self.assertEqual(result["status"], "parsed")
+        self.assertEqual(result["rates_count"], 2)
 
 
 class TestPaymentIngestionStaleSourceStatusBlocked(unittest.TestCase):

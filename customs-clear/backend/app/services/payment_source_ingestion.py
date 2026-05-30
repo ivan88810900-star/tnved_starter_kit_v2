@@ -143,9 +143,27 @@ def parse_normative_bundle_file(rel_path: str) -> dict[str, Any]:
             "checksum_sha256": _file_sha256(rel_path),
         }
 
-    # Семантика importer (normative_bundle.import_normative_bundle_dict): rate row без
-    # source_revision наследует top-level bundle revision. Классифицируем на effective revision,
-    # чтобы пустая row.source_revision при official bundle не считалась seed/fallback.
+    # Любой explicit (непустой) row-level revision, который не official, блокирует весь bundle.
+    # Наследование bundle revision разрешено только для blank/missing row.source_revision —
+    # это совпадает с реальным importer (normative_bundle.import_normative_bundle_dict).
+    explicit_unsafe: list[str] = []
+    for r in rates:
+        rev = str(r.get("source_revision") or "").strip().lower()
+        if rev and not _is_official_revision(rev):
+            explicit_unsafe.append(rev)
+    if explicit_unsafe:
+        return {
+            "status": "manual_review_required",
+            "reason": "explicit_unsafe_row_revision",
+            "revision": revision,
+            "unsafe_row_revisions": sorted(set(explicit_unsafe))[:10],
+            "record_count": len(rates),
+            "rates_count": len(rates),
+            "checksum_sha256": _file_sha256(rel_path),
+        }
+
+    # Defensive net: на effective revision (row.source_revision или inherited bundle revision)
+    # ни одна строка не должна быть seed/fallback (bundle revision здесь уже official).
     seed_rates = sum(
         1
         for r in rates
