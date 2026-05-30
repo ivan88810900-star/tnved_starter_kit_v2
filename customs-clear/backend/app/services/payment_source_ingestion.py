@@ -68,6 +68,17 @@ def _lookup_source_status(code: str | None) -> SourceStatus | None:
         return db.query(SourceStatus).filter(SourceStatus.source_code == code).first()
 
 
+def _is_official_revision(revision: str | None) -> bool:
+    """Единый источник истины: revision официальная только если non-empty, non-seed/fallback,
+    не входит в non-official tokens и не начинается с non-official префикса (example-/demo-/test-/…)."""
+    rev = (revision or "").strip().lower()
+    if not rev or rev in _NON_OFFICIAL_FILE_REVISIONS:
+        return False
+    if _is_seed_or_fallback_revision(rev):
+        return False
+    return not any(rev.startswith(p) for p in _NON_OFFICIAL_FILE_PREFIXES)
+
+
 def _provenance_kind(entry: PaymentSourceEntry, *, revision: str | None = None) -> str:
     if entry.authority_level == "commercial_mirror":
         return "commercial_mirror"
@@ -81,20 +92,13 @@ def _provenance_kind(entry: PaymentSourceEntry, *, revision: str | None = None) 
         rev = (st.revision or "").strip().lower() if st else ""
     if not rev:
         return "missing"
+    # Official только если revision реально проходит единый _is_official_revision().
+    if _is_official_revision(rev):
+        return "official"
     if _is_seed_or_fallback_revision(rev) or rev in _NON_OFFICIAL_FILE_REVISIONS:
         return "seed" if "seed" in rev or rev in {"seed", "legacy", "legacy_seed"} else "fallback"
-    if entry.authority_level in SOURCE_OF_TRUTH_LEVELS and not _is_seed_or_fallback_revision(rev):
-        return "official"
+    # example-/demo-/test-* и прочие non-official, но non-seed ревизии — не official.
     return "ambiguous"
-
-
-def _is_official_revision(revision: str | None) -> bool:
-    rev = (revision or "").strip().lower()
-    if not rev or rev in _NON_OFFICIAL_FILE_REVISIONS:
-        return False
-    if _is_seed_or_fallback_revision(rev):
-        return False
-    return not any(rev.startswith(p) for p in _NON_OFFICIAL_FILE_PREFIXES)
 
 
 # --- Parser / loader stubs (read-only) ---
@@ -329,10 +333,16 @@ def _candidate_readiness(
         return "manual_review_required", blockers, True
 
     if provenance_kind == "official" and entry.loader_status in ("partial", "ready"):
+        st = _lookup_source_status(entry.source_status_code) if entry.source_status_code else None
+        # Stale official contour не может быть ready, даже если normalization present.
+        if st is not None and st.is_stale:
+            blockers.append(
+                f"source_status_stale: SourceStatus {entry.source_status_code} is_stale=True — "
+                "stale official contour не может быть ready_to_ingest."
+            )
+            return "manual_review_required", blockers, True
         if parse_status in ("parsed", None) or (
-            entry.source_status_code
-            and _lookup_source_status(entry.source_status_code)
-            and _is_official_revision(_lookup_source_status(entry.source_status_code).revision)
+            st is not None and _is_official_revision(st.revision)
         ):
             return "ready_to_ingest", [], False
 

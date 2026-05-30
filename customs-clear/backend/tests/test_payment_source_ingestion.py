@@ -279,6 +279,90 @@ class TestPaymentIngestionOfficialProvenanceRequired(unittest.TestCase):
             self.assertNotEqual(duty["readiness"], "ready_to_ingest")
 
 
+class TestPaymentIngestionStaleSourceStatusBlocked(unittest.TestCase):
+    def test_stale_source_status_not_ready_even_if_normalization_present(self) -> None:
+        sm = _memory_sessionmaker()
+        now = datetime.now(timezone.utc).replace(tzinfo=None)
+        with sm() as db:
+            db.add(
+                SourceStatus(
+                    source_code="EEC_ODATA",
+                    source_name="EEC OData test",
+                    source_url="https://opendata.eaeunion.org/",
+                    revision="odata:2026-05",
+                    synced_at=now,
+                    is_stale=True,
+                    note="stale official contour",
+                )
+            )
+            db.commit()
+        fake_norm = {
+            "domains": {"vat": {"coverage_status": "present"}},
+            "overall_readiness": "present",
+            "generated_at": now.isoformat(),
+        }
+        patches = _start_db_patches(sm)
+        norm_patch = unittest.mock.patch(
+            "app.services.payment_source_ingestion.run_payment_data_normalization_report",
+            return_value=fake_norm,
+        )
+        norm_patch.start()
+        try:
+            report = run_payment_source_ingestion_dry_run()
+        finally:
+            norm_patch.stop()
+            _stop_db_patches(*patches)
+        vat = report["domains"]["vat"]
+        cand = next(
+            c for c in vat["candidates"] if c["source_code"] == "eec_odata_vat_preferences"
+        )
+        self.assertEqual(cand["provenance_kind"], "official")
+        self.assertTrue(cand["source_status_stale"])
+        self.assertNotEqual(cand["readiness"], "ready_to_ingest")
+        self.assertTrue(cand["manual_review_required"])
+        self.assertTrue(any("source_status_stale" in b for b in cand["blockers"]))
+
+
+class TestPaymentIngestionNonOfficialRevisionPrefix(unittest.TestCase):
+    def _run_with_eec_revision(self, revision: str) -> dict:
+        sm = _memory_sessionmaker()
+        now = datetime.now(timezone.utc).replace(tzinfo=None)
+        with sm() as db:
+            db.add(
+                SourceStatus(
+                    source_code="EEC_ETT",
+                    source_name="EEC ETT test",
+                    source_url="https://eec.eaeunion.org/",
+                    revision=revision,
+                    synced_at=now,
+                    is_stale=False,
+                )
+            )
+            db.commit()
+        patches = _start_db_patches(sm)
+        try:
+            report = run_payment_source_ingestion_plan()
+        finally:
+            _stop_db_patches(*patches)
+        duty = report["domains"]["import_duty"]
+        return next(c for c in duty["candidates"] if c["source_code"] == "eec_ett_tariff")
+
+    def test_demo_revision_not_official(self) -> None:
+        cand = self._run_with_eec_revision("demo-2026")
+        self.assertNotEqual(cand["provenance_kind"], "official")
+        self.assertNotEqual(cand["readiness"], "ready_to_ingest")
+
+    def test_example_revision_not_official(self) -> None:
+        cand = self._run_with_eec_revision("example-2026")
+        self.assertNotEqual(cand["provenance_kind"], "official")
+        self.assertNotEqual(cand["readiness"], "ready_to_ingest")
+
+    def test_test_prefix_revision_not_official(self) -> None:
+        cand = self._run_with_eec_revision("test-2026")
+        self.assertNotEqual(cand["provenance_kind"], "official")
+        self.assertNotEqual(cand["readiness"], "ready_to_ingest")
+
+
 class TestPaymentIngestionCommercialMirrorBlocked(unittest.TestCase):
     def test_tws_mirror_blocked(self) -> None:
         sm = _memory_sessionmaker()
