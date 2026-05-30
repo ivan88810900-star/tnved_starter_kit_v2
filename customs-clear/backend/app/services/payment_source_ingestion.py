@@ -143,10 +143,15 @@ def parse_normative_bundle_file(rel_path: str) -> dict[str, Any]:
             "checksum_sha256": _file_sha256(rel_path),
         }
 
+    # Семантика importer (normative_bundle.import_normative_bundle_dict): rate row без
+    # source_revision наследует top-level bundle revision. Классифицируем на effective revision,
+    # чтобы пустая row.source_revision при official bundle не считалась seed/fallback.
     seed_rates = sum(
         1
         for r in rates
-        if _is_seed_or_fallback_revision(str(r.get("source_revision") or ""))
+        if _is_seed_or_fallback_revision(
+            (str(r.get("source_revision") or "").strip() or revision)
+        )
     )
     if rates and seed_rates >= len(rates):
         return {

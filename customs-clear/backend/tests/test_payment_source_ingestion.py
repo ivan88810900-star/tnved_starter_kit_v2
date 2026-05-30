@@ -279,6 +279,74 @@ class TestPaymentIngestionOfficialProvenanceRequired(unittest.TestCase):
             self.assertNotEqual(duty["readiness"], "ready_to_ingest")
 
 
+class TestPaymentIngestionInheritedBundleRevision(unittest.TestCase):
+    """P2: rate rows без source_revision наследуют top-level bundle revision."""
+
+    def _parse_bundle(self, payload: dict) -> dict:
+        import json as _json
+        import tempfile
+        from pathlib import Path
+
+        from app.services import payment_source_ingestion as psi
+
+        with tempfile.TemporaryDirectory() as tmp:
+            rel = "data/normative_bundle.test.json"
+            full = Path(tmp) / rel
+            full.parent.mkdir(parents=True, exist_ok=True)
+            full.write_text(_json.dumps(payload), encoding="utf-8")
+            with unittest.mock.patch.object(psi, "_BACKEND_ROOT", Path(tmp)):
+                return parse_normative_bundle_file(rel)
+
+    def test_official_bundle_rows_inherit_revision_parsed(self) -> None:
+        payload = {
+            "format": "customs_clear_normative_bundle",
+            "revision": "ett:2026-05-01",
+            "rates": [
+                {"hs_code": "8471300000", "hs_prefix": "8471", "duty_rate": "5%"},
+                {"hs_code": "8528720001", "hs_prefix": "8528", "duty_rate": "10%"},
+            ],
+            "tnved": [],
+        }
+        result = self._parse_bundle(payload)
+        self.assertEqual(result["status"], "parsed")
+        self.assertEqual(result["rates_count"], 2)
+
+    def test_empty_bundle_revision_rows_stay_manual_review(self) -> None:
+        payload = {
+            "format": "customs_clear_normative_bundle",
+            "revision": "",
+            "rates": [{"hs_code": "8471300000", "hs_prefix": "8471", "duty_rate": "5%"}],
+            "tnved": [],
+        }
+        result = self._parse_bundle(payload)
+        self.assertEqual(result["status"], "manual_review_required")
+        self.assertNotEqual(result["status"], "parsed")
+
+    def test_seed_bundle_revision_rows_stay_manual_review(self) -> None:
+        payload = {
+            "format": "customs_clear_normative_bundle",
+            "revision": "seed-2026-03",
+            "rates": [{"hs_code": "8471300000", "hs_prefix": "8471", "duty_rate": "5%"}],
+            "tnved": [],
+        }
+        result = self._parse_bundle(payload)
+        self.assertEqual(result["status"], "manual_review_required")
+        self.assertNotEqual(result["status"], "parsed")
+
+    def test_official_bundle_with_explicit_seed_rows_stay_manual_review(self) -> None:
+        payload = {
+            "format": "customs_clear_normative_bundle",
+            "revision": "ett:2026-05-01",
+            "rates": [
+                {"hs_code": "8471300000", "hs_prefix": "8471", "duty_rate": "5%", "source_revision": "seed-2026-03"},
+            ],
+            "tnved": [],
+        }
+        result = self._parse_bundle(payload)
+        self.assertEqual(result["status"], "manual_review_required")
+        self.assertEqual(result.get("reason"), "all_rates_seed_revision")
+
+
 class TestPaymentIngestionStaleSourceStatusBlocked(unittest.TestCase):
     def test_stale_source_status_not_ready_even_if_normalization_present(self) -> None:
         sm = _memory_sessionmaker()
