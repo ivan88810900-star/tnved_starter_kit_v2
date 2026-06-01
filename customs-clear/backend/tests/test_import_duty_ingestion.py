@@ -456,6 +456,20 @@ class TestImportDutyMalformedRatesContainer(unittest.TestCase):
         self.assertFalse(report["db_mutated"])
         self._assert_no_ok_provenance()
 
+    def test_non_object_rows_blocked_parser_failed(self) -> None:
+        for bad in ([123], ["bad"], [{"hs_code": "8471300000", "duty_rate": "5%"}, 7]):
+            payload = {"format": "customs_clear_normative_bundle", "revision": "ett:2026-01-01", "rates": bad}
+            dry = self._dry_run(payload)
+            self.assertEqual(dry["status"], "parser_failed", msg=f"rates={bad}")
+            self.assertFalse(dry["db_mutated"])
+            before = _table_counts(self.sm)
+            report = self._apply(payload)
+            after = _table_counts(self.sm)
+            self.assertEqual(before, after, msg=f"rates={bad} mutated DB")
+            self.assertEqual(report["status"], "parser_failed")
+            self.assertFalse(report["db_mutated"])
+            self._assert_no_ok_provenance()
+
     def test_empty_rates_no_crash_conservative(self) -> None:
         payload = {"format": "customs_clear_normative_bundle", "revision": "ett:2026-01-01", "rates": []}
         dry = self._dry_run(payload)
@@ -548,6 +562,104 @@ class TestImportDutyNonVersionedRevisionRejected(unittest.TestCase):
         report = self._apply(payload)
         self.assertEqual(report["status"], "manual_review_required")
         self.assertFalse(report["db_mutated"])
+
+
+class TestImportDutyExactRowPrefixScope(unittest.TestCase):
+    """P1: exact 10-значные rows не сохраняют broad prefix и не покрывают siblings."""
+
+    def setUp(self) -> None:
+        self.sm = _memory_sessionmaker()
+        self._patches = _start_patches(self.sm)
+
+    def tearDown(self) -> None:
+        _stop_patches(*self._patches)
+
+    def _apply(self, payload: dict) -> dict:
+        import app.services.import_duty_ingestion as idi
+
+        with _BundleFixture(payload) as (root, rel):
+            with unittest.mock.patch.object(idi, "_BACKEND_ROOT", root):
+                return run_import_duty_apply(rel_path=rel)
+
+    def test_exact_row_without_prefix_does_not_persist_broad_prefix(self) -> None:
+        payload = _official_bundle_payload(
+            rates=[{"hs_code": "8471300000", "duty_rate": "5%"}]
+        )
+        report = self._apply(payload)
+        self.assertEqual(report["status"], "OK")
+        with self.sm() as db:
+            row = db.query(HsRate).filter(HsRate.hs_code == "8471300000").first()
+            self.assertIsNotNone(row)
+            self.assertEqual(row.hs_prefix, "8471300000")
+            self.assertNotEqual(row.hs_prefix, "8471")
+
+    def test_exact_row_with_autofilled_prefix_cleared(self) -> None:
+        # _normalize_rate_row авто-заполняет hs_prefix=hs_code[:4]; importer должен очистить.
+        payload = _official_bundle_payload(
+            rates=[{"hs_code": "8471300000", "hs_prefix": "8471", "duty_rate": "5%"}]
+        )
+        report = self._apply(payload)
+        self.assertEqual(report["status"], "OK")
+        with self.sm() as db:
+            row = db.query(HsRate).filter(HsRate.hs_code == "8471300000").first()
+            self.assertEqual(row.hs_prefix, "8471300000")
+
+    def test_sibling_not_covered_official_by_exact_row(self) -> None:
+        from app.services.payment_data_coverage import diagnose_duty_rates
+
+        now = datetime.now(timezone.utc).replace(tzinfo=None)
+        with self.sm() as db:
+            db.add(
+                SourceStatus(
+                    source_code="EEC_ETT",
+                    source_name="EEC ETT",
+                    source_url="https://eec.eaeunion.org/",
+                    revision="ett:2026-05-01",
+                    synced_at=now,
+                    is_stale=False,
+                )
+            )
+            # Каталог: 2 sibling-кода под 8471, импортируем official только один из них.
+            for code in ("8471300000", "8471900000"):
+                db.add(TnvedEntry(hs_code=code, level=10, title=code))
+            db.commit()
+
+        payload = _official_bundle_payload(
+            rates=[{"hs_code": "8471300000", "duty_rate": "5%"}]
+        )
+        report = self._apply(payload)
+        self.assertEqual(report["status"], "OK")
+
+        with self.sm() as db:
+            lookup = {
+                (r.hs_code, r.hs_prefix)
+                for r in db.query(HsRate).all()
+            }
+        self.assertIn(("8471300000", "8471300000"), lookup)
+        # Sibling не покрыт official: full official coverage не достигнут → not present.
+        duty = diagnose_duty_rates()
+        self.assertNotEqual(duty.status, "present")
+
+    def test_explicit_prefix_rate_preserved(self) -> None:
+        payload = _official_bundle_payload(
+            rates=[{"hs_prefix": "8471", "duty_rate": "5%"}]
+        )
+        report = self._apply(payload)
+        self.assertEqual(report["status"], "OK")
+        with self.sm() as db:
+            row = db.query(HsRate).filter(HsRate.hs_prefix == "8471").first()
+            self.assertIsNotNone(row)
+            self.assertEqual(row.hs_prefix, "8471")
+
+    def test_explicit_prefix_scope_flag_keeps_prefix(self) -> None:
+        payload = _official_bundle_payload(
+            rates=[{"hs_code": "8471300000", "hs_prefix": "8471", "prefix_scope": True, "duty_rate": "5%"}]
+        )
+        report = self._apply(payload)
+        self.assertEqual(report["status"], "OK")
+        with self.sm() as db:
+            row = db.query(HsRate).filter(HsRate.hs_code == "8471300000").first()
+            self.assertEqual(row.hs_prefix, "8471")
 
 
 class TestImportDutyCoverageAfterImport(unittest.TestCase):

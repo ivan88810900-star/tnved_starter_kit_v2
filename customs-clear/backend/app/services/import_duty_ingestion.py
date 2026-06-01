@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -66,34 +67,42 @@ def _file_sha256_at(path: Path) -> str | None:
     return digest.hexdigest()
 
 
+def _raw_rates_list(payload: dict[str, Any]) -> tuple[list[Any] | None, str | None]:
+    """Единый безопасный доступ к rates/rows.
+
+    rates/rows должны быть JSON-массивом. Возвращает (list, None) при валидном контейнере
+    (или [] если оба отсутствуют), либо (None, reason) для malformed non-list контейнера.
+    """
+    raw_rates = payload.get("rates")
+    if raw_rates is not None and not isinstance(raw_rates, list):
+        return None, "malformed_rates_container"
+    raw_rows = payload.get("rows")
+    if raw_rows is not None and not isinstance(raw_rows, list):
+        return None, "malformed_rows_container"
+    if isinstance(raw_rates, list):
+        return raw_rates, None
+    if isinstance(raw_rows, list):
+        return raw_rows, None
+    return [], None
+
+
 def _validate_official_bundle_payload(payload: dict[str, Any], *, rel_path: str, checksum: str | None) -> dict[str, Any]:
     """Локальная валидация bundle (без зависимости от payment_source_ingestion._BACKEND_ROOT)."""
     revision = str(payload.get("revision") or "").strip().lower()
     fmt = str(payload.get("format") or "")
 
     # Malformed containers: rates/rows должны быть list — иначе parser_failed без итерации.
-    raw_rates = payload.get("rates")
-    if raw_rates is not None and not isinstance(raw_rates, list):
+    rates, container_err = _raw_rates_list(payload)
+    if container_err is not None:
         return {
             "status": "parser_failed",
-            "reason": "malformed_rates_container",
-            "error": "bundle 'rates' must be a JSON array",
-            "revision": revision,
-            "record_count": 0,
-            "checksum_sha256": checksum,
-        }
-    raw_rows = payload.get("rows")
-    if raw_rows is not None and not isinstance(raw_rows, list):
-        return {
-            "status": "parser_failed",
-            "reason": "malformed_rows_container",
-            "error": "bundle 'rows' must be a JSON array",
+            "reason": container_err,
+            "error": f"bundle '{container_err.split('_')[1]}' must be a JSON array",
             "revision": revision,
             "record_count": 0,
             "checksum_sha256": checksum,
         }
 
-    rates = raw_rates or raw_rows or []
     raw_tnved = payload.get("tnved")
     tnved = raw_tnved if isinstance(raw_tnved, list) else []
 
@@ -119,10 +128,20 @@ def _validate_official_bundle_payload(payload: dict[str, Any], *, rel_path: str,
             "checksum_sha256": checksum,
         }
 
+    # Non-object rows в official import → parser_failed (без silent skip).
+    if any(not isinstance(r, dict) for r in rates):
+        return {
+            "status": "parser_failed",
+            "reason": "malformed_rate_row",
+            "error": "bundle rate rows must be JSON objects",
+            "revision": revision,
+            "record_count": len(rates),
+            "rates_count": len(rates),
+            "checksum_sha256": checksum,
+        }
+
     explicit_unsafe: list[str] = []
     for r in rates:
-        if not isinstance(r, dict):
-            continue
         rev = str(r.get("source_revision") or "").strip().lower()
         if rev and not _is_official_eec_ett_revision(rev):
             explicit_unsafe.append(rev)
@@ -179,15 +198,13 @@ def _extract_duty_rows(payload: dict[str, Any]) -> tuple[str, list[dict[str, Any
 
     rows: list[dict[str, Any]] = []
     blockers: list[str] = []
-    raw_rates = payload.get("rates")
-    raw_rows = payload.get("rows")
-    container = raw_rates if isinstance(raw_rates, list) else (
-        raw_rows if isinstance(raw_rows, list) else []
-    )
-    for raw in container:
+    container, container_err = _raw_rates_list(payload)
+    if container_err is not None:
+        return revision, [], [f"parser_failed: {container_err}"]
+    for raw in container or []:
         if not isinstance(raw, dict):
-            blockers.append("invalid_rate_row: not an object")
-            continue
+            # Official import: non-object row — структурная ошибка, не silent skip.
+            return revision, [], ["parser_failed: malformed_rate_row (rate row not an object)"]
         normalized = _normalize_rate_row(raw)
         if not normalized:
             blockers.append(f"invalid_rate_row: hs_code={raw.get('hs_code')!r}")
@@ -198,6 +215,14 @@ def _extract_duty_rows(payload: dict[str, Any]) -> tuple[str, list[dict[str, Any
         if not _is_official_eec_ett_revision(row_rev):
             blockers.append(f"unsafe_row_revision: {row_rev or '<empty>'} for hs_code={normalized.get('hs_code')}")
             continue
+        # P1: exact 10-значный hs_code не должен сохраняться с broad auto-filled prefix
+        # (иначе ставка протекает на sibling-коды и завышает official coverage). Prefix
+        # сохраняем только для явных prefix-rate строк (prefix_scope/prefix_rate, либо
+        # когда исходно нет 10-значного кода).
+        raw_code_digits = re.sub(r"\D", "", str(raw.get("hs_code") or ""))[:10]
+        explicit_prefix_scope = raw.get("prefix_scope") is True or raw.get("prefix_rate") is True
+        if len(raw_code_digits) >= 10 and not explicit_prefix_scope:
+            normalized["hs_prefix"] = raw_code_digits
         normalized["source_url"] = str(normalized.get("source_url") or official_url).strip()
         if effective_from:
             normalized.setdefault("valid_from", effective_from)
@@ -408,7 +433,9 @@ def _apply_duty_rows(rows: list[dict[str, Any]]) -> ImportDutyRowCounts:
     with SessionLocal() as db:
         for row in rows:
             hs_code = str(row.get("hs_code") or "").strip().replace(" ", "")
-            hs_prefix = str(row.get("hs_prefix") or (hs_code[:4] if hs_code else "")).strip()
+            # Не подставлять broad 4-значный fallback: для exact rows _extract_duty_rows уже
+            # выставил hs_prefix = полный код; fallback на полный hs_code, не на hs_code[:4].
+            hs_prefix = str(row.get("hs_prefix") or hs_code).strip()
             if not hs_prefix:
                 counts.blocked += 1
                 continue
