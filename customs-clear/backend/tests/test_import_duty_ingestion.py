@@ -400,6 +400,78 @@ class TestImportDutyParserFailures(unittest.TestCase):
         self._assert_no_ok_provenance()
 
 
+class TestImportDutyMalformedRatesContainer(unittest.TestCase):
+    """P2: rates/rows не-list → parser_failed/blocked без crash и без OK provenance."""
+
+    def setUp(self) -> None:
+        self.sm = _memory_sessionmaker()
+        self._patches = _start_patches(self.sm)
+
+    def tearDown(self) -> None:
+        _stop_patches(*self._patches)
+
+    def _dry_run(self, payload: dict) -> dict:
+        import app.services.import_duty_ingestion as idi
+
+        with _BundleFixture(payload) as (root, rel):
+            with unittest.mock.patch.object(idi, "_BACKEND_ROOT", root):
+                return run_import_duty_dry_run(rel_path=rel)
+
+    def _apply(self, payload: dict) -> dict:
+        import app.services.import_duty_ingestion as idi
+
+        with _BundleFixture(payload) as (root, rel):
+            with unittest.mock.patch.object(idi, "_BACKEND_ROOT", root):
+                return run_import_duty_apply(rel_path=rel)
+
+    def _assert_no_ok_provenance(self) -> None:
+        with self.sm() as db:
+            self.assertEqual(db.query(SourceStatus).count(), 0)
+            self.assertEqual(db.query(SyncLog).filter(SyncLog.status == "OK").count(), 0)
+
+    def test_rates_scalar_blocked(self) -> None:
+        payload = {"format": "customs_clear_normative_bundle", "revision": "ett:2026-01-01", "rates": 123}
+        dry = self._dry_run(payload)
+        self.assertEqual(dry["status"], "parser_failed")
+        self.assertFalse(dry["db_mutated"])
+        before = _table_counts(self.sm)
+        report = self._apply(payload)
+        after = _table_counts(self.sm)
+        self.assertEqual(before, after)
+        self.assertEqual(report["status"], "parser_failed")
+        self.assertFalse(report["db_mutated"])
+        self._assert_no_ok_provenance()
+
+    def test_rates_object_blocked(self) -> None:
+        payload = {"format": "customs_clear_normative_bundle", "revision": "ett:2026-01-01", "rates": {"a": 1}}
+        report = self._apply(payload)
+        self.assertEqual(report["status"], "parser_failed")
+        self.assertFalse(report["db_mutated"])
+        self._assert_no_ok_provenance()
+
+    def test_rows_object_blocked(self) -> None:
+        payload = {"format": "customs_clear_normative_bundle", "revision": "ett:2026-01-01", "rows": {"a": 1}}
+        report = self._apply(payload)
+        self.assertEqual(report["status"], "parser_failed")
+        self.assertFalse(report["db_mutated"])
+        self._assert_no_ok_provenance()
+
+    def test_empty_rates_no_crash_conservative(self) -> None:
+        payload = {"format": "customs_clear_normative_bundle", "revision": "ett:2026-01-01", "rates": []}
+        dry = self._dry_run(payload)
+        self.assertIn(dry["status"], ("manual_review_required", "missing_official_source"))
+        self.assertFalse(dry["db_mutated"])
+        report = self._apply(payload)
+        self.assertNotEqual(report["status"], "OK")
+        self.assertFalse(report["db_mutated"])
+        self._assert_no_ok_provenance()
+
+    def test_valid_rates_still_works(self) -> None:
+        report = self._apply(_official_bundle_payload())
+        self.assertEqual(report["status"], "OK")
+        self.assertTrue(report["db_mutated"])
+
+
 class TestImportDutyNonVersionedRevisionRejected(unittest.TestCase):
     """P2: arbitrary non-versioned revisions блокируются (нужен explicit versioned EEC/ETT)."""
 

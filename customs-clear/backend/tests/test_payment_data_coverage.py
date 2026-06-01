@@ -637,6 +637,83 @@ class TestPaymentDataCoverageOfficialOnlyDuty(unittest.TestCase):
         self.assertEqual(duty.status, "present")
         self.assertFalse(duty.manual_review_required)
 
+    def _build_catalog_with_revision(self, sm, *, revision: str, base: int) -> None:
+        with sm() as db:
+            self._add_eec_proven(db)
+            for i in range(120):
+                code = f"{base + i:010d}"
+                db.add(TnvedEntry(hs_code=code, level=10, title=f"pos {i}"))
+                db.add(
+                    HsRate(
+                        hs_code=code,
+                        hs_prefix=code,
+                        duty_rate="5%",
+                        vat_import_rate=22.0,
+                        source_revision=revision,
+                    )
+                )
+            db.commit()
+
+    def test_arbitrary_non_versioned_revision_not_official_present(self) -> None:
+        for revision in ("local-copy", "manual", "foo", "official", "prod"):
+            sm = _memory_sessionmaker()
+            self._build_catalog_with_revision(sm, revision=revision, base=8_600_000_000)
+            patch_cov, patch_norm = _start_coverage_db_patches(sm)
+            try:
+                duty = diagnose_duty_rates()
+            finally:
+                _stop_coverage_db_patches(patch_cov, patch_norm)
+            self.assertNotEqual(
+                duty.status, "present", msg=f"revision={revision} must not be official present"
+            )
+            self.assertEqual(duty.status, "partial")
+            self.assertTrue(duty.missing_samples)
+
+    def test_versioned_revision_allows_present(self) -> None:
+        sm = _memory_sessionmaker()
+        self._build_catalog_with_revision(sm, revision="ett:2026-05-01", base=8_700_000_000)
+        patch_cov, patch_norm = _start_coverage_db_patches(sm)
+        try:
+            duty = diagnose_duty_rates()
+        finally:
+            _stop_coverage_db_patches(patch_cov, patch_norm)
+        self.assertEqual(duty.status, "present")
+
+    def test_mixed_non_versioned_full_with_partial_strict_official_not_present(self) -> None:
+        sm = _memory_sessionmaker()
+        base = 8_800_000_000
+        with sm() as db:
+            self._add_eec_proven(db)
+            for i in range(100):
+                code = f"{base + i:010d}"
+                db.add(TnvedEntry(hs_code=code, level=10, title=f"pos {i}"))
+                # i<40 strict official; остальные non-versioned/seed покрывают каталог целиком.
+                if i < 40:
+                    rev = "ett:2026-05-01"
+                elif i < 70:
+                    rev = "local-copy"
+                else:
+                    rev = "seed"
+                db.add(
+                    HsRate(
+                        hs_code=code,
+                        hs_prefix=code,
+                        duty_rate="5%",
+                        vat_import_rate=22.0,
+                        source_revision=rev,
+                    )
+                )
+            db.commit()
+        patch_cov, patch_norm = _start_coverage_db_patches(sm)
+        try:
+            duty = diagnose_duty_rates()
+        finally:
+            _stop_coverage_db_patches(patch_cov, patch_norm)
+        self.assertNotEqual(duty.status, "present")
+        self.assertEqual(duty.status, "partial")
+        self.assertTrue(duty.missing_samples)
+        self.assertTrue(any("official" in g.lower() for g in duty.gaps))
+
 
 @unittest.skipUnless(_API_OK, "fastapi not installed")
 class TestPaymentDataCoverageApi(unittest.TestCase):

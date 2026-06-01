@@ -116,17 +116,19 @@ def _source_configured(
 def _hs_rate_lookup_sets(db, *, official_only: bool = False) -> frozenset[str]:
     """Объединённый набор hs_code/hs_prefix для проверки покрытия (как find_rate_for_hs).
 
-    official_only=True учитывает только non-seed/non-fallback (official) строки — чтобы
-    seed/fallback/demo/test/example/legacy/unknown rows не давали false official coverage.
+    official_only=True учитывает только строки с explicit versioned EEC/ETT revision
+    (тот же strict rule, что и import-duty ingestion) — чтобы seed/fallback/demo/test/example/
+    legacy/unknown/empty и arbitrary non-versioned (local-copy/manual/foo) rows не давали
+    false official coverage.
     """
     merged: set[str] = set()
     if official_only:
-        from .payment_source_ingestion import _is_official_revision
+        from .payment_revision_utils import is_official_eec_ett_revision
 
         for hs_code, hs_prefix, source_revision in db.query(
             HsRate.hs_code, HsRate.hs_prefix, HsRate.source_revision
         ).all():
-            if not _is_official_revision(str(source_revision or "")):
+            if not is_official_eec_ett_revision(str(source_revision or "")):
                 continue
             if hs_code:
                 merged.add(_digits(hs_code))

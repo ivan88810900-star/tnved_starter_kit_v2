@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import hashlib
 import json
-import re
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -19,7 +18,7 @@ from ..schemas.import_duty_ingestion import (
 from .normative_bundle import _normalize_rate_row
 from .normative_store import append_sync_log, normalize_hs_duty_rate_string, upsert_source_status
 from .payment_data_coverage import run_payment_data_coverage_report
-from .payment_source_ingestion import _is_official_revision
+from .payment_revision_utils import is_official_eec_ett_revision as _is_official_eec_ett_revision
 from .payment_source_registry import get_payment_source_entry
 
 _BACKEND_ROOT = Path(__file__).resolve().parent.parent.parent
@@ -30,24 +29,6 @@ _LOCAL_BUNDLE_CANDIDATES: tuple[str, ...] = (
     "data/raw_normative/eec_ett_normative_bundle.json",
     "data/raw_normative/eec_ett_import_duty.json",
 )
-
-
-# Для первого official EEC/ETT import-duty slice принимаем только явные versioned ревизии.
-# Допустимые формы: ett:YYYY-MM-DD | eec-ett:YYYY-MM-DD | eec:ett:YYYY-MM-DD
-_EEC_ETT_REVISION_RE = re.compile(r"^(?:ett|eec-ett|eec:ett):\d{4}-\d{2}-\d{2}$")
-
-
-def _is_official_eec_ett_revision(revision: str | None) -> bool:
-    """Строгая проверка: revision должна быть explicit versioned EEC/ETT, не произвольная строка.
-
-    Отсекает empty/unknown/seed/fallback/legacy/demo/test/example, а также
-    arbitrary non-versioned (`local-copy`, `foo`, `manual`, `prod`, `official`)."""
-    rev = (revision or "").strip().lower()
-    if not rev:
-        return False
-    if not _is_official_revision(rev):
-        return False
-    return bool(_EEC_ETT_REVISION_RE.match(rev))
 
 
 def _utc_now_iso() -> str:
@@ -89,8 +70,32 @@ def _validate_official_bundle_payload(payload: dict[str, Any], *, rel_path: str,
     """Локальная валидация bundle (без зависимости от payment_source_ingestion._BACKEND_ROOT)."""
     revision = str(payload.get("revision") or "").strip().lower()
     fmt = str(payload.get("format") or "")
-    rates = payload.get("rates") or []
-    tnved = payload.get("tnved") or []
+
+    # Malformed containers: rates/rows должны быть list — иначе parser_failed без итерации.
+    raw_rates = payload.get("rates")
+    if raw_rates is not None and not isinstance(raw_rates, list):
+        return {
+            "status": "parser_failed",
+            "reason": "malformed_rates_container",
+            "error": "bundle 'rates' must be a JSON array",
+            "revision": revision,
+            "record_count": 0,
+            "checksum_sha256": checksum,
+        }
+    raw_rows = payload.get("rows")
+    if raw_rows is not None and not isinstance(raw_rows, list):
+        return {
+            "status": "parser_failed",
+            "reason": "malformed_rows_container",
+            "error": "bundle 'rows' must be a JSON array",
+            "revision": revision,
+            "record_count": 0,
+            "checksum_sha256": checksum,
+        }
+
+    rates = raw_rates or raw_rows or []
+    raw_tnved = payload.get("tnved")
+    tnved = raw_tnved if isinstance(raw_tnved, list) else []
 
     if revision in {"example", "seed", "unknown", "ambiguous", "legacy", "legacy_seed", "fallback", "test", "demo"}:
         return {
@@ -174,7 +179,12 @@ def _extract_duty_rows(payload: dict[str, Any]) -> tuple[str, list[dict[str, Any
 
     rows: list[dict[str, Any]] = []
     blockers: list[str] = []
-    for raw in payload.get("rates") or payload.get("rows") or []:
+    raw_rates = payload.get("rates")
+    raw_rows = payload.get("rows")
+    container = raw_rates if isinstance(raw_rates, list) else (
+        raw_rows if isinstance(raw_rows, list) else []
+    )
+    for raw in container:
         if not isinstance(raw, dict):
             blockers.append("invalid_rate_row: not an object")
             continue
