@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -29,6 +30,24 @@ _LOCAL_BUNDLE_CANDIDATES: tuple[str, ...] = (
     "data/raw_normative/eec_ett_normative_bundle.json",
     "data/raw_normative/eec_ett_import_duty.json",
 )
+
+
+# Для первого official EEC/ETT import-duty slice принимаем только явные versioned ревизии.
+# Допустимые формы: ett:YYYY-MM-DD | eec-ett:YYYY-MM-DD | eec:ett:YYYY-MM-DD
+_EEC_ETT_REVISION_RE = re.compile(r"^(?:ett|eec-ett|eec:ett):\d{4}-\d{2}-\d{2}$")
+
+
+def _is_official_eec_ett_revision(revision: str | None) -> bool:
+    """Строгая проверка: revision должна быть explicit versioned EEC/ETT, не произвольная строка.
+
+    Отсекает empty/unknown/seed/fallback/legacy/demo/test/example, а также
+    arbitrary non-versioned (`local-copy`, `foo`, `manual`, `prod`, `official`)."""
+    rev = (revision or "").strip().lower()
+    if not rev:
+        return False
+    if not _is_official_revision(rev):
+        return False
+    return bool(_EEC_ETT_REVISION_RE.match(rev))
 
 
 def _utc_now_iso() -> str:
@@ -84,7 +103,7 @@ def _validate_official_bundle_payload(payload: dict[str, Any], *, rel_path: str,
             "tnved_count": len(tnved),
             "checksum_sha256": checksum,
         }
-    if not _is_official_revision(revision):
+    if not _is_official_eec_ett_revision(revision):
         return {
             "status": "manual_review_required",
             "reason": "non_official_bundle_revision",
@@ -100,7 +119,7 @@ def _validate_official_bundle_payload(payload: dict[str, Any], *, rel_path: str,
         if not isinstance(r, dict):
             continue
         rev = str(r.get("source_revision") or "").strip().lower()
-        if rev and not _is_official_revision(rev):
+        if rev and not _is_official_eec_ett_revision(rev):
             explicit_unsafe.append(rev)
     if explicit_unsafe:
         return {
@@ -166,7 +185,7 @@ def _extract_duty_rows(payload: dict[str, Any]) -> tuple[str, list[dict[str, Any
         if not str(normalized.get("source_revision") or "").strip():
             normalized["source_revision"] = revision
         row_rev = str(normalized.get("source_revision") or "").strip().lower()
-        if not _is_official_revision(row_rev):
+        if not _is_official_eec_ett_revision(row_rev):
             blockers.append(f"unsafe_row_revision: {row_rev or '<empty>'} for hs_code={normalized.get('hs_code')}")
             continue
         normalized["source_url"] = str(normalized.get("source_url") or official_url).strip()
@@ -271,7 +290,18 @@ def _validate_bundle_for_ingest(
 ) -> tuple[dict[str, Any] | None, dict[str, Any], str, list[dict[str, Any]], list[str]]:
     payload, parser_result = _load_bundle_payload(rel_path)
     if payload is None:
-        return None, parser_result, "", [], []
+        # payload не загружен: missing/invalid JSON/не object/parser_failed → жёсткий blocker,
+        # apply не должен продолжать с 0 rows и писать OK provenance.
+        status = parser_result.get("status")
+        if status == "missing_source":
+            return None, parser_result, "", [], ["missing_official_source: bundle file not found"]
+        if status == "parser_failed":
+            return None, parser_result, "", [], [
+                f"parser_failed: {parser_result.get('error') or 'invalid bundle payload'}"
+            ]
+        return None, parser_result, "", [], [
+            f"parser_failed: {parser_result.get('error') or status or 'unloadable bundle'}"
+        ]
 
     parse_status = parser_result.get("status")
     if parse_status == "missing_source":
@@ -284,7 +314,7 @@ def _validate_bundle_for_ingest(
 
     revision, rows, row_blockers = _extract_duty_rows(payload)
     blockers: list[str] = []
-    if not _is_official_revision(revision):
+    if not _is_official_eec_ett_revision(revision):
         blockers.append(f"non_official_bundle_revision: {revision or '<empty>'}")
     if row_blockers:
         blockers.extend(row_blockers)
@@ -429,7 +459,9 @@ def run_import_duty_apply(*, rel_path: str | None = None) -> dict[str, Any]:
 
     if blockers:
         status = "manual_review_required"
-        if any("parser_failed" in b for b in blockers):
+        if any("missing_official_source" in b for b in blockers):
+            status = "missing_official_source"
+        elif any("parser_failed" in b for b in blockers):
             status = "parser_failed"
         return _blocked_response(
             status=status,

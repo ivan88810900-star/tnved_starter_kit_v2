@@ -564,6 +564,80 @@ class TestPaymentDataCoverageFullDutyScan(unittest.TestCase):
         self.assertEqual(len(duty.missing_samples or []), 5)
 
 
+class TestPaymentDataCoverageOfficialOnlyDuty(unittest.TestCase):
+    """P1 #2: seed/fallback строки не дают official present-покрытие."""
+
+    def _add_eec_proven(self, db) -> None:
+        now = datetime.now(timezone.utc).replace(tzinfo=None)
+        db.add(
+            SourceStatus(
+                source_code="EEC_ETT",
+                source_name="EEC ETT test",
+                source_url="https://eec.eaeunion.org/",
+                revision="ett:2026-05-01",
+                synced_at=now,
+                is_stale=False,
+                note="test",
+            )
+        )
+
+    def test_seed_full_coverage_with_partial_official_not_present(self) -> None:
+        sm = _memory_sessionmaker()
+        base = 8_400_000_000
+        with sm() as db:
+            self._add_eec_proven(db)
+            for i in range(100):
+                code = f"{base + i:010d}"
+                db.add(TnvedEntry(hs_code=code, level=10, title=f"pos {i}"))
+                # i<50 official, i>=50 seed; hs_prefix=full code (без prefix-перекрытия).
+                db.add(
+                    HsRate(
+                        hs_code=code,
+                        hs_prefix=code,
+                        duty_rate="5%",
+                        vat_import_rate=22.0,
+                        source_revision="ett:2026-05-01" if i < 50 else "seed",
+                    )
+                )
+            db.commit()
+        patch_cov, patch_norm = _start_coverage_db_patches(sm)
+        try:
+            duty = diagnose_duty_rates()
+        finally:
+            _stop_coverage_db_patches(patch_cov, patch_norm)
+        self.assertNotEqual(duty.status, "present")
+        self.assertEqual(duty.status, "partial")
+        self.assertTrue(duty.manual_review_required)
+        self.assertTrue(duty.missing_samples)
+        self.assertTrue(any("official" in g.lower() for g in duty.gaps))
+
+    def test_full_official_coverage_can_be_present(self) -> None:
+        sm = _memory_sessionmaker()
+        base = 8_500_000_000
+        with sm() as db:
+            self._add_eec_proven(db)
+            for i in range(120):
+                code = f"{base + i:010d}"
+                db.add(TnvedEntry(hs_code=code, level=10, title=f"pos {i}"))
+                db.add(
+                    HsRate(
+                        hs_code=code,
+                        hs_prefix=code,
+                        duty_rate="5%",
+                        vat_import_rate=22.0,
+                        source_revision="ett:2026-05-01",
+                    )
+                )
+            db.commit()
+        patch_cov, patch_norm = _start_coverage_db_patches(sm)
+        try:
+            duty = diagnose_duty_rates()
+        finally:
+            _stop_coverage_db_patches(patch_cov, patch_norm)
+        self.assertEqual(duty.status, "present")
+        self.assertFalse(duty.manual_review_required)
+
+
 @unittest.skipUnless(_API_OK, "fastapi not installed")
 class TestPaymentDataCoverageApi(unittest.TestCase):
     @classmethod

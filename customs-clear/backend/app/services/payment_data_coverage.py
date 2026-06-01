@@ -113,9 +113,27 @@ def _source_configured(
     return any_configured, ", ".join(labels) if labels else None, authority
 
 
-def _hs_rate_lookup_sets(db) -> frozenset[str]:
-    """Объединённый набор hs_code/hs_prefix для проверки покрытия (как find_rate_for_hs)."""
+def _hs_rate_lookup_sets(db, *, official_only: bool = False) -> frozenset[str]:
+    """Объединённый набор hs_code/hs_prefix для проверки покрытия (как find_rate_for_hs).
+
+    official_only=True учитывает только non-seed/non-fallback (official) строки — чтобы
+    seed/fallback/demo/test/example/legacy/unknown rows не давали false official coverage.
+    """
     merged: set[str] = set()
+    if official_only:
+        from .payment_source_ingestion import _is_official_revision
+
+        for hs_code, hs_prefix, source_revision in db.query(
+            HsRate.hs_code, HsRate.hs_prefix, HsRate.source_revision
+        ).all():
+            if not _is_official_revision(str(source_revision or "")):
+                continue
+            if hs_code:
+                merged.add(_digits(hs_code))
+            if hs_prefix:
+                merged.add(_digits(hs_prefix))
+        return frozenset(merged)
+
     for hs_code, hs_prefix in db.query(HsRate.hs_code, HsRate.hs_prefix).all():
         if hs_code:
             merged.add(_digits(hs_code))
@@ -134,13 +152,14 @@ def _code_covered_by_hs_rates(code: str, lookup: frozenset[str]) -> bool:
     return False
 
 
-def _full_tnved_duty_coverage(db) -> tuple[int, int, list[str]]:
+def _full_tnved_duty_coverage(db, *, official_only: bool = False) -> tuple[int, int, list[str]]:
     """
     Полное покрытие 10-значных кодов каталога ставками hs_rates (точное + префикс 10→2).
 
+    official_only=True считает покрытие только по official (non-seed/non-fallback) строкам.
     Returns (covered_count, total_count, missing_samples up to 5).
     """
-    lookup = _hs_rate_lookup_sets(db)
+    lookup = _hs_rate_lookup_sets(db, official_only=official_only)
     commodity_codes = [
         _digits(c)
         for (c,) in db.query(Commodity.code).filter(func.length(Commodity.code) >= 10).all()
@@ -244,6 +263,9 @@ def diagnose_duty_rates() -> CoverageDomainSummary:
         hs_count = db.query(HsRate).count()
         duty_rules = db.query(HsDutyRule).count()
         covered_codes, total_codes, missing_samples = _full_tnved_duty_coverage(db)
+        official_covered, _official_total, official_missing = _full_tnved_duty_coverage(
+            db, official_only=True
+        )
         eec_ok, official_rows, seed_count = _duty_official_provenance(db)
 
     label, authority = _registry_label("eec_ett_tnved")
@@ -276,7 +298,16 @@ def diagnose_duty_rates() -> CoverageDomainSummary:
     elif official_rows == 0 and hs_count > 0:
         status = "partial"
         gaps.append("Все строки hs_rates помечены seed/fallback — не claim official present.")
-    elif total_codes > 0 and covered_codes == total_codes and eec_ok and official_rows > 0:
+    elif total_codes > 0 and official_covered < total_codes:
+        # Полное покрытие каталога достигается за счёт seed/fallback строк — official present
+        # не выдаётся; missing_samples отражают gaps именно в official rows.
+        status = "partial"
+        gaps.append(
+            f"Official покрытие {official_covered}/{total_codes}: полнота каталога "
+            "достигается seed/fallback строками — official present не выдаётся."
+        )
+        missing_samples = official_missing or missing_samples
+    elif total_codes > 0 and official_covered == total_codes and eec_ok and official_rows > 0:
         status = "present"
     elif hs_count >= _EXPECTED_HS_RATES_MIN and eec_ok and official_rows > 0:
         status = "partial"

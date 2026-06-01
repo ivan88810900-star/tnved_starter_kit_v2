@@ -309,6 +309,175 @@ class TestImportDutyApplyOfficial(unittest.TestCase):
             self.assertEqual(db.query(SyncLog).count(), 0)
 
 
+class _RawBundleFixture:
+    """Записывает произвольный (возможно невалидный) текст вместо JSON-объекта."""
+
+    def __init__(self, raw_text: str, rel_path: str = "data/raw_normative/eec_ett_normative_bundle.json"):
+        self.rel_path = rel_path
+        self.raw_text = raw_text
+        self._tmpdir = None
+
+    def __enter__(self) -> tuple[Path, str]:
+        import tempfile
+
+        self._tmpdir = tempfile.TemporaryDirectory()
+        root = Path(self._tmpdir.name)
+        full = root / self.rel_path
+        full.parent.mkdir(parents=True, exist_ok=True)
+        full.write_text(self.raw_text, encoding="utf-8")
+        return root, self.rel_path
+
+    def __exit__(self, *args: object) -> None:
+        if self._tmpdir:
+            self._tmpdir.cleanup()
+
+
+class TestImportDutyParserFailures(unittest.TestCase):
+    """P1 #1: invalid/non-object bundle → blocked, без OK provenance и мутаций."""
+
+    def setUp(self) -> None:
+        self.sm = _memory_sessionmaker()
+        self._patches = _start_patches(self.sm)
+
+    def tearDown(self) -> None:
+        _stop_patches(*self._patches)
+
+    def _dry_run(self, raw: str) -> dict:
+        import app.services.import_duty_ingestion as idi
+
+        with _RawBundleFixture(raw) as (root, rel):
+            with unittest.mock.patch.object(idi, "_BACKEND_ROOT", root):
+                return run_import_duty_dry_run(rel_path=rel)
+
+    def _apply(self, raw: str) -> dict:
+        import app.services.import_duty_ingestion as idi
+
+        with _RawBundleFixture(raw) as (root, rel):
+            with unittest.mock.patch.object(idi, "_BACKEND_ROOT", root):
+                return run_import_duty_apply(rel_path=rel)
+
+    def _assert_no_ok_provenance(self) -> None:
+        with self.sm() as db:
+            self.assertEqual(db.query(SourceStatus).count(), 0)
+            self.assertEqual(
+                db.query(SyncLog).filter(SyncLog.status == "OK").count(), 0
+            )
+
+    def test_invalid_json_dry_run_blocked(self) -> None:
+        report = self._dry_run("{ this is : not valid json ,,, ")
+        self.assertEqual(report["status"], "parser_failed")
+        self.assertTrue(report["dry_run"])
+        self.assertFalse(report["db_mutated"])
+        self.assertTrue(report["blockers"])
+
+    def test_invalid_json_apply_no_mutation(self) -> None:
+        before = _table_counts(self.sm)
+        report = self._apply("{ this is : not valid json ,,, ")
+        after = _table_counts(self.sm)
+        self.assertEqual(before, after)
+        self.assertEqual(report["status"], "parser_failed")
+        self.assertFalse(report["db_mutated"])
+        self._assert_no_ok_provenance()
+
+    def test_json_array_apply_blocked(self) -> None:
+        before = _table_counts(self.sm)
+        report = self._apply("[1, 2, 3]")
+        after = _table_counts(self.sm)
+        self.assertEqual(before, after)
+        self.assertEqual(report["status"], "parser_failed")
+        self.assertFalse(report["db_mutated"])
+        self._assert_no_ok_provenance()
+
+    def test_json_scalar_dry_run_and_apply_blocked(self) -> None:
+        dry = self._dry_run("42")
+        self.assertEqual(dry["status"], "parser_failed")
+        self.assertFalse(dry["db_mutated"])
+        before = _table_counts(self.sm)
+        report = self._apply("42")
+        after = _table_counts(self.sm)
+        self.assertEqual(before, after)
+        self.assertEqual(report["status"], "parser_failed")
+        self._assert_no_ok_provenance()
+
+
+class TestImportDutyNonVersionedRevisionRejected(unittest.TestCase):
+    """P2: arbitrary non-versioned revisions блокируются (нужен explicit versioned EEC/ETT)."""
+
+    def setUp(self) -> None:
+        self.sm = _memory_sessionmaker()
+        self._patches = _start_patches(self.sm)
+
+    def tearDown(self) -> None:
+        _stop_patches(*self._patches)
+
+    def _dry_run(self, payload: dict) -> dict:
+        import app.services.import_duty_ingestion as idi
+
+        with _BundleFixture(payload) as (root, rel):
+            with unittest.mock.patch.object(idi, "_BACKEND_ROOT", root):
+                return run_import_duty_dry_run(rel_path=rel)
+
+    def _apply(self, payload: dict) -> dict:
+        import app.services.import_duty_ingestion as idi
+
+        with _BundleFixture(payload) as (root, rel):
+            with unittest.mock.patch.object(idi, "_BACKEND_ROOT", root):
+                return run_import_duty_apply(rel_path=rel)
+
+    def test_local_copy_revision_blocked_dry_run_and_apply(self) -> None:
+        payload = _official_bundle_payload(revision="local-copy")
+        dry = self._dry_run(payload)
+        self.assertEqual(dry["status"], "manual_review_required")
+        self.assertFalse(dry["db_mutated"])
+        before = _table_counts(self.sm)
+        report = self._apply(payload)
+        after = _table_counts(self.sm)
+        self.assertEqual(before, after)
+        self.assertEqual(report["status"], "manual_review_required")
+        self.assertFalse(report["db_mutated"])
+        with self.sm() as db:
+            self.assertEqual(db.query(SourceStatus).count(), 0)
+            self.assertEqual(db.query(SyncLog).filter(SyncLog.status == "OK").count(), 0)
+
+    def test_foo_revision_blocked(self) -> None:
+        report = self._apply(_official_bundle_payload(revision="foo"))
+        self.assertEqual(report["status"], "manual_review_required")
+        self.assertFalse(report["db_mutated"])
+
+    def test_manual_revision_blocked(self) -> None:
+        report = self._apply(_official_bundle_payload(revision="manual"))
+        self.assertEqual(report["status"], "manual_review_required")
+        self.assertFalse(report["db_mutated"])
+
+    def test_versioned_ett_revision_accepted(self) -> None:
+        report = self._apply(_official_bundle_payload(revision="ett:2026-05-01"))
+        self.assertEqual(report["status"], "OK")
+        self.assertTrue(report["db_mutated"])
+
+    def test_explicit_official_row_revision_accepted(self) -> None:
+        payload = _official_bundle_payload(
+            rates=[
+                {"hs_code": "8471300000", "hs_prefix": "8471", "duty_rate": "5%", "source_revision": "eec-ett:2026-05-01"},
+            ]
+        )
+        report = self._apply(payload)
+        self.assertEqual(report["status"], "OK")
+        self.assertTrue(report["db_mutated"])
+        with self.sm() as db:
+            row = db.query(HsRate).filter(HsRate.hs_code == "8471300000").first()
+            self.assertEqual(row.source_revision, "eec-ett:2026-05-01")
+
+    def test_explicit_non_versioned_row_revision_blocked(self) -> None:
+        payload = _official_bundle_payload(
+            rates=[
+                {"hs_code": "8471300000", "hs_prefix": "8471", "duty_rate": "5%", "source_revision": "local-copy"},
+            ]
+        )
+        report = self._apply(payload)
+        self.assertEqual(report["status"], "manual_review_required")
+        self.assertFalse(report["db_mutated"])
+
+
 class TestImportDutyCoverageAfterImport(unittest.TestCase):
     def setUp(self) -> None:
         self.sm = _memory_sessionmaker()
