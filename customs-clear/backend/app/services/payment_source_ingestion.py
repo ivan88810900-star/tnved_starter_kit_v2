@@ -216,7 +216,7 @@ def parse_payment_source_file(entry: PaymentSourceEntry) -> dict[str, Any]:
         return {"status": "missing_source", "reason": "no_local_canonical_path", "record_count": 0}
 
     rel = entry.local_canonical_paths[0]
-    if rel.endswith(".json") and "normative_bundle" in rel:
+    if rel.endswith(".json") and ("normative_bundle" in rel or "eec_ett" in rel):
         return parse_normative_bundle_file(rel)
     if rel.endswith(".json"):
         return parse_sanctions_fixture_file(rel)

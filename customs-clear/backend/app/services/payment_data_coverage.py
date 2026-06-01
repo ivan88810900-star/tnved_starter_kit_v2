@@ -223,16 +223,34 @@ def diagnose_tnved_tree() -> TnvedTreeCoverage:
     )
 
 
+def _duty_official_provenance(db) -> tuple[bool, int, int]:
+    """EEC_ETT proven + доля non-seed hs_rates (import-duty official contour)."""
+    from .payment_data_normalization import _eec_proven, _is_seed_or_fallback_revision
+
+    eec_ok, _ = _eec_proven()
+    hs_count = db.query(HsRate).count()
+    seed_count = 0
+    for revision, count in (
+        db.query(HsRate.source_revision, func.count()).group_by(HsRate.source_revision).all()
+    ):
+        if _is_seed_or_fallback_revision(revision):
+            seed_count += int(count or 0)
+    official_rows = max(0, hs_count - seed_count)
+    return eec_ok, official_rows, seed_count
+
+
 def diagnose_duty_rates() -> CoverageDomainSummary:
     with SessionLocal() as db:
         hs_count = db.query(HsRate).count()
         duty_rules = db.query(HsDutyRule).count()
         covered_codes, total_codes, missing_samples = _full_tnved_duty_coverage(db)
+        eec_ok, official_rows, seed_count = _duty_official_provenance(db)
 
     label, authority = _registry_label("eec_ett_tnved")
     eec = _lookup_source_status("EEC_ETT")
     last_ok = _latest_sync_ok("EEC_ETT")
     gaps: list[str] = []
+    notes: list[str] = []
 
     if hs_count == 0:
         status = "missing"
@@ -252,11 +270,27 @@ def diagnose_duty_rates() -> CoverageDomainSummary:
     elif total_codes == 0 and hs_count < _EXPECTED_HS_RATES_MIN:
         status = "partial"
         gaps.append("Нет 10-значных кодов в каталоге для проверки полноты покрытия.")
-    else:
+    elif not eec_ok:
+        status = "partial"
+        gaps.append("EEC_ETT не подтверждён как актуальный official import-duty contour.")
+    elif official_rows == 0 and hs_count > 0:
+        status = "partial"
+        gaps.append("Все строки hs_rates помечены seed/fallback — не claim official present.")
+    elif total_codes > 0 and covered_codes == total_codes and eec_ok and official_rows > 0:
         status = "present"
+    elif hs_count >= _EXPECTED_HS_RATES_MIN and eec_ok and official_rows > 0:
+        status = "partial"
+    else:
+        status = "partial" if hs_count > 0 else "missing"
 
     if duty_rules == 0:
         gaps.append("hs_duty_rules пуст — структурированные ставки не импортированы.")
+
+    if eec_ok and official_rows > 0:
+        resolved_authority = authority or "official_binding"
+        notes.append(f"official hs_rates rows: {official_rows}/{hs_count}")
+    else:
+        resolved_authority = "legacy_seed" if seed_count >= hs_count and hs_count > 0 else authority
 
     manual = status in {"missing", "partial", "stale"}
     return CoverageDomainSummary(
@@ -266,11 +300,11 @@ def diagnose_duty_rates() -> CoverageDomainSummary:
         total_codes=total_codes if total_codes else None,
         manual_review_required=manual,
         source_label=label or "hs_rates / hs_duty_rules (ЕТТ ЕАЭС)",
-        authority_level=authority,
+        authority_level=resolved_authority,
         last_successful_sync_at=last_ok or (eec.synced_at.isoformat() if eec and eec.synced_at else None),
         gaps=gaps,
         missing_samples=missing_samples,
-        notes=[f"hs_duty_rules: {duty_rules}"] if duty_rules else [],
+        notes=notes + ([f"hs_duty_rules: {duty_rules}"] if duty_rules else []),
     )
 
 
