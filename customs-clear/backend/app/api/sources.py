@@ -13,6 +13,11 @@ from ..services.regulatory_source_completeness import (
 )
 from ..services.payment_data_coverage import run_payment_data_coverage_report
 from ..services.payment_data_normalization import run_payment_data_normalization_report
+from ..services.payment_source_ingestion import (
+    run_payment_source_ingestion_dry_run,
+    run_payment_source_ingestion_plan,
+)
+from ..services.payment_source_registry import list_payment_registry_snapshot
 from ..services.normative_bundle import import_normative_bundle_bytes
 from ..services.source_import import import_normative_file
 from ..services.source_sync import sync_all_sources, sync_normative_bundle_url
@@ -69,6 +74,24 @@ async def sources_payment_coverage() -> JSONResponse:
 async def sources_payment_normalization() -> JSONResponse:
     """Readiness-отчёт нормализации платёжных источников (пошлина, НДС, акциз, антидемпинг)."""
     return JSONResponse(run_payment_data_normalization_report())
+
+
+@router.get("/payment-ingestion/plan")
+async def sources_payment_ingestion_plan() -> JSONResponse:
+    """План ingestion официальных платёжных источников (read-only, без мутации БД)."""
+    return JSONResponse(run_payment_source_ingestion_plan())
+
+
+@router.post("/payment-ingestion/dry-run")
+async def sources_payment_ingestion_dry_run() -> JSONResponse:
+    """Dry-run ingestion: парсинг локальных кандидатов, оценки строк, db_mutated=false."""
+    return JSONResponse(run_payment_source_ingestion_dry_run())
+
+
+@router.get("/payment-ingestion/registry")
+async def sources_payment_ingestion_registry() -> JSONResponse:
+    """Статический реестр платёжных источников по доменам (import_duty, vat, excise, …)."""
+    return JSONResponse({"status": "OK", "sources": list_payment_registry_snapshot()})
 
 
 @router.get("/log")

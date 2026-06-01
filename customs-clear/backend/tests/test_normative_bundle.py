@@ -70,6 +70,56 @@ class NormativeBundleTests(unittest.TestCase):
         self.assertEqual(data.get("status"), "OK")
         self.assertIsInstance(data.get("results"), list)
 
+    def test_blank_row_revision_inherits_bundle_revision(self):
+        import_normative_bundle_dict(
+            {
+                "format": "customs_clear_normative_bundle",
+                "revision": "ett:2026-05-01",
+                "rates": [
+                    {
+                        "hs_code": "7777770000",
+                        "hs_prefix": "7777",
+                        "duty_rate": 5,
+                        "vat_import_rate": 22,
+                        "source_revision": "",
+                    }
+                ],
+            },
+            filename="unit-inherit.json",
+        )
+        from app.db import SessionLocal
+        from app.models.core import HsRate
+
+        with SessionLocal() as db:
+            row = db.query(HsRate).filter(HsRate.hs_code == "7777770000").first()
+        self.assertIsNotNone(row)
+        self.assertEqual(row.source_revision, "ett:2026-05-01")
+
+    def test_explicit_seed_row_revision_preserved(self):
+        import_normative_bundle_dict(
+            {
+                "format": "customs_clear_normative_bundle",
+                "revision": "ett:2026-05-01",
+                "rates": [
+                    {
+                        "hs_code": "7777770001",
+                        "hs_prefix": "7777",
+                        "duty_rate": 5,
+                        "vat_import_rate": 22,
+                        "source_revision": "seed-2026-03",
+                    }
+                ],
+            },
+            filename="unit-explicit-seed.json",
+        )
+        from app.db import SessionLocal
+        from app.models.core import HsRate
+
+        with SessionLocal() as db:
+            row = db.query(HsRate).filter(HsRate.hs_code == "7777770001").first()
+        self.assertIsNotNone(row)
+        self.assertEqual(row.source_revision, "seed-2026-03")
+
 
 _EXAMPLE = Path(__file__).resolve().parent.parent / "data" / "normative_bundle.example.json"
 

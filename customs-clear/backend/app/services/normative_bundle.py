@@ -141,7 +141,10 @@ def import_normative_bundle_dict(
         try:
             row = _normalize_rate_row(raw)
             if row:
-                row.setdefault("source_revision", revision)
+                # _normalize_rate_row всегда кладёт ключ source_revision (возможно ""),
+                # поэтому setdefault не сработает. Наследуем bundle revision для blank/None.
+                if not str(row.get("source_revision") or "").strip():
+                    row["source_revision"] = revision
                 upsert_hs_rate(row)
                 n_rates += 1
             else:
