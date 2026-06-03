@@ -496,6 +496,96 @@ class TestPaymentIngestionMalformedRatesContainer(unittest.TestCase):
         self.assertEqual(parsed["status"], "parser_failed")
 
 
+class TestPaymentIngestionFallbackCanonicalPath(unittest.TestCase):
+    """P2: parser должен открывать первый существующий canonical path, не всегда [0]."""
+
+    _FIRST = "data/raw_normative/eec_ett_normative_bundle.json"
+    _SECOND = "data/raw_normative/eec_ett_import_duty.json"
+
+    def _valid_payload(self) -> dict:
+        return {
+            "format": "customs_clear_normative_bundle",
+            "revision": "ett:2026-05-01",
+            "official_ett_url": "https://eec.eaeunion.org/comission/department/catr/ett/",
+            "rates": [{"hs_code": "8471300000", "hs_prefix": "8471", "duty_rate": "5%"}],
+            "tnved": [],
+        }
+
+    def _run(self, *, files: dict[str, object]) -> dict:
+        import json as _json
+        import tempfile
+        from pathlib import Path
+
+        from app.services import payment_source_ingestion as psi
+        from app.services.payment_source_registry import get_payment_source_entry
+
+        entry = get_payment_source_entry("eec_ett_tariff")
+        self.assertIsNotNone(entry)
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            for rel, content in files.items():
+                full = root / rel
+                full.parent.mkdir(parents=True, exist_ok=True)
+                text = content if isinstance(content, str) else _json.dumps(content)
+                full.write_text(text, encoding="utf-8")
+            with unittest.mock.patch.object(psi, "_BACKEND_ROOT", root):
+                return psi.parse_payment_source_file(entry)
+
+    def test_first_absent_second_valid_parses(self) -> None:
+        result = self._run(files={self._SECOND: self._valid_payload()})
+        self.assertEqual(result["status"], "parsed")
+        self.assertEqual(result["rates_count"], 1)
+        self.assertEqual(result.get("selected_path"), self._SECOND)
+
+    def test_first_absent_second_malformed_parser_failed(self) -> None:
+        payload = self._valid_payload()
+        payload["rates"] = 123
+        result = self._run(files={self._SECOND: payload})
+        self.assertEqual(result["status"], "parser_failed")
+        self.assertEqual(result.get("reason"), "malformed_rates_container")
+
+    def test_first_present_valid_uses_first(self) -> None:
+        result = self._run(
+            files={self._FIRST: self._valid_payload(), self._SECOND: self._valid_payload()}
+        )
+        self.assertEqual(result["status"], "parsed")
+        self.assertEqual(result.get("selected_path"), self._FIRST)
+
+    def test_neither_exists_missing_source(self) -> None:
+        result = self._run(files={})
+        self.assertEqual(result["status"], "missing_source")
+
+    def test_plan_candidate_uses_found_fallback_path(self) -> None:
+        import json as _json
+        import tempfile
+        from pathlib import Path
+
+        from app.services import payment_source_ingestion as psi
+
+        sm = _memory_sessionmaker()
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            full = root / self._SECOND
+            full.parent.mkdir(parents=True, exist_ok=True)
+            full.write_text(_json.dumps(self._valid_payload()), encoding="utf-8")
+            patches = _start_db_patches(sm)
+            root_patch = unittest.mock.patch.object(psi, "_BACKEND_ROOT", root)
+            root_patch.start()
+            try:
+                report = run_payment_source_ingestion_plan()
+            finally:
+                root_patch.stop()
+                _stop_db_patches(*patches)
+        eec = next(
+            c
+            for c in report["domains"]["import_duty"]["candidates"]
+            if c["source_code"] == "eec_ett_tariff"
+        )
+        self.assertIn(self._SECOND, eec["local_paths_found"])
+        self.assertNotEqual(eec["parser_result"].get("status"), "missing_source")
+        self.assertEqual(eec["parser_result"].get("selected_path"), self._SECOND)
+
+
 class TestPaymentIngestionStaleSourceStatusBlocked(unittest.TestCase):
     def test_stale_source_status_not_ready_even_if_normalization_present(self) -> None:
         sm = _memory_sessionmaker()

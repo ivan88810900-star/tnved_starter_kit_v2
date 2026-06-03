@@ -235,22 +235,45 @@ def parse_sanctions_fixture_file(rel_path: str) -> dict[str, Any]:
     }
 
 
+def _first_existing_local_path(entry: PaymentSourceEntry) -> str | None:
+    """Первый реально существующий canonical path (а не всегда [0]).
+
+    Registry может объявлять несколько fallback-путей; парсер должен открывать тот файл,
+    который фактически найден, иначе valid fallback ошибочно даёт missing_source.
+    """
+    for rel in entry.local_canonical_paths:
+        if _local_path_present(rel):
+            return rel
+    return None
+
+
 def parse_payment_source_file(entry: PaymentSourceEntry) -> dict[str, Any]:
     """Диспетчер read-only парсеров по типу локального файла."""
     if not entry.local_canonical_paths:
         return {"status": "missing_source", "reason": "no_local_canonical_path", "record_count": 0}
 
-    rel = entry.local_canonical_paths[0]
+    # Берём первый существующий path из всех canonical paths, не только [0].
+    rel = _first_existing_local_path(entry)
+    if rel is None:
+        return {
+            "status": "missing_source",
+            "reason": "no_local_canonical_file_found",
+            "candidate_paths": list(entry.local_canonical_paths),
+            "record_count": 0,
+        }
+
     if rel.endswith(".json") and ("normative_bundle" in rel or "eec_ett" in rel):
-        return parse_normative_bundle_file(rel)
-    if rel.endswith(".json"):
-        return parse_sanctions_fixture_file(rel)
-    return {
-        "status": "stub_only",
-        "reason": "parser_not_implemented_for_format",
-        "path": rel,
-        "record_count": 0,
-    }
+        result = parse_normative_bundle_file(rel)
+    elif rel.endswith(".json"):
+        result = parse_sanctions_fixture_file(rel)
+    else:
+        result = {
+            "status": "stub_only",
+            "reason": "parser_not_implemented_for_format",
+            "record_count": 0,
+        }
+    result.setdefault("selected_path", rel)
+    return result
 
 
 def _table_row_counts() -> dict[str, int]:
