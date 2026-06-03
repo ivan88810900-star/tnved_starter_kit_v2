@@ -24,6 +24,7 @@ from .payment_data_normalization import (
     _is_seed_or_fallback_revision,
     run_payment_data_normalization_report,
 )
+from .payment_revision_utils import raw_rate_rows
 from .payment_source_registry import (
     PAYMENT_DOMAINS,
     PAYMENT_SOURCE_REGISTRY,
@@ -128,8 +129,32 @@ def parse_normative_bundle_file(rel_path: str) -> dict[str, Any]:
 
     revision = str(payload.get("revision") or "").strip().lower()
     fmt = str(payload.get("format") or "")
-    rates = payload.get("rates") or []
-    tnved = payload.get("tnved") or []
+
+    # Malformed контейнеры: rates/rows должны быть JSON-массивом — иначе parser_failed
+    # без итерации (общий helper с import-duty ingestion), чтобы /plan не падал 500.
+    rates, container_err = raw_rate_rows(payload)
+    if container_err is not None:
+        return {
+            "status": "parser_failed",
+            "reason": container_err,
+            "error": f"bundle '{container_err.split('_')[1]}' must be a JSON array",
+            "revision": revision,
+            "record_count": 0,
+            "checksum_sha256": _file_sha256(rel_path),
+        }
+    # Non-object строки в rates/rows → parser_failed (без silent skip / AttributeError).
+    if any(not isinstance(r, dict) for r in rates):
+        return {
+            "status": "parser_failed",
+            "reason": "malformed_rate_row",
+            "error": "bundle rate rows must be JSON objects",
+            "revision": revision,
+            "record_count": len(rates),
+            "rates_count": len(rates),
+            "checksum_sha256": _file_sha256(rel_path),
+        }
+    raw_tnved = payload.get("tnved")
+    tnved = raw_tnved if isinstance(raw_tnved, list) else []
 
     if revision in _NON_OFFICIAL_FILE_REVISIONS or not _is_official_revision(revision):
         return {

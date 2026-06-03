@@ -786,6 +786,188 @@ class TestImportDutyStalePrefixUpdate(unittest.TestCase):
         self.assertEqual(report["row_counts"]["skip"], 1)
 
 
+class TestImportDutyOfficialSourceUrl(unittest.TestCase):
+    """P2: official import требует explicit source URL — default НЕ синтезируется."""
+
+    def setUp(self) -> None:
+        self.sm = _memory_sessionmaker()
+        self._patches = _start_patches(self.sm)
+
+    def tearDown(self) -> None:
+        _stop_patches(*self._patches)
+
+    def _dry_run(self, payload: dict) -> dict:
+        import app.services.import_duty_ingestion as idi
+
+        with _BundleFixture(payload) as (root, rel):
+            with unittest.mock.patch.object(idi, "_BACKEND_ROOT", root):
+                return run_import_duty_dry_run(rel_path=rel)
+
+    def _apply(self, payload: dict) -> dict:
+        import app.services.import_duty_ingestion as idi
+
+        with _BundleFixture(payload) as (root, rel):
+            with unittest.mock.patch.object(idi, "_BACKEND_ROOT", root):
+                return run_import_duty_apply(rel_path=rel)
+
+    def _assert_no_ok_provenance(self) -> None:
+        with self.sm() as db:
+            self.assertEqual(db.query(SourceStatus).count(), 0)
+            self.assertEqual(db.query(SyncLog).filter(SyncLog.status == "OK").count(), 0)
+
+    @staticmethod
+    def _payload_without_url(*, rates: list[dict] | None = None, effective_from: str | None = "2026-01-01") -> dict:
+        payload: dict = {
+            "format": "customs_clear_normative_bundle",
+            "revision": "ett:2026-05-01",
+            "rates": rates or [{"hs_code": "8471300000", "duty_rate": "5%"}],
+        }
+        if effective_from is not None:
+            payload["effective_from"] = effective_from
+        return payload
+
+    def test_missing_source_url_blocks_dry_run_and_apply(self) -> None:
+        payload = self._payload_without_url()
+        dry = self._dry_run(payload)
+        self.assertNotEqual(dry["status"], "OK")
+        self.assertFalse(dry["db_mutated"])
+        self.assertTrue(any("source_url" in b for b in dry["blockers"]))
+        before = _table_counts(self.sm)
+        report = self._apply(payload)
+        after = _table_counts(self.sm)
+        self.assertEqual(before, after)
+        self.assertNotEqual(report["status"], "OK")
+        self.assertFalse(report["db_mutated"])
+        self._assert_no_ok_provenance()
+
+    def test_blank_source_url_strings_blocked(self) -> None:
+        payload = self._payload_without_url()
+        payload["official_ett_url"] = "   "
+        payload["source_url"] = ""
+        report = self._apply(payload)
+        self.assertNotEqual(report["status"], "OK")
+        self.assertFalse(report["db_mutated"])
+        self._assert_no_ok_provenance()
+
+    def test_bundle_official_ett_url_accepted(self) -> None:
+        payload = self._payload_without_url()
+        payload["official_ett_url"] = "https://eec.eaeunion.org/comission/department/catr/ett/"
+        report = self._apply(payload)
+        self.assertEqual(report["status"], "OK")
+        self.assertTrue(report["db_mutated"])
+        with self.sm() as db:
+            row = db.query(HsRate).filter(HsRate.hs_code == "8471300000").first()
+            self.assertEqual(row.source_url, "https://eec.eaeunion.org/comission/department/catr/ett/")
+
+    def test_bundle_source_url_accepted(self) -> None:
+        payload = self._payload_without_url()
+        payload["source_url"] = "https://eec.eaeunion.org/ett/2026"
+        report = self._apply(payload)
+        self.assertEqual(report["status"], "OK")
+        self.assertTrue(report["db_mutated"])
+        with self.sm() as db:
+            row = db.query(HsRate).filter(HsRate.hs_code == "8471300000").first()
+            self.assertEqual(row.source_url, "https://eec.eaeunion.org/ett/2026")
+
+    def test_row_level_source_url_accepted_without_bundle_url(self) -> None:
+        payload = self._payload_without_url(
+            rates=[{"hs_code": "8471300000", "duty_rate": "5%", "source_url": "https://eec.eaeunion.org/row"}]
+        )
+        report = self._apply(payload)
+        self.assertEqual(report["status"], "OK")
+        self.assertTrue(report["db_mutated"])
+        with self.sm() as db:
+            row = db.query(HsRate).filter(HsRate.hs_code == "8471300000").first()
+            self.assertEqual(row.source_url, "https://eec.eaeunion.org/row")
+
+    def test_row_level_url_overrides_bundle_url(self) -> None:
+        payload = self._payload_without_url(
+            rates=[{"hs_code": "8471300000", "duty_rate": "5%", "source_url": "https://eec.eaeunion.org/row"}]
+        )
+        payload["official_ett_url"] = "https://eec.eaeunion.org/bundle"
+        report = self._apply(payload)
+        self.assertEqual(report["status"], "OK")
+        with self.sm() as db:
+            row = db.query(HsRate).filter(HsRate.hs_code == "8471300000").first()
+            self.assertEqual(row.source_url, "https://eec.eaeunion.org/row")
+
+
+class TestImportDutyValidityDates(unittest.TestCase):
+    """P2: blank row dates наследуют bundle effective_from/effective_to."""
+
+    def setUp(self) -> None:
+        self.sm = _memory_sessionmaker()
+        self._patches = _start_patches(self.sm)
+
+    def tearDown(self) -> None:
+        _stop_patches(*self._patches)
+
+    def _apply(self, payload: dict) -> dict:
+        import app.services.import_duty_ingestion as idi
+
+        with _BundleFixture(payload) as (root, rel):
+            with unittest.mock.patch.object(idi, "_BACKEND_ROOT", root):
+                return run_import_duty_apply(rel_path=rel)
+
+    @staticmethod
+    def _payload(*, effective_from=None, effective_to=None, rates: list[dict] | None = None) -> dict:
+        payload: dict = {
+            "format": "customs_clear_normative_bundle",
+            "revision": "ett:2026-05-01",
+            "official_ett_url": "https://eec.eaeunion.org/comission/department/catr/ett/",
+            "rates": rates or [{"hs_code": "8471300000", "duty_rate": "5%"}],
+        }
+        if effective_from is not None:
+            payload["effective_from"] = effective_from
+        if effective_to is not None:
+            payload["effective_to"] = effective_to
+        return payload
+
+    def test_rows_omit_dates_inherit_bundle_dates(self) -> None:
+        payload = self._payload(effective_from="2026-01-01", effective_to="2026-12-31")
+        report = self._apply(payload)
+        self.assertEqual(report["status"], "OK")
+        with self.sm() as db:
+            row = db.query(HsRate).filter(HsRate.hs_code == "8471300000").first()
+            self.assertEqual(row.valid_from, "2026-01-01")
+            self.assertEqual(row.valid_to, "2026-12-31")
+
+    def test_blank_row_dates_inherit_bundle_dates(self) -> None:
+        payload = self._payload(
+            effective_from="2026-01-01",
+            effective_to="2026-12-31",
+            rates=[{"hs_code": "8471300000", "duty_rate": "5%", "valid_from": "", "valid_to": "  "}],
+        )
+        report = self._apply(payload)
+        self.assertEqual(report["status"], "OK")
+        with self.sm() as db:
+            row = db.query(HsRate).filter(HsRate.hs_code == "8471300000").first()
+            self.assertEqual(row.valid_from, "2026-01-01")
+            self.assertEqual(row.valid_to, "2026-12-31")
+
+    def test_explicit_row_dates_preserved(self) -> None:
+        payload = self._payload(
+            effective_from="2026-01-01",
+            effective_to="2026-12-31",
+            rates=[{"hs_code": "8471300000", "duty_rate": "5%", "valid_from": "2025-06-01", "valid_to": "2025-09-30"}],
+        )
+        report = self._apply(payload)
+        self.assertEqual(report["status"], "OK")
+        with self.sm() as db:
+            row = db.query(HsRate).filter(HsRate.hs_code == "8471300000").first()
+            self.assertEqual(row.valid_from, "2025-06-01")
+            self.assertEqual(row.valid_to, "2025-09-30")
+
+    def test_no_bundle_dates_remain_blank(self) -> None:
+        payload = self._payload()
+        report = self._apply(payload)
+        self.assertEqual(report["status"], "OK")
+        with self.sm() as db:
+            row = db.query(HsRate).filter(HsRate.hs_code == "8471300000").first()
+            self.assertIn(row.valid_from, (None, ""))
+            self.assertIn(row.valid_to, (None, ""))
+
+
 class TestImportDutyCoverageAfterImport(unittest.TestCase):
     def setUp(self) -> None:
         self.sm = _memory_sessionmaker()

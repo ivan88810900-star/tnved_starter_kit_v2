@@ -20,6 +20,7 @@ from .normative_bundle import _normalize_rate_row
 from .normative_store import append_sync_log, normalize_hs_duty_rate_string, upsert_source_status
 from .payment_data_coverage import run_payment_data_coverage_report
 from .payment_revision_utils import is_official_eec_ett_revision as _is_official_eec_ett_revision
+from .payment_revision_utils import raw_rate_rows
 from .payment_source_registry import get_payment_source_entry
 
 _BACKEND_ROOT = Path(__file__).resolve().parent.parent.parent
@@ -68,22 +69,8 @@ def _file_sha256_at(path: Path) -> str | None:
 
 
 def _raw_rates_list(payload: dict[str, Any]) -> tuple[list[Any] | None, str | None]:
-    """Единый безопасный доступ к rates/rows.
-
-    rates/rows должны быть JSON-массивом. Возвращает (list, None) при валидном контейнере
-    (или [] если оба отсутствуют), либо (None, reason) для malformed non-list контейнера.
-    """
-    raw_rates = payload.get("rates")
-    if raw_rates is not None and not isinstance(raw_rates, list):
-        return None, "malformed_rates_container"
-    raw_rows = payload.get("rows")
-    if raw_rows is not None and not isinstance(raw_rows, list):
-        return None, "malformed_rows_container"
-    if isinstance(raw_rates, list):
-        return raw_rates, None
-    if isinstance(raw_rows, list):
-        return raw_rows, None
-    return [], None
+    """Единый безопасный доступ к rates/rows (делегирует shared helper)."""
+    return raw_rate_rows(payload)
 
 
 def _validate_official_bundle_payload(payload: dict[str, Any], *, rel_path: str, checksum: str | None) -> dict[str, Any]:
@@ -194,11 +181,8 @@ def _extract_duty_rows(
     чтобы любой вызов был safe от malformed non-list контейнеров.
     """
     revision = str(payload.get("revision") or payload.get("source_revision") or "").strip()
-    official_url = str(
-        payload.get("official_ett_url")
-        or payload.get("source_url")
-        or "https://eec.eaeunion.org/comission/department/catr/ett/"
-    ).strip()
+    # P2: НЕ синтезируем default EEC URL — provenance должен быть explicit на bundle- или row-level.
+    bundle_url = str(payload.get("official_ett_url") or payload.get("source_url") or "").strip()
     effective_from = str(payload.get("effective_from") or "").strip() or None
     effective_to = str(payload.get("effective_to") or "").strip() or None
 
@@ -230,11 +214,19 @@ def _extract_duty_rows(
         explicit_prefix_scope = raw.get("prefix_scope") is True or raw.get("prefix_rate") is True
         if len(raw_code_digits) >= 10 and not explicit_prefix_scope:
             normalized["hs_prefix"] = raw_code_digits
-        normalized["source_url"] = str(normalized.get("source_url") or official_url).strip()
-        if effective_from:
-            normalized.setdefault("valid_from", effective_from)
-        if effective_to:
-            normalized.setdefault("valid_to", effective_to)
+        # P2: row-level source_url override; иначе наследуем bundle-level; default НЕ подставляем.
+        row_url = str(normalized.get("source_url") or "").strip() or bundle_url
+        if not row_url:
+            blockers.append(
+                f"official_source_url_required: нет official source_url для hs_code={normalized.get('hs_code')}"
+            )
+            continue
+        normalized["source_url"] = row_url
+        # P2: blank/None row dates наследуют bundle effective_from/effective_to (не только missing key).
+        if effective_from and not str(normalized.get("valid_from") or "").strip():
+            normalized["valid_from"] = effective_from
+        if effective_to and not str(normalized.get("valid_to") or "").strip():
+            normalized["valid_to"] = effective_to
         rows.append(normalized)
     return revision, rows, blockers
 
@@ -298,12 +290,8 @@ def _build_provenance(
         source_code=_EEC_SOURCE_CODE,
         source_name=entry.name if entry else "ЕТТ ЕАЭС — импортные пошлины",
         legal_basis=entry.legal_basis if entry else "Единый таможенный тариф ЕАЭС (ЕТТ)",
-        official_url=str(
-            payload.get("official_ett_url")
-            or (entry.official_url if entry else "")
-            or "https://eec.eaeunion.org/comission/department/catr/ett/"
-        ).strip()
-        or None,
+        # P2: provenance URL только из explicit bundle-level декларации, без synthesized default.
+        official_url=str(payload.get("official_ett_url") or payload.get("source_url") or "").strip() or None,
         revision=revision or None,
         checksum_sha256=parser_result.get("checksum_sha256") or _file_sha256_at(_BACKEND_ROOT / rel_path),
         effective_from=str(payload.get("effective_from") or "").strip() or None,

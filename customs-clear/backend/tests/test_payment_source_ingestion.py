@@ -403,6 +403,99 @@ class TestPaymentIngestionInheritedBundleRevision(unittest.TestCase):
         self.assertEqual(result["rates_count"], 2)
 
 
+class TestPaymentIngestionMalformedRatesContainer(unittest.TestCase):
+    """P2: malformed rates/rows в generic plan parser → parser_failed, без TypeError/500."""
+
+    def _parse_bundle(self, payload: dict) -> dict:
+        import json as _json
+        import tempfile
+        from pathlib import Path
+
+        from app.services import payment_source_ingestion as psi
+
+        with tempfile.TemporaryDirectory() as tmp:
+            rel = "data/eec_ett_normative_bundle.test.json"
+            full = Path(tmp) / rel
+            full.parent.mkdir(parents=True, exist_ok=True)
+            full.write_text(_json.dumps(payload), encoding="utf-8")
+            with unittest.mock.patch.object(psi, "_BACKEND_ROOT", Path(tmp)):
+                return parse_normative_bundle_file(rel)
+
+    def test_rates_scalar_parser_failed(self) -> None:
+        result = self._parse_bundle(
+            {"format": "customs_clear_normative_bundle", "revision": "ett:2026-05-01", "rates": 123}
+        )
+        self.assertEqual(result["status"], "parser_failed")
+        self.assertEqual(result.get("reason"), "malformed_rates_container")
+
+    def test_rates_object_parser_failed(self) -> None:
+        result = self._parse_bundle(
+            {"format": "customs_clear_normative_bundle", "revision": "ett:2026-05-01", "rates": {"a": 1}}
+        )
+        self.assertEqual(result["status"], "parser_failed")
+        self.assertEqual(result.get("reason"), "malformed_rates_container")
+
+    def test_rows_object_parser_failed(self) -> None:
+        result = self._parse_bundle(
+            {"format": "customs_clear_normative_bundle", "revision": "ett:2026-05-01", "rows": {"a": 1}}
+        )
+        self.assertEqual(result["status"], "parser_failed")
+        self.assertEqual(result.get("reason"), "malformed_rows_container")
+
+    def test_non_object_rate_items_parser_failed(self) -> None:
+        for bad in ([123], ["bad"], [{"hs_code": "8471300000", "duty_rate": "5%"}, 7]):
+            result = self._parse_bundle(
+                {"format": "customs_clear_normative_bundle", "revision": "ett:2026-05-01", "rates": bad}
+            )
+            self.assertEqual(result["status"], "parser_failed", msg=f"rates={bad}")
+            self.assertEqual(result.get("reason"), "malformed_rate_row")
+
+    def test_valid_list_of_dicts_still_parses(self) -> None:
+        result = self._parse_bundle(
+            {
+                "format": "customs_clear_normative_bundle",
+                "revision": "ett:2026-05-01",
+                "rates": [{"hs_code": "8471300000", "hs_prefix": "8471", "duty_rate": "5%"}],
+                "tnved": [],
+            }
+        )
+        self.assertEqual(result["status"], "parsed")
+        self.assertEqual(result["rates_count"], 1)
+
+    def test_plan_path_no_exception_on_malformed_canonical_file(self) -> None:
+        """Generic plan через parse_payment_source_file не должен падать на malformed rates."""
+        import json as _json
+        import tempfile
+        from pathlib import Path
+
+        from app.services import payment_source_ingestion as psi
+
+        sm = _memory_sessionmaker()
+        with tempfile.TemporaryDirectory() as tmp:
+            rel = "data/eec_ett_normative_bundle.test.json"
+            full = Path(tmp) / rel
+            full.parent.mkdir(parents=True, exist_ok=True)
+            full.write_text(
+                _json.dumps(
+                    {"format": "customs_clear_normative_bundle", "revision": "ett:2026-05-01", "rates": 123}
+                ),
+                encoding="utf-8",
+            )
+
+            class _FakeEntry:
+                local_canonical_paths = [rel]
+
+            patches = _start_db_patches(sm)
+            root_patch = unittest.mock.patch.object(psi, "_BACKEND_ROOT", Path(tmp))
+            root_patch.start()
+            try:
+                parsed = psi.parse_payment_source_file(_FakeEntry())  # type: ignore[arg-type]
+            finally:
+                root_patch.stop()
+                _stop_db_patches(*patches)
+        self.assertEqual(parsed["status"], "parser_failed")
+
+
 class TestPaymentIngestionStaleSourceStatusBlocked(unittest.TestCase):
     def test_stale_source_status_not_ready_even_if_normalization_present(self) -> None:
         sm = _memory_sessionmaker()

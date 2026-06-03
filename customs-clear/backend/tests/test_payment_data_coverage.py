@@ -715,6 +715,74 @@ class TestPaymentDataCoverageOfficialOnlyDuty(unittest.TestCase):
         self.assertTrue(any("official" in g.lower() for g in duty.gaps))
 
 
+class TestPaymentDataCoverageTopLevelEecRevision(unittest.TestCase):
+    """P2 #1: top-level SourceStatus(EEC_ETT).revision должен быть strict versioned EEC/ETT."""
+
+    def _build_full_official_catalog(self, sm, *, source_revision: str, is_stale: bool, base: int) -> None:
+        now = datetime.now(timezone.utc).replace(tzinfo=None)
+        with sm() as db:
+            db.add(
+                SourceStatus(
+                    source_code="EEC_ETT",
+                    source_name="EEC ETT test",
+                    source_url="https://eec.eaeunion.org/",
+                    revision=source_revision,
+                    synced_at=now,
+                    is_stale=is_stale,
+                    note="test",
+                )
+            )
+            # Row-level всегда strict official + полное покрытие каталога.
+            for i in range(120):
+                code = f"{base + i:010d}"
+                db.add(TnvedEntry(hs_code=code, level=10, title=f"pos {i}"))
+                db.add(
+                    HsRate(
+                        hs_code=code,
+                        hs_prefix=code,
+                        duty_rate="5%",
+                        vat_import_rate=22.0,
+                        source_revision="ett:2026-05-01",
+                    )
+                )
+            db.commit()
+
+    def _diagnose(self, sm):
+        patch_cov, patch_norm = _start_coverage_db_patches(sm)
+        try:
+            return diagnose_duty_rates()
+        finally:
+            _stop_coverage_db_patches(patch_cov, patch_norm)
+
+    def test_local_copy_top_level_revision_not_present(self) -> None:
+        sm = _memory_sessionmaker()
+        self._build_full_official_catalog(sm, source_revision="local-copy", is_stale=False, base=8_900_000_000)
+        duty = self._diagnose(sm)
+        self.assertNotEqual(duty.status, "present")
+        self.assertEqual(duty.status, "partial")
+        self.assertTrue(duty.manual_review_required)
+
+    def test_manual_top_level_revision_not_present(self) -> None:
+        sm = _memory_sessionmaker()
+        self._build_full_official_catalog(sm, source_revision="manual", is_stale=False, base=9_000_000_000)
+        duty = self._diagnose(sm)
+        self.assertNotEqual(duty.status, "present")
+        self.assertEqual(duty.status, "partial")
+
+    def test_versioned_top_level_revision_present_allowed(self) -> None:
+        sm = _memory_sessionmaker()
+        self._build_full_official_catalog(sm, source_revision="ett:2026-05-01", is_stale=False, base=9_100_000_000)
+        duty = self._diagnose(sm)
+        self.assertEqual(duty.status, "present")
+        self.assertFalse(duty.manual_review_required)
+
+    def test_stale_top_level_with_strict_revision_not_present(self) -> None:
+        sm = _memory_sessionmaker()
+        self._build_full_official_catalog(sm, source_revision="ett:2026-05-01", is_stale=True, base=9_200_000_000)
+        duty = self._diagnose(sm)
+        self.assertNotEqual(duty.status, "present")
+
+
 @unittest.skipUnless(_API_OK, "fastapi not installed")
 class TestPaymentDataCoverageApi(unittest.TestCase):
     @classmethod
