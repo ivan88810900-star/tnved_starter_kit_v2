@@ -247,8 +247,19 @@ def diagnose_tnved_tree() -> TnvedTreeCoverage:
 def _duty_official_provenance(db) -> tuple[bool, int, int]:
     """EEC_ETT proven + доля non-seed hs_rates (import-duty official contour)."""
     from .payment_data_normalization import _eec_proven, _is_seed_or_fallback_revision
+    from .payment_revision_utils import is_official_eec_ett_revision
 
-    eec_ok, _ = _eec_proven()
+    # Top-level EEC_ETT proof для import-duty present: SourceStatus exists, not stale и
+    # revision строго versioned EEC/ETT. Прямой strict-чек (defense-in-depth) — даже если
+    # _eec_proven() ослабят, present здесь не выдаётся на local-copy/manual/foo/official/prod.
+    eec_proven, _ = _eec_proven()
+    eec_status = _lookup_source_status("EEC_ETT")
+    eec_ok = bool(
+        eec_proven
+        and eec_status is not None
+        and not eec_status.is_stale
+        and is_official_eec_ett_revision(eec_status.revision)
+    )
     hs_count = db.query(HsRate).count()
     seed_count = 0
     for revision, count in (

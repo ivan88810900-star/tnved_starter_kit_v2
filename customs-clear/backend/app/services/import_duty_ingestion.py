@@ -90,6 +90,19 @@ def _validate_official_bundle_payload(payload: dict[str, Any], *, rel_path: str,
             "checksum_sha256": checksum,
         }
 
+    # Структурная валидация ДО любых revision/row веток: non-object rows → parser_failed.
+    # Так malformed структура всегда parser_failed, независимо от revision.
+    if any(not isinstance(r, dict) for r in rates):
+        return {
+            "status": "parser_failed",
+            "reason": "malformed_rate_row",
+            "error": "bundle rate rows must be JSON objects",
+            "revision": revision,
+            "record_count": len(rates),
+            "rates_count": len(rates),
+            "checksum_sha256": checksum,
+        }
+
     raw_tnved = payload.get("tnved")
     tnved = raw_tnved if isinstance(raw_tnved, list) else []
 
@@ -111,18 +124,6 @@ def _validate_official_bundle_payload(payload: dict[str, Any], *, rel_path: str,
             "revision": revision,
             "format": fmt,
             "record_count": len(rates) + len(tnved),
-            "rates_count": len(rates),
-            "checksum_sha256": checksum,
-        }
-
-    # Non-object rows в official import → parser_failed (без silent skip).
-    if any(not isinstance(r, dict) for r in rates):
-        return {
-            "status": "parser_failed",
-            "reason": "malformed_rate_row",
-            "error": "bundle rate rows must be JSON objects",
-            "revision": revision,
-            "record_count": len(rates),
             "rates_count": len(rates),
             "checksum_sha256": checksum,
         }

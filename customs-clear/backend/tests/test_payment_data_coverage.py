@@ -769,6 +769,49 @@ class TestPaymentDataCoverageTopLevelEecRevision(unittest.TestCase):
         self.assertNotEqual(duty.status, "present")
         self.assertEqual(duty.status, "partial")
 
+    def test_arbitrary_non_versioned_top_level_revisions_not_present(self) -> None:
+        for idx, revision in enumerate(("foo", "official", "prod", "legacy", "fallback", "")):
+            sm = _memory_sessionmaker()
+            self._build_full_official_catalog(
+                sm, source_revision=revision, is_stale=False, base=9_300_000_000 + idx * 1000
+            )
+            duty = self._diagnose(sm)
+            self.assertNotEqual(
+                duty.status, "present", msg=f"top-level revision={revision!r} must not be present"
+            )
+            self.assertEqual(duty.status, "partial")
+
+    def test_synclog_only_strict_revision_without_source_status_not_present(self) -> None:
+        # SyncLog не является present-proof: без SourceStatus(EEC_ETT) present не выдаётся,
+        # даже если SyncLog содержит strict versioned revision.
+        sm = _memory_sessionmaker()
+        now = datetime.now(timezone.utc).replace(tzinfo=None)
+        base = 9_400_000_000
+        with sm() as db:
+            db.add(
+                SyncLog(
+                    source_code="EEC_ETT",
+                    status="OK",
+                    revision="ett:2026-05-01",
+                    synced_at=now,
+                )
+            )
+            for i in range(120):
+                code = f"{base + i:010d}"
+                db.add(TnvedEntry(hs_code=code, level=10, title=f"pos {i}"))
+                db.add(
+                    HsRate(
+                        hs_code=code,
+                        hs_prefix=code,
+                        duty_rate="5%",
+                        vat_import_rate=22.0,
+                        source_revision="ett:2026-05-01",
+                    )
+                )
+            db.commit()
+        duty = self._diagnose(sm)
+        self.assertNotEqual(duty.status, "present")
+
     def test_versioned_top_level_revision_present_allowed(self) -> None:
         sm = _memory_sessionmaker()
         self._build_full_official_catalog(sm, source_revision="ett:2026-05-01", is_stale=False, base=9_100_000_000)
