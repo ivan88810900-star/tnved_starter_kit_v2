@@ -185,8 +185,14 @@ def _load_bundle_payload(rel_path: str) -> tuple[dict[str, Any] | None, dict[str
     return payload, _validate_official_bundle_payload(payload, rel_path=rel_path, checksum=checksum)
 
 
-def _extract_duty_rows(payload: dict[str, Any]) -> tuple[str, list[dict[str, Any]], list[str]]:
-    """Нормализовать rates[]; blank source_revision наследует bundle revision."""
+def _extract_duty_rows(
+    payload: dict[str, Any], rows_in: list[dict[str, Any]] | None = None
+) -> tuple[str, list[dict[str, Any]], list[str]]:
+    """Нормализовать rates[]; blank source_revision наследует bundle revision.
+
+    rows_in — уже validated list (из _raw_rates_list). Если не передан, валидируем сами,
+    чтобы любой вызов был safe от malformed non-list контейнеров.
+    """
     revision = str(payload.get("revision") or payload.get("source_revision") or "").strip()
     official_url = str(
         payload.get("official_ett_url")
@@ -198,10 +204,11 @@ def _extract_duty_rows(payload: dict[str, Any]) -> tuple[str, list[dict[str, Any
 
     rows: list[dict[str, Any]] = []
     blockers: list[str] = []
-    container, container_err = _raw_rates_list(payload)
-    if container_err is not None:
-        return revision, [], [f"parser_failed: {container_err}"]
-    for raw in container or []:
+    if rows_in is None:
+        rows_in, container_err = _raw_rates_list(payload)
+        if container_err is not None:
+            return revision, [], [f"parser_failed: {container_err}"]
+    for raw in rows_in or []:
         if not isinstance(raw, dict):
             # Official import: non-object row — структурная ошибка, не silent skip.
             return revision, [], ["parser_failed: malformed_rate_row (rate row not an object)"]
@@ -239,6 +246,12 @@ def _existing_hs_rate(db, hs_code: str) -> HsRate | None:
     return db.query(HsRate).filter(HsRate.hs_code == lookup).first()
 
 
+def _desired_hs_prefix(row: dict[str, Any]) -> str:
+    """Целевой hs_prefix для строки (после P1 scope-fix), с fallback на полный hs_code."""
+    hs_code = str(row.get("hs_code") or "").strip().replace(" ", "")
+    return str(row.get("hs_prefix") or hs_code).strip()
+
+
 def _row_needs_update(existing: HsRate, row: dict[str, Any]) -> bool:
     new_duty = normalize_hs_duty_rate_string(row.get("duty_rate"))
     if (existing.duty_rate or "") != (new_duty or ""):
@@ -248,6 +261,11 @@ def _row_needs_update(existing: HsRate, row: dict[str, Any]) -> bool:
     if str(row.get("source_url") or "").strip() and (existing.source_url or "").strip() != str(
         row.get("source_url") or ""
     ).strip():
+        return True
+    # P1: stale broad hs_prefix (например 8471) должен обновляться на exact full code,
+    # даже если остальные поля не изменились — иначе sibling leakage / false coverage.
+    desired_prefix = _desired_hs_prefix(row)
+    if desired_prefix and (existing.hs_prefix or "").strip() != desired_prefix:
         return True
     return False
 
@@ -347,7 +365,13 @@ def _validate_bundle_for_ingest(
         reason = parser_result.get("reason") or "non_official_bundle"
         return payload, parser_result, "", [], [f"manual_review_required: {reason}"]
 
-    revision, rows, row_blockers = _extract_duty_rows(payload)
+    # Единый validated доступ к rates/rows: parser_result уже гарантирует list of dicts,
+    # но повторно валидируем перед итерацией (defense-in-depth, без raw payload-итерации ниже).
+    rows_in, container_err = _raw_rates_list(payload)
+    if container_err is not None:
+        return payload, parser_result, "", [], [f"parser_failed: {container_err}"]
+
+    revision, rows, row_blockers = _extract_duty_rows(payload, rows_in)
     blockers: list[str] = []
     if not _is_official_eec_ett_revision(revision):
         blockers.append(f"non_official_bundle_revision: {revision or '<empty>'}")

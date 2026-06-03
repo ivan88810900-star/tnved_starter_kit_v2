@@ -662,6 +662,130 @@ class TestImportDutyExactRowPrefixScope(unittest.TestCase):
             self.assertEqual(row.hs_prefix, "8471")
 
 
+class TestImportDutyStalePrefixUpdate(unittest.TestCase):
+    """P1: stale broad hs_prefix должен обновляться на exact full code при re-import."""
+
+    def setUp(self) -> None:
+        self.sm = _memory_sessionmaker()
+        self._patches = _start_patches(self.sm)
+
+    def tearDown(self) -> None:
+        _stop_patches(*self._patches)
+
+    def _dry_run(self, payload: dict) -> dict:
+        import app.services.import_duty_ingestion as idi
+
+        with _BundleFixture(payload) as (root, rel):
+            with unittest.mock.patch.object(idi, "_BACKEND_ROOT", root):
+                return run_import_duty_dry_run(rel_path=rel)
+
+    def _apply(self, payload: dict) -> dict:
+        import app.services.import_duty_ingestion as idi
+
+        with _BundleFixture(payload) as (root, rel):
+            with unittest.mock.patch.object(idi, "_BACKEND_ROOT", root):
+                return run_import_duty_apply(rel_path=rel)
+
+    def _seed_stale_broad_prefix_row(self) -> None:
+        with self.sm() as db:
+            db.add(
+                HsRate(
+                    hs_code="8471300000",
+                    hs_prefix="8471",
+                    duty_rate="5%",
+                    vat_import_rate=22.0,
+                    source_revision="ett:2026-05-01",
+                    source_url="https://eec.eaeunion.org/comission/department/catr/ett/",
+                )
+            )
+            db.commit()
+
+    def test_dry_run_shows_update_for_prefix_only_change(self) -> None:
+        self._seed_stale_broad_prefix_row()
+        payload = _official_bundle_payload(
+            rates=[{"hs_code": "8471300000", "duty_rate": "5%"}]
+        )
+        before = _table_counts(self.sm)
+        report = self._dry_run(payload)
+        after = _table_counts(self.sm)
+        self.assertEqual(before, after)
+        self.assertFalse(report["db_mutated"])
+        self.assertEqual(report["row_counts"]["update"], 1)
+        self.assertEqual(report["row_counts"]["skip"], 0)
+
+    def test_apply_updates_stale_broad_prefix_to_exact(self) -> None:
+        self._seed_stale_broad_prefix_row()
+        payload = _official_bundle_payload(
+            rates=[{"hs_code": "8471300000", "duty_rate": "5%"}]
+        )
+        report = self._apply(payload)
+        self.assertEqual(report["status"], "OK")
+        self.assertTrue(report["db_mutated"])
+        self.assertGreaterEqual(report["row_counts"]["update"], 1)
+        with self.sm() as db:
+            row = db.query(HsRate).filter(HsRate.hs_code == "8471300000").first()
+            self.assertEqual(row.hs_prefix, "8471300000")
+
+    def test_sibling_not_covered_after_prefix_fix(self) -> None:
+        from app.services.payment_data_coverage import diagnose_duty_rates
+
+        now = datetime.now(timezone.utc).replace(tzinfo=None)
+        with self.sm() as db:
+            db.add(
+                SourceStatus(
+                    source_code="EEC_ETT",
+                    source_name="EEC ETT",
+                    source_url="https://eec.eaeunion.org/",
+                    revision="ett:2026-05-01",
+                    synced_at=now,
+                    is_stale=False,
+                )
+            )
+            for code in ("8471300000", "8471900000"):
+                db.add(TnvedEntry(hs_code=code, level=10, title=code))
+            db.add(
+                HsRate(
+                    hs_code="8471300000",
+                    hs_prefix="8471",
+                    duty_rate="5%",
+                    vat_import_rate=22.0,
+                    source_revision="ett:2026-05-01",
+                    source_url="https://eec.eaeunion.org/comission/department/catr/ett/",
+                )
+            )
+            db.commit()
+        payload = _official_bundle_payload(
+            rates=[{"hs_code": "8471300000", "duty_rate": "5%"}]
+        )
+        report = self._apply(payload)
+        self.assertEqual(report["status"], "OK")
+        with self.sm() as db:
+            row = db.query(HsRate).filter(HsRate.hs_code == "8471300000").one()
+            self.assertEqual(row.hs_prefix, "8471300000")
+        duty = diagnose_duty_rates()
+        self.assertNotEqual(duty.status, "present")
+
+    def test_exact_prefix_already_correct_skips(self) -> None:
+        with self.sm() as db:
+            db.add(
+                HsRate(
+                    hs_code="8471300000",
+                    hs_prefix="8471300000",
+                    duty_rate="5%",
+                    vat_import_rate=22.0,
+                    source_revision="ett:2026-05-01",
+                    source_url="https://eec.eaeunion.org/comission/department/catr/ett/",
+                )
+            )
+            db.commit()
+        payload = _official_bundle_payload(
+            rates=[{"hs_code": "8471300000", "duty_rate": "5%"}]
+        )
+        report = self._dry_run(payload)
+        self.assertEqual(report["row_counts"]["update"], 0)
+        self.assertEqual(report["row_counts"]["skip"], 1)
+
+
 class TestImportDutyCoverageAfterImport(unittest.TestCase):
     def setUp(self) -> None:
         self.sm = _memory_sessionmaker()
