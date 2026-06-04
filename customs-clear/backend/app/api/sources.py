@@ -13,6 +13,7 @@ from ..services.regulatory_source_completeness import (
 )
 from ..services.payment_data_coverage import run_payment_data_coverage_report
 from ..services.payment_data_normalization import run_payment_data_normalization_report
+from ..services.import_duty_ingestion import run_import_duty_apply, run_import_duty_dry_run
 from ..services.payment_source_ingestion import (
     run_payment_source_ingestion_dry_run,
     run_payment_source_ingestion_plan,
@@ -86,6 +87,23 @@ async def sources_payment_ingestion_plan() -> JSONResponse:
 async def sources_payment_ingestion_dry_run() -> JSONResponse:
     """Dry-run ingestion: парсинг локальных кандидатов, оценки строк, db_mutated=false."""
     return JSONResponse(run_payment_source_ingestion_dry_run())
+
+
+@router.post("/payment-ingestion/import-duty/dry-run")
+async def sources_import_duty_dry_run() -> JSONResponse:
+    """Dry-run import-duty: insert/update/skip counts без мутации БД."""
+    return JSONResponse(run_import_duty_dry_run())
+
+
+@router.post("/payment-ingestion/import-duty/apply")
+async def sources_import_duty_apply(
+    x_admin_token: str | None = Header(None, alias="X-Admin-Token"),
+) -> JSONResponse:
+    """Guarded apply import-duty из локального official EEC/ETT bundle."""
+    require_admin_token(x_admin_token)
+    data = run_import_duty_apply()
+    clear_preview_cache()
+    return JSONResponse(data)
 
 
 @router.get("/payment-ingestion/registry")

@@ -24,6 +24,7 @@ from .payment_data_normalization import (
     _is_seed_or_fallback_revision,
     run_payment_data_normalization_report,
 )
+from .payment_revision_utils import raw_rate_rows
 from .payment_source_registry import (
     PAYMENT_DOMAINS,
     PAYMENT_SOURCE_REGISTRY,
@@ -128,8 +129,32 @@ def parse_normative_bundle_file(rel_path: str) -> dict[str, Any]:
 
     revision = str(payload.get("revision") or "").strip().lower()
     fmt = str(payload.get("format") or "")
-    rates = payload.get("rates") or []
-    tnved = payload.get("tnved") or []
+
+    # Malformed контейнеры: rates/rows должны быть JSON-массивом — иначе parser_failed
+    # без итерации (общий helper с import-duty ingestion), чтобы /plan не падал 500.
+    rates, container_err = raw_rate_rows(payload)
+    if container_err is not None:
+        return {
+            "status": "parser_failed",
+            "reason": container_err,
+            "error": f"bundle '{container_err.split('_')[1]}' must be a JSON array",
+            "revision": revision,
+            "record_count": 0,
+            "checksum_sha256": _file_sha256(rel_path),
+        }
+    # Non-object строки в rates/rows → parser_failed (без silent skip / AttributeError).
+    if any(not isinstance(r, dict) for r in rates):
+        return {
+            "status": "parser_failed",
+            "reason": "malformed_rate_row",
+            "error": "bundle rate rows must be JSON objects",
+            "revision": revision,
+            "record_count": len(rates),
+            "rates_count": len(rates),
+            "checksum_sha256": _file_sha256(rel_path),
+        }
+    raw_tnved = payload.get("tnved")
+    tnved = raw_tnved if isinstance(raw_tnved, list) else []
 
     if revision in _NON_OFFICIAL_FILE_REVISIONS or not _is_official_revision(revision):
         return {
@@ -210,22 +235,45 @@ def parse_sanctions_fixture_file(rel_path: str) -> dict[str, Any]:
     }
 
 
+def _first_existing_local_path(entry: PaymentSourceEntry) -> str | None:
+    """Первый реально существующий canonical path (а не всегда [0]).
+
+    Registry может объявлять несколько fallback-путей; парсер должен открывать тот файл,
+    который фактически найден, иначе valid fallback ошибочно даёт missing_source.
+    """
+    for rel in entry.local_canonical_paths:
+        if _local_path_present(rel):
+            return rel
+    return None
+
+
 def parse_payment_source_file(entry: PaymentSourceEntry) -> dict[str, Any]:
     """Диспетчер read-only парсеров по типу локального файла."""
     if not entry.local_canonical_paths:
         return {"status": "missing_source", "reason": "no_local_canonical_path", "record_count": 0}
 
-    rel = entry.local_canonical_paths[0]
-    if rel.endswith(".json") and "normative_bundle" in rel:
-        return parse_normative_bundle_file(rel)
-    if rel.endswith(".json"):
-        return parse_sanctions_fixture_file(rel)
-    return {
-        "status": "stub_only",
-        "reason": "parser_not_implemented_for_format",
-        "path": rel,
-        "record_count": 0,
-    }
+    # Берём первый существующий path из всех canonical paths, не только [0].
+    rel = _first_existing_local_path(entry)
+    if rel is None:
+        return {
+            "status": "missing_source",
+            "reason": "no_local_canonical_file_found",
+            "candidate_paths": list(entry.local_canonical_paths),
+            "record_count": 0,
+        }
+
+    if rel.endswith(".json") and ("normative_bundle" in rel or "eec_ett" in rel):
+        result = parse_normative_bundle_file(rel)
+    elif rel.endswith(".json"):
+        result = parse_sanctions_fixture_file(rel)
+    else:
+        result = {
+            "status": "stub_only",
+            "reason": "parser_not_implemented_for_format",
+            "record_count": 0,
+        }
+    result.setdefault("selected_path", rel)
+    return result
 
 
 def _table_row_counts() -> dict[str, int]:

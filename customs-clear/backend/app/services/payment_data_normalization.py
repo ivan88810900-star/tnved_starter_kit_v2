@@ -36,7 +36,6 @@ _SEED_REVISIONS = frozenset(
 )
 # Префиксы версионированных seed/fallback ревизий: seed-2026-03, fallback:cbrf, legacy-… и т.п.
 _SEED_REVISION_PREFIXES = ("seed-", "seed:", "seed_", "fallback-", "fallback:", "fallback_", "legacy-", "legacy_")
-_INVALID_EEC_REVISIONS = frozenset({"unavailable", "seed", "unknown", "fallback", "partial"})
 
 
 def _is_seed_or_fallback_revision(revision: str | None) -> bool:
@@ -70,17 +69,16 @@ def _worst_status(*statuses: PaymentNormalizationStatus) -> PaymentNormalization
 
 
 def _eec_proven() -> tuple[bool, str | None]:
+    from .payment_revision_utils import is_official_eec_ett_revision
+
     st = _lookup_source_status("EEC_ETT")
     if st is None:
         return False, None
-    revision = (st.revision or "").strip().lower()
     synced = st.synced_at.isoformat() if st.synced_at else None
-    # Reject stale, явные invalid токены и любые seed/fallback/legacy/versioned ревизии.
-    if (
-        st.is_stale
-        or revision in _INVALID_EEC_REVISIONS
-        or _is_seed_or_fallback_revision(revision)
-    ):
+    # Official EEC/ETT provenance: не stale и revision строго versioned EEC/ETT.
+    # Это отсекает seed/fallback/legacy/demo/test/example и arbitrary non-versioned
+    # (local-copy/manual/foo/official/prod) — единый strict rule с import-duty ingestion.
+    if st.is_stale or not is_official_eec_ett_revision(st.revision):
         return False, synced
     return True, synced
 

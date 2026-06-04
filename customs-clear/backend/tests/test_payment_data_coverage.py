@@ -564,6 +564,268 @@ class TestPaymentDataCoverageFullDutyScan(unittest.TestCase):
         self.assertEqual(len(duty.missing_samples or []), 5)
 
 
+class TestPaymentDataCoverageOfficialOnlyDuty(unittest.TestCase):
+    """P1 #2: seed/fallback строки не дают official present-покрытие."""
+
+    def _add_eec_proven(self, db) -> None:
+        now = datetime.now(timezone.utc).replace(tzinfo=None)
+        db.add(
+            SourceStatus(
+                source_code="EEC_ETT",
+                source_name="EEC ETT test",
+                source_url="https://eec.eaeunion.org/",
+                revision="ett:2026-05-01",
+                synced_at=now,
+                is_stale=False,
+                note="test",
+            )
+        )
+
+    def test_seed_full_coverage_with_partial_official_not_present(self) -> None:
+        sm = _memory_sessionmaker()
+        base = 8_400_000_000
+        with sm() as db:
+            self._add_eec_proven(db)
+            for i in range(100):
+                code = f"{base + i:010d}"
+                db.add(TnvedEntry(hs_code=code, level=10, title=f"pos {i}"))
+                # i<50 official, i>=50 seed; hs_prefix=full code (без prefix-перекрытия).
+                db.add(
+                    HsRate(
+                        hs_code=code,
+                        hs_prefix=code,
+                        duty_rate="5%",
+                        vat_import_rate=22.0,
+                        source_revision="ett:2026-05-01" if i < 50 else "seed",
+                    )
+                )
+            db.commit()
+        patch_cov, patch_norm = _start_coverage_db_patches(sm)
+        try:
+            duty = diagnose_duty_rates()
+        finally:
+            _stop_coverage_db_patches(patch_cov, patch_norm)
+        self.assertNotEqual(duty.status, "present")
+        self.assertEqual(duty.status, "partial")
+        self.assertTrue(duty.manual_review_required)
+        self.assertTrue(duty.missing_samples)
+        self.assertTrue(any("official" in g.lower() for g in duty.gaps))
+
+    def test_full_official_coverage_can_be_present(self) -> None:
+        sm = _memory_sessionmaker()
+        base = 8_500_000_000
+        with sm() as db:
+            self._add_eec_proven(db)
+            for i in range(120):
+                code = f"{base + i:010d}"
+                db.add(TnvedEntry(hs_code=code, level=10, title=f"pos {i}"))
+                db.add(
+                    HsRate(
+                        hs_code=code,
+                        hs_prefix=code,
+                        duty_rate="5%",
+                        vat_import_rate=22.0,
+                        source_revision="ett:2026-05-01",
+                    )
+                )
+            db.commit()
+        patch_cov, patch_norm = _start_coverage_db_patches(sm)
+        try:
+            duty = diagnose_duty_rates()
+        finally:
+            _stop_coverage_db_patches(patch_cov, patch_norm)
+        self.assertEqual(duty.status, "present")
+        self.assertFalse(duty.manual_review_required)
+
+    def _build_catalog_with_revision(self, sm, *, revision: str, base: int) -> None:
+        with sm() as db:
+            self._add_eec_proven(db)
+            for i in range(120):
+                code = f"{base + i:010d}"
+                db.add(TnvedEntry(hs_code=code, level=10, title=f"pos {i}"))
+                db.add(
+                    HsRate(
+                        hs_code=code,
+                        hs_prefix=code,
+                        duty_rate="5%",
+                        vat_import_rate=22.0,
+                        source_revision=revision,
+                    )
+                )
+            db.commit()
+
+    def test_arbitrary_non_versioned_revision_not_official_present(self) -> None:
+        for revision in ("local-copy", "manual", "foo", "official", "prod"):
+            sm = _memory_sessionmaker()
+            self._build_catalog_with_revision(sm, revision=revision, base=8_600_000_000)
+            patch_cov, patch_norm = _start_coverage_db_patches(sm)
+            try:
+                duty = diagnose_duty_rates()
+            finally:
+                _stop_coverage_db_patches(patch_cov, patch_norm)
+            self.assertNotEqual(
+                duty.status, "present", msg=f"revision={revision} must not be official present"
+            )
+            self.assertEqual(duty.status, "partial")
+            self.assertTrue(duty.missing_samples)
+
+    def test_versioned_revision_allows_present(self) -> None:
+        sm = _memory_sessionmaker()
+        self._build_catalog_with_revision(sm, revision="ett:2026-05-01", base=8_700_000_000)
+        patch_cov, patch_norm = _start_coverage_db_patches(sm)
+        try:
+            duty = diagnose_duty_rates()
+        finally:
+            _stop_coverage_db_patches(patch_cov, patch_norm)
+        self.assertEqual(duty.status, "present")
+
+    def test_mixed_non_versioned_full_with_partial_strict_official_not_present(self) -> None:
+        sm = _memory_sessionmaker()
+        base = 8_800_000_000
+        with sm() as db:
+            self._add_eec_proven(db)
+            for i in range(100):
+                code = f"{base + i:010d}"
+                db.add(TnvedEntry(hs_code=code, level=10, title=f"pos {i}"))
+                # i<40 strict official; остальные non-versioned/seed покрывают каталог целиком.
+                if i < 40:
+                    rev = "ett:2026-05-01"
+                elif i < 70:
+                    rev = "local-copy"
+                else:
+                    rev = "seed"
+                db.add(
+                    HsRate(
+                        hs_code=code,
+                        hs_prefix=code,
+                        duty_rate="5%",
+                        vat_import_rate=22.0,
+                        source_revision=rev,
+                    )
+                )
+            db.commit()
+        patch_cov, patch_norm = _start_coverage_db_patches(sm)
+        try:
+            duty = diagnose_duty_rates()
+        finally:
+            _stop_coverage_db_patches(patch_cov, patch_norm)
+        self.assertNotEqual(duty.status, "present")
+        self.assertEqual(duty.status, "partial")
+        self.assertTrue(duty.missing_samples)
+        self.assertTrue(any("official" in g.lower() for g in duty.gaps))
+
+
+class TestPaymentDataCoverageTopLevelEecRevision(unittest.TestCase):
+    """P2 #1: top-level SourceStatus(EEC_ETT).revision должен быть strict versioned EEC/ETT."""
+
+    def _build_full_official_catalog(self, sm, *, source_revision: str, is_stale: bool, base: int) -> None:
+        now = datetime.now(timezone.utc).replace(tzinfo=None)
+        with sm() as db:
+            db.add(
+                SourceStatus(
+                    source_code="EEC_ETT",
+                    source_name="EEC ETT test",
+                    source_url="https://eec.eaeunion.org/",
+                    revision=source_revision,
+                    synced_at=now,
+                    is_stale=is_stale,
+                    note="test",
+                )
+            )
+            # Row-level всегда strict official + полное покрытие каталога.
+            for i in range(120):
+                code = f"{base + i:010d}"
+                db.add(TnvedEntry(hs_code=code, level=10, title=f"pos {i}"))
+                db.add(
+                    HsRate(
+                        hs_code=code,
+                        hs_prefix=code,
+                        duty_rate="5%",
+                        vat_import_rate=22.0,
+                        source_revision="ett:2026-05-01",
+                    )
+                )
+            db.commit()
+
+    def _diagnose(self, sm):
+        patch_cov, patch_norm = _start_coverage_db_patches(sm)
+        try:
+            return diagnose_duty_rates()
+        finally:
+            _stop_coverage_db_patches(patch_cov, patch_norm)
+
+    def test_local_copy_top_level_revision_not_present(self) -> None:
+        sm = _memory_sessionmaker()
+        self._build_full_official_catalog(sm, source_revision="local-copy", is_stale=False, base=8_900_000_000)
+        duty = self._diagnose(sm)
+        self.assertNotEqual(duty.status, "present")
+        self.assertEqual(duty.status, "partial")
+        self.assertTrue(duty.manual_review_required)
+
+    def test_manual_top_level_revision_not_present(self) -> None:
+        sm = _memory_sessionmaker()
+        self._build_full_official_catalog(sm, source_revision="manual", is_stale=False, base=9_000_000_000)
+        duty = self._diagnose(sm)
+        self.assertNotEqual(duty.status, "present")
+        self.assertEqual(duty.status, "partial")
+
+    def test_arbitrary_non_versioned_top_level_revisions_not_present(self) -> None:
+        for idx, revision in enumerate(("foo", "official", "prod", "legacy", "fallback", "")):
+            sm = _memory_sessionmaker()
+            self._build_full_official_catalog(
+                sm, source_revision=revision, is_stale=False, base=9_300_000_000 + idx * 1000
+            )
+            duty = self._diagnose(sm)
+            self.assertNotEqual(
+                duty.status, "present", msg=f"top-level revision={revision!r} must not be present"
+            )
+            self.assertEqual(duty.status, "partial")
+
+    def test_synclog_only_strict_revision_without_source_status_not_present(self) -> None:
+        # SyncLog не является present-proof: без SourceStatus(EEC_ETT) present не выдаётся,
+        # даже если SyncLog содержит strict versioned revision.
+        sm = _memory_sessionmaker()
+        now = datetime.now(timezone.utc).replace(tzinfo=None)
+        base = 9_400_000_000
+        with sm() as db:
+            db.add(
+                SyncLog(
+                    source_code="EEC_ETT",
+                    status="OK",
+                    revision="ett:2026-05-01",
+                    synced_at=now,
+                )
+            )
+            for i in range(120):
+                code = f"{base + i:010d}"
+                db.add(TnvedEntry(hs_code=code, level=10, title=f"pos {i}"))
+                db.add(
+                    HsRate(
+                        hs_code=code,
+                        hs_prefix=code,
+                        duty_rate="5%",
+                        vat_import_rate=22.0,
+                        source_revision="ett:2026-05-01",
+                    )
+                )
+            db.commit()
+        duty = self._diagnose(sm)
+        self.assertNotEqual(duty.status, "present")
+
+    def test_versioned_top_level_revision_present_allowed(self) -> None:
+        sm = _memory_sessionmaker()
+        self._build_full_official_catalog(sm, source_revision="ett:2026-05-01", is_stale=False, base=9_100_000_000)
+        duty = self._diagnose(sm)
+        self.assertEqual(duty.status, "present")
+        self.assertFalse(duty.manual_review_required)
+
+    def test_stale_top_level_with_strict_revision_not_present(self) -> None:
+        sm = _memory_sessionmaker()
+        self._build_full_official_catalog(sm, source_revision="ett:2026-05-01", is_stale=True, base=9_200_000_000)
+        duty = self._diagnose(sm)
+        self.assertNotEqual(duty.status, "present")
+
+
 @unittest.skipUnless(_API_OK, "fastapi not installed")
 class TestPaymentDataCoverageApi(unittest.TestCase):
     @classmethod

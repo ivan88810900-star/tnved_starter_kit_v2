@@ -113,9 +113,29 @@ def _source_configured(
     return any_configured, ", ".join(labels) if labels else None, authority
 
 
-def _hs_rate_lookup_sets(db) -> frozenset[str]:
-    """Объединённый набор hs_code/hs_prefix для проверки покрытия (как find_rate_for_hs)."""
+def _hs_rate_lookup_sets(db, *, official_only: bool = False) -> frozenset[str]:
+    """Объединённый набор hs_code/hs_prefix для проверки покрытия (как find_rate_for_hs).
+
+    official_only=True учитывает только строки с explicit versioned EEC/ETT revision
+    (тот же strict rule, что и import-duty ingestion) — чтобы seed/fallback/demo/test/example/
+    legacy/unknown/empty и arbitrary non-versioned (local-copy/manual/foo) rows не давали
+    false official coverage.
+    """
     merged: set[str] = set()
+    if official_only:
+        from .payment_revision_utils import is_official_eec_ett_revision
+
+        for hs_code, hs_prefix, source_revision in db.query(
+            HsRate.hs_code, HsRate.hs_prefix, HsRate.source_revision
+        ).all():
+            if not is_official_eec_ett_revision(str(source_revision or "")):
+                continue
+            if hs_code:
+                merged.add(_digits(hs_code))
+            if hs_prefix:
+                merged.add(_digits(hs_prefix))
+        return frozenset(merged)
+
     for hs_code, hs_prefix in db.query(HsRate.hs_code, HsRate.hs_prefix).all():
         if hs_code:
             merged.add(_digits(hs_code))
@@ -134,13 +154,14 @@ def _code_covered_by_hs_rates(code: str, lookup: frozenset[str]) -> bool:
     return False
 
 
-def _full_tnved_duty_coverage(db) -> tuple[int, int, list[str]]:
+def _full_tnved_duty_coverage(db, *, official_only: bool = False) -> tuple[int, int, list[str]]:
     """
     Полное покрытие 10-значных кодов каталога ставками hs_rates (точное + префикс 10→2).
 
+    official_only=True считает покрытие только по official (non-seed/non-fallback) строкам.
     Returns (covered_count, total_count, missing_samples up to 5).
     """
-    lookup = _hs_rate_lookup_sets(db)
+    lookup = _hs_rate_lookup_sets(db, official_only=official_only)
     commodity_codes = [
         _digits(c)
         for (c,) in db.query(Commodity.code).filter(func.length(Commodity.code) >= 10).all()
@@ -223,16 +244,48 @@ def diagnose_tnved_tree() -> TnvedTreeCoverage:
     )
 
 
+def _duty_official_provenance(db) -> tuple[bool, int, int]:
+    """EEC_ETT proven + доля non-seed hs_rates (import-duty official contour)."""
+    from .payment_data_normalization import _eec_proven, _is_seed_or_fallback_revision
+    from .payment_revision_utils import is_official_eec_ett_revision
+
+    # Top-level EEC_ETT proof для import-duty present: SourceStatus exists, not stale и
+    # revision строго versioned EEC/ETT. Прямой strict-чек (defense-in-depth) — даже если
+    # _eec_proven() ослабят, present здесь не выдаётся на local-copy/manual/foo/official/prod.
+    eec_proven, _ = _eec_proven()
+    eec_status = _lookup_source_status("EEC_ETT")
+    eec_ok = bool(
+        eec_proven
+        and eec_status is not None
+        and not eec_status.is_stale
+        and is_official_eec_ett_revision(eec_status.revision)
+    )
+    hs_count = db.query(HsRate).count()
+    seed_count = 0
+    for revision, count in (
+        db.query(HsRate.source_revision, func.count()).group_by(HsRate.source_revision).all()
+    ):
+        if _is_seed_or_fallback_revision(revision):
+            seed_count += int(count or 0)
+    official_rows = max(0, hs_count - seed_count)
+    return eec_ok, official_rows, seed_count
+
+
 def diagnose_duty_rates() -> CoverageDomainSummary:
     with SessionLocal() as db:
         hs_count = db.query(HsRate).count()
         duty_rules = db.query(HsDutyRule).count()
         covered_codes, total_codes, missing_samples = _full_tnved_duty_coverage(db)
+        official_covered, _official_total, official_missing = _full_tnved_duty_coverage(
+            db, official_only=True
+        )
+        eec_ok, official_rows, seed_count = _duty_official_provenance(db)
 
     label, authority = _registry_label("eec_ett_tnved")
     eec = _lookup_source_status("EEC_ETT")
     last_ok = _latest_sync_ok("EEC_ETT")
     gaps: list[str] = []
+    notes: list[str] = []
 
     if hs_count == 0:
         status = "missing"
@@ -252,11 +305,36 @@ def diagnose_duty_rates() -> CoverageDomainSummary:
     elif total_codes == 0 and hs_count < _EXPECTED_HS_RATES_MIN:
         status = "partial"
         gaps.append("Нет 10-значных кодов в каталоге для проверки полноты покрытия.")
-    else:
+    elif not eec_ok:
+        status = "partial"
+        gaps.append("EEC_ETT не подтверждён как актуальный official import-duty contour.")
+    elif official_rows == 0 and hs_count > 0:
+        status = "partial"
+        gaps.append("Все строки hs_rates помечены seed/fallback — не claim official present.")
+    elif total_codes > 0 and official_covered < total_codes:
+        # Полное покрытие каталога достигается за счёт seed/fallback строк — official present
+        # не выдаётся; missing_samples отражают gaps именно в official rows.
+        status = "partial"
+        gaps.append(
+            f"Official покрытие {official_covered}/{total_codes}: полнота каталога "
+            "достигается seed/fallback строками — official present не выдаётся."
+        )
+        missing_samples = official_missing or missing_samples
+    elif total_codes > 0 and official_covered == total_codes and eec_ok and official_rows > 0:
         status = "present"
+    elif hs_count >= _EXPECTED_HS_RATES_MIN and eec_ok and official_rows > 0:
+        status = "partial"
+    else:
+        status = "partial" if hs_count > 0 else "missing"
 
     if duty_rules == 0:
         gaps.append("hs_duty_rules пуст — структурированные ставки не импортированы.")
+
+    if eec_ok and official_rows > 0:
+        resolved_authority = authority or "official_binding"
+        notes.append(f"official hs_rates rows: {official_rows}/{hs_count}")
+    else:
+        resolved_authority = "legacy_seed" if seed_count >= hs_count and hs_count > 0 else authority
 
     manual = status in {"missing", "partial", "stale"}
     return CoverageDomainSummary(
@@ -266,11 +344,11 @@ def diagnose_duty_rates() -> CoverageDomainSummary:
         total_codes=total_codes if total_codes else None,
         manual_review_required=manual,
         source_label=label or "hs_rates / hs_duty_rules (ЕТТ ЕАЭС)",
-        authority_level=authority,
+        authority_level=resolved_authority,
         last_successful_sync_at=last_ok or (eec.synced_at.isoformat() if eec and eec.synced_at else None),
         gaps=gaps,
         missing_samples=missing_samples,
-        notes=[f"hs_duty_rules: {duty_rules}"] if duty_rules else [],
+        notes=notes + ([f"hs_duty_rules: {duty_rules}"] if duty_rules else []),
     )
 
 
