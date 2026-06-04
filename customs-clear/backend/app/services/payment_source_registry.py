@@ -61,6 +61,7 @@ PAYMENT_SOURCE_REGISTRY: tuple[PaymentSourceEntry, ...] = (
         official_url="https://eec.eaeunion.org/comission/department/catr/ett/",
         legal_basis="Единый таможенный тариф ЕАЭС (ЕТТ)",
         local_canonical_paths=(
+            "data/raw_normative/eec_ett_vat.json",
             "data/raw_normative/eec_ett_normative_bundle.json",
             "data/raw_normative/eec_ett_import_duty.json",
         ),
