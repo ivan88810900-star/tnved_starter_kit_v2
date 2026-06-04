@@ -16,7 +16,11 @@ from app.main import app
 from app.models.core import ExchangeRate, GeoSpecialDuty, HsRate, SourceStatus, SyncLog, TnvedEntry
 from app.models.tnved import Chapter, Commodity, HsDutyRule, Section, SpecialDuty, VatPreference
 from app.services.normative_store import init_db
-from app.services.payment_data_coverage import diagnose_vat_rates, run_payment_data_coverage_report
+from app.services.payment_data_coverage import (
+    diagnose_duty_rates,
+    diagnose_vat_rates,
+    run_payment_data_coverage_report,
+)
 from app.services.payment_data_normalization import normalize_vat, run_payment_data_normalization_report
 from app.services.vat_ingestion import run_vat_apply, run_vat_dry_run
 
@@ -79,6 +83,27 @@ def _table_counts(sm: sessionmaker) -> dict[str, int]:
             "source_status": db.query(SourceStatus).count(),
             "sync_log": db.query(SyncLog).count(),
         }
+
+
+def _seed_hs_rates_for_bundle(sm: sessionmaker, *, duty_revision: str = "seed-2026-03") -> None:
+    """Существующие hs_rates для кодов из default VAT bundle (без VAT insert path)."""
+    with sm() as db:
+        for code, prefix, duty in (
+            ("3004909200", "3004", "5%"),
+            ("8471300000", "8471", "10%"),
+        ):
+            db.add(
+                HsRate(
+                    hs_code=code,
+                    hs_prefix=prefix,
+                    duty_rate=duty,
+                    vat_import_rate=22.0,
+                    vat_rule="none",
+                    source_revision=duty_revision,
+                    source_url="seed://local",
+                )
+            )
+        db.commit()
 
 
 def _official_vat_bundle_payload(*, revision: str = "ett:2026-05-01", rates: list[dict] | None = None) -> dict:
@@ -160,6 +185,7 @@ class TestVatDryRunNoMutation(unittest.TestCase):
     def test_dry_run_does_not_mutate_db(self) -> None:
         import app.services.vat_ingestion as vi
 
+        _seed_hs_rates_for_bundle(self.sm)
         with _BundleFixture(_official_vat_bundle_payload()) as (root, rel):
             with unittest.mock.patch.object(vi, "_BACKEND_ROOT", root):
                 before = _table_counts(self.sm)
@@ -169,7 +195,8 @@ class TestVatDryRunNoMutation(unittest.TestCase):
         self.assertEqual(report["status"], "OK")
         self.assertTrue(report["dry_run"])
         self.assertFalse(report["db_mutated"])
-        self.assertGreater(report["row_counts"]["insert"], 0)
+        self.assertEqual(report["row_counts"]["insert"], 0)
+        self.assertGreater(report["row_counts"]["update"], 0)
 
 
 class TestVatBlockedBundles(unittest.TestCase):
@@ -234,6 +261,7 @@ class TestVatApplyOfficial(unittest.TestCase):
     def test_apply_imports_official_vat_with_provenance(self) -> None:
         import app.services.vat_ingestion as vi
 
+        _seed_hs_rates_for_bundle(self.sm, duty_revision="ett:2026-05-01")
         with _BundleFixture(_official_vat_bundle_payload()) as (root, rel):
             with unittest.mock.patch.object(vi, "_BACKEND_ROOT", root):
                 report = run_vat_apply(rel_path=rel)
@@ -246,16 +274,18 @@ class TestVatApplyOfficial(unittest.TestCase):
         with self.sm() as db:
             row = db.query(HsRate).filter(HsRate.hs_code == "3004909200").first()
             self.assertIsNotNone(row)
+            # P1 #2: duty provenance не перезаписывается VAT slice.
             self.assertEqual(row.source_revision, "ett:2026-05-01")
             self.assertEqual(row.vat_rule, "reduced10")
             self.assertEqual(float(row.vat_import_rate), 10.0)
+            self.assertEqual(row.duty_rate, "5%")
             st = db.query(SourceStatus).filter(SourceStatus.source_code == "EEC_ETT").first()
             self.assertIsNotNone(st)
             logs = db.query(SyncLog).filter(SyncLog.source_code == "EEC_ETT").all()
             self.assertEqual(len(logs), 1)
             self.assertEqual(logs[0].status, "OK")
 
-    def test_blank_row_revision_inherits_bundle_revision(self) -> None:
+    def test_blank_row_revision_does_not_create_hs_rate(self) -> None:
         import app.services.vat_ingestion as vi
 
         payload = _official_vat_bundle_payload(
@@ -268,14 +298,16 @@ class TestVatApplyOfficial(unittest.TestCase):
                 }
             ]
         )
+        before = _table_counts(self.sm)
         with _BundleFixture(payload) as (root, rel):
             with unittest.mock.patch.object(vi, "_BACKEND_ROOT", root):
                 report = run_vat_apply(rel_path=rel)
-        self.assertEqual(report["status"], "OK")
+        after = _table_counts(self.sm)
+        self.assertEqual(before["hs_rates"], after["hs_rates"])
+        self.assertEqual(report["status"], "manual_review_required")
+        self.assertFalse(report["db_mutated"])
         with self.sm() as db:
-            row = db.query(HsRate).filter(HsRate.hs_code == "9401300000").first()
-            self.assertIsNotNone(row)
-            self.assertEqual(row.source_revision, "ett:2026-05-01")
+            self.assertIsNone(db.query(HsRate).filter(HsRate.hs_code == "9401300000").first())
 
     def test_apply_updates_seed_row_vat_only(self) -> None:
         import app.services.vat_ingestion as vi
@@ -285,24 +317,29 @@ class TestVatApplyOfficial(unittest.TestCase):
                 HsRate(
                     hs_code="3004909200",
                     hs_prefix="3004",
-                    duty_rate="0%",
+                    duty_rate="7%",
                     vat_import_rate=22.0,
                     vat_rule="none",
-                    source_revision="seed",
+                    source_revision="seed-2026-03",
+                    source_url="seed://local",
                 )
             )
             db.commit()
 
-        with _BundleFixture(_official_vat_bundle_payload()) as (root, rel):
+        payload = _official_vat_bundle_payload(
+            rates=[{"hs_code": "3004909200", "vat_import_rate": 10, "vat_rule": "reduced10"}]
+        )
+        with _BundleFixture(payload) as (root, rel):
             with unittest.mock.patch.object(vi, "_BACKEND_ROOT", root):
                 report = run_vat_apply(rel_path=rel)
 
         self.assertEqual(report["status"], "OK")
         with self.sm() as db:
             row = db.query(HsRate).filter(HsRate.hs_code == "3004909200").first()
-            self.assertEqual(row.source_revision, "ett:2026-05-01")
+            self.assertEqual(row.source_revision, "seed-2026-03")
+            self.assertEqual(row.source_url, "seed://local")
             self.assertEqual(row.vat_rule, "reduced10")
-            self.assertEqual(row.duty_rate, "0%")
+            self.assertEqual(row.duty_rate, "7%")
 
     def test_blocked_apply_no_source_status_or_sync_log(self) -> None:
         import app.services.vat_ingestion as vi
@@ -400,6 +437,137 @@ class TestVatMissingSourceUrl(unittest.TestCase):
             self.assertEqual(db.query(SyncLog).count(), 0)
 
 
+class TestVatNoInsertZeroDutyRows(unittest.TestCase):
+    """P1 #1: VAT apply не создаёт hs_rates с duty_rate=0 для отсутствующих кодов."""
+
+    def setUp(self) -> None:
+        self.sm = _memory_sessionmaker()
+        self._patches = _start_patches(self.sm)
+
+    def tearDown(self) -> None:
+        _stop_patches(*self._patches)
+
+    def test_missing_hs_code_not_inserted_on_apply(self) -> None:
+        import app.services.vat_ingestion as vi
+
+        payload = _official_vat_bundle_payload(
+            rates=[{"hs_code": "9999999999", "vat_import_rate": 10, "vat_rule": "reduced10"}]
+        )
+        before = _table_counts(self.sm)
+        with _BundleFixture(payload) as (root, rel):
+            with unittest.mock.patch.object(vi, "_BACKEND_ROOT", root):
+                dry = run_vat_dry_run(rel_path=rel)
+                report = run_vat_apply(rel_path=rel)
+        after = _table_counts(self.sm)
+        self.assertEqual(before, after)
+        self.assertEqual(dry["row_counts"]["insert"], 0)
+        self.assertGreaterEqual(dry["row_counts"]["blocked"], 1)
+        self.assertEqual(report["status"], "manual_review_required")
+        self.assertFalse(report["db_mutated"])
+        with self.sm() as db:
+            self.assertEqual(db.query(HsRate).count(), 0)
+            self.assertEqual(db.query(SyncLog).filter(SyncLog.status == "OK").count(), 0)
+
+    def test_all_rows_missing_no_ok_provenance(self) -> None:
+        import app.services.vat_ingestion as vi
+
+        with _BundleFixture(_official_vat_bundle_payload()) as (root, rel):
+            with unittest.mock.patch.object(vi, "_BACKEND_ROOT", root):
+                report = run_vat_apply(rel_path=rel)
+        self.assertEqual(report["status"], "manual_review_required")
+        with self.sm() as db:
+            self.assertEqual(db.query(SourceStatus).count(), 0)
+            self.assertEqual(db.query(SyncLog).filter(SyncLog.status == "OK").count(), 0)
+            for row in db.query(HsRate).all():
+                self.assertNotEqual(row.duty_rate, "0")
+
+
+class TestVatPreserveDutyProvenance(unittest.TestCase):
+    """P1 #2: VAT apply не перезаписывает import-duty provenance и duty_rate."""
+
+    def setUp(self) -> None:
+        self.sm = _memory_sessionmaker()
+        self._patches = _start_patches(self.sm)
+
+    def tearDown(self) -> None:
+        _stop_patches(*self._patches)
+
+    def test_seed_duty_provenance_unchanged_after_vat_apply(self) -> None:
+        import app.services.vat_ingestion as vi
+
+        with self.sm() as db:
+            db.add(
+                HsRate(
+                    hs_code="8471300000",
+                    hs_prefix="8471",
+                    duty_rate="12%",
+                    vat_import_rate=22.0,
+                    vat_rule="none",
+                    source_revision="seed-2026-03",
+                    source_url="seed://duty",
+                )
+            )
+            db.commit()
+
+        payload = _official_vat_bundle_payload(
+            rates=[{"hs_code": "8471300000", "vat_import_rate": 22, "vat_rule": "none"}]
+        )
+        with _BundleFixture(payload) as (root, rel):
+            with unittest.mock.patch.object(vi, "_BACKEND_ROOT", root):
+                report = run_vat_apply(rel_path=rel)
+        self.assertEqual(report["status"], "OK")
+        with self.sm() as db:
+            row = db.query(HsRate).filter(HsRate.hs_code == "8471300000").one()
+            self.assertEqual(row.source_revision, "seed-2026-03")
+            self.assertEqual(row.source_url, "seed://duty")
+            self.assertEqual(row.duty_rate, "12%")
+        duty = diagnose_duty_rates()
+        self.assertNotEqual(duty.status, "present")
+
+    def test_official_duty_provenance_unchanged_after_vat_apply(self) -> None:
+        import app.services.vat_ingestion as vi
+        from datetime import datetime, timezone
+
+        now = datetime.now(timezone.utc).replace(tzinfo=None)
+        with self.sm() as db:
+            db.add(
+                SourceStatus(
+                    source_code="EEC_ETT",
+                    source_name="EEC",
+                    source_url="https://eec.eaeunion.org/",
+                    revision="ett:2026-05-01",
+                    synced_at=now,
+                    is_stale=False,
+                )
+            )
+            db.add(
+                HsRate(
+                    hs_code="3004909200",
+                    hs_prefix="3004",
+                    duty_rate="8%",
+                    vat_import_rate=22.0,
+                    vat_rule="none",
+                    source_revision="ett:2026-05-01",
+                    source_url="https://eec.eaeunion.org/duty",
+                )
+            )
+            db.commit()
+
+        payload = _official_vat_bundle_payload(
+            rates=[{"hs_code": "3004909200", "vat_import_rate": 10, "vat_rule": "reduced10"}]
+        )
+        with _BundleFixture(payload) as (root, rel):
+            with unittest.mock.patch.object(vi, "_BACKEND_ROOT", root):
+                report = run_vat_apply(rel_path=rel)
+        self.assertEqual(report["status"], "OK")
+        with self.sm() as db:
+            row = db.query(HsRate).filter(HsRate.hs_code == "3004909200").one()
+            self.assertEqual(row.source_revision, "ett:2026-05-01")
+            self.assertEqual(row.source_url, "https://eec.eaeunion.org/duty")
+            self.assertEqual(row.duty_rate, "8%")
+            self.assertEqual(row.vat_rule, "reduced10")
+
+
 class TestVatCoverageAfterImport(unittest.TestCase):
     def setUp(self) -> None:
         self.sm = _memory_sessionmaker()
@@ -410,6 +578,33 @@ class TestVatCoverageAfterImport(unittest.TestCase):
 
     def test_official_vat_seen_in_coverage_and_normalization(self) -> None:
         import app.services.vat_ingestion as vi
+        from datetime import datetime, timezone
+
+        now = datetime.now(timezone.utc).replace(tzinfo=None)
+        with self.sm() as db:
+            db.add(
+                SourceStatus(
+                    source_code="EEC_ETT",
+                    source_name="EEC",
+                    source_url="https://eec.eaeunion.org/",
+                    revision="ett:2026-05-01",
+                    synced_at=now,
+                    is_stale=False,
+                )
+            )
+            for code, prefix in (("3004909200", "3004"), ("8471300000", "8471")):
+                db.add(
+                    HsRate(
+                        hs_code=code,
+                        hs_prefix=prefix,
+                        duty_rate="5%",
+                        vat_import_rate=22.0,
+                        vat_rule="none",
+                        source_revision="ett:2026-05-01",
+                        source_url="https://eec.eaeunion.org/duty",
+                    )
+                )
+            db.commit()
 
         with _BundleFixture(_official_vat_bundle_payload()) as (root, rel):
             with unittest.mock.patch.object(vi, "_BACKEND_ROOT", root):

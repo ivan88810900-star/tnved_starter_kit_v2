@@ -33,7 +33,9 @@ _LOCAL_BUNDLE_CANDIDATES: tuple[str, ...] = (
     "data/raw_normative/eec_ett_import_duty.json",
 )
 
-_VAT_FIELDS = ("vat_import_rate", "vat_rule", "vat_rule_basis", "source_url", "source_revision", "valid_from", "valid_to")
+# Только VAT-поля hs_rates. source_revision/source_url — import-duty provenance, не трогаем.
+# duty_rate/hs_prefix — import-duty semantics, VAT slice не меняет.
+_VAT_APPLY_FIELDS = ("vat_import_rate", "vat_rule", "vat_rule_basis", "valid_from", "valid_to")
 
 
 def _utc_now_iso() -> str:
@@ -158,43 +160,41 @@ def _existing_hs_rate(db, hs_code: str) -> HsRate | None:
     return db.query(HsRate).filter(HsRate.hs_code == lookup).first()
 
 
-def _desired_hs_prefix(row: dict[str, Any]) -> str:
-    hs_code = str(row.get("hs_code") or "").strip().replace(" ", "")
-    return str(row.get("hs_prefix") or hs_code).strip()
-
-
 def _row_needs_vat_update(existing: HsRate, row: dict[str, Any]) -> bool:
+    """Сравнение только VAT-полей — import-duty provenance/scope не участвуют."""
     if float(existing.vat_import_rate or 0) != float(row.get("vat_import_rate") or 22.0):
         return True
     if (existing.vat_rule or "none") != str(row.get("vat_rule") or "none"):
         return True
     if (existing.vat_rule_basis or "").strip() != str(row.get("vat_rule_basis") or "").strip():
         return True
-    if (existing.source_revision or "").strip() != str(row.get("source_revision") or "").strip():
-        return True
-    if str(row.get("source_url") or "").strip() and (existing.source_url or "").strip() != str(
-        row.get("source_url") or ""
+    if str(row.get("valid_from") or "").strip() and (existing.valid_from or "").strip() != str(
+        row.get("valid_from") or ""
     ).strip():
         return True
-    desired_prefix = _desired_hs_prefix(row)
-    if desired_prefix and (existing.hs_prefix or "").strip() != desired_prefix:
+    if str(row.get("valid_to") or "").strip() and (existing.valid_to or "").strip() != str(
+        row.get("valid_to") or ""
+    ).strip():
         return True
     return False
 
 
-def _plan_vat_rows(rows: list[dict[str, Any]]) -> VatRowCounts:
+def _plan_vat_rows(rows: list[dict[str, Any]]) -> tuple[VatRowCounts, list[str]]:
+    """План без insert: отсутствующий hs_rate → blocked (нет VAT-safe storage для новых duty rows)."""
     counts = VatRowCounts(total_in_source=len(rows))
+    missing_blockers: list[str] = []
     with SessionLocal() as db:
         for row in rows:
             hs_code = str(row.get("hs_code") or "").strip()
             existing = _existing_hs_rate(db, hs_code)
             if existing is None:
-                counts.insert += 1
+                counts.blocked += 1
+                missing_blockers.append(f"missing_hs_rate: {hs_code or '<empty>'}")
             elif _row_needs_vat_update(existing, row):
                 counts.update += 1
             else:
                 counts.skip += 1
-    return counts
+    return counts, missing_blockers
 
 
 def _build_provenance(
@@ -328,7 +328,13 @@ def run_vat_dry_run(*, rel_path: str | None = None) -> dict[str, Any]:
             notes=["Dry-run не мутирует БД.", "SourceStatus/SyncLog не записываются."],
         )
 
-    row_counts = _plan_vat_rows(rows)
+    row_counts, missing_blockers = _plan_vat_rows(rows)
+    dry_blockers = list(missing_blockers)
+    if row_counts.blocked > 0 and row_counts.update == 0 and row_counts.skip == 0:
+        dry_blockers.append(
+            f"no_applicable_vat_rows: все {row_counts.blocked} строк без existing hs_rate "
+            "(VAT slice не создаёт duty rows с duty_rate=0)."
+        )
     coverage = run_payment_data_coverage_report()
     response = VatIngestionResponse(
         status="OK",
@@ -337,7 +343,7 @@ def run_vat_dry_run(*, rel_path: str | None = None) -> dict[str, Any]:
         db_mutated=False,
         provenance=provenance,
         row_counts=row_counts,
-        blockers=[],
+        blockers=dry_blockers,
         parser_result=parser_result,
         coverage_link={
             "vat_rates_status": (coverage.get("summary") or {}).get("vat_rates", {}).get("status"),
@@ -352,40 +358,32 @@ def run_vat_dry_run(*, rel_path: str | None = None) -> dict[str, Any]:
     return response.model_dump(mode="json")
 
 
-def _apply_vat_rows(rows: list[dict[str, Any]]) -> VatRowCounts:
-    """Upsert только VAT-полей hs_rates (без import-duty slice)."""
+def _apply_vat_rows(rows: list[dict[str, Any]]) -> tuple[VatRowCounts, list[str]]:
+    """Обновить только VAT-поля существующих hs_rates. Новые duty rows не создаём."""
     counts = VatRowCounts(total_in_source=len(rows))
+    missing_blockers: list[str] = []
 
     with SessionLocal() as db:
         for row in rows:
             hs_code = str(row.get("hs_code") or "").strip().replace(" ", "")
-            hs_prefix = str(row.get("hs_prefix") or hs_code).strip()
-            if not hs_prefix:
+            if not hs_code:
                 counts.blocked += 1
                 continue
 
             existing = _existing_hs_rate(db, hs_code)
             if existing is None:
-                create_kwargs = {k: row[k] for k in _VAT_FIELDS if k in row and row[k] is not None}
-                db.add(
-                    HsRate(
-                        hs_code=hs_code or hs_prefix,
-                        hs_prefix=hs_prefix,
-                        duty_rate="0",
-                        **create_kwargs,
-                    )
-                )
-                counts.insert += 1
-            elif _row_needs_vat_update(existing, row):
-                for k in _VAT_FIELDS:
+                counts.blocked += 1
+                missing_blockers.append(f"missing_hs_rate: {hs_code}")
+                continue
+            if _row_needs_vat_update(existing, row):
+                for k in _VAT_APPLY_FIELDS:
                     if k in row and row[k] is not None:
                         setattr(existing, k, row[k])
-                existing.hs_prefix = hs_prefix
                 counts.update += 1
             else:
                 counts.skip += 1
         db.commit()
-    return counts
+    return counts, missing_blockers
 
 
 def run_vat_apply(*, rel_path: str | None = None) -> dict[str, Any]:
@@ -426,12 +424,31 @@ def run_vat_apply(*, rel_path: str | None = None) -> dict[str, Any]:
             notes=["Apply отменён — SourceStatus/SyncLog не записаны."],
         )
 
-    entry = get_payment_source_entry(_REGISTRY_SOURCE_CODE)
-    row_counts = _apply_vat_rows(rows)
+    row_counts, missing_blockers = _apply_vat_rows(rows)
+    apply_blockers = list(missing_blockers)
+    if row_counts.blocked > 0:
+        apply_blockers.append(
+            f"vat_rows_without_hs_rate: {row_counts.blocked} (VAT slice не создаёт hs_rates/duty_rate=0)."
+        )
+        # Любые missing rows → не OK provenance (даже если часть VAT-полей уже обновлена).
+        return _blocked_response(
+            status="manual_review_required",
+            mode="apply",
+            dry_run=False,
+            blockers=apply_blockers,
+            parser_result=parser_result,
+            provenance=provenance,
+            row_counts=row_counts,
+            notes=[
+                "Apply без полного применения — SourceStatus/SyncLog не записаны.",
+                "Отсутствующие hs_rate строки требуют import-duty contour или manual review.",
+            ],
+        )
 
+    entry = get_payment_source_entry(_REGISTRY_SOURCE_CODE)
     note_txt = (
         f"vat apply {bundle_path}: revision={revision}; "
-        f"insert={row_counts.insert}, update={row_counts.update}, skip={row_counts.skip}, "
+        f"update={row_counts.update}, skip={row_counts.skip}, "
         f"blocked={row_counts.blocked}; checksum={provenance.checksum_sha256 or 'n/a'}"
     )
     upsert_source_status(
@@ -446,7 +463,7 @@ def run_vat_apply(*, rel_path: str | None = None) -> dict[str, Any]:
         source_code=_EEC_SOURCE_CODE,
         status="OK",
         revision=revision,
-        rows_affected=row_counts.insert + row_counts.update,
+        rows_affected=row_counts.update,
         note=note_txt,
     )
 
@@ -455,10 +472,10 @@ def run_vat_apply(*, rel_path: str | None = None) -> dict[str, Any]:
         status="OK",
         mode="apply",
         dry_run=False,
-        db_mutated=True,
+        db_mutated=row_counts.update > 0,
         provenance=provenance,
         row_counts=row_counts,
-        blockers=[],
+        blockers=apply_blockers if row_counts.blocked > 0 else [],
         parser_result=parser_result,
         coverage_link={
             "vat_rates_status": (coverage.get("summary") or {}).get("vat_rates", {}).get("status"),
@@ -466,8 +483,8 @@ def run_vat_apply(*, rel_path: str | None = None) -> dict[str, Any]:
             "generated_at": coverage.get("generated_at"),
         },
         notes=[
-            "VAT slice: обновлены только vat_import_rate/vat_rule/vat_rule_basis/source_* в hs_rates.",
-            "Import-duty поля не изменяются в этом срезе.",
+            "VAT slice: обновлены только vat_import_rate/vat_rule/vat_rule_basis/valid_from/valid_to.",
+            "Import-duty поля (duty_rate, source_revision, source_url, hs_prefix) не изменяются.",
         ],
     )
     return response.model_dump(mode="json")
