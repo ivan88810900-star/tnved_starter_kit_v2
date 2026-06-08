@@ -36,6 +36,19 @@ _LOCAL_BUNDLE_CANDIDATES: tuple[str, ...] = (
 # Только VAT-поля hs_rates. source_revision/source_url — import-duty provenance, не трогаем.
 # duty_rate/hs_prefix — import-duty semantics, VAT slice не меняет.
 _VAT_APPLY_FIELDS = ("vat_import_rate", "vat_rule", "vat_rule_basis", "valid_from", "valid_to")
+_DEFAULT_VAT_IMPORT_RATE = 22.0
+
+
+def _vat_import_rate_value(row: dict[str, Any], *, default: float = _DEFAULT_VAT_IMPORT_RATE) -> float:
+    """Explicit 0/0.0/"0" — валидная ставка; fallback 22.0 только при missing/None/blank."""
+    if "vat_import_rate" not in row:
+        return default
+    raw = row["vat_import_rate"]
+    if raw is None:
+        return default
+    if isinstance(raw, str) and not raw.strip():
+        return default
+    return float(str(raw).replace(",", "."))
 
 
 def _utc_now_iso() -> str:
@@ -162,7 +175,7 @@ def _existing_hs_rate(db, hs_code: str) -> HsRate | None:
 
 def _row_needs_vat_update(existing: HsRate, row: dict[str, Any]) -> bool:
     """Сравнение только VAT-полей — import-duty provenance/scope не участвуют."""
-    if float(existing.vat_import_rate or 0) != float(row.get("vat_import_rate") or 22.0):
+    if float(existing.vat_import_rate or 0) != _vat_import_rate_value(row):
         return True
     if (existing.vat_rule or "none") != str(row.get("vat_rule") or "none"):
         return True
@@ -358,32 +371,36 @@ def run_vat_dry_run(*, rel_path: str | None = None) -> dict[str, Any]:
     return response.model_dump(mode="json")
 
 
-def _apply_vat_rows(rows: list[dict[str, Any]]) -> tuple[VatRowCounts, list[str]]:
-    """Обновить только VAT-поля существующих hs_rates. Новые duty rows не создаём."""
+def _apply_vat_field(existing: HsRate, row: dict[str, Any], field: str) -> None:
+    """Записать одно VAT-поле; vat_import_rate=0 не теряется из-за truthy fallback."""
+    if field == "vat_import_rate":
+        raw = row.get("vat_import_rate")
+        if raw is None or (isinstance(raw, str) and not str(raw).strip()):
+            return
+        existing.vat_import_rate = _vat_import_rate_value(row, default=float(existing.vat_import_rate or 0))
+        return
+    if field in row and row[field] is not None:
+        setattr(existing, field, row[field])
+
+
+def _apply_vat_rows(rows: list[dict[str, Any]]) -> VatRowCounts:
+    """Обновить VAT-поля существующих hs_rates. Вызывать только после _plan_vat_rows (blocked==0)."""
     counts = VatRowCounts(total_in_source=len(rows))
-    missing_blockers: list[str] = []
 
     with SessionLocal() as db:
         for row in rows:
             hs_code = str(row.get("hs_code") or "").strip().replace(" ", "")
-            if not hs_code:
-                counts.blocked += 1
-                continue
-
             existing = _existing_hs_rate(db, hs_code)
             if existing is None:
-                counts.blocked += 1
-                missing_blockers.append(f"missing_hs_rate: {hs_code}")
-                continue
+                raise RuntimeError(f"missing_hs_rate: {hs_code} — apply without pre-validation")
             if _row_needs_vat_update(existing, row):
                 for k in _VAT_APPLY_FIELDS:
-                    if k in row and row[k] is not None:
-                        setattr(existing, k, row[k])
+                    _apply_vat_field(existing, row, k)
                 counts.update += 1
             else:
                 counts.skip += 1
         db.commit()
-    return counts, missing_blockers
+    return counts
 
 
 def run_vat_apply(*, rel_path: str | None = None) -> dict[str, Any]:
@@ -424,13 +441,13 @@ def run_vat_apply(*, rel_path: str | None = None) -> dict[str, Any]:
             notes=["Apply отменён — SourceStatus/SyncLog не записаны."],
         )
 
-    row_counts, missing_blockers = _apply_vat_rows(rows)
-    apply_blockers = list(missing_blockers)
+    # Validate-before-apply: тот же blocker set, что и dry-run; без commit при blocked>0.
+    row_counts, missing_blockers = _plan_vat_rows(rows)
     if row_counts.blocked > 0:
+        apply_blockers = list(missing_blockers)
         apply_blockers.append(
             f"vat_rows_without_hs_rate: {row_counts.blocked} (VAT slice не создаёт hs_rates/duty_rate=0)."
         )
-        # Любые missing rows → не OK provenance (даже если часть VAT-полей уже обновлена).
         return _blocked_response(
             status="manual_review_required",
             mode="apply",
@@ -440,10 +457,12 @@ def run_vat_apply(*, rel_path: str | None = None) -> dict[str, Any]:
             provenance=provenance,
             row_counts=row_counts,
             notes=[
-                "Apply без полного применения — SourceStatus/SyncLog не записаны.",
-                "Отсутствующие hs_rate строки требуют import-duty contour или manual review.",
+                "Apply атомарно отменён — ни одна VAT row не обновлена.",
+                "SourceStatus/SyncLog не записаны.",
             ],
         )
+
+    row_counts = _apply_vat_rows(rows)
 
     entry = get_payment_source_entry(_REGISTRY_SOURCE_CODE)
     note_txt = (
@@ -475,7 +494,7 @@ def run_vat_apply(*, rel_path: str | None = None) -> dict[str, Any]:
         db_mutated=row_counts.update > 0,
         provenance=provenance,
         row_counts=row_counts,
-        blockers=apply_blockers if row_counts.blocked > 0 else [],
+        blockers=[],
         parser_result=parser_result,
         coverage_link={
             "vat_rates_status": (coverage.get("summary") or {}).get("vat_rates", {}).get("status"),

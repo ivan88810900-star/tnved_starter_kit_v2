@@ -482,6 +482,158 @@ class TestVatNoInsertZeroDutyRows(unittest.TestCase):
                 self.assertNotEqual(row.duty_rate, "0")
 
 
+class TestVatAtomicApply(unittest.TestCase):
+    """P1: blocked apply атомарен — без partial commit при missing_hs_rate."""
+
+    def setUp(self) -> None:
+        self.sm = _memory_sessionmaker()
+        self._patches = _start_patches(self.sm)
+
+    def tearDown(self) -> None:
+        _stop_patches(*self._patches)
+
+    def test_mixed_existing_and_missing_rows_no_partial_mutation(self) -> None:
+        import app.services.vat_ingestion as vi
+
+        with self.sm() as db:
+            db.add(
+                HsRate(
+                    hs_code="3004909200",
+                    hs_prefix="3004",
+                    duty_rate="5%",
+                    vat_import_rate=22.0,
+                    vat_rule="none",
+                    source_revision="seed-2026-03",
+                )
+            )
+            db.commit()
+
+        payload = _official_vat_bundle_payload(
+            rates=[
+                {"hs_code": "3004909200", "vat_import_rate": 10, "vat_rule": "reduced10"},
+                {"hs_code": "9999999999", "vat_import_rate": 10, "vat_rule": "reduced10"},
+            ]
+        )
+        with _BundleFixture(payload) as (root, rel):
+            with unittest.mock.patch.object(vi, "_BACKEND_ROOT", root):
+                dry = run_vat_dry_run(rel_path=rel)
+                report = run_vat_apply(rel_path=rel)
+
+        self.assertEqual(dry["row_counts"]["blocked"], 1)
+        self.assertTrue(any("missing_hs_rate: 9999999999" in b for b in dry["blockers"]))
+        self.assertEqual(report["status"], "manual_review_required")
+        self.assertFalse(report["db_mutated"])
+        with self.sm() as db:
+            row = db.query(HsRate).filter(HsRate.hs_code == "3004909200").one()
+            self.assertEqual(float(row.vat_import_rate), 22.0)
+            self.assertEqual(row.vat_rule, "none")
+            self.assertIsNone(db.query(HsRate).filter(HsRate.hs_code == "9999999999").first())
+            self.assertEqual(db.query(SourceStatus).count(), 0)
+            self.assertEqual(db.query(SyncLog).filter(SyncLog.status == "OK").count(), 0)
+
+    def test_all_existing_rows_apply_ok(self) -> None:
+        import app.services.vat_ingestion as vi
+
+        _seed_hs_rates_for_bundle(self.sm)
+        with _BundleFixture(_official_vat_bundle_payload()) as (root, rel):
+            with unittest.mock.patch.object(vi, "_BACKEND_ROOT", root):
+                report = run_vat_apply(rel_path=rel)
+        self.assertEqual(report["status"], "OK")
+        self.assertTrue(report["db_mutated"])
+        with self.sm() as db:
+            self.assertEqual(db.query(SyncLog).filter(SyncLog.status == "OK").count(), 1)
+
+
+class TestVatExplicitZeroRate(unittest.TestCase):
+    """P2: explicit zero VAT rate (0 / "0") не теряется из-за truthy fallback."""
+
+    def setUp(self) -> None:
+        self.sm = _memory_sessionmaker()
+        self._patches = _start_patches(self.sm)
+
+    def tearDown(self) -> None:
+        _stop_patches(*self._patches)
+
+    def test_zero_numeric_rate_dry_run_counts_update(self) -> None:
+        import app.services.vat_ingestion as vi
+
+        with self.sm() as db:
+            db.add(
+                HsRate(
+                    hs_code="3004909200",
+                    hs_prefix="3004",
+                    duty_rate="5%",
+                    vat_import_rate=22.0,
+                    vat_rule="none",
+                    source_revision="seed",
+                )
+            )
+            db.commit()
+
+        payload = _official_vat_bundle_payload(
+            rates=[{"hs_code": "3004909200", "vat_import_rate": 0, "vat_rule": "zero"}]
+        )
+        with _BundleFixture(payload) as (root, rel):
+            with unittest.mock.patch.object(vi, "_BACKEND_ROOT", root):
+                dry = run_vat_dry_run(rel_path=rel)
+        self.assertEqual(dry["row_counts"]["update"], 1)
+
+    def test_zero_numeric_rate_apply_sets_zero(self) -> None:
+        import app.services.vat_ingestion as vi
+
+        with self.sm() as db:
+            db.add(
+                HsRate(
+                    hs_code="3004909200",
+                    hs_prefix="3004",
+                    duty_rate="5%",
+                    vat_import_rate=22.0,
+                    vat_rule="none",
+                    source_revision="seed",
+                )
+            )
+            db.commit()
+
+        payload = _official_vat_bundle_payload(
+            rates=[{"hs_code": "3004909200", "vat_import_rate": 0, "vat_rule": "zero"}]
+        )
+        with _BundleFixture(payload) as (root, rel):
+            with unittest.mock.patch.object(vi, "_BACKEND_ROOT", root):
+                report = run_vat_apply(rel_path=rel)
+        self.assertEqual(report["status"], "OK")
+        with self.sm() as db:
+            row = db.query(HsRate).filter(HsRate.hs_code == "3004909200").one()
+            self.assertEqual(float(row.vat_import_rate), 0.0)
+            self.assertEqual(row.vat_rule, "zero")
+
+    def test_zero_string_rate_apply_sets_zero(self) -> None:
+        import app.services.vat_ingestion as vi
+
+        with self.sm() as db:
+            db.add(
+                HsRate(
+                    hs_code="8471300000",
+                    hs_prefix="8471",
+                    duty_rate="10%",
+                    vat_import_rate=22.0,
+                    vat_rule="none",
+                    source_revision="seed",
+                )
+            )
+            db.commit()
+
+        payload = _official_vat_bundle_payload(
+            rates=[{"hs_code": "8471300000", "vat_import_rate": "0", "vat_rule": "zero"}]
+        )
+        with _BundleFixture(payload) as (root, rel):
+            with unittest.mock.patch.object(vi, "_BACKEND_ROOT", root):
+                report = run_vat_apply(rel_path=rel)
+        self.assertEqual(report["status"], "OK")
+        with self.sm() as db:
+            row = db.query(HsRate).filter(HsRate.hs_code == "8471300000").one()
+            self.assertEqual(float(row.vat_import_rate), 0.0)
+
+
 class TestVatPreserveDutyProvenance(unittest.TestCase):
     """P1 #2: VAT apply не перезаписывает import-duty provenance и duty_rate."""
 
