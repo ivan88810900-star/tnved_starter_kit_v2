@@ -21,6 +21,7 @@ from app.services.payment_data_coverage import (
     diagnose_excise,
     diagnose_exchange_rates,
     diagnose_trade_remedies,
+    diagnose_vat_rates,
     run_payment_data_coverage_report,
 )
 
@@ -713,6 +714,113 @@ class TestPaymentDataCoverageOfficialOnlyDuty(unittest.TestCase):
         self.assertEqual(duty.status, "partial")
         self.assertTrue(duty.missing_samples)
         self.assertTrue(any("official" in g.lower() for g in duty.gaps))
+
+
+class TestVatCoverageViaEecVatSourceStatus(unittest.TestCase):
+    """P2: VAT readiness через EEC_VAT SourceStatus, не duty source_revision."""
+
+    def _add_vat_signal_row(self, db, *, duty_revision: str = "seed-2026-03") -> None:
+        db.add(
+            HsRate(
+                hs_code="3004909200",
+                hs_prefix="3004",
+                duty_rate="5%",
+                vat_import_rate=10.0,
+                vat_rule="reduced10",
+                source_revision=duty_revision,
+            )
+        )
+
+    def _add_eec_vat_status(self, db, *, revision: str = "vat:2026-05-01", is_stale: bool = False) -> None:
+        now = datetime.now(timezone.utc).replace(tzinfo=None)
+        db.add(
+            SourceStatus(
+                source_code="EEC_VAT",
+                source_name="EEC VAT",
+                source_url="https://eec.eaeunion.org/",
+                revision=revision,
+                synced_at=now,
+                is_stale=is_stale,
+            )
+        )
+
+    def test_seed_duty_row_with_eec_vat_status_present(self) -> None:
+        sm = _memory_sessionmaker()
+        with sm() as db:
+            self._add_vat_signal_row(db)
+            self._add_eec_vat_status(db)
+            db.commit()
+        patch_cov, patch_norm = _start_coverage_db_patches(sm)
+        try:
+            vat = diagnose_vat_rates()
+            duty = diagnose_duty_rates()
+        finally:
+            _stop_coverage_db_patches(patch_cov, patch_norm)
+        self.assertEqual(vat.status, "present")
+        self.assertNotEqual(duty.status, "present")
+
+    def test_vat_signal_without_eec_vat_status_not_present(self) -> None:
+        sm = _memory_sessionmaker()
+        with sm() as db:
+            self._add_vat_signal_row(db)
+            db.commit()
+        patch_cov, patch_norm = _start_coverage_db_patches(sm)
+        try:
+            vat = diagnose_vat_rates()
+        finally:
+            _stop_coverage_db_patches(patch_cov, patch_norm)
+        self.assertNotEqual(vat.status, "present")
+
+    def test_stale_eec_vat_status_not_present(self) -> None:
+        sm = _memory_sessionmaker()
+        with sm() as db:
+            self._add_vat_signal_row(db)
+            self._add_eec_vat_status(db, is_stale=True)
+            db.commit()
+        patch_cov, patch_norm = _start_coverage_db_patches(sm)
+        try:
+            vat = diagnose_vat_rates()
+        finally:
+            _stop_coverage_db_patches(patch_cov, patch_norm)
+        self.assertNotEqual(vat.status, "present")
+
+    def test_seed_eec_vat_revision_not_present(self) -> None:
+        sm = _memory_sessionmaker()
+        with sm() as db:
+            self._add_vat_signal_row(db)
+            self._add_eec_vat_status(db, revision="seed-2026-03")
+            db.commit()
+        patch_cov, patch_norm = _start_coverage_db_patches(sm)
+        try:
+            vat = diagnose_vat_rates()
+        finally:
+            _stop_coverage_db_patches(patch_cov, patch_norm)
+        self.assertNotEqual(vat.status, "present")
+
+    def test_official_eec_ett_alone_does_not_make_vat_present(self) -> None:
+        sm = _memory_sessionmaker()
+        now = datetime.now(timezone.utc).replace(tzinfo=None)
+        with sm() as db:
+            db.add(
+                SourceStatus(
+                    source_code="EEC_ETT",
+                    source_name="EEC ETT",
+                    source_url="https://eec.eaeunion.org/",
+                    revision="ett:2026-05-01",
+                    synced_at=now,
+                    is_stale=False,
+                )
+            )
+            self._add_vat_signal_row(db, duty_revision="ett:2026-05-01")
+            db.commit()
+        patch_cov, patch_norm = _start_coverage_db_patches(sm)
+        try:
+            vat = diagnose_vat_rates()
+            duty = diagnose_duty_rates()
+        finally:
+            _stop_coverage_db_patches(patch_cov, patch_norm)
+        self.assertNotEqual(vat.status, "present")
+        self.assertNotEqual(duty.status, "present")
 
 
 class TestPaymentDataCoverageTopLevelEecRevision(unittest.TestCase):

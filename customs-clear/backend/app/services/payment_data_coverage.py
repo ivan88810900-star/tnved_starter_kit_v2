@@ -363,34 +363,23 @@ def _hs_rate_has_vat_signal(row: HsRate) -> bool:
 
 
 def _vat_official_provenance(db) -> tuple[bool, int, int]:
-    """EEC_ETT proven + доля official (non-seed) hs_rates с VAT-сигналом."""
-    from .payment_data_normalization import _eec_proven, _is_seed_or_fallback_revision
-    from .payment_revision_utils import is_official_eec_ett_revision
+    """EEC_VAT SourceStatus proven + hs_rates с VAT-сигналом (не duty source_revision)."""
+    from .payment_data_normalization import _vat_proven
 
-    eec_ok, _ = _eec_proven()
-    eec_status = _lookup_source_status("EEC_ETT")
-    if (
-        eec_status
-        and not eec_status.is_stale
-        and is_official_eec_ett_revision(eec_status.revision)
-    ):
-        eec_ok = True
+    vat_ok, _ = _vat_proven()
 
-    official_vat_rows = 0
-    seed_vat_rows = 0
-    for revision, vat_rule, vat_rate, vat_basis in db.query(
-        HsRate.source_revision,
+    vat_signal_rows = 0
+    for vat_rule, vat_rate, vat_basis in db.query(
         HsRate.vat_rule,
         HsRate.vat_import_rate,
         HsRate.vat_rule_basis,
     ).all():
-        if not _hs_rate_has_vat_signal_from_parts(vat_rule, vat_rate, vat_basis):
-            continue
-        if _is_seed_or_fallback_revision(revision) or not is_official_eec_ett_revision(str(revision or "")):
-            seed_vat_rows += 1
-        else:
-            official_vat_rows += 1
-    return eec_ok, official_vat_rows, seed_vat_rows
+        if _hs_rate_has_vat_signal_from_parts(vat_rule, vat_rate, vat_basis):
+            vat_signal_rows += 1
+    # seed_vat_rows: legacy metric — без row-level VAT provenance считаем 0 official-by-revision.
+    seed_vat_rows = 0 if vat_ok else vat_signal_rows
+    official_vat_rows = vat_signal_rows if vat_ok else 0
+    return vat_ok, official_vat_rows, seed_vat_rows
 
 
 def _hs_rate_has_vat_signal_from_parts(vat_rule: str | None, vat_rate: float | None, vat_basis: str | None) -> bool:
@@ -409,7 +398,7 @@ def diagnose_vat_rates() -> CoverageDomainSummary:
         pref_count = db.query(VatPreference).count()
         reduced = db.query(HsRate).filter(HsRate.vat_import_rate != 22.0).count()
         with_rule = db.query(HsRate).filter(HsRate.vat_rule != "none").count()
-        eec_ok, official_vat_rows, seed_vat_rows = _vat_official_provenance(db)
+        vat_ok, official_vat_rows, seed_vat_rows = _vat_official_provenance(db)
 
     label, authority = _registry_label("eec_ett_tnved")
     gaps: list[str] = []
@@ -418,21 +407,18 @@ def diagnose_vat_rates() -> CoverageDomainSummary:
     if hs_count == 0:
         status = "missing"
         gaps.append("Нет hs_rates — базовые ставки НДС не определены.")
-    elif not eec_ok:
+    elif not vat_ok:
         status = "partial"
-        gaps.append("EEC_ETT не подтверждён как актуальный official VAT contour.")
+        gaps.append("EEC_VAT не подтверждён как актуальный official VAT contour.")
+        if seed_vat_rows > 0:
+            notes.append(f"VAT signal rows без EEC_VAT provenance: {seed_vat_rows}")
     elif official_vat_rows == 0 and (with_rule > 0 or reduced > 0 or pref_count > 0):
         status = "partial"
-        gaps.append(
-            "Есть vat_preferences или hs_rates с VAT-сигналом, но без official versioned revision — "
-            "не claim official present."
-        )
-        if seed_vat_rows > 0:
-            notes.append(f"seed/fallback VAT rows: {seed_vat_rows}")
+        gaps.append("Есть VAT-сигнал в данных, но нет подтверждённого official VAT import contour.")
     elif pref_count == 0 and with_rule == 0 and official_vat_rows == 0:
         status = "partial"
         gaps.append("Нет vat_preferences и vat_rule в hs_rates — льготный НДС не импортирован.")
-    elif official_vat_rows > 0 and eec_ok:
+    elif official_vat_rows > 0 and vat_ok:
         status = "present"
         notes.append(f"official VAT hs_rates rows: {official_vat_rows}")
     elif pref_count > 0 or with_rule > 0:
@@ -442,8 +428,8 @@ def diagnose_vat_rates() -> CoverageDomainSummary:
 
     manual = status != "present"
     resolved_authority = authority or "official_binding"
-    if status != "present" and (seed_vat_rows >= official_vat_rows or not eec_ok):
-        resolved_authority = "legacy_seed" if seed_vat_rows > 0 and official_vat_rows == 0 else authority
+    if status != "present" and (not vat_ok or seed_vat_rows > 0):
+        resolved_authority = "legacy_seed" if not vat_ok else authority
 
     return CoverageDomainSummary(
         status=status,

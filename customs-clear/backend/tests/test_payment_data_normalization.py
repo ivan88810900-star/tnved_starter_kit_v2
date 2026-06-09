@@ -85,6 +85,21 @@ def _add_eec_proven(db, revision: str = "ett:2026-05-01") -> None:
     )
 
 
+def _add_eec_vat_proven(db, revision: str = "vat:2026-05-01") -> None:
+    now = datetime.now(timezone.utc).replace(tzinfo=None)
+    db.add(
+        SourceStatus(
+            source_code="EEC_VAT",
+            source_name="EEC VAT test",
+            source_url="https://eec.eaeunion.org/",
+            revision=revision,
+            synced_at=now,
+            is_stale=False,
+            note="test",
+        )
+    )
+
+
 class TestPaymentNormalizationEmptyDb(unittest.TestCase):
     def setUp(self) -> None:
         self.sm = _memory_sessionmaker()
@@ -172,7 +187,7 @@ class TestPaymentNormalizationVat(unittest.TestCase):
     def setUp(self) -> None:
         self.sm = _memory_sessionmaker()
         with self.sm() as db:
-            _add_eec_proven(db)
+            _add_eec_vat_proven(db)
             db.add(
                 HsRate(
                     hs_code="3004909200",
@@ -354,7 +369,7 @@ class TestPaymentNormalizationDutyNoCatalog(unittest.TestCase):
 
 
 class TestPaymentNormalizationVatSeedRates(unittest.TestCase):
-    """P1 #3: seed-only hs_rates + vat_preferences + EEC OK → VAT не present."""
+    """Seed duty rows без EEC_VAT SourceStatus → VAT не present."""
 
     def setUp(self) -> None:
         self.sm = _memory_sessionmaker()
@@ -388,7 +403,7 @@ class TestPaymentNormalizationVatSeedRates(unittest.TestCase):
         self.assertNotEqual(vat.coverage_status, "present")
         self.assertIn(vat.coverage_status, ("partial", "manual_review_required"))
         self.assertTrue(vat.manual_review_required)
-        self.assertTrue(any("seed" in g.lower() for g in vat.known_gaps))
+        self.assertTrue(any("eec_vat" in g.lower() for g in vat.known_gaps))
 
 
 class TestPaymentNormalizationSeedEecRevision(unittest.TestCase):

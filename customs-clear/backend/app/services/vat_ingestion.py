@@ -12,25 +12,23 @@ from typing import Any
 from ..db import SessionLocal
 from ..models.core import HsRate, SourceStatus, SyncLog
 from ..schemas.vat_ingestion import VatIngestionResponse, VatProvenance, VatRowCounts
-from .import_duty_ingestion import (
-    _EEC_SOURCE_CODE,
-    _REGISTRY_SOURCE_CODE,
-    _validate_official_bundle_payload,
-)
+from .import_duty_ingestion import _validate_official_bundle_payload
 from .normative_bundle import _normalize_rate_row
 from .normative_store import append_sync_log, upsert_source_status
 from .payment_data_coverage import run_payment_data_coverage_report
-from .payment_revision_utils import is_official_eec_ett_revision as _is_official_eec_ett_revision
+from .payment_revision_utils import is_import_duty_bundle_path
+from .payment_revision_utils import is_official_vat_revision as _is_official_vat_revision
+from .payment_revision_utils import is_vat_only_bundle_path
 from .payment_revision_utils import raw_rate_rows
 from .payment_source_registry import get_payment_source_entry
 
 _BACKEND_ROOT = Path(__file__).resolve().parent.parent.parent
+_VAT_SOURCE_CODE = "EEC_VAT"
+_REGISTRY_SOURCE_CODE = "eec_ett_vat"
 
-# Кандидаты локального canonical VAT bundle (относительно customs-clear/backend/).
+# Кандидаты локального canonical VAT bundle (import-duty-only paths исключены).
 _LOCAL_BUNDLE_CANDIDATES: tuple[str, ...] = (
     "data/raw_normative/eec_ett_vat.json",
-    "data/raw_normative/eec_ett_normative_bundle.json",
-    "data/raw_normative/eec_ett_import_duty.json",
 )
 
 # Только VAT-поля hs_rates. source_revision/source_url — import-duty provenance, не трогаем.
@@ -88,9 +86,13 @@ def _load_bundle_payload(rel_path: str) -> tuple[dict[str, Any] | None, dict[str
 
 
 def discover_vat_bundle_path(*, rel_path: str | None = None) -> str | None:
-    """Найти локальный official VAT bundle: явный путь или первый существующий из реестра/кандидатов."""
+    """Найти локальный official VAT bundle (не import-duty-only paths)."""
     if rel_path:
-        return rel_path if _local_path_present(rel_path) else None
+        if not _local_path_present(rel_path):
+            return None
+        if is_import_duty_bundle_path(rel_path) and not is_vat_only_bundle_path(rel_path):
+            return None
+        return rel_path
 
     entry = get_payment_source_entry(_REGISTRY_SOURCE_CODE)
     if entry:
@@ -144,7 +146,7 @@ def _extract_vat_rows(
         if not str(normalized.get("source_revision") or "").strip():
             normalized["source_revision"] = revision
         row_rev = str(normalized.get("source_revision") or "").strip().lower()
-        if not _is_official_eec_ett_revision(row_rev):
+        if not _is_official_vat_revision(row_rev):
             blockers.append(f"unsafe_row_revision: {row_rev or '<empty>'} for hs_code={normalized.get('hs_code')}")
             continue
         raw_code_digits = re.sub(r"\D", "", str(raw.get("hs_code") or ""))[:10]
@@ -220,7 +222,7 @@ def _build_provenance(
 ) -> VatProvenance:
     entry = get_payment_source_entry(_REGISTRY_SOURCE_CODE)
     return VatProvenance(
-        source_code=_EEC_SOURCE_CODE,
+        source_code=_VAT_SOURCE_CODE,
         source_name=entry.name if entry else "ЕТТ ЕАЭС — НДС при ввозе",
         legal_basis=entry.legal_basis if entry else "Единый таможенный тариф ЕАЭС (ЕТТ)",
         official_url=str(payload.get("official_ett_url") or payload.get("source_url") or "").strip() or None,
@@ -289,7 +291,9 @@ def _validate_bundle_for_ingest(
 
     revision, rows, row_blockers = _extract_vat_rows(payload, rows_in)
     blockers: list[str] = []
-    if not _is_official_eec_ett_revision(revision):
+    if is_import_duty_bundle_path(rel_path) and not is_vat_only_bundle_path(rel_path):
+        blockers.append("manual_review_required: import_duty_only_bundle_not_vat")
+    if not _is_official_vat_revision(revision):
         blockers.append(f"non_official_bundle_revision: {revision or '<empty>'}")
     if row_blockers:
         blockers.extend(row_blockers)
@@ -383,16 +387,21 @@ def _apply_vat_field(existing: HsRate, row: dict[str, Any], field: str) -> None:
         setattr(existing, field, row[field])
 
 
-def _apply_vat_rows(rows: list[dict[str, Any]]) -> VatRowCounts:
-    """Обновить VAT-поля существующих hs_rates. Вызывать только после _plan_vat_rows (blocked==0)."""
+def _apply_vat_rows(rows: list[dict[str, Any]]) -> VatRowCounts | None:
+    """Атомарно обновить VAT-поля. None = blocked (ни одна строка не изменена, без commit)."""
     counts = VatRowCounts(total_in_source=len(rows))
 
     with SessionLocal() as db:
+        # Preflight: любой missing hs_rate → abort до setattr/commit.
+        for row in rows:
+            hs_code = str(row.get("hs_code") or "").strip().replace(" ", "")
+            if not hs_code or _existing_hs_rate(db, hs_code) is None:
+                return None
         for row in rows:
             hs_code = str(row.get("hs_code") or "").strip().replace(" ", "")
             existing = _existing_hs_rate(db, hs_code)
             if existing is None:
-                raise RuntimeError(f"missing_hs_rate: {hs_code} — apply without pre-validation")
+                return None
             if _row_needs_vat_update(existing, row):
                 for k in _VAT_APPLY_FIELDS:
                     _apply_vat_field(existing, row, k)
@@ -462,7 +471,19 @@ def run_vat_apply(*, rel_path: str | None = None) -> dict[str, Any]:
             ],
         )
 
-    row_counts = _apply_vat_rows(rows)
+    applied = _apply_vat_rows(rows)
+    if applied is None:
+        return _blocked_response(
+            status="manual_review_required",
+            mode="apply",
+            dry_run=False,
+            blockers=list(missing_blockers) + ["atomic_apply_aborted: missing_hs_rate detected during apply"],
+            parser_result=parser_result,
+            provenance=provenance,
+            row_counts=row_counts,
+            notes=["Apply атомарно отменён — ни одна VAT row не обновлена.", "SourceStatus/SyncLog не записаны."],
+        )
+    row_counts = applied
 
     entry = get_payment_source_entry(_REGISTRY_SOURCE_CODE)
     note_txt = (
@@ -471,7 +492,7 @@ def run_vat_apply(*, rel_path: str | None = None) -> dict[str, Any]:
         f"blocked={row_counts.blocked}; checksum={provenance.checksum_sha256 or 'n/a'}"
     )
     upsert_source_status(
-        source_code=_EEC_SOURCE_CODE,
+        source_code=_VAT_SOURCE_CODE,
         source_name=entry.name if entry else provenance.source_name,
         source_url=provenance.official_url or bundle_path,
         revision=revision,
@@ -479,7 +500,7 @@ def run_vat_apply(*, rel_path: str | None = None) -> dict[str, Any]:
         note=note_txt,
     )
     append_sync_log(
-        source_code=_EEC_SOURCE_CODE,
+        source_code=_VAT_SOURCE_CODE,
         status="OK",
         revision=revision,
         rows_affected=row_counts.update,

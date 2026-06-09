@@ -19,7 +19,9 @@ from ..schemas.import_duty_ingestion import (
 from .normative_bundle import _normalize_rate_row
 from .normative_store import append_sync_log, normalize_hs_duty_rate_string, upsert_source_status
 from .payment_data_coverage import run_payment_data_coverage_report
+from .payment_revision_utils import is_import_duty_bundle_path
 from .payment_revision_utils import is_official_eec_ett_revision as _is_official_eec_ett_revision
+from .payment_revision_utils import is_vat_only_bundle_path
 from .payment_revision_utils import raw_rate_rows
 from .payment_source_registry import get_payment_source_entry
 
@@ -41,19 +43,34 @@ def _local_path_present(rel_path: str) -> bool:
     return (_BACKEND_ROOT / rel_path).is_file()
 
 
+def _raw_row_has_duty_signal(raw: dict[str, Any]) -> bool:
+    """Строка содержит явный duty/import signal (не VAT-only row)."""
+    if raw.get("duty_rate") is not None and str(raw.get("duty_rate") or "").strip():
+        return True
+    if raw.get("import_duty_rate") is not None and str(raw.get("import_duty_rate") or "").strip():
+        return True
+    if raw.get("prefix_rate") is True or raw.get("prefix_scope") is True:
+        return True
+    return False
+
+
 def discover_import_duty_bundle_path(*, rel_path: str | None = None) -> str | None:
-    """Найти локальный official bundle: явный путь или первый существующий из реестра/кандидатов."""
+    """Найти локальный official import-duty bundle (VAT-only paths исключены)."""
     if rel_path:
-        return rel_path if _local_path_present(rel_path) else None
+        if not _local_path_present(rel_path):
+            return None
+        if is_vat_only_bundle_path(rel_path):
+            return None
+        return rel_path
 
     entry = get_payment_source_entry(_REGISTRY_SOURCE_CODE)
     if entry:
         for p in entry.local_canonical_paths:
-            if _local_path_present(p):
+            if is_import_duty_bundle_path(p) and _local_path_present(p):
                 return p
 
     for p in _LOCAL_BUNDLE_CANDIDATES:
-        if _local_path_present(p):
+        if is_import_duty_bundle_path(p) and _local_path_present(p):
             return p
     return None
 
@@ -197,6 +214,8 @@ def _extract_duty_rows(
         if not isinstance(raw, dict):
             # Official import: non-object row — структурная ошибка, не silent skip.
             return revision, [], ["parser_failed: malformed_rate_row (rate row not an object)"]
+        if not _raw_row_has_duty_signal(raw):
+            continue
         normalized = _normalize_rate_row(raw)
         if not normalized:
             blockers.append(f"invalid_rate_row: hs_code={raw.get('hs_code')!r}")
@@ -330,6 +349,10 @@ def _blocked_response(
 def _validate_bundle_for_ingest(
     rel_path: str,
 ) -> tuple[dict[str, Any] | None, dict[str, Any], str, list[dict[str, Any]], list[str]]:
+    if is_vat_only_bundle_path(rel_path):
+        return None, {"status": "manual_review_required", "reason": "vat_only_bundle"}, "", [], [
+            "manual_review_required: vat_only_bundle_not_import_duty"
+        ]
     payload, parser_result = _load_bundle_payload(rel_path)
     if payload is None:
         # payload не загружен: missing/invalid JSON/не object/parser_failed → жёсткий blocker,
