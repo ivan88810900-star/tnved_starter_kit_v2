@@ -106,7 +106,7 @@ def _seed_hs_rates_for_bundle(sm: sessionmaker, *, duty_revision: str = "seed-20
         db.commit()
 
 
-def _official_vat_bundle_payload(*, revision: str = "ett:2026-05-01", rates: list[dict] | None = None) -> dict:
+def _official_vat_bundle_payload(*, revision: str = "vat:2026-05-01", rates: list[dict] | None = None) -> dict:
     return {
         "format": "customs_clear_normative_bundle",
         "revision": revision,
@@ -268,7 +268,7 @@ class TestVatApplyOfficial(unittest.TestCase):
 
         self.assertEqual(report["status"], "OK")
         self.assertTrue(report["db_mutated"])
-        self.assertEqual(report["provenance"]["revision"], "ett:2026-05-01")
+        self.assertEqual(report["provenance"]["revision"], "vat:2026-05-01")
         self.assertEqual(report["provenance"]["source_code"], "EEC_VAT")
 
         with self.sm() as db:
@@ -402,7 +402,7 @@ class TestVatParserFailures(unittest.TestCase):
 
     def test_malformed_rates_container(self) -> None:
         payload = json.dumps(
-            {"format": "customs_clear_normative_bundle", "revision": "ett:2026-01-01", "rates": 123}
+            {"format": "customs_clear_normative_bundle", "revision": "vat:2026-01-01", "rates": 123}
         )
         report = self._apply(payload)
         self.assertEqual(report["status"], "parser_failed")
@@ -427,7 +427,7 @@ class TestVatMissingSourceUrl(unittest.TestCase):
     def test_missing_source_url_blocks(self) -> None:
         payload = {
             "format": "customs_clear_normative_bundle",
-            "revision": "ett:2026-05-01",
+            "revision": "vat:2026-05-01",
             "rates": [{"hs_code": "3004909200", "vat_import_rate": 10, "vat_rule": "reduced10"}],
         }
         report = self._apply(payload)
@@ -805,6 +805,122 @@ class TestVatCoverageAfterImport(unittest.TestCase):
         self.assertNotEqual(vat_cov.status, "present")
         vat_norm = normalize_vat()
         self.assertNotEqual(vat_norm.coverage_status, "present")
+
+
+class TestVatRevisionValidation(unittest.TestCase):
+    """P2: VAT ingestion принимает VAT-specific revisions, отклоняет ETT duty revisions."""
+
+    def setUp(self) -> None:
+        self.sm = _memory_sessionmaker()
+        self._patches = _start_patches(self.sm)
+
+    def tearDown(self) -> None:
+        _stop_patches(*self._patches)
+
+    def _dry_run(self, payload: dict) -> dict:
+        import app.services.vat_ingestion as vi
+
+        with _BundleFixture(payload) as (root, rel):
+            with unittest.mock.patch.object(vi, "_BACKEND_ROOT", root):
+                return run_vat_dry_run(rel_path=rel)
+
+    def _apply(self, payload: dict) -> dict:
+        import app.services.vat_ingestion as vi
+
+        with _BundleFixture(payload) as (root, rel):
+            with unittest.mock.patch.object(vi, "_BACKEND_ROOT", root):
+                return run_vat_apply(rel_path=rel)
+
+    def test_vat_revision_accepted_dry_run_and_apply(self) -> None:
+        _seed_hs_rates_for_bundle(self.sm)
+        payload = _official_vat_bundle_payload(revision="vat:2026-05-01")
+        dry = self._dry_run(payload)
+        self.assertEqual(dry["status"], "OK")
+        report = self._apply(payload)
+        self.assertEqual(report["status"], "OK")
+        self.assertTrue(report["db_mutated"])
+        self.assertEqual(report["provenance"]["revision"], "vat:2026-05-01")
+
+    def test_eec_vat_revision_accepted(self) -> None:
+        _seed_hs_rates_for_bundle(self.sm)
+        payload = _official_vat_bundle_payload(revision="eec-vat:2026-05-01")
+        dry = self._dry_run(payload)
+        self.assertEqual(dry["status"], "OK")
+        report = self._apply(payload)
+        self.assertEqual(report["status"], "OK")
+
+    def test_ett_revision_rejected_in_vat_ingestion(self) -> None:
+        report = self._apply(_official_vat_bundle_payload(revision="ett:2026-05-01"))
+        self.assertEqual(report["status"], "manual_review_required")
+        self.assertFalse(report["db_mutated"])
+        blockers = " ".join(report["blockers"])
+        self.assertTrue("wrong_domain" in blockers or "non_official" in blockers)
+
+    def test_eec_ett_revision_rejected_in_vat_ingestion(self) -> None:
+        report = self._apply(_official_vat_bundle_payload(revision="eec-ett:2026-05-01"))
+        self.assertEqual(report["status"], "manual_review_required")
+        self.assertFalse(report["db_mutated"])
+
+    def test_non_official_revision_tokens_rejected(self) -> None:
+        for revision in (
+            "seed-2026-03",
+            "fallback:2026",
+            "legacy-2026",
+            "demo-2026",
+            "test-2026",
+            "example-2026",
+            "manual",
+            "local-copy",
+            "unknown",
+            "",
+        ):
+            with self.subTest(revision=revision):
+                report = self._apply(_official_vat_bundle_payload(revision=revision))
+                self.assertNotEqual(report["status"], "OK")
+                self.assertFalse(report["db_mutated"])
+
+    def test_blank_row_revision_inherits_official_vat_bundle_revision(self) -> None:
+        _seed_hs_rates_for_bundle(self.sm)
+        payload = _official_vat_bundle_payload(
+            revision="vat:2026-06-01",
+            rates=[{"hs_code": "3004909200", "vat_import_rate": 10, "vat_rule": "reduced10"}],
+        )
+        report = self._apply(payload)
+        self.assertEqual(report["status"], "OK")
+
+    def test_explicit_unsafe_row_revision_blocked(self) -> None:
+        payload = _official_vat_bundle_payload(
+            rates=[
+                {
+                    "hs_code": "3004909200",
+                    "vat_import_rate": 10,
+                    "vat_rule": "reduced10",
+                    "source_revision": "manual",
+                }
+            ]
+        )
+        report = self._apply(payload)
+        self.assertEqual(report["status"], "manual_review_required")
+        self.assertFalse(report["db_mutated"])
+        self.assertTrue(
+            any("unsafe" in b or "wrong_domain" in b for b in report["blockers"])
+            or report["parser_result"].get("reason") == "explicit_unsafe_row_revision"
+        )
+
+    def test_explicit_ett_row_revision_in_vat_bundle_blocked(self) -> None:
+        payload = _official_vat_bundle_payload(
+            rates=[
+                {
+                    "hs_code": "3004909200",
+                    "vat_import_rate": 10,
+                    "vat_rule": "reduced10",
+                    "source_revision": "ett:2026-05-01",
+                }
+            ]
+        )
+        report = self._apply(payload)
+        self.assertEqual(report["status"], "manual_review_required")
+        self.assertFalse(report["db_mutated"])
 
 
 @unittest.skipUnless(_API_OK, "fastapi not installed")

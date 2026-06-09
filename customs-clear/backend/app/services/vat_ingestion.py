@@ -12,14 +12,16 @@ from typing import Any
 from ..db import SessionLocal
 from ..models.core import HsRate, SourceStatus, SyncLog
 from ..schemas.vat_ingestion import VatIngestionResponse, VatProvenance, VatRowCounts
-from .import_duty_ingestion import _validate_official_bundle_payload
 from .normative_bundle import _normalize_rate_row
 from .normative_store import append_sync_log, upsert_source_status
 from .payment_data_coverage import run_payment_data_coverage_report
-from .payment_revision_utils import is_import_duty_bundle_path
-from .payment_revision_utils import is_official_vat_revision as _is_official_vat_revision
-from .payment_revision_utils import is_vat_only_bundle_path
-from .payment_revision_utils import raw_rate_rows
+from .payment_revision_utils import (
+    is_import_duty_bundle_path,
+    is_official_vat_ingestion_revision,
+    is_vat_only_bundle_path,
+    is_wrong_domain_eec_ett_revision_in_vat_bundle,
+    raw_rate_rows,
+)
 from .payment_source_registry import get_payment_source_entry
 
 _BACKEND_ROOT = Path(__file__).resolve().parent.parent.parent
@@ -67,6 +69,139 @@ def _file_sha256_at(path: Path) -> str | None:
     return digest.hexdigest()
 
 
+_NON_OFFICIAL_VAT_REVISION_EXACT = frozenset(
+    {"example", "seed", "unknown", "ambiguous", "legacy", "legacy_seed", "fallback", "test", "demo", "manual", "local-copy"}
+)
+_NON_OFFICIAL_VAT_REVISION_PREFIXES = (
+    "seed-",
+    "seed:",
+    "seed_",
+    "fallback-",
+    "fallback:",
+    "fallback_",
+    "legacy-",
+    "legacy_",
+    "example-",
+    "demo-",
+    "test-",
+)
+
+
+def _is_non_official_vat_revision_token(revision: str) -> bool:
+    rev = (revision or "").strip().lower()
+    if not rev:
+        return True
+    if rev in _NON_OFFICIAL_VAT_REVISION_EXACT:
+        return True
+    return any(rev.startswith(p) for p in _NON_OFFICIAL_VAT_REVISION_PREFIXES)
+
+
+def _validate_official_vat_bundle_payload(
+    payload: dict[str, Any], *, rel_path: str, checksum: str | None
+) -> dict[str, Any]:
+    """VAT-domain bundle validation — не делегирует import-duty ETT validator."""
+    revision = str(payload.get("revision") or "").strip().lower()
+    fmt = str(payload.get("format") or "")
+
+    rates, container_err = raw_rate_rows(payload)
+    if container_err is not None:
+        return {
+            "status": "parser_failed",
+            "reason": container_err,
+            "error": f"bundle '{container_err.split('_')[1]}' must be a JSON array",
+            "revision": revision,
+            "record_count": 0,
+            "checksum_sha256": checksum,
+        }
+
+    if any(not isinstance(r, dict) for r in rates):
+        return {
+            "status": "parser_failed",
+            "reason": "malformed_rate_row",
+            "error": "bundle rate rows must be JSON objects",
+            "revision": revision,
+            "record_count": len(rates),
+            "rates_count": len(rates),
+            "checksum_sha256": checksum,
+        }
+
+    raw_tnved = payload.get("tnved")
+    tnved = raw_tnved if isinstance(raw_tnved, list) else []
+
+    if _is_non_official_vat_revision_token(revision):
+        return {
+            "status": "manual_review_required",
+            "reason": "non_official_bundle_revision",
+            "revision": revision,
+            "format": fmt,
+            "record_count": len(rates) + len(tnved),
+            "rates_count": len(rates),
+            "checksum_sha256": checksum,
+        }
+    if is_wrong_domain_eec_ett_revision_in_vat_bundle(revision):
+        return {
+            "status": "manual_review_required",
+            "reason": "wrong_domain_eec_ett_revision_in_vat_bundle",
+            "revision": revision,
+            "format": fmt,
+            "record_count": len(rates) + len(tnved),
+            "rates_count": len(rates),
+            "checksum_sha256": checksum,
+        }
+    if not is_official_vat_ingestion_revision(revision):
+        return {
+            "status": "manual_review_required",
+            "reason": "non_official_bundle_revision",
+            "revision": revision,
+            "format": fmt,
+            "record_count": len(rates) + len(tnved),
+            "rates_count": len(rates),
+            "checksum_sha256": checksum,
+        }
+
+    explicit_unsafe: list[str] = []
+    wrong_domain_rows: list[str] = []
+    for r in rates:
+        rev = str(r.get("source_revision") or "").strip().lower()
+        if not rev:
+            continue
+        if is_wrong_domain_eec_ett_revision_in_vat_bundle(rev):
+            wrong_domain_rows.append(rev)
+            continue
+        if not is_official_vat_ingestion_revision(rev):
+            explicit_unsafe.append(rev)
+    if wrong_domain_rows:
+        return {
+            "status": "manual_review_required",
+            "reason": "wrong_domain_eec_ett_row_revision",
+            "revision": revision,
+            "wrong_domain_row_revisions": sorted(set(wrong_domain_rows))[:10],
+            "record_count": len(rates),
+            "rates_count": len(rates),
+            "checksum_sha256": checksum,
+        }
+    if explicit_unsafe:
+        return {
+            "status": "manual_review_required",
+            "reason": "explicit_unsafe_row_revision",
+            "revision": revision,
+            "unsafe_row_revisions": sorted(set(explicit_unsafe))[:10],
+            "record_count": len(rates),
+            "rates_count": len(rates),
+            "checksum_sha256": checksum,
+        }
+
+    return {
+        "status": "parsed",
+        "revision": revision,
+        "format": fmt,
+        "record_count": len(rates) + len(tnved),
+        "rates_count": len(rates),
+        "tnved_count": len(tnved),
+        "checksum_sha256": checksum,
+    }
+
+
 def _load_bundle_payload(rel_path: str) -> tuple[dict[str, Any] | None, dict[str, Any]]:
     path = _BACKEND_ROOT / rel_path
     if not path.is_file():
@@ -82,7 +217,7 @@ def _load_bundle_payload(rel_path: str) -> tuple[dict[str, Any] | None, dict[str
     if not isinstance(payload, dict):
         return None, {"status": "parser_failed", "error": "bundle must be JSON object", "record_count": 0}
     checksum = _file_sha256_at(path)
-    return payload, _validate_official_bundle_payload(payload, rel_path=rel_path, checksum=checksum)
+    return payload, _validate_official_vat_bundle_payload(payload, rel_path=rel_path, checksum=checksum)
 
 
 def discover_vat_bundle_path(*, rel_path: str | None = None) -> str | None:
@@ -146,7 +281,12 @@ def _extract_vat_rows(
         if not str(normalized.get("source_revision") or "").strip():
             normalized["source_revision"] = revision
         row_rev = str(normalized.get("source_revision") or "").strip().lower()
-        if not _is_official_vat_revision(row_rev):
+        if is_wrong_domain_eec_ett_revision_in_vat_bundle(row_rev):
+            blockers.append(
+                f"wrong_domain_row_revision: {row_rev} for hs_code={normalized.get('hs_code')}"
+            )
+            continue
+        if not is_official_vat_ingestion_revision(row_rev):
             blockers.append(f"unsafe_row_revision: {row_rev or '<empty>'} for hs_code={normalized.get('hs_code')}")
             continue
         raw_code_digits = re.sub(r"\D", "", str(raw.get("hs_code") or ""))[:10]
@@ -293,7 +433,9 @@ def _validate_bundle_for_ingest(
     blockers: list[str] = []
     if is_import_duty_bundle_path(rel_path) and not is_vat_only_bundle_path(rel_path):
         blockers.append("manual_review_required: import_duty_only_bundle_not_vat")
-    if not _is_official_vat_revision(revision):
+    if is_wrong_domain_eec_ett_revision_in_vat_bundle(revision):
+        blockers.append(f"wrong_domain_bundle_revision: {revision}")
+    elif not is_official_vat_ingestion_revision(revision):
         blockers.append(f"non_official_bundle_revision: {revision or '<empty>'}")
     if row_blockers:
         blockers.extend(row_blockers)

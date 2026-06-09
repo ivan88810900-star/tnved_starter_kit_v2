@@ -25,11 +25,23 @@ def is_official_eec_ett_revision(revision: str | None) -> bool:
     return bool(_EEC_ETT_REVISION_RE.match(rev))
 
 
+def is_official_vat_ingestion_revision(revision: str | None) -> bool:
+    """Строгая revision только для VAT ingestion (не import-duty ETT).
+
+    Принимает: vat:YYYY-MM-DD | eec-vat:YYYY-MM-DD | eec:vat:YYYY-MM-DD.
+    Отклоняет ett:/eec-ett:/eec:ett: и произвольные non-versioned строки.
+    """
+    rev = (revision or "").strip().lower()
+    if not rev:
+        return False
+    return bool(_EEC_VAT_REVISION_RE.match(rev))
+
+
 def is_official_vat_revision(revision: str | None) -> bool:
     """Строгая проверка revision для official VAT contour (SourceStatus EEC_VAT).
 
-    Принимает VAT-specific формы и shared ETT versioned revisions из общих bundle
-    (ett:/eec-ett:/eec:ett:) — но не duty-only arbitrary strings.
+    Принимает VAT-specific формы и legacy shared ETT versioned revisions из старых
+    VAT import runs (ett:/eec-ett:/eec:ett:) — но не duty-only arbitrary strings.
     """
     rev = (revision or "").strip().lower()
     if not rev:
@@ -37,6 +49,14 @@ def is_official_vat_revision(revision: str | None) -> bool:
     if _EEC_VAT_REVISION_RE.match(rev):
         return True
     return bool(_EEC_ETT_REVISION_RE.match(rev))
+
+
+def is_wrong_domain_eec_ett_revision_in_vat_bundle(revision: str | None) -> bool:
+    """ETT duty revision внутри VAT bundle — wrong domain для VAT ingestion."""
+    rev = (revision or "").strip().lower()
+    if not rev:
+        return False
+    return bool(_EEC_ETT_REVISION_RE.match(rev)) and not bool(_EEC_VAT_REVISION_RE.match(rev))
 
 
 def is_vat_only_bundle_path(rel_path: str) -> bool:

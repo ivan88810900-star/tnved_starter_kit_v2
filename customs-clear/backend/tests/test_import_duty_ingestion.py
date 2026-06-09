@@ -1111,6 +1111,42 @@ class TestImportDutyVatBundleIsolation(unittest.TestCase):
             self.assertFalse(is_vat_only_bundle_path(p))
 
 
+class TestImportDutyVatRevisionRejected(unittest.TestCase):
+    """Regression: VAT-specific revisions не принимаются import-duty ingestion."""
+
+    def setUp(self) -> None:
+        self.sm = _memory_sessionmaker()
+        self._patches = _start_patches(self.sm)
+
+    def tearDown(self) -> None:
+        _stop_patches(*self._patches)
+
+    def _apply(self, payload: dict) -> dict:
+        import app.services.import_duty_ingestion as idi
+
+        with _BundleFixture(payload) as (root, rel):
+            with unittest.mock.patch.object(idi, "_BACKEND_ROOT", root):
+                return run_import_duty_apply(rel_path=rel)
+
+    def test_vat_revision_rejected_by_import_duty(self) -> None:
+        payload = _official_bundle_payload(revision="vat:2026-05-01")
+        report = self._apply(payload)
+        self.assertEqual(report["status"], "manual_review_required")
+        self.assertFalse(report["db_mutated"])
+
+    def test_eec_vat_revision_rejected_by_import_duty(self) -> None:
+        payload = _official_bundle_payload(revision="eec-vat:2026-05-01")
+        report = self._apply(payload)
+        self.assertEqual(report["status"], "manual_review_required")
+        self.assertFalse(report["db_mutated"])
+
+    def test_ett_revision_still_accepted_by_import_duty(self) -> None:
+        payload = _official_bundle_payload(revision="ett:2026-05-01")
+        report = self._apply(payload)
+        self.assertEqual(report["status"], "OK")
+        self.assertTrue(report["db_mutated"])
+
+
 @unittest.skipUnless(_API_OK, "fastapi not installed")
 class TestImportDutyApi(unittest.TestCase):
     @classmethod
