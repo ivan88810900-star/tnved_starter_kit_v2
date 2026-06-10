@@ -363,23 +363,39 @@ def _hs_rate_has_vat_signal(row: HsRate) -> bool:
 
 
 def _vat_official_provenance(db) -> tuple[bool, int, int]:
-    """EEC_VAT SourceStatus proven + hs_rates с VAT-сигналом (не duty source_revision)."""
+    """EEC_VAT SourceStatus + row-level VAT marker (vat_source_*), не global VAT signal alone."""
     from .payment_data_normalization import _vat_proven
+    from .payment_revision_utils import is_official_vat_row_marker
 
     vat_ok, _ = _vat_proven()
 
-    vat_signal_rows = 0
-    for vat_rule, vat_rate, vat_basis in db.query(
+    official_vat_rows = 0
+    legacy_vat_signal_rows = 0
+    for (
+        vat_rule,
+        vat_rate,
+        vat_basis,
+        vat_source_code,
+        vat_source_revision,
+    ) in db.query(
         HsRate.vat_rule,
         HsRate.vat_import_rate,
         HsRate.vat_rule_basis,
+        HsRate.vat_source_code,
+        HsRate.vat_source_revision,
     ).all():
-        if _hs_rate_has_vat_signal_from_parts(vat_rule, vat_rate, vat_basis):
-            vat_signal_rows += 1
-    # seed_vat_rows: legacy metric — без row-level VAT provenance считаем 0 official-by-revision.
-    seed_vat_rows = 0 if vat_ok else vat_signal_rows
-    official_vat_rows = vat_signal_rows if vat_ok else 0
-    return vat_ok, official_vat_rows, seed_vat_rows
+        if not _hs_rate_has_vat_signal_from_parts(vat_rule, vat_rate, vat_basis):
+            continue
+        if is_official_vat_row_marker(
+            vat_source_code=vat_source_code,
+            vat_source_revision=vat_source_revision,
+        ):
+            official_vat_rows += 1
+        else:
+            legacy_vat_signal_rows += 1
+    if not vat_ok:
+        return False, 0, legacy_vat_signal_rows
+    return vat_ok, official_vat_rows, legacy_vat_signal_rows
 
 
 def _hs_rate_has_vat_signal_from_parts(vat_rule: str | None, vat_rate: float | None, vat_basis: str | None) -> bool:
@@ -411,10 +427,14 @@ def diagnose_vat_rates() -> CoverageDomainSummary:
         status = "partial"
         gaps.append("EEC_VAT не подтверждён как актуальный official VAT contour.")
         if seed_vat_rows > 0:
-            notes.append(f"VAT signal rows без EEC_VAT provenance: {seed_vat_rows}")
+            notes.append(f"legacy VAT signal rows без row-level marker: {seed_vat_rows}")
     elif official_vat_rows == 0 and (with_rule > 0 or reduced > 0 or pref_count > 0):
         status = "partial"
-        gaps.append("Есть VAT-сигнал в данных, но нет подтверждённого official VAT import contour.")
+        gaps.append(
+            "Есть VAT-сигнал в данных, но нет row-level official VAT provenance (vat_source_*)."
+        )
+        if seed_vat_rows > 0:
+            notes.append(f"legacy VAT signal rows без official marker: {seed_vat_rows}")
     elif pref_count == 0 and with_rule == 0 and official_vat_rows == 0:
         status = "partial"
         gaps.append("Нет vat_preferences и vat_rule в hs_rates — льготный НДС не импортирован.")

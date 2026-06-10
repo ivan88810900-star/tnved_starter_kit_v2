@@ -196,6 +196,9 @@ class TestPaymentNormalizationVat(unittest.TestCase):
                     vat_import_rate=10.0,
                     vat_rule="reduced10",
                     source_revision="ett:2026-05-01",
+                    vat_source_code="EEC_VAT",
+                    vat_source_revision="vat:2026-05-01",
+                    vat_source_url="https://eec.eaeunion.org/",
                 )
             )
             db.add(

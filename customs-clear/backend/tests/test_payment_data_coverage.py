@@ -719,15 +719,26 @@ class TestPaymentDataCoverageOfficialOnlyDuty(unittest.TestCase):
 class TestVatCoverageViaEecVatSourceStatus(unittest.TestCase):
     """P2: VAT readiness через EEC_VAT SourceStatus, не duty source_revision."""
 
-    def _add_vat_signal_row(self, db, *, duty_revision: str = "seed-2026-03") -> None:
+    def _add_vat_signal_row(
+        self,
+        db,
+        *,
+        hs_code: str = "3004909200",
+        duty_revision: str = "seed-2026-03",
+        vat_marker: bool = False,
+        vat_source_revision: str = "vat:2026-05-01",
+    ) -> None:
         db.add(
             HsRate(
-                hs_code="3004909200",
-                hs_prefix="3004",
+                hs_code=hs_code,
+                hs_prefix=hs_code[:4],
                 duty_rate="5%",
                 vat_import_rate=10.0,
                 vat_rule="reduced10",
                 source_revision=duty_revision,
+                vat_source_code="EEC_VAT" if vat_marker else "",
+                vat_source_revision=vat_source_revision if vat_marker else "",
+                vat_source_url="https://eec.eaeunion.org/" if vat_marker else "",
             )
         )
 
@@ -747,7 +758,7 @@ class TestVatCoverageViaEecVatSourceStatus(unittest.TestCase):
     def test_seed_duty_row_with_eec_vat_status_present(self) -> None:
         sm = _memory_sessionmaker()
         with sm() as db:
-            self._add_vat_signal_row(db)
+            self._add_vat_signal_row(db, vat_marker=True)
             self._add_eec_vat_status(db)
             db.commit()
         patch_cov, patch_norm = _start_coverage_db_patches(sm)
@@ -758,6 +769,35 @@ class TestVatCoverageViaEecVatSourceStatus(unittest.TestCase):
             _stop_coverage_db_patches(patch_cov, patch_norm)
         self.assertEqual(vat.status, "present")
         self.assertNotEqual(duty.status, "present")
+
+    def test_legacy_vat_row_not_official_after_eec_vat_sync(self) -> None:
+        sm = _memory_sessionmaker()
+        with sm() as db:
+            self._add_vat_signal_row(db, hs_code="3004909200", vat_marker=False)
+            self._add_vat_signal_row(db, hs_code="8471300000", vat_marker=True)
+            self._add_eec_vat_status(db)
+            db.commit()
+        patch_cov, patch_norm = _start_coverage_db_patches(sm)
+        try:
+            vat = diagnose_vat_rates()
+        finally:
+            _stop_coverage_db_patches(patch_cov, patch_norm)
+        self.assertEqual(vat.status, "present")
+        self.assertIn("official VAT hs_rates rows: 1", " ".join(vat.notes))
+
+    def test_eec_vat_status_without_row_marker_not_present(self) -> None:
+        sm = _memory_sessionmaker()
+        with sm() as db:
+            self._add_vat_signal_row(db, vat_marker=False)
+            self._add_eec_vat_status(db)
+            db.commit()
+        patch_cov, patch_norm = _start_coverage_db_patches(sm)
+        try:
+            vat = diagnose_vat_rates()
+        finally:
+            _stop_coverage_db_patches(patch_cov, patch_norm)
+        self.assertNotEqual(vat.status, "present")
+        self.assertTrue(any("row-level" in g.lower() for g in vat.gaps))
 
     def test_vat_signal_without_eec_vat_status_not_present(self) -> None:
         sm = _memory_sessionmaker()

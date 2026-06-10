@@ -279,6 +279,8 @@ class TestVatApplyOfficial(unittest.TestCase):
             self.assertEqual(row.vat_rule, "reduced10")
             self.assertEqual(float(row.vat_import_rate), 10.0)
             self.assertEqual(row.duty_rate, "5%")
+            self.assertEqual(row.vat_source_code, "EEC_VAT")
+            self.assertEqual(row.vat_source_revision, "vat:2026-05-01")
             st = db.query(SourceStatus).filter(SourceStatus.source_code == "EEC_VAT").first()
             self.assertIsNotNone(st)
             logs = db.query(SyncLog).filter(SyncLog.source_code == "EEC_VAT").all()
@@ -507,6 +509,13 @@ class TestVatAtomicApply(unittest.TestCase):
                 )
             )
             db.commit()
+            before_row = db.query(HsRate).filter(HsRate.hs_code == "3004909200").one()
+            before_snapshot = (
+                float(before_row.vat_import_rate),
+                before_row.vat_rule,
+                before_row.vat_source_code,
+                before_row.vat_source_revision,
+            )
 
         payload = _official_vat_bundle_payload(
             rates=[
@@ -525,8 +534,13 @@ class TestVatAtomicApply(unittest.TestCase):
         self.assertFalse(report["db_mutated"])
         with self.sm() as db:
             row = db.query(HsRate).filter(HsRate.hs_code == "3004909200").one()
-            self.assertEqual(float(row.vat_import_rate), 22.0)
-            self.assertEqual(row.vat_rule, "none")
+            after_snapshot = (
+                float(row.vat_import_rate),
+                row.vat_rule,
+                row.vat_source_code,
+                row.vat_source_revision,
+            )
+            self.assertEqual(after_snapshot, before_snapshot)
             self.assertIsNone(db.query(HsRate).filter(HsRate.hs_code == "9999999999").first())
             self.assertEqual(db.query(SourceStatus).count(), 0)
             self.assertEqual(db.query(SyncLog).filter(SyncLog.status == "OK").count(), 0)
@@ -805,6 +819,36 @@ class TestVatCoverageAfterImport(unittest.TestCase):
         self.assertNotEqual(vat_cov.status, "present")
         vat_norm = normalize_vat()
         self.assertNotEqual(vat_norm.coverage_status, "present")
+
+
+class TestVatValidatorIndependence(unittest.TestCase):
+    """VAT path не зависит от import-duty ETT validator."""
+
+    def setUp(self) -> None:
+        self.sm = _memory_sessionmaker()
+        self._patches = _start_patches(self.sm)
+
+    def tearDown(self) -> None:
+        _stop_patches(*self._patches)
+
+    def test_vat_dry_run_apply_without_import_duty_validator(self) -> None:
+        import app.services.import_duty_ingestion as idi
+        import app.services.vat_ingestion as vi
+
+        _seed_hs_rates_for_bundle(self.sm)
+        payload = _official_vat_bundle_payload(revision="vat:2026-05-01")
+        with _BundleFixture(payload) as (root, rel):
+            with unittest.mock.patch.object(vi, "_BACKEND_ROOT", root):
+                with unittest.mock.patch.object(
+                    idi,
+                    "_validate_official_bundle_payload",
+                    side_effect=RuntimeError("import-duty validator must not run for VAT"),
+                ):
+                    dry = run_vat_dry_run(rel_path=rel)
+                    report = run_vat_apply(rel_path=rel)
+        self.assertEqual(dry["status"], "OK")
+        self.assertEqual(report["status"], "OK")
+        self.assertTrue(report["db_mutated"])
 
 
 class TestVatRevisionValidation(unittest.TestCase):

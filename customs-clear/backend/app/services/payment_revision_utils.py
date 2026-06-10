@@ -51,6 +51,14 @@ def is_official_vat_revision(revision: str | None) -> bool:
     return bool(_EEC_ETT_REVISION_RE.match(rev))
 
 
+def is_official_vat_row_marker(*, vat_source_code: str | None, vat_source_revision: str | None) -> bool:
+    """Row-level official VAT proof: marker записан VAT apply для конкретной строки."""
+    code = (vat_source_code or "").strip().upper()
+    if code != "EEC_VAT":
+        return False
+    return is_official_vat_ingestion_revision(vat_source_revision)
+
+
 def is_wrong_domain_eec_ett_revision_in_vat_bundle(revision: str | None) -> bool:
     """ETT duty revision внутри VAT bundle — wrong domain для VAT ingestion."""
     rev = (revision or "").strip().lower()

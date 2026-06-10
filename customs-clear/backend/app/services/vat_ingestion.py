@@ -529,28 +529,64 @@ def _apply_vat_field(existing: HsRate, row: dict[str, Any], field: str) -> None:
         setattr(existing, field, row[field])
 
 
-def _apply_vat_rows(rows: list[dict[str, Any]]) -> VatRowCounts | None:
+def _stamp_vat_row_provenance(
+    existing: HsRate,
+    *,
+    row: dict[str, Any],
+    bundle_revision: str,
+    bundle_url: str | None,
+    synced_at: datetime,
+) -> None:
+    """VAT-specific row marker — только для строк, реально обновлённых official VAT apply."""
+    existing.vat_source_code = _VAT_SOURCE_CODE
+    existing.vat_source_revision = str(row.get("source_revision") or bundle_revision or "").strip()
+    existing.vat_source_url = str(row.get("source_url") or bundle_url or "").strip()
+    existing.vat_synced_at = synced_at
+
+
+def _apply_vat_rows(
+    rows: list[dict[str, Any]],
+    *,
+    bundle_revision: str,
+    bundle_url: str | None,
+    synced_at: datetime,
+) -> VatRowCounts | None:
     """Атомарно обновить VAT-поля. None = blocked (ни одна строка не изменена, без commit)."""
     counts = VatRowCounts(total_in_source=len(rows))
 
     with SessionLocal() as db:
-        # Preflight: любой missing hs_rate → abort до setattr/commit.
-        for row in rows:
-            hs_code = str(row.get("hs_code") or "").strip().replace(" ", "")
-            if not hs_code or _existing_hs_rate(db, hs_code) is None:
-                return None
-        for row in rows:
-            hs_code = str(row.get("hs_code") or "").strip().replace(" ", "")
-            existing = _existing_hs_rate(db, hs_code)
-            if existing is None:
-                return None
-            if _row_needs_vat_update(existing, row):
-                for k in _VAT_APPLY_FIELDS:
-                    _apply_vat_field(existing, row, k)
-                counts.update += 1
-            else:
-                counts.skip += 1
-        db.commit()
+        try:
+            # Preflight: собрать все existing rows до любого setattr.
+            pending: list[tuple[HsRate, dict[str, Any]]] = []
+            for row in rows:
+                hs_code = str(row.get("hs_code") or "").strip().replace(" ", "")
+                if not hs_code:
+                    db.rollback()
+                    return None
+                existing = _existing_hs_rate(db, hs_code)
+                if existing is None:
+                    db.rollback()
+                    return None
+                pending.append((existing, row))
+
+            for existing, row in pending:
+                if _row_needs_vat_update(existing, row):
+                    for k in _VAT_APPLY_FIELDS:
+                        _apply_vat_field(existing, row, k)
+                    _stamp_vat_row_provenance(
+                        existing,
+                        row=row,
+                        bundle_revision=bundle_revision,
+                        bundle_url=bundle_url,
+                        synced_at=synced_at,
+                    )
+                    counts.update += 1
+                else:
+                    counts.skip += 1
+            db.commit()
+        except Exception:
+            db.rollback()
+            raise
     return counts
 
 
@@ -613,7 +649,13 @@ def run_vat_apply(*, rel_path: str | None = None) -> dict[str, Any]:
             ],
         )
 
-    applied = _apply_vat_rows(rows)
+    synced_at = datetime.now(timezone.utc).replace(tzinfo=None)
+    applied = _apply_vat_rows(
+        rows,
+        bundle_revision=revision,
+        bundle_url=provenance.official_url,
+        synced_at=synced_at,
+    )
     if applied is None:
         return _blocked_response(
             status="manual_review_required",
