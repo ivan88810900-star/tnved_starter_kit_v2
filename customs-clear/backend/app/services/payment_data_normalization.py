@@ -96,6 +96,19 @@ def _vat_proven() -> tuple[bool, str | None]:
     return True, synced
 
 
+def _excise_proven() -> tuple[bool, str | None]:
+    """Official excise contour proof через SourceStatus EEC_EXCISE."""
+    from .payment_revision_utils import is_official_excise_revision
+
+    st = _lookup_source_status("EEC_EXCISE")
+    if st is None:
+        return False, None
+    synced = st.synced_at.isoformat() if st.synced_at else None
+    if st.is_stale or not is_official_excise_revision(st.revision):
+        return False, synced
+    return True, synced
+
+
 def _local_path_present(rel_path: str) -> bool:
     return (_BACKEND_ROOT / rel_path).exists()
 
@@ -352,41 +365,72 @@ def normalize_vat() -> PaymentDomainNormalization:
 
 
 def normalize_excise() -> PaymentDomainNormalization:
-    """Акциз: без официального контура — never present."""
+    """Акциз: present только при EEC_EXCISE + row-level excise_source_* markers."""
+    from .payment_revision_utils import is_official_excise_row_marker
+
     excise_cov = diagnose_excise()
+    excise_ok, _ = _excise_proven()
     with SessionLocal() as db:
         stats = _hs_rate_stats(db)
+        official_excise_rows = 0
+        for excise_type, excise_value, excise_basis, excise_source_code, excise_source_revision in db.query(
+            HsRate.excise_type,
+            HsRate.excise_value,
+            HsRate.excise_basis,
+            HsRate.excise_source_code,
+            HsRate.excise_source_revision,
+        ).all():
+            if str(excise_type or "none").strip().lower() not in ("percent", "fixed"):
+                continue
+            if is_official_excise_row_marker(
+                excise_source_code=excise_source_code,
+                excise_source_revision=excise_source_revision,
+            ):
+                official_excise_rows += 1
 
     status: PaymentNormalizationStatus
-    if excise_cov.status == "not_configured":
-        status = "manual_review_required"
+    if not excise_ok:
+        status = "manual_review_required" if stats["hs_rates_excise"] > 0 else "missing"
+    elif official_excise_rows == 0 and stats["hs_rates_excise"] > 0:
+        status = "partial"
+    elif official_excise_rows > 0 and excise_ok:
+        status = "present"
     elif stats["hs_rates_excise"] == 0:
         status = "missing"
     else:
         status = "partial"
 
     gaps = list(excise_cov.gaps)
-    if stats["hs_rates_seed"] >= stats["hs_rates_excise"] > 0:
+    if stats["hs_rates_seed"] >= stats["hs_rates_excise"] > 0 and official_excise_rows == 0:
         gaps.append("Акцизные поля только из seed — требуется верификация.")
+    if stats["hs_rates_excise"] > 0 and official_excise_rows == 0:
+        gaps.append("Нет row-level official excise provenance (excise_source_*).")
 
     return PaymentDomainNormalization(
         domain="excise",
         coverage_status=status,
-        authority_level=excise_cov.authority_level or "legacy_seed",
+        authority_level=excise_cov.authority_level or ("official_binding" if excise_ok else "legacy_seed"),
         sources=[
             NormalizedSourceRef(
                 id="hs_rates.excise",
                 label="hs_rates (excise_type / excise_value)",
                 present=stats["hs_rates_excise"] > 0,
                 record_count=stats["hs_rates_excise"],
-                authority_level="legacy_seed",
-                notes=["Официальный контур акциза не зарегистрирован в реестре."],
+                authority_level="official_binding" if official_excise_rows > 0 else "legacy_seed",
+                notes=[
+                    f"official excise rows with marker: {official_excise_rows}",
+                    "Seed/fallback rows не считаются official без excise_source_*.",
+                ],
             )
         ],
         record_count=stats["hs_rates_excise"],
         known_gaps=gaps,
-        manual_review_required=True,
-        normalized_snapshot=stats,
+        manual_review_required=status != "present",
+        normalized_snapshot={
+            **stats,
+            "official_excise_rows": official_excise_rows,
+            "excise_source_status_ok": excise_ok,
+        },
     )
 
 

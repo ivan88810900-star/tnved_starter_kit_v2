@@ -16,6 +16,7 @@ from .normative_bundle import _normalize_rate_row
 from .normative_store import append_sync_log, upsert_source_status
 from .payment_data_coverage import run_payment_data_coverage_report
 from .payment_revision_utils import (
+    is_excise_only_bundle_path,
     is_import_duty_bundle_path,
     is_official_vat_ingestion_revision,
     is_vat_only_bundle_path,
@@ -227,6 +228,8 @@ def discover_vat_bundle_path(*, rel_path: str | None = None) -> str | None:
             return None
         if is_import_duty_bundle_path(rel_path) and not is_vat_only_bundle_path(rel_path):
             return None
+        if is_excise_only_bundle_path(rel_path):
+            return None
         return rel_path
 
     entry = get_payment_source_entry(_REGISTRY_SOURCE_CODE)
@@ -433,6 +436,8 @@ def _validate_bundle_for_ingest(
     blockers: list[str] = []
     if is_import_duty_bundle_path(rel_path) and not is_vat_only_bundle_path(rel_path):
         blockers.append("manual_review_required: import_duty_only_bundle_not_vat")
+    if is_excise_only_bundle_path(rel_path):
+        blockers.append("manual_review_required: excise_only_bundle_not_vat")
     if is_wrong_domain_eec_ett_revision_in_vat_bundle(revision):
         blockers.append(f"wrong_domain_bundle_revision: {revision}")
     elif not is_official_vat_ingestion_revision(revision):
