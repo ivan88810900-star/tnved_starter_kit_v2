@@ -55,6 +55,11 @@ class HsRate(Base):
     valid_to: Mapped[str] = mapped_column(String(20), default="")
     source_url: Mapped[str] = mapped_column(Text, default="")
     source_revision: Mapped[str] = mapped_column(String(128), default="seed")
+    # VAT-specific row provenance (отдельно от import-duty source_revision/source_url).
+    vat_source_code: Mapped[str] = mapped_column(String(50), default="")
+    vat_source_revision: Mapped[str] = mapped_column(String(128), default="")
+    vat_source_url: Mapped[str] = mapped_column(Text, default="")
+    vat_synced_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
 
 
 class ExchangeRate(Base):

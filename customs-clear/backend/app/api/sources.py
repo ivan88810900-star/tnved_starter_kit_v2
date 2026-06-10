@@ -14,6 +14,7 @@ from ..services.regulatory_source_completeness import (
 from ..services.payment_data_coverage import run_payment_data_coverage_report
 from ..services.payment_data_normalization import run_payment_data_normalization_report
 from ..services.import_duty_ingestion import run_import_duty_apply, run_import_duty_dry_run
+from ..services.vat_ingestion import run_vat_apply, run_vat_dry_run
 from ..services.payment_source_ingestion import (
     run_payment_source_ingestion_dry_run,
     run_payment_source_ingestion_plan,
@@ -102,6 +103,23 @@ async def sources_import_duty_apply(
     """Guarded apply import-duty из локального official EEC/ETT bundle."""
     require_admin_token(x_admin_token)
     data = run_import_duty_apply()
+    clear_preview_cache()
+    return JSONResponse(data)
+
+
+@router.post("/payment-ingestion/vat/dry-run")
+async def sources_vat_dry_run() -> JSONResponse:
+    """Dry-run VAT: insert/update/skip counts без мутации БД."""
+    return JSONResponse(run_vat_dry_run())
+
+
+@router.post("/payment-ingestion/vat/apply")
+async def sources_vat_apply(
+    x_admin_token: str | None = Header(None, alias="X-Admin-Token"),
+) -> JSONResponse:
+    """Guarded apply VAT из локального official EEC/ETT bundle."""
+    require_admin_token(x_admin_token)
+    data = run_vat_apply()
     clear_preview_cache()
     return JSONResponse(data)
 

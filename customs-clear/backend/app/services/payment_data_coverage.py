@@ -352,35 +352,114 @@ def diagnose_duty_rates() -> CoverageDomainSummary:
     )
 
 
+def _hs_rate_has_vat_signal(row: HsRate) -> bool:
+    if (row.vat_rule or "none") != "none":
+        return True
+    if float(row.vat_import_rate or 22.0) != 22.0:
+        return True
+    if (row.vat_rule_basis or "").strip():
+        return True
+    return False
+
+
+def _vat_official_provenance(db) -> tuple[bool, int, int]:
+    """EEC_VAT SourceStatus + row-level VAT marker (vat_source_*), не global VAT signal alone."""
+    from .payment_data_normalization import _vat_proven
+    from .payment_revision_utils import is_official_vat_row_marker
+
+    vat_ok, _ = _vat_proven()
+
+    official_vat_rows = 0
+    legacy_vat_signal_rows = 0
+    for (
+        vat_rule,
+        vat_rate,
+        vat_basis,
+        vat_source_code,
+        vat_source_revision,
+    ) in db.query(
+        HsRate.vat_rule,
+        HsRate.vat_import_rate,
+        HsRate.vat_rule_basis,
+        HsRate.vat_source_code,
+        HsRate.vat_source_revision,
+    ).all():
+        if not _hs_rate_has_vat_signal_from_parts(vat_rule, vat_rate, vat_basis):
+            continue
+        if is_official_vat_row_marker(
+            vat_source_code=vat_source_code,
+            vat_source_revision=vat_source_revision,
+        ):
+            official_vat_rows += 1
+        else:
+            legacy_vat_signal_rows += 1
+    if not vat_ok:
+        return False, 0, legacy_vat_signal_rows
+    return vat_ok, official_vat_rows, legacy_vat_signal_rows
+
+
+def _hs_rate_has_vat_signal_from_parts(vat_rule: str | None, vat_rate: float | None, vat_basis: str | None) -> bool:
+    if (vat_rule or "none") != "none":
+        return True
+    if float(vat_rate or 22.0) != 22.0:
+        return True
+    if (vat_basis or "").strip():
+        return True
+    return False
+
+
 def diagnose_vat_rates() -> CoverageDomainSummary:
     with SessionLocal() as db:
         hs_count = db.query(HsRate).count()
         pref_count = db.query(VatPreference).count()
         reduced = db.query(HsRate).filter(HsRate.vat_import_rate != 22.0).count()
         with_rule = db.query(HsRate).filter(HsRate.vat_rule != "none").count()
+        vat_ok, official_vat_rows, seed_vat_rows = _vat_official_provenance(db)
 
     label, authority = _registry_label("eec_ett_tnved")
     gaps: list[str] = []
+    notes = [f"vat_preferences: {pref_count}", f"hs_rates с нестандартным НДС: {reduced + with_rule}"]
 
     if hs_count == 0:
         status = "missing"
         gaps.append("Нет hs_rates — базовые ставки НДС не определены.")
-    elif pref_count == 0 and with_rule == 0:
+    elif not vat_ok:
+        status = "partial"
+        gaps.append("EEC_VAT не подтверждён как актуальный official VAT contour.")
+        if seed_vat_rows > 0:
+            notes.append(f"legacy VAT signal rows без row-level marker: {seed_vat_rows}")
+    elif official_vat_rows == 0 and (with_rule > 0 or reduced > 0 or pref_count > 0):
+        status = "partial"
+        gaps.append(
+            "Есть VAT-сигнал в данных, но нет row-level official VAT provenance (vat_source_*)."
+        )
+        if seed_vat_rows > 0:
+            notes.append(f"legacy VAT signal rows без official marker: {seed_vat_rows}")
+    elif pref_count == 0 and with_rule == 0 and official_vat_rows == 0:
         status = "partial"
         gaps.append("Нет vat_preferences и vat_rule в hs_rates — льготный НДС не импортирован.")
+    elif official_vat_rows > 0 and vat_ok:
+        status = "present"
+        notes.append(f"official VAT hs_rates rows: {official_vat_rows}")
+    elif pref_count > 0 or with_rule > 0:
+        status = "partial"
     else:
-        status = "present" if pref_count > 0 or with_rule > 0 else "partial"
+        status = "partial"
 
     manual = status != "present"
+    resolved_authority = authority or "official_binding"
+    if status != "present" and (not vat_ok or seed_vat_rows > 0):
+        resolved_authority = "legacy_seed" if not vat_ok else authority
+
     return CoverageDomainSummary(
         status=status,
         count=hs_count,
-        covered_codes=with_rule + reduced,
+        covered_codes=official_vat_rows if official_vat_rows else (with_rule + reduced),
         manual_review_required=manual,
         source_label=label or "hs_rates + vat_preferences",
-        authority_level=authority,
+        authority_level=resolved_authority if status == "present" else (resolved_authority or "legacy_seed"),
         gaps=gaps,
-        notes=[f"vat_preferences: {pref_count}", f"hs_rates с нестандартным НДС: {reduced + with_rule}"],
+        notes=notes,
     )
 
 

@@ -1020,6 +1020,133 @@ class TestImportDutyCoverageAfterImport(unittest.TestCase):
         self.assertEqual(cov["summary"]["duty_rates"]["status"], "present")
 
 
+def _vat_only_bundle_payload(*, revision: str = "ett:2026-05-01") -> dict:
+    return {
+        "format": "customs_clear_normative_bundle",
+        "revision": revision,
+        "effective_from": "2026-01-01",
+        "official_ett_url": "https://eec.eaeunion.org/comission/department/catr/ett/",
+        "rates": [
+            {"hs_code": "3004909200", "vat_import_rate": 10, "vat_rule": "reduced10"},
+            {"hs_code": "8471300000", "vat_import_rate": 22, "vat_rule": "none"},
+        ],
+    }
+
+
+class TestImportDutyVatBundleIsolation(unittest.TestCase):
+    """P1 #2: VAT bundle не должен shadow import-duty discovery/apply."""
+
+    def setUp(self) -> None:
+        self.sm = _memory_sessionmaker()
+        self._patches = _start_patches(self.sm)
+
+    def tearDown(self) -> None:
+        _stop_patches(*self._patches)
+
+    def test_only_vat_bundle_discovery_returns_none(self) -> None:
+        import app.services.import_duty_ingestion as idi
+        from app.services.import_duty_ingestion import discover_import_duty_bundle_path
+
+        with _BundleFixture(_vat_only_bundle_payload(), rel_path="data/raw_normative/eec_ett_vat.json") as (
+            root,
+            rel,
+        ):
+            with unittest.mock.patch.object(idi, "_BACKEND_ROOT", root):
+                self.assertIsNone(discover_import_duty_bundle_path())
+                report = run_import_duty_dry_run()
+        self.assertEqual(report["status"], "missing_official_source")
+        self.assertFalse(report["db_mutated"])
+
+    def test_both_bundles_each_uses_correct_path(self) -> None:
+        import app.services.import_duty_ingestion as idi
+        import app.services.vat_ingestion as vi
+        from app.services.import_duty_ingestion import discover_import_duty_bundle_path
+        from app.services.vat_ingestion import discover_vat_bundle_path
+
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            duty_rel = "data/raw_normative/eec_ett_normative_bundle.json"
+            vat_rel = "data/raw_normative/eec_ett_vat.json"
+            (root / duty_rel).parent.mkdir(parents=True, exist_ok=True)
+            (root / duty_rel).write_text(json.dumps(_official_bundle_payload()), encoding="utf-8")
+            (root / vat_rel).write_text(json.dumps(_vat_only_bundle_payload()), encoding="utf-8")
+            with unittest.mock.patch.object(idi, "_BACKEND_ROOT", root):
+                with unittest.mock.patch.object(vi, "_BACKEND_ROOT", root):
+                    self.assertEqual(discover_import_duty_bundle_path(), duty_rel)
+                    self.assertEqual(discover_vat_bundle_path(), vat_rel)
+
+    def test_vat_bundle_passed_to_import_duty_blocked(self) -> None:
+        import app.services.import_duty_ingestion as idi
+
+        before = _table_counts(self.sm)
+        with _BundleFixture(_vat_only_bundle_payload(), rel_path="data/raw_normative/eec_ett_vat.json") as (
+            root,
+            rel,
+        ):
+            with unittest.mock.patch.object(idi, "_BACKEND_ROOT", root):
+                dry = run_import_duty_dry_run(rel_path=rel)
+                report = run_import_duty_apply(rel_path=rel)
+        after = _table_counts(self.sm)
+        self.assertEqual(before, after)
+        self.assertNotEqual(dry["status"], "OK")
+        self.assertIn(report["status"], ("manual_review_required", "missing_official_source"))
+        self.assertFalse(report["db_mutated"])
+        if report["status"] == "manual_review_required":
+            self.assertTrue(
+                any("vat_only" in b or "no_importable_duty_rows" in b for b in report["blockers"])
+            )
+        with self.sm() as db:
+            self.assertEqual(db.query(HsRate).count(), 0)
+            self.assertEqual(db.query(SyncLog).filter(SyncLog.status == "OK").count(), 0)
+
+    def test_registry_import_duty_candidates_exclude_vat_path(self) -> None:
+        from app.services.payment_source_registry import get_payment_source_entry
+        from app.services.payment_revision_utils import is_vat_only_bundle_path
+
+        entry = get_payment_source_entry("eec_ett_tariff")
+        self.assertIsNotNone(entry)
+        for p in entry.local_canonical_paths:
+            self.assertFalse(is_vat_only_bundle_path(p))
+
+
+class TestImportDutyVatRevisionRejected(unittest.TestCase):
+    """Regression: VAT-specific revisions не принимаются import-duty ingestion."""
+
+    def setUp(self) -> None:
+        self.sm = _memory_sessionmaker()
+        self._patches = _start_patches(self.sm)
+
+    def tearDown(self) -> None:
+        _stop_patches(*self._patches)
+
+    def _apply(self, payload: dict) -> dict:
+        import app.services.import_duty_ingestion as idi
+
+        with _BundleFixture(payload) as (root, rel):
+            with unittest.mock.patch.object(idi, "_BACKEND_ROOT", root):
+                return run_import_duty_apply(rel_path=rel)
+
+    def test_vat_revision_rejected_by_import_duty(self) -> None:
+        payload = _official_bundle_payload(revision="vat:2026-05-01")
+        report = self._apply(payload)
+        self.assertEqual(report["status"], "manual_review_required")
+        self.assertFalse(report["db_mutated"])
+
+    def test_eec_vat_revision_rejected_by_import_duty(self) -> None:
+        payload = _official_bundle_payload(revision="eec-vat:2026-05-01")
+        report = self._apply(payload)
+        self.assertEqual(report["status"], "manual_review_required")
+        self.assertFalse(report["db_mutated"])
+
+    def test_ett_revision_still_accepted_by_import_duty(self) -> None:
+        payload = _official_bundle_payload(revision="ett:2026-05-01")
+        report = self._apply(payload)
+        self.assertEqual(report["status"], "OK")
+        self.assertTrue(report["db_mutated"])
+
+
 @unittest.skipUnless(_API_OK, "fastapi not installed")
 class TestImportDutyApi(unittest.TestCase):
     @classmethod

@@ -55,8 +55,8 @@ class PaymentSourceEntry:
 PAYMENT_SOURCE_REGISTRY: tuple[PaymentSourceEntry, ...] = (
     PaymentSourceEntry(
         source_code="eec_ett_tariff",
-        name="ЕТТ ЕАЭС — импортные пошлины и базовый НДС",
-        domains=("import_duty", "vat"),
+        name="ЕТТ ЕАЭС — импортные пошлины",
+        domains=("import_duty",),
         authority_level="official_binding",
         official_url="https://eec.eaeunion.org/comission/department/catr/ett/",
         legal_basis="Единый таможенный тариф ЕАЭС (ЕТТ)",
@@ -72,6 +72,25 @@ PAYMENT_SOURCE_REGISTRY: tuple[PaymentSourceEntry, ...] = (
         known_gaps=(
             "Локальный canonical bundle кладётся в data/raw_normative/; без файла — missing_official_source.",
             "seed/fallback hs_rates не заменяются автоматически без явной revision.",
+            "VAT bundle (eec_ett_vat.json) — отдельный контур eec_ett_vat / EEC_VAT.",
+        ),
+    ),
+    PaymentSourceEntry(
+        source_code="eec_ett_vat",
+        name="ЕТТ ЕАЭС — НДС при ввозе",
+        domains=("vat",),
+        authority_level="official_binding",
+        official_url="https://eec.eaeunion.org/comission/department/catr/ett/",
+        legal_basis="Единый таможенный тариф ЕАЭС (ЕТТ) — ставки НДС",
+        local_canonical_paths=("data/raw_normative/eec_ett_vat.json",),
+        source_status_code="EEC_VAT",
+        loader_status="ready",
+        sync_script="source_sync.py",
+        target_tables=("hs_rates",),
+        registry_source_id="eec_ett_tnved",
+        known_gaps=(
+            "Обновляет только VAT-поля существующих hs_rates; не создаёт duty rows.",
+            "Official VAT proof — SourceStatus EEC_VAT, не duty source_revision.",
         ),
     ),
     PaymentSourceEntry(

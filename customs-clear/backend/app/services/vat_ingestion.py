@@ -1,4 +1,4 @@
-"""Официальный import-duty ingestion ЕТТ ЕАЭС: dry-run / guarded apply (issue #37)."""
+"""Официальный VAT/reference ingestion ЕТТ ЕАЭС: dry-run / guarded apply (issue #39)."""
 
 from __future__ import annotations
 
@@ -11,28 +11,44 @@ from typing import Any
 
 from ..db import SessionLocal
 from ..models.core import HsRate, SourceStatus, SyncLog
-from ..schemas.import_duty_ingestion import (
-    ImportDutyIngestionResponse,
-    ImportDutyProvenance,
-    ImportDutyRowCounts,
-)
+from ..schemas.vat_ingestion import VatIngestionResponse, VatProvenance, VatRowCounts
 from .normative_bundle import _normalize_rate_row
-from .normative_store import append_sync_log, normalize_hs_duty_rate_string, upsert_source_status
+from .normative_store import append_sync_log, upsert_source_status
 from .payment_data_coverage import run_payment_data_coverage_report
-from .payment_revision_utils import is_import_duty_bundle_path
-from .payment_revision_utils import is_official_eec_ett_revision as _is_official_eec_ett_revision
-from .payment_revision_utils import is_vat_only_bundle_path
-from .payment_revision_utils import raw_rate_rows
+from .payment_revision_utils import (
+    is_import_duty_bundle_path,
+    is_official_vat_ingestion_revision,
+    is_vat_only_bundle_path,
+    is_wrong_domain_eec_ett_revision_in_vat_bundle,
+    raw_rate_rows,
+)
 from .payment_source_registry import get_payment_source_entry
 
 _BACKEND_ROOT = Path(__file__).resolve().parent.parent.parent
-_EEC_SOURCE_CODE = "EEC_ETT"
-_REGISTRY_SOURCE_CODE = "eec_ett_tariff"
-# Кандидаты локального canonical bundle (относительно customs-clear/backend/).
+_VAT_SOURCE_CODE = "EEC_VAT"
+_REGISTRY_SOURCE_CODE = "eec_ett_vat"
+
+# Кандидаты локального canonical VAT bundle (import-duty-only paths исключены).
 _LOCAL_BUNDLE_CANDIDATES: tuple[str, ...] = (
-    "data/raw_normative/eec_ett_normative_bundle.json",
-    "data/raw_normative/eec_ett_import_duty.json",
+    "data/raw_normative/eec_ett_vat.json",
 )
+
+# Только VAT-поля hs_rates. source_revision/source_url — import-duty provenance, не трогаем.
+# duty_rate/hs_prefix — import-duty semantics, VAT slice не меняет.
+_VAT_APPLY_FIELDS = ("vat_import_rate", "vat_rule", "vat_rule_basis", "valid_from", "valid_to")
+_DEFAULT_VAT_IMPORT_RATE = 22.0
+
+
+def _vat_import_rate_value(row: dict[str, Any], *, default: float = _DEFAULT_VAT_IMPORT_RATE) -> float:
+    """Explicit 0/0.0/"0" — валидная ставка; fallback 22.0 только при missing/None/blank."""
+    if "vat_import_rate" not in row:
+        return default
+    raw = row["vat_import_rate"]
+    if raw is None:
+        return default
+    if isinstance(raw, str) and not raw.strip():
+        return default
+    return float(str(raw).replace(",", "."))
 
 
 def _utc_now_iso() -> str:
@@ -41,38 +57,6 @@ def _utc_now_iso() -> str:
 
 def _local_path_present(rel_path: str) -> bool:
     return (_BACKEND_ROOT / rel_path).is_file()
-
-
-def _raw_row_has_duty_signal(raw: dict[str, Any]) -> bool:
-    """Строка содержит явный duty/import signal (не VAT-only row)."""
-    if raw.get("duty_rate") is not None and str(raw.get("duty_rate") or "").strip():
-        return True
-    if raw.get("import_duty_rate") is not None and str(raw.get("import_duty_rate") or "").strip():
-        return True
-    if raw.get("prefix_rate") is True or raw.get("prefix_scope") is True:
-        return True
-    return False
-
-
-def discover_import_duty_bundle_path(*, rel_path: str | None = None) -> str | None:
-    """Найти локальный official import-duty bundle (VAT-only paths исключены)."""
-    if rel_path:
-        if not _local_path_present(rel_path):
-            return None
-        if is_vat_only_bundle_path(rel_path):
-            return None
-        return rel_path
-
-    entry = get_payment_source_entry(_REGISTRY_SOURCE_CODE)
-    if entry:
-        for p in entry.local_canonical_paths:
-            if is_import_duty_bundle_path(p) and _local_path_present(p):
-                return p
-
-    for p in _LOCAL_BUNDLE_CANDIDATES:
-        if is_import_duty_bundle_path(p) and _local_path_present(p):
-            return p
-    return None
 
 
 def _file_sha256_at(path: Path) -> str | None:
@@ -85,18 +69,41 @@ def _file_sha256_at(path: Path) -> str | None:
     return digest.hexdigest()
 
 
-def _raw_rates_list(payload: dict[str, Any]) -> tuple[list[Any] | None, str | None]:
-    """Единый безопасный доступ к rates/rows (делегирует shared helper)."""
-    return raw_rate_rows(payload)
+_NON_OFFICIAL_VAT_REVISION_EXACT = frozenset(
+    {"example", "seed", "unknown", "ambiguous", "legacy", "legacy_seed", "fallback", "test", "demo", "manual", "local-copy"}
+)
+_NON_OFFICIAL_VAT_REVISION_PREFIXES = (
+    "seed-",
+    "seed:",
+    "seed_",
+    "fallback-",
+    "fallback:",
+    "fallback_",
+    "legacy-",
+    "legacy_",
+    "example-",
+    "demo-",
+    "test-",
+)
 
 
-def _validate_official_bundle_payload(payload: dict[str, Any], *, rel_path: str, checksum: str | None) -> dict[str, Any]:
-    """Локальная валидация bundle (без зависимости от payment_source_ingestion._BACKEND_ROOT)."""
+def _is_non_official_vat_revision_token(revision: str) -> bool:
+    rev = (revision or "").strip().lower()
+    if not rev:
+        return True
+    if rev in _NON_OFFICIAL_VAT_REVISION_EXACT:
+        return True
+    return any(rev.startswith(p) for p in _NON_OFFICIAL_VAT_REVISION_PREFIXES)
+
+
+def _validate_official_vat_bundle_payload(
+    payload: dict[str, Any], *, rel_path: str, checksum: str | None
+) -> dict[str, Any]:
+    """VAT-domain bundle validation — не делегирует import-duty ETT validator."""
     revision = str(payload.get("revision") or "").strip().lower()
     fmt = str(payload.get("format") or "")
 
-    # Malformed containers: rates/rows должны быть list — иначе parser_failed без итерации.
-    rates, container_err = _raw_rates_list(payload)
+    rates, container_err = raw_rate_rows(payload)
     if container_err is not None:
         return {
             "status": "parser_failed",
@@ -107,8 +114,6 @@ def _validate_official_bundle_payload(payload: dict[str, Any], *, rel_path: str,
             "checksum_sha256": checksum,
         }
 
-    # Структурная валидация ДО любых revision/row веток: non-object rows → parser_failed.
-    # Так malformed структура всегда parser_failed, независимо от revision.
     if any(not isinstance(r, dict) for r in rates):
         return {
             "status": "parser_failed",
@@ -123,7 +128,7 @@ def _validate_official_bundle_payload(payload: dict[str, Any], *, rel_path: str,
     raw_tnved = payload.get("tnved")
     tnved = raw_tnved if isinstance(raw_tnved, list) else []
 
-    if revision in {"example", "seed", "unknown", "ambiguous", "legacy", "legacy_seed", "fallback", "test", "demo"}:
+    if _is_non_official_vat_revision_token(revision):
         return {
             "status": "manual_review_required",
             "reason": "non_official_bundle_revision",
@@ -131,10 +136,19 @@ def _validate_official_bundle_payload(payload: dict[str, Any], *, rel_path: str,
             "format": fmt,
             "record_count": len(rates) + len(tnved),
             "rates_count": len(rates),
-            "tnved_count": len(tnved),
             "checksum_sha256": checksum,
         }
-    if not _is_official_eec_ett_revision(revision):
+    if is_wrong_domain_eec_ett_revision_in_vat_bundle(revision):
+        return {
+            "status": "manual_review_required",
+            "reason": "wrong_domain_eec_ett_revision_in_vat_bundle",
+            "revision": revision,
+            "format": fmt,
+            "record_count": len(rates) + len(tnved),
+            "rates_count": len(rates),
+            "checksum_sha256": checksum,
+        }
+    if not is_official_vat_ingestion_revision(revision):
         return {
             "status": "manual_review_required",
             "reason": "non_official_bundle_revision",
@@ -146,10 +160,26 @@ def _validate_official_bundle_payload(payload: dict[str, Any], *, rel_path: str,
         }
 
     explicit_unsafe: list[str] = []
+    wrong_domain_rows: list[str] = []
     for r in rates:
         rev = str(r.get("source_revision") or "").strip().lower()
-        if rev and not _is_official_eec_ett_revision(rev):
+        if not rev:
+            continue
+        if is_wrong_domain_eec_ett_revision_in_vat_bundle(rev):
+            wrong_domain_rows.append(rev)
+            continue
+        if not is_official_vat_ingestion_revision(rev):
             explicit_unsafe.append(rev)
+    if wrong_domain_rows:
+        return {
+            "status": "manual_review_required",
+            "reason": "wrong_domain_eec_ett_row_revision",
+            "revision": revision,
+            "wrong_domain_row_revisions": sorted(set(wrong_domain_rows))[:10],
+            "record_count": len(rates),
+            "rates_count": len(rates),
+            "checksum_sha256": checksum,
+        }
     if explicit_unsafe:
         return {
             "status": "manual_review_required",
@@ -187,19 +217,47 @@ def _load_bundle_payload(rel_path: str) -> tuple[dict[str, Any] | None, dict[str
     if not isinstance(payload, dict):
         return None, {"status": "parser_failed", "error": "bundle must be JSON object", "record_count": 0}
     checksum = _file_sha256_at(path)
-    return payload, _validate_official_bundle_payload(payload, rel_path=rel_path, checksum=checksum)
+    return payload, _validate_official_vat_bundle_payload(payload, rel_path=rel_path, checksum=checksum)
 
 
-def _extract_duty_rows(
+def discover_vat_bundle_path(*, rel_path: str | None = None) -> str | None:
+    """Найти локальный official VAT bundle (не import-duty-only paths)."""
+    if rel_path:
+        if not _local_path_present(rel_path):
+            return None
+        if is_import_duty_bundle_path(rel_path) and not is_vat_only_bundle_path(rel_path):
+            return None
+        return rel_path
+
+    entry = get_payment_source_entry(_REGISTRY_SOURCE_CODE)
+    if entry:
+        for p in entry.local_canonical_paths:
+            if _local_path_present(p):
+                return p
+
+    for p in _LOCAL_BUNDLE_CANDIDATES:
+        if _local_path_present(p):
+            return p
+    return None
+
+
+def _raw_row_has_vat_signal(raw: dict[str, Any]) -> bool:
+    """Строка содержит явные VAT-поля (не только duty_rate)."""
+    if "vat_import_rate" in raw and raw.get("vat_import_rate") is not None:
+        return True
+    rule = str(raw.get("vat_rule") or "").strip().lower()
+    if rule and rule != "none":
+        return True
+    if str(raw.get("vat_rule_basis") or "").strip():
+        return True
+    return False
+
+
+def _extract_vat_rows(
     payload: dict[str, Any], rows_in: list[dict[str, Any]] | None = None
 ) -> tuple[str, list[dict[str, Any]], list[str]]:
-    """Нормализовать rates[]; blank source_revision наследует bundle revision.
-
-    rows_in — уже validated list (из _raw_rates_list). Если не передан, валидируем сами,
-    чтобы любой вызов был safe от malformed non-list контейнеров.
-    """
+    """Нормализовать rates[] с VAT-сигналом; blank source_revision наследует bundle revision."""
     revision = str(payload.get("revision") or payload.get("source_revision") or "").strip()
-    # P2: НЕ синтезируем default EEC URL — provenance должен быть explicit на bundle- или row-level.
     bundle_url = str(payload.get("official_ett_url") or payload.get("source_url") or "").strip()
     effective_from = str(payload.get("effective_from") or "").strip() or None
     effective_to = str(payload.get("effective_to") or "").strip() or None
@@ -207,14 +265,14 @@ def _extract_duty_rows(
     rows: list[dict[str, Any]] = []
     blockers: list[str] = []
     if rows_in is None:
-        rows_in, container_err = _raw_rates_list(payload)
+        rows_in, container_err = raw_rate_rows(payload)
         if container_err is not None:
             return revision, [], [f"parser_failed: {container_err}"]
+
     for raw in rows_in or []:
         if not isinstance(raw, dict):
-            # Official import: non-object row — структурная ошибка, не silent skip.
             return revision, [], ["parser_failed: malformed_rate_row (rate row not an object)"]
-        if not _raw_row_has_duty_signal(raw):
+        if not _raw_row_has_vat_signal(raw):
             continue
         normalized = _normalize_rate_row(raw)
         if not normalized:
@@ -223,18 +281,18 @@ def _extract_duty_rows(
         if not str(normalized.get("source_revision") or "").strip():
             normalized["source_revision"] = revision
         row_rev = str(normalized.get("source_revision") or "").strip().lower()
-        if not _is_official_eec_ett_revision(row_rev):
+        if is_wrong_domain_eec_ett_revision_in_vat_bundle(row_rev):
+            blockers.append(
+                f"wrong_domain_row_revision: {row_rev} for hs_code={normalized.get('hs_code')}"
+            )
+            continue
+        if not is_official_vat_ingestion_revision(row_rev):
             blockers.append(f"unsafe_row_revision: {row_rev or '<empty>'} for hs_code={normalized.get('hs_code')}")
             continue
-        # P1: exact 10-значный hs_code не должен сохраняться с broad auto-filled prefix
-        # (иначе ставка протекает на sibling-коды и завышает official coverage). Prefix
-        # сохраняем только для явных prefix-rate строк (prefix_scope/prefix_rate, либо
-        # когда исходно нет 10-значного кода).
         raw_code_digits = re.sub(r"\D", "", str(raw.get("hs_code") or ""))[:10]
         explicit_prefix_scope = raw.get("prefix_scope") is True or raw.get("prefix_rate") is True
         if len(raw_code_digits) >= 10 and not explicit_prefix_scope:
             normalized["hs_prefix"] = raw_code_digits
-        # P2: row-level source_url override; иначе наследуем bundle-level; default НЕ подставляем.
         row_url = str(normalized.get("source_url") or "").strip() or bundle_url
         if not row_url:
             blockers.append(
@@ -242,7 +300,6 @@ def _extract_duty_rows(
             )
             continue
         normalized["source_url"] = row_url
-        # P2: blank/None row dates наследуют bundle effective_from/effective_to (не только missing key).
         if effective_from and not str(normalized.get("valid_from") or "").strip():
             normalized["valid_from"] = effective_from
         if effective_to and not str(normalized.get("valid_to") or "").strip():
@@ -258,43 +315,41 @@ def _existing_hs_rate(db, hs_code: str) -> HsRate | None:
     return db.query(HsRate).filter(HsRate.hs_code == lookup).first()
 
 
-def _desired_hs_prefix(row: dict[str, Any]) -> str:
-    """Целевой hs_prefix для строки (после P1 scope-fix), с fallback на полный hs_code."""
-    hs_code = str(row.get("hs_code") or "").strip().replace(" ", "")
-    return str(row.get("hs_prefix") or hs_code).strip()
-
-
-def _row_needs_update(existing: HsRate, row: dict[str, Any]) -> bool:
-    new_duty = normalize_hs_duty_rate_string(row.get("duty_rate"))
-    if (existing.duty_rate or "") != (new_duty or ""):
+def _row_needs_vat_update(existing: HsRate, row: dict[str, Any]) -> bool:
+    """Сравнение только VAT-полей — import-duty provenance/scope не участвуют."""
+    if float(existing.vat_import_rate or 0) != _vat_import_rate_value(row):
         return True
-    if (existing.source_revision or "").strip() != str(row.get("source_revision") or "").strip():
+    if (existing.vat_rule or "none") != str(row.get("vat_rule") or "none"):
         return True
-    if str(row.get("source_url") or "").strip() and (existing.source_url or "").strip() != str(
-        row.get("source_url") or ""
+    if (existing.vat_rule_basis or "").strip() != str(row.get("vat_rule_basis") or "").strip():
+        return True
+    if str(row.get("valid_from") or "").strip() and (existing.valid_from or "").strip() != str(
+        row.get("valid_from") or ""
     ).strip():
         return True
-    # P1: stale broad hs_prefix (например 8471) должен обновляться на exact full code,
-    # даже если остальные поля не изменились — иначе sibling leakage / false coverage.
-    desired_prefix = _desired_hs_prefix(row)
-    if desired_prefix and (existing.hs_prefix or "").strip() != desired_prefix:
+    if str(row.get("valid_to") or "").strip() and (existing.valid_to or "").strip() != str(
+        row.get("valid_to") or ""
+    ).strip():
         return True
     return False
 
 
-def _plan_import_duty_rows(rows: list[dict[str, Any]]) -> ImportDutyRowCounts:
-    counts = ImportDutyRowCounts(total_in_source=len(rows))
+def _plan_vat_rows(rows: list[dict[str, Any]]) -> tuple[VatRowCounts, list[str]]:
+    """План без insert: отсутствующий hs_rate → blocked (нет VAT-safe storage для новых duty rows)."""
+    counts = VatRowCounts(total_in_source=len(rows))
+    missing_blockers: list[str] = []
     with SessionLocal() as db:
         for row in rows:
             hs_code = str(row.get("hs_code") or "").strip()
             existing = _existing_hs_rate(db, hs_code)
             if existing is None:
-                counts.insert += 1
-            elif _row_needs_update(existing, row):
+                counts.blocked += 1
+                missing_blockers.append(f"missing_hs_rate: {hs_code or '<empty>'}")
+            elif _row_needs_vat_update(existing, row):
                 counts.update += 1
             else:
                 counts.skip += 1
-    return counts
+    return counts, missing_blockers
 
 
 def _build_provenance(
@@ -304,13 +359,12 @@ def _build_provenance(
     payload: dict[str, Any],
     parser_result: dict[str, Any],
     loaded_at: str,
-) -> ImportDutyProvenance:
+) -> VatProvenance:
     entry = get_payment_source_entry(_REGISTRY_SOURCE_CODE)
-    return ImportDutyProvenance(
-        source_code=_EEC_SOURCE_CODE,
-        source_name=entry.name if entry else "ЕТТ ЕАЭС — импортные пошлины",
+    return VatProvenance(
+        source_code=_VAT_SOURCE_CODE,
+        source_name=entry.name if entry else "ЕТТ ЕАЭС — НДС при ввозе",
         legal_basis=entry.legal_basis if entry else "Единый таможенный тариф ЕАЭС (ЕТТ)",
-        # P2: provenance URL только из explicit bundle-level декларации, без synthesized default.
         official_url=str(payload.get("official_ett_url") or payload.get("source_url") or "").strip() or None,
         revision=revision or None,
         checksum_sha256=parser_result.get("checksum_sha256") or _file_sha256_at(_BACKEND_ROOT / rel_path),
@@ -328,17 +382,17 @@ def _blocked_response(
     dry_run: bool,
     blockers: list[str],
     parser_result: dict[str, Any] | None = None,
-    provenance: ImportDutyProvenance | None = None,
-    row_counts: ImportDutyRowCounts | None = None,
+    provenance: VatProvenance | None = None,
+    row_counts: VatRowCounts | None = None,
     notes: list[str] | None = None,
 ) -> dict[str, Any]:
-    response = ImportDutyIngestionResponse(
+    response = VatIngestionResponse(
         status=status,  # type: ignore[arg-type]
         mode=mode,  # type: ignore[arg-type]
         dry_run=dry_run,
         db_mutated=False,
         provenance=provenance,
-        row_counts=row_counts or ImportDutyRowCounts(),
+        row_counts=row_counts or VatRowCounts(),
         blockers=blockers,
         parser_result=parser_result or {},
         notes=notes or [],
@@ -349,14 +403,8 @@ def _blocked_response(
 def _validate_bundle_for_ingest(
     rel_path: str,
 ) -> tuple[dict[str, Any] | None, dict[str, Any], str, list[dict[str, Any]], list[str]]:
-    if is_vat_only_bundle_path(rel_path):
-        return None, {"status": "manual_review_required", "reason": "vat_only_bundle"}, "", [], [
-            "manual_review_required: vat_only_bundle_not_import_duty"
-        ]
     payload, parser_result = _load_bundle_payload(rel_path)
     if payload is None:
-        # payload не загружен: missing/invalid JSON/не object/parser_failed → жёсткий blocker,
-        # apply не должен продолжать с 0 rows и писать OK provenance.
         status = parser_result.get("status")
         if status == "missing_source":
             return None, parser_result, "", [], ["missing_official_source: bundle file not found"]
@@ -377,34 +425,36 @@ def _validate_bundle_for_ingest(
         reason = parser_result.get("reason") or "non_official_bundle"
         return payload, parser_result, "", [], [f"manual_review_required: {reason}"]
 
-    # Единый validated доступ к rates/rows: parser_result уже гарантирует list of dicts,
-    # но повторно валидируем перед итерацией (defense-in-depth, без raw payload-итерации ниже).
-    rows_in, container_err = _raw_rates_list(payload)
+    rows_in, container_err = raw_rate_rows(payload)
     if container_err is not None:
         return payload, parser_result, "", [], [f"parser_failed: {container_err}"]
 
-    revision, rows, row_blockers = _extract_duty_rows(payload, rows_in)
+    revision, rows, row_blockers = _extract_vat_rows(payload, rows_in)
     blockers: list[str] = []
-    if not _is_official_eec_ett_revision(revision):
+    if is_import_duty_bundle_path(rel_path) and not is_vat_only_bundle_path(rel_path):
+        blockers.append("manual_review_required: import_duty_only_bundle_not_vat")
+    if is_wrong_domain_eec_ett_revision_in_vat_bundle(revision):
+        blockers.append(f"wrong_domain_bundle_revision: {revision}")
+    elif not is_official_vat_ingestion_revision(revision):
         blockers.append(f"non_official_bundle_revision: {revision or '<empty>'}")
     if row_blockers:
         blockers.extend(row_blockers)
     if not rows:
-        blockers.append("no_importable_duty_rows")
+        blockers.append("no_importable_vat_rows")
     return payload, parser_result, revision, rows, blockers
 
 
-def run_import_duty_dry_run(*, rel_path: str | None = None) -> dict[str, Any]:
+def run_vat_dry_run(*, rel_path: str | None = None) -> dict[str, Any]:
     """Dry-run: insert/update/skip counts и blockers без мутации БД."""
     loaded_at = _utc_now_iso()
-    bundle_path = discover_import_duty_bundle_path(rel_path=rel_path)
+    bundle_path = discover_vat_bundle_path(rel_path=rel_path)
     if not bundle_path:
         return _blocked_response(
             status="missing_official_source",
             mode="dry_run",
             dry_run=True,
             blockers=[
-                "Нет локального official EEC/ETT bundle. "
+                "Нет локального official EEC/ETT VAT bundle. "
                 f"Ожидается один из: {', '.join(_LOCAL_BUNDLE_CANDIDATES)} "
                 "или local_canonical_paths в payment_source_registry."
             ],
@@ -433,91 +483,123 @@ def run_import_duty_dry_run(*, rel_path: str | None = None) -> dict[str, Any]:
             blockers=blockers,
             parser_result=parser_result,
             provenance=provenance,
-            row_counts=ImportDutyRowCounts(total_in_source=len(rows), blocked=len(rows)),
+            row_counts=VatRowCounts(total_in_source=len(rows), blocked=len(rows)),
             notes=["Dry-run не мутирует БД.", "SourceStatus/SyncLog не записываются."],
         )
 
-    row_counts = _plan_import_duty_rows(rows)
+    row_counts, missing_blockers = _plan_vat_rows(rows)
+    dry_blockers = list(missing_blockers)
+    if row_counts.blocked > 0 and row_counts.update == 0 and row_counts.skip == 0:
+        dry_blockers.append(
+            f"no_applicable_vat_rows: все {row_counts.blocked} строк без existing hs_rate "
+            "(VAT slice не создаёт duty rows с duty_rate=0)."
+        )
     coverage = run_payment_data_coverage_report()
-    response = ImportDutyIngestionResponse(
+    response = VatIngestionResponse(
         status="OK",
         mode="dry_run",
         dry_run=True,
         db_mutated=False,
         provenance=provenance,
         row_counts=row_counts,
-        blockers=[],
+        blockers=dry_blockers,
         parser_result=parser_result,
         coverage_link={
-            "duty_rates_status": (coverage.get("summary") or {}).get("duty_rates", {}).get("status"),
+            "vat_rates_status": (coverage.get("summary") or {}).get("vat_rates", {}).get("status"),
             "generated_at": coverage.get("generated_at"),
         },
         notes=[
             "Dry-run не мутирует БД.",
             "Apply доступен только при status=OK dry-run и official provenance.",
-            "Coverage present требует полного покрытия каталога ТН ВЭД.",
+            "Coverage present требует official VAT rows (не seed/fallback).",
         ],
     )
     return response.model_dump(mode="json")
 
 
-def _apply_duty_rows(rows: list[dict[str, Any]]) -> ImportDutyRowCounts:
-    """Upsert только import-duty полей hs_rates (без VAT/excise/trade slice)."""
-    counts = ImportDutyRowCounts(total_in_source=len(rows))
-    duty_fields = ("duty_rate", "source_url", "source_revision", "valid_from", "valid_to")
+def _apply_vat_field(existing: HsRate, row: dict[str, Any], field: str) -> None:
+    """Записать одно VAT-поле; vat_import_rate=0 не теряется из-за truthy fallback."""
+    if field == "vat_import_rate":
+        raw = row.get("vat_import_rate")
+        if raw is None or (isinstance(raw, str) and not str(raw).strip()):
+            return
+        existing.vat_import_rate = _vat_import_rate_value(row, default=float(existing.vat_import_rate or 0))
+        return
+    if field in row and row[field] is not None:
+        setattr(existing, field, row[field])
+
+
+def _stamp_vat_row_provenance(
+    existing: HsRate,
+    *,
+    row: dict[str, Any],
+    bundle_revision: str,
+    bundle_url: str | None,
+    synced_at: datetime,
+) -> None:
+    """VAT-specific row marker — только для строк, реально обновлённых official VAT apply."""
+    existing.vat_source_code = _VAT_SOURCE_CODE
+    existing.vat_source_revision = str(row.get("source_revision") or bundle_revision or "").strip()
+    existing.vat_source_url = str(row.get("source_url") or bundle_url or "").strip()
+    existing.vat_synced_at = synced_at
+
+
+def _apply_vat_rows(
+    rows: list[dict[str, Any]],
+    *,
+    bundle_revision: str,
+    bundle_url: str | None,
+    synced_at: datetime,
+) -> VatRowCounts | None:
+    """Атомарно обновить VAT-поля. None = blocked (ни одна строка не изменена, без commit)."""
+    counts = VatRowCounts(total_in_source=len(rows))
 
     with SessionLocal() as db:
-        for row in rows:
-            hs_code = str(row.get("hs_code") or "").strip().replace(" ", "")
-            # Не подставлять broad 4-значный fallback: для exact rows _extract_duty_rows уже
-            # выставил hs_prefix = полный код; fallback на полный hs_code, не на hs_code[:4].
-            hs_prefix = str(row.get("hs_prefix") or hs_code).strip()
-            if not hs_prefix:
-                counts.blocked += 1
-                continue
+        try:
+            # Preflight: собрать все existing rows до любого setattr.
+            pending: list[tuple[HsRate, dict[str, Any]]] = []
+            for row in rows:
+                hs_code = str(row.get("hs_code") or "").strip().replace(" ", "")
+                if not hs_code:
+                    db.rollback()
+                    return None
+                existing = _existing_hs_rate(db, hs_code)
+                if existing is None:
+                    db.rollback()
+                    return None
+                pending.append((existing, row))
 
-            existing = _existing_hs_rate(db, hs_code)
-            if existing is None:
-                create_kwargs = {
-                    k: row[k]
-                    for k in duty_fields
-                    if k in row and row[k] is not None
-                }
-                if "duty_rate" in create_kwargs:
-                    create_kwargs["duty_rate"] = normalize_hs_duty_rate_string(create_kwargs["duty_rate"])
-                db.add(
-                    HsRate(
-                        hs_code=hs_code or hs_prefix,
-                        hs_prefix=hs_prefix,
-                        **create_kwargs,
+            for existing, row in pending:
+                if _row_needs_vat_update(existing, row):
+                    for k in _VAT_APPLY_FIELDS:
+                        _apply_vat_field(existing, row, k)
+                    _stamp_vat_row_provenance(
+                        existing,
+                        row=row,
+                        bundle_revision=bundle_revision,
+                        bundle_url=bundle_url,
+                        synced_at=synced_at,
                     )
-                )
-                counts.insert += 1
-            elif _row_needs_update(existing, row):
-                for k in duty_fields:
-                    if k in row and row[k] is not None:
-                        val = row[k]
-                        if k == "duty_rate":
-                            val = normalize_hs_duty_rate_string(val)
-                        setattr(existing, k, val)
-                existing.hs_prefix = hs_prefix
-                counts.update += 1
-            else:
-                counts.skip += 1
-        db.commit()
+                    counts.update += 1
+                else:
+                    counts.skip += 1
+            db.commit()
+        except Exception:
+            db.rollback()
+            raise
     return counts
 
 
-def run_import_duty_apply(*, rel_path: str | None = None) -> dict[str, Any]:
+def run_vat_apply(*, rel_path: str | None = None) -> dict[str, Any]:
     """Guarded apply: мутирует БД только при official provenance и отсутствии blockers."""
     loaded_at = _utc_now_iso()
-    bundle_path = discover_import_duty_bundle_path(rel_path=rel_path)
+    bundle_path = discover_vat_bundle_path(rel_path=rel_path)
     if not bundle_path:
         return _blocked_response(
             status="missing_official_source",
             mode="apply",
             dry_run=False,
-            blockers=["missing_official_source: локальный official bundle не найден"],
+            blockers=["missing_official_source: локальный official VAT bundle не найден"],
             notes=["Apply отменён — SourceStatus/SyncLog не записаны."],
         )
 
@@ -546,16 +628,55 @@ def run_import_duty_apply(*, rel_path: str | None = None) -> dict[str, Any]:
             notes=["Apply отменён — SourceStatus/SyncLog не записаны."],
         )
 
-    entry = get_payment_source_entry(_REGISTRY_SOURCE_CODE)
-    row_counts = _apply_duty_rows(rows)
+    # Validate-before-apply: тот же blocker set, что и dry-run; без commit при blocked>0.
+    row_counts, missing_blockers = _plan_vat_rows(rows)
+    if row_counts.blocked > 0:
+        apply_blockers = list(missing_blockers)
+        apply_blockers.append(
+            f"vat_rows_without_hs_rate: {row_counts.blocked} (VAT slice не создаёт hs_rates/duty_rate=0)."
+        )
+        return _blocked_response(
+            status="manual_review_required",
+            mode="apply",
+            dry_run=False,
+            blockers=apply_blockers,
+            parser_result=parser_result,
+            provenance=provenance,
+            row_counts=row_counts,
+            notes=[
+                "Apply атомарно отменён — ни одна VAT row не обновлена.",
+                "SourceStatus/SyncLog не записаны.",
+            ],
+        )
 
+    synced_at = datetime.now(timezone.utc).replace(tzinfo=None)
+    applied = _apply_vat_rows(
+        rows,
+        bundle_revision=revision,
+        bundle_url=provenance.official_url,
+        synced_at=synced_at,
+    )
+    if applied is None:
+        return _blocked_response(
+            status="manual_review_required",
+            mode="apply",
+            dry_run=False,
+            blockers=list(missing_blockers) + ["atomic_apply_aborted: missing_hs_rate detected during apply"],
+            parser_result=parser_result,
+            provenance=provenance,
+            row_counts=row_counts,
+            notes=["Apply атомарно отменён — ни одна VAT row не обновлена.", "SourceStatus/SyncLog не записаны."],
+        )
+    row_counts = applied
+
+    entry = get_payment_source_entry(_REGISTRY_SOURCE_CODE)
     note_txt = (
-        f"import-duty apply {bundle_path}: revision={revision}; "
-        f"insert={row_counts.insert}, update={row_counts.update}, skip={row_counts.skip}, "
+        f"vat apply {bundle_path}: revision={revision}; "
+        f"update={row_counts.update}, skip={row_counts.skip}, "
         f"blocked={row_counts.blocked}; checksum={provenance.checksum_sha256 or 'n/a'}"
     )
     upsert_source_status(
-        source_code=_EEC_SOURCE_CODE,
+        source_code=_VAT_SOURCE_CODE,
         source_name=entry.name if entry else provenance.source_name,
         source_url=provenance.official_url or bundle_path,
         revision=revision,
@@ -563,31 +684,31 @@ def run_import_duty_apply(*, rel_path: str | None = None) -> dict[str, Any]:
         note=note_txt,
     )
     append_sync_log(
-        source_code=_EEC_SOURCE_CODE,
+        source_code=_VAT_SOURCE_CODE,
         status="OK",
         revision=revision,
-        rows_affected=row_counts.insert + row_counts.update,
+        rows_affected=row_counts.update,
         note=note_txt,
     )
 
     coverage = run_payment_data_coverage_report()
-    response = ImportDutyIngestionResponse(
+    response = VatIngestionResponse(
         status="OK",
         mode="apply",
         dry_run=False,
-        db_mutated=True,
+        db_mutated=row_counts.update > 0,
         provenance=provenance,
         row_counts=row_counts,
         blockers=[],
         parser_result=parser_result,
         coverage_link={
-            "duty_rates_status": (coverage.get("summary") or {}).get("duty_rates", {}).get("status"),
-            "duty_authority_level": (coverage.get("summary") or {}).get("duty_rates", {}).get("authority_level"),
+            "vat_rates_status": (coverage.get("summary") or {}).get("vat_rates", {}).get("status"),
+            "vat_authority_level": (coverage.get("summary") or {}).get("vat_rates", {}).get("authority_level"),
             "generated_at": coverage.get("generated_at"),
         },
         notes=[
-            "Import-duty slice: обновлены только duty_rate/source_* в hs_rates.",
-            "VAT/excise/trade remedies не импортируются в этом срезе.",
+            "VAT slice: обновлены только vat_import_rate/vat_rule/vat_rule_basis/valid_from/valid_to.",
+            "Import-duty поля (duty_rate, source_revision, source_url, hs_prefix) не изменяются.",
         ],
     )
     return response.model_dump(mode="json")

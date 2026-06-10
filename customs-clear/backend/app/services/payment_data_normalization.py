@@ -83,6 +83,19 @@ def _eec_proven() -> tuple[bool, str | None]:
     return True, synced
 
 
+def _vat_proven() -> tuple[bool, str | None]:
+    """Official VAT contour proof через SourceStatus EEC_VAT (не duty source_revision)."""
+    from .payment_revision_utils import is_official_vat_revision
+
+    st = _lookup_source_status("EEC_VAT")
+    if st is None:
+        return False, None
+    synced = st.synced_at.isoformat() if st.synced_at else None
+    if st.is_stale or not is_official_vat_revision(st.revision):
+        return False, synced
+    return True, synced
+
+
 def _local_path_present(rel_path: str) -> bool:
     return (_BACKEND_ROOT / rel_path).exists()
 
@@ -219,16 +232,63 @@ def normalize_import_duty() -> PaymentDomainNormalization:
     )
 
 
+def _count_vat_signal_hs_rows(db) -> int:
+    """Строки hs_rates с VAT-сигналом (без классификации official/partial)."""
+    count = 0
+    for vat_rule, vat_rate, vat_basis in db.query(
+        HsRate.vat_rule,
+        HsRate.vat_import_rate,
+        HsRate.vat_rule_basis,
+    ).all():
+        if (vat_rule or "none") != "none":
+            count += 1
+            continue
+        if float(vat_rate or 22.0) != 22.0:
+            count += 1
+            continue
+        if (vat_basis or "").strip():
+            count += 1
+    return count
+
+
+def _count_official_vat_marker_rows(db) -> int:
+    """Строки с row-level official VAT marker (vat_source_* + EEC_VAT)."""
+    from .payment_revision_utils import is_official_vat_row_marker
+
+    count = 0
+    for vat_rule, vat_rate, vat_basis, vat_source_code, vat_source_revision in db.query(
+        HsRate.vat_rule,
+        HsRate.vat_import_rate,
+        HsRate.vat_rule_basis,
+        HsRate.vat_source_code,
+        HsRate.vat_source_revision,
+    ).all():
+        if not (
+            (vat_rule or "none") != "none"
+            or float(vat_rate or 22.0) != 22.0
+            or (vat_basis or "").strip()
+        ):
+            continue
+        if is_official_vat_row_marker(
+            vat_source_code=vat_source_code,
+            vat_source_revision=vat_source_revision,
+        ):
+            count += 1
+    return count
+
+
 def normalize_vat() -> PaymentDomainNormalization:
     """НДС: hs_rates + vat_preferences; seed-only → не present."""
     vat_cov = diagnose_vat_rates()
     label, authority = _registry_label("eec_ett_tnved")
-    eec_ok, _ = _eec_proven()
+    vat_ok, _ = _vat_proven()
 
     with SessionLocal() as db:
         stats = _hs_rate_stats(db)
         pref_count = db.query(VatPreference).count()
         pref_codes = db.query(func.count(func.distinct(VatPreference.hs_code_prefix))).scalar() or 0
+        vat_signal_rows = _count_vat_signal_hs_rows(db)
+        official_vat_marker_rows = _count_official_vat_marker_rows(db)
 
     gaps = list(vat_cov.gaps)
     manual = True
@@ -240,29 +300,28 @@ def normalize_vat() -> PaymentDomainNormalization:
 
     if hs_total == 0:
         status: PaymentNormalizationStatus = "missing"
-    elif not has_prefs and not has_rules:
+    elif not has_prefs and not has_rules and vat_signal_rows == 0:
         status = "partial"
         gaps.append("Только базовый НДС 22% в hs_rates без vat_preferences/vat_rule.")
-    elif not eec_ok:
+    elif not vat_ok:
         status = "partial"
-        gaps.append("НДС-контур без подтверждённого EEC_ETT — консервативно partial.")
-    elif seed_only:
-        status = "manual_review_required"
-        gaps.append(
-            "Базовые ставки hs_rates помечены seed/fallback — НДС не подтверждён как "
-            "official present, даже при наличии vat_preferences."
-        )
-    elif has_prefs and eec_ok:
-        status = "present"
-        manual = False
-    elif has_rules and eec_ok and seed_total < hs_total:
+        gaps.append("НДС-контур без подтверждённого EEC_VAT SourceStatus — консервативно partial.")
+    elif official_vat_marker_rows == 0 and (has_prefs or has_rules or vat_signal_rows > 0):
+        status = "partial"
+        gaps.append("Есть VAT-сигнал в данных, но нет row-level official VAT provenance (vat_source_*).")
+    elif official_vat_marker_rows > 0 and vat_ok:
         status = "present"
         manual = False
     else:
         status = "partial"
 
     sources = [
-        _source_ref("eec_ett_tnved", present=hs_total > 0, record_count=hs_total),
+        _source_ref(
+            "eec_ett_tnved",
+            present=vat_ok and official_vat_marker_rows > 0,
+            record_count=hs_total,
+            mapped_hs_codes=official_vat_marker_rows,
+        ),
         NormalizedSourceRef(
             id="vat_preferences",
             label="vat_preferences (льготный НДС)",
@@ -279,10 +338,16 @@ def normalize_vat() -> PaymentDomainNormalization:
         authority_level=authority if status == "present" else "legacy_seed",
         sources=sources,
         record_count=hs_total,
-        mapped_hs_codes=int(pref_codes) if has_prefs else stats["hs_rates_vat_rule"] + stats["hs_rates_vat_non_default"],
+        mapped_hs_codes=official_vat_marker_rows
+        or (int(pref_codes) if has_prefs else stats["hs_rates_vat_rule"] + stats["hs_rates_vat_non_default"]),
         known_gaps=gaps,
         manual_review_required=manual,
-        normalized_snapshot={**stats, "vat_preferences": pref_count},
+        normalized_snapshot={
+            **stats,
+            "vat_preferences": pref_count,
+            "vat_signal_hs_rows": vat_signal_rows,
+            "official_vat_marker_rows": official_vat_marker_rows,
+        },
     )
 
 
