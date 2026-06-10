@@ -10,6 +10,8 @@ from typing import Any
 _EEC_ETT_REVISION_RE = re.compile(r"^(?:ett|eec-ett|eec:ett):\d{4}-\d{2}-\d{2}$")
 # VAT contour: vat:YYYY-MM-DD | eec-vat:YYYY-MM-DD | eec:vat:YYYY-MM-DD (+ shared ETT forms).
 _EEC_VAT_REVISION_RE = re.compile(r"^(?:vat|eec-vat|eec:vat):\d{4}-\d{2}-\d{2}$")
+# Excise contour: excise:YYYY-MM-DD | eec-excise:YYYY-MM-DD | eec:excise:YYYY-MM-DD.
+_EEC_EXCISE_REVISION_RE = re.compile(r"^(?:excise|eec-excise|eec:excise):\d{4}-\d{2}-\d{2}$")
 
 
 def is_official_eec_ett_revision(revision: str | None) -> bool:
@@ -59,6 +61,39 @@ def is_official_vat_row_marker(*, vat_source_code: str | None, vat_source_revisi
     return is_official_vat_ingestion_revision(vat_source_revision)
 
 
+def is_official_excise_ingestion_revision(revision: str | None) -> bool:
+    """Строгая revision только для excise ingestion (не import-duty / VAT)."""
+    rev = (revision or "").strip().lower()
+    if not rev:
+        return False
+    return bool(_EEC_EXCISE_REVISION_RE.match(rev))
+
+
+def is_official_excise_revision(revision: str | None) -> bool:
+    """Строгая проверка revision для official excise contour (SourceStatus EEC_EXCISE)."""
+    return is_official_excise_ingestion_revision(revision)
+
+
+def is_official_excise_row_marker(
+    *, excise_source_code: str | None, excise_source_revision: str | None
+) -> bool:
+    """Row-level official excise proof: marker записан excise apply для конкретной строки."""
+    code = (excise_source_code or "").strip().upper()
+    if code != "EEC_EXCISE":
+        return False
+    return is_official_excise_ingestion_revision(excise_source_revision)
+
+
+def is_wrong_domain_revision_in_excise_bundle(revision: str | None) -> bool:
+    """Import-duty / VAT revision внутри excise bundle — wrong domain для excise ingestion."""
+    rev = (revision or "").strip().lower()
+    if not rev:
+        return False
+    if _EEC_EXCISE_REVISION_RE.match(rev):
+        return False
+    return bool(_EEC_ETT_REVISION_RE.match(rev)) or bool(_EEC_VAT_REVISION_RE.match(rev))
+
+
 def is_wrong_domain_eec_ett_revision_in_vat_bundle(revision: str | None) -> bool:
     """ETT duty revision внутри VAT bundle — wrong domain для VAT ingestion."""
     rev = (revision or "").strip().lower()
@@ -73,9 +108,15 @@ def is_vat_only_bundle_path(rel_path: str) -> bool:
     return norm.endswith("/eec_ett_vat.json") or "/eec_ett_vat.json" in norm
 
 
+def is_excise_only_bundle_path(rel_path: str) -> bool:
+    """Путь excise-only bundle — не должен использоваться import-duty / VAT discovery."""
+    norm = rel_path.replace("\\", "/").lower()
+    return norm.endswith("/eec_excise.json") or "/eec_excise.json" in norm
+
+
 def is_import_duty_bundle_path(rel_path: str) -> bool:
-    """Путь import-duty bundle — исключает VAT-only файлы."""
-    if is_vat_only_bundle_path(rel_path):
+    """Путь import-duty bundle — исключает VAT-only / excise-only файлы."""
+    if is_vat_only_bundle_path(rel_path) or is_excise_only_bundle_path(rel_path):
         return False
     norm = rel_path.replace("\\", "/").lower()
     return (
