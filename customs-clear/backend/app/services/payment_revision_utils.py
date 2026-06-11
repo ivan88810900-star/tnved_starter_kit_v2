@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import re
 from typing import Any
+from urllib.parse import urlparse
 
 # Для официального EEC/ETT import-duty контура принимаем только явные versioned ревизии.
 # Допустимые формы: ett:YYYY-MM-DD | eec-ett:YYYY-MM-DD | eec:ett:YYYY-MM-DD
@@ -124,6 +125,40 @@ def is_import_duty_bundle_path(rel_path: str) -> bool:
         or "eec_ett_normative_bundle" in norm
         or "normative_bundle" in norm
     )
+
+
+def _url_netloc(url: str) -> str:
+    return urlparse(url.strip()).netloc.lower()
+
+
+def is_conservative_official_excise_source_url(
+    url: str | None, *, registry_official_url: str | None = None
+) -> bool:
+    """Консервативная проверка official excise URL — блокирует unsafe placeholders."""
+    raw = (url or "").strip()
+    if not raw:
+        return False
+    lower = raw.lower()
+    if lower in {"manual", "local-copy", "unknown"}:
+        return False
+    if "example.com" in lower or "localhost" in lower or "127.0.0.1" in lower:
+        return False
+    if lower.startswith(("seed://", "file://")):
+        return False
+    if not lower.startswith("https://"):
+        return False
+    netloc = _url_netloc(raw)
+    if not netloc:
+        return False
+    if netloc == "nalog.gov.ru" or netloc.endswith(".nalog.gov.ru"):
+        return True
+    if registry_official_url:
+        reg_netloc = _url_netloc(registry_official_url)
+        if reg_netloc and netloc == reg_netloc:
+            return True
+        if reg_netloc and netloc.endswith(reg_netloc):
+            return True
+    return False
 
 
 def raw_rate_rows(payload: dict[str, Any]) -> tuple[list[Any] | None, str | None]:

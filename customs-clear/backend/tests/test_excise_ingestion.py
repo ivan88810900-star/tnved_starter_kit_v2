@@ -363,6 +363,141 @@ class TestExciseMissingSourceUrl(unittest.TestCase):
         self.assertTrue(any("source_url" in b for b in report["blockers"]))
 
 
+class TestExciseSkipRowProvenanceStamp(unittest.TestCase):
+    """P1: skip по excise values всё равно пишет excise_source_* marker."""
+
+    def setUp(self) -> None:
+        self.sm = _memory_sessionmaker()
+        self._patches = _start_patches(self.sm)
+
+    def tearDown(self) -> None:
+        _stop_patches(*self._patches)
+
+    def test_matching_excise_values_still_stamp_provenance(self) -> None:
+        import app.services.excise_ingestion as ei
+
+        official_url = "https://www.nalog.gov.ru/rn77/about_fts/docs/12345678"
+        with self.sm() as db:
+            db.add(
+                HsRate(
+                    hs_code="2203009900",
+                    hs_prefix="2203",
+                    duty_rate="0%",
+                    vat_import_rate=22.0,
+                    source_revision="seed-2026-03",
+                    excise_type="percent",
+                    excise_value=5.0,
+                    excise_basis="НК РФ ст. 193",
+                )
+            )
+            db.commit()
+
+        payload = _official_excise_bundle_payload(
+            rates=[
+                {
+                    "hs_code": "2203009900",
+                    "excise_type": "percent",
+                    "excise_value": 5.0,
+                    "excise_basis": "НК РФ ст. 193",
+                }
+            ]
+        )
+        with _BundleFixture(payload) as (root, rel):
+            with unittest.mock.patch.object(ei, "_BACKEND_ROOT", root):
+                report = run_excise_apply(rel_path=rel)
+
+        self.assertEqual(report["status"], "OK")
+        self.assertTrue(report["db_mutated"])
+        self.assertGreaterEqual(report["row_counts"]["update"], 1)
+        with self.sm() as db:
+            row = db.query(HsRate).filter(HsRate.hs_code == "2203009900").one()
+            self.assertEqual(row.excise_source_code, "EEC_EXCISE")
+            self.assertEqual(row.excise_source_revision, "excise:2026-05-01")
+            self.assertEqual(row.excise_source_url, official_url)
+            self.assertIsNotNone(row.excise_synced_at)
+
+        excise_cov = diagnose_excise()
+        self.assertEqual(excise_cov.status, "present")
+        excise_norm = normalize_excise()
+        self.assertEqual(excise_norm.coverage_status, "present")
+
+
+class TestExciseDryRunBlockers(unittest.TestCase):
+    """P2: dry-run не возвращает OK при blockers (missing_hs_rate)."""
+
+    def setUp(self) -> None:
+        self.sm = _memory_sessionmaker()
+        self._patches = _start_patches(self.sm)
+
+    def tearDown(self) -> None:
+        _stop_patches(*self._patches)
+
+    def test_dry_run_mixed_bundle_not_ok_with_blockers(self) -> None:
+        import app.services.excise_ingestion as ei
+
+        with self.sm() as db:
+            db.add(
+                HsRate(
+                    hs_code="2203009900",
+                    hs_prefix="2203",
+                    duty_rate="0%",
+                    vat_import_rate=22.0,
+                    source_revision="seed",
+                )
+            )
+            db.commit()
+
+        with _BundleFixture(_official_excise_bundle_payload()) as (root, rel):
+            with unittest.mock.patch.object(ei, "_BACKEND_ROOT", root):
+                report = run_excise_dry_run(rel_path=rel)
+
+        self.assertEqual(report["status"], "manual_review_required")
+        self.assertFalse(report["db_mutated"])
+        self.assertGreater(report["row_counts"]["blocked"], 0)
+        self.assertTrue(any("missing_hs_rate" in b for b in report["blockers"]))
+
+
+class TestExciseUnsafeUrlValidation(unittest.TestCase):
+    """P2: unsafe/fake official URLs блокируются."""
+
+    def setUp(self) -> None:
+        self.sm = _memory_sessionmaker()
+        self._patches = _start_patches(self.sm)
+
+    def tearDown(self) -> None:
+        _stop_patches(*self._patches)
+
+    def _apply(self, payload: dict) -> dict:
+        import app.services.excise_ingestion as ei
+
+        _seed_hs_rates_for_bundle(self.sm)
+        with _BundleFixture(payload) as (root, rel):
+            with unittest.mock.patch.object(ei, "_BACKEND_ROOT", root):
+                return run_excise_apply(rel_path=rel)
+
+    def test_example_com_url_rejected(self) -> None:
+        payload = _official_excise_bundle_payload()
+        payload["official_excise_url"] = "https://example.com/excise"
+        report = self._apply(payload)
+        self.assertEqual(report["status"], "manual_review_required")
+        self.assertFalse(report["db_mutated"])
+        self.assertTrue(any("unsafe" in b for b in report["blockers"]))
+
+    def test_seed_scheme_url_rejected(self) -> None:
+        payload = _official_excise_bundle_payload()
+        payload["official_excise_url"] = "seed://local/excise"
+        report = self._apply(payload)
+        self.assertNotEqual(report["status"], "OK")
+        self.assertTrue(any("unsafe" in b for b in report["blockers"]))
+
+    def test_localhost_url_rejected(self) -> None:
+        payload = _official_excise_bundle_payload()
+        payload["official_excise_url"] = "https://localhost/excise"
+        report = self._apply(payload)
+        self.assertNotEqual(report["status"], "OK")
+        self.assertTrue(any("unsafe" in b for b in report["blockers"]))
+
+
 class TestExciseAtomicApply(unittest.TestCase):
     def setUp(self) -> None:
         self.sm = _memory_sessionmaker()

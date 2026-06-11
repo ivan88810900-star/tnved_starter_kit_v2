@@ -15,6 +15,7 @@ from .normative_bundle import _normalize_rate_row
 from .normative_store import append_sync_log, upsert_source_status
 from .payment_data_coverage import run_payment_data_coverage_report
 from .payment_revision_utils import (
+    is_conservative_official_excise_source_url,
     is_excise_only_bundle_path,
     is_import_duty_bundle_path,
     is_official_excise_ingestion_revision,
@@ -236,10 +237,22 @@ def _raw_row_has_excise_signal(raw: dict[str, Any]) -> bool:
     return False
 
 
+def _registry_official_excise_url() -> str | None:
+    entry = get_payment_source_entry(_REGISTRY_SOURCE_CODE)
+    url = (entry.official_url if entry else "") or ""
+    return url.strip() or None
+
+
 def _bundle_official_url(payload: dict[str, Any]) -> str:
     return str(
         payload.get("official_excise_url") or payload.get("source_url") or ""
     ).strip()
+
+
+def _validate_excise_source_url(url: str) -> bool:
+    return is_conservative_official_excise_source_url(
+        url, registry_official_url=_registry_official_excise_url()
+    )
 
 
 def _extract_excise_rows(
@@ -283,6 +296,11 @@ def _extract_excise_rows(
                 f"official_source_url_required: нет official source_url для hs_code={normalized.get('hs_code')}"
             )
             continue
+        if not _validate_excise_source_url(row_url):
+            blockers.append(
+                f"unsafe_official_source_url: {row_url!r} для hs_code={normalized.get('hs_code')}"
+            )
+            continue
         normalized["source_url"] = row_url
         rows.append(normalized)
     return revision, rows, blockers
@@ -295,7 +313,7 @@ def _existing_hs_rate(db, hs_code: str) -> HsRate | None:
     return db.query(HsRate).filter(HsRate.hs_code == lookup).first()
 
 
-def _row_needs_excise_update(existing: HsRate, row: dict[str, Any]) -> bool:
+def _row_needs_excise_value_update(existing: HsRate, row: dict[str, Any]) -> bool:
     if (existing.excise_type or "none") != str(row.get("excise_type") or "none"):
         return True
     if float(existing.excise_value or 0) != float(row.get("excise_value") or 0):
@@ -303,6 +321,47 @@ def _row_needs_excise_update(existing: HsRate, row: dict[str, Any]) -> bool:
     if (existing.excise_basis or "").strip() != str(row.get("excise_basis") or "").strip():
         return True
     return False
+
+
+def _row_needs_excise_provenance_stamp(
+    existing: HsRate,
+    row: dict[str, Any],
+    *,
+    bundle_revision: str,
+    bundle_url: str | None,
+) -> bool:
+    """Missing/stale excise_source_* marker требует stamp даже при совпадающих excise values."""
+    expected_code = _EXCISE_SOURCE_CODE
+    expected_rev = str(row.get("source_revision") or bundle_revision or "").strip()
+    expected_url = str(row.get("source_url") or bundle_url or "").strip()
+    if (existing.excise_source_code or "").strip().upper() != expected_code:
+        return True
+    if not (existing.excise_source_revision or "").strip():
+        return True
+    if expected_rev and (existing.excise_source_revision or "").strip() != expected_rev:
+        return True
+    if not (existing.excise_source_url or "").strip():
+        return True
+    if expected_url and (existing.excise_source_url or "").strip() != expected_url:
+        return True
+    if existing.excise_synced_at is None:
+        return True
+    return False
+
+
+def _row_needs_excise_apply_action(
+    existing: HsRate,
+    row: dict[str, Any],
+    *,
+    bundle_revision: str = "",
+    bundle_url: str | None = None,
+) -> bool:
+    return _row_needs_excise_value_update(existing, row) or _row_needs_excise_provenance_stamp(
+        existing,
+        row,
+        bundle_revision=bundle_revision,
+        bundle_url=bundle_url,
+    )
 
 
 def _plan_excise_rows(rows: list[dict[str, Any]]) -> tuple[ExciseRowCounts, list[str]]:
@@ -315,7 +374,7 @@ def _plan_excise_rows(rows: list[dict[str, Any]]) -> tuple[ExciseRowCounts, list
             if existing is None:
                 counts.blocked += 1
                 missing_blockers.append(f"missing_hs_rate: {hs_code or '<empty>'}")
-            elif _row_needs_excise_update(existing, row):
+            elif _row_needs_excise_apply_action(existing, row):
                 counts.update += 1
             else:
                 counts.skip += 1
@@ -418,6 +477,9 @@ def _validate_bundle_for_ingest(
         blockers.extend(row_blockers)
     if not rows:
         blockers.append("no_importable_excise_rows")
+    bundle_url = _bundle_official_url(payload) if payload else ""
+    if bundle_url and not _validate_excise_source_url(bundle_url):
+        blockers.append(f"unsafe_official_bundle_url: {bundle_url!r}")
     return payload, parser_result, revision, rows, blockers
 
 
@@ -466,10 +528,21 @@ def run_excise_dry_run(*, rel_path: str | None = None) -> dict[str, Any]:
 
     row_counts, missing_blockers = _plan_excise_rows(rows)
     dry_blockers = list(missing_blockers)
-    if row_counts.blocked > 0 and row_counts.update == 0 and row_counts.skip == 0:
+    if row_counts.blocked > 0:
         dry_blockers.append(
-            f"no_applicable_excise_rows: все {row_counts.blocked} строк без existing hs_rate "
-            "(excise slice не создаёт duty rows с duty_rate=0)."
+            f"excise_rows_without_hs_rate: {row_counts.blocked} "
+            "(excise slice не создаёт hs_rates/duty_rate=0)."
+        )
+    if dry_blockers:
+        return _blocked_response(
+            status="manual_review_required",
+            mode="dry_run",
+            dry_run=True,
+            blockers=dry_blockers,
+            parser_result=parser_result,
+            provenance=provenance,
+            row_counts=row_counts,
+            notes=["Dry-run не мутирует БД.", "SourceStatus/SyncLog не записываются."],
         )
     coverage = run_payment_data_coverage_report()
     response = ExciseIngestionResponse(
@@ -479,7 +552,7 @@ def run_excise_dry_run(*, rel_path: str | None = None) -> dict[str, Any]:
         db_mutated=False,
         provenance=provenance,
         row_counts=row_counts,
-        blockers=dry_blockers,
+        blockers=[],
         parser_result=parser_result,
         coverage_link={
             "excise_status": (coverage.get("summary") or {}).get("excise", {}).get("status"),
@@ -537,9 +610,17 @@ def _apply_excise_rows(
                 pending.append((existing, row))
 
             for existing, row in pending:
-                if _row_needs_excise_update(existing, row):
+                needs_values = _row_needs_excise_value_update(existing, row)
+                needs_stamp = _row_needs_excise_provenance_stamp(
+                    existing,
+                    row,
+                    bundle_revision=bundle_revision,
+                    bundle_url=bundle_url,
+                )
+                if needs_values:
                     for k in _EXCISE_APPLY_FIELDS:
                         _apply_excise_field(existing, row, k)
+                if needs_values or needs_stamp:
                     _stamp_excise_row_provenance(
                         existing,
                         row=row,
