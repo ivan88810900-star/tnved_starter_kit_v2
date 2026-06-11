@@ -60,6 +60,11 @@ class HsRate(Base):
     vat_source_revision: Mapped[str] = mapped_column(String(128), default="")
     vat_source_url: Mapped[str] = mapped_column(Text, default="")
     vat_synced_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    # Excise-specific row provenance (отдельно от import-duty / VAT source_*).
+    excise_source_code: Mapped[str] = mapped_column(String(50), default="")
+    excise_source_revision: Mapped[str] = mapped_column(String(128), default="")
+    excise_source_url: Mapped[str] = mapped_column(Text, default="")
+    excise_synced_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
 
 
 class ExchangeRate(Base):

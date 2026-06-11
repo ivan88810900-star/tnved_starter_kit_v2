@@ -26,8 +26,8 @@ _EXPECTED_FULL_CODES_MIN = 1_000
 _EXPECTED_HS_RATES_MIN = 100
 _EXCHANGE_RATE_STALE_DAYS = 7
 
-# Официальные контуры excise / trade remedies в реестре (пока нет dedicated excise source).
-_EXCISE_SOURCE_IDS: frozenset[str] = frozenset()
+# Официальные контуры excise / trade remedies в реестре.
+_EXCISE_SOURCE_IDS: frozenset[str] = frozenset({"excise_official_contour"})
 _TRADE_REMEDY_OFFICIAL_SOURCE_IDS: frozenset[str] = frozenset(
     {
         # geo_special_duties — только legacy_seed; не считается полным official contour.
@@ -476,59 +476,99 @@ def diagnose_customs_fees() -> CoverageDomainSummary:
 
 
 def diagnose_excise() -> CoverageDomainSummary:
-    configured, label, authority = _source_configured(_EXCISE_SOURCE_IDS)
     with SessionLocal() as db:
         hs_count = db.query(HsRate).count()
-        excise_rows = (
-            db.query(HsRate)
-            .filter(HsRate.excise_type.in_(("percent", "fixed")))
-            .count()
-        )
-        seed_only = (
-            db.query(HsRate)
-            .filter(
-                HsRate.excise_type.in_(("percent", "fixed")),
-                or_(HsRate.source_revision == "seed", HsRate.source_revision == ""),
-            )
-            .count()
-        )
+        excise_ok, official_excise_rows, legacy_excise_rows = _excise_official_provenance(db)
+
+    label, authority = _registry_label("excise_official_contour")
+    if not label:
+        entry = None
+        from .payment_source_registry import get_payment_source_entry
+
+        reg = get_payment_source_entry("excise_official_contour")
+        if reg:
+            label = reg.name
+            authority = AUTHORITY_LEVEL_LABELS.get(reg.authority_level, reg.authority_level)
 
     gaps: list[str] = []
-    if not configured:
-        if excise_rows > 0:
-            status = "partial"
-            gaps.append(
-                "В hs_rates есть акцизные поля, но официальный контур акциза не зарегистрирован — "
-                "не считается полным покрытием."
-            )
-        else:
-            status = "not_configured"
-            gaps.append("Официальный контур акцизных ставок не настроен/не синхронизирован.")
-    elif hs_count == 0:
+    notes: list[str] = []
+
+    if hs_count == 0:
         status = "missing"
         gaps.append("hs_rates пуст — акцизные поля недоступны.")
-    elif excise_rows == 0:
+    elif not excise_ok:
         status = "partial"
-        gaps.append("В hs_rates нет строк с excise_type percent/fixed.")
-    elif seed_only == excise_rows:
+        gaps.append("EEC_EXCISE не подтверждён как актуальный official excise contour.")
+        if legacy_excise_rows > 0:
+            notes.append(f"legacy excise signal rows без row-level marker: {legacy_excise_rows}")
+    elif official_excise_rows == 0 and legacy_excise_rows > 0:
         status = "partial"
-        gaps.append("Акцизные данные только из seed — требуется верификация источника.")
+        gaps.append(
+            "Есть excise-сигнал в данных, но нет row-level official excise provenance (excise_source_*)."
+        )
+        notes.append(f"legacy excise signal rows без official marker: {legacy_excise_rows}")
+    elif official_excise_rows > 0 and excise_ok:
+        status = "present"
+        notes.append(f"official excise hs_rates rows: {official_excise_rows}")
     else:
         status = "partial"
+        gaps.append("Официальный excise contour без импортированных строк — partial.")
 
-    manual = True
+    manual = status != "present"
     return CoverageDomainSummary(
         status=status,
-        count=excise_rows,
+        count=official_excise_rows or legacy_excise_rows,
         manual_review_required=manual,
         source_label=label or "не настроен",
-        authority_level=authority,
+        authority_level=authority if status == "present" else "legacy_seed",
         gaps=gaps,
-        notes=[
+        notes=notes
+        + [
             "Smart Payments не трактует отсутствие акциза как 0 без данных hs_rates.",
-            f"Строк hs_rates с акцизом: {excise_rows}.",
         ],
     )
+
+
+def _hs_rate_has_excise_signal_from_parts(
+    excise_type: str | None, excise_value: float | None, excise_basis: str | None
+) -> bool:
+    if str(excise_type or "none").strip().lower() in {"percent", "fixed"}:
+        return True
+    if float(excise_value or 0) > 0:
+        return True
+    if (excise_basis or "").strip():
+        return True
+    return False
+
+
+def _excise_official_provenance(db) -> tuple[bool, int, int]:
+    """EEC_EXCISE SourceStatus + row-level excise marker (excise_source_*)."""
+    from .payment_data_normalization import _excise_proven
+    from .payment_revision_utils import is_official_excise_row_marker
+
+    excise_ok, _ = _excise_proven()
+
+    official_excise_rows = 0
+    legacy_excise_rows = 0
+    for excise_type, excise_value, excise_basis, excise_source_code, excise_source_revision in db.query(
+        HsRate.excise_type,
+        HsRate.excise_value,
+        HsRate.excise_basis,
+        HsRate.excise_source_code,
+        HsRate.excise_source_revision,
+    ).all():
+        if not _hs_rate_has_excise_signal_from_parts(excise_type, excise_value, excise_basis):
+            continue
+        if is_official_excise_row_marker(
+            excise_source_code=excise_source_code,
+            excise_source_revision=excise_source_revision,
+        ):
+            official_excise_rows += 1
+        else:
+            legacy_excise_rows += 1
+    if not excise_ok:
+        return False, 0, legacy_excise_rows
+    return excise_ok, official_excise_rows, legacy_excise_rows
 
 
 def diagnose_trade_remedies() -> CoverageDomainSummary:

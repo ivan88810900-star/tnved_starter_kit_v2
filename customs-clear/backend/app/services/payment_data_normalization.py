@@ -28,6 +28,7 @@ from .payment_data_coverage import (
     diagnose_vat_rates,
 )
 from .regulatory_source_registry import AUTHORITY_LEVEL_LABELS, get_registry_entry
+from .payment_source_registry import get_payment_source_entry
 
 _BACKEND_ROOT = Path(__file__).resolve().parent.parent.parent
 # Exact seed/fallback/ambiguous tokens (для legacy совместимости и явных значений).
@@ -92,6 +93,19 @@ def _vat_proven() -> tuple[bool, str | None]:
         return False, None
     synced = st.synced_at.isoformat() if st.synced_at else None
     if st.is_stale or not is_official_vat_revision(st.revision):
+        return False, synced
+    return True, synced
+
+
+def _excise_proven() -> tuple[bool, str | None]:
+    """Official excise contour proof через SourceStatus EEC_EXCISE."""
+    from .payment_revision_utils import is_official_excise_revision
+
+    st = _lookup_source_status("EEC_EXCISE")
+    if st is None:
+        return False, None
+    synced = st.synced_at.isoformat() if st.synced_at else None
+    if st.is_stale or not is_official_excise_revision(st.revision):
         return False, synced
     return True, synced
 
@@ -352,23 +366,41 @@ def normalize_vat() -> PaymentDomainNormalization:
 
 
 def normalize_excise() -> PaymentDomainNormalization:
-    """Акциз: без официального контура — never present."""
+    """Акциз: present только при EEC_EXCISE + row-level excise_source_*."""
     excise_cov = diagnose_excise()
+    excise_ok, _ = _excise_proven()
+
     with SessionLocal() as db:
         stats = _hs_rate_stats(db)
+        excise_signal_rows = _count_excise_signal_hs_rows(db)
+        official_excise_marker_rows = _count_official_excise_marker_rows(db)
 
-    status: PaymentNormalizationStatus
-    if excise_cov.status == "not_configured":
-        status = "manual_review_required"
-    elif stats["hs_rates_excise"] == 0:
+    gaps = list(excise_cov.gaps)
+    manual = True
+
+    if stats["hs_rates_total"] == 0:
+        status: PaymentNormalizationStatus = "missing"
+    elif excise_signal_rows == 0:
         status = "missing"
+        gaps.append("В hs_rates нет строк с excise_type percent/fixed.")
+    elif not excise_ok:
+        status = "partial"
+        gaps.append("Excise-контур без подтверждённого EEC_EXCISE SourceStatus — консервативно partial.")
+    elif official_excise_marker_rows == 0 and excise_signal_rows > 0:
+        status = "partial"
+        gaps.append(
+            "Есть excise-сигнал в данных, но нет row-level official excise provenance (excise_source_*)."
+        )
+    elif official_excise_marker_rows > 0 and excise_ok:
+        status = "present"
+        manual = False
     else:
         status = "partial"
 
-    gaps = list(excise_cov.gaps)
-    if stats["hs_rates_seed"] >= stats["hs_rates_excise"] > 0:
+    if stats["hs_rates_seed"] >= stats["hs_rates_excise"] > 0 and status != "present":
         gaps.append("Акцизные поля только из seed — требуется верификация.")
 
+    entry = get_payment_source_entry("excise_official_contour")
     return PaymentDomainNormalization(
         domain="excise",
         coverage_status=status,
@@ -377,17 +409,76 @@ def normalize_excise() -> PaymentDomainNormalization:
             NormalizedSourceRef(
                 id="hs_rates.excise",
                 label="hs_rates (excise_type / excise_value)",
-                present=stats["hs_rates_excise"] > 0,
+                present=official_excise_marker_rows > 0 and excise_ok,
                 record_count=stats["hs_rates_excise"],
-                authority_level="legacy_seed",
-                notes=["Официальный контур акциза не зарегистрирован в реестре."],
-            )
+                mapped_hs_codes=official_excise_marker_rows,
+                authority_level="official_binding" if status == "present" else "legacy_seed",
+                notes=[
+                    "Official excise требует EEC_EXCISE SourceStatus и excise_source_* на строке.",
+                ],
+            ),
+            NormalizedSourceRef(
+                id="excise_official_contour",
+                label=entry.name if entry else "excise_official_contour",
+                present=excise_ok and official_excise_marker_rows > 0,
+                record_count=official_excise_marker_rows,
+                mapped_hs_codes=official_excise_marker_rows,
+                authority_level="official_binding" if status == "present" else "legacy_seed",
+            ),
         ],
         record_count=stats["hs_rates_excise"],
+        mapped_hs_codes=official_excise_marker_rows,
         known_gaps=gaps,
-        manual_review_required=True,
-        normalized_snapshot=stats,
+        manual_review_required=manual,
+        normalized_snapshot={
+            **stats,
+            "excise_signal_hs_rows": excise_signal_rows,
+            "official_excise_marker_rows": official_excise_marker_rows,
+        },
     )
+
+
+def _count_excise_signal_hs_rows(db) -> int:
+    count = 0
+    for excise_type, excise_value, excise_basis in db.query(
+        HsRate.excise_type,
+        HsRate.excise_value,
+        HsRate.excise_basis,
+    ).all():
+        if str(excise_type or "none").strip().lower() in {"percent", "fixed"}:
+            count += 1
+            continue
+        if float(excise_value or 0) > 0:
+            count += 1
+            continue
+        if (excise_basis or "").strip():
+            count += 1
+    return count
+
+
+def _count_official_excise_marker_rows(db) -> int:
+    from .payment_revision_utils import is_official_excise_row_marker
+
+    count = 0
+    for excise_type, excise_value, excise_basis, excise_source_code, excise_source_revision in db.query(
+        HsRate.excise_type,
+        HsRate.excise_value,
+        HsRate.excise_basis,
+        HsRate.excise_source_code,
+        HsRate.excise_source_revision,
+    ).all():
+        if not (
+            str(excise_type or "none").strip().lower() in {"percent", "fixed"}
+            or float(excise_value or 0) > 0
+            or (excise_basis or "").strip()
+        ):
+            continue
+        if is_official_excise_row_marker(
+            excise_source_code=excise_source_code,
+            excise_source_revision=excise_source_revision,
+        ):
+            count += 1
+    return count
 
 
 def normalize_anti_dumping() -> PaymentDomainNormalization:

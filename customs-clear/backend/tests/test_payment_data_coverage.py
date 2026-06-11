@@ -91,7 +91,7 @@ class TestPaymentDataCoverageEmptyDb(unittest.TestCase):
         self.assertIn(summary["tnved_entries"]["status"], ("missing", "partial"))
         self.assertEqual(summary["duty_rates"]["status"], "missing")
         self.assertEqual(summary["customs_fees"]["status"], "present")
-        self.assertEqual(summary["excise"]["status"], "not_configured")
+        self.assertEqual(summary["excise"]["status"], "missing")
         self.assertEqual(summary["trade_remedies"]["status"], "not_configured")
         self.assertIn(summary["exchange_rates"]["status"], ("missing", "partial"))
         self.assertFalse(report["smart_payments"]["can_produce_final_total"])
@@ -138,7 +138,7 @@ class TestPaymentDataCoveragePartialRates(unittest.TestCase):
 
     def test_excise_seed_rows_not_full_coverage(self) -> None:
         excise = diagnose_excise()
-        self.assertIn(excise.status, ("not_configured", "partial"))
+        self.assertIn(excise.status, ("partial", "missing"))
         self.assertTrue(excise.manual_review_required)
         self.assertNotEqual(excise.status, "present")
 
