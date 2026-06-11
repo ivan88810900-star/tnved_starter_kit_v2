@@ -30,7 +30,7 @@ _EXCHANGE_RATE_STALE_DAYS = 7
 _EXCISE_SOURCE_IDS: frozenset[str] = frozenset({"excise_official_contour"})
 _TRADE_REMEDY_OFFICIAL_SOURCE_IDS: frozenset[str] = frozenset(
     {
-        # geo_special_duties — только legacy_seed; не считается полным official contour.
+        "trade_remedies_official",
     }
 )
 
@@ -572,7 +572,11 @@ def _excise_official_provenance(db) -> tuple[bool, int, int]:
 
 
 def diagnose_trade_remedies() -> CoverageDomainSummary:
+    from .payment_data_normalization import _anti_dumping_proven
+    from .payment_revision_utils import is_official_anti_dumping_row_marker
+
     configured, label, authority = _source_configured(_TRADE_REMEDY_OFFICIAL_SOURCE_IDS)
+    ad_ok, _ = _anti_dumping_proven()
     with SessionLocal() as db:
         special = db.query(SpecialDuty).count()
         geo = db.query(GeoSpecialDuty).count()
@@ -582,11 +586,22 @@ def diagnose_trade_remedies() -> CoverageDomainSummary:
             .filter(HsRate.antidumping_type.in_(("percent", "fixed")))
             .count()
         )
+        official_ad_rows = 0
+        legacy_ad_rows = 0
+        for source_code, source_revision in db.query(
+            SpecialDuty.source_code, SpecialDuty.source_revision
+        ).filter(SpecialDuty.measure_type == "anti_dumping"):
+            if is_official_anti_dumping_row_marker(
+                source_code=source_code, source_revision=source_revision
+            ):
+                official_ad_rows += 1
+            else:
+                legacy_ad_rows += 1
 
     gaps: list[str] = []
     total_rows = special + geo + ad_hs
 
-    if not configured:
+    if not configured and not ad_ok:
         if total_rows == 0:
             status = "not_configured"
             gaps.append("Нет настроенных официальных источников торговых мер и локальные таблицы пусты.")
@@ -594,23 +609,33 @@ def diagnose_trade_remedies() -> CoverageDomainSummary:
             status = "partial"
             gaps.append(
                 "Есть локальные строки special_duties/geo_special_duties/hs_rates, "
-                "но официальный контур торговых мер не зарегистрирован — не считается полным покрытием."
+                "но официальный контур торговых мер не подтверждён — не считается полным покрытием."
             )
-    elif special == 0:
+    elif not ad_ok:
         status = "partial"
-        gaps.append("special_duties пуст — защитные/компенсационные пошлины не загружены.")
+        gaps.append("EEC_ANTI_DUMPING не подтверждён как актуальный official anti-dumping contour.")
+        if legacy_ad_rows > 0:
+            gaps.append(
+                "Есть special_duties без row-level official anti-dumping provenance (source_code/source_revision)."
+            )
+    elif official_ad_rows == 0:
+        status = "partial"
+        gaps.append("special_duties без official anti-dumping row markers — present не выдаётся.")
     else:
         status = "present"
 
-    manual = True
+    manual = status != "present"
     notes = [
         f"special_duties: {special}",
+        f"official anti-dumping special_duties rows: {official_ad_rows}",
         f"geo_special_duties: {geo}",
         f"hs_rates has_antidumping: {ad_hs}",
         f"hs_rates antidumping_type percent/fixed: {ad_fields}",
     ]
     if geo > 0:
         notes.append("geo_special_duties — legacy_seed; не claim полного официального покрытия.")
+    if legacy_ad_rows > 0:
+        notes.append(f"legacy special_duties без official marker: {legacy_ad_rows}")
 
     return CoverageDomainSummary(
         status=status,

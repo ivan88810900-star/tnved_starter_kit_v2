@@ -13,6 +13,19 @@ _EEC_ETT_REVISION_RE = re.compile(r"^(?:ett|eec-ett|eec:ett):\d{4}-\d{2}-\d{2}$"
 _EEC_VAT_REVISION_RE = re.compile(r"^(?:vat|eec-vat|eec:vat):\d{4}-\d{2}-\d{2}$")
 # Excise contour: excise:YYYY-MM-DD | eec-excise:YYYY-MM-DD | eec:excise:YYYY-MM-DD.
 _EEC_EXCISE_REVISION_RE = re.compile(r"^(?:excise|eec-excise|eec:excise):\d{4}-\d{2}-\d{2}$")
+# Anti-dumping contour: anti-dumping:YYYY-MM-DD | eec-anti-dumping:YYYY-MM-DD | eec:anti-dumping:YYYY-MM-DD
+_EEC_ANTI_DUMPING_REVISION_RE = re.compile(
+    r"^(?:anti-dumping|antidumping|eec-anti-dumping|eec:anti-dumping):\d{4}-\d{2}-\d{2}$"
+)
+
+_UNSAFE_OFFICIAL_URL_EXACT = frozenset({"", "manual", "local-copy"})
+_UNSAFE_OFFICIAL_URL_SUBSTRINGS = (
+    "example.com",
+    "localhost",
+    "127.0.0.1",
+    "seed://",
+    "file://",
+)
 
 
 def is_official_eec_ett_revision(revision: str | None) -> bool:
@@ -105,6 +118,8 @@ def is_wrong_domain_eec_ett_revision_in_vat_bundle(revision: str | None) -> bool
 
 def is_vat_only_bundle_path(rel_path: str) -> bool:
     """Путь VAT-only bundle — не должен использоваться import-duty discovery."""
+    if is_anti_dumping_only_bundle_path(rel_path):
+        return False
     norm = rel_path.replace("\\", "/").lower()
     return norm.endswith("/eec_ett_vat.json") or "/eec_ett_vat.json" in norm
 
@@ -115,9 +130,17 @@ def is_excise_only_bundle_path(rel_path: str) -> bool:
     return norm.endswith("/eec_excise.json") or "/eec_excise.json" in norm
 
 
+def is_anti_dumping_only_bundle_path(rel_path: str) -> bool:
+    """Путь anti-dumping-only bundle — не должен использоваться duty/VAT/excise discovery."""
+    norm = rel_path.replace("\\", "/").lower()
+    return "eec_anti_dumping" in norm or "anti_dumping" in norm
+
+
 def is_import_duty_bundle_path(rel_path: str) -> bool:
-    """Путь import-duty bundle — исключает VAT-only / excise-only файлы."""
+    """Путь import-duty bundle — исключает VAT-only / excise-only / anti-dumping-only файлы."""
     if is_vat_only_bundle_path(rel_path) or is_excise_only_bundle_path(rel_path):
+        return False
+    if is_anti_dumping_only_bundle_path(rel_path):
         return False
     norm = rel_path.replace("\\", "/").lower()
     return (
@@ -178,6 +201,79 @@ def raw_rate_rows(payload: dict[str, Any]) -> tuple[list[Any] | None, str | None
         return None, "malformed_rows_container"
     if isinstance(raw_rates, list):
         return raw_rates, None
+    if isinstance(raw_rows, list):
+        return raw_rows, None
+    return [], None
+
+
+def is_unsafe_official_source_url(url: str | None) -> bool:
+    """Reject seed/demo/local/blank URLs for official ingestion provenance."""
+    u = (url or "").strip().lower()
+    if not u or u in _UNSAFE_OFFICIAL_URL_EXACT:
+        return True
+    return any(token in u for token in _UNSAFE_OFFICIAL_URL_SUBSTRINGS)
+
+
+def is_official_anti_dumping_ingestion_revision(revision: str | None) -> bool:
+    """Strict revision only for anti-dumping ingestion (not duty/VAT/excise)."""
+    rev = (revision or "").strip().lower()
+    if not rev:
+        return False
+    return bool(_EEC_ANTI_DUMPING_REVISION_RE.match(rev))
+
+
+def is_official_anti_dumping_revision(revision: str | None) -> bool:
+    """Revision proof for official anti-dumping contour (SourceStatus EEC_ANTI_DUMPING)."""
+    return is_official_anti_dumping_ingestion_revision(revision)
+
+
+def is_official_anti_dumping_row_marker(
+    *, source_code: str | None, source_revision: str | None
+) -> bool:
+    """Row-level official anti-dumping proof on special_duties."""
+    code = (source_code or "").strip().upper()
+    if code != "EEC_ANTI_DUMPING":
+        return False
+    return is_official_anti_dumping_ingestion_revision(source_revision)
+
+
+def is_wrong_domain_revision_in_anti_dumping_bundle(revision: str | None) -> bool:
+    """Duty/VAT/excise revisions inside anti-dumping bundle — wrong domain."""
+    rev = (revision or "").strip().lower()
+    if not rev:
+        return False
+    if _EEC_ANTI_DUMPING_REVISION_RE.match(rev):
+        return False
+    return bool(
+        _EEC_ETT_REVISION_RE.match(rev)
+        or _EEC_VAT_REVISION_RE.match(rev)
+        or _EEC_EXCISE_REVISION_RE.match(rev)
+    )
+
+
+def is_wrong_domain_anti_dumping_revision_in_duty_bundle(revision: str | None) -> bool:
+    """Anti-dumping revision inside import-duty bundle — wrong domain."""
+    rev = (revision or "").strip().lower()
+    if not rev:
+        return False
+    return bool(_EEC_ANTI_DUMPING_REVISION_RE.match(rev))
+
+
+def is_wrong_domain_anti_dumping_revision_in_vat_bundle(revision: str | None) -> bool:
+    """Anti-dumping revision inside VAT bundle — wrong domain."""
+    return is_wrong_domain_anti_dumping_revision_in_duty_bundle(revision)
+
+
+def raw_measure_rows(payload: dict[str, Any]) -> tuple[list[Any] | None, str | None]:
+    """Safe access to anti-dumping bundle measures/rows containers."""
+    raw_measures = payload.get("measures")
+    if raw_measures is not None and not isinstance(raw_measures, list):
+        return None, "malformed_measures_container"
+    raw_rows = payload.get("rows")
+    if raw_rows is not None and not isinstance(raw_rows, list):
+        return None, "malformed_rows_container"
+    if isinstance(raw_measures, list):
+        return raw_measures, None
     if isinstance(raw_rows, list):
         return raw_rows, None
     return [], None

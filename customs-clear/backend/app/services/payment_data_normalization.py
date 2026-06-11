@@ -110,6 +110,19 @@ def _excise_proven() -> tuple[bool, str | None]:
     return True, synced
 
 
+def _anti_dumping_proven() -> tuple[bool, str | None]:
+    """Official anti-dumping contour proof через SourceStatus EEC_ANTI_DUMPING."""
+    from .payment_revision_utils import is_official_anti_dumping_revision
+
+    st = _lookup_source_status("EEC_ANTI_DUMPING")
+    if st is None:
+        return False, None
+    synced = st.synced_at.isoformat() if st.synced_at else None
+    if st.is_stale or not is_official_anti_dumping_revision(st.revision):
+        return False, synced
+    return True, synced
+
+
 def _local_path_present(rel_path: str) -> bool:
     return (_BACKEND_ROOT / rel_path).exists()
 
@@ -482,14 +495,31 @@ def _count_official_excise_marker_rows(db) -> int:
 
 
 def normalize_anti_dumping() -> PaymentDomainNormalization:
-    """Антидемпинг: special_duties + hs_rates flags; без official contour — never present."""
+    """Антидемпинг: special_duties с row-level provenance; без official contour — never present."""
+    from .payment_revision_utils import is_official_anti_dumping_row_marker
+
     configured, reg_label, authority = _source_configured(_TRADE_REMEDY_OFFICIAL_SOURCE_IDS)
+    ad_ok, ad_sync = _anti_dumping_proven()
 
     with SessionLocal() as db:
-        special = db.query(SpecialDuty).count()
+        special = db.query(SpecialDuty).filter(SpecialDuty.measure_type == "anti_dumping").count()
         special_prefixes = (
-            db.query(func.count(func.distinct(SpecialDuty.hs_code_prefix))).scalar() or 0
+            db.query(func.count(func.distinct(SpecialDuty.hs_code_prefix)))
+            .filter(SpecialDuty.measure_type == "anti_dumping")
+            .scalar()
+            or 0
         )
+        official_rows = 0
+        legacy_rows = 0
+        for source_code, source_revision in db.query(
+            SpecialDuty.source_code, SpecialDuty.source_revision
+        ).filter(SpecialDuty.measure_type == "anti_dumping"):
+            if is_official_anti_dumping_row_marker(
+                source_code=source_code, source_revision=source_revision
+            ):
+                official_rows += 1
+            else:
+                legacy_rows += 1
         geo_ad = (
             db.query(GeoSpecialDuty)
             .filter(GeoSpecialDuty.measure_type == "anti_dumping")
@@ -500,18 +530,26 @@ def normalize_anti_dumping() -> PaymentDomainNormalization:
     local_rows = special + geo_ad + stats["hs_rates_antidumping_flag"] + stats["hs_rates_antidumping_typed"]
     gaps: list[str] = []
 
-    if local_rows == 0 and not configured:
+    if local_rows == 0 and not configured and not ad_ok:
         status: PaymentNormalizationStatus = "missing"
         gaps.append("Нет локальных строк антидемпинга и официальный контур не настроен.")
-    elif not configured:
-        status = "manual_review_required"
+    elif not ad_ok:
+        status = "manual_review_required" if local_rows > 0 else "partial"
         gaps.append(
-            "Есть локальные special_duties/geo/hs_rates, но официальный контур торговых мер "
-            "не зарегистрирован — не claim present."
+            "EEC_ANTI_DUMPING SourceStatus не подтверждён — не claim present "
+            "(global SourceStatus alone недостаточен без row-level provenance)."
         )
-    elif special == 0:
+        if legacy_rows > 0:
+            gaps.append(
+                "Есть special_duties без row-level official anti-dumping provenance "
+                "(source_code/source_revision)."
+            )
+    elif official_rows == 0:
         status = "partial"
-        gaps.append("special_duties пуст при настроенном контуре.")
+        gaps.append("Нет special_duties с official anti-dumping row markers.")
+    elif official_rows > 0 and ad_ok:
+        status = "partial"
+        gaps.append("Контур подтверждён, но полнота антидемпинга не верифицирована в этом MVP.")
     else:
         status = "partial"
         gaps.append("Контур настроен, но полнота антидемпинга не верифицирована в этом MVP.")
@@ -519,11 +557,12 @@ def normalize_anti_dumping() -> PaymentDomainNormalization:
     sources = [
         NormalizedSourceRef(
             id="special_duties",
-            label="special_duties",
+            label="special_duties (anti_dumping)",
             present=special > 0,
             record_count=special,
             mapped_hs_codes=int(special_prefixes),
             authority_level=authority or "legacy_seed",
+            notes=[f"official row markers: {official_rows}", f"legacy rows: {legacy_rows}"],
         ),
         NormalizedSourceRef(
             id="hs_rates.antidumping",
@@ -531,12 +570,19 @@ def normalize_anti_dumping() -> PaymentDomainNormalization:
             present=stats["hs_rates_antidumping_typed"] > 0 or stats["hs_rates_antidumping_flag"] > 0,
             record_count=stats["hs_rates_antidumping_typed"] + stats["hs_rates_antidumping_flag"],
             authority_level="legacy_seed",
+            notes=["Не обновляется official anti-dumping ingestion MVP."],
         ),
         _source_ref(
             "geo_special_duties_embargo",
             present=geo_ad > 0,
             record_count=geo_ad,
-            extra_notes=["measure_type=anti_dumping"],
+            extra_notes=["measure_type=anti_dumping", "legacy_seed"],
+        ),
+        _source_ref(
+            "trade_remedies_official",
+            present=ad_ok,
+            record_count=official_rows if ad_ok else None,
+            extra_notes=[f"EEC_ANTI_DUMPING synced_at={ad_sync or 'n/a'}"],
         ),
     ]
 
@@ -552,8 +598,11 @@ def normalize_anti_dumping() -> PaymentDomainNormalization:
         normalized_snapshot={
             **stats,
             "special_duties": special,
+            "special_duties_official_rows": official_rows,
+            "special_duties_legacy_rows": legacy_rows,
             "geo_special_duties_anti_dumping": geo_ad,
             "official_contour_configured": configured,
+            "eec_anti_dumping_proven": ad_ok,
             "registry_label": reg_label,
         },
     )

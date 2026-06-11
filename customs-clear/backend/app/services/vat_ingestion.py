@@ -19,7 +19,9 @@ from .payment_revision_utils import (
     is_import_duty_bundle_path,
     is_official_vat_ingestion_revision,
     is_vat_only_bundle_path,
+    is_anti_dumping_only_bundle_path,
     is_wrong_domain_eec_ett_revision_in_vat_bundle,
+    is_wrong_domain_anti_dumping_revision_in_vat_bundle,
     raw_rate_rows,
 )
 from .payment_source_registry import get_payment_source_entry
@@ -148,6 +150,16 @@ def _validate_official_vat_bundle_payload(
             "rates_count": len(rates),
             "checksum_sha256": checksum,
         }
+    if is_wrong_domain_anti_dumping_revision_in_vat_bundle(revision):
+        return {
+            "status": "manual_review_required",
+            "reason": "wrong_domain_anti_dumping_revision_in_vat_bundle",
+            "revision": revision,
+            "format": fmt,
+            "record_count": len(rates) + len(tnved),
+            "rates_count": len(rates),
+            "checksum_sha256": checksum,
+        }
     if not is_official_vat_ingestion_revision(revision):
         return {
             "status": "manual_review_required",
@@ -226,6 +238,8 @@ def discover_vat_bundle_path(*, rel_path: str | None = None) -> str | None:
         if not _local_path_present(rel_path):
             return None
         if is_import_duty_bundle_path(rel_path) and not is_vat_only_bundle_path(rel_path):
+            return None
+        if is_anti_dumping_only_bundle_path(rel_path):
             return None
         return rel_path
 
@@ -433,6 +447,8 @@ def _validate_bundle_for_ingest(
     blockers: list[str] = []
     if is_import_duty_bundle_path(rel_path) and not is_vat_only_bundle_path(rel_path):
         blockers.append("manual_review_required: import_duty_only_bundle_not_vat")
+    if is_anti_dumping_only_bundle_path(rel_path):
+        blockers.append("manual_review_required: anti_dumping_only_bundle_not_vat")
     if is_wrong_domain_eec_ett_revision_in_vat_bundle(revision):
         blockers.append(f"wrong_domain_bundle_revision: {revision}")
     elif not is_official_vat_ingestion_revision(revision):

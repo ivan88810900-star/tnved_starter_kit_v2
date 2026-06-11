@@ -217,6 +217,17 @@ class SpecialDuty(Base):
     currency_code: Mapped[str] = mapped_column(String(8), default="")
     # Нормативный акт.
     regulatory_act: Mapped[str] = mapped_column(String(255), default="")
+    # anti_dumping | special_protective | countervailing (official ingestion MVP — anti_dumping).
+    measure_type: Mapped[str] = mapped_column(String(32), default="anti_dumping")
+    manufacturer_exporter: Mapped[str] = mapped_column(String(512), default="")
+    product_description: Mapped[str] = mapped_column(Text, default="")
+    effective_from: Mapped[str] = mapped_column(String(20), default="")
+    effective_to: Mapped[str] = mapped_column(String(20), default="")
+    # Row-level official anti-dumping provenance (отдельно от hs_rates / import-duty).
+    source_code: Mapped[str] = mapped_column(String(50), default="")
+    source_revision: Mapped[str] = mapped_column(String(128), default="")
+    source_url: Mapped[str] = mapped_column(Text, default="")
+    synced_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
 
 
 class VatPreference(Base):
