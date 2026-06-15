@@ -296,6 +296,22 @@ REGULATORY_SOURCE_REGISTRY: tuple[RegulatorySourceEntry, ...] = (
         manual_review_default=True,
     ),
     RegulatorySourceEntry(
+        source_id="trade_remedies_official",
+        title="Официальный контур антидемпинговых мер ЕЭК",
+        authority_level="official_binding",
+        official_url="https://eec.eaeunion.org/comission/department/deptexsec/trade_remedies/",
+        description="Official anti-dumping measures contour (special_duties + EEC_ANTI_DUMPING).",
+        local_paths=("data/raw_normative/eec_anti_dumping.json",),
+        db_probe="special_duties",
+        source_status_code="EEC_ANTI_DUMPING",
+        min_document_count=1,
+        known_gaps=(
+            "MVP: локальный canonical bundle; полный перечень мер — отдельный data curation.",
+            "geo_special_duties и hs_rates antidumping_* не считаются official proof.",
+        ),
+        manual_review_default=True,
+    ),
+    RegulatorySourceEntry(
         source_id="geo_special_duties_embargo",
         title="Геополитические меры (эмбарго / повышенные ставки)",
         authority_level="legacy_seed",
