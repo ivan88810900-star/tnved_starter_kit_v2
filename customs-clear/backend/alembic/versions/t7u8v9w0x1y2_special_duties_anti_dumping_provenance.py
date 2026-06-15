@@ -1,8 +1,8 @@
 """special_duties: anti-dumping measure provenance fields.
 
-Revision ID: s6t7u8v9w0x1
-Revises: r5s6t7u8v9w0
-Create Date: 2026-06-11
+Revision ID: t7u8v9w0x1y2
+Revises: s6t7u8v9w0x1
+Create Date: 2026-06-15
 
 """
 
@@ -11,8 +11,8 @@ from typing import Sequence, Union
 import sqlalchemy as sa
 from alembic import op
 
-revision: str = "s6t7u8v9w0x1"
-down_revision: Union[str, Sequence[str], None] = "r5s6t7u8v9w0"
+revision: str = "t7u8v9w0x1y2"
+down_revision: Union[str, Sequence[str], None] = "s6t7u8v9w0x1"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 

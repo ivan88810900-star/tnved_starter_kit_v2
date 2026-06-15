@@ -622,7 +622,13 @@ def diagnose_trade_remedies() -> CoverageDomainSummary:
         status = "partial"
         gaps.append("special_duties без official anti-dumping row markers — present не выдаётся.")
     else:
-        status = "present"
+        # MVP: успешный official anti-dumping sync доказывает работу контура,
+        # но НЕ полноту торговых мер (special/countervailing не покрыты).
+        status = "manual_review_required"
+        gaps.append(
+            "Anti-dumping MVP: официальный контур работает, но полнота торговых мер "
+            "не верифицирована (special safeguard / countervailing вне scope) — present не выдаётся."
+        )
 
     manual = status != "present"
     notes = [
@@ -632,6 +638,9 @@ def diagnose_trade_remedies() -> CoverageDomainSummary:
         f"hs_rates has_antidumping: {ad_hs}",
         f"hs_rates antidumping_type percent/fixed: {ad_fields}",
     ]
+    if ad_ok and official_ad_rows > 0:
+        notes.append("official anti-dumping contour synced")
+        notes.append("completeness not verified")
     if geo > 0:
         notes.append("geo_special_duties — legacy_seed; не claim полного официального покрытия.")
     if legacy_ad_rows > 0:

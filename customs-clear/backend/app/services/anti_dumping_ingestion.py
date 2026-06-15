@@ -23,12 +23,25 @@ from .payment_revision_utils import (
     is_anti_dumping_only_bundle_path,
     is_import_duty_bundle_path,
     is_official_anti_dumping_ingestion_revision,
-    is_unsafe_official_source_url,
+    is_safe_official_anti_dumping_source_url,
     is_vat_only_bundle_path,
     is_wrong_domain_revision_in_anti_dumping_bundle,
     raw_measure_rows,
 )
 from .payment_source_registry import get_payment_source_entry
+
+
+def _registry_official_anti_dumping_url() -> str | None:
+    entry = get_payment_source_entry(_REGISTRY_SOURCE_CODE)
+    url = (entry.official_url if entry else "") or ""
+    return url.strip() or None
+
+
+def _is_unsafe_anti_dumping_url(url: str) -> bool:
+    """Строгий allowlist: только eec.eaeunion.org / registry domain через HTTPS."""
+    return not is_safe_official_anti_dumping_source_url(
+        url, registry_official_url=_registry_official_anti_dumping_url()
+    )
 
 _BACKEND_ROOT = Path(__file__).resolve().parent.parent.parent
 _ANTI_DUMPING_SOURCE_CODE = "EEC_ANTI_DUMPING"
@@ -168,7 +181,7 @@ def _validate_official_anti_dumping_bundle_payload(
         }
 
     bundle_url = str(payload.get("official_url") or payload.get("source_url") or "").strip()
-    if is_unsafe_official_source_url(bundle_url):
+    if _is_unsafe_anti_dumping_url(bundle_url):
         return {
             "status": "manual_review_required",
             "reason": "unsafe_official_source_url",
@@ -351,7 +364,7 @@ def _extract_anti_dumping_rows(
             )
             continue
         row_url = str(normalized.get("source_url") or "").strip() or bundle_url
-        if is_unsafe_official_source_url(row_url):
+        if _is_unsafe_anti_dumping_url(row_url):
             blockers.append(
                 f"unsafe_official_source_url: {row_url or '<empty>'} "
                 f"for hs_prefix={normalized.get('hs_code_prefix')}"

@@ -214,6 +214,45 @@ def is_unsafe_official_source_url(url: str | None) -> bool:
     return any(token in u for token in _UNSAFE_OFFICIAL_URL_SUBSTRINGS)
 
 
+# Официальный домен торговых мер ЕАЭС (anti-dumping контур).
+_EEC_OFFICIAL_NETLOC = "eec.eaeunion.org"
+
+
+def is_safe_official_anti_dumping_source_url(
+    url: str | None, *, registry_official_url: str | None = None
+) -> bool:
+    """Строгий allowlist для official anti-dumping URL.
+
+    Принимает только https:// на eec.eaeunion.org (и поддоменах) и/или домене из
+    registry official_url. Отклоняет non-HTTPS, произвольные внешние домены и
+    placeholders (example.com / localhost / 127.0.0.1 / seed:// / file:// / manual / local-copy / empty).
+    """
+    raw = (url or "").strip()
+    if not raw:
+        return False
+    lower = raw.lower()
+    if lower in {"manual", "local-copy", "unknown"}:
+        return False
+    if any(token in lower for token in ("example.com", "localhost", "127.0.0.1")):
+        return False
+    if lower.startswith(("seed://", "file://")):
+        return False
+    if not lower.startswith("https://"):
+        return False
+    netloc = _url_netloc(raw)
+    if not netloc:
+        return False
+    allowed_netlocs = {_EEC_OFFICIAL_NETLOC}
+    if registry_official_url:
+        reg_netloc = _url_netloc(registry_official_url)
+        if reg_netloc:
+            allowed_netlocs.add(reg_netloc)
+    for allowed in allowed_netlocs:
+        if netloc == allowed or netloc.endswith("." + allowed):
+            return True
+    return False
+
+
 def is_official_anti_dumping_ingestion_revision(revision: str | None) -> bool:
     """Strict revision only for anti-dumping ingestion (not duty/VAT/excise)."""
     rev = (revision or "").strip().lower()

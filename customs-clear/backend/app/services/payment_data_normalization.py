@@ -547,12 +547,13 @@ def normalize_anti_dumping() -> PaymentDomainNormalization:
     elif official_rows == 0:
         status = "partial"
         gaps.append("Нет special_duties с official anti-dumping row markers.")
-    elif official_rows > 0 and ad_ok:
-        status = "partial"
-        gaps.append("Контур подтверждён, но полнота антидемпинга не верифицирована в этом MVP.")
     else:
-        status = "partial"
-        gaps.append("Контур настроен, но полнота антидемпинга не верифицирована в этом MVP.")
+        # MVP: контур работает, но полнота торговых мер не верифицирована — present не выдаётся.
+        status = "manual_review_required"
+        gaps.append(
+            "Anti-dumping MVP: official anti-dumping contour synced, completeness not verified "
+            "(special safeguard / countervailing вне scope) — present не выдаётся."
+        )
 
     sources = [
         NormalizedSourceRef(

@@ -262,6 +262,30 @@ class TestAntiDumpingUnsafeUrls(unittest.TestCase):
                 self.assertNotEqual(report["status"], "OK")
                 self.assertFalse(report["db_mutated"])
 
+    def test_arbitrary_external_domain_rejected(self) -> None:
+        for url in (
+            "https://evil.ru/decision",
+            "https://eec.eaeunion.org.attacker.com/decision",
+            "https://fake-eaeunion.org/decision",
+            "http://eec.eaeunion.org/decision",
+        ):
+            with self.subTest(url=url):
+                before = _table_counts(self.sm)
+                report = self._apply(_official_anti_dumping_payload(official_url=url))
+                after = _table_counts(self.sm)
+                self.assertEqual(before, after)
+                self.assertNotEqual(report["status"], "OK")
+                self.assertFalse(report["db_mutated"])
+
+    def test_official_eaeunion_domain_accepted(self) -> None:
+        report = self._apply(
+            _official_anti_dumping_payload(
+                official_url="https://eec.eaeunion.org/comission/department/deptexsec/trade_remedies/"
+            )
+        )
+        self.assertEqual(report["status"], "OK")
+        self.assertTrue(report["db_mutated"])
+
 
 class TestAntiDumpingRevisionValidation(unittest.TestCase):
     def setUp(self) -> None:
