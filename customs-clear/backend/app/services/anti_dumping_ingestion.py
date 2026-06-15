@@ -379,17 +379,52 @@ def _extract_anti_dumping_rows(
     return revision, rows, blockers
 
 
-def _lookup_special_duty(db, row: dict[str, Any]) -> SpecialDuty | None:
+def _norm_identity_text(value: Any) -> str:
+    """Нормализация текста для сравнения идентичности меры (whitespace/регистр)."""
+    return " ".join(str(value or "").split()).casefold()
+
+
+def _special_duty_identity(obj: Any) -> tuple[str, ...]:
+    """Детерминированный ключ идентичности официальной антидемпинговой меры.
+
+    Две меры считаются одной только при полном совпадении: один товар (hs_prefix),
+    одна страна происхождения, один нормативный акт, один производитель/экспортёр,
+    одно окно действия и один товарный scope. Иначе — это разные меры и они не
+    должны перезаписывать друг друга.
+
+    Принимает как SpecialDuty ORM-объект, так и normalized row dict.
+    """
+    if isinstance(obj, dict):
+        get = obj.get
+    else:
+        get = lambda key: getattr(obj, key, None)  # noqa: E731
     return (
+        "anti_dumping",
+        str(get("hs_code_prefix") or "").strip(),
+        str(get("origin_country") or "").strip(),
+        _norm_identity_text(get("regulatory_act")),
+        _norm_identity_text(get("manufacturer_exporter")),
+        _norm_identity_text(get("product_description")),
+        str(get("effective_from") or "").strip(),
+        str(get("effective_to") or "").strip(),
+    )
+
+
+def _lookup_special_duty(db, row: dict[str, Any]) -> SpecialDuty | None:
+    target = _special_duty_identity(row)
+    candidates = (
         db.query(SpecialDuty)
         .filter(
             SpecialDuty.hs_code_prefix == row["hs_code_prefix"],
             SpecialDuty.origin_country == row["origin_country"],
-            SpecialDuty.regulatory_act == row["regulatory_act"],
             SpecialDuty.measure_type == "anti_dumping",
         )
-        .first()
+        .all()
     )
+    for candidate in candidates:
+        if _special_duty_identity(candidate) == target:
+            return candidate
+    return None
 
 
 def _row_needs_update(existing: SpecialDuty, row: dict[str, Any]) -> bool:

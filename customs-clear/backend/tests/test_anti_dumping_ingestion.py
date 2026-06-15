@@ -228,6 +228,133 @@ class TestAntiDumpingApplyProvenance(unittest.TestCase):
             self.assertEqual(logs[0].status, "OK")
 
 
+class TestAntiDumpingMeasureIdentity(unittest.TestCase):
+    """P1: разные производители/окна/scope не должны схлопываться в одну меру."""
+
+    def setUp(self) -> None:
+        self.sm = _memory_sessionmaker()
+        self._patches = _start_patches(self.sm)
+
+    def tearDown(self) -> None:
+        _stop_patches(*self._patches)
+
+    @staticmethod
+    def _two_manufacturer_payload() -> dict:
+        return _official_anti_dumping_payload(
+            measures=[
+                {
+                    "hs_prefix": "7214",
+                    "origin_country": "CN",
+                    "measure_type": "anti_dumping",
+                    "rate_type": "percent",
+                    "rate_value": 18.0,
+                    "regulatory_act": "ЕЭК №123/2024",
+                    "manufacturer_exporter": "Alpha Steel Co",
+                    "product_description": "Прокат стальной",
+                },
+                {
+                    "hs_prefix": "7214",
+                    "origin_country": "CN",
+                    "measure_type": "anti_dumping",
+                    "rate_type": "percent",
+                    "rate_value": 25.0,
+                    "regulatory_act": "ЕЭК №123/2024",
+                    "manufacturer_exporter": "Beta Metallurg LLC",
+                    "product_description": "Прокат стальной",
+                },
+            ]
+        )
+
+    def _apply(self, payload: dict) -> dict:
+        import app.services.anti_dumping_ingestion as adi
+
+        with _BundleFixture(payload) as (root, rel):
+            with unittest.mock.patch.object(adi, "_BACKEND_ROOT", root):
+                return run_anti_dumping_apply(rel_path=rel)
+
+    def test_different_manufacturer_creates_separate_rows(self) -> None:
+        payload = self._two_manufacturer_payload()
+        report = self._apply(payload)
+        self.assertEqual(report["status"], "OK")
+        self.assertTrue(report["db_mutated"])
+        self.assertEqual(report["row_counts"]["insert"], 2)
+        with self.sm() as db:
+            rows = (
+                db.query(SpecialDuty)
+                .filter(
+                    SpecialDuty.hs_code_prefix == "7214",
+                    SpecialDuty.origin_country == "CN",
+                    SpecialDuty.regulatory_act == "ЕЭК №123/2024",
+                )
+                .all()
+            )
+            self.assertEqual(len(rows), 2)
+            by_manuf = {r.manufacturer_exporter: r for r in rows}
+            self.assertEqual(set(by_manuf), {"Alpha Steel Co", "Beta Metallurg LLC"})
+            self.assertEqual(by_manuf["Alpha Steel Co"].rate_percent, 18.0)
+            self.assertEqual(by_manuf["Beta Metallurg LLC"].rate_percent, 25.0)
+            for r in rows:
+                self.assertEqual(r.source_code, "EEC_ANTI_DUMPING")
+                self.assertEqual(r.source_revision, "anti-dumping:2026-05-01")
+
+    def test_reapply_is_idempotent_no_duplicate_or_overwrite(self) -> None:
+        payload = self._two_manufacturer_payload()
+        self._apply(payload)
+        report2 = self._apply(payload)
+        self.assertEqual(report2["status"], "OK")
+        self.assertEqual(report2["row_counts"]["insert"], 0)
+        self.assertEqual(report2["row_counts"]["update"], 0)
+        self.assertEqual(report2["row_counts"]["skip"], 2)
+        with self.sm() as db:
+            rows = (
+                db.query(SpecialDuty)
+                .filter(SpecialDuty.hs_code_prefix == "7214", SpecialDuty.origin_country == "CN")
+                .all()
+            )
+            self.assertEqual(len(rows), 2)
+            by_manuf = {r.manufacturer_exporter: r.rate_percent for r in rows}
+            self.assertEqual(by_manuf, {"Alpha Steel Co": 18.0, "Beta Metallurg LLC": 25.0})
+
+    def test_different_effective_window_not_overwritten(self) -> None:
+        payload = _official_anti_dumping_payload(
+            measures=[
+                {
+                    "hs_prefix": "7214",
+                    "origin_country": "CN",
+                    "measure_type": "anti_dumping",
+                    "rate_type": "percent",
+                    "rate_value": 18.0,
+                    "regulatory_act": "ЕЭК №123/2024",
+                    "manufacturer_exporter": "Alpha Steel Co",
+                    "effective_from": "2026-01-01",
+                    "effective_to": "2026-06-30",
+                },
+                {
+                    "hs_prefix": "7214",
+                    "origin_country": "CN",
+                    "measure_type": "anti_dumping",
+                    "rate_type": "percent",
+                    "rate_value": 22.0,
+                    "regulatory_act": "ЕЭК №123/2024",
+                    "manufacturer_exporter": "Alpha Steel Co",
+                    "effective_from": "2026-07-01",
+                    "effective_to": "2026-12-31",
+                },
+            ]
+        )
+        report = self._apply(payload)
+        self.assertEqual(report["status"], "OK")
+        self.assertEqual(report["row_counts"]["insert"], 2)
+        with self.sm() as db:
+            rows = db.query(SpecialDuty).filter(SpecialDuty.hs_code_prefix == "7214").all()
+            self.assertEqual(len(rows), 2)
+            windows = {(r.effective_from, r.effective_to): r.rate_percent for r in rows}
+            self.assertEqual(
+                windows,
+                {("2026-01-01", "2026-06-30"): 18.0, ("2026-07-01", "2026-12-31"): 22.0},
+            )
+
+
 class TestAntiDumpingUnsafeUrls(unittest.TestCase):
     def setUp(self) -> None:
         self.sm = _memory_sessionmaker()
