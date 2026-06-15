@@ -217,7 +217,7 @@ class SpecialDuty(Base):
     currency_code: Mapped[str] = mapped_column(String(8), default="")
     # Нормативный акт.
     regulatory_act: Mapped[str] = mapped_column(String(255), default="")
-    # anti_dumping | special_protective | countervailing (official ingestion MVP — anti_dumping).
+    # anti_dumping | special_safeguard | special_protective | countervailing
     measure_type: Mapped[str] = mapped_column(String(32), default="anti_dumping")
     manufacturer_exporter: Mapped[str] = mapped_column(String(512), default="")
     product_description: Mapped[str] = mapped_column(Text, default="")

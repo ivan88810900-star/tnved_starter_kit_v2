@@ -506,6 +506,7 @@ def _build_domain_plan(
         "vat": "vat_rates",
         "excise": "excise",
         "anti_dumping": "trade_remedies",
+        "special_safeguard": "trade_remedies",
         "special_protective": "trade_remedies",
         "countervailing": "trade_remedies",
     }.get(domain)

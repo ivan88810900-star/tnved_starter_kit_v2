@@ -123,6 +123,19 @@ def _anti_dumping_proven() -> tuple[bool, str | None]:
     return True, synced
 
 
+def _special_safeguard_proven() -> tuple[bool, str | None]:
+    """Official special-safeguard contour proof через SourceStatus EEC_SPECIAL_SAFEGUARD."""
+    from .payment_revision_utils import is_official_special_safeguard_revision
+
+    st = _lookup_source_status("EEC_SPECIAL_SAFEGUARD")
+    if st is None:
+        return False, None
+    synced = st.synced_at.isoformat() if st.synced_at else None
+    if st.is_stale or not is_official_special_safeguard_revision(st.revision):
+        return False, synced
+    return True, synced
+
+
 def _local_path_present(rel_path: str) -> bool:
     return (_BACKEND_ROOT / rel_path).exists()
 
@@ -552,7 +565,7 @@ def normalize_anti_dumping() -> PaymentDomainNormalization:
         status = "manual_review_required"
         gaps.append(
             "Anti-dumping MVP: official anti-dumping contour synced, completeness not verified "
-            "(special safeguard / countervailing вне scope) — present не выдаётся."
+            "(special-safeguard / countervailing — отдельные контуры) — present не выдаётся."
         )
 
     sources = [
@@ -604,6 +617,96 @@ def normalize_anti_dumping() -> PaymentDomainNormalization:
             "geo_special_duties_anti_dumping": geo_ad,
             "official_contour_configured": configured,
             "eec_anti_dumping_proven": ad_ok,
+            "registry_label": reg_label,
+        },
+    )
+
+
+def normalize_special_safeguard() -> PaymentDomainNormalization:
+    """Специальные защитные пошлины: special_duties с row-level EEC_SPECIAL_SAFEGUARD provenance."""
+    from .payment_revision_utils import is_official_special_safeguard_row_marker
+
+    configured, reg_label, authority = _source_configured(_TRADE_REMEDY_OFFICIAL_SOURCE_IDS)
+    ss_ok, ss_sync = _special_safeguard_proven()
+
+    with SessionLocal() as db:
+        special = db.query(SpecialDuty).filter(SpecialDuty.measure_type == "special_safeguard").count()
+        special_prefixes = (
+            db.query(func.count(func.distinct(SpecialDuty.hs_code_prefix)))
+            .filter(SpecialDuty.measure_type == "special_safeguard")
+            .scalar()
+            or 0
+        )
+        official_rows = 0
+        legacy_rows = 0
+        for source_code, source_revision in db.query(
+            SpecialDuty.source_code, SpecialDuty.source_revision
+        ).filter(SpecialDuty.measure_type == "special_safeguard"):
+            if is_official_special_safeguard_row_marker(
+                source_code=source_code, source_revision=source_revision
+            ):
+                official_rows += 1
+            else:
+                legacy_rows += 1
+
+    gaps: list[str] = []
+    if special == 0 and not configured and not ss_ok:
+        status: PaymentNormalizationStatus = "missing"
+        gaps.append("Нет локальных строк special-safeguard и официальный контур не настроен.")
+    elif not ss_ok:
+        status = "manual_review_required" if special > 0 else "partial"
+        gaps.append(
+            "EEC_SPECIAL_SAFEGUARD SourceStatus не подтверждён — не claim present "
+            "(global SourceStatus alone недостаточен без row-level provenance)."
+        )
+        if legacy_rows > 0:
+            gaps.append(
+                "Есть special_duties без row-level official special-safeguard provenance "
+                "(source_code/source_revision)."
+            )
+    elif official_rows == 0:
+        status = "partial"
+        gaps.append("Нет special_duties с official special-safeguard row markers.")
+    else:
+        status = "manual_review_required"
+        gaps.append(
+            "Special-safeguard MVP: official contour synced, completeness not verified "
+            "(countervailing вне scope) — present не выдаётся."
+        )
+
+    sources = [
+        NormalizedSourceRef(
+            id="special_duties",
+            label="special_duties (special_safeguard)",
+            present=special > 0,
+            record_count=special,
+            mapped_hs_codes=int(special_prefixes),
+            authority_level=authority or "legacy_seed",
+            notes=[f"official row markers: {official_rows}", f"legacy rows: {legacy_rows}"],
+        ),
+        _source_ref(
+            "trade_remedies_special_safeguard_official",
+            present=ss_ok,
+            record_count=official_rows if ss_ok else None,
+            extra_notes=[f"EEC_SPECIAL_SAFEGUARD synced_at={ss_sync or 'n/a'}"],
+        ),
+    ]
+
+    return PaymentDomainNormalization(
+        domain="special_safeguard",
+        coverage_status=status,
+        authority_level=authority or "legacy_seed",
+        sources=sources,
+        record_count=special,
+        mapped_hs_codes=int(special_prefixes) if special else None,
+        known_gaps=gaps,
+        manual_review_required=True,
+        normalized_snapshot={
+            "special_duties": special,
+            "special_duties_official_rows": official_rows,
+            "special_duties_legacy_rows": legacy_rows,
+            "official_contour_configured": configured,
+            "eec_special_safeguard_proven": ss_ok,
             "registry_label": reg_label,
         },
     )
@@ -678,6 +781,7 @@ def run_payment_data_normalization_report() -> dict[str, Any]:
         "vat": normalize_vat(),
         "excise": normalize_excise(),
         "anti_dumping": normalize_anti_dumping(),
+        "special_safeguard": normalize_special_safeguard(),
         "countervailing": normalize_countervailing(),
     }
     optional = normalize_special_protective()

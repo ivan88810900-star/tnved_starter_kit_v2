@@ -12,6 +12,7 @@ PaymentDomain = Literal[
     "vat",
     "excise",
     "anti_dumping",
+    "special_safeguard",
     "special_protective",
     "countervailing",
 ]
@@ -23,6 +24,7 @@ PAYMENT_DOMAINS: tuple[str, ...] = (
     "vat",
     "excise",
     "anti_dumping",
+    "special_safeguard",
     "special_protective",
     "countervailing",
 )
@@ -142,8 +144,8 @@ PAYMENT_SOURCE_REGISTRY: tuple[PaymentSourceEntry, ...] = (
     ),
     PaymentSourceEntry(
         source_code="trade_remedies_official",
-        name="Официальный контур торговых мер (антидемпинг / защита)",
-        domains=("anti_dumping", "special_protective", "countervailing"),
+        name="Официальный контур торговых мер (антидемпинг)",
+        domains=("anti_dumping",),
         authority_level="official_binding",
         official_url="https://eec.eaeunion.org/comission/department/deptexsec/trade_remedies/",
         legal_basis="Решения ЕЭК / Комиссии по торговым мерам",
@@ -157,6 +159,25 @@ PAYMENT_SOURCE_REGISTRY: tuple[PaymentSourceEntry, ...] = (
             "без файла — missing_official_source.",
             "geo_special_duties — legacy_seed; не заменяет official anti-dumping contour.",
             "hs_rates antidumping_* не обновляются этим MVP slice.",
+        ),
+    ),
+    PaymentSourceEntry(
+        source_code="trade_remedies_special_safeguard_official",
+        name="Официальный контур специальных защитных пошлин",
+        domains=("special_safeguard",),
+        authority_level="official_binding",
+        official_url="https://eec.eaeunion.org/comission/department/deptexsec/trade_remedies/",
+        legal_basis="Решения ЕЭК / Комиссии по торговым мерам — специальные защитные пошлины",
+        local_canonical_paths=("data/raw_normative/eec_special_safeguard.json",),
+        source_status_code="EEC_SPECIAL_SAFEGUARD",
+        loader_status="ready",
+        target_tables=("special_duties",),
+        registry_source_id="trade_remedies_special_safeguard_official",
+        known_gaps=(
+            "Локальный canonical bundle кладётся в data/raw_normative/eec_special_safeguard.json; "
+            "без файла — missing_official_source.",
+            "Отдельный source_code EEC_SPECIAL_SAFEGUARD — не смешивать с EEC_ANTI_DUMPING.",
+            "countervailing вне scope MVP.",
         ),
     ),
     PaymentSourceEntry(

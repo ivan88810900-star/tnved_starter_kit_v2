@@ -23,7 +23,9 @@ from .payment_revision_utils import is_import_duty_bundle_path
 from .payment_revision_utils import is_official_eec_ett_revision as _is_official_eec_ett_revision
 from .payment_revision_utils import is_vat_only_bundle_path
 from .payment_revision_utils import is_anti_dumping_only_bundle_path
+from .payment_revision_utils import is_special_safeguard_only_bundle_path
 from .payment_revision_utils import is_wrong_domain_anti_dumping_revision_in_duty_bundle
+from .payment_revision_utils import is_wrong_domain_special_safeguard_revision_in_duty_bundle
 from .payment_revision_utils import raw_rate_rows
 from .payment_source_registry import get_payment_source_entry
 
@@ -64,6 +66,8 @@ def discover_import_duty_bundle_path(*, rel_path: str | None = None) -> str | No
         if is_vat_only_bundle_path(rel_path):
             return None
         if is_anti_dumping_only_bundle_path(rel_path):
+            return None
+        if is_special_safeguard_only_bundle_path(rel_path):
             return None
         return rel_path
 
@@ -142,6 +146,16 @@ def _validate_official_bundle_payload(payload: dict[str, Any], *, rel_path: str,
         return {
             "status": "manual_review_required",
             "reason": "wrong_domain_anti_dumping_revision_in_duty_bundle",
+            "revision": revision,
+            "format": fmt,
+            "record_count": len(rates) + len(tnved),
+            "rates_count": len(rates),
+            "checksum_sha256": checksum,
+        }
+    if is_wrong_domain_special_safeguard_revision_in_duty_bundle(revision):
+        return {
+            "status": "manual_review_required",
+            "reason": "wrong_domain_special_safeguard_revision_in_duty_bundle",
             "revision": revision,
             "format": fmt,
             "record_count": len(rates) + len(tnved),
@@ -370,6 +384,10 @@ def _validate_bundle_for_ingest(
     if is_anti_dumping_only_bundle_path(rel_path):
         return None, {"status": "manual_review_required", "reason": "anti_dumping_only_bundle"}, "", [], [
             "manual_review_required: anti_dumping_only_bundle_not_import_duty"
+        ]
+    if is_special_safeguard_only_bundle_path(rel_path):
+        return None, {"status": "manual_review_required", "reason": "special_safeguard_only_bundle"}, "", [], [
+            "manual_review_required: special_safeguard_only_bundle_not_import_duty"
         ]
     payload, parser_result = _load_bundle_payload(rel_path)
     if payload is None:
