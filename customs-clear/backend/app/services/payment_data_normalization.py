@@ -136,6 +136,19 @@ def _special_safeguard_proven() -> tuple[bool, str | None]:
     return True, synced
 
 
+def _countervailing_proven() -> tuple[bool, str | None]:
+    """Official countervailing contour proof через SourceStatus EEC_COUNTERVAILING."""
+    from .payment_revision_utils import is_official_countervailing_revision
+
+    st = _lookup_source_status("EEC_COUNTERVAILING")
+    if st is None:
+        return False, None
+    synced = st.synced_at.isoformat() if st.synced_at else None
+    if st.is_stale or not is_official_countervailing_revision(st.revision):
+        return False, synced
+    return True, synced
+
+
 def _local_path_present(rel_path: str) -> bool:
     return (_BACKEND_ROOT / rel_path).exists()
 
@@ -672,7 +685,7 @@ def normalize_special_safeguard() -> PaymentDomainNormalization:
         status = "manual_review_required"
         gaps.append(
             "Special-safeguard MVP: official contour synced, completeness not verified "
-            "(countervailing вне scope) — present не выдаётся."
+            "(countervailing — отдельный контур) — present не выдаётся."
         )
 
     sources = [
@@ -755,18 +768,93 @@ def normalize_special_protective() -> PaymentDomainNormalization | None:
 
 
 def normalize_countervailing() -> PaymentDomainNormalization:
-    """Компенсационные пошлины: в схеме БД не отделены от special_duties — not_applicable."""
+    """Компенсационные пошлины: special_duties с row-level EEC_COUNTERVAILING provenance."""
+    from .payment_revision_utils import is_official_countervailing_row_marker
+
+    configured, reg_label, authority = _source_configured(_TRADE_REMEDY_OFFICIAL_SOURCE_IDS)
+    cv_ok, cv_sync = _countervailing_proven()
+
+    with SessionLocal() as db:
+        special = db.query(SpecialDuty).filter(SpecialDuty.measure_type == "countervailing").count()
+        special_prefixes = (
+            db.query(func.count(func.distinct(SpecialDuty.hs_code_prefix)))
+            .filter(SpecialDuty.measure_type == "countervailing")
+            .scalar()
+            or 0
+        )
+        official_rows = 0
+        legacy_rows = 0
+        for countervailing_source_code, countervailing_source_revision in db.query(
+            SpecialDuty.countervailing_source_code, SpecialDuty.countervailing_source_revision
+        ).filter(SpecialDuty.measure_type == "countervailing"):
+            if is_official_countervailing_row_marker(
+                countervailing_source_code=countervailing_source_code,
+                countervailing_source_revision=countervailing_source_revision,
+            ):
+                official_rows += 1
+            else:
+                legacy_rows += 1
+
+    gaps: list[str] = []
+    if special == 0 and not configured and not cv_ok:
+        status: PaymentNormalizationStatus = "missing"
+        gaps.append("Нет локальных строк countervailing и официальный контур не настроен.")
+    elif not cv_ok:
+        status = "manual_review_required" if special > 0 else "partial"
+        gaps.append(
+            "EEC_COUNTERVAILING SourceStatus не подтверждён — не claim present "
+            "(global SourceStatus alone недостаточен без row-level provenance)."
+        )
+        if legacy_rows > 0:
+            gaps.append(
+                "Есть special_duties без row-level official countervailing provenance "
+                "(countervailing_source_*)."
+            )
+    elif official_rows == 0:
+        status = "partial"
+        gaps.append("Нет special_duties с official countervailing row markers.")
+    else:
+        status = "manual_review_required"
+        gaps.append(
+            "Countervailing MVP: official contour synced, completeness not verified "
+            "(trade_remedies aggregate — present не выдаётся)."
+        )
+
+    sources = [
+        NormalizedSourceRef(
+            id="special_duties",
+            label="special_duties (countervailing)",
+            present=special > 0,
+            record_count=special,
+            mapped_hs_codes=int(special_prefixes),
+            authority_level=authority or "legacy_seed",
+            notes=[f"official row markers: {official_rows}", f"legacy rows: {legacy_rows}"],
+        ),
+        _source_ref(
+            "trade_remedies_countervailing_official",
+            present=cv_ok,
+            record_count=official_rows if cv_ok else None,
+            extra_notes=[f"EEC_COUNTERVAILING synced_at={cv_sync or 'n/a'}"],
+        ),
+    ]
+
     return PaymentDomainNormalization(
         domain="countervailing",
-        coverage_status="not_applicable",
-        authority_level=None,
-        sources=[],
-        known_gaps=[
-            "В локальной схеме нет отдельного контура countervailing; "
-            "special_duties не различает тип меры.",
-        ],
-        manual_review_required=False,
-        normalized_snapshot={"reason": "no_dedicated_local_source"},
+        coverage_status=status,
+        authority_level=authority or "legacy_seed",
+        sources=sources,
+        record_count=special,
+        mapped_hs_codes=int(special_prefixes) if special else None,
+        known_gaps=gaps,
+        manual_review_required=True,
+        normalized_snapshot={
+            "special_duties": special,
+            "special_duties_official_rows": official_rows,
+            "special_duties_legacy_rows": legacy_rows,
+            "official_contour_configured": configured,
+            "eec_countervailing_proven": cv_ok,
+            "registry_label": reg_label,
+        },
     )
 
 

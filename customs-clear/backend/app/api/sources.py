@@ -17,6 +17,7 @@ from ..services.import_duty_ingestion import run_import_duty_apply, run_import_d
 from ..services.excise_ingestion import run_excise_apply, run_excise_dry_run
 from ..services.vat_ingestion import run_vat_apply, run_vat_dry_run
 from ..services.anti_dumping_ingestion import run_anti_dumping_apply, run_anti_dumping_dry_run
+from ..services.countervailing_ingestion import run_countervailing_apply, run_countervailing_dry_run
 from ..services.special_safeguard_ingestion import run_special_safeguard_apply, run_special_safeguard_dry_run
 from ..services.payment_source_ingestion import (
     run_payment_source_ingestion_dry_run,
@@ -174,6 +175,23 @@ async def sources_special_safeguard_apply(
     """Guarded apply special-safeguard из локального official EEC bundle."""
     require_admin_token(x_admin_token)
     data = run_special_safeguard_apply()
+    clear_preview_cache()
+    return JSONResponse(data)
+
+
+@router.post("/payment-ingestion/countervailing/dry-run")
+async def sources_countervailing_dry_run() -> JSONResponse:
+    """Dry-run countervailing: insert/update/skip counts без мутации БД."""
+    return JSONResponse(run_countervailing_dry_run())
+
+
+@router.post("/payment-ingestion/countervailing/apply")
+async def sources_countervailing_apply(
+    x_admin_token: str | None = Header(None, alias="X-Admin-Token"),
+) -> JSONResponse:
+    """Guarded apply countervailing из локального official EEC bundle."""
+    require_admin_token(x_admin_token)
+    data = run_countervailing_apply()
     clear_preview_cache()
     return JSONResponse(data)
 
