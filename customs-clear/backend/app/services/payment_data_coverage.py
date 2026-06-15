@@ -595,8 +595,18 @@ def diagnose_trade_remedies() -> CoverageDomainSummary:
         legacy_ad_rows = 0
         official_ss_rows = 0
         legacy_ss_rows = 0
-        for measure_type, source_code, source_revision in db.query(
-            SpecialDuty.measure_type, SpecialDuty.source_code, SpecialDuty.source_revision
+        for (
+            measure_type,
+            source_code,
+            source_revision,
+            safeguard_source_code,
+            safeguard_source_revision,
+        ) in db.query(
+            SpecialDuty.measure_type,
+            SpecialDuty.source_code,
+            SpecialDuty.source_revision,
+            SpecialDuty.safeguard_source_code,
+            SpecialDuty.safeguard_source_revision,
         ):
             if measure_type == "anti_dumping":
                 if is_official_anti_dumping_row_marker(
@@ -607,7 +617,8 @@ def diagnose_trade_remedies() -> CoverageDomainSummary:
                     legacy_ad_rows += 1
             elif measure_type == "special_safeguard":
                 if is_official_special_safeguard_row_marker(
-                    source_code=source_code, source_revision=source_revision
+                    safeguard_source_code=safeguard_source_code,
+                    safeguard_source_revision=safeguard_source_revision,
                 ):
                     official_ss_rows += 1
                 else:

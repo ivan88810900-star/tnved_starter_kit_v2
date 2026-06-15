@@ -639,11 +639,12 @@ def normalize_special_safeguard() -> PaymentDomainNormalization:
         )
         official_rows = 0
         legacy_rows = 0
-        for source_code, source_revision in db.query(
-            SpecialDuty.source_code, SpecialDuty.source_revision
+        for safeguard_source_code, safeguard_source_revision in db.query(
+            SpecialDuty.safeguard_source_code, SpecialDuty.safeguard_source_revision
         ).filter(SpecialDuty.measure_type == "special_safeguard"):
             if is_official_special_safeguard_row_marker(
-                source_code=source_code, source_revision=source_revision
+                safeguard_source_code=safeguard_source_code,
+                safeguard_source_revision=safeguard_source_revision,
             ):
                 official_rows += 1
             else:

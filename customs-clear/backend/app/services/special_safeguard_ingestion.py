@@ -438,11 +438,11 @@ def _row_needs_update(existing: SpecialDuty, row: dict[str, Any]) -> bool:
         row.get("effective_to") or ""
     ).strip():
         return True
-    if (existing.source_code or "") != _SPECIAL_SAFEGUARD_SOURCE_CODE:
+    if (existing.safeguard_source_code or "") != _SPECIAL_SAFEGUARD_SOURCE_CODE:
         return True
-    if (existing.source_revision or "") != str(row.get("source_revision") or ""):
+    if (existing.safeguard_source_revision or "") != str(row.get("source_revision") or ""):
         return True
-    if (existing.source_url or "").strip() != str(row.get("source_url") or "").strip():
+    if (existing.safeguard_source_url or "").strip() != str(row.get("source_url") or "").strip():
         return True
     return False
 
@@ -621,10 +621,11 @@ def run_special_safeguard_dry_run(*, rel_path: str | None = None) -> dict[str, A
 
 
 def _stamp_row_provenance(existing: SpecialDuty, *, row: dict[str, Any], synced_at: datetime) -> None:
-    existing.source_code = _SPECIAL_SAFEGUARD_SOURCE_CODE
-    existing.source_revision = str(row.get("source_revision") or "").strip()
-    existing.source_url = str(row.get("source_url") or "").strip()
-    existing.synced_at = synced_at
+    # Safeguard-specific provenance — изолирована от anti-dumping source_* полей.
+    existing.safeguard_source_code = _SPECIAL_SAFEGUARD_SOURCE_CODE
+    existing.safeguard_source_revision = str(row.get("source_revision") or "").strip()
+    existing.safeguard_source_url = str(row.get("source_url") or "").strip()
+    existing.safeguard_synced_at = synced_at
     existing.measure_type = "special_safeguard"
 
 

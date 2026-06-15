@@ -228,6 +228,11 @@ class SpecialDuty(Base):
     source_revision: Mapped[str] = mapped_column(String(128), default="")
     source_url: Mapped[str] = mapped_column(Text, default="")
     synced_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    # Row-level official special-safeguard provenance (изолировано от anti-dumping source_*).
+    safeguard_source_code: Mapped[str] = mapped_column(String(50), default="")
+    safeguard_source_revision: Mapped[str] = mapped_column(String(128), default="")
+    safeguard_source_url: Mapped[str] = mapped_column(Text, default="")
+    safeguard_synced_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
 
 
 class VatPreference(Base):

@@ -339,13 +339,17 @@ def is_official_special_safeguard_revision(revision: str | None) -> bool:
 
 
 def is_official_special_safeguard_row_marker(
-    *, source_code: str | None, source_revision: str | None
+    *, safeguard_source_code: str | None, safeguard_source_revision: str | None
 ) -> bool:
-    """Row-level official special-safeguard proof on special_duties."""
-    code = (source_code or "").strip().upper()
+    """Row-level official special-safeguard proof on special_duties.
+
+    Использует safeguard-specific provenance (safeguard_source_*), изолированную от
+    anti-dumping source_* — anti-dumping строки никогда не считаются safeguard official.
+    """
+    code = (safeguard_source_code or "").strip().upper()
     if code != "EEC_SPECIAL_SAFEGUARD":
         return False
-    return is_official_special_safeguard_ingestion_revision(source_revision)
+    return is_official_special_safeguard_ingestion_revision(safeguard_source_revision)
 
 
 def is_wrong_domain_revision_in_special_safeguard_bundle(revision: str | None) -> bool:
