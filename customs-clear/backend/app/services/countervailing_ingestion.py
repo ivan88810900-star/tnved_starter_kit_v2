@@ -1,4 +1,4 @@
-"""Официальный special-safeguard ingestion ЕЭК: dry-run / guarded apply (issue #47)."""
+"""Официальный countervailing ingestion ЕЭК: dry-run / guarded apply (issue #49)."""
 
 from __future__ import annotations
 
@@ -10,12 +10,11 @@ from pathlib import Path
 from typing import Any
 
 from ..db import SessionLocal
-from ..models.core import SourceStatus, SyncLog
 from ..models.tnved import SpecialDuty
-from ..schemas.special_safeguard_ingestion import (
-    SpecialSafeguardIngestionResponse,
-    SpecialSafeguardProvenance,
-    SpecialSafeguardRowCounts,
+from ..schemas.countervailing_ingestion import (
+    CountervailingIngestionResponse,
+    CountervailingProvenance,
+    CountervailingRowCounts,
 )
 from .normative_store import append_sync_log, upsert_source_status
 from .payment_data_coverage import run_payment_data_coverage_report
@@ -23,34 +22,34 @@ from .payment_revision_utils import (
     is_anti_dumping_only_bundle_path,
     is_countervailing_only_bundle_path,
     is_import_duty_bundle_path,
-    is_official_special_safeguard_ingestion_revision,
-    is_safe_official_special_safeguard_source_url,
+    is_official_countervailing_ingestion_revision,
+    is_safe_official_countervailing_source_url,
     is_special_safeguard_only_bundle_path,
     is_vat_only_bundle_path,
-    is_wrong_domain_revision_in_special_safeguard_bundle,
+    is_wrong_domain_revision_in_countervailing_bundle,
     raw_measure_rows,
 )
 from .payment_source_registry import get_payment_source_entry
 
 
-def _registry_official_special_safeguard_url() -> str | None:
+def _registry_official_countervailing_url() -> str | None:
     entry = get_payment_source_entry(_REGISTRY_SOURCE_CODE)
     url = (entry.official_url if entry else "") or ""
     return url.strip() or None
 
 
-def _is_unsafe_special_safeguard_url(url: str) -> bool:
-    return not is_safe_official_special_safeguard_source_url(
-        url, registry_official_url=_registry_official_special_safeguard_url()
+def _is_unsafe_countervailing_url(url: str) -> bool:
+    return not is_safe_official_countervailing_source_url(
+        url, registry_official_url=_registry_official_countervailing_url()
     )
 
 
 _BACKEND_ROOT = Path(__file__).resolve().parent.parent.parent
-_SPECIAL_SAFEGUARD_SOURCE_CODE = "EEC_SPECIAL_SAFEGUARD"
-_REGISTRY_SOURCE_CODE = "trade_remedies_special_safeguard_official"
+_COUNTERVAILING_SOURCE_CODE = "EEC_COUNTERVAILING"
+_REGISTRY_SOURCE_CODE = "trade_remedies_countervailing_official"
 
 _LOCAL_BUNDLE_CANDIDATES: tuple[str, ...] = (
-    "data/raw_normative/eec_special_safeguard.json",
+    "data/raw_normative/eec_countervailing.json",
 )
 
 _NON_OFFICIAL_REVISION_EXACT = frozenset(
@@ -123,7 +122,7 @@ def _hs_prefix_from_raw(raw: dict[str, Any]) -> str:
     return prefix[:16]
 
 
-def _validate_official_special_safeguard_bundle_payload(
+def _validate_official_countervailing_bundle_payload(
     payload: dict[str, Any], *, rel_path: str, checksum: str | None
 ) -> dict[str, Any]:
     revision = str(payload.get("revision") or "").strip().lower()
@@ -161,17 +160,17 @@ def _validate_official_special_safeguard_bundle_payload(
             "measures_count": len(measures),
             "checksum_sha256": checksum,
         }
-    if is_wrong_domain_revision_in_special_safeguard_bundle(revision):
+    if is_wrong_domain_revision_in_countervailing_bundle(revision):
         return {
             "status": "manual_review_required",
-            "reason": "wrong_domain_revision_in_special_safeguard_bundle",
+            "reason": "wrong_domain_revision_in_countervailing_bundle",
             "revision": revision,
             "format": fmt,
             "record_count": len(measures),
             "measures_count": len(measures),
             "checksum_sha256": checksum,
         }
-    if not is_official_special_safeguard_ingestion_revision(revision):
+    if not is_official_countervailing_ingestion_revision(revision):
         return {
             "status": "manual_review_required",
             "reason": "non_official_bundle_revision",
@@ -183,7 +182,7 @@ def _validate_official_special_safeguard_bundle_payload(
         }
 
     bundle_url = str(payload.get("official_url") or payload.get("source_url") or "").strip()
-    if _is_unsafe_special_safeguard_url(bundle_url):
+    if _is_unsafe_countervailing_url(bundle_url):
         return {
             "status": "manual_review_required",
             "reason": "unsafe_official_source_url",
@@ -199,10 +198,10 @@ def _validate_official_special_safeguard_bundle_payload(
         rev = str(row.get("source_revision") or "").strip().lower()
         if not rev:
             continue
-        if is_wrong_domain_revision_in_special_safeguard_bundle(rev):
+        if is_wrong_domain_revision_in_countervailing_bundle(rev):
             wrong_domain_rows.append(rev)
             continue
-        if not is_official_special_safeguard_ingestion_revision(rev):
+        if not is_official_countervailing_ingestion_revision(rev):
             explicit_unsafe.append(rev)
     if wrong_domain_rows:
         return {
@@ -250,24 +249,24 @@ def _load_bundle_payload(rel_path: str) -> tuple[dict[str, Any] | None, dict[str
     if not isinstance(payload, dict):
         return None, {"status": "parser_failed", "error": "bundle must be JSON object", "record_count": 0}
     checksum = _file_sha256_at(path)
-    return payload, _validate_official_special_safeguard_bundle_payload(
+    return payload, _validate_official_countervailing_bundle_payload(
         payload, rel_path=rel_path, checksum=checksum
     )
 
 
-def discover_special_safeguard_bundle_path(*, rel_path: str | None = None) -> str | None:
-    """Найти локальный official special-safeguard bundle."""
+def discover_countervailing_bundle_path(*, rel_path: str | None = None) -> str | None:
+    """Найти локальный official countervailing bundle."""
     if rel_path:
         if not _local_path_present(rel_path):
             return None
-        if not is_special_safeguard_only_bundle_path(rel_path):
+        if not is_countervailing_only_bundle_path(rel_path):
             return None
         return rel_path
 
     entry = get_payment_source_entry(_REGISTRY_SOURCE_CODE)
     if entry:
         for p in entry.local_canonical_paths:
-            if is_special_safeguard_only_bundle_path(p) and _local_path_present(p):
+            if is_countervailing_only_bundle_path(p) and _local_path_present(p):
                 return p
 
     for p in _LOCAL_BUNDLE_CANDIDATES:
@@ -276,11 +275,11 @@ def discover_special_safeguard_bundle_path(*, rel_path: str | None = None) -> st
     return None
 
 
-def _raw_row_has_special_safeguard_signal(raw: dict[str, Any]) -> bool:
+def _raw_row_has_countervailing_signal(raw: dict[str, Any]) -> bool:
     mt = str(raw.get("measure_type") or "").strip().lower()
-    if mt in ("special_safeguard", "special_safeguard_duty", "special_protective"):
+    if mt in ("countervailing", "countervailing_duty", "compensatory"):
         return True
-    if raw.get("has_special_safeguard") or raw.get("special_safeguard_type"):
+    if raw.get("has_countervailing") or raw.get("countervailing_type"):
         return True
     if raw.get("rate_type") or raw.get("rate_value") is not None or raw.get("rate_percent") is not None:
         return True
@@ -295,13 +294,13 @@ def _normalize_measure_row(raw: dict[str, Any]) -> dict[str, Any] | None:
         return None
     origin = str(raw.get("origin_country") or raw.get("country_iso") or raw.get("country") or "").strip().upper()
     rate_type = str(
-        raw.get("rate_type") or raw.get("special_safeguard_type") or raw.get("duty_type") or "percent"
+        raw.get("rate_type") or raw.get("countervailing_type") or raw.get("duty_type") or "percent"
     ).strip().lower()
     rate_value = raw.get("rate_value")
     if rate_value is None:
         rate_value = raw.get("rate_percent")
     if rate_value is None:
-        rate_value = raw.get("special_safeguard_value")
+        rate_value = raw.get("countervailing_value")
     rate_specific = float(raw.get("rate_specific") or raw.get("rate_specific_value") or 0.0)
     currency = str(raw.get("currency_code") or raw.get("currency") or "").strip().upper()
     regulatory_act = str(
@@ -312,7 +311,7 @@ def _normalize_measure_row(raw: dict[str, Any]) -> dict[str, Any] | None:
     row: dict[str, Any] = {
         "hs_code_prefix": prefix,
         "origin_country": origin,
-        "measure_type": "special_safeguard",
+        "measure_type": "countervailing",
         "rate_type": rate_type,
         "rate_percent": float(rate_value or 0.0) if rate_type == "percent" else 0.0,
         "rate_specific": rate_specific if rate_type in ("fixed", "specific") else 0.0,
@@ -328,7 +327,7 @@ def _normalize_measure_row(raw: dict[str, Any]) -> dict[str, Any] | None:
     return row
 
 
-def _extract_special_safeguard_rows(
+def _extract_countervailing_rows(
     payload: dict[str, Any], rows_in: list[dict[str, Any]] | None = None
 ) -> tuple[str, list[dict[str, Any]], list[str]]:
     revision = str(payload.get("revision") or payload.get("source_revision") or "").strip()
@@ -346,7 +345,7 @@ def _extract_special_safeguard_rows(
     for raw in rows_in or []:
         if not isinstance(raw, dict):
             return revision, [], ["parser_failed: malformed_measure_row (row not an object)"]
-        if not _raw_row_has_special_safeguard_signal(raw):
+        if not _raw_row_has_countervailing_signal(raw):
             continue
         normalized = _normalize_measure_row(raw)
         if not normalized:
@@ -357,18 +356,18 @@ def _extract_special_safeguard_rows(
         if not str(normalized.get("source_revision") or "").strip():
             normalized["source_revision"] = revision
         row_rev = str(normalized.get("source_revision") or "").strip().lower()
-        if is_wrong_domain_revision_in_special_safeguard_bundle(row_rev):
+        if is_wrong_domain_revision_in_countervailing_bundle(row_rev):
             blockers.append(
                 f"wrong_domain_row_revision: {row_rev} for hs_prefix={normalized.get('hs_code_prefix')}"
             )
             continue
-        if not is_official_special_safeguard_ingestion_revision(row_rev):
+        if not is_official_countervailing_ingestion_revision(row_rev):
             blockers.append(
                 f"unsafe_row_revision: {row_rev or '<empty>'} for hs_prefix={normalized.get('hs_code_prefix')}"
             )
             continue
         row_url = str(normalized.get("source_url") or "").strip() or bundle_url
-        if _is_unsafe_special_safeguard_url(row_url):
+        if _is_unsafe_countervailing_url(row_url):
             blockers.append(
                 f"unsafe_official_source_url: {row_url or '<empty>'} "
                 f"for hs_prefix={normalized.get('hs_code_prefix')}"
@@ -393,10 +392,11 @@ def _special_duty_identity(obj: Any) -> tuple[str, ...]:
     else:
         get = lambda key: getattr(obj, key, None)  # noqa: E731
     return (
-        "special_safeguard",
+        "countervailing",
         str(get("hs_code_prefix") or "").strip(),
         str(get("origin_country") or "").strip(),
         _norm_identity_text(get("regulatory_act")),
+        _norm_identity_text(get("manufacturer_exporter")),
         _norm_identity_text(get("product_description")),
         str(get("effective_from") or "").strip(),
         str(get("effective_to") or "").strip(),
@@ -410,7 +410,7 @@ def _lookup_special_duty(db, row: dict[str, Any]) -> SpecialDuty | None:
         .filter(
             SpecialDuty.hs_code_prefix == row["hs_code_prefix"],
             SpecialDuty.origin_country == row["origin_country"],
-            SpecialDuty.measure_type == "special_safeguard",
+            SpecialDuty.measure_type == "countervailing",
         )
         .all()
     )
@@ -439,17 +439,17 @@ def _row_needs_update(existing: SpecialDuty, row: dict[str, Any]) -> bool:
         row.get("effective_to") or ""
     ).strip():
         return True
-    if (existing.safeguard_source_code or "") != _SPECIAL_SAFEGUARD_SOURCE_CODE:
+    if (existing.countervailing_source_code or "") != _COUNTERVAILING_SOURCE_CODE:
         return True
-    if (existing.safeguard_source_revision or "") != str(row.get("source_revision") or ""):
+    if (existing.countervailing_source_revision or "") != str(row.get("source_revision") or ""):
         return True
-    if (existing.safeguard_source_url or "").strip() != str(row.get("source_url") or "").strip():
+    if (existing.countervailing_source_url or "").strip() != str(row.get("source_url") or "").strip():
         return True
     return False
 
 
-def _plan_special_safeguard_rows(rows: list[dict[str, Any]]) -> SpecialSafeguardRowCounts:
-    counts = SpecialSafeguardRowCounts(total_in_source=len(rows))
+def _plan_countervailing_rows(rows: list[dict[str, Any]]) -> CountervailingRowCounts:
+    counts = CountervailingRowCounts(total_in_source=len(rows))
     with SessionLocal() as db:
         for row in rows:
             existing = _lookup_special_duty(db, row)
@@ -469,11 +469,11 @@ def _build_provenance(
     payload: dict[str, Any],
     parser_result: dict[str, Any],
     loaded_at: str,
-) -> SpecialSafeguardProvenance:
+) -> CountervailingProvenance:
     entry = get_payment_source_entry(_REGISTRY_SOURCE_CODE)
-    return SpecialSafeguardProvenance(
-        source_code=_SPECIAL_SAFEGUARD_SOURCE_CODE,
-        source_name=entry.name if entry else "Официальный контур специальных защитных пошлин",
+    return CountervailingProvenance(
+        source_code=_COUNTERVAILING_SOURCE_CODE,
+        source_name=entry.name if entry else "Официальный контур компенсационных пошлин",
         legal_basis=entry.legal_basis if entry else "Решения ЕЭК / Комиссии по торговым мерам",
         official_url=str(payload.get("official_url") or payload.get("source_url") or "").strip() or None,
         revision=revision or None,
@@ -492,17 +492,17 @@ def _blocked_response(
     dry_run: bool,
     blockers: list[str],
     parser_result: dict[str, Any] | None = None,
-    provenance: SpecialSafeguardProvenance | None = None,
-    row_counts: SpecialSafeguardRowCounts | None = None,
+    provenance: CountervailingProvenance | None = None,
+    row_counts: CountervailingRowCounts | None = None,
     notes: list[str] | None = None,
 ) -> dict[str, Any]:
-    response = SpecialSafeguardIngestionResponse(
+    response = CountervailingIngestionResponse(
         status=status,  # type: ignore[arg-type]
         mode=mode,  # type: ignore[arg-type]
         dry_run=dry_run,
         db_mutated=False,
         provenance=provenance,
-        row_counts=row_counts or SpecialSafeguardRowCounts(),
+        row_counts=row_counts or CountervailingRowCounts(),
         blockers=blockers,
         parser_result=parser_result or {},
         notes=notes or [],
@@ -537,36 +537,36 @@ def _validate_bundle_for_ingest(
     if container_err is not None:
         return payload, parser_result, "", [], [f"parser_failed: {container_err}"]
 
-    revision, rows, row_blockers = _extract_special_safeguard_rows(payload, measures_in)
+    revision, rows, row_blockers = _extract_countervailing_rows(payload, measures_in)
     blockers: list[str] = []
     if is_import_duty_bundle_path(rel_path) or is_vat_only_bundle_path(rel_path):
         blockers.append("manual_review_required: wrong_domain_bundle_path")
     if is_anti_dumping_only_bundle_path(rel_path):
         blockers.append("manual_review_required: wrong_domain_bundle_path")
-    if is_countervailing_only_bundle_path(rel_path):
+    if is_special_safeguard_only_bundle_path(rel_path):
         blockers.append("manual_review_required: wrong_domain_bundle_path")
-    if is_wrong_domain_revision_in_special_safeguard_bundle(revision):
+    if is_wrong_domain_revision_in_countervailing_bundle(revision):
         blockers.append(f"wrong_domain_bundle_revision: {revision}")
-    elif not is_official_special_safeguard_ingestion_revision(revision):
+    elif not is_official_countervailing_ingestion_revision(revision):
         blockers.append(f"non_official_bundle_revision: {revision or '<empty>'}")
     if row_blockers:
         blockers.extend(row_blockers)
     if not rows:
-        blockers.append("no_importable_special_safeguard_rows")
+        blockers.append("no_importable_countervailing_rows")
     return payload, parser_result, revision, rows, blockers
 
 
-def run_special_safeguard_dry_run(*, rel_path: str | None = None) -> dict[str, Any]:
+def run_countervailing_dry_run(*, rel_path: str | None = None) -> dict[str, Any]:
     """Dry-run: insert/update/skip counts и blockers без мутации БД."""
     loaded_at = _utc_now_iso()
-    bundle_path = discover_special_safeguard_bundle_path(rel_path=rel_path)
+    bundle_path = discover_countervailing_bundle_path(rel_path=rel_path)
     if not bundle_path:
         return _blocked_response(
             status="missing_official_source",
             mode="dry_run",
             dry_run=True,
             blockers=[
-                "Нет локального official special-safeguard bundle. "
+                "Нет локального official countervailing bundle. "
                 f"Ожидается один из: {', '.join(_LOCAL_BUNDLE_CANDIDATES)} "
                 "или local_canonical_paths в payment_source_registry."
             ],
@@ -595,13 +595,13 @@ def run_special_safeguard_dry_run(*, rel_path: str | None = None) -> dict[str, A
             blockers=blockers,
             parser_result=parser_result,
             provenance=provenance,
-            row_counts=SpecialSafeguardRowCounts(total_in_source=len(rows), blocked=len(rows)),
+            row_counts=CountervailingRowCounts(total_in_source=len(rows), blocked=len(rows)),
             notes=["Dry-run не мутирует БД.", "SourceStatus/SyncLog не записываются."],
         )
 
-    row_counts = _plan_special_safeguard_rows(rows)
+    row_counts = _plan_countervailing_rows(rows)
     coverage = run_payment_data_coverage_report()
-    response = SpecialSafeguardIngestionResponse(
+    response = CountervailingIngestionResponse(
         status="OK",
         mode="dry_run",
         dry_run=True,
@@ -617,19 +617,18 @@ def run_special_safeguard_dry_run(*, rel_path: str | None = None) -> dict[str, A
         notes=[
             "Dry-run не мутирует БД.",
             "Apply доступен только при status=OK dry-run и official provenance.",
-            "Coverage present требует official special-safeguard rows (не seed/fallback).",
+            "Coverage present требует official countervailing rows (не seed/fallback).",
         ],
     )
     return response.model_dump(mode="json")
 
 
 def _stamp_row_provenance(existing: SpecialDuty, *, row: dict[str, Any], synced_at: datetime) -> None:
-    # Safeguard-specific provenance — изолирована от anti-dumping source_* полей.
-    existing.safeguard_source_code = _SPECIAL_SAFEGUARD_SOURCE_CODE
-    existing.safeguard_source_revision = str(row.get("source_revision") or "").strip()
-    existing.safeguard_source_url = str(row.get("source_url") or "").strip()
-    existing.safeguard_synced_at = synced_at
-    existing.measure_type = "special_safeguard"
+    existing.countervailing_source_code = _COUNTERVAILING_SOURCE_CODE
+    existing.countervailing_source_revision = str(row.get("source_revision") or "").strip()
+    existing.countervailing_source_url = str(row.get("source_url") or "").strip()
+    existing.countervailing_synced_at = synced_at
+    existing.measure_type = "countervailing"
 
 
 def _apply_row_fields(existing: SpecialDuty, row: dict[str, Any]) -> None:
@@ -647,12 +646,12 @@ def _apply_row_fields(existing: SpecialDuty, row: dict[str, Any]) -> None:
         existing.effective_to = str(row.get("effective_to") or "")
 
 
-def _apply_special_safeguard_rows(
+def _apply_countervailing_rows(
     rows: list[dict[str, Any]],
     *,
     synced_at: datetime,
-) -> SpecialSafeguardRowCounts | None:
-    counts = SpecialSafeguardRowCounts(total_in_source=len(rows))
+) -> CountervailingRowCounts | None:
+    counts = CountervailingRowCounts(total_in_source=len(rows))
     with SessionLocal() as db:
         try:
             for row in rows:
@@ -668,7 +667,7 @@ def _apply_special_safeguard_rows(
                         rate_specific=float(row.get("rate_specific") or 0.0),
                         currency_code=str(row.get("currency_code") or ""),
                         regulatory_act=row["regulatory_act"],
-                        measure_type="special_safeguard",
+                        measure_type="countervailing",
                         manufacturer_exporter=str(row.get("manufacturer_exporter") or ""),
                         product_description=str(row.get("product_description") or ""),
                         effective_from=str(row.get("effective_from") or ""),
@@ -690,16 +689,16 @@ def _apply_special_safeguard_rows(
     return counts
 
 
-def run_special_safeguard_apply(*, rel_path: str | None = None) -> dict[str, Any]:
+def run_countervailing_apply(*, rel_path: str | None = None) -> dict[str, Any]:
     """Guarded apply: мутирует БД только при official provenance и отсутствии blockers."""
     loaded_at = _utc_now_iso()
-    bundle_path = discover_special_safeguard_bundle_path(rel_path=rel_path)
+    bundle_path = discover_countervailing_bundle_path(rel_path=rel_path)
     if not bundle_path:
         return _blocked_response(
             status="missing_official_source",
             mode="apply",
             dry_run=False,
-            blockers=["missing_official_source: локальный official special-safeguard bundle не найден"],
+            blockers=["missing_official_source: локальный official countervailing bundle не найден"],
             notes=["Apply отменён — SourceStatus/SyncLog не записаны."],
         )
 
@@ -729,7 +728,7 @@ def run_special_safeguard_apply(*, rel_path: str | None = None) -> dict[str, Any
         )
 
     synced_at = datetime.now(timezone.utc).replace(tzinfo=None)
-    applied = _apply_special_safeguard_rows(rows, synced_at=synced_at)
+    applied = _apply_countervailing_rows(rows, synced_at=synced_at)
     if applied is None:
         return _blocked_response(
             status="manual_review_required",
@@ -744,12 +743,12 @@ def run_special_safeguard_apply(*, rel_path: str | None = None) -> dict[str, Any
 
     entry = get_payment_source_entry(_REGISTRY_SOURCE_CODE)
     note_txt = (
-        f"special-safeguard apply {bundle_path}: revision={revision}; "
+        f"countervailing apply {bundle_path}: revision={revision}; "
         f"insert={row_counts.insert}, update={row_counts.update}, skip={row_counts.skip}; "
         f"checksum={provenance.checksum_sha256 or 'n/a'}"
     )
     upsert_source_status(
-        source_code=_SPECIAL_SAFEGUARD_SOURCE_CODE,
+        source_code=_COUNTERVAILING_SOURCE_CODE,
         source_name=entry.name if entry else provenance.source_name,
         source_url=provenance.official_url or bundle_path,
         revision=revision,
@@ -757,7 +756,7 @@ def run_special_safeguard_apply(*, rel_path: str | None = None) -> dict[str, Any
         note=note_txt,
     )
     append_sync_log(
-        source_code=_SPECIAL_SAFEGUARD_SOURCE_CODE,
+        source_code=_COUNTERVAILING_SOURCE_CODE,
         status="OK",
         revision=revision,
         rows_affected=row_counts.insert + row_counts.update,
@@ -765,7 +764,7 @@ def run_special_safeguard_apply(*, rel_path: str | None = None) -> dict[str, Any
     )
 
     coverage = run_payment_data_coverage_report()
-    response = SpecialSafeguardIngestionResponse(
+    response = CountervailingIngestionResponse(
         status="OK",
         mode="apply",
         dry_run=False,
@@ -779,8 +778,8 @@ def run_special_safeguard_apply(*, rel_path: str | None = None) -> dict[str, Any
             "generated_at": coverage.get("generated_at"),
         },
         notes=[
-            "Special-safeguard slice: обновляет только special_duties с measure_type=special_safeguard.",
-            "Import-duty/VAT/excise/anti-dumping поля не изменяются.",
+            "Countervailing slice: обновляет только special_duties с measure_type=countervailing.",
+            "Import-duty/VAT/excise/anti-dumping/special-safeguard поля не изменяются.",
         ],
     )
     return response.model_dump(mode="json")

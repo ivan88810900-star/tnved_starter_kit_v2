@@ -233,6 +233,11 @@ class SpecialDuty(Base):
     safeguard_source_revision: Mapped[str] = mapped_column(String(128), default="")
     safeguard_source_url: Mapped[str] = mapped_column(Text, default="")
     safeguard_synced_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    # Row-level official countervailing provenance (изолировано от AD/safeguard/duty/VAT/excise).
+    countervailing_source_code: Mapped[str] = mapped_column(String(50), default="")
+    countervailing_source_revision: Mapped[str] = mapped_column(String(128), default="")
+    countervailing_source_url: Mapped[str] = mapped_column(Text, default="")
+    countervailing_synced_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
 
 
 class VatPreference(Base):

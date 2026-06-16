@@ -32,6 +32,7 @@ _TRADE_REMEDY_OFFICIAL_SOURCE_IDS: frozenset[str] = frozenset(
     {
         "trade_remedies_official",
         "trade_remedies_special_safeguard_official",
+        "trade_remedies_countervailing_official",
     }
 )
 
@@ -573,15 +574,21 @@ def _excise_official_provenance(db) -> tuple[bool, int, int]:
 
 
 def diagnose_trade_remedies() -> CoverageDomainSummary:
-    from .payment_data_normalization import _anti_dumping_proven, _special_safeguard_proven
+    from .payment_data_normalization import (
+        _anti_dumping_proven,
+        _countervailing_proven,
+        _special_safeguard_proven,
+    )
     from .payment_revision_utils import (
         is_official_anti_dumping_row_marker,
+        is_official_countervailing_row_marker,
         is_official_special_safeguard_row_marker,
     )
 
     configured, label, authority = _source_configured(_TRADE_REMEDY_OFFICIAL_SOURCE_IDS)
     ad_ok, _ = _anti_dumping_proven()
     ss_ok, _ = _special_safeguard_proven()
+    cv_ok, _ = _countervailing_proven()
     with SessionLocal() as db:
         special = db.query(SpecialDuty).count()
         geo = db.query(GeoSpecialDuty).count()
@@ -595,18 +602,24 @@ def diagnose_trade_remedies() -> CoverageDomainSummary:
         legacy_ad_rows = 0
         official_ss_rows = 0
         legacy_ss_rows = 0
+        official_cv_rows = 0
+        legacy_cv_rows = 0
         for (
             measure_type,
             source_code,
             source_revision,
             safeguard_source_code,
             safeguard_source_revision,
+            countervailing_source_code,
+            countervailing_source_revision,
         ) in db.query(
             SpecialDuty.measure_type,
             SpecialDuty.source_code,
             SpecialDuty.source_revision,
             SpecialDuty.safeguard_source_code,
             SpecialDuty.safeguard_source_revision,
+            SpecialDuty.countervailing_source_code,
+            SpecialDuty.countervailing_source_revision,
         ):
             if measure_type == "anti_dumping":
                 if is_official_anti_dumping_row_marker(
@@ -623,11 +636,19 @@ def diagnose_trade_remedies() -> CoverageDomainSummary:
                     official_ss_rows += 1
                 else:
                     legacy_ss_rows += 1
+            elif measure_type == "countervailing":
+                if is_official_countervailing_row_marker(
+                    countervailing_source_code=countervailing_source_code,
+                    countervailing_source_revision=countervailing_source_revision,
+                ):
+                    official_cv_rows += 1
+                else:
+                    legacy_cv_rows += 1
 
     gaps: list[str] = []
     total_rows = special + geo + ad_hs
-    trade_contours_ok = ad_ok or ss_ok
-    official_trade_rows = official_ad_rows + official_ss_rows
+    trade_contours_ok = ad_ok or ss_ok or cv_ok
+    official_trade_rows = official_ad_rows + official_ss_rows + official_cv_rows
 
     if not configured and not trade_contours_ok:
         if total_rows == 0:
@@ -647,20 +668,22 @@ def diagnose_trade_remedies() -> CoverageDomainSummary:
             gaps.append(
                 "EEC_SPECIAL_SAFEGUARD не подтверждён как актуальный official special-safeguard contour."
             )
-        if legacy_ad_rows > 0 or legacy_ss_rows > 0:
+        if not cv_ok:
             gaps.append(
-                "Есть special_duties без row-level official trade-remedies provenance (source_code/source_revision)."
+                "EEC_COUNTERVAILING не подтверждён как актуальный official countervailing contour."
+            )
+        if legacy_ad_rows > 0 or legacy_ss_rows > 0 or legacy_cv_rows > 0:
+            gaps.append(
+                "Есть special_duties без row-level official trade-remedies provenance "
+                "(source_code/source_revision / safeguard_source_* / countervailing_source_*)."
             )
     elif official_trade_rows == 0:
         status = "partial"
         gaps.append("special_duties без official trade-remedies row markers — present не выдаётся.")
     else:
-        # MVP: успешный official sync доказывает работу контура,
-        # но НЕ полноту торговых мер (countervailing не покрыт).
         status = "manual_review_required"
         gaps.append(
-            "Trade-remedies MVP: официальные контуры работают, но полнота торговых мер "
-            "не верифицирована (countervailing вне scope) — present не выдаётся."
+            "official trade-remedy contours synced; completeness not verified — present не выдаётся."
         )
 
     manual = status != "present"
@@ -668,6 +691,7 @@ def diagnose_trade_remedies() -> CoverageDomainSummary:
         f"special_duties: {special}",
         f"official anti-dumping special_duties rows: {official_ad_rows}",
         f"official special-safeguard special_duties rows: {official_ss_rows}",
+        f"official countervailing special_duties rows: {official_cv_rows}",
         f"geo_special_duties: {geo}",
         f"hs_rates has_antidumping: {ad_hs}",
         f"hs_rates antidumping_type percent/fixed: {ad_fields}",
@@ -676,6 +700,8 @@ def diagnose_trade_remedies() -> CoverageDomainSummary:
         notes.append("official anti-dumping contour synced")
     if ss_ok and official_ss_rows > 0:
         notes.append("official special-safeguard contour synced")
+    if cv_ok and official_cv_rows > 0:
+        notes.append("official countervailing contour synced")
     if official_trade_rows > 0:
         notes.append("completeness not verified")
     if geo > 0:
@@ -684,6 +710,8 @@ def diagnose_trade_remedies() -> CoverageDomainSummary:
         notes.append(f"legacy anti-dumping special_duties без official marker: {legacy_ad_rows}")
     if legacy_ss_rows > 0:
         notes.append(f"legacy special-safeguard special_duties без official marker: {legacy_ss_rows}")
+    if legacy_cv_rows > 0:
+        notes.append(f"legacy countervailing special_duties без official marker: {legacy_cv_rows}")
 
     return CoverageDomainSummary(
         status=status,

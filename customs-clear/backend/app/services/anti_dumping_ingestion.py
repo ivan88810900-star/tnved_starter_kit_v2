@@ -21,6 +21,7 @@ from .normative_store import append_sync_log, upsert_source_status
 from .payment_data_coverage import run_payment_data_coverage_report
 from .payment_revision_utils import (
     is_anti_dumping_only_bundle_path,
+    is_countervailing_only_bundle_path,
     is_import_duty_bundle_path,
     is_official_anti_dumping_ingestion_revision,
     is_safe_official_anti_dumping_source_url,
@@ -550,6 +551,8 @@ def _validate_bundle_for_ingest(
     if is_import_duty_bundle_path(rel_path) or is_vat_only_bundle_path(rel_path):
         blockers.append("manual_review_required: wrong_domain_bundle_path")
     if is_special_safeguard_only_bundle_path(rel_path):
+        blockers.append("manual_review_required: wrong_domain_bundle_path")
+    if is_countervailing_only_bundle_path(rel_path):
         blockers.append("manual_review_required: wrong_domain_bundle_path")
     if is_wrong_domain_revision_in_anti_dumping_bundle(revision):
         blockers.append(f"wrong_domain_bundle_revision: {revision}")

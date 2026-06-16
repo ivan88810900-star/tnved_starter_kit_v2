@@ -21,6 +21,10 @@ _EEC_ANTI_DUMPING_REVISION_RE = re.compile(
 _EEC_SPECIAL_SAFEGUARD_REVISION_RE = re.compile(
     r"^(?:special-safeguard|special_safeguard|eec-special-safeguard|eec:special-safeguard):\d{4}-\d{2}-\d{2}$"
 )
+# Countervailing contour: countervailing:YYYY-MM-DD | eec-countervailing:YYYY-MM-DD | eec:countervailing:YYYY-MM-DD
+_EEC_COUNTERVAILING_REVISION_RE = re.compile(
+    r"^(?:countervailing|eec-countervailing|eec:countervailing):\d{4}-\d{2}-\d{2}$"
+)
 
 _UNSAFE_OFFICIAL_URL_EXACT = frozenset({"", "manual", "local-copy"})
 _UNSAFE_OFFICIAL_URL_SUBSTRINGS = (
@@ -103,13 +107,19 @@ def is_official_excise_row_marker(
 
 
 def is_wrong_domain_revision_in_excise_bundle(revision: str | None) -> bool:
-    """Import-duty / VAT revision внутри excise bundle — wrong domain для excise ingestion."""
+    """Import-duty / VAT / trade-remedy revisions inside excise bundle — wrong domain for excise ingestion."""
     rev = (revision or "").strip().lower()
     if not rev:
         return False
     if _EEC_EXCISE_REVISION_RE.match(rev):
         return False
-    return bool(_EEC_ETT_REVISION_RE.match(rev)) or bool(_EEC_VAT_REVISION_RE.match(rev))
+    return bool(
+        _EEC_ETT_REVISION_RE.match(rev)
+        or _EEC_VAT_REVISION_RE.match(rev)
+        or _EEC_ANTI_DUMPING_REVISION_RE.match(rev)
+        or _EEC_SPECIAL_SAFEGUARD_REVISION_RE.match(rev)
+        or _EEC_COUNTERVAILING_REVISION_RE.match(rev)
+    )
 
 
 def is_wrong_domain_eec_ett_revision_in_vat_bundle(revision: str | None) -> bool:
@@ -122,7 +132,11 @@ def is_wrong_domain_eec_ett_revision_in_vat_bundle(revision: str | None) -> bool
 
 def is_vat_only_bundle_path(rel_path: str) -> bool:
     """Путь VAT-only bundle — не должен использоваться import-duty discovery."""
-    if is_anti_dumping_only_bundle_path(rel_path) or is_special_safeguard_only_bundle_path(rel_path):
+    if (
+        is_anti_dumping_only_bundle_path(rel_path)
+        or is_special_safeguard_only_bundle_path(rel_path)
+        or is_countervailing_only_bundle_path(rel_path)
+    ):
         return False
     norm = rel_path.replace("\\", "/").lower()
     return norm.endswith("/eec_ett_vat.json") or "/eec_ett_vat.json" in norm
@@ -130,7 +144,7 @@ def is_vat_only_bundle_path(rel_path: str) -> bool:
 
 def is_excise_only_bundle_path(rel_path: str) -> bool:
     """Путь excise-only bundle — не должен использоваться import-duty / VAT discovery."""
-    if is_special_safeguard_only_bundle_path(rel_path):
+    if is_special_safeguard_only_bundle_path(rel_path) or is_countervailing_only_bundle_path(rel_path):
         return False
     norm = rel_path.replace("\\", "/").lower()
     return norm.endswith("/eec_excise.json") or "/eec_excise.json" in norm
@@ -139,7 +153,12 @@ def is_excise_only_bundle_path(rel_path: str) -> bool:
 def is_anti_dumping_only_bundle_path(rel_path: str) -> bool:
     """Путь anti-dumping-only bundle — не должен использоваться duty/VAT/excise discovery."""
     norm = rel_path.replace("\\", "/").lower()
-    if "eec_special_safeguard" in norm or "special_safeguard" in norm:
+    if (
+        "eec_special_safeguard" in norm
+        or "special_safeguard" in norm
+        or "eec_countervailing" in norm
+        or "countervailing" in norm
+    ):
         return False
     return "eec_anti_dumping" in norm or "anti_dumping" in norm
 
@@ -147,14 +166,26 @@ def is_anti_dumping_only_bundle_path(rel_path: str) -> bool:
 def is_special_safeguard_only_bundle_path(rel_path: str) -> bool:
     """Путь special-safeguard-only bundle — не должен использоваться duty/VAT/excise/AD discovery."""
     norm = rel_path.replace("\\", "/").lower()
+    if "eec_countervailing" in norm or "countervailing" in norm:
+        return False
     return "eec_special_safeguard" in norm or "special_safeguard" in norm
 
 
+def is_countervailing_only_bundle_path(rel_path: str) -> bool:
+    """Путь countervailing-only bundle — не должен использоваться duty/VAT/excise/AD/SS discovery."""
+    norm = rel_path.replace("\\", "/").lower()
+    return "eec_countervailing" in norm or "countervailing" in norm
+
+
 def is_import_duty_bundle_path(rel_path: str) -> bool:
-    """Путь import-duty bundle — исключает VAT-only / excise-only / anti-dumping-only файлы."""
+    """Путь import-duty bundle — исключает VAT-only / excise-only / trade-remedy-only файлы."""
     if is_vat_only_bundle_path(rel_path) or is_excise_only_bundle_path(rel_path):
         return False
-    if is_anti_dumping_only_bundle_path(rel_path) or is_special_safeguard_only_bundle_path(rel_path):
+    if (
+        is_anti_dumping_only_bundle_path(rel_path)
+        or is_special_safeguard_only_bundle_path(rel_path)
+        or is_countervailing_only_bundle_path(rel_path)
+    ):
         return False
     norm = rel_path.replace("\\", "/").lower()
     return (
@@ -302,6 +333,7 @@ def is_wrong_domain_revision_in_anti_dumping_bundle(revision: str | None) -> boo
         or _EEC_VAT_REVISION_RE.match(rev)
         or _EEC_EXCISE_REVISION_RE.match(rev)
         or _EEC_SPECIAL_SAFEGUARD_REVISION_RE.match(rev)
+        or _EEC_COUNTERVAILING_REVISION_RE.match(rev)
     )
 
 
@@ -364,6 +396,7 @@ def is_wrong_domain_revision_in_special_safeguard_bundle(revision: str | None) -
         or _EEC_VAT_REVISION_RE.match(rev)
         or _EEC_EXCISE_REVISION_RE.match(rev)
         or _EEC_ANTI_DUMPING_REVISION_RE.match(rev)
+        or _EEC_COUNTERVAILING_REVISION_RE.match(rev)
     )
 
 
@@ -383,6 +416,79 @@ def is_wrong_domain_special_safeguard_revision_in_vat_bundle(revision: str | Non
 def is_wrong_domain_special_safeguard_revision_in_anti_dumping_bundle(revision: str | None) -> bool:
     """Special-safeguard revision inside anti-dumping bundle — wrong domain."""
     return is_wrong_domain_special_safeguard_revision_in_duty_bundle(revision)
+
+
+def is_safe_official_countervailing_source_url(
+    url: str | None, *, registry_official_url: str | None = None
+) -> bool:
+    """Строгий allowlist для official countervailing URL (EEC trade-remedies домен)."""
+    return is_safe_official_anti_dumping_source_url(url, registry_official_url=registry_official_url)
+
+
+def is_official_countervailing_ingestion_revision(revision: str | None) -> bool:
+    """Strict revision only for countervailing ingestion (not duty/VAT/excise/AD/SS)."""
+    rev = (revision or "").strip().lower()
+    if not rev:
+        return False
+    return bool(_EEC_COUNTERVAILING_REVISION_RE.match(rev))
+
+
+def is_official_countervailing_revision(revision: str | None) -> bool:
+    """Revision proof for official countervailing contour (SourceStatus EEC_COUNTERVAILING)."""
+    return is_official_countervailing_ingestion_revision(revision)
+
+
+def is_official_countervailing_row_marker(
+    *, countervailing_source_code: str | None, countervailing_source_revision: str | None
+) -> bool:
+    """Row-level official countervailing proof on special_duties.
+
+    Использует countervailing-specific provenance (countervailing_source_*), изолированную от
+    anti-dumping source_*, safeguard safeguard_source_* и duty/VAT/excise полей.
+    """
+    code = (countervailing_source_code or "").strip().upper()
+    if code != "EEC_COUNTERVAILING":
+        return False
+    return is_official_countervailing_ingestion_revision(countervailing_source_revision)
+
+
+def is_wrong_domain_revision_in_countervailing_bundle(revision: str | None) -> bool:
+    """Duty/VAT/excise/anti-dumping/special-safeguard revisions inside countervailing bundle — wrong domain."""
+    rev = (revision or "").strip().lower()
+    if not rev:
+        return False
+    if _EEC_COUNTERVAILING_REVISION_RE.match(rev):
+        return False
+    return bool(
+        _EEC_ETT_REVISION_RE.match(rev)
+        or _EEC_VAT_REVISION_RE.match(rev)
+        or _EEC_EXCISE_REVISION_RE.match(rev)
+        or _EEC_ANTI_DUMPING_REVISION_RE.match(rev)
+        or _EEC_SPECIAL_SAFEGUARD_REVISION_RE.match(rev)
+    )
+
+
+def is_wrong_domain_countervailing_revision_in_duty_bundle(revision: str | None) -> bool:
+    """Countervailing revision inside import-duty bundle — wrong domain."""
+    rev = (revision or "").strip().lower()
+    if not rev:
+        return False
+    return bool(_EEC_COUNTERVAILING_REVISION_RE.match(rev))
+
+
+def is_wrong_domain_countervailing_revision_in_vat_bundle(revision: str | None) -> bool:
+    """Countervailing revision inside VAT bundle — wrong domain."""
+    return is_wrong_domain_countervailing_revision_in_duty_bundle(revision)
+
+
+def is_wrong_domain_countervailing_revision_in_anti_dumping_bundle(revision: str | None) -> bool:
+    """Countervailing revision inside anti-dumping bundle — wrong domain."""
+    return is_wrong_domain_countervailing_revision_in_duty_bundle(revision)
+
+
+def is_wrong_domain_countervailing_revision_in_special_safeguard_bundle(revision: str | None) -> bool:
+    """Countervailing revision inside special-safeguard bundle — wrong domain."""
+    return is_wrong_domain_countervailing_revision_in_duty_bundle(revision)
 
 
 def raw_measure_rows(payload: dict[str, Any]) -> tuple[list[Any] | None, str | None]:

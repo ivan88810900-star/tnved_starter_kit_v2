@@ -177,7 +177,26 @@ PAYMENT_SOURCE_REGISTRY: tuple[PaymentSourceEntry, ...] = (
             "Локальный canonical bundle кладётся в data/raw_normative/eec_special_safeguard.json; "
             "без файла — missing_official_source.",
             "Отдельный source_code EEC_SPECIAL_SAFEGUARD — не смешивать с EEC_ANTI_DUMPING.",
-            "countervailing вне scope MVP.",
+            "countervailing — отдельный контур trade_remedies_countervailing_official.",
+        ),
+    ),
+    PaymentSourceEntry(
+        source_code="trade_remedies_countervailing_official",
+        name="Официальный контур компенсационных пошлин",
+        domains=("countervailing",),
+        authority_level="official_binding",
+        official_url="https://eec.eaeunion.org/comission/department/deptexsec/trade_remedies/",
+        legal_basis="Решения ЕЭК / Комиссии по торговым мерам — компенсационные пошлины",
+        local_canonical_paths=("data/raw_normative/eec_countervailing.json",),
+        source_status_code="EEC_COUNTERVAILING",
+        loader_status="ready",
+        target_tables=("special_duties",),
+        registry_source_id="trade_remedies_countervailing_official",
+        known_gaps=(
+            "Локальный canonical bundle кладётся в data/raw_normative/eec_countervailing.json; "
+            "без файла — missing_official_source.",
+            "Отдельный source_code EEC_COUNTERVAILING — не смешивать с EEC_ANTI_DUMPING / EEC_SPECIAL_SAFEGUARD.",
+            "trade_remedies aggregate остаётся partial/manual_review_required без completeness model.",
         ),
     ),
     PaymentSourceEntry(
