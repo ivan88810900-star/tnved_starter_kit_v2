@@ -223,6 +223,19 @@ class TestOfficialPaymentCoverageAuditEmpty(unittest.TestCase):
         for d in report["domains"]:
             self.assertFalse(d["domain_unsupported"])
 
+    def test_summary_counts_by_status_and_action(self) -> None:
+        report = run_official_payment_coverage_audit()
+        summary = report["summary"]
+        self.assertEqual(summary["domain_count"], 6)
+        self.assertEqual(
+            sum(summary["by_coverage_status"].values()),
+            6,
+        )
+        self.assertEqual(
+            sum(summary["by_recommended_next_action"].values()),
+            6,
+        )
+
     def test_trade_remedies_aggregate_not_present(self) -> None:
         report = run_official_payment_coverage_audit()
         agg = report["trade_remedies_aggregate"]
@@ -461,6 +474,89 @@ class TestOfficialPaymentCoverageAuditEndpoint(unittest.TestCase):
         self.assertFalse(data["db_mutated"])
         self.assertEqual(len(data["domains"]), 6)
         self.assertEqual(before, after)
+
+
+class TestOfficialPaymentCoverageAuditScript(unittest.TestCase):
+    def setUp(self) -> None:
+        self.sm = _memory_sessionmaker()
+        self._patches = _start_patches(self.sm)
+        self._root_ctx = _IngestionRootPatch(Path("/nonexistent"))
+        self._root_ctx.__enter__()
+
+    def tearDown(self) -> None:
+        self._root_ctx.__exit__()
+        _stop_patches(*self._patches)
+
+    def test_module_main_prints_json_report(self) -> None:
+        from io import StringIO
+
+        from app.scripts.official_payment_coverage_audit import (
+            STABLE_DOMAIN_AUDIT_KEYS,
+            STABLE_REPORT_TOP_LEVEL_KEYS,
+            STABLE_SUMMARY_KEYS,
+            main,
+        )
+
+        before = _table_counts(self.sm)
+        buf = StringIO()
+        with unittest.mock.patch("sys.stdout", buf):
+            rc = main(["--json"])
+        after = _table_counts(self.sm)
+        self.assertEqual(rc, 0)
+        self.assertEqual(before, after)
+
+        report = json.loads(buf.getvalue())
+        self.assertFalse(report["db_mutated"])
+        self.assertEqual(set(report.keys()), STABLE_REPORT_TOP_LEVEL_KEYS)
+        self.assertEqual(len(report["domains"]), 6)
+        self.assertEqual(set(report["summary"].keys()), STABLE_SUMMARY_KEYS)
+        self.assertEqual(report["summary"]["domain_count"], 6)
+        self.assertEqual(
+            sum(report["summary"]["by_coverage_status"].values()),
+            6,
+        )
+        self.assertEqual(
+            sum(report["summary"]["by_recommended_next_action"].values()),
+            6,
+        )
+        for domain in report["domains"]:
+            self.assertEqual(set(domain.keys()), STABLE_DOMAIN_AUDIT_KEYS)
+
+    def test_module_main_is_idempotent_on_table_counts(self) -> None:
+        from io import StringIO
+
+        from app.scripts.official_payment_coverage_audit import main
+
+        before = _table_counts(self.sm)
+        for _ in range(2):
+            buf = StringIO()
+            with unittest.mock.patch("sys.stdout", buf):
+                self.assertEqual(main(["--json"]), 0)
+            report = json.loads(buf.getvalue())
+            self.assertFalse(report["db_mutated"])
+        after = _table_counts(self.sm)
+        self.assertEqual(before, after)
+
+    def test_module_main_countervailing_supported_domain(self) -> None:
+        from io import StringIO
+
+        from app.scripts.official_payment_coverage_audit import main
+
+        with _BundleFixture(
+            _official_cv_payload(), rel_path="data/raw_normative/eec_countervailing.json"
+        ) as (root, rel):
+            with _IngestionRootPatch(root):
+                run_countervailing_apply(rel_path=rel)
+                buf = StringIO()
+                with unittest.mock.patch("sys.stdout", buf):
+                    self.assertEqual(main(["--json"]), 0)
+                report = json.loads(buf.getvalue())
+        cv = _domain(report, "EEC_COUNTERVAILING")
+        self.assertEqual(cv["domain"], "countervailing")
+        self.assertFalse(cv["domain_unsupported"])
+        self.assertGreater(cv["official_row_count"], 0)
+        self.assertTrue(cv["countervailing_source_url"])
+        self.assertTrue(cv["countervailing_synced_at"])
 
 
 if __name__ == "__main__":

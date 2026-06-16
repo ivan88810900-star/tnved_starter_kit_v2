@@ -62,5 +62,6 @@ class OfficialPaymentCoverageAuditResponse(BaseModel):
     generated_at: str
     db_mutated: bool = False
     domains: list[OfficialPaymentDomainAudit]
+    summary: dict[str, Any] = Field(default_factory=dict)
     trade_remedies_aggregate: dict[str, Any] = Field(default_factory=dict)
     notes: list[str] = Field(default_factory=list)

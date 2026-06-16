@@ -600,6 +600,23 @@ def _audit_domain(spec: _DomainSpec, entry: PaymentSourceEntry | None) -> Offici
     )
 
 
+def _build_domain_summary(domains: list[OfficialPaymentDomainAudit]) -> dict[str, Any]:
+    by_coverage_status: dict[str, int] = {}
+    by_recommended_next_action: dict[str, int] = {}
+    for domain in domains:
+        by_coverage_status[domain.coverage_status] = (
+            by_coverage_status.get(domain.coverage_status, 0) + 1
+        )
+        by_recommended_next_action[domain.recommended_next_action] = (
+            by_recommended_next_action.get(domain.recommended_next_action, 0) + 1
+        )
+    return {
+        "domain_count": len(domains),
+        "by_coverage_status": dict(sorted(by_coverage_status.items())),
+        "by_recommended_next_action": dict(sorted(by_recommended_next_action.items())),
+    }
+
+
 def _trade_remedies_aggregate(domains: list[OfficialPaymentDomainAudit]) -> dict[str, Any]:
     tr = [d for d in domains if d.domain in {"anti_dumping", "special_safeguard", "countervailing"}]
     official_total = sum(d.official_row_count for d in tr)
@@ -634,6 +651,7 @@ def run_official_payment_coverage_audit() -> dict[str, Any]:
         generated_at=generated_at,
         db_mutated=False,
         domains=domains,
+        summary=_build_domain_summary(domains),
         trade_remedies_aggregate=_trade_remedies_aggregate(domains),
         notes=[
             "Read-only audit: SourceStatus/SyncLog/HsRate/SpecialDuty не мутируются.",
