@@ -11,6 +11,7 @@ from ..services.regulatory_source_completeness import (
     list_registry_snapshot,
     run_regulatory_source_completeness_report,
 )
+from ..services.official_payment_coverage_audit import run_official_payment_coverage_audit
 from ..services.payment_data_coverage import run_payment_data_coverage_report
 from ..services.payment_data_normalization import run_payment_data_normalization_report
 from ..services.import_duty_ingestion import run_import_duty_apply, run_import_duty_dry_run
@@ -74,6 +75,12 @@ async def sources_completeness() -> JSONResponse:
 async def sources_payment_coverage() -> JSONResponse:
     """Диагностика покрытия ТН ВЭД, тарифов, НДС, акциза, торговых мер и курсов валют."""
     return JSONResponse(run_payment_data_coverage_report())
+
+
+@router.get("/payment-coverage-audit")
+async def sources_payment_coverage_audit() -> JSONResponse:
+    """Read-only аудит official payment/remedy coverage по шести доменам (EEC_ETT … EEC_COUNTERVAILING)."""
+    return JSONResponse(run_official_payment_coverage_audit())
 
 
 @router.get("/payment-normalization")
