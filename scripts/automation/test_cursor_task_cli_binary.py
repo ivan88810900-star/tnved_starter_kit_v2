@@ -27,3 +27,27 @@ def test_run_agent_source_uses_default_constant() -> None:
     assert 'os.environ.get("CURSOR_AGENT_BIN", DEFAULT_CURSOR_AGENT_BIN)' in source
     assert ', "agent")' not in source
     assert '", "agent"' not in source
+
+
+def test_existing_pr_context_is_rendered_into_prompt() -> None:
+    mod = _load_module()
+    prompt = mod.build_agent_prompt(
+        {
+            "number": 57,
+            "title": "Fix workflow",
+            "body": "Issue body",
+            "html_url": "https://example.test/issues/57",
+        },
+        Path(__file__).resolve().parents[2],
+        {
+            "number": 56,
+            "url": "https://example.test/pull/56",
+            "head_branch": "cursor/issue-55-example",
+            "comments": {"reviews": [{"body": "REQUEST_CHANGES"}]},
+        },
+    )
+    assert "Existing PR update context" in prompt
+    assert "https://example.test/pull/56" in prompt
+    assert "cursor/issue-55-example" in prompt
+    assert "REQUEST_CHANGES" in prompt
+    assert "Do not create a new branch or PR" in prompt
