@@ -44,6 +44,13 @@ def test_workflow_trigger_includes_workflow_dispatch_issue_number() -> None:
     assert "issue_number:" in on_block
 
 
+def test_workflow_dispatch_can_update_existing_pr() -> None:
+    on_block = _workflow_on_block()
+    assert "update_existing_pr:" in on_block
+    assert "type: boolean" in on_block
+    assert "default: false" in on_block
+
+
 def test_job_if_supports_issues_and_workflow_dispatch() -> None:
     job_if = _cursor_task_job_if()
     assert "github.event_name == 'issues'" in job_if
@@ -95,3 +102,26 @@ def test_trusted_actor_gate_still_present() -> None:
     assert "Authorize trusted actor" in text
     assert "ivan88810900-star" in text
     assert "steps.authorize.outputs.authorized == 'true'" in text
+
+
+def test_existing_pr_without_update_mode_is_still_skipped() -> None:
+    text = WORKFLOW.read_text(encoding="utf-8")
+    assert "Cursor Task automation skipped" in text
+    assert "update_existing_pr=true" in text
+    assert "steps.existing_pr.outputs.count == '0'" in text
+
+
+def test_existing_pr_update_mode_runs_agent_and_pushes_existing_branch() -> None:
+    text = WORKFLOW.read_text(encoding="utf-8")
+    assert "Checkout existing PR branch" in text
+    assert "Run Cursor agent (headless)" in text
+    assert "steps.existing_pr.outputs.update_existing_pr == 'true'" in text
+    assert "git push origin \"${EXISTING_BRANCH_NAME}\"" in text
+    assert "Cursor Task update mode finished" in text
+
+
+def test_existing_pr_context_is_passed_to_agent() -> None:
+    text = WORKFLOW.read_text(encoding="utf-8")
+    assert "EXISTING_PR_CONTEXT_PATH" in text
+    assert "Build existing PR review context" in text
+    assert "gh pr view \"${PR_NUMBER}\" --json comments,reviews" in text
