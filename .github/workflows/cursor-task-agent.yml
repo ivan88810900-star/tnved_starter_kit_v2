@@ -13,6 +13,11 @@ on:
         description: GitHub issue number to run cursor-task automation for
         required: true
         type: number
+      update_existing_pr:
+        description: Reuse and update the existing open cursor-task PR for this issue
+        required: false
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -58,6 +63,7 @@ jobs:
             echo "CURSOR_TASK_TEMP=${CURSOR_TASK_TEMP}"
             echo "ISSUE_CONTEXT_PATH=${CURSOR_TASK_TEMP}/issue-context.json"
             echo "OPEN_PRS_PATH=${CURSOR_TASK_TEMP}/open-prs.json"
+            echo "EXISTING_PR_CONTEXT_PATH=${CURSOR_TASK_TEMP}/existing-pr-context.json"
             echo "PR_BODY_PATH=${CURSOR_TASK_TEMP}/pr-body.md"
           } >> "${GITHUB_ENV}"
 
@@ -194,12 +200,13 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           ISSUE_NUMBER: ${{ steps.issue_ctx.outputs.issue_number }}
           REPOSITORY_OWNER: ${{ github.repository_owner }}
+          UPDATE_EXISTING_PR: ${{ github.event.inputs.update_existing_pr || 'false' }}
         run: |
           ISSUE_NUM="${ISSUE_NUMBER}"
           REPO_NAME="${GITHUB_REPOSITORY#*/}"
           BRANCH_PREFIX="cursor/issue-${ISSUE_NUM}-"
           gh pr list --state open --limit 1000 \
-            --json headRefName,headRepositoryOwner,headRepository \
+            --json number,url,headRefName,headRepositoryOwner,headRepository \
             > "${OPEN_PRS_PATH}"
           COUNT=$(python3 scripts/automation/count_cursor_task_duplicate_prs.py \
             --branch-prefix "${BRANCH_PREFIX}" \
@@ -207,19 +214,76 @@ jobs:
             --repo "${REPO_NAME}" \
             "${OPEN_PRS_PATH}")
           echo "count=${COUNT}" >> "${GITHUB_OUTPUT}"
+          echo "update_existing_pr=${UPDATE_EXISTING_PR}" >> "${GITHUB_OUTPUT}"
           if [ "${COUNT}" -gt 0 ]; then
+            python3 - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          data = json.loads(Path(os.environ['OPEN_PRS_PATH']).read_text(encoding='utf-8'))
+          branch_prefix = f"cursor/issue-{os.environ['ISSUE_NUMBER']}-"
+          owner = os.environ['REPOSITORY_OWNER']
+          repo = os.environ['GITHUB_REPOSITORY'].split('/', 1)[1]
+          matches = [
+              pr for pr in data
+              if str(pr.get('headRefName') or '').startswith(branch_prefix)
+              and (pr.get('headRepositoryOwner') or {}).get('login') == owner
+              and (pr.get('headRepository') or {}).get('name') == repo
+          ]
+          if matches:
+              pr = matches[0]
+              with open(os.environ['GITHUB_OUTPUT'], 'a', encoding='utf-8') as fh:
+                  fh.write(f"pr_number={pr['number']}\n")
+                  fh.write(f"pr_url={pr['url']}\n")
+                  fh.write(f"head_branch={pr['headRefName']}\n")
+          PY
+          fi
+          if [ "${COUNT}" -gt 0 ] && [ "${UPDATE_EXISTING_PR}" != "true" ]; then
             gh issue comment "${ISSUE_NUM}" --body \
-              "⏭️ **Cursor Task automation skipped** — an open PR already exists for this issue (branch prefix \`${BRANCH_PREFIX}*\`)."
+              "⏭️ **Cursor Task automation skipped** — an open PR already exists for this issue (branch prefix \`${BRANCH_PREFIX}*\`). Re-run with \`update_existing_pr=true\` to update that PR branch."
           fi
 
+      - name: Build existing PR review context
+        if: >-
+          steps.authorize.outputs.authorized == 'true' &&
+          steps.existing_pr.outputs.count != '0' &&
+          steps.existing_pr.outputs.update_existing_pr == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ steps.existing_pr.outputs.pr_number }}
+          PR_URL: ${{ steps.existing_pr.outputs.pr_url }}
+          HEAD_BRANCH: ${{ steps.existing_pr.outputs.head_branch }}
+        run: |
+          {
+            echo "{"
+            echo "  \"number\": ${PR_NUMBER},"
+            echo "  \"url\": \"${PR_URL}\","
+            echo "  \"head_branch\": \"${HEAD_BRANCH}\","
+            echo "  \"comments\": "
+            gh pr view "${PR_NUMBER}" --json comments,reviews --jq '{comments: .comments, reviews: .reviews}'
+            echo "}"
+          } > "${EXISTING_PR_CONTEXT_PATH}"
+
       - name: Comment on issue (run started)
-        if: steps.authorize.outputs.authorized == 'true' && steps.existing_pr.outputs.count == '0'
+        if: >-
+          steps.authorize.outputs.authorized == 'true' &&
+          (
+            steps.existing_pr.outputs.count == '0' ||
+            steps.existing_pr.outputs.update_existing_pr == 'true'
+          )
         env:
           GH_TOKEN: ${{ github.token }}
           ISSUE_NUMBER: ${{ steps.issue_ctx.outputs.issue_number }}
+          EXISTING_PR_URL: ${{ steps.existing_pr.outputs.pr_url }}
         run: |
-          gh issue comment "${ISSUE_NUMBER}" --body \
-            "🤖 **Cursor Task automation started** (workflow run: ${WORKFLOW_RUN_URL})."
+          if [ -n "${EXISTING_PR_URL}" ]; then
+            gh issue comment "${ISSUE_NUMBER}" --body \
+              "🤖 **Cursor Task update mode started** for existing PR: ${EXISTING_PR_URL} (workflow run: ${WORKFLOW_RUN_URL})."
+          else
+            gh issue comment "${ISSUE_NUMBER}" --body \
+              "🤖 **Cursor Task automation started** (workflow run: ${WORKFLOW_RUN_URL})."
+          fi
 
       - name: Create task branch
         if: steps.authorize.outputs.authorized == 'true' && steps.existing_pr.outputs.count == '0'
@@ -228,29 +292,57 @@ jobs:
         run: |
           git checkout -B "${BRANCH_NAME}"
 
+      - name: Checkout existing PR branch
+        if: >-
+          steps.authorize.outputs.authorized == 'true' &&
+          steps.existing_pr.outputs.count != '0' &&
+          steps.existing_pr.outputs.update_existing_pr == 'true'
+        env:
+          BRANCH_NAME: ${{ steps.existing_pr.outputs.head_branch }}
+        run: |
+          git fetch origin "${BRANCH_NAME}:${BRANCH_NAME}"
+          git checkout "${BRANCH_NAME}"
+
       - name: Install Cursor CLI
-        if: steps.authorize.outputs.authorized == 'true' && steps.existing_pr.outputs.count == '0'
+        if: >-
+          steps.authorize.outputs.authorized == 'true' &&
+          (
+            steps.existing_pr.outputs.count == '0' ||
+            steps.existing_pr.outputs.update_existing_pr == 'true'
+          )
         run: |
           curl https://cursor.com/install -fsS | bash
           echo "$HOME/.cursor/bin" >> "${GITHUB_PATH}"
           cursor-agent --version
 
       - name: Run Cursor agent (headless)
-        if: steps.authorize.outputs.authorized == 'true' && steps.existing_pr.outputs.count == '0'
+        if: >-
+          steps.authorize.outputs.authorized == 'true' &&
+          (
+            steps.existing_pr.outputs.count == '0' ||
+            steps.existing_pr.outputs.update_existing_pr == 'true'
+          )
         env:
           CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
         run: |
           env -u GITHUB_TOKEN -u GH_TOKEN \
             CURSOR_API_KEY="${CURSOR_API_KEY}" \
             ISSUE_CONTEXT_PATH="${ISSUE_CONTEXT_PATH}" \
+            EXISTING_PR_CONTEXT_PATH="${EXISTING_PR_CONTEXT_PATH}" \
             python3 scripts/automation/run_cursor_task_from_issue.py
 
       - name: Commit changes
-        if: steps.authorize.outputs.authorized == 'true' && steps.existing_pr.outputs.count == '0'
+        if: >-
+          steps.authorize.outputs.authorized == 'true' &&
+          (
+            steps.existing_pr.outputs.count == '0' ||
+            steps.existing_pr.outputs.update_existing_pr == 'true'
+          )
         id: git_commit
         env:
           ISSUE_NUMBER: ${{ steps.issue_ctx.outputs.issue_number }}
           CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
+          UPDATE_EXISTING_PR: ${{ steps.existing_pr.outputs.update_existing_pr }}
         run: |
           git add -A
           python3 scripts/automation/validate_cursor_task_staged_changes.py
@@ -261,17 +353,33 @@ jobs:
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git commit -m "Implement cursor-task issue #${ISSUE_NUMBER}"
+          if [ "${UPDATE_EXISTING_PR}" = "true" ]; then
+            git commit -m "Address cursor-task review for issue #${ISSUE_NUMBER}"
+          else
+            git commit -m "Implement cursor-task issue #${ISSUE_NUMBER}"
+          fi
           echo "changed=true" >> "${GITHUB_OUTPUT}"
 
       - name: Push branch
-        if: steps.authorize.outputs.authorized == 'true' && steps.existing_pr.outputs.count == '0' && steps.git_commit.outputs.changed == 'true'
+        if: >-
+          steps.authorize.outputs.authorized == 'true' &&
+          steps.git_commit.outputs.changed == 'true' &&
+          (
+            steps.existing_pr.outputs.count == '0' ||
+            steps.existing_pr.outputs.update_existing_pr == 'true'
+          )
         env:
           GH_TOKEN: ${{ github.token }}
-          BRANCH_NAME: ${{ steps.issue_ctx.outputs.branch_name }}
+          NEW_BRANCH_NAME: ${{ steps.issue_ctx.outputs.branch_name }}
+          EXISTING_BRANCH_NAME: ${{ steps.existing_pr.outputs.head_branch }}
+          UPDATE_EXISTING_PR: ${{ steps.existing_pr.outputs.update_existing_pr }}
         run: |
           gh auth setup-git
-          git push --force-with-lease origin "${BRANCH_NAME}"
+          if [ "${UPDATE_EXISTING_PR}" = "true" ]; then
+            git push origin "${EXISTING_BRANCH_NAME}"
+          else
+            git push --force-with-lease origin "${NEW_BRANCH_NAME}"
+          fi
 
       - name: Open pull request
         if: steps.authorize.outputs.authorized == 'true' && steps.existing_pr.outputs.count == '0' && steps.git_commit.outputs.changed == 'true'
@@ -302,14 +410,39 @@ jobs:
           gh issue comment "${ISSUE_NUMBER}" --body \
             "✅ **Cursor Task automation finished** — PR opened: ${PR_URL}"
 
-      - name: Comment on issue (no changes)
-        if: steps.authorize.outputs.authorized == 'true' && steps.existing_pr.outputs.count == '0' && steps.git_commit.outputs.changed == 'false'
+      - name: Comment on issue (existing PR updated)
+        if: >-
+          steps.authorize.outputs.authorized == 'true' &&
+          steps.existing_pr.outputs.update_existing_pr == 'true' &&
+          steps.git_commit.outputs.changed == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
           ISSUE_NUMBER: ${{ steps.issue_ctx.outputs.issue_number }}
+          PR_URL: ${{ steps.existing_pr.outputs.pr_url }}
         run: |
           gh issue comment "${ISSUE_NUMBER}" --body \
-            "⚠️ **Cursor Task automation finished** — the agent made no file changes. Check workflow logs or refine the issue body."
+            "✅ **Cursor Task update mode finished** — pushed a new commit to existing PR: ${PR_URL}"
+
+      - name: Comment on issue (no changes)
+        if: >-
+          steps.authorize.outputs.authorized == 'true' &&
+          steps.git_commit.outputs.changed == 'false' &&
+          (
+            steps.existing_pr.outputs.count == '0' ||
+            steps.existing_pr.outputs.update_existing_pr == 'true'
+          )
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ISSUE_NUMBER: ${{ steps.issue_ctx.outputs.issue_number }}
+          PR_URL: ${{ steps.existing_pr.outputs.pr_url }}
+        run: |
+          if [ -n "${PR_URL}" ]; then
+            gh issue comment "${ISSUE_NUMBER}" --body \
+              "⚠️ **Cursor Task update mode finished** — the agent made no file changes for existing PR: ${PR_URL}. Check workflow logs or refine the issue/review context."
+          else
+            gh issue comment "${ISSUE_NUMBER}" --body \
+              "⚠️ **Cursor Task automation finished** — the agent made no file changes. Check workflow logs or refine the issue body."
+          fi
 
       - name: Comment on issue (workflow failed)
         if: failure() && steps.authorize.outputs.authorized == 'true' && steps.issue_ctx.outputs.issue_number != ''
