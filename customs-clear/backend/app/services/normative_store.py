@@ -1892,6 +1892,55 @@ def upsert_geo_special_duty(
         db.commit()
 
 
+def get_recycling_fee(hs_code: str, *, is_new: bool = True, engine_volume: int | None = None) -> list[dict[str, Any]]:
+    """Lookup recycling fees for a vehicle HS code (8701-8705, 8711).
+
+    Returns matching fee rows sorted by specificity (exact volume match first).
+    """
+    from ..models.tnved import RecyclingFee
+
+    d = _digits_hs(hs_code)
+    if not d or len(d) < 4:
+        return []
+    prefix = d[:4]
+    vehicle_prefixes = {"8701", "8702", "8703", "8704", "8705", "8711"}
+    if prefix not in vehicle_prefixes:
+        return []
+    with SessionLocal() as db:
+        q = db.query(RecyclingFee).filter(
+            RecyclingFee.hs_prefix == prefix,
+            RecyclingFee.is_new == is_new,
+        )
+        rows = q.all()
+    if not rows:
+        return []
+    results: list[dict[str, Any]] = []
+    for r in rows:
+        vol_from = r.engine_volume_from
+        vol_to = r.engine_volume_to
+        if engine_volume is not None and vol_from is not None:
+            if engine_volume < vol_from:
+                continue
+            if vol_to is not None and engine_volume >= vol_to:
+                continue
+        results.append({
+            "vehicle_type": r.vehicle_type,
+            "is_new": r.is_new,
+            "base_rate": float(r.base_rate),
+            "coefficient": float(r.coefficient),
+            "fee_amount": round(float(r.base_rate) * float(r.coefficient), 2),
+            "engine_volume_from": r.engine_volume_from,
+            "engine_volume_to": r.engine_volume_to,
+            "description": r.description or "",
+            "legal_ref": r.legal_ref or "",
+        })
+    results.sort(key=lambda x: (
+        0 if (x["engine_volume_from"] is not None and engine_volume is not None) else 1,
+        x.get("engine_volume_from") or 0,
+    ))
+    return results
+
+
 def format_applied_special_duty_label(document_basis: str) -> str:
     """Краткая подпись для колонки Excel (например «ПП РФ №2140»)."""
     s = (document_basis or "").strip()
