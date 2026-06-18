@@ -11,6 +11,7 @@ from .tnved import (
     Chapter,
     Commodity,
     CountryTariffPreference,
+    CustomsProcedure,
     HsDutyRule,
     IntellectualProperty,
     NonTariffMeasure,
