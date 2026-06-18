@@ -1,0 +1,222 @@
+# Claude Code PR Reviewer — автоматический review каждого нового/обновлённого PR.
+# Запускает тесты, анализирует diff, добавляет labels: claude-approved / needs-fixes.
+
+name: Claude PR Reviewer
+
+on:
+  pull_request:
+    types: [opened, synchronize, ready_for_review]
+    branches: [main]
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
+concurrency:
+  group: claude-review-pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    # Пропускаем draft PRs и PRs с skip-review label
+    if: |
+      !github.event.pull_request.draft &&
+      !contains(github.event.pull_request.labels.*.name, 'skip-claude-review')
+
+    steps:
+      - name: Require ANTHROPIC_API_KEY
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          if [ -z "${ANTHROPIC_API_KEY}" ]; then
+            echo "::error::ANTHROPIC_API_KEY secret is not configured."
+            echo "Add it under Settings → Secrets and variables → Actions."
+            exit 1
+          fi
+
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install backend test dependencies
+        run: |
+          pip install -q pytest pytest-asyncio anyio pydantic sqlalchemy fastapi httpx 2>/dev/null || true
+          # Try full requirements if present
+          if [ -f customs-clear/backend/requirements.txt ]; then
+            pip install -q -r customs-clear/backend/requirements.txt 2>/dev/null || true
+          fi
+
+      - name: Run tests
+        id: tests
+        working-directory: customs-clear/backend
+        run: |
+          python3 -m pytest tests/ -q --tb=short --no-header 2>&1 | tee /tmp/test_output.txt
+          TEST_EXIT=${PIPESTATUS[0]}
+          echo "exit_code=${TEST_EXIT}" >> "${GITHUB_OUTPUT}"
+          PASSED=$(grep -E "^[0-9]+ passed" /tmp/test_output.txt | grep -oE "^[0-9]+" || echo "0")
+          FAILED=$(grep -E "[0-9]+ failed" /tmp/test_output.txt | grep -oE "[0-9]+ failed" | grep -oE "^[0-9]+" || echo "0")
+          echo "passed=${PASSED}" >> "${GITHUB_OUTPUT}"
+          echo "failed=${FAILED}" >> "${GITHUB_OUTPUT}"
+        continue-on-error: true
+
+      - name: Install Claude Code CLI
+        run: npm install -g @anthropic-ai/claude-code
+
+      - name: Build review context
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          # Diff (ограничиваем до 250 строк для контекста)
+          gh pr diff "${PR_NUMBER}" 2>/dev/null | head -250 > /tmp/pr_diff.txt || echo "(diff unavailable)" > /tmp/pr_diff.txt
+
+          # PR body
+          gh pr view "${PR_NUMBER}" --json body --jq '.body' > /tmp/pr_body.txt 2>/dev/null || echo "" > /tmp/pr_body.txt
+
+          # Test output (последние 50 строк)
+          tail -50 /tmp/test_output.txt > /tmp/test_tail.txt 2>/dev/null || echo "no test output" > /tmp/test_tail.txt
+
+          PR_DIFF=$(cat /tmp/pr_diff.txt)
+          PR_BODY=$(cat /tmp/pr_body.txt)
+          TEST_OUT=$(cat /tmp/test_tail.txt)
+
+          cat > /tmp/review_prompt.txt << HEREDOC
+          You are a senior code reviewer for the tnved_starter_kit_v2 repository.
+          This is a Python/FastAPI backend for customs clearance (EAEU payment rates, HS codes).
+
+          ## PR: ${PR_TITLE}
+          ## PR Description
+          ${PR_BODY}
+
+          ## Test Output
+          \`\`\`
+          ${TEST_OUT}
+          \`\`\`
+
+          ## Code Diff (first 250 lines)
+          \`\`\`diff
+          ${PR_DIFF}
+          \`\`\`
+
+          ## Review Checklist
+          Check each item and note issues (P1 = blocker, P2 = suggestion):
+          - [ ] Tests pass (see test output above)
+          - [ ] No hardcoded official data (must come from DB/registry)
+          - [ ] db_mutated=False for read-only operations
+          - [ ] Provenance fields present (source_code, source_revision, source_url) when writing rows
+          - [ ] No SQL injection or XSS
+          - [ ] No auto-mutation without explicit flag/guard
+          - [ ] Separate diagnostic vs action enums (backfill_situation vs recommended_next_action)
+
+          ## Instructions
+          Write a concise review (max 300 words). List any P1 blockers explicitly.
+          End with EXACTLY one verdict line:
+          VERDICT: APPROVE
+          VERDICT: REQUEST_CHANGES
+          VERDICT: COMMENT
+          HEREDOC
+
+      - name: Run Claude review
+        id: claude
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          claude --print --output-format text "$(cat /tmp/review_prompt.txt)" > /tmp/review_output.txt 2>&1
+          cat /tmp/review_output.txt
+
+          if grep -q "VERDICT: APPROVE" /tmp/review_output.txt; then
+            echo "verdict=APPROVE" >> "${GITHUB_OUTPUT}"
+          elif grep -q "VERDICT: REQUEST_CHANGES" /tmp/review_output.txt; then
+            echo "verdict=REQUEST_CHANGES" >> "${GITHUB_OUTPUT}"
+          else
+            echo "verdict=COMMENT" >> "${GITHUB_OUTPUT}"
+          fi
+
+      - name: Determine final verdict
+        id: final
+        env:
+          TESTS_EXIT: ${{ steps.tests.outputs.exit_code }}
+          CLAUDE_VERDICT: ${{ steps.claude.outputs.verdict }}
+        run: |
+          # Tests failing always overrides to REQUEST_CHANGES
+          if [ "${TESTS_EXIT}" != "0" ]; then
+            echo "verdict=REQUEST_CHANGES" >> "${GITHUB_OUTPUT}"
+            echo "label=needs-fixes" >> "${GITHUB_OUTPUT}"
+          elif [ "${CLAUDE_VERDICT}" = "APPROVE" ]; then
+            echo "verdict=APPROVE" >> "${GITHUB_OUTPUT}"
+            echo "label=claude-approved" >> "${GITHUB_OUTPUT}"
+          elif [ "${CLAUDE_VERDICT}" = "REQUEST_CHANGES" ]; then
+            echo "verdict=REQUEST_CHANGES" >> "${GITHUB_OUTPUT}"
+            echo "label=needs-fixes" >> "${GITHUB_OUTPUT}"
+          else
+            echo "verdict=COMMENT" >> "${GITHUB_OUTPUT}"
+            echo "label=" >> "${GITHUB_OUTPUT}"
+          fi
+
+      - name: Post review comment
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          VERDICT: ${{ steps.final.outputs.verdict }}
+          TESTS_PASSED: ${{ steps.tests.outputs.passed }}
+          TESTS_FAILED: ${{ steps.tests.outputs.failed }}
+          TESTS_EXIT: ${{ steps.tests.outputs.exit_code }}
+        run: |
+          REVIEW_BODY=$(cat /tmp/review_output.txt)
+
+          if [ "${TESTS_EXIT}" = "0" ]; then
+            TEST_LINE="✅ **Tests:** ${TESTS_PASSED} passed"
+          else
+            TEST_LINE="❌ **Tests:** ${TESTS_FAILED} failed / ${TESTS_PASSED} passed"
+          fi
+
+          if [ "${VERDICT}" = "APPROVE" ]; then
+            VERDICT_BADGE="✅ **Verdict: APPROVED**"
+          elif [ "${VERDICT}" = "REQUEST_CHANGES" ]; then
+            VERDICT_BADGE="🔴 **Verdict: CHANGES REQUESTED**"
+          else
+            VERDICT_BADGE="💬 **Verdict: COMMENT**"
+          fi
+
+          COMMENT_BODY="## 🤖 Claude Code Review
+
+          ${TEST_LINE}
+          ${VERDICT_BADGE}
+
+          ---
+
+          ${REVIEW_BODY}
+
+          ---
+          *Automated review by Claude Code · [Workflow run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})*"
+
+          gh pr comment "${PR_NUMBER}" --body "${COMMENT_BODY}"
+
+      - name: Add result label
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          ADD_LABEL: ${{ steps.final.outputs.label }}
+        run: |
+          if [ -z "${ADD_LABEL}" ]; then exit 0; fi
+
+          # Ensure label exists
+          gh label create "${ADD_LABEL}" --color "0075ca" --description "Claude Code review result" 2>/dev/null || true
+
+          # Remove opposite label if present
+          if [ "${ADD_LABEL}" = "claude-approved" ]; then
+            gh pr edit "${PR_NUMBER}" --remove-label "needs-fixes" 2>/dev/null || true
+          else
+            gh pr edit "${PR_NUMBER}" --remove-label "claude-approved" 2>/dev/null || true
+          fi
+
+          gh pr edit "${PR_NUMBER}" --add-label "${ADD_LABEL}" 2>/dev/null || true

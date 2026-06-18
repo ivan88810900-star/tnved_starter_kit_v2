@@ -1,0 +1,161 @@
+# Claude Comment Handler — отвечает на @claude в комментариях к issues и PRs.
+# Поддерживает команды: @claude review, @claude fix, @claude explain
+
+name: Claude Comment Handler
+
+on:
+  issue_comment:
+    types: [created]
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+
+jobs:
+  handle:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    # Только комментарии содержащие @claude, не от ботов
+    if: |
+      contains(github.event.comment.body, '@claude') &&
+      github.event.comment.user.type != 'Bot'
+
+    steps:
+      - name: Require ANTHROPIC_API_KEY
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          if [ -z "${ANTHROPIC_API_KEY}" ]; then
+            echo "::error::ANTHROPIC_API_KEY secret is not configured."
+            exit 1
+          fi
+
+      - name: Detect context (issue vs PR)
+        id: ctx
+        env:
+          GH_TOKEN: ${{ github.token }}
+          COMMENT_BODY: ${{ github.event.comment.body }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          COMMENTER: ${{ github.event.comment.user.login }}
+        run: |
+          # Check if this is a PR comment
+          IS_PR=$(gh pr view "${ISSUE_NUMBER}" --json number 2>/dev/null | python3 -c "import json,sys; d=json.load(sys.stdin); print('true' if d.get('number') else 'false')" 2>/dev/null || echo "false")
+
+          echo "is_pr=${IS_PR}" >> "${GITHUB_OUTPUT}"
+          echo "number=${ISSUE_NUMBER}" >> "${GITHUB_OUTPUT}"
+          echo "commenter=${COMMENTER}" >> "${GITHUB_OUTPUT}"
+
+          # Detect command intent
+          BODY_LOWER=$(echo "${COMMENT_BODY}" | tr '[:upper:]' '[:lower:]')
+          if echo "${BODY_LOWER}" | grep -qE "@claude.*(review|check|проверь)"; then
+            echo "command=review" >> "${GITHUB_OUTPUT}"
+          elif echo "${BODY_LOWER}" | grep -qE "@claude.*(fix|исправь|почини)"; then
+            echo "command=fix" >> "${GITHUB_OUTPUT}"
+          elif echo "${BODY_LOWER}" | grep -qE "@claude.*(explain|объясни|расскажи)"; then
+            echo "command=explain" >> "${GITHUB_OUTPUT}"
+          elif echo "${BODY_LOWER}" | grep -qE "@claude.*(merge|смержи)"; then
+            echo "command=merge_request" >> "${GITHUB_OUTPUT}"
+          else
+            echo "command=general" >> "${GITHUB_OUTPUT}"
+          fi
+
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          sparse-checkout-cone-mode: true
+          sparse-checkout: |
+            .github
+            AGENTS.md
+            docs
+            customs-clear/backend/app
+            customs-clear/backend/tests
+
+      - name: Install Claude Code CLI
+        run: npm install -g @anthropic-ai/claude-code
+
+      - name: Build context and prompt
+        env:
+          GH_TOKEN: ${{ github.token }}
+          IS_PR: ${{ steps.ctx.outputs.is_pr }}
+          NUMBER: ${{ steps.ctx.outputs.number }}
+          COMMAND: ${{ steps.ctx.outputs.command }}
+          COMMENTER: ${{ steps.ctx.outputs.commenter }}
+          COMMENT_BODY: ${{ github.event.comment.body }}
+        run: |
+          if [ "${IS_PR}" = "true" ]; then
+            PR_INFO=$(gh pr view "${NUMBER}" --json title,body,headRefName 2>/dev/null || echo "{}")
+            CONTEXT_TITLE=$(echo "${PR_INFO}" | python3 -c "import json,sys; d=json.load(sys.stdin); print(d.get('title',''))" 2>/dev/null || echo "")
+            CONTEXT_BODY=$(echo "${PR_INFO}" | python3 -c "import json,sys; d=json.load(sys.stdin); print((d.get('body','') or '')[:600])" 2>/dev/null || echo "")
+            PR_DIFF=$(gh pr diff "${NUMBER}" 2>/dev/null | head -150 || echo "(diff unavailable)")
+            CONTEXT_TYPE="PR"
+          else
+            ISSUE_INFO=$(gh issue view "${NUMBER}" --json title,body 2>/dev/null || echo "{}")
+            CONTEXT_TITLE=$(echo "${ISSUE_INFO}" | python3 -c "import json,sys; d=json.load(sys.stdin); print(d.get('title',''))" 2>/dev/null || echo "")
+            CONTEXT_BODY=$(echo "${ISSUE_INFO}" | python3 -c "import json,sys; d=json.load(sys.stdin); print((d.get('body','') or '')[:600])" 2>/dev/null || echo "")
+            PR_DIFF=""
+            CONTEXT_TYPE="Issue"
+          fi
+
+          DIFF_SECTION=""
+          if [ -n "${PR_DIFF}" ]; then
+            DIFF_SECTION="## Code Diff (first 150 lines)
+          \`\`\`diff
+          ${PR_DIFF}
+          \`\`\`"
+          fi
+
+          cat > /tmp/comment_prompt.txt << HEREDOC
+          You are Claude Code, an AI assistant embedded in the tnved_starter_kit_v2 GitHub repository.
+          A user @mentioned you in a comment.
+
+          ## ${CONTEXT_TYPE} #${NUMBER}: ${CONTEXT_TITLE}
+          ${CONTEXT_BODY}
+
+          ${DIFF_SECTION}
+
+          ## User Comment (from @${COMMENTER})
+          ${COMMENT_BODY}
+
+          ## Command: ${COMMAND}
+
+          ## Instructions
+          Respond helpfully to the user's request. Be concise (max 200 words).
+          - If command=review: give a brief code quality assessment
+          - If command=fix: describe what needs to be fixed (you cannot apply changes from a comment handler)
+          - If command=explain: explain the relevant code or concept
+          - If command=merge_request: note that merge requires claude-approved label + no conflicts
+          - If command=general: answer the question naturally
+
+          Do not include "VERDICT:" in your response (that's only for the PR reviewer workflow).
+          Respond in the same language as the user's comment (Russian or English).
+          HEREDOC
+
+      - name: Run Claude
+        id: claude
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          claude --print --output-format text "$(cat /tmp/comment_prompt.txt)" > /tmp/claude_response.txt 2>&1
+          cat /tmp/claude_response.txt
+
+      - name: Post reply
+        env:
+          GH_TOKEN: ${{ github.token }}
+          IS_PR: ${{ steps.ctx.outputs.is_pr }}
+          NUMBER: ${{ steps.ctx.outputs.number }}
+          COMMENTER: ${{ steps.ctx.outputs.commenter }}
+        run: |
+          RESPONSE=$(cat /tmp/claude_response.txt)
+          REPLY="@${COMMENTER}
+
+          ${RESPONSE}
+
+          ---
+          *Claude Code · [Run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})*"
+
+          if [ "${IS_PR}" = "true" ]; then
+            gh pr comment "${NUMBER}" --body "${REPLY}"
+          else
+            gh issue comment "${NUMBER}" --body "${REPLY}"
+          fi
