@@ -16,6 +16,7 @@ from ..schemas.official_payment_coverage_audit import (
     CoverageAuditStatus,
     OfficialPaymentCoverageAuditResponse,
     OfficialPaymentDomainAudit,
+    RecommendedNextAction,
 )
 from .anti_dumping_ingestion import _load_bundle_payload as _load_anti_dumping_bundle
 from .anti_dumping_ingestion import discover_anti_dumping_bundle_path
@@ -366,37 +367,43 @@ def _derive_backfill(
     official_row_count: int,
     row_count: int,
     trade_remedy: bool,
-) -> tuple[BackfillSituation, BackfillSituation, list[str]]:
+) -> tuple[RecommendedNextAction, BackfillSituation, list[str]]:
     notes: list[str] = []
     if missing_source:
         notes.append("Локальный official bundle отсутствует.")
-        return "acquire_official_source", "acquire_official_source", notes
+        return "acquire_official_source", "missing_official_source", notes
     if parser_failed:
         notes.append("Bundle не прошёл read-only парсинг.")
-        return "manual_review_required", "manual_review_required", notes
-    if unsafe_revision or unsafe_url:
-        notes.append("Revision или URL bundle не проходят conservative allowlist.")
-        return "manual_review_required", "manual_review_required", notes
+        return "manual_review_required", "parser_failure", notes
+    if unsafe_revision and unsafe_url:
+        notes.append("Revision и URL bundle не проходят conservative allowlist.")
+        return "manual_review_required", "unsafe_revision", notes
+    if unsafe_revision:
+        notes.append("Revision bundle/SourceStatus не проходит official revision check.")
+        return "manual_review_required", "unsafe_revision", notes
+    if unsafe_url:
+        notes.append("URL bundle/SourceStatus не проходит conservative allowlist.")
+        return "manual_review_required", "unsafe_url", notes
     if stale_source_status:
         notes.append("SourceStatus помечен is_stale — требуется refresh sync.")
-        return "refresh_official_source", "refresh_official_source", notes
+        return "refresh_official_source", "stale_source_status", notes
     if source_present_but_not_applied:
         notes.append("Official bundle распарсен, но строки не применены в БД.")
-        return "run_apply", "run_apply", notes
+        return "run_apply", "official_source_present_not_applied", notes
     if partial_rows or (proven and official_row_count == 0 and row_count > 0):
         notes.append("Есть локальные строки без row-level official provenance.")
-        return "reapply_official_bundle", "reapply_official_bundle", notes
+        return "reapply_official_bundle", "applied_no_row_provenance", notes
     if trade_remedy and official_row_count > 0:
         notes.append("Trade-remedy contour synced; completeness not verified.")
-        return "manual_review_required", "none", notes
+        return "manual_review_required", "completeness_not_verified", notes
     if proven and official_row_count > 0:
         notes.append("Official contour applied с row-level provenance.")
-        return "none", "none", notes
+        return "none", "ok", notes
     if row_count > 0:
         notes.append("Локальные данные без полного official proof.")
-        return "manual_review_required", "manual_review_required", notes
+        return "manual_review_required", "applied_no_row_provenance", notes
     notes.append("Нет локальных строк и нет подтверждённого apply.")
-    return "none", "none", notes
+    return "none", "ok", notes
 
 
 def _derive_coverage_status(
@@ -571,8 +578,8 @@ def _audit_domain(spec: _DomainSpec, entry: PaymentSourceEntry | None) -> Offici
     return OfficialPaymentDomainAudit(
         domain=spec.domain,
         domain_key=spec.domain_key,
-        expected_official_source=entry.name if entry else spec.registry_source_code,
-        configured_official_source=entry.source_code if entry else spec.registry_source_code,
+        expected_official_source=spec.registry_source_code,
+        configured_official_source=entry is not None,
         local_bundle_present=local_present,
         local_bundle_path=bundle_path,
         source_revision=source_revision,
@@ -598,6 +605,23 @@ def _audit_domain(spec: _DomainSpec, entry: PaymentSourceEntry | None) -> Offici
         countervailing_source_url=countervailing_source_url,
         countervailing_synced_at=countervailing_synced_at,
     )
+
+
+def _build_domain_summary(domains: list[OfficialPaymentDomainAudit]) -> dict[str, Any]:
+    by_coverage_status: dict[str, int] = {}
+    by_recommended_next_action: dict[str, int] = {}
+    for domain in domains:
+        by_coverage_status[domain.coverage_status] = (
+            by_coverage_status.get(domain.coverage_status, 0) + 1
+        )
+        by_recommended_next_action[domain.recommended_next_action] = (
+            by_recommended_next_action.get(domain.recommended_next_action, 0) + 1
+        )
+    return {
+        "domain_count": len(domains),
+        "by_coverage_status": dict(sorted(by_coverage_status.items())),
+        "by_recommended_next_action": dict(sorted(by_recommended_next_action.items())),
+    }
 
 
 def _trade_remedies_aggregate(domains: list[OfficialPaymentDomainAudit]) -> dict[str, Any]:
@@ -634,6 +658,7 @@ def run_official_payment_coverage_audit() -> dict[str, Any]:
         generated_at=generated_at,
         db_mutated=False,
         domains=domains,
+        summary=_build_domain_summary(domains),
         trade_remedies_aggregate=_trade_remedies_aggregate(domains),
         notes=[
             "Read-only audit: SourceStatus/SyncLog/HsRate/SpecialDuty не мутируются.",

@@ -202,7 +202,7 @@ class TestOfficialPaymentCoverageAuditEmpty(unittest.TestCase):
         cv = _domain(report, "EEC_COUNTERVAILING")
         self.assertTrue(cv["missing_source"])
         self.assertFalse(cv["local_bundle_present"])
-        self.assertEqual(cv["backfill_situation"], "acquire_official_source")
+        self.assertEqual(cv["backfill_situation"], "missing_official_source")
         self.assertEqual(cv["recommended_next_action"], "acquire_official_source")
         self.assertFalse(cv["domain_unsupported"])
 
@@ -222,6 +222,19 @@ class TestOfficialPaymentCoverageAuditEmpty(unittest.TestCase):
         )
         for d in report["domains"]:
             self.assertFalse(d["domain_unsupported"])
+
+    def test_summary_counts_by_status_and_action(self) -> None:
+        report = run_official_payment_coverage_audit()
+        summary = report["summary"]
+        self.assertEqual(summary["domain_count"], 6)
+        self.assertEqual(
+            sum(summary["by_coverage_status"].values()),
+            6,
+        )
+        self.assertEqual(
+            sum(summary["by_recommended_next_action"].values()),
+            6,
+        )
 
     def test_trade_remedies_aggregate_not_present(self) -> None:
         report = run_official_payment_coverage_audit()
@@ -258,7 +271,7 @@ class TestOfficialPaymentCoverageAuditSourcePresentNotApplied(unittest.TestCase)
         self.assertEqual(cv["official_row_count"], 0)
         self.assertTrue(cv["source_present_but_not_applied"])
         self.assertEqual(cv["recommended_next_action"], "run_apply")
-        self.assertEqual(cv["backfill_situation"], "run_apply")
+        self.assertEqual(cv["backfill_situation"], "official_source_present_not_applied")
 
 
 class TestOfficialPaymentCoverageAuditOfficialRows(unittest.TestCase):
@@ -362,7 +375,7 @@ class TestOfficialPaymentCoverageAuditStaleAndUnsafe(unittest.TestCase):
                 report = run_official_payment_coverage_audit()
         cv = _domain(report, "EEC_COUNTERVAILING")
         self.assertTrue(cv["unsafe_url"])
-        self.assertEqual(cv["backfill_situation"], "manual_review_required")
+        self.assertEqual(cv["backfill_situation"], "unsafe_url")
 
 
 class TestOfficialPaymentCoverageAuditReapplyRecommendation(unittest.TestCase):
@@ -406,7 +419,7 @@ class TestOfficialPaymentCoverageAuditReapplyRecommendation(unittest.TestCase):
         self.assertGreater(cv["row_count"], 0)
         self.assertEqual(cv["official_row_count"], 0)
         self.assertEqual(cv["recommended_next_action"], "reapply_official_bundle")
-        self.assertEqual(cv["backfill_situation"], "reapply_official_bundle")
+        self.assertEqual(cv["backfill_situation"], "applied_no_row_provenance")
 
 
 class TestOfficialPaymentCoverageAuditCountervailingRealDomain(unittest.TestCase):
@@ -426,7 +439,7 @@ class TestOfficialPaymentCoverageAuditCountervailingRealDomain(unittest.TestCase
                 report = run_official_payment_coverage_audit()
         cv = _domain(report, "EEC_COUNTERVAILING")
         self.assertEqual(cv["domain"], "countervailing")
-        self.assertEqual(cv["configured_official_source"], "trade_remedies_countervailing_official")
+        self.assertIs(cv["configured_official_source"], True)
         self.assertFalse(cv["domain_unsupported"])
         with self.sm() as db:
             row = (
@@ -461,6 +474,199 @@ class TestOfficialPaymentCoverageAuditEndpoint(unittest.TestCase):
         self.assertFalse(data["db_mutated"])
         self.assertEqual(len(data["domains"]), 6)
         self.assertEqual(before, after)
+
+
+class TestOfficialPaymentCoverageAuditScript(unittest.TestCase):
+    def setUp(self) -> None:
+        self.sm = _memory_sessionmaker()
+        self._patches = _start_patches(self.sm)
+        self._root_ctx = _IngestionRootPatch(Path("/nonexistent"))
+        self._root_ctx.__enter__()
+
+    def tearDown(self) -> None:
+        self._root_ctx.__exit__()
+        _stop_patches(*self._patches)
+
+    def test_module_main_prints_json_report(self) -> None:
+        from io import StringIO
+
+        from app.scripts.official_payment_coverage_audit import (
+            STABLE_DOMAIN_AUDIT_KEYS,
+            STABLE_REPORT_TOP_LEVEL_KEYS,
+            STABLE_SUMMARY_KEYS,
+            main,
+        )
+
+        before = _table_counts(self.sm)
+        buf = StringIO()
+        with unittest.mock.patch("sys.stdout", buf):
+            rc = main(["--json"])
+        after = _table_counts(self.sm)
+        self.assertEqual(rc, 0)
+        self.assertEqual(before, after)
+
+        report = json.loads(buf.getvalue())
+        self.assertFalse(report["db_mutated"])
+        self.assertEqual(set(report.keys()), STABLE_REPORT_TOP_LEVEL_KEYS)
+        self.assertEqual(len(report["domains"]), 6)
+        self.assertEqual(set(report["summary"].keys()), STABLE_SUMMARY_KEYS)
+        self.assertEqual(report["summary"]["domain_count"], 6)
+        self.assertEqual(
+            sum(report["summary"]["by_coverage_status"].values()),
+            6,
+        )
+        self.assertEqual(
+            sum(report["summary"]["by_recommended_next_action"].values()),
+            6,
+        )
+        for domain in report["domains"]:
+            self.assertEqual(set(domain.keys()), STABLE_DOMAIN_AUDIT_KEYS)
+
+    def test_module_main_is_idempotent_on_table_counts(self) -> None:
+        from io import StringIO
+
+        from app.scripts.official_payment_coverage_audit import main
+
+        before = _table_counts(self.sm)
+        for _ in range(2):
+            buf = StringIO()
+            with unittest.mock.patch("sys.stdout", buf):
+                self.assertEqual(main(["--json"]), 0)
+            report = json.loads(buf.getvalue())
+            self.assertFalse(report["db_mutated"])
+        after = _table_counts(self.sm)
+        self.assertEqual(before, after)
+
+    def test_module_main_countervailing_supported_domain(self) -> None:
+        from io import StringIO
+
+        from app.scripts.official_payment_coverage_audit import main
+
+        with _BundleFixture(
+            _official_cv_payload(), rel_path="data/raw_normative/eec_countervailing.json"
+        ) as (root, rel):
+            with _IngestionRootPatch(root):
+                run_countervailing_apply(rel_path=rel)
+                buf = StringIO()
+                with unittest.mock.patch("sys.stdout", buf):
+                    self.assertEqual(main(["--json"]), 0)
+                report = json.loads(buf.getvalue())
+        cv = _domain(report, "EEC_COUNTERVAILING")
+        self.assertEqual(cv["domain"], "countervailing")
+        self.assertFalse(cv["domain_unsupported"])
+        self.assertGreater(cv["official_row_count"], 0)
+        self.assertTrue(cv["countervailing_source_url"])
+        self.assertTrue(cv["countervailing_synced_at"])
+
+
+_VALID_DIAGNOSTIC_SITUATIONS = frozenset(
+    {
+        "missing_official_source",
+        "official_source_present_not_applied",
+        "applied_no_row_provenance",
+        "stale_source_status",
+        "unsafe_revision",
+        "unsafe_url",
+        "parser_failure",
+        "partial_rows",
+        "unsupported_domain",
+        "ok",
+        "completeness_not_verified",
+    }
+)
+
+_VALID_NEXT_ACTIONS = frozenset(
+    {
+        "run_apply",
+        "acquire_official_source",
+        "reapply_official_bundle",
+        "refresh_official_source",
+        "manual_review_required",
+        "none",
+    }
+)
+
+
+class TestOfficialPaymentCoverageAuditFieldContract(unittest.TestCase):
+    """Verifies field types and enum contract per Issue #55 requirements."""
+
+    def setUp(self) -> None:
+        self.sm = _memory_sessionmaker()
+        self._patches = _start_patches(self.sm)
+        self._root_ctx = _IngestionRootPatch(Path("/nonexistent"))
+        self._root_ctx.__enter__()
+
+    def tearDown(self) -> None:
+        self._root_ctx.__exit__()
+        _stop_patches(*self._patches)
+
+    def test_db_mutated_is_false(self) -> None:
+        report = run_official_payment_coverage_audit()
+        self.assertIs(report["db_mutated"], False)
+
+    def test_exactly_six_domains_by_expected_key(self) -> None:
+        report = run_official_payment_coverage_audit()
+        self.assertEqual(len(report["domains"]), 6)
+        domain_keys = {d["domain_key"] for d in report["domains"]}
+        self.assertEqual(
+            domain_keys,
+            {
+                "EEC_ETT",
+                "EEC_VAT",
+                "EEC_EXCISE",
+                "EEC_ANTI_DUMPING",
+                "EEC_SPECIAL_SAFEGUARD",
+                "EEC_COUNTERVAILING",
+            },
+        )
+
+    def test_configured_official_source_is_bool_for_all_domains(self) -> None:
+        report = run_official_payment_coverage_audit()
+        for d in report["domains"]:
+            self.assertIsInstance(
+                d["configured_official_source"],
+                bool,
+                msg=f"{d['domain_key']}: configured_official_source must be bool",
+            )
+
+    def test_expected_official_source_is_non_empty_string_for_all_domains(self) -> None:
+        report = run_official_payment_coverage_audit()
+        for d in report["domains"]:
+            self.assertIsInstance(
+                d["expected_official_source"],
+                str,
+                msg=f"{d['domain_key']}: expected_official_source must be str",
+            )
+            self.assertTrue(
+                d["expected_official_source"],
+                msg=f"{d['domain_key']}: expected_official_source must be non-empty",
+            )
+
+    def test_backfill_situation_uses_diagnostic_values_for_all_domains(self) -> None:
+        report = run_official_payment_coverage_audit()
+        for d in report["domains"]:
+            self.assertIn(
+                d["backfill_situation"],
+                _VALID_DIAGNOSTIC_SITUATIONS,
+                msg=f"{d['domain_key']}: backfill_situation '{d['backfill_situation']}' not in diagnostic enum",
+            )
+
+    def test_recommended_next_action_uses_action_values_for_all_domains(self) -> None:
+        report = run_official_payment_coverage_audit()
+        for d in report["domains"]:
+            self.assertIn(
+                d["recommended_next_action"],
+                _VALID_NEXT_ACTIONS,
+                msg=f"{d['domain_key']}: recommended_next_action '{d['recommended_next_action']}' not in action enum",
+            )
+
+    def test_summary_has_status_and_action_groups(self) -> None:
+        report = run_official_payment_coverage_audit()
+        summary = report["summary"]
+        self.assertIn("by_coverage_status", summary)
+        self.assertIn("by_recommended_next_action", summary)
+        self.assertEqual(sum(summary["by_coverage_status"].values()), 6)
+        self.assertEqual(sum(summary["by_recommended_next_action"].values()), 6)
 
 
 if __name__ == "__main__":

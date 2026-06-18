@@ -16,7 +16,8 @@ CoverageAuditStatus = Literal[
     "not_configured",
 ]
 
-BackfillSituation = Literal[
+# Action enum: what to do next
+RecommendedNextAction = Literal[
     "run_apply",
     "acquire_official_source",
     "reapply_official_bundle",
@@ -25,12 +26,27 @@ BackfillSituation = Literal[
     "none",
 ]
 
+# Diagnostic enum: current state of the domain
+BackfillSituation = Literal[
+    "missing_official_source",
+    "official_source_present_not_applied",
+    "applied_no_row_provenance",
+    "stale_source_status",
+    "unsafe_revision",
+    "unsafe_url",
+    "parser_failure",
+    "partial_rows",
+    "unsupported_domain",
+    "ok",
+    "completeness_not_verified",
+]
+
 
 class OfficialPaymentDomainAudit(BaseModel):
     domain: str
     domain_key: str
-    expected_official_source: str | None = None
-    configured_official_source: str | None = None
+    expected_official_source: str
+    configured_official_source: bool = False
     local_bundle_present: bool = False
     local_bundle_path: str | None = None
     source_revision: str | None = None
@@ -50,7 +66,7 @@ class OfficialPaymentDomainAudit(BaseModel):
     domain_unsupported: bool = False
     coverage_status: CoverageAuditStatus
     known_gaps: list[str] = Field(default_factory=list)
-    recommended_next_action: BackfillSituation
+    recommended_next_action: RecommendedNextAction
     backfill_situation: BackfillSituation
     backfill_notes: list[str] = Field(default_factory=list)
     countervailing_source_url: str | None = None
@@ -62,5 +78,6 @@ class OfficialPaymentCoverageAuditResponse(BaseModel):
     generated_at: str
     db_mutated: bool = False
     domains: list[OfficialPaymentDomainAudit]
+    summary: dict[str, Any] = Field(default_factory=dict)
     trade_remedies_aggregate: dict[str, Any] = Field(default_factory=dict)
     notes: list[str] = Field(default_factory=list)
