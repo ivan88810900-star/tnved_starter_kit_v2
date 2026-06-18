@@ -300,6 +300,27 @@ class RecyclingFee(Base):
     legal_ref: Mapped[str] = mapped_column(String(255), default="")
 
 
+class ImportRestriction(Base):
+    """Запреты и ограничения на ввоз: санкции, эмбарго, квоты, dual-use."""
+
+    __tablename__ = "import_restrictions"
+    __table_args__ = (
+        Index("ix_import_restrictions_hs", "hs_prefix"),
+        Index("ix_import_restrictions_type", "restriction_type"),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    hs_prefix: Mapped[str] = mapped_column(String(10), nullable=False)
+    restriction_type: Mapped[str] = mapped_column(String(30), nullable=False)
+    country_code: Mapped[str] = mapped_column(String(10), nullable=False, default="ALL")
+    description: Mapped[str] = mapped_column(Text, nullable=False, default="")
+    legal_ref: Mapped[str] = mapped_column(String(512), nullable=False, default="")
+    effective_from: Mapped[str] = mapped_column(String(20), nullable=False, default="")
+    effective_to: Mapped[str] = mapped_column(String(20), nullable=False, default="")
+    severity: Mapped[str] = mapped_column(String(20), nullable=False, default="warning")
+    source_url: Mapped[str] = mapped_column(String(512), nullable=False, default="")
+
+
 class CustomsProcedure(Base):
     """Таможенные процедуры и режимы (ИМ40, ЭК10, ТТ80 и др.)."""
 
