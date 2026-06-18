@@ -128,7 +128,8 @@
 ### Фаза M — Официальные платёжные контуры и аудит покрытия
 
 - [x] **PR #56 (Issue #55)** — Official Payment Coverage Audit: read-only аудит 6 официальных доменов (EEC_ETT, EEC_VAT, EEC_EXCISE, EEC_ANTI_DUMPING, EEC_SPECIAL_SAFEGUARD, EEC_COUNTERVAILING); отдельные enum `BackfillSituation` (диагностика) и `RecommendedNextAction` (действие); `configured_official_source: bool`; `expected_official_source: str` (non-null); runnable script `app/scripts/official_payment_coverage_audit.py`; 24 теста. ✅ merged 2026-06-18
-- [ ] **Issue #51** — Audit and backfill full official payment data coverage: таблица покрытия `Domain | In DB | Official | Coverage %`, dry-run backfill plan, 10 тестов.
+- [x] **PR #59 (Issue #51)** — Coverage table and dry-run backfill plan: `build_coverage_table()` → `Domain | In DB | Official | Coverage %`; `build_backfill_plan()` → приоритизированный dry-run план (acquire→apply→reapply→refresh→manual); script `app/scripts/coverage_backfill_plan.py`; 43 теста (19 новых). ✅ merged 2026-06-18
+- [x] **PR #43 (Issue #42)** — Official Excise Ingestion MVP: `run_excise_dry_run()` / `run_excise_apply()`; row-level провенанс (`excise_source_*`); Alembic миграция; 25 тестов; API endpoints `/payment-ingestion/excise/*`. ✅ merged (PR #44 closed as superseded)
 
 ### Фаза L — Дальше (бэклог)
 - [x] Стаб HTTP-классификатора для разработки (`scripts/inference_classifier_stub.py`); боевой inference — вне репозитория по **`INFERENCE_CLASSIFIER.md`**.
@@ -166,4 +167,4 @@
 
 ---
 
-*Последнее обновление: фаза M — Official Payment Coverage Audit (PR #56 merged 2026-06-18); Issue #51 в работе.*
+*Последнее обновление: фаза M — PR #56 + PR #59 + PR #43 merged 2026-06-18; excise ingestion, coverage table, backfill plan — всё в main.*
