@@ -1892,6 +1892,46 @@ def upsert_geo_special_duty(
         db.commit()
 
 
+def find_import_restrictions(hs_code: str, *, country: str | None = None) -> list[dict[str, Any]]:
+    """Lookup import restrictions (bans, quotas, sanctions, dual-use, licensing) for an HS code."""
+    from ..models.tnved import ImportRestriction
+
+    d = _digits_hs(hs_code)
+    if not d or len(d) < 4:
+        return []
+    prefixes = []
+    for length in (10, 8, 6, 4):
+        if len(d) >= length:
+            prefixes.append(d[:length])
+    with SessionLocal() as db:
+        rows = db.query(ImportRestriction).filter(
+            ImportRestriction.hs_prefix.in_(prefixes)
+        ).all()
+    if not rows:
+        return []
+    results: list[dict[str, Any]] = []
+    country_upper = (country or "").strip().upper()
+    for r in rows:
+        if country_upper and r.country_code != "ALL" and r.country_code != country_upper:
+            continue
+        results.append({
+            "hs_prefix": r.hs_prefix,
+            "restriction_type": r.restriction_type,
+            "country_code": r.country_code,
+            "description": r.description or "",
+            "legal_ref": r.legal_ref or "",
+            "effective_from": r.effective_from or "",
+            "effective_to": r.effective_to or "",
+            "severity": r.severity or "warning",
+            "source_url": r.source_url or "",
+        })
+    results.sort(key=lambda x: (
+        {"block": 0, "warning": 1}.get(x["severity"], 2),
+        x["hs_prefix"],
+    ))
+    return results
+
+
 def get_recycling_fee(hs_code: str, *, is_new: bool = True, engine_volume: int | None = None) -> list[dict[str, Any]]:
     """Lookup recycling fees for a vehicle HS code (8701-8705, 8711).
 

@@ -13,6 +13,7 @@ from .tnved import (
     CountryTariffPreference,
     CustomsProcedure,
     HsDutyRule,
+    ImportRestriction,
     RecyclingFee,
     IntellectualProperty,
     NonTariffMeasure,

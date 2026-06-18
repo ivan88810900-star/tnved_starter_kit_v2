@@ -7,7 +7,7 @@ from pydantic import BaseModel
 from loguru import logger
 
 from ..services.non_tariff_service import check_position_non_tariff
-from ..services.normative_store import list_tr_ts_acts
+from ..services.normative_store import find_import_restrictions, list_tr_ts_acts
 from ..security import require_authenticated_user
 
 router = APIRouter()
@@ -127,6 +127,25 @@ async def non_tariff_risk_block(
         if order.get(st, 0) > order.get(overall, 0):
             overall = st
     return JSONResponse({"status": overall, "items": results})
+
+
+@router.get("/restrictions/{hs_code}")
+async def import_restrictions_for_hs(
+    hs_code: str,
+    country: str | None = Query(None, description="ISO-2 код страны происхождения"),
+) -> JSONResponse:
+    """Запреты и ограничения на ввоз по коду ТН ВЭД."""
+    restrictions = find_import_restrictions(hs_code, country=country)
+    has_block = any(r["severity"] == "block" for r in restrictions)
+    has_warning = any(r["severity"] == "warning" for r in restrictions)
+    status = "BLOCKED" if has_block else ("WARNING" if has_warning else "OK")
+    return JSONResponse({
+        "status": status,
+        "hs_code": hs_code,
+        "country": country,
+        "restrictions": restrictions,
+        "total": len(restrictions),
+    })
 
 
 @router.post("/check")
