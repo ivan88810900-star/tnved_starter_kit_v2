@@ -157,6 +157,16 @@
 - [x] **PR #70 (Issue #65)** — Full regression suite 71 cases: расширение REGRESSION_MATRIX с 37 до 71 тест-кейсов, покрытие 22 новых глав ТН ВЭД. ✅ merged 2026-06-18
 - [x] **PR #71 (Issue #66)** — Departmental letters HS binding accuracy: KEYWORD_HS_MAP (80+ терминов → HS), 4-digit extraction в контексте ТН ВЭД, `_extract_keyword_hs_codes()`, 20 тестов. ✅ merged 2026-06-18
 
+### Фаза O — Максимальное наполнение нетарифных данных
+
+- [x] **PR #78-80 (Issues #72-#74)** — Mass data seeding:
+  - 5686 regulatory documents across 12 agencies, 6705 HS mappings (Issue #72)
+  - 115 departmental instructions by 8 commodity groups (Issue #73)
+  - 279 verified Honest Mark (Честный Знак) entries for 14 product groups (Issue #74)
+- [x] **PR #81 (Issue #75)** — Country tariff preferences: `country_tariff_preferences` table with 161 countries across 6 preference types (EAEU 0% / SNG 0% / GSP 75% / LDC 0% / MFN 100% / non-MFN 200%); payment engine integration with duty coefficient; 16 tests. ✅ merged 2026-06-18
+- [x] **PR #82 (Issue #76)** — NTM full sync: 609 NTM entries across 63 chapters; all 96 active chapters ≥10 entries with ≥3 measure types; normalized stale `licence` → `license`; total 42,631 NTM entries; 9 tests. ✅ merged 2026-06-18
+- [x] **PR #83 (Issue #77)** — Customs procedures database: `customs_procedures` table with 22 procedure codes (ИМ40, ИМ51, ИМ53, ЭК10, ТТ80 и др.); payment rules, time limits, required documents, legal references; 12 tests. ✅ merged 2026-06-18
+
 ### Фаза L — Дальше (бэклог)
 - [x] Стаб HTTP-классификатора для разработки (`scripts/inference_classifier_stub.py`); боевой inference — вне репозитория по **`INFERENCE_CLASSIFIER.md`**.
 - [x] Персистентная очередь async-проверок ФСА (`permits_verify_jobs` в БД).
@@ -193,4 +203,4 @@
 
 ---
 
-*Последнее обновление: фаза N завершена — полная система NTM v2: noise classifier, mass marking, 629 regulatory docs, 6-digit TR TS accuracy, 71 regression tests, keyword-based HS binding. 2026-06-18.*
+*Последнее обновление: фаза O завершена — максимальное наполнение нетарифных данных: 5686 regulatory docs, 161 country tariff preferences, 42631 NTM entries across all chapters, 22 customs procedures, Honest Mark for 14 product groups. 2026-06-18.*
