@@ -1,6 +1,5 @@
-# Cursor Task automation: issue label `cursor-task` → Cursor CLI agent → branch + PR.
+# Cursor Task automation: issue label `cursor-task` → Claude Code CLI agent → branch + PR.
 # Docs: docs/ai-workflow/CURSOR_GITHUB_ACTION_AUTOMATION.md
-# Official: https://cursor.com/docs/cli/github-actions
 
 name: Cursor Task Agent
 
@@ -44,12 +43,12 @@ jobs:
       WORKFLOW_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
 
     steps:
-      - name: Require CURSOR_API_KEY secret
+      - name: Require ANTHROPIC_API_KEY secret
         env:
-          CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: |
-          if [ -z "${CURSOR_API_KEY}" ]; then
-            echo "::error::Repository secret CURSOR_API_KEY is not configured."
+          if [ -z "${ANTHROPIC_API_KEY}" ]; then
+            echo "::error::Repository secret ANTHROPIC_API_KEY is not configured."
             echo "Add it under Settings → Secrets and variables → Actions."
             echo "See docs/ai-workflow/CURSOR_GITHUB_ACTION_AUTOMATION.md"
             exit 1
@@ -303,7 +302,7 @@ jobs:
           git fetch origin "${BRANCH_NAME}:${BRANCH_NAME}"
           git checkout "${BRANCH_NAME}"
 
-      - name: Install Cursor CLI
+      - name: Install Claude Code CLI
         if: >-
           steps.authorize.outputs.authorized == 'true' &&
           (
@@ -311,11 +310,10 @@ jobs:
             steps.existing_pr.outputs.update_existing_pr == 'true'
           )
         run: |
-          curl https://cursor.com/install -fsS | bash
-          echo "$HOME/.cursor/bin" >> "${GITHUB_PATH}"
-          cursor-agent --version
+          npm install -g @anthropic-ai/claude-code
+          claude --version
 
-      - name: Run Cursor agent (headless)
+      - name: Run Claude Code agent (headless)
         if: >-
           steps.authorize.outputs.authorized == 'true' &&
           (
@@ -323,10 +321,10 @@ jobs:
             steps.existing_pr.outputs.update_existing_pr == 'true'
           )
         env:
-          CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: |
           env -u GITHUB_TOKEN -u GH_TOKEN \
-            CURSOR_API_KEY="${CURSOR_API_KEY}" \
+            ANTHROPIC_API_KEY="${ANTHROPIC_API_KEY}" \
             ISSUE_CONTEXT_PATH="${ISSUE_CONTEXT_PATH}" \
             EXISTING_PR_CONTEXT_PATH="${EXISTING_PR_CONTEXT_PATH}" \
             python3 scripts/automation/run_cursor_task_from_issue.py
@@ -341,7 +339,6 @@ jobs:
         id: git_commit
         env:
           ISSUE_NUMBER: ${{ steps.issue_ctx.outputs.issue_number }}
-          CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
           UPDATE_EXISTING_PR: ${{ steps.existing_pr.outputs.update_existing_pr }}
         run: |
           git add -A

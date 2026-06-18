@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Run Cursor CLI agent for a GitHub issue labeled cursor-task (CI / local dry-run)."""
+"""Run Claude Code CLI agent for a GitHub issue labeled cursor-task (CI / local dry-run)."""
 
 from __future__ import annotations
 
@@ -10,7 +10,7 @@ import sys
 from pathlib import Path
 from typing import Any
 
-DEFAULT_CURSOR_AGENT_BIN = "cursor-agent"
+DEFAULT_CLAUDE_AGENT_BIN = "claude"
 
 
 def _repo_root() -> Path:
@@ -112,20 +112,20 @@ URL: {ctx.get("html_url") or "(see CI logs)"}
 
 ## If blocked
 If legal/product interpretation is ambiguous, create a short draft at
-`docs/ai-workflow/.cursor-agent-blocked-issue-{ctx["number"]}.md` explaining why you stopped.
+`docs/ai-workflow/.claude-agent-blocked-issue-{ctx["number"]}.md` explaining why you stopped.
 Do not guess strategic direction.
 """
 
 
 def run_agent(prompt: str) -> None:
-    api_key = os.environ.get("CURSOR_API_KEY", "").strip()
+    api_key = os.environ.get("ANTHROPIC_API_KEY", "").strip()
     if not api_key:
-        print("::error::CURSOR_API_KEY is not set", file=sys.stderr)
+        print("::error::ANTHROPIC_API_KEY is not set", file=sys.stderr)
         sys.exit(1)
 
-    agent_bin = os.environ.get("CURSOR_AGENT_BIN", DEFAULT_CURSOR_AGENT_BIN)
-    cmd = [agent_bin, "-p", "--force", "--output-format", "text", prompt]
-    print(f"Running: {agent_bin} -p --force (prompt length={len(prompt)} chars)")
+    agent_bin = os.environ.get("CLAUDE_AGENT_BIN", DEFAULT_CLAUDE_AGENT_BIN)
+    cmd = [agent_bin, "--print", "--output-format", "text", prompt]
+    print(f"Running: {agent_bin} --print (prompt length={len(prompt)} chars)")
     subprocess.run(cmd, check=True)
 
 
