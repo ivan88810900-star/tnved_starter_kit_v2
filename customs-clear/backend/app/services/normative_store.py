@@ -1892,6 +1892,56 @@ def upsert_geo_special_duty(
         db.commit()
 
 
+def find_declaration_documents(hs_code: str) -> list[dict[str, Any]]:
+    """Lookup required documents for customs declaration by HS code.
+
+    Returns universal documents (hs_prefix='') plus code-specific ones,
+    sorted: mandatory first, then by category.
+    """
+    from ..models.tnved import DeclarationDocument
+
+    d = _digits_hs(hs_code)
+    prefixes = [""]
+    if d:
+        for length in (10, 8, 6, 4, 2):
+            if len(d) >= length:
+                prefixes.append(d[:length])
+    with SessionLocal() as db:
+        rows = db.query(DeclarationDocument).filter(
+            DeclarationDocument.hs_prefix.in_(prefixes)
+        ).all()
+    if not rows:
+        return []
+    seen_types: set[str] = set()
+    results: list[dict[str, Any]] = []
+    rows_sorted = sorted(rows, key=lambda r: (
+        0 if r.hs_prefix else 1,
+        -len(r.hs_prefix),
+        0 if r.is_mandatory else 1,
+    ))
+    for r in rows_sorted:
+        key = f"{r.doc_type}:{r.doc_name}"
+        if key in seen_types:
+            continue
+        seen_types.add(key)
+        results.append({
+            "hs_prefix": r.hs_prefix,
+            "doc_type": r.doc_type,
+            "doc_name": r.doc_name,
+            "is_mandatory": r.is_mandatory,
+            "condition": r.condition or "",
+            "legal_ref": r.legal_ref or "",
+            "category": r.category or "general",
+        })
+    cat_order = {"general": 0, "commercial": 1, "transport": 2, "conformity": 3, "special": 4, "origin": 5, "payment": 6}
+    results.sort(key=lambda x: (
+        0 if x["is_mandatory"] else 1,
+        cat_order.get(x["category"], 99),
+        x["doc_name"],
+    ))
+    return results
+
+
 def find_import_restrictions(hs_code: str, *, country: str | None = None) -> list[dict[str, Any]]:
     """Lookup import restrictions (bans, quotas, sanctions, dual-use, licensing) for an HS code."""
     from ..models.tnved import ImportRestriction
