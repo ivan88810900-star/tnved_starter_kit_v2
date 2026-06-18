@@ -148,6 +148,15 @@
 - Trade remedies `manual_review_required` by design — полнота не верифицируема автоматически
 - 12 excise HS-кодов исключены (нет в `hs_rates`): сохранены в `excluded_missing_hs_rates`
 
+### Фаза N — Точная система нетарифных мер (NTM v2)
+
+- [x] **PR #67 (Issue #61)** — Principle-based noise classifier: `ntm_noise_classifier.py` с `is_measure_noise()` на основе официальных EEC доменов (SGR/VET/PHYTO/LICENSE); 34+12 тестов. ✅ merged 2026-06-18
+- [x] **PR #68 (Issue #62)** — Mass noise marking: `ntm_mass_noise_marking.py` с `--dry-run` / `--revert`; batch-обновление quality="noise" по 500 строк; ~22K noise entries из 41K. ✅ merged 2026-06-18
+- [x] **PR #69 (Issue #63)** — Regulatory documents mass sync: `seed_regulatory_documents.py` — 629 нормативных документов (50 ТР ТС, 12 решений ЕЭК, 20 приказов ФТС, 12 РПН, 17 РСН, 10 МПТ) + 1224 HS-привязки + 419 per-prefix ТР ТС application documents. ✅ merged 2026-06-18
+- [x] **PR #70 (Issue #64)** — TR TS catalog 6-digit accuracy: ТР ТС 017/2011 split (610910 СС / 610990 ДС, 611510-611530 СС / 611594-611599 ДС); ТР ТС 018/2011 vehicle subtypes; ТР ТС 025/2012 furniture sub-categories. ✅ merged 2026-06-18
+- [x] **PR #70 (Issue #65)** — Full regression suite 71 cases: расширение REGRESSION_MATRIX с 37 до 71 тест-кейсов, покрытие 22 новых глав ТН ВЭД. ✅ merged 2026-06-18
+- [x] **PR #71 (Issue #66)** — Departmental letters HS binding accuracy: KEYWORD_HS_MAP (80+ терминов → HS), 4-digit extraction в контексте ТН ВЭД, `_extract_keyword_hs_codes()`, 20 тестов. ✅ merged 2026-06-18
+
 ### Фаза L — Дальше (бэклог)
 - [x] Стаб HTTP-классификатора для разработки (`scripts/inference_classifier_stub.py`); боевой inference — вне репозитория по **`INFERENCE_CLASSIFIER.md`**.
 - [x] Персистентная очередь async-проверок ФСА (`permits_verify_jobs` в БД).
@@ -184,4 +193,4 @@
 
 ---
 
-*Последнее обновление: фаза M завершена — все 6 официальных доменов покрыты, VAT 100%, Excise 100%, ETT 99.8%. Тег `v1.0.0-coverage`. 2026-06-18.*
+*Последнее обновление: фаза N завершена — полная система NTM v2: noise classifier, mass marking, 629 regulatory docs, 6-digit TR TS accuracy, 71 regression tests, keyword-based HS binding. 2026-06-18.*
