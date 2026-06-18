@@ -279,6 +279,27 @@ class CountryTariffPreference(Base):
     effective_from: Mapped[str] = mapped_column(String(20), default="")
 
 
+class RecyclingFee(Base):
+    """Утилизационный сбор на транспортные средства (ПП РФ №870)."""
+
+    __tablename__ = "recycling_fees"
+    __table_args__ = (
+        Index("ix_recycling_fees_hs_prefix", "hs_prefix"),
+        UniqueConstraint("hs_prefix", "vehicle_type", "is_new", name="uq_recycling_fees"),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    hs_prefix: Mapped[str] = mapped_column(String(10), nullable=False)
+    vehicle_type: Mapped[str] = mapped_column(String(50), nullable=False)
+    is_new: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    base_rate: Mapped[float] = mapped_column(Float, nullable=False, default=20000.0)
+    coefficient: Mapped[float] = mapped_column(Float, nullable=False, default=1.0)
+    engine_volume_from: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    engine_volume_to: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    description: Mapped[str] = mapped_column(String(255), default="")
+    legal_ref: Mapped[str] = mapped_column(String(255), default="")
+
+
 class CustomsProcedure(Base):
     """Таможенные процедуры и режимы (ИМ40, ЭК10, ТТ80 и др.)."""
 

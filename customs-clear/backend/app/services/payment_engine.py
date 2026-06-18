@@ -14,6 +14,7 @@ from .normative_store import (
     find_rate_for_hs,
     get_country_risk_by_iso,
     get_integrated_data_stats,
+    get_recycling_fee,
     get_tariff_preference,
     get_tnved_context_for_hs,
 )
@@ -432,6 +433,7 @@ def compute_payments(payload: dict[str, Any]) -> dict[str, Any]:
                     "special_duties_amount": 0.0,
                     "vat_rate": 0.0,
                     "vat": 0.0,
+                    "recycling_fee": 0.0,
                     "total_payable": 0.0,
                 },
                 "message": "Ввоз запрещён: найдено эмбарго в geo_special_duties.",
@@ -550,6 +552,27 @@ def compute_payments(payload: dict[str, Any]) -> dict[str, Any]:
         fx_rates=payload.get("_fx_rates") if isinstance(payload.get("_fx_rates"), dict) else None,
     )
 
+    # Recycling fee (утильсбор) for vehicles (8701-8705, 8711)
+    recycling_fee_amount = 0.0
+    recycling_fee_meta: dict[str, Any] = {"applied": False}
+    vehicle_is_new = bool(payload.get("vehicle_is_new", True))
+    engine_volume = int(payload["engine_volume"]) if payload.get("engine_volume") is not None else None
+    recycling_matches = get_recycling_fee(hs_code, is_new=vehicle_is_new, engine_volume=engine_volume)
+    if recycling_matches:
+        best = recycling_matches[0]
+        recycling_fee_amount = best["fee_amount"]
+        recycling_fee_meta = {
+            "applied": True,
+            "vehicle_type": best["vehicle_type"],
+            "is_new": best["is_new"],
+            "base_rate": best["base_rate"],
+            "coefficient": best["coefficient"],
+            "fee_amount": best["fee_amount"],
+            "description": best["description"],
+            "legal_ref": best["legal_ref"],
+            "all_matches": len(recycling_matches),
+        }
+
     # Customs fee (2026 tariff) — в базу НДС при ввозе не включается (НК РФ)
     customs_fee = calculate_customs_fee(customs_value)
 
@@ -591,10 +614,12 @@ def compute_payments(payload: dict[str, Any]) -> dict[str, Any]:
     special_duties_total = _num(special_duties_amount)
     customs_fee_amount = _num(customs_fee)
 
+    recycling_fee_total = _num(recycling_fee_amount)
+
     vat_base = _sum_amounts(customs_value, duty_amount, excise_amount, antidumping_amount, special_duties_total)
     vat = _num(vat_base) * _num(vat_rate) / 100.0
 
-    total = _sum_amounts(customs_fee_amount, duty_amount, excise_amount, antidumping_amount, special_duties_total, vat)
+    total = _sum_amounts(customs_fee_amount, duty_amount, excise_amount, antidumping_amount, special_duties_total, vat, recycling_fee_total)
 
     # Sources: интегрированные данные в приложении (без внешних ссылок)
     stats = get_integrated_data_stats()
@@ -677,6 +702,7 @@ def compute_payments(payload: dict[str, Any]) -> dict[str, Any]:
             "vat_pref_comment": vat_pref_comment,
             "vat_base": _round2(vat_base),
             "vat": _round2(vat),
+            "recycling_fee": _round2(recycling_fee_total),
             "total_payable": _round2(total),
         },
         "legal_basis": {
@@ -704,6 +730,7 @@ def compute_payments(payload: dict[str, Any]) -> dict[str, Any]:
         "special_duties_amount": _round2(special_duties_amount),
         "geo": geo_meta,
         "tariff_preference": tariff_pref_meta,
+        "recycling_fee": recycling_fee_meta,
     }
 
 
