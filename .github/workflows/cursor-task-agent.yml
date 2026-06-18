@@ -116,8 +116,9 @@ jobs:
               core.setFailed(`Issue #${issue.number} is closed.`);
               return;
             }
-            if (!labelNames.includes('cursor-task')) {
-              core.setFailed(`Issue #${issue.number} does not have label cursor-task.`);
+            const TRIGGER_LABELS = ['cursor-task', 'claude', 'cursor'];
+            if (!labelNames.some(l => TRIGGER_LABELS.includes(l))) {
+              core.setFailed(`Issue #${issue.number} does not have a trigger label (cursor-task, claude, cursor).`);
               return;
             }
 
