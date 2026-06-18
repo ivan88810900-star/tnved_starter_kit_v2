@@ -669,5 +669,175 @@ class TestOfficialPaymentCoverageAuditFieldContract(unittest.TestCase):
         self.assertEqual(sum(summary["by_recommended_next_action"].values()), 6)
 
 
+class TestCoverageTable(unittest.TestCase):
+    """Issue #51 — build_coverage_table: structure, types, pct semantics."""
+
+    def setUp(self) -> None:
+        from app.services.official_payment_coverage_audit import build_coverage_table
+
+        sm = _memory_sessionmaker()
+        self._patches = _start_patches(sm)
+        self._root_ctx = _IngestionRootPatch(Path("/nonexistent"))
+        self._root_ctx.__enter__()
+        self._table = build_coverage_table()
+
+    def tearDown(self) -> None:
+        self._root_ctx.__exit__()
+        _stop_patches(*self._patches)
+
+    def test_table_has_six_rows(self) -> None:
+        self.assertEqual(len(self._table["rows"]), 6)
+
+    def test_table_db_mutated_is_false(self) -> None:
+        self.assertFalse(self._table["db_mutated"])
+
+    def test_table_has_text_table_string(self) -> None:
+        self.assertIsInstance(self._table["text_table"], str)
+        self.assertIn("Domain", self._table["text_table"])
+        self.assertIn("Coverage %", self._table["text_table"])
+
+    def test_coverage_pct_zero_when_no_rows(self) -> None:
+        for row in self._table["rows"]:
+            if row["in_db"] == 0:
+                self.assertEqual(row["coverage_pct"], 0.0)
+
+    def test_coverage_pct_in_range(self) -> None:
+        for row in self._table["rows"]:
+            self.assertGreaterEqual(row["coverage_pct"], 0.0)
+            self.assertLessEqual(row["coverage_pct"], 100.0)
+
+    def test_table_rows_have_required_keys(self) -> None:
+        required = {
+            "domain_key", "domain", "in_db", "official", "legacy",
+            "coverage_pct", "coverage_status", "recommended_next_action",
+            "backfill_situation",
+        }
+        for row in self._table["rows"]:
+            self.assertTrue(required.issubset(row.keys()), msg=f"Missing keys in row: {row}")
+
+    def test_table_domain_keys_are_expected_six(self) -> None:
+        expected = {"EEC_ETT", "EEC_VAT", "EEC_EXCISE", "EEC_ANTI_DUMPING", "EEC_SPECIAL_SAFEGUARD", "EEC_COUNTERVAILING"}
+        got = {r["domain_key"] for r in self._table["rows"]}
+        self.assertEqual(got, expected)
+
+    def test_table_official_le_in_db(self) -> None:
+        for row in self._table["rows"]:
+            self.assertLessEqual(
+                row["official"], row["in_db"],
+                msg=f"{row['domain_key']}: official ({row['official']}) > in_db ({row['in_db']})",
+            )
+
+
+class TestBackfillPlan(unittest.TestCase):
+    """Issue #51 — build_backfill_plan: dry-run, priority ordering, completeness."""
+
+    def setUp(self) -> None:
+        from app.services.official_payment_coverage_audit import build_backfill_plan
+
+        sm = _memory_sessionmaker()
+        self._patches = _start_patches(sm)
+        self._root_ctx = _IngestionRootPatch(Path("/nonexistent"))
+        self._root_ctx.__enter__()
+        self._plan = build_backfill_plan()
+
+    def tearDown(self) -> None:
+        self._root_ctx.__exit__()
+        _stop_patches(*self._patches)
+
+    def test_plan_dry_run_true(self) -> None:
+        self.assertTrue(self._plan["dry_run"])
+
+    def test_plan_db_mutated_false(self) -> None:
+        self.assertFalse(self._plan["db_mutated"])
+
+    def test_plan_total_domains_six(self) -> None:
+        self.assertEqual(self._plan["total_domains"], 6)
+
+    def test_plan_has_all_six_domain_keys(self) -> None:
+        expected = {"EEC_ETT", "EEC_VAT", "EEC_EXCISE", "EEC_ANTI_DUMPING", "EEC_SPECIAL_SAFEGUARD", "EEC_COUNTERVAILING"}
+        got = {item["domain_key"] for item in self._plan["plan"]}
+        self.assertEqual(got, expected)
+
+    def test_plan_sorted_by_priority(self) -> None:
+        priorities = [item["priority"] for item in self._plan["plan"]]
+        self.assertEqual(priorities, sorted(priorities), msg="Plan items must be sorted ascending by priority")
+
+    def test_plan_domains_needing_action_count(self) -> None:
+        actionable = [i for i in self._plan["plan"] if i["action"] != "none"]
+        self.assertEqual(self._plan["domains_needing_action"], len(actionable))
+
+    def test_plan_action_values_are_valid(self) -> None:
+        valid = {"acquire_official_source", "run_apply", "reapply_official_bundle",
+                 "refresh_official_source", "manual_review_required", "none"}
+        for item in self._plan["plan"]:
+            self.assertIn(item["action"], valid, msg=f"{item['domain_key']}: invalid action '{item['action']}'")
+
+    def test_plan_backfill_situation_values_are_valid(self) -> None:
+        valid = {
+            "missing_official_source", "official_source_present_not_applied",
+            "applied_no_row_provenance", "stale_source_status", "unsafe_revision",
+            "unsafe_url", "parser_failure", "partial_rows", "unsupported_domain", "ok",
+            "completeness_not_verified",
+        }
+        for item in self._plan["plan"]:
+            self.assertIn(
+                item["backfill_situation"], valid,
+                msg=f"{item['domain_key']}: invalid backfill_situation '{item['backfill_situation']}'",
+            )
+
+    def test_plan_acquire_before_run_apply(self) -> None:
+        from app.services.official_payment_coverage_audit import _ACTION_PRIORITY
+
+        self.assertLess(
+            _ACTION_PRIORITY["acquire_official_source"],
+            _ACTION_PRIORITY["run_apply"],
+        )
+        self.assertLess(
+            _ACTION_PRIORITY["run_apply"],
+            _ACTION_PRIORITY["reapply_official_bundle"],
+        )
+
+
+class TestCoverageBackfillScript(unittest.TestCase):
+    """Issue #51 — app/scripts/coverage_backfill_plan module: prints table + plan."""
+
+    def setUp(self) -> None:
+        sm = _memory_sessionmaker()
+        self._patches = _start_patches(sm)
+        self._root_ctx = _IngestionRootPatch(Path("/nonexistent"))
+        self._root_ctx.__enter__()
+
+    def tearDown(self) -> None:
+        self._root_ctx.__exit__()
+        _stop_patches(*self._patches)
+
+    def test_script_json_output_valid(self) -> None:
+        import io
+        from app.scripts.coverage_backfill_plan import main
+
+        with unittest.mock.patch("sys.argv", ["coverage_backfill_plan", "--json"]):
+            with unittest.mock.patch("sys.stdout", new_callable=io.StringIO) as mock_out:
+                rc = main()
+        self.assertEqual(rc, 0)
+        output = mock_out.getvalue()
+        parsed = json.loads(output)
+        self.assertIn("coverage_table", parsed)
+        self.assertIn("backfill_plan", parsed)
+        self.assertFalse(parsed["coverage_table"]["db_mutated"])
+        self.assertTrue(parsed["backfill_plan"]["dry_run"])
+
+    def test_script_text_output_contains_domain_keys(self) -> None:
+        import io
+        from app.scripts.coverage_backfill_plan import main
+
+        with unittest.mock.patch("sys.argv", ["coverage_backfill_plan"]):
+            with unittest.mock.patch("sys.stdout", new_callable=io.StringIO) as mock_out:
+                rc = main()
+        self.assertEqual(rc, 0)
+        output = mock_out.getvalue()
+        for key in ("EEC_ETT", "EEC_VAT", "EEC_EXCISE", "EEC_ANTI_DUMPING"):
+            self.assertIn(key, output, msg=f"Expected domain key {key!r} in script output")
+
+
 if __name__ == "__main__":
     unittest.main()

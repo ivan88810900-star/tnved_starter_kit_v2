@@ -667,3 +667,119 @@ def run_official_payment_coverage_audit() -> dict[str, Any]:
         ],
     )
     return response.model_dump(mode="json")
+
+
+# ---------------------------------------------------------------------------
+# Issue #51 — Coverage table and backfill plan
+# ---------------------------------------------------------------------------
+
+_ACTION_PRIORITY: dict[str, int] = {
+    "acquire_official_source": 0,
+    "run_apply": 1,
+    "reapply_official_bundle": 2,
+    "refresh_official_source": 3,
+    "manual_review_required": 4,
+    "none": 5,
+}
+
+
+def _coverage_pct(official: int, total: int) -> float:
+    if total <= 0:
+        return 0.0
+    return round(official / total * 100, 1)
+
+
+def build_coverage_table() -> dict[str, Any]:
+    """Issue #51: coverage table across 6 official payment domains.
+
+    Returns structured rows and a formatted text table.
+    Does not mutate the database.
+    """
+    audit = run_official_payment_coverage_audit()
+    rows: list[dict[str, Any]] = []
+    for d in audit["domains"]:
+        in_db: int = d["row_count"]
+        official: int = d["official_row_count"]
+        rows.append(
+            {
+                "domain_key": d["domain_key"],
+                "domain": d["domain"],
+                "in_db": in_db,
+                "official": official,
+                "legacy": d["legacy_row_count"],
+                "coverage_pct": _coverage_pct(official, in_db),
+                "coverage_status": d["coverage_status"],
+                "recommended_next_action": d["recommended_next_action"],
+                "backfill_situation": d["backfill_situation"],
+            }
+        )
+
+    col_w = {"domain": 26, "in_db": 8, "official": 10, "pct": 12, "status": 26, "action": 28}
+    header = (
+        f"{'Domain':<{col_w['domain']}} "
+        f"{'In DB':>{col_w['in_db']}} "
+        f"{'Official':>{col_w['official']}} "
+        f"{'Coverage %':>{col_w['pct']}} "
+        f"{'Status':<{col_w['status']}} "
+        f"{'Next Action':<{col_w['action']}}"
+    )
+    sep = "-" * len(header)
+    lines = [header, sep]
+    for r in rows:
+        lines.append(
+            f"{r['domain_key']:<{col_w['domain']}} "
+            f"{r['in_db']:>{col_w['in_db']}} "
+            f"{r['official']:>{col_w['official']}} "
+            f"{r['coverage_pct']:>{col_w['pct'] - 1}.1f}% "
+            f"{r['coverage_status']:<{col_w['status']}} "
+            f"{r['recommended_next_action']:<{col_w['action']}}"
+        )
+    lines.append(sep)
+
+    return {
+        "generated_at": _utc_now_iso(),
+        "db_mutated": False,
+        "rows": rows,
+        "text_table": "\n".join(lines),
+    }
+
+
+def build_backfill_plan() -> dict[str, Any]:
+    """Issue #51: deterministic dry-run backfill plan across 6 official domains.
+
+    Returns prioritised list of actions. Does not mutate the database.
+    Priority order: acquire > run_apply > reapply > refresh > manual_review.
+    """
+    audit = run_official_payment_coverage_audit()
+    plan: list[dict[str, Any]] = []
+    for d in audit["domains"]:
+        action: str = d["recommended_next_action"]
+        plan.append(
+            {
+                "priority": _ACTION_PRIORITY.get(action, 99),
+                "domain_key": d["domain_key"],
+                "domain": d["domain"],
+                "action": action,
+                "backfill_situation": d["backfill_situation"],
+                "coverage_status": d["coverage_status"],
+                "in_db": d["row_count"],
+                "official": d["official_row_count"],
+                "notes": d["backfill_notes"],
+            }
+        )
+    plan.sort(key=lambda x: (x["priority"], x["domain_key"]))
+
+    actionable = [p for p in plan if p["action"] != "none"]
+    return {
+        "generated_at": _utc_now_iso(),
+        "db_mutated": False,
+        "dry_run": True,
+        "total_domains": len(plan),
+        "domains_needing_action": len(actionable),
+        "plan": plan,
+        "notes": [
+            "Dry-run only — no DB mutations performed.",
+            "Verify each action manually before execution.",
+            "run_apply and reapply_official_bundle require official bundle present locally.",
+        ],
+    }
