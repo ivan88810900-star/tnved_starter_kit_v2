@@ -130,6 +130,23 @@
 - [x] **PR #56 (Issue #55)** — Official Payment Coverage Audit: read-only аудит 6 официальных доменов (EEC_ETT, EEC_VAT, EEC_EXCISE, EEC_ANTI_DUMPING, EEC_SPECIAL_SAFEGUARD, EEC_COUNTERVAILING); отдельные enum `BackfillSituation` (диагностика) и `RecommendedNextAction` (действие); `configured_official_source: bool`; `expected_official_source: str` (non-null); runnable script `app/scripts/official_payment_coverage_audit.py`; 24 теста. ✅ merged 2026-06-18
 - [x] **PR #59 (Issue #51)** — Coverage table and dry-run backfill plan: `build_coverage_table()` → `Domain | In DB | Official | Coverage %`; `build_backfill_plan()` → приоритизированный dry-run план (acquire→apply→reapply→refresh→manual); script `app/scripts/coverage_backfill_plan.py`; 43 теста (19 новых). ✅ merged 2026-06-18
 - [x] **PR #43 (Issue #42)** — Official Excise Ingestion MVP: `run_excise_dry_run()` / `run_excise_apply()`; row-level провенанс (`excise_source_*`); Alembic миграция; 25 тестов; API endpoints `/payment-ingestion/excise/*`. ✅ merged (PR #44 closed as superseded)
+- [x] **Официальные бандлы и провенанс** — Скачаны/сгенерированы официальные JSON-бандлы для всех 6 доменов (`data/raw_normative/eec_*.json`); скрипты `fetch_eec_official.py` и `build_vat_excise_official.py`; VAT provenance проставлен на 13 296 строк (100%); Excise расширен до 24 позиций по НК РФ Ст. 193.
+
+#### Финальная таблица покрытия (v1.0.0-coverage)
+
+| Domain | In DB | Official | Coverage % | Status |
+|--------|------:|---------:|-----------:|--------|
+| EEC_ETT | 13 323 | 13 296 | 99.8% | `partial` (27 legacy TKS) |
+| EEC_VAT | 13 296 | 13 296 | **100%** | `present` |
+| EEC_EXCISE | 24 | 24 | **100%** | `present` |
+| EEC_ANTI_DUMPING | 29 | 24 | 82.8% | `manual_review_required` |
+| EEC_SPECIAL_SAFEGUARD | 3 | 3 | 100% | `manual_review_required` |
+| EEC_COUNTERVAILING | 2 | 2 | 100% | `manual_review_required` |
+
+Остаточные позиции:
+- 27 ETT rows из TKS bulk-AI crawler (legacy, не от ЕЭК)
+- Trade remedies `manual_review_required` by design — полнота не верифицируема автоматически
+- 12 excise HS-кодов исключены (нет в `hs_rates`): сохранены в `excluded_missing_hs_rates`
 
 ### Фаза L — Дальше (бэклог)
 - [x] Стаб HTTP-классификатора для разработки (`scripts/inference_classifier_stub.py`); боевой inference — вне репозитория по **`INFERENCE_CLASSIFIER.md`**.
@@ -167,4 +184,4 @@
 
 ---
 
-*Последнее обновление: фаза M — PR #56 + PR #59 + PR #43 merged 2026-06-18; excise ingestion, coverage table, backfill plan — всё в main.*
+*Последнее обновление: фаза M завершена — все 6 официальных доменов покрыты, VAT 100%, Excise 100%, ETT 99.8%. Тег `v1.0.0-coverage`. 2026-06-18.*
