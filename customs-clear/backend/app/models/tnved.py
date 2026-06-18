@@ -6,7 +6,7 @@ from typing import List
 
 from datetime import datetime
 
-from sqlalchemy import DateTime, Float, ForeignKey, Index, Integer, String, Text, UniqueConstraint
+from sqlalchemy import Boolean, DateTime, Float, ForeignKey, Index, Integer, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from ..db import Base
@@ -277,6 +277,31 @@ class CountryTariffPreference(Base):
     duty_coefficient: Mapped[float] = mapped_column(Float, nullable=False, default=1.0)
     legal_ref: Mapped[str] = mapped_column(String(255), default="")
     effective_from: Mapped[str] = mapped_column(String(20), default="")
+
+
+class CustomsProcedure(Base):
+    """Таможенные процедуры и режимы (ИМ40, ЭК10, ТТ80 и др.)."""
+
+    __tablename__ = "customs_procedures"
+    __table_args__ = (
+        Index("ix_customs_procedures_code", "procedure_code"),
+        UniqueConstraint("procedure_code", name="uq_customs_procedures_code"),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    procedure_code: Mapped[str] = mapped_column(String(10), nullable=False)
+    name_ru: Mapped[str] = mapped_column(String(255), nullable=False, default="")
+    direction: Mapped[str] = mapped_column(String(10), nullable=False, default="import")
+    description: Mapped[str] = mapped_column(Text, default="")
+    legal_ref: Mapped[str] = mapped_column(String(255), default="")
+    duty_applies: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    vat_applies: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    excise_applies: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    customs_fee_applies: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    time_limit_months: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    documents_required: Mapped[str] = mapped_column(Text, default="")
+    conditions: Mapped[str] = mapped_column(Text, default="")
+    hs_restrictions: Mapped[str] = mapped_column(Text, default="")
 
 
 class TamdocSyncCandidate(Base):
