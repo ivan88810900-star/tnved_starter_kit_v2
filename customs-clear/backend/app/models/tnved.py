@@ -262,6 +262,23 @@ class VatPreference(Base):
     comment: Mapped[str] = mapped_column(Text, default="")
 
 
+class CountryTariffPreference(Base):
+    """Тарифные преференции по стране происхождения (коэффициент к базовой ставке пошлины)."""
+
+    __tablename__ = "country_tariff_preferences"
+    __table_args__ = (
+        Index("ix_ctp_country_code", "country_code"),
+        UniqueConstraint("country_code", name="uq_ctp_country_code"),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    country_code: Mapped[str] = mapped_column(String(2), nullable=False)
+    preference_type: Mapped[str] = mapped_column(String(20), nullable=False)
+    duty_coefficient: Mapped[float] = mapped_column(Float, nullable=False, default=1.0)
+    legal_ref: Mapped[str] = mapped_column(String(255), default="")
+    effective_from: Mapped[str] = mapped_column(String(20), default="")
+
+
 class TamdocSyncCandidate(Base):
     """Staging-кандидаты из tamdoc до ручного подтверждения/апрува."""
 

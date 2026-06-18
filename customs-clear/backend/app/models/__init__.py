@@ -10,6 +10,7 @@ from .ntm_v2 import NtmApplicabilityRuleV2, NtmMeasureV2  # noqa: F401
 from .tnved import (
     Chapter,
     Commodity,
+    CountryTariffPreference,
     HsDutyRule,
     IntellectualProperty,
     NonTariffMeasure,

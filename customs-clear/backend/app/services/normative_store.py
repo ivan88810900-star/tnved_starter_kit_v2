@@ -50,6 +50,7 @@ from ..models import (
     ClassificationDecision,
     Commodity,
     CountryRisk,
+    CountryTariffPreference,
     CustomsCalculationHistory,
     GeoSpecialDuty,
     HsRate,
@@ -1720,6 +1721,21 @@ def get_country_risk_by_iso(iso: str | None) -> CountryRisk | None:
         return None
     with SessionLocal() as db:
         return db.query(CountryRisk).filter(CountryRisk.iso_code == code).first()
+
+
+def get_tariff_preference(iso: str | None) -> CountryTariffPreference | None:
+    """Тарифная преференция по ISO-2 коду страны."""
+    if not iso:
+        return None
+    code = str(iso).strip().upper()[:2]
+    if len(code) != 2 or not code.isalpha():
+        return None
+    with SessionLocal() as db:
+        return (
+            db.query(CountryTariffPreference)
+            .filter(CountryTariffPreference.country_code == code)
+            .first()
+        )
 
 
 _GEO_DUTY_MEASURE_TYPES = frozenset({"increased_duty", "anti_dumping"})
