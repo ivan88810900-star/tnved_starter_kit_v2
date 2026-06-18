@@ -45,6 +45,21 @@ class ApiIntegrationTests(unittest.TestCase):
         self.assertTrue(body.get("database"))
         self.assertIn("assistant_llm_configured", body)
 
+    def test_pipeline_health_endpoint_returns_ok(self):
+        r = self.client.get("/api/health/pipeline")
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(r.json()["status"], "ok")
+
+    def test_pipeline_health_has_required_fields(self):
+        r = self.client.get("/api/health/pipeline")
+        self.assertEqual(r.status_code, 200)
+        body = r.json()
+        self.assertEqual(body["status"], "ok")
+        self.assertEqual(body["pipeline"], "claude-autonomous")
+        self.assertEqual(body["version"], "1.0")
+        self.assertIn("timestamp", body)
+        self.assertRegex(body["timestamp"], r"\d{4}-\d{2}-\d{2}T")
+
     # ------------------------------------------------------------------ sources
     def test_sources_status(self):
         r = self.client.get("/api/sources/status")

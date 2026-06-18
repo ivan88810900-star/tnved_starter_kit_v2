@@ -178,6 +178,21 @@ async def health_data_pipeline() -> JSONResponse:
     return JSONResponse(body, status_code=200)
 
 
+@app.get("/api/health/pipeline")
+async def health_pipeline() -> JSONResponse:
+    """CI pipeline validation endpoint."""
+    from datetime import datetime, timezone
+
+    return JSONResponse(
+        {
+            "status": "ok",
+            "pipeline": "claude-autonomous",
+            "version": "1.0",
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+        }
+    )
+
+
 app.include_router(analytics.router, prefix="/api/analytics", tags=["analytics"])
 app.include_router(ai.router, prefix="/api/ai", tags=["ai"])
 app.include_router(documents.router, prefix="/api/documents", tags=["documents"])
