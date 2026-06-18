@@ -1,0 +1,252 @@
+{
+  "revision": "excise:2026-06-18",
+  "format": "eec_excise_v1",
+  "source_url": "https://www.nalog.gov.ru/rn77/taxation/taxes/excise/",
+  "effective_from": "2025-01-01",
+  "description": "Акцизные ставки при ввозе — НК РФ Ст. 193 (2025)",
+  "legal_basis": "НК РФ Глава 22, Ст. 181 (перечень), Ст. 193 (ставки); ФЗ от 29.10.2024 № 362-ФЗ",
+  "rates": [
+    {
+      "hs_code": "2207100000",
+      "excise_type": "fixed",
+      "excise_value": 643.0,
+      "excise_basis": "НК РФ Ст. 193 — этиловый спирт из пищевого сырья",
+      "source_revision": "excise:2026-06-18",
+      "source_url": "https://www.nalog.gov.ru/rn77/taxation/taxes/excise/"
+    },
+    {
+      "hs_code": "2207200000",
+      "excise_type": "fixed",
+      "excise_value": 643.0,
+      "excise_basis": "НК РФ Ст. 193 — этиловый спирт денатурированный",
+      "source_revision": "excise:2026-06-18",
+      "source_url": "https://www.nalog.gov.ru/rn77/taxation/taxes/excise/"
+    },
+    {
+      "hs_code": "2208201200",
+      "excise_type": "fixed",
+      "excise_value": 643.0,
+      "excise_basis": "НК РФ Ст. 193 — алкогольная продукция с долей спирта > 9%",
+      "source_revision": "excise:2026-06-18",
+      "source_url": "https://www.nalog.gov.ru/rn77/taxation/taxes/excise/"
+    },
+    {
+      "hs_code": "2208301100",
+      "excise_type": "fixed",
+      "excise_value": 643.0,
+      "excise_basis": "НК РФ Ст. 193 — алкогольная продукция с долей спирта > 9%",
+      "source_revision": "excise:2026-06-18",
+      "source_url": "https://www.nalog.gov.ru/rn77/taxation/taxes/excise/"
+    },
+    {
+      "hs_code": "2208401100",
+      "excise_type": "fixed",
+      "excise_value": 643.0,
+      "excise_basis": "НК РФ Ст. 193 — алкогольная продукция с долей спирта > 9%",
+      "source_revision": "excise:2026-06-18",
+      "source_url": "https://www.nalog.gov.ru/rn77/taxation/taxes/excise/"
+    },
+    {
+      "hs_code": "2208601100",
+      "excise_type": "fixed",
+      "excise_value": 643.0,
+      "excise_basis": "НК РФ Ст. 193 — алкогольная продукция с долей спирта > 9%",
+      "source_revision": "excise:2026-06-18",
+      "source_url": "https://www.nalog.gov.ru/rn77/taxation/taxes/excise/"
+    },
+    {
+      "hs_code": "2208905602",
+      "excise_type": "fixed",
+      "excise_value": 643.0,
+      "excise_basis": "НК РФ Ст. 193 — алкогольная продукция с долей спирта > 9%",
+      "source_revision": "excise:2026-06-18",
+      "source_url": "https://www.nalog.gov.ru/rn77/taxation/taxes/excise/"
+    },
+    {
+      "hs_code": "2204210600",
+      "excise_type": "fixed",
+      "excise_value": 36.0,
+      "excise_basis": "НК РФ Ст. 193 — вина (кроме игристых)",
+      "source_revision": "excise:2026-06-18",
+      "source_url": "https://www.nalog.gov.ru/rn77/taxation/taxes/excise/"
+    },
+    {
+      "hs_code": "2203000100",
+      "excise_type": "fixed",
+      "excise_value": 26.0,
+      "excise_basis": "НК РФ Ст. 193 — пиво с долей спирта от 0.5% до 8.6%",
+      "source_revision": "excise:2026-06-18",
+      "source_url": "https://www.nalog.gov.ru/rn77/taxation/taxes/excise/"
+    },
+    {
+      "hs_code": "2203000900",
+      "excise_type": "fixed",
+      "excise_value": 48.0,
+      "excise_basis": "НК РФ Ст. 193 — пиво с долей спирта свыше 8.6%",
+      "source_revision": "excise:2026-06-18",
+      "source_url": "https://www.nalog.gov.ru/rn77/taxation/taxes/excise/"
+    },
+    {
+      "hs_code": "2402201000",
+      "excise_type": "combined",
+      "excise_value": 2813.0,
+      "excise_basis": "НК РФ Ст. 193 — сигареты",
+      "source_revision": "excise:2026-06-18",
+      "source_url": "https://www.nalog.gov.ru/rn77/taxation/taxes/excise/"
+    },
+    {
+      "hs_code": "2402209000",
+      "excise_type": "combined",
+      "excise_value": 2813.0,
+      "excise_basis": "НК РФ Ст. 193 — сигареты",
+      "source_revision": "excise:2026-06-18",
+      "source_url": "https://www.nalog.gov.ru/rn77/taxation/taxes/excise/"
+    },
+    {
+      "hs_code": "2402100000",
+      "excise_type": "fixed",
+      "excise_value": 296.0,
+      "excise_basis": "НК РФ Ст. 193 — сигары",
+      "source_revision": "excise:2026-06-18",
+      "source_url": "https://www.nalog.gov.ru/rn77/taxation/taxes/excise/"
+    },
+    {
+      "hs_code": "2403110000",
+      "excise_type": "fixed",
+      "excise_value": 4160.0,
+      "excise_basis": "НК РФ Ст. 193 — табак трубочный, курительный",
+      "source_revision": "excise:2026-06-18",
+      "source_url": "https://www.nalog.gov.ru/rn77/taxation/taxes/excise/"
+    },
+    {
+      "hs_code": "2403191000",
+      "excise_type": "fixed",
+      "excise_value": 4160.0,
+      "excise_basis": "НК РФ Ст. 193 — табак курительный",
+      "source_revision": "excise:2026-06-18",
+      "source_url": "https://www.nalog.gov.ru/rn77/taxation/taxes/excise/"
+    },
+    {
+      "hs_code": "8543400000",
+      "excise_type": "fixed",
+      "excise_value": 72.0,
+      "excise_basis": "НК РФ Ст. 193 — электронные системы доставки никотина",
+      "source_revision": "excise:2026-06-18",
+      "source_url": "https://www.nalog.gov.ru/rn77/taxation/taxes/excise/"
+    },
+    {
+      "hs_code": "2404120000",
+      "excise_type": "fixed",
+      "excise_value": 20.0,
+      "excise_basis": "НК РФ Ст. 193 — жидкости для ЭСДН",
+      "source_revision": "excise:2026-06-18",
+      "source_url": "https://www.nalog.gov.ru/rn77/taxation/taxes/excise/"
+    },
+    {
+      "hs_code": "2710124500",
+      "excise_type": "fixed",
+      "excise_value": 15048.0,
+      "excise_basis": "НК РФ Ст. 193 — бензин автомобильный",
+      "source_revision": "excise:2026-06-18",
+      "source_url": "https://www.nalog.gov.ru/rn77/taxation/taxes/excise/"
+    },
+    {
+      "hs_code": "2710191100",
+      "excise_type": "fixed",
+      "excise_value": 2800.0,
+      "excise_basis": "НК РФ Ст. 193 — авиационный керосин",
+      "source_revision": "excise:2026-06-18",
+      "source_url": "https://www.nalog.gov.ru/rn77/taxation/taxes/excise/"
+    },
+    {
+      "hs_code": "8703221010",
+      "excise_type": "fixed",
+      "excise_value": 0.0,
+      "excise_basis": "НК РФ Ст. 193 — л/а с мощностью до 90 л.с. (0 руб)",
+      "source_revision": "excise:2026-06-18",
+      "source_url": "https://www.nalog.gov.ru/rn77/taxation/taxes/excise/"
+    },
+    {
+      "hs_code": "8703241010",
+      "excise_type": "fixed",
+      "excise_value": 955.0,
+      "excise_basis": "НК РФ Ст. 193 — л/а 200-300 л.с. (955 руб/л.с.)",
+      "source_revision": "excise:2026-06-18",
+      "source_url": "https://www.nalog.gov.ru/rn77/taxation/taxes/excise/"
+    },
+    {
+      "hs_code": "8703249010",
+      "excise_type": "fixed",
+      "excise_value": 1550.0,
+      "excise_basis": "НК РФ Ст. 193 — л/а 400-500 л.с. (1550 руб/л.с.)",
+      "source_revision": "excise:2026-06-18",
+      "source_url": "https://www.nalog.gov.ru/rn77/taxation/taxes/excise/"
+    },
+    {
+      "hs_code": "8711500000",
+      "excise_type": "fixed",
+      "excise_value": 588.0,
+      "excise_basis": "НК РФ Ст. 193 — мотоциклы с мощностью > 150 л.с.",
+      "source_revision": "excise:2026-06-18",
+      "source_url": "https://www.nalog.gov.ru/rn77/taxation/taxes/excise/"
+    },
+    {
+      "hs_code": "2711210000",
+      "excise_type": "percent",
+      "excise_value": 30.0,
+      "excise_basis": "НК РФ Ст. 193 — природный газ (ставка при экспорте, 30%)",
+      "source_revision": "excise:2026-06-18",
+      "source_url": "https://www.nalog.gov.ru/rn77/taxation/taxes/excise/"
+    }
+  ],
+  "excluded_missing_hs_rates": [
+    {
+      "hs_code": "2204100000",
+      "reason": "hs_code not in hs_rates table"
+    },
+    {
+      "hs_code": "2206000000",
+      "reason": "hs_code not in hs_rates table"
+    },
+    {
+      "hs_code": "2404110000",
+      "reason": "hs_code not in hs_rates table"
+    },
+    {
+      "hs_code": "2710124100",
+      "reason": "hs_code not in hs_rates table"
+    },
+    {
+      "hs_code": "2710194200",
+      "reason": "hs_code not in hs_rates table"
+    },
+    {
+      "hs_code": "2710194300",
+      "reason": "hs_code not in hs_rates table"
+    },
+    {
+      "hs_code": "2710198100",
+      "reason": "hs_code not in hs_rates table"
+    },
+    {
+      "hs_code": "2710121100",
+      "reason": "hs_code not in hs_rates table"
+    },
+    {
+      "hs_code": "8703228010",
+      "reason": "hs_code not in hs_rates table"
+    },
+    {
+      "hs_code": "8703238010",
+      "reason": "hs_code not in hs_rates table"
+    },
+    {
+      "hs_code": "8703241090",
+      "reason": "hs_code not in hs_rates table"
+    },
+    {
+      "hs_code": "8703249090",
+      "reason": "hs_code not in hs_rates table"
+    }
+  ]
+}
