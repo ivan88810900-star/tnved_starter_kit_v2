@@ -125,6 +125,11 @@
 - [x] Список `/api/calculator/history`: корректные `total_payable` и код для типов `compliance`, `copilot`, `copilot_batch`.
 - [x] Фильтр журнала по **`kind`**, **`GET /api/calculator/history/summary`**; чипы на UI «Платежи»; список загрузок на «Документах».
 
+### Фаза M — Официальные платёжные контуры и аудит покрытия
+
+- [x] **PR #56 (Issue #55)** — Official Payment Coverage Audit: read-only аудит 6 официальных доменов (EEC_ETT, EEC_VAT, EEC_EXCISE, EEC_ANTI_DUMPING, EEC_SPECIAL_SAFEGUARD, EEC_COUNTERVAILING); отдельные enum `BackfillSituation` (диагностика) и `RecommendedNextAction` (действие); `configured_official_source: bool`; `expected_official_source: str` (non-null); runnable script `app/scripts/official_payment_coverage_audit.py`; 24 теста. ✅ merged 2026-06-18
+- [ ] **Issue #51** — Audit and backfill full official payment data coverage: таблица покрытия `Domain | In DB | Official | Coverage %`, dry-run backfill plan, 10 тестов.
+
 ### Фаза L — Дальше (бэклог)
 - [x] Стаб HTTP-классификатора для разработки (`scripts/inference_classifier_stub.py`); боевой inference — вне репозитория по **`INFERENCE_CLASSIFIER.md`**.
 - [x] Персистентная очередь async-проверок ФСА (`permits_verify_jobs` в БД).
@@ -161,4 +166,4 @@
 
 ---
 
-*Последнее обновление: фаза L1 (персистенция, история расчётов, семантика ТН ВЭД), UI и README.*
+*Последнее обновление: фаза M — Official Payment Coverage Audit (PR #56 merged 2026-06-18); Issue #51 в работе.*
