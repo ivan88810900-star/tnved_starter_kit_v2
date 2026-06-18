@@ -7,7 +7,7 @@ from pydantic import BaseModel
 from loguru import logger
 
 from ..services.non_tariff_service import check_position_non_tariff
-from ..services.normative_store import find_import_restrictions, list_tr_ts_acts
+from ..services.normative_store import find_declaration_documents, find_import_restrictions, list_tr_ts_acts
 from ..security import require_authenticated_user
 
 router = APIRouter()
@@ -127,6 +127,22 @@ async def non_tariff_risk_block(
         if order.get(st, 0) > order.get(overall, 0):
             overall = st
     return JSONResponse({"status": overall, "items": results})
+
+
+@router.get("/declaration/documents/{hs_code}")
+async def declaration_documents_for_hs(hs_code: str) -> JSONResponse:
+    """Список документов, необходимых для декларирования товара по коду ТН ВЭД."""
+    docs = find_declaration_documents(hs_code)
+    mandatory = [d for d in docs if d["is_mandatory"]]
+    optional = [d for d in docs if not d["is_mandatory"]]
+    return JSONResponse({
+        "status": "OK",
+        "hs_code": hs_code,
+        "documents": docs,
+        "mandatory_count": len(mandatory),
+        "optional_count": len(optional),
+        "total": len(docs),
+    })
 
 
 @router.get("/restrictions/{hs_code}")

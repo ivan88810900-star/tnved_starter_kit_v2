@@ -12,6 +12,7 @@ from .tnved import (
     Commodity,
     CountryTariffPreference,
     CustomsProcedure,
+    DeclarationDocument,
     HsDutyRule,
     ImportRestriction,
     RecyclingFee,

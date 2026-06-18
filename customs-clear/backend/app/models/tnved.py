@@ -321,6 +321,24 @@ class ImportRestriction(Base):
     source_url: Mapped[str] = mapped_column(String(512), nullable=False, default="")
 
 
+class DeclarationDocument(Base):
+    """Требуемые документы для таможенного декларирования по коду ТН ВЭД."""
+
+    __tablename__ = "declaration_documents"
+    __table_args__ = (
+        Index("ix_declaration_documents_hs", "hs_prefix"),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    hs_prefix: Mapped[str] = mapped_column(String(10), nullable=False)
+    doc_type: Mapped[str] = mapped_column(String(50), nullable=False)
+    doc_name: Mapped[str] = mapped_column(String(512), nullable=False)
+    is_mandatory: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    condition: Mapped[str] = mapped_column(Text, nullable=False, default="")
+    legal_ref: Mapped[str] = mapped_column(String(512), nullable=False, default="")
+    category: Mapped[str] = mapped_column(String(50), nullable=False, default="general")
+
+
 class CustomsProcedure(Base):
     """Таможенные процедуры и режимы (ИМ40, ЭК10, ТТ80 и др.)."""
 
