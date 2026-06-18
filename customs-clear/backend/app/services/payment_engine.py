@@ -14,6 +14,7 @@ from .normative_store import (
     find_rate_for_hs,
     get_country_risk_by_iso,
     get_integrated_data_stats,
+    get_tariff_preference,
     get_tnved_context_for_hs,
 )
 from .compliance_resolver import pick_vat_preference_row
@@ -494,6 +495,25 @@ def compute_payments(payload: dict[str, Any]) -> dict[str, Any]:
         fx_rates=payload.get("_fx_rates") if isinstance(payload.get("_fx_rates"), dict) else None,
     )
 
+    # Tariff preference: apply country-of-origin duty coefficient
+    tariff_pref = get_tariff_preference(country) if country else None
+    tariff_pref_meta: dict[str, Any] = {"applied": False}
+    user_duty_rate = payload.get("duty_rate")
+    if tariff_pref and user_duty_rate is None and geo_meta.get("duty_override_rate") is None:
+        coeff = tariff_pref.duty_coefficient
+        if coeff != 1.0:
+            duty = duty * coeff
+            if ad_valorem_amount is not None:
+                ad_valorem_amount = ad_valorem_amount * coeff
+            if specific_amount_rub is not None:
+                specific_amount_rub = specific_amount_rub * coeff
+            tariff_pref_meta = {
+                "applied": True,
+                "preference_type": tariff_pref.preference_type,
+                "duty_coefficient": coeff,
+                "legal_ref": tariff_pref.legal_ref or "",
+            }
+
     # Excise
     user_excise = payload.get("excise")
     if user_excise is not None:
@@ -683,6 +703,7 @@ def compute_payments(payload: dict[str, Any]) -> dict[str, Any]:
         "special_duties": special_duties_details,
         "special_duties_amount": _round2(special_duties_amount),
         "geo": geo_meta,
+        "tariff_preference": tariff_pref_meta,
     }
 
 
