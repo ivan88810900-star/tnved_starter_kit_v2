@@ -323,32 +323,44 @@ def search_commodities(
     db: Session = Depends(get_db),
 ) -> JSONResponse:
     from ..services.normative_store import _expand_query_terms, get_search_suggestions
+    from ..services.tnved_fts import search_commodities_fts
 
     query = (q or "").strip()
     if len(query) < 2:
         return JSONResponse({"status": "OK", "results": []})
 
-    terms = _expand_query_terms(query)
+    # Основной путь — релевантный FTS5-поиск по всей номенклатуре (bm25 ранжирование).
+    fts_rows = search_commodities_fts(query, limit=50)
+    if fts_rows is not None:
+        results = [
+            {
+                "code": _pad_code(r["code"] or ""),
+                "name": _strip_leading_dashes((r.get("description") or "").strip()),
+            }
+            for r in fts_rows
+        ]
+    else:
+        # Fallback (FTS5 недоступен в сборке SQLite): LIKE по расширенным терминам.
+        terms = _expand_query_terms(query)
+        digit_prefix = _digits(query)
+        filters = [func.lower(Commodity.description).like(f"%{t}%") for t in terms]
+        if digit_prefix:
+            filters.append(Commodity.code.like(f"{digit_prefix}%"))
+        rows = (
+            db.query(Commodity.code, Commodity.description)
+            .filter(or_(*filters))
+            .order_by(Commodity.code.asc())
+            .limit(50)
+            .all()
+        )
+        results = [
+            {
+                "code": _pad_code(code or ""),
+                "name": _strip_leading_dashes((name or "").strip()),
+            }
+            for code, name in rows
+        ]
 
-    digit_prefix = _digits(query)
-    filters = [func.lower(Commodity.description).like(f"%{t}%") for t in terms]
-    if digit_prefix:
-        filters.append(Commodity.code.like(f"{digit_prefix}%"))
-
-    rows = (
-        db.query(Commodity.code, Commodity.description)
-        .filter(or_(*filters))
-        .order_by(Commodity.code.asc())
-        .limit(50)
-        .all()
-    )
-    results = [
-        {
-            "code": _pad_code(code or ""),
-            "name": _strip_leading_dashes((name or "").strip()),
-        }
-        for code, name in rows
-    ]
     resp: dict[str, Any] = {"status": "OK", "results": results}
     if not results:
         resp["suggestions"] = get_search_suggestions()
