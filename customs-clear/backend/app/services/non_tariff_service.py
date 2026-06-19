@@ -22,6 +22,20 @@ from .regulatory_layer import get_regulatory_documents_for_hs
 from .tr_ts_catalog import TR_TS_FULL_NAMES, get_full_ntm_requirements
 
 
+# Человекочитаемое описание/основание для разрешений из чувствительных групп
+# (заменяет внутренние строки "override" / "SENSITIVE_OVERRIDES" в UI).
+_SENSITIVE_PERMIT_BASIS: Dict[str, tuple[str, str]] = {
+    "РУ": (
+        "Лекарственное средство — требуется регистрационное удостоверение",
+        "ФЗ №61-ФЗ «Об обращении лекарственных средств»",
+    ),
+    "ЛЗ": (
+        "Лицензируемый товар (подакцизный / ограниченного оборота) — требуется лицензия",
+        "Решение Коллегии ЕЭК №30 (единый перечень лицензируемых товаров)",
+    ),
+}
+
+
 def _build_broker_required_permits(
     hs_code: str,
     catalog_and_layer_rows: List[Dict[str, Any]],
@@ -55,13 +69,20 @@ def _build_broker_required_permits(
             }
         )
     if sensitive_permit:
+        _sens_desc, _sens_ref = _SENSITIVE_PERMIT_BASIS.get(
+            sensitive_permit,
+            (
+                "Товар чувствительной группы — требуется разрешительный документ до ввоза",
+                "Единый перечень товаров с ограничениями (Решение Коллегии ЕЭК №30)",
+            ),
+        )
         rows.append(
             {
                 "permit_type": sensitive_permit,
                 "tr_ts": None,
                 "tr_ts_full_name": "",
-                "description": "Чувствительная группа товара (override)",
-                "legal_ref": "SENSITIVE_OVERRIDES",
+                "description": _sens_desc,
+                "legal_ref": _sens_ref,
                 "matched_prefix": hc[:4] if hc else "",
                 "priority": 1,
                 "trigger": None,
