@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { api } from '../api/client';
 
 type TnvedHit = { hs_code: string; title: string; level: number; chapter: string };
+type SearchSuggestion = { term: string; hint: string };
 type Note = {
   id: number;
   category: string;
@@ -37,6 +38,7 @@ export const TnvedBook: React.FC = () => {
     openai_configured?: boolean;
     model?: string;
   } | null>(null);
+  const [suggestions, setSuggestions] = useState<SearchSuggestion[]>([]);
   const [detail, setDetail] = useState<{
     hs_code: string;
     title: string;
@@ -108,9 +110,13 @@ export const TnvedBook: React.FC = () => {
     if (q.trim().length < 2) return;
     setLoading(true);
     setDetail(null);
+    setSuggestions([]);
     try {
-      const { data } = await api.get<{ results: TnvedHit[] }>(`/tnved/search?q=${encodeURIComponent(q.trim())}&limit=50`);
+      const { data } = await api.get<{ results: TnvedHit[]; suggestions?: SearchSuggestion[] }>(`/tnved/search?q=${encodeURIComponent(q.trim())}&limit=50`);
       setHits(data.results || []);
+      if (!data.results?.length && data.suggestions) {
+        setSuggestions(data.suggestions);
+      }
     } catch {
       setHits([]);
     } finally {
@@ -268,6 +274,25 @@ export const TnvedBook: React.FC = () => {
               <span className="text-[11px] text-slate-400">{h.title || '—'}</span>
             </button>
           ))}
+        </div>
+      )}
+
+      {!loading && hits.length === 0 && suggestions.length > 0 && (
+        <div className="rounded-xl border border-amber-500/20 bg-amber-950/20 p-4">
+          <p className="mb-2 text-[13px] font-medium text-amber-200">Ничего не найдено. Попробуйте:</p>
+          <div className="flex flex-wrap gap-2">
+            {suggestions.map((s) => (
+              <button
+                key={s.term}
+                type="button"
+                className="rounded-lg border border-amber-500/20 bg-amber-900/30 px-3 py-1.5 text-[11px] text-amber-100 transition hover:bg-amber-800/40"
+                onClick={() => { setQ(s.term); setSuggestions([]); }}
+              >
+                <span className="font-medium">{s.term}</span>
+                <span className="ml-1.5 text-amber-300/70">→ {s.hint}</span>
+              </button>
+            ))}
+          </div>
         </div>
       )}
 

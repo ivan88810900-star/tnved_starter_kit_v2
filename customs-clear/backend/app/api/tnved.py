@@ -11,6 +11,7 @@ from ..security import require_admin_token, require_authenticated_user
 from ..services.normative_store import (
     find_normative_notes_for_hs,
     get_integrated_data_stats,
+    get_search_suggestions,
     get_tnved_breadcrumb,
     get_tnved_context_for_hs,
     search_tnved,
@@ -86,7 +87,11 @@ async def tnved_search(
     q: str = Query(..., min_length=2, description="Код или фрагмент наименования"),
     limit: int = Query(40, ge=1, le=200),
 ) -> JSONResponse:
-    return JSONResponse({"status": "OK", "results": search_tnved(q, limit=limit)})
+    results = search_tnved(q, limit=limit)
+    resp: dict = {"status": "OK", "results": results}
+    if not results:
+        resp["suggestions"] = get_search_suggestions()
+    return JSONResponse(resp)
 
 
 @router.get("/lookup/{hs_code:path}")
