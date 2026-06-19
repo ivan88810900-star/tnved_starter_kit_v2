@@ -167,6 +167,14 @@
 - [x] **PR #82 (Issue #76)** — NTM full sync: 609 NTM entries across 63 chapters; all 96 active chapters ≥10 entries with ≥3 measure types; normalized stale `licence` → `license`; total 42,631 NTM entries; 9 tests. ✅ merged 2026-06-18
 - [x] **PR #83 (Issue #77)** — Customs procedures database: `customs_procedures` table with 22 procedure codes (ИМ40, ИМ51, ИМ53, ЭК10, ТТ80 и др.); payment rules, time limits, required documents, legal references; 12 tests. ✅ merged 2026-06-18
 
+### Фаза P — Расширенные данные и справочники (Issues #85–#89)
+
+- [x] **PR #91 (Issue #85)** — Recycling fee (утильсбор): таблица `recycling_fees` с 39 категориями транспортных средств и самоходных машин; коэффициенты по возрасту (новые/старше 3 лет); API `GET /api/recycling-fee/{hs_code}`; 12 тестов. ✅ merged 2026-06-18
+- [x] **PR #92 (Issue #86)** — Import restrictions: таблица `import_restrictions` с запретами, квотами, лицензированием и двойным назначением; API `GET /api/restrictions/{hs_code}`; 12 тестов. ✅ merged 2026-06-18
+- [x] **PR #93 (Issue #87)** — Declaration documents: таблица `declaration_documents` со списками документов для декларирования по кодам ТН ВЭД; API `GET /api/declaration/documents/{hs_code}`; тесты. ✅ merged 2026-06-18
+- [x] **PR #94 (Issue #88)** — Classification rulings: таблица `classification_rulings` с 50 решениями КТС/ФТС/ЕЭК по классификации товаров; prefix-based lookup; API `GET /api/classification/rulings/{hs_code}`; 13 тестов. ✅ merged 2026-06-19
+- [ ] **Issue #89** — Data refresh workflow: автообновление курсов ЦБ, акцизов, антидемпинга; GitHub Actions workflow для еженедельной проверки.
+
 ### Фаза L — Дальше (бэклог)
 - [x] Стаб HTTP-классификатора для разработки (`scripts/inference_classifier_stub.py`); боевой inference — вне репозитория по **`INFERENCE_CLASSIFIER.md`**.
 - [x] Персистентная очередь async-проверок ФСА (`permits_verify_jobs` в БД).
@@ -203,4 +211,4 @@
 
 ---
 
-*Последнее обновление: фаза O завершена — максимальное наполнение нетарифных данных: 5686 regulatory docs, 161 country tariff preferences, 42631 NTM entries across all chapters, 22 customs procedures, Honest Mark for 14 product groups. 2026-06-18.*
+*Последнее обновление: фаза P — расширенные справочники: утильсбор (39 категорий), запреты/ограничения, документы для декларирования, 50 решений по классификации КТС/ФТС/ЕЭК. 2026-06-19.*

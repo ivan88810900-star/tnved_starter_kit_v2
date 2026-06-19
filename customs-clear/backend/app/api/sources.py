@@ -27,6 +27,7 @@ from ..services.payment_source_ingestion import (
 from ..services.payment_source_registry import list_payment_registry_snapshot
 from ..services.normative_bundle import import_normative_bundle_bytes
 from ..services.source_import import import_normative_file
+from ..services.data_refresh_service import check_data_freshness, run_full_data_refresh
 from ..services.source_sync import sync_all_sources, sync_normative_bundle_url
 from ..services.tamdoc_sync import (
     approve_tamdoc_candidate,
@@ -367,6 +368,23 @@ async def sources_sync_bundle(x_admin_token: str | None = Header(None, alias="X-
     data = await sync_normative_bundle_url()
     clear_preview_cache()
     return JSONResponse(data)
+
+
+@router.get("/data/freshness")
+async def data_freshness() -> JSONResponse:
+    """Check freshness of all data domains (bundles, currency rates)."""
+    report = check_data_freshness()
+    return JSONResponse(report)
+
+
+@router.post("/data/refresh")
+async def data_refresh(
+    x_admin_token: str | None = Header(None, alias="X-Admin-Token"),
+) -> JSONResponse:
+    """Run coordinated data refresh: CBR rates + excise/anti-dumping dry-run."""
+    require_admin_token(x_admin_token)
+    result = await run_full_data_refresh(dry_run=True)
+    return JSONResponse(result)
 
 
 @router.get("/template")
