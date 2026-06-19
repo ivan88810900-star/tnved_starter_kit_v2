@@ -322,13 +322,13 @@ def search_commodities(
     q: str = Query("", description="Поиск по коду или наименованию"),
     db: Session = Depends(get_db),
 ) -> JSONResponse:
+    from ..services.normative_store import _expand_query_terms, get_search_suggestions
+
     query = (q or "").strip()
     if len(query) < 2:
         return JSONResponse({"status": "OK", "results": []})
 
-    terms = [query.lower()]
-    if "ноутбук" in query.lower():
-        terms.extend(["портативн", "вычислительн", "компьютер"])
+    terms = _expand_query_terms(query)
 
     digit_prefix = _digits(query)
     filters = [func.lower(Commodity.description).like(f"%{t}%") for t in terms]
@@ -349,7 +349,10 @@ def search_commodities(
         }
         for code, name in rows
     ]
-    return JSONResponse({"status": "OK", "results": results})
+    resp: dict[str, Any] = {"status": "OK", "results": results}
+    if not results:
+        resp["suggestions"] = get_search_suggestions()
+    return JSONResponse(resp)
 
 
 @router.get("/sections")
