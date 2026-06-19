@@ -1,5 +1,6 @@
 import React from 'react';
 import type { SanctionsRiskBlockData, SanctionsRiskSignal } from '../../types/api.types';
+import { sanitizeNonTariffLine } from '../../utils/nonTariffUiFilter';
 
 const SEVERITY_LABELS: Record<string, string> = {
   clear: 'Без сигналов',
@@ -36,6 +37,7 @@ type Props = {
 
 function SignalRow({ signal }: { signal: SanctionsRiskSignal }) {
   const sev = signal.severity ?? 'unknown';
+  const explanation = sanitizeNonTariffLine(signal.explanation) || 'Выявлен санкционный сигнал.';
   return (
     <li
       className={`rounded-md border px-2.5 py-2 text-[11px] space-y-1 ${SEVERITY_STYLES[sev] ?? SEVERITY_STYLES.unknown}`}
@@ -49,7 +51,7 @@ function SignalRow({ signal }: { signal: SanctionsRiskSignal }) {
           <span className="rounded-full bg-white/60 px-2 py-0.5 text-[10px]">{signal.source_label}</span>
         ) : null}
       </div>
-      <p className="text-[10px] leading-snug opacity-95">{signal.explanation}</p>
+      <p className="text-[10px] leading-snug opacity-95">{explanation}</p>
       {(signal.matched_entity || signal.matched_hs_prefix || signal.legal_ref) && (
         <div className="text-[10px] opacity-80 space-y-0.5">
           {signal.matched_entity ? <div>Совпадение: {signal.matched_entity}</div> : null}
