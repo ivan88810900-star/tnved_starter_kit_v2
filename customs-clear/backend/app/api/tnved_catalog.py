@@ -456,24 +456,77 @@ def _collect_chapter_notes(db: Session) -> dict[str, str]:
     return result
 
 
+def _node_level(code10: str) -> int:
+    """Структурный уровень 10-значного кода ТН ВЭД: 4 / 6 / 8 / 9 / 10.
+
+    Коды в БД хранятся 10-значными с паддингом нулями. Нулевой «хвост» означает,
+    что это промежуточный (бескодовый) уровень иерархии, а не самостоятельный
+    декларируемый код. Уровни считаются по границам субпозиций (4→6→8) и по
+    национальным разрядам (9→10):
+
+      9401200000 → 6  (субпозиция 9401 20, бескодовая если есть 9401 20 000 1/9)
+      9401200001 → 10 (декларируемый национальный код)
+      8703211090 → 9  (национальная группа, родитель 8703 21 109 1/9)
+      9401000000 → 4  (паддинг товарной позиции = сама позиция 9401)
+    """
+    if code10[9] != "0":
+        return 10
+    if code10[8] != "0":
+        return 9
+    if code10[6:8] != "00":
+        return 8
+    if code10[4:6] != "00":
+        return 6
+    return 4
+
+
+def _make_node(
+    code: str,
+    name: str,
+    import_duty: str,
+    notes: str,
+    *,
+    is_leaf: bool,
+    is_codeless: bool,
+    is_group: bool,
+) -> dict[str, Any]:
+    return {
+        "code": code,
+        "name": name,
+        "import_duty": import_duty,
+        "notes": notes,
+        # Классификация узла для фронтенда:
+        #   is_leaf     — терминальный 10-значный декларируемый код (кликабельный)
+        #   is_codeless — промежуточная бескодовая субпозиция (только текст)
+        #   is_group    — раздел/группа/позиция (раскрываемый заголовок)
+        "is_leaf": is_leaf,
+        "is_codeless": is_codeless,
+        "is_group": is_group,
+        "display_code": _digits(code),
+        "children": [],
+    }
+
+
+def _collect_leaf_names(node: dict[str, Any], acc: list[dict[str, Any]]) -> None:
+    for ch in node["children"]:
+        if not ch["children"]:
+            acc.append(ch)
+        else:
+            _collect_leaf_names(ch, acc)
+
+
 def _build_tree(rows: list[Commodity], chapter_notes: dict[str, str]) -> list[dict[str, Any]]:
     """
-    Плоский список tnved_commodities (коды 4 и 10 знаков) → дерево 4→6→10.
+    Плоский список tnved_commodities (10-значные коды с паддингом) → дерево
+    позиция(4) → субпозиция(6) → подсубпозиция(8) → национальный код(10).
 
-    Структура узла:
-      code        - строка (4, 6 или 10 знаков, нули НЕ теряются)
-      name        - наименование
-      import_duty - ставка пошлины (строка, пустая если нет)
-      notes       - примечания раздела/группы
-      children    - дочерние узлы
-
-    Промежуточные 6-значные узлы строятся синтетически из первых 6 цифр
-    10-значных кодов. Если под 6-значным узлом ровно один лист с суффиксом
-    "000000" (например, 1506000000), уровень 6 пропускается — лист идёт
-    прямо под родителем 4-го уровня.
+    Бескодовые субпозиции (промежуточные узлы с детьми) помечаются
+    is_codeless=True и НЕ являются кликабельными кодами. Терминальные коды —
+    is_leaf=True. Иерархия восстанавливается из структуры самих кодов
+    (см. _node_level), не из форматирования описаний.
     """
-    parents: dict[str, dict[str, Any]] = {}   # 4-digit key → node
-    ten_by_code: dict[str, dict[str, Any]] = {}  # 10-digit code → leaf
+    parents: dict[str, dict[str, Any]] = {}      # 4-digit key → heading node
+    ten_by_code: dict[str, dict[str, str]] = {}  # 10-digit code → raw fields
 
     for r in rows:
         raw_code = (r.code or "").strip()
@@ -484,13 +537,10 @@ def _build_tree(rows: list[Commodity], chapter_notes: dict[str, str]) -> list[di
         if len(d) <= 4:
             key4 = d.zfill(4)
             if key4 not in parents:
-                parents[key4] = {
-                    "code": key4,
-                    "name": (r.description or "").strip(),
-                    "import_duty": "",
-                    "notes": chapter_notes.get(key4, ""),
-                    "children": [],
-                }
+                parents[key4] = _make_node(
+                    key4, (r.description or "").strip(), "", chapter_notes.get(key4, ""),
+                    is_leaf=False, is_codeless=False, is_group=True,
+                )
             elif not parents[key4]["name"]:
                 parents[key4]["name"] = (r.description or "").strip()
         else:
@@ -499,77 +549,78 @@ def _build_tree(rows: list[Commodity], chapter_notes: dict[str, str]) -> list[di
                 "code": code10,
                 "name": _strip_leading_dashes((r.description or "").strip()),
                 "import_duty": _format_duty(r.import_duty),
-                "notes": "",          # заполним ниже
-                "children": [],
-                "_p4": code10[:4],
-                "_p6": code10[:6],
             }
 
-    # Создаём отсутствующие родители для 10-значных кодов
-    for leaf in ten_by_code.values():
-        p4 = leaf["_p4"]
+    # Создаём отсутствующие 4-значные родители для 10-значных кодов
+    for code10 in ten_by_code:
+        p4 = code10[:4]
         if p4 not in parents:
-            parents[p4] = {
-                "code": p4,
-                "name": "",
-                "import_duty": "",
-                "notes": chapter_notes.get(p4, ""),
-                "children": [],
-            }
+            parents[p4] = _make_node(
+                p4, "", "", chapter_notes.get(p4, ""),
+                is_leaf=False, is_codeless=False, is_group=True,
+            )
 
-    # Заполняем пустые наименования 4-значных узлов
-    for p4, pnode in parents.items():
-        if not pnode["name"]:
-            # Попытка 1: XXXX000000 → это «базовый» код позиции без субпозиций
-            zero_code = p4 + "000000"
-            if zero_code in ten_by_code:
-                raw_name = ten_by_code[zero_code].get("name", "")
-                candidate = _strip_leading_dashes(raw_name)
-                # Используем только осмысленные имена (не 'прочие', не обрезанные)
-                if _is_meaningful_name(candidate):
-                    pnode["name"] = candidate
-            # Попытка 2: первый дочерний код с наименьшим числом тире
-            if not pnode["name"]:
-                children_of_p4 = [lf for lf in ten_by_code.values() if lf["_p4"] == p4]
-                if children_of_p4:
-                    pnode["name"] = _best_name_for_group(children_of_p4)
+    # Группируем 10-значные коды по товарной позиции (первые 4 знака)
+    by_heading: dict[str, list[str]] = {}
+    for code10 in ten_by_code:
+        by_heading.setdefault(code10[:4], []).append(code10)
 
-    # Простановка notes всем листьям (из родительского 4-значного узла)
-    for leaf in ten_by_code.values():
-        p4 = leaf["_p4"]
-        leaf["notes"] = parents[p4]["notes"]
+    for p4, codes in by_heading.items():
+        heading = parents[p4]
+        codes.sort()
 
-    # Группируем листья по первым 6 знакам
-    groups6: dict[str, list] = {}
-    for leaf in ten_by_code.values():
-        groups6.setdefault(leaf["_p6"], []).append(leaf)
+        # XXXX000000 — это сама товарная позиция (паддинг). Если под позицией
+        # есть более глубокие коды, сворачиваем её имя в заголовок и НЕ создаём
+        # для неё отдельный (фиктивный) узел-лист. Если это единственный код —
+        # оставляем его как реальный декларируемый лист.
+        pad_code = p4 + "000000"
+        deeper = [c for c in codes if c != pad_code]
+        if pad_code in ten_by_code and deeper:
+            cand = ten_by_code[pad_code]["name"]
+            if cand and (not heading["name"] or not _is_meaningful_name(heading["name"])):
+                heading["name"] = cand
+            codes = deeper
 
-    # Строим 6-значные узлы и присоединяем к 4-значным родителям
-    for p6, g_leaves in sorted(groups6.items()):
-        p4 = p6[:4]
-        sorted_leaves = sorted(g_leaves, key=lambda x: x["code"])
+        # Восстанавливаем вложенность по структурному уровню кода через стек
+        stack: list[tuple[int, dict[str, Any]]] = []
+        for code10 in codes:
+            lvl = _node_level(code10)
+            raw = ten_by_code[code10]
+            node = _make_node(
+                code10, raw["name"], raw["import_duty"], heading["notes"],
+                is_leaf=True, is_codeless=False, is_group=False,
+            )
+            while stack and stack[-1][0] >= lvl:
+                stack.pop()
+            parent_node = stack[-1][1] if stack else heading
+            parent_node["children"].append(node)
+            stack.append((lvl, node))
 
-        # Убираем служебные поля
-        for lf in sorted_leaves:
-            lf.pop("_p4", None)
-            lf.pop("_p6", None)
+    # Классификация: 10-значный узел с детьми — бескодовая субпозиция
+    def _classify(node: dict[str, Any]) -> None:
+        for ch in node["children"]:
+            _classify(ch)
+        if len(node["display_code"]) == 10:
+            if node["children"]:
+                node["is_leaf"] = False
+                node["is_codeless"] = True
+            else:
+                node["is_leaf"] = True
+                node["is_codeless"] = False
 
-        # Единственный лист с суффиксом «000000» — уровень 6 не нужен
-        if len(sorted_leaves) == 1 and sorted_leaves[0]["code"][4:] == "000000":
-            parents[p4]["children"].append(sorted_leaves[0])
-        else:
-            node6: dict[str, Any] = {
-                "code": p6,
-                "name": _best_name_for_group(sorted_leaves) or f"Субпозиция {p6}",
-                "import_duty": "",
-                "notes": parents[p4]["notes"],
-                "children": sorted_leaves,
-            }
-            parents[p4]["children"].append(node6)
+    def _sort(node: dict[str, Any]) -> None:
+        node["children"].sort(key=lambda x: x["code"])
+        for ch in node["children"]:
+            _sort(ch)
 
-    # Сортируем детей по коду
     for p in parents.values():
-        p["children"].sort(key=lambda x: x["code"])
+        _classify(p)
+        _sort(p)
+        # Заполняем пустое имя позиции лучшим именем из дочерних листьев
+        if not p["name"]:
+            leaves: list[dict[str, Any]] = []
+            _collect_leaf_names(p, leaves)
+            p["name"] = _best_name_for_group(leaves)
 
     return sorted(parents.values(), key=lambda x: x["code"])
 
@@ -618,24 +669,23 @@ def _wrap_in_sections(
             headings = sorted(by_ch.get(ch_prefix, []), key=lambda x: x["code"])
             if not headings:
                 continue
-            ch_nodes.append({
-                "code": ch_prefix,
-                "name": (ch.title or "").strip(),
-                "import_duty": "",
-                "notes": (ch.notes or "").strip(),
-                "children": headings,
-            })
+            ch_node = _make_node(
+                ch_prefix, (ch.title or "").strip(), "", (ch.notes or "").strip(),
+                is_leaf=False, is_codeless=False, is_group=True,
+            )
+            ch_node["children"] = headings
+            ch_nodes.append(ch_node)
 
         if not ch_nodes:
             continue
 
-        result.append({
-            "code": sec.roman_number or f"S{sec.id}",
-            "name": (sec.title or "").strip(),
-            "import_duty": "",
-            "notes": (sec.notes or "").strip(),
-            "children": ch_nodes,
-        })
+        sec_node = _make_node(
+            sec.roman_number or f"S{sec.id}", (sec.title or "").strip(), "", (sec.notes or "").strip(),
+            is_leaf=False, is_codeless=False, is_group=True,
+        )
+        sec_node["display_code"] = ""  # раздел кодируется римской цифрой
+        sec_node["children"] = ch_nodes
+        result.append(sec_node)
 
     return result
 

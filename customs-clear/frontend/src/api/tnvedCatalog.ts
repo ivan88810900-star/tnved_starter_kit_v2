@@ -151,6 +151,14 @@ export type TnvedHierarchyNode = {
   title_ru?: string;
   import_duty: string;
   notes: string;
+  /** Терминальный 10-значный декларируемый код (кликабельный). */
+  is_leaf?: boolean;
+  /** Бескодовая субпозиция — промежуточный уровень, только текст (не кликабельный). */
+  is_codeless?: boolean;
+  /** Раздел / группа / товарная позиция (раскрываемый заголовок). */
+  is_group?: boolean;
+  /** Код без пробелов (только цифры). */
+  display_code?: string;
   children: TnvedHierarchyNode[];
 };
 

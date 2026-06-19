@@ -37,6 +37,14 @@ const FileIcon = () => (
   </svg>
 );
 
+// Маркер бескодовой субпозиции (только текст, без кода)
+const CodelessIcon = () => (
+  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"
+    className="shrink-0 text-gray-300" aria-hidden>
+    <line x1="5" y1="12" x2="19" y2="12" />
+  </svg>
+);
+
 const ChevronIcon = ({ open }: { open: boolean }) => (
   <svg width="11" height="11" viewBox="0 0 24 24" fill="none"
     stroke="currentColor" strokeWidth="2.5"
@@ -168,9 +176,12 @@ const TreeRow: React.FC<RowProps> = ({
   const d           = digitsOnly(node.code);
   const nodeKey     = node.code;
   const hasChildren = node.children.length > 0;
-  const isLeaf      = isFullTnvedCode(d);
+  // Классификация приходит с бэкенда; fallback на эвристику для старых ответов.
+  const isCodeless  = node.is_codeless === true;
+  const isLeaf      = node.is_leaf ?? (isFullTnvedCode(d) && !hasChildren);
   const open        = expanded.has(nodeKey);
   const active      = isLeaf && selectedCode === d;
+  const clickable   = hasChildren || isLeaf;
 
   // Отступ: 4px + 16px на уровень
   const pl = 8 + depth * 18;
@@ -188,8 +199,9 @@ const TreeRow: React.FC<RowProps> = ({
     level === 'subheading' ? 'text-[12.5px] font-medium text-gray-700' :
                              'text-[12.5px] font-medium text-gray-800';
 
-  // Стили названия по уровню
+  // Стили названия по уровню. Бескодовые субпозиции — серый курсив.
   const nameClass =
+    isCodeless       ? `text-[12px] italic text-gray-400 ${TNVED_COMMODITY_NAME_CLASS}` :
     active           ? `text-[12.5px] text-blue-700 ${TNVED_COMMODITY_NAME_CLASS}` :
     level === 'section'  ? `text-[12.5px] text-gray-700 ${TNVED_COMMODITY_NAME_CLASS}` :
     level === 'chapter'  ? `text-[12px] text-gray-600 ${TNVED_COMMODITY_NAME_CLASS}` :
@@ -202,12 +214,12 @@ const TreeRow: React.FC<RowProps> = ({
       <button
         type="button"
         onClick={handleClick}
-        disabled={!hasChildren && !isLeaf}
+        disabled={!clickable}
         style={{ paddingLeft: pl }}
         className={[
           'flex w-full items-start gap-2 rounded-xl py-3 pr-3.5 text-left',
           'border border-transparent transition-all duration-150',
-          hasChildren || isLeaf ? 'cursor-pointer hover:-translate-y-[1px] hover:bg-slate-50' : 'cursor-default opacity-40',
+          clickable ? 'cursor-pointer hover:-translate-y-[1px] hover:bg-slate-50' : 'cursor-default opacity-40',
           active ? 'border-indigo-200 bg-indigo-50 shadow-sm' : '',
         ].join(' ')}
       >
@@ -218,23 +230,34 @@ const TreeRow: React.FC<RowProps> = ({
 
         {/* Иконка */}
         <span className="mt-[2px] shrink-0">
-          {level === 'section' ? <SectionIcon /> : hasChildren ? <FolderIcon depth={depth} /> : <FileIcon />}
+          {level === 'section' ? <SectionIcon />
+            : isCodeless ? <CodelessIcon />
+            : hasChildren ? <FolderIcon depth={depth} />
+            : <FileIcon />}
         </span>
 
-        {/* Код (моноширинный) + Название (перенос строки) */}
+        {/* Бескодовая субпозиция — только текст. Иначе: код + название. */}
         <span className="min-w-0 flex-1">
-          <MeasureHoverCard code={node.code} fallbackName={node.name}>
-            <span className={`font-mono block ${codeClass} ${active ? 'text-blue-800' : ''}`}>
-              {codeLabel(node.code, level)}
+          {isCodeless ? (
+            <span className={`block ${nameClass} break-words`}>
+              <Highlight text={`— ${formatTnvedCommodityName(node.name)}`} query={searchQuery} />
             </span>
-          </MeasureHoverCard>
-          {node.name ? (
-            <span className={`block ${nameClass} mt-0.5 break-words`}>
-              <Highlight text={formatTnvedCommodityName(node.name)} query={searchQuery} />
-            </span>
-          ) : isLeaf ? (
-            <span className="mt-0.5 block text-[12px] italic text-gray-400">Описание отсутствует</span>
-          ) : null}
+          ) : (
+            <>
+              <MeasureHoverCard code={node.code} fallbackName={node.name}>
+                <span className={`font-mono block ${codeClass} ${active ? 'text-blue-800' : ''}`}>
+                  {codeLabel(node.code, level)}
+                </span>
+              </MeasureHoverCard>
+              {node.name ? (
+                <span className={`block ${nameClass} mt-0.5 break-words`}>
+                  <Highlight text={formatTnvedCommodityName(node.name)} query={searchQuery} />
+                </span>
+              ) : isLeaf ? (
+                <span className="mt-0.5 block text-[12px] italic text-gray-400">Описание отсутствует</span>
+              ) : null}
+            </>
+          )}
         </span>
       </button>
 
