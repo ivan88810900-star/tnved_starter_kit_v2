@@ -1892,6 +1892,49 @@ def upsert_geo_special_duty(
         db.commit()
 
 
+def find_classification_rulings(hs_code: str, *, limit: int = 20) -> list[dict[str, Any]]:
+    """Find formal classification rulings matching an HS code by prefix."""
+    from ..models.tnved import ClassificationRuling
+
+    d = _digits_hs(hs_code)
+    if not d or len(d) < 4:
+        return []
+    prefixes = []
+    for length in (10, 8, 6, 4):
+        if len(d) >= length:
+            prefixes.append(d[:length])
+    with SessionLocal() as db:
+        results: list[dict[str, Any]] = []
+        seen: set[str] = set()
+        for pref in prefixes:
+            rows = (
+                db.query(ClassificationRuling)
+                .filter(ClassificationRuling.assigned_hs_code.like(f"{pref}%"))
+                .order_by(ClassificationRuling.ruling_date.desc())
+                .limit(limit)
+                .all()
+            )
+            for r in rows:
+                if r.ruling_number in seen:
+                    continue
+                seen.add(r.ruling_number)
+                results.append({
+                    "ruling_number": r.ruling_number,
+                    "ruling_date": r.ruling_date or "",
+                    "agency": r.agency or "",
+                    "goods_description": r.goods_description or "",
+                    "assigned_hs_code": r.assigned_hs_code or "",
+                    "rationale": r.rationale or "",
+                    "source_url": r.source_url or "",
+                })
+                if len(results) >= limit:
+                    break
+            if len(results) >= limit:
+                break
+    results.sort(key=lambda x: x["ruling_date"], reverse=True)
+    return results[:limit]
+
+
 def find_declaration_documents(hs_code: str) -> list[dict[str, Any]]:
     """Lookup required documents for customs declaration by HS code.
 
