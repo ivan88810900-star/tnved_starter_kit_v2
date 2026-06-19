@@ -8,9 +8,9 @@ try:
     from fastapi.testclient import TestClient
 
     from app.db import SessionLocal
-    from app.api.tnved_catalog import _format_duty
+    from app.api.tnved_catalog import _format_duty, clear_preview_cache
     from app.main import app
-    from app.models.core import ClassificationDecision, PreliminaryDecision
+    from app.models.core import ClassificationDecision, HsRate, PreliminaryDecision
     from app.models.tnved import Chapter, Commodity, Section
     from app.services.normative_store import init_db
 
@@ -174,6 +174,28 @@ class TnvedCatalogApiTests(unittest.TestCase):
         self.assertEqual(_format_duty("5 563С)"), "5%")
         self.assertIn("15", _format_duty("15, но не менее 0,07 евро за 1 л 563С)"))
         self.assertNotIn("563С)", _format_duty("15, но не менее 0,07 евро за 1 л 563С)"))
+
+    def test_preview_vat_rate_from_data(self):
+        """preview.payments.vat_rates берёт фактическую ставку из hs_rates, без хардкода 20%/22%."""
+        # Без hs_rate — стандартная ставка по умолчанию 22 (не 20).
+        clear_preview_cache()
+        r0 = self.client.get("/api/v1/tnved/preview/9901210000")
+        self.assertEqual(r0.status_code, 200)
+        self.assertEqual(r0.json().get("payments", {}).get("vat_rates"), [22])
+        # С льготной ставкой 10 в hs_rates — preview отдаёт [10].
+        with SessionLocal() as db:
+            db.add(HsRate(hs_code="9901210000", hs_prefix="9901", duty_rate="10", vat_import_rate=10.0))
+            db.commit()
+        try:
+            clear_preview_cache()
+            r1 = self.client.get("/api/v1/tnved/preview/9901210000")
+            self.assertEqual(r1.status_code, 200)
+            self.assertEqual(r1.json().get("payments", {}).get("vat_rates"), [10])
+        finally:
+            with SessionLocal() as db:
+                db.query(HsRate).filter(HsRate.hs_code == "9901210000").delete()
+                db.commit()
+            clear_preview_cache()
 
     def test_hierarchy_tree_ok(self):
         r = self.client.get("/api/v1/tnved/hierarchy-tree?prefix=9901")
