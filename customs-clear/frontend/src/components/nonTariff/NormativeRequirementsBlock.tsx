@@ -9,6 +9,7 @@ import {
   type NormativeDocument,
   type NormativeRequirementsBlockData,
 } from './normativeBlockHelpers';
+import { describePermit, permitBadgeClasses } from '../../utils/permitVocabulary';
 
 const APPLICABILITY_LABELS: Record<string, string> = {
   definite: 'Обязательно',
@@ -30,6 +31,7 @@ function DocumentRow({
   variant: 'required' | 'missing';
 }) {
   const isMissing = variant === 'missing';
+  const permit = describePermit(doc.permit_type, 'mandatory');
   return (
     <li
       className={`rounded-md border px-2.5 py-2 text-[11px] space-y-1 ${
@@ -37,12 +39,20 @@ function DocumentRow({
       }`}
     >
       <div className="flex flex-wrap items-center gap-2">
+        <span
+          className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold ${
+            isMissing ? 'border-red-300 bg-red-100 text-red-900' : permitBadgeClasses(permit.severity)
+          }`}
+        >
+          {permit.code}
+        </span>
         <span className={`font-semibold ${isMissing ? 'text-red-900' : 'text-slate-800'}`}>
-          {doc.permit_type}
+          {permit.label}
         </span>
         {doc.tr_ts && (
           <span className="rounded-full bg-purple-50 px-2 py-0.5 text-[10px] text-purple-800">
             ТР ТС {doc.tr_ts}
+            {doc.tr_ts_full_name ? ` — ${doc.tr_ts_full_name}` : ''}
           </span>
         )}
         {doc.applicability && doc.applicability !== 'definite' && (

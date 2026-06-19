@@ -3,6 +3,7 @@ import type { AdvisoryRequirement } from './AdvisoryRequirementsBlock';
 export type NormativeDocument = {
   permit_type: string;
   tr_ts?: string | null;
+  tr_ts_full_name?: string | null;
   source?: string;
   source_label?: string | null;
   applicability?: string;
@@ -43,7 +44,7 @@ export function normativeBlockFromNonTariff(nonTariff: {
   description?: string;
   tr_ts?: string[];
   notes?: string[];
-  required_permits?: Array<{ permit_type?: string; tr_ts?: string | null; description?: string; legal_ref?: string; trigger?: string; source?: string; applicability?: string }>;
+  required_permits?: Array<{ permit_type?: string; tr_ts?: string | null; tr_ts_full_name?: string | null; description?: string; legal_ref?: string; trigger?: string; source?: string; applicability?: string }>;
 } | null | undefined): NormativeRequirementsBlockData | null {
   if (!nonTariff) return null;
   if (nonTariff.normative_block) {
@@ -63,6 +64,7 @@ export function normativeBlockFromNonTariff(nonTariff: {
   const required = (nonTariff.required_permits ?? []).map((r) => ({
     permit_type: r.permit_type ?? '',
     tr_ts: r.tr_ts ?? null,
+    tr_ts_full_name: r.tr_ts_full_name ?? null,
     source: r.source,
     source_label: r.source,
     applicability: r.applicability ?? 'definite',
