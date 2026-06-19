@@ -1,4 +1,5 @@
 import React from 'react';
+import { describePermit, permitBadgeClasses } from '../../utils/permitVocabulary';
 
 export type AdvisoryRequirement = {
   permit_type: string;
@@ -80,7 +81,14 @@ export const AdvisoryRequirementsBlock: React.FC<Props> = ({
               className={`rounded-md border px-2.5 py-2 text-[11px] text-slate-700 space-y-1 ${liBorder}`}
             >
               <div className="flex flex-wrap items-center gap-2">
-                <span className="font-semibold text-slate-800">{item.permit_type}</span>
+                <span
+                  className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold ${permitBadgeClasses('conditional')}`}
+                >
+                  {describePermit(item.permit_type).code}
+                </span>
+                <span className="font-semibold text-slate-800">
+                  {describePermit(item.permit_type).label}
+                </span>
                 {item.tr_ts && (
                   <span className="rounded-full bg-purple-50 px-2 py-0.5 text-[10px] text-purple-800">
                     ТР ТС {item.tr_ts}

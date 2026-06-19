@@ -2,9 +2,8 @@ import React, { useState } from 'react';
 import { api } from '../api/client';
 import { getUserFacingApiError } from '../api/error';
 import { CC_NORMATIVE_PREFILL_KEY } from '../constants/homeNav';
-import { NormativeRequirementsBlock } from '../components/nonTariff/NormativeRequirementsBlock';
+import { NonTariffBlock } from '../components/nonTariff/NonTariffBlock';
 import { SanctionsRiskBlock } from '../components/nonTariff/SanctionsRiskBlock';
-import { normativeBlockFromNonTariff } from '../components/nonTariff/normativeBlockHelpers';
 import type { AdvisoryRequirement, NormativeRequirementsBlockData, SanctionsRiskBlockData } from '../types/api.types';
 
 type Permit = { type: string; number: string };
@@ -433,8 +432,8 @@ export const NonTariff: React.FC = () => {
                   )}
                 </div>
 
-                {/* Normative requirements block */}
-                <NormativeRequirementsBlock block={normativeBlockFromNonTariff(item.non_tariff)} />
+                {/* Universal non-tariff requirements block */}
+                <NonTariffBlock nonTariff={item.non_tariff} />
 
                 {/* Sanctions / risk block */}
                 <SanctionsRiskBlock block={item.non_tariff.risk_block} />
