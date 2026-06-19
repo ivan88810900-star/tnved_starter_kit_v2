@@ -339,6 +339,25 @@ class DeclarationDocument(Base):
     category: Mapped[str] = mapped_column(String(50), nullable=False, default="general")
 
 
+class ClassificationRuling(Base):
+    """Формальные решения по классификации товаров (КТС/ФТС/ЕЭК)."""
+
+    __tablename__ = "classification_rulings"
+    __table_args__ = (
+        Index("ix_classification_rulings_hs", "assigned_hs_code"),
+        UniqueConstraint("ruling_number", name="uq_classification_rulings_number"),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    ruling_number: Mapped[str] = mapped_column(String(128), nullable=False)
+    ruling_date: Mapped[str] = mapped_column(String(20), nullable=False, default="")
+    agency: Mapped[str] = mapped_column(String(50), nullable=False, default="FTS")
+    goods_description: Mapped[str] = mapped_column(Text, nullable=False, default="")
+    assigned_hs_code: Mapped[str] = mapped_column(String(10), nullable=False, default="")
+    rationale: Mapped[str] = mapped_column(Text, nullable=False, default="")
+    source_url: Mapped[str] = mapped_column(String(512), nullable=False, default="")
+
+
 class CustomsProcedure(Base):
     """Таможенные процедуры и режимы (ИМ40, ЭК10, ТТ80 и др.)."""
 

@@ -9,6 +9,7 @@ from .regulatory import (  # noqa: F401
 from .ntm_v2 import NtmApplicabilityRuleV2, NtmMeasureV2  # noqa: F401
 from .tnved import (
     Chapter,
+    ClassificationRuling,
     Commodity,
     CountryTariffPreference,
     CustomsProcedure,
