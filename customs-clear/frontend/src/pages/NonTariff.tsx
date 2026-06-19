@@ -4,7 +4,54 @@ import { getUserFacingApiError } from '../api/error';
 import { CC_NORMATIVE_PREFILL_KEY } from '../constants/homeNav';
 import { NonTariffBlock } from '../components/nonTariff/NonTariffBlock';
 import { SanctionsRiskBlock } from '../components/nonTariff/SanctionsRiskBlock';
+import { sanitizeNonTariffLine } from '../utils/nonTariffUiFilter';
 import type { AdvisoryRequirement, NormativeRequirementsBlockData, SanctionsRiskBlockData } from '../types/api.types';
+
+/**
+ * Сырые служебные «Мера (тип): <сырой текст TKS>» дублируют структурированный
+ * NonTariffBlock и нарушают принцип #107 (никакого сырого TKS в UI). Скрываем их;
+ * остальные заметки (запреты, оговорки) показываем после очистки fallback-шума.
+ */
+const RAW_MEASURE_DUMP_RE = /^\s*Мера\s*\(/i;
+const PROHIBITION_RE = /^\s*Запретительная мера\s*:/i;
+const PROHIBITION_CLEAN =
+  'Запретительная мера: возможен запрет или ограничение ввоза — проверьте нормативное основание.';
+
+function visibleNotes(notes: string[] | undefined): string[] {
+  if (!notes?.length) return [];
+  const out: string[] = [];
+  const seen = new Set<string>();
+  for (const note of notes) {
+    // Сырой дамп «Мера (тип): <текст TKS>» дублирует структурированный блок — скрываем.
+    if (RAW_MEASURE_DUMP_RE.test(note)) continue;
+    // Запретительные меры показываем нормализованной формулировкой (без сырого хвоста).
+    if (PROHIBITION_RE.test(note)) {
+      if (!seen.has(PROHIBITION_CLEAN)) {
+        seen.add(PROHIBITION_CLEAN);
+        out.push(PROHIBITION_CLEAN);
+      }
+      continue;
+    }
+    const clean = sanitizeNonTariffLine(note);
+    if (!clean || seen.has(clean)) continue;
+    seen.add(clean);
+    out.push(clean);
+  }
+  return out;
+}
+
+function visibleRisks(risks: string[] | undefined): string[] {
+  if (!risks?.length) return [];
+  const out: string[] = [];
+  const seen = new Set<string>();
+  for (const risk of risks) {
+    const clean = sanitizeNonTariffLine(risk);
+    if (!clean || seen.has(clean)) continue;
+    seen.add(clean);
+    out.push(clean);
+  }
+  return out;
+}
 
 type Permit = { type: string; number: string };
 
@@ -379,6 +426,8 @@ export const NonTariff: React.FC = () => {
           {result.items?.map((item, idx) => {
             const dq = item.payment.data_quality;
             const freshness = item.non_tariff.data_freshness;
+            const cleanRisks = visibleRisks(item.risks);
+            const cleanNotes = visibleNotes(item.non_tariff.notes);
             return (
               <div key={idx} className="cc-card-soft p-3 space-y-2">
                 {/* Header row */}
@@ -488,17 +537,17 @@ export const NonTariff: React.FC = () => {
                 ))}
 
                 {/* Risks */}
-                {item.risks && item.risks.length > 0 && (
+                {cleanRisks.length > 0 && (
                   <div className="rounded-lg border border-orange-200 bg-orange-50 px-2 py-1.5 space-y-1">
                     <span className="text-orange-800 font-medium text-[10px]">Риски:</span>
-                    {item.risks.map((r, i) => (
+                    {cleanRisks.map((r, i) => (
                       <div key={i} className="text-orange-700 text-[10px]">{r}</div>
                     ))}
                   </div>
                 )}
 
-                {/* Notes */}
-                {item.non_tariff.notes?.map((n, i) => (
+                {/* Notes (очищенные, без сырых дампов мер) */}
+                {cleanNotes.map((n, i) => (
                   <div key={i} className="text-amber-700">{n}</div>
                 ))}
 
