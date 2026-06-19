@@ -173,7 +173,7 @@
 - [x] **PR #92 (Issue #86)** — Import restrictions: таблица `import_restrictions` с запретами, квотами, лицензированием и двойным назначением; API `GET /api/restrictions/{hs_code}`; 12 тестов. ✅ merged 2026-06-18
 - [x] **PR #93 (Issue #87)** — Declaration documents: таблица `declaration_documents` со списками документов для декларирования по кодам ТН ВЭД; API `GET /api/declaration/documents/{hs_code}`; тесты. ✅ merged 2026-06-18
 - [x] **PR #94 (Issue #88)** — Classification rulings: таблица `classification_rulings` с 50 решениями КТС/ФТС/ЕЭК по классификации товаров; prefix-based lookup; API `GET /api/classification/rulings/{hs_code}`; 13 тестов. ✅ merged 2026-06-19
-- [ ] **Issue #89** — Data refresh workflow: автообновление курсов ЦБ, акцизов, антидемпинга; GitHub Actions workflow для еженедельной проверки.
+- [x] **PR #95 (Issue #89)** — Data refresh workflow: unified data_refresh_service (freshness checks для 6 доменов + CBR); CLI `scripts/data_refresh.py`; API `GET /data/freshness` + `POST /data/refresh`; GitHub Actions с CBR/EEC reachability, duplicate issue prevention; APScheduler currency refresh 09:00 daily; 16 тестов. ✅ merged 2026-06-19
 
 ### Фаза L — Дальше (бэклог)
 - [x] Стаб HTTP-классификатора для разработки (`scripts/inference_classifier_stub.py`); боевой inference — вне репозитория по **`INFERENCE_CLASSIFIER.md`**.
@@ -211,4 +211,4 @@
 
 ---
 
-*Последнее обновление: фаза P — расширенные справочники: утильсбор (39 категорий), запреты/ограничения, документы для декларирования, 50 решений по классификации КТС/ФТС/ЕЭК. 2026-06-19.*
+*Последнее обновление: фаза P завершена — расширенные справочники и автообновление: утильсбор, запреты/ограничения, документы для декларирования, 50 решений по классификации, unified data refresh workflow (CBR + excise + anti-dumping). 2026-06-19.*
