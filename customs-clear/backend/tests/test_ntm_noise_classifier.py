@@ -32,6 +32,9 @@ NOISE_CASES: list[tuple[str, str, bool]] = [
     ("0201100000", "phyto_control", True),   # beef — no phyto
     ("8517120000", "phyto_control", True),   # smartphone — no phyto
     ("3304990000", "phyto_control", True),   # cosmetics — no phyto
+    # Live animals chapter 01 — vet, NOT phyto (#99: horses 0101)
+    ("0101210000", "phyto_control", True),   # horses — no phyto (noise)
+    ("0101210000", "vet_control", False),    # horses — vet valid
 
     # License: alcohol (22), tobacco (24), weapons (93), explosives (36), etc.
     ("2204210000", "license", False),  # wine — license valid
