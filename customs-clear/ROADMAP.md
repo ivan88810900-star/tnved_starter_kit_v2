@@ -175,6 +175,20 @@
 - [x] **PR #94 (Issue #88)** — Classification rulings: таблица `classification_rulings` с 50 решениями КТС/ФТС/ЕЭК по классификации товаров; prefix-based lookup; API `GET /api/classification/rulings/{hs_code}`; 13 тестов. ✅ merged 2026-06-19
 - [x] **PR #95 (Issue #89)** — Data refresh workflow: unified data_refresh_service (freshness checks для 6 доменов + CBR); CLI `scripts/data_refresh.py`; API `GET /data/freshness` + `POST /data/refresh`; GitHub Actions с CBR/EEC reachability, duplicate issue prevention; APScheduler currency refresh 09:00 daily; 16 тестов. ✅ merged 2026-06-19
 
+### Фаза Q — Официальные платёжные провенансы, поиск и NTM-UX (Issues #39–#114)
+
+- [x] **PR #40 (Issue #39)** — Official VAT Ingestion MVP: атомарный apply (no commit при blockers), row-level VAT провенанс (`vat_source_*`), строгие VAT-revision паттерны (`vat:` / `eec-vat:`), изоляция VAT от import-duty bundle/registry; coverage по VAT-провенансу, а не по duty revision. ✅ merged
+- [x] **PR #46 (Issue #45)** — Official Anti-Dumping Ingestion MVP: уникальная Alembic-миграция, строгая official-URL валидация (`eec.eaeunion.org` / HTTPS), детерминированная identity меры (manufacturer/exporter) против коллизий; `trade_remedies` остаётся `manual_review_required`. ✅ merged
+- [x] **PR #48 (Issue #47)** — Official Special Safeguard MVP: safeguard-специфичный провенанс (`safeguard_source_*`), изоляция от anti-dumping/VAT/excise/duty, coverage/readiness только по safeguard-полям; regression-тесты доменной изоляции. ✅ merged
+- [x] **PR #105** — TNVED tree codeless subpositions: бескодовые субпозиции (`is_codeless`) отделены от 10-значных кликабельных листьев (`is_leaf`), `display_code` без пробелов; backend + frontend по стандарту TKS.ru. ✅ merged
+- [x] **PR #111 (Issue #106)** — SYSTEM: FTS5 full-text search по всей номенклатуре ТН ВЭД: runtime-индекс `tnved_fts` (idempotent, вне Alembic из-за #112), синонимы + морфология (prefix), BM25-релевантность; `tnved_fts.py` + тесты. ✅ merged
+- [x] **PR #113 (Issue #107)** — SYSTEM: универсальный `NonTariffBlock` для всех 97 глав: централизованный `permitVocabulary` (ДС/СС/ВС/ФСС/РУ/ЛЗ/НФ/СГР → человекочитаемые названия, орган, цветовые бейджи), без сырого TKS-текста. ✅ merged
+- [x] **Issue #108** — SYSTEM: аудит полноты данных по главам (NTM / hs_rates / regulatory docs / ТР ТС); выявлены пробелы → дочерние issues #109/#110.
+- [x] **PR #115 (Issue #112)** — CRITICAL Alembic fix: устранён дубликат ревизии `a1b2c3d4e5f6` (`country_tariff_preferences` → `a1b2c3d4e5f7`), воссоздана merge-миграция `merge_heads_001` (объединяет 3 головы); `alembic upgrade head` проходит на свежей БД. ✅ merged
+- [x] **PR #116 (Issue #109)** — Backfill NTM для главы 97 (культурные ценности): идемпотентный `backfill_ch97_cultural_measures.py` (Закон РФ № 4804-1 + Единый перечень ЕАЭС разд. 2.20); clean NTM по главе 97: 6 → 18. ✅ merged
+- [x] **PR #117 (Issue #110)** — Ревизия noise-классификации: доля ~54% признана обоснованной (исправление over-assignment краулера TKS), потери валидных мер нет (12/12 контрольных кодов + 71/71 брокерская регрессия); `audit_ntm_noise.py` для воспроизводимого отчёта. ✅ merged
+- [x] **PR #118 (Issue #114)** — Чистка сырого TKS-текста в блоке «Санкции и риски»: скрыты сырые дампы `Мера (тип): …`, нормализованы запретительные меры, санитизация notes/risks (принцип #107). ✅ merged
+
 ### Фаза L — Дальше (бэклог)
 - [x] Стаб HTTP-классификатора для разработки (`scripts/inference_classifier_stub.py`); боевой inference — вне репозитория по **`INFERENCE_CLASSIFIER.md`**.
 - [x] Персистентная очередь async-проверок ФСА (`permits_verify_jobs` в БД).
@@ -211,4 +225,4 @@
 
 ---
 
-*Последнее обновление: фаза P завершена — расширенные справочники и автообновление: утильсбор, запреты/ограничения, документы для декларирования, 50 решений по классификации, unified data refresh workflow (CBR + excise + anti-dumping). 2026-06-19.*
+*Последнее обновление: фаза Q завершена — официальные платёжные провенансы (VAT/anti-dumping/safeguard), исправление дерева ТН ВЭД, FTS5-поиск по всей номенклатуре, универсальный NonTariffBlock, критический фикс Alembic (#112), backfill главы 97, обоснование noise-разметки, чистка сырого TKS-текста в блоке рисков. 2026-06-19.*
