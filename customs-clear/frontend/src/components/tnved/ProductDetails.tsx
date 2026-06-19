@@ -2,8 +2,8 @@ import React from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../../api/client';
-import type { TnvedCommodityDetail, TnvedImportReference } from '../../api/tnvedCatalog';
-import { fetchCommodityByCode, fetchTnvedImportReference, formatCode, isFullTnvedCode } from '../../api/tnvedCatalog';
+import type { TnvedCommodityDetail, TnvedImportReference, TnvedPreview } from '../../api/tnvedCatalog';
+import { fetchCommodityByCode, fetchTnvedImportReference, fetchTnvedPreview, formatCode, isFullTnvedCode } from '../../api/tnvedCatalog';
 import {
   hasVisibleNonTariffContent,
   pickNonTariffVisibleFields,
@@ -45,6 +45,7 @@ export const ProductDetails: React.FC<Props> = ({ selectedCode }) => {
   const [chatError, setChatError] = React.useState<string | null>(null);
   const [reference, setReference] = React.useState<TnvedImportReference | null>(null);
   const [referenceLoading, setReferenceLoading] = React.useState(false);
+  const [preview, setPreview] = React.useState<TnvedPreview | null>(null);
   const [activeTab, setActiveTab] = React.useState<DetailTab>('payments');
   const [normativeBlock, setNormativeBlock] = React.useState<NormativeRequirementsBlockData | null>(null);
   const [normativeLoading, setNormativeLoading] = React.useState(false);
@@ -101,6 +102,15 @@ export const ProductDetails: React.FC<Props> = ({ selectedCode }) => {
     return () => {
       cancelled = true;
     };
+  }, [detail?.code]);
+
+  React.useEffect(() => {
+    if (!detail?.code) { setPreview(null); return; }
+    let cancelled = false;
+    fetchTnvedPreview(detail.code)
+      .then((p) => { if (!cancelled) setPreview(p); })
+      .catch(() => { if (!cancelled) setPreview(null); });
+    return () => { cancelled = true; };
   }, [detail?.code]);
 
   React.useEffect(() => {
@@ -402,7 +412,9 @@ export const ProductDetails: React.FC<Props> = ({ selectedCode }) => {
             Пошлина: {dutyLabel}
           </span>
           <span className="inline-flex rounded-full bg-emerald-100 px-2.5 py-1 text-[11px] font-semibold text-emerald-800">
-            НДС: 20%
+            НДС: {preview?.payments?.vat_rates?.length
+              ? preview.payments.vat_rates.map((r) => `${r}%`).join(' / ')
+              : '22%'}
           </span>
           {intellectualProperties.length > 0 ? (
             <span className="inline-flex rounded-full bg-amber-100 px-2.5 py-1 text-[11px] font-semibold text-amber-800">
@@ -410,6 +422,47 @@ export const ProductDetails: React.FC<Props> = ({ selectedCode }) => {
             </span>
           ) : null}
         </div>
+
+        {/* Summary block */}
+        <div className="mt-4 grid grid-cols-3 gap-3 rounded-xl border border-slate-200 bg-slate-50 p-3">
+          <div className="text-center">
+            <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">Пошлина</p>
+            <p className="mt-0.5 font-mono text-lg font-bold text-blue-800">{dutyLabel}</p>
+          </div>
+          <div className="text-center">
+            <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">НДС</p>
+            <p className="mt-0.5 font-mono text-lg font-bold text-emerald-800">
+              {preview?.payments?.vat_rates?.length
+                ? preview.payments.vat_rates.map((r) => `${r}%`).join(' / ')
+                : '22%'}
+            </p>
+            {preview?.payments?.vat_rates && preview.payments.vat_rates.includes(10) && (
+              <p className="text-[9px] text-emerald-700">Льготная ставка 10%</p>
+            )}
+          </div>
+          <div className="text-center">
+            <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">Документы</p>
+            <p className="mt-0.5 text-sm font-semibold text-slate-800">
+              {preview?.non_tariff?.measure_badges?.length
+                ? preview.non_tariff.measure_badges.slice(0, 3).join(', ')
+                : nonTariffMeasures.length > 0 ? `${nonTariffMeasures.length} мер` : 'Не требуются'}
+            </p>
+          </div>
+        </div>
+
+        {preview?.non_tariff?.has_ban && (
+          <div className="mt-2 flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm font-medium text-red-800">
+            <ShieldCheck className="h-4 w-4 shrink-0" aria-hidden />
+            Имеются запреты или ограничения на ввоз
+          </div>
+        )}
+
+        {preview?.non_tariff && !preview.non_tariff.has_ban && preview.non_tariff.measure_types.length > 0 && (
+          <div className="mt-2 flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+            <FileCheck2 className="h-4 w-4 shrink-0" aria-hidden />
+            Требуется: {preview.non_tariff.measure_badges.join(', ')}
+          </div>
+        )}
       </header>
       <div className="flex flex-wrap gap-2">
         <button
