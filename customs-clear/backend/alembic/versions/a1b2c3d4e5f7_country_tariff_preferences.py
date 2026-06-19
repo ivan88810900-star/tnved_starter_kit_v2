@@ -1,8 +1,12 @@
 """Add country_tariff_preferences table.
 
-Revision ID: a1b2c3d4e5f6
+Revision ID: a1b2c3d4e5f7
 Revises: z3a4b5c6d7e8
 Create Date: 2026-06-18
+
+Примечание: ранее ошибочно использовался revision id a1b2c3d4e5f6, уже занятый
+миграцией create_hs_duty_rules (коллизия ломала alembic). Переименовано в
+a1b2c3d4e5f7. См. issue #112.
 """
 
 from __future__ import annotations
@@ -12,7 +16,7 @@ from typing import Sequence, Union
 import sqlalchemy as sa
 from alembic import op
 
-revision: str = "a1b2c3d4e5f6"
+revision: str = "a1b2c3d4e5f7"
 down_revision: Union[str, Sequence[str], None] = "z3a4b5c6d7e8"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
