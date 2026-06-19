@@ -572,6 +572,12 @@ def init_db() -> None:
     _run_alembic_upgrade_to_head()
     _sqlite_patch_non_tariff_columns()
     seed_data()
+    try:
+        from .tnved_fts import ensure_fts_index
+
+        ensure_fts_index()
+    except Exception as exc:  # поисковый индекс не критичен для старта
+        logger.warning("init_db: не удалось построить FTS-индекс ТН ВЭД: %s", exc)
 
 
 def seed_data() -> None:
@@ -1604,19 +1610,33 @@ def search_tnved(query: str, limit: int = 40) -> list[dict[str, Any]]:
         return []
     with SessionLocal() as db:
         qd = _digits_hs(q)
-        terms = _expand_query_terms(q)
-        if not terms:
-            return []
-        filters = [func.lower(Commodity.description).like(f"%{t}%") for t in terms]
-        if qd and len(qd) >= 2:
-            filters.append(Commodity.code.like(f"{qd}%"))
-        rows = (
-            db.query(Commodity)
-            .filter(or_(*filters))
-            .order_by(Commodity.code.asc())
-            .limit(limit)
-            .all()
-        )
+        # Основной путь — релевантный FTS5-поиск; сохраняет порядок релевантности.
+        from .tnved_fts import search_commodities_fts
+
+        fts_rows = search_commodities_fts(q, limit=limit)
+        if fts_rows is not None:
+            codes = [r["code"] for r in fts_rows if r.get("code")]
+            if not codes:
+                return []
+            by_code = {
+                c.code: c
+                for c in db.query(Commodity).filter(Commodity.code.in_(codes)).all()
+            }
+            rows = [by_code[c] for c in codes if c in by_code]
+        else:
+            terms = _expand_query_terms(q)
+            if not terms:
+                return []
+            filters = [func.lower(Commodity.description).like(f"%{t}%") for t in terms]
+            if qd and len(qd) >= 2:
+                filters.append(Commodity.code.like(f"{qd}%"))
+            rows = (
+                db.query(Commodity)
+                .filter(or_(*filters))
+                .order_by(Commodity.code.asc())
+                .limit(limit)
+                .all()
+            )
         if not rows:
             return []
 
