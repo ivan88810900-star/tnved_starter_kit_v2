@@ -165,6 +165,10 @@ def job_sync_sgr_registry() -> None:
     run_subprocess("sync_sgr_registry.py", [], job_id="sgr_registry_weekly", timeout_sec=7200)
 
 
+def job_data_refresh_check() -> None:
+    run_subprocess("data_refresh.py", ["--check-only", "--json"], job_id="data_freshness_weekly", timeout_sec=300)
+
+
 def job_sync_ifcg_monthly() -> None:
     """
     1-го числа: по очереди главы 01–97 (без 77), каждая в своём subprocess.
@@ -251,6 +255,16 @@ def build_scheduler() -> BlockingScheduler:
         replace_existing=True,
     )
 
+    # Среда 10:00 — еженедельная проверка свежести всех данных
+    sch.add_job(
+        job_data_refresh_check,
+        CronTrigger(day_of_week="wed", hour=10, minute=0),
+        id="data_freshness_weekly",
+        max_instances=1,
+        coalesce=True,
+        replace_existing=True,
+    )
+
     return sch
 
 
@@ -258,7 +272,7 @@ def main() -> int:
     ap = argparse.ArgumentParser(description="Планировщик краулеров backend")
     ap.add_argument(
         "--run-once",
-        choices=("law", "nontariff", "ifcg", "rates", "ifcg-one", "eco", "registries", "sgr"),
+        choices=("law", "nontariff", "ifcg", "rates", "ifcg-one", "eco", "registries", "sgr", "freshness"),
         help="Один прогон выбранной задачи и выход (без расписания)",
     )
     ap.add_argument(
@@ -300,10 +314,12 @@ def main() -> int:
         return run_subprocess("sync_state_registries.py", [], job_id="registries_once", timeout_sec=3600)
     if args.run_once == "sgr":
         return run_subprocess("sync_sgr_registry.py", [], job_id="sgr_once", timeout_sec=7200)
+    if args.run_once == "freshness":
+        return run_subprocess("data_refresh.py", ["--check-only", "--json"], job_id="freshness_once", timeout_sec=300)
 
     LOG.info("Планировщик стартовал; лог: %s", LOG_FILE)
     LOG.info(
-        "Расписание: law 02:00 daily | nontariff Sun 03:00 | sgr Sun 04:30 | IFCG 1st 04:00 | eco fees 1st 05:30 | registries Mon 06:30 | rates 09:00 (timezone=%s)",
+        "Расписание: law 02:00 daily | nontariff Sun 03:00 | sgr Sun 04:30 | IFCG 1st 04:00 | eco fees 1st 05:30 | registries Mon 06:30 | rates 09:00 | freshness Wed 10:00 (timezone=%s)",
         os.environ.get("TZ", "Europe/Moscow"),
     )
     sch = build_scheduler()

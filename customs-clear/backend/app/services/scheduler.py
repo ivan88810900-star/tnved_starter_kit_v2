@@ -64,6 +64,15 @@ def start_apscheduler() -> None:
             except Exception as e:
                 logger.exception(f"sync_daily_regulatory_data: {e}")
 
+        async def _refresh_currency_rates() -> None:
+            try:
+                from .exchange_rates import update_exchange_rates_from_cbrf
+
+                result = await update_exchange_rates_from_cbrf()
+                logger.info(f"Currency refresh: source={result.get('source')}, updated={result.get('updated')}")
+            except Exception as e:
+                logger.exception(f"Currency refresh failed: {e}")
+
         tz_name = os.getenv("REGULATORY_SYNC_TZ", "Europe/Moscow").strip() or "Europe/Moscow"
         try:
             tz = ZoneInfo(tz_name)
@@ -80,6 +89,16 @@ def start_apscheduler() -> None:
             coalesce=True,
         )
         jobs.append("sync_daily_regulatory_data@03:00")
+
+        sch.add_job(
+            _refresh_currency_rates,
+            CronTrigger(hour=9, minute=0, timezone=tz),
+            id="refresh_currency_rates_daily",
+            replace_existing=True,
+            max_instances=1,
+            coalesce=True,
+        )
+        jobs.append("refresh_currency_rates@09:00")
 
     if legacy_on:
         from .source_sync import sync_all_sources
