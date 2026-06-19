@@ -875,7 +875,13 @@ def _build_preview_payload(code: str) -> dict[str, Any]:
 
         # Упрощенная витрина платежей для hover.
         duty = _format_duty(row.import_duty)
-        vat_rates = [22, 10]
+        # Фактическая ставка НДС из hs_rates (с префиксным fallback), без хардкода.
+        rate_row, _vat_mlen = find_rate_for_hs(out_code)
+        if rate_row and rate_row.vat_import_rate:
+            raw_vat = float(rate_row.vat_import_rate)
+            vat_rates = [int(raw_vat) if raw_vat.is_integer() else raw_vat]
+        else:
+            vat_rates = [22]  # стандартная ставка по умолчанию (с 01.01.2026)
         excise = ""
 
         features: list[str] = []
