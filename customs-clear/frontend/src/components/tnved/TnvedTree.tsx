@@ -553,7 +553,7 @@ export const TnvedTree: React.FC<Props> = ({ selectedCode, onSelectCode, initial
       </div>
 
       {/* ─── Дерево ─── */}
-        <div className={`relative min-h-0 flex-1 overflow-y-auto rounded-xl border border-slate-100 bg-white p-1 pr-2 transition-opacity ${prefixLoading ? 'opacity-50' : 'opacity-100'}`}>
+        <div className={`relative min-h-0 flex-1 overflow-x-auto overflow-y-auto rounded-xl border border-slate-100 bg-white p-1 pr-2 transition-opacity ${prefixLoading ? 'opacity-50' : 'opacity-100'}`}>
         {loading ? (
           <p className="py-10 text-center text-sm text-gray-500">Загрузка справочника…</p>
         ) : displayTree.length === 0 ? (

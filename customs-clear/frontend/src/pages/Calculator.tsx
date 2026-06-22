@@ -928,7 +928,8 @@ export const Calculator: React.FC = () => {
             </button>
           </div>
           {histItems.length > 0 && (
-            <ul className="max-h-40 space-y-1 overflow-auto rounded-lg border border-slate-200 bg-slate-50 p-2 text-[11px]">
+            <div className="max-h-40 overflow-auto rounded-lg border border-slate-200 bg-slate-50 p-2">
+            <ul className="min-w-[320px] space-y-1 text-[11px]">
               {histItems.map((h) => (
                 <li key={h.id} className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 py-1 last:border-0">
                   <span className="cc-mono text-indigo-700">{h.id.slice(0, 8)}…</span>
@@ -948,6 +949,7 @@ export const Calculator: React.FC = () => {
                 </li>
               ))}
             </ul>
+            </div>
           )}
         </div>
       </details>

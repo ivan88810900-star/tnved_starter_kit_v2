@@ -574,3 +574,25 @@ body {
     opacity: 1;
   }
 }
+
+/* Mobile / print helpers */
+@media print {
+  header,
+  aside,
+  .cc-disclosure > summary,
+  .print\\:hidden {
+    display: none !important;
+  }
+
+  main {
+    display: block !important;
+    max-width: none !important;
+    padding: 0 !important;
+  }
+
+  .cc-card,
+  .cc-card-soft {
+    box-shadow: none !important;
+    break-inside: avoid;
+  }
+}
