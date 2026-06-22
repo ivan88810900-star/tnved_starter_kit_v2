@@ -58,6 +58,30 @@ export function InvoicePage() {
     URL.revokeObjectURL(url);
   };
 
+  const exportExcel = () => {
+    if (!result?.lines?.length) return;
+    const header = ['Описание', 'HS', 'Стоимость', 'Валюта', 'Пошлина', 'НДС', 'РОП', 'ИТОГО'];
+    const rows = result.lines.map((ln) => [
+      ln.description,
+      ln.hs_code || '',
+      String(ln.customs_value),
+      ln.currency,
+      String(ln.duty),
+      String(ln.vat),
+      String(ln.rop?.total_rop_rub || 0),
+      String(ln.total_payable),
+    ]);
+    rows.push(['ИТОГО', '', '', '', '', '', '', String(result.totals.total_payable)]);
+    const csv = [header, ...rows].map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(';')).join('\n');
+    const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'invoice_calculation.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap gap-2">
@@ -93,6 +117,10 @@ export function InvoicePage() {
       {error ? <p className="text-sm text-red-600">{error}</p> : null}
 
       {result ? (
+        <div className="space-y-2">
+          <button type="button" className="cc-btn cc-btn-secondary text-sm" onClick={exportExcel}>
+            Экспорт в Excel (CSV)
+          </button>
         <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
           <table className="min-w-[720px] w-full text-left text-sm">
             <thead className="bg-slate-50 text-xs uppercase text-slate-500">
@@ -128,6 +156,7 @@ export function InvoicePage() {
               </tr>
             </tfoot>
           </table>
+        </div>
         </div>
       ) : null}
     </div>
