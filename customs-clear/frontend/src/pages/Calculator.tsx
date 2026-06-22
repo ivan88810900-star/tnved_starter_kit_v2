@@ -40,6 +40,7 @@ import {
   type CalculatorPrefillPayload,
 } from '../store/calculatorPrefillBridge';
 import { CalculatorInvoiceAnalyzeSection } from '../components/calculator/CalculatorInvoiceAnalyzeSection';
+import { CalculatorScenarioCompareSection } from '../components/calculator/CalculatorScenarioCompareSection';
 import { formatTnvedCommodityName, TNVED_COMMODITY_NAME_CLASS } from '../utils/tnvedDisplayText';
 import { Banknote, ShieldCheck } from 'lucide-react';
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip as RechartsTooltip } from 'recharts';
@@ -1243,6 +1244,15 @@ export const Calculator: React.FC = () => {
           )}
         </div>
       </details>
+
+      <CalculatorScenarioCompareSection
+        baseHsCode={hsCode}
+        customsValue={invoiceAmount}
+        currency={invoiceCurrency}
+        weightGrossKg={netWeightKg}
+        weightNetKg={netWeightKg}
+        defaultCountry={country}
+      />
 
       <div className="flex flex-wrap gap-2">
         <button

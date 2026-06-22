@@ -221,10 +221,10 @@
 ### Фаза W — Системные краулеры и расширение платформы (Issues #143–#147)
 
 - [x] **PR #148 (Issue #143)** — FTS rulings systematic crawler: `fts_rulings_crawler.py`, авто-пагинация folder, универсальный парсер, AI HS-fallback, cron понедельник. ✅ merged 2026-06-22
-- [ ] **Issue #144** — ROP coverage audit 97 chapters: `rop_coverage_audit.py`, `GET /api/rop/coverage/chapters`, `data/rop_chapter_coverage.json`.
-- [ ] **Issue #145** — Invoice upload batch: `POST /api/invoice/upload`, `/calculate-batch`, `/template`, страница `/invoice`.
-- [ ] **Issue #146** — Scenario compare extended: `POST /api/calculator/compare-scenarios` (+ ROP, best_scenario).
-- [ ] **Issue #147** — AI classifier: `/api/classify/image`, `/characteristics`, `/history`.
+- [x] **PR #149 (Issue #144)** — ROP coverage audit 97 chapters: `rop_coverage_audit.py`, `GET /api/rop/coverage/chapters`, `data/rop_chapter_coverage.json` (12 subject / 84 not_subject / 4 needs_verification). ✅ merged 2026-06-22
+- [x] **PR #149 (Issue #145)** — Invoice upload batch: `POST /api/invoice/upload`, `/calculate-batch`, `/template`, страница `/invoice` с drag&drop и экспорт CSV. ✅ merged 2026-06-22
+- [x] **PR #149 + UI (#146)** — Scenario compare extended: `POST /api/calculator/compare-scenarios` (+ ROP, best_scenario), UI в калькуляторе. ✅ merged 2026-06-22
+- [x] **PR #149 + UI (#147)** — AI classifier: `/api/classify/image`, `/characteristics`, `/history`; вкладки в классификаторе. ✅ merged 2026-06-22
 
 ### Фаза L — Дальше (бэклог)
 - [x] Стаб HTTP-классификатора для разработки (`scripts/inference_classifier_stub.py`); боевой inference — вне репозитория по **`INFERENCE_CLASSIFIER.md`**.
@@ -262,4 +262,4 @@
 
 ---
 
-*Последнее обновление: фаза V завершена — полная система РОП (экосбор) на ПП №1041/№2414, API `/api/rop/*`, 16+36 групп ставок, авто-определение упаковки по ТН ВЭД (PR #142). 2026-06-22.*
+*Последнее обновление: фаза W завершена — FTS crawler (#143), ROP audit 97 глав (#144), invoice batch (#145), compare-scenarios (#146), classify enhancements (#147); PR #148–#150. 2026-06-22.*

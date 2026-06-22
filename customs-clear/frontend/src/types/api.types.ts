@@ -520,6 +520,37 @@ export interface CalculatorCompareResponse {
   fx_source?: string;
 }
 
+export interface ScenarioCompareScenarioResult {
+  name: string;
+  hs_code: string;
+  country_of_origin?: string | null;
+  procedure_code?: string | null;
+  duty: number;
+  vat: number;
+  fee: number;
+  excise: number;
+  recycling_fee: number;
+  rop: number;
+  total: number;
+  preference?: unknown;
+  payments_status?: string;
+}
+
+export interface ScenarioCompareResponse {
+  status: 'OK';
+  base: {
+    hs_code: string;
+    customs_value: number;
+    currency: string;
+    customs_value_rub: number;
+    weight_gross_kg?: number | null;
+    weight_net_kg?: number | null;
+  };
+  scenarios: ScenarioCompareScenarioResult[];
+  best_scenario: string;
+  savings_vs_worst: number;
+}
+
 export type CalculationHistoryKind = 'compute' | 'compare' | 'compliance' | 'copilot' | 'copilot_batch';
 
 export interface CalculatorHistorySummaryResponse {
