@@ -226,6 +226,10 @@
 - [x] **PR #149 + UI (#146)** — Scenario compare extended: `POST /api/calculator/compare-scenarios` (+ ROP, best_scenario), UI в калькуляторе. ✅ merged 2026-06-22
 - [x] **PR #149 + UI (#147)** — AI classifier: `/api/classify/image`, `/characteristics`, `/history`; вкладки в классификаторе. ✅ merged 2026-06-22
 
+### Фаза X — Аудит ТРОИС и СС/ДС (Issue #151)
+
+- [ ] **Issue #151** — TROIS: fuzzy-matching (Найк→Nike), загрузка `customs.gov.ru/folder/14344`, `scripts/fetch_trois_registry.py`, sync БД→in-memory, `risk_level` в API, cron понедельник. СС/ДС: FSA API `filter` + кэш 24h, fallback `manual_check_url`, блок «Разрешительные документы» в карточке товара, дисклеймеры UI.
+
 ### Фаза L — Дальше (бэклог)
 - [x] Стаб HTTP-классификатора для разработки (`scripts/inference_classifier_stub.py`); боевой inference — вне репозитория по **`INFERENCE_CLASSIFIER.md`**.
 - [x] Персистентная очередь async-проверок ФСА (`permits_verify_jobs` в БД).

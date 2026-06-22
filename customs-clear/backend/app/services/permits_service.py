@@ -15,7 +15,16 @@ from loguru import logger
 
 from .cache_layer import PERMITS_PREFIX, cache_get, cache_set
 
-_PERMITS_TTL = int(os.getenv("PERMITS_CACHE_TTL_SECONDS", os.getenv("CACHE_TTL_SECONDS", "3600")))
+_PERMITS_TTL = int(os.getenv("PERMITS_CACHE_TTL_SECONDS", "86400"))  # 24h default (#151)
+
+PERMITS_DISCLAIMER_RU = (
+    "Система определяет **необходимость** разрешительного документа по ТН ВЭД и ТР ТС, "
+    "но не подтверждает наличие конкретного сертификата у импортёра. "
+    "Проверка номера выполняется через реестр ФСА; при недоступности реестра используйте ссылку для ручной проверки."
+)
+
+FSA_SEARCH_CERT_URL = "https://pub.fsa.gov.ru/rss/certificate"
+FSA_SEARCH_DECL_URL = "https://pub.fsa.gov.ru/rds/declaration"
 
 # Реестры ФСА (при 403 можно использовать внешний API: FSA_EXTERNAL_API_URL)
 FSA_CERT_URL = os.getenv("FSA_CERT_URL", "https://pub.fsa.gov.ru/rss/certificate")
@@ -46,6 +55,23 @@ BROWSER_HEADERS = {
 }
 # Некоторые gov-сайты (fp.crc.ru) могут иметь проблемы с SSL — отключить: PERMITS_VERIFY_SSL=false
 HTTP_VERIFY_SSL = os.getenv("PERMITS_VERIFY_SSL", "true").lower() not in ("0", "false", "no")
+
+
+def build_fsa_manual_link(doc_type: str, number: str) -> str:
+    """Прямая ссылка для ручной проверки в браузере."""
+    norm = normalize_number(number)
+    base = FSA_SEARCH_CERT_URL if doc_type == "СС" else FSA_SEARCH_DECL_URL
+    return f"{base}?page=1&size=10&filter={quote(norm)}"
+
+
+def infer_doc_type_from_number(number: str) -> str:
+    """Эвристика типа документа по номеру."""
+    n = (number or "").upper()
+    if n.startswith("Д-") or n.startswith("D-"):
+        return "ДС"
+    if "ДС" in n and "СС" not in n:
+        return "ДС"
+    return "СС"
 
 
 def normalize_number(raw: str) -> str:
@@ -342,7 +368,8 @@ def _enrich_verification_record(data: Dict[str, Any], item_hs_code: str) -> Dict
 
 
 async def _fetch_fsa(doc_type: str, norm: str, url: str, api_url: str) -> Dict[str, Any]:
-    """Общая логика запроса к ФСА: пауза, сессия, внешний API → API → HTML (с повторами)."""
+    """Общая логика запроса к ФСА: пауза, сессия, внешний API → API (filter) → HTML."""
+    manual_link = build_fsa_manual_link(doc_type, norm)
     base = {
         "type": doc_type,
         "status": "UNKNOWN",
@@ -350,7 +377,9 @@ async def _fetch_fsa(doc_type: str, norm: str, url: str, api_url: str) -> Dict[s
         "holder": None,
         "valid_from": None,
         "valid_to": None,
-        "registry_link": f"{url}?q={quote(norm)}",
+        "registry_link": manual_link,
+        "manual_check_url": manual_link,
+        "disclaimer": PERMITS_DISCLAIMER_RU,
         "raw": None,
     }
     await _delay_fsa()
@@ -382,14 +411,20 @@ async def _fetch_fsa(doc_type: str, norm: str, url: str, api_url: str) -> Dict[s
             ) as client:
                 await client.get(url, headers=BROWSER_HEADERS)
                 await asyncio.sleep(0.5)
-                r = await client.get(api_url, params={"number": norm, "size": 10}, headers=api_headers)
+                api_params = {"page": 1, "size": 1, "filter": norm, "number": norm}
+                r = await client.get(api_url, params=api_params, headers=api_headers)
                 if r.status_code == 200 and "application/json" in r.headers.get("content-type", ""):
                     parsed = _extract_fsa_from_json(r.json(), doc_type, norm)
                     if parsed:
+                        parsed["manual_check_url"] = manual_link
+                        parsed["disclaimer"] = PERMITS_DISCLAIMER_RU
                         return parsed
-                r2 = await client.get(f"{url}?q={quote(norm)}", headers=BROWSER_HEADERS)
+                r2 = await client.get(f"{url}?page=1&size=10&filter={quote(norm)}", headers=BROWSER_HEADERS)
                 r2.raise_for_status()
-                return _extract_fsa_from_html(r2.text, doc_type, norm)
+                parsed_html = _extract_fsa_from_html(r2.text, doc_type, norm)
+                parsed_html["manual_check_url"] = manual_link
+                parsed_html["disclaimer"] = PERMITS_DISCLAIMER_RU
+                return parsed_html
         except Exception as e:
             last_err = e
             logger.warning(f"ФСА {doc_type} {norm} попытка {attempt + 1}/{FSA_RETRIES}: {e}")
@@ -397,6 +432,10 @@ async def _fetch_fsa(doc_type: str, norm: str, url: str, api_url: str) -> Dict[s
 
     if last_err:
         logger.warning(f"ФСА {doc_type} {norm}: исчерпаны попытки: {last_err}")
+    base["fallback_note"] = (
+        "Реестр ФСА недоступен для автоматической проверки. "
+        "Откройте manual_check_url в браузере для ручной проверки."
+    )
     return base
 
 

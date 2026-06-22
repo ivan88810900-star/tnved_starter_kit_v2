@@ -109,6 +109,10 @@ export const PermitPicker: React.FC = () => {
   return (
     <div className="space-y-5">
       <p className="text-[12px] text-slate-600">Подбор типовых СС/ДС по описанию товара и коду.</p>
+      <p className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-[11px] leading-relaxed text-slate-600">
+        Система определяет необходимость документа по ТН ВЭД, но не подтверждает наличие сертификата. Номера проверяйте в
+        реестре ФСА.
+      </p>
 
       <details className="cc-disclosure">
         <summary>О подборе</summary>

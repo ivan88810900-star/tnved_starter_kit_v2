@@ -18,6 +18,7 @@ import { SanctionsRiskBlock } from '../nonTariff/SanctionsRiskBlock';
 import { normativeBlockFromNonTariff } from '../nonTariff/normativeBlockHelpers';
 import { PreliminaryDecisionsBlock } from './PreliminaryDecisionsBlock';
 import { ProductCardSummary } from './ProductCardSummary';
+import { PermitDocumentsBlock } from './PermitDocumentsBlock';
 import { SmartPaymentsBlock } from '../payments/SmartPaymentsBlock';
 import type { NormativeRequirementsBlockData, SanctionsRiskBlockData } from '../../types/api.types';
 import { ArrowUpRight, FileCheck2, FolderKanban, Scale, ShieldCheck } from 'lucide-react';
@@ -376,6 +377,13 @@ export const ProductDetails: React.FC<Props> = ({ selectedCode }) => {
     <div className="space-y-6 bg-white text-gray-900">
       {/* Шапка-резюме карточки товара */}
       <ProductCardSummary detail={detail} preview={preview} />
+
+      <PermitDocumentsBlock
+        hsCode={detail.code}
+        productName={(detail.name ?? detail.description ?? '').trim()}
+        normativeBlock={normativeBlock}
+      />
+
       {intellectualProperties.length > 0 ? (
         <div className="flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm font-medium text-amber-800">
           <ShieldCheck className="h-4 w-4 shrink-0" aria-hidden />
