@@ -21,7 +21,13 @@ from .normative_store import (
 )
 
 FCS_PRELIMINARY_SOURCE_CODE = "FCS_PRELIMINARY"
-FCS_OFFICIAL_URL = "https://customs.gov.ru/document"
+# Прежний URL "https://customs.gov.ru/document" отдавал 404 (проверено 2026-06,
+# см. scripts/probe_fcs_sources.py). Раздел customs.gov.ru/folder/519 — это
+# таможенная статистика, а НЕ реестр предрешений. Корень портала доступен;
+# реальные предрешения публикуются за JS/анти-бот барьерами (TKS — клиентский
+# JS, Alta — 403), поэтому live-ingest пока не подключён, источник истины —
+# fixture с честной маркировкой (FCS-/fcs_official).
+FCS_OFFICIAL_URL = "https://customs.gov.ru/"
 FCS_OFFICIAL_DECISION_PREFIX = "FCS-"
 FCS_PRELIMINARY_SOURCE_TAG = "fcs_official"
 
