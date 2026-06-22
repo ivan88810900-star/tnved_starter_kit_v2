@@ -382,10 +382,10 @@ export const ProductDetails: React.FC<Props> = ({ selectedCode }) => {
           ТРОИС: есть совпадения по защищённым брендам — см. вкладку «Нетарифное регулирование».
         </div>
       ) : null}
-      <div className="flex flex-wrap gap-2">
+      <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0">
         <button
           type="button"
-          className={`rounded-lg border px-3 py-2 text-sm font-medium transition ${
+          className={`shrink-0 rounded-lg border px-3 py-2 text-sm font-medium transition sm:shrink ${
             activeTab === 'payments'
               ? 'border-blue-200 bg-blue-50 text-blue-800'
               : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
@@ -396,7 +396,7 @@ export const ProductDetails: React.FC<Props> = ({ selectedCode }) => {
         </button>
         <button
           type="button"
-          className={`rounded-lg border px-3 py-2 text-sm font-medium transition ${
+          className={`shrink-0 rounded-lg border px-3 py-2 text-sm font-medium transition sm:shrink ${
             activeTab === 'nonTariff'
               ? 'border-blue-200 bg-blue-50 text-blue-800'
               : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
@@ -407,7 +407,7 @@ export const ProductDetails: React.FC<Props> = ({ selectedCode }) => {
         </button>
         <button
           type="button"
-          className={`rounded-lg border px-3 py-2 text-sm font-medium transition ${
+          className={`shrink-0 rounded-lg border px-3 py-2 text-sm font-medium transition sm:shrink ${
             activeTab === 'decisions'
               ? 'border-blue-200 bg-blue-50 text-blue-800'
               : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
@@ -426,7 +426,7 @@ export const ProductDetails: React.FC<Props> = ({ selectedCode }) => {
         </button>
         <button
           type="button"
-          className={`rounded-lg border px-3 py-2 text-sm font-medium transition ${
+          className={`shrink-0 rounded-lg border px-3 py-2 text-sm font-medium transition sm:shrink ${
             activeTab === 'normative'
               ? 'border-blue-200 bg-blue-50 text-blue-800'
               : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
@@ -437,7 +437,7 @@ export const ProductDetails: React.FC<Props> = ({ selectedCode }) => {
         </button>
         <button
           type="button"
-          className={`rounded-lg border px-3 py-2 text-sm font-medium transition ${
+          className={`shrink-0 rounded-lg border px-3 py-2 text-sm font-medium transition sm:shrink ${
             activeTab === 'notes'
               ? 'border-blue-200 bg-blue-50 text-blue-800'
               : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
@@ -638,7 +638,7 @@ export const ProductDetails: React.FC<Props> = ({ selectedCode }) => {
               <div className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-500">Формирование справки…</div>
             ) : reference ? (
               <div className="rounded-xl border border-gray-200 bg-gray-50">
-                <div className="grid grid-cols-[240px_1fr] gap-x-4 gap-y-0 px-4 py-3 text-sm">
+                <div className="grid grid-cols-1 gap-y-0 px-3 py-3 text-sm sm:grid-cols-[240px_1fr] sm:gap-x-4 sm:px-4">
                   {reference.fields.map((f) => (
                     <React.Fragment key={f.label}>
                       <div className="border-b border-gray-200 py-2 text-gray-500">{f.label}</div>

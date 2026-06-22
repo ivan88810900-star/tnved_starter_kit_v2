@@ -18,8 +18,10 @@ import {
   FileSearch,
   Files,
   FileText,
+  Menu,
   ShieldCheck,
   Stamp,
+  X,
 } from 'lucide-react';
 import './styles.css';
 import { SystemHealth } from './pages/admin/SystemHealth';
@@ -86,50 +88,104 @@ function AppShell() {
   const { health } = useClientCapabilities();
   const showAssistantNav = useAssistantSurfaceVisible();
   const apiReady = health === 'loading' ? 'unknown' : health === 'down' ? 'down' : health === 'ok' ? 'ok' : 'degraded';
+  const [navOpen, setNavOpen] = React.useState(false);
+
+  React.useEffect(() => {
+    setNavOpen(false);
+  }, [pathname]);
+
+  React.useEffect(() => {
+    if (!navOpen) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [navOpen]);
+
+  const navLinkClass = ({ isActive }: { isActive: boolean }) =>
+    `flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-left transition-all duration-200 ${
+      isActive
+        ? 'border border-indigo-500 bg-indigo-600 text-white shadow-md shadow-indigo-700/35'
+        : 'border border-slate-700 bg-slate-800/90 text-slate-100 hover:-translate-y-0.5 hover:bg-slate-700 hover:shadow-md'
+    }`;
+
+  const navItems = NAV_ITEMS.filter((item) => item.to !== '/assistant' || showAssistantNav);
 
   return (
     <div className="cc-bg min-h-screen text-slate-900">
       <header className="sticky top-0 z-20 border-b border-slate-200/90 bg-white/95 backdrop-blur">
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3.5">
-          <div className="flex items-center gap-3">
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-3 py-3 sm:px-4 sm:py-3.5">
+          <div className="flex min-w-0 items-center gap-2 sm:gap-3">
+            <button
+              type="button"
+              className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-700 shadow-sm hover:bg-slate-50 lg:hidden"
+              onClick={() => setNavOpen((v) => !v)}
+              aria-expanded={navOpen}
+              aria-controls="cc-main-nav"
+              aria-label={navOpen ? 'Закрыть меню' : 'Открыть меню'}
+            >
+              {navOpen ? <X className="h-5 w-5" aria-hidden /> : <Menu className="h-5 w-5" aria-hidden />}
+            </button>
             <div className="cc-logo-ring">
               <div className="cc-logo-inner">CC</div>
             </div>
-            <div>
-              <h1 className="text-base font-semibold tracking-tight text-slate-900">CustomsClear</h1>
-              <p className="text-[11px] font-medium tracking-wide text-slate-500">Профессиональная ВЭД-аналитика</p>
+            <div className="min-w-0">
+              <h1 className="truncate text-base font-semibold tracking-tight text-slate-900">CustomsClear</h1>
+              <p className="hidden text-[11px] font-medium tracking-wide text-slate-500 sm:block">Профессиональная ВЭД-аналитика</p>
             </div>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex shrink-0 items-center gap-2 sm:gap-3">
             <AuthBar />
           </div>
         </div>
       </header>
 
       {apiReady === 'down' ? (
-        <div className="border-b border-amber-200 bg-amber-50 px-4 py-2.5 text-center text-[12px] text-amber-800">
+        <div className="border-b border-amber-200 bg-amber-50 px-3 py-2.5 text-center text-[12px] text-amber-800 sm:px-4">
           Сервис временно недоступен. Обновите страницу или повторите попытку позже.
         </div>
       ) : null}
 
-      <main className="mx-auto grid max-w-[1500px] gap-6 px-5 py-6 lg:grid-cols-[280px_minmax(0,1fr)]">
-        <aside className="h-fit rounded-2xl border border-slate-800 bg-gradient-to-b from-slate-950 to-slate-900 p-3 shadow-xl shadow-slate-900/30">
-          <div className="mb-2 px-2 pt-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">Меню</div>
+      {navOpen ? (
+        <button
+          type="button"
+          className="fixed inset-0 z-30 bg-slate-900/45 backdrop-blur-[1px] lg:hidden"
+          aria-label="Закрыть меню"
+          onClick={() => setNavOpen(false)}
+        />
+      ) : null}
+
+      <main className="mx-auto grid max-w-[1500px] grid-cols-1 gap-4 px-3 py-4 sm:px-5 sm:py-6 lg:grid-cols-[280px_minmax(0,1fr)] lg:gap-6">
+        <aside
+          id="cc-main-nav"
+          className={`fixed inset-y-0 left-0 z-40 h-full w-[min(300px,88vw)] overflow-y-auto rounded-none border-r border-slate-800 bg-gradient-to-b from-slate-950 to-slate-900 p-3 shadow-2xl shadow-slate-900/40 transition-transform duration-200 ease-out lg:static lg:z-auto lg:h-fit lg:w-auto lg:overflow-visible lg:rounded-2xl lg:border lg:shadow-xl lg:shadow-slate-900/30 ${
+            navOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
+          }`}
+        >
+          <div className="mb-2 flex items-center justify-between px-2 pt-1 lg:block">
+            <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">Меню</div>
+            <button
+              type="button"
+              className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-800 hover:text-white lg:hidden"
+              onClick={() => setNavOpen(false)}
+              aria-label="Закрыть меню"
+            >
+              <X className="h-4 w-4" aria-hidden />
+            </button>
+          </div>
           <nav className="space-y-1">
-            {NAV_ITEMS.filter((item) => item.to !== '/assistant' || showAssistantNav).map((item) => (
+            {navItems.map((item) => (
               <NavLink
                 key={item.to}
                 to={item.to}
                 end={item.end}
                 title={PAGE_HEADERS[item.to]?.desc}
-                onClick={() => clearUrlHash()}
-                className={({ isActive }) =>
-                  `flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-left transition-all duration-200 ${
-                    isActive
-                      ? 'border border-indigo-500 bg-indigo-600 text-white shadow-md shadow-indigo-700/35'
-                      : 'border border-slate-700 bg-slate-800/90 text-slate-100 hover:-translate-y-0.5 hover:bg-slate-700 hover:shadow-md'
-                  }`
-                }
+                onClick={() => {
+                  clearUrlHash();
+                  setNavOpen(false);
+                }}
+                className={navLinkClass}
               >
                 <span className="inline-flex h-8 w-8 items-center justify-center rounded-md bg-white/15">
                   <item.icon className="h-4 w-4" />
@@ -140,13 +196,13 @@ function AppShell() {
           </nav>
         </aside>
 
-        <section className="space-y-3 rounded-2xl border border-slate-200/80 bg-slate-50/70 p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)]">
-          <div className="cc-card px-5 py-4">
+        <section className="min-w-0 space-y-3 rounded-2xl border border-slate-200/80 bg-slate-50/70 p-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] sm:p-3">
+          <div className="cc-card px-4 py-3 sm:px-5 sm:py-4">
             <h2 className="text-[15px] font-semibold tracking-tight text-slate-900">{header.title}</h2>
             <p className="mt-0.5 text-[12px] leading-relaxed text-slate-500">{header.desc}</p>
           </div>
 
-          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 shadow-lg shadow-slate-200/60 sm:p-5">
+          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3 shadow-lg shadow-slate-200/60 sm:p-4 md:p-5">
             <div key={pathname} className="cc-tab-enter">
               <Outlet />
             </div>
