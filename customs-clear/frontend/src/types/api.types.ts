@@ -609,6 +609,10 @@ export interface TroisCheckResponse {
   details: TroisCheckDetail[];
   error?: string;
   note?: string;
+  risk_level?: 'low' | 'high' | 'unchecked';
+  disclaimer?: string;
+  official_url?: string;
+  source?: string;
 }
 
 export interface TroisSyncResponse {

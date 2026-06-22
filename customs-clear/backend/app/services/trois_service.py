@@ -229,13 +229,44 @@ TROIS_HEADERS = {
 }
 TROIS_VERIFY_SSL = os.getenv("PERMITS_VERIFY_SSL", "true").lower() not in ("0", "false", "no")
 
+TROIS_DISCLAIMER_RU = (
+    "Данные реестра ТРОИС обновляются по расписанию (еженедельно). "
+    "Для юридически значимой проверки используйте официальный реестр ФТС: "
+    "customs.gov.ru/registers/objects-intellectual-property"
+)
+
+TROIS_OFFICIAL_URL = "https://customs.gov.ru/registers/objects-intellectual-property"
+
+_db_cache_loaded = False
+
+
+def _ensure_db_cache_loaded() -> None:
+    global _db_cache_loaded
+    if _db_cache_loaded:
+        return
+    try:
+        from .trois_registry_loader import sync_db_to_local_cache
+
+        sync_db_to_local_cache()
+    except Exception as exc:
+        logger.debug("TROIS DB cache load skipped: {}", exc)
+    _db_cache_loaded = True
+
+
+def _risk_level(found: bool, source: str, error: bool = False) -> str:
+    """low | high | unchecked — для UI карточки товара."""
+    if error:
+        return "unchecked"
+    if found:
+        return "high"
+    if source in ("local_cache", "db_registry", "fuzzy", "external", "search_complete"):
+        return "low"
+    return "unchecked"
+
 
 def trouis_conflicts_in_text(text: str) -> List[str]:
-    """Находит в тексте упоминания брендов из локального кэша ТРОИС (для фильтра подбора СС/ДС).
-
-    Длинные ключи (≥5 символов) ищутся как подстрока; короткие — только как отдельное слово,
-    чтобы не ловить ложные вхождения внутри других слов.
-    """
+    """Находит в тексте упоминания брендов из локального кэша и БД ТРОИС."""
+    _ensure_db_cache_loaded()
     if not text or not str(text).strip():
         return []
     low = re.sub(r"\s+", " ", str(text).lower())
@@ -252,6 +283,27 @@ def trouis_conflicts_in_text(text: str) -> List[str]:
             if re.search(pat, low):
                 hits.append(k)
     return sorted(set(hits))
+
+
+def _find_in_cache_fuzzy(query: str) -> tuple[Dict[str, Any] | None, str]:
+    """Поиск в in-memory кэше с fuzzy-вариантами."""
+    from .trois_fuzzy import fuzzy_match_score, fuzzy_variants
+
+    best: Dict[str, Any] | None = None
+    best_score = 0.0
+    for variant in fuzzy_variants(query):
+        hit = _find_in_cache(variant)
+        if hit:
+            return hit, "local_cache"
+        for cache_key, data in _LOCAL_CACHE.items():
+            sc = fuzzy_match_score(variant, cache_key)
+            if sc >= 0.82 and sc > best_score:
+                best_score = sc
+                best = dict(data)
+                best["note"] = f"Fuzzy-match «{query}» → «{cache_key}» (score={sc:.2f}). {best.get('note', '')}"
+    if best:
+        return best, "fuzzy"
+    return None, ""
 
 
 def _find_in_cache(query: str) -> Dict[str, Any] | None:
@@ -307,8 +359,9 @@ async def _fetch_from_trois(query: str) -> Dict[str, Any]:
 
 
 async def check_trademark(query: str) -> Dict[str, Any]:
-    """Проверка товарного знака: сначала локальная база (100+ брендов), затем внешний ТРОИС."""
+    """Проверка товарного знака: in-memory + БД trois_registry + fuzzy + внешний ФТС."""
     from .cache_layer import TROIS_PREFIX, cache_get, cache_set
+    from .trois_registry_loader import search_db_registry
 
     key = (query or "").strip().lower()
     ttl = int(os.getenv("TROIS_CACHE_TTL_SECONDS", "7200"))
@@ -317,29 +370,71 @@ async def check_trademark(query: str) -> Dict[str, Any]:
         if layer is not None:
             return dict(layer)
 
-    cached = _find_in_cache(query)
+    _ensure_db_cache_loaded()
+
+    cached, source = _find_in_cache_fuzzy(query)
     if cached:
         cached.setdefault("status", "OK")
-        logger.info(f"ТРОИС: найден в базе приложения: {query}")
+        cached["found"] = True
+        cached["risk_level"] = _risk_level(True, source)
+        cached["disclaimer"] = TROIS_DISCLAIMER_RU
+        cached["official_url"] = TROIS_OFFICIAL_URL
+        logger.info("ТРОИС: найден в кэше ({}) query={}", source, query)
         out = dict(cached)
+        if key:
+            await cache_set(TROIS_PREFIX, key, out, ttl)
+        return out
+
+    db_hits = search_db_registry(query, max_results=5)
+    if db_hits:
+        details = [
+            {
+                "cols": [
+                    h.get("trademark") or h.get("brand") or "",
+                    "Товарный знак",
+                    h.get("right_holder") or "—",
+                    h.get("reg_number") or "",
+                ],
+                "reg_number": h.get("reg_number"),
+                "match_score": h.get("match_score"),
+            }
+            for h in db_hits
+        ]
+        out = {
+            "status": "OK",
+            "found": True,
+            "details": details,
+            "source": "db_registry",
+            "risk_level": "high",
+            "disclaimer": TROIS_DISCLAIMER_RU,
+            "official_url": TROIS_OFFICIAL_URL,
+            "note": f"Найдено в локальной БД реестра ({len(db_hits)} записей). {TROIS_DISCLAIMER_RU}",
+        }
         if key:
             await cache_set(TROIS_PREFIX, key, out, ttl)
         return out
 
     try:
         data = await _fetch_from_trois(query)
-        _LOCAL_CACHE[query.strip().lower()] = data
+        data["risk_level"] = _risk_level(bool(data.get("found")), "external")
+        data["disclaimer"] = TROIS_DISCLAIMER_RU
+        data["official_url"] = TROIS_OFFICIAL_URL
+        if data.get("found"):
+            _LOCAL_CACHE[query.strip().lower()] = data
         if key:
             await cache_set(TROIS_PREFIX, key, dict(data), ttl)
         return data
-    except Exception as exc:
+    except Exception:
         logger.warning("ТРОИС: внешний реестр недоступен")
         err_out = {
             "status": "ERROR",
             "found": False,
             "details": [],
-            "error": "Реестр ТРОИС на customs.gov.ru временно недоступен. Проверьте вручную: customs.gov.ru/registers/objects-intellectual-property",
+            "error": "Реестр ТРОИС на customs.gov.ru временно недоступен. Проверьте вручную.",
             "note": f"В приложении {len(_LOCAL_CACHE)} брендов. Введите точное название или часть названия.",
+            "risk_level": "unchecked",
+            "disclaimer": TROIS_DISCLAIMER_RU,
+            "official_url": TROIS_OFFICIAL_URL,
         }
         if key:
             await cache_set(TROIS_PREFIX, key, err_out, ttl)
@@ -347,22 +442,26 @@ async def check_trademark(query: str) -> Dict[str, Any]:
 
 
 def suggest_trois_brands(query: str, limit: int = 10) -> List[Dict[str, Any]]:
-    """Подсказки брендов из локального кэша (SequenceMatcher + подстрока, с полем score)."""
+    """Подсказки брендов из локального кэша (SequenceMatcher + fuzzy + подстрока)."""
     from difflib import SequenceMatcher
 
+    from .trois_fuzzy import fuzzy_match_score, fuzzy_variants
+
+    _ensure_db_cache_loaded()
     q = (query or "").strip().lower()
     if not q or len(q) < 2:
         return []
     keys = list(_LOCAL_CACHE.keys())
     scored: List[tuple[float, str]] = []
-    for k in keys:
-        if q in k:
-            base = 0.52 + 0.33 * (len(q) / max(len(k), 1))
-        else:
-            base = SequenceMatcher(None, q, k).ratio()
-        if base < 0.28:
-            continue
-        scored.append((base, k))
+    for variant in fuzzy_variants(query):
+        for k in keys:
+            if variant in k:
+                base = 0.52 + 0.33 * (len(variant) / max(len(k), 1))
+            else:
+                base = max(SequenceMatcher(None, variant, k).ratio(), fuzzy_match_score(variant, k))
+            if base < 0.28:
+                continue
+            scored.append((base, k))
     scored.sort(key=lambda x: (-x[0], x[1]))
     out: List[Dict[str, Any]] = []
     seen: set[str] = set()
@@ -380,8 +479,21 @@ def suggest_trois_brands(query: str, limit: int = 10) -> List[Dict[str, Any]]:
 
 
 def get_trois_local_cache_stats() -> Dict[str, Any]:
+    _ensure_db_cache_loaded()
     sample = sorted(_LOCAL_CACHE.keys())[:20]
-    return {"local_brands_count": len(_LOCAL_CACHE), "sample_keys": sample}
+    db_count = 0
+    try:
+        from .trois_registry_loader import count_db_brands
+
+        db_count = count_db_brands()
+    except Exception:
+        pass
+    return {
+        "local_brands_count": len(_LOCAL_CACHE),
+        "db_registry_rows": db_count,
+        "sample_keys": sample,
+        "disclaimer": TROIS_DISCLAIMER_RU,
+    }
 
 
 def load_extra_brands_from_file(path: str) -> int:

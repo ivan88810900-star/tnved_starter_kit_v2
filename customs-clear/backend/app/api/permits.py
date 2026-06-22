@@ -1,6 +1,7 @@
 """Проверка СС/ДС/СГР в реестрах Росаккредитации и ЕАЭС."""
 from __future__ import annotations
 
+import re
 from typing import Any, Dict, List, Tuple
 
 from fastapi import APIRouter, BackgroundTasks, Depends, Header, HTTPException, Query
@@ -16,7 +17,12 @@ from ..services.permits_jobs import (
     permits_job_items_as_csv,
 )
 from ..services.permits_metrics import get_permits_metrics
-from ..services.permits_service import check_permits, clear_permits_cache
+from ..services.permits_service import (
+    PERMITS_DISCLAIMER_RU,
+    check_permits,
+    clear_permits_cache,
+    infer_doc_type_from_number,
+)
 from ..security import require_admin_token, require_authenticated_user
 
 router = APIRouter(dependencies=[Depends(require_authenticated_user)])
@@ -76,6 +82,18 @@ async def permits_suggest(req: PermitSuggestRequest) -> JSONResponse:
     return JSONResponse(payload)
 
 
+@router.get("/suggest/{hs_code}")
+async def permits_suggest_by_hs(
+    hs_code: str,
+    q: str = Query("", description="Описание товара"),
+    limit: int = Query(10, ge=1, le=50),
+) -> JSONResponse:
+    """GET-алиас подбора СС/ДС по коду ТН ВЭД (curl/Smoke)."""
+    payload = await suggest_permits(q, hs_code=re.sub(r"\D", "", hs_code), limit=limit)
+    payload["disclaimer"] = PERMITS_DISCLAIMER_RU
+    return JSONResponse(payload)
+
+
 @router.post("/verify")
 async def permits_verify(req: PermitVerifyRequest) -> JSONResponse:
     """Пакетная проверка документов в pub.fsa.gov.ru (СС/ДС) и fp.crc.ru (СГР)."""
@@ -92,6 +110,27 @@ async def permits_verify(req: PermitVerifyRequest) -> JSONResponse:
         ),
     }
     return JSONResponse({"status": "OK", "items": results, "summary": summary})
+
+
+@router.get("/verify/number/{number:path}")
+async def permits_verify_by_number(
+    number: str,
+    hs_code: str = Query("", description="Код ТН ВЭД для сверки"),
+    doc_type: str = Query("", description="СС или ДС; если пусто — авто"),
+) -> JSONResponse:
+    """GET-алиас проверки одного номера в реестре ФСА."""
+    dtype = (doc_type or infer_doc_type_from_number(number)).strip().upper() or "СС"
+    if dtype not in ("СС", "ДС", "СГР"):
+        dtype = infer_doc_type_from_number(number)
+    results = await check_permits([{"type": dtype, "number": number}], hs_code, enrich=True)
+    return JSONResponse(
+        {
+            "status": "OK",
+            "disclaimer": PERMITS_DISCLAIMER_RU,
+            "items": results,
+            "summary": {"total": len(results)},
+        }
+    )
 
 
 @router.post("/verify/async")

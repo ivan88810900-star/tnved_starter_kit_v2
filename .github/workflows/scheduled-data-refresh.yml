@@ -5,6 +5,7 @@ on:
     - cron: '0 2 * * 0'  # Every Sunday at 02:00 UTC
     - cron: '0 9 1 12 *'  # 1 December — check ROP rates update (PP 1041)
     - cron: '0 4 * * 1'  # Monday 04:00 UTC — FTS rulings crawler (#143)
+    - cron: '0 5 * * 1'  # Monday 05:00 UTC — TROIS registry fetch (#151)
   workflow_dispatch:
     inputs:
       force_issue:
@@ -232,3 +233,22 @@ jobs:
 
       - name: Crawl FTS rulings (systematic folder crawler)
         run: PYTHONPATH=. python3 scripts/crawl_fts_rulings.py --max-pages 5 --max-documents 50 --no-ai || true
+
+  sync-trois-registry:
+    runs-on: ubuntu-latest
+    if: github.event.schedule == '0 5 * * 1' || github.event_name == 'workflow_dispatch'
+    defaults:
+      run:
+        working-directory: customs-clear/backend
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Install dependencies
+        run: pip install -q httpx sqlalchemy loguru python-dotenv pandas openpyxl beautifulsoup4
+
+      - name: Fetch TROIS open registry + reload cache
+        run: PYTHONPATH=. python3 scripts/fetch_trois_registry.py --alta --alta-max-pages 5 || true

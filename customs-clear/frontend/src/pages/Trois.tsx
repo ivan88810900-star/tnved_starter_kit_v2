@@ -73,6 +73,18 @@ export const Trois: React.FC = () => {
   return (
     <div className="space-y-4">
       <p className="text-[12px] text-slate-600">Поиск по локальному справочнику товарных знаков.</p>
+      <p className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-[11px] leading-relaxed text-slate-600">
+        Данные реестра обновляются еженедельно. Для юридически значимой проверки используйте{' '}
+        <a
+          href="https://customs.gov.ru/registers/objects-intellectual-property"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-indigo-600 hover:underline"
+        >
+          официальный реестр ФТС
+        </a>
+        .
+      </p>
       <details className="cc-disclosure">
         <summary>Быстрый выбор бренда</summary>
         <div className="cc-disclosure-body flex flex-wrap gap-1.5">
@@ -140,12 +152,16 @@ export const Trois: React.FC = () => {
               className={`rounded-lg px-3 py-2 ${
                 result.found
                   ? 'border-amber-200 bg-amber-50 text-amber-800'
-                  : 'border-emerald-200 bg-emerald-50 text-emerald-800'
+                  : result.risk_level === 'low'
+                    ? 'border-emerald-200 bg-emerald-50 text-emerald-800'
+                    : 'border-slate-200 bg-slate-50 text-slate-700'
               }`}
             >
               {result.found
-                ? 'Знак найден в реестре: требуется проверка уполномоченности импортёра.'
-                : 'Знак не найден в локальном результате поиска (проверьте вручную для уверенности).'}
+                ? '⚠️ Знак найден в реестре: требуется разрешение правообладателя.'
+                : result.risk_level === 'low'
+                  ? '✅ Бренд не найден в локальной БД — риск по ТРОИС низкий (проверьте официальный реестр).'
+                  : '❓ Бренд не проверен автоматически — проверьте вручную в реестре ФТС.'}
             </div>
           )}
           {result.note && result.status !== 'ERROR' && (
