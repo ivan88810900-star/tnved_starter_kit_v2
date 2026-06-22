@@ -301,6 +301,8 @@ export interface CalculatorComputeRequest {
   net_weight_kg?: number | null;
   extra_quantity?: number | null;
   apply_reduced_vat?: boolean;
+  vehicle_is_new?: boolean | null;
+  engine_volume?: number | null;
   save_history?: boolean;
   document_id?: string | null;
   user_ref?: string;
@@ -366,7 +368,27 @@ export interface CalculatorBreakdown {
   vat_pref_comment: string;
   vat_base: number;
   vat: number;
+  recycling_fee?: number;
   total_payable: number;
+}
+
+export interface CalculatorTariffPreference {
+  applied: boolean;
+  preference_type?: string;
+  duty_coefficient?: number;
+  legal_ref?: string;
+}
+
+export interface CalculatorRecyclingFeeMeta {
+  applied: boolean;
+  vehicle_type?: string;
+  is_new?: boolean;
+  base_rate?: number;
+  coefficient?: number;
+  fee_amount?: number;
+  description?: string;
+  legal_ref?: string;
+  all_matches?: number;
 }
 
 export interface CalculatorLegalBasis {
@@ -409,6 +431,9 @@ export interface CalculatorComputeResponse {
   special_duties_amount: number;
   invoice?: CalculatorInvoiceInfo;
   fx_source?: string;
+  tariff_preference?: CalculatorTariffPreference;
+  recycling_fee?: CalculatorRecyclingFeeMeta;
+  geo?: Record<string, unknown> | null;
 }
 
 export interface CalculatorDutyRuleInfo {

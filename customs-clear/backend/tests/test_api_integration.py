@@ -104,6 +104,58 @@ class ApiIntegrationTests(unittest.TestCase):
         self.assertTrue("sources" in body or "documents" in body)
         self.assertGreater(body["breakdown"]["total_payable"], 0)
 
+    def test_calculator_returns_rich_contract(self):
+        """Эндпоинт /compute отдаёт развёрнутый профиль (поля, которые потребляет UI)."""
+        r = self.client.post("/api/calculator/compute", json={
+            "hs_code": "8509400000",
+            "customs_value": 500_000,
+            "country": "CN",
+        })
+        self.assertEqual(r.status_code, 200)
+        body = r.json()
+        bd = body["breakdown"]
+        # Богатый контракт: ставки и развёрнутые поля присутствуют
+        for key in ("duty_rate", "vat_rate", "recycling_fee", "vat_reason", "total_payable"):
+            self.assertIn(key, bd)
+        self.assertIn("auto_detected", body)
+        self.assertIn("tnved_context", body)
+        self.assertIn("tariff_preference", body)
+        self.assertIn("invoice", body)
+
+    def test_calculator_vehicle_recycling_used_vs_new(self):
+        """vehicle_is_new / engine_volume теперь принимаются и влияют на утильсбор."""
+        base = {
+            "hs_code": "8703231910",
+            "customs_value": 2_000_000,
+            "country": "CN",
+            "engine_volume": 2500,
+        }
+        r_new = self.client.post("/api/calculator/compute", json={**base, "vehicle_is_new": True})
+        r_used = self.client.post("/api/calculator/compute", json={**base, "vehicle_is_new": False})
+        self.assertEqual(r_new.status_code, 200)
+        self.assertEqual(r_used.status_code, 200)
+        rf_new = r_new.json()["breakdown"]["recycling_fee"]
+        rf_used = r_used.json()["breakdown"]["recycling_fee"]
+        # Утильсбор б/у выше, чем у нового, и попадает отдельной строкой в breakdown
+        self.assertGreater(rf_new, 0)
+        self.assertGreater(rf_used, rf_new)
+        meta = r_used.json()["recycling_fee"]
+        self.assertTrue(meta.get("applied"))
+        self.assertFalse(meta.get("is_new"))
+
+    def test_calculator_eaeu_country_preference(self):
+        """Страна ЕАЭС (BY) применяет тарифную преференцию (нулевая пошлина)."""
+        r = self.client.post("/api/calculator/compute", json={
+            "hs_code": "8509400000",
+            "customs_value": 500_000,
+            "country": "BY",
+        })
+        self.assertEqual(r.status_code, 200)
+        pref = r.json()["tariff_preference"]
+        self.assertTrue(pref.get("applied"))
+        self.assertEqual(pref.get("preference_type"), "eaeu")
+        self.assertEqual(r.json()["breakdown"]["duty"], 0.0)
+
     def test_calculator_vat_reason_present(self):
         r = self.client.post("/api/calculator/compute", json={
             "hs_code": "0201300000",
