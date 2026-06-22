@@ -6,11 +6,18 @@
 Если ответ не 200, делается запасной запрос ``https://www.tks.ru/db/tnved/tree/?c={код}``
 (на стороне TKS путь ``/tree/c…`` может отдавать 404).
 
-Валидация: в ``div.tree_code`` или в ``h1`` должен фигурировать **тот же** 10-значный код, что в каталоге.
+Актуальная вёрстка (2026): данные приходят AJAX-модалкой ``/db/tnved/tree/info/``
+(POST + CSRF). Внутри — ``section.product-info`` → ``table.product-info__table``:
+структурированная таблица ключ→значение («Пошлина:», «НДС:», «Лицензирование:»,
+«Сертификация:», «Квотирование:» …) со значениями ``нет`` / ``да`` / ``есть``.
 
-- Блок **«Импорт»**: ставки пошлины и НДС → текст в ``tnved_commodities.import_duty`` (не в ``non_tariff_measures``).
-- **«Нетарифное регулирование»** и **«Дополнительная информация»** → ``non_tariff_measures`` с типами
-  ``marking``, ``license``, ``certificate``, ``vet_control``, ``phyto_control``, ``sgr``, ``fsb``, ``fsetc``, ``tr_ts``.
+Валидация: 10-значный код страницы должен совпадать с кодом каталога.
+
+- Блок **«Импорт»** (Пошлина / Антидемп. пошлина / Акциз / НДС) → текст в
+  ``tnved_commodities.import_duty`` (не в ``non_tariff_measures``).
+- Нетарифные флаги таблицы → ``non_tariff_measures`` **только при положительном
+  значении (да/есть)**. Раньше парсер искал слова-метки по всей странице и эмитил
+  меру даже при значении ``нет`` → массовый шум; теперь учитывается реальное значение.
 
   cd customs-clear/backend
   pip3 install playwright && playwright install chromium
@@ -805,6 +812,78 @@ def _update_commodity_import(db, code: str, import_text: str) -> None:
         row.import_duty = import_text.strip()
 
 
+# ──────────────────────────────────────────────────────────────────────
+# Структурный парсер актуальной вёрстки TKS (modal AJAX):
+#   section.product-info → table.product-info__table — таблица ключ→значение
+#   («Пошлина:», «НДС:», «Лицензирование:», «Сертификация:» …).
+# Раньше парсер искал ключевые слова по ВСЕЙ странице и эмитил меру при
+# любом упоминании слова-метки (например «сертификат»), игнорируя реальное
+# значение «нет» → массовые ложные меры (СГР/сертификат для ноутбука).
+# Теперь меры эмитируются ТОЛЬКО для положительных флагов (да/есть).
+# ──────────────────────────────────────────────────────────────────────
+
+# Метка таблицы TKS → (measure_type, document_required, описание-основание)
+_TKS_FLAG_MAP: dict[str, tuple[str, str, str]] = {
+    "лицензирование": ("license", "Лицензия", "TKS.ru: по таблице — требуется лицензирование"),
+    "квотирование": ("other", "Квота / разрешение", "TKS.ru: по таблице — применяется квотирование"),
+    "сертификация": ("certificate", "Сертификат / декларация", "TKS.ru: по таблице — требуется сертификация"),
+    "разреш. прочие": ("other", "Разрешительный документ", "TKS.ru: по таблице — иные разрешительные документы"),
+}
+
+# Метки блока «Импорт» (пошлина/НДС) для поля import_duty.
+_TKS_IMPORT_LABELS: tuple[tuple[str, str], ...] = (
+    ("пошлина", "Пошлина"),
+    ("антидемп. пошлина", "Антидемп. пошлина"),
+    ("акциз", "Акциз"),
+    ("ндс", "НДС"),
+)
+
+
+def _tks_flag_is_positive(value: str) -> bool:
+    """Флаг таблицы TKS считается положительным, если значение начинается с «да»/«есть»."""
+    low = re.sub(r"\s+", " ", (value or "")).strip().lower()
+    if not low or low.startswith("нет"):
+        return False
+    return low.startswith("да") or low.startswith("есть")
+
+
+def parse_product_info_table(soup: BeautifulSoup) -> dict[str, str]:
+    """Главная таблица TKS ``table.product-info__table`` → dict ключ→значение (ключ в lower)."""
+    table = soup.select_one("table.product-info__table")
+    if table is None:
+        return {}
+    out: dict[str, str] = {}
+    for tr in table.find_all("tr"):
+        cells = [td.get_text(" ", strip=True) for td in tr.find_all(["td", "th"])]
+        cells = [c for c in cells if c]
+        if len(cells) >= 2:
+            key = cells[0].rstrip(":").strip().lower()
+            if key and key not in out:
+                out[key] = cells[1].strip()
+    return out
+
+
+def _format_import_from_table(table: dict[str, str]) -> str:
+    """Текст import_duty из таблицы TKS: пошлина / антидемпинг / акциз / НДС."""
+    chunks: list[str] = []
+    for key, label in _TKS_IMPORT_LABELS:
+        val = table.get(key, "").strip()
+        if val:
+            chunks.append(f"{label}: {val}")
+    return " | ".join(chunks)[:8000]
+
+
+def parse_nontariff_from_table(table: dict[str, str]) -> list[dict[str, str]]:
+    """Нетарифные меры из таблицы TKS — только для положительных флагов (да/есть)."""
+    out: list[dict[str, str]] = []
+    seen: set[tuple[str, str]] = set()
+    for label, (mtype, doc, desc) in _TKS_FLAG_MAP.items():
+        if label in table and _tks_flag_is_positive(table[label]):
+            act = f"TKS.ru | {label.capitalize()}: {table[label]}"
+            _add_spec(out, seen, mtype, desc, doc, act)
+    return out
+
+
 def _process_code_worker(
     code: str,
     *,
@@ -855,11 +934,18 @@ def _process_code_worker(
                 f"код на странице={page_code!r}, ожидали={exp!r} url={used_url}",
                 "",
             )
-        imp_block = _import_block_text(soup)
-        nt_block = _nontariff_block_text(soup)
-        ex_block = _extra_info_block_text(soup)
-        import_text = _format_import_for_commodity(imp_block)
-        specs = parse_nontariff_regulation_block(nt_block) + parse_additional_info_block(ex_block)
+        # Приоритет — структурная таблица актуальной вёрстки TKS.
+        table = parse_product_info_table(soup)
+        if table:
+            import_text = _format_import_from_table(table)
+            specs = parse_nontariff_from_table(table)
+        else:
+            # Legacy-эвристика по блокам (на случай старой/иной вёрстки).
+            imp_block = _import_block_text(soup)
+            nt_block = _nontariff_block_text(soup)
+            ex_block = _extra_info_block_text(soup)
+            import_text = _format_import_for_commodity(imp_block)
+            specs = parse_nontariff_regulation_block(nt_block) + parse_additional_info_block(ex_block)
         if not specs and not import_text.strip():
             return code, "skip_empty", [], "нет данных в блоках Импорт / Нетарифное / Дополнительная информация", ""
         return code, "ok", specs, "", import_text
