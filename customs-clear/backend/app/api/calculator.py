@@ -209,6 +209,39 @@ async def compare(req: CompareRequest) -> PaymentCompareResponse:
         raise HTTPException(status_code=500, detail=f"Ошибка сравнения: {exc}")
 
 
+class ScenarioCompareBase(BaseModel):
+    hs_code: str
+    customs_value: float
+    currency: str = "USD"
+    weight_gross_kg: float | None = None
+    weight_net_kg: float | None = None
+    country: str | None = None
+
+
+class ScenarioCompareItem(BaseModel):
+    name: str = "Сценарий"
+    hs_code: str | None = None
+    country_of_origin: str | None = None
+    procedure_code: str | None = None
+
+
+class ScenarioCompareRequest(BaseModel):
+    base: ScenarioCompareBase
+    scenarios: list[ScenarioCompareItem] = Field(..., min_length=2, max_length=8)
+
+
+@router.post("/compare-scenarios")
+async def compare_scenarios(req: ScenarioCompareRequest) -> JSONResponse:
+    """Сравнение сценариев: страны, коды, процедуры + РОП (#146)."""
+    from ..services.scenario_compare_service import compare_scenarios_extended
+
+    try:
+        result = compare_scenarios_extended(req.model_dump())
+        return JSONResponse(result)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
 @router.get("/history/summary")
 async def calculator_history_summary(
     user_ref: str = "",

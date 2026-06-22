@@ -37,6 +37,17 @@ class RopCalculateRequest(BaseModel):
     calendar_year: int | None = None
 
 
+@router.get("/coverage/chapters")
+def rop_chapter_coverage(
+    calendar_year: int = Query(2026),
+    db: Session = Depends(get_db),
+) -> dict:
+    from ..services.rop_coverage_audit import build_rop_chapter_coverage, coverage_summary
+
+    matrix = build_rop_chapter_coverage(db, calendar_year=calendar_year)
+    return {"summary": coverage_summary(matrix), "chapters": matrix}
+
+
 @router.post("/calculate")
 def rop_calculate(body: RopCalculateRequest, db: Session = Depends(get_db)) -> dict:
     if body.weight_gross_kg < body.weight_net_kg:

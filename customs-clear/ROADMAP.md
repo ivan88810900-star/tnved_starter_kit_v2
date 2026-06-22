@@ -220,7 +220,11 @@
 
 ### Фаза W — Системные краулеры и расширение платформы (Issues #143–#147)
 
-- [ ] **Issue #143** — FTS rulings systematic crawler: `fts_rulings_crawler.py`, авто-пагинация folder, универсальный парсер, AI HS-fallback, cron понедельник.
+- [x] **PR #148 (Issue #143)** — FTS rulings systematic crawler: `fts_rulings_crawler.py`, авто-пагинация folder, универсальный парсер, AI HS-fallback, cron понедельник. ✅ merged 2026-06-22
+- [ ] **Issue #144** — ROP coverage audit 97 chapters: `rop_coverage_audit.py`, `GET /api/rop/coverage/chapters`, `data/rop_chapter_coverage.json`.
+- [ ] **Issue #145** — Invoice upload batch: `POST /api/invoice/upload`, `/calculate-batch`, `/template`, страница `/invoice`.
+- [ ] **Issue #146** — Scenario compare extended: `POST /api/calculator/compare-scenarios` (+ ROP, best_scenario).
+- [ ] **Issue #147** — AI classifier: `/api/classify/image`, `/characteristics`, `/history`.
 
 ### Фаза L — Дальше (бэклог)
 - [x] Стаб HTTP-классификатора для разработки (`scripts/inference_classifier_stub.py`); боевой inference — вне репозитория по **`INFERENCE_CLASSIFIER.md`**.
