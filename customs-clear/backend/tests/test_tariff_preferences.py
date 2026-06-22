@@ -35,11 +35,20 @@ class TestCountryTariffPreferencesData:
             assert pref.duty_coefficient == 0.0
 
     def test_gsp_countries_have_075_coefficient(self) -> None:
-        for iso in ("CN", "BR", "IN", "TR"):
+        for iso in ("BR", "IN", "TR"):
             pref = get_tariff_preference(iso)
             assert pref is not None, f"GSP country {iso} not found"
             assert pref.duty_coefficient == 0.75, f"{iso} should have 0.75 coefficient"
             assert pref.preference_type == "gsp"
+
+    def test_china_graduated_from_gsp(self) -> None:
+        # КНР исключена из перечня пользователей ЕСТП ЕАЭС
+        # (Решение Совета ЕЭК № 17 от 05.03.2021, применяется с 12.10.2021):
+        # применяется полная ставка РНБ, а не льготная GSP.
+        pref = get_tariff_preference("CN")
+        assert pref is not None, "CN not found"
+        assert pref.duty_coefficient == 1.0, "CN must use full MFN rate, not GSP 0.75"
+        assert pref.preference_type == "mfn_graduated"
 
     def test_ldc_countries_have_zero_coefficient(self) -> None:
         for iso in ("AF", "BD", "ET"):
@@ -78,7 +87,7 @@ class TestCountryTariffPreferencesData:
         assert pref is None
 
     def test_lookup_case_insensitive(self) -> None:
-        pref = get_tariff_preference("cn")
+        pref = get_tariff_preference("br")
         assert pref is not None
         assert pref.preference_type == "gsp"
 
@@ -95,7 +104,7 @@ class TestTariffPreferencePaymentIntegration:
         gsp_result = compute_payments({
             "hs_code": "8509100000",
             "customs_value": 100000,
-            "country": "CN",
+            "country": "BR",
         })
         base_duty = base_result["breakdown"]["duty"]
         gsp_duty = gsp_result["breakdown"]["duty"]
@@ -103,6 +112,24 @@ class TestTariffPreferencePaymentIntegration:
             assert gsp_duty < base_duty, (
                 f"GSP duty ({gsp_duty}) should be less than MFN duty ({base_duty})"
             )
+
+    def test_china_no_gsp_discount(self) -> None:
+        from app.services.payment_engine import compute_payments
+
+        us_result = compute_payments({
+            "hs_code": "8509400000",
+            "customs_value": 500000,
+            "country": "US",
+        })
+        cn_result = compute_payments({
+            "hs_code": "8509400000",
+            "customs_value": 500000,
+            "country": "CN",
+        })
+        assert cn_result["breakdown"]["duty"] == us_result["breakdown"]["duty"], (
+            "CN graduated from GSP — duty must equal full MFN duty"
+        )
+        assert cn_result["tariff_preference"]["applied"] is False
 
     def test_eaeu_zeroes_duty(self) -> None:
         from app.services.payment_engine import compute_payments
@@ -134,7 +161,7 @@ class TestTariffPreferencePaymentIntegration:
         result = compute_payments({
             "hs_code": "8509100000",
             "customs_value": 100000,
-            "country": "CN",
+            "country": "BR",
         })
         assert "tariff_preference" in result
         pref = result["tariff_preference"]
