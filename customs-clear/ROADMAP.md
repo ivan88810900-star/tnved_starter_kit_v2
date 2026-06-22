@@ -218,6 +218,10 @@
 
 - [x] **PR #142** — Полная система РОП на официальных данных **ПП №1041** (ставки 2025–2027 + коэффициент К) и **ПП №2414** (16 групп товаров + 36 групп упаковки, нормативы утилизации). JSON `data/rop_rates_2024.json`, таблицы `rop_goods_rates` / `rop_packaging_rates` / `rop_packaging_defaults`, `rop_calculator.py`, API `/api/rop/*`, идемпотентный импорт, cron-проверка обновлений (1 декабря), 13 регрессионных тестов. Примечание: ПП №2657 в официальной публикации не найден — источник ПП №2406/№1041/№2414. ✅ merged 2026-06-22
 
+### Фаза W — Системные краулеры и расширение платформы (Issues #143–#147)
+
+- [ ] **Issue #143** — FTS rulings systematic crawler: `fts_rulings_crawler.py`, авто-пагинация folder, универсальный парсер, AI HS-fallback, cron понедельник.
+
 ### Фаза L — Дальше (бэклог)
 - [x] Стаб HTTP-классификатора для разработки (`scripts/inference_classifier_stub.py`); боевой inference — вне репозитория по **`INFERENCE_CLASSIFIER.md`**.
 - [x] Персистентная очередь async-проверок ФСА (`permits_verify_jobs` в БД).
