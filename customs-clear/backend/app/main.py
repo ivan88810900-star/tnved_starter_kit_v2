@@ -50,6 +50,7 @@ from .api import (
     trois,
     tnved,
     tnved_catalog,
+    rop,
 )
 from .db import engine
 from .services.exchange_rates import update_exchange_rates_from_cbrf
@@ -220,6 +221,7 @@ app.include_router(search.router, prefix="/api/search", tags=["search"])
 app.include_router(permits.router, prefix="/api/permits", tags=["permits"])
 app.include_router(alta_integrations.router, prefix="/api/integrations/alta", tags=["integrations-alta"])
 app.include_router(tnved.router, prefix="/api/tnved", tags=["tnved"])
+app.include_router(rop.router, prefix="/api/rop", tags=["rop"])
 app.include_router(
     tnved_catalog.router,
     prefix="/api/v1/tnved",
