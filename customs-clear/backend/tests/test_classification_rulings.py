@@ -15,9 +15,11 @@ class TestClassificationRulingsData:
         yield
         self.db.close()
 
-    def test_total_entries_50(self) -> None:
+    def test_total_entries_at_least_50(self) -> None:
+        # Базовый курируемый набор (50) + опциональное расширение справочными
+        # записями (scripts/expand_classification_rulings.py) → ≥ 50.
         total = self.db.execute(text("SELECT COUNT(*) FROM classification_rulings")).scalar()
-        assert total == 50
+        assert total >= 50
 
     def test_fts_rulings(self) -> None:
         count = self.db.execute(text(
@@ -86,3 +88,28 @@ class TestClassificationRulingsLookup:
     def test_no_results_for_rare_code(self) -> None:
         results = find_classification_rulings("0101210000")
         assert isinstance(results, list)
+
+
+class TestClassificationRulingsExpansion:
+    """Issue #125: генератор справочных решений из реального каталога ТН ВЭД."""
+
+    def test_generator_yields_500_plus_real_catalog_rows(self) -> None:
+        from scripts.expand_classification_rulings import _build_rows
+
+        rows = _build_rows(target=520, per_chapter=8)
+        assert len(rows) >= 500
+        # Каждая запись привязана к реальному 10-значному коду и имеет обоснование.
+        for r in rows:
+            assert len(r["hs"]) == 10 and r["hs"].isdigit()
+            assert r["desc"].strip()
+            assert "ОПИ" in r["rationale"]
+            # Справочные записи явно помечены (не выдаются за официальные ФТС/ЕЭК).
+            assert r["agency"] == "ТНВЭД-REF"
+            assert r["num"].startswith("REF-ТНВЭД-")
+
+    def test_generator_rows_are_unique(self) -> None:
+        from scripts.expand_classification_rulings import _build_rows
+
+        rows = _build_rows(target=520, per_chapter=8)
+        nums = [r["num"] for r in rows]
+        assert len(nums) == len(set(nums))
