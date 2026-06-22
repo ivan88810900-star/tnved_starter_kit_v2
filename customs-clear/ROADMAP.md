@@ -228,7 +228,7 @@
 
 ### Фаза X — Аудит ТРОИС и СС/ДС (Issue #151)
 
-- [ ] **Issue #151** — TROIS: fuzzy-matching (Найк→Nike), загрузка `customs.gov.ru/folder/14344`, `scripts/fetch_trois_registry.py`, sync БД→in-memory, `risk_level` в API, cron понедельник. СС/ДС: FSA API `filter` + кэш 24h, fallback `manual_check_url`, блок «Разрешительные документы» в карточке товара, дисклеймеры UI.
+- [x] **PR #152 (Issue #151)** — TROIS: fuzzy-matching, `trois_fts_fetch.py` (folder/14344), `fetch_trois_registry.py`, БД→in-memory sync, `risk_level`, GET `/api/trois/check/{query}`, cron понедельник. СС/ДС: FSA `filter` API, кэш 24h, `manual_check_url`, `PermitDocumentsBlock` в карточке товара, дисклеймеры. ✅ merged 2026-06-22
 
 ### Фаза L — Дальше (бэклог)
 - [x] Стаб HTTP-классификатора для разработки (`scripts/inference_classifier_stub.py`); боевой inference — вне репозитория по **`INFERENCE_CLASSIFIER.md`**.
