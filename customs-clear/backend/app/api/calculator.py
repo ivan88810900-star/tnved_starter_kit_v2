@@ -11,14 +11,18 @@ from ..services.calculation_history_service import save_calculation_record
 from ..services.exchange_rates import get_rates_map
 from ..services.payment_profile_builder import (
     build_compare_payment_profiles,
-    build_full_payment_profile,
 )
 from ..services.export_service import generate_final_customs_excel
 from ..security import require_admin_token
 from ..services.payment_engine_compat import (
+    compute_payments,
     get_commodity_meta_info,
     get_duty_rule_info,
 )
+
+
+def _round2(value: float) -> float:
+    return round(float(value), 2)
 
 
 router = APIRouter()
@@ -74,6 +78,8 @@ class CalculatorRequest(BaseModel):
     net_weight_kg: float | None = Field(default=None, validation_alias=AliasChoices("net_weight_kg", "weight_kg"))  # вес нетто для специфических ставок /kg
     extra_quantity: float | None = None  # объём/шт для специфических ставок /l, /pcs и т.д.
     apply_reduced_vat: bool = False  # льготный НДС 10%
+    vehicle_is_new: bool | None = None  # ТС: новое (True) / б.у. (False) — для утильсбора (8701-8705, 8711)
+    engine_volume: int | None = None  # объём двигателя, см³ — выбор ставки утильсбора
     save_history: bool = Field(True, description="Сохранить расчёт в customs_calculation_history")
     document_id: str | None = Field(None, description="Связь с ingested_documents.id")
     user_ref: str = Field("", description="Пользователь / клиент для журнала")
@@ -92,9 +98,15 @@ class ExportExcelRequest(BaseModel):
     items: list[ExportExcelItemIn] = Field(default_factory=list)
 
 
-@router.post("/compute", response_model=PaymentProfileResponse)
-async def compute(req: CalculatorRequest) -> PaymentProfileResponse:
-    """Расчёт платежей: пошлина, НДС, акциз, антидемпинг."""
+@router.post("/compute")
+async def compute(req: CalculatorRequest) -> JSONResponse:
+    """Расчёт платежей: пошлина, НДС, акциз, антидемпинг, утильсбор.
+
+    Возвращает развёрнутый профиль расчёта (богатый контракт):
+    `breakdown` (включая `duty_rate`, `vat_rate`, `recycling_fee`),
+    `auto_detected`, `tnved_context`, `special_duties`, `tariff_preference`
+    и метаданные утильсбора — именно эти поля потребляет UI калькулятора.
+    """
     try:
         logger.info(f"Расчёт платежей для кода {req.hs_code}")
         payload = req.model_dump(exclude={"save_history", "document_id", "user_ref"})
@@ -103,22 +115,29 @@ async def compute(req: CalculatorRequest) -> PaymentProfileResponse:
         if invoice_currency not in rates:
             raise HTTPException(status_code=400, detail=f"Неизвестная валюта инвойса: {invoice_currency}")
         invoice_fx_rate = float(rates.get(invoice_currency) or 1.0)
-        payload["customs_value"] = float(req.customs_value) * invoice_fx_rate
+        invoice_amount = float(req.customs_value)
+        customs_value_rub = invoice_amount * invoice_fx_rate
+        payload["customs_value"] = customs_value_rub
+        payload["hs_code"] = req.hs_code
+        payload["country"] = req.country
         payload["_fx_rates"] = rates
-        profile = build_full_payment_profile(
-            payload=payload,
-            hs_code=req.hs_code,
-            country=req.country,
-        )
+        result = compute_payments(payload)
+        result["invoice"] = {
+            "currency": invoice_currency,
+            "amount": _round2(invoice_amount),
+            "fx_rate": _round2(invoice_fx_rate),
+            "customs_value_rub": _round2(customs_value_rub),
+        }
+        result["fx_source"] = "ЦБ РФ"
         if req.save_history:
             save_calculation_record(
                 input_payload=payload,
-                output_payload=profile.model_dump(),
+                output_payload=result,
                 document_id=req.document_id,
                 user_ref=req.user_ref or "",
                 kind="compute",
             )
-        return profile
+        return JSONResponse(result)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc))
     except HTTPException:
@@ -128,8 +147,8 @@ async def compute(req: CalculatorRequest) -> PaymentProfileResponse:
         raise HTTPException(status_code=500, detail=f"Ошибка расчета: {exc}")
 
 
-@router.post("/calculate", response_model=PaymentProfileResponse)
-async def calculate(req: CalculatorRequest) -> PaymentProfileResponse:
+@router.post("/calculate")
+async def calculate(req: CalculatorRequest) -> JSONResponse:
     """Совместимый alias для /compute."""
     return await compute(req)
 

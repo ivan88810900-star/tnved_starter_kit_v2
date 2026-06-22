@@ -16,6 +16,7 @@ import type {
   CalculatorHistoryListItem,
   CalculatorHistoryListResponse,
   CalculatorHistorySummaryResponse,
+  CalculatorTariffPreference,
   FinanceRatesResponse,
   SearchHsItem,
   SearchHsResponse,
@@ -108,8 +109,34 @@ const HISTORY_KIND_LABELS: Record<string, string> = {
   copilot_batch: 'Пакет',
 };
 
-const PAYMENT_COLORS = ['#1d4ed8', '#0ea5e9', '#cbd5e1', '#94a3b8'];
+const PAYMENT_COLORS = ['#1d4ed8', '#0ea5e9', '#cbd5e1', '#94a3b8', '#f59e0b'];
 const COUNTRY_OPTIONS = ['CN', 'MY', 'VN', 'TR', 'IN', 'RU', 'KZ', 'BY', 'DE', 'IT', 'US', 'KR', 'JP'];
+
+const VEHICLE_PREFIXES = ['8701', '8702', '8703', '8704', '8705', '8711'];
+
+function isVehicleHs(hs: string): boolean {
+  const d = (hs || '').replace(/\D/g, '');
+  return VEHICLE_PREFIXES.some((p) => d.startsWith(p));
+}
+
+function preferenceLabel(pref?: CalculatorTariffPreference | null): string | null {
+  if (!pref || !pref.applied) return null;
+  const map: Record<string, string> = {
+    eaeu: 'ЕАЭС',
+    cis: 'СНГ',
+    gsp: 'ВРС (преференция)',
+    gsp_graduated: 'ВРС (исключён)',
+    mfn_graduated: 'РНБ',
+    ldc: 'Наименее развитые страны',
+    mfn: 'РНБ',
+    non_mfn: 'без РНБ',
+  };
+  const name = map[pref.preference_type || ''] || pref.preference_type || 'преференция';
+  const coeff = pref.duty_coefficient;
+  if (coeff === 0) return `${name}: пошлина 0%`;
+  if (typeof coeff === 'number' && coeff !== 1) return `${name}: пошлина ×${coeff}`;
+  return name;
+}
 
 function TreeNode({
   node,
@@ -207,6 +234,8 @@ export const Calculator: React.FC = () => {
   const [dutyRate, setDutyRate] = useState('');
   const [country, setCountry] = useState('');
   const [applyReducedVat, setApplyReducedVat] = useState(false);
+  const [vehicleIsNew, setVehicleIsNew] = useState(true);
+  const [engineVolume, setEngineVolume] = useState('');
   const [excise, setExcise] = useState('');
   const [quantity, setQuantity] = useState('');
   const [netWeightKg, setNetWeightKg] = useState('');
@@ -274,6 +303,7 @@ export const Calculator: React.FC = () => {
     const delta = Math.abs(entered - expectedWeightKg) / expectedWeightKg;
     return delta > 0.3;
   }, [expectedWeightKg, netWeightKg]);
+  const isVehicle = useMemo(() => isVehicleHs(hsCode), [hsCode]);
 
   const loadTnvedTree = async () => {
     setTreeLoading(true);
@@ -523,6 +553,10 @@ export const Calculator: React.FC = () => {
       if (netWeightKg) payload.net_weight_kg = parseFloat(netWeightKg);
       if (extraQuantity) payload.extra_quantity = parseFloat(extraQuantity);
       if (country) payload.country = country.trim().toUpperCase();
+      if (isVehicleHs(hsCode)) {
+        payload.vehicle_is_new = vehicleIsNew;
+        if (engineVolume) payload.engine_volume = parseInt(engineVolume, 10);
+      }
       payload.save_history = saveHistory;
       const did = documentId.trim();
       if (did) payload.document_id = did;
@@ -594,6 +628,10 @@ export const Calculator: React.FC = () => {
           payload.net_weight_kg = Number(p.net_weight_kg);
         }
         if (extraQuantity) payload.extra_quantity = parseFloat(extraQuantity);
+        if (isVehicleHs(hs)) {
+          payload.vehicle_is_new = vehicleIsNew;
+          if (engineVolume) payload.engine_volume = parseInt(engineVolume, 10);
+        }
         payload.save_history = saveHistory;
         const did = documentId.trim();
         if (did) payload.document_id = did;
@@ -633,6 +671,8 @@ export const Calculator: React.FC = () => {
       extraQuantity,
       country,
       applyReducedVat,
+      vehicleIsNew,
+      engineVolume,
       saveHistory,
       documentId,
       userRef,
@@ -1214,6 +1254,8 @@ export const Calculator: React.FC = () => {
             setInsurance('');
             setDutyRate('');
             setApplyReducedVat(false);
+            setVehicleIsNew(true);
+            setEngineVolume('');
             setExcise('');
             setQuantity('');
             setNetWeightKg('');
@@ -1283,6 +1325,40 @@ export const Calculator: React.FC = () => {
         />
         <span>Товар входит в перечень ПП РФ №908/41/1042 (Льготный НДС 10%)</span>
       </label>
+
+      {isVehicle && (
+        <div className="cc-card-soft space-y-3 border-l-2 border-amber-400/60 p-4">
+          <p className="text-[12px] font-semibold text-slate-700">
+            Транспортное средство — расчёт утилизационного сбора (ПП РФ №1291)
+          </p>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <label className="space-y-1">
+              <span className="cc-label">Состояние ТС</span>
+              <select
+                value={vehicleIsNew ? 'new' : 'used'}
+                onChange={(e) => setVehicleIsNew(e.target.value === 'new')}
+                className="cc-input"
+              >
+                <option value="new">Новое</option>
+                <option value="used">Б/у (старше 3 лет)</option>
+              </select>
+            </label>
+            <label className="space-y-1">
+              <span className="cc-label">Объём двигателя, см³</span>
+              <input
+                value={engineVolume}
+                onChange={(e) => setEngineVolume(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                placeholder="напр. 2500"
+                className="cc-input cc-mono"
+                inputMode="numeric"
+              />
+            </label>
+          </div>
+          <p className="text-[11px] text-slate-500">
+            Утильсбор зависит от типа ТС, возраста и объёма двигателя и добавляется в итог отдельной строкой.
+          </p>
+        </div>
+      )}
 
       <details className="cc-disclosure">
         <summary>Дополнительные параметры расчёта</summary>
@@ -1472,6 +1548,16 @@ export const Calculator: React.FC = () => {
                   Спецмеры
                 </span>
               ) : null}
+              {(result.breakdown.recycling_fee ?? 0) > 0 ? (
+                <span className="inline-flex items-center rounded-full bg-orange-100 px-2.5 py-1 text-[11px] font-semibold text-orange-800">
+                  Утильсбор
+                </span>
+              ) : null}
+              {preferenceLabel(result.tariff_preference) ? (
+                <span className="inline-flex items-center rounded-full bg-sky-100 px-2.5 py-1 text-[11px] font-semibold text-sky-800">
+                  {preferenceLabel(result.tariff_preference)}
+                </span>
+              ) : null}
             </div>
             <div className="space-y-1 text-[12px] text-slate-700">
               <div>
@@ -1515,6 +1601,19 @@ export const Calculator: React.FC = () => {
                   <span className="font-medium">{Number(result.breakdown.special_duties_amount || 0).toLocaleString('ru-RU')} руб.</span>
                 </div>
               )}
+              {(result.breakdown.recycling_fee ?? 0) > 0 && (
+                <div>
+                  <div className="flex items-center justify-between">
+                    <span>Утилизационный сбор:</span>
+                    <span className="font-medium">{Number(result.breakdown.recycling_fee || 0).toLocaleString('ru-RU')} руб.</span>
+                  </div>
+                  <p className="text-gray-400 text-xs">
+                    {result.recycling_fee?.description
+                      ? `${result.recycling_fee.description} · ${result.recycling_fee.legal_ref ?? 'ПП РФ №1291'}`
+                      : 'ПП РФ от 26.12.2013 №1291'}
+                  </p>
+                </div>
+              )}
               <p className="text-gray-500 text-xs">База НДС = Стоимость + Пошлина</p>
             </div>
 
@@ -1528,6 +1627,7 @@ export const Calculator: React.FC = () => {
                         { name: 'Пошлина', value: Number(result.breakdown.duty || 0) },
                         { name: 'НДС', value: Number(result.breakdown.vat || 0) },
                         { name: 'Сборы', value: Number(result.breakdown.customs_fee || 0) },
+                        { name: 'Утильсбор', value: Number(result.breakdown.recycling_fee || 0) },
                       ]
                         .filter((x) => x.value > 0)
                         .map((x) => ({ ...x, pct: result.breakdown.total_payable > 0 ? (x.value / result.breakdown.total_payable) * 100 : 0 }))}
@@ -1542,6 +1642,7 @@ export const Calculator: React.FC = () => {
                         { name: 'Пошлина', value: Number(result.breakdown.duty || 0) },
                         { name: 'НДС', value: Number(result.breakdown.vat || 0) },
                         { name: 'Сборы', value: Number(result.breakdown.customs_fee || 0) },
+                        { name: 'Утильсбор', value: Number(result.breakdown.recycling_fee || 0) },
                       ]
                         .filter((x) => x.value > 0)
                         .map((entry, index) => (
@@ -1561,11 +1662,72 @@ export const Calculator: React.FC = () => {
                 <p>Пошлина: {result.breakdown.duty.toLocaleString('ru-RU')} ₽</p>
                 <p>НДС: {result.breakdown.vat.toLocaleString('ru-RU')} ₽</p>
                 <p>Сборы: {(result.breakdown.customs_fee ?? 0).toLocaleString('ru-RU')} ₽</p>
+                {(result.breakdown.recycling_fee ?? 0) > 0 && (
+                  <p>Утильсбор: {(result.breakdown.recycling_fee ?? 0).toLocaleString('ru-RU')} ₽</p>
+                )}
               </div>
             </div>
 
-            <div className="text-xl font-bold tracking-tight text-slate-900">
-              Итого к уплате: {result.breakdown.total_payable.toLocaleString('ru-RU')} руб.
+            <div className="rounded-xl border border-blue-200 bg-gradient-to-br from-blue-50 to-white p-4">
+              <div className="flex flex-wrap items-end justify-between gap-3">
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Итого к уплате</p>
+                  <p className="mt-0.5 text-3xl font-extrabold tracking-tight text-blue-900 sm:text-4xl">
+                    {result.breakdown.total_payable.toLocaleString('ru-RU')} ₽
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => window.print()}
+                  className="cc-btn-ghost !px-3 !py-1.5 text-[12px] print:hidden"
+                >
+                  Экспорт в PDF
+                </button>
+              </div>
+              <div className="mt-3 grid grid-cols-2 gap-x-4 gap-y-1 text-[12px] text-slate-700 sm:grid-cols-3">
+                <div className="flex justify-between gap-2">
+                  <span className="text-slate-500">Пошлина</span>
+                  <span className="tabular-nums font-medium">{result.breakdown.duty.toLocaleString('ru-RU')}</span>
+                </div>
+                <div className="flex justify-between gap-2">
+                  <span className="text-slate-500">НДС</span>
+                  <span className="tabular-nums font-medium">{result.breakdown.vat.toLocaleString('ru-RU')}</span>
+                </div>
+                <div className="flex justify-between gap-2">
+                  <span className="text-slate-500">Сборы</span>
+                  <span className="tabular-nums font-medium">{(result.breakdown.customs_fee ?? 0).toLocaleString('ru-RU')}</span>
+                </div>
+                {result.breakdown.excise > 0 && (
+                  <div className="flex justify-between gap-2">
+                    <span className="text-slate-500">Акциз</span>
+                    <span className="tabular-nums font-medium">{result.breakdown.excise.toLocaleString('ru-RU')}</span>
+                  </div>
+                )}
+                {(result.breakdown.antidumping ?? 0) > 0 && (
+                  <div className="flex justify-between gap-2">
+                    <span className="text-slate-500">Антидемпинг</span>
+                    <span className="tabular-nums font-medium">{result.breakdown.antidumping.toLocaleString('ru-RU')}</span>
+                  </div>
+                )}
+                {(result.breakdown.special_duties_amount ?? 0) > 0 && (
+                  <div className="flex justify-between gap-2">
+                    <span className="text-slate-500">Спецпошлины</span>
+                    <span className="tabular-nums font-medium">{result.breakdown.special_duties_amount.toLocaleString('ru-RU')}</span>
+                  </div>
+                )}
+                {(result.breakdown.recycling_fee ?? 0) > 0 && (
+                  <div className="flex justify-between gap-2">
+                    <span className="text-orange-700">Утильсбор</span>
+                    <span className="tabular-nums font-medium text-orange-800">{(result.breakdown.recycling_fee ?? 0).toLocaleString('ru-RU')}</span>
+                  </div>
+                )}
+              </div>
+              {preferenceLabel(result.tariff_preference) && (
+                <p className="mt-2 text-[11px] text-sky-700">
+                  Применена тарифная преференция по стране происхождения: {preferenceLabel(result.tariff_preference)}
+                  {result.tariff_preference?.legal_ref ? ` (${result.tariff_preference.legal_ref})` : ''}
+                </p>
+              )}
             </div>
 
             {(result.breakdown.selected_rule || result.breakdown.fx_rate || result.breakdown.ad_valorem_amount != null || result.breakdown.specific_amount_rub != null) && (
