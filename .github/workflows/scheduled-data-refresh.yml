@@ -3,6 +3,7 @@ name: Scheduled Data Refresh Check
 on:
   schedule:
     - cron: '0 2 * * 0'  # Every Sunday at 02:00 UTC
+    - cron: '0 9 1 12 *'  # 1 December — check ROP rates update (PP 1041)
   workflow_dispatch:
     inputs:
       force_issue:
@@ -189,3 +190,25 @@ jobs:
           else
             echo "✅ All bundles are fresh (< 90 days)" >> $GITHUB_STEP_SUMMARY
           fi
+
+  check-rop-rates:
+    runs-on: ubuntu-latest
+    if: github.event.schedule == '0 9 1 12 *' || github.event_name == 'workflow_dispatch'
+    defaults:
+      run:
+        working-directory: customs-clear/backend
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Check ROP rates update
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: PYTHONPATH=. python3 scripts/check_rop_rates_update.py || true
