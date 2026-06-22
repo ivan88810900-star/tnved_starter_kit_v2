@@ -11,7 +11,8 @@
 """
 import unittest
 
-from app.models.tnved import HsDutyRule
+from app.db import SessionLocal
+from app.models.tnved import HsDutyRule, VatPreference
 from app.services.normative_store import init_db
 from app.services.payment_engine import _compute_structured_duty, compare_payment_scenarios, compute_payments
 
@@ -51,6 +52,29 @@ class PaymentEngineTests(unittest.TestCase):
         """Код 9503 + apply_reduced_vat: НДС 10%."""
         res = self._calc(hs_code="9503009900", customs_value=80_000, freight=8_000, apply_reduced_vat=True)
         self.assertEqual(res["breakdown"]["vat_rate"], 10.0)
+
+    def test_vat_10_beef_from_hs_rates(self):
+        """Контрольный код #124: говядина 0201100000 → НДС 10% (НК РФ ст. 164 п. 2)."""
+        res = self._calc(hs_code="0201100000", customs_value=100_000, freight=0)
+        self.assertEqual(res["breakdown"]["vat_rate"], 10.0)
+
+    def test_vat_10_from_vat_preferences_expansion(self):
+        """Льготная позиция из vat_preferences (живой скот по ПП №908) → 10%, без over-claim для электроники."""
+        marker = "ТЕСТ ПП РФ № 908 (vat10 expansion)"
+        with SessionLocal() as db:
+            db.add(VatPreference(hs_code_prefix="0102", vat_rate=10, decree_info=marker, comment="тест"))
+            db.commit()
+        try:
+            res = self._calc(hs_code="0102291000", customs_value=100_000, freight=0)
+            self.assertEqual(res["breakdown"]["vat_rate"], 10.0)
+            self.assertIn("vat_preferences", res["breakdown"]["vat_reason"].lower())
+            # Электроника не должна попасть под льготу.
+            res_el = self._calc(hs_code="8471300000", customs_value=100_000, freight=0)
+            self.assertEqual(res_el["breakdown"]["vat_rate"], 22.0)
+        finally:
+            with SessionLocal() as db:
+                db.query(VatPreference).filter(VatPreference.decree_info == marker).delete()
+                db.commit()
 
     def test_vat_22_fallback_unknown_code(self):
         """Нет льготы в vat_preferences: базовая ставка НДС 22%."""
