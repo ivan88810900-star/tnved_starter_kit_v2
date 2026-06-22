@@ -15,6 +15,7 @@ import {
   BookOpenText,
   Bot,
   Calculator as CalculatorIcon,
+  FileSpreadsheet,
   FileSearch,
   Files,
   FileText,
@@ -26,6 +27,7 @@ import {
 import './styles.css';
 import { SystemHealth } from './pages/admin/SystemHealth';
 import { BulkNormativeImport } from './pages/admin/BulkNormativeImport';
+import { InvoicePage } from './pages/Invoice';
 import { HomeDashboard } from './pages/HomeDashboard';
 import { DocumentCheck } from './pages/DocumentCheck';
 import { Classifier } from './pages/Classifier';
@@ -52,6 +54,7 @@ const PAGE_HEADERS: Record<string, { title: string; desc: string }> = {
   '/tnved': { title: 'Справочник ТН ВЭД', desc: 'Наименования, примечания, ссылки ЕЭК' },
   '/trois': { title: 'ТРОИС', desc: 'Товарные знаки' },
   '/permits': { title: 'СС и ДС', desc: 'Разрешительные документы' },
+  '/invoice': { title: 'Инвойс', desc: 'Загрузка и пакетный расчёт платежей' },
   '/calculator': { title: 'Платежи', desc: 'Пошлина, НДС, база' },
   '/non-tariff': { title: 'Нетарифка', desc: 'ТР ТС, меры' },
   '/assistant': { title: 'Ассистент', desc: 'Сводный разбор: ТН ВЭД, платежи, нетарифные меры' },
@@ -67,6 +70,7 @@ const NAV_ITEMS: Array<{ to: string; label: string; icon: React.ComponentType<{ 
   { to: '/trois', label: 'ТРОИС', icon: BadgeCheck },
   { to: '/permits', label: 'СС и ДС', icon: Files },
   { to: '/calculator', label: 'Платежи', icon: CalculatorIcon },
+  { to: '/invoice', label: 'Инвойс', icon: FileSpreadsheet },
   { to: '/non-tariff', label: 'Нетарифка', icon: ShieldCheck },
   { to: '/assistant', label: 'Ассистент', icon: Bot },
 ];
@@ -251,6 +255,7 @@ function AppRoutes() {
         <Route path="trois" element={<Trois />} />
         <Route path="permits" element={<PermitPicker />} />
         <Route path="calculator" element={<Calculator />} />
+        <Route path="invoice" element={<InvoicePage />} />
         <Route path="non-tariff" element={<NonTariff />} />
         <Route
           path="assistant"

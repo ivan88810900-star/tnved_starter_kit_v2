@@ -105,3 +105,39 @@ async def classify(req: ClassifyRequest, request: Request) -> JSONResponse:
     except Exception as exc:
         logger.exception("Ошибка классификации ТН ВЭД")
         raise HTTPException(status_code=500, detail=str(exc))
+
+
+class ClassifyImageRequest(BaseModel):
+    image_base64: str
+    hint: str = ""
+
+
+class ClassifyCharacteristicsRequest(BaseModel):
+    material: str = ""
+    purpose: str = ""
+    principle: str = ""
+    function: str = ""
+    description: str = ""
+
+
+@router.post("/image")
+async def classify_image(req: ClassifyImageRequest) -> JSONResponse:
+    from ..services.classify_enhancements import classify_by_image_base64
+
+    result = await classify_by_image_base64(req.image_base64, hint=req.hint)
+    return JSONResponse(result)
+
+
+@router.post("/characteristics")
+async def classify_characteristics(req: ClassifyCharacteristicsRequest) -> JSONResponse:
+    from ..services.classify_enhancements import classify_by_characteristics
+
+    result = await classify_by_characteristics(req.model_dump())
+    return JSONResponse(result)
+
+
+@router.get("/history")
+async def classify_history(limit: int = 20) -> JSONResponse:
+    from ..services.classify_enhancements import list_classification_history
+
+    return JSONResponse({"items": list_classification_history(limit=min(limit, 20))})

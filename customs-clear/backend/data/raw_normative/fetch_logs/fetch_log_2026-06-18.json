@@ -1,0 +1,181 @@
+{
+  "generated_at": "2026-06-18T10:25:00.702971+00:00",
+  "mode": "live",
+  "domains": {
+    "EEC_ANTI_DUMPING": {
+      "status": "ok",
+      "measures_count": 22,
+      "path": "/Users/aleks/Downloads/tnved_starter_kit_v2/customs-clear/backend/data/raw_normative/eec_anti_dumping.json",
+      "notes": "Bundle with 22 known anti-dumping measures from official EEC decisions"
+    },
+    "EEC_SPECIAL_SAFEGUARD": {
+      "status": "ok",
+      "measures_count": 3,
+      "path": "/Users/aleks/Downloads/tnved_starter_kit_v2/customs-clear/backend/data/raw_normative/eec_special_safeguard.json",
+      "notes": "Bundle with 3 known special safeguard measures"
+    },
+    "EEC_COUNTERVAILING": {
+      "status": "ok",
+      "measures_count": 2,
+      "path": "/Users/aleks/Downloads/tnved_starter_kit_v2/customs-clear/backend/data/raw_normative/eec_countervailing.json",
+      "notes": "Bundle with 2 known countervailing measures"
+    },
+    "EEC_EXCISE": {
+      "domain": "EEC_EXCISE",
+      "status": "existing_bundle_ok",
+      "notes": [
+        "Excise rates are from Russian Tax Code (НК РФ Ст. 193), not EEC.",
+        "Current bundle has 2 excise items (alcohol, tobacco).",
+        "Full excise rate table needs manual extraction from НК РФ."
+      ],
+      "current_rates_count": 2
+    }
+  },
+  "trade_remedies_page_check": {
+    "domain": "TRADE_REMEDIES",
+    "status": "partial",
+    "urls_tried": [
+      "https://eec.eaeunion.org/comission/department/catr/trade-protect/",
+      "https://eec.eaeunion.org/comission/department/deptexsec/trade_remedies/",
+      "https://eec.eaeunion.org/comission/department/tarp/trade_remedy/",
+      "https://eec.eaeunion.org/comission/department/catr/nontariff/"
+    ],
+    "errors": [],
+    "notes": [
+      "Not accessible: https://eec.eaeunion.org/comission/department/catr/trade-protect/ → HTTP 404",
+      "Not accessible: https://eec.eaeunion.org/comission/department/deptexsec/trade_remedies/ → HTTP 404",
+      "Not accessible: https://eec.eaeunion.org/comission/department/tarp/trade_remedy/ → HTTP 404",
+      "Accessible: https://eec.eaeunion.org/comission/department/catr/nontariff/ (97576 bytes)"
+    ],
+    "accessible_pages": [
+      "https://eec.eaeunion.org/comission/department/catr/nontariff/"
+    ]
+  },
+  "manual_download_plan": {
+    "title": "Manual Download Plan — Official EEC Data",
+    "generated_at": "2026-06-18T10:25:13.120243+00:00",
+    "domains": {
+      "EEC_ETT": {
+        "priority": 1,
+        "current_status": "DB has 13,323 rates from prior ingestion",
+        "what_to_download": "Structured ETT data (not PDFs)",
+        "recommended_sources": [
+          {
+            "source": "TKS.RU API",
+            "url": "https://www.tks.ru/tnvedapi/",
+            "format": "JSON API",
+            "cost": "от 3000 руб/мес",
+            "data": "30+ полей на код ТН ВЭД включая ставки пошлин, НДС, акцизы",
+            "how_to": "Оформить лицензию → получить API ключ → выгрузить все 10-значные коды"
+          },
+          {
+            "source": "EEC ETT PDFs",
+            "url": "https://eec.eaeunion.org/comission/department/catr/ett/",
+            "format": "PDF (96 файлов по главам)",
+            "cost": "бесплатно",
+            "data": "Официальный текст тарифа с примечаниями",
+            "how_to": "Скачать все PDF → OCR/парсинг → извлечь hs_code + duty_rate"
+          },
+          {
+            "source": "Alta-Soft ТН ВЭД",
+            "url": "https://www.alta.ru/tnved/",
+            "format": "HTML (нужен парсинг)",
+            "cost": "бесплатно (с ограничениями)",
+            "data": "Коды ТН ВЭД + ставки пошлин + НДС",
+            "how_to": "Требует сессию/cookie. Скрипт data/ingest/fetch_tariff_eec.py нужно адаптировать."
+          }
+        ],
+        "import_command": "cd customs-clear/backend && python3 -c \"from app.services.import_duty_ingestion import run_import_duty_apply; print(run_import_duty_apply())\""
+      },
+      "EEC_VAT": {
+        "priority": 2,
+        "current_status": "DB has VAT data but only 6 rows with official row-level provenance",
+        "what_to_download": "Перечень товаров с льготными ставками НДС (0%, 10%)",
+        "recommended_sources": [
+          {
+            "source": "НК РФ Ст. 164",
+            "url": "http://sudact.ru/law/nk-rf-chast2/razdel-viii/glava-21/statia-164/",
+            "format": "HTML → manual extraction",
+            "data": "Перечни товаров со ставками 0% и 10% НДС",
+            "how_to": "Скачать текст статьи → извлечь перечни кодов ТН ВЭД → сформировать JSON bundle"
+          },
+          {
+            "source": "Постановления Правительства РФ",
+            "url": "https://www.consultant.ru/document/cons_doc_LAW_28165/",
+            "format": "HTML/PDF",
+            "data": "Перечень кодов ТН ВЭД для пониженных ставок",
+            "how_to": "Постановления 908, 41 — перечни кодов со ставкой 10%"
+          }
+        ],
+        "import_command": "cd customs-clear/backend && python3 -c \"from app.services.vat_ingestion import run_vat_apply; print(run_vat_apply())\""
+      },
+      "EEC_EXCISE": {
+        "priority": 3,
+        "current_status": "Only 2 excise items in bundle",
+        "what_to_download": "Полная таблица акцизных ставок из НК РФ Ст. 193",
+        "recommended_sources": [
+          {
+            "source": "НК РФ Ст. 193",
+            "url": "http://sudact.ru/law/nk-rf-chast2/razdel-viii/glava-22/statia-193/",
+            "format": "HTML → manual extraction",
+            "data": "Ставки акцизов по видам подакцизных товаров",
+            "how_to": "Скачать таблицу ставок → сопоставить с кодами ТН ВЭД → сформировать JSON bundle"
+          }
+        ],
+        "import_command": "cd customs-clear/backend && python3 -c \"from app.services.excise_ingestion import run_excise_apply; print(run_excise_apply())\""
+      },
+      "EEC_ANTI_DUMPING": {
+        "priority": 4,
+        "current_status": "Bundle updated with 22 measures from known EEC decisions",
+        "what_to_download": "Верификация полноты списка антидемпинговых мер",
+        "recommended_sources": [
+          {
+            "source": "Правовой портал ЕЭК",
+            "url": "https://docs.eaeunion.org",
+            "format": "HTML search → PDF decisions",
+            "data": "Все Решения Коллегии ЕЭК по антидемпинговым мерам",
+            "how_to": "Поиск 'антидемпинговая пошлина' → скачать актуальные решения → проверить ставки и HS коды"
+          },
+          {
+            "source": "Alta-Soft Таможенные документы",
+            "url": "https://www.alta.ru/tamdoc/",
+            "format": "HTML → structured data",
+            "data": "Каталог Решений ЕЭК",
+            "how_to": "Фильтр по 'антидемпинговые' → extract HS codes + rates"
+          }
+        ],
+        "import_command": "cd customs-clear/backend && python3 -c \"from app.services.anti_dumping_ingestion import run_anti_dumping_apply; print(run_anti_dumping_apply())\""
+      },
+      "EEC_SPECIAL_SAFEGUARD": {
+        "priority": 5,
+        "current_status": "Bundle updated with 3 measures",
+        "what_to_download": "Верификация полноты списка специальных защитных мер",
+        "recommended_sources": [
+          {
+            "source": "docs.eaeunion.org",
+            "url": "https://docs.eaeunion.org",
+            "format": "HTML → PDF",
+            "data": "Решения ЕЭК по специальным защитным мерам",
+            "how_to": "Поиск 'специальная защитная мера' → verify measures"
+          }
+        ],
+        "import_command": "cd customs-clear/backend && python3 -c \"from app.services.special_safeguard_ingestion import run_special_safeguard_apply; print(run_special_safeguard_apply())\""
+      },
+      "EEC_COUNTERVAILING": {
+        "priority": 6,
+        "current_status": "Bundle updated with 2 measures",
+        "what_to_download": "Верификация полноты списка компенсационных мер",
+        "recommended_sources": [
+          {
+            "source": "docs.eaeunion.org",
+            "url": "https://docs.eaeunion.org",
+            "format": "HTML → PDF",
+            "data": "Решения ЕЭК по компенсационным мерам",
+            "how_to": "Поиск 'компенсационная мера' → verify measures"
+          }
+        ],
+        "import_command": "cd customs-clear/backend && python3 -c \"from app.services.countervailing_ingestion import run_countervailing_apply; print(run_countervailing_apply())\""
+      }
+    }
+  }
+}
