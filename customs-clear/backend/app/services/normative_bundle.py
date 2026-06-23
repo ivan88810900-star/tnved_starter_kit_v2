@@ -21,6 +21,19 @@ from .normative_store import (
 BUNDLE_FORMAT_KEY = "customs_clear_normative_bundle"
 BUNDLE_VERSION = 1
 
+# Фиктивные коды из ранних ETT-сборок (не официальный ЕТТ) — #159
+ETT_TEST_HS_BLOCKLIST = frozenset({
+    "7777770000",
+    "7777770001",
+    "8888880000",
+    "9999990000",
+})
+
+
+def is_ett_test_hs(code: str) -> bool:
+    """True для известных тестовых/фиктивных HS, не входящих в официальный ЕТТ."""
+    return _norm_hs(code) in ETT_TEST_HS_BLOCKLIST
+
 
 def _is_bundle_payload(data: Any) -> bool:
     if not isinstance(data, dict):
@@ -120,6 +133,10 @@ def import_normative_bundle_dict(
         if len(code) < 2:
             skipped["tnved"] += 1
             continue
+        if is_ett_test_hs(code):
+            skipped["tnved"] += 1
+            logger.warning("Skipping ETT test/fake HS in tnved: {}", code)
+            continue
         upsert_tnved_entry(
             {
                 "hs_code": code,
@@ -141,6 +158,11 @@ def import_normative_bundle_dict(
         try:
             row = _normalize_rate_row(raw)
             if row:
+                hs = _norm_hs(row.get("hs_code"))
+                if is_ett_test_hs(hs):
+                    skipped["rates"] += 1
+                    logger.warning("Skipping ETT test/fake HS in rates: {}", hs)
+                    continue
                 # _normalize_rate_row всегда кладёт ключ source_revision (возможно ""),
                 # поэтому setdefault не сработает. Наследуем bundle revision для blank/None.
                 if not str(row.get("source_revision") or "").strip():
