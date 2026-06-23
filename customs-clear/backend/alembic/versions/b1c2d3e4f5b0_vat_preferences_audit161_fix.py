@@ -5,7 +5,7 @@ Revises: z9a0b1c2d3e4
 Create Date: 2026-06-22
 
 Deletes over-broad tamdoc prefixes 27/92/95, fixes 9018 (0% -> 10% per PP688),
-adds precise 9503 prefix (PP908 children toys).
+adds precise 950300 prefix (PP908 «из 9503 00»; superseded by c2d3e4f5b0a1 if 9503 was inserted).
 """
 
 from typing import Sequence, Union
@@ -27,11 +27,11 @@ _9018_ROW = {
     "comment": "Инструменты и аппаратура медицинские",
 }
 
-_9503_ROW = {
-    "hs_code_prefix": "9503",
+_950300_ROW = {
+    "hs_code_prefix": "950300",
     "vat_rate": 10,
-    "decree_info": "ПП РФ № 908 от 31.12.2004 (товары для детей)",
-    "comment": "Игрушки",
+    "decree_info": "ПП РФ № 908 от 31.12.2004 (из 9503 00 — игрушки для детей)",
+    "comment": "Игрушки (субпозиция 950300)",
 }
 
 
@@ -60,7 +60,7 @@ def upgrade() -> None:
               AND decree_info = :decree_info
             """
         ),
-        _9503_ROW,
+        _950300_ROW,
     ).fetchone()
     if not existing:
         conn.execute(
@@ -70,13 +70,13 @@ def upgrade() -> None:
                 VALUES (:hs_code_prefix, :vat_rate, :decree_info, :comment)
                 """
             ),
-            _9503_ROW,
+            _950300_ROW,
         )
 
 
 def downgrade() -> None:
     conn = op.get_bind()
     conn.execute(
-        sa.text("DELETE FROM vat_preferences WHERE hs_code_prefix = '9503' AND vat_rate = 10")
+        sa.text("DELETE FROM vat_preferences WHERE hs_code_prefix IN ('9503', '950300') AND vat_rate = 10")
     )
     conn.execute(sa.text("DELETE FROM vat_preferences WHERE hs_code_prefix = '9018' AND vat_rate = 10"))
