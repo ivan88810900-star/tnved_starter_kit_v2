@@ -14,8 +14,8 @@ from app.models.tnved import NonTariffMeasure  # noqa: E402
 from app.services.tr_ts_catalog import get_tr_ts_requirements  # noqa: E402
 
 CONTROL_CODES = [
-    "8528720001",
-    "8517120000",
+    "8528721000",
+    "8517110000",
     "8471300000",
     "8508110000",
     "8516710000",
@@ -23,7 +23,7 @@ CONTROL_CODES = [
     "6109100010",
     "9503007500",
     "3304990000",
-    "9401300000",
+    "9401310000",
     "8418102001",
     "8450110000",
     "9405100000",
