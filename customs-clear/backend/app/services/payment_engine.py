@@ -339,6 +339,17 @@ def _find_vat_preference(hs_code: str) -> tuple[VatPreference | None, int]:
         return pick_vat_preference_row(hs_code, db)
 
 
+def get_effective_vat_rate(hs_code: str) -> float:
+    """Фактическая ставка НДС при ввозе: vat_preferences → hs_rates → 22%."""
+    rate, _ = find_rate_for_hs(hs_code)
+    vat_pref, _ = _find_vat_preference(hs_code)
+    if vat_pref is not None:
+        return float(vat_pref.vat_rate)
+    if rate is not None:
+        return float(rate.vat_import_rate)
+    return 22.0
+
+
 def _resolve_antidumping(
     antidumping_type: str,
     antidumping_value: float,

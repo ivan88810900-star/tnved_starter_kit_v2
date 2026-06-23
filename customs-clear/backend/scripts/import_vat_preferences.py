@@ -105,9 +105,9 @@ def generate_sample(path: Path) -> None:
         },
         {
             "hs_code_prefix": "9018",
-            "vat_rate": 0,
-            "decree_info": "ПП РФ № 688",
-            "comment": "Отдельные медизделия, ставка 0% (пример)",
+            "vat_rate": 10,
+            "decree_info": "ПП РФ № 688 от 15.09.2008 (медицинские товары)",
+            "comment": "Инструменты и аппаратура медицинские",
         },
     ]
     path.parent.mkdir(parents=True, exist_ok=True)
