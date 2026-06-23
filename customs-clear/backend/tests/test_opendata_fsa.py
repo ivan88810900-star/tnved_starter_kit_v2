@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import unittest
+import uuid
 
 from app.db import SessionLocal
 from app.models.tnved import FsaCertificate
@@ -16,7 +17,7 @@ class FsaUpsertDedupeTests(unittest.TestCase):
         init_db()
 
     def test_duplicate_registry_number_in_batch_collapses(self) -> None:
-        reg = "ЕАЭС RU С-CN.АБ12.В.01234/24"
+        reg = f"TEST-DEDUPE-{uuid.uuid4().hex[:12]}"
         rows = [
             {
                 "registry_number": reg,
