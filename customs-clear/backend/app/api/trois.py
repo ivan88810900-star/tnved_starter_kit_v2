@@ -63,6 +63,14 @@ async def trois_suggest(
     return JSONResponse({"status": "OK", "suggestions": suggest_trois_brands(q, limit=limit)})
 
 
+@router.get("/opendata/status")
+async def opendata_status_public() -> JSONResponse:
+    """Публичный статус локальных копий opendata (без auth)."""
+    from ..services.opendata_status import build_opendata_status
+
+    return JSONResponse(build_opendata_status())
+
+
 @router.get("/check/{query:path}")
 async def trois_check_get(query: str) -> JSONResponse:
     """GET-алиас проверки ТРОИС (удобно для curl/Smoke)."""

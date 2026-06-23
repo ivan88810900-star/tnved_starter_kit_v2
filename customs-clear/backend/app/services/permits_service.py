@@ -355,6 +355,12 @@ def _enrich_verification_record(data: Dict[str, Any], item_hs_code: str) -> Dict
     out["verified_at"] = datetime.now(timezone.utc).isoformat()
     if out.get("type") == "СГР":
         out["registry_source"] = "fp.crc.ru (Роспотребнадзор, реестр СГР)"
+    elif out.get("source_kind") == "opendata_local":
+        from .opendata_registry import OPENDATA_FSA_SOURCE
+
+        out["registry_source"] = OPENDATA_FSA_SOURCE
+        if out.get("data_as_of"):
+            out["freshness_label"] = f"Проверка по реестру ФСА (данные на {out['data_as_of']})"
     else:
         out["registry_source"] = REGISTRY_SOURCE
     codes: List[str] = []
@@ -440,7 +446,7 @@ async def _fetch_fsa(doc_type: str, norm: str, url: str, api_url: str) -> Dict[s
 
 
 async def check_certificate(number: str) -> Dict[str, Any]:
-    """Проверка сертификата соответствия (СС) в реестре ФСА pub.fsa.gov.ru."""
+    """Проверка сертификата соответствия (СС): локальный opendata → реестр ФСА."""
     norm = normalize_number(number)
     if not norm:
         return {"type": "СС", "status": "UNKNOWN", "number": number, "error": "Пустой номер"}
@@ -450,6 +456,14 @@ async def check_certificate(number: str) -> Dict[str, Any]:
     if mem is not None:
         return mem
 
+    from .opendata_registry import lookup_fsa_certificate
+
+    local = lookup_fsa_certificate(norm, "СС")
+    if local is not None:
+        logger.info(f"СС {norm}: {local['status']} (opendata local)")
+        await cache_set(PERMITS_PREFIX, cache_key, local, _PERMITS_TTL)
+        return local
+
     data = await _fetch_fsa("СС", norm, FSA_CERT_URL, FSA_API_CERT)
     logger.info(f"СС {norm}: {data['status']}")
     await cache_set(PERMITS_PREFIX, cache_key, data, _PERMITS_TTL)
@@ -457,7 +471,7 @@ async def check_certificate(number: str) -> Dict[str, Any]:
 
 
 async def check_declaration(number: str) -> Dict[str, Any]:
-    """Проверка декларации о соответствии (ДС) в реестре ФСА pub.fsa.gov.ru."""
+    """Проверка декларации о соответствии (ДС): локальный opendata → реестр ФСА."""
     norm = normalize_number(number)
     if not norm:
         return {"type": "ДС", "status": "UNKNOWN", "number": number, "error": "Пустой номер"}
@@ -466,6 +480,14 @@ async def check_declaration(number: str) -> Dict[str, Any]:
     mem = await cache_get(PERMITS_PREFIX, cache_key)
     if mem is not None:
         return mem
+
+    from .opendata_registry import lookup_fsa_certificate
+
+    local = lookup_fsa_certificate(norm, "ДС")
+    if local is not None:
+        logger.info(f"ДС {norm}: {local['status']} (opendata local)")
+        await cache_set(PERMITS_PREFIX, cache_key, local, _PERMITS_TTL)
+        return local
 
     data = await _fetch_fsa("ДС", norm, FSA_DECL_URL, FSA_API_DECL)
     logger.info(f"ДС {norm}: {data['status']}")

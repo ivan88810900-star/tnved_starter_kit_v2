@@ -1,0 +1,70 @@
+name: Opendata Registries Sync
+
+on:
+  schedule:
+    - cron: '0 5 * * *'  # ежедневно 05:00 UTC — opendata TROIS + ФСА + mask44
+  workflow_dispatch:
+    inputs:
+      source:
+        description: 'trois | fsa | customs | all'
+        type: choice
+        options:
+          - all
+          - trois
+          - fsa
+          - customs
+        default: all
+      force:
+        description: 'Re-import even if snapshot exists'
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  opendata-sync:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: customs-clear/backend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+          cache: 'pip'
+          cache-dependency-path: customs-clear/backend/requirements.txt
+
+      - name: Install dependencies
+        run: pip install -q -r requirements.txt
+
+      - name: Apply migrations
+        run: PYTHONPATH=. alembic upgrade head
+        env:
+          DATABASE_URL: sqlite:///./data/opendata_ci.db
+
+      - name: Sync official opendata
+        run: |
+          PYTHONPATH=. python3 scripts/opendata_sync.py \
+            --source "${{ github.event.inputs.source || 'all' }}" \
+            ${{ github.event.inputs.force == 'true' && '--force' || '' }}
+        env:
+          DATABASE_URL: sqlite:///./data/opendata_ci.db
+          OPENDATA_VERIFY_SSL: 'false'
+
+      - name: Summary
+        run: |
+          PYTHONPATH=. python3 -c "
+          import json
+          from app.services.opendata_registry import get_sync_freshness
+          keys = ('trois', 'fsa_rss', 'fsa_rds', 'mask44')
+          print('### Opendata sync')
+          for k in keys:
+              f = get_sync_freshness(k)
+              print(k, json.dumps(f, ensure_ascii=False) if f else '—')
+          " >> "$GITHUB_STEP_SUMMARY"
+        env:
+          DATABASE_URL: sqlite:///./data/opendata_ci.db

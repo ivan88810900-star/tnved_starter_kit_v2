@@ -20,6 +20,9 @@ type VerifyRow = {
   manual_check_url?: string;
   registry_link?: string;
   fallback_note?: string;
+  registry_source?: string;
+  data_as_of?: string;
+  freshness_label?: string;
 };
 
 export function PermitDocumentsBlock({ hsCode, productName, normativeBlock }: Props) {
@@ -108,6 +111,14 @@ export function PermitDocumentsBlock({ hsCode, productName, normativeBlock }: Pr
           <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-[11px]">
             Статус: <strong>{verifyResult.status || '—'}</strong>
             {verifyResult.holder ? ` · ${verifyResult.holder}` : ''}
+            {verifyResult.freshness_label ? (
+              <p className="mt-1 text-slate-600">{verifyResult.freshness_label}</p>
+            ) : verifyResult.data_as_of ? (
+              <p className="mt-1 text-slate-600">Проверка по реестру ФСА (данные на {verifyResult.data_as_of})</p>
+            ) : null}
+            {verifyResult.registry_source ? (
+              <p className="text-slate-500">Источник: {verifyResult.registry_source}</p>
+            ) : null}
             {verifyResult.fallback_note ? <p className="mt-1 text-amber-700">{verifyResult.fallback_note}</p> : null}
             {(verifyResult.manual_check_url || verifyResult.registry_link) && (
               <a
@@ -131,7 +142,7 @@ export function PermitDocumentsBlock({ hsCode, productName, normativeBlock }: Pr
           </p>
         ) : null}
         <p className="mt-1 text-slate-500">
-          Данные реестра обновляются еженедельно. Для точной проверки используйте официальный реестр ФТС.
+          Проверка по локальной копии реестра ТРОИС (открытые данные ФТС). Для точной проверки используйте официальный реестр.
         </p>
         <a href={TROIS_OFFICIAL} target="_blank" rel="noopener noreferrer" className="mt-1 inline-block text-indigo-600 hover:underline">
           Проверить в реестре ТРОИС →

@@ -303,6 +303,7 @@ def fetch_alta_html(
 def upsert_trois_registry_rows(rows: list[dict[str, str]]) -> dict[str, int]:
     created = updated = skipped = 0
     with SessionLocal() as db:
+        seen_in_batch: set[str] = set()
         for row in rows:
             reg = _clean_cell(row.get("reg_number", ""))
             if not reg or not REG_NUMBER_RE.match(reg):
@@ -326,6 +327,9 @@ def upsert_trois_registry_rows(rows: list[dict[str, str]]) -> dict[str, int]:
                 existing.valid_until = vu[:128]
                 existing.representatives = reps
                 updated += 1
+            elif reg in seen_in_batch:
+                skipped += 1
+                continue
             else:
                 db.add(
                     TroisRegistry(
@@ -338,7 +342,10 @@ def upsert_trois_registry_rows(rows: list[dict[str, str]]) -> dict[str, int]:
                         representatives=reps,
                     )
                 )
+                seen_in_batch.add(reg)
                 created += 1
+            if (created + updated) % 2000 == 0:
+                db.commit()
         db.commit()
     return {"created": created, "updated": updated, "skipped": skipped}
 

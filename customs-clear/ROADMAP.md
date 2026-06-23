@@ -11,8 +11,8 @@
 | **ТН ВЭД / классификация** | ИИ-классификатор (Gemini/Claude), локальная БД ЕТТ | + интеграция с официальными справочниками, история решений пользователя, обучение на отклонениях |
 | **Платежи** | Движок по БД (пошлина, НДС, акциз, антидемпинг) | + актуальные выгрузки ЕТТ по расписанию, валидация ставок, сценарии «что если» |
 | **Нетарифка** | Правила + ТР ТС в коде/БД | + расширяемые правила, привязка к редакциям ТР, учёт исключений |
-| **Разрешения (СС/ДС/СГР)** | ФСА/fp.crc.ru (ограничения SPA/403), справочник подбора | + прокси/API (`FSA_EXTERNAL_API_URL`), очередь проверок, кэш с TTL |
-| **ТРОИС** | Локальный кэш брендов + попытка customs.gov.ru | + выгрузка/индекс реестра, fuzzy-поиск, связка с декларацией |
+| **Разрешения (СС/ДС/СГР)** | **opendata ФСА** + fp.crc.ru fallback | + полный backfill, поиск по ТН ВЭД из локальной БД |
+| **ТРОИС** | **opendata ФТС** + локальный кэш | + ежедневный cron, fuzzy из `trois_registry` |
 | **Документы** | Инвойс/упаковка, извлечение СС/ДС | + NLP-сопоставление позиций, валидация реквизитов контрагентов |
 | **Ассистент** | Нетарифка + ИИ; отдельно комплаенс | **Единый конвейер** (классификация → платежи → нетарифка → реестры → ИИ) |
 
@@ -230,6 +230,13 @@
 
 - [x] **PR #152 (Issue #151)** — TROIS: fuzzy-matching, `trois_fts_fetch.py` (folder/14344), `fetch_trois_registry.py`, БД→in-memory sync, `risk_level`, GET `/api/trois/check/{query}`, cron понедельник. СС/ДС: FSA `filter` API, кэш 24h, `manual_check_url`, `PermitDocumentsBlock` в карточке товара, дисклеймеры. ✅ merged 2026-06-22
 
+### Фаза Y — Официальные открытые данные (Issue #153)
+
+- [x] **ТРОИС ФТС (7730176610-trois)** — ежедневный CSV snapshot (~42 MB), импорт в `trois_registry` (~6k уникальных REGNOM после dedup), `scripts/fetch_trois_opendata.py`, fuzzy-поиск из локальной БД.
+- [x] **Маски графы 44 (7730176610-mask44)** — 504 маски в `customs_doc_masks`, валидация форматов документов ДТ.
+- [x] **ФСА opendata (7736638268-rss / rds)** — месячные 7Z-архивы, `fsa_certificates`, backfill всей истории (`--backfill-all`), мгновенная проверка номера из локальной БД.
+- [x] **Инфраструктура** — `scripts/opendata_sync.py`, `scripts/check_fsa_backfill_progress.py`, cron `.github/workflows/opendata-sync.yml` (05:00 UTC), `GET /api/trois/opendata/status` + `/api/permits/opendata/status`, UI с датой актуальности и источником, `OPENDATA_VERIFY_SSL=false` для fsa.gov.ru.
+
 ### Фаза L — Дальше (бэклог)
 - [x] Стаб HTTP-классификатора для разработки (`scripts/inference_classifier_stub.py`); боевой inference — вне репозитория по **`INFERENCE_CLASSIFIER.md`**.
 - [x] Персистентная очередь async-проверок ФСА (`permits_verify_jobs` в БД).
@@ -266,4 +273,4 @@
 
 ---
 
-*Последнее обновление: фаза W завершена — FTS crawler (#143), ROP audit 97 глав (#144), invoice batch (#145), compare-scenarios (#146), classify enhancements (#147); PR #148–#150. 2026-06-22.*
+*Последнее обновление: фаза Y — официальные opendata (#153): TROIS ФТС, маски графы 44, ФСА backfill, cron sync, API статуса. 2026-06-23.*

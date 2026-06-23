@@ -201,6 +201,42 @@ async def permits_verify_job_export(
     )
 
 
+@router.get("/verify/{number:path}")
+async def permits_verify_short(
+    number: str,
+    hs_code: str = Query("", description="Код ТН ВЭД для сверки"),
+    doc_type: str = Query("", description="СС или ДС; если пусто — авто"),
+) -> JSONResponse:
+    """GET /api/permits/verify/{number} — проверка из локальной opendata-копии или реестра ФСА."""
+    return await permits_verify_by_number(number, hs_code=hs_code, doc_type=doc_type)
+
+
+@router.get("/search")
+async def permits_search(
+    tnved: str = Query(..., min_length=4, description="Код или префикс ТН ВЭД"),
+    doc_type: str = Query("", description="СС или ДС"),
+    limit: int = Query(25, ge=1, le=100),
+) -> JSONResponse:
+    """Поиск сертификатов/деклараций в локальной копии opendata ФСА по коду ТН ВЭД."""
+    from ..services.opendata_registry import get_sync_freshness, search_fsa_by_tnved
+
+    dtype = doc_type.strip().upper() if doc_type else ""
+    items = search_fsa_by_tnved(tnved, doc_type=dtype, limit=limit)
+    freshness = get_sync_freshness("fsa_rss") or get_sync_freshness("fsa_rds") or {}
+    return JSONResponse(
+        {
+            "status": "OK",
+            "tnved": tnved,
+            "count": len(items),
+            "items": items,
+            "registry_source": "открытые данные Росаккредитации (fsa.gov.ru/opendata)",
+            "data_as_of": freshness.get("data_as_of"),
+            "disclaimer": PERMITS_DISCLAIMER_RU,
+        }
+    )
+
+
+
 @router.get("/verify/jobs/{job_id}")
 async def permits_verify_job_status(
     job_id: str,
