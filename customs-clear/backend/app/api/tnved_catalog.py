@@ -322,7 +322,7 @@ def search_commodities(
     q: str = Query("", description="Поиск по коду или наименованию"),
     db: Session = Depends(get_db),
 ) -> JSONResponse:
-    from ..services.normative_store import _expand_query_terms, get_search_suggestions
+    from ..services.normative_store import _expand_query_terms, get_search_suggestions, is_leaf_hs_code
     from ..services.tnved_fts import search_commodities_fts
 
     query = (q or "").strip()
@@ -336,6 +336,7 @@ def search_commodities(
             {
                 "code": _pad_code(r["code"] or ""),
                 "name": _strip_leading_dashes((r.get("description") or "").strip()),
+                "is_leaf": is_leaf_hs_code(_pad_code(r["code"] or "")),
             }
             for r in fts_rows
         ]
@@ -357,6 +358,7 @@ def search_commodities(
             {
                 "code": _pad_code(code or ""),
                 "name": _strip_leading_dashes((name or "").strip()),
+                "is_leaf": is_leaf_hs_code(_pad_code(code or "")),
             }
             for code, name in rows
         ]
@@ -613,12 +615,17 @@ def _build_tree(rows: list[Commodity], chapter_notes: dict[str, str]) -> list[di
         for ch in node["children"]:
             _classify(ch)
         if len(node["display_code"]) == 10:
+            from ..services.normative_store import is_leaf_hs_code
+
             if node["children"]:
                 node["is_leaf"] = False
                 node["is_codeless"] = True
+                node["is_group"] = True
             else:
-                node["is_leaf"] = True
-                node["is_codeless"] = False
+                leaf = is_leaf_hs_code(node["code"])
+                node["is_leaf"] = leaf
+                node["is_codeless"] = not leaf
+                node["is_group"] = not leaf
 
     def _sort(node: dict[str, Any]) -> None:
         node["children"].sort(key=lambda x: x["code"])

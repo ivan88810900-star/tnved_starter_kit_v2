@@ -19,6 +19,7 @@ from ..services.payment_engine_compat import (
     get_commodity_meta_info,
     get_duty_rule_info,
 )
+from ..services.normative_store import find_suggested_leaf_codes, is_leaf_hs_code
 
 
 def _round2(value: float) -> float:
@@ -109,6 +110,20 @@ async def compute(req: CalculatorRequest) -> JSONResponse:
     """
     try:
         logger.info(f"Расчёт платежей для кода {req.hs_code}")
+        hs_norm = (req.hs_code or "").strip().replace(" ", "")
+        if not is_leaf_hs_code(hs_norm):
+            suggested = find_suggested_leaf_codes(hs_norm, limit=20)
+            return JSONResponse(
+                {
+                    "status": "CLARIFICATION_NEEDED",
+                    "hs_code": hs_norm,
+                    "message": (
+                        f"Код {hs_norm} является групповым заголовком. "
+                        "Для расчёта выберите конкретный код товара."
+                    ),
+                    "suggested_codes": suggested,
+                }
+            )
         payload = req.model_dump(exclude={"save_history", "document_id", "user_ref"})
         rates = get_rates_map()
         invoice_currency = (req.invoice_currency or "RUB").upper().strip()

@@ -187,7 +187,13 @@ const TreeRow: React.FC<RowProps> = ({
   const pl = 8 + depth * 18;
 
   const handleClick = () => {
-    if (hasChildren) { toggle(nodeKey); return; }
+    if (hasChildren) {
+      toggle(nodeKey);
+      return;
+    }
+    if (!isLeaf && isFullTnvedCode(d)) {
+      return;
+    }
     if (isLeaf) onSelectCode(d);
   };
 
@@ -414,13 +420,14 @@ export const TnvedTree: React.FC<Props> = ({ selectedCode, onSelectCode, initial
 
   const handleSelectHit = React.useCallback((hit: TnvedSearchHit) => {
     const digits = digitsOnly(hit.code);
-    const leaf = isFullTnvedCode(digits);
-    if (leaf) {
-      onSelectCode(digits);
-      clearSearch();
+    if (hit.is_leaf === false) {
+      setSearch(hit.code);
       return;
     }
-    setSearch(hit.code);
+    if (hit.is_leaf === true || isFullTnvedCode(digits)) {
+      onSelectCode(digits);
+      clearSearch();
+    }
   }, [onSelectCode, clearSearch]);
 
   // Подсчёт найденных листьев при поиске
@@ -522,7 +529,12 @@ export const TnvedTree: React.FC<Props> = ({ selectedCode, onSelectCode, initial
                         isActive ? 'bg-indigo-50' : ''
                       }`}
                     >
-                      <span className="font-mono text-[13px] font-medium text-gray-800">{formatCode(hit.code)}</span>
+                      <span className="font-mono text-[13px] font-medium text-gray-800">
+                        {formatCode(hit.code)}
+                        {hit.is_leaf === false ? (
+                          <span className="ml-2 text-[10px] font-normal text-amber-700">группа</span>
+                        ) : null}
+                      </span>
                       <span className={`text-[14px] text-gray-800 ${TNVED_COMMODITY_NAME_CLASS}`}>
                         {formatTnvedCommodityName(hit.name || '') || 'Описание отсутствует'}
                       </span>

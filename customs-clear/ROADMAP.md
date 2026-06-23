@@ -273,7 +273,7 @@
 
 ---
 
-*Последнее обновление: фаза AA — trade remedies audit (#170): 4 меры ЕЭК, is_official, sync script. 2026-06-23.*
+*Последнее обновление: фаза AA — групповые коды ТН ВЭД (CLARIFICATION_NEEDED). 2026-06-23.*
 
 ### Фаза AA — Trade remedies audit (Issue #170)
 
@@ -282,7 +282,7 @@
 - [x] **Bundle `eec_anti_dumping.json`** — revision `anti-dumping:2026-06-23`, portal `remedies.eaeunion.org`.
 - [x] **`scripts/sync_trade_remedies.py`** — еженедельная проверка портала ЕЭК, issue `data-update` без авто-импорта.
 - [x] **UI disclaimer** — SmartPaymentsBlock, MeasureHoverCard, Calculator; `TradeRemediesDisclaimer` component.
-- [x] **`payment_engine._resolve_special_duties` (PR #171)** — фильтр `effective_to`, предупреждение без страны, `special_duties_warning` в API.
+- [x] **Групповые коды ТН ВЭД** — `is_leaf_hs_code`, `CLARIFICATION_NEEDED` в `/api/calculator/compute`, UI выбора дочерних кодов, `is_leaf` в поиске/дереве.
 
 ### Фаза Z — Закрытие дочерних issues аудита L0–L3
 

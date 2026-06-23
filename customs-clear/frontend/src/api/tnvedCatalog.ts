@@ -36,6 +36,8 @@ export type TnvedCommodityRow = {
 export type TnvedSearchHit = {
   code: string;
   name: string;
+  /** Реальный декларируемый лист (не групповой заголовок). */
+  is_leaf?: boolean;
 };
 
 export type TnvedPreview = {
