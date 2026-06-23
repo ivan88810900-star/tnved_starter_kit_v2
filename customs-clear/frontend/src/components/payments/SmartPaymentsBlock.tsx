@@ -7,6 +7,7 @@ import {
   type PaymentQuoteResponse,
 } from '../../api/paymentQuote';
 import { getUserFacingApiError } from '../../api/error';
+import { TradeRemediesDisclaimer } from './TradeRemediesDisclaimer';
 
 const STATUS_LABELS: Record<PaymentLineStatus, string> = {
   applied: 'Рассчитано',
@@ -103,6 +104,7 @@ export const SmartPaymentsBlock: React.FC<Props> = ({ hsCode, description, class
         <p className="mb-4 text-xs text-slate-600">
           Пошлина, НДС, таможенный сбор, акциз и торговые меры с явными статусами. Неопределённые суммы не показываются как ноль.
         </p>
+        <TradeRemediesDisclaimer className="mb-4" />
 
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <label className="block text-xs">

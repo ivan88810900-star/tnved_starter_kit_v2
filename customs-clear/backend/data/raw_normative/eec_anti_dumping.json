@@ -1,8 +1,8 @@
 {
-  "revision": "anti-dumping:2026-06-18",
+  "revision": "anti-dumping:2026-06-23",
   "format": "eec_trade_remedies_v1",
-  "official_url": "https://eec.eaeunion.org/comission/department/catr/trade-protect/",
-  "source_url": "https://eec.eaeunion.org/comission/department/catr/trade-protect/",
+  "official_url": "https://remedies.eaeunion.org/dimd/ru",
+  "source_url": "https://remedies.eaeunion.org/dimd/ru",
   "effective_from": "2026-01-01",
   "description": "Антидемпинговые пошлины ЕЭК — реестр действующих мер",
   "data_source": "Решения Коллегии/Совета ЕЭК (официальные документы)",
@@ -18,8 +18,8 @@
       "currency_code": "USD",
       "manufacturer_exporter": "",
       "effective_to": "",
-      "source_revision": "anti-dumping:2026-06-18",
-      "source_url": "https://eec.eaeunion.org/comission/department/catr/trade-protect/"
+      "source_revision": "anti-dumping:2026-06-23",
+      "source_url": "https://remedies.eaeunion.org/dimd/ru"
     },
     {
       "hs_code": "7214",
@@ -32,8 +32,8 @@
       "currency_code": "USD",
       "manufacturer_exporter": "",
       "effective_to": "",
-      "source_revision": "anti-dumping:2026-06-18",
-      "source_url": "https://eec.eaeunion.org/comission/department/catr/trade-protect/"
+      "source_revision": "anti-dumping:2026-06-23",
+      "source_url": "https://remedies.eaeunion.org/dimd/ru"
     },
     {
       "hs_code": "7213",
@@ -46,8 +46,8 @@
       "currency_code": "USD",
       "manufacturer_exporter": "",
       "effective_to": "",
-      "source_revision": "anti-dumping:2026-06-18",
-      "source_url": "https://eec.eaeunion.org/comission/department/catr/trade-protect/"
+      "source_revision": "anti-dumping:2026-06-23",
+      "source_url": "https://remedies.eaeunion.org/dimd/ru"
     },
     {
       "hs_code": "7213",
@@ -60,8 +60,8 @@
       "currency_code": "USD",
       "manufacturer_exporter": "",
       "effective_to": "",
-      "source_revision": "anti-dumping:2026-06-18",
-      "source_url": "https://eec.eaeunion.org/comission/department/catr/trade-protect/"
+      "source_revision": "anti-dumping:2026-06-23",
+      "source_url": "https://remedies.eaeunion.org/dimd/ru"
     },
     {
       "hs_code": "7304",
@@ -74,8 +74,8 @@
       "currency_code": "USD",
       "manufacturer_exporter": "",
       "effective_to": "",
-      "source_revision": "anti-dumping:2026-06-18",
-      "source_url": "https://eec.eaeunion.org/comission/department/catr/trade-protect/"
+      "source_revision": "anti-dumping:2026-06-23",
+      "source_url": "https://remedies.eaeunion.org/dimd/ru"
     },
     {
       "hs_code": "7219",
@@ -88,8 +88,8 @@
       "currency_code": "USD",
       "manufacturer_exporter": "",
       "effective_to": "",
-      "source_revision": "anti-dumping:2026-06-18",
-      "source_url": "https://eec.eaeunion.org/comission/department/catr/trade-protect/"
+      "source_revision": "anti-dumping:2026-06-23",
+      "source_url": "https://remedies.eaeunion.org/dimd/ru"
     },
     {
       "hs_code": "7220",
@@ -102,8 +102,8 @@
       "currency_code": "USD",
       "manufacturer_exporter": "",
       "effective_to": "",
-      "source_revision": "anti-dumping:2026-06-18",
-      "source_url": "https://eec.eaeunion.org/comission/department/catr/trade-protect/"
+      "source_revision": "anti-dumping:2026-06-23",
+      "source_url": "https://remedies.eaeunion.org/dimd/ru"
     },
     {
       "hs_code": "7219",
@@ -116,8 +116,8 @@
       "currency_code": "USD",
       "manufacturer_exporter": "",
       "effective_to": "",
-      "source_revision": "anti-dumping:2026-06-18",
-      "source_url": "https://eec.eaeunion.org/comission/department/catr/trade-protect/"
+      "source_revision": "anti-dumping:2026-06-23",
+      "source_url": "https://remedies.eaeunion.org/dimd/ru"
     },
     {
       "hs_code": "7306",
@@ -130,8 +130,8 @@
       "currency_code": "USD",
       "manufacturer_exporter": "",
       "effective_to": "",
-      "source_revision": "anti-dumping:2026-06-18",
-      "source_url": "https://eec.eaeunion.org/comission/department/catr/trade-protect/"
+      "source_revision": "anti-dumping:2026-06-23",
+      "source_url": "https://remedies.eaeunion.org/dimd/ru"
     },
     {
       "hs_code": "7306",
@@ -144,8 +144,8 @@
       "currency_code": "USD",
       "manufacturer_exporter": "",
       "effective_to": "",
-      "source_revision": "anti-dumping:2026-06-18",
-      "source_url": "https://eec.eaeunion.org/comission/department/catr/trade-protect/"
+      "source_revision": "anti-dumping:2026-06-23",
+      "source_url": "https://remedies.eaeunion.org/dimd/ru"
     },
     {
       "hs_code": "3904",
@@ -158,8 +158,8 @@
       "currency_code": "USD",
       "manufacturer_exporter": "",
       "effective_to": "",
-      "source_revision": "anti-dumping:2026-06-18",
-      "source_url": "https://eec.eaeunion.org/comission/department/catr/trade-protect/"
+      "source_revision": "anti-dumping:2026-06-23",
+      "source_url": "https://remedies.eaeunion.org/dimd/ru"
     },
     {
       "hs_code": "7208",
@@ -172,8 +172,8 @@
       "currency_code": "USD",
       "manufacturer_exporter": "",
       "effective_to": "",
-      "source_revision": "anti-dumping:2026-06-18",
-      "source_url": "https://eec.eaeunion.org/comission/department/catr/trade-protect/"
+      "source_revision": "anti-dumping:2026-06-23",
+      "source_url": "https://remedies.eaeunion.org/dimd/ru"
     },
     {
       "hs_code": "7208",
@@ -186,8 +186,8 @@
       "currency_code": "USD",
       "manufacturer_exporter": "",
       "effective_to": "",
-      "source_revision": "anti-dumping:2026-06-18",
-      "source_url": "https://eec.eaeunion.org/comission/department/catr/trade-protect/"
+      "source_revision": "anti-dumping:2026-06-23",
+      "source_url": "https://remedies.eaeunion.org/dimd/ru"
     },
     {
       "hs_code": "7225",
@@ -200,8 +200,8 @@
       "currency_code": "USD",
       "manufacturer_exporter": "",
       "effective_to": "",
-      "source_revision": "anti-dumping:2026-06-18",
-      "source_url": "https://eec.eaeunion.org/comission/department/catr/trade-protect/"
+      "source_revision": "anti-dumping:2026-06-23",
+      "source_url": "https://remedies.eaeunion.org/dimd/ru"
     },
     {
       "hs_code": "4011",
@@ -214,8 +214,8 @@
       "currency_code": "USD",
       "manufacturer_exporter": "",
       "effective_to": "",
-      "source_revision": "anti-dumping:2026-06-18",
-      "source_url": "https://eec.eaeunion.org/comission/department/catr/trade-protect/"
+      "source_revision": "anti-dumping:2026-06-23",
+      "source_url": "https://remedies.eaeunion.org/dimd/ru"
     },
     {
       "hs_code": "2836",
@@ -228,8 +228,8 @@
       "currency_code": "USD",
       "manufacturer_exporter": "",
       "effective_to": "",
-      "source_revision": "anti-dumping:2026-06-18",
-      "source_url": "https://eec.eaeunion.org/comission/department/catr/trade-protect/"
+      "source_revision": "anti-dumping:2026-06-23",
+      "source_url": "https://remedies.eaeunion.org/dimd/ru"
     },
     {
       "hs_code": "7304",
@@ -242,8 +242,8 @@
       "currency_code": "USD",
       "manufacturer_exporter": "",
       "effective_to": "",
-      "source_revision": "anti-dumping:2026-06-18",
-      "source_url": "https://eec.eaeunion.org/comission/department/catr/trade-protect/"
+      "source_revision": "anti-dumping:2026-06-23",
+      "source_url": "https://remedies.eaeunion.org/dimd/ru"
     },
     {
       "hs_code": "8429",
@@ -256,8 +256,8 @@
       "currency_code": "USD",
       "manufacturer_exporter": "",
       "effective_to": "",
-      "source_revision": "anti-dumping:2026-06-18",
-      "source_url": "https://eec.eaeunion.org/comission/department/catr/trade-protect/"
+      "source_revision": "anti-dumping:2026-06-23",
+      "source_url": "https://remedies.eaeunion.org/dimd/ru"
     },
     {
       "hs_code": "7304",
@@ -270,8 +270,8 @@
       "currency_code": "USD",
       "manufacturer_exporter": "",
       "effective_to": "",
-      "source_revision": "anti-dumping:2026-06-18",
-      "source_url": "https://eec.eaeunion.org/comission/department/catr/trade-protect/"
+      "source_revision": "anti-dumping:2026-06-23",
+      "source_url": "https://remedies.eaeunion.org/dimd/ru"
     },
     {
       "hs_code": "7228",
@@ -284,8 +284,8 @@
       "currency_code": "USD",
       "manufacturer_exporter": "",
       "effective_to": "",
-      "source_revision": "anti-dumping:2026-06-18",
-      "source_url": "https://eec.eaeunion.org/comission/department/catr/trade-protect/"
+      "source_revision": "anti-dumping:2026-06-23",
+      "source_url": "https://remedies.eaeunion.org/dimd/ru"
     },
     {
       "hs_code": "6810",
@@ -298,8 +298,8 @@
       "currency_code": "USD",
       "manufacturer_exporter": "",
       "effective_to": "",
-      "source_revision": "anti-dumping:2026-06-18",
-      "source_url": "https://eec.eaeunion.org/comission/department/catr/trade-protect/"
+      "source_revision": "anti-dumping:2026-06-23",
+      "source_url": "https://remedies.eaeunion.org/dimd/ru"
     },
     {
       "hs_code": "4810",
@@ -312,8 +312,68 @@
       "currency_code": "USD",
       "manufacturer_exporter": "",
       "effective_to": "",
-      "source_revision": "anti-dumping:2026-06-18",
-      "source_url": "https://eec.eaeunion.org/comission/department/catr/trade-protect/"
+      "source_revision": "anti-dumping:2026-06-23",
+      "source_url": "https://remedies.eaeunion.org/dimd/ru"
+    },
+    {
+      "hs_code": "7607",
+      "origin_country": "CN",
+      "rate_percent": 20.24,
+      "regulatory_act": "Решение Коллегии ЕЭК № 97 от 14.10.2025",
+      "product_description": "Алюминиевая фольга (прочие производители; 17,16–20,24% по изготовителю, ЕЭК №97)",
+      "effective_from": "2025-10-14",
+      "effective_to": "2030-10-14",
+      "rate_specific": 0.0,
+      "currency_code": "USD",
+      "manufacturer_exporter": "",
+      "needs_verification": false,
+      "source_revision": "anti-dumping:2026-06-23",
+      "source_url": "https://remedies.eaeunion.org/dimd/ru"
+    },
+    {
+      "hs_code": "3206",
+      "origin_country": "CN",
+      "rate_percent": 16.25,
+      "regulatory_act": "Решение Коллегии ЕЭК № 96 от 14.10.2025",
+      "product_description": "Диоксид титана / пигменты TiO2 (до 16,25% по изготовителю, ЕЭК №96)",
+      "effective_from": "2025-11-16",
+      "effective_to": "2030-10-14",
+      "rate_specific": 0.0,
+      "currency_code": "USD",
+      "manufacturer_exporter": "",
+      "needs_verification": false,
+      "source_revision": "anti-dumping:2026-06-23",
+      "source_url": "https://remedies.eaeunion.org/dimd/ru"
+    },
+    {
+      "hs_code": "7607",
+      "origin_country": "AZ",
+      "rate_percent": 16.18,
+      "regulatory_act": "Решение Коллегии ЕЭК № 62 от 25.05.2026 (продление № 115)",
+      "product_description": "Алюминиевая лента",
+      "effective_from": "2020-09-22",
+      "effective_to": "2031-05-24",
+      "rate_specific": 0.0,
+      "currency_code": "USD",
+      "manufacturer_exporter": "",
+      "needs_verification": false,
+      "source_revision": "anti-dumping:2026-06-23",
+      "source_url": "https://remedies.eaeunion.org/dimd/ru"
+    },
+    {
+      "hs_code": "730640",
+      "origin_country": "CN",
+      "rate_percent": 17.28,
+      "regulatory_act": "Решение Коллегии ЕЭК № 12 от 09.02.2021; продлено № 4 от 20.01.2026",
+      "product_description": "Трубы сварные из нержавеющей стали (до 17,28% по изготовителю, ЕЭК №12)",
+      "effective_from": "2021-02-09",
+      "effective_to": "2026-11-12",
+      "rate_specific": 0.0,
+      "currency_code": "USD",
+      "manufacturer_exporter": "",
+      "needs_verification": false,
+      "source_revision": "anti-dumping:2026-06-23",
+      "source_url": "https://remedies.eaeunion.org/dimd/ru"
     }
   ]
 }

@@ -244,6 +244,19 @@ def _build_warnings(line_items: list[PaymentQuoteLineItem], raw: dict[str, Any])
                 severity="error",
             )
         )
+
+    has_special = any(item.code == "special_duty" and item.status == "applied" for item in line_items)
+    if has_special or any(item.code == "special_duty" for item in line_items):
+        warnings.append(
+            PaymentQuoteWarning(
+                code="trade_remedies_disclaimer",
+                message=(
+                    "Данные по мерам защиты рынка могут быть неполными. "
+                    "Для точной проверки используйте: remedies.eaeunion.org"
+                ),
+                severity="info",
+            )
+        )
     return warnings
 
 

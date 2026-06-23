@@ -2,7 +2,10 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass
+from datetime import date
 from typing import Any
+
+from sqlalchemy import or_
 
 from ..db import SessionLocal
 from ..models.tnved import Commodity, HsDutyRule, SpecialDuty, VatPreference
@@ -58,6 +61,12 @@ _FALLBACK_FX_RATES: dict[str, float] = {
     "USD": 92.0,
     "RUB": 1.0,
 }
+
+SPECIAL_DUTIES_COUNTRY_WARNING = (
+    "Антидемпинговые и иные специальные пошлины проверяются только при указании "
+    "страны происхождения. Данные по мерам защиты рынка могут быть неполными — "
+    "см. remedies.eaeunion.org"
+)
 
 
 def _digits_hs(code: str) -> str:
@@ -151,25 +160,43 @@ def _resolve_special_duties(
     quantity: float,
     fx_rates: dict[str, float] | None,
 ) -> tuple[float, list[dict[str, Any]]]:
-    if not country:
-        return 0.0, []
     cands = _special_duty_prefix_candidates(hs_code)
     if not cands:
         return 0.0, []
     by_prefix = {p: m for p, m in cands}
-    rates = dict(_FALLBACK_FX_RATES)
-    rates.update({(k or "").upper(): float(v) for k, v in (fx_rates or {}).items()})
+    today = date.today().isoformat()
+    country_norm = (country or "").strip().upper() or None
+
     with SessionLocal() as db:
-        rows = (
-            db.query(SpecialDuty)
-            .filter(
-                SpecialDuty.origin_country == country,
-                SpecialDuty.hs_code_prefix.in_(list(by_prefix.keys())),
-            )
-            .all()
+        query = db.query(SpecialDuty).filter(
+            SpecialDuty.hs_code_prefix.in_(list(by_prefix.keys())),
+            or_(
+                SpecialDuty.effective_to.is_(None),
+                SpecialDuty.effective_to == "",
+                SpecialDuty.effective_to >= today,
+            ),
         )
+        if country_norm:
+            query = query.filter(SpecialDuty.origin_country == country_norm)
+        rows = query.all()
+
     if not rows:
         return 0.0, []
+
+    if not country_norm:
+        return 0.0, [
+            {
+                "warning": (
+                    "Страна происхождения не указана. "
+                    "Возможно применение антидемпинговых и иных специальных пошлин."
+                ),
+                "affected_codes": sorted({r.hs_code_prefix for r in rows}),
+                "origin_countries": sorted({r.origin_country for r in rows if r.origin_country}),
+            }
+        ]
+
+    rates = dict(_FALLBACK_FX_RATES)
+    rates.update({(k or "").upper(): float(v) for k, v in (fx_rates or {}).items()})
     details: list[dict[str, Any]] = []
     total = 0.0
     for r in rows:
@@ -185,11 +212,13 @@ def _resolve_special_duties(
             {
                 "hs_code_prefix": r.hs_code_prefix,
                 "origin_country": r.origin_country,
+                "measure_type": r.measure_type or "anti_dumping",
                 "rate_percent": float(r.rate_percent or 0.0),
                 "rate_specific": float(r.rate_specific or 0.0),
                 "currency_code": ccy,
                 "fx_rate": fx,
                 "regulatory_act": r.regulatory_act or "",
+                "needs_verification": bool(getattr(r, "needs_verification", False)),
                 "amount": _round2(part),
                 "match_len": by_prefix.get(r.hs_code_prefix, 0),
             }
@@ -562,6 +591,11 @@ def compute_payments(payload: dict[str, Any]) -> dict[str, Any]:
         quantity=qty,
         fx_rates=payload.get("_fx_rates") if isinstance(payload.get("_fx_rates"), dict) else None,
     )
+    special_duties_warning: str | None = None
+    if special_duties_details and special_duties_details[0].get("warning"):
+        special_duties_warning = str(special_duties_details[0]["warning"])
+    elif not (country or "").strip() and _special_duty_prefix_candidates(hs_code):
+        special_duties_warning = SPECIAL_DUTIES_COUNTRY_WARNING
 
     # Recycling fee (утильсбор) for vehicles (8701-8705, 8711)
     recycling_fee_amount = 0.0
@@ -739,6 +773,7 @@ def compute_payments(payload: dict[str, Any]) -> dict[str, Any]:
         "tnved_context": tnved_context,
         "special_duties": special_duties_details,
         "special_duties_amount": _round2(special_duties_amount),
+        "special_duties_warning": special_duties_warning,
         "geo": geo_meta,
         "tariff_preference": tariff_pref_meta,
         "recycling_fee": recycling_fee_meta,
