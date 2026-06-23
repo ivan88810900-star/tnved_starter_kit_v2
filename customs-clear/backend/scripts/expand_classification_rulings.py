@@ -135,6 +135,7 @@ def expand(*, target: int, per_chapter: int, dry_run: bool) -> dict[str, int]:
                     assigned_hs_code=r["hs"],
                     rationale=r["rationale"],
                     source_url=r["url"],
+                    is_official=False,
                 )
             )
             inserted += 1

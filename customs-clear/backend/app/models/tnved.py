@@ -238,6 +238,7 @@ class SpecialDuty(Base):
     countervailing_source_revision: Mapped[str] = mapped_column(String(128), default="")
     countervailing_source_url: Mapped[str] = mapped_column(Text, default="")
     countervailing_synced_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    needs_verification: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
 
 
 class VatPreference(Base):
@@ -356,6 +357,7 @@ class ClassificationRuling(Base):
     assigned_hs_code: Mapped[str] = mapped_column(String(10), nullable=False, default="")
     rationale: Mapped[str] = mapped_column(Text, nullable=False, default="")
     source_url: Mapped[str] = mapped_column(String(512), nullable=False, default="")
+    is_official: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
 
 
 class CustomsProcedure(Base):

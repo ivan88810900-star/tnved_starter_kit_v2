@@ -53,6 +53,23 @@ class TestClassificationRulingsData:
         """)).fetchall()
         assert len(dupes) == 0
 
+    def test_is_official_flags(self) -> None:
+        official = self.db.execute(
+            text("SELECT COUNT(*) FROM classification_rulings WHERE is_official = 1")
+        ).scalar()
+        reference = self.db.execute(
+            text("SELECT COUNT(*) FROM classification_rulings WHERE is_official = 0")
+        ).scalar()
+        assert official >= 50
+        assert reference >= 500
+        tnved_ref = self.db.execute(
+            text(
+                "SELECT COUNT(*) FROM classification_rulings "
+                "WHERE agency = 'ТНВЭД-REF' AND is_official = 0"
+            )
+        ).scalar()
+        assert tnved_ref >= 500
+
     def test_all_have_hs_code(self) -> None:
         missing = self.db.execute(text(
             "SELECT COUNT(*) FROM classification_rulings WHERE assigned_hs_code IS NULL OR assigned_hs_code = ''"
@@ -88,6 +105,11 @@ class TestClassificationRulingsLookup:
     def test_no_results_for_rare_code(self) -> None:
         results = find_classification_rulings("0101210000")
         assert isinstance(results, list)
+
+    def test_lookup_includes_is_official(self) -> None:
+        results = find_classification_rulings("8517120000", limit=5)
+        assert results
+        assert all("is_official" in r for r in results)
 
 
 class TestClassificationRulingsExpansion:

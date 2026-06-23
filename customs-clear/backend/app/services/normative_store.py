@@ -2113,6 +2113,7 @@ def find_classification_rulings(hs_code: str, *, limit: int = 20) -> list[dict[s
                     "assigned_hs_code": r.assigned_hs_code or "",
                     "rationale": r.rationale or "",
                     "source_url": r.source_url or "",
+                    "is_official": bool(getattr(r, "is_official", True)),
                 })
                 if len(results) >= limit:
                     break

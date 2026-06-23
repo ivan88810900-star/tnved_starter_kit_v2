@@ -918,9 +918,15 @@ def _build_preview_payload(code: str) -> dict[str, Any]:
                 "countries": special_countries,
                 "warning": (
                     "⚠️ Внимание: для данного кода действуют антидемпинговые меры "
-                    f"(например, для стран: {', '.join(special_countries)})."
+                    f"(например, для стран: {', '.join(special_countries)}). "
+                    "Данные по мерам защиты рынка могут быть неполными — "
+                    "для точной проверки используйте remedies.eaeunion.org."
                     if special_countries
                     else ""
+                ),
+                "disclaimer": (
+                    "Данные по мерам защиты рынка могут быть неполными. "
+                    "Для точной проверки используйте: https://remedies.eaeunion.org/dimd/ru"
                 ),
             },
             "trois": {

@@ -42,7 +42,7 @@ import {
 import { CalculatorInvoiceAnalyzeSection } from '../components/calculator/CalculatorInvoiceAnalyzeSection';
 import { CalculatorScenarioCompareSection } from '../components/calculator/CalculatorScenarioCompareSection';
 import { formatTnvedCommodityName, TNVED_COMMODITY_NAME_CLASS } from '../utils/tnvedDisplayText';
-import { Banknote, ShieldCheck } from 'lucide-react';
+import { TradeRemediesDisclaimer } from '../components/payments/TradeRemediesDisclaimer';
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip as RechartsTooltip } from 'recharts';
 
 function normHsCode(raw: string): string {
@@ -1608,9 +1608,12 @@ export const Calculator: React.FC = () => {
                 </p>
               </div>
               {(result.breakdown.special_duties_amount ?? 0) > 0 && (
-                <div className="flex items-center justify-between">
-                  <span>Спецпошлины:</span>
-                  <span className="font-medium">{Number(result.breakdown.special_duties_amount || 0).toLocaleString('ru-RU')} руб.</span>
+                <div>
+                  <div className="flex items-center justify-between">
+                    <span>Спецпошлины:</span>
+                    <span className="font-medium">{Number(result.breakdown.special_duties_amount || 0).toLocaleString('ru-RU')} руб.</span>
+                  </div>
+                  <TradeRemediesDisclaimer className="mt-1" />
                 </div>
               )}
               {(result.breakdown.recycling_fee ?? 0) > 0 && (

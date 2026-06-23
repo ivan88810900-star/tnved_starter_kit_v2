@@ -136,11 +136,17 @@ async def classification_rulings_for_hs(
 ) -> JSONResponse:
     """Решения по классификации товаров (КТС/ФТС/ЕЭК) по коду ТН ВЭД."""
     rulings = find_classification_rulings(hs_code, limit=limit)
+    official = [r for r in rulings if r.get("is_official")]
+    reference = [r for r in rulings if not r.get("is_official")]
     agencies = list({r["agency"] for r in rulings})
     return JSONResponse({
         "status": "OK",
         "hs_code": hs_code,
         "rulings": rulings,
+        "official_rulings": official,
+        "reference_rulings": reference,
+        "official_count": len(official),
+        "reference_count": len(reference),
         "agencies": sorted(agencies),
         "total": len(rulings),
     })

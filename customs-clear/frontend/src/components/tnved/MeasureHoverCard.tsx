@@ -4,6 +4,7 @@ import { AlertTriangle, Banknote, Info } from 'lucide-react';
 import { fetchTnvedPreview, formatCode, type TnvedPreview } from '../../api/tnvedCatalog';
 import { getApiErrorMessage } from '../../api/error';
 import { formatTnvedCommodityName, TNVED_COMMODITY_NAME_CLASS } from '../../utils/tnvedDisplayText';
+import { TradeRemediesDisclaimer } from '../payments/TradeRemediesDisclaimer';
 
 type Props = {
   code: string;
@@ -167,8 +168,9 @@ export const MeasureHoverCard: React.FC<Props> = ({ code, fallbackName = '', chi
                 <div>
                   <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-gray-500">Спецпошлины</p>
                   <p className="text-xs text-amber-700">
-                    ⚠️ Внимание: для данного кода действуют антидемпинговые меры (например, для стран: {p.special_duties.countries.join(', ')}).
+                    ⚠️ {p.special_duties.warning || `Для данного кода действуют антидемпинговые меры (страны: ${p.special_duties.countries.join(', ')}).`}
                   </p>
+                  <TradeRemediesDisclaimer className="mt-1.5" />
                 </div>
               ) : null}
 

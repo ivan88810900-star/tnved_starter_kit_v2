@@ -273,7 +273,15 @@
 
 ---
 
-*Последнее обновление: фаза Y — официальные opendata (#153): TROIS ФТС, маски графы 44, ФСА backfill, cron sync, API статуса. 2026-06-23.*
+*Последнее обновление: фаза AA — trade remedies audit (#170): 4 меры ЕЭК, is_official, sync script. 2026-06-23.*
+
+### Фаза AA — Trade remedies audit (Issue #170)
+
+- [x] **Alembic `e4f5b0a1b2c3`** — удалены 5 legacy-строк `special_duties` (id 1,2,4,5,6); добавлены 4 официальные меры (7607 CN фольга, 3206 CN TiO2, 7607 AZ лента, 730640 CN нержав. трубы); колонка `needs_verification`.
+- [x] **`classification_rulings.is_official`** — FTS/KTS/EEC=true (50), ТНВЭД-REF=false (520); UI разделение официальных и справочных решений.
+- [x] **Bundle `eec_anti_dumping.json`** — revision `anti-dumping:2026-06-23`, portal `remedies.eaeunion.org`.
+- [x] **`scripts/sync_trade_remedies.py`** — еженедельная проверка портала ЕЭК, issue `data-update` без авто-импорта.
+- [x] **UI disclaimer** — SmartPaymentsBlock, MeasureHoverCard, Calculator; `TradeRemediesDisclaimer` component.
 
 ### Фаза Z — Закрытие дочерних issues аудита L0–L3
 

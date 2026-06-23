@@ -17,6 +17,7 @@ import { NormativeRequirementsBlock } from '../nonTariff/NormativeRequirementsBl
 import { SanctionsRiskBlock } from '../nonTariff/SanctionsRiskBlock';
 import { normativeBlockFromNonTariff } from '../nonTariff/normativeBlockHelpers';
 import { PreliminaryDecisionsBlock } from './PreliminaryDecisionsBlock';
+import { ClassificationRulingsBlock } from './ClassificationRulingsBlock';
 import { ProductCardSummary } from './ProductCardSummary';
 import { PermitDocumentsBlock } from './PermitDocumentsBlock';
 import { SmartPaymentsBlock } from '../payments/SmartPaymentsBlock';
@@ -579,11 +580,21 @@ export const ProductDetails: React.FC<Props> = ({ selectedCode }) => {
       ) : null}
 
       {activeTab === 'decisions' ? (
-        <section>
-          <h3 className="mb-3 text-xs font-bold uppercase tracking-wide text-gray-600 border-b border-gray-200 pb-2">
-            Предварительные и классификационные решения
-          </h3>
-          <PreliminaryDecisionsBlock block={preliminaryBlock} loading={loading} />
+        <section className="space-y-6">
+          <div>
+            <h3 className="mb-3 text-xs font-bold uppercase tracking-wide text-gray-600 border-b border-gray-200 pb-2">
+              Предварительные решения
+            </h3>
+            <PreliminaryDecisionsBlock block={preliminaryBlock} loading={loading} />
+          </div>
+          {detail?.code ? (
+            <div>
+              <h3 className="mb-3 text-xs font-bold uppercase tracking-wide text-gray-600 border-b border-gray-200 pb-2">
+                Решения по классификации
+              </h3>
+              <ClassificationRulingsBlock hsCode={detail.code} />
+            </div>
+          ) : null}
         </section>
       ) : null}
 

@@ -653,6 +653,8 @@ def _apply_row_fields(existing: SpecialDuty, row: dict[str, Any]) -> None:
         existing.effective_from = str(row.get("effective_from") or "")
     if str(row.get("effective_to") or "").strip():
         existing.effective_to = str(row.get("effective_to") or "")
+    if "needs_verification" in row:
+        existing.needs_verification = bool(row.get("needs_verification"))
 
 
 def _apply_anti_dumping_rows(
@@ -681,6 +683,7 @@ def _apply_anti_dumping_rows(
                         product_description=str(row.get("product_description") or ""),
                         effective_from=str(row.get("effective_from") or ""),
                         effective_to=str(row.get("effective_to") or ""),
+                        needs_verification=bool(row.get("needs_verification")),
                     )
                     _stamp_row_provenance(entity, row=row, synced_at=synced_at)
                     db.add(entity)
