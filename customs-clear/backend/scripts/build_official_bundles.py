@@ -20,6 +20,7 @@ sys.path.insert(0, str(BACKEND_ROOT))
 
 from sqlalchemy import text
 from app.db import SessionLocal
+from app.services.normative_bundle import is_ett_test_hs
 
 TODAY = date.today().isoformat()
 EEC_BASE_URL = "https://eec.eaeunion.org/comission/department/catr/ett/"
@@ -47,6 +48,9 @@ def build_ett_bundle() -> Path:
     rates = []
     for hs_code, duty_rate in rows:
         if not hs_code or not str(duty_rate or "").strip():
+            continue
+        code = str(hs_code).strip()
+        if is_ett_test_hs(code):
             continue
         rates.append({
             "hs_code": str(hs_code).strip(),

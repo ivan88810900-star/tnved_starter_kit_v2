@@ -53059,18 +53059,6 @@
       "source_url": "https://eec.eaeunion.org/comission/department/catr/ett/"
     },
     {
-      "hs_code": "7777770000",
-      "duty_rate": "5",
-      "source_revision": "ett:2026-06-18",
-      "source_url": "https://eec.eaeunion.org/comission/department/catr/ett/"
-    },
-    {
-      "hs_code": "7777770001",
-      "duty_rate": "5",
-      "source_revision": "ett:2026-06-18",
-      "source_url": "https://eec.eaeunion.org/comission/department/catr/ett/"
-    },
-    {
       "hs_code": "7801100000",
       "duty_rate": "3%",
       "source_revision": "ett:2026-06-18",
@@ -75163,12 +75151,6 @@
       "source_url": "https://eec.eaeunion.org/comission/department/catr/ett/"
     },
     {
-      "hs_code": "8888880000",
-      "duty_rate": "7.5",
-      "source_revision": "ett:2026-06-18",
-      "source_url": "https://eec.eaeunion.org/comission/department/catr/ett/"
-    },
-    {
       "hs_code": "8901101001",
       "duty_rate": "5%",
       "source_revision": "ett:2026-06-18",
@@ -79937,12 +79919,7 @@
       "duty_rate": "0",
       "source_revision": "ett:2026-06-18",
       "source_url": "https://eec.eaeunion.org/comission/department/catr/ett/"
-    },
-    {
-      "hs_code": "9999990000",
-      "duty_rate": "5",
-      "source_revision": "ett:2026-06-18",
-      "source_url": "https://eec.eaeunion.org/comission/department/catr/ett/"
     }
-  ]
+  ],
+  "tnved": []
 }

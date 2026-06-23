@@ -5,7 +5,7 @@ from pathlib import Path
 from fastapi.testclient import TestClient
 
 from app.main import app
-from app.services.normative_bundle import import_normative_bundle_dict
+from app.services.normative_bundle import import_normative_bundle_dict, is_ett_test_hs
 from app.services.normative_store import find_tnved_entry, init_db
 from app.services.payment_engine import compute_payments
 
@@ -22,7 +22,7 @@ class NormativeBundleTests(unittest.TestCase):
                 "revision": "test-b1",
                 "tnved": [
                     {
-                        "hs_code": "8888880000",
+                        "hs_code": "8812345670",
                         "parent_hs": "",
                         "level": 10,
                         "title": "Тестовая позиция",
@@ -32,7 +32,7 @@ class NormativeBundleTests(unittest.TestCase):
                 ],
                 "rates": [
                     {
-                        "hs_code": "8888880000",
+                        "hs_code": "8812345670",
                         "hs_prefix": "8888",
                         "duty_rate": 7.5,
                         "vat_import_rate": 22,
@@ -52,7 +52,7 @@ class NormativeBundleTests(unittest.TestCase):
         )
         self.assertEqual(res["status"], "OK")
         self.assertGreaterEqual(res["imported"]["tnved"], 1)
-        ent = find_tnved_entry("8888880000")
+        ent = find_tnved_entry("8812345670")
         self.assertIsNotNone(ent)
         self.assertIn("Тестовая", ent.title or "")
 
@@ -77,7 +77,7 @@ class NormativeBundleTests(unittest.TestCase):
                 "revision": "ett:2026-05-01",
                 "rates": [
                     {
-                        "hs_code": "7777770000",
+                        "hs_code": "6666010000",
                         "hs_prefix": "7777",
                         "duty_rate": 5,
                         "vat_import_rate": 22,
@@ -91,7 +91,7 @@ class NormativeBundleTests(unittest.TestCase):
         from app.models.core import HsRate
 
         with SessionLocal() as db:
-            row = db.query(HsRate).filter(HsRate.hs_code == "7777770000").first()
+            row = db.query(HsRate).filter(HsRate.hs_code == "6666010000").first()
         self.assertIsNotNone(row)
         self.assertEqual(row.source_revision, "ett:2026-05-01")
 
@@ -102,7 +102,7 @@ class NormativeBundleTests(unittest.TestCase):
                 "revision": "ett:2026-05-01",
                 "rates": [
                     {
-                        "hs_code": "7777770001",
+                        "hs_code": "6666010001",
                         "hs_prefix": "7777",
                         "duty_rate": 5,
                         "vat_import_rate": 22,
@@ -116,9 +116,41 @@ class NormativeBundleTests(unittest.TestCase):
         from app.models.core import HsRate
 
         with SessionLocal() as db:
-            row = db.query(HsRate).filter(HsRate.hs_code == "7777770001").first()
+            row = db.query(HsRate).filter(HsRate.hs_code == "6666010001").first()
         self.assertIsNotNone(row)
         self.assertEqual(row.source_revision, "seed-2026-03")
+
+    def test_ett_test_hs_codes_skipped_on_import(self):
+        res = import_normative_bundle_dict(
+            {
+                "format": "customs_clear_normative_bundle",
+                "revision": "ett:test-guard",
+                "rates": [
+                    {
+                        "hs_code": "7777770000",
+                        "hs_prefix": "7777",
+                        "duty_rate": 5,
+                        "vat_import_rate": 22,
+                    },
+                    {
+                        "hs_code": "6666020000",
+                        "hs_prefix": "6666",
+                        "duty_rate": 5,
+                        "vat_import_rate": 22,
+                    },
+                ],
+            },
+            filename="unit-blocklist.json",
+        )
+        self.assertEqual(res["status"], "OK")
+        self.assertEqual(res["skipped"]["rates"], 1)
+        self.assertTrue(is_ett_test_hs("7777770000"))
+        from app.db import SessionLocal
+        from app.models.core import HsRate
+
+        with SessionLocal() as db:
+            self.assertIsNone(db.query(HsRate).filter(HsRate.hs_code == "7777770000").first())
+            self.assertIsNotNone(db.query(HsRate).filter(HsRate.hs_code == "6666020000").first())
 
 
 _EXAMPLE = Path(__file__).resolve().parent.parent / "data" / "normative_bundle.example.json"
