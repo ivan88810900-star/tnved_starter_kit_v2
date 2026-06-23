@@ -282,6 +282,7 @@
 - [x] **Bundle `eec_anti_dumping.json`** — revision `anti-dumping:2026-06-23`, portal `remedies.eaeunion.org`.
 - [x] **`scripts/sync_trade_remedies.py`** — еженедельная проверка портала ЕЭК, issue `data-update` без авто-импорта.
 - [x] **UI disclaimer** — SmartPaymentsBlock, MeasureHoverCard, Calculator; `TradeRemediesDisclaimer` component.
+- [ ] **`payment_engine._resolve_special_duties`** — фильтр `effective_to`, предупреждение без страны, `special_duties_warning` в API.
 
 ### Фаза Z — Закрытие дочерних issues аудита L0–L3
 

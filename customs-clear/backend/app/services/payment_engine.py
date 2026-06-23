@@ -594,8 +594,6 @@ def compute_payments(payload: dict[str, Any]) -> dict[str, Any]:
     special_duties_warning: str | None = None
     if special_duties_details and special_duties_details[0].get("warning"):
         special_duties_warning = str(special_duties_details[0]["warning"])
-    elif not (country or "").strip() and _special_duty_prefix_candidates(hs_code):
-        special_duties_warning = SPECIAL_DUTIES_COUNTRY_WARNING
 
     # Recycling fee (утильсбор) for vehicles (8701-8705, 8711)
     recycling_fee_amount = 0.0
@@ -741,6 +739,7 @@ def compute_payments(payload: dict[str, Any]) -> dict[str, Any]:
             "antidumping_reason": antidumping_reason,
             "antidumping_status": antidumping_status,
             "special_duties_amount": _round2(special_duties_total),
+            "special_duties_warning": special_duties_warning,
             "vat_rate": vat_rate,
             "vat_reason": vat_reason,
             "vat_decree_info": vat_decree_info,

@@ -1571,6 +1571,12 @@ export const Calculator: React.FC = () => {
                 </span>
               ) : null}
             </div>
+            {(result.special_duties_warning || result.breakdown.special_duties_warning) ? (
+              <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+                {result.special_duties_warning || result.breakdown.special_duties_warning}
+              </div>
+            ) : null}
+            <TradeRemediesDisclaimer />
             <div className="space-y-1 text-[12px] text-slate-700">
               <div>
                 <div className="flex items-center justify-between">

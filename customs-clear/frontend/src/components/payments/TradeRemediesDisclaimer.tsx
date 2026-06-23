@@ -8,8 +8,9 @@ type Props = {
 
 /** Дисклеймер для trade remedies — данные могут быть неполными. */
 export const TradeRemediesDisclaimer: React.FC<Props> = ({ className = '' }) => (
-  <p className={`text-xs leading-snug text-slate-600 ${className}`.trim()}>
-    Данные по мерам защиты рынка могут быть неполными. Для точной проверки используйте:{' '}
+  <p className={`text-xs leading-snug text-amber-900 ${className}`.trim()}>
+    ⚠️ Данные по мерам защиты рынка (антидемпинг, спецзащита) могут быть неполными.
+    Проверяйте актуальный реестр:{' '}
     <a
       href={REMEDIES_URL}
       target="_blank"
