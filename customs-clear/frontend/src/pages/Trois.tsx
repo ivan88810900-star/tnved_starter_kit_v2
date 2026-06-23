@@ -74,7 +74,7 @@ export const Trois: React.FC = () => {
     <div className="space-y-4">
       <p className="text-[12px] text-slate-600">Поиск по локальному справочнику товарных знаков.</p>
       <p className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-[11px] leading-relaxed text-slate-600">
-        Данные реестра обновляются еженедельно. Для юридически значимой проверки используйте{' '}
+        Проверка по локальной копии реестра ТРОИС (открытые данные ФТС). Для юридически значимой проверки используйте{' '}
         <a
           href="https://customs.gov.ru/registers/objects-intellectual-property"
           target="_blank"
@@ -163,6 +163,12 @@ export const Trois: React.FC = () => {
                   ? '✅ Бренд не найден в локальной БД — риск по ТРОИС низкий (проверьте официальный реестр).'
                   : '❓ Бренд не проверен автоматически — проверьте вручную в реестре ФТС.'}
             </div>
+          )}
+          {result.freshness_label && (
+            <p className="text-[11px] text-slate-500">
+              {result.freshness_label}
+              {result.registry_source ? ` · Источник: ${result.registry_source}` : ''}
+            </p>
           )}
           {result.note && result.status !== 'ERROR' && (
             <div className="cc-card-soft px-3 py-2 text-slate-700">

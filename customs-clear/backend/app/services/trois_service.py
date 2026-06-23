@@ -387,6 +387,10 @@ async def check_trademark(query: str) -> Dict[str, Any]:
 
     db_hits = search_db_registry(query, max_results=5)
     if db_hits:
+        from .opendata_registry import OPENDATA_TROIS_SOURCE, get_sync_freshness
+
+        freshness = get_sync_freshness("trois") or {}
+        data_as_of = freshness.get("data_as_of") or ""
         details = [
             {
                 "cols": [
@@ -400,15 +404,21 @@ async def check_trademark(query: str) -> Dict[str, Any]:
             }
             for h in db_hits
         ]
+        note = f"Найдено в локальной БД реестра ({len(db_hits)} записей). {TROIS_DISCLAIMER_RU}"
+        if data_as_of:
+            note = f"Реестр ТРОИС ФТС, обновлён {data_as_of}. {note}"
         out = {
             "status": "OK",
             "found": True,
             "details": details,
-            "source": "db_registry",
+            "source": "opendata_db",
+            "registry_source": OPENDATA_TROIS_SOURCE,
+            "data_as_of": data_as_of,
+            "freshness_label": f"Реестр ТРОИС ФТС, обновлён {data_as_of}" if data_as_of else "",
             "risk_level": "high",
             "disclaimer": TROIS_DISCLAIMER_RU,
             "official_url": TROIS_OFFICIAL_URL,
-            "note": f"Найдено в локальной БД реестра ({len(db_hits)} записей). {TROIS_DISCLAIMER_RU}",
+            "note": note,
         }
         if key:
             await cache_set(TROIS_PREFIX, key, out, ttl)

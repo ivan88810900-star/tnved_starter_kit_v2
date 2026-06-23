@@ -412,3 +412,70 @@ class TamdocSyncCandidate(Base):
         onupdate=datetime.utcnow,
         nullable=False,
     )
+
+
+class OpendataSyncLog(Base):
+    """Журнал загрузок официальных наборов открытых данных."""
+
+    __tablename__ = "opendata_sync_log"
+    __table_args__ = (
+        Index("ix_opendata_sync_log_source_key", "source_key"),
+        Index("ix_opendata_sync_log_snapshot", "source_key", "snapshot_id"),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    source_key: Mapped[str] = mapped_column(String(32), nullable=False)
+    dataset_id: Mapped[str] = mapped_column(String(64), nullable=False, default="")
+    snapshot_id: Mapped[str] = mapped_column(String(256), nullable=False, default="")
+    file_url: Mapped[str] = mapped_column(Text, default="")
+    file_sha256: Mapped[str] = mapped_column(String(64), default="")
+    row_count: Mapped[int] = mapped_column(Integer, default=0)
+    synced_at: Mapped[str] = mapped_column(String(32), default="")
+    data_as_of: Mapped[str] = mapped_column(String(32), default="")
+    status: Mapped[str] = mapped_column(String(16), default="ok")
+    details: Mapped[str] = mapped_column(Text, default="")
+    error_message: Mapped[str] = mapped_column(Text, default="")
+
+
+class FsaCertificate(Base):
+    """Локальная копия реестра СС/ДС Росаккредитации (opendata fsa.gov.ru)."""
+
+    __tablename__ = "fsa_certificates"
+    __table_args__ = (
+        UniqueConstraint("registry_number", name="uq_fsa_certificates_registry_number"),
+        Index("ix_fsa_certificates_doc_type", "doc_type"),
+        Index("ix_fsa_certificates_status", "status"),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    registry_number: Mapped[str] = mapped_column(String(256), nullable=False, default="")
+    doc_type: Mapped[str] = mapped_column(String(8), nullable=False, default="СС")
+    status: Mapped[str] = mapped_column(String(128), default="")
+    applicant: Mapped[str] = mapped_column(String(512), default="")
+    manufacturer: Mapped[str] = mapped_column(String(512), default="")
+    product_name: Mapped[str] = mapped_column(Text, default="")
+    tn_ved_codes: Mapped[str] = mapped_column(Text, default="")
+    tr_ts: Mapped[str] = mapped_column(Text, default="")
+    issue_date: Mapped[str] = mapped_column(String(32), default="")
+    expiry_date: Mapped[str] = mapped_column(String(32), default="")
+    fsa_record_id: Mapped[str] = mapped_column(String(32), default="")
+    source_snapshot: Mapped[str] = mapped_column(String(256), default="")
+
+
+class CustomsDocMask(Base):
+    """Маски номеров документов графы 44 ДТ (opendata 7730176610-mask44)."""
+
+    __tablename__ = "customs_doc_masks"
+    __table_args__ = (
+        Index("ix_customs_doc_masks_kod", "kod"),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    sid_smev: Mapped[str] = mapped_column(String(64), default="")
+    kod: Mapped[str] = mapped_column(String(16), default="")
+    mask_number: Mapped[str] = mapped_column(String(8), default="")
+    name: Mapped[str] = mapped_column(Text, default="")
+    mask_pattern: Mapped[str] = mapped_column(Text, default="")
+    description: Mapped[str] = mapped_column(Text, default="")
+    valid_from: Mapped[str] = mapped_column(String(32), default="")
+    valid_to: Mapped[str] = mapped_column(String(32), default="")

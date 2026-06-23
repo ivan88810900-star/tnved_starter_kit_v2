@@ -613,6 +613,9 @@ export interface TroisCheckResponse {
   disclaimer?: string;
   official_url?: string;
   source?: string;
+  registry_source?: string;
+  data_as_of?: string;
+  freshness_label?: string;
 }
 
 export interface TroisSyncResponse {

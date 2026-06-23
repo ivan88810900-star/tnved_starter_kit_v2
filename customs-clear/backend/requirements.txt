@@ -29,4 +29,5 @@ google-generativeai
 streamlit
 streamlit-lottie
 pytest>=8.0.0
+py7zr>=0.22.0
 

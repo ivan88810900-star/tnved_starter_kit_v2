@@ -231,6 +231,14 @@ app.include_router(
 )
 app.include_router(admin_v1.router, prefix="/api/v1/admin", tags=["admin-v1"])
 
+
+@app.get("/api/permits/opendata/status", tags=["permits"])
+async def permits_opendata_status_public() -> JSONResponse:
+    """Публичный алиас статуса opendata (без JWT)."""
+    from .services.opendata_status import build_opendata_status
+
+    return JSONResponse(build_opendata_status())
+
 # Статика фронтенда (для десктоп-сборки)
 # PyInstaller: sys._MEIPASS; иначе backend/../static
 _BASE = Path(getattr(sys, "_MEIPASS", Path(__file__).resolve().parent.parent))
