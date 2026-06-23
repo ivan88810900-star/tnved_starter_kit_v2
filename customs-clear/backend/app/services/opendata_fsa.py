@@ -75,13 +75,19 @@ def _iter_csv_rows(path: Path) -> Iterator[dict[str, str]]:
 
 
 def _upsert_fsa_rows(rows: list[dict[str, str]], *, snapshot_id: str) -> dict[str, int]:
-    created = updated = skipped = 0
+    """Upsert по registry_number; дубликаты в одном снимке схлопываются (последняя строка)."""
+    by_reg: dict[str, dict[str, str]] = {}
+    skipped = 0
+    for row in rows:
+        reg = row.get("registry_number") or ""
+        if not reg:
+            skipped += 1
+            continue
+        by_reg[reg] = row
+
+    created = updated = 0
     with SessionLocal() as db:
-        for row in rows:
-            reg = row.get("registry_number") or ""
-            if not reg:
-                skipped += 1
-                continue
+        for reg, row in by_reg.items():
             existing = (
                 db.query(FsaCertificate).filter(FsaCertificate.registry_number == reg).one_or_none()
             )
