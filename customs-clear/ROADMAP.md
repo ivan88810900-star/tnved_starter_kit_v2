@@ -280,3 +280,4 @@
 - [x] **PR #165 (Issue #164)** — TV 8528: домен ДС для TR TS 004/020 (не СС); регрессия `8528721000`. ✅ merged 2026-06-23
 - [x] **PR #166 (Issue #160)** — Актуальные ETT-коды в тестах: 851711/940131/3004900001/8528721000. ✅ merged 2026-06-23
 - [x] **PR #167 (Issue #159)** — Удалены тестовые HS из ETT bundle; guard в импортёре + Alembic cleanup. ✅ merged 2026-06-23
+- [x] **PR #168** — FSA opendata: dedupe `registry_number` в batch upsert (IntegrityError fix). ✅ merged 2026-06-23
