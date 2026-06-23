@@ -22,8 +22,8 @@ REGRESSION_MATRIX: list[tuple[str, str, set[tuple[str, str | None]]]] = [
     # ── Компьютеры, IT (Гл. 84-85) ──
     ("8471300000", "Ноутбук обычный", {("ДС", "004/2011"), ("ДС", "020/2011"), ("ДС", "037/2016")}),
     ("8471300000", "Ноутбук с Wi-Fi", {("ДС", "004/2011"), ("ДС", "020/2011"), ("ДС", "037/2016"), ("НФ", None)}),
-    ("8528720001", "Телевизор LED", {("СС", "004/2011"), ("СС", "020/2011"), ("ДС", "037/2016")}),
-    ("8528720001", "Smart TV с Wi-Fi", {("СС", "004/2011"), ("СС", "020/2011"), ("ДС", "037/2016"), ("НФ", None)}),
+    ("8528720001", "Телевизор LED", {("ДС", "004/2011"), ("ДС", "020/2011"), ("ДС", "037/2016")}),
+    ("8528720001", "Smart TV с Wi-Fi", {("ДС", "004/2011"), ("ДС", "020/2011"), ("ДС", "037/2016"), ("НФ", None)}),
 
     # ── Бытовая электроника (Гл. 85) ──
     ("8508110000", "Пылесос бытовой", {("СС", "004/2011"), ("СС", "020/2011"), ("ДС", "037/2016")}),
@@ -180,6 +180,27 @@ REGRESSION_MATRIX: list[tuple[str, str, set[tuple[str, str | None]]]] = [
     # ── Часы (Гл. 91) ──
     ("9102110000", "Наручные часы кварцевые", set()),
 ]
+
+
+def test_tv_8528721000_ds_only_no_ss() -> None:
+    """Issue #164: ТВ (8528) — домен ДС по Решению ЕЭК №620, без СС на 004/020."""
+    result = asyncio.run(
+        check_position_non_tariff(
+            hs_code="8528721000",
+            description="Телевизор LED",
+            country="CN",
+            permits=[],
+            skip_registry_verify=True,
+        )
+    )
+    permits = result.get("required_permits") or []
+    got_types = {str(p["permit_type"]) for p in permits}
+    assert "ДС" in got_types
+    assert "СС" not in got_types
+    tr_ts_by_type = {str(p["permit_type"]): p.get("tr_ts") for p in permits}
+    assert tr_ts_by_type.get("ДС") in {"004/2011", "020/2011", "037/2016"} or len(
+        [p for p in permits if p.get("permit_type") == "ДС"]
+    ) >= 1
 
 
 @pytest.mark.parametrize("hs_code,description,expected", REGRESSION_MATRIX)
