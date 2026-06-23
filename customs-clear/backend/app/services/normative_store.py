@@ -923,6 +923,58 @@ def find_classification_precedents_for_invoice_item(
     return block, ",".join(dict.fromkeys(nums))
 
 
+def is_leaf_hs_code(hs_code: str) -> bool:
+    """
+    True если код — реальный лист ЕТТ (есть прямая ставка в hs_rates или не групповой заголовок).
+
+    Групповые заголовки часто оканчиваются на ``0000`` / ``000000`` без строки в hs_rates
+    (например ``8703230000``). Исключения вроде ``8471300000`` имеют прямую запись в hs_rates.
+    """
+    code = normalize_hs_code(hs_code)
+    if len(code) != 10:
+        return False
+    if code.endswith("000000") or code.endswith("0000"):
+        with SessionLocal() as db:
+            exists = db.query(HsRate.id).filter(HsRate.hs_code == code).first()
+        return exists is not None
+    return True
+
+
+def find_suggested_leaf_codes(hs_code: str, *, limit: int = 20) -> list[dict[str, Any]]:
+    """Дочерние коды-листья из hs_rates для группового заголовка."""
+    code = normalize_hs_code(hs_code)
+    if len(code) != 10:
+        return []
+    prefix = code.rstrip("0")
+    if len(prefix) < 4:
+        prefix = code[:4]
+    with SessionLocal() as db:
+        rate_rows = (
+            db.query(HsRate.hs_code, HsRate.duty_rate)
+            .filter(HsRate.hs_code.like(f"{prefix}%"), HsRate.hs_code != code)
+            .order_by(HsRate.hs_code)
+            .limit(limit)
+            .all()
+        )
+        if not rate_rows:
+            return []
+        codes = [r[0] for r in rate_rows]
+        commodities = (
+            db.query(Commodity.code, Commodity.description)
+            .filter(Commodity.code.in_(codes))
+            .all()
+        )
+        desc_by_code = {c.code: (c.description or "").strip() for c in commodities}
+    return [
+        {
+            "code": hc,
+            "duty_rate": str(dr or "0"),
+            "description": desc_by_code.get(hc, ""),
+        }
+        for hc, dr in rate_rows
+    ]
+
+
 def find_rate_for_hs(hs_code: str) -> tuple[HsRate | None, int]:
     """Returns (rate, matched_prefix_length). Length 0 means no match."""
     code = (hs_code or "").strip().replace(" ", "")

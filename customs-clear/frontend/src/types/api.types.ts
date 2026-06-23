@@ -415,6 +415,19 @@ export interface CalculatorInvoiceInfo {
   customs_value_rub: number;
 }
 
+export interface CalculatorSuggestedCode {
+  code: string;
+  description: string;
+  duty_rate: string;
+}
+
+export interface CalculatorClarificationResponse {
+  status: 'CLARIFICATION_NEEDED';
+  hs_code: string;
+  message: string;
+  suggested_codes: CalculatorSuggestedCode[];
+}
+
 export interface CalculatorComputeResponse {
   status: 'OK';
   hs_code: string;

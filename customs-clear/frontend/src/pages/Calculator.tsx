@@ -8,6 +8,7 @@ import type {
   CalculatorCommodityMetaInfo,
   CalculatorCompareRequest,
   CalculatorCompareResponse,
+  CalculatorClarificationResponse,
   CalculatorComputeRequest,
   CalculatorComputeResponse,
   CalculatorDutyRuleInfo,
@@ -247,6 +248,7 @@ export const Calculator: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<CalculatorComputeResponse | null>(null);
+  const [clarification, setClarification] = useState<CalculatorClarificationResponse | null>(null);
   const [importing, setImporting] = useState(false);
   const [importMsg, setImportMsg] = useState<string | null>(null);
   const [dataFreshness, setDataFreshness] = useState<{
@@ -527,7 +529,7 @@ export const Calculator: React.FC = () => {
     }
   };
 
-  const handleCompute = async () => {
+  const handleCompute = async (hsOverride?: string) => {
     if (!country.trim()) {
       setError('Выберите страну происхождения (обязательное поле).');
       return;
@@ -536,12 +538,18 @@ export const Calculator: React.FC = () => {
       setError(`Нет курса ЦБ для валюты ${invoiceCurrency}`);
       return;
     }
+    const codeToUse = (hsOverride ?? hsCode).replace(/\D/g, '').slice(0, 10);
+    if (codeToUse.length !== 10) {
+      setError('Укажите полный 10-значный код ТН ВЭД.');
+      return;
+    }
     setLoading(true);
     setError(null);
     setResult(null);
+    setClarification(null);
     try {
       const payload: CalculatorComputeRequest = {
-        hs_code: hsCode,
+        hs_code: codeToUse,
         customs_value: parseFloat(customsValue || '0'),
         invoice_currency: invoiceCurrency,
         freight: parseFloat(freight || '0'),
@@ -554,7 +562,7 @@ export const Calculator: React.FC = () => {
       if (netWeightKg) payload.net_weight_kg = parseFloat(netWeightKg);
       if (extraQuantity) payload.extra_quantity = parseFloat(extraQuantity);
       if (country) payload.country = country.trim().toUpperCase();
-      if (isVehicleHs(hsCode)) {
+      if (isVehicleHs(codeToUse)) {
         payload.vehicle_is_new = vehicleIsNew;
         if (engineVolume) payload.engine_volume = parseInt(engineVolume, 10);
       }
@@ -566,8 +574,17 @@ export const Calculator: React.FC = () => {
         payload.user_ref = ur;
         localStorage.setItem('cc_client_id', ur);
       }
-      const { data } = await api.post<CalculatorComputeResponse>('/calculator/compute', payload);
+      const { data } = await api.post<CalculatorComputeResponse | CalculatorClarificationResponse>(
+        '/calculator/compute',
+        payload,
+      );
+      if (data.status === 'CLARIFICATION_NEEDED') {
+        setClarification(data);
+        if (hsOverride) setHsCode(codeToUse);
+        return;
+      }
       setResult(data);
+      if (hsOverride) setHsCode(codeToUse);
       setAssistantCalculationContext(buildAssistantCalcContext(data));
       try {
         const detail = await fetchCommodityByCode(data.hs_code);
@@ -612,6 +629,7 @@ export const Calculator: React.FC = () => {
       setLoading(true);
       setError(null);
       setResult(null);
+      setClarification(null);
       try {
         const payload: CalculatorComputeRequest = {
           hs_code: hs,
@@ -641,7 +659,14 @@ export const Calculator: React.FC = () => {
           payload.user_ref = ur;
           localStorage.setItem('cc_client_id', ur);
         }
-        const { data } = await api.post<CalculatorComputeResponse>('/calculator/compute', payload);
+        const { data } = await api.post<CalculatorComputeResponse | CalculatorClarificationResponse>(
+          '/calculator/compute',
+          payload,
+        );
+        if (data.status === 'CLARIFICATION_NEEDED') {
+          setClarification(data);
+          return;
+        }
         setResult(data);
         setAssistantCalculationContext(buildAssistantCalcContext(data));
         try {
@@ -1275,6 +1300,7 @@ export const Calculator: React.FC = () => {
             setSuppQuantity('');
             setCountry('');
             setResult(null);
+            setClarification(null);
             setSearchResults([]);
           }}
         >
@@ -1472,9 +1498,40 @@ export const Calculator: React.FC = () => {
         </div>
       </details>
 
-      <button type="button" onClick={handleCompute} disabled={loading} className="cc-btn-primary">
+      <button type="button" onClick={() => void handleCompute()} disabled={loading} className="cc-btn-primary">
         {loading ? 'Расчёт…' : 'Рассчитать'}
       </button>
+
+      {clarification ? (
+        <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-4 text-sm text-amber-950">
+          <p className="font-semibold">{clarification.message}</p>
+          <p className="mt-1 text-xs text-amber-800">
+            Групповой код {formatCustomsCode(clarification.hs_code)} нельзя использовать для расчёта напрямую — выберите конкретную
+            подпозицию:
+          </p>
+          <ul className="mt-3 max-h-64 space-y-2 overflow-y-auto">
+            {clarification.suggested_codes.map((item) => (
+              <li key={item.code}>
+                <button
+                  type="button"
+                  onClick={() => void handleCompute(item.code)}
+                  className="flex w-full flex-col items-start rounded-lg border border-amber-200 bg-white px-3 py-2 text-left hover:border-indigo-300 hover:bg-indigo-50"
+                >
+                  <span className="font-mono text-[13px] font-semibold text-indigo-800">{formatCustomsCode(item.code)}</span>
+                  {item.description ? (
+                    <span className={`mt-0.5 text-xs text-slate-700 ${TNVED_COMMODITY_NAME_CLASS}`}>
+                      {formatTnvedCommodityName(item.description)}
+                    </span>
+                  ) : null}
+                  {item.duty_rate ? (
+                    <span className="mt-1 text-[11px] text-slate-500">Пошлина: {formatImportDutyPercent(item.duty_rate)}</span>
+                  ) : null}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
 
       {error && (
         <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
