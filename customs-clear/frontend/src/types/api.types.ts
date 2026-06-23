@@ -362,6 +362,7 @@ export interface CalculatorBreakdown {
   antidumping_reason: string;
   antidumping_status: string;
   special_duties_amount: number;
+  special_duties_warning?: string | null;
   vat_rate: number;
   vat_reason: string;
   vat_decree_info: string;
@@ -429,6 +430,7 @@ export interface CalculatorComputeResponse {
   tnved_context: TnvedContext;
   special_duties: CalculatorSpecialDutyItem[];
   special_duties_amount: number;
+  special_duties_warning?: string | null;
   invoice?: CalculatorInvoiceInfo;
   fx_source?: string;
   tariff_preference?: CalculatorTariffPreference;
