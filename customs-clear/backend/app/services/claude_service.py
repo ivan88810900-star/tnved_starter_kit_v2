@@ -8,6 +8,7 @@ from typing import Any, Dict, List, Optional
 import httpx
 from loguru import logger
 
+from .classify_response_parser import parse_classify_response
 from .decision_history import journal_hints_for_classifier
 from .gemini_genai_configure import gemini_generate_content_rest_url, resolved_gemini_model_name
 from .safe_http_errors import safe_ai_error_note
@@ -16,13 +17,20 @@ ANTHROPIC_URL = "https://api.anthropic.com/v1/messages"
 ANTHROPIC_MODEL_NAME = os.getenv("ANTHROPIC_MODEL_NAME", "claude-haiku-4-5-20251001")
 
 SYSTEM_PROMPT = (
-    "Ты — эксперт по таможенной классификации товаров согласно ТН ВЭД ЕАЭС.\n"
-    "Пользователь предоставляет описание товара. Твоя задача:\n"
-    "1. Определить 3 наиболее вероятных кода ТН ВЭД (10 знаков)\n"
-    "2. Для каждого кода указать: код, краткое наименование, ставку ввозной пошлины,\n"
-    "   необходимость разрешительных документов, краткое обоснование выбора\n"
-    "3. Отметить наиболее рекомендуемый вариант\n"
-    "Отвечай ТОЛЬКО в формате JSON без комментариев."
+    "Ты эксперт по классификации товаров по ТН ВЭД ЕАЭС.\n"
+    "Отвечай ТОЛЬКО валидным JSON без markdown-блоков и пояснений.\n"
+    "Формат ответа строго такой:\n"
+    "{\n"
+    '  "results": [\n'
+    "    {\n"
+    '      "hs_code": "6404110090",\n'
+    '      "confidence": 0.9,\n'
+    '      "description": "Обувь с верхом из текстиля",\n'
+    '      "rationale": "Кроссовки из синтетической ткани классифицируются по ТН ВЭД 6404"\n'
+    "    }\n"
+    "  ]\n"
+    "}\n"
+    "Возвращай топ-3 варианта. hs_code всегда 10 цифр без пробелов."
 )
 
 
@@ -216,24 +224,37 @@ async def classify_hs_code(
             "note": safe_ai_error_note(exc),
         }
     text = llm_resp.get("text", "").strip()
-    data = llm_resp.get("raw", {})
 
     try:
-        parsed = json.loads(text)
-        parsed.setdefault("query", description)
-        parsed.setdefault("status", "OK")
-        parsed.setdefault("provider", llm_resp.get("provider"))
-        return parsed
-    except Exception as exc:
-        logger.exception("Не удалось разобрать ответ LLM, возвращаем сырые данные")
+        results = parse_classify_response(text)
+    except ValueError:
+        logger.exception("Не удалось разобрать ответ LLM классификатора")
         return {
             "status": "ERROR",
+            "error_code": "invalid_llm_response",
             "query": description,
+            "results": [],
             "provider": llm_resp.get("provider"),
-            "raw_response": data,
-            "error": "invalid_llm_response",
             "note": safe_ai_error_note(),
         }
+
+    if not results:
+        logger.warning("LLM classify: пустой список results после нормализации")
+        return {
+            "status": "ERROR",
+            "error_code": "invalid_llm_response",
+            "query": description,
+            "results": [],
+            "provider": llm_resp.get("provider"),
+            "note": safe_ai_error_note(),
+        }
+
+    return {
+        "status": "OK",
+        "query": description,
+        "results": results,
+        "provider": llm_resp.get("provider"),
+    }
 
 
 ASSISTANT_SYSTEM_PROMPT = (
