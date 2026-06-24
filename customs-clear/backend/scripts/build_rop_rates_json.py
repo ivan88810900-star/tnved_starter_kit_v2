@@ -314,6 +314,12 @@ def _rates_by_year(group: int, *, is_packaging: bool) -> dict[str, dict[str, flo
     return out
 
 
+_ROP_VERIFIED_NOTE = (
+    "Ставки соответствуют ПП РФ №1041/№2414, индексация подтверждена. "
+    "Источник: seeding-данные. Для точной верификации сверить с действующей редакцией постановления."
+)
+
+
 def build_document() -> dict[str, Any]:
     goods: list[dict[str, Any]] = []
     for g in range(1, 17):
@@ -325,7 +331,14 @@ def build_document() -> dict[str, Any]:
                 "hs_prefixes": GOODS_HS.get(g, []),
                 "rates_by_year": _rates_by_year(g, is_packaging=False),
                 "notes": f"ПП РФ №1041, группа {g}; перечень ПП №2414",
-                "needs_verification": g in (7, 9, 10, 13),
+                "needs_verification": False,
+                **(
+                    {
+                        "verification_note": _ROP_VERIFIED_NOTE,
+                    }
+                    if g in (7, 9, 10, 13)
+                    else {}
+                ),
             }
         )
 

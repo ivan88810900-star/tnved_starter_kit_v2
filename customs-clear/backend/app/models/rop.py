@@ -29,6 +29,7 @@ class RopGoodsRate(Base):
     legal_ref: Mapped[str] = mapped_column(String(512), nullable=False, default="")
     notes: Mapped[str] = mapped_column(Text, nullable=False, default="")
     needs_verification: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    verification_note: Mapped[str] = mapped_column(Text, nullable=False, default="")
 
 
 class RopPackagingRate(Base):

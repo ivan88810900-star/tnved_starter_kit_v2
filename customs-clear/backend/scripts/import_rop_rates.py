@@ -63,6 +63,7 @@ def _upsert_goods(session: Session, doc: dict[str, Any], *, dry_run: bool) -> tu
                 "legal_ref": legal,
                 "notes": str(item.get("notes") or ""),
                 "needs_verification": bool(item.get("needs_verification")),
+                "verification_note": str(item.get("verification_note") or ""),
             }
             if row is None:
                 created += 1
