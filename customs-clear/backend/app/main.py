@@ -215,6 +215,10 @@ app.include_router(non_tariff.router, prefix="/api/non_tariff", tags=["non_tarif
 app.include_router(regulatory.router, prefix="/api/regulatory", tags=["regulatory"])
 app.include_router(assistant.router, prefix="/api/assistant", tags=["assistant"])
 app.include_router(assistant.chat_router, prefix="/api/v1/assistant", tags=["assistant-v1"])
+# Обратная совместимость: старые клиенты вызывали /api/assistant/chat
+app.include_router(assistant.chat_router, prefix="/api/assistant", tags=["assistant-compat"])
+# Обратная совместимость: старые клиенты вызывали /api/tnved/classify
+app.include_router(classify.router, prefix="/api/tnved/classify", tags=["classify-compat"])
 app.include_router(sources.router, prefix="/api/sources", tags=["sources"])
 app.include_router(compliance.router, prefix="/api/compliance", tags=["compliance"])
 app.include_router(risk.router, prefix="/api/risk", tags=["risk"])
