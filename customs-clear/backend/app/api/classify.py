@@ -7,6 +7,7 @@ from ..security import require_authenticated_user
 
 from ..services.audit_log import request_audit_meta
 from ..services.claude_service import classify_hs_code
+from ..services.safe_http_errors import AI_SERVICE_UNAVAILABLE, contains_sensitive_error_text
 from ..services import custom_classifier_service as ccs
 
 
@@ -102,9 +103,13 @@ async def classify(req: ClassifyRequest, request: Request) -> JSONResponse:
                 return JSONResponse(custom)
 
         return JSONResponse(result)
+    except HTTPException:
+        raise
     except Exception as exc:
         logger.exception("Ошибка классификации ТН ВЭД")
-        raise HTTPException(status_code=500, detail=str(exc))
+        if contains_sensitive_error_text(str(exc)):
+            raise HTTPException(status_code=503, detail=AI_SERVICE_UNAVAILABLE) from exc
+        raise HTTPException(status_code=500, detail=AI_SERVICE_UNAVAILABLE) from exc
 
 
 class ClassifyImageRequest(BaseModel):
