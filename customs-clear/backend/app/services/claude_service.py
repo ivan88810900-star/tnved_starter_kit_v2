@@ -13,7 +13,7 @@ from .gemini_genai_configure import gemini_generate_content_rest_url, resolved_g
 from .safe_http_errors import safe_ai_error_note
 
 ANTHROPIC_URL = "https://api.anthropic.com/v1/messages"
-ANTHROPIC_MODEL_NAME = os.getenv("ANTHROPIC_MODEL_NAME", "claude-3.7-sonnet-20250219")
+ANTHROPIC_MODEL_NAME = os.getenv("ANTHROPIC_MODEL_NAME", "claude-haiku-4-5-20251001")
 
 SYSTEM_PROMPT = (
     "Ты — эксперт по таможенной классификации товаров согласно ТН ВЭД ЕАЭС.\n"
@@ -34,15 +34,29 @@ def _anthropic_key_env() -> str:
     return (os.getenv("ANTHROPIC_API_KEY") or "").strip()
 
 
-def _choose_provider() -> tuple[str, str | None]:
-    """Только серверная конфигурация: Gemini (GEMINI_API_KEY / GOOGLE_API_KEY), затем Anthropic."""
+def _llm_provider_pref() -> str:
+    return (os.getenv("LLM_PROVIDER") or "anthropic").strip().lower()
+
+
+def llm_provider_chain() -> list[tuple[str, str]]:
+    """Порядок провайдеров: LLM_PROVIDER=anthropic (default) → Claude, затем Gemini fallback."""
     g = _gemini_key_env()
-    if g:
-        return "gemini", g
     a = _anthropic_key_env()
-    if a:
-        return "anthropic", a
-    return "none", None
+    order = ("gemini", "anthropic") if _llm_provider_pref() == "gemini" else ("anthropic", "gemini")
+    chain: list[tuple[str, str]] = []
+    for provider in order:
+        key = a if provider == "anthropic" else g
+        if key:
+            chain.append((provider, key))
+    return chain
+
+
+def _choose_provider() -> tuple[str, str | None]:
+    """Основной LLM-провайдер (первый доступный в цепочке)."""
+    chain = llm_provider_chain()
+    if not chain:
+        return "none", None
+    return chain[0]
 
 
 def is_llm_configured() -> bool:
@@ -97,13 +111,25 @@ async def _call_gemini(system_prompt: str, user_text: str, key: str) -> dict[str
 
 
 async def _ask_llm(system_prompt: str, user_text: str) -> dict[str, Any]:
-    provider, key = _choose_provider()
-    if provider == "none" or not key:
+    chain = llm_provider_chain()
+    if not chain:
         return {"provider": "none", "text": "", "raw": {}}
-    logger.info(f"Запрос к LLM провайдеру: {provider}")
-    if provider == "gemini":
-        return await _call_gemini(system_prompt, user_text, key)
-    return await _call_anthropic(system_prompt, user_text, key)
+
+    last_exc: Exception | None = None
+    for provider, key in chain:
+        logger.info(f"Запрос к LLM провайдеру: {provider}")
+        try:
+            if provider == "gemini":
+                return await _call_gemini(system_prompt, user_text, key)
+            return await _call_anthropic(system_prompt, user_text, key)
+        except (httpx.HTTPError, OSError, TimeoutError) as exc:
+            logger.warning(f"LLM провайдер {provider} недоступен: {exc}")
+            last_exc = exc
+            continue
+
+    if last_exc is not None:
+        raise last_exc
+    return {"provider": "none", "text": "", "raw": {}}
 
 
 DECLARATION_DRAFT_LINES_SYSTEM = (

@@ -9,7 +9,7 @@ import httpx
 from loguru import logger
 
 from ..api.v1.assistant import configure_gemini_sdk
-from .claude_service import ANTHROPIC_MODEL_NAME, ANTHROPIC_URL, _choose_provider
+from .claude_service import ANTHROPIC_MODEL_NAME, ANTHROPIC_URL, llm_provider_chain
 from .gemini_genai_configure import resolved_gemini_model_name
 
 _WARN_GENERIC = (
@@ -133,8 +133,8 @@ async def run_assistant_chat(
     history: list[dict[str, Any]],
     current_context: dict[str, Any] | None,
 ) -> str:
-    provider, api_key = _choose_provider()
-    if provider == "none" or not api_key:
+    chain = llm_provider_chain()
+    if not chain:
         return _WARN_GENERIC
 
     system_instruction = _system_with_context_only(current_context)
@@ -143,20 +143,45 @@ async def run_assistant_chat(
     if not user_msg:
         return "Введите сообщение."
 
-    if provider == "anthropic":
-        try:
-            msgs = _anthropic_messages(turns, user_msg)
-            if not msgs:
-                return _WARN_GENERIC
-            return await _call_anthropic_messages(system_instruction, msgs, api_key) or _WARN_GENERIC
-        except httpx.HTTPStatusError as exc:
-            logger.warning(f"assistant_chat anthropic HTTP: {exc}")
-            return _WARN_GENERIC
-        except Exception as exc:
-            logger.exception(f"assistant_chat anthropic: {exc}")
-            return _WARN_GENERIC
+    last_generic = _WARN_GENERIC
+    for provider, api_key in chain:
+        if provider == "anthropic":
+            try:
+                msgs = _anthropic_messages(turns, user_msg)
+                if not msgs:
+                    continue
+                text = await _call_anthropic_messages(system_instruction, msgs, api_key)
+                if text:
+                    return text
+            except httpx.HTTPStatusError as exc:
+                logger.warning(f"assistant_chat anthropic HTTP: {exc}")
+                last_generic = _WARN_GENERIC
+                continue
+            except Exception as exc:
+                logger.exception(f"assistant_chat anthropic: {exc}")
+                last_generic = _WARN_GENERIC
+                continue
 
-    # Gemini (по умолчанию при наличии GOOGLE-ключа или не-ant ключе)
+        gemini_answer = await _run_assistant_chat_gemini(
+            api_key=api_key,
+            system_instruction=system_instruction,
+            turns=turns,
+            user_msg=user_msg,
+        )
+        if gemini_answer and gemini_answer not in {_WARN_GENERIC, _WARN_QUOTA, _WARN_REGION}:
+            return gemini_answer
+        last_generic = gemini_answer or last_generic
+
+    return last_generic
+
+
+async def _run_assistant_chat_gemini(
+    *,
+    api_key: str,
+    system_instruction: str,
+    turns: list[tuple[str, str]],
+    user_msg: str,
+) -> str:
     try:
         import google.generativeai as genai
     except ModuleNotFoundError:
