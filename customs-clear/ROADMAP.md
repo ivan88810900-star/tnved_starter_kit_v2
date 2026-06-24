@@ -227,6 +227,13 @@
 - [x] **PR #149 + UI (#147)** — AI classifier: `/api/classify/image`, `/characteristics`, `/history`; вкладки в классификаторе. ✅ merged 2026-06-22
 - [x] **SmartClassifier (пакинг-листы)** — `smart_classifier.py`: перевод CN/EN, Claude Vision, web-search/fallback по артикулу; расширенный `POST /api/classify`, `/classify/batch`; invoice upload с колонками `image_url`, `article`, `manufacturer`; `classify_meta.photo_analyzed` в batch-ответе.
 
+### Фаза AB — Пакинг-листы (Vision + экспорт)
+
+- [x] **Универсальный парсер** — `packing_list_parser.py`: автоопределение колонок CN/EN/RU, извлечение фото по якорю строки; PR #179.
+- [x] **Vision-классификация** — `POST /api/invoice/upload-packing-list` + SmartClassifier; проверено на `询价6.24.xlsx` (138 строк, 135 фото).
+- [x] **Async-задачи** — `GET /api/invoice/task/{id}`, `/task/{id}/results`; Redis + in-memory fallback.
+- [x] **Экспорт Excel** — колонки «Перевод (RU)», «Код ТН ВЭД», «Уверенность %», «Обоснование»; `GET /api/invoice/download/{task_id}`.
+
 ### Фаза X — Аудит ТРОИС и СС/ДС (Issue #151)
 
 - [x] **PR #152 (Issue #151)** — TROIS: fuzzy-matching, `trois_fts_fetch.py` (folder/14344), `fetch_trois_registry.py`, БД→in-memory sync, `risk_level`, GET `/api/trois/check/{query}`, cron понедельник. СС/ДС: FSA `filter` API, кэш 24h, `manual_check_url`, `PermitDocumentsBlock` в карточке товара, дисклеймеры. ✅ merged 2026-06-22
@@ -274,7 +281,7 @@
 
 ---
 
-*Последнее обновление: фаза AA — групповые коды ТН ВЭД (CLARIFICATION_NEEDED). 2026-06-23.*
+*Последнее обновление: фаза AB — пакинг-листы Vision + async экспорт. 2026-06-24.*
 
 ### Фаза AA — Trade remedies audit (Issue #170)
 
