@@ -90,6 +90,34 @@ def normalize_number(raw: str) -> str:
     return s
 
 
+_REGISTRY_PREFIXES = ("ЕАЭС", "EAEU", "РОСС", "ВП")
+
+
+def canonical_cert_number(raw: str) -> str:
+    """Канонический хвост номера без префиксов opendata (ЕАЭС/РОСС/ВП)."""
+    s = normalize_number(raw)
+    if not s:
+        return ""
+    for prefix in _REGISTRY_PREFIXES:
+        if s.startswith(prefix):
+            return s[len(prefix) :]
+    return s
+
+
+def cert_number_search_variants(raw: str) -> list[str]:
+    """Варианты registry_number для поиска в fsa_certificates."""
+    base = normalize_number(raw)
+    if not base:
+        return []
+    variants: set[str] = {base}
+    core = canonical_cert_number(raw)
+    if core:
+        variants.add(core)
+        for prefix in _REGISTRY_PREFIXES:
+            variants.add(f"{prefix}{core}")
+    return list(variants)
+
+
 def _extract_sgr_from_html(html: str, search_number: str) -> Dict[str, Any]:
     """Парсинг страницы fp.crc.ru — поиск по номеру СГР."""
     soup = BeautifulSoup(html, "html.parser")

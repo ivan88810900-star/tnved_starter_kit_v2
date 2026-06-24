@@ -47,6 +47,11 @@ _USERS = {
         "password": _required_env("DECLARANT_PASSWORD"),
         "role": "declarant",
     },
+    "test": {
+        "username": "test",
+        "password": (os.getenv("TEST_PASSWORD") or "test123").strip(),
+        "role": "declarant",
+    },
 }
 
 

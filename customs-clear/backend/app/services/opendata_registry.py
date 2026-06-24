@@ -8,7 +8,12 @@ from typing import Any
 
 from ..db import SessionLocal
 from ..models.tnved import FsaCertificate, OpendataSyncLog
-from .permits_service import build_fsa_manual_link, normalize_number
+from .permits_service import (
+    build_fsa_manual_link,
+    canonical_cert_number,
+    cert_number_search_variants,
+    normalize_number,
+)
 
 OPENDATA_FSA_SOURCE = "открытые данные Росаккредитации (fsa.gov.ru/opendata)"
 OPENDATA_TROIS_SOURCE = "открытые данные ФТС России (customs.gov.ru/opendata)"
@@ -56,23 +61,42 @@ def _registry_status_to_verify(status: str, expiry: str) -> str:
     return "VALID" if status else "UNKNOWN"
 
 
+def _find_fsa_certificate_row(db: Any, number: str) -> FsaCertificate | None:
+    variants = cert_number_search_variants(number)
+    canonical = canonical_cert_number(number)
+    if not variants:
+        return None
+
+    row = (
+        db.query(FsaCertificate)
+        .filter(FsaCertificate.registry_number.in_(variants))
+        .first()
+    )
+    if row is not None:
+        return row
+
+    if not canonical:
+        return None
+
+    suffix = canonical[-24:] if len(canonical) > 24 else canonical
+    rows = (
+        db.query(FsaCertificate)
+        .filter(FsaCertificate.registry_number.ilike(f"%{suffix}%"))
+        .limit(10)
+        .all()
+    )
+    for candidate in rows:
+        if canonical_cert_number(candidate.registry_number) == canonical:
+            return candidate
+    return None
+
+
 def lookup_fsa_certificate(number: str, doc_type: str) -> dict[str, Any] | None:
     norm = normalize_number(number)
     if not norm:
         return None
     with SessionLocal() as db:
-        row = (
-            db.query(FsaCertificate)
-            .filter(FsaCertificate.registry_number == norm)
-            .one_or_none()
-        )
-        if row is None:
-            # fuzzy: без пробелов иногда отличается регистр ЕАЭС
-            rows = db.query(FsaCertificate).filter(FsaCertificate.registry_number.ilike(f"%{norm[-20:]}%")).limit(5).all()
-            for candidate in rows:
-                if normalize_number(candidate.registry_number) == norm:
-                    row = candidate
-                    break
+        row = _find_fsa_certificate_row(db, number)
         if row is None:
             return None
 
@@ -85,7 +109,7 @@ def lookup_fsa_certificate(number: str, doc_type: str) -> dict[str, Any] | None:
     return {
         "type": doc_type,
         "status": verify_status,
-        "number": norm,
+        "number": normalize_number(row.registry_number),
         "holder": row.applicant or row.manufacturer or None,
         "valid_from": row.issue_date or None,
         "valid_to": row.expiry_date or None,
