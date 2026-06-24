@@ -50,12 +50,15 @@ class UploadPackingListApiTests(unittest.TestCase):
         self.assertIn("name", body["meta"]["columns_found"])
         self.assertEqual(body["results"][0]["name_cn"], "塑料盒")
 
-    @patch("app.services.packing_list_tasks.get_smart_classifier")
+    @patch("app.services.packing_list_classify.get_smart_classifier")
     def test_upload_packing_list_async_task(self, mock_get_clf) -> None:
         from app.services.smart_classifier import ClassifyResult
 
         mock_clf = AsyncMock()
-        mock_clf.classify = AsyncMock(
+        mock_clf.prepare_translations = AsyncMock(return_value={})
+        mock_clf.translate_cached = AsyncMock(return_value="пластиковая коробка")
+        mock_clf.get_or_analyze_vision = AsyncMock(return_value="На фото контейнер")
+        mock_clf.get_or_classify_group = AsyncMock(
             return_value=ClassifyResult(
                 results=[{
                     "hs_code": "3924100000",
