@@ -627,12 +627,18 @@ def _photo_analysis_report(path: Path | None) -> str:
     return "Нет"
 
 
-def extract_images_from_xlsx(file_path: str | Path, *, sheet: int | str = 0) -> dict[int, Path]:
+def extract_images_from_xlsx(
+    file_path: str | Path,
+    *,
+    sheet: int | str = 0,
+    any_column: bool = False,
+) -> dict[int, Path]:
     """
     Обходит `sheet._images` (openpyxl), сопоставляет якорь с номером строки Excel (1-based),
     сохраняет снимок в `backend/data/temp_images/{row_number}.jpg` (RGB JPEG).
 
-    Учитываются вложения в колонке с заголовком «产品图片» / аналогах (как в спецификациях).
+    По умолчанию — только колонка с заголовком «产品图片» / аналогами.
+    При `any_column=True` или если колонка не найдена — все вложения по строке якоря.
     Перед заполнением очищает каталог temp_images.
     """
     p = Path(file_path)
@@ -653,18 +659,20 @@ def extract_images_from_xlsx(file_path: str | Path, *, sheet: int | str = 0) -> 
             ws = wb[str(sheet)]
 
         img_col: int | None = None
-        for cell in ws[1]:
-            if cell.value and _header_is_product_image_column(str(cell.value)):
-                img_col = int(cell.column) - 1
+        for row_num in range(1, min(4, (ws.max_row or 1) + 1)):
+            for cell in ws[row_num]:
+                if cell.value and _header_is_product_image_column(str(cell.value)):
+                    img_col = int(cell.column) - 1
+                    break
+            if img_col is not None:
                 break
-        if img_col is None:
-            return {}
 
+        extract_all = any_column or img_col is None
         result: dict[int, Path] = {}
         for im in getattr(ws, "_images", None) or []:
             try:
                 frm = im.anchor._from
-                if int(frm.col) != img_col:
+                if not extract_all and int(frm.col) != img_col:
                     continue
                 excel_row = int(frm.row) + 1
                 raw = im._data()
