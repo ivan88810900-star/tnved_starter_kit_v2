@@ -10,6 +10,7 @@ from loguru import logger
 
 from .decision_history import journal_hints_for_classifier
 from .gemini_genai_configure import gemini_generate_content_rest_url, resolved_gemini_model_name
+from .safe_http_errors import safe_ai_error_note
 
 ANTHROPIC_URL = "https://api.anthropic.com/v1/messages"
 ANTHROPIC_MODEL_NAME = os.getenv("ANTHROPIC_MODEL_NAME", "claude-3.7-sonnet-20250219")
@@ -177,7 +178,17 @@ async def classify_hs_code(
         else ""
     )
     user_text = f"{prefix}{description}" if prefix else description
-    llm_resp = await _ask_llm(SYSTEM_PROMPT, user_text)
+    try:
+        llm_resp = await _ask_llm(SYSTEM_PROMPT, user_text)
+    except (httpx.HTTPError, OSError, TimeoutError) as exc:
+        logger.exception("LLM classify request failed")
+        return {
+            "status": "ERROR",
+            "error_code": "llm_unavailable",
+            "query": description,
+            "results": [],
+            "note": safe_ai_error_note(exc),
+        }
     text = llm_resp.get("text", "").strip()
     data = llm_resp.get("raw", {})
 
@@ -194,7 +205,8 @@ async def classify_hs_code(
             "query": description,
             "provider": llm_resp.get("provider"),
             "raw_response": data,
-            "error": str(exc),
+            "error": "invalid_llm_response",
+            "note": safe_ai_error_note(),
         }
 
 
