@@ -16,6 +16,7 @@ Usage:
 """
 from __future__ import annotations
 
+import json
 import sys
 from pathlib import Path
 
@@ -26,6 +27,15 @@ from sqlalchemy import text
 from app.db import SessionLocal, engine, Base
 
 DRY_RUN = "--dry-run" in sys.argv
+CHAPTER_SEED_PATH = BACKEND_ROOT / "data" / "declaration_documents_chapters.json"
+
+
+def load_chapter_seed() -> list[dict]:
+    """Chapter-specific docs from official TR TS / EEC decisions (JSON seed)."""
+    if not CHAPTER_SEED_PATH.exists():
+        return []
+    payload = json.loads(CHAPTER_SEED_PATH.read_text(encoding="utf-8"))
+    return list(payload.get("specific") or [])
 
 # ═══════════════════════════════════════════════════════════════════
 # Universal documents (apply to all HS codes via prefix "")
@@ -182,15 +192,45 @@ SPECIFIC = [
 ]
 
 
+def _insert_entries(db, entries: list[dict], *, hs_key: str = "hs") -> int:
+    from app.models.tnved import DeclarationDocument
+
+    inserted = 0
+    for entry in entries:
+        hs = entry.get(hs_key, "")
+        exists = db.execute(
+            text(
+                "SELECT 1 FROM declaration_documents "
+                "WHERE hs_prefix = :hs AND doc_type = :dt AND doc_name = :dn"
+            ),
+            {"hs": hs, "dt": entry["type"], "dn": entry["name"]},
+        ).fetchone()
+        if exists:
+            continue
+        db.add(
+            DeclarationDocument(
+                hs_prefix=hs,
+                doc_type=entry["type"],
+                doc_name=entry["name"],
+                is_mandatory=entry["mandatory"],
+                condition=entry.get("cond", ""),
+                legal_ref=entry["legal"],
+                category=entry["cat"],
+            )
+        )
+        inserted += 1
+    return inserted
+
+
 def seed() -> dict[str, int]:
     from app.models.tnved import DeclarationDocument
     Base.metadata.create_all(engine, tables=[DeclarationDocument.__table__])
 
+    chapter_seed = load_chapter_seed()
+    all_specific = SPECIFIC + chapter_seed
+
     inserted = 0
     with SessionLocal() as db:
-        for docs, hs_prefix in [(UNIVERSAL, ""), *[(None, None)]]:
-            pass
-
         for entry in UNIVERSAL:
             exists = db.execute(
                 text("SELECT 1 FROM declaration_documents WHERE hs_prefix = '' AND doc_type = :dt AND doc_name = :dn"),
@@ -210,24 +250,7 @@ def seed() -> dict[str, int]:
             db.add(row)
             inserted += 1
 
-        for entry in SPECIFIC:
-            exists = db.execute(
-                text("SELECT 1 FROM declaration_documents WHERE hs_prefix = :hs AND doc_type = :dt AND doc_name = :dn"),
-                {"hs": entry["hs"], "dt": entry["type"], "dn": entry["name"]},
-            ).fetchone()
-            if exists:
-                continue
-            row = DeclarationDocument(
-                hs_prefix=entry["hs"],
-                doc_type=entry["type"],
-                doc_name=entry["name"],
-                is_mandatory=entry["mandatory"],
-                condition=entry.get("cond", ""),
-                legal_ref=entry["legal"],
-                category=entry["cat"],
-            )
-            db.add(row)
-            inserted += 1
+        inserted += _insert_entries(db, all_specific)
 
         if DRY_RUN:
             db.rollback()
