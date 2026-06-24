@@ -2,11 +2,10 @@
 
 from __future__ import annotations
 
-import tempfile
 from pathlib import Path
 
-from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
-from fastapi.responses import Response
+from fastapi import APIRouter, BackgroundTasks, Depends, File, Form, HTTPException, Query, UploadFile
+from fastapi.responses import FileResponse, Response
 from pydantic import BaseModel, Field
 
 from ..security import require_authenticated_user
@@ -15,8 +14,13 @@ from ..services.invoice_batch_service import (
     calculate_batch_lines,
     parse_invoice_file,
 )
-from ..services.packing_list_parser import parse_packing_list
-from ..services.smart_classifier import get_smart_classifier
+from ..services.packing_list_tasks import (
+    create_packing_list_task,
+    get_task,
+    get_task_export_path,
+    get_task_results,
+    task_status_payload,
+)
 
 router = APIRouter(dependencies=[Depends(require_authenticated_user)])
 
@@ -80,67 +84,75 @@ async def invoice_calculate_batch(body: InvoiceBatchRequest) -> dict:
 
 @router.post("/upload-packing-list")
 async def upload_packing_list(
+    background_tasks: BackgroundTasks,
     file: UploadFile = File(...),
     classify: bool = Form(False),
-    max_rows: int = Form(10),
+    max_rows: int | None = Form(None),
     start_row: int = Form(1),
 ) -> dict:
-    """Универсальный разбор пакинг-листа (.xlsx) с автоопределением колонок."""
-    name = (file.filename or "").lower()
-    if not name.endswith(".xlsx"):
+    """Универсальный разбор пакинг-листа (.xlsx). При classify=true — фоновая задача."""
+    name = (file.filename or "").strip()
+    if not name.lower().endswith(".xlsx"):
         raise HTTPException(status_code=400, detail="Поддерживается только .xlsx")
 
     content = await file.read()
     if not content:
         raise HTTPException(status_code=422, detail="Пустой файл")
 
-    max_rows = max(1, min(int(max_rows), 500))
-    start_row = max(1, int(start_row))
-
-    with tempfile.NamedTemporaryFile(suffix=".xlsx", delete=False) as tmp:
-        tmp.write(content)
-        tmp_path = Path(tmp.name)
+    max_rows_int: int | None = None
+    if max_rows is not None and str(max_rows).strip() != "":
+        max_rows_int = max(1, min(int(max_rows), 500))
 
     try:
-        rows, meta = parse_packing_list(tmp_path)
-    except Exception as exc:
-        raise HTTPException(status_code=422, detail=f"Не удалось разобрать файл: {exc}") from exc
-    finally:
-        tmp_path.unlink(missing_ok=True)
+        return await create_packing_list_task(
+            file_bytes=content,
+            original_filename=Path(name).name,
+            background_tasks=background_tasks,
+            classify=bool(classify),
+            max_rows=max_rows_int,
+            start_row=max(1, int(start_row)),
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
 
-    if not rows:
-        raise HTTPException(status_code=422, detail="В файле не найдено строк данных")
 
-    slice_start = start_row - 1
-    slice_end = slice_start + max_rows
-    selected = rows[slice_start:slice_end]
+@router.get("/task/{task_id}")
+async def packing_list_task_status(task_id: str) -> dict:
+    task = await get_task(task_id)
+    if not task:
+        raise HTTPException(status_code=404, detail="Задача не найдена")
+    return task_status_payload(task)
 
-    results: list[dict] = []
-    for row in selected:
-        item: dict = row.to_dict(include_image=classify)
-        if classify:
-            desc_parts = [p for p in (row.name_cn, row.material) if p]
-            clf = await get_smart_classifier().classify(
-                description=" ".join(desc_parts) if desc_parts else None,
-                image_base64=row.image_base64,
-                article=row.article,
-            )
-            api = clf.to_api_dict()
-            item["translation_used"] = api.get("translation_used") or ""
-            item["visual_analysis"] = api.get("visual_analysis")
-            item["classify_status"] = api.get("status")
-            top = (api.get("results") or [{}])[0] if api.get("results") else {}
-            item["hs_code"] = top.get("hs_code")
-            item["hs_confidence"] = top.get("confidence")
-            item["hs_description"] = top.get("description")
-            item["hs_rationale"] = top.get("rationale")
-            item["classify_results"] = api.get("results") or []
-            if api.get("note"):
-                item["classify_note"] = api.get("note")
-        results.append(item)
 
-    return {
-        "status": "OK",
-        "meta": meta,
-        "results": results,
-    }
+@router.get("/task/{task_id}/results")
+async def packing_list_task_results(
+    task_id: str,
+    start: int = Query(0, ge=0),
+    limit: int = Query(50, ge=1, le=500),
+) -> dict:
+    payload = await get_task_results(task_id, start=start, limit=limit)
+    if not payload:
+        raise HTTPException(status_code=404, detail="Задача не найдена")
+    return payload
+
+
+@router.get("/download/{task_id}")
+async def packing_list_download(task_id: str) -> FileResponse:
+    export_path = await get_task_export_path(task_id)
+    if not export_path:
+        task = await get_task(task_id)
+        if not task:
+            raise HTTPException(status_code=404, detail="Задача не найдена")
+        if task.get("status") == "processing":
+            raise HTTPException(status_code=409, detail="Классификация ещё выполняется")
+        raise HTTPException(status_code=404, detail="Файл экспорта недоступен")
+    filename = export_path.name
+    if filename.startswith("classified_"):
+        parts = filename.split("_", 2)
+        if len(parts) == 3:
+            filename = f"classified_{parts[2]}"
+    return FileResponse(
+        path=export_path,
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        filename=filename,
+    )

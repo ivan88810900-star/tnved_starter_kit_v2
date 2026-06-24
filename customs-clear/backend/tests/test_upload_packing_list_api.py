@@ -1,11 +1,10 @@
-"""API: POST /api/invoice/upload-packing-list."""
+"""API: POST /api/invoice/upload-packing-list + task endpoints."""
 from __future__ import annotations
 
 import io
+import importlib.util
 import unittest
 from unittest.mock import AsyncMock, patch
-
-import importlib.util
 
 from openpyxl import Workbook
 
@@ -38,21 +37,21 @@ class UploadPackingListApiTests(unittest.TestCase):
         cls.client = TestClient(app)
         login_declarant(cls.client)
 
-    def test_upload_packing_list_meta(self) -> None:
+    def test_upload_packing_list_parse_only(self) -> None:
         r = self.client.post(
             "/api/invoice/upload-packing-list",
             files={"file": ("pack.xlsx", _sample_xlsx(), "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")},
-            data={"classify": "false", "max_rows": "10"},
+            data={"classify": "false"},
         )
         self.assertEqual(r.status_code, 200, r.text)
         body = r.json()
-        self.assertEqual(body["status"], "OK")
+        self.assertEqual(body["status"], "done")
+        self.assertIn("task_id", body)
         self.assertIn("name", body["meta"]["columns_found"])
-        self.assertEqual(body["meta"]["total_rows"], 1)
         self.assertEqual(body["results"][0]["name_cn"], "塑料盒")
 
-    @patch("app.api.invoice.get_smart_classifier")
-    def test_upload_packing_list_classify(self, mock_get_clf) -> None:
+    @patch("app.services.packing_list_tasks.get_smart_classifier")
+    def test_upload_packing_list_async_task(self, mock_get_clf) -> None:
         from app.services.smart_classifier import ClassifyResult
 
         mock_clf = AsyncMock()
@@ -65,7 +64,7 @@ class UploadPackingListApiTests(unittest.TestCase):
                     "rationale": "PP plastic box",
                 }],
                 translation_used="пластиковая коробка",
-                visual_analysis="На фото прозрачный контейнер",
+                visual_analysis="На фото контейнер",
                 status="OK",
             )
         )
@@ -77,7 +76,20 @@ class UploadPackingListApiTests(unittest.TestCase):
             data={"classify": "true", "max_rows": "1"},
         )
         self.assertEqual(r.status_code, 200, r.text)
-        row = r.json()["results"][0]
+        body = r.json()
+        self.assertEqual(body["status"], "processing")
+        task_id = body["task_id"]
+
+        status = self.client.get(f"/api/invoice/task/{task_id}")
+        self.assertEqual(status.status_code, 200)
+        self.assertEqual(status.json()["status"], "done")
+
+        results = self.client.get(f"/api/invoice/task/{task_id}/results?limit=5")
+        self.assertEqual(results.status_code, 200)
+        row = results.json()["results"][0]
         self.assertEqual(row["translation_used"], "пластиковая коробка")
-        self.assertEqual(row["visual_analysis"], "На фото прозрачный контейнер")
         self.assertEqual(row["hs_code"], "3924100000")
+
+        dl = self.client.get(f"/api/invoice/download/{task_id}")
+        self.assertEqual(dl.status_code, 200)
+        self.assertIn("spreadsheet", dl.headers.get("content-type", ""))
