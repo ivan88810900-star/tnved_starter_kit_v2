@@ -27,7 +27,7 @@ def export_db_brands_json(path: Path | None = None) -> int:
     with SessionLocal() as db:
         rows = (
             db.query(TroisRegistry)
-            .filter(TroisRegistry.trademark.isnot(None))
+            .filter(TroisRegistry.trademark.isnot(None), TroisRegistry.is_active.is_(True))
             .limit(50000)
             .all()
         )
@@ -75,7 +75,7 @@ def sync_db_to_local_cache(force: bool = False) -> int:
     added = 0
     seen_keys: set[str] = set()
     with SessionLocal() as db:
-        rows = db.query(TroisRegistry).limit(50000).all()
+        rows = db.query(TroisRegistry).filter(TroisRegistry.is_active.is_(True)).limit(50000).all()
         for row in rows:
             for raw_name in (row.trademark, row.brand):
                 name = (raw_name or "").strip()
@@ -97,15 +97,26 @@ def sync_db_to_local_cache(force: bool = False) -> int:
     return added
 
 
-def search_db_registry(query: str, *, max_results: int = 10) -> list[dict[str, Any]]:
-    """Поиск в БД через ``query_trois_matches_for_trademark``."""
-    from .trois_registry_sync import normalize_trademark_for_registry, query_trois_matches_for_trademark
+def search_db_registry(query: str, *, max_results: int = 10) -> tuple[list[dict[str, Any]], str | None]:
+    """Поиск в БД через ``query_trois_matches_for_trademark``. Возвращает (items, warning)."""
+    from .trois_registry_sync import (
+        TROIS_EXPIRED_WARNING,
+        normalize_trademark_for_registry,
+        query_trois_matches_for_trademark,
+    )
 
     tm = normalize_trademark_for_registry(query)
     if not tm:
-        return []
+        return [], None
     with SessionLocal() as db:
-        rows = query_trois_matches_for_trademark(db, tm, max_results=max_results)
+        rows = query_trois_matches_for_trademark(db, tm, max_results=max_results, active_only=True)
+        warning: str | None = None
+        if not rows:
+            rows = query_trois_matches_for_trademark(db, tm, max_results=max_results, active_only=False)
+            expired = [r for r in rows if not r.is_active]
+            if expired:
+                rows = expired
+                warning = TROIS_EXPIRED_WARNING
     out: list[dict[str, Any]] = []
     for row in rows:
         score = getattr(row, "_trois_match_score", None)
@@ -117,7 +128,8 @@ def search_db_registry(query: str, *, max_results: int = 10) -> list[dict[str, A
                 "reg_number": row.reg_number,
                 "status": row.status,
                 "valid_until": row.valid_until,
+                "is_active": bool(row.is_active),
                 "match_score": score,
             }
         )
-    return out
+    return out, warning

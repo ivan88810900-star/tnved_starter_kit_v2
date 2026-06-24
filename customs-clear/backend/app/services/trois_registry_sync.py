@@ -6,6 +6,7 @@ import random
 import os
 import re
 import time
+from datetime import date
 from difflib import SequenceMatcher
 from typing import Any
 from urllib.parse import urljoin, urlparse
@@ -32,6 +33,24 @@ HTTP_UAS: tuple[str, ...] = (
 )
 
 REG_NUMBER_RE = re.compile(r"^\s*\d{5}/")
+
+TROIS_EXPIRED_WARNING = (
+    "Найдены записи ТРОИС с истёкшим сроком охраны. "
+    "Проверьте актуальность на customs.gov.ru/opendata"
+)
+
+
+def compute_trois_is_active(valid_until: str | None) -> bool:
+    """True если срок охраны не истёк или дата не указана."""
+    vu = (valid_until or "").strip()
+    if not vu:
+        return True
+    normalized = vu.replace(".", "-")
+    try:
+        y_s, m_s, d_s = normalized.split("-", 2)
+        return date(int(y_s), int(m_s), int(d_s)) >= date.today()
+    except (ValueError, TypeError):
+        return True
 
 
 def normalize_trademark_for_registry(raw: str) -> str:
@@ -318,6 +337,7 @@ def upsert_trois_registry_rows(rows: list[dict[str, str]]) -> dict[str, int]:
             st = _clean_cell(row.get("status", ""))[:120]
             vu = _clean_cell(row.get("valid_until", ""))[:128]
             reps = _clean_cell(row.get("representatives", ""))[:1200]
+            active = compute_trois_is_active(vu)
             existing = db.query(TroisRegistry).filter(TroisRegistry.reg_number == reg).one_or_none()
             if existing:
                 existing.brand = brand[:512]
@@ -326,6 +346,7 @@ def upsert_trois_registry_rows(rows: list[dict[str, str]]) -> dict[str, int]:
                 existing.status = st[:128]
                 existing.valid_until = vu[:128]
                 existing.representatives = reps
+                existing.is_active = active
                 updated += 1
             elif reg in seen_in_batch:
                 skipped += 1
@@ -340,6 +361,7 @@ def upsert_trois_registry_rows(rows: list[dict[str, str]]) -> dict[str, int]:
                         status=st[:128],
                         valid_until=vu[:128],
                         representatives=reps,
+                        is_active=active,
                     )
                 )
                 seen_in_batch.add(reg)
@@ -430,6 +452,7 @@ def query_trois_matches_for_trademark(
     like_min_len: int = 3,
     fuzzy_threshold: float = 0.74,
     max_results: int = 20,
+    active_only: bool = True,
 ) -> list[TroisRegistry]:
     """
     Надежный поиск ТРОИС:
@@ -438,6 +461,11 @@ def query_trois_matches_for_trademark(
     3) fuzzy ранжирование (SequenceMatcher) с порогом.
     """
     from sqlalchemy import func, or_
+
+    def _active_filter(q):
+        if active_only:
+            return q.filter(TroisRegistry.is_active.is_(True))
+        return q
 
     def _norm(s: str) -> str:
         x = normalize_trademark_for_registry(s)
@@ -451,8 +479,14 @@ def query_trois_matches_for_trademark(
     if not tm:
         return []
     exact = (
-        db.query(TroisRegistry)
-        .filter(or_(func.upper(func.trim(TroisRegistry.trademark)) == tm, func.upper(func.trim(TroisRegistry.brand)) == tm))
+        _active_filter(
+            db.query(TroisRegistry).filter(
+                or_(
+                    func.upper(func.trim(TroisRegistry.trademark)) == tm,
+                    func.upper(func.trim(TroisRegistry.brand)) == tm,
+                )
+            )
+        )
         .limit(max_results)
         .all()
     )
@@ -465,8 +499,11 @@ def query_trois_matches_for_trademark(
     if len(tm) >= like_min_len:
         pat = f"%{tm}%"
         candidates.extend(
-            db.query(TroisRegistry)
-            .filter(or_(TroisRegistry.trademark.like(pat), TroisRegistry.brand.like(pat)))
+            _active_filter(
+                db.query(TroisRegistry).filter(
+                    or_(TroisRegistry.trademark.like(pat), TroisRegistry.brand.like(pat))
+                )
+            )
             .limit(400)
             .all()
         )
@@ -475,8 +512,11 @@ def query_trois_matches_for_trademark(
         first = tm[:1]
         if first:
             candidates.extend(
-                db.query(TroisRegistry)
-                .filter(or_(TroisRegistry.trademark.like(f"{first}%"), TroisRegistry.brand.like(f"{first}%")))
+                _active_filter(
+                    db.query(TroisRegistry).filter(
+                        or_(TroisRegistry.trademark.like(f"{first}%"), TroisRegistry.brand.like(f"{first}%"))
+                    )
+                )
                 .limit(1200)
                 .all()
             )
@@ -495,4 +535,128 @@ def query_trois_matches_for_trademark(
     out = [r for _, r in scored[:max_results]]
     for s, row in scored[:max_results]:
         setattr(row, "_trois_match_score", round(float(s), 4))
+    return out
+
+
+def _hs_prefix_candidates(code: str) -> list[str]:
+    d = re.sub(r"\D", "", code or "")
+    if len(d) >= 6:
+        return list(dict.fromkeys([d[:6], d[:4]]))
+    if len(d) >= 4:
+        return [d[:4]]
+    return []
+
+
+def get_trois_for_hs_code(db, hs_code: str, *, max_results: int = 50) -> dict[str, Any]:
+    """
+    Защищённые бренды по префиксу ТН ВЭД (intellectual_properties + trois_registry).
+    Активные записи trois_registry приоритетны; при отсутствии — истёкшие с warning.
+    """
+    from sqlalchemy import func, or_
+
+    from ..models.tnved import IntellectualProperty
+
+    prefixes = _hs_prefix_candidates(hs_code)
+    if not prefixes:
+        return {"items": [], "active_count": 0, "expired_count": 0}
+
+    ip_rows = (
+        db.query(IntellectualProperty)
+        .filter(IntellectualProperty.hs_code_prefix.in_(prefixes))
+        .order_by(IntellectualProperty.hs_code_prefix.desc(), IntellectualProperty.brand_name.asc())
+        .limit(max_results)
+        .all()
+    )
+
+    items: list[dict[str, Any]] = []
+    seen_keys: set[str] = set()
+    active_count = 0
+    expired_count = 0
+
+    for ip in ip_rows:
+        brand = (ip.brand_name or "").strip()
+        if not brand:
+            continue
+        tm = normalize_trademark_for_registry(brand)
+        active_rows = (
+            db.query(TroisRegistry)
+            .filter(
+                TroisRegistry.is_active.is_(True),
+                or_(
+                    func.upper(func.trim(TroisRegistry.brand)) == tm,
+                    func.upper(func.trim(TroisRegistry.trademark)) == tm,
+                    TroisRegistry.brand.like(f"%{brand[:20]}%"),
+                ),
+            )
+            .limit(5)
+            .all()
+        )
+        registry_rows = active_rows
+        if not registry_rows:
+            registry_rows = (
+                db.query(TroisRegistry)
+                .filter(
+                    TroisRegistry.is_active.is_(False),
+                    or_(
+                        func.upper(func.trim(TroisRegistry.brand)) == tm,
+                        func.upper(func.trim(TroisRegistry.trademark)) == tm,
+                        TroisRegistry.brand.like(f"%{brand[:20]}%"),
+                    ),
+                )
+                .limit(5)
+                .all()
+            )
+
+        if registry_rows:
+            for row in registry_rows:
+                key = (row.reg_number or "").strip() or f"{ip.id}:{row.id}"
+                if key in seen_keys:
+                    continue
+                seen_keys.add(key)
+                is_active = bool(row.is_active)
+                if is_active:
+                    active_count += 1
+                else:
+                    expired_count += 1
+                items.append(
+                    {
+                        "brand_name": brand,
+                        "hs_code_prefix": ip.hs_code_prefix,
+                        "reg_number": row.reg_number or ip.reg_number,
+                        "right_holder": row.right_holder or ip.right_holder,
+                        "trademark": row.trademark,
+                        "valid_until": row.valid_until,
+                        "is_active": is_active,
+                        "status": row.status,
+                    }
+                )
+        else:
+            key = f"ip:{ip.id}"
+            if key in seen_keys:
+                continue
+            seen_keys.add(key)
+            items.append(
+                {
+                    "brand_name": brand,
+                    "hs_code_prefix": ip.hs_code_prefix,
+                    "reg_number": ip.reg_number,
+                    "right_holder": ip.right_holder,
+                    "trademark": brand,
+                    "valid_until": "",
+                    "is_active": True,
+                    "status": "catalog",
+                }
+            )
+            active_count += 1
+
+    out: dict[str, Any] = {
+        "hs_code": re.sub(r"\D", "", hs_code or "")[:10],
+        "prefixes": prefixes,
+        "items": items,
+        "active_count": active_count,
+        "expired_count": expired_count,
+        "total": len(items),
+    }
+    if expired_count > 0 and active_count == 0:
+        out["warning"] = TROIS_EXPIRED_WARNING
     return out

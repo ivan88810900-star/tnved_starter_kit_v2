@@ -1,4 +1,5 @@
 """API нетарифного контроля."""
+import re
 from typing import Any, Dict, List
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -9,6 +10,7 @@ from loguru import logger
 from ..services.non_tariff_service import check_position_non_tariff
 from ..services.normative_store import find_classification_rulings, find_declaration_documents, find_import_restrictions, list_tr_ts_acts
 from ..security import require_authenticated_user
+from ..db import SessionLocal
 
 router = APIRouter()
 
@@ -127,6 +129,23 @@ async def non_tariff_risk_block(
         if order.get(st, 0) > order.get(overall, 0):
             overall = st
     return JSONResponse({"status": overall, "items": results})
+
+
+@router.get("/trois/{hs_code}")
+async def trois_for_hs(
+    hs_code: str,
+    _user: dict = Depends(require_authenticated_user),
+) -> JSONResponse:
+    """Защищённые бренды ТРОИС по коду ТН ВЭД (только is_active=1, fallback на истёкшие с warning)."""
+    from ..services.trois_registry_sync import get_trois_for_hs_code
+
+    digits = re.sub(r"\D", "", hs_code or "")
+    if len(digits) < 4:
+        raise HTTPException(status_code=400, detail="Укажите код ТН ВЭД минимум 4 цифры")
+    with SessionLocal() as db:
+        payload = get_trois_for_hs_code(db, digits)
+    payload["status"] = "OK"
+    return JSONResponse(payload)
 
 
 @router.get("/classification/rulings/{hs_code}")

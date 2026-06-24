@@ -385,7 +385,7 @@ async def check_trademark(query: str) -> Dict[str, Any]:
             await cache_set(TROIS_PREFIX, key, out, ttl)
         return out
 
-    db_hits = search_db_registry(query, max_results=5)
+    db_hits, db_warning = search_db_registry(query, max_results=5)
     if db_hits:
         from .opendata_registry import OPENDATA_TROIS_SOURCE, get_sync_freshness
 
@@ -401,6 +401,8 @@ async def check_trademark(query: str) -> Dict[str, Any]:
                 ],
                 "reg_number": h.get("reg_number"),
                 "match_score": h.get("match_score"),
+                "is_active": h.get("is_active"),
+                "valid_until": h.get("valid_until"),
             }
             for h in db_hits
         ]
@@ -420,6 +422,8 @@ async def check_trademark(query: str) -> Dict[str, Any]:
             "official_url": TROIS_OFFICIAL_URL,
             "note": note,
         }
+        if db_warning:
+            out["warning"] = db_warning
         if key:
             await cache_set(TROIS_PREFIX, key, out, ttl)
         return out

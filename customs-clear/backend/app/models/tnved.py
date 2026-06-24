@@ -170,6 +170,7 @@ class TroisRegistry(Base):
     status: Mapped[str] = mapped_column(String(128), default="")
     valid_until: Mapped[str] = mapped_column(String(128), default="")
     representatives: Mapped[str] = mapped_column(Text, default="")
+    is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
 
 
 class IntellectualProperty(Base):
