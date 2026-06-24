@@ -85,10 +85,13 @@ async def test_create_task_async_classify(tmp_path: Path, monkeypatch: pytest.Mo
     src = tmp_path / "pack.xlsx"
     _build_sample_xlsx(src)
 
-    from app.services.smart_classifier import ClassifyResult
+    from app.services.smart_classifier import ClassifyResult, SmartClassifier
 
     mock_clf = AsyncMock()
-    mock_clf.classify = AsyncMock(
+    mock_clf.prepare_translations = AsyncMock(return_value={})
+    mock_clf.translate_cached = AsyncMock(return_value="коробка")
+    mock_clf.get_or_analyze_vision = AsyncMock(return_value="фото")
+    mock_clf.get_or_classify_group = AsyncMock(
         return_value=ClassifyResult(
             results=[{"hs_code": "3924100000", "confidence": 0.9, "description": "x", "rationale": "y"}],
             translation_used="коробка",
@@ -98,7 +101,7 @@ async def test_create_task_async_classify(tmp_path: Path, monkeypatch: pytest.Mo
     )
 
     bg = BackgroundTasks()
-    with patch("app.services.packing_list_tasks.get_smart_classifier", return_value=mock_clf):
+    with patch("app.services.packing_list_classify.get_smart_classifier", return_value=mock_clf):
         result = await create_packing_list_task(
             file_bytes=src.read_bytes(),
             original_filename="pack.xlsx",

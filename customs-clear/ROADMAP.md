@@ -233,6 +233,7 @@
 - [x] **Vision-классификация** — `POST /api/invoice/upload-packing-list` + SmartClassifier; проверено на `询价6.24.xlsx` (138 строк, 135 фото).
 - [x] **Async-задачи** — `GET /api/invoice/task/{id}`, `/task/{id}/results`; Redis + in-memory fallback.
 - [x] **Экспорт Excel** — колонки «Перевод (RU)», «Код ТН ВЭД», «Уверенность %», «Обоснование»; `GET /api/invoice/download/{task_id}`.
+- [x] **Оптимизация скорости** — батч-перевод, dedupe Vision/классификации по `(name_cn, material)`, параллель до 8 групп (`PACKING_CLASSIFY_CONCURRENCY`); ~11 с/группа вместо ~25 с/строка.
 
 ### Фаза X — Аудит ТРОИС и СС/ДС (Issue #151)
 

@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import asyncio
 import base64
+import json
 import re
 from dataclasses import dataclass, field
 from typing import Any
@@ -41,6 +43,13 @@ _EQUIPMENT_KEYWORDS = (
     "泵",
     "压缩机",
 )
+
+# Кэши для пакетной обработки пакинг-листов (перевод / vision / классификация по группе).
+_translation_cache: dict[str, str] = {}
+_vision_cache: dict[tuple[str, str], str] = {}
+_classify_group_cache: dict[tuple[str, str], "ClassifyResult"] = {}
+_cache_lock = asyncio.Lock()
+_BATCH_TRANSLATE_CHUNK = 45
 
 _CLASSIFY_WITH_CONTEXT_PROMPT = """Ты эксперт по классификации товаров по ТН ВЭД ЕАЭС.
 
@@ -187,24 +196,180 @@ class SmartClassifier:
     async def _translate_if_needed(self, text: str | None) -> str:
         if not text:
             return ""
+        key = text.strip()
+        if key in _translation_cache:
+            return _translation_cache[key]
+        translated = await self._do_translate(key)
+        _translation_cache[key] = translated
+        return translated
 
+    async def translate_cached(self, text: str | None) -> str:
+        """Перевод с кэшем (после prepare_translations)."""
+        if not text:
+            return ""
+        key = text.strip()
+        if key in _translation_cache:
+            return _translation_cache[key]
+        return await self._translate_if_needed(key)
+
+    @staticmethod
+    def _text_needs_translation(text: str) -> bool:
         has_chinese = any("\u4e00" <= c <= "\u9fff" for c in text)
         has_cyrillic = any("\u0400" <= c <= "\u04ff" for c in text)
+        return bool(has_chinese or (not has_cyrillic and len(text.strip()) > 5))
 
-        if has_chinese or (not has_cyrillic and len(text.strip()) > 5):
-            prompt = (
-                "Переведи на русский язык описание товара для таможенного декларирования.\n"
-                "Сохрани технические характеристики точно.\n"
-                f"Описание: {text}\n"
-                "Ответь только переводом, без пояснений."
+    async def _do_translate(self, text: str) -> str:
+        if not self._text_needs_translation(text):
+            return text.strip()
+        prompt = (
+            "Переведи на русский язык описание товара для таможенного декларирования.\n"
+            "Сохрани технические характеристики точно.\n"
+            f"Описание: {text}\n"
+            "Ответь только переводом, без пояснений."
+        )
+        try:
+            return (await complete_text(prompt, max_tokens=512)).strip() or text
+        except Exception as exc:
+            logger.warning(f"Translation failed, using original: {exc}")
+            return text
+
+    async def prepare_translations(self, texts: list[str]) -> dict[str, str]:
+        """Батч-перевод уникальных строк (один LLM-запрос на чанк)."""
+        pending: list[str] = []
+        for raw in texts:
+            t = (raw or "").strip()
+            if not t or t in _translation_cache:
+                continue
+            if not self._text_needs_translation(t):
+                _translation_cache[t] = t
+                continue
+            if t not in pending:
+                pending.append(t)
+
+        for i in range(0, len(pending), _BATCH_TRANSLATE_CHUNK):
+            chunk = pending[i : i + _BATCH_TRANSLATE_CHUNK]
+            await self._translate_batch_chunk(chunk)
+
+        return dict(_translation_cache)
+
+    async def _translate_batch_chunk(self, texts: list[str]) -> None:
+        if not texts:
+            return
+        if len(texts) == 1:
+            t = texts[0]
+            _translation_cache[t] = await self._do_translate(t)
+            return
+
+        lines = "\n".join(f"- {t}" for t in texts)
+        prompt = (
+            "Переведи на русский язык названия товаров для таможенного декларирования.\n"
+            "Сохрани технические характеристики точно.\n"
+            "Отвечай ТОЛЬКО валидным JSON без markdown:\n"
+            '{"translations": {"оригинал": "перевод"}}\n\n'
+            f"Товары:\n{lines}"
+        )
+        try:
+            raw = (await complete_text(prompt, max_tokens=4096)).strip()
+            raw = re.sub(r"^```json\s*", "", raw)
+            raw = re.sub(r"^```\s*", "", raw)
+            raw = re.sub(r"\s*```$", "", raw)
+            match = re.search(r"\{.*\}", raw, re.DOTALL)
+            if match:
+                data = json.loads(match.group())
+                mapping = data.get("translations") or data.get("переводы") or {}
+                if isinstance(mapping, dict):
+                    for src, dst in mapping.items():
+                        src_s = str(src).strip()
+                        dst_s = str(dst).strip()
+                        if src_s:
+                            _translation_cache[src_s] = dst_s or src_s
+        except Exception as exc:
+            logger.warning(f"Batch translation parse failed: {exc}")
+
+        for t in texts:
+            if t not in _translation_cache:
+                _translation_cache[t] = await self._do_translate(t)
+
+    async def get_or_analyze_vision(
+        self,
+        group_key: tuple[str, str],
+        *,
+        image_base64: str | None,
+        description: str,
+    ) -> str | None:
+        if group_key in _vision_cache:
+            return _vision_cache[group_key]
+        if not image_base64:
+            return None
+        try:
+            visual = await self._analyze_image(image_base64, None, description)
+        except Exception as exc:
+            logger.warning(f"Vision analysis failed: {exc}")
+            return None
+        _vision_cache[group_key] = visual
+        return visual
+
+    async def get_or_classify_group(
+        self,
+        group_key: tuple[str, str],
+        *,
+        description: str,
+        translated: str,
+        visual_context: str | None,
+        article: str | None,
+    ) -> ClassifyResult:
+        if group_key in _classify_group_cache:
+            cached = _classify_group_cache[group_key]
+            return ClassifyResult(
+                results=list(cached.results),
+                translation_used=translated,
+                visual_analysis=visual_context or cached.visual_analysis,
+                web_search_used=cached.web_search_used,
+                web_context=cached.web_context,
+                status=cached.status,
+                classifier_source=cached.classifier_source,
+                provider=cached.provider,
+                note=cached.note,
+                extra=dict(cached.extra),
             )
-            try:
-                return (await complete_text(prompt, max_tokens=512)).strip() or text
-            except Exception as exc:
-                logger.warning(f"Translation failed, using original: {exc}")
-                return text
 
-        return text.strip()
+        article_s = (article or "").strip()
+        web_context: str | None = None
+        web_used = False
+        if self._needs_web_search(translated, visual_context, article_s, ""):
+            web_context = await self._search_web(translated, article_s, None)
+            web_used = bool(web_context)
+
+        try:
+            result = await self._classify_with_context(
+                description=translated,
+                visual_context=visual_context,
+                web_context=web_context,
+                article=article_s,
+                manufacturer="",
+                web_search_used=web_used,
+            )
+        except Exception as exc:
+            logger.exception("SmartClassifier group classify failed")
+            result = ClassifyResult(
+                results=[],
+                translation_used=translated,
+                visual_analysis=visual_context,
+                web_search_used=web_used,
+                web_context=web_context,
+                status="ERROR",
+                note=safe_ai_error_note(exc),
+                extra={"error_code": "llm_unavailable"},
+            )
+
+        _classify_group_cache[group_key] = result
+        return result
+
+    @staticmethod
+    def clear_packing_caches() -> None:
+        _translation_cache.clear()
+        _vision_cache.clear()
+        _classify_group_cache.clear()
 
     async def _analyze_image(
         self,

@@ -13,14 +13,16 @@ from loguru import logger
 from starlette.background import BackgroundTasks
 
 from .cache_layer import cache_get, cache_set
+from .packing_list_classify import classify_packing_rows_optimized
 from .packing_list_export import export_classified_packing_list
 from .packing_list_parser import parse_packing_list
-from .smart_classifier import get_smart_classifier
+from .smart_classifier import SmartClassifier, get_smart_classifier
 
 TASK_PREFIX = "cc:packing:task:"
 TASK_TTL = int(os.getenv("PACKING_TASK_TTL_SECONDS", str(24 * 3600)))
 TASK_BASE_DIR = Path(os.getenv("PACKING_TASK_DIR", "/tmp/packing_tasks"))
-AVG_ROW_SECONDS = float(os.getenv("PACKING_TASK_AVG_ROW_SECONDS", "25"))
+AVG_ROW_SECONDS = float(os.getenv("PACKING_TASK_AVG_ROW_SECONDS", "3"))
+CLASSIFY_CONCURRENCY = int(os.getenv("PACKING_CLASSIFY_CONCURRENCY", "8"))
 
 
 def _now() -> float:
@@ -189,52 +191,26 @@ async def _run_classification_task(task_id: str) -> None:
             if r.image_base64 or r.image_path:
                 images_by_row[r.row_num] = r
 
-        results: list[dict] = []
-        results_by_row: dict[int, dict] = {}
-        classifier = get_smart_classifier()
+        SmartClassifier.clear_packing_caches()
+        total = len(rows_snapshot)
 
-        for idx, snap in enumerate(rows_snapshot):
-            row_num = int(snap["row_num"])
-            full = images_by_row.get(row_num)
-            img_b64 = full.image_base64 if full else None
-
-            desc_parts = [p for p in (snap.get("name_cn"), snap.get("material")) if p]
-            item = dict(snap)
-            item["image_path"] = str(full.image_path) if full and full.image_path else None
-
-            try:
-                clf = await classifier.classify(
-                    description=" ".join(desc_parts) if desc_parts else None,
-                    image_base64=img_b64,
-                    article=snap.get("article"),
-                )
-                api = clf.to_api_dict()
-                item["translation_used"] = api.get("translation_used") or ""
-                item["visual_analysis"] = api.get("visual_analysis")
-                item["classify_status"] = api.get("status")
-                top = (api.get("results") or [{}])[0] if api.get("results") else {}
-                item["hs_code"] = top.get("hs_code")
-                item["hs_confidence"] = top.get("confidence")
-                item["hs_description"] = top.get("description")
-                item["hs_rationale"] = top.get("rationale")
-                item["classify_results"] = api.get("results") or []
-                if api.get("note"):
-                    item["classify_note"] = api.get("note")
-            except Exception as exc:
-                logger.warning(f"packing task {task_id} row {row_num}: {exc}")
-                item["classify_status"] = "ERROR"
-                item["classify_note"] = str(exc)
-
-            clean = _strip_heavy_fields(item)
-            results.append(clean)
-            results_by_row[row_num] = clean
-
+        async def _on_progress(processed: int, _total: int) -> None:
+            nonlocal task
             task = await get_task(task_id) or task
-            task["processed"] = idx + 1
-            task["results"] = results
+            task["processed"] = processed
             task["updated_at"] = _now()
             task.pop("_rows_snapshot", None)
             await _save_task(task_id, task)
+
+        classified = await classify_packing_rows_optimized(
+            rows_snapshot,
+            images_by_row,
+            max_concurrent=CLASSIFY_CONCURRENCY,
+            on_progress=_on_progress,
+        )
+
+        results: list[dict] = [_strip_heavy_fields(item) for item in classified]
+        results_by_row: dict[int, dict] = {int(r["row_num"]): r for r in results}
 
         safe_name = Path(task.get("original_filename") or "packing.xlsx").name
         export_path = Path(f"/tmp/classified_{task_id}_{safe_name}")
@@ -249,6 +225,7 @@ async def _run_classification_task(task_id: str) -> None:
         task = await get_task(task_id) or task
         task["status"] = "done"
         task["processed"] = len(results)
+        task["results"] = results
         task["export_path"] = str(export_path)
         task["updated_at"] = _now()
         task.pop("_rows_snapshot", None)
