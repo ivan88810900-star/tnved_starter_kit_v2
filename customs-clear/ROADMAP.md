@@ -225,6 +225,7 @@
 - [x] **PR #149 (Issue #145)** — Invoice upload batch: `POST /api/invoice/upload`, `/calculate-batch`, `/template`, страница `/invoice` с drag&drop и экспорт CSV. ✅ merged 2026-06-22
 - [x] **PR #149 + UI (#146)** — Scenario compare extended: `POST /api/calculator/compare-scenarios` (+ ROP, best_scenario), UI в калькуляторе. ✅ merged 2026-06-22
 - [x] **PR #149 + UI (#147)** — AI classifier: `/api/classify/image`, `/characteristics`, `/history`; вкладки в классификаторе. ✅ merged 2026-06-22
+- [x] **SmartClassifier (пакинг-листы)** — `smart_classifier.py`: перевод CN/EN, Claude Vision, web-search/fallback по артикулу; расширенный `POST /api/classify`, `/classify/batch`; invoice upload с колонками `image_url`, `article`, `manufacturer`; `classify_meta.photo_analyzed` в batch-ответе.
 
 ### Фаза X — Аудит ТРОИС и СС/ДС (Issue #151)
 
