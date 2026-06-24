@@ -15,6 +15,7 @@ from .safe_http_errors import safe_ai_error_note
 
 ANTHROPIC_URL = "https://api.anthropic.com/v1/messages"
 ANTHROPIC_MODEL_NAME = os.getenv("ANTHROPIC_MODEL_NAME", "claude-haiku-4-5-20251001")
+ANTHROPIC_VISION_MODEL = os.getenv("ANTHROPIC_VISION_MODEL", ANTHROPIC_MODEL_NAME)
 
 SYSTEM_PROMPT = (
     "Ты эксперт по классификации товаров по ТН ВЭД ЕАЭС.\n"
@@ -73,6 +74,47 @@ def is_llm_configured() -> bool:
     return provider != "none" and bool(key)
 
 
+def _extract_anthropic_text(data: dict[str, Any]) -> str:
+    parts: list[str] = []
+    for block in data.get("content") or []:
+        if isinstance(block, dict) and block.get("type") == "text":
+            parts.append(str(block.get("text") or ""))
+    return "".join(parts).strip()
+
+
+async def anthropic_messages_request(payload: dict[str, Any], *, key: str | None = None) -> dict[str, Any]:
+    """Низкоуровневый вызов Anthropic Messages API (vision, tools)."""
+    api_key = key or _anthropic_key_env()
+    if not api_key:
+        raise RuntimeError("ANTHROPIC_API_KEY не задан")
+    headers = {
+        "x-api-key": api_key,
+        "anthropic-version": "2023-06-01",
+        "content-type": "application/json",
+    }
+    async with httpx.AsyncClient(timeout=90.0) as client:
+        resp = await client.post(ANTHROPIC_URL, json=payload, headers=headers)
+        resp.raise_for_status()
+        return resp.json()
+
+
+async def complete_text(user_text: str, *, system_prompt: str | None = None, max_tokens: int = 1024) -> str:
+    """Короткий текстовый ответ Claude (перевод, вспомогательные промпты)."""
+    key = _anthropic_key_env()
+    if not key:
+        llm_resp = await _ask_llm(system_prompt or "Отвечай кратко.", user_text)
+        return (llm_resp.get("text") or "").strip()
+    payload: dict[str, Any] = {
+        "model": ANTHROPIC_MODEL_NAME,
+        "max_tokens": max_tokens,
+        "messages": [{"role": "user", "content": user_text}],
+    }
+    if system_prompt:
+        payload["system"] = system_prompt
+    data = await anthropic_messages_request(payload, key=key)
+    return _extract_anthropic_text(data)
+
+
 async def _call_anthropic(system_prompt: str, user_text: str, key: str) -> dict[str, Any]:
     headers = {
         "x-api-key": key,
@@ -89,11 +131,8 @@ async def _call_anthropic(system_prompt: str, user_text: str, key: str) -> dict[
         resp = await client.post(ANTHROPIC_URL, json=payload, headers=headers)
         resp.raise_for_status()
         data = resp.json()
-    text = ""
-    for part in data.get("content") or []:
-        if isinstance(part, dict) and part.get("type") == "text":
-            text += part.get("text", "")
-    return {"provider": "anthropic", "text": text.strip(), "raw": data}
+    text = _extract_anthropic_text(data)
+    return {"provider": "anthropic", "text": text, "raw": data}
 
 
 async def _call_gemini(system_prompt: str, user_text: str, key: str) -> dict[str, Any]:

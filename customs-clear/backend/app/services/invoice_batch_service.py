@@ -24,6 +24,10 @@ _COLUMN_ALIASES: dict[str, tuple[str, ...]] = {
     "weight_gross_kg": ("weight_gross_kg", "gross_kg", "брутто", "gross"),
     "weight_net_kg": ("weight_net_kg", "net_kg", "нетто", "net"),
     "country_of_origin": ("country_of_origin", "country", "страна", "origin"),
+    "image_url": ("image_url", "photo_url", "фото url", "url фото", "image url", "photo"),
+    "image_base64": ("image_base64", "фото", "photo_base64", "image"),
+    "article": ("article", "артикул", "sku", "part_no", "part number"),
+    "manufacturer": ("manufacturer", "производитель", "brand", "бренд", "maker"),
 }
 
 
@@ -70,6 +74,10 @@ def parse_invoice_file(content: bytes, filename: str) -> list[dict[str, Any]]:
         desc = str(_cell(row, colmap, "description", "") or "").strip()
         if not desc:
             continue
+        image_url = str(_cell(row, colmap, "image_url", "") or "").strip()
+        image_b64 = str(_cell(row, colmap, "image_base64", "") or "").strip()
+        article = str(_cell(row, colmap, "article", "") or "").strip()
+        manufacturer = str(_cell(row, colmap, "manufacturer", "") or "").strip()
         qty = _cell(row, colmap, "quantity", 1)
         price = _cell(row, colmap, "unit_price", 0)
         try:
@@ -88,24 +96,57 @@ def parse_invoice_file(content: bytes, filename: str) -> list[dict[str, Any]]:
                 "weight_gross_kg": _cell(row, colmap, "weight_gross_kg"),
                 "weight_net_kg": _cell(row, colmap, "weight_net_kg"),
                 "country_of_origin": str(_cell(row, colmap, "country_of_origin", "") or "").strip().upper(),
+                "image_url": image_url,
+                "image_base64": image_b64,
+                "article": article,
+                "manufacturer": manufacturer,
             }
         )
     return rows
 
 
-async def classify_hs_if_missing(description: str) -> str:
-    if not description.strip():
-        return ""
+async def classify_hs_if_missing(line: dict[str, Any]) -> tuple[str, dict[str, Any] | None]:
+    description = str(line.get("description") or "").strip()
+    if not description and not (line.get("image_url") or line.get("image_base64") or line.get("article")):
+        return "", None
+    image_url = str(line.get("image_url") or "").strip() or None
+    image_b64 = str(line.get("image_base64") or "").strip() or None
+    article = str(line.get("article") or "").strip() or None
+    manufacturer = str(line.get("manufacturer") or "").strip() or None
+    use_smart = bool(image_url or image_b64 or article or manufacturer)
+
     try:
+        if use_smart:
+            from .smart_classifier import get_smart_classifier
+
+            result = await get_smart_classifier().classify(
+                description=description or None,
+                image_base64=image_b64,
+                image_url=image_url,
+                article=article,
+                manufacturer=manufacturer,
+            )
+            meta = {
+                "visual_analysis": result.visual_analysis,
+                "web_search_used": result.web_search_used,
+                "translation_used": result.translation_used,
+                "photo_analyzed": bool(result.visual_analysis),
+            }
+            if result.results:
+                hs = re.sub(r"\D", "", str(result.results[0].get("hs_code") or ""))[:10]
+                return hs, meta
+            return "", meta
+
         from .claude_service import classify_hs_code
 
         res = await classify_hs_code(description[:1500], use_journal_hints=False)
         results = res.get("results") or []
         if results and isinstance(results[0], dict):
-            return re.sub(r"\D", "", str(results[0].get("hs_code") or results[0].get("code") or ""))[:10]
+            hs = re.sub(r"\D", "", str(results[0].get("hs_code") or results[0].get("code") or ""))[:10]
+            return hs, None
     except Exception:
-        return ""
-    return ""
+        return "", None
+    return "", None
 
 
 def calculate_line_payments(
@@ -187,11 +228,15 @@ async def calculate_batch_lines(
         for line in lines:
             row = dict(line)
             if auto_classify and not re.sub(r"\D", "", str(row.get("hs_code") or "")):
-                hs = await classify_hs_if_missing(str(row.get("description") or ""))
+                hs, classify_meta = await classify_hs_if_missing(row)
                 if hs:
                     row["hs_code"] = hs
-                    row["hs_classified_by"] = "ai"
+                    row["hs_classified_by"] = "ai_smart" if classify_meta else "ai"
+                if classify_meta:
+                    row["classify_meta"] = classify_meta
             calc = calculate_line_payments(row, db_session=db, calendar_year=calendar_year)
+            if row.get("classify_meta"):
+                calc["classify_meta"] = row["classify_meta"]
             results.append(calc)
 
     totals = {
@@ -220,6 +265,9 @@ def build_invoice_template_xlsx() -> bytes:
                 "weight_gross_kg": 25,
                 "weight_net_kg": 22,
                 "country_of_origin": "CN",
+                "image_url": "",
+                "article": "",
+                "manufacturer": "",
             }
         ]
     )
