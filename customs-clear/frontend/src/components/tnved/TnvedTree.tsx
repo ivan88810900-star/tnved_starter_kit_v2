@@ -16,39 +16,10 @@ type Props = {
 // Иконки
 // ---------------------------------------------------------------------------
 
-const SectionIcon = () => (
-  <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" className="shrink-0 text-blue-600" aria-hidden>
-    <path d="M4 6h16v2H4zm0 5h16v2H4zm0 5h16v2H4z" />
-  </svg>
-);
-
-const FolderIcon = ({ depth }: { depth: number }) => (
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"
-    className={`shrink-0 ${depth === 1 ? 'text-amber-500' : 'text-amber-400'}`} aria-hidden>
-    <path d="M10 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z" />
-  </svg>
-);
-
-const FileIcon = () => (
-  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"
-    className="shrink-0 text-gray-400" aria-hidden>
-    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-    <polyline points="14 2 14 8 20 8" />
-  </svg>
-);
-
-// Маркер бескодовой субпозиции (только текст, без кода)
-const CodelessIcon = () => (
-  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"
-    className="shrink-0 text-gray-300" aria-hidden>
-    <line x1="5" y1="12" x2="19" y2="12" />
-  </svg>
-);
-
-const ChevronIcon = ({ open }: { open: boolean }) => (
+const ChevronIcon = ({ open, active }: { open: boolean; active?: boolean }) => (
   <svg width="11" height="11" viewBox="0 0 24 24" fill="none"
     stroke="currentColor" strokeWidth="2.5"
-    className="shrink-0 text-gray-400 transition-transform duration-150"
+    className={`shrink-0 transition-transform duration-150 ${active ? 'text-cargo-trust' : 'text-cargo-mid'}`}
     style={{ transform: open ? 'rotate(90deg)' : 'rotate(0deg)' }}
     aria-hidden>
     <polyline points="9 18 15 12 9 6" />
@@ -199,21 +170,20 @@ const TreeRow: React.FC<RowProps> = ({
 
   // Стили кода по уровню
   const codeClass =
-    level === 'section'    ? 'text-[14px] font-semibold text-gray-900' :
-    level === 'chapter'    ? 'text-[13px] font-semibold text-gray-800' :
-    level === 'heading'    ? 'text-[13px] font-semibold text-gray-800' :
-    level === 'subheading' ? 'text-[12.5px] font-medium text-gray-700' :
-                             'text-[12.5px] font-medium text-gray-800';
+    level === 'section'    ? 'text-sm font-medium text-cargo-deep' :
+    level === 'chapter'    ? 'text-[13px] font-medium text-cargo-deep' :
+    level === 'heading'    ? 'text-[13px] font-medium text-cargo-deep' :
+    level === 'subheading' ? 'text-[13px] font-medium text-cargo-mid' :
+                             'text-[13px] font-medium text-cargo-mid';
 
-  // Стили названия по уровню. Бескодовые субпозиции — серый курсив.
   const nameClass =
-    isCodeless       ? `text-[12px] italic text-gray-400 ${TNVED_COMMODITY_NAME_CLASS}` :
-    active           ? `text-[12.5px] text-blue-700 ${TNVED_COMMODITY_NAME_CLASS}` :
-    level === 'section'  ? `text-[12.5px] text-gray-700 ${TNVED_COMMODITY_NAME_CLASS}` :
-    level === 'chapter'  ? `text-[12px] text-gray-600 ${TNVED_COMMODITY_NAME_CLASS}` :
-    level === 'heading'  ? `text-[12px] text-gray-600 ${TNVED_COMMODITY_NAME_CLASS}` :
-    level === 'subheading' ? `text-[12px] text-gray-500 ${TNVED_COMMODITY_NAME_CLASS}` :
-                             `text-[12px] text-gray-500 ${TNVED_COMMODITY_NAME_CLASS}`;
+    isCodeless       ? `text-xs italic text-cargo-light ${TNVED_COMMODITY_NAME_CLASS}` :
+    active           ? `text-[13px] text-cargo-trust ${TNVED_COMMODITY_NAME_CLASS}` :
+    level === 'section'  ? `text-[13px] text-cargo-mid ${TNVED_COMMODITY_NAME_CLASS}` :
+    level === 'chapter'  ? `text-xs text-cargo-mid ${TNVED_COMMODITY_NAME_CLASS}` :
+    level === 'heading'  ? `text-xs text-cargo-mid ${TNVED_COMMODITY_NAME_CLASS}` :
+    level === 'subheading' ? `text-xs text-cargo-light ${TNVED_COMMODITY_NAME_CLASS}` :
+                             `text-xs text-cargo-mid ${TNVED_COMMODITY_NAME_CLASS}`;
 
   return (
     <div>
@@ -223,26 +193,16 @@ const TreeRow: React.FC<RowProps> = ({
         disabled={!clickable}
         style={{ paddingLeft: pl }}
         className={[
-          'flex w-full items-start gap-2 rounded-xl py-3 pr-3.5 text-left',
-          'border border-transparent transition-all duration-150',
-          clickable ? 'cursor-pointer hover:-translate-y-[1px] hover:bg-slate-50' : 'cursor-default opacity-40',
-          active ? 'border-indigo-200 bg-indigo-50 shadow-sm' : '',
+          'flex w-full items-start gap-2 rounded-md py-2 pr-3 text-left',
+          'border border-transparent transition-colors duration-150',
+          clickable ? 'cursor-pointer hover:bg-cargo-navy-50' : 'cursor-default opacity-40',
+          active ? 'border-cargo-trust-light bg-cargo-trust-light' : '',
         ].join(' ')}
       >
-        {/* Шеврон */}
         <span className="mt-[3px] shrink-0">
-          {hasChildren ? <ChevronIcon open={open} /> : <span className="inline-block w-[11px]" />}
+          {hasChildren ? <ChevronIcon open={open} active={open} /> : <span className="inline-block w-[11px]" />}
         </span>
 
-        {/* Иконка */}
-        <span className="mt-[2px] shrink-0">
-          {level === 'section' ? <SectionIcon />
-            : isCodeless ? <CodelessIcon />
-            : hasChildren ? <FolderIcon depth={depth} />
-            : <FileIcon />}
-        </span>
-
-        {/* Бескодовая субпозиция — только текст. Иначе: код + название. */}
         <span className="min-w-0 flex-1">
           {isCodeless ? (
             <span className={`block ${nameClass} break-words`}>
@@ -251,7 +211,7 @@ const TreeRow: React.FC<RowProps> = ({
           ) : (
             <>
               <MeasureHoverCard code={node.code} fallbackName={node.name}>
-                <span className={`font-mono block ${codeClass} ${active ? 'text-blue-800' : ''}`}>
+                <span className={`font-mono block ${codeClass} ${active ? 'text-cargo-trust' : ''}`}>
                   {codeLabel(node.code, level)}
                 </span>
               </MeasureHoverCard>
@@ -509,13 +469,11 @@ export const TnvedTree: React.FC<Props> = ({ selectedCode, onSelectCode, initial
         </div>
 
         {trimmed.length >= 2 && (
-          <div className="max-h-64 overflow-y-auto rounded-xl border border-slate-200 bg-white shadow-sm">
+          <div className="grid gap-2 sm:grid-cols-2">
             {searchLoading ? (
-              <p className="px-3 py-2 text-sm text-gray-500">Поиск...</p>
+              <p className="col-span-full px-1 py-2 text-sm text-cargo-mid">Поиск...</p>
             ) : searchHits.length === 0 ? (
-              <p className="px-3 py-2 text-sm text-gray-500">
-                {searchErr || 'Ничего не найдено'}
-              </p>
+              <p className="col-span-full px-1 py-2 text-sm text-cargo-mid">{searchErr || 'Ничего не найдено'}</p>
             ) : (
               searchHits.map((hit, idx) => {
                 const isActive = idx === activeSearchIdx;
@@ -525,17 +483,23 @@ export const TnvedTree: React.FC<Props> = ({ selectedCode, onSelectCode, initial
                       type="button"
                       onMouseEnter={() => setActiveSearchIdx(idx)}
                       onClick={() => handleSelectHit(hit)}
-                      className={`flex w-full flex-col items-start border-b border-slate-100 px-3 py-2.5 text-left last:border-b-0 hover:bg-slate-50 ${
-                        isActive ? 'bg-indigo-50' : ''
+                      className={`flex w-full flex-col items-start rounded-lg border p-3 text-left transition-colors ${
+                        isActive
+                          ? 'border-cargo-trust bg-cargo-trust-light'
+                          : 'border-cargo-border bg-cargo-surface hover:border-cargo-trust'
                       }`}
                     >
-                      <span className="font-mono text-[13px] font-medium text-gray-800">
-                        {formatCode(hit.code)}
+                      <div className="flex w-full items-start justify-between gap-2">
+                        <span className="font-mono text-base font-medium text-cargo-trust">
+                          {formatCode(hit.code)}
+                        </span>
                         {hit.is_leaf === false ? (
-                          <span className="ml-2 text-[10px] font-normal text-amber-700">группа</span>
+                          <span className="shrink-0 rounded bg-cargo-cloud px-1.5 py-0.5 text-[10px] text-cargo-mid">
+                            группа
+                          </span>
                         ) : null}
-                      </span>
-                      <span className={`text-[14px] text-gray-800 ${TNVED_COMMODITY_NAME_CLASS}`}>
+                      </div>
+                      <span className={`mt-1 text-sm text-cargo-deep ${TNVED_COMMODITY_NAME_CLASS}`}>
                         {formatTnvedCommodityName(hit.name || '') || 'Описание отсутствует'}
                       </span>
                     </button>
@@ -565,7 +529,7 @@ export const TnvedTree: React.FC<Props> = ({ selectedCode, onSelectCode, initial
       </div>
 
       {/* ─── Дерево ─── */}
-        <div className={`relative min-h-0 flex-1 overflow-x-auto overflow-y-auto rounded-xl border border-slate-100 bg-white p-1 pr-2 transition-opacity ${prefixLoading ? 'opacity-50' : 'opacity-100'}`}>
+        <div className={`relative min-h-0 flex-1 overflow-x-auto overflow-y-auto rounded-lg border border-cargo-border bg-cargo-surface p-1 transition-opacity ${prefixLoading ? 'opacity-50' : 'opacity-100'}`}>
         {loading ? (
           <p className="py-10 text-center text-sm text-gray-500">Загрузка справочника…</p>
         ) : displayTree.length === 0 ? (

@@ -44,6 +44,8 @@ import { CalculatorInvoiceAnalyzeSection } from '../components/calculator/Calcul
 import { CalculatorScenarioCompareSection } from '../components/calculator/CalculatorScenarioCompareSection';
 import { formatTnvedCommodityName, TNVED_COMMODITY_NAME_CLASS } from '../utils/tnvedDisplayText';
 import { TradeRemediesDisclaimer } from '../components/payments/TradeRemediesDisclaimer';
+import { PaymentBreakdownCard } from '../components/PaymentBreakdownCard';
+import { PageHeader } from '../components/PageHeader';
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip as RechartsTooltip } from 'recharts';
 
 function normHsCode(raw: string): string {
@@ -819,7 +821,11 @@ export const Calculator: React.FC = () => {
 
   return (
     <div className="space-y-4">
-      <p className="text-[12px] leading-relaxed text-slate-600">
+      <PageHeader
+        title="Калькулятор платежей"
+        subtitle="Расчёт пошлины, НДС и сопутствующих платежей по базе приложения"
+      />
+      <p className="text-sm leading-relaxed text-cargo-mid">
         Расчёт пошлины, НДС и сопутствующих платежей по базе приложения.
       </p>
       <div className="cc-card-soft rounded-xl px-4 py-3 text-[11px] text-slate-700">
@@ -1308,6 +1314,8 @@ export const Calculator: React.FC = () => {
         </button>
       </div>
 
+      <div className="grid gap-6 lg:grid-cols-[3fr_2fr] lg:items-start">
+        <div className="space-y-4">
       <div className="grid gap-3 md:grid-cols-2">
         <label className="space-y-1">
           <span className="cc-label">ТН ВЭД</span>
@@ -1534,13 +1542,39 @@ export const Calculator: React.FC = () => {
       ) : null}
 
       {error && (
-        <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
+        <div className="rounded-lg border border-cargo-alert/30 bg-cargo-alert-light px-3 py-2 text-xs text-cargo-alert">
           {error}
         </div>
       )}
+        </div>
 
+        <div className="space-y-4 lg:sticky lg:top-20">
       {result && (
         <div className="space-y-4 text-xs">
+          <PaymentBreakdownCard
+            rows={[
+              {
+                label: 'Таможенный сбор',
+                amount: result.breakdown.customs_fee ?? 0,
+                meta: 'обязательно',
+              },
+              {
+                label: 'Ввозная пошлина',
+                amount: result.breakdown.duty ?? 0,
+                meta: `${result.breakdown.duty_rate ?? 0}%`,
+                tone: 'trust',
+              },
+              {
+                label: 'НДС',
+                amount: result.breakdown.vat ?? 0,
+                meta: `${result.breakdown.vat_rate ?? 0}%`,
+              },
+              ...(result.breakdown.recycling_fee
+                ? [{ label: 'Утильсбор', amount: result.breakdown.recycling_fee ?? 0 }]
+                : []),
+            ]}
+            totalAmount={result.breakdown.total_payable ?? 0}
+          />
           {assistantVisible ? (
             <div className="flex flex-wrap justify-end gap-2">
               <button
@@ -1884,6 +1918,8 @@ export const Calculator: React.FC = () => {
           </details>
         </div>
       )}
+        </div>
+      </div>
     </div>
   );
 };

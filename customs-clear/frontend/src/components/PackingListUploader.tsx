@@ -1,10 +1,11 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import { Camera } from 'lucide-react';
+import { Camera, Upload } from 'lucide-react';
 import { api } from '../api/client';
 import { getUserFacingApiError } from '../api/error';
 import { CC_TNVED_SELECT_CODE_KEY } from '../constants/homeNav';
+import { confidenceStatus, StatusPill } from './StatusPill';
 
 type Stage = 'upload' | 'processing' | 'results' | 'error';
 
@@ -247,9 +248,7 @@ export const PackingListUploader: React.FC = () => {
   if (stage === 'upload') {
     return (
       <div
-        className={`rounded-xl border-2 border-dashed p-8 text-center transition-colors ${
-          dragOver ? 'border-indigo-500 bg-indigo-50' : 'border-slate-300 bg-white'
-        }`}
+        className={`cc-dropzone ${dragOver ? 'border-cargo-trust bg-cargo-trust-light' : ''}`}
         onDragOver={(e) => {
           e.preventDefault();
           setDragOver(true);
@@ -262,8 +261,9 @@ export const PackingListUploader: React.FC = () => {
           if (file) void uploadFile(file);
         }}
       >
-        <p className="text-sm font-medium text-slate-700">Перетащите пакинг-лист .xlsx</p>
-        <p className="mt-1 text-xs text-slate-500">Поддерживается: Chinese packing list с фото</p>
+        <Upload className="mx-auto h-10 w-10 text-cargo-trust" aria-hidden />
+        <p className="mt-3 text-sm font-medium text-cargo-mid">Перетащите пакинг-лист .xlsx</p>
+        <p className="mt-1 text-xs text-cargo-light">Поддерживается: Chinese packing list с фото</p>
         <input
           ref={fileInputRef}
           type="file"
@@ -290,25 +290,25 @@ export const PackingListUploader: React.FC = () => {
     const pct = progress.total > 0 ? Math.min(100, Math.round((progress.processed / progress.total) * 100)) : 0;
     return (
       <div className="cc-card-soft space-y-4 p-5">
-        <p className="truncate text-sm font-medium text-slate-800">{fileName}</p>
-        <div className="h-2 overflow-hidden rounded-full bg-slate-200">
+        <p className="truncate text-sm font-medium text-cargo-deep">{fileName}</p>
+        <div className="h-2 overflow-hidden rounded-full bg-cargo-border">
           <div
-            className="h-full rounded-full bg-indigo-600 transition-all duration-500"
+            className="h-full rounded-full bg-cargo-trust transition-all duration-500"
             style={{ width: `${pct}%` }}
           />
         </div>
-        <p className="text-sm text-slate-600">
+        <p className="text-sm text-cargo-mid">
           Классифицировано {progress.processed} из {progress.total} товаров
         </p>
-        <p className="text-xs text-slate-500">Осталось {formatEta(progress.eta)}</p>
+        <p className="text-xs text-cargo-light">Осталось {formatEta(progress.eta)}</p>
       </div>
     );
   }
 
   if (stage === 'error') {
     return (
-      <div className="rounded-xl border border-red-200 bg-red-50 p-5 text-center">
-        <p className="text-sm text-red-800">{errorMsg || 'Произошла ошибка'}</p>
+      <div className="rounded-lg border border-cargo-alert/30 bg-cargo-alert-light p-5 text-center">
+        <p className="text-sm text-cargo-alert">{errorMsg || 'Произошла ошибка'}</p>
         <button type="button" className="cc-btn-primary mt-4" onClick={reset}>
           Попробовать снова
         </button>
@@ -332,9 +332,9 @@ export const PackingListUploader: React.FC = () => {
         </div>
       </div>
 
-      <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
+      <div className="overflow-x-auto rounded-lg border border-cargo-border bg-cargo-surface">
         <table className="min-w-[960px] w-full text-left text-xs">
-          <thead className="bg-slate-50 text-[10px] uppercase tracking-wide text-slate-500">
+          <thead className="bg-cargo-cloud text-[11px] uppercase tracking-[0.06em] text-cargo-light">
             <tr>
               <th className="px-2 py-2">#</th>
               <th className="px-2 py-2">Артикул</th>
@@ -347,24 +347,27 @@ export const PackingListUploader: React.FC = () => {
             </tr>
           </thead>
           <tbody>
-            {results.map((row, idx) => (
-              <tr key={`${row.row_num ?? idx}-${row.article ?? idx}`} className="border-t border-slate-100">
-                <td className="px-2 py-2 text-slate-500">{row.row_num ?? idx + 1}</td>
-                <td className="px-2 py-2 font-mono">{row.article || '—'}</td>
-                <td className="max-w-[160px] px-2 py-2">{row.name_cn || '—'}</td>
-                <td className="max-w-[160px] px-2 py-2">{row.translation_used || '—'}</td>
+            {results.map((row, idx) => {
+              const confRaw = row.hs_confidence;
+              const confNum = confRaw == null ? null : confRaw <= 1 ? confRaw * 100 : confRaw;
+              return (
+              <tr key={`${row.row_num ?? idx}-${row.article ?? idx}`} className={`border-t border-cargo-border ${idx % 2 ? 'bg-cargo-cloud' : 'bg-cargo-surface'}`}>
+                <td className="px-2 py-2 text-cargo-light">{row.row_num ?? idx + 1}</td>
+                <td className="px-2 py-2 font-mono text-cargo-mid">{row.article || '—'}</td>
+                <td className="max-w-[160px] px-2 py-2 text-cargo-deep">{row.name_cn || '—'}</td>
+                <td className="max-w-[160px] px-2 py-2 text-cargo-mid">{row.translation_used || '—'}</td>
                 <td className="px-2 py-2 text-center">
                   {imageAnalyzed(row) ? (
-                    <Camera className="mx-auto h-4 w-4 text-indigo-600" aria-label="Фото проанализировано" />
+                    <Camera className="mx-auto h-4 w-4 text-cargo-trust" aria-label="Фото проанализировано" />
                   ) : (
-                    <span className="text-slate-300">—</span>
+                    <span className="text-cargo-light">—</span>
                   )}
                 </td>
                 <td className="px-2 py-2">
                   {row.hs_code ? (
                     <button
                       type="button"
-                      className="font-mono text-indigo-700 hover:underline"
+                      className="font-mono text-cargo-trust hover:underline"
                       onClick={() => openHsCard(row.hs_code!)}
                     >
                       {row.hs_code}
@@ -373,12 +376,18 @@ export const PackingListUploader: React.FC = () => {
                     '—'
                   )}
                 </td>
-                <td className="px-2 py-2">{confidencePct(row)}</td>
-                <td className="max-w-[220px] px-2 py-2 text-slate-600">
+                <td className="px-2 py-2">
+                  {confNum != null ? (
+                    <StatusPill type={confidenceStatus(confNum)}>{confidencePct(row)}</StatusPill>
+                  ) : (
+                    '—'
+                  )}
+                </td>
+                <td className="max-w-[220px] px-2 py-2 text-cargo-mid">
                   {row.hs_description || row.classify_status || '—'}
                 </td>
               </tr>
-            ))}
+            );})}
           </tbody>
         </table>
       </div>

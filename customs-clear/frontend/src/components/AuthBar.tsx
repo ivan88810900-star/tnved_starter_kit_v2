@@ -3,7 +3,11 @@ import { api } from '../api/client';
 import { getApiErrorMessage } from '../api/error';
 import type { AuthLoginResponse, AuthSessionResponse } from '../types/api.types';
 
-export function AuthBar() {
+type Props = {
+  variant?: 'default' | 'cargo';
+};
+
+export function AuthBar({ variant = 'default' }: Props) {
   const [open, setOpen] = useState(false);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -40,7 +44,7 @@ export function AuthBar() {
     try {
       await api.post('/auth/logout');
     } catch {
-      // Даже если запрос logout упал, локально считаем сессию завершённой.
+      /* ignore */
     } finally {
       setSession(null);
       setOpen(false);
@@ -79,42 +83,54 @@ export function AuthBar() {
     }
   };
 
+  const isCargo = variant === 'cargo';
+
   return (
     <div className="flex items-center gap-2">
       {session ? (
-        <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-emerald-400/90">
-          {session.role}
-        </span>
+        <>
+          <span className={`hidden text-[11px] font-medium uppercase tracking-[0.06em] sm:inline ${isCargo ? 'text-cargo-clear' : 'text-emerald-600'}`}>
+            {session.username} · {session.role}
+          </span>
+          <button type="button" className={isCargo ? 'cc-btn-secondary text-xs' : 'cc-btn-ghost text-[11px]'} onClick={() => void logout()}>
+            Выйти
+          </button>
+        </>
       ) : checking ? (
-        <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">…</span>
-      ) : null}
-      <button type="button" className="cc-btn-ghost text-[11px]" onClick={() => setOpen(true)}>
-        {session ? 'Сменить' : 'Вход'}
-      </button>
-      {session ? (
-        <button type="button" className="cc-btn-ghost text-[11px] text-slate-500" onClick={() => void logout()}>
-          Выйти
+        <span className="cc-spinner" aria-label="Проверка сессии" />
+      ) : isCargo ? (
+        <>
+          <button type="button" className="cc-btn-secondary text-xs" onClick={() => setOpen(true)}>
+            Войти
+          </button>
+          <button type="button" className="cc-btn-primary text-xs" onClick={() => setOpen(true)}>
+            Регистрация
+          </button>
+        </>
+      ) : (
+        <button type="button" className="cc-btn-ghost text-[11px]" onClick={() => setOpen(true)}>
+          Вход
         </button>
-      ) : null}
+      )}
 
       {open && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/20 p-4 backdrop-blur-sm"
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-cargo-deep/30 p-4 backdrop-blur-sm"
           role="dialog"
           aria-modal="true"
           aria-labelledby="cc-auth-title"
           onClick={() => setOpen(false)}
         >
-          <div className="cc-card w-full max-w-sm p-5 shadow-2xl" onClick={(e) => e.stopPropagation()}>
-            <h3 id="cc-auth-title" className="text-[14px] font-semibold text-slate-900">
+          <div className="cc-card w-full max-w-sm p-5 shadow-xl" onClick={(e) => e.stopPropagation()}>
+            <h3 id="cc-auth-title" className="text-base font-medium text-cargo-deep">
               Вход в систему
             </h3>
-            <p className="mt-1 text-[11px] text-slate-500">
-              Сеанс безопасно сохраняется в браузере после авторизации.
+            <p className="mt-1 text-xs text-cargo-mid">
+              Сеанс сохраняется в браузере после авторизации. Для регистрации обратитесь к администратору.
             </p>
             <form className="mt-4 space-y-3" onSubmit={(e) => void submit(e)}>
               <div>
-                <label className="text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-500">Логин</label>
+                <label className="cc-label">Логин</label>
                 <input
                   className="cc-input mt-1 w-full"
                   autoComplete="username"
@@ -123,7 +139,7 @@ export function AuthBar() {
                 />
               </div>
               <div>
-                <label className="text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-500">Пароль</label>
+                <label className="cc-label">Пароль</label>
                 <input
                   type="password"
                   className="cc-input mt-1 w-full"
@@ -132,12 +148,12 @@ export function AuthBar() {
                   onChange={(e) => setPassword(e.target.value)}
                 />
               </div>
-              {err && <div className="text-[11px] text-red-700">{err}</div>}
+              {err && <div className="text-xs text-cargo-alert">{err}</div>}
               <div className="flex justify-end gap-2 pt-1">
-                <button type="button" className="cc-btn-ghost text-[11px]" onClick={() => setOpen(false)}>
+                <button type="button" className="cc-btn-secondary text-xs" onClick={() => setOpen(false)}>
                   Отмена
                 </button>
-                <button type="submit" className="cc-btn-primary text-[11px]" disabled={busy}>
+                <button type="submit" className="cc-btn-primary text-xs" disabled={busy}>
                   {busy ? '…' : 'Войти'}
                 </button>
               </div>

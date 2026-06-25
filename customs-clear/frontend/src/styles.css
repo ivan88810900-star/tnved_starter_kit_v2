@@ -3,23 +3,43 @@
 @tailwind utilities;
 
 :root {
-  --cc-bg-deep: #f7f8fc;
-  --cc-surface: #ffffff;
-  --cc-surface-elevated: #fbfcff;
-  --cc-border: #e2e8f0;
-  --cc-border-strong: #cbd5e1;
-  --cc-accent: #1d4ed8;
-  --cc-accent-dim: rgba(29, 78, 216, 0.14);
-  --cc-gold: #a16207;
-  --cc-gold-dim: rgba(161, 98, 7, 0.08);
-  --cc-font: 'Inter', 'Roboto', system-ui, -apple-system, sans-serif;
-  --cc-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  /* Cargo design system */
+  --cargo-cloud: #F5F7FA;
+  --cargo-trust: #0052CC;
+  --cargo-trust-hover: #0747A6;
+  --cargo-trust-light: #E6EDF8;
+  --cargo-alert: #FF5630;
+  --cargo-alert-light: #FFEBE6;
+  --cargo-clear: #36B37E;
+  --cargo-clear-light: #E3FCEF;
+  --cargo-warning: #FF8B00;
+  --cargo-warning-light: #FFFAE6;
+  --cargo-deep: #172B4D;
+  --cargo-mid: #42526E;
+  --cargo-light: #97A0AF;
+  --cargo-border: #DFE1E6;
+  --cargo-surface: #FFFFFF;
+  --cargo-navy-50: #E6EDF8;
+
+  /* Legacy aliases (cc-* utilities) */
+  --cc-bg-deep: var(--cargo-cloud);
+  --cc-surface: var(--cargo-surface);
+  --cc-surface-elevated: var(--cargo-surface);
+  --cc-border: var(--cargo-border);
+  --cc-border-strong: var(--cargo-border);
+  --cc-accent: var(--cargo-trust);
+  --cc-accent-dim: var(--cargo-trust-light);
+  --cc-gold: var(--cargo-warning);
+  --cc-gold-dim: var(--cargo-warning-light);
+  --cc-font: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --cc-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
 
 body {
-  @apply antialiased text-slate-800;
+  @apply antialiased;
   font-family: var(--cc-font);
-  background: #f1f5f9;
+  background: var(--cargo-cloud);
+  color: var(--cargo-deep);
 }
 
 #root {
@@ -27,88 +47,111 @@ body {
 }
 
 .cc-bg {
-  background:
-    radial-gradient(1200px 460px at 0% -18%, rgba(79, 70, 229, 0.12), transparent 62%),
-    radial-gradient(980px 420px at 100% 0%, rgba(15, 23, 42, 0.08), transparent 60%),
-    linear-gradient(180deg, #f8fafc 0%, #f1f5f9 42%, #eaf0f8 100%);
+  background: var(--cargo-cloud);
 }
 
 .cc-card {
-  border-radius: 1.1rem;
-  border: 1px solid #e6ecf3;
-  background: var(--cc-surface);
-  box-shadow:
-    0 10px 30px rgba(15, 23, 42, 0.08),
-    0 1px 0 rgba(255, 255, 255, 0.8) inset;
+  border-radius: 8px;
+  border: 1px solid var(--cargo-border);
+  background: var(--cargo-surface);
+  box-shadow: 0 1px 2px rgba(23, 43, 77, 0.04);
 }
 
 .cc-card-soft {
-  border-radius: 1rem;
-  border: 1px solid #e5ebf3;
-  background: var(--cc-surface-elevated);
-  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.06);
+  border-radius: 8px;
+  border: 1px solid var(--cargo-border);
+  background: var(--cargo-surface);
+  box-shadow: 0 1px 2px rgba(23, 43, 77, 0.04);
 }
 
 .cc-input {
-  @apply w-full outline-none transition duration-200;
+  @apply w-full outline-none transition duration-150;
   font-family: var(--cc-font);
-  border-radius: 0.85rem;
-  border: 1px solid var(--cc-border-strong);
-  background: #ffffff;
-  padding: 0.78rem 1rem;
-  font-size: 0.86rem;
-  color: #0f172a;
-  box-shadow: 0 1px 0 rgba(15, 23, 42, 0.02) inset;
+  border-radius: 6px;
+  border: 1px solid var(--cargo-border);
+  background: var(--cargo-surface);
+  min-height: 40px;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  color: var(--cargo-deep);
 }
 
 .cc-input:focus {
-  border-color: rgba(29, 78, 216, 0.6);
-  box-shadow: 0 0 0 3px var(--cc-accent-dim);
+  border-color: var(--cargo-trust);
+  box-shadow: 0 0 0 2px var(--cargo-trust-light);
 }
 
 .cc-input::placeholder {
-  color: #94a3b8;
+  color: var(--cargo-light);
 }
 
 .cc-label {
-  @apply mb-1 block text-[11px] font-medium uppercase tracking-[0.12em] text-slate-500;
+  @apply mb-1 block text-[11px] font-medium uppercase tracking-[0.06em];
+  color: var(--cargo-light);
 }
 
 .cc-btn-primary {
-  @apply inline-flex items-center justify-center font-semibold text-white transition duration-200 disabled:cursor-not-allowed disabled:opacity-45;
+  @apply inline-flex items-center justify-center font-medium text-white transition duration-150 disabled:cursor-not-allowed disabled:opacity-45;
   font-family: var(--cc-font);
-  border-radius: 0.8rem;
-  padding: 0.72rem 1.35rem;
-  font-size: 0.84rem;
-  background: linear-gradient(135deg, #1e40af 0%, #1d4ed8 55%, #2563eb 100%);
-  border: 1px solid rgba(37, 99, 235, 0.5);
-  box-shadow: 0 10px 22px rgba(37, 99, 235, 0.28);
+  border-radius: 6px;
+  min-height: 40px;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  background: var(--cargo-trust);
+  border: 1px solid var(--cargo-trust);
 }
 
 .cc-btn-primary:hover:not(:disabled) {
-  transform: translateY(-2px);
-  filter: brightness(1.05);
-  box-shadow: 0 14px 30px rgba(37, 99, 235, 0.32);
+  background: var(--cargo-trust-hover);
+  border-color: var(--cargo-trust-hover);
+}
+
+.cc-btn-secondary {
+  @apply inline-flex items-center justify-center font-medium transition duration-150 disabled:cursor-not-allowed disabled:opacity-45;
+  font-family: var(--cc-font);
+  border-radius: 6px;
+  min-height: 40px;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  background: var(--cargo-surface);
+  border: 1px solid var(--cargo-border);
+  color: var(--cargo-deep);
+}
+
+.cc-btn-secondary:hover:not(:disabled) {
+  background: var(--cargo-navy-50);
 }
 
 .cc-btn-ghost {
-  @apply inline-flex items-center justify-center font-medium transition duration-200;
-  color: #1e293b;
+  @apply inline-flex items-center justify-center font-medium transition duration-150;
+  color: var(--cargo-mid);
   font-family: var(--cc-font);
-  border-radius: 0.8rem;
-  border: 1px solid var(--cc-border);
-  background: #ffffff;
-  padding: 0.58rem 0.95rem;
-  font-size: 0.78rem;
-  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+  border-radius: 6px;
+  border: 1px solid transparent;
+  background: transparent;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.8125rem;
 }
 
 .cc-btn-ghost:hover {
-  border-color: #bfdbfe;
-  background: #eff6ff;
-  color: #1e40af;
-  transform: translateY(-2px);
-  box-shadow: 0 8px 16px rgba(59, 130, 246, 0.18);
+  background: var(--cargo-navy-50);
+  color: var(--cargo-deep);
+}
+
+.cc-btn-danger {
+  @apply inline-flex items-center justify-center font-medium transition duration-150;
+  font-family: var(--cc-font);
+  border-radius: 6px;
+  min-height: 40px;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  background: var(--cargo-alert-light);
+  border: 1px solid var(--cargo-alert-light);
+  color: var(--cargo-alert);
+}
+
+.cc-btn-danger:hover:not(:disabled) {
+  filter: brightness(0.97);
 }
 
 .cc-badge {
@@ -147,11 +190,27 @@ body {
   }
 }
 
+.cc-spinner {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--cargo-trust-light);
+  border-top-color: var(--cargo-trust);
+  border-radius: 50%;
+  animation: ccSpin 0.7s linear infinite;
+}
+
+@keyframes ccSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .cc-skeleton {
   position: relative;
   overflow: hidden;
-  border-radius: 0.75rem;
-  background: #e2e8f0;
+  border-radius: 6px;
+  background: var(--cargo-border);
 }
 
 .cc-skeleton::after {
@@ -310,17 +369,25 @@ body {
 }
 
 .cc-dropzone {
-  @apply flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed p-8 text-center transition-all duration-200;
-  border-color: #a5b4fc;
-  background: linear-gradient(180deg, #f8faff 0%, #f2f6ff 100%);
-  box-shadow: 0 8px 20px rgba(79, 70, 229, 0.08);
+  @apply flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed p-8 text-center transition-all duration-150;
+  border-color: var(--cargo-border);
+  background: var(--cargo-surface);
 }
 
 .cc-dropzone:hover {
-  transform: translateY(-2px);
-  border-color: #818cf8;
-  background: #eef2ff;
-  box-shadow: 0 14px 26px rgba(79, 70, 229, 0.14);
+  border-color: var(--cargo-trust);
+  background: var(--cargo-trust-light);
+}
+
+.cc-nav-active {
+  background: var(--cargo-trust-light);
+  color: var(--cargo-trust);
+  border-left: 3px solid var(--cargo-trust);
+}
+
+.cc-tab-active {
+  color: var(--cargo-trust);
+  border-bottom: 2px solid var(--cargo-trust);
 }
 
 
