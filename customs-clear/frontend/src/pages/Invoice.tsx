@@ -2,6 +2,7 @@ import React, { useCallback, useState } from 'react';
 import { api } from '../api/client';
 import { getUserFacingApiError } from '../api/error';
 import { PackingListUploader } from '../components/PackingListUploader';
+import { PageHeader } from '../components/PageHeader';
 
 type InvoiceLine = {
   description: string;
@@ -84,86 +85,96 @@ export function InvoicePage() {
   };
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap gap-2">
-        <button type="button" className="cc-btn cc-btn-secondary" onClick={() => void downloadTemplate()}>
-          Скачать шаблон Excel
-        </button>
-      </div>
+    <div className="space-y-8">
+      <PageHeader
+        title="Инвойс и пакинг-лист"
+        subtitle="Пакетный расчёт платежей по инвойсу и AI-классификация пакинг-листа"
+      />
 
-      <div
-        className={`rounded-xl border-2 border-dashed p-8 text-center transition-colors ${
-          dragOver ? 'border-indigo-500 bg-indigo-50' : 'border-slate-300 bg-white'
-        }`}
-        onDragOver={(e) => {
-          e.preventDefault();
-          setDragOver(true);
-        }}
-        onDragLeave={() => setDragOver(false)}
-        onDrop={onDrop}
-      >
-        <p className="text-sm text-slate-600">Перетащите файл .xlsx / .csv или выберите вручную</p>
-        <input
-          type="file"
-          accept=".xlsx,.xls,.csv"
-          className="mt-3 text-sm"
-          onChange={(e) => {
-            const f = e.target.files?.[0];
-            if (f) void onFile(f);
-          }}
-        />
-      </div>
-
-      {loading ? <p className="text-sm text-slate-500">Расчёт платежей…</p> : null}
-      {error ? <p className="text-sm text-red-600">{error}</p> : null}
-
-      {result ? (
-        <div className="space-y-2">
-          <button type="button" className="cc-btn cc-btn-secondary text-sm" onClick={exportExcel}>
-            Экспорт в Excel (CSV)
+      <section className="space-y-4">
+        <h2 className="text-base font-medium text-cargo-deep">Расчёт по инвойсу</h2>
+        <div className="flex flex-wrap gap-2">
+          <button type="button" className="cc-btn-secondary" onClick={() => void downloadTemplate()}>
+            Скачать шаблон Excel
           </button>
-        <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
-          <table className="min-w-[720px] w-full text-left text-sm">
-            <thead className="bg-slate-50 text-xs uppercase text-slate-500">
-              <tr>
-                <th className="px-3 py-2">Описание</th>
-                <th className="px-3 py-2">HS</th>
-                <th className="px-3 py-2">Стоимость</th>
-                <th className="px-3 py-2">Пошлина</th>
-                <th className="px-3 py-2">НДС</th>
-                <th className="px-3 py-2">РОП</th>
-                <th className="px-3 py-2">ИТОГО</th>
-              </tr>
-            </thead>
-            <tbody>
-              {result.lines.map((ln, i) => (
-                <tr key={i} className="border-t border-slate-100">
-                  <td className="px-3 py-2">{ln.description}</td>
-                  <td className="px-3 py-2 font-mono">{ln.hs_code || '—'}</td>
-                  <td className="px-3 py-2">{ln.customs_value.toLocaleString('ru-RU')} {ln.currency}</td>
-                  <td className="px-3 py-2">{Number(ln.duty).toLocaleString('ru-RU')}</td>
-                  <td className="px-3 py-2">{Number(ln.vat).toLocaleString('ru-RU')}</td>
-                  <td className="px-3 py-2">{Number(ln.rop?.total_rop_rub || 0).toLocaleString('ru-RU')}</td>
-                  <td className="px-3 py-2 font-semibold">{Number(ln.total_payable).toLocaleString('ru-RU')}</td>
-                </tr>
-              ))}
-            </tbody>
-            <tfoot className="bg-slate-50 font-semibold">
-              <tr>
-                <td className="px-3 py-2" colSpan={6}>
-                  ИТОГО
-                </td>
-                <td className="px-3 py-2">{Number(result.totals.total_payable).toLocaleString('ru-RU')} ₽</td>
-              </tr>
-            </tfoot>
-          </table>
         </div>
-        </div>
-      ) : null}
 
-      <section className="mt-8 border-t border-slate-200 pt-8">
-        <h2 className="mb-4 text-xl font-semibold text-slate-900">Классификация пакинг-листа</h2>
-        <p className="mb-4 text-sm text-gray-500">
+        <div
+          className={`cc-dropzone ${dragOver ? 'border-cargo-trust bg-cargo-trust-light' : ''}`}
+          onDragOver={(e) => {
+            e.preventDefault();
+            setDragOver(true);
+          }}
+          onDragLeave={() => setDragOver(false)}
+          onDrop={onDrop}
+        >
+          <p className="text-sm text-cargo-mid">Перетащите файл .xlsx / .csv или выберите вручную</p>
+          <input
+            type="file"
+            accept=".xlsx,.xls,.csv"
+            className="mt-3 text-sm"
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              if (f) void onFile(f);
+            }}
+          />
+        </div>
+
+        {loading ? (
+          <div className="flex items-center gap-2 text-sm text-cargo-mid">
+            <span className="cc-spinner" /> Расчёт платежей…
+          </div>
+        ) : null}
+        {error ? <p className="text-sm text-cargo-alert">{error}</p> : null}
+
+        {result ? (
+          <div className="space-y-2">
+            <button type="button" className="cc-btn-secondary text-sm" onClick={exportExcel}>
+              Экспорт в Excel (CSV)
+            </button>
+            <div className="overflow-x-auto rounded-lg border border-cargo-border bg-cargo-surface">
+              <table className="min-w-[720px] w-full text-left text-sm">
+                <thead className="bg-cargo-cloud text-[11px] uppercase tracking-[0.06em] text-cargo-light">
+                  <tr>
+                    <th className="px-3 py-2">Описание</th>
+                    <th className="px-3 py-2">HS</th>
+                    <th className="px-3 py-2">Стоимость</th>
+                    <th className="px-3 py-2">Пошлина</th>
+                    <th className="px-3 py-2">НДС</th>
+                    <th className="px-3 py-2">РОП</th>
+                    <th className="px-3 py-2">ИТОГО</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {result.lines.map((ln, i) => (
+                    <tr key={i} className={`border-t border-cargo-border ${i % 2 ? 'bg-cargo-cloud' : 'bg-cargo-surface'}`}>
+                      <td className="px-3 py-2 text-cargo-deep">{ln.description}</td>
+                      <td className="px-3 py-2 font-mono text-cargo-trust">{ln.hs_code || '—'}</td>
+                      <td className="px-3 py-2">{ln.customs_value.toLocaleString('ru-RU')} {ln.currency}</td>
+                      <td className="px-3 py-2">{Number(ln.duty).toLocaleString('ru-RU')}</td>
+                      <td className="px-3 py-2">{Number(ln.vat).toLocaleString('ru-RU')}</td>
+                      <td className="px-3 py-2">{Number(ln.rop?.total_rop_rub || 0).toLocaleString('ru-RU')}</td>
+                      <td className="px-3 py-2 font-medium">{Number(ln.total_payable).toLocaleString('ru-RU')}</td>
+                    </tr>
+                  ))}
+                </tbody>
+                <tfoot className="bg-cargo-deep font-medium text-white">
+                  <tr>
+                    <td className="px-3 py-2" colSpan={6}>
+                      ИТОГО
+                    </td>
+                    <td className="px-3 py-2">{Number(result.totals.total_payable).toLocaleString('ru-RU')} ₽</td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+          </div>
+        ) : null}
+      </section>
+
+      <section className="space-y-4 border-t border-cargo-border pt-8">
+        <h2 className="text-base font-medium text-cargo-deep">Классификация пакинг-листа</h2>
+        <p className="text-sm text-cargo-mid">
           Загрузите пакинг-лист .xlsx — AI определит коды ТН ВЭД по названиям на китайском и фотографиям товаров
         </p>
         <PackingListUploader />

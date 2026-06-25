@@ -23,7 +23,7 @@ import { PermitDocumentsBlock } from './PermitDocumentsBlock';
 import { SmartPaymentsBlock } from '../payments/SmartPaymentsBlock';
 import { TradeRemediesDisclaimer } from '../payments/TradeRemediesDisclaimer';
 import type { NormativeRequirementsBlockData, SanctionsRiskBlockData } from '../../types/api.types';
-import { ArrowUpRight, FileCheck2, FolderKanban, Scale, ShieldCheck } from 'lucide-react';
+import { ArrowUpRight, FileCheck2, FolderKanban, ShieldCheck } from 'lucide-react';
 
 const REFERENCE_NT_SECTION_TITLES = new Set([
   'Запреты и лицензии',
@@ -392,70 +392,34 @@ export const ProductDetails: React.FC<Props> = ({ selectedCode }) => {
           ТРОИС: есть совпадения по защищённым брендам — см. вкладку «Нетарифное регулирование».
         </div>
       ) : null}
-      <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0">
-        <button
-          type="button"
-          className={`shrink-0 rounded-lg border px-3 py-2 text-sm font-medium transition sm:shrink ${
-            activeTab === 'payments'
-              ? 'border-blue-200 bg-blue-50 text-blue-800'
-              : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
-          }`}
-          onClick={() => setActiveTab('payments')}
-        >
-          Платежи
-        </button>
-        <button
-          type="button"
-          className={`shrink-0 rounded-lg border px-3 py-2 text-sm font-medium transition sm:shrink ${
-            activeTab === 'nonTariff'
-              ? 'border-blue-200 bg-blue-50 text-blue-800'
-              : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
-          }`}
-          onClick={() => setActiveTab('nonTariff')}
-        >
-          Нетарифное регулирование
-        </button>
-        <button
-          type="button"
-          className={`shrink-0 rounded-lg border px-3 py-2 text-sm font-medium transition sm:shrink ${
-            activeTab === 'decisions'
-              ? 'border-blue-200 bg-blue-50 text-blue-800'
-              : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
-          }`}
-          onClick={() => setActiveTab('decisions')}
-        >
-          <span className="inline-flex items-center gap-1.5">
-            <Scale className="h-4 w-4" aria-hidden />
-            Предварительные решения
-            {(preliminaryBlock?.total_count ?? 0) > 0 ? (
-              <span className="rounded-full bg-indigo-100 px-1.5 py-0.5 text-[10px] font-semibold text-indigo-800">
+      <div className="-mx-1 flex gap-1 overflow-x-auto border-b border-cargo-border px-1 pb-0 sm:mx-0 sm:px-0">
+        {(
+          [
+            ['payments', 'Платежи'],
+            ['nonTariff', 'Нетарифка'],
+            ['decisions', 'Решения'],
+            ['normative', 'Документы'],
+            ['notes', 'Примечания'],
+          ] as const
+        ).map(([tab, label]) => (
+          <button
+            key={tab}
+            type="button"
+            className={`shrink-0 border-b-2 px-3 py-2.5 text-sm font-medium transition sm:shrink ${
+              activeTab === tab
+                ? 'border-cargo-trust text-cargo-trust'
+                : 'border-transparent text-cargo-mid hover:text-cargo-deep'
+            }`}
+            onClick={() => setActiveTab(tab)}
+          >
+            {label}
+            {tab === 'decisions' && (preliminaryBlock?.total_count ?? 0) > 0 ? (
+              <span className="ml-1.5 rounded-full bg-cargo-trust-light px-1.5 py-0.5 text-[10px] font-semibold text-cargo-trust">
                 {preliminaryBlock?.total_count}
               </span>
             ) : null}
-          </span>
-        </button>
-        <button
-          type="button"
-          className={`shrink-0 rounded-lg border px-3 py-2 text-sm font-medium transition sm:shrink ${
-            activeTab === 'normative'
-              ? 'border-blue-200 bg-blue-50 text-blue-800'
-              : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
-          }`}
-          onClick={() => setActiveTab('normative')}
-        >
-          Нормативные требования
-        </button>
-        <button
-          type="button"
-          className={`shrink-0 rounded-lg border px-3 py-2 text-sm font-medium transition sm:shrink ${
-            activeTab === 'notes'
-              ? 'border-blue-200 bg-blue-50 text-blue-800'
-              : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
-          }`}
-          onClick={() => setActiveTab('notes')}
-        >
-          Примечания и документы
-        </button>
+          </button>
+        ))}
       </div>
 
       {activeTab === 'payments' ? (

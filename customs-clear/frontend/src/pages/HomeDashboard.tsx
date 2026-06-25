@@ -1,14 +1,43 @@
-import React, { useState } from 'react';
-import { Calculator, Copyright, Search } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { Calculator, FileSpreadsheet, Search } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { api } from '../api/client';
 import { CC_HOME_TNVED_QUERY_KEY } from '../constants/homeNav';
 import { DeclarantChatPanel } from '../components/assistant/DeclarantChatPanel';
+import { PageHeader } from '../components/PageHeader';
 import { useAssistantSurfaceVisible } from '../context/ClientCapabilitiesContext';
+
+function formatStat(n: number): string {
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
+  return n.toLocaleString('ru-RU');
+}
 
 export const HomeDashboard: React.FC = () => {
   const navigate = useNavigate();
   const assistantVisible = useAssistantSurfaceVisible();
   const [q, setQ] = useState('');
+  const [stats, setStats] = useState<{ tnved: string; nt: string; rates: string }>({
+    tnved: '—',
+    nt: '—',
+    rates: '—',
+  });
+
+  useEffect(() => {
+    void api
+      .get<{ tnved_entries_count?: number; non_tariff_rules_count?: number; hs_rates_count?: number }>(
+        '/tnved/stats',
+      )
+      .then(({ data }) => {
+        setStats({
+          tnved: formatStat(data.tnved_entries_count ?? 0),
+          nt: formatStat(data.non_tariff_rules_count ?? 0),
+          rates: formatStat(data.hs_rates_count ?? 0),
+        });
+      })
+      .catch(() => {
+        /* keep placeholders */
+      });
+  }, []);
 
   const submitSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -22,67 +51,75 @@ export const HomeDashboard: React.FC = () => {
     navigate('/tnved');
   };
 
-  return (
-    <div className="mx-auto max-w-4xl space-y-8 py-2">
-      <div className="cc-card px-8 py-8 text-center">
-        <h2 className="text-2xl font-semibold tracking-tight text-slate-900">Добро пожаловать</h2>
-        <p className="mx-auto mt-2 max-w-2xl text-[13px] leading-relaxed text-slate-500">
-          Найдите код ТН ВЭД в справочнике или перейдите к расчёту платежей и проверке товарных знаков.
-        </p>
-      </div>
+  const quickActions = [
+    {
+      icon: Search,
+      title: 'Найти код',
+      desc: 'Справочник ТН ВЭД с деревом и поиском',
+      onClick: () => navigate('/tnved'),
+    },
+    {
+      icon: Calculator,
+      title: 'Рассчитать платежи',
+      desc: 'Пошлина, НДС и таможенные сборы',
+      onClick: () => navigate('/calculator'),
+    },
+    {
+      icon: FileSpreadsheet,
+      title: 'Загрузить пакинг-лист',
+      desc: 'AI-классификация по названиям и фото',
+      onClick: () => navigate('/invoice'),
+    },
+  ];
 
-      <form onSubmit={submitSearch} className="cc-card grid gap-3 p-4 sm:grid-cols-[1fr_auto] sm:items-stretch">
+  return (
+    <div className="space-y-6">
+      <PageHeader
+        title="Главная"
+        subtitle="Найдите код ТН ВЭД, рассчитайте платежи или загрузите пакинг-лист для классификации"
+        stats={[
+          { label: 'Кодов ТН ВЭД', value: stats.tnved },
+          { label: 'Нетарифных мер', value: stats.nt },
+          { label: 'Ставок hs_rates', value: stats.rates },
+        ]}
+      />
+
+      <form onSubmit={submitSearch} className="relative">
         <label htmlFor="home-tnved-search" className="sr-only">
           Поиск по ТН ВЭД
         </label>
-        <div className="relative min-w-0">
-          <Search
-            className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-500"
-            aria-hidden
-          />
-          <input
-            id="home-tnved-search"
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            placeholder="Введите код ТН ВЭД или наименование товара…"
-            className="w-full rounded-2xl border border-slate-200 bg-white py-4 pl-12 pr-4 text-[15px] text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200"
-          />
-        </div>
-        <button
-          type="submit"
-          className="rounded-2xl bg-indigo-600 px-5 py-3 text-[13px] font-semibold text-white transition-all hover:-translate-y-0.5 hover:bg-indigo-500 hover:shadow-md sm:min-h-[56px] sm:rounded-xl sm:py-0"
-        >
-          Справочник ТН ВЭД
-        </button>
+        <Search
+          className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-cargo-light"
+          aria-hidden
+        />
+        <input
+          id="home-tnved-search"
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          placeholder="Найти товар по коду или описанию..."
+          className="w-full rounded-lg border-2 border-cargo-border bg-cargo-surface py-3 pl-12 pr-4 text-base text-cargo-deep placeholder:text-cargo-light focus:border-cargo-trust focus:outline-none focus:ring-2 focus:ring-cargo-trust-light"
+          style={{ minHeight: 48 }}
+        />
       </form>
 
-      {assistantVisible ? <DeclarantChatPanel variant="home" /> : null}
-
-      <div className="grid gap-3 sm:grid-cols-2">
-        <button
-          type="button"
-          onClick={() => navigate('/calculator')}
-          className="group cc-card flex flex-col items-center px-6 py-8 text-center transition-all hover:-translate-y-0.5 hover:border-indigo-200 hover:shadow-md"
-        >
-          <span className="flex h-12 w-12 items-center justify-center rounded-full bg-indigo-100 text-indigo-700">
-            <Calculator className="h-6 w-6" aria-hidden />
-          </span>
-          <span className="mt-4 text-[15px] font-semibold text-slate-900">Калькулятор платежей</span>
-          <span className="mt-1 text-[12px] leading-snug text-slate-500">Пошлина, НДС и сборы</span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => navigate('/trois')}
-          className="group cc-card flex flex-col items-center px-6 py-8 text-center transition-all hover:-translate-y-0.5 hover:border-amber-200 hover:shadow-md"
-        >
-          <span className="flex h-12 w-12 items-center justify-center rounded-full bg-amber-100 text-amber-700">
-            <Copyright className="h-6 w-6" aria-hidden />
-          </span>
-          <span className="mt-4 text-[15px] font-semibold text-slate-900">ТРОИС</span>
-          <span className="mt-1 text-[12px] leading-snug text-slate-500">Проверка по реестру товарных знаков</span>
-        </button>
+      <div className="grid gap-3 sm:grid-cols-3">
+        {quickActions.map((action) => (
+          <button
+            key={action.title}
+            type="button"
+            onClick={action.onClick}
+            className="group flex flex-col items-start rounded-lg border border-cargo-border bg-cargo-surface p-4 text-left transition-colors hover:border-cargo-trust"
+          >
+            <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-cargo-trust-light text-cargo-trust">
+              <action.icon className="h-5 w-5" aria-hidden />
+            </span>
+            <span className="mt-3 text-sm font-medium text-cargo-deep">{action.title}</span>
+            <span className="mt-1 text-xs text-cargo-mid">{action.desc}</span>
+          </button>
+        ))}
       </div>
+
+      {assistantVisible ? <DeclarantChatPanel variant="home" /> : null}
     </div>
   );
 };

@@ -2,6 +2,7 @@ import React from 'react';
 import { X } from 'lucide-react';
 import { ProductDetails } from '../components/tnved/ProductDetails';
 import { TnvedTree } from '../components/tnved/TnvedTree';
+import { PageHeader } from '../components/PageHeader';
 import { CC_HOME_TNVED_QUERY_KEY, CC_TNVED_SELECT_CODE_KEY } from '../constants/homeNav';
 
 export const Dictionary: React.FC = () => {
@@ -47,14 +48,13 @@ export const Dictionary: React.FC = () => {
 
   return (
     <>
-      <div className="min-h-[min(640px,calc(100dvh-8rem))] overflow-hidden rounded-2xl border border-slate-100 bg-white text-gray-900 shadow-lg shadow-slate-200/70 sm:min-h-[min(860px,calc(100vh-10rem))]">
-        <div className="shrink-0 border-b border-slate-100 bg-slate-50 px-4 py-3 sm:px-6 sm:py-4">
-          <p className="text-[11px] font-semibold uppercase tracking-widest text-gray-500">Справочник ТН ВЭД</p>
-          <p className="mt-0.5 text-xs text-gray-500">
-            Выберите 10-значный код для карточки товара: платежи, нетарифные меры, предварительные решения и ссылка на нормативный блок.
-          </p>
-        </div>
-        <div className="min-h-0 h-[calc(100dvh-11rem)] overflow-hidden px-3 py-3 sm:h-[calc(100vh-13.5rem)] sm:px-5 sm:py-4">
+      <PageHeader
+        title="Справочник ТН ВЭД"
+        subtitle="Поиск по коду или описанию, дерево классификации и карточка товара"
+      />
+
+      <div className="min-h-[min(560px,calc(100dvh-12rem))] overflow-hidden rounded-lg border border-cargo-border bg-cargo-surface sm:min-h-[min(720px,calc(100vh-14rem))]">
+        <div className="min-h-0 h-[calc(100dvh-14rem)] overflow-hidden p-3 sm:h-[calc(100vh-16rem)] sm:p-4">
           <TnvedTree
             selectedCode={selectedCode}
             onSelectCode={handleSelectCode}
@@ -65,21 +65,21 @@ export const Dictionary: React.FC = () => {
 
       {detailsOpen && selectedCode ? (
         <div
-          className="fixed inset-0 z-50 flex items-end justify-center bg-slate-900/45 p-0 backdrop-blur-[2px] sm:items-center sm:p-4"
+          className="fixed inset-0 z-50 flex items-end justify-center bg-cargo-deep/40 p-0 sm:items-center sm:p-4"
           onClick={() => setDetailsOpen(false)}
         >
           <div
-            className="flex h-[100dvh] max-h-[100dvh] w-full max-w-5xl flex-col overflow-hidden rounded-none border border-slate-200 bg-white shadow-2xl shadow-slate-900/20 sm:h-[90vh] sm:min-h-[480px] sm:rounded-2xl"
+            className="flex h-[100dvh] max-h-[100dvh] w-full max-w-5xl flex-col overflow-hidden rounded-none border border-cargo-border bg-cargo-surface shadow-xl sm:h-[90vh] sm:min-h-[480px] sm:rounded-lg"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between border-b border-slate-200 bg-slate-50 px-4 py-3 sm:px-5">
+            <div className="flex items-center justify-between border-b border-cargo-border px-4 py-4 sm:px-5">
               <div>
-                <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">Справка по товару</p>
-                <p className="mt-0.5 font-mono text-sm text-slate-700">{selectedCode}</p>
+                <p className="text-[11px] font-medium uppercase tracking-[0.06em] text-cargo-light">Карточка товара</p>
+                <p className="mt-1 font-mono text-2xl font-medium text-cargo-trust">{selectedCode}</p>
               </div>
               <button
                 type="button"
-                className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 hover:bg-slate-100"
+                className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-cargo-border text-cargo-mid hover:bg-cargo-navy-50"
                 onClick={() => setDetailsOpen(false)}
                 aria-label="Закрыть"
               >
