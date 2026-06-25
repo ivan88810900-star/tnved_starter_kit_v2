@@ -2,7 +2,7 @@ import React from 'react';
 import { X } from 'lucide-react';
 import { ProductDetails } from '../components/tnved/ProductDetails';
 import { TnvedTree } from '../components/tnved/TnvedTree';
-import { CC_HOME_TNVED_QUERY_KEY } from '../constants/homeNav';
+import { CC_HOME_TNVED_QUERY_KEY, CC_TNVED_SELECT_CODE_KEY } from '../constants/homeNav';
 
 export const Dictionary: React.FC = () => {
   const [selectedCode, setSelectedCode] = React.useState<string | null>(null);
@@ -11,6 +11,16 @@ export const Dictionary: React.FC = () => {
 
   React.useEffect(() => {
     try {
+      const codeRaw = sessionStorage.getItem(CC_TNVED_SELECT_CODE_KEY);
+      if (codeRaw?.trim()) {
+        const code = codeRaw.replace(/\D/g, '').slice(0, 10);
+        sessionStorage.removeItem(CC_TNVED_SELECT_CODE_KEY);
+        if (code.length === 10) {
+          setSelectedCode(code);
+          setDetailsOpen(true);
+          return;
+        }
+      }
       const raw = sessionStorage.getItem(CC_HOME_TNVED_QUERY_KEY);
       if (raw?.trim()) {
         setInitialSearch(raw.trim());

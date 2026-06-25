@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
+import axios from 'axios';
 import { api } from '../api/client';
 import { getUserFacingApiError, isTechnicalErrorMessage } from '../api/error';
 import { AltaClassifierHints } from '../components/AltaClassifierHints';
@@ -45,6 +46,13 @@ type HistoryItem = {
 };
 
 type ClassifyMode = 'text' | 'image' | 'characteristics' | 'history';
+
+function classifyApiError(e: unknown, fallback: string): string {
+  if (axios.isAxiosError(e) && e.response?.status === 401) {
+    return 'Войдите в систему для использования AI';
+  }
+  return getUserFacingApiError(e, fallback);
+}
 
 function resultCode(r: ClassifyResult['results'][0]): string {
   return (r.code || r.hs_code || '').trim();
@@ -98,6 +106,18 @@ export const Classifier: React.FC = () => {
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [useJournalHints, setUseJournalHints] = useState(true);
   const [clientId, setClientId] = useState(() => localStorage.getItem('cc_audit_client_id') || '');
+  const [authRequired, setAuthRequired] = useState(false);
+
+  useEffect(() => {
+    void (async () => {
+      try {
+        const { data } = await api.get<{ authenticated?: boolean }>('/auth/me');
+        setAuthRequired(!data.authenticated);
+      } catch {
+        setAuthRequired(true);
+      }
+    })();
+  }, []);
 
   const loadHistory = useCallback(async () => {
     try {
@@ -127,7 +147,7 @@ export const Classifier: React.FC = () => {
       });
       setResult(data);
     } catch (e: unknown) {
-      setError(getUserFacingApiError(e, 'Не удалось подобрать код ТН ВЭД. Попробуйте позже.'));
+      setError(classifyApiError(e, 'Не удалось подобрать код ТН ВЭД. Попробуйте позже.'));
     } finally {
       setLoading(false);
     }
@@ -156,7 +176,7 @@ export const Classifier: React.FC = () => {
       setResult(data);
       void loadHistory();
     } catch (e: unknown) {
-      setError(getUserFacingApiError(e, 'Не удалось классифицировать по фото.'));
+      setError(classifyApiError(e, 'Не удалось классифицировать по фото.'));
     } finally {
       setLoading(false);
     }
@@ -171,7 +191,7 @@ export const Classifier: React.FC = () => {
       setResult(data);
       void loadHistory();
     } catch (e: unknown) {
-      setError(getUserFacingApiError(e, 'Не удалось классифицировать по характеристикам.'));
+      setError(classifyApiError(e, 'Не удалось классифицировать по характеристикам.'));
     } finally {
       setLoading(false);
     }
@@ -194,6 +214,11 @@ export const Classifier: React.FC = () => {
   return (
     <div className="space-y-4">
       <p className="text-[12px] text-slate-600">Подбор кода ТН ВЭД по описанию, фото или структурированным характеристикам.</p>
+      {authRequired ? (
+        <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-[12px] text-amber-800">
+          Требуется авторизация — войдите в систему для использования AI-классификатора.
+        </p>
+      ) : null}
 
       <div className="flex flex-wrap gap-1 rounded-lg border border-slate-200 bg-slate-50 p-1">
         {tabs.map((t) => (

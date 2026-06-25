@@ -32,7 +32,10 @@ type VerifyRow = {
   status?: string;
   number?: string;
   holder?: string | null;
+  valid_to?: string | null;
+  valid_from?: string | null;
   registry_link?: string | null;
+  registry_source?: string | null;
   error?: string;
   raw?: { spa_shell?: boolean; note?: string };
 };
@@ -51,6 +54,10 @@ export const PermitPicker: React.FC = () => {
   const [verifyById, setVerifyById] = useState<Record<string, VerifyRow[] | 'loading' | null>>({});
   const [asyncJobs, setAsyncJobs] = useState<AsyncJobRow[]>([]);
   const [jobsLoading, setJobsLoading] = useState(false);
+  const [directNumber, setDirectNumber] = useState('');
+  const [directLoading, setDirectLoading] = useState(false);
+  const [directResult, setDirectResult] = useState<VerifyRow | null>(null);
+  const [directError, setDirectError] = useState<string | null>(null);
 
   const loadAsyncJobs = async () => {
     setJobsLoading(true);
@@ -89,6 +96,25 @@ export const PermitPicker: React.FC = () => {
     }
   };
 
+  const verifyDirectNumber = async () => {
+    const num = directNumber.trim();
+    if (!num) return;
+    setDirectLoading(true);
+    setDirectError(null);
+    setDirectResult(null);
+    try {
+      const { data: res } = await api.get<{ items: VerifyRow[] }>(
+        `/permits/verify/${encodeURIComponent(num)}`,
+        { params: { hs_code: hsCode.trim().replace(/\D/g, '') } },
+      );
+      setDirectResult(res.items?.[0] ?? null);
+    } catch (e: unknown) {
+      setDirectError(getApiErrorMessage(e, 'Ошибка проверки сертификата'));
+    } finally {
+      setDirectLoading(false);
+    }
+  };
+
   const verifyOne = async (item: SuggestItem) => {
     setVerifyById((m) => ({ ...m, [item.id]: 'loading' }));
     try {
@@ -120,6 +146,55 @@ export const PermitPicker: React.FC = () => {
           Используется внутренний справочник примеров. Итоговые номера подтверждайте в реестре кнопкой проверки.
         </div>
       </details>
+
+      <section className="cc-card-soft space-y-3 p-4">
+        <h3 className="text-sm font-semibold text-slate-800">Проверить сертификат по номеру</h3>
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <input
+            value={directNumber}
+            onChange={(e) => setDirectNumber(e.target.value)}
+            placeholder="Введите номер СС/ДС (например: RU С-CN.АД50.В.04618/22)"
+            className="cc-input min-w-0 flex-1"
+          />
+          <button
+            type="button"
+            disabled={directLoading || !directNumber.trim()}
+            onClick={() => void verifyDirectNumber()}
+            className="cc-btn-primary shrink-0"
+          >
+            {directLoading ? 'Проверка…' : 'Проверить'}
+          </button>
+        </div>
+        {directError && (
+          <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">{directError}</div>
+        )}
+        {directResult && (
+          <div className="rounded-lg border border-slate-200 bg-white p-3 text-xs text-slate-700">
+            <div className="font-mono text-sm text-slate-900">{directResult.number || directNumber}</div>
+            <p className="mt-1">
+              Статус: <strong>{directResult.status || '—'}</strong>
+              {directResult.holder ? ` · Держатель: ${directResult.holder}` : ''}
+            </p>
+            {directResult.valid_to ? (
+              <p className="mt-0.5 text-slate-600">Срок действия: {directResult.valid_to}</p>
+            ) : null}
+            {directResult.registry_source ? (
+              <p className="mt-0.5 text-slate-500">Источник: {directResult.registry_source}</p>
+            ) : null}
+            {directResult.error && <p className="mt-1 text-red-700">{directResult.error}</p>}
+            {directResult.registry_link && (
+              <a
+                href={directResult.registry_link}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-2 inline-block text-indigo-600 hover:underline"
+              >
+                Открыть в реестре
+              </a>
+            )}
+          </div>
+        )}
+      </section>
 
       <div className="grid gap-3 md:grid-cols-2">
         <label className="space-y-1">

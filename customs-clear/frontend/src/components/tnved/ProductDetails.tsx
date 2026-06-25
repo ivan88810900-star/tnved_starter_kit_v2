@@ -21,6 +21,7 @@ import { ClassificationRulingsBlock } from './ClassificationRulingsBlock';
 import { ProductCardSummary } from './ProductCardSummary';
 import { PermitDocumentsBlock } from './PermitDocumentsBlock';
 import { SmartPaymentsBlock } from '../payments/SmartPaymentsBlock';
+import { TradeRemediesDisclaimer } from '../payments/TradeRemediesDisclaimer';
 import type { NormativeRequirementsBlockData, SanctionsRiskBlockData } from '../../types/api.types';
 import { ArrowUpRight, FileCheck2, FolderKanban, Scale, ShieldCheck } from 'lucide-react';
 
@@ -540,6 +541,26 @@ export const ProductDetails: React.FC<Props> = ({ selectedCode }) => {
                     </article>
                   );
                 })}
+              </div>
+            )}
+          </section>
+
+          <section>
+            <h3 className="mb-3 border-b border-gray-200 pb-2 text-xs font-bold uppercase tracking-wide text-gray-600">
+              Торговые меры
+            </h3>
+            {preview?.special_duties?.has_measures ? (
+              <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+                <p>
+                  ⚠️{' '}
+                  {preview.special_duties.warning ||
+                    `Для данного кода действуют специальные торговые меры (страны: ${preview.special_duties.countries.join(', ')}).`}
+                </p>
+                <TradeRemediesDisclaimer className="mt-2" />
+              </div>
+            ) : (
+              <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+                Специальные торговые меры (антидемпинг, компенсационные пошлины) для этого кода не выявлены в справочнике.
               </div>
             )}
           </section>

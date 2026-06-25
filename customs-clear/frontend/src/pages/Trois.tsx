@@ -9,8 +9,32 @@ import type {
   TroisSyncResponse,
 } from '../types/api.types';
 
+type TroisHsItem = {
+  brand_name: string;
+  hs_code_prefix?: string;
+  reg_number?: string;
+  right_holder?: string;
+  trademark?: string;
+  valid_until?: string;
+  is_active: boolean;
+  status?: string;
+};
+
+type TroisHsResponse = {
+  status: string;
+  hs_code: string;
+  items: TroisHsItem[];
+  active_count?: number;
+  expired_count?: number;
+  warning?: string;
+};
+
 export const Trois: React.FC = () => {
   const [query, setQuery] = useState('');
+  const [hsLookup, setHsLookup] = useState('');
+  const [hsLoading, setHsLoading] = useState(false);
+  const [hsError, setHsError] = useState<string | null>(null);
+  const [hsResult, setHsResult] = useState<TroisHsResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -48,6 +72,25 @@ export const Trois: React.FC = () => {
       setError(getUserFacingApiError(e, 'Не удалось выполнить проверку ТРОИС.'));
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleHsLookup = async () => {
+    const code = hsLookup.trim().replace(/\D/g, '');
+    if (code.length < 4) {
+      setHsError('Укажите код ТН ВЭД минимум 4 цифры');
+      return;
+    }
+    setHsLoading(true);
+    setHsError(null);
+    setHsResult(null);
+    try {
+      const { data } = await api.get<TroisHsResponse>(`/non_tariff/trois/${code}`);
+      setHsResult(data);
+    } catch (e) {
+      setHsError(getUserFacingApiError(e, 'Не удалось выполнить поиск по коду ТН ВЭД.'));
+    } finally {
+      setHsLoading(false);
     }
   };
 
@@ -95,6 +138,62 @@ export const Trois: React.FC = () => {
           ))}
         </div>
       </details>
+
+      <section className="cc-card-soft space-y-3 p-4">
+        <h3 className="text-sm font-semibold text-slate-800">Поиск брендов по коду ТН ВЭД</h3>
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <input
+            value={hsLookup}
+            onChange={(e) => setHsLookup(e.target.value)}
+            placeholder="Код ТН ВЭД (например: 8517120000)"
+            className="cc-input min-w-0 flex-1 font-mono"
+          />
+          <button
+            type="button"
+            disabled={hsLoading || !hsLookup.trim()}
+            onClick={() => void handleHsLookup()}
+            className="cc-btn-primary shrink-0"
+          >
+            {hsLoading ? 'Поиск…' : 'Проверить'}
+          </button>
+        </div>
+        {hsError && (
+          <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">{hsError}</div>
+        )}
+        {hsResult && (
+          <div className="space-y-2 text-xs">
+            {hsResult.warning && (
+              <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-amber-800">
+                {hsResult.warning}
+              </div>
+            )}
+            {(() => {
+              const activeItems = (hsResult.items || []).filter((it) => it.is_active);
+              if (activeItems.length === 0) {
+                return (
+                  <p className="text-slate-600">
+                    Активных записей для кода {hsResult.hs_code} не найдено.
+                    {(hsResult.expired_count ?? 0) > 0 ? ' Есть только истёкшие записи — см. предупреждение выше.' : ''}
+                  </p>
+                );
+              }
+              return (
+                <ul className="divide-y divide-slate-100 rounded-lg border border-slate-200 bg-white">
+                  {activeItems.map((it, idx) => (
+                    <li key={`${it.brand_name}-${it.reg_number ?? idx}`} className="px-3 py-2">
+                      <p className="font-semibold text-slate-900">{it.brand_name}</p>
+                      {it.right_holder && <p className="text-slate-600">Правообладатель: {it.right_holder}</p>}
+                      {it.reg_number && <p className="font-mono text-[11px] text-slate-500">{it.reg_number}</p>}
+                      {it.valid_until && <p className="text-slate-500">Действует до: {it.valid_until}</p>}
+                    </li>
+                  ))}
+                </ul>
+              );
+            })()}
+          </div>
+        )}
+      </section>
+
       <input
         value={query}
         onChange={(e) => setQuery(e.target.value)}
