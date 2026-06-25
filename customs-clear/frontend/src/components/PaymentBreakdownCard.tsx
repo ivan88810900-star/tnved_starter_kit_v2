@@ -1,4 +1,5 @@
 import React from 'react';
+import { AnimatedNumber } from './AnimatedNumber';
 
 type Row = {
   label: string;
@@ -37,7 +38,9 @@ export const PaymentBreakdownCard: React.FC<Props> = ({
     ))}
     <div className="flex items-center justify-between bg-cargo-deep px-4 py-4 text-white">
       <p className="text-[11px] font-medium uppercase tracking-[0.06em] text-white/70">{totalLabel}</p>
-      <p className="text-xl font-medium tabular-nums">{totalAmount.toLocaleString('ru-RU')} ₽</p>
+      <p className="text-xl font-medium tabular-nums">
+        <AnimatedNumber value={totalAmount} format="currency" />
+      </p>
     </div>
   </div>
 );

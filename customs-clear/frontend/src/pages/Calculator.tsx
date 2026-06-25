@@ -44,6 +44,7 @@ import { CalculatorInvoiceAnalyzeSection } from '../components/calculator/Calcul
 import { CalculatorScenarioCompareSection } from '../components/calculator/CalculatorScenarioCompareSection';
 import { formatTnvedCommodityName, TNVED_COMMODITY_NAME_CLASS } from '../utils/tnvedDisplayText';
 import { TradeRemediesDisclaimer } from '../components/payments/TradeRemediesDisclaimer';
+import { AnimatedNumber } from '../components/AnimatedNumber';
 import { PaymentBreakdownCard } from '../components/PaymentBreakdownCard';
 import { PageHeader } from '../components/PageHeader';
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip as RechartsTooltip } from 'recharts';
@@ -1785,7 +1786,7 @@ export const Calculator: React.FC = () => {
                 <div>
                   <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Итого к уплате</p>
                   <p className="mt-0.5 text-3xl font-extrabold tracking-tight text-blue-900 sm:text-4xl">
-                    {result.breakdown.total_payable.toLocaleString('ru-RU')} ₽
+                    <AnimatedNumber value={result.breakdown.total_payable} format="currency" />
                   </p>
                 </div>
                 <button
