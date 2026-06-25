@@ -1,27 +1,20 @@
 from __future__ import annotations
 
-import asyncio
 import json
-import os
 from typing import Any
 
 import httpx
 from loguru import logger
 
-from ..api.v1.assistant import configure_gemini_sdk
-from .claude_service import ANTHROPIC_MODEL_NAME, ANTHROPIC_URL, llm_provider_chain
-from .gemini_genai_configure import resolved_gemini_model_name
+from .claude_service import (
+    ANTHROPIC_MODEL_NAME,
+    ANTHROPIC_URL,
+    _call_gemini,
+    llm_provider_chain,
+)
 
-_WARN_GENERIC = (
-    "Консультант временно недоступен. Повторите запрос позже или обратитесь к администратору."
-)
-_WARN_QUOTA = (
-    "Достигнут лимит запросов к облачному сервису ИИ. Повторите попытку позже или проверьте квоту в Google AI Studio."
-)
-_WARN_REGION = (
-    "⚠️ ИИ недоступен из-за региональных ограничений Google API. "
-    "Используйте VPN/прокси на стороне сервера."
-)
+_NOT_CONFIGURED = "AI сервис не настроен. Добавьте ANTHROPIC_API_KEY в .env"
+_UNAVAILABLE = "AI сервис временно недоступен. Повторите запрос через несколько минут."
 
 BASE_SYSTEM = (
     "Ты — ведущий специалист по ВЭД компании-импортера. Ты получил данные из таможенного калькулятора. "
@@ -60,7 +53,7 @@ def _normalized_turns(history: list[dict[str, Any]], max_turns: int = 32) -> lis
 
 
 def _strip_leading_assistant(turns: list[tuple[str, str]]) -> list[tuple[str, str]]:
-    """Gemini/чаты: нельзя начинать историю с ответа модели без user (например, приветствие из UI)."""
+    """Нельзя начинать историю с ответа модели без user (например, приветствие из UI)."""
     i = 0
     while i < len(turns) and turns[i][0] == "assistant":
         i += 1
@@ -71,15 +64,6 @@ def _system_with_context_only(current_context: dict[str, Any] | None) -> str:
     """Системный блок: роль + JSON контекста калькулятора (не дублирует историю диалога)."""
     ctx_text = _serialize_context(current_context)
     return f"{BASE_SYSTEM}\n\n---\nКонтекст текущего расчёта пользователя (JSON):\n{ctx_text}\n---"
-
-
-def _gemini_content_history(turns: list[tuple[str, str]]) -> list[dict[str, Any]]:
-    """История для Gemini: роли user | model."""
-    hist: list[dict[str, Any]] = []
-    for role, text in turns:
-        gem_role = "user" if role == "user" else "model"
-        hist.append({"role": gem_role, "parts": [text]})
-    return hist
 
 
 def _anthropic_messages(turns: list[tuple[str, str]], current_user_message: str) -> list[dict[str, str]]:
@@ -98,10 +82,19 @@ def _anthropic_messages(turns: list[tuple[str, str]], current_user_message: str)
         merged[-1]["content"] = (merged[-1]["content"] + "\n\n" + cur).strip()
     else:
         merged.append({"role": "user", "content": cur})
-    # Anthropic: первое сообщение должно быть от user
     while merged and merged[0]["role"] != "user":
         merged.pop(0)
     return merged
+
+
+def _gemini_user_text(turns: list[tuple[str, str]], user_msg: str) -> str:
+    """Плоский промпт для Gemini REST (fallback без multi-turn API)."""
+    parts: list[str] = []
+    for role, text in turns:
+        label = "Пользователь" if role == "user" else "Ассистент"
+        parts.append(f"{label}: {text}")
+    parts.append(f"Пользователь: {user_msg}")
+    return "\n\n".join(parts)
 
 
 async def _call_anthropic_messages(system: str, messages: list[dict[str, str]], key: str) -> str:
@@ -135,7 +128,7 @@ async def run_assistant_chat(
 ) -> str:
     chain = llm_provider_chain()
     if not chain:
-        return _WARN_GENERIC
+        return _NOT_CONFIGURED
 
     system_instruction = _system_with_context_only(current_context)
     turns = _strip_leading_assistant(_normalized_turns(history))
@@ -143,86 +136,29 @@ async def run_assistant_chat(
     if not user_msg:
         return "Введите сообщение."
 
-    last_generic = _WARN_GENERIC
+    last_error: Exception | None = None
     for provider, api_key in chain:
-        if provider == "anthropic":
-            try:
+        try:
+            if provider == "anthropic":
                 msgs = _anthropic_messages(turns, user_msg)
                 if not msgs:
                     continue
                 text = await _call_anthropic_messages(system_instruction, msgs, api_key)
                 if text:
                     return text
-            except httpx.HTTPStatusError as exc:
-                logger.warning(f"assistant_chat anthropic HTTP: {exc}")
-                last_generic = _WARN_GENERIC
-                continue
-            except Exception as exc:
-                logger.exception(f"assistant_chat anthropic: {exc}")
-                last_generic = _WARN_GENERIC
-                continue
+            elif provider == "gemini":
+                llm_resp = await _call_gemini(
+                    system_instruction,
+                    _gemini_user_text(turns, user_msg),
+                    api_key,
+                )
+                text = (llm_resp.get("text") or "").strip()
+                if text:
+                    return text
+        except Exception as exc:
+            last_error = exc
+            logger.warning(f"assistant_chat {provider} error: {exc}")
+            continue
 
-        gemini_answer = await _run_assistant_chat_gemini(
-            api_key=api_key,
-            system_instruction=system_instruction,
-            turns=turns,
-            user_msg=user_msg,
-        )
-        if gemini_answer and gemini_answer not in {_WARN_GENERIC, _WARN_QUOTA, _WARN_REGION}:
-            return gemini_answer
-        last_generic = gemini_answer or last_generic
-
-    return last_generic
-
-
-async def _run_assistant_chat_gemini(
-    *,
-    api_key: str,
-    system_instruction: str,
-    turns: list[tuple[str, str]],
-    user_msg: str,
-) -> str:
-    try:
-        import google.generativeai as genai
-    except ModuleNotFoundError:
-        return _WARN_GENERIC
-
-    model_name = resolved_gemini_model_name()
-
-    try:
-        configure_gemini_sdk(genai, api_key=api_key)
-        model = genai.GenerativeModel(
-            model_name,
-            system_instruction=system_instruction,
-        )
-        gem_hist = _gemini_content_history(turns)
-
-        def _generate() -> str:
-            chat = model.start_chat(history=gem_hist)
-            resp = chat.send_message(
-                user_msg,
-                generation_config={"temperature": 0.2},
-            )
-            return (getattr(resp, "text", "") or "").strip()
-
-        text = await asyncio.to_thread(_generate)
-        return text or "Не удалось сформулировать ответ. Уточните вопрос."
-    except Exception as exc:
-        msg = str(exc).lower()
-        if "429" in msg or "quota" in msg or "resource exhausted" in msg or "resourceexhausted" in msg:
-            return _WARN_QUOTA
-        if (
-            "user location is not supported" in msg
-            or "regional" in msg
-            or "api_key_http_referrer_blocked" in msg
-            or "forbidden" in msg
-            or "403" in msg
-        ):
-            return _WARN_REGION
-        if "404" in msg and "not found" in msg and "model" in msg:
-            return (
-                "Модель ИИ не найдена на стороне Google. Задайте актуальное имя в переменной окружения "
-                "GEMINI_MODEL_NAME (например, gemini-1.5-flash)."
-            )
-        logger.exception(f"assistant_chat gemini: {exc}")
-        return _WARN_GENERIC
+    logger.error(f"assistant_chat: все провайдеры недоступны. Последняя ошибка: {last_error}")
+    return _UNAVAILABLE
