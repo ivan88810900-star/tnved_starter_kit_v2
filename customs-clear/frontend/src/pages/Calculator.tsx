@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Banknote, ShieldCheck } from 'lucide-react';
 import { api } from '../api/client';
 import { getAdminToken, setAdminToken as setAdminTokenMemory } from '../api/adminToken';
 import { getUserFacingApiError } from '../api/error';
