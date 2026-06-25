@@ -17,15 +17,6 @@ export const TnvedBook: React.FC = () => {
   const [q, setQ] = useState('');
   const [hits, setHits] = useState<TnvedHit[]>([]);
   const [loading, setLoading] = useState(false);
-  const [stats, setStats] = useState<{
-    tnved: number;
-    notes: number;
-    rates: number;
-    nt: number;
-    ingested?: number;
-    embeddings?: number;
-    calcHist?: number;
-  } | null>(null);
   const [semQ, setSemQ] = useState('');
   const [semLoading, setSemLoading] = useState(false);
   const [semErr, setSemErr] = useState<string | null>(null);
@@ -47,31 +38,6 @@ export const TnvedBook: React.FC = () => {
     notes: Note[];
     official_ett_url: string;
   } | null>(null);
-
-  React.useEffect(() => {
-    api
-      .get<{
-        tnved_entries_count: number;
-        normative_notes_count: number;
-        hs_rates_count: number;
-        non_tariff_rules_count: number;
-        ingested_documents_count?: number;
-        tnved_embeddings_count?: number;
-        customs_calculation_history_count?: number;
-      }>('/tnved/stats')
-      .then(({ data }) => {
-        setStats({
-          tnved: data.tnved_entries_count,
-          notes: data.normative_notes_count,
-          rates: data.hs_rates_count,
-          nt: data.non_tariff_rules_count,
-          ingested: data.ingested_documents_count,
-          embeddings: data.tnved_embeddings_count,
-          calcHist: data.customs_calculation_history_count,
-        });
-      })
-      .catch(() => setStats(null));
-  }, []);
 
   const loadEmbStatus = async () => {
     try {
@@ -160,30 +126,6 @@ export const TnvedBook: React.FC = () => {
         </a>
         .
       </p>
-
-      {stats && (
-        <div className="flex flex-wrap gap-2 text-[11px] text-slate-400">
-          <span className="rounded-md border border-white/[0.06] px-2 py-1">ТН ВЭД в БД: {stats.tnved}</span>
-          <span className="rounded-md border border-white/[0.06] px-2 py-1">Примечания: {stats.notes}</span>
-          <span className="rounded-md border border-white/[0.06] px-2 py-1">Ставки (hs_rates): {stats.rates}</span>
-          <span className="rounded-md border border-white/[0.06] px-2 py-1">Нетарифные правила: {stats.nt}</span>
-          {stats.ingested != null && (
-            <span className="rounded-md border border-emerald-900/40 px-2 py-1 text-emerald-200/80">
-              Загрузки документов: {stats.ingested}
-            </span>
-          )}
-          {stats.embeddings != null && (
-            <span className="rounded-md border border-violet-900/40 px-2 py-1 text-violet-200/80">
-              Векторов ТН ВЭД: {stats.embeddings}
-            </span>
-          )}
-          {stats.calcHist != null && (
-            <span className="rounded-md border border-sky-900/40 px-2 py-1 text-sky-200/80">
-              История расчётов: {stats.calcHist}
-            </span>
-          )}
-        </div>
-      )}
 
       <details
         className="cc-disclosure"

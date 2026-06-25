@@ -1,4 +1,5 @@
 import React, { useCallback, useState } from 'react';
+import * as HoverCard from '@radix-ui/react-hover-card';
 import { useDropzone } from 'react-dropzone';
 import { CloudUpload, FileText, Files } from 'lucide-react';
 import { api } from '../api/client';
@@ -180,6 +181,32 @@ const HS_MATCH_RU: Record<string, string> = {
   unknown: 'Сверка ТН ВЭД недоступна',
 };
 
+const SUPPORTED_FORMATS_HINT =
+  'Инвойс или упаковочный лист: PDF, .xlsx, .xls, .csv. Китайские и английские колонки в Excel; для сканов PDF — OCR. Точнее всего — таблица .xlsx. Второй файл необязателен — для сверки инвойса с упаковочным листом.';
+
+function SupportedFormatsLink() {
+  return (
+    <HoverCard.Root openDelay={200} closeDelay={100}>
+      <HoverCard.Trigger asChild>
+        <button type="button" className="text-sm text-cargo-trust underline-offset-2 hover:underline">
+          Что поддерживается?
+        </button>
+      </HoverCard.Trigger>
+      <HoverCard.Portal>
+        <HoverCard.Content
+          side="top"
+          align="start"
+          sideOffset={6}
+          className="z-50 max-w-sm rounded-lg border border-cargo-border bg-cargo-surface px-3 py-2 text-xs leading-relaxed text-cargo-mid shadow-lg"
+        >
+          {SUPPORTED_FORMATS_HINT}
+          <HoverCard.Arrow className="fill-cargo-surface" />
+        </HoverCard.Content>
+      </HoverCard.Portal>
+    </HoverCard.Root>
+  );
+}
+
 export const DocumentCheck: React.FC = () => {
   const [invoiceFile, setInvoiceFile] = useState<File | null>(null);
   const [packingFile, setPackingFile] = useState<File | null>(null);
@@ -265,6 +292,7 @@ export const DocumentCheck: React.FC = () => {
     multiple: false
   });
 
+  const hasFile = Boolean(invoiceFile || packingFile);
   const canStart = Boolean(invoiceFile) && !isLoading;
   const reset = () => {
     setInvoiceFile(null);
@@ -439,37 +467,23 @@ export const DocumentCheck: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <div className="cc-card flex flex-wrap items-center justify-between gap-3 px-5 py-4">
-        <div className="max-w-2xl space-y-1">
-          <p className="text-[13px] text-slate-700">
-            Загрузите <strong>упаковочный лист или инвойс</strong> (Excel / PDF, в т.ч. на <strong>китайском</strong>) — при
-            режиме «ВЭД-аналитик» выполняется полный цикл: <strong>код ТН ВЭД и графа 31</strong>, справка по{' '}
-            <strong>разрешительным документам</strong> и <strong>мерам нетарифного регулирования</strong>,{' '}
-            <strong>пошлина и НДС</strong> по строкам (если в файле есть суммы), проверка реестра (опционально) и{' '}
-            <strong>сводка с рисками и рекомендациями</strong>.
-          </p>
-          <p className="text-[11px] text-slate-500">
-            Поддерживаются <strong className="text-slate-700">китайские</strong> и английские колонки в Excel; для сканов
-            PDF при необходимости включается распознавание текста (OCR). Точнее всего — таблица .xlsx.
-          </p>
-          <p className="text-[11px] text-slate-600">
-            Второй файл <strong className="text-slate-700">не обязателен</strong> — для сверки инвойса с упаковочным
-            листом. Один файл может быть только packing list — строки товаров извлекаются из него.
-          </p>
-        </div>
-        <button type="button" onClick={reset} className="cc-btn-ghost">
-          Сбросить
-        </button>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h1 className="text-[22px] font-medium tracking-tight text-cargo-deep">Загрузите документ</h1>
+        {hasFile ? (
+          <button type="button" onClick={reset} className="cc-btn-ghost">
+            Сбросить
+          </button>
+        ) : null}
       </div>
+
       <section className="grid gap-4 md:grid-cols-2">
         <div {...invoiceDrop.getRootProps()} className="cc-dropzone">
           <input {...invoiceDrop.getInputProps()} />
           <span className="mb-3 inline-flex h-14 w-14 items-center justify-center rounded-full bg-indigo-100 text-indigo-700">
             <CloudUpload className="h-7 w-7" />
           </span>
-          <p className="text-sm font-semibold text-slate-800">Главный файл — обязательно</p>
+          <p className="text-sm font-semibold text-slate-800">Главный файл</p>
           <p className="mt-1 text-[11px] text-slate-600">Перетащите файл сюда или кликните для выбора</p>
-          <p className="mt-1 text-[11px] text-slate-500">Инвойс или упаковочный лист: PDF, .xlsx, .xls, .csv</p>
           {invoiceFile && (
             <p className="mt-3 inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-1 text-[11px] font-medium text-emerald-800">
               <FileText className="h-3.5 w-3.5" />
@@ -483,8 +497,8 @@ export const DocumentCheck: React.FC = () => {
           <span className="mb-3 inline-flex h-14 w-14 items-center justify-center rounded-full bg-sky-100 text-sky-700">
             <Files className="h-7 w-7" />
           </span>
-          <p className="text-sm font-semibold text-slate-800">Второй документ</p>
-          <p className="mt-1 text-[11px] text-slate-600">Необязательно — для сверки (инвойс ↔ packing list)</p>
+          <p className="text-sm font-semibold text-slate-800">Второй файл</p>
+          <p className="mt-1 text-[11px] text-slate-600">Перетащите файл сюда или кликните для выбора</p>
           {packingFile && (
             <p className="mt-3 inline-flex items-center gap-1 rounded-full bg-blue-100 px-2.5 py-1 text-[11px] font-medium text-blue-800">
               <FileText className="h-3.5 w-3.5" />
@@ -494,6 +508,10 @@ export const DocumentCheck: React.FC = () => {
         </div>
       </section>
 
+      <SupportedFormatsLink />
+
+      {hasFile ? (
+        <>
       <details className="cc-disclosure">
         <summary>Сохранение документа и идентификатор партии</summary>
         <div className="cc-disclosure-body space-y-3">
@@ -613,7 +631,7 @@ export const DocumentCheck: React.FC = () => {
         </div>
       </details>
 
-      <details className="cc-disclosure" open>
+      <details className="cc-disclosure">
         <summary>Режим ВЭД-аналитика (рекомендуется)</summary>
         <div className="cc-disclosure-body space-y-3">
           <label className="flex cursor-pointer items-center gap-2 text-[13px] text-slate-200">
@@ -775,6 +793,8 @@ export const DocumentCheck: React.FC = () => {
           </div>
         )}
       </div>
+        </>
+      ) : null}
 
       {error && (
         <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
