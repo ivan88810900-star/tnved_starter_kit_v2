@@ -1,7 +1,7 @@
 import React from 'react';
 import { X } from 'lucide-react';
 import { ProductDetails } from '../components/tnved/ProductDetails';
-import { TnvedTree } from '../components/tnved/TnvedTree';
+import { DrillDownTree } from '../components/DrillDownTree';
 import { PageHeader } from '../components/PageHeader';
 import { CC_HOME_TNVED_QUERY_KEY, CC_TNVED_SELECT_CODE_KEY } from '../constants/homeNav';
 
@@ -55,7 +55,7 @@ export const Dictionary: React.FC = () => {
 
       <div className="min-h-[min(560px,calc(100dvh-12rem))] overflow-hidden rounded-lg border border-cargo-border bg-cargo-surface sm:min-h-[min(720px,calc(100vh-14rem))]">
         <div className="min-h-0 h-[calc(100dvh-14rem)] overflow-hidden p-3 sm:h-[calc(100vh-16rem)] sm:p-4">
-          <TnvedTree
+          <DrillDownTree
             selectedCode={selectedCode}
             onSelectCode={handleSelectCode}
             initialSearchQuery={initialSearch}

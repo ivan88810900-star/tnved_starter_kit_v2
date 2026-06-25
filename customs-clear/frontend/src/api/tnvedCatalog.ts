@@ -202,6 +202,21 @@ export async function fetchHierarchyTree(prefix?: string): Promise<TnvedHierarch
   return data.tree ?? [];
 }
 
+export type TnvedBreadcrumbItem = {
+  hs_code: string;
+  title: string;
+  level: number;
+};
+
+export async function fetchTnvedBreadcrumb(code: string): Promise<TnvedBreadcrumbItem[]> {
+  const norm = code.replace(/\D/g, '').slice(0, 10);
+  if (!norm) return [];
+  const { data } = await api.get<{ status: string; breadcrumb: TnvedBreadcrumbItem[] }>(
+    `/tnved/breadcrumb/${encodeURIComponent(norm)}`,
+  );
+  return data.breadcrumb ?? [];
+}
+
 export async function searchTnved(q: string): Promise<TnvedSearchHit[]> {
   const query = (q ?? '').trim();
   if (query.length < 2) return [];
