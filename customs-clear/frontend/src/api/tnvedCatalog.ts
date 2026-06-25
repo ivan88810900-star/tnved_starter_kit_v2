@@ -193,6 +193,43 @@ export async function fetchCommodityByCode(code: string): Promise<TnvedCommodity
   return data;
 }
 
+export type TnvedChildItem = {
+  code: string;
+  display_code: string;
+  name: string;
+  level: string;
+  is_leaf: boolean;
+  is_codeless: boolean;
+  is_group?: boolean;
+  has_children: boolean;
+  import_duty?: string;
+  duty_rate?: string;
+  vat_rate?: number | null;
+  children_count?: number;
+  section_id?: number;
+  chapter_id?: number;
+};
+
+export async function fetchTnvedChildren(
+  code?: string,
+  depth: 'direct' | 'all' = 'direct',
+): Promise<{ status: string; code: string; depth: string; items: TnvedChildItem[] }> {
+  const qs = `depth=${encodeURIComponent(depth)}`;
+  const url = code?.trim()
+    ? `/tnved/children/${encodeURIComponent(code.trim())}?${qs}`
+    : `/tnved/children?${qs}`;
+  const { data } = await api.get<{ status: string; code: string; depth: string; items: TnvedChildItem[] }>(url);
+  return data;
+}
+
+export async function fetchTnvedNode(code: string): Promise<TnvedChildItem & { children?: TnvedChildItem[] }> {
+  const norm = code.replace(/\D/g, '').slice(0, 10);
+  const { data } = await api.get<{ status: string; node: TnvedChildItem & { children?: TnvedChildItem[] } }>(
+    `/tnved/node/${encodeURIComponent(norm || code.trim())}`,
+  );
+  return data.node;
+}
+
 export async function fetchHierarchyTree(prefix?: string): Promise<TnvedHierarchyNode[]> {
   const p = (prefix ?? '').replace(/\D/g, '').slice(0, 10);
   const qs = p ? `?prefix=${p}` : '';

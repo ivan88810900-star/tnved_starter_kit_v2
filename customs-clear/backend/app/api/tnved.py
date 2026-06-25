@@ -5,6 +5,9 @@ from typing import Optional
 from fastapi import APIRouter, Depends, Header, HTTPException, Query
 from fastapi.responses import JSONResponse
 from loguru import logger
+from sqlalchemy.orm import Session
+
+from ..api.tnved_catalog import get_db, get_tnved_node, list_tnved_children
 
 from ..services.embedding_service import embeddings_stats, ingest_tnved_embeddings_batch, semantic_search_tnved
 from ..security import require_admin_token, require_authenticated_user
@@ -103,6 +106,30 @@ async def tnved_lookup(hs_code: str) -> JSONResponse:
 @router.get("/breadcrumb/{hs_code:path}")
 async def tnved_breadcrumb(hs_code: str) -> JSONResponse:
     return JSONResponse({"status": "OK", "breadcrumb": get_tnved_breadcrumb(hs_code)})
+
+
+@router.get("/children")
+async def tnved_children_root_compat(
+    depth: str = Query("direct", description="direct — прямые потомки; all — все потомки"),
+    db: Session = Depends(get_db),
+) -> JSONResponse:
+    return JSONResponse(list_tnved_children(db, "", depth))
+
+
+@router.get("/children/{code}")
+async def tnved_children_compat(
+    code: str,
+    depth: str = Query("direct", description="direct — прямые потомки; all — все потомки"),
+    db: Session = Depends(get_db),
+) -> JSONResponse:
+    if code.lower() in {"root", "_"}:
+        code = ""
+    return JSONResponse(list_tnved_children(db, code, depth))
+
+
+@router.get("/node/{code}")
+async def tnved_node_compat(code: str, db: Session = Depends(get_db)) -> JSONResponse:
+    return JSONResponse(get_tnved_node(db, code))
 
 
 @router.get("/notes/{hs_code:path}")

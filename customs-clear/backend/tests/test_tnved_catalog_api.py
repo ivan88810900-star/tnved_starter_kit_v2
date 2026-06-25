@@ -172,8 +172,43 @@ class TnvedCatalogApiTests(unittest.TestCase):
         self.assertEqual(_format_duty("563С)"), "")
         self.assertEqual(_format_duty("1363С)"), "")
         self.assertEqual(_format_duty("5 563С)"), "5%")
+        self.assertEqual(_format_duty("Пошлина: Пошлина: | НДС: НДС:"), "")
         self.assertIn("15", _format_duty("15, но не менее 0,07 евро за 1 л 563С)"))
         self.assertNotIn("563С)", _format_duty("15, но не менее 0,07 евро за 1 л 563С)"))
+
+    def test_children_direct_8517(self):
+        r = self.client.get("/api/v1/tnved/children/8517?depth=direct")
+        self.assertEqual(r.status_code, 200)
+        body = r.json()
+        self.assertEqual(body.get("depth"), "direct")
+        items = body.get("items") or []
+        codes = [x.get("code") for x in items]
+        self.assertIn("8517110000", codes)
+        self.assertIn("8517610000", codes)
+        leaf = next(x for x in items if x.get("code") == "8517110000")
+        self.assertTrue(leaf.get("is_leaf"))
+        self.assertNotIn("Пошлина:", (leaf.get("duty_rate") or ""))
+
+    def test_children_codeless_has_children(self):
+        r = self.client.get("/api/v1/tnved/children/2701110000?depth=direct")
+        self.assertEqual(r.status_code, 200)
+        items = r.json().get("items") or []
+        self.assertEqual(len(items), 2)
+        codes = {x.get("code") for x in items}
+        self.assertIn("2701111000", codes)
+        self.assertIn("2701119000", codes)
+
+    def test_children_compat_route(self):
+        r = self.client.get("/api/tnved/children/8517?depth=direct")
+        self.assertEqual(r.status_code, 200)
+        self.assertGreaterEqual(len(r.json().get("items") or []), 1)
+
+    def test_node_leaf_rates(self):
+        r = self.client.get("/api/v1/tnved/node/9901210000")
+        self.assertEqual(r.status_code, 200)
+        node = r.json().get("node") or {}
+        self.assertEqual(node.get("code"), "9901210000")
+        self.assertIn("10", node.get("duty_rate") or "")
 
     def test_preview_vat_rate_from_data(self):
         """preview.payments.vat_rates берёт фактическую ставку из hs_rates, без хардкода 20%/22%."""

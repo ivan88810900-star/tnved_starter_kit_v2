@@ -226,6 +226,11 @@ def _format_duty(raw: str) -> str:
     t = _strip_duty_footnotes((raw or "").strip())
     if not t or t in ("-", "—"):
         return ""
+    low = t.lower()
+    if "пошлина:" in low and "ндс:" in low:
+        return ""
+    if low in {"пошлина:", "ндс:", "пошлина", "ндс"}:
+        return ""
     # уже содержит % или спецсимволы
     if "%" in t or "eur" in t.lower() or "€" in t.lower() or any(c.isalpha() for c in t):
         return re.sub(r"\s+", " ", t).replace(" %", "%")
@@ -709,6 +714,220 @@ def _wrap_in_sections(
     return result
 
 
+_ROMAN_SECTION_RE = re.compile(r"^[IVXLCDM]+$", re.IGNORECASE)
+
+
+def _is_roman_section(code: str) -> bool:
+    return bool(_ROMAN_SECTION_RE.match((code or "").strip()))
+
+
+def _tree_prefix_for_code(d: str) -> str:
+    """Минимальный префикс для пересборки поддерева с прямыми потомками узла."""
+    if not d:
+        return ""
+    if len(d) <= 2:
+        return d
+    return d[:4]
+
+
+def _find_node_in_tree(nodes: list[dict[str, Any]], code: str) -> dict[str, Any] | None:
+    target = (code or "").strip()
+    target_digits = _digits(code)
+    target_roman = target.upper() if _is_roman_section(target) else ""
+    for node in nodes:
+        node_code = (node.get("code") or "").strip()
+        if target_roman and node_code.upper() == target_roman:
+            return node
+        if target_digits and _digits(node_code) == target_digits:
+            return node
+        if node_code == target:
+            return node
+        found = _find_node_in_tree(node.get("children") or [], code)
+        if found:
+            return found
+    return None
+
+
+def _infer_api_level(code: str, node: dict[str, Any]) -> str:
+    if _is_roman_section(code):
+        return "section"
+    d = _digits(code)
+    if len(d) <= 2:
+        return "chapter"
+    if len(d) <= 4:
+        return "heading"
+    if node.get("is_leaf"):
+        return "leaf"
+    if len(d) <= 6:
+        return "subheading"
+    if node.get("is_codeless") or node.get("is_group"):
+        return "subheading"
+    return "leaf"
+
+
+def _resolve_rates_for_code(db: Session, code: str, import_duty: str) -> tuple[str, float | None]:
+    d = _digits(code)
+    hs_code = d.zfill(10)[:10] if len(d) >= 6 else d.zfill(4)[:4]
+    hs_rate, _ = find_rate_for_hs(hs_code) if len(d) >= 4 else (None, 0)
+    duty = _format_duty(import_duty)
+    if not duty and hs_rate:
+        duty = _format_duty(str(hs_rate.duty_rate or "").strip())
+    vat_rate: float | None = None
+    if hs_rate and hs_rate.vat_import_rate is not None:
+        vat_rate = float(hs_rate.vat_import_rate)
+    elif len(d) >= 4:
+        vat_rate = 22.0
+    return duty, vat_rate
+
+
+def _serialize_tree_node(db: Session, node: dict[str, Any]) -> dict[str, Any]:
+    code = node.get("code") or ""
+    children = node.get("children") or []
+    duty, vat_rate = _resolve_rates_for_code(db, code, node.get("import_duty") or "")
+    return {
+        "code": code,
+        "display_code": _digits(code) if not _is_roman_section(code) else code.upper(),
+        "name": node.get("name") or "",
+        "level": _infer_api_level(code, node),
+        "is_leaf": bool(node.get("is_leaf")),
+        "is_codeless": bool(node.get("is_codeless")),
+        "is_group": bool(node.get("is_group")),
+        "has_children": len(children) > 0,
+        "import_duty": duty,
+        "duty_rate": duty,
+        "vat_rate": vat_rate,
+        "children_count": len(children),
+    }
+
+
+def _build_wrapped_tree(db: Session, prefix: str) -> list[dict[str, Any]]:
+    p = _digits(prefix)
+    q = db.query(Commodity).order_by(Commodity.code.asc())
+    if p:
+        q = q.filter(Commodity.code.like(f"{p}%"))
+    rows = q.limit(2_000_000).all()
+    chapter_notes = _collect_chapter_notes(db)
+    flat = _build_tree(rows, chapter_notes)
+    return _wrap_in_sections(flat, db)
+
+
+def _resolve_tree_node(db: Session, code: str) -> dict[str, Any] | None:
+    code = (code or "").strip()
+    if not code:
+        return None
+    if _is_roman_section(code):
+        tree = _build_wrapped_tree(db, "")
+        return _find_node_in_tree(tree, code.upper())
+    d = _digits(code)
+    if not d:
+        return None
+    prefix = _tree_prefix_for_code(d)
+    tree = _build_wrapped_tree(db, prefix)
+    return _find_node_in_tree(tree, code)
+
+
+def list_tnved_children(db: Session, code: str, depth: str = "direct") -> dict[str, Any]:
+    code = (code or "").strip()
+    depth_norm = (depth or "direct").lower()
+    if depth_norm not in {"direct", "all"}:
+        raise HTTPException(status_code=400, detail="depth must be 'direct' or 'all'")
+
+    if not code:
+        sections = db.query(Section).order_by(Section.id.asc()).all()
+        sections.sort(key=lambda s: _ROMAN_RANK.get(s.roman_number or "", 99))
+        items = [
+            {
+                "code": sec.roman_number,
+                "display_code": sec.roman_number,
+                "name": (sec.title or "").strip(),
+                "level": "section",
+                "is_leaf": False,
+                "is_codeless": False,
+                "is_group": True,
+                "has_children": True,
+                "import_duty": "",
+                "duty_rate": "",
+                "vat_rate": None,
+                "children_count": len(sec.chapters or []),
+                "section_id": sec.id,
+            }
+            for sec in sections
+        ]
+        return {"status": "OK", "code": "", "depth": depth_norm, "items": items}
+
+    if _is_roman_section(code):
+        sec = (
+            db.query(Section)
+            .options(selectinload(Section.chapters))
+            .filter(Section.roman_number == code.upper())
+            .first()
+        )
+        if not sec:
+            raise HTTPException(status_code=404, detail="Раздел не найден")
+        items = [
+            {
+                "code": ch.code,
+                "display_code": ch.code,
+                "name": (ch.title or "").strip(),
+                "level": "chapter",
+                "is_leaf": False,
+                "is_codeless": False,
+                "is_group": True,
+                "has_children": True,
+                "import_duty": "",
+                "duty_rate": "",
+                "vat_rate": None,
+                "children_count": 0,
+                "section_id": sec.id,
+                "chapter_id": ch.id,
+            }
+            for ch in sorted(sec.chapters or [], key=lambda c: c.code)
+        ]
+        return {"status": "OK", "code": code.upper(), "depth": depth_norm, "items": items}
+
+    d = _digits(code)
+    if len(d) == 2:
+        node = _resolve_tree_node(db, d)
+        if not node:
+            raise HTTPException(status_code=404, detail="Группа не найдена")
+        items = [_serialize_tree_node(db, ch) for ch in node.get("children") or []]
+        return {"status": "OK", "code": d, "depth": depth_norm, "items": items}
+
+    node = _resolve_tree_node(db, code)
+    if not node:
+        raise HTTPException(status_code=404, detail="Узел не найден")
+
+    children = node.get("children") or []
+    if depth_norm == "all":
+
+        def _flatten(nodes: list[dict[str, Any]], acc: list[dict[str, Any]]) -> None:
+            for ch in nodes:
+                acc.append(_serialize_tree_node(db, ch))
+                _flatten(ch.get("children") or [], acc)
+
+        flat_items: list[dict[str, Any]] = []
+        _flatten(children, flat_items)
+        items = flat_items
+    else:
+        items = [_serialize_tree_node(db, ch) for ch in children]
+
+    return {"status": "OK", "code": code, "depth": depth_norm, "items": items}
+
+
+def get_tnved_node(db: Session, code: str) -> dict[str, Any]:
+    code = (code or "").strip()
+    if not code:
+        raise HTTPException(status_code=400, detail="code required")
+    if _is_roman_section(code):
+        raise HTTPException(status_code=400, detail="Используйте /children/{section} для разделов")
+    node = _resolve_tree_node(db, code)
+    if not node:
+        raise HTTPException(status_code=404, detail="Узел не найден")
+    payload = _serialize_tree_node(db, node)
+    payload["children"] = [_serialize_tree_node(db, ch) for ch in node.get("children") or []]
+    return {"status": "OK", "node": payload}
+
+
 # ---------------------------------------------------------------------------
 # Основной эндпоинт дерева
 # ---------------------------------------------------------------------------
@@ -743,6 +962,30 @@ def hierarchy_tree(
         "count_rows": len(rows),
         "tree": tree,
     })
+
+
+@router.get("/children")
+def tnved_children_root(
+    depth: str = Query("direct", description="direct — только прямые потомки; all — все потомки"),
+    db: Session = Depends(get_db),
+) -> JSONResponse:
+    return JSONResponse(list_tnved_children(db, "", depth))
+
+
+@router.get("/children/{code}")
+def tnved_children(
+    code: str,
+    depth: str = Query("direct", description="direct — только прямые потомки; all — все потомки"),
+    db: Session = Depends(get_db),
+) -> JSONResponse:
+    if code.lower() in {"root", "_"}:
+        code = ""
+    return JSONResponse(list_tnved_children(db, code, depth))
+
+
+@router.get("/node/{code}")
+def tnved_node(code: str, db: Session = Depends(get_db)) -> JSONResponse:
+    return JSONResponse(get_tnved_node(db, code))
 
 
 # ---------------------------------------------------------------------------

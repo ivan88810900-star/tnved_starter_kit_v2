@@ -2,19 +2,18 @@ import React from 'react';
 import { Search } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
-  fetchChapters,
-  fetchHierarchyTree,
-  fetchSections,
   fetchTnvedBreadcrumb,
+  fetchTnvedChildren,
   formatCode,
-  formatImportDutyPercent,
   isFullTnvedCode,
   searchTnved,
   type TnvedBreadcrumbItem,
-  type TnvedHierarchyNode,
+  type TnvedChildItem,
   type TnvedSearchHit,
 } from '../api/tnvedCatalog';
 import { PremiumCard } from './PremiumCard';
+import { HierarchyView } from './tnved/HierarchyView';
+import { RateBadges } from './tnved/RateBadges';
 import { formatTnvedCommodityName, TNVED_COMMODITY_NAME_CLASS } from '../utils/tnvedDisplayText';
 
 // ---------------------------------------------------------------------------
@@ -39,6 +38,7 @@ export type DrillNode = {
   sectionId?: number;
   chapterId?: number;
   importDuty?: string;
+  vatRate?: number | null;
   hasChildren: boolean;
   isLeaf: boolean;
   isCodeless?: boolean;
@@ -75,36 +75,20 @@ function displayCodeFor(code: string, level: DrillLevel): string {
   return formatCode(digitsOnly(code));
 }
 
-function findNodeInTree(nodes: TnvedHierarchyNode[], code: string): TnvedHierarchyNode | null {
-  const target = code.trim();
-  const targetDigits = digitsOnly(code);
-  for (const node of nodes) {
-    const nodeCode = node.code.trim();
-    if (nodeCode === target || digitsOnly(nodeCode) === targetDigits) return node;
-    const found = findNodeInTree(node.children, code);
-    if (found) return found;
-  }
-  return null;
-}
-
-function hierarchyToDrillNode(node: TnvedHierarchyNode, sectionId?: number): DrillNode {
-  const level = inferLevel(node.code);
-  const d = digitsOnly(node.code);
-  const hasChildren = node.children.length > 0;
-  const isLeaf =
-    !node.is_codeless &&
-    (node.is_leaf === true || (!hasChildren && isFullTnvedCode(d) && level === 'leaf'));
-
+function childToDrillNode(item: TnvedChildItem, sectionId?: number): DrillNode {
+  const level = (item.level as DrillLevel) || inferLevel(item.code);
   return {
-    code: node.code,
-    name: node.name || node.title_ru || '',
-    displayCode: displayCodeFor(node.code, level),
+    code: item.code,
+    name: item.name || '',
+    displayCode: item.display_code || displayCodeFor(item.code, level),
     level,
-    sectionId,
-    importDuty: node.import_duty,
-    hasChildren,
-    isLeaf,
-    isCodeless: node.is_codeless,
+    sectionId: item.section_id ?? sectionId,
+    chapterId: item.chapter_id,
+    importDuty: item.duty_rate || item.import_duty,
+    vatRate: item.vat_rate,
+    hasChildren: item.has_children,
+    isLeaf: item.is_leaf,
+    isCodeless: item.is_codeless,
   };
 }
 
@@ -144,19 +128,11 @@ function formatBreadcrumbPath(items: TnvedBreadcrumbItem[]): string {
     .join(' › ');
 }
 
-function DutyBadge({ duty }: { duty?: string }) {
-  const formatted = formatImportDutyPercent(duty || '');
-  const numeric = parseFloat(formatted.replace(/[^\d.,]/g, '').replace(',', '.'));
-  const isZero = !formatted || numeric === 0 || formatted === '0%';
-  return (
-    <span
-      className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-medium ${
-        isZero ? 'bg-cargo-cloud text-cargo-mid' : 'bg-cargo-trust-light text-cargo-trust'
-      }`}
-    >
-      {formatted || '0%'}
-    </span>
-  );
+function useHierarchyView(path: PathSegment[]): boolean {
+  const last = path[path.length - 1];
+  if (!last) return false;
+  if (last.level === 'heading' || last.level === 'subheading') return true;
+  return digitsOnly(last.code).length >= 4 && !isRomanSection(last.code);
 }
 
 function useIsMobile(breakpoint = 640): boolean {
@@ -245,6 +221,7 @@ function DrillCard({
         : 'font-mono text-base font-semibold text-cargo-trust';
 
   const handleClick = () => {
+    if (node.isCodeless && !node.hasChildren) return;
     if (node.isLeaf) {
       onSelectLeaf(digitsOnly(node.code));
       return;
@@ -252,15 +229,22 @@ function DrillCard({
     if (node.hasChildren) onDrill(node);
   };
 
+  if (node.isCodeless && !node.hasChildren) {
+    return (
+      <div className="codeless-node flex items-start gap-2 rounded-lg border border-cargo-border/60 bg-cargo-cloud/40 px-4 py-3 text-[13px] italic text-cargo-light">
+        <span className="shrink-0">–</span>
+        <span className={`min-w-0 ${TNVED_COMMODITY_NAME_CLASS}`}>{formatTnvedCommodityName(node.name)}</span>
+      </div>
+    );
+  }
+
   return (
     <PremiumCard index={index} onClick={clickable ? handleClick : undefined} glow={clickable}>
       <div className="relative flex items-start justify-between gap-3 p-4">
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            {!node.isCodeless ? (
-              <span className={codeClass}>{node.displayCode}</span>
-            ) : null}
-            {node.isLeaf ? <DutyBadge duty={node.importDuty} /> : null}
+            <span className={codeClass}>{node.displayCode}</span>
+            {node.isLeaf ? <RateBadges dutyRate={node.importDuty} vatRate={node.vatRate} /> : null}
           </div>
           {node.name ? (
             <p className={`mt-1 text-[13px] leading-snug text-cargo-mid ${TNVED_COMMODITY_NAME_CLASS}`}>
@@ -296,14 +280,14 @@ export const DrillDownTree: React.FC<Props> = ({ onSelectCode, initialSearchQuer
   const [searchErr, setSearchErr] = React.useState<string | null>(null);
   const [activeSearchIdx, setActiveSearchIdx] = React.useState(-1);
 
-  const sectionsRef = React.useRef<Awaited<ReturnType<typeof fetchSections>>>([]);
-  const chaptersCache = React.useRef<Map<number, Awaited<ReturnType<typeof fetchChapters>>>>(new Map());
+  const sectionsRef = React.useRef<TnvedChildItem[]>([]);
   const inputRef = React.useRef<HTMLInputElement>(null);
   const appliedInitialSearch = React.useRef(false);
 
   const trimmed = search.trim();
   const isSearching = trimmed.length >= 2;
   const currentLevelId = path.map((p) => p.code).join('/') || 'root';
+  const showHierarchy = useHierarchyView(path);
 
   React.useEffect(() => {
     const q = initialSearchQuery?.trim();
@@ -313,46 +297,16 @@ export const DrillDownTree: React.FC<Props> = ({ onSelectCode, initialSearchQuer
   }, [initialSearchQuery]);
 
   const loadChildrenForPath = React.useCallback(async (segments: PathSegment[]): Promise<DrillNode[]> => {
+    const sectionId = segments.find((s) => s.level === 'section')?.sectionId;
     if (segments.length === 0) {
-      const sections = await fetchSections();
-      sectionsRef.current = sections;
-      setSectionCount(sections.length);
-      return sections.map((s) => ({
-        code: s.roman_number,
-        name: s.title,
-        displayCode: s.roman_number,
-        level: 'section' as const,
-        sectionId: s.id,
-        hasChildren: true,
-        isLeaf: false,
-      }));
+      const res = await fetchTnvedChildren(undefined, 'direct');
+      sectionsRef.current = res.items;
+      setSectionCount(res.items.length);
+      return res.items.map((item) => childToDrillNode(item));
     }
-
     const last = segments[segments.length - 1];
-
-    if (last.level === 'section' && last.sectionId) {
-      let chapters = chaptersCache.current.get(last.sectionId);
-      if (!chapters) {
-        chapters = await fetchChapters(last.sectionId);
-        chaptersCache.current.set(last.sectionId, chapters);
-      }
-      return chapters.map((ch) => ({
-        code: ch.code,
-        name: ch.title,
-        displayCode: ch.code,
-        level: 'chapter' as const,
-        sectionId: last.sectionId,
-        chapterId: ch.id,
-        hasChildren: true,
-        isLeaf: false,
-      }));
-    }
-
-    const prefix = digitsOnly(last.code);
-    const tree = await fetchHierarchyTree(prefix);
-    const node = findNodeInTree(tree, last.code);
-    if (!node) return [];
-    return node.children.map((child) => hierarchyToDrillNode(child, last.sectionId));
+    const res = await fetchTnvedChildren(last.code, 'direct');
+    return res.items.map((item) => childToDrillNode(item, sectionId ?? last.sectionId));
   }, []);
 
   const refreshAtPath = React.useCallback(
@@ -453,74 +407,63 @@ export const DrillDownTree: React.FC<Props> = ({ onSelectCode, initialSearchQuer
     setPath((prev) => [...prev, drillNodeToPathSegment(node)]);
   }, []);
 
-  const buildPathFromBreadcrumb = React.useCallback(
-    async (crumb: TnvedBreadcrumbItem[]): Promise<PathSegment[]> => {
-      const segments: PathSegment[] = [];
-      for (const item of crumb) {
-        if (isRomanSection(item.hs_code)) {
-          const section = sectionsRef.current.find((s) => s.roman_number === item.hs_code);
-          segments.push({
-            code: item.hs_code,
-            label: `Раздел ${item.hs_code}`,
-            level: 'section',
-            sectionId: section?.id,
-          });
-          continue;
-        }
-        const d = digitsOnly(item.hs_code);
-        if (d.length === 2) {
-          const section = segments[segments.length - 1];
-          let chapterId: number | undefined;
-          if (section?.sectionId) {
-            let chapters = chaptersCache.current.get(section.sectionId);
-            if (!chapters) {
-              chapters = await fetchChapters(section.sectionId);
-              chaptersCache.current.set(section.sectionId, chapters);
-            }
-            chapterId = chapters.find((c) => c.code === d)?.id;
-          }
-          segments.push({
-            code: d,
-            label: `Группа ${d}`,
-            level: 'chapter',
-            sectionId: section?.sectionId,
-            chapterId,
-          });
-          continue;
-        }
-        const level = inferLevel(item.hs_code);
+  const drillIntoChild = React.useCallback((item: TnvedChildItem) => {
+    setPath((prev) => [...prev, drillNodeToPathSegment(childToDrillNode(item, prev.find((p) => p.sectionId)?.sectionId))]);
+  }, []);
+
+  const buildPathFromBreadcrumb = React.useCallback(async (crumb: TnvedBreadcrumbItem[]): Promise<PathSegment[]> => {
+    const segments: PathSegment[] = [];
+    for (const item of crumb) {
+      if (isRomanSection(item.hs_code)) {
+        const section = sectionsRef.current.find((s) => s.code === item.hs_code);
         segments.push({
           code: item.hs_code,
-          label: formatCode(d),
-          level,
+          label: `Раздел ${item.hs_code}`,
+          level: 'section',
+          sectionId: section?.section_id,
+        });
+        continue;
+      }
+      const d = digitsOnly(item.hs_code);
+      if (d.length === 2) {
+        segments.push({
+          code: d,
+          label: `Группа ${d}`,
+          level: 'chapter',
           sectionId: segments.find((s) => s.level === 'section')?.sectionId,
         });
+        continue;
       }
-      return segments;
-    },
-    [],
-  );
+      const level = inferLevel(item.hs_code);
+      segments.push({
+        code: item.hs_code,
+        label: formatCode(d),
+        level,
+        sectionId: segments.find((s) => s.level === 'section')?.sectionId,
+      });
+    }
+    return segments;
+  }, []);
 
   const navigateToSearchHit = React.useCallback(
     async (hit: TnvedSearchHit) => {
       const d = digitsOnly(hit.code);
-      if (hit.is_leaf === true || (hit.is_leaf !== false && isFullTnvedCode(d))) {
+      if (hit.is_leaf === true) {
         onSelectCode(d);
         clearSearch();
         return;
       }
 
       try {
+        const nodeRes = await fetchTnvedChildren(hit.code, 'direct');
+        if (nodeRes.items.length === 0 && isFullTnvedCode(d)) {
+          onSelectCode(d);
+          clearSearch();
+          return;
+        }
         const crumb = await fetchTnvedBreadcrumb(hit.code);
         const fullPath = await buildPathFromBreadcrumb(crumb);
-        const tree = await fetchHierarchyTree(d);
-        const node = findNodeInTree(tree, hit.code);
-        if (node?.children.length) {
-          setPath(fullPath);
-          setCurrentChildren(node.children.map((c) => hierarchyToDrillNode(c, fullPath.find((p) => p.sectionId)?.sectionId)));
-        } else if (fullPath.length) {
-          setPath(fullPath.slice(0, -1));
-        }
+        setPath(fullPath);
         clearSearch();
       } catch {
         setSearchErr('Не удалось перейти к позиции');
@@ -646,6 +589,12 @@ export const DrillDownTree: React.FC<Props> = ({ onSelectCode, initialSearchQuer
 
             {loading ? (
               <p className="py-10 text-center text-sm text-cargo-mid">Загрузка…</p>
+            ) : showHierarchy && path.length > 0 ? (
+              <HierarchyView
+                parentCode={path[path.length - 1].code}
+                onSelectCode={onSelectCode}
+                onDrill={drillIntoChild}
+              />
             ) : (
               <AnimatePresence mode="wait">
                 <motion.div
