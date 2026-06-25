@@ -1724,7 +1724,7 @@ export const Calculator: React.FC = () => {
                       ]
                         .filter((x) => x.value > 0)
                         .map((entry, index) => (
-                          <Cell key={entry.name} fill={PAYMENT_COLORS[index % PAYMENT_COLORS.length]} />
+                          <Cell key={`pie-cell-${index}`} fill={PAYMENT_COLORS[index % PAYMENT_COLORS.length]} />
                         ))}
                     </Pie>
                     <RechartsTooltip

@@ -270,9 +270,9 @@ const TreeRow: React.FC<RowProps> = ({
       {/* Дети */}
       {hasChildren && open && (
         <div className="border-l border-slate-200" style={{ marginLeft: pl + 8 }}>
-          {node.children.map((ch) => (
+          {node.children.map((ch, chIdx) => (
             <TreeRow
-              key={ch.code}
+              key={`${ch.code}-${depth + 1}-${chIdx}`}
               node={ch}
               depth={depth + 1}
               expanded={expanded}
@@ -520,7 +520,7 @@ export const TnvedTree: React.FC<Props> = ({ selectedCode, onSelectCode, initial
               searchHits.map((hit, idx) => {
                 const isActive = idx === activeSearchIdx;
                 return (
-                  <MeasureHoverCard key={`${hit.code}-${hit.name}`} code={hit.code} fallbackName={hit.name}>
+                  <MeasureHoverCard key={`${hit.code}-${idx}`} code={hit.code} fallbackName={hit.name}>
                     <button
                       type="button"
                       onMouseEnter={() => setActiveSearchIdx(idx)}
@@ -578,9 +578,9 @@ export const TnvedTree: React.FC<Props> = ({ selectedCode, onSelectCode, initial
             )}
           </div>
         ) : (
-          displayTree.map((n) => (
+          displayTree.map((n, idx) => (
             <TreeRow
-              key={n.code}
+              key={`${n.code}-root-${idx}`}
               node={n}
               depth={0}
               expanded={expanded}

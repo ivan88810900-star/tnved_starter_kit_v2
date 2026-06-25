@@ -1,6 +1,7 @@
 import React, { useCallback, useState } from 'react';
 import { api } from '../api/client';
 import { getUserFacingApiError } from '../api/error';
+import { PackingListUploader } from '../components/PackingListUploader';
 
 type InvoiceLine = {
   description: string;
@@ -159,6 +160,14 @@ export function InvoicePage() {
         </div>
         </div>
       ) : null}
+
+      <section className="mt-8 border-t border-slate-200 pt-8">
+        <h2 className="mb-4 text-xl font-semibold text-slate-900">Классификация пакинг-листа</h2>
+        <p className="mb-4 text-sm text-gray-500">
+          Загрузите пакинг-лист .xlsx — AI определит коды ТН ВЭД по названиям на китайском и фотографиям товаров
+        </p>
+        <PackingListUploader />
+      </section>
     </div>
   );
 }
