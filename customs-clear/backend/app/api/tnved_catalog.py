@@ -1000,10 +1000,29 @@ def _build_tree(rows: list[Commodity], chapter_notes: dict[str, str]) -> list[di
                 node["is_codeless"] = True
                 node["is_group"] = True
             else:
-                leaf = is_leaf_hs_code(node["code"])
-                node["is_leaf"] = leaf
-                node["is_codeless"] = not leaf
-                node["is_group"] = not leaf
+                lvl = _node_level(node["code"])
+                if lvl == 6:
+                    # Одиночная L6-субпозиция без дочерних кодов в БД.
+                    # В эталонной структуре ТН ВЭД такой узел — бескодовый заголовок
+                    # (отображается как «030213»), а декларируемый лист идёт под ним.
+                    # Синтезируем дочерний лист с тем же 10-значным кодом.
+                    leaf_child = {
+                        **node,
+                        "is_leaf": True,
+                        "is_codeless": False,
+                        "is_group": False,
+                        "children": [],
+                    }
+                    node["children"] = [leaf_child]
+                    node["is_leaf"] = False
+                    node["is_codeless"] = True
+                    node["is_group"] = True
+                    node["display_code"] = node["code"][:6]
+                else:
+                    leaf = is_leaf_hs_code(node["code"])
+                    node["is_leaf"] = leaf
+                    node["is_codeless"] = not leaf
+                    node["is_group"] = not leaf
 
     def _sort(node: dict[str, Any]) -> None:
         node["children"].sort(key=lambda x: x["code"])
@@ -1181,7 +1200,11 @@ def _serialize_tree_node(db: Session, node: dict[str, Any]) -> dict[str, Any]:
         measures = _measures_for_api(code)
     return {
         "code": code,
-        "display_code": _digits(code) if not _is_roman_section(code) else code.upper(),
+        "display_code": (
+            node["display_code"]
+            if node.get("display_code") and node["display_code"] != _digits(code)
+            else (_digits(code) if not _is_roman_section(code) else code.upper())
+        ),
         "name": node.get("name") or "",
         "level": _infer_api_level(code, node),
         "is_leaf": is_leaf,
