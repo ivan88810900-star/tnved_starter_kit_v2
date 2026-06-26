@@ -3,9 +3,20 @@ import { Calculator, FileSpreadsheet, Search } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { CC_HOME_TNVED_QUERY_KEY } from '../constants/homeNav';
 
+const HERO_GRID_STYLE: React.CSSProperties = {
+  backgroundImage: `repeating-linear-gradient(
+      0deg, transparent, transparent 40px,
+      rgba(255,255,255,0.02) 40px, rgba(255,255,255,0.02) 41px
+    ), repeating-linear-gradient(
+      90deg, transparent, transparent 40px,
+      rgba(255,255,255,0.02) 40px, rgba(255,255,255,0.02) 41px
+    )`,
+};
+
 export const HomeDashboard: React.FC = () => {
   const navigate = useNavigate();
   const [q, setQ] = useState('');
+  const [searchFocused, setSearchFocused] = useState(false);
 
   const submitSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -20,61 +31,78 @@ export const HomeDashboard: React.FC = () => {
   };
 
   const quickActions = [
-    {
-      icon: Search,
-      title: 'Найти код',
-      onClick: () => navigate('/tnved'),
-    },
-    {
-      icon: Calculator,
-      title: 'Рассчитать платежи',
-      onClick: () => navigate('/calculator'),
-    },
-    {
-      icon: FileSpreadsheet,
-      title: 'Пакинг-лист',
-      onClick: () => navigate('/invoice'),
-    },
+    { icon: Search, title: 'Найти код', href: '/tnved' },
+    { icon: Calculator, title: 'Рассчитать платежи', href: '/calculator' },
+    { icon: FileSpreadsheet, title: 'Пакинг-лист', href: '/invoice' },
   ];
 
   return (
-    <div className="mx-auto max-w-3xl space-y-8 py-4">
-      <h1 className="text-2xl font-medium leading-snug tracking-tight text-cargo-deep sm:text-[26px]">
-        Таможенная классификация и расчёт
-        <br />
-        платежей для импортёров
-      </h1>
+    <div className="mx-auto max-w-3xl">
+      {/* Hero — выходит за padding main (p-6) */}
+      <div
+        className="relative -mx-6 -mt-6 mb-6 overflow-hidden px-8 pb-10 pt-12"
+        style={{
+          background: 'linear-gradient(135deg, var(--hero-from) 0%, var(--hero-to) 100%)',
+        }}
+      >
+        <div className="pointer-events-none absolute inset-0" style={HERO_GRID_STYLE} aria-hidden />
 
-      <form onSubmit={submitSearch} className="relative">
-        <label htmlFor="home-tnved-search" className="sr-only">
-          Поиск по ТН ВЭД
-        </label>
-        <Search
-          className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-cargo-light"
-          aria-hidden
-        />
-        <input
-          id="home-tnved-search"
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-          placeholder="Найти товар по коду или описанию..."
-          className="w-full rounded-lg border-2 border-cargo-border bg-cargo-surface py-3 pl-12 pr-4 text-base text-cargo-deep placeholder:text-cargo-light focus:border-cargo-trust focus:outline-none focus:ring-2 focus:ring-cargo-trust-light"
-          style={{ minHeight: 48 }}
-        />
-      </form>
+        <h1 className="relative text-[28px] font-semibold leading-snug tracking-tight text-white">
+          Таможенная классификация
+          <br />
+          и расчёт платежей
+        </h1>
+        <p className="relative mb-6 mt-2 text-sm text-white/55">
+          Справочник ТН ВЭД · Расчёт платежей · Нетарифные меры
+        </p>
 
-      <div className="grid gap-3 sm:grid-cols-3">
+        <form onSubmit={submitSearch} className="relative max-w-xl">
+          <label htmlFor="home-tnved-search" className="sr-only">
+            Поиск по ТН ВЭД
+          </label>
+          <Search
+            className={`pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 transition-colors ${
+              searchFocused ? 'text-white/60' : 'text-white/40'
+            }`}
+            size={18}
+            aria-hidden
+          />
+          <input
+            id="home-tnved-search"
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            onFocus={() => setSearchFocused(true)}
+            onBlur={() => setSearchFocused(false)}
+            placeholder="Найти товар по коду или описанию..."
+            className="h-12 w-full rounded-[10px] border pl-11 pr-4 text-[15px] text-white outline-none backdrop-blur-md transition-all placeholder:text-white/40"
+            style={{
+              background: searchFocused ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.1)',
+              borderColor: searchFocused ? 'rgba(74,158,255,0.6)' : 'rgba(255,255,255,0.15)',
+              boxShadow: searchFocused ? '0 0 0 3px rgba(74,158,255,0.15)' : 'none',
+            }}
+          />
+        </form>
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         {quickActions.map((action) => (
           <button
             key={action.title}
             type="button"
-            onClick={action.onClick}
-            className="group flex flex-col items-start rounded-lg border border-cargo-border bg-cargo-surface p-4 text-left transition-colors hover:border-cargo-trust"
+            onClick={() => navigate(action.href)}
+            className="group flex flex-col items-center gap-3 rounded-xl border border-[var(--cargo-border)] bg-white p-6 transition-all duration-200 hover:-translate-y-0.5 hover:border-[var(--cargo-trust)]"
+            style={{ boxShadow: 'var(--shadow-card)' }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.boxShadow = 'var(--shadow-card-hover)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.boxShadow = 'var(--shadow-card)';
+            }}
           >
-            <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-cargo-trust-light text-cargo-trust">
-              <action.icon className="h-5 w-5" aria-hidden />
-            </span>
-            <span className="mt-3 text-sm font-medium text-cargo-deep">{action.title}</span>
+            <div className="flex h-11 w-11 items-center justify-center rounded-[10px] bg-[var(--cargo-trust-light)]">
+              <action.icon size={20} className="text-[var(--cargo-trust)]" aria-hidden />
+            </div>
+            <span className="text-[13px] font-medium text-[var(--cargo-deep)]">{action.title}</span>
           </button>
         ))}
       </div>

@@ -28,7 +28,7 @@ def memory_sessionmaker(monkeypatch: pytest.MonkeyPatch):
 
 
 def test_flag_off_uses_legacy_path(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.delenv("NTM_V2_TR_TS_ENABLED", raising=False)
+    monkeypatch.setenv("NTM_V2_TR_TS_ENABLED", "false")
     from app.services.ntm_engine_v2 import (
         get_tr_ts_requirements_for_pipeline,
         is_ntm_v2_tr_ts_enabled,
@@ -64,7 +64,7 @@ def test_flag_on_uses_v2_adapter(memory_sessionmaker: sessionmaker, monkeypatch:
 def test_get_full_ntm_tr_ts_slice_matches_legacy_after_import(
     memory_sessionmaker: sessionmaker, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    monkeypatch.delenv("NTM_V2_TR_TS_ENABLED", raising=False)
+    monkeypatch.setenv("NTM_V2_TR_TS_ENABLED", "false")
     import_tr_ts_catalog_to_ntm_v2()
     from app.services.ntm_layers import get_all_layer_requirements
     from app.services.tr_ts_catalog import get_full_ntm_requirements, get_tr_ts_requirements
@@ -93,17 +93,29 @@ def test_spaced_hs_parity_with_flag_on(memory_sessionmaker: sessionmaker, monkey
     assert get_tr_ts_requirements_for_pipeline(spaced, "") == get_tr_ts_requirements(plain)
 
 
-def test_empty_v2_logs_warning_no_fallback(
+def test_empty_v2_falls_back_to_legacy_catalog(
     memory_sessionmaker: sessionmaker, monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
 ) -> None:
     monkeypatch.setenv("NTM_V2_TR_TS_ENABLED", "true")
-    # Без import_tr_ts_catalog_to_ntm_v2 — таблицы пустые
     from app.services.ntm_engine_v2 import get_tr_ts_requirements_v2_legacy_shape
+    from app.services.tr_ts_catalog import get_tr_ts_requirements
 
     caplog.set_level(logging.WARNING, logger="app.services.ntm_engine_v2")
-    out = get_tr_ts_requirements_v2_legacy_shape("8517620000", "")
-    assert out == []
+    hs = "5208211000"
+    legacy = get_tr_ts_requirements(hs)
+    assert legacy
+    out = get_tr_ts_requirements_v2_legacy_shape(hs, "")
+    assert out == legacy
     assert any("NTM_V2_TR_TS" in r.message for r in caplog.records)
+
+
+def test_empty_v2_and_legacy_both_empty(
+    memory_sessionmaker: sessionmaker, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("NTM_V2_TR_TS_ENABLED", "true")
+    from app.services.ntm_engine_v2 import get_tr_ts_requirements_v2_legacy_shape
+
+    assert get_tr_ts_requirements_v2_legacy_shape("8517620000", "") == []
 
 
 def test_compare_pipeline_tr_ts_vs_legacy_when_flag_on(

@@ -48,15 +48,17 @@ export const Dictionary: React.FC = () => {
 
   return (
     <>
-      <PageHeader title="Справочник ТН ВЭД" />
+      <div className="flex h-full min-h-0 flex-1 flex-col">
+        <PageHeader title="Справочник ТН ВЭД" />
 
-      <div className="min-h-[min(560px,calc(100dvh-12rem))] overflow-hidden rounded-lg border border-cargo-border bg-cargo-surface sm:min-h-[min(720px,calc(100vh-14rem))]">
-        <div className="min-h-0 h-[calc(100dvh-14rem)] overflow-hidden p-3 sm:h-[calc(100vh-16rem)] sm:p-4">
-          <TnvedAccordionTree
-            selectedCode={selectedCode}
-            onSelectCode={handleSelectCode}
-            initialSearchQuery={initialSearch}
-          />
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border border-cargo-border bg-cargo-surface">
+          <div className="flex min-h-0 flex-1 flex-col p-3 sm:p-4">
+            <TnvedAccordionTree
+              selectedCode={selectedCode}
+              onSelectCode={handleSelectCode}
+              initialSearchQuery={initialSearch}
+            />
+          </div>
         </div>
       </div>
 

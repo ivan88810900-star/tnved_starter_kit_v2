@@ -92,6 +92,7 @@ export type TnvedCommodityDetail = {
     document_required: string;
     regulatory_act: string;
     type_label?: string;
+    permit_type?: string;
   }>;
   intellectual_properties?: Array<{
     id: number;

@@ -1511,8 +1511,8 @@ export const Calculator: React.FC = () => {
         </div>
       </details>
 
-      <button type="button" onClick={() => void handleCompute()} disabled={loading} className="cc-btn-primary">
-        {loading ? 'Расчёт…' : 'Рассчитать'}
+      <button type="button" onClick={() => void handleCompute()} disabled={loading} className="cc-btn-primary w-full">
+        {loading ? 'Расчёт…' : 'Рассчитать платежи'}
       </button>
 
       {clarification ? (

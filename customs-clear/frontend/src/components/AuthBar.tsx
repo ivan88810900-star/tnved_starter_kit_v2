@@ -100,10 +100,18 @@ export function AuthBar({ variant = 'default' }: Props) {
         <span className="cc-spinner" aria-label="Проверка сессии" />
       ) : isCargo ? (
         <>
-          <button type="button" className="cc-btn-secondary text-xs" onClick={() => setOpen(true)}>
+          <button
+            type="button"
+            className="h-8 rounded-md border border-[var(--cargo-border)] bg-transparent px-3.5 text-[13px] text-[var(--cargo-mid)] transition-all duration-150 hover:border-[var(--cargo-trust)] hover:text-[var(--cargo-trust)]"
+            onClick={() => setOpen(true)}
+          >
             Войти
           </button>
-          <button type="button" className="cc-btn-primary text-xs" onClick={() => setOpen(true)}>
+          <button
+            type="button"
+            className="h-8 rounded-md border-none bg-[var(--cargo-trust)] px-3.5 text-[13px] font-medium text-white transition-all duration-150 hover:bg-[var(--cargo-trust-hover)]"
+            onClick={() => setOpen(true)}
+          >
             Регистрация
           </button>
         </>

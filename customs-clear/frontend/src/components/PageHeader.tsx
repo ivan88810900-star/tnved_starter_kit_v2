@@ -22,8 +22,8 @@ type PageHeaderProps = {
 export const PageHeader: React.FC<PageHeaderProps> = ({ title, subtitle, stats, children }) => (
   <div className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
     <div className="min-w-0 flex-1">
-      <h1 className="text-[22px] font-medium tracking-tight text-cargo-deep">{title}</h1>
-      {subtitle ? <p className="mt-1 text-sm text-cargo-mid">{subtitle}</p> : null}
+      <h1 className="text-xl font-semibold tracking-tight text-[var(--cargo-deep)]">{title}</h1>
+      {subtitle ? <p className="mt-1 text-sm text-[var(--cargo-mid)]">{subtitle}</p> : null}
       {children}
     </div>
     {stats && stats.length > 0 ? (

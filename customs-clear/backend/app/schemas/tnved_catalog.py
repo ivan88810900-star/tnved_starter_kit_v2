@@ -37,6 +37,7 @@ class NonTariffMeasureOut(BaseModel):
     document_required: str = ""
     regulatory_act: str = ""
     type_label: str = ""
+    permit_type: str = ""
 
 
 class IntellectualPropertyOut(BaseModel):

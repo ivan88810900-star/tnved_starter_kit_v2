@@ -7,7 +7,7 @@ const STATUS_STYLES: Record<StatusType, string> = {
   warning: 'bg-cargo-warning-light text-cargo-warning',
   danger: 'bg-cargo-alert-light text-cargo-alert',
   info: 'bg-cargo-trust-light text-cargo-trust',
-  neutral: 'bg-cargo-cloud text-cargo-mid',
+  neutral: 'bg-slate-100 text-slate-600',
 };
 
 type Props = {

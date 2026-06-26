@@ -16,31 +16,42 @@ type Props = {
 
 export const PaymentBreakdownCard: React.FC<Props> = ({
   rows,
-  totalLabel = 'ИТОГО К УПЛАТЕ',
+  totalLabel = 'Итого к уплате',
   totalAmount,
 }) => (
-  <div className="overflow-hidden rounded-lg border border-cargo-border bg-cargo-surface">
-    {rows.map((row, idx) => (
-      <div
-        key={`${row.label}-${idx}`}
-        className={`flex items-start justify-between gap-3 border-b border-cargo-border px-4 py-3 ${
-          row.tone === 'trust' ? 'text-cargo-trust' : 'text-cargo-mid'
-        }`}
-      >
-        <div className="min-w-0">
-          <p className="text-[11px] font-medium uppercase tracking-[0.06em] text-cargo-light">{row.label}</p>
-          <p className={`mt-1 text-lg font-medium tabular-nums ${row.tone === 'trust' ? 'text-cargo-trust' : 'text-cargo-deep'}`}>
-            {row.amount.toLocaleString('ru-RU')} ₽
-          </p>
+  <div className="overflow-hidden rounded-xl" style={{ boxShadow: 'var(--shadow-card)' }}>
+    <div className="rounded-t-xl border border-b-0 border-[var(--cargo-border)] bg-white">
+      {rows.map((row, idx) => (
+        <div
+          key={`${row.label}-${idx}`}
+          className="flex items-center justify-between border-b border-[var(--cargo-border)] px-6 py-3.5 last:border-0"
+        >
+          <span className="text-[11px] font-semibold uppercase tracking-wider text-[var(--cargo-light)]">
+            {row.label}
+          </span>
+          <div className="text-right">
+            <span
+              className={`text-base font-semibold tabular-nums ${
+                row.tone === 'trust' ? 'text-[var(--cargo-trust)]' : 'text-[var(--cargo-deep)]'
+              }`}
+            >
+              {row.amount.toLocaleString('ru-RU')} ₽
+            </span>
+            {row.meta ? (
+              <span className="ml-1.5 text-xs text-[var(--cargo-light)]">{row.meta}</span>
+            ) : null}
+          </div>
         </div>
-        {row.meta ? <span className="shrink-0 pt-5 text-xs text-cargo-light">{row.meta}</span> : null}
-      </div>
-    ))}
-    <div className="flex items-center justify-between bg-cargo-deep px-4 py-4 text-white">
-      <p className="text-[11px] font-medium uppercase tracking-[0.06em] text-white/70">{totalLabel}</p>
-      <p className="text-xl font-medium tabular-nums">
+      ))}
+    </div>
+    <div
+      className="flex items-center justify-between rounded-b-xl px-6 py-5"
+      style={{ background: 'var(--hero-from)' }}
+    >
+      <span className="text-[11px] font-bold uppercase tracking-widest text-white/50">{totalLabel}</span>
+      <span className="text-[32px] font-light tabular-nums tracking-tight text-white">
         <AnimatedNumber value={totalAmount} format="currency" />
-      </p>
+      </span>
     </div>
   </div>
 );

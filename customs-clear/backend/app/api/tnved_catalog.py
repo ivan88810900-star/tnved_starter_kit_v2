@@ -7,6 +7,7 @@
 
 from __future__ import annotations
 
+import json
 import os
 import time
 import re
@@ -63,6 +64,10 @@ def _pad_code(raw: str) -> str:
     return d.zfill(10)[:10]   # конечный код всегда ровно 10 символов
 
 
+# Legacy TKS non_tariff_measures в карточке (certificate/license/marking) — отключено.
+USE_LEGACY_NTM = False
+
+
 def _fetch_nt_rows(db: Session, hs_code: str) -> list[NonTariffMeasure]:
     """Нетарифные меры: каскадный поиск по префиксам кода."""
     return get_measures_for_code(hs_code, db)
@@ -107,7 +112,7 @@ def _filter_nt_rows_for_chapter(rows: list[Any], hs_code: str) -> list[Any]:
 
 def _merge_tr_ts_measures(hs_code: str, measures: list[dict[str, Any]]) -> list[dict[str, Any]]:
     """Дополняет меры из каталога ТР ТС (ДС/СС), если в БД нет явного подтверждения."""
-    from ..services.tr_ts_catalog import get_tr_ts_requirements
+    from ..services.ntm_engine_v2 import get_tr_ts_requirements_for_pipeline
 
     existing_refs = {
         (m.get("regulatory_act") or "").strip().lower()
@@ -115,7 +120,7 @@ def _merge_tr_ts_measures(hs_code: str, measures: list[dict[str, Any]]) -> list[
         if (m.get("regulatory_act") or "").strip()
     }
     out = list(measures)
-    for req in get_tr_ts_requirements(hs_code):
+    for req in get_tr_ts_requirements_for_pipeline(hs_code, ""):
         pt = (req.get("permit_type") or "").strip()
         tr = (req.get("tr_ts") or "").strip()
         if not pt or not tr:
@@ -138,8 +143,16 @@ def _merge_tr_ts_measures(hs_code: str, measures: list[dict[str, Any]]) -> list[
     return out
 
 
+def _collapse_preview_badges(badges: set[str]) -> set[str]:
+    """Все реальные типы документов на badge (СС и ДС не схлопываем)."""
+    return badges
+
+
 _PERMIT_BADGE_TYPES: frozenset[str] = frozenset({
     "ДС", "СС", "СГР", "РУ", "ЛЗ",
+    "ВС",
+    "ФСС",
+    "НФ",
     "Фито", "Вет", "Серт", "Марк", "ФСТЭК", "Рад",
 })
 
@@ -152,6 +165,12 @@ _MEASURE_TYPE_TO_BADGE: dict[str, str] = {
     "marking": "Марк",
     "fsetc": "ФСТЭК",
     "radiation_control": "Рад",
+    "вс": "ВС",
+    "фсс": "ФСС",
+    "нф": "НФ",
+    "ВС": "ВС",
+    "ФСС": "ФСС",
+    "НФ": "НФ",
 }
 
 _MEASURE_DESCRIPTIONS: dict[str, str] = {
@@ -181,53 +200,159 @@ def _serialize_nt_measure_row(m: NonTariffMeasure) -> dict[str, Any]:
         "document_required": m.document_required or "",
         "regulatory_act": m.regulatory_act or "",
         "type_label": _measure_type_label(mtype),
+        "permit_type": "",
     }
 
 
+_NTM_V2_PERMIT_TYPE_LABELS: dict[str, str] = {
+    "СС": "Сертификат соответствия",
+    "ДС": "Декларация о соответствии",
+    "СГР": "Свидетельство государственной регистрации",
+    "ВС": "Ветеринарный сертификат",
+    "ФСС": "Фитосанитарный сертификат страны экспорта",
+    "НФ": "Нотификация ФСТЭК",
+    "ЛЗ": "Лицензия на ввоз",
+    "РУ": "Разрешение на ввоз",
+}
+
+
+def _measure_type_for_v2_permit(permit_type: str, tr_ts: str | None) -> str:
+    pt = (permit_type or "").strip()
+    if pt in ("СС", "ДС") or tr_ts:
+        return "tr_ts"
+    return {
+        "ВС": "vet_control",
+        "ФСС": "phyto_control",
+        "НФ": "fsetc",
+        "СГР": "sgr",
+        "ЛЗ": "license",
+        "РУ": "license",
+    }.get(pt, "other")
+
+
+def _parse_short_desc(raw: Any) -> dict[str, Any]:
+    if not raw:
+        return {}
+    if isinstance(raw, dict):
+        return raw
+    try:
+        parsed = json.loads(str(raw))
+        return parsed if isinstance(parsed, dict) else {}
+    except (json.JSONDecodeError, TypeError, ValueError):
+        return {}
+
+
+def _convert_ntm_v2_to_display(hs_code: str, requirements: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Конвертирует строки ``get_full_ntm_requirements`` в формат вкладки «Нетарифка»."""
+    from ..services.tr_ts_catalog import TR_TS_FULL_NAMES
+
+    result: list[dict[str, Any]] = []
+    seen: set[tuple[str, str]] = set()
+    for req in requirements:
+        permit_type = (req.get("permit_type") or "").strip()
+        tr_ts = (req.get("tr_ts") or "").strip()
+        key = (permit_type, tr_ts)
+        if key in seen:
+            continue
+        seen.add(key)
+
+        short = _parse_short_desc(req.get("short_description") or "")
+        label = (
+            str(short.get("label") or "").strip()
+            or str(short.get("consumer") or "").strip()
+            or _NTM_V2_PERMIT_TYPE_LABELS.get(permit_type, "")
+            or (req.get("description") or "").strip()
+            or (req.get("tr_ts_full_name") or "").strip()
+        )
+        legal_ref = str(short.get("legal_ref") or "").strip() or (req.get("legal_ref") or "").strip()
+        document_name = label or _NTM_V2_PERMIT_TYPE_LABELS.get(permit_type, permit_type)
+
+        if tr_ts:
+            full_name = TR_TS_FULL_NAMES.get(tr_ts, "") or (req.get("tr_ts_full_name") or "").strip()
+            regulatory_act = f"ТР ТС {tr_ts}" + (f" — {full_name}" if full_name else "")
+            type_label = _NTM_V2_PERMIT_TYPE_LABELS.get(permit_type, permit_type)
+            document_required = type_label
+            description = (req.get("description") or full_name or type_label).strip()
+        else:
+            regulatory_act = legal_ref or (req.get("regulatory_act") or "").strip()
+            type_label = document_name
+            document_required = (
+                f"{document_name} — {legal_ref}"
+                if legal_ref and legal_ref not in document_name
+                else (document_name or legal_ref)
+            )
+            description = (req.get("description") or document_name).strip()
+
+        result.append(
+            {
+                "id": abs(hash((hs_code, permit_type, tr_ts))) % 1_000_000,
+                "commodity_code": hs_code,
+                "measure_type": _measure_type_for_v2_permit(permit_type, tr_ts or None),
+                "type_label": type_label,
+                "permit_type": permit_type,
+                "document_required": document_required,
+                "regulatory_act": regulatory_act,
+                "description": description,
+                "tr_ts_full_name": TR_TS_FULL_NAMES.get(tr_ts, "") if tr_ts else label,
+            }
+        )
+    return result
+
+
+def _non_tariff_measures_for_code(hs_code: str, description: str = "") -> list[dict[str, Any]]:
+    from ..services.tr_ts_catalog import get_full_ntm_requirements
+
+    return _convert_ntm_v2_to_display(hs_code, get_full_ntm_requirements(hs_code, description))
+
+
 def _permit_badges_for_hs(hs_code: str, measure_types: list[str]) -> list[str]:
-    """Badge для карточки: permit-типы из мер БД + каталог ТР ТС."""
-    from ..services.tr_ts_catalog import get_tr_ts_requirements
+    """Badge для карточки: legacy TKS (опционально) + get_full_ntm_requirements (ТР ТС + слои v2)."""
+    from ..services.tr_ts_catalog import get_full_ntm_requirements
 
     badges: set[str] = set()
-    for mt in measure_types:
-        t = (mt or "").strip().lower()
-        badge = _MEASURE_TYPE_TO_BADGE.get(t)
-        if badge:
-            badges.add(badge)
+    if USE_LEGACY_NTM:
+        for mt in measure_types:
+            t = (mt or "").strip().lower()
+            badge = _MEASURE_TYPE_TO_BADGE.get(t)
+            if badge:
+                badges.add(badge)
 
-    for req in get_tr_ts_requirements(hs_code):
+    for req in get_full_ntm_requirements(hs_code, ""):
         pt = (req.get("permit_type") or "").strip()
-        if pt in _PERMIT_BADGE_TYPES:
+        if pt and pt in _PERMIT_BADGE_TYPES:
             badges.add(pt)
+
+    badges = _collapse_preview_badges(badges)
 
     priority = {
         "ДС": 0, "СС": 1, "СГР": 2,
-        "Фито": 3, "Вет": 4, "Серт": 5,
-        "ЛЗ": 6, "Марк": 7, "ФСТЭК": 8, "Рад": 9,
-        "РУ": 10,
+        "Фито": 3, "Вет": 4, "ФСС": 5, "ВС": 6,
+        "Серт": 7, "ЛЗ": 8, "Марк": 9, "ФСТЭК": 10, "НФ": 11, "Рад": 12,
+        "РУ": 13,
     }
     return sorted(badges, key=lambda b: (priority.get(b, 99), b))
 
 
 def _measures_for_api(hs_code: str, measure_types: list[str] | None = None) -> list[dict[str, str]]:
     """Упрощённые меры для фронта: type + document + description."""
-    from ..services.tr_ts_catalog import get_tr_ts_requirements
+    from ..services.tr_ts_catalog import get_full_ntm_requirements
 
     badges = _permit_badges_for_hs(hs_code, measure_types or [])
     by_type: dict[str, dict[str, Any]] = {}
 
-    for mt in measure_types or []:
-        t = (mt or "").strip().lower()
-        badge = _MEASURE_TYPE_TO_BADGE.get(t)
-        if badge and badge not in by_type:
-            label = _MEASURE_DESCRIPTIONS.get(t, badge)
-            by_type[badge] = {
-                "type": badge,
-                "document": label,
-                "description": label,
-            }
+    if USE_LEGACY_NTM:
+        for mt in measure_types or []:
+            t = (mt or "").strip().lower()
+            badge = _MEASURE_TYPE_TO_BADGE.get(t)
+            if badge and badge not in by_type:
+                label = _MEASURE_DESCRIPTIONS.get(t, badge)
+                by_type[badge] = {
+                    "type": badge,
+                    "document": label,
+                    "description": label,
+                }
 
-    for req in get_tr_ts_requirements(hs_code):
+    for req in get_full_ntm_requirements(hs_code, ""):
         pt = (req.get("permit_type") or "").strip()
         if pt in badges and pt not in by_type:
             tr = (req.get("tr_ts") or "").strip()
@@ -1409,8 +1534,11 @@ def _build_preview_payload(code: str) -> dict[str, Any]:
             return {"status": "NOT_FOUND", "code": _pad_code(code)}
 
         out_code = _pad_code(row.code or "")
-        nt_rows = _fetch_nt_rows(db, out_code)
-        nt_rows = _filter_nt_rows_for_chapter(nt_rows, out_code)
+        if USE_LEGACY_NTM:
+            nt_rows = _fetch_nt_rows(db, out_code)
+            nt_rows = _filter_nt_rows_for_chapter(nt_rows, out_code)
+        else:
+            nt_rows = []
         measure_types = sorted({(m.measure_type or "").strip().lower() for m in nt_rows if (m.measure_type or "").strip()})
         measure_badges = _permit_badges_for_hs(out_code, measure_types)
         has_ban = "ban" in measure_types
@@ -1588,7 +1716,7 @@ def reference_by_code(
                 parts.append(s.regulatory_act.strip())
             special_lines.append(" ".join(parts))
 
-    nt_rows = _fetch_nt_rows(db, out_code)
+    nt_rows = _fetch_nt_rows(db, out_code) if USE_LEGACY_NTM else []
     bans_license_items = _nt_section_items_or_placeholder(_nt_reference_lines(nt_rows, {"ban", "license"}))
     permits_nt_items = _nt_section_items_or_placeholder(_nt_reference_lines(nt_rows, {"certificate", "tr_ts"}))
     other_nt_items = _nt_section_items_or_placeholder(
@@ -1803,9 +1931,17 @@ def get_commodity_by_code(code: str, db: Session = Depends(get_db)) -> dict[str,
     notes_text = "\n\n".join(notes_parts)
 
     out_code = _pad_code(row.code or "")
-    nt_rows = _filter_nt_rows_for_chapter(_fetch_nt_rows(db, out_code), out_code)
-    non_tariff_measures = [_serialize_nt_measure_row(m) for m in nt_rows]
-    non_tariff_measures = _merge_tr_ts_measures(out_code, non_tariff_measures)
+    description = (row.description or "").strip()
+    if USE_LEGACY_NTM:
+        nt_rows = _filter_nt_rows_for_chapter(_fetch_nt_rows(db, out_code), out_code)
+        non_tariff_measures = [_serialize_nt_measure_row(m) for m in nt_rows]
+        non_tariff_measures = _merge_tr_ts_measures(out_code, non_tariff_measures)
+        measure_types = sorted({(m.measure_type or "").strip().lower() for m in nt_rows if (m.measure_type or "").strip()})
+    else:
+        non_tariff_measures = _non_tariff_measures_for_code(out_code, description)
+        measure_types = sorted(
+            {(m.get("measure_type") or "").strip().lower() for m in non_tariff_measures if (m.get("measure_type") or "").strip()}
+        )
     trois_rows = _get_trois_matches(db, out_code)
     intellectual_properties = [
         {
@@ -1818,7 +1954,6 @@ def get_commodity_by_code(code: str, db: Session = Depends(get_db)) -> dict[str,
         for r in trois_rows
     ]
     preliminary_decisions = find_preliminary_decisions_for_hs(db, out_code)
-    measure_types = sorted({(m.measure_type or "").strip().lower() for m in nt_rows if (m.measure_type or "").strip()})
 
     return {
         "status": "OK",

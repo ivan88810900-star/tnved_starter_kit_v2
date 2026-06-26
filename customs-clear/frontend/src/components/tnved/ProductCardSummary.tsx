@@ -13,6 +13,7 @@ type Props = {
 
 export const PERMIT_BADGES = new Set([
   'ДС', 'СС', 'СГР', 'РУ', 'ЛЗ',
+  'ВС', 'ФСС', 'НФ',
   'Фито', 'Вет', 'Серт', 'Марк', 'ФСТЭК', 'Рад',
 ]);
 
@@ -28,6 +29,9 @@ export const BADGE_COLORS: Record<string, { bg: string; text: string }> = {
   Марк: { bg: 'bg-gray-50', text: 'text-gray-700' },
   ФСТЭК: { bg: 'bg-red-50', text: 'text-red-700' },
   Рад: { bg: 'bg-red-50', text: 'text-red-700' },
+  ВС: { bg: 'bg-teal-50', text: 'text-teal-700' },
+  ФСС: { bg: 'bg-green-50', text: 'text-green-700' },
+  НФ: { bg: 'bg-red-50', text: 'text-red-700' },
 };
 
 export const MEASURE_TYPE_TO_BADGE: Record<string, string> = {
@@ -53,6 +57,7 @@ export const MEASURE_DESCRIPTIONS: Record<string, string> = {
 };
 
 const NON_TARIFF_TAB_TYPES = new Set([
+  'tr_ts',
   'phyto_control',
   'vet_control',
   'certificate',
@@ -61,12 +66,17 @@ const NON_TARIFF_TAB_TYPES = new Set([
   'fsetc',
   'sgr',
   'radiation_control',
+  'other',
 ]);
 
 export type NonTariffMeasureItem = NonNullable<TnvedCommodityDetail['non_tariff_measures']>[number];
 
-export function badgeForMeasureType(measureType: string): string | null {
-  return MEASURE_TYPE_TO_BADGE[measureType.trim().toLowerCase()] ?? null;
+export function badgeForMeasureType(measure: NonTariffMeasureItem): string | null {
+  const permit = (measure as { permit_type?: string }).permit_type?.trim();
+  if (permit && PERMIT_BADGES.has(permit)) {
+    return permit;
+  }
+  return MEASURE_TYPE_TO_BADGE[measure.measure_type.trim().toLowerCase()] ?? null;
 }
 
 export function measureTypeLabel(measure: NonTariffMeasureItem): string {
@@ -107,7 +117,7 @@ export function NonTariffMeasureCards({ measures }: NonTariffMeasureCardsProps) 
   return (
     <div className="space-y-2">
       {visible.map((m) => {
-        const badge = badgeForMeasureType(m.measure_type);
+        const badge = badgeForMeasureType(m);
         const colors = badge ? BADGE_COLORS[badge] : { bg: 'bg-gray-50', text: 'text-gray-700' };
         return (
           <div key={`${m.id}-${m.measure_type}-${m.commodity_code}`} className="mb-2 rounded-lg border border-cargo-border p-3">

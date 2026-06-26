@@ -22,6 +22,10 @@ from typing import Any
 
 from .hs_matching import match_hs_prefix, normalize_hs_code
 
+# Feature flag: слой ТР ТС в пайплайне через ntm_measures_v2 (см. ntm_engine_v2).
+# Переопределение: env NTM_V2_TR_TS_ENABLED=false|0|no|off
+NTM_V2_TR_TS_ENABLED: bool = True
+
 
 @dataclass
 class TrTsRequirement:
@@ -296,7 +300,6 @@ TR_TS_020 = [
     ("8531", "ДС"),
     ("8536", "ДС"),
     ("8543", "ДС"),
-    ("8504", "ДС"),
 ]
 
 _TR_TS_021_EXTRA: list[tuple[str, str]] = [

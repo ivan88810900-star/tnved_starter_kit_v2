@@ -88,16 +88,23 @@ function SidebarLink({ item, onNavigate }: { item: NavItem; onNavigate?: () => v
         onNavigate?.();
       }}
       className={({ isActive }) =>
-        `relative flex h-10 items-center gap-2 rounded-md px-2 text-[13px] font-medium transition-colors ${
+        `group mx-2 flex items-center gap-2.5 rounded-md py-2 text-[13px] transition-all duration-150 ${
           isActive
-            ? 'bg-cargo-trust-light pl-[5px] text-cargo-trust before:absolute before:left-0 before:top-1 before:bottom-1 before:w-[3px] before:rounded-full before:bg-cargo-trust before:content-[""]'
-            : 'text-cargo-mid hover:bg-cargo-navy-50 hover:text-cargo-deep'
+            ? 'border-l-2 border-[var(--sidebar-accent)] bg-[var(--sidebar-active)] pl-[10px] pr-3 font-medium text-[var(--sidebar-text-active)]'
+            : 'px-3 font-normal text-[var(--sidebar-text)] hover:bg-[var(--sidebar-hover)] hover:text-[#CBD8EA]'
         }`
       }
     >
       {({ isActive }) => (
         <>
-          <item.icon className={`h-4 w-4 shrink-0 ${isActive ? 'text-cargo-trust' : 'text-cargo-light'}`} aria-hidden />
+          <item.icon
+            className={`h-4 w-4 shrink-0 transition-colors ${
+              isActive
+                ? 'text-[var(--sidebar-accent)]'
+                : 'text-[var(--sidebar-text)] group-hover:text-[#CBD8EA]'
+            }`}
+            aria-hidden
+          />
           <span>{item.label}</span>
         </>
       )}
@@ -141,11 +148,14 @@ export function Layout() {
 
   const sidebarContent = (onNavigate?: () => void) => (
     <>
-      <TariffLogo onNavigate={onNavigate} />
-      <nav className="flex-1 space-y-4 overflow-y-auto px-2 py-3">
+      <TariffLogo variant="dark" onNavigate={onNavigate} />
+      <div className="mx-4 mb-2 h-px bg-[var(--sidebar-border)]" aria-hidden />
+      <nav className="flex-1 space-y-1 overflow-y-auto pb-3">
         {filterGroups.map((group) => (
           <div key={group.label}>
-            <p className="mb-1 px-2 text-[11px] font-medium uppercase tracking-[0.06em] text-cargo-light">{group.label}</p>
+            <p className="px-4 pb-1.5 pt-4 text-[10px] font-bold uppercase tracking-widest text-[var(--sidebar-label)]">
+              {group.label}
+            </p>
             <div className="space-y-0.5">
               {group.items.map((item) => (
                 <SidebarLink key={item.to} item={item} onNavigate={onNavigate} />
@@ -160,7 +170,7 @@ export function Layout() {
   return (
     <div className="flex min-h-screen bg-cargo-cloud text-cargo-deep">
       {/* Desktop sidebar */}
-      <aside className="fixed inset-y-0 left-0 z-30 hidden w-[240px] flex-col border-r border-cargo-border bg-cargo-surface lg:flex">
+      <aside className="fixed inset-y-0 left-0 z-30 hidden w-[240px] flex-col border-r border-[var(--sidebar-border)] bg-[var(--sidebar-bg)] lg:flex">
         {sidebarContent()}
       </aside>
 
@@ -173,11 +183,11 @@ export function Layout() {
             aria-label="Закрыть меню"
             onClick={() => setDrawerOpen(false)}
           />
-          <aside className="fixed inset-y-0 left-0 z-50 flex w-[min(280px,88vw)] flex-col bg-cargo-surface shadow-xl lg:hidden">
-            <div className="flex items-center justify-end border-b border-cargo-border px-2 py-2">
+          <aside className="fixed inset-y-0 left-0 z-50 flex w-[min(280px,88vw)] flex-col border-r border-[var(--sidebar-border)] bg-[var(--sidebar-bg)] shadow-xl lg:hidden">
+            <div className="flex items-center justify-end border-b border-[var(--sidebar-border)] px-2 py-2">
               <button
                 type="button"
-                className="inline-flex h-9 w-9 items-center justify-center rounded-md text-cargo-mid hover:bg-cargo-navy-50"
+                className="inline-flex h-9 w-9 items-center justify-center rounded-md text-[var(--sidebar-text)] hover:bg-[var(--sidebar-hover)]"
                 onClick={() => setDrawerOpen(false)}
                 aria-label="Закрыть"
               >
@@ -189,13 +199,13 @@ export function Layout() {
         </>
       ) : null}
 
-      <div className="flex min-w-0 flex-1 flex-col lg:pl-[240px]">
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col lg:pl-[240px]">
         {/* Topbar */}
-        <header className="sticky top-0 z-20 flex h-14 shrink-0 items-center justify-between gap-3 border-b border-cargo-border bg-cargo-surface px-4 lg:px-6">
+        <header className="sticky top-0 z-20 flex h-14 shrink-0 items-center justify-between gap-3 border-b border-[var(--cargo-border)] bg-white px-6 shadow-[0_1px_0_var(--cargo-border)]">
           <div className="flex min-w-0 items-center gap-2">
             <button
               type="button"
-              className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-cargo-border text-cargo-mid hover:bg-cargo-navy-50 lg:hidden"
+              className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-[var(--cargo-border)] text-[var(--cargo-mid)] hover:bg-[var(--cargo-navy-50)] lg:hidden"
               onClick={() => setDrawerOpen(true)}
               aria-label="Открыть меню"
             >
@@ -204,9 +214,11 @@ export function Layout() {
             <div className="min-w-0 lg:hidden">
               <TariffLogo iconOnly />
             </div>
-            <p className="hidden truncate text-[13px] text-cargo-mid lg:block">
-              {APP_NAME} / <span className="text-cargo-deep">{header.breadcrumb || header.title}</span>
-            </p>
+            <nav className="hidden text-[13px] lg:block">
+              <span className="text-[var(--cargo-light)]">{APP_NAME}</span>
+              <span className="mx-1.5 text-[var(--cargo-light)]">/</span>
+              <span className="font-medium text-[var(--cargo-deep)]">{header.breadcrumb || header.title}</span>
+            </nav>
           </div>
           <AuthBar variant="cargo" />
         </header>
@@ -217,9 +229,9 @@ export function Layout() {
           </div>
         ) : null}
 
-        <main className="flex-1 px-4 py-6 pb-20 lg:px-6 lg:pb-6">
-          <div className="mx-auto max-w-[1200px]">
-            <div key={pathname} className="cc-tab-enter">
+        <main className="flex min-h-0 flex-1 flex-col bg-[var(--cargo-cloud)] p-6 pb-20 lg:pb-6">
+          <div className="mx-auto flex min-h-0 w-full max-w-[1200px] flex-1 flex-col">
+            <div key={pathname} className="cc-tab-enter flex min-h-0 flex-1 flex-col">
               <Outlet />
             </div>
           </div>

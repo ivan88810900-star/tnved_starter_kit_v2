@@ -8,7 +8,7 @@ import os
 from datetime import date
 from typing import Any
 
-from sqlalchemy import select
+from sqlalchemy import or_, select
 from sqlalchemy.orm import joinedload
 
 from .. import db
@@ -25,6 +25,14 @@ LAYER_LEGACY_ORDER = ("vet", "phyto", "notification", "license", "sgr")
 TR_TS_SOURCE_KIND = "legacy_tr_ts_catalog"
 LAYERS_SOURCE_KIND = "legacy_ntm_layers"
 
+# Канонические меры v2: ntm_layers + каталог ТР ТС (+ official SGR contour).
+# Исключает TKS-зеркала non_tariff_measures:* и legacy non_tariff_rules:*.
+_CANONICAL_MEASURE_SOURCE_REF = or_(
+    NtmMeasureV2.source_ref.like("ntm_layers.py:%"),
+    NtmMeasureV2.source_ref.like("tr_ts_catalog.%"),
+    NtmMeasureV2.source_kind == "official_sgr_registry",
+)
+
 
 def _env_truthy(name: str) -> bool:
     raw = (os.environ.get(name) or "").strip().lower()
@@ -35,8 +43,17 @@ def is_ntm_v2_tr_ts_enabled() -> bool:
     """
     Feature flag ``NTM_V2_TR_TS_ENABLED``: подмена слоя ТР ТС в ``get_full_ntm_requirements``.
 
-    По умолчанию выключено. Включение: ``1``, ``true``, ``yes``, ``on`` (без учёта регистра).
+    По умолчанию — ``tr_ts_catalog.NTM_V2_TR_TS_ENABLED`` (True).
+    Явное выключение: ``0``, ``false``, ``no``, ``off``.
+    Явное включение: ``1``, ``true``, ``yes``, ``on``.
     """
+    raw = os.environ.get("NTM_V2_TR_TS_ENABLED")
+    if raw is None or not raw.strip():
+        from .tr_ts_catalog import NTM_V2_TR_TS_ENABLED
+
+        return bool(NTM_V2_TR_TS_ENABLED)
+    if raw.strip().lower() in ("0", "false", "no", "off"):
+        return False
     return _env_truthy("NTM_V2_TR_TS_ENABLED")
 
 
@@ -226,6 +243,7 @@ def evaluate_ntm_v2(
             .where(
                 NtmMeasureV2.status == "active",
                 NtmApplicabilityRuleV2.direction.in_(("import", "both")),
+                _CANONICAL_MEASURE_SOURCE_REF,
             )
         )
         if source_kinds is not None:
@@ -319,22 +337,27 @@ def get_tr_ts_requirements_v2_legacy_shape(hs_code: str, description: str = "") 
         description=description,
         source_kinds=frozenset({TR_TS_SOURCE_KIND}),
     )
+    legacy = get_tr_ts_requirements(hs_code)
+    legacy_keys = {(str(x.get("permit_type") or ""), str(x.get("tr_ts") or "")) for x in legacy}
+
     raw_reqs = [r for r in evaluated.get("requirements") or [] if r.get("measure_kind") == MEASURE_KIND_TR]
     if not raw_reqs:
-        legacy_would = get_tr_ts_requirements(hs_code)
-        if legacy_would:
+        if legacy:
             logger.warning(
-                "NTM_V2_TR_TS: v2 вернул пустой список ТР ТС, тогда как legacy-каталог "
-                "дал бы %s строк(и) для hs_code=%r — проверьте импорт в ntm_*_v2.",
-                len(legacy_would),
+                "NTM_V2_TR_TS: v2 вернул пустой список ТР ТС, fallback на legacy-каталог "
+                "(%s строк(и)) для hs_code=%r — проверьте импорт в ntm_*_v2.",
+                len(legacy),
                 hs_code,
             )
+            return legacy
         return []
 
     out: list[dict[str, Any]] = []
     for r in raw_reqs:
         form = str(r.get("permit_type") or "")
         tr_ts = str(r.get("tr_ts") or "")
+        if (form, tr_ts) not in legacy_keys:
+            continue
         matched = str(r.get("matched_hs_scope") or "")
         out.append(
             {
@@ -351,6 +374,14 @@ def get_tr_ts_requirements_v2_legacy_shape(hs_code: str, description: str = "") 
                 "trigger": None,
             }
         )
+    if not out and legacy:
+        logger.warning(
+            "NTM_V2_TR_TS: v2 не дал совпадений с legacy-каталогом, fallback "
+            "(%s строк(и)) для hs_code=%r.",
+            len(legacy),
+            hs_code,
+        )
+        return legacy
     return out
 
 
@@ -390,6 +421,7 @@ def get_layer_requirements_v2_legacy_shape(hs_code: str, description: str = "") 
                         "priority": pub.get("priority", 1),
                         "trigger": pub.get("trigger"),
                         "measure_kind": str(r.get("measure_kind") or "sgr"),
+                        "short_description": m.short_description,
                     }
                 )
             else:
@@ -404,6 +436,7 @@ def get_layer_requirements_v2_legacy_shape(hs_code: str, description: str = "") 
                         "priority": 1,
                         "trigger": r.get("layer_trigger"),
                         "measure_kind": str(r.get("measure_kind") or ""),
+                        "short_description": m.short_description,
                     }
                 )
     return out
