@@ -1,0 +1,37 @@
+{
+  "revision": "countervailing:2026-06-18",
+  "format": "eec_trade_remedies_v1",
+  "official_url": "https://eec.eaeunion.org/comission/department/catr/trade-protect/",
+  "source_url": "https://eec.eaeunion.org/comission/department/catr/trade-protect/",
+  "effective_from": "2026-01-01",
+  "description": "Компенсационные пошлины ЕЭК",
+  "data_source": "Решения Коллегии/Совета ЕЭК (официальные документы)",
+  "measures": [
+    {
+      "hs_code": "4810",
+      "origin_country": "CN",
+      "rate_percent": 12.8,
+      "regulatory_act": "Решение Совета ЕЭК № 95 от 10.07.2018",
+      "product_description": "Бумага и картон мелованные",
+      "effective_from": "2018-08-01",
+      "rate_specific": 0.0,
+      "currency_code": "USD",
+      "effective_to": "",
+      "source_revision": "countervailing:2026-06-18",
+      "source_url": "https://eec.eaeunion.org/comission/department/catr/trade-protect/"
+    },
+    {
+      "hs_code": "3904",
+      "origin_country": "CN",
+      "rate_percent": 8.5,
+      "regulatory_act": "Решение Коллегии ЕЭК № 164 от 17.12.2019",
+      "product_description": "Поливинилхлорид (компенсационная)",
+      "effective_from": "2020-01-18",
+      "rate_specific": 0.0,
+      "currency_code": "USD",
+      "effective_to": "",
+      "source_revision": "countervailing:2026-06-18",
+      "source_url": "https://eec.eaeunion.org/comission/department/catr/trade-protect/"
+    }
+  ]
+}

@@ -1,0 +1,63 @@
+{
+  "format": "customs_clear_normative_bundle",
+  "bundle_version": 1,
+  "revision": "example-2026-03",
+  "official_ett_url": "https://eec.eaeunion.org/comission/department/catr/ett/",
+  "official_nts_url": "https://eec.eaeunion.org/comission/department/nts/",
+  "tnved": [
+    {
+      "hs_code": "9999990000",
+      "parent_hs": "999999",
+      "level": 10,
+      "title": "Пример товара для теста импорта пакета",
+      "description": "Полный перечень позиций загружается вашим ETL или коммерческой выгрузкой; здесь минимальный образец.",
+      "chapter": "99",
+      "source_revision": "example"
+    }
+  ],
+  "rates": [
+    {
+      "hs_code": "9999990000",
+      "hs_prefix": "9999",
+      "duty_rate": 5,
+      "vat_import_rate": 22,
+      "vat_rule": "none",
+      "source_revision": "example"
+    }
+  ],
+  "non_tariff_rules": [
+    {
+      "name": "Пример: техническое регулирование",
+      "hs_prefix": "9999",
+      "tr_ts": "004/2011",
+      "required_permits": "ДС",
+      "source_revision": "example"
+    }
+  ],
+  "notes": [
+    {
+      "scope_type": "prefix",
+      "scope_value": "9999",
+      "category": "tnved",
+      "title": "Пояснение к группе (пример)",
+      "body": "Текст официальных примечаний к ТН ВЭД переносите из проверенного источника (PDF ЕЭК, договорной датасет).",
+      "sort_order": 1
+    },
+    {
+      "scope_type": "prefix",
+      "scope_value": "9999",
+      "category": "ett",
+      "title": "ЕТТ",
+      "body": "Ставки ЕТТ уточняйте по действующей редакции Единого таможенного тарифа ЕАЭС.",
+      "sort_order": 2
+    },
+    {
+      "scope_type": "global",
+      "scope_value": "",
+      "category": "general",
+      "title": "Дисклеймер",
+      "body": "Данные в приложении — справочные; юридическую силу имеют официальные источники ЕЭК и национальное законодательство.",
+      "sort_order": 0
+    }
+  ]
+}

@@ -1,0 +1,98 @@
+"""API: POST /api/invoice/upload-packing-list + task endpoints."""
+from __future__ import annotations
+
+import io
+import importlib.util
+import unittest
+from unittest.mock import AsyncMock, patch
+
+from openpyxl import Workbook
+
+from tests.support_auth import login_declarant
+
+
+def _sample_xlsx() -> bytes:
+    wb = Workbook()
+    ws = wb.active
+    ws["A1"] = "票号"
+    ws["B1"] = "品名"
+    ws["C1"] = "材质"
+    ws["D1"] = "总数量"
+    ws["A2"] = "X1"
+    ws["B2"] = "塑料盒"
+    ws["C2"] = "PP"
+    ws["D2"] = 50
+    buf = io.BytesIO()
+    wb.save(buf)
+    return buf.getvalue()
+
+
+@unittest.skipUnless(importlib.util.find_spec("fastapi"), "fastapi")
+class UploadPackingListApiTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls) -> None:
+        from fastapi.testclient import TestClient
+        from app.main import app
+
+        cls.client = TestClient(app)
+        login_declarant(cls.client)
+
+    def test_upload_packing_list_parse_only(self) -> None:
+        r = self.client.post(
+            "/api/invoice/upload-packing-list",
+            files={"file": ("pack.xlsx", _sample_xlsx(), "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")},
+            data={"classify": "false"},
+        )
+        self.assertEqual(r.status_code, 200, r.text)
+        body = r.json()
+        self.assertEqual(body["status"], "done")
+        self.assertIn("task_id", body)
+        self.assertIn("name", body["meta"]["columns_found"])
+        self.assertEqual(body["results"][0]["name_cn"], "塑料盒")
+
+    @patch("app.services.packing_list_classify.get_smart_classifier")
+    def test_upload_packing_list_async_task(self, mock_get_clf) -> None:
+        from app.services.smart_classifier import ClassifyResult
+
+        mock_clf = AsyncMock()
+        mock_clf.prepare_translations = AsyncMock(return_value={})
+        mock_clf.translate_cached = AsyncMock(return_value="пластиковая коробка")
+        mock_clf.get_or_analyze_vision = AsyncMock(return_value="На фото контейнер")
+        mock_clf.get_or_classify_group = AsyncMock(
+            return_value=ClassifyResult(
+                results=[{
+                    "hs_code": "3924100000",
+                    "confidence": 0.85,
+                    "description": "Пластиковые изделия",
+                    "rationale": "PP plastic box",
+                }],
+                translation_used="пластиковая коробка",
+                visual_analysis="На фото контейнер",
+                status="OK",
+            )
+        )
+        mock_get_clf.return_value = mock_clf
+
+        r = self.client.post(
+            "/api/invoice/upload-packing-list",
+            files={"file": ("pack.xlsx", _sample_xlsx(), "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")},
+            data={"classify": "true", "max_rows": "1"},
+        )
+        self.assertEqual(r.status_code, 200, r.text)
+        body = r.json()
+        self.assertEqual(body["status"], "processing")
+        task_id = body["task_id"]
+
+        status = self.client.get(f"/api/invoice/task/{task_id}")
+        self.assertEqual(status.status_code, 200)
+        self.assertEqual(status.json()["status"], "done")
+
+        results = self.client.get(f"/api/invoice/task/{task_id}/results?limit=5")
+        self.assertEqual(results.status_code, 200)
+        row = results.json()["results"][0]
+        self.assertEqual(row["translation_used"], "пластиковая коробка")
+        self.assertEqual(row["hs_code"], "3924100000")
+
+        dl = self.client.get(f"/api/invoice/download/{task_id}")
+        self.assertEqual(dl.status_code, 200)
+        self.assertIn("spreadsheet", dl.headers.get("content-type", ""))

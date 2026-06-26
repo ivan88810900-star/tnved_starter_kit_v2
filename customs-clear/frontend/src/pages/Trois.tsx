@@ -1,0 +1,294 @@
+import React, { useEffect, useState } from 'react';
+import { api } from '../api/client';
+import { getAdminToken, setAdminToken as setAdminTokenMemory } from '../api/adminToken';
+import { getUserFacingApiError } from '../api/error';
+import type {
+  TroisCheckResponse,
+  TroisSuggestResponse,
+  TroisSuggestion,
+  TroisSyncResponse,
+} from '../types/api.types';
+import { InfoTooltip } from '../components/InfoTooltip';
+
+type TroisHsItem = {
+  brand_name: string;
+  hs_code_prefix?: string;
+  reg_number?: string;
+  right_holder?: string;
+  trademark?: string;
+  valid_until?: string;
+  is_active: boolean;
+  status?: string;
+};
+
+type TroisHsResponse = {
+  status: string;
+  hs_code: string;
+  items: TroisHsItem[];
+  active_count?: number;
+  expired_count?: number;
+  warning?: string;
+};
+
+export const Trois: React.FC = () => {
+  const [query, setQuery] = useState('');
+  const [hsLookup, setHsLookup] = useState('');
+  const [hsLoading, setHsLoading] = useState(false);
+  const [hsError, setHsError] = useState<string | null>(null);
+  const [hsResult, setHsResult] = useState<TroisHsResponse | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [syncing, setSyncing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [result, setResult] = useState<TroisCheckResponse | null>(null);
+  const [suggestions, setSuggestions] = useState<TroisSuggestion[]>([]);
+  const [syncInfo, setSyncInfo] = useState<string>('');
+  const [adminToken, setAdminToken] = useState(() => getAdminToken());
+
+  useEffect(() => {
+    const q = query.trim();
+    if (q.length < 2) {
+      setSuggestions([]);
+      return;
+    }
+    const t = setTimeout(async () => {
+      try {
+        const { data } = await api.get<TroisSuggestResponse>('/trois/suggest', { params: { q, limit: 8 } });
+        setSuggestions(data.suggestions || []);
+      } catch {
+        setSuggestions([]);
+      }
+    }, 300);
+    return () => clearTimeout(t);
+  }, [query]);
+
+  const handleCheck = async () => {
+    if (!query.trim()) return;
+    setLoading(true);
+    setError(null);
+    setResult(null);
+    try {
+      const { data } = await api.post<TroisCheckResponse>('/trois/check', { query });
+      setResult(data);
+    } catch (e) {
+      setError(getUserFacingApiError(e, 'Не удалось выполнить проверку ТРОИС.'));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleHsLookup = async () => {
+    const code = hsLookup.trim().replace(/\D/g, '');
+    if (code.length < 4) {
+      setHsError('Укажите код ТН ВЭД минимум 4 цифры');
+      return;
+    }
+    setHsLoading(true);
+    setHsError(null);
+    setHsResult(null);
+    try {
+      const { data } = await api.get<TroisHsResponse>(`/non_tariff/trois/${code}`);
+      setHsResult(data);
+    } catch (e) {
+      setHsError(getUserFacingApiError(e, 'Не удалось выполнить поиск по коду ТН ВЭД.'));
+    } finally {
+      setHsLoading(false);
+    }
+  };
+
+  const handleSync = async () => {
+    setSyncing(true);
+    setError(null);
+    setSyncInfo('');
+    try {
+      const headers: Record<string, string> = {};
+      const adminTokenValue = adminToken.trim();
+      if (adminTokenValue) headers['X-Admin-Token'] = adminTokenValue;
+      const { data } = await api.post<TroisSyncResponse>('/trois/sync', {}, { headers });
+      setSyncInfo(
+        `Синхронизация завершена: parsed=${data?.parsed_records ?? 0}, dedup=${data?.dedup_records ?? 0}, created=${data?.created ?? 0}, updated=${data?.updated ?? 0}`,
+      );
+    } catch (e) {
+      setError(getUserFacingApiError(e, 'Не удалось обновить справочник ТРОИС.'));
+    } finally {
+      setSyncing(false);
+    }
+  };
+
+  const troisDisclaimer =
+    'Проверка по локальной копии реестра ТРОИС (открытые данные ФТС). Для юридически значимой проверки используйте официальный реестр ФТС.';
+
+  return (
+    <div className="space-y-4">
+      <details className="cc-disclosure">
+        <summary>Быстрый выбор бренда</summary>
+        <div className="cc-disclosure-body flex flex-wrap gap-1.5">
+          {['Apple', 'Samsung', 'Philips', 'Bosch', 'Nike', 'IKEA', 'BMW', 'Coca-Cola'].map((b) => (
+            <button key={b} type="button" className="cc-btn-ghost text-[11px]" onClick={() => setQuery(b)}>
+              {b}
+            </button>
+          ))}
+        </div>
+      </details>
+
+      <section className="cc-card-soft space-y-3 p-4">
+        <h3 className="flex items-center gap-1.5 text-sm font-semibold text-slate-800">
+          Поиск брендов по коду ТН ВЭД
+          <InfoTooltip text={troisDisclaimer} />
+        </h3>
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <input
+            value={hsLookup}
+            onChange={(e) => setHsLookup(e.target.value)}
+            placeholder="Код ТН ВЭД (например: 8517120000)"
+            className="cc-input min-w-0 flex-1 font-mono"
+          />
+          <button
+            type="button"
+            disabled={hsLoading || !hsLookup.trim()}
+            onClick={() => void handleHsLookup()}
+            className="cc-btn-primary shrink-0"
+          >
+            {hsLoading ? 'Поиск…' : 'Проверить'}
+          </button>
+        </div>
+        {hsError && (
+          <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">{hsError}</div>
+        )}
+        {hsResult && (
+          <div className="space-y-2 text-xs">
+            {hsResult.warning && (
+              <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-amber-800">
+                {hsResult.warning}
+              </div>
+            )}
+            {(() => {
+              const activeItems = (hsResult.items || []).filter((it) => it.is_active);
+              if (activeItems.length === 0) {
+                return (
+                  <p className="text-slate-600">
+                    Активных записей для кода {hsResult.hs_code} не найдено.
+                    {(hsResult.expired_count ?? 0) > 0 ? ' Есть только истёкшие записи — см. предупреждение выше.' : ''}
+                  </p>
+                );
+              }
+              return (
+                <ul className="divide-y divide-slate-100 rounded-lg border border-slate-200 bg-white">
+                  {activeItems.map((it, idx) => (
+                    <li key={`${it.brand_name}-${it.reg_number ?? idx}`} className="px-3 py-2">
+                      <p className="font-semibold text-slate-900">{it.brand_name}</p>
+                      {it.right_holder && <p className="text-slate-600">Правообладатель: {it.right_holder}</p>}
+                      {it.reg_number && <p className="font-mono text-[11px] text-slate-500">{it.reg_number}</p>}
+                      {it.valid_until && <p className="text-slate-500">Действует до: {it.valid_until}</p>}
+                    </li>
+                  ))}
+                </ul>
+              );
+            })()}
+          </div>
+        )}
+      </section>
+
+      <p className="flex items-center gap-1.5 text-[12px] font-medium text-slate-700">
+        Проверка по торговой марке
+        <InfoTooltip text={troisDisclaimer} />
+      </p>
+      <input
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+        placeholder="Торговая марка"
+        className="cc-input"
+      />
+      {suggestions.length > 0 && (
+        <div className="flex flex-wrap gap-1 text-[11px]">
+          {suggestions.map((s) => (
+            <button key={s.key} type="button" className="cc-btn-ghost py-0.5 px-2" onClick={() => setQuery(s.label)}>
+              {s.label}
+            </button>
+          ))}
+        </div>
+      )}
+      <div className="flex flex-wrap gap-2">
+        <input
+          type="password"
+          value={adminToken}
+          onChange={(e) => {
+            const value = e.target.value;
+            setAdminToken(value);
+            setAdminTokenMemory(value);
+          }}
+          placeholder="Токен администратора (для обновления справочника)"
+          className="cc-input min-w-[260px] flex-1"
+        />
+        <button type="button" disabled={!query.trim() || loading} onClick={handleCheck} className="cc-btn-primary">
+          {loading ? 'Поиск…' : 'Проверить'}
+        </button>
+        <button type="button" disabled={syncing} onClick={handleSync} className="cc-btn-ghost">
+          {syncing ? 'Синхронизация…' : 'Обновить реестр ТРОИС'}
+        </button>
+      </div>
+      {syncInfo && (
+        <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-700">
+          {syncInfo}
+        </div>
+      )}
+      {error && (
+        <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
+          {error}
+        </div>
+      )}
+      {result && (
+        <div className="space-y-2 text-xs">
+          {result.status === 'ERROR' && result.error && (
+            <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-amber-800">
+              {result.error}
+              {result.note && <p className="mt-1 text-amber-700">{result.note}</p>}
+            </div>
+          )}
+          {result.status !== 'ERROR' && (
+            <div
+              className={`rounded-lg px-3 py-2 ${
+                result.found
+                  ? 'border-amber-200 bg-amber-50 text-amber-800'
+                  : result.risk_level === 'low'
+                    ? 'border-emerald-200 bg-emerald-50 text-emerald-800'
+                    : 'border-slate-200 bg-slate-50 text-slate-700'
+              }`}
+            >
+              {result.found
+                ? '⚠️ Знак найден в реестре: требуется разрешение правообладателя.'
+                : result.risk_level === 'low'
+                  ? '✅ Бренд не найден в локальной БД — риск по ТРОИС низкий (проверьте официальный реестр).'
+                  : '❓ Бренд не проверен автоматически — проверьте вручную в реестре ФТС.'}
+            </div>
+          )}
+          {result.freshness_label && (
+            <p className="text-[11px] text-slate-500">
+              {result.freshness_label}
+              {result.registry_source ? ` · Источник: ${result.registry_source}` : ''}
+            </p>
+          )}
+          {result.note && result.status !== 'ERROR' && (
+            <div className="cc-card-soft px-3 py-2 text-slate-700">
+              {result.note}
+            </div>
+          )}
+          {Array.isArray(result.details) && result.details.length > 0 && (
+            <details className="cc-disclosure" open>
+              <summary>Записи справочника</summary>
+              <div className="cc-disclosure-body space-y-2">
+                {result.details.map((d, i) => (
+                  <div key={i} className="flex flex-wrap gap-x-4 gap-y-1 border-b border-slate-200 pb-2 text-[12px] text-slate-700 last:border-0">
+                    {Array.isArray(d.cols) && d.cols.map((c, j) => (
+                      <span key={j}>{String(c)}</span>
+                    ))}
+                  </div>
+                ))}
+              </div>
+            </details>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+

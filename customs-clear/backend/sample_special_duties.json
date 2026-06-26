@@ -1,0 +1,18 @@
+[
+  {
+    "hs_code_prefix": "7214",
+    "origin_country": "CN",
+    "rate_percent": 18.0,
+    "rate_specific": 0.0,
+    "currency_code": "RUB",
+    "regulatory_act": "Решение Коллегии ЕЭК № 186"
+  },
+  {
+    "hs_code_prefix": "7214",
+    "origin_country": "MY",
+    "rate_percent": 12.5,
+    "rate_specific": 0.0,
+    "currency_code": "RUB",
+    "regulatory_act": "Решение Коллегии ЕЭК № 186"
+  }
+]

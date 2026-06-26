@@ -1,0 +1,20 @@
+# Прод-подобный стек: PostgreSQL + Redis. Backend запускайте отдельно с DATABASE_URL и REDIS_URL.
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: customs
+      POSTGRES_PASSWORD: customs
+      POSTGRES_DB: customs
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+
+volumes:
+  pgdata:

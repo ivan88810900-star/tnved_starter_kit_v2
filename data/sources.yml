@@ -1,0 +1,421 @@
+allowed_domains:
+- eec.eaeunion.org
+- www.eurasiancommission.org
+datasets:
+  tnved_tree:
+    name: Дерево ТН ВЭД (ЕАЭС)
+    authority: ЕЭК
+    version: '2025-01-01'
+    start_pages:
+    - https://eec.eaeunion.org/comission/department/catr/ett/
+    - https://eec.eaeunion.org/comission/department/catr/ett/ett-docs/
+    - https://eec.eaeunion.org/comission/department/catr/ett/ett-archive/
+    match:
+      extensions:
+      - .pdf
+      - .xml
+      - .html
+      - .htm
+      must_include: []
+    file_type: AUTO
+    urls: []
+    save_as: []
+    checksum: []
+  section_notes:
+    name: Примечания к разделам
+    authority: ЕЭК
+    version: '2025-01-01'
+    start_pages:
+    - https://eec.eaeunion.org/comission/department/catr/ett/
+    - https://eec.eaeunion.org/comission/department/catr/ett/ett-docs/
+    - https://eec.eaeunion.org/comission/department/catr/ett/ett-archive/
+    match:
+      extensions:
+      - .pdf
+      - .xml
+      - .html
+      - .htm
+      must_include: []
+    file_type: AUTO
+    urls: []
+    save_as: []
+    checksum: []
+  chapter_notes:
+    name: Примечания к главам
+    authority: ЕЭК
+    version: '2025-01-01'
+    start_pages:
+    - https://eec.eaeunion.org/comission/department/catr/ett/
+    - https://eec.eaeunion.org/comission/department/catr/ett/ett-docs/
+    - https://eec.eaeunion.org/comission/department/catr/ett/ett-archive/
+    match:
+      extensions:
+      - .pdf
+      - .xml
+      - .html
+      - .htm
+      must_include: []
+    file_type: AUTO
+    urls: []
+    save_as: []
+    checksum: []
+  tariff_cet:
+    name: Единый таможенный тариф (ЕТТ ЕАЭС)
+    authority: ЕЭК
+    version: '2025-01-01'
+    file_type: PDF
+    urls:
+    - https://eec.eaeunion.org/upload/files/catr/ett/%d0%9e%d0%9f%d0%98_%d1%81%d0%be%d0%ba%d1%80%d0%b0%d1%89%d0%b5%d0%bd%d0%b8%d1%8f_%d0%b4%d0%be%d0%bf.%d0%b5%d0%b4.%d0%b8%d0%b7%d0%bc.pdf
+    - https://eec.eaeunion.org/upload/files/catr/ett/ru.01_2022_25.04.2022.pdf
+    - https://eec.eaeunion.org/upload/files/catr/ett/ru.02_2022.pdf
+    - https://eec.eaeunion.org/upload/files/catr/ett/ru.03_2022_28.03.2022.pdf
+    - https://eec.eaeunion.org/upload/files/catr/ett/ru.04_2022_25.04.2022.pdf
+    - https://eec.eaeunion.org/upload/files/catr/ett/ru.05_2022_28.04.2022.pdf
+    - https://eec.eaeunion.org/upload/files/catr/ett/ru.06_2022_25.04.2022.pdf
+    - https://eec.eaeunion.org/upload/files/catr/ett/ru.07_2022_08.05.2022.pdf
+    - https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.08_2022_28.07.2024.pdf
+    - https://eec.eaeunion.org/upload/files/catr/ett/ru.09_2022_25.04.2022.pdf
+    - https://eec.eaeunion.org/upload/files/catr/ett/ru.10_2022_25.04.2022.pdf
+    - https://eec.eaeunion.org/upload/files/catr/ett/ru.11_2022_10.10.2022.pdf
+    - https://eec.eaeunion.org/upload/files/catr/ett/ru.12_2022_10.10.2022.pdf
+    - https://eec.eaeunion.org/upload/files/catr/ett/ru.13_2022_25.04.2022.pdf
+    - https://eec.eaeunion.org/upload/files/catr/ett/ru.14_2022_10.10.2022.pdf
+    - https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.15_2022_20.12.2023.pdf
+    - https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.16_2022_10.09.2023.pdf
+    - https://eec.eaeunion.org/upload/files/catr/ett/ru.17_2022_10.10.2022.pdf
+    - https://eec.eaeunion.org/upload/files/catr/ett/ru.18_2022_10.10.2022.pdf
+    - https://eec.eaeunion.org/upload/files/catr/ett/ru.19_2022_25.04.2022.pdf
+    - https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.20_2022_12.06.2025.pdf
+    - https://eec.eaeunion.org/upload/files/catr/ett/ru.21_2022_17.11.2022.pdf
+    - https://eec.eaeunion.org/upload/files/catr/ett/ru.22_2022_25.04.2022.pdf
+    - https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.23_2022_19.02.2023.pdf
+    - https://eec.eaeunion.org/upload/files/catr/ett/ru.24_2022.pdf
+    - https://eec.eaeunion.org/upload/files/catr/ett/ru.24_2022.pdf
+    - https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.25_2022_28.01.2024.pdf
+    - https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.26_2022_20.11.2024.pdf
+    - https://eec.eaeunion.org/upload/files/catr/ett/ru.27_2022_10.10.2022.pdf
+    - https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.28_2022_24.03.2024.pdf
+    - https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.29_2022_24.05.2024.pdf
+    - https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.30_2022_01.07.2024.pdf
+    - https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.31_2022_03.12.2023.pdf
+    - https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.32_2022_31.03.2024.pdf
+    - https://eec.eaeunion.org/upload/files/catr/ett/ru.33_2022_10.10.2022.pdf
+    - https://eec.eaeunion.org/upload/files/catr/ett/ru.34_2022_10.10.2022.pdf
+    - https://eec.eaeunion.org/upload/files/catr/ett/ru.35_2022_10.10.2022.pdf
+    - https://eec.eaeunion.org/upload/files/catr/ett/ru.36_2022.pdf
+    - https://eec.eaeunion.org/upload/files/catr/ett/ru.37_2022_10.10.2022.pdf
+    - https://eec.eaeunion.org/upload/files/catr/ett/ru.38_2022_10.10.2022.pdf
+    - https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.39_2022_11.03.2024.pdf
+    - https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.40_2022_26.04.2025.pdf
+    - https://eec.eaeunion.org/upload/files/catr/ett/ru.41_2022.pdf
+    - https://eec.eaeunion.org/upload/files/catr/ett/ru.42_2022.pdf
+    - https://eec.eaeunion.org/upload/files/catr/ett/ru.43_2022_25.04.2022.pdf
+    - https://eec.eaeunion.org/upload/files/catr/ett/ru.44_2022_16.06.2022.pdf
+    - https://eec.eaeunion.org/upload/files/catr/ett/ru.45_2022_10.10.2022.pdf
+    - https://eec.eaeunion.org/upload/files/catr/ett/ru.46_2022.pdf
+    - https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.47_2022_14.04.2024.pdf
+    - https://eec.eaeunion.org/upload/files/catr/ett/ru.48_2022_10.10.2022.pdf
+    - https://eec.eaeunion.org/upload/files/catr/ett/ru.49_2022_10.10.2022.pdf
+    - https://eec.eaeunion.org/upload/files/catr/ett/ru.50_2022.pdf
+    - https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.51_2022_12.04.2025.pdf
+    - https://eec.eaeunion.org/upload/files/catr/ett/ru.52_2022_10.10.2022.pdf
+    - https://eec.eaeunion.org/upload/files/catr/ett/ru.53_2022_10.10.2022.pdf
+    - https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.54_2022_24.05.2024.pdf
+    - https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.55_2022_29.11.2024.pdf
+    - https://eec.eaeunion.org/upload/files/catr/ett/ru.56_2022_10.10.2022.pdf
+    - https://eec.eaeunion.org/upload/files/catr/ett/ru.57_2022.pdf
+    - https://eec.eaeunion.org/upload/files/catr/ett/ru.58_2022_10.10.2022.pdf
+    - https://eec.eaeunion.org/upload/files/catr/ett/ru.59_2022_10.10.2022.pdf
+    - https://eec.eaeunion.org/upload/files/catr/ett/ru.60_2022_10.10.2022.pdf
+    - https://eec.eaeunion.org/upload/files/catr/ett/ru.61_2022_25.04.2022.pdf
+    - https://eec.eaeunion.org/upload/files/catr/ett/ru.62_2022.pdf
+    - https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.63_2022_12.06.2025.pdf
+    - https://eec.eaeunion.org/upload/files/catr/ett/ru.64_2022.pdf
+    - https://eec.eaeunion.org/upload/files/catr/ett/ru.65_2022.pdf
+    - https://eec.eaeunion.org/upload/files/catr/ett/ru.66_2022.pdf
+    - https://eec.eaeunion.org/upload/files/catr/ett/ru.67_2022.pdf
+    - https://eec.eaeunion.org/upload/files/catr/ett/ru.68_2022_25.04.2022.pdf
+    - https://eec.eaeunion.org/upload/files/catr/ett/ru.69_2022_08.05.2022.pdf
+    - https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.70_2022_17.03.2024.pdf
+    - https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.71_2022_20.11.2024.pdf
+    - https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.72_2022_20.12.2023.pdf
+    - https://eec.eaeunion.org/upload/files/catr/ett/ru.73_2022_10.10.2022.pdf
+    - https://eec.eaeunion.org/upload/files/catr/ett/ru.74_2022_10.10.2022.pdf
+    - https://eec.eaeunion.org/upload/files/catr/ett/ru.75_2022_25.04.2022.pdf
+    - https://eec.eaeunion.org/upload/files/catr/ett/ru.76_2022_08.05.2022.pdf
+    - https://eec.eaeunion.org/upload/files/catr/ett/ru.78_2022_25.04.2022.pdf
+    - https://eec.eaeunion.org/upload/files/catr/ett/ru.79_2022.pdf
+    - https://eec.eaeunion.org/upload/files/catr/ett/ru.80_2022.pdf
+    - https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.81_2022_27.04.2024.pdf
+    - https://eec.eaeunion.org/upload/files/catr/ett/ru.82_2022_10.10.2022.pdf
+    - https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.83_2022_06.10.2024.pdf
+    - https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.84_2022_21.09.2025.pdf
+    - https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.85_2022_21.09.2025.pdf
+    - https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.86_2022_20.03.2023.pdf
+    - https://eec.eaeunion.org/upload/files/catr/ett/ru.87_2022_10.04.2022.pdf
+    - https://eec.eaeunion.org/upload/files/catr/ett/ru.88_2022.pdf
+    - https://eec.eaeunion.org/upload/files/catr/ett/ru.89_2022.pdf
+    - https://eec.eaeunion.org/upload/files/catr/ett/ru.90_2022_10.10.2022.pdf
+    - https://eec.eaeunion.org/upload/files/catr/ett/ru.91_2022.pdf
+    - https://eec.eaeunion.org/upload/files/catr/ett/ru.92_2022.pdf
+    - https://eec.eaeunion.org/upload/files/catr/ett/ru.93_2022.pdf
+    - https://eec.eaeunion.org/upload/files/catr/ett/ru.94_2022_10.10.2022.pdf
+    - https://eec.eaeunion.org/upload/files/catr/ett/ru.95_2022.pdf
+    - https://eec.eaeunion.org/upload/files/catr/ett/ru.96_2022_10.10.2022.pdf
+    - https://eec.eaeunion.org/upload/files/catr/ett/ru.97_2022.pdf
+    - https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/Примечания%20к%20ТН%20ВЭД_11.05.2025.pdf
+    - https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/Примечания%20к%20ЕТТ_21.09.2025.pdf
+    - https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/Примечания%20к%20ЕТТ_08.02.2024.pdf
+    save_as:
+    - '%d0%9e%d0%9f%d0%98_%d1%81%d0%be%d0%ba%d1%80%d0%b0%d1%89%d0%b5%d0%bd%d0%b8%d1%8f_%d0%b4%d0%be%d0%bf.%d0%b5%d0%b4.%d0%b8%d0%b7%d0%bc.pdf'
+    - ru.01_2022_25.04.2022.pdf
+    - ru.02_2022.pdf
+    - ru.03_2022_28.03.2022.pdf
+    - ru.04_2022_25.04.2022.pdf
+    - ru.05_2022_28.04.2022.pdf
+    - ru.06_2022_25.04.2022.pdf
+    - ru.07_2022_08.05.2022.pdf
+    - ru.08_2022_28.07.2024.pdf
+    - ru.09_2022_25.04.2022.pdf
+    - ru.10_2022_25.04.2022.pdf
+    - ru.11_2022_10.10.2022.pdf
+    - ru.12_2022_10.10.2022.pdf
+    - ru.13_2022_25.04.2022.pdf
+    - ru.14_2022_10.10.2022.pdf
+    - ru.15_2022_20.12.2023.pdf
+    - ru.16_2022_10.09.2023.pdf
+    - ru.17_2022_10.10.2022.pdf
+    - ru.18_2022_10.10.2022.pdf
+    - ru.19_2022_25.04.2022.pdf
+    - ru.20_2022_12.06.2025.pdf
+    - ru.21_2022_17.11.2022.pdf
+    - ru.22_2022_25.04.2022.pdf
+    - ru.23_2022_19.02.2023.pdf
+    - ru.24_2022.pdf
+    - ru.24_2022.pdf
+    - ru.25_2022_28.01.2024.pdf
+    - ru.26_2022_20.11.2024.pdf
+    - ru.27_2022_10.10.2022.pdf
+    - ru.28_2022_24.03.2024.pdf
+    - ru.29_2022_24.05.2024.pdf
+    - ru.30_2022_01.07.2024.pdf
+    - ru.31_2022_03.12.2023.pdf
+    - ru.32_2022_31.03.2024.pdf
+    - ru.33_2022_10.10.2022.pdf
+    - ru.34_2022_10.10.2022.pdf
+    - ru.35_2022_10.10.2022.pdf
+    - ru.36_2022.pdf
+    - ru.37_2022_10.10.2022.pdf
+    - ru.38_2022_10.10.2022.pdf
+    - ru.39_2022_11.03.2024.pdf
+    - ru.40_2022_26.04.2025.pdf
+    - ru.41_2022.pdf
+    - ru.42_2022.pdf
+    - ru.43_2022_25.04.2022.pdf
+    - ru.44_2022_16.06.2022.pdf
+    - ru.45_2022_10.10.2022.pdf
+    - ru.46_2022.pdf
+    - ru.47_2022_14.04.2024.pdf
+    - ru.48_2022_10.10.2022.pdf
+    - ru.49_2022_10.10.2022.pdf
+    - ru.50_2022.pdf
+    - ru.51_2022_12.04.2025.pdf
+    - ru.52_2022_10.10.2022.pdf
+    - ru.53_2022_10.10.2022.pdf
+    - ru.54_2022_24.05.2024.pdf
+    - ru.55_2022_29.11.2024.pdf
+    - ru.56_2022_10.10.2022.pdf
+    - ru.57_2022.pdf
+    - ru.58_2022_10.10.2022.pdf
+    - ru.59_2022_10.10.2022.pdf
+    - ru.60_2022_10.10.2022.pdf
+    - ru.61_2022_25.04.2022.pdf
+    - ru.62_2022.pdf
+    - ru.63_2022_12.06.2025.pdf
+    - ru.64_2022.pdf
+    - ru.65_2022.pdf
+    - ru.66_2022.pdf
+    - ru.67_2022.pdf
+    - ru.68_2022_25.04.2022.pdf
+    - ru.69_2022_08.05.2022.pdf
+    - ru.70_2022_17.03.2024.pdf
+    - ru.71_2022_20.11.2024.pdf
+    - ru.72_2022_20.12.2023.pdf
+    - ru.73_2022_10.10.2022.pdf
+    - ru.74_2022_10.10.2022.pdf
+    - ru.75_2022_25.04.2022.pdf
+    - ru.76_2022_08.05.2022.pdf
+    - ru.78_2022_25.04.2022.pdf
+    - ru.79_2022.pdf
+    - ru.80_2022.pdf
+    - ru.81_2022_27.04.2024.pdf
+    - ru.82_2022_10.10.2022.pdf
+    - ru.83_2022_06.10.2024.pdf
+    - ru.84_2022_21.09.2025.pdf
+    - ru.85_2022_21.09.2025.pdf
+    - ru.86_2022_20.03.2023.pdf
+    - ru.87_2022_10.04.2022.pdf
+    - ru.88_2022.pdf
+    - ru.89_2022.pdf
+    - ru.90_2022_10.10.2022.pdf
+    - ru.91_2022.pdf
+    - ru.92_2022.pdf
+    - ru.93_2022.pdf
+    - ru.94_2022_10.10.2022.pdf
+    - ru.95_2022.pdf
+    - ru.96_2022_10.10.2022.pdf
+    - ru.97_2022.pdf
+    - Примечания%20к%20ТН%20ВЭД_11.05.2025.pdf
+    - Примечания%20к%20ЕТТ_21.09.2025.pdf
+    - Примечания%20к%20ЕТТ_08.02.2024.pdf
+    checksum:
+    - b05cb8061d0854d121ac86d0d2ee5663ed185cc9c3915ed586de2d8173a666a8
+    - 7942d2176d8c728dde35f55cc4871ba230fdef721b30d5c191fd444cd55537c9
+    - d026efa23a48105a80f4a9194525f454d36884d7cbc94abaa5843a4fcc871b74
+    - 8f5cb9bf465b882778d0530f64221b6fa7b4aaafea492a032be66991115dd059
+    - 5b94a99f1784e8f82d77883235360b96440781fab68c76c15bdb06a516584277
+    - 2e7670fe509fe6ce6175f3edd6ed52a29cb1aca1644cbcdc77ffd2fcbdce6a4a
+    - 6cd11b8b134d4f3712137966bdb757d81bc9720e3da6abb5c6183ad1960bbbf3
+    - 75080d3883897f0d697347093454326d6ba05f0e9796d6eeb97bc15dbe1e3f88
+    - e4c6e8d764375e793281554732cde740411d4faa0abd80bfe4b5250994f60bd4
+    - 1efd21071ce9701f1d42f7ceca100d0fff2d951e454f9274759ca66d85d6efa6
+    - 22986cc7cbca59417296f14dbe5668dbcd10cf585ae9e9ad6dabad1eeaadc887
+    - 30985b9bfc43d8052c3118c54b816c26e5e6bf460455dc7dde18e2ed28c3a60b
+    - 9f362475951173e673ec4d38dad33aba2334feb94b8660a76e0639fc60cac8a1
+    - ddc4cd6b3dd7d78fc856ffb7bee7bf308144df500e206a22e883b15dbf7f25b1
+    - f39692c359fe943dfe9e34e3fadddbf6971dfa7f9834d9f3075b0676acf4509d
+    - 4650c0970da23132dc12c41ee3c623bebe8a0b9bf826fab6ac373da906dcb120
+    - 15570c27486bbae4e5545cb2cc92eeb0775262c730c0622af03ce324e46a5061
+    - 2411f78e7bd5d6921f7999ae933e775961ce1a55a3b99ae156ca1b89348fa4c6
+    - 23600b57b2efbc87553ad0284a24744463e67997a4bc99f92c89ab68dea81cf5
+    - 1eeee5eadd2d095038b287ddae6756d0ff580013f9f0ee6085aece474aec5f55
+    - 0d766331e83704cdaf0b260c4968e8e10cb2ee122261a1be1bacec4b8d332a37
+    - d1a85d5464d3ee2b7084353aa31efdfa9822740ce8c402372062914a31d17f61
+    - d36ff91756bda80cf54895843e8c5fca75897b26d6e77596f29a885f06b375d7
+    - 8f11edeb8907b0f325c3c492943880fa6872839f05cac57d3701de066bbee775
+    - 2b4d840d43b2ba88fdf1870d006e1248927b5120b3806c4822ca96d6a24e688b
+    - 2b4d840d43b2ba88fdf1870d006e1248927b5120b3806c4822ca96d6a24e688b
+    - 995077fd15d431ff610dc8dcd74650e4e7e7790e1f0bbbc9d6281c4f2132f096
+    - c73f5b34c5b0517f9dd410d7c9c9e9a7fc5a345091a14d354ad01ae4af4d1d08
+    - a09e8ced95565319cdae5cf621109b4334e771ced50e55693caec60e905c12d2
+    - 5f83bd947b08f2f9374cf76557aeb5583a68b24e3b03e1871bb4429363bc9efe
+    - 418666f5fc61db171a9d0bbcf068753504cd29ff04f0f4ac62d4e1147980b51a
+    - d814d82b679c11c5dd035332151aa022b74c202327b7ccf2981f3087cbe39aa3
+    - e2787e2b31953994570aef12659aae04aef69b87dd172b44123552fa56472a97
+    - bb4da48dcdde2a93f011c55a00d7276c82fce3c740216d79be410205e488c46d
+    - 0300a0a3a6585e39ab82aa00593ea7c0df9c1f5c75cf60fdecdccf00eff4927b
+    - d363c07b9d7c5c534b5aff2a8fb04a9fd62fe3331cb590b37c33a795e8c6e90d
+    - 9422689ea5d2f4960ab15267779256f5209bee5c44d4692d880c468450bc9d05
+    - 1be7c23e6d14a48cff9302a011805dbe9bb37946c619ef2953172255a203f716
+    - 0ec834d50a127af8bb82d6b26353b514f1ecb6bfec6c19dc31e02f1239915b5c
+    - 21781b60cdda8b63f2dad1876d63362bd86dbc2247e01ed8577dc75947db4985
+    - c4e375c685b741fdb5a828cb707ec646761f9de3ada296c070871f8be4d28365
+    - e93095d798b00ce4d98abd6e977c028259bfca2cc2386d53e4c20547cf57a1f5
+    - 871219209cdca4e6b730b52d2e664ed85e09b5ad698fa2b3528ec88414ce3af7
+    - 5f2f383ca3831c8dbd4afe9ecc6adef5f28bf7b5bce53d28dc072630482db3db
+    - 8fe23e71527ed8a4283c5dfb5f1146580ccb191362275887241f83862b997f1f
+    - 1c7abb43e53bdc16f0b63d5d7db434c8cba137c5778ea89c0cb4f33e2a31e3ec
+    - 08077657d6041e0e9ef604b9765af13acd08bae2597b2fddd247a478605c9164
+    - a3653ef57d917f00208cf66cb054f8706bec89706f17e7a3bb1011b48eae38d6
+    - 73f912757213f6becc3ead85f69347437e592f3ff2f1906dd56b0763b927377f
+    - 92b6702e1952480785486354a8cdc770f3f6682bc40b2c360705a314e46805ff
+    - ebeb6394e7c318b4d4aff353a3d956545262d6977ab67c89beac803358c28cdb
+    - bbf3618a251f6f77ba04ae264c655f195650c8fe1935c7a891e3a16738c89b96
+    - 48573fa5f92211ae2f0dbb07008c31e2314e94cdc2ea66a569d0fd08c24a45b2
+    - 0bab11a6a4545d7b569bf374d7defc27e2d148175025352298f944a98596c7f5
+    - fe43e7fd0c00e899fa36b9638fcbdb9be609729bc4cc6d31e59e6161df1ecf41
+    - c53064f29e55acd9b25751a6f7ec832a305ac1b67554f32f80f4179ab7228937
+    - 8525fe9e1805aa871fe9677f65679f372b5e94748dae65839293913167b7db60
+    - 22773a652d7d8e6c5973bd3057ef061ce50f59e8fad49e65a2e628430b65607d
+    - 825d136aedef63d3a5eb7d3729bda93d3d7ba1c74cf5893bdb578fdb63a24fc2
+    - 49893aea3ac90ba82c3ca94df30735ad94d0559e8828459b56deadd79e8e893d
+    - 319b8b1ef94f271172fe6f0257e7cdf36254ea71e2d5f31b9e35c74242f1d3e4
+    - b52a6792be8c0eb8ca56be56f136f249d50fa7e90c7b9b8933dca1902578f00d
+    - 55a77a8d647f87b85055da92e88bb47ce49ca90e184c5f78b96a08cef441b9a0
+    - 8dc3e2e4d8f9b8a2f95a6d20ffc0edbca767a11690a196a52e519d6675e25f21
+    - d31cb8950e5f88e9fdf70ee3c2635c9f28ba8a0be4b3aa54cbbb929fede3491e
+    - 2a8b54c1915d42c698b88e803ce68c226731e13228e03069c631c89d2dc32e74
+    - 42c11021ffbde994428ed98cc4d4abda545b765e5a30a5542403cc5197d4c9ba
+    - f673510605765d131b90d2d817a8bd0f2450c682f65a16a3efc05d8f83cdcf54
+    - fb0913b9dd8de7f43828b3eae59669e5c5fd89fc087cce78d73459191f641ac7
+    - e6adc19e62c8bdf6530d40994eaef74e2c46ece905bbd6f5109b5850db41461f
+    - 11daa8f36a456ee363b6eefc3abb52d2d2b1627a4e9ac6db1f383e625716e443
+    - 772ddd017b6a480b18433d524194b0fb1b3c230859d6ce8f5025e4eca3c862c3
+    - 3dedf1fe810870add01f916de2c5029248c160204ac3771ba7a58a487f75dc9c
+    - 6093b43be41f902e9ab9f105ed76228709d482fb92af73d103627e120550f9a6
+    - 0d34869f52093cc21fdf1116c7cb71d30d68322859facac15bf5fdf8dfc7ac08
+    - a4c8ebea3472a5d008acb89d118128c2f4f31579805e77b03586e167fe90857c
+    - 6f09acf17937deb9bcb9f33150189e7c68889fdfeaa3498f37e8fc324ca36d5a
+    - 57ea41461e8587664197fd7d2a6ec6d8ca13ad3498b4c6b6d93191bb988cc9cb
+    - afbb5b896009016ce781160166d24b6246797edd901b7fe22a945f48be808a82
+    - ed572511f422cc933154f5175177bab8dd140c58ed5ad22c6fe8852d3bd7da15
+    - abda2734e52a5288d925eff96259cf42f993b2657a22d1c8548a5bc19fce5b15
+    - 16172946c0c5a36cb985a984fa1f35a6388f2c9b5653da0f7fe64b50d6ce3398
+    - e21f8b412b3129955de11639fb62909d4ab308a3d9a341e6e21624e211c4505e
+    - 639acfdaadc3e59f8fc23638813af710aed594007d6ed990114cfdf9572ff10a
+    - ba9558f6e198318ffe2e742a4d104925d1c603b8038421b8e86a2c2207291b46
+    - e8658ac13ba0deb62f4dbfc56ab587b4bd578810db168ac079636d86e39fe736
+    - 42454a7fca6cdf3d9e05002c9330d2843e6bc318d5e3b3e81e319fc9e64f84c6
+    - 0fdf45a6455a41e1a3586c59899ff069f49e4879b723db9a8e880683039dccf3
+    - 5892440f247df978f86dfa3028d49e33e38698672754ce8f3f50f8cf948a41e9
+    - 11e79dd4052c88cb6b2b312ab48171629959ec13a6bf1ad0514486def86548bb
+    - 6abfb3ff239147249c2ee618b9efe0bedcf960100f8cf11eedce17b273cb75fa
+    - 5766f7126e770f6d5cace523fde8a05fe67061e8e7a28bdaee247e18cbf2cc53
+    - c2f818b1a4ebc2d9eb86ee4d417e96273a19bdf3a88b3257fad02fadf0ae77da
+    - 6135fcf97bee5bb1e6e7bc777b737bd24d795bd2919fff925caa57e0a44bf4e2
+    - 479ce0fdcb136090d94aadbd1ee8db32806a9b94753038a973522de456ea640b
+    - a1ed9abdcd300c8ea9fd6657ca332fa11d366cdca34ef25ac975f96bfa109f2c
+    - 0fd1d1b92228aec48ecd8f4291563278569d6112d35fd07df148e300c3b1733e
+    - ab11deb403161e8c5be060888029491685cba27b980c908988d1fb97e4d7156e
+    - df3b7126d402622d1eb01fbd383cba9c78974d5e29f0ab1161964c5942b9df0b
+    - bd4f4b8bab21d75e8fd69d832f84e9e53141639675d946c8a3bbfd47179929ac
+    - 865450360bd6fe5221cabb83958b8546fc4b98a0ab15ee9a8f7d039165ac2ffa
+  vat_10_food_children:
+    name: НДС 10% — продтовары и детские товары (ПП РФ №908)
+    authority: Правительство РФ
+    version: '2025-01-01'
+    start_pages:
+    - https://www.consultant.ru/document/cons_doc_LAW_51304/
+    match:
+      extensions:
+      - .html
+      - .htm
+      - .pdf
+      must_include: []
+    file_type: AUTO
+    urls: []
+    save_as: []
+    checksum: []
+  vat_10_med:
+    name: НДС 10% — медизделия/товары (ПП РФ №688)
+    authority: Правительство РФ
+    version: '2025-01-01'
+    start_pages:
+    - https://base.garant.ru/58076332/
+    match:
+      extensions:
+      - .html
+      - .htm
+      - .pdf
+      must_include: []
+    file_type: AUTO
+    urls: []
+    save_as: []
+    checksum: []
+  vat_0_med:
+    name: НДС 0% — медтовары, реализация и ввоз (ПП РФ №1042)
+    authority: Правительство РФ
+    version: '2025-01-01'
+    start_pages:
+    - https://www.consultant.ru/document/cons_doc_LAW_186846/
+    - https://government.ru/docs/19885/
+    match:
+      extensions:
+      - .html
+      - .htm
+      - .pdf
+      must_include: []
+    file_type: AUTO
+    urls: []
+    save_as: []
+    checksum: []

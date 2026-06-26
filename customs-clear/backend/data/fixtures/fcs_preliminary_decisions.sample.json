@@ -1,0 +1,31 @@
+{
+  "schema_version": "1",
+  "source": "fcs_preliminary_fixture",
+  "description": "Sample FCS preliminary classification decisions for deterministic sync MVP tests",
+  "items": [
+    {
+      "hs_code": "8471300000",
+      "decision_number": "FCS-14-000001",
+      "issue_date": "2023-06-01",
+      "product_name": "Ноутбук переносной",
+      "description": "Портативный персональный компьютер массой не более 10 кг",
+      "target_entity": "Ноутбук"
+    },
+    {
+      "hs_code": "6403990000",
+      "decision_number": "FCS-14-000002",
+      "issue_date": "2022-11-15",
+      "product_name": "Обувь спортивная с подошвой из резины",
+      "description": "Кроссовки с верхом из текстильных материалов",
+      "target_entity": "Кроссовки"
+    },
+    {
+      "hs_code": "9503007500",
+      "decision_number": "FCS-14-000003",
+      "issue_date": "2024-03-20",
+      "product_name": "Кукла",
+      "description": "Игрушка в виде человеческой фигуры для детей",
+      "target_entity": "Кукла"
+    }
+  ]
+}

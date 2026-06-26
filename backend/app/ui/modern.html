@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>ТН ВЭД — Modern UI</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="/static/modern.css" rel="stylesheet">
+</head>
+<body>
+<header class="topbar">
+<div class="container">
+<h1>Классификатор ТН ВЭД</h1>
+<div class="searchbar" role="search">
+<label for="q" class="sr-only">Поиск кода или текста</label>
+<input id="q" type="text" placeholder="код (7009 / 7009100000) или текст (стекло)..." autocomplete="off" />
+<button id="btnGo" aria-label="Поиск">Найти</button>
+</div>
+<div id="suggest" class="suggest" role="listbox" aria-label="Подсказки" hidden></div>
+</div>
+</header>
+
+<main class="container">
+<section id="state" class="state" aria-live="polite"></section>
+
+<section id="tree" class="card" hidden>
+<h2>Дерево кодов для префикса <span id="treePrefix"></span></h2>
+<div id="treeCounts" class="counts"></div>
+<div class="grid">
+<div>
+<h3>4 знака</h3>
+<div id="L4" class="list"></div>
+<button class="more" data-len="4" hidden>Показать ещё</button>
+</div>
+<div>
+<h3>6 знаков</h3>
+<div id="L6" class="list"></div>
+<button class="more" data-len="6" hidden>Показать ещё</button>
+</div>
+<div>
+<h3>8 знаков</h3>
+<div id="L8" class="list"></div>
+<button class="more" data-len="8" hidden>Показать ещё</button>
+</div>
+<div>
+<h3>10 знаков</h3>
+<div id="L10" class="list"></div>
+<button class="more" data-len="10" hidden>Показать ещё</button>
+</div>
+</div>
+</section>
+
+<section id="detail" class="card" hidden>
+<h2>Карточка кода</h2>
+<div id="detailBody" class="detail"></div>
+</section>
+
+<section id="textResults" class="card" hidden>
+<h2>Текстовый поиск</h2>
+<div id="textList" class="list"></div>
+</section>
+
+<section id="batch" class="card">
+<h2>Массовая классификация (Excel)</h2>
+<p class="muted">Загрузите XLSX с колонкой <code>code</code> (или первой колонкой с кодами).</p>
+<div class="row">
+<input id="xls" type="file" accept=".xlsx,.xls" />
+<button id="btnXls">Классифицировать и скачать</button>
+</div>
+<div id="batchMsg" class="muted"></div>
+</section>
+</main>
+
+<div id="toast" class="toast" hidden></div>
+
+<script src="/static/modern.js"></script>
+</body>
+</html>
+

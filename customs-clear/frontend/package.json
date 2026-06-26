@@ -1,0 +1,38 @@
+{
+  "name": "customs-clear-frontend",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit",
+    "gen:api-types": "openapi-typescript http://127.0.0.1:8001/openapi.json -o src/api/openapi.generated.ts"
+  },
+  "dependencies": {
+    "@radix-ui/react-hover-card": "^1.1.15",
+    "@react-spring/web": "^10.1.2",
+    "@tanstack/react-table": "^8.16.0",
+    "axios": "^1.7.0",
+    "framer-motion": "^12.41.0",
+    "lucide-react": "^1.7.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-dropzone": "^14.2.3",
+    "react-markdown": "^10.1.0",
+    "react-router-dom": "^6.30.3",
+    "recharts": "^3.8.1",
+    "remark-gfm": "^4.0.1"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "^18.3.0",
+    "@vitejs/plugin-react-swc": "^4.3.0",
+    "autoprefixer": "^10.4.20",
+    "openapi-typescript": "^7.13.0",
+    "postcss": "^8.4.38",
+    "tailwindcss": "^3.4.4",
+    "typescript": "^5.5.4",
+    "vite": "^8.0.0"
+  }
+}
