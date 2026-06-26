@@ -1018,6 +1018,23 @@ def _build_tree(rows: list[Commodity], chapter_notes: dict[str, str]) -> list[di
                     node["is_codeless"] = True
                     node["is_group"] = True
                     node["display_code"] = node["code"][:6]
+                elif lvl == 8:
+                    # Одиночная L8-субпозиция без дочерних кодов в БД.
+                    # В эталонной структуре ТН ВЭД (ТКС) L8-узел тоже является
+                    # бескодовым заголовком, а декларируемый лист — под ним.
+                    # Синтезируем дочерний лист с тем же 10-значным кодом.
+                    leaf_child = {
+                        **node,
+                        "is_leaf": True,
+                        "is_codeless": False,
+                        "is_group": False,
+                        "children": [],
+                    }
+                    node["children"] = [leaf_child]
+                    node["is_leaf"] = False
+                    node["is_codeless"] = True
+                    node["is_group"] = True
+                    node["display_code"] = node["code"][:8]
                 else:
                     leaf = is_leaf_hs_code(node["code"])
                     node["is_leaf"] = leaf
