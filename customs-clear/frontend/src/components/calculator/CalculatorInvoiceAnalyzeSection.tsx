@@ -76,11 +76,6 @@ export const CalculatorInvoiceAnalyzeSection: React.FC = () => {
           Инвойс → строки (ИИ)
         </span>
       </div>
-      <p className="text-[11px] leading-relaxed text-slate-600">
-        PDF, сканы, <strong>Excel</strong> (.xlsx, .xls) и CSV — спецификации и пакинг-листы из логистики. Разбор выполняется
-        ключами ИИ, настроенными администратором на сервере.
-      </p>
-
       <div className="relative">
         <div
           {...dz.getRootProps()}

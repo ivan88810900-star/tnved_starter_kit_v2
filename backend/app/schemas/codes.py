@@ -21,6 +21,12 @@ class TariffInfo(BaseModel):
     add: Optional[str] = None
 
 
+class PermitMeasure(BaseModel):
+    type: str = ""
+    document: Optional[str] = None
+    description: Optional[str] = None
+
+
 class CodeNode(BaseModel):
     code: str
     title_ru: Optional[str] = None
@@ -32,7 +38,9 @@ class CodeNode(BaseModel):
     parent: Optional[str] = None
     chapter: Optional[str] = None
     has_children: Optional[bool] = None
+    is_codeless: Optional[bool] = None
     tariff: Optional[TariffInfo] = None
+    measures: Optional[List[PermitMeasure]] = None
 
 
 class CodePathItem(BaseModel):
@@ -50,4 +58,5 @@ class CodeDetail(BaseModel):
     parent: Optional[str] = None
     path: List[CodePathItem] = []
     tariff: Optional[TariffInfo] = None
+    measures: List[PermitMeasure] = []
     children: List[CodeNode] = []

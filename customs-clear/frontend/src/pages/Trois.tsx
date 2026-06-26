@@ -8,6 +8,7 @@ import type {
   TroisSuggestion,
   TroisSyncResponse,
 } from '../types/api.types';
+import { InfoTooltip } from '../components/InfoTooltip';
 
 type TroisHsItem = {
   brand_name: string;
@@ -113,21 +114,11 @@ export const Trois: React.FC = () => {
     }
   };
 
+  const troisDisclaimer =
+    'Проверка по локальной копии реестра ТРОИС (открытые данные ФТС). Для юридически значимой проверки используйте официальный реестр ФТС.';
+
   return (
     <div className="space-y-4">
-      <p className="text-[12px] text-slate-600">Поиск по локальному справочнику товарных знаков.</p>
-      <p className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-[11px] leading-relaxed text-slate-600">
-        Проверка по локальной копии реестра ТРОИС (открытые данные ФТС). Для юридически значимой проверки используйте{' '}
-        <a
-          href="https://customs.gov.ru/registers/objects-intellectual-property"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-indigo-600 hover:underline"
-        >
-          официальный реестр ФТС
-        </a>
-        .
-      </p>
       <details className="cc-disclosure">
         <summary>Быстрый выбор бренда</summary>
         <div className="cc-disclosure-body flex flex-wrap gap-1.5">
@@ -140,7 +131,10 @@ export const Trois: React.FC = () => {
       </details>
 
       <section className="cc-card-soft space-y-3 p-4">
-        <h3 className="text-sm font-semibold text-slate-800">Поиск брендов по коду ТН ВЭД</h3>
+        <h3 className="flex items-center gap-1.5 text-sm font-semibold text-slate-800">
+          Поиск брендов по коду ТН ВЭД
+          <InfoTooltip text={troisDisclaimer} />
+        </h3>
         <div className="flex flex-col gap-2 sm:flex-row">
           <input
             value={hsLookup}
@@ -194,6 +188,10 @@ export const Trois: React.FC = () => {
         )}
       </section>
 
+      <p className="flex items-center gap-1.5 text-[12px] font-medium text-slate-700">
+        Проверка по торговой марке
+        <InfoTooltip text={troisDisclaimer} />
+      </p>
       <input
         value={query}
         onChange={(e) => setQuery(e.target.value)}

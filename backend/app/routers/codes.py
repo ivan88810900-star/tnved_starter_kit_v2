@@ -8,6 +8,7 @@ from ..db import get_db, SessionLocal
 from ..models_hs import HSCode, Note
 from ..models import TariffRate
 from ..services import tariff_service
+from ..services.permit_resolver import is_codeless_title, permit_measures_for_code
 
 router = APIRouter(prefix="/codes", tags=["codes"])
 
@@ -555,6 +556,21 @@ def _next_len(n: int) -> int:
     if n <= 6: return 8
     return 10
 
+
+def _has_real_children(db: Session, parent_code: str) -> bool:
+    """Есть ли в БД коды длиннее parent_code с тем же префиксом."""
+    parent = (parent_code or "").replace(".", "").strip()
+    plen = len(parent)
+    if plen >= 10 or plen == 0:
+        return False
+    cnt = db.execute(
+        select(func.count(HSCode.code))
+        .where(HSCode.code.like(f"{parent}%"))
+        .where(func.length(HSCode.code) > plen)
+    ).scalar_one()
+    return int(cnt or 0) > 0
+
+
 @router.get("/suggest")
 def suggest_codes(q: str = Query(..., min_length=1, max_length=10)):
     qn = (q or "").replace(".", "").strip()
@@ -747,18 +763,23 @@ def get_children(
             if is_generic_title(title) and parent_display_title:
                 title = compose_title(parent_display_title, title) or title
 
+            # is_codeless — по сырому заголовку из БД (sanitize убирает «:»)
+            codeless = is_codeless_title(direct_raw or "") or is_codeless_title(title or "")
+
             node = {
                 "code": child_code,
                 "title_ru": title,
                 "title_full": full_map.get(child_code),
                 "level": _lvl(child_code),
                 "parent": code,
-                "has_children": len(child_code) < 10,
+                "has_children": len(child_code) < 10 and _has_real_children(db, child_code),
+                "is_codeless": codeless,
             }
-            if include_tariff and len(child_code) == 10:
+            if include_tariff and len(child_code) == 10 and not node["is_codeless"]:
                 t = tariff_service.lookup(child_code)
                 vat_rate, vat_source, vat_title = tariff_service.resolve_vat_for_code(child_code)
                 node["tariff"] = {**t, "vat": vat_rate, "vat_source": vat_source, "vat_reason": vat_title}
+                node["measures"] = permit_measures_for_code(child_code)
             items.append(node)
         return items
 
@@ -773,6 +794,9 @@ def get_children(
     result = []
     for child in children:
         title = sanitize_title(child.title_ru or best_title_for(child.code))
+        child_digits = (child.code or "").replace(".", "")
+        raw_title = child.title_ru or title
+        codeless = is_codeless_title(raw_title or "") or is_codeless_title(title or "")
         node = {
             "code": child.code,
             "title_ru": title,
@@ -780,12 +804,14 @@ def get_children(
             "level": child.level,
             "parent": child.parent,
             "chapter": child.chapter,
-            "has_children": len((child.code or "").replace(".", "")) < 10,
+            "has_children": len(child_digits) < 10 and _has_real_children(db, child_digits),
+            "is_codeless": codeless,
         }
-        if include_tariff and len(child.code) == 10:
+        if include_tariff and len(child.code) == 10 and not node["is_codeless"]:
             t = tariff_service.lookup(child.code)
             vat_rate, vat_source, vat_title = tariff_service.resolve_vat_for_code(child.code)
             node["tariff"] = {**t, "vat": vat_rate, "vat_source": vat_source, "vat_reason": vat_title}
+            node["measures"] = permit_measures_for_code(child.code)
         result.append(node)
     return result
 
@@ -983,6 +1009,7 @@ def get_code(hs_code: str):
             "parent": c.parent,
             "path": clean_path,
             "tariff": tariff,
+            "measures": permit_measures_for_code(c.code) if len(code) == 10 else [],
             "children": [
                 {
                     "code": k.code,

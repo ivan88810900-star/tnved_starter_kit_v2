@@ -93,7 +93,7 @@ async def lifespan(app: FastAPI):
         pass
 
 
-app = FastAPI(title="CustomsClear API", version="1.0.0", lifespan=lifespan)
+app = FastAPI(title="Tariff API", version="1.0.0", lifespan=lifespan)
 
 # CORS — для десктопа и веба
 origins = os.getenv("CORS_ORIGINS", "http://localhost:3000,http://127.0.0.1:3000,http://127.0.0.1:8001").split(",")

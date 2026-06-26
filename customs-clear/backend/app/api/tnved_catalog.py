@@ -20,6 +20,7 @@ from sqlalchemy.orm import Session, joinedload, selectinload
 from ..db import SessionLocal
 from ..models.tnved import Chapter, Commodity, IntellectualProperty, NonTariffMeasure, Section, SpecialDuty, VatPreference
 from ..schemas.tnved_catalog import TnvedCommodityDetailsResponse
+from ..services.non_tariff_measures_lookup import get_measures_for_code
 from ..services.normative_store import find_rate_for_hs
 from ..services.tnved_code_card import find_preliminary_decisions_for_hs
 from ..services.preview_cache_revision import (
@@ -62,18 +63,9 @@ def _pad_code(raw: str) -> str:
     return d.zfill(10)[:10]   # конечный код всегда ровно 10 символов
 
 
-def _non_tariff_code_candidates(code10: str) -> list[str]:
-    """
-    Кандидаты для fallback мер:
-      10-значный -> 6-значный уровень -> 4-значный уровень.
-    В БД храним как 10-значные коды с нулями справа.
-    """
-    d = _digits(code10).zfill(10)[:10]
-    return [
-        d,
-        d[:6] + "0000",
-        d[:4] + "000000",
-    ]
+def _fetch_nt_rows(db: Session, hs_code: str) -> list[NonTariffMeasure]:
+    """Нетарифные меры: каскадный поиск по префиксам кода."""
+    return get_measures_for_code(hs_code, db)
 
 
 def _measure_label(mtype: str) -> str:
@@ -90,6 +82,179 @@ def _measure_label(mtype: str) -> str:
         "fsetc": "Экспортный контроль",
         "fsb": "ФСБ / шифрование",
     }.get(t, "Иные меры")
+
+
+# Главы, для которых СГР может применяться (пищевая, косметика, детские и т.п.).
+# Глава 84 (машины) и прочие — СГР из legacy-импорта TKS отфильтровываем.
+_SGR_APPLICABLE_CHAPTERS: frozenset[str] = frozenset({
+    "04", "15", "16", "17", "18", "19", "20", "21", "22", "23", "28", "30",
+    "32", "33", "34", "39", "48", "57", "61", "62", "63", "64", "65", "87",
+    "90", "94", "95",
+})
+
+
+def _chapter_code_from_hs(code: str) -> str:
+    d = _digits(code)
+    return d[:2].zfill(2) if len(d) >= 2 else ""
+
+
+def _filter_nt_rows_for_chapter(rows: list[Any], hs_code: str) -> list[Any]:
+    ch = _chapter_code_from_hs(hs_code)
+    if ch in _SGR_APPLICABLE_CHAPTERS:
+        return rows
+    return [m for m in rows if (getattr(m, "measure_type", None) or "").strip().lower() != "sgr"]
+
+
+def _merge_tr_ts_measures(hs_code: str, measures: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Дополняет меры из каталога ТР ТС (ДС/СС), если в БД нет явного подтверждения."""
+    from ..services.tr_ts_catalog import get_tr_ts_requirements
+
+    existing_refs = {
+        (m.get("regulatory_act") or "").strip().lower()
+        for m in measures
+        if (m.get("regulatory_act") or "").strip()
+    }
+    out = list(measures)
+    for req in get_tr_ts_requirements(hs_code):
+        pt = (req.get("permit_type") or "").strip()
+        tr = (req.get("tr_ts") or "").strip()
+        if not pt or not tr:
+            continue
+        act = f"ТР ТС {tr}"
+        if act.lower() in existing_refs or any(tr in ref for ref in existing_refs):
+            continue
+        doc = "Декларация соответствия" if pt == "ДС" else "Сертификат соответствия" if pt == "СС" else pt
+        out.append(
+            {
+                "id": -(abs(hash((hs_code, tr, pt))) % 1_000_000),
+                "commodity_code": hs_code,
+                "measure_type": "tr_ts",
+                "description": (req.get("description") or req.get("tr_ts_full_name") or act).strip(),
+                "document_required": doc,
+                "regulatory_act": act,
+            }
+        )
+        existing_refs.add(act.lower())
+    return out
+
+
+_PERMIT_BADGE_TYPES: frozenset[str] = frozenset({
+    "ДС", "СС", "СГР", "РУ", "ЛЗ",
+    "Фито", "Вет", "Серт", "Марк", "ФСТЭК", "Рад",
+})
+
+_MEASURE_TYPE_TO_BADGE: dict[str, str] = {
+    "sgr": "СГР",
+    "phyto_control": "Фито",
+    "vet_control": "Вет",
+    "certificate": "Серт",
+    "license": "ЛЗ",
+    "marking": "Марк",
+    "fsetc": "ФСТЭК",
+    "radiation_control": "Рад",
+}
+
+_MEASURE_DESCRIPTIONS: dict[str, str] = {
+    "phyto_control": "Фитосанитарный сертификат страны экспорта",
+    "vet_control": "Ветеринарный сертификат",
+    "certificate": "Карантинный сертификат / разрешение на ввоз",
+    "license": "Лицензия на ввоз",
+    "marking": "Маркировка (ЧЗ / ЕГАИС / Меркурий)",
+    "fsetc": "Нотификация ФСТЭК",
+    "radiation_control": "Радиационный контроль",
+    "sgr": "Свидетельство государственной регистрации",
+}
+
+
+def _measure_type_label(measure_type: str) -> str:
+    t = (measure_type or "").strip().lower()
+    return _MEASURE_DESCRIPTIONS.get(t) or _measure_label(t)
+
+
+def _serialize_nt_measure_row(m: NonTariffMeasure) -> dict[str, Any]:
+    mtype = (m.measure_type or "").strip().lower()
+    return {
+        "id": m.id,
+        "commodity_code": m.commodity_code,
+        "measure_type": m.measure_type,
+        "description": m.description or "",
+        "document_required": m.document_required or "",
+        "regulatory_act": m.regulatory_act or "",
+        "type_label": _measure_type_label(mtype),
+    }
+
+
+def _permit_badges_for_hs(hs_code: str, measure_types: list[str]) -> list[str]:
+    """Badge для карточки: permit-типы из мер БД + каталог ТР ТС."""
+    from ..services.tr_ts_catalog import get_tr_ts_requirements
+
+    badges: set[str] = set()
+    for mt in measure_types:
+        t = (mt or "").strip().lower()
+        badge = _MEASURE_TYPE_TO_BADGE.get(t)
+        if badge:
+            badges.add(badge)
+
+    for req in get_tr_ts_requirements(hs_code):
+        pt = (req.get("permit_type") or "").strip()
+        if pt in _PERMIT_BADGE_TYPES:
+            badges.add(pt)
+
+    priority = {
+        "ДС": 0, "СС": 1, "СГР": 2,
+        "Фито": 3, "Вет": 4, "Серт": 5,
+        "ЛЗ": 6, "Марк": 7, "ФСТЭК": 8, "Рад": 9,
+        "РУ": 10,
+    }
+    return sorted(badges, key=lambda b: (priority.get(b, 99), b))
+
+
+def _measures_for_api(hs_code: str, measure_types: list[str] | None = None) -> list[dict[str, str]]:
+    """Упрощённые меры для фронта: type + document + description."""
+    from ..services.tr_ts_catalog import get_tr_ts_requirements
+
+    badges = _permit_badges_for_hs(hs_code, measure_types or [])
+    by_type: dict[str, dict[str, Any]] = {}
+
+    for mt in measure_types or []:
+        t = (mt or "").strip().lower()
+        badge = _MEASURE_TYPE_TO_BADGE.get(t)
+        if badge and badge not in by_type:
+            label = _MEASURE_DESCRIPTIONS.get(t, badge)
+            by_type[badge] = {
+                "type": badge,
+                "document": label,
+                "description": label,
+            }
+
+    for req in get_tr_ts_requirements(hs_code):
+        pt = (req.get("permit_type") or "").strip()
+        if pt in badges and pt not in by_type:
+            tr = (req.get("tr_ts") or "").strip()
+            by_type[pt] = {
+                "type": pt,
+                "document": f"ТР ТС {tr}" if tr else pt,
+                "description": (req.get("description") or req.get("tr_ts_full_name") or "").strip(),
+            }
+    out: list[dict[str, str]] = []
+    for pt in badges:
+        if pt in by_type:
+            out.append(by_type[pt])
+        else:
+            out.append({"type": pt, "document": pt, "description": ""})
+    return out
+
+
+def _resolve_duty_for_display(row: Commodity, hs_code: str) -> str:
+    duty = _format_duty(row.import_duty or "")
+    if duty:
+        return duty
+    hs_rate, _ = find_rate_for_hs(hs_code)
+    if hs_rate and hs_rate.duty_rate is not None:
+        duty = _format_duty(str(hs_rate.duty_rate).strip())
+        if duty:
+            return duty
+    return ""
 
 
 _NT_FALLBACK_NOISE = "Извлечено в fallback-режиме без LLM"
@@ -227,8 +392,16 @@ def _format_duty(raw: str) -> str:
     if not t or t in ("-", "—"):
         return ""
     low = t.lower()
+    # «Пошлина: 5% | НДС: 20%» — берём только часть пошлины; мусор без цифр отсекаем.
     if "пошлина:" in low and "ндс:" in low:
-        return ""
+        if not re.search(r"\d", t):
+            return ""
+        duty_part = re.split(r"\|", t, maxsplit=1)[0]
+        duty_part = re.sub(r"^.*?пошлина:\s*", "", duty_part, flags=re.I).strip()
+        if not duty_part or not re.search(r"\d", duty_part):
+            return ""
+        t = duty_part
+        low = t.lower()
     if low in {"пошлина:", "ндс:", "пошлина", "ндс"}:
         return ""
     # уже содержит % или спецсимволы
@@ -254,6 +427,20 @@ def _strip_leading_dashes(s: str) -> str:
     """Убирает ведущие «–»/«—»/«-» и завершающие запятые/тире из строки."""
     t = _LEADING_DASHES_RE.sub("", s.strip())
     return _TRAILING_NOISE_RE.sub("", t).strip()
+
+
+_PAD_SUBHEADING_RE = re.compile(r"^(.+?)\s[\u2013\u2014\-]\s(.+)$")
+
+
+def _split_position_pad_name(raw: str) -> tuple[str, str]:
+    """Разбивает описание XXXX000000 на заголовок позиции и подзаголовок субпозиции."""
+    s = (raw or "").strip()
+    m = _PAD_SUBHEADING_RE.match(s)
+    if m:
+        title = m.group(1).strip()
+        sub = _strip_leading_dashes(m.group(2).strip())
+        return title, sub
+    return _strip_leading_dashes(s), ""
 
 
 def _count_leading_dashes(s: str) -> int:
@@ -344,6 +531,7 @@ def search_commodities(
                 "is_leaf": is_leaf_hs_code(_pad_code(r["code"] or "")),
             }
             for r in fts_rows
+            if not _is_obsolete_reserved_description(r.get("description"))
         ]
     else:
         # Fallback (FTS5 недоступен в сборке SQLite): LIKE по расширенным терминам.
@@ -353,7 +541,9 @@ def search_commodities(
         if digit_prefix:
             filters.append(Commodity.code.like(f"{digit_prefix}%"))
         rows = (
-            db.query(Commodity.code, Commodity.description)
+            _exclude_obsolete_reserved(
+                db.query(Commodity.code, Commodity.description)
+            )
             .filter(or_(*filters))
             .order_by(Commodity.code.asc())
             .limit(50)
@@ -453,6 +643,18 @@ def list_commodities(
 # Построение иерархического дерева 4 → 10
 # ---------------------------------------------------------------------------
 
+_OBSOLETE_RESERVED_DESC_PREFIX = "Товарная позиция"
+
+
+def _is_obsolete_reserved_description(description: str | None) -> bool:
+    """Упразднённые резервные позиции без реального содержания (35 записей в БД)."""
+    return (description or "").strip().startswith(_OBSOLETE_RESERVED_DESC_PREFIX)
+
+
+def _exclude_obsolete_reserved(q):
+    return q.filter(~Commodity.description.like(f"{_OBSOLETE_RESERVED_DESC_PREFIX}%"))
+
+
 def _collect_chapter_notes(db: Session) -> dict[str, str]:
     """
     Собирает объединённые примечания (раздел + группа) для каждого кода главы.
@@ -497,6 +699,13 @@ def _node_level(code10: str) -> int:
     if code10[4:6] != "00":
         return 6
     return 4
+
+
+def _is_direct_position_subheading(code10: str) -> bool:
+    """Субпозиция уровня XXXX30 / XXXX90 — прямой потомок 4-значной позиции, не XXXX00."""
+    if _node_level(code10) != 6:
+        return False
+    return code10[4] != "0" and code10[5] == "0"
 
 
 def _make_node(
@@ -566,6 +775,7 @@ def _build_tree(rows: list[Commodity], chapter_notes: dict[str, str]) -> list[di
             code10 = d.zfill(10)[:10]
             ten_by_code[code10] = {
                 "code": code10,
+                "raw_name": (r.description or "").strip(),
                 "name": _strip_leading_dashes((r.description or "").strip()),
                 "import_duty": _format_duty(r.import_duty),
             }
@@ -588,19 +798,31 @@ def _build_tree(rows: list[Commodity], chapter_notes: dict[str, str]) -> list[di
         heading = parents[p4]
         codes.sort()
 
-        # XXXX000000 — это сама товарная позиция (паддинг). Если под позицией
-        # есть более глубокие коды, сворачиваем её имя в заголовок и НЕ создаём
-        # для неё отдельный (фиктивный) узел-лист. Если это единственный код —
-        # оставляем его как реальный декларируемый лист.
+        # XXXX000000 — паддинг товарной позиции. Отдельный codeless-узел только
+        # если есть уникальный подзаголовок («лошади:», «свежие:»). Иначе pad
+        # дублирует heading — пропускаем, дети идут напрямую под позицию.
         pad_code = p4 + "000000"
         deeper = [c for c in codes if c != pad_code]
+        pad_has_subheading = False
         if pad_code in ten_by_code and deeper:
+            raw_pad = ten_by_code[pad_code].get("raw_name") or ""
+            title, sub = _split_position_pad_name(raw_pad)
+            if title and (not heading["name"] or not _is_meaningful_name(heading["name"])):
+                heading["name"] = title
+            if sub:
+                ten_by_code[pad_code]["name"] = sub
+                pad_has_subheading = True
+            else:
+                if not heading["name"] or not _is_meaningful_name(heading["name"]):
+                    heading["name"] = title or ten_by_code[pad_code]["name"]
+                codes = deeper
+        elif pad_code in ten_by_code and not deeper:
             cand = ten_by_code[pad_code]["name"]
             if cand and (not heading["name"] or not _is_meaningful_name(heading["name"])):
                 heading["name"] = cand
-            codes = deeper
 
-        # Восстанавливаем вложенность по структурному уровню кода через стек
+        # Восстанавливаем вложенность по структурному уровню кода через стек.
+        # Субпозиции XXXX30/XXXX90 (ослы, прочие) — прямые дети позиции, не XXXX00.
         stack: list[tuple[int, dict[str, Any]]] = []
         for code10 in codes:
             lvl = _node_level(code10)
@@ -609,9 +831,14 @@ def _build_tree(rows: list[Commodity], chapter_notes: dict[str, str]) -> list[di
                 code10, raw["name"], raw["import_duty"], heading["notes"],
                 is_leaf=True, is_codeless=False, is_group=False,
             )
-            while stack and stack[-1][0] >= lvl:
-                stack.pop()
-            parent_node = stack[-1][1] if stack else heading
+            if pad_has_subheading and _is_direct_position_subheading(code10):
+                while stack:
+                    stack.pop()
+                parent_node = heading
+            else:
+                while stack and stack[-1][0] >= lvl:
+                    stack.pop()
+                parent_node = stack[-1][1] if stack else heading
             parent_node["children"].append(node)
             stack.append((lvl, node))
 
@@ -780,16 +1007,38 @@ def _resolve_rates_for_code(db: Session, code: str, import_duty: str) -> tuple[s
     return duty, vat_rate
 
 
+def _permit_flags_for_hs(hs_code: str) -> tuple[bool, bool]:
+    from ..services.tr_ts_catalog import get_tr_ts_requirements
+
+    has_ds = False
+    has_ss = False
+    for req in get_tr_ts_requirements(hs_code):
+        pt = (req.get("permit_type") or "").strip()
+        if pt == "ДС":
+            has_ds = True
+        elif pt == "СС":
+            has_ss = True
+    return has_ds, has_ss
+
+
 def _serialize_tree_node(db: Session, node: dict[str, Any]) -> dict[str, Any]:
     code = node.get("code") or ""
     children = node.get("children") or []
     duty, vat_rate = _resolve_rates_for_code(db, code, node.get("import_duty") or "")
+    is_leaf = bool(node.get("is_leaf"))
+    has_ds = False
+    has_ss = False
+    if is_leaf and not node.get("is_codeless"):
+        has_ds, has_ss = _permit_flags_for_hs(code)
+    measures: list[dict[str, str]] = []
+    if is_leaf and not node.get("is_codeless"):
+        measures = _measures_for_api(code)
     return {
         "code": code,
         "display_code": _digits(code) if not _is_roman_section(code) else code.upper(),
         "name": node.get("name") or "",
         "level": _infer_api_level(code, node),
-        "is_leaf": bool(node.get("is_leaf")),
+        "is_leaf": is_leaf,
         "is_codeless": bool(node.get("is_codeless")),
         "is_group": bool(node.get("is_group")),
         "has_children": len(children) > 0,
@@ -797,12 +1046,15 @@ def _serialize_tree_node(db: Session, node: dict[str, Any]) -> dict[str, Any]:
         "duty_rate": duty,
         "vat_rate": vat_rate,
         "children_count": len(children),
+        "has_ds": has_ds,
+        "has_ss": has_ss,
+        "measures": measures,
     }
 
 
 def _build_wrapped_tree(db: Session, prefix: str) -> list[dict[str, Any]]:
     p = _digits(prefix)
-    q = db.query(Commodity).order_by(Commodity.code.asc())
+    q = _exclude_obsolete_reserved(db.query(Commodity).order_by(Commodity.code.asc()))
     if p:
         q = q.filter(Commodity.code.like(f"{p}%"))
     rows = q.limit(2_000_000).all()
@@ -944,7 +1196,7 @@ def hierarchy_tree(
     Каждый узел: code, name, import_duty, notes, children.
     """
     p = _digits(prefix)
-    q = (
+    q = _exclude_obsolete_reserved(
         db.query(Commodity)
         .order_by(Commodity.code.asc())
     )
@@ -1104,33 +1356,74 @@ def _build_preview_payload(code: str) -> dict[str, Any]:
                 .order_by(Commodity.id.asc())
                 .first()
             )
+        if not row and len(norm) == 10:
+            out_code = norm.zfill(10)
+            measure_badges = _permit_badges_for_hs(out_code, [])
+            name_row = (
+                db.query(Commodity)
+                .filter(Commodity.code.like(f"{norm[:6]}%"))
+                .order_by(Commodity.code.asc())
+                .first()
+            )
+            from ..services.payment_engine import get_effective_vat_rate
+            from ..services.rate_display import format_duty_rule_label, format_excise_display, resolve_excise_for_hs
+
+            duty = format_duty_rule_label(out_code, "")
+            raw_vat = get_effective_vat_rate(out_code)
+            vat_rates = [int(raw_vat) if raw_vat == int(raw_vat) else raw_vat]
+            excise_type, excise_value, excise_basis = resolve_excise_for_hs(out_code)
+            excise = format_excise_display(excise_type, excise_value, excise_basis)
+            return {
+                "status": "OK",
+                "code": out_code,
+                "name": _strip_leading_dashes((name_row.description or "").strip()) if name_row else "",
+                "payments": {
+                    "duty": duty,
+                    "vat_rates": vat_rates,
+                    "excise": excise,
+                },
+                "non_tariff": {
+                    "has_ban": False,
+                    "measure_types": [],
+                    "measure_badges": measure_badges,
+                    "empty_message": "✅ Меры нетарифного регулирования не применяются" if not measure_badges else "",
+                },
+                "features": [],
+                "special_duties": {
+                    "has_measures": False,
+                    "countries": [],
+                    "warning": "",
+                    "disclaimer": (
+                        "Данные по мерам защиты рынка могут быть неполными. "
+                        "Для точной проверки используйте: https://remedies.eaeunion.org/dimd/ru"
+                    ),
+                },
+                "trois": {
+                    "has_protected_brands": False,
+                    "brands": [],
+                    "items": [],
+                    "warning": "",
+                },
+            }
         if not row:
             return {"status": "NOT_FOUND", "code": _pad_code(code)}
 
         out_code = _pad_code(row.code or "")
-        nt_candidates = _non_tariff_code_candidates(out_code)
-        nt_rows = list(row.non_tariff_measures or [])
-        if not nt_rows:
-            fallback_candidates = nt_candidates[1:]
-            nt_rows = (
-                db.query(NonTariffMeasure)
-                .filter(NonTariffMeasure.commodity_code.in_(fallback_candidates))
-                .order_by(NonTariffMeasure.id.asc())
-                .all()
-            )
-
+        nt_rows = _fetch_nt_rows(db, out_code)
+        nt_rows = _filter_nt_rows_for_chapter(nt_rows, out_code)
         measure_types = sorted({(m.measure_type or "").strip().lower() for m in nt_rows if (m.measure_type or "").strip()})
-        measure_badges = [_measure_label(mt) for mt in measure_types]
+        measure_badges = _permit_badges_for_hs(out_code, measure_types)
         has_ban = "ban" in measure_types
 
         # Упрощенная витрина платежей для hover.
-        duty = _format_duty(row.import_duty)
-        # Фактическая ставка НДС: vat_preferences → hs_rates → 22% (как payment_engine).
         from ..services.payment_engine import get_effective_vat_rate
+        from ..services.rate_display import format_duty_rule_label, format_excise_display, resolve_excise_for_hs
 
+        duty = format_duty_rule_label(out_code, row.import_duty or "")
         raw_vat = get_effective_vat_rate(out_code)
         vat_rates = [int(raw_vat) if raw_vat == int(raw_vat) else raw_vat]
-        excise = ""
+        excise_type, excise_value, excise_basis = resolve_excise_for_hs(out_code)
+        excise = format_excise_display(excise_type, excise_value, excise_basis)
 
         features: list[str] = []
         source_text = " ".join(
@@ -1160,7 +1453,7 @@ def _build_preview_payload(code: str) -> dict[str, Any]:
                 "has_ban": has_ban,
                 "measure_types": measure_types,
                 "measure_badges": measure_badges,
-                "empty_message": "✅ Меры нетарифного регулирования не применяются" if not measure_types else "",
+                "empty_message": "✅ Меры нетарифного регулирования не применяются" if not measure_badges else "",
             },
             "features": features,
             "special_duties": {
@@ -1258,7 +1551,7 @@ def reference_by_code(
     # Данные ставок/налогов
     hs_rate, _mlen = find_rate_for_hs(out_code)
     duty_from_hs = _format_duty(str(hs_rate.duty_rate).strip()) if hs_rate else ""
-    duty_value = _format_duty(row.import_duty) or duty_from_hs or "Не указана"
+    duty_value = _resolve_duty_for_display(row, out_code) or duty_from_hs or "Не указана"
     excise_text = "Не облагается"
     if hs_rate and (hs_rate.excise_type or "none") != "none":
         if (hs_rate.excise_type or "").lower() == "percent":
@@ -1295,15 +1588,7 @@ def reference_by_code(
                 parts.append(s.regulatory_act.strip())
             special_lines.append(" ".join(parts))
 
-    nt_rows = list(row.non_tariff_measures or [])
-    if not nt_rows:
-        fallback_candidates = _non_tariff_code_candidates(out_code)[1:]
-        nt_rows = (
-            db.query(NonTariffMeasure)
-            .filter(NonTariffMeasure.commodity_code.in_(fallback_candidates))
-            .order_by(NonTariffMeasure.id.asc())
-            .all()
-        )
+    nt_rows = _fetch_nt_rows(db, out_code)
     bans_license_items = _nt_section_items_or_placeholder(_nt_reference_lines(nt_rows, {"ban", "license"}))
     permits_nt_items = _nt_section_items_or_placeholder(_nt_reference_lines(nt_rows, {"certificate", "tr_ts"}))
     other_nt_items = _nt_section_items_or_placeholder(
@@ -1475,6 +1760,33 @@ def get_commodity_by_code(code: str, db: Session = Depends(get_db)) -> dict[str,
             .order_by(Commodity.id.asc())
             .first()
         )
+    if not row and len(norm) == 10:
+        out_code = norm.zfill(10)
+        name_row = (
+            db.query(Commodity)
+            .filter(Commodity.code.like(f"{norm[:6]}%"))
+            .order_by(Commodity.code.asc())
+            .first()
+        )
+        measures = _measures_for_api(out_code)
+        return {
+            "status": "OK",
+            "code": out_code,
+            "name": _strip_leading_dashes((name_row.description or "").strip()) if name_row else "",
+            "description": (name_row.description or "").strip() if name_row else "",
+            "unit": "",
+            "supp_unit": "",
+            "weight_coeff": 0.0,
+            "import_duty": _resolve_duty_for_display(name_row, out_code) if name_row else "",
+            "notes": "",
+            "notes_combined": "",
+            "non_tariff_measures": [],
+            "measures": measures,
+            "intellectual_properties": [],
+            "preliminary_decisions": find_preliminary_decisions_for_hs(db, out_code),
+            "chapter": None,
+            "section": None,
+        }
     if not row:
         raise HTTPException(status_code=404, detail="Позиция не найдена")
 
@@ -1491,30 +1803,9 @@ def get_commodity_by_code(code: str, db: Session = Depends(get_db)) -> dict[str,
     notes_text = "\n\n".join(notes_parts)
 
     out_code = _pad_code(row.code or "")
-    nt_candidates = _non_tariff_code_candidates(out_code)
-    nt_rows = list(row.non_tariff_measures or [])
-    # Fallback по уровню агрегации: сначала 6 знаков, затем 4.
-    if not nt_rows:
-        fallback_candidates = nt_candidates[1:]
-        nt_rows = (
-            db.query(NonTariffMeasure)
-            .filter(NonTariffMeasure.commodity_code.in_(fallback_candidates))
-            .order_by(NonTariffMeasure.id.asc())
-            .all()
-        )
-        order_map = {c: i for i, c in enumerate(fallback_candidates)}
-        nt_rows.sort(key=lambda m: (order_map.get(m.commodity_code, 99), m.id))
-    non_tariff_measures = [
-        {
-            "id": m.id,
-            "commodity_code": m.commodity_code,
-            "measure_type": m.measure_type,
-            "description": m.description or "",
-            "document_required": m.document_required or "",
-            "regulatory_act": m.regulatory_act or "",
-        }
-        for m in nt_rows
-    ]
+    nt_rows = _filter_nt_rows_for_chapter(_fetch_nt_rows(db, out_code), out_code)
+    non_tariff_measures = [_serialize_nt_measure_row(m) for m in nt_rows]
+    non_tariff_measures = _merge_tr_ts_measures(out_code, non_tariff_measures)
     trois_rows = _get_trois_matches(db, out_code)
     intellectual_properties = [
         {
@@ -1527,6 +1818,7 @@ def get_commodity_by_code(code: str, db: Session = Depends(get_db)) -> dict[str,
         for r in trois_rows
     ]
     preliminary_decisions = find_preliminary_decisions_for_hs(db, out_code)
+    measure_types = sorted({(m.measure_type or "").strip().lower() for m in nt_rows if (m.measure_type or "").strip()})
 
     return {
         "status": "OK",
@@ -1536,10 +1828,11 @@ def get_commodity_by_code(code: str, db: Session = Depends(get_db)) -> dict[str,
         "unit": row.unit or "",
         "supp_unit": row.supp_unit or "",
         "weight_coeff": float(row.weight_coeff or 0.0),
-        "import_duty": _format_duty(row.import_duty),
+        "import_duty": _resolve_duty_for_display(row, out_code),
         "notes": notes_text,
         "notes_combined": notes_text,
         "non_tariff_measures": non_tariff_measures,
+        "measures": _measures_for_api(out_code, measure_types),
         "intellectual_properties": intellectual_properties,
         "preliminary_decisions": preliminary_decisions,
         "chapter": {"id": ch.id, "code": ch.code, "title": ch.title or "", "notes": ch.notes or ""},

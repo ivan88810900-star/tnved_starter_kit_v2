@@ -25,6 +25,8 @@ logger = logging.getLogger(__name__)
 
 _FTS_TABLE = "tnved_fts"
 _SOURCE_TABLE = "tnved_commodities"
+_OBSOLETE_RESERVED_DESC_SQL = "description NOT LIKE 'Товарная позиция%'"
+_OBSOLETE_RESERVED_DESC_SQL_C = "c.description NOT LIKE 'Товарная позиция%'"
 
 # Кэш доступности FTS5 в текущей сборке SQLite (None — ещё не проверяли).
 _fts_ready: bool | None = None
@@ -134,7 +136,7 @@ def search_commodities_fts(query: str, limit: int = 40) -> list[dict[str, Any]] 
 
     def add(code: str | None, desc: str | None) -> None:
         code = (code or "").strip()
-        if code and code not in seen:
+        if code and code not in seen and not (desc or "").strip().startswith("Товарная позиция"):
             seen.add(code)
             results.append({"code": code, "description": (desc or "").strip()})
 
@@ -144,7 +146,7 @@ def search_commodities_fts(query: str, limit: int = 40) -> list[dict[str, Any]] 
             if qd and len(qd) >= 2:
                 for code, desc in conn.execute(
                     text(f"SELECT code, description FROM {_SOURCE_TABLE} "
-                         f"WHERE code LIKE :p ORDER BY code LIMIT :l"),
+                         f"WHERE code LIKE :p AND {_OBSOLETE_RESERVED_DESC_SQL} ORDER BY code LIMIT :l"),
                     {"p": f"{qd}%", "l": limit},
                 ):
                     add(code, desc)
@@ -155,7 +157,8 @@ def search_commodities_fts(query: str, limit: int = 40) -> list[dict[str, Any]] 
                 rows = conn.execute(
                     text(f"SELECT c.code, c.description FROM {_FTS_TABLE} f "
                          f"JOIN {_SOURCE_TABLE} c ON c.id = f.rowid "
-                         f"WHERE {_FTS_TABLE} MATCH :m ORDER BY bm25({_FTS_TABLE}) LIMIT :l"),
+                         f"WHERE {_FTS_TABLE} MATCH :m AND {_OBSOLETE_RESERVED_DESC_SQL_C} "
+                         f"ORDER BY bm25({_FTS_TABLE}) LIMIT :l"),
                     {"m": match, "l": limit * 3},
                 )
                 for code, desc in rows:
@@ -169,7 +172,7 @@ def search_commodities_fts(query: str, limit: int = 40) -> list[dict[str, Any]] 
                     break
                 for code, desc in conn.execute(
                     text(f"SELECT code, description FROM {_SOURCE_TABLE} "
-                         f"WHERE code LIKE :p ORDER BY code LIMIT :l"),
+                         f"WHERE code LIKE :p AND {_OBSOLETE_RESERVED_DESC_SQL} ORDER BY code LIMIT :l"),
                     {"p": f"{ct}%", "l": limit},
                 ):
                     if len(results) >= limit:

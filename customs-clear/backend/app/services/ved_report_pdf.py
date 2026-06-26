@@ -25,7 +25,7 @@ def _truncate(s: str, max_len: int) -> str:
 
 def build_ved_report_html(data: Dict[str, Any]) -> str:
     parts: List[str] = []
-    parts.append("<h1>CustomsClear — отчёт ВЭД</h1>")
+    parts.append("<h1>Tariff — отчёт ВЭД</h1>")
     parts.append("<p><em>Справочный документ; юридическая ответственность за декларацию несёт специалист.</em></p>")
 
     parts.append("<h2>Общие сведения</h2><ul>")

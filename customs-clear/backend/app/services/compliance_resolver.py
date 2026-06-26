@@ -459,22 +459,12 @@ def _requirements_from_non_tariff_rules(hs: str, db: Session) -> list[Compliance
 
 
 def _requirements_from_non_tariff_measures(hs: str, db: Session) -> list[ComplianceRequirement]:
+    from .non_tariff_measures_lookup import get_measures_for_code
+
     out: list[ComplianceRequirement] = []
-    prefixes = _hs_prefix_chain(hs, min_len=2)
-    if not prefixes:
-        return out
-    rows = (
-        db.query(NonTariffMeasure)
-        .filter(
-            NonTariffMeasure.commodity_code.in_(prefixes)
-        )
-        .limit(2000)
-        .all()
-    )
+    rows = get_measures_for_code(hs, db)
     for r in rows:
         code = _norm_hs(r.commodity_code)
-        if code and not hs.startswith(code):
-            continue
         text_blob = _norm_text(r.document_required or "", r.description or "", r.regulatory_act or "")
         tr_codes = _extract_tr_codes(text_blob)
         mtype = str(r.measure_type or "").strip().lower()

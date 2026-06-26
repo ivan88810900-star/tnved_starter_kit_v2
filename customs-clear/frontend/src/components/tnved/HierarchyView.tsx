@@ -3,6 +3,7 @@ import { formatCode, fetchTnvedChildren, type TnvedChildItem } from '../../api/t
 import { PremiumCard } from '../PremiumCard';
 import { RateBadges } from './RateBadges';
 import { formatTnvedCommodityName, TNVED_COMMODITY_NAME_CLASS } from '../../utils/tnvedDisplayText';
+import { normalizeDutyRate } from '../../utils/dutyRate';
 
 type Props = {
   parentCode: string;
@@ -22,11 +23,13 @@ function displayCode(item: TnvedChildItem): string {
 function CodelessRow({ name, depth = 0 }: { name: string; depth?: number }) {
   return (
     <div
-      className="codeless-node flex items-start gap-2 py-2 text-[13px] italic text-cargo-light"
+      className="tree-node tree-node--header pointer-events-none flex items-start py-1 text-[12px] italic text-cargo-light"
       style={{ paddingLeft: 8 + depth * 16 }}
+      aria-hidden
     >
-      <span className="shrink-0">–</span>
-      <span className={`${TNVED_COMMODITY_NAME_CLASS} min-w-0 break-words`}>{formatTnvedCommodityName(name)}</span>
+      <span className={`tree-header-label ${TNVED_COMMODITY_NAME_CLASS} min-w-0 break-words`}>
+        {formatTnvedCommodityName(name)}
+      </span>
     </div>
   );
 }
@@ -61,7 +64,7 @@ function HierarchyRow({
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
             <span className="font-mono text-[13px] font-semibold text-cargo-clear">{displayCode(item)}</span>
-            <RateBadges dutyRate={item.duty_rate || item.import_duty} vatRate={item.vat_rate} />
+            <RateBadges dutyRate={normalizeDutyRate(item.duty_rate || item.import_duty)} vatRate={item.vat_rate} />
           </div>
           {item.name ? (
             <p className={`mt-0.5 text-[12px] leading-snug text-cargo-mid ${TNVED_COMMODITY_NAME_CLASS}`}>

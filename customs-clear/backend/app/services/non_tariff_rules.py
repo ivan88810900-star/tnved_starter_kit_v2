@@ -176,6 +176,12 @@ _FALLBACK_RULES: List[Dict[str, Any]] = [
         "required_permits": ["ДС"],
     },
     {
+        "name": "Ткани хлопковые",
+        "hs_prefixes": ["5208", "5209", "5210", "5211", "5212"],
+        "tr_ts": ["017/2011"],
+        "required_permits": ["ДС"],
+    },
+    {
         "name": "Детские товары",
         "hs_prefixes": ["9503", "9403", "6307", "9619", "6209"],
         "tr_ts": ["007/2011"],
@@ -326,10 +332,10 @@ def get_sensitive_override(hs_code: str) -> str | None:
 def find_measures_for_code(hs_code: str, direction: str = "import") -> list[dict]:
     """
     Читает нетарифные меры из non_tariff_measures по коду.
-    Поиск по убывающему префиксу: 10 -> 8 -> 6 -> 4 -> 2 знаков.
-    Возвращает список мер с полями: measure_type, description,
-    legal_ref, permit_type, tr_ts_code (если есть), source_level.
+    Каскадный поиск по всем префиксам (см. ``get_measures_for_code``).
     """
+    from .non_tariff_measures_lookup import get_measures_for_code
+
     code = normalize_hs_code(hs_code)
     if not code:
         return []
@@ -342,16 +348,16 @@ def find_measures_for_code(hs_code: str, direction: str = "import") -> list[dict
         4: "4_digit",
         2: "chapter",
     }
-    prefixes: list[tuple[str, str, int]] = []
-    for pref in get_hs_prefixes(code, levels=(10, 8, 6, 4, 2)):
-        ln = len(pref)
-        prefixes.append((pref, _len_to_level[ln], ln))
-    if not prefixes:
-        return []
+
+    def _source_level_for_code(commodity_code: str) -> tuple[str, int]:
+        cc = normalize_hs_code(commodity_code)
+        pref_len = len(cc) if cc else 0
+        for threshold in (10, 8, 6, 4, 2):
+            if pref_len >= threshold:
+                return _len_to_level[threshold], threshold
+        return "chapter", 2
 
     with SessionLocal() as db:
-        results: list[dict] = []
-        seen_ids: set[int] = set()
         direction_exists = hasattr(NonTariffMeasure, "direction")
         level_order = {
             "exact": 0,
@@ -360,56 +366,33 @@ def find_measures_for_code(hs_code: str, direction: str = "import") -> list[dict
             "4_digit": 3,
             "chapter": 4,
         }
-
-        for pref, source_level, pref_len in prefixes:
-            query = db.query(NonTariffMeasure).filter(
-                NonTariffMeasure.commodity_code.like(f"{pref}%"),
+        results: list[dict] = []
+        for row in get_measures_for_code(code, db, direction=direction_norm):
+            desc = (row.description or "").strip()
+            legal_ref = (row.regulatory_act or "").strip()
+            doc = (row.document_required or "").strip()
+            mtype = (row.measure_type or "").strip()
+            source_level, pref_len = _source_level_for_code(row.commodity_code or "")
+            permit_type = _measure_to_permit_type(
+                mtype,
+                f"{doc} {desc} {legal_ref}",
+                hs_code=code,
             )
-            if hasattr(NonTariffMeasure, "quality"):
-                query = query.filter(
-                    (NonTariffMeasure.quality.is_(None)) | (NonTariffMeasure.quality != "noise")
-                )
-            if direction_exists:
-                query = query.filter(NonTariffMeasure.direction == direction_norm)
-            rows = query.order_by(NonTariffMeasure.commodity_code.asc()).all()
-            if not rows:
-                continue
-            level_seen: set[tuple[str, str, str | None, str | None]] = set()
-            for row in rows:
-                if row.id in seen_ids:
-                    continue
-                desc = (row.description or "").strip()
-                legal_ref = (row.regulatory_act or "").strip()
-                doc = (row.document_required or "").strip()
-                mtype = (row.measure_type or "").strip()
-                permit_type = _measure_to_permit_type(
-                    mtype,
-                    f"{doc} {desc} {legal_ref}",
-                    hs_code=code,
-                )
-                tr_ts_code = _extract_tr_ts_code(desc, legal_ref, doc)
-                compact_key = (mtype.lower(), legal_ref.lower(), permit_type, tr_ts_code)
-                if compact_key in level_seen:
-                    continue
-                level_seen.add(compact_key)
-                seen_ids.add(row.id)
-                results.append(
-                    {
-                        "commodity_code": row.commodity_code,
-                        "measure_type": mtype,
-                        "description": desc,
-                        "document_required": doc,
-                        "legal_ref": legal_ref,
-                        "permit_type": permit_type,
-                        "tr_ts_code": tr_ts_code,
-                        "match_prefix_len": pref_len,
-                        "source_level": source_level,
-                        "direction": direction_norm if direction_exists else None,
-                    }
-                )
-            # Используем первый непустой уровень и не расползаемся на более общие префиксы.
-            if results:
-                break
+            tr_ts_code = _extract_tr_ts_code(desc, legal_ref, doc)
+            results.append(
+                {
+                    "commodity_code": row.commodity_code,
+                    "measure_type": mtype,
+                    "description": desc,
+                    "document_required": doc,
+                    "legal_ref": legal_ref,
+                    "permit_type": permit_type,
+                    "tr_ts_code": tr_ts_code,
+                    "match_prefix_len": pref_len,
+                    "source_level": source_level,
+                    "direction": direction_norm if direction_exists else None,
+                }
+            )
 
         results.sort(
             key=lambda m: (

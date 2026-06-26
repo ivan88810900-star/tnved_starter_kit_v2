@@ -86,10 +86,7 @@ export function InvoicePage() {
 
   return (
     <div className="space-y-8">
-      <PageHeader
-        title="Инвойс и пакинг-лист"
-        subtitle="Пакетный расчёт платежей по инвойсу и AI-классификация пакинг-листа"
-      />
+      <PageHeader title="Инвойс и пакинг-лист" />
 
       <section className="space-y-4">
         <h2 className="text-base font-medium text-cargo-deep">Расчёт по инвойсу</h2>

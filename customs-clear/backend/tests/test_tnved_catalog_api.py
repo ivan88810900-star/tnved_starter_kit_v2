@@ -198,6 +198,38 @@ class TnvedCatalogApiTests(unittest.TestCase):
         self.assertIn("2701111000", codes)
         self.assertIn("2701119000", codes)
 
+    def test_format_duty_strips_garbage_and_parses_composite(self):
+        self.assertEqual(_format_duty("Пошлина: Пошлина: | НДС: НДС:"), "")
+        self.assertEqual(_format_duty("Пошлина: 5% | НДС: 20%"), "5%")
+
+    def test_children_group_01_returns_headings(self):
+        r = self.client.get("/api/tnved/children/01?depth=direct")
+        self.assertEqual(r.status_code, 200)
+        items = r.json().get("items") or []
+        self.assertGreaterEqual(len(items), 1)
+        self.assertTrue(all(item.get("level") == "heading" for item in items))
+        self.assertTrue(all(not item.get("is_leaf") for item in items))
+
+    def test_children_leaf_returns_empty(self):
+        r = self.client.get("/api/tnved/children/0101210000?depth=direct")
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(r.json().get("items") or [], [])
+
+    def test_preview_chapter_84_no_sgr(self):
+        from app.api.tnved_catalog import clear_preview_cache
+
+        clear_preview_cache()
+        r = self.client.get("/api/v1/tnved/preview/8401100000")
+        self.assertEqual(r.status_code, 200)
+        badges = r.json().get("non_tariff", {}).get("measure_badges") or []
+        self.assertNotIn("СГР", badges)
+
+    def test_commodity_chapter_84_duty_from_hs_rates(self):
+        r = self.client.get("/api/v1/tnved/8401300000")
+        self.assertEqual(r.status_code, 200)
+        duty = r.json().get("import_duty") or ""
+        self.assertIn("15", duty)
+
     def test_children_compat_route(self):
         r = self.client.get("/api/tnved/children/8517?depth=direct")
         self.assertEqual(r.status_code, 200)

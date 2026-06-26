@@ -824,8 +824,7 @@ export const Assistant: React.FC<AssistantPageProps> = ({
   return (
     <div className="space-y-5">
       <p className="text-[12px] leading-relaxed text-slate-500">
-        Единый разбор: подбор кода ТН ВЭД, пошлина и НДС, меры нетарифного регулирования и проверки по реестрам — в одном
-        потоке.
+        Подбор кода, платежи, меры и проверки в одном диалоге.
       </p>
 
       <div className="cc-card-soft p-4">
@@ -1324,7 +1323,7 @@ export const Assistant: React.FC<AssistantPageProps> = ({
                 type="button"
                 className="cc-btn-ghost"
                 onClick={() =>
-                  downloadJson(`customs-clear-copilot-${Date.now()}.json`, {
+                  downloadJson(`tariff-copilot-${Date.now()}.json`, {
                     exported_at: new Date().toISOString(),
                     bundle: copilotResult.bundle,
                     ai: copilotResult.ai,
@@ -1396,7 +1395,7 @@ export const Assistant: React.FC<AssistantPageProps> = ({
                 type="button"
                 className="cc-btn-ghost"
                 onClick={() =>
-                  downloadJson(`customs-clear-batch-${Date.now()}.json`, {
+                  downloadJson(`tariff-batch-${Date.now()}.json`, {
                     exported_at: new Date().toISOString(),
                     bundles: batchResult.bundles,
                     ai: batchResult.ai,
@@ -1473,7 +1472,7 @@ export const Assistant: React.FC<AssistantPageProps> = ({
                 type="button"
                 className="cc-btn-ghost"
                 onClick={() =>
-                  downloadJson(`customs-clear-legacy-${Date.now()}.json`, {
+                  downloadJson(`tariff-legacy-${Date.now()}.json`, {
                     exported_at: new Date().toISOString(),
                     status: legacyResult.status,
                     items: legacyResult.items,

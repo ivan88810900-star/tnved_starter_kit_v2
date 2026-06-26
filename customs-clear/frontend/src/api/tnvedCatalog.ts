@@ -91,6 +91,7 @@ export type TnvedCommodityDetail = {
     description: string;
     document_required: string;
     regulatory_act: string;
+    type_label?: string;
   }>;
   intellectual_properties?: Array<{
     id: number;
@@ -208,6 +209,8 @@ export type TnvedChildItem = {
   children_count?: number;
   section_id?: number;
   chapter_id?: number;
+  has_ds?: boolean;
+  has_ss?: boolean;
 };
 
 export async function fetchTnvedChildren(

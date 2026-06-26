@@ -678,3 +678,116 @@ body {
 .tabular-nums {
   font-variant-numeric: tabular-nums;
 }
+
+/* TNVED accordion tree */
+.tree-node-branch {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  background: #ffffff;
+  border: 1px solid var(--cargo-border);
+  border-radius: 6px;
+  cursor: pointer;
+  margin-bottom: 4px;
+  width: 100%;
+  text-align: left;
+}
+
+.tree-node-branch:hover {
+  background: var(--cargo-navy-50);
+  border-color: var(--cargo-trust);
+}
+
+.tree-node-leaf {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  background: var(--cargo-cloud);
+  border: 1px solid var(--cargo-border);
+  border-radius: 6px;
+  cursor: pointer;
+  margin-bottom: 3px;
+  width: 100%;
+  min-width: 0;
+  text-align: left;
+}
+
+.tree-node-leaf:hover {
+  background: var(--cargo-navy-50);
+}
+
+.tree-code {
+  font-family: var(--cc-mono);
+  color: var(--cargo-trust);
+  font-size: 13px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.tree-code.leaf {
+  min-width: 100px;
+}
+
+.tree-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+  color: var(--cargo-mid);
+  line-height: 1.35;
+}
+
+.tree-chevron {
+  flex-shrink: 0;
+  color: var(--cargo-light);
+  transition: transform 0.2s ease;
+}
+
+.tree-chevron.expanded {
+  transform: rotate(90deg);
+}
+
+.tree-node-header {
+  padding: 8px 4px 2px;
+  pointer-events: none;
+}
+
+.tree-header-text {
+  font-size: 12px;
+  color: var(--cargo-light);
+  font-style: italic;
+}
+
+.tree-badges {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 4px;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+.badge {
+  font-size: 11px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+.badge.duty {
+  background: var(--cargo-trust-light);
+  color: var(--cargo-trust);
+}
+
+.badge.vat {
+  background: var(--cargo-cloud);
+  color: var(--cargo-mid);
+}
+
+.badge.doc {
+  background: var(--cargo-clear-light);
+  color: #00875a;
+}

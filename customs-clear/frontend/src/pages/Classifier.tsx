@@ -213,7 +213,7 @@ export const Classifier: React.FC = () => {
 
   return (
     <div className="space-y-4">
-      <p className="text-[12px] text-slate-600">Подбор кода ТН ВЭД по описанию, фото или структурированным характеристикам.</p>
+      <p className="text-[12px] text-slate-600">Подбор кода по описанию, фото или характеристикам.</p>
       {authRequired ? (
         <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-[12px] text-amber-800">
           Требуется авторизация — войдите в систему для использования AI-классификатора.

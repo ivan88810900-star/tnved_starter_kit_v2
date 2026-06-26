@@ -1,24 +1,5 @@
 import React from 'react';
-
-type DutyBadgeInfo = {
-  label: string;
-  tone: 'zero' | 'percent' | 'specific';
-} | null;
-
-function parseDutyBadge(raw?: string): DutyBadgeInfo {
-  const t = (raw || '').trim();
-  if (!t) return null;
-  const low = t.toLowerCase();
-  if (low.includes('пошлина:') && !/\d/.test(t)) return null;
-  if (/eur|€/i.test(t)) {
-    const compact = t.replace(/\s+/g, ' ');
-    return { label: compact.toLowerCase().includes('eur') ? 'EUR/кг' : compact, tone: 'specific' };
-  }
-  const numeric = parseFloat(t.replace('%', '').replace(',', '.').replace(/[^\d.,]/g, ''));
-  if (!Number.isFinite(numeric)) return null;
-  if (numeric === 0) return { label: '0%', tone: 'zero' };
-  return { label: t.includes('%') ? t : `${t}%`, tone: 'percent' };
-}
+import { parseDutyBadge } from '../../utils/dutyRate';
 
 export function RateBadges({ dutyRate, vatRate }: { dutyRate?: string; vatRate?: number | null }) {
   const duty = parseDutyBadge(dutyRate);

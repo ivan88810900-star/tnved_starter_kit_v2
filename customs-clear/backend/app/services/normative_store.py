@@ -1685,6 +1685,7 @@ def search_tnved(query: str, limit: int = 40) -> list[dict[str, Any]]:
             rows = (
                 db.query(Commodity)
                 .filter(or_(*filters))
+                .filter(~Commodity.description.like("Товарная позиция%"))
                 .order_by(Commodity.code.asc())
                 .limit(limit)
                 .all()
@@ -1700,6 +1701,7 @@ def search_tnved(query: str, limit: int = 40) -> list[dict[str, Any]]:
                 kids = (
                     db.query(Commodity)
                     .filter(Commodity.code.like(f"{pref6}%"))
+                    .filter(~Commodity.description.like("Товарная позиция%"))
                     .order_by(Commodity.code.asc())
                     .limit(max(1, limit - len(expanded)))
                     .all()

@@ -1,5 +1,5 @@
 import React from 'react';
-import { AlertTriangle, Calculator, Info } from 'lucide-react';
+import { Calculator } from 'lucide-react';
 import {
   fetchPaymentQuote,
   type PaymentLineStatus,
@@ -7,7 +7,6 @@ import {
   type PaymentQuoteResponse,
 } from '../../api/paymentQuote';
 import { getUserFacingApiError } from '../../api/error';
-import { TradeRemediesDisclaimer } from './TradeRemediesDisclaimer';
 
 const STATUS_LABELS: Record<PaymentLineStatus, string> = {
   applied: 'Рассчитано',
@@ -32,6 +31,18 @@ const STATUS_CLASS: Record<PaymentLineStatus, string> = {
 function formatRub(value: number | null | undefined): string {
   if (value == null) return '—';
   return `${value.toLocaleString('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₽`;
+}
+
+function formatRateLabel(raw?: string | null): string | null {
+  if (!raw?.trim()) return null;
+  const m = /^([\d.,]+)\s*%$/.exec(raw.trim());
+  if (m) {
+    const n = parseFloat(m[1].replace(',', '.'));
+    if (Number.isFinite(n)) {
+      return `${Number.isInteger(n) ? n : parseFloat(n.toFixed(1))}%`;
+    }
+  }
+  return raw.replace(/\.0(?=%)/, '%');
 }
 
 function LineAmount({ item }: { item: PaymentQuoteLineItem }) {
@@ -79,6 +90,9 @@ export const SmartPaymentsBlock: React.FC<Props> = ({ hsCode, description, class
         quantity: quantity.trim() ? parseFloat(quantity.replace(',', '.')) : null,
       };
       const result = await fetchPaymentQuote(payload);
+      if (import.meta.env.DEV && result.warnings.length > 0) {
+        console.warn('[SmartPayments]', result.warnings);
+      }
       setQuote(result);
     } catch (e: unknown) {
       setQuote(null);
@@ -99,12 +113,11 @@ export const SmartPaymentsBlock: React.FC<Props> = ({ hsCode, description, class
       <div className="rounded-xl border border-blue-100 bg-gradient-to-br from-blue-50 to-white px-4 py-4">
         <div className="mb-3 flex items-center gap-2">
           <Calculator className="h-5 w-5 text-blue-700" aria-hidden />
-          <h3 className="text-sm font-bold uppercase tracking-wide text-blue-800">Smart Payments — расчёт платежей</h3>
+          <h3 className="text-sm font-bold uppercase tracking-wide text-blue-800">Расчёт платежей</h3>
         </div>
         <p className="mb-4 text-xs text-slate-600">
-          Пошлина, НДС, таможенный сбор, акциз и торговые меры с явными статусами. Неопределённые суммы не показываются как ноль.
+          Пошлина, НДС, таможенный сбор и акциз по указанной таможенной стоимости.
         </p>
-        <TradeRemediesDisclaimer className="mb-4" />
 
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <label className="block text-xs">
@@ -170,30 +183,6 @@ export const SmartPaymentsBlock: React.FC<Props> = ({ hsCode, description, class
 
       {quote ? (
         <div className="space-y-4">
-          {quote.warnings.length > 0 ? (
-            <ul className="space-y-2">
-              {quote.warnings.map((w) => (
-                <li
-                  key={w.code}
-                  className={`flex gap-2 rounded-lg border px-3 py-2 text-xs ${
-                    w.severity === 'error'
-                      ? 'border-red-200 bg-red-50 text-red-900'
-                      : w.severity === 'info'
-                        ? 'border-slate-200 bg-slate-50 text-slate-700'
-                        : 'border-amber-200 bg-amber-50 text-amber-900'
-                  }`}
-                >
-                  {w.severity === 'error' || w.severity === 'warning' ? (
-                    <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
-                  ) : (
-                    <Info className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
-                  )}
-                  <span>{w.message}</span>
-                </li>
-              ))}
-            </ul>
-          ) : null}
-
           <div className="overflow-x-auto rounded-xl border border-slate-200">
             <table className="w-full min-w-[480px] text-sm">
               <thead className="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500">
@@ -204,32 +193,29 @@ export const SmartPaymentsBlock: React.FC<Props> = ({ hsCode, description, class
                 </tr>
               </thead>
               <tbody>
-                {quote.line_items.map((item) => (
-                  <tr key={item.code} className="border-t border-slate-100">
-                    <td className="px-4 py-3 align-top">
-                      <p className="font-medium text-slate-900">{item.label}</p>
-                      {item.rate_label ? (
-                        <p className="mt-0.5 text-[11px] text-slate-500">Ставка: {item.rate_label}</p>
-                      ) : null}
-                      {item.reason ? (
-                        <p className="mt-1 text-[11px] leading-snug text-slate-600">{item.reason}</p>
-                      ) : null}
-                      {item.source ? (
-                        <p className="mt-0.5 text-[10px] text-slate-400">Источник: {item.source}</p>
-                      ) : null}
-                    </td>
-                    <td className="px-4 py-3 align-top">
-                      <span
-                        className={`inline-flex rounded-full border px-2 py-0.5 text-[10px] font-semibold ${STATUS_CLASS[item.status]}`}
-                      >
-                        {STATUS_LABELS[item.status]}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-right align-top">
-                      <LineAmount item={item} />
-                    </td>
-                  </tr>
-                ))}
+                {quote.line_items.map((item) => {
+                  const rateLabel = formatRateLabel(item.rate_label);
+                  return (
+                    <tr key={item.code} className="border-t border-slate-100">
+                      <td className="px-4 py-3 align-top">
+                        <p className="font-medium text-slate-900">{item.label}</p>
+                        {rateLabel ? (
+                          <p className="mt-0.5 text-[11px] text-slate-500">Ставка: {rateLabel}</p>
+                        ) : null}
+                      </td>
+                      <td className="px-4 py-3 align-top">
+                        <span
+                          className={`inline-flex rounded-full border px-2 py-0.5 text-[10px] font-semibold ${STATUS_CLASS[item.status]}`}
+                        >
+                          {STATUS_LABELS[item.status]}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-right align-top">
+                        <LineAmount item={item} />
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
               <tfoot className="border-t-2 border-slate-200 bg-slate-50">
                 <tr>
@@ -254,22 +240,6 @@ export const SmartPaymentsBlock: React.FC<Props> = ({ hsCode, description, class
               </tfoot>
             </table>
           </div>
-
-          {quote.assumptions.length > 0 ? (
-            <details className="rounded-lg border border-slate-200 bg-white px-4 py-3">
-              <summary className="cursor-pointer text-xs font-semibold uppercase tracking-wide text-slate-600">
-                Допущения расчёта
-              </summary>
-              <dl className="mt-2 grid gap-2 sm:grid-cols-2">
-                {quote.assumptions.map((a) => (
-                  <div key={a.key} className="text-xs">
-                    <dt className="text-slate-500">{a.label}</dt>
-                    <dd className="font-medium text-slate-800">{a.value}</dd>
-                  </div>
-                ))}
-              </dl>
-            </details>
-          ) : null}
         </div>
       ) : loading ? (
         <p className="text-sm text-slate-500">Формирование расчёта платежей…</p>

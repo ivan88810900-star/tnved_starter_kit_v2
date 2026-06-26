@@ -15,6 +15,7 @@ import { PremiumCard } from './PremiumCard';
 import { HierarchyView } from './tnved/HierarchyView';
 import { RateBadges } from './tnved/RateBadges';
 import { formatTnvedCommodityName, TNVED_COMMODITY_NAME_CLASS } from '../utils/tnvedDisplayText';
+import { normalizeDutyRate } from '../utils/dutyRate';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -25,6 +26,7 @@ export type DrillLevel = 'root' | 'section' | 'chapter' | 'heading' | 'subheadin
 export type PathSegment = {
   code: string;
   label: string;
+  name?: string;
   level: DrillLevel;
   sectionId?: number;
   chapterId?: number;
@@ -77,6 +79,7 @@ function displayCodeFor(code: string, level: DrillLevel): string {
 
 function childToDrillNode(item: TnvedChildItem, sectionId?: number): DrillNode {
   const level = (item.level as DrillLevel) || inferLevel(item.code);
+  const duty = normalizeDutyRate(item.duty_rate || item.import_duty);
   return {
     code: item.code,
     name: item.name || '',
@@ -84,7 +87,7 @@ function childToDrillNode(item: TnvedChildItem, sectionId?: number): DrillNode {
     level,
     sectionId: item.section_id ?? sectionId,
     chapterId: item.chapter_id,
-    importDuty: item.duty_rate || item.import_duty,
+    importDuty: duty || undefined,
     vatRate: item.vat_rate,
     hasChildren: item.has_children,
     isLeaf: item.is_leaf,
@@ -102,19 +105,47 @@ function drillNodeToPathSegment(node: DrillNode): PathSegment {
   return {
     code: node.code,
     label,
+    name: (node.name || '').trim() || undefined,
     level: node.level,
     sectionId: node.sectionId,
     chapterId: node.chapterId,
   };
 }
 
-function depthLabel(path: PathSegment[], sectionCount: number): string {
-  if (path.length === 0) return `Разделы · ${sectionCount}`;
+function depthLabel(path: PathSegment[], sectionCount: number, itemCount?: number): string {
+  if (path.length === 0) {
+    const count = itemCount ?? sectionCount;
+    return `Разделы · ${count}`;
+  }
   const last = path[path.length - 1]?.level;
-  if (last === 'section') return 'Группы';
-  if (last === 'chapter') return 'Позиции';
-  if (last === 'heading') return 'Субпозиции';
-  return 'Субпозиции — листья';
+  let base: string;
+  if (last === 'section') base = 'Группы';
+  else if (last === 'chapter') base = 'Позиции';
+  else if (last === 'heading') base = 'Субпозиции';
+  else base = 'Субпозиции — листья';
+  return itemCount != null ? `${base} · ${itemCount}` : base;
+}
+
+function levelHeaderTitle(segment: PathSegment): string {
+  if (segment.level === 'section') return `Раздел ${segment.code}`;
+  if (segment.level === 'chapter') return `Группа ${segment.code}`;
+  return segment.label;
+}
+
+function DrillLevelHeader({ segment, depthText }: { segment: PathSegment; depthText: string }) {
+  return (
+    <div className="mb-2 flex flex-wrap items-end justify-between gap-2 border-b border-cargo-border/50 pb-2">
+      <div className="min-w-0">
+        <p className="font-mono text-base font-semibold text-cargo-deep">{levelHeaderTitle(segment)}</p>
+        {segment.name ? (
+          <p className={`mt-0.5 text-[12px] uppercase tracking-wide text-cargo-mid ${TNVED_COMMODITY_NAME_CLASS}`}>
+            {formatTnvedCommodityName(segment.name)}
+          </p>
+        ) : null}
+      </div>
+      <span className="shrink-0 text-[11px] font-medium uppercase tracking-[0.06em] text-cargo-light">{depthText}</span>
+    </div>
+  );
 }
 
 function formatBreadcrumbPath(items: TnvedBreadcrumbItem[]): string {
@@ -131,6 +162,7 @@ function formatBreadcrumbPath(items: TnvedBreadcrumbItem[]): string {
 function useHierarchyView(path: PathSegment[]): boolean {
   const last = path[path.length - 1];
   if (!last) return false;
+  if (last.level === 'leaf') return false;
   if (last.level === 'heading' || last.level === 'subheading') return true;
   return digitsOnly(last.code).length >= 4 && !isRomanSection(last.code);
 }
@@ -231,10 +263,31 @@ function DrillCard({
 
   if (node.isCodeless && !node.hasChildren) {
     return (
-      <div className="codeless-node flex items-start gap-2 rounded-lg border border-cargo-border/60 bg-cargo-cloud/40 px-4 py-3 text-[13px] italic text-cargo-light">
-        <span className="shrink-0">–</span>
-        <span className={`min-w-0 ${TNVED_COMMODITY_NAME_CLASS}`}>{formatTnvedCommodityName(node.name)}</span>
+      <div
+        className="tree-node tree-node--header pointer-events-none col-span-full px-2 py-1 text-[12px] italic text-cargo-light"
+        aria-hidden
+      >
+        <span className={`tree-header-label ${TNVED_COMMODITY_NAME_CLASS}`}>
+          {formatTnvedCommodityName(node.name)}
+        </span>
       </div>
+    );
+  }
+
+  if (node.isCodeless && node.hasChildren) {
+    return (
+      <button
+        type="button"
+        onClick={() => onDrill(node)}
+        className="tree-node tree-node--header group col-span-full flex w-full items-center gap-2 px-2 py-1.5 text-left text-[12px] italic text-cargo-light transition hover:text-cargo-mid"
+      >
+        <span className={`tree-header-label min-w-0 flex-1 ${TNVED_COMMODITY_NAME_CLASS}`}>
+          {formatTnvedCommodityName(node.name)}
+        </span>
+        <span className="shrink-0 not-italic text-base text-cargo-light/70 group-hover:text-cargo-mid" aria-hidden>
+          ›
+        </span>
+      </button>
     );
   }
 
@@ -403,13 +456,27 @@ export const DrillDownTree: React.FC<Props> = ({ onSelectCode, initialSearchQuer
     [],
   );
 
-  const drillInto = React.useCallback((node: DrillNode) => {
-    setPath((prev) => [...prev, drillNodeToPathSegment(node)]);
-  }, []);
+  const drillInto = React.useCallback(
+    (node: DrillNode) => {
+      if (node.isLeaf) {
+        onSelectCode(digitsOnly(node.code));
+        return;
+      }
+      setPath((prev) => [...prev, drillNodeToPathSegment(node)]);
+    },
+    [onSelectCode],
+  );
 
-  const drillIntoChild = React.useCallback((item: TnvedChildItem) => {
-    setPath((prev) => [...prev, drillNodeToPathSegment(childToDrillNode(item, prev.find((p) => p.sectionId)?.sectionId))]);
-  }, []);
+  const drillIntoChild = React.useCallback(
+    (item: TnvedChildItem) => {
+      if (item.is_leaf) {
+        onSelectCode(digitsOnly(item.code));
+        return;
+      }
+      setPath((prev) => [...prev, drillNodeToPathSegment(childToDrillNode(item, prev.find((p) => p.sectionId)?.sectionId))]);
+    },
+    [onSelectCode],
+  );
 
   const buildPathFromBreadcrumb = React.useCallback(async (crumb: TnvedBreadcrumbItem[]): Promise<PathSegment[]> => {
     const segments: PathSegment[] = [];
@@ -419,6 +486,7 @@ export const DrillDownTree: React.FC<Props> = ({ onSelectCode, initialSearchQuer
         segments.push({
           code: item.hs_code,
           label: `Раздел ${item.hs_code}`,
+          name: (item.title || '').trim() || undefined,
           level: 'section',
           sectionId: section?.section_id,
         });
@@ -429,6 +497,7 @@ export const DrillDownTree: React.FC<Props> = ({ onSelectCode, initialSearchQuer
         segments.push({
           code: d,
           label: `Группа ${d}`,
+          name: (item.title || '').trim() || undefined,
           level: 'chapter',
           sectionId: segments.find((s) => s.level === 'section')?.sectionId,
         });
@@ -438,6 +507,7 @@ export const DrillDownTree: React.FC<Props> = ({ onSelectCode, initialSearchQuer
       segments.push({
         code: item.hs_code,
         label: formatCode(d),
+        name: (item.title || '').trim() || undefined,
         level,
         sectionId: segments.find((s) => s.level === 'section')?.sectionId,
       });
@@ -575,10 +645,19 @@ export const DrillDownTree: React.FC<Props> = ({ onSelectCode, initialSearchQuer
         <>
           <div className="flex shrink-0 flex-wrap items-center justify-between gap-2">
             <DrillBreadcrumb path={path} onNavigate={navigateToIndex} />
-            <span className="shrink-0 text-[11px] font-medium uppercase tracking-[0.06em] text-cargo-light">
-              {depthLabel(path, sectionCount)}
-            </span>
+            {path.length === 0 ? (
+              <span className="shrink-0 text-[11px] font-medium uppercase tracking-[0.06em] text-cargo-light">
+                {depthLabel(path, sectionCount, currentChildren.length)}
+              </span>
+            ) : null}
           </div>
+
+          {path.length > 0 && !showHierarchy ? (
+            <DrillLevelHeader
+              segment={path[path.length - 1]}
+              depthText={depthLabel(path, sectionCount, currentChildren.length)}
+            />
+          ) : null}
 
           <div className="relative min-h-0 flex-1 overflow-y-auto">
             {loadErr ? (

@@ -508,6 +508,13 @@ def compute_payments(payload: dict[str, Any]) -> dict[str, Any]:
     excise_type = (rate.excise_type if rate else "none") or "none"
     excise_value = float(rate.excise_value) if rate else 0.0
     excise_basis = (rate.excise_basis if rate else "") or ""
+    from .rate_display import resolve_excise_for_hs
+
+    resolved_type, resolved_value, resolved_basis = resolve_excise_for_hs(hs_code)
+    if excise_type in ("", "none") and resolved_type not in ("", "none"):
+        excise_type = resolved_type
+        excise_value = resolved_value
+        excise_basis = resolved_basis or excise_basis
     antidumping_type = (rate.antidumping_type if rate else "none") or "none"
     antidumping_value = float(rate.antidumping_value) if rate else 0.0
     antidumping_condition = (rate.antidumping_condition if rate else "") or ""
@@ -570,6 +577,9 @@ def compute_payments(payload: dict[str, Any]) -> dict[str, Any]:
         excise = excise_value * qty
         basis_str = excise_basis or f"НК РФ ст. 193: фикс. ставка {excise_value} руб./ед."
         excise_reason = f"Авто: {excise_value} руб./ед. × {qty} ед. — {basis_str}"
+    elif excise_type == "needs_review":
+        excise = 0.0
+        excise_reason = "Уточните ставку акциза"
     else:
         excise = 0.0
         excise_reason = "Не применяется"

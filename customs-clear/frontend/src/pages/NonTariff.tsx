@@ -178,8 +178,6 @@ export const NonTariff: React.FC = () => {
   const [hsCode, setHsCode] = useState('');
   const [description, setDescription] = useState('');
   const [country, setCountry] = useState('CN');
-  const [customsValue, setCustomsValue] = useState('500000');
-  const [freight, setFreight] = useState('45000');
   const [permits, setPermits] = useState<Permit[]>([{ type: 'ДС', number: '' }]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -220,8 +218,8 @@ export const NonTariff: React.FC = () => {
           description: description.trim(),
           country: country || null,
           permits: permits.filter((p) => p.number.trim()),
-          customs_value: parseFloat(customsValue || '0'),
-          freight: parseFloat(freight || '0'),
+          customs_value: 0,
+          freight: 0,
         }],
         save_history: saveComplianceHistory,
         document_id: complianceDocId.trim() || undefined,
@@ -240,7 +238,7 @@ export const NonTariff: React.FC = () => {
   return (
     <div className="space-y-4">
       <p className="text-[12px] leading-relaxed text-slate-600">
-        Совмещённая проверка: платежи, нетарифные меры и реестры разрешений.
+        Проверка нетарифных мер и разрешений.
       </p>
       <details className="cc-disclosure">
         <summary>Журнал расчётов (комплаенс)</summary>
@@ -317,14 +315,6 @@ export const NonTariff: React.FC = () => {
             <option value="RU">Россия</option>
             <option value="">— не указана</option>
           </select>
-        </label>
-        <label className="space-y-1">
-          <span className="cc-label">Таможенная стоимость (₽)</span>
-          <input value={customsValue} onChange={(e) => setCustomsValue(e.target.value)} className="cc-input" />
-        </label>
-        <label className="space-y-1">
-          <span className="cc-label">Фрахт (₽)</span>
-          <input value={freight} onChange={(e) => setFreight(e.target.value)} className="cc-input" />
         </label>
       </div>
 
@@ -464,21 +454,13 @@ export const NonTariff: React.FC = () => {
                   {freshness.synced_at ? ` · ${formatDate(freshness.synced_at)}` : ''}
                 </div>
 
-                {/* Payment summary */}
-                <div className="rounded-lg border border-slate-200 bg-slate-50 p-2 text-[11px] text-slate-700 space-y-1">
-                  <div>
-                    Пошлина {item.payment.breakdown.duty.toLocaleString('ru-RU')} ₽
-                    · НДС {item.payment.breakdown.vat.toLocaleString('ru-RU')} ₽ ({item.payment.breakdown.vat_rate}%)
-                    {item.payment.breakdown.antidumping > 0 && ` · антидемпинг ${item.payment.breakdown.antidumping.toLocaleString('ru-RU')} ₽`}
-                    {item.payment.breakdown.excise > 0 && ` · акциз ${item.payment.breakdown.excise.toLocaleString('ru-RU')} ₽`}
-                    {' · '}<strong>итог {item.payment.breakdown.total_payable.toLocaleString('ru-RU')} ₽</strong>
-                  </div>
-                  <div className="text-[10px] text-slate-600">{item.payment.breakdown.vat_reason}</div>
-                  {(item.payment.breakdown.antidumping > 0 || item.payment.breakdown.antidumping_status === 'manual_review') && (
-                    <div className={`text-[10px] ${item.payment.breakdown.antidumping_status === 'manual_review' ? 'text-orange-700' : 'text-red-700'}`}>
-                      {item.payment.breakdown.antidumping_reason}
-                    </div>
-                  )}
+                {/* Суммы платежей — в калькуляторе */}
+                <div className="rounded-lg border border-indigo-100 bg-indigo-50 px-2.5 py-2 text-[11px] text-indigo-800">
+                  Суммы пошлины, НДС и акциза рассчитываются в{' '}
+                  <a href={`/calculator?code=${encodeURIComponent(item.hs_code.replace(/\D/g, '').slice(0, 10))}`} className="font-medium underline-offset-2 hover:underline">
+                    калькуляторе платежей
+                  </a>
+                  .
                 </div>
 
                 {/* Universal non-tariff requirements block */}

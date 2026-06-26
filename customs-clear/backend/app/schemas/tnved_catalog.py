@@ -36,6 +36,7 @@ class NonTariffMeasureOut(BaseModel):
     description: str = ""
     document_required: str = ""
     regulatory_act: str = ""
+    type_label: str = ""
 
 
 class IntellectualPropertyOut(BaseModel):
@@ -99,6 +100,14 @@ class PreliminaryDecisionsBlockOut(BaseModel):
     empty_message: str = ""
 
 
+class PermitMeasureOut(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+
+    type: str = Field("", description="ДС | СС | СГР | РУ | ЛЗ")
+    document: str = ""
+    description: str = ""
+
+
 class TnvedCommodityDetailsResponse(BaseModel):
     model_config = ConfigDict(extra="ignore")
 
@@ -113,7 +122,8 @@ class TnvedCommodityDetailsResponse(BaseModel):
     notes: str = ""
     notes_combined: str = ""
     non_tariff_measures: list[NonTariffMeasureOut] = Field(default_factory=list)
+    measures: list[PermitMeasureOut] = Field(default_factory=list)
     intellectual_properties: list[IntellectualPropertyOut] = Field(default_factory=list)
     preliminary_decisions: PreliminaryDecisionsBlockOut = Field(default_factory=PreliminaryDecisionsBlockOut)
-    chapter: ChapterOut
-    section: SectionOut
+    chapter: ChapterOut | None = None
+    section: SectionOut | None = None

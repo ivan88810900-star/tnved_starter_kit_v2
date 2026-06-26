@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Banknote, ShieldCheck } from 'lucide-react';
 import { api } from '../api/client';
 import { getAdminToken, setAdminToken as setAdminTokenMemory } from '../api/adminToken';
@@ -228,6 +229,7 @@ function TreeNode({
 }
 
 export const Calculator: React.FC = () => {
+  const [searchParams] = useSearchParams();
   const assistantVisible = useAssistantSurfaceVisible();
   const [hsCode, setHsCode] = useState('');
   const [customsValue, setCustomsValue] = useState('0');
@@ -437,6 +439,11 @@ export const Calculator: React.FC = () => {
         /* без всплывающих предупреждений: блок актуальности опционален */
       });
   }, []);
+
+  React.useEffect(() => {
+    const code = searchParams.get('code')?.replace(/\D/g, '').slice(0, 10);
+    if (code?.length === 10) setHsCode(code);
+  }, [searchParams]);
 
   React.useEffect(() => {
     api
@@ -823,13 +830,8 @@ export const Calculator: React.FC = () => {
 
   return (
     <div className="space-y-4">
-      <PageHeader
-        title="Калькулятор платежей"
-        subtitle="Расчёт пошлины, НДС и сопутствующих платежей по базе приложения"
-      />
-      <p className="text-sm leading-relaxed text-cargo-mid">
-        Расчёт пошлины, НДС и сопутствующих платежей по базе приложения.
-      </p>
+      <PageHeader title="Калькулятор платежей" />
+      {(Number(ratesMap.USD ?? 0) > 0 || Number(ratesMap.EUR ?? 0) > 0 || Number(ratesMap.CNY ?? 0) > 0) ? (
       <div className="cc-card-soft rounded-xl px-4 py-3 text-[11px] text-slate-700">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div>
@@ -849,6 +851,7 @@ export const Calculator: React.FC = () => {
           </button>
         </div>
       </div>
+      ) : null}
 
       <details className="cc-disclosure">
         <summary>Журнал расчётов и связь с документом</summary>

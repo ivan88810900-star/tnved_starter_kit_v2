@@ -15,19 +15,22 @@ import {
   X,
 } from 'lucide-react';
 import { AuthBar } from './AuthBar';
+import { TariffLogo } from './TariffLogo';
 import { useAssistantSurfaceVisible, useClientCapabilities } from '../context/ClientCapabilitiesContext';
+
+export const APP_NAME = 'Tariff';
 
 export const PAGE_HEADERS: Record<string, { title: string; desc: string; breadcrumb?: string }> = {
   '/': { title: 'Главная', desc: 'Поиск по ТН ВЭД и быстрые действия', breadcrumb: 'Главная' },
   '/docs': { title: 'Документы', desc: 'Инвойс и упаковочные листы', breadcrumb: 'Документы' },
-  '/classifier': { title: 'Классификатор', desc: 'Подбор кода ТН ВЭД', breadcrumb: 'Классификатор' },
+  '/classifier': { title: 'Классификатор', desc: 'Подбор кода по описанию, фото или характеристикам', breadcrumb: 'Классификатор' },
   '/tnved': { title: 'Справочник ТН ВЭД', desc: 'Наименования, примечания, ссылки ЕЭК', breadcrumb: 'Справочник' },
   '/trois': { title: 'ТРОИС', desc: 'Товарные знаки', breadcrumb: 'ТРОИС' },
   '/permits': { title: 'СС и ДС', desc: 'Разрешительные документы', breadcrumb: 'СС и ДС' },
   '/invoice': { title: 'Инвойс', desc: 'Загрузка и классификация пакинг-листа', breadcrumb: 'Инвойс' },
-  '/calculator': { title: 'Платежи', desc: 'Пошлина, НДС, база', breadcrumb: 'Калькулятор' },
-  '/non-tariff': { title: 'Нетарифка', desc: 'ТР ТС, меры', breadcrumb: 'Нетарифка' },
-  '/assistant': { title: 'Ассистент', desc: 'Сводный разбор: ТН ВЭД, платежи, нетарифные меры', breadcrumb: 'Ассистент' },
+  '/calculator': { title: 'Платежи', desc: 'Расчёт пошлины, НДС и сборов', breadcrumb: 'Калькулятор' },
+  '/non-tariff': { title: 'Нетарифка', desc: 'Проверка нетарифных мер и разрешений', breadcrumb: 'Нетарифка' },
+  '/assistant': { title: 'Ассистент', desc: 'Подбор кода, платежи, меры и проверки в одном диалоге', breadcrumb: 'Ассистент' },
   '/admin/system': { title: 'Состояние системы', desc: 'Сводка БД и ИИ', breadcrumb: 'Админ' },
   '/admin/import': { title: 'Массовая загрузка базы', desc: 'Импорт PDF/DOCX/HTML', breadcrumb: 'Админ' },
 };
@@ -104,7 +107,13 @@ function SidebarLink({ item, onNavigate }: { item: NavItem; onNavigate?: () => v
 
 export function Layout() {
   const { pathname } = useLocation();
-  const header = PAGE_HEADERS[pathname] ?? { title: 'CustomsClear', desc: '', breadcrumb: 'CustomsClear' };
+  const header = PAGE_HEADERS[pathname] ?? { title: APP_NAME, desc: '', breadcrumb: APP_NAME };
+
+  React.useEffect(() => {
+    const page = header.breadcrumb || header.title;
+    document.title =
+      page && page !== APP_NAME ? `${APP_NAME} — ${page}` : `${APP_NAME} — Customs Intelligence`;
+  }, [header.breadcrumb, header.title]);
   const { health } = useClientCapabilities();
   const showAssistantNav = useAssistantSurfaceVisible();
   const apiReady = health === 'loading' ? 'unknown' : health === 'down' ? 'down' : health === 'ok' ? 'ok' : 'degraded';
@@ -132,10 +141,7 @@ export function Layout() {
 
   const sidebarContent = (onNavigate?: () => void) => (
     <>
-      <div className="border-b border-cargo-border px-4 py-4">
-        <p className="text-base font-medium text-cargo-deep">CustomsClear</p>
-        <p className="text-[11px] text-cargo-light">Профессиональная ВЭД-аналитика</p>
-      </div>
+      <TariffLogo onNavigate={onNavigate} />
       <nav className="flex-1 space-y-4 overflow-y-auto px-2 py-3">
         {filterGroups.map((group) => (
           <div key={group.label}>
@@ -196,10 +202,10 @@ export function Layout() {
               <Menu className="h-5 w-5" />
             </button>
             <div className="min-w-0 lg:hidden">
-              <p className="truncate text-sm font-medium text-cargo-deep">CustomsClear</p>
+              <TariffLogo iconOnly />
             </div>
             <p className="hidden truncate text-[13px] text-cargo-mid lg:block">
-              CustomsClear / <span className="text-cargo-deep">{header.breadcrumb || header.title}</span>
+              {APP_NAME} / <span className="text-cargo-deep">{header.breadcrumb || header.title}</span>
             </p>
           </div>
           <AuthBar variant="cargo" />
