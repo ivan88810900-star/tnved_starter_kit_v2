@@ -1,3 +1,0 @@
-# Data ingestion package
-
-

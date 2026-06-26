@@ -1,4 +1,0 @@
-# Опционально: PostgreSQL + семантический поиск по ТН ВЭД
-# pip install -r requirements-pgvector.txt
-# В БД: CREATE EXTENSION IF NOT EXISTS vector;
-pgvector>=0.2.5
