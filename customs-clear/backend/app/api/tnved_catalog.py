@@ -868,6 +868,14 @@ def _collect_leaf_names(node: dict[str, Any], acc: list[dict[str, Any]]) -> None
             _collect_leaf_names(ch, acc)
 
 
+def _needs_pad_subheading_group(pad_sub: str, level6_codes: list[str]) -> bool:
+    """Codeless-узел pad-sub нужен только если есть «прямые» XXXX30/90 и другие level-6 (0101)."""
+    if not pad_sub or not level6_codes:
+        return False
+    direct = sum(1 for c in level6_codes if _is_direct_position_subheading(c))
+    return 0 < direct < len(level6_codes)
+
+
 def _build_tree(rows: list[Commodity], chapter_notes: dict[str, str]) -> list[dict[str, Any]]:
     """
     Плоский список tnved_commodities (10-значные коды с паддингом) → дерево
@@ -928,26 +936,39 @@ def _build_tree(rows: list[Commodity], chapter_notes: dict[str, str]) -> list[di
         # дублирует heading — пропускаем, дети идут напрямую под позицию.
         pad_code = p4 + "000000"
         deeper = [c for c in codes if c != pad_code]
-        pad_has_subheading = False
-        if pad_code in ten_by_code and deeper:
+        pad_sub = ""
+        if pad_code in ten_by_code:
             raw_pad = ten_by_code[pad_code].get("raw_name") or ""
             title, sub = _split_position_pad_name(raw_pad)
             if title and (not heading["name"] or not _is_meaningful_name(heading["name"])):
                 heading["name"] = title
-            if sub:
-                ten_by_code[pad_code]["name"] = sub
-                pad_has_subheading = True
-            else:
-                if not heading["name"] or not _is_meaningful_name(heading["name"]):
-                    heading["name"] = title or ten_by_code[pad_code]["name"]
-                codes = deeper
+            pad_sub = sub
+            if not pad_sub and (not heading["name"] or not _is_meaningful_name(heading["name"])):
+                heading["name"] = title or ten_by_code[pad_code]["name"]
+            codes = deeper
         elif pad_code in ten_by_code and not deeper:
             cand = ten_by_code[pad_code]["name"]
             if cand and (not heading["name"] or not _is_meaningful_name(heading["name"])):
                 heading["name"] = cand
 
-        # Восстанавливаем вложенность по структурному уровню кода через стек.
-        # Субпозиции XXXX30/XXXX90 (ослы, прочие) — прямые дети позиции, не XXXX00.
+        level6_codes = [c for c in codes if _node_level(c) == 6]
+        direct_l6 = {c for c in level6_codes if _is_direct_position_subheading(c)}
+        use_subheading_group = _needs_pad_subheading_group(pad_sub, level6_codes)
+
+        subheading_group: dict[str, Any] | None = None
+        if use_subheading_group:
+            pad_raw = ten_by_code.get(pad_code, {})
+            subheading_group = _make_node(
+                pad_code,
+                pad_sub,
+                pad_raw.get("import_duty", ""),
+                heading["notes"],
+                is_leaf=False,
+                is_codeless=True,
+                is_group=True,
+            )
+            heading["children"].append(subheading_group)
+
         stack: list[tuple[int, dict[str, Any]]] = []
         for code10 in codes:
             lvl = _node_level(code10)
@@ -956,10 +977,10 @@ def _build_tree(rows: list[Commodity], chapter_notes: dict[str, str]) -> list[di
                 code10, raw["name"], raw["import_duty"], heading["notes"],
                 is_leaf=True, is_codeless=False, is_group=False,
             )
-            if pad_has_subheading and _is_direct_position_subheading(code10):
+            if use_subheading_group and lvl == 6 and code10 not in direct_l6:
                 while stack:
                     stack.pop()
-                parent_node = heading
+                parent_node = subheading_group
             else:
                 while stack and stack[-1][0] >= lvl:
                     stack.pop()
