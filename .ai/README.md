@@ -66,6 +66,23 @@
 
 ---
 
+## AI Team Infrastructure (этап 1)
+
+Параллельный контур ролей, задач и протоколов:
+
+| Путь | Назначение |
+|------|------------|
+| `.ai/VISION.md` | Продуктовая цель Tariff |
+| `.ai/TASK_PROTOCOL.md` | Жизненный цикл задач, **запрет push без Ivan** |
+| `.ai/QA_PROTOCOL.md` | QA с **фактическим выводом команд** |
+| `.ai/PROMPTS.md` | Короткие команды для телефона |
+| `.ai/agents/` | Роли: architect, backend, frontend, qa, reviewer, memory, PO |
+| `.ai/tasks/` | Задачи (шаблон + TASK-SEMANTIC-003) |
+
+Начни с `VISION.md` + `PROMPTS.md`, если нужна быстрая постановка задачи.
+
+---
+
 ## Быстрый старт для нового агента
 
 ```
