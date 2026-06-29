@@ -1002,39 +1002,43 @@ def _build_tree(rows: list[Commodity], chapter_notes: dict[str, str]) -> list[di
             else:
                 lvl = _node_level(node["code"])
                 if lvl == 6:
-                    # Одиночная L6-субпозиция без дочерних кодов в БД.
-                    # В эталонной структуре ТН ВЭД такой узел — бескодовый заголовок
-                    # (отображается как «030213»), а декларируемый лист идёт под ним.
-                    # Синтезируем дочерний лист с тем же 10-значным кодом.
-                    leaf_child = {
-                        **node,
-                        "is_leaf": True,
-                        "is_codeless": False,
-                        "is_group": False,
-                        "children": [],
-                    }
-                    node["children"] = [leaf_child]
-                    node["is_leaf"] = False
-                    node["is_codeless"] = True
-                    node["is_group"] = True
-                    node["display_code"] = node["code"][:6]
+                    # Одиночная L6 без детей в БД: если код декларируемый (hs_rates) —
+                    # лист; иначе бескодовый заголовок с синтезированным листом (ТКС).
+                    if is_leaf_hs_code(node["code"]):
+                        node["is_leaf"] = True
+                        node["is_codeless"] = False
+                        node["is_group"] = False
+                    else:
+                        leaf_child = {
+                            **node,
+                            "is_leaf": True,
+                            "is_codeless": False,
+                            "is_group": False,
+                            "children": [],
+                        }
+                        node["children"] = [leaf_child]
+                        node["is_leaf"] = False
+                        node["is_codeless"] = True
+                        node["is_group"] = True
+                        node["display_code"] = node["code"][:6]
                 elif lvl == 8:
-                    # Одиночная L8-субпозиция без дочерних кодов в БД.
-                    # В эталонной структуре ТН ВЭД (ТКС) L8-узел тоже является
-                    # бескодовым заголовком, а декларируемый лист — под ним.
-                    # Синтезируем дочерний лист с тем же 10-значным кодом.
-                    leaf_child = {
-                        **node,
-                        "is_leaf": True,
-                        "is_codeless": False,
-                        "is_group": False,
-                        "children": [],
-                    }
-                    node["children"] = [leaf_child]
-                    node["is_leaf"] = False
-                    node["is_codeless"] = True
-                    node["is_group"] = True
-                    node["display_code"] = node["code"][:8]
+                    if is_leaf_hs_code(node["code"]):
+                        node["is_leaf"] = True
+                        node["is_codeless"] = False
+                        node["is_group"] = False
+                    else:
+                        leaf_child = {
+                            **node,
+                            "is_leaf": True,
+                            "is_codeless": False,
+                            "is_group": False,
+                            "children": [],
+                        }
+                        node["children"] = [leaf_child]
+                        node["is_leaf"] = False
+                        node["is_codeless"] = True
+                        node["is_group"] = True
+                        node["display_code"] = node["code"][:8]
                 else:
                     leaf = is_leaf_hs_code(node["code"])
                     node["is_leaf"] = leaf
@@ -1336,6 +1340,17 @@ def list_tnved_children(db: Session, code: str, depth: str = "direct") -> dict[s
         raise HTTPException(status_code=404, detail="Узел не найден")
 
     children = node.get("children") or []
+    # _classify() синтезирует единственного leaf-потомка с тем же 10-значным кодом
+    # для одиночных L6/L8 без детей в БД (0101210000). Эндпоинт /children/{leaf}
+    # для декларируемого кода должен возвращать [].
+    if (
+        depth_norm == "direct"
+        and len(children) == 1
+        and _digits(children[0].get("code") or "") == _digits(node.get("code") or "")
+        and children[0].get("is_leaf")
+        and not (children[0].get("children") or [])
+    ):
+        children = []
     if depth_norm == "all":
 
         def _flatten(nodes: list[dict[str, Any]], acc: list[dict[str, Any]]) -> None:
