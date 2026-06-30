@@ -52,10 +52,35 @@ curl http://localhost:8001/api/v1/tnved/children/0302
 
 ---
 
+## 2a. Принятые архитектурные решения
+
+### ADR-0001 — Canonical TNVED Model (Accepted, Ivan, 2026-06-30)
+
+**Source of Truth продукта Tariff — Canonical TNVED Model**, а не SQLite, не дерево
+(`build_tree()`), не parser и не API. SQLite — слой хранения/ingestion; дерево,
+семантика, AI, NTM, пошлины, поиск, RAG, граф знаний — проекции/overlay поверх
+канонической модели (привязка по `stable_id` / `anchor`).
+
+Зафиксировано:
+1. Canonical TNVED Model — центральная source-of-truth модель.
+2. **Recovery — стадия внутри `tree_engine`**, не отдельный top-level module.
+3. **Semantic Navigation позже переводится на Canonical Model** (перестаёт читать БД сам).
+4. Следующая задача — **`TASK-CANONICAL-001`**: deterministic `stable_id` + recovery
+   stage skeleton (без подключения к API).
+5. **Legacy `_build_tree` остаётся production и oracle до parity**; удаляется только после.
+
+Полный документ: `.ai/decisions/ADR-0001-canonical-tnved-model.md`. Индекс: `.ai/DECISIONS.md`.
+
+> Реализация ещё не начата: код приложения (backend/frontend/API/БД) **не менялся**,
+> это пока только архитектурный контракт (DOCS).
+
+---
+
 ## 3. Последние архитектурные изменения
 
 | Коммит | Дата | Описание |
 |--------|------|---------|
+| (docs) | 2026-06-30 | ADR-0001 Canonical TNVED Model принят (Ivan); зафиксированы DECISIONS.md, ROADMAP |
 | `f42d2d4` | 2026-06-26 | L6 синтез: codeless L6 wrappers для одиночных субпозиций |
 | `732c1e7` | 2026-06-26 | L8 синтез: codeless headings для L8-узлов без детей |
 | `6c61f70` | 2026-06-26 | ntm_measures_v2: canonical sources, full names, badges |
@@ -82,6 +107,7 @@ curl http://localhost:8001/api/v1/tnved/children/0302
 
 | Задача | Статус | Приоритет |
 |--------|--------|-----------|
+| **TASK-CANONICAL-001** — deterministic `stable_id` + recovery stage skeleton (ADR-0001) | Запланирована | Высокий |
 | Fine-tune модели на `training_pairs.jsonl` | Вне репозитория | Низкий |
 | Live-parсер ФТС предрешений (tks.ru JS) | Decision Memo #135 | Средний |
 | Мульти-воркер ФСА (Redis-очередь) | Бэклог | Низкий |

@@ -8,6 +8,30 @@
 
 ## Высокий приоритет
 
+### 0. Canonical TNVED Model (ADR-0001) — целевая source-of-truth
+
+**Обоснование:** ADR-0001 (Accepted, Ivan, 2026-06-30) фиксирует, что Source of Truth
+продукта — Canonical TNVED Model, а не SQLite / `build_tree()` / API. Сейчас дерево
+пересобирается из БД на каждый запрос, без стабильных ID и без единой модели истины.
+
+**Что нужно (поэтапно, параллельный контур, default OFF):**
+- **`TASK-CANONICAL-001` (следующая задача):** deterministic `stable_id` (замена
+  `uuid4()` в `tree_engine` / `semantic_navigation` на детерминированный ID от снапшота)
+  + **recovery stage skeleton как стадия внутри `tree_engine`** (не отдельный top-level
+  module). Без подключения к API/frontend.
+- Далее: materialized Canonical Model + Validator-gate; API за feature flag
+  `CANONICAL_TREE_ENABLED`; перевод Semantic Navigation / Notes / Search / NTM / Duty
+  на `anchor` (`stable_id`); удаление legacy после parity.
+
+**Инварианты и план миграции:** `.ai/decisions/ADR-0001-canonical-tnved-model.md`.
+
+**Ограничения:**
+- Legacy `_build_tree` **остаётся production и oracle до parity** (байт-в-байт /
+  fingerprint-совпадение на репрезентативных heading'ах).
+- Semantic Navigation переводится на Canonical Model **позже** (не в первой задаче).
+
+---
+
 ### 1. Регрессионные тесты дерева ТН ВЭД
 
 **Обоснование:** `_build_tree()` и `_classify()` — критически важные функции без покрытия unit-тестами. Последние два фикса (L6 и L8 синтез) вносились без автотестов, что создаёт риск регрессий.
