@@ -13,7 +13,7 @@ from .models import (
     compute_snapshot_id,
 )
 from .parser import TreeParser
-from .recovery import StructureNormalizer
+from .recovery import RecoveredHeading, RecoveredNode, StructureNormalizer
 from .serializer import TreeSerializer
 from .validator import TreeValidator, ValidationIssue, ValidationResult
 
@@ -23,6 +23,8 @@ __all__ = [
     "HeadingNode",
     "NodeType",
     "ParsedCommodityRecord",
+    "RecoveredHeading",
+    "RecoveredNode",
     "StructureNormalizer",
     "TreeBuilder",
     "TreeNode",
