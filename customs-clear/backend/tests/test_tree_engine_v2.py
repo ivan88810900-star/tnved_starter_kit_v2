@@ -95,6 +95,34 @@ class TreeEngineV2SmokeTests(unittest.TestCase):
                 self.assertEqual(orig.code, ser.get("code"))
                 self.assertEqual(len(orig.children), len(ser.get("children") or []))
 
+    def test_stable_ids_are_deterministic(self) -> None:
+        """ADR-0001 этап 1: stable_id детерминирован, не пуст, не uuid4."""
+        parser = TreeParser()
+        builder = TreeBuilder()
+
+        with SessionLocal() as db:
+            parsed = parser.parse(db)
+            roots_a = builder.build(parsed)
+            roots_b = builder.build(parsed)
+
+        def ids(roots: list) -> list[str]:
+            out: list[str] = []
+
+            def walk(node) -> None:
+                out.append(node.stable_id)
+                for ch in node.children:
+                    walk(ch)
+
+            for root in roots:
+                walk(root)
+            return out
+
+        ids_a = ids(roots_a)
+        self.assertTrue(all(ids_a), "найден пустой stable_id")
+        self.assertTrue(all(i.startswith("node-") for i in ids_a))
+        self.assertEqual(ids_a, ids(roots_b), "две сборки дали разные stable_id")
+        self.assertEqual(len(ids_a), len(set(ids_a)), "stable_id не уникальны")
+
 
 if __name__ == "__main__":
     unittest.main()

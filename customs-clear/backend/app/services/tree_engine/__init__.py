@@ -9,8 +9,11 @@ from .models import (
     ParsedCommodityRecord,
     TreeNode,
     TreeParseResult,
+    assign_stable_ids,
+    compute_snapshot_id,
 )
 from .parser import TreeParser
+from .recovery import StructureNormalizer
 from .serializer import TreeSerializer
 from .validator import TreeValidator, ValidationIssue, ValidationResult
 
@@ -20,6 +23,7 @@ __all__ = [
     "HeadingNode",
     "NodeType",
     "ParsedCommodityRecord",
+    "StructureNormalizer",
     "TreeBuilder",
     "TreeNode",
     "TreeParseResult",
@@ -28,4 +32,6 @@ __all__ = [
     "TreeValidator",
     "ValidationIssue",
     "ValidationResult",
+    "assign_stable_ids",
+    "compute_snapshot_id",
 ]

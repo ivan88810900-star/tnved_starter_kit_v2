@@ -13,7 +13,10 @@ from .models import (
     ParsedCommodityRecord,
     TreeNode,
     TreeParseResult,
+    assign_stable_ids,
+    compute_snapshot_id,
 )
+from .recovery import StructureNormalizer
 
 
 @dataclass
@@ -26,7 +29,15 @@ class _CommodityRowAdapter:
 
 
 class TreeBuilder:
-    """Строит TreeNode, делегируя иерархию существующему build_tree()."""
+    """Строит TreeNode, делегируя иерархию существующему build_tree().
+
+    ADR-0001 этап 1: после сборки прогоняется Recovery-skeleton (no-op) и
+    присваиваются детерминированные `stable_id`/`snapshot_id`. Ни структура, ни
+    набор узлов, ни legacy-сериализация при этом не меняются.
+    """
+
+    def __init__(self, normalizer: StructureNormalizer | None = None) -> None:
+        self._normalizer = normalizer or StructureNormalizer()
 
     def build(self, parse_result: TreeParseResult) -> list[TreeNode]:
         rows = [
@@ -38,7 +49,13 @@ class TreeBuilder:
             for rec in parse_result.commodities
         ]
         legacy_tree = build_tree(rows, parse_result.chapter_notes)
-        return [self._from_legacy_dict(node) for node in legacy_tree]
+        roots = [self._from_legacy_dict(node) for node in legacy_tree]
+        # Recovery-стадия (skeleton, no-op) — позиция в pipeline по ADR-0001.
+        roots = self._normalizer.normalize(roots, parse_result=parse_result)
+        # Детерминированные идентификаторы (без uuid4).
+        snapshot_id = compute_snapshot_id(parse_result.db_codes)
+        assign_stable_ids(roots, snapshot_id=snapshot_id)
+        return roots
 
     def build_heading_map(self, parse_result: TreeParseResult) -> dict[str, TreeNode]:
         return {node.code or "": node for node in self.build(parse_result) if node.code}
