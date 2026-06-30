@@ -71,8 +71,43 @@ curl http://localhost:8001/api/v1/tnved/children/0302
 
 Полный документ: `.ai/decisions/ADR-0001-canonical-tnved-model.md`. Индекс: `.ai/DECISIONS.md`.
 
-> Реализация ещё не начата: код приложения (backend/frontend/API/БД) **не менялся**,
-> это пока только архитектурный контракт (DOCS).
+---
+
+## 2b. Состояние Canonical Pipeline (после TASK-CANONICAL-001 и 002)
+
+**TASK-CANONICAL-001 — Completed.** Детерминированные `stable_id` (без `uuid4()`),
+`snapshot_id`, skeleton стадии Recovery.
+
+**TASK-CANONICAL-002 — Completed.** Recovery-логика перенесена в `StructureNormalizer`;
+Builder собирает дерево напрямую из recovery-результата (без делегирования в legacy
+`build_tree()`); добавлены full-tree parity-тесты против legacy-oracle.
+
+> **Прошло Architecture Review (Chief Architect): APPROVE WITH NOTES.** Контур
+> изолирован, к runtime/API/overlay не подключён, прод-риска нет. Открытые замечания
+> вынесены в разделы «Architecture Debt» и «Open Architecture Decisions» ниже.
+
+### Реализовано (в `customs-clear/backend/app/services/tree_engine/`, изолированно)
+
+- **Parser** (`parser.py`) — SQLite → плоская промежуточная модель `ParsedCommodityRecord`.
+- **Recovery** (`recovery.py`, `StructureNormalizer`) — pad-имена, синтез бескодовых
+  L6/L8, subheading-group, очистка имён, классификация типов; **чистая стадия** (без БД,
+  без `uuid4`), leaf-флаги принимает аргументом.
+- **Builder** (`builder.py`) — stack-сборка иерархии, материализация синтет-листьев,
+  сортировка, восстановление имени группы, присвоение ID; **напрямую**, без legacy.
+- **stable_id** — детерминированный (`node-<hex>`), воспроизводим между сборками.
+- **snapshot_id** — вычисляется (`compute_snapshot_id(db_codes)`).
+- **Full-tree parity tests** — `test_canonical_tnved_model.py` сравнивает структуру
+  каждого heading с legacy `build_tree()` через `structure_fingerprint`.
+
+### Чего ещё НЕТ (намеренно, по плану ADR-0001)
+
+- **CanonicalModel** — нет единого иммутабельного объекта-истины (есть только узлы дерева).
+- **freeze()** — нет операции заморозки модели после валидации.
+- **Indexes** — нет `code → stable_id` / `prefix → node` / reachability-индексов.
+- **Feature flag** — нет `CANONICAL_TREE_ENABLED`.
+- **Runtime adoption** — контур не подключён к API / `lifespan` / роутерам.
+- **Overlays** — Semantic Navigation / NTM / Duty / Notes / Search / RAG ещё не
+  переведены на `anchor` (продолжают читать БД сами).
 
 ---
 
@@ -80,6 +115,8 @@ curl http://localhost:8001/api/v1/tnved/children/0302
 
 | Коммит | Дата | Описание |
 |--------|------|---------|
+| (uncommitted) | 2026-06-30 | TASK-CANONICAL-002: recovery-логика → `StructureNormalizer`; Builder без делегирования в legacy; full-tree parity tests (APPROVE WITH NOTES) |
+| `4a7eac2` | 2026-06-30 | TASK-CANONICAL-001: deterministic `stable_id`, `snapshot_id`, recovery skeleton |
 | (docs) | 2026-06-30 | ADR-0001 Canonical TNVED Model принят (Ivan); зафиксированы DECISIONS.md, ROADMAP |
 | `f42d2d4` | 2026-06-26 | L6 синтез: codeless L6 wrappers для одиночных субпозиций |
 | `732c1e7` | 2026-06-26 | L8 синтез: codeless headings для L8-узлов без детей |
@@ -107,7 +144,9 @@ curl http://localhost:8001/api/v1/tnved/children/0302
 
 | Задача | Статус | Приоритет |
 |--------|--------|-----------|
-| **TASK-CANONICAL-001** — deterministic `stable_id` + recovery stage skeleton (ADR-0001) | Запланирована | Высокий |
+| **TASK-CANONICAL-001** — deterministic `stable_id` + recovery stage skeleton | ✅ Completed | — |
+| **TASK-CANONICAL-002** — recovery-логика → `StructureNormalizer`, Builder без legacy, parity tests | ✅ Completed (APPROVE WITH NOTES) | — |
+| Derisking before materialization (см. ROADMAP, рекомендуемый этап ADR-0001) | Рекомендован | Высокий |
 | Fine-tune модели на `training_pairs.jsonl` | Вне репозитория | Низкий |
 | Live-parсер ФТС предрешений (tks.ru JS) | Decision Memo #135 | Средний |
 | Мульти-воркер ФСА (Redis-очередь) | Бэклог | Низкий |
@@ -150,6 +189,61 @@ curl http://localhost:8001/api/v1/tnved/children/0302
 | Vite | 8.0.0 |
 | Tailwind CSS | 3.4.4 |
 | Node.js | актуальная LTS |
+
+---
+
+## 8. Architecture Debt (Canonical TNVED Model)
+
+> Источник: Architecture Review TASK-CANONICAL-002 (Chief Architect, APPROVE WITH NOTES).
+> Долги контура изолированы (к runtime не подключено), но должны быть закрыты до
+> перехода к runtime-adoption / Этапа 3 ADR-0001.
+
+### Critical
+- **Structural parity проверяет не весь контент.** Текущие parity-тесты сверяют
+  `structure_fingerprint` (коды + форма дерева), но не полный контент узлов (имена,
+  `import_duty`, notes, флаги, `display_code`). Возможно скрытое расхождение содержимого
+  при совпадающей структуре.
+- **`snapshot_id` не учитывает все входы модели.** Считается от `db_codes`, но не
+  включает другие входы, влияющие на результат — в частности `hs_rates` (через leaf-флаги),
+  `import_duty`, примечания глав. Кэш/инвалидация по такому `snapshot_id` ненадёжны.
+- **Recovery-логика временно дублируется** в legacy `build_tree()` и в canonical
+  (`StructureNormalizer` + Builder). Два источника одной логики до достижения parity —
+  риск дрейфа.
+
+### Important
+- **Формула `stable_id` не утверждена окончательно** (см. Open Decisions). Сейчас
+  `node-<hex>`; не зафиксировано отношение к ревизиям номенклатуры/истории.
+- **Документация отставала от кода** (001/002 были «Completed» по факту, но `.ai`
+  отражал «не начато») — этим обновлением синхронизировано; держать в синхроне.
+- **Validator ещё не freeze-gate.** `TreeValidator` существует, но не включён как
+  обязательный шлюз перед публикацией модели.
+- **Builder читает БД для `leaf_flags`** (`SessionLocal`/`HsRate` в `builder.py`).
+  Противоречит ADR §6.1 «единственный путь чтения — Parser» и переписывает предикат
+  `is_leaf_hs_code`. Должно переехать в Parser.
+
+### Nice to have
+- **provenance / history / aliases / breadcrumb** — поля модели из ADR §3.2 ещё не
+  реализованы (нужны для Search/RAG/Graph/версионности).
+- **SQLite / PostgreSQL / FTS5 долг** — FTS5 вне Alembic; миграция на Postgres
+  потребует аналога полнотекстового поиска (ROADMAP §7).
+- **Удаление переходных `serializer`/`structure_fingerprint`** после завершения
+  миграции (нужны только в переходный период для дифф-тестов).
+
+---
+
+## 9. Open Architecture Decisions
+
+> Решения, которые нужно закрыть осознанно (а не молча) — по `ENGINEERING_PROTOCOL` и
+> `agents/architect.md`. Полный контекст — в ADR-0001.
+
+| Решение | Статус | Почему важно | Когда закрыть |
+|---------|--------|--------------|---------------|
+| **stable_id formula** | Open (черновой `node-<hex>`) | ID — первичный ключ для Search/RAG/AI-журнала/Graph; смена формулы позже = миграция всех ссылок | До runtime-adoption (Этап 3); прежде, чем кто-то начнёт хранить ссылки на узлы |
+| **snapshot_id inputs** | Open (только `db_codes`) | От полноты входов зависит корректность кэша/инвалидации и «snapshot-консистентности» (I19) | До materialized CanonicalModel / включения кэша |
+| **Materialized CanonicalModel** | Open (in-memory vs снапшот) | Определяет переживаемость рестарта, память, путь к PostgreSQL | Перед Этапом 2-материализации (freeze + indexes) |
+| **Feature flag strategy** | Open (нет `CANONICAL_TREE_ENABLED`) | Управляет безопасным A/B old-vs-new и откатом | До первого runtime read-path (Этап 3) |
+| **Deadline for legacy `build_tree` removal** | Open (oracle до parity) | Двойная логика — долг; нужен критерий «parity достигнута → удаляем» | После content-parity + стабилизации flag (Этап 6) |
+| **First production read-path** | Open | Какой эндпоинт первым читает CanonicalModel за флагом и как сверяется с legacy | До Этапа 3; зафиксировать план до реализации |
 
 ---
 

@@ -44,10 +44,26 @@
    Удаляется только после байт-в-байт / fingerprint-совпадения с Canonical Model
    на репрезентативном наборе heading'ов и стабилизации feature flag.
 
-**Открытые Decision-точки (требуют подтверждения Ivan по ходу реализации):**
-- Где материализуется модель: in-memory при старте vs materialized-снапшот.
-- Формула `stable_id`: `snapshot:code:level` vs контент-независимый ID с историей.
-- Судьба legacy `build_tree` после parity: тестовый оракул навсегда vs удаление.
+**Прогресс реализации:**
+- ✅ **TASK-CANONICAL-001** (Completed) — deterministic `stable_id`, `snapshot_id`,
+  recovery skeleton.
+- ✅ **TASK-CANONICAL-002** (Completed, Architecture Review: APPROVE WITH NOTES) —
+  recovery-логика → `StructureNormalizer`; Builder собирает напрямую (без делегирования
+  в legacy); full-tree parity-тесты. Контур изолирован, к runtime не подключён.
+- ▶ Рекомендуемый следующий этап — **Derisking before materialization** (content-parity,
+  расширение `snapshot_id`, закрытие формулы `stable_id`, план read-path за флагом).
+  См. `.ai/ROADMAP.md` и `.ai/CURRENT_STATE.md` §2b/§8/§9.
+
+**Открытые Decision-точки** (полный список со статусами/сроками — `.ai/CURRENT_STATE.md`
+§9 «Open Architecture Decisions»):
+- Формула `stable_id` (черновой `node-<hex>`, окончательно не утверждена).
+- Состав входов `snapshot_id` (сейчас только `db_codes`, не учитывает `hs_rates` и др.).
+- Где материализуется модель: in-memory vs materialized-снапшот.
+- Стратегия feature flag (`CANONICAL_TREE_ENABLED`).
+- Дедлайн удаления legacy `build_tree` после parity.
+- Первый production read-path.
+
+**Архитектурные долги:** `.ai/CURRENT_STATE.md` §8 (Critical / Important / Nice to have).
 
 **Инварианты (binding):** I1–I22 в полном ADR (no virtual L5, no fake codes,
 stable ids, детерминизм, реальные коды достижимы, одна модель истины, semantic

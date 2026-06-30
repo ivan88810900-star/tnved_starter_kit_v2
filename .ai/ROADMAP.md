@@ -11,24 +11,41 @@
 ### 0. Canonical TNVED Model (ADR-0001) — целевая source-of-truth
 
 **Обоснование:** ADR-0001 (Accepted, Ivan, 2026-06-30) фиксирует, что Source of Truth
-продукта — Canonical TNVED Model, а не SQLite / `build_tree()` / API. Сейчас дерево
-пересобирается из БД на каждый запрос, без стабильных ID и без единой модели истины.
+продукта — Canonical TNVED Model, а не SQLite / `build_tree()` / API.
 
-**Что нужно (поэтапно, параллельный контур, default OFF):**
-- **`TASK-CANONICAL-001` (следующая задача):** deterministic `stable_id` (замена
-  `uuid4()` в `tree_engine` / `semantic_navigation` на детерминированный ID от снапшота)
-  + **recovery stage skeleton как стадия внутри `tree_engine`** (не отдельный top-level
-  module). Без подключения к API/frontend.
-- Далее: materialized Canonical Model + Validator-gate; API за feature flag
-  `CANONICAL_TREE_ENABLED`; перевод Semantic Navigation / Notes / Search / NTM / Duty
-  на `anchor` (`stable_id`); удаление legacy после parity.
+**Сделано:**
+- ✅ **TASK-CANONICAL-001** — deterministic `stable_id`, `snapshot_id`, recovery skeleton.
+- ✅ **TASK-CANONICAL-002** — recovery-логика → `StructureNormalizer`; Builder собирает
+  напрямую (без делегирования в legacy); full-tree parity-тесты. Прошло Architecture
+  Review: **APPROVE WITH NOTES**.
 
-**Инварианты и план миграции:** `.ai/decisions/ADR-0001-canonical-tnved-model.md`.
+**Текущее состояние и долги:** см. `.ai/CURRENT_STATE.md` §2b/§8/§9. Контур изолирован,
+к runtime/API/overlay не подключён. Legacy `_build_tree` остаётся production и oracle.
 
-**Ограничения:**
-- Legacy `_build_tree` **остаётся production и oracle до parity** (байт-в-байт /
-  fingerprint-совпадение на репрезентативных heading'ах).
-- Semantic Navigation переводится на Canonical Model **позже** (не в первой задаче).
+#### Рекомендуемый следующий этап — Derisking before materialization
+
+> Прежде чем материализовать CanonicalModel (`freeze()` + indexes) и тем более
+> подключать runtime, нужно снять ключевые риски, выявленные ревью. **Это направление,
+> а не готовый TASK-файл** — задача не создаётся автоматически, формализуется отдельно
+> после согласования объёма.
+
+Рекомендуемый порядок работ:
+1. **Расширить parity от структуры до контента.** Дополнить fingerprint/тесты сверкой
+   полного контента узлов (имена, `import_duty`, notes, флаги, `display_code`), а не
+   только кодов и формы дерева. → закрывает Critical-долг «parity не покрывает контент».
+2. **Расширить входы `snapshot_id`.** Включить все влияющие на результат входы
+   (как минимум `hs_rates`/leaf-флаги, `import_duty`, примечания глав). → закрывает
+   Critical-долг и обеспечивает «snapshot-консистентность» (I19).
+3. **Закрыть решение по формуле `stable_id`** (Open Decision) до того, как ссылки на
+   узлы начнут где-либо храниться.
+4. **Зафиксировать план первого read-path за feature flag** (`CANONICAL_TREE_ENABLED`):
+   какой эндпоинт первым читает CanonicalModel и как сверяется с legacy (shadow / A-B).
+   План — до реализации; не подключать runtime в рамках derisking.
+
+Только после derisking — материализация (`freeze()` + indexes + Validator-gate),
+затем Этап 3 (runtime за флагом), затем overlays и удаление legacy после parity.
+
+**Инварианты и полный план миграции:** `.ai/decisions/ADR-0001-canonical-tnved-model.md`.
 
 ---
 
