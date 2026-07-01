@@ -62,7 +62,14 @@ Decision Memo: первый production read-path `/children` читает **ст
 (`_serialize_tree_node`) остаётся legacy-путём; legacy `build_tree()` — oracle; JSON-контракт
 неизменен; смена source of truth **частичная и временная**; откат одной переменной; сбой
 canonical → fallback на legacy без 500. **Меняет source of truth для API → требует
-утверждения Ivan до кода.** Полный документ: `.ai/decisions/ADR-0002-canonical-children-read-path.md`.
+утверждения Ivan до кода.**
+
+Review: **APPROVE WITH NOTES** — зафиксированы 2 blocking-gate до первого
+`CANONICAL_TREE_ENABLED=1` (в любом окружении): **Gate-1** — revision/cache invalidation
+обязан учитывать `tnved_commodities` **и** `hs_rates` (leaf_flags / `is_leaf_hs_code`);
+**Gate-2** — полный offline-обход всех `/children` кодов на полной БД = 0 mismatch. Тип
+кэша решён на этот этап: **in-memory singleton** (persistent materialization — будущий этап).
+Полный документ: `.ai/decisions/ADR-0002-canonical-children-read-path.md`.
 Реализация: `.ai/tasks/TASK-CANONICAL-004.md` (blocked-on-decision).
 
 ### ADR-0001 — Canonical TNVED Model (Accepted, Ivan, 2026-06-30)
@@ -274,7 +281,7 @@ legacy (сверх structural). Контур по-прежнему **не под
 |---------|--------|--------------|---------------|
 | **stable_id formula** | Open (черновой `node-<hex>`) | ID — первичный ключ для Search/RAG/AI-журнала/Graph; смена формулы позже = миграция всех ссылок | До runtime-adoption (Этап 3); прежде, чем кто-то начнёт хранить ссылки на узлы |
 | **snapshot_id inputs** | Open (только `db_codes`) | От полноты входов зависит корректность кэша/инвалидации и «snapshot-консистентности» (I19) | До materialized CanonicalModel / включения кэша |
-| **Materialized CanonicalModel** | Частично (in-memory `CanonicalModel` реализован; переживающий рестарт снапшот/кэш — Open) | Определяет переживаемость рестарта, память, путь к PostgreSQL | Перед runtime-adoption (кэш по `snapshot_id`) |
+| **Materialized CanonicalModel** | На этап TASK-004 решено: **in-memory singleton** (ADR-0002 §3.8.1); persistent снапшот/файл/таблица — Open (будущий этап при дороговизне in-memory) | Определяет переживаемость рестарта, память, путь к PostgreSQL | Persistent — отдельный ADR/TASK при необходимости |
 | **Feature flag strategy** | Спроектировано в TASK-CANONICAL-004 (`CANONICAL_TREE_ENABLED` + `CANONICAL_TREE_SHADOW`, default OFF, request-time) | Управляет безопасным A/B old-vs-new и откатом | Реализация — TASK-CANONICAL-004 |
 | **Deadline for legacy `build_tree` removal** | Open (oracle до parity) | Двойная логика — долг; нужен критерий «parity достигнута → удаляем» | После content-parity + стабилизации flag (Этап 6) |
 | **First production read-path** | Спроектировано в TASK-CANONICAL-004 (`/children`; shadow structural+content vs legacy; overlay через `_serialize_tree_node`) | Какой эндпоинт первым читает CanonicalModel за флагом и как сверяется с legacy | Реализация — TASK-CANONICAL-004 |

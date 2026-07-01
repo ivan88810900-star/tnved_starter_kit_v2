@@ -52,7 +52,10 @@ Materialization). Этап 3 (первый runtime read-path `/children` за fe
 `CANONICAL_TREE_ENABLED`, default OFF, + shadow-режим) зафиксирован Decision Memo
 **ADR-0002** (`.ai/decisions/ADR-0002-canonical-children-read-path.md`, *Proposed* — ждёт
 Ivan) и формализован в **`.ai/tasks/TASK-CANONICAL-004.md`** (*blocked-on-decision*).
-Код — только после ADR-0002 Accepted. Затем overlays и удаление legacy после parity.
+Код — только после ADR-0002 Accepted. Review APPROVE WITH NOTES зафиксировал 2 blocking-gate
+до первого `CANONICAL_TREE_ENABLED=1` (Gate-1: revision учитывает `tnved_commodities`+`hs_rates`/
+leaf_flags; Gate-2: полный offline-обход всех `/children` кодов на полной БД = 0 mismatch) и
+тип кэша in-memory singleton. Затем overlays и удаление legacy после parity.
 
 **Инварианты и полный план миграции:** `.ai/decisions/ADR-0001-canonical-tnved-model.md`.
 

@@ -109,10 +109,18 @@
 - **Provider строит модель один раз и кэширует** (`TreeParser.parse` → `TreeBuilder.build_model`).
   Владелец — сервис-провайдер в `app/services/tree_engine/` (API модель сам не строит;
   слоистость `api → services`).
+- **Тип кэша:** **in-memory singleton** (иммутабельный `CanonicalModel` в процессе).
+  **Materialized persistent snapshot / файл / таблица в этой задаче НЕ делаем** — причина:
+  минимальный blast radius и быстрый rollback (нет новых артефактов хранения для
+  версионирования/инвалидации/отката). Persistent materialization — будущий этап, если
+  in-memory окажется дорогим (см. ADR-0002 §3.8.1).
 - **Build-once под lock**, конкурентное чтение безопасно (модель иммутабельна). Опциональный
   прогрев в `lifespan` при включённом флаге.
-- **Пересборка — при смене revision-маркера**, который покрывает `tnved_commodities` **и**
-  `hs_rates` (leaf-флаги влияют на структуру). Атомарная замена инстанса.
+- **Пересборка — при смене revision-маркера. Gate-1 (жёсткий блокер, ADR-0002 §3a):** до
+  первого `CANONICAL_TREE_ENABLED=1` **в любом окружении** revision / cache invalidation
+  **ОБЯЗАН** учитывать `tnved_commodities` **и** `hs_rates`, влияющие на `leaf_flags` /
+  `is_leaf_hs_code`. Пока это не выполнено — serving-флаг включать **запрещено**. Атомарная
+  замена инстанса.
 - **Validator gate:** `build_model` прогоняет `TreeValidator`; невалидная модель в runtime
   не отдаётся.
 
@@ -134,7 +142,10 @@
   (`structure_fingerprint` + content: `name`, `display_code`, `is_leaf` / `is_codeless` /
   `is_group`, `import_duty`, `notes`); обогащение из сравнения исключается (одинаково).
 - Mismatch логируется (WARNING, с **семплированием**) + метрики `shadow_match` / `shadow_mismatch`.
-- Включать в staging → canary; полный обход всех кодов — офлайн-скрипт/health, не live-трафик.
+- Включать в staging → canary; live-shadow — инструмент наблюдения.
+- **Gate-2 (критерий serving ON, ADR-0002 §3a):** **полный offline-обход всех
+  поддерживаемых `/children` кодов на полной БД должен дать 0 mismatch перед включением
+  serving-флага.** Live/семплированный shadow **не заменяет** полный offline-обход.
 
 ### 4.5 Fallback / rollback
 - **Failure → fallback на legacy, без 500**, если legacy доступен (`AGENTS.md`: не 500 при
@@ -151,12 +162,15 @@
 - [ ] **ON** — JSON-ответ `/children` **идентичен** legacy на тест-матрице кодов:
       heading (напр. `8517`), одиночный L6 (`0302`-ветвь), L8, декларируемый leaf,
       pad-код, subheading-group (`0101`), 2-значная группа (`01`), Roman-section.
-- [ ] Provider строит модель один раз и пересобирает при смене revision-маркера, который
-      покрывает `tnved_commodities` **и** `hs_rates` (leaf-флаги).
+- [ ] **Gate-1 (блокер):** provider build-once + инвалидация по revision, **обязательно**
+      покрывающему `tnved_commodities` **и** `hs_rates` (leaf_flags / `is_leaf_hs_code`);
+      без этого `CANONICAL_TREE_ENABLED=1` **запрещён в любом окружении**.
+- [ ] Тип кэша — **in-memory singleton**; persistent materialization в этой задаче не делается.
 - [ ] Validator gate: невалидная модель не попадает в runtime; `/children` fail-safe
       fallback на legacy + лог, **без 500**.
-- [ ] `CANONICAL_TREE_SHADOW` логирует structural+content mismatch с семплированием;
-      на репрезентативном обходе mismatch = 0.
+- [ ] `CANONICAL_TREE_SHADOW` логирует structural+content mismatch с семплированием.
+- [ ] **Gate-2 (блокер):** полный offline-обход всех поддерживаемых `/children` кодов на
+      полной БД даёт **0 mismatch** перед включением serving-флага.
 - [ ] Rollback подтверждён: `CANONICAL_TREE_ENABLED=0` немедленно возвращает legacy без рестарта.
 - [ ] Запрещённые пути не изменены: `build_tree()`, `semantic_navigation`, frontend,
       БД/Alembic, NTM/Duty enforcement, `source_kind` isolation, прочие endpoints.
