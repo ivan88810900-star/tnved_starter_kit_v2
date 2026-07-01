@@ -52,6 +52,10 @@ customs-clear/backend/logs/fsa_backfill.pid
 logs/
 tmp/
 
+# === Runtime downloads (tamdoc archive, QC reports, parsed cache) ===
+# Не коммитить: HTML tamdoc с длинными кириллическими именами ломают checkout на Linux.
+customs-clear/backend/downloads/
+
 # === Инвойсы и сырые ответы LLM — не коммитить ===
 backend/data/raw_invoices/*.xlsx
 backend/data/raw_invoices/*.csv
