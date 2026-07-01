@@ -47,8 +47,12 @@
    какой эндпоинт первым читает CanonicalModel и как сверяется с legacy (shadow / A-B).
    План — до реализации; не подключать runtime в рамках derisking.
 
-Только после derisking — материализация (`freeze()` + indexes + Validator-gate),
-затем Этап 3 (runtime за флагом), затем overlays и удаление legacy после parity.
+Материализация (`freeze()` + indexes + Validator-gate) — **выполнена** (Canonical Model
+Materialization). Этап 3 (первый runtime read-path `/children` за feature flag
+`CANONICAL_TREE_ENABLED`, default OFF, + shadow-режим) зафиксирован Decision Memo
+**ADR-0002** (`.ai/decisions/ADR-0002-canonical-children-read-path.md`, *Proposed* — ждёт
+Ivan) и формализован в **`.ai/tasks/TASK-CANONICAL-004.md`** (*blocked-on-decision*).
+Код — только после ADR-0002 Accepted. Затем overlays и удаление legacy после parity.
 
 **Инварианты и полный план миграции:** `.ai/decisions/ADR-0001-canonical-tnved-model.md`.
 

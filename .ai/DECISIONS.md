@@ -10,6 +10,7 @@
 | ADR | Название | Статус | Принял | Дата | Документ |
 |-----|----------|--------|--------|------|----------|
 | ADR-0001 | Canonical TNVED Model | Accepted | Ivan | 2026-06-30 | [`decisions/ADR-0001-canonical-tnved-model.md`](decisions/ADR-0001-canonical-tnved-model.md) |
+| ADR-0002 | First production read-path on CanonicalModel (`/children`) | **Proposed** | — (ждёт Ivan) | 2026-07-01 | [`decisions/ADR-0002-canonical-children-read-path.md`](decisions/ADR-0002-canonical-children-read-path.md) |
 
 ---
 
@@ -55,10 +56,18 @@
   перед freeze, freeze/read-only на уровне интерфейса, full-tree content parity с legacy.
   Additive `TreeBuilder.build_model(...)`; `build(...)` без изменений. Не подключён к
   runtime/API/overlay; feature flag не вводился.
-- ▶ Рекомендуемый следующий этап — **Derisking (остаток)**: расширение входов
-  `snapshot_id` (hs_rates/leaf-флаги, import_duty, примечания), закрытие формулы
-  `stable_id`, план read-path за флагом. См. `.ai/ROADMAP.md` и `.ai/CURRENT_STATE.md`
-  §2b/§8/§9.
+- 📝 **ADR-0002** (Proposed) — Decision Memo для первого production read-path `/children`
+  на `CanonicalModel`. Меняет source of truth для API частично/временно → требует
+  утверждения Ivan **до кода**. См. ниже §ADR-0002.
+- 📋 **TASK-CANONICAL-004** (blocked-on-decision) — инженерная спецификация под ADR-0002:
+  `/children` читает структуру из `CanonicalModel` за `CANONICAL_TREE_ENABLED`
+  (default OFF, request-time) + отдельный `CANONICAL_TREE_SHADOW`; provider с build-once
+  кэшем и validator gate; overlay через существующий `_serialize_tree_node` без изменений;
+  legacy `build_tree()` остаётся oracle. Код — только после ADR-0002 Accepted.
+  См. `.ai/tasks/TASK-CANONICAL-004.md`.
+- ▶ Параллельный derisking-остаток — расширение входов `snapshot_id`/revision (hs_rates/
+  leaf-флаги, import_duty, примечания) и закрытие формулы `stable_id`. См. `.ai/ROADMAP.md`
+  и `.ai/CURRENT_STATE.md` §2b/§8/§9.
 
 **Открытые Decision-точки** (полный список со статусами/сроками — `.ai/CURRENT_STATE.md`
 §9 «Open Architecture Decisions»):
@@ -74,6 +83,38 @@
 **Инварианты (binding):** I1–I22 в полном ADR (no virtual L5, no fake codes,
 stable ids, детерминизм, реальные коды достижимы, одна модель истины, semantic
 overlay не меняет структуру, AI ничего не изменяет, snapshot-консистентность и др.).
+
+---
+
+## ADR-0002 — First production read-path on CanonicalModel (`/children`)
+
+**Статус:** Proposed (ждёт утверждения Ivan; код не начинать до Accepted)
+
+**Суть решения:**
+
+Первым перевести на `CanonicalModel` **только** endpoint `GET /api/v1/tnved/children/{code}`
+(+ compat), и **только его структурный слой**, за feature flag `CANONICAL_TREE_ENABLED`
+(**default OFF**, читается **request-time**), с отдельным `CANONICAL_TREE_SHADOW`
+(сравнивает legacy vs canonical, служит legacy). Overlay/enrichment (`_serialize_tree_node`:
+ставки/НДС/меры/permit) **остаётся существующим legacy-путём**. Legacy `build_tree()` —
+**oracle**. JSON-контракт **не меняется** (I20). Смена source of truth — **частичная и
+временная**; откат — **одной переменной**; сбой canonical → **fallback на legacy без 500**.
+
+**Ключевые обоснования:** `/children` — самый дорогой legacy-путь (до 2M строк/запрос) и уже
+покрыт parity; flag OFF/request-time — обратимость и мгновенный откат; отдельный shadow —
+ортогональность serving и наблюдения; cache build-once — иначе воспроизводится худшая
+сторона legacy; overlay не мигрирует — свежесть данных + `source_kind`/enforcement.
+
+**Риски (binding для реализации):** `snapshot_id`/revision обязан включать влияние
+`hs_rates` (leaf-флаги) и `tnved_commodities` (иначе stale cache); латентность первого
+запроса; усечённая dev-БД (ложные mismatch); shadow overhead; structural mismatch на
+краевых кодах.
+
+**Decision-точки для Ivan:** утвердить `/children` как первый read-path; состав
+revision-маркера; критерий «parity → serving ON»; in-memory vs materialized-снапшот.
+
+**Реализация:** `.ai/tasks/TASK-CANONICAL-004.md` (blocked-on-decision). Полный документ:
+`.ai/decisions/ADR-0002-canonical-children-read-path.md`.
 
 ---
 

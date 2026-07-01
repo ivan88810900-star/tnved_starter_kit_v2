@@ -54,6 +54,17 @@ curl http://localhost:8001/api/v1/tnved/children/0302
 
 ## 2a. Принятые архитектурные решения
 
+### ADR-0002 — First production read-path on CanonicalModel (`/children`) (Proposed, 2026-07-01)
+
+Decision Memo: первый production read-path `/children` читает **структуру** из
+`CanonicalModel` вместо legacy `build_tree()` за feature flag `CANONICAL_TREE_ENABLED`
+(default OFF, request-time) + отдельный `CANONICAL_TREE_SHADOW`; overlay/enrichment
+(`_serialize_tree_node`) остаётся legacy-путём; legacy `build_tree()` — oracle; JSON-контракт
+неизменен; смена source of truth **частичная и временная**; откат одной переменной; сбой
+canonical → fallback на legacy без 500. **Меняет source of truth для API → требует
+утверждения Ivan до кода.** Полный документ: `.ai/decisions/ADR-0002-canonical-children-read-path.md`.
+Реализация: `.ai/tasks/TASK-CANONICAL-004.md` (blocked-on-decision).
+
 ### ADR-0001 — Canonical TNVED Model (Accepted, Ivan, 2026-06-30)
 
 **Source of Truth продукта Tariff — Canonical TNVED Model**, а не SQLite, не дерево
@@ -165,7 +176,9 @@ legacy (сверх structural). Контур по-прежнему **не под
 | **TASK-CANONICAL-001** — deterministic `stable_id` + recovery stage skeleton | ✅ Completed | — |
 | **TASK-CANONICAL-002** — recovery-логика → `StructureNormalizer`, Builder без legacy, parity tests | ✅ Completed (APPROVE WITH NOTES) | — |
 | **Canonical Model Materialization** — иммутабельный `CanonicalModel` (индексы+навигация), validator gate, content parity | ✅ Completed (не подключён к runtime) | — |
-| Derisking (остаток): расширение входов `snapshot_id`, формула `stable_id`, план read-path за флагом | Рекомендован | Высокий |
+| **ADR-0002** — Decision Memo: первый production read-path `/children` на `CanonicalModel` (меняет source of truth API частично/временно) | 📝 Proposed (ждёт Ivan) | Высокий |
+| **TASK-CANONICAL-004** — реализация read-path `/children` за feature flag (default OFF) + shadow | 📋 Blocked-on-decision (ADR-0002; `.ai/tasks/TASK-CANONICAL-004.md`) | Высокий |
+| Derisking (остаток): расширение входов `snapshot_id`, формула `stable_id` | Рекомендован | Высокий |
 | Fine-tune модели на `training_pairs.jsonl` | Вне репозитория | Низкий |
 | Live-parсер ФТС предрешений (tks.ru JS) | Decision Memo #135 | Средний |
 | Мульти-воркер ФСА (Redis-очередь) | Бэклог | Низкий |
@@ -262,9 +275,9 @@ legacy (сверх structural). Контур по-прежнему **не под
 | **stable_id formula** | Open (черновой `node-<hex>`) | ID — первичный ключ для Search/RAG/AI-журнала/Graph; смена формулы позже = миграция всех ссылок | До runtime-adoption (Этап 3); прежде, чем кто-то начнёт хранить ссылки на узлы |
 | **snapshot_id inputs** | Open (только `db_codes`) | От полноты входов зависит корректность кэша/инвалидации и «snapshot-консистентности» (I19) | До materialized CanonicalModel / включения кэша |
 | **Materialized CanonicalModel** | Частично (in-memory `CanonicalModel` реализован; переживающий рестарт снапшот/кэш — Open) | Определяет переживаемость рестарта, память, путь к PostgreSQL | Перед runtime-adoption (кэш по `snapshot_id`) |
-| **Feature flag strategy** | Open (нет `CANONICAL_TREE_ENABLED`) | Управляет безопасным A/B old-vs-new и откатом | До первого runtime read-path (Этап 3) |
+| **Feature flag strategy** | Спроектировано в TASK-CANONICAL-004 (`CANONICAL_TREE_ENABLED` + `CANONICAL_TREE_SHADOW`, default OFF, request-time) | Управляет безопасным A/B old-vs-new и откатом | Реализация — TASK-CANONICAL-004 |
 | **Deadline for legacy `build_tree` removal** | Open (oracle до parity) | Двойная логика — долг; нужен критерий «parity достигнута → удаляем» | После content-parity + стабилизации flag (Этап 6) |
-| **First production read-path** | Open | Какой эндпоинт первым читает CanonicalModel за флагом и как сверяется с legacy | До Этапа 3; зафиксировать план до реализации |
+| **First production read-path** | Спроектировано в TASK-CANONICAL-004 (`/children`; shadow structural+content vs legacy; overlay через `_serialize_tree_node`) | Какой эндпоинт первым читает CanonicalModel за флагом и как сверяется с legacy | Реализация — TASK-CANONICAL-004 |
 
 ---
 
