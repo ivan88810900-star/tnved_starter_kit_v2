@@ -18,6 +18,11 @@
 - ✅ **TASK-CANONICAL-002** — recovery-логика → `StructureNormalizer`; Builder собирает
   напрямую (без делегирования в legacy); full-tree parity-тесты. Прошло Architecture
   Review: **APPROVE WITH NOTES**.
+- ✅ **Canonical Model Materialization** — иммутабельный `CanonicalModel`
+  (`canonical_model.py`) поверх `TreeBuilder.build(...)`: индексы достижимости
+  (`node_by_stable_id` / `node_by_code` / `node_by_display_code`) + навигация
+  (parent/children/path/descendants); freeze/read-only на уровне интерфейса; validator
+  gate перед freeze; full-tree **content** parity с legacy. Не подключён к runtime.
 
 **Текущее состояние и долги:** см. `.ai/CURRENT_STATE.md` §2b/§8/§9. Контур изолирован,
 к runtime/API/overlay не подключён. Legacy `_build_tree` остаётся production и oracle.
@@ -30,9 +35,9 @@
 > после согласования объёма.
 
 Рекомендуемый порядок работ:
-1. **Расширить parity от структуры до контента.** Дополнить fingerprint/тесты сверкой
-   полного контента узлов (имена, `import_duty`, notes, флаги, `display_code`), а не
-   только кодов и формы дерева. → закрывает Critical-долг «parity не покрывает контент».
+1. ✅ **Расширить parity от структуры до контента.** Сделано в Canonical Model
+   Materialization: `test_full_tree_content_parity_with_legacy` сверяет имена,
+   `import_duty`, notes, флаги, `display_code` рекурсивно. → Critical-долг закрыт.
 2. **Расширить входы `snapshot_id`.** Включить все влияющие на результат входы
    (как минимум `hs_rates`/leaf-флаги, `import_duty`, примечания глав). → закрывает
    Critical-долг и обеспечивает «snapshot-консистентность» (I19).

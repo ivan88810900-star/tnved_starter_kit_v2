@@ -50,9 +50,15 @@
 - ✅ **TASK-CANONICAL-002** (Completed, Architecture Review: APPROVE WITH NOTES) —
   recovery-логика → `StructureNormalizer`; Builder собирает напрямую (без делегирования
   в legacy); full-tree parity-тесты. Контур изолирован, к runtime не подключён.
-- ▶ Рекомендуемый следующий этап — **Derisking before materialization** (content-parity,
-  расширение `snapshot_id`, закрытие формулы `stable_id`, план read-path за флагом).
-  См. `.ai/ROADMAP.md` и `.ai/CURRENT_STATE.md` §2b/§8/§9.
+- ✅ **Canonical Model Materialization** (Completed) — иммутабельный `CanonicalModel`
+  (индексы достижимости + навигация parent/children/path/descendants), validator gate
+  перед freeze, freeze/read-only на уровне интерфейса, full-tree content parity с legacy.
+  Additive `TreeBuilder.build_model(...)`; `build(...)` без изменений. Не подключён к
+  runtime/API/overlay; feature flag не вводился.
+- ▶ Рекомендуемый следующий этап — **Derisking (остаток)**: расширение входов
+  `snapshot_id` (hs_rates/leaf-флаги, import_duty, примечания), закрытие формулы
+  `stable_id`, план read-path за флагом. См. `.ai/ROADMAP.md` и `.ai/CURRENT_STATE.md`
+  §2b/§8/§9.
 
 **Открытые Decision-точки** (полный список со статусами/сроками — `.ai/CURRENT_STATE.md`
 §9 «Open Architecture Decisions»):

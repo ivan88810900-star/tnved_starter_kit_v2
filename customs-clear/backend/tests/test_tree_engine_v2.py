@@ -14,6 +14,7 @@ try:
         exclude_obsolete_reserved,
     )
     from app.services.tree_engine import (
+        CanonicalModel,
         TreeBuilder,
         TreeParser,
         TreeSerializer,
@@ -122,6 +123,31 @@ class TreeEngineV2SmokeTests(unittest.TestCase):
         self.assertTrue(all(i.startswith("node-") for i in ids_a))
         self.assertEqual(ids_a, ids(roots_b), "две сборки дали разные stable_id")
         self.assertEqual(len(ids_a), len(set(ids_a)), "stable_id не уникальны")
+
+    def test_build_model_materializes_canonical_model(self) -> None:
+        """Pipeline Parser → Builder → CanonicalModel (validator gate + indexes)."""
+        parser = TreeParser()
+        builder = TreeBuilder()
+        serializer = TreeSerializer()
+
+        with SessionLocal() as db:
+            parsed = parser.parse(db)
+            model = builder.build_model(parsed)
+            roots = builder.build(parsed)
+
+        self.assertIsInstance(model, CanonicalModel)
+        # индексы покрывают всё дерево, роуты совпадают с build()
+        self.assertEqual([n.code for n in model.roots], [n.code for n in roots])
+        # адресуемость + навигация
+        for heading in _SAMPLE_HEADINGS:
+            node = model.get_by_code(heading)
+            self.assertIsNotNone(node, msg=f"heading {heading} не адресуем по коду")
+            self.assertEqual(model.children(node), tuple(node.children))
+            self.assertEqual(model.path(node)[-1].code, heading)
+        # legacy-сериализация модели совпадает со сборкой из build()
+        model_serialized = [serializer.to_legacy_dict(n) for n in model.roots]
+        build_serialized = serializer.serialize_roots(roots)
+        self.assertEqual(model_serialized, build_serialized)
 
 
 if __name__ == "__main__":

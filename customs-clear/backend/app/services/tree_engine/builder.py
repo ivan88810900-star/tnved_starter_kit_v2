@@ -13,6 +13,7 @@ from __future__ import annotations
 from ...db import SessionLocal
 from ...models import HsRate
 from ..tnved_tree import digits
+from .canonical_model import CanonicalModel
 from .models import (
     ClassificationGroupNode,
     CommodityNode,
@@ -23,6 +24,7 @@ from .models import (
     compute_snapshot_id,
 )
 from .recovery import RecoveredHeading, RecoveredNode, StructureNormalizer
+from .validator import TreeValidator
 
 _LEAF_FLAG_CHUNK = 500
 
@@ -47,6 +49,29 @@ class TreeBuilder:
 
     def build_heading_map(self, parse_result: TreeParseResult) -> dict[str, TreeNode]:
         return {node.code or "": node for node in self.build(parse_result) if node.code}
+
+    def build_model(
+        self,
+        parse_result: TreeParseResult,
+        *,
+        validate: bool = True,
+        validator: TreeValidator | None = None,
+    ) -> CanonicalModel:
+        """Материализует иммутабельную CanonicalModel из результата `build`.
+
+        Additive API: не меняет `build()` (по-прежнему `list[TreeNode]`), а
+        оборачивает его в read-only модель с индексами. Перед freeze прогоняется
+        validator gate (ADR-0001 §6.4); при `validate=True` проверка fake-кодов
+        идёт по `parse_result.db_codes`. Модель к runtime не подключается.
+        """
+        roots = self.build(parse_result)
+        snapshot_id = compute_snapshot_id(parse_result.db_codes)
+        return CanonicalModel.from_roots(
+            roots,
+            snapshot_id=snapshot_id,
+            parse_result=parse_result if validate else None,
+            validator=validator,
+        )
 
     # -- leaf-флаги (БД вне нормализатора, R2) -----------------------------
 

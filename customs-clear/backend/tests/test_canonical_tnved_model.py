@@ -19,12 +19,17 @@ try:
         exclude_obsolete_reserved,
     )
     from app.services.tree_engine import (
+        CanonicalModel,
+        CanonicalModelValidationError,
+        CommodityNode,
+        HeadingNode,
         StructureNormalizer,
         TreeBuilder,
         TreeNode,
         TreeParser,
         TreeSerializer,
         TreeValidator,
+        assign_stable_ids,
         compute_snapshot_id,
     )
 
@@ -72,6 +77,25 @@ def _all_nodes(roots: "list[TreeNode]") -> "list[TreeNode]":
     for root in roots:
         walk(root)
     return out
+
+
+def _content_fingerprint(node: dict) -> tuple:
+    """Полный контентный отпечаток узла (сверх structure_fingerprint).
+
+    Учитывает name / display_code / is_leaf / is_codeless / is_group /
+    import_duty / notes рекурсивно — для content-parity с legacy build_tree.
+    """
+    return (
+        node.get("code") or "",
+        node.get("name") or "",
+        node.get("display_code") or "",
+        bool(node.get("is_leaf")),
+        bool(node.get("is_codeless")),
+        bool(node.get("is_group")),
+        node.get("import_duty") or "",
+        node.get("notes") or "",
+        tuple(_content_fingerprint(ch) for ch in (node.get("children") or [])),
+    )
 
 
 @unittest.skipUnless(_OK, "canonical model tests need FastAPI app deps")
@@ -327,6 +351,200 @@ class CanonicalTnvedModelTests(unittest.TestCase):
         leaf = wrapper.children[0]
         self.assertTrue(leaf.metadata.get("is_leaf"))
         self.assertTrue(leaf.metadata.get("is_synthetic"))
+
+    # -- CanonicalModel: материализация / индексы -------------------------
+
+    def test_build_model_returns_canonical_model(self) -> None:
+        model = self.builder.build_model(self.parsed)
+        self.assertIsInstance(model, CanonicalModel)
+        self.assertTrue(model.snapshot_id.startswith("snap-"))
+        self.assertEqual(model.snapshot_id, compute_snapshot_id(self.parsed.db_codes))
+        self.assertTrue(len(model) > 0)
+
+    def test_build_does_not_return_model(self) -> None:
+        """Additive API: build() по-прежнему отдаёт list[TreeNode]."""
+        roots = self.builder.build(self.parsed)
+        self.assertIsInstance(roots, list)
+        self.assertTrue(all(isinstance(n, TreeNode) for n in roots))
+        self.assertNotIsInstance(roots, CanonicalModel)
+
+    def test_indexes_cover_all_nodes(self) -> None:
+        model = self.builder.build_model(self.parsed)
+        roots = list(model.roots)
+        all_nodes = _all_nodes(roots)
+        self.assertEqual(len(model.node_by_stable_id), len(all_nodes))
+        for node in all_nodes:
+            self.assertIs(model.get(node.stable_id), node)
+
+    def test_get_by_code_and_display_code(self) -> None:
+        model = self.builder.build_model(self.parsed)
+        heading = model.get_by_code("0302")
+        self.assertIsNotNone(heading, "heading 0302 должен быть адресуем по коду")
+        self.assertEqual(heading.code, "0302")
+        by_display = model.get_by_display_code("0302")
+        self.assertIsNotNone(by_display)
+        self.assertEqual(by_display.metadata.get("display_code") or by_display.code, "0302")
+
+    def test_get_by_code_prefers_leaf_on_collision(self) -> None:
+        """Коллизия код↔synthetic-leaf: индекс возвращает реальный лист."""
+        from app.services.tree_engine import ParsedCommodityRecord, TreeParseResult
+
+        records = [
+            ParsedCommodityRecord(
+                code10="0302", description="Рыба", raw_description="Рыба", import_duty=""
+            ),
+            ParsedCommodityRecord(
+                code10="0302130000",
+                description="– – лосось",
+                raw_description="– – лосось",
+                import_duty="5%",
+            ),
+        ]
+        builder = TreeBuilder()
+        builder._compute_leaf_flags = lambda parse_result: {}  # type: ignore[method-assign]
+        parsed = TreeParseResult(
+            commodities=records,
+            chapter_notes={},
+            db_codes=frozenset({"0302", "0302130000"}),
+        )
+        model = builder.build_model(parsed)
+        node = model.get_by_code("0302130000")
+        self.assertIsNotNone(node)
+        self.assertTrue(node.metadata.get("is_leaf"), "по коду должен вернуться лист, а не обёртка")
+
+    def test_parent_children_consistency(self) -> None:
+        model = self.builder.build_model(self.parsed)
+        for node in _all_nodes(list(model.roots)):
+            for child in model.children(node):
+                self.assertIs(model.parent(child), node)
+        for root in model.roots:
+            self.assertIsNone(model.parent(root), "корень не имеет parent")
+
+    def test_children_accepts_id_and_node(self) -> None:
+        model = self.builder.build_model(self.parsed)
+        heading = model.get_by_code("0302")
+        by_node = model.children(heading)
+        by_id = model.children(heading.stable_id)
+        self.assertEqual([n.stable_id for n in by_node], [n.stable_id for n in by_id])
+
+    def test_path_from_root_to_node(self) -> None:
+        model = self.builder.build_model(self.parsed)
+        # берём произвольный глубокий лист
+        deep = next(
+            (n for n in _all_nodes(list(model.roots)) if model.parent(n) is not None
+             and model.parent(model.parent(n)) is not None),
+            None,
+        )
+        self.assertIsNotNone(deep, "должен быть узел глубины ≥ 3")
+        path = model.path(deep)
+        self.assertGreaterEqual(len(path), 3)
+        self.assertIsNone(model.parent(path[0]), "путь начинается с корня")
+        self.assertIs(path[-1], deep, "путь заканчивается искомым узлом")
+        for parent_node, child_node in zip(path, path[1:]):
+            self.assertIs(model.parent(child_node), parent_node)
+
+    def test_descendants_matches_manual_walk(self) -> None:
+        model = self.builder.build_model(self.parsed)
+        heading = model.get_by_code("0302")
+        manual: list[str] = []
+
+        def walk(node: TreeNode) -> None:
+            for ch in node.children:
+                manual.append(ch.stable_id)
+                walk(ch)
+
+        walk(heading)
+        got = [n.stable_id for n in model.descendants(heading)]
+        self.assertEqual(sorted(got), sorted(manual))
+        self.assertNotIn(heading.stable_id, got, "descendants не включает сам узел")
+
+    def test_lookup_miss_returns_none(self) -> None:
+        model = self.builder.build_model(self.parsed)
+        self.assertIsNone(model.get("node-does-not-exist"))
+        self.assertIsNone(model.get_by_code("0000000001"))
+        self.assertEqual(model.children("node-does-not-exist"), ())
+        self.assertEqual(model.path("node-does-not-exist"), ())
+        self.assertEqual(model.descendants("node-does-not-exist"), ())
+
+    # -- CanonicalModel: freeze / read-only -------------------------------
+
+    def test_model_is_read_only(self) -> None:
+        model = self.builder.build_model(self.parsed)
+        with self.assertRaises(AttributeError):
+            model.roots = ()  # type: ignore[misc]
+        with self.assertRaises(AttributeError):
+            model.snapshot_id = "snap-hacked"  # type: ignore[misc]
+        with self.assertRaises(AttributeError):
+            del model._roots  # type: ignore[attr-defined]
+
+    def test_roots_and_children_are_tuples(self) -> None:
+        model = self.builder.build_model(self.parsed)
+        self.assertIsInstance(model.roots, tuple)
+        heading = model.get_by_code("0302")
+        self.assertIsInstance(model.children(heading), tuple)
+        self.assertIsInstance(model.path(heading), tuple)
+        self.assertIsInstance(model.descendants(heading), tuple)
+
+    def test_indexes_are_immutable_views(self) -> None:
+        model = self.builder.build_model(self.parsed)
+        heading = model.get_by_code("0302")
+        for mapping in (
+            model.node_by_stable_id,
+            model.node_by_code,
+            model.node_by_display_code,
+            model.parent_by_stable_id,
+            model.children_by_stable_id,
+        ):
+            with self.assertRaises(TypeError):
+                mapping["x"] = heading  # type: ignore[index]
+
+    # -- CanonicalModel: validator gate -----------------------------------
+
+    def test_validator_gate_blocks_invalid_tree(self) -> None:
+        """Невалидное дерево (лист с детьми + дубль кода) → модель не создаётся."""
+        heading = HeadingNode(title="H", code="0101")
+        leaf = CommodityNode(
+            title="L", code="0101210000", level=10, metadata={"is_leaf": True}
+        )
+        bad_child = CommodityNode(
+            title="C", code="0101210000", level=10, metadata={"is_leaf": True}
+        )
+        leaf.add_child(bad_child)
+        heading.add_child(leaf)
+        assign_stable_ids([heading], snapshot_id="snap-test")
+        with self.assertRaises(CanonicalModelValidationError):
+            CanonicalModel.from_roots([heading], snapshot_id="snap-test")
+
+    def test_validator_gate_passes_for_real_tree(self) -> None:
+        model = self.builder.build_model(self.parsed)
+        self.assertIsInstance(model, CanonicalModel)
+
+    # -- CanonicalModel: content parity vs legacy -------------------------
+
+    def test_full_tree_content_parity_with_legacy(self) -> None:
+        """Полная контент-parity: name/display_code/флаги/import_duty/notes."""
+        serializer = TreeSerializer()
+        model = self.builder.build_model(self.parsed)
+        v2_map = {
+            n.code: serializer.to_legacy_dict(n) for n in model.roots if n.code
+        }
+        with SessionLocal() as db:
+            rows = (
+                exclude_obsolete_reserved(db.query(Commodity).order_by(Commodity.code.asc())).all()
+            )
+            chapter_notes = collect_chapter_notes(db)
+        legacy_flat = build_tree(rows, chapter_notes)
+        legacy_map = {n.get("code"): n for n in legacy_flat if n.get("code")}
+        self.assertEqual(set(v2_map), set(legacy_map), "набор heading-кодов отличается")
+        mismatches: list[str] = []
+        for code, legacy in legacy_map.items():
+            if _content_fingerprint(legacy) != _content_fingerprint(v2_map[code]):
+                mismatches.append(code)
+        self.assertEqual(
+            mismatches,
+            [],
+            f"content mismatch на {len(mismatches)} heading(s): {mismatches[:10]}",
+        )
 
 
 if __name__ == "__main__":
