@@ -23,9 +23,17 @@
   (`node_by_stable_id` / `node_by_code` / `node_by_display_code`) + навигация
   (parent/children/path/descendants); freeze/read-only на уровне интерфейса; validator
   gate перед freeze; full-tree **content** parity с legacy. Не подключён к runtime.
+- ✅ **TASK-CANONICAL-004 (Этап 3, read-path за флагом)** — структурный слой
+  `/children` может читать CanonicalModel за `CANONICAL_TREE_ENABLED` (default OFF),
+  с shadow-режимом `CANONICAL_TREE_SHADOW` (default OFF). Provider с in-memory кэшем
+  (`provider.py`, build-once под локом, ревизия учитывает `tnved_commodities` +
+  leaf-relevant `hs_rates`), fallback на legacy без 500, bridge через
+  `TreeSerializer.to_legacy_dict` → существующий `_serialize_tree_node` (overlay не
+  дублируется). Контракт JSON неизменён; legacy `build_tree()` не тронут.
 
-**Текущее состояние и долги:** см. `.ai/CURRENT_STATE.md` §2b/§8/§9. Контур изолирован,
-к runtime/API/overlay не подключён. Legacy `_build_tree` остаётся production и oracle.
+**Текущее состояние и долги:** см. `.ai/CURRENT_STATE.md` §2b/§8/§9. Read-path
+`/children` подключён к runtime **только за флагом** (default OFF). Overlay/остальные
+эндпоинты по-прежнему legacy. Legacy `_build_tree` остаётся production и oracle.
 
 #### Рекомендуемый следующий этап — Derisking before materialization
 
@@ -38,14 +46,16 @@
 1. ✅ **Расширить parity от структуры до контента.** Сделано в Canonical Model
    Materialization: `test_full_tree_content_parity_with_legacy` сверяет имена,
    `import_duty`, notes, флаги, `display_code` рекурсивно. → Critical-долг закрыт.
-2. **Расширить входы `snapshot_id`.** Включить все влияющие на результат входы
-   (как минимум `hs_rates`/leaf-флаги, `import_duty`, примечания глав). → закрывает
-   Critical-долг и обеспечивает «snapshot-консистентность» (I19).
+2. **Расширить входы `snapshot_id` самой модели.** Включить все влияющие на результат
+   входы (как минимум `import_duty`, примечания глав) в `compute_snapshot_id`.
+   Частично: read-path **ревизия кэша** (`provider._compute_revision`) уже учитывает
+   `tnved_commodities` + leaf-relevant `hs_rates`, но это cache-key, а не `snapshot_id`.
 3. **Закрыть решение по формуле `stable_id`** (Open Decision) до того, как ссылки на
    узлы начнут где-либо храниться.
-4. **Зафиксировать план первого read-path за feature flag** (`CANONICAL_TREE_ENABLED`):
-   какой эндпоинт первым читает CanonicalModel и как сверяется с legacy (shadow / A-B).
-   План — до реализации; не подключать runtime в рамках derisking.
+4. ✅ **Первый read-path за feature flag** — реализовано в TASK-CANONICAL-004:
+   `/children` (структурный слой) за `CANONICAL_TREE_ENABLED`, сверка с legacy через
+   `CANONICAL_TREE_SHADOW` (shadow) и offline-хелпер `compare_children_structure`.
+   Включение по умолчанию — решение Ivan.
 
 Только после derisking — материализация (`freeze()` + indexes + Validator-gate),
 затем Этап 3 (runtime за флагом), затем overlays и удаление legacy после parity.

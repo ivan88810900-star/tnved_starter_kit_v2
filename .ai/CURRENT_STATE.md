@@ -87,6 +87,37 @@ Builder собирает дерево напрямую из recovery-резул�
 freeze/read-only на уровне интерфейса; обязательный validator gate; content-parity с
 legacy (сверх structural). Контур по-прежнему **не подключён** к runtime/API/overlay.
 
+**TASK-CANONICAL-004 — Completed (Этап 3 ADR: read-path за флагом).** Структурный слой
+эндпоинта `/children` может брать структуру из `CanonicalModel` **за feature flag**:
+
+- Флаги `CANONICAL_TREE_ENABLED` и `CANONICAL_TREE_SHADOW` — **оба default OFF**,
+  читаются **request-time** (rollback без рестарта). Централизованный accessor —
+  `tree_engine/flags.py` (без scattered `os.getenv`).
+- Provider `tree_engine/provider.py` — in-memory singleton кэш `CanonicalModel`,
+  **build-once под локом** (double-checked), пайплайн `TreeParser → TreeBuilder.build_model`
+  (validator gate внутри, не обходится). **Ревизия кэша** учитывает `tnved_commodities`
+  (count+max id) и leaf-relevant `hs_rates` (множество кодов «…0000», влияющих на
+  `is_leaf_hs_code`). При сбое сборки/валидатора — лог + `None` → fallback на legacy,
+  **не** 500.
+- Bridge: `CanonicalModel.TreeNode → TreeSerializer.to_legacy_dict(node)` →
+  **существующий** `_serialize_tree_node` (overlay/enrichment **не** дублируется и **не**
+  меняется). Секционная обёртка `_wrap_in_sections` и поиск узла `_find_node_in_tree`
+  переиспользуются.
+- Branching **только** внутри `list_tnved_children` (через `_resolve_children_node`):
+  OFF → строго legacy; ON → canonical structure, при неудаче (модель недоступна / узел
+  не найден) → fallback legacy. Поведение сохранено для empty/root, roman sections,
+  2/4/6/8/10-значных узлов, leaf → `[]`, synthetic/codeless-обёрток.
+- Shadow (`SHADOW=1`, `ENABLED=0`): ответ legacy, canonical считается и сверяется
+  (structural+content fingerprint), mismatch логируется (`code/reason/count/revision`),
+  на ответ **не** влияет; сбой canonical в shadow — только лог.
+- Offline-хелпер `compare_children_structure(db, codes)` — тестируемая сверка legacy vs
+  canonical (без нового runtime-эндпоинта).
+- Контракт JSON **не изменён**; legacy `build_tree()` и `semantic_navigation` **не тронуты**;
+  БД/Alembic/frontend **не тронуты**.
+- Тесты: `tests/test_canonical_read_path.py` (29) — флаги/provider/shadow/parity;
+  full-tree parity (`test_canonical_tnved_model.py`, `test_tree_engine_v2.py`) проходит на
+  наполненной БД (13 979 позиций). ON/SHADOW дают ответ, идентичный OFF (legacy).
+
 > **Прошло Architecture Review (Chief Architect): APPROVE WITH NOTES.** Контур
 > изолирован, к runtime/API/overlay не подключён, прод-риска нет. Открытые замечания
 > вынесены в разделы «Architecture Debt» и «Open Architecture Decisions» ниже.
@@ -119,8 +150,12 @@ legacy (сверх structural). Контур по-прежнему **не под
 - **Deep-immutability узлов** — сами `TreeNode` (их `children`/`metadata`) физически не
   заморожены; иммутабельность обеспечена только на уровне интерфейса `CanonicalModel`
   (известное ограничение этапа).
-- **Feature flag** — нет `CANONICAL_TREE_ENABLED`.
-- **Runtime adoption** — контур не подключён к API / `lifespan` / роутерам.
+- ~~**Feature flag** — нет `CANONICAL_TREE_ENABLED`.~~ **Закрыто** (TASK-CANONICAL-004):
+  `CANONICAL_TREE_ENABLED` / `CANONICAL_TREE_SHADOW` (default OFF, request-time,
+  `tree_engine/flags.py`).
+- **Runtime adoption** — подключён к runtime **только** структурный слой `/children`
+  **за флагом** (default OFF). Остальные эндпоинты / `lifespan` / overlay — по-прежнему
+  legacy.
 - **Materialized snapshot** — модель строится in-memory на вызов `build_model(...)`; нет
   переживающего рестарт снапшота/кэша по `snapshot_id`.
 - **Overlays** — Semantic Navigation / NTM / Duty / Notes / Search / RAG ещё не
@@ -132,6 +167,7 @@ legacy (сверх structural). Контур по-прежнему **не под
 
 | Коммит | Дата | Описание |
 |--------|------|---------|
+| (uncommitted) | 2026-07-01 | TASK-CANONICAL-004: canonical read-path `/children` за feature flag (`CANONICAL_TREE_ENABLED`/`CANONICAL_TREE_SHADOW`, default OFF); provider+кэш, shadow, fallback на legacy. Контракт неизменён |
 | (uncommitted) | 2026-07-01 | Canonical Model Materialization: иммутабельный `CanonicalModel` (индексы + навигация), validator gate, freeze/read-only, full-tree content parity. Не подключён к runtime |
 | (uncommitted) | 2026-06-30 | TASK-CANONICAL-002: recovery-логика → `StructureNormalizer`; Builder без делегирования в legacy; full-tree parity tests (APPROVE WITH NOTES) |
 | `4a7eac2` | 2026-06-30 | TASK-CANONICAL-001: deterministic `stable_id`, `snapshot_id`, recovery skeleton |
@@ -165,6 +201,7 @@ legacy (сверх structural). Контур по-прежнему **не под
 | **TASK-CANONICAL-001** — deterministic `stable_id` + recovery stage skeleton | ✅ Completed | — |
 | **TASK-CANONICAL-002** — recovery-логика → `StructureNormalizer`, Builder без legacy, parity tests | ✅ Completed (APPROVE WITH NOTES) | — |
 | **Canonical Model Materialization** — иммутабельный `CanonicalModel` (индексы+навигация), validator gate, content parity | ✅ Completed (не подключён к runtime) | — |
+| **TASK-CANONICAL-004** — read-path `/children` за флагом (provider/cache, shadow, fallback), контракт неизменён | ✅ Completed (default OFF) | — |
 | Derisking (остаток): расширение входов `snapshot_id`, формула `stable_id`, план read-path за флагом | Рекомендован | Высокий |
 | Fine-tune модели на `training_pairs.jsonl` | Вне репозитория | Низкий |
 | Live-parсер ФТС предрешений (tks.ru JS) | Decision Memo #135 | Средний |
@@ -262,9 +299,9 @@ legacy (сверх structural). Контур по-прежнему **не под
 | **stable_id formula** | Open (черновой `node-<hex>`) | ID — первичный ключ для Search/RAG/AI-журнала/Graph; смена формулы позже = миграция всех ссылок | До runtime-adoption (Этап 3); прежде, чем кто-то начнёт хранить ссылки на узлы |
 | **snapshot_id inputs** | Open (только `db_codes`) | От полноты входов зависит корректность кэша/инвалидации и «snapshot-консистентности» (I19) | До materialized CanonicalModel / включения кэша |
 | **Materialized CanonicalModel** | Частично (in-memory `CanonicalModel` реализован; переживающий рестарт снапшот/кэш — Open) | Определяет переживаемость рестарта, память, путь к PostgreSQL | Перед runtime-adoption (кэш по `snapshot_id`) |
-| **Feature flag strategy** | Open (нет `CANONICAL_TREE_ENABLED`) | Управляет безопасным A/B old-vs-new и откатом | До первого runtime read-path (Этап 3) |
+| **Feature flag strategy** | ✅ Closed (`CANONICAL_TREE_ENABLED` / `CANONICAL_TREE_SHADOW`, default OFF, request-time) — TASK-CANONICAL-004 | Управляет безопасным A/B old-vs-new и откатом | Включение по умолчанию — решение Ivan |
 | **Deadline for legacy `build_tree` removal** | Open (oracle до parity) | Двойная логика — долг; нужен критерий «parity достигнута → удаляем» | После content-parity + стабилизации flag (Этап 6) |
-| **First production read-path** | Open | Какой эндпоинт первым читает CanonicalModel за флагом и как сверяется с legacy | До Этапа 3; зафиксировать план до реализации |
+| **First production read-path** | ✅ Closed — `/children` структурный слой за флагом; сверка через shadow + `compare_children_structure` (TASK-CANONICAL-004) | Какой эндпоинт первым читает CanonicalModel за флагом и как сверяется с legacy | Следующее: overlay-эндпоинты / включение флага (Ivan) |
 
 ---
 

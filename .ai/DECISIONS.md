@@ -55,19 +55,27 @@
   перед freeze, freeze/read-only на уровне интерфейса, full-tree content parity с legacy.
   Additive `TreeBuilder.build_model(...)`; `build(...)` без изменений. Не подключён к
   runtime/API/overlay; feature flag не вводился.
-- ▶ Рекомендуемый следующий этап — **Derisking (остаток)**: расширение входов
-  `snapshot_id` (hs_rates/leaf-флаги, import_duty, примечания), закрытие формулы
-  `stable_id`, план read-path за флагом. См. `.ai/ROADMAP.md` и `.ai/CURRENT_STATE.md`
-  §2b/§8/§9.
+- ✅ **TASK-CANONICAL-004** (Completed) — Этап 3 ADR: **структурный слой `/children`
+  за feature flag** (`CANONICAL_TREE_ENABLED`, `CANONICAL_TREE_SHADOW`, оба default OFF,
+  request-time). Provider с in-memory кэшем (build-once под локом; ревизия учитывает
+  `tnved_commodities` + leaf-relevant `hs_rates`) + validator gate + fallback на legacy
+  без 500. Bridge `TreeSerializer.to_legacy_dict` → существующий `_serialize_tree_node`
+  (overlay не дублируется). Shadow-режим не влияет на ответ, логирует mismatch. Контракт
+  JSON не изменён. Legacy `build_tree()` не тронут.
 
 **Открытые Decision-точки** (полный список со статусами/сроками — `.ai/CURRENT_STATE.md`
 §9 «Open Architecture Decisions»):
 - Формула `stable_id` (черновой `node-<hex>`, окончательно не утверждена).
-- Состав входов `snapshot_id` (сейчас только `db_codes`, не учитывает `hs_rates` и др.).
-- Где материализуется модель: in-memory vs materialized-снапшот.
-- Стратегия feature flag (`CANONICAL_TREE_ENABLED`).
+- Состав входов `snapshot_id` модели (по-прежнему только `db_codes`); **ревизия кэша**
+  read-path в `provider.py` дополнительно учитывает leaf-relevant `hs_rates` — это
+  cache-инвалидация, не сам `snapshot_id`.
+- Где материализуется модель: in-memory (read-path использует in-memory кэш провайдера)
+  vs materialized-снапшот, переживающий рестарт.
+- ✅ Стратегия feature flag (`CANONICAL_TREE_ENABLED` / `CANONICAL_TREE_SHADOW`) —
+  введена в TASK-CANONICAL-004 (default OFF). Включение по умолчанию — за Ivan.
 - Дедлайн удаления legacy `build_tree` после parity.
-- Первый production read-path.
+- ✅ Первый production read-path — `/children` (структурный слой) за флагом
+  (TASK-CANONICAL-004); overlay/остальные эндпоинты — вне scope.
 
 **Архитектурные долги:** `.ai/CURRENT_STATE.md` §8 (Critical / Important / Nice to have).
 

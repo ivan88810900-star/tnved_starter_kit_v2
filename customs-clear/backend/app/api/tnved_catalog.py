@@ -8,6 +8,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import os
 import time
 import re
@@ -41,8 +42,19 @@ from ..services.tnved_tree.helpers import (
     pad_code as _pad_code,
     strip_leading_dashes as _strip_leading_dashes,
 )
+from ..services.tree_engine import (
+    TreeSerializer,
+    compare_children,
+    get_canonical_model,
+    is_canonical_tree_enabled,
+    is_canonical_tree_shadow_enabled,
+)
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
+
+_tree_serializer = TreeSerializer()
 
 
 def get_db():
@@ -829,6 +841,133 @@ def _resolve_tree_node(db: Session, code: str) -> dict[str, Any] | None:
     return _find_node_in_tree(tree, code)
 
 
+# ---------------------------------------------------------------------------
+# Canonical read-path (ADR-0001, Этап 3): структурный слой /children за флагом.
+# Bridge: CanonicalModel.TreeNode -> TreeSerializer.to_legacy_dict -> _wrap_in_sections
+#         -> _find_node_in_tree -> (существующий) _serialize_tree_node.
+# Overlay/enrichment (_serialize_tree_node) НЕ дублируется и НЕ меняется.
+# ---------------------------------------------------------------------------
+
+
+def _build_wrapped_tree_canonical(db: Session, prefix: str) -> list[dict[str, Any]] | None:
+    """Аналог ``_build_wrapped_tree``, но структуру берёт из CanonicalModel.
+
+    Возвращает legacy-совместимое дерево (Раздел → Группа → 4→6→8→10) или
+    ``None``, если модель недоступна (→ fallback на legacy). Секционная обёртка
+    (``_wrap_in_sections``) переиспользуется без изменений.
+    """
+    model = get_canonical_model()
+    if model is None:
+        return None
+    p = _digits(prefix)
+    flat = [
+        _tree_serializer.to_legacy_dict(root)
+        for root in model.roots
+        if root.code and (not p or root.code.startswith(p))
+    ]
+    return _wrap_in_sections(flat, db)
+
+
+def _resolve_tree_node_canonical(db: Session, code: str) -> dict[str, Any] | None:
+    """Canonical-версия ``_resolve_tree_node``: узел из CanonicalModel или ``None``.
+
+    ``None`` означает «canonical недоступен или узел не найден» → вызывающий код
+    делает fallback на legacy (ADR §9: не 500 при доступном legacy).
+    """
+    code = (code or "").strip()
+    if not code:
+        return None
+    if _is_roman_section(code):
+        tree = _build_wrapped_tree_canonical(db, "")
+        if tree is None:
+            return None
+        return _find_node_in_tree(tree, code.upper())
+    d = _digits(code)
+    if not d:
+        return None
+    prefix = _tree_prefix_for_code(d)
+    tree = _build_wrapped_tree_canonical(db, prefix)
+    if tree is None:
+        return None
+    return _find_node_in_tree(tree, code)
+
+
+def _canonical_children_for_shadow(db: Session, code: str) -> list[dict[str, Any]] | None:
+    """Прямые потомки узла (legacy-форма) через canonical — для shadow-сверки.
+
+    ``None`` — canonical не смог разрешить узел (логируется как mismatch).
+    """
+    node = _resolve_tree_node_canonical(db, code)
+    if node is None:
+        return None
+    return list(node.get("children") or [])
+
+
+def _run_children_shadow(db: Session, code: str, legacy_node: dict[str, Any] | None) -> None:
+    """Shadow-режим: сверить canonical со legacy, залогировать расхождение.
+
+    Никогда не влияет на ответ и не поднимает исключения наружу.
+    """
+    try:
+        legacy_children = list((legacy_node or {}).get("children") or [])
+        canonical_children = _canonical_children_for_shadow(db, code)
+        model = get_canonical_model()
+        revision = getattr(model, "snapshot_id", None) if model is not None else None
+        result = compare_children(code, legacy_children, canonical_children, revision=revision)
+        if not result.match:
+            logger.warning(
+                "CANONICAL_TREE_SHADOW mismatch on /children: %s",
+                result.as_log_fields(),
+            )
+    except Exception:  # noqa: BLE001 — shadow не должен влиять на запрос
+        logger.exception("CANONICAL_TREE_SHADOW: сбой сравнения для code=%r", code)
+
+
+def _resolve_children_node(db: Session, code: str) -> dict[str, Any] | None:
+    """Разрешение узла для ``/children`` с учётом feature flags.
+
+    - ``CANONICAL_TREE_ENABLED`` ON → структура из CanonicalModel; при неуспехе
+      (модель недоступна / узел не найден) — fallback на legacy.
+    - OFF → строго legacy path. Если дополнительно включён
+      ``CANONICAL_TREE_SHADOW`` — legacy-ответ отдаётся как есть, а canonical
+      считается и сверяется в фоне (лог), без влияния на ответ.
+    """
+    if is_canonical_tree_enabled():
+        try:
+            node = _resolve_tree_node_canonical(db, code)
+        except Exception:  # noqa: BLE001 — canonical не должен ронять запрос
+            logger.exception("CANONICAL_TREE: сбой canonical-пути для code=%r; fallback legacy", code)
+            node = None
+        if node is not None:
+            return node
+        return _resolve_tree_node(db, code)
+
+    legacy_node = _resolve_tree_node(db, code)
+    if is_canonical_tree_shadow_enabled():
+        _run_children_shadow(db, code, legacy_node)
+    return legacy_node
+
+
+def compare_children_structure(db: Session, codes: list[str]) -> list[dict[str, Any]]:
+    """Offline-хелпер: сверка структуры ``/children`` legacy vs canonical.
+
+    Тестируемая функция (НЕ runtime-эндпоинт): для каждого поддерживаемого кода
+    сравнивает прямых потомков legacy-пути и canonical-пути и возвращает отчёт.
+    Полезно для оффлайн-аудита parity перед включением флага.
+    """
+    report: list[dict[str, Any]] = []
+    model = get_canonical_model()
+    revision = getattr(model, "snapshot_id", None) if model is not None else None
+    for raw in codes:
+        code = (raw or "").strip()
+        legacy_node = _resolve_tree_node(db, code)
+        legacy_children = list((legacy_node or {}).get("children") or [])
+        canonical_children = _canonical_children_for_shadow(db, code)
+        result = compare_children(code, legacy_children, canonical_children, revision=revision)
+        report.append(result.as_log_fields())
+    return report
+
+
 def list_tnved_children(db: Session, code: str, depth: str = "direct") -> dict[str, Any]:
     code = (code or "").strip()
     depth_norm = (depth or "direct").lower()
@@ -890,13 +1029,13 @@ def list_tnved_children(db: Session, code: str, depth: str = "direct") -> dict[s
 
     d = _digits(code)
     if len(d) == 2:
-        node = _resolve_tree_node(db, d)
+        node = _resolve_children_node(db, d)
         if not node:
             raise HTTPException(status_code=404, detail="Группа не найдена")
         items = [_serialize_tree_node(db, ch) for ch in node.get("children") or []]
         return {"status": "OK", "code": d, "depth": depth_norm, "items": items}
 
-    node = _resolve_tree_node(db, code)
+    node = _resolve_children_node(db, code)
     if not node:
         raise HTTPException(status_code=404, detail="Узел не найден")
 
