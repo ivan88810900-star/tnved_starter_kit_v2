@@ -14,7 +14,11 @@ ADR-0001 §8 (Этап 2/3): пока canonical read-path выключен, мо
 from __future__ import annotations
 
 from dataclasses import dataclass
+import threading
 from typing import Any, Mapping, Sequence
+
+
+DEFAULT_MISMATCH_LOG_EVERY = 100
 
 
 def node_fingerprint(node: Mapping[str, Any]) -> tuple[Any, ...]:
@@ -63,6 +67,50 @@ class ShadowComparison:
         }
 
 
+@dataclass(frozen=True)
+class ShadowMetricsSnapshot:
+    """Потокобезопасный снимок in-process shadow-счётчиков."""
+
+    shadow_match: int
+    shadow_mismatch: int
+
+
+class ShadowMonitor:
+    """Считает match/mismatch и семплирует mismatch-логи.
+
+    Метрика обновляется для каждого сравнения. Логируется первый mismatch и
+    затем каждый N-й; это сохраняет наблюдаемость без log storm.
+    """
+
+    def __init__(self, *, mismatch_log_every: int = DEFAULT_MISMATCH_LOG_EVERY) -> None:
+        self._lock = threading.Lock()
+        self._shadow_match = 0
+        self._shadow_mismatch = 0
+        self._mismatch_log_every = max(1, int(mismatch_log_every))
+
+    def record(self, result: ShadowComparison) -> bool:
+        """Записать результат; вернуть True, если mismatch нужно логировать."""
+        with self._lock:
+            if result.match:
+                self._shadow_match += 1
+                return False
+            self._shadow_mismatch += 1
+            mismatch_number = self._shadow_mismatch
+            return mismatch_number == 1 or mismatch_number % self._mismatch_log_every == 0
+
+    def snapshot(self) -> ShadowMetricsSnapshot:
+        with self._lock:
+            return ShadowMetricsSnapshot(
+                shadow_match=self._shadow_match,
+                shadow_mismatch=self._shadow_mismatch,
+            )
+
+    def reset(self) -> None:
+        with self._lock:
+            self._shadow_match = 0
+            self._shadow_mismatch = 0
+
+
 def compare_children(
     code: str,
     legacy_children: Sequence[Mapping[str, Any]] | None,
@@ -109,3 +157,21 @@ def compare_children(
         canonical_count=len(canonical_list),
         revision=revision,
     )
+
+
+_shadow_monitor = ShadowMonitor()
+
+
+def record_shadow_comparison(result: ShadowComparison) -> bool:
+    """Обновить глобальные runtime-счётчики и решить, писать ли warning."""
+    return _shadow_monitor.record(result)
+
+
+def get_shadow_metrics() -> ShadowMetricsSnapshot:
+    """Текущий in-process snapshot без добавления нового public endpoint."""
+    return _shadow_monitor.snapshot()
+
+
+def reset_shadow_metrics() -> None:
+    """Сброс счётчиков для изолированных тестов/диагностики."""
+    _shadow_monitor.reset()

@@ -10,6 +10,10 @@ oracle до достижения parity.
 
 from __future__ import annotations
 
+from typing import Callable
+
+from sqlalchemy.orm import Session
+
 from ...db import SessionLocal
 from ...models import HsRate
 from ..tnved_tree import digits
@@ -28,12 +32,20 @@ from .validator import TreeValidator
 
 _LEAF_FLAG_CHUNK = 500
 
+SessionFactory = Callable[[], Session]
+
 
 class TreeBuilder:
     """Собирает TreeNode из RecoveredHeading (Parser → Recovery → Builder)."""
 
-    def __init__(self, normalizer: StructureNormalizer | None = None) -> None:
+    def __init__(
+        self,
+        normalizer: StructureNormalizer | None = None,
+        *,
+        session_factory: SessionFactory = SessionLocal,
+    ) -> None:
         self._normalizer = normalizer or StructureNormalizer()
+        self._session_factory = session_factory
 
     def build(self, parse_result: TreeParseResult) -> list[TreeNode]:
         leaf_flags = self._compute_leaf_flags(parse_result)
@@ -62,7 +74,8 @@ class TreeBuilder:
         Additive API: не меняет `build()` (по-прежнему `list[TreeNode]`), а
         оборачивает его в read-only модель с индексами. Перед freeze прогоняется
         validator gate (ADR-0001 §6.4); при `validate=True` проверка fake-кодов
-        идёт по `parse_result.db_codes`. Модель к runtime не подключается.
+        идёт по `parse_result.db_codes`. Runtime-провайдер вызывает именно этот
+        метод, поэтому validator gate остаётся обязательным и для read-path.
         """
         roots = self.build(parse_result)
         snapshot_id = compute_snapshot_id(parse_result.db_codes)
@@ -90,7 +103,7 @@ class TreeBuilder:
         )
         existing: set[str] = set()
         if ambiguous:
-            with SessionLocal() as db:
+            with self._session_factory() as db:
                 for i in range(0, len(ambiguous), _LEAF_FLAG_CHUNK):
                     chunk = ambiguous[i : i + _LEAF_FLAG_CHUNK]
                     rows = db.query(HsRate.hs_code).filter(HsRate.hs_code.in_(chunk)).all()

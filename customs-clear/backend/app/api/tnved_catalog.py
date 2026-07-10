@@ -43,11 +43,14 @@ from ..services.tnved_tree.helpers import (
     strip_leading_dashes as _strip_leading_dashes,
 )
 from ..services.tree_engine import (
+    ShadowComparison,
     TreeSerializer,
     compare_children,
     get_canonical_model,
+    get_provider,
     is_canonical_tree_enabled,
     is_canonical_tree_shadow_enabled,
+    record_shadow_comparison,
 )
 
 logger = logging.getLogger(__name__)
@@ -911,16 +914,22 @@ def _run_children_shadow(db: Session, code: str, legacy_node: dict[str, Any] | N
     try:
         legacy_children = list((legacy_node or {}).get("children") or [])
         canonical_children = _canonical_children_for_shadow(db, code)
-        model = get_canonical_model()
-        revision = getattr(model, "snapshot_id", None) if model is not None else None
+        revision = get_provider().current_revision
         result = compare_children(code, legacy_children, canonical_children, revision=revision)
-        if not result.match:
+        if record_shadow_comparison(result):
             logger.warning(
                 "CANONICAL_TREE_SHADOW mismatch on /children: %s",
                 result.as_log_fields(),
             )
     except Exception:  # noqa: BLE001 — shadow не должен влиять на запрос
-        logger.exception("CANONICAL_TREE_SHADOW: сбой сравнения для code=%r", code)
+        result = ShadowComparison(
+            code=code,
+            match=False,
+            reason="shadow_exception",
+            revision=get_provider().current_revision,
+        )
+        if record_shadow_comparison(result):
+            logger.exception("CANONICAL_TREE_SHADOW: сбой сравнения для code=%r", code)
 
 
 def _resolve_children_node(db: Session, code: str) -> dict[str, Any] | None:

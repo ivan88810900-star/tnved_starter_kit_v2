@@ -1,4 +1,4 @@
-"""Tree Model v2 — параллельный движок дерева ТН ВЭД (не подключён к API)."""
+"""Canonical tree engine; `/children` read-path доступен только за default-OFF флагом."""
 
 from .builder import TreeBuilder
 from .canonical_model import CanonicalModel, CanonicalModelValidationError
@@ -27,10 +27,16 @@ from .provider import (
 from .recovery import RecoveredHeading, RecoveredNode, StructureNormalizer
 from .serializer import TreeSerializer
 from .shadow import (
+    DEFAULT_MISMATCH_LOG_EVERY,
     ShadowComparison,
+    ShadowMetricsSnapshot,
+    ShadowMonitor,
     children_fingerprint,
     compare_children,
+    get_shadow_metrics,
     node_fingerprint,
+    record_shadow_comparison,
+    reset_shadow_metrics,
 )
 from .validator import TreeValidator, ValidationIssue, ValidationResult
 
@@ -40,12 +46,15 @@ __all__ = [
     "CanonicalTreeProvider",
     "ClassificationGroupNode",
     "CommodityNode",
+    "DEFAULT_MISMATCH_LOG_EVERY",
     "HeadingNode",
     "NodeType",
     "ParsedCommodityRecord",
     "RecoveredHeading",
     "RecoveredNode",
     "ShadowComparison",
+    "ShadowMetricsSnapshot",
+    "ShadowMonitor",
     "StructureNormalizer",
     "TreeBuilder",
     "TreeNode",
@@ -61,8 +70,11 @@ __all__ = [
     "compute_snapshot_id",
     "get_canonical_model",
     "get_provider",
+    "get_shadow_metrics",
     "is_canonical_tree_enabled",
     "is_canonical_tree_shadow_enabled",
     "node_fingerprint",
+    "record_shadow_comparison",
     "reset_canonical_provider",
+    "reset_shadow_metrics",
 ]

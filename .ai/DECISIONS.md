@@ -10,6 +10,7 @@
 | ADR | Название | Статус | Принял | Дата | Документ |
 |-----|----------|--------|--------|------|----------|
 | ADR-0001 | Canonical TNVED Model | Accepted | Ivan | 2026-06-30 | [`decisions/ADR-0001-canonical-tnved-model.md`](decisions/ADR-0001-canonical-tnved-model.md) |
+| ADR-0002 | First production read-path on CanonicalModel (`/children`) | Accepted with conditions | Ivan | 2026-07-10 | [`decisions/ADR-0002-canonical-children-read-path.md`](decisions/ADR-0002-canonical-children-read-path.md) |
 
 ---
 
@@ -55,33 +56,46 @@
   перед freeze, freeze/read-only на уровне интерфейса, full-tree content parity с legacy.
   Additive `TreeBuilder.build_model(...)`; `build(...)` без изменений. Не подключён к
   runtime/API/overlay; feature flag не вводился.
-- ✅ **TASK-CANONICAL-004** (Completed) — Этап 3 ADR: **структурный слой `/children`
+- ▶ **TASK-CANONICAL-004** (In progress) — Этап 3 ADR: **структурный слой `/children`
   за feature flag** (`CANONICAL_TREE_ENABLED`, `CANONICAL_TREE_SHADOW`, оба default OFF,
   request-time). Provider с in-memory кэшем (build-once под локом; ревизия учитывает
   `tnved_commodities` + leaf-relevant `hs_rates`) + validator gate + fallback на legacy
   без 500. Bridge `TreeSerializer.to_legacy_dict` → существующий `_serialize_tree_node`
   (overlay не дублируется). Shadow-режим не влияет на ответ, логирует mismatch. Контракт
-  JSON не изменён. Legacy `build_tree()` не тронут.
+  JSON не изменён. Legacy `build_tree()` не тронут. Corrective закрывает stale-cache
+  при in-place UPDATE и добавляет shadow metrics/sampling + Gate-2 auditor; полный
+  Gate-2 на наполненной БД ещё обязателен.
 
 **Открытые Decision-точки** (полный список со статусами/сроками — `.ai/CURRENT_STATE.md`
 §9 «Open Architecture Decisions»):
 - Формула `stable_id` (черновой `node-<hex>`, окончательно не утверждена).
-- Состав входов `snapshot_id` модели (по-прежнему только `db_codes`); **ревизия кэша**
-  read-path в `provider.py` дополнительно учитывает leaf-relevant `hs_rates` — это
-  cache-инвалидация, не сам `snapshot_id`.
+- Состав входов `snapshot_id` модели (по-прежнему только `db_codes`); отдельная
+  **ревизия кэша** read-path хеширует значимые поля commodities, Section/Chapter notes
+  и leaf-relevant `hs_rates` — это cache-invalidation, не identity самой модели.
 - Где материализуется модель: in-memory (read-path использует in-memory кэш провайдера)
   vs materialized-снапшот, переживающий рестарт.
 - ✅ Стратегия feature flag (`CANONICAL_TREE_ENABLED` / `CANONICAL_TREE_SHADOW`) —
-  введена в TASK-CANONICAL-004 (default OFF). Включение по умолчанию — за Ivan.
+  введена в TASK-CANONICAL-004 (default OFF). Serving ON запрещён до Gate-2 и
+  отдельного решения Ivan.
 - Дедлайн удаления legacy `build_tree` после parity.
-- ✅ Первый production read-path — `/children` (структурный слой) за флагом
-  (TASK-CANONICAL-004); overlay/остальные эндпоинты — вне scope.
+- ✅ Дизайн первого production read-path — `/children` (структурный слой) за флагом;
+  TASK-CANONICAL-004 остаётся in progress до Gate-2, overlay/остальные endpoints вне scope.
 
 **Архитектурные долги:** `.ai/CURRENT_STATE.md` §8 (Critical / Important / Nice to have).
 
 **Инварианты (binding):** I1–I22 в полном ADR (no virtual L5, no fake codes,
 stable ids, детерминизм, реальные коды достижимы, одна модель истины, semantic
 overlay не меняет структуру, AI ничего не изменяет, snapshot-консистентность и др.).
+
+## ADR-0002 — First production read-path on CanonicalModel (`/children`)
+
+**Статус:** Accepted with conditions (Ivan, 2026-07-10).
+
+- Первый read-path — только структурный слой `/children`.
+- Оба флага default OFF и читаются request-time.
+- Legacy остаётся oracle и fail-safe fallback.
+- Serving ON запрещён до точной cache-invalidation (Gate-1), полного offline-аудита
+  с 0 mismatch (Gate-2) и отдельного решения Ivan о rollout.
 
 ---
 
