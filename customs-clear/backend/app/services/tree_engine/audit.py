@@ -28,6 +28,7 @@ from .serializer import TreeSerializer
 from .shadow import compare_children
 
 SessionFactory = Callable[[], Session]
+MIN_GATE2_COMMODITIES = 10_000
 
 
 @dataclass(frozen=True)
@@ -57,13 +58,18 @@ class CanonicalChildrenAuditReport:
 
     @property
     def gate2_ok(self) -> bool:
-        """True только для полного, а не prefix-диагностического, обхода."""
-        return not self.prefix and self.ok
+        """True только для полного обхода достаточно наполненной БД."""
+        return (
+            not self.prefix
+            and self.commodity_count >= MIN_GATE2_COMMODITIES
+            and self.ok
+        )
 
     def as_dict(self) -> dict[str, Any]:
         payload = asdict(self)
         payload["ok"] = self.ok
         payload["gate2_ok"] = self.gate2_ok
+        payload["minimum_gate2_commodities"] = MIN_GATE2_COMMODITIES
         return payload
 
 

@@ -8,7 +8,11 @@ try:
     from app.db import SessionLocal
     from app.models.tnved import Chapter, Commodity, Section
     from app.services.normative_store import init_db
-    from app.services.tree_engine.audit import audit_canonical_children
+    from app.services.tree_engine.audit import (
+        MIN_GATE2_COMMODITIES,
+        CanonicalChildrenAuditReport,
+        audit_canonical_children,
+    )
 
     _OK = True
 except ImportError:  # pragma: no cover
@@ -81,6 +85,29 @@ class CanonicalChildrenAuditTests(unittest.TestCase):
         self.assertFalse(report.ok)
         self.assertFalse(report.gate2_ok)
         self.assertEqual(report.commodity_count, 0)
+
+    def test_gate2_requires_minimum_database_coverage(self) -> None:
+        common = {
+            "prefix": "",
+            "chapter_paths": 1,
+            "node_paths": 1,
+            "checked": 2,
+            "matches": 2,
+            "mismatches": 0,
+            "unresolved": 0,
+            "duration_ms": 1.0,
+        }
+        partial = CanonicalChildrenAuditReport(
+            commodity_count=MIN_GATE2_COMMODITIES - 1,
+            **common,
+        )
+        full = CanonicalChildrenAuditReport(
+            commodity_count=MIN_GATE2_COMMODITIES,
+            **common,
+        )
+        self.assertTrue(partial.ok)
+        self.assertFalse(partial.gate2_ok)
+        self.assertTrue(full.gate2_ok)
 
 
 if __name__ == "__main__":

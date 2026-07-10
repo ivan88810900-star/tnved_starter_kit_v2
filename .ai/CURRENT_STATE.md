@@ -120,11 +120,21 @@ legacy (сверх structural). До TASK-CANONICAL-004 контур не был
 - Gate-2 инструмент `scripts/audit_canonical_children.py` строит legacy/canonical по
   одному разу и сравнивает все DB-backed `/children` пути. Полный прогон на наполненной
   БД после corrective-изменений **ещё не выполнен**, поэтому serving-флаг включать нельзя.
+  Защита от false-green требует не менее 10 000 commodity-строк; меньшая БД может дать
+  parity-smoke, но не `gate2_ok`.
+- Для передачи без полного 1.5 GB `customs.db` добавлен read-only exporter
+  `scripts/export_canonical_gate2_db.py`: в одной snapshot-транзакции копирует только
+  `tnved_sections`, `tnved_chapters`, `tnved_commodities`, `hs_rates`, проверяет
+  integrity/FK, считает SHA-256 и опционально создаёт ZIP. В `hs_rates` остаются только
+  leaf-маркеры неоднозначных commodity-кодов `*0000`; значения ставок/provenance и
+  операционные/user tables в экспорт не попадают.
 - Контракт JSON **не изменён**; legacy `build_tree()` и `semantic_navigation` **не тронуты**;
   БД/Alembic/frontend **не тронуты**.
-- Self-contained тесты: `tests/test_canonical_read_path.py` (35) и
-  `tests/test_canonical_children_audit.py` (2). Они покрывают in-place UPDATE,
-  notes, leaf-rate invalidation, метрики/семплирование, root/Roman parity и audit smoke.
+- Self-contained тесты: `tests/test_canonical_read_path.py` (35),
+  `tests/test_canonical_children_audit.py` (3) и
+  `tests/test_export_canonical_gate2_db.py` (2). Они покрывают in-place UPDATE,
+  notes, leaf-rate invalidation, метрики/семплирование, root/Roman parity, audit smoke
+  и минимальный read-only export → полный audit.
   Data-dependent suites и полный Gate-2 должны быть повторены на наполненной БД.
 
 > Предыдущий QA-вердикт `APPROVE WITH NOTES` отменён после воспроизведения stale-cache

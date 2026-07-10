@@ -32,6 +32,8 @@
   дублируется). Контракт JSON неизменён; legacy `build_tree()` не тронут. До завершения
   нужен полный Gate-2 audit на наполненной БД и повторный QA; флаг остаётся OFF.
   Stable requests используют дешёвый DB source-token и не хешируют весь каталог.
+  Для Gate-2 передачи без полного DB-архива есть минимальный read-only exporter четырёх
+  структурных таблиц (`scripts/export_canonical_gate2_db.py`).
 
 **Текущее состояние и долги:** см. `.ai/CURRENT_STATE.md` §2b/§8/§9. Read-path
 `/children` подключён к runtime **только за флагом** (default OFF). Overlay/остальные

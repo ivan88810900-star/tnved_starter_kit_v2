@@ -213,8 +213,18 @@ pytest tests/test_canonical_tnved_model.py -v
 # Self-contained provider/cache/shadow/API parity + audit smoke
 pytest tests/test_canonical_read_path.py tests/test_canonical_children_audit.py -q
 
-# Gate-2: только полный запуск без --prefix может завершиться кодом 0
+# Gate-2: exit 0 требует полного запуска, 0 mismatch и >=10k commodity rows
 python scripts/audit_canonical_children.py --json
+
+# Если полный customs.db слишком велик: безопасный минимальный export + ZIP
+python scripts/export_canonical_gate2_db.py \
+  --source ./customs.db \
+  --output ./canonical-gate2.db \
+  --archive ./canonical-gate2.zip
+
+# Проверка экспортированного файла
+DATABASE_URL=sqlite:///./canonical-gate2.db \
+  python scripts/audit_canonical_children.py --json
 ```
 
 Также приложить фактический вывод:
@@ -236,7 +246,11 @@ QA по `.ai/QA_PROTOCOL.md`; отчёт по `.ai/ENGINEERING_PROTOCOL.md` §12
 - `ruff check` по всем изменённым Python-файлам — **passed**.
 - `compileall` по изменённым модулям/тестам — **passed**.
 - `pytest tests/test_canonical_read_path.py tests/test_canonical_children_audit.py -q` —
-  **37 passed**, 1 dependency deprecation warning.
+  **38 passed**, 1 dependency deprecation warning.
+- `pytest tests/test_export_canonical_gate2_db.py -q` — **2 passed**; проверены
+  read-only source, исключение посторонних таблиц, ZIP, SHA-256 и parity-smoke
+  экспортированной БД. Synthetic DB возвращает `ok=true`, но `gate2_ok=false`, exit `4`
+  из-за покрытия `<10 000`, поэтому усечённый экспорт не может дать false-green.
 - `test_canonical_tnved_model.py + test_tree_engine_v2.py` на текущей ветке и на
   baseline `main` — одинаково **24 passed / 12 failed**; все 12 падений требуют
   отсутствующие в локальной БД TNVED-данные.
@@ -251,6 +265,8 @@ QA по `.ai/QA_PROTOCOL.md`; отчёт по `.ai/ENGINEERING_PROTOCOL.md` §12
   `ok=false`, `gate2_ok=false`, exit `2`: это корректный **BLOCKED**, не зелёный Gate-2.
 - `--prefix` предназначен только для диагностики/smoke и при успешной parity выходит
   с кодом `3`; подтвердить Gate-2 может только полный запуск без `--prefix`.
+- Непустая, но усечённая БД (`<10 000` commodities) при 0 mismatch выходит с кодом `4`;
+  это отдельный coverage-blocker.
 
 **Промежуточный verdict:** corrective code/self-contained QA — green; задача остаётся
 `in_progress`, serving-флаг остаётся OFF до полного Gate-2 на наполненной БД.

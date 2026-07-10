@@ -13,7 +13,10 @@ if str(_BACKEND) not in sys.path:
     sys.path.insert(0, str(_BACKEND))
 
 from app.db import SessionLocal  # noqa: E402
-from app.services.tree_engine.audit import audit_canonical_children  # noqa: E402
+from app.services.tree_engine.audit import (  # noqa: E402
+    MIN_GATE2_COMMODITIES,
+    audit_canonical_children,
+)
 
 
 def main() -> int:
@@ -53,7 +56,16 @@ def main() -> int:
     if not report.ok:
         return 1
     # Prefix полезен для smoke/диагностики, но не может дать зелёный Gate-2.
-    return 0 if report.gate2_ok else 3
+    if report.prefix:
+        return 3
+    if not report.gate2_ok:
+        if not args.json:
+            print(
+                "BLOCKED: database coverage is too small for Gate-2 "
+                f"({report.commodity_count} < {MIN_GATE2_COMMODITIES})."
+            )
+        return 4
+    return 0
 
 
 if __name__ == "__main__":
