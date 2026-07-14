@@ -129,8 +129,8 @@ legacy (сверх structural). До TASK-CANONICAL-004 контур не был
   leaf-маркеры неоднозначных commodity-кодов `*0000`; значения ставок/provenance и
   операционные/user tables в экспорт не попадают.
   Опция `--audit-report` сразу запускает Gate-2 на экспорте и атомарно сохраняет
-  переносимый JSON с SHA-256, coverage, parity и exit code; при 0 mismatch достаточно
-  передать этот маленький отчёт, без самой БД.
+  переносимый JSON с SHA-256, coverage, parity и exit code; при `gate2_ok=true`
+  достаточно передать этот маленький отчёт, без самой БД.
 - Контракт JSON **не изменён**; legacy `build_tree()` и `semantic_navigation` **не тронуты**;
   БД/Alembic/frontend **не тронуты**.
 - Self-contained тесты: `tests/test_canonical_read_path.py` (35),
