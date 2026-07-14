@@ -109,6 +109,15 @@ class PermitMeasureOut(BaseModel):
     description: str = ""
 
 
+class CanonicalAnchorOut(BaseModel):
+    """Stable internal product reference exposed additively to trusted consumers."""
+
+    stable_id: str
+    snapshot_id: str
+    code: str | None = None
+    node_type: str
+
+
 class TnvedCommodityDetailsResponse(BaseModel):
     model_config = ConfigDict(extra="ignore")
 
@@ -126,5 +135,6 @@ class TnvedCommodityDetailsResponse(BaseModel):
     measures: list[PermitMeasureOut] = Field(default_factory=list)
     intellectual_properties: list[IntellectualPropertyOut] = Field(default_factory=list)
     preliminary_decisions: PreliminaryDecisionsBlockOut = Field(default_factory=PreliminaryDecisionsBlockOut)
+    canonical_anchor: CanonicalAnchorOut | None = None
     chapter: ChapterOut | None = None
     section: SectionOut | None = None

@@ -24,7 +24,11 @@ from ..models.tnved import Chapter, Commodity, IntellectualProperty, NonTariffMe
 from ..schemas.tnved_catalog import TnvedCommodityDetailsResponse
 from ..services.non_tariff_measures_lookup import get_measures_for_code
 from ..services.normative_store import find_rate_for_hs
-from ..services.tnved_code_card import find_preliminary_decisions_for_hs
+from ..services.tnved_code_card import (
+    canonical_anchor_for_hs,
+    canonical_anchors_for_hs_codes,
+    find_preliminary_decisions_for_hs,
+)
 from ..services.preview_cache_revision import (
     bump_preview_cache_revision,
     read_preview_cache_revision_marker,
@@ -557,6 +561,11 @@ def search_commodities(
         ]
 
     resp: dict[str, Any] = {"status": "OK", "results": results}
+    anchors = canonical_anchors_for_hs_codes([item["code"] for item in results])
+    for item in results:
+        anchor = anchors.get(_digits(item["code"]))
+        if anchor is not None:
+            item["canonical_anchor"] = anchor
     if not results:
         resp["suggestions"] = get_search_suggestions()
     return JSONResponse(resp)
@@ -1697,6 +1706,7 @@ def get_commodity_by_code(code: str, db: Session = Depends(get_db)) -> dict[str,
             "measures": measures,
             "intellectual_properties": [],
             "preliminary_decisions": find_preliminary_decisions_for_hs(db, out_code),
+            "canonical_anchor": canonical_anchor_for_hs(out_code),
             "chapter": None,
             "section": None,
         }
@@ -1755,6 +1765,7 @@ def get_commodity_by_code(code: str, db: Session = Depends(get_db)) -> dict[str,
         "measures": _measures_for_api(out_code, measure_types),
         "intellectual_properties": intellectual_properties,
         "preliminary_decisions": preliminary_decisions,
+        "canonical_anchor": canonical_anchor_for_hs(out_code),
         "chapter": {"id": ch.id, "code": ch.code, "title": ch.title or "", "notes": ch.notes or ""},
         "section": {"id": sec.id, "roman_number": sec.roman_number, "title": sec.title or "", "notes": sec.notes or ""},
     }

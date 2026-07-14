@@ -44,9 +44,9 @@ Parallel (not blocking MVP UI): continue curating `official_sgr_rules.seed.json`
 
 Current next tasks:
 
-- ADR-0003 / TASK-CANONICAL-005: freeze `stable_id` + `snapshot_id` lifecycle
-- TN VED search + code card with related preliminary decisions and evidence, using the
-  additive Canonical anchor DTO
+- ✅ ADR-0003 / TASK-CANONICAL-005: `stable_id` + `snapshot_id` lifecycle frozen
+- ✅ TASK-CANONICAL-006: TN VED search + code-card consume the additive Canonical
+  anchor DTO with soft fallback; preliminary decisions/evidence remain visible
 - Smart payment explanation block (reuse calculator/compliance surfaces)
 - Sanctions/risk check slice
 - Assistant grounding on normative + payments modules

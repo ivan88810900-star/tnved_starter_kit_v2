@@ -227,6 +227,7 @@ legacy (сверх structural). До TASK-CANONICAL-004 контур не был
 | **Canonical Model Materialization** — иммутабельный `CanonicalModel` (индексы+навигация), validator gate, content parity | ✅ Completed (не подключён к runtime) | — |
 | **TASK-CANONICAL-004** — read-path `/children` за флагом (provider/cache, shadow, fallback), контракт неизменён | ✅ Completed: Gate-1 + Gate-2 passed; flags default OFF | — |
 | **TASK-CANONICAL-005** — freeze `stable_id` / output `snapshot_id` / anchor DTO | ✅ Completed; ADR-0003 Accepted | — |
+| **TASK-CANONICAL-006** — TN VED search/code-card anchor bridge | ✅ Completed; optional soft-fail anchor | — |
 | Derisking после TASK-005: aliases/history (`superseded_by`, previous codes/IDs) | Рекомендован | Высокий |
 | Fine-tune модели на `training_pairs.jsonl` | Вне репозитория | Низкий |
 | Live-parсер ФТС предрешений (tks.ru JS) | Decision Memo #135 | Средний |

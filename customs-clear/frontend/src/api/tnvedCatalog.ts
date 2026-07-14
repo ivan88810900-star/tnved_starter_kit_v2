@@ -38,6 +38,14 @@ export type TnvedSearchHit = {
   name: string;
   /** Реальный декларируемый лист (не групповой заголовок). */
   is_leaf?: boolean;
+  canonical_anchor?: CanonicalAnchor;
+};
+
+export type CanonicalAnchor = {
+  stable_id: string;
+  snapshot_id: string;
+  code: string | null;
+  node_type: string;
 };
 
 export type TnvedPreview = {
@@ -104,6 +112,8 @@ export type TnvedCommodityDetail = {
   chapter: { id: number; code: string; title: string; notes: string };
   section: { id: number; roman_number: string; title: string; notes: string };
   preliminary_decisions?: TnvedPreliminaryDecisionsBlock;
+  /** Устойчивая ссылка для AI/RAG и следующих модулей; не влияет на отображение. */
+  canonical_anchor?: CanonicalAnchor | null;
 };
 
 export type TnvedClassificationDecision = {
