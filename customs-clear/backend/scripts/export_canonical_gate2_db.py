@@ -16,6 +16,8 @@ import json
 import os
 from pathlib import Path
 import sqlite3
+import subprocess
+import sys
 import tempfile
 from typing import Any
 import zipfile
@@ -190,6 +192,64 @@ def _create_archive(database: Path, archive: Path) -> None:
         temp_path.unlink(missing_ok=True)
 
 
+def _write_json_atomic(path: Path, payload: dict[str, Any]) -> None:
+    fd, temp_name = tempfile.mkstemp(
+        prefix=f".{path.name}.",
+        suffix=".tmp",
+        dir=path.parent,
+    )
+    temp_path = Path(temp_name)
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as stream:
+            json.dump(payload, stream, ensure_ascii=False, indent=2)
+            stream.write("\n")
+        os.replace(temp_path, path)
+    finally:
+        temp_path.unlink(missing_ok=True)
+
+
+def write_gate2_audit_report(
+    export_report: Gate2ExportReport,
+    report_path: str | Path,
+    *,
+    force: bool = False,
+) -> int:
+    """Audit an exported database and atomically write a portable JSON report."""
+    report = Path(report_path).expanduser().resolve()
+    database = Path(export_report.output)
+    reserved = {Path(export_report.source), database}
+    if export_report.archive:
+        reserved.add(Path(export_report.archive))
+    if report in reserved:
+        raise ValueError("audit report must differ from source, output, and archive")
+    _check_destination(report, force=force)
+
+    env = os.environ.copy()
+    env["DATABASE_URL"] = f"sqlite:///{database}"
+    result = subprocess.run(
+        [sys.executable, str(Path(__file__).with_name("audit_canonical_children.py")), "--json"],
+        env=env,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    try:
+        audit = json.loads(result.stdout)
+    except json.JSONDecodeError as exc:
+        raise RuntimeError(
+            "Gate-2 auditor did not produce valid JSON: "
+            f"exit={result.returncode}, stderr={result.stderr.strip()!r}"
+        ) from exc
+    payload = {
+        "format": "canonical-gate2-report-v1",
+        "export": export_report.as_dict(),
+        "audit_exit_code": result.returncode,
+        "audit": audit,
+    }
+    _write_json_atomic(report, payload)
+    return result.returncode
+
+
 def export_gate2_database(
     source_path: str | Path,
     output_path: str | Path,
@@ -309,6 +369,10 @@ def main() -> int:
     parser.add_argument("--source", required=True, help="path to the full customs.db")
     parser.add_argument("--output", required=True, help="path for compact Gate-2 SQLite DB")
     parser.add_argument("--archive", help="optional ZIP path for transfer")
+    parser.add_argument(
+        "--audit-report",
+        help="optional portable JSON report; runs Gate-2 against the compact DB",
+    )
     parser.add_argument("--force", action="store_true", help="replace existing output/archive")
     parser.add_argument("--batch-size", type=int, default=10_000)
     args = parser.parse_args()
@@ -319,8 +383,18 @@ def main() -> int:
         force=args.force,
         batch_size=args.batch_size,
     )
-    print(json.dumps(report.as_dict(), ensure_ascii=False, indent=2))
-    return 0
+    payload: dict[str, Any] = report.as_dict()
+    exit_code = 0
+    if args.audit_report:
+        exit_code = write_gate2_audit_report(
+            report,
+            args.audit_report,
+            force=args.force,
+        )
+        payload["audit_report"] = str(Path(args.audit_report).expanduser().resolve())
+        payload["audit_exit_code"] = exit_code
+    print(json.dumps(payload, ensure_ascii=False, indent=2))
+    return exit_code
 
 
 if __name__ == "__main__":

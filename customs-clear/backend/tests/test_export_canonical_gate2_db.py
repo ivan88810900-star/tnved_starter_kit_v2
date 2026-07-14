@@ -78,6 +78,7 @@ class Gate2DatabaseExporterTests(unittest.TestCase):
             source = root / "full customs.db"
             output = root / "canonical-gate2.db"
             archive = root / "canonical-gate2.zip"
+            audit_report = root / "gate2-report.json"
             _create_source(source)
             source_mtime = source.stat().st_mtime_ns
 
@@ -136,6 +137,33 @@ class Gate2DatabaseExporterTests(unittest.TestCase):
             self.assertFalse(payload["gate2_ok"], msg=payload)
             self.assertEqual(payload["commodity_count"], 3)
             self.assertEqual(payload["mismatches"], 0)
+
+            cli_result = subprocess.run(
+                [
+                    sys.executable,
+                    "scripts/export_canonical_gate2_db.py",
+                    "--source",
+                    str(source),
+                    "--output",
+                    str(root / "cli-gate2.db"),
+                    "--audit-report",
+                    str(audit_report),
+                ],
+                cwd=Path(__file__).resolve().parents[1],
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+            self.assertEqual(cli_result.returncode, 4, msg=cli_result.stderr)
+            cli_payload = json.loads(cli_result.stdout)
+            self.assertEqual(cli_payload["audit_exit_code"], 4)
+            portable = json.loads(audit_report.read_text(encoding="utf-8"))
+            self.assertEqual(portable["format"], "canonical-gate2-report-v1")
+            self.assertEqual(portable["export"]["table_rows"]["tnved_commodities"], 3)
+            self.assertEqual(len(portable["export"]["output_sha256"]), 64)
+            self.assertEqual(portable["audit_exit_code"], 4)
+            self.assertTrue(portable["audit"]["ok"])
+            self.assertFalse(portable["audit"]["gate2_ok"])
 
     def test_export_refuses_destructive_destinations(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

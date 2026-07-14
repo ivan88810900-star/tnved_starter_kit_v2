@@ -220,12 +220,17 @@ python scripts/audit_canonical_children.py --json
 python scripts/export_canonical_gate2_db.py \
   --source ./customs.db \
   --output ./canonical-gate2.db \
-  --archive ./canonical-gate2.zip
+  --archive ./canonical-gate2.zip \
+  --audit-report ./gate2-report.json
 
-# Проверка экспортированного файла
+# Если --audit-report не использован: проверка экспортированного файла
 DATABASE_URL=sqlite:///./canonical-gate2.db \
   python scripts/audit_canonical_children.py --json
 ```
+
+`--audit-report` сохраняет переносимый JSON с SHA-256 экспорта, количеством строк,
+результатом аудита и его exit code. Поэтому для финальной сверки достаточно передать
+только `gate2-report.json`; ZIP нужен лишь для расследования найденных расхождений.
 
 Также приложить фактический вывод:
 
