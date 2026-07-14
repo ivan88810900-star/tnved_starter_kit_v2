@@ -1,6 +1,6 @@
 # TASK-CANONICAL-004: First production read-path on CanonicalModel
 
-> **Status:** in_progress (ADR-0002 Accepted with conditions; Gate-2 full-DB run pending)
+> **Status:** completed (Gate-1 + Gate-2 passed; rollout remains a separate Ivan decision)
 > **Owner:** Backend Engineer (+ Architect review)
 > **Created:** 2026-07-01
 > **Depends on:** **ADR-0002** (`.ai/decisions/ADR-0002-canonical-children-read-path.md`, *Accepted with conditions*, Ivan, 2026-07-10), ADR-0001 (`.ai/decisions/ADR-0001-canonical-tnved-model.md`), TASK-CANONICAL-001, TASK-CANONICAL-002, Canonical Model Materialization (`CanonicalModel`, `TreeBuilder.build_model`, validator gate, full-tree content parity — уже в `main`)
@@ -9,8 +9,9 @@
 > request-time, почему отдельный shadow, почему legacy = oracle, почему контракт неизменен,
 > почему overlay остаётся, почему cache build-once, fallback, частичность/временность смены
 > source of truth) зафиксированы в **ADR-0002**. Эта задача — инженерная спецификация под него.
-> **Decision resolved:** Ivan принял ADR-0002 с условиями 2026-07-10. Флаги остаются
-> default OFF; включение запрещено до полного прохождения Gate-1 и Gate-2.
+> **Decision resolved:** Ivan принял ADR-0002 с условиями 2026-07-10. Gate-1 и Gate-2
+> пройдены 2026-07-14. Флаги остаются default OFF; включение требует отдельного решения
+> Ivan о rollout и не входит в эту задачу.
 
 ---
 
@@ -159,8 +160,8 @@
 ## 5. Acceptance Criteria
 
 - [x] `CANONICAL_TREE_ENABLED` (default OFF) управляет только `/children`, читается request-time.
-- [ ] **OFF** — поведение `/children` **байт-в-байт** = текущему legacy (регресс-тесты не меняются).
-- [ ] **ON** — JSON-ответ `/children` **идентичен** legacy на тест-матрице кодов:
+- [x] **OFF** — поведение `/children` **байт-в-байт** = текущему legacy (регресс-тесты не меняются).
+- [x] **ON** — JSON-ответ `/children` **идентичен** legacy на тест-матрице кодов:
       heading (напр. `8517`), одиночный L6 (`0302`-ветвь), L8, декларируемый leaf,
       pad-код, subheading-group (`0101`), 2-значная группа (`01`), Roman-section.
 - [x] **Gate-1 (блокер):** provider build-once + инвалидация по revision, **обязательно**
@@ -170,15 +171,15 @@
 - [x] Validator gate: невалидная модель не попадает в runtime; `/children` fail-safe
       fallback на legacy + лог, **без 500**.
 - [x] `CANONICAL_TREE_SHADOW` логирует structural+content mismatch с семплированием.
-- [ ] **Gate-2 (блокер):** полный offline-обход всех поддерживаемых `/children` кодов на
-      полной БД даёт **0 mismatch** перед включением serving-флага.
+- [x] **Gate-2 (блокер):** полный offline-обход всех поддерживаемых `/children` кодов на
+      наполненной БД дал **18 049/18 049 match, 0 mismatch, 0 unresolved**.
 - [x] Rollback подтверждён: `CANONICAL_TREE_ENABLED=0` немедленно возвращает legacy без рестарта.
 - [x] Запрещённые пути не изменены: `build_tree()`, `semantic_navigation`, frontend,
       БД/Alembic, NTM/Duty enforcement, `source_kind` isolation, прочие endpoints.
-- [ ] Тесты (см. §7) проходят; добавлены provider/shadow и ON-vs-OFF parity тесты.
+- [x] Тесты (см. §7) проходят; добавлены provider/shadow и ON-vs-OFF parity тесты.
 - [x] `.ai/CURRENT_STATE.md` / `ROADMAP.md` / `DECISIONS.md` обновлены (закрыты Open
       Decisions «Feature flag strategy» и «First production read-path»).
-- [x] QA Report с фактическим выводом команд (§7); финальный full-DB verdict ожидает Gate-2.
+- [x] QA Report с фактическим выводом команд (§7), включая финальный Gate-2.
 
 ---
 
@@ -273,8 +274,21 @@ QA по `.ai/QA_PROTOCOL.md`; отчёт по `.ai/ENGINEERING_PROTOCOL.md` §12
 - Непустая, но усечённая БД (`<10 000` commodities) при 0 mismatch выходит с кодом `4`;
   это отдельный coverage-blocker.
 
-**Промежуточный verdict:** corrective code/self-contained QA — green; задача остаётся
-`in_progress`, serving-флаг остаётся OFF до полного Gate-2 на наполненной БД.
+**Промежуточный verdict на 2026-07-10:** corrective code/self-contained QA — green;
+на тот момент задача оставалась `in_progress` до полного Gate-2 на наполненной БД.
+
+### Final Gate-2 — 2026-07-14
+
+- Source DB: `6 775 808 000` bytes; read-only compact export: `5 365 760` bytes.
+- Export coverage: 21 sections, 96 chapters, 17 809 commodities, 3 258 leaf-relevant
+  `hs_rates`; SHA-256 `b3ece86c68b5010486ec64cce102759673ddc585e634e5698be596d22a8d8d2b`.
+- Full audit without prefix: 17 774 commodities, 96 chapter paths, 17 953 node paths;
+  **18 049 checked, 18 049 matched, 0 mismatches, 0 unresolved** in 4 413.616 ms.
+- Result: `ok=true`, `gate2_ok=true`, exit `0`; minimum coverage 10 000 satisfied.
+
+**Final verdict:** TASK-CANONICAL-004 — **Completed**. Technical rollout gates passed;
+`CANONICAL_TREE_ENABLED` and `CANONICAL_TREE_SHADOW` remain default OFF. Enabling either
+flag is a separate explicit rollout decision by Ivan; no flag was enabled by this task.
 
 ---
 

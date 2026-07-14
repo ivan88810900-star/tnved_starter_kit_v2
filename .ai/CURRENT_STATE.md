@@ -74,7 +74,7 @@ curl http://localhost:8001/api/v1/tnved/children/0302
 
 ---
 
-## 2b. Состояние Canonical Pipeline (TASK-CANONICAL-004 corrective QA)
+## 2b. Состояние Canonical Pipeline (TASK-CANONICAL-004 completed)
 
 **TASK-CANONICAL-001 — Completed.** Детерминированные `stable_id` (без `uuid4()`),
 `snapshot_id`, skeleton стадии Recovery.
@@ -88,8 +88,8 @@ Builder собирает дерево напрямую из recovery-резул�
 freeze/read-only на уровне интерфейса; обязательный validator gate; content-parity с
 legacy (сверх structural). До TASK-CANONICAL-004 контур не был подключён к runtime.
 
-**TASK-CANONICAL-004 — In progress (Этап 3 ADR: read-path за флагом).** ADR-0002
-принят Ivan 2026-07-10 с условиями. Структурный слой
+**TASK-CANONICAL-004 — Completed (Этап 3 ADR: read-path за флагом).** ADR-0002
+принят Ivan 2026-07-10 с условиями; Gate-1 и Gate-2 пройдены. Структурный слой
 эндпоинта `/children` может брать структуру из `CanonicalModel` **за feature flag**:
 
 - Флаги `CANONICAL_TREE_ENABLED` и `CANONICAL_TREE_SHADOW` — **оба default OFF**,
@@ -118,8 +118,9 @@ legacy (сверх structural). До TASK-CANONICAL-004 контур не был
   считаются всегда, mismatch-warning семплируется (первый и каждый 100-й), на ответ
   **не** влияет; сбой canonical в shadow учитывается как mismatch и не даёт 500.
 - Gate-2 инструмент `scripts/audit_canonical_children.py` строит legacy/canonical по
-  одному разу и сравнивает все DB-backed `/children` пути. Полный прогон на наполненной
-  БД после corrective-изменений **ещё не выполнен**, поэтому serving-флаг включать нельзя.
+  одному разу и сравнивает все DB-backed `/children` пути. Финальный прогон 2026-07-14
+  на наполненной БД: **18 049 checked/matched, 0 mismatch, 0 unresolved**,
+  `gate2_ok=true`, exit `0`.
   Защита от false-green требует не менее 10 000 commodity-строк; меньшая БД может дать
   parity-smoke, но не `gate2_ok`.
 - Для передачи без полного 1.5 GB `customs.db` добавлен read-only exporter
@@ -138,11 +139,11 @@ legacy (сверх structural). До TASK-CANONICAL-004 контур не был
   `tests/test_export_canonical_gate2_db.py` (2). Они покрывают in-place UPDATE,
   notes, leaf-rate invalidation, метрики/семплирование, root/Roman parity, audit smoke
   и минимальный read-only export → полный audit.
-  Data-dependent suites и полный Gate-2 должны быть повторены на наполненной БД.
+  Финальный data-dependent Gate-2 выполнен на наполненной БД.
 
-> Предыдущий QA-вердикт `APPROVE WITH NOTES` отменён после воспроизведения stale-cache
-> на in-place UPDATE. Corrective fix реализован; финальный verdict возможен только после
-> повторного QA и Gate-2 на наполненной БД.
+> Предыдущий QA-вердикт `APPROVE WITH NOTES` был отменён после воспроизведения stale-cache
+> на in-place UPDATE. Corrective fix и повторный QA выполнены; финальный Gate-2 зелёный.
+> Флаги остаются default OFF до отдельного решения Ivan о rollout.
 
 ### Реализовано (в `customs-clear/backend/app/services/tree_engine/`, изолированно)
 
@@ -189,7 +190,8 @@ legacy (сверх structural). До TASK-CANONICAL-004 контур не был
 
 | Коммит | Дата | Описание |
 |--------|------|---------|
-| `9fe1fa5` + corrective (текущий commit) | 2026-07-10 | TASK-CANONICAL-004: `/children` за default-OFF флагом; corrective устраняет stale revision, добавляет shadow metrics/sampling и Gate-2 auditor |
+| Gate-2 QA | 2026-07-14 | TASK-CANONICAL-004 completed: 18 049/18 049 match, 0 mismatch/unresolved; flags remain default OFF |
+| `9fe1fa5..daf6be1` | 2026-07-10..14 | `/children` за default-OFF флагом; corrective, shadow metrics, Gate-2 auditor/export/report |
 | `9712c7b` | 2026-07-01 | Canonical Model Materialization: иммутабельный `CanonicalModel`, validator gate, full-tree content parity |
 | `f66d3c7` | 2026-06-30 | TASK-CANONICAL-002: recovery-логика → `StructureNormalizer`; Builder без legacy delegation |
 | `4a7eac2` | 2026-06-30 | TASK-CANONICAL-001: deterministic `stable_id`, `snapshot_id`, recovery skeleton |
@@ -223,7 +225,7 @@ legacy (сверх structural). До TASK-CANONICAL-004 контур не был
 | **TASK-CANONICAL-001** — deterministic `stable_id` + recovery stage skeleton | ✅ Completed | — |
 | **TASK-CANONICAL-002** — recovery-логика → `StructureNormalizer`, Builder без legacy, parity tests | ✅ Completed (APPROVE WITH NOTES) | — |
 | **Canonical Model Materialization** — иммутабельный `CanonicalModel` (индексы+навигация), validator gate, content parity | ✅ Completed (не подключён к runtime) | — |
-| **TASK-CANONICAL-004** — read-path `/children` за флагом (provider/cache, shadow, fallback), контракт неизменён | ▶ In progress: corrective QA; Gate-2 full-DB pending | Высокий |
+| **TASK-CANONICAL-004** — read-path `/children` за флагом (provider/cache, shadow, fallback), контракт неизменён | ✅ Completed: Gate-1 + Gate-2 passed; flags default OFF | — |
 | Derisking (остаток): расширение входов `snapshot_id`, формула `stable_id` | Рекомендован | Высокий |
 | Fine-tune модели на `training_pairs.jsonl` | Вне репозитория | Низкий |
 | Live-parсер ФТС предрешений (tks.ru JS) | Decision Memo #135 | Средний |
@@ -323,9 +325,9 @@ legacy (сверх structural). До TASK-CANONICAL-004 контур не был
 | **stable_id formula** | Open (черновой `node-<hex>`) | ID — первичный ключ для Search/RAG/AI-журнала/Graph; смена формулы позже = миграция всех ссылок | До runtime-adoption (Этап 3); прежде, чем кто-то начнёт хранить ссылки на узлы |
 | **snapshot_id inputs** | Open (только `db_codes`) | От полноты входов зависит корректность кэша/инвалидации и «snapshot-консистентности» (I19) | До materialized CanonicalModel / включения кэша |
 | **Materialized CanonicalModel** | Частично (in-memory `CanonicalModel` реализован; переживающий рестарт снапшот/кэш — Open) | Определяет переживаемость рестарта, память, путь к PostgreSQL | Перед runtime-adoption (кэш по `snapshot_id`) |
-| **Feature flag strategy** | ✅ Closed (`CANONICAL_TREE_ENABLED` / `CANONICAL_TREE_SHADOW`, default OFF, request-time) — ADR-0002 Accepted with conditions | Управляет безопасным A/B old-vs-new и откатом | Включение запрещено до Gate-2; затем отдельное решение Ivan |
+| **Feature flag strategy** | ✅ Closed (`CANONICAL_TREE_ENABLED` / `CANONICAL_TREE_SHADOW`, default OFF, request-time) — ADR-0002 Accepted with conditions | Управляет безопасным A/B old-vs-new и откатом | Gate-2 пройден; включение — отдельное решение Ivan |
 | **Deadline for legacy `build_tree` removal** | Open (oracle до parity) | Двойная логика — долг; нужен критерий «parity достигнута → удаляем» | После content-parity + стабилизации flag (Этап 6) |
-| **First production read-path** | ✅ Design closed — `/children` структурный слой за флагом; TASK-CANONICAL-004 ещё in progress | Какой эндпоинт первым читает CanonicalModel и как сверяется с legacy | Gate-2 full-DB → повторный QA → отдельное решение о rollout |
+| **First production read-path** | ✅ Completed — `/children` структурный слой за default-OFF флагом; Gate-2 green | Какой эндпоинт первым читает CanonicalModel и как сверяется с legacy | Отдельное решение Ivan о rollout |
 
 ---
 

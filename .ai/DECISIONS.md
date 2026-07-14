@@ -56,15 +56,15 @@
   перед freeze, freeze/read-only на уровне интерфейса, full-tree content parity с legacy.
   Additive `TreeBuilder.build_model(...)`; `build(...)` без изменений. Не подключён к
   runtime/API/overlay; feature flag не вводился.
-- ▶ **TASK-CANONICAL-004** (In progress) — Этап 3 ADR: **структурный слой `/children`
+- ✅ **TASK-CANONICAL-004** (Completed, 2026-07-14) — Этап 3 ADR: **структурный слой `/children`
   за feature flag** (`CANONICAL_TREE_ENABLED`, `CANONICAL_TREE_SHADOW`, оба default OFF,
   request-time). Provider с in-memory кэшем (build-once под локом; ревизия учитывает
   `tnved_commodities` + leaf-relevant `hs_rates`) + validator gate + fallback на legacy
   без 500. Bridge `TreeSerializer.to_legacy_dict` → существующий `_serialize_tree_node`
   (overlay не дублируется). Shadow-режим не влияет на ответ, логирует mismatch. Контракт
   JSON не изменён. Legacy `build_tree()` не тронут. Corrective закрывает stale-cache
-  при in-place UPDATE и добавляет shadow metrics/sampling + Gate-2 auditor; полный
-  Gate-2 на наполненной БД ещё обязателен.
+  при in-place UPDATE и добавляет shadow metrics/sampling + Gate-2 auditor. Финальный
+  Gate-2: 18 049/18 049 match, 0 mismatch/unresolved, `gate2_ok=true`, exit 0.
 
 **Открытые Decision-точки** (полный список со статусами/сроками — `.ai/CURRENT_STATE.md`
 §9 «Open Architecture Decisions»):
@@ -75,11 +75,11 @@
 - Где материализуется модель: in-memory (read-path использует in-memory кэш провайдера)
   vs materialized-снапшот, переживающий рестарт.
 - ✅ Стратегия feature flag (`CANONICAL_TREE_ENABLED` / `CANONICAL_TREE_SHADOW`) —
-  введена в TASK-CANONICAL-004 (default OFF). Serving ON запрещён до Gate-2 и
+  введена в TASK-CANONICAL-004 (default OFF). Gate-2 пройден; serving ON требует
   отдельного решения Ivan.
 - Дедлайн удаления legacy `build_tree` после parity.
-- ✅ Дизайн первого production read-path — `/children` (структурный слой) за флагом;
-  TASK-CANONICAL-004 остаётся in progress до Gate-2, overlay/остальные endpoints вне scope.
+- ✅ Первый production read-path — `/children` (структурный слой) за флагом;
+  TASK-CANONICAL-004 completed, overlay/остальные endpoints вне scope.
 
 **Архитектурные долги:** `.ai/CURRENT_STATE.md` §8 (Critical / Important / Nice to have).
 

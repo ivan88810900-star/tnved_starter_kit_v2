@@ -195,12 +195,12 @@ stale-структура после ingestion ставок; R1/R2/R3). Толь�
 - [x] Решение утверждено Ivan: **Accepted with conditions**, 2026-07-10.
 - [x] Реализация соблюдает разделение слоёв (§2): мигрирует только структура `/children`.
 - [x] `CANONICAL_TREE_ENABLED` default OFF, request-time; OFF = byte-compatible legacy.
-- [ ] ON: JSON `/children` идентичен legacy на тест-матрице (heading/L6/L8/leaf/pad/
+- [x] ON: JSON `/children` идентичен legacy на тест-матрице (heading/L6/L8/leaf/pad/
       subheading-group/2-значная группа/roman-section).
 - [x] `CANONICAL_TREE_SHADOW` независим; логирует structural+content mismatch с
       семплированием.
-- [ ] **Gate-2 (блокер):** полный offline-обход всех поддерживаемых `/children` кодов на
-      полной БД даёт **0 mismatch** перед включением serving-флага.
+- [x] **Gate-2 (блокер):** полный offline-обход всех поддерживаемых `/children` кодов на
+      наполненной БД дал **18 049 match, 0 mismatch, 0 unresolved** (2026-07-14).
 - [x] **Gate-1 (блокер):** provider build-once + инвалидация по revision, **обязательно**
       покрывающему `tnved_commodities` **и** `hs_rates` (leaf_flags / `is_leaf_hs_code`);
       без этого `CANONICAL_TREE_ENABLED=1` запрещён в любом окружении.
@@ -236,7 +236,7 @@ ON-OFF / Shadow / Fallback-Rollback / Acceptance / QA / Commit rules). Код �
 
 ## Статус
 
-**Accepted with conditions** (Ivan, 2026-07-10). Serving-флаг остаётся default OFF
-до подтверждения Gate-1 тестами и Gate-2 полным offline-аудитом на наполненной БД.
+**Accepted with conditions** (Ivan, 2026-07-10); Gate-1 и Gate-2 подтверждены
+2026-07-14. Serving-флаг остаётся default OFF до отдельного решения Ivan о rollout.
 Связанные документы:
 ADR-0001, `.ai/tasks/TASK-CANONICAL-004.md`, `.ai/CURRENT_STATE.md` §9, `.ai/DECISIONS.md`.

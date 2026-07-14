@@ -23,14 +23,15 @@
   (`node_by_stable_id` / `node_by_code` / `node_by_display_code`) + навигация
   (parent/children/path/descendants); freeze/read-only на уровне интерфейса; validator
   gate перед freeze; full-tree **content** parity с legacy. Не подключён к runtime.
-- ▶ **TASK-CANONICAL-004 (Этап 3, read-path за флагом; in progress)** — структурный слой
+- ✅ **TASK-CANONICAL-004 (Этап 3, read-path за флагом; completed)** — структурный слой
   `/children` может читать CanonicalModel за `CANONICAL_TREE_ENABLED` (default OFF),
   с shadow-режимом `CANONICAL_TREE_SHADOW` (default OFF). Provider с in-memory кэшем
   (`provider.py`, build-once под локом, точная content-revision учитывает
   `tnved_commodities`, Section/Chapter notes и leaf-relevant `hs_rates`), fallback на legacy без 500, bridge через
   `TreeSerializer.to_legacy_dict` → существующий `_serialize_tree_node` (overlay не
-  дублируется). Контракт JSON неизменён; legacy `build_tree()` не тронут. До завершения
-  нужен полный Gate-2 audit на наполненной БД и повторный QA; флаг остаётся OFF.
+  дублируется). Контракт JSON неизменён; legacy `build_tree()` не тронут. Gate-2 на
+  наполненной БД: 18 049/18 049 match, 0 mismatch/unresolved; флаг остаётся OFF до
+  отдельного решения Ivan о rollout.
   Stable requests используют дешёвый DB source-token и не хешируют весь каталог.
   Для Gate-2 передачи без полного DB-архива есть минимальный read-only exporter четырёх
   структурных таблиц (`scripts/export_canonical_gate2_db.py`); `--audit-report` создаёт
@@ -57,12 +58,12 @@
    но это cache-key, а не `snapshot_id` модели.
 3. **Закрыть решение по формуле `stable_id`** (Open Decision) до того, как ссылки на
    узлы начнут где-либо храниться.
-4. ▶ **Первый read-path за feature flag** — реализуется в TASK-CANONICAL-004:
+4. ✅ **Первый read-path за feature flag** — завершён в TASK-CANONICAL-004:
    `/children` (структурный слой) за `CANONICAL_TREE_ENABLED`, сверка с legacy через
    `CANONICAL_TREE_SHADOW` и `scripts/audit_canonical_children.py`.
-   ADR-0002 принят с условиями; включение запрещено до Gate-2 и отдельного решения Ivan.
+   ADR-0002 принят с условиями; Gate-2 пройден, включение требует отдельного решения Ivan.
 
-После Gate-2 и отдельного решения Ivan возможен rollout первого read-path. Расширение
+После отдельного решения Ivan возможен rollout первого read-path. Расширение
 runtime на overlays и удаление legacy допустимы только после отдельного derisking/parity.
 
 **Инварианты и полный план миграции:** `.ai/decisions/ADR-0001-canonical-tnved-model.md`.
