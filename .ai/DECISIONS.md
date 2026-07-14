@@ -102,10 +102,11 @@ overlay не меняет структуру, AI ничего не изменя�
 anchors with the TN VED search/code-card MVP; broad overlay migration and flag rollout
 remain separate decisions.
 
-**ADR-0003:** Proposed. Freeze snapshot-independent path identity (`stable-id-v1`),
-hash deterministic Canonical output as `canonical-snapshot-v2`, and define the additive
-anchor tuple `(stable_id, snapshot_id, code, node_type)`. TASK-CANONICAL-005 is blocked
-until Ivan accepts or amends this exact contract.
+**ADR-0003:** Accepted by Ivan, 2026-07-14, and implemented by TASK-CANONICAL-005.
+Canonical anchors use snapshot-independent path identity (`stable-id-v1`), deterministic
+output hashing (`canonical-snapshot-v2`), and the additive tuple
+`(stable_id, snapshot_id, code, node_type)`. Formula changes now require a new ADR and
+an explicit alias/migration plan.
 
 ---
 

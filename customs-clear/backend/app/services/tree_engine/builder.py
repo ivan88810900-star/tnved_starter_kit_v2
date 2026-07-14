@@ -26,6 +26,7 @@ from .models import (
     TreeParseResult,
     assign_stable_ids,
     compute_snapshot_id,
+    stamp_snapshot_id,
 )
 from .recovery import RecoveredHeading, RecoveredNode, StructureNormalizer
 from .validator import TreeValidator
@@ -55,8 +56,9 @@ class TreeBuilder:
             leaf_flags=leaf_flags,
         )
         roots = [self._assemble(rh) for rh in recovered]
-        snapshot_id = compute_snapshot_id(parse_result.db_codes)
-        assign_stable_ids(roots, snapshot_id=snapshot_id)
+        assign_stable_ids(roots)
+        snapshot_id = compute_snapshot_id(roots)
+        stamp_snapshot_id(roots, snapshot_id)
         return roots
 
     def build_heading_map(self, parse_result: TreeParseResult) -> dict[str, TreeNode]:
@@ -78,7 +80,7 @@ class TreeBuilder:
         метод, поэтому validator gate остаётся обязательным и для read-path.
         """
         roots = self.build(parse_result)
-        snapshot_id = compute_snapshot_id(parse_result.db_codes)
+        snapshot_id = roots[0].snapshot_id if roots else compute_snapshot_id(roots)
         return CanonicalModel.from_roots(
             roots,
             snapshot_id=snapshot_id,

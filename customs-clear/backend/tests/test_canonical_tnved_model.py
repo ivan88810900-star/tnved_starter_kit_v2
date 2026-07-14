@@ -21,6 +21,8 @@ try:
     from app.services.tree_engine import (
         CanonicalModel,
         CanonicalModelValidationError,
+        CanonicalAnchor,
+        ClassificationGroupNode,
         CommodityNode,
         HeadingNode,
         StructureNormalizer,
@@ -31,6 +33,7 @@ try:
         TreeValidator,
         assign_stable_ids,
         compute_snapshot_id,
+        stamp_snapshot_id,
     )
 
     _OK = True
@@ -141,16 +144,106 @@ class CanonicalTnvedModelTests(unittest.TestCase):
         )
 
     def test_snapshot_id_deterministic(self) -> None:
-        snap_a = compute_snapshot_id(self.parsed.db_codes)
-        snap_b = compute_snapshot_id(self.parsed.db_codes)
-        self.assertTrue(snap_a.startswith("snap-"))
+        roots_a = self.builder.build(self.parsed)
+        roots_b = self.builder.build(self.parsed)
+        snap_a = compute_snapshot_id(roots_a)
+        snap_b = compute_snapshot_id(roots_b)
+        self.assertTrue(snap_a.startswith("snap-v2-"))
         self.assertEqual(snap_a, snap_b)
 
     def test_snapshot_id_present_on_nodes(self) -> None:
         roots = self.builder.build(self.parsed)
-        expected = compute_snapshot_id(self.parsed.db_codes)
+        expected = compute_snapshot_id(roots)
         for node in _all_nodes(roots):
             self.assertEqual(node.snapshot_id, expected)
+
+    def test_content_change_preserves_coded_id_and_changes_snapshot(self) -> None:
+        def make_tree(title: str) -> list[TreeNode]:
+            heading = HeadingNode(title="Heading", code="0101")
+            leaf = CommodityNode(
+                title=title,
+                code="0101210001",
+                level=10,
+                metadata={"display_code": "0101210001", "is_leaf": True},
+            )
+            heading.add_child(leaf)
+            roots = [heading]
+            assign_stable_ids(roots)
+            stamp_snapshot_id(roots, compute_snapshot_id(roots))
+            return roots
+
+        before = make_tree("Лошади")
+        after = make_tree("Лошади племенные")
+        self.assertEqual(before[0].children[0].stable_id, after[0].children[0].stable_id)
+        self.assertNotEqual(before[0].snapshot_id, after[0].snapshot_id)
+
+    def test_structural_identity_change_updates_id_and_snapshot(self) -> None:
+        def make_tree(display_code: str) -> list[TreeNode]:
+            heading = HeadingNode(title="Heading", code="0101")
+            leaf = CommodityNode(
+                title="Leaf",
+                code="0101210001",
+                level=10,
+                metadata={"display_code": display_code, "is_leaf": True},
+            )
+            heading.add_child(leaf)
+            roots = [heading]
+            assign_stable_ids(roots)
+            stamp_snapshot_id(roots, compute_snapshot_id(roots))
+            return roots
+
+        before = make_tree("0101210001")
+        after = make_tree("0101210002")
+        self.assertNotEqual(before[0].children[0].stable_id, after[0].children[0].stable_id)
+        self.assertNotEqual(before[0].snapshot_id, after[0].snapshot_id)
+
+    def test_codeless_title_is_identity_fallback(self) -> None:
+        def group_id(title: str) -> str:
+            heading = HeadingNode(title="Heading", code="0101")
+            group = ClassificationGroupNode(title=title, code=None, level=6)
+            heading.add_child(group)
+            assign_stable_ids([heading])
+            return group.stable_id
+
+        self.assertNotEqual(group_id("Первая группа"), group_id("Вторая группа"))
+        self.assertEqual(group_id("  Cafe\u0301  "), group_id("Café"))
+
+    def test_leaf_marker_changes_snapshot_not_coded_identity(self) -> None:
+        leaf = CommodityNode(
+            title="Leaf",
+            code="0101210000",
+            level=10,
+            metadata={"display_code": "0101210000", "is_leaf": False},
+        )
+        roots = [leaf]
+        assign_stable_ids(roots)
+        stable_id = leaf.stable_id
+        before = compute_snapshot_id(roots)
+        leaf.metadata["is_leaf"] = True
+        self.assertEqual(stable_id, leaf.stable_id)
+        self.assertNotEqual(before, compute_snapshot_id(roots))
+
+    def test_overlay_only_metadata_does_not_change_snapshot(self) -> None:
+        heading = HeadingNode(
+            title="Heading",
+            code="0101",
+            metadata={"display_code": "0101", "duty_rate": "5%"},
+        )
+        first = compute_snapshot_id([heading])
+        heading.metadata["duty_rate"] = "10%"
+        heading.metadata["vat_rate"] = 22
+        heading.metadata["measures"] = ["advisory"]
+        self.assertEqual(first, compute_snapshot_id([heading]))
+
+    def test_canonical_content_metadata_changes_snapshot(self) -> None:
+        heading = HeadingNode(
+            title="Heading",
+            code="0101",
+            metadata={"display_code": "0101", "import_duty": "5%", "notes": "A"},
+        )
+        first = compute_snapshot_id([heading])
+        heading.metadata["notes"] = "B"
+        self.assertNotEqual(first, compute_snapshot_id([heading]))
 
     # -- структура / legacy сериализация ----------------------------------
 
@@ -357,9 +450,22 @@ class CanonicalTnvedModelTests(unittest.TestCase):
     def test_build_model_returns_canonical_model(self) -> None:
         model = self.builder.build_model(self.parsed)
         self.assertIsInstance(model, CanonicalModel)
-        self.assertTrue(model.snapshot_id.startswith("snap-"))
-        self.assertEqual(model.snapshot_id, compute_snapshot_id(self.parsed.db_codes))
+        self.assertTrue(model.snapshot_id.startswith("snap-v2-"))
+        self.assertEqual(model.snapshot_id, compute_snapshot_id(model.roots))
         self.assertTrue(len(model) > 0)
+
+    def test_anchor_dto_is_internal_and_versioned(self) -> None:
+        model = self.builder.build_model(self.parsed)
+        node = model.roots[0]
+        anchor = model.anchor(node)
+        self.assertIsInstance(anchor, CanonicalAnchor)
+        self.assertEqual(anchor.stable_id, node.stable_id)
+        self.assertEqual(anchor.snapshot_id, model.snapshot_id)
+        self.assertEqual(anchor.code, node.code)
+        self.assertEqual(anchor.node_type, node.node_type)
+        self.assertIsNone(model.anchor("node-does-not-exist"))
+        with self.assertRaises(AttributeError):
+            anchor.code = "changed"  # type: ignore[misc]
 
     def test_build_does_not_return_model(self) -> None:
         """Additive API: build() по-прежнему отдаёт list[TreeNode]."""

@@ -1,6 +1,6 @@
 # ADR-0003: Canonical anchor identity and snapshot lifecycle
 
-> **Status:** Proposed — requires Ivan decision
+> **Status:** Accepted — Ivan, 2026-07-14
 > **Date:** 2026-07-14
 > **Owner:** Ivan
 > **Implements:** DM-0003 Option C
@@ -40,14 +40,15 @@ formula change requires migration of indexes, RAG chunks, AI journals, and graph
 Freeze the current path-based identity as **stable-id-v1**:
 
 ```text
-segment = node_type + ":" + local_key
-path    = parent_path + "/" + segment
-stable_id = "node-" + sha1("stable-id-v1\n" + path)[0:24]
+segment = [node_type, local_key]
+path    = parent_path_segments + [segment]
+stable_id = "node-" + sha1("stable-id-v1\n" + canonical_json(path))[0:24]
 ```
 
 All hash inputs are UTF-8. Text normalization is exactly Unicode NFC followed by
 outer-whitespace trim; internal whitespace and case are preserved. No locale-dependent
-normalization is allowed.
+normalization is allowed. `canonical_json(path)` is compact JSON; structured segments
+avoid delimiter ambiguity when a codeless title contains `/`, `:`, or similar text.
 
 `local_key` rules:
 
@@ -159,16 +160,16 @@ Canonical output. It is a rebuild key, not the identity of the built artifact.
 
 ## 5. Acceptance criteria
 
-- [ ] Ivan accepts stable-id-v1 and canonical-snapshot-v2.
-- [ ] Two identical builds produce identical IDs and snapshot on SQLite/PostgreSQL-safe
+- [x] Ivan accepts stable-id-v1 and canonical-snapshot-v2.
+- [x] Two identical builds produce identical IDs and snapshot on SQLite/PostgreSQL-safe
       canonical inputs.
-- [ ] Row-order changes do not affect either value.
-- [ ] Content-only coded-node changes preserve `stable_id` and change `snapshot_id`.
-- [ ] Structural/type/display-code changes change the affected `stable_id` and snapshot.
-- [ ] Leaf-marker changes change the snapshot when they change Canonical output.
-- [ ] Request-time overlay-only changes do not change the snapshot.
-- [ ] Existing legacy serializer/API contract remains unchanged.
-- [ ] No DB/Alembic/frontend/NTM/Duty/feature-flag change.
+- [x] Row-order changes do not affect either value.
+- [x] Content-only coded-node changes preserve `stable_id` and change `snapshot_id`.
+- [x] Structural/type/display-code changes change the affected `stable_id` and snapshot.
+- [x] Leaf-marker changes change the snapshot when they change Canonical output.
+- [x] Request-time overlay-only changes do not change the snapshot.
+- [x] Existing legacy serializer/API contract remains unchanged.
+- [x] No DB/Alembic/frontend/NTM/Duty/feature-flag change.
 
 ## 6. Rollback
 
@@ -176,11 +177,9 @@ Before persistent consumers exist, rollback is code-only: revert stable-id-v1/sn
 and rebuild the in-memory model. After anchors are persisted, formula rollback requires
 the same explicit alias/migration plan as any future formula change.
 
-## 7. Decision required
+## 7. Decision record
 
-Ivan must approve or amend:
-
-1. snapshot-independent path identity for `stable_id`;
-2. codeless title as the final fallback identity component;
-3. output-model hash rather than raw database revision for `snapshot_id`;
-4. `(stable_id, snapshot_id, code, node_type)` as the additive anchor DTO.
+Ivan accepted all four contract points on 2026-07-14: snapshot-independent path
+identity, codeless-title fallback, output-model snapshot hash, and the additive
+`(stable_id, snapshot_id, code, node_type)` anchor DTO. Any future formula change now
+requires a new ADR plus an explicit alias/migration plan.

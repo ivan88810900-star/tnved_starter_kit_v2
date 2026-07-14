@@ -226,7 +226,7 @@ legacy (сверх structural). До TASK-CANONICAL-004 контур не был
 | **TASK-CANONICAL-002** — recovery-логика → `StructureNormalizer`, Builder без legacy, parity tests | ✅ Completed (APPROVE WITH NOTES) | — |
 | **Canonical Model Materialization** — иммутабельный `CanonicalModel` (индексы+навигация), validator gate, content parity | ✅ Completed (не подключён к runtime) | — |
 | **TASK-CANONICAL-004** — read-path `/children` за флагом (provider/cache, shadow, fallback), контракт неизменён | ✅ Completed: Gate-1 + Gate-2 passed; flags default OFF | — |
-| **TASK-CANONICAL-005** — freeze `stable_id` / output `snapshot_id` / anchor DTO | ⏸ Blocked on ADR-0003 approval | Высокий |
+| **TASK-CANONICAL-005** — freeze `stable_id` / output `snapshot_id` / anchor DTO | ✅ Completed; ADR-0003 Accepted | — |
 | Derisking после TASK-005: aliases/history (`superseded_by`, previous codes/IDs) | Рекомендован | Высокий |
 | Fine-tune модели на `training_pairs.jsonl` | Вне репозитория | Низкий |
 | Live-parсер ФТС предрешений (tks.ru JS) | Decision Memo #135 | Средний |
@@ -284,17 +284,18 @@ legacy (сверх structural). До TASK-CANONICAL-004 контур не был
   Materialization): добавлен `test_full_tree_content_parity_with_legacy` — сверяет
   полный контент узлов (name, `display_code`, `is_leaf`, `is_codeless`, `is_group`,
   `import_duty`, notes) рекурсивно против legacy `build_tree()`; проходит на всём дереве.
-- **`snapshot_id` не учитывает все входы модели.** Считается от `db_codes`, но не
-  включает `hs_rates`, `import_duty`, примечания глав. Runtime cache-key больше не
-  использует этот неполный ID: provider считает отдельную точную content-revision.
-  Полный provenance/version identity самой модели остаётся долгом.
+- ~~**`snapshot_id` не учитывает все входы модели.**~~ **Закрыто**
+  (TASK-CANONICAL-005): `canonical-snapshot-v2` хеширует детерминированный output
+  модели, включая структуру, имена, `import_duty`, notes и результирующие флаги;
+  provider source revision остаётся отдельным rebuild-key.
 - **Recovery-логика временно дублируется** в legacy `build_tree()` и в canonical
   (`StructureNormalizer` + Builder). Два источника одной логики до достижения parity —
   риск дрейфа.
 
 ### Important
-- **Формула `stable_id` не утверждена окончательно** (см. Open Decisions). Сейчас
-  `node-<hex>`; не зафиксировано отношение к ревизиям номенклатуры/истории.
+- ~~**Формула `stable_id` не утверждена окончательно.**~~ **Закрыто**
+  (ADR-0003 / TASK-CANONICAL-005): `stable-id-v1` — snapshot-independent versioned
+  Canonical path hash; будущая смена требует ADR и alias/migration plan.
 - **Документация отставала от кода** (001/002 были «Completed» по факту, но `.ai`
   отражал «не начато») — этим обновлением синхронизировано; держать в синхроне.
 - ~~**Validator ещё не freeze-gate.**~~ **Закрыто** для `CanonicalModel`:
@@ -323,8 +324,8 @@ legacy (сверх structural). До TASK-CANONICAL-004 контур не был
 
 | Решение | Статус | Почему важно | Когда закрыть |
 |---------|--------|--------------|---------------|
-| **stable_id formula** | Proposed: ADR-0003 `stable-id-v1` | ID — первичный ключ для Search/RAG/AI-журнала/Graph; смена формулы позже = миграция всех ссылок | Approve before TASK-CANONICAL-005 implementation |
-| **snapshot_id inputs** | Proposed: ADR-0003 output-model hash `canonical-snapshot-v2` | Snapshot должен идентифицировать построенный artifact, а не только DB-коды | Approve before TASK-CANONICAL-005 implementation |
+| **stable_id formula** | ✅ Closed: ADR-0003 `stable-id-v1`; TASK-CANONICAL-005 implemented | ID — первичный ключ для Search/RAG/AI-журнала/Graph; смена формулы позже = миграция всех ссылок | New ADR + alias/migration plan for any change |
+| **snapshot_id inputs** | ✅ Closed: ADR-0003 `canonical-snapshot-v2`; TASK-CANONICAL-005 implemented | Snapshot идентифицирует построенный artifact, source revision отдельно управляет rebuild | Revisit only when Canonical output contract expands |
 | **Materialized CanonicalModel** | Частично (in-memory `CanonicalModel` реализован; переживающий рестарт снапшот/кэш — Open) | Определяет переживаемость рестарта, память, путь к PostgreSQL | Перед runtime-adoption (кэш по `snapshot_id`) |
 | **Feature flag strategy** | ✅ Closed (`CANONICAL_TREE_ENABLED` / `CANONICAL_TREE_SHADOW`, default OFF, request-time) — ADR-0002 Accepted with conditions | Управляет безопасным A/B old-vs-new и откатом | Gate-2 пройден; включение — отдельное решение Ivan |
 | **Deadline for legacy `build_tree` removal** | Open (oracle до parity) | Двойная логика — долг; нужен критерий «parity достигнута → удаляем» | После content-parity + стабилизации flag (Этап 6) |

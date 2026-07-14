@@ -7,6 +7,7 @@ from .flags import (
     is_canonical_tree_shadow_enabled,
 )
 from .models import (
+    CanonicalAnchor,
     ClassificationGroupNode,
     CommodityNode,
     HeadingNode,
@@ -16,6 +17,7 @@ from .models import (
     TreeParseResult,
     assign_stable_ids,
     compute_snapshot_id,
+    stamp_snapshot_id,
 )
 from .parser import TreeParser
 from .provider import (
@@ -42,6 +44,7 @@ from .validator import TreeValidator, ValidationIssue, ValidationResult
 
 __all__ = [
     "CanonicalModel",
+    "CanonicalAnchor",
     "CanonicalModelValidationError",
     "CanonicalTreeProvider",
     "ClassificationGroupNode",
@@ -68,6 +71,7 @@ __all__ = [
     "children_fingerprint",
     "compare_children",
     "compute_snapshot_id",
+    "stamp_snapshot_id",
     "get_canonical_model",
     "get_provider",
     "get_shadow_metrics",

@@ -21,10 +21,9 @@ Validator gate (ADR-0001 §4, §6.4): перед созданием модели
 `TreeValidator`. Если валидатор нашёл ошибки — модель **не создаётся**
 (`CanonicalModelValidationError`), старое дерево/oracle остаётся истиной.
 
-Known debt (не решается в этой задаче, см. `.ai/CURRENT_STATE.md` §8):
-`snapshot_id` считается от `db_codes` и **не** учитывает все входы (в частности
-`hs_rates`/leaf-флаги, `import_duty`, примечания глав). Кэш/инвалидация по такому
-`snapshot_id` пока ненадёжны — расширение входов вынесено в отдельный derisking-этап.
+ADR-0003 разделяет два понятия: provider source revision решает, когда перестраивать
+модель, а `snapshot_id` хеширует детерминированный Canonical output и идентифицирует
+то, что было построено. `stable_id` при этом не зависит от snapshot-контента.
 """
 
 from __future__ import annotations
@@ -32,7 +31,7 @@ from __future__ import annotations
 from types import MappingProxyType
 from typing import Mapping
 
-from .models import TreeNode
+from .models import CanonicalAnchor, TreeNode, compute_snapshot_id, stamp_snapshot_id
 from .validator import TreeValidator, ValidationIssue
 
 
@@ -122,7 +121,8 @@ class CanonicalModel:
         if not gate.ok:
             raise CanonicalModelValidationError(gate.issues)
         if snapshot_id is None:
-            snapshot_id = roots_list[0].snapshot_id if roots_list else ""
+            snapshot_id = roots_list[0].snapshot_id if roots_list else compute_snapshot_id(())
+        stamp_snapshot_id(roots_list, snapshot_id)
         return cls(roots_list, snapshot_id)
 
     @staticmethod
@@ -194,6 +194,11 @@ class CanonicalModel:
 
     def get_by_display_code(self, display_code: str) -> TreeNode | None:
         return self._node_by_display_code.get(display_code)
+
+    def anchor(self, node_or_id: TreeNode | str) -> CanonicalAnchor | None:
+        """Return an internal stable/versioned reference without changing API JSON."""
+        node = self._node_by_stable_id.get(self._resolve_id(node_or_id))
+        return CanonicalAnchor.from_node(node) if node is not None else None
 
     # -- navigation --------------------------------------------------------
 

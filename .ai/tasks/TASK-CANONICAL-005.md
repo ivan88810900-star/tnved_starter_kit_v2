@@ -1,6 +1,6 @@
 # TASK-CANONICAL-005: Freeze Canonical anchor identity and snapshot
 
-> **Status:** blocked_on_adr (ADR-0003 Proposed)
+> **Status:** Completed (ADR-0003 Accepted; implementation QA passed)
 > **Owner:** Backend Engineer (+ Architect review)
 > **Created:** 2026-07-14
 > **Depends on:** ADR-0003 acceptance, TASK-CANONICAL-004 completion
@@ -64,12 +64,45 @@ current API behavior or enabling runtime flags.
 
 ## Acceptance criteria
 
-- [ ] ADR-0003 accepted and implementation matches it exactly.
-- [ ] All new identity/snapshot tests pass.
-- [ ] TASK-CANONICAL-004 focused suite remains green.
-- [ ] Ruff/compileall pass for changed Python files.
-- [ ] Documentation reflects the final formula and remaining rollout boundary.
-- [ ] Feature flags remain default OFF.
+- [x] ADR-0003 accepted and implementation matches it exactly.
+- [x] All new identity/snapshot tests pass.
+- [x] TASK-CANONICAL-004 focused suite remains green.
+- [x] Ruff/compileall pass for changed Python files.
+- [x] Documentation reflects the final formula and remaining rollout boundary.
+- [x] Feature flags remain default OFF.
+
+## Completion report (2026-07-14)
+
+### Implementation
+
+- `stable-id-v1`: SHA-1 (24 hex) over the version prefix and compact JSON path of
+  `(node_type, local_key)` segments; NFC + outer trim normalization; no snapshot,
+  storage ID, timestamp, or random input.
+- `canonical-snapshot-v2`: SHA-256 (32 hex) over deterministic Canonical output,
+  including structure, names, flags, duty and notes, excluding IDs and request-time
+  overlays.
+- one computed `snapshot_id` is stamped on the model and every node;
+- frozen internal `CanonicalAnchor(stable_id, snapshot_id, code, node_type)` added;
+- legacy serializer and public `/children` response remain unchanged.
+
+### Verification
+
+- Ruff and `compileall`: passed.
+- TASK-CANONICAL-004 focused regression: **40 passed**.
+- Identity/snapshot selection: **15 passed**.
+- Data-dependent model/tree suites: **36 passed, 7 failed**; the same seven missing-data
+  failures occur at parent `af5dd7b`, therefore **zero new failures**.
+- Synthetic 18,090-node timing: stable IDs 64.09 ms, snapshot 102.26 ms, stamping
+  1.87 ms in the QA container.
+- Broad backend run (excluding the unavailable `py7zr` collector): 1,233 passed,
+  2 skipped; remaining failures/errors are pre-existing environment/full-dataset
+  dependencies and are not used as this task's acceptance gate.
+
+### Boundary / next task
+
+No flag was enabled, no DB/Alembic/frontend/NTM/Duty behavior changed, and no anchors
+were persisted. The recommended next bounded task is an additive TN VED code-card
+anchor bridge; aliases/history must be designed before durable cross-snapshot links.
 
 ## Report format
 
