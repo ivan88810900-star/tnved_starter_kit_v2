@@ -94,8 +94,18 @@ overlay не меняет структуру, AI ничего не изменя�
 - Первый read-path — только структурный слой `/children`.
 - Оба флага default OFF и читаются request-time.
 - Legacy остаётся oracle и fail-safe fallback.
-- Serving ON запрещён до точной cache-invalidation (Gate-1), полного offline-аудита
-  с 0 mismatch (Gate-2) и отдельного решения Ivan о rollout.
+- Gate-1 и Gate-2 пройдены; Serving ON остаётся отдельным решением Ivan о rollout.
+
+## DM-0003 / ADR-0003 — Next Canonical step and anchor identity
+
+**DM-0003:** Option C accepted by Ivan, 2026-07-14. The next slice aligns Canonical
+anchors with the TN VED search/code-card MVP; broad overlay migration and flag rollout
+remain separate decisions.
+
+**ADR-0003:** Proposed. Freeze snapshot-independent path identity (`stable-id-v1`),
+hash deterministic Canonical output as `canonical-snapshot-v2`, and define the additive
+anchor tuple `(stable_id, snapshot_id, code, node_type)`. TASK-CANONICAL-005 is blocked
+until Ivan accepts or amends this exact contract.
 
 ---
 

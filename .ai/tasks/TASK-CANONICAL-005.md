@@ -1,0 +1,81 @@
+# TASK-CANONICAL-005: Freeze Canonical anchor identity and snapshot
+
+> **Status:** blocked_on_adr (ADR-0003 Proposed)
+> **Owner:** Backend Engineer (+ Architect review)
+> **Created:** 2026-07-14
+> **Depends on:** ADR-0003 acceptance, TASK-CANONICAL-004 completion
+
+## Goal
+
+Implement the accepted ADR-0003 identity contract so Canonical nodes expose a stable,
+versioned anchor suitable for the next TN VED search/code-card task without changing
+current API behavior or enabling runtime flags.
+
+## Scope
+
+- version and freeze the `stable_id` formula;
+- compute `snapshot_id` from deterministic Canonical output rather than `db_codes`;
+- stamp one snapshot consistently on model and all nodes;
+- define an internal additive `CanonicalAnchor` DTO;
+- add determinism, mutation, ordering, collision, and serialization tests;
+- update Canonical documentation and debt tables.
+
+## Required behavior
+
+1. `stable_id` does not include snapshot, database PK, time, randomness, or process state.
+2. Content-only changes preserve coded-node identity and change output snapshot.
+3. Structural identity changes affect the relevant stable IDs and snapshot.
+4. Snapshot canonicalization is independent of DB row order and engine-specific values.
+5. Provider source revision remains the cache rebuild trigger; model snapshot identifies
+   the produced artifact.
+6. Legacy serialization and `/children` JSON remain byte-compatible.
+7. Validator gate and legacy fallback remain mandatory.
+
+## Files / areas to inspect
+
+- `app/services/tree_engine/models.py`
+- `app/services/tree_engine/builder.py`
+- `app/services/tree_engine/canonical_model.py`
+- `app/services/tree_engine/provider.py`
+- `app/services/tree_engine/serializer.py`
+- `tests/test_canonical_tnved_model.py`
+- `tests/test_canonical_read_path.py`
+
+## Tests
+
+- identical builds → identical stable IDs and snapshot;
+- input order permutation → identical result;
+- title/duty/notes/flags mutation → expected identity/snapshot behavior;
+- wrapper/leaf same-code collision remains uniquely addressable;
+- codeless title mutation follows ADR behavior;
+- model/node snapshot consistency;
+- legacy serializer excludes anchor fields;
+- existing TASK-CANONICAL-004 focused regression remains green.
+
+## Do not do
+
+- do not enable `CANONICAL_TREE_ENABLED` or `CANONICAL_TREE_SHADOW`;
+- do not merge or roll out TASK-CANONICAL-004;
+- do not change `/children` or any public JSON contract;
+- do not add DB/Alembic changes or persist anchors;
+- do not migrate Semantic/Notes/Search/AI/RAG/NTM/Duty in this task;
+- do not remove or modify legacy behavior;
+- do not broaden root legacy `backend/`.
+
+## Acceptance criteria
+
+- [ ] ADR-0003 accepted and implementation matches it exactly.
+- [ ] All new identity/snapshot tests pass.
+- [ ] TASK-CANONICAL-004 focused suite remains green.
+- [ ] Ruff/compileall pass for changed Python files.
+- [ ] Documentation reflects the final formula and remaining rollout boundary.
+- [ ] Feature flags remain default OFF.
+
+## Report format
+
+1. changed files grouped by implementation/tests/docs;
+2. exact stable-id and snapshot algorithms;
+3. before/after behavior matrix;
+4. commands and test counts;
+5. risks/limitations and migration boundary;
+6. recommended next task: additive TN VED code-card anchor bridge.

@@ -6,13 +6,17 @@ Active
 
 ## Last updated
 
-2026-05-25
+2026-07-14
 
 ## Strategic direction
 
 The current active workstream is the **CustomsClear MVP application**: end-to-end product slices for TN VED usage, normative requirements, payments, sanctions/risk, and an AI assistant grounded in internal modules.
 
 Official SGR and NTM v2 normative datasets remain important **data contours**, but the top priority is shipping user-facing MVP blocks — starting with the normative requirements block.
+
+The normative requirements foundation is complete enough to advance to the TN VED
+search/code-card slice. Per DM-0003, that slice is also the first planned consumer of
+the Canonical anchor contract. This does not authorize Canonical runtime flag rollout.
 
 ## What has already been completed
 
@@ -27,8 +31,9 @@ Official SGR and NTM v2 normative datasets remain important **data contours**, b
 **CustomsClear MVP application workstream** — deliver integrated product slices in this order:
 
 1. ~~Product readiness audit~~ (ongoing reference)
-2. **Normative block end-to-end** — required / missing / advisory documents, source labels, applicability, evidence
-3. TN VED + preliminary decisions — search, code card, related decisions
+2. ~~Normative block foundation~~ — required / missing / advisory documents, source labels, applicability, evidence
+3. **TN VED + preliminary decisions** — first freeze Canonical anchor identity/snapshot,
+   then deliver search, code card, related decisions and evidence
 4. Smart payments — duty/VAT/excise/fees with explanation
 5. Sanctions/risk checks — lists, matches, severity
 6. AI assistant — answers grounded in internal modules, cites sources
@@ -37,9 +42,11 @@ Parallel (not blocking MVP UI): continue curating `official_sgr_rules.seed.json`
 
 ## Next recommended implementation tasks
 
-After normative block MVP is merged:
+Current next tasks:
 
-- TN VED search + code card with related preliminary decisions and evidence
+- ADR-0003 / TASK-CANONICAL-005: freeze `stable_id` + `snapshot_id` lifecycle
+- TN VED search + code card with related preliminary decisions and evidence, using the
+  additive Canonical anchor DTO
 - Smart payment explanation block (reuse calculator/compliance surfaces)
 - Sanctions/risk check slice
 - Assistant grounding on normative + payments modules
@@ -56,6 +63,8 @@ Official SGR dataset tasks (when not conflicting with MVP slices):
 - Broad legacy SGR heuristics promoted to broker as “official”
 - Unrelated refactors or legacy root `backend/` expansion
 - Broad UI redesign outside MVP slices
+- Canonical `/children` flag rollout without a separate Ivan decision
+- NTM/Duty anchor migration in TASK-CANONICAL-005
 
 ## When to create a Decision Memo
 

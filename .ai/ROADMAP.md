@@ -51,13 +51,16 @@
 1. ✅ **Расширить parity от структуры до контента.** Сделано в Canonical Model
    Materialization: `test_full_tree_content_parity_with_legacy` сверяет имена,
    `import_duty`, notes, флаги, `display_code` рекурсивно. → Critical-долг закрыт.
-2. **Расширить входы `snapshot_id` самой модели.** Включить все влияющие на результат
+2. ⏸ **Расширить входы `snapshot_id` самой модели.** ADR-0003 предлагает хешировать
+   детерминированный Canonical output и отделить artifact snapshot от source revision.
+   Реализация — TASK-CANONICAL-005 после решения Ivan. Включить все влияющие на результат
    входы (как минимум `import_duty`, примечания глав) в `compute_snapshot_id`.
    Частично: read-path **ревизия кэша** (`provider._compute_revision`) уже хеширует
    значимые поля `tnved_commodities`, Section/Chapter notes и leaf-relevant `hs_rates`,
    но это cache-key, а не `snapshot_id` модели.
-3. **Закрыть решение по формуле `stable_id`** (Open Decision) до того, как ссылки на
-   узлы начнут где-либо храниться.
+3. ⏸ **Закрыть решение по формуле `stable_id`.** ADR-0003 предлагает path-based
+   `stable-id-v1`; TASK-CANONICAL-005 заблокирован до принятия Ivan, прежде чем ссылки
+   на узлы начнут где-либо храниться.
 4. ✅ **Первый read-path за feature flag** — завершён в TASK-CANONICAL-004:
    `/children` (структурный слой) за `CANONICAL_TREE_ENABLED`, сверка с legacy через
    `CANONICAL_TREE_SHADOW` и `scripts/audit_canonical_children.py`.

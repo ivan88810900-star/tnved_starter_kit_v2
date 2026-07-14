@@ -1,6 +1,6 @@
 # DM-0003: What follows TASK-CANONICAL-004
 
-> **Status:** Pending Ivan decision
+> **Status:** Accepted — Option C (Ivan, 2026-07-14)
 > **Date:** 2026-07-14
 > **Owner:** Ivan
 > **Context:** ADR-0001, ADR-0002, TASK-CANONICAL-004, `CURRENT_PROJECT_FOCUS.md`
@@ -35,6 +35,18 @@ implementation task.
 
 Choose the sequence after TASK-CANONICAL-004 and confirm whether the Active MVP
 focus still takes precedence over Canonical Stage 4.
+
+## Decision
+
+Ivan selected **Option C** on 2026-07-14. The next step is the MVP-aligned anchor
+bridge: first freeze the Canonical anchor identity/snapshot contract, then use it in
+the TN VED search/code-card slice. TASK-CANONICAL-004 remains unmerged and both runtime
+flags remain default OFF until separate review/rollout decisions.
+
+Execution follows the autonomous engineering model agreed with Ivan: the agent may
+inspect, edit, test, correct, commit, and push isolated branches without stopping for
+routine confirmations. Ivan retains strategic choices, production rollout, feature-flag
+activation, and final merge authority.
 
 ## Option A — Roll out `/children` first
 
