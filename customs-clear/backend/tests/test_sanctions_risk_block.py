@@ -36,6 +36,10 @@ def memory_sessionmaker(monkeypatch: pytest.MonkeyPatch):
     sm = sessionmaker(autocommit=False, autoflush=False, bind=engine)
     monkeypatch.setattr("app.db.SessionLocal", sm)
     monkeypatch.setattr("app.services.sanctions_risk_block.SessionLocal", sm)
+    monkeypatch.setattr(
+        "app.services.sanctions_risk_block.canonical_anchor_for_hs",
+        lambda _hs: None,
+    )
     return sm
 
 
@@ -53,6 +57,10 @@ def test_missing_sources_yield_manual_review(memory_sessionmaker: sessionmaker) 
     assert not block.signals
     assert block.empty_message
     assert any("не настроены" in w.lower() or "ручная" in w.lower() for w in block.warnings)
+    scope = {item.code: item for item in block.screening_scope}
+    assert scope["hs_code"].status == "checked"
+    assert scope["country"].status == "checked"
+    assert scope["counterparty"].status == "not_checked"
 
 
 def test_no_match_with_fixture_coverage_stays_manual_review(memory_sessionmaker: sessionmaker) -> None:
@@ -114,6 +122,43 @@ def test_positive_counterparty_ofac_match(memory_sessionmaker: sessionmaker) -> 
         )
     assert any(s.category == "counterparty_ofac" for s in block.signals)
     assert block.overall_severity == "high"
+    ofac = next(s for s in block.signals if s.category == "counterparty_ofac")
+    assert ofac.matched_entity == "FIXTURE SANCTIONED ENTITY LLC"
+    assert ofac.match_method == "name_substring"
+    assert ofac.source_url == "https://ofac.treasury.gov/specially-designated-nationals-list-sdn-list"
+    assert len([s for s in block.signals if s.category == "counterparty_ofac"]) == 1
+
+
+def test_risk_block_carries_canonical_anchor_and_typed_evidence(
+    memory_sessionmaker: sessionmaker,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    anchor = {
+        "stable_id": "node-0123456789abcdef01234567",
+        "snapshot_id": "snap-v2-0123456789abcdef0123456789abcdef",
+        "code": "0406100000",
+        "node_type": "commodity",
+    }
+    monkeypatch.setattr(
+        "app.services.sanctions_risk_block.canonical_anchor_for_hs",
+        lambda _hs: anchor,
+    )
+    with memory_sessionmaker() as db:
+        load_sanctions_risk_fixture(db)
+        block = build_sanctions_risk_block(
+            hs_code="0406100000",
+            description="Сыр",
+            country="IT",
+            db=db,
+        )
+
+    embargo = next(s for s in block.signals if s.category == "embargo")
+    assert embargo.matched_hs_prefix == "0406"
+    assert embargo.matched_country == "IT"
+    assert embargo.match_method == "country_hs_prefix"
+    assert block.canonical_anchor is not None
+    assert block.canonical_anchor.model_dump() == anchor
+    assert all(row.known_gaps for row in block.source_coverage)
 
 
 def test_stale_partial_source_not_presented_as_clear(memory_sessionmaker: sessionmaker) -> None:
@@ -138,15 +183,21 @@ def test_stale_partial_source_not_presented_as_clear(memory_sessionmaker: sessio
     assert block.coverage_complete is False
 
 
-def test_product_details_does_not_hardcode_cn_country() -> None:
+def test_product_details_uses_interactive_risk_checker_without_hardcoded_country() -> None:
     product_details = (
         Path(__file__).resolve().parents[2]
         / "frontend/src/components/tnved/ProductDetails.tsx"
     )
-    source = product_details.read_text(encoding="utf-8")
-    risk_section = source.split("/non_tariff/risk-block", 1)[1].split(".then(", 1)[0]
-    assert "country: 'CN'" not in risk_section
-    assert 'country: "CN"' not in risk_section
+    risk_checker = (
+        Path(__file__).resolve().parents[2]
+        / "frontend/src/components/nonTariff/SmartRiskCheckBlock.tsx"
+    )
+    details_source = product_details.read_text(encoding="utf-8")
+    checker_source = risk_checker.read_text(encoding="utf-8")
+    assert "<SmartRiskCheckBlock" in details_source
+    assert "['risks', 'Риски']" in details_source
+    assert "country: 'CN'" not in checker_source
+    assert 'country: "CN"' not in checker_source
 
 
 def test_risk_api_endpoint(memory_sessionmaker: sessionmaker) -> None:
@@ -174,4 +225,6 @@ def test_risk_api_endpoint(memory_sessionmaker: sessionmaker) -> None:
     assert body["overall_severity"] in {"medium", "high", "manual_review_required", "low", "clear"}
     assert "signals" in body
     assert "source_coverage" in body
+    assert "screening_scope" in body
+    assert "canonical_anchor" in body
     assert body.get("disclaimer")

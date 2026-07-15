@@ -10,7 +10,7 @@ from __future__ import annotations
 import json
 import re
 from pathlib import Path
-from typing import Any, Literal
+from typing import Any
 
 from ..db import SessionLocal
 from ..models.core import (
@@ -22,6 +22,7 @@ from ..models.core import (
 )
 from ..schemas.sanctions_risk import (
     RiskBlockStatus,
+    RiskCheckScopeOut,
     RiskSeverity,
     RiskSignalOut,
     SanctionsRiskBlockOut,
@@ -33,6 +34,7 @@ from .regulatory_source_registry import (
     get_registry_entry,
     registry_entry_to_dict,
 )
+from .tnved_code_card import canonical_anchor_for_hs
 
 RiskSeverityRank = {
     "clear": 0,
@@ -50,6 +52,11 @@ SOURCE_LABELS: dict[str, str] = {
     "ofac_sdn_list": "OFAC SDN (США)",
     "eu_sanctions_list": "Консолидированный список санкций ЕС",
     "country_specific_rules": "Страновые правила комплаенса",
+}
+
+SOURCE_REGISTRY_IDS: dict[str, str] = {
+    "country_risks": "country_risks_geopolitics",
+    "geo_special_duties": "geo_special_duties_embargo",
 }
 
 SANCTIONS_REGISTRY_IDS: tuple[str, ...] = (
@@ -99,7 +106,7 @@ def source_label_for(source: str | None) -> str:
     key = (source or "").strip()
     if not key:
         return "Источник не указан"
-    entry = get_registry_entry(key)
+    entry = get_registry_entry(SOURCE_REGISTRY_IDS.get(key, key))
     if entry:
         return entry.title
     return SOURCE_LABELS.get(key, key)
@@ -164,6 +171,8 @@ def diagnose_sanctions_source_coverage(db=None) -> tuple[list[SourceCoverageOut]
                     record_count=count if count >= 0 else None,
                     manual_review_required=entry.manual_review_default or cov in {"missing", "partial", "not_configured"},
                     authority_level=meta.get("authority_label"),
+                    source_url=entry.official_url or None,
+                    known_gaps=list(entry.known_gaps),
                 )
             )
     finally:
@@ -219,31 +228,74 @@ def _source_to_category(source: str, doc: dict[str, Any]) -> str:
 
 def _doc_to_signal(doc: dict[str, Any]) -> RiskSignalOut:
     source = str(doc.get("source") or "").strip()
-    entry = get_registry_entry(source)
+    entry = get_registry_entry(SOURCE_REGISTRY_IDS.get(source, source))
     authority = AUTHORITY_LEVEL_LABELS.get(entry.authority_level, entry.authority_level) if entry else None
     legal_ref = str(doc.get("legal_ref") or "").strip() or None
     title = str(doc.get("title") or "").strip()
     detail = str(doc.get("detail") or "").strip()
     explanation = detail or title or "Выявлен санкционный сигнал."
-    matched_entity = None
-    if "контрагент" in title.lower() or "производитель" in title.lower():
+    matched_entity = str(doc.get("matched_entity") or "").strip() or None
+    if not matched_entity and ("контрагент" in title.lower() or "производитель" in title.lower()):
         matched_entity = title.split(":", 1)[-1].strip() if ":" in title else None
-    hs_prefix = None
+    hs_prefix = str(doc.get("matched_hs_prefix") or "").strip() or None
     if legal_ref and "HS" in legal_ref.upper():
         m = re.search(r"HS\s+(\d{4,10})", legal_ref, re.I)
-        if m:
+        if m and not hs_prefix:
             hs_prefix = m.group(1)
     return RiskSignalOut(
         category=_source_to_category(source, doc),
         severity=_compliance_status_to_severity(str(doc.get("compliance_status") or ""), source=source),
         source=source,
         source_label=source_label_for(source),
+        source_url=(entry.official_url or None) if entry else None,
         authority_level=authority,
         matched_entity=matched_entity,
         matched_hs_prefix=hs_prefix,
+        matched_country=str(doc.get("matched_country") or "").strip() or None,
+        match_method=str(doc.get("match_method") or "").strip() or None,
         explanation=explanation,
         legal_ref=legal_ref,
     )
+
+
+def _build_screening_scope(
+    *,
+    hs_code: str,
+    country: str | None,
+    counterparty: str | None,
+) -> list[RiskCheckScopeOut]:
+    country_value = (country or "").strip().upper() or None
+    return [
+        RiskCheckScopeOut(
+            code="hs_code",
+            label="Код ТН ВЭД",
+            status="checked",
+            value=hs_code or None,
+            explanation="Проверены локальные ограничения и санкционные признаки по коду и его префиксам.",
+        ),
+        RiskCheckScopeOut(
+            code="country",
+            label="Страна происхождения",
+            status="checked" if country_value else "not_checked",
+            value=country_value,
+            explanation=(
+                "Проверены страновые риски и эмбарго по указанной стране."
+                if country_value
+                else "Страна не указана — страновые риски и эмбарго не проверены."
+            ),
+        ),
+        RiskCheckScopeOut(
+            code="counterparty",
+            label="Контрагент / производитель",
+            status="checked" if counterparty else "not_checked",
+            value=counterparty,
+            explanation=(
+                "Выполнен предварительный поиск наименования в локальных списках OFAC/ЕС."
+                if counterparty
+                else "Наименование не указано — списки лиц и организаций не проверены."
+            ),
+        ),
+    ]
 
 
 def _max_severity(severities: list[RiskSeverity]) -> RiskSeverity:
@@ -342,8 +394,14 @@ def build_sanctions_risk_block(
             signals=signals,
             warnings=warnings,
             source_coverage=coverage_rows,
+            screening_scope=_build_screening_scope(
+                hs_code=hs,
+                country=country,
+                counterparty=counterparty,
+            ),
             coverage_complete=coverage_complete,
             empty_message=empty_message,
+            canonical_anchor=canonical_anchor_for_hs(hs),
             disclaimer=_DISCLAIMER,
         )
     finally:

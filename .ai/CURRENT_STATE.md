@@ -231,7 +231,8 @@ legacy (сверх structural). До TASK-CANONICAL-004 контур не был
 | **TASK-CANONICAL-005** — freeze `stable_id` / output `snapshot_id` / anchor DTO | ✅ Completed; ADR-0003 Accepted | — |
 | **TASK-CANONICAL-006** — TN VED search/code-card anchor bridge | ✅ Completed; optional soft-fail anchor | — |
 | **TASK-MVP-PAYMENTS-001** — объяснимый расчёт платежей в карточке ТН ВЭД | ✅ Completed; calculation semantics unchanged | — |
-| Sanctions/risk checks — списки, совпадения, severity, evidence | Следующая MVP-задача | Высокий |
+| **TASK-MVP-RISK-001** — санкционный скрининг: scope, evidence, coverage, sources | ✅ Completed; semantics remain diagnostic | — |
+| Grounded AI assistant — нормативка + платежи + риски с цитатами | Следующая MVP-задача | Высокий |
 | Derisking после TASK-005: aliases/history (`superseded_by`, previous codes/IDs) | Рекомендован | Высокий |
 | Fine-tune модели на `training_pairs.jsonl` | Вне репозитория | Низкий |
 | Live-parсер ФТС предрешений (tks.ru JS) | Decision Memo #135 | Средний |

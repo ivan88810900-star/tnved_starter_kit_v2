@@ -22,7 +22,7 @@ from ..models.core import (
     SanctionImportRisk,
     TrTsAct,
 )
-from ..models.tnved import NonTariffMeasure, VatPreference
+from ..models.tnved import VatPreference
 from .registry_matcher import match_document_in_registries
 
 DEFAULT_VAT_RATE = 22.0
@@ -929,6 +929,8 @@ def _check_sanction_risks(
                     "title": "Санкционный риск по коду ТН ВЭД",
                     "detail": str(r.description or "Требуется проверка санкционных ограничений по юрисдикциям."),
                     "source": "sanction_import_risks",
+                    "matched_hs_prefix": str(r.hs_code_prefix or "").strip() or None,
+                    "match_method": "hs_prefix",
                     "priority": 1400 if is_critical else 1250,
                     "registry_match": None,
                     "compliance_status": "CRITICAL_RISK" if is_critical else "WARNING",
@@ -949,6 +951,8 @@ def _check_sanction_risks(
                         "title": f"Страна {c_iso} в перечне недружественных юрисдикций",
                         "detail": "Для поставок из данной страны требуется расширенная санкционная проверка; возможны запреты ввоза по отдельным товарным группам.",
                         "source": "country_risks",
+                        "matched_country": c_iso,
+                        "match_method": "country",
                         "priority": 1500,
                         "registry_match": None,
                         "compliance_status": "CRITICAL_RISK",
@@ -979,6 +983,9 @@ def _check_sanction_risks(
                         "title": "Выявлено эмбарго/запрет ввоза",
                         "detail": str(emb.document_link or "Импорт по данному коду/стране может быть запрещён."),
                         "source": "geo_special_duties",
+                        "matched_hs_prefix": str(emb.hs_code_prefix or "").strip() or None,
+                        "matched_country": c_iso,
+                        "match_method": "country_hs_prefix",
                         "priority": 1600,
                         "registry_match": None,
                         "compliance_status": "CRITICAL_RISK",
@@ -999,7 +1006,15 @@ def _check_sanction_risks(
             d.get("consignor"),
             d.get("brand"),
         ]
-        entities = [str(x).strip() for x in entities_raw if str(x or "").strip()]
+        entities: list[str] = []
+        seen_entities: set[str] = set()
+        for raw in entities_raw:
+            name = str(raw or "").strip()
+            key = name.casefold()
+            if not name or key in seen_entities:
+                continue
+            seen_entities.add(key)
+            entities.append(name)
         for name in entities[:8]:
             if len(name) < 3:
                 continue
@@ -1013,6 +1028,8 @@ def _check_sanction_risks(
                         "title": f"Контрагент/производитель найден в SDN: {name}",
                         "detail": f"Совпадение с OFAC SDN: {ofac_hit.name} ({ofac_hit.type}). Требуется блокирующая проверка.",
                         "source": "ofac_sdn_list",
+                        "matched_entity": str(ofac_hit.name or "").strip() or None,
+                        "match_method": "name_substring",
                         "priority": 1700,
                         "registry_match": None,
                         "compliance_status": "CRITICAL_RISK",
@@ -1027,6 +1044,9 @@ def _check_sanction_risks(
                         "title": f"Контрагент/производитель найден в списке санкций ЕС: {name}",
                         "detail": str(eu_hit.description or eu_hit.entity_name or "")[:1200],
                         "source": "eu_sanctions_list",
+                        "matched_entity": str(eu_hit.entity_name or "").strip() or None,
+                        "matched_hs_prefix": str(eu_hit.hs_code or "").strip() or None,
+                        "match_method": "name_substring",
                         "priority": 1450,
                         "registry_match": None,
                         "compliance_status": "CRITICAL_RISK" if (eu_hit.hs_code and hs.startswith(str(eu_hit.hs_code))) else "WARNING",

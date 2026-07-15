@@ -1,3 +1,5 @@
+import type { CanonicalAnchor } from '../api/tnvedCatalog';
+
 export type ApiStatus = 'OK' | 'ERROR' | 'WARNING' | 'SKIPPED' | 'NOT_FOUND' | 'REJECTED';
 
 export type JsonPrimitive = string | number | boolean | null;
@@ -749,9 +751,12 @@ export type SanctionsRiskSignal = {
   severity: 'clear' | 'low' | 'medium' | 'high' | 'unknown' | 'manual_review_required' | string;
   source: string;
   source_label?: string;
+  source_url?: string | null;
   authority_level?: string | null;
   matched_entity?: string | null;
   matched_hs_prefix?: string | null;
+  matched_country?: string | null;
+  match_method?: string | null;
   explanation: string;
   legal_ref?: string | null;
 };
@@ -763,6 +768,16 @@ export type SanctionsRiskSourceCoverage = {
   record_count?: number | null;
   manual_review_required?: boolean;
   authority_level?: string | null;
+  source_url?: string | null;
+  known_gaps?: string[];
+};
+
+export type SanctionsRiskScope = {
+  code: 'hs_code' | 'country' | 'counterparty';
+  label: string;
+  status: 'checked' | 'not_checked';
+  value?: string | null;
+  explanation?: string;
 };
 
 export type SanctionsRiskBlockData = {
@@ -776,8 +791,10 @@ export type SanctionsRiskBlockData = {
   signals?: SanctionsRiskSignal[];
   warnings?: string[];
   source_coverage?: SanctionsRiskSourceCoverage[];
+  screening_scope?: SanctionsRiskScope[];
   coverage_complete?: boolean;
   empty_message?: string | null;
+  canonical_anchor?: CanonicalAnchor | null;
   disclaimer?: string;
 };
 

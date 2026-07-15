@@ -6,6 +6,8 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
+from .tnved_catalog import CanonicalAnchorOut
+
 RiskSeverity = Literal[
     "clear",
     "low",
@@ -16,6 +18,7 @@ RiskSeverity = Literal[
 ]
 
 RiskBlockStatus = Literal["OK", "WARNING", "CRITICAL", "MANUAL_REVIEW"]
+RiskScopeStatus = Literal["checked", "not_checked"]
 
 
 class RiskCheckRequest(BaseModel):
@@ -31,9 +34,12 @@ class RiskSignalOut(BaseModel):
     severity: RiskSeverity
     source: str
     source_label: str
+    source_url: str | None = None
     authority_level: str | None = None
     matched_entity: str | None = None
     matched_hs_prefix: str | None = None
+    matched_country: str | None = None
+    match_method: str | None = None
     explanation: str
     legal_ref: str | None = None
 
@@ -45,6 +51,16 @@ class SourceCoverageOut(BaseModel):
     record_count: int | None = None
     manual_review_required: bool = False
     authority_level: str | None = None
+    source_url: str | None = None
+    known_gaps: list[str] = Field(default_factory=list)
+
+
+class RiskCheckScopeOut(BaseModel):
+    code: Literal["hs_code", "country", "counterparty"]
+    label: str
+    status: RiskScopeStatus
+    value: str | None = None
+    explanation: str = ""
 
 
 class SanctionsRiskBlockOut(BaseModel):
@@ -58,8 +74,13 @@ class SanctionsRiskBlockOut(BaseModel):
     signals: list[RiskSignalOut] = Field(default_factory=list)
     warnings: list[str] = Field(default_factory=list)
     source_coverage: list[SourceCoverageOut] = Field(default_factory=list)
+    screening_scope: list[RiskCheckScopeOut] = Field(default_factory=list)
     coverage_complete: bool = False
     empty_message: str | None = None
+    canonical_anchor: CanonicalAnchorOut | None = Field(
+        default=None,
+        description="Устойчивая ссылка на Canonical TN VED node для AI/RAG grounding.",
+    )
     disclaimer: str = (
         "Диагностическая проверка по локальным источникам платформы. "
         "Не заменяет полноценный санкционный скрининг и юридическую экспертизу."
