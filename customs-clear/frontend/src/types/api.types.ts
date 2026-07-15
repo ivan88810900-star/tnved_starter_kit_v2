@@ -721,10 +721,12 @@ export type AdvisoryRequirement = {
 export type NormativeDocument = {
   permit_type: string;
   tr_ts?: string | null;
+  tr_ts_full_name?: string | null;
   source?: string;
   source_label?: string | null;
   applicability?: string;
   reason?: string | null;
+  note?: string | null;
   used_for_missing_check?: boolean;
   rule_name?: string | null;
 };

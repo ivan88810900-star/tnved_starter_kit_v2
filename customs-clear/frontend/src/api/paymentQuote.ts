@@ -1,4 +1,5 @@
 import { api } from './client';
+import type { CanonicalAnchor } from './tnvedCatalog';
 
 export type PaymentLineStatus =
   | 'applied'
@@ -17,6 +18,8 @@ export type PaymentQuoteLineItem = {
   reason: string;
   source: string;
   rate_label?: string | null;
+  basis_label?: string;
+  basis_amount_rub?: number | null;
 };
 
 export type PaymentQuoteWarning = {
@@ -60,6 +63,7 @@ export type PaymentQuoteResponse = {
   sources?: Array<Record<string, unknown>>;
   legal_basis?: Record<string, string> | null;
   geo?: Record<string, unknown> | null;
+  canonical_anchor?: CanonicalAnchor | null;
 };
 
 export async function fetchPaymentQuote(payload: PaymentQuoteRequest): Promise<PaymentQuoteResponse> {

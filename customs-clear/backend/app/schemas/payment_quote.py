@@ -4,6 +4,8 @@ from typing import Literal
 
 from pydantic import AliasChoices, BaseModel, ConfigDict, Field
 
+from .tnved_catalog import CanonicalAnchorOut
+
 PaymentLineStatus = Literal[
     "applied",
     "not_applicable",
@@ -26,6 +28,8 @@ class PaymentQuoteLineItem(BaseModel):
     reason: str = ""
     source: str = ""
     rate_label: str | None = None
+    basis_label: str = ""
+    basis_amount_rub: float | None = None
 
 
 class PaymentQuoteAssumption(BaseModel):
@@ -81,3 +85,7 @@ class PaymentQuoteResponse(BaseModel):
     sources: list[dict] = Field(default_factory=list)
     legal_basis: dict | None = None
     geo: dict | None = None
+    canonical_anchor: CanonicalAnchorOut | None = Field(
+        default=None,
+        description="Устойчивая ссылка на Canonical TN VED node для AI/RAG grounding.",
+    )

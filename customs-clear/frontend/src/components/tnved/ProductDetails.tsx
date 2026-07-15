@@ -14,7 +14,7 @@ import { PreliminaryDecisionsBlock } from './PreliminaryDecisionsBlock';
 import { ClassificationRulingsBlock } from './ClassificationRulingsBlock';
 import { ProductCardSummary, NonTariffMeasureCards } from './ProductCardSummary';
 import { PermitDocumentsBlock } from './PermitDocumentsBlock';
-import { formatDutyDisplay } from '../../utils/dutyRate';
+import { SmartPaymentsBlock } from '../payments/SmartPaymentsBlock';
 import type { NormativeRequirementsBlockData, SanctionsRiskBlockData } from '../../types/api.types';
 import { ArrowUpRight, ShieldCheck } from 'lucide-react';
 
@@ -213,7 +213,6 @@ export const ProductDetails: React.FC<Props> = ({ selectedCode }) => {
 
   if (!detail) return null;
 
-  const dutyLabel = formatDutyDisplay(preview?.payments?.duty || detail.import_duty);
   const nonTariffMeasures = detail.non_tariff_measures ?? [];
   const intellectualProperties = detail.intellectual_properties ?? [];
 
@@ -303,21 +302,14 @@ export const ProductDetails: React.FC<Props> = ({ selectedCode }) => {
 
       {activeTab === 'payments' ? (
         <div className="space-y-4">
-          <section className="rounded-xl border border-blue-100 bg-blue-50 px-5 py-4">
-            <p className="mb-1 text-xs font-bold uppercase tracking-wide text-blue-700">Ставки (справочник)</p>
-            <div className="flex flex-wrap gap-4 font-mono text-lg font-bold text-blue-900">
-              <span>Пошлина: {dutyLabel}</span>
-              <span>
-                НДС:{' '}
-                {(preview?.payments?.vat_rates ?? [22]).map((r) => `${r}%`).join(' / ')}
-              </span>
-              {preview?.payments?.excise ? <span>Акциз: {preview.payments.excise}</span> : null}
-            </div>
-          </section>
+          <SmartPaymentsBlock
+            hsCode={detail.code}
+            description={(detail.name ?? detail.description ?? '').trim()}
+          />
 
           <details className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-3">
             <summary className="cursor-pointer text-xs font-bold uppercase tracking-wide text-gray-600">
-              Правовые основания
+              Дополнительные нормативные справки
             </summary>
             <div className="mt-3 space-y-3">
               {referenceLoading ? (

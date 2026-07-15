@@ -16,6 +16,7 @@ from ..schemas.payment_quote import (
 )
 from .exchange_rates import get_rates_map
 from .payment_engine_compat import compute_payments
+from .tnved_code_card import canonical_anchor_for_hs
 
 
 def _digits_hs(code: str) -> str:
@@ -336,6 +337,7 @@ def build_payment_quote(payload: dict[str, Any]) -> PaymentQuoteResponse:
     breakdown = raw.get("breakdown") or {}
     country = raw.get("country") or (str(payload.get("country") or "").upper().strip() or None)
     dq = raw.get("data_quality") or {}
+    canonical_anchor = canonical_anchor_for_hs(hs_code)
 
     if raw.get("status") == "EMBARGO":
         geo = raw.get("geo") or {}
@@ -382,6 +384,7 @@ def build_payment_quote(payload: dict[str, Any]) -> PaymentQuoteResponse:
             sources=list(raw.get("sources") or []),
             legal_basis=raw.get("legal_basis"),
             geo=geo,
+            canonical_anchor=canonical_anchor,
         )
 
     duty_status: PaymentLineStatus = "applied"
@@ -401,6 +404,8 @@ def build_payment_quote(payload: dict[str, Any]) -> PaymentQuoteResponse:
             reason=duty_reason,
             source="hs_duty_rules / hs_rates (ЕТТ ЕАЭС)",
             rate_label=f"{breakdown.get('duty_rate')}%" if breakdown.get("duty_rate") is not None else None,
+            basis_label="Таможенная стоимость",
+            basis_amount_rub=float(raw.get("customs_value") or 0.0),
         ),
         PaymentQuoteLineItem(
             code="vat",
@@ -410,6 +415,8 @@ def build_payment_quote(payload: dict[str, Any]) -> PaymentQuoteResponse:
             reason=str(breakdown.get("vat_reason") or ""),
             source="hs_rates / vat_preferences (НК РФ)",
             rate_label=f"{breakdown.get('vat_rate')}%",
+            basis_label="Стоимость + пошлина + акциз + торговые пошлины",
+            basis_amount_rub=float(breakdown.get("vat_base") or 0.0),
         ),
         PaymentQuoteLineItem(
             code="customs_fee",
@@ -418,6 +425,8 @@ def build_payment_quote(payload: dict[str, Any]) -> PaymentQuoteResponse:
             status="applied",
             reason=str((raw.get("legal_basis") or {}).get("customs_fee") or "Шкала таможенных сборов РФ 2026."),
             source="customs_fees",
+            basis_label="Таможенная стоимость",
+            basis_amount_rub=float(raw.get("customs_value") or 0.0),
         ),
         PaymentQuoteLineItem(
             code="excise",
@@ -462,4 +471,5 @@ def build_payment_quote(payload: dict[str, Any]) -> PaymentQuoteResponse:
         sources=list(raw.get("sources") or []),
         legal_basis=raw.get("legal_basis"),
         geo=raw.get("geo"),
+        canonical_anchor=canonical_anchor,
     )

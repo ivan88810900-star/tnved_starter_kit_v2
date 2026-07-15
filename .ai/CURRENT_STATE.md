@@ -1,7 +1,7 @@
 # CURRENT_STATE.md — Текущее состояние проекта
 
-> Дата: 2026-07-10
-> Активная ветка: `feat/canonical-read-path`; baseline реализации: `9fe1fa5`
+> Дата: 2026-07-15
+> Активная ветка: `feat/smart-payments-explanation`; baseline: `d2ef092`
 
 ---
 
@@ -190,6 +190,8 @@ legacy (сверх structural). До TASK-CANONICAL-004 контур не был
 
 | Коммит | Дата | Описание |
 |--------|------|---------|
+| TASK-MVP-PAYMENTS-001 | 2026-07-15 | Smart Payments встроен в карточку ТН ВЭД: базы расчёта, статусы, источники, допущения, честный partial total и Canonical anchor |
+| `f7df848..d2ef092` | 2026-07-15 | Canonical anchor identity + additive bridge в поиск/карточку ТН ВЭД |
 | Gate-2 QA | 2026-07-14 | TASK-CANONICAL-004 completed: 18 049/18 049 match, 0 mismatch/unresolved; flags remain default OFF |
 | `9fe1fa5..daf6be1` | 2026-07-10..14 | `/children` за default-OFF флагом; corrective, shadow metrics, Gate-2 auditor/export/report |
 | `9712c7b` | 2026-07-01 | Canonical Model Materialization: иммутабельный `CanonicalModel`, validator gate, full-tree content parity |
@@ -228,6 +230,8 @@ legacy (сверх structural). До TASK-CANONICAL-004 контур не был
 | **TASK-CANONICAL-004** — read-path `/children` за флагом (provider/cache, shadow, fallback), контракт неизменён | ✅ Completed: Gate-1 + Gate-2 passed; flags default OFF | — |
 | **TASK-CANONICAL-005** — freeze `stable_id` / output `snapshot_id` / anchor DTO | ✅ Completed; ADR-0003 Accepted | — |
 | **TASK-CANONICAL-006** — TN VED search/code-card anchor bridge | ✅ Completed; optional soft-fail anchor | — |
+| **TASK-MVP-PAYMENTS-001** — объяснимый расчёт платежей в карточке ТН ВЭД | ✅ Completed; calculation semantics unchanged | — |
+| Sanctions/risk checks — списки, совпадения, severity, evidence | Следующая MVP-задача | Высокий |
 | Derisking после TASK-005: aliases/history (`superseded_by`, previous codes/IDs) | Рекомендован | Высокий |
 | Fine-tune модели на `training_pairs.jsonl` | Вне репозитория | Низкий |
 | Live-parсер ФТС предрешений (tks.ru JS) | Decision Memo #135 | Средний |
@@ -243,6 +247,8 @@ legacy (сверх structural). До TASK-CANONICAL-004 контур не был
 ### Данные
 - **ETT (пошлины):** 27 строк из TKS bulk-AI краулера (legacy), не от ЕЭК → `manual_review_required`
 - **Anti-dumping:** 82.8% покрытие, 5 мер из 29 без официального источника
+- **Special duties:** при отсутствии локальных данных Smart Payments намеренно не
+  подтверждает финальный итог и показывает только известную частичную сумму
 - **ФТС предрешения:** live-парсер не реализован (customs.gov.ru/folder/519 — статистика, не предрешения)
 - **ТРОИС:** fuzzy-поиск может давать false positives на коротких запросах
 

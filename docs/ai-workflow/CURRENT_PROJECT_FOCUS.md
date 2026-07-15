@@ -6,7 +6,7 @@ Active
 
 ## Last updated
 
-2026-07-14
+2026-07-15
 
 ## Strategic direction
 
@@ -14,9 +14,10 @@ The current active workstream is the **CustomsClear MVP application**: end-to-en
 
 Official SGR and NTM v2 normative datasets remain important **data contours**, but the top priority is shipping user-facing MVP blocks — starting with the normative requirements block.
 
-The normative requirements foundation is complete enough to advance to the TN VED
-search/code-card slice. Per DM-0003, that slice is also the first planned consumer of
-the Canonical anchor contract. This does not authorize Canonical runtime flag rollout.
+The normative requirements, TN VED search/code-card and explainable Smart Payments
+slices are complete. The next product slice is sanctions/risk checks, followed by an
+AI assistant grounded in the same internal evidence contracts. This does not authorize
+Canonical runtime flag rollout.
 
 ## What has already been completed
 
@@ -25,6 +26,9 @@ the Canonical anchor contract. This does not authorize Canonical runtime flag ro
 - Advisory requirements UI/API foundation
 - Official SGR contour: importer, diagnostics, seed dataset, validator
 - Normative requirements block MVP (backend aggregation + frontend block on NonTariff/compliance)
+- Canonical anchor identity plus additive TN VED search/code-card bridge
+- Explainable Smart Payments in the TN VED card: bases, statuses, sources, assumptions,
+  uncertainty and optional Canonical grounding anchor
 
 ## Current top priority
 
@@ -32,10 +36,10 @@ the Canonical anchor contract. This does not authorize Canonical runtime flag ro
 
 1. ~~Product readiness audit~~ (ongoing reference)
 2. ~~Normative block foundation~~ — required / missing / advisory documents, source labels, applicability, evidence
-3. **TN VED + preliminary decisions** — first freeze Canonical anchor identity/snapshot,
-   then deliver search, code card, related decisions and evidence
-4. Smart payments — duty/VAT/excise/fees with explanation
-5. Sanctions/risk checks — lists, matches, severity
+3. ~~TN VED + preliminary decisions~~ — Canonical anchor identity/snapshot, search,
+   code card, related decisions and evidence
+4. ~~Smart payments~~ — duty/VAT/excise/fees with explanation and conservative uncertainty
+5. **Sanctions/risk checks** — lists, matches, severity and evidence
 6. AI assistant — answers grounded in internal modules, cites sources
 
 Parallel (not blocking MVP UI): continue curating `official_sgr_rules.seed.json` and validation — **without** enabling official SGR broker enforcement until a separate approved workstream.
@@ -47,8 +51,8 @@ Current next tasks:
 - ✅ ADR-0003 / TASK-CANONICAL-005: `stable_id` + `snapshot_id` lifecycle frozen
 - ✅ TASK-CANONICAL-006: TN VED search + code-card consume the additive Canonical
   anchor DTO with soft fallback; preliminary decisions/evidence remain visible
-- Smart payment explanation block (reuse calculator/compliance surfaces)
-- Sanctions/risk check slice
+- ✅ TASK-MVP-PAYMENTS-001: Smart payment explanation block in the TN VED card
+- Sanctions/risk check slice with source evidence and conservative match semantics
 - Assistant grounding on normative + payments modules
 
 Official SGR dataset tasks (when not conflicting with MVP slices):
