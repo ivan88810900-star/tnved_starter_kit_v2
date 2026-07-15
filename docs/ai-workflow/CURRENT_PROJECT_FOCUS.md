@@ -27,6 +27,8 @@ Canonical runtime flag rollout.
 - Official SGR contour: importer, diagnostics, seed dataset, validator
 - Normative requirements block MVP (backend aggregation + frontend block on NonTariff/compliance)
 - Canonical anchor identity plus additive TN VED search/code-card bridge
+- Product-facing hybrid TN VED search: code/name/domain ranking, safe synonym
+  boundaries, conservative typo recovery and explainable match reasons
 - Explainable Smart Payments in the TN VED card: bases, statuses, sources, assumptions,
   uncertainty and optional Canonical grounding anchor
 - Evidence-first sanctions/risk checks in the TN VED card: explicit scope, conservative
@@ -53,6 +55,8 @@ Current next tasks:
 - ✅ ADR-0003 / TASK-CANONICAL-005: `stable_id` + `snapshot_id` lifecycle frozen
 - ✅ TASK-CANONICAL-006: TN VED search + code-card consume the additive Canonical
   anchor DTO with soft fallback; preliminary decisions/evidence remain visible
+- ✅ TASK-MVP-SEARCH-QUALITY-001: hybrid search ranking, typo recovery and
+  explainable main-UI results
 - ✅ TASK-MVP-PAYMENTS-001: Smart payment explanation block in the TN VED card
 - ✅ TASK-MVP-RISK-001: sanctions/risk check slice with source evidence and
   conservative match semantics

@@ -81,8 +81,19 @@ def test_search_response_exposes_anchor_additively() -> None:
     }
     with (
         patch(
-            "app.services.tnved_fts.search_commodities_fts",
-            return_value=[{"code": "8517130000", "description": "Смартфоны"}],
+            "app.services.tnved_fts.search_commodities_smart",
+            return_value={
+                "results": [
+                    {
+                        "code": "8517130000",
+                        "description": "Смартфоны",
+                        "match_reason": "name_match",
+                    }
+                ],
+                "corrected_query": None,
+                "effective_query": "смартфон",
+                "strategy": "hybrid_fts",
+            },
         ),
         patch("app.services.normative_store.is_leaf_hs_code", return_value=True),
         patch(
@@ -96,3 +107,5 @@ def test_search_response_exposes_anchor_additively() -> None:
     assert payload["results"][0]["canonical_anchor"] == anchor
     assert payload["results"][0]["code"] == "8517130000"
     assert payload["results"][0]["name"] == "Смартфоны"
+    assert payload["results"][0]["match_reason"] == "name_match"
+    assert payload["search"]["strategy"] == "hybrid_fts"

@@ -38,7 +38,18 @@ export type TnvedSearchHit = {
   name: string;
   /** Реальный декларируемый лист (не групповой заголовок). */
   is_leaf?: boolean;
+  match_reason?: 'code_prefix' | 'name_match' | 'domain_dictionary' | 'typo_correction' | 'full_text';
   canonical_anchor?: CanonicalAnchor;
+};
+
+export type TnvedSearchResponse = {
+  results: TnvedSearchHit[];
+  suggestions: Array<{ term: string; hint: string }>;
+  search: {
+    strategy: string;
+    corrected_query: string | null;
+    effective_query: string;
+  } | null;
 };
 
 export type CanonicalAnchor = {
@@ -268,13 +279,22 @@ export async function fetchTnvedBreadcrumb(code: string): Promise<TnvedBreadcrum
   return data.breadcrumb ?? [];
 }
 
-export async function searchTnved(q: string): Promise<TnvedSearchHit[]> {
+export async function searchTnved(q: string): Promise<TnvedSearchResponse> {
   const query = (q ?? '').trim();
-  if (query.length < 2) return [];
-  const { data } = await api.get<{ status: string; results: TnvedSearchHit[] }>(
+  if (query.length < 2) return { results: [], suggestions: [], search: null };
+  const { data } = await api.get<{
+    status: string;
+    results: TnvedSearchHit[];
+    suggestions?: Array<{ term: string; hint: string }>;
+    search?: TnvedSearchResponse['search'];
+  }>(
     `${PREFIX}/search?q=${encodeURIComponent(query)}`,
   );
-  return data.results ?? [];
+  return {
+    results: data.results ?? [],
+    suggestions: data.suggestions ?? [],
+    search: data.search ?? null,
+  };
 }
 
 export async function fetchTnvedPreview(code: string): Promise<TnvedPreview> {

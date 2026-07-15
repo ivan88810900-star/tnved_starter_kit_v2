@@ -677,7 +677,7 @@ body {
   header,
   aside,
   .cc-disclosure > summary,
-  .print\\:hidden {
+  [class~="print:hidden"] {
     display: none !important;
   }
 

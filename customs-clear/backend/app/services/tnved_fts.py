@@ -27,6 +27,12 @@ _FTS_TABLE = "tnved_fts"
 _SOURCE_TABLE = "tnved_commodities"
 _OBSOLETE_RESERVED_DESC_SQL = "description NOT LIKE 'Товарная позиция%'"
 _OBSOLETE_RESERVED_DESC_SQL_C = "c.description NOT LIKE 'Товарная позиция%'"
+_SEARCH_STOP_WORDS = frozenset({"and", "or", "not", "near"})
+_RANKING_WORD_ENDINGS = (
+    "иями", "ями", "ами", "ого", "его", "ому", "ему", "ыми", "ими",
+    "ая", "яя", "ое", "ее", "ые", "ие", "ый", "ий", "ой", "ую", "юю",
+    "ам", "ям", "ах", "ях", "ов", "ев", "ей", "а", "я", "о", "е", "ы", "и", "у", "ю", "ь",
+)
 
 # Кэш доступности FTS5 в текущей сборке SQLite (None — ещё не проверяли).
 _fts_ready: bool | None = None
@@ -103,19 +109,45 @@ def _build_match(text_terms: list[str]) -> str:
         # Оставляем буквы/цифры/пробел (в т.ч. кириллицу), убираем спецсимволы FTS.
         tok = re.sub(r"[^\w\s]", " ", term, flags=re.UNICODE).strip()
         tok = re.sub(r"\s+", " ", tok)
-        if not tok or tok in seen:
+        words = [word.lower() for word in tok.split() if word]
+        if not tok or tok in seen or (words and all(word in _SEARCH_STOP_WORDS for word in words)):
             continue
         seen.add(tok)
         parts.append(f'"{tok}"*')
     return " OR ".join(parts)
 
 
-def search_commodities_fts(query: str, limit: int = 40) -> list[dict[str, Any]] | None:
-    """Релевантный поиск по номенклатуре. None — если FTS недоступен (fallback)."""
-    if not ensure_fts_index():
-        return None
+def _normalise_search_text(value: str) -> str:
+    cleaned = re.sub(r"[^\w\s]", " ", (value or "").lower().replace("ё", "е"), flags=re.UNICODE)
+    return re.sub(r"\s+", " ", cleaned).strip()
 
-    from .normative_store import _expand_query_terms  # локальный импорт: избегаем цикла
+
+def _search_words(value: str) -> list[str]:
+    return [
+        word
+        for word in _normalise_search_text(value).split()
+        if len(word) >= 2 and not word.isdigit() and word not in _SEARCH_STOP_WORDS
+    ]
+
+
+def _ranking_word_stem(word: str) -> str:
+    for ending in _RANKING_WORD_ENDINGS:
+        if word.endswith(ending) and len(word) - len(ending) >= 4:
+            return word[: -len(ending)]
+    return word
+
+
+def _word_matches_description(word: str, description_words: list[str]) -> bool:
+    if word in description_words:
+        return True
+    # Conservative morphology aid for ranking only; FTS candidate retrieval remains
+    # the source of truth.
+    root = _ranking_word_stem(word)
+    return len(root) >= 4 and any(candidate.startswith(root) for candidate in description_words)
+
+
+def _search_once(query: str, limit: int, *, corrected: bool = False) -> list[dict[str, Any]] | None:
+    from .normative_store import _expand_query_terms  # local import: avoids a module cycle
 
     q = (query or "").strip()
     if len(q) < 2:
@@ -130,15 +162,41 @@ def search_commodities_fts(query: str, limit: int = 40) -> list[dict[str, Any]] 
                 code_terms.append(t)
         else:
             text_terms.append(t)
+    text_terms.extend(_search_words(q))
 
-    results: list[dict[str, Any]] = []
-    seen: set[str] = set()
+    # De-duplicate dictionary prefixes while preserving their intentional order.
+    code_terms = list(dict.fromkeys(code_terms))
+    text_terms = list(dict.fromkeys(text_terms))
 
-    def add(code: str | None, desc: str | None) -> None:
-        code = (code or "").strip()
-        if code and code not in seen and not (desc or "").strip().startswith("Товарная позиция"):
-            seen.add(code)
-            results.append({"code": code, "description": (desc or "").strip()})
+    candidates: dict[str, dict[str, Any]] = {}
+    raw_rank = 0
+
+    def add(
+        code: str | None,
+        desc: str | None,
+        *,
+        source: str,
+        dictionary_prefix: str | None = None,
+    ) -> None:
+        nonlocal raw_rank
+        code_value = (code or "").strip()
+        desc_value = (desc or "").strip()
+        if not code_value or desc_value.startswith("Товарная позиция"):
+            return
+        row = candidates.get(code_value)
+        if row is None:
+            row = {
+                "code": code_value,
+                "description": desc_value,
+                "sources": set(),
+                "dictionary_prefixes": set(),
+                "raw_rank": raw_rank,
+            }
+            candidates[code_value] = row
+            raw_rank += 1
+        row["sources"].add(source)
+        if dictionary_prefix:
+            row["dictionary_prefixes"].add(dictionary_prefix)
 
     try:
         with engine.begin() as conn:
@@ -149,37 +207,142 @@ def search_commodities_fts(query: str, limit: int = 40) -> list[dict[str, Any]] 
                          f"WHERE code LIKE :p AND {_OBSOLETE_RESERVED_DESC_SQL} ORDER BY code LIMIT :l"),
                     {"p": f"{qd}%", "l": limit},
                 ):
-                    add(code, desc)
+                    add(code, desc, source="code")
 
-            # 2) Полнотекстовый поиск по описанию, ранжирование bm25.
+            # 2) Curated domain dictionary prefixes.  These must be candidates
+            # before generic BM25 rows: otherwise "ноутбук" ranked a computer
+            # tomography device above the intended 8471 family.
+            per_prefix_limit = max(12, min(limit * 2, 60))
+            for code_term in code_terms:
+                for code, desc in conn.execute(
+                    text(
+                        f"SELECT code, description FROM {_SOURCE_TABLE} "
+                        f"WHERE code LIKE :p AND {_OBSOLETE_RESERVED_DESC_SQL} ORDER BY code LIMIT :l"
+                    ),
+                    {"p": f"{code_term}%", "l": per_prefix_limit},
+                ):
+                    add(code, desc, source="dictionary", dictionary_prefix=code_term)
+
+            # 3) Full-text candidates.  BM25 supplies a stable raw order; final
+            # ranking below combines it with direct-text and dictionary evidence.
             match = _build_match(text_terms)
-            if match and len(results) < limit:
+            if match:
                 rows = conn.execute(
                     text(f"SELECT c.code, c.description FROM {_FTS_TABLE} f "
                          f"JOIN {_SOURCE_TABLE} c ON c.id = f.rowid "
                          f"WHERE {_FTS_TABLE} MATCH :m AND {_OBSOLETE_RESERVED_DESC_SQL_C} "
                          f"ORDER BY bm25({_FTS_TABLE}) LIMIT :l"),
-                    {"m": match, "l": limit * 3},
+                    {"m": match, "l": max(100, min(limit * 6, 400))},
                 )
                 for code, desc in rows:
-                    if len(results) >= limit:
-                        break
-                    add(code, desc)
-
-            # 3) Коды глав из синонимов (например, ноутбук → 8471).
-            for ct in code_terms:
-                if len(results) >= limit:
-                    break
-                for code, desc in conn.execute(
-                    text(f"SELECT code, description FROM {_SOURCE_TABLE} "
-                         f"WHERE code LIKE :p AND {_OBSOLETE_RESERVED_DESC_SQL} ORDER BY code LIMIT :l"),
-                    {"p": f"{ct}%", "l": limit},
-                ):
-                    if len(results) >= limit:
-                        break
-                    add(code, desc)
+                    add(code, desc, source="text")
     except Exception as exc:
         logger.warning("tnved_fts: ошибка FTS-поиска, fallback на LIKE: %s", exc)
         return None
 
-    return results[:limit]
+    query_norm = _normalise_search_text(q)
+    query_words = _search_words(q)
+
+    def rank(row: dict[str, Any]) -> tuple[int, int, str]:
+        code = str(row["code"])
+        description_norm = _normalise_search_text(str(row["description"]))
+        description_words = _search_words(description_norm)
+        sources: set[str] = row["sources"]
+        dictionary_prefixes: set[str] = row["dictionary_prefixes"]
+        matched_dictionary_prefixes = {
+            prefix for prefix in code_terms if code.startswith(prefix)
+        } | dictionary_prefixes
+        score = 0
+
+        direct_code = bool(qd and len(qd) >= 2 and code.startswith(qd))
+        direct_phrase = bool(query_norm and f" {query_norm} " in f" {description_norm} ")
+        direct_word_hits = sum(
+            1 for word in query_words if _word_matches_description(word, description_words)
+        )
+        dictionary_hit = bool(matched_dictionary_prefixes)
+
+        if direct_code:
+            score += 100_000
+            if code == qd:
+                score += 8_000
+        if direct_phrase:
+            score += 70_000
+        if query_words and direct_word_hits == len(query_words):
+            score += 60_000
+        elif direct_word_hits:
+            score += direct_word_hits * 6_000
+        if dictionary_hit:
+            score += 45_000
+            if code in matched_dictionary_prefixes:
+                score += 8_000
+            elif len(code) == 4:
+                score += 3_000
+        if "text" in sources:
+            score += 5_000
+
+        if direct_code:
+            reason = "code_prefix"
+        elif corrected:
+            reason = "typo_correction"
+        elif direct_phrase or (query_words and direct_word_hits == len(query_words)):
+            reason = "name_match"
+        elif dictionary_hit:
+            reason = "domain_dictionary"
+        else:
+            reason = "full_text"
+        row["match_reason"] = reason
+        return (-score, int(row["raw_rank"]), code)
+
+    ranked = sorted(candidates.values(), key=rank)
+    return [
+        {
+            "code": row["code"],
+            "description": row["description"],
+            "match_reason": row["match_reason"],
+        }
+        for row in ranked[:limit]
+    ]
+
+
+def search_commodities_smart(query: str, limit: int = 40) -> dict[str, Any]:
+    """Hybrid lexical search with curated semantics and conservative typo recovery."""
+    q = (query or "").strip()
+    if len(q) < 2:
+        return {
+            "results": [],
+            "corrected_query": None,
+            "effective_query": q,
+            "strategy": "hybrid_fts",
+        }
+    if not ensure_fts_index():
+        return {
+            "results": None,
+            "corrected_query": None,
+            "effective_query": q,
+            "strategy": "fts_unavailable",
+        }
+
+    results = _search_once(q, limit) or []
+    corrected_query: str | None = None
+    if not results:
+        from .normative_store import suggest_search_correction
+
+        corrected_query = suggest_search_correction(q)
+        if corrected_query:
+            corrected_results = _search_once(corrected_query, limit, corrected=True)
+            if corrected_results:
+                results = corrected_results
+            else:
+                corrected_query = None
+
+    return {
+        "results": results,
+        "corrected_query": corrected_query,
+        "effective_query": corrected_query or q,
+        "strategy": "hybrid_fts_typo" if corrected_query else "hybrid_fts",
+    }
+
+
+def search_commodities_fts(query: str, limit: int = 40) -> list[dict[str, Any]] | None:
+    """Backward-compatible result list for existing service consumers."""
+    return search_commodities_smart(query, limit=limit)["results"]

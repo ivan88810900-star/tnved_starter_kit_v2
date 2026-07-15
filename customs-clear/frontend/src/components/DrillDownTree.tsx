@@ -397,8 +397,9 @@ export const DrillDownTree: React.FC<Props> = ({ onSelectCode, initialSearchQuer
     setSearchLoading(true);
     const t = window.setTimeout(() => {
       searchTnved(trimmed)
-        .then(async (rows) => {
+        .then(async (payload) => {
           if (cancelled) return;
+          const rows = payload.results;
           setSearchHits(rows);
           setSearchErr(null);
           const paths: Record<string, string> = {};

@@ -513,33 +513,41 @@ def _get_vat_preferences_rows(db: Session, code: str) -> list[VatPreference]:
 
 @router.get("/search")
 def search_commodities(
-    q: str = Query("", description="Поиск по коду или наименованию"),
+    q: str = Query("", max_length=160, description="Поиск по коду или наименованию"),
+    limit: int = 24,
     db: Session = Depends(get_db),
 ) -> JSONResponse:
     from ..services.normative_store import _expand_query_terms, get_search_suggestions, is_leaf_hs_code
-    from ..services.tnved_fts import search_commodities_fts
+    from ..services.tnved_fts import search_commodities_smart
 
     query = (q or "").strip()
     if len(query) < 2:
         return JSONResponse({"status": "OK", "results": []})
+    result_limit = max(1, min(int(limit), 50))
 
     # Основной путь — релевантный FTS5-поиск по всей номенклатуре (bm25 ранжирование).
-    fts_rows = search_commodities_fts(query, limit=50)
+    search_outcome = search_commodities_smart(query, limit=result_limit)
+    fts_rows = search_outcome["results"]
     if fts_rows is not None:
         results = [
             {
                 "code": _pad_code(r["code"] or ""),
                 "name": _strip_leading_dashes((r.get("description") or "").strip()),
                 "is_leaf": is_leaf_hs_code(_pad_code(r["code"] or "")),
+                "match_reason": r.get("match_reason") or "full_text",
             }
             for r in fts_rows
             if not _is_obsolete_reserved_description(r.get("description"))
         ]
     else:
         # Fallback (FTS5 недоступен в сборке SQLite): LIKE по расширенным терминам.
-        terms = _expand_query_terms(query)
-        digit_prefix = _digits(query)
-        filters = [func.lower(Commodity.description).like(f"%{t}%") for t in terms]
+        effective_query = str(search_outcome.get("effective_query") or query)
+        terms = _expand_query_terms(effective_query)
+        digit_prefix = _digits(effective_query)
+        text_terms = [term for term in terms if not term.isdigit()]
+        dictionary_code_terms = [term for term in terms if term.isdigit() and len(term) >= 2]
+        filters = [func.lower(Commodity.description).like(f"%{term}%") for term in text_terms]
+        filters.extend(Commodity.code.like(f"{term}%") for term in dictionary_code_terms)
         if digit_prefix:
             filters.append(Commodity.code.like(f"{digit_prefix}%"))
         rows = (
@@ -548,7 +556,7 @@ def search_commodities(
             )
             .filter(or_(*filters))
             .order_by(Commodity.code.asc())
-            .limit(50)
+            .limit(result_limit)
             .all()
         )
         results = [
@@ -556,11 +564,26 @@ def search_commodities(
                 "code": _pad_code(code or ""),
                 "name": _strip_leading_dashes((name or "").strip()),
                 "is_leaf": is_leaf_hs_code(_pad_code(code or "")),
+                "match_reason": (
+                    "code_prefix"
+                    if digit_prefix and str(code or "").startswith(digit_prefix)
+                    else "domain_dictionary"
+                    if any(str(code or "").startswith(term) for term in dictionary_code_terms)
+                    else "full_text"
+                ),
             }
             for code, name in rows
         ]
 
-    resp: dict[str, Any] = {"status": "OK", "results": results}
+    resp: dict[str, Any] = {
+        "status": "OK",
+        "results": results,
+        "search": {
+            "strategy": "like_fallback" if fts_rows is None else search_outcome.get("strategy") or "hybrid_fts",
+            "corrected_query": search_outcome.get("corrected_query"),
+            "effective_query": search_outcome.get("effective_query") or query,
+        },
+    }
     anchors = canonical_anchors_for_hs_codes([item["code"] for item in results])
     for item in results:
         anchor = anchors.get(_digits(item["code"]))

@@ -4,6 +4,7 @@ from __future__ import annotations
 # upsert/search — функции ниже (данные с tks.ru и др.).
 
 import re
+from difflib import SequenceMatcher
 from datetime import date, datetime, timezone
 from typing import Any, Literal
 
@@ -45,7 +46,7 @@ def normalize_hs_duty_rate_string(value: Any) -> str:
     return s[:2048]
 
 
-from ..models import (
+from ..models import (  # noqa: E402 — rate normalizer intentionally stays dependency-free above ORM imports
     Chapter,
     ClassificationDecision,
     Commodity,
@@ -1302,6 +1303,9 @@ _SYNONYM_MAP: dict[str, list[str]] = {
     "телевизор": ["приемник телевиз", "монитор", "8528"],
     "монитор": ["монитор", "видеоконтрольн", "8528"],
     "телек": ["приемник телевиз", "8528"],
+    "чайник": ["электротермическ", "водонагревател", "приготовления кофе или чая", "8516"],
+    "электрочайник": ["электротермическ", "водонагревател", "приготовления кофе или чая", "8516"],
+    "пылесос": ["пылесос", "8508"],
     "автомобиль": ["моторн транспортн", "легков", "8703"],
     "машина": ["моторн транспортн", "легков", "8703"],
     "авто": ["моторн транспортн", "легков", "8703"],
@@ -1385,7 +1389,6 @@ _SYNONYM_MAP: dict[str, list[str]] = {
     "матрас": ["матрас", "матрац", "9404"],
     "игрушка": ["игрушк", "9503"],
     "кукла": ["кукл", "9503"],
-    "велосипед": ["велосипед", "8712"],
     "коляска": ["коляск", "детск", "8715"],
     "часы": ["час", "наручн", "9101", "9102"],
     "очки": ["очк", "оптическ", "9004"],
@@ -1446,13 +1449,94 @@ _SEARCH_SUGGESTIONS: list[dict[str, str]] = [
 ]
 
 
+_QUERY_WORD_RE = re.compile(r"[\w\-]+", flags=re.UNICODE)
+_RUSSIAN_VOWELS_AND_SIGNS = frozenset("аеёиоуыэюяйьъ")
+_RUSSIAN_STEM_SUFFIXES = frozenset(
+    {
+        "а", "я", "о", "е", "ы", "и", "у", "ю",
+        "ая", "яя", "ое", "ее", "ый", "ий", "ой",
+        "ого", "его", "ому", "ему", "ым", "им", "ых", "их",
+        "ую", "юю", "ам", "ям", "ах", "ях", "ами", "ями",
+        "ов", "ев", "ей", "ые", "ие",
+    }
+)
+
+
+def _query_words(value: str) -> list[str]:
+    return [word for word in _QUERY_WORD_RE.findall((value or "").lower().replace("ё", "е")) if word]
+
+
+def _synonym_key_matches_query(key: str, query: str) -> bool:
+    """Match dictionary keys as words/stems, never as arbitrary substrings.
+
+    The old ``key in query`` rule treated ``чай`` as a synonym hit inside
+    ``чайник`` and sent electric-kettle searches to HS 0902.  Exact word-sequence
+    matching keeps normal phrases safe; consonant-ending keys of at least five
+    characters may still act as intentional Russian stems (``стиральн`` etc.).
+    """
+    key_words = _query_words(key)
+    query_words = _query_words(query)
+    if not key_words or not query_words:
+        return False
+
+    width = len(key_words)
+    if any(query_words[idx : idx + width] == key_words for idx in range(len(query_words) - width + 1)):
+        return True
+
+    if width != 1:
+        return False
+    stem = key_words[0]
+    if len(stem) < 5 or stem[-1] in _RUSSIAN_VOWELS_AND_SIGNS:
+        return False
+    return any(
+        word.startswith(stem) and word[len(stem) :] in _RUSSIAN_STEM_SUFFIXES
+        for word in query_words
+    )
+
+
+def suggest_search_correction(query: str) -> str | None:
+    """Return a conservative correction for common product-name typos.
+
+    Corrections are limited to the curated domain vocabulary; codes, short words
+    and already recognised dictionary terms are left untouched.  The search layer
+    only applies the correction after the original query produced no candidates.
+    """
+    words = _query_words(query)
+    if not words or any(ch.isdigit() for ch in (query or "")):
+        return None
+
+    keys = [key for key in _SYNONYM_MAP if len(_query_words(key)) == 1]
+    corrected: list[str] = []
+    changed = False
+    for word in words:
+        if len(word) < 5 or any(_synonym_key_matches_query(key, word) for key in keys):
+            corrected.append(word)
+            continue
+
+        candidates = [key for key in keys if abs(len(key) - len(word)) <= 2 and key[:1] == word[:1]]
+        best = max(
+            candidates,
+            key=lambda candidate: SequenceMatcher(None, word, candidate).ratio(),
+            default="",
+        )
+        ratio = SequenceMatcher(None, word, best).ratio() if best else 0.0
+        if best and ratio >= 0.84:
+            corrected.append(best)
+            changed = True
+        else:
+            corrected.append(word)
+
+    value = " ".join(corrected).strip()
+    return value if changed and value and value != " ".join(words) else None
+
+
 def _expand_query_terms(query: str) -> list[str]:
     q = (query or "").strip().lower()
     if not q:
         return []
     terms = [q]
     for key, vals in _SYNONYM_MAP.items():
-        if key in q:
+        if _synonym_key_matches_query(key, q):
             terms.extend(vals)
     # Stem-like prefix matching: trim last 1-2 chars for Russian morphology
     if len(q) >= 4 and not any(c.isdigit() for c in q):

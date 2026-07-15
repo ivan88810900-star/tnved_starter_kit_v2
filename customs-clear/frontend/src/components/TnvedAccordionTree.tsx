@@ -23,6 +23,13 @@ type Props = {
 
 const DEBOUNCE_MS = 300;
 const INDENT_PX = 16;
+const MATCH_REASON_LABELS: Record<NonNullable<TnvedSearchHit['match_reason']>, string> = {
+  code_prefix: 'по коду',
+  name_match: 'по наименованию',
+  domain_dictionary: 'по смыслу',
+  typo_correction: 'с исправлением',
+  full_text: 'по тексту',
+};
 
 const containerVariants = {
   hidden: {},
@@ -365,6 +372,8 @@ export const TnvedAccordionTree: React.FC<Props> = ({ onSelectCode, initialSearc
   const [searchPaths, setSearchPaths] = React.useState<Record<string, string>>({});
   const [searchLoading, setSearchLoading] = React.useState(false);
   const [searchErr, setSearchErr] = React.useState<string | null>(null);
+  const [searchSuggestions, setSearchSuggestions] = React.useState<Array<{ term: string; hint: string }>>([]);
+  const [correctedQuery, setCorrectedQuery] = React.useState<string | null>(null);
   const [activeSearchIdx, setActiveSearchIdx] = React.useState(-1);
 
   const inputRef = React.useRef<HTMLInputElement>(null);
@@ -465,17 +474,24 @@ export const TnvedAccordionTree: React.FC<Props> = ({ onSelectCode, initialSearc
       setSearchHits([]);
       setSearchPaths({});
       setSearchErr(null);
+      setSearchSuggestions([]);
+      setCorrectedQuery(null);
       setSearchLoading(false);
       return;
     }
 
     let cancelled = false;
     setSearchLoading(true);
+    setSearchSuggestions([]);
+    setCorrectedQuery(null);
     const t = window.setTimeout(() => {
       searchTnved(trimmed)
-        .then(async (hits) => {
+        .then(async (payload) => {
           if (cancelled) return;
+          const hits = payload.results;
           setSearchHits(hits);
+          setSearchSuggestions(payload.suggestions);
+          setCorrectedQuery(payload.search?.corrected_query ?? null);
           setSearchErr(null);
           const paths: Record<string, string> = {};
           await Promise.all(
@@ -493,6 +509,8 @@ export const TnvedAccordionTree: React.FC<Props> = ({ onSelectCode, initialSearc
         .catch(() => {
           if (!cancelled) {
             setSearchHits([]);
+            setSearchSuggestions([]);
+            setCorrectedQuery(null);
             setSearchErr('Ошибка поиска');
           }
         })
@@ -516,6 +534,8 @@ export const TnvedAccordionTree: React.FC<Props> = ({ onSelectCode, initialSearc
     setSearchHits([]);
     setSearchPaths({});
     setSearchErr(null);
+    setSearchSuggestions([]);
+    setCorrectedQuery(null);
     setActiveSearchIdx(-1);
     inputRef.current?.focus();
   }, []);
@@ -559,6 +579,7 @@ export const TnvedAccordionTree: React.FC<Props> = ({ onSelectCode, initialSearc
           id="tnved-search"
           type="search"
           autoComplete="off"
+          maxLength={160}
           placeholder="Поиск по коду или наименованию…"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
@@ -604,22 +625,53 @@ export const TnvedAccordionTree: React.FC<Props> = ({ onSelectCode, initialSearc
 
       {isSearching ? (
         <div className="min-h-0 flex-1 space-y-2 overflow-y-auto">
+          {correctedQuery ? (
+            <p className="rounded-lg border border-sky-200 bg-sky-50 px-3 py-2 text-xs text-sky-900">
+              Исправили опечатку и ищем: <strong>«{correctedQuery}»</strong>
+            </p>
+          ) : null}
           {searchLoading ? (
             <p className="py-6 text-center text-sm text-cargo-mid">Поиск…</p>
           ) : searchHits.length === 0 ? (
-            <p className="py-6 text-center text-sm text-cargo-mid">{searchErr || 'Ничего не найдено'}</p>
+            <div className="py-6 text-center text-sm text-cargo-mid">
+              <p>{searchErr || 'Ничего не найдено'}</p>
+              {!searchErr && searchSuggestions.length > 0 ? (
+                <div className="mt-3 flex flex-wrap justify-center gap-2" aria-label="Подсказки поиска">
+                  {searchSuggestions.map((suggestion) => (
+                    <button
+                      key={suggestion.term}
+                      type="button"
+                      onClick={() => setSearch(suggestion.term)}
+                      className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs text-amber-900 hover:bg-amber-100"
+                      title={suggestion.hint}
+                    >
+                      {suggestion.term}
+                    </button>
+                  ))}
+                </div>
+              ) : null}
+            </div>
           ) : (
             <>
-              <p className="text-[11px] text-cargo-light">Найдено: {searchHits.length}</p>
+              <p className="text-[11px] text-cargo-light">
+                Найдено вариантов: {searchHits.length}. Выберите подходящую группу или код.
+              </p>
               <div className="grid gap-2 sm:grid-cols-2">
                 {searchHits.map((hit, idx) => (
                   <PremiumCard key={`${hit.code}-${idx}`} index={idx} onClick={() => void navigateToSearchHit(hit)}>
                     <div className="p-4">
                       <div className="flex items-start justify-between gap-2">
                         <span className="font-mono text-base font-semibold text-cargo-trust">{formatCode(hit.code)}</span>
-                        {hit.is_leaf === false ? (
-                          <span className="shrink-0 rounded bg-cargo-cloud px-1.5 py-0.5 text-[10px] text-cargo-mid">группа</span>
-                        ) : null}
+                        <span className="flex shrink-0 flex-wrap justify-end gap-1">
+                          {hit.is_leaf === false ? (
+                            <span className="rounded bg-cargo-cloud px-1.5 py-0.5 text-[10px] text-cargo-mid">группа</span>
+                          ) : null}
+                          {hit.match_reason ? (
+                            <span className="rounded bg-indigo-50 px-1.5 py-0.5 text-[10px] text-indigo-700">
+                              {MATCH_REASON_LABELS[hit.match_reason] ?? hit.match_reason}
+                            </span>
+                          ) : null}
+                        </span>
                       </div>
                       <p className={`mt-1 text-[13px] text-cargo-deep ${TNVED_COMMODITY_NAME_CLASS}`}>
                         {formatTnvedCommodityName(hit.name || '') || 'Описание отсутствует'}

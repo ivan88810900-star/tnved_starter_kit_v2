@@ -254,6 +254,14 @@ const TreeRow: React.FC<RowProps> = ({
 
 const DEBOUNCE_MS = 300;
 
+const MATCH_REASON_LABELS: Record<NonNullable<TnvedSearchHit['match_reason']>, string> = {
+  code_prefix: 'по коду',
+  name_match: 'по наименованию',
+  domain_dictionary: 'по смыслу',
+  typo_correction: 'с исправлением',
+  full_text: 'по тексту',
+};
+
 export const TnvedTree: React.FC<Props> = ({ selectedCode, onSelectCode, initialSearchQuery }) => {
   const [fullTree, setFullTree]       = React.useState<TnvedHierarchyNode[]>([]);
   const [displayTree, setDisplayTree] = React.useState<TnvedHierarchyNode[]>([]);
@@ -265,6 +273,8 @@ export const TnvedTree: React.FC<Props> = ({ selectedCode, onSelectCode, initial
   const [searchHits, setSearchHits]   = React.useState<TnvedSearchHit[]>([]);
   const [searchLoading, setSearchLoading] = React.useState(false);
   const [searchErr, setSearchErr]     = React.useState<string | null>(null);
+  const [searchSuggestions, setSearchSuggestions] = React.useState<Array<{ term: string; hint: string }>>([]);
+  const [correctedQuery, setCorrectedQuery] = React.useState<string | null>(null);
   const [activeSearchIdx, setActiveSearchIdx] = React.useState(-1);
   const inputRef = React.useRef<HTMLInputElement>(null);
   const appliedInitialSearch = React.useRef(false);
@@ -304,23 +314,31 @@ export const TnvedTree: React.FC<Props> = ({ selectedCode, onSelectCode, initial
     if (trimmed.length < 2) {
       setSearchHits([]);
       setSearchErr(null);
+      setSearchSuggestions([]);
+      setCorrectedQuery(null);
       setSearchLoading(false);
       return;
     }
 
     let cancelled = false;
     setSearchLoading(true);
+    setSearchSuggestions([]);
+    setCorrectedQuery(null);
     const t = window.setTimeout(() => {
       searchTnved(trimmed)
-        .then((rows) => {
+        .then((payload) => {
           if (!cancelled) {
-            setSearchHits(rows);
+            setSearchHits(payload.results);
+            setSearchSuggestions(payload.suggestions);
+            setCorrectedQuery(payload.search?.corrected_query ?? null);
             setSearchErr(null);
           }
         })
         .catch(() => {
           if (!cancelled) {
             setSearchHits([]);
+            setSearchSuggestions([]);
+            setCorrectedQuery(null);
             setSearchErr('Ошибка поиска');
           }
         })
@@ -374,6 +392,8 @@ export const TnvedTree: React.FC<Props> = ({ selectedCode, onSelectCode, initial
     setSearch('');
     setSearchHits([]);
     setSearchErr(null);
+    setSearchSuggestions([]);
+    setCorrectedQuery(null);
     setActiveSearchIdx(-1);
     inputRef.current?.focus();
   }, []);
@@ -422,6 +442,7 @@ export const TnvedTree: React.FC<Props> = ({ selectedCode, onSelectCode, initial
             id="tnved-search"
             type="search"
             autoComplete="off"
+            maxLength={160}
             placeholder="Поиск по коду или наименованию…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -469,7 +490,13 @@ export const TnvedTree: React.FC<Props> = ({ selectedCode, onSelectCode, initial
         </div>
 
         {trimmed.length >= 2 && (
-          <div className="grid gap-2 sm:grid-cols-2">
+          <div className="space-y-2">
+            {correctedQuery ? (
+              <p className="rounded-lg border border-sky-200 bg-sky-50 px-3 py-2 text-xs text-sky-900">
+                Исправили опечатку и ищем: <strong>«{correctedQuery}»</strong>
+              </p>
+            ) : null}
+            <div className="grid gap-2 sm:grid-cols-2">
             {searchLoading ? (
               <p className="col-span-full px-1 py-2 text-sm text-cargo-mid">Поиск...</p>
             ) : searchHits.length === 0 ? (
@@ -493,11 +520,18 @@ export const TnvedTree: React.FC<Props> = ({ selectedCode, onSelectCode, initial
                         <span className="font-mono text-base font-medium text-cargo-trust">
                           {formatCode(hit.code)}
                         </span>
-                        {hit.is_leaf === false ? (
-                          <span className="shrink-0 rounded bg-cargo-cloud px-1.5 py-0.5 text-[10px] text-cargo-mid">
-                            группа
-                          </span>
-                        ) : null}
+                        <span className="flex shrink-0 flex-wrap justify-end gap-1">
+                          {hit.is_leaf === false ? (
+                            <span className="rounded bg-cargo-cloud px-1.5 py-0.5 text-[10px] text-cargo-mid">
+                              группа
+                            </span>
+                          ) : null}
+                          {hit.match_reason ? (
+                            <span className="rounded bg-indigo-50 px-1.5 py-0.5 text-[10px] text-indigo-700">
+                              {MATCH_REASON_LABELS[hit.match_reason] ?? hit.match_reason}
+                            </span>
+                          ) : null}
+                        </span>
                       </div>
                       <span className={`mt-1 text-sm text-cargo-deep ${TNVED_COMMODITY_NAME_CLASS}`}>
                         {formatTnvedCommodityName(hit.name || '') || 'Описание отсутствует'}
@@ -507,15 +541,33 @@ export const TnvedTree: React.FC<Props> = ({ selectedCode, onSelectCode, initial
                 );
               })
             )}
+            </div>
+            {!searchLoading && searchHits.length === 0 && searchSuggestions.length > 0 ? (
+              <div className="flex flex-wrap gap-2" aria-label="Подсказки поиска">
+                {searchSuggestions.map((suggestion) => (
+                  <button
+                    key={suggestion.term}
+                    type="button"
+                    onClick={() => setSearch(suggestion.term)}
+                    className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs text-amber-900 hover:bg-amber-100"
+                    title={suggestion.hint}
+                  >
+                    {suggestion.term}
+                  </button>
+                ))}
+              </div>
+            ) : null}
           </div>
         )}
 
         {/* Строка подсказки / результаты */}
         {isSearching && !prefixLoading && (
           <p className="px-1 text-[11px] text-gray-500">
-            {resultCount === 0
-              ? 'Ничего не найдено'
-              : `Найдено позиций: ${resultCount}`}
+            {searchHits.length > 0
+              ? `Найдено вариантов: ${searchHits.length}. Выберите подходящую группу или код.`
+              : resultCount === 0
+                ? 'Ничего не найдено'
+                : `Найдено позиций в дереве: ${resultCount}`}
           </p>
         )}
         {isSearching && prefixLoading && (
@@ -534,7 +586,11 @@ export const TnvedTree: React.FC<Props> = ({ selectedCode, onSelectCode, initial
           <p className="py-10 text-center text-sm text-gray-500">Загрузка справочника…</p>
         ) : displayTree.length === 0 ? (
           <div className="py-10 text-center">
-            <p className="text-sm text-gray-500">Ничего не найдено</p>
+            <p className="text-sm text-gray-500">
+              {searchHits.length > 0
+                ? 'Варианты умного поиска показаны выше. Выберите код, чтобы открыть карточку.'
+                : 'Ничего не найдено'}
+            </p>
             {isSearching && (
               <button onClick={clearSearch} className="mt-2 text-xs text-blue-600 hover:underline">
                 Сбросить поиск
