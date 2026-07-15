@@ -209,13 +209,14 @@ class StructureNormalizer:
     def _is_leaf(code: str, leaf_flags: dict[str, bool]) -> bool:
         """Чистый эквивалент `is_leaf_hs_code` по предвычисленным leaf_flags.
 
-        Коды, не оканчивающиеся на «0000», — всегда листья (как в
-        `normative_store.is_leaf_hs_code`); неоднозначные «…0000» берутся из
-        `leaf_flags` (наличие строки в `hs_rates`, посчитано вне нормализатора).
+        Терминальные L8/L9/L10-коды — листья; неоднозначные L4/L6 берутся из
+        ``leaf_flags`` (точная строка для L4; точная или унаследованная для L6,
+        посчитанная вне нормализатора). Узлы с детьми классифицируются группами
+        до этого вызова.
         """
         if len(code) != 10:
             return False
-        if code.endswith("0000"):
+        if node_level(code) in {4, 6}:
             return leaf_flags.get(code, False)
         return True
 

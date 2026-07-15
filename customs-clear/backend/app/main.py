@@ -1,31 +1,32 @@
+import asyncio
 import os
 import sys
-from contextlib import asynccontextmanager
+from contextlib import asynccontextmanager, suppress
 from pathlib import Path
 
 from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
+from fastapi.staticfiles import StaticFiles
+from loguru import logger
+from sqlalchemy import text
 
 # Явно подхватываем backend/.env даже если uvicorn запущен не из каталога backend
 _BACKEND_ROOT = Path(__file__).resolve().parent.parent
 load_dotenv(_BACKEND_ROOT / ".env")
 load_dotenv()
 
-from .services.normative_store import (
+from .services.normative_store import (  # noqa: E402
     get_integrated_data_stats,
     get_normative_data_hints,
     init_db,
     list_source_status,
     list_sync_log,
 )
-from .services.rate_limit_middleware import RateLimitMiddleware
-from fastapi.staticfiles import StaticFiles
-from loguru import logger
-from sqlalchemy import text
+from .services.rate_limit_middleware import RateLimitMiddleware  # noqa: E402
 
-from .api import (
+from .api import (  # noqa: E402
     admin_v1,
     ai,
     alta_integrations,
@@ -53,17 +54,27 @@ from .api import (
     rop,
     invoice,
 )
-from .db import engine
-from .services.exchange_rates import update_exchange_rates_from_cbrf
+from .db import engine  # noqa: E402
+from .services.exchange_rates import update_exchange_rates_from_cbrf  # noqa: E402
+
+
+async def _refresh_exchange_rates_after_startup() -> None:
+    """Обновить курсы без блокировки готовности HTTP-сервера."""
+    try:
+        result = await update_exchange_rates_from_cbrf()
+        logger.info(
+            "exchange_rates: фоновое обновление завершено, "
+            f"source={result.get('source', 'unknown')}, updated={result.get('updated', 0)}"
+        )
+    except asyncio.CancelledError:
+        raise
+    except Exception as exc:
+        logger.warning(f"exchange_rates: фоновое обновление пропущено: {exc}")
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     init_db()
-    try:
-        await update_exchange_rates_from_cbrf()
-    except Exception as e:
-        logger.warning(f"exchange_rates: автообновление курсов пропущено: {e}")
     try:
         from .services.permits_jobs import mark_interrupted_jobs_on_startup
 
@@ -84,13 +95,24 @@ async def lifespan(app: FastAPI):
         logger.warning("Пакет apscheduler не установлен — планировщик отключён")
     except Exception as e:
         logger.warning(f"Планировщик не запущен: {e}")
-    yield
-    try:
-        from .services.scheduler import shutdown_apscheduler
 
-        shutdown_apscheduler()
-    except Exception:
-        pass
+    exchange_refresh_task = asyncio.create_task(
+        _refresh_exchange_rates_after_startup(),
+        name="startup-exchange-rate-refresh",
+    )
+    try:
+        yield
+    finally:
+        if not exchange_refresh_task.done():
+            exchange_refresh_task.cancel()
+            with suppress(asyncio.CancelledError):
+                await exchange_refresh_task
+        try:
+            from .services.scheduler import shutdown_apscheduler
+
+            shutdown_apscheduler()
+        except Exception:
+            pass
 
 
 app = FastAPI(title="Tariff API", version="1.0.0", lifespan=lifespan)

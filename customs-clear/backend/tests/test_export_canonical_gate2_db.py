@@ -90,7 +90,7 @@ class Gate2DatabaseExporterTests(unittest.TestCase):
             )
 
             self.assertEqual(report.table_rows["tnved_commodities"], 3)
-            self.assertEqual(report.table_rows["hs_rates"], 1)
+            self.assertEqual(report.table_rows["hs_rates"], 2)
             self.assertEqual(len(report.output_sha256), 64)
             self.assertTrue(output.is_file())
             self.assertTrue(archive.is_file())
@@ -110,9 +110,14 @@ class Gate2DatabaseExporterTests(unittest.TestCase):
                 rate_columns = {
                     row[1] for row in db.execute("PRAGMA table_info(hs_rates)")
                 }
-                self.assertEqual(rate_columns, {"id", "hs_code"})
-                rate_codes = db.execute("SELECT hs_code FROM hs_rates").fetchall()
-                self.assertEqual(rate_codes, [("9898130000",)])
+                self.assertEqual(rate_columns, {"id", "hs_code", "hs_prefix"})
+                rate_keys = db.execute(
+                    "SELECT hs_code, hs_prefix FROM hs_rates ORDER BY hs_code"
+                ).fetchall()
+                self.assertEqual(
+                    rate_keys,
+                    [("9898110001", "9898"), ("9898130000", "9898")],
+                )
                 private = db.execute(
                     "SELECT count(*) FROM sqlite_master WHERE name='private_operational_data'"
                 ).fetchone()

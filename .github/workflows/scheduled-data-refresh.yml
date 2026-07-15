@@ -1,0 +1,41 @@
+name: Scheduled data freshness check
+
+on:
+  schedule:
+    - cron: "17 3 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: scheduled-data-refresh
+  cancel-in-progress: false
+
+jobs:
+  cbr_check:
+    name: CBR and regulatory bundle freshness
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: customs-clear/backend
+    env:
+      SECRET_KEY: ci-data-refresh-check-only
+      CBR_SOURCE_URL: https://www.cbr.ru/currency_base/daily/
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: customs-clear/backend/requirements.txt
+
+      - name: Install backend dependencies
+        run: python -m pip install --disable-pip-version-check -r requirements.txt
+
+      - name: Check CBR and regulatory data freshness
+        run: python -m scripts.data_refresh --check-only --json

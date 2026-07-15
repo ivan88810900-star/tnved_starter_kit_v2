@@ -13,6 +13,7 @@ from sqlalchemy import func, literal, or_
 
 from ..db import SessionLocal, engine
 from .hs_matching import get_hs_prefixes, normalize_hs_code, specificity
+from .tnved_tree.helpers import node_level
 
 
 def normalize_hs_duty_rate_string(value: Any) -> str:
@@ -933,55 +934,146 @@ def find_classification_precedents_for_invoice_item(
     return block, ",".join(dict.fromkeys(nums))
 
 
-def is_leaf_hs_code(hs_code: str) -> bool:
-    """
-    True если код — реальный лист ЕТТ (есть прямая ставка в hs_rates или не групповой заголовок).
+def _is_hierarchy_descendant(raw_code: str | None, parent_code: str, parent_level: int) -> bool:
+    """True, если код расположен глубже ``parent_code`` в иерархии ТН ВЭД."""
+    candidate = normalize_hs_code(raw_code or "")
+    prefix = parent_code[:parent_level]
+    if not candidate or candidate == parent_code or not candidate.startswith(prefix):
+        return False
+    if len(candidate) < 10:
+        return len(candidate) > parent_level
+    if len(candidate) != 10:
+        return False
+    return node_level(candidate) > parent_level
 
-    Групповые заголовки часто оканчиваются на ``0000`` / ``000000`` без строки в hs_rates
-    (например ``8703230000``). Исключения вроде ``8471300000`` имеют прямую запись в hs_rates.
+
+def _has_known_hs_descendant(db: Any, code: str, level: int) -> bool:
+    """Проверяет дочерние коды в структурном каталоге и таблице ставок."""
+    prefix = code[:level]
+    columns = (HsRate.hs_code, Commodity.code)
+    for column in columns:
+        rows = (
+            db.query(column)
+            .filter(column.like(f"{prefix}%"), column != code)
+            .order_by(column.asc())
+            .limit(500)
+            .all()
+        )
+        if any(_is_hierarchy_descendant(raw, code, level) for (raw,) in rows):
+            return True
+    return False
+
+
+def _known_hs_descendant_codes(db: Any, code: str, level: int, *, limit: int) -> list[str]:
+    """Собирает 10-значные дочерние коды из ставок и обеих проекций каталога."""
+    prefix = code[:level]
+    scan_limit = max(limit * 20, 200)
+    found: set[str] = set()
+    for column in (HsRate.hs_code, Commodity.code, TnvedEntry.hs_code):
+        rows = (
+            db.query(column)
+            .filter(column.like(f"{prefix}%"), column != code)
+            .order_by(column.asc())
+            .limit(scan_limit)
+            .all()
+        )
+        for (raw,) in rows:
+            candidate = normalize_hs_code(raw or "")
+            if len(candidate) == 10 and _is_hierarchy_descendant(candidate, code, level):
+                found.add(candidate)
+    return sorted(found)
+
+
+def is_leaf_hs_code(hs_code: str) -> bool:
+    """Определяет, является ли 10-значный код терминальным товарным кодом.
+
+    Хвостовые нули сами по себе не делают код групповым: реальные листы вроде
+    ``0201300000`` и ``8471300000`` получают ставку по префиксу. Поэтому сначала
+    проверяется фактическая иерархия в ``hs_rates`` и ``tnved_commodities``.
+    Четырёхзначный уровень без подтверждённого точного листа остаётся
+    групповым. Для неоднозначного шестизначного уровня также
+    требуется ставка (точная или унаследованная от префикса); терминальные
+    L8/L9/L10 без известных детей считаются листами.
     """
     code = normalize_hs_code(hs_code)
     if len(code) != 10:
         return False
-    if code.endswith("000000") or code.endswith("0000"):
-        with SessionLocal() as db:
-            exists = db.query(HsRate.id).filter(HsRate.hs_code == code).first()
-        return exists is not None
-    return True
+
+    level = node_level(code)
+    if level == 10:
+        return True
+
+    with SessionLocal() as db:
+        if _has_known_hs_descendant(db, code, level):
+            return False
+        if level >= 8:
+            return True
+        if level == 4:
+            return db.query(HsRate.id).filter(HsRate.hs_code == code).first() is not None
+
+        prefixes = get_hs_prefixes(code)
+        matching_rate = (
+            db.query(HsRate.id)
+            .filter(or_(HsRate.hs_code.in_(prefixes), HsRate.hs_prefix.in_(prefixes)))
+            .first()
+        )
+        return matching_rate is not None
 
 
 def find_suggested_leaf_codes(hs_code: str, *, limit: int = 20) -> list[dict[str, Any]]:
-    """Дочерние коды-листья из hs_rates для группового заголовка."""
+    """Дочерние коды-листья для группового заголовка из всех проекций каталога."""
     code = normalize_hs_code(hs_code)
-    if len(code) != 10:
+    if len(code) != 10 or limit <= 0:
         return []
-    prefix = code.rstrip("0")
-    if len(prefix) < 4:
-        prefix = code[:4]
+    level = node_level(code)
+    if level == 10:
+        return []
+
     with SessionLocal() as db:
-        rate_rows = (
-            db.query(HsRate.hs_code, HsRate.duty_rate)
-            .filter(HsRate.hs_code.like(f"{prefix}%"), HsRate.hs_code != code)
-            .order_by(HsRate.hs_code)
-            .limit(limit)
-            .all()
-        )
-        if not rate_rows:
-            return []
-        codes = [r[0] for r in rate_rows]
-        commodities = (
+        candidates = _known_hs_descendant_codes(db, code, level, limit=limit)
+
+    leaf_codes = [candidate for candidate in candidates if is_leaf_hs_code(candidate)][:limit]
+    if not leaf_codes:
+        return []
+
+    with SessionLocal() as db:
+        rate_rows = db.query(HsRate.hs_code, HsRate.duty_rate).filter(HsRate.hs_code.in_(leaf_codes)).all()
+        exact_rate_by_code = {str(row.hs_code): str(row.duty_rate or "0") for row in rate_rows}
+        commodity_rows = (
             db.query(Commodity.code, Commodity.description)
-            .filter(Commodity.code.in_(codes))
+            .filter(Commodity.code.in_(leaf_codes))
             .all()
         )
-        desc_by_code = {c.code: (c.description or "").strip() for c in commodities}
+        entry_rows = (
+            db.query(TnvedEntry.hs_code, TnvedEntry.title, TnvedEntry.description)
+            .filter(TnvedEntry.hs_code.in_(leaf_codes))
+            .all()
+        )
+
+    description_by_code = {
+        str(row.code): (row.description or "").strip()
+        for row in commodity_rows
+        if (row.description or "").strip()
+    }
+    for row in entry_rows:
+        description_by_code.setdefault(
+            str(row.hs_code),
+            ((row.title or "").strip() or (row.description or "").strip()),
+        )
+
+    duty_by_code = dict(exact_rate_by_code)
+    for candidate in leaf_codes:
+        if candidate not in duty_by_code:
+            inherited_rate, _ = find_rate_for_hs(candidate)
+            duty_by_code[candidate] = str(inherited_rate.duty_rate or "0") if inherited_rate else ""
+
     return [
         {
-            "code": hc,
-            "duty_rate": str(dr or "0"),
-            "description": desc_by_code.get(hc, ""),
+            "code": candidate,
+            "duty_rate": duty_by_code.get(candidate, ""),
+            "description": description_by_code.get(candidate, ""),
         }
-        for hc, dr in rate_rows
+        for candidate in leaf_codes
     ]
 
 

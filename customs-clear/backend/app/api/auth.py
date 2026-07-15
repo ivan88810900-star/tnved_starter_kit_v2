@@ -47,11 +47,6 @@ _USERS = {
         "password": _required_env("DECLARANT_PASSWORD"),
         "role": "declarant",
     },
-    "test": {
-        "username": "test",
-        "password": (os.getenv("TEST_PASSWORD") or "test123").strip(),
-        "role": "declarant",
-    },
 }
 
 
@@ -159,4 +154,3 @@ async def me(request: Request) -> JSONResponse:
             "role": str(payload.get("role") or "viewer"),
         }
     )
-

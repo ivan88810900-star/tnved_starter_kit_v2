@@ -87,7 +87,12 @@ class PaymentQuoteServiceTests(unittest.TestCase):
         ad = self._line(quote, "antidumping")
         self.assertEqual(ad.status, "applied")
         self.assertGreater(ad.amount_rub or 0, 0)
-        self.assertIsNotNone(quote.total_payable_rub)
+        special = self._line(quote, "special_duty")
+        if special.status == "not_configured":
+            self.assertIsNone(quote.total_payable_rub)
+            self.assertGreater(quote.total_partial_rub or 0, 0)
+        else:
+            self.assertIsNotNone(quote.total_payable_rub)
 
     def test_special_duty_not_configured_blocks_final_total(self):
         quote = self._quote(hs_code="8517120000", customs_value=50_000, country="CN")

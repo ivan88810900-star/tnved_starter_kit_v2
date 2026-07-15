@@ -1,13 +1,52 @@
 """Group HS header clarification — Issue group codes UX."""
 from __future__ import annotations
 
+import pytest
 from fastapi.testclient import TestClient
 
+from app.db import SessionLocal
 from app.main import app
-from app.services.normative_store import find_suggested_leaf_codes, is_leaf_hs_code
+from app.models import HsRate
+from app.services.normative_store import find_suggested_leaf_codes, init_db, is_leaf_hs_code
 
 
 client = TestClient(app)
+
+
+@pytest.fixture(scope="module", autouse=True)
+def _leaf_rate_rows() -> None:
+    """Изолированный минимум для проверки иерархии, не зависящий от рабочей БД."""
+    init_db()
+    created_ids: list[int] = []
+    rows = (
+        ("8703231100", "15"),
+        ("8703231900", "15"),
+        ("8471300000", "0"),
+        ("8517110000", "0"),
+    )
+    with SessionLocal() as db:
+        for hs_code, duty_rate in rows:
+            existing = db.query(HsRate).filter(HsRate.hs_code == hs_code).first()
+            if existing is not None:
+                continue
+            row = HsRate(
+                hs_code=hs_code,
+                hs_prefix=hs_code,
+                duty_rate=duty_rate,
+                vat_import_rate=22.0,
+                source_revision="test-leaf-hierarchy",
+            )
+            db.add(row)
+            db.flush()
+            created_ids.append(row.id)
+        db.commit()
+
+    yield
+
+    if created_ids:
+        with SessionLocal() as db:
+            db.query(HsRate).filter(HsRate.id.in_(created_ids)).delete(synchronize_session=False)
+            db.commit()
 
 
 class TestIsLeafHsCode:

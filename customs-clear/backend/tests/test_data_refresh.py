@@ -1,12 +1,10 @@
 """Tests for data refresh workflow — Issue #89."""
 from __future__ import annotations
 
+import asyncio
 import json
-from datetime import datetime, timezone, timedelta
 from pathlib import Path
-from unittest.mock import patch, AsyncMock
-
-import pytest
+from unittest.mock import patch
 
 from app.services.data_refresh_service import (
     STALE_THRESHOLD_DAYS,
@@ -109,6 +107,32 @@ class TestAutoUpdaterIntegration:
         auto_updater = BACKEND_ROOT / "scripts" / "auto_updater.py"
         content = auto_updater.read_text()
         assert '"freshness"' in content
+
+
+class TestApplicationStartup:
+    def test_exchange_refresh_does_not_block_lifespan(self) -> None:
+        from app import main as main_module
+
+        async def scenario() -> None:
+            refresh_started = asyncio.Event()
+
+            async def slow_refresh() -> dict[str, object]:
+                refresh_started.set()
+                await asyncio.Event().wait()
+                return {"status": "OK"}
+
+            with (
+                patch.object(main_module, "init_db"),
+                patch.object(main_module, "update_exchange_rates_from_cbrf", slow_refresh),
+                patch("app.services.permits_jobs.mark_interrupted_jobs_on_startup"),
+                patch("app.services.ved_intel_jobs.mark_interrupted_ved_intel_jobs_on_startup"),
+                patch("app.services.scheduler.start_apscheduler"),
+                patch("app.services.scheduler.shutdown_apscheduler"),
+            ):
+                async with main_module.lifespan(main_module.app):
+                    await asyncio.wait_for(refresh_started.wait(), timeout=0.5)
+
+        asyncio.run(asyncio.wait_for(scenario(), timeout=1.0))
 
 
 class TestGitHubWorkflow:

@@ -8,6 +8,7 @@
 """
 import os
 import unittest
+from types import SimpleNamespace
 from unittest.mock import patch
 
 try:
@@ -130,8 +131,23 @@ class ApiIntegrationTests(unittest.TestCase):
             "country": "CN",
             "engine_volume": 2500,
         }
-        r_new = self.client.post("/api/calculator/compute", json={**base, "vehicle_is_new": True})
-        r_used = self.client.post("/api/calculator/compute", json={**base, "vehicle_is_new": False})
+        def fixture_fee(_hs_code, *, is_new=True, engine_volume=None):
+            coefficient = 1.0 if is_new else 5.0
+            return [{
+                "vehicle_type": "passenger_car",
+                "is_new": is_new,
+                "base_rate": 20_000.0,
+                "coefficient": coefficient,
+                "fee_amount": 20_000.0 * coefficient,
+                "engine_volume_from": 2_000,
+                "engine_volume_to": 3_000,
+                "description": f"Тестовый диапазон для {engine_volume or 0} см³",
+                "legal_ref": "Детерминированная тестовая запись",
+            }]
+
+        with patch("app.services.payment_engine.get_recycling_fee", side_effect=fixture_fee):
+            r_new = self.client.post("/api/calculator/compute", json={**base, "vehicle_is_new": True})
+            r_used = self.client.post("/api/calculator/compute", json={**base, "vehicle_is_new": False})
         self.assertEqual(r_new.status_code, 200)
         self.assertEqual(r_used.status_code, 200)
         rf_new = r_new.json()["breakdown"]["recycling_fee"]
@@ -145,11 +161,17 @@ class ApiIntegrationTests(unittest.TestCase):
 
     def test_calculator_eaeu_country_preference(self):
         """Страна ЕАЭС (BY) применяет тарифную преференцию (нулевая пошлина)."""
-        r = self.client.post("/api/calculator/compute", json={
-            "hs_code": "8509400000",
-            "customs_value": 500_000,
-            "country": "BY",
-        })
+        preference = SimpleNamespace(
+            duty_coefficient=0.0,
+            preference_type="eaeu",
+            legal_ref="Детерминированная тестовая запись",
+        )
+        with patch("app.services.payment_engine.get_tariff_preference", return_value=preference):
+            r = self.client.post("/api/calculator/compute", json={
+                "hs_code": "8509400000",
+                "customs_value": 500_000,
+                "country": "BY",
+            })
         self.assertEqual(r.status_code, 200)
         pref = r.json()["tariff_preference"]
         self.assertTrue(pref.get("applied"))

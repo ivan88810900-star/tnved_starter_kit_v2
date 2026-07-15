@@ -1,17 +1,15 @@
 """Тесты оптимизированной пакетной классификации."""
 from __future__ import annotations
 
+import asyncio
 from unittest.mock import AsyncMock, patch
-
-import pytest
 
 from app.services.packing_list_classify import classify_packing_rows_optimized
 from app.services.packing_list_parser import PackingRow
 from app.services.smart_classifier import ClassifyResult, SmartClassifier
 
 
-@pytest.mark.asyncio
-async def test_group_dedup_single_vision_and_classify() -> None:
+def test_group_dedup_single_vision_and_classify() -> None:
     SmartClassifier.clear_packing_caches()
     snaps = [
         {"row_num": 2, "name_cn": "染发碗", "material": "塑料", "article": "A1"},
@@ -35,7 +33,7 @@ async def test_group_dedup_single_vision_and_classify() -> None:
     )
 
     with patch("app.services.packing_list_classify.get_smart_classifier", return_value=mock_clf):
-        out = await classify_packing_rows_optimized(snaps, images, max_concurrent=3)
+        out = asyncio.run(classify_packing_rows_optimized(snaps, images, max_concurrent=3))
 
     assert len(out) == 2
     assert out[0]["hs_code"] == "3924900000"

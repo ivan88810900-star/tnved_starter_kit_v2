@@ -60,6 +60,13 @@ class SensitiveEndpointsAuthTests(unittest.TestCase):
         r = self.anon.post("/api/ai/ask", json={"question": "что такое ТН ВЭД?", "code": "", "notes": ""})
         self.assertEqual(r.status_code, 401, r.text)
 
+    def test_default_test_credentials_are_rejected(self) -> None:
+        r = self.anon.post(
+            "/api/auth/login",
+            data={"username": "test", "password": "test123"},
+        )
+        self.assertEqual(r.status_code, 401, r.text)
+
     @patch("app.api.assistant.analyze_copilot_bundle", new_callable=AsyncMock)
     def test_assistant_copilot_ok_with_session(self, mock_ai: AsyncMock) -> None:
         mock_ai.return_value = {"status": "OK", "summary": "ok", "risks": []}

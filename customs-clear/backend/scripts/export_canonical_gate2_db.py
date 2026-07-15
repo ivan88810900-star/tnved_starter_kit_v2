@@ -2,9 +2,9 @@
 """Export a compact SQLite database containing only Canonical Gate-2 inputs.
 
 The source database is opened read-only and copied inside one read transaction.
-Only columns used by the structural audit are exported. From ``hs_rates`` only
-leaf markers for ambiguous commodity codes ending in ``0000`` are retained.
-Operational and user tables are never copied.
+Only columns used by the structural audit are exported. From ``hs_rates`` the
+distinct structural key pairs ``hs_code`` / ``hs_prefix`` are retained; rates,
+provenance, operational data, and user tables are never copied.
 """
 
 from __future__ import annotations
@@ -43,7 +43,7 @@ _TABLE_COLUMNS = {
         "supp_unit",
         "weight_coeff",
     ),
-    "hs_rates": ("id", "hs_code"),
+    "hs_rates": ("id", "hs_code", "hs_prefix"),
 }
 
 _TARGET_SCHEMA = {
@@ -79,7 +79,8 @@ _TARGET_SCHEMA = {
     "hs_rates": """
         CREATE TABLE hs_rates (
             id INTEGER PRIMARY KEY,
-            hs_code VARCHAR(10)
+            hs_code VARCHAR(10),
+            hs_prefix VARCHAR(10)
         )
     """,
 }
@@ -90,6 +91,7 @@ _TARGET_INDEXES = (
     "CREATE UNIQUE INDEX uq_tnved_commodities_code ON tnved_commodities(code)",
     "CREATE INDEX ix_tnved_commodities_chapter_id ON tnved_commodities(chapter_id)",
     "CREATE INDEX ix_hs_rates_hs_code ON hs_rates(hs_code)",
+    "CREATE INDEX ix_hs_rates_hs_prefix ON hs_rates(hs_prefix)",
 )
 
 
@@ -307,20 +309,20 @@ def export_gate2_database(
                 f"SELECT {quoted_columns} FROM {_quote_identifier(table)}",
                 batch_size=batch_size,
             )
-        # Structural classification consults hs_rates only for real commodity
-        # codes ending in 0000; values/provenance and all other rate rows are irrelevant.
+        # Canonical revision and leaf classification depend on both structural
+        # keys. Duplicate key pairs, rate values, and provenance are irrelevant.
         table_rows["hs_rates"] = _copy_query(
             source_db,
             target_db,
             "hs_rates",
             _TABLE_COLUMNS["hs_rates"],
             """
-            SELECT min(rate.id), rate.hs_code
+            SELECT min(rate.id), rate.hs_code, rate.hs_prefix
             FROM hs_rates AS rate
-            JOIN tnved_commodities AS commodity ON commodity.code = rate.hs_code
-            WHERE commodity.code LIKE '%0000'
-            GROUP BY rate.hs_code
-            ORDER BY rate.hs_code
+            WHERE coalesce(trim(rate.hs_code), '') <> ''
+               OR coalesce(trim(rate.hs_prefix), '') <> ''
+            GROUP BY rate.hs_code, rate.hs_prefix
+            ORDER BY rate.hs_code, rate.hs_prefix
             """,
             batch_size=batch_size,
         )

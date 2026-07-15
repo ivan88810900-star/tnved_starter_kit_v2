@@ -12,11 +12,12 @@ from __future__ import annotations
 
 from typing import Callable
 
+from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from ...db import SessionLocal
 from ...models import HsRate
-from ..tnved_tree import digits
+from ..tnved_tree import digits, node_level
 from .canonical_model import CanonicalModel
 from .models import (
     ClassificationGroupNode,
@@ -91,26 +92,44 @@ class TreeBuilder:
     # -- leaf-флаги (БД вне нормализатора, R2) -----------------------------
 
     def _compute_leaf_flags(self, parse_result: TreeParseResult) -> dict[str, bool]:
-        """Предвычисляет leaf-признаки для неоднозначных «…0000» кодов.
+        """Предвычисляет leaf-признаки для неоднозначных неполных уровней.
 
-        Повторяет предикат `normative_store.is_leaf_hs_code` (наличие строки в
-        `hs_rates`) одним bulk-запросом. Держит БД-доступ ВНЕ `StructureNormalizer`.
+        Повторяет предикат `normative_store.is_leaf_hs_code`: ребёнок определяется
+        самой структурой. Терминальный L4 подтверждается точной строкой
+        ``hs_rates``, а L6 — точной или унаследованной. Держит БД-доступ ВНЕ
+        `StructureNormalizer`.
         """
         ambiguous = sorted(
             {
                 rec.code10
                 for rec in parse_result.commodities
-                if len(rec.code10) == 10 and rec.code10.endswith("0000")
+                if len(rec.code10) == 10 and node_level(rec.code10) in {4, 6}
             }
         )
+        if not ambiguous:
+            return {}
+
+        prefixes_by_code: dict[str, set[str]] = {}
+        all_prefixes: set[str] = set()
+        for code in ambiguous:
+            level = node_level(code)
+            prefixes = {code} if level == 4 else {code[:length] for length in (10, 8, 6, 4, 2)}
+            prefixes_by_code[code] = prefixes
+            all_prefixes.update(prefixes)
+
         existing: set[str] = set()
-        if ambiguous:
-            with self._session_factory() as db:
-                for i in range(0, len(ambiguous), _LEAF_FLAG_CHUNK):
-                    chunk = ambiguous[i : i + _LEAF_FLAG_CHUNK]
-                    rows = db.query(HsRate.hs_code).filter(HsRate.hs_code.in_(chunk)).all()
-                    existing.update(code for (code,) in rows)
-        return {code: (code in existing) for code in ambiguous}
+        prefix_list = sorted(all_prefixes)
+        with self._session_factory() as db:
+            for i in range(0, len(prefix_list), _LEAF_FLAG_CHUNK):
+                chunk = prefix_list[i : i + _LEAF_FLAG_CHUNK]
+                rows = (
+                    db.query(HsRate.hs_code, HsRate.hs_prefix)
+                    .filter(or_(HsRate.hs_code.in_(chunk), HsRate.hs_prefix.in_(chunk)))
+                    .all()
+                )
+                for hs_code, hs_prefix in rows:
+                    existing.update(value for value in (hs_code, hs_prefix) if value)
+        return {code: bool(prefixes_by_code[code] & existing) for code in ambiguous}
 
     # -- сборка иерархии (assembly = Builder) ------------------------------
 

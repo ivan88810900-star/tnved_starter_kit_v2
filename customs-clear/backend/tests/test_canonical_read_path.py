@@ -215,6 +215,31 @@ class CanonicalProviderTests(unittest.TestCase):
         rev2 = prov._compute_revision(SessionLocal)
         self.assertEqual(rev0, rev2, "revision должен вернуться к исходному после отката")
 
+    def test_revision_changes_when_inherited_leaf_prefix_changes(self) -> None:
+        """Builder читает унаследованный hs_prefix, поэтому он входит в cache-key."""
+        prov = provider_mod.CanonicalTreeProvider()
+        rev0 = prov._compute_revision(SessionLocal)
+        marker = "test-canonical-inherited-prefix"
+        with SessionLocal() as db:
+            db.add(
+                HsRate(
+                    hs_code="9876",
+                    hs_prefix="9876",
+                    duty_rate="0",
+                    vat_import_rate=22.0,
+                    source_revision=marker,
+                )
+            )
+            db.commit()
+        try:
+            rev1 = prov._compute_revision(SessionLocal)
+            self.assertNotEqual(rev0, rev1)
+        finally:
+            with SessionLocal() as db:
+                db.query(HsRate).filter(HsRate.source_revision == marker).delete()
+                db.commit()
+        self.assertEqual(rev0, prov._compute_revision(SessionLocal))
+
     def test_revision_change_triggers_rebuild(self) -> None:
         prov = get_provider()
         prov.get_model()
@@ -349,11 +374,30 @@ class CanonicalProviderTests(unittest.TestCase):
 class CanonicalChildrenReadPathTests(unittest.TestCase):
     _section_id: int | None = None
 
+    @staticmethod
+    def _delete_fixture(db) -> None:  # noqa: ANN001
+        """Удаляет только синтетическую главу этого класса, включая хвост от прерванного прогона."""
+        section_ids = [row[0] for row in db.query(Section.id).filter(Section.roman_number == "MMM").all()]
+        if not section_ids:
+            return
+        chapter_ids = [
+            row[0]
+            for row in db.query(Chapter.id).filter(Chapter.section_id.in_(section_ids)).all()
+        ]
+        if chapter_ids:
+            db.query(Commodity).filter(Commodity.chapter_id.in_(chapter_ids)).delete(
+                synchronize_session=False
+            )
+            db.query(Chapter).filter(Chapter.id.in_(chapter_ids)).delete(synchronize_session=False)
+        db.query(Section).filter(Section.id.in_(section_ids)).delete(synchronize_session=False)
+        db.flush()
+
     @classmethod
     def setUpClass(cls) -> None:
         init_db()
         cls.client = TestClient(app)
         with SessionLocal() as db:
+            cls._delete_fixture(db)
             # Синтетическая глава 99 (в реальной номенклатуре ТН ВЭД отсутствует),
             # чтобы фикстуры не конфликтовали с наполненной БД.
             # Валидный, но практически невозможный реальный Roman-section.
@@ -383,15 +427,10 @@ class CanonicalChildrenReadPathTests(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls) -> None:
-        if cls._section_id is None:
-            return
         with SessionLocal() as db:
-            ch_ids = [r[0] for r in db.query(Chapter.id).filter(Chapter.section_id == cls._section_id).all()]
-            for cid in ch_ids:
-                db.query(Commodity).filter(Commodity.chapter_id == cid).delete()
-            db.query(Chapter).filter(Chapter.section_id == cls._section_id).delete()
-            db.query(Section).filter(Section.id == cls._section_id).delete()
+            cls._delete_fixture(db)
             db.commit()
+        cls._section_id = None
 
     def setUp(self) -> None:
         _clear_flags()

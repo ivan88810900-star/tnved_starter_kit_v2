@@ -36,7 +36,7 @@ logger = logging.getLogger(__name__)
 
 SessionFactory = Callable[[], Session]
 
-_REVISION_VERSION = "v2"
+_REVISION_VERSION = "v3"
 _MAX_CONSISTENT_BUILD_ATTEMPTS = 3
 
 
@@ -234,7 +234,9 @@ class CanonicalTreeProvider:
 
         - все поля ``tnved_commodities``, которые читает ``TreeParser``;
         - Section/Chapter metadata, формирующие ``chapter_notes``;
-        - множество leaf-relevant ``hs_rates`` для неоднозначных ``*0000``.
+        - ключи ``hs_code`` / ``hs_prefix`` из ``hs_rates``, которыми Builder
+          подтверждает неоднозначные L4/L6-листья по точной или унаследованной
+          ставке.
 
         Порядок строк фиксирован. Любой insert/delete/in-place update значимого
         входа меняет digest; изменение ставки у уже подтверждённого leaf — нет,
@@ -283,11 +285,9 @@ class CanonicalTreeProvider:
             chapter_count = self._hash_rows(digest, "chapters", chapter_rows)
 
             leaf_rows = (
-                db.query(HsRate.hs_code)
-                .join(Commodity, Commodity.code == HsRate.hs_code)
-                .filter(Commodity.code.like("%0000"))
+                db.query(HsRate.hs_code, HsRate.hs_prefix)
                 .distinct()
-                .order_by(HsRate.hs_code.asc())
+                .order_by(HsRate.hs_code.asc(), HsRate.hs_prefix.asc())
             )
             leaf_count = self._hash_rows(digest, "leaf_rates", leaf_rows)
         finally:

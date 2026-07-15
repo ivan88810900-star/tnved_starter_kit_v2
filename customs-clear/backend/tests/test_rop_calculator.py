@@ -7,10 +7,8 @@ import unittest
 from pathlib import Path
 
 try:
-    from sqlalchemy import text
-
-    from app.db import SessionLocal, engine
-    from app.models.rop import RopGoodsRate, RopPackagingDefault, RopPackagingRate
+    from app.db import SessionLocal
+    from app.models.rop import RopGoodsRate, RopPackagingRate
     from app.services.rop_calculator import calculate_rop, detect_packaging_type, get_goods_rate
     from scripts.import_rop_rates import main as import_main
 
@@ -37,7 +35,7 @@ def _ensure_schema_and_data() -> None:
     finally:
         session.close()
     if count == 0:
-        import_main()
+        import_main([])
 
 
 @unittest.skipIf(not _AVAILABLE, f"ROP tests require deps: {_IMPORT_ERROR}")

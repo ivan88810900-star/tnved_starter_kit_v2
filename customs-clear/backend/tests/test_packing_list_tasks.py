@@ -1,6 +1,7 @@
 """Тесты экспорта и async-задач пакинг-листа."""
 from __future__ import annotations
 
+import asyncio
 import io
 from pathlib import Path
 from unittest.mock import AsyncMock, patch
@@ -61,31 +62,31 @@ def test_export_inserts_columns_after_name(tmp_path: Path) -> None:
     wb.close()
 
 
-@pytest.mark.asyncio
-async def test_create_task_sync_parse_only(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_create_task_sync_parse_only(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("PACKING_TASK_DIR", str(tmp_path / "tasks"))
     src = tmp_path / "pack.xlsx"
     _build_sample_xlsx(src)
     data = src.read_bytes()
     bg = BackgroundTasks()
-    result = await create_packing_list_task(
-        file_bytes=data,
-        original_filename="pack.xlsx",
-        background_tasks=bg,
-        classify=False,
+    result = asyncio.run(
+        create_packing_list_task(
+            file_bytes=data,
+            original_filename="pack.xlsx",
+            background_tasks=bg,
+            classify=False,
+        )
     )
     assert result["status"] == "done"
     assert result["total_rows"] == 1
     assert result["results"][0]["name_cn"] == "塑料盒"
 
 
-@pytest.mark.asyncio
-async def test_create_task_async_classify(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_create_task_async_classify(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("PACKING_TASK_DIR", str(tmp_path / "tasks"))
     src = tmp_path / "pack.xlsx"
     _build_sample_xlsx(src)
 
-    from app.services.smart_classifier import ClassifyResult, SmartClassifier
+    from app.services.smart_classifier import ClassifyResult
 
     mock_clf = AsyncMock()
     mock_clf.prepare_translations = AsyncMock(return_value={})
@@ -102,17 +103,19 @@ async def test_create_task_async_classify(tmp_path: Path, monkeypatch: pytest.Mo
 
     bg = BackgroundTasks()
     with patch("app.services.packing_list_classify.get_smart_classifier", return_value=mock_clf):
-        result = await create_packing_list_task(
-            file_bytes=src.read_bytes(),
-            original_filename="pack.xlsx",
-            background_tasks=bg,
-            classify=True,
+        result = asyncio.run(
+            create_packing_list_task(
+                file_bytes=src.read_bytes(),
+                original_filename="pack.xlsx",
+                background_tasks=bg,
+                classify=True,
+            )
         )
         assert result["status"] == "processing"
         task_id = result["task_id"]
-        await bg()
+        asyncio.run(bg())
 
-    task = await get_task(task_id)
+    task = asyncio.run(get_task(task_id))
     assert task is not None
     assert task["status"] == "done"
     assert task["processed"] == 1

@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import json
 import re
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any
 
 from sqlalchemy.orm import Session
@@ -132,7 +132,7 @@ def _resolve_pp2414_group(session: Session, packaging_type: str) -> int | None:
 
 
 def get_goods_rate(session: Session, hs_code: str, calendar_year: int | None = None) -> RopGoodsRate | None:
-    year = int(calendar_year or datetime.utcnow().year)
+    year = int(calendar_year or datetime.now(timezone.utc).year)
     return _match_goods_rate(session, hs_code, year)
 
 
@@ -141,7 +141,7 @@ def get_packaging_rate(
     packaging_type: str,
     calendar_year: int | None = None,
 ) -> RopPackagingRate | None:
-    year = int(calendar_year or datetime.utcnow().year)
+    year = int(calendar_year or datetime.now(timezone.utc).year)
     ptype = _normalize_packaging_type(packaging_type)
     if ptype in ("none", "auto"):
         return None
@@ -167,7 +167,7 @@ def calculate_rop(
 ) -> dict[str, Any]:
     """Расчёт РОП за товар и упаковку."""
     _ = direction  # зарезервировано для будущих правил импорт/ЕАЭС
-    year = int(calendar_year or datetime.utcnow().year)
+    year = int(calendar_year or datetime.now(timezone.utc).year)
     packaging_weight = max(0.0, float(weight_gross_kg) - float(weight_net_kg))
 
     goods_rate = get_goods_rate(session, hs_code, year)
