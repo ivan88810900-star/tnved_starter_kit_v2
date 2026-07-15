@@ -878,6 +878,8 @@ export interface AssistantCopilotAi {
   note?: string;
   conclusion?: string;
   raw?: string;
+  citations?: AssistantGroundingCitation[];
+  grounding?: AssistantGrounding;
 }
 
 export interface AssistantCopilotResponse {
@@ -912,6 +914,33 @@ export interface AssistantCalculationCurrentContext {
   antidumping_rub?: number;
   special_duties_rub?: number;
   vat_base_rub?: number;
+  payment_data_quality?: CalculatorDataQuality;
+  payment_legal_basis?: CalculatorLegalBasis;
+  payment_sources?: CalculatorSourceLayer[];
+}
+
+export interface AssistantGroundingCitation {
+  id: string;
+  source_id: string;
+  title: string;
+  kind: 'official' | 'calculation' | 'canonical' | 'local_registry' | 'internal_advisory' | string;
+  url?: string | null;
+  status?: string | null;
+  excerpt?: string | null;
+}
+
+export interface AssistantGrounding {
+  mode: 'deterministic' | 'llm_grounded' | 'legacy' | string;
+  coverage: 'grounded' | 'partial' | 'needs_context' | string;
+  llm_configured?: boolean;
+  provider?: string | null;
+  generated_from_server_facts?: boolean;
+  resolved_hs_code?: string | null;
+  hs_source?: string;
+  facts_used?: string[];
+  citations?: AssistantGroundingCitation[];
+  limitations?: string[];
+  canonical_anchor?: CanonicalAnchor | null;
 }
 
 export interface AssistantChatHistoryItem {
@@ -933,6 +962,8 @@ export interface AssistantChatRequest {
 export interface AssistantChatResponse {
   status: string;
   answer: string;
+  grounding?: AssistantGrounding;
+  suggestions?: string[];
 }
 
 export interface AssistantCopilotBatchResponse {

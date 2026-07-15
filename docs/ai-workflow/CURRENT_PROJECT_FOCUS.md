@@ -14,10 +14,10 @@ The current active workstream is the **CustomsClear MVP application**: end-to-en
 
 Official SGR and NTM v2 normative datasets remain important **data contours**, but the top priority is shipping user-facing MVP blocks — starting with the normative requirements block.
 
-The normative requirements, TN VED search/code-card, explainable Smart Payments and
-evidence-first sanctions/risk slices are complete. The next product slice is an AI
-assistant grounded in the same internal evidence contracts. This does not authorize
-Canonical runtime flag rollout.
+The normative requirements, TN VED search/code-card, explainable Smart Payments,
+evidence-first sanctions/risk and grounded assistant slices are complete. The current
+focus is full-data end-to-end product acceptance and hardening; this does not authorize
+Canonical runtime flag rollout or automatic semantic-vector ingestion.
 
 ## What has already been completed
 
@@ -33,6 +33,9 @@ Canonical runtime flag rollout.
   uncertainty and optional Canonical grounding anchor
 - Evidence-first sanctions/risk checks in the TN VED card: explicit scope, conservative
   coverage, matched entity/prefix/country, match method and registered source links
+- Grounded declarant assistant: deterministic no-key answers over TN VED, calculator,
+  definite/advisory requirements and risk coverage; optional validated LLM wording,
+  citations, limitations and follow-up actions
 
 ## Current top priority
 
@@ -44,7 +47,7 @@ Canonical runtime flag rollout.
    code card, related decisions and evidence
 4. ~~Smart payments~~ — duty/VAT/excise/fees with explanation and conservative uncertainty
 5. ~~Sanctions/risk checks~~ — lists, matches, severity and evidence
-6. **AI assistant** — answers grounded in internal modules, cites sources
+6. ~~AI assistant~~ — answers grounded in internal modules, cites sources
 
 Parallel (not blocking MVP UI): continue curating `official_sgr_rules.seed.json` and validation — **without** enabling official SGR broker enforcement until a separate approved workstream.
 
@@ -60,7 +63,11 @@ Current next tasks:
 - ✅ TASK-MVP-PAYMENTS-001: Smart payment explanation block in the TN VED card
 - ✅ TASK-MVP-RISK-001: sanctions/risk check slice with source evidence and
   conservative match semantics
-- Assistant grounding on normative + payments + risk modules
+- ✅ TASK-MVP-ASSISTANT-001: deterministic grounded assistant + optional guarded LLM
+  wording over normative, payments and risk modules
+- Full-data end-to-end acceptance of the completed MVP slices on the user's current DB
+- Separate readiness decision for semantic embeddings (vectors/API cost/provider), without
+  weakening the deterministic hybrid-search fallback
 
 Official SGR dataset tasks (when not conflicting with MVP slices):
 

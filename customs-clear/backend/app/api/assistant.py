@@ -136,6 +136,9 @@ class AssistantCurrentContext(BaseModel):
     origin_country: Optional[str] = None
     total_payable: Optional[float] = None
     non_tariff_measures: List[AssistantNonTariffMeasureContext] = Field(default_factory=list)
+    payment_data_quality: Dict[str, Any] = Field(default_factory=dict)
+    payment_legal_basis: Dict[str, Any] = Field(default_factory=dict)
+    payment_sources: List[Dict[str, Any]] = Field(default_factory=list)
 
 
 class AssistantChatRequest(BaseModel):
@@ -461,17 +464,29 @@ async def assistant_chat(req: AssistantChatRequest, request: Request) -> JSONRes
     ctx_dict: dict[str, Any] | None = None
     if eff is not None:
         ctx_dict = eff.model_dump(mode="json", exclude_none=True)
-    answer = await run_assistant_chat(
+    result = await run_assistant_chat(
         message=req.message.strip(),
         history=[h.model_dump() for h in req.history],
         current_context=ctx_dict,
     )
+    # Keep compatibility with tests/older service overrides that returned a string.
+    if isinstance(result, str):
+        payload: dict[str, Any] = {"answer": result}
+        grounding_mode = "legacy"
+        citation_count = 0
+    else:
+        payload = dict(result)
+        grounding = payload.get("grounding") if isinstance(payload.get("grounding"), dict) else {}
+        grounding_mode = str(grounding.get("mode") or "deterministic")
+        citation_count = len(grounding.get("citations") or [])
     append_audit(
         {
             "action": "assistant.chat",
             "has_context": eff is not None,
             "hs": (eff.hs_code if eff else "") or "",
+            "grounding_mode": grounding_mode,
+            "citation_count": citation_count,
             **request_audit_meta(request),
         }
     )
-    return JSONResponse({"status": "OK", "answer": answer})
+    return JSONResponse({"status": "OK", **payload})

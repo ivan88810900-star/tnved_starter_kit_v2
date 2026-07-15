@@ -1,7 +1,7 @@
 # CURRENT_STATE.md — Текущее состояние проекта
 
 > Дата: 2026-07-15
-> Активная ветка: `feat/smart-payments-explanation`; baseline: `d2ef092`
+> Активная ветка: `feat/grounded-ai-assistant`; baseline: `9da2799`
 
 ---
 
@@ -16,7 +16,8 @@
 - **Инвойс / пакинг-лист** — загрузка XLSX/CSV, Vision-классификация, async-задачи, экспорт в Excel
 - **ТРОИС** — opendata ФТС (CSV ~42MB), fuzzy-поиск, cron-синхронизация
 - **ФСА/СС/ДС** — opendata (7Z-архивы), backfill истории, мгновенная проверка номера
-- **AI-ассистент** — copilot pipeline, batch-режим, RAG (PDF/TXT/MD), журнал решений, semantic search (embeddings)
+- **AI-ассистент** — grounded chat/copilot по TN VED, платежам, definite/advisory
+  требованиям и risk coverage; цитаты, no-key fallback, guarded LLM, batch и журнал решений
 - **РОП / экосбор** — ставки ПП №1041/2414, 39 категорий ТС, audit 97 глав
 - **Официальные данные** — ETT 99.8%, VAT 100%, Excise 100%, Anti-dumping 82.8%, Special Safeguard 100%, Countervailing 100%
 
@@ -190,6 +191,7 @@ legacy (сверх structural). До TASK-CANONICAL-004 контур не был
 
 | Коммит | Дата | Описание |
 |--------|------|---------|
+| TASK-MVP-ASSISTANT-001 | 2026-07-15 | Grounded assistant: no-key server answers, TN VED/payment/NTM/risk evidence, citations and guarded optional LLM wording |
 | TASK-MVP-PAYMENTS-001 | 2026-07-15 | Smart Payments встроен в карточку ТН ВЭД: базы расчёта, статусы, источники, допущения, честный partial total и Canonical anchor |
 | `f7df848..d2ef092` | 2026-07-15 | Canonical anchor identity + additive bridge в поиск/карточку ТН ВЭД |
 | Gate-2 QA | 2026-07-14 | TASK-CANONICAL-004 completed: 18 049/18 049 match, 0 mismatch/unresolved; flags remain default OFF |
@@ -233,7 +235,7 @@ legacy (сверх structural). До TASK-CANONICAL-004 контур не был
 | **TASK-MVP-SEARCH-QUALITY-001** — hybrid поиск: ranking, typo recovery, explainable UI | ✅ Completed; embeddings remain separate | — |
 | **TASK-MVP-PAYMENTS-001** — объяснимый расчёт платежей в карточке ТН ВЭД | ✅ Completed; calculation semantics unchanged | — |
 | **TASK-MVP-RISK-001** — санкционный скрининг: scope, evidence, coverage, sources | ✅ Completed; semantics remain diagnostic | — |
-| Grounded AI assistant — нормативка + платежи + риски с цитатами | Следующая MVP-задача | Высокий |
+| **TASK-MVP-ASSISTANT-001** — grounded assistant: серверные факты, цитаты, no-key fallback, guarded LLM | ✅ Completed | — |
 | Derisking после TASK-005: aliases/history (`superseded_by`, previous codes/IDs) | Рекомендован | Высокий |
 | Fine-tune модели на `training_pairs.jsonl` | Вне репозитория | Низкий |
 | Live-parсер ФТС предрешений (tks.ru JS) | Decision Memo #135 | Средний |
@@ -253,6 +255,8 @@ legacy (сверх structural). До TASK-CANONICAL-004 контур не был
   подтверждает финальный итог и показывает только известную частичную сумму
 - **ФТС предрешения:** live-парсер не реализован (customs.gov.ru/folder/519 — статистика, не предрешения)
 - **ТРОИС:** fuzzy-поиск может давать false positives на коротких запросах
+- **Semantic embeddings:** в доступных QA-БД нет готовых векторов и серверный ключ
+  провайдера не настроен; умный поиск и ассистент используют детерминированный hybrid/evidence fallback
 
 ### Архитектура
 - **SQLite** — ограничение параллельных записей; для production рекомендуется PostgreSQL (DATABASE_URL поддерживает)

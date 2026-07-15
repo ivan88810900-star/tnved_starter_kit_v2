@@ -85,6 +85,9 @@ function buildAssistantCalcContext(
     antidumping_rub: b.antidumping,
     special_duties_rub: b.special_duties_amount,
     vat_base_rub: b.vat_base,
+    payment_data_quality: data.data_quality,
+    payment_legal_basis: data.legal_basis,
+    payment_sources: data.sources,
     non_tariff_measures: (measures || []).map((m) => ({
       measure_type: m.measure_type,
       regulatory_act: m.regulatory_act,

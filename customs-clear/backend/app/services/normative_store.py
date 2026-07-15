@@ -484,8 +484,11 @@ SEED_TNVED: list[dict[str, Any]] = [
         "hs_code": "8509400000",
         "parent_hs": "850940",
         "level": 10,
-        "title": "Электрические чайники и прочие электроприборы для кипячения воды",
-        "description": "Включает бытовые электрочайники. Уточняйте субпозицию по конструкции и мощности по действующей редакции ТН ВЭД ЕАЭС.",
+        "title": "Измельчители пищевых продуктов и миксеры; соковыжималки для фруктов или овощей",
+        "description": (
+            "Электромеханические бытовые приборы со встроенным электродвигателем: "
+            "измельчители пищевых продуктов, миксеры и соковыжималки."
+        ),
         "chapter": "85",
         "source_url": "https://eec.eaeunion.org/comission/department/catr/ett/",
         "source_revision": "seed-2026-03",
@@ -620,6 +623,12 @@ def seed_data() -> None:
             exists = db.query(TnvedEntry).filter(TnvedEntry.hs_code == row["hs_code"]).first()
             if not exists:
                 db.add(TnvedEntry(**row))
+            elif (exists.source_revision or "") == row["source_revision"]:
+                # Seed is a replaceable demo projection.  Keep corrected seed facts
+                # current, but never overwrite an imported official revision.
+                for key, value in row.items():
+                    if key != "hs_code":
+                        setattr(exists, key, value)
 
         for row in SEED_NORMATIVE_NOTES:
             exists = (

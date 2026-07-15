@@ -168,7 +168,7 @@ async def run_copilot_pipeline(
 
 
 def bundle_for_llm(bundle: Dict[str, Any]) -> Dict[str, Any]:
-    """Сжатый JSON для промпта (без огромных raw)."""
+    """Сжатый evidence JSON для сводки (без raw и без потери provenance)."""
     pay = bundle.get("payment") or {}
     b = pay.get("breakdown") if isinstance(pay, dict) else {}
     nt = bundle.get("non_tariff") or {}
@@ -184,12 +184,27 @@ def bundle_for_llm(bundle: Dict[str, Any]) -> Dict[str, Any]:
     }
     if isinstance(b, dict) and b:
         slim["payment_summary"] = {
+            "status": pay.get("status"),
             "duty": b.get("duty"),
+            "duty_rate": b.get("duty_rate"),
             "vat": b.get("vat"),
             "excise": b.get("excise"),
             "antidumping": b.get("antidumping"),
+            "antidumping_status": b.get("antidumping_status"),
             "total_payable": b.get("total_payable"),
             "vat_rate": b.get("vat_rate"),
+            "data_quality": pay.get("data_quality") if isinstance(pay.get("data_quality"), dict) else {},
+            "legal_basis": pay.get("legal_basis") if isinstance(pay.get("legal_basis"), dict) else {},
+            "sources": [
+                {
+                    "name": x.get("name"),
+                    "revision": x.get("revision"),
+                    "data_info": x.get("data_info"),
+                    "url": x.get("url"),
+                }
+                for x in (pay.get("sources") or [])[:8]
+                if isinstance(x, dict)
+            ],
         }
     pv = bundle.get("permits_verification")
     if isinstance(pv, list):
@@ -210,6 +225,66 @@ def bundle_for_llm(bundle: Dict[str, Any]) -> Dict[str, Any]:
             "description_excerpt": (str(tv.get("description") or ""))[:400],
             "breadcrumb_hs": [b.get("hs_code") for b in (tv.get("breadcrumb") or []) if isinstance(b, dict)],
             "note_titles": [t for t in note_titles if t],
+            "official_ett_url": tv.get("official_ett_url"),
+            "source_revision": tv.get("source_revision"),
+        }
+
+    normative = nt.get("normative_block") if isinstance(nt.get("normative_block"), dict) else {}
+    if normative:
+        def _normative_rows(key: str, *, limit: int = 12) -> list[dict[str, Any]]:
+            return [
+                {
+                    "permit_type": row.get("permit_type"),
+                    "tr_ts": row.get("tr_ts"),
+                    "source": row.get("source"),
+                    "source_label": row.get("source_label"),
+                    "applicability": row.get("applicability"),
+                    "reason": str(row.get("reason") or row.get("note") or "")[:320],
+                }
+                for row in (normative.get(key) or [])[:limit]
+                if isinstance(row, dict)
+            ]
+
+        slim["normative_requirements"] = {
+            "status": normative.get("status"),
+            "required_documents": _normative_rows("required_documents"),
+            "missing_documents": _normative_rows("missing_documents"),
+            "advisory_requirements": _normative_rows("advisory_requirements"),
+            "empty_message": normative.get("empty_message"),
+        }
+
+    risk = nt.get("risk_block") if isinstance(nt.get("risk_block"), dict) else {}
+    if risk:
+        slim["risk_summary"] = {
+            "status": risk.get("status"),
+            "overall_severity": risk.get("overall_severity"),
+            "coverage_complete": bool(risk.get("coverage_complete")),
+            "signals": [
+                {
+                    "category": row.get("category"),
+                    "severity": row.get("severity"),
+                    "source": row.get("source"),
+                    "source_label": row.get("source_label"),
+                    "source_url": row.get("source_url"),
+                    "match_method": row.get("match_method"),
+                    "explanation": str(row.get("explanation") or "")[:420],
+                }
+                for row in (risk.get("signals") or [])[:10]
+                if isinstance(row, dict)
+            ],
+            "source_coverage": [
+                {
+                    "source_id": row.get("source_id"),
+                    "title": row.get("title"),
+                    "coverage_status": row.get("coverage_status"),
+                    "manual_review_required": bool(row.get("manual_review_required")),
+                    "source_url": row.get("source_url"),
+                }
+                for row in (risk.get("source_coverage") or [])[:10]
+                if isinstance(row, dict)
+            ],
+            "screening_scope": list(risk.get("screening_scope") or [])[:6],
+            "canonical_anchor": risk.get("canonical_anchor"),
         }
     return slim
 

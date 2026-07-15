@@ -60,10 +60,10 @@ export function useClientCapabilities(): CapabilitiesValue {
   return useContext(ClientCapabilitiesContext);
 }
 
-/** Показывать чат ассистента и пункт меню при настроенном LLM на сервере. */
+/** Ассистент работает на серверных фактах; LLM — необязательный слой формулировки. */
 export function useAssistantSurfaceVisible(): boolean {
-  const { health, assistantLlmConfigured } = useClientCapabilities();
+  const { health } = useClientCapabilities();
 
   if (health === 'loading') return false;
-  return assistantLlmConfigured;
+  return health !== 'down';
 }

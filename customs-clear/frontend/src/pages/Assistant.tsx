@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { api } from '../api/client';
 import { getUserFacingApiError } from '../api/error';
 import { useClientCapabilities } from '../context/ClientCapabilitiesContext';
-import { Sparkles } from 'lucide-react';
+import { CheckCircle2, Database, ExternalLink, Sparkles } from 'lucide-react';
 import type {
   AssistantAnalyzeResponse,
   AssistantCopilotAi,
@@ -40,6 +40,11 @@ function downloadJson<T>(filename: string, data: T) {
   a.download = filename;
   a.click();
   URL.revokeObjectURL(a.href);
+}
+
+function safeExternalUrl(value?: string | null): string | null {
+  const raw = (value || '').trim();
+  return /^https?:\/\//i.test(raw) ? raw : null;
 }
 
 type BatchLine = {
@@ -335,10 +340,24 @@ const CopilotBundleView: React.FC<{ bundle: AssistantCopilotBundle; title: strin
 
 const CopilotAiView: React.FC<{ ai: AssistantCopilotAi }> = ({ ai }) => (
   <div className="space-y-3 text-[13px] leading-relaxed">
+    {ai.grounding && (
+      <div className="flex flex-wrap items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-[11px] text-emerald-900">
+        <span className="inline-flex items-center gap-1 font-semibold">
+          <CheckCircle2 className="h-3.5 w-3.5" aria-hidden />
+          Серверные факты
+        </span>
+        <span className="inline-flex items-center gap-1 text-emerald-800">
+          <Database className="h-3.5 w-3.5" aria-hidden />
+          {ai.grounding.mode === 'llm_grounded'
+            ? `формулировка ИИ${ai.grounding.provider ? ` · ${ai.grounding.provider}` : ''}`
+            : 'без внешней модели'}
+        </span>
+      </div>
+    )}
     {ai.summary && (
       <div className="rounded-xl border border-indigo-200 bg-indigo-50 p-4 text-slate-800">
         <div className="mb-1.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-indigo-700">Экспертная сводка</div>
-        <p className="text-[13px] text-slate-700">{ai.summary}</p>
+        <p className="whitespace-pre-wrap text-[13px] text-slate-700">{ai.summary}</p>
       </div>
     )}
     {ai.note && (
@@ -349,25 +368,25 @@ const CopilotAiView: React.FC<{ ai: AssistantCopilotAi }> = ({ ai }) => (
         {ai.classification_advice && (
           <div className="cc-card-soft p-3">
             <div className="cc-label mb-1">Классификация</div>
-            <p className="text-[12px] text-slate-400">{ai.classification_advice}</p>
+            <p className="whitespace-pre-wrap text-[12px] text-slate-600">{ai.classification_advice}</p>
           </div>
         )}
         {ai.payment_comment && (
           <div className="cc-card-soft p-3">
             <div className="cc-label mb-1">Платежи</div>
-            <p className="text-[12px] text-slate-400">{ai.payment_comment}</p>
+            <p className="whitespace-pre-wrap text-[12px] text-slate-600">{ai.payment_comment}</p>
           </div>
         )}
         {ai.non_tariff_comment && (
           <div className="cc-card-soft p-3">
             <div className="cc-label mb-1">Нетарифка</div>
-            <p className="text-[12px] text-slate-400">{ai.non_tariff_comment}</p>
+            <p className="whitespace-pre-wrap text-[12px] text-slate-600">{ai.non_tariff_comment}</p>
           </div>
         )}
         {ai.documents_comment && (
           <div className="cc-card-soft p-3">
             <div className="cc-label mb-1">Документы</div>
-            <p className="text-[12px] text-slate-400">{ai.documents_comment}</p>
+            <p className="whitespace-pre-wrap text-[12px] text-slate-600">{ai.documents_comment}</p>
           </div>
         )}
       </div>
@@ -394,6 +413,33 @@ const CopilotAiView: React.FC<{ ai: AssistantCopilotAi }> = ({ ai }) => (
           ))}
         </ol>
       </div>
+    )}
+    {ai.citations && ai.citations.length > 0 && (
+      <details className="cc-disclosure">
+        <summary>Источники сводки ({ai.citations.length})</summary>
+        <div className="cc-disclosure-body space-y-2">
+          {ai.citations.map((citation) => {
+            const href = safeExternalUrl(citation.url);
+            return (
+              <div key={`${citation.id}-${citation.source_id}`} className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-[11px] text-slate-600">
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <span className="font-mono font-semibold text-indigo-700">[{citation.id}]</span>
+                  {href ? (
+                    <a href={href} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 font-medium text-indigo-700 hover:underline">
+                      {citation.title}
+                      <ExternalLink className="h-3 w-3" aria-hidden />
+                    </a>
+                  ) : (
+                    <span className="font-medium text-slate-700">{citation.title}</span>
+                  )}
+                  {citation.status ? <span className="rounded bg-slate-100 px-1.5 py-0.5 font-mono text-[9px]">{citation.status}</span> : null}
+                </div>
+                {citation.excerpt ? <p className="mt-1 text-slate-500">{citation.excerpt}</p> : null}
+              </div>
+            );
+          })}
+        </div>
+      </details>
     )}
     {ai.disclaimer && (
       <details className="cc-disclosure">
@@ -802,7 +848,7 @@ export const Assistant: React.FC<AssistantPageProps> = ({
   }, [copilotResult, batchResult, legacyResult, mode]);
 
   const { health, assistantLlmConfigured } = useClientCapabilities();
-  const assistantAllowed = health !== 'loading' && assistantLlmConfigured;
+  const assistantAllowed = health !== 'loading' && health !== 'down';
 
   if (health === 'loading') {
     return (
@@ -816,7 +862,7 @@ export const Assistant: React.FC<AssistantPageProps> = ({
   if (!assistantAllowed) {
     return (
       <div className="rounded-xl border border-slate-200 bg-slate-50 px-6 py-12 text-center text-[13px] text-slate-600">
-        Консультант по декларации сейчас недоступен.
+        Backend сейчас недоступен, поэтому консультант не может получить проверяемые данные.
       </div>
     );
   }
@@ -826,6 +872,14 @@ export const Assistant: React.FC<AssistantPageProps> = ({
       <p className="text-[12px] leading-relaxed text-slate-500">
         Подбор кода, платежи, меры и проверки в одном диалоге.
       </p>
+
+      {!assistantLlmConfigured ? (
+        <div className="rounded-xl border border-sky-200 bg-sky-50 px-4 py-3 text-[12px] leading-relaxed text-sky-900">
+          <span className="font-semibold">Фактический режим.</span>{' '}
+          Ответы собираются из расчётов и справочников Tariff с источниками. Внешняя ИИ-модель не подключена,
+          поэтому формулировка будет более строгой и шаблонной, но основные проверки доступны.
+        </div>
+      ) : null}
 
       <div className="cc-card-soft p-4">
         <DeclarantChatThread
