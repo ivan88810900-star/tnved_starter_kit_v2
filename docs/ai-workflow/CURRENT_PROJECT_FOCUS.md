@@ -6,7 +6,7 @@ Active
 
 ## Last updated
 
-2026-07-15
+2026-07-16
 
 ## Strategic direction
 
@@ -36,6 +36,10 @@ Canonical runtime flag rollout or automatic semantic-vector ingestion.
 - Grounded declarant assistant: deterministic no-key answers over TN VED, calculator,
   definite/advisory requirements and risk coverage; optional validated LLM wording,
   citations, limitations and follow-up actions
+- Authenticated read-only MVP acceptance harness: search/code card, payments,
+  normative requirements, evidence-first risk and grounded assistant pass 4/4 on
+  the sandbox dataset with all Canonical flags OFF. The obsolete scenario that
+  treated US origin as an automatic embargo was removed.
 
 ## Current top priority
 
@@ -65,7 +69,11 @@ Current next tasks:
   conservative match semantics
 - ✅ TASK-MVP-ASSISTANT-001: deterministic grounded assistant + optional guarded LLM
   wording over normative, payments and risk modules
-- Full-data end-to-end acceptance of the completed MVP slices on the user's current DB
+- ✅ Local end-to-end acceptance of the completed MVP slices (4/4, authenticated,
+  no external LLM, no writes, Canonical flags OFF)
+- Full-data end-to-end acceptance on the user's current DB remains pending; use
+  `E2E_SEARCH_QUERY` / `E2E_PAYMENT_HS_CODE` only to select representative data,
+  without changing product semantics
 - Separate readiness decision for semantic embeddings (vectors/API cost/provider), without
   weakening the deterministic hybrid-search fallback
 
