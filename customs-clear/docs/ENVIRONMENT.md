@@ -82,6 +82,18 @@ PDF по тем же полям, что JSON-экспорт из UI: **`POST /ap
 | `ADMIN_API_TOKEN` | Для `POST /permits/cache/clear`, `GET /assistant/decisions/export`, `POST /api/tnved/embeddings/ingest`, **`GET /api/calculator/history/export`** — заголовок **`X-Admin-Token`** |
 | `OPENAI_API_KEY` | Эмбеддинги ТН ВЭД: `POST /api/tnved/embeddings/ingest`, `GET /api/tnved/search/semantic` |
 | `OPENAI_EMBEDDING_MODEL` | По умолчанию `text-embedding-3-small` |
+| `TNVED_SEMANTIC_SEARCH_ENABLED` | `1` разрешает явные запросы к экспериментальному семантическому поиску; по умолчанию `0`, основной hybrid FTS работает независимо |
+| `TNVED_SEMANTIC_INGEST_ENABLED` | `1` отдельно разрешает платную/изменяющую БД пакетную индексацию; по умолчанию `0` |
+
+Безопасная проверка контрактов без внешних запросов:
+
+```bash
+python3 scripts/verify_optional_ai.py
+```
+
+Один синтетический запрос к настроенному LLM выполняется только с двумя явными
+аргументами: `--live-llm --allow-external-ai`. Текст ответа и ключи в отчёт не
+записываются.
 
 ## Кэш Redis
 

@@ -1,15 +1,39 @@
-"""Эмбеддинги ТН ВЭД (OpenAI) и семантический поиск по JSON-векторам в SQLite."""
+"""Optional TN VED embeddings with an always-available lexical fallback.
+
+This is a legacy vector contour over ``tnved_entries``.  It is deliberately
+kept behind default-OFF read/ingest flags until the product catalogue
+(``tnved_commodities``) gets its own versioned vector index.
+"""
 from __future__ import annotations
 
+import heapq
 import math
 import os
-from typing import Any, Optional
+from typing import Any
 
 import httpx
-from loguru import logger
+from sqlalchemy import or_
 
 from ..db import SessionLocal
 from ..models import TnvedEntry, TnvedEntryEmbedding
+from ..models.tnved import Commodity
+
+
+_TRUTHY = frozenset({"1", "true", "yes", "on"})
+
+
+def _env_truthy(name: str) -> bool:
+    return (os.getenv(name) or "").strip().lower() in _TRUTHY
+
+
+def semantic_search_enabled() -> bool:
+    """Whether paid request-time vector search is explicitly enabled."""
+    return _env_truthy("TNVED_SEMANTIC_SEARCH_ENABLED")
+
+
+def semantic_ingest_enabled() -> bool:
+    """Whether the mutating/paid vector ingestion operation is enabled."""
+    return _env_truthy("TNVED_SEMANTIC_INGEST_ENABLED")
 
 
 def _openai_key() -> str:
@@ -24,7 +48,7 @@ def embed_texts_openai(texts: list[str]) -> list[list[float]]:
     """Синхронный вызов OpenAI embeddings API (батч)."""
     key = _openai_key()
     if not key:
-        raise RuntimeError("OPENAI_API_KEY не задан")
+        raise RuntimeError("embedding_provider_not_configured")
     if not texts:
         return []
     model = _embedding_model()
@@ -75,21 +99,30 @@ def ingest_tnved_embeddings_batch(
     Заполняет tnved_entry_embeddings для позиций ТН ВЭД.
     Текст для эмбеддинга: hs_code + title + description (обрезка).
     """
+    if not semantic_ingest_enabled():
+        raise RuntimeError(
+            "semantic_ingest_disabled: set TNVED_SEMANTIC_INGEST_ENABLED=1 for an explicit batch run"
+        )
+
     limit = max(1, min(limit, 500))
     offset = max(0, offset)
     model = _embedding_model()
 
     with SessionLocal() as db:
-        q = db.query(TnvedEntry).order_by(TnvedEntry.id).offset(offset).limit(limit)
-        entries = q.all()
+        q = db.query(TnvedEntry)
         if only_missing:
-            existing_ids = {
-                int(r[0])
-                for r in db.query(TnvedEntryEmbedding.tnved_entry_id)
-                .filter(TnvedEntryEmbedding.embedding.isnot(None))
-                .all()
-            }
-            entries = [e for e in entries if e.id not in existing_ids]
+            q = q.outerjoin(
+                TnvedEntryEmbedding,
+                TnvedEntryEmbedding.tnved_entry_id == TnvedEntry.id,
+            ).filter(
+                or_(
+                    TnvedEntryEmbedding.id.is_(None),
+                    TnvedEntryEmbedding.embedding.is_(None),
+                    TnvedEntryEmbedding.embedding_model != model,
+                )
+            )
+        q = q.order_by(TnvedEntry.id).offset(offset).limit(limit)
+        entries = q.all()
 
     if not entries:
         return {"status": "OK", "processed": 0, "message": "Нет записей для обработки"}
@@ -119,56 +152,90 @@ def ingest_tnved_embeddings_batch(
 
 
 def semantic_search_tnved(query: str, top_k: int = 15) -> list[dict[str, Any]]:
-    """Поиск по косинусной близости (все строки эмбеддингов в памяти — для умеренных объёмов)."""
+    """Return top-k legacy semantic matches without loading the full index at once."""
     top_k = max(1, min(top_k, 50))
     q = (query or "").strip()
     if len(q) < 2:
         return []
+    if not semantic_search_enabled():
+        raise RuntimeError(
+            "semantic_search_disabled: set TNVED_SEMANTIC_SEARCH_ENABLED=1 to allow request-time embeddings"
+        )
 
     qv = embed_texts_openai([q])[0]
     if not qv:
         return []
 
+    # A bounded heap avoids retaining every ORM row/vector.  Filtering by the
+    # configured model and dimension also prevents incomparable vectors from
+    # silently entering the ranking after a model migration.
+    best: list[tuple[float, int, dict[str, Any]]] = []
+    model = _embedding_model()
     with SessionLocal() as db:
         rows = (
             db.query(TnvedEntryEmbedding, TnvedEntry)
             .join(TnvedEntry, TnvedEntry.id == TnvedEntryEmbedding.tnved_entry_id)
-            .filter(TnvedEntryEmbedding.embedding.isnot(None))
-            .all()
+            .filter(
+                TnvedEntryEmbedding.embedding.isnot(None),
+                TnvedEntryEmbedding.embedding_model == model,
+                TnvedEntryEmbedding.embedding_dim == len(qv),
+            )
+            .yield_per(256)
         )
-
-    scored: list[tuple[float, Any, Any]] = []
-    for emb_row, ent in rows:
-        vec = emb_row.embedding
-        if not isinstance(vec, list) or not vec:
-            continue
-        s = cosine_sim(qv, [float(x) for x in vec])
-        scored.append((s, ent, emb_row))
-
-    scored.sort(key=lambda x: -x[0])
-    out: list[dict[str, Any]] = []
-    for s, ent, emb_row in scored[:top_k]:
-        out.append(
-            {
-                "score": round(s, 6),
+        for emb_row, ent in rows:
+            vec = emb_row.embedding
+            if not isinstance(vec, list) or len(vec) != len(qv):
+                continue
+            score = cosine_sim(qv, [float(x) for x in vec])
+            item = {
+                "score": round(score, 6),
                 "hs_code": ent.hs_code,
                 "title": (ent.title or "")[:500],
                 "level": ent.level,
                 "embedding_model": emb_row.embedding_model,
             }
-        )
-    return out
+            candidate = (score, int(ent.id), item)
+            if len(best) < top_k:
+                heapq.heappush(best, candidate)
+            elif candidate[:2] > best[0][:2]:
+                heapq.heapreplace(best, candidate)
+
+    return [row[2] for row in sorted(best, key=lambda item: (-item[0], item[1]))]
 
 
 def embeddings_stats() -> dict[str, Any]:
     with SessionLocal() as db:
         total_e = db.query(TnvedEntryEmbedding).count()
         with_vec = db.query(TnvedEntryEmbedding).filter(TnvedEntryEmbedding.embedding.isnot(None)).count()
+        compatible = (
+            db.query(TnvedEntryEmbedding)
+            .filter(
+                TnvedEntryEmbedding.embedding.isnot(None),
+                TnvedEntryEmbedding.embedding_model == _embedding_model(),
+            )
+            .count()
+        )
         tnved = db.query(TnvedEntry).count()
+        catalogue = db.query(Commodity).count()
+    coverage_pct = round((compatible / tnved * 100.0), 2) if tnved else 0.0
+    configured = bool(_openai_key())
+    enabled = semantic_search_enabled()
     return {
+        "source_table": "tnved_entries",
+        "product_catalogue_table": "tnved_commodities",
         "tnved_entries": tnved,
+        "product_catalogue_entries": catalogue,
         "embedding_rows": total_e,
         "with_vectors": with_vec,
-        "openai_configured": bool(_openai_key()),
+        "compatible_vectors": compatible,
+        "coverage_pct": coverage_pct,
+        "provider": "openai",
+        "provider_configured": configured,
+        "openai_configured": configured,
+        "search_enabled": enabled,
+        "ingest_enabled": semantic_ingest_enabled(),
+        "search_ready": bool(enabled and configured and tnved > 0 and compatible == tnved),
+        "fallback": "/api/v1/tnved/search",
+        "limitation": "legacy_vector_source_not_product_catalogue",
         "model": _embedding_model(),
     }

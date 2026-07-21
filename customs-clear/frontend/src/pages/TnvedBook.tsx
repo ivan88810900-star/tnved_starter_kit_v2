@@ -25,8 +25,15 @@ export const TnvedBook: React.FC = () => {
   );
   const [embStatus, setEmbStatus] = useState<{
     with_vectors?: number;
+    compatible_vectors?: number;
     tnved_entries?: number;
-    openai_configured?: boolean;
+    product_catalogue_entries?: number;
+    provider?: string;
+    provider_configured?: boolean;
+    search_enabled?: boolean;
+    search_ready?: boolean;
+    coverage_pct?: number;
+    limitation?: string | null;
     model?: string;
   } | null>(null);
   const [suggestions, setSuggestions] = useState<SearchSuggestion[]>([]);
@@ -43,8 +50,15 @@ export const TnvedBook: React.FC = () => {
     try {
       const { data } = await api.get<{
         with_vectors?: number;
+        compatible_vectors?: number;
         tnved_entries?: number;
-        openai_configured?: boolean;
+        product_catalogue_entries?: number;
+        provider?: string;
+        provider_configured?: boolean;
+        search_enabled?: boolean;
+        search_ready?: boolean;
+        coverage_pct?: number;
+        limitation?: string | null;
         model?: string;
       }>('/tnved/embeddings/status');
       setEmbStatus(data);
@@ -60,9 +74,18 @@ export const TnvedBook: React.FC = () => {
     setSemErr(null);
     setSemHits([]);
     try {
-      const { data } = await api.get<{ results: typeof semHits }>(
+      const { data } = await api.get<{ status: string; results: typeof semHits; reason?: string }>(
         `/tnved/search/semantic?q=${encodeURIComponent(t)}&limit=12`,
       );
+      if (data.status !== 'OK') {
+        setSemErr(
+          data.reason === 'semantic_search_disabled'
+            ? 'AI-поиск пока не включён. Основной умный поиск продолжает работать без внешнего ИИ.'
+            : data.reason === 'embedding_provider_not_configured'
+              ? 'Провайдер AI-поиска пока не настроен. Используйте основной умный поиск.'
+              : 'AI-поиск временно недоступен. Используйте основной умный поиск.',
+        );
+      }
       setSemHits(data.results || []);
     } catch (e: unknown) {
       const err = e as { response?: { data?: { detail?: string } }; message?: string };
@@ -134,21 +157,25 @@ export const TnvedBook: React.FC = () => {
           if (el.open && !embStatus) void loadEmbStatus();
         }}
       >
-        <summary>Семантический поиск по наименованиям (OpenAI)</summary>
+        <summary>Экспериментальный AI-поиск по смыслу</summary>
         <div className="cc-disclosure-body space-y-3">
           <p className="text-[11px] leading-relaxed text-slate-500">
-            Сначала на сервере выполняется пакетная индексация: <span className="cc-mono text-slate-400">POST /api/tnved/embeddings/ingest</span>{' '}
-            (нужны <span className="cc-mono">OPENAI_API_KEY</span> и при необходимости <span className="cc-mono">X-Admin-Token</span>). Затем здесь
-            можно искать формулировкой товара на естественном языке.
+            Ищет товар по свободному описанию. Функция включается администратором только после проверки индекса;
+            основной умный поиск всегда остаётся доступным.
           </p>
           {embStatus && (
             <p className="text-[11px] text-slate-400">
-              В БД векторов: <strong className="text-slate-200">{embStatus.with_vectors ?? 0}</strong> из{' '}
-              <strong className="text-slate-200">{embStatus.tnved_entries ?? '—'}</strong> позиций · OpenAI:{' '}
-              <strong className={embStatus.openai_configured ? 'text-emerald-300' : 'text-amber-300'}>
-                {embStatus.openai_configured ? 'да' : 'нет'}
+              Готовность индекса: <strong className="text-slate-200">{embStatus.compatible_vectors ?? embStatus.with_vectors ?? 0}</strong> из{' '}
+              <strong className="text-slate-200">{embStatus.tnved_entries ?? '—'}</strong> позиций · AI-поиск:{' '}
+              <strong className={embStatus.search_ready ? 'text-emerald-300' : 'text-amber-300'}>
+                {embStatus.search_ready ? 'готов' : 'не готов'}
               </strong>
               {embStatus.model && <span className="text-slate-600"> · {embStatus.model}</span>}
+            </p>
+          )}
+          {embStatus?.limitation === 'legacy_vector_source_not_product_catalogue' && (
+            <p className="text-[11px] text-amber-200/90">
+              Индекс относится к прежнему справочнику и не используется как основной результат классификации.
             </p>
           )}
           <div className="flex flex-wrap items-end gap-2">
@@ -160,7 +187,7 @@ export const TnvedBook: React.FC = () => {
               onKeyDown={(e) => e.key === 'Enter' && void semanticSearch()}
             />
             <button type="button" className="cc-btn-primary" disabled={semLoading || semQ.trim().length < 2} onClick={() => void semanticSearch()}>
-              {semLoading ? '…' : 'Семантика'}
+              {semLoading ? '…' : 'AI-поиск'}
             </button>
           </div>
           {semErr && <p className="text-[11px] text-amber-200/90">{semErr}</p>}

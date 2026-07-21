@@ -376,6 +376,11 @@ class ApiIntegrationTests(unittest.TestCase):
         b = r.json()
         self.assertIn("tnved_entries", b)
         self.assertIn("openai_configured", b)
+        self.assertIn("product_catalogue_entries", b)
+        self.assertIn("search_enabled", b)
+        self.assertIn("ingest_enabled", b)
+        self.assertIn("search_ready", b)
+        self.assertEqual(b["fallback"], "/api/v1/tnved/search")
 
     def test_documents_ingested_list(self):
         r = self.client.get("/api/documents/ingested?limit=5")

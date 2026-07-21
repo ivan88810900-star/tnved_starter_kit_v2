@@ -92,6 +92,18 @@ class OperationalAdminSurfaceAuthTests(unittest.TestCase):
         ok = self.auth.get("/api/tnved/search/semantic?q=телефон&limit=3")
         self.assertEqual(ok.status_code, 200, ok.text)
 
+    @patch("app.api.tnved.semantic_search_tnved")
+    def test_tnved_semantic_failure_returns_deterministic_fallback(self, mock_sem) -> None:
+        mock_sem.side_effect = RuntimeError("semantic_search_disabled: test detail")
+        response = self.auth.get("/api/tnved/search/semantic?q=телефон&limit=3")
+
+        self.assertEqual(response.status_code, 200, response.text)
+        body = response.json()
+        self.assertEqual(body["status"], "DEGRADED")
+        self.assertEqual(body["reason"], "semantic_search_disabled")
+        self.assertEqual(body["fallback"], "/api/v1/tnved/search")
+        self.assertNotIn("test detail", response.text)
+
     @patch("app.api.non_tariff.check_position_non_tariff", new_callable=AsyncMock)
     def test_non_tariff_check_requires_authenticated_user(self, mock_nt: AsyncMock) -> None:
         mock_nt.return_value = {

@@ -62,10 +62,11 @@ async def tnved_embeddings_ingest(
         return JSONResponse(result)
     except RuntimeError as e:
         logger.warning(f"embeddings ingest: {e}")
-        raise HTTPException(status_code=503, detail=str(e))
+        code = str(e).split(":", 1)[0]
+        raise HTTPException(status_code=409 if code == "semantic_ingest_disabled" else 503, detail=code)
     except Exception as e:
-        logger.exception("embeddings ingest")
-        raise HTTPException(status_code=502, detail=str(e))
+        logger.exception("embeddings ingest: {}", type(e).__name__)
+        raise HTTPException(status_code=502, detail="embedding_provider_unavailable")
 
 
 @router.get("/search/semantic")
@@ -74,15 +75,39 @@ async def tnved_search_semantic(
     limit: int = Query(15, ge=1, le=50),
     _user: dict = Depends(require_authenticated_user),
 ) -> JSONResponse:
-    """Семантический top-k по загруженным эмбеддингам (нужен OPENAI_API_KEY для вектора запроса)."""
+    """Optional semantic top-k; deterministic product search is always the fallback."""
     try:
         results = semantic_search_tnved(q, top_k=limit)
-        return JSONResponse({"status": "OK", "query": q, "results": results})
+        return JSONResponse(
+            {
+                "status": "OK",
+                "query": q,
+                "results": results,
+                "fallback": "/api/v1/tnved/search",
+            }
+        )
     except RuntimeError as e:
-        raise HTTPException(status_code=503, detail=str(e))
+        reason = str(e).split(":", 1)[0]
+        return JSONResponse(
+            {
+                "status": "DEGRADED",
+                "query": q,
+                "results": [],
+                "reason": reason,
+                "fallback": "/api/v1/tnved/search",
+            }
+        )
     except Exception as e:
-        logger.exception("semantic search")
-        raise HTTPException(status_code=502, detail=str(e))
+        logger.warning("semantic search fallback after {}", type(e).__name__)
+        return JSONResponse(
+            {
+                "status": "DEGRADED",
+                "query": q,
+                "results": [],
+                "reason": "embedding_provider_unavailable",
+                "fallback": "/api/v1/tnved/search",
+            }
+        )
 
 
 @router.get("/search")

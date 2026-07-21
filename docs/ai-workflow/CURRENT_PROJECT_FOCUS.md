@@ -88,6 +88,11 @@ Current next tasks:
   assistant as a user journey, without broad UI redesign
 - Separate readiness decision for semantic embeddings (vectors/API cost/provider), without
   weakening the deterministic hybrid-search fallback
+- 🔄 Semantic/optional-AI hardening: the legacy `tnved_entries` vector contour is
+  default OFF for both search and ingestion, reports aggregate readiness, ranks in
+  bounded memory, and has a secret-safe optional LLM contract/live verifier. The
+  product index decision is documented in `DECISION_MEMO_SEMANTIC_SEARCH.md`; no
+  automatic ingestion or provider spend is authorized.
 
 Full-data gate (run from `customs-clear/backend`):
 
