@@ -4,6 +4,7 @@ from __future__ import annotations
 import asyncio
 import json
 from pathlib import Path
+import sys
 from unittest.mock import patch
 
 from app.services.data_refresh_service import (
@@ -83,7 +84,7 @@ class TestDataRefreshScript:
     def test_script_check_only_mode(self) -> None:
         import subprocess
         result = subprocess.run(
-            ["python3", "-m", "scripts.data_refresh", "--check-only", "--json"],
+            [sys.executable, "-m", "scripts.data_refresh", "--check-only", "--json"],
             cwd=str(BACKEND_ROOT),
             capture_output=True,
             text=True,
@@ -122,6 +123,7 @@ class TestApplicationStartup:
                 return {"status": "OK"}
 
             with (
+                patch.object(main_module, "is_read_only_mode", return_value=False),
                 patch.object(main_module, "init_db"),
                 patch.object(main_module, "update_exchange_rates_from_cbrf", slow_refresh),
                 patch("app.services.permits_jobs.mark_interrupted_jobs_on_startup"),
@@ -131,6 +133,31 @@ class TestApplicationStartup:
             ):
                 async with main_module.lifespan(main_module.app):
                     await asyncio.wait_for(refresh_started.wait(), timeout=0.5)
+
+        asyncio.run(asyncio.wait_for(scenario(), timeout=1.0))
+
+    def test_read_only_lifespan_skips_all_startup_mutations(self) -> None:
+        from app import main as main_module
+
+        async def scenario() -> None:
+            with (
+                patch.object(main_module, "is_read_only_mode", return_value=True),
+                patch.object(main_module, "init_db") as init_db_mock,
+                patch.object(main_module, "update_exchange_rates_from_cbrf") as refresh_mock,
+                patch("app.services.permits_jobs.mark_interrupted_jobs_on_startup") as permits_mock,
+                patch("app.services.ved_intel_jobs.mark_interrupted_ved_intel_jobs_on_startup") as ved_mock,
+                patch("app.services.scheduler.start_apscheduler") as scheduler_start_mock,
+                patch("app.services.scheduler.shutdown_apscheduler") as scheduler_stop_mock,
+            ):
+                async with main_module.lifespan(main_module.app):
+                    pass
+
+                init_db_mock.assert_not_called()
+                refresh_mock.assert_not_called()
+                permits_mock.assert_not_called()
+                ved_mock.assert_not_called()
+                scheduler_start_mock.assert_not_called()
+                scheduler_stop_mock.assert_not_called()
 
         asyncio.run(asyncio.wait_for(scenario(), timeout=1.0))
 

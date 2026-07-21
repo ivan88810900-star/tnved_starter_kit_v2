@@ -6,7 +6,7 @@ Active
 
 ## Last updated
 
-2026-07-16
+2026-07-21
 
 ## Strategic direction
 
@@ -36,10 +36,13 @@ Canonical runtime flag rollout or automatic semantic-vector ingestion.
 - Grounded declarant assistant: deterministic no-key answers over TN VED, calculator,
   definite/advisory requirements and risk coverage; optional validated LLM wording,
   citations, limitations and follow-up actions
-- Authenticated read-only MVP acceptance harness: search/code card, payments,
-  normative requirements, evidence-first risk and grounded assistant pass 4/4 on
-  the sandbox dataset with all Canonical flags OFF. The obsolete scenario that
-  treated US origin as an automatic embargo was removed.
+- Authenticated **strict read-only** MVP acceptance harness: SQLite opens with
+  `mode=ro` plus `PRAGMA query_only`; startup migrations, job recovery, schedulers
+  and exchange refresh are skipped. Search/code card, payments, normative
+  requirements, evidence-first risk and grounded assistant pass 4/4 on the sandbox
+  dataset with all Canonical flags OFF and external LLM keys disabled. The harness
+  emits a compact aggregate-only JSON report and can reject undersized datasets with
+  `--require-full-data`.
 
 ## Current top priority
 
@@ -70,12 +73,24 @@ Current next tasks:
 - ✅ TASK-MVP-ASSISTANT-001: deterministic grounded assistant + optional guarded LLM
   wording over normative, payments and risk modules
 - ✅ Local end-to-end acceptance of the completed MVP slices (4/4, authenticated,
-  no external LLM, no writes, Canonical flags OFF)
+  SQLite-enforced read-only, unchanged database file, no external LLM, Canonical
+  flags OFF)
 - Full-data end-to-end acceptance on the user's current DB remains pending; use
   `E2E_SEARCH_QUERY` / `E2E_PAYMENT_HS_CODE` only to select representative data,
   without changing product semantics
 - Separate readiness decision for semantic embeddings (vectors/API cost/provider), without
   weakening the deterministic hybrid-search fallback
+
+Full-data gate (run from `customs-clear/backend`):
+
+```bash
+python3 scripts/run_e2e_scenarios.py \
+  --require-full-data \
+  --report "mvp-acceptance-$(date +%Y%m%d-%H%M%S).json"
+```
+
+The report contains only aggregate counts and scenario metrics; it does not contain
+passwords, absolute database paths, product descriptions, or assistant answer text.
 
 Official SGR dataset tasks (when not conflicting with MVP slices):
 

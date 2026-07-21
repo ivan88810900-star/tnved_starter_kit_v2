@@ -36,6 +36,13 @@ def test_prepare_environment_creates_process_local_secrets(monkeypatch) -> None:
     assert e2e.os.environ["SECRET_KEY"]
     assert e2e.os.environ["ADMIN_PASSWORD"]
     assert e2e.os.environ["VIEWER_PASSWORD"]
+    assert e2e.os.environ["CUSTOMSCLEAR_READ_ONLY"] == "1"
+    assert e2e.os.environ["AUDIT_LOG_ENABLED"] == "0"
+    assert e2e.os.environ["CANONICAL_TREE_ENABLED"] == "0"
+    assert e2e.os.environ["CANONICAL_TREE_SHADOW"] == "0"
+    assert e2e.os.environ["GEMINI_API_KEY"] == ""
+    assert e2e.os.environ["GOOGLE_API_KEY"] == ""
+    assert e2e.os.environ["ANTHROPIC_API_KEY"] == ""
 
 
 def test_prepare_environment_supports_configured_admin(monkeypatch) -> None:
@@ -49,6 +56,22 @@ def test_prepare_environment_supports_configured_admin(monkeypatch) -> None:
     assert username == "admin"
     assert password == "admin-e2e-secret"
     assert e2e.os.environ["ADMIN_PASSWORD"] == password
+
+
+def test_prepare_environment_replaces_empty_security_values(monkeypatch) -> None:
+    monkeypatch.delenv("E2E_USERNAME", raising=False)
+    monkeypatch.delenv("E2E_PASSWORD", raising=False)
+    for name in ("SECRET_KEY", "ADMIN_PASSWORD", "VIEWER_PASSWORD", "DECLARANT_PASSWORD"):
+        monkeypatch.setenv(name, "")
+
+    username, password = e2e._prepare_e2e_environment()
+
+    assert username == "declarant"
+    assert password
+    assert e2e.os.environ["SECRET_KEY"]
+    assert e2e.os.environ["DECLARANT_PASSWORD"] == password
+    assert e2e.os.environ["ADMIN_PASSWORD"]
+    assert e2e.os.environ["VIEWER_PASSWORD"]
 
 
 def test_login_verifies_anonymous_rejection_and_cookie_session() -> None:
@@ -104,3 +127,57 @@ def test_payments_fall_back_from_group_to_confirmed_leaf(monkeypatch) -> None:
     assert result.ok is True
     assert ctx.hs_code == "8509400000"
     assert client.codes == ["9988100000", "8509400000"]
+    assert result.metrics == {
+        "hs_code": "8509400000",
+        "vat_rate": 22.0,
+        "total_payable_rub": 38481.0,
+    }
+
+
+def test_full_data_minimums_require_every_core_table() -> None:
+    exact_minimums = dict(e2e.FULL_DATA_MINIMUMS)
+
+    assert e2e._meets_full_data_minimums(exact_minimums) is True
+
+    exact_minimums["tnved_commodities"] -= 1
+    assert e2e._meets_full_data_minimums(exact_minimums) is False
+    assert e2e._meets_full_data_minimums({}) is False
+
+
+def test_json_report_is_atomic_and_serializes_metrics(tmp_path) -> None:
+    report_path = tmp_path / "acceptance.json"
+    payload = {
+        "format": "customsclear-mvp-acceptance-v1",
+        "scenarios": [
+            e2e._scenario_payload(
+                e2e.ScenarioResult(
+                    name="search",
+                    ok=True,
+                    detail="ok",
+                    metrics={"results": 1},
+                )
+            )
+        ],
+    }
+
+    e2e._write_report(report_path, payload)
+
+    assert e2e.json.loads(report_path.read_text(encoding="utf-8")) == payload
+    assert not (tmp_path / ".acceptance.json.tmp").exists()
+
+
+def test_failed_report_payload_does_not_copy_response_body() -> None:
+    payload = e2e._scenario_payload(
+        e2e.ScenarioResult(
+            name="risk",
+            ok=False,
+            detail="AssertionError: sensitive response body",
+        )
+    )
+
+    assert payload == {
+        "name": "risk",
+        "ok": False,
+        "metrics": {},
+        "error_type": "AssertionError",
+    }

@@ -54,7 +54,7 @@ from .api import (  # noqa: E402
     rop,
     invoice,
 )
-from .db import engine  # noqa: E402
+from .db import engine, is_read_only_mode  # noqa: E402
 from .services.exchange_rates import update_exchange_rates_from_cbrf  # noqa: E402
 
 
@@ -74,45 +74,56 @@ async def _refresh_exchange_rates_after_startup() -> None:
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    init_db()
-    try:
-        from .services.permits_jobs import mark_interrupted_jobs_on_startup
+    read_only = is_read_only_mode()
+    exchange_refresh_task: asyncio.Task | None = None
+    scheduler_started = False
+    if read_only:
+        logger.info(
+            "CUSTOMSCLEAR_READ_ONLY: startup migrations, job recovery, scheduler "
+            "and exchange-rate refresh are disabled"
+        )
+    else:
+        init_db()
+        try:
+            from .services.permits_jobs import mark_interrupted_jobs_on_startup
 
-        mark_interrupted_jobs_on_startup()
-    except Exception as e:
-        logger.warning(f"permits_verify_jobs: пометка прерванных заданий пропущена: {e}")
-    try:
-        from .services.ved_intel_jobs import mark_interrupted_ved_intel_jobs_on_startup
+            mark_interrupted_jobs_on_startup()
+        except Exception as e:
+            logger.warning(f"permits_verify_jobs: пометка прерванных заданий пропущена: {e}")
+        try:
+            from .services.ved_intel_jobs import mark_interrupted_ved_intel_jobs_on_startup
 
-        mark_interrupted_ved_intel_jobs_on_startup()
-    except Exception as e:
-        logger.warning(f"ved_intel_jobs: пометка прерванных заданий пропущена: {e}")
-    try:
-        from .services.scheduler import shutdown_apscheduler, start_apscheduler
+            mark_interrupted_ved_intel_jobs_on_startup()
+        except Exception as e:
+            logger.warning(f"ved_intel_jobs: пометка прерванных заданий пропущена: {e}")
+        try:
+            from .services.scheduler import start_apscheduler
 
-        start_apscheduler()
-    except ImportError:
-        logger.warning("Пакет apscheduler не установлен — планировщик отключён")
-    except Exception as e:
-        logger.warning(f"Планировщик не запущен: {e}")
+            start_apscheduler()
+            scheduler_started = True
+        except ImportError:
+            logger.warning("Пакет apscheduler не установлен — планировщик отключён")
+        except Exception as e:
+            logger.warning(f"Планировщик не запущен: {e}")
 
-    exchange_refresh_task = asyncio.create_task(
-        _refresh_exchange_rates_after_startup(),
-        name="startup-exchange-rate-refresh",
-    )
+        exchange_refresh_task = asyncio.create_task(
+            _refresh_exchange_rates_after_startup(),
+            name="startup-exchange-rate-refresh",
+        )
     try:
         yield
     finally:
-        if not exchange_refresh_task.done():
+        if exchange_refresh_task is not None and not exchange_refresh_task.done():
             exchange_refresh_task.cancel()
             with suppress(asyncio.CancelledError):
                 await exchange_refresh_task
-        try:
-            from .services.scheduler import shutdown_apscheduler
+        if scheduler_started:
+            try:
+                from .services.scheduler import shutdown_apscheduler
 
-            shutdown_apscheduler()
-        except Exception:
-            pass
+                shutdown_apscheduler()
+            except Exception:
+                pass
 
 
 app = FastAPI(title="Tariff API", version="1.0.0", lifespan=lifespan)

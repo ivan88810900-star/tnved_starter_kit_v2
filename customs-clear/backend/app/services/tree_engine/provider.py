@@ -21,6 +21,7 @@ import logging
 from pathlib import Path
 import threading
 from typing import Callable
+from urllib.parse import unquote
 
 from sqlalchemy import text
 from sqlalchemy.orm import Session
@@ -200,6 +201,8 @@ class CanonicalTreeProvider:
                 database = bind.url.database
                 if not database or database == ":memory:":
                     return None
+                if database.startswith("file:"):
+                    database = unquote(database[5:])
                 path = Path(database).expanduser().resolve()
                 stats: list[tuple[str, int, int, int, int] | tuple[str]] = []
                 for candidate in (path, Path(f"{path}-wal")):

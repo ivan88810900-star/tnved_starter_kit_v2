@@ -8,6 +8,8 @@ semantic-vector ingestion, and feature-flag rollout.
 
 from __future__ import annotations
 
+import argparse
+from datetime import datetime, timezone
 import json
 import os
 from pathlib import Path
@@ -16,17 +18,25 @@ import sys
 import traceback
 from dataclasses import dataclass, field
 from typing import Any, Callable
+from urllib.parse import unquote
 
 BACKEND_ROOT = Path(__file__).resolve().parents[1]
 if str(BACKEND_ROOT) not in sys.path:
     sys.path.insert(0, str(BACKEND_ROOT))
 
-from fastapi.testclient import TestClient
+from fastapi.testclient import TestClient  # noqa: E402
 
 ROOT_OK = "✅"
 ROOT_FAIL = "❌"
 ROOT_INFO = "🔎"
 ROOT_STEP = "➡️"
+
+FULL_DATA_MINIMUMS = {
+    "tnved_sections": 20,
+    "tnved_chapters": 90,
+    "tnved_commodities": 10_000,
+    "hs_rates": 3_000,
+}
 
 
 def _log(message: str) -> None:
@@ -47,7 +57,21 @@ def _assert(condition: bool, message: str) -> None:
 
 def _prepare_e2e_environment() -> tuple[str, str]:
     """Provide process-local secrets when the caller did not configure them."""
-    os.environ.setdefault("SECRET_KEY", secrets.token_urlsafe(48))
+    # This must be set before importing app.db/app.main: the engine is created
+    # once and opens SQLite with mode=ro + PRAGMA query_only.
+    os.environ["CUSTOMSCLEAR_READ_ONLY"] = "1"
+    os.environ["AUDIT_LOG_ENABLED"] = "0"
+    os.environ["REGULATORY_SYNC_SCHEDULER_ENABLED"] = "false"
+    os.environ["SCHEDULER_ENABLED"] = "false"
+    os.environ["CANONICAL_TREE_ENABLED"] = "0"
+    os.environ["CANONICAL_TREE_SHADOW"] = "0"
+    # The acceptance is deterministic and must not spend API quota or send data
+    # outside the machine even when backend/.env contains an LLM key.
+    os.environ["GEMINI_API_KEY"] = ""
+    os.environ["GOOGLE_API_KEY"] = ""
+    os.environ["ANTHROPIC_API_KEY"] = ""
+    if not (os.getenv("SECRET_KEY") or "").strip():
+        os.environ["SECRET_KEY"] = secrets.token_urlsafe(48)
     username = (os.getenv("E2E_USERNAME") or "declarant").strip()
     password_env_by_user = {
         "admin": "ADMIN_PASSWORD",
@@ -59,9 +83,10 @@ def _prepare_e2e_environment() -> tuple[str, str]:
     password = (os.getenv("E2E_PASSWORD") or os.getenv(password_env) or "").strip()
     if not password:
         password = secrets.token_urlsafe(24)
-    os.environ.setdefault(password_env, password)
+    os.environ[password_env] = password
     for env_name in password_env_by_user.values():
-        os.environ.setdefault(env_name, secrets.token_urlsafe(24))
+        if not (os.getenv(env_name) or "").strip():
+            os.environ[env_name] = secrets.token_urlsafe(24)
     return username, password
 
 
@@ -77,6 +102,123 @@ class ScenarioResult:
     name: str
     ok: bool
     detail: str = ""
+    metrics: dict[str, Any] = field(default_factory=dict)
+
+
+def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        description="Read-only end-to-end acceptance of the CustomsClear MVP",
+    )
+    parser.add_argument(
+        "--report",
+        type=Path,
+        help="Write a compact JSON report to this path (no secrets or product records).",
+    )
+    parser.add_argument(
+        "--require-full-data",
+        action="store_true",
+        help="Fail unless the database meets the full-data minimum row counts.",
+    )
+    return parser.parse_args(argv)
+
+
+def _sqlite_database_path(engine: Any) -> Path | None:
+    if engine.dialect.name != "sqlite":
+        return None
+    database = str(engine.url.database or "")
+    if not database or database == ":memory:":
+        return None
+    if database.startswith("file:"):
+        database = unquote(database[5:])
+    database = database.split("?", 1)[0]
+    return Path(database).expanduser().resolve()
+
+
+def _file_state(path: Path | None) -> dict[str, Any]:
+    if path is None:
+        return {"available": False}
+    try:
+        stat = path.stat()
+    except FileNotFoundError:
+        return {"available": False, "filename": path.name}
+    return {
+        "available": True,
+        "filename": path.name,
+        "size_bytes": stat.st_size,
+        "mtime_ns": stat.st_mtime_ns,
+    }
+
+
+def _meets_full_data_minimums(counts: dict[str, int | None]) -> bool:
+    return all(
+        int(counts.get(table_name) or 0) >= minimum
+        for table_name, minimum in FULL_DATA_MINIMUMS.items()
+    )
+
+
+def _database_profile(engine: Any) -> dict[str, Any]:
+    """Return aggregate-only diagnostics without exposing paths or row contents."""
+    from sqlalchemy import inspect, text
+
+    path = _sqlite_database_path(engine)
+    counts: dict[str, int | None] = {}
+    read_only_enforced = False
+    with engine.connect() as connection:
+        table_names = set(inspect(connection).get_table_names())
+        for table_name in FULL_DATA_MINIMUMS:
+            if table_name not in table_names:
+                counts[table_name] = None
+                continue
+            counts[table_name] = int(
+                connection.execute(text(f'SELECT COUNT(*) FROM "{table_name}"')).scalar_one()
+            )
+        if engine.dialect.name == "sqlite":
+            read_only_enforced = bool(
+                connection.execute(text("PRAGMA query_only")).scalar_one()
+            )
+
+    full_data_ok = _meets_full_data_minimums(counts)
+    return {
+        "dialect": engine.dialect.name,
+        "filename": path.name if path else None,
+        "size_bytes": _file_state(path).get("size_bytes"),
+        "read_only_enforced": read_only_enforced,
+        "counts": counts,
+        "minimums": dict(FULL_DATA_MINIMUMS),
+        "full_data_ok": full_data_ok,
+    }
+
+
+def _scenario_payload(result: ScenarioResult) -> dict[str, Any]:
+    payload = {
+        "name": result.name,
+        "ok": result.ok,
+        "metrics": result.metrics,
+    }
+    if result.ok:
+        payload["detail"] = result.detail
+    else:
+        payload["error_type"] = result.detail.partition(":")[0] or "ScenarioError"
+    return payload
+
+
+def _safe_error(phase: str, exc: Exception) -> dict[str, str]:
+    """Keep machine-readable failures free of paths, secrets and response bodies."""
+    return {"phase": phase, "type": type(exc).__name__}
+
+
+def _write_report(path: Path | None, payload: dict[str, Any]) -> None:
+    if path is None:
+        return
+    target = path.expanduser().resolve()
+    target.parent.mkdir(parents=True, exist_ok=True)
+    temporary = target.with_name(f".{target.name}.tmp")
+    temporary.write_text(
+        json.dumps(payload, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
+    temporary.replace(target)
+    _log(f"{ROOT_INFO} JSON-отчёт: {target}")
 
 
 def _login(client: TestClient, username: str, password: str) -> None:
@@ -136,7 +278,17 @@ def scenario_search_and_card(client: TestClient, ctx: AcceptanceContext) -> Scen
         f"canonical={'yes' if anchor else 'soft-fallback'}"
     )
     _log(f"{ROOT_OK} {detail}")
-    return ScenarioResult(name=name, ok=True, detail=detail)
+    return ScenarioResult(
+        name=name,
+        ok=True,
+        detail=detail,
+        metrics={
+            "hs_code": ctx.hs_code,
+            "is_leaf": bool(selected.get("is_leaf")),
+            "search_strategy": strategy,
+            "canonical_anchor_present": bool(anchor),
+        },
+    )
 
 
 def scenario_payments(client: TestClient, ctx: AcceptanceContext) -> ScenarioResult:
@@ -179,7 +331,16 @@ def scenario_payments(client: TestClient, ctx: AcceptanceContext) -> ScenarioRes
     ctx.payment = body
     detail = f"vat={breakdown.get('vat_rate')}%, total={total:.2f} RUB"
     _log(f"{ROOT_OK} {detail}")
-    return ScenarioResult(name=name, ok=True, detail=detail)
+    return ScenarioResult(
+        name=name,
+        ok=True,
+        detail=detail,
+        metrics={
+            "hs_code": selected_code,
+            "vat_rate": float(breakdown.get("vat_rate") or 0),
+            "total_payable_rub": total,
+        },
+    )
 
 
 def scenario_requirements_and_risk(client: TestClient, ctx: AcceptanceContext) -> ScenarioResult:
@@ -226,7 +387,17 @@ def scenario_requirements_and_risk(client: TestClient, ctx: AcceptanceContext) -
         )
     detail = f"normative={normative_body.get('status')}, risk={risk_body.get('status')}, coverage={risk_body.get('coverage_complete')}"
     _log(f"{ROOT_OK} {detail}")
-    return ScenarioResult(name=name, ok=True, detail=detail)
+    return ScenarioResult(
+        name=name,
+        ok=True,
+        detail=detail,
+        metrics={
+            "normative_status": normative_body.get("status"),
+            "risk_status": risk_body.get("status"),
+            "risk_coverage_complete": risk_body.get("coverage_complete"),
+            "risk_sources": len(risk_body.get("source_coverage") or []),
+        },
+    )
 
 
 def scenario_grounded_assistant(client: TestClient, ctx: AcceptanceContext) -> ScenarioResult:
@@ -258,21 +429,99 @@ def scenario_grounded_assistant(client: TestClient, ctx: AcceptanceContext) -> S
     _assert(bool(suggestions), "Ассистент не предложил следующие действия")
     detail = f"mode={grounding.get('mode')}, citations={len(citations)}, actions={len(suggestions)}"
     _log(f"{ROOT_OK} {detail}")
-    return ScenarioResult(name=name, ok=True, detail=detail)
+    return ScenarioResult(
+        name=name,
+        ok=True,
+        detail=detail,
+        metrics={
+            "mode": grounding.get("mode"),
+            "citations": len(citations),
+            "suggested_actions": len(suggestions),
+        },
+    )
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
+    args = _parse_args(argv)
     username, password = _prepare_e2e_environment()
+    generated_at = datetime.now(timezone.utc).isoformat()
+    report: dict[str, Any] = {
+        "format": "customsclear-mvp-acceptance-v1",
+        "generated_at": generated_at,
+        "require_full_data": bool(args.require_full_data),
+        "read_only": {
+            "requested": True,
+            "startup_mutations_disabled": False,
+            "database_enforced": False,
+            "main_database_file_unchanged": False,
+        },
+        "external_llm_enabled": False,
+        "feature_flags": {
+            "canonical_tree_enabled": False,
+            "canonical_tree_shadow": False,
+        },
+        "database": {},
+        "authentication_ok": False,
+        "scenarios": [],
+        "ok": False,
+        "exit_code": 2,
+    }
     try:
+        from app.db import engine, is_read_only_mode
         from app.main import app
-        from app.services.normative_store import init_db
-    except Exception:
+        from app.services.tree_engine.flags import (
+            is_canonical_tree_enabled,
+            is_canonical_tree_shadow_enabled,
+        )
+    except Exception as exc:
         _log(f"{ROOT_FAIL} Не удалось импортировать app.main")
         _log(traceback.format_exc())
+        report["error"] = _safe_error("app_import", exc)
+        _write_report(args.report, report)
+        return 2
+
+    read_only_mode = is_read_only_mode()
+    canonical_enabled = is_canonical_tree_enabled()
+    canonical_shadow = is_canonical_tree_shadow_enabled()
+    report["read_only"]["startup_mutations_disabled"] = read_only_mode
+    report["feature_flags"] = {
+        "canonical_tree_enabled": canonical_enabled,
+        "canonical_tree_shadow": canonical_shadow,
+    }
+
+    database_path = _sqlite_database_path(engine)
+    database_before = _file_state(database_path)
+    try:
+        database = _database_profile(engine)
+    except Exception as exc:
+        _log(f"{ROOT_FAIL} Не удалось проверить базу данных: {exc}")
+        _log(traceback.format_exc())
+        report["error"] = _safe_error("database_profile", exc)
+        report["database"] = {"filename": database_before.get("filename")}
+        _write_report(args.report, report)
+        return 2
+    report["database"] = database
+    report["read_only"]["database_enforced"] = database["read_only_enforced"]
+
+    if not read_only_mode or not database["read_only_enforced"]:
+        _log(f"{ROOT_FAIL} База не открыта в строгом read-only режиме; прогон остановлен")
+        report["error"] = "strict_read_only_not_enforced"
+        _write_report(args.report, report)
+        return 2
+    if canonical_enabled or canonical_shadow:
+        _log(f"{ROOT_FAIL} Canonical feature flags должны быть выключены")
+        report["error"] = "canonical_feature_flags_enabled"
+        _write_report(args.report, report)
         return 2
 
     _log("🚀 CustomsClear MVP end-to-end acceptance")
-    _log("   Реальный FastAPI stack, cookie-auth, без внешнего LLM и без включения feature flags.\n")
+    _log("   Строгий read-only, cookie-auth, без внешнего LLM и без включения feature flags.")
+    counts = database["counts"]
+    _log(
+        "   База: "
+        f"sections={counts.get('tnved_sections')}, chapters={counts.get('tnved_chapters')}, "
+        f"commodities={counts.get('tnved_commodities')}, hs_rates={counts.get('hs_rates')}\n"
+    )
     ctx = AcceptanceContext()
     scenarios: list[Callable[[TestClient, AcceptanceContext], ScenarioResult]] = [
         scenario_search_and_card,
@@ -281,30 +530,56 @@ def main() -> int:
         scenario_grounded_assistant,
     ]
     results: list[ScenarioResult] = []
-    init_db()
-    with TestClient(app) as client:
-        try:
-            _login(client, username, password)
-            _log(f"{ROOT_OK} Авторизация и cookie-сессия")
-        except Exception as exc:
-            _log(f"{ROOT_FAIL} Авторизация: {exc}")
-            return 1
-        for scenario in scenarios:
+    authentication_ok = False
+    try:
+        with TestClient(app) as client:
             try:
-                results.append(scenario(client, ctx))
+                _login(client, username, password)
+                authentication_ok = True
+                _log(f"{ROOT_OK} Авторизация и cookie-сессия")
             except Exception as exc:
-                detail = f"{type(exc).__name__}: {exc}"
-                _log(f"{ROOT_FAIL} {scenario.__name__}: {detail}")
-                _log(traceback.format_exc())
-                results.append(ScenarioResult(name=scenario.__name__, ok=False, detail=detail))
-                break
+                _log(f"{ROOT_FAIL} Авторизация: {exc}")
+                report["authentication_error"] = _safe_error("authentication", exc)
+            if authentication_ok:
+                for scenario in scenarios:
+                    try:
+                        results.append(scenario(client, ctx))
+                    except Exception as exc:
+                        detail = f"{type(exc).__name__}: {exc}"
+                        _log(f"{ROOT_FAIL} {scenario.__name__}: {detail}")
+                        _log(traceback.format_exc())
+                        results.append(ScenarioResult(name=scenario.__name__, ok=False, detail=detail))
+                        break
+    except Exception as exc:
+        detail = f"{type(exc).__name__}: {exc}"
+        _log(f"{ROOT_FAIL} Приложение не запустилось в read-only режиме: {detail}")
+        _log(traceback.format_exc())
+        report["application_error"] = _safe_error("application_lifespan", exc)
+
+    database_after = _file_state(database_path)
+    database_file_unchanged = database_before == database_after
+    report["read_only"]["main_database_file_unchanged"] = database_file_unchanged
+    report["authentication_ok"] = authentication_ok
+    report["scenarios"] = [_scenario_payload(result) for result in results]
 
     _log("\n📊 Итог MVP acceptance:")
     for result in results:
         _log(f"  {ROOT_OK if result.ok else ROOT_FAIL} {result.name} — {result.detail}")
     ok_count = sum(1 for result in results if result.ok)
     _log(f"\n{ROOT_INFO} Успешно: {ok_count}/{len(scenarios)}")
-    return 0 if ok_count == len(scenarios) else 1
+    if not database_file_unchanged:
+        _log(f"{ROOT_FAIL} Основной файл базы данных изменился во время read-only прогона")
+    if args.require_full_data and not database["full_data_ok"]:
+        _log(f"{ROOT_FAIL} База не достигла минимального объёма полного набора данных")
+
+    scenarios_ok = authentication_ok and ok_count == len(scenarios)
+    full_data_gate_ok = database["full_data_ok"] or not args.require_full_data
+    overall_ok = scenarios_ok and database_file_unchanged and full_data_gate_ok
+    exit_code = 0 if overall_ok else 1
+    report["ok"] = overall_ok
+    report["exit_code"] = exit_code
+    _write_report(args.report, report)
+    return exit_code
 
 
 if __name__ == "__main__":

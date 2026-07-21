@@ -1,7 +1,7 @@
 # CURRENT_STATE.md — Текущее состояние проекта
 
-> Дата: 2026-07-15
-> Активная ветка: `feat/grounded-ai-assistant`; baseline: `9da2799`
+> Дата: 2026-07-21
+> Активная ветка: `fix/baseline-acceptance`; baseline: `72406ce`
 
 ---
 
@@ -191,6 +191,7 @@ legacy (сверх structural). До TASK-CANONICAL-004 контур не был
 
 | Коммит | Дата | Описание |
 |--------|------|---------|
+| Strict read-only MVP gate | 2026-07-21 | Acceptance открывает SQLite через `mode=ro` + `query_only`, отключает startup-записи/планировщики/внешний LLM и Canonical flags, проверяет неизменность файла БД, выдаёт aggregate-only JSON; sandbox 4/4, full-data threshold корректно отклоняет малую БД |
 | MVP acceptance hardening | 2026-07-16 | `run_e2e_scenarios.py` синхронизирован с текущим продуктом: обязательный login/cookie, hybrid search + code card, Smart Payments, normative/risk evidence, grounded assistant; sandbox 4/4, flags OFF; ошибочный US→automatic embargo assertion удалён |
 | TASK-MVP-ASSISTANT-001 | 2026-07-15 | Grounded assistant: no-key server answers, TN VED/payment/NTM/risk evidence, citations and guarded optional LLM wording |
 | TASK-MVP-PAYMENTS-001 | 2026-07-15 | Smart Payments встроен в карточку ТН ВЭД: базы расчёта, статусы, источники, допущения, честный partial total и Canonical anchor |
@@ -237,7 +238,7 @@ legacy (сверх structural). До TASK-CANONICAL-004 контур не был
 | **TASK-MVP-PAYMENTS-001** — объяснимый расчёт платежей в карточке ТН ВЭД | ✅ Completed; calculation semantics unchanged | — |
 | **TASK-MVP-RISK-001** — санкционный скрининг: scope, evidence, coverage, sources | ✅ Completed; semantics remain diagnostic | — |
 | **TASK-MVP-ASSISTANT-001** — grounded assistant: серверные факты, цитаты, no-key fallback, guarded LLM | ✅ Completed | — |
-| Full-data MVP acceptance | Sandbox 4/4; прогон на пользовательской полной БД ещё требуется | Высокий |
+| Full-data MVP acceptance | Строгий read-only gate готов; sandbox 4/4, малая БД отклоняется; требуется запуск `--require-full-data` на пользовательской полной БД | Высокий |
 | Derisking после TASK-005: aliases/history (`superseded_by`, previous codes/IDs) | Рекомендован | Высокий |
 | Fine-tune модели на `training_pairs.jsonl` | Вне репозитория | Низкий |
 | Live-parсер ФТС предрешений (tks.ru JS) | Decision Memo #135 | Средний |
