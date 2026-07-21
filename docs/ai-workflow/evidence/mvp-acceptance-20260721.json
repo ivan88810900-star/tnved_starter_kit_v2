@@ -1,0 +1,82 @@
+{
+  "format": "customsclear-mvp-acceptance-v1",
+  "generated_at": "2026-07-21T11:26:10.894715+00:00",
+  "require_full_data": true,
+  "read_only": {
+    "requested": true,
+    "startup_mutations_disabled": true,
+    "database_enforced": true,
+    "main_database_file_unchanged": true
+  },
+  "external_llm_enabled": false,
+  "feature_flags": {
+    "canonical_tree_enabled": false,
+    "canonical_tree_shadow": false
+  },
+  "database": {
+    "dialect": "sqlite",
+    "filename": "customs.db",
+    "size_bytes": 6775808000,
+    "read_only_enforced": true,
+    "counts": {
+      "tnved_sections": 21,
+      "tnved_chapters": 96,
+      "tnved_commodities": 17809,
+      "hs_rates": 13322
+    },
+    "minimums": {
+      "tnved_sections": 20,
+      "tnved_chapters": 90,
+      "tnved_commodities": 10000,
+      "hs_rates": 3000
+    },
+    "full_data_ok": true
+  },
+  "authentication_ok": true,
+  "scenarios": [
+    {
+      "name": "Умный поиск и карточка ТН ВЭД",
+      "ok": true,
+      "metrics": {
+        "hs_code": "8509400000",
+        "is_leaf": true,
+        "search_strategy": "hybrid_fts",
+        "canonical_anchor_present": true
+      },
+      "detail": "code=8509400000, leaf=True, strategy=hybrid_fts, canonical=yes"
+    },
+    {
+      "name": "Объяснимые таможенные платежи",
+      "ok": true,
+      "metrics": {
+        "hs_code": "8509400000",
+        "vat_rate": 22.0,
+        "total_payable_rub": 32991.0
+      },
+      "detail": "vat=22.0%, total=32991.00 RUB"
+    },
+    {
+      "name": "Нормативные требования и evidence-first риск",
+      "ok": true,
+      "metrics": {
+        "normative_status": "ERROR",
+        "risk_status": "MANUAL_REVIEW",
+        "risk_coverage_complete": true,
+        "risk_sources": 5
+      },
+      "detail": "normative=ERROR, risk=MANUAL_REVIEW, coverage=True"
+    },
+    {
+      "name": "Grounded AI-помощник",
+      "ok": true,
+      "metrics": {
+        "mode": "deterministic",
+        "citations": 10,
+        "suggested_actions": 3
+      },
+      "detail": "mode=deterministic, citations=10, actions=3"
+    }
+  ],
+  "ok": true,
+  "exit_code": 0
+}

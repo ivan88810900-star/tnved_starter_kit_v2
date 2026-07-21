@@ -15,9 +15,10 @@ The current active workstream is the **CustomsClear MVP application**: end-to-en
 Official SGR and NTM v2 normative datasets remain important **data contours**, but the top priority is shipping user-facing MVP blocks — starting with the normative requirements block.
 
 The normative requirements, TN VED search/code-card, explainable Smart Payments,
-evidence-first sanctions/risk and grounded assistant slices are complete. The current
-focus is full-data end-to-end product acceptance and hardening; this does not authorize
-Canonical runtime flag rollout or automatic semantic-vector ingestion.
+evidence-first sanctions/risk and grounded assistant slices are complete. Full-data
+end-to-end product acceptance is also complete; the current focus is post-acceptance
+product hardening and interactive UI verification. This does not authorize Canonical
+runtime flag rollout or automatic semantic-vector ingestion.
 
 ## What has already been completed
 
@@ -43,6 +44,10 @@ Canonical runtime flag rollout or automatic semantic-vector ingestion.
   dataset with all Canonical flags OFF and external LLM keys disabled. The harness
   emits a compact aggregate-only JSON report and can reject undersized datasets with
   `--require-full-data`.
+- Full-data gate passed on the user's 6.78 GB `customs.db`: 21 sections, 96 chapters,
+  17,809 commodities and 13,322 rates. Authentication and all four MVP scenarios
+  passed; the main database file remained unchanged; Canonical flags and external LLM
+  remained OFF. Evidence: `evidence/mvp-acceptance-20260721.json`.
 
 ## Current top priority
 
@@ -75,9 +80,12 @@ Current next tasks:
 - ✅ Local end-to-end acceptance of the completed MVP slices (4/4, authenticated,
   SQLite-enforced read-only, unchanged database file, no external LLM, Canonical
   flags OFF)
-- Full-data end-to-end acceptance on the user's current DB remains pending; use
-  `E2E_SEARCH_QUERY` / `E2E_PAYMENT_HS_CODE` only to select representative data,
-  without changing product semantics
+- ✅ Full-data end-to-end acceptance on the user's current DB (4/4, full-data
+  thresholds passed, strict read-only confirmed). Evidence:
+  `evidence/mvp-acceptance-20260721.json`
+- Interactive browser acceptance of the integrated frontend is the next product
+  hardening step: verify search → code card → payments → requirements/risk → grounded
+  assistant as a user journey, without broad UI redesign
 - Separate readiness decision for semantic embeddings (vectors/API cost/provider), without
   weakening the deterministic hybrid-search fallback
 
