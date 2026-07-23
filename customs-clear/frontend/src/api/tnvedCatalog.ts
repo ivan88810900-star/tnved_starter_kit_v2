@@ -59,6 +59,67 @@ export type CanonicalAnchor = {
   node_type: string;
 };
 
+export type GuidedTnvedNode = {
+  id: string;
+  kind:
+    | 'heading'
+    | 'classification_group'
+    | 'classification_subgroup'
+    | 'commodity'
+    | 'leaf';
+  role: 'semantic_choice' | 'code_branch' | 'declarable_code';
+  title: string;
+  code: string | null;
+  is_leaf: boolean;
+  result_count: number;
+  code_count: number;
+  confidence: 'high' | 'medium' | null;
+  canonical_anchor: CanonicalAnchor | null;
+  children: GuidedTnvedNode[];
+};
+
+export type GuidedTnvedResponse = {
+  status: 'OK' | 'DEGRADED';
+  engine: {
+    name: 'guided_tnved';
+    version: string;
+    mode: 'canonical_semantic_overlay' | 'safe_fallback';
+    snapshot_id: string | null;
+  };
+  heading: {
+    code: string;
+    title: string;
+    canonical_anchor: CanonicalAnchor | null;
+  };
+  prompt: string;
+  choices: GuidedTnvedNode[];
+  integrity: {
+    complete: boolean;
+    expected_real_codes?: number;
+    reachable_real_codes?: number;
+    canonical_bound_codes?: number;
+    canonical_coverage?: number;
+    fake_codes?: number;
+    critical_issues: string[];
+    semantic_groups?: number;
+    rejected_unsafe_groups?: number;
+    pruned_empty_groups?: number;
+  };
+  explanation?: {
+    structure_source: string;
+    semantic_source: string;
+    groups_have_codes: boolean;
+    final_choices_are_real_codes: boolean;
+  };
+  reason?: string;
+  message?: string;
+  fallback: {
+    type: string;
+    href: string;
+    label: string;
+  };
+};
+
 export type TnvedPreview = {
   status: string;
   code: string;
@@ -253,6 +314,17 @@ export async function fetchTnvedNode(code: string): Promise<TnvedChildItem & { c
     `/tnved/node/${encodeURIComponent(norm || code.trim())}`,
   );
   return data.node;
+}
+
+export async function fetchGuidedTnvedNavigation(heading: string): Promise<GuidedTnvedResponse> {
+  const norm = heading.replace(/\D/g, '').slice(0, 4);
+  if (norm.length !== 4) {
+    throw new Error('Для умного маршрута нужна 4-значная товарная позиция');
+  }
+  const { data } = await api.get<GuidedTnvedResponse>(
+    `${PREFIX}/guided/${encodeURIComponent(norm)}`,
+  );
+  return data;
 }
 
 export async function fetchHierarchyTree(prefix?: string): Promise<TnvedHierarchyNode[]> {

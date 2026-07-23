@@ -1,5 +1,5 @@
 import React from 'react';
-import { ChevronRight, Search } from 'lucide-react';
+import { ChevronRight, Search, Sparkles } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   fetchTnvedBreadcrumb,
@@ -18,6 +18,7 @@ import { normalizeDutyRate } from '../utils/dutyRate';
 type Props = {
   selectedCode: string | null;
   onSelectCode: (code: string) => void;
+  onOpenGuidedNavigation?: (heading: string) => void;
   initialSearchQuery?: string;
 };
 
@@ -171,6 +172,7 @@ type TreeNodeProps = {
   childrenCache: Map<string, TnvedChildItem[]>;
   onToggle: (item: TnvedChildItem) => void;
   onSelectLeaf: (code: string) => void;
+  onOpenGuidedNavigation?: (heading: string) => void;
   inCodelessBranch?: boolean;
 };
 
@@ -200,6 +202,7 @@ function TreeNode({
   childrenCache,
   onToggle,
   onSelectLeaf,
+  onOpenGuidedNavigation,
   inCodelessBranch = false,
 }: TreeNodeProps) {
   const cacheKey = item.code;
@@ -231,6 +234,7 @@ function TreeNode({
               childrenCache={childrenCache}
               onToggle={onToggle}
               onSelectLeaf={onSelectLeaf}
+              onOpenGuidedNavigation={onOpenGuidedNavigation}
               inCodelessBranch={childInCodelessBranch}
             />
           ))}
@@ -338,28 +342,48 @@ function TreeNode({
 
   return (
     <motion.div variants={itemVariants} style={{ marginLeft: depth * INDENT_PX }}>
-      <button
-        type="button"
-        className="tree-node-branch !items-start"
-        onClick={() => onToggle(item)}
-        aria-expanded={isExpanded}
-      >
-        <ChevronRight
-          size={16}
-          className={`tree-chevron mt-1 shrink-0${isExpanded ? ' expanded' : ''}`}
-        />
-        <span className="tree-code">{displayLabel(item)}</span>
-        <span className={BRANCH_NAME_CLASS}>
-          {formatTnvedCommodityName(item.name)}
-        </span>
-      </button>
+      <div className="mb-1 flex items-stretch gap-1.5">
+        <button
+          type="button"
+          className="tree-node-branch !mb-0 min-w-0 flex-1 !items-start"
+          onClick={() => onToggle(item)}
+          aria-expanded={isExpanded}
+        >
+          <ChevronRight
+            size={16}
+            className={`tree-chevron mt-1 shrink-0${isExpanded ? ' expanded' : ''}`}
+          />
+          <span className="tree-code">{displayLabel(item)}</span>
+          <span className={BRANCH_NAME_CLASS}>
+            {formatTnvedCommodityName(item.name)}
+          </span>
+        </button>
+        {item.level === 'heading'
+        && digitsOnly(item.code).length === 4
+        && onOpenGuidedNavigation ? (
+          <button
+            type="button"
+            onClick={() => onOpenGuidedNavigation(digitsOnly(item.code))}
+            className="group inline-flex shrink-0 items-center justify-center gap-1.5 rounded-md border border-indigo-200 bg-indigo-50 px-2.5 text-indigo-700 transition hover:border-indigo-400 hover:bg-indigo-100"
+            aria-label={`Открыть умный маршрут для позиции ${digitsOnly(item.code)}`}
+            title="Умный маршрут по смысловым группам"
+          >
+            <Sparkles className="h-4 w-4" aria-hidden="true" />
+            <span className="hidden text-[11px] font-semibold xl:inline">Умный маршрут</span>
+          </button>
+        ) : null}
+      </div>
 
       {renderChildList(inCodelessBranch)}
     </motion.div>
   );
 }
 
-export const TnvedAccordionTree: React.FC<Props> = ({ onSelectCode, initialSearchQuery }) => {
+export const TnvedAccordionTree: React.FC<Props> = ({
+  onSelectCode,
+  onOpenGuidedNavigation,
+  initialSearchQuery,
+}) => {
   const [sections, setSections] = React.useState<TnvedChildItem[]>([]);
   const [loadingRoot, setLoadingRoot] = React.useState(true);
   const [loadErr, setLoadErr] = React.useState<string | null>(null);
@@ -679,6 +703,21 @@ export const TnvedAccordionTree: React.FC<Props> = ({ onSelectCode, initialSearc
                       {searchPaths[hit.code] ? (
                         <p className="mt-2 truncate text-[11px] text-cargo-light">{searchPaths[hit.code]}</p>
                       ) : null}
+                      {hit.is_leaf === false
+                      && digitsOnly(hit.code).length === 4
+                      && onOpenGuidedNavigation ? (
+                        <button
+                          type="button"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            onOpenGuidedNavigation(digitsOnly(hit.code));
+                          }}
+                          className="mt-3 inline-flex items-center gap-1.5 rounded-md border border-indigo-200 bg-indigo-50 px-2.5 py-1.5 text-[11px] font-semibold text-indigo-700 hover:border-indigo-400 hover:bg-indigo-100"
+                        >
+                          <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
+                          Пройти умный маршрут
+                        </button>
+                      ) : null}
                     </div>
                   </PremiumCard>
                 ))}
@@ -713,6 +752,7 @@ export const TnvedAccordionTree: React.FC<Props> = ({ onSelectCode, initialSearc
                     childrenCache={childrenCache}
                     onToggle={handleToggle}
                     onSelectLeaf={onSelectCode}
+                    onOpenGuidedNavigation={onOpenGuidedNavigation}
                   />
                 ))}
               </motion.div>

@@ -6,7 +6,7 @@ Active
 
 ## Last updated
 
-2026-07-21
+2026-07-23
 
 ## Strategic direction
 
@@ -17,8 +17,9 @@ Official SGR and NTM v2 normative datasets remain important **data contours**, b
 The normative requirements, TN VED search/code-card, explainable Smart Payments,
 evidence-first sanctions/risk and grounded assistant slices are complete. Full-data
 end-to-end product acceptance is also complete; the current focus is post-acceptance
-product hardening and interactive UI verification. This does not authorize Canonical
-runtime flag rollout or automatic semantic-vector ingestion.
+product hardening, intelligent TN VED navigation and interactive UI verification.
+This does not authorize Canonical runtime flag rollout or automatic semantic-vector
+ingestion.
 
 ## What has already been completed
 
@@ -28,6 +29,9 @@ runtime flag rollout or automatic semantic-vector ingestion.
 - Official SGR contour: importer, diagnostics, seed dataset, validator
 - Normative requirements block MVP (backend aggregation + frontend block on NonTariff/compliance)
 - Canonical anchor identity plus additive TN VED search/code-card bridge
+- Additive guided TN VED v1: semantic choices from official descriptions are bound
+  to one Canonical snapshot, fail closed on incomplete code coverage and lead only
+  to real declarable codes; the main `/children` flags remain OFF
 - Product-facing hybrid TN VED search: code/name/domain ranking, safe synonym
   boundaries, conservative typo recovery and explainable match reasons
 - Explainable Smart Payments in the TN VED card: bases, statuses, sources, assumptions,
@@ -60,6 +64,8 @@ runtime flag rollout or automatic semantic-vector ingestion.
 4. ~~Smart payments~~ — duty/VAT/excise/fees with explanation and conservative uncertainty
 5. ~~Sanctions/risk checks~~ — lists, matches, severity and evidence
 6. ~~AI assistant~~ — answers grounded in internal modules, cites sources
+7. **Intelligent TN VED structure** — Canonical-backed semantic routes and
+   understandable product questions without virtual/fake customs codes
 
 Parallel (not blocking MVP UI): continue curating `official_sgr_rules.seed.json` and validation — **without** enabling official SGR broker enforcement until a separate approved workstream.
 
@@ -83,6 +89,14 @@ Current next tasks:
 - ✅ Full-data end-to-end acceptance on the user's current DB (4/4, full-data
   thresholds passed, strict read-only confirmed). Evidence:
   `evidence/mvp-acceptance-20260721.json`
+- ✅ Guided TN VED v1 backend + frontend: a heading exposes a separate smart route;
+  semantic group IDs are deterministic, all real codes are bound to the current
+  Canonical snapshot, and any integrity failure returns a safe ordinary-tree fallback
+- Full-data guided-navigation acceptance on representative complex headings
+  (`0302`, `0303`, `5208`, `8517`), followed by controlled subgroup nesting from
+  `TASK-SEMANTIC-003`
+- Product-description entry into the guided route: use deterministic hybrid search
+  first, then ask only discriminating questions inside the selected Canonical heading
 - Interactive browser acceptance of the integrated frontend is the next product
   hardening step: verify search → code card → payments → requirements/risk → grounded
   assistant as a user journey, without broad UI redesign
@@ -105,6 +119,14 @@ python3 scripts/run_e2e_scenarios.py \
 The report contains only aggregate counts and scenario metrics; it does not contain
 passwords, absolute database paths, product descriptions, or assistant answer text.
 
+Guided TN VED full-data gate (also aggregate-only and strict read-only):
+
+```bash
+python3 scripts/diagnose_guided_tnved_navigation.py \
+  --require-complete \
+  --output "guided-tnved-$(date +%Y%m%d-%H%M%S).json"
+```
+
 Official SGR dataset tasks (when not conflicting with MVP slices):
 
 - Expand `data/official_sgr_rules.seed.json` (ЕЭК №299 and related contours)
@@ -118,6 +140,7 @@ Official SGR dataset tasks (when not conflicting with MVP slices):
 - Unrelated refactors or legacy root `backend/` expansion
 - Broad UI redesign outside MVP slices
 - Canonical `/children` flag rollout without a separate Ivan decision
+- Virtual TN VED levels or synthetic/fake customs codes for semantic groups
 - NTM/Duty anchor migration in TASK-CANONICAL-005
 
 ## When to create a Decision Memo

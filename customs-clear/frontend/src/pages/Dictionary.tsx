@@ -1,5 +1,6 @@
 import React from 'react';
 import { X } from 'lucide-react';
+import { GuidedTnvedNavigator } from '../components/tnved/GuidedTnvedNavigator';
 import { ProductDetails } from '../components/tnved/ProductDetails';
 import { TnvedAccordionTree } from '../components/TnvedAccordionTree';
 import { PageHeader } from '../components/PageHeader';
@@ -8,6 +9,7 @@ import { CC_HOME_TNVED_QUERY_KEY, CC_TNVED_SELECT_CODE_KEY } from '../constants/
 export const Dictionary: React.FC = () => {
   const [selectedCode, setSelectedCode] = React.useState<string | null>(null);
   const [detailsOpen, setDetailsOpen] = React.useState(false);
+  const [guidedHeading, setGuidedHeading] = React.useState<string | null>(null);
   const [initialSearch, setInitialSearch] = React.useState<string | undefined>(undefined);
 
   React.useEffect(() => {
@@ -37,6 +39,19 @@ export const Dictionary: React.FC = () => {
     setDetailsOpen(true);
   }, []);
 
+  const handleOpenGuidedNavigation = React.useCallback((heading: string) => {
+    setDetailsOpen(false);
+    setGuidedHeading(heading);
+  }, []);
+
+  const handleGuidedCode = React.useCallback(
+    (code: string) => {
+      setGuidedHeading(null);
+      handleSelectCode(code);
+    },
+    [handleSelectCode],
+  );
+
   React.useEffect(() => {
     if (!detailsOpen) return;
     const onEsc = (e: KeyboardEvent) => {
@@ -56,11 +71,30 @@ export const Dictionary: React.FC = () => {
             <TnvedAccordionTree
               selectedCode={selectedCode}
               onSelectCode={handleSelectCode}
+              onOpenGuidedNavigation={handleOpenGuidedNavigation}
               initialSearchQuery={initialSearch}
             />
           </div>
         </div>
       </div>
+
+      {guidedHeading ? (
+        <div
+          className="fixed inset-0 z-50 flex items-end justify-center bg-cargo-deep/40 p-0 sm:items-center sm:p-4"
+          onClick={() => setGuidedHeading(null)}
+        >
+          <div
+            className="h-[100dvh] max-h-[100dvh] w-full max-w-4xl overflow-hidden rounded-none border border-cargo-border bg-cargo-surface shadow-xl sm:h-[88vh] sm:min-h-[520px] sm:rounded-lg"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <GuidedTnvedNavigator
+              heading={guidedHeading}
+              onClose={() => setGuidedHeading(null)}
+              onSelectCode={handleGuidedCode}
+            />
+          </div>
+        </div>
+      ) : null}
 
       {detailsOpen && selectedCode ? (
         <div

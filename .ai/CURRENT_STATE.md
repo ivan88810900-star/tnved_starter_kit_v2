@@ -1,7 +1,7 @@
 # CURRENT_STATE.md — Текущее состояние проекта
 
-> Дата: 2026-07-21
-> Активная ветка: `fix/baseline-acceptance`; baseline: `72406ce`
+> Дата: 2026-07-23
+> Активная ветка: `fix/baseline-acceptance`
 
 ---
 
@@ -9,7 +9,9 @@
 
 ### Ядро платформы
 
-- **Справочник ТН ВЭД** — полное дерево (разделы → группы → позиции → субпозиции → коды), FTS5-поиск по всей номенклатуре (BM25), карточка товара
+- **Справочник ТН ВЭД** — полное дерево (разделы → группы → позиции → субпозиции → коды),
+  гибридный поиск, карточка товара и отдельный Canonical-backed «Умный маршрут»
+  по смысловым группам без фиктивных кодов
 - **AI-классификация** — Gemini structured JSON (код, обоснование, confidence_score, атрибуты), Claude Vision для фото
 - **Расчёт платежей** — пошлина, НДС (22%/10%), акциз, антидемпинг, спецпошлины, утильсбор (РОП), тарифные преференции (161 страна)
 - **Нетарифные меры** — ТР ТС каталог (96+ глав), NTM v2 контур, noise-classifier (22K записей), структурированный UI без сырого TKS-текста
@@ -133,8 +135,8 @@ legacy (сверх structural). До TASK-CANONICAL-004 контур не был
   Опция `--audit-report` сразу запускает Gate-2 на экспорте и атомарно сохраняет
   переносимый JSON с SHA-256, coverage, parity и exit code; при `gate2_ok=true`
   достаточно передать этот маленький отчёт, без самой БД.
-- Контракт JSON **не изменён**; legacy `build_tree()` и `semantic_navigation` **не тронуты**;
-  БД/Alembic/frontend **не тронуты**.
+- Контракт JSON основного `/children` **не изменён**; legacy `build_tree()` не тронут.
+  Guided navigation подключена отдельно и не включает Canonical feature flags.
 - Self-contained тесты: `tests/test_canonical_read_path.py` (35),
   `tests/test_canonical_children_audit.py` (3) и
   `tests/test_export_canonical_gate2_db.py` (2). Они покрывают in-place UPDATE,
@@ -182,8 +184,28 @@ legacy (сверх structural). До TASK-CANONICAL-004 контур не был
   legacy.
 - **Materialized snapshot** — модель строится in-memory на вызов `build_model(...)`; нет
   переживающего рестарт снапшота/кэша по `snapshot_id`.
-- **Overlays** — Semantic Navigation / NTM / Duty / Notes / Search / RAG ещё не
-  переведены на `anchor` (продолжают читать БД сами).
+- **Overlays** — guided Semantic Navigation теперь проверяет каждый реальный код по
+  Canonical anchor/snapshot, но текст для извлечения смысловых групп пока читает из
+  официальных описаний БД. NTM / Duty / Notes / RAG ещё не переведены на `anchor`.
+
+## 2c. Guided TN VED v1 — пользовательская умная структура
+
+Реализован additive read-only маршрут `GET /api/v1/tnved/guided/{heading}` и
+пользовательский интерфейс «Умный маршрут» у 4-значных товарных позиций:
+
+- CanonicalModel — единственная истина кодов; semantic extraction создаёт только
+  бескодовые навигационные группы из официального текста.
+- Все кодовые узлы получают Canonical `stable_id`/`snapshot_id`; ID смысловых групп
+  детерминированы и не используют `uuid4`.
+- Integrity gate проверяет достижимость, отсутствие fake/duplicate codes и 100%
+  Canonical binding. Частичное дерево запрещено: при любой ошибке возвращается
+  `DEGRADED` со ссылкой на обычный `/children`, без 500.
+- В UI пользователь последовательно выбирает понятные смысловые варианты и приходит
+  к реальному 10-значному коду; группы явно помечены как подсказки, а не коды.
+- Основные `CANONICAL_TREE_ENABLED` / `CANONICAL_TREE_SHADOW` остаются OFF.
+- Sandbox HTTP smoke: heading `9988`, 2/2 кода, Canonical coverage 100%, fake codes 0.
+  Полная проверка сложных headings `0302/0303/5208/8517` должна быть повторена на
+  пользовательской полной БД.
 
 ---
 
@@ -191,6 +213,7 @@ legacy (сверх structural). До TASK-CANONICAL-004 контур не был
 
 | Коммит | Дата | Описание |
 |--------|------|---------|
+| Guided TN VED v1 | 2026-07-23 | Canonical-backed смысловой маршрут, fail-closed integrity gate, отдельный API и UI без включения `/children` flags |
 | Full-data MVP acceptance | 2026-07-21 | Пользовательская БД 6.78 GB прошла strict read-only gate: 21 раздел, 96 групп, 17,809 commodities, 13,322 rates; auth + 4/4 сценария; файл БД неизменён; Canonical flags и внешний LLM OFF; evidence сохранён в `docs/ai-workflow/evidence/mvp-acceptance-20260721.json` |
 | Strict read-only MVP gate | 2026-07-21 | Acceptance открывает SQLite через `mode=ro` + `query_only`, отключает startup-записи/планировщики/внешний LLM и Canonical flags, проверяет неизменность файла БД, выдаёт aggregate-only JSON; sandbox 4/4, full-data threshold корректно отклоняет малую БД |
 | MVP acceptance hardening | 2026-07-16 | `run_e2e_scenarios.py` синхронизирован с текущим продуктом: обязательный login/cookie, hybrid search + code card, Smart Payments, normative/risk evidence, grounded assistant; sandbox 4/4, flags OFF; ошибочный US→automatic embargo assertion удалён |
@@ -240,6 +263,9 @@ legacy (сверх structural). До TASK-CANONICAL-004 контур не был
 | **TASK-MVP-RISK-001** — санкционный скрининг: scope, evidence, coverage, sources | ✅ Completed; semantics remain diagnostic | — |
 | **TASK-MVP-ASSISTANT-001** — grounded assistant: серверные факты, цитаты, no-key fallback, guarded LLM | ✅ Completed | — |
 | Full-data MVP acceptance | ✅ Completed: полная пользовательская БД, strict read-only, auth + 4/4, evidence сохранён | — |
+| Guided TN VED v1 | ✅ Completed locally: API/UI, 100% Canonical binding gate, safe fallback | — |
+| Full-data guided acceptance (`0302/0303/5208/8517`) | Нужен read-only прогон на пользовательской БД | Высокий |
+| **TASK-SEMANTIC-003** — controlled nesting смысловых подгрупп | Следующий этап после full-data отчёта | Высокий |
 | Interactive frontend acceptance | Следующий этап: пользовательский путь search → card → payments → requirements/risk → assistant | Высокий |
 | Derisking после TASK-005: aliases/history (`superseded_by`, previous codes/IDs) | Рекомендован | Высокий |
 | Fine-tune модели на `training_pairs.jsonl` | Вне репозитория | Низкий |

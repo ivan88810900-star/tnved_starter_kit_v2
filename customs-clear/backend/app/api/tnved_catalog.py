@@ -22,6 +22,7 @@ from sqlalchemy.orm import Session, joinedload, selectinload
 from ..db import SessionLocal
 from ..models.tnved import Chapter, Commodity, IntellectualProperty, NonTariffMeasure, Section, SpecialDuty, VatPreference
 from ..schemas.tnved_catalog import TnvedCommodityDetailsResponse
+from ..services.guided_tnved_navigation import build_guided_tnved_navigation
 from ..services.non_tariff_measures_lookup import get_measures_for_code
 from ..services.normative_store import find_rate_for_hs
 from ..services.tnved_code_card import (
@@ -1175,6 +1176,24 @@ def tnved_children(
     if code.lower() in {"root", "_"}:
         code = ""
     return JSONResponse(list_tnved_children(db, code, depth))
+
+
+@router.get("/guided/{heading}")
+def tnved_guided_navigation(
+    heading: str,
+    db: Session = Depends(get_db),
+) -> JSONResponse:
+    """Объяснимый смысловой маршрут внутри одной 4-значной позиции.
+
+    Это отдельный read-only слой поверх CanonicalModel. Он не включает и не
+    обходит feature flags основного ``/children`` read-path.
+    """
+
+    try:
+        payload = build_guided_tnved_navigation(db, heading)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    return JSONResponse(payload)
 
 
 @router.get("/node/{code}")
