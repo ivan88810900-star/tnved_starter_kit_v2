@@ -42,6 +42,20 @@ def _db_codes(db, heading4: str) -> set[str]:
     return out
 
 
+def _count_unsplit_real_codes(node) -> int:
+    """Коды группы без захода в дочерние semantic-подгруппы."""
+
+    count = 1 if node.carries_real_code and node.code else 0
+    for child in node.children:
+        if child.node_type in {
+            SemanticNodeType.CLASSIFICATION_GROUP,
+            SemanticNodeType.CLASSIFICATION_SUBGROUP,
+        }:
+            continue
+        count += _count_unsplit_real_codes(child)
+    return count
+
+
 @unittest.skipUnless(_OK, "semantic navigation tests need FastAPI app deps")
 class SemanticNavigationV1Tests(unittest.TestCase):
     @classmethod
@@ -109,7 +123,7 @@ class SemanticNavigationV1Tests(unittest.TestCase):
         for expected in ("лососевые", "камбалообразные", "тунец"):
             self.assertIn(expected, titles, f"0302 должен содержать группу {expected!r}")
 
-    def test_0303_tunets_not_a_single_75_code_group(self) -> None:
+    def test_0303_tuna_has_bounded_direct_span_and_nested_species(self) -> None:
         with SessionLocal() as db:
             tree = self.builder.build_heading(db, "0303")
         tunets = [
@@ -119,15 +133,45 @@ class SemanticNavigationV1Tests(unittest.TestCase):
             and n.title.strip().lower() == "тунец"
         ]
         self.assertTrue(tunets, "0303 должен иметь группу 'тунец'")
-        max_codes = max(
-            sum(1 for d in g.iter_descendants() if d.carries_real_code and d.code)
-            for g in tunets
+        max_unsplit_codes = max(
+            _count_unsplit_real_codes(group) for group in tunets
         )
         self.assertLess(
-            max_codes,
-            75,
-            f"группа 'тунец' поглощает слишком много кодов: {max_codes}",
+            max_unsplit_codes,
+            20,
+            "группа 'тунец' содержит слишком много кодов без смыслового "
+            f"разбиения: {max_unsplit_codes}",
         )
+        nested = {
+            node.title.strip().lower()
+            for group in tunets
+            for node in group.children
+            if node.node_type == SemanticNodeType.CLASSIFICATION_SUBGROUP
+        }
+        self.assertIn("тунец синий", nested)
+        self.assertIn("тунец тихоокеанский голубой", nested)
+
+    def test_5208_plain_weave_is_nested_under_colour_groups(self) -> None:
+        with SessionLocal() as db:
+            tree = self.builder.build_heading(db, "5208")
+
+        parents = {
+            node.title.strip().lower(): node
+            for node in tree.root.children
+            if node.node_type == SemanticNodeType.CLASSIFICATION_GROUP
+        }
+        for parent_title in ("неотбеленные", "отбеленные", "окрашенные"):
+            self.assertIn(parent_title, parents)
+            nested = {
+                node.title.strip().lower()
+                for node in parents[parent_title].children
+                if node.node_type == SemanticNodeType.CLASSIFICATION_SUBGROUP
+            }
+            self.assertIn(
+                "полотняного переплетения",
+                nested,
+                f"5208: нет nested plain-weave под {parent_title!r}",
+            )
 
     def test_8517_rejects_technical_param_headers(self) -> None:
         with SessionLocal() as db:

@@ -5,9 +5,10 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Iterator
+from typing import Any
 from uuid import uuid4
 
 
@@ -41,6 +42,15 @@ REAL_CODE_NODE_TYPES: frozenset[SemanticNodeType] = frozenset(
         SemanticNodeType.LEAF,
     }
 )
+
+#: Максимум уровней бескодовых semantic-групп под heading:
+#: classification_group → classification_subgroup.
+MAX_SEMANTIC_GROUP_LEVELS = 2
+
+#: Защитный предел для одного неразбитого semantic-сегмента. Если кандидат
+#: подгруппы сам охватывает больше кодов и не содержит дальнейшего смыслового
+#: разбиения, builder оставляет его плоским.
+MAX_UNSPLIT_GROUP_CODES = 30
 
 
 def _new_id() -> str:
@@ -90,6 +100,17 @@ class SemanticNode:
             yield from ch.iter_descendants()
 
 
+@dataclass(frozen=True)
+class NestingFallback:
+    """Почему кандидат подгруппы оставлен плоским."""
+
+    title: str
+    source_code: str
+    reason: str
+    parent_title: str | None = None
+    real_code_count: int = 0
+
+
 @dataclass
 class SemanticNavigationTree:
     """Результат построения семантической навигации для одного heading."""
@@ -101,6 +122,8 @@ class SemanticNavigationTree:
     pad_code: str | None = None
     #: Отбракованные кандидаты в группы (confidence=low): (title, reason, source_code).
     rejected_candidates: list[tuple[str, str, str]] = field(default_factory=list)
+    #: Подгруппы, которые не прошли controlled-nesting guard и остались siblings.
+    nesting_fallbacks: list[NestingFallback] = field(default_factory=list)
 
     def all_nodes(self) -> list[SemanticNode]:
         return [self.root, *self.root.iter_descendants()]

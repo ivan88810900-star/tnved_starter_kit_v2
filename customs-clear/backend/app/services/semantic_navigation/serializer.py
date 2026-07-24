@@ -15,6 +15,16 @@ class SemanticNavigationSerializer:
             "heading": tree.heading,
             "pad_code": tree.pad_code,
             "ungrouped_codes": list(tree.ungrouped_codes),
+            "nesting_fallbacks": [
+                {
+                    "title": item.title,
+                    "source_code": item.source_code,
+                    "reason": item.reason,
+                    "parent_title": item.parent_title,
+                    "real_code_count": item.real_code_count,
+                }
+                for item in tree.nesting_fallbacks
+            ],
             "items": [self._node(ch) for ch in tree.root.children],
             "root": self._node(tree.root),
         }
@@ -27,6 +37,7 @@ class SemanticNavigationSerializer:
             "code": node.code,
             "depth": node.depth,
             "source": node.source,
+            "metadata": dict(node.metadata),
             "children": [self._node(ch) for ch in node.children],
         }
 

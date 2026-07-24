@@ -4,8 +4,8 @@
 
     0302  (heading)
       classification_group: лососевые
-        commodity: 0302110000
-        commodity: 0302130000
+        classification_subgroup: лосось тихоокеанский
+          commodity: 0302130000
       classification_group: камбалообразные
         ...
 
@@ -19,8 +19,11 @@ from sqlalchemy.orm import Session
 from ...models.tnved import Commodity
 from ..tnved_tree.data_access import exclude_obsolete_reserved
 from ..tnved_tree.helpers import digits, node_level
-from .extractor import SemanticStructureExtractor
+from .extractor import ExtractionResult, SemanticStructureExtractor
 from .models import (
+    MAX_SEMANTIC_GROUP_LEVELS,
+    MAX_UNSPLIT_GROUP_CODES,
+    NestingFallback,
     SemanticNavigationTree,
     SemanticNode,
     SemanticNodeType,
@@ -66,9 +69,12 @@ class SemanticNavigationBuilder:
         self, db: Session, heading4: str, records: list[SourceRecord]
     ) -> str:
         for rec in records:
-            if digits(rec.code).zfill(4)[:4] == heading4 and len(digits(rec.code)) <= 4:
-                if rec.description:
-                    return rec.description
+            if (
+                digits(rec.code).zfill(4)[:4] == heading4
+                and len(digits(rec.code)) <= 4
+                and rec.description
+            ):
+                return rec.description
         pad = heading4 + "000000"
         for rec in records:
             if digits(rec.code).zfill(10)[:10] == pad:
@@ -81,7 +87,7 @@ class SemanticNavigationBuilder:
         self,
         heading4: str,
         heading_title: str,
-        extraction,
+        extraction: ExtractionResult,
     ) -> SemanticNavigationTree:
         root = SemanticNode(
             node_type=SemanticNodeType.HEADING,
@@ -92,11 +98,9 @@ class SemanticNavigationBuilder:
             metadata={"pad_code": extraction.pad_code},
         )
 
-        # Плоская группировка: каждая принятая группа — sibling под heading.
-        # Это сознательное решение этапа 2: исходные «прилипшие» заголовки не несут
-        # надёжной информации о вложенности, поэтому вложенные группы (напр. «тунец
-        # синий» внутри «тунец», но и «мерлуза» рядом) не строим — иначе одна группа
-        # поглощает соседние. Вложенность товаров сохраняется по node_level кода.
+        # Первый проход сохраняет безопасную плоскую модель этапа 2. Controlled
+        # nesting выполняется только вторым проходом и только по явной подсказке
+        # экстрактора; поэтому сомнительный кандидат всегда может остаться sibling.
         position = {code: i for i, code in enumerate(extraction.commodity_codes)}
         activations: dict[int, list] = {}
         for grp in extraction.groups:
@@ -120,6 +124,11 @@ class SemanticNavigationBuilder:
                         "extracted_from": grp.source_code,
                         "confidence": grp.confidence,
                         "reason": grp.reason,
+                        "activation_index": idx,
+                        "dash_depth": grp.dash_depth,
+                        "parent_title_hint": grp.parent_title_hint,
+                        "parent_source_code_hint": grp.parent_source_code_hint,
+                        "hierarchy_hint": grp.hierarchy_hint,
                     },
                 )
                 root.add_child(gnode)
@@ -158,6 +167,8 @@ class SemanticNavigationBuilder:
         # группы, открытые последним кодом (без последующих товаров) — пустые заголовки
         open_groups(len(extraction.commodity_codes))
 
+        nesting_fallbacks = self._apply_controlled_nesting(root)
+        self._refresh_links(root)
         self._mark_leaves(root)
 
         expected = {heading4, *extraction.commodity_codes}
@@ -170,7 +181,125 @@ class SemanticNavigationBuilder:
             rejected_candidates=[
                 (rc.title, rc.reason, rc.source_code) for rc in extraction.rejected
             ],
+            nesting_fallbacks=nesting_fallbacks,
         )
+
+    @staticmethod
+    def _apply_controlled_nesting(root: SemanticNode) -> list[NestingFallback]:
+        """Вложить только доказанные и ограниченные semantic-подгруппы.
+
+        Источником доказательства служит ``parent_*_hint`` экстрактора. Родитель
+        дополнительно обязан быть текущим level-1 сегментом: это не позволяет
+        подгруппе перепрыгнуть через соседний заголовок. При любом сомнении узел
+        остаётся top-level sibling — ровно как в безопасной flat-модели.
+        """
+
+        fallbacks: list[NestingFallback] = []
+        top_level: list[SemanticNode] = []
+        current_parent: SemanticNode | None = None
+
+        def fallback(
+            node: SemanticNode,
+            reason: str,
+            *,
+            parent: SemanticNode | None = None,
+            real_code_count: int = 0,
+        ) -> None:
+            fallbacks.append(
+                NestingFallback(
+                    title=node.title,
+                    source_code=str(node.metadata.get("extracted_from") or ""),
+                    reason=reason,
+                    parent_title=parent.title if parent is not None else None,
+                    real_code_count=real_code_count,
+                )
+            )
+
+        for node in root.children:
+            if node.node_type != SemanticNodeType.CLASSIFICATION_GROUP:
+                top_level.append(node)
+                continue
+
+            dash_depth = int(node.metadata.get("dash_depth") or 1)
+            parent_title_hint = node.metadata.get("parent_title_hint")
+            parent_source_hint = node.metadata.get("parent_source_code_hint")
+            hierarchy_hint = node.metadata.get("hierarchy_hint")
+            wants_nesting = bool(parent_title_hint and hierarchy_hint)
+
+            if not wants_nesting:
+                top_level.append(node)
+                if dash_depth == 1:
+                    current_parent = node
+                else:
+                    fallback(node, "no_active_parent_hint")
+                    current_parent = None
+                continue
+
+            parent_matches = (
+                current_parent is not None
+                and current_parent.title == parent_title_hint
+                and str(current_parent.metadata.get("extracted_from") or "")
+                == str(parent_source_hint or "")
+            )
+            if not parent_matches:
+                top_level.append(node)
+                fallback(node, "parent_segment_not_active", parent=current_parent)
+                continue
+
+            if (
+                hierarchy_hint == "dash_depth"
+                and dash_depth > MAX_SEMANTIC_GROUP_LEVELS
+            ):
+                top_level.append(node)
+                fallback(node, "semantic_depth_exceeds_limit", parent=current_parent)
+                continue
+
+            unsplit_codes = SemanticNavigationBuilder._unsplit_real_code_count(node)
+            if unsplit_codes > MAX_UNSPLIT_GROUP_CODES:
+                top_level.append(node)
+                fallback(
+                    node,
+                    "unsplit_span_exceeds_limit",
+                    parent=current_parent,
+                    real_code_count=unsplit_codes,
+                )
+                continue
+
+            node.node_type = SemanticNodeType.CLASSIFICATION_SUBGROUP
+            node.metadata["nested_by"] = hierarchy_hint
+            current_parent.children.append(node)
+
+        root.children = top_level
+        return fallbacks
+
+    @staticmethod
+    def _unsplit_real_code_count(node: SemanticNode) -> int:
+        """Число кодов в сегменте до любой дальнейшей semantic-подгруппы."""
+
+        count = 1 if node.carries_real_code and node.code else 0
+        for child in node.children:
+            if child.is_group:
+                continue
+            count += SemanticNavigationBuilder._unsplit_real_code_count(child)
+        return count
+
+    @staticmethod
+    def _refresh_links(
+        node: SemanticNode,
+        *,
+        parent_id: str | None = None,
+        depth: int = 0,
+    ) -> None:
+        """После reparenting синхронизировать parent_id/depth всего поддерева."""
+
+        node.parent_id = parent_id
+        node.depth = depth
+        for child in node.children:
+            SemanticNavigationBuilder._refresh_links(
+                child,
+                parent_id=node.id,
+                depth=depth + 1,
+            )
 
     @staticmethod
     def _mark_leaves(node: SemanticNode) -> None:

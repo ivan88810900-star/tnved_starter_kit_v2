@@ -84,6 +84,14 @@ class ExtractedGroup:
     after_code: str | None  # активируется после этого кода (None = до первого)
     confidence: str  # high | medium
     reason: str
+    #: Глубина заголовка в официальном тексте. Разделяющее тире — уровень 1,
+    #: оставшиеся ведущие тире в trailing raw увеличивают глубину.
+    dash_depth: int = 1
+    #: Консервативная подсказка родителя, вычисленная только по уже встреченному
+    #: принятому заголовку в том же heading.
+    parent_title_hint: str | None = None
+    parent_source_code_hint: str | None = None
+    hierarchy_hint: str | None = None  # dash_depth | title_prefix
 
 
 @dataclass
@@ -176,6 +184,22 @@ def _confidence_for(trailing_raw: str, reason: str | None) -> tuple[str, str]:
     return HIGH, "canonical_merged_header"
 
 
+def _normalise_title(value: str) -> str:
+    return " ".join((value or "").casefold().split())
+
+
+def _is_title_prefix_child(parent_title: str, child_title: str) -> bool:
+    """Строгая lexical-подсказка: «тунец» → «тунец синий».
+
+    Совпадение целого первого слова/словосочетания намеренно не пытается
+    угадывать синонимы или грамматические формы.
+    """
+
+    parent = _normalise_title(parent_title)
+    child = _normalise_title(child_title)
+    return bool(parent and child != parent and child.startswith(f"{parent} "))
+
+
 class SemanticStructureExtractor:
     """Извлекает смысловые группы heading из официальных описаний (read-only, strict)."""
 
@@ -209,13 +233,18 @@ class SemanticStructureExtractor:
 
         groups: list[ExtractedGroup] = []
         rejected: list[RejectedCandidate] = []
+        active_parent: ExtractedGroup | None = None
 
         def consider(source_code: str, description: str, after_code: str | None) -> None:
+            nonlocal active_parent
             main, trailing = _split_main_and_trailing(description)
             if not trailing:
                 return
+            dash_depth = 1 + _count_leading_dashes(trailing)
             title = _clean_group_title(trailing)
             if not title:
+                if dash_depth == 1:
+                    active_parent = None
                 rejected.append(
                     RejectedCandidate(
                         title=trailing.strip()[:60],
@@ -228,17 +257,46 @@ class SemanticStructureExtractor:
             reason = _rejection_reason(main, trailing, title)
             confidence, reason_text = _confidence_for(trailing, reason)
             if confidence in self.ACCEPTED_CONFIDENCE:
-                groups.append(
-                    ExtractedGroup(
-                        title=title,
-                        raw=trailing,
-                        source_code=source_code,
-                        after_code=after_code,
-                        confidence=confidence,
-                        reason=reason_text,
-                    )
+                parent_hint: ExtractedGroup | None = None
+                hierarchy_hint: str | None = None
+                if active_parent is not None and dash_depth > 1:
+                    parent_hint = active_parent
+                    hierarchy_hint = "dash_depth"
+                elif (
+                    active_parent is not None
+                    and dash_depth == 1
+                    and _is_title_prefix_child(active_parent.title, title)
+                ):
+                    parent_hint = active_parent
+                    hierarchy_hint = "title_prefix"
+
+                group = ExtractedGroup(
+                    title=title,
+                    raw=trailing,
+                    source_code=source_code,
+                    after_code=after_code,
+                    confidence=confidence,
+                    reason=reason_text,
+                    dash_depth=dash_depth,
+                    parent_title_hint=(
+                        parent_hint.title if parent_hint is not None else None
+                    ),
+                    parent_source_code_hint=(
+                        parent_hint.source_code if parent_hint is not None else None
+                    ),
+                    hierarchy_hint=hierarchy_hint,
                 )
+                groups.append(group)
+
+                # Явный новый level-1 заголовок закрывает предыдущий сегмент.
+                # Lexical child остаётся внутри действующего umbrella-parent.
+                if dash_depth == 1 and parent_hint is None:
+                    active_parent = group
             else:
+                # Даже отбракованный level-1 заголовок является границей сегмента:
+                # следующую подгруппу нельзя привязать к устаревшему родителю.
+                if dash_depth == 1:
+                    active_parent = None
                 rejected.append(
                     RejectedCandidate(
                         title=title,

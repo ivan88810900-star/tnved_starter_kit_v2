@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Read-only acceptance для Canonical-backed guided TN VED.
 
-Отчёт содержит только агрегаты: коды, названия товаров и тексты смысловых групп
-в JSON не записываются.
+Отчёт содержит только агрегаты: 10-значные товарные коды, названия товаров и
+тексты смысловых групп в JSON не записываются.
 """
 
 from __future__ import annotations
@@ -27,6 +27,84 @@ from app.services.guided_tnved_navigation import (  # noqa: E402
 )
 
 DEFAULT_HEADINGS = ("0302", "0303", "5208", "8517")
+
+
+def _normalise_title(raw: str) -> str:
+    return " ".join((raw or "").casefold().split())
+
+
+def _unsplit_code_count(node: dict) -> int:
+    count = 1 if node.get("code") else 0
+    for child in node.get("children") or []:
+        if child.get("role") == "semantic_choice":
+            continue
+        count += _unsplit_code_count(child)
+    return count
+
+
+def _hierarchy_checks(heading: str, choices: list[dict]) -> dict[str, bool]:
+    """Проверки целевой структуры без записи названий/кодов в отчёт."""
+
+    top = {_normalise_title(node.get("title") or ""): node for node in choices}
+    if heading == "0302":
+        return {
+            "required_top_groups": {
+                "лососевые",
+                "камбалообразные",
+                "тунец",
+            }.issubset(top)
+        }
+    if heading == "0303":
+        tuna = top.get("тунец")
+        if tuna is None:
+            return {
+                "tuna_parent_present": False,
+                "tuna_unsplit_span_lt_20": False,
+                "tuna_species_nested": False,
+            }
+        subgroups = {
+            _normalise_title(node.get("title") or "")
+            for node in tuna.get("children") or []
+            if node.get("kind") == "classification_subgroup"
+        }
+        return {
+            "tuna_parent_present": True,
+            "tuna_unsplit_span_lt_20": _unsplit_code_count(tuna) < 20,
+            "tuna_species_nested": {
+                "тунец синий",
+                "тунец тихоокеанский голубой",
+            }.issubset(subgroups),
+        }
+    if heading == "5208":
+        parents = ("неотбеленные", "отбеленные", "окрашенные")
+        return {
+            "plain_weave_nested_by_finish": all(
+                parent in top
+                and any(
+                    child.get("kind") == "classification_subgroup"
+                    and _normalise_title(child.get("title") or "")
+                    == "полотняного переплетения"
+                    for child in top[parent].get("children") or []
+                )
+                for parent in parents
+            )
+        }
+    if heading == "8517":
+        accepted_titles: set[str] = set()
+
+        def collect(nodes: list[dict]) -> None:
+            for node in nodes:
+                if node.get("role") == "semantic_choice":
+                    accepted_titles.add(_normalise_title(node.get("title") or ""))
+                collect(node.get("children") or [])
+
+        collect(choices)
+        return {
+            "technical_ranges_not_accepted": not accepted_titles.intersection(
+                {"10 ггц", "1610 нм"}
+            )
+        }
+    return {}
 
 
 def _parse_headings(raw: str) -> list[str]:
@@ -76,18 +154,23 @@ def run(headings: list[str]) -> dict:
             snapshot_id = (result.get("engine") or {}).get("snapshot_id")
             if snapshot_id:
                 snapshot_ids.add(str(snapshot_id))
+            choices = list(result.get("choices") or [])
+            hierarchy_checks = _hierarchy_checks(heading, choices)
             rows.append(
                 {
                     "heading": heading,
                     "status": result.get("status"),
                     "reason": result.get("reason"),
-                    "choice_count": len(result.get("choices") or []),
+                    "choice_count": len(choices),
                     "expected_real_codes": integrity.get("expected_real_codes"),
                     "reachable_real_codes": integrity.get("reachable_real_codes"),
                     "canonical_bound_codes": integrity.get("canonical_bound_codes"),
                     "canonical_coverage": integrity.get("canonical_coverage"),
                     "fake_codes": integrity.get("fake_codes"),
                     "semantic_groups": integrity.get("semantic_groups"),
+                    "semantic_subgroups": integrity.get("semantic_subgroups"),
+                    "semantic_max_depth": integrity.get("semantic_max_depth"),
+                    "nesting_fallbacks": integrity.get("nesting_fallbacks"),
                     "rejected_unsafe_groups": integrity.get(
                         "rejected_unsafe_groups"
                     ),
@@ -95,6 +178,8 @@ def run(headings: list[str]) -> dict:
                     "critical_issues": list(
                         integrity.get("critical_issues") or []
                     ),
+                    "hierarchy_checks": hierarchy_checks,
+                    "hierarchy_ok": all(hierarchy_checks.values()),
                     "complete": bool(integrity.get("complete")),
                 }
             )
@@ -105,10 +190,11 @@ def run(headings: list[str]) -> dict:
         and row["canonical_coverage"] == 1.0
         and row["fake_codes"] == 0
         and not row["critical_issues"]
+        and row["hierarchy_ok"]
         for row in rows
     )
     return {
-        "format": "guided-tnved-acceptance-v1",
+        "format": "guided-tnved-acceptance-v2",
         "read_only": True,
         "headings": rows,
         "snapshot_count": len(snapshot_ids),

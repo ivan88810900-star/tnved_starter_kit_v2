@@ -26,6 +26,7 @@ type Props = {
 };
 
 function nodeLabel(node: GuidedTnvedNode): string {
+  if (node.kind === 'classification_subgroup') return 'Смысловое уточнение';
   if (node.role === 'semantic_choice') return 'Смысловая группа';
   if (node.is_leaf) return 'Реальный код';
   return 'Уточнение';
@@ -197,7 +198,7 @@ export const GuidedTnvedNavigator: React.FC<Props> = ({
               </p>
               {current ? (
                 <p className="mt-1 text-xs text-cargo-light">
-                  Выберите следующее уточнение
+                  Шаг {trail.length + 1} · выберите следующее уточнение
                 </p>
               ) : null}
 

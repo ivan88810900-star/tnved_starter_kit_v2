@@ -7,6 +7,8 @@ from dataclasses import dataclass, field
 from ..tnved_tree.helpers import digits
 from .models import (
     GROUP_NODE_TYPES,
+    MAX_SEMANTIC_GROUP_LEVELS,
+    MAX_UNSPLIT_GROUP_CODES,
     SemanticNavigationTree,
     SemanticNode,
     SemanticNodeType,
@@ -56,6 +58,7 @@ class SemanticNavigationValidator:
 
         self._check_ids_and_cycles(tree, issues)
         self._check_groups_have_no_code(nodes, issues)
+        self._check_semantic_hierarchy(tree, issues)
         self._check_leaves(nodes, issues)
         self._check_real_codes(tree, nodes, db_codes, issues)
         self._check_reachability(tree, issues)
@@ -111,6 +114,18 @@ class SemanticNavigationValidator:
                             node_id=ch.id,
                         )
                     )
+                if ch.depth != node.depth + 1:
+                    issues.append(
+                        SemanticIssue(
+                            code="bad_depth",
+                            severity=WARNING,
+                            message=(
+                                "depth ребёнка не равен depth родителя + 1: "
+                                f"{ch.id}"
+                            ),
+                            node_id=ch.id,
+                        )
+                    )
                 walk(ch, ancestors | {node.id})
 
         walk(tree.root, set())
@@ -137,6 +152,105 @@ class SemanticNavigationValidator:
                         node_id=n.id,
                     )
                 )
+
+    def _check_semantic_hierarchy(
+        self,
+        tree: SemanticNavigationTree,
+        issues: list[SemanticIssue],
+    ) -> None:
+        """Проверить допустимую форму controlled semantic-nesting."""
+
+        def unsplit_real_codes(node: SemanticNode) -> int:
+            count = 1 if node.carries_real_code and node.code else 0
+            for child in node.children:
+                if child.node_type in {
+                    SemanticNodeType.CLASSIFICATION_GROUP,
+                    SemanticNodeType.CLASSIFICATION_SUBGROUP,
+                }:
+                    continue
+                count += unsplit_real_codes(child)
+            return count
+
+        def walk(
+            node: SemanticNode,
+            *,
+            parent: SemanticNode | None,
+            semantic_levels: int,
+        ) -> None:
+            is_semantic_group = node.node_type in {
+                SemanticNodeType.CLASSIFICATION_GROUP,
+                SemanticNodeType.CLASSIFICATION_SUBGROUP,
+            }
+            next_levels = semantic_levels + (1 if is_semantic_group else 0)
+
+            if node.node_type == SemanticNodeType.CLASSIFICATION_GROUP:
+                if parent is None or parent.node_type != SemanticNodeType.HEADING:
+                    issues.append(
+                        SemanticIssue(
+                            code="classification_group_wrong_parent",
+                            severity=CRITICAL,
+                            message=(
+                                "classification_group должен быть ребёнком heading: "
+                                f"{node.title}"
+                            ),
+                            node_id=node.id,
+                        )
+                    )
+            elif (
+                node.node_type == SemanticNodeType.CLASSIFICATION_SUBGROUP
+                and (
+                    parent is None
+                    or parent.node_type != SemanticNodeType.CLASSIFICATION_GROUP
+                )
+            ):
+                issues.append(
+                    SemanticIssue(
+                        code="classification_subgroup_wrong_parent",
+                        severity=CRITICAL,
+                        message=(
+                            "classification_subgroup должен быть ребёнком "
+                            f"classification_group: {node.title}"
+                        ),
+                        node_id=node.id,
+                    )
+                )
+
+            if is_semantic_group:
+                if next_levels > MAX_SEMANTIC_GROUP_LEVELS:
+                    issues.append(
+                        SemanticIssue(
+                            code="semantic_group_depth_exceeded",
+                            severity=CRITICAL,
+                            message=(
+                                "Превышена допустимая глубина semantic-групп "
+                                f"({MAX_SEMANTIC_GROUP_LEVELS}): {node.title}"
+                            ),
+                            node_id=node.id,
+                        )
+                    )
+                unsplit = unsplit_real_codes(node)
+                if unsplit > MAX_UNSPLIT_GROUP_CODES:
+                    issues.append(
+                        SemanticIssue(
+                            code="oversized_unsplit_group",
+                            severity=WARNING,
+                            message=(
+                                f"Semantic-сегмент {node.title!r} содержит "
+                                f"{unsplit} кодов без дальнейшего смыслового "
+                                f"разбиения (limit={MAX_UNSPLIT_GROUP_CODES})"
+                            ),
+                            node_id=node.id,
+                        )
+                    )
+
+            for child in node.children:
+                walk(
+                    child,
+                    parent=node,
+                    semantic_levels=next_levels,
+                )
+
+        walk(tree.root, parent=None, semantic_levels=0)
 
     def _check_leaves(
         self, nodes: list[SemanticNode], issues: list[SemanticIssue]

@@ -102,6 +102,9 @@ export type GuidedTnvedResponse = {
     fake_codes?: number;
     critical_issues: string[];
     semantic_groups?: number;
+    semantic_subgroups?: number;
+    semantic_max_depth?: number;
+    nesting_fallbacks?: number;
     rejected_unsafe_groups?: number;
     pruned_empty_groups?: number;
   };

@@ -6,7 +6,7 @@ Active
 
 ## Last updated
 
-2026-07-23
+2026-07-24
 
 ## Strategic direction
 
@@ -92,9 +92,11 @@ Current next tasks:
 - ✅ Guided TN VED v1 backend + frontend: a heading exposes a separate smart route;
   semantic group IDs are deterministic, all real codes are bound to the current
   Canonical snapshot, and any integrity failure returns a safe ordinary-tree fallback
-- Full-data guided-navigation acceptance on representative complex headings
-  (`0302`, `0303`, `5208`, `8517`), followed by controlled subgroup nesting from
-  `TASK-SEMANTIC-003`
+- 🔄 TASK-SEMANTIC-003 controlled subgroup nesting is implemented locally:
+  explicit dash-depth or strict parent-title hints only, bounded unsplit spans,
+  fail-flat diagnostics, validator checks and a nested Guided UI question. The
+  aggregate-only gate now verifies hierarchy targets for `0302`, `0303`, `5208`
+  and `8517`; the remaining step is its read-only run on the user's full database.
 - Product-description entry into the guided route: use deterministic hybrid search
   first, then ask only discriminating questions inside the selected Canonical heading
 - Interactive browser acceptance of the integrated frontend is the next product

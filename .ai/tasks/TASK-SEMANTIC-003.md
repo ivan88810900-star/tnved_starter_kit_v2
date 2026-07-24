@@ -1,9 +1,27 @@
 # TASK-SEMANTIC-003: Semantic Navigation — hierarchical grouping quality
 
-> **Status:** ready  
+> **Status:** implemented locally; full-data acceptance pending
 > **Owner:** Backend Engineer (+ Architect review)  
 > **Created:** 2026-06-29  
 > **Depends on:** Semantic Navigation v1 этапы 1–2 (модуль + strict extraction + flat grouping)
+
+---
+
+## Implementation progress (2026-07-24)
+
+- Controlled two-pass nesting реализован: безопасная flat-модель остаётся первым
+  проходом, а второй проход вкладывает подгруппу только по явному dash-depth либо
+  строгому title-prefix hint и только в текущий активный parent segment.
+- Добавлены guards: максимум два semantic-уровня, максимум 30 кодов в одном
+  unsplit-сегменте; при нарушении группа остаётся плоской, причина попадает в
+  диагностику.
+- Validator проверяет parent type, semantic depth, unsplit span, ссылки/depth и
+  прежние инварианты реальных кодов.
+- Guided API/UI уже поддерживают дополнительный вопрос для
+  `classification_subgroup`; Canonical binding и fail-closed поведение сохранены.
+- 15 self-contained backend tests зелёные; frontend typecheck/build зелёные.
+- Полный прогон `0302/0303/5208/8517` на пользовательской БД ещё обязателен:
+  локальная sandbox-БД содержит только 2 специальных тестовых commodity-строки.
 
 ---
 

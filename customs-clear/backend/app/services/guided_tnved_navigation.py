@@ -20,7 +20,8 @@ import logging
 import re
 import unicodedata
 from collections import Counter
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
 from sqlalchemy.orm import Session
 
@@ -77,7 +78,7 @@ class GuidedTnvedNavigationService:
 
         try:
             model = self.model_loader()
-        except Exception:  # noqa: BLE001 — обычное дерево должно остаться доступным
+        except Exception:  # обычное дерево должно остаться доступным
             logger.exception(
                 "Guided TN VED: CanonicalModel unavailable for heading=%s",
                 heading4,
@@ -99,7 +100,7 @@ class GuidedTnvedNavigationService:
 
         try:
             tree = self.builder.build_heading(db, heading4)
-        except Exception:  # noqa: BLE001 — additive UX не должен ломать каталог
+        except Exception:  # additive UX не должен ломать каталог
             logger.exception(
                 "Guided TN VED: semantic overlay failed for heading=%s",
                 heading4,
@@ -148,9 +149,18 @@ class GuidedTnvedNavigationService:
         ]
         real_expected = set(tree.expected_real_codes) - {heading4}
         real_reachable = set(tree.real_codes_in_tree()) - {heading4}
-        semantic_group_count = sum(
-            node.node_type == SemanticNodeType.CLASSIFICATION_GROUP
+        semantic_nodes = [
+            node
             for node in tree.all_nodes()
+            if node.node_type
+            in {
+                SemanticNodeType.CLASSIFICATION_GROUP,
+                SemanticNodeType.CLASSIFICATION_SUBGROUP,
+            }
+        ]
+        semantic_subgroup_count = sum(
+            node.node_type == SemanticNodeType.CLASSIFICATION_SUBGROUP
+            for node in semantic_nodes
         )
 
         heading_anchor = self._anchor_payload(model, canonical_heading)
@@ -180,7 +190,13 @@ class GuidedTnvedNavigationService:
                 "canonical_coverage": 1.0,
                 "fake_codes": 0,
                 "critical_issues": [],
-                "semantic_groups": semantic_group_count,
+                "semantic_groups": len(semantic_nodes),
+                "semantic_subgroups": semantic_subgroup_count,
+                "semantic_max_depth": max(
+                    (node.depth for node in semantic_nodes),
+                    default=0,
+                ),
+                "nesting_fallbacks": len(tree.nesting_fallbacks),
                 "rejected_unsafe_groups": len(tree.rejected_candidates),
                 "pruned_empty_groups": pruned_empty_groups,
             },

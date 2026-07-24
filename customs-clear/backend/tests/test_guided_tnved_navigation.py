@@ -90,11 +90,33 @@ def _semantic_tree() -> SemanticNavigationTree:
     )
 
 
+def _nested_semantic_tree() -> SemanticNavigationTree:
+    tree = _semantic_tree()
+    group = tree.root.children[0]
+    second_leaf = group.children.pop()
+    subgroup = group.add_child(
+        SemanticNode(
+            node_type=SemanticNodeType.CLASSIFICATION_SUBGROUP,
+            title="лосось тихоокеанский",
+            metadata={"confidence": "medium"},
+        )
+    )
+    subgroup.add_child(second_leaf)
+    return tree
+
+
 class _Builder:
     def build_heading(self, _db, heading: str) -> SemanticNavigationTree:
         if heading != "0302":
             raise AssertionError(f"unexpected heading: {heading}")
         return _semantic_tree()
+
+
+class _NestedBuilder:
+    def build_heading(self, _db, heading: str) -> SemanticNavigationTree:
+        if heading != "0302":
+            raise AssertionError(f"unexpected heading: {heading}")
+        return _nested_semantic_tree()
 
 
 class GuidedTnvedNavigationTests(unittest.TestCase):
@@ -148,6 +170,30 @@ class GuidedTnvedNavigationTests(unittest.TestCase):
             canonical = model.get_by_code(child["code"])
             self.assertIsNotNone(canonical)
             self.assertEqual(child["id"], canonical.stable_id)
+
+    def test_nested_semantic_choice_is_serialized_as_an_extra_question(self) -> None:
+        model = _canonical_model()
+        service = GuidedTnvedNavigationService(
+            builder=_NestedBuilder(),
+            model_loader=lambda: model,
+        )
+
+        result = service.build(object(), "0302")
+
+        self.assertEqual(result["status"], "OK")
+        group = result["choices"][0]
+        subgroup = next(
+            child
+            for child in group["children"]
+            if child["kind"] == "classification_subgroup"
+        )
+        self.assertEqual(subgroup["role"], "semantic_choice")
+        self.assertEqual(subgroup["result_count"], 1)
+        self.assertEqual(subgroup["children"][0]["code"], "0302130000")
+        self.assertEqual(result["integrity"]["semantic_groups"], 2)
+        self.assertEqual(result["integrity"]["semantic_subgroups"], 1)
+        self.assertEqual(result["integrity"]["semantic_max_depth"], 2)
+        self.assertEqual(result["integrity"]["nesting_fallbacks"], 0)
 
     def test_missing_canonical_binding_never_returns_partial_choices(self) -> None:
         model = _canonical_model(include_second_leaf=False)
