@@ -9,7 +9,7 @@ from datetime import date, datetime, timezone
 from typing import Any, Literal
 
 from loguru import logger
-from sqlalchemy import func, literal, or_
+from sqlalchemy import func, inspect, literal, or_
 
 from ..db import SessionLocal, engine
 from .hs_matching import get_hs_prefixes, normalize_hs_code, specificity
@@ -1012,9 +1012,16 @@ def is_leaf_hs_code(hs_code: str) -> bool:
             return db.query(HsRate.id).filter(HsRate.hs_code == code).first() is not None
 
         prefixes = get_hs_prefixes(code)
+        rate_filters = [HsRate.hs_code.in_(prefixes)]
+        bind = db.get_bind()
+        if inspect(bind).has_table(HsRate.__tablename__) and any(
+            column["name"] == "hs_prefix"
+            for column in inspect(bind).get_columns(HsRate.__tablename__)
+        ):
+            rate_filters.append(HsRate.hs_prefix.in_(prefixes))
         matching_rate = (
             db.query(HsRate.id)
-            .filter(or_(HsRate.hs_code.in_(prefixes), HsRate.hs_prefix.in_(prefixes)))
+            .filter(or_(*rate_filters))
             .first()
         )
         return matching_rate is not None

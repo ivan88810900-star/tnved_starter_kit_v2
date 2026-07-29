@@ -22,6 +22,7 @@ from sqlalchemy.orm import Session, joinedload, selectinload
 from ..db import SessionLocal
 from ..models.tnved import Chapter, Commodity, IntellectualProperty, NonTariffMeasure, Section, SpecialDuty, VatPreference
 from ..schemas.tnved_catalog import TnvedCommodityDetailsResponse
+from ..services.guided_tnved_entry import build_guided_search_routes
 from ..services.guided_tnved_navigation import build_guided_tnved_navigation
 from ..services.non_tariff_measures_lookup import get_measures_for_code
 from ..services.normative_store import find_rate_for_hs
@@ -590,6 +591,7 @@ def search_commodities(
         anchor = anchors.get(_digits(item["code"]))
         if anchor is not None:
             item["canonical_anchor"] = anchor
+    resp["guided_routes"] = build_guided_search_routes(query, results)
     if not results:
         resp["suggestions"] = get_search_suggestions()
     return JSONResponse(resp)

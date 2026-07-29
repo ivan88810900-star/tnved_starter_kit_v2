@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Iterator
+from unittest.mock import Mock
 
 import pytest
 from sqlalchemy import create_engine, text
@@ -96,3 +97,17 @@ def test_exact_code_remains_first_and_special_syntax_is_safe(search_engine: Engi
     for query in ('NOT OR AND', 'чайник* (электрический)', '"смартфон"'):
         outcome = tnved_fts.search_commodities_smart(query, limit=5)
         assert outcome["results"] is None or isinstance(outcome["results"], list)
+
+
+def test_unavailable_fts_is_cached_until_explicit_rebuild(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    unavailable_engine = Mock()
+    unavailable_engine.url = "sqlite:///readonly.db"
+    unavailable_engine.begin.side_effect = RuntimeError("read-only")
+    monkeypatch.setattr(tnved_fts, "engine", unavailable_engine)
+    monkeypatch.setattr(tnved_fts, "_fts_ready", None)
+
+    assert tnved_fts.ensure_fts_index() is False
+    assert tnved_fts.ensure_fts_index() is False
+    assert unavailable_engine.begin.call_count == 1

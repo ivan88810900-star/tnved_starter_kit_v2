@@ -69,8 +69,8 @@ def ensure_fts_index(*, rebuild: bool = False) -> bool:
     if not _is_sqlite():
         _fts_ready = False
         return False
-    if _fts_ready and not rebuild:
-        return True
+    if _fts_ready is not None and not rebuild:
+        return _fts_ready
     try:
         with engine.begin() as conn:
             exists = conn.execute(

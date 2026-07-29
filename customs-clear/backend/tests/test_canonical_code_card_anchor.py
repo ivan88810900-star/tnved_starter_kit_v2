@@ -100,6 +100,16 @@ def test_search_response_exposes_anchor_additively() -> None:
             "app.api.tnved_catalog.canonical_anchors_for_hs_codes",
             return_value={"8517130000": anchor},
         ),
+        patch(
+            "app.api.tnved_catalog.build_guided_search_routes",
+            return_value=[
+                {
+                    "heading": "8517",
+                    "title": "Телефонные аппараты",
+                    "candidate_count": 1,
+                }
+            ],
+        ),
     ):
         response = search_commodities(q="смартфон", db=None)  # type: ignore[arg-type]
 
@@ -109,3 +119,4 @@ def test_search_response_exposes_anchor_additively() -> None:
     assert payload["results"][0]["name"] == "Смартфоны"
     assert payload["results"][0]["match_reason"] == "name_match"
     assert payload["search"]["strategy"] == "hybrid_fts"
+    assert payload["guided_routes"][0]["heading"] == "8517"

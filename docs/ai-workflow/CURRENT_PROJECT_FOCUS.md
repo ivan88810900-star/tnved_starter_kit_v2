@@ -6,7 +6,7 @@ Active
 
 ## Last updated
 
-2026-07-24
+2026-07-29
 
 ## Strategic direction
 
@@ -34,6 +34,10 @@ ingestion.
   to real declarable codes; the main `/children` flags remain OFF
 - Product-facing hybrid TN VED search: code/name/domain ranking, safe synonym
   boundaries, conservative typo recovery and explainable match reasons
+- Product-description entry into Guided TN VED: text results are grouped into
+  ranked Canonical 4-digit heading candidates, curated semantic evidence outranks
+  incidental full-text matches, and every candidate opens the existing
+  integrity-checked questions; numeric code lookup remains unchanged
 - Explainable Smart Payments in the TN VED card: bases, statuses, sources, assumptions,
   uncertainty and optional Canonical grounding anchor
 - Evidence-first sanctions/risk checks in the TN VED card: explicit scope, conservative
@@ -92,20 +96,26 @@ Current next tasks:
 - ✅ Guided TN VED v1 backend + frontend: a heading exposes a separate smart route;
   semantic group IDs are deterministic, all real codes are bound to the current
   Canonical snapshot, and any integrity failure returns a safe ordinary-tree fallback
-- 🔄 TASK-SEMANTIC-003 controlled subgroup nesting is implemented locally:
+- ✅ TASK-SEMANTIC-003 controlled subgroup nesting passed the full-data read-only
+  gate:
   explicit dash-depth or strict parent-title hints only, bounded unsplit spans,
   fail-flat diagnostics, validator checks and a nested Guided UI question. The
-  aggregate-only gate now verifies hierarchy targets for `0302`, `0303`, `5208`
-  and `8517`; the remaining step is its read-only run on the user's full database.
-- Product-description entry into the guided route: use deterministic hybrid search
-  first, then ask only discriminating questions inside the selected Canonical heading
+  aggregate-only gate verifies `0302`, `0303`, `5208` and `8517`: 328/328
+  codes reachable, 100% Canonical coverage and zero fake codes.
+- ✅ TASK-SEMANTIC-004 product-description entry into Guided TN VED:
+  deterministic hybrid candidates are grouped and ranked by Canonical heading,
+  then the existing route asks only discriminating questions inside the selected
+  heading. Compact Gate-2 schema compatibility and read-only search fallback are
+  covered.
 - Interactive browser acceptance of the integrated frontend is the next product
   hardening step: verify search → code card → payments → requirements/risk → grounded
   assistant as a user journey, without broad UI redesign
 - Separate readiness decision for semantic embeddings (vectors/API cost/provider), without
   weakening the deterministic hybrid-search fallback
-- 🔄 Semantic/optional-AI hardening: the legacy `tnved_entries` vector contour is
-  default OFF for both search and ingestion, reports aggregate readiness, ranks in
+- ✅ Optional-AI contract verification (no external request): citation grounding,
+  unknown-citation rejection and deterministic fallback pass. The legacy
+  `tnved_entries` vector contour remains default OFF for search and ingestion, reports
+  aggregate readiness, ranks in
   bounded memory, and has a secret-safe optional LLM contract/live verifier. The
   product index decision is documented in `DECISION_MEMO_SEMANTIC_SEARCH.md`; no
   automatic ingestion or provider spend is authorized.

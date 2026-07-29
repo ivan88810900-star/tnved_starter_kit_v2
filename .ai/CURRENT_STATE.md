@@ -1,7 +1,7 @@
 # CURRENT_STATE.md — Текущее состояние проекта
 
-> Дата: 2026-07-24
-> Активная ветка: `fix/baseline-acceptance`
+> Дата: 2026-07-29
+> Активная ветка: `feat/canonical-read-path`
 
 ---
 
@@ -218,6 +218,13 @@ legacy (сверх structural). До TASK-CANONICAL-004 контур не был
   `0302/0303/5208/8517` зелёные, 328/328 целевых кодов достижимы, Canonical
   coverage 100%, fake codes 0, hierarchy checks passed. 17 self-contained
   hierarchy/Guided tests проходят. Canonical runtime flags оставались OFF.
+- Текстовое описание товара теперь даёт ранжированные Canonical-позиции для
+  запуска Guided-вопросов. Curated semantic evidence выше случайного full-text:
+  на полном Gate-2 экспорте «смартфон» ведёт сначала в `8517`, «портативный
+  компьютер» — в `8471`; цифровой поиск кодов не изменён.
+- Canonical provider, leaf detection и revision fingerprint поддерживают
+  компактную Gate-2 схему `hs_rates(id, hs_code)` без `hs_prefix`; read-only
+  fallback не повторяет неуспешное создание FTS на каждом запросе.
 
 ---
 
@@ -278,7 +285,9 @@ legacy (сверх structural). До TASK-CANONICAL-004 контур не был
 | Full-data MVP acceptance | ✅ Completed: полная пользовательская БД, strict read-only, auth + 4/4, evidence сохранён | — |
 | Guided TN VED v1 | ✅ Completed locally: API/UI, 100% Canonical binding gate, safe fallback | — |
 | Full-data guided acceptance (`0302/0303/5208/8517`) | ✅ Completed: 328/328 target codes, 100% Canonical coverage, hierarchy green | — |
-| **TASK-SEMANTIC-003** — controlled nesting смысловых подгрупп | Реализовано локально; нужен read-only full-data gate | Высокий |
+| **TASK-SEMANTIC-003** — controlled nesting смысловых подгрупп | ✅ Completed: full-data hierarchy gate green | — |
+| **TASK-SEMANTIC-004** — описание товара → ранжированные Canonical heading → Guided-вопросы | ✅ Completed: full Gate-2 API acceptance; flags OFF | — |
+| Optional LLM/embeddings readiness | Контракт и fallback ✅; векторы/provider не настроены, ingestion/search OFF | Отдельное решение |
 | Interactive frontend acceptance | Следующий этап: пользовательский путь search → card → payments → requirements/risk → assistant | Высокий |
 | Derisking после TASK-005: aliases/history (`superseded_by`, previous codes/IDs) | Рекомендован | Высокий |
 | Fine-tune модели на `training_pairs.jsonl` | Вне репозитория | Низкий |

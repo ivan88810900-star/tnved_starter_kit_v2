@@ -9,6 +9,7 @@ import {
   searchTnved,
   type TnvedBreadcrumbItem,
   type TnvedChildItem,
+  type TnvedGuidedSearchRoute,
   type TnvedSearchHit,
 } from '../api/tnvedCatalog';
 import { PremiumCard } from './PremiumCard';
@@ -393,6 +394,7 @@ export const TnvedAccordionTree: React.FC<Props> = ({
 
   const [search, setSearch] = React.useState('');
   const [searchHits, setSearchHits] = React.useState<TnvedSearchHit[]>([]);
+  const [guidedRoutes, setGuidedRoutes] = React.useState<TnvedGuidedSearchRoute[]>([]);
   const [searchPaths, setSearchPaths] = React.useState<Record<string, string>>({});
   const [searchLoading, setSearchLoading] = React.useState(false);
   const [searchErr, setSearchErr] = React.useState<string | null>(null);
@@ -496,6 +498,7 @@ export const TnvedAccordionTree: React.FC<Props> = ({
   React.useEffect(() => {
     if (trimmed.length < 2) {
       setSearchHits([]);
+      setGuidedRoutes([]);
       setSearchPaths({});
       setSearchErr(null);
       setSearchSuggestions([]);
@@ -506,6 +509,7 @@ export const TnvedAccordionTree: React.FC<Props> = ({
 
     let cancelled = false;
     setSearchLoading(true);
+    setGuidedRoutes([]);
     setSearchSuggestions([]);
     setCorrectedQuery(null);
     const t = window.setTimeout(() => {
@@ -514,6 +518,7 @@ export const TnvedAccordionTree: React.FC<Props> = ({
           if (cancelled) return;
           const hits = payload.results;
           setSearchHits(hits);
+          setGuidedRoutes(payload.guided_routes ?? []);
           setSearchSuggestions(payload.suggestions);
           setCorrectedQuery(payload.search?.corrected_query ?? null);
           setSearchErr(null);
@@ -533,6 +538,7 @@ export const TnvedAccordionTree: React.FC<Props> = ({
         .catch(() => {
           if (!cancelled) {
             setSearchHits([]);
+            setGuidedRoutes([]);
             setSearchSuggestions([]);
             setCorrectedQuery(null);
             setSearchErr('Ошибка поиска');
@@ -556,6 +562,7 @@ export const TnvedAccordionTree: React.FC<Props> = ({
   const clearSearch = React.useCallback(() => {
     setSearch('');
     setSearchHits([]);
+    setGuidedRoutes([]);
     setSearchPaths({});
     setSearchErr(null);
     setSearchSuggestions([]);
@@ -677,6 +684,44 @@ export const TnvedAccordionTree: React.FC<Props> = ({
             </div>
           ) : (
             <>
+              {guidedRoutes.length > 0 && onOpenGuidedNavigation ? (
+                <section className="rounded-lg border border-indigo-200 bg-indigo-50/70 p-3">
+                  <div className="flex items-start gap-2">
+                    <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-indigo-700" aria-hidden="true" />
+                    <div>
+                      <p className="text-xs font-semibold text-indigo-950">
+                        Подобрать точный код по вопросам
+                      </p>
+                      <p className="mt-1 text-[11px] leading-relaxed text-indigo-900">
+                        Поиск определил вероятные товарные позиции. Это кандидаты,
+                        а не готовое классификационное решение.
+                      </p>
+                    </div>
+                  </div>
+                  <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                    {guidedRoutes.map((route) => (
+                      <button
+                        key={route.heading}
+                        type="button"
+                        onClick={() => onOpenGuidedNavigation(route.heading)}
+                        className="rounded-md border border-indigo-200 bg-white p-2.5 text-left transition hover:border-indigo-400 hover:bg-indigo-50"
+                      >
+                        <span className="flex items-center justify-between gap-2">
+                          <span className="font-mono text-sm font-semibold text-cargo-trust">
+                            {formatCode(route.heading)}
+                          </span>
+                          <span className="text-[10px] text-indigo-700">
+                            совпадений: {route.candidate_count}
+                          </span>
+                        </span>
+                        <span className={`mt-1 block text-xs text-cargo-deep ${TNVED_COMMODITY_NAME_CLASS}`}>
+                          {formatTnvedCommodityName(route.title)}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </section>
+              ) : null}
               <p className="text-[11px] text-cargo-light">
                 Найдено вариантов: {searchHits.length}. Выберите подходящую группу или код.
               </p>

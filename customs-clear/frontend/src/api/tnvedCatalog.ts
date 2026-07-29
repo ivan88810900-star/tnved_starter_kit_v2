@@ -44,12 +44,23 @@ export type TnvedSearchHit = {
 
 export type TnvedSearchResponse = {
   results: TnvedSearchHit[];
+  guided_routes: TnvedGuidedSearchRoute[];
   suggestions: Array<{ term: string; hint: string }>;
   search: {
     strategy: string;
     corrected_query: string | null;
     effective_query: string;
   } | null;
+};
+
+export type TnvedGuidedSearchRoute = {
+  heading: string;
+  title: string;
+  candidate_count: number;
+  best_match_reason: NonNullable<TnvedSearchHit['match_reason']>;
+  first_result_rank: number;
+  canonical_anchor: CanonicalAnchor;
+  guided_href: string;
 };
 
 export type CanonicalAnchor = {
@@ -356,11 +367,14 @@ export async function fetchTnvedBreadcrumb(code: string): Promise<TnvedBreadcrum
 
 export async function searchTnved(q: string): Promise<TnvedSearchResponse> {
   const query = (q ?? '').trim();
-  if (query.length < 2) return { results: [], suggestions: [], search: null };
+  if (query.length < 2) {
+    return { results: [], suggestions: [], guided_routes: [], search: null };
+  }
   const { data } = await api.get<{
     status: string;
     results: TnvedSearchHit[];
     suggestions?: Array<{ term: string; hint: string }>;
+    guided_routes?: TnvedGuidedSearchRoute[];
     search?: TnvedSearchResponse['search'];
   }>(
     `${PREFIX}/search?q=${encodeURIComponent(query)}`,
@@ -368,6 +382,7 @@ export async function searchTnved(q: string): Promise<TnvedSearchResponse> {
   return {
     results: data.results ?? [],
     suggestions: data.suggestions ?? [],
+    guided_routes: data.guided_routes ?? [],
     search: data.search ?? null,
   };
 }

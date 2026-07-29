@@ -18,12 +18,12 @@ from __future__ import annotations
 
 import hashlib
 import logging
-from pathlib import Path
 import threading
-from typing import Callable
+from collections.abc import Callable
+from pathlib import Path
 from urllib.parse import unquote
 
-from sqlalchemy import text
+from sqlalchemy import inspect, text
 from sqlalchemy.orm import Session
 
 from ...db import SessionLocal
@@ -37,7 +37,7 @@ logger = logging.getLogger(__name__)
 
 SessionFactory = Callable[[], Session]
 
-_REVISION_VERSION = "v3"
+_REVISION_VERSION = "v4"
 _MAX_CONSISTENT_BUILD_ATTEMPTS = 3
 
 
@@ -287,10 +287,18 @@ class CanonicalTreeProvider:
             )
             chapter_count = self._hash_rows(digest, "chapters", chapter_rows)
 
-            leaf_rows = (
-                db.query(HsRate.hs_code, HsRate.hs_prefix)
-                .distinct()
-                .order_by(HsRate.hs_code.asc(), HsRate.hs_prefix.asc())
+            rate_columns = [HsRate.hs_code]
+            rate_inspector = inspect(db.get_bind())
+            if (
+                rate_inspector.has_table(HsRate.__tablename__)
+                and any(
+                    column["name"] == "hs_prefix"
+                    for column in rate_inspector.get_columns(HsRate.__tablename__)
+                )
+            ):
+                rate_columns.append(HsRate.hs_prefix)
+            leaf_rows = db.query(*rate_columns).distinct().order_by(
+                *(column.asc() for column in rate_columns)
             )
             leaf_count = self._hash_rows(digest, "leaf_rates", leaf_rows)
         finally:

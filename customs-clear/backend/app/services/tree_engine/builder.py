@@ -10,9 +10,9 @@ oracle до достижения parity.
 
 from __future__ import annotations
 
-from typing import Callable
+from collections.abc import Callable
 
-from sqlalchemy import or_
+from sqlalchemy import inspect, or_
 from sqlalchemy.orm import Session
 
 from ...db import SessionLocal
@@ -120,15 +120,29 @@ class TreeBuilder:
         existing: set[str] = set()
         prefix_list = sorted(all_prefixes)
         with self._session_factory() as db:
+            rate_columns = [HsRate.hs_code]
+            rate_inspector = inspect(db.get_bind())
+            has_hs_prefix = (
+                rate_inspector.has_table(HsRate.__tablename__)
+                and any(
+                    column["name"] == "hs_prefix"
+                    for column in rate_inspector.get_columns(HsRate.__tablename__)
+                )
+            )
+            if has_hs_prefix:
+                rate_columns.append(HsRate.hs_prefix)
             for i in range(0, len(prefix_list), _LEAF_FLAG_CHUNK):
                 chunk = prefix_list[i : i + _LEAF_FLAG_CHUNK]
+                rate_filters = [HsRate.hs_code.in_(chunk)]
+                if has_hs_prefix:
+                    rate_filters.append(HsRate.hs_prefix.in_(chunk))
                 rows = (
-                    db.query(HsRate.hs_code, HsRate.hs_prefix)
-                    .filter(or_(HsRate.hs_code.in_(chunk), HsRate.hs_prefix.in_(chunk)))
+                    db.query(*rate_columns)
+                    .filter(or_(*rate_filters))
                     .all()
                 )
-                for hs_code, hs_prefix in rows:
-                    existing.update(value for value in (hs_code, hs_prefix) if value)
+                for row in rows:
+                    existing.update(value for value in row if value)
         return {code: bool(prefixes_by_code[code] & existing) for code in ambiguous}
 
     # -- сборка иерархии (assembly = Builder) ------------------------------
