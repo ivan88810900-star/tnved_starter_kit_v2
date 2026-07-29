@@ -204,17 +204,20 @@ legacy (сверх structural). До TASK-CANONICAL-004 контур не был
   к реальному 10-значному коду; группы явно помечены как подсказки, а не коды.
 - Controlled nesting восстанавливает один уровень смысловых подгрупп только по
   явной глубине тире официального текста либо строгому title-prefix внутри текущего
-  parent segment. Сомнительный, слишком глубокий или unsplit-сегмент более 30 кодов
-  остаётся плоским с диагностической причиной.
+  parent segment и внутри его официального code scope. Реальная глубина тире
+  нормализуется в два пользовательских semantic-уровня; вышедшие за scope соседние
+  коды возвращаются на безопасный уровень, одинаковые подгруппы одного parent
+  объединяются. Сомнительный или unsplit-сегмент более 30 кодов остаётся плоским
+  с диагностической причиной.
 - Validator и aggregate-only full-data gate проверяют semantic depth/parent,
   code invariance, bounded unsplit span и целевые случаи `0302/0303/5208/8517`.
 - UI различает «Смысловую группу» и «Смысловое уточнение» и показывает вложенность
   как следующий вопрос, не выдавая бескодовую группу за код ТН ВЭД.
 - Основные `CANONICAL_TREE_ENABLED` / `CANONICAL_TREE_SHADOW` остаются OFF.
-- Sandbox HTTP smoke: heading `9988`, 2/2 кода, Canonical coverage 100%, fake codes 0.
-  15 self-contained hierarchy/Guided tests и frontend typecheck/build проходят.
-  Полная проверка сложных headings `0302/0303/5208/8517` должна быть повторена на
-  пользовательской полной БД; текущая sandbox-БД содержит только 2 commodity-строки.
+- Full-data read-only Gate на пользовательском экспорте с 17,809 commodities:
+  `0302/0303/5208/8517` зелёные, 328/328 целевых кодов достижимы, Canonical
+  coverage 100%, fake codes 0, hierarchy checks passed. 17 self-contained
+  hierarchy/Guided tests проходят. Canonical runtime flags оставались OFF.
 
 ---
 
@@ -222,7 +225,7 @@ legacy (сверх structural). До TASK-CANONICAL-004 контур не был
 
 | Коммит | Дата | Описание |
 |--------|------|---------|
-| Controlled semantic nesting | 2026-07-24 | Bounded group→subgroup hierarchy, fail-flat diagnostics, validator/full-data checks and nested Guided UI question; full-data acceptance pending |
+| Controlled semantic nesting | 2026-07-29 | Full-data approved bounded group→subgroup hierarchy with official code-scope guards, spillover protection, duplicate subgroup merge and 328/328 target-code coverage; flags OFF |
 | Guided TN VED v1 | 2026-07-23 | Canonical-backed смысловой маршрут, fail-closed integrity gate, отдельный API и UI без включения `/children` flags |
 | Full-data MVP acceptance | 2026-07-21 | Пользовательская БД 6.78 GB прошла strict read-only gate: 21 раздел, 96 групп, 17,809 commodities, 13,322 rates; auth + 4/4 сценария; файл БД неизменён; Canonical flags и внешний LLM OFF; evidence сохранён в `docs/ai-workflow/evidence/mvp-acceptance-20260721.json` |
 | Strict read-only MVP gate | 2026-07-21 | Acceptance открывает SQLite через `mode=ro` + `query_only`, отключает startup-записи/планировщики/внешний LLM и Canonical flags, проверяет неизменность файла БД, выдаёт aggregate-only JSON; sandbox 4/4, full-data threshold корректно отклоняет малую БД |
@@ -274,7 +277,7 @@ legacy (сверх structural). До TASK-CANONICAL-004 контур не был
 | **TASK-MVP-ASSISTANT-001** — grounded assistant: серверные факты, цитаты, no-key fallback, guarded LLM | ✅ Completed | — |
 | Full-data MVP acceptance | ✅ Completed: полная пользовательская БД, strict read-only, auth + 4/4, evidence сохранён | — |
 | Guided TN VED v1 | ✅ Completed locally: API/UI, 100% Canonical binding gate, safe fallback | — |
-| Full-data guided acceptance (`0302/0303/5208/8517`) | Нужен read-only прогон на пользовательской БД | Высокий |
+| Full-data guided acceptance (`0302/0303/5208/8517`) | ✅ Completed: 328/328 target codes, 100% Canonical coverage, hierarchy green | — |
 | **TASK-SEMANTIC-003** — controlled nesting смысловых подгрупп | Реализовано локально; нужен read-only full-data gate | Высокий |
 | Interactive frontend acceptance | Следующий этап: пользовательский путь search → card → payments → requirements/risk → assistant | Высокий |
 | Derisking после TASK-005: aliases/history (`superseded_by`, previous codes/IDs) | Рекомендован | Высокий |

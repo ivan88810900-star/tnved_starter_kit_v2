@@ -21,7 +21,6 @@ from ..tnved_tree.data_access import exclude_obsolete_reserved
 from ..tnved_tree.helpers import digits, node_level
 from .extractor import ExtractionResult, SemanticStructureExtractor
 from .models import (
-    MAX_SEMANTIC_GROUP_LEVELS,
     MAX_UNSPLIT_GROUP_CODES,
     NestingFallback,
     SemanticNavigationTree,
@@ -220,6 +219,7 @@ class SemanticNavigationBuilder:
                 top_level.append(node)
                 continue
 
+            spillover = SemanticNavigationBuilder._detach_out_of_scope_children(node)
             dash_depth = int(node.metadata.get("dash_depth") or 1)
             parent_title_hint = node.metadata.get("parent_title_hint")
             parent_source_hint = node.metadata.get("parent_source_code_hint")
@@ -228,6 +228,7 @@ class SemanticNavigationBuilder:
 
             if not wants_nesting:
                 top_level.append(node)
+                top_level.extend(spillover)
                 if dash_depth == 1:
                     current_parent = node
                 else:
@@ -243,20 +244,28 @@ class SemanticNavigationBuilder:
             )
             if not parent_matches:
                 top_level.append(node)
+                top_level.extend(spillover)
                 fallback(node, "parent_segment_not_active", parent=current_parent)
                 continue
 
-            if (
-                hierarchy_hint == "dash_depth"
-                and dash_depth > MAX_SEMANTIC_GROUP_LEVELS
-            ):
+            parent_scope = (
+                SemanticNavigationBuilder._semantic_scope_prefix(current_parent)
+                if current_parent is not None
+                else None
+            )
+            source_code = digits(str(node.metadata.get("extracted_from") or "")).zfill(
+                10
+            )[:10]
+            if parent_scope and not source_code.startswith(parent_scope):
                 top_level.append(node)
-                fallback(node, "semantic_depth_exceeds_limit", parent=current_parent)
+                top_level.extend(spillover)
+                fallback(node, "outside_parent_code_scope", parent=current_parent)
                 continue
 
             unsplit_codes = SemanticNavigationBuilder._unsplit_real_code_count(node)
             if unsplit_codes > MAX_UNSPLIT_GROUP_CODES:
                 top_level.append(node)
+                top_level.extend(spillover)
                 fallback(
                     node,
                     "unsplit_span_exceeds_limit",
@@ -267,10 +276,99 @@ class SemanticNavigationBuilder:
 
             node.node_type = SemanticNodeType.CLASSIFICATION_SUBGROUP
             node.metadata["nested_by"] = hierarchy_hint
-            current_parent.children.append(node)
+            existing = next(
+                (
+                    child
+                    for child in current_parent.children
+                    if (
+                        child.node_type == SemanticNodeType.CLASSIFICATION_SUBGROUP
+                        and SemanticNavigationBuilder._normalise_group_title(
+                            child.title
+                        )
+                        == SemanticNavigationBuilder._normalise_group_title(node.title)
+                    )
+                ),
+                None,
+            )
+            if existing is None:
+                current_parent.children.append(node)
+            else:
+                variants = existing.metadata.setdefault("merged_variants", [])
+                if not variants:
+                    variants.append(
+                        {
+                            "raw": existing.metadata.get("raw"),
+                            "extracted_from": existing.metadata.get("extracted_from"),
+                        }
+                    )
+                variants.append(
+                    {
+                        "raw": node.metadata.get("raw"),
+                        "extracted_from": node.metadata.get("extracted_from"),
+                    }
+                )
+                existing.children.extend(node.children)
+            current_parent.children.extend(spillover)
 
         root.children = top_level
         return fallbacks
+
+    @staticmethod
+    def _normalise_group_title(value: str) -> str:
+        return " ".join((value or "").casefold().split())
+
+    @staticmethod
+    def _detach_out_of_scope_children(
+        node: SemanticNode,
+    ) -> list[SemanticNode]:
+        """Не позволить trailing-заголовку поглотить соседний кодовый диапазон."""
+
+        scope = SemanticNavigationBuilder._semantic_scope_prefix(node)
+        if not scope:
+            return []
+
+        kept: list[SemanticNode] = []
+        spillover: list[SemanticNode] = []
+        for child in node.children:
+            child_code = SemanticNavigationBuilder._first_real_code(child)
+            if child_code and not child_code.startswith(scope):
+                spillover.append(child)
+            else:
+                kept.append(child)
+        node.children = kept
+        return spillover
+
+    @staticmethod
+    def _semantic_scope_prefix(node: SemanticNode) -> str | None:
+        """Вернуть официальный кодовый диапазон level-1 semantic-группы.
+
+        Бескодовый заголовок из официального текста обычно занимает нечётный
+        промежуточный уровень: перед несколькими L6-кодами это 5-значный
+        диапазон, перед L8 — 7-значный и т. д. Первое реальное кодовое поддерево
+        плоского прохода надёжно задаёт этот диапазон. Проверка не даёт
+        оставшейся активной группе («тунец») поглотить более поздний соседний
+        диапазон («мерлуза»), даже если у его trailing-заголовка больше тире.
+        """
+
+        code = SemanticNavigationBuilder._first_real_code(node)
+        if not code:
+            return None
+        level = node_level(code)
+        if level <= 4:
+            return None
+        return code[: level - 1]
+
+    @staticmethod
+    def _first_real_code(node: SemanticNode) -> str | None:
+        if node.carries_real_code and node.code:
+            return digits(node.code).zfill(10)[:10]
+        for child in node.children:
+            if child.is_group:
+                continue
+            found = SemanticNavigationBuilder._first_real_code(child)
+            if found:
+                return found
+        return None
 
     @staticmethod
     def _unsplit_real_code_count(node: SemanticNode) -> int:

@@ -43,17 +43,21 @@ def _db_codes(db, heading4: str) -> set[str]:
 
 
 def _count_unsplit_real_codes(node) -> int:
-    """Коды группы без захода в дочерние semantic-подгруппы."""
+    """Прямые кодовые варианты группы на текущем пользовательском шаге."""
 
-    count = 1 if node.carries_real_code and node.code else 0
-    for child in node.children:
-        if child.node_type in {
-            SemanticNodeType.CLASSIFICATION_GROUP,
-            SemanticNodeType.CLASSIFICATION_SUBGROUP,
-        }:
-            continue
-        count += _count_unsplit_real_codes(child)
-    return count
+    return sum(
+        1
+        for child in node.children
+        if (
+            child.node_type
+            not in {
+                SemanticNodeType.CLASSIFICATION_GROUP,
+                SemanticNodeType.CLASSIFICATION_SUBGROUP,
+            }
+            and child.carries_real_code
+            and child.code
+        )
+    )
 
 
 @unittest.skipUnless(_OK, "semantic navigation tests need FastAPI app deps")
@@ -121,7 +125,9 @@ class SemanticNavigationV1Tests(unittest.TestCase):
     def test_expected_groups_found_for_0302(self) -> None:
         titles = self._group_titles("0302")
         for expected in ("лососевые", "камбалообразные", "тунец"):
-            self.assertIn(expected, titles, f"0302 должен содержать группу {expected!r}")
+            self.assertIn(
+                expected, titles, f"0302 должен содержать группу {expected!r}"
+            )
 
     def test_0303_tuna_has_bounded_direct_span_and_nested_species(self) -> None:
         with SessionLocal() as db:
@@ -133,9 +139,7 @@ class SemanticNavigationV1Tests(unittest.TestCase):
             and n.title.strip().lower() == "тунец"
         ]
         self.assertTrue(tunets, "0303 должен иметь группу 'тунец'")
-        max_unsplit_codes = max(
-            _count_unsplit_real_codes(group) for group in tunets
-        )
+        max_unsplit_codes = max(_count_unsplit_real_codes(group) for group in tunets)
         self.assertLess(
             max_unsplit_codes,
             20,

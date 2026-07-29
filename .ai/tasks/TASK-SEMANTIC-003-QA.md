@@ -1,123 +1,109 @@
 # QA Report: TASK-SEMANTIC-003
 
-> Date: 2026-07-24
-> Environment: sandbox DB with 2 synthetic commodity rows
-> Full-data status: pending read-only run on the user's 17,809-row commodity set
+> Date: 2026-07-29
+> Environment: user Gate-2 export with 17,809 commodity rows
+> Full-data status: approved
 
-## Commands run
+## Input integrity
 
-1. Controlled hierarchy + Guided contract:
+- Archive SHA-256:
+  `7a6e93ec298042ef97b6e08db2231651154f8ea2e84d5de597146858eeb44dfe`.
+- Extracted DB SHA-256:
+  `b3ece86c68b5010486ec64cce102759673ddc585e634e5698be596d22a8d8d2b`.
+- Rows: 21 sections, 96 chapters, 17,809 commodities, 3,258 structural
+  `hs_rates` keys.
+- The archive was produced by the pre-`7f38de3` exporter and therefore lacked
+  the later-required `hs_prefix` column. The original archive and extracted DB
+  were not modified. A separate temporary compatibility copy added
+  `hs_prefix = hs_code`, which preserves the exact structural leaf semantics
+  of this legacy export. Current exporter code and its contract test already
+  include `hs_prefix`.
+- The original extracted DB retained the same SHA-256 after all checks.
 
-   ```bash
-   cd customs-clear/backend
-   /tmp/tariff-hierarchy-venv/bin/python -m pytest \
-     tests/test_semantic_navigation_hierarchy.py \
-     tests/test_guided_tnved_navigation.py -q
-   ```
+## Defects found and corrected
 
-   Result: `15 passed, 1 warning in 0.54s`, exit `0`. The warning is a
-   Starlette deprecation notice inside the installed test client.
+1. Official dash depth was incorrectly compared with the number of semantic UI
+   levels. Real depth-3/4 headers could never become a second-level semantic
+   choice.
+2. An active text parent could absorb a later neighbouring tariff range. A
+   code-scope guard now requires the child source to remain inside the parent's
+   official odd-level prefix range.
+3. A narrow trailing group could retain following sibling codes. Out-of-scope
+   children are detached and returned to the safe parent/root level.
+4. Repeated same-title subgroups under one parent are merged with source
+   variants retained in metadata, so `5208` no longer shows duplicate
+   “полотняного переплетения” choices.
+5. The tuna UX-load check counted every deep canonical descendant rather than
+   the direct choices on the current screen. It now measures direct code
+   choices; deep completeness remains independently gated by expected,
+   reachable and Canonical coverage.
 
-2. Python compile + lint for changed backend files:
+## Commands and results
 
-   ```bash
-   /tmp/tariff-hierarchy-venv/bin/python -m compileall -q \
-     app/services/semantic_navigation \
-     app/services/guided_tnved_navigation.py \
-     scripts/diagnose_semantic_navigation.py \
-     scripts/diagnose_guided_tnved_navigation.py
-
-   /tmp/tariff-hierarchy-venv/bin/ruff check \
-     --select E,F,I --ignore E402,E501 \
-     app/services/semantic_navigation \
-     app/services/guided_tnved_navigation.py \
-     scripts/diagnose_semantic_navigation.py \
-     scripts/diagnose_guided_tnved_navigation.py \
-     tests/test_semantic_navigation_hierarchy.py \
-     tests/test_semantic_navigation_v1.py \
-     tests/test_guided_tnved_navigation.py
-   ```
-
-   Result: `All checks passed!`, exit `0`.
-
-3. Actual Canonical-backed Guided smoke on the sandbox data:
-
-   ```bash
-   CANONICAL_TREE_ENABLED=0 CANONICAL_TREE_SHADOW=0 \
-   /tmp/tariff-hierarchy-venv/bin/python \
-     scripts/diagnose_guided_tnved_navigation.py \
-     --headings 9988 \
-     --require-complete \
-     --output /tmp/guided-tnved-local.json
-   ```
-
-   Result: exit `0`; `status=OK`, `expected_real_codes=2`,
-   `reachable_real_codes=2`, `canonical_coverage=1.0`, `fake_codes=0`,
-   `critical_issues=[]`, `ok=true`. Both Canonical runtime flags stayed OFF.
-
-4. Frontend:
-
-   ```bash
-   cd customs-clear/frontend
-   npm run typecheck
-   npm run build
-   ```
-
-   Result: both exit `0`; Vite transformed `3071` modules and produced the
-   production bundle. The existing large-chunk and Vite plugin deprecation
-   warnings remain non-blocking and are unrelated to this task.
-
-5. Git whitespace:
-
-   ```bash
-   git diff --check
-   ```
-
-   Result: no output, exit `0`.
-
-## Data-dependent checks
-
-The mandatory full-data checks cannot be truthfully completed in this sandbox:
-`customs-clear/backend/customs.db` contains only 2 rows (`9988100000`,
-`9988200000`) and none of the target headings.
-
-The attempted required regression makes this limitation visible:
-
-```bash
-/tmp/tariff-hierarchy-venv/bin/python -m pytest \
-  tests/test_tree_engine_v2.py -q
-```
-
-Result: exit `1`; `2 failed, 2 passed`. Both failures are missing-fixture
-failures (`legacy missing heading 0101`, `heading 0101 not addressable`), not
-semantic-nesting failures.
-
-The new aggregate-only v2 gate is ready for the full database:
+### Self-contained hierarchy and Guided API
 
 ```bash
 cd customs-clear/backend
-python3 scripts/diagnose_guided_tnved_navigation.py \
-  --require-complete \
-  --output "guided-tnved-$(date +%Y%m%d-%H%M%S).json"
+DATABASE_URL=sqlite:////tmp/.../canonical-gate2-compatible.db \
+CUSTOMSCLEAR_READ_ONLY=1 \
+CANONICAL_TREE_ENABLED=0 \
+CANONICAL_TREE_SHADOW=0 \
+/tmp/tariff-full-gate-venv/bin/pytest -q \
+  tests/test_semantic_navigation_hierarchy.py \
+  tests/test_guided_tnved_navigation.py
 ```
 
-It now requires both the existing Canonical integrity conditions and the
-hierarchy checks for `0302`, `0303`, `5208`, and `8517`.
+Result: `17 passed, 1 warning`, exit `0`. The warning is the existing
+Starlette test-client deprecation notice.
 
-## Invariants covered by self-contained tests
+### Full-data aggregate-only acceptance
 
-- Every expected real code remains reachable.
-- No semantic group carries a customs code.
-- Reparenting refreshes every `parent_id` and `depth`.
-- Rejected level-1 candidates close the parent segment.
-- A subgroup over the 30-code unsplit limit remains flat with a diagnostic.
-- `5208` duplicate plain-weave titles remain distinct under their own parents.
-- `0303` strict tuna title-prefix children become subgroups.
-- Guided serialization turns a subgroup into an extra user question.
-- Canonical coverage remains 100%; incomplete binding still fails closed.
+```bash
+DATABASE_URL=sqlite:////tmp/.../canonical-gate2-compatible.db \
+CUSTOMSCLEAR_READ_ONLY=1 \
+CANONICAL_TREE_ENABLED=0 \
+CANONICAL_TREE_SHADOW=0 \
+/tmp/tariff-full-gate-venv/bin/python \
+  scripts/diagnose_guided_tnved_navigation.py \
+  --require-complete \
+  --output /tmp/.../guided-full-final.json
+```
+
+Result: exit `0`, `ok=true`, one Canonical snapshot:
+
+| Heading | Expected/reachable | Coverage | Fake | Semantic groups/subgroups | Hierarchy |
+|---|---:|---:|---:|---:|---|
+| 0302 | 120 / 120 | 1.0 | 0 | 12 / 4 | required groups present |
+| 0303 | 146 / 146 | 1.0 | 0 | 11 / 3 | tuna species nested; direct span < 20 |
+| 5208 | 37 / 37 | 1.0 | 0 | 8 / 3 | plain weave nested under three finishes |
+| 8517 | 25 / 25 | 1.0 | 0 | 5 / 0 | technical ranges rejected |
+
+All headings returned `status=OK`, `complete=true`, no critical issues and
+semantic depth at most two. Non-zero fallback counts are expected safe
+rejections of out-of-scope or unparented candidates, not data loss.
+
+### Static checks
+
+```bash
+/tmp/tariff-full-gate-venv/bin/ruff check \
+  --select E,F,I --ignore E402,E501 \
+  app/services/semantic_navigation/builder.py \
+  scripts/diagnose_guided_tnved_navigation.py \
+  tests/test_semantic_navigation_hierarchy.py \
+  tests/test_semantic_navigation_v1.py
+
+/tmp/tariff-full-gate-venv/bin/python -m compileall -q \
+  app/services/semantic_navigation \
+  scripts/diagnose_guided_tnved_navigation.py \
+  tests/test_semantic_navigation_hierarchy.py \
+  tests/test_semantic_navigation_v1.py
+```
+
+Result: all checks passed, exit `0`.
 
 ## Verdict
 
-**IMPLEMENTATION READY; FULL-DATA APPROVAL PENDING.**
+**APPROVED FOR THE DEFAULT-OFF GUIDED READ PATH.**
 
-No merge and no Canonical flag enablement are authorized or performed.
+No merge was performed. `CANONICAL_TREE_ENABLED` and
+`CANONICAL_TREE_SHADOW` remained OFF throughout; no rollout decision is implied.

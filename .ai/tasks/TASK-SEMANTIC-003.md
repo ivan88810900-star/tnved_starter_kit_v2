@@ -1,27 +1,33 @@
 # TASK-SEMANTIC-003: Semantic Navigation — hierarchical grouping quality
 
-> **Status:** implemented locally; full-data acceptance pending
+> **Status:** completed; full-data acceptance passed
 > **Owner:** Backend Engineer (+ Architect review)  
 > **Created:** 2026-06-29  
 > **Depends on:** Semantic Navigation v1 этапы 1–2 (модуль + strict extraction + flat grouping)
 
 ---
 
-## Implementation progress (2026-07-24)
+## Implementation progress (2026-07-29)
 
 - Controlled two-pass nesting реализован: безопасная flat-модель остаётся первым
   проходом, а второй проход вкладывает подгруппу только по явному dash-depth либо
   строгому title-prefix hint и только в текущий активный parent segment.
 - Добавлены guards: максимум два semantic-уровня, максимум 30 кодов в одном
-  unsplit-сегменте; при нарушении группа остаётся плоской, причина попадает в
+  unsplit-сегменте и обязательная принадлежность официальному кодовому
+  диапазону parent; при нарушении группа остаётся плоской, причина попадает в
   диагностику.
+- Реальная глубина тире ТН ВЭД отображается в два пользовательских semantic-
+  уровня, а не ошибочно трактуется как глубина UI. Выходящие за scope соседние
+  коды возвращаются на безопасный уровень; одинаковые подгруппы одного parent
+  объединяются без потери source metadata.
 - Validator проверяет parent type, semantic depth, unsplit span, ссылки/depth и
   прежние инварианты реальных кодов.
 - Guided API/UI уже поддерживают дополнительный вопрос для
   `classification_subgroup`; Canonical binding и fail-closed поведение сохранены.
-- 15 self-contained backend tests зелёные; frontend typecheck/build зелёные.
-- Полный прогон `0302/0303/5208/8517` на пользовательской БД ещё обязателен:
-  локальная sandbox-БД содержит только 2 специальных тестовых commodity-строки.
+- 17 self-contained hierarchy/Guided backend tests зелёные.
+- Полный strict read-only прогон `0302/0303/5208/8517` на пользовательском
+  Gate-2 экспорте (17,809 commodity-строк) зелёный: 328/328 целевых кодов
+  достижимы, Canonical coverage 100%, fake codes 0, все hierarchy checks passed.
 
 ---
 
@@ -128,13 +134,13 @@ python scripts/diagnose_semantic_navigation.py
 
 ## Acceptance criteria
 
-- [ ] 0302: groups лососевые, камбалообразные, тунец present; all real codes reachable
-- [ ] 0303: «тунец» group has **< 20** direct commodity children (subgroups nested)
-- [ ] 8517: no accepted groups «10 ГГц» / «1610 нм»; rejected list contains them
-- [ ] 5208: «полотняного переплетения» nested under color groups (not only flat duplicate report lines)
-- [ ] Validator: 0 critical issues on 0302, 0303, 5208, 8517
-- [ ] QA report with **actual command output** per QA_PROTOCOL
-- [ ] git diff only `semantic_navigation/`, diagnose script, tests
+- [x] 0302: groups лососевые, камбалообразные, тунец present; all real codes reachable
+- [x] 0303: «тунец» group has **< 20** direct commodity children (subgroups nested)
+- [x] 8517: no accepted groups «10 ГГц» / «1610 нм»; rejected list contains them
+- [x] 5208: «полотняного переплетения» nested under color groups (not only flat duplicate report lines)
+- [x] Validator: 0 critical issues on 0302, 0303, 5208, 8517
+- [x] QA report with **actual command output** per QA_PROTOCOL
+- [x] git diff only `semantic_navigation/`, diagnose script, tests and task-state docs
 
 ---
 

@@ -41,8 +41,7 @@ def test_dash_depth_and_parent_hints_are_extracted_from_official_text() -> None:
             ),
             SourceRecord(
                 "5208110000",
-                "– – полотна массой не более 100 г/м² "
-                "– – полотняного переплетения:",
+                "– – полотна массой не более 100 г/м² – – полотняного переплетения:",
             ),
             SourceRecord(
                 "5208120000",
@@ -50,8 +49,7 @@ def test_dash_depth_and_parent_hints_are_extracted_from_official_text() -> None:
             ),
             SourceRecord(
                 "5208210000",
-                "– – полотна массой не более 100 г/м² "
-                "– – полотняного переплетения:",
+                "– – полотна массой не более 100 г/м² – – полотняного переплетения:",
             ),
             SourceRecord("5208220000", "– – прочие"),
         ],
@@ -108,9 +106,7 @@ def test_5208_repeated_titles_are_nested_under_their_own_parent() -> None:
             for node in parent.children
             if node.node_type == SemanticNodeType.CLASSIFICATION_SUBGROUP
         ]
-        assert [node.title for node in subgroups] == [
-            "полотняного переплетения"
-        ]
+        assert [node.title for node in subgroups] == ["полотняного переплетения"]
         assert subgroups[0].metadata["nested_by"] == "dash_depth"
 
     assert set(tree.real_codes_in_tree()) == set(tree.expected_real_codes)
@@ -120,6 +116,88 @@ def test_5208_repeated_titles_are_nested_under_their_own_parent() -> None:
     )
     assert not validation.has_critical
     assert not tree.nesting_fallbacks
+
+
+def test_official_dash_depth_is_mapped_to_semantic_subgroup_level() -> None:
+    extraction = _extract(
+        "5208",
+        [
+            SourceRecord(
+                "5208000000",
+                "Ткани хлопчатобумажные: – неотбеленные:",
+            ),
+            SourceRecord(
+                "5208120000",
+                "– – полотняного переплетения, более 100 г/м²: "
+                "– – – полотняного переплетения, до 130 г/м²:",
+            ),
+            SourceRecord("5208121600", "– – – – не более 165 см"),
+            SourceRecord(
+                "5208121900",
+                "– – – – более 165 см – – – полотняного переплетения, более 130 г/м²:",
+            ),
+            SourceRecord("5208129600", "– – – – не более 165 см"),
+            SourceRecord("5208130000", "– – саржевого переплетения"),
+        ],
+    )
+
+    assert extraction.groups[1].dash_depth == 3
+    tree = _assemble(extraction)
+    parent = _group(tree, "неотбеленные")
+    subgroups = [
+        child
+        for child in parent.children
+        if child.node_type == SemanticNodeType.CLASSIFICATION_SUBGROUP
+    ]
+    subgroup = subgroups[0]
+
+    assert len(subgroups) == 1
+    assert subgroup.node_type == SemanticNodeType.CLASSIFICATION_SUBGROUP
+    assert subgroup.parent_id == parent.id
+    assert len(subgroup.metadata["merged_variants"]) == 2
+    assert "5208130000" not in {
+        node.code for node in subgroup.iter_descendants() if node.code
+    }
+    assert "5208130000" in {
+        node.code for node in parent.iter_descendants() if node.code
+    }
+    assert not tree.nesting_fallbacks
+
+
+def test_deeper_header_outside_parent_code_scope_stays_flat() -> None:
+    extraction = _extract(
+        "0303",
+        [
+            SourceRecord("0303000000", "Рыба мороженая: – тунец:"),
+            SourceRecord("0303410000", "– – тунец длинноперый"),
+            SourceRecord(
+                "0303450000",
+                "– – тунец синий: – – – тунец синий промышленный:",
+            ),
+            SourceRecord("0303451000", "– – – – товар"),
+            SourceRecord(
+                "0303660000",
+                "– – мерлуза: – – – мерлуза рода Merluccius:",
+            ),
+            SourceRecord("0303661000", "– – – – товар"),
+        ],
+    )
+
+    tree = _assemble(extraction)
+    tuna = _group(tree, "тунец")
+    nested = {
+        node.title
+        for node in tuna.children
+        if node.node_type == SemanticNodeType.CLASSIFICATION_SUBGROUP
+    }
+
+    assert "тунец синий промышленный" in nested
+    merluza = _group(tree, "мерлуза рода Merluccius")
+    assert merluza.node_type == SemanticNodeType.CLASSIFICATION_GROUP
+    assert merluza.parent_id == tree.root.id
+    assert [item.reason for item in tree.nesting_fallbacks] == [
+        "outside_parent_code_scope"
+    ]
 
 
 def test_tuna_title_prefix_is_a_conservative_secondary_hint() -> None:
@@ -183,17 +261,16 @@ def test_rejected_level_one_candidate_closes_parent_segment() -> None:
         node.node_type != SemanticNodeType.CLASSIFICATION_SUBGROUP
         for node in tree.group_nodes()
     )
-    assert [item.reason for item in tree.nesting_fallbacks] == [
-        "no_active_parent_hint"
-    ]
+    assert [item.reason for item in tree.nesting_fallbacks] == ["no_active_parent_hint"]
 
 
 def test_oversized_unsplit_subgroup_falls_back_to_flat_without_code_loss() -> None:
     heading = "9999"
-    codes = [
-        f"9999{index:06d}"
-        for index in range(1, MAX_UNSPLIT_GROUP_CODES + 3)
+    source_code = "9999100000"
+    group_codes = ["9999111100"] + [
+        f"99991111{index:02d}" for index in range(1, MAX_UNSPLIT_GROUP_CODES + 3)
     ]
+    codes = [source_code, *group_codes]
     records = {
         code: SourceRecord(code, f"Тестовый товар {index}")
         for index, code in enumerate(codes, start=1)
@@ -215,8 +292,8 @@ def test_oversized_unsplit_subgroup_falls_back_to_flat_without_code_loss() -> No
             ExtractedGroup(
                 title="слишком широкая подгруппа",
                 raw="– слишком широкая подгруппа",
-                source_code=codes[0],
-                after_code=codes[0],
+                source_code=source_code,
+                after_code=source_code,
                 confidence="medium",
                 reason="embedded_subheader",
                 dash_depth=2,
@@ -234,19 +311,14 @@ def test_oversized_unsplit_subgroup_falls_back_to_flat_without_code_loss() -> No
     assert wide.parent_id == tree.root.id
     assert len(tree.nesting_fallbacks) == 1
     assert tree.nesting_fallbacks[0].reason == "unsplit_span_exceeds_limit"
-    assert (
-        tree.nesting_fallbacks[0].real_code_count
-        == MAX_UNSPLIT_GROUP_CODES + 1
-    )
+    assert tree.nesting_fallbacks[0].real_code_count == len(group_codes)
     assert set(tree.real_codes_in_tree()) == set(tree.expected_real_codes)
     validation = SemanticNavigationValidator().validate(
         tree,
         db_codes=tree.expected_real_codes,
     )
     assert not validation.has_critical
-    assert "oversized_unsplit_group" in {
-        issue.code for issue in validation.issues
-    }
+    assert "oversized_unsplit_group" in {issue.code for issue in validation.issues}
 
 
 def test_depth_and_parent_links_are_refreshed_after_reparenting() -> None:

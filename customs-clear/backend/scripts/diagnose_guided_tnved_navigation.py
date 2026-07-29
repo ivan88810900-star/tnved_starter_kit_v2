@@ -34,12 +34,18 @@ def _normalise_title(raw: str) -> str:
 
 
 def _unsplit_code_count(node: dict) -> int:
-    count = 1 if node.get("code") else 0
-    for child in node.get("children") or []:
-        if child.get("role") == "semantic_choice":
-            continue
-        count += _unsplit_code_count(child)
-    return count
+    """Число прямых кодовых вариантов до следующего пользовательского шага.
+
+    Глубокие canonical-потомки уже свёрнуты внутри собственного варианта и не
+    должны искусственно завышать нагрузку первого экрана. Их полнота отдельно
+    контролируется expected/reachable/canonical coverage.
+    """
+
+    return sum(
+        1
+        for child in node.get("children") or []
+        if child.get("role") != "semantic_choice" and child.get("code")
+    )
 
 
 def _hierarchy_checks(heading: str, choices: list[dict]) -> dict[str, bool]:
@@ -171,13 +177,9 @@ def run(headings: list[str]) -> dict:
                     "semantic_subgroups": integrity.get("semantic_subgroups"),
                     "semantic_max_depth": integrity.get("semantic_max_depth"),
                     "nesting_fallbacks": integrity.get("nesting_fallbacks"),
-                    "rejected_unsafe_groups": integrity.get(
-                        "rejected_unsafe_groups"
-                    ),
+                    "rejected_unsafe_groups": integrity.get("rejected_unsafe_groups"),
                     "pruned_empty_groups": integrity.get("pruned_empty_groups"),
-                    "critical_issues": list(
-                        integrity.get("critical_issues") or []
-                    ),
+                    "critical_issues": list(integrity.get("critical_issues") or []),
                     "hierarchy_checks": hierarchy_checks,
                     "hierarchy_ok": all(hierarchy_checks.values()),
                     "complete": bool(integrity.get("complete")),
