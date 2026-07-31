@@ -1,14 +1,24 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowUpRight, FileCheck2, ShieldAlert, ShieldCheck } from 'lucide-react';
+import { ArrowUpRight, Bot, FileCheck2, ShieldAlert, ShieldCheck } from 'lucide-react';
 import type { TnvedCommodityDetail, TnvedPreview } from '../../api/tnvedCatalog';
 import { formatCode } from '../../api/tnvedCatalog';
+import { useAssistantSurfaceVisible } from '../../context/ClientCapabilitiesContext';
+import { requestAssistantWithPrefill } from '../../store/calculatorAssistantBridge';
+import type { NormativeRequirementsBlockData } from '../../types/api.types';
 import { formatDutyDisplay, formatPercentRate } from '../../utils/dutyRate';
 import { formatTnvedCommodityName } from '../../utils/tnvedDisplayText';
+
+export type ProductPreviewStatus = 'idle' | 'loading' | 'loaded' | 'error';
 
 type Props = {
   detail: TnvedCommodityDetail;
   preview: TnvedPreview | null;
+  previewStatus?: ProductPreviewStatus;
+  normativeBlock: NormativeRequirementsBlockData | null;
+  normativeLoading: boolean;
+  normativeLoaded: boolean;
+  normativeError?: string | null;
 };
 
 export const PERMIT_BADGES = new Set([
@@ -84,19 +94,48 @@ export function measureTypeLabel(measure: NonTariffMeasureItem): string {
   return measure.type_label?.trim() || MEASURE_DESCRIPTIONS[t] || measure.measure_type;
 }
 
-function documentsSummary(preview: TnvedPreview | null): { text: string; hasRequirements: boolean } {
-  const badges = preview?.non_tariff?.measure_badges ?? [];
-  if (preview?.non_tariff?.has_ban) {
-    return { text: 'Запрет или ограничение', hasRequirements: true };
+function documentsSummary(
+  preview: TnvedPreview | null,
+  previewStatus: ProductPreviewStatus,
+  normativeBlock: NormativeRequirementsBlockData | null,
+  normativeLoading: boolean,
+  normativeLoaded: boolean,
+  normativeError?: string | null,
+): { text: string; state: 'unknown' | 'required' | 'clear' } {
+  const previewVerified = previewStatus === 'loaded' && preview?.non_tariff != null;
+  const normativeVerified =
+    normativeLoaded && !normativeLoading && !normativeError && normativeBlock != null;
+
+  if (previewVerified && preview.non_tariff?.has_ban) {
+    return { text: 'Запрет или ограничение', state: 'required' };
   }
-  const permits = badges.filter((b) => PERMIT_BADGES.has(b));
-  if (permits.length > 0) {
-    return { text: permits.join(', '), hasRequirements: true };
+
+  const requirementLabels = Array.from(
+    new Set([
+      ...(normativeVerified
+        ? (normativeBlock.required_documents ?? [])
+            .map((document) => String(document.permit_type ?? '').trim().toUpperCase())
+            .filter(Boolean)
+        : []),
+      ...(previewVerified ? (preview.non_tariff?.measure_badges ?? []) : []),
+    ]),
+  );
+  if (requirementLabels.length > 0) {
+    return { text: requirementLabels.slice(0, 4).join(', '), state: 'required' };
   }
-  if (badges.length > 0) {
-    return { text: badges.slice(0, 4).join(', '), hasRequirements: true };
+
+  if (!previewVerified || !normativeVerified) {
+    const unavailable =
+      previewStatus === 'error'
+      || Boolean(normativeError)
+      || (normativeLoaded && !normativeBlock);
+    return {
+      text: unavailable ? 'Нет данных' : 'Проверяем…',
+      state: 'unknown',
+    };
   }
-  return { text: 'Не требуются', hasRequirements: false };
+
+  return { text: 'Не выявлены', state: 'clear' };
 }
 
 type NonTariffMeasureCardsProps = {
@@ -109,7 +148,8 @@ export function NonTariffMeasureCards({ measures }: NonTariffMeasureCardsProps) 
   if (visible.length === 0) {
     return (
       <div className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-600">
-        Документы не требуются.
+        В карточке товара нет отдельных мер нетарифного регулирования. Требования
+        к документам проверяются по нормативному блоку.
       </div>
     );
   }
@@ -145,17 +185,42 @@ export function NonTariffMeasureCards({ measures }: NonTariffMeasureCardsProps) 
   );
 }
 
-export const ProductCardSummary: React.FC<Props> = ({ detail, preview }) => {
+export const ProductCardSummary: React.FC<Props> = ({
+  detail,
+  preview,
+  previewStatus = preview ? 'loaded' : 'idle',
+  normativeBlock,
+  normativeLoading,
+  normativeLoaded,
+  normativeError,
+}) => {
   const navigate = useNavigate();
+  const assistantVisible = useAssistantSurfaceVisible();
   const name = formatTnvedCommodityName((detail.name ?? detail.description ?? '').trim());
   const dutyText = formatDutyDisplay(preview?.payments?.duty || detail.import_duty);
+  const vatRates = preview?.payments?.vat_rates ?? [];
   const vatText =
-    (preview?.payments?.vat_rates ?? []).length > 0
-      ? preview!.payments!.vat_rates!.map((r) => formatPercentRate(r)).join(' / ')
-      : '22%';
+    previewStatus === 'loaded'
+      ? vatRates.length > 0
+        ? vatRates.map((rate) => formatPercentRate(rate)).join(' / ')
+        : 'Нет данных'
+      : previewStatus === 'error'
+        ? 'Нет данных'
+        : 'Проверяем…';
+  const vatTextClass =
+    previewStatus === 'loaded' && vatRates.length > 0
+      ? 'text-emerald-700'
+      : 'text-slate-500';
   const exciseText = (preview?.payments?.excise ?? '').trim();
   const unit = (detail.unit ?? '').trim();
-  const docs = documentsSummary(preview);
+  const docs = documentsSummary(
+    preview,
+    previewStatus,
+    normativeBlock,
+    normativeLoading,
+    normativeLoaded,
+    normativeError,
+  );
 
   const codeDigits = detail.code.replace(/\D/g, '');
   const heading4 = codeDigits.slice(0, 4);
@@ -164,12 +229,21 @@ export const ProductCardSummary: React.FC<Props> = ({ detail, preview }) => {
   if (detail.chapter?.code) crumbs.push(`Гл.${detail.chapter.code}`);
   if (heading4) crumbs.push(heading4);
 
-  const hasBan = Boolean(preview?.non_tariff?.has_ban);
-  const measureBadges = preview?.non_tariff?.measure_badges ?? [];
-  const showRequirementHint = !hasBan && measureBadges.length > 0;
+  const previewVerified = previewStatus === 'loaded' && preview != null;
+  const hasBan = previewVerified && Boolean(preview?.non_tariff?.has_ban);
+
+  const askAssistant = () => {
+    const description = name ? ` (${name})` : '';
+    requestAssistantWithPrefill(
+      `Проверьте товар по коду ТН ВЭД ${codeDigits}${description}. Объясните платежи, обязательные документы и риски.`,
+    );
+  };
 
   return (
-    <section className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+    <section
+      className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm"
+      aria-label="Сводка по товару"
+    >
       <div className="border-b border-slate-100 px-4 py-3 sm:px-5">
         <div className="flex flex-col gap-1 sm:flex-row sm:flex-wrap sm:items-baseline sm:gap-3">
           <span className="font-mono text-xl font-bold tracking-tight text-blue-700 sm:text-2xl">
@@ -198,7 +272,7 @@ export const ProductCardSummary: React.FC<Props> = ({ detail, preview }) => {
         </div>
         <div className="px-4 py-3 text-center sm:px-3">
           <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">НДС</p>
-          <p className="mt-0.5 font-mono text-lg font-bold text-emerald-700">{vatText}</p>
+          <p className={`mt-0.5 font-mono text-lg font-bold ${vatTextClass}`}>{vatText}</p>
         </div>
         {exciseText ? (
           <div className="px-4 py-3 text-center sm:px-3">
@@ -212,7 +286,7 @@ export const ProductCardSummary: React.FC<Props> = ({ detail, preview }) => {
         </div>
       </div>
 
-      <div className="border-t border-slate-100 px-4 py-3 sm:px-5">
+      <div className="flex flex-wrap gap-2 border-t border-slate-100 px-4 py-3 sm:px-5">
         <button
           type="button"
           onClick={() => navigate(`/calculator?code=${encodeURIComponent(detail.code.replace(/\D/g, '').slice(0, 10))}`)}
@@ -221,6 +295,16 @@ export const ProductCardSummary: React.FC<Props> = ({ detail, preview }) => {
           Рассчитать платежи по этому коду
           <ArrowUpRight className="h-4 w-4" aria-hidden />
         </button>
+        {assistantVisible ? (
+          <button
+            type="button"
+            onClick={askAssistant}
+            className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-indigo-200 bg-indigo-50 px-4 py-2.5 text-sm font-semibold text-indigo-800 transition hover:border-indigo-300 hover:bg-indigo-100 sm:w-auto"
+          >
+            <Bot className="h-4 w-4" aria-hidden />
+            Спросить помощника
+          </button>
+        ) : null}
       </div>
 
       {hasBan ? (
@@ -228,15 +312,24 @@ export const ProductCardSummary: React.FC<Props> = ({ detail, preview }) => {
           <ShieldAlert className="h-4 w-4 shrink-0" aria-hidden />
           Имеются запреты или ограничения на ввоз — проверьте условия.
         </div>
-      ) : showRequirementHint ? (
+      ) : docs.state === 'required' ? (
         <div className="flex items-start gap-2 border-t border-amber-200 bg-amber-50 px-4 py-2.5 text-sm text-amber-800 sm:px-5">
           <FileCheck2 className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
-          <span>Требуются разрешительные документы{measureBadges.length > 0 ? `: ${measureBadges.join(', ')}` : ''}.</span>
+          <span>Требуются разрешительные документы: {docs.text}.</span>
         </div>
-      ) : (
+      ) : docs.state === 'clear' ? (
         <div className="flex items-center gap-2 border-t border-emerald-100 bg-emerald-50 px-4 py-2.5 text-sm text-emerald-700 sm:px-5">
           <ShieldCheck className="h-4 w-4 shrink-0" aria-hidden />
           Особых разрешительных документов не выявлено.
+        </div>
+      ) : (
+        <div className="flex items-start gap-2 border-t border-slate-200 bg-slate-50 px-4 py-2.5 text-sm text-slate-700 sm:px-5">
+          <FileCheck2 className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
+          <span>
+            {previewStatus === 'error'
+              ? 'Не удалось подтвердить наличие или отсутствие разрешительных документов.'
+              : 'Проверяем разрешительные документы и ограничения.'}
+          </span>
         </div>
       )}
     </section>

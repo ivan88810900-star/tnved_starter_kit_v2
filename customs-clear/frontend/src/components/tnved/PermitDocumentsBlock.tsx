@@ -12,6 +12,9 @@ type Props = {
   hsCode: string;
   productName?: string;
   normativeBlock: NormativeRequirementsBlockData | null | undefined;
+  normativeLoading?: boolean;
+  normativeLoaded?: boolean;
+  normativeError?: string | null;
 };
 
 type VerifyRow = {
@@ -25,7 +28,14 @@ type VerifyRow = {
   freshness_label?: string;
 };
 
-export function PermitDocumentsBlock({ hsCode, productName, normativeBlock }: Props) {
+export function PermitDocumentsBlock({
+  hsCode,
+  productName,
+  normativeBlock,
+  normativeLoading = false,
+  normativeLoaded = normativeBlock != null,
+  normativeError,
+}: Props) {
   const [certNumber, setCertNumber] = useState('');
   const [verifyLoading, setVerifyLoading] = useState(false);
   const [verifyResult, setVerifyResult] = useState<VerifyRow | null>(null);
@@ -62,15 +72,27 @@ export function PermitDocumentsBlock({ hsCode, productName, normativeBlock }: Pr
         реестр ФСА.
       </p>
 
-      {permits.length === 0 ? (
-        <p className="text-[12px] text-emerald-700">✅ Специальных разрешительных документов (СС/ДС) по нормативному блоку не выявлено.</p>
+      {normativeLoading || !normativeLoaded ? (
+        <p className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-[12px] text-slate-700">
+          Определяем обязательные документы по нормативному блоку…
+        </p>
+      ) : normativeError ? (
+        <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-[12px] text-amber-900">
+          Отсутствие разрешительных документов не подтверждено: {normativeError}
+        </p>
+      ) : !normativeBlock ? (
+        <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-[12px] text-amber-900">
+          Нормативный блок не вернул подтверждённых данных. Проверьте требования на вкладке «Документы».
+        </p>
+      ) : permits.length === 0 ? (
+        <p className="text-[12px] text-emerald-700">✅ Специальных разрешительных документов (СС/ДС/СГР) по нормативному блоку не выявлено.</p>
       ) : (
         <ul className="mb-3 space-y-2">
           {permits.map((doc, i) => {
             const p = describePermit(doc.permit_type, 'mandatory');
             return (
               <li key={i} className="rounded-lg border border-amber-200 bg-amber-50/80 px-3 py-2 text-[12px]">
-                <span className="font-semibold text-amber-900">⚠️ Нужен {p.label}</span>
+                <span className="font-semibold text-amber-900">⚠️ Требуется: {p.label}</span>
                 {doc.tr_ts ? (
                   <span className="ml-2 text-amber-800">
                     ТР ТС {doc.tr_ts}

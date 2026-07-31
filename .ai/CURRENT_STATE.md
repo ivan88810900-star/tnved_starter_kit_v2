@@ -226,7 +226,7 @@ legacy (сверх structural). До TASK-CANONICAL-004 контур не был
   компактную Gate-2 схему `hs_rates(id, hs_code)` без `hs_prefix`; read-only
   fallback не повторяет неуспешное создание FTS на каждом запросе.
 
-## 2d. Frontend acceptance первой умной цепочки
+## 2d. Frontend acceptance интегрированных умных цепочек
 
 **TASK-MVP-FRONTEND-ACCEPTANCE-001 — Completed.** Добавлен первый автоматический
 frontend acceptance-контур (Vitest + jsdom + Testing Library), который проверяет
@@ -238,8 +238,21 @@ frontend acceptance-контур (Vitest + jsdom + Testing Library), котор�
 облачный браузер не подключается к локальному адресу приложения. Одновременно
 поиск получил доступное имя, оба полноэкранных окна — корректную dialog-семантику
 и начальный фокус, а фон блокируется от прокрутки на время открытого окна.
-Следующее расширение acceptance: карточка → платежи → требования/риски →
-grounded assistant.
+**TASK-MVP-FRONTEND-ACCEPTANCE-002 — Completed.** Второй автоматический контур
+проверяет реальную композицию карточки товара:
+`8517130000` → объяснимые платежи → обязательные документы → проверка рисков →
+передача кода и названия в grounded assistant.
+
+Карточка теперь fail-safe по отсутствующим данным: пока preview и нормативный
+блок загружаются, показываются нейтральные состояния; при ошибке отсутствие
+документов, специальных мер и ставка НДС не выдаются за подтверждённый факт.
+Нормативный блок загружается сразу при открытии карточки, вкладки получили
+доступную tab-семантику, а кнопка «Спросить помощника» формирует grounded-вопрос
+по текущему коду. Второй тест намеренно имитирует отказ обоих источников.
+
+Оба контура являются DOM-level проверкой. Визуальная и live-network browser
+проверка остаётся отдельным шагом, когда приложение будет доступно браузеру по
+достижимому URL.
 
 ---
 
@@ -247,6 +260,7 @@ grounded assistant.
 
 | Коммит | Дата | Описание |
 |--------|------|---------|
+| TASK-MVP-FRONTEND-ACCEPTANCE-002 | 2026-07-31 | Интегрированная карточка `8517130000`: платежи → документы → риск → assistant; fail-safe состояния при недоступных evidence |
 | TASK-MVP-FRONTEND-ACCEPTANCE-001 | 2026-07-31 | Автоматический frontend-путь `смартфон` → `8517` → Guided → реальный `8517130000` → карточка; dialog/accessibility hardening |
 | Controlled semantic nesting | 2026-07-29 | Full-data approved bounded group→subgroup hierarchy with official code-scope guards, spillover protection, duplicate subgroup merge and 328/328 target-code coverage; flags OFF |
 | Guided TN VED v1 | 2026-07-23 | Canonical-backed смысловой маршрут, fail-closed integrity gate, отдельный API и UI без включения `/children` flags |
@@ -304,8 +318,9 @@ grounded assistant.
 | **TASK-SEMANTIC-003** — controlled nesting смысловых подгрупп | ✅ Completed: full-data hierarchy gate green | — |
 | **TASK-SEMANTIC-004** — описание товара → ранжированные Canonical heading → Guided-вопросы | ✅ Completed: full Gate-2 API acceptance; flags OFF | — |
 | **TASK-MVP-FRONTEND-ACCEPTANCE-001** — поиск → Guided → реальный код → карточка | ✅ Completed: автоматический DOM-level acceptance; accessibility hardening | — |
+| **TASK-MVP-FRONTEND-ACCEPTANCE-002** — карточка → платежи → документы → риск → assistant | ✅ Completed: verified/failure DOM-level paths; fail-safe evidence UI | — |
 | Optional LLM/embeddings readiness | Контракт и fallback ✅; векторы/provider не настроены, ingestion/search OFF | Отдельное решение |
-| Interactive frontend acceptance | Первый путь search → Guided → card ✅; далее card → payments → requirements/risk → assistant и live-browser QA | Высокий |
+| Interactive frontend acceptance | Search → Guided → card ✅; card → payments → requirements/risk → assistant prefill ✅; live-browser QA ожидает достижимый URL | Высокий |
 | Derisking после TASK-005: aliases/history (`superseded_by`, previous codes/IDs) | Рекомендован | Высокий |
 | Fine-tune модели на `training_pairs.jsonl` | Вне репозитория | Низкий |
 | Live-parсер ФТС предрешений (tks.ru JS) | Decision Memo #135 | Средний |
@@ -336,8 +351,10 @@ grounded assistant.
 
 ### Frontend
 - **Тайпскрипт типы** — `openapi.generated.ts` требует ручной регенерации (`npm run gen:api-types`) при изменении схемы API
-- **Acceptance coverage** — автоматизирован первый путь search → Guided → card;
-  платежи, требования/риски, assistant и визуальная live-browser проверка ещё не покрыты
+- **Acceptance coverage** — автоматизированы search → Guided → card и card →
+  payments → requirements/risk → assistant prefill; визуальная/live-network
+  browser проверка ещё не выполнена из-за недоступности локального URL облачному
+  браузеру
 - **Tailwind CSS 3.4** (не 4.x) — конфигурация в `tailwind.config.cjs`
 
 ---

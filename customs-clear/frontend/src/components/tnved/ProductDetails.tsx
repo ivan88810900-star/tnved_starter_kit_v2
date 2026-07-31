@@ -13,6 +13,7 @@ import { normativeBlockFromNonTariff } from '../nonTariff/normativeBlockHelpers'
 import { PreliminaryDecisionsBlock } from './PreliminaryDecisionsBlock';
 import { ClassificationRulingsBlock } from './ClassificationRulingsBlock';
 import { ProductCardSummary, NonTariffMeasureCards } from './ProductCardSummary';
+import type { ProductPreviewStatus } from './ProductCardSummary';
 import { PermitDocumentsBlock } from './PermitDocumentsBlock';
 import { SmartPaymentsBlock } from '../payments/SmartPaymentsBlock';
 import type { NormativeRequirementsBlockData } from '../../types/api.types';
@@ -22,8 +23,17 @@ type Props = {
   selectedCode: string | null;
 };
 
+type DetailTab = 'payments' | 'nonTariff' | 'risks' | 'decisions' | 'normative';
+
+const DETAIL_TABS: ReadonlyArray<readonly [DetailTab, string]> = [
+  ['payments', 'Платежи'],
+  ['nonTariff', 'Нетарифка'],
+  ['risks', 'Риски'],
+  ['decisions', 'Решения'],
+  ['normative', 'Документы'],
+];
+
 export const ProductDetails: React.FC<Props> = ({ selectedCode }) => {
-  type DetailTab = 'payments' | 'nonTariff' | 'risks' | 'decisions' | 'normative';
   const navigate = useNavigate();
   const [detail, setDetail] = React.useState<TnvedCommodityDetail | null>(null);
   const [loading, setLoading] = React.useState(false);
@@ -31,10 +41,13 @@ export const ProductDetails: React.FC<Props> = ({ selectedCode }) => {
   const [reference, setReference] = React.useState<TnvedImportReference | null>(null);
   const [referenceLoading, setReferenceLoading] = React.useState(false);
   const [preview, setPreview] = React.useState<TnvedPreview | null>(null);
+  const [previewStatus, setPreviewStatus] = React.useState<ProductPreviewStatus>('idle');
   const [activeTab, setActiveTab] = React.useState<DetailTab>('payments');
   const [normativeBlock, setNormativeBlock] = React.useState<NormativeRequirementsBlockData | null>(null);
   const [normativeLoading, setNormativeLoading] = React.useState(false);
+  const [normativeLoaded, setNormativeLoaded] = React.useState(false);
   const [normativeError, setNormativeError] = React.useState<string | null>(null);
+  const tabsId = React.useId().replace(/:/g, '');
 
   React.useEffect(() => {
     if (!selectedCode || !isFullTnvedCode(selectedCode)) {
@@ -81,25 +94,43 @@ export const ProductDetails: React.FC<Props> = ({ selectedCode }) => {
   }, [detail?.code]);
 
   React.useEffect(() => {
-    if (!detail?.code) { setPreview(null); return; }
+    if (!detail?.code) {
+      setPreview(null);
+      setPreviewStatus('idle');
+      return;
+    }
     let cancelled = false;
+    setPreview(null);
+    setPreviewStatus('loading');
     fetchTnvedPreview(detail.code)
-      .then((p) => { if (!cancelled) setPreview(p); })
-      .catch(() => { if (!cancelled) setPreview(null); });
+      .then((p) => {
+        if (!cancelled) {
+          setPreview(p);
+          setPreviewStatus('loaded');
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setPreview(null);
+          setPreviewStatus('error');
+        }
+      });
     return () => { cancelled = true; };
   }, [detail?.code]);
 
   React.useEffect(() => {
     setActiveTab('payments');
     setNormativeBlock(null);
+    setNormativeLoaded(false);
     setNormativeError(null);
     setNormativeLoading(false);
   }, [selectedCode]);
 
   React.useEffect(() => {
-    if (activeTab !== 'normative' || !detail?.code) return;
+    if (!detail?.code) return;
     let cancelled = false;
     setNormativeLoading(true);
+    setNormativeLoaded(false);
     setNormativeError(null);
     api
       .post<{ status: string; items: Array<{ normative_block?: NormativeRequirementsBlockData }> }>(
@@ -129,12 +160,15 @@ export const ProductDetails: React.FC<Props> = ({ selectedCode }) => {
         }
       })
       .finally(() => {
-        if (!cancelled) setNormativeLoading(false);
+        if (!cancelled) {
+          setNormativeLoading(false);
+          setNormativeLoaded(true);
+        }
       });
     return () => {
       cancelled = true;
     };
-  }, [activeTab, detail?.code, detail?.description, detail?.name]);
+  }, [detail?.code, detail?.description, detail?.name]);
 
   // Пусто — приглашение
   if (!selectedCode) {
@@ -209,15 +243,47 @@ export const ProductDetails: React.FC<Props> = ({ selectedCode }) => {
     navigate('/non-tariff');
   };
 
+  const selectAndFocusTab = (tab: DetailTab) => {
+    setActiveTab(tab);
+    const target = document.getElementById(`${tabsId}-tab-${tab}`);
+    if (target instanceof HTMLButtonElement) target.focus();
+  };
+
+  const handleTabKeyDown = (
+    event: React.KeyboardEvent<HTMLButtonElement>,
+    currentTab: DetailTab,
+  ) => {
+    const currentIndex = DETAIL_TABS.findIndex(([tab]) => tab === currentTab);
+    let targetIndex: number | null = null;
+    if (event.key === 'ArrowRight') targetIndex = (currentIndex + 1) % DETAIL_TABS.length;
+    if (event.key === 'ArrowLeft') targetIndex = (currentIndex - 1 + DETAIL_TABS.length) % DETAIL_TABS.length;
+    if (event.key === 'Home') targetIndex = 0;
+    if (event.key === 'End') targetIndex = DETAIL_TABS.length - 1;
+    if (targetIndex == null) return;
+    event.preventDefault();
+    selectAndFocusTab(DETAIL_TABS[targetIndex][0]);
+  };
+
   return (
     <div className="space-y-6 bg-white text-gray-900">
       {/* Шапка-резюме карточки товара */}
-      <ProductCardSummary detail={detail} preview={preview} />
+      <ProductCardSummary
+        detail={detail}
+        preview={preview}
+        previewStatus={previewStatus}
+        normativeBlock={normativeBlock}
+        normativeLoading={normativeLoading}
+        normativeLoaded={normativeLoaded}
+        normativeError={normativeError}
+      />
 
       <PermitDocumentsBlock
         hsCode={detail.code}
         productName={(detail.name ?? detail.description ?? '').trim()}
         normativeBlock={normativeBlock}
+        normativeLoading={normativeLoading}
+        normativeLoaded={normativeLoaded}
+        normativeError={normativeError}
       />
 
       {intellectualProperties.length > 0 ? (
@@ -226,16 +292,12 @@ export const ProductDetails: React.FC<Props> = ({ selectedCode }) => {
           ТРОИС: есть совпадения по защищённым брендам — см. вкладку «Нетарифное регулирование».
         </div>
       ) : null}
-      <div className="-mx-1 flex gap-1 overflow-x-auto border-b border-cargo-border px-1 pb-0 sm:mx-0 sm:px-0">
-        {(
-          [
-            ['payments', 'Платежи'],
-            ['nonTariff', 'Нетарифка'],
-            ['risks', 'Риски'],
-            ['decisions', 'Решения'],
-            ['normative', 'Документы'],
-          ] as const
-        ).map(([tab, label]) => (
+      <div
+        className="-mx-1 flex gap-1 overflow-x-auto border-b border-cargo-border px-1 pb-0 sm:mx-0 sm:px-0"
+        role="tablist"
+        aria-label="Разделы карточки товара"
+      >
+        {DETAIL_TABS.map(([tab, label]) => (
           <button
             key={tab}
             type="button"
@@ -245,6 +307,12 @@ export const ProductDetails: React.FC<Props> = ({ selectedCode }) => {
                 : 'border-transparent text-cargo-mid hover:text-cargo-deep'
             }`}
             onClick={() => setActiveTab(tab)}
+            onKeyDown={(event) => handleTabKeyDown(event, tab)}
+            role="tab"
+            id={`${tabsId}-tab-${tab}`}
+            aria-selected={activeTab === tab}
+            aria-controls={`${tabsId}-panel-${tab}`}
+            tabIndex={activeTab === tab ? 0 : -1}
           >
             {label}
             {tab === 'decisions' && (preliminaryBlock?.total_count ?? 0) > 0 ? (
@@ -257,7 +325,12 @@ export const ProductDetails: React.FC<Props> = ({ selectedCode }) => {
       </div>
 
       {activeTab === 'payments' ? (
-        <div className="space-y-4">
+        <div
+          className="space-y-4"
+          role="tabpanel"
+          id={`${tabsId}-panel-payments`}
+          aria-labelledby={`${tabsId}-tab-payments`}
+        >
           <SmartPaymentsBlock
             hsCode={detail.code}
             description={(detail.name ?? detail.description ?? '').trim()}
@@ -292,7 +365,12 @@ export const ProductDetails: React.FC<Props> = ({ selectedCode }) => {
       ) : null}
 
       {activeTab === 'nonTariff' ? (
-        <div className="space-y-4">
+        <div
+          className="space-y-4"
+          role="tabpanel"
+          id={`${tabsId}-panel-nonTariff`}
+          aria-labelledby={`${tabsId}-tab-nonTariff`}
+        >
           <section>
             <h3 className="mb-3 text-xs font-bold uppercase tracking-wide text-gray-600 border-b border-gray-200 pb-2">
               Меры нетарифного регулирования
@@ -304,7 +382,17 @@ export const ProductDetails: React.FC<Props> = ({ selectedCode }) => {
             <h3 className="mb-3 border-b border-gray-200 pb-2 text-xs font-bold uppercase tracking-wide text-gray-600">
               Торговые меры
             </h3>
-            {preview?.special_duties?.has_measures ? (
+            {previewStatus !== 'loaded' ? (
+              <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
+                {previewStatus === 'error'
+                  ? 'Не удалось подтвердить наличие или отсутствие специальных торговых мер.'
+                  : 'Проверяем специальные торговые меры…'}
+              </div>
+            ) : !preview?.special_duties ? (
+              <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
+                Нет подтверждённых данных о специальных торговых мерах.
+              </div>
+            ) : preview.special_duties.has_measures ? (
               <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
                 <p>
                   ⚠️{' '}
@@ -355,7 +443,12 @@ export const ProductDetails: React.FC<Props> = ({ selectedCode }) => {
       ) : null}
 
       {activeTab === 'decisions' ? (
-        <section className="space-y-6">
+        <section
+          className="space-y-6"
+          role="tabpanel"
+          id={`${tabsId}-panel-decisions`}
+          aria-labelledby={`${tabsId}-tab-decisions`}
+        >
           <div>
             <h3 className="mb-3 text-xs font-bold uppercase tracking-wide text-gray-600 border-b border-gray-200 pb-2">
               Предварительные решения
@@ -374,14 +467,25 @@ export const ProductDetails: React.FC<Props> = ({ selectedCode }) => {
       ) : null}
 
       {activeTab === 'risks' ? (
-        <SmartRiskCheckBlock
-          hsCode={detail.code}
-          description={(detail.name ?? detail.description ?? '').trim()}
-        />
+        <div
+          role="tabpanel"
+          id={`${tabsId}-panel-risks`}
+          aria-labelledby={`${tabsId}-tab-risks`}
+        >
+          <SmartRiskCheckBlock
+            hsCode={detail.code}
+            description={(detail.name ?? detail.description ?? '').trim()}
+          />
+        </div>
       ) : null}
 
       {activeTab === 'normative' ? (
-        <section className="space-y-4">
+        <section
+          className="space-y-4"
+          role="tabpanel"
+          id={`${tabsId}-panel-normative`}
+          aria-labelledby={`${tabsId}-tab-normative`}
+        >
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-gray-200 pb-3">
             <h3 className="text-xs font-bold uppercase tracking-wide text-gray-600">
               Нормативные требования по коду
@@ -395,7 +499,7 @@ export const ProductDetails: React.FC<Props> = ({ selectedCode }) => {
               <ArrowUpRight className="h-4 w-4" aria-hidden />
             </button>
           </div>
-          {normativeLoading ? (
+          {normativeLoading || !normativeLoaded ? (
             <p className="text-sm text-gray-500">Загрузка нормативного блока…</p>
           ) : normativeError ? (
             <div className="space-y-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">

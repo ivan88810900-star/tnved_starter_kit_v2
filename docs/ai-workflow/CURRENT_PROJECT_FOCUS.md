@@ -41,6 +41,10 @@ ingestion.
 - Frontend acceptance foundation: the real Dictionary/search/Guided composition is
   covered for `смартфон` → `8517` → semantic question → real `8517130000` →
   product card, with accessible dialogs, initial focus and background scroll lock
+- Integrated product-card acceptance: real frontend components cover explainable
+  payments → normative documents → risk check → grounded-assistant prefill, with
+  a separate unavailable-evidence path that cannot report a false clean state or
+  an unverified VAT rate
 - Explainable Smart Payments in the TN VED card: bases, statuses, sources, assumptions,
   uncertainty and optional Canonical grounding anchor
 - Evidence-first sanctions/risk checks in the TN VED card: explicit scope, conservative
@@ -114,10 +118,11 @@ Current next tasks:
   search → Canonical Guided candidate → real code → product card. This is a
   DOM-level gate because the available cloud browser cannot reach the local app;
   it does not replace visual/live-browser QA.
-- Expand the acceptance journey from the product card through payments,
-  requirements/risk and the grounded assistant, then perform visual/live-browser
-  verification when a reachable application URL is available, without broad UI
-  redesign
+- ✅ Second automated frontend acceptance segment:
+  product card → payments → requirements/risk → grounded-assistant prefill,
+  including fail-safe loading/error evidence states and accessible tabs.
+- Perform visual/live-browser verification when a reachable application URL is
+  available, without broad UI redesign
 - Separate readiness decision for semantic embeddings (vectors/API cost/provider), without
   weakening the deterministic hybrid-search fallback
 - ✅ Optional-AI contract verification (no external request): citation grounding,
