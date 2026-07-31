@@ -247,7 +247,7 @@ describe('ProductDetails integrated product card', () => {
   it('loads evidence eagerly and lets the user inspect payments, documents, risk, and assistant', async () => {
     const user = userEvent.setup();
     render(
-      <MemoryRouter>
+      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <ProductDetails selectedCode="8517130000" />
       </MemoryRouter>,
     );
@@ -325,7 +325,7 @@ describe('ProductDetails integrated product card', () => {
   it('never presents unavailable evidence as a confirmed clean result', async () => {
     const user = userEvent.setup();
     render(
-      <MemoryRouter>
+      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <ProductDetails selectedCode="8517130000" />
       </MemoryRouter>,
     );
@@ -355,7 +355,7 @@ describe('ProductDetails integrated product card', () => {
 
   it('keeps a confirmed normative requirement visible when preview evidence fails', async () => {
     render(
-      <MemoryRouter>
+      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <ProductDetails selectedCode="8517130000" />
       </MemoryRouter>,
     );

@@ -254,12 +254,25 @@ frontend acceptance-контур (Vitest + jsdom + Testing Library), котор�
 проверка остаётся отдельным шагом, когда приложение будет доступно браузеру по
 достижимому URL.
 
+**TASK-MVP-FRONTEND-ACCEPTANCE-003 — Completed.** Реальный navigation bridge
+теперь проверяется от продуктового вопроса до маршрута `/assistant`, а настоящий
+`Assistant` / `DeclarantChatThread` — до отправки `/v1/assistant/chat` и показа
+ответа с provenance. Детерминированный режим явно маркируется как «серверные
+факты», guarded optional LLM — как «ИИ + серверные факты»; citation, ограничения
+и follow-up действия остаются видимыми. Вопрос из карточки получает фокус, чтобы
+пользователь мог проверить и отправить его без повторного поиска поля.
+
+Для тестируемости route composition вынесена из browser bootstrap `main.tsx` в
+`App.tsx`; URL-контракты не изменены. Тест optional LLM использует только
+валидированный API-ответ на mocked boundary и не вызывает внешнего провайдера.
+
 ---
 
 ## 3. Последние архитектурные изменения
 
 | Коммит | Дата | Описание |
 |--------|------|---------|
+| TASK-MVP-FRONTEND-ACCEPTANCE-003 | 2026-07-31 | Реальный card→assistant route bridge, focused prefill, cited deterministic/guarded-LLM frontend contracts |
 | TASK-MVP-FRONTEND-ACCEPTANCE-002 | 2026-07-31 | Интегрированная карточка `8517130000`: платежи → документы → риск → assistant; fail-safe состояния при недоступных evidence |
 | TASK-MVP-FRONTEND-ACCEPTANCE-001 | 2026-07-31 | Автоматический frontend-путь `смартфон` → `8517` → Guided → реальный `8517130000` → карточка; dialog/accessibility hardening |
 | Controlled semantic nesting | 2026-07-29 | Full-data approved bounded group→subgroup hierarchy with official code-scope guards, spillover protection, duplicate subgroup merge and 328/328 target-code coverage; flags OFF |
@@ -319,8 +332,9 @@ frontend acceptance-контур (Vitest + jsdom + Testing Library), котор�
 | **TASK-SEMANTIC-004** — описание товара → ранжированные Canonical heading → Guided-вопросы | ✅ Completed: full Gate-2 API acceptance; flags OFF | — |
 | **TASK-MVP-FRONTEND-ACCEPTANCE-001** — поиск → Guided → реальный код → карточка | ✅ Completed: автоматический DOM-level acceptance; accessibility hardening | — |
 | **TASK-MVP-FRONTEND-ACCEPTANCE-002** — карточка → платежи → документы → риск → assistant | ✅ Completed: verified/failure DOM-level paths; fail-safe evidence UI | — |
+| **TASK-MVP-FRONTEND-ACCEPTANCE-003** — реальный card → assistant → grounded response | ✅ Completed: route bridge + deterministic/guarded-LLM UI contracts | — |
 | Optional LLM/embeddings readiness | Контракт и fallback ✅; векторы/provider не настроены, ingestion/search OFF | Отдельное решение |
-| Interactive frontend acceptance | Search → Guided → card ✅; card → payments → requirements/risk → assistant prefill ✅; live-browser QA ожидает достижимый URL | Высокий |
+| Interactive frontend acceptance | Search → Guided → card ✅; card → payments → requirements/risk → grounded assistant response ✅; live-browser QA ожидает достижимый URL | Высокий |
 | Derisking после TASK-005: aliases/history (`superseded_by`, previous codes/IDs) | Рекомендован | Высокий |
 | Fine-tune модели на `training_pairs.jsonl` | Вне репозитория | Низкий |
 | Live-parсер ФТС предрешений (tks.ru JS) | Decision Memo #135 | Средний |
@@ -352,9 +366,9 @@ frontend acceptance-контур (Vitest + jsdom + Testing Library), котор�
 ### Frontend
 - **Тайпскрипт типы** — `openapi.generated.ts` требует ручной регенерации (`npm run gen:api-types`) при изменении схемы API
 - **Acceptance coverage** — автоматизированы search → Guided → card и card →
-  payments → requirements/risk → assistant prefill; визуальная/live-network
-  browser проверка ещё не выполнена из-за недоступности локального URL облачному
-  браузеру
+  payments → requirements/risk → assistant route/grounded response;
+  визуальная/live-network browser проверка ещё не выполнена из-за недоступности
+  локального URL облачному браузеру
 - **Tailwind CSS 3.4** (не 4.x) — конфигурация в `tailwind.config.cjs`
 
 ---

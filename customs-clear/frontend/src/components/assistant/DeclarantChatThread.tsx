@@ -153,6 +153,7 @@ export const DeclarantChatThread = forwardRef<DeclarantChatThreadHandle, Declara
   const [hasCtx, setHasCtx] = useState(() => !!getAssistantCalculationContext());
   const scrollRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
 
   const isHome = variant === 'home';
   const maxH = isHome ? 'max-h-44' : 'min-h-[14rem] max-h-[min(28rem,55vh)]';
@@ -186,6 +187,7 @@ export const DeclarantChatThread = forwardRef<DeclarantChatThreadHandle, Declara
       },
       setInput(value: string) {
         setInputValue(value);
+        inputRef.current?.focus();
       },
     }),
     [],
@@ -348,6 +350,7 @@ export const DeclarantChatThread = forwardRef<DeclarantChatThreadHandle, Declara
         <label className="min-w-0 flex-1 space-y-1">
           <span className="cc-label">Сообщение</span>
           <textarea
+            ref={inputRef}
             value={input}
             onChange={(e) => setInputValue(e.target.value)}
             rows={isHome ? 2 : 3}

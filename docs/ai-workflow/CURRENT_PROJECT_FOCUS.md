@@ -45,6 +45,10 @@ ingestion.
   payments → normative documents → risk check → grounded-assistant prefill, with
   a separate unavailable-evidence path that cannot report a false clean state or
   an unverified VAT rate
+- Grounded-assistant frontend acceptance: the real application bridge preserves
+  the product question while routing to `/assistant`; the chat focuses the prefill
+  and renders deterministic or guarded-LLM answers with truthful provenance,
+  citations and limitations
 - Explainable Smart Payments in the TN VED card: bases, statuses, sources, assumptions,
   uncertainty and optional Canonical grounding anchor
 - Evidence-first sanctions/risk checks in the TN VED card: explicit scope, conservative
@@ -121,6 +125,10 @@ Current next tasks:
 - ✅ Second automated frontend acceptance segment:
   product card → payments → requirements/risk → grounded-assistant prefill,
   including fail-safe loading/error evidence states and accessible tabs.
+- ✅ Third automated frontend acceptance segment:
+  product-card question → real application route bridge → assistant input →
+  cited grounded response. Deterministic and guarded optional-LLM presentation
+  contracts are covered without an external provider call.
 - Perform visual/live-browser verification when a reachable application URL is
   available, without broad UI redesign
 - Separate readiness decision for semantic embeddings (vectors/API cost/provider), without
