@@ -136,6 +136,7 @@ export const GuidedTnvedNavigator: React.FC<Props> = ({
             className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-cargo-border text-cargo-mid hover:bg-cargo-navy-50"
             onClick={onClose}
             aria-label="Закрыть умный маршрут"
+            autoFocus
           >
             <X className="h-4 w-4" />
           </button>

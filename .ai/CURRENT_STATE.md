@@ -1,6 +1,6 @@
 # CURRENT_STATE.md — Текущее состояние проекта
 
-> Дата: 2026-07-29
+> Дата: 2026-07-31
 > Активная ветка: `feat/canonical-read-path`
 
 ---
@@ -226,12 +226,28 @@ legacy (сверх structural). До TASK-CANONICAL-004 контур не был
   компактную Gate-2 схему `hs_rates(id, hs_code)` без `hs_prefix`; read-only
   fallback не повторяет неуспешное создание FTS на каждом запросе.
 
+## 2d. Frontend acceptance первой умной цепочки
+
+**TASK-MVP-FRONTEND-ACCEPTANCE-001 — Completed.** Добавлен первый автоматический
+frontend acceptance-контур (Vitest + jsdom + Testing Library), который проверяет
+реальную композицию `Dictionary` / поиска / Guided-навигации:
+`смартфон` → Canonical-кандидат `8517` → смысловой вопрос → реальный код
+`8517130000` → карточка товара.
+
+Это DOM-level проверка, а не заявление о визуальном live-browser QA: доступный
+облачный браузер не подключается к локальному адресу приложения. Одновременно
+поиск получил доступное имя, оба полноэкранных окна — корректную dialog-семантику
+и начальный фокус, а фон блокируется от прокрутки на время открытого окна.
+Следующее расширение acceptance: карточка → платежи → требования/риски →
+grounded assistant.
+
 ---
 
 ## 3. Последние архитектурные изменения
 
 | Коммит | Дата | Описание |
 |--------|------|---------|
+| TASK-MVP-FRONTEND-ACCEPTANCE-001 | 2026-07-31 | Автоматический frontend-путь `смартфон` → `8517` → Guided → реальный `8517130000` → карточка; dialog/accessibility hardening |
 | Controlled semantic nesting | 2026-07-29 | Full-data approved bounded group→subgroup hierarchy with official code-scope guards, spillover protection, duplicate subgroup merge and 328/328 target-code coverage; flags OFF |
 | Guided TN VED v1 | 2026-07-23 | Canonical-backed смысловой маршрут, fail-closed integrity gate, отдельный API и UI без включения `/children` flags |
 | Full-data MVP acceptance | 2026-07-21 | Пользовательская БД 6.78 GB прошла strict read-only gate: 21 раздел, 96 групп, 17,809 commodities, 13,322 rates; auth + 4/4 сценария; файл БД неизменён; Canonical flags и внешний LLM OFF; evidence сохранён в `docs/ai-workflow/evidence/mvp-acceptance-20260721.json` |
@@ -287,8 +303,9 @@ legacy (сверх structural). До TASK-CANONICAL-004 контур не был
 | Full-data guided acceptance (`0302/0303/5208/8517`) | ✅ Completed: 328/328 target codes, 100% Canonical coverage, hierarchy green | — |
 | **TASK-SEMANTIC-003** — controlled nesting смысловых подгрупп | ✅ Completed: full-data hierarchy gate green | — |
 | **TASK-SEMANTIC-004** — описание товара → ранжированные Canonical heading → Guided-вопросы | ✅ Completed: full Gate-2 API acceptance; flags OFF | — |
+| **TASK-MVP-FRONTEND-ACCEPTANCE-001** — поиск → Guided → реальный код → карточка | ✅ Completed: автоматический DOM-level acceptance; accessibility hardening | — |
 | Optional LLM/embeddings readiness | Контракт и fallback ✅; векторы/provider не настроены, ingestion/search OFF | Отдельное решение |
-| Interactive frontend acceptance | Следующий этап: пользовательский путь search → card → payments → requirements/risk → assistant | Высокий |
+| Interactive frontend acceptance | Первый путь search → Guided → card ✅; далее card → payments → requirements/risk → assistant и live-browser QA | Высокий |
 | Derisking после TASK-005: aliases/history (`superseded_by`, previous codes/IDs) | Рекомендован | Высокий |
 | Fine-tune модели на `training_pairs.jsonl` | Вне репозитория | Низкий |
 | Live-parсер ФТС предрешений (tks.ru JS) | Decision Memo #135 | Средний |
@@ -319,6 +336,8 @@ legacy (сверх structural). До TASK-CANONICAL-004 контур не был
 
 ### Frontend
 - **Тайпскрипт типы** — `openapi.generated.ts` требует ручной регенерации (`npm run gen:api-types`) при изменении схемы API
+- **Acceptance coverage** — автоматизирован первый путь search → Guided → card;
+  платежи, требования/риски, assistant и визуальная live-browser проверка ещё не покрыты
 - **Tailwind CSS 3.4** (не 4.x) — конфигурация в `tailwind.config.cjs`
 
 ---

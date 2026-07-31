@@ -61,6 +61,15 @@ export const Dictionary: React.FC = () => {
     return () => window.removeEventListener('keydown', onEsc);
   }, [detailsOpen]);
 
+  React.useEffect(() => {
+    if (!guidedHeading && !detailsOpen) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [detailsOpen, guidedHeading]);
+
   return (
     <>
       <div className="flex h-full min-h-0 flex-1 flex-col">
@@ -86,6 +95,9 @@ export const Dictionary: React.FC = () => {
           <div
             className="h-[100dvh] max-h-[100dvh] w-full max-w-4xl overflow-hidden rounded-none border border-cargo-border bg-cargo-surface shadow-xl sm:h-[88vh] sm:min-h-[520px] sm:rounded-lg"
             onClick={(event) => event.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Умная структура ТН ВЭД"
           >
             <GuidedTnvedNavigator
               heading={guidedHeading}
@@ -104,10 +116,18 @@ export const Dictionary: React.FC = () => {
           <div
             className="flex h-[100dvh] max-h-[100dvh] w-full max-w-5xl flex-col overflow-hidden rounded-none border border-cargo-border bg-cargo-surface shadow-xl sm:h-[90vh] sm:min-h-[480px] sm:rounded-lg"
             onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="tnved-product-dialog-title"
           >
             <div className="flex items-center justify-between border-b border-cargo-border px-4 py-4 sm:px-5">
               <div>
-                <p className="text-[11px] font-medium uppercase tracking-[0.06em] text-cargo-light">Карточка товара</p>
+                <p
+                  id="tnved-product-dialog-title"
+                  className="text-[11px] font-medium uppercase tracking-[0.06em] text-cargo-light"
+                >
+                  Карточка товара
+                </p>
                 <p className="mt-1 font-mono text-2xl font-medium text-cargo-trust">{selectedCode}</p>
               </div>
               <button
@@ -115,6 +135,7 @@ export const Dictionary: React.FC = () => {
                 className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-cargo-border text-cargo-mid hover:bg-cargo-navy-50"
                 onClick={() => setDetailsOpen(false)}
                 aria-label="Закрыть"
+                autoFocus
               >
                 <X className="h-4 w-4" />
               </button>

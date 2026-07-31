@@ -612,6 +612,7 @@ export const TnvedAccordionTree: React.FC<Props> = ({
           autoComplete="off"
           maxLength={160}
           placeholder="Поиск по коду или наименованию…"
+          aria-label="Поиск по ТН ВЭД"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           onKeyDown={(e) => {

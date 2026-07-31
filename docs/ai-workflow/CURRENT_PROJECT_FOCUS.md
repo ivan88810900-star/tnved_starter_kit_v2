@@ -6,7 +6,7 @@ Active
 
 ## Last updated
 
-2026-07-29
+2026-07-31
 
 ## Strategic direction
 
@@ -38,6 +38,9 @@ ingestion.
   ranked Canonical 4-digit heading candidates, curated semantic evidence outranks
   incidental full-text matches, and every candidate opens the existing
   integrity-checked questions; numeric code lookup remains unchanged
+- Frontend acceptance foundation: the real Dictionary/search/Guided composition is
+  covered for `смартфон` → `8517` → semantic question → real `8517130000` →
+  product card, with accessible dialogs, initial focus and background scroll lock
 - Explainable Smart Payments in the TN VED card: bases, statuses, sources, assumptions,
   uncertainty and optional Canonical grounding anchor
 - Evidence-first sanctions/risk checks in the TN VED card: explicit scope, conservative
@@ -107,9 +110,14 @@ Current next tasks:
   then the existing route asks only discriminating questions inside the selected
   heading. Compact Gate-2 schema compatibility and read-only search fallback are
   covered.
-- Interactive browser acceptance of the integrated frontend is the next product
-  hardening step: verify search → code card → payments → requirements/risk → grounded
-  assistant as a user journey, without broad UI redesign
+- ✅ First automated frontend acceptance segment:
+  search → Canonical Guided candidate → real code → product card. This is a
+  DOM-level gate because the available cloud browser cannot reach the local app;
+  it does not replace visual/live-browser QA.
+- Expand the acceptance journey from the product card through payments,
+  requirements/risk and the grounded assistant, then perform visual/live-browser
+  verification when a reachable application URL is available, without broad UI
+  redesign
 - Separate readiness decision for semantic embeddings (vectors/API cost/provider), without
   weakening the deterministic hybrid-search fallback
 - ✅ Optional-AI contract verification (no external request): citation grounding,
