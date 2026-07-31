@@ -68,7 +68,9 @@ describe('application assistant navigation bridge', () => {
       </MemoryRouter>,
     );
 
-    await user.click(screen.getByRole('button', { name: 'Спросить помощника из карточки' }));
+    await user.click(
+      await screen.findByRole('button', { name: 'Спросить помощника из карточки' }),
+    );
 
     await screen.findByRole('heading', { name: 'Assistant route' });
     expect(screen.getByText('/assistant')).toBeInTheDocument();

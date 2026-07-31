@@ -1,24 +1,59 @@
 import React from 'react';
-import { BrowserRouter, Navigate, Route, Routes, useNavigate } from 'react-router-dom';
+import {
+  BrowserRouter,
+  Navigate,
+  Route,
+  Routes,
+  useLocation,
+  useNavigate,
+} from 'react-router-dom';
 import { Layout } from './components/Layout';
-import { SystemHealth } from './pages/admin/SystemHealth';
-import { BulkNormativeImport } from './pages/admin/BulkNormativeImport';
-import { InvoicePage } from './pages/Invoice';
-import { HomeDashboard } from './pages/HomeDashboard';
-import { DocumentCheck } from './pages/DocumentCheck';
-import { Classifier } from './pages/Classifier';
-import { Trois } from './pages/Trois';
-import { Calculator } from './pages/Calculator';
-import { NonTariff } from './pages/NonTariff';
-import { Assistant } from './pages/Assistant';
+import { RouteLoadBoundary } from './components/routing/RouteLoadBoundary';
 import {
   drainAssistantNavigationJob,
   subscribeAssistantNavigation,
   type AssistantNavigationJob,
 } from './store/calculatorAssistantBridge';
-import { PermitPicker } from './pages/PermitPicker';
-import { Dictionary } from './pages/Dictionary';
 import { ClientCapabilitiesProvider } from './context/ClientCapabilitiesContext';
+
+const HomeDashboard = React.lazy(() =>
+  import('./pages/HomeDashboard').then((module) => ({ default: module.HomeDashboard })),
+);
+const DocumentCheck = React.lazy(() =>
+  import('./pages/DocumentCheck').then((module) => ({ default: module.DocumentCheck })),
+);
+const Classifier = React.lazy(() =>
+  import('./pages/Classifier').then((module) => ({ default: module.Classifier })),
+);
+const Dictionary = React.lazy(() =>
+  import('./pages/Dictionary').then((module) => ({ default: module.Dictionary })),
+);
+const Trois = React.lazy(() =>
+  import('./pages/Trois').then((module) => ({ default: module.Trois })),
+);
+const PermitPicker = React.lazy(() =>
+  import('./pages/PermitPicker').then((module) => ({ default: module.PermitPicker })),
+);
+const Calculator = React.lazy(() =>
+  import('./pages/Calculator').then((module) => ({ default: module.Calculator })),
+);
+const InvoicePage = React.lazy(() =>
+  import('./pages/Invoice').then((module) => ({ default: module.InvoicePage })),
+);
+const NonTariff = React.lazy(() =>
+  import('./pages/NonTariff').then((module) => ({ default: module.NonTariff })),
+);
+const Assistant = React.lazy(() =>
+  import('./pages/Assistant').then((module) => ({ default: module.Assistant })),
+);
+const SystemHealth = React.lazy(() =>
+  import('./pages/admin/SystemHealth').then((module) => ({ default: module.SystemHealth })),
+);
+const BulkNormativeImport = React.lazy(() =>
+  import('./pages/admin/BulkNormativeImport').then((module) => ({
+    default: module.BulkNormativeImport,
+  })),
+);
 
 function readAdminHash(): boolean {
   if (typeof window === 'undefined') return false;
@@ -33,8 +68,12 @@ function clearUrlHash(): void {
 
 export function AppRoutes() {
   const navigate = useNavigate();
+  const { pathname } = useLocation();
   const [assistantOpenJob, setAssistantOpenJob] = React.useState<AssistantNavigationJob | null>(null);
   const clearAssistantOpenJob = React.useCallback(() => setAssistantOpenJob(null), []);
+  const routeElement = (children: React.ReactNode) => (
+    <RouteLoadBoundary key={pathname}>{children}</RouteLoadBoundary>
+  );
 
   React.useLayoutEffect(() => {
     if (typeof window === 'undefined') return;
@@ -62,26 +101,26 @@ export function AppRoutes() {
   return (
     <Routes>
       <Route path="/" element={<Layout />}>
-        <Route index element={<HomeDashboard />} />
-        <Route path="docs" element={<DocumentCheck />} />
-        <Route path="classifier" element={<Classifier />} />
-        <Route path="tnved" element={<Dictionary />} />
-        <Route path="trois" element={<Trois />} />
-        <Route path="permits" element={<PermitPicker />} />
-        <Route path="calculator" element={<Calculator />} />
-        <Route path="invoice" element={<InvoicePage />} />
-        <Route path="non-tariff" element={<NonTariff />} />
+        <Route index element={routeElement(<HomeDashboard />)} />
+        <Route path="docs" element={routeElement(<DocumentCheck />)} />
+        <Route path="classifier" element={routeElement(<Classifier />)} />
+        <Route path="tnved" element={routeElement(<Dictionary />)} />
+        <Route path="trois" element={routeElement(<Trois />)} />
+        <Route path="permits" element={routeElement(<PermitPicker />)} />
+        <Route path="calculator" element={routeElement(<Calculator />)} />
+        <Route path="invoice" element={routeElement(<InvoicePage />)} />
+        <Route path="non-tariff" element={routeElement(<NonTariff />)} />
         <Route
           path="assistant"
-          element={
+          element={routeElement(
             <Assistant
               assistantOpenJob={assistantOpenJob}
               onAssistantOpenJobConsumed={clearAssistantOpenJob}
-            />
-          }
+            />,
+          )}
         />
-        <Route path="admin/system" element={<SystemHealth />} />
-        <Route path="admin/import" element={<BulkNormativeImport />} />
+        <Route path="admin/system" element={routeElement(<SystemHealth />)} />
+        <Route path="admin/import" element={routeElement(<BulkNormativeImport />)} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

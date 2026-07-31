@@ -49,6 +49,9 @@ ingestion.
   the product question while routing to `/assistant`; the chat focuses the prefill
   and renders deterministic or guarded-LLM answers with truthful provenance,
   citations and limitations
+- Frontend production hardening: every existing page is an on-demand route bundle;
+  the initial JavaScript set fell from 1,277,432 to 231,325 bytes (`-81.9%`), with
+  accessible loading and recoverable route-error states and no URL/API changes
 - Explainable Smart Payments in the TN VED card: bases, statuses, sources, assumptions,
   uncertainty and optional Canonical grounding anchor
 - Evidence-first sanctions/risk checks in the TN VED card: explicit scope, conservative
@@ -129,6 +132,9 @@ Current next tasks:
   product-card question → real application route bridge → assistant input →
   cited grounded response. Deterministic and guarded optional-LLM presentation
   contracts are covered without an external provider call.
+- ✅ TASK-MVP-FRONTEND-PERFORMANCE-001 route-level production bundles:
+  all existing screens load on demand, the Vite 500 kB warning is eliminated, and
+  loading/failure behavior is protected by regression tests.
 - Perform visual/live-browser verification when a reachable application URL is
   available, without broad UI redesign
 - Separate readiness decision for semantic embeddings (vectors/API cost/provider), without

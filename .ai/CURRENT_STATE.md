@@ -266,12 +266,21 @@ frontend acceptance-контур (Vitest + jsdom + Testing Library), котор�
 `App.tsx`; URL-контракты не изменены. Тест optional LLM использует только
 валидированный API-ответ на mocked boundary и не вызывает внешнего провайдера.
 
+**TASK-MVP-FRONTEND-PERFORMANCE-001 — Completed.** Все существующие экраны теперь
+загружаются по маршрутам, а общий shell остаётся видимым. Начальный JavaScript
+сокращён с `1,277,432` до `231,325` байт (`-81.9%`), основной entry chunk — до
+`51,580` байт. Самый большой on-demand chunk (`Calculator`, `384,916` байт) ниже
+порога Vite 500 kB. Доступный loading-status и error boundary с безопасным reload
+не оставляют пользователя на пустом экране при задержке или сбое загрузки.
+URL/API-контракты не менялись; backend, БД, флаги и внешний LLM не затронуты.
+
 ---
 
 ## 3. Последние архитектурные изменения
 
 | Коммит | Дата | Описание |
 |--------|------|---------|
+| TASK-MVP-FRONTEND-PERFORMANCE-001 | 2026-07-31 | Route-level bundles: initial JS −81.9%, accessible loading/error fallback, no route/API changes |
 | TASK-MVP-FRONTEND-ACCEPTANCE-003 | 2026-07-31 | Реальный card→assistant route bridge, focused prefill, cited deterministic/guarded-LLM frontend contracts |
 | TASK-MVP-FRONTEND-ACCEPTANCE-002 | 2026-07-31 | Интегрированная карточка `8517130000`: платежи → документы → риск → assistant; fail-safe состояния при недоступных evidence |
 | TASK-MVP-FRONTEND-ACCEPTANCE-001 | 2026-07-31 | Автоматический frontend-путь `смартфон` → `8517` → Guided → реальный `8517130000` → карточка; dialog/accessibility hardening |
@@ -333,6 +342,7 @@ frontend acceptance-контур (Vitest + jsdom + Testing Library), котор�
 | **TASK-MVP-FRONTEND-ACCEPTANCE-001** — поиск → Guided → реальный код → карточка | ✅ Completed: автоматический DOM-level acceptance; accessibility hardening | — |
 | **TASK-MVP-FRONTEND-ACCEPTANCE-002** — карточка → платежи → документы → риск → assistant | ✅ Completed: verified/failure DOM-level paths; fail-safe evidence UI | — |
 | **TASK-MVP-FRONTEND-ACCEPTANCE-003** — реальный card → assistant → grounded response | ✅ Completed: route bridge + deterministic/guarded-LLM UI contracts | — |
+| **TASK-MVP-FRONTEND-PERFORMANCE-001** — route-level production bundles | ✅ Completed: initial JS −81.9%, loading/error boundary, all routes preserved | — |
 | Optional LLM/embeddings readiness | Контракт и fallback ✅; векторы/provider не настроены, ingestion/search OFF | Отдельное решение |
 | Interactive frontend acceptance | Search → Guided → card ✅; card → payments → requirements/risk → grounded assistant response ✅; live-browser QA ожидает достижимый URL | Высокий |
 | Derisking после TASK-005: aliases/history (`superseded_by`, previous codes/IDs) | Рекомендован | Высокий |
