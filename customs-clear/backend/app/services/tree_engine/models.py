@@ -133,11 +133,12 @@ class ParsedCommodityRecord:
 
 @dataclass
 class TreeParseResult:
-    """Результат TreeParser — без построенного дерева."""
+    """Все явные входы Builder, собранные TreeParser из одного DB snapshot."""
 
     commodities: list[ParsedCommodityRecord]
     chapter_notes: dict[str, str]
     db_codes: frozenset[str]
+    leaf_flags: dict[str, bool] = field(default_factory=dict)
 
 
 @dataclass(frozen=True)

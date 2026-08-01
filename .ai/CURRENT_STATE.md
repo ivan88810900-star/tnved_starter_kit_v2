@@ -1,6 +1,6 @@
 # CURRENT_STATE.md — Текущее состояние проекта
 
-> Дата: 2026-07-31
+> Дата: 2026-08-01
 > Активная ветка: `feat/canonical-read-path`
 
 ---
@@ -103,8 +103,13 @@ legacy (сверх structural). До TASK-CANONICAL-004 контур не был
   (validator gate внутри, не обходится). **Ревизия кэша** учитывает `tnved_commodities`
   точный content fingerprint значимых полей `tnved_commodities`, Section/Chapter notes
   и leaf-relevant `hs_rates`. Это закрывает stale-cache при in-place UPDATE, который
-  не замечал прежний `count+max(id)`. Parser и leaf-flags используют одну session
-  factory. Полный fingerprint пересчитывается только после изменения дешёвого DB
+  не замечал прежний `count+max(id)`. После TASK-CANONICAL-007 `TreeParser` читает
+  commodities, Section/Chapter metadata и leaf-relevant `hs_rates` в **одной DB
+  session**, передаёт `leaf_flags` как явный `TreeParseResult`; `TreeBuilder` больше
+  не знает о БД/session factory. Для SQLite Parser явно начинает read-транзакцию до
+  первого `SELECT`, поскольку legacy transaction mode драйвера иначе не гарантирует
+  один snapshot нескольким чтениям. Полный fingerprint пересчитывается только после
+  изменения дешёвого DB
   source-token (SQLite DB/WAL stat; PostgreSQL WAL LSN), а не на каждый read. На
   synthetic 14k строк: cold hash ~129 ms, stable probe median ~0.021 ms. При сбое
   сборки/валидатора — лог + `None` → fallback на legacy, **не** 500.
@@ -139,9 +144,11 @@ legacy (сверх structural). До TASK-CANONICAL-004 контур не был
   Guided navigation подключена отдельно и не включает Canonical feature flags.
 - Self-contained тесты: `tests/test_canonical_read_path.py` (35),
   `tests/test_canonical_children_audit.py` (3) и
-  `tests/test_export_canonical_gate2_db.py` (2). Они покрывают in-place UPDATE,
+  `tests/test_export_canonical_gate2_db.py` (2), плюс
+  `tests/test_tree_parser_leaf_flags.py` (5). Они покрывают in-place UPDATE,
   notes, leaf-rate invalidation, метрики/семплирование, root/Roman parity, audit smoke
-  и минимальный read-only export → полный audit.
+  минимальный read-only export → полный audit, full/compact `hs_rates`, чистый Builder
+  один DB snapshot на provider build и изоляцию от конкурентного SQLite commit.
   Финальный data-dependent Gate-2 выполнен на наполненной БД.
 
 > Предыдущий QA-вердикт `APPROVE WITH NOTES` был отменён после воспроизведения stale-cache
@@ -150,11 +157,15 @@ legacy (сверх structural). До TASK-CANONICAL-004 контур не был
 
 ### Реализовано (в `customs-clear/backend/app/services/tree_engine/`, изолированно)
 
-- **Parser** (`parser.py`) — SQLite → плоская промежуточная модель `ParsedCommodityRecord`.
+- **Parser** (`parser.py`) — единственная DB-reading стадия: из одной session собирает
+  `ParsedCommodityRecord`, Section/Chapter notes и leaf-evidence L4/L6 в явный
+  `TreeParseResult`; SQLite read-snapshot начинается до первого запроса, полная и
+  compact Gate-2 схемы поддерживаются.
 - **Recovery** (`recovery.py`, `StructureNormalizer`) — pad-имена, синтез бескодовых
   L6/L8, subheading-group, очистка имён, классификация типов; **чистая стадия** (без БД,
   без `uuid4`), leaf-флаги принимает аргументом.
-- **Builder** (`builder.py`) — stack-сборка иерархии, материализация синтет-листьев,
+- **Builder** (`builder.py`) — чистая DB-независимая stack-сборка иерархии,
+  материализация синтет-листьев,
   сортировка, восстановление имени группы, присвоение ID; **напрямую**, без legacy.
   Additive-метод `build_model(...)` → `CanonicalModel` (validator gate + freeze).
 - **CanonicalModel** (`canonical_model.py`) — иммутабельный Source-of-Truth объект:
@@ -280,6 +291,7 @@ URL/API-контракты не менялись; backend, БД, флаги и �
 
 | Коммит | Дата | Описание |
 |--------|------|---------|
+| TASK-CANONICAL-007 | 2026-08-01 | Parser — единственная DB-reading стадия; явные leaf flags и один snapshot, Builder чистый; Gate-2 18,049/18,049 |
 | TASK-MVP-FRONTEND-PERFORMANCE-001 | 2026-07-31 | Route-level bundles: initial JS −81.9%, accessible loading/error fallback, no route/API changes |
 | TASK-MVP-FRONTEND-ACCEPTANCE-003 | 2026-07-31 | Реальный card→assistant route bridge, focused prefill, cited deterministic/guarded-LLM frontend contracts |
 | TASK-MVP-FRONTEND-ACCEPTANCE-002 | 2026-07-31 | Интегрированная карточка `8517130000`: платежи → документы → риск → assistant; fail-safe состояния при недоступных evidence |
@@ -330,6 +342,7 @@ URL/API-контракты не менялись; backend, БД, флаги и �
 | **TASK-CANONICAL-004** — read-path `/children` за флагом (provider/cache, shadow, fallback), контракт неизменён | ✅ Completed: Gate-1 + Gate-2 passed; flags default OFF | — |
 | **TASK-CANONICAL-005** — freeze `stable_id` / output `snapshot_id` / anchor DTO | ✅ Completed; ADR-0003 Accepted | — |
 | **TASK-CANONICAL-006** — TN VED search/code-card anchor bridge | ✅ Completed; optional soft-fail anchor | — |
+| **TASK-CANONICAL-007** — leaf evidence в Parser, один DB snapshot, чистый Builder | ✅ Completed; Gate-2 18,049/18,049 | — |
 | **TASK-MVP-SEARCH-QUALITY-001** — hybrid поиск: ranking, typo recovery, explainable UI | ✅ Completed; embeddings remain separate | — |
 | **TASK-MVP-PAYMENTS-001** — объяснимый расчёт платежей в карточке ТН ВЭД | ✅ Completed; calculation semantics unchanged | — |
 | **TASK-MVP-RISK-001** — санкционный скрининг: scope, evidence, coverage, sources | ✅ Completed; semantics remain diagnostic | — |
@@ -428,10 +441,12 @@ URL/API-контракты не менялись; backend, БД, флаги и �
   `CanonicalModel.from_roots(...)` / `TreeBuilder.build_model(...)` прогоняют
   `TreeValidator` перед freeze; при ошибках модель не создаётся
   (`CanonicalModelValidationError`). Runtime по-прежнему использует legacy-путь.
-- **Builder читает БД для `leaf_flags`** (`HsRate` в `builder.py`). Жёсткая привязка
-  к глобальному `SessionLocal` устранена: provider/Builder используют одну session factory.
-  Противоречит ADR §6.1 «единственный путь чтения — Parser» и переписывает предикат
-  `is_leaf_hs_code`. Должно переехать в Parser.
+- ~~**Builder читает БД для `leaf_flags`.**~~ **Закрыто** (TASK-CANONICAL-007):
+  `TreeParser` собирает leaf-evidence вместе с остальными входами в одной DB session,
+  `TreeParseResult.leaf_flags` делает зависимость явной, а `TreeBuilder` не импортирует
+  SQLAlchemy/`SessionLocal`/`HsRate` и выполняет только детерминированное преобразование.
+  Явный SQLite `BEGIN` защищает Parser от промежуточного конкурентного commit. Full и
+  compact Gate-2 схемы покрыты тестами; parity 18,049/18,049 сохранён.
 
 ### Nice to have
 - **provenance / history / aliases / breadcrumb** — поля модели из ADR §3.2 ещё не

@@ -216,7 +216,7 @@ class CanonicalProviderTests(unittest.TestCase):
         self.assertEqual(rev0, rev2, "revision должен вернуться к исходному после отката")
 
     def test_revision_changes_when_inherited_leaf_prefix_changes(self) -> None:
-        """Builder читает унаследованный hs_prefix, поэтому он входит в cache-key."""
+        """Parser читает унаследованный hs_prefix, поэтому он входит в cache-key."""
         prov = provider_mod.CanonicalTreeProvider()
         rev0 = prov._compute_revision(SessionLocal)
         marker = "test-canonical-inherited-prefix"

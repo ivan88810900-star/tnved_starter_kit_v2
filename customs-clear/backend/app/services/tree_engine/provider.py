@@ -120,7 +120,7 @@ class CanonicalTreeProvider:
 
     def _build(self, session_factory: SessionFactory) -> CanonicalModel:
         parser = TreeParser()
-        builder = TreeBuilder(session_factory=session_factory)
+        builder = TreeBuilder()
         db = session_factory()
         try:
             parsed = parser.parse(db)
@@ -237,9 +237,9 @@ class CanonicalTreeProvider:
 
         - все поля ``tnved_commodities``, которые читает ``TreeParser``;
         - Section/Chapter metadata, формирующие ``chapter_notes``;
-        - ключи ``hs_code`` / ``hs_prefix`` из ``hs_rates``, которыми Builder
+        - ключи ``hs_code`` / ``hs_prefix`` из ``hs_rates``, которыми Parser
           подтверждает неоднозначные L4/L6-листья по точной или унаследованной
-          ставке.
+          ставке и передаёт их Builder как явный вход.
 
         Порядок строк фиксирован. Любой insert/delete/in-place update значимого
         входа меняет digest; изменение ставки у уже подтверждённого leaf — нет,

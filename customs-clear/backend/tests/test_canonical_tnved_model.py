@@ -362,16 +362,15 @@ class CanonicalTnvedModelTests(unittest.TestCase):
     def test_structure_normalizer_is_pure_and_deterministic(self) -> None:
         """StructureNormalizer — чистый и детерминированный (без БД, без uuid4)."""
         normalizer = StructureNormalizer()
-        leaf_flags = self.builder._compute_leaf_flags(self.parsed)
         rec_a = normalizer.normalize(
             self.parsed.commodities,
             chapter_notes=self.parsed.chapter_notes,
-            leaf_flags=leaf_flags,
+            leaf_flags=self.parsed.leaf_flags,
         )
         rec_b = normalizer.normalize(
             self.parsed.commodities,
             chapter_notes=self.parsed.chapter_notes,
-            leaf_flags=leaf_flags,
+            leaf_flags=self.parsed.leaf_flags,
         )
         self.assertTrue(rec_a, "recovery вернул пустой результат")
         codes_a = [(h.code, len(h.entries)) for h in rec_a]
@@ -428,9 +427,7 @@ class CanonicalTnvedModelTests(unittest.TestCase):
                 import_duty="5%",
             ),
         ]
-        # Подменяем leaf-флаги пустыми, чтобы форсировать синтез без БД.
         builder = TreeBuilder()
-        builder._compute_leaf_flags = lambda parse_result: {}  # type: ignore[method-assign]
         parsed = TreeParseResult(
             commodities=records,
             chapter_notes={},
@@ -507,7 +504,6 @@ class CanonicalTnvedModelTests(unittest.TestCase):
             ),
         ]
         builder = TreeBuilder()
-        builder._compute_leaf_flags = lambda parse_result: {}  # type: ignore[method-assign]
         parsed = TreeParseResult(
             commodities=records,
             chapter_notes={},

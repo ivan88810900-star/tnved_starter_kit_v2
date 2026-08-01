@@ -2,7 +2,7 @@
 
 > Только задачи, подтверждённые анализом кода и существующего бэклога.
 > Не содержит бизнес-wishlist без технического обоснования.
-> Дата: 2026-07-10.
+> Дата: 2026-08-01.
 
 ---
 
@@ -36,6 +36,11 @@
   Для Gate-2 передачи без полного DB-архива есть минимальный read-only exporter четырёх
   структурных таблиц (`scripts/export_canonical_gate2_db.py`); `--audit-report` создаёт
   самодостаточный маленький JSON, поэтому БД нужна только для разбора mismatch.
+- ✅ **TASK-CANONICAL-007** — Parser стал единственной DB-reading стадией Canonical
+  pipeline: commodities, Section/Chapter metadata и leaf-evidence читаются в одной
+  session и одном явном SQLite read-snapshot, затем передаются Builder как явный
+  `TreeParseResult`. Builder не знает о БД; full/compact Gate-2 покрыты тестами,
+  parity 18 049/18 049 сохранён.
 
 **Текущее состояние и долги:** см. `.ai/CURRENT_STATE.md` §2b/§8/§9. Read-path
 `/children` подключён к runtime **только за флагом** (default OFF). Overlay/остальные
@@ -62,6 +67,8 @@
    `/children` (структурный слой) за `CANONICAL_TREE_ENABLED`, сверка с legacy через
    `CANONICAL_TREE_SHADOW` и `scripts/audit_canonical_children.py`.
    ADR-0002 принят с условиями; Gate-2 пройден, включение требует отдельного решения Ivan.
+5. ✅ **Устранить скрытое DB-чтение Builder.** TASK-CANONICAL-007 перенёс
+   leaf-evidence в Parser, закрепил один DB snapshot и сохранил full Gate-2 parity.
 
 После отдельного решения Ivan возможен rollout первого read-path. Расширение
 runtime на overlays и удаление legacy допустимы только после отдельного derisking/parity.

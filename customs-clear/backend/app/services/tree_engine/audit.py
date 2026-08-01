@@ -9,11 +9,10 @@ from __future__ import annotations
 
 from dataclasses import asdict, dataclass
 from time import perf_counter
-from typing import Any, Callable
+from typing import Any
 
 from sqlalchemy.orm import Session
 
-from ...db import SessionLocal
 from ...models.tnved import Commodity
 from ..tnved_tree import (
     build_tree,
@@ -27,7 +26,6 @@ from .parser import TreeParser
 from .serializer import TreeSerializer
 from .shadow import compare_children
 
-SessionFactory = Callable[[], Session]
 MIN_GATE2_COMMODITIES = 10_000
 
 
@@ -93,7 +91,6 @@ def _chapter_children(roots: list[dict[str, Any]], chapter: str) -> list[dict[st
 def audit_canonical_children(
     db: Session,
     *,
-    session_factory: SessionFactory = SessionLocal,
     max_examples: int = 20,
     prefix: str = "",
 ) -> CanonicalChildrenAuditReport:
@@ -103,6 +100,8 @@ def audit_canonical_children(
     их идентичность проверяется API-тестом, а не дублируется здесь.
     """
     started = perf_counter()
+    # Parser opens the SQLite read snapshot before either projection is built.
+    parsed = TreeParser().parse(db)
     prefix_digits = digits(prefix)
     query = exclude_obsolete_reserved(db.query(Commodity).order_by(Commodity.code.asc()))
     if prefix_digits:
@@ -112,7 +111,6 @@ def audit_canonical_children(
     chapter_notes = collect_chapter_notes(db)
 
     legacy_roots = build_tree(rows, chapter_notes)
-    parsed = TreeParser().parse(db)
     if prefix_digits:
         parsed = TreeParseResult(
             commodities=[
@@ -124,8 +122,13 @@ def audit_canonical_children(
             db_codes=frozenset(
                 code for code in parsed.db_codes if code.startswith(prefix_digits)
             ),
+            leaf_flags={
+                code: is_leaf
+                for code, is_leaf in parsed.leaf_flags.items()
+                if code.startswith(prefix_digits)
+            },
         )
-    model = TreeBuilder(session_factory=session_factory).build_model(parsed)
+    model = TreeBuilder().build_model(parsed)
     canonical_roots = TreeSerializer().serialize_roots(list(model.roots))
 
     legacy_index = _index_first_by_code(legacy_roots)

@@ -10,14 +10,7 @@ oracle до достижения parity.
 
 from __future__ import annotations
 
-from collections.abc import Callable
-
-from sqlalchemy import inspect, or_
-from sqlalchemy.orm import Session
-
-from ...db import SessionLocal
-from ...models import HsRate
-from ..tnved_tree import digits, node_level
+from ..tnved_tree import digits
 from .canonical_model import CanonicalModel
 from .models import (
     ClassificationGroupNode,
@@ -32,29 +25,20 @@ from .models import (
 from .recovery import RecoveredHeading, RecoveredNode, StructureNormalizer
 from .validator import TreeValidator
 
-_LEAF_FLAG_CHUNK = 500
-
-SessionFactory = Callable[[], Session]
-
-
 class TreeBuilder:
     """Собирает TreeNode из RecoveredHeading (Parser → Recovery → Builder)."""
 
     def __init__(
         self,
         normalizer: StructureNormalizer | None = None,
-        *,
-        session_factory: SessionFactory = SessionLocal,
     ) -> None:
         self._normalizer = normalizer or StructureNormalizer()
-        self._session_factory = session_factory
 
     def build(self, parse_result: TreeParseResult) -> list[TreeNode]:
-        leaf_flags = self._compute_leaf_flags(parse_result)
         recovered = self._normalizer.normalize(
             parse_result.commodities,
             chapter_notes=parse_result.chapter_notes,
-            leaf_flags=leaf_flags,
+            leaf_flags=parse_result.leaf_flags,
         )
         roots = [self._assemble(rh) for rh in recovered]
         assign_stable_ids(roots)
@@ -88,62 +72,6 @@ class TreeBuilder:
             parse_result=parse_result if validate else None,
             validator=validator,
         )
-
-    # -- leaf-флаги (БД вне нормализатора, R2) -----------------------------
-
-    def _compute_leaf_flags(self, parse_result: TreeParseResult) -> dict[str, bool]:
-        """Предвычисляет leaf-признаки для неоднозначных неполных уровней.
-
-        Повторяет предикат `normative_store.is_leaf_hs_code`: ребёнок определяется
-        самой структурой. Терминальный L4 подтверждается точной строкой
-        ``hs_rates``, а L6 — точной или унаследованной. Держит БД-доступ ВНЕ
-        `StructureNormalizer`.
-        """
-        ambiguous = sorted(
-            {
-                rec.code10
-                for rec in parse_result.commodities
-                if len(rec.code10) == 10 and node_level(rec.code10) in {4, 6}
-            }
-        )
-        if not ambiguous:
-            return {}
-
-        prefixes_by_code: dict[str, set[str]] = {}
-        all_prefixes: set[str] = set()
-        for code in ambiguous:
-            level = node_level(code)
-            prefixes = {code} if level == 4 else {code[:length] for length in (10, 8, 6, 4, 2)}
-            prefixes_by_code[code] = prefixes
-            all_prefixes.update(prefixes)
-
-        existing: set[str] = set()
-        prefix_list = sorted(all_prefixes)
-        with self._session_factory() as db:
-            rate_columns = [HsRate.hs_code]
-            rate_inspector = inspect(db.get_bind())
-            has_hs_prefix = (
-                rate_inspector.has_table(HsRate.__tablename__)
-                and any(
-                    column["name"] == "hs_prefix"
-                    for column in rate_inspector.get_columns(HsRate.__tablename__)
-                )
-            )
-            if has_hs_prefix:
-                rate_columns.append(HsRate.hs_prefix)
-            for i in range(0, len(prefix_list), _LEAF_FLAG_CHUNK):
-                chunk = prefix_list[i : i + _LEAF_FLAG_CHUNK]
-                rate_filters = [HsRate.hs_code.in_(chunk)]
-                if has_hs_prefix:
-                    rate_filters.append(HsRate.hs_prefix.in_(chunk))
-                rows = (
-                    db.query(*rate_columns)
-                    .filter(or_(*rate_filters))
-                    .all()
-                )
-                for row in rows:
-                    existing.update(value for value in row if value)
-        return {code: bool(prefixes_by_code[code] & existing) for code in ambiguous}
 
     # -- сборка иерархии (assembly = Builder) ------------------------------
 

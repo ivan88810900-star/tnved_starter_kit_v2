@@ -6,7 +6,7 @@ Active
 
 ## Last updated
 
-2026-07-31
+2026-08-01
 
 ## Strategic direction
 
@@ -52,6 +52,11 @@ ingestion.
 - Frontend production hardening: every existing page is an on-demand route bundle;
   the initial JavaScript set fell from 1,277,432 to 231,325 bytes (`-81.9%`), with
   accessible loading and recoverable route-error states and no URL/API changes
+- Canonical pipeline boundary hardening: `TreeParser` is now the sole DB-reading
+  stage for commodities, chapter metadata and L4/L6 leaf evidence; `TreeBuilder`
+  consumes explicit inputs without opening a second session. An explicit SQLite
+  read transaction also keeps those inputs on one snapshot under concurrent commits.
+  Full Gate-2 remains 18,049/18,049 with all serving flags OFF.
 - Explainable Smart Payments in the TN VED card: bases, statuses, sources, assumptions,
   uncertainty and optional Canonical grounding anchor
 - Evidence-first sanctions/risk checks in the TN VED card: explicit scope, conservative
@@ -94,6 +99,8 @@ Current next tasks:
 - ✅ ADR-0003 / TASK-CANONICAL-005: `stable_id` + `snapshot_id` lifecycle frozen
 - ✅ TASK-CANONICAL-006: TN VED search + code-card consume the additive Canonical
   anchor DTO with soft fallback; preliminary decisions/evidence remain visible
+- ✅ TASK-CANONICAL-007: all Canonical Builder inputs are collected by Parser from
+  one DB session; Builder is DB-independent and compact Gate-2 parity remains green
 - ✅ TASK-MVP-SEARCH-QUALITY-001: hybrid search ranking, typo recovery and
   explainable main-UI results
 - ✅ TASK-MVP-PAYMENTS-001: Smart payment explanation block in the TN VED card
@@ -137,6 +144,8 @@ Current next tasks:
   loading/failure behavior is protected by regression tests.
 - Perform visual/live-browser verification when a reachable application URL is
   available, without broad UI redesign
+- Prepare a separate Decision Memo before adding Canonical aliases/history or
+  changing persistent identity semantics
 - Separate readiness decision for semantic embeddings (vectors/API cost/provider), without
   weakening the deterministic hybrid-search fallback
 - ✅ Optional-AI contract verification (no external request): citation grounding,
