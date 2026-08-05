@@ -64,6 +64,12 @@ class SourceRecord:
     code: str
     description: str
     import_duty: str = ""
+    # Canonical runtime supplies explicit snapshot-bound evidence.  Direct
+    # DB/offline callers leave it unknown and use topology as a fallback.
+    is_leaf: bool | None = None
+    # Nearest distinct real-code ancestor in the same Canonical snapshot.
+    # ``None`` means that no canonical containment evidence is available.
+    parent_code: str | None = None
 
 
 @dataclass

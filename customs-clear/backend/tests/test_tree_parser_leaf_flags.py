@@ -27,6 +27,33 @@ def _record(code: str, description: str = "test") -> ParsedCommodityRecord:
 
 
 class TreeParserLeafFlagTests(unittest.TestCase):
+    def test_parser_does_not_treat_prefix_only_l4_rate_as_exact_leaf(self) -> None:
+        engine = create_engine("sqlite+pysqlite:///:memory:")
+        try:
+            with engine.begin() as connection:
+                connection.execute(
+                    text(
+                        "CREATE TABLE hs_rates ("
+                        "id INTEGER PRIMARY KEY, hs_code VARCHAR(10), hs_prefix VARCHAR(10))"
+                    )
+                )
+                connection.execute(
+                    text(
+                        "INSERT INTO hs_rates (id, hs_code, hs_prefix) "
+                        "VALUES (1, 'unrelated', '0101000000')"
+                    )
+                )
+
+            with Session(engine) as db:
+                flags = TreeParser._load_leaf_flags(
+                    db,
+                    [_record("0101000000")],
+                )
+
+            self.assertEqual(flags, {"0101000000": False})
+        finally:
+            engine.dispose()
+
     def test_parser_collects_exact_l4_and_inherited_l6_evidence(self) -> None:
         engine = create_engine("sqlite+pysqlite:///:memory:")
         try:

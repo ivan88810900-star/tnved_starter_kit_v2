@@ -136,14 +136,30 @@ class StructureNormalizer:
             deeper = [c for c in codes if c != pad_code]
             pad_sub = ""
             if pad_code in ten_by_code:
-                raw_pad = ten_by_code[pad_code].get("raw_name") or ""
-                title, sub = split_position_pad_name(raw_pad)
-                if title and (not draft.name or not is_meaningful_name(draft.name)):
-                    draft.name = title
-                pad_sub = sub
-                if not pad_sub and (not draft.name or not is_meaningful_name(draft.name)):
-                    draft.name = title or ten_by_code[pad_code]["name"]
-                codes = deeper
+                terminal_pad = not deeper and leaf_flags.get(pad_code, False)
+                if terminal_pad:
+                    # Exact-rate L4 без потомков — реальный декларируемый код,
+                    # а не только технический источник имени heading. Сохраняем
+                    # отдельный 4-значный wrapper и полный 10-значный leaf.
+                    full_name = ten_by_code[pad_code]["name"]
+                    if full_name and (
+                        not draft.name or not is_meaningful_name(draft.name)
+                    ):
+                        draft.name = full_name
+                    codes = [pad_code]
+                else:
+                    raw_pad = ten_by_code[pad_code].get("raw_name") or ""
+                    title, sub = split_position_pad_name(raw_pad)
+                    if title and (
+                        not draft.name or not is_meaningful_name(draft.name)
+                    ):
+                        draft.name = title
+                    pad_sub = sub
+                    if not pad_sub and (
+                        not draft.name or not is_meaningful_name(draft.name)
+                    ):
+                        draft.name = title or ten_by_code[pad_code]["name"]
+                    codes = deeper
 
             level6_codes = [c for c in codes if node_level(c) == 6]
             direct_l6 = {c for c in level6_codes if is_direct_position_subheading(c)}

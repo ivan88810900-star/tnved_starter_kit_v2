@@ -31,6 +31,7 @@ from .semantic_navigation import (
     SemanticNavigationValidator,
     SemanticNode,
     SemanticNodeType,
+    SourceRecord,
 )
 from .tree_engine import CanonicalModel, get_canonical_model
 
@@ -75,6 +76,8 @@ class GuidedTnvedNavigationService:
         heading4 = _digits(heading)
         if len(heading4) != 4:
             raise ValueError("heading must contain exactly 4 digits")
+        # Kept for the stable service/API signature; runtime source is the model.
+        _ = db
 
         try:
             model = self.model_loader()
@@ -98,8 +101,33 @@ class GuidedTnvedNavigationService:
                 snapshot_id=model.snapshot_id,
             )
 
+        canonical_source_records = model.source_records_for_heading(heading4)
+        if not canonical_source_records:
+            logger.warning(
+                "Guided TN VED: Canonical source records unavailable for "
+                "heading=%s snapshot=%s",
+                heading4,
+                model.snapshot_id,
+            )
+            return self._degraded(
+                heading4,
+                "canonical_source_records_unavailable",
+                snapshot_id=model.snapshot_id,
+            )
+
+        source_records: list[SourceRecord] = []
+        for record in canonical_source_records:
+            source_records.append(
+                SourceRecord(
+                    code=record.code,
+                    description=record.description,
+                    import_duty=record.import_duty,
+                    is_leaf=record.is_leaf,
+                    parent_code=record.parent_code,
+                )
+            )
         try:
-            tree = self.builder.build_heading(db, heading4)
+            tree = self.builder.build_heading_from_records(heading4, source_records)
         except Exception:  # additive UX не должен ломать каталог
             logger.exception(
                 "Guided TN VED: semantic overlay failed for heading=%s",
@@ -149,6 +177,21 @@ class GuidedTnvedNavigationService:
         ]
         real_expected = set(tree.expected_real_codes) - {heading4}
         real_reachable = set(tree.real_codes_in_tree()) - {heading4}
+        code_nodes = [
+            node
+            for node in tree.all_nodes()
+            if node.code and node.code != heading4 and node.carries_real_code
+        ]
+        declarable_leaf_codes = {
+            str(node.code)
+            for node in code_nodes
+            if node.node_type == SemanticNodeType.LEAF
+        }
+        canonical_leaf_evidence = {
+            str(node.code)
+            for node in code_nodes
+            if node.metadata.get("leaf_evidence") is True
+        }
         semantic_nodes = [
             node
             for node in tree.all_nodes()
@@ -162,6 +205,19 @@ class GuidedTnvedNavigationService:
             node.node_type == SemanticNodeType.CLASSIFICATION_SUBGROUP
             for node in semantic_nodes
         )
+
+        def semantic_depth(node: SemanticNode, current: int = 0) -> int:
+            level = current + int(
+                node.node_type
+                in {
+                    SemanticNodeType.CLASSIFICATION_GROUP,
+                    SemanticNodeType.CLASSIFICATION_SUBGROUP,
+                }
+            )
+            return max(
+                [level]
+                + [semantic_depth(child, level) for child in node.children]
+            )
 
         heading_anchor = self._anchor_payload(model, canonical_heading)
         return {
@@ -187,15 +243,16 @@ class GuidedTnvedNavigationService:
                 "expected_real_codes": len(real_expected),
                 "reachable_real_codes": len(real_reachable),
                 "canonical_bound_codes": len(real_expected),
+                "source_code_nodes": len(real_expected),
+                "reachable_source_code_nodes": len(real_reachable),
+                "canonical_declarable_leaves": len(canonical_leaf_evidence),
+                "declarable_leaf_codes": len(declarable_leaf_codes),
                 "canonical_coverage": 1.0,
                 "fake_codes": 0,
                 "critical_issues": [],
                 "semantic_groups": len(semantic_nodes),
                 "semantic_subgroups": semantic_subgroup_count,
-                "semantic_max_depth": max(
-                    (node.depth for node in semantic_nodes),
-                    default=0,
-                ),
+                "semantic_max_depth": semantic_depth(tree.root),
                 "nesting_fallbacks": len(tree.nesting_fallbacks),
                 "rejected_unsafe_groups": len(tree.rejected_candidates),
                 "pruned_empty_groups": pruned_empty_groups,

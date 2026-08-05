@@ -19,6 +19,7 @@ from ..tnved_tree import (
     collect_chapter_notes,
     digits,
     exclude_obsolete_reserved,
+    node_level,
 )
 from .builder import TreeBuilder
 from .models import TreeParseResult
@@ -133,6 +134,21 @@ def audit_canonical_children(
 
     legacy_index = _index_first_by_code(legacy_roots)
     canonical_index = _index_first_by_code(canonical_roots)
+    headings_with_deeper_records = {
+        code[:4]
+        for record in parsed.commodities
+        if len(code := digits(record.code10)) == 10 and node_level(code) > 4
+    }
+    required_terminal_l4_codes = {
+        code
+        for code, is_leaf in parsed.leaf_flags.items()
+        if (
+            is_leaf
+            and len(digits(code)) == 10
+            and node_level(digits(code)) == 4
+            and digits(code)[:4] not in headings_with_deeper_records
+        )
+    }
     chapter_codes = sorted(
         {
             code[:2]
@@ -142,7 +158,13 @@ def audit_canonical_children(
             if len(code) >= 4
         }
     )
-    node_codes = sorted(set(legacy_index) | set(canonical_index))
+    # Comparing only the union of produced nodes can be falsely green when
+    # both projections omit the same source-backed terminal L4 leaf. Parser
+    # leaf evidence is an independent reachability requirement for those
+    # exact XXXX000000 codes.
+    node_codes = sorted(
+        set(legacy_index) | set(canonical_index) | required_terminal_l4_codes
+    )
 
     matches = 0
     mismatches = 0

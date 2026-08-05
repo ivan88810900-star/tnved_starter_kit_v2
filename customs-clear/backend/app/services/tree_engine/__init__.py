@@ -8,6 +8,7 @@ from .flags import (
 )
 from .models import (
     CanonicalAnchor,
+    CanonicalSourceRecord,
     ClassificationGroupNode,
     CommodityNode,
     HeadingNode,
@@ -45,6 +46,7 @@ from .validator import TreeValidator, ValidationIssue, ValidationResult
 __all__ = [
     "CanonicalModel",
     "CanonicalAnchor",
+    "CanonicalSourceRecord",
     "CanonicalModelValidationError",
     "CanonicalTreeProvider",
     "ClassificationGroupNode",

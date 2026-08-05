@@ -223,9 +223,13 @@ class SemanticStructureExtractor:
                 code=code10,
                 description=rec.description,
                 import_duty=rec.import_duty,
+                is_leaf=rec.is_leaf,
+                parent_code=rec.parent_code,
             )
             if code10 == pad_code:
                 pad_record = records_by_code[code10]
+                if pad_record.is_leaf:
+                    commodity_codes.append(code10)
             else:
                 commodity_codes.append(code10)
 
@@ -307,11 +311,14 @@ class SemanticStructureExtractor:
                 )
 
         # 1. Первый групповой заголовок — из хвоста описания pad-кода.
-        if pad_record is not None:
+        if pad_record is not None and not pad_record.is_leaf:
             consider(pad_code, pad_record.description, None)
 
         # 2. Заголовки, «прилипшие» к описаниям позиций.
         for code10 in commodity_codes:
+            if code10 == pad_code:
+                # Exact terminal L4 — товар, а не источник semantic-группы.
+                continue
             consider(code10, records_by_code[code10].description, code10)
 
         return ExtractionResult(

@@ -108,7 +108,8 @@ class TreeParser:
         if has_hs_prefix:
             rate_columns.append(HsRate.hs_prefix)
 
-        existing: set[str] = set()
+        existing_hs_codes: set[str] = set()
+        existing_hs_prefixes: set[str] = set()
         prefix_list = sorted(all_prefixes)
         for index in range(0, len(prefix_list), _LEAF_FLAG_CHUNK):
             chunk = prefix_list[index : index + _LEAF_FLAG_CHUNK]
@@ -117,10 +118,18 @@ class TreeParser:
                 rate_filters.append(HsRate.hs_prefix.in_(chunk))
             rows = db.query(*rate_columns).filter(or_(*rate_filters)).all()
             for row in rows:
-                existing.update(value for value in row if value)
+                if row[0]:
+                    existing_hs_codes.add(row[0])
+                if has_hs_prefix and row[1]:
+                    existing_hs_prefixes.add(row[1])
 
+        inherited_rate_keys = existing_hs_codes | existing_hs_prefixes
         return {
-            code: bool(prefixes_by_code[code] & existing)
+            code: (
+                code in existing_hs_codes
+                if node_level(code) == 4
+                else bool(prefixes_by_code[code] & inherited_rate_keys)
+            )
             for code in ambiguous
         }
 

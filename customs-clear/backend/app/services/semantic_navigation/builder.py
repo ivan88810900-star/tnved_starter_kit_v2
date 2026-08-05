@@ -9,18 +9,26 @@
       classification_group: камбалообразные
         ...
 
-НЕ влияет на production API и текущее дерево. Реальные коды берутся только из БД.
+Не меняет обычное production-дерево. Guided runtime передаёт immutable records из
+выбранного CanonicalModel snapshot; отдельный DB entrypoint сохранён для offline
+диагностики и изолированных тестов.
 """
 
 from __future__ import annotations
 
+from collections.abc import Iterable
+
+from sqlalchemy import inspect
+from sqlalchemy.exc import NoInspectionAvailable, SQLAlchemyError
 from sqlalchemy.orm import Session
 
+from ...models.core import HsRate
 from ...models.tnved import Commodity
 from ..tnved_tree.data_access import exclude_obsolete_reserved
-from ..tnved_tree.helpers import digits, node_level
+from ..tnved_tree.helpers import digits, node_level, strip_leading_dashes
 from .extractor import ExtractionResult, SemanticStructureExtractor
 from .models import (
+    MAX_SEMANTIC_GROUP_LEVELS,
     MAX_UNSPLIT_GROUP_CODES,
     NestingFallback,
     SemanticNavigationTree,
@@ -41,8 +49,26 @@ class SemanticNavigationBuilder:
     def build_heading(self, db: Session, heading: str) -> SemanticNavigationTree:
         heading4 = digits(heading).zfill(4)[:4]
         records = self._load_records(db, heading4)
-        heading_title = self._heading_title(db, heading4, records)
-        extraction = self.extractor.extract(heading4, records)
+        return self.build_heading_from_records(heading4, records)
+
+    def build_heading_from_records(
+        self,
+        heading: str,
+        records: Iterable[SourceRecord],
+    ) -> SemanticNavigationTree:
+        """Build the semantic overlay from an already captured source snapshot."""
+
+        heading4 = digits(heading).zfill(4)[:4]
+        scoped_records = sorted(
+            (
+                record
+                for record in records
+                if digits(record.code).zfill(4)[:4] == heading4
+            ),
+            key=lambda record: record.code,
+        )
+        heading_title = self._heading_title(heading4, scoped_records)
+        extraction = self.extractor.extract(heading4, scoped_records)
         return self._assemble(heading4, heading_title, extraction)
 
     # -- data access -------------------------------------------------------
@@ -55,18 +81,43 @@ class SemanticNavigationBuilder:
             .order_by(Commodity.code.asc())
             .all()
         )
+        pad_code = heading4 + "000000"
+        normalized_codes = [
+            code_digits.zfill(10)[:10]
+            for row in rows
+            if len(code_digits := digits(str(row.code or ""))) > 4
+        ]
+        terminal_pad = pad_code in normalized_codes and not any(
+            code != pad_code for code in normalized_codes
+        )
+        try:
+            has_hs_rates = terminal_pad and inspect(db.get_bind()).has_table(
+                HsRate.__tablename__
+            )
+        except (AttributeError, NoInspectionAvailable, SQLAlchemyError, TypeError):
+            has_hs_rates = False
+        exact_terminal_pad = bool(
+            has_hs_rates
+            and db.query(HsRate.hs_code)
+            .filter(HsRate.hs_code == pad_code)
+            .first()
+        )
         return [
             SourceRecord(
                 code=str(r.code or ""),
                 description=(r.description or "").strip(),
                 import_duty=(r.import_duty or "").strip(),
+                is_leaf=(
+                    True
+                    if exact_terminal_pad
+                    and digits(str(r.code or "")).zfill(10)[:10] == pad_code
+                    else None
+                ),
             )
             for r in rows
         ]
 
-    def _heading_title(
-        self, db: Session, heading4: str, records: list[SourceRecord]
-    ) -> str:
+    def _heading_title(self, heading4: str, records: list[SourceRecord]) -> str:
         for rec in records:
             if (
                 digits(rec.code).zfill(4)[:4] == heading4
@@ -77,6 +128,8 @@ class SemanticNavigationBuilder:
         pad = heading4 + "000000"
         for rec in records:
             if digits(rec.code).zfill(10)[:10] == pad:
+                if rec.is_leaf:
+                    return strip_leading_dashes(rec.description)
                 return self.extractor.main_title(rec.description)
         return ""
 
@@ -151,13 +204,19 @@ class SemanticNavigationBuilder:
 
             cnode = SemanticNode(
                 node_type=SemanticNodeType.COMMODITY,
-                title=self.extractor.main_title(rec.description),
+                title=(
+                    strip_leading_dashes(rec.description)
+                    if code10 == extraction.pad_code and rec.is_leaf
+                    else self.extractor.main_title(rec.description)
+                ),
                 code=code10,
                 source="tnved_commodities",
                 metadata={
                     "raw_description": rec.description,
                     "import_duty": rec.import_duty,
                     "node_level": lvl,
+                    "leaf_evidence": rec.is_leaf,
+                    "canonical_parent_code": rec.parent_code,
                 },
             )
             parent.add_child(cnode)
@@ -167,6 +226,7 @@ class SemanticNavigationBuilder:
         open_groups(len(extraction.commodity_codes))
 
         nesting_fallbacks = self._apply_controlled_nesting(root)
+        self._restore_canonical_code_containment(root)
         self._refresh_links(root)
         self._mark_leaves(root)
 
@@ -382,6 +442,227 @@ class SemanticNavigationBuilder:
         return count
 
     @staticmethod
+    def _restore_canonical_code_containment(root: SemanticNode) -> None:
+        """Restore snapshot-proven code ancestry without discarding semantics.
+
+        Controlled semantic nesting is intentionally applied first.  A semantic
+        wrapper is moved as a unit only when every real-code node on its frontier
+        has the same Canonical parent and the two-level semantic limit remains
+        valid.  That keeps safe group/subgroup wrappers and their kinds intact.
+        Any remaining misplaced code node is then reparented directly; no node
+        is copied or synthesized here.
+        """
+
+        all_nodes = [root, *root.iter_descendants()]
+        original_order = {id(node): index for index, node in enumerate(all_nodes)}
+        baseline_children = {id(node): list(node.children) for node in all_nodes}
+        code_nodes: dict[str, SemanticNode] = {
+            str(node.code): node
+            for node in all_nodes
+            if node.carries_real_code and node.code
+        }
+
+        def structural_parents() -> dict[int, SemanticNode]:
+            return {
+                id(child): node
+                for node in [root, *root.iter_descendants()]
+                for child in node.children
+            }
+
+        def contains(ancestor: SemanticNode, candidate: SemanticNode) -> bool:
+            return ancestor is candidate or any(
+                descendant is candidate for descendant in ancestor.iter_descendants()
+            )
+
+        def nearest_code_ancestor(
+            node: SemanticNode,
+            parents: dict[int, SemanticNode],
+        ) -> SemanticNode | None:
+            cursor = parents.get(id(node))
+            seen: set[int] = set()
+            while cursor is not None and id(cursor) not in seen:
+                seen.add(id(cursor))
+                if cursor.carries_real_code and cursor.code:
+                    return cursor
+                cursor = parents.get(id(cursor))
+            return None
+
+        def semantic_frontier(node: SemanticNode) -> list[SemanticNode]:
+            frontier: list[SemanticNode] = []
+
+            def walk(current: SemanticNode) -> None:
+                for child in current.children:
+                    if child.carries_real_code and child.code:
+                        frontier.append(child)
+                    else:
+                        walk(child)
+
+            walk(node)
+            return frontier
+
+        def semantic_ancestor_count(
+            node: SemanticNode,
+            parents: dict[int, SemanticNode],
+        ) -> int:
+            count = 0
+            cursor: SemanticNode | None = node
+            seen: set[int] = set()
+            while cursor is not None and id(cursor) not in seen:
+                seen.add(id(cursor))
+                count += int(cursor.is_group)
+                cursor = parents.get(id(cursor))
+            return count
+
+        def semantic_subtree_depth(node: SemanticNode, current: int = 0) -> int:
+            level = current + int(node.is_group)
+            return max(
+                [level]
+                + [semantic_subtree_depth(child, level) for child in node.children]
+            )
+
+        def move(node: SemanticNode, target: SemanticNode) -> bool:
+            parents = structural_parents()
+            current = parents.get(id(node))
+            if current is None or current is target or contains(node, target):
+                return False
+            current.children = [child for child in current.children if child is not node]
+            if all(child is not node for child in target.children):
+                target.children.append(node)
+            return True
+
+        groups_with_depth: list[tuple[int, SemanticNode]] = []
+
+        def collect_groups(node: SemanticNode, depth: int) -> None:
+            if node.is_group:
+                groups_with_depth.append((depth, node))
+            for child in node.children:
+                collect_groups(child, depth + 1)
+
+        collect_groups(root, 0)
+        ordered_groups = sorted(
+            groups_with_depth,
+            key=lambda item: (item[0], original_order.get(id(item[1]), 0)),
+        )
+
+        def canonical_depth(node: SemanticNode) -> int:
+            depth = 0
+            code = str(node.code or "")
+            seen: set[str] = set()
+            while code and code not in seen:
+                seen.add(code)
+                current = code_nodes.get(code)
+                if current is None:
+                    break
+                parent_code = str(
+                    current.metadata.get("canonical_parent_code") or ""
+                )
+                if not parent_code or parent_code == code:
+                    break
+                depth += 1
+                code = parent_code
+            return depth
+
+        real_nodes = [
+            node
+            for node in all_nodes
+            if node.carries_real_code and node.code and node is not root
+        ]
+        ordered_real_nodes = sorted(
+            real_nodes,
+            key=lambda item: (
+                canonical_depth(item),
+                original_order.get(id(item), 0),
+            ),
+        )
+
+        def restore_order(node: SemanticNode) -> None:
+            node.children.sort(key=lambda child: original_order.get(id(child), 10**9))
+            for child in node.children:
+                restore_order(child)
+
+        def execute(excluded_groups: set[int]) -> set[int]:
+            for node in all_nodes:
+                node.children = list(baseline_children[id(node)])
+
+            moved_groups: set[int] = set()
+            # Settle shallow semantic ancestry first.  A deeper wrapper is
+            # accepted only against the already-established semantic frontier.
+            for _, group in ordered_groups:
+                if id(group) in excluded_groups:
+                    continue
+                frontier = semantic_frontier(group)
+                parent_codes = {
+                    str(node.metadata.get("canonical_parent_code") or "")
+                    for node in frontier
+                }
+                if not frontier or "" in parent_codes or len(parent_codes) != 1:
+                    continue
+                target = code_nodes.get(next(iter(parent_codes)))
+                if target is None or contains(group, target):
+                    continue
+                parents = structural_parents()
+                if nearest_code_ancestor(group, parents) is target:
+                    continue
+                if (
+                    semantic_ancestor_count(target, parents)
+                    + semantic_subtree_depth(group)
+                    > MAX_SEMANTIC_GROUP_LEVELS
+                ):
+                    continue
+                if move(group, target):
+                    moved_groups.add(id(group))
+
+            for node in ordered_real_nodes:
+                parent_code = str(
+                    node.metadata.get("canonical_parent_code") or ""
+                )
+                target = code_nodes.get(parent_code)
+                if (
+                    not parent_code
+                    or target is None
+                    or target is node
+                    or contains(node, target)
+                ):
+                    continue
+                parents = structural_parents()
+                if nearest_code_ancestor(node, parents) is target:
+                    continue
+                move(node, target)
+
+            restore_order(root)
+            return moved_groups
+
+        def depth_breaking_moves(moved_groups: set[int]) -> set[int]:
+            excluded: set[int] = set()
+
+            def walk(
+                node: SemanticNode,
+                semantic_levels: int,
+                moved_path: tuple[int, ...],
+            ) -> None:
+                next_levels = semantic_levels + int(node.is_group)
+                next_path = (
+                    (*moved_path, id(node))
+                    if node.is_group and id(node) in moved_groups
+                    else moved_path
+                )
+                if next_levels > MAX_SEMANTIC_GROUP_LEVELS and next_path:
+                    excluded.add(next_path[-1])
+                for child in node.children:
+                    walk(child, next_levels, next_path)
+
+            walk(root, 0, ())
+            return excluded
+
+        excluded_groups: set[int] = set()
+        for _ in range(len(ordered_groups) + 1):
+            moved_groups = execute(excluded_groups)
+            new_exclusions = depth_breaking_moves(moved_groups) - excluded_groups
+            if not new_exclusions:
+                break
+            excluded_groups.update(new_exclusions)
+
+    @staticmethod
     def _refresh_links(
         node: SemanticNode,
         *,
@@ -404,9 +685,10 @@ class SemanticNavigationBuilder:
         for ch in node.children:
             SemanticNavigationBuilder._mark_leaves(ch)
         if node.node_type == SemanticNodeType.COMMODITY:
-            has_code_children = any(
-                c.node_type in (SemanticNodeType.COMMODITY, SemanticNodeType.LEAF)
-                for c in node.children
+            evidence = node.metadata.get("leaf_evidence")
+            has_code_descendants = any(
+                descendant.carries_real_code and descendant.code
+                for descendant in node.iter_descendants()
             )
-            if not has_code_children:
+            if evidence is True or (evidence is None and not has_code_descendants):
                 node.node_type = SemanticNodeType.LEAF

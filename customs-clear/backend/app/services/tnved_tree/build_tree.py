@@ -26,6 +26,15 @@ def build_tree(rows: list[Any], chapter_notes: dict[str, str]) -> list[dict[str,
     """
     parents: dict[str, dict[str, Any]] = {}
     ten_by_code: dict[str, dict[str, str]] = {}
+    leaf_cache: dict[str, bool] = {}
+
+    def _is_leaf(code: str) -> bool:
+        """Cache the legacy DB-backed predicate for this one tree build."""
+        if code not in leaf_cache:
+            from ..normative_store import is_leaf_hs_code
+
+            leaf_cache[code] = is_leaf_hs_code(code)
+        return leaf_cache[code]
 
     for r in rows:
         raw_code = (r.code or "").strip()
@@ -81,18 +90,30 @@ def build_tree(rows: list[Any], chapter_notes: dict[str, str]) -> list[dict[str,
         deeper = [c for c in codes if c != pad_code]
         pad_sub = ""
         if pad_code in ten_by_code:
-            raw_pad = ten_by_code[pad_code].get("raw_name") or ""
-            title, sub = split_position_pad_name(raw_pad)
-            if title and (not heading["name"] or not is_meaningful_name(heading["name"])):
-                heading["name"] = title
-            pad_sub = sub
-            if not pad_sub and (not heading["name"] or not is_meaningful_name(heading["name"])):
-                heading["name"] = title or ten_by_code[pad_code]["name"]
-            codes = deeper
-        elif pad_code in ten_by_code and not deeper:
-            cand = ten_by_code[pad_code]["name"]
-            if cand and (not heading["name"] or not is_meaningful_name(heading["name"])):
-                heading["name"] = cand
+            terminal_pad = not deeper and _is_leaf(pad_code)
+            if terminal_pad:
+                # A real terminal description can contain an ordinary numeric
+                # range (for example ``8202 – 8205``). It is not pad-subheading
+                # syntax, so preserve the full title on both wrapper and leaf.
+                full_name = ten_by_code[pad_code]["name"]
+                if full_name and (
+                    not heading["name"] or not is_meaningful_name(heading["name"])
+                ):
+                    heading["name"] = full_name
+                codes = [pad_code]
+            else:
+                raw_pad = ten_by_code[pad_code].get("raw_name") or ""
+                title, sub = split_position_pad_name(raw_pad)
+                if title and (
+                    not heading["name"] or not is_meaningful_name(heading["name"])
+                ):
+                    heading["name"] = title
+                pad_sub = sub
+                if not pad_sub and (
+                    not heading["name"] or not is_meaningful_name(heading["name"])
+                ):
+                    heading["name"] = title or ten_by_code[pad_code]["name"]
+                codes = deeper
 
         level6_codes = [c for c in codes if node_level(c) == 6]
         direct_l6 = {c for c in level6_codes if is_direct_position_subheading(c)}
@@ -140,8 +161,6 @@ def build_tree(rows: list[Any], chapter_notes: dict[str, str]) -> list[dict[str,
         for ch in node["children"]:
             _classify(ch)
         if len(node["display_code"]) == 10:
-            from ..normative_store import is_leaf_hs_code
-
             if node["children"]:
                 node["is_leaf"] = False
                 node["is_codeless"] = True
@@ -149,7 +168,7 @@ def build_tree(rows: list[Any], chapter_notes: dict[str, str]) -> list[dict[str,
             else:
                 lvl = node_level(node["code"])
                 if lvl == 6:
-                    if is_leaf_hs_code(node["code"]):
+                    if _is_leaf(node["code"]):
                         node["is_leaf"] = True
                         node["is_codeless"] = False
                         node["is_group"] = False
@@ -167,7 +186,7 @@ def build_tree(rows: list[Any], chapter_notes: dict[str, str]) -> list[dict[str,
                         node["is_group"] = True
                         node["display_code"] = node["code"][:6]
                 elif lvl == 8:
-                    if is_leaf_hs_code(node["code"]):
+                    if _is_leaf(node["code"]):
                         node["is_leaf"] = True
                         node["is_codeless"] = False
                         node["is_group"] = False
@@ -185,7 +204,7 @@ def build_tree(rows: list[Any], chapter_notes: dict[str, str]) -> list[dict[str,
                         node["is_group"] = True
                         node["display_code"] = node["code"][:8]
                 else:
-                    leaf = is_leaf_hs_code(node["code"])
+                    leaf = _is_leaf(node["code"])
                     node["is_leaf"] = leaf
                     node["is_codeless"] = not leaf
                     node["is_group"] = not leaf

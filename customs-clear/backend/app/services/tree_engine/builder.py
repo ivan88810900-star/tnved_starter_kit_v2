@@ -71,6 +71,7 @@ class TreeBuilder:
             snapshot_id=snapshot_id,
             parse_result=parse_result if validate else None,
             validator=validator,
+            source_records=parse_result.commodities,
         )
 
     # -- сборка иерархии (assembly = Builder) ------------------------------

@@ -432,6 +432,7 @@ class CanonicalTnvedModelTests(unittest.TestCase):
             commodities=records,
             chapter_notes={},
             db_codes=frozenset({"0302", "0302130000"}),
+            leaf_flags={},
         )
         roots = builder.build(parsed)
         heading = next(r for r in roots if r.code == "0302")
@@ -508,6 +509,7 @@ class CanonicalTnvedModelTests(unittest.TestCase):
             commodities=records,
             chapter_notes={},
             db_codes=frozenset({"0302", "0302130000"}),
+            leaf_flags={},
         )
         model = builder.build_model(parsed)
         node = model.get_by_code("0302130000")

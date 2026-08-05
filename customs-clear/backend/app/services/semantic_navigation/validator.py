@@ -60,6 +60,7 @@ class SemanticNavigationValidator:
         self._check_groups_have_no_code(nodes, issues)
         self._check_semantic_hierarchy(tree, issues)
         self._check_leaves(nodes, issues)
+        self._check_canonical_parent_containment(tree, issues)
         self._check_real_codes(tree, nodes, db_codes, issues)
         self._check_reachability(tree, issues)
         self._check_group_removal_invariance(tree, issues)
@@ -184,13 +185,17 @@ class SemanticNavigationValidator:
             next_levels = semantic_levels + (1 if is_semantic_group else 0)
 
             if node.node_type == SemanticNodeType.CLASSIFICATION_GROUP:
-                if parent is None or parent.node_type != SemanticNodeType.HEADING:
+                if parent is None or parent.node_type not in {
+                    SemanticNodeType.HEADING,
+                    SemanticNodeType.COMMODITY,
+                }:
                     issues.append(
                         SemanticIssue(
                             code="classification_group_wrong_parent",
                             severity=CRITICAL,
                             message=(
-                                "classification_group должен быть ребёнком heading: "
+                                "classification_group должен быть ребёнком heading "
+                                "или code-branch: "
                                 f"{node.title}"
                             ),
                             node_id=node.id,
@@ -200,7 +205,11 @@ class SemanticNavigationValidator:
                 node.node_type == SemanticNodeType.CLASSIFICATION_SUBGROUP
                 and (
                     parent is None
-                    or parent.node_type != SemanticNodeType.CLASSIFICATION_GROUP
+                    or parent.node_type
+                    not in {
+                        SemanticNodeType.CLASSIFICATION_GROUP,
+                        SemanticNodeType.COMMODITY,
+                    }
                 )
             ):
                 issues.append(
@@ -209,7 +218,8 @@ class SemanticNavigationValidator:
                         severity=CRITICAL,
                         message=(
                             "classification_subgroup должен быть ребёнком "
-                            f"classification_group: {node.title}"
+                            "classification_group или code-branch: "
+                            f"{node.title}"
                         ),
                         node_id=node.id,
                     )
@@ -265,6 +275,37 @@ class SemanticNavigationValidator:
                         node_id=n.id,
                     )
                 )
+            if not n.carries_real_code or not n.code:
+                continue
+            evidence = n.metadata.get("leaf_evidence")
+            actual_leaf = n.node_type == SemanticNodeType.LEAF
+            if evidence is not None and actual_leaf != evidence:
+                issues.append(
+                    SemanticIssue(
+                        code="leaf_role_mismatch",
+                        severity=CRITICAL,
+                        message=(
+                            "Роль leaf расходится с Canonical evidence: "
+                            f"{n.code}"
+                        ),
+                        node_id=n.id,
+                    )
+                )
+            if evidence is False and not any(
+                descendant.node_type == SemanticNodeType.LEAF
+                for descendant in n.iter_descendants()
+            ):
+                issues.append(
+                    SemanticIssue(
+                        code="nonleaf_without_reachable_children",
+                        severity=CRITICAL,
+                        message=(
+                            "Canonical non-leaf не ведёт к декларируемому коду: "
+                            f"{n.code}"
+                        ),
+                        node_id=n.id,
+                    )
+                )
 
     def _check_real_codes(
         self,
@@ -303,6 +344,37 @@ class SemanticNavigationValidator:
                         message=f"Реальный код встречается {cnt} раз: {code}",
                     )
                 )
+
+    def _check_canonical_parent_containment(
+        self,
+        tree: SemanticNavigationTree,
+        issues: list[SemanticIssue],
+    ) -> None:
+        """Every snapshot-projected code must keep its nearest code ancestor."""
+
+        def walk(node: SemanticNode, nearest_code: str | None) -> None:
+            next_nearest = nearest_code
+            if node.carries_real_code and node.code:
+                expected_parent = str(
+                    node.metadata.get("canonical_parent_code") or ""
+                )
+                if expected_parent and nearest_code != expected_parent:
+                    issues.append(
+                        SemanticIssue(
+                            code="canonical_parent_mismatch",
+                            severity=CRITICAL,
+                            message=(
+                                "Ближайший кодовый предок расходится с "
+                                f"Canonical snapshot: {node.code}"
+                            ),
+                            node_id=node.id,
+                        )
+                    )
+                next_nearest = str(node.code)
+            for child in node.children:
+                walk(child, next_nearest)
+
+        walk(tree.root, None)
 
     def _check_reachability(
         self, tree: SemanticNavigationTree, issues: list[SemanticIssue]

@@ -131,6 +131,17 @@ class ParsedCommodityRecord:
     weight_coeff: float = 0.0
 
 
+@dataclass(frozen=True)
+class CanonicalSourceRecord:
+    """Immutable official-description input retained with one Canonical build."""
+
+    code: str
+    description: str
+    import_duty: str = ""
+    is_leaf: bool = False
+    parent_code: str | None = None
+
+
 @dataclass
 class TreeParseResult:
     """Все явные входы Builder, собранные TreeParser из одного DB snapshot."""
@@ -138,7 +149,7 @@ class TreeParseResult:
     commodities: list[ParsedCommodityRecord]
     chapter_notes: dict[str, str]
     db_codes: frozenset[str]
-    leaf_flags: dict[str, bool] = field(default_factory=dict)
+    leaf_flags: dict[str, bool]
 
 
 @dataclass(frozen=True)

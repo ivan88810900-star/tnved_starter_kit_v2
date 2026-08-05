@@ -3,14 +3,18 @@
 from __future__ import annotations
 
 import unittest
+from dataclasses import FrozenInstanceError
 from unittest.mock import patch
 
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
+from sqlalchemy import create_engine, text
+from sqlalchemy.orm import Session
 
 from app.api import tnved_catalog
 from app.services.guided_tnved_navigation import GuidedTnvedNavigationService
 from app.services.semantic_navigation import (
+    SemanticNavigationBuilder,
     SemanticNavigationTree,
     SemanticNode,
     SemanticNodeType,
@@ -19,6 +23,9 @@ from app.services.tree_engine import (
     CanonicalModel,
     CommodityNode,
     HeadingNode,
+    ParsedCommodityRecord,
+    TreeBuilder,
+    TreeParser,
     assign_stable_ids,
     compute_snapshot_id,
 )
@@ -44,7 +51,34 @@ def _canonical_model(*, include_second_leaf: bool = True) -> CanonicalModel:
     roots = [root]
     assign_stable_ids(roots)
     snapshot_id = compute_snapshot_id(roots)
-    return CanonicalModel.from_roots(roots, snapshot_id=snapshot_id)
+    source_records = [
+        ParsedCommodityRecord(
+            code10="0302",
+            description="Рыба свежая или охлажденная",
+            raw_description="Рыба свежая или охлажденная",
+            import_duty="",
+        ),
+        ParsedCommodityRecord(
+            code10="0302110000",
+            description="– Форель",
+            raw_description="– Форель",
+            import_duty="",
+        ),
+    ]
+    if include_second_leaf:
+        source_records.append(
+            ParsedCommodityRecord(
+                code10="0302130000",
+                description="– Лосось",
+                raw_description="– Лосось",
+                import_duty="",
+            )
+        )
+    return CanonicalModel.from_roots(
+        roots,
+        snapshot_id=snapshot_id,
+        source_records=source_records,
+    )
 
 
 def _semantic_tree() -> SemanticNavigationTree:
@@ -106,20 +140,44 @@ def _nested_semantic_tree() -> SemanticNavigationTree:
 
 
 class _Builder:
-    def build_heading(self, _db, heading: str) -> SemanticNavigationTree:
+    def build_heading_from_records(
+        self,
+        heading,
+        records,
+    ) -> SemanticNavigationTree:  # noqa: ANN001
         if heading != "0302":
             raise AssertionError(f"unexpected heading: {heading}")
+        if not records:
+            raise AssertionError("expected Canonical source records")
         return _semantic_tree()
 
 
 class _NestedBuilder:
-    def build_heading(self, _db, heading: str) -> SemanticNavigationTree:
+    def build_heading_from_records(
+        self,
+        heading,
+        records,
+    ) -> SemanticNavigationTree:  # noqa: ANN001
         if heading != "0302":
             raise AssertionError(f"unexpected heading: {heading}")
+        if not records:
+            raise AssertionError("expected Canonical source records")
         return _nested_semantic_tree()
 
 
 class GuidedTnvedNavigationTests(unittest.TestCase):
+    def test_canonical_source_record_projection_is_immutable(self) -> None:
+        model = _canonical_model()
+
+        records = model.source_records_for_heading("0302")
+
+        self.assertIsInstance(records, tuple)
+        self.assertEqual(records[0].code, "0302")
+        with self.assertRaises(FrozenInstanceError):
+            records[0].description = "changed"  # type: ignore[misc]
+        with self.assertRaises(TypeError):
+            model.source_records_by_heading["0302"] = ()  # type: ignore[index]
+
     def test_canonical_overlay_is_complete_and_explainable(self) -> None:
         model = _canonical_model()
         service = GuidedTnvedNavigationService(
@@ -151,6 +209,112 @@ class GuidedTnvedNavigationTests(unittest.TestCase):
         self.assertTrue(
             all(child["canonical_anchor"] for child in choice["children"])
         )
+
+    def test_database_update_after_model_build_does_not_change_guided_source(
+        self,
+    ) -> None:
+        engine = create_engine("sqlite+pysqlite:///:memory:")
+        try:
+            with engine.begin() as connection:
+                connection.execute(
+                    text(
+                        "CREATE TABLE tnved_sections ("
+                        "id INTEGER PRIMARY KEY, roman_number VARCHAR(16), "
+                        "title TEXT, notes TEXT)"
+                    )
+                )
+                connection.execute(
+                    text(
+                        "CREATE TABLE tnved_chapters ("
+                        "id INTEGER PRIMARY KEY, section_id INTEGER, code VARCHAR(16), "
+                        "title TEXT, notes TEXT)"
+                    )
+                )
+                connection.execute(
+                    text(
+                        "CREATE TABLE tnved_commodities ("
+                        "id INTEGER PRIMARY KEY, chapter_id INTEGER, code VARCHAR(32), "
+                        "description TEXT, unit VARCHAR(64), import_duty TEXT, "
+                        "supp_unit VARCHAR(16), weight_coeff FLOAT)"
+                    )
+                )
+                connection.execute(
+                    text(
+                        "CREATE TABLE hs_rates ("
+                        "id INTEGER PRIMARY KEY, hs_code VARCHAR(10))"
+                    )
+                )
+                connection.execute(
+                    text(
+                        "INSERT INTO tnved_sections "
+                        "(id, roman_number, title, notes) "
+                        "VALUES (1, 'I', 'Test section', '')"
+                    )
+                )
+                connection.execute(
+                    text(
+                        "INSERT INTO tnved_chapters "
+                        "(id, section_id, code, title, notes) "
+                        "VALUES (1, 1, '03', 'Fish', '')"
+                    )
+                )
+                connection.execute(
+                    text(
+                        "INSERT INTO tnved_commodities "
+                        "(id, chapter_id, code, description, unit, import_duty, "
+                        "supp_unit, weight_coeff) VALUES "
+                        "(1, 1, '0302', 'Рыба свежая или охлажденная', '', '', '', 0), "
+                        "(2, 1, '0302110000', '– Форель', '', '', '', 0), "
+                        "(3, 1, '0302130000', '– Лосось', '', '', '', 0)"
+                    )
+                )
+
+            with Session(engine) as db:
+                parsed = TreeParser().parse(db)
+            model = TreeBuilder().build_model(parsed)
+            snapshot_id = model.snapshot_id
+
+            with engine.begin() as connection:
+                connection.execute(
+                    text(
+                        "UPDATE tnved_commodities "
+                        "SET description='MUTATED AFTER SNAPSHOT' "
+                        "WHERE code='0302110000'"
+                    )
+                )
+
+            service = GuidedTnvedNavigationService(
+                builder=SemanticNavigationBuilder(),
+                model_loader=lambda: model,
+            )
+            with Session(engine) as db:
+                result = service.build(db, "0302")
+                changed = db.execute(
+                    text(
+                        "SELECT description FROM tnved_commodities "
+                        "WHERE code='0302110000'"
+                    )
+                ).scalar_one()
+
+            self.assertEqual(changed, "MUTATED AFTER SNAPSHOT")
+            self.assertEqual(result["status"], "OK")
+            self.assertEqual(result["engine"]["snapshot_id"], snapshot_id)
+
+            def find_choice(items, code):  # noqa: ANN001
+                for item in items:
+                    if item.get("code") == code:
+                        return item
+                    found = find_choice(item.get("children") or [], code)
+                    if found is not None:
+                        return found
+                return None
+
+            choice = find_choice(result["choices"], "0302110000")
+            self.assertIsNotNone(choice)
+            self.assertEqual(choice["title"], "Форель")
+            self.assertNotEqual(choice["title"], "MUTATED AFTER SNAPSHOT")
+        finally:
+            engine.dispose()
 
     def test_ids_are_stable_and_real_codes_use_canonical_ids(self) -> None:
         model = _canonical_model()
@@ -227,6 +391,22 @@ class GuidedTnvedNavigationTests(unittest.TestCase):
         self.assertEqual(result["status"], "DEGRADED")
         self.assertEqual(result["reason"], "canonical_model_unavailable")
         self.assertEqual(result["choices"], [])
+
+    def test_model_without_source_records_falls_back_without_database_read(self) -> None:
+        root = HeadingNode(title="Рыба", code="0302")
+        assign_stable_ids([root])
+        model = CanonicalModel.from_roots([root])
+        service = GuidedTnvedNavigationService(
+            builder=_Builder(),
+            model_loader=lambda: model,
+        )
+
+        result = service.build(object(), "0302")
+
+        self.assertEqual(result["status"], "DEGRADED")
+        self.assertEqual(result["reason"], "canonical_source_records_unavailable")
+        self.assertEqual(result["choices"], [])
+        self.assertEqual(result["engine"]["snapshot_id"], model.snapshot_id)
 
     def test_requires_one_four_digit_heading(self) -> None:
         service = GuidedTnvedNavigationService(
