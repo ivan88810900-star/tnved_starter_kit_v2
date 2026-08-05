@@ -36,7 +36,47 @@ from app.services.tree_engine import (  # noqa: E402
     get_canonical_model,
 )
 
-DEFAULT_HEADINGS = ("0302", "0303", "5208", "8517")
+DEFAULT_HEADINGS = ("0302", "0303", "2204", "5208", "8517")
+
+_PDO_2204_TITLE = (
+    "вина с защищенным наименованием по происхождению"
+)
+_PGI_2204_TITLE = "вина с защищенным географическим указанием"
+_PDO_2204_SLICE = (
+    "2204211100",
+    "2204211200",
+    "2204211300",
+    "2204211700",
+    "2204211800",
+    "2204211900",
+    "2204212200",
+    "2204212300",
+    "2204212400",
+    "2204212600",
+    "2204212700",
+    "2204212800",
+    "2204213200",
+    "2204213400",
+    "2204213600",
+    "2204213700",
+    "2204213800",
+    "2204214200",
+    "2204214300",
+    "2204214400",
+    "2204214600",
+    "2204214700",
+    "2204214800",
+    "2204216200",
+    "2204216600",
+    "2204216700",
+    "2204216800",
+    "2204216900",
+    "2204217100",
+    "2204217400",
+    "2204217600",
+    "2204217700",
+    "2204217800",
+)
 
 
 def _normalise_title(raw: str) -> str:
@@ -119,6 +159,80 @@ def _hierarchy_checks(heading: str, choices: list[dict]) -> dict[str, bool]:
                 and has_plain_weave(top[parent])
                 for parent in parents
             )
+        }
+    if heading == "2204":
+        all_nodes: list[dict] = []
+
+        def collect_nodes(nodes: list[dict]) -> None:
+            for node in nodes:
+                all_nodes.append(node)
+                collect_nodes(list(node.get("children") or []))
+
+        def subtree_codes(node: dict) -> tuple[str, ...]:
+            codes: list[str] = []
+
+            def collect_codes(current: dict) -> None:
+                if current.get("code"):
+                    codes.append(str(current["code"]))
+                for child in current.get("children") or []:
+                    collect_codes(child)
+
+            collect_codes(node)
+            return tuple(codes)
+
+        collect_nodes(choices)
+        parent_candidates = [
+            node for node in all_nodes if node.get("code") == "2204210000"
+        ]
+        parent = parent_candidates[0] if len(parent_candidates) == 1 else None
+        parent_children = list(parent.get("children") or []) if parent else []
+        pdo_candidates = [
+            node
+            for node in parent_children
+            if node.get("role") == "semantic_choice"
+            and _normalise_title(node.get("title") or "")
+            == _normalise_title(_PDO_2204_TITLE)
+        ]
+        pdo = pdo_candidates[0] if len(pdo_candidates) == 1 else None
+        pdo_codes = subtree_codes(pdo) if pdo is not None else ()
+        pdo_leaf_roles = bool(pdo) and all(
+            node.get("role") == "declarable_code"
+            for node in all_nodes
+            if node.get("code") in set(_PDO_2204_SLICE)
+        )
+        pgi_candidates = [
+            node
+            for node in parent_children
+            if node.get("role") == "semantic_choice"
+            and _normalise_title(node.get("title") or "")
+            == _normalise_title(_PGI_2204_TITLE)
+        ]
+        pgi = pgi_candidates[0] if len(pgi_candidates) == 1 else None
+        pgi_codes = subtree_codes(pgi) if pgi is not None else ()
+        pgi_boundary = bool(
+            pdo is not None
+            and pgi is not None
+            and parent_children.index(pdo) < parent_children.index(pgi)
+            and "2204217900" in pgi_codes
+            and not set(_PDO_2204_SLICE).intersection(pgi_codes)
+        )
+        return {
+            "pdo_official_group_present": pdo is not None,
+            "pdo_group_is_codeless": bool(pdo) and pdo.get("code") is None,
+            "pdo_exact_33_leaf_slice": (
+                pdo_codes == _PDO_2204_SLICE and pdo_leaf_roles
+            ),
+            "pdo_parent_step_18_choices": len(parent_children) == 18,
+            "pdo_parent_step_14_direct_codes": (
+                _unsplit_code_count(parent) == 14 if parent is not None else False
+            ),
+            "pdo_step_33_choices": (
+                len(pdo.get("children") or []) == 33 if pdo is not None else False
+            ),
+            "pdo_step_33_direct_codes": (
+                _unsplit_code_count(pdo) == 33 if pdo is not None else False
+            ),
+            "pgi_boundary_after_pdo_slice": pgi_boundary,
         }
     if heading == "8517":
         accepted_titles: set[str] = set()
@@ -774,7 +888,10 @@ def main(argv: Sequence[str] | None = None) -> int:
     selection.add_argument(
         "--headings",
         type=_parse_headings,
-        help="Comma-separated 4-digit headings (default: 0302,0303,5208,8517).",
+        help=(
+            "Comma-separated 4-digit headings "
+            "(default: 0302,0303,2204,5208,8517)."
+        ),
     )
     selection.add_argument(
         "--all-headings",
@@ -793,7 +910,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         "--require-complete",
         action="store_true",
         help=(
-            "Exit 1 unless every heading passes correctness and the four "
+            "Exit 1 unless every heading passes correctness and the five "
             "golden assertions; census quality metrics do not set thresholds."
         ),
     )

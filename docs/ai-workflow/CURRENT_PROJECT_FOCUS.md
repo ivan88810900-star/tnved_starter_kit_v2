@@ -75,9 +75,20 @@ ingestion.
   headings and 16,708 source-backed code nodes pass reachability, binding and nearest
   Canonical-parent integrity. The model contains 13,254 actual declarable leaves;
   leaf roles are checked against Canonical rather than inferred from the absence of
-  semantic children. Semantic questions currently cover 548 headings (44.6254%) and
-  6,891 leaves (51.9919%); these are measured product-quality baselines, not a claim
-  that every heading is already semantically optimized.
+  semantic children. On the current feature branch, semantic questions cover 548
+  headings (44.6254%) and 6,924 leaves (52.2408%); these are measured product-quality
+  baselines, not a claim that every heading is already semantically optimized.
+- Feature-branch candidate TASK-SEMANTIC-006 implements a bounded official `2204`
+  PDO slice: an exact 33-leaf Canonical sibling allowlist under `2204210000` is
+  staged only while the official PDO/PGI markers and source topology match. The
+  affected step is 18 choices / 14 direct codes, followed by PDO 33/33; source drift
+  fails closed to the complete flat route. The unchanged global limit of 30 leaves
+  one honest noncritical oversized warning. Whole-catalog correctness remains
+  1,228/1,228, golden assertions are 5/5, serving flags remain OFF and no database,
+  API or LLM contract changed. Ivan accepted Option A in DM-0005 on 2026-08-05;
+  TASK-SEMANTIC-006 is completed and accepted, with implementation + verification
+  still on the feature branch. This docs-only update performs no merge, rollout or
+  deployment.
 - Explainable Smart Payments in the TN VED card: bases, statuses, sources, assumptions,
   uncertainty and optional Canonical grounding anchor
 - Evidence-first sanctions/risk checks in the TN VED card: explicit scope, conservative
@@ -134,6 +145,11 @@ Current next tasks:
 - ✅ TASK-SEMANTIC-005: strict read-only census covers all 1,228 headings and
   16,708 source-backed code nodes / 13,254 declarable leaves; quality distributions
   and four-digit outlier lists are reported separately from correctness
+- ✅ TASK-SEMANTIC-006: exact official `2204` PDO interval is completed and accepted
+  via DM-0005 Option A, with implementation + verification on the feature branch.
+  It fails closed and covers 33/33 Canonical leaves; `220421` is 18/14 before the
+  PDO step, the whole census is 1,228/1,228 and the fifth golden assertion is green.
+  Flags remain OFF; this docs-only update performs no merge, rollout or deployment
 - ✅ TASK-MVP-SEARCH-QUALITY-001: hybrid search ranking, typo recovery and
   explainable main-UI results
 - ✅ TASK-MVP-PAYMENTS-001: Smart payment explanation block in the TN VED card
@@ -177,10 +193,13 @@ Current next tasks:
   loading/failure behavior is protected by regression tests.
 - Perform visual/live-browser verification when a reachable application URL is
   available, without broad UI redesign
-- Improve semantic question coverage and reduce measured high-branching outliers in
-  bounded, evidence-backed slices. Do not set arbitrary global usability thresholds
-  until a reviewed baseline policy exists; preserve whole-catalog integrity and the
-  four golden hierarchy assertions.
+- Improve semantic question coverage and reduce measured high-branching outliers
+  in bounded, evidence-backed slices. Do not set arbitrary global usability
+  thresholds until a reviewed baseline policy exists; preserve whole-catalog
+  integrity and the five golden hierarchy assertions. The first official `2204`
+  PDO slice is accepted via DM-0005 Option A and completed/verified on the feature
+  branch, but is not merged, rolled out or deployed by this update. Its remaining
+  33/33 step and other outliers need separate source-backed slices.
 - Review proposed DM-0004 before adding Canonical aliases/history or changing
   persistent identity semantics. No schema/runtime implementation is authorized
   until an official transition-source feasibility audit and Ivan decision.

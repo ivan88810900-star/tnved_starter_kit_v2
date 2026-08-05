@@ -65,6 +65,16 @@ def _code(code: str) -> dict:
     }
 
 
+def _branch(code: str, *children: dict) -> dict:
+    return {
+        "role": "code_branch",
+        "kind": "classification_group",
+        "title": "not exported",
+        "code": code,
+        "children": list(children),
+    }
+
+
 def _golden_choices() -> dict[str, list[dict]]:
     return {
         "0302": [
@@ -91,6 +101,48 @@ def _golden_choices() -> dict[str, list[dict]]:
                 ("неотбеленные", "5208111000"),
                 ("отбеленные", "5208211000"),
                 ("окрашенные", "5208310000"),
+            )
+        ],
+        "2204": [
+            _branch(
+                "2204210000",
+                _semantic("вино", _code("2204210600")),
+                _semantic(
+                    diagnostic._PDO_2204_TITLE,
+                    *(
+                        _code(code)
+                        for code in diagnostic._PDO_2204_SLICE
+                    ),
+                ),
+                _semantic(
+                    diagnostic._PGI_2204_TITLE,
+                    _code("2204217900"),
+                ),
+                *(
+                    _code(code)
+                    for code in (
+                        "2204218000",
+                        "2204218100",
+                        "2204218200",
+                        "2204218300",
+                        "2204218400",
+                    )
+                ),
+                _semantic("более 15 об.%", _code("2204218500")),
+                *(
+                    _code(code)
+                    for code in (
+                        "2204219000",
+                        "2204219100",
+                        "2204219200",
+                        "2204219300",
+                        "2204219400",
+                        "2204219500",
+                        "2204219600",
+                        "2204219700",
+                        "2204219800",
+                    )
+                ),
             )
         ],
         "8517": [_code("8517130000")],
@@ -151,6 +203,28 @@ def test_discovery_uses_only_unique_four_digit_canonical_headings() -> None:
     assert diagnostic._discover_headings(model) == ["0302", "5208", "8517"]
 
 
+def test_2204_golden_assertions_reject_a_partial_pdo_slice() -> None:
+    choices = _golden_choices()["2204"]
+
+    assert all(diagnostic._hierarchy_checks("2204", choices).values())
+    choices[0]["children"][1]["children"].pop()
+    checks = diagnostic._hierarchy_checks("2204", choices)
+    assert checks["pdo_official_group_present"] is True
+    assert checks["pdo_exact_33_leaf_slice"] is False
+    assert checks["pdo_step_33_choices"] is False
+
+
+def test_2204_golden_assertions_require_pdo_before_pgi_under_same_parent() -> None:
+    choices = _golden_choices()["2204"]
+    parent_children = choices[0]["children"]
+    parent_children[1], parent_children[2] = parent_children[2], parent_children[1]
+
+    checks = diagnostic._hierarchy_checks("2204", choices)
+
+    assert checks["pdo_exact_33_leaf_slice"] is True
+    assert checks["pgi_boundary_after_pdo_slice"] is False
+
+
 def test_all_heading_census_loads_model_once_and_returns_aggregates_only() -> None:
     choices = _golden_choices()
     model = _FakeModel(list(choices))
@@ -187,11 +261,11 @@ def test_all_heading_census_loads_model_once_and_returns_aggregates_only() -> No
     assert loader_calls == 1
     assert built == sorted(choices)
     assert report["ok"] is True
-    assert report["catalog"]["discovered_headings"] == 4
+    assert report["catalog"]["discovered_headings"] == 5
     assert report["catalog"]["snapshot_count"] == 1
-    assert report["correctness"]["expected_real_codes"] == 9
-    assert report["correctness"]["source_code_nodes"] == 9
-    assert report["correctness"]["canonical_declarable_leaves"] == 9
+    assert report["correctness"]["expected_real_codes"] == 60
+    assert report["correctness"]["source_code_nodes"] == 60
+    assert report["correctness"]["canonical_declarable_leaves"] == 59
     assert report["correctness"]["duplicate_code_occurrences"] == 0
     assert report["golden_assertions"]["failed_headings"] == []
     assert report["quality_census"]["diagnostic_totals"] == {
@@ -200,10 +274,10 @@ def test_all_heading_census_loads_model_once_and_returns_aggregates_only() -> No
         "pruned_empty_groups": 1,
     }
     assert report["quality_census"]["semantic_choice_coverage"] == {
-        "headings_with_choices": 3,
-        "heading_ratio": 0.75,
-        "declarable_leaves_under_choices": 8,
-        "declarable_leaf_ratio": 0.888889,
+        "headings_with_choices": 4,
+        "heading_ratio": 0.8,
+        "declarable_leaves_under_choices": 44,
+        "declarable_leaf_ratio": 0.745763,
     }
     root_choices = report["quality_census"]["counts"]["root_choices"]
     assert root_choices["p50"] == 1
@@ -222,6 +296,8 @@ def test_all_heading_census_loads_model_once_and_returns_aggregates_only() -> No
     serialized = json.dumps(report, ensure_ascii=False)
     assert "not exported" not in serialized
     assert "лососевые" not in serialized
+    assert diagnostic._PDO_2204_TITLE not in serialized
+    assert diagnostic._PGI_2204_TITLE not in serialized
     assert "0302110000" not in serialized
     assert re.search(r"(?<!\d)\d{10}(?!\d)", serialized) is None
 

@@ -56,6 +56,12 @@
   1 228/1 228 headings, 16 708/16 708 source-backed code nodes и 13 254
   Canonical declarable leaves на одном snapshot, zero role mismatch/fake/duplicate/
   degraded/empty-root; semantic UX baseline измеряется отдельно.
+- ✅ **TASK-SEMANTIC-006** — bounded official PDO slice для `2204` completed и
+  accepted через DM-0005 Option A; implementation + verification находятся на
+  feature branch. Exact ordered allowlist из 33 Canonical sibling leaves,
+  fail-closed при source/topology drift; шаг `220421` сократился с 50/47 до 18/14,
+  PDO открывает 33/33. Whole census 1 228/1 228 и golden 5/5 сохранены, flags OFF.
+  Этот docs-only update не выполняет merge/rollout/deploy.
 
 **Текущее состояние и долги:** см. `.ai/CURRENT_STATE.md` §2b/§8/§9. Read-path
 `/children` подключён к runtime **только за флагом** (default OFF). Guided overlay
@@ -110,12 +116,18 @@ runtime на overlays и удаление legacy допустимы только
 **Обоснование:** Correctness gate прошёл на supplied Gate-2 snapshot по
 всем 1 228 heading: 16 708 source-backed code nodes и 13 254 declarable
 leaves, zero leaf-role/Canonical-parent mismatch, empty-root/fake/duplicate/degraded.
-Но semantic choices есть у 548 heading (44.6254%) и покрывают 6 891 leaves
-(51.9919%). Максимум первого шага — 19 вариантов; максимум любого
-следующего шага — 50, из них 47 direct code choices. Это измеренный UX
-backlog, а не integrity failure.
+Semantic choices есть у 548 heading (44.6254%) и покрывают 6 924 leaves
+(52.2408%) на текущей feature branch. TASK-SEMANTIC-006 технически реализовал и
+проверил первый bounded `2204` slice: шаг `220421` теперь 18 choices / 14 direct
+code choices, а PDO открывает 33/33. Максимум первого шага остаётся 19, candidate
+catalog-wide максимум любого следующего шага теперь 33/33 в `2204`. Эта exact
+official группа сохраняет одну noncritical oversized warning, поскольку глобальный
+лимит 30 намеренно не ослаблен. DM-0005 Option A принят: product-semantic choice
+закрыт, но текущий docs-only update не выполняет merge, rollout или deployment.
 
 **Что нужно:**
+- Сохранить отдельный operational gate: DM-0005 acceptance не выполняет
+  merge/rollout/deploy TASK-SEMANTIC-006 и не включает Canonical flags.
 - Выбирать небольшие наборы heading из `quality_outliers` по максимальной
   пользовательской пользе и добавлять только объяснимые вопросы из официального
   текста.

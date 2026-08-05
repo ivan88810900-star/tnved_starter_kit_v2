@@ -18,9 +18,24 @@ confidence (high/medium/low); в дерево попадают только high
 from __future__ import annotations
 
 import re
+import unicodedata
 from dataclasses import dataclass, field
 
 from ..tnved_tree.helpers import digits, strip_leading_dashes
+from .bounded_slices import (
+    PDO_2204_ANCHOR_CODE,
+    PDO_2204_CODES,
+    PDO_2204_DEPTH,
+    PDO_2204_HEADING,
+    PDO_2204_LEAF_COUNT,
+    PDO_2204_OFFICIAL_HEADER,
+    PDO_2204_PARENT_CODE,
+    PDO_2204_REASON,
+    PDO_2204_SCOPE_KIND,
+    PDO_2204_STOP_CODE,
+    PGI_2204_OFFICIAL_HEADER,
+    PGI_2204_TITLE,
+)
 from .models import SourceRecord
 
 # Тире: en-dash, em-dash, hyphen-minus (hyphen строго последним — иначе диапазон в [..]).
@@ -73,6 +88,13 @@ _GENERIC_PREFIXES: tuple[str, ...] = (
 
 _MIN_TITLE_LEN = 4
 
+# One packed official description contains several dash-prefixed headers.  The
+# regex is used only by the bounded 2204 guard below; the generic extractor
+# intentionally keeps its established single-trailing-header policy.
+_PACKED_HEADER_MARKER_RE = re.compile(
+    rf"(?:^|\s)(?P<marks>[{_DASH_CLASS}](?:\s+[{_DASH_CLASS}])*)\s+"
+)
+
 
 @dataclass
 class ExtractedGroup:
@@ -92,6 +114,13 @@ class ExtractedGroup:
     parent_title_hint: str | None = None
     parent_source_code_hint: str | None = None
     hierarchy_hint: str | None = None  # dash_depth | title_prefix
+    #: Optional fail-closed scope proven from one Canonical source snapshot.
+    #: TASK-SEMANTIC-006 is the only producer; ordinary groups leave these None.
+    verified_scope_kind: str | None = None
+    verified_scope_start_exclusive: str | None = None
+    verified_scope_end_inclusive: str | None = None
+    verified_scope_parent_code: str | None = None
+    verified_scope_leaf_count: int | None = None
 
 
 @dataclass
@@ -114,6 +143,15 @@ class ExtractionResult:
     records_by_code: dict[str, SourceRecord]
     groups: list[ExtractedGroup] = field(default_factory=list)
     rejected: list[RejectedCandidate] = field(default_factory=list)
+
+
+@dataclass(frozen=True)
+class _PackedHeader:
+    """One dash-prefixed segment inside the exact bounded official chain."""
+
+    title: str
+    raw: str
+    dash_depth: int
 
 
 def _count_leading_dashes(s: str) -> int:
@@ -186,6 +224,169 @@ def _confidence_for(trailing_raw: str, reason: str | None) -> tuple[str, str]:
 
 def _normalise_title(value: str) -> str:
     return " ".join((value or "").casefold().split())
+
+
+def _normalise_official_header(value: str) -> str:
+    """NFC/case/whitespace normalization for exact official-header matching."""
+
+    normalized = unicodedata.normalize("NFC", value or "").strip()
+    normalized = normalized[:-1].rstrip() if normalized.endswith(":") else normalized
+    return _normalise_title(normalized)
+
+
+def _packed_headers(description: str) -> list[_PackedHeader]:
+    """Split a packed official description into dash-depth segments.
+
+    This helper is intentionally not part of the generic acceptance path.  It
+    only supplies evidence to the fully bounded 2204 PDO rule.
+    """
+
+    source = unicodedata.normalize("NFC", description or "").strip()
+    matches = list(_PACKED_HEADER_MARKER_RE.finditer(source))
+    headers: list[_PackedHeader] = []
+    for index, match in enumerate(matches):
+        end = matches[index + 1].start() if index + 1 < len(matches) else len(source)
+        title = " ".join(source[match.end() : end].strip().split())
+        if not title:
+            continue
+        clean_title = title[:-1].rstrip() if title.endswith(":") else title
+        headers.append(
+            _PackedHeader(
+                title=clean_title,
+                raw=source[match.start() : end].strip(),
+                dash_depth=sum(
+                    1 for char in match.group("marks") if char in _DASH_CLASS
+                ),
+            )
+        )
+    return headers
+
+
+def _bounded_2204_pdo_group(
+    *,
+    heading: str,
+    commodity_codes: list[str],
+    records_by_code: dict[str, SourceRecord],
+    accepted_groups: list[ExtractedGroup],
+) -> ExtractedGroup | None:
+    """Return the exact 220421 PDO slice or fail closed to the flat model.
+
+    The official anchor packs several headers into 2204210900.  We accept only
+    its final, exact depth-6 PDO header and only while the first same-depth PGI
+    boundary remains 2204217800.  The open interval after the anchor through
+    that boundary must still be 33 contiguous Canonical sibling leaves under
+    2204210000.  Any source/topology drift simply leaves the existing safe
+    extraction unchanged.
+    """
+
+    if heading != PDO_2204_HEADING:
+        return None
+    try:
+        anchor_index = commodity_codes.index(PDO_2204_ANCHOR_CODE)
+        stop_index = commodity_codes.index(PDO_2204_STOP_CODE)
+        anchor = records_by_code[PDO_2204_ANCHOR_CODE]
+        parent = records_by_code[PDO_2204_PARENT_CODE]
+    except (KeyError, ValueError):
+        return None
+    if not anchor_index < stop_index:
+        return None
+    if (
+        anchor.is_leaf is not True
+        or anchor.parent_code != PDO_2204_PARENT_CODE
+        or parent.is_leaf is not False
+    ):
+        return None
+
+    anchor_headers = _packed_headers(anchor.description)
+    anchor_same_depth = [
+        (index, header)
+        for index, header in enumerate(anchor_headers)
+        if header.dash_depth == PDO_2204_DEPTH
+    ]
+    if (
+        len(anchor_same_depth) != 1
+        or anchor_same_depth[0][0] == 0
+        or anchor_same_depth[0][0] != len(anchor_headers) - 1
+        or _normalise_official_header(anchor_same_depth[0][1].title)
+        != _normalise_official_header(PDO_2204_OFFICIAL_HEADER)
+    ):
+        return None
+    pdo_header = anchor_same_depth[0][1]
+
+    # An unknown same- or higher-level header would legally close the PDO span
+    # even when the conservative generic extractor rejects its first fragment.
+    # Therefore every intervening packed record must contain only deeper headers.
+    if any(
+        header.dash_depth <= PDO_2204_DEPTH
+        for code in commodity_codes[anchor_index + 1 : stop_index]
+        for header in _packed_headers(records_by_code[code].description)
+    ):
+        return None
+
+    stop_headers = _packed_headers(records_by_code[PDO_2204_STOP_CODE].description)
+    stop_same_depth = [
+        (index, header)
+        for index, header in enumerate(stop_headers)
+        if header.dash_depth == PDO_2204_DEPTH
+    ]
+    if (
+        len(stop_same_depth) != 1
+        or stop_same_depth[0][0] == 0
+        or stop_same_depth[0][0] != len(stop_headers) - 1
+        or _normalise_official_header(stop_same_depth[0][1].title)
+        != _normalise_official_header(PGI_2204_OFFICIAL_HEADER)
+    ):
+        return None
+
+    # The ordinary strict extractor must also have accepted the PGI boundary;
+    # otherwise adding the PDO group could leave it open beyond the proven span.
+    if not any(
+        group.source_code == PDO_2204_STOP_CODE
+        and group.after_code == PDO_2204_STOP_CODE
+        and group.dash_depth == pdo_header.dash_depth
+        and _normalise_title(group.title)
+        == _normalise_title(PGI_2204_TITLE)
+        for group in accepted_groups
+    ):
+        return None
+    if any(
+        group.after_code is not None
+        and PDO_2204_ANCHOR_CODE < group.after_code < PDO_2204_STOP_CODE
+        for group in accepted_groups
+    ):
+        return None
+
+    slice_codes = commodity_codes[anchor_index + 1 : stop_index + 1]
+    interval_codes = [
+        code
+        for code in commodity_codes
+        if PDO_2204_ANCHOR_CODE < code <= PDO_2204_STOP_CODE
+    ]
+    if (
+        tuple(slice_codes) != PDO_2204_CODES
+        or slice_codes != interval_codes
+        or any(
+            records_by_code[code].is_leaf is not True
+            or records_by_code[code].parent_code != PDO_2204_PARENT_CODE
+            for code in slice_codes
+        )
+    ):
+        return None
+
+    return ExtractedGroup(
+        title=_clean_group_title(pdo_header.title),
+        raw=pdo_header.raw,
+        source_code=PDO_2204_ANCHOR_CODE,
+        after_code=PDO_2204_ANCHOR_CODE,
+        confidence=HIGH,
+        reason=PDO_2204_REASON,
+        dash_depth=pdo_header.dash_depth,
+        verified_scope_kind=PDO_2204_SCOPE_KIND,
+        verified_scope_start_exclusive=PDO_2204_ANCHOR_CODE,
+        verified_scope_end_inclusive=PDO_2204_STOP_CODE,
+        verified_scope_parent_code=PDO_2204_PARENT_CODE,
+        verified_scope_leaf_count=PDO_2204_LEAF_COUNT,
+    )
 
 
 def _is_title_prefix_child(parent_title: str, child_title: str) -> bool:
@@ -320,6 +521,24 @@ class SemanticStructureExtractor:
                 # Exact terminal L4 — товар, а не источник semantic-группы.
                 continue
             consider(code10, records_by_code[code10].description, code10)
+
+        bounded_pdo = _bounded_2204_pdo_group(
+            heading=heading4,
+            commodity_codes=commodity_codes,
+            records_by_code=records_by_code,
+            accepted_groups=groups,
+        )
+        if bounded_pdo is not None:
+            insert_at = next(
+                (
+                    index
+                    for index, group in enumerate(groups)
+                    if group.after_code is not None
+                    and group.after_code > PDO_2204_ANCHOR_CODE
+                ),
+                len(groups),
+            )
+            groups.insert(insert_at, bounded_pdo)
 
         return ExtractionResult(
             heading=heading4,

@@ -13,6 +13,7 @@
 | ADR-0002 | First production read-path on CanonicalModel (`/children`) | Accepted with conditions | Ivan | 2026-07-10 | [`decisions/ADR-0002-canonical-children-read-path.md`](decisions/ADR-0002-canonical-children-read-path.md) |
 | ADR-0003 | Canonical anchor identity and snapshot lifecycle | Accepted | Ivan | 2026-07-14 | [`decisions/ADR-0003-canonical-anchor-identity.md`](decisions/ADR-0003-canonical-anchor-identity.md) |
 | DM-0004 | Canonical nomenclature history and code transitions | Proposed | Awaiting Ivan | 2026-08-05 | [`decisions/DM-0004-canonical-nomenclature-history.md`](decisions/DM-0004-canonical-nomenclature-history.md) |
+| DM-0005 | Guided `2204` PDO interval | Accepted — Option A | Ivan | 2026-08-05 | [`decisions/DM-0005-guided-2204-pdo-interval.md`](decisions/DM-0005-guided-2204-pdo-interval.md) |
 
 ---
 
@@ -128,6 +129,24 @@ redirect и без выдачи inferred-сходства за официаль�
 До решения Ivan и успешного source-feasibility audit запрещены schema/runtime/UI
 реализация и автоматическое сопоставление кодов. Полный документ:
 [`decisions/DM-0004-canonical-nomenclature-history.md`](decisions/DM-0004-canonical-nomenclature-history.md).
+
+## DM-0005 — Guided 2204 PDO interval
+
+**Статус:** Accepted — Option A (Ivan, 2026-08-05).
+
+Ivan принял exact bounded interval только для `2204`: видимый пользователю
+бескодовый PDO-вопрос, границу `(2204210900, 2204217800]` и следующий PGI code
+choice с `2204217900`. Это navigation guidance, а не юридическое подтверждение PDO
+для товара.
+
+Приняты точные source markers, ordered allowlist из 33 Canonical sibling leaves и
+fail-closed возврат к полному плоскому маршруту при любом drift. Option B и Option C
+не выбраны; generic parser этим решением не разрешён. Глобальный лимит 30 не
+меняется, одна noncritical `oversized_unsplit_group` warning не скрывается.
+TASK-SEMANTIC-006 completed/accepted, но код остаётся только на feature branch:
+этот docs-only update не выполняет merge, rollout или deployment. Флаги остаются
+OFF; DB/API/LLM изменения не разрешены. Полный документ:
+[`decisions/DM-0005-guided-2204-pdo-interval.md`](decisions/DM-0005-guided-2204-pdo-interval.md).
 
 ---
 

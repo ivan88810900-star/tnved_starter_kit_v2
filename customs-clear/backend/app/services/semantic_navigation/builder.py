@@ -26,6 +26,16 @@ from ...models.core import HsRate
 from ...models.tnved import Commodity
 from ..tnved_tree.data_access import exclude_obsolete_reserved
 from ..tnved_tree.helpers import digits, node_level, strip_leading_dashes
+from .bounded_slices import (
+    PDO_2204_ANCHOR_CODE,
+    PDO_2204_CODES,
+    PDO_2204_LEAF_COUNT,
+    PDO_2204_PARENT_CODE,
+    PDO_2204_REASON,
+    PDO_2204_SCOPE_KIND,
+    PDO_2204_STOP_CODE,
+    PDO_2204_TITLE,
+)
 from .extractor import ExtractionResult, SemanticStructureExtractor
 from .models import (
     MAX_SEMANTIC_GROUP_LEVELS,
@@ -166,22 +176,41 @@ class SemanticNavigationBuilder:
         def open_groups(idx: int) -> None:
             nonlocal current_group, commodity_stack
             for grp in activations.get(idx, []):
+                metadata = {
+                    "raw": grp.raw,
+                    "extracted_from": grp.source_code,
+                    "confidence": grp.confidence,
+                    "reason": grp.reason,
+                    "activation_index": idx,
+                    "dash_depth": grp.dash_depth,
+                    "parent_title_hint": grp.parent_title_hint,
+                    "parent_source_code_hint": grp.parent_source_code_hint,
+                    "hierarchy_hint": grp.hierarchy_hint,
+                }
+                if grp.verified_scope_kind is not None:
+                    metadata.update(
+                        {
+                            "verified_scope_kind": grp.verified_scope_kind,
+                            "verified_scope_start_exclusive": (
+                                grp.verified_scope_start_exclusive
+                            ),
+                            "verified_scope_end_inclusive": (
+                                grp.verified_scope_end_inclusive
+                            ),
+                            "verified_scope_parent_code": (
+                                grp.verified_scope_parent_code
+                            ),
+                            "verified_scope_leaf_count": (
+                                grp.verified_scope_leaf_count
+                            ),
+                        }
+                    )
                 gnode = SemanticNode(
                     node_type=SemanticNodeType.CLASSIFICATION_GROUP,
                     title=grp.title,
                     code=None,
                     source="semantic_extraction",
-                    metadata={
-                        "raw": grp.raw,
-                        "extracted_from": grp.source_code,
-                        "confidence": grp.confidence,
-                        "reason": grp.reason,
-                        "activation_index": idx,
-                        "dash_depth": grp.dash_depth,
-                        "parent_title_hint": grp.parent_title_hint,
-                        "parent_source_code_hint": grp.parent_source_code_hint,
-                        "hierarchy_hint": grp.hierarchy_hint,
-                    },
+                    metadata=metadata,
                 )
                 root.add_child(gnode)
                 current_group = gnode
@@ -383,6 +412,56 @@ class SemanticNavigationBuilder:
     ) -> list[SemanticNode]:
         """Не позволить trailing-заголовку поглотить соседний кодовый диапазон."""
 
+        verified_interval = (
+            SemanticNavigationBuilder._verified_2204_pdo_interval(node)
+        )
+        is_bounded_2204_pdo = (
+            node.metadata.get("reason") == PDO_2204_REASON
+        )
+        if is_bounded_2204_pdo and verified_interval is None:
+            original_children = list(node.children)
+            node.children = []
+            return original_children
+        if verified_interval is not None:
+            (
+                start_exclusive,
+                first_code,
+                end_inclusive,
+                parent_code,
+                expected_count,
+            ) = verified_interval
+            original_children = list(node.children)
+            kept: list[SemanticNode] = []
+            spillover: list[SemanticNode] = []
+            kept_codes: list[str] = []
+            for child in node.children:
+                child_code = SemanticNavigationBuilder._first_real_code(child)
+                is_verified_leaf = bool(
+                    child_code
+                    and start_exclusive < child_code <= end_inclusive
+                    and child.carries_real_code
+                    and child.metadata.get("leaf_evidence") is True
+                    and str(child.metadata.get("canonical_parent_code") or "")
+                    == parent_code
+                )
+                if is_verified_leaf:
+                    kept.append(child)
+                    kept_codes.append(str(child_code))
+                else:
+                    spillover.append(child)
+            complete_scope = bool(
+                len(kept) == expected_count
+                and tuple(kept_codes) == PDO_2204_CODES
+            )
+            if not complete_scope:
+                # Never publish a partial semantic promise.  The group becomes
+                # empty (and is pruned by Guided), while every code falls back
+                # to its ordinary flat/canonical placement.
+                node.children = []
+                return original_children
+            node.children = kept
+            return spillover
+
         scope = SemanticNavigationBuilder._semantic_scope_prefix(node)
         if not scope:
             return []
@@ -397,6 +476,40 @@ class SemanticNavigationBuilder:
                 kept.append(child)
         node.children = kept
         return spillover
+
+    @staticmethod
+    def _verified_2204_pdo_interval(
+        node: SemanticNode,
+    ) -> tuple[str, str, str, str, int] | None:
+        """Recognize only the exact TASK-SEMANTIC-006 verified scope."""
+
+        metadata = node.metadata
+        signature = (
+            node.code is None,
+            node.source == "semantic_extraction",
+            " ".join(node.title.casefold().split())
+            == PDO_2204_TITLE,
+            str(metadata.get("extracted_from") or "") == PDO_2204_ANCHOR_CODE,
+            metadata.get("reason") == PDO_2204_REASON,
+            metadata.get("verified_scope_kind")
+            == PDO_2204_SCOPE_KIND,
+            str(metadata.get("verified_scope_start_exclusive") or "")
+            == PDO_2204_ANCHOR_CODE,
+            str(metadata.get("verified_scope_end_inclusive") or "")
+            == PDO_2204_STOP_CODE,
+            str(metadata.get("verified_scope_parent_code") or "")
+            == PDO_2204_PARENT_CODE,
+            metadata.get("verified_scope_leaf_count") == PDO_2204_LEAF_COUNT,
+        )
+        if not all(signature):
+            return None
+        return (
+            PDO_2204_ANCHOR_CODE,
+            PDO_2204_CODES[0],
+            PDO_2204_STOP_CODE,
+            PDO_2204_PARENT_CODE,
+            PDO_2204_LEAF_COUNT,
+        )
 
     @staticmethod
     def _semantic_scope_prefix(node: SemanticNode) -> str | None:
