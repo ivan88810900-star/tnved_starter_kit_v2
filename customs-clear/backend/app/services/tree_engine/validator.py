@@ -136,6 +136,17 @@ class TreeValidator:
                 self._check_pad_swallowing(node, issues)
 
         for root in roots:
+            if root.parent is not None:
+                issues.append(
+                    ValidationIssue(
+                        code="root_has_parent",
+                        message=(
+                            "Корень не должен ссылаться на parent: "
+                            f"{root.code or root.id}"
+                        ),
+                        node_id=root.id,
+                    )
+                )
             walk(root, [])
 
         return ValidationResult(ok=not issues, issues=issues)

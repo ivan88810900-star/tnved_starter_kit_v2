@@ -61,6 +61,12 @@ ingestion.
   source records captured by the exact `TreeParseResult` that built its
   `CanonicalModel`; it no longer re-reads commodity descriptions from a request
   session after selecting a model snapshot.
+- Canonical publication hardening: the shared model now deep-freezes every
+  published node, parent link, tuple children and recursive standard metadata
+  container. A retained pre-publication list/dict alias cannot mutate the model,
+  while `TreeBuilder.build(...)` remains mutable before validator/stamping/
+  publication. Identity formulas, API behavior and default-OFF flags are unchanged;
+  Gate-2 remains 18,211/18,211 and the census remains 1,228/1,228.
 - Terminal L4 correctness: 162 exact-rate `XXXX000000` records without deeper
   descendants are now real declarable leaves under their stable four-digit heading
   wrappers in both legacy and Canonical projections. Gate-2 now independently
@@ -121,6 +127,10 @@ Current next tasks:
   with structure/anchors from snapshot A
 - ✅ TASK-CANONICAL-009: exact terminal L4 codes are reachable in both tree
   projections and in Guided navigation; hardened Gate-2 passes 18,211/18,211
+- ✅ TASK-CANONICAL-010: published Canonical nodes and recursive metadata are
+  physically immutable for standard containers; snapshot content and navigation
+  indexes cannot split through a retained node/container reference. Arbitrary custom
+  mutable metadata objects remain a documented limitation, with none in production
 - ✅ TASK-SEMANTIC-005: strict read-only census covers all 1,228 headings and
   16,708 source-backed code nodes / 13,254 declarable leaves; quality distributions
   and four-digit outlier lists are reported separately from correctness

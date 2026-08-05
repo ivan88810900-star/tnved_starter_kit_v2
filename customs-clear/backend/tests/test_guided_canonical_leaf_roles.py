@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
@@ -113,12 +114,14 @@ def test_nonleaf_code_branch_retains_semantic_subgroups_and_four_true_leaves() -
     )
 
 
-def test_source_leaf_and_parent_evidence_stays_frozen_after_node_metadata_mutation() -> None:
+def test_published_nodes_reject_metadata_mutation_and_source_evidence_stays_frozen() -> None:
     model = _bluefin_model()
     before = model.source_records_for_heading("0302")
 
-    model.get_by_code(PARENT_CODE).metadata["is_leaf"] = True
-    model.get_by_code(CHILD_CODES[0]).metadata["is_leaf"] = False
+    with pytest.raises(TypeError):
+        model.get_by_code(PARENT_CODE).metadata["is_leaf"] = True
+    with pytest.raises(TypeError):
+        model.get_by_code(CHILD_CODES[0]).metadata["is_leaf"] = False
 
     assert model.source_records_for_heading("0302") == before
     evidence = {record.code: record for record in before}

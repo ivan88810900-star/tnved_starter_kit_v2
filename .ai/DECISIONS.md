@@ -55,7 +55,9 @@
   в legacy); full-tree parity-тесты. Контур изолирован, к runtime не подключён.
 - ✅ **Canonical Model Materialization** (Completed) — иммутабельный `CanonicalModel`
   (индексы достижимости + навигация parent/children/path/descendants), validator gate
-  перед freeze, freeze/read-only на уровне интерфейса, full-tree content parity с legacy.
+  перед freeze, full-tree content parity с legacy. TASK-CANONICAL-010 дополнительно
+  deep-freezes опубликованные nodes/parent/children и standard metadata containers
+  без нового решения ADR.
   Additive `TreeBuilder.build_model(...)`; `build(...)` без изменений. Не подключён к
   runtime/API/overlay; feature flag не вводился.
 - ✅ **TASK-CANONICAL-004** (Completed, 2026-07-14) — Этап 3 ADR: **структурный слой `/children`
@@ -67,6 +69,9 @@
   JSON не изменён. Legacy `build_tree()` не тронут. Corrective закрывает stale-cache
   при in-place UPDATE и добавляет shadow metrics/sampling + Gate-2 auditor. Финальный
   Gate-2: 18 049/18 049 match, 0 mismatch/unresolved, `gate2_ok=true`, exit 0.
+- ✅ **TASK-CANONICAL-010** (Completed, 2026-08-05) — corrective implementation
+  ADR-0001 immutability invariant: опубликованный Canonical graph deep-frozen,
+  Builder output до publication остаётся mutable; API/formulas/flags unchanged.
 
 **Decision-точки** (полный список со статусами/сроками — `.ai/CURRENT_STATE.md`
 §9 «Open Architecture Decisions»):

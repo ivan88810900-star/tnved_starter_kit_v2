@@ -10,9 +10,11 @@ from __future__ import annotations
 import hashlib
 import json
 import unicodedata
+from collections.abc import Iterable, Mapping
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Iterable
+from types import MappingProxyType
+from typing import Any
 
 
 class NodeType(str, Enum):
@@ -23,7 +25,7 @@ class NodeType(str, Enum):
     COMMODITY = "commodity"  # декларируемый или терминальный код
 
 
-@dataclass
+@dataclass(slots=True)
 class TreeNode:
     """Базовый узел дерева Tree Model v2.
 
@@ -39,16 +41,117 @@ class TreeNode:
     stable_id: str = ""
     snapshot_id: str = ""
     parent: TreeNode | None = field(default=None, repr=False)
-    children: list[TreeNode] = field(default_factory=list, repr=False)
-    metadata: dict[str, Any] = field(default_factory=dict)
+    children: list[TreeNode] | tuple[TreeNode, ...] = field(
+        default_factory=list,
+        repr=False,
+    )
+    metadata: dict[str, Any] | Mapping[str, Any] = field(default_factory=dict)
+    _frozen: bool = field(default=False, init=False, repr=False, compare=False)
+
+    def __setattr__(self, name: str, value: Any) -> None:
+        if getattr(self, "_frozen", False):
+            raise AttributeError(
+                f"{type(self).__name__} is frozen; cannot set {name!r}"
+            )
+        object.__setattr__(self, name, value)
+
+    def __delattr__(self, name: str) -> None:
+        if getattr(self, "_frozen", False):
+            raise AttributeError(
+                f"{type(self).__name__} is frozen; cannot delete {name!r}"
+            )
+        object.__delattr__(self, name)
 
     def add_child(self, child: TreeNode) -> TreeNode:
+        if not isinstance(self.children, list):
+            raise AttributeError(f"{type(self).__name__} is frozen; cannot add child")
         child.parent = self
         self.children.append(child)
         return child
 
+    @property
+    def is_frozen(self) -> bool:
+        """Whether this node belongs to a published CanonicalModel graph."""
 
-@dataclass
+        return self._frozen
+
+
+def _freeze_metadata_value(value: Any, *, visiting: set[int] | None = None) -> Any:
+    """Build an immutable copy of standard metadata containers.
+
+    A path-local identity set detects cycles without rejecting a shared acyclic
+    container.  Nothing in the source value is mutated, so a failure leaves the
+    complete Builder graph retryable.
+    """
+
+    if not isinstance(value, (Mapping, list, tuple, set, frozenset, bytearray)):
+        return value
+    if isinstance(value, bytearray):
+        return bytes(value)
+
+    active = visiting if visiting is not None else set()
+    identity = id(value)
+    if identity in active:
+        raise ValueError("cyclic metadata is not supported by Canonical publication")
+    active.add(identity)
+    try:
+        if isinstance(value, Mapping):
+            return MappingProxyType(
+                {
+                    key: _freeze_metadata_value(item, visiting=active)
+                    for key, item in value.items()
+                }
+            )
+        if isinstance(value, (list, tuple)):
+            return tuple(
+                _freeze_metadata_value(item, visiting=active) for item in value
+            )
+        return frozenset(
+            _freeze_metadata_value(item, visiting=active) for item in value
+        )
+    finally:
+        active.remove(identity)
+
+
+def freeze_tree_nodes(roots: Iterable[TreeNode]) -> tuple[TreeNode, ...]:
+    """Deep-freeze a validated/stamped tree at the publication boundary.
+
+    Builder and recovery nodes intentionally stay mutable.  CanonicalModel calls
+    this only after identity stamping and validation, when no further structural
+    mutation is allowed.  Freezing the node objects themselves prevents callers
+    holding a root/index reference from bypassing the model's immutable views.
+    """
+
+    roots_tuple = tuple(roots)
+    seen: set[int] = set()
+    plan: list[tuple[TreeNode, tuple[TreeNode, ...], Any]] = []
+
+    def prepare(node: TreeNode) -> None:
+        identity = id(node)
+        if identity in seen:
+            return
+        seen.add(identity)
+        if node.is_frozen:
+            raise ValueError("published Canonical nodes cannot be frozen again")
+        children = tuple(node.children)
+        for child in children:
+            prepare(child)
+        frozen_metadata = _freeze_metadata_value(node.metadata)
+        plan.append((node, children, frozen_metadata))
+
+    for root in roots_tuple:
+        prepare(root)
+
+    # Publication commit point: every potentially failing conversion above has
+    # completed, so no node can be left half-frozen by cyclic/bad metadata.
+    for node, children, frozen_metadata in plan:
+        object.__setattr__(node, "children", children)
+        object.__setattr__(node, "metadata", frozen_metadata)
+        object.__setattr__(node, "_frozen", True)
+    return roots_tuple
+
+
+@dataclass(slots=True)
 class HeadingNode(TreeNode):
     """4-значная товарная позиция (XXXX)."""
 
@@ -61,7 +164,8 @@ class HeadingNode(TreeNode):
         id: str | None = None,
         metadata: dict[str, Any] | None = None,
     ) -> None:
-        super().__init__(
+        TreeNode.__init__(
+            self,
             id=id or "",
             title=title,
             level=level,
@@ -71,7 +175,7 @@ class HeadingNode(TreeNode):
         )
 
 
-@dataclass
+@dataclass(slots=True)
 class ClassificationGroupNode(TreeNode):
     """Промежуточная классификационная группа (субпозиция / подзаголовок)."""
 
@@ -84,7 +188,8 @@ class ClassificationGroupNode(TreeNode):
         id: str | None = None,
         metadata: dict[str, Any] | None = None,
     ) -> None:
-        super().__init__(
+        TreeNode.__init__(
+            self,
             id=id or "",
             title=title,
             level=level,
@@ -94,7 +199,7 @@ class ClassificationGroupNode(TreeNode):
         )
 
 
-@dataclass
+@dataclass(slots=True)
 class CommodityNode(TreeNode):
     """Терминальный товарный код (лист или декларируемая позиция)."""
 
@@ -107,7 +212,8 @@ class CommodityNode(TreeNode):
         id: str | None = None,
         metadata: dict[str, Any] | None = None,
     ) -> None:
-        super().__init__(
+        TreeNode.__init__(
+            self,
             id=id or "",
             title=title,
             level=level,

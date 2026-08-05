@@ -7,15 +7,11 @@ parent/children и адресуемостью по коду. Этот модул
 достижимости (`code → node`, `display_code → node`, `stable_id → node`) и
 навигацией (parent/children/path/descendants).
 
-Границы этого этапа (см. TASK — Canonical Model Materialization):
-- модель **не подключается** к API / runtime / lifespan;
-- **нет** feature flag;
-- legacy `build_tree()` остаётся production и oracle;
-- freeze — на уровне **интерфейса** (индексы и `roots`/`children` возвращаются
-  как immutable view / tuple; переустановка атрибутов модели запрещена).
-  Глубокая физическая иммутабельность каждого `TreeNode` (заморозка `children`
-  и `metadata` самих узлов) **не** входит в этот этап и зафиксирована как
-  известное ограничение.
+TASK-CANONICAL-010 усиливает publication boundary: после identity stamping и
+validator gate замораживаются не только индексы/корни модели, но и каждый
+`TreeNode`, его `children`, `parent` и рекурсивные standard metadata-контейнеры.
+Builder и recovery до публикации остаются mutable; legacy `build_tree()` не
+меняется.
 
 Validator gate (ADR-0001 §4, §6.4): перед созданием модели прогоняется
 `TreeValidator`. Если валидатор нашёл ошибки — модель **не создаётся**
@@ -38,9 +34,32 @@ from .models import (
     ParsedCommodityRecord,
     TreeNode,
     compute_snapshot_id,
+    freeze_tree_nodes,
     stamp_snapshot_id,
 )
 from .validator import TreeValidator, ValidationIssue
+
+
+_PUBLICATION_TOKEN = object()
+
+
+def _reject_published_nodes(roots: Iterable[TreeNode]) -> None:
+    """Fail before validation/stamping if any reachable node is already published."""
+
+    pending = list(roots)
+    seen: set[int] = set()
+    while pending:
+        node = pending.pop()
+        identity = id(node)
+        if identity in seen:
+            continue
+        seen.add(identity)
+        if node.is_frozen:
+            raise ValueError(
+                "published roots cannot be republished and published descendants "
+                "cannot be attached to a new Canonical graph without retained inputs"
+            )
+        pending.extend(node.children)
 
 
 class CanonicalModelValidationError(RuntimeError):
@@ -57,8 +76,9 @@ class CanonicalModelValidationError(RuntimeError):
 class CanonicalModel:
     """Иммутабельная модель дерева ТН ВЭД с индексами и навигацией.
 
-    Read-only на уровне интерфейса: `roots` и `children(...)` возвращают `tuple`,
-    индексы — `MappingProxyType`; переустановка/удаление атрибутов запрещены.
+    Read-only на всех опубликованных ссылках: `roots` и `children(...)` возвращают
+    `tuple`, индексы — `MappingProxyType`, а сами узлы и standard metadata
+    containers deep-frozen.
     """
 
     __slots__ = (
@@ -79,7 +99,12 @@ class CanonicalModel:
         snapshot_id: str,
         *,
         source_records: Iterable[ParsedCommodityRecord] = (),
+        _publication_token: object | None = None,
     ) -> None:
+        if _publication_token is not _PUBLICATION_TOKEN:
+            raise TypeError(
+                "CanonicalModel must be published through CanonicalModel.from_roots"
+            )
         roots_tuple: tuple[TreeNode, ...] = tuple(roots)
 
         node_by_stable_id: dict[str, TreeNode] = {}
@@ -150,6 +175,7 @@ class CanonicalModel:
                 for heading, records in source_records_by_heading.items()
             }
         )
+        roots_tuple = freeze_tree_nodes(roots_tuple)
 
         object.__setattr__(self, "_roots", roots_tuple)
         object.__setattr__(self, "_snapshot_id", snapshot_id)
@@ -185,6 +211,7 @@ class CanonicalModel:
         берётся с уже размеченных узлов (`assign_stable_ids`).
         """
         roots_list = list(roots)
+        _reject_published_nodes(roots_list)
         gate = (validator or TreeValidator()).validate(roots_list, parse_result=parse_result)
         if not gate.ok:
             raise CanonicalModelValidationError(gate.issues)
@@ -196,7 +223,12 @@ class CanonicalModel:
             if source_records is not None
             else (parse_result.commodities if parse_result is not None else ())
         )
-        return cls(roots_list, snapshot_id, source_records=retained_records)
+        return cls(
+            roots_list,
+            snapshot_id,
+            source_records=retained_records,
+            _publication_token=_PUBLICATION_TOKEN,
+        )
 
     @staticmethod
     def _register_code(index: dict[str, TreeNode], code: str, node: TreeNode) -> None:

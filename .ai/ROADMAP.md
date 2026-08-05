@@ -47,6 +47,11 @@
 - ✅ **TASK-CANONICAL-009** — 162 exact-rate terminal L4 `XXXX000000` без descendants
   материализуются как реальные leaves в legacy/Canonical/Guided; independent audit
   reachability защищает от общего пропуска. Gate-2: 18 211/18 211.
+- ✅ **TASK-CANONICAL-010** — опубликованный Canonical graph физически immutable:
+  scalar attributes/parent/tuple children и рекурсивные standard metadata-контейнеры
+  заморожены после validator/stamping; Builder output до публикации остаётся mutable.
+  Alias/mutation regressions зелёные; Gate-2 18 211/18 211 и census 1 228/1 228
+  сохранены без изменений identity/API/flags.
 - ✅ **TASK-SEMANTIC-005** — aggregate-only whole-catalog Guided census:
   1 228/1 228 headings, 16 708/16 708 source-backed code nodes и 13 254
   Canonical declarable leaves на одном snapshot, zero role mismatch/fake/duplicate/
@@ -85,9 +90,13 @@ production и oracle.
    второе runtime-чтение commodities и добавил mutation regression.
 7. ✅ **Закрыть terminal L4 omission и усилить Gate-2.** TASK-CANONICAL-009
    восстановил 162 реальных кода; 18 211/18 211 paths зелёные.
-8. **Следующий platform derisking:** deep immutability shared model graph и
-   PostgreSQL repeatable-read/read-only snapshot portability — отдельная bounded
-   corrective task, без смешивания с aliases/history.
+8. ✅ **Deep-freeze shared model graph.** TASK-CANONICAL-010 исключил mutation
+   опубликованных `TreeNode`, standard metadata/children aliases и split-brain с
+   индексами; неизвестные custom mutable metadata objects требуют отдельного protocol,
+   но в production metadata таких объектов нет.
+9. **Следующий platform derisking:** PostgreSQL repeatable-read/read-only snapshot
+   portability — отдельная bounded corrective task с реальным concurrent PG gate,
+   без смешивания с aliases/history.
 
 После отдельного решения Ivan возможен rollout первого read-path. Расширение
 runtime на overlays и удаление legacy допустимы только после отдельного derisking/parity.

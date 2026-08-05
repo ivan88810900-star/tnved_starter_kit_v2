@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterable
 from typing import Any
 
 from .models import TreeNode
@@ -25,7 +26,7 @@ class TreeSerializer:
             "children": [self.to_legacy_dict(ch) for ch in node.children],
         }
 
-    def serialize_roots(self, roots: list[TreeNode]) -> list[dict[str, Any]]:
+    def serialize_roots(self, roots: Iterable[TreeNode]) -> list[dict[str, Any]]:
         return [self.to_legacy_dict(root) for root in roots]
 
     @staticmethod

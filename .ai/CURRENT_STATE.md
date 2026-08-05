@@ -48,11 +48,14 @@
 2. 162 терминальных exact-rate L4-кода `XXXX000000` восстановлены как реальные
    листья под отдельными heading-wrapper; технические pad-записи с потомками не
    дублируются.
-3. Full Gate-2: 18,211/18,211 legacy-vs-Canonical paths, 0 mismatch/unresolved.
-4. Whole-catalog Guided census: 1,228/1,228 headings, 16,708/16,708 source-backed
+3. Publication boundary физически замораживает published nodes и `parent` links.
+   `children` становятся tuple, standard metadata containers — recursively
+   immutable; Builder output до публикации mutable, retained aliases отсоединены.
+4. Full Gate-2: 18,211/18,211 legacy-vs-Canonical paths, 0 mismatch/unresolved.
+5. Whole-catalog Guided census: 1,228/1,228 headings, 16,708/16,708 source-backed
    code nodes reachable/Canonical-bound, из них 13,254 declarable leaves; leaf-role
    проверяется по Canonical, а не по отсутствию semantic children.
-5. Semantic questions есть у 548 headings (44.6254%) и покрывают 6,891 leaves
+6. Semantic questions есть у 548 headings (44.6254%) и покрывают 6,891 leaves
    (51.9919%). Это честный baseline: strict correctness gate прошёл на
    supplied Gate-2 snapshot, но semantic UX ещё требует последовательного
    улучшения измеренных outlier-позиций.
@@ -82,7 +85,7 @@
 
 ---
 
-## 2b. Состояние Canonical Pipeline (through TASK-CANONICAL-009)
+## 2b. Состояние Canonical Pipeline (through TASK-CANONICAL-010)
 
 **TASK-CANONICAL-001 — Completed.** Детерминированные `stable_id` (без `uuid4()`),
 `snapshot_id`, skeleton стадии Recovery.
@@ -93,8 +96,10 @@ Builder собирает дерево напрямую из recovery-резул�
 
 **Canonical Model Materialization — Completed.** Добавлен иммутабельный `CanonicalModel`
 поверх результата `TreeBuilder.build(...)` с индексами достижимости и навигацией;
-freeze/read-only на уровне интерфейса; обязательный validator gate; content-parity с
-legacy (сверх structural). До TASK-CANONICAL-004 контур не был подключён к runtime.
+обязательный validator gate; content-parity с legacy (сверх structural).
+Первичная реализация замораживала facade, а TASK-CANONICAL-010 закрыл
+физическую deep-immutability опубликованных узлов. До TASK-CANONICAL-004
+контур не был подключён к runtime.
 
 **TASK-CANONICAL-004 — Completed (Этап 3 ADR: read-path за флагом).** ADR-0002
 принят Ivan 2026-07-10 с условиями; Gate-1 и Gate-2 пройдены. Структурный слой
@@ -177,8 +182,11 @@ legacy (сверх structural). До TASK-CANONICAL-004 контур не был
   `roots`/`snapshot_id`, индексы `node_by_stable_id` / `node_by_code` /
   `node_by_display_code` / `parent_by_stable_id` / `children_by_stable_id`; методы
   `get` / `get_by_code` / `get_by_display_code` / `parent` / `children` / `path` /
-  `descendants`. Read-only на уровне интерфейса: `roots`/`children`/`path`/`descendants`
-  → `tuple`, индексы → `MappingProxyType`, переустановка/удаление атрибутов запрещены.
+  `descendants`. После validator/stamping каждый опубликованный `TreeNode`
+  физически заморожен: scalar attributes и `parent` не переустанавливаются,
+  `children` → `tuple`, а standard metadata mappings/lists/sets/bytearray
+  рекурсивно detached/frozen; индексы → `MappingProxyType`.
+  `TreeBuilder.build(...)` до публикации остаётся mutable.
 - **Validator gate** — `CanonicalModel.from_roots(...)` прогоняет `TreeValidator` перед
   freeze; при ошибках модель не создаётся (`CanonicalModelValidationError`).
 - **stable_id** — `stable-id-v1`, детерминированный snapshot-independent hash
@@ -192,9 +200,10 @@ legacy (сверх structural). До TASK-CANONICAL-004 контур не был
 
 ### Чего ещё НЕТ (намеренно, по плану ADR-0001)
 
-- **Deep-immutability узлов** — сами `TreeNode` (их `children`/`metadata`) физически не
-  заморожены; иммутабельность обеспечена только на уровне интерфейса `CanonicalModel`
-  (известное ограничение этапа).
+- **Generic freeze arbitrary custom metadata objects** — неизвестный mutable
+  object как metadata value сохраняется как есть; для него нужен отдельный
+  cloning/serialization protocol. В production Canonical metadata таких
+  объектов нет.
 - ~~**Feature flag** — нет `CANONICAL_TREE_ENABLED`.~~ **Закрыто** (TASK-CANONICAL-004):
   `CANONICAL_TREE_ENABLED` / `CANONICAL_TREE_SHADOW` (default OFF, request-time,
   `tree_engine/flags.py`).
@@ -305,6 +314,7 @@ URL/API-контракты не менялись; backend, БД, флаги и �
 
 | Коммит | Дата | Описание |
 |--------|------|---------|
+| TASK-CANONICAL-010 | 2026-08-05 | Published Canonical graph deep-frozen |
 | TASK-SEMANTIC-005 | 2026-08-05 | Whole-catalog Guided census: 1,228/1,228 headings, 16,708/16,708 source code nodes, 13,254 Canonical leaves, zero role mismatch/fake/duplicate/degraded/empty-root; semantic UX baseline measured separately |
 | TASK-CANONICAL-009 | 2026-08-05 | 162 terminal exact-rate L4 pad records restored as real leaves; hardened Gate-2 18,211/18,211 |
 | TASK-CANONICAL-008 | 2026-08-05 | Guided semantic records retained inside the selected Canonical model; no mixed model-A / DB-B runtime response |
@@ -341,6 +351,7 @@ URL/API-контракты не менялись; backend, БД, флаги и �
 | PR/коммит | Проблема | Решение |
 |-----------|---------|---------|
 | TASK-CANONICAL-009 | Legacy и Canonical одинаково удаляли terminal `XXXX000000`, поэтому 162 Guided headings были пустыми, а parity gate не замечал общий пропуск | Exact L4 leaf materialization + independent Parser-backed reachability requirement; Gate-2 18,211/18,211 |
+| TASK-CANONICAL-010 | Mutable published graph | Deep-freeze boundary |
 | TASK-CANONICAL-008 | Guided мог смешать Canonical structure/snapshot A с повторно прочитанными описаниями DB state B | Immutable source-record projection внутри `CanonicalModel`; runtime pure builder, fail-safe DEGRADED без records |
 | `732c1e7` | L8-коды показывались как листья, а не codeless headings | `elif lvl == 8` ветвь в `_classify()` |
 | `f42d2d4` | L6-субпозиции без детей показывались как листья | `elif lvl == 6` ветвь в `_classify()` |
@@ -364,6 +375,7 @@ URL/API-контракты не менялись; backend, БД, флаги и �
 | **TASK-CANONICAL-007** — leaf evidence в Parser, один DB snapshot, чистый Builder | ✅ Completed; Gate-2 18,049/18,049 | — |
 | **TASK-CANONICAL-008** — snapshot-bound Guided semantic records | ✅ Completed; mutation regression + compact Gate-2 smoke | — |
 | **TASK-CANONICAL-009** — terminal exact-rate L4 reachability | ✅ Completed; Gate-2 18,211/18,211, zero empty-root | — |
+| **TASK-CANONICAL-010** — deep-freeze | ✅ Completed | — |
 | **TASK-MVP-SEARCH-QUALITY-001** — hybrid поиск: ranking, typo recovery, explainable UI | ✅ Completed; embeddings remain separate | — |
 | **TASK-MVP-PAYMENTS-001** — объяснимый расчёт платежей в карточке ТН ВЭД | ✅ Completed; calculation semantics unchanged | — |
 | **TASK-MVP-RISK-001** — санкционный скрининг: scope, evidence, coverage, sources | ✅ Completed; semantics remain diagnostic | — |
@@ -480,13 +492,16 @@ URL/API-контракты не менялись; backend, БД, флаги и �
 - ~~**Parity gate не замечает общий пропуск terminal L4.**~~ **Закрыто**
   (TASK-CANONICAL-009): Parser leaf evidence независимо добавляет exact-rate L4 без
   descendants в required reachability; Gate-2 18,211/18,211.
+- ~~**Shared model deep immutability.**~~ **Закрыто** (TASK-CANONICAL-010):
+  опубликованные `TreeNode` запрещают assignment/deletion, `children` и
+  рекурсивные metadata immutable и detached от pre-publication aliases;
+  snapshot и navigation indexes больше не могут разойтись через обычную
+  ссылку на узел. Arbitrary custom mutable metadata objects не охватываются
+  generic freeze; в production metadata таких объектов нет.
 - **PostgreSQL snapshot portability.** SQLite Parser явно фиксирует read snapshot,
   но PostgreSQL default `READ COMMITTED` не гарантирует один snapshot для серии
   `SELECT`; нужен отдельный bounded read-only / repeatable-read design и regression
   до production PostgreSQL rollout.
-- **Shared model deep immutability.** Индексы и retained source records immutable,
-  но `TreeNode.children`/`metadata` остаются mutable object graph. Не добавлять
-  persistent/mutable overlays внутрь модели до отдельного hardening.
 
 ### Nice to have
 - **provenance / history / aliases / breadcrumb** — поля модели из ADR §3.2 ещё не
