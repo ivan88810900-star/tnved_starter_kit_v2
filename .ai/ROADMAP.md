@@ -2,7 +2,7 @@
 
 > Только задачи, подтверждённые анализом кода и существующего бэклога.
 > Не содержит бизнес-wishlist без технического обоснования.
-> Дата: 2026-08-01.
+> Дата: 2026-08-05.
 
 ---
 
@@ -41,10 +41,22 @@
   session и одном явном SQLite read-snapshot, затем передаются Builder как явный
   `TreeParseResult`. Builder не знает о БД; full/compact Gate-2 покрыты тестами,
   parity 18 049/18 049 сохранён.
+- ✅ **TASK-CANONICAL-008** — Guided runtime больше не перечитывает `Commodity`
+  после выбора модели: semantic source records принадлежат exact Parser snapshot и
+  хранятся immutable внутри `CanonicalModel`; missing projection fail-safe.
+- ✅ **TASK-CANONICAL-009** — 162 exact-rate terminal L4 `XXXX000000` без descendants
+  материализуются как реальные leaves в legacy/Canonical/Guided; independent audit
+  reachability защищает от общего пропуска. Gate-2: 18 211/18 211.
+- ✅ **TASK-SEMANTIC-005** — aggregate-only whole-catalog Guided census:
+  1 228/1 228 headings, 16 708/16 708 source-backed code nodes и 13 254
+  Canonical declarable leaves на одном snapshot, zero role mismatch/fake/duplicate/
+  degraded/empty-root; semantic UX baseline измеряется отдельно.
 
 **Текущее состояние и долги:** см. `.ai/CURRENT_STATE.md` §2b/§8/§9. Read-path
-`/children` подключён к runtime **только за флагом** (default OFF). Overlay/остальные
-эндпоинты по-прежнему legacy. Legacy `_build_tree` остаётся production и oracle.
+`/children` подключён к runtime **только за флагом** (default OFF). Guided overlay
+уже читает source records и anchors выбранного Canonical model, но остальные
+overlays/endpoints по-прежнему не мигрированы. Legacy `_build_tree` остаётся
+production и oracle.
 
 #### Оставшийся derisking после materialization
 
@@ -69,6 +81,13 @@
    ADR-0002 принят с условиями; Gate-2 пройден, включение требует отдельного решения Ivan.
 5. ✅ **Устранить скрытое DB-чтение Builder.** TASK-CANONICAL-007 перенёс
    leaf-evidence в Parser, закрепил один DB snapshot и сохранил full Gate-2 parity.
+6. ✅ **Связать Guided semantic input с model snapshot.** TASK-CANONICAL-008 убрал
+   второе runtime-чтение commodities и добавил mutation regression.
+7. ✅ **Закрыть terminal L4 omission и усилить Gate-2.** TASK-CANONICAL-009
+   восстановил 162 реальных кода; 18 211/18 211 paths зелёные.
+8. **Следующий platform derisking:** deep immutability shared model graph и
+   PostgreSQL repeatable-read/read-only snapshot portability — отдельная bounded
+   corrective task, без смешивания с aliases/history.
 
 После отдельного решения Ivan возможен rollout первого read-path. Расширение
 runtime на overlays и удаление legacy допустимы только после отдельного derisking/parity.
@@ -77,17 +96,28 @@ runtime на overlays и удаление legacy допустимы только
 
 ---
 
-### 1. Регрессионные тесты дерева ТН ВЭД
+### 1. Guided TN VED semantic-quality expansion
 
-**Обоснование:** `_build_tree()` и `_classify()` — критически важные функции без покрытия unit-тестами. Последние два фикса (L6 и L8 синтез) вносились без автотестов, что создаёт риск регрессий.
+**Обоснование:** Correctness gate прошёл на supplied Gate-2 snapshot по
+всем 1 228 heading: 16 708 source-backed code nodes и 13 254 declarable
+leaves, zero leaf-role/Canonical-parent mismatch, empty-root/fake/duplicate/degraded.
+Но semantic choices есть у 548 heading (44.6254%) и покрывают 6 891 leaves
+(51.9919%). Максимум первого шага — 19 вариантов; максимум любого
+следующего шага — 50, из них 47 direct code choices. Это измеренный UX
+backlog, а не integrity failure.
 
 **Что нужно:**
-- Unit-тесты для `_node_level()` (все 5 уровней: 4, 6, 8, 9, 10)
-- Тесты `_classify()`: L6 синтез, L8 синтез, узлы с детьми, обычные листья
-- Тесты `_build_tree()`: pad-коды, subheading_group, смешанные L6
-- Интеграционный тест: проверить конкретный код (например, `0302`) через API
+- Выбирать небольшие наборы heading из `quality_outliers` по максимальной
+  пользовательской пользе и добавлять только объяснимые вопросы из официального
+  текста.
+- Для каждого slice фиксировать golden assertions и сравнивать before/after census.
+- Не создавать fake customs codes, не терять реальные коды, не ослаблять Canonical
+  binding и safe fallback.
+- Не вводить произвольный глобальный usability threshold без отдельного
+  product/architecture решения на основе baseline.
+- После доступности реального URL дополнить DOM-level тесты live-network/browser QA.
 
-**Файл:** `customs-clear/backend/tests/test_tnved_tree.py` (создать)
+**Gate:** `scripts/diagnose_guided_tnved_navigation.py --all-headings --require-complete`.
 
 ---
 

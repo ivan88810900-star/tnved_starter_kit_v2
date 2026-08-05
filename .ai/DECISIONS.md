@@ -5,12 +5,14 @@
 
 ---
 
-## Индекс ADR
+## Индекс ADR / DM
 
 | ADR | Название | Статус | Принял | Дата | Документ |
 |-----|----------|--------|--------|------|----------|
 | ADR-0001 | Canonical TNVED Model | Accepted | Ivan | 2026-06-30 | [`decisions/ADR-0001-canonical-tnved-model.md`](decisions/ADR-0001-canonical-tnved-model.md) |
 | ADR-0002 | First production read-path on CanonicalModel (`/children`) | Accepted with conditions | Ivan | 2026-07-10 | [`decisions/ADR-0002-canonical-children-read-path.md`](decisions/ADR-0002-canonical-children-read-path.md) |
+| ADR-0003 | Canonical anchor identity and snapshot lifecycle | Accepted | Ivan | 2026-07-14 | [`decisions/ADR-0003-canonical-anchor-identity.md`](decisions/ADR-0003-canonical-anchor-identity.md) |
+| DM-0004 | Canonical nomenclature history and code transitions | Proposed | Awaiting Ivan | 2026-08-05 | [`decisions/DM-0004-canonical-nomenclature-history.md`](decisions/DM-0004-canonical-nomenclature-history.md) |
 
 ---
 
@@ -66,12 +68,12 @@
   при in-place UPDATE и добавляет shadow metrics/sampling + Gate-2 auditor. Финальный
   Gate-2: 18 049/18 049 match, 0 mismatch/unresolved, `gate2_ok=true`, exit 0.
 
-**Открытые Decision-точки** (полный список со статусами/сроками — `.ai/CURRENT_STATE.md`
+**Decision-точки** (полный список со статусами/сроками — `.ai/CURRENT_STATE.md`
 §9 «Open Architecture Decisions»):
-- Формула `stable_id` (черновой `node-<hex>`, окончательно не утверждена).
-- Состав входов `snapshot_id` модели (по-прежнему только `db_codes`); отдельная
-  **ревизия кэша** read-path хеширует значимые поля commodities, Section/Chapter notes
-  и leaf-relevant `hs_rates` — это cache-invalidation, не identity самой модели.
+- ✅ Формула `stable_id` закрыта ADR-0003: snapshot-independent `stable-id-v1`.
+- ✅ Состав `snapshot_id` закрыт ADR-0003: `canonical-snapshot-v2` хеширует
+  детерминированный Canonical output; provider source revision остаётся отдельным
+  cache-invalidation key.
 - Где материализуется модель: in-memory (read-path использует in-memory кэш провайдера)
   vs materialized-снапшот, переживающий рестарт.
 - ✅ Стратегия feature flag (`CANONICAL_TREE_ENABLED` / `CANONICAL_TREE_SHADOW`) —
@@ -107,6 +109,20 @@ Canonical anchors use snapshot-independent path identity (`stable-id-v1`), deter
 output hashing (`canonical-snapshot-v2`), and the additive tuple
 `(stable_id, snapshot_id, code, node_type)`. Formula changes now require a new ADR and
 an explicit alias/migration plan.
+
+## DM-0004 — Canonical nomenclature history and code transitions
+
+**Статус:** Proposed — awaiting Ivan (2026-08-05).
+
+Decision Memo разделяет три независимых контура: лексические синонимы поиска,
+юридические переходы реальных кодов между редакциями номенклатуры и технические
+миграции `stable_id`. Рекомендован отдельный versioned many-to-many history overlay с
+провенансом, без изменения текущего `CanonicalModel` / `stable-id-v1`, без silent
+redirect и без выдачи inferred-сходства за официальный переход.
+
+До решения Ivan и успешного source-feasibility audit запрещены schema/runtime/UI
+реализация и автоматическое сопоставление кодов. Полный документ:
+[`decisions/DM-0004-canonical-nomenclature-history.md`](decisions/DM-0004-canonical-nomenclature-history.md).
 
 ---
 

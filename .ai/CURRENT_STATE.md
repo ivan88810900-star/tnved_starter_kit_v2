@@ -1,6 +1,6 @@
 # CURRENT_STATE.md — Текущее состояние проекта
 
-> Дата: 2026-08-01
+> Дата: 2026-08-05
 > Активная ветка: `feat/canonical-read-path`
 
 ---
@@ -35,24 +35,29 @@
 
 ## 2. Активная задача
 
-### Исправление структуры дерева ТН ВЭД под эталон ТКС
+### Intelligent TN VED structure — whole-catalog hardening
 
-**Цель:** Структура дерева в приложении должна совпадать со структурой на tks.ru.
+**Цель:** Canonical-backed «Умный маршрут» должен сохранять каждый реальный
+декларируемый код, не создавать фиктивных кодов и задавать понятные вопросы поверх
+одного согласованного Canonical snapshot.
 
-**Проблема:** Некоторые коды отображались как прямые листья там, где по эталону должны быть бескодовые заголовки с декларируемым листом под ними.
+**Текущий проверенный статус:**
 
-**Выполненные шаги:**
-1. `732c1e7` — L8 синтез: одиночные L8-узлы без детей → codeless heading + synthetic leaf
-2. `f42d2d4` — L6 синтез: одиночные L6-субпозиции без детей → codeless heading + synthetic leaf
+1. Guided использует описания, захваченные той же Parser-сборкой, что и выбранный
+   `CanonicalModel`; второго runtime-чтения `Commodity` больше нет.
+2. 162 терминальных exact-rate L4-кода `XXXX000000` восстановлены как реальные
+   листья под отдельными heading-wrapper; технические pad-записи с потомками не
+   дублируются.
+3. Full Gate-2: 18,211/18,211 legacy-vs-Canonical paths, 0 mismatch/unresolved.
+4. Whole-catalog Guided census: 1,228/1,228 headings, 16,708/16,708 source-backed
+   code nodes reachable/Canonical-bound, из них 13,254 declarable leaves; leaf-role
+   проверяется по Canonical, а не по отсутствию semantic children.
+5. Semantic questions есть у 548 headings (44.6254%) и покрывают 6,891 leaves
+   (51.9919%). Это честный baseline: strict correctness gate прошёл на
+   supplied Gate-2 snapshot, но semantic UX ещё требует последовательного
+   улучшения измеренных outlier-позиций.
 
-**Статус:** Оба фикса применены в `main`. Активная работа над первым canonical
-read-path ведётся в `feat/canonical-read-path` и описана в §2b.
-
-**Проверка:**
-```bash
-curl http://localhost:8001/api/v1/tnved/children/0302
-# Ожидается: L6 узлы как codeless, под ними L8 codeless, под ними 10-digit листья
-```
+Основные `CANONICAL_TREE_ENABLED` / `CANONICAL_TREE_SHADOW` остаются default OFF.
 
 ---
 
@@ -77,7 +82,7 @@ curl http://localhost:8001/api/v1/tnved/children/0302
 
 ---
 
-## 2b. Состояние Canonical Pipeline (TASK-CANONICAL-004 completed)
+## 2b. Состояние Canonical Pipeline (through TASK-CANONICAL-009)
 
 **TASK-CANONICAL-001 — Completed.** Детерминированные `stable_id` (без `uuid4()`),
 `snapshot_id`, skeleton стадии Recovery.
@@ -176,8 +181,11 @@ legacy (сверх structural). До TASK-CANONICAL-004 контур не был
   → `tuple`, индексы → `MappingProxyType`, переустановка/удаление атрибутов запрещены.
 - **Validator gate** — `CanonicalModel.from_roots(...)` прогоняет `TreeValidator` перед
   freeze; при ошибках модель не создаётся (`CanonicalModelValidationError`).
-- **stable_id** — детерминированный (`node-<hex>`), воспроизводим между сборками.
-- **snapshot_id** — вычисляется (`compute_snapshot_id(db_codes)`).
+- **stable_id** — `stable-id-v1`, детерминированный snapshot-independent hash
+  Canonical path, воспроизводимый между эквивалентными сборками.
+- **snapshot_id** — `canonical-snapshot-v2`, детерминированный hash полного
+  результирующего Canonical output; provider source revision остаётся отдельным
+  rebuild-key.
 - **Parity tests** — `test_canonical_tnved_model.py`: full-tree **structural** parity
   (`structure_fingerprint`) и full-tree **content** parity (name / display_code /
   is_leaf / is_codeless / is_group / import_duty / notes) против legacy `build_tree()`.
@@ -195,9 +203,10 @@ legacy (сверх structural). До TASK-CANONICAL-004 контур не был
   legacy.
 - **Materialized snapshot** — модель строится in-memory на вызов `build_model(...)`; нет
   переживающего рестарт снапшота/кэша по `snapshot_id`.
-- **Overlays** — guided Semantic Navigation теперь проверяет каждый реальный код по
-  Canonical anchor/snapshot, но текст для извлечения смысловых групп пока читает из
-  официальных описаний БД. NTM / Duty / Notes / RAG ещё не переведены на `anchor`.
+- **Overlays** — Guided Semantic Navigation проверяет каждый реальный код по
+  Canonical anchor/snapshot и строит смысловые группы из immutable source records
+  той же модели, не перечитывая `Commodity` после выбора snapshot. NTM / Duty /
+  Notes / RAG ещё не переведены на `anchor`.
 
 ## 2c. Guided TN VED v1 — пользовательская умная структура
 
@@ -221,14 +230,19 @@ legacy (сверх structural). До TASK-CANONICAL-004 контур не был
   объединяются. Сомнительный или unsplit-сегмент более 30 кодов остаётся плоским
   с диагностической причиной.
 - Validator и aggregate-only full-data gate проверяют semantic depth/parent,
-  code invariance, bounded unsplit span и целевые случаи `0302/0303/5208/8517`.
+  code invariance, bounded unsplit span и строгие целевые случаи
+  `0302/0303/5208/8517`; whole-catalog режим дополнительно обходит все heading одного
+  Canonical snapshot.
 - UI различает «Смысловую группу» и «Смысловое уточнение» и показывает вложенность
   как следующий вопрос, не выдавая бескодовую группу за код ТН ВЭД.
 - Основные `CANONICAL_TREE_ENABLED` / `CANONICAL_TREE_SHADOW` остаются OFF.
-- Full-data read-only Gate на пользовательском экспорте с 17,809 commodities:
-  `0302/0303/5208/8517` зелёные, 328/328 целевых кодов достижимы, Canonical
-  coverage 100%, fake codes 0, hierarchy checks passed. 17 self-contained
-  hierarchy/Guided tests проходят. Canonical runtime flags оставались OFF.
+- Full-data read-only Gate на пользовательском экспорте: 1,228/1,228 heading,
+  16,708/16,708 source-backed code nodes reachable/Canonical-bound и 13,254
+  Canonical declarable leaves на одном snapshot; fake/duplicate/critical/degraded/
+  empty-root/leaf-role/Canonical-parent mismatch = 0, golden hierarchy 4/4.
+  Semantic choices покрывают 548 heading (44.6254%) и 6,891 leaves
+  (51.9919%); quality distributions не подменяют correctness gate произвольным
+  threshold. Canonical runtime flags оставались OFF.
 - Текстовое описание товара теперь даёт ранжированные Canonical-позиции для
   запуска Guided-вопросов. Curated semantic evidence выше случайного full-text:
   на полном Gate-2 экспорте «смартфон» ведёт сначала в `8517`, «портативный
@@ -291,6 +305,9 @@ URL/API-контракты не менялись; backend, БД, флаги и �
 
 | Коммит | Дата | Описание |
 |--------|------|---------|
+| TASK-SEMANTIC-005 | 2026-08-05 | Whole-catalog Guided census: 1,228/1,228 headings, 16,708/16,708 source code nodes, 13,254 Canonical leaves, zero role mismatch/fake/duplicate/degraded/empty-root; semantic UX baseline measured separately |
+| TASK-CANONICAL-009 | 2026-08-05 | 162 terminal exact-rate L4 pad records restored as real leaves; hardened Gate-2 18,211/18,211 |
+| TASK-CANONICAL-008 | 2026-08-05 | Guided semantic records retained inside the selected Canonical model; no mixed model-A / DB-B runtime response |
 | TASK-CANONICAL-007 | 2026-08-01 | Parser — единственная DB-reading стадия; явные leaf flags и один snapshot, Builder чистый; Gate-2 18,049/18,049 |
 | TASK-MVP-FRONTEND-PERFORMANCE-001 | 2026-07-31 | Route-level bundles: initial JS −81.9%, accessible loading/error fallback, no route/API changes |
 | TASK-MVP-FRONTEND-ACCEPTANCE-003 | 2026-07-31 | Реальный card→assistant route bridge, focused prefill, cited deterministic/guarded-LLM frontend contracts |
@@ -323,6 +340,8 @@ URL/API-контракты не менялись; backend, БД, флаги и �
 
 | PR/коммит | Проблема | Решение |
 |-----------|---------|---------|
+| TASK-CANONICAL-009 | Legacy и Canonical одинаково удаляли terminal `XXXX000000`, поэтому 162 Guided headings были пустыми, а parity gate не замечал общий пропуск | Exact L4 leaf materialization + independent Parser-backed reachability requirement; Gate-2 18,211/18,211 |
+| TASK-CANONICAL-008 | Guided мог смешать Canonical structure/snapshot A с повторно прочитанными описаниями DB state B | Immutable source-record projection внутри `CanonicalModel`; runtime pure builder, fail-safe DEGRADED без records |
 | `732c1e7` | L8-коды показывались как листья, а не codeless headings | `elif lvl == 8` ветвь в `_classify()` |
 | `f42d2d4` | L6-субпозиции без детей показывались как листья | `elif lvl == 6` ветвь в `_classify()` |
 | PR #130 | Китай (CN) получал GSP-скидку 25% | CN → `mfn_graduated` (коэфф. 1.0) |
@@ -343,6 +362,8 @@ URL/API-контракты не менялись; backend, БД, флаги и �
 | **TASK-CANONICAL-005** — freeze `stable_id` / output `snapshot_id` / anchor DTO | ✅ Completed; ADR-0003 Accepted | — |
 | **TASK-CANONICAL-006** — TN VED search/code-card anchor bridge | ✅ Completed; optional soft-fail anchor | — |
 | **TASK-CANONICAL-007** — leaf evidence в Parser, один DB snapshot, чистый Builder | ✅ Completed; Gate-2 18,049/18,049 | — |
+| **TASK-CANONICAL-008** — snapshot-bound Guided semantic records | ✅ Completed; mutation regression + compact Gate-2 smoke | — |
+| **TASK-CANONICAL-009** — terminal exact-rate L4 reachability | ✅ Completed; Gate-2 18,211/18,211, zero empty-root | — |
 | **TASK-MVP-SEARCH-QUALITY-001** — hybrid поиск: ranking, typo recovery, explainable UI | ✅ Completed; embeddings remain separate | — |
 | **TASK-MVP-PAYMENTS-001** — объяснимый расчёт платежей в карточке ТН ВЭД | ✅ Completed; calculation semantics unchanged | — |
 | **TASK-MVP-RISK-001** — санкционный скрининг: scope, evidence, coverage, sources | ✅ Completed; semantics remain diagnostic | — |
@@ -352,13 +373,14 @@ URL/API-контракты не менялись; backend, БД, флаги и �
 | Full-data guided acceptance (`0302/0303/5208/8517`) | ✅ Completed: 328/328 target codes, 100% Canonical coverage, hierarchy green | — |
 | **TASK-SEMANTIC-003** — controlled nesting смысловых подгрупп | ✅ Completed: full-data hierarchy gate green | — |
 | **TASK-SEMANTIC-004** — описание товара → ранжированные Canonical heading → Guided-вопросы | ✅ Completed: full Gate-2 API acceptance; flags OFF | — |
+| **TASK-SEMANTIC-005** — whole-catalog Guided integrity/quality census | ✅ Completed: 1,228/1,228 headings, 16,708 source nodes / 13,254 declarable leaves; semantic baseline recorded | — |
 | **TASK-MVP-FRONTEND-ACCEPTANCE-001** — поиск → Guided → реальный код → карточка | ✅ Completed: автоматический DOM-level acceptance; accessibility hardening | — |
 | **TASK-MVP-FRONTEND-ACCEPTANCE-002** — карточка → платежи → документы → риск → assistant | ✅ Completed: verified/failure DOM-level paths; fail-safe evidence UI | — |
 | **TASK-MVP-FRONTEND-ACCEPTANCE-003** — реальный card → assistant → grounded response | ✅ Completed: route bridge + deterministic/guarded-LLM UI contracts | — |
 | **TASK-MVP-FRONTEND-PERFORMANCE-001** — route-level production bundles | ✅ Completed: initial JS −81.9%, loading/error boundary, all routes preserved | — |
 | Optional LLM/embeddings readiness | Контракт и fallback ✅; векторы/provider не настроены, ingestion/search OFF | Отдельное решение |
 | Interactive frontend acceptance | Search → Guided → card ✅; card → payments → requirements/risk → grounded assistant response ✅; live-browser QA ожидает достижимый URL | Высокий |
-| Derisking после TASK-005: aliases/history (`superseded_by`, previous codes/IDs) | Рекомендован | Высокий |
+| DM-0004: nomenclature history / code transitions | Proposed; awaiting Ivan and official-source feasibility audit; no schema/runtime authorized | Decision |
 | Fine-tune модели на `training_pairs.jsonl` | Вне репозитория | Низкий |
 | Live-parсер ФТС предрешений (tks.ru JS) | Decision Memo #135 | Средний |
 | Мульти-воркер ФСА (Redis-очередь) | Бэклог | Низкий |
@@ -385,6 +407,10 @@ URL/API-контракты не менялись; backend, БД, флаги и �
 - **FTS5** — вне Alembic, создаётся только при старте приложения
 - **NTM v2 feature flags** — по умолчанию OFF, требует явного включения Иваном
 - **L6/L8 синтез** — производительность: на каждый запрос к дереву пересчитывается из БД (кэш не реализован)
+- **Semantic Guided quality** — strict integrity доказана для supplied Gate-2
+  snapshot по всем 1,228 heading, но
+  смысловые вопросы сейчас есть у 44.6254% headings; 680 headings остаются прямыми
+  code-choice маршрутами, а большие ветвления требуют bounded UX-задач по baseline.
 
 ### Frontend
 - **Тайпскрипт типы** — `openapi.generated.ts` требует ручной регенерации (`npm run gen:api-types`) при изменении схемы API
@@ -447,6 +473,20 @@ URL/API-контракты не менялись; backend, БД, флаги и �
   SQLAlchemy/`SessionLocal`/`HsRate` и выполняет только детерминированное преобразование.
   Явный SQLite `BEGIN` защищает Parser от промежуточного конкурентного commit. Full и
   compact Gate-2 схемы покрыты тестами; parity 18,049/18,049 сохранён.
+- ~~**Guided повторно читает Commodity после выбора Canonical snapshot.**~~
+  **Закрыто** (TASK-CANONICAL-008): модель хранит frozen source-record projection
+  exact Parser build; Guided runtime строит overlay только из неё и fail-safe
+  возвращает `DEGRADED`, если projection отсутствует.
+- ~~**Parity gate не замечает общий пропуск terminal L4.**~~ **Закрыто**
+  (TASK-CANONICAL-009): Parser leaf evidence независимо добавляет exact-rate L4 без
+  descendants в required reachability; Gate-2 18,211/18,211.
+- **PostgreSQL snapshot portability.** SQLite Parser явно фиксирует read snapshot,
+  но PostgreSQL default `READ COMMITTED` не гарантирует один snapshot для серии
+  `SELECT`; нужен отдельный bounded read-only / repeatable-read design и regression
+  до production PostgreSQL rollout.
+- **Shared model deep immutability.** Индексы и retained source records immutable,
+  но `TreeNode.children`/`metadata` остаются mutable object graph. Не добавлять
+  persistent/mutable overlays внутрь модели до отдельного hardening.
 
 ### Nice to have
 - **provenance / history / aliases / breadcrumb** — поля модели из ADR §3.2 ещё не
@@ -471,6 +511,7 @@ URL/API-контракты не менялись; backend, БД, флаги и �
 | **Feature flag strategy** | ✅ Closed (`CANONICAL_TREE_ENABLED` / `CANONICAL_TREE_SHADOW`, default OFF, request-time) — ADR-0002 Accepted with conditions | Управляет безопасным A/B old-vs-new и откатом | Gate-2 пройден; включение — отдельное решение Ivan |
 | **Deadline for legacy `build_tree` removal** | Open (oracle до parity) | Двойная логика — долг; нужен критерий «parity достигнута → удаляем» | После content-parity + стабилизации flag (Этап 6) |
 | **First production read-path** | ✅ Completed — `/children` структурный слой за default-OFF флагом; Gate-2 green | Какой эндпоинт первым читает CanonicalModel и как сверяется с legacy | Отдельное решение Ivan о rollout |
+| **Nomenclature history / legal code transitions** | Proposed: DM-0004, current-only Canonical remains unchanged | Нужны official source, revision/effective dates, many-to-many split/merge semantics and provenance; нельзя смешивать с lexical synonyms/stable-ID aliases | Ivan decision after source-feasibility audit |
 
 ---
 

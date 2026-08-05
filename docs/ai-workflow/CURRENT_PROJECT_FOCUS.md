@@ -6,7 +6,7 @@ Active
 
 ## Last updated
 
-2026-08-01
+2026-08-05
 
 ## Strategic direction
 
@@ -56,7 +56,22 @@ ingestion.
   stage for commodities, chapter metadata and L4/L6 leaf evidence; `TreeBuilder`
   consumes explicit inputs without opening a second session. An explicit SQLite
   read transaction also keeps those inputs on one snapshot under concurrent commits.
-  Full Gate-2 remains 18,049/18,049 with all serving flags OFF.
+  Full Gate-2 remained 18,049/18,049 with all serving flags OFF.
+- Canonical snapshot-bound Guided input: the semantic overlay now uses immutable
+  source records captured by the exact `TreeParseResult` that built its
+  `CanonicalModel`; it no longer re-reads commodity descriptions from a request
+  session after selecting a model snapshot.
+- Terminal L4 correctness: 162 exact-rate `XXXX000000` records without deeper
+  descendants are now real declarable leaves under their stable four-digit heading
+  wrappers in both legacy and Canonical projections. Gate-2 now independently
+  requires these source-backed leaves and passes 18,211/18,211 paths.
+- Whole-catalog Guided census: on the supplied Gate-2 snapshot, all 1,228 Canonical
+  headings and 16,708 source-backed code nodes pass reachability, binding and nearest
+  Canonical-parent integrity. The model contains 13,254 actual declarable leaves;
+  leaf roles are checked against Canonical rather than inferred from the absence of
+  semantic children. Semantic questions currently cover 548 headings (44.6254%) and
+  6,891 leaves (51.9919%); these are measured product-quality baselines, not a claim
+  that every heading is already semantically optimized.
 - Explainable Smart Payments in the TN VED card: bases, statuses, sources, assumptions,
   uncertainty and optional Canonical grounding anchor
 - Evidence-first sanctions/risk checks in the TN VED card: explicit scope, conservative
@@ -101,6 +116,14 @@ Current next tasks:
   anchor DTO with soft fallback; preliminary decisions/evidence remain visible
 - ✅ TASK-CANONICAL-007: all Canonical Builder inputs are collected by Parser from
   one DB session; Builder is DB-independent and compact Gate-2 parity remains green
+- ✅ TASK-CANONICAL-008: Guided semantic inputs are retained inside the selected
+  Canonical model snapshot; a later database update cannot mix description state B
+  with structure/anchors from snapshot A
+- ✅ TASK-CANONICAL-009: exact terminal L4 codes are reachable in both tree
+  projections and in Guided navigation; hardened Gate-2 passes 18,211/18,211
+- ✅ TASK-SEMANTIC-005: strict read-only census covers all 1,228 headings and
+  16,708 source-backed code nodes / 13,254 declarable leaves; quality distributions
+  and four-digit outlier lists are reported separately from correctness
 - ✅ TASK-MVP-SEARCH-QUALITY-001: hybrid search ranking, typo recovery and
   explainable main-UI results
 - ✅ TASK-MVP-PAYMENTS-001: Smart payment explanation block in the TN VED card
@@ -144,8 +167,13 @@ Current next tasks:
   loading/failure behavior is protected by regression tests.
 - Perform visual/live-browser verification when a reachable application URL is
   available, without broad UI redesign
-- Prepare a separate Decision Memo before adding Canonical aliases/history or
-  changing persistent identity semantics
+- Improve semantic question coverage and reduce measured high-branching outliers in
+  bounded, evidence-backed slices. Do not set arbitrary global usability thresholds
+  until a reviewed baseline policy exists; preserve whole-catalog integrity and the
+  four golden hierarchy assertions.
+- Review proposed DM-0004 before adding Canonical aliases/history or changing
+  persistent identity semantics. No schema/runtime implementation is authorized
+  until an official transition-source feasibility audit and Ivan decision.
 - Separate readiness decision for semantic embeddings (vectors/API cost/provider), without
   weakening the deterministic hybrid-search fallback
 - ✅ Optional-AI contract verification (no external request): citation grounding,
@@ -171,6 +199,7 @@ Guided TN VED full-data gate (also aggregate-only and strict read-only):
 
 ```bash
 python3 scripts/diagnose_guided_tnved_navigation.py \
+  --all-headings \
   --require-complete \
   --output "guided-tnved-$(date +%Y%m%d-%H%M%S).json"
 ```
