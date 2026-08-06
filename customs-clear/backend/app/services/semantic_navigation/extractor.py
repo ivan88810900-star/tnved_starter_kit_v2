@@ -23,6 +23,7 @@ from dataclasses import dataclass, field
 
 from ..tnved_tree.helpers import digits, strip_leading_dashes
 from .bounded_slices import (
+    Bounded0304GroupSpec,
     PDO_2204_ANCHOR_CODE,
     PDO_2204_CODES,
     PDO_2204_DEPTH,
@@ -35,6 +36,12 @@ from .bounded_slices import (
     PDO_2204_STOP_CODE,
     PGI_2204_OFFICIAL_HEADER,
     PGI_2204_TITLE,
+    STATE_0304_PAD_CODE,
+    STATE_0304_REAL_SIGNATURE,
+    STATE_0304_GROUPS,
+    STATE_0304_HEADING,
+    STATE_0304_REASON,
+    STATE_0304_SCOPE_KIND,
 )
 from .models import SourceRecord
 
@@ -89,8 +96,8 @@ _GENERIC_PREFIXES: tuple[str, ...] = (
 _MIN_TITLE_LEN = 4
 
 # One packed official description contains several dash-prefixed headers.  The
-# regex is used only by the bounded 2204 guard below; the generic extractor
-# intentionally keeps its established single-trailing-header policy.
+# regex is used only by the bounded 2204/0304 guards below; the generic
+# extractor intentionally keeps its established single-trailing-header policy.
 _PACKED_HEADER_MARKER_RE = re.compile(
     rf"(?:^|\s)(?P<marks>[{_DASH_CLASS}](?:\s+[{_DASH_CLASS}])*)\s+"
 )
@@ -115,7 +122,8 @@ class ExtractedGroup:
     parent_source_code_hint: str | None = None
     hierarchy_hint: str | None = None  # dash_depth | title_prefix
     #: Optional fail-closed scope proven from one Canonical source snapshot.
-    #: TASK-SEMANTIC-006 is the only producer; ordinary groups leave these None.
+    #: Bounded TASK-SEMANTIC-006/007 rules are the only producers; ordinary
+    #: groups leave these fields ``None``.
     verified_scope_kind: str | None = None
     verified_scope_start_exclusive: str | None = None
     verified_scope_end_inclusive: str | None = None
@@ -150,6 +158,8 @@ class _PackedHeader:
     """One dash-prefixed segment inside the exact bounded official chain."""
 
     title: str
+    exact_title: str
+    has_terminal_colon: bool
     raw: str
     dash_depth: int
 
@@ -238,21 +248,33 @@ def _packed_headers(description: str) -> list[_PackedHeader]:
     """Split a packed official description into dash-depth segments.
 
     This helper is intentionally not part of the generic acceptance path.  It
-    only supplies evidence to the fully bounded 2204 PDO rule.
+    only supplies evidence to the fully bounded 2204/0304 rules.
     """
 
-    source = unicodedata.normalize("NFC", description or "").strip()
+    # Keep source spelling byte-for-byte apart from outer whitespace.  The
+    # 2204 comparison applies its own NFC policy; the exact 0304 rule must be
+    # able to detect even Unicode-normalization drift in a legal label.
+    source = (description or "").strip()
     matches = list(_PACKED_HEADER_MARKER_RE.finditer(source))
     headers: list[_PackedHeader] = []
     for index, match in enumerate(matches):
         end = matches[index + 1].start() if index + 1 < len(matches) else len(source)
-        title = " ".join(source[match.end() : end].strip().split())
-        if not title:
+        exact_segment = source[match.end() : end].strip()
+        if not exact_segment:
             continue
+        has_terminal_colon = exact_segment.endswith(":")
+        exact_title = (
+            exact_segment[:-1].rstrip()
+            if has_terminal_colon
+            else exact_segment
+        )
+        title = " ".join(exact_segment.split())
         clean_title = title[:-1].rstrip() if title.endswith(":") else title
         headers.append(
             _PackedHeader(
                 title=clean_title,
+                exact_title=exact_title,
+                has_terminal_colon=has_terminal_colon,
                 raw=source[match.start() : end].strip(),
                 dash_depth=sum(
                     1 for char in match.group("marks") if char in _DASH_CLASS
@@ -389,6 +411,191 @@ def _bounded_2204_pdo_group(
     )
 
 
+def _apply_bounded_0304_state(
+    *,
+    heading: str,
+    commodity_codes: list[str],
+    records_by_code: dict[str, SourceRecord],
+    accepted_groups: list[ExtractedGroup],
+    rejected_candidates: list[RejectedCandidate],
+) -> tuple[list[ExtractedGroup], list[RejectedCandidate]]:
+    """Upgrade all five exact official 0304 states or change nothing.
+
+    The ordinary parser deliberately truncates titles at commas and rejects
+    generic ``прочее`` labels.  In this one audited heading the complete source
+    state proves five mutually exclusive level-1 headers.  A/C/D therefore
+    replace their existing generic accepts, while B/E replace matching generic
+    rejections.  Any source, boundary, order, parent or leaf drift keeps the
+    established generic result unchanged.
+    """
+
+    if heading != STATE_0304_HEADING:
+        return accepted_groups, rejected_candidates
+
+    pad_record = records_by_code.get(STATE_0304_PAD_CODE)
+    actual_real_signature = tuple(
+        (
+            code,
+            str(records_by_code[code].parent_code or ""),
+            records_by_code[code].is_leaf,
+        )
+        for code in commodity_codes
+        if code in records_by_code
+    )
+    if (
+        pad_record is None
+        or pad_record.code != STATE_0304_PAD_CODE
+        or pad_record.is_leaf is not False
+        or pad_record.parent_code is not None
+        or tuple(commodity_codes)
+        != tuple(code for code, _, _ in STATE_0304_REAL_SIGNATURE)
+        or actual_real_signature != STATE_0304_REAL_SIGNATURE
+        or set(records_by_code)
+        != {
+            STATE_0304_PAD_CODE,
+            *(code for code, _, _ in STATE_0304_REAL_SIGNATURE),
+        }
+    ):
+        return accepted_groups, rejected_candidates
+
+    position = {code: index for index, code in enumerate(commodity_codes)}
+    expected_boundaries = [spec.anchor_code for spec in STATE_0304_GROUPS]
+    boundary_headers: dict[str, _PackedHeader] = {}
+    observed_boundaries: list[str] = []
+
+    # A hidden same-level marker legally closes a product state even when the
+    # generic parser rejects its title.  Require the complete depth-1 boundary
+    # sequence, and require each known marker to be the final packed header.
+    for code in commodity_codes:
+        record = records_by_code.get(code)
+        if record is None:
+            return accepted_groups, rejected_candidates
+        headers = _packed_headers(record.description)
+        for header_index, header in enumerate(headers):
+            if header.dash_depth != 1:
+                continue
+            observed_boundaries.append(code)
+            if header_index != len(headers) - 1 or code in boundary_headers:
+                return accepted_groups, rejected_candidates
+            boundary_headers[code] = header
+    if observed_boundaries != expected_boundaries:
+        return accepted_groups, rejected_candidates
+
+    generic_accepts: dict[str, tuple[int, ExtractedGroup]] = {}
+    upgraded: list[
+        tuple[Bounded0304GroupSpec, _PackedHeader, ExtractedGroup | None]
+    ] = []
+
+    for spec in STATE_0304_GROUPS:
+        header = boundary_headers.get(spec.anchor_code)
+        anchor = records_by_code.get(spec.anchor_code)
+        anchor_signature = next(
+            (
+                signature
+                for prior in STATE_0304_GROUPS
+                for signature in prior.signature
+                if signature[0] == spec.anchor_code
+            ),
+            None,
+        )
+        expected_anchor_parent = (
+            anchor_signature[1]
+            if anchor_signature is not None
+            else STATE_0304_HEADING
+        )
+        if (
+            header is None
+            or anchor is None
+            or anchor.is_leaf is not True
+            or anchor.parent_code != expected_anchor_parent
+            or not header.has_terminal_colon
+            or header.exact_title != spec.title
+        ):
+            return accepted_groups, rejected_candidates
+
+        actual_signature = tuple(
+            (
+                code,
+                str(records_by_code[code].parent_code or ""),
+                records_by_code[code].is_leaf,
+            )
+            for code in commodity_codes
+            if code.startswith(spec.code_prefix)
+        )
+        if actual_signature != spec.signature:
+            return accepted_groups, rejected_candidates
+
+        matching_accepts = [
+            (index, group)
+            for index, group in enumerate(accepted_groups)
+            if group.source_code == spec.anchor_code
+            and group.after_code == spec.anchor_code
+            and group.dash_depth == 1
+        ]
+        matching_rejections = [
+            candidate
+            for candidate in rejected_candidates
+            if candidate.source_code == spec.anchor_code
+            and candidate.reason == "generic_subcategory"
+        ]
+        existing: ExtractedGroup | None = None
+        if spec.generic_disposition == "accepted":
+            if len(matching_accepts) != 1 or matching_rejections:
+                return accepted_groups, rejected_candidates
+            generic_accepts[spec.key] = matching_accepts[0]
+            existing = matching_accepts[0][1]
+        else:
+            if matching_accepts or len(matching_rejections) != 1:
+                return accepted_groups, rejected_candidates
+        upgraded.append((spec, header, existing))
+
+    # Validation above is complete; only now mutate copies of generic output.
+    groups = list(accepted_groups)
+    rejected = list(rejected_candidates)
+    additions: list[ExtractedGroup] = []
+    for spec, header, existing in upgraded:
+        bounded = ExtractedGroup(
+            title=spec.title,
+            raw=header.raw,
+            source_code=spec.anchor_code,
+            after_code=spec.anchor_code,
+            confidence=HIGH,
+            reason=STATE_0304_REASON,
+            dash_depth=1,
+            verified_scope_kind=STATE_0304_SCOPE_KIND,
+            verified_scope_start_exclusive=spec.anchor_code,
+            verified_scope_end_inclusive=spec.last_code,
+            verified_scope_leaf_count=spec.leaf_count,
+        )
+        if existing is not None:
+            index, old_parent = generic_accepts[spec.key]
+            groups[index] = bounded
+            for child in groups:
+                if (
+                    child.parent_source_code_hint == spec.anchor_code
+                    and _normalise_title(child.parent_title_hint or "")
+                    == _normalise_title(old_parent.title)
+                ):
+                    child.parent_title_hint = bounded.title
+        else:
+            additions.append(bounded)
+
+    # Preserve activation order without changing ordering among ordinary groups.
+    for bounded in additions:
+        anchor_index = position[bounded.after_code or ""]
+        insert_at = next(
+            (
+                index
+                for index, group in enumerate(groups)
+                if group.after_code is not None
+                and position.get(group.after_code, len(position)) > anchor_index
+            ),
+            len(groups),
+        )
+        groups.insert(insert_at, bounded)
+    return groups, rejected
+
+
 def _is_title_prefix_child(parent_title: str, child_title: str) -> bool:
     """Строгая lexical-подсказка: «тунец» → «тунец синий».
 
@@ -521,6 +728,14 @@ class SemanticStructureExtractor:
                 # Exact terminal L4 — товар, а не источник semantic-группы.
                 continue
             consider(code10, records_by_code[code10].description, code10)
+
+        groups, rejected = _apply_bounded_0304_state(
+            heading=heading4,
+            commodity_codes=commodity_codes,
+            records_by_code=records_by_code,
+            accepted_groups=groups,
+            rejected_candidates=rejected,
+        )
 
         bounded_pdo = _bounded_2204_pdo_group(
             heading=heading4,

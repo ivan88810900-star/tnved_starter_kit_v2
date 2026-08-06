@@ -1,6 +1,6 @@
 # CURRENT_STATE.md — Текущее состояние проекта
 
-> Дата: 2026-08-05
+> Дата: 2026-08-06
 > Активная ветка: `feat/canonical-read-path`
 
 ---
@@ -56,8 +56,8 @@
    code nodes reachable/Canonical-bound, из них 13,254 declarable leaves; leaf-role
    проверяется по Canonical, а не по отсутствию semantic children.
 6. На текущей feature branch semantic questions есть у 548 headings (44.6254%)
-   и покрывают 6,924 leaves (52.2408%). Это честный проверенный baseline, но не
-   разрешение на merge TASK-SEMANTIC-006.
+   и покрывают 6,934 leaves (52.3163%). Это честный проверенный baseline, но не
+   разрешение на merge или rollout.
 7. Bounded official PDO slice для `2204` реализован и проверен: шаг `220421`
    сократился с 50/47 до 18/14 choices/direct codes; выбор PDO открывает точные
    33/33. Это новый candidate catalog-wide максимум и один честный noncritical
@@ -65,6 +65,11 @@
 8. DM-0005 Accepted — Option A (Ivan, 2026-08-05); TASK-SEMANTIC-006 имеет статус
    Completed. Код пока остаётся только на feature branch: этот docs-only update не
    выполняет merge, rollout или deploy.
+9. TASK-SEMANTIC-007 для `0304` завершён и принят через DM-0006 Option A: exact
+   five-chain сократила root 19/16 → 13/8 и maximum step 19/17 → 13/9, подняла
+   semantic coverage 82/100 → 92/100 и сохранила 117/117 source nodes, 100/100
+   leaves. Whole census 1,228/1,228, golden 6/6, Gate-2 18,211/18,211. Это не
+   выполняет merge/rollout/deploy и не включает флаги.
 
 Основные `CANONICAL_TREE_ENABLED` / `CANONICAL_TREE_SHADOW` остаются default OFF.
 
@@ -259,13 +264,20 @@ Builder собирает дерево напрямую из recovery-резул�
   PDO — 33/33; глобальный лимит 30 не менялся, поэтому одна noncritical
   `oversized_unsplit_group` warning намеренно сохранена. DM-0005 Accepted — Option A;
   реализация проверена, но этот docs-only update не выполняет merge/rollout/deploy.
+- TASK-SEMANTIC-007 — завершённый и принятый через DM-0006 Option A bounded slice
+  для `0304`. Пять product-form
+  titles с exact `(anchor, stop]` source scopes, ordered tuples и полной Canonical
+  leaf/parent topology как одну fail-closed chain. Measured metrics: root 13/8,
+  max step 13/9, coverage 92/100; 117/117 source nodes и 100/100 leaves сохранены.
+  Full official titles меняют codeless guide IDs; coded-node `stable_id`
+  неизменны. Merge/rollout/flag activation не выполнялись.
 - Feature-branch full-data read-only Gate на пользовательском экспорте:
   1,228/1,228 heading,
   16,708/16,708 source-backed code nodes reachable/Canonical-bound и 13,254
   Canonical declarable leaves на одном snapshot; fake/duplicate/critical/degraded/
-  empty-root/leaf-role/Canonical-parent mismatch = 0, golden hierarchy 5/5.
-  Semantic choices покрывают 548 heading (44.6254%) и 6,924 leaves
-  (52.2408%); quality distributions не подменяют correctness gate произвольным
+  empty-root/leaf-role/Canonical-parent mismatch = 0, golden hierarchy 6/6.
+  Semantic choices покрывают 548 heading (44.6254%) и 6,934 leaves
+  (52.3163%); quality distributions не подменяют correctness gate произвольным
   threshold. Canonical runtime flags оставались OFF.
 - Текстовое описание товара теперь даёт ранжированные Canonical-позиции для
   запуска Guided-вопросов. Curated semantic evidence выше случайного full-text:
@@ -329,6 +341,7 @@ URL/API-контракты не менялись; backend, БД, флаги и �
 
 | Коммит | Дата | Описание |
 |--------|------|---------|
+| TASK-SEMANTIC-007 | 2026-08-06 | Completed; DM-0006 Option A |
 | TASK-SEMANTIC-006 (feature branch) | 2026-08-05 | Completed and accepted via DM-0005 Option A: exact bounded `2204` PDO slice, 50/47 → 18/14 → PDO 33/33, census 1,228/1,228 and golden 5/5; not merged/rolled out/deployed |
 | TASK-CANONICAL-010 | 2026-08-05 | Published Canonical graph deep-frozen |
 | TASK-SEMANTIC-005 | 2026-08-05 | Whole-catalog Guided census: 1,228/1,228 headings, 16,708/16,708 source code nodes, 13,254 Canonical leaves, zero role mismatch/fake/duplicate/degraded/empty-root; semantic UX baseline measured separately |
@@ -403,6 +416,7 @@ URL/API-контракты не менялись; backend, БД, флаги и �
 | **TASK-SEMANTIC-004** — описание товара → ранжированные Canonical heading → Guided-вопросы | ✅ Completed: full Gate-2 API acceptance; flags OFF | — |
 | **TASK-SEMANTIC-005** — whole-catalog Guided integrity/quality census | ✅ Completed: 1,228/1,228 headings, 16,708 source nodes / 13,254 declarable leaves; semantic baseline recorded | — |
 | **TASK-SEMANTIC-006** — bounded official PDO interval for `2204` | ✅ Completed and accepted via DM-0005 Option A; implemented + verified on feature branch: exact 33-leaf allowlist, 18/14 → PDO 33/33, census 1,228/1,228 and golden 5/5; flags OFF | No merge/rollout/deploy in this docs update |
+| TASK-SEMANTIC-007 | ✅ Completed; DM-0006 Option A | No rollout |
 | **TASK-MVP-FRONTEND-ACCEPTANCE-001** — поиск → Guided → реальный код → карточка | ✅ Completed: автоматический DOM-level acceptance; accessibility hardening | — |
 | **TASK-MVP-FRONTEND-ACCEPTANCE-002** — карточка → платежи → документы → риск → assistant | ✅ Completed: verified/failure DOM-level paths; fail-safe evidence UI | — |
 | **TASK-MVP-FRONTEND-ACCEPTANCE-003** — реальный card → assistant → grounded response | ✅ Completed: route bridge + deterministic/guarded-LLM UI contracts | — |
@@ -549,6 +563,7 @@ URL/API-контракты не менялись; backend, БД, флаги и �
 | **First production read-path** | ✅ Completed — `/children` структурный слой за default-OFF флагом; Gate-2 green | Какой эндпоинт первым читает CanonicalModel и как сверяется с legacy | Отдельное решение Ivan о rollout |
 | **Nomenclature history / legal code transitions** | Proposed: DM-0004, current-only Canonical remains unchanged | Нужны official source, revision/effective dates, many-to-many split/merge semantics and provenance; нельзя смешивать с lexical synonyms/stable-ID aliases | Ivan decision after source-feasibility audit |
 | **Guided `2204` PDO interval** | ✅ Closed: DM-0005 Option A Accepted; bounded implementation completed + verified on feature branch | Exact user-visible PDO/PGI boundary accepted; flat/generic-parser options not selected | No merge/rollout/deploy in this docs update; flags OFF |
+| Guided `0304` | ✅ DM-0006 Option A | Visible semantics | No rollout |
 
 ---
 

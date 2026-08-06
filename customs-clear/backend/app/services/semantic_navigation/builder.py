@@ -27,6 +27,7 @@ from ...models.tnved import Commodity
 from ..tnved_tree.data_access import exclude_obsolete_reserved
 from ..tnved_tree.helpers import digits, node_level, strip_leading_dashes
 from .bounded_slices import (
+    Bounded0304GroupSpec,
     PDO_2204_ANCHOR_CODE,
     PDO_2204_CODES,
     PDO_2204_LEAF_COUNT,
@@ -35,6 +36,12 @@ from .bounded_slices import (
     PDO_2204_SCOPE_KIND,
     PDO_2204_STOP_CODE,
     PDO_2204_TITLE,
+    STATE_0304_PAD_CODE,
+    STATE_0304_REAL_SIGNATURE,
+    STATE_0304_GROUPS,
+    STATE_0304_HEADING,
+    STATE_0304_REASON,
+    STATE_0304_SCOPE_KIND,
 )
 from .extractor import ExtractionResult, SemanticStructureExtractor
 from .models import (
@@ -255,6 +262,7 @@ class SemanticNavigationBuilder:
         open_groups(len(extraction.commodity_codes))
 
         nesting_fallbacks = self._apply_controlled_nesting(root)
+        self._verify_or_unwrap_bounded_0304_state(root, extraction)
         self._restore_canonical_code_containment(root)
         self._refresh_links(root)
         self._mark_leaves(root)
@@ -405,6 +413,214 @@ class SemanticNavigationBuilder:
     @staticmethod
     def _normalise_group_title(value: str) -> str:
         return " ".join((value or "").casefold().split())
+
+    @staticmethod
+    def _bounded_0304_candidate(
+        node: SemanticNode,
+    ) -> Bounded0304GroupSpec | None:
+        """Map a group sourced from one of the five audited anchor records."""
+
+        source_code = str(node.metadata.get("extracted_from") or "")
+        for spec in STATE_0304_GROUPS:
+            if source_code == spec.anchor_code:
+                return spec
+        return None
+
+    @staticmethod
+    def _matches_exact_0304_raw_header(raw: object, title: str) -> bool:
+        """Accept one dash separator plus the exact audited title and colon."""
+
+        source = str(raw or "").strip()
+        if not source or source[0] not in "–—-":
+            return False
+        remainder = source[1:].lstrip()
+        if remainder.startswith(("–", "—", "-")):
+            return False
+        return remainder == f"{title}:"
+
+    @staticmethod
+    def _verified_0304_group_signature(
+        node: SemanticNode,
+        spec: Bounded0304GroupSpec,
+    ) -> bool:
+        """Check the complete post-nesting wrapper and Canonical topology."""
+
+        metadata = node.metadata
+        identity = (
+            node.node_type == SemanticNodeType.CLASSIFICATION_GROUP,
+            node.code is None,
+            node.source == "semantic_extraction",
+            node.title == spec.title,
+            str(metadata.get("extracted_from") or "") == spec.anchor_code,
+            metadata.get("confidence") == "high",
+            metadata.get("reason") == STATE_0304_REASON,
+            metadata.get("dash_depth") == 1,
+            metadata.get("verified_scope_kind") == STATE_0304_SCOPE_KIND,
+            str(metadata.get("verified_scope_start_exclusive") or "")
+            == spec.anchor_code,
+            str(metadata.get("verified_scope_end_inclusive") or "")
+            == spec.last_code,
+            metadata.get("verified_scope_leaf_count") == spec.leaf_count,
+            SemanticNavigationBuilder._matches_exact_0304_raw_header(
+                metadata.get("raw"),
+                spec.title,
+            ),
+        )
+        if not all(identity):
+            return False
+
+        actual_signature = tuple(
+            (
+                str(descendant.code),
+                str(descendant.metadata.get("canonical_parent_code") or ""),
+                descendant.metadata.get("leaf_evidence"),
+            )
+            for descendant in node.iter_descendants()
+            if descendant.carries_real_code and descendant.code
+        )
+        return actual_signature == spec.signature
+
+    @staticmethod
+    def _verify_or_unwrap_bounded_0304_state(
+        root: SemanticNode,
+        extraction: ExtractionResult,
+    ) -> None:
+        """Publish the five official states atomically or remove all wrappers.
+
+        Verification deliberately runs after controlled subgroup nesting, so
+        the exact signature includes code nodes hidden behind preserved generic
+        subgroups.  It runs before Canonical containment restoration, which can
+        then reparent code branches without weakening the bounded proof.
+        """
+
+        all_nodes = [root, *root.iter_descendants()]
+        anchor_candidates = [
+            (node, spec)
+            for node in all_nodes
+            if node.is_group
+            if (spec := SemanticNavigationBuilder._bounded_0304_candidate(node))
+            is not None
+        ]
+        state_labeled = [
+            node
+            for node in all_nodes
+            if node.is_group
+            and (
+                node.metadata.get("reason") == STATE_0304_REASON
+                or node.metadata.get("verified_scope_kind")
+                == STATE_0304_SCOPE_KIND
+            )
+        ]
+        override_anchors = {
+            spec.anchor_code
+            for spec in STATE_0304_GROUPS
+            if spec.generic_disposition == "rejected"
+        }
+        chain_signal = bool(
+            state_labeled
+            or any(
+                str(node.metadata.get("extracted_from") or "")
+                in override_anchors
+                for node, _ in anchor_candidates
+            )
+        )
+        if not chain_signal:
+            return
+
+        by_key: dict[str, list[SemanticNode]] = {
+            spec.key: [] for spec in STATE_0304_GROUPS
+        }
+        for node, spec in anchor_candidates:
+            by_key[spec.key].append(node)
+        expected_frontier: tuple[str, ...] = (
+            "0304310000",
+            "0304320000",
+            "0304330000",
+            "0304390000",
+            "A",
+            "B",
+            "0304610000",
+            "0304620000",
+            "0304630000",
+            "0304690000",
+            "C",
+            "D",
+            "E",
+        )
+
+        def frontier_token(node: SemanticNode) -> str:
+            if node.carries_real_code and node.code:
+                return str(node.code)
+            spec = SemanticNavigationBuilder._bounded_0304_candidate(node)
+            return spec.key if spec is not None else ""
+
+        pad_record = extraction.records_by_code.get(STATE_0304_PAD_CODE)
+        actual_real_signature = tuple(
+            (
+                code,
+                str(extraction.records_by_code[code].parent_code or ""),
+                extraction.records_by_code[code].is_leaf,
+            )
+            for code in extraction.commodity_codes
+            if code in extraction.records_by_code
+        )
+        source_projection_valid = bool(
+            extraction.heading == STATE_0304_HEADING
+            and extraction.pad_code == STATE_0304_PAD_CODE
+            and pad_record is not None
+            and pad_record.code == STATE_0304_PAD_CODE
+            and pad_record.is_leaf is False
+            and pad_record.parent_code is None
+            and tuple(extraction.commodity_codes)
+            == tuple(code for code, _, _ in STATE_0304_REAL_SIGNATURE)
+            and actual_real_signature == STATE_0304_REAL_SIGNATURE
+            and set(extraction.records_by_code)
+            == {
+                STATE_0304_PAD_CODE,
+                *(code for code, _, _ in STATE_0304_REAL_SIGNATURE),
+            }
+        )
+        valid = bool(
+            source_projection_valid
+            and len(anchor_candidates) == len(STATE_0304_GROUPS)
+            and len(state_labeled) == len(STATE_0304_GROUPS)
+            and all(len(by_key[spec.key]) == 1 for spec in STATE_0304_GROUPS)
+            and tuple(frontier_token(node) for node in root.children)
+            == expected_frontier
+            and all(
+                by_key[spec.key][0] in root.children
+                and SemanticNavigationBuilder._verified_0304_group_signature(
+                    by_key[spec.key][0],
+                    spec,
+                )
+                for spec in STATE_0304_GROUPS
+            )
+        )
+        if valid:
+            return
+
+        # A partial semantic promise is worse than a flat route.  Splice every
+        # recognizable bounded wrapper out as one operation.  Its generic
+        # subgroups and real-code nodes remain intact for Canonical restoration.
+        candidate_ids = {id(node) for node, _ in anchor_candidates}
+        candidate_ids.update(id(node) for node in state_labeled)
+        candidate_ids.update(
+            id(node)
+            for node in root.children
+            if node.node_type == SemanticNodeType.CLASSIFICATION_GROUP
+        )
+
+        def unwrap(parent: SemanticNode) -> None:
+            retained: list[SemanticNode] = []
+            for child in parent.children:
+                unwrap(child)
+                if id(child) in candidate_ids:
+                    retained.extend(child.children)
+                else:
+                    retained.append(child)
+            parent.children = retained
+
+        unwrap(root)
 
     @staticmethod
     def _detach_out_of_scope_children(

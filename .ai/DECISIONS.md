@@ -14,6 +14,7 @@
 | ADR-0003 | Canonical anchor identity and snapshot lifecycle | Accepted | Ivan | 2026-07-14 | [`decisions/ADR-0003-canonical-anchor-identity.md`](decisions/ADR-0003-canonical-anchor-identity.md) |
 | DM-0004 | Canonical nomenclature history and code transitions | Proposed | Awaiting Ivan | 2026-08-05 | [`decisions/DM-0004-canonical-nomenclature-history.md`](decisions/DM-0004-canonical-nomenclature-history.md) |
 | DM-0005 | Guided `2204` PDO interval | Accepted — Option A | Ivan | 2026-08-05 | [`decisions/DM-0005-guided-2204-pdo-interval.md`](decisions/DM-0005-guided-2204-pdo-interval.md) |
+| DM-0006 | Guided `0304` product-form chain | Accepted — Option A | Ivan | 2026-08-06 | [`decisions/DM-0006-guided-0304-product-form-chain.md`](decisions/DM-0006-guided-0304-product-form-chain.md) |
 
 ---
 
@@ -147,6 +148,30 @@ TASK-SEMANTIC-006 completed/accepted, но код остаётся только 
 этот docs-only update не выполняет merge, rollout или deployment. Флаги остаются
 OFF; DB/API/LLM изменения не разрешены. Полный документ:
 [`decisions/DM-0005-guided-2204-pdo-interval.md`](decisions/DM-0005-guided-2204-pdo-interval.md).
+
+## DM-0006 — Guided 0304 product-form chain
+
+**Статус:** Accepted — Option A (Ivan, 2026-08-06).
+
+TASK-SEMANTIC-007 рассматривает одну exact five-chain проекцию для `0304`:
+пять официальных product-form titles связываются с точными open/closed source
+intervals, полными ordered code tuples, leaf roles и Canonical-parent topology.
+Один drift подавляет весь bounded candidate и сохраняет полный pre-task route.
+
+Ivan принял Option A — атомарную five-chain. Option B добавляет только две
+отсутствующие границы «прочее» и смешивает exact/generic trust models; Option C
+откладывает heading до generic packed-header parser; эти варианты не выбраны.
+
+Технически проверенный candidate для `0304`: root 19/16 → 13/8, maximum step
+19/17 → 13/9, semantic leaf coverage 82/100 → 92/100, при неизменных 117/117
+source nodes и 100/100 declarable leaves. Whole census 1,228/1,228, golden 6/6,
+Gate-2 18,211/18,211; QA не является продуктовым принятием. Exact official titles
+меняют codeless guide IDs; реальные Canonical `stable_id` не меняются,
+aliases/history вне scope.
+
+DM не разрешает merge, rollout/deploy, включение флагов, DB/API/frontend изменения
+или LLM/provider calls. Полный документ:
+[`decisions/DM-0006-guided-0304-product-form-chain.md`](decisions/DM-0006-guided-0304-product-form-chain.md).
 
 ---
 

@@ -2,7 +2,7 @@
 
 > Только задачи, подтверждённые анализом кода и существующего бэклога.
 > Не содержит бизнес-wishlist без технического обоснования.
-> Дата: 2026-08-05.
+> Дата: 2026-08-06.
 
 ---
 
@@ -62,6 +62,13 @@
   fail-closed при source/topology drift; шаг `220421` сократился с 50/47 до 18/14,
   PDO открывает 33/33. Whole census 1 228/1 228 и golden 5/5 сохранены, flags OFF.
   Этот docs-only update не выполняет merge/rollout/deploy.
+- ✅ **TASK-SEMANTIC-007** — exact product-form chain для `0304` реализована,
+  проверена и принята через DM-0006 Option A:
+  атомарно связать пять exact `(anchor, stop]` scopes с ordered source tuples и
+  Canonical leaf/parent topology. Measured: root 19/16 → 13/8, max step 19/17 →
+  13/9, semantic leaves 82/100 → 92/100 при неизменных 117/117 source nodes и
+  100/100 leaves. Census 1,228/1,228, golden 6/6, Gate-2 18,211/18,211. Flags
+  остаются OFF; merge/rollout/deploy не выполнялись.
 
 **Текущее состояние и долги:** см. `.ai/CURRENT_STATE.md` §2b/§8/§9. Read-path
 `/children` подключён к runtime **только за флагом** (default OFF). Guided overlay
@@ -128,6 +135,11 @@ official группа сохраняет одну noncritical oversized warning,
 **Что нужно:**
 - Сохранить отдельный operational gate: DM-0005 acceptance не выполняет
   merge/rollout/deploy TASK-SEMANTIC-006 и не включает Canonical flags.
+- Сохранить отдельный operational gate: принятие DM-0006 не выполняет
+  merge/rollout/deploy TASK-SEMANTIC-007 и не включает Canonical flags.
+- Для Option A требовать атомарную five-chain signature: точные source titles,
+  `(anchor, stop]`, полные ordered tuples, leaf roles и Canonical parents должны
+  проверяться Extractor и Builder; любой drift возвращает полный pre-task route.
 - Выбирать небольшие наборы heading из `quality_outliers` по максимальной
   пользовательской пользе и добавлять только объяснимые вопросы из официального
   текста.

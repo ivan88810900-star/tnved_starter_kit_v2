@@ -6,7 +6,7 @@ Active
 
 ## Last updated
 
-2026-08-05
+2026-08-06
 
 ## Strategic direction
 
@@ -149,7 +149,14 @@ Current next tasks:
   via DM-0005 Option A, with implementation + verification on the feature branch.
   It fails closed and covers 33/33 Canonical leaves; `220421` is 18/14 before the
   PDO step, the whole census is 1,228/1,228 and the fifth golden assertion is green.
-  Flags remain OFF; this docs-only update performs no merge, rollout or deployment
+  Flags remain OFF; this docs-only update performs no merge, rollout or deployment.
+- ✅ TASK-SEMANTIC-007 is implemented, verified and accepted through DM-0006
+  Option A: an atomic exact five-question product-form chain for
+  `0304`, verified against exact source titles, `(anchor, stop]` ordered tuples,
+  leaf roles and Canonical-parent topology. Measured results are root 13/8,
+  maximum step 13/9 and semantic coverage 92/100 while preserving 117/117 source
+  nodes and 100/100 leaves; census is 1,228/1,228, golden 6/6 and Gate-2
+  18,211/18,211. Acceptance does not constitute merge, rollout or flag activation.
 - ✅ TASK-MVP-SEARCH-QUALITY-001: hybrid search ranking, typo recovery and
   explainable main-UI results
 - ✅ TASK-MVP-PAYMENTS-001: Smart payment explanation block in the TN VED card
@@ -200,6 +207,9 @@ Current next tasks:
   PDO slice is accepted via DM-0005 Option A and completed/verified on the feature
   branch, but is not merged, rolled out or deployed by this update. Its remaining
   33/33 step and other outliers need separate source-backed slices.
+- Preserve the DM-0006 Option A boundary for `0304`. Exact official titles change
+  codeless guide IDs while real Canonical coded-node IDs remain stable; no guide-ID
+  alias/history layer is included. Any source/topology drift must fail closed.
 - Review proposed DM-0004 before adding Canonical aliases/history or changing
   persistent identity semantics. No schema/runtime implementation is authorized
   until an official transition-source feasibility audit and Ivan decision.

@@ -76,6 +76,9 @@ def _branch(code: str, *children: dict) -> dict:
 
 
 def _golden_choices() -> dict[str, list[dict]]:
+    group_0304_titles = [
+        title for title, _codes, _leaves in diagnostic._0304_GROUP_SPECS
+    ]
     return {
         "0302": [
             _semantic("лососевые", _code("0302110000")),
@@ -91,6 +94,174 @@ def _golden_choices() -> dict[str, list[dict]]:
                     "0303420000",
                 ),
             )
+        ],
+        "0304": [
+            _code("0304310000"),
+            _code("0304320000"),
+            _code("0304330000"),
+            _code("0304390000"),
+            _semantic(
+                group_0304_titles[0],
+                _code("0304410000"),
+                _branch(
+                    "0304420000",
+                    _code("0304421000"),
+                    _code("0304425000"),
+                    _code("0304429000"),
+                ),
+                _code("0304430000"),
+                _branch(
+                    "0304440000",
+                    _code("0304441000"),
+                    _code("0304443000"),
+                    _code("0304449000"),
+                ),
+                _code("0304450000"),
+                _code("0304460000"),
+                _code("0304470000"),
+                _code("0304480000"),
+                _branch(
+                    "0304490000",
+                    _code("0304491010"),
+                    _code("0304491080"),
+                    _code("0304495000"),
+                    _code("0304498000"),
+                ),
+            ),
+            _semantic(
+                group_0304_titles[1],
+                _code("0304510000"),
+                _code("0304520000"),
+                _code("0304530000"),
+                _code("0304540000"),
+                _code("0304550000"),
+                _code("0304560000"),
+                _code("0304570000"),
+                _branch(
+                    "0304590000",
+                    _code("0304592000"),
+                    _code("0304595000"),
+                    _code("0304598000"),
+                ),
+            ),
+            _code("0304610000"),
+            _code("0304620000"),
+            _code("0304630000"),
+            _code("0304690000"),
+            _semantic(
+                group_0304_titles[2],
+                _branch(
+                    "0304710000",
+                    _code("0304711000"),
+                    _code("0304719000"),
+                ),
+                _code("0304720000"),
+                _code("0304730000"),
+                _branch(
+                    "0304740000",
+                    _code("0304741100"),
+                    _code("0304741500"),
+                    _code("0304741900"),
+                    _code("0304749000"),
+                ),
+                _code("0304750000"),
+                _branch(
+                    "0304790000",
+                    _code("0304791000"),
+                    _code("0304793000"),
+                    _code("0304795000"),
+                    _code("0304798000"),
+                    _code("0304799000"),
+                ),
+            ),
+            _semantic(
+                group_0304_titles[3],
+                _code("0304810000"),
+                _branch(
+                    "0304820000",
+                    _code("0304821000"),
+                    _code("0304825000"),
+                    _code("0304829000"),
+                ),
+                _branch(
+                    "0304830000",
+                    _code("0304831000"),
+                    _code("0304833000"),
+                    _code("0304835000"),
+                    _code("0304839000"),
+                ),
+                _code("0304840000"),
+                _code("0304850000"),
+                _code("0304860000"),
+                _code("0304870000"),
+                _branch(
+                    "0304880000",
+                    _code("0304881000"),
+                    _code("0304882000"),
+                    _code("0304885000"),
+                    _code("0304889000"),
+                ),
+                _branch(
+                    "0304890000",
+                    _code("0304891010"),
+                    _code("0304891080"),
+                    _code("0304892100"),
+                    _code("0304892900"),
+                    _code("0304893000"),
+                    _code("0304894100"),
+                    _code("0304894900"),
+                    _code("0304896000"),
+                    _code("0304898000"),
+                ),
+            ),
+            _semantic(
+                group_0304_titles[4],
+                _code("0304910000"),
+                _code("0304920000"),
+                _branch(
+                    "0304930000",
+                    _code("0304932000"),
+                    _code("0304938000"),
+                ),
+                _branch(
+                    "0304940000",
+                    _code("0304941000"),
+                    _code("0304949000"),
+                ),
+                _branch(
+                    "0304950000",
+                    _code("0304951000"),
+                    _code("0304952100"),
+                    _code("0304952500"),
+                    _code("0304952900"),
+                    _code("0304953000"),
+                    _code("0304954000"),
+                    _code("0304955000"),
+                    _code("0304956000"),
+                    _code("0304959000"),
+                ),
+                _branch(
+                    "0304960000",
+                    _code("0304961000"),
+                    _code("0304969000"),
+                ),
+                _branch(
+                    "0304970000",
+                    _code("0304971000"),
+                    _code("0304979000"),
+                ),
+                _branch(
+                    "0304990000",
+                    _code("0304991100"),
+                    _code("0304992200"),
+                    _code("0304992300"),
+                    _code("0304992900"),
+                    _code("0304995500"),
+                    _code("0304996100"),
+                    _code("0304996500"),
+                    _code("0304999800"),
+                ),
+            ),
         ],
         "5208": [
             _semantic(
@@ -203,6 +374,41 @@ def test_discovery_uses_only_unique_four_digit_canonical_headings() -> None:
     assert diagnostic._discover_headings(model) == ["0302", "5208", "8517"]
 
 
+def test_0304_golden_assertions_require_exact_ordered_scopes() -> None:
+    choices = _golden_choices()["0304"]
+
+    assert all(diagnostic._hierarchy_checks("0304", choices).values())
+
+    first_group = choices[4]
+    first_group["children"][0], first_group["children"][1] = (
+        first_group["children"][1],
+        first_group["children"][0],
+    )
+    checks = diagnostic._hierarchy_checks("0304", choices)
+
+    assert checks["five_ordered_top_groups"] is True
+    assert checks["scoped_code_sets_exact"] is False
+    assert checks["scoped_leaf_sets_exact"] is False
+
+
+def test_0304_golden_assertions_keep_03046_direct_and_groups_ordered() -> None:
+    choices = _golden_choices()["0304"]
+    choices[4], choices[5] = choices[5], choices[4]
+
+    checks = diagnostic._hierarchy_checks("0304", choices)
+
+    assert checks["five_ordered_top_groups"] is False
+    assert checks["root_step_13_choices_8_direct_codes"] is True
+
+    choices = _golden_choices()["0304"]
+    direct_03046 = choices.pop(6)
+    choices[4]["children"].append(direct_03046)
+    checks = diagnostic._hierarchy_checks("0304", choices)
+
+    assert checks["direct_03046_four_leaves_outside_groups"] is False
+    assert checks["root_step_13_choices_8_direct_codes"] is False
+
+
 def test_2204_golden_assertions_reject_a_partial_pdo_slice() -> None:
     choices = _golden_choices()["2204"]
 
@@ -261,11 +467,11 @@ def test_all_heading_census_loads_model_once_and_returns_aggregates_only() -> No
     assert loader_calls == 1
     assert built == sorted(choices)
     assert report["ok"] is True
-    assert report["catalog"]["discovered_headings"] == 5
+    assert report["catalog"]["discovered_headings"] == 6
     assert report["catalog"]["snapshot_count"] == 1
-    assert report["correctness"]["expected_real_codes"] == 60
-    assert report["correctness"]["source_code_nodes"] == 60
-    assert report["correctness"]["canonical_declarable_leaves"] == 59
+    assert report["correctness"]["expected_real_codes"] == 177
+    assert report["correctness"]["source_code_nodes"] == 177
+    assert report["correctness"]["canonical_declarable_leaves"] == 159
     assert report["correctness"]["duplicate_code_occurrences"] == 0
     assert report["golden_assertions"]["failed_headings"] == []
     assert report["quality_census"]["diagnostic_totals"] == {
@@ -274,21 +480,21 @@ def test_all_heading_census_loads_model_once_and_returns_aggregates_only() -> No
         "pruned_empty_groups": 1,
     }
     assert report["quality_census"]["semantic_choice_coverage"] == {
-        "headings_with_choices": 4,
-        "heading_ratio": 0.8,
-        "declarable_leaves_under_choices": 44,
-        "declarable_leaf_ratio": 0.745763,
+        "headings_with_choices": 5,
+        "heading_ratio": 0.833333,
+        "declarable_leaves_under_choices": 136,
+        "declarable_leaf_ratio": 0.855346,
     }
     root_choices = report["quality_census"]["counts"]["root_choices"]
     assert root_choices["p50"] == 1
-    assert root_choices["max"] == 3
+    assert root_choices["max"] == 13
     assert report["quality_census"]["latency_ms"]["per_heading_build"]["p95"] == 1.0
     assert report["quality_census"]["usability_thresholds_applied"] is False
     assert report["quality_outliers"]["zero_root_choices"] == []
     assert report["quality_outliers"]["no_semantic_choices"] == ["8517"]
     assert report["quality_outliers"]["maxima"]["root_choices"] == {
-        "value": 3,
-        "headings": ["0302", "5208"],
+        "value": 13,
+        "headings": ["0304"],
     }
     assert report["quality_outliers"]["affects_ok"] is False
     assert "headings" not in report
@@ -298,7 +504,9 @@ def test_all_heading_census_loads_model_once_and_returns_aggregates_only() -> No
     assert "лососевые" not in serialized
     assert diagnostic._PDO_2204_TITLE not in serialized
     assert diagnostic._PGI_2204_TITLE not in serialized
+    assert diagnostic._0304_GROUP_SPECS[0][0] not in serialized
     assert "0302110000" not in serialized
+    assert "0304410000" not in serialized
     assert re.search(r"(?<!\d)\d{10}(?!\d)", serialized) is None
 
 

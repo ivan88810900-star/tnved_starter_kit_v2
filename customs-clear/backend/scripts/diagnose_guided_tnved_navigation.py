@@ -36,7 +36,130 @@ from app.services.tree_engine import (  # noqa: E402
     get_canonical_model,
 )
 
-DEFAULT_HEADINGS = ("0302", "0303", "2204", "5208", "8517")
+DEFAULT_HEADINGS = ("0302", "0303", "0304", "2204", "5208", "8517")
+
+
+def _fixed_codes(raw: str) -> tuple[str, ...]:
+    """Compact source-level allowlist used only by aggregate golden checks."""
+
+    return tuple(raw.split())
+
+
+_0304_GROUP_SPECS = (
+    (
+        "филе прочей рыбы, свежее или охлажденное",
+        _fixed_codes(
+            """
+            0304410000 0304420000 0304421000 0304425000 0304429000
+            0304430000 0304440000 0304441000 0304443000 0304449000
+            0304450000 0304460000 0304470000 0304480000 0304490000
+            0304491010 0304491080 0304495000 0304498000
+            """
+        ),
+        _fixed_codes(
+            """
+            0304410000 0304421000 0304425000 0304429000 0304430000
+            0304441000 0304443000 0304449000 0304450000 0304460000
+            0304470000 0304480000 0304491010 0304491080 0304495000
+            0304498000
+            """
+        ),
+    ),
+    (
+        "прочее, свежее или охлажденное",
+        _fixed_codes(
+            """
+            0304510000 0304520000 0304530000 0304540000 0304550000
+            0304560000 0304570000 0304590000 0304592000 0304595000
+            0304598000
+            """
+        ),
+        _fixed_codes(
+            """
+            0304510000 0304520000 0304530000 0304540000 0304550000
+            0304560000 0304570000 0304592000 0304595000 0304598000
+            """
+        ),
+    ),
+    (
+        (
+            "филе мороженое рыбы семейств Bregmacerotidae, "
+            "Euclichthyidae, Gadidae, Macrouridae, Melanonidae, "
+            "Merlucciidae, Moridae и Muraenolepididae"
+        ),
+        _fixed_codes(
+            """
+            0304710000 0304711000 0304719000 0304720000 0304730000
+            0304740000 0304741100 0304741500 0304741900 0304749000
+            0304750000 0304790000 0304791000 0304793000 0304795000
+            0304798000 0304799000
+            """
+        ),
+        _fixed_codes(
+            """
+            0304711000 0304719000 0304720000 0304730000 0304741100
+            0304741500 0304741900 0304749000 0304750000 0304791000
+            0304793000 0304795000 0304798000 0304799000
+            """
+        ),
+    ),
+    (
+        "филе прочей рыбы, мороженое",
+        _fixed_codes(
+            """
+            0304810000 0304820000 0304821000 0304825000 0304829000
+            0304830000 0304831000 0304833000 0304835000 0304839000
+            0304840000 0304850000 0304860000 0304870000 0304880000
+            0304881000 0304882000 0304885000 0304889000 0304890000
+            0304891010 0304891080 0304892100 0304892900 0304893000
+            0304894100 0304894900 0304896000 0304898000
+            """
+        ),
+        _fixed_codes(
+            """
+            0304810000 0304821000 0304825000 0304829000 0304831000
+            0304833000 0304835000 0304839000 0304840000 0304850000
+            0304860000 0304870000 0304881000 0304882000 0304885000
+            0304889000 0304891010 0304891080 0304892100 0304892900
+            0304893000 0304894100 0304894900 0304896000 0304898000
+            """
+        ),
+    ),
+    (
+        "прочее, мороженое",
+        _fixed_codes(
+            """
+            0304910000 0304920000 0304930000 0304932000 0304938000
+            0304940000 0304941000 0304949000 0304950000 0304951000
+            0304952100 0304952500 0304952900 0304953000 0304954000
+            0304955000 0304956000 0304959000 0304960000 0304961000
+            0304969000 0304970000 0304971000 0304979000 0304990000
+            0304991100 0304992200 0304992300 0304992900 0304995500
+            0304996100 0304996500 0304999800
+            """
+        ),
+        _fixed_codes(
+            """
+            0304910000 0304920000 0304932000 0304938000 0304941000
+            0304949000 0304951000 0304952100 0304952500 0304952900
+            0304953000 0304954000 0304955000 0304956000 0304959000
+            0304961000 0304969000 0304971000 0304979000 0304991100
+            0304992200 0304992300 0304992900 0304995500 0304996100
+            0304996500 0304999800
+            """
+        ),
+    ),
+)
+
+_0304_DIRECT_LEAVES = _fixed_codes(
+    """
+    0304310000 0304320000 0304330000 0304390000
+    0304610000 0304620000 0304630000 0304690000
+    """
+)
+_0304_DIRECT_03046_LEAVES = _fixed_codes(
+    "0304610000 0304620000 0304630000 0304690000"
+)
 
 _PDO_2204_TITLE = (
     "вина с защищенным наименованием по происхождению"
@@ -98,7 +221,12 @@ def _unsplit_code_count(node: dict) -> int:
     )
 
 
-def _hierarchy_checks(heading: str, choices: list[dict]) -> dict[str, bool]:
+def _hierarchy_checks(
+    heading: str,
+    choices: list[dict],
+    *,
+    integrity: dict[str, Any] | None = None,
+) -> dict[str, bool]:
     """Проверки целевой структуры без записи названий/кодов в отчёт."""
 
     def through_code_branches(node: dict) -> list[dict]:
@@ -141,6 +269,132 @@ def _hierarchy_checks(heading: str, choices: list[dict]) -> dict[str, bool]:
                 "тунец синий",
                 "тунец тихоокеанский голубой",
             }.issubset(subgroups),
+        }
+    if heading == "0304":
+        root_groups = [
+            node
+            for node in choices
+            if node.get("role") == "semantic_choice"
+            and node.get("kind") == "classification_group"
+        ]
+        expected_titles = [
+            _normalise_title(title)
+            for title, _codes, _leaves in _0304_GROUP_SPECS
+        ]
+        actual_titles = [
+            _normalise_title(node.get("title") or "") for node in root_groups
+        ]
+
+        def subtree_occurrences(
+            node: dict,
+            *,
+            leaves_only: bool,
+        ) -> list[str]:
+            occurrences: list[str] = []
+
+            def collect(current: dict) -> None:
+                code = current.get("code")
+                if code and (
+                    not leaves_only
+                    or current.get("role") == "declarable_code"
+                ):
+                    occurrences.append(str(code))
+                for child in current.get("children") or []:
+                    collect(child)
+
+            collect(node)
+            return occurrences
+
+        scope_code_sets_exact = len(root_groups) == len(_0304_GROUP_SPECS)
+        scope_leaf_sets_exact = scope_code_sets_exact
+        scope_counts_exact = scope_code_sets_exact
+        if scope_code_sets_exact:
+            for node, (_title, expected_codes, expected_leaves) in zip(
+                root_groups,
+                _0304_GROUP_SPECS,
+                strict=True,
+            ):
+                code_occurrences = subtree_occurrences(
+                    node,
+                    leaves_only=False,
+                )
+                leaf_occurrences = subtree_occurrences(
+                    node,
+                    leaves_only=True,
+                )
+                scope_code_sets_exact = scope_code_sets_exact and (
+                    tuple(code_occurrences) == expected_codes
+                    and len(set(code_occurrences)) == len(code_occurrences)
+                )
+                scope_leaf_sets_exact = scope_leaf_sets_exact and (
+                    tuple(leaf_occurrences) == expected_leaves
+                    and len(set(leaf_occurrences)) == len(leaf_occurrences)
+                )
+                scope_counts_exact = scope_counts_exact and (
+                    len(code_occurrences) == len(expected_codes)
+                    and len(leaf_occurrences) == len(expected_leaves)
+                )
+
+        direct_root = [
+            node
+            for node in choices
+            if node.get("role") != "semantic_choice" and node.get("code")
+        ]
+        direct_root_codes = [str(node["code"]) for node in direct_root]
+        direct_03046 = [
+            node
+            for node in direct_root
+            if str(node.get("code") or "").startswith("03046")
+        ]
+        metrics = _choice_metrics(choices)
+        integrity = integrity or {}
+        integrity_matches = not integrity or bool(
+            integrity.get("complete")
+            and integrity.get("expected_real_codes") == 117
+            and integrity.get("reachable_real_codes") == 117
+            and integrity.get("canonical_bound_codes") == 117
+            and integrity.get("source_code_nodes") == 117
+            and integrity.get("reachable_source_code_nodes") == 117
+            and integrity.get("canonical_declarable_leaves") == 100
+            and integrity.get("declarable_leaf_codes") == 100
+            and integrity.get("canonical_coverage") == 1.0
+            and integrity.get("fake_codes") == 0
+            and not integrity.get("critical_issues")
+        )
+        return {
+            "five_ordered_top_groups": actual_titles == expected_titles,
+            "top_groups_are_codeless": (
+                len(root_groups) == 5
+                and all(node.get("code") is None for node in root_groups)
+            ),
+            "scoped_code_sets_exact": scope_code_sets_exact,
+            "scoped_leaf_sets_exact": scope_leaf_sets_exact,
+            "scoped_counts_exact": scope_counts_exact,
+            "direct_03046_four_leaves_outside_groups": (
+                tuple(str(node.get("code")) for node in direct_03046)
+                == _0304_DIRECT_03046_LEAVES
+                and len(direct_03046) == 4
+                and all(
+                    node.get("role") == "declarable_code"
+                    and not node.get("children")
+                    for node in direct_03046
+                )
+            ),
+            "root_step_13_choices_8_direct_codes": (
+                metrics["root_choices"] == 13
+                and metrics["root_direct_code_choices"] == 8
+                and tuple(direct_root_codes) == _0304_DIRECT_LEAVES
+                and len(direct_root_codes) == len(_0304_DIRECT_LEAVES)
+            ),
+            "max_step_13_choices_9_direct_codes": (
+                metrics["max_step_choices"] == 13
+                and metrics["max_step_direct_code_choices"] == 9
+            ),
+            "semantic_leaf_coverage_92_of_100": (
+                metrics["semantic_covered_leaves"] == 92
+                and metrics["serialized_unique_declarable_leaves"] == 100
+            ),
+            "canonical_integrity_117_codes_100_leaves": integrity_matches,
         }
     if heading == "5208":
         parents = ("неотбеленные", "отбеленные", "окрашенные")
@@ -370,7 +624,11 @@ def _row_from_result(
 ) -> dict[str, Any]:
     integrity = result.get("integrity") or {}
     choices = list(result.get("choices") or [])
-    hierarchy_checks = _hierarchy_checks(heading, choices)
+    hierarchy_checks = _hierarchy_checks(
+        heading,
+        choices,
+        integrity=integrity,
+    )
     return {
         "heading": heading,
         "status": result.get("status"),
@@ -890,7 +1148,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         type=_parse_headings,
         help=(
             "Comma-separated 4-digit headings "
-            "(default: 0302,0303,2204,5208,8517)."
+            "(default: 0302,0303,0304,2204,5208,8517)."
         ),
     )
     selection.add_argument(
@@ -910,7 +1168,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         "--require-complete",
         action="store_true",
         help=(
-            "Exit 1 unless every heading passes correctness and the five "
+            "Exit 1 unless every heading passes correctness and the six "
             "golden assertions; census quality metrics do not set thresholds."
         ),
     )
