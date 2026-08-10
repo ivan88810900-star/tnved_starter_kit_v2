@@ -69,6 +69,11 @@
   13/9, semantic leaves 82/100 → 92/100 при неизменных 117/117 source nodes и
   100/100 leaves. Census 1,228/1,228, golden 6/6, Gate-2 18,211/18,211. Flags
   остаются OFF; merge/rollout/deploy не выполнялись.
+- ✅ **TASK-SEMANTIC-008** — exact fat/moisture chain для `0406` реализована,
+  проверена и принята через DM-0007 Option A: maximum step 27/26 → 16/15,
+  semantic leaves 10/47 → 21/47 при неизменных 54/54 source nodes и 47/47
+  leaves. Census 1,228/1,228, golden 7/7, Gate-2 18,211/18,211. Flags остаются
+  OFF; merge/rollout/deploy не выполнялись.
 
 **Текущее состояние и долги:** см. `.ai/CURRENT_STATE.md` §2b/§8/§9. Read-path
 `/children` подключён к runtime **только за флагом** (default OFF). Guided overlay
@@ -123,10 +128,10 @@ runtime на overlays и удаление legacy допустимы только
 **Обоснование:** Correctness gate прошёл на supplied Gate-2 snapshot по
 всем 1 228 heading: 16 708 source-backed code nodes и 13 254 declarable
 leaves, zero leaf-role/Canonical-parent mismatch, empty-root/fake/duplicate/degraded.
-Semantic choices есть у 548 heading (44.6254%) и покрывают 6 924 leaves
-(52.2408%) на текущей feature branch. TASK-SEMANTIC-006 технически реализовал и
+Semantic choices есть у 548 heading (44.6254%) и покрывают 6 945 leaves
+(52.3993%) на текущей feature branch. TASK-SEMANTIC-006 технически реализовал и
 проверил первый bounded `2204` slice: шаг `220421` теперь 18 choices / 14 direct
-code choices, а PDO открывает 33/33. Максимум первого шага остаётся 19, candidate
+code choices, а PDO открывает 33/33. Максимум первого шага теперь 15, candidate
 catalog-wide максимум любого следующего шага теперь 33/33 в `2204`. Эта exact
 official группа сохраняет одну noncritical oversized warning, поскольку глобальный
 лимит 30 намеренно не ослаблен. DM-0005 Option A принят: product-semantic choice
@@ -137,6 +142,8 @@ official группа сохраняет одну noncritical oversized warning,
   merge/rollout/deploy TASK-SEMANTIC-006 и не включает Canonical flags.
 - Сохранить отдельный operational gate: принятие DM-0006 не выполняет
   merge/rollout/deploy TASK-SEMANTIC-007 и не включает Canonical flags.
+- Сохранить отдельный operational gate: принятие DM-0007 не выполняет
+  merge/rollout/deploy TASK-SEMANTIC-008 и не включает Canonical flags.
 - Для Option A требовать атомарную five-chain signature: точные source titles,
   `(anchor, stop]`, полные ordered tuples, leaf roles и Canonical parents должны
   проверяться Extractor и Builder; любой drift возвращает полный pre-task route.

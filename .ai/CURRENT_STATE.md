@@ -1,6 +1,6 @@
 # CURRENT_STATE.md — Текущее состояние проекта
 
-> Дата: 2026-08-06
+> Дата: 2026-08-10
 > Активная ветка: `feat/canonical-read-path`
 
 ---
@@ -56,7 +56,7 @@
    code nodes reachable/Canonical-bound, из них 13,254 declarable leaves; leaf-role
    проверяется по Canonical, а не по отсутствию semantic children.
 6. На текущей feature branch semantic questions есть у 548 headings (44.6254%)
-   и покрывают 6,934 leaves (52.3163%). Это честный проверенный baseline, но не
+   и покрывают 6,945 leaves (52.3993%). Это честный проверенный baseline, но не
    разрешение на merge или rollout.
 7. Bounded official PDO slice для `2204` реализован и проверен: шаг `220421`
    сократился с 50/47 до 18/14 choices/direct codes; выбор PDO открывает точные
@@ -70,6 +70,11 @@
    semantic coverage 82/100 → 92/100 и сохранила 117/117 source nodes, 100/100
    leaves. Whole census 1,228/1,228, golden 6/6, Gate-2 18,211/18,211. Это не
    выполняет merge/rollout/deploy и не включает флаги.
+10. TASK-SEMANTIC-008 для `0406` завершён и принят через DM-0007 Option A:
+    exact bounded fat/moisture chain сократила maximum step 27/26 → 16/15 и
+    подняла semantic coverage 10/47 → 21/47 при неизменных 54/54 source nodes и
+    47/47 leaves. Whole census 1,228/1,228, golden 7/7, Gate-2 18,211/18,211.
+    Это не выполняет merge/rollout/deploy и не включает флаги.
 
 Основные `CANONICAL_TREE_ENABLED` / `CANONICAL_TREE_SHADOW` остаются default OFF.
 
@@ -275,9 +280,9 @@ Builder собирает дерево напрямую из recovery-резул�
   1,228/1,228 heading,
   16,708/16,708 source-backed code nodes reachable/Canonical-bound и 13,254
   Canonical declarable leaves на одном snapshot; fake/duplicate/critical/degraded/
-  empty-root/leaf-role/Canonical-parent mismatch = 0, golden hierarchy 6/6.
-  Semantic choices покрывают 548 heading (44.6254%) и 6,934 leaves
-  (52.3163%); quality distributions не подменяют correctness gate произвольным
+  empty-root/leaf-role/Canonical-parent mismatch = 0, golden hierarchy 7/7.
+  Semantic choices покрывают 548 heading (44.6254%) и 6,945 leaves
+  (52.3993%); quality distributions не подменяют correctness gate произвольным
   threshold. Canonical runtime flags оставались OFF.
 - Текстовое описание товара теперь даёт ранжированные Canonical-позиции для
   запуска Guided-вопросов. Curated semantic evidence выше случайного full-text:
@@ -341,6 +346,7 @@ URL/API-контракты не менялись; backend, БД, флаги и �
 
 | Коммит | Дата | Описание |
 |--------|------|---------|
+| TASK-SEMANTIC-008 | 2026-08-10 | Completed; DM-0007 Option A, exact `0406` moisture chain, 27/26 → 16/15, golden 7/7 |
 | TASK-SEMANTIC-007 | 2026-08-06 | Completed; DM-0006 Option A |
 | TASK-SEMANTIC-006 (feature branch) | 2026-08-05 | Completed and accepted via DM-0005 Option A: exact bounded `2204` PDO slice, 50/47 → 18/14 → PDO 33/33, census 1,228/1,228 and golden 5/5; not merged/rolled out/deployed |
 | TASK-CANONICAL-010 | 2026-08-05 | Published Canonical graph deep-frozen |
@@ -417,6 +423,7 @@ URL/API-контракты не менялись; backend, БД, флаги и �
 | **TASK-SEMANTIC-005** — whole-catalog Guided integrity/quality census | ✅ Completed: 1,228/1,228 headings, 16,708 source nodes / 13,254 declarable leaves; semantic baseline recorded | — |
 | **TASK-SEMANTIC-006** — bounded official PDO interval for `2204` | ✅ Completed and accepted via DM-0005 Option A; implemented + verified on feature branch: exact 33-leaf allowlist, 18/14 → PDO 33/33, census 1,228/1,228 and golden 5/5; flags OFF | No merge/rollout/deploy in this docs update |
 | TASK-SEMANTIC-007 | ✅ Completed; DM-0006 Option A | No rollout |
+| TASK-SEMANTIC-008 | ✅ Completed; DM-0007 Option A, exact `0406` moisture chain, 16/15 and 21/47 | No merge/rollout/flag activation |
 | **TASK-MVP-FRONTEND-ACCEPTANCE-001** — поиск → Guided → реальный код → карточка | ✅ Completed: автоматический DOM-level acceptance; accessibility hardening | — |
 | **TASK-MVP-FRONTEND-ACCEPTANCE-002** — карточка → платежи → документы → риск → assistant | ✅ Completed: verified/failure DOM-level paths; fail-safe evidence UI | — |
 | **TASK-MVP-FRONTEND-ACCEPTANCE-003** — реальный card → assistant → grounded response | ✅ Completed: route bridge + deterministic/guarded-LLM UI contracts | — |

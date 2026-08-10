@@ -55,6 +55,16 @@ def _subgroup(title: str, code: str) -> dict:
     }
 
 
+def _subgroup_many(title: str, *codes: str) -> dict:
+    return {
+        "role": "semantic_choice",
+        "kind": "classification_subgroup",
+        "title": title,
+        "code": None,
+        "children": [_code(code) for code in codes],
+    }
+
+
 def _code(code: str) -> dict:
     return {
         "role": "declarable_code",
@@ -263,6 +273,96 @@ def _golden_choices() -> dict[str, list[dict]]:
                 ),
             ),
         ],
+        "0406": [
+            _branch(
+                "0406100000",
+                _semantic(
+                    "сыр первый",
+                    _code("0406101000"),
+                    _code("0406102000"),
+                ),
+                _code("0406109000"),
+            ),
+            _branch(
+                "0406200000",
+                _semantic(
+                    "сыр второй",
+                    _code("0406201000"),
+                    _code("0406202000"),
+                ),
+                _code("0406209000"),
+            ),
+            _branch(
+                "0406300000",
+                _branch(
+                    "0406301000",
+                    _code("0406301100"),
+                    _code("0406301200"),
+                    _code("0406301900"),
+                ),
+                _code("0406309000"),
+            ),
+            _branch(
+                "0406400000",
+                _branch(
+                    "0406401000",
+                    _code("0406401100"),
+                    _code("0406401200"),
+                    _code("0406401900"),
+                ),
+                _code("0406408000"),
+                _code("0406409000"),
+            ),
+            _branch(
+                "0406900000",
+                *(
+                    _code(code)
+                    for code in (
+                        "0406900100",
+                        "0406900200",
+                        "0406900300",
+                        "0406900400",
+                        "0406900500",
+                        "0406900600",
+                        "0406900700",
+                        "0406900800",
+                        "0406900900",
+                        "0406901200",
+                        "0406901300",
+                        "0406901500",
+                        "0406901700",
+                        "0406901800",
+                        "0406901900",
+                    )
+                ),
+                _semantic(
+                    diagnostic._0406_TOP_TITLE,
+                    _subgroup_many(
+                        diagnostic._0406_LOW_TITLE,
+                        "0406906100",
+                        "0406906300",
+                        "0406906900",
+                    ),
+                    _subgroup_many(
+                        diagnostic._0406_MIDDLE_TITLE,
+                        "0406907300",
+                        "0406907400",
+                        "0406907500",
+                        "0406907600",
+                        "0406907800",
+                        "0406907900",
+                        "0406908100",
+                        "0406908200",
+                        "0406908400",
+                        "0406908500",
+                        "0406908600",
+                        "0406908900",
+                        "0406909200",
+                    ),
+                    _code("0406909300"),
+                ),
+            ),
+        ],
         "5208": [
             _semantic(
                 finish,
@@ -431,6 +531,18 @@ def test_2204_golden_assertions_require_pdo_before_pgi_under_same_parent() -> No
     assert checks["pgi_boundary_after_pdo_slice"] is False
 
 
+def test_0406_golden_assertions_require_exact_moisture_scope() -> None:
+    choices = _golden_choices()["0406"]
+
+    assert all(diagnostic._hierarchy_checks("0406", choices).values())
+    moisture = choices[-1]["children"][-1]
+    moisture["children"][1]["children"].pop()
+    checks = diagnostic._hierarchy_checks("0406", choices)
+
+    assert checks["moisture_group_present_under_040690"] is True
+    assert checks["semantic_leaf_coverage_21_of_47"] is False
+
+
 def test_all_heading_census_loads_model_once_and_returns_aggregates_only() -> None:
     choices = _golden_choices()
     model = _FakeModel(list(choices))
@@ -467,11 +579,11 @@ def test_all_heading_census_loads_model_once_and_returns_aggregates_only() -> No
     assert loader_calls == 1
     assert built == sorted(choices)
     assert report["ok"] is True
-    assert report["catalog"]["discovered_headings"] == 6
+    assert report["catalog"]["discovered_headings"] == 7
     assert report["catalog"]["snapshot_count"] == 1
-    assert report["correctness"]["expected_real_codes"] == 177
-    assert report["correctness"]["source_code_nodes"] == 177
-    assert report["correctness"]["canonical_declarable_leaves"] == 159
+    assert report["correctness"]["expected_real_codes"] == 231
+    assert report["correctness"]["source_code_nodes"] == 231
+    assert report["correctness"]["canonical_declarable_leaves"] == 206
     assert report["correctness"]["duplicate_code_occurrences"] == 0
     assert report["golden_assertions"]["failed_headings"] == []
     assert report["quality_census"]["diagnostic_totals"] == {
@@ -480,13 +592,13 @@ def test_all_heading_census_loads_model_once_and_returns_aggregates_only() -> No
         "pruned_empty_groups": 1,
     }
     assert report["quality_census"]["semantic_choice_coverage"] == {
-        "headings_with_choices": 5,
-        "heading_ratio": 0.833333,
-        "declarable_leaves_under_choices": 136,
-        "declarable_leaf_ratio": 0.855346,
+        "headings_with_choices": 6,
+        "heading_ratio": 0.857143,
+        "declarable_leaves_under_choices": 157,
+        "declarable_leaf_ratio": 0.762136,
     }
     root_choices = report["quality_census"]["counts"]["root_choices"]
-    assert root_choices["p50"] == 1
+    assert root_choices["p50"] == 3
     assert root_choices["max"] == 13
     assert report["quality_census"]["latency_ms"]["per_heading_build"]["p95"] == 1.0
     assert report["quality_census"]["usability_thresholds_applied"] is False
@@ -505,6 +617,7 @@ def test_all_heading_census_loads_model_once_and_returns_aggregates_only() -> No
     assert diagnostic._PDO_2204_TITLE not in serialized
     assert diagnostic._PGI_2204_TITLE not in serialized
     assert diagnostic._0304_GROUP_SPECS[0][0] not in serialized
+    assert diagnostic._0406_TOP_TITLE not in serialized
     assert "0302110000" not in serialized
     assert "0304410000" not in serialized
     assert re.search(r"(?<!\d)\d{10}(?!\d)", serialized) is None

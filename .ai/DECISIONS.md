@@ -15,6 +15,7 @@
 | DM-0004 | Canonical nomenclature history and code transitions | Proposed | Awaiting Ivan | 2026-08-05 | [`decisions/DM-0004-canonical-nomenclature-history.md`](decisions/DM-0004-canonical-nomenclature-history.md) |
 | DM-0005 | Guided `2204` PDO interval | Accepted — Option A | Ivan | 2026-08-05 | [`decisions/DM-0005-guided-2204-pdo-interval.md`](decisions/DM-0005-guided-2204-pdo-interval.md) |
 | DM-0006 | Guided `0304` product-form chain | Accepted — Option A | Ivan | 2026-08-06 | [`decisions/DM-0006-guided-0304-product-form-chain.md`](decisions/DM-0006-guided-0304-product-form-chain.md) |
+| DM-0007 | Guided `0406` fat/moisture chain | Accepted — Option A | Ivan | 2026-08-07 | [`decisions/DM-0007-guided-0406-moisture-chain.md`](decisions/DM-0007-guided-0406-moisture-chain.md) |
 
 ---
 
@@ -172,6 +173,22 @@ aliases/history вне scope.
 DM не разрешает merge, rollout/deploy, включение флагов, DB/API/frontend изменения
 или LLM/provider calls. Полный документ:
 [`decisions/DM-0006-guided-0304-product-form-chain.md`](decisions/DM-0006-guided-0304-product-form-chain.md).
+
+## DM-0007 — Guided 0406 fat/moisture chain
+
+**Статус:** Accepted — Option A (Ivan, 2026-08-07).
+
+TASK-SEMANTIC-008 реализует ограниченную exact-source цепочку для `0406`:
+официальный вопрос по содержанию жира/влаги и два вложенных диапазона влажности
+связываются с 17 точными Canonical leaves. Проверенная реализация снижает maximum
+step 27/26 → 16/15 и повышает semantic coverage 10/47 → 21/47, сохраняя
+54/54 source nodes и 47/47 leaves.
+
+Ivan выбрал Option A. Option B с повторяющимися «прочие» и дополнительной
+глубиной не авторизован. Whole census прошёл 1,228/1,228, golden 7/7, Gate-2 —
+18,211/18,211. DM не разрешает merge, rollout/deploy, включение флагов или
+DB/API/frontend/LLM изменения. Полный документ:
+[`decisions/DM-0007-guided-0406-moisture-chain.md`](decisions/DM-0007-guided-0406-moisture-chain.md).
 
 ---
 

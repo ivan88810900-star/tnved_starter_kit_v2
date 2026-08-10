@@ -76,7 +76,7 @@ ingestion.
   Canonical-parent integrity. The model contains 13,254 actual declarable leaves;
   leaf roles are checked against Canonical rather than inferred from the absence of
   semantic children. On the current feature branch, semantic questions cover 548
-  headings (44.6254%) and 6,924 leaves (52.2408%); these are measured product-quality
+  headings (44.6254%) and 6,945 leaves (52.3993%); these are measured product-quality
   baselines, not a claim that every heading is already semantically optimized.
 - Feature-branch candidate TASK-SEMANTIC-006 implements a bounded official `2204`
   PDO slice: an exact 33-leaf Canonical sibling allowlist under `2204210000` is
@@ -157,6 +157,12 @@ Current next tasks:
   maximum step 13/9 and semantic coverage 92/100 while preserving 117/117 source
   nodes and 100/100 leaves; census is 1,228/1,228, golden 6/6 and Gate-2
   18,211/18,211. Acceptance does not constitute merge, rollout or flag activation.
+- ✅ TASK-SEMANTIC-008 is implemented, verified and accepted through DM-0007
+  Option A. The exact official `0406` fat/moisture chain reduces the maximum step
+  from 27/26 to 16/15 and raises semantic coverage from 10/47 to 21/47 while
+  preserving all 54 source nodes and 47 leaves. Census is 1,228/1,228, golden
+  7/7 and Gate-2 18,211/18,211. Acceptance does not merge, roll out or activate
+  flags.
 - ✅ TASK-MVP-SEARCH-QUALITY-001: hybrid search ranking, typo recovery and
   explainable main-UI results
 - ✅ TASK-MVP-PAYMENTS-001: Smart payment explanation block in the TN VED card
@@ -203,13 +209,16 @@ Current next tasks:
 - Improve semantic question coverage and reduce measured high-branching outliers
   in bounded, evidence-backed slices. Do not set arbitrary global usability
   thresholds until a reviewed baseline policy exists; preserve whole-catalog
-  integrity and the five golden hierarchy assertions. The first official `2204`
+  integrity and the seven golden hierarchy assertions. The first official `2204`
   PDO slice is accepted via DM-0005 Option A and completed/verified on the feature
   branch, but is not merged, rolled out or deployed by this update. Its remaining
   33/33 step and other outliers need separate source-backed slices.
 - Preserve the DM-0006 Option A boundary for `0304`. Exact official titles change
   codeless guide IDs while real Canonical coded-node IDs remain stable; no guide-ID
   alias/history layer is included. Any source/topology drift must fail closed.
+- Preserve the DM-0007 Option A boundary for `0406`. Do not silently select the
+  broader repeated-«прочие» route or raise semantic depth; source/topology drift
+  must fail closed to the complete route.
 - Review proposed DM-0004 before adding Canonical aliases/history or changing
   persistent identity semantics. No schema/runtime implementation is authorized
   until an official transition-source feasibility audit and Ivan decision.

@@ -36,7 +36,7 @@ from app.services.tree_engine import (  # noqa: E402
     get_canonical_model,
 )
 
-DEFAULT_HEADINGS = ("0302", "0303", "0304", "2204", "5208", "8517")
+DEFAULT_HEADINGS = ("0302", "0303", "0304", "0406", "2204", "5208", "8517")
 
 
 def _fixed_codes(raw: str) -> tuple[str, ...]:
@@ -159,6 +159,21 @@ _0304_DIRECT_LEAVES = _fixed_codes(
 )
 _0304_DIRECT_03046_LEAVES = _fixed_codes(
     "0304610000 0304620000 0304630000 0304690000"
+)
+
+_0406_TOP_TITLE = (
+    "с содержанием жира не более 40 мас.% и содержанием влаги в "
+    "обезжиренном веществе"
+)
+_0406_LOW_TITLE = "не более 47 мас.%"
+_0406_MIDDLE_TITLE = "более 47 мас.%, но не более 72 мас.%"
+_0406_SCOPE = _fixed_codes(
+    """
+    0406906100 0406906300 0406906900 0406907300 0406907400
+    0406907500 0406907600 0406907800 0406907900 0406908100
+    0406908200 0406908400 0406908500 0406908600 0406908900
+    0406909200 0406909300
+    """
 )
 
 _PDO_2204_TITLE = (
@@ -395,6 +410,97 @@ def _hierarchy_checks(
                 and metrics["serialized_unique_declarable_leaves"] == 100
             ),
             "canonical_integrity_117_codes_100_leaves": integrity_matches,
+        }
+    if heading == "0406":
+        all_nodes: list[dict] = []
+
+        def collect(nodes: list[dict]) -> None:
+            for node in nodes:
+                all_nodes.append(node)
+                collect(list(node.get("children") or []))
+
+        def subtree_leaf_codes(node: dict) -> tuple[str, ...]:
+            codes: list[str] = []
+
+            def walk(current: dict) -> None:
+                if current.get("role") == "declarable_code" and current.get("code"):
+                    codes.append(str(current["code"]))
+                for child in current.get("children") or []:
+                    walk(child)
+
+            walk(node)
+            return tuple(codes)
+
+        collect(choices)
+        parent_candidates = [
+            node for node in all_nodes if node.get("code") == "0406900000"
+        ]
+        parent = parent_candidates[0] if len(parent_candidates) == 1 else None
+        parent_children = list(parent.get("children") or []) if parent else []
+        group_candidates = [
+            node
+            for node in parent_children
+            if node.get("role") == "semantic_choice"
+            and _normalise_title(node.get("title") or "")
+            == _normalise_title(_0406_TOP_TITLE)
+        ]
+        group = group_candidates[0] if len(group_candidates) == 1 else None
+        group_children = list(group.get("children") or []) if group else []
+        semantic_children = [
+            node
+            for node in group_children
+            if node.get("role") == "semantic_choice"
+        ]
+        subgroup_titles = tuple(
+            _normalise_title(node.get("title") or "")
+            for node in semantic_children
+        )
+        direct_high = [
+            node
+            for node in group_children
+            if node.get("role") == "declarable_code"
+            and node.get("code") == "0406909300"
+        ]
+        metrics = _choice_metrics(choices)
+        integrity = integrity or {}
+        integrity_matches = not integrity or bool(
+            integrity.get("complete")
+            and integrity.get("expected_real_codes") == 54
+            and integrity.get("reachable_real_codes") == 54
+            and integrity.get("canonical_bound_codes") == 54
+            and integrity.get("source_code_nodes") == 54
+            and integrity.get("reachable_source_code_nodes") == 54
+            and integrity.get("canonical_declarable_leaves") == 47
+            and integrity.get("declarable_leaf_codes") == 47
+            and integrity.get("canonical_coverage") == 1.0
+            and integrity.get("fake_codes") == 0
+            and not integrity.get("critical_issues")
+        )
+        return {
+            "moisture_group_present_under_040690": group is not None,
+            "moisture_group_is_codeless": bool(group) and group.get("code") is None,
+            "two_exact_moisture_subgroups": subgroup_titles
+            == (
+                _normalise_title(_0406_LOW_TITLE),
+                _normalise_title(_0406_MIDDLE_TITLE),
+            ),
+            "coded_over_72_boundary_is_direct": (
+                len(direct_high) == 1 and not direct_high[0].get("children")
+            ),
+            "parent_step_16_choices_15_direct_codes": (
+                len(parent_children) == 16
+                and (_unsplit_code_count(parent) == 15 if parent else False)
+            ),
+            "max_step_16_choices_15_direct_codes": (
+                metrics["max_step_choices"] == 16
+                and metrics["max_step_direct_code_choices"] == 15
+            ),
+            "semantic_leaf_coverage_21_of_47": (
+                metrics["semantic_covered_leaves"] == 21
+                and metrics["serialized_unique_declarable_leaves"] == 47
+                and (subtree_leaf_codes(group) == _0406_SCOPE if group else False)
+            ),
+            "canonical_integrity_54_codes_47_leaves": integrity_matches,
         }
     if heading == "5208":
         parents = ("неотбеленные", "отбеленные", "окрашенные")
@@ -1148,7 +1254,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         type=_parse_headings,
         help=(
             "Comma-separated 4-digit headings "
-            "(default: 0302,0303,0304,2204,5208,8517)."
+            "(default: 0302,0303,0304,0406,2204,5208,8517)."
         ),
     )
     selection.add_argument(
@@ -1168,7 +1274,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         "--require-complete",
         action="store_true",
         help=(
-            "Exit 1 unless every heading passes correctness and the six "
+            "Exit 1 unless every heading passes correctness and the seven "
             "golden assertions; census quality metrics do not set thresholds."
         ),
     )

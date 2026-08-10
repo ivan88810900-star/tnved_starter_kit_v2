@@ -24,6 +24,20 @@ from dataclasses import dataclass, field
 from ..tnved_tree.helpers import digits, strip_leading_dashes
 from .bounded_slices import (
     Bounded0304GroupSpec,
+    CHEESE_0406_AFTER_CODE,
+    CHEESE_0406_AFTER_DESCRIPTION,
+    CHEESE_0406_ANCHOR_CODE,
+    CHEESE_0406_ANCHOR_DESCRIPTION,
+    CHEESE_0406_GROUPS,
+    CHEESE_0406_HEADING,
+    CHEESE_0406_MIDDLE_ANCHOR_CODE,
+    CHEESE_0406_MIDDLE_DESCRIPTION,
+    CHEESE_0406_PAD_CODE,
+    CHEESE_0406_PARENT_CODE,
+    CHEESE_0406_REASON,
+    CHEESE_0406_SCOPE_KIND,
+    CHEESE_0406_STOP_CODE,
+    CHEESE_0406_STOP_DESCRIPTION,
     PDO_2204_ANCHOR_CODE,
     PDO_2204_CODES,
     PDO_2204_DEPTH,
@@ -96,7 +110,7 @@ _GENERIC_PREFIXES: tuple[str, ...] = (
 _MIN_TITLE_LEN = 4
 
 # One packed official description contains several dash-prefixed headers.  The
-# regex is used only by the bounded 2204/0304 guards below; the generic
+# regex is used only by the bounded 2204/0304/0406 guards below; the generic
 # extractor intentionally keeps its established single-trailing-header policy.
 _PACKED_HEADER_MARKER_RE = re.compile(
     rf"(?:^|\s)(?P<marks>[{_DASH_CLASS}](?:\s+[{_DASH_CLASS}])*)\s+"
@@ -122,7 +136,7 @@ class ExtractedGroup:
     parent_source_code_hint: str | None = None
     hierarchy_hint: str | None = None  # dash_depth | title_prefix
     #: Optional fail-closed scope proven from one Canonical source snapshot.
-    #: Bounded TASK-SEMANTIC-006/007 rules are the only producers; ordinary
+    #: Bounded TASK-SEMANTIC-006/007/008 rules are the only producers; ordinary
     #: groups leave these fields ``None``.
     verified_scope_kind: str | None = None
     verified_scope_start_exclusive: str | None = None
@@ -248,7 +262,7 @@ def _packed_headers(description: str) -> list[_PackedHeader]:
     """Split a packed official description into dash-depth segments.
 
     This helper is intentionally not part of the generic acceptance path.  It
-    only supplies evidence to the fully bounded 2204/0304 rules.
+    only supplies evidence to the fully bounded 2204/0304/0406 rules.
     """
 
     # Keep source spelling byte-for-byte apart from outer whitespace.  The
@@ -596,6 +610,185 @@ def _apply_bounded_0304_state(
     return groups, rejected
 
 
+def _apply_bounded_0406_moisture(
+    *,
+    heading: str,
+    commodity_codes: list[str],
+    records_by_code: dict[str, SourceRecord],
+    accepted_groups: list[ExtractedGroup],
+    rejected_candidates: list[RejectedCandidate],
+) -> tuple[list[ExtractedGroup], list[RejectedCandidate]]:
+    """Add the exact official 0406 moisture chain or change nothing.
+
+    This is deliberately not a generic percentage/range parser.  The source
+    strings, packed-header depths, ordered Canonical sibling tuples and generic
+    extractor evidence must all match the audited Gate-2 projection.  A single
+    mismatch leaves the complete, safe pre-task route untouched.
+    """
+
+    if heading != CHEESE_0406_HEADING:
+        return accepted_groups, rejected_candidates
+
+    try:
+        pad = records_by_code[CHEESE_0406_PAD_CODE]
+        parent = records_by_code[CHEESE_0406_PARENT_CODE]
+        anchor = records_by_code[CHEESE_0406_ANCHOR_CODE]
+        middle = records_by_code[CHEESE_0406_MIDDLE_ANCHOR_CODE]
+        stop = records_by_code[CHEESE_0406_STOP_CODE]
+        after = records_by_code[CHEESE_0406_AFTER_CODE]
+    except KeyError:
+        return accepted_groups, rejected_candidates
+
+    if not (
+        pad.is_leaf is False
+        and pad.parent_code is None
+        and parent.is_leaf is False
+        and parent.parent_code == CHEESE_0406_HEADING
+        and anchor.description == CHEESE_0406_ANCHOR_DESCRIPTION
+        and middle.description == CHEESE_0406_MIDDLE_DESCRIPTION
+        and stop.description == CHEESE_0406_STOP_DESCRIPTION
+        and after.description == CHEESE_0406_AFTER_DESCRIPTION
+    ):
+        return accepted_groups, rejected_candidates
+
+    anchor_headers = _packed_headers(anchor.description)
+    middle_headers = _packed_headers(middle.description)
+    stop_headers = _packed_headers(stop.description)
+    after_headers = _packed_headers(after.description)
+    expected_anchor_headers = (
+        (4, "сыры из овечьего молока или молока буйволиц в контейнерах, "
+         "содержащих рассол, или в бурдюках из овечьей или козьей шкуры", False),
+        (4, "прочие", True),
+        (5, CHEESE_0406_GROUPS[0].title, True),
+        (6, CHEESE_0406_GROUPS[1].title, True),
+    )
+    expected_middle_headers = (
+        (7, "прочие", False),
+        (6, CHEESE_0406_GROUPS[2].title, True),
+    )
+
+    def header_signature(
+        headers: list[_PackedHeader],
+    ) -> tuple[tuple[int, str, bool], ...]:
+        return tuple(
+            (header.dash_depth, header.exact_title, header.has_terminal_colon)
+            for header in headers
+        )
+
+    if (
+        header_signature(anchor_headers) != expected_anchor_headers
+        or header_signature(middle_headers) != expected_middle_headers
+        or header_signature(stop_headers)
+        != ((6, "более 72 мас.%", False),)
+        or header_signature(after_headers) != ((5, "прочие", True),)
+    ):
+        return accepted_groups, rejected_candidates
+
+    positions = {code: index for index, code in enumerate(commodity_codes)}
+    if not all(
+        code in positions
+        for code in (
+            CHEESE_0406_ANCHOR_CODE,
+            CHEESE_0406_MIDDLE_ANCHOR_CODE,
+            CHEESE_0406_STOP_CODE,
+            CHEESE_0406_AFTER_CODE,
+        )
+    ):
+        return accepted_groups, rejected_candidates
+    if not (
+        positions[CHEESE_0406_ANCHOR_CODE]
+        < positions[CHEESE_0406_MIDDLE_ANCHOR_CODE]
+        < positions[CHEESE_0406_STOP_CODE]
+        < positions[CHEESE_0406_AFTER_CODE]
+    ):
+        return accepted_groups, rejected_candidates
+
+    # Any unknown top-or-shallower packed boundary inside the verified span
+    # legally closes the question, even if generic extraction rejects it.
+    if any(
+        header.dash_depth <= 5
+        for code in commodity_codes[
+            positions[CHEESE_0406_ANCHOR_CODE] + 1 :
+            positions[CHEESE_0406_AFTER_CODE]
+        ]
+        if code != CHEESE_0406_AFTER_CODE
+        for header in _packed_headers(records_by_code[code].description)
+    ):
+        return accepted_groups, rejected_candidates
+
+    for spec in CHEESE_0406_GROUPS:
+        actual = tuple(
+            (
+                code,
+                str(records_by_code[code].parent_code or ""),
+                records_by_code[code].is_leaf,
+            )
+            for code in commodity_codes
+            if spec.anchor_code < code <= spec.stop_code
+            and code in records_by_code
+        )
+        if actual != spec.signature:
+            return accepted_groups, rejected_candidates
+
+    anchor_rejections = [
+        candidate
+        for candidate in rejected_candidates
+        if candidate.source_code == CHEESE_0406_ANCHOR_CODE
+        and candidate.reason == "generic_subcategory"
+    ]
+    middle_accepts = [
+        (index, group)
+        for index, group in enumerate(accepted_groups)
+        if group.source_code == CHEESE_0406_MIDDLE_ANCHOR_CODE
+        and group.after_code == CHEESE_0406_MIDDLE_ANCHOR_CODE
+        and group.dash_depth == 6
+    ]
+    if len(anchor_rejections) != 1 or len(middle_accepts) != 1:
+        return accepted_groups, rejected_candidates
+
+    def exact_group(spec_index: int, raw: str) -> ExtractedGroup:
+        spec = CHEESE_0406_GROUPS[spec_index]
+        return ExtractedGroup(
+            title=spec.title,
+            raw=raw,
+            source_code=spec.anchor_code,
+            after_code=spec.anchor_code,
+            confidence=HIGH,
+            reason=CHEESE_0406_REASON,
+            dash_depth=spec.dash_depth,
+            parent_title_hint=(
+                CHEESE_0406_GROUPS[0].title if spec.key != "top" else None
+            ),
+            parent_source_code_hint=(
+                CHEESE_0406_ANCHOR_CODE if spec.key != "top" else None
+            ),
+            hierarchy_hint="dash_depth" if spec.key != "top" else None,
+            verified_scope_kind=CHEESE_0406_SCOPE_KIND,
+            verified_scope_start_exclusive=spec.anchor_code,
+            verified_scope_end_inclusive=spec.stop_code,
+            verified_scope_parent_code=CHEESE_0406_PARENT_CODE,
+            verified_scope_leaf_count=spec.leaf_count,
+        )
+
+    top = exact_group(0, anchor_headers[2].raw)
+    low = exact_group(1, anchor_headers[3].raw)
+    bounded_middle = exact_group(2, middle_headers[1].raw)
+    groups = list(accepted_groups)
+    middle_index, _ = middle_accepts[0]
+    groups[middle_index] = bounded_middle
+    insert_at = next(
+        (
+            index
+            for index, group in enumerate(groups)
+            if group.after_code is not None
+            and group.after_code > CHEESE_0406_ANCHOR_CODE
+        ),
+        len(groups),
+    )
+    groups[insert_at:insert_at] = [top, low]
+    return groups, list(rejected_candidates)
+
+
 def _is_title_prefix_child(parent_title: str, child_title: str) -> bool:
     """Строгая lexical-подсказка: «тунец» → «тунец синий».
 
@@ -730,6 +923,14 @@ class SemanticStructureExtractor:
             consider(code10, records_by_code[code10].description, code10)
 
         groups, rejected = _apply_bounded_0304_state(
+            heading=heading4,
+            commodity_codes=commodity_codes,
+            records_by_code=records_by_code,
+            accepted_groups=groups,
+            rejected_candidates=rejected,
+        )
+
+        groups, rejected = _apply_bounded_0406_moisture(
             heading=heading4,
             commodity_codes=commodity_codes,
             records_by_code=records_by_code,

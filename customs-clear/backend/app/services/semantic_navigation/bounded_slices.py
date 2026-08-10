@@ -289,3 +289,111 @@ PDO_2204_CODES = (
 )
 PDO_2204_FIRST_CODE = PDO_2204_CODES[0]
 PDO_2204_LEAF_COUNT = len(PDO_2204_CODES)
+
+
+CHEESE_0406_HEADING = "0406"
+CHEESE_0406_PAD_CODE = "0406000000"
+CHEESE_0406_PARENT_CODE = "0406900000"
+CHEESE_0406_ANCHOR_CODE = "0406905000"
+CHEESE_0406_MIDDLE_ANCHOR_CODE = "0406906900"
+CHEESE_0406_MIDDLE_STOP_CODE = "0406909200"
+CHEESE_0406_STOP_CODE = "0406909300"
+CHEESE_0406_AFTER_CODE = "0406909900"
+CHEESE_0406_REASON = "bounded_0406_official_moisture_chain"
+CHEESE_0406_SCOPE_KIND = "canonical_sibling_leaf_moisture_chain"
+CHEESE_0406_TOP_TITLE = (
+    "с содержанием жира не более 40 мас.% и содержанием влаги в "
+    "обезжиренном веществе"
+)
+CHEESE_0406_LOW_TITLE = "не более 47 мас.%"
+CHEESE_0406_MIDDLE_TITLE = "более 47 мас.%, но не более 72 мас.%"
+CHEESE_0406_HIGH_TITLE = "более 72 мас.%"
+
+# Exact strings produced by the current official-catalog import.  They are
+# intentionally stricter than the generic extractor: any legal-text or packed
+# marker drift disables the whole codeless chain until another source audit.
+CHEESE_0406_ANCHOR_DESCRIPTION = (
+    "– – – – сыры из овечьего молока или молока буйволиц в контейнерах, "
+    "содержащих рассол, или в бурдюках из овечьей или козьей шкуры "
+    "– – – – прочие: "
+    f"– – – – – {CHEESE_0406_TOP_TITLE}: "
+    f"– – – – – – {CHEESE_0406_LOW_TITLE}:"
+)
+CHEESE_0406_MIDDLE_DESCRIPTION = (
+    "– – – – – – – прочие "
+    f"– – – – – – {CHEESE_0406_MIDDLE_TITLE}:"
+)
+CHEESE_0406_STOP_DESCRIPTION = f"– – – – – – {CHEESE_0406_HIGH_TITLE}"
+CHEESE_0406_AFTER_DESCRIPTION = "– – – – – прочие:"
+
+
+@dataclass(frozen=True)
+class Bounded0406GroupSpec:
+    """One exact codeless wrapper in the audited 0406 moisture chain."""
+
+    key: str
+    title: str
+    anchor_code: str
+    stop_code: str
+    dash_depth: int
+    signature: tuple[tuple[str, str, bool], ...]
+
+    @property
+    def leaf_count(self) -> int:
+        return len(self.signature)
+
+
+CHEESE_0406_LOW_SIGNATURE = (
+    ("0406906100", CHEESE_0406_PARENT_CODE, True),
+    ("0406906300", CHEESE_0406_PARENT_CODE, True),
+    ("0406906900", CHEESE_0406_PARENT_CODE, True),
+)
+CHEESE_0406_MIDDLE_SIGNATURE = (
+    ("0406907300", CHEESE_0406_PARENT_CODE, True),
+    ("0406907400", CHEESE_0406_PARENT_CODE, True),
+    ("0406907500", CHEESE_0406_PARENT_CODE, True),
+    ("0406907600", CHEESE_0406_PARENT_CODE, True),
+    ("0406907800", CHEESE_0406_PARENT_CODE, True),
+    ("0406907900", CHEESE_0406_PARENT_CODE, True),
+    ("0406908100", CHEESE_0406_PARENT_CODE, True),
+    ("0406908200", CHEESE_0406_PARENT_CODE, True),
+    ("0406908400", CHEESE_0406_PARENT_CODE, True),
+    ("0406908500", CHEESE_0406_PARENT_CODE, True),
+    ("0406908600", CHEESE_0406_PARENT_CODE, True),
+    ("0406908900", CHEESE_0406_PARENT_CODE, True),
+    ("0406909200", CHEESE_0406_PARENT_CODE, True),
+)
+CHEESE_0406_HIGH_SIGNATURE = (
+    (CHEESE_0406_STOP_CODE, CHEESE_0406_PARENT_CODE, True),
+)
+CHEESE_0406_TOP_SIGNATURE = (
+    *CHEESE_0406_LOW_SIGNATURE,
+    *CHEESE_0406_MIDDLE_SIGNATURE,
+    *CHEESE_0406_HIGH_SIGNATURE,
+)
+CHEESE_0406_GROUPS = (
+    Bounded0406GroupSpec(
+        key="top",
+        title=CHEESE_0406_TOP_TITLE,
+        anchor_code=CHEESE_0406_ANCHOR_CODE,
+        stop_code=CHEESE_0406_STOP_CODE,
+        dash_depth=5,
+        signature=CHEESE_0406_TOP_SIGNATURE,
+    ),
+    Bounded0406GroupSpec(
+        key="low",
+        title=CHEESE_0406_LOW_TITLE,
+        anchor_code=CHEESE_0406_ANCHOR_CODE,
+        stop_code=CHEESE_0406_MIDDLE_ANCHOR_CODE,
+        dash_depth=6,
+        signature=CHEESE_0406_LOW_SIGNATURE,
+    ),
+    Bounded0406GroupSpec(
+        key="middle",
+        title=CHEESE_0406_MIDDLE_TITLE,
+        anchor_code=CHEESE_0406_MIDDLE_ANCHOR_CODE,
+        stop_code=CHEESE_0406_MIDDLE_STOP_CODE,
+        dash_depth=6,
+        signature=CHEESE_0406_MIDDLE_SIGNATURE,
+    ),
+)

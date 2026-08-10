@@ -27,7 +27,22 @@ from ...models.tnved import Commodity
 from ..tnved_tree.data_access import exclude_obsolete_reserved
 from ..tnved_tree.helpers import digits, node_level, strip_leading_dashes
 from .bounded_slices import (
+    Bounded0406GroupSpec,
     Bounded0304GroupSpec,
+    CHEESE_0406_AFTER_CODE,
+    CHEESE_0406_AFTER_DESCRIPTION,
+    CHEESE_0406_ANCHOR_CODE,
+    CHEESE_0406_ANCHOR_DESCRIPTION,
+    CHEESE_0406_GROUPS,
+    CHEESE_0406_HEADING,
+    CHEESE_0406_MIDDLE_ANCHOR_CODE,
+    CHEESE_0406_MIDDLE_DESCRIPTION,
+    CHEESE_0406_PAD_CODE,
+    CHEESE_0406_PARENT_CODE,
+    CHEESE_0406_REASON,
+    CHEESE_0406_SCOPE_KIND,
+    CHEESE_0406_STOP_CODE,
+    CHEESE_0406_STOP_DESCRIPTION,
     PDO_2204_ANCHOR_CODE,
     PDO_2204_CODES,
     PDO_2204_LEAF_COUNT,
@@ -263,7 +278,9 @@ class SemanticNavigationBuilder:
 
         nesting_fallbacks = self._apply_controlled_nesting(root)
         self._verify_or_unwrap_bounded_0304_state(root, extraction)
+        self._arrange_or_unwrap_bounded_0406_moisture(root, extraction)
         self._restore_canonical_code_containment(root)
+        self._finalize_bounded_0406_moisture(root, extraction)
         self._refresh_links(root)
         self._mark_leaves(root)
 
@@ -623,10 +640,337 @@ class SemanticNavigationBuilder:
         unwrap(root)
 
     @staticmethod
+    def _bounded_0406_candidate(
+        node: SemanticNode,
+    ) -> Bounded0406GroupSpec | None:
+        """Map a recognizable wrapper to one audited 0406 group spec."""
+
+        source = str(node.metadata.get("extracted_from") or "")
+        stop = str(node.metadata.get("verified_scope_end_inclusive") or "")
+        for spec in CHEESE_0406_GROUPS:
+            if source == spec.anchor_code and stop == spec.stop_code:
+                return spec
+        return None
+
+    @staticmethod
+    def _exact_bounded_raw_header(
+        raw: object,
+        *,
+        title: str,
+        dash_depth: int,
+    ) -> bool:
+        expected = f"{'– ' * dash_depth}{title}:"
+        return str(raw or "").strip() == expected
+
+    @staticmethod
+    def _0406_source_projection_valid(extraction: ExtractionResult) -> bool:
+        """Recheck exact source/topology evidence independently in Builder."""
+
+        records = extraction.records_by_code
+        try:
+            pad = records[CHEESE_0406_PAD_CODE]
+            parent = records[CHEESE_0406_PARENT_CODE]
+            anchor = records[CHEESE_0406_ANCHOR_CODE]
+            middle = records[CHEESE_0406_MIDDLE_ANCHOR_CODE]
+            stop = records[CHEESE_0406_STOP_CODE]
+            after = records[CHEESE_0406_AFTER_CODE]
+        except KeyError:
+            return False
+        if not (
+            extraction.heading == CHEESE_0406_HEADING
+            and extraction.pad_code == CHEESE_0406_PAD_CODE
+            and pad.is_leaf is False
+            and pad.parent_code is None
+            and parent.is_leaf is False
+            and parent.parent_code == CHEESE_0406_HEADING
+            and anchor.description == CHEESE_0406_ANCHOR_DESCRIPTION
+            and middle.description == CHEESE_0406_MIDDLE_DESCRIPTION
+            and stop.description == CHEESE_0406_STOP_DESCRIPTION
+            and after.description == CHEESE_0406_AFTER_DESCRIPTION
+        ):
+            return False
+        for spec in CHEESE_0406_GROUPS:
+            actual = tuple(
+                (
+                    code,
+                    str(records[code].parent_code or ""),
+                    records[code].is_leaf,
+                )
+                for code in extraction.commodity_codes
+                if spec.anchor_code < code <= spec.stop_code
+                and code in records
+            )
+            if actual != spec.signature:
+                return False
+        return True
+
+    @staticmethod
+    def _0406_wrapper_identity(
+        node: SemanticNode,
+        spec: Bounded0406GroupSpec,
+    ) -> bool:
+        metadata = node.metadata
+        return all(
+            (
+                node.code is None,
+                node.source == "semantic_extraction",
+                node.title == spec.title,
+                str(metadata.get("extracted_from") or "") == spec.anchor_code,
+                metadata.get("confidence") == "high",
+                metadata.get("reason") == CHEESE_0406_REASON,
+                metadata.get("dash_depth") == spec.dash_depth,
+                metadata.get("verified_scope_kind") == CHEESE_0406_SCOPE_KIND,
+                str(metadata.get("verified_scope_start_exclusive") or "")
+                == spec.anchor_code,
+                str(metadata.get("verified_scope_end_inclusive") or "")
+                == spec.stop_code,
+                str(metadata.get("verified_scope_parent_code") or "")
+                == CHEESE_0406_PARENT_CODE,
+                metadata.get("verified_scope_leaf_count") == spec.leaf_count,
+                SemanticNavigationBuilder._exact_bounded_raw_header(
+                    metadata.get("raw"),
+                    title=spec.title,
+                    dash_depth=spec.dash_depth,
+                ),
+            )
+        )
+
+    @staticmethod
+    def _real_signature(node: SemanticNode) -> tuple[tuple[str, str, object], ...]:
+        return tuple(
+            (
+                str(descendant.code),
+                str(descendant.metadata.get("canonical_parent_code") or ""),
+                descendant.metadata.get("leaf_evidence"),
+            )
+            for descendant in node.iter_descendants()
+            if descendant.carries_real_code and descendant.code
+        )
+
+    @staticmethod
+    def _unwrap_bounded_0406(root: SemanticNode) -> None:
+        """Remove all recognizable 0406 wrappers without dropping real nodes."""
+
+        def unwrap(parent: SemanticNode) -> None:
+            retained: list[SemanticNode] = []
+            for child in parent.children:
+                unwrap(child)
+                if (
+                    child.is_group
+                    and (
+                        child.metadata.get("reason") == CHEESE_0406_REASON
+                        or child.metadata.get("verified_scope_kind")
+                        == CHEESE_0406_SCOPE_KIND
+                        or "verified_scope_kind" in child.metadata
+                        or SemanticNavigationBuilder._bounded_0406_candidate(child)
+                        is not None
+                    )
+                ):
+                    retained.extend(child.children)
+                else:
+                    retained.append(child)
+            parent.children = retained
+
+        unwrap(root)
+
+    @staticmethod
+    def _0406_signals(root: SemanticNode) -> list[SemanticNode]:
+        return [
+            node
+            for node in [root, *root.iter_descendants()]
+            if node.is_group
+            and (
+                node.metadata.get("reason") == CHEESE_0406_REASON
+                or node.metadata.get("verified_scope_kind")
+                == CHEESE_0406_SCOPE_KIND
+                or "verified_scope_kind" in node.metadata
+                or SemanticNavigationBuilder._bounded_0406_candidate(node)
+                is not None
+            )
+        ]
+
+    @staticmethod
+    def _arrange_or_unwrap_bounded_0406_moisture(
+        root: SemanticNode,
+        extraction: ExtractionResult,
+    ) -> None:
+        """Assemble the exact two-level moisture chain before containment."""
+
+        if extraction.heading != CHEESE_0406_HEADING:
+            return
+        signals = SemanticNavigationBuilder._0406_signals(root)
+        if not signals:
+            return
+
+        by_key: dict[str, list[SemanticNode]] = {
+            spec.key: [] for spec in CHEESE_0406_GROUPS
+        }
+        for node in [root, *root.iter_descendants()]:
+            if not node.is_group:
+                continue
+            spec = SemanticNavigationBuilder._bounded_0406_candidate(node)
+            if spec is not None:
+                by_key[spec.key].append(node)
+
+        valid = bool(
+            SemanticNavigationBuilder._0406_source_projection_valid(extraction)
+            and len(signals) == len(CHEESE_0406_GROUPS)
+            and all(len(by_key[spec.key]) == 1 for spec in CHEESE_0406_GROUPS)
+            and all(
+                SemanticNavigationBuilder._0406_wrapper_identity(
+                    by_key[spec.key][0], spec
+                )
+                for spec in CHEESE_0406_GROUPS
+            )
+        )
+        if not valid:
+            SemanticNavigationBuilder._unwrap_bounded_0406(root)
+            return
+
+        top = by_key["top"][0]
+        low = by_key["low"][0]
+        middle = by_key["middle"][0]
+        if not all(node in root.children for node in (top, low, middle)):
+            SemanticNavigationBuilder._unwrap_bounded_0406(root)
+            return
+        if (
+            top.children
+            or SemanticNavigationBuilder._real_signature(low)
+            != CHEESE_0406_GROUPS[1].signature
+        ):
+            SemanticNavigationBuilder._unwrap_bounded_0406(root)
+            return
+
+        middle_codes = {code for code, _, _ in CHEESE_0406_GROUPS[2].signature}
+        selected: list[SemanticNode] = []
+        high: list[SemanticNode] = []
+        spillover: list[SemanticNode] = []
+        for child in middle.children:
+            first_code = SemanticNavigationBuilder._first_real_code(child)
+            if first_code in middle_codes:
+                selected.append(child)
+            elif first_code == CHEESE_0406_STOP_CODE:
+                high.append(child)
+            else:
+                spillover.append(child)
+        middle.children = selected
+        if (
+            SemanticNavigationBuilder._real_signature(middle)
+            != CHEESE_0406_GROUPS[2].signature
+            or len(high) != 1
+            or high[0].code != CHEESE_0406_STOP_CODE
+            or high[0].metadata.get("leaf_evidence") is not True
+            or str(high[0].metadata.get("canonical_parent_code") or "")
+            != CHEESE_0406_PARENT_CODE
+        ):
+            middle.children.extend(high)
+            middle.children.extend(spillover)
+            SemanticNavigationBuilder._unwrap_bounded_0406(root)
+            return
+
+        top.node_type = SemanticNodeType.CLASSIFICATION_GROUP
+        low.node_type = SemanticNodeType.CLASSIFICATION_SUBGROUP
+        middle.node_type = SemanticNodeType.CLASSIFICATION_SUBGROUP
+        top.children = [low, middle, high[0]]
+
+        rebuilt: list[SemanticNode] = []
+        for child in root.children:
+            if child is top:
+                rebuilt.append(top)
+                rebuilt.extend(spillover)
+            elif child is low or child is middle:
+                continue
+            else:
+                rebuilt.append(child)
+        root.children = rebuilt
+        if (
+            SemanticNavigationBuilder._real_signature(top)
+            != CHEESE_0406_GROUPS[0].signature
+        ):
+            SemanticNavigationBuilder._unwrap_bounded_0406(root)
+
+    @staticmethod
+    def _finalize_bounded_0406_moisture(
+        root: SemanticNode,
+        extraction: ExtractionResult,
+    ) -> None:
+        """Verify final Canonical containment or atomically restore flat safety."""
+
+        if extraction.heading != CHEESE_0406_HEADING:
+            return
+        signals = SemanticNavigationBuilder._0406_signals(root)
+        if not signals:
+            return
+        by_key: dict[str, list[SemanticNode]] = {
+            spec.key: [] for spec in CHEESE_0406_GROUPS
+        }
+        for node in signals:
+            spec = SemanticNavigationBuilder._bounded_0406_candidate(node)
+            if spec is not None:
+                by_key[spec.key].append(node)
+        all_nodes = [root, *root.iter_descendants()]
+        code_parent = next(
+            (
+                node
+                for node in all_nodes
+                if node.carries_real_code
+                and node.code == CHEESE_0406_PARENT_CODE
+            ),
+            None,
+        )
+        valid = bool(
+            SemanticNavigationBuilder._0406_source_projection_valid(extraction)
+            and code_parent is not None
+            and len(signals) == len(CHEESE_0406_GROUPS)
+            and all(len(by_key[spec.key]) == 1 for spec in CHEESE_0406_GROUPS)
+        )
+        if valid:
+            top = by_key["top"][0]
+            low = by_key["low"][0]
+            middle = by_key["middle"][0]
+            high = [
+                child
+                for child in top.children
+                if child.carries_real_code
+                and child.code == CHEESE_0406_STOP_CODE
+            ]
+            valid = bool(
+                top in code_parent.children
+                and top.node_type == SemanticNodeType.CLASSIFICATION_GROUP
+                and low.node_type == SemanticNodeType.CLASSIFICATION_SUBGROUP
+                and middle.node_type == SemanticNodeType.CLASSIFICATION_SUBGROUP
+                and len(high) == 1
+                and top.children == [low, middle, high[0]]
+                and all(
+                    SemanticNavigationBuilder._0406_wrapper_identity(
+                        by_key[spec.key][0], spec
+                    )
+                    and SemanticNavigationBuilder._real_signature(
+                        by_key[spec.key][0]
+                    )
+                    == spec.signature
+                    for spec in CHEESE_0406_GROUPS
+                )
+            )
+        if valid:
+            return
+        SemanticNavigationBuilder._unwrap_bounded_0406(root)
+
+    @staticmethod
     def _detach_out_of_scope_children(
         node: SemanticNode,
     ) -> list[SemanticNode]:
         """Не позволить trailing-заголовку поглотить соседний кодовый диапазон."""
+
+        # TASK-SEMANTIC-008 verifies and assembles all three 0406 wrappers as
+        # one chain after controlled nesting.  Prefix heuristics would split
+        # its explicit 17-sibling allowlist, so leave it untouched here.
+        if (
+            node.metadata.get("reason") == CHEESE_0406_REASON
+            or node.metadata.get("verified_scope_kind")
+            == CHEESE_0406_SCOPE_KIND
+        ):
+            return []
 
         verified_interval = (
             SemanticNavigationBuilder._verified_2204_pdo_interval(node)
