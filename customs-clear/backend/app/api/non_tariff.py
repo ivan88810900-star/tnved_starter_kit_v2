@@ -7,6 +7,8 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from loguru import logger
 
+from ..schemas.ntm_applicability import NtmTransactionFacts, dump_ntm_transaction_facts
+from ..schemas.sanctions_risk import MovementDirection
 from ..services.non_tariff_service import check_position_non_tariff
 from ..services.normative_store import find_classification_rulings, find_declaration_documents, find_import_restrictions, list_tr_ts_acts
 from ..security import require_authenticated_user
@@ -34,6 +36,7 @@ class NonTariffItemIn(BaseModel):
     description: str
     country: str | None = None
     permits: List[PermitIn] = []
+    facts: NtmTransactionFacts | None = None
 
 
 class NonTariffRequest(BaseModel):
@@ -45,6 +48,7 @@ class NormativeBlockItemIn(BaseModel):
     description: str = ""
     country: str | None = None
     permits: List[PermitIn] = []
+    facts: NtmTransactionFacts | None = None
 
 
 class NormativeBlockRequest(BaseModel):
@@ -57,6 +61,7 @@ class RiskBlockItemIn(BaseModel):
     country: str | None = None
     destination_country: str | None = None
     counterparty_name: str | None = None
+    movement_direction: MovementDirection = "import"
 
 
 class RiskBlockRequest(BaseModel):
@@ -78,6 +83,7 @@ async def non_tariff_normative_block(
             item.description,
             item.country,
             [{"type": p.type, "number": p.number} for p in item.permits],
+            transaction_facts=dump_ntm_transaction_facts(item.facts),
         )
         results.append(
             {
@@ -112,6 +118,7 @@ async def non_tariff_risk_block(
             country=item.country,
             destination_country=item.destination_country,
             counterparty_name=item.counterparty_name,
+            movement_direction=item.movement_direction,
         )
         results.append(
             {
@@ -119,6 +126,7 @@ async def non_tariff_risk_block(
                 "description": item.description,
                 "country": item.country,
                 "counterparty_name": item.counterparty_name,
+                "movement_direction": item.movement_direction,
                 "risk_block": block.model_dump(),
             }
         )
@@ -222,6 +230,7 @@ async def non_tariff_check(
             item.description,
             item.country,
             [{"type": p.type, "number": p.number} for p in item.permits],
+            transaction_facts=dump_ntm_transaction_facts(item.facts),
         )
         results.append(res)
 

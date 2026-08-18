@@ -1,7 +1,7 @@
 # CURRENT_STATE.md — Текущее состояние проекта
 
-> Дата: 2026-08-10
-> Активная ветка: `feat/canonical-read-path`
+> Дата: 2026-08-18
+> Активная ветка: `feat/ntm-official-full-contours` (локально от `feat/canonical-read-path`)
 
 ---
 
@@ -51,17 +51,17 @@
 3. Publication boundary физически замораживает published nodes и `parent` links.
    `children` становятся tuple, standard metadata containers — recursively
    immutable; Builder output до публикации mutable, retained aliases отсоединены.
-4. Full Gate-2: 18,211/18,211 legacy-vs-Canonical paths, 0 mismatch/unresolved.
-5. Whole-catalog Guided census: 1,228/1,228 headings, 16,708/16,708 source-backed
+4. Full Gate-2: 18,246/18,246 legacy-vs-Canonical paths, 0 mismatch/unresolved.
+5. Whole-catalog Guided census: 1,263/1,263 headings, 16,708/16,708 source-backed
    code nodes reachable/Canonical-bound, из них 13,254 declarable leaves; leaf-role
    проверяется по Canonical, а не по отсутствию semantic children.
-6. На текущей feature branch semantic questions есть у 548 headings (44.6254%)
-   и покрывают 6,945 leaves (52.3993%). Это честный проверенный baseline, но не
-   разрешение на merge или rollout.
-7. Bounded official PDO slice для `2204` реализован и проверен: шаг `220421`
-   сократился с 50/47 до 18/14 choices/direct codes; выбор PDO открывает точные
-   33/33. Это новый candidate catalog-wide максимум и один честный noncritical
-   `oversized_unsplit_group`, без ослабления глобального лимита 30.
+6. На текущей feature branch semantic questions покрывают 6,949 из 13,254 leaves.
+   Catalog-wide максимум шага равен 29 choices / 27 direct codes; это честный
+   проверенный baseline, но не разрешение на rollout.
+7. DM-0012/TASK-SEMANTIC-009 завершили bounded `2204` slice: точный PDO-набор
+   `220421` сохранён как 18/17 + вложенные «прочие» 16/16; соседний `220422` —
+   27/25 + «прочие» 7/7. Все 211/211 source codes и 170/170 leaves сохранены,
+   oversized-шагов более 30 больше нет.
 8. DM-0005 Accepted — Option A (Ivan, 2026-08-05); TASK-SEMANTIC-006 имеет статус
    Completed. Код пока остаётся только на feature branch: этот docs-only update не
    выполняет merge, rollout или deploy.
@@ -75,6 +75,53 @@
     подняла semantic coverage 10/47 → 21/47 при неизменных 54/54 source nodes и
     47/47 leaves. Whole census 1,228/1,228, golden 7/7, Gate-2 18,211/18,211.
     Это не выполняет merge/rollout/deploy и не включает флаги.
+11. Официальный NTM-срез восстановлен и завершён как безопасный advisory-контур:
+    93 уникальных диапазона разделов 2.16/2.19, индекс 30 **базовых** разделов
+    приложений 1 и 2 Решения ЕЭК №30 и стабильная матрица 9 семейств мер.
+    Квотные 2.27/3.1/3.2 не выдаются за code-only правила. Ivan принял
+    advisory-only rollout 2026-08-15: показ default ON, kill switch —
+    `NTM_V2_OFFICIAL_FULL_ADVISORY_ENABLED=false`. Контур не пишет в БД и не
+    участвует в missing-check; enforcement не одобрен (DM-0008).
+12. Legal-contours уточнены по первичным источникам: prefix/«из»/свободный marker
+    всегда остаётся `needs_clarification`; Решение КТС №299 проверяется по коду,
+    наименованию, назначению и исключениям; ветеринарный контроль не выдаётся за
+    универсальный документ `ВС`; фитосанитарный контур разделяет высокий риск
+    (advisory ФСС) и низкий риск (без ФСС). Для Решения №30 исправлены исключения
+    и overbroad/missing-контуры, включая 2.2, 2.6, 2.11, 2.16, 2.17, 2.20, 2.23 и
+    import-only 2.30. Реестр технических регламентов содержит 53 позиции (001–053).
+13. Раздел II Решения КТС №299 содержит 98 текущих advisory code-ranges, включая
+    ранее пропущенные `4812000000` и `7412`. Экспортный контроль ПП РФ
+    №1284–1288/№1299 выделен в девятое семейство: source-faithful union содержит
+    1 087 raw HS-кандидатов, два versioned retired exact-кода исключены, поэтому
+    runtime effective count равен 1 085. Направление — `export`; идентификация по
+    техническим параметрам обязательна; enforcement отсутствует (DM-0009).
+14. Full-catalog claim остаётся fail-closed (DM-0010), и его критерий теперь
+    выполнен. После parser baseline fix все 96 tracked official PDFs rebuilt во
+    временный audit-only SQLite artifact: exact 21 раздел / 96 групп / 17 809
+    уникальных позиций, 0 duplicate/invalid, 17 774 непустых описания. Все 35
+    blank catalog codes absent from the pinned active ETT rate snapshot; причина
+    или юридический статус из этого не выводятся. Все 13 290 кодов revision
+    `ett:2026-06-18` присутствуют и описаны. Pinned PDF-manifest, parser, ETT
+    code-set, catalog code-set и code+description digests совпали. Artifact был
+    открыт audit-процессом read-only; production/application DB не изменялась.
+    `ntm-full-gate-20260815.json` имеет
+    `ok=true`, `full_commodity_catalog`, `catalog_complete=true`, 9/9 семейств,
+    30/30 базовых разделов и 0 enforcement leaks. Code-only и partial evidence
+    сохранены как supplementary, но не подменяют full result.
+15. DM-0011 добавляет structured `facts` в NTM API/UI и bounded exact advisory
+    для санитарных/ветеринарных/фитосанитарных мер, РЭС/ВЧУ, криптографии,
+    Решения №30 и экспортного контроля. Запрос без facts сохраняет broad-only
+    контракт. Exact `definite`/`excluded` всегда остаётся вне missing-check.
+    Versioned curated broker bridge реализован для shadow-аудита, но
+    `NTM_V2_OFFICIAL_CURATED_ENFORCEMENT_ENABLED=0` является обязательным default;
+    production activation отложен до отдельного решения и trusted source adapters.
+    Caller-supplied exact facts fail-closed даже при включённом флаге; для
+    export/transit legacy import broker/payment отключены, catch-all имеет отдельный
+    transaction-risk UI, а санкционный country/HS screening маркируется неполным.
+16. Локальный CI-контур теперь проверяет 266 backend safety/semantic tests,
+    frontend tests/types/build и read-only staging definition. Staging открывается
+    только на loopback, запускает exact full-catalog gate до HTTP и принудительно
+    держит все NTM enforcement flags выключенными.
 
 Основные `CANONICAL_TREE_ENABLED` / `CANONICAL_TREE_SHADOW` остаются default OFF.
 
@@ -261,14 +308,13 @@ Builder собирает дерево напрямую из recovery-резул�
 - UI различает «Смысловую группу» и «Смысловое уточнение» и показывает вложенность
   как следующий вопрос, не выдавая бескодовую группу за код ТН ВЭД.
 - Основные `CANONICAL_TREE_ENABLED` / `CANONICAL_TREE_SHADOW` остаются OFF.
-- Feature-branch candidate TASK-SEMANTIC-006 реализует только для `2204`
-  exact-source PDO projection:
-  `(2204210900, 2204217800]` должен совпасть с allowlist из 33 Canonical sibling
-  leaves под `2204210000` и точными PDO/PGI markers. Любой source/topology drift
-  fail-closed сохраняет полный плоский маршрут. Шаг `220421` теперь 18/14, выбор
-  PDO — 33/33; глобальный лимит 30 не менялся, поэтому одна noncritical
-  `oversized_unsplit_group` warning намеренно сохранена. DM-0005 Accepted — Option A;
-  реализация проверена, но этот docs-only update не выполняет merge/rollout/deploy.
+- TASK-SEMANTIC-006 и TASK-SEMANTIC-009 реализуют только для `2204` exact-source
+  projection. Исходный PDO scope из 33 Canonical sibling leaves остаётся полным;
+  retained depth-7 «прочие» создаёт вложенный шаг 16/16, а независимый retained
+  boundary под `2204220000` — шаг 7/7. Любой source/topology drift атомарно
+  возвращает полный прежний маршрут. Итоговый catalog/`2204` максимум — 29/27,
+  oversized warning более 30 отсутствует. DM-0005 и DM-0012 приняты; rollout и
+  feature activation этим не разрешены.
 - TASK-SEMANTIC-007 — завершённый и принятый через DM-0006 Option A bounded slice
   для `0304`. Пять product-form
   titles с exact `(anchor, stop]` source scopes, ordered tuples и полной Canonical
@@ -277,13 +323,13 @@ Builder собирает дерево напрямую из recovery-резул�
   Full official titles меняют codeless guide IDs; coded-node `stable_id`
   неизменны. Merge/rollout/flag activation не выполнялись.
 - Feature-branch full-data read-only Gate на пользовательском экспорте:
-  1,228/1,228 heading,
+  1,263/1,263 heading,
   16,708/16,708 source-backed code nodes reachable/Canonical-bound и 13,254
   Canonical declarable leaves на одном snapshot; fake/duplicate/critical/degraded/
   empty-root/leaf-role/Canonical-parent mismatch = 0, golden hierarchy 7/7.
-  Semantic choices покрывают 548 heading (44.6254%) и 6,945 leaves
-  (52.3993%); quality distributions не подменяют correctness gate произвольным
-  threshold. Canonical runtime flags оставались OFF.
+  Semantic choices покрывают 6,949 leaves; maximum step 29/27. Quality
+  distributions не подменяют correctness gate произвольным threshold. Canonical
+  runtime flags оставались OFF.
 - Текстовое описание товара теперь даёт ранжированные Canonical-позиции для
   запуска Guided-вопросов. Curated semantic evidence выше случайного full-text:
   на полном Gate-2 экспорте «смартфон» ведёт сначала в `8517`, «портативный
@@ -346,6 +392,9 @@ URL/API-контракты не менялись; backend, БД, флаги и �
 
 | Коммит | Дата | Описание |
 |--------|------|---------|
+| TASK-SEMANTIC-009 / DM-0012 | 2026-08-18 | Exact retained `2204` «прочие» boundaries; max 29/27, census 1,263/1,263, Gate-2 18,246/18,246 |
+| DM-0011 + exact NTM applicability | 2026-08-15 | Structured facts, bounded exact advisory/exclusions and versioned default-OFF curated broker bridge; production activation deferred |
+| DM-0008/0009/0010 + official NTM contour | 2026-08-15 | Ivan approved advisory-only default-ON rollout with kill switch; enforcement not approved; 9 families / 30 base sections; temp read-only 96-PDF artifact passed exact 21/96/17 809 gate with pinned digests and no production DB mutation |
 | TASK-SEMANTIC-008 | 2026-08-10 | Completed; DM-0007 Option A, exact `0406` moisture chain, 27/26 → 16/15, golden 7/7 |
 | TASK-SEMANTIC-007 | 2026-08-06 | Completed; DM-0006 Option A |
 | TASK-SEMANTIC-006 (feature branch) | 2026-08-05 | Completed and accepted via DM-0005 Option A: exact bounded `2204` PDO slice, 50/47 → 18/14 → PDO 33/33, census 1,228/1,228 and golden 5/5; not merged/rolled out/deployed |
@@ -416,6 +465,11 @@ URL/API-контракты не менялись; backend, БД, флаги и �
 | **TASK-MVP-RISK-001** — санкционный скрининг: scope, evidence, coverage, sources | ✅ Completed; semantics remain diagnostic | — |
 | **TASK-MVP-ASSISTANT-001** — grounded assistant: серверные факты, цитаты, no-key fallback, guarded LLM | ✅ Completed | — |
 | Full-data MVP acceptance | ✅ Completed: полная пользовательская БД, strict read-only, auth + 4/4, evidence сохранён | — |
+| Official full NTM advisory rollout | ✅ Accepted Ivan 2026-08-15: default ON, explicit false kill switch, 9 families / 30 base sections, no broker impact | — |
+| Full-catalog NTM audit on current code | ✅ Passed on temp read-only audit artifact rebuilt from 96 tracked official PDFs: exact 21/96/17 809, 17 774 described + 35 blank codes absent from pinned active ETT rate snapshot; pinned digests match; no production DB mutation | Повторять при source/parser revision |
+| Official NTM enforcement | Not approved; every contour match remains advisory and outside missing-check | New Ivan decision required |
+| Structured exact NTM applicability | ✅ Implemented under DM-0011: additive facts API/UI, exact advisory/exclusions, no default broker effect | Trusted registry/source adapters before rollout |
+| Curated official NTM bridge | ✅ Implemented and tested in shadow; default OFF, two frozen exact rule IDs | Explicit rollout decision required to enable |
 | Guided TN VED v1 | ✅ Completed locally: API/UI, 100% Canonical binding gate, safe fallback | — |
 | Full-data guided acceptance (`0302/0303/5208/8517`) | ✅ Completed: 328/328 target codes, 100% Canonical coverage, hierarchy green | — |
 | **TASK-SEMANTIC-003** — controlled nesting смысловых подгрупп | ✅ Completed: full-data hierarchy gate green | — |
@@ -424,6 +478,7 @@ URL/API-контракты не менялись; backend, БД, флаги и �
 | **TASK-SEMANTIC-006** — bounded official PDO interval for `2204` | ✅ Completed and accepted via DM-0005 Option A; implemented + verified on feature branch: exact 33-leaf allowlist, 18/14 → PDO 33/33, census 1,228/1,228 and golden 5/5; flags OFF | No merge/rollout/deploy in this docs update |
 | TASK-SEMANTIC-007 | ✅ Completed; DM-0006 Option A | No rollout |
 | TASK-SEMANTIC-008 | ✅ Completed; DM-0007 Option A, exact `0406` moisture chain, 16/15 and 21/47 | No merge/rollout/flag activation |
+| TASK-SEMANTIC-009 | ✅ Completed; DM-0012 Option A, exact retained `2204` «прочие» boundaries, max 29/27, census 1,263/1,263 | No runtime rollout/flag activation |
 | **TASK-MVP-FRONTEND-ACCEPTANCE-001** — поиск → Guided → реальный код → карточка | ✅ Completed: автоматический DOM-level acceptance; accessibility hardening | — |
 | **TASK-MVP-FRONTEND-ACCEPTANCE-002** — карточка → платежи → документы → риск → assistant | ✅ Completed: verified/failure DOM-level paths; fail-safe evidence UI | — |
 | **TASK-MVP-FRONTEND-ACCEPTANCE-003** — реальный card → assistant → grounded response | ✅ Completed: route bridge + deterministic/guarded-LLM UI contracts | — |
@@ -432,6 +487,7 @@ URL/API-контракты не менялись; backend, БД, флаги и �
 | Interactive frontend acceptance | Search → Guided → card ✅; card → payments → requirements/risk → grounded assistant response ✅; live-browser QA ожидает достижимый URL | Высокий |
 | DM-0004: nomenclature history / code transitions | Proposed; awaiting Ivan and official-source feasibility audit; no schema/runtime authorized | Decision |
 | DM-0005: Guided `2204` PDO interval | ✅ Accepted — Option A (Ivan, 2026-08-05); TASK-SEMANTIC-006 completed on feature branch | No merge/rollout/deploy in this docs update |
+| DM-0012: retained `2204` «прочие» boundaries | ✅ Accepted — Option A; TASK-SEMANTIC-009 completed and verified | No runtime rollout/flag activation |
 | Fine-tune модели на `training_pairs.jsonl` | Вне репозитория | Низкий |
 | Live-parсер ФТС предрешений (tks.ru JS) | Decision Memo #135 | Средний |
 | Мульти-воркер ФСА (Redis-очередь) | Бэклог | Низкий |
@@ -450,21 +506,29 @@ URL/API-контракты не менялись; backend, БД, флаги и �
   подтверждает финальный итог и показывает только известную частичную сумму
 - **ФТС предрешения:** live-парсер не реализован (customs.gov.ru/folder/519 — статистика, не предрешения)
 - **ТРОИС:** fuzzy-поиск может давать false positives на коротких запросах
+- **NTM full-catalog evidence:** gate пройден на временном audit-only SQLite
+  artifact, rebuilt из 96 tracked official PDFs и открытом read-only. Production
+  DB не заменялась и не изменялась. Результат привязан к exact 21/96/17 809,
+  pinned manifest/parser/ETT/code/code+description digests и должен
+  пересчитываться при их обновлении. Partial/code-only отчёты supplementary
 - **Semantic embeddings:** в доступных QA-БД нет готовых векторов и серверный ключ
   провайдера не настроен; умный поиск и ассистент используют детерминированный hybrid/evidence fallback
 
 ### Архитектура
 - **SQLite** — ограничение параллельных записей; для production рекомендуется PostgreSQL (DATABASE_URL поддерживает)
 - **FTS5** — вне Alembic, создаётся только при старте приложения
-- **NTM v2 feature flags** — по умолчанию OFF, требует явного включения Иваном
+- **Official full NTM advisory** — default ON по решению Ivan от 2026-08-15;
+  `NTM_V2_OFFICIAL_FULL_ADVISORY_ENABLED=false` является kill switch. Это не
+  включает enforcement
+- **Прочие NTM v2/enforcement flags** — не активируются решением advisory rollout;
+  влияние на broker/missing-check требует отдельного одобрения Ivan
 - **L6/L8 синтез** — производительность: на каждый запрос к дереву пересчитывается из БД (кэш не реализован)
 - **Semantic Guided quality** — strict integrity доказана для supplied Gate-2
-  snapshot по всем 1,228 heading, но смысловые вопросы сейчас есть у 44.6254%
-  headings; 680 headings остаются прямыми code-choice маршрутами. На feature-branch
-  candidate после bounded PDO slice catalog-wide максимум равен 33/33 в `2204`;
-  эта official 33-code группа честно сохраняет одну noncritical oversized warning.
-  DM-0005 Option A принят; дальнейшее разбиение и другие outliers требуют отдельных
-  evidence-backed UX-задач. Текущий branch-код ещё не merged/rolled out/deployed.
+  snapshot по всем 1,263 heading. Semantic questions покрывают 6,949/13,254
+  declarable leaves; остальные ветки сохраняют прямые code-choice маршруты.
+  После bounded DM-0012 slice catalog-wide максимум равен 29/27 в `220429`;
+  шагов более 30 нет. Дальнейшая оптимизация требует отдельных source-backed
+  UX-задач; runtime rollout флагов не выполнен.
 
 ### Frontend
 - **Тайпскрипт типы** — `openapi.generated.ts` требует ручной регенерации (`npm run gen:api-types`) при изменении схемы API
@@ -569,6 +633,10 @@ URL/API-контракты не менялись; backend, БД, флаги и �
 | **Deadline for legacy `build_tree` removal** | Open (oracle до parity) | Двойная логика — долг; нужен критерий «parity достигнута → удаляем» | После content-parity + стабилизации flag (Этап 6) |
 | **First production read-path** | ✅ Completed — `/children` структурный слой за default-OFF флагом; Gate-2 green | Какой эндпоинт первым читает CanonicalModel и как сверяется с legacy | Отдельное решение Ivan о rollout |
 | **Nomenclature history / legal code transitions** | Proposed: DM-0004, current-only Canonical remains unchanged | Нужны official source, revision/effective dates, many-to-many split/merge semantics and provenance; нельзя смешивать с lexical synonyms/stable-ID aliases | Ivan decision after source-feasibility audit |
+| **Official NTM advisory rollout** | ✅ Closed: DM-0008 Option A, Ivan 2026-08-15; default ON with explicit-false kill switch | Пользователь видит 9 семейств / 30 базовых разделов без broker-влияния | Revisit only for rollout rollback or a new enforcement decision |
+| **Export-control family** | ✅ Closed: DM-0009 Option A; 1 087 raw / 1 085 effective candidates | Справочный код не заменяет параметрическую идентификацию | Any enforcement requires a new Ivan decision |
+| **NTM legal/catalog completeness** | ✅ Boundary closed by DM-0010; full gate passed on rebuilt official-PDF temp read-only artifact with pinned digests; production DB unchanged | Code-only/partial scope по-прежнему нельзя выдавать за full; 35 blank catalog codes are absent from the pinned active ETT rate snapshot, без вывода о причине/статусе | Повторять gate при PDF/ETT/parser revision |
+| **Structured exact NTM / curated bridge** | ✅ DM-0011 implementation boundary closed; exact rows remain advisory and bridge is default OFF | Caller-supplied facts are not a live registry lookup | New explicit rollout decision + trusted adapters before enabling |
 | **Guided `2204` PDO interval** | ✅ Closed: DM-0005 Option A Accepted; bounded implementation completed + verified on feature branch | Exact user-visible PDO/PGI boundary accepted; flat/generic-parser options not selected | No merge/rollout/deploy in this docs update; flags OFF |
 | Guided `0304` | ✅ DM-0006 Option A | Visible semantics | No rollout |
 

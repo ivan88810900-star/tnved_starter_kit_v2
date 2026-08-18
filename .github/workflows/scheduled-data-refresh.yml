@@ -39,3 +39,29 @@ jobs:
 
       - name: Check CBR and regulatory data freshness
         run: python -m scripts.data_refresh --check-only --json
+
+      - name: Monitor official NTM source documents
+        run: python scripts/monitor_official_ntm_sources.py --strict --output ntm-source-monitor.json
+
+      - name: Verify current export-control list extraction
+        run: python scripts/build_official_export_control_dataset.py --check
+
+      - name: Verify pinned TN VED PDF and ETT source manifests
+        run: python scripts/build_ntm_full_catalog_baseline.py --check-sources-only
+
+      - name: Audit pinned ETT code scope and every rule probe
+        run: >-
+          python scripts/run_ntm_full_coverage_audit.py
+          --allow-partial
+          --require-code-catalog
+          --output ntm-code-scope.json
+
+      - name: Upload NTM source digest report
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: ntm-source-monitor-${{ github.run_id }}
+          path: |
+            customs-clear/backend/ntm-source-monitor.json
+            customs-clear/backend/ntm-code-scope.json
+          retention-days: 30

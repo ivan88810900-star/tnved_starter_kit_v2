@@ -6,7 +6,7 @@ Active
 
 ## Last updated
 
-2026-08-06
+2026-08-18
 
 ## Strategic direction
 
@@ -24,7 +24,29 @@ ingestion.
 ## What has already been completed
 
 - NTM v2 storage model and applicability semantics (`definite` / `possible` / `needs_clarification`)
-- Safe enforcement policy: only `definite` in broker; official SGR advisory-only by default
+- Safe enforcement policy: only separately authorized `definite` sources may enter
+  broker; the official full NTM contour is advisory-only
+- Official full NTM advisory rollout accepted by Ivan on 2026-08-15: default ON
+  with `NTM_V2_OFFICIAL_FULL_ADVISORY_ENABLED=false` as kill switch, 9 measure
+  families and 30 base Decision-30 sections; enforcement is not approved
+- Structured NTM applicability (DM-0011): the API/UI accepts optional transaction
+  and product facts, bounded source-backed exact rules expose explainable
+  `definite`/`excluded` advisory results, and requests without facts retain the
+  broad-only contract. The versioned curated broker bridge is implemented for
+  shadow audit but remains default OFF; caller-supplied evidence is rejected by
+  the broker trust gate even if the flag is enabled, and production activation
+  is not approved. Export/transit requests do not reuse import broker/payment
+  semantics and expose catch-all transaction risk separately.
+- NTM catalog coverage is fail-closed and the current full gate passed on a temp
+  audit-only SQLite artifact rebuilt from 96 tracked official PDFs and opened
+  read-only: exact 21 sections, 96 chapters, 17,809 unique commodities,
+  0 duplicate/invalid rows and 17,774 nonempty descriptions. All 35 blank catalog
+  codes are absent from the pinned active ETT rate snapshot; no cause or legal
+  status is inferred. All 13,290 codes in revision `ett:2026-06-18` are present
+  and described. Pinned PDF-manifest, parser, ETT code-set, catalog code-set and
+  code+description digests match; no production/application DB was mutated.
+  Primary aggregate-only evidence: `evidence/ntm-full-gate-20260815.json`;
+  earlier code-only and partial reports remain supplementary
 - Advisory requirements UI/API foundation
 - Official SGR contour: importer, diagnostics, seed dataset, validator
 - Normative requirements block MVP (backend aggregation + frontend block on NonTariff/compliance)
@@ -71,24 +93,19 @@ ingestion.
   descendants are now real declarable leaves under their stable four-digit heading
   wrappers in both legacy and Canonical projections. Gate-2 now independently
   requires these source-backed leaves and passes 18,211/18,211 paths.
-- Whole-catalog Guided census: on the supplied Gate-2 snapshot, all 1,228 Canonical
+- Whole-catalog Guided census: on the supplied Gate-2 snapshot, all 1,263 Canonical
   headings and 16,708 source-backed code nodes pass reachability, binding and nearest
   Canonical-parent integrity. The model contains 13,254 actual declarable leaves;
   leaf roles are checked against Canonical rather than inferred from the absence of
-  semantic children. On the current feature branch, semantic questions cover 548
-  headings (44.6254%) and 6,945 leaves (52.3993%); these are measured product-quality
-  baselines, not a claim that every heading is already semantically optimized.
-- Feature-branch candidate TASK-SEMANTIC-006 implements a bounded official `2204`
-  PDO slice: an exact 33-leaf Canonical sibling allowlist under `2204210000` is
-  staged only while the official PDO/PGI markers and source topology match. The
-  affected step is 18 choices / 14 direct codes, followed by PDO 33/33; source drift
-  fails closed to the complete flat route. The unchanged global limit of 30 leaves
-  one honest noncritical oversized warning. Whole-catalog correctness remains
-  1,228/1,228, golden assertions are 5/5, serving flags remain OFF and no database,
-  API or LLM contract changed. Ivan accepted Option A in DM-0005 on 2026-08-05;
-  TASK-SEMANTIC-006 is completed and accepted, with implementation + verification
-  still on the feature branch. This docs-only update performs no merge, rollout or
-  deployment.
+  semantic children. On the current feature branch, semantic questions cover 6,949
+  leaves; these are measured product-quality baselines, not a claim that every
+  heading is already semantically optimized.
+- TASK-SEMANTIC-006 plus DM-0012/TASK-SEMANTIC-009 provide a bounded official
+  `2204` slice. Exact retained «прочие» boundaries split the 33-leaf PDO scope into
+  18/17 plus 16/16 and the neighboring `220422` step into 27/25 plus 7/7. Source
+  drift fails closed to the complete prior route. Whole-catalog correctness remains
+  1,263/1,263, golden 7/7 and Gate-2 18,246/18,246; catalog maximum is 29/27 and
+  no step above 30 remains. Serving flags remain OFF.
 - Explainable Smart Payments in the TN VED card: bases, statuses, sources, assumptions,
   uncertainty and optional Canonical grounding anchor
 - Evidence-first sanctions/risk checks in the TN VED card: explicit scope, conservative
@@ -122,7 +139,10 @@ ingestion.
 7. **Intelligent TN VED structure** — Canonical-backed semantic routes and
    understandable product questions without virtual/fake customs codes
 
-Parallel (not blocking MVP UI): continue curating `official_sgr_rules.seed.json` and validation — **without** enabling official SGR broker enforcement until a separate approved workstream.
+Parallel (not blocking MVP UI): maintain the official NTM datasets and source
+monitoring, repeat the strict read-only full audit for every PDF/ETT/parser
+revision, keep the curated official bridge OFF, and connect trusted registry/source
+adapters before proposing any exact-rule production enforcement.
 
 ## Next recommended implementation tasks
 
@@ -163,6 +183,11 @@ Current next tasks:
   preserving all 54 source nodes and 47 leaves. Census is 1,228/1,228, golden
   7/7 and Gate-2 18,211/18,211. Acceptance does not merge, roll out or activate
   flags.
+- ✅ TASK-SEMANTIC-009 is implemented and accepted through DM-0012 Option A.
+  Exact retained `2204` «прочие» boundaries preserve 211/211 source codes and
+  170/170 leaves, reduce the catalog maximum to 29/27, and pass the current
+  1,263/1,263 census plus 18,246/18,246 Gate-2. Missing page-break labels are not
+  synthesized; runtime flags remain OFF.
 - ✅ TASK-MVP-SEARCH-QUALITY-001: hybrid search ranking, typo recovery and
   explainable main-UI results
 - ✅ TASK-MVP-PAYMENTS-001: Smart payment explanation block in the TN VED card
@@ -176,6 +201,10 @@ Current next tasks:
 - ✅ Full-data end-to-end acceptance on the user's current DB (4/4, full-data
   thresholds passed, strict read-only confirmed). Evidence:
   `evidence/mvp-acceptance-20260721.json`
+- ✅ TASK-NTM-EXACT-001 / DM-0011: additive structured facts contract, bounded
+  exact health/device/trade evaluators, explicit exclusions and transaction-level
+  export catch-all note are integrated into the normative block. Exact rows remain
+  advisory; the two-rule versioned enforcement bridge is default OFF and audited.
 - ✅ Guided TN VED v1 backend + frontend: a heading exposes a separate smart route;
   semantic group IDs are deterministic, all real codes are bound to the current
   Canonical snapshot, and any integrity failure returns a safe ordinary-tree fallback
@@ -209,10 +238,9 @@ Current next tasks:
 - Improve semantic question coverage and reduce measured high-branching outliers
   in bounded, evidence-backed slices. Do not set arbitrary global usability
   thresholds until a reviewed baseline policy exists; preserve whole-catalog
-  integrity and the seven golden hierarchy assertions. The first official `2204`
-  PDO slice is accepted via DM-0005 Option A and completed/verified on the feature
-  branch, but is not merged, rolled out or deployed by this update. Its remaining
-  33/33 step and other outliers need separate source-backed slices.
+  integrity and the seven golden hierarchy assertions. The source-backed `2204`
+  follow-up is accepted via DM-0012 and leaves a bounded 29/27 residual at `220429`;
+  any further split requires new retained source evidence.
 - Preserve the DM-0006 Option A boundary for `0304`. Exact official titles change
   codeless guide IDs while real Canonical coded-node IDs remain stable; no guide-ID
   alias/history layer is included. Any source/topology drift must fail closed.
@@ -254,13 +282,19 @@ python3 scripts/diagnose_guided_tnved_navigation.py \
 
 Official SGR dataset tasks (when not conflicting with MVP slices):
 
-- Expand `data/official_sgr_rules.seed.json` (ЕЭК №299 and related contours)
+- Expand `data/official_sgr_rules.seed.json` (Решение КТС №299 and related contours)
 - Extend `validate_official_sgr_dataset(...)` and dataset report coverage
 - Regression: toys `9503`, adult cosmetics `3304`, child/special SGR cases
+- ✅ Rebuilt the exact 21/96/17,809 catalog from 96 tracked official PDFs into a
+  temp audit-only artifact and passed the read-only fail-closed NTM gate with all
+  pinned digests matching and no production DB mutation; repeat on every
+  PDF/ETT/parser revision. ETT code-only and the partial backup remain
+  supplementary, not full substitutes
 
 ## What is not the next priority
 
-- Official SGR **enforcement** in broker / missing-check (separate Decision Memo required)
+- Official NTM/SGR **enforcement** in broker / missing-check (not approved; a new
+  Ivan decision is required)
 - Broad legacy SGR heuristics promoted to broker as “official”
 - Unrelated refactors or legacy root `backend/` expansion
 - Broad UI redesign outside MVP slices

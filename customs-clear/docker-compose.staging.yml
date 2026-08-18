@@ -1,0 +1,95 @@
+name: customs-clear-staging
+
+services:
+  backend:
+    build:
+      context: ..
+      dockerfile: customs-clear/staging/backend.Dockerfile
+    environment:
+      DATABASE_URL: sqlite:////data/customs.db
+      CUSTOMSCLEAR_READ_ONLY: "1"
+      SECRET_KEY: ${STAGING_SECRET_KEY:?Set STAGING_SECRET_KEY in the staging env file}
+      ADMIN_PASSWORD: ${STAGING_ADMIN_PASSWORD:?Set STAGING_ADMIN_PASSWORD in the staging env file}
+      VIEWER_PASSWORD: ${STAGING_VIEWER_PASSWORD:?Set STAGING_VIEWER_PASSWORD in the staging env file}
+      DECLARANT_PASSWORD: ${STAGING_DECLARANT_PASSWORD:?Set STAGING_DECLARANT_PASSWORD in the staging env file}
+      ADMIN_API_TOKEN: ${STAGING_ADMIN_API_TOKEN:?Set STAGING_ADMIN_API_TOKEN in the staging env file}
+      CORS_ORIGINS: http://127.0.0.1:${STAGING_FRONTEND_PORT:-3000}
+      PYTHONDONTWRITEBYTECODE: "1"
+      SCHEDULER_ENABLED: "0"
+      REGULATORY_SYNC_SCHEDULER_ENABLED: "0"
+      TAMDOC_SYNC_ENABLED: "0"
+      AUDIT_LOG_ENABLED: "0"
+      CUSTOM_CLASSIFIER_ENABLED: "0"
+      ALTA_TIK_ENABLED: "0"
+      ALTA_APU_ENABLED: "0"
+      TNVED_SEMANTIC_INGEST_ENABLED: "0"
+      TNVED_SEMANTIC_SEARCH_ENABLED: "0"
+      NTM_V2_OFFICIAL_FULL_ADVISORY_ENABLED: ${STAGING_NTM_FULL_ADVISORY_ENABLED:-1}
+      NTM_V2_MEASURES_ENFORCEMENT_ENABLED: "0"
+      NTM_V2_RULES_ENFORCEMENT_ENABLED: "0"
+      NTM_V2_OFFICIAL_CURATED_ENFORCEMENT_ENABLED: "0"
+      NTM_V2_EXACT_TRADE_CURATED_ALLOWLIST_ENABLED: "0"
+      ANTHROPIC_API_KEY: ""
+      GEMINI_API_KEY: ""
+      OPENAI_API_KEY: ""
+      REDIS_URL: ""
+    volumes:
+      - type: bind
+        source: ${STAGING_DATABASE_PATH:?Set STAGING_DATABASE_PATH to an absolute path}
+        target: /data/customs.db
+        read_only: true
+    ports:
+      - "127.0.0.1:${STAGING_BACKEND_PORT:-8001}:8000"
+    networks:
+      - staging
+    read_only: true
+    tmpfs:
+      - /tmp:size=128m,mode=1777
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - >-
+          import json, urllib.request;
+          payload=json.load(urllib.request.urlopen('http://127.0.0.1:8000/api/health/ready', timeout=5));
+          assert payload.get('status') == 'ready' and payload.get('database') is True
+      interval: 10s
+      timeout: 6s
+      retries: 12
+      start_period: 30s
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: .
+      dockerfile: staging/frontend.Dockerfile
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:${STAGING_FRONTEND_PORT:-3000}:3000"
+    networks:
+      - staging
+    read_only: true
+    tmpfs:
+      - /tmp:size=32m,mode=1777
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:3000/"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 10s
+    restart: unless-stopped
+
+networks:
+  staging:
+    internal: true

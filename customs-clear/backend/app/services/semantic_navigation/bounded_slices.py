@@ -290,6 +290,108 @@ PDO_2204_CODES = (
 PDO_2204_FIRST_CODE = PDO_2204_CODES[0]
 PDO_2204_LEAF_COUNT = len(PDO_2204_CODES)
 
+# TASK-SEMANTIC-009 uses only uncoded boundaries retained in the immutable
+# Canonical source records.  The official PDF also has ``белые:`` rows at
+# page breaks, but the catalog projection does not retain them; they must not
+# be synthesized at runtime.
+_D8 = "– " * 8
+PDO_2204_OTHER_ANCHOR_CODE = "2204213800"
+PDO_2204_OTHER_TITLE = "прочие"
+PDO_2204_OTHER_RAW = "– – – – – – – прочие:"
+PDO_2204_OTHER_DEPTH = 7
+PDO_2204_OTHER_REASON = "bounded_2204_official_pdo_other_colour"
+PDO_2204_OTHER_SCOPE_KIND = "canonical_sibling_leaf_nested_interval"
+PDO_2204_OTHER_HIERARCHY_HINT = "bounded_exact_source_topology"
+PDO_2204_ANCHOR_DESCRIPTION = (
+    "– – – – прочее – – – прочие: "
+    "– – – – произведенные в Европейском союзе: "
+    "– – – – – с фактической концентрацией спирта не более 15 об.%: "
+    f"– – – – – – {PDO_2204_OFFICIAL_HEADER}:"
+)
+PDO_2204_PRE_OTHER_TITLES = (
+    ("2204211100", "Эльзас"), ("2204211200", "Бордо"),
+    ("2204211300", "Бургундия"),
+    ("2204211700", "Валь де Луар (Долина Луары)"),
+    ("2204211800", "Мозель"), ("2204211900", "Пфальц"),
+    ("2204212200", "Рейнхессен"), ("2204212300", "Токай"),
+    ("2204212400", "Лацио"), ("2204212600", "Тоскана"),
+    ("2204212700", "Трентино, Альто- Адидже и Фриули"),
+    ("2204212800", "Венето"), ("2204213200", "Виньо Верде"),
+    ("2204213400", "Пенедес"), ("2204213600", "Риойя"),
+    ("2204213700", "Валенсия"),
+)
+PDO_2204_OTHER_TITLES = (
+    ("2204214200", "Бордо"), ("2204214300", "Бургундия"),
+    ("2204214400", "Божоле"), ("2204214600", "Вале-дю-Рон"),
+    ("2204214700", "Лангедок-Руссильон"),
+    ("2204214800", "Валь де Луар (Долина Луары)"),
+    ("2204216200", "Пьемонт"), ("2204216600", "Тоскана"),
+    ("2204216700", "Трентино и Альто- Адидже"),
+    ("2204216800", "Венето"),
+    ("2204216900", "Дао, Беррада и Дуро"),
+    ("2204217100", "Наварра"), ("2204217400", "Пенедес"),
+    ("2204217600", "Риойя"), ("2204217700", "Вальдепениас"),
+)
+PDO_2204_PRE_OTHER_SIGNATURE = tuple(
+    (code, PDO_2204_PARENT_CODE, True, _D8 + title)
+    for code, title in PDO_2204_PRE_OTHER_TITLES
+) + ((PDO_2204_OTHER_ANCHOR_CODE, PDO_2204_PARENT_CODE, True,
+      _D8 + "прочие " + PDO_2204_OTHER_RAW),)
+PDO_2204_OTHER_SIGNATURE = tuple(
+    (code, PDO_2204_PARENT_CODE, True, _D8 + title)
+    for code, title in PDO_2204_OTHER_TITLES
+) + ((PDO_2204_STOP_CODE, PDO_2204_PARENT_CODE, True,
+      _D8 + "прочие – – – – – – " + PGI_2204_OFFICIAL_HEADER + ":"),)
+PDO_2204_COLOUR_SIGNATURE = (
+    PDO_2204_PRE_OTHER_SIGNATURE + PDO_2204_OTHER_SIGNATURE
+)
+PDO_2204_OTHER_CODES = tuple(row[0] for row in PDO_2204_OTHER_SIGNATURE)
+PDO_2204_OTHER_LEAF_COUNT = len(PDO_2204_OTHER_CODES)
+
+# Adjacent 220422 has one independently retained depth-7 boundary.  The exact
+# scope is kept separate because its preceding PDO/white headers are absent.
+BULK_2204_PARENT_CODE = "2204220000"
+BULK_2204_PARENT_DESCRIPTION = "– – в сосудах емкостью более 2 л, но не более 10 л:"
+BULK_2204_ROOT_ANCHOR_CODE = "2204221000"
+BULK_2204_ROOT_ANCHOR_DESCRIPTION = (
+    "– – – вино, за исключением указанного в субпозиции 2204 10, в бутылках с "
+    "\"грибовидными\" пробками, удерживаемыми завязками или креплениями; вино в другой таре с избыточным давлением, "
+    "обусловленным диоксидом углерода в напитке, не менее 1 бар, но менее 3 бар при температуре 20 °C "
+    "– – – прочие: – – – – произведенные в Европейском союзе:"
+)
+BULK_2204_OTHER_ANCHOR_CODE = "2204221800"
+BULK_2204_OTHER_STOP_CODE = "2204225800"
+BULK_2204_OTHER_TITLE = "прочие"
+BULK_2204_OTHER_RAW = PDO_2204_OTHER_RAW
+BULK_2204_OTHER_DEPTH = 7
+BULK_2204_OTHER_REASON = "bounded_2204_official_220422_other_colour"
+BULK_2204_OTHER_SCOPE_KIND = "canonical_sibling_leaf_220422_interval"
+BULK_2204_CONTEXT_TITLES = (
+    ("2204221100", "Токай"), ("2204221200", "Бордо"),
+    ("2204221300", "Бургундия"),
+    ("2204221700", "Валь де Луар (Долина Луары)"),
+)
+BULK_2204_OTHER_TITLES = (
+    ("2204224200", "Бордо"), ("2204224300", "Бургундия"),
+    ("2204224400", "Божоле"), ("2204224600", "Вале-дю-Рон"),
+    ("2204224700", "Лангедок-Руссильон"),
+    ("2204224800", "Валь де Луар (Долина Луары)"),
+)
+BULK_2204_CONTEXT_SIGNATURE = tuple(
+    (code, BULK_2204_PARENT_CODE, True, _D8 + title)
+    for code, title in BULK_2204_CONTEXT_TITLES
+) + ((BULK_2204_OTHER_ANCHOR_CODE, BULK_2204_PARENT_CODE, True,
+      _D8 + "прочие " + BULK_2204_OTHER_RAW),)
+BULK_2204_OTHER_SIGNATURE = tuple(
+    (code, BULK_2204_PARENT_CODE, True, _D8 + title)
+    for code, title in BULK_2204_OTHER_TITLES
+) + ((BULK_2204_OTHER_STOP_CODE, BULK_2204_PARENT_CODE, True,
+      _D8 + "прочие – – – – – – " + PGI_2204_OFFICIAL_HEADER + ":"),)
+BULK_2204_CONTEXT_SIGNATURE += BULK_2204_OTHER_SIGNATURE
+BULK_2204_CONTEXT_CODES = tuple(row[0] for row in BULK_2204_CONTEXT_SIGNATURE)
+BULK_2204_OTHER_CODES = tuple(row[0] for row in BULK_2204_OTHER_SIGNATURE)
+BULK_2204_OTHER_LEAF_COUNT = len(BULK_2204_OTHER_CODES)
+
 
 CHEESE_0406_HEADING = "0406"
 CHEESE_0406_PAD_CODE = "0406000000"

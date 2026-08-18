@@ -8,6 +8,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 
+from ..schemas.ntm_applicability import NtmTransactionFacts, dump_ntm_transaction_facts
 from ..services.calculation_history_service import save_calculation_record
 from ..services.non_tariff_service import check_position_non_tariff
 from ..services.payment_engine_compat import compute_payments
@@ -33,6 +34,7 @@ class ComplianceItemIn(BaseModel):
     vat_rate: float | None = None
     excise: float | None = None
     quantity: float | None = None
+    facts: NtmTransactionFacts | None = None
 
 
 class ComplianceRequest(BaseModel):
@@ -40,6 +42,51 @@ class ComplianceRequest(BaseModel):
     save_history: bool = Field(False, description="Сохранить сводку проверки в customs_calculation_history")
     document_id: str | None = Field(None, description="Связь с ingested_documents.id")
     user_ref: str = Field("", description="Пользователь / клиент для журнала")
+
+
+def _non_import_payment(direction: str) -> dict[str, Any]:
+    """Stable UI contract when the import-payment engine is out of scope."""
+
+    reason = f"Импортные таможенные платежи не рассчитываются для направления {direction}."
+    return {
+        "status": "NOT_APPLICABLE",
+        "not_applicable_direction": direction,
+        "breakdown": {
+            "duty": 0.0,
+            "vat": 0.0,
+            "excise": 0.0,
+            "antidumping": 0.0,
+            "recycling_fee": 0.0,
+            "total_payable": 0.0,
+            "vat_rate": 0.0,
+            "duty_rate": 0.0,
+            "vat_reason": reason,
+            "excise_reason": reason,
+            "antidumping_reason": reason,
+            "antidumping_status": "not_applicable",
+        },
+        "auto_detected": {
+            "duty_rate": 0.0,
+            "vat_rate": 0.0,
+            "antidumping_type": "none",
+            "antidumping_value": 0.0,
+            "antidumping_condition": reason,
+            "antidumping_countries": "",
+        },
+        "data_quality": {
+            "confidence": "none",
+            "matched_prefix": "",
+            "match_length": 0,
+            "antidumping_status": "not_applicable",
+        },
+        "sources": [
+            {
+                "name": "Контур импортных платежей",
+                "integrated": False,
+                "data_info": reason,
+            }
+        ],
+    }
 
 
 @router.post("/check")
@@ -53,12 +100,19 @@ async def compliance_check(req: ComplianceRequest) -> JSONResponse:
 
     results: List[Dict[str, Any]] = []
     for item in req.items:
-        payment = compute_payments(item.model_dump())
+        facts = dump_ntm_transaction_facts(item.facts)
+        direction = str(facts.get("direction") or "import")
+        payment = (
+            compute_payments(item.model_dump())
+            if direction == "import"
+            else _non_import_payment(direction)
+        )
         non_tariff = await check_position_non_tariff(
             item.hs_code,
             item.description,
             item.country,
             [{"type": p.type, "number": p.number} for p in item.permits],
+            transaction_facts=facts,
         )
         # Документы: требуемые и предоставленные разрешения
         documents = {

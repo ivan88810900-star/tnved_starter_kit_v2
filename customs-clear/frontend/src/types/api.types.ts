@@ -712,12 +712,35 @@ export type AdvisoryRequirement = {
   applicability: 'possible' | 'needs_clarification' | 'definite' | string;
   source: string;
   source_label?: string | null;
+  source_url?: string | null;
+  direction?: 'import' | 'export' | 'both' | string;
+  section?: string | null;
   used_for_missing_check: false;
   requires_manual_review: boolean;
   hs_prefix?: string | null;
   rule_name?: string | null;
   reason: string;
   note?: string | null;
+  outcome?: string | null;
+  matched_rule?: string | null;
+  matched_hs_scope?: string | null;
+  missing_facts?: string[];
+  exclusion_reason?: string | null;
+  source_revision?: string | null;
+  eligible_for_enforcement?: boolean;
+  curated_enforcement_key?: string | null;
+  transaction_level?: boolean;
+  risk_level?: string | null;
+  certificate_required?: boolean | null;
+  exact_advisory?: boolean;
+  evidence_trust?: string | null;
+  trusted_source_verified?: boolean;
+  identification_url?: string | null;
+  source_documents?: Array<{
+    number?: number | string | null;
+    title?: string | null;
+    official_url?: string | null;
+  }>;
 };
 
 export type NormativeDocument = {
@@ -740,6 +763,48 @@ export type NormativeRequirementsBlockData = {
   required_documents: NormativeDocument[];
   missing_documents: NormativeDocument[];
   advisory_requirements: AdvisoryRequirement[];
+  measure_families?: Array<{
+    family: string;
+    label: string;
+    status: 'definite' | 'needs_clarification' | 'legacy_signal' | 'not_detected' | string;
+    requirements_count: number;
+    signals_count?: number;
+    permit_types?: string[];
+    regulations?: string[];
+    matched_sections?: string[];
+    directions?: string[];
+    source_labels?: string[];
+  }>;
+  measure_families_disclaimer?: string | null;
+  official_ntm_applicability?: {
+    mode?: string;
+    structured_facts_received?: number;
+    exact_rows_count?: number;
+    definite_advisory_count?: number;
+    excluded_count?: number;
+    exact_needs_clarification_count?: number;
+    missing_fact_keys?: string[];
+    broker_effect?: boolean;
+    facts_trust_boundary?: string;
+  } | null;
+  official_ntm_resolved_exclusions?: Array<Record<string, unknown>>;
+  official_ntm_catch_all?: {
+    status?: string;
+    applicability?: string;
+    reason?: string;
+    recommended_action?: string;
+    missing_facts?: string[];
+    source_url?: string | null;
+    source_revision?: string | null;
+    automatic_document_requirement?: boolean;
+  } | null;
+  curated_enforcement_audit?: {
+    enabled?: boolean;
+    default?: boolean;
+    allowlist_version?: string;
+    applied_rule_ids?: string[];
+    broker_changed?: boolean;
+  } | null;
   sources_summary?: string[];
   empty_message?: string | null;
   tr_ts?: string[];

@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import re
+from collections.abc import Mapping
 from typing import Any, Dict, List, Union
 
 from .ntm_enricher import enrich_measures_by_description
@@ -188,17 +189,46 @@ async def check_position_non_tariff(
     rules_enforcement_enabled: bool | None = None,
     measures_enforcement_enabled: bool | None = None,
     official_sgr_advisory_enabled: bool | None = None,
+    official_ntm_advisory_enabled: bool | None = None,
+    official_curated_enforcement_enabled: bool | None = None,
+    transaction_facts: Mapping[str, Any] | None = None,
 ) -> Dict[str, Any]:
     """Проверка нетарифных требований по одной позиции товара."""
-    catalog_and_layers = get_full_ntm_requirements(hs_code, description or "")
-    rules = _sanitize_ntm_rules_for_position(hs_code, description, find_rules_for_code(hs_code))
-    db_measures = find_measures_for_code(hs_code, direction="import")
+    raw_direction = str((transaction_facts or {}).get("direction") or "").strip().lower()
+    movement_direction = raw_direction or "import"
+    legacy_import_broker_applied = movement_direction == "import"
+    # The historical catalog/rules/description triggers are import-oriented.
+    # For export/transit they must not create missing-document ERRORs alongside
+    # the direction-aware exact advisory layer.
+    catalog_and_layers = (
+        get_full_ntm_requirements(hs_code, description or "")
+        if legacy_import_broker_applied
+        else []
+    )
+    rules = (
+        _sanitize_ntm_rules_for_position(
+            hs_code,
+            description,
+            find_rules_for_code(hs_code),
+        )
+        if legacy_import_broker_applied
+        else []
+    )
+    db_measures = (
+        find_measures_for_code(hs_code, direction=movement_direction)
+        if movement_direction in {"import", "export"}
+        else []
+    )
     measures: List[Dict[str, Any]] = list(db_measures)
-    trigger_measures = find_measures_by_description(description, hs_code)
+    trigger_measures = (
+        find_measures_by_description(description, hs_code)
+        if legacy_import_broker_applied
+        else []
+    )
     if trigger_measures:
         measures.extend(trigger_measures)
     # Если есть описание товара — обогащаем через AI.
-    if description and len(description) > 10:
+    if legacy_import_broker_applied and description and len(description) > 10:
         enriched = await enrich_measures_by_description(
             hs_code=hs_code,
             description=description,
@@ -223,6 +253,11 @@ async def check_position_non_tariff(
         permits_result = await check_permits(permits, hs_code)
 
     notes: list[str] = []
+    if not legacy_import_broker_applied:
+        notes.append(
+            "Для вывоза/транзита legacy-контур требований ввоза отключён; "
+            "направление оценивается официальным advisory-контуром без автоматического missing-check."
+        )
     required_types: set[str] = set()
     tr_ts_list: set[str] = set()
     rule_sources: list[Dict[str, Union[str, int, bool, list]]] = []
@@ -311,7 +346,7 @@ async def check_position_non_tariff(
             }
         )
 
-    domain_pt = get_default_cert_form(hs_code)
+    domain_pt = get_default_cert_form(hs_code) if legacy_import_broker_applied else None
     if domain_pt:
         required_types.add(domain_pt)
         rule_sources.append(
@@ -326,7 +361,9 @@ async def check_position_non_tariff(
             }
         )
 
-    sensitive_permit = get_sensitive_override(hs_code)
+    sensitive_permit = (
+        get_sensitive_override(hs_code) if legacy_import_broker_applied else None
+    )
     if sensitive_permit:
         required_types.add(sensitive_permit)
 
@@ -350,23 +387,98 @@ async def check_position_non_tariff(
         should_apply_official_sgr_advisory,
     )
 
-    legacy_advisory = get_advisory_legacy_rule_requirements_v2(
-        hs_code,
-        description or "",
+    legacy_advisory = (
+        get_advisory_legacy_rule_requirements_v2(hs_code, description or "")
+        if legacy_import_broker_applied
+        else []
     )
     official_advisory: list[dict[str, Any]] = []
-    if should_apply_official_sgr_advisory(official_sgr_advisory_enabled):
+    if legacy_import_broker_applied and should_apply_official_sgr_advisory(
+        official_sgr_advisory_enabled
+    ):
         official_advisory = get_advisory_official_sgr_requirements_v2(
             hs_code,
             description or "",
         )
+
+    from .official_ntm_contours import (
+        evaluate_official_ntm_contours,
+        should_apply_official_ntm_advisory,
+    )
+
+    official_ntm_result: dict[str, Any] | None = None
+    if should_apply_official_ntm_advisory(official_ntm_advisory_enabled):
+        legacy_family_hits: set[str] = set()
+        family_signals: list[dict[str, Any]] = []
+        for row in broker_required_permits:
+            permit_type = str(row.get("permit_type") or "")
+            family: str | None = None
+            if permit_type in {"ДС", "СС"}:
+                family = "technical_conformity"
+            elif permit_type == "СГР":
+                family = "sanitary_registration"
+            elif permit_type == "ВС":
+                family = "veterinary_control"
+            elif permit_type == "ФСС":
+                family = "phytosanitary_control"
+            elif permit_type == "НФ":
+                family = "cryptography"
+            elif permit_type == "ЛЗ":
+                family = "licensing"
+            elif permit_type in {"ЛЗ ФСТЭК", "ЛЗ/разрешение ФСТЭК"}:
+                family = "export_control_dual_use"
+            if family:
+                legacy_family_hits.add(family)
+                family_signals.append({
+                    "family": family,
+                    "permit_type": permit_type,
+                    "tr_ts": row.get("tr_ts"),
+                    "source": str(row.get("source") or "broker_catalog_layers"),
+                    "source_label": "Действующий каталог требований",
+                })
+        if any(
+            "prohibit" in str(row.get("measure_type") or "").lower()
+            or "запрет" in f"{row.get('description', '')} {row.get('legal_ref', '')}".lower()
+            for row in measures
+        ):
+            legacy_family_hits.add("prohibitions_restrictions")
+            family_signals.append({
+                "family": "prohibitions_restrictions",
+                "permit_type": "ЗАПРЕТ",
+                "tr_ts": None,
+                "source": "non_tariff_measures",
+                "source_label": "Меры нетарифного регулирования",
+            })
+        if any(
+            "dual_use" in str(row.get("measure_type") or "").lower()
+            or "двойн" in f"{row.get('description', '')} {row.get('legal_ref', '')}".lower()
+            for row in measures
+        ):
+            legacy_family_hits.add("export_control_dual_use")
+            family_signals.append({
+                "family": "export_control_dual_use",
+                "permit_type": "ЛЗ ФСТЭК",
+                "tr_ts": None,
+                "source": "non_tariff_measures",
+                "source_label": "Меры экспортного контроля",
+            })
+        official_ntm_result = evaluate_official_ntm_contours(
+            hs_code,
+            description or "",
+            legacy_family_hits=legacy_family_hits,
+            family_signals=family_signals,
+            transaction_facts=transaction_facts,
+        )
+        official_advisory.extend(official_ntm_result["requirements"])
     advisory_requirements = merge_advisory_legacy_and_official(
         legacy_advisory,
         official_advisory,
     )
 
     legacy_v2_rules_informational: list[dict[str, Any]] = []
-    if should_apply_v2_rules_enforcement(rules_enforcement_enabled):
+    if legacy_import_broker_applied and should_apply_v2_rules_enforcement(
+        rules_enforcement_enabled
+    ):
         v2_rule_rows = get_legacy_rule_requirements_for_enforcement(
             hs_code,
             description or "",
@@ -375,7 +487,7 @@ async def check_position_non_tariff(
             broker_required_permits,
             v2_rule_rows,
         )
-    elif include_effective_requirements_debug:
+    elif include_effective_requirements_debug and legacy_import_broker_applied:
         legacy_v2_rules_informational = get_legacy_rule_requirements_v2_legacy_shape(
             hs_code,
             description or "",
@@ -387,11 +499,27 @@ async def check_position_non_tariff(
         should_apply_v2_measures_enforcement,
     )
 
-    if should_apply_v2_measures_enforcement(measures_enforcement_enabled):
+    if legacy_import_broker_applied and should_apply_v2_measures_enforcement(
+        measures_enforcement_enabled
+    ):
         broker_required_permits, measures_enforcement_audit = apply_v2_measures_enforcement_to_broker(
             broker_required_permits,
             hs_code,
             description or "",
+        )
+
+    curated_enforcement_audit: Dict[str, Any] | None = None
+    if official_ntm_result is not None:
+        from .official_ntm_curated_enforcement import (
+            apply_curated_official_enforcement,
+        )
+
+        broker_required_permits, curated_enforcement_audit = (
+            apply_curated_official_enforcement(
+                broker_required_permits,
+                official_ntm_result.get("exact_requirements") or [],
+                enabled=official_curated_enforcement_enabled,
+            )
         )
 
     for br in broker_required_permits:
@@ -400,10 +528,19 @@ async def check_position_non_tariff(
             tr_ts_list.add(str(ts))
 
     broker_keys = {(str(r.get("permit_type") or ""), r.get("tr_ts")) for r in broker_required_permits}
+    official_advisory_sources = {
+        "official_sgr_registry",
+        "official_ntm_contours",
+        "official_export_control",
+        "official_ntm_exact_devices_shadow",
+        "official_ntm_exact_health",
+        "official_ntm_exact_trade",
+    }
     advisory_requirements = [
         a
         for a in advisory_requirements
-        if (a.get("permit_type"), a.get("tr_ts")) not in broker_keys
+        if a.get("source") in official_advisory_sources
+        or (a.get("permit_type"), a.get("tr_ts")) not in broker_keys
     ]
 
     got_types = {p["type"] for p in permits_result if p.get("type")}
@@ -416,6 +553,18 @@ async def check_position_non_tariff(
         status = "WARNING"
     else:
         status = "OK"
+
+    transaction_risk_status = str(
+        ((official_ntm_result or {}).get("catch_all") or {}).get("status") or ""
+    )
+    if (
+        status == "OK"
+        and transaction_risk_status
+        in {"permission_review_required", "prohibited_transaction_risk"}
+    ):
+        # A catch-all hit is not a missing document, but a green overall status
+        # would contradict the required stop/review action.
+        status = "WARNING"
 
     if not rules and not measures and not broker_required_permits:
         notes.append("Для данного кода ТН ВЭД нет настроенных правил нетарифных мер (нетарифные требования могут применяться — уточните вручную).")
@@ -435,6 +584,9 @@ async def check_position_non_tariff(
         "hs_code": hs_code,
         "description": description,
         "country": country,
+        "movement_direction": movement_direction,
+        "legacy_import_broker_applied": legacy_import_broker_applied,
+        "transaction_risk_status": transaction_risk_status or None,
         "tr_ts": sorted(tr_ts_list),
         "tr_ts_act_codes": tr_ts_codes,
         "tr_ts_registry": tr_ts_registry,
@@ -444,15 +596,24 @@ async def check_position_non_tariff(
         "permits": permits_result,
         "missing_permit_types": sorted(missing_types),
         "advisory_requirements": advisory_requirements,
+        "measure_families": (official_ntm_result or {}).get("measure_families", []),
+        "measure_families_disclaimer": (official_ntm_result or {}).get("disclaimer"),
+        "official_ntm_applicability": (official_ntm_result or {}).get("applicability_summary"),
+        "official_ntm_resolved_exclusions": (official_ntm_result or {}).get("resolved_exclusions", []),
+        "official_ntm_catch_all": (official_ntm_result or {}).get("catch_all"),
         "notes": notes,
         "rule_sources": rule_sources,
         "data_freshness": _data_freshness(),
     }
     if measures_enforcement_audit is not None:
         result["measures_enforcement_audit"] = measures_enforcement_audit
+    if curated_enforcement_audit is not None:
+        result["curated_enforcement_audit"] = curated_enforcement_audit
     if include_effective_requirements_debug:
-        if not legacy_v2_rules_informational and should_apply_v2_rules_enforcement(
-            rules_enforcement_enabled
+        if (
+            legacy_import_broker_applied
+            and not legacy_v2_rules_informational
+            and should_apply_v2_rules_enforcement(rules_enforcement_enabled)
         ):
             legacy_v2_rules_informational = get_legacy_rule_requirements_v2_legacy_shape(
                 hs_code,
@@ -466,9 +627,21 @@ async def check_position_non_tariff(
             legacy_v2_rules=legacy_v2_rules_informational,
         )
     result["normative_block"] = build_normative_requirements_block(result)
+    destination_country = str(
+        (transaction_facts or {}).get("destination_country") or ""
+    ).strip() or None
+    raw_end_user = (transaction_facts or {}).get("end_user")
+    counterparty_name = (
+        str(raw_end_user).strip()
+        if isinstance(raw_end_user, str) and raw_end_user.strip()
+        else None
+    )
     result["risk_block"] = build_sanctions_risk_block(
         hs_code=hs_code,
         description=description or "",
         country=country,
+        destination_country=destination_country,
+        counterparty_name=counterparty_name,
+        movement_direction=movement_direction,
     ).model_dump()
     return result

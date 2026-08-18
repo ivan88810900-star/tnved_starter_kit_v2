@@ -382,7 +382,11 @@ def _golden_choices() -> dict[str, list[dict]]:
                     diagnostic._PDO_2204_TITLE,
                     *(
                         _code(code)
-                        for code in diagnostic._PDO_2204_SLICE
+                        for code in diagnostic._PDO_2204_PRE_OTHER_SLICE
+                    ),
+                    _subgroup_many(
+                        diagnostic._PDO_2204_OTHER_TITLE,
+                        *diagnostic._PDO_2204_OTHER_SLICE,
                     ),
                 ),
                 _semantic(
@@ -414,7 +418,56 @@ def _golden_choices() -> dict[str, list[dict]]:
                         "2204219800",
                     )
                 ),
-            )
+            ),
+            _branch(
+                diagnostic._BULK_2204_PARENT_CODE,
+                *(
+                    _code(code)
+                    for code in (
+                        "2204221000",
+                        "2204221100",
+                        "2204221200",
+                        "2204221300",
+                        "2204221700",
+                        "2204221800",
+                    )
+                ),
+                _semantic(
+                    diagnostic._BULK_2204_OTHER_TITLE,
+                    *(
+                        _code(code)
+                        for code in diagnostic._BULK_2204_OTHER_SLICE
+                    ),
+                ),
+                _semantic(
+                    diagnostic._PGI_2204_TITLE,
+                    _code("2204227900"),
+                ),
+                *(
+                    _code(code)
+                    for code in (
+                        "2204228000",
+                        "2204228100",
+                        "2204228200",
+                        "2204228300",
+                        "2204228400",
+                        "2204228500",
+                        "2204228600",
+                        "2204228700",
+                        "2204228800",
+                        "2204228900",
+                        "2204229000",
+                        "2204229100",
+                        "2204229200",
+                        "2204229300",
+                        "2204229400",
+                        "2204229500",
+                        "2204229600",
+                        "2204229700",
+                        "2204229800",
+                    )
+                ),
+            ),
         ],
         "8517": [_code("8517130000")],
     }
@@ -517,7 +570,7 @@ def test_2204_golden_assertions_reject_a_partial_pdo_slice() -> None:
     checks = diagnostic._hierarchy_checks("2204", choices)
     assert checks["pdo_official_group_present"] is True
     assert checks["pdo_exact_33_leaf_slice"] is False
-    assert checks["pdo_step_33_choices"] is False
+    assert checks["pdo_step_18_choices"] is False
 
 
 def test_2204_golden_assertions_require_pdo_before_pgi_under_same_parent() -> None:
@@ -529,6 +582,31 @@ def test_2204_golden_assertions_require_pdo_before_pgi_under_same_parent() -> No
 
     assert checks["pdo_exact_33_leaf_slice"] is True
     assert checks["pgi_boundary_after_pdo_slice"] is False
+
+
+def test_2204_golden_assertions_require_exact_pdo_other_subgroup() -> None:
+    choices = _golden_choices()["2204"]
+    pdo_other = choices[0]["children"][1]["children"][-1]
+    pdo_other["children"].pop()
+
+    checks = diagnostic._hierarchy_checks("2204", choices)
+
+    assert checks["pdo_other_subgroup_present"] is True
+    assert checks["pdo_other_exact_16_leaf_slice"] is False
+    assert checks["pdo_other_step_16_choices"] is False
+    assert checks["pdo_exact_33_leaf_slice"] is False
+
+
+def test_2204_golden_assertions_require_exact_220422_other_group() -> None:
+    choices = _golden_choices()["2204"]
+    bulk_other = choices[1]["children"][6]
+    bulk_other["children"].pop()
+
+    checks = diagnostic._hierarchy_checks("2204", choices)
+
+    assert checks["bulk_220422_other_group_present"] is True
+    assert checks["bulk_220422_other_exact_7_leaf_slice"] is False
+    assert checks["bulk_220422_other_step_7_choices"] is False
 
 
 def test_0406_golden_assertions_require_exact_moisture_scope() -> None:
@@ -581,9 +659,9 @@ def test_all_heading_census_loads_model_once_and_returns_aggregates_only() -> No
     assert report["ok"] is True
     assert report["catalog"]["discovered_headings"] == 7
     assert report["catalog"]["snapshot_count"] == 1
-    assert report["correctness"]["expected_real_codes"] == 231
-    assert report["correctness"]["source_code_nodes"] == 231
-    assert report["correctness"]["canonical_declarable_leaves"] == 206
+    assert report["correctness"]["expected_real_codes"] == 265
+    assert report["correctness"]["source_code_nodes"] == 265
+    assert report["correctness"]["canonical_declarable_leaves"] == 239
     assert report["correctness"]["duplicate_code_occurrences"] == 0
     assert report["golden_assertions"]["failed_headings"] == []
     assert report["quality_census"]["diagnostic_totals"] == {
@@ -594,8 +672,8 @@ def test_all_heading_census_loads_model_once_and_returns_aggregates_only() -> No
     assert report["quality_census"]["semantic_choice_coverage"] == {
         "headings_with_choices": 6,
         "heading_ratio": 0.857143,
-        "declarable_leaves_under_choices": 157,
-        "declarable_leaf_ratio": 0.762136,
+        "declarable_leaves_under_choices": 165,
+        "declarable_leaf_ratio": 0.690377,
     }
     root_choices = report["quality_census"]["counts"]["root_choices"]
     assert root_choices["p50"] == 3

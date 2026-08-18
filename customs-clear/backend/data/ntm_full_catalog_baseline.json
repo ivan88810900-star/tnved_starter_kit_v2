@@ -1,0 +1,772 @@
+{
+  "schema_version": "1",
+  "dataset_id": "ntm-full-catalog-reference-20260815",
+  "qualification": "Full 21/96/17809 reference corpus; every active ETT code is present and has a non-empty description. Blank reference rows are disclosed.",
+  "parser": {
+    "path": "customs-clear/backend/scripts/tnved_pdf_parser.py",
+    "sha256": "a74f1150806ab12c52dd73dfade1f44b928888f877e67500dd42b58e23d1307f"
+  },
+  "pdf_source": {
+    "source_dir": "backend/app/services/source_sync/data",
+    "file_count": 96,
+    "total_size_bytes": 33861731,
+    "chapter_codes": [
+      "01",
+      "02",
+      "03",
+      "04",
+      "05",
+      "06",
+      "07",
+      "08",
+      "09",
+      "10",
+      "11",
+      "12",
+      "13",
+      "14",
+      "15",
+      "16",
+      "17",
+      "18",
+      "19",
+      "20",
+      "21",
+      "22",
+      "23",
+      "24",
+      "25",
+      "26",
+      "27",
+      "28",
+      "29",
+      "30",
+      "31",
+      "32",
+      "33",
+      "34",
+      "35",
+      "36",
+      "37",
+      "38",
+      "39",
+      "40",
+      "41",
+      "42",
+      "43",
+      "44",
+      "45",
+      "46",
+      "47",
+      "48",
+      "49",
+      "50",
+      "51",
+      "52",
+      "53",
+      "54",
+      "55",
+      "56",
+      "57",
+      "58",
+      "59",
+      "60",
+      "61",
+      "62",
+      "63",
+      "64",
+      "65",
+      "66",
+      "67",
+      "68",
+      "69",
+      "70",
+      "71",
+      "72",
+      "73",
+      "74",
+      "75",
+      "76",
+      "78",
+      "79",
+      "80",
+      "81",
+      "82",
+      "83",
+      "84",
+      "85",
+      "86",
+      "87",
+      "88",
+      "89",
+      "90",
+      "91",
+      "92",
+      "93",
+      "94",
+      "95",
+      "96",
+      "97"
+    ],
+    "manifest_sha256": "05d953c993f5ae10557d385ece0ef201dcce3f76d387e622d98d8da223daed41",
+    "files": [
+      {
+        "name": "ru.01_2022_25.04.2022.pdf",
+        "size_bytes": 168285,
+        "sha256": "7942d2176d8c728dde35f55cc4871ba230fdef721b30d5c191fd444cd55537c9"
+      },
+      {
+        "name": "ru.02_2022.pdf",
+        "size_bytes": 474466,
+        "sha256": "d026efa23a48105a80f4a9194525f454d36884d7cbc94abaa5843a4fcc871b74"
+      },
+      {
+        "name": "ru.03_2022_28.03.2022.pdf",
+        "size_bytes": 438928,
+        "sha256": "8f5cb9bf465b882778d0530f64221b6fa7b4aaafea492a032be66991115dd059"
+      },
+      {
+        "name": "ru.04_2022_25.04.2022.pdf",
+        "size_bytes": 257546,
+        "sha256": "5b94a99f1784e8f82d77883235360b96440781fab68c76c15bdb06a516584277"
+      },
+      {
+        "name": "ru.05_2022_28.04.2022.pdf",
+        "size_bytes": 149757,
+        "sha256": "2e7670fe509fe6ce6175f3edd6ed52a29cb1aca1644cbcdc77ffd2fcbdce6a4a"
+      },
+      {
+        "name": "ru.06_2022_25.04.2022.pdf",
+        "size_bytes": 155179,
+        "sha256": "6cd11b8b134d4f3712137966bdb757d81bc9720e3da6abb5c6183ad1960bbbf3"
+      },
+      {
+        "name": "ru.07_2022_08.05.2022.pdf",
+        "size_bytes": 190992,
+        "sha256": "75080d3883897f0d697347093454326d6ba05f0e9796d6eeb97bc15dbe1e3f88"
+      },
+      {
+        "name": "ru.08_2022_28.07.2024.pdf",
+        "size_bytes": 376659,
+        "sha256": "e4c6e8d764375e793281554732cde740411d4faa0abd80bfe4b5250994f60bd4"
+      },
+      {
+        "name": "ru.09_2022_25.04.2022.pdf",
+        "size_bytes": 157910,
+        "sha256": "1efd21071ce9701f1d42f7ceca100d0fff2d951e454f9274759ca66d85d6efa6"
+      },
+      {
+        "name": "ru.10_2022_25.04.2022.pdf",
+        "size_bytes": 172905,
+        "sha256": "22986cc7cbca59417296f14dbe5668dbcd10cf585ae9e9ad6dabad1eeaadc887"
+      },
+      {
+        "name": "ru.11_2022_08.03.2026.pdf",
+        "size_bytes": 312326,
+        "sha256": "260c816907338028f08ac33d3b3389c2d2ac8097fbc95eb70f74ec405fa299e6"
+      },
+      {
+        "name": "ru.12_2022_08.03.2026.pdf",
+        "size_bytes": 491821,
+        "sha256": "bfdc6f500387a69c116d8ce16a8a15c06fc8af00ecc7419e66aa31686db27650"
+      },
+      {
+        "name": "ru.13_2022_25.04.2022.pdf",
+        "size_bytes": 135110,
+        "sha256": "ddc4cd6b3dd7d78fc856ffb7bee7bf308144df500e206a22e883b15dbf7f25b1"
+      },
+      {
+        "name": "ru.14_2022_08.03.2026.pdf",
+        "size_bytes": 210230,
+        "sha256": "6589f39bda3dec76d4167e7bd6fed0ba81ca87444860f3cecc4f3e6f85ccc64d"
+      },
+      {
+        "name": "ru.15_2022_08.03.2026.pdf",
+        "size_bytes": 467620,
+        "sha256": "7ae3b93d5011cda4449d75039dbcbb6cd8e8853b8ffa6698db22960476c1553a"
+      },
+      {
+        "name": "ru.16_2022_10.09.2023.pdf",
+        "size_bytes": 202361,
+        "sha256": "15570c27486bbae4e5545cb2cc92eeb0775262c730c0622af03ce324e46a5061"
+      },
+      {
+        "name": "ru.17_2022_08.03.2026.pdf",
+        "size_bytes": 391910,
+        "sha256": "dfd21c0be4bad3d6306a8298a20ad4ff6df4f4a207bbae82236a89772136ea36"
+      },
+      {
+        "name": "ru.18_2022_08.03.2026.pdf",
+        "size_bytes": 232425,
+        "sha256": "90eee6f644e866ab2d06ee26fed1b4fa54f21f7f6cb4cfb10461051a80335816"
+      },
+      {
+        "name": "ru.19_2022_25.04.2022.pdf",
+        "size_bytes": 169395,
+        "sha256": "1eeee5eadd2d095038b287ddae6756d0ff580013f9f0ee6085aece474aec5f55"
+      },
+      {
+        "name": "ru.20_2022_12.06.2025.pdf",
+        "size_bytes": 841198,
+        "sha256": "0d766331e83704cdaf0b260c4968e8e10cb2ee122261a1be1bacec4b8d332a37"
+      },
+      {
+        "name": "ru.21_2022_08.03.2026.pdf",
+        "size_bytes": 289751,
+        "sha256": "acb6761fd931e6e0ab07b3974bd3291b962bb6ad6c0617a7461acced446de85f"
+      },
+      {
+        "name": "ru.22_2022_25.04.2022.pdf",
+        "size_bytes": 315516,
+        "sha256": "d36ff91756bda80cf54895843e8c5fca75897b26d6e77596f29a885f06b375d7"
+      },
+      {
+        "name": "ru.23_2022_19.02.2023.pdf",
+        "size_bytes": 183547,
+        "sha256": "8f11edeb8907b0f325c3c492943880fa6872839f05cac57d3701de066bbee775"
+      },
+      {
+        "name": "ru.24_2022.pdf",
+        "size_bytes": 150663,
+        "sha256": "2b4d840d43b2ba88fdf1870d006e1248927b5120b3806c4822ca96d6a24e688b"
+      },
+      {
+        "name": "ru.25_2022_08.03.2026.pdf",
+        "size_bytes": 314259,
+        "sha256": "9dbc2532eca36d9a36831bf5904f1c97e1554ea52ace97143e72673e62be0bee"
+      },
+      {
+        "name": "ru.26_2022_20.11.2024.pdf",
+        "size_bytes": 258583,
+        "sha256": "c73f5b34c5b0517f9dd410d7c9c9e9a7fc5a345091a14d354ad01ae4af4d1d08"
+      },
+      {
+        "name": "ru.27_2022_08.03.2026.pdf",
+        "size_bytes": 461711,
+        "sha256": "013f95540459762ba4541a236af89d9ff81cca9f04fa62b503f45cabf956b4f7"
+      },
+      {
+        "name": "ru.28_2022_08.03.2026.pdf",
+        "size_bytes": 559815,
+        "sha256": "ef41c2e303684c68cb796931ef8d8fcb5cd9b47c2eeac9038ff6f4911283113a"
+      },
+      {
+        "name": "ru.29_2022_08.03.2026.pdf",
+        "size_bytes": 959355,
+        "sha256": "d0b2869ed1f7c11eb94f3e26e7ce061d46dd0329cf47e98788712f39e57598f1"
+      },
+      {
+        "name": "ru.30_2022_08.03.2026.pdf",
+        "size_bytes": 346952,
+        "sha256": "5f4ea9bc3534c7d01b314eb7fd9219a38d8dd74d69960394f55c929f686d0249"
+      },
+      {
+        "name": "ru.31_2022_03.12.2023.pdf",
+        "size_bytes": 155278,
+        "sha256": "e2787e2b31953994570aef12659aae04aef69b87dd172b44123552fa56472a97"
+      },
+      {
+        "name": "ru.32_2022_08.03.2026.pdf",
+        "size_bytes": 483241,
+        "sha256": "235eea305fc9e929903b7c731361c2b8d93dd446aeef5b3243c817cff11b6cb4"
+      },
+      {
+        "name": "ru.33_2022_08.03.2026.pdf",
+        "size_bytes": 263836,
+        "sha256": "26eb35574b88e98b4e0a041350eef22cfde7ad98f740464dd5837085bcc51dc3"
+      },
+      {
+        "name": "ru.34_2022_08.03.2026.pdf",
+        "size_bytes": 262876,
+        "sha256": "d055b4b41bf8f72b131d08b77982a61f9231843b2e896fa61170f3f75c71532b"
+      },
+      {
+        "name": "ru.35_2022_08.03.2026.pdf",
+        "size_bytes": 258661,
+        "sha256": "199b267433c23f0eccb35d9695ef4bb6ec6dc8e31dd9e7f7efda94dc49fd65c5"
+      },
+      {
+        "name": "ru.36_2022.pdf",
+        "size_bytes": 135604,
+        "sha256": "1be7c23e6d14a48cff9302a011805dbe9bb37946c619ef2953172255a203f716"
+      },
+      {
+        "name": "ru.37_2022_08.03.2026.pdf",
+        "size_bytes": 250540,
+        "sha256": "998fca6b6aa238f91b65ea1e852767f9e286cfbee500f32fa5ad81b619ab1918"
+      },
+      {
+        "name": "ru.38_2022_08.03.2026.pdf",
+        "size_bytes": 557755,
+        "sha256": "4d8798483fbe725cb05142a953493b93f6b8ad87ae4f545c8664fada59215c1d"
+      },
+      {
+        "name": "ru.39_2022_08.03.2026.pdf",
+        "size_bytes": 863350,
+        "sha256": "b31bc592790137114e151ddd628ed54082e24b01b1c8245ecc24cb2f84413b5a"
+      },
+      {
+        "name": "ru.40_2022_08.03.2026.pdf",
+        "size_bytes": 368363,
+        "sha256": "57bced8470cc8bbd88d79038374015bdba68c35d5592166002c5ac9115eddbb1"
+      },
+      {
+        "name": "ru.41_2022.pdf",
+        "size_bytes": 181138,
+        "sha256": "871219209cdca4e6b730b52d2e664ed85e09b5ad698fa2b3528ec88414ce3af7"
+      },
+      {
+        "name": "ru.42_2022.pdf",
+        "size_bytes": 161971,
+        "sha256": "5f2f383ca3831c8dbd4afe9ecc6adef5f28bf7b5bce53d28dc072630482db3db"
+      },
+      {
+        "name": "ru.43_2022_25.04.2022.pdf",
+        "size_bytes": 172505,
+        "sha256": "8fe23e71527ed8a4283c5dfb5f1146580ccb191362275887241f83862b997f1f"
+      },
+      {
+        "name": "ru.44_2022_16.06.2022.pdf",
+        "size_bytes": 558838,
+        "sha256": "1c7abb43e53bdc16f0b63d5d7db434c8cba137c5778ea89c0cb4f33e2a31e3ec"
+      },
+      {
+        "name": "ru.45_2022_08.03.2026.pdf",
+        "size_bytes": 207255,
+        "sha256": "700a1770a9bb19d9ed00f4e9f5a8d4a55089ee58dfd2e871f79678774f6114ce"
+      },
+      {
+        "name": "ru.46_2022.pdf",
+        "size_bytes": 143119,
+        "sha256": "a3653ef57d917f00208cf66cb054f8706bec89706f17e7a3bb1011b48eae38d6"
+      },
+      {
+        "name": "ru.47_2022_08.03.2026.pdf",
+        "size_bytes": 234188,
+        "sha256": "d6218c263892b8d5b49981961c0a903d62376aefe8d5efe9a3aab10e92a3d8ca"
+      },
+      {
+        "name": "ru.48_2022_08.03.2026.pdf",
+        "size_bytes": 511843,
+        "sha256": "a5ec4385eee6bcefc9b4893c54f4ed3d8453050f01bcc4cf8f0c7f226985dbdb"
+      },
+      {
+        "name": "ru.49_2022_08.03.2026.pdf",
+        "size_bytes": 232682,
+        "sha256": "293ab81b29eb3c426d406c83a75bfea1f66da1d4171c39a8927b91ec7d57bb50"
+      },
+      {
+        "name": "ru.50_2022.pdf",
+        "size_bytes": 186643,
+        "sha256": "bbf3618a251f6f77ba04ae264c655f195650c8fe1935c7a891e3a16738c89b96"
+      },
+      {
+        "name": "ru.51_2022_07.02.2026.pdf",
+        "size_bytes": 294225,
+        "sha256": "ba5550a5cb109903ab86c093200cbffd117e24d22bcc62680cd209659d75dbc7"
+      },
+      {
+        "name": "ru.52_2022_08.03.2026.pdf",
+        "size_bytes": 381504,
+        "sha256": "4b19108a916debb82a65ff59b64519e3b7313896332e6a104555236d4a72e0fd"
+      },
+      {
+        "name": "ru.53_2022_08.03.2026.pdf",
+        "size_bytes": 251726,
+        "sha256": "a55360f52aad508eaae0ee8134b2ee33ab174b7febb0e6a12a1a2d63507aeaa8"
+      },
+      {
+        "name": "ru.54_2022_08.03.2026.pdf",
+        "size_bytes": 300554,
+        "sha256": "6bf4a879ad72a599ce73af61c6ff05f935671f99ace9287ffa9f6b08740e3ed3"
+      },
+      {
+        "name": "ru.55_2022_08.03.2026.pdf",
+        "size_bytes": 544245,
+        "sha256": "b06b50075fc8e20711530f606f0cf8029c2db405f90e0d5c0e0000455c6719ad"
+      },
+      {
+        "name": "ru.56_2022_08.03.2026.pdf",
+        "size_bytes": 293929,
+        "sha256": "90391acfeb92de823141bda0eafe794e87c103d51fbe34f0537968ad9830c784"
+      },
+      {
+        "name": "ru.57_2022.pdf",
+        "size_bytes": 151232,
+        "sha256": "825d136aedef63d3a5eb7d3729bda93d3d7ba1c74cf5893bdb578fdb63a24fc2"
+      },
+      {
+        "name": "ru.58_2022_08.03.2026.pdf",
+        "size_bytes": 262970,
+        "sha256": "d024829230be6af70a96744558e3957e7aa5f6a61fc7c487efb6e234fe3281cb"
+      },
+      {
+        "name": "ru.59_2022_08.03.2026.pdf",
+        "size_bytes": 287186,
+        "sha256": "9515bd420c1a050cbe436401d46c59e9e986ce2869af75ff3d917ebb46f9b0d4"
+      },
+      {
+        "name": "ru.60_2022_08.03.2026.pdf",
+        "size_bytes": 269184,
+        "sha256": "bd4449385b0dc86f6dff307cce0874a6d8f6f85ec03444601a3874860164f916"
+      },
+      {
+        "name": "ru.61_2022_25.04.2022.pdf",
+        "size_bytes": 238487,
+        "sha256": "55a77a8d647f87b85055da92e88bb47ce49ca90e184c5f78b96a08cef441b9a0"
+      },
+      {
+        "name": "ru.62_2022.pdf",
+        "size_bytes": 244578,
+        "sha256": "8dc3e2e4d8f9b8a2f95a6d20ffc0edbca767a11690a196a52e519d6675e25f21"
+      },
+      {
+        "name": "ru.63_2022_12.06.2025.pdf",
+        "size_bytes": 328999,
+        "sha256": "d31cb8950e5f88e9fdf70ee3c2635c9f28ba8a0be4b3aa54cbbb929fede3491e"
+      },
+      {
+        "name": "ru.64_2022.pdf",
+        "size_bytes": 189095,
+        "sha256": "2a8b54c1915d42c698b88e803ce68c226731e13228e03069c631c89d2dc32e74"
+      },
+      {
+        "name": "ru.65_2022.pdf",
+        "size_bytes": 135962,
+        "sha256": "42c11021ffbde994428ed98cc4d4abda545b765e5a30a5542403cc5197d4c9ba"
+      },
+      {
+        "name": "ru.66_2022.pdf",
+        "size_bytes": 132356,
+        "sha256": "f673510605765d131b90d2d817a8bd0f2450c682f65a16a3efc05d8f83cdcf54"
+      },
+      {
+        "name": "ru.67_2022.pdf",
+        "size_bytes": 134754,
+        "sha256": "fb0913b9dd8de7f43828b3eae59669e5c5fd89fc087cce78d73459191f641ac7"
+      },
+      {
+        "name": "ru.68_2022_25.04.2022.pdf",
+        "size_bytes": 185791,
+        "sha256": "e6adc19e62c8bdf6530d40994eaef74e2c46ece905bbd6f5109b5850db41461f"
+      },
+      {
+        "name": "ru.69_2022_08.05.2022.pdf",
+        "size_bytes": 178322,
+        "sha256": "11daa8f36a456ee363b6eefc3abb52d2d2b1627a4e9ac6db1f383e625716e443"
+      },
+      {
+        "name": "ru.70_2022_17.03.2024.pdf",
+        "size_bytes": 630647,
+        "sha256": "772ddd017b6a480b18433d524194b0fb1b3c230859d6ce8f5025e4eca3c862c3"
+      },
+      {
+        "name": "ru.71_2022_25.01.2026.pdf",
+        "size_bytes": 349297,
+        "sha256": "62c4d3031fc503134c10eb478532cb47e61a4a32daba7cb1b033ec6667dbdabd"
+      },
+      {
+        "name": "ru.72_2022_08.03.2026.pdf",
+        "size_bytes": 794761,
+        "sha256": "6581d927c6fe0e0cfae11b7411885da7aec9e73f3be28186a170f88b624f05f4"
+      },
+      {
+        "name": "ru.73_2022_08.03.2026.pdf",
+        "size_bytes": 724871,
+        "sha256": "47f6b05c2530b409ce33ae2f18316ceecb0ba9bd30a3ebca5e7f056defed5b55"
+      },
+      {
+        "name": "ru.74_2022_08.03.2026.pdf",
+        "size_bytes": 295630,
+        "sha256": "5ceba359c9edf064f17b922cf980af1b13438110705150b57235e0e34dcc8fa4"
+      },
+      {
+        "name": "ru.75_2022_25.04.2022.pdf",
+        "size_bytes": 144963,
+        "sha256": "6f09acf17937deb9bcb9f33150189e7c68889fdfeaa3498f37e8fc324ca36d5a"
+      },
+      {
+        "name": "ru.76_2022_08.05.2022.pdf",
+        "size_bytes": 195821,
+        "sha256": "57ea41461e8587664197fd7d2a6ec6d8ca13ad3498b4c6b6d93191bb988cc9cb"
+      },
+      {
+        "name": "ru.78_2022_25.04.2022.pdf",
+        "size_bytes": 142170,
+        "sha256": "afbb5b896009016ce781160166d24b6246797edd901b7fe22a945f48be808a82"
+      },
+      {
+        "name": "ru.79_2022.pdf",
+        "size_bytes": 135204,
+        "sha256": "ed572511f422cc933154f5175177bab8dd140c58ed5ad22c6fe8852d3bd7da15"
+      },
+      {
+        "name": "ru.80_2022.pdf",
+        "size_bytes": 133721,
+        "sha256": "abda2734e52a5288d925eff96259cf42f993b2657a22d1c8548a5bc19fce5b15"
+      },
+      {
+        "name": "ru.81_2022_08.03.2026.pdf",
+        "size_bytes": 294210,
+        "sha256": "05702d28f9bee5a4fd7cbce2f328f68af95dc8ba5942465e246f54f84f1d63bb"
+      },
+      {
+        "name": "ru.82_2022_08.03.2026.pdf",
+        "size_bytes": 337080,
+        "sha256": "7fb742d0c4368b9b20785b8904b4ec98eee4fbb20ec3745de0e3e1aa6672ad15"
+      },
+      {
+        "name": "ru.83_2022_08.03.2026.pdf",
+        "size_bytes": 268523,
+        "sha256": "7d056d47ceb1ab22dd151f2b104e354d17593eea0ed02e59c8d281900a093ad6"
+      },
+      {
+        "name": "ru.84_2022_08.03.2026.pdf",
+        "size_bytes": 2330972,
+        "sha256": "418712711dc5dba46d88f044d04fe83254c7e5aad6cf01c5572b6c831031905a"
+      },
+      {
+        "name": "ru.85_2022_08.03.2026.pdf",
+        "size_bytes": 2013782,
+        "sha256": "ab99ae7d104e267dc5e0adbb53b6c119b29219c05892e4cb5c4492382b0cf52c"
+      },
+      {
+        "name": "ru.86_2022_20.03.2023.pdf",
+        "size_bytes": 176506,
+        "sha256": "42454a7fca6cdf3d9e05002c9330d2843e6bc318d5e3b3e81e319fc9e64f84c6"
+      },
+      {
+        "name": "ru.87_2022_22.01.2026.pdf",
+        "size_bytes": 1510170,
+        "sha256": "4c705ac9b62fd54b57ff40bb6aa88c17e2109a3bf3d00e706ded973e74071016"
+      },
+      {
+        "name": "ru.88_2022.pdf",
+        "size_bytes": 202550,
+        "sha256": "5892440f247df978f86dfa3028d49e33e38698672754ce8f3f50f8cf948a41e9"
+      },
+      {
+        "name": "ru.89_2022.pdf",
+        "size_bytes": 153932,
+        "sha256": "11e79dd4052c88cb6b2b312ab48171629959ec13a6bf1ad0514486def86548bb"
+      },
+      {
+        "name": "ru.90_2022_08.03.2026.pdf",
+        "size_bytes": 591255,
+        "sha256": "e1311cdf0bdf7203b92266246ff2600d278f28d8447787e54cb262ac651090e0"
+      },
+      {
+        "name": "ru.91_2022.pdf",
+        "size_bytes": 157959,
+        "sha256": "5766f7126e770f6d5cace523fde8a05fe67061e8e7a28bdaee247e18cbf2cc53"
+      },
+      {
+        "name": "ru.92_2022.pdf",
+        "size_bytes": 147025,
+        "sha256": "c2f818b1a4ebc2d9eb86ee4d417e96273a19bdf3a88b3257fad02fadf0ae77da"
+      },
+      {
+        "name": "ru.93_2022.pdf",
+        "size_bytes": 148789,
+        "sha256": "6135fcf97bee5bb1e6e7bc777b737bd24d795bd2919fff925caa57e0a44bf4e2"
+      },
+      {
+        "name": "ru.94_2022_08.03.2026.pdf",
+        "size_bytes": 487732,
+        "sha256": "e87d6249bc007ce274fe3d3ffe575559c65340393100bfdb1ef4ff12c9b232bd"
+      },
+      {
+        "name": "ru.95_2022.pdf",
+        "size_bytes": 187451,
+        "sha256": "a1ed9abdcd300c8ea9fd6657ca332fa11d366cdca34ef25ac975f96bfa109f2c"
+      },
+      {
+        "name": "ru.96_2022_08.03.2026.pdf",
+        "size_bytes": 336032,
+        "sha256": "1e63c350ad03d60f77c4c8a9e21c47b94f9a294dd01b277345817ba1b4ec1d4b"
+      },
+      {
+        "name": "ru.97_2022.pdf",
+        "size_bytes": 138718,
+        "sha256": "ab11deb403161e8c5be060888029491685cba27b980c908988d1fb97e4d7156e"
+      }
+    ]
+  },
+  "active_ett": {
+    "revision": "ett:2026-06-18",
+    "effective_from": "2026-01-01",
+    "source_url": "https://eec.eaeunion.org/comission/department/catr/ett/",
+    "raw_rows": 13319,
+    "unique_codes": 13290,
+    "duplicate_rows": 27,
+    "invalid_code_rows": 2,
+    "code_set_sha256": "2f901b2ed745994d248ddd96899f0d0a286e8bb30d9735688c6ac2a0c2187891"
+  },
+  "catalog": {
+    "section_count": 21,
+    "section_codes": [
+      "I",
+      "II",
+      "III",
+      "IV",
+      "IX",
+      "V",
+      "VI",
+      "VII",
+      "VIII",
+      "X",
+      "XI",
+      "XII",
+      "XIII",
+      "XIV",
+      "XIX",
+      "XV",
+      "XVI",
+      "XVII",
+      "XVIII",
+      "XX",
+      "XXI"
+    ],
+    "chapter_count": 96,
+    "chapter_codes": [
+      "01",
+      "02",
+      "03",
+      "04",
+      "05",
+      "06",
+      "07",
+      "08",
+      "09",
+      "10",
+      "11",
+      "12",
+      "13",
+      "14",
+      "15",
+      "16",
+      "17",
+      "18",
+      "19",
+      "20",
+      "21",
+      "22",
+      "23",
+      "24",
+      "25",
+      "26",
+      "27",
+      "28",
+      "29",
+      "30",
+      "31",
+      "32",
+      "33",
+      "34",
+      "35",
+      "36",
+      "37",
+      "38",
+      "39",
+      "40",
+      "41",
+      "42",
+      "43",
+      "44",
+      "45",
+      "46",
+      "47",
+      "48",
+      "49",
+      "50",
+      "51",
+      "52",
+      "53",
+      "54",
+      "55",
+      "56",
+      "57",
+      "58",
+      "59",
+      "60",
+      "61",
+      "62",
+      "63",
+      "64",
+      "65",
+      "66",
+      "67",
+      "68",
+      "69",
+      "70",
+      "71",
+      "72",
+      "73",
+      "74",
+      "75",
+      "76",
+      "78",
+      "79",
+      "80",
+      "81",
+      "82",
+      "83",
+      "84",
+      "85",
+      "86",
+      "87",
+      "88",
+      "89",
+      "90",
+      "91",
+      "92",
+      "93",
+      "94",
+      "95",
+      "96",
+      "97"
+    ],
+    "rows": 17809,
+    "unique_codes": 17809,
+    "description_rows": 17774,
+    "blank_description_codes": [
+      "0503000000",
+      "0509000000",
+      "1402000000",
+      "1403000000",
+      "1519000000",
+      "2527000000",
+      "2838000000",
+      "2848000000",
+      "2851000000",
+      "4108000000",
+      "4109000000",
+      "4110000000",
+      "4111000000",
+      "4204000000",
+      "4815000000",
+      "5304000000",
+      "6503000000",
+      "6908000000",
+      "7012000000",
+      "7414000000",
+      "7416000000",
+      "7417000000",
+      "7803000000",
+      "7805000000",
+      "7906000000",
+      "8004000000",
+      "8005000000",
+      "8006000000",
+      "8107000000",
+      "8469000000",
+      "8520000000",
+      "8803000000",
+      "9009000000",
+      "9203000000",
+      "9204000000"
+    ],
+    "code_set_sha256": "717df6eeb874f9fd1a8def26aa13bb3d720c1335216d5b040c560bae7d80d945",
+    "code_description_sha256": "649b3ab0d1c7042baaad1ac37d0f07dab4627b0486f8cc2c16db87f1660c0f63"
+  }
+}

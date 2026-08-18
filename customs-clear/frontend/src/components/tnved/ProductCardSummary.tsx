@@ -52,6 +52,7 @@ export const MEASURE_TYPE_TO_BADGE: Record<string, string> = {
   license: 'ЛЗ',
   marking: 'Марк',
   fsetc: 'ФСТЭК',
+  fsb: 'НФ',
   radiation_control: 'Рад',
 };
 
@@ -61,7 +62,8 @@ export const MEASURE_DESCRIPTIONS: Record<string, string> = {
   certificate: 'Карантинный сертификат / разрешение на ввоз',
   license: 'Лицензия на ввоз',
   marking: 'Маркировка (ЧЗ / ЕГАИС / Меркурий)',
-  fsetc: 'Нотификация ФСТЭК',
+  fsetc: 'Требования ФСТЭК в сфере экспортного контроля',
+  fsb: 'Нотификация ФСБ',
   radiation_control: 'Радиационный контроль',
   sgr: 'Свидетельство государственной регистрации',
 };
@@ -74,6 +76,7 @@ const NON_TARIFF_TAB_TYPES = new Set([
   'license',
   'marking',
   'fsetc',
+  'fsb',
   'sgr',
   'radiation_control',
   'other',

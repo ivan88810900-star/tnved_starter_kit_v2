@@ -12,6 +12,19 @@ export type NormativeDocument = {
   rule_name?: string | null;
 };
 
+export type MeasureFamilyStatus = {
+  family: string;
+  label: string;
+  status: 'definite' | 'needs_clarification' | 'legacy_signal' | 'not_detected' | string;
+  requirements_count: number;
+  signals_count?: number;
+  permit_types?: string[];
+  regulations?: string[];
+  matched_sections?: string[];
+  directions?: string[];
+  source_labels?: string[];
+};
+
 export type NormativeRequirementsBlockData = {
   status?: string;
   hs_code?: string;
@@ -19,6 +32,37 @@ export type NormativeRequirementsBlockData = {
   required_documents: NormativeDocument[];
   missing_documents: NormativeDocument[];
   advisory_requirements: AdvisoryRequirement[];
+  measure_families?: MeasureFamilyStatus[];
+  measure_families_disclaimer?: string | null;
+  official_ntm_applicability?: {
+    mode?: string;
+    structured_facts_received?: number;
+    exact_rows_count?: number;
+    definite_advisory_count?: number;
+    excluded_count?: number;
+    exact_needs_clarification_count?: number;
+    missing_fact_keys?: string[];
+    broker_effect?: boolean;
+    facts_trust_boundary?: string;
+  } | null;
+  official_ntm_resolved_exclusions?: Array<Record<string, unknown>>;
+  official_ntm_catch_all?: {
+    status?: string;
+    applicability?: string;
+    reason?: string;
+    recommended_action?: string;
+    missing_facts?: string[];
+    source_url?: string | null;
+    source_revision?: string | null;
+    automatic_document_requirement?: boolean;
+  } | null;
+  curated_enforcement_audit?: {
+    enabled?: boolean;
+    default?: boolean;
+    allowlist_version?: string;
+    applied_rule_ids?: string[];
+    broker_changed?: boolean;
+  } | null;
   sources_summary?: string[];
   empty_message?: string | null;
   tr_ts?: string[];
@@ -30,7 +74,11 @@ export function hasNormativeContent(block: NormativeRequirementsBlockData | null
   return (
     (block.required_documents?.length ?? 0) > 0 ||
     (block.missing_documents?.length ?? 0) > 0 ||
-    (block.advisory_requirements?.length ?? 0) > 0
+    (block.advisory_requirements?.length ?? 0) > 0 ||
+    Boolean(
+      block.official_ntm_catch_all?.status
+      && block.official_ntm_catch_all.status !== 'not_applicable_direction',
+    )
   );
 }
 
@@ -52,6 +100,12 @@ export function normativeBlockFromNonTariff(nonTariff: {
       required_documents: nonTariff.normative_block.required_documents ?? [],
       missing_documents: nonTariff.normative_block.missing_documents ?? [],
       advisory_requirements: nonTariff.normative_block.advisory_requirements ?? [],
+      measure_families: nonTariff.normative_block.measure_families ?? [],
+      measure_families_disclaimer: nonTariff.normative_block.measure_families_disclaimer,
+      official_ntm_applicability: nonTariff.normative_block.official_ntm_applicability,
+      official_ntm_resolved_exclusions: nonTariff.normative_block.official_ntm_resolved_exclusions,
+      official_ntm_catch_all: nonTariff.normative_block.official_ntm_catch_all,
+      curated_enforcement_audit: nonTariff.normative_block.curated_enforcement_audit,
       sources_summary: nonTariff.normative_block.sources_summary,
       empty_message: nonTariff.normative_block.empty_message,
       status: nonTariff.normative_block.status ?? nonTariff.status,
@@ -105,6 +159,6 @@ export function countNormativeGroups(block: NormativeRequirementsBlockData | nul
   return {
     required: block?.required_documents?.length ?? 0,
     missing: block?.missing_documents?.length ?? 0,
-    advisory: block?.advisory_requirements?.length ?? 0,
+    advisory: block?.advisory_requirements?.filter((item) => !item.transaction_level).length ?? 0,
   };
 }

@@ -291,6 +291,34 @@ class ApiIntegrationTests(unittest.TestCase):
         self.assertIn("any_stale_source", meta)
         self.assertIn("any_manual_review", meta)
 
+    def test_export_compliance_skips_import_payment_and_antidumping(self):
+        r = self.client.post("/api/compliance/check", json={
+            "items": [{
+                "hs_code": "7214990000",
+                "description": "Стальной товар на вывоз",
+                "country": "RU",
+                "customs_value": 100_000,
+                "freight": 0,
+                "facts": {
+                    "direction": "export",
+                    "destination_country": "CN",
+                    "end_user": "foreign industrial customer",
+                },
+            }]
+        })
+        self.assertEqual(r.status_code, 200)
+        body = r.json()
+        item = body["items"][0]
+        self.assertEqual(item["payment"]["status"], "NOT_APPLICABLE")
+        self.assertEqual(item["payment"]["breakdown"]["total_payable"], 0)
+        self.assertEqual(
+            item["payment"]["data_quality"]["antidumping_status"],
+            "not_applicable",
+        )
+        self.assertFalse(body["meta"]["any_manual_review"])
+        self.assertFalse(item["non_tariff"]["legacy_import_broker_applied"])
+        self.assertNotIn("Антидемпинговые меры", " ".join(item["risks"]))
+
     def test_compliance_empty_list(self):
         r = self.client.post("/api/compliance/check", json={"items": []})
         self.assertEqual(r.status_code, 400)

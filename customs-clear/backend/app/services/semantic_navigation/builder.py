@@ -27,6 +27,21 @@ from ...models.tnved import Commodity
 from ..tnved_tree.data_access import exclude_obsolete_reserved
 from ..tnved_tree.helpers import digits, node_level, strip_leading_dashes
 from .bounded_slices import (
+    BULK_2204_CONTEXT_CODES,
+    BULK_2204_CONTEXT_SIGNATURE,
+    BULK_2204_OTHER_ANCHOR_CODE,
+    BULK_2204_OTHER_CODES,
+    BULK_2204_OTHER_DEPTH,
+    BULK_2204_OTHER_LEAF_COUNT,
+    BULK_2204_OTHER_RAW,
+    BULK_2204_OTHER_REASON,
+    BULK_2204_OTHER_SCOPE_KIND,
+    BULK_2204_OTHER_STOP_CODE,
+    BULK_2204_OTHER_TITLE,
+    BULK_2204_PARENT_CODE,
+    BULK_2204_PARENT_DESCRIPTION,
+    BULK_2204_ROOT_ANCHOR_CODE,
+    BULK_2204_ROOT_ANCHOR_DESCRIPTION,
     Bounded0406GroupSpec,
     Bounded0304GroupSpec,
     CHEESE_0406_AFTER_CODE,
@@ -44,8 +59,18 @@ from .bounded_slices import (
     CHEESE_0406_STOP_CODE,
     CHEESE_0406_STOP_DESCRIPTION,
     PDO_2204_ANCHOR_CODE,
+    PDO_2204_ANCHOR_DESCRIPTION,
     PDO_2204_CODES,
+    PDO_2204_COLOUR_SIGNATURE,
     PDO_2204_LEAF_COUNT,
+    PDO_2204_OTHER_ANCHOR_CODE,
+    PDO_2204_OTHER_CODES,
+    PDO_2204_OTHER_DEPTH,
+    PDO_2204_OTHER_LEAF_COUNT,
+    PDO_2204_OTHER_RAW,
+    PDO_2204_OTHER_REASON,
+    PDO_2204_OTHER_SCOPE_KIND,
+    PDO_2204_OTHER_TITLE,
     PDO_2204_PARENT_CODE,
     PDO_2204_REASON,
     PDO_2204_SCOPE_KIND,
@@ -276,10 +301,13 @@ class SemanticNavigationBuilder:
         # группы, открытые последним кодом (без последующих товаров) — пустые заголовки
         open_groups(len(extraction.commodity_codes))
 
+        self._arrange_or_unwrap_bounded_2204_other(root, extraction)
         nesting_fallbacks = self._apply_controlled_nesting(root)
         self._verify_or_unwrap_bounded_0304_state(root, extraction)
         self._arrange_or_unwrap_bounded_0406_moisture(root, extraction)
         self._restore_canonical_code_containment(root)
+        self._finalize_bounded_2204_other(root, extraction)
+        self._finalize_bounded_2204_bulk_other(root, extraction)
         self._finalize_bounded_0406_moisture(root, extraction)
         self._refresh_links(root)
         self._mark_leaves(root)
@@ -957,6 +985,382 @@ class SemanticNavigationBuilder:
         SemanticNavigationBuilder._unwrap_bounded_0406(root)
 
     @staticmethod
+    def _source_signature(
+        extraction: ExtractionResult,
+        expected_codes: tuple[str, ...],
+    ) -> tuple[tuple[str, str, bool | None, str], ...]:
+        records = extraction.records_by_code
+        return tuple(
+            (
+                code,
+                str(records[code].parent_code or ""),
+                records[code].is_leaf,
+                records[code].description,
+            )
+            for code in extraction.commodity_codes
+            if code in expected_codes and code in records
+        )
+
+    @staticmethod
+    def _2204_colour_source_projection_valid(
+        extraction: ExtractionResult,
+    ) -> bool:
+        records = extraction.records_by_code
+        parent = records.get(PDO_2204_PARENT_CODE)
+        anchor = records.get(PDO_2204_ANCHOR_CODE)
+        return bool(
+            extraction.heading == "2204"
+            and parent is not None
+            and parent.is_leaf is False
+            and anchor is not None
+            and anchor.is_leaf is True
+            and anchor.parent_code == PDO_2204_PARENT_CODE
+            and anchor.description == PDO_2204_ANCHOR_DESCRIPTION
+            and SemanticNavigationBuilder._source_signature(
+                extraction,
+                PDO_2204_CODES,
+            )
+            == PDO_2204_COLOUR_SIGNATURE
+        )
+
+    @staticmethod
+    def _2204_other_identity(node: SemanticNode) -> bool:
+        metadata = node.metadata
+        return all(
+            (
+                node.code is None,
+                node.source == "semantic_extraction",
+                node.title == PDO_2204_OTHER_TITLE,
+                str(metadata.get("raw") or "") == PDO_2204_OTHER_RAW,
+                str(metadata.get("extracted_from") or "")
+                == PDO_2204_OTHER_ANCHOR_CODE,
+                metadata.get("confidence") == "high",
+                metadata.get("reason") == PDO_2204_OTHER_REASON,
+                metadata.get("dash_depth") == PDO_2204_OTHER_DEPTH,
+                metadata.get("verified_scope_kind")
+                == PDO_2204_OTHER_SCOPE_KIND,
+                str(metadata.get("verified_scope_start_exclusive") or "")
+                == PDO_2204_OTHER_ANCHOR_CODE,
+                str(metadata.get("verified_scope_end_inclusive") or "")
+                == PDO_2204_STOP_CODE,
+                str(metadata.get("verified_scope_parent_code") or "")
+                == PDO_2204_PARENT_CODE,
+                metadata.get("verified_scope_leaf_count")
+                == PDO_2204_OTHER_LEAF_COUNT,
+            )
+        )
+
+    @staticmethod
+    def _2204_other_signals(root: SemanticNode) -> list[SemanticNode]:
+        return [
+            node
+            for node in [root, *root.iter_descendants()]
+            if SemanticNavigationBuilder._is_2204_other_signal(node)
+        ]
+
+    @staticmethod
+    def _is_2204_other_signal(node: SemanticNode) -> bool:
+        metadata = node.metadata
+        return bool(
+            node.is_group
+            and (
+                metadata.get("reason") == PDO_2204_OTHER_REASON
+                or metadata.get("verified_scope_kind")
+                == PDO_2204_OTHER_SCOPE_KIND
+                or (
+                    str(metadata.get("extracted_from") or "")
+                    == PDO_2204_OTHER_ANCHOR_CODE
+                    and "verified_scope_start_exclusive" in metadata
+                )
+            )
+        )
+
+    @staticmethod
+    def _splice_group(parent: SemanticNode, group: SemanticNode) -> bool:
+        if group not in parent.children:
+            return False
+        rebuilt: list[SemanticNode] = []
+        for child in parent.children:
+            if child is group:
+                rebuilt.extend(group.children)
+            else:
+                rebuilt.append(child)
+        parent.children = rebuilt
+        return True
+
+    @staticmethod
+    def _unwrap_bounded_2204_other(root: SemanticNode) -> None:
+        def unwrap(parent: SemanticNode) -> None:
+            for child in list(parent.children):
+                unwrap(child)
+            for child in list(parent.children):
+                if SemanticNavigationBuilder._is_2204_other_signal(child):
+                    SemanticNavigationBuilder._splice_group(parent, child)
+
+        unwrap(root)
+
+    @staticmethod
+    def _arrange_or_unwrap_bounded_2204_other(
+        root: SemanticNode,
+        extraction: ExtractionResult,
+    ) -> None:
+        """Nest the retained PDO colour boundary, or keep all 33 leaves flat."""
+
+        signals = SemanticNavigationBuilder._2204_other_signals(root)
+        if not signals:
+            return
+        pdo_candidates = [
+            node
+            for node in root.children
+            if node.is_group
+            and SemanticNavigationBuilder._verified_2204_pdo_interval(node)
+            is not None
+        ]
+        expected_white = tuple(
+            (code, PDO_2204_PARENT_CODE, True)
+            for code in PDO_2204_CODES[: -PDO_2204_OTHER_LEAF_COUNT]
+        )
+        expected_other = tuple(
+            (code, PDO_2204_PARENT_CODE, True)
+            for code in PDO_2204_OTHER_CODES
+        )
+        valid = bool(
+            SemanticNavigationBuilder._2204_colour_source_projection_valid(
+                extraction
+            )
+            and len(signals) == 1
+            and len(pdo_candidates) == 1
+        )
+        if valid:
+            pdo = pdo_candidates[0]
+            other = signals[0]
+            valid = bool(
+                other in root.children
+                and root.children.index(pdo) + 1 == root.children.index(other)
+                and SemanticNavigationBuilder._2204_other_identity(other)
+                and SemanticNavigationBuilder._real_signature(pdo)
+                == expected_white
+                and SemanticNavigationBuilder._real_signature(other)
+                == expected_other
+                and all(child.carries_real_code for child in pdo.children)
+                and all(child.carries_real_code for child in other.children)
+            )
+        if valid:
+            other.node_type = SemanticNodeType.CLASSIFICATION_SUBGROUP
+            other.metadata["nested_by"] = "bounded_exact_source_topology"
+            pdo.children.append(other)
+            root.children = [child for child in root.children if child is not other]
+            return
+
+        # When only the new wrapper is malformed, retain the already-proven
+        # PDO question and return its leaves to the original direct order.
+        if len(pdo_candidates) == 1 and len(signals) == 1:
+            pdo = pdo_candidates[0]
+            other = signals[0]
+            if (
+                pdo in root.children
+                and other in root.children
+                and root.children.index(pdo) < root.children.index(other)
+                and SemanticNavigationBuilder._real_signature(pdo)
+                + SemanticNavigationBuilder._real_signature(other)
+                == tuple(
+                    (code, PDO_2204_PARENT_CODE, True)
+                    for code in PDO_2204_CODES
+                )
+            ):
+                pdo.children.extend(other.children)
+                root.children = [
+                    child for child in root.children if child is not other
+                ]
+                return
+        SemanticNavigationBuilder._unwrap_bounded_2204_other(root)
+
+    @staticmethod
+    def _finalize_bounded_2204_other(
+        root: SemanticNode,
+        extraction: ExtractionResult,
+    ) -> None:
+        signals = SemanticNavigationBuilder._2204_other_signals(root)
+        if not signals:
+            return
+        all_nodes = [root, *root.iter_descendants()]
+        pdo_candidates = [
+            node
+            for node in all_nodes
+            if node.is_group
+            and SemanticNavigationBuilder._verified_2204_pdo_interval(node)
+            is not None
+        ]
+        code_parents = [
+            node
+            for node in all_nodes
+            if node.carries_real_code and node.code == PDO_2204_PARENT_CODE
+        ]
+        valid = bool(
+            SemanticNavigationBuilder._2204_colour_source_projection_valid(
+                extraction
+            )
+            and len(signals) == 1
+            and len(pdo_candidates) == 1
+            and len(code_parents) == 1
+        )
+        if valid:
+            other = signals[0]
+            pdo = pdo_candidates[0]
+            direct_codes = tuple(
+                str(child.code)
+                for child in pdo.children
+                if child.carries_real_code and child.code
+            )
+            valid = bool(
+                pdo in code_parents[0].children
+                and other in pdo.children
+                and other.node_type == SemanticNodeType.CLASSIFICATION_SUBGROUP
+                and SemanticNavigationBuilder._2204_other_identity(other)
+                and len(pdo.children) == 18
+                and direct_codes
+                == PDO_2204_CODES[: -PDO_2204_OTHER_LEAF_COUNT]
+                and SemanticNavigationBuilder._real_signature(other)
+                == tuple(
+                    (code, PDO_2204_PARENT_CODE, True)
+                    for code in PDO_2204_OTHER_CODES
+                )
+                and SemanticNavigationBuilder._real_signature(pdo)
+                == tuple(
+                    (code, PDO_2204_PARENT_CODE, True)
+                    for code in PDO_2204_CODES
+                )
+            )
+        if valid:
+            return
+        SemanticNavigationBuilder._unwrap_bounded_2204_other(root)
+
+    @staticmethod
+    def _2204_bulk_source_projection_valid(
+        extraction: ExtractionResult,
+    ) -> bool:
+        records = extraction.records_by_code
+        parent = records.get(BULK_2204_PARENT_CODE)
+        anchor = records.get(BULK_2204_ROOT_ANCHOR_CODE)
+        return bool(
+            extraction.heading == "2204"
+            and parent is not None
+            and parent.is_leaf is False
+            and parent.description == BULK_2204_PARENT_DESCRIPTION
+            and anchor is not None
+            and anchor.is_leaf is True
+            and anchor.parent_code == BULK_2204_PARENT_CODE
+            and anchor.description == BULK_2204_ROOT_ANCHOR_DESCRIPTION
+            and SemanticNavigationBuilder._source_signature(
+                extraction,
+                BULK_2204_CONTEXT_CODES,
+            )
+            == BULK_2204_CONTEXT_SIGNATURE
+        )
+
+    @staticmethod
+    def _2204_bulk_other_identity(node: SemanticNode) -> bool:
+        metadata = node.metadata
+        return all(
+            (
+                node.code is None,
+                node.source == "semantic_extraction",
+                node.title == BULK_2204_OTHER_TITLE,
+                str(metadata.get("raw") or "") == BULK_2204_OTHER_RAW,
+                str(metadata.get("extracted_from") or "")
+                == BULK_2204_OTHER_ANCHOR_CODE,
+                metadata.get("confidence") == "high",
+                metadata.get("reason") == BULK_2204_OTHER_REASON,
+                metadata.get("dash_depth") == BULK_2204_OTHER_DEPTH,
+                metadata.get("verified_scope_kind")
+                == BULK_2204_OTHER_SCOPE_KIND,
+                str(metadata.get("verified_scope_start_exclusive") or "")
+                == BULK_2204_OTHER_ANCHOR_CODE,
+                str(metadata.get("verified_scope_end_inclusive") or "")
+                == BULK_2204_OTHER_STOP_CODE,
+                str(metadata.get("verified_scope_parent_code") or "")
+                == BULK_2204_PARENT_CODE,
+                metadata.get("verified_scope_leaf_count")
+                == BULK_2204_OTHER_LEAF_COUNT,
+            )
+        )
+
+    @staticmethod
+    def _2204_bulk_other_signals(root: SemanticNode) -> list[SemanticNode]:
+        return [
+            node
+            for node in [root, *root.iter_descendants()]
+            if SemanticNavigationBuilder._is_2204_bulk_other_signal(node)
+        ]
+
+    @staticmethod
+    def _is_2204_bulk_other_signal(node: SemanticNode) -> bool:
+        metadata = node.metadata
+        return bool(
+            node.is_group
+            and (
+                metadata.get("reason") == BULK_2204_OTHER_REASON
+                or metadata.get("verified_scope_kind")
+                == BULK_2204_OTHER_SCOPE_KIND
+                or (
+                    str(metadata.get("extracted_from") or "")
+                    == BULK_2204_OTHER_ANCHOR_CODE
+                    and "verified_scope_start_exclusive" in metadata
+                )
+            )
+        )
+
+    @staticmethod
+    def _unwrap_bounded_2204_bulk_other(root: SemanticNode) -> None:
+        def unwrap(parent: SemanticNode) -> None:
+            for child in list(parent.children):
+                unwrap(child)
+            for child in list(parent.children):
+                if SemanticNavigationBuilder._is_2204_bulk_other_signal(child):
+                    SemanticNavigationBuilder._splice_group(parent, child)
+
+        unwrap(root)
+
+    @staticmethod
+    def _finalize_bounded_2204_bulk_other(
+        root: SemanticNode,
+        extraction: ExtractionResult,
+    ) -> None:
+        signals = SemanticNavigationBuilder._2204_bulk_other_signals(root)
+        if not signals:
+            return
+        all_nodes = [root, *root.iter_descendants()]
+        code_parents = [
+            node
+            for node in all_nodes
+            if node.carries_real_code and node.code == BULK_2204_PARENT_CODE
+        ]
+        valid = bool(
+            SemanticNavigationBuilder._2204_bulk_source_projection_valid(
+                extraction
+            )
+            and len(signals) == 1
+            and len(code_parents) == 1
+        )
+        if valid:
+            group = signals[0]
+            valid = bool(
+                group in code_parents[0].children
+                and group.node_type == SemanticNodeType.CLASSIFICATION_GROUP
+                and SemanticNavigationBuilder._2204_bulk_other_identity(group)
+                and len(group.children) == BULK_2204_OTHER_LEAF_COUNT
+                and all(child.carries_real_code for child in group.children)
+                and SemanticNavigationBuilder._real_signature(group)
+                == tuple(
+                    (code, BULK_2204_PARENT_CODE, True)
+                    for code in BULK_2204_OTHER_CODES
+                )
+            )
+        if valid:
+            return
+        SemanticNavigationBuilder._unwrap_bounded_2204_bulk_other(root)
+
+    @staticmethod
     def _detach_out_of_scope_children(
         node: SemanticNode,
     ) -> list[SemanticNode]:
@@ -972,6 +1376,26 @@ class SemanticNavigationBuilder:
         ):
             return []
 
+        is_bounded_2204_bulk = (
+            SemanticNavigationBuilder._is_2204_bulk_other_signal(node)
+        )
+        if is_bounded_2204_bulk:
+            original_children = list(node.children)
+            complete_scope = bool(
+                SemanticNavigationBuilder._2204_bulk_other_identity(node)
+                and len(node.children) == BULK_2204_OTHER_LEAF_COUNT
+                and all(child.carries_real_code for child in node.children)
+                and SemanticNavigationBuilder._real_signature(node)
+                == tuple(
+                    (code, BULK_2204_PARENT_CODE, True)
+                    for code in BULK_2204_OTHER_CODES
+                )
+            )
+            if complete_scope:
+                return []
+            node.children = []
+            return original_children
+
         verified_interval = (
             SemanticNavigationBuilder._verified_2204_pdo_interval(node)
         )
@@ -985,7 +1409,7 @@ class SemanticNavigationBuilder:
         if verified_interval is not None:
             (
                 start_exclusive,
-                first_code,
+                _first_code,
                 end_inclusive,
                 parent_code,
                 expected_count,
@@ -995,22 +1419,39 @@ class SemanticNavigationBuilder:
             spillover: list[SemanticNode] = []
             kept_codes: list[str] = []
             for child in node.children:
-                child_code = SemanticNavigationBuilder._first_real_code(child)
-                is_verified_leaf = bool(
-                    child_code
-                    and start_exclusive < child_code <= end_inclusive
-                    and child.carries_real_code
-                    and child.metadata.get("leaf_evidence") is True
-                    and str(child.metadata.get("canonical_parent_code") or "")
-                    == parent_code
+                child_real_nodes = [
+                    descendant
+                    for descendant in [child, *child.iter_descendants()]
+                    if descendant.carries_real_code and descendant.code
+                ]
+                child_codes = tuple(
+                    digits(str(descendant.code)).zfill(10)[:10]
+                    for descendant in child_real_nodes
                 )
-                if is_verified_leaf:
+                is_verified_branch = bool(
+                    child_real_nodes
+                    and all(
+                        start_exclusive < code <= end_inclusive
+                        and descendant.metadata.get("leaf_evidence") is True
+                        and str(
+                            descendant.metadata.get("canonical_parent_code")
+                            or ""
+                        )
+                        == parent_code
+                        for descendant, code in zip(
+                            child_real_nodes,
+                            child_codes,
+                            strict=True,
+                        )
+                    )
+                )
+                if is_verified_branch:
                     kept.append(child)
-                    kept_codes.append(str(child_code))
+                    kept_codes.extend(child_codes)
                 else:
                     spillover.append(child)
             complete_scope = bool(
-                len(kept) == expected_count
+                len(kept_codes) == expected_count
                 and tuple(kept_codes) == PDO_2204_CODES
             )
             if not complete_scope:
