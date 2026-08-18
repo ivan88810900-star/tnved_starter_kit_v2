@@ -51,8 +51,9 @@ Stop it with:
 docker compose --env-file .env.staging -f docker-compose.staging.yml down
 ```
 
-The Docker network is internal, so containers cannot reach external sources.
 Only loopback ports are published; this definition intentionally does not
-support a public bind. A missing database path or secret causes Compose to fail
-before it starts any service. To refresh data, create a new snapshot and restart
-the stack; never make the staging mount writable.
+support a public bind. Automatic external sync/provider jobs are disabled and
+provider keys are blank, but the bridge network is not an egress sandbox. A
+missing database path or secret causes Compose to fail before it starts any
+service. To refresh data, create a new snapshot and restart the stack; never make
+the staging mount writable.

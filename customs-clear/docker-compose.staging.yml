@@ -92,4 +92,4 @@ services:
 
 networks:
   staging:
-    internal: true
+    driver: bridge
