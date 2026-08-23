@@ -21,6 +21,7 @@
 | DM-0010 | Правовые контуры NTM и fail-closed полнота каталога | Accepted boundary — full gate passed | Ivan | 2026-08-15 | [`decisions/DM-0010-ntm-legal-contours-catalog-fail-closed.md`](decisions/DM-0010-ntm-legal-contours-catalog-fail-closed.md) |
 | DM-0011 | Структурированная применимость NTM и curated shadow enforcement | Accepted — implementation; activation deferred | Ivan | 2026-08-15 | [`decisions/DM-0011-structured-ntm-applicability-shadow-enforcement.md`](decisions/DM-0011-structured-ntm-applicability-shadow-enforcement.md) |
 | DM-0012 | Guided `2204`: retained «прочие» boundaries | Accepted — Option A | Ivan | 2026-08-18 | [`decisions/DM-0012-guided-2204-retained-other-boundaries.md`](decisions/DM-0012-guided-2204-retained-other-boundaries.md) |
+| DM-0013 | Automatic regulatory-source updates | Accepted | Ivan | 2026-08-23 | [`decisions/DM-0013-regulatory-source-automatic-updates.md`](decisions/DM-0013-regulatory-source-automatic-updates.md) |
 
 ---
 

@@ -7,6 +7,7 @@ on:
 
 permissions:
   contents: read
+  issues: write
 
 concurrency:
   group: scheduled-data-refresh
@@ -37,11 +38,50 @@ jobs:
       - name: Install backend dependencies
         run: python -m pip install --disable-pip-version-check -r requirements.txt
 
+      - name: Restore official-source checksum baseline
+        uses: actions/cache@v5
+        with:
+          path: customs-clear/backend/data/runtime/source-monitor-state.json
+          key: regulatory-source-monitor-${{ github.run_id }}
+          restore-keys: |
+            regulatory-source-monitor-
+
+      - name: Validate automatic update policy for every registered source
+        run: >-
+          python scripts/run_regulatory_source_updates.py
+          --plan
+          --strict
+          --output regulatory-source-update-plan.json
+
       - name: Check CBR and regulatory data freshness
         run: python -m scripts.data_refresh --check-only --json
 
       - name: Monitor official NTM source documents
-        run: python scripts/monitor_official_ntm_sources.py --strict --output ntm-source-monitor.json
+        id: source_monitor
+        continue-on-error: true
+        run: >-
+          python scripts/monitor_official_ntm_sources.py
+          --strict
+          --state data/runtime/source-monitor-state.json
+          --output ntm-source-monitor.json
+
+      - name: Open or update source-review issue
+        if: always() && hashFiles('customs-clear/backend/ntm-source-monitor.json') != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          review_required="$(jq -r '.review_required or (.all_available | not)' ntm-source-monitor.json)"
+          if [ "$review_required" != "true" ]; then
+            exit 0
+          fi
+          title="Regulatory source change or availability failure"
+          jq '{checked_at, all_available, changed_source_ids, new_source_ids, unavailable: [.sources[] | select(.ok != true) | {source_id, url, status_code, error}]}' ntm-source-monitor.json > source-review-issue.json
+          issue_number="$(gh issue list --repo "$GITHUB_REPOSITORY" --state open --search "$title in:title" --json number --jq '.[0].number // empty')"
+          if [ -n "$issue_number" ]; then
+            gh issue comment "$issue_number" --repo "$GITHUB_REPOSITORY" --body-file source-review-issue.json
+          else
+            gh issue create --repo "$GITHUB_REPOSITORY" --title "$title" --body-file source-review-issue.json
+          fi
 
       - name: Verify current export-control list extraction
         run: python scripts/build_official_export_control_dataset.py --check
@@ -56,6 +96,10 @@ jobs:
           --require-code-catalog
           --output ntm-code-scope.json
 
+      - name: Fail when an official source is unavailable
+        if: steps.source_monitor.outcome == 'failure'
+        run: exit 1
+
       - name: Upload NTM source digest report
         if: always()
         uses: actions/upload-artifact@v6
@@ -64,4 +108,5 @@ jobs:
           path: |
             customs-clear/backend/ntm-source-monitor.json
             customs-clear/backend/ntm-code-scope.json
+            customs-clear/backend/regulatory-source-update-plan.json
           retention-days: 30

@@ -6,7 +6,7 @@ Active
 
 ## Last updated
 
-2026-08-18
+2026-08-23
 
 ## Strategic direction
 
@@ -49,6 +49,9 @@ ingestion.
   earlier code-only and partial reports remain supplementary
 - Advisory requirements UI/API foundation
 - Official SGR contour: importer, diagnostics, seed dataset, validator
+- Automatic source lifecycle (DM-0013): 31/31 registry entries have an explicit
+  policy; trusted structured registries update daily/weekly, while legal documents
+  are checksum-monitored and routed to review without automatic enforcement
 - Normative requirements block MVP (backend aggregation + frontend block on NonTariff/compliance)
 - Canonical anchor identity plus additive TN VED search/code-card bridge
 - Additive guided TN VED v1: semantic choices from official descriptions are bound
@@ -139,10 +142,10 @@ ingestion.
 7. **Intelligent TN VED structure** — Canonical-backed semantic routes and
    understandable product questions without virtual/fake customs codes
 
-Parallel (not blocking MVP UI): maintain the official NTM datasets and source
-monitoring, repeat the strict read-only full audit for every PDF/ETT/parser
-revision, keep the curated official bridge OFF, and connect trusted registry/source
-adapters before proposing any exact-rule production enforcement.
+Parallel (not blocking MVP UI): maintain the official NTM datasets and the DM-0013
+automatic source lifecycle, repeat the strict read-only full audit for every
+PDF/ETT/parser revision, and keep the curated official bridge OFF before proposing
+any exact-rule production enforcement.
 
 ## Next recommended implementation tasks
 

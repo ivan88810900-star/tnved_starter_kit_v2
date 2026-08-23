@@ -68,12 +68,13 @@ class TestRegulatorySourceRegistry(unittest.TestCase):
         seed = next(p for p in checked if p["path"].endswith("official_sgr_rules.seed.json"))
         self.assertTrue(seed["exists"])
 
-    def test_fsa_runtime_only_not_missing(self) -> None:
+    def test_fsa_has_bulk_registry_probe(self) -> None:
         entry = get_registry_entry("fsa_registry_evidence")
         assert entry is not None
         row = diagnose_source_entry(entry, status_by_code={})
-        self.assertEqual(row["coverage_status"], "not_applicable")
-        self.assertEqual(row["parser_status"], "runtime_only")
+        self.assertEqual(entry.db_probe, "fsa_certificates")
+        self.assertNotEqual(row["coverage_status"], "not_applicable")
+        self.assertNotEqual(row["parser_status"], "runtime_only")
 
     def test_fts_official_not_covered_by_mirror_rows(self) -> None:
         """ПКР Alta (без префикса FCS-) не должны попадать в official FCS probe."""
@@ -149,3 +150,14 @@ class TestRegulatorySourceCompletenessApi(unittest.TestCase):
         self.assertIn("summary", body)
         self.assertIn("future_sync_notes", body)
         self.assertIn("official_source_gap_ids", body["summary"])
+
+    def test_update_plan_endpoint_covers_registry(self) -> None:
+        r = self.client.get("/api/sources/updates/plan")
+        self.assertEqual(r.status_code, 200)
+        body = r.json()
+        self.assertTrue(body["coverage"]["valid"])
+        self.assertEqual(len(body["sources"]), len(REGULATORY_SOURCE_REGISTRY))
+
+    def test_update_run_requires_admin_token(self) -> None:
+        r = self.client.post("/api/sources/updates/run?cadence=daily")
+        self.assertIn(r.status_code, (401, 403))

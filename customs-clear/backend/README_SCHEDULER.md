@@ -1,4 +1,33 @@
-# Фоновый запуск `scripts/auto_updater.py`
+# Автоматические обновления нормативных источников
+
+Основной production-контур запускается вместе с FastAPI через
+`app.services.scheduler` при `REGULATORY_SYNC_SCHEDULER_ENABLED=true`:
+
+| Задача | Когда (по `REGULATORY_SYNC_TZ`) | Источники |
+|---|---|---|
+| `regulatory_sources_daily` | ежедневно 03:00 | ЦБ, СГР, нотификации ФСБ, РЭС/ВЧУ, OFAC, санкции ЕС |
+| `regulatory_sources_weekly` | воскресенье 04:00 | ФСА, ТРОИС, справочники/маски документов ФТС |
+
+Все адаптеры выполняются последовательно под process-lock, поэтому два worker-а
+не пишут снимок одновременно. Проверить полное покрытие реестра без мутации:
+
+```bash
+python scripts/run_regulatory_source_updates.py --plan --strict
+python scripts/run_regulatory_source_updates.py --cadence all --check-only --strict
+```
+
+Ручной guarded-запуск безопасных structured-sync:
+
+```bash
+python scripts/run_regulatory_source_updates.py --cadence daily --apply-safe --strict
+```
+
+Нормативные PDF, перечни Решения №30, №299, ветеринарные/фитосанитарные акты,
+ПП №2425 и экспортный контроль не превращаются в правила автоматически.
+Ежедневный GitHub workflow сохраняет ETag/SHA-256, обнаруживает изменение и
+создаёт/обновляет review issue. Коммерческие зеркала по умолчанию отключены.
+
+## Legacy-планировщик `scripts/auto_updater.py`
 
 Планировщик держит в памяти только расписание; каждый краулер запускается **отдельным процессом** Python (см. `scripts/auto_updater.py`). Логи: `logs/updater.log` (ротация ~10 МБ × 5 файлов).
 
@@ -86,7 +115,7 @@ pm2 save
 
 Секреты лучше не вписывать в plist: используйте `EnvironmentVariables` с путём к файлу только если `launchd` у вас это поддерживает, либо обёртку-shell, которая делает `source .env` и вызывает `python3`.
 
-## Расписание по умолчанию
+## Legacy-расписание `auto_updater.py`
 
 | Задача | Когда | Скрипт |
 |--------|--------|--------|

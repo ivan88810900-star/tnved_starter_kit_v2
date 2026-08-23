@@ -44,6 +44,7 @@ out/
 customs-clear/backend/customs.db
 customs-clear/backend/customs.db-*
 customs-clear/backend/data/opendata/
+customs-clear/backend/data/runtime/
 customs-clear/backend/logs/fsa_backfill.log
 customs-clear/backend/logs/fsa_backfill.pid
 

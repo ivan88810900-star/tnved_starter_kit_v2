@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Проверка доступности и контрольных сумм официальных источников NTM.
+"""Проверка доступности и изменений всех официальных источников.
 
 Скрипт ничего не импортирует в БД и не меняет правила. Его JSON-отчёт пригоден
 для хранения как CI artifact и ручного сравнения при изменении документа.
@@ -35,6 +35,10 @@ from app.services.official_ntm_contours import (  # noqa: E402
     TR_TS_015_URL,
 )
 from app.services.official_export_control import FSTEC_IDENTIFICATION_URL, PP_1299_URL  # noqa: E402
+from app.services.regulatory_source_registry import (  # noqa: E402
+    REGULATORY_SOURCE_REGISTRY,
+    SOURCE_OF_TRUTH_LEVELS,
+)
 
 SOURCES = {
     "eec_decision30_unified_list": DECISION_30_UNIFIED_LIST_URL,
@@ -64,48 +68,141 @@ SOURCES = {
     "eec_phytosanitary_measures": "https://eec.eaeunion.org/comission/department/depsanmer/regulation/karantinnye-fitosanitarnye-mery.php",
 }
 
+# Реестр является основным каталогом. Точные URL отдельных приложений к НПА
+# выше сохраняются дополнительно, потому что одна карточка источника может
+# содержать несколько юридически значимых документов.
+for _entry in REGULATORY_SOURCE_REGISTRY:
+    if _entry.official_url and _entry.authority_level in SOURCE_OF_TRUTH_LEVELS:
+        SOURCES.setdefault(_entry.source_id, _entry.official_url)
 
-def monitor_sources(timeout: float = 60.0) -> dict[str, Any]:
+
+def _load_state(path: Path | None) -> dict[str, Any]:
+    if path is None or not path.is_file():
+        return {"sources": {}}
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+        if isinstance(data, dict) and isinstance(data.get("sources"), dict):
+            return data
+    except Exception:
+        pass
+    return {"sources": {}}
+
+
+def monitor_sources(timeout: float = 60.0, *, previous_state: dict[str, Any] | None = None) -> dict[str, Any]:
     rows: list[dict[str, Any]] = []
-    headers = {"User-Agent": "Tariff-NTM-source-monitor/1.0"}
+    previous_sources = (previous_state or {}).get("sources") or {}
+    has_previous_baseline = bool(previous_sources)
+    headers = {"User-Agent": "Tariff-regulatory-source-monitor/2.0"}
+    next_sources = dict(previous_sources)
     with httpx.Client(follow_redirects=True, timeout=timeout, headers=headers, trust_env=False) as client:
         for source_id, url in SOURCES.items():
+            previous = previous_sources.get(source_id) or {}
+            request_headers: dict[str, str] = {}
+            if previous.get("etag"):
+                request_headers["If-None-Match"] = str(previous["etag"])
+            if previous.get("last_modified"):
+                request_headers["If-Modified-Since"] = str(previous["last_modified"])
             try:
-                response = client.get(url)
+                response = client.get(url, headers=request_headers)
+                if response.status_code == 304 and previous.get("sha256"):
+                    row = {
+                        "source_id": source_id,
+                        "url": url,
+                        "final_url": previous.get("final_url") or url,
+                        "status_code": 304,
+                        "ok": True,
+                        "not_modified": True,
+                        "changed": False,
+                        "new_source": False,
+                        "content_type": previous.get("content_type"),
+                        "content_length": previous.get("content_length"),
+                        "etag": response.headers.get("etag") or previous.get("etag"),
+                        "last_modified": response.headers.get("last-modified") or previous.get("last_modified"),
+                        "sha256": previous.get("sha256"),
+                    }
+                    rows.append(row)
+                    continue
                 body = response.content
-                rows.append({
+                digest = hashlib.sha256(body).hexdigest()
+                ok = response.status_code == 200 and len(body) > 100
+                is_new = ok and not bool(previous.get("sha256"))
+                changed = ok and bool(previous.get("sha256")) and previous.get("sha256") != digest
+                row = {
                     "source_id": source_id,
                     "url": url,
                     "final_url": str(response.url),
                     "status_code": response.status_code,
-                    "ok": response.status_code == 200 and len(body) > 100,
+                    "ok": ok,
+                    "not_modified": False,
+                    "changed": changed,
+                    "new_source": is_new,
                     "content_type": response.headers.get("content-type"),
                     "content_length": len(body),
                     "etag": response.headers.get("etag"),
                     "last_modified": response.headers.get("last-modified"),
-                    "sha256": hashlib.sha256(body).hexdigest(),
-                })
+                    "sha256": digest,
+                }
+                rows.append(row)
+                if ok:
+                    next_sources[source_id] = {
+                        key: row.get(key)
+                        for key in (
+                            "url",
+                            "final_url",
+                            "content_type",
+                            "content_length",
+                            "etag",
+                            "last_modified",
+                            "sha256",
+                        )
+                    }
             except Exception as exc:
-                rows.append({"source_id": source_id, "url": url, "ok": False, "error": str(exc)})
+                rows.append(
+                    {
+                        "source_id": source_id,
+                        "url": url,
+                        "ok": False,
+                        "changed": False,
+                        "new_source": False,
+                        "error": str(exc),
+                    }
+                )
+    changed_ids = [row["source_id"] for row in rows if row.get("changed")]
+    new_ids = [row["source_id"] for row in rows if row.get("new_source")]
     return {
         "checked_at": datetime.now(timezone.utc).isoformat(),
         "all_available": all(row.get("ok") is True for row in rows),
+        "had_previous_baseline": has_previous_baseline,
+        "changed_source_ids": changed_ids,
+        "new_source_ids": new_ids,
+        "review_required": bool(changed_ids or (has_previous_baseline and new_ids)),
         "sources": rows,
+        "next_state": {
+            "version": 1,
+            "updated_at": datetime.now(timezone.utc).isoformat(),
+            "sources": next_sources,
+        },
     }
 
 
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--output", type=Path)
+    parser.add_argument("--state", type=Path, help="Persisted checksum/ETag baseline")
     parser.add_argument("--timeout", type=float, default=60.0)
     parser.add_argument("--strict", action="store_true", help="Exit 1 if any source is unavailable")
     args = parser.parse_args()
-    report = monitor_sources(args.timeout)
+    previous_state = _load_state(args.state)
+    report = monitor_sources(args.timeout, previous_state=previous_state)
+    next_state = report.pop("next_state")
     text = json.dumps(report, ensure_ascii=False, indent=2)
     print(text)
     if args.output:
         args.output.parent.mkdir(parents=True, exist_ok=True)
         args.output.write_text(text + "\n", encoding="utf-8")
+    if args.state:
+        args.state.parent.mkdir(parents=True, exist_ok=True)
+        args.state.write_text(json.dumps(next_state, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     return 0 if report["all_available"] or not args.strict else 1
 
 

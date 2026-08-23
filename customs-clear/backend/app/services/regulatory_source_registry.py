@@ -45,7 +45,7 @@ class RegulatorySourceEntry:
     db_probe: str | None = None
     # Связь с source_status.source_code (если sync обновляет метаданные)
     source_status_code: str | None = None
-    # Имя скрипта в scripts/ для будущих sync-задач
+    # Имя существующего скрипта в scripts/ (если источник имеет structured-sync)
     sync_script: str | None = None
     min_document_count: int = 1
     known_gaps: tuple[str, ...] = ()
@@ -55,6 +55,16 @@ class RegulatorySourceEntry:
 # Порядок фиксирован — отчёт сортирует по source_id для детерминизма.
 REGULATORY_SOURCE_REGISTRY: tuple[RegulatorySourceEntry, ...] = (
     RegulatorySourceEntry(
+        source_id="cbr_exchange_rates",
+        title="Официальные курсы валют Банка России",
+        authority_level="official_reference",
+        official_url="https://www.cbr.ru/scripts/XML_daily.asp",
+        description="Ежедневные официальные курсы валют для расчётов и инвойсов.",
+        db_probe="exchange_rates",
+        sync_script="update_rates.py",
+        min_document_count=1,
+    ),
+    RegulatorySourceEntry(
         source_id="eec_ett_tnved",
         title="ТН ВЭД и ЕТТ ЕАЭС",
         authority_level="official_binding",
@@ -62,7 +72,7 @@ REGULATORY_SOURCE_REGISTRY: tuple[RegulatorySourceEntry, ...] = (
         description="Официальный тариф ЕТТ / справочник кодов ЕАЭС.",
         db_probe="tnved_entries",
         source_status_code="EEC_ETT",
-        sync_script="source_sync.py",
+        sync_script=None,
         min_document_count=100,
         known_gaps=("Полный массив кодов может требовать отдельного bundle/PDF-парсера.",),
     ),
@@ -152,8 +162,30 @@ REGULATORY_SOURCE_REGISTRY: tuple[RegulatorySourceEntry, ...] = (
         known_gaps=(
             "Большинство строк раздела II содержит «из»: код без назначения, состава и исключений не доказывает обязанность СГР.",
             "Актуальность конкретного документа требует отдельной проверки реестра.",
-            "OData NSI требует SGR_ODATA_LIST_TITLE.",
+            "Автосинхронизация реестра не изменяет code-only правила раздела II.",
         ),
+    ),
+    RegulatorySourceEntry(
+        source_id="eec_fss_notifications_registry",
+        title="Единый реестр нотификаций о характеристиках шифровальных средств",
+        authority_level="registry_evidence",
+        official_url="https://nsi.eaeunion.org/portal/1994",
+        description="Официальный реестр нотификаций ФСБ/ЕАЭС для проверки конкретного товара.",
+        db_probe="fss_notifications",
+        sync_script="sync_state_registries.py",
+        min_document_count=1,
+        known_gaps=("Запись реестра подтверждает документ, но не заменяет проверку применимости меры по товару.",),
+    ),
+    RegulatorySourceEntry(
+        source_id="eec_reo_vchu_registry",
+        title="Единый реестр РЭС и ВЧУ",
+        authority_level="registry_evidence",
+        official_url="https://nsi.eaeunion.org/portal/1992",
+        description="Официальный реестр радиоэлектронных средств и высокочастотных устройств.",
+        db_probe="reo_registry",
+        sync_script="sync_state_registries.py",
+        min_document_count=1,
+        known_gaps=("Совпадение модели является доказательством реестра, а не автоматическим выводом о разрешительном документе.",),
     ),
     RegulatorySourceEntry(
         source_id="eec_veterinary_decision_317",
@@ -221,10 +253,30 @@ REGULATORY_SOURCE_REGISTRY: tuple[RegulatorySourceEntry, ...] = (
         authority_level="registry_evidence",
         official_url="https://pub.fsa.gov.ru/",
         description="Проверка разрешительных документов в permits/compliance (не нормативная истина по мерам).",
-        db_probe="permits_fsa_usage",
-        sync_script=None,
-        min_document_count=0,
-        known_gaps=("Нет локального bulk-снимка; используется онлайн-проверка.",),
+        db_probe="fsa_certificates",
+        sync_script="opendata_sync.py",
+        min_document_count=1,
+        known_gaps=("Локальный снимок обновляется из официальных открытых данных; юридический статус документа проверяется на дату операции.",),
+    ),
+    RegulatorySourceEntry(
+        source_id="fts_trois_registry",
+        title="ТРОИС ФТС России",
+        authority_level="registry_evidence",
+        official_url="https://customs.gov.ru/opendata/7730176610-trois",
+        description="Официальные открытые данные Таможенного реестра объектов интеллектуальной собственности.",
+        db_probe="trois_registry",
+        sync_script="opendata_sync.py",
+        min_document_count=1,
+    ),
+    RegulatorySourceEntry(
+        source_id="fts_customs_document_masks",
+        title="Справочники документов ФТС России",
+        authority_level="official_reference",
+        official_url="https://customs.gov.ru/opendata",
+        description="Официальные открытые справочники и маски документов для декларации.",
+        db_probe="customs_doc_masks",
+        sync_script="opendata_sync.py",
+        min_document_count=1,
     ),
     RegulatorySourceEntry(
         source_id="regulatory_documents_corpus",
@@ -233,7 +285,7 @@ REGULATORY_SOURCE_REGISTRY: tuple[RegulatorySourceEntry, ...] = (
         official_url="https://customs.gov.ru/document",
         description="Скачанные приказы, письма, решения ведомств с привязкой к HS.",
         db_probe="regulatory_documents",
-        sync_script="regulatory_fetcher.py",
+        sync_script=None,
         min_document_count=1,
         known_gaps=("Парсеры по agency — частичное покрытие; AI-mapping требует approve.",),
         manual_review_default=True,
@@ -281,7 +333,7 @@ REGULATORY_SOURCE_REGISTRY: tuple[RegulatorySourceEntry, ...] = (
         official_url="",
         description="Правила из sync_engine / bulk_normative_ai.",
         db_probe="regulatory_ai_extracts",
-        sync_script="sync_engine.py",
+        sync_script=None,
         min_document_count=0,
         known_gaps=("Все строки требуют ручной верификации перед enforcement.",),
         manual_review_default=True,
@@ -321,7 +373,7 @@ REGULATORY_SOURCE_REGISTRY: tuple[RegulatorySourceEntry, ...] = (
         sync_script="sync_ofac_sanctions.py",
         min_document_count=1,
         known_gaps=(
-            "Полный bulk-sync не входит в MVP-срез; локальная БД может быть пустой.",
+            "Доступность официального bulk-фида контролируется результатом scheduled sync.",
             "Fuzzy-match по наименованию — advisory, не юридическое заключение.",
         ),
         manual_review_default=True,
@@ -337,7 +389,7 @@ REGULATORY_SOURCE_REGISTRY: tuple[RegulatorySourceEntry, ...] = (
         source_status_code="EU_SANCTIONS",
         sync_script="sync_eu_sanctions.py",
         min_document_count=1,
-        known_gaps=("MVP: fixture + опциональный sync; не полный официальный фид.",),
+        known_gaps=("Entity/HS correlation остаётся диагностическим контуром и не заменяет правовую проверку операции.",),
         manual_review_default=True,
     ),
     RegulatorySourceEntry(

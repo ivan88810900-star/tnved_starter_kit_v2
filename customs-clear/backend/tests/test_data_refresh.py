@@ -180,8 +180,18 @@ class TestGitHubWorkflow:
 
 
 class TestSchedulerIntegration:
-    def test_scheduler_has_currency_refresh(self) -> None:
+    def test_scheduler_has_real_regulatory_source_updates(self) -> None:
         scheduler_file = BACKEND_ROOT / "app" / "services" / "scheduler.py"
         content = scheduler_file.read_text()
-        assert "refresh_currency_rates_daily" in content
-        assert "update_exchange_rates_from_cbrf" in content
+        assert "regulatory_sources_daily" in content
+        assert "regulatory_sources_weekly" in content
+        assert "run_regulatory_update_cycle" in content
+        assert "sync_daily_regulatory_data" not in content
+
+    def test_workflow_validates_plan_and_persists_monitor_state(self) -> None:
+        wf = BACKEND_ROOT.parent.parent / ".github" / "workflows" / "scheduled-data-refresh.yml"
+        content = wf.read_text()
+        assert "run_regulatory_source_updates.py" in content
+        assert "source-monitor-state.json" in content
+        assert "issues: write" in content
+        assert "gh issue" in content

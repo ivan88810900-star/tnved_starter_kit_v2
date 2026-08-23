@@ -35,6 +35,10 @@ def _count_db_probe(probe: str | None) -> int | None:
     if not probe:
         return None
     with SessionLocal() as db:
+        if probe == "exchange_rates":
+            from ..models.core import ExchangeRate
+
+            return db.query(ExchangeRate).count()
         if probe == "tnved_entries":
             from ..models.core import TnvedEntry
 
@@ -97,6 +101,26 @@ def _count_db_probe(probe: str | None) -> int | None:
             )
         if probe == "sgr_certificates":
             return db.query(SgrCertificate).count()
+        if probe == "fss_notifications":
+            from ..models.core import FssNotification
+
+            return db.query(FssNotification).count()
+        if probe == "reo_registry":
+            from ..models.core import ReoRegistryEntry
+
+            return db.query(ReoRegistryEntry).count()
+        if probe == "fsa_certificates":
+            from ..models.tnved import FsaCertificate
+
+            return db.query(FsaCertificate).count()
+        if probe == "trois_registry":
+            from ..models.tnved import TroisRegistry
+
+            return db.query(TroisRegistry).count()
+        if probe == "customs_doc_masks":
+            from ..models.tnved import CustomsDocMask
+
+            return db.query(CustomsDocMask).count()
         if probe == "ntm_v2_official_sgr_rules":
             return (
                 db.query(NtmApplicabilityRuleV2)
@@ -115,9 +139,6 @@ def _count_db_probe(probe: str | None) -> int | None:
             return db.query(RegulatoryAiExtract).count()
         if probe == "non_tariff_measures":
             return db.query(NonTariffMeasure).count()
-        if probe == "permits_fsa_usage":
-            # Нет отдельной таблицы bulk — маркер «runtime-only»
-            return -1
         if probe == "ofac_sdn_list":
             from ..models.core import OfacSdnList
 

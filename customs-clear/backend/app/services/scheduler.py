@@ -1,10 +1,9 @@
-"""Единый APScheduler (AsyncIO): ежедневная нормативная синхронизация и опционально полный sync источников."""
+"""Единый APScheduler: безопасные обновления реестров и мониторинг источников."""
 
 from __future__ import annotations
 
 import os
 from datetime import datetime, timezone
-from typing import Any
 from zoneinfo import ZoneInfo
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
@@ -27,7 +26,7 @@ def regulatory_job_next_run_iso() -> str | None:
     sch = _scheduler
     if sch is None:
         return None
-    job = sch.get_job("sync_daily_regulatory_data")
+    job = sch.get_job("regulatory_sources_daily")
     if job is None or job.next_run_time is None:
         return None
     nr = job.next_run_time
@@ -42,7 +41,7 @@ def start_apscheduler() -> None:
     if _scheduler is not None and _scheduler.running:
         return
 
-    jobs: list[dict[str, Any]] = []
+    jobs: list[str] = []
 
     regulatory_on = os.getenv("REGULATORY_SYNC_SCHEDULER_ENABLED", "true").lower() in ("1", "true", "yes")
     legacy_on = os.getenv("SCHEDULER_ENABLED", "").lower() in ("1", "true", "yes")
@@ -55,23 +54,19 @@ def start_apscheduler() -> None:
     _scheduler = sch
 
     if regulatory_on:
-
-        async def _sync_daily_regulatory_data() -> None:
+        async def _run_source_updates(cadence: str) -> None:
             try:
-                from .sync_engine import sync_daily_regulatory_data
+                from .regulatory_source_updates import run_regulatory_update_cycle
 
-                await sync_daily_regulatory_data(trigger="scheduled")
+                result = await run_regulatory_update_cycle(cadence, apply_safe=True)  # type: ignore[arg-type]
+                logger.info(
+                    "Regulatory source updates {}: status={}, adapters={}",
+                    cadence,
+                    result.get("status"),
+                    len(result.get("results") or []),
+                )
             except Exception as e:
-                logger.exception(f"sync_daily_regulatory_data: {e}")
-
-        async def _refresh_currency_rates() -> None:
-            try:
-                from .exchange_rates import update_exchange_rates_from_cbrf
-
-                result = await update_exchange_rates_from_cbrf()
-                logger.info(f"Currency refresh: source={result.get('source')}, updated={result.get('updated')}")
-            except Exception as e:
-                logger.exception(f"Currency refresh failed: {e}")
+                logger.exception("Regulatory source updates {} failed: {}", cadence, e)
 
         tz_name = os.getenv("REGULATORY_SYNC_TZ", "Europe/Moscow").strip() or "Europe/Moscow"
         try:
@@ -81,24 +76,26 @@ def start_apscheduler() -> None:
             tz = ZoneInfo("Europe/Moscow")
 
         sch.add_job(
-            _sync_daily_regulatory_data,
+            _run_source_updates,
             CronTrigger(hour=3, minute=0, timezone=tz),
-            id="sync_daily_regulatory_data",
+            args=["daily"],
+            id="regulatory_sources_daily",
             replace_existing=True,
             max_instances=1,
             coalesce=True,
         )
-        jobs.append("sync_daily_regulatory_data@03:00")
+        jobs.append("regulatory_sources_daily@03:00")
 
         sch.add_job(
-            _refresh_currency_rates,
-            CronTrigger(hour=9, minute=0, timezone=tz),
-            id="refresh_currency_rates_daily",
+            _run_source_updates,
+            CronTrigger(day_of_week="sun", hour=4, minute=0, timezone=tz),
+            args=["weekly"],
+            id="regulatory_sources_weekly",
             replace_existing=True,
             max_instances=1,
             coalesce=True,
         )
-        jobs.append("refresh_currency_rates@09:00")
+        jobs.append("regulatory_sources_weekly@Sun 04:00")
 
     if legacy_on:
         from .source_sync import sync_all_sources

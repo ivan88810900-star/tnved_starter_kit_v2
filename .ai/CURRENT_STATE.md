@@ -1,6 +1,6 @@
 # CURRENT_STATE.md — Текущее состояние проекта
 
-> Дата: 2026-08-18
+> Дата: 2026-08-23
 > Активная ветка: `feat/ntm-official-full-contours` (локально от `feat/canonical-read-path`)
 
 ---
@@ -122,6 +122,12 @@
     frontend tests/types/build и read-only staging definition. Staging открывается
     только на loopback, запускает exact full-catalog gate до HTTP и принудительно
     держит все NTM enforcement flags выключенными.
+17. DM-0013 подключает полный update-policy для 31/31 зарегистрированных
+    нормативных источников. Структурированные официальные реестры (ЦБ, СГР,
+    нотификации ФСБ, РЭС/ВЧУ, ФСА, ТРОИС, справочники ФТС, OFAC и ЕС)
+    синхронизируются по ежедневному/еженедельному расписанию. Нормативные PDF и
+    перечни автоматически контролируются по ETag/SHA-256 и ставятся в review issue
+    при drift; никакое изменение источника не включает NTM enforcement.
 
 Основные `CANONICAL_TREE_ENABLED` / `CANONICAL_TREE_SHADOW` остаются default OFF.
 

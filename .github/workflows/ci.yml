@@ -60,6 +60,10 @@ jobs:
           tests/test_ntm_applicability_schema.py
           tests/test_official_ntm_exact_*.py
           tests/test_official_ntm_curated_enforcement.py
+          tests/test_regulatory_source_updates.py
+          tests/test_official_source_monitor.py
+          tests/test_regulatory_source_completeness.py
+          tests/test_data_refresh.py
           tests/test_normative_requirements_block.py
           tests/test_sanctions_risk_block.py
           tests/test_semantic_navigation_2204_pdo.py

@@ -11,6 +11,7 @@ from ..services.regulatory_source_completeness import (
     list_registry_snapshot,
     run_regulatory_source_completeness_report,
 )
+from ..services.regulatory_source_updates import build_update_plan, run_regulatory_update_cycle
 from ..services.official_payment_coverage_audit import run_official_payment_coverage_audit
 from ..services.payment_data_coverage import run_payment_data_coverage_report
 from ..services.payment_data_normalization import run_payment_data_normalization_report
@@ -70,6 +71,22 @@ async def sources_registry() -> JSONResponse:
 async def sources_completeness() -> JSONResponse:
     """Gap-отчёт полноты нормативных источников: missing/stale/partial/parser_failed."""
     return JSONResponse(run_regulatory_source_completeness_report())
+
+
+@router.get("/updates/plan")
+async def sources_updates_plan() -> JSONResponse:
+    """Полная политика автоматического обновления каждого источника."""
+    return JSONResponse(build_update_plan())
+
+
+@router.post("/updates/run")
+async def sources_updates_run(
+    cadence: str = Query("daily", pattern="^(daily|weekly|monthly|all)$"),
+    x_admin_token: str | None = Header(None, alias="X-Admin-Token"),
+) -> JSONResponse:
+    """Ручной guarded-запуск тех же безопасных structured-sync, что и scheduler."""
+    require_admin_token(x_admin_token)
+    return JSONResponse(await run_regulatory_update_cycle(cadence, apply_safe=True))  # type: ignore[arg-type]
 
 
 @router.get("/payment-coverage")
@@ -448,4 +465,3 @@ async def sources_template_bundle() -> FileResponse:
         media_type="application/json; charset=utf-8",
         filename="normative_bundle.example.json",
     )
-
