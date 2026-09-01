@@ -20,6 +20,7 @@ from .opendata_client import (
     latest_version,
     snapshot_date_from_id,
 )
+from .snapshot_safety import configured_minimum_rows, validate_full_snapshot
 
 MASK44_DATASET_ID = "7730176610-mask44"
 CATALOG_URL = "https://customs.gov.ru/opendata/list.csv"
@@ -44,47 +45,79 @@ def sync_mask44(*, force: bool = False) -> dict[str, Any]:
                 .first()
             )
             if done:
-                return {"status": "skipped", "snapshot_id": snapshot_id, "rows": done.row_count}
+                live_rows = db.query(CustomsDocMask).count()
+                logged_rows = int(done.row_count or 0)
+                if logged_rows <= 0 or live_rows != logged_rows:
+                    logger.warning(
+                        "mask44 snapshot {} has a success log without positive "
+                        "and complete matching live evidence (logged={}, live={}); "
+                        "re-importing",
+                        snapshot_id,
+                        logged_rows,
+                        live_rows,
+                    )
+                else:
+                    return {
+                        "status": "skipped",
+                        "snapshot_id": snapshot_id,
+                        "rows": live_rows,
+                        "verified_live_rows": live_rows,
+                    }
 
     dest = backend_opendata_dir() / "mask44" / snapshot_id
     raw = download_bytes(version.url, dest=dest)
     sha = hashlib.sha256(raw).hexdigest()
     text = raw.decode("utf-8-sig", errors="replace")
     reader = csv.DictReader(io.StringIO(text), delimiter=";")
-    rows_in = 0
+    candidate_rows: list[dict[str, str]] = []
+    for row in reader:
+        pattern = (row.get("K_MASKA") or "").strip().strip('"')
+        if not pattern:
+            continue
+        candidate_rows.append(
+            {
+                "sid_smev": (row.get("SID_SMEV") or "").strip().strip('"')[:64],
+                "kod": (row.get("KOD") or "").strip().strip('"')[:16],
+                "mask_number": (row.get("N_MSK") or "").strip().strip('"')[:8],
+                "name": (row.get("NAME_MSK") or "").strip().strip('"'),
+                "mask_pattern": pattern,
+                "description": (row.get("DSCR_MSK") or "").strip().strip('"'),
+                "valid_from": (row.get("DATBEG") or "").strip().strip('"')[:32],
+                "valid_to": (row.get("DATEND") or "").strip().strip('"')[:32],
+            }
+        )
+    if not candidate_rows:
+        raise RuntimeError("mask44: official snapshot contains zero valid masks; live table preserved")
+
+    rows_in = len(candidate_rows)
     with SessionLocal() as db:
-        db.query(CustomsDocMask).delete()
-        for row in reader:
-            pattern = (row.get("K_MASKA") or "").strip().strip('"')
-            if not pattern:
-                continue
+        try:
+            existing_count = db.query(CustomsDocMask).count()
+            validate_full_snapshot(
+                source_id="fts_customs_document_masks",
+                candidate_count=rows_in,
+                existing_count=existing_count,
+                minimum_rows=configured_minimum_rows("fts_customs_document_masks", 10),
+            )
+            db.query(CustomsDocMask).delete(synchronize_session=False)
+            db.add_all(CustomsDocMask(**row) for row in candidate_rows)
             db.add(
-                CustomsDocMask(
-                    sid_smev=(row.get("SID_SMEV") or "").strip().strip('"')[:64],
-                    kod=(row.get("KOD") or "").strip().strip('"')[:16],
-                    mask_number=(row.get("N_MSK") or "").strip().strip('"')[:8],
-                    name=(row.get("NAME_MSK") or "").strip().strip('"'),
-                    mask_pattern=pattern,
-                    description=(row.get("DSCR_MSK") or "").strip().strip('"'),
-                    valid_from=(row.get("DATBEG") or "").strip().strip('"')[:32],
-                    valid_to=(row.get("DATEND") or "").strip().strip('"')[:32],
+                OpendataSyncLog(
+                    source_key="mask44",
+                    dataset_id=MASK44_DATASET_ID,
+                    snapshot_id=snapshot_id,
+                    file_url=version.url,
+                    file_sha256=sha,
+                    row_count=rows_in,
+                    synced_at=datetime.now(timezone.utc).isoformat(),
+                    data_as_of=snapshot_date_from_id(snapshot_id) or meta.modified,
+                    status="ok",
                 )
             )
-            rows_in += 1
-        db.add(
-            OpendataSyncLog(
-                source_key="mask44",
-                dataset_id=MASK44_DATASET_ID,
-                snapshot_id=snapshot_id,
-                file_url=version.url,
-                file_sha256=sha,
-                row_count=rows_in,
-                synced_at=datetime.now(timezone.utc).isoformat(),
-                data_as_of=snapshot_date_from_id(snapshot_id) or meta.modified,
-                status="ok",
-            )
-        )
-        db.commit()
+            db.commit()
+        except Exception:
+            db.rollback()
+            raise
     logger.info("mask44: imported {} masks from {}", rows_in, snapshot_id)
     return {"status": "ok", "snapshot_id": snapshot_id, "rows": rows_in}
 
@@ -102,6 +135,8 @@ def fetch_customs_catalog() -> list[dict[str, str]]:
 
 def sync_customs_catalog() -> dict[str, Any]:
     rows = fetch_customs_catalog()
+    if not rows:
+        raise RuntimeError("FTS opendata catalog contains zero rows")
     ved_keywords = ("троис", "маск", "валют", "пропуск", "тн вэд", "деклар", "склад")
     relevant = [r for r in rows if any(k in r["title"].lower() for k in ved_keywords)]
     return {"status": "ok", "total": len(rows), "ved_relevant": relevant}

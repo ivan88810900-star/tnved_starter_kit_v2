@@ -27,6 +27,7 @@ from __future__ import annotations
 import argparse
 import csv
 import io
+import json
 import os
 import re
 import sys
@@ -45,9 +46,10 @@ sys.path.insert(0, str(ROOT))
 from app.datetime_util import utc_now_naive
 from app.db import SessionLocal
 from app.models.core import FssNotification, ReoRegistryEntry
-from app.services.normative_store import append_sync_log, init_db
+from app.services.normative_store import append_sync_log, init_db, upsert_source_status
 from app.services.preview_cache_revision import bump_preview_cache_revision
 from app.services.registry_sync_http import registry_http_get_text
+from app.services.snapshot_safety import configured_minimum_rows, validate_full_snapshot
 
 NSI_BASE_API = "https://nsi.eaeunion.org/portal/api"
 NSI_FSS_CODE = "1994"
@@ -183,6 +185,11 @@ def _nsi_fetch_rows(
         offset += len(rows)
         if len(rows) < payload["limit"]:
             break
+    if len(out) != target:
+        raise RuntimeError(
+            f"NSI dictionary {code} snapshot is incomplete: "
+            f"fetched_rows={len(out)} expected_rows={target} reported_total={total}"
+        )
     return out
 
 
@@ -273,6 +280,47 @@ def _rows_from_nsi_reo(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
             }
         )
     return out
+
+
+def _unique_registry_rows(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Deduplicate the candidate snapshot by its database identity."""
+    return list(
+        {
+            str(row.get("number") or "").strip(): row
+            for row in rows
+            if str(row.get("number") or "").strip()
+        }.values()
+    )
+
+
+def _validate_nsi_snapshot(
+    db,
+    *,
+    source_id: str,
+    model,
+    raw_rows: list[dict[str, Any]],
+    parsed_rows: list[dict[str, Any]],
+    max_rows: int,
+    default_minimum_rows: int,
+) -> list[dict[str, Any]]:
+    """Validate complete NSI snapshots before any live rows are deleted.
+
+    A limited request is explicitly a partial upsert.  It still benefits from
+    exact HTTP pagination in ``_nsi_fetch_rows`` but must never be interpreted
+    as a replacement snapshot.
+    """
+    candidates = _unique_registry_rows(parsed_rows)
+    if int(max_rows) > 0:
+        return candidates
+    validate_full_snapshot(
+        source_id=source_id,
+        candidate_count=len(candidates),
+        existing_count=db.query(model).count(),
+        minimum_rows=configured_minimum_rows(source_id, default_minimum_rows),
+        reported_total=len(raw_rows),
+        fetched_count=len(candidates),
+    )
+    return candidates
 
 
 def _is_sqlite(db) -> bool:
@@ -461,6 +509,11 @@ def main() -> int:
         help="Отключить fallback к официальному NSI API ЕАЭС",
     )
     ap.add_argument(
+        "--nsi-only",
+        action="store_true",
+        help="Использовать только канонические NSI API, игнорируя CSV URL из окружения",
+    )
+    ap.add_argument(
         "--nsi-date",
         type=str,
         default="",
@@ -484,7 +537,19 @@ def main() -> int:
         default=NSI_REO_CODE,
         help=f"Код словаря NSI для реестра РЭС/ВЧУ (по умолчанию {NSI_REO_CODE})",
     )
+    ap.add_argument("--strict", action="store_true", help="Require non-empty FSS and REO official results")
+    ap.add_argument("--json", action="store_true", help="Emit the adapter result contract")
     args = ap.parse_args()
+
+    if args.nsi_only and (
+        args.demo_seed
+        or args.disable_nsi
+        or args.fss_csv is not None
+        or args.reo_csv is not None
+        or bool((args.fss_url or "").strip())
+        or bool((args.reo_url or "").strip())
+    ):
+        ap.error("--nsi-only cannot be combined with demo, CSV/URL, or --disable-nsi")
 
     init_db()
 
@@ -492,104 +557,274 @@ def main() -> int:
     reo_total = 0
     notes: list[str] = []
     http_failed = False
+    fss_failed = False
+    reo_failed = False
     proxy = (args.proxy or "").strip()
     nsi_date = (args.nsi_date or datetime.now(timezone.utc).strftime("%Y-%m-%d")).strip()
+    nsi_limit = max(0, int(args.nsi_limit))
+    fss_nsi_code = str(args.fss_nsi_code or NSI_FSS_CODE).strip()
+    reo_nsi_code = str(args.reo_nsi_code or NSI_REO_CODE).strip()
     ua = {"User-Agent": "customs-clear-state-registries/1.0"}
+    fss_variant = "unknown"
+    reo_variant = "unknown"
+    fss_snapshot_kind = "partial"
+    reo_snapshot_kind = "partial"
 
     with SessionLocal() as db:
         if args.demo_seed:
+            fss_variant = "demo"
+            reo_variant = "demo"
             fss_rows, reo_rows = demo_seed_rows()
             fss_total = upsert_fss_rows(db, fss_rows)
             reo_total = upsert_reo_rows(db, reo_rows)
             notes.append("demo_seed")
         else:
-            fss_url = (args.fss_url or os.getenv("FSS_NOTIFICATIONS_SYNC_URL") or "").strip()
-            reo_url = (args.reo_url or os.getenv("REO_REGISTRY_SYNC_URL") or "").strip()
+            fss_url = "" if args.nsi_only else (
+                args.fss_url or os.getenv("FSS_NOTIFICATIONS_SYNC_URL") or ""
+            ).strip()
+            reo_url = "" if args.nsi_only else (
+                args.reo_url or os.getenv("REO_REGISTRY_SYNC_URL") or ""
+            ).strip()
 
-            if args.fss_csv and args.fss_csv.is_file():
-                text = args.fss_csv.read_text(encoding="utf-8", errors="replace")
-                parsed = _rows_from_csv_dicts(_read_csv_rows(text), kind="fss")
-                fss_total = upsert_fss_rows(db, parsed)
-                notes.append(f"fss_file={args.fss_csv.name}")
+            if args.fss_csv:
+                fss_variant = "csv_file"
+                try:
+                    if not args.fss_csv.is_file():
+                        raise RuntimeError(f"CSV file does not exist: {args.fss_csv}")
+                    text = args.fss_csv.read_text(encoding="utf-8", errors="replace")
+                    parsed = _rows_from_csv_dicts(_read_csv_rows(text), kind="fss")
+                    # Operator-provided exports are not authoritative snapshots:
+                    # only upsert them, never delete live registry rows.
+                    fss_total = upsert_fss_rows(db, parsed)
+                    notes.append(f"fss_file={args.fss_csv.name}")
+                except Exception as e:
+                    db.rollback()
+                    fss_total = 0
+                    reo_total = 0
+                    logger.error("FSS CSV: {}", e)
+                    notes.append(f"fss_file_error:{e!s}")
+                    fss_failed = True
             elif fss_url:
+                fss_variant = "csv_url"
                 try:
                     text = registry_http_get_text(fss_url, headers=ua)
                     parsed = _rows_from_csv_dicts(_read_csv_rows(text), kind="fss")
                     fss_total = upsert_fss_rows(db, parsed)
                     notes.append("fss_url_ok")
                 except Exception as e:
+                    db.rollback()
+                    fss_total = 0
+                    reo_total = 0
                     logger.error("FSS_NOTIFICATIONS_SYNC_URL: недоступен после повторов: {}", e)
                     notes.append(f"fss_url_error:{e!s}")
                     http_failed = True
+                    fss_failed = True
             elif not args.disable_nsi:
+                fss_variant = "nsi"
+                fss_snapshot_kind = "partial" if nsi_limit > 0 else "full"
                 try:
                     raw = _nsi_fetch_rows(
-                        code=str(args.fss_nsi_code or NSI_FSS_CODE).strip(),
+                        code=fss_nsi_code,
                         date_iso=nsi_date,
                         proxy=proxy,
-                        max_rows=max(0, int(args.nsi_limit)),
+                        max_rows=nsi_limit,
                     )
-                    parsed = _rows_from_nsi_fss(raw)
+                    parsed = _validate_nsi_snapshot(
+                        db,
+                        source_id="eec_fss_notifications_registry",
+                        model=FssNotification,
+                        raw_rows=raw,
+                        parsed_rows=_rows_from_nsi_fss(raw),
+                        max_rows=nsi_limit,
+                        default_minimum_rows=100,
+                    )
+                    if parsed and nsi_limit <= 0:
+                        db.query(FssNotification).delete(synchronize_session=False)
                     fss_total = upsert_fss_rows(db, parsed)
                     notes.append(f"fss_nsi_ok:{len(parsed)}")
                 except Exception as e:
+                    db.rollback()
+                    fss_total = 0
+                    reo_total = 0
                     logger.error("FSS NSI API: недоступен после повторов: {}", e)
                     notes.append(f"fss_nsi_error:{e!s}")
                     http_failed = True
+                    fss_failed = True
 
-            if args.reo_csv and args.reo_csv.is_file():
-                text = args.reo_csv.read_text(encoding="utf-8", errors="replace")
-                parsed = _rows_from_csv_dicts(_read_csv_rows(text), kind="reo")
-                reo_total = upsert_reo_rows(db, parsed)
-                notes.append(f"reo_file={args.reo_csv.name}")
+            if args.reo_csv:
+                reo_variant = "csv_file"
+                try:
+                    if not args.reo_csv.is_file():
+                        raise RuntimeError(f"CSV file does not exist: {args.reo_csv}")
+                    text = args.reo_csv.read_text(encoding="utf-8", errors="replace")
+                    parsed = _rows_from_csv_dicts(_read_csv_rows(text), kind="reo")
+                    reo_total = upsert_reo_rows(db, parsed)
+                    notes.append(f"reo_file={args.reo_csv.name}")
+                except Exception as e:
+                    # REO is the second half of the pair. Its failure rolls
+                    # back any uncommitted FSS replacement as well.
+                    db.rollback()
+                    fss_total = 0
+                    reo_total = 0
+                    logger.error("REO CSV: {}", e)
+                    notes.append(f"reo_file_error:{e!s}")
+                    reo_failed = True
             elif reo_url:
+                reo_variant = "csv_url"
                 try:
                     text = registry_http_get_text(reo_url, headers=ua)
                     parsed = _rows_from_csv_dicts(_read_csv_rows(text), kind="reo")
                     reo_total = upsert_reo_rows(db, parsed)
                     notes.append("reo_url_ok")
                 except Exception as e:
+                    db.rollback()
+                    fss_total = 0
+                    reo_total = 0
                     logger.error("REO_REGISTRY_SYNC_URL: недоступен после повторов: {}", e)
                     notes.append(f"reo_url_error:{e!s}")
                     http_failed = True
+                    reo_failed = True
             elif not args.disable_nsi:
+                reo_variant = "nsi"
+                reo_snapshot_kind = "partial" if nsi_limit > 0 else "full"
                 try:
                     raw = _nsi_fetch_rows(
-                        code=str(args.reo_nsi_code or NSI_REO_CODE).strip(),
+                        code=reo_nsi_code,
                         date_iso=nsi_date,
                         proxy=proxy,
-                        max_rows=max(0, int(args.nsi_limit)),
+                        max_rows=nsi_limit,
                     )
-                    parsed = _rows_from_nsi_reo(raw)
+                    parsed = _validate_nsi_snapshot(
+                        db,
+                        source_id="eec_reo_vchu_registry",
+                        model=ReoRegistryEntry,
+                        raw_rows=raw,
+                        parsed_rows=_rows_from_nsi_reo(raw),
+                        max_rows=nsi_limit,
+                        default_minimum_rows=100,
+                    )
+                    if parsed and nsi_limit <= 0:
+                        db.query(ReoRegistryEntry).delete(synchronize_session=False)
                     reo_total = upsert_reo_rows(db, parsed)
                     notes.append(f"reo_nsi_ok:{len(parsed)}")
                 except Exception as e:
+                    db.rollback()
+                    fss_total = 0
+                    reo_total = 0
                     logger.error("REO NSI API: недоступен после повторов: {}", e)
                     notes.append(f"reo_nsi_error:{e!s}")
                     http_failed = True
+                    reo_failed = True
 
             if not fss_total and not args.fss_csv and not fss_url:
                 notes.append("fss_skipped_no_source")
             if not reo_total and not args.reo_csv and not reo_url:
                 notes.append("reo_skipped_no_source")
 
-        db.commit()
+        strict_failure = bool(
+            (args.strict or args.nsi_only)
+            and not args.demo_seed
+            and (http_failed or fss_failed or reo_failed or fss_total <= 0 or reo_total <= 0)
+        )
+        if strict_failure:
+            # FSS and REO form one scheduled adapter contract.  Do not expose a
+            # half-refreshed pair when either official snapshot is unavailable.
+            db.rollback()
+            fss_total = 0
+            reo_total = 0
+        else:
+            db.commit()
 
+    if strict_failure:
+        notes.append("transaction_rolled_back")
     note = "; ".join(notes) or "ok"
-    log_status = "error" if http_failed else ("ok" if (fss_total or reo_total or args.demo_seed) else "partial")
-    append_sync_log(
-        "state_registries_fss_reo",
-        log_status,
-        "v1",
-        fss_total + reo_total,
-        note[:2000],
+    if args.strict and not args.demo_seed:
+        fss_failed = fss_failed or fss_total <= 0
+        reo_failed = reo_failed or reo_total <= 0
+    fss_ok = not fss_failed and (fss_total > 0 or not args.strict)
+    reo_ok = not reo_failed and (reo_total > 0 or not args.strict)
+    sync_ok = fss_ok and reo_ok and not http_failed
+    revision = (
+        f"{fss_variant}+{reo_variant}:{nsi_date}"
+        if not args.demo_seed
+        else "demo"
     )
+    for source_code, source_name, source_url, rows, source_ok in (
+        (
+            "FSS_NOTIFICATIONS",
+            "Единый реестр нотификаций ЕАЭС",
+            "https://nsi.eaeunion.org/portal/1994",
+            fss_total,
+            fss_ok,
+        ),
+        (
+            "REO_VCHU",
+            "Единый реестр РЭС и ВЧУ ЕАЭС",
+            "https://nsi.eaeunion.org/portal/1992",
+            reo_total,
+            reo_ok,
+        ),
+    ):
+        upsert_source_status(
+            source_code=source_code,
+            source_name=source_name,
+            source_url=source_url,
+            revision=revision if source_ok else "unavailable",
+            is_stale=not source_ok,
+            note=note[:2000],
+        )
+        append_sync_log(
+            source_code,
+            "OK" if source_ok else "ERROR",
+            revision,
+            rows,
+            note[:2000],
+        )
     print(f"fss_rows={fss_total} reo_rows={reo_total} ({note})")
-    try:
-        bump_preview_cache_revision("sync_state_registries")
-    except Exception:
-        pass
-    return 1 if http_failed else 0
+    if fss_total or reo_total:
+        try:
+            bump_preview_cache_revision("sync_state_registries")
+        except Exception:
+            pass
+    if args.json:
+        official_source = bool(
+            args.strict
+            and args.nsi_only
+            and fss_variant == "nsi"
+            and reo_variant == "nsi"
+            and fss_nsi_code == NSI_FSS_CODE
+            and reo_nsi_code == NSI_REO_CODE
+            and fss_snapshot_kind == "full"
+            and reo_snapshot_kind == "full"
+        )
+        snapshot_kind = (
+            "full"
+            if fss_snapshot_kind == "full" and reo_snapshot_kind == "full"
+            else "partial"
+        )
+        payload = {
+            "status": "ok" if sync_ok else "error",
+            "source_ids": ["eec_fss_notifications_registry", "eec_reo_vchu_registry"],
+            "official_source": official_source,
+            "snapshot_kind": snapshot_kind,
+            "source_variant": f"{fss_variant}+{reo_variant}",
+            "revision": revision,
+            "sources": {
+                "eec_fss_notifications_registry": {
+                    "status": "ok" if fss_ok else "error",
+                    "official_source": official_source,
+                    "rows_applied": fss_total,
+                },
+                "eec_reo_vchu_registry": {
+                    "status": "ok" if reo_ok else "error",
+                    "official_source": official_source,
+                    "rows_applied": reo_total,
+                },
+            },
+            "note": note,
+        }
+        print("REGULATORY_SYNC_RESULT=" + json.dumps(payload, ensure_ascii=False, separators=(",", ":")))
+    return 0 if sync_ok else 1
 
 
 if __name__ == "__main__":

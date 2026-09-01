@@ -238,19 +238,42 @@ TROIS_DISCLAIMER_RU = (
 TROIS_OFFICIAL_URL = "https://customs.gov.ru/registers/objects-intellectual-property"
 
 _db_cache_loaded = False
+_db_cache_revision: str | None = None
+
+
+def _current_db_cache_revision() -> str:
+    """Revision token used for in-memory and Redis invalidation after a sync."""
+    try:
+        from ..db import SessionLocal
+        from ..models.core import SourceStatus
+
+        with SessionLocal() as db:
+            status = (
+                db.query(SourceStatus)
+                .filter(SourceStatus.source_code == "FTS_TROIS")
+                .first()
+            )
+            if status is None:
+                return "untracked"
+            synced = status.synced_at.isoformat() if status.synced_at else "unknown"
+            return f"{status.revision or 'unknown'}:{synced}:{int(bool(status.is_stale))}"
+    except Exception:
+        return "unavailable"
 
 
 def _ensure_db_cache_loaded() -> None:
-    global _db_cache_loaded
-    if _db_cache_loaded:
+    global _db_cache_loaded, _db_cache_revision
+    revision = _current_db_cache_revision()
+    if _db_cache_loaded and revision == _db_cache_revision:
         return
     try:
         from .trois_registry_loader import sync_db_to_local_cache
 
-        sync_db_to_local_cache()
+        sync_db_to_local_cache(force=_db_cache_loaded)
     except Exception as exc:
         logger.debug("TROIS DB cache load skipped: {}", exc)
     _db_cache_loaded = True
+    _db_cache_revision = revision
 
 
 def _risk_level(found: bool, source: str, error: bool = False) -> str:
@@ -363,14 +386,14 @@ async def check_trademark(query: str) -> Dict[str, Any]:
     from .cache_layer import TROIS_PREFIX, cache_get, cache_set
     from .trois_registry_loader import search_db_registry
 
-    key = (query or "").strip().lower()
+    _ensure_db_cache_loaded()
+    raw_key = (query or "").strip().lower()
+    key = f"{_db_cache_revision or 'untracked'}:{raw_key}" if raw_key else ""
     ttl = int(os.getenv("TROIS_CACHE_TTL_SECONDS", "7200"))
     if key:
         layer = await cache_get(TROIS_PREFIX, key)
         if layer is not None:
             return dict(layer)
-
-    _ensure_db_cache_loaded()
 
     cached, source = _find_in_cache_fuzzy(query)
     if cached:

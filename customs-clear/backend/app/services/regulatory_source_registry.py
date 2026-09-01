@@ -15,6 +15,8 @@ AuthorityLevel = Literal[
     "ai_extracted",
 ]
 
+RefreshCadence = Literal["daily", "weekly", "monthly", "manual"]
+
 AUTHORITY_LEVEL_LABELS: dict[str, str] = {
     "official_binding": "Официальный обязательный контур (source of truth)",
     "official_reference": "Официальный справочный контур",
@@ -39,6 +41,9 @@ class RegulatorySourceEntry:
     authority_level: AuthorityLevel
     official_url: str
     description: str
+    # Exact machine-readable/legal artifacts used by monitors or adapters.  The
+    # landing page above remains the user-facing citation.
+    monitor_urls: tuple[str, ...] = ()
     # Пути относительно customs-clear/backend/
     local_paths: tuple[str, ...] = ()
     # Ключ счётчика в regulatory_source_completeness._count_db_probe
@@ -48,6 +53,11 @@ class RegulatorySourceEntry:
     # Имя существующего скрипта в scripts/ (если источник имеет structured-sync)
     sync_script: str | None = None
     min_document_count: int = 1
+    # Operational freshness contract.  ``max_age_hours`` is intentionally
+    # explicit instead of being inferred at report time: a missed daily/weekly
+    # run must make the source stale even when its last snapshot is still in DB.
+    refresh_cadence: RefreshCadence = "manual"
+    max_age_hours: int | None = None
     known_gaps: tuple[str, ...] = ()
     manual_review_default: bool = False
 
@@ -60,9 +70,13 @@ REGULATORY_SOURCE_REGISTRY: tuple[RegulatorySourceEntry, ...] = (
         authority_level="official_reference",
         official_url="https://www.cbr.ru/scripts/XML_daily.asp",
         description="Ежедневные официальные курсы валют для расчётов и инвойсов.",
+        monitor_urls=("https://www.cbr.ru/scripts/XML_daily.asp",),
         db_probe="exchange_rates",
+        source_status_code="CBRF",
         sync_script="update_rates.py",
         min_document_count=1,
+        refresh_cadence="daily",
+        max_age_hours=48,
     ),
     RegulatorySourceEntry(
         source_id="eec_ett_tnved",
@@ -153,16 +167,34 @@ REGULATORY_SOURCE_REGISTRY: tuple[RegulatorySourceEntry, ...] = (
         title="Единый перечень санитарного контроля и СГР (Решение КТС №299)",
         authority_level="official_binding",
         official_url="https://eec.eaeunion.org/upload/medialibrary/f52/EdpertovarovEEU.pdf",
-        description="Решение КТС №299: кодовые кандидаты раздела II и отдельная проверка реестра выданных СГР.",
-        local_paths=("app/services/official_ntm_contours.py", "data/official_sgr_rules.seed.json"),
+        description="Решение КТС №299: нормативный перечень и кодовые кандидаты раздела II.",
+        monitor_urls=("https://eec.eaeunion.org/upload/medialibrary/f52/EdpertovarovEEU.pdf",),
+        local_paths=("app/services/official_ntm_contours.py",),
+        sync_script="monitor_official_ntm_sources.py",
+        known_gaps=(
+            "Большинство строк раздела II содержит «из»: код без назначения, состава и исключений не доказывает обязанность СГР.",
+            "Изменение нормативного перечня требует проверки и не продвигается в правила автоматически.",
+        ),
+        manual_review_default=True,
+    ),
+    RegulatorySourceEntry(
+        source_id="eec_sgr_registry",
+        title="Единый реестр выданных свидетельств о государственной регистрации",
+        authority_level="registry_evidence",
+        official_url="https://nsi.eaeunion.org/portal/1995",
+        description="Машиночитаемый реестр выданных СГР для проверки конкретного документа.",
+        monitor_urls=("https://nsi.eaeunion.org/portal/1995",),
+        local_paths=("data/official_sgr_rules.seed.json",),
         db_probe="sgr_certificates",
         source_status_code="SGR_REGISTRY",
         sync_script="sync_sgr_registry.py",
         min_document_count=1,
+        refresh_cadence="daily",
+        max_age_hours=48,
         known_gaps=(
             "Большинство строк раздела II содержит «из»: код без назначения, состава и исключений не доказывает обязанность СГР.",
             "Актуальность конкретного документа требует отдельной проверки реестра.",
-            "Автосинхронизация реестра не изменяет code-only правила раздела II.",
+            "Автосинхронизация реестра не изменяет нормативные code-only правила Решения №299.",
         ),
     ),
     RegulatorySourceEntry(
@@ -172,8 +204,11 @@ REGULATORY_SOURCE_REGISTRY: tuple[RegulatorySourceEntry, ...] = (
         official_url="https://nsi.eaeunion.org/portal/1994",
         description="Официальный реестр нотификаций ФСБ/ЕАЭС для проверки конкретного товара.",
         db_probe="fss_notifications",
+        source_status_code="FSS_NOTIFICATIONS",
         sync_script="sync_state_registries.py",
         min_document_count=1,
+        refresh_cadence="daily",
+        max_age_hours=48,
         known_gaps=("Запись реестра подтверждает документ, но не заменяет проверку применимости меры по товару.",),
     ),
     RegulatorySourceEntry(
@@ -183,8 +218,11 @@ REGULATORY_SOURCE_REGISTRY: tuple[RegulatorySourceEntry, ...] = (
         official_url="https://nsi.eaeunion.org/portal/1992",
         description="Официальный реестр радиоэлектронных средств и высокочастотных устройств.",
         db_probe="reo_registry",
+        source_status_code="REO_VCHU",
         sync_script="sync_state_registries.py",
         min_document_count=1,
+        refresh_cadence="daily",
+        max_age_hours=48,
         known_gaps=("Совпадение модели является доказательством реестра, а не автоматическим выводом о разрешительном документе.",),
     ),
     RegulatorySourceEntry(
@@ -253,9 +291,16 @@ REGULATORY_SOURCE_REGISTRY: tuple[RegulatorySourceEntry, ...] = (
         authority_level="registry_evidence",
         official_url="https://pub.fsa.gov.ru/",
         description="Проверка разрешительных документов в permits/compliance (не нормативная истина по мерам).",
+        monitor_urls=(
+            "https://fsa.gov.ru/opendata/7736638268-rss/meta.xml",
+            "https://fsa.gov.ru/opendata/7736638268-rds/meta.xml",
+        ),
         db_probe="fsa_certificates",
+        source_status_code="FSA_REGISTRY",
         sync_script="opendata_sync.py",
         min_document_count=1,
+        refresh_cadence="weekly",
+        max_age_hours=216,
         known_gaps=("Локальный снимок обновляется из официальных открытых данных; юридический статус документа проверяется на дату операции.",),
     ),
     RegulatorySourceEntry(
@@ -264,9 +309,13 @@ REGULATORY_SOURCE_REGISTRY: tuple[RegulatorySourceEntry, ...] = (
         authority_level="registry_evidence",
         official_url="https://customs.gov.ru/opendata/7730176610-trois",
         description="Официальные открытые данные Таможенного реестра объектов интеллектуальной собственности.",
+        monitor_urls=("https://customs.gov.ru/7730176610-trois/meta.csv",),
         db_probe="trois_registry",
+        source_status_code="FTS_TROIS",
         sync_script="opendata_sync.py",
         min_document_count=1,
+        refresh_cadence="weekly",
+        max_age_hours=216,
     ),
     RegulatorySourceEntry(
         source_id="fts_customs_document_masks",
@@ -274,9 +323,16 @@ REGULATORY_SOURCE_REGISTRY: tuple[RegulatorySourceEntry, ...] = (
         authority_level="official_reference",
         official_url="https://customs.gov.ru/opendata",
         description="Официальные открытые справочники и маски документов для декларации.",
+        monitor_urls=(
+            "https://customs.gov.ru/7730176610-mask44/meta.csv",
+            "https://customs.gov.ru/opendata/list.csv",
+        ),
         db_probe="customs_doc_masks",
+        source_status_code="FTS_CUSTOMS_DOCS",
         sync_script="opendata_sync.py",
         min_document_count=1,
+        refresh_cadence="weekly",
+        max_age_hours=216,
     ),
     RegulatorySourceEntry(
         source_id="regulatory_documents_corpus",
@@ -368,12 +424,15 @@ REGULATORY_SOURCE_REGISTRY: tuple[RegulatorySourceEntry, ...] = (
         authority_level="official_reference",
         official_url="https://ofac.treasury.gov/specially-designated-nationals-list-sdn-list",
         description="Список SDN OFAC для проверки контрагентов (диагностический контур).",
+        monitor_urls=("https://www.treasury.gov/ofac/downloads/sdn.xml",),
         db_probe="ofac_sdn_list",
         source_status_code="OFAC_SDN",
         sync_script="sync_ofac_sanctions.py",
         min_document_count=1,
+        refresh_cadence="daily",
+        max_age_hours=48,
         known_gaps=(
-            "Доступность официального bulk-фида контролируется результатом scheduled sync.",
+            "Scheduled-контур только валидирует официальный bulk-фид; применение в blocking-таблицу выполняется вручную.",
             "Fuzzy-match по наименованию — advisory, не юридическое заключение.",
         ),
         manual_review_default=True,
@@ -384,12 +443,21 @@ REGULATORY_SOURCE_REGISTRY: tuple[RegulatorySourceEntry, ...] = (
         authority_level="official_reference",
         official_url="https://finance.ec.europa.eu/eu-and-world/sanctions-reform/sanctions-against-russia_en",
         description="Консолидированный контур ограничений ЕС по HS и субъектам.",
+        monitor_urls=(
+            "https://webgate.ec.europa.eu/fsd/fsf/public/files/xmlFullSanctionsList_1_1/content",
+            "https://finance.ec.europa.eu/document/download/e5a807d3-6ca0-4bfb-8c6c-2f56f55e0b2e_en?filename=faqs-sanctions-russia-correlation-table-goods-regulation-833_en.xlsx",
+        ),
         local_paths=("data/fixtures/sanctions_risk.sample.json",),
         db_probe="eu_sanctions_list",
         source_status_code="EU_SANCTIONS",
         sync_script="sync_eu_sanctions.py",
         min_document_count=1,
-        known_gaps=("Entity/HS correlation остаётся диагностическим контуром и не заменяет правовую проверку операции.",),
+        refresh_cadence="daily",
+        max_age_hours=48,
+        known_gaps=(
+            "Scheduled-контур только валидирует официальный bulk-фид; применение в blocking-таблицу выполняется вручную.",
+            "Entity/HS correlation остаётся диагностическим контуром и не заменяет правовую проверку операции.",
+        ),
         manual_review_default=True,
     ),
     RegulatorySourceEntry(
@@ -425,13 +493,74 @@ REGULATORY_SOURCE_REGISTRY: tuple[RegulatorySourceEntry, ...] = (
         official_url="https://eec.eaeunion.org/comission/department/deptexsec/trade_remedies/",
         description="Official anti-dumping measures contour (special_duties + EEC_ANTI_DUMPING).",
         local_paths=("data/raw_normative/eec_anti_dumping.json",),
-        db_probe="special_duties",
+        db_probe="special_duties_anti_dumping",
         source_status_code="EEC_ANTI_DUMPING",
         min_document_count=1,
         known_gaps=(
             "MVP: локальный canonical bundle; полный перечень мер — отдельный data curation.",
             "geo_special_duties и hs_rates antidumping_* не считаются official proof.",
         ),
+        manual_review_default=True,
+    ),
+    RegulatorySourceEntry(
+        source_id="trade_remedies_special_safeguard_official",
+        title="Официальный контур специальных защитных мер ЕЭК",
+        authority_level="official_binding",
+        official_url="https://eec.eaeunion.org/comission/department/deptexsec/trade_remedies/",
+        description=(
+            "Official special-safeguard measures contour "
+            "(special_duties + EEC_SPECIAL_SAFEGUARD)."
+        ),
+        local_paths=("data/raw_normative/eec_special_safeguard.json",),
+        db_probe="special_duties_special_safeguard",
+        source_status_code="EEC_SPECIAL_SAFEGUARD",
+        min_document_count=1,
+        known_gaps=(
+            "MVP: локальный canonical bundle; полный перечень мер — отдельный data curation.",
+            "Строки антидемпинговых и компенсационных мер не считаются proof этого контура.",
+        ),
+        manual_review_default=True,
+    ),
+    RegulatorySourceEntry(
+        source_id="trade_remedies_countervailing_official",
+        title="Официальный контур компенсационных мер ЕЭК",
+        authority_level="official_binding",
+        official_url="https://eec.eaeunion.org/comission/department/deptexsec/trade_remedies/",
+        description=(
+            "Official countervailing measures contour "
+            "(special_duties + EEC_COUNTERVAILING)."
+        ),
+        local_paths=("data/raw_normative/eec_countervailing.json",),
+        db_probe="special_duties_countervailing",
+        source_status_code="EEC_COUNTERVAILING",
+        min_document_count=1,
+        known_gaps=(
+            "MVP: локальный canonical bundle; полный перечень мер — отдельный data curation.",
+            "Строки антидемпинговых и защитных мер не считаются proof этого контура.",
+        ),
+        manual_review_default=True,
+    ),
+    RegulatorySourceEntry(
+        source_id="rf_excise_tax_code",
+        title="Официальный контур ставок акцизов РФ",
+        authority_level="official_binding",
+        official_url="https://www.nalog.gov.ru/rn77/taxation/taxes/akciz/",
+        description="НК РФ и официальные разъяснения ФНС по подакцизным товарам и ставкам.",
+        local_paths=("data/raw_normative/eec_excise.json",),
+        db_probe="hs_rates_excise_eec",
+        source_status_code="EEC_EXCISE",
+        known_gaps=("Изменение ставок требует review канонического bundle до применения.",),
+        manual_review_default=True,
+    ),
+    RegulatorySourceEntry(
+        source_id="eec_odata_vat_preferences",
+        title="Открытые данные ЕАЭС по льготам НДС",
+        authority_level="official_reference",
+        official_url="https://opendata.eaeunion.org/",
+        description="Машиночитаемые справочники льгот и решений ЕЭК по НДС.",
+        db_probe="vat_preferences_eec_odata",
+        source_status_code="EEC_ODATA",
+        known_gaps=("Требуется проверка правового основания и срока действия каждой строки.",),
         manual_review_default=True,
     ),
     RegulatorySourceEntry(
@@ -466,11 +595,14 @@ def registry_entry_to_dict(entry: RegulatorySourceEntry) -> dict[str, Any]:
         "is_source_of_truth": entry.authority_level in SOURCE_OF_TRUTH_LEVELS,
         "official_url": entry.official_url,
         "description": entry.description,
+        "monitor_urls": list(entry.monitor_urls),
         "local_paths": list(entry.local_paths),
         "db_probe": entry.db_probe,
         "source_status_code": entry.source_status_code,
         "sync_script": entry.sync_script,
         "min_document_count": entry.min_document_count,
+        "refresh_cadence": entry.refresh_cadence,
+        "max_age_hours": entry.max_age_hours,
         "known_gaps": list(entry.known_gaps),
         "manual_review_default": entry.manual_review_default,
     }

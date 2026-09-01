@@ -1,6 +1,8 @@
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timezone
+import math
+import os
 import xml.etree.ElementTree as ET
 
 import httpx
@@ -13,6 +15,17 @@ CBR_DAILY_URL = "https://www.cbr.ru/scripts/XML_daily.asp"
 CBRF_SOURCE_CODE = "CBRF"
 CBRF_SOURCE_NAME = "Курсы валют ЦБ РФ (XML daily)"
 TRACKED = ("USD", "EUR", "CNY", "BYN", "KZT")
+
+
+def _configured_cbr_max_rate_age_days() -> int:
+    try:
+        value = int(os.getenv("CBR_MAX_RATE_AGE_DAYS", "14") or "14")
+    except ValueError:
+        value = 14
+    return max(1, min(31, value))
+
+
+CBR_MAX_RATE_AGE_DAYS = _configured_cbr_max_rate_age_days()
 FALLBACK: dict[str, float] = {
     "USD": 92.0,
     "EUR": 100.0,
@@ -26,10 +39,9 @@ FALLBACK: dict[str, float] = {
 def _parse_cbr_xml(xml_text: str) -> tuple[str, dict[str, tuple[float, float]]]:
     root = ET.fromstring(xml_text)
     date_raw = root.attrib.get("Date", "")
-    try:
-        date_key = datetime.strptime(date_raw, "%d.%m.%Y").strftime("%Y-%m-%d")
-    except Exception:
-        date_key = datetime.now().strftime("%Y-%m-%d")
+    if not date_raw:
+        raise ValueError("CBR XML is missing its Date attribute")
+    date_key = datetime.strptime(date_raw, "%d.%m.%Y").strftime("%Y-%m-%d")
 
     out: dict[str, tuple[float, float]] = {}
     for valute in root.findall("Valute"):
@@ -38,7 +50,12 @@ def _parse_cbr_xml(xml_text: str) -> tuple[str, dict[str, tuple[float, float]]]:
             continue
         value = float((valute.findtext("Value") or "0").replace(",", "."))
         nominal = float((valute.findtext("Nominal") or "1").replace(",", "."))
-        if nominal <= 0:
+        if (
+            not math.isfinite(value)
+            or not math.isfinite(nominal)
+            or value <= 0
+            or nominal <= 0
+        ):
             continue
         out[code] = (value / nominal, nominal)
     return date_key, out
@@ -49,6 +66,51 @@ async def fetch_cbr_rates() -> tuple[str, dict[str, tuple[float, float]]]:
         resp = await client.get(CBR_DAILY_URL)
     resp.raise_for_status()
     return _parse_cbr_xml(resp.text)
+
+
+def _validate_cbr_rate_date(date_key: str, *, now: datetime | None = None) -> None:
+    """Reject cached or future-dated XML even when its shape looks canonical."""
+    rate_date = datetime.strptime(str(date_key or ""), "%Y-%m-%d").date()
+    reference = (now or datetime.now(timezone.utc)).date()
+    age_days = (reference - rate_date).days
+    if age_days < -1:
+        raise ValueError(f"CBR rate date is in the future: {rate_date.isoformat()}")
+    if age_days > CBR_MAX_RATE_AGE_DAYS:
+        raise ValueError(
+            f"CBR rate date is stale: {rate_date.isoformat()} "
+            f"(age_days={age_days}, max={CBR_MAX_RATE_AGE_DAYS})"
+        )
+
+
+async def validate_cbr_rates_source() -> dict[str, object]:
+    """Fetch and validate the canonical CBR payload without mutating the database."""
+    try:
+        date_key, rows = await fetch_cbr_rates()
+        _validate_cbr_rate_date(date_key)
+    except Exception as exc:
+        return {
+            "status": "ERROR",
+            "source": "unavailable",
+            "date": datetime.now().strftime("%Y-%m-%d"),
+            "validated": 0,
+            "error": str(exc),
+        }
+    missing = _missing_tracked_currencies(rows)
+    if missing:
+        return {
+            "status": "ERROR",
+            "source": "incomplete",
+            "date": date_key,
+            "validated": len(rows),
+            "missing_currencies": missing,
+        }
+    return {
+        "status": "OK",
+        "source": "CBRF",
+        "date": date_key,
+        "validated": len(rows),
+        "updated": 0,
+    }
 
 
 def _missing_tracked_currencies(rows: dict[str, tuple[float, float]]) -> list[str]:
@@ -80,6 +142,16 @@ def _upsert_rates(rows: dict[str, tuple[float, float]]) -> int:
                 changed += 1
         db.commit()
     return changed
+
+
+def _stored_tracked_rate_count() -> int:
+    """Число уже сохранённых курсов, которые нельзя затирать fallback-константами."""
+    with SessionLocal() as db:
+        return int(
+            db.query(ExchangeRate)
+            .filter(ExchangeRate.currency_code.in_(TRACKED))
+            .count()
+        )
 
 
 def _record_cbrf_sync_success(date_key: str, rows_updated: int) -> None:
@@ -137,7 +209,18 @@ def _safe_record_provenance(record_fn, *args: object, **kwargs: object) -> str |
 
 
 def _apply_fallback_exchange_rates(error: str) -> dict[str, object]:
-    """CBR fetch/parse/upsert failed — записать FALLBACK в exchange_rates."""
+    """Seed fallback only into an empty database; preserve any last-known-good rates."""
+    existing = _stored_tracked_rate_count()
+    if existing:
+        _safe_record_provenance(_record_cbrf_sync_fallback, error, 0)
+        return {
+            "status": "ERROR",
+            "source": "preserved_last_good",
+            "date": datetime.now().strftime("%Y-%m-%d"),
+            "updated": 0,
+            "preserved_rows": existing,
+            "error": error,
+        }
     fallback_rows = {k: (v, 1.0) for k, v in FALLBACK.items() if k in TRACKED}
     changed = _upsert_rates(fallback_rows)
     _safe_record_provenance(_record_cbrf_sync_fallback, error, changed)
@@ -149,31 +232,60 @@ def _apply_fallback_exchange_rates(error: str) -> dict[str, object]:
     }
 
 
-async def update_exchange_rates_from_cbrf() -> dict[str, object]:
+async def update_exchange_rates_from_cbrf(*, allow_fallback: bool = False) -> dict[str, object]:
     try:
         date_key, rows = await fetch_cbr_rates()
+        _validate_cbr_rate_date(date_key)
     except Exception as exc:
+        if not allow_fallback:
+            _safe_record_provenance(_record_cbrf_sync_fallback, str(exc), 0)
+            return {
+                "status": "ERROR",
+                "source": "unavailable",
+                "date": datetime.now().strftime("%Y-%m-%d"),
+                "updated": 0,
+                "error": str(exc),
+            }
         return _apply_fallback_exchange_rates(str(exc))
 
     missing = _missing_tracked_currencies(rows)
     if missing:
-        changed = _upsert_rates(rows)
-        _safe_record_provenance(
-            _record_cbrf_sync_fallback,
-            f"CBRF XML incomplete, missing tracked currencies: {', '.join(missing)}",
-            changed,
+        if not allow_fallback:
+            _safe_record_provenance(
+                _record_cbrf_sync_fallback,
+                f"CBRF XML incomplete, missing tracked currencies: {', '.join(missing)}",
+                0,
+            )
+            return {
+                "status": "ERROR",
+                "source": "incomplete",
+                "date": date_key,
+                "updated": 0,
+                "missing_currencies": missing,
+            }
+        result = _apply_fallback_exchange_rates(
+            f"CBRF XML incomplete, missing tracked currencies: {', '.join(missing)}"
         )
-        return {
-            "status": "OK",
-            "source": "fallback",
-            "date": date_key,
-            "updated": changed,
-            "missing_currencies": missing,
-        }
+        result["date"] = date_key
+        result["missing_currencies"] = missing
+        return result
 
     try:
         changed = _upsert_rates(rows)
     except Exception as exc:
+        if not allow_fallback:
+            _safe_record_provenance(
+                _record_cbrf_sync_fallback,
+                f"CBR rates upsert failed: {exc}",
+                0,
+            )
+            return {
+                "status": "ERROR",
+                "source": "CBRF",
+                "date": date_key,
+                "updated": 0,
+                "error": str(exc),
+            }
         return _apply_fallback_exchange_rates(f"CBR rates upsert failed: {exc}")
 
     provenance_error = _safe_record_provenance(_record_cbrf_sync_success, date_key, changed)
@@ -232,4 +344,3 @@ def get_rates_payload() -> dict[str, object]:
         "rates": items,
         "map": map_data,
     }
-

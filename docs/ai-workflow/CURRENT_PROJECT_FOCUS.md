@@ -6,7 +6,7 @@ Active
 
 ## Last updated
 
-2026-08-23
+2026-09-01
 
 ## Strategic direction
 
@@ -49,9 +49,15 @@ ingestion.
   earlier code-only and partial reports remain supplementary
 - Advisory requirements UI/API foundation
 - Official SGR contour: importer, diagnostics, seed dataset, validator
-- Automatic source lifecycle (DM-0013): 31/31 registry entries have an explicit
-  policy; trusted structured registries update daily/weekly, while legal documents
-  are checksum-monitored and routed to review without automatic enforcement
+- Automatic source lifecycle (DM-0013): 36/36 registry entries have an explicit
+  policy. Seven trusted structured sources update daily/weekly through strict,
+  table-scoped adapters and atomic full-snapshot replacement where applicable;
+  OFAC and EU feeds run validation-only and cannot mutate blocking tables;
+  17 official legal/reference sources are drift-monitored, five curated layers
+  raise a monthly review, four commercial mirrors remain disabled and one AI layer
+  remains manual. Legal checksum changes stay pending until an explicit referenced
+  approval and never change enforcement automatically. Scheduler overlap is
+  blocked across processes/replicas and every run persists an observable status.
 - Normative requirements block MVP (backend aggregation + frontend block on NonTariff/compliance)
 - Canonical anchor identity plus additive TN VED search/code-card bridge
 - Additive guided TN VED v1: semantic choices from official descriptions are bound

@@ -13,6 +13,40 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  workflow-contract:
+    name: Scheduled workflow and locked environment
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: customs-clear/backend
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: customs-clear/backend/requirements-monitor.txt
+
+      - name: Install exact scheduled-monitor environment
+        run: |
+          python -m pip install \
+            --disable-pip-version-check \
+            --only-binary=:all: \
+            --require-hashes \
+            --requirement requirements-monitor.txt
+          python -m pip check
+
+      - name: Validate scheduled workflow contracts
+        run: |
+          python scripts/validate_scheduled_workflow_contract.py
+          python scripts/run_regulatory_source_updates.py \
+            --plan --strict --output /tmp/regulatory-source-update-plan.json
+          python scripts/build_ntm_full_catalog_baseline.py --check-sources-only
+
   backend-ntm:
     name: Backend NTM safety suite
     runs-on: ubuntu-latest
@@ -29,6 +63,7 @@ jobs:
       ADMIN_API_TOKEN: ci-only-admin-api-token
       CUSTOMSCLEAR_READ_ONLY: "0"
       SCHEDULER_ENABLED: "0"
+      REGULATORY_SYNC_SCHEDULER_ENABLED: "0"
       NTM_V2_MEASURES_ENFORCEMENT_ENABLED: "0"
       NTM_V2_RULES_ENFORCEMENT_ENABLED: "0"
       NTM_V2_OFFICIAL_CURATED_ENFORCEMENT_ENABLED: "0"
@@ -61,9 +96,18 @@ jobs:
           tests/test_official_ntm_exact_*.py
           tests/test_official_ntm_curated_enforcement.py
           tests/test_regulatory_source_updates.py
+          tests/test_regulatory_adapter_scripts.py
+          tests/test_regulatory_adapter_write_guard.py
+          tests/test_regulatory_scheduler_api.py
+          tests/test_regulatory_snapshot_atomicity.py
+          tests/test_sgr_state_source_hardening.py
+          tests/test_legacy_automation_guards.py
           tests/test_official_source_monitor.py
           tests/test_regulatory_source_completeness.py
           tests/test_data_refresh.py
+          tests/test_payment_data_coverage.py
+          tests/test_payment_registry_references.py
+          tests/test_trois_is_active.py
           tests/test_normative_requirements_block.py
           tests/test_sanctions_risk_block.py
           tests/test_semantic_navigation_2204_pdo.py

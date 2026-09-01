@@ -45,9 +45,10 @@ from sqlalchemy.orm import Session
 
 from app.db import SessionLocal
 from app.models.core import SgrCertificate
-from app.services.normative_store import append_sync_log, init_db
+from app.services.normative_store import append_sync_log, init_db, upsert_source_status
 from app.services.preview_cache_revision import bump_preview_cache_revision
 from app.services.registry_sync_http import registry_http_get, registry_http_get_text
+from app.services.snapshot_safety import configured_minimum_rows, validate_full_snapshot
 
 CHECKPOINT_PATH = ROOT / "data" / "sgr_sync_checkpoint.json"
 UA = {"User-Agent": "customs-clear-sgr-sync/1.0"}
@@ -83,7 +84,9 @@ def _load_checkpoint() -> dict[str, Any]:
 
 def _save_checkpoint(data: dict[str, Any]) -> None:
     CHECKPOINT_PATH.parent.mkdir(parents=True, exist_ok=True)
-    CHECKPOINT_PATH.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
+    temporary = CHECKPOINT_PATH.with_suffix(CHECKPOINT_PATH.suffix + ".tmp")
+    temporary.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
+    temporary.replace(CHECKPOINT_PATH)
 
 
 def _sniff_dialect(sample: str) -> csv.Dialect:
@@ -296,6 +299,11 @@ def _nsi_sgr_rows(
         offset += len(rows)
         if len(rows) < payload["limit"]:
             break
+    if len(out) != target:
+        raise RuntimeError(
+            "SGR NSI snapshot is incomplete: "
+            f"fetched_rows={len(out)} expected_rows={target} reported_total={total}"
+        )
     return out
 
 
@@ -330,19 +338,39 @@ def sync_from_nsi(
     date_iso: str,
     proxy: str = "",
     max_rows: int = 0,
+    minimum_rows: int = 1,
 ) -> tuple[int, str]:
     rows = _nsi_sgr_rows(code=code, date_iso=date_iso, proxy=proxy, max_rows=max_rows)
+    parsed = [row for item in rows if (row := _row_from_nsi_dict(item)) is not None]
+    candidates = list({str(row["sgr_number"]): row for row in parsed}.values())
+    if not candidates:
+        return 0, "nsi_empty"
+    if int(max_rows) <= 0:
+        # NSI returns a complete dated snapshot.  Replace in the caller's
+        # transaction so revoked/removed certificates cannot linger forever.
+        validate_full_snapshot(
+            source_id="eec_sgr_registry",
+            candidate_count=len(candidates),
+            existing_count=db.query(SgrCertificate).count(),
+            minimum_rows=minimum_rows,
+            reported_total=len(rows),
+            fetched_count=len(candidates),
+        )
+        db.query(SgrCertificate).delete(synchronize_session=False)
     n = 0
-    for item in rows:
-        row = _row_from_nsi_dict(item)
-        if not row:
-            continue
+    for row in candidates:
         upsert_sgr(db, row)
         n += 1
     return n, "nsi_ok"
 
 
-def sync_from_odata(db: Session, *, list_title: str, reset_checkpoint: bool) -> tuple[int, str]:
+def sync_from_odata(
+    db: Session,
+    *,
+    list_title: str,
+    reset_checkpoint: bool,
+    checkpoint_out: dict[str, Any] | None = None,
+) -> tuple[int, str]:
     cp = {} if reset_checkpoint else _load_checkpoint()
     last_mod = (cp.get("last_modified_iso") or "").strip()
     enc_title = list_title.replace("'", "''")
@@ -364,12 +392,11 @@ def sync_from_odata(db: Session, *, list_title: str, reset_checkpoint: bool) -> 
         try:
             r = registry_http_get(url, headers=headers)
         except Exception as e:
-            logger.error("SGR OData: HTTP после повторов: {}", e)
-            return total, f"odata_http_error:{e!s}"
+            raise RuntimeError(f"SGR OData HTTP failed after retries: {e!s}") from e
         try:
             payload = r.json()
         except Exception as e:
-            return total, f"odata_json_error:{e!s}"
+            raise RuntimeError(f"SGR OData returned invalid JSON: {e!s}") from e
 
         if isinstance(payload.get("value"), list):
             results = payload["value"]
@@ -384,7 +411,7 @@ def sync_from_odata(db: Session, *, list_title: str, reset_checkpoint: bool) -> 
                 next_link = None
 
         if not isinstance(results, list):
-            return total, "odata_unexpected_shape"
+            raise RuntimeError("SGR OData returned an unexpected response shape")
 
         for it in results:
             if not isinstance(it, dict):
@@ -409,7 +436,9 @@ def sync_from_odata(db: Session, *, list_title: str, reset_checkpoint: bool) -> 
     if max_modified:
         cp["last_modified_iso"] = max_modified
     cp["last_run_at"] = datetime.now(timezone.utc).replace(tzinfo=None).isoformat()
-    _save_checkpoint(cp)
+    if checkpoint_out is not None:
+        checkpoint_out.clear()
+        checkpoint_out.update(cp)
     return total, "odata_ok"
 
 
@@ -493,6 +522,8 @@ def main() -> int:
         default="",
         help="Опциональный прокси для HTTP-запросов (например, http://user:pass@host:port)",
     )
+    ap.add_argument("--strict", action="store_true", help="Fail when the official registry yields no valid rows")
+    ap.add_argument("--json", action="store_true", help="Emit the adapter result contract")
     args = ap.parse_args()
 
     init_db()
@@ -510,68 +541,136 @@ def main() -> int:
     note_parts: list[str] = []
     total = 0
     http_failed = False
+    pending_checkpoint: dict[str, Any] = {}
+    source_variant = "unknown"
+    snapshot_kind = "full"
+    effective_nsi_code = str(args.nsi_code or NSI_SGR_CODE).strip()
 
     with SessionLocal() as db:
         if args.demo_seed:
             total = demo_seed(db)
             note_parts.append("demo_seed")
         elif args.nsi:
-            n, msg = sync_from_nsi(
-                db,
-                code=str(args.nsi_code or NSI_SGR_CODE).strip(),
-                date_iso=nsi_date,
-                proxy=proxy,
-                max_rows=max(0, int(args.nsi_limit)),
-            )
-            total = n
-            note_parts.append(msg)
+            source_variant = "nsi"
+            snapshot_kind = "partial" if int(args.nsi_limit) > 0 else "full"
+            try:
+                n, msg = sync_from_nsi(
+                    db,
+                    code=effective_nsi_code,
+                    date_iso=nsi_date,
+                    proxy=proxy,
+                    max_rows=max(0, int(args.nsi_limit)),
+                    minimum_rows=configured_minimum_rows("eec_sgr_registry", 1000),
+                )
+                total = n
+                note_parts.append(msg)
+            except Exception as e:
+                # A full NSI attempt may already have deleted/replaced rows in
+                # this transaction. Never let a later fallback commit that
+                # partial mutation.
+                db.rollback()
+                total = 0
+                logger.error("SGR NSI API snapshot rejected: {}", e)
+                note_parts.append(f"nsi_error:{e!s}")
+                http_failed = True
         elif args.odata:
+            source_variant = "odata"
+            snapshot_kind = "full" if args.full_load else "incremental"
             title = (os.getenv("SGR_ODATA_LIST_TITLE") or DEFAULT_SGR_ODATA_LIST_TITLE).strip()
             if not title:
                 print("Задайте переменную окружения SGR_ODATA_LIST_TITLE (наименование списка НСИ на portal.eaeunion.org).")
                 return 2
-            n, msg = sync_from_odata(db, list_title=title, reset_checkpoint=(args.reset_checkpoint or args.full_load))
-            total = n
-            note_parts.append(msg)
-            if msg.startswith("odata_http_error") or msg.startswith("odata_json_error"):
+            try:
+                n, msg = sync_from_odata(
+                    db,
+                    list_title=title,
+                    reset_checkpoint=(args.reset_checkpoint or args.full_load),
+                    checkpoint_out=pending_checkpoint,
+                )
+                total = n
+                note_parts.append(msg)
+            except Exception as e:
+                db.rollback()
+                total = 0
+                pending_checkpoint.clear()
+                note_parts.append(f"odata_error:{e!s}")
                 http_failed = True
         elif args.csv and args.csv.is_file():
+            source_variant = "csv_file"
+            snapshot_kind = "full" if args.full_load else "incremental"
             text = args.csv.read_text(encoding="utf-8", errors="replace")
             total = sync_from_csv_text(db, text, since_date=since_dt)
             note_parts.append(f"csv={args.csv.name}")
         else:
             url = (os.getenv("SGR_REGISTRY_SYNC_URL") or "").strip()
             if url:
+                source_variant = "csv_url"
+                snapshot_kind = "full" if args.full_load else "incremental"
                 try:
                     text = registry_http_get_text(url, headers=UA)
                     total = sync_from_csv_text(db, text, since_date=since_dt)
                     note_parts.append("csv_url")
                 except Exception as e:
+                    db.rollback()
+                    total = 0
                     logger.error("SGR_REGISTRY_SYNC_URL: недоступен после повторов: {}", e)
                     note_parts.append(f"csv_url_error:{e!s}")
                     http_failed = True
             else:
                 # Официальный fallback без ручной конфигурации env: сначала NSI API, затем OData.
                 try:
+                    source_variant = "nsi"
+                    snapshot_kind = "full"
                     n, msg = sync_from_nsi(
                         db,
-                        code=str(args.nsi_code or NSI_SGR_CODE).strip(),
+                        code=effective_nsi_code,
                         date_iso=nsi_date,
                         proxy=proxy,
                         max_rows=max(0, int(args.nsi_limit)),
+                        minimum_rows=configured_minimum_rows("eec_sgr_registry", 1000),
                     )
+                    if n <= 0:
+                        raise RuntimeError("official NSI SGR snapshot contained no valid rows")
                     total = n
                     note_parts.append(f"auto_nsi:{msg}")
                 except Exception as e:
+                    # Restore the last good snapshot before attempting the
+                    # incremental OData fallback in the same Session.
+                    db.rollback()
+                    total = 0
                     logger.warning("SGR NSI fallback failed: {}", e)
+                    source_variant = "odata"
+                    snapshot_kind = "full" if args.full_load else "incremental"
                     title = (os.getenv("SGR_ODATA_LIST_TITLE") or DEFAULT_SGR_ODATA_LIST_TITLE).strip()
-                    n, msg = sync_from_odata(db, list_title=title, reset_checkpoint=(args.reset_checkpoint or args.full_load))
-                    total = n
-                    note_parts.append(f"auto_odata:{msg}")
-                    if msg.startswith("odata_http_error") or msg.startswith("odata_json_error"):
+                    try:
+                        n, msg = sync_from_odata(
+                            db,
+                            list_title=title,
+                            reset_checkpoint=(args.reset_checkpoint or args.full_load),
+                            checkpoint_out=pending_checkpoint,
+                        )
+                        total = n
+                        note_parts.append(f"auto_odata:{msg}")
+                    except Exception as odata_error:
+                        db.rollback()
+                        total = 0
+                        pending_checkpoint.clear()
+                        note_parts.append(f"auto_odata_error:{odata_error!s}")
                         http_failed = True
 
-        db.commit()
+        transaction_failed = bool(
+            args.strict and not args.demo_seed and (http_failed or total <= 0)
+        )
+        if transaction_failed:
+            db.rollback()
+            total = 0
+            pending_checkpoint.clear()
+            note_parts.append("transaction_rolled_back")
+        else:
+            db.commit()
+
+    if pending_checkpoint:
+        _save_checkpoint(pending_checkpoint)
 
     if total and since_dt:
         cp = _load_checkpoint()
@@ -579,20 +678,52 @@ def main() -> int:
         _save_checkpoint(cp)
 
     note = "; ".join(note_parts) or "ok"
-    log_status = "error" if http_failed else ("ok" if total or args.demo_seed else "partial")
+    strict_empty = bool(args.strict and not args.demo_seed and total <= 0)
+    sync_ok = not http_failed and not strict_empty
+    log_status = "ok" if sync_ok and (total or args.demo_seed) else ("error" if not sync_ok else "partial")
+    revision = f"{source_variant}:{nsi_date}" if not args.demo_seed else "demo"
+    upsert_source_status(
+        source_code="SGR_REGISTRY",
+        source_name="Единый реестр выданных СГР ЕАЭС",
+        source_url="https://nsi.eaeunion.org/portal/1995",
+        revision=revision if sync_ok else "unavailable",
+        is_stale=not sync_ok,
+        note=note[:2000],
+    )
     append_sync_log(
-        "sgr_registry",
-        log_status,
-        "v1",
+        "SGR_REGISTRY",
+        log_status.upper(),
+        revision,
         total,
         note[:2000],
     )
     print(f"sgr_rows={total} ({note})")
-    try:
-        bump_preview_cache_revision("sync_sgr_registry")
-    except Exception:
-        pass
-    return 1 if http_failed else 0
+    if total:
+        try:
+            bump_preview_cache_revision("sync_sgr_registry")
+        except Exception:
+            pass
+    if args.json:
+        official_source = bool(
+            not args.demo_seed
+            and args.strict
+            and args.nsi
+            and source_variant == "nsi"
+            and effective_nsi_code == NSI_SGR_CODE
+            and snapshot_kind == "full"
+        )
+        payload = {
+            "status": "ok" if sync_ok else "error",
+            "source_ids": ["eec_sgr_registry"],
+            "official_source": official_source,
+            "snapshot_kind": snapshot_kind,
+            "source_variant": source_variant,
+            "rows_applied": total,
+            "revision": revision,
+            "note": note,
+        }
+        print("REGULATORY_SYNC_RESULT=" + json.dumps(payload, ensure_ascii=False, separators=(",", ":")))
+    return 0 if sync_ok else 1
 
 
 if __name__ == "__main__":

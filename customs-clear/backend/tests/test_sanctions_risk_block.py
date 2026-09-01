@@ -124,9 +124,75 @@ def test_positive_counterparty_ofac_match(memory_sessionmaker: sessionmaker) -> 
     assert block.overall_severity == "high"
     ofac = next(s for s in block.signals if s.category == "counterparty_ofac")
     assert ofac.matched_entity == "FIXTURE SANCTIONED ENTITY LLC"
-    assert ofac.match_method == "name_substring"
+    assert ofac.match_method == "name_exact_verified"
     assert ofac.source_url == "https://ofac.treasury.gov/specially-designated-nationals-list-sdn-list"
     assert len([s for s in block.signals if s.category == "counterparty_ofac"]) == 1
+
+
+@pytest.mark.parametrize("counterparty", ["%", "_", "FI", "LLC", "ENTITY", "BANK"])
+def test_wildcard_short_or_common_entity_input_never_blocks(
+    memory_sessionmaker: sessionmaker,
+    counterparty: str,
+) -> None:
+    with memory_sessionmaker() as db:
+        load_sanctions_risk_fixture(db)
+        block = build_sanctions_risk_block(
+            hs_code="8509400000",
+            description="Пылесос",
+            country="CN",
+            counterparty_name=counterparty,
+            db=db,
+        )
+
+    assert block.status != "CRITICAL"
+    assert block.overall_severity != "high"
+    assert not any(
+        signal.category in {"counterparty_ofac", "counterparty_eu"}
+        and signal.severity == "high"
+        for signal in block.signals
+    )
+
+
+def test_single_token_substring_is_advisory_only(memory_sessionmaker: sessionmaker) -> None:
+    with memory_sessionmaker() as db:
+        load_sanctions_risk_fixture(db)
+        block = build_sanctions_risk_block(
+            hs_code="8509400000",
+            description="Пылесос",
+            country="CN",
+            counterparty_name="FIXTURE",
+            db=db,
+        )
+
+    signal = next(row for row in block.signals if row.category == "counterparty_ofac")
+    assert signal.severity == "medium"
+    assert signal.match_method == "name_ambiguous"
+    assert block.status != "CRITICAL"
+
+
+def test_exact_eu_entity_match_is_verified_and_blocking(memory_sessionmaker: sessionmaker) -> None:
+    with memory_sessionmaker() as db:
+        load_sanctions_risk_fixture(db)
+        db.add(
+            EuSanctionsList(
+                hs_code="",
+                entity_name="EXACT EUROPEAN TARGET LTD",
+                description="Official consolidated entity entry",
+            )
+        )
+        db.commit()
+        block = build_sanctions_risk_block(
+            hs_code="8509400000",
+            description="Пылесос",
+            country="CN",
+            counterparty_name="EXACT EUROPEAN TARGET LTD",
+            db=db,
+        )
+
+    signal = next(row for row in block.signals if row.category == "counterparty_eu")
+    assert signal.severity == "high"
+    assert signal.match_method == "name_exact_verified"
+    assert block.status == "CRITICAL"
 
 
 def test_export_scope_screens_end_user_but_never_reuses_import_country_or_hs_rules(

@@ -42,7 +42,7 @@ def main() -> int:
     if args.output:
         args.output.parent.mkdir(parents=True, exist_ok=True)
         args.output.write_text(text + "\n", encoding="utf-8")
-    if args.strict and report.get("status") not in {"ok", "skipped_locked"}:
+    if args.strict and report.get("status") != "ok":
         return 1
     return 0
 

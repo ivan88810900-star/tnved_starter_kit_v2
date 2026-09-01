@@ -6,10 +6,14 @@
 | Задача | Когда (по `REGULATORY_SYNC_TZ`) | Источники |
 |---|---|---|
 | `regulatory_sources_daily` | ежедневно 03:00 | ЦБ, СГР, нотификации ФСБ, РЭС/ВЧУ, OFAC, санкции ЕС |
-| `regulatory_sources_weekly` | воскресенье 04:00 | ФСА, ТРОИС, справочники/маски документов ФТС |
+| `regulatory_sources_weekly` | воскресенье 08:00 | ФСА, ТРОИС, справочники/маски документов ФТС |
+| `regulatory_sources_monthly` | 1-го числа 13:00 | отчёт о курируемых слоях, требующих сверки и review |
 
-Все адаптеры выполняются последовательно под process-lock, поэтому два worker-а
-не пишут снимок одновременно. Проверить полное покрытие реестра без мутации:
+Все адаптеры выполняются последовательно. SQLite защищён файловой блокировкой,
+PostgreSQL — advisory lock между репликами. Каждый дочерний процесс работает со
+строгим machine-readable контрактом и может писать только в явно разрешённые
+таблицы. Пустой, fallback или частичный снимок не считается успешным. Проверить
+полное покрытие 36 зарегистрированных источников без мутации:
 
 ```bash
 python scripts/run_regulatory_source_updates.py --plan --strict
@@ -20,108 +24,57 @@ python scripts/run_regulatory_source_updates.py --cadence all --check-only --str
 
 ```bash
 python scripts/run_regulatory_source_updates.py --cadence daily --apply-safe --strict
+python scripts/run_regulatory_source_updates.py --cadence weekly --apply-safe --strict
 ```
+
+Для PostgreSQL обязателен отдельный `REGULATORY_SYNC_DATABASE_URL`: роль этого
+DSN должна иметь `SELECT` и только необходимые `INSERT/UPDATE/DELETE` на union
+таблиц адаптеров, без DDL, `EXECUTE` пользовательских функций и прав владельца.
+Без отдельного DSN цикл завершается ошибкой. Для SQLite дополнительно действует
+authorizer на уровне драйвера и табличный allowlist.
+
+OFAC и санкционный список ЕС являются исключением из автоматического apply:
+daily-задача скачивает только закреплённые официальные URL, разбирает и проверяет
+полный снимок, но не меняет blocking-таблицы `ofac_sdn_list` и
+`eu_sanctions_list`. Контракт такого запуска обязан содержать
+`operation=validation_only`, `enforcement_changed=false` и `rows_applied=0`;
+планировщик отклоняет любой другой результат. Применение проверенного снимка
+остаётся отдельным ручным запуском соответствующего sync-скрипта с обязательным
+явным флагом `--apply`; отсутствие `--validate-only` само по себе применение не
+разрешает.
+
+Последний результат и расписание доступны через `GET /api/sources/updates/status`.
+Ручной `POST /api/sources/updates/run` требует admin token и заблокирован в
+`CUSTOMSCLEAR_READ_ONLY`.
 
 Нормативные PDF, перечни Решения №30, №299, ветеринарные/фитосанитарные акты,
 ПП №2425 и экспортный контроль не превращаются в правила автоматически.
 Ежедневный GitHub workflow сохраняет ETag/SHA-256, обнаруживает изменение и
-создаёт/обновляет review issue. Коммерческие зеркала по умолчанию отключены.
+создаёт/обновляет review issue. Новый или изменившийся legal checksum остаётся
+`pending` и не заменяет одобренный baseline. После юридической проверки baseline
+можно продвинуть только ручным `workflow_dispatch` с
+`approve_source_baseline=true`, обязательной ссылкой `approval_ref` на Issue/PR и
+`approval_source_ids`, точно совпадающим со всем pending-набором, на default
+branch. `approval_source_digests` должен содержать точный JSON mapping
+`source_id → pending SHA-256`. Review issue рассчитывает binding этого mapping;
+trusted dispatcher добавляет указанный `REGULATORY_BASELINE_APPROVAL_SHA256=…`
+как отдельную строку комментария до запуска approval. Запуск разрешён только
+actor-у с правами write/maintain/admin; текущий digest каждого источника обязан
+совпасть с pending-версией. Коммерческие зеркала по умолчанию отключены.
+
+Нельзя одновременно включать новый планировщик и legacy `SCHEDULER_ENABLED`:
+приложение завершит запуск с явной ошибкой вместо двух конкурирующих sync-контуров.
 
 ## Legacy-планировщик `scripts/auto_updater.py`
 
-Планировщик держит в памяти только расписание; каждый краулер запускается **отдельным процессом** Python (см. `scripts/auto_updater.py`). Логи: `logs/updater.log` (ротация ~10 МБ × 5 файлов).
+`auto_updater.py`, `auto_update.sh`, `run_critical_syncs.sh` и `initial_sync.py`
+оставлены только для совместимости и **заблокированы по умолчанию**. Они не должны
+использоваться как production-расписание параллельно новому контуру. Разовый
+операторский запуск возможен только с явным opt-in
+`CUSTOMSCLEAR_ALLOW_LEGACY_AUTOMATION=1`; этот opt-in не является настройкой для
+постоянного сервиса или cron.
 
-Перед запуском:
-
-1. Каталог работы — **`customs-clear/backend`** (как у остальных скриптов).
-2. В окружении должны быть доступны переменные из `.env` (БД, `GEMINI_API_KEY` для `sync_law_full.py` и т.д.). Планировщик копирует `os.environ` в дочерние процессы и выставляет `PYTHONPATH` на корень backend.
-3. Часовой пояс расписания по умолчанию: **`Europe/Moscow`**. Иначе: `export TZ=UTC` (или нужная зона) перед стартом.
-
-## Быстрая проверка одной задачи
-
-```bash
-cd customs-clear/backend
-set -a && [ -f .env ] && source .env && set +a
-python3 scripts/auto_updater.py --run-once rates
-python3 scripts/auto_updater.py --run-once ifcg-one --ifcg-chapter 64
-```
-
-## Запуск планировщика в фоне
-
-### Вариант A: `nohup`
-
-```bash
-cd customs-clear/backend
-set -a && [ -f .env ] && source .env && set +a
-nohup python3 scripts/auto_updater.py >> logs/updater.nohup.out 2>&1 &
-echo $! > logs/updater.pid
-```
-
-Остановка: `kill $(cat logs/updater.pid)`.
-
-### Вариант B: `tmux`
-
-```bash
-tmux new -s tnved-updater
-cd customs-clear/backend
-set -a && [ -f .env ] && source .env && set +a
-python3 scripts/auto_updater.py
-# Ctrl+B, D — отсоединиться; tmux attach -t tnved-updater — вернуться
-```
-
-### Вариант C: `pm2` (нужен Node.js)
-
-```bash
-cd customs-clear/backend
-pm2 start /usr/bin/python3 --name tnved-updater --interpreter none \
-  --cwd "$(pwd)" -- scripts/auto_updater.py
-pm2 save
-```
-
-Переменные: `pm2 start ... --update-env` или ecosystem-файл с `env` / `env_file`.
-
-### Вариант D: macOS `launchd`
-
-Создайте `~/Library/LaunchAgents/com.example.tnved-updater.plist` (замените пути и пользователя):
-
-```xml
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
- "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0">
-<dict>
-  <key>Label</key><string>com.example.tnved-updater</string>
-  <key>WorkingDirectory</key><string>/ABS/PATH/customs-clear/backend</string>
-  <key>ProgramArguments</key>
-  <array>
-    <string>/usr/bin/python3</string>
-    <string>scripts/auto_updater.py</string>
-  </array>
-  <key>RunAtLoad</key><true/>
-  <key>KeepAlive</key><true/>
-  <key>StandardOutPath</key><string>/ABS/PATH/customs-clear/backend/logs/launchd-updater.out</string>
-  <key>StandardErrorPath</key><string>/ABS/PATH/customs-clear/backend/logs/launchd-updater.err</string>
-  <key>EnvironmentVariables</key>
-  <dict>
-    <key>PYTHONPATH</key><string>/ABS/PATH/customs-clear/backend</string>
-    <key>GEMINI_API_KEY</key><string>YOUR_KEY</string>
-  </dict>
-</dict>
-</plist>
-```
-
-Загрузка: `launchctl load ~/Library/LaunchAgents/com.example.tnved-updater.plist`  
-Выгрузка: `launchctl unload ...`
-
-Секреты лучше не вписывать в plist: используйте `EnvironmentVariables` с путём к файлу только если `launchd` у вас это поддерживает, либо обёртку-shell, которая делает `source .env` и вызывает `python3`.
-
-## Legacy-расписание `auto_updater.py`
-
-| Задача | Когда | Скрипт |
-|--------|--------|--------|
-| Законы TKS | каждый день 02:00 | `sync_law_full.py` |
-| Нетарифка | воскресенье 03:00 | `sync_tks_nontariff.py --all-chapters --workers 4` |
-| Примеры IFCG | 1-го числа 04:00 | `sync_ifcg_examples.py` по главам 01–97 |
-| Курсы ЦБ | каждый день 09:00 | `update_rates.py` |
-
-Ежемесячный прогон IFCG может занять много часов; при необходимости сузьте список глав в `auto_updater.py` (`IFCG_MONTHLY_CHAPTERS`).
+Даже при opt-in legacy-вызовы OFAC и санкционного списка ЕС работают только как
+`validation-only`: официальный снимок проверяется, но blocking-таблицы не
+изменяются. Ручное применение санкционного снимка выполняется отдельно и не
+должно добавляться в автоматическое расписание.

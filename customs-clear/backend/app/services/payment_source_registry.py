@@ -106,7 +106,7 @@ PAYMENT_SOURCE_REGISTRY: tuple[PaymentSourceEntry, ...] = (
         loader_status="partial",
         sync_script="ett_odata_parser.py",
         target_tables=("vat_preferences", "hs_rates"),
-        registry_source_id="eec_ett_tnved",
+        registry_source_id="eec_odata_vat_preferences",
         known_gaps=("Требует настроенного OData sync; tamdoc — отдельный commercial contour.",),
         manual_review_default=True,
     ),
@@ -136,6 +136,7 @@ PAYMENT_SOURCE_REGISTRY: tuple[PaymentSourceEntry, ...] = (
         source_status_code="EEC_EXCISE",
         loader_status="ready",
         target_tables=("hs_rates",),
+        registry_source_id="rf_excise_tax_code",
         known_gaps=(
             "Обновляет только excise-поля существующих hs_rates; не создаёт duty rows.",
             "Official excise proof — SourceStatus EEC_EXCISE + row-level excise_source_*.",

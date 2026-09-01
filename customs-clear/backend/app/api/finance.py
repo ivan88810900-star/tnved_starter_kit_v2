@@ -16,8 +16,7 @@ async def rates() -> JSONResponse:
 async def update_rates(x_admin_token: str | None = Header(None, alias="X-Admin-Token")) -> JSONResponse:
     """Обновление курсов в БД из ЦБ РФ — только с X-Admin-Token (операционное действие)."""
     require_admin_token(x_admin_token)
-    refresh = await update_exchange_rates_from_cbrf()
+    refresh = await update_exchange_rates_from_cbrf(allow_fallback=False)
     payload = get_rates_payload()
     payload["refresh"] = refresh
     return JSONResponse(payload)
-

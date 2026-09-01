@@ -6,12 +6,18 @@ from typing import Optional
 from fastapi import APIRouter, File, Header, HTTPException, Query, UploadFile
 from fastapi.responses import FileResponse, JSONResponse
 
+from ..db import is_read_only_mode
 from ..services.normative_store import get_integrated_data_stats, get_normative_data_hints, list_source_status, list_sync_log
 from ..services.regulatory_source_completeness import (
     list_registry_snapshot,
     run_regulatory_source_completeness_report,
 )
-from ..services.regulatory_source_updates import build_update_plan, run_regulatory_update_cycle
+from ..services.regulatory_source_updates import (
+    build_update_plan,
+    load_last_update_report,
+    run_regulatory_update_cycle,
+)
+from ..services.scheduler import is_scheduler_running, regulatory_jobs_status
 from ..services.official_payment_coverage_audit import run_official_payment_coverage_audit
 from ..services.payment_data_coverage import run_payment_data_coverage_report
 from ..services.payment_data_normalization import run_payment_data_normalization_report
@@ -79,6 +85,23 @@ async def sources_updates_plan() -> JSONResponse:
     return JSONResponse(build_update_plan())
 
 
+@router.get("/updates/status")
+async def sources_updates_status() -> JSONResponse:
+    """Последний persisted-отчёт и следующее расписание обновлений."""
+    last_run = load_last_update_report()
+    return JSONResponse(
+        {
+            "status": str(last_run.get("status") or "unknown") if last_run else "never_run",
+            "read_only": is_read_only_mode(),
+            "scheduler": {
+                "running": is_scheduler_running(),
+                "jobs": regulatory_jobs_status(),
+            },
+            "last_run": last_run,
+        }
+    )
+
+
 @router.post("/updates/run")
 async def sources_updates_run(
     cadence: str = Query("daily", pattern="^(daily|weekly|monthly|all)$"),
@@ -86,6 +109,14 @@ async def sources_updates_run(
 ) -> JSONResponse:
     """Ручной guarded-запуск тех же безопасных structured-sync, что и scheduler."""
     require_admin_token(x_admin_token)
+    if is_read_only_mode():
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "error_code": "read_only_mode",
+                "message": "Обновление источников запрещено в CUSTOMSCLEAR_READ_ONLY режиме.",
+            },
+        )
     return JSONResponse(await run_regulatory_update_cycle(cadence, apply_safe=True))  # type: ignore[arg-type]
 
 

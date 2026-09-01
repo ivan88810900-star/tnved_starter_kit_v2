@@ -13,7 +13,7 @@ from typing import Any
 from loguru import logger
 
 from ..db import SessionLocal
-from ..models.tnved import OpendataSyncLog
+from ..models.tnved import OpendataSyncLog, TroisRegistry
 from .opendata_client import (
     backend_opendata_dir,
     download_bytes,
@@ -22,6 +22,7 @@ from .opendata_client import (
     snapshot_date_from_id,
 )
 from .trois_registry_sync import normalize_trademark_for_registry, upsert_trois_registry_rows
+from .snapshot_safety import configured_minimum_rows
 
 TROIS_DATASET_ID = "7730176610-trois"
 SOURCE_KEY = "trois"
@@ -90,13 +91,26 @@ def sync_trois_opendata(*, force: bool = False) -> dict[str, Any]:
                 .first()
             )
             if done:
-                logger.info("ТРОИС opendata: snapshot {} уже импортирован", snapshot_id)
-                return {
-                    "status": "skipped",
-                    "snapshot_id": snapshot_id,
-                    "rows": done.row_count,
-                    "data_as_of": done.data_as_of,
-                }
+                live_rows = db.query(TroisRegistry).count()
+                logged_rows = int(done.row_count or 0)
+                if logged_rows <= 0 or live_rows != logged_rows:
+                    logger.warning(
+                        "ТРОИС snapshot {} has a success log without positive "
+                        "and complete matching live evidence (logged={}, live={}); "
+                        "re-importing",
+                        snapshot_id,
+                        logged_rows,
+                        live_rows,
+                    )
+                else:
+                    logger.info("ТРОИС opendata: snapshot {} уже импортирован", snapshot_id)
+                    return {
+                        "status": "skipped",
+                        "snapshot_id": snapshot_id,
+                        "rows": live_rows,
+                        "verified_live_rows": live_rows,
+                        "data_as_of": done.data_as_of,
+                    }
 
     dest_dir = backend_opendata_dir() / "trois"
     dest_dir.mkdir(parents=True, exist_ok=True)
@@ -112,26 +126,36 @@ def sync_trois_opendata(*, force: bool = False) -> dict[str, Any]:
         if reg:
             dedup[reg] = row
     parsed = list(dedup.values())
-    stats = upsert_trois_registry_rows(parsed)
 
     data_as_of = snapshot_date_from_id(snapshot_id) or meta.modified
     synced_at = datetime.now(timezone.utc).isoformat()
     with SessionLocal() as db:
-        db.add(
-            OpendataSyncLog(
-                source_key=SOURCE_KEY,
-                dataset_id=TROIS_DATASET_ID,
-                snapshot_id=snapshot_id,
-                file_url=version.url,
-                file_sha256=sha,
-                row_count=len(parsed),
-                synced_at=synced_at,
-                data_as_of=data_as_of,
-                status="ok",
-                details=f"created={stats['created']} updated={stats['updated']} skipped={stats['skipped']}",
+        try:
+            stats = upsert_trois_registry_rows(
+                parsed,
+                replace_snapshot=True,
+                db=db,
+                commit=False,
+                minimum_rows=configured_minimum_rows("fts_trois_registry", 100),
             )
-        )
-        db.commit()
+            db.add(
+                OpendataSyncLog(
+                    source_key=SOURCE_KEY,
+                    dataset_id=TROIS_DATASET_ID,
+                    snapshot_id=snapshot_id,
+                    file_url=version.url,
+                    file_sha256=sha,
+                    row_count=len(parsed),
+                    synced_at=synced_at,
+                    data_as_of=data_as_of,
+                    status="ok",
+                    details=f"created={stats['created']} updated={stats['updated']} skipped={stats['skipped']}",
+                )
+            )
+            db.commit()
+        except Exception:
+            db.rollback()
+            raise
 
     from .trois_registry_loader import sync_db_to_local_cache
 
