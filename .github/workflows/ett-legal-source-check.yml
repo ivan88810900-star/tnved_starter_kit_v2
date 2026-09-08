@@ -43,11 +43,17 @@ jobs:
           cache: pip
           cache-dependency-path: customs-clear/backend/requirements.txt
       - name: Install source capture dependencies
+        id: install
         run: python -m pip install --disable-pip-version-check -r requirements.txt
       - name: Check observed official document and discovery URLs
         run: |
           python scripts/probe_ett_legal_sources.py \
             --store-root "$ETT_PROBE_STORE" --output "$ETT_PROBE_ROOT/report.json"
+      - name: Capture the observed public search form
+        if: ${{ always() && steps.install.outcome == 'success' }}
+        run: |
+          python scripts/probe_ett_portal_search.py \
+            --store-root "$ETT_PROBE_STORE" --output "$ETT_PROBE_ROOT/portal-search.json"
       - name: Package original source objects
         if: ${{ always() && steps.prepare.outcome == 'success' }}
         run: tar -C "$ETT_PROBE_ROOT" -czf "$ETT_PROBE_ROOT/objects.tar.gz" store
@@ -58,6 +64,7 @@ jobs:
           name: ett-legal-source-check-${{ github.run_id }}
           path: |
             ${{ runner.temp }}/ett-legal-source-check/report.json
+            ${{ runner.temp }}/ett-legal-source-check/portal-search.json
             ${{ runner.temp }}/ett-legal-source-check/objects.tar.gz
           if-no-files-found: error
           retention-days: 90

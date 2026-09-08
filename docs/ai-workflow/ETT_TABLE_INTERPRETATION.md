@@ -1,6 +1,6 @@
 # ETT complete cells and note evidence — TASK-ETT-003
 
-Status: implementation and historical-corpus verification, 2026-09-08. This continues approved Decision #188 Option A. The **complete current legal rates block is not ready**: the current index has been captured on GitHub, but the complete document set and a legally reviewed manifest have not yet been produced.
+Status: implementation and current-source table verification, 2026-09-08. This continues approved Decision #188 Option A. The **complete current legal rates block is not ready**: the current index and all 100 core PDFs have been captured on GitHub, but the complete legal amendment set and a legally reviewed manifest have not yet been produced.
 
 ## Source-preserving interpretation
 
@@ -52,9 +52,31 @@ The [named-act inventory](evidence/ett-amendment-inventory-20260908.json) indepe
 
 The previous complete-cell census is retained as evidence of the earlier tested parser revision, not silently relabeled as an audit of every later revision or the new live source set.
 
+## Current-source verification
+
+[Run #34239100895](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/34239100895) retained the current index and **100 unique core PDFs** before the first legacy portal link failed. The distinct incomplete report is `5b4dda0926a9c4c17a009903bd7b685c092c072e5b53ed297cfd14c78140a873`; it records actual successful request URLs, hashes and timestamps. The original archive was preserved separately from GitHub's temporary retention.
+
+The [current corpus audit](evidence/ett-current-cells-20260908.json) re-extracted **96 chapters / 1,537 pages / 13,293 exact unique table codes**. All 13,293 complete duty cells and hierarchical descriptions resolve; no duplicate codes, unresolved cells, empty/scanned chapters or unbound note IDs were found. Current notes contain **124 identifiers**. Independent extraction accounted for all **311/311** note rows; the two unassigned rows form the title. All 140 pages without table headers precede their chapter's table and contain introductory narrative. These checks establish extraction coverage, not current legal applicability.
+
+Compared with the retained historical corpus, chapter 32 replaces `3215110000` and `3215190000` with six exact descendants ending in `0001`, `0002` and `0009`. Eight chapter PDFs changed. Twenty-seven shared duty cells changed their note references; their parsed numeric structures are unchanged. These are source differences, not approved catalog or rate migrations.
+
+The [current-note census](evidence/ett-current-notes-20260908.json) preserves 24 absolute windows across 23 notes, 51 starts tied to an act entering into force, 34 repeal statements and 18 notes with unresolved Russian destination/conditional scope. Its 85 literal citations identify 61 distinct acts requiring primary-body review. Recognizing these clauses does not resolve their legal effect.
+
+The current analysis report is `b98c7681f2aeca5c4c1188f76b12ff19b6d03a5387e3bbff1b3d9dd4e4d582ab`. It retains `acquisition_complete=false`, zero verified effective clauses, 103 unlinked named amendments and all legal/promotion blockers. Passing parser checks does not open the production gate.
+
+## Portal discovery and rejected originals
+
+Two original modern portal pages are retained verbatim with capture metadata and replay tests. Each exposes one distinct PDF and six unsupported attachments. Their shared clarification DOCX is preserved exactly as linked; its filename is not used to infer act identity.
+
+The [observed list audit](evidence/ett-legal-list-discovery-20260908.json) parses 100 rows from each of two 2022 decision-year lists. The pages report totals of 205 Collegium and 170 Council decisions, so these first pages are explicitly partial. Exact issuing-body/number/adoption-date matching identifies eight of the 105 named amendments and one of the 61 current-note dependencies. Row text hashes, DOM locators, observed date fields and actual pagination links are retained; none is marked as a verified effective date or complete act body.
+
+A separate discovery-only transport implements the GET search form actually present in those original pages: `/documents/search/` with one bounded `q`. The ordinary source/manifest URL contract remains query-free. The isolated CI probe captures three public queries and their exact original responses; empty search results cannot establish an act's absence.
+
+The source-access diagnostics distinguish a rejected redirect using an explicit default HTTPS port from a network failure. The two legal PDF responses begin with a supported PDF version, but their first-line layout still fails the bounded header check. Rejected original document bytes can now be retained by digest while the request remains `failed`, with `document_validation_passed=false`; they never become successful receipts merely because the bytes exist. This permits inspecting the originals before adjusting a format rule. The open-data landing `/api/` returned non-200 in the observed capture; its availability is not assumed.
+
 ## Remaining gates
 
-1. Obtain a current raw capture on a host that can retrieve the official documents, and verify the actual index and portal layouts.
+1. Complete the amendment-body capture, including the 103 named acts with no URL in the index declaration. The current index, all 100 core PDFs and two modern portal HTML pages have been retained; they do not establish complete amendment coverage.
 2. Bind each applicable rate interval, destination and product condition to the current notes and complete amendment evidence. Scan-only or unsupported documents require an explicit verified interpretation path.
 3. Produce and review one specific manifest, then implement retention attestation and reviewed atomic promotion before connecting active product rates.
 

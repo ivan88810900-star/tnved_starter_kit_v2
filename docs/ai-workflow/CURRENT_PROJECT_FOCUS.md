@@ -181,8 +181,10 @@ original-byte receipts, reproducible PDF rows and referenced-quote verification;
 TASK-ETT-003 now assembles and lexically parses all 13,289 commodity rows in the
 96 pinned PDFs, preserving typography, note clauses and source diagnostics. The
 old padded heading 0406900000 is not inserted. This is historical evidence; current
-index raw bytes are now captured and their specific layout is supported. Complete
-current-PDF acquisition and note/amendment interpretation remain unverified. An isolated ops/ett-source-capture push can request read-only
+index and all 100 core PDFs have now been captured. The verified incomplete-capture
+analysis assembles and parses all 13,293 current table rows across 96 chapters; all
+124 current note IDs bind without gaps. Amendment bodies and effective-date
+interpretation remain unverified: 105 named amendments, 103 without index links. An isolated ops/ett-source-capture push can request read-only
 GitHub acquisition without merging application changes. Positive production staging remains closed until
 legal review and promotion are implemented.
 Keep the curated official bridge OFF before proposing any exact-rule production
@@ -198,7 +200,7 @@ Current next tasks:
   [TASK-ETT-002](ETT_SOURCE_EVIDENCE.md). [TASK-ETT-003](ETT_TABLE_INTERPRETATION.md)
   adds full cells, source-proven superscript separation, note clauses and actual
   legal attachment capture, with explicit dispatch/isolated-branch CI acquisition.
-  Current-source acquisition and legal footnote/date interpretation,
+  Complete amendment-body acquisition and legal footnote/date interpretation,
   durable retention, manifest-bound legal review and production
   promotion remain unfinished. An exact quote match alone does not approve a rate.
   The DB-derived bundle remains quarantined; old direct PDF/OData/index-hash

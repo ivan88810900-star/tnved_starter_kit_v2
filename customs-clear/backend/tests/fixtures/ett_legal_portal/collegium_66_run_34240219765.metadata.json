@@ -1,0 +1,24 @@
+{
+  "fixture_kind": "original_official_html_bytes",
+  "github_repository": "ivan88810900-star/tnved_starter_kit_v2",
+  "github_actions_run_id": "34240219765",
+  "probe_kind": "observed_official_source_access",
+  "capture_record": {
+    "attempted_at": "2026-09-08T14:45:19.260330+00:00",
+    "expected_media_type": "text/html",
+    "media_type": "text/html",
+    "redirect_chain": [],
+    "requested_url": "https://docs.eaeunion.org/documents/399/6620/",
+    "response_url": "https://docs.eaeunion.org/documents/399/6620/",
+    "retrieved_at": "2026-09-08T14:45:20.694609+00:00",
+    "sha256": "68161af0fb45bf6a420a47c92f4b459df1fb5d9b382df5c1c0cb2d539d327fa7",
+    "size_bytes": 54256,
+    "source_id": "canonical_collegium_66",
+    "status": "captured"
+  },
+  "transformation": "none; original response bytes retained",
+  "purpose": "offline replay of original legal portal HTML; parse only, never execute page scripts",
+  "amendment_inventory_complete": false,
+  "legal_applicability_verified": false,
+  "production_ready": false
+}

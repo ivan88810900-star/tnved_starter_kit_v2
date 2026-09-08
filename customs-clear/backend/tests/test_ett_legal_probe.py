@@ -6,7 +6,7 @@ import json
 import pytest
 
 from app.services.ett_artifacts import LocalArtifactStore
-from app.services.ett_transport import OfficialResponse, OfficialTransportError
+from app.services.ett_transport import OfficialResponse, OfficialTransportError, _validate_document
 from scripts.probe_ett_legal_sources import PROBE_SOURCES, main, probe_legal_sources
 
 
@@ -128,4 +128,57 @@ def test_probe_exposes_only_sanctioned_diagnostic_fields(tmp_path):
         "sha256": "a" * 64, "pdf_header_offset": None, "pdf_header_ending": "absent",
     }
     assert "SECRET" not in json.dumps(report)
+    assert "PRIVATE" not in json.dumps(report)
+
+
+def test_probe_retains_rejected_originals_only_as_failed_evidence(tmp_path):
+    rejected = b"%PDF-1.7 PRIVATE_HEADER_CONTENT\n%%EOF\n"
+    def fetch(url, **kwargs):
+        if kwargs["expected_media"] == "application/pdf":
+            _validate_document(rejected, "application/pdf")
+            pytest.fail("invalid document must stay rejected")
+        return captured(url, **kwargs)
+    store = LocalArtifactStore(tmp_path / "objects")
+    report = probe_legal_sources(store, fetch=fetch)
+    assert report["attempted_sources"] == 8
+    assert report["failed_sources"] == report["retained_rejected_documents"] == 2
+    assert report["captured_sources"] == 6
+    assert report["all_sources_captured"] is False
+    for result in report["results"]:
+        if result["expected_media_type"] == "application/pdf":
+            assert result["status"] == "failed"
+            assert result["document_validation_passed"] is False
+            assert result["reason"] == "invalid_pdf_shape"
+            assert "sha256" not in result
+            digest = result["rejected_document_sha256"]
+            assert digest == result["diagnostics"]["sha256"] == hashlib.sha256(rejected).hexdigest()
+            assert store.read(digest) == rejected
+    assert "PRIVATE_HEADER_CONTENT" not in json.dumps(report)
+    assert report["production_ready"] is report["active_rates_written"] is False
+
+
+def test_probe_other_transport_errors_cannot_smuggle_payloads_into_store(tmp_path):
+    def fetch(url, **kwargs):
+        error = OfficialTransportError("official source acquisition failed")
+        error._rejected_document = b"PRIVATE unrelated payload"
+        raise error
+    store = LocalArtifactStore(tmp_path / "objects")
+    report = probe_legal_sources(store, fetch=fetch)
+    assert report["retained_rejected_documents"] == 0
+    assert report["failed_sources"] == 8
+    assert all("rejected_document_sha256" not in item for item in report["results"])
+    assert "PRIVATE" not in json.dumps(report)
+
+
+def test_rejected_retention_failure_preserves_rejection_and_continues(tmp_path, monkeypatch):
+    def fetch(url, **kwargs):
+        _validate_document(b"invalid rejected body", "application/pdf")
+    def fail_store(*args):
+        raise OSError("PRIVATE filesystem error")
+    monkeypatch.setattr(LocalArtifactStore, "put", fail_store)
+    report = probe_legal_sources(LocalArtifactStore(tmp_path / "objects"), fetch=fetch)
+    assert report["failed_sources"] == report["attempted_sources"] == 8
+    assert report["retained_rejected_documents"] == 0
+    assert all(item["reason"] == "invalid_pdf_shape" for item in report["results"])
+    assert all(item["rejected_document_retention_reason"] == "rejected_evidence_retention_failed" for item in report["results"])
     assert "PRIVATE" not in json.dumps(report)

@@ -152,6 +152,39 @@ def test_malformed_explicit_port_remains_invalid_and_has_no_arbitrary_text():
     assert "SECRET" not in str(caught.value)
 
 
+@pytest.mark.parametrize("media,content", [
+    ("application/pdf", b"%PDF-1.7 SECRET\n%%EOF\n"),
+    ("application/pdf", b"%PDF-1.7\nSECRET truncated"),
+    ("text/html", b"SECRET non-HTML document"),
+])
+def test_only_document_rejection_retains_private_original_bytes(media, content):
+    with pytest.raises(transport.OfficialTransportError) as caught:
+        fetch(lambda request: response(content, headers={"Content-Type": media}), expected_media=media)
+    error = caught.value
+    assert transport._get_rejected_document_bytes(error) == content
+    assert error.diagnostics["sha256"] == hashlib.sha256(content).hexdigest()
+    assert "SECRET" not in str(error)
+    assert "SECRET" not in repr(error)
+    assert "SECRET" not in json.dumps(error.diagnostics)
+
+
+def test_http_and_media_rejections_do_not_retain_other_response_payloads():
+    for status, headers in [(403, {}), (200, {"Content-Type": "application/json"})]:
+        with pytest.raises(transport.OfficialTransportError) as caught:
+            fetch(lambda request: response(b"SECRET", status=status, headers=headers))
+        assert transport._get_rejected_document_bytes(caught.value) is None
+        assert "SECRET" not in str(caught.value)
+
+
+def test_rejected_body_accessor_rejects_changed_digest_and_generic_errors():
+    error = transport._rejected_document_error("official source is not a PDF document", b"original body")
+    error._rejected_document = b"changed body"
+    assert transport._get_rejected_document_bytes(error) is None
+    generic = transport.OfficialTransportError("official source acquisition failed", diagnostics=transport._document_diagnostics(b"payload"))
+    generic._rejected_document = b"payload"
+    assert transport._get_rejected_document_bytes(generic) is None
+
+
 @pytest.mark.parametrize("url", [
     "http://eec.eaeunion.org/path", "https://eec.eaeunion.org.evil.example/path",
     "https://evil.example/path", "https://user:secret@eec.eaeunion.org/path",

@@ -14,7 +14,7 @@ import time
 import hashlib
 from dataclasses import dataclass
 from datetime import datetime, timezone
-from typing import Literal
+from typing import Callable, Literal
 from urllib.parse import unquote, urljoin, urlsplit
 
 import httpx
@@ -34,15 +34,50 @@ _ENCODED_FORBIDDEN = re.compile(r"%(?:0[0-9a-f]|1[0-9a-f]|25|2f|3f|23|5c|7f)", r
 
 
 class OfficialTransportError(ValueError):
-    """Sanitized acquisition failure; source bodies/headers are never included."""
+    """Sanitized failure; optional rejected bytes are private evidence only.
+
+    ``str``/``repr`` and diagnostics never include a response body or headers.
+    Only ``_validate_document`` rejections attach bounded original bytes, which
+    may be retained for inspection without becoming a successful response.
+    """
 
     def __init__(self, message: str, *, diagnostics: dict | None = None) -> None:
         super().__init__(message)
         self._diagnostics = tuple(sanitize_transport_diagnostics(diagnostics).items())
+        self._rejected_document: bytes | None = None
 
     @property
     def diagnostics(self) -> dict:
         return dict(self._diagnostics)
+
+
+_DOCUMENT_REJECTION_MESSAGES = frozenset({
+    "official source is not a PDF document", "official PDF has no terminal EOF marker",
+    "official source is not an HTML document",
+})
+
+
+def _rejected_document_error(message: str, content: bytes) -> OfficialTransportError:
+    """Create a rejection, never a successful/validated source response."""
+    if message not in _DOCUMENT_REJECTION_MESSAGES or type(content) is not bytes or len(content) > MAX_PDF_BYTES:
+        return OfficialTransportError(message)
+    error = OfficialTransportError(message, diagnostics=_document_diagnostics(content))
+    error._rejected_document = content
+    return error
+
+
+def _get_rejected_document_bytes(error: OfficialTransportError) -> bytes | None:
+    """Read only bounded hash-matching private document-validation evidence."""
+    if type(error) is not OfficialTransportError or str(error) not in _DOCUMENT_REJECTION_MESSAGES:
+        return None
+    raw = error._rejected_document
+    if type(raw) is not bytes or len(raw) > MAX_PDF_BYTES:
+        return None
+    diagnostics = error.diagnostics
+    if (diagnostics.get("kind") != "rejected_document" or diagnostics.get("size_bytes") != len(raw)
+            or diagnostics.get("sha256") != hashlib.sha256(raw).hexdigest()):
+        return None
+    return raw
 
 
 def sanitize_transport_diagnostics(value) -> dict:
@@ -225,17 +260,17 @@ def _validate_document(content: bytes, expected_media: OfficialMedia) -> None:
         # between the PDF version and its mandatory CR/LF. A shifted header,
         # arbitrary suffix bytes, vertical whitespace or an overlong gap fail.
         if not re.match(rb"%PDF-[12]\.[0-9][ \t]{0,16}(?:\r|\n)", content[:8 + MAX_PDF_HEADER_WHITESPACE + 2]):
-            raise OfficialTransportError("official source is not a PDF document", diagnostics=_document_diagnostics(content))
+            raise _rejected_document_error("official source is not a PDF document", content)
         if not re.search(rb"%%EOF[\t\n\f\r ]*\Z", content[-2048:]):
-            raise OfficialTransportError("official PDF has no terminal EOF marker", diagnostics=_document_diagnostics(content))
+            raise _rejected_document_error("official PDF has no terminal EOF marker", content)
         return
     # This proves HTML shape, not a valid ETT index. Captcha/login/error pages
     # must additionally fail the separate exact chapter/document discovery gate.
     prefix = content[:64 * 1024].removeprefix(b"\xef\xbb\xbf").lstrip()
     if not re.match(rb"(?:<!doctype\s+html(?:\s|>)|<html(?:\s|>))", prefix, re.I):
-        raise OfficialTransportError("official source is not an HTML document", diagnostics=_document_diagnostics(content))
+        raise _rejected_document_error("official source is not an HTML document", content)
     if not re.search(rb"<html(?:\s|>)", prefix, re.I):
-        raise OfficialTransportError("official source is not an HTML document", diagnostics=_document_diagnostics(content))
+        raise _rejected_document_error("official source is not an HTML document", content)
 
 
 def fetch_official(
@@ -251,7 +286,41 @@ def fetch_official(
     callers cannot inject an ambient authenticated client. There are no retries
     or fallback origins. Redirect responses close without reading their bodies.
     """
-    requested_url = validate_official_url(url)
+    return _fetch_bounded(
+        url, expected_media=expected_media, _transport=_transport,
+        url_validator=validate_official_url,
+        redirect_target=_official_redirect_target,
+    )
+
+
+def _official_redirect_target(current_url: str, location: str) -> str:
+    # Validate raw Location first: urljoin can normalize away traversal or strip
+    # leading whitespace/control characters. This remains the query-free policy
+    # used by every ordinary source acquisition.
+    if (
+        any(ord(char) < 33 or ord(char) == 127 for char in location)
+        or any(char in location for char in "\\?#")
+        or _ENCODED_FORBIDDEN.search(location)
+        or any(part in {".", ".."} for part in location.split("/"))
+    ):
+        raise OfficialTransportError("official source returned an invalid redirect", diagnostics=_url_diagnostics(location, kind="rejected_redirect"))
+    return validate_official_url(urljoin(current_url, location))
+
+
+def _fetch_bounded(
+    url: str,
+    *,
+    expected_media: OfficialMedia,
+    url_validator: Callable[[str], str],
+    redirect_target: Callable[[str, str], str],
+    _transport: httpx.BaseTransport | None = None,
+) -> OfficialResponse:
+    """Private shared I/O; each entry point supplies its own narrow URL policy.
+
+    URL policies never change TLS, authentication, cookies, same-origin rules,
+    redirect counts, body limits, document validation or elapsed-time bounds.
+    """
+    requested_url = url_validator(url)
     if expected_media not in {"text/html", "application/pdf"}:
         raise OfficialTransportError("unsupported official source media type")
     limit = MAX_PDF_BYTES if expected_media == "application/pdf" else MAX_HTML_BYTES
@@ -282,7 +351,7 @@ def fetch_official(
                     },
                     timeout=httpx.Timeout(timeout),
                 )
-                actual_url = validate_official_url(str(request.url))
+                actual_url = url_validator(str(request.url))
                 if actual_url in visited:
                     raise OfficialTransportError("official source redirect loop")
                 visited.add(actual_url)
@@ -295,24 +364,15 @@ def fetch_official(
                         location = response.headers.get("location", "")
                         if not location or len(response.headers.get_list("location")) != 1:
                             raise OfficialTransportError("official source returned an invalid redirect", diagnostics=_url_diagnostics(location, kind="rejected_redirect"))
-                        # Validate raw Location first: urljoin can normalize away
-                        # traversal or strip leading whitespace/control characters.
-                        if (
-                            any(ord(char) < 33 or ord(char) == 127 for char in location)
-                            or any(char in location for char in "\\?#")
-                            or _ENCODED_FORBIDDEN.search(location)
-                            or any(part in {".", ".."} for part in location.split("/"))
-                        ):
-                            raise OfficialTransportError("official source returned an invalid redirect", diagnostics=_url_diagnostics(location, kind="rejected_redirect"))
                         try:
-                            target = validate_official_url(urljoin(actual_url, location))
+                            target = redirect_target(actual_url, location)
                         except OfficialTransportError as exc:
                             raise OfficialTransportError("invalid official source URL", diagnostics={**exc.diagnostics, "kind": "rejected_redirect"}) from None
                         if urlsplit(target).netloc != origin:
                             raise OfficialTransportError("official source redirected to a different host", diagnostics={"kind": "rejected_redirect", "url_reason": "cross_host"})
                         # Store the exact URL spelling sent by HTTPX, including
                         # percent-encoding for Unicode relative Location values.
-                        target = validate_official_url(str(httpx.URL(target)))
+                        target = url_validator(str(httpx.URL(target)))
                         chain.append(target)
                         current_url = target
                         continue

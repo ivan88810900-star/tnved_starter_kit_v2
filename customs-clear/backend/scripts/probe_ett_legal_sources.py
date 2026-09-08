@@ -5,6 +5,8 @@ This explicit diagnostic compares the legacy portal locator, its observed canoni
 pages, observed Russian PDF attachments and observed public discovery pages. It
 does not discover or synthesize URLs. Successful HTTP acquisition does not verify
 the act identity, adoption/effective dates or completeness of any inventory.
+Shape-rejected original bodies may be retained as rejected-document evidence.
+Their records remain failed; object-store presence never establishes validation.
 """
 from __future__ import annotations
 
@@ -24,6 +26,7 @@ from app.services.ett_artifacts import ArtifactIntegrityError, LocalArtifactStor
 from app.services.ett_transport import (
     MAX_HTML_BYTES, MAX_PDF_BYTES, MAX_REDIRECTS, OfficialResponse,
     OfficialTransportError, fetch_official, sanitize_transport_diagnostics, validate_official_url,
+    _get_rejected_document_bytes,
 )
 
 # Literal locators observed on official EEC/document pages, never filename guesses.
@@ -109,6 +112,18 @@ def probe_legal_sources(store: LocalArtifactStore, *, fetch=fetch_official) -> d
             diagnostics = sanitize_transport_diagnostics(exc.diagnostics)
             if diagnostics:
                 record["diagnostics"] = diagnostics
+            rejected = _get_rejected_document_bytes(exc)
+            if rejected is not None:
+                record["document_validation_passed"] = False
+                try:
+                    rejected_digest = store.put(rejected)
+                    if rejected_digest != diagnostics.get("sha256"):
+                        raise ArtifactIntegrityError("rejected evidence digest mismatch")
+                    record["rejected_document_sha256"] = rejected_digest
+                except Exception:
+                    # Preserve the original transport rejection and continue
+                    # the probe even if retaining its evidence also fails.
+                    record["rejected_document_retention_reason"] = "rejected_evidence_retention_failed"
         except ArtifactIntegrityError:
             record.update(status="failed", reason="source_storage_integrity_failure")
         except Exception:
@@ -120,6 +135,7 @@ def probe_legal_sources(store: LocalArtifactStore, *, fetch=fetch_official) -> d
         "started_at": started_at, "finished_at": _instant(datetime.now(timezone.utc)),
         "attempted_sources": len(results), "captured_sources": succeeded,
         "failed_sources": len(results) - succeeded, "all_sources_captured": succeeded == len(PROBE_SOURCES),
+        "retained_rejected_documents": sum("rejected_document_sha256" in item for item in results),
         "source_identity_verified": False, "adoption_dates_verified": False,
         "effective_dates_verified": False, "amendment_inventory_complete": False,
         "production_ready": False, "active_rates_written": False,
