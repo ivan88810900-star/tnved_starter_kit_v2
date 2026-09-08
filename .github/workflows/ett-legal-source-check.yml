@@ -1,0 +1,63 @@
+name: ETT legal source access check
+
+on:
+  push:
+    branches: [ops/ett-legal-source-check]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ett-legal-source-check-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  legal-source-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      CUSTOMSCLEAR_READ_ONLY: "1"
+      SCHEDULER_ENABLED: "0"
+      REGULATORY_SYNC_SCHEDULER_ENABLED: "0"
+    defaults:
+      run:
+        working-directory: customs-clear/backend
+        shell: bash
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Prepare private source directory
+        id: prepare
+        run: |
+          umask 077
+          ETT_PROBE_ROOT="$RUNNER_TEMP/ett-legal-source-check"
+          ETT_PROBE_STORE="$ETT_PROBE_ROOT/store"
+          mkdir -m 700 "$ETT_PROBE_ROOT" "$ETT_PROBE_STORE"
+          printf 'ETT_PROBE_ROOT=%s\nETT_PROBE_STORE=%s\n' "$ETT_PROBE_ROOT" "$ETT_PROBE_STORE" >> "$GITHUB_ENV"
+      - name: Set up Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: customs-clear/backend/requirements.txt
+      - name: Install source capture dependencies
+        run: python -m pip install --disable-pip-version-check -r requirements.txt
+      - name: Check four observed official document URLs
+        run: |
+          python scripts/probe_ett_legal_sources.py \
+            --store-root "$ETT_PROBE_STORE" --output "$ETT_PROBE_ROOT/report.json"
+      - name: Package original source objects
+        if: ${{ always() && steps.prepare.outcome == 'success' }}
+        run: tar -C "$ETT_PROBE_ROOT" -czf "$ETT_PROBE_ROOT/objects.tar.gz" store
+      - name: Upload temporary source evidence
+        if: ${{ always() && steps.prepare.outcome == 'success' }}
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        with:
+          name: ett-legal-source-check-${{ github.run_id }}
+          path: |
+            ${{ runner.temp }}/ett-legal-source-check/report.json
+            ${{ runner.temp }}/ett-legal-source-check/objects.tar.gz
+          if-no-files-found: error
+          retention-days: 90

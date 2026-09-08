@@ -141,3 +141,23 @@ def test_analysis_receives_only_the_successfully_verified_receipt_output():
     assert "${{" not in analysis["run"]
     upload = next(step for step in steps if step.get("uses", "").startswith("actions/upload-artifact@"))
     assert "analysis.json" in upload["with"]["path"]
+
+
+def test_legal_source_check_is_explicit_readonly_and_uses_valid_runner_contexts():
+    path = WORKFLOW_PATH.with_name("ett-legal-source-check.yml")
+    document = yaml.load(path.read_text(), Loader=yaml.BaseLoader)
+    assert document["on"] == {"push": {"branches": ["ops/ett-legal-source-check"]}}
+    assert document["permissions"] == {"contents": "read"}
+    job = document["jobs"]["legal-source-check"]
+    assert int(job["timeout-minutes"]) <= 10
+    assert job["env"]["CUSTOMSCLEAR_READ_ONLY"] == "1"
+    assert "secrets." not in json.dumps(document)
+    assert "DATABASE_URL" not in json.dumps(document)
+    assert "runner." not in json.dumps(job["env"])
+    for step in job["steps"]:
+        if "uses" in step:
+            assert re.fullmatch(r"[^@\s]+@[0-9a-f]{40}", step["uses"])
+        if "run" in step:
+            assert "${{" not in step["run"]
+            result = subprocess.run(["bash", "-n"], input=step["run"], text=True, capture_output=True)
+            assert result.returncode == 0, result.stderr
