@@ -17,10 +17,11 @@ import os
 import re
 import sys
 import time
+from contextlib import closing
 from datetime import datetime
 from pathlib import Path
 from typing import Any
-from urllib.parse import urlparse
+from urllib.parse import parse_qsl, urljoin, urlparse
 from xml.etree import ElementTree as ET
 
 import httpx
@@ -29,6 +30,8 @@ from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
+from app.services.source_http import read_httpx_body
+from app.services.source_document import SourceDocument, XML_MEDIA_TYPES, XLSX_MEDIA_TYPE, original_source_bytes, parse_source_xml, validate_xlsx_archive
 from app.db import SessionLocal
 from app.models.core import EuSanctionsList
 from app.services.normative_store import (
@@ -48,6 +51,7 @@ EU_CORRELATION_XLSX_URL = (
     "e5a807d3-6ca0-4bfb-8c6c-2f56f55e0b2e_en"
     "?filename=faqs-sanctions-russia-correlation-table-goods-regulation-833_en.xlsx"
 )
+_REDIRECT_STATUSES = frozenset({301, 302, 303, 307, 308})
 UA = "customs-clear-eu-sanctions-sync/1.0"
 
 
@@ -63,47 +67,137 @@ def _namespace(tag: Any) -> str:
     return ""
 
 
-def _redirect_url_allowed(original_url: str, final_url: str) -> bool:
-    """Require the official feed to remain on its pinned EC HTTPS origin."""
-    original = urlparse(original_url)
-    final = urlparse(final_url)
-    original_host = (original.hostname or "").casefold()
-    final_host = (final.hostname or "").casefold()
-    if not original_host or not final_host:
-        return False
-    if original_host == "webgate.ec.europa.eu":
-        return (
-            final.scheme.casefold() == "https"
-            and final.port in {None, 443}
-            and final_host == original_host
-        )
-    return (
-        original.scheme.casefold() == final.scheme.casefold()
-        and original_host == final_host
-        and (original.port or None) == (final.port or None)
+def _safe_https_parts(url: str):
+    parsed = urlparse(url)
+    try:
+        port = parsed.port
+    except ValueError:
+        return None
+    if (
+        parsed.scheme.casefold() != "https"
+        or port not in {None, 443}
+        or parsed.username is not None
+        or parsed.password is not None
+        or not parsed.hostname
+        or bool(parsed.fragment)
+    ):
+        return None
+    return parsed
+
+
+def _is_eu_consolidated_url(url: str) -> bool:
+    parsed = _safe_https_parts(url)
+    return bool(
+        parsed is not None
+        and (parsed.hostname or "").casefold() == "webgate.ec.europa.eu"
+        and parsed.path
+        == "/fsd/fsf/public/files/xmlFullSanctionsList_1_1/content"
+        and not parsed.params
+        and not parsed.query
     )
+
+
+def _is_eu_correlation_xlsx_url(url: str) -> bool:
+    parsed = _safe_https_parts(url)
+    if (
+        parsed is None
+        or (parsed.hostname or "").casefold() != "finance.ec.europa.eu"
+        or parsed.path
+        != "/document/download/e5a807d3-6ca0-4bfb-8c6c-2f56f55e0b2e_en"
+        or parsed.params
+    ):
+        return False
+    try:
+        query = parse_qsl(parsed.query, keep_blank_values=True, strict_parsing=True)
+    except ValueError:
+        return False
+    return query == [
+        (
+            "filename",
+            "faqs-sanctions-russia-correlation-table-goods-regulation-833_en.xlsx",
+        )
+    ]
+
+
+def _same_request_url(left: str, right: str) -> bool:
+    try:
+        return httpx.URL(left) == httpx.URL(right)
+    except (TypeError, ValueError):
+        return False
+
+
+def _redirect_url_allowed(original_url: str, target_url: str) -> bool:
+    """Pin each scheduled EU artifact to its exact HTTPS URL identity."""
+    if _is_eu_consolidated_url(original_url):
+        return _is_eu_consolidated_url(target_url)
+    if _is_eu_correlation_xlsx_url(original_url):
+        return _is_eu_correlation_xlsx_url(target_url)
+    # Operator-provided, non-scheduled sources may be fetched, but they cannot
+    # redirect. Their initial URL must still use verified HTTPS transport.
+    return _safe_https_parts(original_url) is not None and _same_request_url(
+        original_url, target_url
+    )
+
+
+def _get_with_verified_redirects(
+    client: httpx.Client,
+    url: str,
+    *,
+    headers: dict[str, str],
+) -> httpx.Response:
+    """Validate the exact feed/document identity before every request."""
+    if not _redirect_url_allowed(url, url):
+        raise RuntimeError(f"untrusted EU sanctions source URL: {url!r}")
+    current_url = url
+    for redirect_count in range(6):
+        if not _redirect_url_allowed(url, current_url):
+            raise RuntimeError(f"unexpected EU sanctions redirect target: {current_url}")
+        response = client.send(client.build_request("GET", current_url,
+            headers={**headers, "Accept-Encoding": "identity"}), stream=True, follow_redirects=False)
+        handed_off = False
+        try:
+            if not _same_request_url(current_url, str(response.url)):
+                raise RuntimeError(f"unexpected EU sanctions response URL: {response.url}")
+            if response.status_code not in _REDIRECT_STATUSES:
+                handed_off = True
+                return response
+            location = str(response.headers.get("location") or "").strip()
+            if not location:
+                raise RuntimeError("EU sanctions redirect is missing Location")
+            if redirect_count >= 5:
+                raise RuntimeError("EU sanctions redirect limit exceeded")
+            next_url = urljoin(current_url, location)
+            if not _redirect_url_allowed(url, next_url):
+                raise RuntimeError(f"unexpected EU sanctions redirect target: {next_url}")
+            current_url = next_url
+        finally:
+            if not handed_off:
+                response.close()
+    raise RuntimeError("EU sanctions redirect limit exceeded")  # pragma: no cover
 
 
 def _http_get(url: str, *, timeout_sec: float = 45.0, retries: int = 4) -> tuple[str, str]:
     err: Exception | None = None
-    with httpx.Client(timeout=timeout_sec, follow_redirects=True) as client:
-        for i in range(1, max(1, retries) + 1):
+    with httpx.Client(timeout=timeout_sec, follow_redirects=False, trust_env=False, verify=True) as client:
+        for attempt in range(1, max(1, retries) + 1):
             try:
-                r = client.get(url, headers={"User-Agent": UA, "Accept": "*/*"})
-                if r.status_code in (429, 500, 502, 503, 504) and i < retries:
-                    time.sleep(min(1.2 * i, 8.0))
-                    continue
-                r.raise_for_status()
-                if not _redirect_url_allowed(url, str(r.url)):
-                    raise RuntimeError(f"unexpected EU sanctions redirect target: {r.url}")
-                ctype = str(r.headers.get("content-type") or "").lower()
-                return r.text, ctype
-            except Exception as e:
-                err = e
-                if i >= retries:
+                with closing(_get_with_verified_redirects(client, url, headers={"User-Agent": UA})) as response:
+                    response.raise_for_status()
+                    if response.status_code != 200:
+                        raise RuntimeError("EU requires a complete HTTP 200 snapshot")
+                    ctype = str(response.headers.get("content-type") or "").lower()
+                    if ctype.split(";", 1)[0].strip() not in XML_MEDIA_TYPES:
+                        raise ValueError("EU source returned non-XML Content-Type")
+                    raw = read_httpx_body(response, max_bytes=128 * 1024**2)
+                    document = SourceDocument(raw, ctype)
+                    parse_source_xml(document)
+                    return document, ctype
+            except Exception as exc:
+                err = exc
+                if attempt >= max(1, retries):
                     break
-                time.sleep(min(1.2 * i, 8.0))
-    raise RuntimeError(f"EU sanctions download failed: {err!r}")
+            time.sleep(min(1.2 * attempt, 8.0))
+    raise RuntimeError(f"EU download failed: {err!r}")
 
 
 def _http_get_with_fallback(urls: list[str], *, timeout_sec: float, retries: int) -> tuple[str, str, str]:
@@ -125,20 +219,22 @@ def _http_get_with_fallback(urls: list[str], *, timeout_sec: float, retries: int
 
 def _http_get_bytes(url: str, *, timeout_sec: float = 45.0, retries: int = 4) -> tuple[bytes, str]:
     err: Exception | None = None
-    with httpx.Client(timeout=timeout_sec, follow_redirects=True) as client:
-        for i in range(1, max(1, retries) + 1):
+    with httpx.Client(timeout=timeout_sec, follow_redirects=False, trust_env=False, verify=True) as client:
+        for attempt in range(1, max(1, retries) + 1):
             try:
-                r = client.get(url, headers={"User-Agent": UA, "Accept": "*/*"})
-                if r.status_code in (403, 429, 500, 502, 503, 504) and i < retries:
-                    time.sleep(min(1.5 * i, 8.0))
-                    continue
-                r.raise_for_status()
-                return r.content or b"", str(r.headers.get("content-type") or "").lower()
-            except Exception as e:
-                err = e
-                if i >= retries:
+                with closing(_get_with_verified_redirects(client, url, headers={"User-Agent": UA})) as response:
+                    response.raise_for_status()
+                    if response.status_code != 200:
+                        raise RuntimeError("EU workbook requires a complete HTTP 200 snapshot")
+                    ctype = str(response.headers.get("content-type") or "").lower()
+                    if ctype.split(";", 1)[0].strip() != XLSX_MEDIA_TYPE:
+                        raise ValueError("EU workbook returned non-XLSX Content-Type")
+                    return read_httpx_body(response, max_bytes=32 * 1024**2), ctype
+            except Exception as exc:
+                err = exc
+                if attempt >= max(1, retries):
                     break
-                time.sleep(min(1.5 * i, 8.0))
+            time.sleep(min(1.2 * attempt, 8.0))
     raise RuntimeError(f"EU binary download failed: {err!r}")
 
 
@@ -164,7 +260,7 @@ def _rows_from_xml(
     *,
     require_official_schema: bool = False,
 ) -> list[dict[str, str]]:
-    root = ET.fromstring(text)
+    root = parse_source_xml(text)
     if require_official_schema:
         if _local_name(root.tag) != "export":
             raise ValueError("official EU sanctions XML root must be export")
@@ -277,6 +373,7 @@ def _rows_from_json(text: str) -> list[dict[str, str]]:
 
 
 def _rows_from_eu_correlation_xlsx(blob: bytes) -> list[dict[str, str]]:
+    validate_xlsx_archive(blob)
     try:
         import pandas as pd
     except Exception as e:
@@ -284,7 +381,7 @@ def _rows_from_eu_correlation_xlsx(blob: bytes) -> list[dict[str, str]]:
 
     df = pd.read_excel(io.BytesIO(blob), sheet_name=0)
     if df is None or df.empty:
-        return []
+        raise ValueError("EU correlation workbook is empty")
 
     cols = list(df.columns)
     cn_col = ""
@@ -294,11 +391,13 @@ def _rows_from_eu_correlation_xlsx(blob: bytes) -> list[dict[str, str]]:
             cn_col = str(c)
             break
     if not cn_col:
-        return []
+        raise ValueError("EU correlation workbook lacks a code column")
 
     category_col = next((str(c) for c in cols if "category" in str(c).lower()), "")
     eu_code_col = next((str(c) for c in cols if "eu code" in str(c).lower()), "")
     control_col = next((str(c) for c in cols if "control text" in str(c).lower()), "")
+    if not any((category_col, eu_code_col, control_col)):
+        raise ValueError("EU correlation workbook lacks semantic columns")
 
     rows: list[dict[str, str]] = []
     seen: set[tuple[str, str, str]] = set()
@@ -319,6 +418,8 @@ def _rows_from_eu_correlation_xlsx(blob: bytes) -> list[dict[str, str]]:
             continue
         seen.add(key)
         rows.append({"hs_code": hs, "description": desc[:4000], "entity_name": ent})
+    if not rows:
+        raise ValueError("EU correlation workbook contains no valid rows")
     return rows
 
 
@@ -550,6 +651,8 @@ def main() -> int:
                 timeout_sec=float(args.timeout),
                 retries=max(1, int(args.retries)),
             )
+            if ctype.split(";", 1)[0].strip().casefold() != XLSX_MEDIA_TYPE:
+                raise ValueError("EU correlation response is not XLSX")
             rows = _rows_from_eu_correlation_xlsx(blob)
             # This workbook is a partial goods-correlation contour, not the
             # consolidated entity list. It can be reported as evidence but must
@@ -613,8 +716,9 @@ def main() -> int:
             return 1
     rows: list[dict[str, str]]
     try:
+        original_source_bytes(text)
         if args.official_only:
-            if "xml" not in ctype or not text.lstrip().startswith("<"):
+            if ctype.split(";", 1)[0].strip().casefold() not in XML_MEDIA_TYPES or not text.lstrip().startswith("<"):
                 raise ValueError("official EU consolidated feed is not XML")
             # Official mode never falls back to body sniffing: a schema failure
             # is a red result, not permission to reinterpret arbitrary JSON/CSV.
@@ -661,7 +765,7 @@ def main() -> int:
         return 1
 
     minimum_rows = configured_minimum_rows("eu_sanctions_list", 500)
-    digest = hashlib.sha256(text.encode("utf-8", errors="replace")).hexdigest()
+    digest = hashlib.sha256(original_source_bytes(text)).hexdigest()
     revision = f"sha256:{digest}"
     try:
         if not apply_changes:

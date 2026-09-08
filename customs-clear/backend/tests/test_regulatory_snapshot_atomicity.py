@@ -62,20 +62,12 @@ def _sessionmakers(*tables):
 
 
 def _fake_7z(csv_text: str):
-    class _Archive:
-        def __init__(self, *args, **kwargs) -> None:
-            pass
-
-        def __enter__(self):
-            return self
-
-        def __exit__(self, *args) -> None:
-            return None
-
-        def extractall(self, *, path) -> None:
-            (Path(path) / "snapshot.csv").write_text(csv_text, encoding="utf-8")
-
-    return _Archive
+    # These tests isolate DB rollback; real archive boundaries have their own suite.
+    def extract(_path, root):
+        csv_path = root / "snapshot.csv"
+        csv_path.write_text(csv_text, encoding="utf-8")
+        return [csv_path]
+    return extract
 
 
 def test_ofac_empty_or_invalid_snapshot_preserves_live_rows() -> None:
@@ -367,8 +359,8 @@ def test_fsa_snapshot_empty_and_commit_failure_preserve_previous_doc_type(tmp_pa
     with (
         patch.object(opendata_fsa, "SessionLocal", sm),
         patch.object(
-            opendata_fsa.py7zr,
-            "SevenZipFile",
+            opendata_fsa,
+            "extract_fsa_csvs",
             _fake_7z("reg_number;product_name\n"),
         ),
         pytest.raises(RuntimeError, match="zero valid registry rows"),
@@ -378,7 +370,7 @@ def test_fsa_snapshot_empty_and_commit_failure_preserve_previous_doc_type(tmp_pa
     valid_csv = "reg_number;product_name\nNEW-CC;new certificate\n"
     with (
         patch.object(opendata_fsa, "SessionLocal", failing_sm),
-        patch.object(opendata_fsa.py7zr, "SevenZipFile", _fake_7z(valid_csv)),
+        patch.object(opendata_fsa, "extract_fsa_csvs", _fake_7z(valid_csv)),
         pytest.raises(RuntimeError, match="injected commit failure"),
     ):
         opendata_fsa._import_7z(archive_path, doc_type="СС", snapshot_id="failed")
@@ -401,7 +393,7 @@ def test_fsa_snapshot_replaces_only_its_document_type(tmp_path: Path) -> None:
 
     with (
         patch.object(opendata_fsa, "SessionLocal", sm),
-        patch.object(opendata_fsa.py7zr, "SevenZipFile", _fake_7z(valid_csv)),
+        patch.object(opendata_fsa, "extract_fsa_csvs", _fake_7z(valid_csv)),
     ):
         result = opendata_fsa._import_7z(archive_path, doc_type="СС", snapshot_id="full")
     assert result["parsed"] == 1
@@ -435,8 +427,8 @@ def test_fsa_snapshot_rolls_back_first_batch_when_later_batch_fails(tmp_path: Pa
     with (
         patch.object(opendata_fsa, "SessionLocal", sm),
         patch.object(
-            opendata_fsa.py7zr,
-            "SevenZipFile",
+            opendata_fsa,
+            "extract_fsa_csvs",
             _fake_7z("reg_number;product_name\nplaceholder;placeholder\n"),
         ),
         patch.object(opendata_fsa, "_iter_csv_rows", side_effect=lambda _path: iter(raw_rows)),
@@ -712,7 +704,7 @@ def test_fsa_cached_success_is_reimported_when_live_row_count_differs(
         patch.object(opendata_fsa, "backend_opendata_dir", return_value=tmp_path),
         patch.object(
             opendata_fsa,
-            "download_bytes",
+            "download_file",
             side_effect=RuntimeError("reimport attempted"),
         ) as download,
         pytest.raises(RuntimeError, match="reimport attempted"),

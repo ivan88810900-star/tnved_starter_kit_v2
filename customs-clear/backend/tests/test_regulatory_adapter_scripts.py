@@ -9,9 +9,11 @@ import os
 import sys
 from unittest.mock import AsyncMock, patch
 
+import httpx
 import pytest
 
 from app.services import exchange_rates
+from app.services.source_document import SourceDocument
 from scripts import opendata_sync, sync_eu_sanctions, sync_ofac_sanctions, update_rates
 
 
@@ -75,8 +77,22 @@ def test_cbr_validator_rejects_stale_or_future_payload_dates() -> None:
 def test_opendata_fsa_summary_rejects_nested_error() -> None:
     ok, rows, revision = opendata_sync._fsa_summary(
         {
-            "rss": [{"status": "ok", "parsed": 120, "snapshot_id": "rss-1"}],
-            "rds": [{"status": "error", "parsed": 0, "snapshot_id": "rds-1"}],
+            "aggregate_status": "ok",
+            "official_source_verified": True,
+            "rss": [{
+                "status": "ok",
+                "official_source_verified": True,
+                "dataset_id": opendata_sync.FSA_RSS_ID,
+                "parsed": 120,
+                "snapshot_id": "rss-1",
+            }],
+            "rds": [{
+                "status": "error",
+                "official_source_verified": True,
+                "dataset_id": opendata_sync.FSA_RDS_ID,
+                "parsed": 0,
+                "snapshot_id": "rds-1",
+            }],
         }
     )
     assert ok is False
@@ -88,8 +104,21 @@ def test_opendata_fsa_summary_rejects_unverified_empty_skip() -> None:
     ok, rows, revision = opendata_sync._fsa_summary(
         {
             "aggregate_status": "ok",
-            "rss": [{"status": "skipped", "rows": 0, "snapshot_id": "rss-1"}],
-            "rds": [{"status": "skipped", "rows": 80, "snapshot_id": "rds-1"}],
+            "official_source_verified": True,
+            "rss": [{
+                "status": "skipped",
+                "official_source_verified": True,
+                "dataset_id": opendata_sync.FSA_RSS_ID,
+                "rows": 0,
+                "snapshot_id": "rss-1",
+            }],
+            "rds": [{
+                "status": "skipped",
+                "official_source_verified": True,
+                "dataset_id": opendata_sync.FSA_RDS_ID,
+                "rows": 80,
+                "snapshot_id": "rds-1",
+            }],
         }
     )
     assert ok is False
@@ -99,8 +128,15 @@ def test_opendata_fsa_summary_rejects_unverified_empty_skip() -> None:
 
 def test_opendata_single_summary_rejects_empty_success() -> None:
     ok, rows, revision = opendata_sync._single_summary(
-        {"status": "ok", "parsed_rows": 0, "snapshot_id": "empty-1"},
+        {
+            "status": "ok",
+            "official_source_verified": True,
+            "dataset_id": opendata_sync.TROIS_DATASET_ID,
+            "parsed_rows": 0,
+            "snapshot_id": "empty-1",
+        },
         count_keys=("parsed_rows", "rows"),
+        expected_dataset_id=opendata_sync.TROIS_DATASET_ID,
     )
     assert (ok, rows, revision) == (False, 0, "empty-1")
 
@@ -135,7 +171,7 @@ def test_ofac_strict_mode_rejects_empty_official_snapshot(capsys) -> None:
         patch.object(
             sync_ofac_sanctions,
             "_http_get",
-            return_value=("<?xml version='1.0'?><sdnList></sdnList>", "application/xml"),
+            return_value=(SourceDocument("<?xml version='1.0'?><sdnList></sdnList>".encode()), "application/xml"),
         ),
         patch.object(sync_ofac_sanctions, "_extract_rows_from_xml", return_value=[]),
         patch.object(sync_ofac_sanctions, "_validate_rows", return_value=0),
@@ -206,7 +242,7 @@ def test_ofac_scheduled_validation_never_applies_enforcement_rows(capsys) -> Non
         patch.object(
             sync_ofac_sanctions,
             "_http_get",
-            return_value=("<official/>", "application/xml"),
+            return_value=(SourceDocument("<official/>".encode()), "application/xml"),
         ) as download,
         patch.object(sync_ofac_sanctions, "_extract_rows_from_xml", return_value=rows),
         patch.object(sync_ofac_sanctions, "_validate_rows", return_value=1200) as validate,
@@ -254,7 +290,7 @@ def test_ofac_manual_apply_remains_explicit_and_reports_enforcement_change(capsy
         patch.object(
             sync_ofac_sanctions,
             "_http_get",
-            return_value=("<fixture/>", "application/xml"),
+            return_value=(SourceDocument("<fixture/>".encode()), "application/xml"),
         ) as download,
         patch.object(sync_ofac_sanctions, "_extract_rows_from_xml", return_value=rows),
         patch.object(sync_ofac_sanctions, "_replace_rows", return_value=1) as replace,
@@ -295,7 +331,7 @@ def test_eu_scheduled_validation_ignores_env_fallbacks_and_never_applies(capsys)
         patch.object(
             sync_eu_sanctions,
             "_http_get_with_fallback",
-            return_value=("<official/>", "application/xml", sync_eu_sanctions.EU_DEFAULT_URL),
+            return_value=(SourceDocument("<official/>".encode()), "application/xml", sync_eu_sanctions.EU_DEFAULT_URL),
         ) as download,
         patch.object(sync_eu_sanctions, "_rows_from_xml", return_value=rows),
         patch.object(sync_eu_sanctions, "_validate_rows", return_value=600) as validate,
@@ -345,7 +381,7 @@ def test_eu_manual_apply_remains_explicit(capsys) -> None:
         patch.object(
             sync_eu_sanctions,
             "_http_get_with_fallback",
-            return_value=("<fixture/>", "application/xml", custom_url),
+            return_value=(SourceDocument("<fixture/>".encode()), "application/xml", custom_url),
         ),
         patch.object(sync_eu_sanctions, "_rows_from_xml", return_value=rows),
         patch.object(sync_eu_sanctions, "_replace_rows", return_value=1) as replace,
@@ -375,7 +411,7 @@ def test_ofac_default_mode_validates_without_replacing(capsys) -> None:
         patch.object(
             sync_ofac_sanctions,
             "_http_get",
-            return_value=("<fixture/>", "application/xml"),
+            return_value=(SourceDocument("<fixture/>".encode()), "application/xml"),
         ),
         patch.object(sync_ofac_sanctions, "_extract_rows_from_xml", return_value=rows),
         patch.object(sync_ofac_sanctions, "_validate_rows", return_value=1),
@@ -403,7 +439,7 @@ def test_eu_default_mode_validates_without_replacing(capsys) -> None:
         patch.object(
             sync_eu_sanctions,
             "_http_get_with_fallback",
-            return_value=("<fixture/>", "application/xml", custom_url),
+            return_value=(SourceDocument("<fixture/>".encode()), "application/xml", custom_url),
         ),
         patch.object(sync_eu_sanctions, "_rows_from_xml", return_value=rows),
         patch.object(sync_eu_sanctions, "_validate_rows", return_value=1),
@@ -577,12 +613,52 @@ def test_official_modes_do_not_body_sniff_arbitrary_json(capsys) -> None:
     eu_replace.assert_not_called()
 
 
-def test_sanctions_redirect_policies_allow_only_pinned_official_origins() -> None:
-    ofac_s3_url = (
+def _valid_ofac_govcloud_url() -> str:
+    return (
         "https://"
         + sync_ofac_sanctions.OFAC_GOVCLOUD_REDIRECT_HOST
-        + "/exports/SDN.XML?version=42"
+        + "/Published/1e995403-6e53-4855-809c-7e3e8556a9cb/2026-09-03/"
+        "662b270b-fd55-4d88-b532-9b871b9af1b8/SDN.XML"
+        "?X-Amz-Algorithm=AWS4-HMAC-SHA256"
+        "&X-Amz-Credential=ASIA1234567890ABCDEF%2F20260903%2Fus-gov-west-1%2Fs3%2Faws4_request"
+        "&X-Amz-Date=20260903T091224Z"
+        "&X-Amz-Expires=3600"
+        "&X-Amz-Security-Token=temporary-token"
+        "&X-Amz-Signature="
+        + ("a" * 64)
+        + "&X-Amz-SignedHeaders=host"
+        "&response-content-disposition=attachment%3B%20filename%3D%22sdn.xml%22"
+        "&response-content-type=text%2Fxml"
     )
+
+
+def _install_mock_http_client(monkeypatch, module, handler):
+    real_client = httpx.Client
+    requests: list[str] = []
+    client_kwargs: dict[str, object] = {}
+
+    def recording_handler(request: httpx.Request) -> httpx.Response:
+        requests.append(str(request.url))
+        return handler(request)
+
+    transport = httpx.MockTransport(recording_handler)
+
+    def client_factory(**kwargs):
+        client_kwargs.update(kwargs)
+        return real_client(transport=transport, **kwargs)
+
+    monkeypatch.setattr(module.httpx, "Client", client_factory)
+    return requests, client_kwargs
+
+
+def _assert_hardened_client_kwargs(kwargs: dict[str, object]) -> None:
+    assert kwargs["follow_redirects"] is False
+    assert kwargs["trust_env"] is False
+    assert kwargs["verify"] is True
+
+
+def test_sanctions_redirect_policies_allow_only_exact_official_artifacts() -> None:
+    ofac_s3_url = _valid_ofac_govcloud_url()
     assert sync_ofac_sanctions._redirect_url_allowed(
         sync_ofac_sanctions.OFAC_DEFAULT_URL,
         ofac_s3_url,
@@ -590,6 +666,10 @@ def test_sanctions_redirect_policies_allow_only_pinned_official_origins() -> Non
     assert not sync_ofac_sanctions._redirect_url_allowed(
         sync_ofac_sanctions.OFAC_DEFAULT_URL,
         "https://attacker.example/sdn.xml",
+    )
+    assert not sync_ofac_sanctions._redirect_url_allowed(
+        sync_ofac_sanctions.OFAC_DEFAULT_URL,
+        "https://www.treasury.gov/ofac/downloads/not-sdn.xml",
     )
     assert sync_eu_sanctions._redirect_url_allowed(
         sync_eu_sanctions.EU_DEFAULT_URL,
@@ -599,3 +679,138 @@ def test_sanctions_redirect_policies_allow_only_pinned_official_origins() -> Non
         sync_eu_sanctions.EU_DEFAULT_URL,
         "https://attacker.example/content",
     )
+    assert sync_eu_sanctions._redirect_url_allowed(
+        sync_eu_sanctions.EU_CORRELATION_XLSX_URL,
+        sync_eu_sanctions.EU_CORRELATION_XLSX_URL,
+    )
+    assert not sync_eu_sanctions._redirect_url_allowed(
+        sync_eu_sanctions.EU_CORRELATION_XLSX_URL,
+        sync_eu_sanctions.EU_CORRELATION_XLSX_URL + "&extra=1",
+    )
+
+
+def test_ofac_follows_only_the_exact_signed_govcloud_artifact(monkeypatch) -> None:
+    govcloud_url = _valid_ofac_govcloud_url()
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        if str(request.url) == sync_ofac_sanctions.OFAC_DEFAULT_URL:
+            return httpx.Response(302, headers={"location": govcloud_url})
+        return httpx.Response(
+            200,
+            text="<sdnList/>",
+            headers={"content-type": "text/xml"},
+        )
+
+    requests, kwargs = _install_mock_http_client(
+        monkeypatch,
+        sync_ofac_sanctions,
+        handler,
+    )
+    body, content_type = sync_ofac_sanctions._http_get(
+        sync_ofac_sanctions.OFAC_DEFAULT_URL,
+        retries=1,
+    )
+
+    assert body == "<sdnList/>"
+    assert content_type == "text/xml"
+    assert requests == [sync_ofac_sanctions.OFAC_DEFAULT_URL, govcloud_url]
+    _assert_hardened_client_kwargs(kwargs)
+
+
+@pytest.mark.parametrize(
+    "location",
+    (
+        "https://attacker.example/SDN.XML",
+        "http://www.treasury.gov/ofac/downloads/sdn.xml",
+        "https://www.treasury.gov/ofac/downloads/not-sdn.xml",
+        "https://wc2h-sls-prod-public-published.s3.us-gov-west-1.amazonaws.com/"
+        "Published/not-the-approved-object/SDN.XML",
+    ),
+)
+def test_ofac_rejects_redirect_before_contacting_unapproved_target(
+    monkeypatch,
+    location: str,
+) -> None:
+    def handler(_request: httpx.Request) -> httpx.Response:
+        return httpx.Response(302, headers={"location": location})
+
+    requests, kwargs = _install_mock_http_client(
+        monkeypatch,
+        sync_ofac_sanctions,
+        handler,
+    )
+    with pytest.raises(RuntimeError, match="unexpected OFAC redirect target"):
+        sync_ofac_sanctions._http_get(
+            sync_ofac_sanctions.OFAC_DEFAULT_URL,
+            retries=1,
+        )
+
+    assert requests == [sync_ofac_sanctions.OFAC_DEFAULT_URL]
+    _assert_hardened_client_kwargs(kwargs)
+
+
+@pytest.mark.parametrize(
+    "location",
+    (
+        "https://attacker.example/content",
+        "http://webgate.ec.europa.eu/fsd/fsf/public/files/"
+        "xmlFullSanctionsList_1_1/content",
+        "https://webgate.ec.europa.eu/fsd/fsf/public/files/"
+        "xmlFullSanctionsList_1_1/not-content",
+    ),
+)
+def test_eu_feed_rejects_redirect_before_contacting_unapproved_target(
+    monkeypatch,
+    location: str,
+) -> None:
+    def handler(_request: httpx.Request) -> httpx.Response:
+        return httpx.Response(302, headers={"location": location})
+
+    requests, kwargs = _install_mock_http_client(
+        monkeypatch,
+        sync_eu_sanctions,
+        handler,
+    )
+    with pytest.raises(RuntimeError, match="unexpected EU sanctions redirect target"):
+        sync_eu_sanctions._http_get(
+            sync_eu_sanctions.EU_DEFAULT_URL,
+            retries=1,
+        )
+
+    assert requests == [sync_eu_sanctions.EU_DEFAULT_URL]
+    _assert_hardened_client_kwargs(kwargs)
+
+
+@pytest.mark.parametrize(
+    "location",
+    (
+        "https://attacker.example/eu.xlsx",
+        "http://finance.ec.europa.eu/document/download/"
+        "e5a807d3-6ca0-4bfb-8c6c-2f56f55e0b2e_en"
+        "?filename=faqs-sanctions-russia-correlation-table-goods-regulation-833_en.xlsx",
+        "https://finance.ec.europa.eu/document/download/wrong-document"
+        "?filename=faqs-sanctions-russia-correlation-table-goods-regulation-833_en.xlsx",
+        "https://finance.ec.europa.eu/document/download/"
+        "e5a807d3-6ca0-4bfb-8c6c-2f56f55e0b2e_en?filename=wrong.xlsx",
+    ),
+)
+def test_eu_binary_fallback_rejects_redirect_before_contacting_unapproved_target(
+    monkeypatch,
+    location: str,
+) -> None:
+    def handler(_request: httpx.Request) -> httpx.Response:
+        return httpx.Response(302, headers={"location": location})
+
+    requests, kwargs = _install_mock_http_client(
+        monkeypatch,
+        sync_eu_sanctions,
+        handler,
+    )
+    with pytest.raises(RuntimeError, match="unexpected EU sanctions redirect target"):
+        sync_eu_sanctions._http_get_bytes(
+            sync_eu_sanctions.EU_CORRELATION_XLSX_URL,
+            retries=1,
+        )
+
+    assert requests == [sync_eu_sanctions.EU_CORRELATION_XLSX_URL]
+    _assert_hardened_client_kwargs(kwargs)

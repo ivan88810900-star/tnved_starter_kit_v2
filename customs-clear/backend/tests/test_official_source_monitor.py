@@ -3,9 +3,11 @@
 from __future__ import annotations
 
 import hashlib
+from contextlib import contextmanager
 from unittest.mock import patch
 
 import pytest
+import httpx
 
 from scripts import monitor_official_ntm_sources as monitor
 
@@ -17,18 +19,28 @@ class _Response:
         status_code: int = 200,
         *,
         content_type: str = "application/pdf",
-        final_url: str = "https://example.test/final",
+        final_url: str | None = None,
+        headers: dict[str, str] | None = None,
     ) -> None:
         self.content = body
         self.status_code = status_code
         self.url = final_url
         self.headers = {"content-type": content_type, "etag": '"v2"'}
+        self.headers.update(headers or {})
+
+    def iter_bytes(self, chunk_size):
+        yield self.content
+
+    def raise_for_status(self):
+        if self.status_code >= 400:
+            raise RuntimeError(f"HTTP {self.status_code}")
 
 
 class _Client:
-    def __init__(self, response: _Response) -> None:
-        self.response = response
+    def __init__(self, response: _Response | list[_Response]) -> None:
+        self.responses = list(response) if isinstance(response, list) else [response]
         self.request_headers = None
+        self.requested: list[str] = []
 
     def __enter__(self):
         return self
@@ -38,7 +50,32 @@ class _Client:
 
     def get(self, url, headers=None):
         self.request_headers = headers
-        return self.response
+        self.requested.append(str(url))
+        response = self.responses.pop(0)
+        if response.url is None:
+            response.url = str(url)
+        response.request = httpx.Request("GET", response.url)
+        return response
+
+    @contextmanager
+    def stream(self, method, url, headers=None):
+        yield self.get(url, headers=headers)
+
+
+def _valid_ofac_govcloud_url() -> str:
+    return (
+        "https://wc2h-sls-prod-public-published.s3.us-gov-west-1.amazonaws.com/"
+        "Published/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa/2026-09-01/"
+        "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb/SDN.XML?"
+        "X-Amz-Algorithm=AWS4-HMAC-SHA256&"
+        "X-Amz-Credential=ABCDEFGHIJKLMNOP%2F20260901%2Fus-gov-west-1%2Fs3%2Faws4_request&"
+        "X-Amz-Date=20260901T030000Z&X-Amz-Expires=3600&"
+        "X-Amz-Security-Token=token&X-Amz-Signature="
+        + "a" * 64
+        + "&X-Amz-SignedHeaders=host&"
+        "response-content-disposition=attachment%3B%20filename%3D%22sdn.xml%22&"
+        "response-content-type=text%2Fxml"
+    )
 
 
 def test_pending_legal_digest_is_sticky_and_forces_full_revalidation() -> None:
@@ -68,7 +105,7 @@ def test_pending_legal_digest_is_sticky_and_forces_full_revalidation() -> None:
     ):
         report = monitor.monitor_sources(previous_state=previous)
 
-    assert client.request_headers == {}
+    assert client.request_headers == {"Accept-Encoding": "identity"}
     assert report["review_required"] is True
     assert report["pending_review_source_ids"] == ["only"]
     assert report["sources"][0]["requires_approval"] is True
@@ -322,7 +359,7 @@ def test_persisted_state_requires_current_schema_version(tmp_path) -> None:
 
     legacy = tmp_path / "legacy.json"
     legacy.write_text('{"version":1,"sources":{}}', encoding="utf-8")
-    with pytest.raises(RuntimeError, match="expected version=3"):
+    with pytest.raises(RuntimeError, match="expected version=4"):
         monitor._load_state(legacy)
 
     v2 = tmp_path / "v2.json"
@@ -336,6 +373,20 @@ def test_persisted_state_requires_current_schema_version(tmp_path) -> None:
     assert migrated["sources"]["ofac"]["sha256"] == "approved"
     assert "etag" not in migrated["sources"]["ofac"]
     assert "last_modified" not in migrated["sources"]["ofac"]
+
+    v3 = tmp_path / "v3.json"
+    v3.write_text(
+        '{"version":3,"sources":{"legal-card":{'
+        '"url":"https://publication.pravo.gov.ru/Document/View/0001202207190026",'
+        '"sha256":"legacy-raw-html","pending_sha256":"legacy-pending",'
+        '"etag":"legacy"}}}',
+        encoding="utf-8",
+    )
+    migrated_v3 = monitor._load_state(v3)
+    assert migrated_v3["version"] == monitor.STATE_SCHEMA_VERSION
+    assert "sha256" not in migrated_v3["sources"]["legal-card"]
+    assert "pending_sha256" not in migrated_v3["sources"]["legal-card"]
+    assert migrated_v3["sources"]["legal-card"]["revision_covered"] is False
 
     source_url = "https://example.test/source.xml"
     client = _Client(
@@ -352,7 +403,7 @@ def test_persisted_state_requires_current_schema_version(tmp_path) -> None:
         patch.object(monitor.httpx, "Client", return_value=client),
     ):
         report = monitor.monitor_sources(previous_state=migrated)
-    assert client.request_headers == {}
+    assert client.request_headers == {"Accept-Encoding": "identity"}
     assert report["all_available"] is False
     assert report["sources"][0]["validation_error"] == "unexpected_http_status:304"
 
@@ -381,11 +432,14 @@ def test_extensionless_eu_feed_is_xml_and_rejects_html() -> None:
 
 def test_monitor_accepts_exact_ofac_govcloud_redirect_and_rejects_others() -> None:
     ofac_url = "https://www.treasury.gov/ofac/downloads/sdn.xml"
-    s3_url = (
-        "https://wc2h-sls-prod-public-published.s3.us-gov-west-1.amazonaws.com/"
-        "exports/SDN.XML?version=42"
-    )
+    s3_url = _valid_ofac_govcloud_url()
     assert monitor._redirect_host_allowed(ofac_url, s3_url)
+    assert monitor._redirect_target_allowed(ofac_url, s3_url)
+    assert not monitor._redirect_target_allowed(
+        ofac_url,
+        "https://wc2h-sls-prod-public-published.s3.us-gov-west-1.amazonaws.com/"
+        "exports/SDN.XML?version=42",
+    )
     assert not monitor._redirect_host_allowed(
         ofac_url,
         "https://attacker.example/SDN.XML",
@@ -437,10 +491,10 @@ def test_monitor_accepts_exact_ofac_govcloud_redirect_and_rejects_others() -> No
         body=body,
     )
     assert ok is False
-    assert error == "unexpected_redirect_host"
+    assert error == "unexpected_redirect_target"
 
 
-def test_conditional_304_still_enforces_final_redirect_host() -> None:
+def test_conditional_304_still_enforces_exact_redirect_identity() -> None:
     ofac_url = "https://www.treasury.gov/ofac/downloads/sdn.xml"
     previous = {
         "sources": {
@@ -454,9 +508,10 @@ def test_conditional_304_still_enforces_final_redirect_host() -> None:
     rejected_client = _Client(
         _Response(
             b"",
-            status_code=304,
+            status_code=302,
             content_type="text/xml",
-            final_url="https://attacker.example/SDN.XML",
+            final_url=ofac_url,
+            headers={"location": "https://attacker.example/SDN.XML"},
         )
     )
     with (
@@ -466,20 +521,27 @@ def test_conditional_304_still_enforces_final_redirect_host() -> None:
     ):
         report = monitor.monitor_sources(previous_state=previous)
     assert report["all_available"] is False
-    assert report["sources"][0]["validation_error"] == "unexpected_redirect_host"
+    assert report["sources"][0]["validation_error"] == "unexpected_redirect_target"
     assert report["next_state"]["sources"]["only"]["sha256"] == "known-good"
+    assert rejected_client.requested == [ofac_url]
 
-    govcloud_url = (
-        "https://wc2h-sls-prod-public-published.s3.us-gov-west-1.amazonaws.com/"
-        "exports/SDN.XML?version=42"
-    )
+    govcloud_url = _valid_ofac_govcloud_url()
     accepted_client = _Client(
-        _Response(
-            b"",
-            status_code=304,
-            content_type="text/xml",
-            final_url=govcloud_url,
-        )
+        [
+            _Response(
+                b"",
+                status_code=302,
+                content_type="text/xml",
+                final_url=ofac_url,
+                headers={"location": govcloud_url},
+            ),
+            _Response(
+                b"",
+                status_code=304,
+                content_type="text/xml",
+                final_url=govcloud_url,
+            ),
+        ]
     )
     with (
         patch.object(monitor, "SOURCES", {"only": ofac_url}),
@@ -490,6 +552,7 @@ def test_conditional_304_still_enforces_final_redirect_host() -> None:
     assert report["all_available"] is True
     assert report["sources"][0]["ok"] is True
     assert report["sources"][0]["final_url"] == govcloud_url
+    assert accepted_client.requested == [ofac_url, govcloud_url]
 
 
 @pytest.mark.parametrize(

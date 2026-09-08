@@ -7,12 +7,14 @@ import sys
 from unittest.mock import patch
 
 import pytest
+import requests
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
 from app.db import Base
 from app.models.core import FssNotification, ReoRegistryEntry, SgrCertificate
+from app.services import nsi_http
 from scripts import sync_sgr_registry, sync_state_registries
 
 
@@ -47,6 +49,55 @@ def _raw_reo(number: str) -> dict:
     return {"data": {"RecordId": number, "DeviceModelNam": f"model {number}"}}
 
 
+class _NsiResponse:
+    def __init__(
+        self,
+        url: str,
+        *,
+        status_code: int = 200,
+        payload: object | None = None,
+        content_type: str = "application/json; charset=utf-8",
+        location: str = "",
+    ) -> None:
+        self.url = url
+        self.status_code = status_code
+        self._payload = {} if payload is None else payload
+        self.content = json.dumps(self._payload).encode("utf-8")
+        self.headers = {"content-type": content_type}
+        if location:
+            self.headers["location"] = location
+
+    def json(self):
+        return self._payload
+
+    def iter_content(self, chunk_size):
+        yield self.content
+
+    def close(self):
+        self.closed = True
+
+    def raise_for_status(self) -> None:
+        if self.status_code >= 400:
+            raise requests.HTTPError(f"HTTP {self.status_code}", response=self)
+
+
+class _NsiSession:
+    def __init__(self, responses: list[_NsiResponse]) -> None:
+        self.responses = list(responses)
+        self.calls: list[tuple[str, dict]] = []
+        self.trust_env = True
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *_args):
+        return None
+
+    def post(self, url: str, **kwargs):
+        self.calls.append((url, kwargs))
+        return self.responses.pop(0)
+
+
 def test_nsi_pagination_rejects_short_sgr_and_state_snapshots() -> None:
     with (
         patch.object(sync_sgr_registry, "_nsi_sgr_total", return_value=3),
@@ -61,6 +112,148 @@ def test_nsi_pagination_rejects_short_sgr_and_state_snapshots() -> None:
         pytest.raises(RuntimeError, match="fetched_rows=1 expected_rows=2"),
     ):
         sync_state_registries._nsi_fetch_rows(code="1994", date_iso="2026-09-01")
+
+
+@pytest.mark.parametrize(
+    "location",
+    (
+        "https://attacker.example/portal/api/dictionaries/1995/get-list-data",
+        "http://nsi.eaeunion.org/portal/api/dictionaries/1995/get-list-data",
+        "https://nsi.eaeunion.org/portal/api/dictionaries/1994/get-list-data",
+        "https://child.nsi.eaeunion.org/portal/api/dictionaries/1995/get-list-data",
+    ),
+)
+def test_nsi_transport_rejects_redirect_before_contacting_target(location: str) -> None:
+    url = "https://nsi.eaeunion.org/portal/api/dictionaries/1995/get-list-data"
+    session = _NsiSession(
+        [_NsiResponse(url, status_code=307, location=location)]
+    )
+    with (
+        patch.object(nsi_http.requests, "Session", return_value=session),
+        pytest.raises(RuntimeError, match="NSI POST failed"),
+    ):
+        nsi_http.post_official_nsi_json(
+            url,
+            {"date": "2026-09-01"},
+            headers={"Accept": "application/json"},
+            retries=1,
+        )
+    assert [call[0] for call in session.calls] == [url]
+    assert session.trust_env is False
+    assert session.calls[0][1]["allow_redirects"] is False
+    assert session.calls[0][1]["verify"] is True
+
+
+def test_nsi_transport_requires_json_mime_and_valid_root() -> None:
+    url = "https://nsi.eaeunion.org/portal/api/dictionaries/1995/get-list-data"
+    html = _NsiSession(
+        [_NsiResponse(url, payload={"records": []}, content_type="text/html")]
+    )
+    with (
+        patch.object(nsi_http.requests, "Session", return_value=html),
+        pytest.raises(RuntimeError, match="non-JSON Content-Type"),
+    ):
+        nsi_http.post_official_nsi_json(
+            url,
+            {},
+            headers={"Accept": "application/json"},
+            retries=1,
+        )
+
+    scalar = _NsiSession([_NsiResponse(url, payload="not-a-registry")])
+    with (
+        patch.object(nsi_http.requests, "Session", return_value=scalar),
+        pytest.raises(RuntimeError, match="root must be an object or array"),
+    ):
+        nsi_http.post_official_nsi_json(
+            url,
+            {},
+            headers={"Accept": "application/json"},
+            retries=1,
+        )
+
+
+def test_nsi_transport_accepts_only_exact_verified_endpoint() -> None:
+    url = "https://nsi.eaeunion.org/portal/api/dictionaries/1995/get-list-data"
+    session = _NsiSession([_NsiResponse(url, payload=[_raw_sgr("VALID")])])
+    with patch.object(nsi_http.requests, "Session", return_value=session):
+        result = nsi_http.post_official_nsi_json(
+            url,
+            {},
+            headers={"Accept": "application/json"},
+            retries=1,
+        )
+    assert result == [_raw_sgr("VALID")]
+
+    with pytest.raises(RuntimeError, match="untrusted NSI API URL"):
+        nsi_http.post_official_nsi_json(
+            "https://nsi.eaeunion.org/portal/api/dictionaries/1995/get-list-data?next=evil",
+            {},
+            headers={"Accept": "application/json"},
+            retries=1,
+        )
+
+
+@pytest.mark.parametrize(
+    "response_url",
+    (
+        "https://attacker.example/portal/api/dictionaries/1995/get-list-data",
+        "https://nsi.eaeunion.org/portal/api/dictionaries/1995/get-list-data-total",
+        "https://nsi.eaeunion.org/portal/api/dictionaries/1995/get-list-data?shadow=1",
+    ),
+)
+def test_nsi_transport_rejects_unexpected_final_response_url(
+    response_url: str,
+) -> None:
+    requested_url = (
+        "https://nsi.eaeunion.org/portal/api/dictionaries/1995/get-list-data"
+    )
+    session = _NsiSession([_NsiResponse(response_url, payload=[])])
+    with (
+        patch.object(nsi_http.requests, "Session", return_value=session),
+        pytest.raises(RuntimeError, match="NSI POST failed"),
+    ):
+        nsi_http.post_official_nsi_json(
+            requested_url,
+            {},
+            headers={"Accept": "application/json"},
+            retries=1,
+        )
+    assert [call[0] for call in session.calls] == [requested_url]
+
+
+@pytest.mark.parametrize("status_code", (301, 302, 303))
+def test_nsi_transport_rejects_method_changing_redirects(status_code: int) -> None:
+    url = "https://nsi.eaeunion.org/portal/api/dictionaries/1995/get-list-data"
+    session = _NsiSession(
+        [_NsiResponse(url, status_code=status_code, location=url)]
+    )
+    with (
+        patch.object(nsi_http.requests, "Session", return_value=session),
+        pytest.raises(RuntimeError, match="does not preserve POST"),
+    ):
+        nsi_http.post_official_nsi_json(
+            url,
+            {},
+            headers={"Accept": "application/json"},
+            retries=1,
+        )
+    assert [call[0] for call in session.calls] == [url]
+
+
+def test_nsi_row_schema_requires_legal_identity_and_product_fields() -> None:
+    assert sync_sgr_registry._row_from_nsi_dict(
+        {"data": {"NUMB_DOC": "SGR-1"}}
+    ) is None
+    assert sync_state_registries._rows_from_nsi_fss(
+        [{"data": {"Id": "internal-row", "Name": "device"}}]
+    ) == []
+    assert sync_state_registries._rows_from_nsi_fss(
+        [{"data": {"NotificationNumber": "NF-1", "Name": ""}}]
+    ) == []
+    assert sync_state_registries._rows_from_nsi_reo(
+        [{"data": {"RecordId": "REO-1"}}]
+    ) == []
 
 
 def test_sgr_partial_nsi_never_deletes_and_full_shrink_is_rejected() -> None:
@@ -152,10 +345,9 @@ def test_sgr_contract_attests_only_explicit_canonical_full_nsi(
         patch.object(sync_sgr_registry, "append_sync_log"),
         patch.object(sync_sgr_registry, "bump_preview_cache_revision"),
     ):
-        assert sync_sgr_registry.main() == 0
-    payload = _result_contract(capsys.readouterr().out)
-    assert payload["official_source"] is False
-    assert payload["snapshot_kind"] == "partial"
+        with pytest.raises(SystemExit) as exc:
+            sync_sgr_registry.main()
+        assert exc.value.code == 2
 
 
 def test_state_nsi_only_ignores_env_and_atomically_replaces_canonical_snapshots(

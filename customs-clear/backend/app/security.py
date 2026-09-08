@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import hmac
 import os
 from typing import Any, Optional
@@ -41,7 +42,7 @@ async def require_authenticated_user(
     return {"username": username, "role": role, "payload": payload}
 
 
-def require_admin_token(x_admin_token: str | None) -> None:
+def require_admin_token(x_admin_token: str | None) -> str:
     """
     Строгая проверка ADMIN_API_TOKEN для админ-операций.
     Доступ без токена полностью запрещён.
@@ -55,3 +56,12 @@ def require_admin_token(x_admin_token: str | None) -> None:
     provided = (x_admin_token or "").strip()
     if not provided or not hmac.compare_digest(provided, expected):
         raise HTTPException(status_code=401, detail="Unauthorized: invalid or missing X-Admin-Token")
+    # Return a non-reversible credential identity for security-sensitive audit
+    # records. Callers must never treat a user-supplied display name as the
+    # authenticated actor behind this shared administrative credential.
+    fingerprint = hmac.new(
+        auth_mod.SECRET_KEY.encode("utf-8"),
+        expected.encode("utf-8"),
+        hashlib.sha256,
+    ).hexdigest()[:16]
+    return f"admin-token:hmac-sha256:{fingerprint}"

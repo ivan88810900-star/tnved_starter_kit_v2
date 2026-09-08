@@ -18,6 +18,7 @@ COPY --chown=10001:10001 customs-clear/backend/app /workspace/customs-clear/back
 COPY --chown=10001:10001 customs-clear/backend/data /workspace/customs-clear/backend/data
 COPY --chown=10001:10001 customs-clear/backend/alembic/versions /workspace/customs-clear/backend/alembic/versions
 COPY --chown=10001:10001 customs-clear/backend/scripts/run_ntm_full_coverage_audit.py /workspace/customs-clear/backend/scripts/run_ntm_full_coverage_audit.py
+COPY --chown=10001:10001 customs-clear/backend/scripts/run_e2e_scenarios.py /workspace/customs-clear/backend/scripts/run_e2e_scenarios.py
 COPY --chown=10001:10001 customs-clear/backend/scripts/tnved_pdf_parser.py /workspace/customs-clear/backend/scripts/tnved_pdf_parser.py
 COPY --chown=10001:10001 customs-clear/staging/prepare_database.py /workspace/customs-clear/staging/prepare_database.py
 COPY --chown=10001:10001 backend/app/services/source_sync/data /workspace/backend/app/services/source_sync/data

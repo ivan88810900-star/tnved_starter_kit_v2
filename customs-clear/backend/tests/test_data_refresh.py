@@ -245,8 +245,8 @@ class TestSchedulerIntegration:
         content = wf.read_text()
         assert "run_regulatory_source_updates.py" in content
         assert "source-monitor-state.json" in content
-        assert "regulatory-source-monitor-v3-" in content
-        assert 'state.get("version") != 3' in content
+        assert "regulatory-source-monitor-v4-" in content
+        assert 'state.get("version") != 4' in content
         assert "issues: write" in content
         assert content.count("issues: write") == 1
         assert "actions/github-script@" in content
@@ -275,13 +275,47 @@ class TestSchedulerIntegration:
         assert "admin|write)" in content
         assert "effective write or admin access" in content
         assert "gh api \"repos/$GITHUB_REPOSITORY/issues/$approval_issue_number\"" in content
-        assert ".all_available == true and .review_required == false" in content
+        assert (
+            ".all_available == true and .revision_monitor_gate_ok == true "
+            "and .review_required == false"
+        ) in content
+        assert 'report.get("revision_monitor_gate_ok") is not True' in content
+        assert "sourceReport?.revision_monitor_gate_ok !== true" in content
+        assert "revision_candidate_source_count" in content
+        assert "revision_covered_source_count" in content
+        assert "revision_gap_source_count" in content
+        assert "revision_unavailable_source_count" in content
+        assert "explicit_availability_source_count" in content
+        assert "availability_only_source_count" in content
+        assert "Number(sourceReport?.revision_gap_source_count || 0) > 0" in content
         assert "pending_review_exit" in content
         assert "saved source-state universe differs from the current monitor universe" in content
         assert "saved pending digests differ from the current review set" in content
         assert "--allow-partial" not in content
         assert "--database data/runtime/ntm-full-catalog.db" in content
         assert "scripts/import_pdf.py" in content
+
+    def test_workflow_notifies_exact_monthly_local_reconcile_set(self) -> None:
+        wf = BACKEND_ROOT.parent.parent / ".github" / "workflows" / "scheduled-data-refresh.yml"
+        content = wf.read_text()
+        assert "readJson('regulatory-source-update-plan.json')" in content
+        assert "source?.operational_state === 'scheduled_review_due'" in content
+        assert "!localReviewContractValid" in content
+        assert "Monthly curated regulatory-source review ${reviewPeriod}" in content
+        assert "state: 'all'" in content
+        assert "context.ref === `refs/heads/${defaultBranch}`" in content
+        assert "localReviewContractValid && isDefaultBranch" in content
+        assert "regulatory-local-review:${reviewPeriod}:v1" in content
+        assert "issue.user?.login === 'github-actions[bot]'" in content
+        assert "Closing this GitHub issue records notification handling only" in content
+        for source_id in (
+            "official_sgr_ntm_v2_curated",
+            "legacy_ntm_tr_catalog",
+            "sanction_import_risks",
+            "country_risks_geopolitics",
+            "geo_special_duties_embargo",
+        ):
+            assert source_id in content
 
     def test_workflow_approval_binding_uses_python_compatible_ascii_order(self) -> None:
         wf = BACKEND_ROOT.parent.parent / ".github" / "workflows" / "scheduled-data-refresh.yml"

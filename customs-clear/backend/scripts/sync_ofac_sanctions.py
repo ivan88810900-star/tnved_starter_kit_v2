@@ -14,10 +14,11 @@ import json
 import re
 import sys
 import time
+from contextlib import closing
 from datetime import datetime
 from pathlib import Path
 from typing import Any
-from urllib.parse import urlparse
+from urllib.parse import parse_qsl, urljoin, urlparse
 from xml.etree import ElementTree as ET
 
 import httpx
@@ -26,6 +27,8 @@ from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
+from app.services.source_http import read_httpx_body
+from app.services.source_document import SourceDocument, XML_MEDIA_TYPES, XLSX_MEDIA_TYPE, original_source_bytes, parse_source_xml
 from app.db import SessionLocal
 from app.models.core import OfacSdnList
 from app.services.normative_store import (
@@ -44,6 +47,25 @@ OFAC_CURRENT_XML_NAMESPACE = (
 OFAC_GOVCLOUD_REDIRECT_HOST = (
     "wc2h-sls-prod-public-published.s3.us-gov-west-1.amazonaws.com"
 )
+OFAC_GOVCLOUD_ARTIFACT_PATH_RE = re.compile(
+    r"^/Published/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/"
+    r"\d{4}-\d{2}-\d{2}/"
+    r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/SDN\.XML$"
+)
+OFAC_GOVCLOUD_QUERY_KEYS = frozenset(
+    {
+        "X-Amz-Algorithm",
+        "X-Amz-Credential",
+        "X-Amz-Date",
+        "X-Amz-Expires",
+        "X-Amz-Security-Token",
+        "X-Amz-Signature",
+        "X-Amz-SignedHeaders",
+        "response-content-disposition",
+        "response-content-type",
+    }
+)
+_REDIRECT_STATUSES = frozenset({301, 302, 303, 307, 308})
 UA = "customs-clear-ofac-sync/1.0"
 
 
@@ -59,29 +81,133 @@ def _namespace(tag: Any) -> str:
     return ""
 
 
-def _redirect_url_allowed(original_url: str, final_url: str) -> bool:
-    """Allow only the pinned OFAC GovCloud hand-off for the official feed."""
-    original = urlparse(original_url)
-    final = urlparse(final_url)
-    original_host = (original.hostname or "").casefold()
-    final_host = (final.hostname or "").casefold()
-    if not original_host or not final_host:
-        return False
-    if original_host == "www.treasury.gov":
-        return (
-            final.scheme.casefold() == "https"
-            and final.port in {None, 443}
-            and final_host
-            in {
-                "www.treasury.gov",
-                OFAC_GOVCLOUD_REDIRECT_HOST,
-            }
-        )
-    return (
-        original.scheme.casefold() == final.scheme.casefold()
-        and original_host == final_host
-        and (original.port or None) == (final.port or None)
+def _safe_https_parts(url: str):
+    parsed = urlparse(url)
+    try:
+        port = parsed.port
+    except ValueError:
+        return None
+    if (
+        parsed.scheme.casefold() != "https"
+        or port not in {None, 443}
+        or parsed.username is not None
+        or parsed.password is not None
+        or not parsed.hostname
+        or bool(parsed.fragment)
+    ):
+        return None
+    return parsed
+
+
+def _is_ofac_canonical_url(url: str) -> bool:
+    parsed = _safe_https_parts(url)
+    return bool(
+        parsed is not None
+        and (parsed.hostname or "").casefold() == "www.treasury.gov"
+        and parsed.path == "/ofac/downloads/sdn.xml"
+        and not parsed.params
+        and not parsed.query
     )
+
+
+def _is_ofac_govcloud_artifact_url(url: str) -> bool:
+    parsed = _safe_https_parts(url)
+    if (
+        parsed is None
+        or (parsed.hostname or "").casefold() != OFAC_GOVCLOUD_REDIRECT_HOST
+        or parsed.params
+        or OFAC_GOVCLOUD_ARTIFACT_PATH_RE.fullmatch(parsed.path) is None
+    ):
+        return False
+    try:
+        pairs = parse_qsl(parsed.query, keep_blank_values=True, strict_parsing=True)
+    except ValueError:
+        return False
+    if len(pairs) != len(OFAC_GOVCLOUD_QUERY_KEYS):
+        return False
+    query = dict(pairs)
+    if set(query) != OFAC_GOVCLOUD_QUERY_KEYS:
+        return False
+    credential = query["X-Amz-Credential"]
+    request_date = query["X-Amz-Date"]
+    credential_match = re.fullmatch(
+        r"[A-Z0-9]{16,32}/(\d{8})/us-gov-west-1/s3/aws4_request",
+        credential,
+    )
+    return bool(
+        query["X-Amz-Algorithm"] == "AWS4-HMAC-SHA256"
+        and credential_match is not None
+        and re.fullmatch(r"\d{8}T\d{6}Z", request_date)
+        and credential_match.group(1) == request_date[:8]
+        and query["X-Amz-Expires"].isdigit()
+        and 1 <= int(query["X-Amz-Expires"]) <= 86400
+        and bool(query["X-Amz-Security-Token"])
+        and re.fullmatch(r"[0-9a-fA-F]{64}", query["X-Amz-Signature"])
+        and query["X-Amz-SignedHeaders"] == "host"
+        and query["response-content-disposition"] == 'attachment; filename="sdn.xml"'
+        and query["response-content-type"] == "text/xml"
+    )
+
+
+def _same_request_url(left: str, right: str) -> bool:
+    try:
+        return httpx.URL(left) == httpx.URL(right)
+    except (TypeError, ValueError):
+        return False
+
+
+def _redirect_url_allowed(original_url: str, target_url: str) -> bool:
+    """Allow only the canonical feed or its exact signed GovCloud artifact."""
+    if _is_ofac_canonical_url(original_url):
+        return _is_ofac_canonical_url(target_url) or _is_ofac_govcloud_artifact_url(
+            target_url
+        )
+    # Operator-provided, non-scheduled sources may be fetched, but they cannot
+    # redirect.  Their initial URL must still use verified HTTPS transport.
+    return _safe_https_parts(original_url) is not None and _same_request_url(
+        original_url, target_url
+    )
+
+
+def _get_with_verified_redirects(
+    client: httpx.Client,
+    url: str,
+    *,
+    headers: dict[str, str],
+) -> httpx.Response:
+    """Validate every URL before a network request is issued."""
+    if not _redirect_url_allowed(url, url):
+        raise RuntimeError(f"untrusted OFAC source URL: {url!r}")
+    current_url = url
+    for redirect_count in range(2):
+        if not _redirect_url_allowed(url, current_url):
+            raise RuntimeError(f"unexpected OFAC redirect target: {current_url}")
+        response = client.send(client.build_request("GET", current_url,
+            headers={**headers, "Accept-Encoding": "identity"}), stream=True, follow_redirects=False)
+        handed_off = False
+        try:
+            if not _same_request_url(current_url, str(response.url)):
+                raise RuntimeError(f"unexpected OFAC response URL: {response.url}")
+            if response.status_code not in _REDIRECT_STATUSES:
+                handed_off = True
+                return response
+            location = str(response.headers.get("location") or "").strip()
+            if not location:
+                raise RuntimeError("OFAC redirect is missing Location")
+            next_url = urljoin(current_url, location)
+            # The only approved official transition is canonical Treasury -> the
+            # exact signed SDN.XML object.  Reject before contacting the target.
+            if (
+                redirect_count > 0
+                or not _is_ofac_canonical_url(current_url)
+                or not _is_ofac_govcloud_artifact_url(next_url)
+            ):
+                raise RuntimeError(f"unexpected OFAC redirect target: {next_url}")
+            current_url = next_url
+        finally:
+            if not handed_off:
+                response.close()
+    raise RuntimeError("OFAC redirect limit exceeded")  # pragma: no cover
 
 
 def _child_text(node: ET.Element, name: str) -> str:
@@ -100,22 +226,25 @@ def _desc_text(node: ET.Element, name: str) -> str:
 
 def _http_get(url: str, *, timeout_sec: float = 45.0, retries: int = 4) -> tuple[str, str]:
     err: Exception | None = None
-    with httpx.Client(timeout=timeout_sec, follow_redirects=True) as client:
-        for i in range(1, max(1, retries) + 1):
+    with httpx.Client(timeout=timeout_sec, follow_redirects=False, trust_env=False, verify=True) as client:
+        for attempt in range(1, max(1, retries) + 1):
             try:
-                r = client.get(url, headers={"User-Agent": UA, "Accept": "*/*"})
-                if r.status_code in (429, 500, 502, 503, 504) and i < retries:
-                    time.sleep(min(1.2 * i, 8.0))
-                    continue
-                r.raise_for_status()
-                if not _redirect_url_allowed(url, str(r.url)):
-                    raise RuntimeError(f"unexpected OFAC redirect target: {r.url}")
-                return r.text, str(r.headers.get("content-type") or "").lower()
-            except Exception as e:
-                err = e
-                if i >= retries:
+                with closing(_get_with_verified_redirects(client, url, headers={"User-Agent": UA})) as response:
+                    response.raise_for_status()
+                    if response.status_code != 200:
+                        raise RuntimeError("OFAC requires a complete HTTP 200 snapshot")
+                    ctype = str(response.headers.get("content-type") or "").lower()
+                    if ctype.split(";", 1)[0].strip() not in XML_MEDIA_TYPES:
+                        raise ValueError("OFAC source returned non-XML Content-Type")
+                    raw = read_httpx_body(response, max_bytes=128 * 1024**2)
+                    document = SourceDocument(raw, ctype)
+                    parse_source_xml(document)
+                    return document, ctype
+            except Exception as exc:
+                err = exc
+                if attempt >= max(1, retries):
                     break
-                time.sleep(min(1.2 * i, 8.0))
+            time.sleep(min(1.2 * attempt, 8.0))
     raise RuntimeError(f"OFAC download failed: {err!r}")
 
 
@@ -141,7 +270,7 @@ def _extract_rows_from_xml(
     *,
     require_official_schema: bool = False,
 ) -> list[dict[str, str]]:
-    root = ET.fromstring(xml_text)
+    root = parse_source_xml(xml_text)
     if require_official_schema:
         if _local_name(root.tag) != "sdnList":
             raise ValueError("official OFAC XML root must be sdnList")
@@ -416,8 +545,9 @@ def main() -> int:
         return 1
     try:
         stripped = text.lstrip()
+        original_source_bytes(text)
         if args.official_only:
-            if "xml" not in ctype or not stripped.startswith("<"):
+            if ctype.split(";", 1)[0].strip().casefold() not in XML_MEDIA_TYPES or not stripped.startswith("<"):
                 raise ValueError("official OFAC bulk feed is not XML")
             rows = _extract_rows_from_xml(text, require_official_schema=True)
         elif "csv" in ctype or (stripped and not stripped.startswith("<")):
@@ -448,7 +578,7 @@ def main() -> int:
             }, ensure_ascii=False, separators=(",", ":")))
         return 1
     minimum_rows = configured_minimum_rows("ofac_sdn_list", 1000)
-    digest = hashlib.sha256(text.encode("utf-8", errors="replace")).hexdigest()
+    digest = hashlib.sha256(original_source_bytes(text)).hexdigest()
     revision = f"sha256:{digest}"
     try:
         if not apply_changes:

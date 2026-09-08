@@ -6,7 +6,7 @@ Active
 
 ## Last updated
 
-2026-09-01
+2026-09-08
 
 ## Strategic direction
 
@@ -16,8 +16,10 @@ Official SGR and NTM v2 normative datasets remain important **data contours**, b
 
 The normative requirements, TN VED search/code-card, explainable Smart Payments,
 evidence-first sanctions/risk and grounded assistant slices are complete. Full-data
-end-to-end product acceptance is also complete; the current focus is post-acceptance
-product hardening, intelligent TN VED navigation and interactive UI verification.
+end-to-end product-flow acceptance is also complete, but it does not establish the
+current legal correctness of every duty rate. The current focus is post-acceptance
+product and data-source hardening, intelligent TN VED navigation and interactive UI
+verification.
 This does not authorize Canonical runtime flag rollout or automatic semantic-vector
 ingestion.
 
@@ -37,27 +39,45 @@ ingestion.
   the broker trust gate even if the flag is enabled, and production activation
   is not approved. Export/transit requests do not reuse import broker/payment
   semantics and expose catch-all transaction risk separately.
-- NTM catalog coverage is fail-closed and the current full gate passed on a temp
-  audit-only SQLite artifact rebuilt from 96 tracked official PDFs and opened
-  read-only: exact 21 sections, 96 chapters, 17,809 unique commodities,
-  0 duplicate/invalid rows and 17,774 nonempty descriptions. All 35 blank catalog
-  codes are absent from the pinned active ETT rate snapshot; no cause or legal
-  status is inferred. All 13,290 codes in revision `ett:2026-06-18` are present
-  and described. Pinned PDF-manifest, parser, ETT code-set, catalog code-set and
-  code+description digests match; no production/application DB was mutated.
-  Primary aggregate-only evidence: `evidence/ntm-full-gate-20260815.json`;
-  earlier code-only and partial reports remain supplementary
+- The NTM catalog topology gate independently verifies the tracked 96-PDF corpus:
+  exact 21 sections, 96 chapters, 17,809 unique commodities, 0 duplicate/invalid
+  catalog rows and 17,774 nonempty descriptions. The earlier tariff-rate portion
+  of the full staging claim is withdrawn: the DB-derived `ett:2026-06-18` bundle
+  has 13,319 raw rows, 2 invalid rows and 27 duplicate rows across 23 codes,
+  including 18 material rate conflicts, and it does not represent current EEC
+  amendments or temporary/as-of footnotes. It is now explicitly quarantined and
+  cannot produce a positive staging snapshot. Existing aggregate evidence remains
+  useful only for catalog/NTM structure; it is not evidence of current duty-rate
+  correctness. No production/application DB was mutated.
 - Advisory requirements UI/API foundation
 - Official SGR contour: importer, diagnostics, seed dataset, validator
 - Automatic source lifecycle (DM-0013): 36/36 registry entries have an explicit
-  policy. Seven trusted structured sources update daily/weekly through strict,
+  policy; this is policy coverage, not proof that all 36 sources are refreshed
+  automatically or legally current. Seven trusted structured sources update daily/weekly through strict,
   table-scoped adapters and atomic full-snapshot replacement where applicable;
   OFAC and EU feeds run validation-only and cannot mutate blocking tables;
-  17 official legal/reference sources are drift-monitored, five curated layers
+  the expanded official monitor currently covers exactly 50 URLs: 15 direct
+  PDF/machine-readable artifacts have revision-digest coverage, 27 legal HTML
+  pages are explicit revision gaps checked for availability/identity only, and
+  eight additional landing URLs are availability-only. HTML gaps are reported
+  without masquerading as revision coverage or making the operational workflow
+  permanently fail, while the notifier keeps them visible in an issue; covered
+  artifact failures remain fail-closed. Of the 15 covered artifacts, six legal
+  PDFs require digest-bound review; nine structured artifacts advance technical
+  freshness automatically after validation. Five curated layers
   raise a monthly review, four commercial mirrors remain disabled and one AI layer
-  remains manual. Legal checksum changes stay pending until an explicit referenced
-  approval and never change enforcement automatically. Scheduler overlap is
-  blocked across processes/replicas and every run persists an observable status.
+  remains manual. Revision-covered legal checksum changes stay pending until an explicit referenced
+  approval and never change enforcement automatically. FTS/FSA open-data adapters
+  now pin official identities, TLS, redirect paths and artifact schemas. The five
+  curated monthly sources use a durable evidence-bound review queue whose resolve
+  and refresh operations are compare-and-set safe. Scheduler overlap is blocked
+  across processes/replicas and every run persists an observable status.
+- Source ingestion hardening: bounded identity-encoded streaming, exact NSI
+  dictionary pins, original-byte sanctions evidence, strict OOXML fallback
+  validation, private streamed FSA downloads and patched `py7zr==1.1.3` with
+  allowlisted CSV extraction. CBR rates and digest-bound provenance are atomic,
+  first-run/concurrent writers serialize, and stale workers cannot downgrade a
+  newer success. This does not enable enforcement or deploy the scheduler.
 - Normative requirements block MVP (backend aggregation + frontend block on NonTariff/compliance)
 - Canonical anchor identity plus additive TN VED search/code-card bridge
 - Additive guided TN VED v1: semantic choices from official descriptions are bound
@@ -132,7 +152,9 @@ ingestion.
 - Full-data gate passed on the user's 6.78 GB `customs.db`: 21 sections, 96 chapters,
   17,809 commodities and 13,322 rates. Authentication and all four MVP scenarios
   passed; the main database file remained unchanged; Canonical flags and external LLM
-  remained OFF. Evidence: `evidence/mvp-acceptance-20260721.json`.
+  remained OFF. This is product-flow/read-only evidence only; the rate rows require
+  the separate official ETT manifest/as-of gate described above. Evidence:
+  `evidence/mvp-acceptance-20260721.json`.
 
 ## Current top priority
 
@@ -149,13 +171,20 @@ ingestion.
    understandable product questions without virtual/fake customs codes
 
 Parallel (not blocking MVP UI): maintain the official NTM datasets and the DM-0013
-automatic source lifecycle, repeat the strict read-only full audit for every
-PDF/ETT/parser revision, and keep the curated official bridge OFF before proposing
-any exact-rule production enforcement.
+automatic source lifecycle. The immediate data task is an Ivan Decision Memo for a
+versioned official ETT manifest, temporal/as-of rate model and reviewed atomic
+promotion. Until that decision and implementation, positive staging remains closed.
+Keep the curated official bridge OFF before proposing any exact-rule production
+enforcement.
 
 ## Next recommended implementation tasks
 
 Current next tasks:
+
+- ⚠️ [ETT source-of-truth Decision Memo #188](https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/188): choose versioned snapshots, official
+  96-chapter + global-notes manifest, temporal/as-of resolver, immutable artifact
+  storage and manifest-bound review/promotion. The current DB-derived rate bundle is
+  quarantine-only; direct PDF/OData upsert and automatic activation are not approved.
 
 - ✅ ADR-0003 / TASK-CANONICAL-005: `stable_id` + `snapshot_id` lifecycle frozen
 - ✅ TASK-CANONICAL-006: TN VED search + code-card consume the additive Canonical
@@ -295,10 +324,10 @@ Official SGR dataset tasks (when not conflicting with MVP slices):
 - Extend `validate_official_sgr_dataset(...)` and dataset report coverage
 - Regression: toys `9503`, adult cosmetics `3304`, child/special SGR cases
 - ✅ Rebuilt the exact 21/96/17,809 catalog from 96 tracked official PDFs into a
-  temp audit-only artifact and passed the read-only fail-closed NTM gate with all
-  pinned digests matching and no production DB mutation; repeat on every
-  PDF/ETT/parser revision. ETT code-only and the partial backup remain
-  supplementary, not full substitutes
+  temp audit-only artifact and verified the catalog/NTM topology without production
+  DB mutation. Do not reuse the retired positive rate-snapshot conclusion: the
+  current ETT bundle is quarantined until a reviewed schema-v2 official manifest
+  and temporal-rate model exist.
 
 ## What is not the next priority
 

@@ -24,6 +24,13 @@ DEFAULT_WORKFLOW = REPOSITORY_ROOT / ".github" / "workflows" / "scheduled-data-r
 MONITOR_SCRIPT = Path(__file__).resolve().with_name("monitor_official_ntm_sources.py")
 PINNED_ACTION_RE = re.compile(r"^[^@\s]+@[0-9a-f]{40}$")
 HEREDOC_RE = re.compile(r"\bpython(?:3)?\b[^\n]*<<-?'([A-Za-z_][A-Za-z0-9_]*)'")
+EXPECTED_LOCAL_REVIEW_SOURCE_IDS = {
+    "country_risks_geopolitics",
+    "geo_special_duties_embargo",
+    "legacy_ntm_tr_catalog",
+    "official_sgr_ntm_v2_curated",
+    "sanction_import_risks",
+}
 
 
 def _require(condition: bool, message: str) -> None:
@@ -120,6 +127,38 @@ def _check_javascript(script: str, *, label: str) -> None:
     _require(result.returncode == 0, f"{label}: invalid JavaScript: {result.stderr.strip()}")
 
 
+def _check_local_review_notification_contract(script: str, *, label: str) -> None:
+    """Require the GitHub notifier to surface every monthly local-reconcile source."""
+    expected_match = re.search(
+        r"const\s+expectedLocalReviewSourceIds\s*=\s*\[(.*?)\];",
+        script,
+        re.DOTALL,
+    )
+    _require(expected_match is not None, f"{label}: monthly review source contract is missing")
+    configured = set(re.findall(r"['\"]([a-z0-9_]+)['\"]", expected_match.group(1)))
+    _require(
+        configured == EXPECTED_LOCAL_REVIEW_SOURCE_IDS,
+        f"{label}: monthly review source contract differs from the managed set; "
+        f"configured={sorted(configured)!r}",
+    )
+    required_fragments = (
+        "readJson('regulatory-source-update-plan.json')",
+        "source?.strategy === 'local_reconcile'",
+        "source?.cadence === 'monthly'",
+        "source?.operational_state === 'scheduled_review_due'",
+        "!localReviewContractValid",
+        "Monthly curated regulatory-source review ${reviewPeriod}",
+        "state: 'all'",
+        "context.ref === `refs/heads/${defaultBranch}`",
+        "localReviewContractValid && isDefaultBranch",
+        "regulatory-local-review:${reviewPeriod}:v1",
+        "issue.user?.login === 'github-actions[bot]'",
+        "Closing this GitHub issue records notification handling only",
+    )
+    for fragment in required_fragments:
+        _require(fragment in script, f"{label}: missing monthly review notification guard {fragment!r}")
+
+
 def validate_workflow(path: Path) -> dict[str, int]:
     raw = path.read_text(encoding="utf-8")
     try:
@@ -148,6 +187,32 @@ def validate_workflow(path: Path) -> dict[str, int]:
         "workflow persistence gate must match monitor STATE_SCHEMA_VERSION; "
         f"workflow={sorted(gate_versions)!r}, monitor={state_version}",
     )
+    _require(
+        ".all_available == true and .revision_monitor_gate_ok == true "
+        "and .review_required == false" in raw,
+        "workflow final gate must fail closed for revision-covered sources",
+    )
+    _require(
+        'report.get("revision_monitor_gate_ok") is not True' in raw,
+        "workflow persistence gate must reject a failed revision-covered monitor",
+    )
+    for coverage_field in (
+        "monitored_url_count",
+        "revision_candidate_source_count",
+        "revision_covered_source_count",
+        "revision_gap_source_count",
+        "revision_unavailable_source_count",
+        "explicit_availability_source_count",
+        "availability_only_source_count",
+    ):
+        _require(
+            coverage_field in raw,
+            f"workflow must validate/report source coverage field {coverage_field!r}",
+        )
+    _require(
+        "Number(sourceReport?.revision_gap_source_count || 0) > 0" in raw,
+        "workflow notifier must keep legal revision gaps visible without failing the monitor job",
+    )
 
     jobs = _jobs(document)
     _require({"monitor", "notify"}.issubset(jobs), "workflow must contain monitor and notify jobs")
@@ -156,6 +221,7 @@ def validate_workflow(path: Path) -> dict[str, int]:
     bash_count = 0
     python_count = 0
     javascript_count = 0
+    local_review_notification_count = 0
     for job_id, index, step in _steps(jobs):
         label = f"{job_id} step {index} ({step.get('name') or 'unnamed'})"
         uses = str(step.get("uses") or "").strip()
@@ -172,12 +238,19 @@ def validate_workflow(path: Path) -> dict[str, int]:
             script = with_block.get("script")
             _require(isinstance(script, str) and script.strip(), f"{label}: github-script body is empty")
             _check_javascript(script, label=label)
+            if job_id == "notify":
+                _check_local_review_notification_contract(script, label=label)
+                local_review_notification_count += 1
             javascript_count += 1
 
     _require(action_count > 0, "workflow contains no external actions")
     _require(bash_count > 0, "workflow contains no shell contracts")
     _require(python_count > 0, "workflow contains no embedded Python contracts")
     _require(javascript_count > 0, "workflow contains no github-script contract")
+    _require(
+        local_review_notification_count == 1,
+        "workflow must contain exactly one fail-closed monthly review notification contract",
+    )
     return {
         "actions": action_count,
         "bash_blocks": bash_count,

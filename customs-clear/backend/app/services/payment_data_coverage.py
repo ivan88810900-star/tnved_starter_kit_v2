@@ -739,10 +739,20 @@ def _source_status_proves_cbr(st: SourceStatus | None) -> tuple[bool, str | None
     revision = (st.revision or "").strip().lower()
     if st.is_stale or revision in _INVALID_CBR_REVISIONS:
         return False, None
-    if revision.startswith("cbrf:"):
+    if _valid_cbr_revision(revision):
         synced = st.synced_at.isoformat() if st.synced_at else None
         return True, synced
     return False, None
+
+
+def _valid_cbr_revision(revision: str) -> bool:
+    match = re.fullmatch(r"cbrf:(\d{4}-\d{2}-\d{2})(?::sha256:[0-9a-f]{64})?", revision)
+    if not match:
+        return False
+    try:
+        return datetime.strptime(match.group(1), "%Y-%m-%d").strftime("%Y-%m-%d") == match.group(1)
+    except ValueError:
+        return False
 
 
 def _parse_sync_log_synced_at(raw: str | None) -> datetime | None:
@@ -761,7 +771,7 @@ def _sync_log_row_proves_cbr(row: dict[str, Any] | None) -> tuple[bool, str | No
     status = (row.get("status") or "").upper()
     revision = (row.get("revision") or "").strip().lower()
     synced_at = row.get("synced_at")
-    if status == "OK" and revision.startswith("cbrf:") and revision not in _INVALID_CBR_REVISIONS:
+    if status == "OK" and _valid_cbr_revision(revision):
         return True, synced_at
     return False, synced_at
 

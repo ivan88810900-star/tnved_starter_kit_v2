@@ -400,6 +400,7 @@ REGULATORY_SOURCE_REGISTRY: tuple[RegulatorySourceEntry, ...] = (
         authority_level="legacy_seed",
         official_url="https://eec.eaeunion.org/comission/department/deptexreg/tr/TR_general.php",
         description="Переходный импорт tr_ts_catalog → ntm_measures_v2 (legacy_tr_ts_catalog).",
+        local_paths=("app/services/tr_ts_catalog.py",),
         db_probe="ntm_v2_legacy_tr_catalog",
         sync_script="import_tr_ts_catalog_to_ntm_v2.py",
         min_document_count=0,

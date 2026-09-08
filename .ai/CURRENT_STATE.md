@@ -1,7 +1,7 @@
 # CURRENT_STATE.md — Текущее состояние проекта
 
-> Дата: 2026-08-23
-> Активная ветка: `feat/ntm-official-full-contours` (локально от `feat/canonical-read-path`)
+> Дата: 2026-09-08
+> Активная ветка: `feat/ntm-official-full-contours`, Draft PR #187 → `feat/canonical-read-path`
 
 ---
 
@@ -21,19 +21,28 @@
 - **AI-ассистент** — grounded chat/copilot по TN VED, платежам, definite/advisory
   требованиям и risk coverage; цитаты, no-key fallback, guarded LLM, batch и журнал решений
 - **РОП / экосбор** — ставки ПП №1041/2414, 39 категорий ТС, audit 97 глав
-- **Официальные данные** — ETT 99.8%, VAT 100%, Excise 100%, Anti-dumping 82.8%, Special Safeguard 100%, Countervailing 100%
+- **Официальные данные** — coverage-диагностика отделена от юридической актуальности.
+  Старые процентные метрики не доказывают актуальность ставок. DB-derived ЕТТ
+  находится в карантине (см. №188), положительный staging gate закрыт.
 
 ### Инфраструктура
 
 - Alembic: ~60 миграций, merge-голова восстановлена (PR #115)
-- APScheduler: cron-задачи (курсы ЦБ, ФТС краулер, РОП, ТРОИС, ФСА)
-- GitHub Actions: auto-merge, claude-pr-reviewer, cursor-task-agent, opendata-sync (05:00 UTC)
+- APScheduler: guarded daily/weekly structured-sync и monthly review; legacy
+  automation default OFF. Новый runtime scheduler ещё не задеплоен этим PR.
+- GitHub Actions: CI, мониторинг источников и review-notifications; без записи
+  в production DB, автоматического утверждения legal-drift и merge этого PR.
 - Rate limit middleware, JWT auth, admin token
 - Docker + nginx.conf для production
 
 ---
 
 ## 2. Активная задача
+
+Приоритет на 2026-09-08: надёжность автоматических источников, durable review
+и честные release-gates. После этого требуется решение №188 по официальному ЕТТ
+и as-of ставкам; выбор хранилища и новый source-of-truth не принят автоматически.
+Смысловая навигация ниже остаётся достигнутым baseline, а не текущим rollout.
 
 ### Intelligent TN VED structure — whole-catalog hardening
 
@@ -107,7 +116,9 @@
     `ntm-full-gate-20260815.json` имеет
     `ok=true`, `full_commodity_catalog`, `catalog_complete=true`, 9/9 семейств,
     30/30 базовых разделов и 0 enforcement leaks. Code-only и partial evidence
-    сохранены как supplementary, но не подменяют full result.
+    сохранены как supplementary, но не подменяют full result. Этот исторический
+    аудит подтверждает каталог/NTM, **не** текущие ставки пошлин и **не** разрешение
+    на положительный staging launch: тарифная часть прежнего вывода отозвана.
 15. DM-0011 добавляет structured `facts` в NTM API/UI и bounded exact advisory
     для санитарных/ветеринарных/фитосанитарных мер, РЭС/ВЧУ, криптографии,
     Решения №30 и экспортного контроля. Запрос без facts сохраняет broad-only
@@ -118,18 +129,31 @@
     Caller-supplied exact facts fail-closed даже при включённом флаге; для
     export/transit legacy import broker/payment отключены, catch-all имеет отдельный
     transaction-risk UI, а санкционный country/HS screening маркируется неполным.
-16. Локальный CI-контур теперь проверяет 266 backend safety/semantic tests,
-    frontend tests/types/build и read-only staging definition. Staging открывается
-    только на loopback, запускает exact full-catalog gate до HTTP и принудительно
-    держит все NTM enforcement flags выключенными.
+16. CI проверяет backend safety/semantic suites, frontend tests/types/build,
+    workflow contracts и read-only staging. Schema-v1 baseline теперь строго
+    quarantine-only: без одобренного schema-v2 и temporal-rate модели невозможно
+    сформировать положительный full staging snapshot. Enforcement остаётся OFF.
 17. DM-0013 подключает полный update-policy для 36/36 зарегистрированных
     нормативных источников. Семь структурированных официальных реестров (ЦБ,
-    СГР, нотификации ФСБ, РЭС/ВЧУ, ФСА, ТРОИС и справочники ФТС) обновляются
-    строгими ежедневными/еженедельными адаптерами с атомарными snapshot-gates.
+    СГР, нотификации ФСБ, РЭС/ВЧУ, ФСА, ТРОИС и справочники ФТС) получили
+    строгие ежедневные/еженедельные адаптеры с snapshot-gates.
     OFAC и ЕС автоматически загружаются и валидируются, но scheduled-контур не
     меняет blocking-таблицы. Нормативные документы контролируются по ETag/SHA-256
     и ставятся в review issue при drift; никакое изменение источника не включает
     NTM enforcement.
+18. Монитор v4 содержит 50 URL: шесть legal PDF требуют digest-bound approval,
+    девять structured artifacts автоматически обновляют техническую свежесть,
+    27 legal HTML — явные revision gaps, восемь landing — availability-only.
+    36/36 update-policy не означает автоматическое юридическое обновление всего.
+    Пять курируемых слоёв используют durable очередь с CAS, SHA и generation.
+19. В ЕТТ выявлены 13 319 raw / 13 290 unique кодов, две невалидные строки,
+    27 дубликатов по 23 кодам и 18 материальных конфликтов ставок. Требуется
+    [решение №188](https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/188).
+    Никакой дефолтный или автоматически выбранный last-row тариф не публикуется.
+20. Добавлены bounded HTTP streaming, исходные SHA-256, exact NSI pins,
+    проверенная распаковка ФСА на py7zr 1.1.3 и атомарная CBR provenance.
+    Browser-session файлы удалены из текущего дерева и исключены из Git/Docker;
+    старые сессии Alta необходимо отозвать, история не переписывалась.
 
 Основные `CANONICAL_TREE_ENABLED` / `CANONICAL_TREE_SHADOW` остаются default OFF.
 

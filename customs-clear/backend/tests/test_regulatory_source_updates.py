@@ -28,6 +28,9 @@ def test_every_registry_source_has_exactly_one_update_policy() -> None:
     assert coverage["valid"] is True
     assert coverage["registry_source_count"] == len(REGULATORY_SOURCE_REGISTRY)
     assert coverage["policy_source_count"] == len(REGULATORY_SOURCE_REGISTRY)
+    assert coverage["missing_child_env_policy_adapter_ids"] == []
+    assert coverage["unknown_child_env_policy_adapter_ids"] == []
+    assert coverage["invalid_evidence_generation_source_ids"] == []
 
 
 def test_automatic_sources_are_only_structured_whitelist() -> None:
@@ -89,6 +92,23 @@ def test_sanctions_adapters_are_validation_only_and_cannot_write_enforcement_tab
         assert plan_rows[source_id]["changes_enforcement_automatically"] is False
 
 
+def test_monitor_only_plan_does_not_overstate_legal_revision_coverage() -> None:
+    plan = build_update_plan()
+    monitor_rows = [
+        row for row in plan["sources"] if row["strategy"] == "monitor_only"
+    ]
+    assert monitor_rows
+    assert {
+        row["operational_state"] for row in monitor_rows
+    } == {"scheduled_source_monitor"}
+    assert plan["monitor_contract"] == {
+        "revision_coverage": "direct_validated_artifacts_only",
+        "html_legal_pages": "availability_identity_only",
+        "coverage_gaps_reported": True,
+        "coverage_gaps_approvable": False,
+    }
+
+
 def test_adapter_result_parser_requires_machine_readable_contract() -> None:
     payload = {"status": "ok", "source_ids": ["source-a"], "rows": 12}
     stdout = f"human readable log\n{ADAPTER_RESULT_PREFIX}{json.dumps(payload)}\n"
@@ -125,7 +145,26 @@ def test_adapter_runner_requires_matching_contract_and_injects_write_guard() -> 
         captured["env"] = kwargs["env"]
         return _FakeProcess(f"{ADAPTER_RESULT_PREFIX}{json.dumps(payload)}\n")
 
-    with patch("app.services.regulatory_source_updates.asyncio.create_subprocess_exec", side_effect=fake_create):
+    with (
+        patch.dict(
+            os.environ,
+            {
+                "ADMIN_API_TOKEN": "must-not-cross-boundary",
+                "SECRET_KEY": "must-not-cross-boundary",
+                "GEMINI_API_KEY": "must-not-cross-boundary",
+                "AWS_SECRET_ACCESS_KEY": "must-not-cross-boundary",
+                "HTTP_PROXY": "http://user:password@proxy.invalid",
+                "HTTPS_PROXY": "http://user:password@proxy.invalid",
+                "REGULATORY_SYNC_DATABASE_URL": "must-not-cross-boundary",
+                "CBR_MAX_RATE_AGE_DAYS": "21",
+                "OPENDATA_HTTP_TIMEOUT": "77",
+            },
+        ),
+        patch(
+            "app.services.regulatory_source_updates.asyncio.create_subprocess_exec",
+            side_effect=fake_create,
+        ),
+    ):
         result = asyncio.run(_run_adapter(adapter, 1.0))
 
     assert result["status"] == "ok"
@@ -136,6 +175,21 @@ def test_adapter_runner_requires_matching_contract_and_injects_write_guard() -> 
     assert child_env["CUSTOMSCLEAR_REGULATORY_ADAPTER_MODE"] == "1"
     assert child_env["REGULATORY_SYNC_ALLOWED_WRITE_TABLES"] == ",".join(adapter.allowed_write_tables)
     assert child_env["REGULATORY_SYNC_SCHEDULER_ENABLED"] == "0"
+    assert child_env["DATABASE_URL"].startswith("sqlite:")
+    assert child_env["CBR_MAX_RATE_AGE_DAYS"] == "21"
+    assert child_env["PATH"] == os.defpath
+    assert child_env["NETRC"] == os.devnull
+    for excluded in (
+        "ADMIN_API_TOKEN",
+        "SECRET_KEY",
+        "GEMINI_API_KEY",
+        "AWS_SECRET_ACCESS_KEY",
+        "HTTP_PROXY",
+        "HTTPS_PROXY",
+        "REGULATORY_SYNC_DATABASE_URL",
+        "OPENDATA_HTTP_TIMEOUT",
+    ):
+        assert excluded not in child_env
 
 
 def test_adapter_runner_rejects_false_green_without_contract() -> None:
@@ -165,6 +219,51 @@ def test_postgresql_adapter_requires_separate_least_privilege_dsn() -> None:
     assert result["status"] == "error"
     assert "REGULATORY_SYNC_DATABASE_URL" in result["stderr"]
     spawn.assert_not_awaited()
+
+
+def test_postgresql_adapter_exposes_only_scoped_sync_dsn_to_child() -> None:
+    adapter = AUTOMATIC_ADAPTERS[0]
+    captured: dict[str, object] = {}
+    payload = {
+        "status": "ok",
+        "official_source": True,
+        "source_ids": list(adapter.source_ids),
+        "rows": 1,
+    }
+
+    async def fake_create(*command, **kwargs):
+        captured["env"] = kwargs["env"]
+        return _FakeProcess(f"{ADAPTER_RESULT_PREFIX}{json.dumps(payload)}\n")
+
+    with (
+        patch.dict(
+            os.environ,
+            {
+                "DATABASE_URL": "postgresql://app:application-secret@db/app",
+                "REGULATORY_SYNC_DATABASE_URL": (
+                    "postgresql://regulatory_sync:scoped-secret@db/app"
+                ),
+                "SECRET_KEY": "api-secret",
+            },
+            clear=True,
+        ),
+        patch("app.db.engine", SimpleNamespace(dialect=SimpleNamespace(name="postgresql"))),
+        patch(
+            "app.services.regulatory_source_updates.asyncio.create_subprocess_exec",
+            side_effect=fake_create,
+        ),
+    ):
+        result = asyncio.run(_run_adapter(adapter, 1.0))
+
+    assert result["status"] == "ok"
+    child_env = captured["env"]
+    assert isinstance(child_env, dict)
+    assert child_env["DATABASE_URL"] == (
+        "postgresql://regulatory_sync:scoped-secret@db/app"
+    )
+    assert "application-secret" not in repr(child_env)
+    assert "REGULATORY_SYNC_DATABASE_URL" not in child_env
+    assert "SECRET_KEY" not in child_env
 
 
 def test_adapter_runner_rejects_contract_for_wrong_source() -> None:

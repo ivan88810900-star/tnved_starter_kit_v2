@@ -38,6 +38,8 @@ services:
         source: ${STAGING_DATABASE_PATH:?Set STAGING_DATABASE_PATH to an absolute path}
         target: /data/customs.db
         read_only: true
+        bind:
+          create_host_path: false
     ports:
       - "127.0.0.1:${STAGING_BACKEND_PORT:-8001}:8000"
     networks:

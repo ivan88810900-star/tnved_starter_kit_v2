@@ -75,9 +75,9 @@ jobs:
         uses: actions/cache/restore@caa296126883cff596d87d8935842f9db880ef25 # v5
         with:
           path: customs-clear/backend/data/runtime/source-monitor-state.json
-          key: regulatory-source-monitor-v3-${{ github.ref_name }}-${{ github.run_id }}-${{ github.run_attempt }}
+          key: regulatory-source-monitor-v4-${{ github.ref_name }}-${{ github.run_id }}-${{ github.run_attempt }}
           restore-keys: |
-            regulatory-source-monitor-v3-${{ github.ref_name }}-
+            regulatory-source-monitor-v4-${{ github.ref_name }}-
 
       - name: Validate automatic update policy for every registered source
         id: update_plan
@@ -514,13 +514,52 @@ jobs:
                   encoding="utf-8"
               )
           )
-          if state.get("version") != 3:
+          if state.get("version") != 4:
               raise SystemExit(
                   f"unsupported source-monitor state schema: {state.get('version')!r}"
               )
           if report.get("all_available") is not True:
               raise SystemExit("source state is unavailable or invalid")
+          if report.get("revision_monitor_gate_ok") is not True:
+              raise SystemExit("revision-covered official-source monitor failed")
           report_rows = report.get("sources") or []
+          if not isinstance(report_rows, list):
+              raise SystemExit("source-monitor report rows must be a list")
+          count_fields = {
+              field: report.get(field)
+              for field in (
+                  "monitored_url_count",
+                  "revision_candidate_source_count",
+                  "revision_covered_source_count",
+                  "revision_gap_source_count",
+                  "revision_unavailable_source_count",
+                  "explicit_availability_source_count",
+                  "availability_only_source_count",
+              )
+          }
+          if any(type(value) is not int or value < 0 for value in count_fields.values()):
+              raise SystemExit(f"invalid source-monitor coverage counts: {count_fields!r}")
+          if count_fields["monitored_url_count"] != len(report_rows):
+              raise SystemExit(
+                  "source-monitor row count mismatch: "
+                  f"counts={count_fields!r}, rows={len(report_rows)!r}"
+              )
+          if count_fields["monitored_url_count"] != (
+              count_fields["revision_candidate_source_count"]
+              + count_fields["explicit_availability_source_count"]
+          ):
+              raise SystemExit(f"source-monitor universe counts do not balance: {count_fields!r}")
+          if count_fields["revision_candidate_source_count"] != (
+              count_fields["revision_covered_source_count"]
+              + count_fields["revision_gap_source_count"]
+              + count_fields["revision_unavailable_source_count"]
+          ):
+              raise SystemExit(f"source-monitor revision counts do not balance: {count_fields!r}")
+          if count_fields["availability_only_source_count"] != (
+              count_fields["explicit_availability_source_count"]
+              + count_fields["revision_gap_source_count"]
+          ):
+              raise SystemExit(f"source-monitor availability counts do not balance: {count_fields!r}")
           report_source_ids = {
               str(row.get("source_id") or "")
               for row in report_rows
@@ -609,7 +648,7 @@ jobs:
         uses: actions/cache/save@caa296126883cff596d87d8935842f9db880ef25 # v5
         with:
           path: customs-clear/backend/data/runtime/source-monitor-state.json
-          key: regulatory-source-monitor-v3-${{ github.ref_name }}-${{ github.run_id }}-${{ github.run_attempt }}
+          key: regulatory-source-monitor-v4-${{ github.ref_name }}-${{ github.run_id }}-${{ github.run_attempt }}
 
       - name: Enforce monitor gate after evidence and state persistence
         if: always()
@@ -624,7 +663,7 @@ jobs:
           if [[ "$SAVE_BASELINE_OUTCOME" != "success" ]]; then
             failures+=("SAVE_BASELINE=$SAVE_BASELINE_OUTCOME")
           fi
-          if ! jq -e '.all_available == true and .review_required == false' \
+          if ! jq -e '.all_available == true and .revision_monitor_gate_ok == true and .review_required == false' \
             customs-clear/backend/ntm-source-monitor.json >/dev/null
           then
             failures+=("LEGAL_SOURCE_REVIEW=pending_or_invalid")
@@ -667,6 +706,9 @@ jobs:
 
             const title = 'Regulatory source change or availability failure';
             const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+            const defaultBranch = context.payload.repository?.default_branch || '';
+            const isDefaultBranch =
+              Boolean(defaultBranch) && context.ref === `refs/heads/${defaultBranch}`;
 
             function findByBasename(root, basename) {
               if (!fs.existsSync(root)) return null;
@@ -695,6 +737,31 @@ jobs:
 
             const summary = readJson('refresh-gate-summary.json');
             const sourceReport = readJson('ntm-source-monitor.json');
+            const updatePlan = readJson('regulatory-source-update-plan.json');
+            const expectedLocalReviewSourceIds = [
+              'country_risks_geopolitics',
+              'geo_special_duties_embargo',
+              'legacy_ntm_tr_catalog',
+              'official_sgr_ntm_v2_curated',
+              'sanction_import_risks'
+            ];
+            const localReviewRows = Array.isArray(updatePlan?.sources)
+              ? updatePlan.sources.filter(source =>
+                  source?.strategy === 'local_reconcile' &&
+                  source?.cadence === 'monthly' &&
+                  source?.operational_state === 'scheduled_review_due')
+              : [];
+            const localReviewSourceIds = localReviewRows
+              .map(source => String(source.source_id || ''))
+              .sort();
+            const localReviewContractValid =
+              updatePlan?.coverage?.valid === true &&
+              localReviewSourceIds.length === expectedLocalReviewSourceIds.length &&
+              localReviewSourceIds.every(
+                (sourceId, index) => sourceId === expectedLocalReviewSourceIds[index]);
+            const localReviewContractError = localReviewContractValid
+              ? null
+              : `expected ${JSON.stringify(expectedLocalReviewSourceIds)}, observed ${JSON.stringify(localReviewSourceIds)}`;
             const unavailable = (sourceReport?.sources || []).filter(source => source.ok !== true);
             const accepted = sourceReport?.accepted_source_ids || [];
             const approval = summary?.baseline_approval || {};
@@ -702,10 +769,14 @@ jobs:
               process.env.MONITOR_RESULT !== 'success' ||
               process.env.DOWNLOAD_OUTCOME !== 'success' ||
               !summary ||
-              !sourceReport;
+              !sourceReport ||
+              !updatePlan ||
+              !localReviewContractValid;
             const needsAttention =
               infrastructureFailure ||
               sourceReport?.all_available !== true ||
+              sourceReport?.revision_monitor_gate_ok !== true ||
+              Number(sourceReport?.revision_gap_source_count || 0) > 0 ||
               sourceReport?.review_required === true;
 
             const stepRows = Object.entries(summary?.steps || {})
@@ -739,6 +810,12 @@ jobs:
               .map(source =>
                 `- \`${source.source_id}\`: ${source.validation_error || source.error || `HTTP ${source.status_code || 'unknown'}`}`)
               .join('\n') || '- none';
+            const localReviewRowsMarkdown = localReviewRows
+              .map(source => `- \`${source.source_id}\`: ${source.reason || 'primary-source reconciliation required'}`)
+              .join('\n') || '- INVALID: no complete monthly local-reconcile source set';
+            const revisionGapRows = (sourceReport?.revision_gap_source_ids || [])
+              .map(sourceId => `- \`${sourceId}\``)
+              .join('\n') || '- none';
 
             const body = [
               `Run: ${runUrl}`,
@@ -764,6 +841,15 @@ jobs:
               '### Unavailable or invalid sources',
               unavailableRows,
               '',
+              '### Revision-monitor coverage',
+              `Monitored URLs: ${sourceReport?.monitored_url_count ?? 'unknown'}; revision candidates: ${sourceReport?.revision_candidate_source_count ?? 'unknown'}; revision-covered: ${sourceReport?.revision_covered_source_count ?? 'unknown'}; revision gaps: ${sourceReport?.revision_gap_source_count ?? 'unknown'}; explicit availability-only: ${sourceReport?.explicit_availability_source_count ?? 'unknown'}`,
+              'Availability-only legal landing pages do not prove legal revision coverage and cannot be approved as legal baselines:',
+              revisionGapRows,
+              '',
+              '### Monthly local-reconcile notification contract',
+              `Contract: ${localReviewContractValid ? 'valid' : `INVALID — ${localReviewContractError}`}`,
+              localReviewRowsMarkdown,
+              '',
               `Accepted in this run: ${accepted.length ? accepted.map(id => `\`${id}\``).join(', ') : 'none'}`,
               '',
               'Legal-source checksum changes are not accepted automatically. Re-run this workflow manually with the baseline approval input and an auditable approval reference only after review.'
@@ -772,10 +858,45 @@ jobs:
             const issues = await github.paginate(github.rest.issues.listForRepo, {
               owner: context.repo.owner,
               repo: context.repo.repo,
-              state: 'open',
+              state: 'all',
               per_page: 100
             });
-            const existing = issues.find(issue => !issue.pull_request && issue.title === title);
+            const existing = issues.find(
+              issue => !issue.pull_request && issue.state === 'open' && issue.title === title);
+
+            // The runtime database queue is the operational source of truth.
+            // This period-scoped issue is the redundant GitHub notification:
+            // searching open and closed issues makes creation idempotent even
+            // after a reviewer closes the month's issue.
+            if (localReviewContractValid && isDefaultBranch) {
+              const reviewPeriod = new Date().toISOString().slice(0, 7);
+              const monthlyTitle = `Monthly curated regulatory-source review ${reviewPeriod}`;
+              const monthlyMarker = `<!-- regulatory-local-review:${reviewPeriod}:v1 -->`;
+              const existingMonthly = issues.find(
+                issue =>
+                  !issue.pull_request &&
+                  issue.title === monthlyTitle &&
+                  issue.user?.login === 'github-actions[bot]' &&
+                  String(issue.body || '').includes(monthlyMarker));
+              if (!existingMonthly) {
+                const monthlyBody = [
+                  monthlyMarker,
+                  `Review period: \`${reviewPeriod}\``,
+                  `Run: ${runUrl}`,
+                  '',
+                  'The automatic update policy requires primary-source reconciliation for exactly these five curated sources:',
+                  localReviewRowsMarkdown,
+                  '',
+                  'Resolve the corresponding durable runtime queue items with a named reviewer and an evidence reference. Closing this GitHub issue records notification handling only; it does not resolve the runtime queue.'
+                ].join('\n');
+                await github.rest.issues.create({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  title: monthlyTitle,
+                  body: monthlyBody
+                });
+              }
+            }
 
             if (needsAttention) {
               if (existing) {

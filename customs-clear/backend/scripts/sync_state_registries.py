@@ -31,12 +31,10 @@ import json
 import os
 import re
 import sys
-import time
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-import requests
 from loguru import logger
 from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 
@@ -47,6 +45,7 @@ from app.datetime_util import utc_now_naive
 from app.db import SessionLocal
 from app.models.core import FssNotification, ReoRegistryEntry
 from app.services.normative_store import append_sync_log, init_db, upsert_source_status
+from app.services.nsi_http import post_official_nsi_json
 from app.services.preview_cache_revision import bump_preview_cache_revision
 from app.services.registry_sync_http import registry_http_get_text
 from app.services.snapshot_safety import configured_minimum_rows, validate_full_snapshot
@@ -86,13 +85,6 @@ def _read_csv_rows(text: str) -> list[dict[str, str]]:
     return rows
 
 
-def _proxy_map(proxy: str) -> dict[str, str] | None:
-    p = str(proxy or "").strip()
-    if not p:
-        return None
-    return {"http": p, "https": p}
-
-
 def _http_post_json(
     url: str,
     payload: dict[str, Any],
@@ -101,31 +93,18 @@ def _http_post_json(
     timeout_sec: float = 45.0,
     retries: int = 4,
 ) -> Any:
-    err: Exception | None = None
-    for i in range(1, max(1, retries) + 1):
-        try:
-            r = requests.post(
-                url,
-                json=payload,
-                headers={
-                    "User-Agent": "customs-clear-state-registries/1.0",
-                    "Accept": "application/json",
-                    "Content-Type": "application/json",
-                },
-                timeout=timeout_sec,
-                proxies=_proxy_map(proxy),
-            )
-            if r.status_code in (429, 500, 502, 503, 504) and i < retries:
-                time.sleep(min(1.2 * i, 8.0))
-                continue
-            r.raise_for_status()
-            return r.json()
-        except Exception as e:
-            err = e
-            if i >= retries:
-                break
-            time.sleep(min(1.2 * i, 8.0))
-    raise RuntimeError(f"NSI POST failed: {url} | {err!r}")
+    return post_official_nsi_json(
+        url,
+        payload,
+        headers={
+            "User-Agent": "customs-clear-state-registries/1.0",
+            "Accept": "application/json",
+            "Content-Type": "application/json",
+        },
+        proxy=proxy,
+        timeout_sec=timeout_sec,
+        retries=retries,
+    )
 
 
 def _nsi_payload(*, date_iso: str, offset: int, limit: int) -> dict[str, Any]:
@@ -232,10 +211,13 @@ def _rows_from_nsi_fss(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
         data = row.get("data") if isinstance(row, dict) else None
         if not isinstance(data, dict):
             continue
-        num = str(data.get("NotificationNumber") or data.get("Id") or "").strip()
-        if not num:
-            continue
+        num = str(data.get("NotificationNumber") or "").strip()
         name = str(data.get("Name") or "").strip()
+        # ``Id`` is an internal NSI row key, not a legal notification number.
+        # Both the document identity and the product name are required so a
+        # schema drift cannot replace the live registry with hollow rows.
+        if not num or not name:
+            continue
         brand = _extract_brand_hint(name)
         status = str(data.get("Status") or "").strip()
         exp = data.get("ValidityPeriod") or row.get("dateTo")
@@ -258,9 +240,9 @@ def _rows_from_nsi_reo(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
         if not isinstance(data, dict):
             continue
         num = str(data.get("RecordId") or "").strip()
-        if not num:
-            continue
         model_name = str(data.get("DeviceModelNam") or data.get("DeviceName") or "").strip()
+        if not num or not model_name:
+            continue
         manufacturer = _norm_text(data.get("Name_manufacture"), max_len=512)
         country = _norm_text(data.get("Country_manufacture"), max_len=256)
         freq = _norm_text(data.get("DeviceInfo_FrequencyChannel"), max_len=800)
@@ -551,6 +533,10 @@ def main() -> int:
     ):
         ap.error("--nsi-only cannot be combined with demo, CSV/URL, or --disable-nsi")
 
+    fss_nsi_code = str(args.fss_nsi_code or NSI_FSS_CODE).strip()
+    reo_nsi_code = str(args.reo_nsi_code or NSI_REO_CODE).strip()
+    if fss_nsi_code != NSI_FSS_CODE or reo_nsi_code != NSI_REO_CODE:
+        ap.error("FSS/REO source identities are pinned to NSI dictionaries 1994/1992")
     init_db()
 
     fss_total = 0
@@ -562,8 +548,6 @@ def main() -> int:
     proxy = (args.proxy or "").strip()
     nsi_date = (args.nsi_date or datetime.now(timezone.utc).strftime("%Y-%m-%d")).strip()
     nsi_limit = max(0, int(args.nsi_limit))
-    fss_nsi_code = str(args.fss_nsi_code or NSI_FSS_CODE).strip()
-    reo_nsi_code = str(args.reo_nsi_code or NSI_REO_CODE).strip()
     ua = {"User-Agent": "customs-clear-state-registries/1.0"}
     fss_variant = "unknown"
     reo_variant = "unknown"
@@ -722,8 +706,7 @@ def main() -> int:
                 notes.append("reo_skipped_no_source")
 
         strict_failure = bool(
-            (args.strict or args.nsi_only)
-            and not args.demo_seed
+            not args.demo_seed
             and (http_failed or fss_failed or reo_failed or fss_total <= 0 or reo_total <= 0)
         )
         if strict_failure:
@@ -737,6 +720,7 @@ def main() -> int:
 
     if strict_failure:
         notes.append("transaction_rolled_back")
+        fss_failed = reo_failed = True
     note = "; ".join(notes) or "ok"
     if args.strict and not args.demo_seed:
         fss_failed = fss_failed or fss_total <= 0
@@ -765,17 +749,21 @@ def main() -> int:
             reo_ok,
         ),
     ):
+        variant = fss_variant if source_code == "FSS_NOTIFICATIONS" else reo_variant
+        kind = fss_snapshot_kind if source_code == "FSS_NOTIFICATIONS" else reo_snapshot_kind
+        official_provenance = bool(source_ok and rows > 0 and variant == "nsi"
+                                   and kind == "full" and not args.demo_seed)
         upsert_source_status(
             source_code=source_code,
             source_name=source_name,
-            source_url=source_url,
+            source_url=source_url if official_provenance else "",
             revision=revision if source_ok else "unavailable",
-            is_stale=not source_ok,
+            is_stale=not official_provenance,
             note=note[:2000],
         )
         append_sync_log(
             source_code,
-            "OK" if source_ok else "ERROR",
+            "OK" if official_provenance else "ERROR",
             revision,
             rows,
             note[:2000],

@@ -9,13 +9,15 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+from html.parser import HTMLParser
 import json
+import re
 import sys
 import xml.etree.ElementTree as ET
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
-from urllib.parse import urlparse
+from urllib.parse import parse_qsl, urljoin, urlparse
 
 import httpx
 
@@ -84,6 +86,15 @@ def _looks_machine_artifact_url(url: str) -> bool:
     return any(token in lowered for token in (".xml", ".csv", ".xlsx", ".json", "xml_daily"))
 
 
+def _secure_monitor_url(url: str) -> str:
+    """Canonicalize legacy official HTTP citations to their TLS endpoint."""
+    value = str(url or "").strip()
+    parsed = urlparse(value)
+    if parsed.scheme.casefold() == "http":
+        return parsed._replace(scheme="https").geturl()
+    return value
+
+
 for _entry in REGULATORY_SOURCE_REGISTRY:
     if _entry.authority_level not in SOURCE_OF_TRUTH_LEVELS:
         continue
@@ -94,7 +105,8 @@ for _entry in REGULATORY_SOURCE_REGISTRY:
         else "legal_drift"
     )
     _artifact_number = 0
-    for _url in dict.fromkeys(_entry.monitor_urls):
+    for _raw_url in dict.fromkeys(_entry.monitor_urls):
+        _url = _secure_monitor_url(_raw_url)
         if not _url or _url in _registered_urls:
             continue
         _artifact_number += 1
@@ -114,13 +126,14 @@ for _entry in REGULATORY_SOURCE_REGISTRY:
         _registered_urls.add(_url)
     # A portal/landing page proves availability only.  Its HTML checksum is not
     # a revision signal for a structured feed and must not create update noise.
-    if _entry.official_url and _entry.official_url not in _registered_urls:
+    _official_url = _secure_monitor_url(_entry.official_url)
+    if _official_url and _official_url not in _registered_urls:
         _source_id = _entry.source_id if not _artifact_number else f"{_entry.source_id}__landing"
-        SOURCES[_source_id] = _entry.official_url
+        SOURCES[_source_id] = _official_url
         SOURCE_MODES[_source_id] = (
             "availability" if _artifact_mode == "structured_freshness" else "legal_drift"
         )
-        _registered_urls.add(_entry.official_url)
+        _registered_urls.add(_official_url)
 
 _BLOCK_PAGE_MARKERS = (
     b"captcha",
@@ -131,12 +144,38 @@ _BLOCK_PAGE_MARKERS = (
     "доступ ограничен".encode("utf-8"),
     "технические работы".encode("utf-8"),
 )
+_SOFT_NOT_FOUND_MARKERS = (
+    b"<title>404",
+    b"page not found",
+    b"document not found",
+    "страница не найдена".encode("utf-8"),
+    "документ не найден".encode("utf-8"),
+    "запрашиваемая страница не существует".encode("utf-8"),
+)
 _MAX_MONITOR_BYTES = 64 * 1024 * 1024
-STATE_SCHEMA_VERSION = 3
-_REVALIDATABLE_STATE_SCHEMA_VERSION = 2
+STATE_SCHEMA_VERSION = 4
+_REVALIDATABLE_STATE_SCHEMA_VERSIONS = frozenset({2, 3})
 _OFAC_DOWNLOAD_HOST = "www.treasury.gov"
 _OFAC_GOVCLOUD_REDIRECT_HOST = (
     "wc2h-sls-prod-public-published.s3.us-gov-west-1.amazonaws.com"
+)
+_OFAC_GOVCLOUD_ARTIFACT_PATH_RE = re.compile(
+    r"^/Published/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/"
+    r"\d{4}-\d{2}-\d{2}/"
+    r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/SDN\.XML$"
+)
+_OFAC_GOVCLOUD_QUERY_KEYS = frozenset(
+    {
+        "X-Amz-Algorithm",
+        "X-Amz-Credential",
+        "X-Amz-Date",
+        "X-Amz-Expires",
+        "X-Amz-Security-Token",
+        "X-Amz-Signature",
+        "X-Amz-SignedHeaders",
+        "response-content-disposition",
+        "response-content-type",
+    }
 )
 _OFAC_XML_NAMESPACE = (
     "https://sanctionslistservice.ofac.treas.gov/api/PublicationPreview/exports/XML"
@@ -173,12 +212,26 @@ def _redirect_host_allowed(original_url: str, final_url: str) -> bool:
     final = (final_url_parts.hostname or "").lower()
     if not original or not final:
         return False
-    if original_url_parts.scheme.lower() == "https" and final_url_parts.scheme.lower() != "https":
+    try:
+        original_port = original_url_parts.port
+        final_port = final_url_parts.port
+    except ValueError:
+        return False
+    if (
+        original_url_parts.scheme.casefold() != "https"
+        or final_url_parts.scheme.casefold() != "https"
+        or original_port not in {None, 443}
+        or final_port not in {None, 443}
+        or original_url_parts.username is not None
+        or original_url_parts.password is not None
+        or final_url_parts.username is not None
+        or final_url_parts.password is not None
+    ):
         return False
     if original == _OFAC_DOWNLOAD_HOST:
         return (
             final_url_parts.scheme.lower() == "https"
-            and final_url_parts.port in {None, 443}
+            and final_port in {None, 443}
             and final in {_OFAC_DOWNLOAD_HOST, _OFAC_GOVCLOUD_REDIRECT_HOST}
         )
     if original == _EU_SANCTIONS_HOST:
@@ -187,7 +240,143 @@ def _redirect_host_allowed(original_url: str, final_url: str) -> bool:
             and final_url_parts.port in {None, 443}
             and final == _EU_SANCTIONS_HOST
         )
-    return original == final or original.endswith("." + final) or final.endswith("." + original)
+    # Every other legal source is pinned to its exact origin.  Parent/public
+    # suffix and arbitrary child-host matching are not provenance checks.
+    return original == final
+
+
+def _same_request_url(left: str, right: str) -> bool:
+    try:
+        return httpx.URL(left) == httpx.URL(right)
+    except (TypeError, ValueError):
+        return False
+
+
+def _is_ofac_canonical_url(url: str) -> bool:
+    parsed = urlparse(url)
+    try:
+        port = parsed.port
+    except ValueError:
+        return False
+    return bool(
+        parsed.scheme.casefold() == "https"
+        and (parsed.hostname or "").casefold() == _OFAC_DOWNLOAD_HOST
+        and port in {None, 443}
+        and parsed.username is None
+        and parsed.password is None
+        and parsed.path == "/ofac/downloads/sdn.xml"
+        and not parsed.params
+        and not parsed.query
+        and not parsed.fragment
+    )
+
+
+def _is_ofac_govcloud_artifact_url(url: str) -> bool:
+    parsed = urlparse(url)
+    try:
+        port = parsed.port
+        pairs = parse_qsl(parsed.query, keep_blank_values=True, strict_parsing=True)
+    except (ValueError, TypeError):
+        return False
+    if not (
+        parsed.scheme.casefold() == "https"
+        and (parsed.hostname or "").casefold() == _OFAC_GOVCLOUD_REDIRECT_HOST
+        and port in {None, 443}
+        and parsed.username is None
+        and parsed.password is None
+        and not parsed.params
+        and not parsed.fragment
+        and _OFAC_GOVCLOUD_ARTIFACT_PATH_RE.fullmatch(parsed.path)
+        and len(pairs) == len(_OFAC_GOVCLOUD_QUERY_KEYS)
+    ):
+        return False
+    query = dict(pairs)
+    if set(query) != _OFAC_GOVCLOUD_QUERY_KEYS:
+        return False
+    credential_match = re.fullmatch(
+        r"[A-Z0-9]{16,32}/(\d{8})/us-gov-west-1/s3/aws4_request",
+        query["X-Amz-Credential"],
+    )
+    request_date = query["X-Amz-Date"]
+    return bool(
+        query["X-Amz-Algorithm"] == "AWS4-HMAC-SHA256"
+        and credential_match is not None
+        and re.fullmatch(r"\d{8}T\d{6}Z", request_date)
+        and credential_match.group(1) == request_date[:8]
+        and query["X-Amz-Expires"].isdigit()
+        and 1 <= int(query["X-Amz-Expires"]) <= 86400
+        and bool(query["X-Amz-Security-Token"])
+        and re.fullmatch(r"[0-9a-fA-F]{64}", query["X-Amz-Signature"])
+        and query["X-Amz-SignedHeaders"] == "host"
+        and query["response-content-disposition"] == 'attachment; filename="sdn.xml"'
+        and query["response-content-type"] == "text/xml"
+    )
+
+
+def _redirect_target_allowed(original_url: str, target_url: str) -> bool:
+    """Bind every request to the configured official artifact identity."""
+    if not _redirect_host_allowed(original_url, target_url):
+        return False
+    if _is_ofac_canonical_url(original_url):
+        return _is_ofac_canonical_url(target_url) or _is_ofac_govcloud_artifact_url(
+            target_url
+        )
+    if _same_request_url(original_url, target_url):
+        return True
+    # The publication portal has two canonical spellings for the same immutable
+    # publication number.  No other same-host path change is provenance-safe.
+    requested_document_id = _pravo_document_id(original_url)
+    original = urlparse(original_url)
+    target = urlparse(target_url)
+    return bool(
+        requested_document_id
+        and requested_document_id == _pravo_document_id(target_url)
+        and not original.params
+        and not original.query
+        and not original.fragment
+        and not target.params
+        and not target.query
+        and not target.fragment
+    )
+
+
+_REDIRECT_STATUSES = frozenset({301, 302, 303, 307, 308})
+
+
+def _get_with_verified_redirects(
+    client: httpx.Client, url: str, *, headers: dict[str, str],
+) -> httpx.Response:
+    """Read bounded snapshots; close streams before caching or following redirects."""
+    from app.services.source_http import read_httpx_body, validate_body_headers
+
+    if not _redirect_target_allowed(url, url):
+        raise RuntimeError(f"untrusted monitor source URL: {url!r}")
+    current_url = url
+    for redirect_count in range(6):
+        if not _redirect_target_allowed(url, current_url):
+            raise RuntimeError("unexpected_redirect_target")
+        with client.stream("GET", current_url, headers={**headers, "Accept-Encoding": "identity"}) as response:
+            if not _same_request_url(current_url, str(response.url)):
+                raise RuntimeError("unexpected_response_url")
+            if response.status_code not in _REDIRECT_STATUSES:
+                if response.status_code == 304:
+                    validate_body_headers(response.headers, max_bytes=64 * 1024**2)
+                    body = b""
+                else:
+                    response.raise_for_status()
+                    body = read_httpx_body(response, max_bytes=64 * 1024**2)
+                return httpx.Response(response.status_code, content=body,
+                                      headers=response.headers, request=response.request)
+            location = str(response.headers.get("location") or "").strip()
+            if not location:
+                raise RuntimeError("official source redirect is missing Location")
+            if redirect_count >= 5:
+                raise RuntimeError("official source redirect limit exceeded")
+            next_url = urljoin(current_url, location)
+            if not _redirect_target_allowed(url, next_url) or _is_ofac_govcloud_artifact_url(current_url):
+                raise RuntimeError("unexpected_redirect_target")
+            current_url = next_url
+    raise RuntimeError("official source redirect limit exceeded")
 
 
 def _xml_namespace(tag: Any) -> str:
@@ -210,6 +399,215 @@ def _xml_child_text(node: ET.Element, name: str) -> str:
         ),
         "",
     )
+
+
+class _LegalIdentityHTMLParser(HTMLParser):
+    """Extract stable headings and official legal-artifact links only."""
+
+    def __init__(self) -> None:
+        super().__init__(convert_charrefs=True)
+        self.links: list[str] = []
+        self.headings: list[str] = []
+        self.visible_text: list[str] = []
+        self._heading_depth = 0
+        self._ignored_depth = 0
+
+    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        lowered = tag.casefold()
+        if lowered in {"script", "style", "noscript", "template"}:
+            self._ignored_depth += 1
+            return
+        if self._ignored_depth:
+            return
+        if lowered in {"title", "h1", "h2", "h3"}:
+            self._heading_depth += 1
+        if lowered == "a":
+            href = next(
+                (str(value or "").strip() for key, value in attrs if key.casefold() == "href"),
+                "",
+            )
+            if href:
+                self.links.append(href)
+        if lowered == "link":
+            normalized_attrs = {
+                key.casefold(): str(value or "").strip()
+                for key, value in attrs
+            }
+            rel = {
+                token.casefold()
+                for token in normalized_attrs.get("rel", "").split()
+            }
+            href = normalized_attrs.get("href", "")
+            if href and rel.intersection({"canonical", "alternate"}):
+                self.links.append(href)
+
+    def handle_endtag(self, tag: str) -> None:
+        lowered = tag.casefold()
+        if lowered in {"script", "style", "noscript", "template"}:
+            if self._ignored_depth:
+                self._ignored_depth -= 1
+            return
+        if not self._ignored_depth and lowered in {"title", "h1", "h2", "h3"}:
+            self._heading_depth = max(0, self._heading_depth - 1)
+
+    def handle_data(self, data: str) -> None:
+        if self._ignored_depth:
+            return
+        normalized = " ".join(str(data or "").split())
+        if not normalized:
+            return
+        self.visible_text.append(normalized)
+        if self._heading_depth:
+            self.headings.append(normalized)
+
+
+_LEGAL_ARTIFACT_EXTENSIONS = (
+    ".pdf",
+    ".doc",
+    ".docx",
+    ".xls",
+    ".xlsx",
+    ".xml",
+    ".csv",
+    ".json",
+    ".zip",
+    ".7z",
+)
+_LEGAL_REFERENCE_RE = re.compile(
+    r"(?:решени(?:е|я)|постановлени(?:е|я)|приказ|распоряжени(?:е|я)|"
+    r"тр\s+(?:тс|еаэс)|федеральн(?:ый|ого)\s+закон)"
+    r"[^\n\r<>]{0,100}?(?:№|n)\s*[0-9][0-9a-zа-я./-]{0,30}",
+    re.IGNORECASE,
+)
+
+
+def _pravo_document_id(url: str) -> str:
+    parsed = urlparse(url)
+    if (parsed.hostname or "").casefold() != "publication.pravo.gov.ru":
+        return ""
+    match = re.fullmatch(
+        r"/(?:document/)?(?:view/)?([0-9]{16,})/?",
+        parsed.path,
+        flags=re.IGNORECASE,
+    )
+    return match.group(1) if match else ""
+
+
+def _same_legal_resource_identity(requested_url: str, final_url: str) -> bool:
+    if not _redirect_host_allowed(requested_url, final_url):
+        return False
+    requested = urlparse(requested_url)
+    final = urlparse(final_url)
+    requested_path = requested.path.rstrip("/") or "/"
+    final_path = final.path.rstrip("/") or "/"
+    if requested_path == final_path:
+        return True
+    requested_document_id = _pravo_document_id(requested_url)
+    return bool(
+        requested_document_id
+        and requested_document_id == _pravo_document_id(final_url)
+    )
+
+
+def _canonical_legal_html_revision(
+    url: str,
+    final_url: str,
+    body: bytes,
+) -> tuple[bytes | None, str]:
+    """Build a stable legal-identity payload, excluding template/nonces.
+
+    A raw HTML checksum is not a legal revision signal.  Only an immutable
+    publication identifier, same-origin legal attachments, or explicit legal
+    act references can establish a reviewable identity.
+    """
+    if not _same_legal_resource_identity(url, final_url):
+        return None, "legal_resource_identity_mismatch"
+    parser = _LegalIdentityHTMLParser()
+    try:
+        parser.feed(body.decode("utf-8", errors="replace"))
+        parser.close()
+    except Exception:
+        return None, "html_identity_parse_failed"
+
+    signals: set[str] = set()
+    parsed_source = urlparse(final_url)
+    requested_document_id = _pravo_document_id(url)
+    document_identity_confirmed = False
+
+    for raw_link in parser.links:
+        absolute = urljoin(url, raw_link)
+        if not _redirect_host_allowed(url, absolute):
+            continue
+        parsed_link = urlparse(absolute)
+        path = parsed_link.path or "/"
+        lowered_path = path.casefold()
+        is_legal_artifact = lowered_path.endswith(_LEGAL_ARTIFACT_EXTENSIONS)
+        is_document_identity = bool(
+            re.search(r"/(?:document|docs?|files?|upload)/", lowered_path)
+            or re.search(r"/[0-9]{16,}/?$", lowered_path)
+        )
+        if not (is_legal_artifact or is_document_identity):
+            continue
+        # Query strings commonly carry expiring signatures/nonces.  The exact
+        # same-origin path is the durable identity monitored for legal drift.
+        canonical_link = parsed_link._replace(query="", fragment="").geturl()
+        signals.add(f"official_link:{canonical_link}")
+        if requested_document_id and _pravo_document_id(canonical_link) == requested_document_id:
+            document_identity_confirmed = True
+
+    visible = " ".join(parser.visible_text)
+    for reference in _LEGAL_REFERENCE_RE.findall(visible):
+        normalized = " ".join(reference.casefold().split())
+        signals.add(f"legal_reference:{normalized}")
+
+    if requested_document_id and requested_document_id in visible:
+        signals.add(f"publication_document_id:{requested_document_id}")
+        document_identity_confirmed = True
+    if requested_document_id and not document_identity_confirmed:
+        return None, "publication_document_identity_unconfirmed"
+
+    identity_signals = sorted(signals)
+    if not identity_signals:
+        return None, "legal_revision_identity_unverified"
+    payload = json.dumps(
+        {
+            "source_origin": (
+                parsed_source.scheme.casefold(),
+                (parsed_source.hostname or "").casefold(),
+                parsed_source.path,
+            ),
+            "identity_signals": identity_signals,
+        },
+        ensure_ascii=False,
+        sort_keys=True,
+        separators=(",", ":"),
+    ).encode("utf-8")
+    return payload, "canonical_html_legal_identity"
+
+
+def _revision_material(
+    *,
+    url: str,
+    final_url: str,
+    monitor_mode: str,
+    content_type: str,
+    body: bytes,
+) -> tuple[bytes, bool, bool, str]:
+    kind = _expected_content_kind(url)
+    if kind != "html_or_document":
+        return body, True, True, kind
+    stripped = body.lstrip()
+    if stripped.startswith(b"%PDF-"):
+        return body, True, True, "pdf_magic"
+    if monitor_mode == "availability":
+        return body, False, False, "availability_only"
+    canonical, identity_kind = _canonical_legal_html_revision(url, final_url, body)
+    if canonical is None:
+        return body, False, False, identity_kind
+    # An HTML card can identify a source but cannot prove the current legal
+    # revision.  Only direct mutable artifacts/structured feeds (or a future
+    # explicitly validated host-specific manifest) satisfy revision coverage.
+    return canonical, True, False, identity_kind
 
 
 def _source_date_valid(value: str, *, ofac_format: bool = False) -> bool:
@@ -314,8 +712,8 @@ def _validate_observation(
     content_type: str,
     body: bytes,
 ) -> tuple[bool, str | None]:
-    if not _redirect_host_allowed(url, final_url):
-        return False, "unexpected_redirect_host"
+    if not _redirect_target_allowed(url, final_url):
+        return False, "unexpected_redirect_target"
     if status_code != 200:
         return False, f"unexpected_http_status:{status_code}"
     if len(body) <= 100:
@@ -325,27 +723,43 @@ def _validate_observation(
     lowered = body[:200_000].lower()
     if any(marker in lowered for marker in _BLOCK_PAGE_MARKERS):
         return False, "block_or_error_page_detected"
+    if any(marker in lowered[:50_000] for marker in _SOFT_NOT_FOUND_MARKERS):
+        return False, "soft_not_found_page_detected"
     kind = _expected_content_kind(url)
-    ctype = (content_type or "").lower()
+    from app.services.source_document import XML_MEDIA_TYPES, XLSX_MEDIA_TYPE, parse_source_xml, validate_xlsx_archive
+
+    ctype = (content_type or "").split(";", 1)[0].strip().lower()
     stripped = body.lstrip()
-    if kind == "pdf" and (not stripped.startswith(b"%PDF-") or "pdf" not in ctype):
+    if kind == "pdf" and (not stripped.startswith(b"%PDF-") or ctype != "application/pdf"):
         return False, "invalid_pdf_content"
     if kind == "xml":
-        if "xml" not in ctype or not stripped.startswith(b"<"):
+        if ctype not in XML_MEDIA_TYPES or not stripped.startswith(b"<"):
             return False, "invalid_xml_content"
         try:
-            root = ET.fromstring(body)
-        except ET.ParseError:
+            root = parse_source_xml(body)
+        except (ET.ParseError, ValueError):
             return False, "invalid_xml_content"
         root_name = _xml_local_name(root.tag).casefold()
         if root_name in {"html", "error", "errors"}:
             return False, "invalid_xml_content"
         if not _official_xml_schema_valid(url, root):
             return False, "invalid_xml_content"
-    if kind == "xlsx" and not body.startswith(b"PK"):
-        return False, "invalid_xlsx_content"
+    if kind == "xlsx":
+        if ctype != XLSX_MEDIA_TYPE:
+            return False, "invalid_xlsx_content"
+        try:
+            validate_xlsx_archive(body)
+        except Exception:
+            return False, "invalid_xlsx_content"
     if kind == "csv" and (b"<html" in lowered[:1000] or b"<!doctype html" in lowered[:1000]):
         return False, "invalid_csv_content"
+    if kind == "html_or_document" and not (
+        "html" in ctype
+        or stripped.startswith(b"<!DOCTYPE html")
+        or stripped[:100].lower().startswith(b"<html")
+        or stripped.startswith(b"%PDF-")
+    ):
+        return False, "invalid_html_or_document_content"
     return True, None
 
 
@@ -357,10 +771,12 @@ def _load_state(path: Path | None) -> dict[str, Any]:
         if isinstance(data, dict) and isinstance(data.get("sources"), dict):
             if data.get("version") == STATE_SCHEMA_VERSION:
                 return data
-            if data.get("version") == _REVALIDATABLE_STATE_SCHEMA_VERSION:
-                # v3 tightened sanctions schema/cardinality/date validation.
-                # Preserve approved digests but remove conditional validators so
-                # the first v3 run must download and revalidate every body.
+            if data.get("version") in _REVALIDATABLE_STATE_SCHEMA_VERSIONS:
+                previous_version = int(data["version"])
+                # v4 adds exact redirect provenance and separates an HTML
+                # card's identity from legal-revision coverage.  Direct
+                # artifact digests can be revalidated, but legacy raw-HTML
+                # digests are not compatible and must not remain approved.
                 migrated_sources: dict[str, Any] = {}
                 for source_id, raw in data["sources"].items():
                     if not isinstance(raw, dict):
@@ -368,6 +784,24 @@ def _load_state(path: Path | None) -> dict[str, Any]:
                     source_state = dict(raw)
                     source_state.pop("etag", None)
                     source_state.pop("last_modified", None)
+                    source_url = str(source_state.get("url") or "")
+                    if (
+                        previous_version == 3
+                        and _expected_content_kind(source_url) == "html_or_document"
+                    ):
+                        for key in (
+                            "sha256",
+                            "pending_sha256",
+                            "pending_observed_at",
+                            "pending_content_type",
+                            "pending_content_length",
+                            "pending_final_url",
+                            "approved_at",
+                            "approval_ref",
+                        ):
+                            source_state.pop(key, None)
+                        source_state["artifact_identity_verified"] = False
+                        source_state["revision_covered"] = False
                     migrated_sources[str(source_id)] = source_state
                 migrated = dict(data)
                 migrated["version"] = STATE_SCHEMA_VERSION
@@ -398,7 +832,14 @@ def monitor_sources(
     headers = {"User-Agent": "Tariff-regulatory-source-monitor/2.0"}
     next_sources = dict(previous_sources)
     response_cache: dict[tuple[str, str, str], Any] = {}
-    with httpx.Client(follow_redirects=True, timeout=timeout, headers=headers, trust_env=False) as client:
+    cached_bytes = 0
+    with httpx.Client(
+        follow_redirects=False,
+        timeout=timeout,
+        headers=headers,
+        trust_env=False,
+        verify=True,
+    ) as client:
         for source_id, url in SOURCES.items():
             previous = previous_sources.get(source_id) or {}
             monitor_mode = SOURCE_MODES.get(source_id, "legal_drift")
@@ -420,7 +861,14 @@ def monitor_sources(
                 )
                 response = response_cache.get(cache_key)
                 if response is None:
-                    response = client.get(url, headers=request_headers)
+                    response = _get_with_verified_redirects(
+                        client,
+                        url,
+                        headers=request_headers,
+                    )
+                    if cached_bytes + len(response.content) > 256 * 1024**2:
+                        raise RuntimeError("official monitor response cache exceeds size limit")
+                    cached_bytes += len(response.content)
                     response_cache[cache_key] = response
                 if (
                     response.status_code == 304
@@ -428,8 +876,21 @@ def monitor_sources(
                     and bool(request_headers)
                     and _redirect_host_allowed(url, str(response.url))
                 ):
+                    inferred_revision_covered = bool(
+                        previous.get("revision_covered") is True
+                        or _expected_content_kind(url) != "html_or_document"
+                    )
+                    inferred_identity_verified = bool(
+                        previous.get("artifact_identity_verified") is True
+                        or inferred_revision_covered
+                    )
                     pending_review = bool(
-                        monitor_mode == "legal_drift" and previous.get("pending_sha256")
+                        monitor_mode == "legal_drift"
+                        and inferred_revision_covered
+                        and previous.get("pending_sha256")
+                    )
+                    revision_gap = bool(
+                        monitor_mode == "legal_drift" and not inferred_revision_covered
                     )
                     row = {
                         "source_id": source_id,
@@ -453,6 +914,22 @@ def monitor_sources(
                             else previous.get("sha256")
                         ),
                         "validation_error": None,
+                        "artifact_identity_verified": inferred_identity_verified,
+                        "revision_covered": inferred_revision_covered,
+                        "revision_identity_kind": previous.get("revision_identity_kind"),
+                        "revision_gap": revision_gap,
+                        "revision_gap_reason": (
+                            previous.get("revision_gap_reason")
+                            or previous.get("revision_identity_kind")
+                            if revision_gap
+                            else None
+                        ),
+                        "effective_monitor_mode": (
+                            "availability_only"
+                            if revision_gap or monitor_mode == "availability"
+                            else monitor_mode
+                        ),
+                        "approval_allowed": inferred_revision_covered,
                         "baseline_advanced": False,
                         "requires_approval": pending_review,
                         "approval_digest_mismatch": bool(
@@ -462,7 +939,6 @@ def monitor_sources(
                     rows.append(row)
                     continue
                 body = response.content
-                digest = hashlib.sha256(body).hexdigest()
                 content_type = str(response.headers.get("content-type") or "")
                 final_url = str(response.url)
                 ok, validation_error = _validate_observation(
@@ -472,26 +948,84 @@ def monitor_sources(
                     content_type=content_type,
                     body=body,
                 )
+                (
+                    revision_body,
+                    artifact_identity_verified,
+                    revision_covered,
+                    revision_identity_kind,
+                ) = _revision_material(
+                    url=url,
+                    final_url=final_url,
+                    monitor_mode=monitor_mode,
+                    content_type=content_type,
+                    body=body,
+                )
+                digest = hashlib.sha256(revision_body).hexdigest()
                 digest_is_new = ok and not bool(previous.get("sha256"))
                 digest_changed = ok and bool(previous.get("sha256")) and previous.get("sha256") != digest
-                is_new = digest_is_new and monitor_mode != "availability"
-                changed = digest_changed and monitor_mode != "availability"
-                requires_approval = monitor_mode == "legal_drift" and (is_new or changed)
+                revision_gap = bool(
+                    ok and monitor_mode == "legal_drift" and not revision_covered
+                )
+                coverage_regressed = bool(
+                    revision_gap and previous.get("revision_covered") is True
+                )
+                hard_identity_failure = bool(
+                    revision_gap
+                    and revision_identity_kind
+                    in {
+                        "html_identity_parse_failed",
+                        "legal_resource_identity_mismatch",
+                        "publication_document_identity_unconfirmed",
+                    }
+                )
+                if coverage_regressed or hard_identity_failure:
+                    ok = False
+                    validation_error = (
+                        "legal_revision_coverage_regressed"
+                        if coverage_regressed
+                        else revision_identity_kind
+                    )
+                is_new = bool(
+                    digest_is_new
+                    and monitor_mode != "availability"
+                    and revision_covered
+                )
+                changed = bool(
+                    digest_changed
+                    and monitor_mode != "availability"
+                    and revision_covered
+                )
+                identity_new = bool(digest_is_new and revision_gap)
+                identity_changed = bool(digest_changed and revision_gap)
+                requires_approval = bool(
+                    monitor_mode == "legal_drift"
+                    and revision_covered
+                    and (is_new or changed)
+                )
                 pending_digest_matches = bool(
                     requires_approval
                     and previous.get("pending_sha256")
                     and previous.get("pending_sha256") == digest
                 )
                 approval_authorized = bool(
-                    accept_changes and requires_approval and pending_digest_matches
+                    accept_changes
+                    and requires_approval
+                    and pending_digest_matches
+                    and revision_covered
                 )
                 baseline_advanced = bool(
                     ok
                     and (
                         monitor_mode != "legal_drift"
+                        or (revision_gap and not previous.get("pending_sha256"))
                         or not requires_approval
                         or approval_authorized
                     )
+                    # A legacy/persisted pending digest is never silently
+                    # discarded merely because the endpoint now exposes only
+                    # an HTML identity.  It remains visible as a coverage gap
+                    # until the state is deliberately migrated/rebuilt.
+                    and not (revision_gap and previous.get("pending_sha256"))
                 )
                 row = {
                     "source_id": source_id,
@@ -503,6 +1037,8 @@ def monitor_sources(
                     "not_modified": False,
                     "changed": changed,
                     "new_source": is_new,
+                    "identity_changed": identity_changed,
+                    "identity_new": identity_new,
                     "content_type": content_type,
                     "content_length": len(body),
                     "etag": response.headers.get("etag"),
@@ -511,6 +1047,17 @@ def monitor_sources(
                     "previous_sha256": previous.get("sha256"),
                     "observed_sha256": digest,
                     "validation_error": validation_error,
+                    "artifact_identity_verified": artifact_identity_verified,
+                    "revision_covered": revision_covered,
+                    "revision_identity_kind": revision_identity_kind,
+                    "revision_gap": revision_gap,
+                    "revision_gap_reason": revision_identity_kind if revision_gap else None,
+                    "effective_monitor_mode": (
+                        "availability_only"
+                        if revision_gap or monitor_mode == "availability"
+                        else monitor_mode
+                    ),
+                    "approval_allowed": revision_covered,
                     "requires_approval": requires_approval and not approval_authorized,
                     "approval_digest_mismatch": bool(
                         accept_changes and requires_approval and not pending_digest_matches
@@ -529,6 +1076,10 @@ def monitor_sources(
                             "etag",
                             "last_modified",
                             "sha256",
+                            "artifact_identity_verified",
+                            "revision_covered",
+                            "revision_identity_kind",
+                            "revision_gap_reason",
                         )
                     }
                     next_sources[source_id]["monitor_mode"] = monitor_mode
@@ -561,6 +1112,24 @@ def monitor_sources(
                         "previous_sha256": previous.get("sha256"),
                         "observed_sha256": None,
                         "baseline_advanced": False,
+                        "artifact_identity_verified": False,
+                        "revision_covered": False,
+                        "revision_identity_kind": "fetch_failed",
+                        "revision_gap": False,
+                        "revision_gap_reason": None,
+                        "effective_monitor_mode": monitor_mode,
+                        "approval_allowed": False,
+                        "validation_error": (
+                            str(exc)
+                            if str(exc) in {
+                                "unexpected_redirect_host",
+                                "unexpected_redirect_target",
+                                "unexpected_response_url",
+                                "official source redirect is missing Location",
+                                "official source redirect limit exceeded",
+                            }
+                            else "source_fetch_failed"
+                        ),
                         "error": str(exc),
                     }
                 )
@@ -572,6 +1141,36 @@ def monitor_sources(
         for row in rows
         if row.get("baseline_advanced") and row.get("monitor_mode") == "legal_drift" and (row.get("changed") or row.get("new_source"))
     ]
+    revision_candidate_rows = [
+        row
+        for row in rows
+        if row.get("monitor_mode") != "availability"
+    ]
+    revision_rows = [
+        row for row in revision_candidate_rows if row.get("revision_covered") is True
+    ]
+    revision_gap_rows = [
+        row
+        for row in revision_candidate_rows
+        if row.get("revision_covered") is not True and row.get("ok") is True
+    ]
+    revision_unavailable_rows = [
+        row
+        for row in revision_candidate_rows
+        if row.get("ok") is not True
+    ]
+    explicit_availability_rows = [
+        row for row in rows if row.get("monitor_mode") == "availability"
+    ]
+    unverified_revision_ids = [
+        row["source_id"]
+        for row in revision_gap_rows
+    ]
+    unapprovable_ids = [
+        row["source_id"]
+        for row in rows
+        if row.get("requires_approval") and row.get("approval_allowed") is not True
+    ]
     return {
         "checked_at": datetime.now(timezone.utc).isoformat(),
         "all_available": all(row.get("ok") is True for row in rows),
@@ -580,6 +1179,33 @@ def monitor_sources(
         "new_source_ids": new_ids,
         "pending_review_source_ids": pending_ids,
         "accepted_source_ids": accepted_ids,
+        "unverified_revision_source_ids": unverified_revision_ids,
+        "unapprovable_source_ids": unapprovable_ids,
+        "monitored_url_count": len(rows),
+        "revision_candidate_source_count": len(revision_candidate_rows),
+        "revision_covered_source_count": len(revision_rows),
+        "revision_gap_source_count": len(revision_gap_rows),
+        "revision_gap_source_ids": [row["source_id"] for row in revision_gap_rows],
+        "revision_unavailable_source_count": len(revision_unavailable_rows),
+        "revision_unavailable_source_ids": [
+            row["source_id"] for row in revision_unavailable_rows
+        ],
+        "explicit_availability_source_count": len(explicit_availability_rows),
+        "availability_only_source_count": (
+            len(explicit_availability_rows) + len(revision_gap_rows)
+        ),
+        "revision_coverage_complete": bool(revision_candidate_rows)
+        and not revision_gap_rows
+        and len(revision_rows) == len(revision_candidate_rows),
+        # Availability-only sources are reported as coverage gaps but cannot
+        # make the operational gate impossible.  The covered subset remains
+        # fail-closed; ``all([])`` is intentional for an availability-only
+        # monitor universe.
+        "revision_monitor_gate_ok": all(
+            row.get("ok") is True
+            for row in revision_candidate_rows
+            if row not in revision_gap_rows
+        ),
         "review_required": bool(pending_ids),
         "sources": rows,
         "next_state": {
@@ -626,7 +1252,11 @@ def main() -> int:
         state_tmp = args.state.with_suffix(args.state.suffix + ".tmp")
         state_tmp.write_text(json.dumps(next_state, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
         state_tmp.replace(args.state)
-    gate_ok = report["all_available"] and not report["review_required"]
+    gate_ok = (
+        report["all_available"]
+        and report["revision_monitor_gate_ok"]
+        and not report["review_required"]
+    )
     return 0 if gate_ok or not args.strict else 1
 
 

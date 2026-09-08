@@ -89,16 +89,18 @@ def start_apscheduler() -> None:
                 from .regulatory_source_updates import run_regulatory_update_cycle
 
                 result = await run_regulatory_update_cycle(cadence, apply_safe=True)  # type: ignore[arg-type]
-                if result.get("status") != "ok":
+                if result.get("status") not in {"ok", "review_required"}:
                     raise RuntimeError(
                         f"regulatory update cycle returned {result.get('status')}: "
                         f"{result.get('error') or result.get('errors') or 'adapter failure'}"
                     )
-                logger.info(
-                    "Regulatory source updates {}: status={}, adapters={}",
+                log = logger.warning if result.get("status") == "review_required" else logger.info
+                log(
+                    "Regulatory source updates {}: status={}, adapters={}, pending_reviews={}",
                     cadence,
                     result.get("status"),
                     len(result.get("results") or []),
+                    len(result.get("review_required_source_ids") or []),
                 )
             except Exception as e:
                 logger.exception("Regulatory source updates {} failed: {}", cadence, e)

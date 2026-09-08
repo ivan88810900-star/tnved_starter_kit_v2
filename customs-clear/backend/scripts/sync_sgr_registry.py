@@ -30,12 +30,10 @@ import json
 import os
 import re
 import sys
-import time
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-import requests
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
@@ -46,6 +44,7 @@ from sqlalchemy.orm import Session
 from app.db import SessionLocal
 from app.models.core import SgrCertificate
 from app.services.normative_store import append_sync_log, init_db, upsert_source_status
+from app.services.nsi_http import post_official_nsi_json
 from app.services.preview_cache_revision import bump_preview_cache_revision
 from app.services.registry_sync_http import registry_http_get, registry_http_get_text
 from app.services.snapshot_safety import configured_minimum_rows, validate_full_snapshot
@@ -208,13 +207,6 @@ def _parse_sharepoint_item(it: dict[str, Any]) -> dict[str, Any] | None:
     }
 
 
-def _proxy_map(proxy: str) -> dict[str, str] | None:
-    p = str(proxy or "").strip()
-    if not p:
-        return None
-    return {"http": p, "https": p}
-
-
 def _http_post_json(
     url: str,
     payload: dict[str, Any],
@@ -223,27 +215,14 @@ def _http_post_json(
     timeout_sec: float = 45.0,
     retries: int = 4,
 ) -> Any:
-    err: Exception | None = None
-    for i in range(1, max(1, retries) + 1):
-        try:
-            r = requests.post(
-                url,
-                json=payload,
-                headers={**UA, "Accept": "application/json", "Content-Type": "application/json"},
-                timeout=timeout_sec,
-                proxies=_proxy_map(proxy),
-            )
-            if r.status_code in (429, 500, 502, 503, 504) and i < retries:
-                time.sleep(min(1.2 * i, 8.0))
-                continue
-            r.raise_for_status()
-            return r.json()
-        except Exception as e:
-            err = e
-            if i >= retries:
-                break
-            time.sleep(min(1.2 * i, 8.0))
-    raise RuntimeError(f"NSI POST failed: {url} | {err!r}")
+    return post_official_nsi_json(
+        url,
+        payload,
+        headers={**UA, "Accept": "application/json", "Content-Type": "application/json"},
+        proxy=proxy,
+        timeout_sec=timeout_sec,
+        retries=retries,
+    )
 
 
 def _nsi_sgr_total(*, code: str, date_iso: str, proxy: str = "") -> int:
@@ -312,7 +291,11 @@ def _row_from_nsi_dict(item: dict[str, Any]) -> dict[str, Any] | None:
     if not isinstance(data, dict):
         return None
     num = str(data.get("NUMB_DOC") or "").strip()
-    if not num:
+    product_name = str(data.get("NAME_PROD") or "").strip()
+    # A registry number without the legally identifying product text is not a
+    # usable SGR record.  Rejecting it also makes upstream field renames fail
+    # before a full snapshot can replace the live table.
+    if not num or not product_name:
         return None
     status_raw = data.get("STATUS")
     status = (
@@ -322,7 +305,7 @@ def _row_from_nsi_dict(item: dict[str, Any]) -> dict[str, Any] | None:
     )
     return {
         "sgr_number": num[:128],
-        "product_name": str(data.get("NAME_PROD") or "")[:16000],
+        "product_name": product_name[:16000],
         "manufacturer": str(data.get("FIRMMADE_NAME") or "")[:512],
         "brand": "",
         "recipient": str(data.get("FIRMGET_NAME") or "")[:512],
@@ -526,6 +509,9 @@ def main() -> int:
     ap.add_argument("--json", action="store_true", help="Emit the adapter result contract")
     args = ap.parse_args()
 
+    effective_nsi_code = str(args.nsi_code or NSI_SGR_CODE).strip()
+    if effective_nsi_code != NSI_SGR_CODE:
+        ap.error("SGR source identity is pinned to NSI dictionary 1995")
     init_db()
     proxy = (args.proxy or "").strip()
     if proxy:
@@ -544,7 +530,6 @@ def main() -> int:
     pending_checkpoint: dict[str, Any] = {}
     source_variant = "unknown"
     snapshot_kind = "full"
-    effective_nsi_code = str(args.nsi_code or NSI_SGR_CODE).strip()
 
     with SessionLocal() as db:
         if args.demo_seed:
@@ -682,17 +667,19 @@ def main() -> int:
     sync_ok = not http_failed and not strict_empty
     log_status = "ok" if sync_ok and (total or args.demo_seed) else ("error" if not sync_ok else "partial")
     revision = f"{source_variant}:{nsi_date}" if not args.demo_seed else "demo"
+    official_provenance = bool(sync_ok and total > 0 and source_variant == "nsi"
+                               and snapshot_kind == "full" and not args.demo_seed)
     upsert_source_status(
         source_code="SGR_REGISTRY",
         source_name="Единый реестр выданных СГР ЕАЭС",
-        source_url="https://nsi.eaeunion.org/portal/1995",
+        source_url="https://nsi.eaeunion.org/portal/1995" if official_provenance else "",
         revision=revision if sync_ok else "unavailable",
-        is_stale=not sync_ok,
+        is_stale=not official_provenance,
         note=note[:2000],
     )
     append_sync_log(
         "SGR_REGISTRY",
-        log_status.upper(),
+        log_status.upper() if official_provenance else "ERROR",
         revision,
         total,
         note[:2000],

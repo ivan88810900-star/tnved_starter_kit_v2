@@ -64,11 +64,26 @@ def build_baseline(
 ) -> dict[str, Any]:
     return {
         "schema_version": "1",
+        "validation_mode": "quarantine_only",
         "dataset_id": "ntm-full-catalog-reference-20260815",
         "qualification": (
-            "Full 21/96/17809 reference corpus; every active ETT code is present "
-            "and has a non-empty description. Blank reference rows are disclosed."
+            "Full 21/96/17809 reference corpus. Catalog structure is reproducible, "
+            "but the bundled ETT rates are quarantined and must not be used as a "
+            "current legal tariff source."
         ),
+        # Baseline generation is deliberately unable to self-approve legal
+        # freshness.  A separately reviewed official EEC manifest and temporal
+        # footnote audit must explicitly replace this closed gate.
+        "staging_release_gate": {
+            "current_official_ett_verified": False,
+            "temporal_footnotes_verified": False,
+            "positive_snapshot_allowed": False,
+            "reason": (
+                "The local ETT bundle is DB-derived, contains invalid and "
+                "duplicate/conflicting rows, and does not independently prove "
+                "the current EEC revision or temporary as-of footnotes."
+            ),
+        },
         "parser": parser_fingerprint(),
         "pdf_source": pdf_source_manifest(pdf_dir),
         "active_ett": active_ett_fingerprint(ett_path),

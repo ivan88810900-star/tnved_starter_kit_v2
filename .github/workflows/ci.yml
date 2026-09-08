@@ -23,6 +23,19 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Reject tracked browser session state
+        run: |
+          tracked_session_files="$(
+            git ls-files -- ':(top)customs-clear/backend/data/alta_session/**'
+          )"
+          if [[ -n "$tracked_session_files" ]]; then
+            echo "Browser session state must never be tracked:" >&2
+            echo "$tracked_session_files" >&2
+            exit 1
+          fi
 
       - name: Set up Python
         uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
@@ -50,7 +63,7 @@ jobs:
   backend-ntm:
     name: Backend NTM safety suite
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 30
     defaults:
       run:
         working-directory: customs-clear/backend
@@ -70,10 +83,12 @@ jobs:
       NTM_V2_EXACT_TRADE_CURATED_ALLOWLIST_ENABLED: "0"
     steps:
       - name: Check out repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
         with:
           python-version: "3.11"
           cache: pip
@@ -98,14 +113,24 @@ jobs:
           tests/test_regulatory_source_updates.py
           tests/test_regulatory_adapter_scripts.py
           tests/test_regulatory_adapter_write_guard.py
+          tests/test_regulatory_review_queue.py
           tests/test_regulatory_scheduler_api.py
           tests/test_regulatory_snapshot_atomicity.py
+          tests/test_opendata_source_integrity.py
+          tests/test_opendata_version_guards.py
           tests/test_sgr_state_source_hardening.py
           tests/test_legacy_automation_guards.py
           tests/test_official_source_monitor.py
           tests/test_regulatory_source_completeness.py
           tests/test_data_refresh.py
+          tests/test_build_full_staging_snapshot.py
+          tests/test_normative_bundle_exact_rate_scope.py
+          tests/test_ntm_catalog_baseline.py
+          tests/test_run_e2e_scenarios.py
           tests/test_payment_data_coverage.py
+          tests/test_cbr_exchange_rate_hardening.py
+          tests/test_source_resource_limits.py
+          tests/test_safe_fsa_archive.py
           tests/test_payment_registry_references.py
           tests/test_trois_is_active.py
           tests/test_normative_requirements_block.py
@@ -113,6 +138,50 @@ jobs:
           tests/test_semantic_navigation_2204_pdo.py
           tests/test_diagnose_guided_tnved_navigation_catalog.py
           tests/test_api_integration.py::ApiIntegrationTests::test_export_compliance_skips_import_payment_and_antidumping
+
+      - name: Confirm quarantined ETT blocks a positive staging snapshot
+        run: |
+          staging_snapshot="$RUNNER_TEMP/customs-clear-full-staging.db"
+          readiness_report="$RUNNER_TEMP/customs-clear-staging-input-readiness.json"
+          untouched_database="$RUNNER_TEMP/customs-clear-builder-must-not-touch.db"
+          set +e
+          python scripts/build_full_staging_snapshot.py \
+            --check-inputs --report "$readiness_report"
+          readiness_status=$?
+          set -e
+          test "$readiness_status" -eq 1
+          python - "$readiness_report" <<'PY'
+          import json
+          import sys
+
+          report = json.load(open(sys.argv[1], encoding="utf-8"))
+          assert report["positive_snapshot_allowed"] is False
+          assert report["baseline_contract"] == {
+              "schema_version": "1",
+              "validation_mode": "quarantine_only",
+              "positive_validation_implemented": False,
+          }
+          assert report["ett"]["invalid_code_rows"] == 2
+          assert report["ett"]["duplicate_rows"] == 27
+          assert report["ett"]["duplicate_code_count"] == 23
+          assert report["ett"]["material_conflict_code_count"] == 18
+          assert report["ett"]["structurally_publishable"] is False
+          assert report["release_gate"]["current_official_ett_verified"] is False
+          assert report["release_gate"]["temporal_footnotes_verified"] is False
+          PY
+
+          test ! -e "$untouched_database"
+          set +e
+          DATABASE_URL="sqlite:///$untouched_database" \
+            python scripts/build_full_staging_snapshot.py "$staging_snapshot" \
+            > "$RUNNER_TEMP/customs-clear-staging-quarantine.log" 2>&1
+          build_status=$?
+          set -e
+          test "$build_status" -ne 0
+          grep --quiet "positive staging snapshot blocked" \
+            "$RUNNER_TEMP/customs-clear-staging-quarantine.log"
+          test ! -e "$staging_snapshot"
+          test ! -e "$untouched_database"
 
   frontend:
     name: Frontend tests, types and build
@@ -125,10 +194,12 @@ jobs:
       CI: "true"
     steps:
       - name: Check out repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       - name: Set up Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
         with:
           node-version: "22"
           cache: npm
@@ -159,7 +230,9 @@ jobs:
       STAGING_ADMIN_API_TOKEN: ci-only-admin-api-token
     steps:
       - name: Check out repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       - name: Render Compose configuration
         working-directory: customs-clear

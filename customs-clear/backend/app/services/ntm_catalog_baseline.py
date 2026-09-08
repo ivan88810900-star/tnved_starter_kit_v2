@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import json
 import re
+from decimal import Decimal, InvalidOperation
 from pathlib import Path
 from typing import Any, Iterable
 
@@ -31,6 +32,52 @@ def _sha256_lines(lines: Iterable[str]) -> str:
         digest.update(line.encode("utf-8"))
         digest.update(b"\n")
     return digest.hexdigest()
+
+
+def canonical_duty_rate(value: Any) -> str:
+    """Canonical comparison value for a duty string.
+
+    The pinned ETT bundle contains equivalent ad-valorem values in both
+    ``5%`` and ``5.0`` form.  Treat only plain numeric/percent values as
+    equivalent; compound and specific-duty formulas remain exact normalized
+    text so this helper cannot silently reinterpret a legal formula.
+    """
+    raw = " ".join(("" if value is None else str(value)).split())
+    numeric_candidate = raw.replace(",", ".")
+    match = re.fullmatch(
+        r"([+-]?(?:\d+(?:\.\d*)?|\.\d+))\s*%?",
+        numeric_candidate,
+    )
+    if match:
+        try:
+            number = Decimal(match.group(1)).normalize()
+        except InvalidOperation:
+            pass
+        else:
+            if number == 0:
+                number = Decimal(0)
+            return f"ad_valorem_percent:{format(number, 'f')}"
+    return f"text:{raw.casefold()}"
+
+
+def duty_rate_content_sha256(rows: Iterable[tuple[Any, Any]]) -> str:
+    """Fingerprint exact code/rate content after canonical value comparison."""
+    normalized = sorted(
+        (str(code or "").strip(), canonical_duty_rate(duty_rate))
+        for code, duty_rate in rows
+    )
+    return _sha256_lines(
+        f"{code}\t{canonical_rate}" for code, canonical_rate in normalized
+    )
+
+
+def _canonical_json(value: Any) -> str:
+    return json.dumps(
+        value,
+        ensure_ascii=False,
+        sort_keys=True,
+        separators=(",", ":"),
+    )
 
 
 def normalize_catalog_description(value: Any) -> str:
@@ -95,12 +142,23 @@ def active_ett_fingerprint(path: Path = DEFAULT_ETT_PATH) -> dict[str, Any]:
     if not isinstance(rates, list):
         raise ValueError("official ETT bundle has no rates array")
     raw_codes = [
-        str(row.get("hs_code") or "").strip()
+        str(row.get("hs_code") or "").strip() if isinstance(row, dict) else ""
         for row in rates
-        if isinstance(row, dict)
     ]
     valid_codes = [code for code in raw_codes if code.isdigit() and len(code) == 10]
     unique_codes = sorted(set(valid_codes))
+    rows_by_code: dict[str, list[dict[str, Any]]] = {}
+    for row, code in zip(rates, raw_codes, strict=True):
+        if isinstance(row, dict) and code.isdigit() and len(code) == 10:
+            rows_by_code.setdefault(code, []).append(row)
+    duplicate_codes = sorted(
+        code for code, rows in rows_by_code.items() if len(rows) > 1
+    )
+    material_conflict_codes = sorted(
+        code
+        for code, rows in rows_by_code.items()
+        if len({canonical_duty_rate(row.get("duty_rate")) for row in rows}) > 1
+    )
     return {
         "revision": payload.get("revision"),
         "effective_from": payload.get("effective_from"),
@@ -108,8 +166,26 @@ def active_ett_fingerprint(path: Path = DEFAULT_ETT_PATH) -> dict[str, Any]:
         "raw_rows": len(rates),
         "unique_codes": len(unique_codes),
         "duplicate_rows": len(valid_codes) - len(unique_codes),
+        "duplicate_code_count": len(duplicate_codes),
+        "duplicate_codes": duplicate_codes,
+        "material_conflict_code_count": len(material_conflict_codes),
+        "material_conflict_codes": material_conflict_codes,
         "invalid_code_rows": len(rates) - len(valid_codes),
         "code_set_sha256": _sha256_lines(unique_codes),
+        "active_duty_rate_sha256": duty_rate_content_sha256(
+            (code, row.get("duty_rate"))
+            for row, code in zip(rates, raw_codes, strict=True)
+            if isinstance(row, dict) and code.isdigit() and len(code) == 10
+        ),
+        "artifact_sha256": _sha256_file(path),
+        "rate_rows_sha256": _sha256_lines(
+            sorted(_canonical_json(row) for row in rates)
+        ),
+        "structurally_publishable": not (
+            len(rates) - len(valid_codes)
+            or len(valid_codes) - len(unique_codes)
+            or material_conflict_codes
+        ),
     }
 
 
@@ -117,6 +193,8 @@ def load_catalog_baseline(path: Path = DEFAULT_BASELINE_PATH) -> dict[str, Any]:
     payload = json.loads(path.read_text(encoding="utf-8"))
     if payload.get("schema_version") != "1":
         raise ValueError("unsupported NTM full-catalog baseline schema")
+    if payload.get("validation_mode") != "quarantine_only":
+        raise ValueError("NTM baseline schema v1 must remain quarantine-only")
     if not isinstance(payload.get("pdf_source"), dict):
         raise ValueError("NTM full-catalog baseline has no pdf_source")
     if not isinstance(payload.get("catalog"), dict):
@@ -151,8 +229,16 @@ def compare_source_baseline(
                 "raw_rows",
                 "unique_codes",
                 "duplicate_rows",
+                "duplicate_code_count",
+                "duplicate_codes",
+                "material_conflict_code_count",
+                "material_conflict_codes",
                 "invalid_code_rows",
                 "code_set_sha256",
+                "active_duty_rate_sha256",
+                "artifact_sha256",
+                "rate_rows_sha256",
+                "structurally_publishable",
             )
         ),
         "catalog_parser_match": current_parser == baseline.get("parser"),

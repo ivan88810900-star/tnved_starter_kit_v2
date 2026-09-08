@@ -4,15 +4,18 @@ from __future__ import annotations
 from sqlalchemy import (
     JSON,
     Boolean,
+    CheckConstraint,
     Column,
     Date,
     DateTime,
     Float,
     ForeignKey,
+    Index,
     Integer,
     String,
     Text,
     func,
+    text,
 )
 from sqlalchemy.orm import relationship
 
@@ -83,3 +86,87 @@ class RegulatorySyncLog(Base):
     docs_updated = Column(Integer, default=0)
     docs_skipped = Column(Integer, default=0)
     error_message = Column(Text)
+
+
+class RegulatorySourceReview(Base):
+    """Durable monthly review item for a curated regulatory source.
+
+    A source has at most one pending item. Evidence is immutable: a changed
+    pending row becomes ``superseded`` and points to a strictly newer checked-in
+    generation/digest; resolved rows retain their resolution and may receive the
+    same explicit supersession annotation.
+    """
+
+    __tablename__ = "regulatory_source_reviews"
+    __table_args__ = (
+        CheckConstraint(
+            "status IN ('pending', 'resolved', 'superseded')",
+            name="ck_regulatory_source_reviews_status",
+        ),
+        CheckConstraint(
+            "occurrence_count >= 1",
+            name="ck_regulatory_source_reviews_occurrence_count",
+        ),
+        CheckConstraint(
+            "length(evidence_sha256) = 64",
+            name="ck_regulatory_source_reviews_evidence_sha256",
+        ),
+        CheckConstraint(
+            "evidence_generation >= 1",
+            name="ck_regulatory_source_reviews_evidence_generation",
+        ),
+        CheckConstraint(
+            "(status = 'pending' AND resolved_at IS NULL "
+            "AND resolved_by = '' AND asserted_by = '' AND resolution_ref = '' "
+            "AND superseded_at IS NULL AND superseded_by_evidence_sha256 = '' "
+            "AND superseded_by_generation IS NULL) "
+            "OR (status = 'resolved' AND resolved_at IS NOT NULL "
+            "AND length(trim(resolved_by)) > 0 "
+            "AND length(trim(asserted_by)) > 0 "
+            "AND length(trim(resolution_ref)) > 0 "
+            "AND ((superseded_at IS NULL AND superseded_by_evidence_sha256 = '' "
+            "AND superseded_by_generation IS NULL) "
+            "OR (superseded_at IS NOT NULL "
+            "AND length(superseded_by_evidence_sha256) = 64 "
+            "AND superseded_by_evidence_sha256 <> evidence_sha256 "
+            "AND superseded_by_generation IS NOT NULL "
+            "AND superseded_by_generation > evidence_generation))) "
+            "OR (status = 'superseded' AND resolved_at IS NULL "
+            "AND resolved_by = '' AND asserted_by = '' AND resolution_ref = '' "
+            "AND superseded_at IS NOT NULL "
+            "AND length(superseded_by_evidence_sha256) = 64 "
+            "AND superseded_by_evidence_sha256 <> evidence_sha256 "
+            "AND superseded_by_generation IS NOT NULL "
+            "AND superseded_by_generation > evidence_generation)",
+            name="ck_regulatory_source_reviews_resolution_state",
+        ),
+        Index(
+            "uq_regulatory_source_reviews_one_pending_source",
+            "source_id",
+            unique=True,
+            sqlite_where=text("status = 'pending'"),
+            postgresql_where=text("status = 'pending'"),
+        ),
+    )
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    source_id = Column(String(128), nullable=False, index=True)
+    due_period = Column(String(7), nullable=False, index=True)
+    strategy = Column(String(32), nullable=False, default="local_reconcile")
+    cadence = Column(String(16), nullable=False, default="monthly")
+    status = Column(String(16), nullable=False, default="pending", index=True)
+    reason = Column(Text, nullable=False, default="")
+    evidence_sha256 = Column(String(64), nullable=False)
+    evidence_generation = Column(Integer, nullable=False)
+    evidence_scope = Column(String(64), nullable=False)
+    evidence_manifest = Column(JSON, nullable=False)
+    first_raised_at = Column(DateTime, nullable=False, server_default=func.now())
+    last_raised_at = Column(DateTime, nullable=False, server_default=func.now())
+    occurrence_count = Column(Integer, nullable=False, default=1)
+    resolved_at = Column(DateTime)
+    resolved_by = Column(String(128), nullable=False, default="")
+    asserted_by = Column(String(128), nullable=False, default="")
+    resolution_ref = Column(String(2048), nullable=False, default="")
+    superseded_at = Column(DateTime)
+    superseded_by_evidence_sha256 = Column(String(64), nullable=False, default="")
+    superseded_by_generation = Column(Integer)

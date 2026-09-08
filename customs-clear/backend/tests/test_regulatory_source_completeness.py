@@ -479,6 +479,10 @@ class TestRegulatorySourceCompletenessApi(unittest.TestCase):
     def test_update_status_explicitly_reports_never_run(self) -> None:
         with (
             patch("app.api.sources.load_last_update_report", return_value=None),
+            patch(
+                "app.api.sources.regulatory_review_queue_summary",
+                return_value={"notification_required": False},
+            ),
             patch("app.api.sources.is_read_only_mode", return_value=False),
             patch("app.api.sources.is_scheduler_running", return_value=True),
             patch(
@@ -498,6 +502,10 @@ class TestRegulatorySourceCompletenessApi(unittest.TestCase):
         last_run = {"status": "partial", "cadence": "daily", "results": [{"status": "error"}]}
         with (
             patch("app.api.sources.load_last_update_report", return_value=last_run),
+            patch(
+                "app.api.sources.regulatory_review_queue_summary",
+                return_value={"notification_required": False},
+            ),
             patch("app.api.sources.is_read_only_mode", return_value=False),
             patch("app.api.sources.is_scheduler_running", return_value=False),
             patch("app.api.sources.regulatory_jobs_status", return_value={}),
