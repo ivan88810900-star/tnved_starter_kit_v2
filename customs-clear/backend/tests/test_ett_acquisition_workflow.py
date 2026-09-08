@@ -188,3 +188,30 @@ def test_additional_legal_captures_have_isolated_readonly_branch_and_runnable_sh
                 assert result.returncode == 0, result.stderr
                 for script in re.findall(r"\bpython (scripts/[a-z_]+\.py)\b", step["run"]):
                     assert (Path(__file__).resolve().parents[1] / script).is_file(), script
+
+
+def test_retained_capture_resume_reads_only_pinned_prior_artifact_and_has_no_db_authority():
+    document = yaml.load(WORKFLOW_PATH.with_name("ett-legal-document-resume.yml").read_text(), Loader=yaml.BaseLoader)
+    assert document["on"] == {"push": {"branches": ["ops/ett-legal-document-resume"]}}
+    assert document["permissions"] == {"contents": "read", "actions": "read"}
+    assert "DATABASE_URL" not in json.dumps(document)
+    job = document["jobs"]["document-resume"]
+    assert job["env"]["CUSTOMSCLEAR_READ_ONLY"] == "1"
+    assert "runner." not in json.dumps(job["env"])
+    downloaded = [s for s in job["steps"] if s.get("uses", "").startswith("actions/download-artifact@")]
+    assert len(downloaded) == 1
+    assert downloaded[0]["with"]["run-id"] == "34251758308"
+    assert downloaded[0]["with"]["github-token"] == "${{ secrets.GITHUB_TOKEN }}"
+    restore = next(s["run"] for s in job["steps"] if s.get("id") == "restore")
+    assert "a47ac71dab2a06fd7f0f8ada38c95ff077d4d0fc0ccb58217fcc95bff9976fce" in restore
+    assert "12c3c7b1e60f3b495192acb89364008538542fbed1b71fb91758adc734b5a795" in restore
+    for step in job["steps"]:
+        if "uses" in step:
+            assert re.fullmatch(r"[^@\s]+@[0-9a-f]{40}", step["uses"])
+        if step not in downloaded:
+            assert "secrets." not in json.dumps(step)
+        if "run" in step:
+            assert "${{" not in step["run"]
+            result = subprocess.run(["bash", "-n"], input=step["run"], text=True, capture_output=True)
+            assert result.returncode == 0, result.stderr
+            _check_python(step["run"], label=step["name"])

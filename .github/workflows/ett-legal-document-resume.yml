@@ -1,0 +1,102 @@
+name: ETT retained legal document resume
+
+on:
+  push:
+    branches: [ops/ett-legal-document-resume]
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: ett-legal-document-resume-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  document-resume:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    env:
+      CUSTOMSCLEAR_READ_ONLY: "1"
+      SCHEDULER_ENABLED: "0"
+      REGULATORY_SYNC_SCHEDULER_ENABLED: "0"
+    defaults:
+      run:
+        working-directory: customs-clear/backend
+        shell: bash
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Prepare private resume directory
+        id: prepare
+        run: |
+          umask 077
+          ETT_RESUME_ROOT="$RUNNER_TEMP/ett-legal-resume"
+          mkdir -m 700 "$ETT_RESUME_ROOT" "$ETT_RESUME_ROOT/store" "$ETT_RESUME_ROOT/prior"
+          printf 'ETT_RESUME_ROOT=%s\n' "$ETT_RESUME_ROOT" >> "$GITHUB_ENV"
+      - name: Read the exact previous capture artifact
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: ett-legal-documents-34251758308
+          run-id: 34251758308
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: ${{ runner.temp }}/ett-legal-resume/prior
+      - name: Set up Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: customs-clear/backend/requirements.txt
+      - name: Install source capture dependencies
+        id: install
+        run: python -m pip install --disable-pip-version-check -r requirements.txt
+      - name: Verify and restore original capture objects
+        id: restore
+        run: |
+          python - <<'PY'
+          import hashlib, os
+          from pathlib import Path
+          root = Path(os.environ["ETT_RESUME_ROOT"]) / "prior"
+          expected = {
+              "legal-documents.json": "12c3c7b1e60f3b495192acb89364008538542fbed1b71fb91758adc734b5a795",
+              "discovery.json": "64bf12bc27614d36bb2238b2c85cec4c7071f75b8bbc28adeaed615feaec8c51",
+          }
+          for name, digest in expected.items():
+              path = root / name
+              if path.is_symlink() or not path.is_file() or path.stat().st_size > 16 * 1024 * 1024:
+                  raise SystemExit("Invalid retained report")
+              if hashlib.sha256(path.read_bytes()).hexdigest() != digest:
+                  raise SystemExit("Retained report digest mismatch")
+          PY
+          python scripts/restore_ett_capture.py \
+            --archive "$ETT_RESUME_ROOT/prior/objects.tar.gz" \
+            --archive-sha256 a47ac71dab2a06fd7f0f8ada38c95ff077d4d0fc0ccb58217fcc95bff9976fce \
+            --store-root "$ETT_RESUME_ROOT/store"
+      - name: Fetch only missing source bodies from the replayed plan
+        run: |
+          python scripts/resume_ett_legal_documents.py \
+            --source-capture-report "$ETT_RESUME_ROOT/prior/legal-documents.json" \
+            --discovery-report "$ETT_RESUME_ROOT/prior/discovery.json" \
+            --store-root "$ETT_RESUME_ROOT/store" --output "$ETT_RESUME_ROOT/legal-documents-resumed.json"
+      - name: Capture the observed unresolved-label detail page for review
+        if: ${{ always() && steps.restore.outcome == 'success' }}
+        run: |
+          python scripts/probe_ett_legal_sources.py \
+            --source-id observed_collegium_42_review_page \
+            --store-root "$ETT_RESUME_ROOT/store" --output "$ETT_RESUME_ROOT/collegium-42-review.json"
+      - name: Package retained originals and resumed evidence
+        if: ${{ always() && steps.prepare.outcome == 'success' }}
+        run: tar -C "$ETT_RESUME_ROOT" -czf "$ETT_RESUME_ROOT/objects.tar.gz" store
+      - name: Upload resumed source evidence
+        if: ${{ always() && steps.prepare.outcome == 'success' }}
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        with:
+          name: ett-legal-resumed-${{ github.run_id }}
+          path: |
+            ${{ runner.temp }}/ett-legal-resume/legal-documents-resumed.json
+            ${{ runner.temp }}/ett-legal-resume/collegium-42-review.json
+            ${{ runner.temp }}/ett-legal-resume/objects.tar.gz
+          if-no-files-found: error
+          retention-days: 90

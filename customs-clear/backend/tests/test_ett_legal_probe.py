@@ -10,6 +10,19 @@ from app.services.ett_transport import OfficialResponse, OfficialTransportError,
 from scripts.probe_ett_legal_sources import PROBE_SOURCES, main, probe_legal_sources
 
 
+def test_unresolved_label_detail_page_requires_explicit_selection(tmp_path):
+    calls = []
+    def fetch(url, **kwargs):
+        calls.append(url)
+        return captured(url, **kwargs)
+    report = probe_legal_sources(LocalArtifactStore(tmp_path / "objects"), fetch=fetch,
+                                 source_ids=["observed_collegium_42_review_page"])
+    assert calls == ["https://docs.eaeunion.org/documents/399/6485/"]
+    assert report["captured_sources"] == 1
+    assert report["source_identity_verified"] is False
+    assert all(source_id != "observed_collegium_42_review_page" for source_id, _, _ in PROBE_SOURCES)
+
+
 def captured(url, *, expected_media):
     content = b"%PDF-1.7\nSYNTHETIC\n%%EOF\n" if expected_media == "application/pdf" else b"<!doctype html><html><body>SYNTHETIC</body></html>"
     return OfficialResponse(url=url, requested_url=url, content=content, media_type=expected_media,

@@ -21,7 +21,7 @@ from .ett_acquisition import DownloadRecord, read_json
 from .ett_artifacts import ArtifactIntegrityError, LocalArtifactStore
 from .ett_discovery_audit import audit_legal_discovery, canonical_json_bytes
 from .ett_index import _text, _visible
-from .ett_legal_attachments import parse_legal_attachments, validate_attachment_url
+from .ett_legal_attachments import _EEC_DECISION_CATEGORY, parse_legal_attachments, validate_attachment_url
 from .ett_transport import (
     IO_TIMEOUT_SECONDS, MAX_HTML_BYTES, MAX_PDF_BYTES, TOTAL_BUDGET_SECONDS,
     OfficialResponse, OfficialTransportError, _get_rejected_document_bytes,
@@ -38,7 +38,8 @@ MAX_RUN_SECONDS = 20 * 60
 MAX_REQUEST_SECONDS = TOTAL_BUDGET_SECONDS + IO_TIMEOUT_SECONDS
 _SHA = re.compile(r"[0-9a-f]{64}\Z")
 _PAGE = re.compile(r"/documents/[1-9][0-9]*/[1-9][0-9]*/\Z")
-_LABEL = re.compile(r"Решение (Коллегии|Совета) (?:ЕЭК|Евразийской экономической комиссии) № ([1-9][0-9]{0,5})\Z")
+_LABEL = re.compile(r"Решение (Коллегии|Совета) (?:ЕЭК|Евразийской экономической комиссии) №\s*([1-9][0-9]{0,5})\Z")
+_SHORT_LABEL = re.compile(r"Решение (Коллегии|Совета) №\s*([1-9][0-9]{0,5})\Z")
 _TRANSPORT_REASONS = {
     "official source exceeded the elapsed time budget": "request_time_budget",
     "official source did not return HTTP 200": "http_non_200",
@@ -145,13 +146,16 @@ def _page_identity(raw: bytes, expected: dict) -> dict:
         if len(labels) != 1 or len(contents) != 1:
             raise LegalCaptureError("document_metadata_missing_or_ambiguous")
         label = _text(labels[0])
-        if label in wanted:
+        if label in wanted or label == "Вид документа":
             if label in values:
                 raise LegalCaptureError("document_metadata_missing_or_ambiguous")
             values[label] = _text(contents[0])
-    if values.keys() != wanted:
+    if not wanted <= values.keys():
         raise LegalCaptureError("document_metadata_missing_or_ambiguous")
     match = _LABEL.fullmatch(values["Короткий заголовок документа"])
+    short = match is None
+    if short:
+        match = _SHORT_LABEL.fullmatch(values["Короткий заголовок документа"])
     literal = values["Дата принятия документа"]
     if match is None or not re.fullmatch(r"[0-9]{2}\.[0-9]{2}\.[0-9]{4}", literal):
         raise LegalCaptureError("document_metadata_identity_mismatch")
@@ -161,6 +165,11 @@ def _page_identity(raw: bytes, expected: dict) -> dict:
         raise LegalCaptureError("document_metadata_identity_mismatch") from None
     identity = {"issuing_body": "collegium" if match[1] == "Коллегии" else "council",
                 "adoption_date": adopted, "number": match[2]}
+    category = _EEC_DECISION_CATEGORY.fullmatch(values.get("Вид документа", ""))
+    if (short and category is None) or (category is not None and (
+            category[1] != ("Коллегия" if match[1] == "Коллегии" else "Совет")
+            or int(category[2]) != int(adopted[:4]))):
+        raise LegalCaptureError("document_metadata_identity_mismatch")
     if identity != expected or values["Номер документа"] != expected["number"]:
         raise LegalCaptureError("document_metadata_identity_mismatch")
     return {"observed_identity": identity, "short_title": values["Короткий заголовок документа"],

@@ -40,6 +40,12 @@ PROBE_SOURCES = (
     ("observed_collegium_document_list", "https://docs.eaeunion.org/documents/399/", "text/html"),
     ("observed_council_document_list", "https://docs.eaeunion.org/documents/401/", "text/html"),
 )
+# A non-strict search label leaves this observed detail page outside the
+# automatic identity plan. Capture it only on explicit selection for review.
+# It was observed on page 7 of Run 34248830768, never inferred from act numbers.
+REVIEW_ONLY_SOURCES = (
+    ("observed_collegium_42_review_page", "https://docs.eaeunion.org/documents/399/6485/", "text/html"),
+)
 MAX_REPORT_BYTES = 128 * 1024
 _TRANSPORT_REASONS = {
     "invalid official source URL": "invalid_source_url",
@@ -89,8 +95,8 @@ def _response_metadata(response: OfficialResponse, requested_url: str, media: st
 def _selected_sources(source_ids=None) -> tuple:
     if source_ids is None:
         return PROBE_SOURCES
-    by_id = {item[0]: item for item in PROBE_SOURCES}
-    if (type(source_ids) not in (list, tuple) or not 1 <= len(source_ids) <= len(PROBE_SOURCES)
+    by_id = {item[0]: item for item in (*PROBE_SOURCES, *REVIEW_ONLY_SOURCES)}
+    if (type(source_ids) not in (list, tuple) or not 1 <= len(source_ids) <= len(by_id)
             or any(type(source_id) is not str or source_id not in by_id for source_id in source_ids)):
         raise ValueError("source identifiers must select a nonempty bounded list of observed sources")
     if len(set(source_ids)) != len(source_ids):
@@ -180,7 +186,7 @@ def main(argv=None, *, fetch=fetch_official) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--store-root", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
-    parser.add_argument("--source-id", dest="source_ids", action="append", choices=[item[0] for item in PROBE_SOURCES],
+    parser.add_argument("--source-id", dest="source_ids", action="append", choices=[item[0] for item in (*PROBE_SOURCES, *REVIEW_ONLY_SOURCES)],
                         help="Repeat to select distinct observed sources; default attempts all eight")
     args = parser.parse_args(argv)
     try:

@@ -26,6 +26,12 @@ _DOCUMENT_IDENTITY = re.compile(
     r"(?:ЕЭК|Евразийской\s+экономической\s+комиссии)\s*№\s*[0-9]{1,6}(?![0-9])",
     re.I,
 )
+_SHORT_DOCUMENT_IDENTITY = re.compile(r"Решение\s+(Коллегии|Совета)\s+№\s*([1-9][0-9]{0,5})", re.I)
+_EEC_DECISION_CATEGORY = re.compile(
+    r"Акты Евразийской экономической комиссии\s+[–-]\s+"
+    r"(Коллегия|Совет) Евразийской экономической комиссии\s+[–-]\s+"
+    r"Решения\s+[–-]\s+([0-9]{4})",
+)
 _FILE_TYPES = {
     "pdf": "application/pdf",
     "docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
@@ -122,13 +128,41 @@ def _attachment_target(href: str, page_url: str) -> str:
     return validate_attachment_url(absolute)
 
 
+def _short_identity_category_matches(body, authority: str) -> bool:
+    """A label omitting EEC needs its own explicit, unambiguous EEC category."""
+    infos = [node for node in body.select(".DocDetail_Info") if _visible(node)]
+    if len(infos) != 1:
+        return False
+    categories, adoptions = [], []
+    for row in infos[0].select(".DocDetail_Row"):
+        if not _visible(row):
+            continue
+        labels = [node for node in row.select(".DocDetail_Col._title") if _visible(node)]
+        values = [node for node in row.select(".DocDetail_Col._value") if _visible(node)]
+        if len(labels) != 1 or len(values) != 1:
+            return False
+        label = " ".join(str(child) for child in labels[0].descendants
+                         if type(child) is NavigableString and _visible(child))
+        label = " ".join(label.split())
+        if label in ("Вид документа", "Дата принятия документа"):
+            value = " ".join(str(child) for child in values[0].descendants
+                             if type(child) is NavigableString and _visible(child))
+            (categories if label == "Вид документа" else adoptions).append(" ".join(value.split()))
+    if len(categories) != 1 or len(adoptions) != 1 or not re.fullmatch(r"[0-9]{2}\.[0-9]{2}\.[0-9]{4}", adoptions[0]):
+        return False
+    category = _EEC_DECISION_CATEGORY.fullmatch(categories[0])
+    return bool(category and category[1] == ("Коллегия" if authority.casefold() == "коллегии" else "Совет")
+                and category[2] == adoptions[0][-4:])
+
+
 def parse_legal_attachments(raw: bytes, page_url: str) -> ETTLegalAttachmentDiscovery:
     """Retain visible PDF references and explicit unsupported attachment links.
 
     No attachment is fetched. Repeated links (language tabs/download buttons)
     remain individually attributable. Missing PDFs return an empty tuple and
     cannot confer completeness. Visible decision labels only identify page shape;
-    dates in its title, metadata or filenames are never interpreted.
+    adoption-year text may only corroborate an abbreviated EEC category. Dates
+    in titles or filenames are not interpreted and no legal date is established.
     """
     try:
         validate_source_url(page_url, allow_portal=True)
@@ -165,6 +199,11 @@ def parse_legal_attachments(raw: bytes, page_url: str) -> ETTLegalAttachmentDisc
         r"Короткий заголовок документа\s+(.{1,500}?)\s+Вид документа", visible_text,
     )
     identities = _DOCUMENT_IDENTITY.findall(identity_fields[0]) if len(identity_fields) == 1 else []
+    if not identities and len(identity_fields) == 1:
+        short = _SHORT_DOCUMENT_IDENTITY.fullmatch(identity_fields[0])
+        if short and _short_identity_category_matches(body, short[1]):
+            # Preserve the actual short title; never insert a missing EEC token.
+            identities = [short[0]]
     if (
         any(label not in visible_text for label in (
             "Правовой портал", "Информация о документе", "Номер документа",
