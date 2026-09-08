@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Capture four previously observed official URLs; no database or legal approval.
+"""Capture observed official URLs; no database or legal approval.
 
 This explicit diagnostic compares the legacy portal locator, its observed canonical
-page, its observed Russian PDF attachment and the second canonical act page. It
+pages, observed Russian PDF attachments and observed public discovery pages. It
 does not discover or synthesize URLs. Successful HTTP acquisition does not verify
 the act identity, adoption/effective dates or completeness of any inventory.
 """
@@ -23,7 +23,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from app.services.ett_artifacts import ArtifactIntegrityError, LocalArtifactStore
 from app.services.ett_transport import (
     MAX_HTML_BYTES, MAX_PDF_BYTES, MAX_REDIRECTS, OfficialResponse,
-    OfficialTransportError, fetch_official, validate_official_url,
+    OfficialTransportError, fetch_official, sanitize_transport_diagnostics, validate_official_url,
 )
 
 # Literal locators observed on official EEC/document pages, never filename guesses.
@@ -32,6 +32,10 @@ PROBE_SOURCES = (
     ("canonical_collegium_66", "https://docs.eaeunion.org/documents/399/6620/", "text/html"),
     ("observed_collegium_66_pdf", "https://docs.eaeunion.org/upload/iblock/393/f3ak35ptlhz2u9paqn79dontu4r2kj8h/err_28042022_66_doc.pdf", "application/pdf"),
     ("canonical_council_76", "https://docs.eaeunion.org/documents/401/6619/", "text/html"),
+    ("observed_council_76_pdf", "https://docs.eaeunion.org/upload/iblock/82b/1h7ofr72qrt3q86uvgi7kwy36d0l66m6/err_28042022_76_doc.pdf", "application/pdf"),
+    ("observed_public_api_landing", "https://docs.eaeunion.org/api/", "text/html"),
+    ("observed_collegium_document_list", "https://docs.eaeunion.org/documents/399/", "text/html"),
+    ("observed_council_document_list", "https://docs.eaeunion.org/documents/401/", "text/html"),
 )
 MAX_REPORT_BYTES = 128 * 1024
 _TRANSPORT_REASONS = {
@@ -82,7 +86,7 @@ def _response_metadata(response: OfficialResponse, requested_url: str, media: st
 def probe_legal_sources(store: LocalArtifactStore, *, fetch=fetch_official) -> dict:
     """Attempt each literal source once through the bounded official transport.
 
-    ``fetch`` is the testing seam; production CLI uses ``fetch_official``. The four
+    ``fetch`` is the testing seam; production CLI uses ``fetch_official``. The eight
     top-level attempts may follow that transport's existing same-host redirect
     limit. No retry, fallback hostname, API mutation or activation is performed.
     """
@@ -102,6 +106,9 @@ def probe_legal_sources(store: LocalArtifactStore, *, fetch=fetch_official) -> d
             # Only exact messages owned by our transport are mapped. Never emit
             # arbitrary exceptions, response bodies, headers or credentials.
             record.update(status="failed", reason=_TRANSPORT_REASONS.get(str(exc), "transport_failure"))
+            diagnostics = sanitize_transport_diagnostics(exc.diagnostics)
+            if diagnostics:
+                record["diagnostics"] = diagnostics
         except ArtifactIntegrityError:
             record.update(status="failed", reason="source_storage_integrity_failure")
         except Exception:

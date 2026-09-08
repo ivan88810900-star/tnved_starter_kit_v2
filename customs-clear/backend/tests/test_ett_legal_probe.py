@@ -16,7 +16,7 @@ def captured(url, *, expected_media):
                             retrieved_at=datetime(2026, 9, 8, tzinfo=timezone.utc))
 
 
-def test_exact_four_observed_sources_and_success_does_not_verify_law(tmp_path):
+def test_exact_eight_observed_sources_and_success_does_not_verify_law(tmp_path):
     store = LocalArtifactStore(tmp_path / "objects")
     calls = []
     def fetch(url, **kwargs):
@@ -24,7 +24,7 @@ def test_exact_four_observed_sources_and_success_does_not_verify_law(tmp_path):
         return captured(url, **kwargs)
     report = probe_legal_sources(store, fetch=fetch)
     assert calls == [(url, media) for _, url, media in PROBE_SOURCES]
-    assert report["attempted_sources"] == report["captured_sources"] == 4
+    assert report["attempted_sources"] == report["captured_sources"] == 8
     assert report["failed_sources"] == 0
     assert report["all_sources_captured"] is True
     for key in ("source_identity_verified", "adoption_dates_verified", "effective_dates_verified", "amendment_inventory_complete", "production_ready", "active_rates_written", "durable_legal_retention_attested"):
@@ -66,8 +66,8 @@ def test_first_failure_does_not_stop_remaining_attempts_or_leak_text(tmp_path, e
             raise exception
         return captured(url, **kwargs)
     report = probe_legal_sources(LocalArtifactStore(tmp_path / "objects"), fetch=fetch)
-    assert len(calls) == report["attempted_sources"] == 4
-    assert report["captured_sources"] == 3
+    assert len(calls) == report["attempted_sources"] == 8
+    assert report["captured_sources"] == 7
     assert report["failed_sources"] == 1
     assert report["results"][0]["reason"] == reason
     assert "SECRET" not in json.dumps(report)
@@ -79,7 +79,7 @@ def test_mismatched_response_identity_is_rejected_without_stopping(tmp_path):
         return captured(PROBE_SOURCES[0][1], **kwargs)
     report = probe_legal_sources(LocalArtifactStore(tmp_path / "objects"), fetch=fetch)
     assert report["captured_sources"] == 1
-    assert report["failed_sources"] == 3
+    assert report["failed_sources"] == 7
     assert all(item["reason"] == "probe_operation_failed" for item in report["results"][1:])
 
 
@@ -95,7 +95,7 @@ def test_cli_explicit_paths_complete_report_and_exit_code(tmp_path, capsys, fail
     code = main(["--store-root", str(tmp_path / "objects"), "--output", str(output)], fetch=fetch)
     assert code == (2 if fail else 0)
     report = json.loads(output.read_text())
-    assert len(report["results"]) == 4
+    assert len(report["results"]) == 8
     assert report["all_sources_captured"] is (not fail)
     assert json.loads(capsys.readouterr().out)["production_ready"] is False
     assert output.stat().st_mode & 0o777 == 0o600
@@ -109,3 +109,23 @@ def test_cli_does_not_overwrite_existing_report_or_fetch(tmp_path, capsys):
     assert main(["--store-root", str(tmp_path / "objects"), "--output", str(output)], fetch=forbidden) == 2
     assert output.read_text() == "existing report"
     assert json.loads(capsys.readouterr().out)["reason"] == "probe_setup_or_report_failed"
+
+
+def test_probe_exposes_only_sanctioned_diagnostic_fields(tmp_path):
+    def fetch(url, **kwargs):
+        raise OfficialTransportError("official source is not a PDF document", diagnostics={
+            "kind": "rejected_document", "magic": "html", "size_bytes": 123,
+            "sha256": "a" * 64, "pdf_header_offset": None,
+            "pdf_header_ending": "absent", "returned_url": "https://example.com/?token=SECRET",
+            "body": "SECRET", "arbitrary_field": "PRIVATE", "url_reason": "SECRET",
+        })
+    report = probe_legal_sources(LocalArtifactStore(tmp_path / "objects"), fetch=fetch)
+    assert report["failed_sources"] == report["attempted_sources"] == 8
+    assert report["captured_sources"] == 0
+    assert report["all_sources_captured"] is False
+    assert report["results"][0]["diagnostics"] == {
+        "kind": "rejected_document", "magic": "html", "size_bytes": 123,
+        "sha256": "a" * 64, "pdf_header_offset": None, "pdf_header_ending": "absent",
+    }
+    assert "SECRET" not in json.dumps(report)
+    assert "PRIVATE" not in json.dumps(report)

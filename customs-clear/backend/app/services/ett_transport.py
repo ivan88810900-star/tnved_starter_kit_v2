@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import re
 import time
+import hashlib
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Literal
@@ -33,6 +34,108 @@ _ENCODED_FORBIDDEN = re.compile(r"%(?:0[0-9a-f]|1[0-9a-f]|25|2f|3f|23|5c|7f)", r
 
 class OfficialTransportError(ValueError):
     """Sanitized acquisition failure; source bodies/headers are never included."""
+
+    def __init__(self, message: str, *, diagnostics: dict | None = None) -> None:
+        super().__init__(message)
+        self._diagnostics = tuple(sanitize_transport_diagnostics(diagnostics).items())
+
+    @property
+    def diagnostics(self) -> dict:
+        return dict(self._diagnostics)
+
+
+def sanitize_transport_diagnostics(value) -> dict:
+    """Return only bounded static classifications/digests, never source text."""
+    if type(value) is not dict:
+        return {}
+    result = {}
+    vocabularies = {
+        "kind": {"rejected_document", "rejected_url", "rejected_redirect"},
+        "magic": {"pdf", "html", "zip", "gzip", "ole", "unknown"},
+        "pdf_header_signature": {"supported_version", "unsupported_version", "not_found"},
+        "pdf_header_ending": {"crlf", "cr", "lf", "other", "absent"},
+        "url_reason": {"missing", "oversized", "controls", "backslash", "query", "fragment", "credentials", "port", "scheme", "host", "missing_path", "encoding", "encoded_reserved", "traversal", "malformed", "cross_host"},
+    }
+    for key, vocabulary in vocabularies.items():
+        item = value.get(key)
+        if type(item) is str and item in vocabulary:
+            result[key] = item
+    size = value.get("size_bytes")
+    if type(size) is int and 0 <= size <= MAX_PDF_BYTES:
+        result["size_bytes"] = size
+    digest = value.get("sha256")
+    if type(digest) is str and re.fullmatch(r"[0-9a-f]{64}", digest):
+        result["sha256"] = digest
+    if "pdf_header_offset" in value:
+        offset = value["pdf_header_offset"]
+        if offset is None or type(offset) is int and 0 <= offset <= 1019:
+            result["pdf_header_offset"] = offset
+    return result
+
+
+def _url_diagnostics(url, *, kind: str = "rejected_url") -> dict:
+    reason = "malformed"
+    if not isinstance(url, str) or not url:
+        reason = "missing"
+    elif len(url) > 4096:
+        reason = "oversized"
+    elif any(ord(c) < 33 or ord(c) == 127 for c in url):
+        reason = "controls"
+    elif "\\" in url:
+        reason = "backslash"
+    elif "?" in url:
+        reason = "query"
+    elif "#" in url:
+        reason = "fragment"
+    else:
+        try:
+            parsed = urlsplit(url)
+            if "@" in parsed.netloc:
+                reason = "credentials"
+            elif ":" in parsed.netloc:
+                reason = "port"
+            elif parsed.scheme and parsed.scheme != "https":
+                reason = "scheme"
+            elif parsed.netloc and parsed.netloc not in OFFICIAL_HOSTS:
+                reason = "host"
+            elif not parsed.path.startswith("/"):
+                reason = "missing_path"
+            elif re.search(r"%(?![0-9a-fA-F]{2})", parsed.path):
+                reason = "encoding"
+            elif _ENCODED_FORBIDDEN.search(parsed.path):
+                reason = "encoded_reserved"
+            elif any(part in {".", ".."} for part in unquote(parsed.path, encoding="utf-8", errors="strict").split("/")):
+                reason = "traversal"
+        except (ValueError, UnicodeError):
+            reason = "encoding"
+    return {"kind": kind, "url_reason": reason}
+
+
+def _document_diagnostics(content: bytes) -> dict:
+    prefix = content[:1024]
+    offset = prefix.find(b"%PDF-")
+    stripped = prefix.removeprefix(b"\xef\xbb\xbf").lstrip()
+    magic = "unknown"
+    if offset >= 0:
+        magic = "pdf"
+    elif re.match(rb"(?:<!doctype\s+html|<html)(?:\s|>)", stripped, re.I):
+        magic = "html"
+    elif prefix.startswith((b"PK\x03\x04", b"PK\x05\x06", b"PK\x07\x08")):
+        magic = "zip"
+    elif prefix.startswith(b"\x1f\x8b"):
+        magic = "gzip"
+    elif prefix.startswith(b"\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1"):
+        magic = "ole"
+    signature = "not_found"
+    ending = "absent"
+    if offset >= 0:
+        header = prefix[offset:]
+        signature = "supported_version" if re.match(rb"%PDF-[12]\.[0-9]", header) else "unsupported_version"
+        if len(header) > 8:
+            ending = "crlf" if header[8:10] == b"\r\n" else "cr" if header[8:9] == b"\r" else "lf" if header[8:9] == b"\n" else "other"
+    return {"kind": "rejected_document", "magic": magic, "size_bytes": len(content),
+            "sha256": hashlib.sha256(content).hexdigest(), "pdf_header_offset": offset if offset >= 0 else None,
+            "pdf_header_signature": signature, "pdf_header_ending": ending}
 
 
 @dataclass(frozen=True)
@@ -59,7 +162,7 @@ controls, traversal, query delimiters and double-encoding do not.
         or any(ord(char) < 33 or ord(char) == 127 for char in url)
         or any(char in url for char in "\\?#")
     ):
-        raise OfficialTransportError("invalid official source URL")
+        raise OfficialTransportError("invalid official source URL", diagnostics=_url_diagnostics(url))
     try:
         parsed = urlsplit(url)
         if (
@@ -74,7 +177,7 @@ controls, traversal, query delimiters and double-encoding do not.
         if any(part in {".", ".."} for part in decoded.split("/")):
             raise ValueError
     except (ValueError, UnicodeError):
-        raise OfficialTransportError("invalid official source URL") from None
+        raise OfficialTransportError("invalid official source URL", diagnostics=_url_diagnostics(url)) from None
     return url
 
 
@@ -103,17 +206,17 @@ def _checked_raw_chunks(response: httpx.Response, deadline: float):
 def _validate_document(content: bytes, expected_media: OfficialMedia) -> None:
     if expected_media == "application/pdf":
         if not re.match(rb"%PDF-[12]\.[0-9](?:\r|\n)", content[:10]):
-            raise OfficialTransportError("official source is not a PDF document")
+            raise OfficialTransportError("official source is not a PDF document", diagnostics=_document_diagnostics(content))
         if not re.search(rb"%%EOF[\t\n\f\r ]*\Z", content[-2048:]):
-            raise OfficialTransportError("official PDF has no terminal EOF marker")
+            raise OfficialTransportError("official PDF has no terminal EOF marker", diagnostics=_document_diagnostics(content))
         return
     # This proves HTML shape, not a valid ETT index. Captcha/login/error pages
     # must additionally fail the separate exact chapter/document discovery gate.
     prefix = content[:64 * 1024].removeprefix(b"\xef\xbb\xbf").lstrip()
     if not re.match(rb"(?:<!doctype\s+html(?:\s|>)|<html(?:\s|>))", prefix, re.I):
-        raise OfficialTransportError("official source is not an HTML document")
+        raise OfficialTransportError("official source is not an HTML document", diagnostics=_document_diagnostics(content))
     if not re.search(rb"<html(?:\s|>)", prefix, re.I):
-        raise OfficialTransportError("official source is not an HTML document")
+        raise OfficialTransportError("official source is not an HTML document", diagnostics=_document_diagnostics(content))
 
 
 def fetch_official(
@@ -172,7 +275,7 @@ def fetch_official(
                             raise OfficialTransportError("official source exceeded the redirect limit")
                         location = response.headers.get("location", "")
                         if not location or len(response.headers.get_list("location")) != 1:
-                            raise OfficialTransportError("official source returned an invalid redirect")
+                            raise OfficialTransportError("official source returned an invalid redirect", diagnostics=_url_diagnostics(location, kind="rejected_redirect"))
                         # Validate raw Location first: urljoin can normalize away
                         # traversal or strip leading whitespace/control characters.
                         if (
@@ -181,10 +284,13 @@ def fetch_official(
                             or _ENCODED_FORBIDDEN.search(location)
                             or any(part in {".", ".."} for part in location.split("/"))
                         ):
-                            raise OfficialTransportError("official source returned an invalid redirect")
-                        target = validate_official_url(urljoin(actual_url, location))
+                            raise OfficialTransportError("official source returned an invalid redirect", diagnostics=_url_diagnostics(location, kind="rejected_redirect"))
+                        try:
+                            target = validate_official_url(urljoin(actual_url, location))
+                        except OfficialTransportError as exc:
+                            raise OfficialTransportError("invalid official source URL", diagnostics={**exc.diagnostics, "kind": "rejected_redirect"}) from None
                         if urlsplit(target).netloc != origin:
-                            raise OfficialTransportError("official source redirected to a different host")
+                            raise OfficialTransportError("official source redirected to a different host", diagnostics={"kind": "rejected_redirect", "url_reason": "cross_host"})
                         # Store the exact URL spelling sent by HTTPX, including
                         # percent-encoding for Unicode relative Location values.
                         target = validate_official_url(str(httpx.URL(target)))

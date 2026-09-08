@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from dataclasses import FrozenInstanceError
 from datetime import timezone
+import hashlib
+import json
 
 import httpx
 import pytest
@@ -40,6 +42,62 @@ def test_pdf_shape_and_original_hash_input_are_retained():
     value = fetch(lambda request: response(PDF, headers={"Content-Type": "application/pdf"}), expected_media="application/pdf")
     assert value.content == PDF
     assert value.media_type == "application/pdf"
+
+
+@pytest.mark.parametrize("content,magic,offset,ending", [
+    (b" \n%PDF-1.7\nSECRET\n%%EOF\n", "pdf", 2, "lf"),
+    (b"%PDF-1.7 SECRET\n%%EOF\n", "pdf", 0, "other"),
+    (b"<!doctype html><html>SECRET</html>", "html", None, "absent"),
+    (b"PK\x03\x04SECRET", "zip", None, "absent"),
+    (b"\x1f\x8bSECRET", "gzip", None, "absent"),
+    (b"\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1SECRET", "ole", None, "absent"),
+    (b"SECRET", "unknown", None, "absent"),
+    (b"x" * 1020 + b"%PDF-1.7\n%%EOF", "unknown", None, "absent"),
+])
+def test_rejected_pdf_diagnostics_are_bounded_and_do_not_relax_shape(content, magic, offset, ending):
+    with pytest.raises(transport.OfficialTransportError, match="not a PDF") as caught:
+        fetch(lambda request: response(content, headers={"Content-Type": "application/pdf"}), expected_media="application/pdf")
+    details = caught.value.diagnostics
+    assert details["kind"] == "rejected_document"
+    assert details["magic"] == magic
+    assert details["pdf_header_offset"] == offset
+    assert details["pdf_header_ending"] == ending
+    assert details["sha256"] == hashlib.sha256(content).hexdigest()
+    assert details["size_bytes"] == len(content)
+    assert "SECRET" not in json.dumps(details)
+    assert "SECRET" not in str(caught.value)
+    details["magic"] = "changed external copy"
+    assert caught.value.diagnostics["magic"] == magic
+
+
+@pytest.mark.parametrize("location,reason", [
+    ("/documents/399/6620/?token=SECRET", "query"),
+    ("/documents/399/6620/#SECRET", "fragment"),
+    ("https://eec.eaeunion.org:443/SECRET", "port"),
+    ("http://eec.eaeunion.org/SECRET", "scheme"),
+    ("https://docs.eaeunion.org/SECRET", "cross_host"),
+    ("https://user:SECRET@eec.eaeunion.org/a", "credentials"),
+    ("/a/%2e%2e/SECRET", "traversal"),
+])
+def test_redirect_rejection_exposes_only_static_reason_without_following(location, reason):
+    calls = []
+    def handler(request):
+        calls.append(request)
+        return response(status=302, headers={"Location": location})
+    with pytest.raises(transport.OfficialTransportError) as caught:
+        fetch(handler)
+    assert len(calls) == 1
+    assert caught.value.diagnostics == {"kind": "rejected_redirect", "url_reason": reason}
+    assert "SECRET" not in json.dumps(caught.value.diagnostics)
+    assert "SECRET" not in str(caught.value)
+
+
+def test_diagnostic_sanitizer_rejects_unknown_keys_values_and_unbounded_numbers():
+    assert transport.sanitize_transport_diagnostics({
+        "kind": "SECRET", "magic": "SECRET", "sha256": "SECRET", "size_bytes": True,
+        "pdf_header_offset": 1024, "pdf_header_ending": "SECRET", "body": "SECRET",
+        "url_reason": "https://example.com/?token=SECRET",
+    }) == {}
 
 
 @pytest.mark.parametrize("url", [
