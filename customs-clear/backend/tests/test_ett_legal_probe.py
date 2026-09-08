@@ -10,17 +10,21 @@ from app.services.ett_transport import OfficialResponse, OfficialTransportError,
 from scripts.probe_ett_legal_sources import PROBE_SOURCES, main, probe_legal_sources
 
 
-def test_unresolved_label_detail_page_requires_explicit_selection(tmp_path):
+@pytest.mark.parametrize("source_id,url", [
+    ("observed_collegium_42_review_page", "https://docs.eaeunion.org/documents/399/6485/"),
+    ("observed_collegium_42_review_pdf", "https://docs.eaeunion.org/upload/iblock/f50/46fwofvvh6dw34qku7vyou54j81p9zml/err_17032022_42_doc.pdf"),
+])
+def test_unresolved_label_detail_page_requires_explicit_selection(tmp_path, source_id, url):
     calls = []
     def fetch(url, **kwargs):
         calls.append(url)
         return captured(url, **kwargs)
     report = probe_legal_sources(LocalArtifactStore(tmp_path / "objects"), fetch=fetch,
-                                 source_ids=["observed_collegium_42_review_page"])
-    assert calls == ["https://docs.eaeunion.org/documents/399/6485/"]
+                                 source_ids=[source_id])
+    assert calls == [url]
     assert report["captured_sources"] == 1
     assert report["source_identity_verified"] is False
-    assert all(source_id != "observed_collegium_42_review_page" for source_id, _, _ in PROBE_SOURCES)
+    assert all(configured_id != source_id for configured_id, _, _ in PROBE_SOURCES)
 
 
 def captured(url, *, expected_media):

@@ -223,10 +223,16 @@ def test_non_posix_environment_fails_explicitly(monkeypatch):
         pdf.extract_pdf_evidence(_small_pdf(), artifact_id="synthetic")
 
 
-def test_encrypted_pdf_is_rejected():
+@pytest.mark.parametrize("user_password", ["reader", ""])
+def test_encrypted_pdf_is_rejected(user_password):
     with pymupdf.open() as document:
         document.new_page()
-        body = document.tobytes(encryption=pymupdf.PDF_ENCRYPT_AES_256, owner_pw="owner", user_pw="reader")
+        body = document.tobytes(encryption=pymupdf.PDF_ENCRYPT_AES_256, owner_pw="owner", user_pw=user_password)
+    if not user_password:
+        with pymupdf.open(stream=body, filetype="pdf") as document:
+            # Reproduce the auto-authentication gap, not just a password prompt.
+            assert not document.needs_pass and not document.is_encrypted
+            assert document.xref_get_key(-1, "Encrypt")[0] != "null"
     with pytest.raises(pdf.PDFEvidenceError, match="failed"):
         pdf.extract_pdf_evidence(body, artifact_id="synthetic")
 

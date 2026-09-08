@@ -45,6 +45,10 @@ PROBE_SOURCES = (
 # It was observed on page 7 of Run 34248830768, never inferred from act numbers.
 REVIEW_ONLY_SOURCES = (
     ("observed_collegium_42_review_page", "https://docs.eaeunion.org/documents/399/6485/", "text/html"),
+    # Exact href at lines 172, 176 and 180 of original detail HTML SHA256
+    # 41060074475c8fccb3fee9f875d3b0433ebf1b6c6aa341317f63e93a30d111ce.
+    # The short-title typo remains unresolved; capturing bytes is not identity approval.
+    ("observed_collegium_42_review_pdf", "https://docs.eaeunion.org/upload/iblock/f50/46fwofvvh6dw34qku7vyou54j81p9zml/err_17032022_42_doc.pdf", "application/pdf"),
 )
 MAX_REPORT_BYTES = 128 * 1024
 _TRANSPORT_REASONS = {

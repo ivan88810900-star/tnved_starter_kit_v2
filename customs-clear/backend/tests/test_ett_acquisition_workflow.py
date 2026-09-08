@@ -168,6 +168,7 @@ def test_legal_source_check_is_explicit_readonly_and_uses_valid_runner_contexts(
 @pytest.mark.parametrize("filename,branch", [
     ("ett-legal-archive-capture.yml", "ops/ett-legal-archive-capture"),
     ("ett-legal-document-capture.yml", "ops/ett-legal-document-capture"),
+    ("ett-observed-legal-source.yml", "ops/ett-observed-legal-source"),
 ])
 def test_additional_legal_captures_have_isolated_readonly_branch_and_runnable_shell(filename, branch):
     document = yaml.load(WORKFLOW_PATH.with_name(filename).read_text(), Loader=yaml.BaseLoader)

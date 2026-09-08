@@ -86,3 +86,25 @@ def test_duplicate_category_cannot_corroborate_an_abbreviated_title():
         _page_identity(raw, EXPECTED)
     with pytest.raises(ETTLegalAttachmentError):
         parse_legal_attachments(raw, PAGE1)
+
+
+def test_original_42_title_typo_is_preserved_despite_independent_metadata_and_pdf_label():
+    from app.services.ett_legal_metadata import parse_legal_metadata
+    stem = "collegium_42_metadata_run_34255440473"
+    fragment = (FIXTURES / (stem + ".fragment.html")).read_bytes()
+    evidence = json.loads((FIXTURES / (stem + ".metadata.json")).read_bytes())
+    assert hashlib.sha256(fragment).hexdigest() == evidence["fragment_sha256"] == "c91ca208de95d0166e05a78b0356418a12f7189c20d3f5004831bcc14731c980"
+    anchor = evidence["descriptive_pdf_anchor"]["raw_html"]
+    assert hashlib.sha256(anchor.encode()).hexdigest() == evidence["descriptive_pdf_anchor"]["raw_html_sha256"]
+    raw = ('<html><head><title>Fixture</title></head><body><div class="Header_Bottom__Title">Правовой портал</div>'
+           '<div class="Box_Title">Информация о документе</div>').encode() + fragment + anchor.encode() + b'</body></html>'
+    metadata = parse_legal_metadata(raw, evidence["source_url"])
+    assert metadata["fields"]["short_title"]["observed_text"] == "Решение Коллеги ЕЭК №42"
+    assert metadata["fields"]["document_number"]["observed_text"] == "42"
+    assert metadata["fields"]["adoption_date"]["observed_iso_date"] == "2022-03-15"
+    assert "Коллегия Евразийской экономической комиссии" in metadata["fields"]["document_type"]["observed_text"]
+    assert "Решение Коллегии №42 от 15 марта 2022 г" in anchor
+    with pytest.raises(LegalCaptureError):
+        _page_identity(raw, evidence["expected_index_identity"])
+    with pytest.raises(ETTLegalAttachmentError):
+        parse_legal_attachments(raw, evidence["source_url"])

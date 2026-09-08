@@ -251,7 +251,11 @@ def _extract_worker(data: bytes, artifact_id: str, chapter: str | None) -> dict[
     pymupdf.TOOLS.mupdf_display_errors(False)
     pymupdf.TOOLS.mupdf_display_warnings(False)
     with pymupdf.open(stream=data, filetype="pdf") as document:
-        if document.needs_pass or document.is_repaired or not 1 <= len(document) <= MAX_PAGES:
+        # Empty user passwords are auto-authenticated by MuPDF, so neither
+        # needs_pass nor is_encrypted alone proves the original is unencrypted.
+        if (document.needs_pass or document.is_encrypted or document.is_repaired
+                or document.xref_get_key(-1, "Encrypt")[0] != "null"
+                or not 1 <= len(document) <= MAX_PAGES):
             raise PDFEvidenceError("Encrypted, repaired or oversized PDF is unsupported")
         pages = []
         total_words = 0
