@@ -31,6 +31,13 @@ class AcquisitionError(ValueError):
     """Incomplete, inconsistent or unsupported official download set."""
 
 
+class AcquisitionDownloadError(AcquisitionError):
+    """Safe identity of a failed public-source request, without response content."""
+    def __init__(self, requested_url: str):
+        super().__init__("Official source download failed")
+        self.requested_url = requested_url
+
+
 def canonical_bytes(value) -> bytes:
     return json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":"), allow_nan=False).encode("utf-8")
 
@@ -171,7 +178,11 @@ def acquire_official(store: LocalArtifactStore, *, _fetch=fetch_official) -> dic
         nonlocal total
         if time.monotonic() - start > MAX_RUN_SECONDS:
             raise AcquisitionError("Acquisition exceeded the elapsed-time budget")
-        response = _fetch(url, expected_media=media)
+        from app.services.ett_transport import OfficialTransportError
+        try:
+            response = _fetch(url, expected_media=media)
+        except OfficialTransportError:
+            raise AcquisitionDownloadError(url) from None
         if response.requested_url != url or response.media_type != media:
             raise AcquisitionError("Response does not match the discovered request")
         if url == INDEX_URL and response.url != INDEX_URL:
@@ -267,7 +278,10 @@ def extract_acquisition(store: LocalArtifactStore, digest: str) -> dict:
     from app.services.ett_pdf_evidence import extract_pdf_evidence
 
     receipt, discovery = load_acquisition(store, digest)
-    references = {ref.url: ref for ref in discovery.documents}
+    references = {}
+    for ref in discovery.documents:
+        if ref.url not in references or ref.chapter is not None:
+            references[ref.url] = ref
     extracted = []
     started = time.monotonic()
     total = 0

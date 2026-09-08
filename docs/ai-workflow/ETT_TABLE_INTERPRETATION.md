@@ -1,6 +1,6 @@
 # ETT complete cells and note evidence — TASK-ETT-003
 
-Status: implementation and historical-corpus verification, 2026-09-08. This continues approved Decision #188 Option A. The **complete current legal rates block is not ready**: current original documents have not been captured in this environment, and no legally reviewed manifest has been produced.
+Status: implementation and historical-corpus verification, 2026-09-08. This continues approved Decision #188 Option A. The **complete current legal rates block is not ready**: the current index has been captured on GitHub, but the complete document set and a legally reviewed manifest have not yet been produced.
 
 ## Source-preserving interpretation
 
@@ -16,7 +16,7 @@ The PDF evidence format now retains text spans with font, size, baseline and coo
 
 Acquisition receipt v2 retains an immutable inventory of actual attachment links found on captured official document pages and downloads discovered PDF attachments. Original and resolved hrefs, visible document identity and source HTML hashes are retained. Unsupported DOCX and other attachments are listed explicitly; their contents are not assumed to be captured. Receipt v1 remains verifiable with its original narrower meaning.
 
-Receipt verification re-derives the attachment plan from retained HTML, checks the inventory object and requires every planned PDF with its original hash and size. It cannot certify undiscovered amendments, an atomic legal edition or the contents of unsupported attachments. Live portal/index DOM compatibility has not been established from current original bytes; synthetic layout fixtures are labeled accordingly.
+Receipt verification re-derives the attachment plan from retained HTML, checks the inventory object and requires every planned PDF with its original hash and size. It cannot certify undiscovered amendments, an atomic legal edition or the contents of unsupported attachments. The original 132,800-byte current index was captured by GitHub Run #34235767121 (SHA-256 `75991416897e2764afc58f20c72dcaff49753b564f8504c383414028a0633072`). Its empty same-target chapter-24 alias is now retained without duplicating or erasing that chapter. Conflicting aliases still fail. The raw fixture and source metadata are retained verbatim. It yields 96 chapters, 101 PDF references / 100 unique PDF URLs and two legal-document links. This validates that specific index layout; current portal HTML still requires a successful capture.
 
 ## Operation
 
@@ -42,7 +42,7 @@ The [reproducible census](evidence/ett-complete-cells-20260908.json) records ori
 
 The explicitly selected historical notes contain 105 identifiers. Chapter references to IDs 106C–117C remain unbound: the audit does not mix this older notes file with a claim of current completeness. All 264 source rows are accounted for, including two unassigned title rows; 42 act-dependent timing clauses and 18 repeal statements remain visible. No rate interval is approved.
 
-The configured backend suite passed 1,726 tests before the final audit-script and workflow-context additions; their focused verification also passed. Frontend passed 37 tests, TypeScript and production build. Isolated SQLite migration and five authenticated/read-only HTTP checks passed. The prior remote Run #15 failed workflow validation before creating jobs: `runner.temp` was invalid at job-level `env`. Paths now come from `$RUNNER_TEMP` in the Prepare step and are passed through `$GITHUB_ENV`; a regression covers this context restriction. New-head remote CI must be checked directly across push and PR events, because the connector's PR-only workflow helper omitted that failed push run.
+The published `18aba33` passed remote push and PR CI, including **1,750 backend tests**, frontend and staging smoke. The subsequent real-index compatibility and acquisition diagnostics corrections have additional focused tests. Frontend passed 37 tests, TypeScript and production build. Isolated SQLite migration and five authenticated/read-only HTTP checks passed. The prior remote Run #15 failed workflow validation before creating jobs: `runner.temp` was invalid at job-level `env`. Paths now come from `$RUNNER_TEMP` in the Prepare step and are passed through `$GITHUB_ENV`; a regression covers this context restriction. Remote CI is checked across both push and PR events, because the connector's PR-only workflow helper omitted that failed push run. The explicit capture branch ran successfully through checkout, setup and packaging, but acquisition stopped on the duplicate alias in the real index. The stored failed result is not a complete capture receipt; the parser correction is being used for the next capture.
 
 ## Remaining gates
 

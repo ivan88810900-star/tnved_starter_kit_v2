@@ -1,6 +1,8 @@
-"""Synthetic HTML layout tests; these are not a retained official acquisition."""
+"""Index topology tests plus one hash-bound retained official HTML regression."""
 from dataclasses import FrozenInstanceError
 import hashlib
+import json
+from pathlib import Path
 
 import pytest
 
@@ -177,3 +179,46 @@ def test_deep_html_cannot_trigger_unbounded_ancestor_walks():
 def test_balanced_but_incorrect_required_tag_order_is_rejected():
     with pytest.raises(ETTIndexError, match="improperly nested"):
         parse_index(change("Описание 01</a></td>", "Описание 01</td></a>"))
+
+
+def test_blank_editorial_chapter_alias_is_retained_without_duplicate_chapter():
+    result = parse_index(change("Описание 24</a>", 'Описание 24</a><a href="ru.2022/published-24-opaque.pdf"><br/></a>'))
+    assert len(result.chapters) == 96
+    aliases = [r for r in result.additional_documents if r.url == result.chapters[23].url]
+    assert len(aliases) == 1
+    assert aliases[0].text == ""
+    assert aliases[0].locator != result.chapters[23].locator
+
+
+def test_blank_chapter_alias_cannot_hide_a_different_target():
+    with pytest.raises(ETTIndexError, match="ambiguous blank"):
+        parse_index(change("Описание 24</a>", 'Описание 24</a><a href="ru.2022/other.pdf"><br/></a>'))
+
+
+def test_retained_official_index_exact_bytes_and_live_dom_regression():
+    root = Path(__file__).parent / "fixtures" / "ett_index"
+    raw = (root / "eec_run_34235767121.html").read_bytes()
+    metadata = json.loads((root / "eec_run_34235767121.metadata.json").read_text())
+    assert len(raw) == metadata["size_bytes"] == 132800
+    assert hashlib.sha256(raw).hexdigest() == metadata["sha256"]
+    assert metadata["source_url"] == INDEX_URL
+    assert metadata["github_actions_run_id"] == "34235767121"
+    result = parse_index(raw)
+    assert result.source_sha256 == metadata["sha256"]
+    assert tuple(r.chapter for r in result.chapters) == EXPECTED_CHAPTERS
+    assert len(result.documents) == 101
+    assert len({r.url for r in result.documents}) == 100
+    assert len(result.additional_documents) == 3
+    assert len(result.amendment_links) == 2
+    assert result.nomenclature_notes.url.endswith("_11.05.2025.pdf")
+    assert result.tariff_notes.url.endswith("_24.08.2026.pdf")
+    assert [r.url for r in result.amendment_links] == [
+        "https://docs.eaeunion.org/docs/ru-ru/01232481/err_28042022_66",
+        "https://docs.eaeunion.org/docs/ru-ru/01232479/err_28042022_76",
+    ]
+    assert result.additional_documents[1].url == result.chapters[23].url == "https://eec.eaeunion.org/upload/files/catr/ett/ru.24_2022.pdf"
+    assert result.additional_documents[1].text == ""
+    assert result.additional_documents[2].url.endswith("_08.02.2024.pdf")
+    assert "11.08.2026 № 102" in result.declaration_text
+    assert result.declaration_sha256 == "005e8d2b7748f06cf5e2dfba9c5b61d4a446854ec634198162d42929a06a8218"
+    assert result.amendment_inventory_complete is False

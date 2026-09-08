@@ -181,8 +181,8 @@ original-byte receipts, reproducible PDF rows and referenced-quote verification;
 TASK-ETT-003 now assembles and lexically parses all 13,289 commodity rows in the
 96 pinned PDFs, preserving typography, note clauses and source diagnostics. The
 old padded heading 0406900000 is not inserted. This is historical evidence; current
-raw acquisition, current note/amendment interpretation and raw-DOM compatibility
-remain unverified. An isolated ops/ett-source-capture push can request read-only
+index raw bytes are now captured and their specific layout is supported. Complete
+current-PDF acquisition and note/amendment interpretation remain unverified. An isolated ops/ett-source-capture push can request read-only
 GitHub acquisition without merging application changes. Positive production staging remains closed until
 legal review and promotion are implemented.
 Keep the curated official bridge OFF before proposing any exact-rule production

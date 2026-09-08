@@ -118,7 +118,12 @@ def main(argv=None) -> int:
         return 0
     except Exception as exc:
         # Structured failure, no secret-bearing source payload or database path.
-        print(json.dumps({"status": "ERROR", "error": "ETT candidate validation or operation failed", "error_type": type(exc).__name__, "production_ready": False}))
+        failure = {"status": "ERROR", "error": "ETT candidate validation or operation failed", "error_type": type(exc).__name__, "production_ready": False}
+        if args.command == "acquire":
+            from app.services.ett_acquisition import AcquisitionDownloadError
+            if isinstance(exc, AcquisitionDownloadError):
+                failure["failed_public_source_url"] = exc.requested_url
+        print(json.dumps(failure))
         return 2
 
 

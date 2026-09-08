@@ -177,7 +177,8 @@ def parse_index(html_bytes: bytes) -> ETTIndexDiscovery:
     The original-byte SHA plus deterministic anchor locators bind discovery to its
     input. ``declaration_text`` retains the visible text (including whitespace),
     not an inferred list of legally effective amendments. The full HTML must also
-    be kept by the caller. Repeated chapter/note links are rejected; supplemental
+    be kept by the caller. Repeated labeled chapter/note links are rejected;
+    blank chapter aliases must repeat that chapter's exact target. Supplemental
     links are retained individually, even if they repeat another target URL.
     """
     if type(html_bytes) is not bytes or not 1 <= len(html_bytes) <= MAX_INDEX_BYTES:
@@ -223,12 +224,21 @@ def parse_index(html_bytes: bytes) -> ETTIndexDiscovery:
             raise ETTIndexError("chapter row has an invalid or reserved chapter label")
         chapter = match[1]
         anchors = [a for a in row.find_all("a") if _visible(a)]
-        if chapter in chapters or len(cells) < 2 or any(_text(c) or c.find("a") for c in cells[2:]) or len(anchors) != 1 or not _text(anchors[0]):
+        labeled = [a for a in anchors if _text(a)]
+        if chapter in chapters or len(cells) < 2 or any(_text(c) or c.find("a") for c in cells[2:]) or len(labeled) != 1:
             raise ETTIndexError("chapter is duplicated or its document row is ambiguous")
-        anchor = anchors[0]
-        if anchor.find_parent(["td", "th"]) is not cells[1]:
+        anchor = labeled[0]
+        if any(a.find_parent(["td", "th"]) is not cells[1] for a in anchors):
             raise ETTIndexError("chapter document is not in the description cell")
-        chapters[chapter] = _reference(anchor, positions[id(anchor)], "chapter", chapter)
+        chapter_reference = _reference(anchor, positions[id(anchor)], "chapter", chapter)
+        # The retained EEC chapter-24 row has an extra blank <a><br></a>
+        # pointing at the same PDF. It is an editorial alias, not a second
+        # chapter definition. Keep it later as supplemental evidence, while a
+        # differently targeted blank anchor makes chapter selection ambiguous.
+        for alias in anchors:
+            if alias is not anchor and _reference(alias, positions[id(alias)], "supplemental_pdf").url != chapter_reference.url:
+                raise ETTIndexError("chapter contains an ambiguous blank document alias")
+        chapters[chapter] = chapter_reference
         chapter_rows.append(row)
         used.add(id(anchor))
     if tuple(sorted(chapters)) != EXPECTED_CHAPTERS:

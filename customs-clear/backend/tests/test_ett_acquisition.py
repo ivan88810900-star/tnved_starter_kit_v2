@@ -11,6 +11,7 @@ from app.services import ett_acquisition as acquisition
 from app.services.ett_artifacts import LocalArtifactStore
 from app.services.ett_index import INDEX_URL, parse_index
 from app.services.ett_transport import OfficialResponse
+from app.services.ett_transport import OfficialTransportError
 from tests.ett_index_fixtures import synthetic_index_html
 
 
@@ -86,6 +87,26 @@ def test_incoherent_capture_timestamps_never_publish_success(store, case):
 def test_fetch_failure_never_returns_success_or_writes_application_tables(store):
     with pytest.raises(ValueError, match="simulated"):
         capture(store, fail_at=8)
+
+
+def test_transport_failure_keeps_public_request_identity_without_exception_payload(store):
+    def fail(url, **kwargs):
+        raise OfficialTransportError("sensitive upstream debug detail")
+    with pytest.raises(acquisition.AcquisitionDownloadError) as error:
+        acquisition.acquire_official(store, _fetch=fail)
+    assert error.value.requested_url == INDEX_URL
+    assert "sensitive" not in str(error.value)
+
+
+def test_cli_acquisition_failure_exposes_only_public_request_identity(tmp_path, monkeypatch, capsys):
+    from scripts import ett_candidates
+    def fail(store):
+        raise acquisition.AcquisitionDownloadError(INDEX_URL)
+    monkeypatch.setattr(acquisition, "acquire_official", fail)
+    assert ett_candidates.main(["acquire", "--store-root", str(tmp_path/'objects')]) == 2
+    result = json.loads(capsys.readouterr().out)
+    assert result["failed_public_source_url"] == INDEX_URL
+    assert result["production_ready"] is False
 
 
 def test_retrieval_does_not_sort_notes_by_file_date(store):
@@ -177,6 +198,26 @@ def test_extraction_uses_verified_original_objects_and_preserves_the_capture(sto
         extracted = json.loads(store.read(item["report_sha256"]))
         assert extracted["artifact_sha256"] == item["source_sha256"]
     acquisition.load_acquisition(store, result["receipt_sha256"])
+
+
+def test_blank_same_document_alias_does_not_erase_the_chapter_role(store, monkeypatch):
+    from app.services import ett_pdf_evidence
+    original = synthetic_index_html()
+    visible = b'<a href="ru.2022/published-24-opaque.pdf">'
+    altered = original.replace(visible, b'<a href="ru.2022/published-24-opaque.pdf"><br></a>' + visible)
+    fetch, _ = fake_fetch()
+    def with_alias(url, **kwargs):
+        response = fetch(url, **kwargs)
+        return replace(response, content=altered) if url == INDEX_URL else response
+    capture_result = acquisition.acquire_official(store, _fetch=with_alias)
+    calls = []
+    def extract(data, *, artifact_id, chapter):
+        calls.append((artifact_id, chapter))
+        return {"chapter": chapter, "artifact_id": artifact_id}
+    monkeypatch.setattr(ett_pdf_evidence, "extract_pdf_evidence", extract)
+    result = acquisition.extract_acquisition(store, capture_result["receipt_sha256"])
+    assert result["chapters"] == 96
+    assert calls.count(("chapter-24", "24")) == 1
 
 
 @pytest.mark.parametrize("mutation", ["missing_pdf", "inventory_hash", "unrelated_pdf", "extra_pdf"])
