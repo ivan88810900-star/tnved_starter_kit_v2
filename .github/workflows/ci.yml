@@ -125,6 +125,7 @@ jobs:
           tests/test_data_refresh.py
           tests/test_build_full_staging_snapshot.py
           tests/test_normative_bundle_exact_rate_scope.py
+          tests/test_ett_*.py
           tests/test_ntm_catalog_baseline.py
           tests/test_run_e2e_scenarios.py
           tests/test_payment_data_coverage.py

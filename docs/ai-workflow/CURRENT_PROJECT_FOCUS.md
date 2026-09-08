@@ -171,9 +171,12 @@ ingestion.
    understandable product questions without virtual/fake customs codes
 
 Parallel (not blocking MVP UI): maintain the official NTM datasets and the DM-0013
-automatic source lifecycle. The immediate data task is an Ivan Decision Memo for a
-versioned official ETT manifest, temporal/as-of rate model and reviewed atomic
-promotion. Until that decision and implementation, positive staging remains closed.
+automatic source lifecycle. Ivan accepted Decision #188 Option A for a versioned
+official ETT manifest, temporal/as-of rate model and reviewed atomic promotion.
+TASK-ETT-001 now implements isolated local candidates, schema-v2 validation,
+versioned tables and date-specific previews without a cloud purchase. The next
+data task is real official acquisition and PDF row/footnote/date binding; positive
+production staging remains closed until legal review and promotion are implemented.
 Keep the curated official bridge OFF before proposing any exact-rule production
 enforcement.
 
@@ -181,10 +184,12 @@ enforcement.
 
 Current next tasks:
 
-- ⚠️ [ETT source-of-truth Decision Memo #188](https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/188): choose versioned snapshots, official
-  96-chapter + global-notes manifest, temporal/as-of resolver, immutable artifact
-  storage and manifest-bound review/promotion. The current DB-derived rate bundle is
-  quarantine-only; direct PDF/OData upsert and automatic activation are not approved.
+- [ETT source-of-truth Decision Memo #188](https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/188): Option A accepted and [TASK-ETT-001 implemented](ETT_VERSIONED_CANDIDATES.md).
+  Local candidate history and temporal previews are tested. Real official
+  acquisition, independently verified PDF row/footnote/date evidence, durable
+  retention, manifest-bound review and production promotion remain unfinished.
+  The DB-derived bundle remains quarantined; old direct PDF/OData/index-hash
+  paths now return REVIEW_REQUIRED and cannot publish rates or false freshness.
 
 - ✅ ADR-0003 / TASK-CANONICAL-005: `stable_id` + `snapshot_id` lifecycle frozen
 - ✅ TASK-CANONICAL-006: TN VED search + code-card consume the additive Canonical

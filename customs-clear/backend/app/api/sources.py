@@ -466,13 +466,12 @@ async def sources_sync_trois(x_admin_token: str | None = Header(None, alias="X-A
 
 @router.post("/sync/ett")
 async def sources_sync_ett(x_admin_token: str | None = Header(None, alias="X-Admin-Token")) -> JSONResponse:
-    """Синхронизация ЕТТ из PDF (прямой парсинг сайта ЕЭК)."""
+    """Quarantined legacy ETT sync; no downloads, rate writes or cache revision."""
     require_admin_token(x_admin_token)
     from ..services.ett_pdf_parser import sync_ett_from_pdfs
     import os
     max_groups = int(os.getenv("ETT_PDF_MAX_GROUPS", "0") or "0")
     data = await sync_ett_from_pdfs(max_groups=max_groups)
-    clear_preview_cache()
     return JSONResponse(data)
 
 

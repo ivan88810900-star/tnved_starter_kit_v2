@@ -41,6 +41,7 @@ from .api import (  # noqa: E402
     currency,
     documents,
     documents_v1,
+    ett_candidates,
     finance,
     non_tariff,
     permits,
@@ -252,6 +253,7 @@ app.include_router(assistant.chat_router, prefix="/api/assistant", tags=["assist
 # Обратная совместимость: старые клиенты вызывали /api/tnved/classify
 app.include_router(classify.router, prefix="/api/tnved/classify", tags=["classify-compat"])
 app.include_router(sources.router, prefix="/api/sources", tags=["sources"])
+app.include_router(ett_candidates.router, prefix="/api/sources/ett/candidates", tags=["ett-candidates"])
 app.include_router(compliance.router, prefix="/api/compliance", tags=["compliance"])
 app.include_router(risk.router, prefix="/api/risk", tags=["risk"])
 app.include_router(search.router, prefix="/api/search", tags=["search"])
