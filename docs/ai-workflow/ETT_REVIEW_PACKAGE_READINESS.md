@@ -1,7 +1,7 @@
 # ETT review package: contract and present input gaps
 
-Status: source-binding prerequisites and first concrete four-code candidate,
-2026-09-08. The package builder is the next isolated implementation; no legal
+Status: deterministic package builder and first concrete four-code dossier,
+2026-09-08. The package builder is implemented and verified; no legal
 review decision or production behavior is added. Continues accepted Decision #188 Option A and the next sequence in
 [ETT versioned candidates](ETT_VERSIONED_CANDIDATES.md).
 
@@ -49,7 +49,45 @@ now supplies a meaningful source-backed review proposal; it does not solve the
 remaining full-catalog legal-date and applicability interpretation. Existing
 acquisition and analysis reports retain their original scope and identity.
 
-## Input and identity contract for the next implementation
+## Implemented input and identity contract
+
+`ett_review_package.py` now implements this contract. It embeds both exact
+canonical manifests (an explicit prior manifest or an explicit initial state),
+replays the complete v2 core acquisition and source roles, recomputes the index
+inventory, current tariff notes, mixed source evidence and semantic diff, and
+records the exact object closure. `verify_review_package` rebuilds the whole
+value and compares every canonical byte; it does not trust a supplied green report.
+
+Supplemental acts have an explicitly narrower check: selected capture records,
+original response metadata, exact page identity and HTML-to-PDF attachment
+bindings. Their full discovery/search plan and unselected capture records are
+not attested. This gap stays in `unresolved`, including when `assembly_ready=true`.
+All legal approval, source completeness, retention and promotion flags remain
+false. Caller-supplied interpretation text is retained as unverified assumptions.
+
+The [concrete v2 dossier](evidence/ett-review-package-20260908.json) for candidate `8f1c56…fe832` has SHA
+`4d4f22daccaef53b14429e3f958359273dcc47467a89d8594b69c9907c586e8c`,
+921,041 bytes and a replayed closure of 113 objects / 43,850,110 bytes.
+It verifies 124/124 referenced occurrences and reproduces identically through
+the CLI. Earlier dossier versions are retained and must not be relabeled as v2.
+
+From `customs-clear/backend`, with explicit operator-selected paths:
+
+```bash
+python3 scripts/ett_review_package.py build /path/to/candidate.json \
+  --initial --acquisition-receipt-sha256 RECEIPT_SHA256 \
+  --supplemental-capture-report-sha256 CAPTURE_SHA256 \
+  --store-root /path/to/objects --output /path/to/new-review-package.json
+python3 scripts/ett_review_package.py verify /path/to/new-review-package.json \
+  --store-root /path/to/objects
+```
+
+Use `--prior-manifest` instead of `--initial` when reviewing a change. The source
+store is read-only; build publishes complete output exclusively, never replaces
+an existing path, and fails safely on non-regular input, replay errors or an
+unready assembly. No database, network, approval or promotion operation is added.
+The 63 service/CLI tests include independent source-shape, URL, deadline, forgery
+and named-pipe regressions.
 
 The source-bound manifest descriptor supplies the derived inventory mode directly.
 Its source artifact must be the sole HTML index at the actual official ETT index
@@ -149,7 +187,7 @@ not supply these checks.
    expose no approval, promotion or application behavior change. Temporary PDF
    worker files remain within the existing extraction boundary.
 
-The next step is a deterministic package bound to this specific candidate and
+The package is now bound to this specific candidate and
 the originals, with selected supplemental-act provenance explicitly separated
 from full core acquisition. Complete legal interpretation, retention attestation
 and promotion remain separate gates. The optional descriptor and typed evidence
