@@ -86,16 +86,31 @@ def _response_metadata(response: OfficialResponse, requested_url: str, media: st
     }
 
 
-def probe_legal_sources(store: LocalArtifactStore, *, fetch=fetch_official) -> dict:
+def _selected_sources(source_ids=None) -> tuple:
+    if source_ids is None:
+        return PROBE_SOURCES
+    by_id = {item[0]: item for item in PROBE_SOURCES}
+    if (type(source_ids) not in (list, tuple) or not 1 <= len(source_ids) <= len(PROBE_SOURCES)
+            or any(type(source_id) is not str or source_id not in by_id for source_id in source_ids)):
+        raise ValueError("source identifiers must select a nonempty bounded list of observed sources")
+    if len(set(source_ids)) != len(source_ids):
+        raise ValueError("source identifiers must be distinct")
+    return tuple(by_id[source_id] for source_id in source_ids)
+
+
+def probe_legal_sources(store: LocalArtifactStore, *, fetch=fetch_official, source_ids=None) -> dict:
     """Attempt each literal source once through the bounded official transport.
 
-    ``fetch`` is the testing seam; production CLI uses ``fetch_official``. The eight
-    top-level attempts may follow that transport's existing same-host redirect
-    limit. No retry, fallback hostname, API mutation or activation is performed.
+    ``fetch`` is the testing seam; production CLI uses ``fetch_official``. By
+    default all eight observed sources are attempted. An explicit nonempty
+    selection preserves its order and cannot add or repeat a source. Success
+    covers that selection only. Transport redirect limits remain unchanged.
+    No retry, fallback hostname, API mutation or activation is performed.
     """
+    selected = _selected_sources(source_ids)
     started_at = _instant(datetime.now(timezone.utc))
     results = []
-    for source_id, url, media in PROBE_SOURCES:
+    for source_id, url, media in selected:
         record = {"source_id": source_id, "requested_url": url, "expected_media_type": media,
                   "attempted_at": _instant(datetime.now(timezone.utc))}
         try:
@@ -132,9 +147,10 @@ def probe_legal_sources(store: LocalArtifactStore, *, fetch=fetch_official) -> d
     succeeded = sum(item["status"] == "captured" for item in results)
     return {
         "schema_version": 1, "probe_kind": "observed_official_source_access",
+        "selected_source_ids": [item[0] for item in selected],
         "started_at": started_at, "finished_at": _instant(datetime.now(timezone.utc)),
         "attempted_sources": len(results), "captured_sources": succeeded,
-        "failed_sources": len(results) - succeeded, "all_sources_captured": succeeded == len(PROBE_SOURCES),
+        "failed_sources": len(results) - succeeded, "all_sources_captured": succeeded == len(selected),
         "retained_rejected_documents": sum("rejected_document_sha256" in item for item in results),
         "source_identity_verified": False, "adoption_dates_verified": False,
         "effective_dates_verified": False, "amendment_inventory_complete": False,
@@ -164,11 +180,17 @@ def main(argv=None, *, fetch=fetch_official) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--store-root", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--source-id", dest="source_ids", action="append", choices=[item[0] for item in PROBE_SOURCES],
+                        help="Repeat to select distinct observed sources; default attempts all eight")
     args = parser.parse_args(argv)
+    try:
+        _selected_sources(args.source_ids)
+    except ValueError:
+        parser.error("source identifiers must be distinct")
     try:
         if args.output.exists() or args.output.is_symlink() or not args.output.parent.is_dir():
             raise ValueError("report destination unavailable")
-        report = probe_legal_sources(LocalArtifactStore(args.store_root), fetch=fetch)
+        report = probe_legal_sources(LocalArtifactStore(args.store_root), fetch=fetch, source_ids=args.source_ids)
         _write_report(args.output, report)
     except Exception:
         print(json.dumps({"status": "ERROR", "reason": "probe_setup_or_report_failed", "production_ready": False}))

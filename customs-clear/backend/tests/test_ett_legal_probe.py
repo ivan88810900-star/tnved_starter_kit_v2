@@ -24,6 +24,7 @@ def test_exact_eight_observed_sources_and_success_does_not_verify_law(tmp_path):
         return captured(url, **kwargs)
     report = probe_legal_sources(store, fetch=fetch)
     assert calls == [(url, media) for _, url, media in PROBE_SOURCES]
+    assert report["selected_source_ids"] == [item[0] for item in PROBE_SOURCES]
     assert report["attempted_sources"] == report["captured_sources"] == 8
     assert report["failed_sources"] == 0
     assert report["all_sources_captured"] is True
@@ -182,3 +183,66 @@ def test_rejected_retention_failure_preserves_rejection_and_continues(tmp_path, 
     assert all(item["reason"] == "invalid_pdf_shape" for item in report["results"])
     assert all(item["rejected_document_retention_reason"] == "rejected_evidence_retention_failed" for item in report["results"])
     assert "PRIVATE" not in json.dumps(report)
+
+
+def test_explicit_pdf_selection_fetches_only_selected_sources_in_requested_order(tmp_path):
+    selected = ["observed_council_76_pdf", "observed_collegium_66_pdf"]
+    calls = []
+    def fetch(url, **kwargs):
+        calls.append((url, kwargs["expected_media"]))
+        return captured(url, **kwargs)
+    report = probe_legal_sources(LocalArtifactStore(tmp_path / "objects"), fetch=fetch, source_ids=selected)
+    by_id = {source_id: (url, media) for source_id, url, media in PROBE_SOURCES}
+    assert calls == [by_id[source_id] for source_id in selected]
+    assert report["selected_source_ids"] == selected
+    assert [item["source_id"] for item in report["results"]] == selected
+    assert report["attempted_sources"] == report["captured_sources"] == 2
+    assert report["all_sources_captured"] is True
+    assert report["amendment_inventory_complete"] is report["source_identity_verified"] is False
+    assert report["production_ready"] is report["active_rates_written"] is False
+
+
+@pytest.mark.parametrize("selected", [[], (), "observed_collegium_66_pdf", ["unknown"],
+                                      ["observed_collegium_66_pdf"] * 2, [None],
+                                      ["observed_collegium_66_pdf"] * 9])
+def test_invalid_selection_is_rejected_before_any_fetch(tmp_path, selected):
+    def forbidden(*args, **kwargs):
+        pytest.fail("invalid selection must not fetch any source")
+    with pytest.raises(ValueError, match="source identifiers"):
+        probe_legal_sources(LocalArtifactStore(tmp_path / "objects"), fetch=forbidden, source_ids=selected)
+
+
+@pytest.mark.parametrize("fail", [False, True])
+def test_cli_pdf_selection_reports_only_selected_denominator(tmp_path, capsys, fail):
+    selected = ["observed_collegium_66_pdf", "observed_council_76_pdf"]
+    calls = []
+    def fetch(url, **kwargs):
+        calls.append(url)
+        if fail and len(calls) == 1:
+            raise OfficialTransportError("official source acquisition failed")
+        return captured(url, **kwargs)
+    output = tmp_path / "probe.json"
+    argv = ["--store-root", str(tmp_path / "objects"), "--output", str(output)]
+    for source_id in selected:
+        argv.extend(["--source-id", source_id])
+    assert main(argv, fetch=fetch) == (2 if fail else 0)
+    report = json.loads(output.read_text())
+    assert report["selected_source_ids"] == selected
+    assert len(calls) == report["attempted_sources"] == 2
+    assert report["captured_sources"] == (1 if fail else 2)
+    assert report["all_sources_captured"] is (not fail)
+    assert json.loads(capsys.readouterr().out)["attempted_sources"] == 2
+
+
+@pytest.mark.parametrize("selected", [["unknown"], ["observed_collegium_66_pdf"] * 2])
+def test_cli_unknown_or_duplicate_source_ids_reject_before_setup(tmp_path, selected):
+    def forbidden(*args, **kwargs):
+        pytest.fail("invalid selection must not fetch")
+    argv = ["--store-root", str(tmp_path / "objects"), "--output", str(tmp_path / "probe.json")]
+    for source_id in selected:
+        argv.extend(["--source-id", source_id])
+    with pytest.raises(SystemExit) as caught:
+        main(argv, fetch=forbidden)
+    assert caught.value.code == 2
+    assert not (tmp_path / "objects").exists()
+    assert not (tmp_path / "probe.json").exists()

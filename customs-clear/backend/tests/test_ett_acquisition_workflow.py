@@ -149,7 +149,9 @@ def test_legal_source_check_is_explicit_readonly_and_uses_valid_runner_contexts(
     assert document["on"] == {"push": {"branches": ["ops/ett-legal-source-check"]}}
     assert document["permissions"] == {"contents": "read"}
     job = document["jobs"]["legal-source-check"]
-    assert int(job["timeout-minutes"]) <= 10
+    # Allow the separately bounded 20-minute observed-page capture, the source
+    # probes, dependency setup and evidence packaging to finish within the job.
+    assert 20 < int(job["timeout-minutes"]) <= 60
     assert job["env"]["CUSTOMSCLEAR_READ_ONLY"] == "1"
     assert "secrets." not in json.dumps(document)
     assert "DATABASE_URL" not in json.dumps(document)

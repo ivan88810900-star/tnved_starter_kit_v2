@@ -14,7 +14,7 @@ concurrency:
 jobs:
   legal-source-check:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 60
     env:
       CUSTOMSCLEAR_READ_ONLY: "1"
       SCHEDULER_ENABLED: "0"
@@ -45,15 +45,25 @@ jobs:
       - name: Install source capture dependencies
         id: install
         run: python -m pip install --disable-pip-version-check -r requirements.txt
-      - name: Check observed official document and discovery URLs
+      - name: Capture original Russian legal PDFs for review
         run: |
           python scripts/probe_ett_legal_sources.py \
-            --store-root "$ETT_PROBE_STORE" --output "$ETT_PROBE_ROOT/report.json"
+            --store-root "$ETT_PROBE_STORE" --output "$ETT_PROBE_ROOT/report.json" \
+            --source-id observed_collegium_66_pdf --source-id observed_council_76_pdf
       - name: Capture the observed public search form
         if: ${{ always() && steps.install.outcome == 'success' }}
         run: |
           python scripts/probe_ett_portal_search.py \
             --store-root "$ETT_PROBE_STORE" --output "$ETT_PROBE_ROOT/portal-search.json"
+      - name: Follow only observed tariff search pages
+        if: ${{ always() && steps.install.outcome == 'success' }}
+        run: |
+          python scripts/capture_ett_portal_search.py \
+            --store-root "$ETT_PROBE_STORE" --output "$ETT_PROBE_ROOT/pagination.json"
+      - name: Capture the pinned Russian OCR model and license
+        if: ${{ always() && steps.install.outcome == 'success' }}
+        run: |
+          python scripts/download_ett_ocr_model.py --output-directory "$ETT_PROBE_ROOT/ocr-model"
       - name: Package original source objects
         if: ${{ always() && steps.prepare.outcome == 'success' }}
         run: tar -C "$ETT_PROBE_ROOT" -czf "$ETT_PROBE_ROOT/objects.tar.gz" store
@@ -65,6 +75,8 @@ jobs:
           path: |
             ${{ runner.temp }}/ett-legal-source-check/report.json
             ${{ runner.temp }}/ett-legal-source-check/portal-search.json
+            ${{ runner.temp }}/ett-legal-source-check/pagination.json
             ${{ runner.temp }}/ett-legal-source-check/objects.tar.gz
+            ${{ runner.temp }}/ett-legal-source-check/ocr-model/
           if-no-files-found: error
           retention-days: 90
