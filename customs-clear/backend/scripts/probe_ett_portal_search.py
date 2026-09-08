@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Capture three public queries through the observed official portal search form.
+"""Capture a fixed public query set through the observed portal search form.
 
 This is a read-only discovery probe, without a DB, authentication, guessed search
 API or legal interpretation. A captured response, including an empty results page,
@@ -37,6 +37,13 @@ PROBE_QUERIES = (
     ("council_168_number", "168"),
     ("observed_council_date", "09.07.2026"),
 )
+# Exact numbers of index amendments not strictly identified in the retained
+# ten-page title search (Run 34248830768). Number hits require separate exact
+# issuer/date/number matching; neither query text nor an empty page is proof.
+MISSING_ACT_QUERIES = tuple(("index_act_number_" + number, number) for number in (
+    "170", "42", "77", "78", "24", "131", "35", "102", "104",
+))
+QUERY_SETS = {"initial": PROBE_QUERIES, "missing_index_acts": MISSING_ACT_QUERIES}
 OBSERVED_FORM_SOURCE_SHA256 = (
     "d9c2c6856efd697ce8a54bda27f7673e88bd344aeaeb9aa5d06331546e1da729",
     "79c4909e92cb4a573dc2347e997dbb7bc7b186d560d1c374a209860d16af586f",
@@ -89,11 +96,14 @@ def _response_metadata(response: OfficialResponse, requested_url: str) -> dict:
     }
 
 
-def probe_portal_search(store: LocalArtifactStore, *, fetch=fetch_portal_search) -> dict:
+def probe_portal_search(store: LocalArtifactStore, *, fetch=fetch_portal_search, query_set="initial") -> dict:
     """Attempt each literal query once, retain originals and continue failures."""
+    if type(query_set) is not str or query_set not in QUERY_SETS:
+        raise ValueError("unknown fixed query set")
+    queries = QUERY_SETS[query_set]
     started_at = _instant(datetime.now(timezone.utc))
     results = []
-    for query_id, query in PROBE_QUERIES:
+    for query_id, query in queries:
         requested_url = PORTAL_SEARCH_URL + "?" + urlencode({"q": query})
         record = {
             "query_id": query_id, "query": query, "requested_url": requested_url,
@@ -118,10 +128,11 @@ def probe_portal_search(store: LocalArtifactStore, *, fetch=fetch_portal_search)
     captured = sum(record["status"] == "captured" for record in results)
     return {
         "schema_version": 1, "probe_kind": "observed_official_portal_search",
+        "query_set": query_set,
         "started_at": started_at, "finished_at": _instant(datetime.now(timezone.utc)),
         "observed_form_source_sha256": list(OBSERVED_FORM_SOURCE_SHA256),
         "attempted_queries": len(results), "captured_queries": captured,
-        "failed_queries": len(results) - captured, "all_queries_captured": captured == len(PROBE_QUERIES),
+        "failed_queries": len(results) - captured, "all_queries_captured": captured == len(queries),
         "source_identity_verified": False, "adoption_dates_verified": False,
         "effective_dates_verified": False, "amendment_inventory_complete": False,
         "search_results_interpreted": False, "document_absence_verified": False,
@@ -150,11 +161,12 @@ def main(argv=None, *, fetch=fetch_portal_search) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--store-root", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--query-set", choices=tuple(QUERY_SETS), default="initial")
     args = parser.parse_args(argv)
     try:
         if args.output.exists() or args.output.is_symlink() or not args.output.parent.is_dir():
             raise ValueError("report destination unavailable")
-        report = probe_portal_search(LocalArtifactStore(args.store_root), fetch=fetch)
+        report = probe_portal_search(LocalArtifactStore(args.store_root), fetch=fetch, query_set=args.query_set)
         _write_report(args.output, report)
     except Exception:
         print(json.dumps({"status": "ERROR", "reason": "probe_setup_or_report_failed", "production_ready": False}))

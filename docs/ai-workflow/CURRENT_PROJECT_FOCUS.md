@@ -175,17 +175,25 @@ automatic source lifecycle. Ivan accepted Decision #188 Option A for a versioned
 official ETT manifest, temporal/as-of rate model and reviewed atomic promotion.
 TASK-ETT-001 now implements isolated local candidates, schema-v2 validation,
 versioned tables and date-specific previews without a cloud purchase. The next
-data task is completing a current official capture and PDF continuation/footnote/date
+data task is completing amendment-body evidence and legal footnote/date
 interpretation. TASK-ETT-002 implements the transport, actual-index discovery,
 original-byte receipts, reproducible PDF rows and referenced-quote verification;
 TASK-ETT-003 now assembles and lexically parses all 13,289 commodity rows in the
 96 pinned PDFs, preserving typography, note clauses and source diagnostics. The
-old padded heading 0406900000 is not inserted. This is historical evidence; current
-index and all 100 core PDFs have now been captured. The verified incomplete-capture
-analysis assembles and parses all 13,293 current table rows across 96 chapters; all
-124 current note IDs bind without gaps. Amendment bodies and effective-date
-interpretation remain unverified: 105 named amendments, 103 without index links. An isolated ops/ett-source-capture push can request read-only
-GitHub acquisition without merging application changes. Positive production staging remains closed until
+old padded heading 0406900000 is not inserted. This is historical evidence.
+[Run #34244241195](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/34244241195)
+has now completed the supported current-source capture with a verified v2 receipt:
+100 core PDFs, two legal portal pages, two PDF attachments and both index captures
+(106 original objects). The [complete-capture evidence](evidence/ett-complete-capture-20260908.json)
+verifies 13,293 current table rows across 96 chapters and 124 note identifiers,
+with no unresolved cells or unbound note references. All 96 chapter reports match
+the prior local audit byte-for-byte; source and parser digests are retained.
+The source-only backup has passed restoration, but legal retention is not attested.
+The two legal PDFs are 29 scanned pages without extractable text. Twenty unsupported
+attachment references (11 unique DOC/DOCX/ZIP URLs) and 103 of 105 named amendments
+without index links remain explicit gaps. Complete legal coverage and effective-date
+interpretation remain unverified. An isolated ops/ett-source-capture push can request
+read-only GitHub acquisition without merging application changes. Positive production staging remains closed until
 legal review and promotion are implemented.
 Keep the curated official bridge OFF before proposing any exact-rule production
 enforcement.
@@ -200,8 +208,11 @@ Current next tasks:
   [TASK-ETT-002](ETT_SOURCE_EVIDENCE.md). [TASK-ETT-003](ETT_TABLE_INTERPRETATION.md)
   adds full cells, source-proven superscript separation, note clauses and actual
   legal attachment capture, with explicit dispatch/isolated-branch CI acquisition.
+  The supported capture completed in Run #34244241195; its 106 originals and
+  receipt have a verified restorable backup. This does not complete the amendment
+  inventory or interpret the two scanned acts and unsupported attachments.
   Complete amendment-body acquisition and legal footnote/date interpretation,
-  durable retention, manifest-bound legal review and production
+  durable legal-retention attestation, manifest-bound legal review and production
   promotion remain unfinished. An exact quote match alone does not approve a rate.
   The DB-derived bundle remains quarantined; old direct PDF/OData/index-hash
   paths now return REVIEW_REQUIRED and cannot publish rates or false freshness.

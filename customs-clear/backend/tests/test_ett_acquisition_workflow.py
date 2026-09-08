@@ -163,3 +163,28 @@ def test_legal_source_check_is_explicit_readonly_and_uses_valid_runner_contexts(
             assert "${{" not in step["run"]
             result = subprocess.run(["bash", "-n"], input=step["run"], text=True, capture_output=True)
             assert result.returncode == 0, result.stderr
+
+
+@pytest.mark.parametrize("filename,branch", [
+    ("ett-legal-archive-capture.yml", "ops/ett-legal-archive-capture"),
+    ("ett-legal-document-capture.yml", "ops/ett-legal-document-capture"),
+])
+def test_additional_legal_captures_have_isolated_readonly_branch_and_runnable_shell(filename, branch):
+    document = yaml.load(WORKFLOW_PATH.with_name(filename).read_text(), Loader=yaml.BaseLoader)
+    assert document["on"] == {"push": {"branches": [branch]}}
+    assert document["permissions"] == {"contents": "read"}
+    assert "secrets." not in json.dumps(document)
+    assert "DATABASE_URL" not in json.dumps(document)
+    for job in document["jobs"].values():
+        assert int(job["timeout-minutes"]) <= 90
+        assert job["env"]["CUSTOMSCLEAR_READ_ONLY"] == "1"
+        assert "runner." not in json.dumps(job["env"])
+        for step in job["steps"]:
+            if "uses" in step:
+                assert re.fullmatch(r"[^@\s]+@[0-9a-f]{40}", step["uses"])
+            if "run" in step:
+                assert "${{" not in step["run"]
+                result = subprocess.run(["bash", "-n"], input=step["run"], text=True, capture_output=True)
+                assert result.returncode == 0, result.stderr
+                for script in re.findall(r"\bpython (scripts/[a-z_]+\.py)\b", step["run"]):
+                    assert (Path(__file__).resolve().parents[1] / script).is_file(), script

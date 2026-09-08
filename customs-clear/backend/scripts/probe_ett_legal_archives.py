@@ -19,7 +19,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from app.services.ett_artifacts import LocalArtifactStore
 from app.services.ett_legal_archives import capture_legal_archives
 
-MAX_REPORT_BYTES = 4 * 1024 * 1024
+MAX_REPORT_BYTES = 8 * 1024 * 1024
 
 
 def _write_report(path: Path, report: dict) -> None:

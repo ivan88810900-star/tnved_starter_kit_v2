@@ -89,6 +89,16 @@ class ETTParserIdentity(_Frozen):
     sha256: SHA256
 
 
+class ETTDerivedAmendmentInventory(_Frozen):
+    """Derived bytes bind an original index; they have no invented source URL."""
+    derivation_kind: Literal["eec_index_amendment_inventory_v1"]
+    source_artifact_id: Identifier
+    source_artifact_sha256: SHA256
+    report_sha256: SHA256
+    report_size_bytes: Annotated[StrictInt, Field(gt=0, le=16 * 1024 * 1024)]
+    parser: ETTParserIdentity
+
+
 class ETTArtifact(_Frozen):
     artifact_id: Identifier
     role: Literal["index", "chapter", "nomenclature_notes", "tariff_notes", "amendment_inventory", "amendment"]
@@ -367,10 +377,20 @@ class ETTManifest(_Frozen):
     coverage_from: date
     coverage_to: date
     parser: ETTParserIdentity
-    artifacts: Annotated[tuple[ETTArtifact, ...], Field(min_length=100, max_length=2048)]
+    artifacts: Annotated[tuple[ETTArtifact, ...], Field(min_length=99, max_length=2048)]
+    derived_amendment_inventory: ETTDerivedAmendmentInventory | None = None
     codes: Annotated[tuple[ETTCodeVersion, ...], Field(min_length=1, max_length=100_000)]
     footnotes: Annotated[tuple[ETTFootnote, ...], Field(max_length=100_000)] = ()
     rate_rules: Annotated[tuple[ETTRateRule, ...], Field(min_length=1, max_length=200_000)]
+
+    @model_serializer(mode="wrap")
+    def preserve_legacy_serialization(self, handler):
+        result = handler(self)
+        # Adding an optional descriptor must not add a null field to existing
+        # schema-v2 bytes, model dumps or manifest identities.
+        if self.derived_amendment_inventory is None:
+            result.pop("derived_amendment_inventory", None)
+        return result
 
     @field_validator("created_at", mode="before")
     @classmethod
@@ -402,8 +422,18 @@ class ETTManifest(_Frozen):
         if sorted(chapters) != list(EXPECTED_CHAPTERS):
             raise ValueError("exactly all 96 ETT chapters are required")
         for role in SINGLETON_ROLES:
+            if role == "amendment_inventory" and self.derived_amendment_inventory is not None:
+                if any(artifact.role == role for artifact in self.artifacts):
+                    raise ValueError("official and derived amendment inventories are mutually exclusive")
+                continue
             if sum(artifact.role == role for artifact in self.artifacts) != 1:
                 raise ValueError(f"exactly one {role} artifact is required")
+        if self.derived_amendment_inventory is not None:
+            binding = self.derived_amendment_inventory
+            source = artifacts.get(binding.source_artifact_id)
+            if (source is None or source.role != "index" or source.media_type != "text/html"
+                    or source.sha256 != binding.source_artifact_sha256):
+                raise ValueError("derived amendment inventory must bind the sole HTML index artifact and its exact SHA256")
         if any(artifact.retrieved_at > self.created_at for artifact in self.artifacts):
             raise ValueError("artifact retrieval must not postdate snapshot creation")
 

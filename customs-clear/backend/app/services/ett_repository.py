@@ -16,6 +16,7 @@ from sqlalchemy.orm import Session
 
 from ..models.ett import ETTArtifact, ETTCodeVersion, ETTFootnote, ETTRateRule, ETTSnapshot
 from .ett_artifacts import LocalArtifactStore
+from .ett_derived_inventory import verify_derived_amendment_inventory
 from .ett_manifest import ETTManifest, canonical_manifest_bytes, manifest_sha256, validate_manifest
 from .opendata_snapshot_evidence import acquire_opendata_write_lock
 
@@ -64,6 +65,7 @@ def _code_version_start(index: dict, rule: Any):
 def _verify_artifacts(manifest: ETTManifest, store: LocalArtifactStore) -> None:
     for artifact in manifest.artifacts:
         store.verify(artifact.sha256, artifact.size_bytes)
+    verify_derived_amendment_inventory(manifest, store)
 
 
 def stage_candidate(db: Session, store: LocalArtifactStore, manifest: ETTManifest) -> dict[str, Any]:
@@ -200,6 +202,7 @@ def semantic_diff(before: ETTManifest | None, after: ETTManifest) -> dict[str, A
         "review_required": True,
         "coverage_changed": before is None or (before.coverage_from, before.coverage_to) != (after.coverage_from, after.coverage_to),
         "parser_changed": before is None or before.parser != after.parser,
+        "derived_amendment_inventory_changed": before is None or before.derived_amendment_inventory != after.derived_amendment_inventory,
     }
     for _, collection, key in _PROJECTIONS:
         old = {_key(item, key, collection): _payload(item) for item in getattr(before, collection)} if before else {}

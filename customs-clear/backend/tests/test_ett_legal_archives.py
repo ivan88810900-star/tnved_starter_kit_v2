@@ -9,6 +9,7 @@ import warnings
 import zipfile
 import zlib
 import json
+from pathlib import Path
 
 import pytest
 import httpx
@@ -65,12 +66,49 @@ def test_inventory_preserves_candidate_bytes_hashes_and_types():
     assert "_selected_payloads" not in repr(result)
 
 
+def test_observed_legacy_filename_bytes_survive_without_guessing_identity():
+    metadata = json.loads((Path(__file__).parent / "fixtures/ett_archives/legacy_filenames.metadata.json").read_text())
+    assert metadata["fixture_kind"] == "observed_filename_metadata_with_synthetic_document_payloads"
+    for archive in metadata["archives"]:
+        synthetic_members = []
+        for index, member in enumerate(archive["members"]):
+            filename_bytes = bytes.fromhex(member["raw_filename_hex"])
+            # Reproduce the literal observed filename bytes and flag, while
+            # keeping the fixture payload tiny and explicitly synthetic.
+            placeholder = str(index) + "x" * (len(filename_bytes) - 1)
+            payload = make_docx() if member["kind"] == "ooxml_docx_candidate" else DOC
+            synthetic_members.append((placeholder, payload))
+        raw = make_zip(synthetic_members)
+        for (placeholder, _), member in zip(synthetic_members, archive["members"]):
+            raw = raw.replace(placeholder.encode("ascii"), bytes.fromhex(member["raw_filename_hex"]))
+        inspected = subject.inspect_legal_archive(raw)
+        assert len(inspected.members) == len(archive["members"])
+        for actual, expected in zip(inspected.members, archive["members"]):
+            filename_bytes = bytes.fromhex(expected["raw_filename_hex"])
+            assert actual.path == filename_bytes.decode("cp437")
+            assert actual.raw_filename_hex == expected["raw_filename_hex"]
+            assert actual.filename_encoding == "cp437_zip_convention"
+            assert actual.utf8_filename_declared is False
+            assert actual.unverified_display_path == expected["unverified_cp866_display"]
+            assert actual.unverified_display_encoding == "cp866"
+            assert actual.kind == expected["kind"] and actual.selected
+
+
+def test_utf8_russian_numero_is_safe_without_normalization_alias():
+    name = "Решение №66.doc"
+    member = subject.inspect_legal_archive(make_zip([(name, DOC)])).members[0]
+    assert member.path == name and member.utf8_filename_declared is True
+    assert member.filename_encoding == "utf-8"
+    assert member.raw_filename_hex == name.encode("utf-8").hex()
+    assert member.unverified_display_path is None
+
+
 @pytest.mark.parametrize("compression", [zipfile.ZIP_STORED, zipfile.ZIP_DEFLATED])
 def test_accepts_bounded_stored_and_deflated(compression):
     assert subject.inspect_legal_archive(make_zip([("act.pdf", PDF)], compression=compression)).members[0].selected
 
 
-@pytest.mark.parametrize("path", ["../act.pdf", "/act.pdf", "a//act.pdf", "a/./act.pdf", "a/../act.pdf", "C:/act.pdf", "a\\act.pdf", "a. /act.pdf", "con.pdf", "a\x01.pdf", "ａｃｔ.pdf", "a/" * 17 + "act.pdf"])
+@pytest.mark.parametrize("path", ["../act.pdf", "/act.pdf", "a//act.pdf", "a/./act.pdf", "a/../act.pdf", "C:/act.pdf", "a\\act.pdf", "a. /act.pdf", "con.pdf", "a\x01.pdf", "a/" * 17 + "act.pdf", "a／act.pdf", "a：act.pdf", "．．/act.pdf", "ｃｏｎ.pdf", "a．/act.pdf", "a\u00a0/act.pdf"])
 def test_rejects_unsafe_paths(path):
     with pytest.raises(subject.LegalArchiveError):
         subject.inspect_legal_archive(make_zip([(path, PDF)]))
@@ -81,6 +119,10 @@ def test_rejects_unsafe_paths(path):
     [("act.pdf", PDF), ("ACT.pdf", PDF)],
     [("A/one.txt", b"x"), ("a/two.txt", b"x")],
     [("a", b"x"), ("a/act.pdf", PDF)],
+    [("№66.doc", DOC), ("No66.doc", DOC)],
+    [("ａｃｔ.pdf", PDF), ("act.pdf", PDF)],
+    [("№/one.txt", b"x"), ("No/two.txt", b"x")],
+    [("№", b"x"), ("No/act.pdf", PDF)],
 ])
 def test_rejects_duplicate_alias_and_file_directory_conflicts(members):
     with pytest.raises(subject.LegalArchiveError):

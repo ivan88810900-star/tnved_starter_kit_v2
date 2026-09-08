@@ -15,6 +15,41 @@ from app.services.ett_transport import OfficialResponse, OfficialTransportError
 from scripts.probe_ett_portal_search import PROBE_QUERIES, main, probe_portal_search
 
 
+def test_missing_act_query_set_remains_fixed_and_never_interprets_number_hits(tmp_path):
+    calls = []
+    def fetch(query):
+        calls.append(query)
+        return source(query)
+    report = probe_portal_search(LocalArtifactStore(tmp_path / "objects"),
+                                 fetch=fetch, query_set="missing_index_acts")
+    assert calls == ["170", "42", "77", "78", "24", "131", "35", "102", "104"]
+    assert report["captured_queries"] == report["attempted_queries"] == 9
+    assert report["all_queries_captured"] is True
+    assert report["source_identity_verified"] is False
+    assert report["document_absence_verified"] is False
+
+
+@pytest.mark.parametrize("query_set", ["custom", "https://evil.example", [], None, 1])
+def test_query_set_is_rejected_before_any_fetch(tmp_path, query_set):
+    calls = []
+    with pytest.raises(ValueError, match="unknown fixed query set"):
+        probe_portal_search(LocalArtifactStore(tmp_path / "objects"),
+                            fetch=lambda query: calls.append(query), query_set=query_set)
+    assert calls == []
+
+
+def test_cli_selects_missing_act_queries(tmp_path):
+    calls = []
+    def fetch(query):
+        calls.append(query)
+        return source(query)
+    output = tmp_path / "report.json"
+    assert main(["--store-root", str(tmp_path / "objects"), "--output", str(output),
+                 "--query-set", "missing_index_acts"], fetch=fetch) == 0
+    assert len(calls) == 9
+    assert json.loads(output.read_text())["query_set"] == "missing_index_acts"
+
+
 def source(query):
     url = PORTAL_SEARCH_URL + "?" + urlencode({"q": query})
     content = ("<!doctype html><html><body>synthetic results: " + query + "</body></html>").encode()

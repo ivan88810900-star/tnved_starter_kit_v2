@@ -1,6 +1,6 @@
 # ETT complete cells and note evidence — TASK-ETT-003
 
-Status: implementation and current-source table verification, 2026-09-08. This continues approved Decision #188 Option A. The **complete current legal rates block is not ready**: the current index and all 100 core PDFs have been captured on GitHub, but the complete legal amendment set and a legally reviewed manifest have not yet been produced.
+Status: implementation, complete supported-plan source capture and current-source table verification, 2026-09-08. This continues approved Decision #188 Option A. Run #34244241195 produced a verified complete technical receipt for the discovered PDF/HTML plan. The **complete current legal rates block is not ready**: unsupported attachments, complete amendment coverage and a legally reviewed manifest remain outstanding.
 
 ## Source-preserving interpretation
 
@@ -16,7 +16,7 @@ The PDF evidence format now retains text spans with font, size, baseline and coo
 
 Acquisition receipt v2 retains an immutable inventory of actual attachment links found on captured official document pages and downloads discovered PDF attachments. Original and resolved hrefs, visible document identity and source HTML hashes are retained. Unsupported DOCX and other attachments are listed explicitly; their contents are not assumed to be captured. Receipt v1 remains verifiable with its original narrower meaning.
 
-Receipt verification re-derives the attachment plan from retained HTML, checks the inventory object and requires every planned PDF with its original hash and size. It cannot certify undiscovered amendments, an atomic legal edition or the contents of unsupported attachments. The original 132,800-byte current index was captured by GitHub Run #34235767121 (SHA-256 `75991416897e2764afc58f20c72dcaff49753b564f8504c383414028a0633072`). Its empty same-target chapter-24 alias is now retained without duplicating or erasing that chapter. Conflicting aliases still fail. The raw fixture and source metadata are retained verbatim. It yields 96 chapters, 101 PDF references / 100 unique PDF URLs and two legal-document links. This validates that specific index layout; current portal HTML still requires a successful capture.
+Receipt verification re-derives the attachment plan from retained HTML, checks the inventory object and requires every planned PDF with its original hash and size. It cannot certify undiscovered amendments, an atomic legal edition or the contents of unsupported attachments. The original 132,800-byte current index was captured by GitHub Run #34235767121 (SHA-256 `75991416897e2764afc58f20c72dcaff49753b564f8504c383414028a0633072`). Its empty same-target chapter-24 alias is now retained without duplicating or erasing that chapter. Conflicting aliases still fail. The raw fixture and source metadata are retained verbatim. It yields 96 chapters, 101 PDF references / 100 unique PDF URLs and two legal-document links. That earlier index capture validated the layout; the subsequent complete capture described below also retains the linked portal HTML and supported PDF attachments.
 
 ## Operation
 
@@ -54,7 +54,7 @@ The previous complete-cell census is retained as evidence of the earlier tested 
 
 ## Current-source verification
 
-[Run #34239100895](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/34239100895) retained the current index and **100 unique core PDFs** before the first legacy portal link failed. The distinct incomplete report is `5b4dda0926a9c4c17a009903bd7b685c092c072e5b53ed297cfd14c78140a873`; it records actual successful request URLs, hashes and timestamps. The original archive was preserved separately from GitHub's temporary retention.
+The earlier [Run #34239100895](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/34239100895) retained the current index and **100 unique core PDFs** before the first legacy portal link failed. Its distinct incomplete report is `5b4dda0926a9c4c17a009903bd7b685c092c072e5b53ed297cfd14c78140a873`; it records actual successful request URLs, hashes and timestamps. The original archive was preserved separately from GitHub's temporary retention. This historical result remains an incomplete capture and is not relabeled as a successful receipt.
 
 The [current corpus audit](evidence/ett-current-cells-20260908.json) re-extracted **96 chapters / 1,537 pages / 13,293 exact unique table codes**. All 13,293 complete duty cells and hierarchical descriptions resolve; no duplicate codes, unresolved cells, empty/scanned chapters or unbound note IDs were found. Current notes contain **124 identifiers**. Independent extraction accounted for all **311/311** note rows; the two unassigned rows form the title. All 140 pages without table headers precede their chapter's table and contain introductory narrative. These checks establish extraction coverage, not current legal applicability.
 
@@ -62,11 +62,21 @@ Compared with the retained historical corpus, chapter 32 replaces `3215110000` a
 
 The [current-note census](evidence/ett-current-notes-20260908.json) preserves 24 absolute windows across 23 notes, 51 starts tied to an act entering into force, 34 repeal statements and 18 notes with unresolved Russian destination/conditional scope. Its 85 literal citations identify 61 distinct acts requiring primary-body review. Recognizing these clauses does not resolve their legal effect.
 
-The current analysis report is `b98c7681f2aeca5c4c1188f76b12ff19b6d03a5387e3bbff1b3d9dd4e4d582ab`. It retains `acquisition_complete=false`, zero verified effective clauses, 103 unlinked named amendments and all legal/promotion blockers. Passing parser checks does not open the production gate.
+The earlier incomplete-capture analysis report is `b98c7681f2aeca5c4c1188f76b12ff19b6d03a5387e3bbff1b3d9dd4e4d582ab`. It retains `acquisition_complete=false` and its original blockers. The later complete technical receipt has its own analysis and provenance below; passing parser checks does not open the production gate.
+
+## Complete supported-plan capture
+
+[Run #34244241195](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/34244241195), at commit `ad8ed8ba055e3371c19e6d614c9809db4086df46`, completed acquisition, extraction and analysis. The verified receipt v2 is `ab67a2d3055a3fcd8416c874b9bc388ce0b0919e4b964e5de7c1f18c08a6f72e`. It binds **100 core PDFs, two legal portal pages, two PDF attachments and two index captures: 106 original objects / 42,836,101 bytes**. The index's semantic discovery plan matches at the start and end, although the original HTML bytes differ. This verifies the supported download plan, not an atomic legal edition.
+
+The [complete-capture evidence](evidence/ett-complete-capture-20260908.json) verifies all 102 PDF extraction reports and all 96 chapter analysis reports against their exact original source hashes. All 96 chapter reports are byte-identical to the prior local current-source audit, and parser hashes match the run commit. The complete analysis `4fc68dfa5cdbc043d9b374e292c12b44dc2c391ea643260eff679ca323bd9991` reports `acquisition_complete=true`, **13,293 unique table codes**, all 13,293 duty cells parsed, **124 note identifiers**, and no unresolved cells or unbound note references. All legal gates remain false, including `legal_inventory_complete`, effective-date verification and production readiness; `legal_rates_resolved=0`.
+
+The two legal PDF attachments are original scans of 12 and 17 pages with zero extractable words or rows; this capture performed no OCR or legal interpretation. The attachment inventory retains **20 unsupported reference occurrences / 11 unique DOC, DOCX or ZIP URLs**, including two ZIP attachments. Their contents were not downloaded by this supported capture. The index still names 105 amendments, only two with literal linked publication pages and 103 without links. These gaps are not closed by the complete technical receipt.
+
+The source-only backup `Tariff_ETT_original_sources_2026-09-08_complete.zip` contains all 106 originals, the canonical receipt, attachment inventory, source-download metadata and compact audit summary. Its 36,476,554 bytes were preserved separately from temporary GitHub retention; every archive entry was reopened and hash-verified. Restoration into `LocalArtifactStore` revalidated the complete receipt without the large reproducible extraction or chapter reports. This backup does not attest immutable legal retention or authorize promotion.
 
 ## Portal discovery and rejected originals
 
-Two original modern portal pages are retained verbatim with capture metadata and replay tests. Each exposes one distinct PDF and six unsupported attachments. Their shared clarification DOCX is preserved exactly as linked; its filename is not used to infer act identity.
+Two original modern portal pages are retained verbatim with capture metadata and replay tests. Each exposes one distinct PDF and six unsupported attachments. The literal link to their shared clarification DOCX is retained; its body is not included in the supported capture and its filename is not used to infer act identity.
 
 The [observed list audit](evidence/ett-legal-list-discovery-20260908.json) parses 100 rows from each of two 2022 decision-year lists. The pages report totals of 205 Collegium and 170 Council decisions, so these first pages are explicitly partial. Exact issuing-body/number/adoption-date matching identifies eight of the 105 named amendments and one of the 61 current-note dependencies. Row text hashes, DOM locators, observed date fields and actual pagination links are retained; none is marked as a verified effective date or complete act body.
 
@@ -74,9 +84,17 @@ A separate discovery-only transport implements the GET search form actually pres
 
 The source-access diagnostics identified an explicit default HTTPS port in the legacy redirect. That same-origin `:443` spelling is now normalized only for observed redirects; initial source/manifest URLs, other origins and nondefault ports remain restricted. Inspection of both retained originals established the exact `%PDF-1.4 Sharp Scanned ImagePDF` header. This narrow producer variant now passes the header/EOF gate without modifying original bytes. Both PDFs open without repair or encryption: 12 and 17 scanned pages, with no text rows. They require a separate verified visual/OCR evidence path before legal interpretation. Rejected original document bytes can now be retained by digest while the request remains `failed`, with `document_validation_passed=false`; they never become successful receipts merely because the bytes exist. This permits inspecting the originals before adjusting a format rule. The open-data landing `/api/` returned non-200 in the observed capture; its availability is not assumed.
 
+## Search replay, scanned acts and archive reinspection
+
+The successful [Run #34248830768](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/34248830768) retained the full actually observed title-search chain: ten pages and 500 rows. Replaying original HTML identifies 96 of 105 index amendments, 59 of 61 note dependencies and the separate founding Council Decision №80 of 14.09.2021. The unambiguous plan therefore has 97 distinct observed document URLs. The remaining rows and unmatched identities stay visible; an exhausted search chain does not prove a complete legal inventory or an act's absence. The capture consumer independently reproduces this plan from the original index, tariff-note PDF and source-bound search reports before requesting any document.
+
+The [OCR evidence](evidence/ett-legal-ocr-20260908.json) records 29 processed scan pages, 5,501 recognized words and source/model/image/TSV hashes. Six pages were visually inspected. Superscript and numeric recognition errors prevent treating OCR table values as approved rates. The original scans and candidate text are retained separately; no effective interval was approved.
+
+The [archive reinspection](evidence/ett-legal-archives-reinspection-20260908.json) preserves the failed original capture and separately validates both retained ZIPs without new network requests. Four DOC and one DOCX member were stored after size, CRC, structure and normalized-path collision checks. Original filename bytes remain authoritative evidence; a CP866 display candidate is explicitly unverified. The correction does not reinterpret the failed historical report as a successful capture or verify legal text.
+
 ## Remaining gates
 
-1. Complete the amendment-body capture, including the 103 named acts with no URL in the index declaration. The current index, all 100 core PDFs and two modern portal HTML pages have been retained; they do not establish complete amendment coverage.
+1. Complete the legal amendment-body evidence beyond the successful supported-plan capture: resolve the 103 named acts without index links and the 20 unsupported attachment references. The 100 core PDFs, two portal pages and two scanned legal PDFs in the complete receipt do not establish complete amendment coverage.
 2. Bind each applicable rate interval, destination and product condition to the current notes and complete amendment evidence. Scan-only or unsupported documents require an explicit verified interpretation path.
 3. Produce and review one specific manifest, then implement retention attestation and reviewed atomic promotion before connecting active product rates.
 

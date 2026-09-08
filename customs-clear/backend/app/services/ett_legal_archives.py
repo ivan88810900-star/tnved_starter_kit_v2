@@ -65,6 +65,11 @@ class LegalArchiveError(ValueError):
 @dataclass(frozen=True)
 class ArchiveMember:
     path: str
+    raw_filename_hex: str
+    filename_encoding: str
+    utf8_filename_declared: bool
+    unverified_display_path: str | None
+    unverified_display_encoding: str | None
     size_bytes: int
     compressed_size_bytes: int
     sha256: str | None
@@ -99,14 +104,26 @@ def _path(value: str, *, directory: bool) -> str:
         raise LegalArchiveError("unsafe_member_path")
     name = value[:-1] if directory and value.endswith("/") else value
     parts = name.split("/")
-    if (len(parts) > 16 or unicodedata.normalize("NFKC", name) != name
+    # Compatibility characters occur in ordinary legacy ZIP filenames (and in
+    # Russian №). Check both spellings; use normalization-aware collision keys
+    # below, without changing identity or silently guessing a legacy code page.
+    if (len(parts) > 16
             or any(not part or part in {".", ".."} or part[-1:] in {" ", "."}
-                   or any(char in part for char in "\\:")
+                   or any(char in part for char in "/\\:")
                    or any(unicodedata.category(char).startswith("C") for char in part)
                    or re.fullmatch(r"(?:con|prn|aux|nul|com[1-9]|lpt[1-9])(?:\..*)?", part, re.I)
-                   for part in parts)):
+                   for original in parts for part in (original, unicodedata.normalize("NFKC", original)))):
         raise LegalArchiveError("unsafe_member_path")
     return name
+
+
+def _path_key(name: str) -> str:
+    return unicodedata.normalize("NFKC", unicodedata.normalize("NFKC", name).casefold())
+
+
+def _raw_filename(raw: bytes, member: zipfile.ZipInfo) -> bytes:
+    name_size = struct.unpack_from("<H", raw, member.header_offset + 26)[0]
+    return raw[member.header_offset + 30:member.header_offset + 30 + name_size]
 
 
 def _extra_fields(extra: bytes) -> None:
@@ -157,14 +174,14 @@ def _zip_layout(raw: bytes, archive: zipfile.ZipFile) -> list[zipfile.ZipInfo]:
     for member in members:
         directory = member.is_dir()
         name = _path(member.orig_filename, directory=directory)
-        key = name.casefold()
+        key = _path_key(name)
         if key in names:
             raise LegalArchiveError("duplicate_or_alias_member_path")
         names[key] = (name, directory)
         parts = name.split("/")
         for length in range(1, len(parts) + int(directory)):
             prefix = "/".join(parts[:length])
-            previous = implicit_directories.setdefault(prefix.casefold(), prefix)
+            previous = implicit_directories.setdefault(_path_key(prefix), prefix)
             if previous != prefix:
                 raise LegalArchiveError("directory_case_alias")
         mode = stat.S_IFMT(member.external_attr >> 16)
@@ -322,7 +339,15 @@ def inspect_legal_archive(raw: bytes) -> ArchiveInspection:
                 retain = kind in {"pdf_candidate", "ole_doc_candidate", "ooxml_docx_candidate"}
                 if retain:
                     selected.append((name, payload))
-                inventory.append(ArchiveMember(name, len(payload), member.compress_size,
+                filename_bytes = _raw_filename(raw, member)
+                declared_utf8 = bool(member.flag_bits & 0x800)
+                # Raw bytes + flag remain authoritative. CP866 is an explicitly
+                # unverified display candidate for these Russian attachments;
+                # it never changes validation, path identity or member lookup.
+                display = filename_bytes.decode("cp866") if not declared_utf8 and any(byte >= 128 for byte in filename_bytes) else None
+                inventory.append(ArchiveMember(name, filename_bytes.hex(), "utf-8" if declared_utf8 else "cp437_zip_convention",
+                                               declared_utf8, display, "cp866" if display is not None else None,
+                                               len(payload), member.compress_size,
                                                None if member.is_dir() else hashlib.sha256(payload).hexdigest(), kind, retain))
         return ArchiveInspection(hashlib.sha256(raw).hexdigest(), len(raw), budget[0], tuple(inventory), tuple(selected))
     except LegalArchiveError:
@@ -420,7 +445,11 @@ def capture_legal_archives(store: LocalArtifactStore, *, fetch=None) -> dict:
                 if digest != hashlib.sha256(payload).hexdigest():
                     raise ArtifactIntegrityError("member digest mismatch")
                 retained[path] = digest
-            members = [{"path": member.path, "size_bytes": member.size_bytes,
+            members = [{"path": member.path, "raw_filename_hex": member.raw_filename_hex,
+                        "filename_encoding": member.filename_encoding, "utf8_filename_declared": member.utf8_filename_declared,
+                        "unverified_display_path": member.unverified_display_path,
+                        "unverified_display_encoding": member.unverified_display_encoding,
+                        "size_bytes": member.size_bytes,
                         "compressed_size_bytes": member.compressed_size_bytes, "sha256": member.sha256,
                         "kind": member.kind, "selected": member.selected,
                         **({"stored_member_sha256": retained[member.path]} if member.selected else {})}
