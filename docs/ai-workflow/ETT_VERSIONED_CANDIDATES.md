@@ -15,7 +15,7 @@ The new isolated path is:
 3. Atomically stage five versioned tables: `ett_snapshots`, `ett_artifacts`, `ett_code_versions`, `ett_footnotes`, `ett_rate_rules`.
 4. Compare candidate revisions and preview a rate for an explicit date, destination and product facts.
 
-The schema requires exactly 96 chapter artifacts (01–76, 78–97), an index, nomenclature notes, tariff notes and an amendment inventory. A structurally present inventory is **not proof** that all current amendments are captured. Evidence binds an artifact hash, page/row locator and exact retained text hash; actual extraction of that text from that PDF is **not independently attested yet**. URL allowlisting is not download provenance.
+The schema requires exactly 96 chapter artifacts (01–76, 78–97), an index, nomenclature notes, tariff notes and an amendment inventory. A structurally present inventory is **not proof** that all current amendments are captured. Evidence binds an artifact hash, page/row locator and exact retained text hash; staging alone does **not** verify extraction of that quote from its PDF. TASK-ETT-002 adds a separate `verify-rows` check, which still does not approve legal interpretation. URL allowlisting is not download provenance.
 
 Dates use explicit half-open intervals `[valid_from, valid_to)` and a finite snapshot coverage window. No dates are inferred from filenames, retrieval time, or HTTP metadata. Multiple nonoverlapping versions of one code are retained. Duty expressions support ad-valorem, specific, sum and maximum of components with exact decimals. Unknown formulas, unresolved footnotes and overlapping rules fail validation; missing product facts return `needs_clarification`. Out-of-window/no-match queries return `unavailable`, never an invented zero.
 
@@ -35,7 +35,7 @@ python3 scripts/ett_candidates.py preview MANIFEST_SHA256 \
   --code 0101210000 --as-of 2026-09-01 --destination RU
 ```
 
-Every artifact declared by the manifest must already exist in the supplied local store, populated through `LocalArtifactStore.put(original_bytes)`. Staging verifies all source objects and retains canonical manifest bytes. The CLI has no network acquisition command. JSON manifests and individual source artifacts are bounded to 64 MiB. Numeric product facts use lossless plain decimal strings or integers; binary floating-point values are rejected. `--facts` accepts a JSON file.
+Every artifact declared by the manifest must already exist in the supplied local store, populated through `LocalArtifactStore.put(original_bytes)`. Staging verifies all source objects and retains canonical manifest bytes. The separate `acquire` and `extract` commands introduced in [TASK-ETT-002](ETT_SOURCE_EVIDENCE.md) prepare technical source evidence without staging a legal candidate. JSON manifests and individual source artifacts are bounded to 64 MiB. Numeric product facts use lossless plain decimal strings or integers; binary floating-point values are rejected. `--facts` accepts a JSON file.
 
 Local publication is atomic and does not overwrite an existing digest. Reads verify hashes, sizes, file identity and private ownership/permissions. Symlinks, hardlinks and unsafe paths are rejected. This POSIX development store is not Object Lock and is not durable archival proof. On systems without POSIX locking, only this optional store fails; importing the application remains possible.
 
@@ -57,8 +57,8 @@ The listing is metadata only and explicitly says `integrity_checked=false`. Prev
 
 ## Next implementation sequence
 
-1. Build the real EEC index acquisition and PDF row-extraction path, including source-body hashes, exact 96 chapter discovery, global notes, and amendment inventory. Downloaded candidates must never directly update `hs_rates`.
-2. Bind code descriptions, rate cells, footnote interpretation and effective dates to verified PDF rows; report all unresolved cases and semantic differences. Reconstructing historical 2022–2026 law is a separate project.
+1. [TASK-ETT-002](ETT_SOURCE_EVIDENCE.md) implements bounded official index acquisition, source-body retention, reproducible PDF rows and a candidate quote verifier. The optional manual CI acquisition path is ready, but current raw source acquisition has not completed; the current index DOM still needs validation against retained HTML. The 96-PDF extraction check uses the pinned historical corpus. No downloaded set directly updates `hs_rates`.
+2. Complete a current capture, then bind full code descriptions, rate cells, footnote interpretation and effective dates to verified PDF rows; report all unresolved cases and semantic differences. Quote existence alone does not verify interpretation. Reconstructing historical 2022–2026 law is a separate project.
 3. Implement manifest-bound review records, retention-capable storage attestation and atomic reviewed promotion, then a compatibility materialization and product `as_of` integration. Architecture approval alone cannot satisfy these gates.
 4. Continue the NTM workstream: exact source-row and registry evidence for SGR, cryptography/notifications, radio equipment, licenses, sanitary/veterinary/phytosanitary conditions, technical conformity and export control. Improve trusted registry checks without changing broad candidates into mandatory documents.
 5. Connect the already implemented source lifecycle to the chosen deployment, verify live behavior and alerts, and keep legal changes review-bound. Merge, deployment and enforcement require their separately agreed authorization.

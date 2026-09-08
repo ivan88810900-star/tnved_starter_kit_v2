@@ -1,0 +1,1651 @@
+{
+  "format": "ett-source-evidence-verification-v1",
+  "date": "2026-09-08",
+  "decision": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/188#issuecomment-5584102215",
+  "verification": {
+    "configured_backend_ci_equivalent_passed": 1326,
+    "new_tests": 270,
+    "existing_ett_tests": 304,
+    "http_smoke": {
+      "authenticated": true,
+      "read_only_startup": true,
+      "synthetic_candidate": true,
+      "health": 200,
+      "candidate_list": 200,
+      "readiness": 200,
+      "preview": 200,
+      "existing_ntm": 200
+    },
+    "workflow_static_contract": true,
+    "database_migrations_changed": false
+  },
+  "corpus": {
+    "scope": "pinned_historical_pdf_inputs_not_current_acquisition",
+    "directory": "backend/app/services/source_sync/data",
+    "chapters": 96,
+    "pages": 1537,
+    "candidate_occurrences": 13318,
+    "candidate_counts_are_not_legal_coverage": true,
+    "unresolved": {
+      "ambiguous_cell_layout": 8,
+      "chapter_mismatch": 1,
+      "continuation_binding_unresolved": 13318,
+      "effective_dates_unresolved": 13318,
+      "footnote_interpretation_unresolved": 13318,
+      "hierarchy_description_unresolved": 13318,
+      "table_header_unconfirmed": 252
+    },
+    "chapter_evidence": [
+      {
+        "chapter": "01",
+        "sha256": "7942d2176d8c728dde35f55cc4871ba230fdef721b30d5c191fd444cd55537c9",
+        "pages": 6,
+        "words": 1583,
+        "candidate_count": 86,
+        "unique_candidate_count": 86,
+        "duplicates": [],
+        "table_headers": 6,
+        "unresolved": {
+          "effective_dates_unresolved": 86,
+          "footnote_interpretation_unresolved": 86,
+          "hierarchy_description_unresolved": 86,
+          "continuation_binding_unresolved": 86
+        }
+      },
+      {
+        "chapter": "02",
+        "sha256": "d026efa23a48105a80f4a9194525f454d36884d7cbc94abaa5843a4fcc871b74",
+        "pages": 59,
+        "words": 17765,
+        "candidate_count": 442,
+        "unique_candidate_count": 433,
+        "duplicates": [
+          "0201209001",
+          "0204505500",
+          "0207609901",
+          "0210111100",
+          "0210121900",
+          "0210193000",
+          "0210196000",
+          "0210197000"
+        ],
+        "table_headers": 51,
+        "unresolved": {
+          "effective_dates_unresolved": 442,
+          "footnote_interpretation_unresolved": 442,
+          "hierarchy_description_unresolved": 442,
+          "continuation_binding_unresolved": 442,
+          "table_header_unconfirmed": 9
+        }
+      },
+      {
+        "chapter": "03",
+        "sha256": "8f5cb9bf465b882778d0530f64221b6fa7b4aaafea492a032be66991115dd059",
+        "pages": 53,
+        "words": 12337,
+        "candidate_count": 532,
+        "unique_candidate_count": 532,
+        "duplicates": [],
+        "table_headers": 53,
+        "unresolved": {
+          "effective_dates_unresolved": 532,
+          "footnote_interpretation_unresolved": 532,
+          "hierarchy_description_unresolved": 532,
+          "continuation_binding_unresolved": 532
+        }
+      },
+      {
+        "chapter": "04",
+        "sha256": "5b94a99f1784e8f82d77883235360b96440781fab68c76c15bdb06a516584277",
+        "pages": 19,
+        "words": 5748,
+        "candidate_count": 186,
+        "unique_candidate_count": 186,
+        "duplicates": [],
+        "table_headers": 17,
+        "unresolved": {
+          "effective_dates_unresolved": 186,
+          "footnote_interpretation_unresolved": 186,
+          "hierarchy_description_unresolved": 186,
+          "continuation_binding_unresolved": 186
+        }
+      },
+      {
+        "chapter": "05",
+        "sha256": "2e7670fe509fe6ce6175f3edd6ed52a29cb1aca1644cbcdc77ffd2fcbdce6a4a",
+        "pages": 4,
+        "words": 980,
+        "candidate_count": 33,
+        "unique_candidate_count": 33,
+        "duplicates": [],
+        "table_headers": 4,
+        "unresolved": {
+          "effective_dates_unresolved": 33,
+          "footnote_interpretation_unresolved": 33,
+          "hierarchy_description_unresolved": 33,
+          "continuation_binding_unresolved": 33
+        }
+      },
+      {
+        "chapter": "06",
+        "sha256": "6cd11b8b134d4f3712137966bdb757d81bc9720e3da6abb5c6183ad1960bbbf3",
+        "pages": 5,
+        "words": 1124,
+        "candidate_count": 46,
+        "unique_candidate_count": 46,
+        "duplicates": [],
+        "table_headers": 5,
+        "unresolved": {
+          "effective_dates_unresolved": 46,
+          "footnote_interpretation_unresolved": 46,
+          "hierarchy_description_unresolved": 46,
+          "continuation_binding_unresolved": 46
+        }
+      },
+      {
+        "chapter": "07",
+        "sha256": "75080d3883897f0d697347093454326d6ba05f0e9796d6eeb97bc15dbe1e3f88",
+        "pages": 10,
+        "words": 2655,
+        "candidate_count": 139,
+        "unique_candidate_count": 139,
+        "duplicates": [],
+        "table_headers": 10,
+        "unresolved": {
+          "effective_dates_unresolved": 139,
+          "footnote_interpretation_unresolved": 139,
+          "hierarchy_description_unresolved": 139,
+          "continuation_binding_unresolved": 139
+        }
+      },
+      {
+        "chapter": "08",
+        "sha256": "e4c6e8d764375e793281554732cde740411d4faa0abd80bfe4b5250994f60bd4",
+        "pages": 11,
+        "words": 2740,
+        "candidate_count": 138,
+        "unique_candidate_count": 137,
+        "duplicates": [
+          "0813503100"
+        ],
+        "table_headers": 10,
+        "unresolved": {
+          "effective_dates_unresolved": 138,
+          "footnote_interpretation_unresolved": 138,
+          "hierarchy_description_unresolved": 138,
+          "continuation_binding_unresolved": 138,
+          "table_header_unconfirmed": 1
+        }
+      },
+      {
+        "chapter": "09",
+        "sha256": "1efd21071ce9701f1d42f7ceca100d0fff2d951e454f9274759ca66d85d6efa6",
+        "pages": 5,
+        "words": 1377,
+        "candidate_count": 64,
+        "unique_candidate_count": 64,
+        "duplicates": [],
+        "table_headers": 5,
+        "unresolved": {
+          "effective_dates_unresolved": 64,
+          "footnote_interpretation_unresolved": 64,
+          "hierarchy_description_unresolved": 64,
+          "continuation_binding_unresolved": 64
+        }
+      },
+      {
+        "chapter": "10",
+        "sha256": "22986cc7cbca59417296f14dbe5668dbcd10cf585ae9e9ad6dabad1eeaadc887",
+        "pages": 7,
+        "words": 2078,
+        "candidate_count": 68,
+        "unique_candidate_count": 66,
+        "duplicates": [
+          "1006109600",
+          "1006309600"
+        ],
+        "table_headers": 6,
+        "unresolved": {
+          "effective_dates_unresolved": 68,
+          "footnote_interpretation_unresolved": 68,
+          "hierarchy_description_unresolved": 68,
+          "continuation_binding_unresolved": 68,
+          "table_header_unconfirmed": 2
+        }
+      },
+      {
+        "chapter": "11",
+        "sha256": "260c816907338028f08ac33d3b3389c2d2ac8097fbc95eb70f74ec405fa299e6",
+        "pages": 8,
+        "words": 1980,
+        "candidate_count": 75,
+        "unique_candidate_count": 75,
+        "duplicates": [],
+        "table_headers": 6,
+        "unresolved": {
+          "effective_dates_unresolved": 75,
+          "footnote_interpretation_unresolved": 75,
+          "hierarchy_description_unresolved": 75,
+          "continuation_binding_unresolved": 75
+        }
+      },
+      {
+        "chapter": "12",
+        "sha256": "bfdc6f500387a69c116d8ce16a8a15c06fc8af00ecc7419e66aa31686db27650",
+        "pages": 8,
+        "words": 1880,
+        "candidate_count": 81,
+        "unique_candidate_count": 81,
+        "duplicates": [],
+        "table_headers": 7,
+        "unresolved": {
+          "effective_dates_unresolved": 81,
+          "footnote_interpretation_unresolved": 81,
+          "hierarchy_description_unresolved": 81,
+          "continuation_binding_unresolved": 81
+        }
+      },
+      {
+        "chapter": "13",
+        "sha256": "ddc4cd6b3dd7d78fc856ffb7bee7bf308144df500e206a22e883b15dbf7f25b1",
+        "pages": 2,
+        "words": 450,
+        "candidate_count": 14,
+        "unique_candidate_count": 14,
+        "duplicates": [],
+        "table_headers": 2,
+        "unresolved": {
+          "effective_dates_unresolved": 14,
+          "footnote_interpretation_unresolved": 14,
+          "hierarchy_description_unresolved": 14,
+          "continuation_binding_unresolved": 14
+        }
+      },
+      {
+        "chapter": "14",
+        "sha256": "6589f39bda3dec76d4167e7bd6fed0ba81ca87444860f3cecc4f3e6f85ccc64d",
+        "pages": 2,
+        "words": 352,
+        "candidate_count": 6,
+        "unique_candidate_count": 6,
+        "duplicates": [],
+        "table_headers": 2,
+        "unresolved": {
+          "effective_dates_unresolved": 6,
+          "footnote_interpretation_unresolved": 6,
+          "hierarchy_description_unresolved": 6,
+          "continuation_binding_unresolved": 6
+        }
+      },
+      {
+        "chapter": "15",
+        "sha256": "7ae3b93d5011cda4449d75039dbcbb6cd8e8853b8ffa6698db22960476c1553a",
+        "pages": 21,
+        "words": 4896,
+        "candidate_count": 156,
+        "unique_candidate_count": 156,
+        "duplicates": [],
+        "table_headers": 19,
+        "unresolved": {
+          "effective_dates_unresolved": 156,
+          "footnote_interpretation_unresolved": 156,
+          "hierarchy_description_unresolved": 156,
+          "continuation_binding_unresolved": 156
+        }
+      },
+      {
+        "chapter": "16",
+        "sha256": "15570c27486bbae4e5545cb2cc92eeb0775262c730c0622af03ce324e46a5061",
+        "pages": 11,
+        "words": 3154,
+        "candidate_count": 117,
+        "unique_candidate_count": 114,
+        "duplicates": [
+          "1602491500",
+          "1602906100"
+        ],
+        "table_headers": 10,
+        "unresolved": {
+          "effective_dates_unresolved": 117,
+          "footnote_interpretation_unresolved": 117,
+          "hierarchy_description_unresolved": 117,
+          "continuation_binding_unresolved": 117,
+          "table_header_unconfirmed": 3
+        }
+      },
+      {
+        "chapter": "17",
+        "sha256": "dfd21c0be4bad3d6306a8298a20ad4ff6df4f4a207bbae82236a89772136ea36",
+        "pages": 19,
+        "words": 5236,
+        "candidate_count": 130,
+        "unique_candidate_count": 130,
+        "duplicates": [],
+        "table_headers": 18,
+        "unresolved": {
+          "effective_dates_unresolved": 130,
+          "footnote_interpretation_unresolved": 130,
+          "hierarchy_description_unresolved": 130,
+          "continuation_binding_unresolved": 130
+        }
+      },
+      {
+        "chapter": "18",
+        "sha256": "90eee6f644e866ab2d06ee26fed1b4fa54f21f7f6cb4cfb10461051a80335816",
+        "pages": 4,
+        "words": 825,
+        "candidate_count": 29,
+        "unique_candidate_count": 29,
+        "duplicates": [],
+        "table_headers": 4,
+        "unresolved": {
+          "effective_dates_unresolved": 29,
+          "footnote_interpretation_unresolved": 29,
+          "hierarchy_description_unresolved": 29,
+          "continuation_binding_unresolved": 29
+        }
+      },
+      {
+        "chapter": "19",
+        "sha256": "1eeee5eadd2d095038b287ddae6756d0ff580013f9f0ee6085aece474aec5f55",
+        "pages": 8,
+        "words": 1864,
+        "candidate_count": 51,
+        "unique_candidate_count": 51,
+        "duplicates": [],
+        "table_headers": 7,
+        "unresolved": {
+          "effective_dates_unresolved": 51,
+          "footnote_interpretation_unresolved": 51,
+          "hierarchy_description_unresolved": 51,
+          "continuation_binding_unresolved": 51
+        }
+      },
+      {
+        "chapter": "20",
+        "sha256": "0d766331e83704cdaf0b260c4968e8e10cb2ee122261a1be1bacec4b8d332a37",
+        "pages": 46,
+        "words": 13052,
+        "candidate_count": 401,
+        "unique_candidate_count": 399,
+        "duplicates": [
+          "2008501100",
+          "2008971200"
+        ],
+        "table_headers": 43,
+        "unresolved": {
+          "effective_dates_unresolved": 401,
+          "footnote_interpretation_unresolved": 401,
+          "hierarchy_description_unresolved": 401,
+          "continuation_binding_unresolved": 401,
+          "table_header_unconfirmed": 2
+        }
+      },
+      {
+        "chapter": "21",
+        "sha256": "acb6761fd931e6e0ab07b3974bd3291b962bb6ad6c0617a7461acced446de85f",
+        "pages": 7,
+        "words": 1894,
+        "candidate_count": 59,
+        "unique_candidate_count": 59,
+        "duplicates": [],
+        "table_headers": 6,
+        "unresolved": {
+          "effective_dates_unresolved": 59,
+          "footnote_interpretation_unresolved": 59,
+          "hierarchy_description_unresolved": 59,
+          "continuation_binding_unresolved": 59
+        }
+      },
+      {
+        "chapter": "22",
+        "sha256": "d36ff91756bda80cf54895843e8c5fca75897b26d6e77596f29a885f06b375d7",
+        "pages": 27,
+        "words": 7990,
+        "candidate_count": 267,
+        "unique_candidate_count": 266,
+        "duplicates": [
+          "2204221100"
+        ],
+        "table_headers": 24,
+        "unresolved": {
+          "effective_dates_unresolved": 267,
+          "footnote_interpretation_unresolved": 267,
+          "hierarchy_description_unresolved": 267,
+          "continuation_binding_unresolved": 267,
+          "table_header_unconfirmed": 1
+        }
+      },
+      {
+        "chapter": "23",
+        "sha256": "8f11edeb8907b0f325c3c492943880fa6872839f05cac57d3701de066bbee775",
+        "pages": 10,
+        "words": 2494,
+        "candidate_count": 67,
+        "unique_candidate_count": 67,
+        "duplicates": [],
+        "table_headers": 9,
+        "unresolved": {
+          "effective_dates_unresolved": 67,
+          "footnote_interpretation_unresolved": 67,
+          "hierarchy_description_unresolved": 67,
+          "continuation_binding_unresolved": 67,
+          "chapter_mismatch": 1,
+          "table_header_unconfirmed": 1
+        }
+      },
+      {
+        "chapter": "24",
+        "sha256": "2b4d840d43b2ba88fdf1870d006e1248927b5120b3806c4822ca96d6a24e688b",
+        "pages": 4,
+        "words": 854,
+        "candidate_count": 33,
+        "unique_candidate_count": 33,
+        "duplicates": [],
+        "table_headers": 4,
+        "unresolved": {
+          "effective_dates_unresolved": 33,
+          "footnote_interpretation_unresolved": 33,
+          "hierarchy_description_unresolved": 33,
+          "continuation_binding_unresolved": 33
+        }
+      },
+      {
+        "chapter": "25",
+        "sha256": "9dbc2532eca36d9a36831bf5904f1c97e1554ea52ace97143e72673e62be0bee",
+        "pages": 10,
+        "words": 2177,
+        "candidate_count": 81,
+        "unique_candidate_count": 81,
+        "duplicates": [],
+        "table_headers": 8,
+        "unresolved": {
+          "effective_dates_unresolved": 81,
+          "footnote_interpretation_unresolved": 81,
+          "hierarchy_description_unresolved": 81,
+          "continuation_binding_unresolved": 81,
+          "table_header_unconfirmed": 9
+        }
+      },
+      {
+        "chapter": "26",
+        "sha256": "c73f5b34c5b0517f9dd410d7c9c9e9a7fc5a345091a14d354ad01ae4af4d1d08",
+        "pages": 5,
+        "words": 1162,
+        "candidate_count": 50,
+        "unique_candidate_count": 50,
+        "duplicates": [],
+        "table_headers": 4,
+        "unresolved": {
+          "effective_dates_unresolved": 50,
+          "footnote_interpretation_unresolved": 50,
+          "hierarchy_description_unresolved": 50,
+          "continuation_binding_unresolved": 50
+        }
+      },
+      {
+        "chapter": "27",
+        "sha256": "013f95540459762ba4541a236af89d9ff81cca9f04fa62b503f45cabf956b4f7",
+        "pages": 19,
+        "words": 5258,
+        "candidate_count": 156,
+        "unique_candidate_count": 151,
+        "duplicates": [
+          "2710193100",
+          "2710199800",
+          "2710201100",
+          "2710203901"
+        ],
+        "table_headers": 15,
+        "unresolved": {
+          "effective_dates_unresolved": 156,
+          "footnote_interpretation_unresolved": 156,
+          "hierarchy_description_unresolved": 156,
+          "continuation_binding_unresolved": 156,
+          "table_header_unconfirmed": 5,
+          "ambiguous_cell_layout": 8
+        }
+      },
+      {
+        "chapter": "28",
+        "sha256": "ef41c2e303684c68cb796931ef8d8fcb5cd9b47c2eeac9038ff6f4911283113a",
+        "pages": 24,
+        "words": 5725,
+        "candidate_count": 266,
+        "unique_candidate_count": 266,
+        "duplicates": [],
+        "table_headers": 21,
+        "unresolved": {
+          "effective_dates_unresolved": 266,
+          "footnote_interpretation_unresolved": 266,
+          "hierarchy_description_unresolved": 266,
+          "continuation_binding_unresolved": 266
+        }
+      },
+      {
+        "chapter": "29",
+        "sha256": "d0b2869ed1f7c11eb94f3e26e7ce061d46dd0329cf47e98788712f39e57598f1",
+        "pages": 50,
+        "words": 10855,
+        "candidate_count": 539,
+        "unique_candidate_count": 539,
+        "duplicates": [],
+        "table_headers": 46,
+        "unresolved": {
+          "effective_dates_unresolved": 539,
+          "footnote_interpretation_unresolved": 539,
+          "hierarchy_description_unresolved": 539,
+          "continuation_binding_unresolved": 539,
+          "table_header_unconfirmed": 9
+        }
+      },
+      {
+        "chapter": "30",
+        "sha256": "5f4ea9bc3534c7d01b314eb7fd9219a38d8dd74d69960394f55c929f686d0249",
+        "pages": 14,
+        "words": 2920,
+        "candidate_count": 82,
+        "unique_candidate_count": 82,
+        "duplicates": [],
+        "table_headers": 12,
+        "unresolved": {
+          "effective_dates_unresolved": 82,
+          "footnote_interpretation_unresolved": 82,
+          "hierarchy_description_unresolved": 82,
+          "continuation_binding_unresolved": 82
+        }
+      },
+      {
+        "chapter": "31",
+        "sha256": "e2787e2b31953994570aef12659aae04aef69b87dd172b44123552fa56472a97",
+        "pages": 6,
+        "words": 1399,
+        "candidate_count": 34,
+        "unique_candidate_count": 34,
+        "duplicates": [],
+        "table_headers": 4,
+        "unresolved": {
+          "effective_dates_unresolved": 34,
+          "footnote_interpretation_unresolved": 34,
+          "hierarchy_description_unresolved": 34,
+          "continuation_binding_unresolved": 34
+        }
+      },
+      {
+        "chapter": "32",
+        "sha256": "235eea305fc9e929903b7c731361c2b8d93dd446aeef5b3243c817cff11b6cb4",
+        "pages": 10,
+        "words": 2142,
+        "candidate_count": 70,
+        "unique_candidate_count": 70,
+        "duplicates": [],
+        "table_headers": 9,
+        "unresolved": {
+          "effective_dates_unresolved": 70,
+          "footnote_interpretation_unresolved": 70,
+          "hierarchy_description_unresolved": 70,
+          "continuation_binding_unresolved": 70
+        }
+      },
+      {
+        "chapter": "33",
+        "sha256": "26eb35574b88e98b4e0a041350eef22cfde7ad98f740464dd5837085bcc51dc3",
+        "pages": 5,
+        "words": 1239,
+        "candidate_count": 51,
+        "unique_candidate_count": 51,
+        "duplicates": [],
+        "table_headers": 5,
+        "unresolved": {
+          "effective_dates_unresolved": 51,
+          "footnote_interpretation_unresolved": 51,
+          "hierarchy_description_unresolved": 51,
+          "continuation_binding_unresolved": 51
+        }
+      },
+      {
+        "chapter": "34",
+        "sha256": "d055b4b41bf8f72b131d08b77982a61f9231843b2e896fa61170f3f75c71532b",
+        "pages": 7,
+        "words": 1429,
+        "candidate_count": 36,
+        "unique_candidate_count": 36,
+        "duplicates": [],
+        "table_headers": 6,
+        "unresolved": {
+          "effective_dates_unresolved": 36,
+          "footnote_interpretation_unresolved": 36,
+          "hierarchy_description_unresolved": 36,
+          "continuation_binding_unresolved": 36
+        }
+      },
+      {
+        "chapter": "35",
+        "sha256": "199b267433c23f0eccb35d9695ef4bb6ec6dc8e31dd9e7f7efda94dc49fd65c5",
+        "pages": 5,
+        "words": 1044,
+        "candidate_count": 35,
+        "unique_candidate_count": 35,
+        "duplicates": [],
+        "table_headers": 5,
+        "unresolved": {
+          "effective_dates_unresolved": 35,
+          "footnote_interpretation_unresolved": 35,
+          "hierarchy_description_unresolved": 35,
+          "continuation_binding_unresolved": 35
+        }
+      },
+      {
+        "chapter": "36",
+        "sha256": "1be7c23e6d14a48cff9302a011805dbe9bb37946c619ef2953172255a203f716",
+        "pages": 2,
+        "words": 398,
+        "candidate_count": 16,
+        "unique_candidate_count": 16,
+        "duplicates": [],
+        "table_headers": 2,
+        "unresolved": {
+          "effective_dates_unresolved": 16,
+          "footnote_interpretation_unresolved": 16,
+          "hierarchy_description_unresolved": 16,
+          "continuation_binding_unresolved": 16
+        }
+      },
+      {
+        "chapter": "37",
+        "sha256": "998fca6b6aa238f91b65ea1e852767f9e286cfbee500f32fa5ad81b619ab1918",
+        "pages": 5,
+        "words": 1054,
+        "candidate_count": 43,
+        "unique_candidate_count": 43,
+        "duplicates": [],
+        "table_headers": 5,
+        "unresolved": {
+          "effective_dates_unresolved": 43,
+          "footnote_interpretation_unresolved": 43,
+          "hierarchy_description_unresolved": 43,
+          "continuation_binding_unresolved": 43
+        }
+      },
+      {
+        "chapter": "38",
+        "sha256": "4d8798483fbe725cb05142a953493b93f6b8ad87ae4f545c8664fada59215c1d",
+        "pages": 25,
+        "words": 5541,
+        "candidate_count": 194,
+        "unique_candidate_count": 194,
+        "duplicates": [],
+        "table_headers": 22,
+        "unresolved": {
+          "effective_dates_unresolved": 194,
+          "footnote_interpretation_unresolved": 194,
+          "hierarchy_description_unresolved": 194,
+          "continuation_binding_unresolved": 194
+        }
+      },
+      {
+        "chapter": "39",
+        "sha256": "b31bc592790137114e151ddd628ed54082e24b01b1c8245ecc24cb2f84413b5a",
+        "pages": 32,
+        "words": 7799,
+        "candidate_count": 267,
+        "unique_candidate_count": 267,
+        "duplicates": [],
+        "table_headers": 27,
+        "unresolved": {
+          "effective_dates_unresolved": 267,
+          "footnote_interpretation_unresolved": 267,
+          "hierarchy_description_unresolved": 267,
+          "continuation_binding_unresolved": 267
+        }
+      },
+      {
+        "chapter": "40",
+        "sha256": "57bced8470cc8bbd88d79038374015bdba68c35d5592166002c5ac9115eddbb1",
+        "pages": 14,
+        "words": 3198,
+        "candidate_count": 112,
+        "unique_candidate_count": 112,
+        "duplicates": [],
+        "table_headers": 12,
+        "unresolved": {
+          "effective_dates_unresolved": 112,
+          "footnote_interpretation_unresolved": 112,
+          "hierarchy_description_unresolved": 112,
+          "continuation_binding_unresolved": 112
+        }
+      },
+      {
+        "chapter": "41",
+        "sha256": "871219209cdca4e6b730b52d2e664ed85e09b5ad698fa2b3528ec88414ce3af7",
+        "pages": 11,
+        "words": 2163,
+        "candidate_count": 71,
+        "unique_candidate_count": 71,
+        "duplicates": [],
+        "table_headers": 10,
+        "unresolved": {
+          "effective_dates_unresolved": 71,
+          "footnote_interpretation_unresolved": 71,
+          "hierarchy_description_unresolved": 71,
+          "continuation_binding_unresolved": 71
+        }
+      },
+      {
+        "chapter": "42",
+        "sha256": "5f2f383ca3831c8dbd4afe9ecc6adef5f28bf7b5bce53d28dc072630482db3db",
+        "pages": 6,
+        "words": 1413,
+        "candidate_count": 38,
+        "unique_candidate_count": 38,
+        "duplicates": [],
+        "table_headers": 5,
+        "unresolved": {
+          "effective_dates_unresolved": 38,
+          "footnote_interpretation_unresolved": 38,
+          "hierarchy_description_unresolved": 38,
+          "continuation_binding_unresolved": 38
+        }
+      },
+      {
+        "chapter": "43",
+        "sha256": "8fe23e71527ed8a4283c5dfb5f1146580ccb191362275887241f83862b997f1f",
+        "pages": 8,
+        "words": 2120,
+        "candidate_count": 109,
+        "unique_candidate_count": 109,
+        "duplicates": [],
+        "table_headers": 7,
+        "unresolved": {
+          "effective_dates_unresolved": 109,
+          "footnote_interpretation_unresolved": 109,
+          "hierarchy_description_unresolved": 109,
+          "continuation_binding_unresolved": 109
+        }
+      },
+      {
+        "chapter": "44",
+        "sha256": "1c7abb43e53bdc16f0b63d5d7db434c8cba137c5778ea89c0cb4f33e2a31e3ec",
+        "pages": 56,
+        "words": 14059,
+        "candidate_count": 465,
+        "unique_candidate_count": 465,
+        "duplicates": [],
+        "table_headers": 53,
+        "unresolved": {
+          "effective_dates_unresolved": 465,
+          "footnote_interpretation_unresolved": 465,
+          "hierarchy_description_unresolved": 465,
+          "continuation_binding_unresolved": 465
+        }
+      },
+      {
+        "chapter": "45",
+        "sha256": "700a1770a9bb19d9ed00f4e9f5a8d4a55089ee58dfd2e871f79678774f6114ce",
+        "pages": 2,
+        "words": 308,
+        "candidate_count": 12,
+        "unique_candidate_count": 12,
+        "duplicates": [],
+        "table_headers": 2,
+        "unresolved": {
+          "effective_dates_unresolved": 12,
+          "footnote_interpretation_unresolved": 12,
+          "hierarchy_description_unresolved": 12,
+          "continuation_binding_unresolved": 12
+        }
+      },
+      {
+        "chapter": "46",
+        "sha256": "a3653ef57d917f00208cf66cb054f8706bec89706f17e7a3bb1011b48eae38d6",
+        "pages": 4,
+        "words": 837,
+        "candidate_count": 23,
+        "unique_candidate_count": 23,
+        "duplicates": [],
+        "table_headers": 4,
+        "unresolved": {
+          "effective_dates_unresolved": 23,
+          "footnote_interpretation_unresolved": 23,
+          "hierarchy_description_unresolved": 23,
+          "continuation_binding_unresolved": 23
+        }
+      },
+      {
+        "chapter": "47",
+        "sha256": "d6218c263892b8d5b49981961c0a903d62376aefe8d5efe9a3aab10e92a3d8ca",
+        "pages": 4,
+        "words": 672,
+        "candidate_count": 26,
+        "unique_candidate_count": 26,
+        "duplicates": [],
+        "table_headers": 4,
+        "unresolved": {
+          "effective_dates_unresolved": 26,
+          "footnote_interpretation_unresolved": 26,
+          "hierarchy_description_unresolved": 26,
+          "continuation_binding_unresolved": 26
+        }
+      },
+      {
+        "chapter": "48",
+        "sha256": "a5ec4385eee6bcefc9b4893c54f4ed3d8453050f01bcc4cf8f0c7f226985dbdb",
+        "pages": 26,
+        "words": 6238,
+        "candidate_count": 173,
+        "unique_candidate_count": 173,
+        "duplicates": [],
+        "table_headers": 21,
+        "unresolved": {
+          "effective_dates_unresolved": 173,
+          "footnote_interpretation_unresolved": 173,
+          "hierarchy_description_unresolved": 173,
+          "continuation_binding_unresolved": 173
+        }
+      },
+      {
+        "chapter": "49",
+        "sha256": "293ab81b29eb3c426d406c83a75bfea1f66da1d4171c39a8927b91ec7d57bb50",
+        "pages": 4,
+        "words": 810,
+        "candidate_count": 23,
+        "unique_candidate_count": 23,
+        "duplicates": [],
+        "table_headers": 3,
+        "unresolved": {
+          "effective_dates_unresolved": 23,
+          "footnote_interpretation_unresolved": 23,
+          "hierarchy_description_unresolved": 23,
+          "continuation_binding_unresolved": 23
+        }
+      },
+      {
+        "chapter": "50",
+        "sha256": "bbf3618a251f6f77ba04ae264c655f195650c8fe1935c7a891e3a16738c89b96",
+        "pages": 10,
+        "words": 2858,
+        "candidate_count": 25,
+        "unique_candidate_count": 25,
+        "duplicates": [],
+        "table_headers": 3,
+        "unresolved": {
+          "effective_dates_unresolved": 25,
+          "footnote_interpretation_unresolved": 25,
+          "hierarchy_description_unresolved": 25,
+          "continuation_binding_unresolved": 25
+        }
+      },
+      {
+        "chapter": "51",
+        "sha256": "ba5550a5cb109903ab86c093200cbffd117e24d22bcc62680cd209659d75dbc7",
+        "pages": 7,
+        "words": 1637,
+        "candidate_count": 75,
+        "unique_candidate_count": 75,
+        "duplicates": [],
+        "table_headers": 7,
+        "unresolved": {
+          "effective_dates_unresolved": 75,
+          "footnote_interpretation_unresolved": 75,
+          "hierarchy_description_unresolved": 75,
+          "continuation_binding_unresolved": 75
+        }
+      },
+      {
+        "chapter": "52",
+        "sha256": "4b19108a916debb82a65ff59b64519e3b7313896332e6a104555236d4a72e0fd",
+        "pages": 16,
+        "words": 3536,
+        "candidate_count": 149,
+        "unique_candidate_count": 149,
+        "duplicates": [],
+        "table_headers": 16,
+        "unresolved": {
+          "effective_dates_unresolved": 149,
+          "footnote_interpretation_unresolved": 149,
+          "hierarchy_description_unresolved": 149,
+          "continuation_binding_unresolved": 149
+        }
+      },
+      {
+        "chapter": "53",
+        "sha256": "a55360f52aad508eaae0ee8134b2ee33ab174b7febb0e6a12a1a2d63507aeaa8",
+        "pages": 4,
+        "words": 937,
+        "candidate_count": 34,
+        "unique_candidate_count": 34,
+        "duplicates": [],
+        "table_headers": 4,
+        "unresolved": {
+          "effective_dates_unresolved": 34,
+          "footnote_interpretation_unresolved": 34,
+          "hierarchy_description_unresolved": 34,
+          "continuation_binding_unresolved": 34
+        }
+      },
+      {
+        "chapter": "54",
+        "sha256": "6bf4a879ad72a599ce73af61c6ff05f935671f99ace9287ffa9f6b08740e3ed3",
+        "pages": 7,
+        "words": 1754,
+        "candidate_count": 90,
+        "unique_candidate_count": 90,
+        "duplicates": [],
+        "table_headers": 7,
+        "unresolved": {
+          "effective_dates_unresolved": 90,
+          "footnote_interpretation_unresolved": 90,
+          "hierarchy_description_unresolved": 90,
+          "continuation_binding_unresolved": 90
+        }
+      },
+      {
+        "chapter": "55",
+        "sha256": "b06b50075fc8e20711530f606f0cf8029c2db405f90e0d5c0e0000455c6719ad",
+        "pages": 12,
+        "words": 2711,
+        "candidate_count": 147,
+        "unique_candidate_count": 147,
+        "duplicates": [],
+        "table_headers": 12,
+        "unresolved": {
+          "effective_dates_unresolved": 147,
+          "footnote_interpretation_unresolved": 147,
+          "hierarchy_description_unresolved": 147,
+          "continuation_binding_unresolved": 147
+        }
+      },
+      {
+        "chapter": "56",
+        "sha256": "90391acfeb92de823141bda0eafe794e87c103d51fbe34f0537968ad9830c784",
+        "pages": 7,
+        "words": 1787,
+        "candidate_count": 59,
+        "unique_candidate_count": 59,
+        "duplicates": [],
+        "table_headers": 6,
+        "unresolved": {
+          "effective_dates_unresolved": 59,
+          "footnote_interpretation_unresolved": 59,
+          "hierarchy_description_unresolved": 59,
+          "continuation_binding_unresolved": 59
+        }
+      },
+      {
+        "chapter": "57",
+        "sha256": "825d136aedef63d3a5eb7d3729bda93d3d7ba1c74cf5893bdb578fdb63a24fc2",
+        "pages": 4,
+        "words": 1135,
+        "candidate_count": 45,
+        "unique_candidate_count": 45,
+        "duplicates": [],
+        "table_headers": 4,
+        "unresolved": {
+          "effective_dates_unresolved": 45,
+          "footnote_interpretation_unresolved": 45,
+          "hierarchy_description_unresolved": 45,
+          "continuation_binding_unresolved": 45
+        }
+      },
+      {
+        "chapter": "58",
+        "sha256": "d024829230be6af70a96744558e3957e7aa5f6a61fc7c487efb6e234fe3281cb",
+        "pages": 5,
+        "words": 1273,
+        "candidate_count": 50,
+        "unique_candidate_count": 50,
+        "duplicates": [],
+        "table_headers": 2,
+        "unresolved": {
+          "effective_dates_unresolved": 50,
+          "footnote_interpretation_unresolved": 50,
+          "hierarchy_description_unresolved": 50,
+          "continuation_binding_unresolved": 50,
+          "table_header_unconfirmed": 27
+        }
+      },
+      {
+        "chapter": "59",
+        "sha256": "9515bd420c1a050cbe436401d46c59e9e986ce2869af75ff3d917ebb46f9b0d4",
+        "pages": 8,
+        "words": 1945,
+        "candidate_count": 44,
+        "unique_candidate_count": 44,
+        "duplicates": [],
+        "table_headers": 5,
+        "unresolved": {
+          "effective_dates_unresolved": 44,
+          "footnote_interpretation_unresolved": 44,
+          "hierarchy_description_unresolved": 44,
+          "continuation_binding_unresolved": 44
+        }
+      },
+      {
+        "chapter": "60",
+        "sha256": "bd4449385b0dc86f6dff307cce0874a6d8f6f85ec03444601a3874860164f916",
+        "pages": 5,
+        "words": 1210,
+        "candidate_count": 58,
+        "unique_candidate_count": 58,
+        "duplicates": [],
+        "table_headers": 5,
+        "unresolved": {
+          "effective_dates_unresolved": 58,
+          "footnote_interpretation_unresolved": 58,
+          "hierarchy_description_unresolved": 58,
+          "continuation_binding_unresolved": 58
+        }
+      },
+      {
+        "chapter": "61",
+        "sha256": "55a77a8d647f87b85055da92e88bb47ce49ca90e184c5f78b96a08cef441b9a0",
+        "pages": 18,
+        "words": 5418,
+        "candidate_count": 168,
+        "unique_candidate_count": 167,
+        "duplicates": [
+          "6116108000"
+        ],
+        "table_headers": 14,
+        "unresolved": {
+          "effective_dates_unresolved": 168,
+          "footnote_interpretation_unresolved": 168,
+          "hierarchy_description_unresolved": 168,
+          "continuation_binding_unresolved": 168,
+          "table_header_unconfirmed": 1
+        }
+      },
+      {
+        "chapter": "62",
+        "sha256": "8dc3e2e4d8f9b8a2f95a6d20ffc0edbca767a11690a196a52e519d6675e25f21",
+        "pages": 18,
+        "words": 5597,
+        "candidate_count": 187,
+        "unique_candidate_count": 187,
+        "duplicates": [],
+        "table_headers": 15,
+        "unresolved": {
+          "effective_dates_unresolved": 187,
+          "footnote_interpretation_unresolved": 187,
+          "hierarchy_description_unresolved": 187,
+          "continuation_binding_unresolved": 187
+        }
+      },
+      {
+        "chapter": "63",
+        "sha256": "d31cb8950e5f88e9fdf70ee3c2635c9f28ba8a0be4b3aa54cbbb929fede3491e",
+        "pages": 8,
+        "words": 2221,
+        "candidate_count": 86,
+        "unique_candidate_count": 86,
+        "duplicates": [],
+        "table_headers": 8,
+        "unresolved": {
+          "effective_dates_unresolved": 86,
+          "footnote_interpretation_unresolved": 86,
+          "hierarchy_description_unresolved": 86,
+          "continuation_binding_unresolved": 86
+        }
+      },
+      {
+        "chapter": "64",
+        "sha256": "2a8b54c1915d42c698b88e803ce68c226731e13228e03069c631c89d2dc32e74",
+        "pages": 9,
+        "words": 2670,
+        "candidate_count": 79,
+        "unique_candidate_count": 79,
+        "duplicates": [],
+        "table_headers": 8,
+        "unresolved": {
+          "effective_dates_unresolved": 79,
+          "footnote_interpretation_unresolved": 79,
+          "hierarchy_description_unresolved": 79,
+          "continuation_binding_unresolved": 79
+        }
+      },
+      {
+        "chapter": "65",
+        "sha256": "42c11021ffbde994428ed98cc4d4abda545b765e5a30a5542403cc5197d4c9ba",
+        "pages": 3,
+        "words": 584,
+        "candidate_count": 20,
+        "unique_candidate_count": 20,
+        "duplicates": [],
+        "table_headers": 3,
+        "unresolved": {
+          "effective_dates_unresolved": 20,
+          "footnote_interpretation_unresolved": 20,
+          "hierarchy_description_unresolved": 20,
+          "continuation_binding_unresolved": 20
+        }
+      },
+      {
+        "chapter": "66",
+        "sha256": "f673510605765d131b90d2d817a8bd0f2450c682f65a16a3efc05d8f83cdcf54",
+        "pages": 2,
+        "words": 295,
+        "candidate_count": 8,
+        "unique_candidate_count": 8,
+        "duplicates": [],
+        "table_headers": 2,
+        "unresolved": {
+          "effective_dates_unresolved": 8,
+          "footnote_interpretation_unresolved": 8,
+          "hierarchy_description_unresolved": 8,
+          "continuation_binding_unresolved": 8
+        }
+      },
+      {
+        "chapter": "67",
+        "sha256": "fb0913b9dd8de7f43828b3eae59669e5c5fd89fc087cce78d73459191f641ac7",
+        "pages": 2,
+        "words": 424,
+        "candidate_count": 8,
+        "unique_candidate_count": 8,
+        "duplicates": [],
+        "table_headers": 2,
+        "unresolved": {
+          "effective_dates_unresolved": 8,
+          "footnote_interpretation_unresolved": 8,
+          "hierarchy_description_unresolved": 8,
+          "continuation_binding_unresolved": 8
+        }
+      },
+      {
+        "chapter": "68",
+        "sha256": "e6adc19e62c8bdf6530d40994eaef74e2c46ece905bbd6f5109b5850db41461f",
+        "pages": 10,
+        "words": 2279,
+        "candidate_count": 81,
+        "unique_candidate_count": 81,
+        "duplicates": [],
+        "table_headers": 9,
+        "unresolved": {
+          "effective_dates_unresolved": 81,
+          "footnote_interpretation_unresolved": 81,
+          "hierarchy_description_unresolved": 81,
+          "continuation_binding_unresolved": 81
+        }
+      },
+      {
+        "chapter": "69",
+        "sha256": "11daa8f36a456ee363b6eefc3abb52d2d2b1627a4e9ac6db1f383e625716e443",
+        "pages": 8,
+        "words": 1861,
+        "candidate_count": 68,
+        "unique_candidate_count": 68,
+        "duplicates": [],
+        "table_headers": 7,
+        "unresolved": {
+          "effective_dates_unresolved": 68,
+          "footnote_interpretation_unresolved": 68,
+          "hierarchy_description_unresolved": 68,
+          "continuation_binding_unresolved": 68
+        }
+      },
+      {
+        "chapter": "70",
+        "sha256": "772ddd017b6a480b18433d524194b0fb1b3c230859d6ce8f5025e4eca3c862c3",
+        "pages": 17,
+        "words": 4433,
+        "candidate_count": 175,
+        "unique_candidate_count": 175,
+        "duplicates": [],
+        "table_headers": 15,
+        "unresolved": {
+          "effective_dates_unresolved": 175,
+          "footnote_interpretation_unresolved": 175,
+          "hierarchy_description_unresolved": 175,
+          "continuation_binding_unresolved": 175,
+          "table_header_unconfirmed": 7
+        }
+      },
+      {
+        "chapter": "71",
+        "sha256": "62c4d3031fc503134c10eb478532cb47e61a4a32daba7cb1b033ec6667dbdabd",
+        "pages": 12,
+        "words": 2802,
+        "candidate_count": 84,
+        "unique_candidate_count": 83,
+        "duplicates": [
+          "7110210001"
+        ],
+        "table_headers": 9,
+        "unresolved": {
+          "effective_dates_unresolved": 84,
+          "footnote_interpretation_unresolved": 84,
+          "hierarchy_description_unresolved": 84,
+          "continuation_binding_unresolved": 84,
+          "table_header_unconfirmed": 1
+        }
+      },
+      {
+        "chapter": "72",
+        "sha256": "6581d927c6fe0e0cfae11b7411885da7aec9e73f3be28186a170f88b624f05f4",
+        "pages": 42,
+        "words": 11202,
+        "candidate_count": 372,
+        "unique_candidate_count": 371,
+        "duplicates": [
+          "7228502000"
+        ],
+        "table_headers": 33,
+        "unresolved": {
+          "effective_dates_unresolved": 372,
+          "footnote_interpretation_unresolved": 372,
+          "hierarchy_description_unresolved": 372,
+          "continuation_binding_unresolved": 372,
+          "table_header_unconfirmed": 1
+        }
+      },
+      {
+        "chapter": "73",
+        "sha256": "47f6b05c2530b409ce33ae2f18316ceecb0ba9bd30a3ebca5e7f056defed5b55",
+        "pages": 39,
+        "words": 9191,
+        "candidate_count": 366,
+        "unique_candidate_count": 366,
+        "duplicates": [],
+        "table_headers": 39,
+        "unresolved": {
+          "effective_dates_unresolved": 366,
+          "footnote_interpretation_unresolved": 366,
+          "hierarchy_description_unresolved": 366,
+          "continuation_binding_unresolved": 366
+        }
+      },
+      {
+        "chapter": "74",
+        "sha256": "5ceba359c9edf064f17b922cf980af1b13438110705150b57235e0e34dcc8fa4",
+        "pages": 7,
+        "words": 1593,
+        "candidate_count": 58,
+        "unique_candidate_count": 58,
+        "duplicates": [],
+        "table_headers": 6,
+        "unresolved": {
+          "effective_dates_unresolved": 58,
+          "footnote_interpretation_unresolved": 58,
+          "hierarchy_description_unresolved": 58,
+          "continuation_binding_unresolved": 58
+        }
+      },
+      {
+        "chapter": "75",
+        "sha256": "6f09acf17937deb9bcb9f33150189e7c68889fdfeaa3498f37e8fc324ca36d5a",
+        "pages": 3,
+        "words": 611,
+        "candidate_count": 24,
+        "unique_candidate_count": 24,
+        "duplicates": [],
+        "table_headers": 3,
+        "unresolved": {
+          "effective_dates_unresolved": 24,
+          "footnote_interpretation_unresolved": 24,
+          "hierarchy_description_unresolved": 24,
+          "continuation_binding_unresolved": 24
+        }
+      },
+      {
+        "chapter": "76",
+        "sha256": "57ea41461e8587664197fd7d2a6ec6d8ca13ad3498b4c6b6d93191bb988cc9cb",
+        "pages": 10,
+        "words": 2433,
+        "candidate_count": 88,
+        "unique_candidate_count": 88,
+        "duplicates": [],
+        "table_headers": 9,
+        "unresolved": {
+          "effective_dates_unresolved": 88,
+          "footnote_interpretation_unresolved": 88,
+          "hierarchy_description_unresolved": 88,
+          "continuation_binding_unresolved": 88
+        }
+      },
+      {
+        "chapter": "78",
+        "sha256": "afbb5b896009016ce781160166d24b6246797edd901b7fe22a945f48be808a82",
+        "pages": 2,
+        "words": 340,
+        "candidate_count": 11,
+        "unique_candidate_count": 11,
+        "duplicates": [],
+        "table_headers": 2,
+        "unresolved": {
+          "effective_dates_unresolved": 11,
+          "footnote_interpretation_unresolved": 11,
+          "hierarchy_description_unresolved": 11,
+          "continuation_binding_unresolved": 11
+        }
+      },
+      {
+        "chapter": "79",
+        "sha256": "ed572511f422cc933154f5175177bab8dd140c58ed5ad22c6fe8852d3bd7da15",
+        "pages": 2,
+        "words": 346,
+        "candidate_count": 12,
+        "unique_candidate_count": 12,
+        "duplicates": [],
+        "table_headers": 2,
+        "unresolved": {
+          "effective_dates_unresolved": 12,
+          "footnote_interpretation_unresolved": 12,
+          "hierarchy_description_unresolved": 12,
+          "continuation_binding_unresolved": 12
+        }
+      },
+      {
+        "chapter": "80",
+        "sha256": "abda2734e52a5288d925eff96259cf42f993b2657a22d1c8548a5bc19fce5b15",
+        "pages": 1,
+        "words": 227,
+        "candidate_count": 6,
+        "unique_candidate_count": 6,
+        "duplicates": [],
+        "table_headers": 1,
+        "unresolved": {
+          "effective_dates_unresolved": 6,
+          "footnote_interpretation_unresolved": 6,
+          "hierarchy_description_unresolved": 6,
+          "continuation_binding_unresolved": 6
+        }
+      },
+      {
+        "chapter": "81",
+        "sha256": "05702d28f9bee5a4fd7cbce2f328f68af95dc8ba5942465e246f54f84f1d63bb",
+        "pages": 6,
+        "words": 1492,
+        "candidate_count": 89,
+        "unique_candidate_count": 89,
+        "duplicates": [],
+        "table_headers": 6,
+        "unresolved": {
+          "effective_dates_unresolved": 89,
+          "footnote_interpretation_unresolved": 89,
+          "hierarchy_description_unresolved": 89,
+          "continuation_binding_unresolved": 89
+        }
+      },
+      {
+        "chapter": "82",
+        "sha256": "7fb742d0c4368b9b20785b8904b4ec98eee4fbb20ec3745de0e3e1aa6672ad15",
+        "pages": 10,
+        "words": 2440,
+        "candidate_count": 105,
+        "unique_candidate_count": 105,
+        "duplicates": [],
+        "table_headers": 10,
+        "unresolved": {
+          "effective_dates_unresolved": 105,
+          "footnote_interpretation_unresolved": 105,
+          "hierarchy_description_unresolved": 105,
+          "continuation_binding_unresolved": 105
+        }
+      },
+      {
+        "chapter": "83",
+        "sha256": "7d056d47ceb1ab22dd151f2b104e354d17593eea0ed02e59c8d281900a093ad6",
+        "pages": 7,
+        "words": 1495,
+        "candidate_count": 52,
+        "unique_candidate_count": 52,
+        "duplicates": [],
+        "table_headers": 7,
+        "unresolved": {
+          "effective_dates_unresolved": 52,
+          "footnote_interpretation_unresolved": 52,
+          "hierarchy_description_unresolved": 52,
+          "continuation_binding_unresolved": 52
+        }
+      },
+      {
+        "chapter": "84",
+        "sha256": "418712711dc5dba46d88f044d04fe83254c7e5aad6cf01c5572b6c831031905a",
+        "pages": 143,
+        "words": 33691,
+        "candidate_count": 1353,
+        "unique_candidate_count": 1353,
+        "duplicates": [],
+        "table_headers": 132,
+        "unresolved": {
+          "effective_dates_unresolved": 1353,
+          "footnote_interpretation_unresolved": 1353,
+          "hierarchy_description_unresolved": 1353,
+          "continuation_binding_unresolved": 1353,
+          "table_header_unconfirmed": 17
+        }
+      },
+      {
+        "chapter": "85",
+        "sha256": "ab99ae7d104e267dc5e0adbb53b6c119b29219c05892e4cb5c4492382b0cf52c",
+        "pages": 127,
+        "words": 31438,
+        "candidate_count": 1139,
+        "unique_candidate_count": 1139,
+        "duplicates": [],
+        "table_headers": 104,
+        "unresolved": {
+          "effective_dates_unresolved": 1139,
+          "footnote_interpretation_unresolved": 1139,
+          "hierarchy_description_unresolved": 1139,
+          "continuation_binding_unresolved": 1139,
+          "table_header_unconfirmed": 144
+        }
+      },
+      {
+        "chapter": "86",
+        "sha256": "42454a7fca6cdf3d9e05002c9330d2843e6bc318d5e3b3e81e319fc9e64f84c6",
+        "pages": 9,
+        "words": 1921,
+        "candidate_count": 42,
+        "unique_candidate_count": 42,
+        "duplicates": [],
+        "table_headers": 6,
+        "unresolved": {
+          "effective_dates_unresolved": 42,
+          "footnote_interpretation_unresolved": 42,
+          "hierarchy_description_unresolved": 42,
+          "continuation_binding_unresolved": 42
+        }
+      },
+      {
+        "chapter": "87",
+        "sha256": "4c705ac9b62fd54b57ff40bb6aa88c17e2109a3bf3d00e706ded973e74071016",
+        "pages": 120,
+        "words": 26583,
+        "candidate_count": 761,
+        "unique_candidate_count": 760,
+        "duplicates": [
+          "8716398006"
+        ],
+        "table_headers": 117,
+        "unresolved": {
+          "effective_dates_unresolved": 761,
+          "footnote_interpretation_unresolved": 761,
+          "hierarchy_description_unresolved": 761,
+          "continuation_binding_unresolved": 761,
+          "table_header_unconfirmed": 2
+        }
+      },
+      {
+        "chapter": "88",
+        "sha256": "5892440f247df978f86dfa3028d49e33e38698672754ce8f3f50f8cf948a41e9",
+        "pages": 13,
+        "words": 3124,
+        "candidate_count": 112,
+        "unique_candidate_count": 112,
+        "duplicates": [],
+        "table_headers": 12,
+        "unresolved": {
+          "effective_dates_unresolved": 112,
+          "footnote_interpretation_unresolved": 112,
+          "hierarchy_description_unresolved": 112,
+          "continuation_binding_unresolved": 112
+        }
+      },
+      {
+        "chapter": "89",
+        "sha256": "11e79dd4052c88cb6b2b312ab48171629959ec13a6bf1ad0514486def86548bb",
+        "pages": 5,
+        "words": 1155,
+        "candidate_count": 43,
+        "unique_candidate_count": 43,
+        "duplicates": [],
+        "table_headers": 5,
+        "unresolved": {
+          "effective_dates_unresolved": 43,
+          "footnote_interpretation_unresolved": 43,
+          "hierarchy_description_unresolved": 43,
+          "continuation_binding_unresolved": 43
+        }
+      },
+      {
+        "chapter": "90",
+        "sha256": "e1311cdf0bdf7203b92266246ff2600d278f28d8447787e54cb262ac651090e0",
+        "pages": 30,
+        "words": 6780,
+        "candidate_count": 270,
+        "unique_candidate_count": 270,
+        "duplicates": [],
+        "table_headers": 27,
+        "unresolved": {
+          "effective_dates_unresolved": 270,
+          "footnote_interpretation_unresolved": 270,
+          "hierarchy_description_unresolved": 270,
+          "continuation_binding_unresolved": 270
+        }
+      },
+      {
+        "chapter": "91",
+        "sha256": "5766f7126e770f6d5cace523fde8a05fe67061e8e7a28bdaee247e18cbf2cc53",
+        "pages": 6,
+        "words": 1435,
+        "candidate_count": 55,
+        "unique_candidate_count": 55,
+        "duplicates": [],
+        "table_headers": 5,
+        "unresolved": {
+          "effective_dates_unresolved": 55,
+          "footnote_interpretation_unresolved": 55,
+          "hierarchy_description_unresolved": 55,
+          "continuation_binding_unresolved": 55
+        }
+      },
+      {
+        "chapter": "92",
+        "sha256": "c2f818b1a4ebc2d9eb86ee4d417e96273a19bdf3a88b3257fad02fadf0ae77da",
+        "pages": 4,
+        "words": 789,
+        "candidate_count": 31,
+        "unique_candidate_count": 31,
+        "duplicates": [],
+        "table_headers": 4,
+        "unresolved": {
+          "effective_dates_unresolved": 31,
+          "footnote_interpretation_unresolved": 31,
+          "hierarchy_description_unresolved": 31,
+          "continuation_binding_unresolved": 31
+        }
+      },
+      {
+        "chapter": "93",
+        "sha256": "6135fcf97bee5bb1e6e7bc777b737bd24d795bd2919fff925caa57e0a44bf4e2",
+        "pages": 4,
+        "words": 739,
+        "candidate_count": 24,
+        "unique_candidate_count": 24,
+        "duplicates": [],
+        "table_headers": 3,
+        "unresolved": {
+          "effective_dates_unresolved": 24,
+          "footnote_interpretation_unresolved": 24,
+          "hierarchy_description_unresolved": 24,
+          "continuation_binding_unresolved": 24
+        }
+      },
+      {
+        "chapter": "94",
+        "sha256": "e87d6249bc007ce274fe3d3ffe575559c65340393100bfdb1ef4ff12c9b232bd",
+        "pages": 20,
+        "words": 5124,
+        "candidate_count": 188,
+        "unique_candidate_count": 187,
+        "duplicates": [
+          "9403609001"
+        ],
+        "table_headers": 17,
+        "unresolved": {
+          "effective_dates_unresolved": 188,
+          "footnote_interpretation_unresolved": 188,
+          "hierarchy_description_unresolved": 188,
+          "continuation_binding_unresolved": 188,
+          "table_header_unconfirmed": 10
+        }
+      },
+      {
+        "chapter": "95",
+        "sha256": "a1ed9abdcd300c8ea9fd6657ca332fa11d366cdca34ef25ac975f96bfa109f2c",
+        "pages": 10,
+        "words": 2442,
+        "candidate_count": 78,
+        "unique_candidate_count": 78,
+        "duplicates": [],
+        "table_headers": 7,
+        "unresolved": {
+          "effective_dates_unresolved": 78,
+          "footnote_interpretation_unresolved": 78,
+          "hierarchy_description_unresolved": 78,
+          "continuation_binding_unresolved": 78
+        }
+      },
+      {
+        "chapter": "96",
+        "sha256": "1e63c350ad03d60f77c4c8a9e21c47b94f9a294dd01b277345817ba1b4ec1d4b",
+        "pages": 12,
+        "words": 2788,
+        "candidate_count": 88,
+        "unique_candidate_count": 88,
+        "duplicates": [],
+        "table_headers": 10,
+        "unresolved": {
+          "effective_dates_unresolved": 88,
+          "footnote_interpretation_unresolved": 88,
+          "hierarchy_description_unresolved": 88,
+          "continuation_binding_unresolved": 88
+        }
+      },
+      {
+        "chapter": "97",
+        "sha256": "ab11deb403161e8c5be060888029491685cba27b980c908988d1fb97e4d7156e",
+        "pages": 3,
+        "words": 635,
+        "candidate_count": 19,
+        "unique_candidate_count": 19,
+        "duplicates": [],
+        "table_headers": 2,
+        "unresolved": {
+          "effective_dates_unresolved": 19,
+          "footnote_interpretation_unresolved": 19,
+          "hierarchy_description_unresolved": 19,
+          "continuation_binding_unresolved": 19
+        }
+      }
+    ]
+  },
+  "parser_sha256": "2ed7b4d96542580124fca5c83ebe354f52285a390379a4efe1d7a54836b406eb",
+  "current_official_raw_acquisition_completed": false,
+  "current_raw_index_dom_verified": false,
+  "synthetic_index_fixture_scope": "structure_and_drift_only",
+  "optional_workflow_acquisition_dispatched": false,
+  "source_row_verifier": "re_extracts_original_pdf_for_every_referenced_quote",
+  "row_match_does_not_verify_legal_interpretation": true,
+  "effective_dates_interpreted": false,
+  "footnotes_interpreted": false,
+  "legal_rates_resolved": 0,
+  "production_ready": false,
+  "production_database_mutated": false,
+  "runtime_flags_changed": false,
+  "paid_storage_created": false,
+  "merged": false,
+  "deployed": false
+}

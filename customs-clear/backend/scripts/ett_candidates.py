@@ -52,6 +52,14 @@ def main(argv=None) -> int:
     diff.add_argument("after", type=Path)
     stage = commands.add_parser("stage")
     stage.add_argument("manifest", type=Path)
+    acquire = commands.add_parser("acquire", help="Capture the actual official index and linked documents; no database writes")
+    acquire.add_argument("--store-root", required=True, type=Path)
+    extract = commands.add_parser("extract", help="Extract coordinate-bound PDF evidence from a verified acquisition receipt")
+    extract.add_argument("digest")
+    extract.add_argument("--store-root", required=True, type=Path)
+    verify_rows = commands.add_parser("verify-rows", help="Re-extract PDF quotes referenced by a candidate; does not approve rates or dates")
+    verify_rows.add_argument("manifest", type=Path)
+    verify_rows.add_argument("--store-root", required=True, type=Path)
     preview = commands.add_parser("preview")
     preview.add_argument("digest")
     preview.add_argument("--code", required=True)
@@ -67,6 +75,14 @@ def main(argv=None) -> int:
             result = candidate_readiness(validate_manifest(read_json(args.manifest)))
         elif args.command == "diff":
             result = semantic_diff(validate_manifest(read_json(args.before)), validate_manifest(read_json(args.after)))
+        elif args.command in {"acquire", "extract"}:
+            from app.services.ett_acquisition import acquire_official, extract_acquisition
+            store = LocalArtifactStore(args.store_root)
+            result = acquire_official(store) if args.command == "acquire" else extract_acquisition(store, args.digest)
+        elif args.command == "verify-rows":
+            from app.services.ett_evidence_binding import verify_manifest_source_rows
+            store = LocalArtifactStore(args.store_root, create=False)
+            result = verify_manifest_source_rows(validate_manifest(read_json(args.manifest)), store)
         else:
             if not args.database.is_file() or args.database.is_symlink():
                 raise ValueError("An explicit existing migrated SQLite database is required")
@@ -90,10 +106,12 @@ def main(argv=None) -> int:
             finally:
                 engine.dispose()
         print(json.dumps(jsonable_encoder(result, custom_encoder={Decimal: str}), ensure_ascii=False, allow_nan=False))
+        if args.command == "verify-rows" and not result["rows_verified"]:
+            return 2
         return 0
-    except Exception:
+    except Exception as exc:
         # Structured failure, no secret-bearing source payload or database path.
-        print(json.dumps({"status": "ERROR", "error": "ETT candidate validation or operation failed", "production_ready": False}))
+        print(json.dumps({"status": "ERROR", "error": "ETT candidate validation or operation failed", "error_type": type(exc).__name__, "production_ready": False}))
         return 2
 
 

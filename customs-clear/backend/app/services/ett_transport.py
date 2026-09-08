@@ -1,0 +1,222 @@
+"""Bounded acquisition of original EEC bytes; no rate interpretation or DB writes.
+
+The elapsed budget is checked at every unbuffered body chunk and on completion.
+Synchronous HTTPX cannot interrupt an already running I/O call at a wall-clock
+deadline; every such call also has a five-second timeout. A late response is
+rejected, never recorded as a successful acquisition. Document identity and
+legal completeness still require the index and extraction validators.
+"""
+
+from __future__ import annotations
+
+import re
+import time
+from dataclasses import dataclass
+from datetime import datetime, timezone
+from typing import Literal
+from urllib.parse import unquote, urljoin, urlsplit
+
+import httpx
+
+from app.services.source_http import bounded_chunks, validate_body_headers
+
+OfficialMedia = Literal["text/html", "application/pdf"]
+OFFICIAL_HOSTS = frozenset({"eec.eaeunion.org", "docs.eaeunion.org"})
+MAX_HTML_BYTES = 4 * 1024 * 1024
+MAX_PDF_BYTES = 64 * 1024 * 1024
+MAX_REDIRECTS = 3
+TOTAL_BUDGET_SECONDS = 120.0
+IO_TIMEOUT_SECONDS = 5.0
+_REDIRECT_STATUSES = frozenset({301, 302, 303, 307, 308})
+_ENCODED_FORBIDDEN = re.compile(r"%(?:0[0-9a-f]|1[0-9a-f]|25|2f|3f|23|5c|7f)", re.I)
+
+
+class OfficialTransportError(ValueError):
+    """Sanitized acquisition failure; source bodies/headers are never included."""
+
+
+@dataclass(frozen=True)
+class OfficialResponse:
+    url: str
+    requested_url: str
+    content: bytes
+    media_type: OfficialMedia
+    retrieved_at: datetime
+    # Each followed destination, including the final URL after a redirect.
+    redirect_chain: tuple[str, ...] = ()
+
+
+def validate_official_url(url: str) -> str:
+    """Require an unambiguous HTTPS origin compatible with ETT manifests.
+
+Explicit ports (including 443) and even empty query/fragment delimiters are
+forbidden. Encoded Cyrillic and spaces remain valid; encoded path separators,
+controls, traversal, query delimiters and double-encoding do not.
+"""
+    if (
+        not isinstance(url, str)
+        or not 1 <= len(url) <= 4096
+        or any(ord(char) < 33 or ord(char) == 127 for char in url)
+        or any(char in url for char in "\\?#")
+    ):
+        raise OfficialTransportError("invalid official source URL")
+    try:
+        parsed = urlsplit(url)
+        if (
+            parsed.scheme != "https"
+            or parsed.netloc not in OFFICIAL_HOSTS
+            or not parsed.path.startswith("/")
+            or re.search(r"%(?![0-9a-fA-F]{2})", parsed.path)
+            or _ENCODED_FORBIDDEN.search(parsed.path)
+        ):
+            raise ValueError
+        decoded = unquote(parsed.path, encoding="utf-8", errors="strict")
+        if any(part in {".", ".."} for part in decoded.split("/")):
+            raise ValueError
+    except (ValueError, UnicodeError):
+        raise OfficialTransportError("invalid official source URL") from None
+    return url
+
+
+def _remaining(deadline: float) -> float:
+    remaining = deadline - time.monotonic()
+    if remaining <= 0:
+        raise OfficialTransportError("official source exceeded the elapsed time budget")
+    return min(remaining, IO_TIMEOUT_SECONDS)
+
+
+def _checked_raw_chunks(response: httpx.Response, deadline: float):
+    # No chunk_size argument: do not wait for HTTPX to buffer an entire fixed-size
+    # chunk while a slow peer keeps sending tiny pieces below the read timeout.
+    iterator = iter(response.iter_raw())
+    while True:
+        _remaining(deadline)
+        try:
+            chunk = next(iterator)
+        except StopIteration:
+            _remaining(deadline)
+            return
+        _remaining(deadline)
+        yield chunk
+
+
+def _validate_document(content: bytes, expected_media: OfficialMedia) -> None:
+    if expected_media == "application/pdf":
+        if not re.match(rb"%PDF-[12]\.[0-9](?:\r|\n)", content[:10]):
+            raise OfficialTransportError("official source is not a PDF document")
+        if not re.search(rb"%%EOF[\t\n\f\r ]*\Z", content[-2048:]):
+            raise OfficialTransportError("official PDF has no terminal EOF marker")
+        return
+    # This proves HTML shape, not a valid ETT index. Captcha/login/error pages
+    # must additionally fail the separate exact chapter/document discovery gate.
+    prefix = content[:64 * 1024].removeprefix(b"\xef\xbb\xbf").lstrip()
+    if not re.match(rb"(?:<!doctype\s+html(?:\s|>)|<html(?:\s|>))", prefix, re.I):
+        raise OfficialTransportError("official source is not an HTML document")
+    if not re.search(rb"<html(?:\s|>)", prefix, re.I):
+        raise OfficialTransportError("official source is not an HTML document")
+
+
+def fetch_official(
+    url: str,
+    *,
+    expected_media: OfficialMedia = "text/html",
+    _transport: httpx.BaseTransport | None = None,
+) -> OfficialResponse:
+    """Acquire one source with same-host redirects and original-byte limits.
+
+    ``_transport`` is an explicit testing seam for ``httpx.MockTransport``. A new
+    client always owns TLS, timeout, redirect, proxy, auth and cookie policy;
+    callers cannot inject an ambient authenticated client. There are no retries
+    or fallback origins. Redirect responses close without reading their bodies.
+    """
+    requested_url = validate_official_url(url)
+    if expected_media not in {"text/html", "application/pdf"}:
+        raise OfficialTransportError("unsupported official source media type")
+    limit = MAX_PDF_BYTES if expected_media == "application/pdf" else MAX_HTML_BYTES
+    deadline = time.monotonic() + TOTAL_BUDGET_SECONDS
+    origin = urlsplit(requested_url).netloc
+    current_url = requested_url
+    chain: list[str] = []
+    visited: set[str] = set()
+    try:
+        with httpx.Client(
+            verify=True,
+            trust_env=False,
+            follow_redirects=False,
+            timeout=httpx.Timeout(IO_TIMEOUT_SECONDS),
+            limits=httpx.Limits(max_connections=1, max_keepalive_connections=0),
+            transport=_transport,
+        ) as client:
+            while True:
+                timeout = _remaining(deadline)
+                client.cookies.clear()
+                request = client.build_request(
+                    "GET",
+                    current_url,
+                    headers={
+                        "Accept": expected_media,
+                        "Accept-Encoding": "identity",
+                        "User-Agent": "CustomsClear-ETT-Acquisition/1",
+                    },
+                    timeout=httpx.Timeout(timeout),
+                )
+                actual_url = validate_official_url(str(request.url))
+                if actual_url in visited:
+                    raise OfficialTransportError("official source redirect loop")
+                visited.add(actual_url)
+                response = client.send(request, stream=True, auth=None, follow_redirects=False)
+                try:
+                    _remaining(deadline)
+                    if response.status_code in _REDIRECT_STATUSES:
+                        if len(chain) >= MAX_REDIRECTS:
+                            raise OfficialTransportError("official source exceeded the redirect limit")
+                        location = response.headers.get("location", "")
+                        if not location or len(response.headers.get_list("location")) != 1:
+                            raise OfficialTransportError("official source returned an invalid redirect")
+                        # Validate raw Location first: urljoin can normalize away
+                        # traversal or strip leading whitespace/control characters.
+                        if (
+                            any(ord(char) < 33 or ord(char) == 127 for char in location)
+                            or any(char in location for char in "\\?#")
+                            or _ENCODED_FORBIDDEN.search(location)
+                            or any(part in {".", ".."} for part in location.split("/"))
+                        ):
+                            raise OfficialTransportError("official source returned an invalid redirect")
+                        target = validate_official_url(urljoin(actual_url, location))
+                        if urlsplit(target).netloc != origin:
+                            raise OfficialTransportError("official source redirected to a different host")
+                        # Store the exact URL spelling sent by HTTPX, including
+                        # percent-encoding for Unicode relative Location values.
+                        target = validate_official_url(str(httpx.URL(target)))
+                        chain.append(target)
+                        current_url = target
+                        continue
+                    if response.status_code != 200:
+                        raise OfficialTransportError("official source did not return HTTP 200")
+                    media_type = response.headers.get("content-type", "").split(";", 1)[0].strip().lower()
+                    if len(response.headers.get_list("content-type")) != 1 or media_type != expected_media:
+                        raise OfficialTransportError("official source returned an unexpected media type")
+                    if response.headers.get("transfer-encoding") and response.headers.get("content-length"):
+                        raise OfficialTransportError("official source returned ambiguous body framing")
+                    declared = validate_body_headers(response.headers, max_bytes=limit)
+                    content = b"".join(bounded_chunks(
+                        _checked_raw_chunks(response, deadline), max_bytes=limit, declared=declared,
+                    ))
+                    _validate_document(content, expected_media)
+                    _remaining(deadline)
+                    return OfficialResponse(
+                        url=actual_url,
+                        requested_url=requested_url,
+                        content=content,
+                        media_type=expected_media,
+                        retrieved_at=datetime.now(timezone.utc),
+                        redirect_chain=tuple(chain),
+                    )
+                finally:
+                    response.close()
+    except OfficialTransportError:
+        raise
+    except (httpx.HTTPError, RuntimeError, OSError, ValueError):
+        # Never embed upstream exception text: it can contain headers, bodies,
+        # request URLs or credentials supplied by the remote endpoint.
+        raise OfficialTransportError("official source acquisition failed") from None
