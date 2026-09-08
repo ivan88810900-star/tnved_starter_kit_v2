@@ -203,6 +203,20 @@ class OfficialResponse:
     redirect_chain: tuple[str, ...] = ()
 
 
+@dataclass(frozen=True)
+class _BodyPolicy:
+    """Private bounded raw-body policy for a separate evidence response type.
+
+    Ordinary PDF/HTML entry points do not expose this option. A separate raw
+    response may retain bytes for later validation, without becoming a normal
+    OfficialResponse or an acquisition receipt.
+    """
+    allowed_media: frozenset[str]
+    max_bytes: int
+    validate: Callable[[bytes], None]
+    response_factory: Callable[..., object]
+
+
 def validate_official_url(url: str) -> str:
     """Require an unambiguous HTTPS origin compatible with ETT manifests.
 
@@ -331,20 +345,37 @@ def _official_redirect_target(current_url: str, location: str) -> str:
 def _fetch_bounded(
     url: str,
     *,
-    expected_media: OfficialMedia,
+    expected_media: str,
     url_validator: Callable[[str], str],
     redirect_target: Callable[[str, str], str],
     _transport: httpx.BaseTransport | None = None,
-) -> OfficialResponse:
+    _body_policy: _BodyPolicy | None = None,
+) -> OfficialResponse | object:
     """Private shared I/O; each entry point supplies its own narrow URL policy.
 
     URL policies never change TLS, authentication, cookies, same-origin rules,
-    redirect counts, body limits, document validation or elapsed-time bounds.
+    redirect counts or elapsed-time bounds. The optional private body policy
+    has its own media/validation/response contract within the same 64 MiB cap;
+    PDF/HTML callers retain their existing body limits and document validation.
     """
     requested_url = url_validator(url)
-    if expected_media not in {"text/html", "application/pdf"}:
-        raise OfficialTransportError("unsupported official source media type")
-    limit = MAX_PDF_BYTES if expected_media == "application/pdf" else MAX_HTML_BYTES
+    if _body_policy is None:
+        if expected_media not in {"text/html", "application/pdf"}:
+            raise OfficialTransportError("unsupported official source media type")
+        limit = MAX_PDF_BYTES if expected_media == "application/pdf" else MAX_HTML_BYTES
+        allowed_media = frozenset({expected_media})
+    else:
+        if (type(_body_policy) is not _BodyPolicy or type(_body_policy.max_bytes) is not int
+                or not 1 <= _body_policy.max_bytes <= MAX_PDF_BYTES
+                or type(_body_policy.allowed_media) is not frozenset
+                or not 1 <= len(_body_policy.allowed_media) <= 4
+                or any(type(media) is not str or re.fullmatch(r"[a-z0-9.+-]{1,64}/[a-z0-9.+-]{1,64}", media) is None
+                       for media in _body_policy.allowed_media)
+                or expected_media not in _body_policy.allowed_media
+                or not callable(_body_policy.validate) or not callable(_body_policy.response_factory)):
+            raise OfficialTransportError("unsupported official source media type")
+        limit = _body_policy.max_bytes
+        allowed_media = _body_policy.allowed_media
     deadline = time.monotonic() + TOTAL_BUDGET_SECONDS
     origin = urlsplit(requested_url).netloc
     current_url = requested_url
@@ -400,7 +431,7 @@ def _fetch_bounded(
                     if response.status_code != 200:
                         raise OfficialTransportError("official source did not return HTTP 200")
                     media_type = response.headers.get("content-type", "").split(";", 1)[0].strip().lower()
-                    if len(response.headers.get_list("content-type")) != 1 or media_type != expected_media:
+                    if len(response.headers.get_list("content-type")) != 1 or media_type not in allowed_media:
                         raise OfficialTransportError("official source returned an unexpected media type")
                     if response.headers.get("transfer-encoding") and response.headers.get("content-length"):
                         raise OfficialTransportError("official source returned ambiguous body framing")
@@ -408,8 +439,17 @@ def _fetch_bounded(
                     content = b"".join(bounded_chunks(
                         _checked_raw_chunks(response, deadline), max_bytes=limit, declared=declared,
                     ))
-                    _validate_document(content, expected_media)
+                    if _body_policy is None:
+                        _validate_document(content, expected_media)
+                    else:
+                        _body_policy.validate(content)
                     _remaining(deadline)
+                    if _body_policy is not None:
+                        return _body_policy.response_factory(
+                            url=actual_url, requested_url=requested_url, content=content,
+                            media_type=media_type, retrieved_at=datetime.now(timezone.utc),
+                            redirect_chain=tuple(chain), http_content_type=response.headers["content-type"],
+                        )
                     return OfficialResponse(
                         url=actual_url,
                         requested_url=requested_url,
