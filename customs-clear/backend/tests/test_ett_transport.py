@@ -4,6 +4,7 @@ from dataclasses import FrozenInstanceError
 from datetime import timezone
 import hashlib
 import json
+from pathlib import Path
 
 import httpx
 import pytest
@@ -73,7 +74,7 @@ def test_rejected_pdf_diagnostics_are_bounded_and_do_not_relax_shape(content, ma
 @pytest.mark.parametrize("location,reason", [
     ("/documents/399/6620/?token=SECRET", "query"),
     ("/documents/399/6620/#SECRET", "fragment"),
-    ("https://eec.eaeunion.org:443/SECRET", "port"),
+    ("https://eec.eaeunion.org:8443/SECRET", "port"),
     ("http://eec.eaeunion.org/SECRET", "scheme"),
     ("https://docs.eaeunion.org/SECRET", "cross_host"),
     ("https://user:SECRET@eec.eaeunion.org/a", "credentials"),
@@ -89,7 +90,7 @@ def test_redirect_rejection_exposes_only_static_reason_without_following(locatio
     assert len(calls) == 1
     expected = {"kind": "rejected_redirect", "url_reason": reason}
     if reason == "port":
-        expected["url_port_class"] = "default_https"
+        expected["url_port_class"] = "nondefault"
     assert caught.value.diagnostics == expected
     assert "SECRET" not in json.dumps(caught.value.diagnostics)
     assert "SECRET" not in str(caught.value)
@@ -132,8 +133,8 @@ def test_pdf_header_gap_still_requires_terminal_eof():
     assert caught.value.diagnostics["trailing_header_whitespace_count"] == 2
 
 
-@pytest.mark.parametrize("port,port_class", [("443", "default_https"), ("8443", "nondefault")])
-def test_explicit_port_is_classified_but_never_normalized_or_followed(port, port_class):
+@pytest.mark.parametrize("port,port_class", [("8443", "nondefault"), ("80", "nondefault")])
+def test_nondefault_port_is_classified_but_never_normalized_or_followed(port, port_class):
     calls = []
     def handler(request):
         calls.append(request)
@@ -183,6 +184,83 @@ def test_rejected_body_accessor_rejects_changed_digest_and_generic_errors():
     generic = transport.OfficialTransportError("official source acquisition failed", diagnostics=transport._document_diagnostics(b"payload"))
     generic._rejected_document = b"payload"
     assert transport._get_rejected_document_bytes(generic) is None
+
+
+def test_observed_legacy_https_default_port_redirect_retains_request_and_wire_destination():
+    legacy = "https://docs.eaeunion.org/docs/ru-ru/01232481/err_28042022_66"
+    canonical = "https://docs.eaeunion.org/documents/399/6620/"
+    seen = []
+    def handler(request):
+        seen.append(str(request.url))
+        if str(request.url) == legacy:
+            return response(status=301, headers={"Location": "https://docs.eaeunion.org:443/documents/399/6620/"})
+        assert str(request.url) == canonical
+        return response(HTML)
+    result = transport.fetch_official(legacy, _transport=httpx.MockTransport(handler))
+    assert seen == [legacy, canonical]
+    assert result.requested_url == legacy
+    assert result.url == canonical
+    assert result.redirect_chain == (canonical,)
+    assert result.content == HTML
+
+
+@pytest.mark.parametrize("location", [
+    "https://eec.eaeunion.org:443/other-origin",
+    "https://docs.eaeunion.org:8443/documents/399/6620/",
+    "https://docs.eaeunion.org:0443/documents/399/6620/",
+    "https://user@docs.eaeunion.org:443/documents/399/6620/",
+    "http://docs.eaeunion.org:443/documents/399/6620/",
+    "//docs.eaeunion.org:443/documents/399/6620/",
+    "https://docs.eaeunion.org:443/documents/../6620/",
+    "https://docs.eaeunion.org:443/documents/%2e%2e/6620/",
+    "https://docs.eaeunion.org:443/documents/%252e%252e/6620/",
+    "https://docs.eaeunion.org:443/documents/399/6620/?token=SECRET",
+    "https://docs.eaeunion.org:443/documents/399/6620/#SECRET",
+    " https://docs.eaeunion.org:443/documents/399/6620/",
+])
+def test_default_port_redirect_exception_cannot_expand_source_policy(location):
+    seen = []
+    def handler(request):
+        seen.append(str(request.url))
+        return response(status=302, headers={"Location": location})
+    with pytest.raises(transport.OfficialTransportError):
+        transport.fetch_official("https://docs.eaeunion.org/documents/399/6620/", _transport=httpx.MockTransport(handler))
+    assert len(seen) == 1
+
+
+@pytest.mark.parametrize("ending", [b"\n", b"\r", b"\r\n"])
+def test_exact_retained_sharp_producer_header_is_accepted_without_rewriting(ending):
+    evidence = json.loads((Path(__file__).parent / "fixtures" / "ett_pdf_headers" / "sharp_scanned.metadata.json").read_text())
+    header = evidence["first_line"].encode("ascii").removesuffix(b"\n")
+    assert header == b"%PDF-1.4 Sharp Scanned ImagePDF"
+    assert {s["sha256"] for s in evidence["sources"]} == {
+        "10b9315c8c86efadf53f773c8d984d22247bc5485c432d5039352a66113179d5",
+        "d0fbfe320d18465519a9baadc9f00d1b0c88124c2102f70830207dfba95a48fc",
+    }
+    content = header + ending + b"synthetic test body\n%%EOF\n"
+    result = fetch(lambda request: response(content, headers={"Content-Type": "application/pdf"}), expected_media="application/pdf")
+    assert result.content == content
+
+
+@pytest.mark.parametrize("header", [
+    b"%PDF-1.4 Another Producer\n",
+    b"%PDF-1.4 Sharp Scanned ImagePDF EXTRA\n",
+    b"%PDF-1.4 Sharp Scanned ImagePDF \n",
+    b"%PDF-1.4 Sharp Scanned ImagePDF\x00\n",
+    b"%PDF-1.4 Sharp Scanned ImagePDF",
+    b"%PDF-1.4\tSharp Scanned ImagePDF\n",
+    b"%PDF-1.4 Sharp scanned ImagePDF\n",
+    b"%PDF-1.7 Sharp Scanned ImagePDF\n",
+    b" %PDF-1.4 Sharp Scanned ImagePDF\n",
+])
+def test_sharp_header_exception_does_not_accept_speculative_variants(header):
+    with pytest.raises(transport.OfficialTransportError, match="not a PDF"):
+        fetch(lambda request: response(header + b"body\n%%EOF\n", headers={"Content-Type": "application/pdf"}), expected_media="application/pdf")
+
+
+def test_observed_sharp_header_still_requires_terminal_eof():
+    with pytest.raises(transport.OfficialTransportError, match="EOF"):
+        fetch(lambda request: response(b"%PDF-1.4 Sharp Scanned ImagePDF\ntruncated", headers={"Content-Type": "application/pdf"}), expected_media="application/pdf")
 
 
 @pytest.mark.parametrize("url", [

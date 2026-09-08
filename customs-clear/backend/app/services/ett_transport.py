@@ -27,6 +27,9 @@ MAX_HTML_BYTES = 4 * 1024 * 1024
 MAX_PDF_BYTES = 64 * 1024 * 1024
 MAX_REDIRECTS = 3
 MAX_PDF_HEADER_WHITESPACE = 16
+# Exact first-line producer signature retained from both official 2022 acts;
+# unrelated producer strings and version variants are not inferred or accepted.
+_OBSERVED_SHARP_HEADER = b"%PDF-1.4 Sharp Scanned ImagePDF"
 TOTAL_BUDGET_SECONDS = 120.0
 IO_TIMEOUT_SECONDS = 5.0
 _REDIRECT_STATUSES = frozenset({301, 302, 303, 307, 308})
@@ -259,7 +262,12 @@ def _validate_document(content: bytes, expected_media: OfficialMedia) -> None:
         # Preserve originals while tolerating only a bounded horizontal gap
         # between the PDF version and its mandatory CR/LF. A shifted header,
         # arbitrary suffix bytes, vertical whitespace or an overlong gap fail.
-        if not re.match(rb"%PDF-[12]\.[0-9][ \t]{0,16}(?:\r|\n)", content[:8 + MAX_PDF_HEADER_WHITESPACE + 2]):
+        # The one exact Sharp header below is separately attested by retained
+        # originals; this is not a generic free-text producer suffix allowance.
+        standard_header = re.match(rb"%PDF-[12]\.[0-9][ \t]{0,16}(?:\r|\n)", content[:8 + MAX_PDF_HEADER_WHITESPACE + 2])
+        observed_sharp_header = (content.startswith(_OBSERVED_SHARP_HEADER)
+                                 and content[len(_OBSERVED_SHARP_HEADER):len(_OBSERVED_SHARP_HEADER) + 1] in {b"\r", b"\n"})
+        if not standard_header and not observed_sharp_header:
             raise _rejected_document_error("official source is not a PDF document", content)
         if not re.search(rb"%%EOF[\t\n\f\r ]*\Z", content[-2048:]):
             raise _rejected_document_error("official PDF has no terminal EOF marker", content)
@@ -304,6 +312,19 @@ def _official_redirect_target(current_url: str, location: str) -> str:
         or any(part in {".", ".."} for part in location.split("/"))
     ):
         raise OfficialTransportError("official source returned an invalid redirect", diagnostics=_url_diagnostics(location, kind="rejected_redirect"))
+    try:
+        parsed = urlsplit(location)
+        if any(part in {".", ".."} for part in unquote(parsed.path, encoding="utf-8", errors="strict").split("/")):
+            raise ValueError
+    except (ValueError, UnicodeError):
+        raise OfficialTransportError("official source returned an invalid redirect", diagnostics=_url_diagnostics(location, kind="rejected_redirect")) from None
+    # The observed legacy portal emits an absolute same-host HTTPS redirect
+    # with its default port. RFC 3986 sections 3.2.3/6.2.3 allow omitting that
+    # port. Normalize only this exact observed form after raw safety checks;
+    # initial URLs, manifests, other ports/origins and search policy stay strict.
+    current_origin = urlsplit(current_url).netloc
+    if parsed.scheme == "https" and parsed.netloc == current_origin + ":443":
+        location = parsed._replace(netloc=current_origin).geturl()
     return validate_official_url(urljoin(current_url, location))
 
 
