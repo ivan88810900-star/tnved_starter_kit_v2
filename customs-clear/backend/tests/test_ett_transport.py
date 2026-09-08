@@ -87,7 +87,10 @@ def test_redirect_rejection_exposes_only_static_reason_without_following(locatio
     with pytest.raises(transport.OfficialTransportError) as caught:
         fetch(handler)
     assert len(calls) == 1
-    assert caught.value.diagnostics == {"kind": "rejected_redirect", "url_reason": reason}
+    expected = {"kind": "rejected_redirect", "url_reason": reason}
+    if reason == "port":
+        expected["url_port_class"] = "default_https"
+    assert caught.value.diagnostics == expected
     assert "SECRET" not in json.dumps(caught.value.diagnostics)
     assert "SECRET" not in str(caught.value)
 
@@ -97,7 +100,56 @@ def test_diagnostic_sanitizer_rejects_unknown_keys_values_and_unbounded_numbers(
         "kind": "SECRET", "magic": "SECRET", "sha256": "SECRET", "size_bytes": True,
         "pdf_header_offset": 1024, "pdf_header_ending": "SECRET", "body": "SECRET",
         "url_reason": "https://example.com/?token=SECRET",
+        "url_port_class": "443 SECRET", "trailing_header_whitespace_count": 1017,
     }) == {}
+
+
+@pytest.mark.parametrize("gap", [b"", b" ", b"\t", b" \t" * 8])
+@pytest.mark.parametrize("ending", [b"\n", b"\r", b"\r\n"])
+def test_bounded_horizontal_pdf_header_gap_preserves_original_bytes(gap, ending):
+    content = b"%PDF-1.7" + gap + ending + b"synthetic body\n%%EOF\n"
+    value = fetch(lambda request: response(content, headers={"Content-Type": "application/pdf"}), expected_media="application/pdf")
+    assert value.content == content
+    assert transport._document_diagnostics(content)["trailing_header_whitespace_count"] == len(gap)
+
+
+@pytest.mark.parametrize("header", [
+    b" %PDF-1.7 \n", b"\xef\xbb\xbf%PDF-1.7 \n", b"\n%PDF-1.7 \n",
+    b"%PDF-1.7" + b" " * 17 + b"\n", b"%PDF-1.7" + b"\t" * 17 + b"\r\n",
+    b"%PDF-1.7 x\n", b"%PDF-1.7\x00\n", b"%PDF-1.7\v\n", b"%PDF-1.7\f\n",
+    b"%PDF-1.70\n", b"%PDF-3.0 \n", b"%PDF-1.7" + b" " * 16,
+])
+def test_pdf_header_gap_does_not_admit_shifted_long_or_arbitrary_headers(header):
+    content = header + b"synthetic body\n%%EOF\n"
+    with pytest.raises(transport.OfficialTransportError, match="not a PDF") as caught:
+        fetch(lambda request: response(content, headers={"Content-Type": "application/pdf"}), expected_media="application/pdf")
+    assert 0 <= caught.value.diagnostics["trailing_header_whitespace_count"] <= 1016
+
+
+def test_pdf_header_gap_still_requires_terminal_eof():
+    with pytest.raises(transport.OfficialTransportError, match="EOF") as caught:
+        fetch(lambda request: response(b"%PDF-1.7 \t\r\ntruncated body", headers={"Content-Type": "application/pdf"}), expected_media="application/pdf")
+    assert caught.value.diagnostics["trailing_header_whitespace_count"] == 2
+
+
+@pytest.mark.parametrize("port,port_class", [("443", "default_https"), ("8443", "nondefault")])
+def test_explicit_port_is_classified_but_never_normalized_or_followed(port, port_class):
+    calls = []
+    def handler(request):
+        calls.append(request)
+        return response(status=302, headers={"Location": f"https://eec.eaeunion.org:{port}/SECRET"})
+    with pytest.raises(transport.OfficialTransportError) as caught:
+        fetch(handler)
+    assert len(calls) == 1
+    assert caught.value.diagnostics == {"kind": "rejected_redirect", "url_reason": "port", "url_port_class": port_class}
+    assert "SECRET" not in str(caught.value)
+
+
+def test_malformed_explicit_port_remains_invalid_and_has_no_arbitrary_text():
+    with pytest.raises(transport.OfficialTransportError) as caught:
+        transport.validate_official_url("https://eec.eaeunion.org:SECRET/path")
+    assert caught.value.diagnostics == {"kind": "rejected_url", "url_reason": "port", "url_port_class": "nondefault"}
+    assert "SECRET" not in str(caught.value)
 
 
 @pytest.mark.parametrize("url", [

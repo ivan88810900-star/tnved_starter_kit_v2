@@ -26,6 +26,7 @@ OFFICIAL_HOSTS = frozenset({"eec.eaeunion.org", "docs.eaeunion.org"})
 MAX_HTML_BYTES = 4 * 1024 * 1024
 MAX_PDF_BYTES = 64 * 1024 * 1024
 MAX_REDIRECTS = 3
+MAX_PDF_HEADER_WHITESPACE = 16
 TOTAL_BUDGET_SECONDS = 120.0
 IO_TIMEOUT_SECONDS = 5.0
 _REDIRECT_STATUSES = frozenset({301, 302, 303, 307, 308})
@@ -55,6 +56,7 @@ def sanitize_transport_diagnostics(value) -> dict:
         "pdf_header_signature": {"supported_version", "unsupported_version", "not_found"},
         "pdf_header_ending": {"crlf", "cr", "lf", "other", "absent"},
         "url_reason": {"missing", "oversized", "controls", "backslash", "query", "fragment", "credentials", "port", "scheme", "host", "missing_path", "encoding", "encoded_reserved", "traversal", "malformed", "cross_host"},
+        "url_port_class": {"default_https", "nondefault"},
     }
     for key, vocabulary in vocabularies.items():
         item = value.get(key)
@@ -70,11 +72,15 @@ def sanitize_transport_diagnostics(value) -> dict:
         offset = value["pdf_header_offset"]
         if offset is None or type(offset) is int and 0 <= offset <= 1019:
             result["pdf_header_offset"] = offset
+    whitespace_count = value.get("trailing_header_whitespace_count")
+    if type(whitespace_count) is int and 0 <= whitespace_count <= 1016:
+        result["trailing_header_whitespace_count"] = whitespace_count
     return result
 
 
 def _url_diagnostics(url, *, kind: str = "rejected_url") -> dict:
     reason = "malformed"
+    port_class = None
     if not isinstance(url, str) or not url:
         reason = "missing"
     elif len(url) > 4096:
@@ -94,6 +100,10 @@ def _url_diagnostics(url, *, kind: str = "rejected_url") -> dict:
                 reason = "credentials"
             elif ":" in parsed.netloc:
                 reason = "port"
+                try:
+                    port_class = "default_https" if parsed.scheme == "https" and parsed.port == 443 else "nondefault"
+                except ValueError:
+                    port_class = "nondefault"
             elif parsed.scheme and parsed.scheme != "https":
                 reason = "scheme"
             elif parsed.netloc and parsed.netloc not in OFFICIAL_HOSTS:
@@ -108,7 +118,10 @@ def _url_diagnostics(url, *, kind: str = "rejected_url") -> dict:
                 reason = "traversal"
         except (ValueError, UnicodeError):
             reason = "encoding"
-    return {"kind": kind, "url_reason": reason}
+    result = {"kind": kind, "url_reason": reason}
+    if port_class is not None:
+        result["url_port_class"] = port_class
+    return result
 
 
 def _document_diagnostics(content: bytes) -> dict:
@@ -128,14 +141,17 @@ def _document_diagnostics(content: bytes) -> dict:
         magic = "ole"
     signature = "not_found"
     ending = "absent"
+    whitespace_count = 0
     if offset >= 0:
         header = prefix[offset:]
         signature = "supported_version" if re.match(rb"%PDF-[12]\.[0-9]", header) else "unsupported_version"
+        whitespace_count = len(header[8:]) - len(header[8:].lstrip(b" \t"))
         if len(header) > 8:
             ending = "crlf" if header[8:10] == b"\r\n" else "cr" if header[8:9] == b"\r" else "lf" if header[8:9] == b"\n" else "other"
     return {"kind": "rejected_document", "magic": magic, "size_bytes": len(content),
             "sha256": hashlib.sha256(content).hexdigest(), "pdf_header_offset": offset if offset >= 0 else None,
-            "pdf_header_signature": signature, "pdf_header_ending": ending}
+            "pdf_header_signature": signature, "pdf_header_ending": ending,
+            "trailing_header_whitespace_count": whitespace_count}
 
 
 @dataclass(frozen=True)
@@ -205,7 +221,10 @@ def _checked_raw_chunks(response: httpx.Response, deadline: float):
 
 def _validate_document(content: bytes, expected_media: OfficialMedia) -> None:
     if expected_media == "application/pdf":
-        if not re.match(rb"%PDF-[12]\.[0-9](?:\r|\n)", content[:10]):
+        # Preserve originals while tolerating only a bounded horizontal gap
+        # between the PDF version and its mandatory CR/LF. A shifted header,
+        # arbitrary suffix bytes, vertical whitespace or an overlong gap fail.
+        if not re.match(rb"%PDF-[12]\.[0-9][ \t]{0,16}(?:\r|\n)", content[:8 + MAX_PDF_HEADER_WHITESPACE + 2]):
             raise OfficialTransportError("official source is not a PDF document", diagnostics=_document_diagnostics(content))
         if not re.search(rb"%%EOF[\t\n\f\r ]*\Z", content[-2048:]):
             raise OfficialTransportError("official PDF has no terminal EOF marker", diagnostics=_document_diagnostics(content))
