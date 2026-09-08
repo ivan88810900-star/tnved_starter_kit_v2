@@ -9,8 +9,10 @@ import pytest
 from app.services import ett_analysis as analysis
 from app.services.ett_acquisition import AcquisitionError
 from app.services.ett_acquisition import canonical_bytes
+from app.services import ett_acquisition
+from app.services.ett_transport import OfficialTransportError
 from app.services.ett_artifacts import LocalArtifactStore
-from tests.test_ett_acquisition import capture
+from tests.test_ett_acquisition import capture, fake_fetch
 
 
 @pytest.fixture(scope="module")
@@ -70,6 +72,11 @@ def test_full_analysis_index_binds_every_chapter_report_without_legal_promotion(
     assert result["complete_rate_catalog_verified"] is result["production_ready"] is result["active_rates_written"] is False
     assert result["legal_rates_resolved"] == 0
     assert result["linked_legal_pdf_capture"] is True
+    assert result["acquisition_complete"] is True
+    assert result["amendment_inventory_named_count"] == 3
+    assert result["amendment_inventory_linked_count"] == 1
+    assert result["amendment_inventory_missing_link_count"] == 2
+    assert result["amendment_effective_clauses_verified"] == 0
     assert result["note_inventory_diagnostics"] == ["duplicate_note_ids"]
     assert result["assembly_diagnostics"] == result["row_diagnostics"] == {}
     assert result["all_note_source_rows_accounted"] is True
@@ -102,6 +109,36 @@ def test_analysis_cannot_skip_integrity_checks(technical_set, monkeypatch):
     store, _, _ = technical_set
     with pytest.raises(ValueError):
         analysis.analyze_acquisition(store, "a" * 64)
+
+
+@pytest.mark.parametrize("core_complete", [True, False])
+def test_failed_capture_cannot_be_presented_as_a_complete_receipt(technical_set, core_complete):
+    store, _, calls = technical_set
+    fetch, _ = fake_fetch()
+    failed_marker = "docs.eaeunion.org" if core_complete else "published-03-"
+    def interrupted(url, **kwargs):
+        if failed_marker in url:
+            raise OfficialTransportError("network unavailable")
+        return fetch(url, **kwargs)
+    with pytest.raises(ett_acquisition.AcquisitionDownloadError) as error:
+        ett_acquisition.acquire_official(store, _fetch=interrupted)
+    digest = error.value.progress_report_sha256
+    assert digest
+    if not core_complete:
+        with pytest.raises(AcquisitionError, match="full core PDF"):
+            analysis.analyze_incomplete_capture(store, digest)
+        assert calls == []
+        return
+    result = analysis.analyze_incomplete_capture(store, digest)
+    assert result["chapter_count"] == 96
+    assert result["kind"] == "ett_incomplete_capture_analysis"
+    assert result["acquisition_complete"] is False
+    assert result["receipt_sha256"] is None
+    assert result["incomplete_capture_report_sha256"] == digest
+    assert "incomplete_acquisition" in result["blockers"]
+    assert result["complete_rate_catalog_verified"] is result["production_ready"] is False
+    with pytest.raises(ValueError):
+        analysis.analyze_acquisition(store, digest)
 
 
 def test_bounded_encoding_preserves_canonical_hash_and_rejects_overflow():

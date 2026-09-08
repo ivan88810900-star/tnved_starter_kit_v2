@@ -6,16 +6,20 @@ approval, production rate, VAT or database record is inferred or written.
 from __future__ import annotations
 
 from collections import Counter
+from dataclasses import asdict
 import hashlib
 import json
 from pathlib import Path
 import re
 import time
 
+from fastapi.encoders import jsonable_encoder
+
 from app.services.ett_acquisition import (
     AcquisitionError, ExpandedAcquisitionReceipt, load_acquisition,
 )
 from app.services.ett_artifacts import LocalArtifactStore
+from app.services.ett_amendment_inventory import parse_amendment_inventory
 from app.services.ett_duty_cells import parse_duty_cell
 from app.services.ett_duty_typography import normalize_duty_typography
 from app.services.ett_notes import extract_tariff_notes
@@ -29,7 +33,7 @@ MAX_SINGLE_REPORT_BYTES = 64 * 1024 * 1024
 
 def _parser_hashes() -> dict[str, str]:
     return {name: hashlib.sha256(Path(__file__).with_name(name + ".py").read_bytes()).hexdigest()
-            for name in ("ett_analysis", "ett_duty_cells", "ett_duty_typography", "ett_manifest")}
+            for name in ("ett_analysis", "ett_duty_cells", "ett_duty_typography", "ett_manifest", "ett_amendment_inventory")}
 
 
 def _bounded_json(report, *, maximum: int, started: float) -> bytes:
@@ -80,6 +84,20 @@ def analyze_chapter(data: bytes, *, artifact_id: str, chapter: str, known_note_i
 def analyze_acquisition(store: LocalArtifactStore, digest: str) -> dict:
     """Publish an analysis-set index only after every chapter has been examined."""
     receipt, discovery = load_acquisition(store, digest)
+    return _analyze_captured_records(store, digest, receipt, discovery, complete=True)
+
+
+def analyze_incomplete_capture(store: LocalArtifactStore, digest: str) -> dict:
+    """Analyze fully captured core PDFs while retaining the failed legal capture."""
+    from app.services.ett_acquisition import load_incomplete_capture
+    receipt, discovery = load_incomplete_capture(store, digest)
+    present = {record.requested_url for record in receipt.downloads}
+    if discovery is None or receipt.index_start is None or any(ref.url not in present for ref in discovery.documents):
+        raise AcquisitionError("Incomplete capture lacks the full core PDF source set")
+    return _analyze_captured_records(store, digest, receipt, discovery, complete=False)
+
+
+def _analyze_captured_records(store, digest, receipt, discovery, *, complete):
     records_by_url = {record.requested_url: record for record in receipt.downloads}
     started = time.monotonic()
     total_bytes = 0
@@ -92,6 +110,8 @@ def analyze_acquisition(store: LocalArtifactStore, digest: str) -> dict:
             raise AcquisitionError("ETT analysis exceeded its aggregate resource budget")
         return store.put(raw)
 
+    amendments = parse_amendment_inventory(store.read(receipt.index_start.sha256))
+    amendments_sha = publish(jsonable_encoder(asdict(amendments)))
     notes_record = records_by_url[discovery.tariff_notes.url]
     notes = extract_tariff_notes(store.read(notes_record.sha256), artifact_id="tariff-notes")
     notes_sha = publish(notes)
@@ -133,8 +153,17 @@ def analyze_acquisition(store: LocalArtifactStore, digest: str) -> dict:
         unresolved_refs.update(cells["unbound_footnote_references"])
     duplicate_codes = sorted(code for code, count in Counter(all_codes).items() if count > 1)
     summary = {
-        "schema_version": 1, "kind": "ett_acquisition_analysis", "status": "analyzed_for_review",
-        "receipt_sha256": digest, "tariff_notes_report_sha256": notes_sha,
+        "schema_version": 1, "kind": "ett_acquisition_analysis" if complete else "ett_incomplete_capture_analysis",
+        "status": "analyzed_for_review" if complete else "incomplete_capture_analyzed_for_review",
+        "acquisition_complete": complete,
+        "receipt_sha256": digest if complete else None,
+        "incomplete_capture_report_sha256": None if complete else digest,
+        "tariff_notes_report_sha256": notes_sha,
+        "amendment_inventory_report_sha256": amendments_sha,
+        "amendment_inventory_named_count": amendments.named_count,
+        "amendment_inventory_linked_count": amendments.linked_count,
+        "amendment_inventory_missing_link_count": amendments.missing_link_count,
+        "amendment_effective_clauses_verified": 0,
         "notes": notes["note_count"], "duplicate_note_ids": notes["duplicate_note_ids"],
         "note_inventory_diagnostics": notes["issues"], "unassigned_note_rows": len(notes["unassigned_rows"]),
         "all_note_source_rows_accounted": notes["all_source_rows_accounted"],
@@ -153,7 +182,7 @@ def analyze_acquisition(store: LocalArtifactStore, digest: str) -> dict:
         "legal_attachment_inventory_bound": isinstance(receipt, ExpandedAcquisitionReceipt),
         "linked_legal_pdf_capture": bool(receipt.attachment_downloads) if isinstance(receipt, ExpandedAcquisitionReceipt) else False,
         "additional_legal_pdfs_captured": len(receipt.attachment_downloads) if isinstance(receipt, ExpandedAcquisitionReceipt) else 0,
-        "blockers": (["empty_table_chapters"] if empty_chapters else []) + ["current_edition_and_complete_amendments_not_legally_verified",
+        "blockers": ([] if complete else ["incomplete_acquisition"]) + (["empty_table_chapters"] if empty_chapters else []) + ["current_edition_and_complete_amendments_not_legally_verified",
                      "note_conditions_and_effective_dates_require_interpretation",
                      "manifest_bound_legal_review_missing", "production_promotion_not_implemented"],
         "legal_rates_resolved": 0, "complete_rate_catalog_verified": False,

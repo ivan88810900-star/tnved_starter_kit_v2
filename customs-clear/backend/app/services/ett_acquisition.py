@@ -25,6 +25,7 @@ MAX_TOTAL_BYTES = 512 * 1024 * 1024
 MAX_DOWNLOADS = 256
 MAX_RUN_SECONDS = 20 * 60
 MAX_EXTRACTION_BYTES = 512 * 1024 * 1024
+MAX_PROGRESS_REPORT_BYTES = 8 * 1024 * 1024
 
 
 class AcquisitionError(ValueError):
@@ -33,9 +34,10 @@ class AcquisitionError(ValueError):
 
 class AcquisitionDownloadError(AcquisitionError):
     """Safe identity of a failed public-source request, without response content."""
-    def __init__(self, requested_url: str):
+    def __init__(self, requested_url: str, progress_report_sha256: str | None = None):
         super().__init__("Official source download failed")
         self.requested_url = requested_url
+        self.progress_report_sha256 = progress_report_sha256
 
 
 def canonical_bytes(value) -> bytes:
@@ -118,6 +120,39 @@ class ExpandedAcquisitionReceipt(AcquisitionReceipt):
     attachment_downloads: tuple[DownloadRecord, ...] = Field(max_length=MAX_DOWNLOADS)
 
 
+class IncompleteCaptureReport(_Frozen):
+    """Diagnostic source associations only; never accepted as a capture receipt."""
+    schema_version: Literal[1] = 1
+    kind: Literal["ett_incomplete_capture"] = "ett_incomplete_capture"
+    status: Literal["incomplete"] = "incomplete"
+    mode: Literal["technical_progress_only"] = "technical_progress_only"
+    storage_kind: Literal["local_development"] = "local_development"
+    production_ready: Literal[False] = False
+    active_rates_written: Literal[False] = False
+    legal_inventory_complete: Literal[False] = False
+    effective_dates_verified: Literal[False] = False
+    index_stable_during_capture: Literal[False] = False
+    index_start: DownloadRecord | None = None
+    discovery_sha256: SHA256 | None = None
+    downloads: tuple[DownloadRecord, ...] = Field(max_length=MAX_DOWNLOADS)
+    attachment_downloads: tuple[DownloadRecord, ...] = Field(max_length=MAX_DOWNLOADS)
+    failed_stage: Literal["initial_index", "index_documents", "legal_attachments", "final_index"]
+    failed_requested_url: Annotated[StrictStr, Field(max_length=4096)]
+    failed_media_type: Literal["text/html", "application/pdf"]
+    reason_code: Literal["official_transport_failure"] = "official_transport_failure"
+
+    @field_validator("failed_requested_url")
+    @classmethod
+    def official_failed_url(cls, value):
+        return validate_official_url(value)
+
+    @model_validator(mode="after")
+    def bounded_completed_records(self):
+        if len(self.downloads) + len(self.attachment_downloads) > MAX_DOWNLOADS:
+            raise ValueError("Incomplete capture exceeds its download bound")
+        return self
+
+
 def _attachment_plan(store, records):
     from app.services.ett_legal_attachments import parse_legal_attachments
 
@@ -173,6 +208,27 @@ def _verify_capture_interval(index_start, records, index_end):
 def acquire_official(store: LocalArtifactStore, *, _fetch=fetch_official) -> dict:
     start = time.monotonic()
     total = 0
+    index_start = None
+    discovered = None
+    completed_documents = []
+    completed_attachments = []
+    stage = "initial_index"
+
+    def retain_failure(url, media):
+        report = IncompleteCaptureReport(
+            index_start=index_start,
+            discovery_sha256=hashlib.sha256(discovered).hexdigest() if discovered is not None else None,
+            downloads=tuple(completed_documents), attachment_downloads=tuple(completed_attachments),
+            failed_stage=stage, failed_requested_url=url, failed_media_type=media,
+        )
+        # Bounded metadata only: no exception message, traceback, response body,
+        # credentials or arbitrary transport details are copied into the report.
+        raw = canonical_bytes(report.model_dump(mode="json"))
+        if len(raw) > MAX_PROGRESS_REPORT_BYTES:
+            raise AcquisitionError("Incomplete capture report exceeds its byte bound")
+        for record in ((index_start,) if index_start is not None else ()) + tuple(completed_documents) + tuple(completed_attachments):
+            store.verify(record.sha256, record.size_bytes)
+        return store.put(raw)
 
     def download(url, media):
         nonlocal total
@@ -182,7 +238,8 @@ def acquire_official(store: LocalArtifactStore, *, _fetch=fetch_official) -> dic
         try:
             response = _fetch(url, expected_media=media)
         except OfficialTransportError:
-            raise AcquisitionDownloadError(url) from None
+            progress_digest = retain_failure(url, media)
+            raise AcquisitionDownloadError(url, progress_digest) from None
         if response.requested_url != url or response.media_type != media:
             raise AcquisitionError("Response does not match the discovered request")
         if url == INDEX_URL and response.url != INDEX_URL:
@@ -203,13 +260,20 @@ def acquire_official(store: LocalArtifactStore, *, _fetch=fetch_official) -> dic
 
     index_start, raw = download(INDEX_URL, "text/html")
     discovery = parse_index(raw)
-    plan = _plan(discovery)
-    records = tuple(download(url, media)[0] for url, media in plan)
-    attachment_plan, attachment_inventory_sha, unsupported_count, raw_inventory = _attachment_plan(store, records)
-    attachments = tuple(download(url, media)[0] for url, media in attachment_plan)
-    store.put(raw_inventory)
-    index_end, end_raw = download(INDEX_URL, "text/html")
     discovered = canonical_bytes(discovery_payload(discovery))
+    plan = _plan(discovery)
+    stage = "index_documents"
+    for url, media in plan:
+        completed_documents.append(download(url, media)[0])
+    records = tuple(completed_documents)
+    attachment_plan, attachment_inventory_sha, unsupported_count, raw_inventory = _attachment_plan(store, records)
+    stage = "legal_attachments"
+    for url, media in attachment_plan:
+        completed_attachments.append(download(url, media)[0])
+    attachments = tuple(completed_attachments)
+    store.put(raw_inventory)
+    stage = "final_index"
+    index_end, end_raw = download(INDEX_URL, "text/html")
     if discovered != canonical_bytes(discovery_payload(parse_index(end_raw))):
         raise AcquisitionError("Official index changed during acquisition; repeat as a new capture")
     _verify_capture_interval(index_start, (*records, *attachments), index_end)
@@ -232,6 +296,59 @@ def acquire_official(store: LocalArtifactStore, *, _fetch=fetch_official) -> dic
         "legal_inventory_complete": False, "effective_dates_verified": False,
         "production_ready": False, "active_rates_written": False,
     }
+
+
+def load_incomplete_capture(store: LocalArtifactStore, digest: str) -> tuple[IncompleteCaptureReport, object | None]:
+    """Verify retained source associations without granting complete-capture status.
+
+    The completed sequence must be the exact prefix of the discovered plan and
+    the failed request must be its next element. A missing middle document,
+    reordered prefix or unrelated URL cannot be hidden by rehashing JSON.
+    """
+    raw = store.read(digest)
+    if len(raw) > MAX_PROGRESS_REPORT_BYTES:
+        raise AcquisitionError("Incomplete capture report exceeds its byte bound")
+    report = IncompleteCaptureReport.model_validate(read_json(raw))
+    if canonical_bytes(report.model_dump(mode="json")) != raw:
+        raise AcquisitionError("Incomplete capture report must use canonical serialization")
+    failed = (report.failed_requested_url, report.failed_media_type)
+    if report.failed_stage == "initial_index":
+        if report.index_start is not None or report.discovery_sha256 is not None or report.downloads or report.attachment_downloads or failed != (INDEX_URL, "text/html"):
+            raise AcquisitionError("Initial-index failure has inconsistent progress")
+        return report, None
+    index = report.index_start
+    if index is None or index.requested_url != INDEX_URL or index.url != INDEX_URL or index.media_type != "text/html":
+        raise AcquisitionError("Incomplete capture index identity mismatch")
+    completed = (index, *report.downloads, *report.attachment_downloads)
+    if sum(record.size_bytes for record in completed) > MAX_TOTAL_BYTES:
+        raise AcquisitionError("Incomplete capture exceeds its aggregate byte bound")
+    if any(record.retrieved_at < index.retrieved_at for record in completed):
+        raise AcquisitionError("Incomplete capture timestamps predate its index")
+    for record in completed:
+        store.verify(record.sha256, record.size_bytes)
+    discovery = parse_index(store.read(index.sha256))
+    if hashlib.sha256(canonical_bytes(discovery_payload(discovery))).hexdigest() != report.discovery_sha256:
+        raise AcquisitionError("Incomplete capture discovery identity mismatch")
+    expected = _plan(discovery)
+    actual = tuple((record.requested_url, record.media_type) for record in report.downloads)
+    if actual != expected[:len(actual)]:
+        raise AcquisitionError("Completed downloads are not the exact index-plan prefix")
+    if report.failed_stage == "index_documents":
+        if len(actual) >= len(expected) or report.attachment_downloads or failed != expected[len(actual)]:
+            raise AcquisitionError("Failure does not identify the next index-plan request")
+        return report, discovery
+    if actual != expected:
+        raise AcquisitionError("Attachment stage requires the entire initial download plan")
+    attachment_plan, _, _, _ = _attachment_plan(store, report.downloads)
+    actual_attachments = tuple((record.requested_url, record.media_type) for record in report.attachment_downloads)
+    if actual_attachments != attachment_plan[:len(actual_attachments)]:
+        raise AcquisitionError("Completed attachments are not the exact attachment-plan prefix")
+    if report.failed_stage == "legal_attachments":
+        if len(actual_attachments) >= len(attachment_plan) or failed != attachment_plan[len(actual_attachments)]:
+            raise AcquisitionError("Failure does not identify the next attachment request")
+    elif actual_attachments != attachment_plan or failed != (INDEX_URL, "text/html"):
+        raise AcquisitionError("Final-index failure has an incomplete download plan")
+    return report, discovery
 
 
 def load_acquisition(store: LocalArtifactStore, digest: str) -> tuple[AcquisitionReceipt, object]:

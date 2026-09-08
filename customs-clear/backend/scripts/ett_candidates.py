@@ -60,6 +60,9 @@ def main(argv=None) -> int:
     analyze = commands.add_parser("analyze", help="Assemble captured tables, duty expressions and tariff-note references for review")
     analyze.add_argument("digest")
     analyze.add_argument("--store-root", required=True, type=Path)
+    incomplete = commands.add_parser("analyze-incomplete", help="Analyze a verified incomplete capture only when all core PDFs exist; never a complete receipt")
+    incomplete.add_argument("digest")
+    incomplete.add_argument("--store-root", required=True, type=Path)
     verify_rows = commands.add_parser("verify-rows", help="Re-extract PDF quotes referenced by a candidate; does not approve rates or dates")
     verify_rows.add_argument("manifest", type=Path)
     verify_rows.add_argument("--store-root", required=True, type=Path)
@@ -78,12 +81,12 @@ def main(argv=None) -> int:
             result = candidate_readiness(validate_manifest(read_json(args.manifest)))
         elif args.command == "diff":
             result = semantic_diff(validate_manifest(read_json(args.before)), validate_manifest(read_json(args.after)))
-        elif args.command in {"acquire", "extract", "analyze"}:
+        elif args.command in {"acquire", "extract", "analyze", "analyze-incomplete"}:
             from app.services.ett_acquisition import acquire_official, extract_acquisition
             store = LocalArtifactStore(args.store_root)
-            if args.command == "analyze":
-                from app.services.ett_analysis import analyze_acquisition
-                result = analyze_acquisition(store, args.digest)
+            if args.command in {"analyze", "analyze-incomplete"}:
+                from app.services.ett_analysis import analyze_acquisition, analyze_incomplete_capture
+                result = (analyze_acquisition if args.command == "analyze" else analyze_incomplete_capture)(store, args.digest)
             else:
                 result = acquire_official(store) if args.command == "acquire" else extract_acquisition(store, args.digest)
         elif args.command == "verify-rows":
@@ -123,6 +126,8 @@ def main(argv=None) -> int:
             from app.services.ett_acquisition import AcquisitionDownloadError
             if isinstance(exc, AcquisitionDownloadError):
                 failure["failed_public_source_url"] = exc.requested_url
+                if getattr(exc, "progress_report_sha256", None) is not None:
+                    failure["incomplete_capture_report_sha256"] = exc.progress_report_sha256
         print(json.dumps(failure))
         return 2
 

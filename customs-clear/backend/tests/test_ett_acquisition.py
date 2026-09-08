@@ -96,6 +96,14 @@ def test_transport_failure_keeps_public_request_identity_without_exception_paylo
         acquisition.acquire_official(store, _fetch=fail)
     assert error.value.requested_url == INDEX_URL
     assert "sensitive" not in str(error.value)
+    assert error.value.progress_report_sha256 is not None
+    progress, discovery = acquisition.load_incomplete_capture(store, error.value.progress_report_sha256)
+    assert progress.failed_stage == "initial_index"
+    assert progress.index_start is discovery is None
+    assert progress.downloads == progress.attachment_downloads == ()
+    assert progress.failed_media_type == "text/html"
+    assert progress.reason_code == "official_transport_failure"
+    assert "sensitive" not in store.read(error.value.progress_report_sha256).decode()
 
 
 def test_cli_acquisition_failure_exposes_only_public_request_identity(tmp_path, monkeypatch, capsys):
@@ -253,3 +261,135 @@ def test_failure_downloading_linked_act_cannot_publish_success(store):
     with pytest.raises(ValueError, match="act download failed"):
         acquisition.acquire_official(store, _fetch=failing)
     assert calls[-1][0] != INDEX_URL
+
+
+def _failed_transport_capture(store, *, fail_request_number=None, fail_url=None):
+    fetch, calls = fake_fetch()
+    count = 0
+    def failing(url, **kwargs):
+        nonlocal count
+        count += 1
+        if count == fail_request_number or url == fail_url:
+            raise OfficialTransportError("private transport diagnostics must not be retained")
+        return fetch(url, **kwargs)
+    with pytest.raises(acquisition.AcquisitionDownloadError) as caught:
+        acquisition.acquire_official(store, _fetch=failing)
+    return caught.value, calls
+
+
+def test_mid_chapter_transport_failure_retains_exact_completed_source_prefix(store):
+    error, calls = _failed_transport_capture(store, fail_request_number=8)
+    progress, discovery = acquisition.load_incomplete_capture(store, error.progress_report_sha256)
+    assert progress.kind == "ett_incomplete_capture"
+    assert progress.status == "incomplete"
+    assert progress.failed_stage == "index_documents"
+    assert len(progress.downloads) == 6
+    assert len(calls) == 7  # Initial index plus six completely stored documents.
+    assert progress.index_start.requested_url == INDEX_URL
+    expected = acquisition._plan(discovery)
+    assert tuple((r.requested_url, r.media_type) for r in progress.downloads) == expected[:6]
+    assert (progress.failed_requested_url, progress.failed_media_type) == expected[6]
+    assert error.requested_url == expected[6][0]
+    for record in (progress.index_start, *progress.downloads):
+        assert hashlib.sha256(store.read(record.sha256)).hexdigest() == record.sha256
+        assert record.retrieved_at.tzinfo is not None
+    assert progress.production_ready is progress.active_rates_written is progress.legal_inventory_complete is False
+    assert progress.index_stable_during_capture is False
+    assert not {"receipt_sha256", "index_end", "rates"}.intersection(type(progress).model_fields)
+
+
+def test_first_amendment_failure_preserves_every_completed_chapter_download(store):
+    discovery = parse_index(synthetic_index_html())
+    plan = acquisition._plan(discovery)
+    failing_url = next(url for url, media in plan if media == "text/html")
+    error, _ = _failed_transport_capture(store, fail_url=failing_url)
+    progress, replayed = acquisition.load_incomplete_capture(store, error.progress_report_sha256)
+    captured = {record.requested_url for record in progress.downloads}
+    assert len(replayed.chapters) == 96
+    assert all(chapter.url in captured for chapter in replayed.chapters)
+    assert progress.failed_requested_url == failing_url
+    assert progress.failed_media_type == "text/html"
+    assert progress.failed_stage == "index_documents"
+    assert progress.attachment_downloads == ()
+
+
+def test_attachment_failure_retains_initial_plan_and_binds_failed_attachment(store):
+    url = "https://docs.eaeunion.org/upload/iblock/synthetic/test-act.pdf"
+    error, _ = _failed_transport_capture(store, fail_url=url)
+    progress, discovery = acquisition.load_incomplete_capture(store, error.progress_report_sha256)
+    assert len(progress.downloads) == len(acquisition._plan(discovery))
+    assert progress.failed_stage == "legal_attachments"
+    assert progress.failed_requested_url == url
+    assert progress.failed_media_type == "application/pdf"
+    assert progress.attachment_downloads == ()
+
+
+def test_final_index_failure_keeps_all_completed_sources_but_never_stability(store):
+    fetch, calls = fake_fetch()
+    def final_fails(url, **kwargs):
+        if url == INDEX_URL and calls:
+            raise OfficialTransportError("failed final index")
+        return fetch(url, **kwargs)
+    with pytest.raises(acquisition.AcquisitionDownloadError) as caught:
+        acquisition.acquire_official(store, _fetch=final_fails)
+    progress, discovery = acquisition.load_incomplete_capture(store, caught.value.progress_report_sha256)
+    assert progress.failed_stage == "final_index"
+    assert len(progress.downloads) == len(acquisition._plan(discovery))
+    assert len(progress.attachment_downloads) == 1
+    assert progress.index_stable_during_capture is False
+
+
+@pytest.mark.parametrize("mutation", ["missing_middle", "missing_last", "reordered", "duplicate", "unrelated_url", "missing_blob", "wrong_size", "wrong_discovery", "wrong_failed_request", "wrong_stage", "claimed_ready", "missing_index"])
+def test_rehashing_incomplete_report_cannot_hide_invalid_prefix_or_source_associations(store, mutation):
+    error, _ = _failed_transport_capture(store, fail_request_number=8)
+    value = json.loads(store.read(error.progress_report_sha256))
+    if mutation == "missing_middle": value["downloads"].pop(1)
+    elif mutation == "missing_last": value["downloads"].pop()
+    elif mutation == "reordered": value["downloads"][0], value["downloads"][1] = value["downloads"][1], value["downloads"][0]
+    elif mutation == "duplicate": value["downloads"][1] = deepcopy(value["downloads"][0])
+    elif mutation == "unrelated_url": value["downloads"][0]["requested_url"] = value["downloads"][0]["url"] = INDEX_URL + "unrelated.pdf"
+    elif mutation == "missing_blob": value["downloads"][0]["sha256"] = "0" * 64
+    elif mutation == "wrong_size": value["downloads"][0]["size_bytes"] += 1
+    elif mutation == "wrong_discovery": value["discovery_sha256"] = "0" * 64
+    elif mutation == "wrong_failed_request": value["failed_requested_url"] = INDEX_URL + "unrelated.pdf"
+    elif mutation == "wrong_stage": value["failed_stage"] = "final_index"
+    elif mutation == "claimed_ready": value["production_ready"] = True
+    elif mutation == "missing_index": value["index_start"] = None
+    digest = store.put(acquisition.canonical_bytes(value))
+    with pytest.raises(ValueError):
+        acquisition.load_incomplete_capture(store, digest)
+
+
+def test_incomplete_capture_is_never_accepted_by_complete_receipt_loader(store):
+    error, _ = _failed_transport_capture(store, fail_request_number=8)
+    with pytest.raises(ValueError):
+        acquisition.load_acquisition(store, error.progress_report_sha256)
+
+
+def test_incomplete_json_must_be_canonical_and_cannot_add_exception_payload(store):
+    error, _ = _failed_transport_capture(store, fail_request_number=8)
+    value = json.loads(store.read(error.progress_report_sha256))
+    noncanonical = store.put(json.dumps(value, indent=2).encode())
+    with pytest.raises(acquisition.AcquisitionError, match="canonical"):
+        acquisition.load_incomplete_capture(store, noncanonical)
+    value["exception_message"] = "arbitrary upstream response"
+    extra = store.put(acquisition.canonical_bytes(value))
+    with pytest.raises(ValueError):
+        acquisition.load_incomplete_capture(store, extra)
+
+
+def test_incomplete_report_size_bound_is_enforced_before_publication(store, monkeypatch):
+    monkeypatch.setattr(acquisition, "MAX_PROGRESS_REPORT_BYTES", 10)
+    with pytest.raises(acquisition.AcquisitionError, match="byte bound"):
+        acquisition.acquire_official(store, _fetch=lambda *a, **k: (_ for _ in ()).throw(OfficialTransportError("failure")))
+
+
+def test_first_index_failure_cannot_claim_downloads_from_an_unknown_index(store):
+    result, _ = capture(store)
+    receipt, _ = acquisition.load_acquisition(store, result["receipt_sha256"])
+    error, _ = _failed_transport_capture(store, fail_request_number=1)
+    value = json.loads(store.read(error.progress_report_sha256))
+    value["downloads"] = [receipt.downloads[0].model_dump(mode="json")]
+    digest = store.put(acquisition.canonical_bytes(value))
+    with pytest.raises(acquisition.AcquisitionError, match="Initial-index"):
+        acquisition.load_incomplete_capture(store, digest)
