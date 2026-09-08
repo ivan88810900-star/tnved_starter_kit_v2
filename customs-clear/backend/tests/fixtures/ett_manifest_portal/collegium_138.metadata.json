@@ -1,0 +1,101 @@
+{
+  "kind": "unchanged_original_source_fragments",
+  "source_url": "https://docs.eaeunion.org/documents/446/10423/",
+  "source_sha256": "572145df293145270724e11652c193717d09f7568e4d86a9c8eabc986d59f7ee",
+  "source_size_bytes": 53765,
+  "expected_identity": {
+    "issuing_body": "collegium",
+    "adoption_date": "2025-12-24",
+    "number": "138"
+  },
+  "fragments": {
+    "metadata": {
+      "file": "collegium_138_metadata.fragment.html",
+      "source_byte_span": [
+        11253,
+        17801
+      ],
+      "sha256": "85c39298868fdb865c563aefefd3260aa294fb74039d4fc125691608c2adcbf1",
+      "size_bytes": 6548
+    },
+    "anchor": {
+      "file": "collegium_138_anchor.fragment.html",
+      "source_byte_span": [
+        18991,
+        19193
+      ],
+      "sha256": "4cac47c0fb5ad47fa5c9d3a1efe862487729c515156bb0d12d846c9dc0958b3f",
+      "size_bytes": 202
+    }
+  },
+  "observed_metadata_rows": [
+    {
+      "row_index": 6,
+      "container_index": 1,
+      "row_evidence": {
+        "locator": "html:metadata-row:6:line:135:column:124",
+        "raw_text": "\n\n                                                    Дата опубликования                                                \n\n                                                    26.12.2025                                                \n",
+        "raw_text_sha256": "a91add4725440e8f02d00718f7d6ba0780907d84cca0592a97a133622bfa298d",
+        "text": "Дата опубликования 26.12.2025"
+      },
+      "labels": [
+        {
+          "locator": "html:metadata-label:1:line:136:column:48",
+          "raw_text": "\n                                                    Дата опубликования                                                ",
+          "raw_text_sha256": "89bda180c8e3a39996f5c08e4956768aa676c96fce807fd6d32a3149088fc608",
+          "text": "Дата опубликования"
+        }
+      ],
+      "values": [
+        {
+          "locator": "html:metadata-value:1:line:138:column:48",
+          "raw_text": "\n                                                    26.12.2025                                                ",
+          "raw_text_sha256": "06e12830ab885e45918d821fd175363940b8953d36c16f8541b0bd7a5e0396bc",
+          "text": "26.12.2025"
+        }
+      ],
+      "issues": []
+    },
+    {
+      "row_index": 7,
+      "container_index": 1,
+      "row_evidence": {
+        "locator": "html:metadata-row:7:line:141:column:124",
+        "raw_text": "\n\n                                                    Дата вступления в силу                                                \n\n                                                    25.01.2026                                                \n",
+        "raw_text_sha256": "196b601ff9efa92d1147964e12260968fe56968c72fe91440fdc453bfa10d039",
+        "text": "Дата вступления в силу 25.01.2026"
+      },
+      "labels": [
+        {
+          "locator": "html:metadata-label:1:line:142:column:48",
+          "raw_text": "\n                                                    Дата вступления в силу                                                ",
+          "raw_text_sha256": "d8854eb5d89422dec3041fd7c2d3c78546889530f2b31a43fc68282e57ed3fea",
+          "text": "Дата вступления в силу"
+        }
+      ],
+      "values": [
+        {
+          "locator": "html:metadata-value:1:line:144:column:48",
+          "raw_text": "\n                                                    25.01.2026                                                ",
+          "raw_text_sha256": "b12e367db9e73794933671ebacd3e0a8f5b639ae9830f87248fc33bd86d46027",
+          "text": "25.01.2026"
+        }
+      ],
+      "issues": []
+    }
+  ],
+  "pdf_binding": {
+    "url": "https://docs.eaeunion.org/upload/iblock/c86/72y3w2gqyue15fjjxndedk4530rbaqa3/Reshenie-Kollegii-_-138-ot-24-dekabrya-2025-g.pdf",
+    "href": "/upload/iblock/c86/72y3w2gqyue15fjjxndedk4530rbaqa3/Reshenie-Kollegii-_-138-ot-24-dekabrya-2025-g.pdf",
+    "raw_href": "/upload/iblock/c86/72y3w2gqyue15fjjxndedk4530rbaqa3/Reshenie-Kollegii-_-138-ot-24-dekabrya-2025-g.pdf",
+    "text": "Решение Коллегии № 138 от 24 декабря 2025 г",
+    "locator": "html:a:16:line:180:column:8",
+    "text_sha256": "9cfe743bdcb6c40619a7b4fc0df08cbddd4d163e87e76091ccaf653ecafff171"
+  },
+  "pdf_sha256": "d661b91e990c6ae2b1464a13ec990e0bdb300d00336df7e693c17e5dac39a0ab",
+  "pdf_size_bytes": 557983,
+  "source_identity_verified": false,
+  "official_publication_event_verified": false,
+  "effective_dates_verified": false,
+  "legal_approval": false
+}

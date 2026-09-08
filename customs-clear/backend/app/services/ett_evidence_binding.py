@@ -15,7 +15,7 @@ from typing import Any, Iterator
 
 from app.services.ett_artifacts import ArtifactIntegrityError, LocalArtifactStore
 from app.services.ett_manifest import (
-    ETTEvidence, ETTManifest, MAX_MANIFEST_BYTES, canonical_manifest_bytes,
+    ETTEvidence, ETTLegalPortalMetadataEvidence, ETTManifest, MAX_MANIFEST_BYTES, canonical_manifest_bytes,
     validate_manifest,
 )
 from app.services.ett_pdf_evidence import PDFEvidenceError, extract_pdf_evidence
@@ -33,7 +33,7 @@ class EvidenceBindingError(ValueError):
     """Sanitized invalid-input failure; individual source failures become issues."""
 
 
-def _references(manifest: ETTManifest) -> Iterator[tuple[str, ETTEvidence]]:
+def _references(manifest: ETTManifest) -> Iterator[tuple[str, ETTEvidence | ETTLegalPortalMetadataEvidence]]:
     for index, code in enumerate(manifest.codes):
         for field in ("evidence", "effective_evidence"):
             for reference_index, reference in enumerate(getattr(code, field)):
@@ -61,13 +61,22 @@ def verify_manifest_source_rows(
     try:
         validated = validate_manifest(manifest)
         manifest_bytes = canonical_manifest_bytes(validated)
-    except (TypeError, ValueError, UnicodeError) as exc:
+    except (TypeError, ValueError, UnicodeError, RecursionError) as exc:
         raise EvidenceBindingError("ETT manifest validation failed") from exc
     if len(manifest_bytes) > MAX_MANIFEST_BYTES:
         raise EvidenceBindingError("ETT manifest exceeds the bounded input size")
-    grouped: dict[str, list[tuple[str, ETTEvidence]]] = defaultdict(list)
+    return _verify_source_rows(validated, manifest_bytes, _references(validated), store)
+
+
+def _verify_source_rows(validated, manifest_bytes, selected_references, store) -> dict[str, Any]:
+    """Shared strict native checker; callers select references, never failures.
+
+    The mixed-source coordinator supplies every native reference unchanged. The
+    public native-only check also sees typed HTML and explicitly rejects it.
+    """
+    grouped: dict[str, list[tuple[str, ETTEvidence | ETTLegalPortalMetadataEvidence]]] = defaultdict(list)
     reference_count = 0
-    for where, reference in _references(validated):
+    for where, reference in selected_references:
         reference_count += 1
         if reference_count > MAX_REFERENCES:
             raise EvidenceBindingError("ETT evidence reference count exceeds its limit")
@@ -82,16 +91,19 @@ def verify_manifest_source_rows(
     pdf_attempts = 0
     started = time.monotonic()
 
-    def issue(where: str, reference: ETTEvidence, reason: str) -> None:
+    def issue(where: str, reference: ETTEvidence | ETTLegalPortalMetadataEvidence, reason: str) -> None:
         nonlocal failed
         failed += 1
         if len(issues) < MAX_ISSUES:
-            issues.append({
-                "where": where, "artifact_id": reference.artifact_id,
-                "page": reference.page,
-                "row": reference.row if _ROW.fullmatch(reference.row) else "<invalid_locator>",
-                "reason": reason,
-            })
+            if isinstance(reference, ETTEvidence):
+                detail = {"where": where, "artifact_id": reference.artifact_id,
+                          "page": reference.page,
+                          "row": reference.row if _ROW.fullmatch(reference.row) else "<invalid_locator>",
+                          "reason": reason}
+            else:
+                detail = {"where": where, "artifact_id": reference.artifact_id, "reason": reason,
+                          "kind": reference.kind, "locator": reference.locator}
+            issues.append(detail)
 
     for artifact_id in sorted(grouped):
         artifact = artifact_map[artifact_id]

@@ -9,13 +9,14 @@ derive VAT. Dates are supplied explicitly from retained legal evidence.
 from __future__ import annotations
 
 import hashlib
+from html import unescape
 import json
 import re
 from collections import defaultdict
 from datetime import date, datetime, timezone
 from decimal import Decimal
 from typing import Annotated, Any, Literal
-from urllib.parse import urlsplit
+from urllib.parse import quote, unquote, urljoin, urlsplit
 
 from pydantic import BaseModel, ConfigDict, Field, StrictBool, StrictInt, StrictStr, field_validator, model_serializer, model_validator
 
@@ -159,6 +160,182 @@ class ETTEvidence(_Frozen):
 Evidence = Annotated[tuple[ETTEvidence, ...], Field(min_length=1, max_length=128)]
 
 
+_PORTAL_LABELS = {
+    "publication_date": "Дата опубликования",
+    "entry_into_force_date_metadata": "Дата вступления в силу",
+    "comment": "Комментарий",
+}
+_PORTAL_MONTHS = {
+    "января": 1, "февраля": 2, "марта": 3, "апреля": 4,
+    "мая": 5, "июня": 6, "июля": 7, "августа": 8,
+    "сентября": 9, "октября": 10, "ноября": 11, "декабря": 12,
+}
+_PORTAL_DESCRIPTION = re.compile(
+    r"Решение (Коллегии|Совета) (?:(?:ЕЭК|Евразийской экономической комиссии) )?"
+    r"№\s*([1-9][0-9]{0,5}) от "
+    r"([0-9]{2}\.[0-9]{2}\.[0-9]{4}|[0-9]{1,2} (?:" + "|".join(_PORTAL_MONTHS) +
+    r") [0-9]{4})(?: (?:г\.?|года))?\Z"
+)
+
+
+def _portal_locator(value: str, role: str) -> tuple[int, int, int]:
+    pattern = rf"html:{role}:([1-9][0-9]{{0,5}}):line:([1-9][0-9]{{0,6}}):column:(0|[1-9][0-9]{{0,6}})"
+    match = re.fullmatch(pattern, value)
+    if match is None:
+        raise ValueError("a bounded original legal-portal HTML locator is required")
+    position, line, column = map(int, match.groups())
+    if position > 256 or line > 4 * 1024 * 1024 or column > 4 * 1024 * 1024:
+        raise ValueError("legal-portal HTML locator exceeds source bounds")
+    return position, line, column
+
+
+def _portal_pdf_url(value: str) -> str:
+    ETTArtifact.official_url(value)
+    parsed = urlsplit(value)
+    path = unquote(parsed.path, encoding="utf-8", errors="strict")
+    if (parsed.netloc != "docs.eaeunion.org"
+            or re.fullmatch(r"/upload/iblock/[^/]+/(?:[^/]+/)*[^/]+\.[pP][dD][fF]", path) is None
+            or any(part in {"", ".", ".."} for part in path.split("/")[1:])
+            or any(ord(char) < 32 or ord(char) == 127 for char in path)):
+        raise ValueError("primary PDF binding requires an exact official legal-portal attachment URL")
+    return value
+
+
+class ETTLegalActIdentity(_Frozen):
+    """An asserted identity to replay against originals; never legal approval."""
+    issuing_body: Literal["collegium", "council"]
+    adoption_date: date
+    number: Annotated[StrictStr, Field(pattern=r"^[1-9][0-9]{0,5}$")]
+
+    @field_validator("adoption_date", mode="before")
+    @classmethod
+    def explicit_adoption_date(cls, value: Any) -> date:
+        return _date(value)
+
+
+class ETTLegalPortalLiteral(_Frozen):
+    """Exact visible DOM text projection, including retained source whitespace."""
+    locator: Annotated[StrictStr, Field(min_length=1, max_length=256)]
+    raw_text: Text
+    raw_text_sha256: SHA256
+
+    @model_validator(mode="after")
+    def literal_matches(self) -> ETTLegalPortalLiteral:
+        _nonempty(self.raw_text)
+        _nonempty(self.locator)
+        if hashlib.sha256(self.raw_text.encode("utf-8")).hexdigest() != self.raw_text_sha256:
+            raise ValueError("portal literal SHA256 must bind the exact retained UTF-8 text")
+        return self
+
+
+class ETTLegalPortalPDFBinding(_Frozen):
+    """One observed descriptive PDF anchor; its source occurrence needs replay."""
+    artifact_id: Identifier
+    artifact_sha256: SHA256
+    url: Annotated[StrictStr, Field(min_length=1, max_length=4096)]
+    href: Annotated[StrictStr, Field(min_length=1, max_length=4096)]
+    raw_href: Annotated[StrictStr, Field(min_length=1, max_length=4096)]
+    text: Annotated[StrictStr, Field(min_length=1, max_length=8192)]
+    text_sha256: SHA256
+    locator: Annotated[StrictStr, Field(min_length=1, max_length=256)]
+
+    @model_validator(mode="after")
+    def observed_anchor_is_consistent(self) -> ETTLegalPortalPDFBinding:
+        _portal_pdf_url(self.url)
+        _portal_locator(self.locator, "a")
+        if unescape(self.raw_href) != self.href:
+            raise ValueError("raw_href must decode to the exact observed href")
+        if (any(ord(char) < 32 or ord(char) == 127 for char in self.href)
+                or any(char in self.href for char in "\\?#")
+                or not self.href.strip().startswith(("/upload/iblock/", "https://docs.eaeunion.org/upload/iblock/"))):
+            raise ValueError("PDF href must be an observed official attachment path")
+        original_path = unquote(urlsplit(self.href.strip()).path, encoding="utf-8", errors="strict")
+        if any(part in {"", ".", ".."} for part in original_path.split("/")[1:]):
+            raise ValueError("PDF href cannot normalize traversal or empty source path segments")
+        target = urlsplit(urljoin("https://docs.eaeunion.org/", self.href.strip()))
+        resolved = target._replace(path=quote(target.path, safe="/%:@!$&'()*+,;=-._~")).geturl()
+        if _portal_pdf_url(resolved) != self.url:
+            raise ValueError("observed href does not resolve to the bound primary PDF URL")
+        _nonempty(self.text)
+        if self.text != " ".join(self.text.split()):
+            raise ValueError("PDF anchor text requires its exact normalized visible-text projection")
+        if hashlib.sha256(self.text.encode("utf-8")).hexdigest() != self.text_sha256:
+            raise ValueError("PDF anchor SHA256 must bind the exact retained text")
+        self.described_identity()
+        return self
+
+    def described_identity(self) -> ETTLegalActIdentity:
+        match = _PORTAL_DESCRIPTION.fullmatch(self.text)
+        if match is None:
+            raise ValueError("a descriptive PDF anchor with an exact act identity is required")
+        literal = match[3]
+        if "." in literal:
+            day, month, year = map(int, literal.split("."))
+        else:
+            day_raw, month_raw, year_raw = literal.split()
+            day, month, year = int(day_raw), _PORTAL_MONTHS[month_raw], int(year_raw)
+        return ETTLegalActIdentity(
+            issuing_body="collegium" if match[1] == "Коллегии" else "council",
+            adoption_date=date(year, month, day), number=match[2],
+        )
+
+
+class ETTLegalPortalMetadataEvidence(_Frozen):
+    """Replayable HTML metadata assertion, allowed only as effective evidence.
+
+    HTML has no fabricated physical ``page``. The exact row, label, value and
+    descriptive PDF anchor must independently replay from the included originals.
+    An observed portal date is not a verified legal date, and this model never
+    computes a commencement date or infers a code-version validity interval.
+    """
+    kind: Literal["legal_portal_metadata_v1"]
+    artifact_id: Identifier
+    artifact_sha256: SHA256
+    field: Literal["publication_date", "entry_into_force_date_metadata", "comment"]
+    locator: Annotated[StrictStr, Field(min_length=1, max_length=256)]
+    raw_text: Text
+    raw_text_sha256: SHA256
+    label: ETTLegalPortalLiteral
+    value: ETTLegalPortalLiteral
+    parser: ETTParserIdentity
+    expected_identity: ETTLegalActIdentity
+    pdf_binding: ETTLegalPortalPDFBinding
+
+    @model_validator(mode="after")
+    def metadata_assertion_is_consistent(self) -> ETTLegalPortalMetadataEvidence:
+        _, row_line, row_column = _portal_locator(self.locator, "metadata-row")
+        label_position, label_line, label_column = _portal_locator(self.label.locator, "metadata-label")
+        value_position, value_line, value_column = _portal_locator(self.value.locator, "metadata-value")
+        if (label_position != 1 or value_position != 1
+                or not ((row_line, row_column) <= (label_line, label_column) <= (value_line, value_column))):
+            raise ValueError("metadata requires a single ordered label/value pair in its source row")
+        _nonempty(self.raw_text)
+        if hashlib.sha256(self.raw_text.encode("utf-8")).hexdigest() != self.raw_text_sha256:
+            raise ValueError("metadata row SHA256 must bind the exact retained UTF-8 text")
+        label, value = " ".join(self.label.raw_text.split()), " ".join(self.value.raw_text.split())
+        if label != _PORTAL_LABELS[self.field]:
+            raise ValueError("metadata field and its exact official label disagree")
+        label_start = self.raw_text.find(self.label.raw_text)
+        value_start = self.raw_text.find(self.value.raw_text, label_start + len(self.label.raw_text))
+        if (label_start < 0 or value_start < 0
+                or " ".join(self.raw_text.split()) != f"{label} {value}"):
+            raise ValueError("metadata label and value must bind the exact retained row projection")
+        if self.field != "comment":
+            if re.fullmatch(r"[0-9]{2}\.[0-9]{2}\.[0-9]{4}", value) is None:
+                raise ValueError("metadata date requires one literal DD.MM.YYYY calendar date")
+            day, month, year = map(int, value.split("."))
+            date(year, month, day)  # Validate only; never derive a legal date.
+        if self.parser.name != "ett_legal_metadata" or self.parser.version != "1":
+            raise ValueError("unsupported legal-portal metadata parser identity")
+        if self.expected_identity != self.pdf_binding.described_identity():
+            raise ValueError("expected act identity contradicts the descriptive PDF anchor")
+        return self
+
+
+EffectiveEvidenceItem = ETTEvidence | ETTLegalPortalMetadataEvidence
+EffectiveEvidence = Annotated[tuple[EffectiveEvidenceItem, ...], Field(min_length=1, max_length=128)]
+
+
 class ETTCondition(_Frozen):
     """A conjunction term; numeric facts are compared in the field's named unit.
 
@@ -282,7 +459,7 @@ class ETTCodeVersion(_Frozen):
     valid_from: date
     valid_to: date
     evidence: Evidence
-    effective_evidence: Evidence
+    effective_evidence: EffectiveEvidence
 
     @field_validator("valid_from", "valid_to", mode="before")
     @classmethod
@@ -311,7 +488,7 @@ class ETTRateRule(_Frozen):
     duty: ETTDuty
     footnote_ids: Annotated[tuple[Identifier, ...], Field(max_length=128)] = ()
     evidence: Evidence
-    effective_evidence: Evidence
+    effective_evidence: EffectiveEvidence
 
     @field_validator("valid_from", "valid_to", mode="before")
     @classmethod
@@ -437,7 +614,7 @@ class ETTManifest(_Frozen):
         if any(artifact.retrieved_at > self.created_at for artifact in self.artifacts):
             raise ValueError("artifact retrieval must not postdate snapshot creation")
 
-        def evidence_is_bound(items: tuple[ETTEvidence, ...], code: str | None = None) -> None:
+        def evidence_is_bound(items: tuple[EffectiveEvidenceItem, ...], code: str | None = None) -> None:
             for item in items:
                 artifact = artifacts.get(item.artifact_id)
                 if artifact is None or artifact.sha256 != item.artifact_sha256:
@@ -446,6 +623,18 @@ class ETTManifest(_Frozen):
                     raise ValueError("code evidence cannot refer to a different chapter")
                 if artifact.role in {"index", "amendment_inventory"}:
                     raise ValueError("landing/index inventories cannot establish normalized legal rows or dates")
+                if isinstance(item, ETTLegalPortalMetadataEvidence):
+                    parsed = urlsplit(artifact.url)
+                    if (artifact.role != "amendment" or artifact.media_type != "text/html"
+                            or parsed.netloc != "docs.eaeunion.org"
+                            or re.fullmatch(r"/documents/[1-9][0-9]*/[1-9][0-9]*/", parsed.path) is None):
+                        raise ValueError("portal metadata requires an official amendment HTML detail artifact")
+                    binding = item.pdf_binding
+                    pdf = artifacts.get(binding.artifact_id)
+                    if (pdf is None or pdf.sha256 != binding.artifact_sha256
+                            or pdf.role != "amendment" or pdf.media_type != "application/pdf"
+                            or pdf.url != binding.url):
+                        raise ValueError("portal metadata must bind the included primary amendment PDF and its exact URL/SHA256")
 
         by_code: dict[str, list[ETTCodeVersion]] = defaultdict(list)
         for code in self.codes:

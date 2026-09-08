@@ -14,12 +14,13 @@ from collections.abc import Mapping
 from dataclasses import dataclass, field
 from datetime import date
 from decimal import Decimal
-from typing import Literal
+from typing import Literal, TypeVar
 
 from .ett_manifest import (
     ETTCondition,
     ETTDuty,
     ETTEvidence,
+    EffectiveEvidenceItem,
     ETTFootnote,
     ETTManifest,
     ETTRateRule,
@@ -33,6 +34,7 @@ _DECIMAL = re.compile(r"-?(?:0|[1-9][0-9]{0,23})(?:\.[0-9]{1,12})?\Z", re.ASCII)
 _DESTINATIONS = frozenset({"AM", "BY", "KZ", "KG", "RU"})
 _MAX_FACTS = 256
 _MAX_DECIMAL_LENGTH = 38
+_EvidenceT = TypeVar("_EvidenceT", bound=EffectiveEvidenceItem)
 
 
 @dataclass(frozen=True)
@@ -50,7 +52,7 @@ class ETTResolution:
     duty: ETTDuty | None = None
     missing_facts: tuple[str, ...] = ()
     evidence: tuple[ETTEvidence, ...] = ()
-    effective_evidence: tuple[ETTEvidence, ...] = ()
+    effective_evidence: tuple[EffectiveEvidenceItem, ...] = ()
     footnotes: tuple[ETTFootnote, ...] = ()
     mode: Literal["candidate_preview"] = field(default="candidate_preview", init=False)
 
@@ -118,7 +120,7 @@ def _evaluate_rule(rule: ETTRateRule, facts: Mapping[str, object]) -> tuple[bool
     return (False, set()) if excluded else (not missing, missing)
 
 
-def _unique_evidence(values: list[ETTEvidence]) -> tuple[ETTEvidence, ...]:
+def _unique_evidence(values: list[_EvidenceT]) -> tuple[_EvidenceT, ...]:
     # Evidence models are immutable; canonical JSON provides a stable key even
     # where multiple rules cite the same source row in a different order.
     unique = {item.model_dump_json(): item for item in values}

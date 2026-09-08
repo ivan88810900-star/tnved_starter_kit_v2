@@ -66,6 +66,9 @@ def main(argv=None) -> int:
     verify_rows = commands.add_parser("verify-rows", help="Re-extract PDF quotes referenced by a candidate; does not approve rates or dates")
     verify_rows.add_argument("manifest", type=Path)
     verify_rows.add_argument("--store-root", required=True, type=Path)
+    verify_evidence = commands.add_parser("verify-evidence", help="Verify referenced native PDF rows and typed portal metadata; never approve legal meaning")
+    verify_evidence.add_argument("manifest", type=Path)
+    verify_evidence.add_argument("--store-root", required=True, type=Path)
     preview = commands.add_parser("preview")
     preview.add_argument("digest")
     preview.add_argument("--code", required=True)
@@ -93,6 +96,10 @@ def main(argv=None) -> int:
             from app.services.ett_evidence_binding import verify_manifest_source_rows
             store = LocalArtifactStore(args.store_root, create=False)
             result = verify_manifest_source_rows(validate_manifest(read_json(args.manifest)), store)
+        elif args.command == "verify-evidence":
+            from app.services.ett_metadata_binding import verify_manifest_source_evidence
+            store = LocalArtifactStore(args.store_root, create=False)
+            result = verify_manifest_source_evidence(validate_manifest(read_json(args.manifest)), store)
         else:
             if not args.database.is_file() or args.database.is_symlink():
                 raise ValueError("An explicit existing migrated SQLite database is required")
@@ -117,6 +124,8 @@ def main(argv=None) -> int:
                 engine.dispose()
         print(json.dumps(jsonable_encoder(result, custom_encoder={Decimal: str}), ensure_ascii=False, allow_nan=False))
         if args.command == "verify-rows" and not result["rows_verified"]:
+            return 2
+        if args.command == "verify-evidence" and not result["source_evidence_verified"]:
             return 2
         return 0
     except Exception as exc:

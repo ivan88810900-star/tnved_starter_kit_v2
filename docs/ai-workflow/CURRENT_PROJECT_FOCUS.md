@@ -189,10 +189,16 @@ verifies 13,293 current table rows across 96 chapters and 124 note identifiers,
 with no unresolved cells or unbound note references. All 96 chapter reports match
 the prior local audit byte-for-byte; source and parser digests are retained.
 The source-only backup has passed restoration, but legal retention is not attested.
-The two legal PDFs are 29 scanned pages without extractable text. Twenty unsupported
-attachment references (11 unique DOC/DOCX/ZIP URLs) and 103 of 105 named amendments
-without index links remain explicit gaps. Complete legal coverage and effective-date
-interpretation remain unverified. An isolated ops/ett-source-capture push can request
+That original capture included two scanned legal PDFs. Subsequent search/resume
+and the separately corroborated Decision 42 retained original PDFs for all 105
+named amendments plus founding Decision 80. OCR now covers all 428 amendment
+pages and the explicitly selected first two founding pages; the other 1,468
+founding pages remain uninspected. Unsupported attachment references remain
+visible. A first real four-code 111C candidate binds native quotations and exact
+HTML date metadata, with reproducible manifest identity, 124 verified references,
+isolated staging and authenticated API checks. This is a bounded review candidate,
+not legal approval of all 13,293 rates. Complete legal applicability and reviewed
+effective-date interpretation remain unverified. An isolated ops/ett-source-capture push can request
 read-only GitHub acquisition without merging application changes. Positive production staging remains closed until
 legal review and promotion are implemented.
 Keep the curated official bridge OFF before proposing any exact-rule production
@@ -209,9 +215,10 @@ Current next tasks:
   adds full cells, source-proven superscript separation, note clauses and actual
   legal attachment capture, with explicit dispatch/isolated-branch CI acquisition.
   The supported capture completed in Run #34244241195; its 106 originals and
-  receipt have a verified restorable backup. This does not complete the amendment
-  inventory or interpret the two scanned acts and unsupported attachments.
-  Complete amendment-body acquisition and legal footnote/date interpretation,
+  receipt have a verified restorable backup. Subsequent acquisition retained all
+  105 named amendment PDFs and a 430-page OCR evidence set; the original reports
+  retain their narrower historical scope. The first four-code 111C review candidate
+  is concrete and passes source/staging/API checks. Full legal footnote/date interpretation,
   durable legal-retention attestation, manifest-bound legal review and production
   promotion remain unfinished. An exact quote match alone does not approve a rate.
   The DB-derived bundle remains quarantined; old direct PDF/OData/index-hash

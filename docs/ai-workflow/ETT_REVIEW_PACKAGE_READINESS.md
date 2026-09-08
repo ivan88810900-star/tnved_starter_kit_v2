@@ -1,16 +1,22 @@
 # ETT review package: contract and present input gaps
 
-Status: bounded readiness assessment and implemented source-binding prerequisite,
-2026-09-08. No package builder, review decision, endpoint, database migration or
-production behavior is added. Continues accepted Decision #188 Option A and the next sequence in
+Status: source-binding prerequisites and first concrete four-code candidate,
+2026-09-08. The package builder is the next isolated implementation; no legal
+review decision or production behavior is added. Continues accepted Decision #188 Option A and the next sequence in
 [ETT versioned candidates](ETT_VERSIONED_CANDIDATES.md).
 
 ## Present decision
 
 A manifest-bound package needs the bytes of one specific candidate manifest.
-The current source work has not produced that normative candidate: the checked-in
-[complete-capture evidence](evidence/ett-complete-capture-20260908.json) still
-reports `legal_rates_resolved=0`. Its complete technical receipt is
+The [first real candidate](evidence/ett-first-real-candidate-20260908.json) now has
+canonical SHA `8f1c56eac5a3d6082084a6eba7e463eee563c1c170572df2fceaaf70f10fe832`:
+four 7112 codes, 101 actual artifacts and temporary 0% expressions under 111C.
+Its narrow requested coverage and proposed code/date/country interpretation are
+explicit review assumptions. All 124 referenced source occurrences replay, and
+isolated staging plus authenticated full-application HTTP checks pass. This is
+not an approved normative dataset. The earlier
+[complete-capture evidence](evidence/ett-complete-capture-20260908.json) retains its
+historical `legal_rates_resolved=0`. Its complete technical receipt is
 `ab67a2d3055a3fcd8416c874b9bc388ce0b0919e4b964e5de7c1f18c08a6f72e`.
 It binds the supported observed download plan, including 100 core PDFs and two
 linked legal PDFs. It does not establish the completeness of applicable acts or
@@ -38,11 +44,10 @@ index and replay/encoding modules; unsupported or changed identities fail replay
 candidate load/preview. The descriptor lives in canonical manifest JSON and needs
 no new database projection or migration. Semantic diffs expose descriptor changes.
 
-This closes the technical provenance prerequisite; it does not produce a normative
-candidate or solve the remaining legal-date and applicability interpretation.
-Existing acquisition and analysis reports retain that distinction. A package
-builder remains deferred until a specific candidate has meaningful source-backed
-conditions and effective intervals.
+This closes the technical provenance prerequisite. The specific 111C candidate
+now supplies a meaningful source-backed review proposal; it does not solve the
+remaining full-catalog legal-date and applicability interpretation. Existing
+acquisition and analysis reports retain their original scope and identity.
 
 ## Input and identity contract for the next implementation
 
@@ -63,7 +68,7 @@ A future complete package requires these immutable inputs:
 | Candidate source bindings | Match exact final URL, SHA256, size, media type and retrieval timestamp to a captured download. Bind chapter numbers and labeled note roles through discovery references and their requested URLs. |
 | Derived amendment inventory | Replay the optional manifest descriptor against the exact original HTML index and retained canonical report; retain missing links and all unverified legal flags. |
 | Derived tariff-note evidence | Recompute from the exact labeled tariff-note PDF, retaining conditions, unresolved interpretation and every source locator. |
-| Referenced PDF quotation verification | Run `verify_manifest_source_rows` on original bytes; retain the complete canonical verification result and its digest. |
+| Referenced source quotation verification | Run `verify_manifest_source_evidence` on original bytes; retain the complete native PDF and typed HTML verification results and their digest. The PDF-only verifier remains available and strict. |
 | Optional earlier candidate and semantic diff | Verify the earlier canonical manifest digest and recompute the diff against the exact new manifest. A supplied report's hash alone does not verify its content. |
 
 An artifact's hash membership alone cannot establish its role. The same bytes may
@@ -95,9 +100,12 @@ The quotation tests already demonstrate why semantic flags must remain separate:
 a real source row quoting zero can accompany a structurally valid candidate
 claiming five percent, and a quoted 2030 date can accompany a 2026 interval.
 Quotation existence passes; the differing legal interpretation remains unverified.
-The two currently retained amendment PDFs are scans with no extracted text, so
-their conditions cannot pass a text-row verifier without an additional verified
-visual/OCR evidence path.
+Scanned amendment bodies remain separate visual/OCR evidence; their text cannot
+pass the native-row verifier. Typed portal metadata can independently bind exact
+observed date fields and a descriptive anchor to the included PDF original. It
+does not verify that PDF's body identity, a publication event or legal effect.
+The mixed verifier preserves every native failure and never gives HTML a fictitious
+page number. Candidate preview's typed result retains both evidence variants.
 
 The package itself should be a frozen, deterministic value with canonical
 serialization and no mutable nested containers. A full validator must replay its
@@ -141,9 +149,8 @@ not supply these checks.
    expose no approval, promotion or application behavior change. Temporary PDF
    worker files remain within the existing extraction boundary.
 
-The next useful prerequisite is to complete the source-backed conditions and
-effective-interval interpretation and identify one specific candidate for review,
-while retaining the verified derived-inventory binding and remaining unresolved
-legal interpretation explicitly. The optional descriptor preserves existing
-schema-v2 identities and does not claim that a current legally valid candidate
-exists.
+The next step is a deterministic package bound to this specific candidate and
+the originals, with selected supplemental-act provenance explicitly separated
+from full core acquisition. Complete legal interpretation, retention attestation
+and promotion remain separate gates. The optional descriptor and typed evidence
+preserve existing schema-v2 identities.

@@ -1,6 +1,20 @@
 # ETT complete cells and note evidence — TASK-ETT-003
 
-Status: implementation, complete supported-plan source capture and current-source table verification, 2026-09-08. This continues approved Decision #188 Option A. Run #34244241195 produced a verified complete technical receipt for the discovered PDF/HTML plan. The **complete current legal rates block is not ready**: unsupported attachments, complete amendment coverage and a legally reviewed manifest remain outstanding.
+Status: complete supported-plan source capture, current-source table verification and a first bounded four-code review candidate, 2026-09-08. This continues approved Decision #188 Option A. Run #34244241195 produced a verified complete technical receipt for the discovered PDF/HTML plan. The **complete current legal rates block is not ready**: complete legal applicability, unsupported attachments and reviewed promotion remain outstanding.
+
+The subsequent source corpus contains original PDFs for all 105 named amendments
+and founding Decision 80. OCR preserves 430 pages: all 428 pages of the amendment
+PDFs and only the first two of the founding document's 1,470 pages. The
+[backup evidence](evidence/ett-ocr-complete-backup-20260908.json) binds 23 saved,
+independently hash-checked parts; this is restorable evidence, not legal retention
+attestation or proof of all applicable legislation.
+
+The [first real candidate](evidence/ett-first-real-candidate-20260908.json) covers
+four 7112 codes under note 111C. Its 124 native/HTML references replay exactly;
+46 isolated staging cases and 30 authenticated full-application HTTP checks pass.
+The 0% temporary expression, explicit review window and source-derived date
+proposal remain separate from the source table's 15% cell. A full-catalog legally
+approved rate set has not been produced.
 
 ## Source-preserving interpretation
 
