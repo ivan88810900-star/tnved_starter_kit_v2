@@ -22,12 +22,13 @@ from typing import Any
 
 
 PARSER_NAME = "ett_pdf_physical_rows"
-PARSER_VERSION = "1"
+PARSER_VERSION = "2"
 MAX_PDF_BYTES = 64 * 1024 * 1024
 MAX_OUTPUT_BYTES = 32 * 1024 * 1024
 MAX_PAGES = 1000
 MAX_WORDS = 200_000
 MAX_WORD_LENGTH = 20_000
+MAX_SPANS = 250_000
 WORKER_TIMEOUT_SECONDS = 45
 _IDENTIFIER = re.compile(r"[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}\Z")
 _LEAF = re.compile(r"^(?:\+ )?([0-9]{4} [0-9]{2} [0-9]{3} [0-9]|[0-9]{10})(?= |$)")
@@ -206,6 +207,42 @@ def _candidate(row: dict[str, Any], width: float, header: dict[str, Any] | None,
     return result
 
 
+def _typography(page, pymupdf, dimensions: list[float]) -> list[dict[str, Any]]:
+    """Keep PDF span typography so superscripts are not guessed from digits.
+
+    A word such as '563С)' can contain a base-size '5' and a raised '63С)'.
+    Physical row text remains unchanged; this independent coordinate evidence
+    lets later assembly distinguish them without slicing arbitrary strings.
+    Image payloads are explicitly excluded from this text-only extraction.
+    """
+    blocks = page.get_text("dict", flags=pymupdf.TEXTFLAGS_DICT & ~pymupdf.TEXT_PRESERVE_IMAGES)["blocks"]
+    spans = []
+    for block_index, block in enumerate(blocks):
+        for line_index, line in enumerate(block.get("lines", [])):
+            direction = [round(float(value), 6) for value in line["dir"]]
+            if len(direction) != 2 or any(not math.isfinite(value) for value in direction):
+                raise PDFEvidenceError("Unsupported text direction")
+            for span_index, span in enumerate(line["spans"]):
+                if not span["text"]:
+                    continue
+                box = [round(float(value), 6) for value in span["bbox"]]
+                origin = [round(float(value), 6) for value in span["origin"]]
+                size = round(float(span["size"]), 6)
+                if (len(span["text"]) > MAX_WORD_LENGTH or len(span["font"]) > 512
+                    or len(origin) != 2 or any(not math.isfinite(value) for value in (*box, *origin, size))
+                    or not 0 < size <= 1000 or box[2] <= box[0] or box[3] <= box[1]
+                    or box[0] < -1 or box[1] < -1 or box[2] > dimensions[0] + 1 or box[3] > dimensions[1] + 1):
+                    raise PDFEvidenceError("Unsupported PDF span geometry")
+                spans.append({"span": f"p{page.number + 1:04d}:s{len(spans) + 1:05d}",
+                              "text": span["text"], "bbox": box, "origin": origin,
+                              "size": size, "font": span["font"], "flags": span["flags"],
+                              "direction": direction, "block": block.get("number", block_index),
+                              "line": line_index, "source_index": span_index})
+                if len(spans) > MAX_SPANS:
+                    raise PDFEvidenceError("PDF span count exceeds its limit")
+    return spans
+
+
 def _extract_worker(data: bytes, artifact_id: str, chapter: str | None) -> dict[str, Any]:
     # Imported only after resource limits are installed by _worker_main.
     import pymupdf
@@ -218,6 +255,7 @@ def _extract_worker(data: bytes, artifact_id: str, chapter: str | None) -> dict[
             raise PDFEvidenceError("Encrypted, repaired or oversized PDF is unsupported")
         pages = []
         total_words = 0
+        total_spans = 0
         all_candidates = []
         for page in document:
             dimensions = [round(float(page.rect.width), 6), round(float(page.rect.height), 6)]
@@ -233,6 +271,10 @@ def _extract_worker(data: bytes, artifact_id: str, chapter: str | None) -> dict[
                 if total_words > MAX_WORDS:
                     raise PDFEvidenceError("PDF word count exceeds its limit")
             rows = _physical_rows(words, page.number + 1)
+            text_spans = _typography(page, pymupdf, dimensions)
+            total_spans += len(text_spans)
+            if total_spans > MAX_SPANS:
+                raise PDFEvidenceError("PDF span count exceeds its limit")
             header = _table_header(rows, dimensions[0])
             candidates = []
             hierarchy_count = 0
@@ -244,7 +286,7 @@ def _extract_worker(data: bytes, artifact_id: str, chapter: str | None) -> dict[
                 elif _HEADING.match(row["raw_text"]) and row["bbox"][0] < dimensions[0] * .34:
                     hierarchy_count += 1
             all_candidates.extend(candidates)
-            pages.append({"page": page.number + 1, "width": dimensions[0], "height": dimensions[1], "rows": rows, "table_header": header, "candidates": candidates, "hierarchy_row_count": hierarchy_count, "unresolved_reasons": [] if words else ["no_extractable_text"]})
+            pages.append({"page": page.number + 1, "width": dimensions[0], "height": dimensions[1], "rows": rows, "text_spans": text_spans, "table_header": header, "candidates": candidates, "hierarchy_row_count": hierarchy_count, "unresolved_reasons": [] if words else ["no_extractable_text"]})
         counts: dict[str, int] = {}
         for candidate in all_candidates:
             counts[candidate["code"]] = counts.get(candidate["code"], 0) + 1

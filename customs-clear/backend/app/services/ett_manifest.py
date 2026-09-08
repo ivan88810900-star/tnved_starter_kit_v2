@@ -17,7 +17,7 @@ from decimal import Decimal
 from typing import Annotated, Any, Literal
 from urllib.parse import urlsplit
 
-from pydantic import BaseModel, ConfigDict, Field, StrictBool, StrictInt, StrictStr, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, Field, StrictBool, StrictInt, StrictStr, field_validator, model_serializer, model_validator
 
 EXPECTED_CHAPTERS = tuple(f"{number:02d}" for number in range(1, 98) if number != 77)
 EAEU_DESTINATIONS = frozenset({"AM", "BY", "KZ", "KG", "RU"})
@@ -208,24 +208,36 @@ class ETTDuty(_Frozen):
 
     Specific duty is amount in currency per ``unit_quantity`` units. Combined
     expressions apply max or sum to the ad-valorem and specific components.
+    ``engine_displacement_cm3`` is explicitly engine cylinder displacement,
+    never a conversion of generic cargo cubic metres.
+
+    ``capped_combined_max`` represents exactly
+    min(cap_percent / 100 * customs_value,
+        max(ad_valorem_percent / 100 * customs_value,
+            specific_amount * engine_displacement_cm3 / unit_quantity)).
+    The specific amount must first be expressed in the same currency as customs
+    value when a separate calculator evaluates it. This model does not evaluate
+    money or assume exchange rates. This bounded kind requires an engine unit
+    and a nonnegative cap at least as high as its inner ad-valorem percentage.
     Unrepresented legal formulas must remain outside a valid candidate.
     """
-    kind: Literal["ad_valorem", "specific", "combined_max", "combined_sum"]
+    kind: Literal["ad_valorem", "specific", "combined_max", "combined_sum", "capped_combined_max"]
     ad_valorem_percent: Decimal | None = None
     specific_amount: Decimal | None = None
     currency: Literal["EUR", "USD", "RUB"] | None = None
-    unit: Literal["kg", "g", "tonne", "litre", "m3", "m2", "m", "unit", "pair", "kwh"] | None = None
+    unit: Literal["kg", "g", "tonne", "litre", "m3", "m2", "m", "unit", "pair", "kwh", "engine_displacement_cm3"] | None = None
     unit_quantity: Decimal | None = None
+    ad_valorem_cap_percent: Decimal | None = None
 
-    @field_validator("ad_valorem_percent", "specific_amount", "unit_quantity", mode="before")
+    @field_validator("ad_valorem_percent", "specific_amount", "unit_quantity", "ad_valorem_cap_percent", mode="before")
     @classmethod
     def exact_decimal(cls, value: Any) -> Decimal | None:
         return _decimal(value)
 
     @model_validator(mode="after")
     def valid_components(self) -> ETTDuty:
-        ad = self.kind in {"ad_valorem", "combined_max", "combined_sum"}
-        specific = self.kind in {"specific", "combined_max", "combined_sum"}
+        ad = self.kind in {"ad_valorem", "combined_max", "combined_sum", "capped_combined_max"}
+        specific = self.kind in {"specific", "combined_max", "combined_sum", "capped_combined_max"}
         if ad != (self.ad_valorem_percent is not None):
             raise ValueError("the duty kind must explicitly match its ad-valorem component")
         components = (self.specific_amount, self.currency, self.unit, self.unit_quantity)
@@ -237,7 +249,21 @@ class ETTDuty(_Frozen):
             raise ValueError("specific duty cannot be negative")
         if self.unit_quantity is not None and self.unit_quantity <= 0:
             raise ValueError("unit_quantity must be positive")
+        capped = self.kind == "capped_combined_max"
+        if capped != (self.ad_valorem_cap_percent is not None):
+            raise ValueError("only capped_combined_max requires an explicit ad-valorem cap")
+        if capped and (self.unit != "engine_displacement_cm3" or self.ad_valorem_cap_percent < self.ad_valorem_percent):
+            raise ValueError("capped_combined_max requires an engine-displacement unit and cap at least the inner percentage")
         return self
+
+    @model_serializer(mode="wrap")
+    def preserve_existing_wire_shape(self, handler: Any) -> dict[str, Any]:
+        # Adding the optional field must not alter previously retained schema-v2
+        # manifest bytes, immutable digests or child payloads for old duty kinds.
+        result = handler(self)
+        if self.ad_valorem_cap_percent is None:
+            result.pop("ad_valorem_cap_percent", None)
+        return result
 
 
 class ETTCodeVersion(_Frozen):

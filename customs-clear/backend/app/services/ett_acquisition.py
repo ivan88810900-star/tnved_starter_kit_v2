@@ -104,6 +104,35 @@ class AcquisitionReceipt(_Frozen):
     downloads: tuple[DownloadRecord, ...] = Field(min_length=98, max_length=MAX_DOWNLOADS)
 
 
+class ExpandedAcquisitionReceipt(AcquisitionReceipt):
+    """V2 also retains PDF bodies linked from the captured legal portal pages."""
+    schema_version: Literal[2] = 2
+    legal_attachment_inventory_sha256: SHA256
+    attachment_downloads: tuple[DownloadRecord, ...] = Field(max_length=MAX_DOWNLOADS)
+
+
+def _attachment_plan(store, records):
+    from app.services.ett_legal_attachments import parse_legal_attachments
+
+    inventory = []
+    documents = {}
+    unsupported = 0
+    for record in records:
+        if record.media_type != "text/html" or urlsplit(record.url).netloc != "docs.eaeunion.org":
+            continue
+        page = parse_legal_attachments(store.read(record.sha256), record.url)
+        inventory.append(asdict(page))
+        unsupported += len(page.unsupported_references)
+        for reference in page.documents:
+            documents[reference.url] = "application/pdf"
+    existing = {record.requested_url for record in records}
+    plan = tuple((url, media) for url, media in documents.items() if url not in existing)
+    if len(records) + len(plan) > MAX_DOWNLOADS:
+        raise AcquisitionError("Legal attachments exceed the download count bound")
+    raw_inventory = canonical_bytes(inventory)
+    return plan, hashlib.sha256(raw_inventory).hexdigest(), unsupported, raw_inventory
+
+
 def discovery_payload(discovery) -> dict:
     """Semantic index identity excludes markup noise and retrieval time."""
     result = asdict(discovery)
@@ -124,6 +153,14 @@ def _plan(discovery) -> tuple[tuple[str, str], ...]:
     if len(result) > MAX_DOWNLOADS:
         raise AcquisitionError("Official inventory exceeds the download bound")
     return tuple(result.items())
+
+
+def _verify_capture_interval(index_start, records, index_end):
+    if index_end.retrieved_at < index_start.retrieved_at or any(
+        record.retrieved_at < index_start.retrieved_at or record.retrieved_at > index_end.retrieved_at
+        for record in records
+    ):
+        raise AcquisitionError("Receipt timestamps fall outside acquisition interval")
 
 
 def acquire_official(store: LocalArtifactStore, *, _fetch=fetch_official) -> dict:
@@ -157,21 +194,29 @@ def acquire_official(store: LocalArtifactStore, *, _fetch=fetch_official) -> dic
     discovery = parse_index(raw)
     plan = _plan(discovery)
     records = tuple(download(url, media)[0] for url, media in plan)
+    attachment_plan, attachment_inventory_sha, unsupported_count, raw_inventory = _attachment_plan(store, records)
+    attachments = tuple(download(url, media)[0] for url, media in attachment_plan)
+    store.put(raw_inventory)
     index_end, end_raw = download(INDEX_URL, "text/html")
     discovered = canonical_bytes(discovery_payload(discovery))
     if discovered != canonical_bytes(discovery_payload(parse_index(end_raw))):
         raise AcquisitionError("Official index changed during acquisition; repeat as a new capture")
+    _verify_capture_interval(index_start, (*records, *attachments), index_end)
     # Recheck every retained object before publishing the single receipt object.
-    for record in (index_start, *records, index_end):
+    for record in (index_start, *records, *attachments, index_end):
         store.verify(record.sha256, record.size_bytes)
-    receipt = AcquisitionReceipt(
+    receipt = ExpandedAcquisitionReceipt(
         index_start=index_start, index_end=index_end,
         discovery_sha256=hashlib.sha256(discovered).hexdigest(), downloads=records,
+        legal_attachment_inventory_sha256=attachment_inventory_sha,
+        attachment_downloads=attachments,
     )
     digest = store.put(canonical_bytes(receipt.model_dump(mode="json")))
     return {
         "status": "acquired_for_review", "receipt_sha256": digest,
-        "chapters": len(discovery.chapters), "downloaded_documents": len(records),
+        "chapters": len(discovery.chapters), "downloaded_documents": len(records) + len(attachments),
+        "linked_legal_pdfs": len(attachments), "unsupported_legal_references": unsupported_count,
+        "legal_attachment_inventory_sha256": attachment_inventory_sha,
         "source_bytes": total, "index_stable_during_capture": True,
         "legal_inventory_complete": False, "effective_dates_verified": False,
         "production_ready": False, "active_rates_written": False,
@@ -180,7 +225,9 @@ def acquire_official(store: LocalArtifactStore, *, _fetch=fetch_official) -> dic
 
 def load_acquisition(store: LocalArtifactStore, digest: str) -> tuple[AcquisitionReceipt, object]:
     raw = store.read(digest)
-    receipt = AcquisitionReceipt.model_validate(read_json(raw))
+    value = read_json(raw)
+    receipt_type = ExpandedAcquisitionReceipt if isinstance(value, dict) and value.get("schema_version") == 2 else AcquisitionReceipt
+    receipt = receipt_type.model_validate(value)
     if canonical_bytes(receipt.model_dump(mode="json")) != raw:
         raise AcquisitionError("Receipt must use its canonical serialization")
     if receipt.index_start.requested_url != INDEX_URL or receipt.index_end.requested_url != INDEX_URL:
@@ -189,11 +236,11 @@ def load_acquisition(store: LocalArtifactStore, digest: str) -> tuple[Acquisitio
         raise AcquisitionError("Receipt index final URL changed the discovery base")
     if receipt.index_start.media_type != "text/html" or receipt.index_end.media_type != "text/html":
         raise AcquisitionError("Index response must be HTML")
-    records = (receipt.index_start, *receipt.downloads, receipt.index_end)
+    attachments = receipt.attachment_downloads if isinstance(receipt, ExpandedAcquisitionReceipt) else ()
+    records = (receipt.index_start, *receipt.downloads, *attachments, receipt.index_end)
     if sum(record.size_bytes for record in records) > MAX_TOTAL_BYTES:
         raise AcquisitionError("Receipt exceeds aggregate byte bound")
-    if any(record.retrieved_at < receipt.index_start.retrieved_at or record.retrieved_at > receipt.index_end.retrieved_at for record in records):
-        raise AcquisitionError("Receipt timestamps fall outside acquisition interval")
+    _verify_capture_interval(receipt.index_start, records, receipt.index_end)
     for record in records:
         store.verify(record.sha256, record.size_bytes)
     discovery = parse_index(store.read(receipt.index_start.sha256))
@@ -205,6 +252,13 @@ def load_acquisition(store: LocalArtifactStore, digest: str) -> tuple[Acquisitio
     actual = tuple((record.requested_url, record.media_type) for record in receipt.downloads)
     if expected != actual:
         raise AcquisitionError("Receipt does not contain the complete discovered download plan")
+    if isinstance(receipt, ExpandedAcquisitionReceipt):
+        plan, inventory_sha, _, raw_inventory = _attachment_plan(store, receipt.downloads)
+        actual_attachments = tuple((record.requested_url, record.media_type) for record in attachments)
+        if plan != actual_attachments or inventory_sha != receipt.legal_attachment_inventory_sha256:
+            raise AcquisitionError("Receipt does not bind the discovered legal attachments")
+        if store.read(inventory_sha) != raw_inventory:
+            raise AcquisitionError("Retained legal attachment inventory mismatch")
     return receipt, discovery
 
 
@@ -217,7 +271,8 @@ def extract_acquisition(store: LocalArtifactStore, digest: str) -> dict:
     extracted = []
     started = time.monotonic()
     total = 0
-    for index, record in enumerate(receipt.downloads):
+    records = receipt.downloads + (receipt.attachment_downloads if isinstance(receipt, ExpandedAcquisitionReceipt) else ())
+    for index, record in enumerate(records):
         if record.media_type != "application/pdf":
             continue
         ref = references.get(record.requested_url)

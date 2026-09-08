@@ -178,8 +178,12 @@ versioned tables and date-specific previews without a cloud purchase. The next
 data task is completing a current official capture and PDF continuation/footnote/date
 interpretation. TASK-ETT-002 implements the transport, actual-index discovery,
 original-byte receipts, reproducible PDF rows and referenced-quote verification;
-96 pinned PDFs passed extraction, but current raw network acquisition and raw-DOM
-compatibility remain unverified. Positive production staging remains closed until
+TASK-ETT-003 now assembles and lexically parses all 13,289 commodity rows in the
+96 pinned PDFs, preserving typography, note clauses and source diagnostics. The
+old padded heading 0406900000 is not inserted. This is historical evidence; current
+raw acquisition, current note/amendment interpretation and raw-DOM compatibility
+remain unverified. An isolated ops/ett-source-capture push can request read-only
+GitHub acquisition without merging application changes. Positive production staging remains closed until
 legal review and promotion are implemented.
 Keep the curated official bridge OFF before proposing any exact-rule production
 enforcement.
@@ -191,9 +195,11 @@ Current next tasks:
 - [ETT source-of-truth Decision Memo #188](https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/188): Option A accepted and [TASK-ETT-001 implemented](ETT_VERSIONED_CANDIDATES.md).
   Local candidate history and temporal previews are tested. Real official
   acquisition and reproducible row verification are implemented in
-  [TASK-ETT-002](ETT_SOURCE_EVIDENCE.md), with a manual-only CI capture option.
-  Current-source acquisition has not completed; complete row/footnote/date
-  interpretation, durable retention, manifest-bound legal review and production
+  [TASK-ETT-002](ETT_SOURCE_EVIDENCE.md). [TASK-ETT-003](ETT_TABLE_INTERPRETATION.md)
+  adds full cells, source-proven superscript separation, note clauses and actual
+  legal attachment capture, with explicit dispatch/isolated-branch CI acquisition.
+  Current-source acquisition and legal footnote/date interpretation,
+  durable retention, manifest-bound legal review and production
   promotion remain unfinished. An exact quote match alone does not approve a rate.
   The DB-derived bundle remains quarantined; old direct PDF/OData/index-hash
   paths now return REVIEW_REQUIRED and cannot publish rates or false freshness.

@@ -57,6 +57,9 @@ def main(argv=None) -> int:
     extract = commands.add_parser("extract", help="Extract coordinate-bound PDF evidence from a verified acquisition receipt")
     extract.add_argument("digest")
     extract.add_argument("--store-root", required=True, type=Path)
+    analyze = commands.add_parser("analyze", help="Assemble captured tables, duty expressions and tariff-note references for review")
+    analyze.add_argument("digest")
+    analyze.add_argument("--store-root", required=True, type=Path)
     verify_rows = commands.add_parser("verify-rows", help="Re-extract PDF quotes referenced by a candidate; does not approve rates or dates")
     verify_rows.add_argument("manifest", type=Path)
     verify_rows.add_argument("--store-root", required=True, type=Path)
@@ -75,10 +78,14 @@ def main(argv=None) -> int:
             result = candidate_readiness(validate_manifest(read_json(args.manifest)))
         elif args.command == "diff":
             result = semantic_diff(validate_manifest(read_json(args.before)), validate_manifest(read_json(args.after)))
-        elif args.command in {"acquire", "extract"}:
+        elif args.command in {"acquire", "extract", "analyze"}:
             from app.services.ett_acquisition import acquire_official, extract_acquisition
             store = LocalArtifactStore(args.store_root)
-            result = acquire_official(store) if args.command == "acquire" else extract_acquisition(store, args.digest)
+            if args.command == "analyze":
+                from app.services.ett_analysis import analyze_acquisition
+                result = analyze_acquisition(store, args.digest)
+            else:
+                result = acquire_official(store) if args.command == "acquire" else extract_acquisition(store, args.digest)
         elif args.command == "verify-rows":
             from app.services.ett_evidence_binding import verify_manifest_source_rows
             store = LocalArtifactStore(args.store_root, create=False)

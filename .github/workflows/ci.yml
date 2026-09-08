@@ -21,9 +21,9 @@ concurrency:
 jobs:
   ett-acquisition:
     name: Acquire official ETT candidate evidence
-    if: ${{ github.event_name == 'workflow_dispatch' && inputs.ett_acquire == true }}
+    if: ${{ (github.event_name == 'workflow_dispatch' && inputs.ett_acquire == true) || (github.event_name == 'push' && github.ref == 'refs/heads/ops/ett-source-capture') }}
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 80
     permissions:
       contents: read
     defaults:
@@ -31,8 +31,6 @@ jobs:
         working-directory: customs-clear/backend
         shell: bash
     env:
-      ETT_EVIDENCE_ROOT: ${{ runner.temp }}/ett-acquisition
-      ETT_STORE_ROOT: ${{ runner.temp }}/ett-acquisition/store
       CUSTOMSCLEAR_READ_ONLY: "1"
       SCHEDULER_ENABLED: "0"
       REGULATORY_SYNC_SCHEDULER_ENABLED: "0"
@@ -46,8 +44,11 @@ jobs:
         id: prepare
         run: |
           umask 077
+          ETT_EVIDENCE_ROOT="$RUNNER_TEMP/ett-acquisition"
+          ETT_STORE_ROOT="$ETT_EVIDENCE_ROOT/store"
           mkdir -m 700 "$ETT_EVIDENCE_ROOT"
           mkdir -m 700 "$ETT_STORE_ROOT"
+          printf 'ETT_EVIDENCE_ROOT=%s\nETT_STORE_ROOT=%s\n' "$ETT_EVIDENCE_ROOT" "$ETT_STORE_ROOT" >> "$GITHUB_ENV"
 
       - name: Set up Python
         uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
@@ -89,12 +90,24 @@ jobs:
           python scripts/ett_candidates.py extract "$receipt_sha256" \
             --store-root "$ETT_STORE_ROOT" \
             > "$ETT_EVIDENCE_ROOT/extraction.json"
+          printf 'receipt_sha256=%s\n' "$receipt_sha256" >> "$GITHUB_OUTPUT"
+
+      - name: Assemble tariff tables and note evidence for review
+        id: analyze
+        env:
+          ETT_RECEIPT_SHA256: ${{ steps.extract.outputs.receipt_sha256 }}
+        run: |
+          umask 077
+          python scripts/ett_candidates.py analyze "$ETT_RECEIPT_SHA256" \
+            --store-root "$ETT_STORE_ROOT" \
+            > "$ETT_EVIDENCE_ROOT/analysis.json"
 
       - name: Package immutable source objects and execution status
         if: ${{ always() && steps.prepare.outcome == 'success' }}
         env:
           ACQUISITION_OUTCOME: ${{ steps.acquire.outcome }}
           EXTRACTION_OUTCOME: ${{ steps.extract.outcome }}
+          ANALYSIS_OUTCOME: ${{ steps.analyze.outcome }}
           EVIDENCE_COMMIT: ${{ github.sha }}
           EVIDENCE_RUN_ID: ${{ github.run_id }}
           EVIDENCE_RUN_ATTEMPT: ${{ github.run_attempt }}
@@ -112,6 +125,7 @@ jobs:
               "run_attempt": os.environ["EVIDENCE_RUN_ATTEMPT"],
               "acquisition_outcome": os.environ["ACQUISITION_OUTCOME"],
               "extraction_outcome": os.environ["EXTRACTION_OUTCOME"],
+              "analysis_outcome": os.environ["ANALYSIS_OUTCOME"],
               "production_ready": False,
               "active_rates_written": False,
               "retention_kind": "temporary_github_actions_artifact",
@@ -127,7 +141,9 @@ jobs:
           cat >> "$GITHUB_STEP_SUMMARY" <<'SUMMARY'
           Official ETT source acquisition is candidate evidence only. The artifact
           contains original source objects, the acquisition receipt and extraction
-          reports when those steps complete. Check workflow-status.json for failures.
+          reports and assembled tariff analysis when those steps complete.
+          Check workflow-status.json for failures. Parsed cells do not certify legal
+          applicability or effective dates.
           GitHub artifact retention is temporary (up to the requested 90 days); it is
           not durable legal retention, legal review or approval to activate rates.
           SUMMARY
@@ -141,6 +157,7 @@ jobs:
             ${{ runner.temp }}/ett-acquisition/ett-acquisition-store.tar.gz
             ${{ runner.temp }}/ett-acquisition/acquisition.json
             ${{ runner.temp }}/ett-acquisition/extraction.json
+            ${{ runner.temp }}/ett-acquisition/analysis.json
             ${{ runner.temp }}/ett-acquisition/workflow-status.json
           if-no-files-found: error
           retention-days: 90

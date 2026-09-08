@@ -2,6 +2,8 @@
 
 Status: implementation verified, 2026-09-08; acquisition of the current official source set has **not** completed. Continues approved [Decision #188 Option A](https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/188#issuecomment-5584102215) and [TASK-ETT-001](ETT_VERSIONED_CANDIDATES.md).
 
+This document records the TASK-ETT-002 baseline. [TASK-ETT-003](ETT_TABLE_INTERPRETATION.md) adds complete table cells, typography, note evidence and receipt-v2 attachment capture; its verification supersedes the fragment-level limitations below.
+
 ## Result
 
 The candidate layer can now acquire the actual [EEC ETT index](https://eec.eaeunion.org/comission/department/catr/ett/), discover its 96 chapter links and labeled global notes, and retain linked supplemental PDFs and amendment pages. No filename pattern supplies a missing URL. A blank link to an older notes file is retained as supplemental evidence; it cannot replace the visibly labeled tariff notes. All original bytes are SHA-256 objects in the explicit local development store.
@@ -40,4 +42,4 @@ The existing CI workflow also has an optional **manual** `workflow_dispatch` inp
 
 ## Next task
 
-Complete a real current capture on a host that can retrieve the official raw documents, validate the retained index layout, then assemble full table rows and descriptions across continuations. Bind footnote conditions and effective intervals to the current notes and amendment acts, explicitly resolving every missing or ambiguous case before constructing a legally reviewable manifest. The later manifest-bound legal review, durable retention and approved promotion gates remain separate.
+Complete a real current capture on a host that can retrieve the official raw documents and validate the retained index layout. Complete table rows and descriptions across continuations are now implemented and historically audited in TASK-ETT-003. Bind footnote conditions and effective intervals to the current notes and amendment acts, explicitly resolving every missing or ambiguous case before constructing a legally reviewable manifest. The later manifest-bound legal review, durable retention and approved promotion gates remain separate.

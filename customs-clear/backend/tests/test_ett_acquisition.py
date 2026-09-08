@@ -30,7 +30,12 @@ def fake_fetch(*, end_html=None, fail_at=None):
         if url == INDEX_URL and len(calls) > 1 and end_html is not None:
             body = end_html
         if url != INDEX_URL and expected_media == "text/html":
-            body = b"<!doctype html><html><body>SYNTHETIC legal landing page</body></html>"
+            body = '''<!doctype html><html><body>Правовой портал Информация о документе
+            Номер документа 66 Короткий заголовок документа Решение Коллегии ЕЭК № 66
+            Вид документа Решение SYNTHETIC
+            <a href="/upload/iblock/synthetic/test-act.pdf">PDF</a>
+            <a href="/upload/iblock/synthetic/clarification.docx">Разъяснение</a>
+            </body></html>'''.encode()
         return OfficialResponse(url=url, requested_url=url, content=body, media_type=expected_media,
                                 retrieved_at=datetime(2026, 9, 8, tzinfo=timezone.utc) + timedelta(seconds=len(calls)))
     return fetch, calls
@@ -46,7 +51,9 @@ def test_complete_download_set_is_one_revalidatable_technical_receipt(store):
     result, calls = capture(store)
     receipt, discovery = acquisition.load_acquisition(store, result["receipt_sha256"])
     assert len(discovery.chapters) == 96
-    assert result["downloaded_documents"] == len(discovery.documents) + len(discovery.amendment_links)
+    assert result["downloaded_documents"] == len(discovery.documents) + len(discovery.amendment_links) + 1
+    assert result["linked_legal_pdfs"] == result["unsupported_legal_references"] == 1
+    assert receipt.schema_version == 2
     assert calls[0] == calls[-1] == (INDEX_URL, "text/html")
     assert len(calls) == result["downloaded_documents"] + 2
     assert result["production_ready"] is result["active_rates_written"] is False
@@ -60,6 +67,20 @@ def test_index_changes_abort_receipt_publication(store):
     changed = synthetic_index_html().replace(b"published-01-opaque", b"revised-01-new")
     with pytest.raises(acquisition.AcquisitionError, match="changed during"):
         capture(store, end_html=changed)
+
+
+@pytest.mark.parametrize("case", ["backwards_end", "future_document", "old_document"])
+def test_incoherent_capture_timestamps_never_publish_success(store, case):
+    fetch, calls = fake_fetch()
+    def incoherent(url, **kwargs):
+        result = fetch(url, **kwargs)
+        if case == "backwards_end" and url == INDEX_URL and len(calls) > 1:
+            return replace(result, retrieved_at=datetime(2026, 9, 7, tzinfo=timezone.utc))
+        if case != "backwards_end" and len(calls) == 2:
+            return replace(result, retrieved_at=datetime(2027 if case == "future_document" else 2025, 1, 1, tzinfo=timezone.utc))
+        return result
+    with pytest.raises(acquisition.AcquisitionError, match="timestamps"):
+        acquisition.acquire_official(store, _fetch=incoherent)
 
 
 def test_fetch_failure_never_returns_success_or_writes_application_tables(store):
@@ -147,7 +168,7 @@ def test_extraction_uses_verified_original_objects_and_preserves_the_capture(sto
     monkeypatch.setattr(ett_pdf_evidence, "extract_pdf_evidence", fake_extract)
     report = acquisition.extract_acquisition(store, result["receipt_sha256"])
     assert report["chapters"] == 96
-    assert report["extracted_documents"] == len(parse_index(synthetic_index_html()).documents)
+    assert report["extracted_documents"] == len(parse_index(synthetic_index_html()).documents) + 1
     assert len(calls) == report["extracted_documents"]
     summary = json.loads(store.read(report["report_sha256"]))
     assert summary["receipt_sha256"] == result["receipt_sha256"]
@@ -156,3 +177,38 @@ def test_extraction_uses_verified_original_objects_and_preserves_the_capture(sto
         extracted = json.loads(store.read(item["report_sha256"]))
         assert extracted["artifact_sha256"] == item["source_sha256"]
     acquisition.load_acquisition(store, result["receipt_sha256"])
+
+
+@pytest.mark.parametrize("mutation", ["missing_pdf", "inventory_hash", "unrelated_pdf", "extra_pdf"])
+def test_linked_act_attachments_cannot_be_removed_or_substituted(store, mutation):
+    result, _ = capture(store)
+    value = json.loads(store.read(result["receipt_sha256"]))
+    if mutation == "missing_pdf": value["attachment_downloads"] = []
+    elif mutation == "inventory_hash": value["legal_attachment_inventory_sha256"] = "0" * 64
+    elif mutation == "unrelated_pdf":
+        value["attachment_downloads"][0]["requested_url"] = value["attachment_downloads"][0]["url"] = "https://docs.eaeunion.org/upload/iblock/synthetic/unrelated.pdf"
+    else: value["attachment_downloads"].append(deepcopy(value["attachment_downloads"][0]))
+    digest = store.put(acquisition.canonical_bytes(value))
+    with pytest.raises(ValueError): acquisition.load_acquisition(store, digest)
+
+
+def test_v1_receipts_remain_replayable_without_claiming_attachment_capture(store):
+    result, _ = capture(store)
+    value = json.loads(store.read(result["receipt_sha256"]))
+    value["schema_version"] = 1
+    value.pop("attachment_downloads")
+    value.pop("legal_attachment_inventory_sha256")
+    digest = store.put(acquisition.canonical_bytes(value))
+    receipt, _ = acquisition.load_acquisition(store, digest)
+    assert type(receipt) is acquisition.AcquisitionReceipt
+    assert receipt.legal_inventory_complete is False
+
+
+def test_failure_downloading_linked_act_cannot_publish_success(store):
+    fetch, calls = fake_fetch()
+    def failing(url, **kwargs):
+        if "/upload/iblock/" in url: raise ValueError("act download failed")
+        return fetch(url, **kwargs)
+    with pytest.raises(ValueError, match="act download failed"):
+        acquisition.acquire_official(store, _fetch=failing)
+    assert calls[-1][0] != INDEX_URL

@@ -23,15 +23,16 @@ def acquisition_job():
     return document, document["jobs"]["ett-acquisition"]
 
 
-def test_official_acquisition_requires_explicit_dispatch_and_has_no_write_authority():
+def test_official_acquisition_requires_explicit_capture_request_and_has_no_write_authority():
     document, job = acquisition_job()
     configured = document["on"]["workflow_dispatch"]["inputs"]["ett_acquire"]
     assert configured["type"] == "boolean"
     assert configured["default"] == "false"
     assert configured["required"] == "false"
-    assert job["if"] == "${{ github.event_name == 'workflow_dispatch' && inputs.ett_acquire == true }}"
+    assert job["if"] == "${{ (github.event_name == 'workflow_dispatch' && inputs.ett_acquire == true) || (github.event_name == 'push' && github.ref == 'refs/heads/ops/ett-source-capture') }}"
     assert job["permissions"] == {"contents": "read"}
-    assert int(job["timeout-minutes"]) <= 30
+    # Three 20-minute stage budgets plus dependency/packaging reserve.
+    assert 60 < int(job["timeout-minutes"]) <= 90
     assert "DATABASE_URL" not in job["env"]
     assert job["env"]["CUSTOMSCLEAR_READ_ONLY"] == "1"
     assert job["env"]["SCHEDULER_ENABLED"] == "0"
@@ -47,6 +48,22 @@ def test_official_acquisition_requires_explicit_dispatch_and_has_no_write_author
     assert int(uploads[0]["with"]["retention-days"]) <= 90
     assert "ett-acquisition-store.tar.gz" in uploads[0]["with"]["path"]
     assert "workflow-status.json" in uploads[0]["with"]["path"]
+
+
+def test_job_environment_uses_only_contexts_available_before_runner_allocation(tmp_path):
+    document, job = acquisition_job()
+    for configured_job in document["jobs"].values():
+        for value in configured_job.get("env", {}).values():
+            for expression in re.findall(r"\$\{\{(.*?)\}\}", value):
+                assert not re.search(r"\b(?:runner|steps|job|env)\.", expression)
+    script = next(step["run"] for step in job["steps"] if step["name"] == "Prepare private temporary evidence directory")
+    output = tmp_path / "environment"
+    result = subprocess.run(["bash", "-euo", "pipefail", "-c", script],
+                            env={**os.environ, "RUNNER_TEMP": str(tmp_path), "GITHUB_ENV": str(output)},
+                            text=True, capture_output=True)
+    assert result.returncode == 0, result.stderr
+    assert output.read_text() == f"ETT_EVIDENCE_ROOT={tmp_path}/ett-acquisition\nETT_STORE_ROOT={tmp_path}/ett-acquisition/store\n"
+    assert (tmp_path / "ett-acquisition/store").stat().st_mode & 0o777 == 0o700
 
 
 def test_acquisition_workflow_shell_and_embedded_python_compile():
@@ -98,6 +115,7 @@ def test_workflow_extracts_only_the_explicit_validated_receipt(tmp_path, receipt
             "PATH": str(binaries) + os.pathsep + os.environ.get("PATH", ""),
             "ETT_EVIDENCE_ROOT": str(evidence),
             "ETT_STORE_ROOT": str(store),
+            "GITHUB_OUTPUT": str(tmp_path / "step-output"),
         },
         text=True,
         capture_output=True,
@@ -109,3 +127,17 @@ def test_workflow_extracts_only_the_explicit_validated_receipt(tmp_path, receipt
     if allowed:
         assert json.loads(invocation.read_text()) == ["extract", "a" * 64, "--store-root", str(store)]
         assert json.loads((evidence / "extraction.json").read_text())["production_ready"] is False
+        assert (tmp_path / "step-output").read_text() == "receipt_sha256=" + "a" * 64 + "\n"
+
+
+def test_analysis_receives_only_the_successfully_verified_receipt_output():
+    _, job = acquisition_job()
+    steps = job["steps"]
+    analysis = next(step for step in steps if step.get("id") == "analyze")
+    extract = next(step for step in steps if step.get("id") == "extract")
+    assert steps.index(analysis) > steps.index(extract)
+    assert analysis["env"] == {"ETT_RECEIPT_SHA256": "${{ steps.extract.outputs.receipt_sha256 }}"}
+    assert 'analyze "$ETT_RECEIPT_SHA256"' in analysis["run"]
+    assert "${{" not in analysis["run"]
+    upload = next(step for step in steps if step.get("uses", "").startswith("actions/upload-artifact@"))
+    assert "analysis.json" in upload["with"]["path"]

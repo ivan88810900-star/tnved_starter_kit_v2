@@ -68,6 +68,32 @@ def test_rate_is_only_a_located_fragment_and_description_continuation_is_explici
     assert "0101000000" not in {row["code"] for row in _candidates(report)}
 
 
+def test_fused_rate_digits_have_independent_superscript_typography(chapter01):
+    _, report = chapter01
+    page = report["pages"][5]
+    candidate = next(row for row in page["candidates"] if row["code"] == "0106410001")
+    row = next(row for row in page["rows"] if row["row"] == candidate["row"])
+    word = next(word for word in row["words"] if word["text"] == "563С)")
+    spans = [span for span in page["text_spans"] if span["bbox"][0] >= word["bbox"][0] - .01
+             and span["bbox"][2] <= word["bbox"][2] + .01
+             and span["bbox"][1] >= word["bbox"][1] - .01
+             and span["bbox"][3] <= word["bbox"][3] + .01]
+    assert [span["text"] for span in spans] == ["5", "63С)"]
+    assert spans[1]["size"] < spans[0]["size"]
+    assert spans[1]["origin"][1] < spans[0]["origin"][1]
+    assert spans[1]["flags"] & 1
+    assert report["parser"]["version"] == "2"
+    assert candidate["rate_fragment"] == "563С)"  # No silent string rewrite.
+
+
+def test_typography_tampering_requires_reextraction(chapter01):
+    body, original = chapter01
+    altered = deepcopy(original)
+    altered["pages"][5]["text_spans"][0]["size"] += 1
+    with pytest.raises(pdf.PDFEvidenceError, match="does not reproduce"):
+        pdf.verify_pdf_evidence(body, altered)
+
+
 def test_reproducible_extraction_verifies_the_full_report(chapter01):
     body, report = chapter01
     assert pdf.verify_pdf_evidence(body, report) is True
