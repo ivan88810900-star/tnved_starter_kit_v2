@@ -51,18 +51,18 @@ ingestion.
   correctness. No production/application DB was mutated.
 - Advisory requirements UI/API foundation
 - Official SGR contour: importer, diagnostics, seed dataset, validator
-- Automatic source lifecycle (DM-0013): 36/36 registry entries have an explicit
-  policy; this is policy coverage, not proof that all 36 sources are refreshed
+- Automatic source lifecycle (DM-0013): 45/45 registry entries have an explicit
+  policy; this is policy coverage, not proof that all 45 sources are refreshed
   automatically or legally current. Seven trusted structured sources update daily/weekly through strict,
   table-scoped adapters and atomic full-snapshot replacement where applicable;
   OFAC and EU feeds run validation-only and cannot mutate blocking tables;
-  the expanded official monitor currently covers exactly 50 URLs: 15 direct
-  PDF/machine-readable artifacts have revision-digest coverage, 27 legal HTML
+  the expanded official monitor currently covers exactly 62 URLs: 24 direct
+  PDF/machine-readable artifacts have revision-digest coverage, 30 legal HTML
   pages are explicit revision gaps checked for availability/identity only, and
   eight additional landing URLs are availability-only. HTML gaps are reported
   without masquerading as revision coverage or making the operational workflow
   permanently fail, while the notifier keeps them visible in an issue; covered
-  artifact failures remain fail-closed. Of the 15 covered artifacts, six legal
+  artifact failures remain fail-closed. Of the 24 covered artifacts, 15 legal
   PDFs require digest-bound review; nine structured artifacts advance technical
   freshness automatically after validation. Five curated layers
   raise a monthly review, four commercial mirrors remain disabled and one AI layer
@@ -215,6 +215,12 @@ This closes an actual calculation/status defect; it does not certify the legacy
 rates or resolve the full official ETT promotion gate. Original-source capture
 now additionally covers observed tariff relief/GSP landing links and explicitly
 selected act detail pages, with legal completeness remaining false.
+The nine observed relief/origin PDFs are registered as daily `monitor_only`
+sources. Their captured byte observations are unaccepted review references,
+not approved monitor baselines. The existing daily workflow also captures and
+reconciles current links, so a replacement PDF address cannot stay invisible
+merely because the old PDF remains online. New links/digests require review;
+this does not update payment rates or enable enforcement.
 
 Current next tasks:
 

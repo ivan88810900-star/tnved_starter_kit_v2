@@ -9,6 +9,7 @@ from __future__ import annotations
 from datetime import datetime, timezone
 import hashlib
 from html.parser import HTMLParser
+import json
 import re
 import time
 from urllib.parse import quote, unquote, urljoin, urlsplit, urlunsplit
@@ -30,6 +31,7 @@ MAX_PDFS = 48
 MAX_TOTAL_BYTES = 256 * 1024 * 1024
 MAX_REPORT_BYTES = 8 * 1024 * 1024
 MAX_SECONDS = 900
+MAX_OBSERVED_BASELINE_BYTES = 1024 * 1024
 
 
 class ReliefCaptureError(ValueError):
@@ -250,3 +252,178 @@ def capture_tariff_relief(store: LocalArtifactStore, *, detail_urls=(), fetch=fe
         "storage_kind": "local_development", "durable_legal_retention_attested": False,
         "records": records, "links": links, "gaps": gaps,
     }
+
+
+def _check(condition: bool) -> None:
+    if not condition:
+        raise ReliefCaptureError("invalid_capture_or_observation_evidence")
+
+
+def _digest(value) -> bool:
+    return type(value) is str and re.fullmatch(r"[0-9a-f]{64}", value) is not None
+
+
+def _json_object(pairs):
+    result = {}
+    for key, value in pairs:
+        _check(key not in result)
+        result[key] = value
+    return result
+
+
+def _invalid_json_constant(value):
+    raise ReliefCaptureError("invalid_json_constant")
+
+
+def load_observed_baseline(raw: bytes) -> dict:
+    """Read unapproved observation pins; never turn them into accepted baselines."""
+    _check(type(raw) is bytes and 0 < len(raw) <= MAX_OBSERVED_BASELINE_BYTES)
+    baseline = json.loads(raw.decode("utf-8"), object_pairs_hook=_json_object,
+                          parse_constant=_invalid_json_constant)
+    _check(type(baseline) is dict and type(baseline.get("schema_version")) is int and baseline["schema_version"] == 1)
+    _check(baseline.get("observation_kind") == "retrieved_tariff_relief_gsp_artifacts")
+    for flag in ("is_accepted_monitor_baseline", "is_legal_approval", "can_promote", "active_rates_written"):
+        _check(baseline.get(flag) is False)
+    _check(baseline.get("capture_complete") is True and _digest(baseline.get("capture_report_sha256")))
+    sources = baseline.get("sources")
+    _check(type(sources) is list and 0 < len(sources) <= MAX_PDFS)
+    _check(type(baseline.get("source_count")) is int and baseline["source_count"] == len(sources))
+    seen_urls, seen_ids = set(), set()
+    for source in sources:
+        _check(type(source) is dict)
+        source_id = source.get("source_id")
+        _check(type(source_id) is str and re.fullmatch(r"[a-z][a-z0-9_]{0,99}", source_id) is not None)
+        _check(source_id not in seen_ids)
+        seen_ids.add(source_id)
+        for field in ("requested_url", "response_url", "parent_requested_url"):
+            validate_official_url(source.get(field))
+        _check(source["requested_url"] not in seen_urls)
+        seen_urls.add(source["requested_url"])
+        _check(urlsplit(source["response_url"]).netloc == urlsplit(source["requested_url"]).netloc)
+        _check(source.get("media_type") == "application/pdf")
+        _check(unquote(urlsplit(source["requested_url"]).path).lower().endswith(".pdf"))
+        _check(_digest(source.get("sha256")) and _digest(source.get("parent_sha256")))
+        for field, maximum in (("size_bytes", MAX_PDF_BYTES), ("parent_size_bytes", MAX_HTML_BYTES)):
+            _check(type(source.get(field)) is int and 0 < source[field] <= maximum)
+        for field in ("retrieved_at", "parent_retrieved_at"):
+            _check(type(source.get(field)) is str)
+            _instant(datetime.fromisoformat(source[field]))
+        if source["parent_requested_url"] not in {url for _, url in LANDING_SOURCES}:
+            selected_details((source["parent_requested_url"],))
+    return baseline
+
+
+def _replay_current_capture(report: dict, store: LocalArtifactStore) -> dict[str, dict]:
+    """Recompute the complete current HTML→PDF graph from original objects.
+
+    Historical pins identify an observation only; this replay does not assert
+    possession or verification of the historical originals in that other run.
+    """
+    _check(type(report) is dict and type(report.get("schema_version")) is int and report["schema_version"] == 1)
+    _check(report.get("capture_kind") == "observed_tariff_relief_and_gsp_originals")
+    _check(report.get("capture_complete") is True)
+    for field in ("source_inventory_complete", "source_identity_verified", "effective_dates_verified",
+                  "legal_ready", "can_promote", "production_ready", "active_rates_written", "durable_legal_retention_attested"):
+        _check(report.get(field) is False)
+    details = report.get("selected_detail_urls")
+    _check(type(details) is list)
+    selected_details(tuple(details))
+    pages = [(*item, "observed_fixed_landing") for item in LANDING_SOURCES]
+    pages += [(f"selected_detail_{index + 1}", url, "explicit_detail_selection") for index, url in enumerate(details)]
+    records = report.get("records")
+    _check(type(records) is list and len(pages) < len(records) <= len(pages) + MAX_PDFS)
+    _check(all(type(row) is dict and row.get("status") == "captured" for row in records))
+    _check(all(type(row.get("size_bytes")) is int and row["size_bytes"] > 0 for row in records))
+    _check(sum(row["size_bytes"] for row in records) <= MAX_TOTAL_BYTES)
+
+    def original(row, url, media):
+        _check(row.get("requested_url") == url and row.get("expected_media_type") == media)
+        _check(_digest(row.get("sha256")) and type(row.get("redirect_chain")) is list)
+        raw = store.read(row["sha256"])
+        response = OfficialResponse(url=row.get("response_url"), requested_url=url,
+                                    content=raw, media_type=media, retrieved_at=datetime.fromisoformat(row["retrieved_at"]),
+                                    redirect_chain=tuple(row["redirect_chain"]))
+        metadata = _metadata(response, url, media)
+        _check(all(row.get(key) == value for key, value in metadata.items()))
+        return raw
+
+    replayed = []
+    for row, (source_id, url, selection) in zip(records[:len(pages)], pages, strict=True):
+        _check(row.get("source_id") == source_id and row.get("selection") == selection)
+        raw = original(row, url, "text/html")
+        links = extract_pdf_links(raw, parent_url=row["response_url"])
+        _check(bool(links) and all(link["status"] == "eligible" for link in links))
+        for link in links:
+            link.update(parent_requested_url=url, source_id=source_id)
+        replayed.extend(links)
+    _check(type(report.get("links")) is list)
+    # JSON equality must remain type-sensitive: False/0 and 0.0/0 cannot
+    # substitute for the exact anchor indexes produced by the extractor.
+    _check(json.dumps(report["links"], sort_keys=True, ensure_ascii=False)
+           == json.dumps(replayed, sort_keys=True, ensure_ascii=False))
+    targets: dict[str, list[int]] = {}
+    for index, link in enumerate(replayed):
+        targets.setdefault(link["resolved_url"], []).append(index)
+    _check(len(records) == len(pages) + len(targets))
+    result = {}
+    for row, (url, indices) in zip(records[len(pages):], targets.items(), strict=True):
+        _check(type(row.get("parent_link_indices")) is list
+               and all(type(index) is int for index in row["parent_link_indices"]))
+        _check(row.get("selection") == "direct_observed_pdf" and row.get("parent_link_indices") == indices)
+        original(row, url, "application/pdf")
+        result[url] = {**row, "parent_requested_urls": sorted({replayed[index]["parent_requested_url"] for index in indices})}
+    for field in ("failed_sources", "captured_sources", "attempted_sources", "unique_eligible_pdf_targets", "captured_bytes", "rejected_pdf_links"):
+        _check(type(report.get(field)) is int)
+    _check(report.get("gaps") == [] and report.get("rejected_pdf_links") == 0)
+    _check(report.get("failed_sources") == 0 and report.get("captured_sources") == len(records)
+           and report.get("attempted_sources") == len(records) and report.get("unique_eligible_pdf_targets") == len(result)
+           and report.get("captured_bytes") == sum(row["size_bytes"] for row in records))
+    return result
+
+
+def reconcile_tariff_relief(report: dict, store: LocalArtifactStore, *, observed_baseline: bytes | None = None) -> dict:
+    """Detect live link replacement and same-URL byte changes without approval.
+
+    Unchanged observation pins still require the separate review process. This
+    function neither fetches historical PDFs nor accepts/replaces any baseline.
+    HTML byte changes are not revision changes: every current anchor is replayed,
+    while PDF URL/digest/final-URL and its observed parent determine the diff.
+    """
+    result = {"schema_version": 1, "comparison_kind": "unapproved_observation_pins",
+              "review_required": True, "baseline_accepted": False, "baseline_updated": False,
+              "operational_ok": False,
+              "source_graph_verified": False, "historical_originals_replayed": False,
+              "legal_ready": False, "can_promote": False, "active_rates_written": False,
+              "added_pdf_urls": [], "missing_pdf_urls": [], "changed_pdfs": [],
+              "observed_baseline_sha256": hashlib.sha256(observed_baseline).hexdigest() if type(observed_baseline) is bytes else None}
+    try:
+        baseline = load_observed_baseline(observed_baseline) if observed_baseline is not None else None
+        if type(report) is not dict or report.get("capture_complete") is not True:
+            result.update(status="capture_incomplete", reason="complete_current_capture_required")
+            return result
+        current = _replay_current_capture(report, store)
+        result["source_graph_verified"] = True
+        if baseline is None:
+            result.update(status="baseline_missing", reason="first_observation_requires_review")
+            return result
+        previous = {row["requested_url"]: row for row in baseline["sources"]}
+        result["added_pdf_urls"] = sorted(current.keys() - previous.keys())
+        result["missing_pdf_urls"] = sorted(previous.keys() - current.keys())
+        for url in sorted(current.keys() & previous.keys()):
+            old, new = previous[url], current[url]
+            fields = [field for field in ("sha256", "size_bytes", "response_url") if old[field] != new[field]]
+            if old["parent_requested_url"] not in new["parent_requested_urls"]:
+                fields.append("parent_requested_url")
+            if fields:
+                result["changed_pdfs"].append({"source_id": old["source_id"], "requested_url": url,
+                                                "changed_fields": fields, "previous_sha256": old["sha256"],
+                                                "observed_sha256": new["sha256"],
+                                                "observed_response_url": new["response_url"],
+                                                "observed_parent_requested_urls": new["parent_requested_urls"]})
+        changed = bool(result["added_pdf_urls"] or result["missing_pdf_urls"] or result["changed_pdfs"])
+        result.update(status="changes_detected" if changed else "observed_baseline_unreviewed",
+                      operational_ok=not changed,
+                      reason="source_link_or_content_change" if changed else "unchanged_observations_are_not_approval")
+    except Exception:
+        result.update(status="evidence_invalid", reason="observation_or_original_graph_validation_failed")
+    return result

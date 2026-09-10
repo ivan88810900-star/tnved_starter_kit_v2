@@ -28,7 +28,7 @@ from sqlalchemy.exc import IntegrityError
 
 from ..db import SessionLocal
 from ..models.regulatory import RegulatorySourceReview
-from .regulatory_source_registry import REGULATORY_SOURCE_REGISTRY
+from .regulatory_source_registry import REGULATORY_SOURCE_REGISTRY, TARIFF_RELIEF_SOURCE_REGISTRY
 
 UpdateStrategy = Literal[
     "automatic_structured",
@@ -218,6 +218,7 @@ _WEEKLY_AUTOMATIC = {
     "fts_customs_document_masks": "customs_opendata",
 }
 _MONITOR_ONLY = {
+    *(entry.source_id for entry in TARIFF_RELIEF_SOURCE_REGISTRY),
     "eec_ett_tnved",
     "eec_tr_ts_catalog",
     "eec_classification_decisions",

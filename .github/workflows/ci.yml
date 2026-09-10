@@ -260,6 +260,7 @@ jobs:
           tests/test_official_ntm_exact_*.py
           tests/test_official_ntm_curated_enforcement.py
           tests/test_regulatory_source_updates.py
+          tests/test_tariff_relief_source_monitor.py
           tests/test_regulatory_adapter_scripts.py
           tests/test_regulatory_adapter_write_guard.py
           tests/test_regulatory_review_queue.py

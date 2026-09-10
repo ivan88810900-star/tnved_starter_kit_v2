@@ -37,6 +37,14 @@
       "production_database_used": false,
       "server": "full_application_read_only",
       "source_legality_approved": false
+    },
+    "backend_published_ci": {
+      "commit": "b3f6241b2080100977da53caabd0df09b42b80dc",
+      "run_id": 34483670679,
+      "passed": 3137,
+      "warnings": 2,
+      "seconds": 321.07,
+      "conclusion": "success"
     }
   },
   "capture": {
@@ -56,16 +64,29 @@
     "consolidated130_header_date_conflict_retained": true
   },
   "source_backup": {
-    "size_bytes": 7062526,
-    "sha256": "68f8c495e5f8575688a09c0927f5854e8b3e706609b2eb1b06efb7a164bae800",
+    "size_bytes": 7062707,
+    "sha256": "de9132be651118e42f2f49fe237f035a8528fad55635a527b5d7fdf06e68b34a",
     "entries": 29,
     "original_sources": 12,
-    "legal_complete": false
+    "legal_complete": false,
+    "version_reason": "Preserve immutable artifact permissions and add verified restoration instructions",
+    "version": 2,
+    "durable_save_confirmed": true
   },
   "production_database_modified": false,
   "full_current_rates_legally_verified": false,
   "production_ready": false,
   "merge_performed": false,
   "deployment_performed": false,
-  "ntm_enforcement_enabled": false
+  "ntm_enforcement_enabled": false,
+  "source_backup_history": [
+    {
+      "size_bytes": 7062526,
+      "sha256": "68f8c495e5f8575688a09c0927f5854e8b3e706609b2eb1b06efb7a164bae800",
+      "entries": 29,
+      "original_sources": 12,
+      "legal_complete": false,
+      "version": 1
+    }
+  ]
 }

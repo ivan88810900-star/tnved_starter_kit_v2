@@ -257,6 +257,31 @@ jobs:
           python scripts/monitor_official_ntm_sources.py "${args[@]}" \
             2>&1 | tee ntm-source-monitor.log
 
+      - name: Capture and compare live tariff relief and GSP PDF links
+        id: tariff_relief_capture
+        continue-on-error: true
+        working-directory: customs-clear/backend
+        env:
+          CUSTOMSCLEAR_READ_ONLY: "1"
+          SCHEDULER_ENABLED: "0"
+          REGULATORY_SYNC_SCHEDULER_ENABLED: "0"
+        run: |
+          umask 077
+          mkdir -m 700 "$RUNNER_TEMP/ett-tariff-relief-store"
+          python scripts/capture_ett_tariff_relief.py \
+            --store-root "$RUNNER_TEMP/ett-tariff-relief-store" \
+            --output ett-tariff-relief-report.json \
+            --observed-baseline data/ett_tariff_relief_source_observations.json \
+            --detail-url https://docs.eaeunion.org/documents/461/10843/
+
+      - name: Retain original tariff relief and GSP capture objects
+        id: tariff_relief_objects
+        if: always()
+        continue-on-error: true
+        working-directory: customs-clear/backend
+        run: |
+          tar -C "$RUNNER_TEMP" -czf ett-tariff-relief-objects.tar.gz ett-tariff-relief-store
+
       - name: Verify current export-control list extraction
         id: export_control
         continue-on-error: true
@@ -336,6 +361,8 @@ jobs:
           UPDATE_PLAN_OUTCOME: ${{ steps.update_plan.outcome }}
           CBR_SOURCE_OUTCOME: ${{ steps.cbr_source.outcome }}
           SOURCE_MONITOR_OUTCOME: ${{ steps.source_monitor.outcome }}
+          TARIFF_RELIEF_CAPTURE_OUTCOME: ${{ steps.tariff_relief_capture.outcome }}
+          TARIFF_RELIEF_OBJECTS_OUTCOME: ${{ steps.tariff_relief_objects.outcome }}
           EXPORT_CONTROL_OUTCOME: ${{ steps.export_control.outcome }}
           SOURCE_MANIFESTS_OUTCOME: ${{ steps.source_manifests.outcome }}
           CODE_SCOPE_OUTCOME: ${{ steps.code_scope.outcome }}
@@ -360,6 +387,8 @@ jobs:
             --arg update_plan "$UPDATE_PLAN_OUTCOME" \
             --arg cbr_source "$CBR_SOURCE_OUTCOME" \
             --arg source_monitor "$SOURCE_MONITOR_OUTCOME" \
+            --arg tariff_relief_capture "$TARIFF_RELIEF_CAPTURE_OUTCOME" \
+            --arg tariff_relief_objects "$TARIFF_RELIEF_OBJECTS_OUTCOME" \
             --arg export_control "$EXPORT_CONTROL_OUTCOME" \
             --arg source_manifests "$SOURCE_MANIFESTS_OUTCOME" \
             --arg code_scope "$CODE_SCOPE_OUTCOME" \
@@ -393,6 +422,8 @@ jobs:
                 update_plan: $update_plan,
                 cbr_source: $cbr_source,
                 source_monitor: $source_monitor,
+                tariff_relief_capture: $tariff_relief_capture,
+                tariff_relief_objects: $tariff_relief_objects,
                 export_control: $export_control,
                 source_manifests: $source_manifests,
                 code_scope: $code_scope,
@@ -416,6 +447,8 @@ jobs:
             cbr-source-validation.log \
             ntm-source-monitor.json \
             ntm-source-monitor.log \
+            ett-tariff-relief-report.json \
+            ett-tariff-relief-objects.tar.gz \
             data/runtime/source-monitor-state.json \
             export-control-source-check.log \
             catalog-source-manifest-check.log \
@@ -446,6 +479,8 @@ jobs:
             customs-clear/backend/cbr-source-validation.log
             customs-clear/backend/ntm-source-monitor.json
             customs-clear/backend/ntm-source-monitor.log
+            customs-clear/backend/ett-tariff-relief-report.json
+            customs-clear/backend/ett-tariff-relief-objects.tar.gz
             customs-clear/backend/data/runtime/source-monitor-state.json
             customs-clear/backend/export-control-source-check.log
             customs-clear/backend/catalog-source-manifest-check.log
@@ -467,6 +502,8 @@ jobs:
           UPDATE_PLAN_OUTCOME: ${{ steps.update_plan.outcome }}
           CBR_SOURCE_OUTCOME: ${{ steps.cbr_source.outcome }}
           SOURCE_MONITOR_OUTCOME: ${{ steps.source_monitor.outcome }}
+          TARIFF_RELIEF_CAPTURE_OUTCOME: ${{ steps.tariff_relief_capture.outcome }}
+          TARIFF_RELIEF_OBJECTS_OUTCOME: ${{ steps.tariff_relief_objects.outcome }}
           EXPORT_CONTROL_OUTCOME: ${{ steps.export_control.outcome }}
           SOURCE_MANIFESTS_OUTCOME: ${{ steps.source_manifests.outcome }}
           CODE_SCOPE_OUTCOME: ${{ steps.code_scope.outcome }}
@@ -485,6 +522,8 @@ jobs:
             RESTORE_BASELINE \
             UPDATE_PLAN \
             CBR_SOURCE \
+            TARIFF_RELIEF_CAPTURE \
+            TARIFF_RELIEF_OBJECTS \
             EXPORT_CONTROL \
             SOURCE_MANIFESTS \
             CODE_SCOPE \
@@ -655,6 +694,8 @@ jobs:
         env:
           STATE_PERSISTENCE_GATE_OUTCOME: ${{ steps.state_persistence_gate.outcome }}
           SAVE_BASELINE_OUTCOME: ${{ steps.save_baseline.outcome }}
+          TARIFF_RELIEF_CAPTURE_OUTCOME: ${{ steps.tariff_relief_capture.outcome }}
+          TARIFF_RELIEF_OBJECTS_OUTCOME: ${{ steps.tariff_relief_objects.outcome }}
         run: |
           failures=()
           if [[ "$STATE_PERSISTENCE_GATE_OUTCOME" != "success" ]]; then
@@ -663,10 +704,21 @@ jobs:
           if [[ "$SAVE_BASELINE_OUTCOME" != "success" ]]; then
             failures+=("SAVE_BASELINE=$SAVE_BASELINE_OUTCOME")
           fi
+          if [[ "$TARIFF_RELIEF_CAPTURE_OUTCOME" != "success" ]]; then
+            failures+=("TARIFF_RELIEF_CAPTURE=$TARIFF_RELIEF_CAPTURE_OUTCOME")
+          fi
+          if [[ "$TARIFF_RELIEF_OBJECTS_OUTCOME" != "success" ]]; then
+            failures+=("TARIFF_RELIEF_OBJECTS=$TARIFF_RELIEF_OBJECTS_OUTCOME")
+          fi
           if ! jq -e '.all_available == true and .revision_monitor_gate_ok == true and .review_required == false' \
             customs-clear/backend/ntm-source-monitor.json >/dev/null
           then
             failures+=("LEGAL_SOURCE_REVIEW=pending_or_invalid")
+          fi
+          if ! jq -e '.capture_complete == true and .reconciliation.source_graph_verified == true and .reconciliation.operational_ok == true' \
+            customs-clear/backend/ett-tariff-relief-report.json >/dev/null
+          then
+            failures+=("TARIFF_RELIEF_REVIEW=pending_or_invalid")
           fi
           if (( ${#failures[@]} > 0 )); then
             printf 'Regulatory monitor gate failed: %s\n' "${failures[*]}" >&2
@@ -737,6 +789,7 @@ jobs:
 
             const summary = readJson('refresh-gate-summary.json');
             const sourceReport = readJson('ntm-source-monitor.json');
+            const tariffReliefReport = readJson('ett-tariff-relief-report.json');
             const updatePlan = readJson('regulatory-source-update-plan.json');
             const expectedLocalReviewSourceIds = [
               'country_risks_geopolitics',
@@ -770,6 +823,7 @@ jobs:
               process.env.DOWNLOAD_OUTCOME !== 'success' ||
               !summary ||
               !sourceReport ||
+              !tariffReliefReport ||
               !updatePlan ||
               !localReviewContractValid;
             const needsAttention =
@@ -778,6 +832,11 @@ jobs:
               sourceReport?.revision_monitor_gate_ok !== true ||
               Number(sourceReport?.revision_gap_source_count || 0) > 0 ||
               sourceReport?.review_required === true;
+            const tariffReliefNeedsAttention =
+              tariffReliefReport?.capture_complete !== true ||
+              tariffReliefReport?.reconciliation?.source_graph_verified !== true ||
+              tariffReliefReport?.reconciliation?.operational_ok !== true ||
+              tariffReliefReport?.reconciliation?.review_required !== false;
 
             const stepRows = Object.entries(summary?.steps || {})
               .map(([name, outcome]) => `| ${name} | ${outcome} |`)
@@ -829,6 +888,7 @@ jobs:
               '',
               '### Legal-source baselines awaiting approval',
               pendingRows,
+              '',
               `Pending digest mapping: \`${pendingCanonical}\``,
               approvalBinding
                 ? `After review, a trusted dispatcher must add a comment containing this exact line before the approval run: \`REGULATORY_BASELINE_APPROVAL_SHA256=${approvalBinding}\``
@@ -837,6 +897,11 @@ jobs:
               `Approval requested: ${approval.requested === true ? 'yes' : 'no'}; reference: ${approval.reference || 'none'}`,
               `Requested source IDs: ${(approval.requested_source_ids || []).length ? approval.requested_source_ids.map(id => `\`${id}\``).join(', ') : 'none'}`,
               `Requested source digests: \`${JSON.stringify(approval.requested_source_digests || {})}\``,
+              '',
+              '### Live tariff relief and GSP document links',
+              `Capture complete: ${tariffReliefReport?.capture_complete === true}; current original-link graph replayed: ${tariffReliefReport?.reconciliation?.source_graph_verified === true}; operational checks passed: ${tariffReliefReport?.reconciliation?.operational_ok === true}`,
+              `Comparison: ${tariffReliefReport?.reconciliation?.status || 'missing'}; added PDF URLs: ${tariffReliefReport?.reconciliation?.added_pdf_urls?.length ?? 'unknown'}; missing PDF URLs: ${tariffReliefReport?.reconciliation?.missing_pdf_urls?.length ?? 'unknown'}; changed PDF sources: ${tariffReliefReport?.reconciliation?.changed_pdfs?.length ?? 'unknown'}`,
+              'Observation pins are unapproved. This capture never accepts or updates a baseline; originals and the detailed comparison are in the run evidence artifact.',
               '',
               '### Unavailable or invalid sources',
               unavailableRows,
@@ -898,7 +963,7 @@ jobs:
               }
             }
 
-            if (needsAttention) {
+            if (needsAttention || tariffReliefNeedsAttention) {
               if (existing) {
                 await github.rest.issues.createComment({
                   owner: context.repo.owner,
