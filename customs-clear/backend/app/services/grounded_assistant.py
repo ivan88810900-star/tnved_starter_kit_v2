@@ -232,12 +232,40 @@ class _CitationCollector:
         return citation_id
 
 
+def payment_requires_review(payment: dict[str, Any] | None) -> bool:
+    """Preserve pending amounts through chat and copilot projections."""
+    if not isinstance(payment, dict):
+        return False
+    preference = payment.get("tariff_preference")
+    quality = payment.get("data_quality") or payment.get("payment_data_quality") or {}
+    return (
+        payment.get("amounts_provisional") is True
+        or payment.get("status") == "REVIEW_REQUIRED"
+        or payment.get("payment_status") == "REVIEW_REQUIRED"
+        or (isinstance(preference, dict) and preference.get("status") == "needs_review")
+        or (isinstance(quality, dict) and quality.get("amounts_provisional") is True)
+        or bool(_trim(payment.get("payment_review_reason"), 900))
+        or (isinstance(quality, dict) and bool(_trim(quality.get("payment_review_reason"), 900)))
+    )
+
+
+def _payment_review_warning(payment: dict[str, Any]) -> str:
+    preference = payment.get("tariff_preference")
+    quality = payment.get("data_quality")
+    quality = quality if isinstance(quality, dict) else {}
+    reason = _trim(payment.get("payment_review_reason") or quality.get("payment_review_reason"), 900)
+    if not reason and isinstance(preference, dict) and preference.get("status") == "needs_review":
+        reason = _trim(preference.get("reason"), 600)
+    return "Суммы предварительные; итог к уплате не подтверждён." + (f" {reason}" if reason else "")
+
+
 def _payment_snapshot(context: dict[str, Any], citations: _CitationCollector) -> dict[str, Any] | None:
     values = {key: context.get(key) for key in _PAYMENT_FIELDS if context.get(key) is not None}
     if not values:
         return None
 
-    excerpt_parts: list[str] = []
+    provisional = payment_requires_review(context)
+    excerpt_parts: list[str] = ["предварительная оценка"] if provisional else []
     if values.get("total_payable") is not None:
         excerpt_parts.append(f"итого {values['total_payable']} руб.")
     if values.get("duty_rate_pct") is not None:
@@ -247,7 +275,7 @@ def _payment_snapshot(context: dict[str, Any], citations: _CitationCollector) ->
     citation_id = citations.add(
         source_id="calculator_snapshot",
         title="Снимок расчёта платежей Tariff",
-        status="calculated",
+        status="REVIEW_REQUIRED" if provisional else "calculated",
         excerpt="; ".join(excerpt_parts) or "Переданные суммы расчёта",
     )
 
@@ -269,6 +297,13 @@ def _payment_snapshot(context: dict[str, Any], citations: _CitationCollector) ->
 
     return {
         **values,
+        "status": "REVIEW_REQUIRED" if provisional else context.get("payment_status"),
+        "amounts_provisional": True if provisional else context.get("amounts_provisional"),
+        "tariff_preference": context.get("tariff_preference")
+        if isinstance(context.get("tariff_preference"), dict)
+        else None,
+        "payment_review_reason": context.get("payment_review_reason"),
+        "payment_review_reasons": context.get("payment_review_reasons") or [],
         "data_quality": context.get("payment_data_quality")
         if isinstance(context.get("payment_data_quality"), dict)
         else {},
@@ -432,6 +467,8 @@ async def build_chat_grounding_bundle(
     payment = _payment_snapshot(context, citations)
     if payment:
         facts_used.append("payments")
+        if payment_requires_review(payment):
+            limitations.append(_payment_review_warning(payment))
         quality = payment.get("data_quality") or {}
         if str(quality.get("confidence") or "").lower() in {"low", "none"}:
             limitations.append("Качество совпадения ставки в переданном расчёте низкое — ставку нужно перепроверить.")
@@ -709,9 +746,12 @@ def render_chat_grounded_answer(bundle: dict[str, Any]) -> tuple[str, list[str]]
                 rows.append(f"специальные пошлины — {_money(payment.get('special_duties_rub'))}")
             total = payment.get("total_payable")
             lines = "\n".join(f"- {row}" for row in rows)
-            total_line = f"\n\n**Итого по снимку: {_money(total)}.**" if total is not None else ""
+            provisional = payment_requires_review(payment)
+            total_label = "Предварительный итог по снимку" if provisional else "Итого по снимку"
+            total_line = f"\n\n**{total_label}: {_money(total)}.**" if total is not None else ""
             parts.append(
                 "### Платежи\n"
+                + (_payment_review_warning(payment) + "\n\n" if provisional else "")
                 + (lines or "В снимке есть расчёт, но детализация сумм не передана.")
                 + total_line
                 + _citation_suffix(payment.get("citation_ids"))
@@ -849,13 +889,15 @@ def build_copilot_deterministic_summary(context: dict[str, Any]) -> dict[str, An
         payment = row.get("payment_summary") if isinstance(row.get("payment_summary"), dict) else None
         if payment:
             facts_used.append("payments")
+            provisional = payment_requires_review(payment)
             pay_id = citations.add(
                 source_id=f"calculator_snapshot_{idx}" if positions else "calculator_snapshot",
                 title=f"Расчёт платежей Tariff — позиция {idx}" if positions else "Расчёт платежей Tariff",
                 kind="calculation",
-                status=_first_nonempty(payment.get("status"), "calculated"),
+                status="REVIEW_REQUIRED" if provisional else _first_nonempty(payment.get("status"), "calculated"),
                 excerpt=(
-                    f"пошлина={payment.get('duty')}; НДС={payment.get('vat')}; "
+                    ("предварительная оценка; " if provisional else "")
+                    + f"пошлина={payment.get('duty')}; НДС={payment.get('vat')}; "
                     f"итого={payment.get('total_payable')}"
                 ),
             )
@@ -875,10 +917,14 @@ def build_copilot_deterministic_summary(context: dict[str, Any]) -> dict[str, An
                     )
                 )
             payment_notes.append(
-                f"{prefix}итого {_money(payment.get('total_payable'))}, "
+                f"{prefix}{'предварительный итог' if provisional else 'итого'} {_money(payment.get('total_payable'))}, "
                 f"пошлина {_money(payment.get('duty'))}, НДС {_money(payment.get('vat'))}"
                 f"{_citation_suffix([pay_id, *payment_source_ids])}."
             )
+            if provisional:
+                warning = f"{prefix}{_payment_review_warning(payment)}"
+                payment_notes.append(warning)
+                risks.append(warning)
             quality = payment.get("data_quality") if isinstance(payment.get("data_quality"), dict) else {}
             if str(quality.get("confidence") or "").lower() in {"low", "none"}:
                 risks.append(f"{prefix}низкая уверенность совпадения ставки — нужна ручная проверка.")

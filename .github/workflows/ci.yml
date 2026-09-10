@@ -282,12 +282,20 @@ jobs:
           tests/test_source_resource_limits.py
           tests/test_safe_fsa_archive.py
           tests/test_payment_registry_references.py
+          tests/test_tariff_preferences.py
+          tests/test_payment_preference_eligibility.py
+          tests/test_payment_consumer_review.py
+          tests/test_payment_history_uncertainty.py
+          tests/test_payment_document_uncertainty.py
+          tests/test_assistant_payment_review.py
+          tests/test_payment_quote_explanation.py
           tests/test_trois_is_active.py
           tests/test_normative_requirements_block.py
           tests/test_sanctions_risk_block.py
           tests/test_semantic_navigation_2204_pdo.py
           tests/test_diagnose_guided_tnved_navigation_catalog.py
           tests/test_api_integration.py::ApiIntegrationTests::test_export_compliance_skips_import_payment_and_antidumping
+          tests/test_api_integration.py::ApiIntegrationTests::test_calculator_eaeu_country_preference
 
       - name: Confirm quarantined ETT blocks a positive staging snapshot
         run: |

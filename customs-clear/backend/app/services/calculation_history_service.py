@@ -4,6 +4,7 @@ from __future__ import annotations
 import csv
 import io
 import json
+import math
 from datetime import datetime, timezone
 from typing import Any, Optional
 
@@ -12,6 +13,7 @@ from sqlalchemy import String, cast, func
 
 from ..db import SessionLocal, engine
 from ..models import CustomsCalculationHistory, IngestedDocument
+from .payment_result_status import aggregate_payment_metadata, payment_result_metadata
 
 HISTORY_KINDS: frozenset[str] = frozenset(
     {"compute", "compare", "compliance", "copilot", "copilot_batch"},
@@ -224,14 +226,38 @@ def export_calculation_history_rows(
 
 
 def calculation_history_as_csv(rows: list[dict[str, Any]]) -> str:
-    fields = ["id", "created_at", "kind", "user_ref", "document_id", "hs_code", "total_payable", "currency"]
+    fields = [
+        "id", "created_at", "kind", "user_ref", "document_id", "hs_code", "total_payable", "currency",
+        "payment_status", "amounts_provisional", "tariff_preference_warning",
+        "payment_review_reason",
+        "payment_review_reasons",
+    ]
     buf = io.StringIO()
     w = csv.DictWriter(buf, fieldnames=fields, extrasaction="ignore")
     w.writeheader()
     for row in rows:
         flat = {k: row.get(k) for k in fields}
+        if isinstance(flat.get("payment_review_reasons"), list):
+            flat["payment_review_reasons"] = json.dumps(flat["payment_review_reasons"], ensure_ascii=False)
         w.writerow(flat)
     return buf.getvalue()
+
+
+def _recorded_total(rows: list[Any], field: str) -> float | None:
+    """An absent item amount must not silently become zero in an aggregate."""
+    total = 0.0
+    for row in rows:
+        value = row.get(field) if isinstance(row, dict) else None
+        if value is None or isinstance(value, bool):
+            return None
+        try:
+            amount = float(value)
+        except (ValueError, TypeError, OverflowError):
+            return None
+        if not math.isfinite(amount):
+            return None
+        total += amount
+    return total if rows and math.isfinite(total) else None
 
 
 def _history_list_row(r: CustomsCalculationHistory) -> dict[str, Any]:
@@ -240,20 +266,30 @@ def _history_list_row(r: CustomsCalculationHistory) -> dict[str, Any]:
     kind = str(inp.get("_history_kind") or "")
     hs_code: Any = inp.get("hs_code")
     total: Any = None
+    metadata = payment_result_metadata(out)
 
     if kind == "compliance":
         items_s = out.get("items_summary") or []
+        metadata = aggregate_payment_metadata(items_s if isinstance(items_s, list) else [])
         if isinstance(items_s, list) and items_s:
-            total = sum(float(x.get("total_payable") or 0) for x in items_s if isinstance(x, dict))
+            total = _recorded_total(items_s, "total_payable")
             first = items_s[0] if items_s else None
             hc = first.get("hs_code") if isinstance(first, dict) else None
             if hc:
                 hs_code = f"{hc} +{len(items_s) - 1}" if len(items_s) > 1 else hc
     elif kind == "copilot_batch":
         pays = out.get("payments") or []
+        metadata = aggregate_payment_metadata(pays if isinstance(pays, list) else [])
         if isinstance(pays, list) and pays:
-            total = sum(float(x.get("total") or 0) for x in pays if isinstance(x, dict))
+            total = _recorded_total(pays, "total")
         hs_code = hs_code or "batch"
+    elif kind == "compare":
+        scenarios = out.get("scenarios") or []
+        scenarios = scenarios if isinstance(scenarios, list) else []
+        metadata = aggregate_payment_metadata(
+            s.get("profile") or s.get("payment_result") or s
+            for s in scenarios if isinstance(s, dict)
+        )
     elif kind == "copilot":
         total = (out.get("breakdown") or {}).get("total_payable")
         hs_code = hs_code or inp.get("effective_hs_code") or inp.get("hs_code")
@@ -269,6 +305,7 @@ def _history_list_row(r: CustomsCalculationHistory) -> dict[str, Any]:
         "hs_code": hs_code,
         "kind": kind or None,
         "total_payable": total,
+        **metadata,
     }
 
 
@@ -278,11 +315,7 @@ def get_calculation_record(calc_id: str) -> Optional[dict[str, Any]]:
         if not r:
             return None
         return {
-            "id": r.id,
-            "document_id": r.document_id,
-            "user_ref": r.user_ref,
-            "currency": r.currency,
-            "created_at": r.created_at.isoformat() if r.created_at else None,
+            **_history_list_row(r),
             "input_payload": r.input_payload,
             "output_payload": r.output_payload,
         }

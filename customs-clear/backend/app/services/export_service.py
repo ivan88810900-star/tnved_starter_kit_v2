@@ -6,6 +6,7 @@ from typing import Any
 from openpyxl import Workbook
 from openpyxl.styles import PatternFill
 
+from .payment_result_status import payment_result_metadata
 
 RED_FILL = PatternFill(start_color="FCE4D6", end_color="FCE4D6", fill_type="solid")
 GREEN_FILL = PatternFill(start_color="E2F0D9", end_color="E2F0D9", fill_type="solid")
@@ -108,6 +109,11 @@ def generate_final_customs_excel(items: list[dict[str, Any]]) -> bytes:
         "НДС",
         "Итого платежей",
         "Комплаенс-статус",
+        "Статус расчёта",
+        "Суммы предварительные",
+        "Причина проверки преференции",
+        "Предварительная оценка платежей",
+        "Причина проверки расчёта",
     ]
     ws.append(headers)
 
@@ -115,6 +121,13 @@ def generate_final_customs_excel(items: list[dict[str, Any]]) -> bytes:
         profile = dict(it.get("payment_profile") or {})
         breakdown = dict(profile.get("breakdown") or {})
         docs = list(profile.get("documents") or [])
+        metadata = payment_result_metadata(profile)
+        provisional = metadata["amounts_provisional"]
+        # A missing old flag is unknown, not evidence that the amount was final.
+        recorded_total = breakdown.get("total_payable")
+        status_text = metadata["payment_status"] or "Статус не сохранён"
+        if provisional is None:
+            status_text += " (признак окончательности не сохранён)"
 
         ws.append(
             [
@@ -123,13 +136,20 @@ def generate_final_customs_excel(items: list[dict[str, Any]]) -> bytes:
                 str(profile.get("hs_code") or ""),
                 _duty_rate(profile, it),
                 _vat_rate(profile, it),
-                float(breakdown.get("total_payable") or 0.0),
+                float(recorded_total) if recorded_total is not None and provisional is False else None,
                 (_alerts_text(docs) + " | statuses: " + _compliance_status_text(profile))[:8000],
+                status_text,
+                "Да" if provisional is True else ("Нет" if provisional is False else "Не сохранено"),
+                metadata["tariff_preference_warning"],
+                float(recorded_total) if recorded_total is not None and provisional is not False else None,
+                metadata["payment_review_reason"],
             ]
         )
 
         if _is_critical_row(profile):
             fill = RED_FILL
+        elif provisional is True:
+            fill = YELLOW_FILL
         elif _is_matched_row(profile):
             fill = GREEN_FILL
         elif _is_warning_row(profile):
@@ -140,12 +160,14 @@ def generate_final_customs_excel(items: list[dict[str, Any]]) -> bytes:
             for col_idx in range(1, len(headers) + 1):
                 ws.cell(row=row_idx, column=col_idx).fill = fill
 
-    for col in ("A", "B", "G"):
+    for col in ("A", "B", "G", "H", "J", "L"):
         ws.column_dimensions[col].width = 48
     ws.column_dimensions["C"].width = 14
     ws.column_dimensions["D"].width = 12
     ws.column_dimensions["E"].width = 12
     ws.column_dimensions["F"].width = 20
+    ws.column_dimensions["I"].width = 24
+    ws.column_dimensions["K"].width = 30
 
     out = io.BytesIO()
     wb.save(out)
@@ -172,4 +194,3 @@ def generate_final_customs_excel_from_ved_result(result: dict[str, Any]) -> byte
             }
         )
     return generate_final_customs_excel(rows)
-

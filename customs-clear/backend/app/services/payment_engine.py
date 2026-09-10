@@ -68,6 +68,22 @@ SPECIAL_DUTIES_COUNTRY_WARNING = (
     "см. remedies.eaeunion.org"
 )
 
+TARIFF_PREFERENCE_REVIEW_REASON = (
+    "В прежнем справочнике стран указано снижение пошлины, но право на него "
+    "для этого товара и даты не подтверждено. Страна происхождения сама по себе "
+    "не подтверждает преференцию. Предварительные суммы рассчитаны без снижения; "
+    "проверьте действующий режим, товар, происхождение и условия поставки."
+)
+
+DUTY_SOURCE_MISSING_REASON = (
+    "Ставка пошлины не найдена в локальных источниках и не задана вручную. "
+    "Нулевое значение в предварительной арифметике не подтверждает нулевую ставку."
+)
+VAT_SOURCE_MISSING_REASON = (
+    "Ставка НДС не найдена в локальных источниках и не задана вручную. "
+    "Ставка по умолчанию использована только для предварительной арифметики."
+)
+
 
 def _digits_hs(code: str) -> str:
     return re.sub(r"\D", "", (code or ""))[:10]
@@ -279,7 +295,7 @@ def _compute_structured_duty(
     # simple ad valorem
     if rule_type == "ad_valorem":
         duty = ad_valorem_amount if ad_valorem_amount is not None else customs_value * auto_duty_rate / 100.0
-        used_rate = ad_pct if ad_pct > 0 else auto_duty_rate
+        used_rate = ad_pct if ad_pct_raw is not None else auto_duty_rate
         return duty, used_rate, ad_valorem_amount, specific_amount_rub, "ad_valorem", fx_rate, specific_qty_used
 
     # simple specific
@@ -543,14 +559,37 @@ def compute_payments(payload: dict[str, Any]) -> dict[str, Any]:
         auto_duty_rate=auto_duty_rate,
         fx_rates=payload.get("_fx_rates") if isinstance(payload.get("_fx_rates"), dict) else None,
     )
+    duty_source_missing = manual_duty_rate is None and duty_rule is None and rate is None
 
-    # Tariff preference: apply country-of-origin duty coefficient
+    # A legacy country row is a review candidate, not proof of eligibility for
+    # this commodity, date and shipment. Caller assertions cannot authorize it.
     tariff_pref = get_tariff_preference(country) if country else None
     tariff_pref_meta: dict[str, Any] = {"applied": False}
+    preference_review_required = False
     user_duty_rate = payload.get("duty_rate")
     if tariff_pref and user_duty_rate is None and geo_meta.get("duty_override_rate") is None:
         coeff = tariff_pref.duty_coefficient
-        if coeff != 1.0:
+        if coeff < 1.0:
+            preference_review_required = True
+            tariff_pref_meta = {
+                "applied": False,
+                "status": "needs_review",
+                "preference_type": tariff_pref.preference_type,
+                "candidate_duty_coefficient": coeff,
+                "duty_coefficient": 1.0,
+                "eligibility_verified": False,
+                "source_kind": "legacy_country_tariff_preferences",
+                "legal_ref": tariff_pref.legal_ref or "",
+                "reason": TARIFF_PREFERENCE_REVIEW_REASON,
+                "missing_eligibility": [
+                    "current_regime",
+                    "exact_code_and_date",
+                    "origin_and_goods_status",
+                    "origin_evidence",
+                    "shipment_conditions_and_exceptions",
+                ],
+            }
+        elif coeff > 1.0:
             duty = duty * coeff
             if ad_valorem_amount is not None:
                 ad_valorem_amount = ad_valorem_amount * coeff
@@ -661,6 +700,23 @@ def compute_payments(payload: dict[str, Any]) -> dict[str, Any]:
         else:
             vat_reason = "Базовая ставка 22% (нет hs_rates и записи в vat_preferences)"
 
+    vat_source_missing = payload.get("vat_rate") is None and vat_pref is None and rate is None
+    if vat_source_missing:
+        vat_reason = VAT_SOURCE_MISSING_REASON
+
+    review_reasons: list[str] = []
+    review_messages: list[str] = []
+    for required, code, reason in (
+        (duty_source_missing, "duty_source_missing", DUTY_SOURCE_MISSING_REASON),
+        (vat_source_missing, "vat_source_missing", VAT_SOURCE_MISSING_REASON),
+        (preference_review_required, "tariff_preference_eligibility_unverified", TARIFF_PREFERENCE_REVIEW_REASON),
+    ):
+        if required:
+            review_reasons.append(code)
+            review_messages.append(reason)
+    amounts_provisional = bool(review_reasons)
+    payment_review_reason = " ".join(review_messages) or None
+
     duty_amount = _num(duty)
     excise_amount = _num(excise)
     antidumping_amount = _num(antidumping)
@@ -706,11 +762,42 @@ def compute_payments(payload: dict[str, Any]) -> dict[str, Any]:
         "source_code": "EEC_ETT" if rate else None,
         "antidumping_status": antidumping_status,
     }
+    if amounts_provisional:
+        data_quality.update({
+            "status": "REVIEW_REQUIRED",
+            "amounts_provisional": True,
+            "payment_review_reason": payment_review_reason,
+            "payment_review_reasons": review_reasons,
+        })
+    if preference_review_required:
+        data_quality.update({
+            "tariff_preference_status": "needs_review",
+            "tariff_preference_warning": TARIFF_PREFERENCE_REVIEW_REASON,
+        })
 
     tnved_context = get_tnved_context_for_hs(hs_code)
 
+    if user_duty_rate is not None:
+        duty_reason = f"Ставка пошлины указана вручную: {duty_rate}%."
+    elif manual_duty_rate is not None:
+        duty_reason = f"Подмена ставки по geo_special_duties: {duty_rate}%. {geo_meta['document_basis']}".strip()
+    elif duty_rule is not None:
+        duty_reason = (
+            f"Структурированное правило: {duty_rule.type} "
+            f"(код {duty_rule.commodity_code}). Выбрано: {selected_rule}."
+        )
+    elif matched:
+        duty_reason = f"Ввозная пошлина {duty_rate}% по коду ТН ВЭД/ЕТТ ЕАЭС."
+    else:
+        duty_reason = DUTY_SOURCE_MISSING_REASON
+    if preference_review_required:
+        duty_reason += f" {TARIFF_PREFERENCE_REVIEW_REASON}"
+
     return {
-        "status": "OK",
+        "status": "REVIEW_REQUIRED" if amounts_provisional else "OK",
+        "amounts_provisional": amounts_provisional,
+        "payment_review_reason": payment_review_reason,
+        "payment_review_reasons": review_reasons,
         "hs_code": hs_code,
         "country": country,
         "customs_value": _round2(customs_value),
@@ -761,18 +848,7 @@ def compute_payments(payload: dict[str, Any]) -> dict[str, Any]:
         },
         "legal_basis": {
             "vat": vat_reason,
-            "duty": (
-                (
-                    f"Структурированное правило: {duty_rule.type} "
-                    f"(код {duty_rule.commodity_code}). Выбрано: {selected_rule}."
-                )
-                if duty_rule
-                else (
-                    f"Ввозная пошлина {duty_rate}% по коду ТН ВЭД/ЕТТ ЕАЭС."
-                    if matched else
-                    "Ставка пошлины не найдена в локальной базе; применена ставка 0%."
-                )
-            ),
+            "duty": duty_reason,
             "customs_fee": "Таможенный сбор рассчитан по шкале РФ 2026 по таможенной стоимости.",
             "antidumping": antidumping_reason,
             "excise": excise_reason,
@@ -814,6 +890,13 @@ def compare_payment_scenarios(payload: dict[str, Any]) -> dict[str, Any]:
         econ["country"] = str(shared["country"]).strip().upper()
     if shared.get("quantity") is not None:
         econ["quantity"] = float(shared["quantity"])
+    for key in ("net_weight_kg", "extra_quantity"):
+        if shared.get(key) is not None:
+            econ[key] = float(shared[key])
+    if shared.get("apply_reduced_vat") is not None:
+        econ["apply_reduced_vat"] = bool(shared["apply_reduced_vat"])
+    if shared.get("invoice_currency") is not None:
+        econ["invoice_currency"] = str(shared["invoice_currency"])
 
     out_scenarios: list[dict[str, Any]] = []
     first_total: float | None = None
@@ -843,6 +926,13 @@ def compare_payment_scenarios(payload: dict[str, Any]) -> dict[str, Any]:
                 "label": label,
                 "hs_code": hs,
                 "country": (merged.get("country") or None),
+                "status": res.get("status") or "OK",
+                "amounts_provisional": bool(res.get("amounts_provisional")),
+                "payment_review_reason": res.get("payment_review_reason"),
+                "payment_review_reasons": res.get("payment_review_reasons"),
+                "tariff_preference": res.get("tariff_preference"),
+                "payment_result": res,
+                "calculation_payload": merged,
                 "delta_total_vs_first_rub": delta,
                 "total_payable": _round2(total),
                 "duty": res["breakdown"]["duty"],
@@ -856,8 +946,19 @@ def compare_payment_scenarios(payload: dict[str, Any]) -> dict[str, Any]:
             }
         )
 
+    # Even the first row cannot be a comparison baseline while any scenario is
+    # unresolved or blocked. Keep estimates, but do not imply proven savings.
+    comparison_requires_review = any(
+        row["amounts_provisional"] or row["status"] != "OK"
+        for row in out_scenarios
+    )
+    if comparison_requires_review:
+        for row in out_scenarios:
+            row["delta_total_vs_first_rub"] = None
+
     return {
-        "status": "OK",
+        "status": "REVIEW_REQUIRED" if comparison_requires_review else "OK",
+        "amounts_provisional": any(row["amounts_provisional"] for row in out_scenarios),
         "shared_economic": econ,
         "scenarios": out_scenarios,
     }

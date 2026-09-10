@@ -160,7 +160,7 @@ class ApiIntegrationTests(unittest.TestCase):
         self.assertFalse(meta.get("is_new"))
 
     def test_calculator_eaeu_country_preference(self):
-        """Страна ЕАЭС (BY) применяет тарифную преференцию (нулевая пошлина)."""
+        """Страна ЕАЭС сама по себе не подтверждает статус товара и нулевую пошлину."""
         preference = SimpleNamespace(
             duty_coefficient=0.0,
             preference_type="eaeu",
@@ -174,9 +174,13 @@ class ApiIntegrationTests(unittest.TestCase):
             })
         self.assertEqual(r.status_code, 200)
         pref = r.json()["tariff_preference"]
-        self.assertTrue(pref.get("applied"))
+        self.assertFalse(pref.get("applied"))
         self.assertEqual(pref.get("preference_type"), "eaeu")
-        self.assertEqual(r.json()["breakdown"]["duty"], 0.0)
+        self.assertEqual(pref.get("status"), "needs_review")
+        self.assertEqual(pref.get("candidate_duty_coefficient"), 0.0)
+        self.assertEqual(pref.get("duty_coefficient"), 1.0)
+        self.assertEqual(r.json()["status"], "REVIEW_REQUIRED")
+        self.assertTrue(r.json()["amounts_provisional"])
 
     def test_calculator_vat_reason_present(self):
         r = self.client.post("/api/calculator/compute", json={

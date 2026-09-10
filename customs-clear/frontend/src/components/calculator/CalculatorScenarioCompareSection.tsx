@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { api } from '../../api/client';
 import { getUserFacingApiError } from '../../api/error';
 import type { ScenarioCompareResponse } from '../../types/api.types';
+import { hasProvisionalPayments } from '../../utils/paymentReview';
 
 type ScenarioRow = {
   name: string;
@@ -43,6 +44,10 @@ export function CalculatorScenarioCompareSection({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<ScenarioCompareResponse | null>(null);
+  const comparisonIncomplete = result != null && (hasProvisionalPayments(result)
+    || result.comparison_complete === false
+    || result.scenarios.some((s) => hasProvisionalPayments(s) || (s.payments_status != null && s.payments_status !== 'OK')));
+  const canRank = result != null && !comparisonIncomplete && result.best_scenario != null && result.savings_vs_worst != null;
 
   const updateScenario = (idx: number, patch: Partial<ScenarioRow>) => {
     setScenarios((prev) => prev.map((s, i) => (i === idx ? { ...s, ...patch } : s)));
@@ -60,7 +65,7 @@ export function CalculatorScenarioCompareSection({
 
   const exportCsv = () => {
     if (!result?.scenarios?.length) return;
-    const header = ['Сценарий', 'ТН ВЭД', 'Страна', 'Пошлина', 'НДС', 'Сбор', 'РОП', 'ИТОГО', 'Экономия'];
+    const header = ['Сценарий', 'ТН ВЭД', 'Страна', 'Пошлина', 'НДС', 'Сбор', 'РОП', 'Сумма', 'Экономия', 'Статус платежей', 'Предварительная сумма', 'Причина', 'Сравнение завершено', 'Причины проверки (коды)'];
     const worstTotal = Math.max(...result.scenarios.map((s) => s.total));
     const rows = result.scenarios.map((s) => [
       s.name,
@@ -71,9 +76,18 @@ export function CalculatorScenarioCompareSection({
       String(s.fee),
       String(s.rop),
       String(s.total),
-      String(Math.round((worstTotal - s.total) * 100) / 100),
+      canRank ? String(Math.round((worstTotal - s.total) * 100) / 100) : '',
+      s.payments_status ?? '',
+      s.amounts_provisional == null && !hasProvisionalPayments(s) ? '' : String(hasProvisionalPayments(s)),
+      s.payment_review_reason ?? s.preference?.reason ?? '',
+      String(canRank),
+      (s.payment_review_reasons ?? []).join(', '),
     ]);
-    const csv = [header, ...rows].map((r) => r.join(';')).join('\n');
+    const escapeCell = (value: string) => {
+      const safe = /^[=+@\-\t\r]/.test(value) ? "'" + value : value;
+      return /[;"\r\n]/.test(safe) ? '"' + safe.replaceAll('"', '""') + '"' : safe;
+    };
+    const csv = [header, ...rows].map((r) => r.map(escapeCell).join(';')).join('\n');
     const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -179,15 +193,20 @@ export function CalculatorScenarioCompareSection({
         {error ? <div className="rounded-lg border border-red-200 bg-red-50 px-2 py-1.5 text-red-700">{error}</div> : null}
         {result?.scenarios?.length ? (
           <div className="space-y-2">
-            <p className="text-[11px] text-slate-500">
+            {comparisonIncomplete ? (
+              <p role="status" className="rounded-lg border border-amber-200 bg-amber-50 p-2 text-amber-900">
+                Есть предварительные или неполные расчёты. Лучший сценарий и экономия определятся после проверки условий.
+              </p>
+            ) : null}
+            {canRank ? <p className="text-[11px] text-slate-500">
               Лучший: <strong className="text-emerald-700">{result.best_scenario}</strong>
-              {result.savings_vs_worst > 0 ? (
+              {result.savings_vs_worst != null && result.savings_vs_worst > 0 ? (
                 <span>
                   {' '}
                   · экономия vs худший: {result.savings_vs_worst.toLocaleString('ru-RU')} ₽
                 </span>
               ) : null}
-            </p>
+            </p> : null}
             <div className="overflow-x-auto rounded-xl border border-slate-200 bg-slate-50">
               <table className="w-full min-w-[640px] text-left text-[11px]">
                 <thead className="border-b border-slate-200 text-[10px] uppercase tracking-wider text-slate-500">
@@ -197,7 +216,7 @@ export function CalculatorScenarioCompareSection({
                     <th className="p-2">НДС</th>
                     <th className="p-2">Сбор</th>
                     <th className="p-2">РОП</th>
-                    <th className="p-2">ИТОГО</th>
+                    <th className="p-2">{comparisonIncomplete ? 'Предварительная сумма' : 'ИТОГО'}</th>
                     <th className="p-2">Экономия</th>
                   </tr>
                 </thead>
@@ -205,19 +224,23 @@ export function CalculatorScenarioCompareSection({
                   {result.scenarios.map((s, i) => {
                     const worst = Math.max(...result.scenarios.map((x) => x.total));
                     const savings = Math.round((worst - s.total) * 100) / 100;
-                    const isBest = s.name === result.best_scenario;
+                    const isBest = canRank && s.name === result.best_scenario;
                     return (
                       <tr
                         key={i}
                         className={`border-b border-slate-200 ${isBest ? 'bg-emerald-50 font-medium text-emerald-900' : ''}`}
                       >
-                        <td className="p-2">{s.name}</td>
+                        <td className="p-2">
+                          {s.name}
+                          {hasProvisionalPayments(s) ? <span className="block text-amber-800">Требуется проверка</span> : null}
+                          {(s.payment_review_reason ?? s.preference?.reason) ? <span className="block text-amber-800">{s.payment_review_reason ?? s.preference?.reason}</span> : null}
+                        </td>
                         <td className="p-2">{Number(s.duty).toLocaleString('ru-RU')}</td>
                         <td className="p-2">{Number(s.vat).toLocaleString('ru-RU')}</td>
                         <td className="p-2">{Number(s.fee).toLocaleString('ru-RU')}</td>
                         <td className="p-2">{Number(s.rop).toLocaleString('ru-RU')}</td>
                         <td className="p-2">{Number(s.total).toLocaleString('ru-RU')}</td>
-                        <td className="p-2 text-slate-500">{savings.toLocaleString('ru-RU')}</td>
+                        <td className="p-2 text-slate-500">{canRank ? savings.toLocaleString('ru-RU') : '—'}</td>
                       </tr>
                     );
                   })}

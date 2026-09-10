@@ -6,7 +6,7 @@ Active
 
 ## Last updated
 
-2026-09-08
+2026-09-10
 
 ## Strategic direction
 
@@ -205,6 +205,16 @@ Keep the curated official bridge OFF before proposing any exact-rule production
 enforcement.
 
 ## Next recommended implementation tasks
+
+Payment correctness follow-up (2026-09-10): country-only legacy discounts and
+missing duty/VAT source lookups now produce explicit provisional arithmetic,
+not a confirmed final payable amount. The reason survives quotes, scenarios,
+invoice/document batches, histories, CSV/XLSX/PDF and grounded assistant output.
+See [corrective decision and contract](PAYMENT_PREFERENCE_REVIEW_GUARD.md).
+This closes an actual calculation/status defect; it does not certify the legacy
+rates or resolve the full official ETT promotion gate. Original-source capture
+now additionally covers observed tariff relief/GSP landing links and explicitly
+selected act detail pages, with legal completeness remaining false.
 
 Current next tasks:
 

@@ -12,6 +12,7 @@ import pandas as pd
 
 from ..db import SessionLocal
 from .payment_engine_compat import compute_payments
+from .payment_result_status import aggregate_payment_metadata, payment_result_metadata
 from .rop_calculator import calculate_rop
 
 _COLUMN_ALIASES: dict[str, tuple[str, ...]] = {
@@ -213,6 +214,7 @@ def calculate_line_payments(
         "total_payable": round(total, 2),
         "payments_status": payments.get("status"),
         "tariff_preference": payments.get("tariff_preference"),
+        **payment_result_metadata(payments),
     }
 
 
@@ -249,7 +251,12 @@ async def calculate_batch_lines(
         "rop": round(sum(float((r.get("rop") or {}).get("total_rop_rub") or 0) for r in results), 2),
         "total_payable": round(sum(float(r["total_payable"]) for r in results), 2),
     }
-    return {"lines": results, "totals": totals, "line_count": len(results)}
+    metadata = aggregate_payment_metadata(results)
+    totals.update(metadata)
+    return {
+        "lines": results, "totals": totals, "line_count": len(results),
+        "status": metadata["payment_status"] or "UNKNOWN", **metadata,
+    }
 
 
 def build_invoice_template_xlsx() -> bytes:

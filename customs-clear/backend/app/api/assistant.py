@@ -18,6 +18,7 @@ from ..services.assistant_orchestrator import (
 from ..services.rag_service import rag_context_for_copilot
 from ..services.audit_log import append_audit, request_audit_meta
 from ..services.calculation_history_service import save_calculation_record
+from ..services.payment_result_status import payment_result_metadata
 from ..security import require_admin_token, require_authenticated_user
 from ..services.assistant_chat import run_assistant_chat
 from ..services.decision_history import (
@@ -135,6 +136,11 @@ class AssistantCurrentContext(BaseModel):
     product_name: Optional[str] = None
     origin_country: Optional[str] = None
     total_payable: Optional[float] = None
+    payment_status: Optional[str] = None
+    amounts_provisional: Optional[bool] = None
+    tariff_preference: Dict[str, Any] | None = None
+    payment_review_reason: str | None = None
+    payment_review_reasons: List[str] = Field(default_factory=list)
     non_tariff_measures: List[AssistantNonTariffMeasureContext] = Field(default_factory=list)
     payment_data_quality: Dict[str, Any] = Field(default_factory=dict)
     payment_legal_basis: Dict[str, Any] = Field(default_factory=dict)
@@ -393,7 +399,12 @@ async def assistant_copilot_batch(req: CopilotBatchRequest, request: Request) ->
             tot = None
             if isinstance(p, dict):
                 tot = (p.get("breakdown") or {}).get("total_payable")
-            pays.append({"effective_hs": b.get("effective_hs_code"), "total": tot})
+            pays.append({
+                "effective_hs": b.get("effective_hs_code"),
+                "total": tot,
+                **payment_result_metadata(p),
+                "tariff_preference": p.get("tariff_preference") if isinstance(p, dict) else None,
+            })
         save_calculation_record(
             input_payload={
                 "positions": len(rows),

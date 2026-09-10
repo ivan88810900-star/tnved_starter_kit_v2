@@ -12,6 +12,7 @@ from ..schemas.ntm_applicability import NtmTransactionFacts, dump_ntm_transactio
 from ..services.calculation_history_service import save_calculation_record
 from ..services.non_tariff_service import check_position_non_tariff
 from ..services.payment_engine_compat import compute_payments
+from ..services.payment_result_status import aggregate_payment_metadata, payment_result_metadata
 from ..security import require_authenticated_user
 
 router = APIRouter(dependencies=[Depends(require_authenticated_user)])
@@ -126,6 +127,11 @@ async def compliance_check(req: ComplianceRequest) -> JSONResponse:
             risks.append(f"Отсутствуют разрешительные документы: {', '.join(documents['missing'])}")
         if payment.get("data_quality", {}).get("antidumping_status") == "manual_review":
             risks.append("Антидемпинговые меры требуют ручной проверки (страна не указана)")
+        payment_metadata = payment_result_metadata(payment)
+        if payment_metadata["tariff_preference_warning"]:
+            risks.append(payment_metadata["tariff_preference_warning"])
+        if payment_metadata["payment_review_reason"] and payment_metadata["payment_review_reason"] not in risks:
+            risks.append(payment_metadata["payment_review_reason"])
         if non_tariff.get("data_freshness", {}).get("is_stale"):
             risks.append("Данные нормативных источников устарели")
         permits_rows = non_tariff.get("permits") or []
@@ -170,6 +176,9 @@ async def compliance_check(req: ComplianceRequest) -> JSONResponse:
         overall = "ERROR"
     elif any(r["non_tariff"]["status"] == "WARNING" for r in results):
         overall = "WARNING"
+    payment_metadata = aggregate_payment_metadata(r["payment"] for r in results)
+    if overall == "OK" and payment_metadata["amounts_provisional"] is True:
+        overall = "WARNING"
 
     # Summary data quality from payment engine
     all_confidences = [r["payment"]["data_quality"]["confidence"] for r in results]
@@ -179,6 +188,7 @@ async def compliance_check(req: ComplianceRequest) -> JSONResponse:
     )
     any_manual_review = any(
         r["payment"]["data_quality"].get("antidumping_status") == "manual_review"
+        or payment_result_metadata(r["payment"])["amounts_provisional"] is True
         for r in results
     )
 
@@ -187,6 +197,7 @@ async def compliance_check(req: ComplianceRequest) -> JSONResponse:
         "data_confidence": all_confidences,
         "any_stale_source": any_stale,
         "any_manual_review": any_manual_review,
+        **payment_metadata,
     }
 
     if save_hist:
@@ -213,6 +224,8 @@ async def compliance_check(req: ComplianceRequest) -> JSONResponse:
                     "nt_status": r["non_tariff"]["status"],
                     "total_payable": r["payment"]["breakdown"]["total_payable"],
                     "risks_count": len(r["risks"]),
+                    **payment_result_metadata(r["payment"]),
+                    "tariff_preference": r["payment"].get("tariff_preference"),
                 }
                 for r in results
             ],

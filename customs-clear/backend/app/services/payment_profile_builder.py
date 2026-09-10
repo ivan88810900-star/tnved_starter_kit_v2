@@ -61,6 +61,10 @@ def _map_raw_to_profile(
         blocking_issue=blocking_issue,
         geo=raw_result.get("geo"),
         data_quality=raw_result.get("data_quality"),
+        amounts_provisional=raw_result.get("amounts_provisional"),
+        tariff_preference=raw_result.get("tariff_preference"),
+        payment_review_reason=raw_result.get("payment_review_reason"),
+        payment_review_reasons=raw_result.get("payment_review_reasons") or [],
     )
 
 
@@ -97,10 +101,16 @@ def build_compare_payment_profiles(
     for row in scenarios_raw:
         hs_code = str(row.get("hs_code") or "").strip()
         scenario_country = str(row.get("country") or shared.get("country") or "").strip().upper() or None
-        profile = build_full_payment_profile(
-            payload={**shared, "hs_code": hs_code, "country": scenario_country},
+        payment_result = row.get("payment_result")
+        if not isinstance(payment_result, dict):
+            raise ValueError("Не сохранён исходный расчёт сценария; повторите сравнение")
+        # Reuse the exact scenario calculation. Recalculating with only
+        # shared economics loses manual rates and can observe a different
+        # source snapshot between the comparison and its profile.
+        profile = _map_raw_to_profile(
             hs_code=hs_code,
             country=scenario_country,
+            raw_result=payment_result,
         )
         scenarios.append(
             PaymentCompareScenarioItem(
@@ -114,8 +124,21 @@ def build_compare_payment_profiles(
             )
         )
 
+    comparison_complete = bool(scenarios) and all(
+        row.profile.status == "OK" and not row.profile.amounts_provisional
+        for row in scenarios
+    )
+    if not comparison_complete:
+        for row in scenarios:
+            row.delta_total_vs_first_rub = None
     return PaymentCompareResponse(
-        status=str(raw.get("status") or "OK"),
+        status=str(raw.get("status") or "OK") if comparison_complete else "REVIEW_REQUIRED",
         shared_economic=shared,
         scenarios=scenarios,
+        amounts_provisional=(
+            True if any(row.profile.amounts_provisional is True for row in scenarios)
+            else False if scenarios and all(row.profile.amounts_provisional is False for row in scenarios)
+            else None
+        ),
+        comparison_complete=comparison_complete,
     )

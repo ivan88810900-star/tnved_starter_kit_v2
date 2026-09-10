@@ -1,179 +1,55 @@
-"""Tests for country tariff preferences and payment engine integration."""
+"""Legacy lookup storage contract, not a current legal country inventory.
+
+Old assertions that BR/IN/TR must receive GSP reductions from a live database
+encoded the bug. Eligibility regressions are in test_payment_preference_eligibility.
+"""
 from __future__ import annotations
 
 import pytest
-from sqlalchemy import text
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
 
-from app.db import SessionLocal
-from app.services.normative_store import get_tariff_preference
-
-
-class TestCountryTariffPreferencesData:
-    @pytest.fixture(autouse=True)
-    def _db(self):
-        self.db = SessionLocal()
-        yield
-        self.db.close()
-
-    def test_total_countries_above_150(self) -> None:
-        count = self.db.execute(
-            text("SELECT COUNT(*) FROM country_tariff_preferences")
-        ).scalar()
-        assert count >= 150, f"Expected >= 150 country preferences, got {count}"
-
-    def test_eaeu_members_have_zero_coefficient(self) -> None:
-        for iso in ("BY", "KZ", "AM", "KG"):
-            pref = get_tariff_preference(iso)
-            assert pref is not None, f"EAEU member {iso} not found"
-            assert pref.duty_coefficient == 0.0, f"{iso} should have 0.0 coefficient"
-            assert pref.preference_type == "eaeu"
-
-    def test_sng_countries_have_zero_coefficient(self) -> None:
-        for iso in ("UZ", "TJ", "MD"):
-            pref = get_tariff_preference(iso)
-            assert pref is not None, f"CIS country {iso} not found"
-            assert pref.duty_coefficient == 0.0
-
-    def test_gsp_countries_have_075_coefficient(self) -> None:
-        for iso in ("BR", "IN", "TR"):
-            pref = get_tariff_preference(iso)
-            assert pref is not None, f"GSP country {iso} not found"
-            assert pref.duty_coefficient == 0.75, f"{iso} should have 0.75 coefficient"
-            assert pref.preference_type == "gsp"
-
-    def test_china_graduated_from_gsp(self) -> None:
-        # КНР исключена из перечня пользователей ЕСТП ЕАЭС
-        # (Решение Совета ЕЭК № 17 от 05.03.2021, применяется с 12.10.2021):
-        # применяется полная ставка РНБ, а не льготная GSP.
-        pref = get_tariff_preference("CN")
-        assert pref is not None, "CN not found"
-        assert pref.duty_coefficient == 1.0, "CN must use full MFN rate, not GSP 0.75"
-        assert pref.preference_type == "mfn_graduated"
-
-    def test_ldc_countries_have_zero_coefficient(self) -> None:
-        for iso in ("AF", "BD", "ET"):
-            pref = get_tariff_preference(iso)
-            assert pref is not None, f"LDC country {iso} not found"
-            assert pref.duty_coefficient == 0.0
-
-    def test_mfn_countries_have_full_coefficient(self) -> None:
-        for iso in ("US", "DE", "JP", "KR"):
-            pref = get_tariff_preference(iso)
-            assert pref is not None, f"MFN country {iso} not found"
-            assert pref.duty_coefficient == 1.0
-
-    def test_non_mfn_has_double_coefficient(self) -> None:
-        pref = get_tariff_preference("KP")
-        assert pref is not None, "DPRK not found"
-        assert pref.duty_coefficient == 2.0
-        assert pref.preference_type == "non_mfn"
-
-    def test_all_entries_have_legal_ref(self) -> None:
-        missing = self.db.execute(text(
-            "SELECT COUNT(*) FROM country_tariff_preferences "
-            "WHERE legal_ref IS NULL OR legal_ref = ''"
-        )).scalar()
-        assert missing == 0, f"Found {missing} entries without legal_ref"
-
-    def test_all_entries_have_effective_from(self) -> None:
-        missing = self.db.execute(text(
-            "SELECT COUNT(*) FROM country_tariff_preferences "
-            "WHERE effective_from IS NULL OR effective_from = ''"
-        )).scalar()
-        assert missing == 0, f"Found {missing} entries without effective_from"
-
-    def test_lookup_returns_none_for_unknown_country(self) -> None:
-        pref = get_tariff_preference("XX")
-        assert pref is None
-
-    def test_lookup_case_insensitive(self) -> None:
-        pref = get_tariff_preference("br")
-        assert pref is not None
-        assert pref.preference_type == "gsp"
+from app.models.tnved import CountryTariffPreference
+from app.services import normative_store
 
 
-class TestTariffPreferencePaymentIntegration:
-    def test_gsp_reduces_duty(self) -> None:
-        from app.services.payment_engine import compute_payments
+@pytest.fixture
+def legacy_lookup(monkeypatch):
+    engine = create_engine("sqlite://")
+    CountryTariffPreference.__table__.create(engine)
+    sessions = sessionmaker(bind=engine, expire_on_commit=False)
+    with sessions() as db:
+        db.add_all([
+            CountryTariffPreference(country_code="BR", preference_type="gsp",
+                duty_coefficient=0.75, legal_ref="Historical fixture, not eligibility",
+                effective_from="2009-11-27"),
+            CountryTariffPreference(country_code="BY", preference_type="eaeu",
+                duty_coefficient=0, legal_ref="Historical fixture, not goods status",
+                effective_from="2015-01-01"),
+        ])
+        db.commit()
+    monkeypatch.setattr(normative_store, "SessionLocal", sessions)
+    yield normative_store.get_tariff_preference
+    engine.dispose()
 
-        base_result = compute_payments({
-            "hs_code": "8509100000",
-            "customs_value": 100000,
-            "country": "US",
-        })
-        gsp_result = compute_payments({
-            "hs_code": "8509100000",
-            "customs_value": 100000,
-            "country": "BR",
-        })
-        base_duty = base_result["breakdown"]["duty"]
-        gsp_duty = gsp_result["breakdown"]["duty"]
-        if base_duty > 0:
-            assert gsp_duty < base_duty, (
-                f"GSP duty ({gsp_duty}) should be less than MFN duty ({base_duty})"
-            )
 
-    def test_china_no_gsp_discount(self) -> None:
-        from app.services.payment_engine import compute_payments
+def test_lookup_preserves_legacy_candidate_without_asserting_eligibility(legacy_lookup):
+    candidate = legacy_lookup("BR")
+    assert candidate is not None
+    assert candidate.preference_type == "gsp"
+    assert candidate.duty_coefficient == 0.75
+    assert candidate.effective_from == "2009-11-27"
+    assert candidate.legal_ref == "Historical fixture, not eligibility"
 
-        us_result = compute_payments({
-            "hs_code": "8509400000",
-            "customs_value": 500000,
-            "country": "US",
-        })
-        cn_result = compute_payments({
-            "hs_code": "8509400000",
-            "customs_value": 500000,
-            "country": "CN",
-        })
-        assert cn_result["breakdown"]["duty"] == us_result["breakdown"]["duty"], (
-            "CN graduated from GSP — duty must equal full MFN duty"
-        )
-        assert cn_result["tariff_preference"]["applied"] is False
 
-    def test_eaeu_zeroes_duty(self) -> None:
-        from app.services.payment_engine import compute_payments
+def test_lookup_is_case_insensitive(legacy_lookup):
+    assert legacy_lookup(" br ").country_code == "BR"
 
-        result = compute_payments({
-            "hs_code": "8509100000",
-            "customs_value": 100000,
-            "country": "BY",
-        })
-        assert result["breakdown"]["duty"] == 0.0, "EAEU member should have zero duty"
-        assert result["tariff_preference"]["applied"] is True
-        assert result["tariff_preference"]["duty_coefficient"] == 0.0
 
-    def test_manual_duty_rate_overrides_preference(self) -> None:
-        from app.services.payment_engine import compute_payments
+@pytest.mark.parametrize("country", [None, "", "X", "XX", "12"])
+def test_unknown_or_invalid_lookup_has_no_inferred_preference(legacy_lookup, country):
+    assert legacy_lookup(country) is None
 
-        result = compute_payments({
-            "hs_code": "8509100000",
-            "customs_value": 100000,
-            "country": "BY",
-            "duty_rate": 10.0,
-        })
-        assert result["breakdown"]["duty"] == 10000.0, "Manual rate should override preference"
-        assert result["tariff_preference"]["applied"] is False
 
-    def test_tariff_pref_meta_in_response(self) -> None:
-        from app.services.payment_engine import compute_payments
-
-        result = compute_payments({
-            "hs_code": "8509100000",
-            "customs_value": 100000,
-            "country": "BR",
-        })
-        assert "tariff_preference" in result
-        pref = result["tariff_preference"]
-        assert pref["applied"] is True
-        assert pref["preference_type"] == "gsp"
-        assert pref["duty_coefficient"] == 0.75
-
-    def test_no_country_no_preference(self) -> None:
-        from app.services.payment_engine import compute_payments
-
-        result = compute_payments({
-            "hs_code": "8509100000",
-            "customs_value": 100000,
-        })
-        assert result["tariff_preference"]["applied"] is False
+def test_zero_candidate_is_retained_as_data_not_proof(legacy_lookup):
+    assert legacy_lookup("BY").duty_coefficient == 0

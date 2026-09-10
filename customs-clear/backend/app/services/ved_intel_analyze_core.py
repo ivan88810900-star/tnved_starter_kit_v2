@@ -13,6 +13,7 @@ from .extractor import extract_invoice_and_packing_from_files
 from .ingestion_service import persist_extracted_bundle
 from .validator import validate_invoice_only, validate_invoice_vs_packing
 from .ved_intel_service import run_ved_intel_pipeline
+from .payment_result_status import aggregate_payment_metadata, payment_result_metadata
 
 _VED_INTEL_SEM: Optional[asyncio.Semaphore] = None
 
@@ -52,9 +53,12 @@ def slim_ved_intel_for_persist(intel: Dict[str, Any]) -> Dict[str, Any]:
                     "effective_hs_code": b.get("effective_hs_code"),
                     "non_tariff_status": nt.get("status") if isinstance(nt, dict) else None,
                     "total_payable": bd.get("total_payable") if isinstance(bd, dict) else None,
+                    **payment_result_metadata(pay),
+                    "tariff_preference": pay.get("tariff_preference") if isinstance(pay, dict) else None,
                 }
             )
         out["copilot_batch_light"] = light
+        out.update(aggregate_payment_metadata(light))
     return out
 
 
