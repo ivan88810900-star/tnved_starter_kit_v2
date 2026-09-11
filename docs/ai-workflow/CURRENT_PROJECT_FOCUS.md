@@ -235,6 +235,16 @@ this does not update payment rates or enable enforcement.
 
 Current next tasks:
 
+Recovery checkpoint, 11 September 2026: `dc1cd389` is published in PR #187 with
+green CI `34589072638` / `34589067268`. The existing full-catalog dependency
+worklist and literal legal-clause backup have been restored with every saved
+file digest verified; do not rebuild them as a new implementation milestone.
+The full rates block remains incomplete. Before adding positive legal-review
+authorization, [DM-0014](../../.ai/decisions/DM-0014-ett-review-authority.md)
+requires Ivan to choose the human reviewer/approver authority and whether those
+actors must differ. This does not reopen Option A or block ordinary offline
+preparation on missing cloud procurement; no legal approval is inferred.
+
 - [ETT source-of-truth Decision Memo #188](https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/188): Option A accepted and [TASK-ETT-001 implemented](ETT_VERSIONED_CANDIDATES.md).
   Local candidate history and temporal previews are tested. Real official
   acquisition and reproducible row verification are implemented in

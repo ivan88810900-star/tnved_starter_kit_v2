@@ -219,6 +219,17 @@ legal/source completeness, retention и promotion остаются false.
 `ETT_REVIEW_PACKAGE_READINESS.md` в `docs/ai-workflow/`.
 Смысловая навигация ниже остаётся достигнутым baseline, а не текущим rollout.
 
+Recovery checkpoint 2026-09-11: PR #187 опубликован на `dc1cd389` поверх
+сохранённого `177da64`; CI #34589072638 и #34589067268 успешны. `main` остаётся
+`9712c7b`, PR #189 — отдельный Draft на `1be6da4`. Восстановлены, а не пересобраны,
+8 файлов полного dependency worklist (13 293 кода / 124 примечания) и 6 файлов
+legal-interpretation backup; все SHA совпали. Это не восстановление утраченных
+байтов более позднего manifest/review package 111C и не юридическое утверждение.
+[DM-0014](decisions/DM-0014-ett-review-authority.md) запрашивает выбор полномочий
+для положительного manifest-bound legal review и отдельного approval. Option A
+№188 остаётся принятым; отсутствие купленного облака не объявляется блокером
+offline-разработки. Полный блок ставок ещё не завершён, production не изменён.
+
 ### Intelligent TN VED structure — whole-catalog hardening
 
 **Цель:** Canonical-backed «Умный маршрут» должен сохранять каждый реальный
