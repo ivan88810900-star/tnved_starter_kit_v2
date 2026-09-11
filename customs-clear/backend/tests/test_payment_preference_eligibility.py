@@ -91,6 +91,10 @@ def test_legacy_country_discount_remains_undiscounted_estimate(payment_data, cou
     {"amounts_provisional": False, "status": "OK", "_tariff_preference_verified": True},
 ])
 def test_caller_claims_do_not_bypass_review(payment_data, claims):
+    if "as_of" in claims:
+        with pytest.raises(ValueError, match="as_of"):
+            engine.compute_payments(_payload(**claims))
+        return
     result = engine.compute_payments(_payload(**claims))
     assert result["status"] == "REVIEW_REQUIRED"
     assert result["tariff_preference"]["applied"] is False
@@ -176,7 +180,7 @@ def test_structured_duty_does_not_establish_missing_vat_rate(payment_data, monke
     lines = {line.code: line for line in quote.line_items}
     assert lines["duty"].status == "applied"
     assert lines["duty"].amount_rub == 10_000
-    assert lines["vat"].status == "unknown"
+    assert lines["vat"].status == "manual_review_required"
     assert lines["vat"].amount_rub is None
     assert quote.total_payable_rub is None
 
@@ -206,7 +210,9 @@ def test_geo_duty_and_explicit_vat_do_not_require_missing_rate_fallback(payment_
     lines = {line.code: line for line in quote.line_items}
     assert lines["duty"].status == "applied"
     assert lines["duty"].amount_rub == 35_000
-    assert lines["vat"].status == "manual_override"
+    # The explicit VAT percentage cannot determine a base with unknown excise/AD.
+    assert lines["vat"].status == "manual_review_required"
+    assert lines["vat"].amount_rub is None
 
 
 def test_known_zero_duty_is_distinct_from_missing_zero_fallback(payment_data):
@@ -284,22 +290,22 @@ def test_manual_duty_for_unknown_code_is_preserved_but_unknown_vat_is_blocked(pa
     lines = {line.code: line for line in quote.line_items}
     assert lines["duty"].status == "manual_override"
     assert lines["duty"].amount_rub == 5_000
-    assert lines["vat"].status == "unknown"
+    assert lines["vat"].status == "manual_review_required"
     assert lines["vat"].amount_rub is None
     assert quote.total_payable_rub is None
     assert quote.total_partial_rub == 6_000
 
 
-def test_manual_duty_and_vat_remain_explicit_overrides(payment_data, monkeypatch):
+def test_manual_vat_percentage_cannot_resolve_unknown_excise_and_antidumping_base(payment_data, monkeypatch):
     payment_data.duty_rule = None
     monkeypatch.setattr(engine, "find_rate_for_hs", lambda _: (None, 0))
     quote = quotes.build_payment_quote(_payload(country="CN", duty_rate=5, vat_rate=10))
     lines = {line.code: line for line in quote.line_items}
     assert lines["duty"].status == "manual_override"
     assert lines["duty"].amount_rub == 5_000
-    assert lines["vat"].status == "manual_override"
-    assert lines["vat"].amount_rub == 10_500
-    assert quote.total_partial_rub == 16_500
+    assert lines["vat"].status == "manual_review_required"
+    assert lines["vat"].amount_rub is None
+    assert quote.total_partial_rub == 6_000
     # Explicit duty/VAT do not resolve the other unknown charges for this code.
     assert quote.total_payable_rub is None
 

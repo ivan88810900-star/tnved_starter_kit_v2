@@ -1,22 +1,26 @@
 """Principle-based noise classifier for non_tariff_measures.
 
-Uses official EEC regulatory scopes (Решение №317 ветконтроль, №318
-фитоконтроль, №299 СГР, №30 лицензирование) to decide whether a
-(commodity_code, measure_type) pair is legitimate or noise.
+Uses legacy catalog heuristics based on EEC regulatory scopes (Решение №317
+ветконтроль, №318 фитоконтроль, №299 СГР, №30 лицензирование) to select
+crawler rows for retention or noise review; this is not a legal applicability
+resolver.
 
 The TKS crawler bulk-assigned all measure types to nearly every HS code.
-This classifier reverses that by keeping only measures whose HS chapter
-falls within the official regulatory scope.
+This classifier narrows those rows using the existing catalog heuristics.
+
+For ``tr_ts``, the legacy positive catalog is incomplete and cannot establish
+exclusion. Unknown TR scope is retained for review, never marked as proven noise
+or treated as a mandatory document. Import and presentation must also preserve
+``tr_ts_scope_requires_review``; ``False`` from this classifier is not proof of
+legal applicability.
 
 Почему доля noise высокая (issue #110, аудит #108)
 --------------------------------------------------
 Высокая доля noise по license (~93%) и sgr (~96%) — ожидаема и обоснована:
 краулер присвоил эти меры почти всем 10-значным кодам, а официальный scope
 (Решение Коллегии ЕЭК №30 разд. 2.10 — лицензирование; Решение ЕЭК №299 —
-СГР) распространяется лишь на узкие группы. Классификатор не теряет валидные
-меры: точность подтверждается контрольными кодами
-(``tests/test_ntm_noise_classifier.py::test_control_code_noise``, 12/12) и
-полной брокерской регрессией (``tests/test_ntm_pipeline.py``, 71/71).
+СГР) распространяется лишь на узкие группы. Исторические контрольные примеры
+не подтверждают полноту нормативного покрытия или применимость всех мер.
 
 ``fsetc`` из старого краулера помечается noise безусловно: эти строки были
 массово присвоены и не имеют доказуемой привязки. Официальный advisory-контур
@@ -76,11 +80,38 @@ def _code_matches_any_prefix(hs_code: str, prefixes: set[str]) -> bool:
     return False
 
 
+def tr_ts_scope_requires_review(commodity_code: str, measure_type: str) -> bool:
+    """Identify legacy TR rows whose scope the positive catalog cannot establish.
+
+    This is a technical coverage check, not a new legal rule or an exclusion
+    list. Existing catalog matches retain their prior handling. Caller-supplied
+    documentary wording cannot resolve a missing code/product scope.
+    """
+    if (measure_type or "").strip().lower() != "tr_ts":
+        return False
+    code = (commodity_code or "").strip()
+    return not (
+        _code_matches_any_prefix(code, _TR_TS_PREFIXES)
+        or code[:2] in _FOOD_CHAPTERS
+    )
+
+
+def tr_ts_review_metadata(commodity_code: str, measure_type: str) -> dict[str, object]:
+    if not tr_ts_scope_requires_review(commodity_code, measure_type):
+        return {}
+    return {
+        "applicability": "needs_clarification",
+        "requires_manual_review": True,
+        "used_for_missing_check": False,
+        "applicability_reason": "legacy_tr_ts_scope_not_established",
+    }
+
+
 def is_measure_noise(commodity_code: str, measure_type: str) -> bool:
     """Return True if (commodity_code, measure_type) is noise.
 
-    A measure is noise when the HS code falls outside the official
-    regulatory scope for that measure type.
+    False means retained, including unresolved scope; it does not establish
+    legal applicability or permit enforcement.
     """
     code = (commodity_code or "").strip()
     mtype = (measure_type or "").strip().lower()
@@ -114,12 +145,9 @@ def is_measure_noise(commodity_code: str, measure_type: str) -> bool:
         return True
 
     if mtype == "tr_ts":
-        if _code_matches_any_prefix(code, _TR_TS_PREFIXES):
-            return False
-        # TR TS 021/022 cover all food chapters
-        if ch2 in _FOOD_CHAPTERS:
-            return False
-        return True
+        # Missing positive coverage is not evidence of legal exclusion.
+        # Unknown rows are separately guarded by tr_ts_scope_requires_review.
+        return False
 
     if mtype == "marking":
         if ch2 in _FOOD_CHAPTERS:
@@ -140,7 +168,8 @@ def classify_measures(
 ) -> tuple[list[int], list[int]]:
     """Classify a batch of (id, commodity_code, measure_type) tuples.
 
-    Returns (noise_ids, legitimate_ids).
+    Returns (noise_ids, retained_ids). Retention includes unresolved TR rows
+    requiring review and must never be interpreted as legal applicability.
     """
     noise_ids: list[int] = []
     legit_ids: list[int] = []

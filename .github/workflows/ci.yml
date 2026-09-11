@@ -290,6 +290,31 @@ jobs:
           tests/test_payment_document_uncertainty.py
           tests/test_assistant_payment_review.py
           tests/test_payment_quote_explanation.py
+          tests/test_payment_special_duty_applicability.py
+          tests/test_trade_remedy_ingestion_hardening.py
+          tests/test_official_rate_validation.py
+          tests/test_vat_ingestion.py
+          tests/test_excise_ingestion.py
+          tests/test_anti_dumping_ingestion.py
+          tests/test_special_safeguard_ingestion.py
+          tests/test_countervailing_ingestion.py
+          tests/test_payment_engine.py
+          tests/test_special_duties.py
+          tests/test_ntm_noise_classifier.py
+          tests/test_ntm_unknown_tr_review.py
+          tests/test_ntm_v2_legacy_measures_import.py
+          tests/test_ntm_v2_legacy_measures_diagnostics.py
+          tests/test_analytics_api.py
+          tests/test_ntm_v2_layers.py::test_empty_layers_db_warning
+          tests/test_ntm_v2_pipeline_flag.py::test_empty_v2_falls_back_to_legacy_catalog
+          tests/test_permits_normalize_and_api.py
+          tests/test_permits_verify_jobs_ownership.py
+          tests/test_sensitive_endpoints_auth.py
+          tests/test_tnved_catalog_api.py::TnvedCatalogApiTests::test_detail_404
+          tests/test_tnved_catalog_api.py::TnvedCatalogApiTests::test_missing_exact_code_does_not_borrow_sibling_card
+          tests/test_tnved_catalog_api.py::TnvedCatalogApiTests::test_exact_rate_without_commodity_does_not_create_card
+          tests/test_tnved_catalog_api.py::TnvedCatalogApiTests::test_exact_card_keeps_rate_fallback_without_borrowing_identity
+          tests/test_tnved_catalog_api.py::TnvedCatalogApiTests::test_canonical_provider_failure_keeps_exact_database_card
           tests/test_trois_is_active.py
           tests/test_normative_requirements_block.py
           tests/test_sanctions_risk_block.py

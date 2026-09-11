@@ -21,6 +21,7 @@ from .sanctions_risk_block import build_sanctions_risk_block
 from .permits_service import check_permits
 from .regulatory_layer import get_regulatory_documents_for_hs
 from .tr_ts_catalog import TR_TS_FULL_NAMES, get_full_ntm_requirements
+from .ntm_noise_classifier import tr_ts_review_metadata
 
 
 # Человекочитаемое описание/основание для разрешений из чувствительных групп
@@ -47,6 +48,10 @@ def _build_broker_required_permits(
     rows: List[Dict[str, Any]] = [dict(r) for r in catalog_and_layer_rows]
     hc = (hs_code or "").strip().replace(" ", "")
     for m in trigger_measures:
+        if (tr_ts_review_metadata(hc, str(m.get("measure_type") or ""))
+                or tr_ts_review_metadata(str(m.get("commodity_code") or ""),
+                                         str(m.get("measure_type") or ""))):
+            continue
         pt = (m.get("permit_type") or "").strip()
         if not pt:
             continue
@@ -261,6 +266,7 @@ async def check_position_non_tariff(
     required_types: set[str] = set()
     tr_ts_list: set[str] = set()
     rule_sources: list[Dict[str, Union[str, int, bool, list]]] = []
+    unresolved_tr_advisory: list[Dict[str, Any]] = []
 
     seen_rules: set[str] = set()
     for r in rules:
@@ -306,10 +312,29 @@ async def check_position_non_tariff(
         legal_ref = (m.get("legal_ref") or "").strip()
         code = (m.get("commodity_code") or "").strip()
         source_level = m.get("source_level") or ""
+        review = (tr_ts_review_metadata(code, mtype)
+                  or tr_ts_review_metadata(hs_code, mtype))
 
         # Для trigger/ai_enriched permit_type должен задаваться источником.
         # Для БД-мер дополнительно пытаемся вычислить, если не пришел.
-        if not permit and source_level not in ("trigger", "ai_enriched"):
+        if review:
+            permit = ""
+            review_source = {
+                "ai_enriched": "ai_extracted",
+                "trigger": "legacy_description_trigger",
+            }.get(source_level, "legacy_non_tariff_measures")
+            unresolved_tr_advisory.append({
+                "permit_type": "",
+                "tr_ts": tr_ts_code or None,
+                "source": review_source,
+                "source_label": "Непроверенная запись нетарифных мер",
+                "hs_prefix": code,
+                "description": desc,
+                "legal_ref": legal_ref,
+                "reason": "Область применения технического регламента не установлена; необходима проверка товара и источника.",
+                **review,
+            })
+        elif not permit and source_level not in ("trigger", "ai_enriched"):
             permit = _measure_to_permit_type(mtype, f"{desc} {legal_ref}", hs_code=hs_code) or ""
 
         if permit:
@@ -343,6 +368,7 @@ async def check_position_non_tariff(
                 "legal_ref": legal_ref,
                 "source_level": m.get("source_level"),
                 "trigger": m.get("trigger"),
+                **review,
             }
         )
 
@@ -471,7 +497,7 @@ async def check_position_non_tariff(
         )
         official_advisory.extend(official_ntm_result["requirements"])
     advisory_requirements = merge_advisory_legacy_and_official(
-        legacy_advisory,
+        [*legacy_advisory, *unresolved_tr_advisory],
         official_advisory,
     )
 
@@ -553,6 +579,10 @@ async def check_position_non_tariff(
         status = "WARNING"
     else:
         status = "OK"
+    if status == "OK" and unresolved_tr_advisory:
+        # Retaining an unresolved row must not turn an empty-catalog WARNING
+        # into a green clearance result. It never creates a missing document.
+        status = "WARNING"
 
     transaction_risk_status = str(
         ((official_ntm_result or {}).get("catch_all") or {}).get("status") or ""

@@ -83,6 +83,9 @@ def _resolve_excise_status(
     if user_excise is not None:
         return "manual_override", float(amount) if amount is not None else float(user_excise), reason
 
+    if "excise_applicability_unverified" in (raw.get("payment_review_reasons") or []):
+        return "manual_review_required", None, reason or "Тип, значение или применимость ставки акциза требуют проверки."
+
     if excise_type in {"percent", "fixed"}:
         return "applied", float(amount or 0.0), reason
 
@@ -94,7 +97,7 @@ def _resolve_excise_status(
     if int(dq.get("match_length") or 0) == 0:
         return "unknown", None, "Применимость акциза не определена — нет данных по коду в локальной базе."
 
-    return "not_applicable", 0.0, reason or "Акциз не применяется."
+    return "manual_review_required", None, reason or "Тип или применимость ставки акциза требуют проверки."
 
 
 def _resolve_antidumping_line(
@@ -171,6 +174,16 @@ def _resolve_special_duty_line(
     amount = float(breakdown.get("special_duties_amount") or 0.0)
     details = list(raw.get("special_duties") or [])
     configured = _special_duties_configured_for_hs(hs_code)
+
+    if any(item.get("status") in {"needs_clarification", "provisional"} for item in details):
+        return PaymentQuoteLineItem(
+            code="special_duty",
+            label="Специальные / защитные / компенсационные пошлины",
+            amount_rub=None,
+            status="manual_review_required",
+            reason=str(raw.get("special_duties_warning") or "Применимость найденных торговых мер требует проверки."),
+            source="special_duties",
+        )
 
     if amount > 0 and details:
         acts = ", ".join({str(d.get("regulatory_act") or "").strip() for d in details if d.get("regulatory_act")})
@@ -359,6 +372,12 @@ def _build_assumptions(payload: dict[str, Any], raw: dict[str, Any]) -> list[Pay
                     label=label,
                     value=f"{float(breakdown[key]):,.2f} RUB".replace(",", " "),
                 ))
+        if any(item.get("status") in {"needs_clarification", "provisional"} for item in raw.get("special_duties") or []):
+            assumptions.append(PaymentQuoteAssumption(
+                key="provisional_special_duties_rub",
+                label="Рассчитанная часть торговых пошлин без непроверенных мер",
+                value=f"{float(breakdown.get('special_duties_amount') or 0):,.2f} RUB".replace(",", " "),
+            ))
     return assumptions
 
 
@@ -453,11 +472,20 @@ def build_payment_quote(payload: dict[str, Any]) -> PaymentQuoteResponse:
         duty_reason = _amount_review_reason(raw)
 
     duty_uncertain = duty_status in {"unknown", "manual_review_required"}
+    special_duty_uncertain = any(
+        item.get("status") in {"needs_clarification", "provisional"} for item in raw.get("special_duties") or []
+    )
+    excise_status, excise_amount, excise_reason = _resolve_excise_status(raw=raw, user_excise=user_excise)
+    antidumping_line = _resolve_antidumping_line(raw=raw)
+    uncertain_bases = {"manual_review_required", "unknown", "not_configured"}
+    vat_basis_uncertain = (duty_uncertain or special_duty_uncertain
+                           or excise_status in uncertain_bases
+                           or antidumping_line.status in uncertain_bases)
     vat_status: PaymentLineStatus = "manual_override" if payload.get("vat_rate") is not None else "applied"
     vat_reason = str(breakdown.get("vat_reason") or "")
-    if duty_uncertain:
+    if vat_basis_uncertain:
         vat_status = "manual_review_required"
-        vat_reason += " База НДС зависит от непроверенной пошлины."
+        vat_reason += " База НДС зависит от непроверенной пошлины или акциза."
         if amounts_provisional:
             vat_reason += " Предварительный расчёт приведён в допущениях."
     elif payload.get("vat_rate") is None and not (
@@ -466,8 +494,6 @@ def build_payment_quote(payload: dict[str, Any]) -> PaymentQuoteResponse:
         vat_status = "unknown"
         vat_reason = "Ставка НДС не найдена в локальной базе; сумма НДС не определена."
     vat_uncertain = vat_status in {"unknown", "manual_review_required"}
-
-    excise_status, excise_amount, excise_reason = _resolve_excise_status(raw=raw, user_excise=user_excise)
 
     line_items: list[PaymentQuoteLineItem] = [
         PaymentQuoteLineItem(
@@ -491,7 +517,7 @@ def build_payment_quote(payload: dict[str, Any]) -> PaymentQuoteResponse:
             source="hs_rates / vat_preferences (НК РФ)",
             rate_label=f"{breakdown.get('vat_rate')}%",
             basis_label="Стоимость + пошлина + акциз + торговые пошлины",
-            basis_amount_rub=None if duty_uncertain else float(breakdown.get("vat_base") or 0.0),
+            basis_amount_rub=None if vat_basis_uncertain else float(breakdown.get("vat_base") or 0.0),
         ),
         PaymentQuoteLineItem(
             code="customs_fee",
@@ -511,7 +537,7 @@ def build_payment_quote(payload: dict[str, Any]) -> PaymentQuoteResponse:
             reason=excise_reason,
             source="hs_rates (НК РФ ст. 193)",
         ),
-        _resolve_antidumping_line(raw=raw),
+        antidumping_line,
         _resolve_special_duty_line(raw=raw, country=country, hs_code=hs_code),
     ]
 

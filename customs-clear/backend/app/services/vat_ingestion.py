@@ -3,9 +3,9 @@
 from __future__ import annotations
 
 import hashlib
-import json
 import re
 from datetime import datetime, timezone
+from decimal import DecimalException
 from pathlib import Path
 from typing import Any
 
@@ -14,6 +14,7 @@ from ..models.core import HsRate, SourceStatus, SyncLog
 from ..schemas.vat_ingestion import VatIngestionResponse, VatProvenance, VatRowCounts
 from .normative_bundle import _normalize_rate_row
 from .normative_store import append_sync_log, upsert_source_status
+from .official_rate_validation import explicit_nonnegative_rate, load_official_rate_json, rate_value_diagnostic
 from .payment_data_coverage import run_payment_data_coverage_report
 from .payment_revision_utils import (
     is_import_duty_bundle_path,
@@ -42,19 +43,11 @@ _LOCAL_BUNDLE_CANDIDATES: tuple[str, ...] = (
 # Только VAT-поля hs_rates. source_revision/source_url — import-duty provenance, не трогаем.
 # duty_rate/hs_prefix — import-duty semantics, VAT slice не меняет.
 _VAT_APPLY_FIELDS = ("vat_import_rate", "vat_rule", "vat_rule_basis", "valid_from", "valid_to")
-_DEFAULT_VAT_IMPORT_RATE = 22.0
 
 
-def _vat_import_rate_value(row: dict[str, Any], *, default: float = _DEFAULT_VAT_IMPORT_RATE) -> float:
-    """Explicit 0/0.0/"0" — валидная ставка; fallback 22.0 только при missing/None/blank."""
-    if "vat_import_rate" not in row:
-        return default
-    raw = row["vat_import_rate"]
-    if raw is None:
-        return default
-    if isinstance(raw, str) and not raw.strip():
-        return default
-    return float(str(raw).replace(",", "."))
+def _vat_import_rate_value(row: dict[str, Any]) -> float:
+    """Only an explicit valid source value, including zero; never a default VAT."""
+    return explicit_nonnegative_rate(row.get("vat_import_rate"))
 
 
 def _utc_now_iso() -> str:
@@ -227,6 +220,20 @@ def _validate_official_vat_bundle_payload(
             "checksum_sha256": checksum,
         }
 
+    numeric_blockers = _vat_numeric_blockers(rates)
+    if numeric_blockers:
+        return {
+            "status": "parser_failed",
+            "reason": "invalid_vat_rate_value",
+            "error": "; ".join(numeric_blockers[:10]),
+            "invalid_rate_count": len(numeric_blockers),
+            "rate_diagnostics": numeric_blockers[:10],
+            "revision": revision,
+            "record_count": len(rates),
+            "rates_count": len(rates),
+            "checksum_sha256": checksum,
+        }
+
     return {
         "status": "parsed",
         "revision": revision,
@@ -246,13 +253,17 @@ def _load_bundle_payload(rel_path: str) -> tuple[dict[str, Any] | None, dict[str
             "error": f"file not found: {rel_path}",
             "record_count": 0,
         }
+    checksum: str | None = None
     try:
-        payload = json.loads(path.read_text(encoding="utf-8"))
-    except (json.JSONDecodeError, OSError) as exc:
-        return None, {"status": "parser_failed", "error": str(exc), "record_count": 0}
+        source_bytes = path.read_bytes()
+        checksum = hashlib.sha256(source_bytes).hexdigest()
+        payload = load_official_rate_json(source_bytes)
+    except (ValueError, DecimalException, RecursionError, OSError) as exc:
+        return None, {"status": "parser_failed", "reason": "invalid_bundle_json", "error": str(exc),
+                      "record_count": 0, "checksum_sha256": checksum}
     if not isinstance(payload, dict):
-        return None, {"status": "parser_failed", "error": "bundle must be JSON object", "record_count": 0}
-    checksum = _file_sha256_at(path)
+        return None, {"status": "parser_failed", "error": "bundle must be JSON object",
+                      "record_count": 0, "checksum_sha256": checksum}
     return payload, _validate_official_vat_bundle_payload(payload, rel_path=rel_path, checksum=checksum)
 
 
@@ -285,7 +296,7 @@ def discover_vat_bundle_path(*, rel_path: str | None = None) -> str | None:
 
 def _raw_row_has_vat_signal(raw: dict[str, Any]) -> bool:
     """Строка содержит явные VAT-поля (не только duty_rate)."""
-    if "vat_import_rate" in raw and raw.get("vat_import_rate") is not None:
+    if "vat_import_rate" in raw:
         return True
     rule = str(raw.get("vat_rule") or "").strip().lower()
     if rule and rule != "none":
@@ -293,6 +304,21 @@ def _raw_row_has_vat_signal(raw: dict[str, Any]) -> bool:
     if str(raw.get("vat_rule_basis") or "").strip():
         return True
     return False
+
+
+def _vat_numeric_blockers(rows: list[dict[str, Any]], *, start: int = 1) -> list[str]:
+    blockers: list[str] = []
+    for index, raw in enumerate(rows, start=start):
+        if not _raw_row_has_vat_signal(raw):
+            continue
+        try:
+            _vat_import_rate_value(raw)
+        except ValueError as exc:
+            blockers.append(
+                f"invalid_vat_rate: row={index} hs_code={rate_value_diagnostic(raw.get('hs_code'))} "
+                f"raw={rate_value_diagnostic(raw.get('vat_import_rate'))} reason={exc}"
+            )
+    return blockers
 
 
 def _extract_vat_rows(
@@ -311,15 +337,21 @@ def _extract_vat_rows(
         if container_err is not None:
             return revision, [], [f"parser_failed: {container_err}"]
 
-    for raw in rows_in or []:
+    for index, raw in enumerate(rows_in or [], start=1):
         if not isinstance(raw, dict):
             return revision, [], ["parser_failed: malformed_rate_row (rate row not an object)"]
         if not _raw_row_has_vat_signal(raw):
             continue
+        numeric_blockers = _vat_numeric_blockers([raw], start=index)
+        if numeric_blockers:
+            blockers.extend(numeric_blockers)
+            continue
+        explicit_rate = _vat_import_rate_value(raw)
         normalized = _normalize_rate_row(raw)
         if not normalized:
             blockers.append(f"invalid_rate_row: hs_code={raw.get('hs_code')!r}")
             continue
+        normalized["vat_import_rate"] = explicit_rate
         if not str(normalized.get("source_revision") or "").strip():
             normalized["source_revision"] = revision
         row_rev = str(normalized.get("source_revision") or "").strip().lower()
@@ -571,7 +603,7 @@ def _apply_vat_field(existing: HsRate, row: dict[str, Any], field: str) -> None:
         raw = row.get("vat_import_rate")
         if raw is None or (isinstance(raw, str) and not str(raw).strip()):
             return
-        existing.vat_import_rate = _vat_import_rate_value(row, default=float(existing.vat_import_rate or 0))
+        existing.vat_import_rate = _vat_import_rate_value(row)
         return
     if field in row and row[field] is not None:
         setattr(existing, field, row[field])
