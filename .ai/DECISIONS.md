@@ -22,7 +22,7 @@
 | DM-0011 | Структурированная применимость NTM и curated shadow enforcement | Accepted — implementation; activation deferred | Ivan | 2026-08-15 | [`decisions/DM-0011-structured-ntm-applicability-shadow-enforcement.md`](decisions/DM-0011-structured-ntm-applicability-shadow-enforcement.md) |
 | DM-0012 | Guided `2204`: retained «прочие» boundaries | Accepted — Option A | Ivan | 2026-08-18 | [`decisions/DM-0012-guided-2204-retained-other-boundaries.md`](decisions/DM-0012-guided-2204-retained-other-boundaries.md) |
 | DM-0013 | Automatic regulatory-source updates | Accepted | Ivan | 2026-08-23 | [`decisions/DM-0013-regulatory-source-automatic-updates.md`](decisions/DM-0013-regulatory-source-automatic-updates.md) |
-| DM-0014 | Authority for manifest-bound legal review | Proposed | Awaiting Ivan | 2026-09-11 | [`decisions/DM-0014-ett-review-authority.md`](decisions/DM-0014-ett-review-authority.md) |
+| DM-0014 | Authority for manifest-bound legal review | Proposed for future legal authorization; development continues | Ivan at authorization gate | 2026-09-11 | [`decisions/DM-0014-ett-review-authority.md`](decisions/DM-0014-ett-review-authority.md) |
 
 ---
 

@@ -244,6 +244,17 @@ authorization, [DM-0014](../../.ai/decisions/DM-0014-ett-review-authority.md)
 requires Ivan to choose the human reviewer/approver authority and whether those
 actors must differ. This does not reopen Option A or block ordinary offline
 preparation on missing cloud procurement; no legal approval is inferred.
+Ivan's subsequent instruction is to continue the implementation and use another
+agent for independent technical verification when useful. The previous complete
+task pause was premature. Continue fail-closed development and source work;
+DM-0014 remains a future human authorization policy, not a coding prerequisite.
+
+The lost later 111C bytes remain lost; a new replacement now has independently
+reproduced manifest/review hashes and a saved 113-object closure. Do not rebuild
+it again or confuse its four-code, one-day coverage with a full current ETT.
+See [reconstruction evidence](evidence/ett-111c-reconstruction-20260911.json).
+[Source-bound duty arithmetic](ETT_DUTY_PREVIEW.md) adds an isolated read-only
+monetary preview with explicit inputs and permanently provisional results.
 
 - [ETT source-of-truth Decision Memo #188](https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/188): Option A accepted and [TASK-ETT-001 implemented](ETT_VERSIONED_CANDIDATES.md).
   Local candidate history and temporal previews are tested. Real official

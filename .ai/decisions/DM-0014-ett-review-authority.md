@@ -1,9 +1,20 @@
 # DM-0014: Authority for manifest-bound legal review
 
-> **Status:** Proposed — requires Ivan's decision
+> **Status:** Proposed for future legal authorization — not a development hold
 > **Date:** 2026-09-11
 > **Owner:** Ivan
 > **Scope:** trusted human review and separate approval; no activation
+
+## Continuation clarification, 11 September 2026
+
+Ivan instructed the assistant to perform the remaining work and offered another
+agent if needed. Technical implementation, source verification and independent
+AI review continue autonomously. The earlier whole-task pause was premature:
+this memo does not block offline candidates, arithmetic, tests, evidence recovery
+or other fail-closed implementation already authorized by Option A. AI review is
+not recorded as human legal approval, and no reviewer grant or activation is
+inferred from that instruction. Resolve the human authority policy when a
+concrete positive legal-authorization operation is actually ready for approval.
 
 ## Context
 
@@ -34,6 +45,14 @@ amendments, VAT/excise/trade-defence/origin coverage and retention remain separa
 unfinished gates. The exact later 111C candidate/review-package bytes that failed
 to upload in the prior session are still not recovered; their recorded hashes
 alone cannot be reviewed or accepted as substitute inputs.
+
+Continuation: a replacement was subsequently constructed from the retained
+proposal and original objects and saved with new identities: manifest
+`55d25bcc4a3436e2629136a9bcbf31ed11d1318c7343e02501612992bb9b1045`,
+review package
+`d6c83c3ed61ac85863108cd543ea0de5ce25344357c83b525eff522e44357720`.
+This does not recover the old failed-upload hashes or approve the proposal.
+See [reconstruction evidence](../../docs/ai-workflow/evidence/ett-111c-reconstruction-20260911.json).
 
 The accepted architecture requires a trusted human decision bound to an exact
 manifest and separate approval before application. It does not define who has

@@ -6,8 +6,10 @@ import argparse
 from datetime import date
 from decimal import Decimal
 import json
+import os
 from pathlib import Path
 import sqlite3
+import stat
 import sys
 from urllib.parse import quote
 
@@ -23,7 +25,7 @@ from app.services.ett_repository import candidate_readiness, load_candidate, sem
 from app.services.ett_resolver import resolve_rate
 
 
-def read_json(path: Path):
+def read_json(path: Path, maximum: int = 64 * 1024 * 1024):
     def unique_pairs(pairs):
         result = {}
         for key, value in pairs:
@@ -35,9 +37,18 @@ def read_json(path: Path):
     def invalid_constant(value):
         raise ValueError("Non-finite JSON number")
 
-    with path.open("rb") as source:
-        raw = source.read(64 * 1024 * 1024 + 1)
-    if len(raw) > 64 * 1024 * 1024:
+    descriptor = os.open(path, os.O_RDONLY | os.O_NONBLOCK | os.O_CLOEXEC)
+    try:
+        metadata = os.fstat(descriptor)
+        if not stat.S_ISREG(metadata.st_mode) or not 0 < metadata.st_size <= maximum:
+            raise ValueError("ETT input requires a bounded regular file")
+        with os.fdopen(descriptor, "rb") as source:
+            descriptor = None
+            raw = source.read(maximum + 1)
+    finally:
+        if descriptor is not None:
+            os.close(descriptor)
+    if not 0 < len(raw) <= maximum:
         raise ValueError("ETT input exceeds the size limit")
     return json.loads(raw, object_pairs_hook=unique_pairs, parse_constant=invalid_constant)
 
@@ -70,12 +81,16 @@ def main(argv=None) -> int:
     verify_evidence.add_argument("manifest", type=Path)
     verify_evidence.add_argument("--store-root", required=True, type=Path)
     preview = commands.add_parser("preview")
-    preview.add_argument("digest")
-    preview.add_argument("--code", required=True)
-    preview.add_argument("--as-of", required=True, type=date.fromisoformat)
-    preview.add_argument("--destination", required=True, choices=["AM", "BY", "KZ", "KG", "RU"])
-    preview.add_argument("--facts", type=Path)
-    for command in (stage, preview):
+    preview_duty = commands.add_parser("preview-duty", help="Replay candidate quotes and calculate provisional unrounded duty; no final payment or approval")
+    preview_duty.add_argument("--calculation-inputs", required=True, type=Path,
+                              help="Explicit currency, customs value, total duty-unit quantity and optional dated currency factor")
+    for command in (preview, preview_duty):
+        command.add_argument("digest")
+        command.add_argument("--code", required=True)
+        command.add_argument("--as-of", required=True, type=date.fromisoformat)
+        command.add_argument("--destination", required=True, choices=["AM", "BY", "KZ", "KG", "RU"])
+        command.add_argument("--facts", type=Path)
+    for command in (stage, preview, preview_duty):
         command.add_argument("--database", required=True, type=Path, help="Explicit migrated local SQLite candidate database")
         command.add_argument("--store-root", required=True, type=Path)
     args = parser.parse_args(argv)
@@ -119,7 +134,16 @@ def main(argv=None) -> int:
                         result = stage_candidate(db, store, validate_manifest(read_json(args.manifest)))
                     else:
                         manifest = load_candidate(db, store, args.digest)
-                        result = resolve_rate(manifest, args.code, args.as_of, args.destination, read_json(args.facts) if args.facts else None)
+                        facts = read_json(args.facts) if args.facts else None
+                        if args.command == "preview-duty":
+                            from app.services.ett_candidate_duty_preview import preview_candidate_duty
+                            result = preview_candidate_duty(
+                                manifest, store, code=args.code, as_of=args.as_of,
+                                destination=args.destination, facts=facts,
+                                calculation_inputs=read_json(args.calculation_inputs, 1024 * 1024),
+                            )
+                        else:
+                            result = resolve_rate(manifest, args.code, args.as_of, args.destination, facts)
             finally:
                 engine.dispose()
         print(json.dumps(jsonable_encoder(result, custom_encoder={Decimal: str}), ensure_ascii=False, allow_nan=False))
@@ -127,6 +151,8 @@ def main(argv=None) -> int:
             return 2
         if args.command == "verify-evidence" and not result["source_evidence_verified"]:
             return 2
+        if args.command == "preview-duty" and result["status"] != "calculated":
+            return 3
         return 0
     except Exception as exc:
         # Structured failure, no secret-bearing source payload or database path.
