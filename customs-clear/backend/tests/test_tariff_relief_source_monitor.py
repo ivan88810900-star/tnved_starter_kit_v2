@@ -18,20 +18,31 @@ from app.services.regulatory_source_updates import (
 from scripts import monitor_official_ntm_sources as monitor
 
 
-OBSERVATION_PATH = Path(__file__).resolve().parents[1] / "data" / "ett_tariff_relief_source_observations.json"
-OBSERVATIONS = json.loads(OBSERVATION_PATH.read_text(encoding="utf-8"))
+DATA_ROOT = Path(__file__).resolve().parents[1] / "data"
+LEGACY_OBSERVATION_PATH = DATA_ROOT / "ett_tariff_relief_source_observations.json"
+COUNCIL_OBSERVATION_PATH = DATA_ROOT / "ett_tariff_relief_council_source_observations.json"
+OBSERVATION_PATHS = (LEGACY_OBSERVATION_PATH, COUNCIL_OBSERVATION_PATH)
+OBSERVATION_MANIFESTS = tuple(json.loads(path.read_text(encoding="utf-8")) for path in OBSERVATION_PATHS)
+OBSERVED_SOURCES = tuple(row for manifest in OBSERVATION_MANIFESTS for row in manifest["sources"])
+OBSERVED_ON_BY_SOURCE = {
+    row["source_id"]: manifest["observed_on"]
+    for manifest in OBSERVATION_MANIFESTS
+    for row in manifest["sources"]
+}
 
 
 def test_captured_pdf_observations_match_registered_monitor_targets_without_approval():
     entries = {entry.source_id: entry for entry in TARIFF_RELIEF_SOURCE_REGISTRY}
-    observations = {row["source_id"]: row for row in OBSERVATIONS["sources"]}
+    observations = {row["source_id"]: row for row in OBSERVED_SOURCES}
     assert set(entries) == set(observations)
-    assert len(entries) == OBSERVATIONS["source_count"] == 9
-    assert OBSERVATIONS["capture_report_sha256"] == "afc55fd41c2bea027e2cb8c39d9c26ca90b7ad8731dfb8876a995d36232db396"
-    assert OBSERVATIONS["is_accepted_monitor_baseline"] is False
-    assert OBSERVATIONS["is_legal_approval"] is False
-    assert OBSERVATIONS["can_promote"] is False
-    assert OBSERVATIONS["active_rates_written"] is False
+    assert len(OBSERVATION_MANIFESTS) == 2
+    assert sum(manifest["source_count"] for manifest in OBSERVATION_MANIFESTS) == len(entries) == 12
+    assert all(manifest["source_count"] == len(manifest["sources"]) for manifest in OBSERVATION_MANIFESTS)
+    for manifest in OBSERVATION_MANIFESTS:
+        assert manifest["is_accepted_monitor_baseline"] is False
+        assert manifest["is_legal_approval"] is False
+        assert manifest["can_promote"] is False
+        assert manifest["active_rates_written"] is False
     for source_id, entry in entries.items():
         observed = observations[source_id]
         assert entry.monitor_urls == (observed["requested_url"],)
@@ -40,7 +51,7 @@ def test_captured_pdf_observations_match_registered_monitor_targets_without_appr
         assert len(observed["sha256"]) == len(observed["parent_sha256"]) == 64
         assert len(bytes.fromhex(observed["sha256"])) == 32
         assert observed["size_bytes"] > 0
-        assert observed["retrieved_at"].startswith("2026-09-10")
+        assert observed["retrieved_at"].startswith(OBSERVED_ON_BY_SOURCE[source_id])
         assert entry.manual_review_default is True
         assert entry.refresh_cadence == "daily"
         assert entry.max_age_hours == 48
@@ -50,6 +61,26 @@ def test_captured_pdf_observations_match_registered_monitor_targets_without_appr
         assert entry.source_status_code is None
         assert monitor.SOURCES[source_id] == observed["requested_url"]
         assert monitor.SOURCE_MODES[source_id] == "legal_drift"
+
+
+def test_observation_manifests_keep_distinct_capture_provenance():
+    legacy, supplement = OBSERVATION_MANIFESTS
+    assert hashlib.sha256(LEGACY_OBSERVATION_PATH.read_bytes()).hexdigest() == (
+        "6972606d59d94aedec7e4b22d8cd39c11ad5b3da80a0e63bba9335faeb003b1d"
+    )
+    assert legacy["source_count"] == 9
+    assert legacy["capture_report_sha256"] == "afc55fd41c2bea027e2cb8c39d9c26ca90b7ad8731dfb8876a995d36232db396"
+    assert supplement["source_count"] == 3
+    assert supplement["capture_report_sha256"] == "5100837b60cf40857ab88da2fcf94f150cb5232c531365ea435f1d8c034746d3"
+    assert supplement["capture_report_attempted_sources"] == 16
+    assert supplement["capture_report_unique_eligible_pdf_targets"] == 11
+    assert "does not represent Decision 72 as part of that capture" in supplement["scope"]
+    assert "eec_tariff_relief_council72_2026" not in {
+        row["source_id"] for row in supplement["sources"]
+    }
+    for row in supplement["sources"]:
+        assert monitor.SOURCES[f'{row["source_id"]}__landing'] == row["parent_requested_url"]
+        assert monitor.SOURCE_MODES[f'{row["source_id"]}__landing'] == "legal_drift"
 
 
 def test_every_relief_source_uses_existing_daily_monitor_without_an_apply_adapter():
@@ -67,7 +98,7 @@ def test_every_relief_source_uses_existing_daily_monitor_without_an_apply_adapte
         assert plan[entry.source_id]["changes_enforcement_automatically"] is False
 
 
-@pytest.mark.parametrize("observed", OBSERVATIONS["sources"], ids=lambda row: row["source_id"])
+@pytest.mark.parametrize("observed", OBSERVED_SOURCES, ids=lambda row: row["source_id"])
 @pytest.mark.parametrize("existing", [False, True], ids=["first-observation", "changed-bytes"])
 def test_relief_first_or_changed_pdf_stays_pending_without_advancing_baseline(monkeypatch, observed, existing):
     source_id = observed["source_id"]

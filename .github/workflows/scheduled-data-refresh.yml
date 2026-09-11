@@ -272,7 +272,11 @@ jobs:
             --store-root "$RUNNER_TEMP/ett-tariff-relief-store" \
             --output ett-tariff-relief-report.json \
             --observed-baseline data/ett_tariff_relief_source_observations.json \
-            --detail-url https://docs.eaeunion.org/documents/461/10843/
+            --observed-baseline data/ett_tariff_relief_council_source_observations.json \
+            --detail-url https://docs.eaeunion.org/documents/461/10843/ \
+            --detail-url https://docs.eaeunion.org/documents/461/10846/ \
+            --detail-url https://docs.eaeunion.org/documents/461/10848/ \
+            --detail-url https://docs.eaeunion.org/documents/461/10854/
 
       - name: Retain original tariff relief and GSP capture objects
         id: tariff_relief_objects

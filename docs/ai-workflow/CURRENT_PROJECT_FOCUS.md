@@ -6,7 +6,7 @@ Active
 
 ## Last updated
 
-2026-09-10
+2026-09-11
 
 ## Strategic direction
 
@@ -51,18 +51,18 @@ ingestion.
   correctness. No production/application DB was mutated.
 - Advisory requirements UI/API foundation
 - Official SGR contour: importer, diagnostics, seed dataset, validator
-- Automatic source lifecycle (DM-0013): 45/45 registry entries have an explicit
-  policy; this is policy coverage, not proof that all 45 sources are refreshed
+- Automatic source lifecycle (DM-0013): 48/48 registry entries have an explicit
+  policy; this is policy coverage, not proof that all 48 sources are refreshed
   automatically or legally current. Seven trusted structured sources update daily/weekly through strict,
   table-scoped adapters and atomic full-snapshot replacement where applicable;
   OFAC and EU feeds run validation-only and cannot mutate blocking tables;
-  the expanded official monitor currently covers exactly 62 URLs: 24 direct
-  PDF/machine-readable artifacts have revision-digest coverage, 30 legal HTML
+  the expanded official monitor currently covers exactly 68 URLs: 27 direct
+  PDF/machine-readable artifacts have revision-digest coverage, 33 legal HTML
   pages are explicit revision gaps checked for availability/identity only, and
   eight additional landing URLs are availability-only. HTML gaps are reported
   without masquerading as revision coverage or making the operational workflow
   permanently fail, while the notifier keeps them visible in an issue; covered
-  artifact failures remain fail-closed. Of the 24 covered artifacts, 15 legal
+  artifact failures remain fail-closed. Of the 27 covered artifacts, 18 legal
   PDFs require digest-bound review; nine structured artifacts advance technical
   freshness automatically after validation. Five curated layers
   raise a monthly review, four commercial mirrors remain disabled and one AI layer
@@ -157,6 +157,17 @@ ingestion.
   `evidence/mvp-acceptance-20260721.json`.
 
 ## Current top priority
+
+Recovery on 2026-09-11 verified `main=9712c7b`, PR #187 base `a5a811e` and
+published head `a5c884d3`. The already-successful Council capture commit
+`177da64` was found on an ops branch and reused, without reimplementation or a
+merge commit. Its capture run `34584814626` and CI `34584814418` are green.
+The retained listing and all 18 source objects were restored and replayed
+offline; all seven pages of Council 75/77/80 of 9 July 2026 were visually read.
+These conditional relief sources do not constitute a full legal tariff snapshot.
+See [recovery evidence](evidence/ett-council-originals-20260911.json) and
+[relief source monitoring](TARIFF_RELIEF_SOURCE_MONITOR.md).
+PR #189 remains a separate, inactive draft; nothing from that pilot is included.
 
 **CustomsClear MVP application workstream** — deliver integrated product slices in this order:
 

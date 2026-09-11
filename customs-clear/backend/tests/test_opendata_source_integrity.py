@@ -552,17 +552,17 @@ def test_monitor_configuration_has_explicit_current_coverage_counts() -> None:
         )
         for source_id, url in monitor.SOURCES.items()
     ]
-    # Nine relief/GSP PDFs and three distinct parent pages join the monitor.
-    assert len(configured) == 62
+    # Twelve relief/GSP PDFs and six distinct parent pages join the monitor.
+    assert len(configured) == 68
     assert sum(mode == "availability" for mode, _kind in configured) == 8
     assert sum(
         mode != "availability" and kind != "html_or_document"
         for mode, kind in configured
-    ) == 24
+    ) == 27
     assert sum(
         mode == "legal_drift" and kind == "html_or_document"
         for mode, kind in configured
-    ) == 30
+    ) == 33
 
 
 def _html_response(url: str, body: bytes) -> httpx.Response:

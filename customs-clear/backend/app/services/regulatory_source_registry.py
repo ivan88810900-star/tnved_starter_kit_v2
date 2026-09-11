@@ -62,9 +62,10 @@ class RegulatorySourceEntry:
     manual_review_default: bool = False
 
 
-# Exact PDFs captured on 2026-09-10. Their byte observations live in
-# data/ett_tariff_relief_source_observations.json and are NOT accepted monitor
-# baselines. Local metadata is intentionally not listed as a legal document.
+# Exact PDFs captured on 2026-09-10 and 2026-09-11. Their byte observations
+# live in the tariff-relief observation manifests under data/ and are NOT
+# accepted monitor baselines. Local metadata is intentionally not listed as a
+# legal document.
 TARIFF_RELIEF_SOURCE_REGISTRY: tuple[RegulatorySourceEntry, ...] = (
     RegulatorySourceEntry(
         source_id='eec_tariff_relief_130',
@@ -215,6 +216,57 @@ TARIFF_RELIEF_SOURCE_REGISTRY: tuple[RegulatorySourceEntry, ...] = (
         manual_review_default=True,
         known_gaps=(
             'Обе страницы оригинала подтверждают 30.01.2026; иной заголовок №130 сохранён как редакционное расхождение. Полная применимость льготы не подтверждена.',
+            "Отслеживается наблюдаемый PDF; замена ссылки на странице требует отдельного захвата и проверки.",
+            "Мониторинг не обновляет тарифные ставки, страновые коэффициенты или обязательные меры.",
+        ),
+    ),
+    RegulatorySourceEntry(
+        source_id='eec_tariff_relief_council75_2026',
+        title='Наблюдаемая публикация решения Совета №75/2026',
+        authority_level="official_reference",
+        official_url='https://docs.eaeunion.org/documents/461/10846/',
+        description='Индивидуальный PDF, непосредственно связанный с карточкой 461/10846 правового портала.',
+        monitor_urls=('https://docs.eaeunion.org/upload/iblock/d3e/9lg968qn50bptr5cyr3yfazjc9qagqbo/Reshenie-Soveta-_-75-ot-9-iyulya-2026-g.pdf',),
+        sync_script="monitor_official_ntm_sources.py",
+        refresh_cadence="daily",
+        max_age_hours=48,
+        manual_review_default=True,
+        known_gaps=(
+            'Оригинал наблюдается как поправка к Решению КТС №130; товарный охват, условия льготы и момент применения не верифицированы.',
+            "Отслеживается наблюдаемый PDF; замена ссылки на странице требует отдельного захвата и проверки.",
+            "Мониторинг не обновляет тарифные ставки, страновые коэффициенты или обязательные меры.",
+        ),
+    ),
+    RegulatorySourceEntry(
+        source_id='eec_tariff_relief_council77_2026',
+        title='Наблюдаемая публикация решения Совета №77/2026',
+        authority_level="official_reference",
+        official_url='https://docs.eaeunion.org/documents/461/10848/',
+        description='Индивидуальный PDF, непосредственно связанный с карточкой 461/10848 правового портала.',
+        monitor_urls=('https://docs.eaeunion.org/upload/iblock/e55/zu15kv2j4zgiyjdxlpqgobqgspjrbazy/Reshenie-Soveta-_-77-ot-9-iyulya-2026-g.pdf',),
+        sync_script="monitor_official_ntm_sources.py",
+        refresh_cadence="daily",
+        max_age_hours=48,
+        manual_review_default=True,
+        known_gaps=(
+            'Оригинал наблюдается как поправка к Решению КТС №130; товарный охват, условия льготы и момент применения не верифицированы.',
+            "Отслеживается наблюдаемый PDF; замена ссылки на странице требует отдельного захвата и проверки.",
+            "Мониторинг не обновляет тарифные ставки, страновые коэффициенты или обязательные меры.",
+        ),
+    ),
+    RegulatorySourceEntry(
+        source_id='eec_tariff_relief_council80_2026',
+        title='Наблюдаемая публикация решения Совета №80/2026',
+        authority_level="official_reference",
+        official_url='https://docs.eaeunion.org/documents/461/10854/',
+        description='Индивидуальный PDF, непосредственно связанный с карточкой 461/10854 правового портала.',
+        monitor_urls=('https://docs.eaeunion.org/upload/iblock/1cd/eomzmq4w7qi56jj1hkdyagwds9x22q0f/Reshenie-Soveta-_-80-ot-9-iyulya-2026-g.pdf',),
+        sync_script="monitor_official_ntm_sources.py",
+        refresh_cadence="daily",
+        max_age_hours=48,
+        manual_review_default=True,
+        known_gaps=(
+            'Оригинал наблюдается как поправка к порядку по Решению КТС №728; условия освобождения и момент применения не верифицированы.',
             "Отслеживается наблюдаемый PDF; замена ссылки на странице требует отдельного захвата и проверки.",
             "Мониторинг не обновляет тарифные ставки, страновые коэффициенты или обязательные меры.",
         ),

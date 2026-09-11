@@ -1,0 +1,56 @@
+{
+  "schema_version": 1,
+  "observation_kind": "retrieved_tariff_relief_gsp_artifacts",
+  "observed_on": "2026-09-11",
+  "capture_report_sha256": "5100837b60cf40857ab88da2fcf94f150cb5232c531365ea435f1d8c034746d3",
+  "capture_complete": true,
+  "capture_report_attempted_sources": 16,
+  "capture_report_unique_eligible_pdf_targets": 11,
+  "source_count": 3,
+  "is_accepted_monitor_baseline": false,
+  "is_legal_approval": false,
+  "can_promote": false,
+  "active_rates_written": false,
+  "scope": "Three exact Council PDFs (75/77/80) selected from a complete 2026-09-11 capture of 16 sources and 11 unique PDFs. This supplement does not represent Decision 72 as part of that capture; the unchanged nine-source observation file supplies its separate pin. Hashes do not approve a baseline or legal interpretation.",
+  "sources": [
+    {
+      "requested_url": "https://docs.eaeunion.org/upload/iblock/d3e/9lg968qn50bptr5cyr3yfazjc9qagqbo/Reshenie-Soveta-_-75-ot-9-iyulya-2026-g.pdf",
+      "response_url": "https://docs.eaeunion.org/upload/iblock/d3e/9lg968qn50bptr5cyr3yfazjc9qagqbo/Reshenie-Soveta-_-75-ot-9-iyulya-2026-g.pdf",
+      "sha256": "e45b887e9fdb5dd08da38443b104abfd9676adb16364428a25f16aa329cbd1d8",
+      "size_bytes": 400111,
+      "media_type": "application/pdf",
+      "retrieved_at": "2026-09-11T09:35:03.601258+00:00",
+      "source_id": "eec_tariff_relief_council75_2026",
+      "parent_requested_url": "https://docs.eaeunion.org/documents/461/10846/",
+      "parent_sha256": "d631c8f7937ad816a5f22262bc9fb248f63e8cadc9dc955912048e1f53b28fd8",
+      "parent_size_bytes": 52061,
+      "parent_retrieved_at": "2026-09-11T09:34:36.468315+00:00"
+    },
+    {
+      "requested_url": "https://docs.eaeunion.org/upload/iblock/e55/zu15kv2j4zgiyjdxlpqgobqgspjrbazy/Reshenie-Soveta-_-77-ot-9-iyulya-2026-g.pdf",
+      "response_url": "https://docs.eaeunion.org/upload/iblock/e55/zu15kv2j4zgiyjdxlpqgobqgspjrbazy/Reshenie-Soveta-_-77-ot-9-iyulya-2026-g.pdf",
+      "sha256": "a5954811f605fa486a7dbf65e113521c197eb3791fff6056ece94b5282af5db6",
+      "size_bytes": 521434,
+      "media_type": "application/pdf",
+      "retrieved_at": "2026-09-11T09:35:01.622216+00:00",
+      "source_id": "eec_tariff_relief_council77_2026",
+      "parent_requested_url": "https://docs.eaeunion.org/documents/461/10848/",
+      "parent_sha256": "ce74bfc0c7f91438102f7be8185618cb9b578af889a4c96ec41af1da7f5d32ca",
+      "parent_size_bytes": 52620,
+      "parent_retrieved_at": "2026-09-11T09:34:35.310867+00:00"
+    },
+    {
+      "requested_url": "https://docs.eaeunion.org/upload/iblock/1cd/eomzmq4w7qi56jj1hkdyagwds9x22q0f/Reshenie-Soveta-_-80-ot-9-iyulya-2026-g.pdf",
+      "response_url": "https://docs.eaeunion.org/upload/iblock/1cd/eomzmq4w7qi56jj1hkdyagwds9x22q0f/Reshenie-Soveta-_-80-ot-9-iyulya-2026-g.pdf",
+      "sha256": "a71f9f0513bee3906b5f3a78508f95cfd5899e6fd6196765a08386dfbe957af8",
+      "size_bytes": 356481,
+      "media_type": "application/pdf",
+      "retrieved_at": "2026-09-11T09:34:59.128942+00:00",
+      "source_id": "eec_tariff_relief_council80_2026",
+      "parent_requested_url": "https://docs.eaeunion.org/documents/461/10854/",
+      "parent_sha256": "cc2f82abec5520ba48e4cd3442bfe0cb54bac514359faa6eaf742178a2a56685",
+      "parent_size_bytes": 52057,
+      "parent_retrieved_at": "2026-09-11T09:34:33.959130+00:00"
+    }
+  ]
+}

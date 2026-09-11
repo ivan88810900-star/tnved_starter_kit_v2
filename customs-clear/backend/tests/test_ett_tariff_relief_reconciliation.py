@@ -10,7 +10,8 @@ import pytest
 
 from app.services.ett_artifacts import LocalArtifactStore
 from app.services.ett_tariff_relief_capture import (
-    LANDING_SOURCES, capture_tariff_relief, load_observed_baseline, reconcile_tariff_relief,
+    LANDING_SOURCES, ReliefCaptureError, capture_tariff_relief, load_observed_baseline,
+    load_observed_baselines, reconcile_tariff_relief,
 )
 from app.services.ett_transport import OfficialResponse
 from scripts.capture_ett_tariff_relief import main
@@ -19,6 +20,12 @@ OLD_URL = "https://eec.eaeunion.org/upload/old.pdf"
 NEW_URL = "https://eec.eaeunion.org/upload/current.pdf"
 PDF = b"%PDF-1.7\nSYNTHETIC\n%%EOF\n"
 INSTANT = datetime(2026, 9, 10, tzinfo=timezone.utc)
+DETAIL_URLS = (
+    "https://docs.eaeunion.org/documents/461/10843/",
+    "https://docs.eaeunion.org/documents/461/10846/",
+    "https://docs.eaeunion.org/documents/461/10848/",
+    "https://docs.eaeunion.org/documents/461/10854/",
+)
 
 
 def fetcher(urls=(OLD_URL,), pdf=PDF, page_note="", calls=None):
@@ -49,6 +56,14 @@ def baseline_for(report):
                        "capture_complete": True, "source_count": len(rows), "sources": rows,
                        "is_accepted_monitor_baseline": False, "is_legal_approval": False,
                        "can_promote": False, "active_rates_written": False}).encode()
+
+
+def split_baseline(raw):
+    baseline = json.loads(raw)
+    return tuple(
+        json.dumps({**baseline, "source_count": 1, "sources": [source]}).encode()
+        for source in baseline["sources"]
+    )
 
 
 def capture(tmp_path, name="store", **kwargs):
@@ -109,6 +124,9 @@ def test_first_capture_and_unchanged_observation_are_both_unapproved(tmp_path):
     unchanged = reconcile_tariff_relief(current, store, observed_baseline=baseline_for(current))
     assert unchanged["status"] == "observed_baseline_unreviewed"
     assert unchanged["operational_ok"] is True
+    assert unchanged["observed_baseline_count"] == 1
+    assert unchanged["observed_baseline_sha256"] == hashlib.sha256(baseline_for(current)).hexdigest()
+    assert unchanged["observed_baseline_sha256s"] == [unchanged["observed_baseline_sha256"]]
     for result in (first, unchanged):
         assert result["source_graph_verified"] is True
         assert result["review_required"] is True
@@ -174,6 +192,28 @@ def test_duplicate_json_keys_are_not_accepted_as_observation_pins():
         load_observed_baseline(b'{"schema_version":1,"schema_version":1}')
 
 
+def test_multiple_observation_manifests_are_combined_without_synthetic_baseline_identity(tmp_path):
+    store, current = capture(tmp_path, urls=(OLD_URL, NEW_URL))
+    baselines = split_baseline(baseline_for(current))
+    assert len(load_observed_baselines(baselines)) == 2
+    result = reconcile_tariff_relief(current, store, observed_baseline=baselines)
+    assert result["status"] == "observed_baseline_unreviewed"
+    assert result["operational_ok"] is True
+    assert result["observed_baseline_count"] == 2
+    assert result["observed_baseline_sha256"] is None
+    assert result["observed_baseline_sha256s"] == [hashlib.sha256(raw).hexdigest() for raw in baselines]
+
+
+def test_duplicate_sources_across_observation_manifests_are_rejected(tmp_path):
+    store, current = capture(tmp_path)
+    baseline = baseline_for(current)
+    with pytest.raises(ReliefCaptureError):
+        load_observed_baselines((baseline, baseline))
+    result = reconcile_tariff_relief(current, store, observed_baseline=(baseline, baseline))
+    assert result["status"] == "evidence_invalid"
+    assert result["source_graph_verified"] is False
+
+
 def test_failed_current_acquisition_is_not_a_false_missing_link_finding(tmp_path):
     store, current = capture(tmp_path)
     baseline = baseline_for(current)
@@ -217,6 +257,40 @@ def test_cli_stable_unapproved_observations_are_operationally_healthy_without_ac
     assert reconciliation["active_rates_written"] is False
 
 
+def test_cli_combines_repeatable_observation_files_without_modifying_them(tmp_path):
+    _, old = capture(tmp_path, "old", urls=(OLD_URL, NEW_URL))
+    pins = split_baseline(baseline_for(old))
+    paths = []
+    for index, pinned in enumerate(pins):
+        path = tmp_path / f"observed-{index}.json"
+        path.write_bytes(pinned)
+        paths.append(path)
+    output = tmp_path / "report.json"
+    result = main([
+        "--store-root", str(tmp_path / "current"), "--output", str(output),
+        "--observed-baseline", str(paths[0]), "--observed-baseline", str(paths[1]),
+    ], fetch=fetcher(urls=(OLD_URL, NEW_URL)))
+    assert result == 0
+    assert tuple(path.read_bytes() for path in paths) == pins
+    reconciliation = json.loads(output.read_text())["reconciliation"]
+    assert reconciliation["operational_ok"] is True
+    assert reconciliation["observed_baseline_count"] == 2
+    assert reconciliation["observed_baseline_sha256"] is None
+    assert reconciliation["observed_baseline_sha256s"] == [hashlib.sha256(raw).hexdigest() for raw in pins]
+
+
+def test_cli_rejects_overlapping_observation_files_before_network(tmp_path):
+    _, old = capture(tmp_path, "old")
+    observed = tmp_path / "observed.json"
+    observed.write_bytes(baseline_for(old))
+    assert main([
+        "--store-root", str(tmp_path / "current"),
+        "--output", str(tmp_path / "report.json"),
+        "--observed-baseline", str(observed),
+        "--observed-baseline", str(observed),
+    ], fetch=lambda *args, **kwargs: pytest.fail("must not fetch")) == 2
+
+
 @pytest.mark.parametrize("kind", ["fifo", "symlink", "directory", "invalid", "missing"])
 def test_cli_rejects_unsafe_baseline_before_network_or_blocking_open(tmp_path, kind):
     path = tmp_path / "observed"
@@ -243,8 +317,12 @@ def test_daily_workflow_reconciles_dynamic_links_retains_originals_and_cannot_ac
     assert monitor["permissions"] == {"contents": "read", "issues": "read"}
     by_id = {step.get("id"): step for step in monitor["steps"]}
     capture_step = by_id["tariff_relief_capture"]
+    assert capture_step["run"].count("--observed-baseline ") == 2
+    assert capture_step["run"].count("--detail-url ") == len(DETAIL_URLS)
     assert "--observed-baseline data/ett_tariff_relief_source_observations.json" in capture_step["run"]
-    assert "--detail-url https://docs.eaeunion.org/documents/461/10843/" in capture_step["run"]
+    assert "--observed-baseline data/ett_tariff_relief_council_source_observations.json" in capture_step["run"]
+    for detail_url in DETAIL_URLS:
+        assert f"--detail-url {detail_url}" in capture_step["run"]
     assert "--accept" not in capture_step["run"]
     assert "secrets." not in json.dumps(capture_step)
     assert capture_step["env"]["CUSTOMSCLEAR_READ_ONLY"] == "1"

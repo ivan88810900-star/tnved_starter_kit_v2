@@ -32,6 +32,7 @@ MAX_TOTAL_BYTES = 256 * 1024 * 1024
 MAX_REPORT_BYTES = 8 * 1024 * 1024
 MAX_SECONDS = 900
 MAX_OBSERVED_BASELINE_BYTES = 1024 * 1024
+MAX_OBSERVED_BASELINES = 8
 
 
 class ReliefCaptureError(ValueError):
@@ -313,6 +314,29 @@ def load_observed_baseline(raw: bytes) -> dict:
     return baseline
 
 
+def load_observed_baselines(raws: tuple[bytes, ...]) -> tuple[dict, ...]:
+    """Validate a bounded, non-overlapping set of observation manifests."""
+    _check(type(raws) is tuple and 0 < len(raws) <= MAX_OBSERVED_BASELINES)
+    baselines = tuple(load_observed_baseline(raw) for raw in raws)
+    _check(sum(baseline["source_count"] for baseline in baselines) <= MAX_PDFS)
+    seen_urls, seen_ids = set(), set()
+    for baseline in baselines:
+        for source in baseline["sources"]:
+            _check(source["source_id"] not in seen_ids and source["requested_url"] not in seen_urls)
+            seen_ids.add(source["source_id"])
+            seen_urls.add(source["requested_url"])
+    return baselines
+
+
+def _observed_baseline_raws(observed_baseline: bytes | tuple[bytes, ...] | None) -> tuple[bytes, ...]:
+    if observed_baseline is None:
+        return ()
+    if type(observed_baseline) is bytes:
+        return (observed_baseline,)
+    _check(type(observed_baseline) is tuple)
+    return observed_baseline
+
+
 def _replay_current_capture(report: dict, store: LocalArtifactStore) -> dict[str, dict]:
     """Recompute the complete current HTML→PDF graph from original objects.
 
@@ -381,7 +405,12 @@ def _replay_current_capture(report: dict, store: LocalArtifactStore) -> dict[str
     return result
 
 
-def reconcile_tariff_relief(report: dict, store: LocalArtifactStore, *, observed_baseline: bytes | None = None) -> dict:
+def reconcile_tariff_relief(
+    report: dict,
+    store: LocalArtifactStore,
+    *,
+    observed_baseline: bytes | tuple[bytes, ...] | None = None,
+) -> dict:
     """Detect live link replacement and same-URL byte changes without approval.
 
     Unchanged observation pins still require the separate review process. This
@@ -395,18 +424,28 @@ def reconcile_tariff_relief(report: dict, store: LocalArtifactStore, *, observed
               "source_graph_verified": False, "historical_originals_replayed": False,
               "legal_ready": False, "can_promote": False, "active_rates_written": False,
               "added_pdf_urls": [], "missing_pdf_urls": [], "changed_pdfs": [],
-              "observed_baseline_sha256": hashlib.sha256(observed_baseline).hexdigest() if type(observed_baseline) is bytes else None}
+              "observed_baseline_count": 0, "observed_baseline_sha256": None,
+              "observed_baseline_sha256s": []}
     try:
-        baseline = load_observed_baseline(observed_baseline) if observed_baseline is not None else None
+        baseline_raws = _observed_baseline_raws(observed_baseline)
+        baselines = load_observed_baselines(baseline_raws) if baseline_raws else ()
+        baseline_sha256s = [hashlib.sha256(raw).hexdigest() for raw in baseline_raws]
+        result.update(observed_baseline_count=len(baseline_raws),
+                      observed_baseline_sha256=baseline_sha256s[0] if len(baseline_sha256s) == 1 else None,
+                      observed_baseline_sha256s=baseline_sha256s)
         if type(report) is not dict or report.get("capture_complete") is not True:
             result.update(status="capture_incomplete", reason="complete_current_capture_required")
             return result
         current = _replay_current_capture(report, store)
         result["source_graph_verified"] = True
-        if baseline is None:
+        if not baselines:
             result.update(status="baseline_missing", reason="first_observation_requires_review")
             return result
-        previous = {row["requested_url"]: row for row in baseline["sources"]}
+        previous = {
+            row["requested_url"]: row
+            for baseline in baselines
+            for row in baseline["sources"]
+        }
         result["added_pdf_urls"] = sorted(current.keys() - previous.keys())
         result["missing_pdf_urls"] = sorted(previous.keys() - current.keys())
         for url in sorted(current.keys() & previous.keys()):

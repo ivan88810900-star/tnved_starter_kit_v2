@@ -16,6 +16,12 @@ from scripts.capture_ett_tariff_relief import main
 
 PDF_URL = "https://eec.eaeunion.org/upload/medialibrary/example.pdf"
 DETAIL = "https://docs.eaeunion.org/documents/461/10843/"
+CAPTURE_DETAIL_URLS = (
+    DETAIL,
+    "https://docs.eaeunion.org/documents/461/10846/",
+    "https://docs.eaeunion.org/documents/461/10848/",
+    "https://docs.eaeunion.org/documents/461/10854/",
+)
 PDF = b"%PDF-1.7\nSYNTHETIC TEST ORIGINAL\n%%EOF\n"
 
 
@@ -285,6 +291,10 @@ def test_workflow_is_read_only_branch_limited_and_pinned():
     assert workflow["permissions"] == {"contents": "read"}
     job = workflow["jobs"]["relief-capture"]
     assert job["if"] == "github.ref == 'refs/heads/ops/ett-tariff-relief-capture'"
+    capture_step = next(step for step in job["steps"] if step["name"].startswith("Capture observed"))
+    assert capture_step["run"].count("--detail-url ") == len(CAPTURE_DETAIL_URLS)
+    for detail_url in CAPTURE_DETAIL_URLS:
+        assert f"--detail-url {detail_url}" in capture_step["run"]
     for step in job["steps"]:
         if "uses" in step:
             assert len(step["uses"].split("@")[-1]) == 40

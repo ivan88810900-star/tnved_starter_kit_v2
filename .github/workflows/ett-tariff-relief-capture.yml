@@ -49,7 +49,10 @@ jobs:
         run: |
           python scripts/capture_ett_tariff_relief.py \
             --store-root "$ETT_RELIEF_ROOT/store" --output "$ETT_RELIEF_ROOT/report.json" \
-            --detail-url https://docs.eaeunion.org/documents/461/10843/
+            --detail-url https://docs.eaeunion.org/documents/461/10843/ \
+            --detail-url https://docs.eaeunion.org/documents/461/10846/ \
+            --detail-url https://docs.eaeunion.org/documents/461/10848/ \
+            --detail-url https://docs.eaeunion.org/documents/461/10854/
       - name: Package original source objects
         if: ${{ always() && steps.prepare.outcome == 'success' }}
         run: tar -C "$ETT_RELIEF_ROOT" -czf "$ETT_RELIEF_ROOT/objects.tar.gz" store
