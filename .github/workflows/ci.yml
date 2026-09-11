@@ -271,6 +271,7 @@ jobs:
           tests/test_sgr_state_source_hardening.py
           tests/test_legacy_automation_guards.py
           tests/test_official_source_monitor.py
+          tests/test_official_source_original_capture.py
           tests/test_regulatory_source_completeness.py
           tests/test_data_refresh.py
           tests/test_build_full_staging_snapshot.py

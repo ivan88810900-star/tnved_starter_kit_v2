@@ -256,6 +256,14 @@ See [reconstruction evidence](evidence/ett-111c-reconstruction-20260911.json).
 [Source-bound duty arithmetic](ETT_DUTY_PREVIEW.md) adds an isolated read-only
 monetary preview with explicit inputs and permanently provisional results.
 
+`819226f1` also closes concrete invalid-number, unresolved trade-remedy and
+unknown-TR promotion defects; both CI runs are green and the expanded backend
+profile passed 4,403 tests. See [corrective evidence](RATE_SOURCE_FAIL_CLOSED_CORRECTIONS.md).
+The next source task is retaining originals outside the already completed ETT
+and relief captures. [Optional original-body capture](OFFICIAL_SOURCE_ORIGINAL_CAPTURE.md)
+keeps raw-response hashes separate from monitor revision identities, with a
+bounded three-source isolated acquisition workflow and no acceptance arguments.
+
 - [ETT source-of-truth Decision Memo #188](https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/188): Option A accepted and [TASK-ETT-001 implemented](ETT_VERSIONED_CANDIDATES.md).
   Local candidate history and temporal previews are tested. Real official
   acquisition and reproducible row verification are implemented in

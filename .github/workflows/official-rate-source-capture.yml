@@ -1,0 +1,108 @@
+name: Official rate source originals for review
+
+on:
+  push:
+    branches: [ops/official-rate-source-capture]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: official-rate-source-capture-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  capture:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      CUSTOMSCLEAR_READ_ONLY: "1"
+      SCHEDULER_ENABLED: "0"
+      REGULATORY_SYNC_SCHEDULER_ENABLED: "0"
+    defaults:
+      run:
+        working-directory: customs-clear/backend
+        shell: bash
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Prepare private source directory
+        id: prepare
+        run: |
+          umask 077
+          RATE_CAPTURE_ROOT="$RUNNER_TEMP/official-rate-originals"
+          mkdir -m 700 "$RATE_CAPTURE_ROOT" "$RATE_CAPTURE_ROOT/store"
+          printf 'RATE_CAPTURE_ROOT=%s\n' "$RATE_CAPTURE_ROOT" >> "$GITHUB_ENV"
+          printf 'DATABASE_URL=sqlite:///%s/official-capture-must-not-exist.db\n' "$RUNNER_TEMP" >> "$GITHUB_ENV"
+      - name: Set up Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: customs-clear/backend/requirements.txt
+      - name: Install source capture dependencies
+        run: python -m pip install --disable-pip-version-check -r requirements.txt
+      - name: Capture selected original source bodies without accepting changes
+        id: acquire
+        run: |
+          umask 077
+          python scripts/monitor_official_ntm_sources.py \
+            --capture-originals --store-root "$RATE_CAPTURE_ROOT/store" \
+            --timeout 45 \
+            --source-id trade_remedies_official \
+            --source-id rf_excise_tax_code \
+            --source-id eec_odata_vat_preferences \
+            --state "$RATE_CAPTURE_ROOT/observed-state.json" \
+            --output "$RATE_CAPTURE_ROOT/report.json" \
+            > "$RATE_CAPTURE_ROOT/stdout.json"
+      - name: Record execution boundary and package retained originals
+        if: ${{ always() && steps.prepare.outcome == 'success' }}
+        env:
+          CAPTURE_OUTCOME: ${{ steps.acquire.outcome }}
+          EVIDENCE_COMMIT: ${{ github.sha }}
+          EVIDENCE_RUN_ID: ${{ github.run_id }}
+        run: |
+          umask 077
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          root = Path(os.environ["RATE_CAPTURE_ROOT"])
+          sentinel = Path(os.environ["RUNNER_TEMP"]) / "official-capture-must-not-exist.db"
+          report = {
+              "schema_version": 1,
+              "kind": "selected_official_rate_original_capture_execution",
+              "commit_sha": os.environ["EVIDENCE_COMMIT"],
+              "run_id": os.environ["EVIDENCE_RUN_ID"],
+              "capture_outcome": os.environ["CAPTURE_OUTCOME"],
+              "selected_monitor_ids": ["trade_remedies_official", "rf_excise_tax_code", "eec_odata_vat_preferences"],
+              "application_database_created": sentinel.exists(),
+              "legal_inventory_complete": False,
+              "legal_approval": False,
+              "active_rates_written": False,
+              "production_ready": False,
+              "can_promote": False,
+              "durable_legal_retention_attested": False,
+              "retention_kind": "temporary_github_actions_artifact",
+              "retention_days_requested": 90,
+          }
+          (root / "workflow-status.json").write_text(json.dumps(report, indent=2) + "\n")
+          if sentinel.exists():
+              raise SystemExit("Source-only capture unexpectedly created a database")
+          PY
+          tar -C "$RATE_CAPTURE_ROOT" -czf "$RATE_CAPTURE_ROOT/objects.tar.gz" store
+      - name: Upload temporary source evidence
+        if: ${{ always() && steps.prepare.outcome == 'success' }}
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        with:
+          name: official-rate-originals-${{ github.run_id }}
+          path: |
+            ${{ runner.temp }}/official-rate-originals/report.json
+            ${{ runner.temp }}/official-rate-originals/observed-state.json
+            ${{ runner.temp }}/official-rate-originals/workflow-status.json
+            ${{ runner.temp }}/official-rate-originals/objects.tar.gz
+          if-no-files-found: error
+          retention-days: 90

@@ -44,6 +44,8 @@ from app.services.regulatory_source_registry import (  # noqa: E402
     SOURCE_OF_TRUTH_LEVELS,
 )
 from app.services.regulatory_source_updates import UPDATE_POLICIES  # noqa: E402
+from app.services.ett_artifacts import LocalArtifactStore  # noqa: E402
+from app.services.regulatory_source_capture import capture_original, url_identity  # noqa: E402
 
 SOURCES = {
     "eec_decision30_unified_list": DECISION_30_UNIFIED_LIST_URL,
@@ -352,6 +354,7 @@ def _get_with_verified_redirects(
     if not _redirect_target_allowed(url, url):
         raise RuntimeError(f"untrusted monitor source URL: {url!r}")
     current_url = url
+    redirect_chain = [url]
     for redirect_count in range(6):
         if not _redirect_target_allowed(url, current_url):
             raise RuntimeError("unexpected_redirect_target")
@@ -365,8 +368,14 @@ def _get_with_verified_redirects(
                 else:
                     response.raise_for_status()
                     body = read_httpx_body(response, max_bytes=64 * 1024**2)
-                return httpx.Response(response.status_code, content=body,
-                                      headers=response.headers, request=response.request)
+                return httpx.Response(
+                    response.status_code, content=body,
+                    headers=response.headers, request=response.request,
+                    extensions={
+                        "official_redirect_chain": tuple(redirect_chain),
+                        "official_retrieved_at": datetime.now(timezone.utc),
+                    },
+                )
             location = str(response.headers.get("location") or "").strip()
             if not location:
                 raise RuntimeError("official source redirect is missing Location")
@@ -376,6 +385,7 @@ def _get_with_verified_redirects(
             if not _redirect_target_allowed(url, next_url) or _is_ofac_govcloud_artifact_url(current_url):
                 raise RuntimeError("unexpected_redirect_target")
             current_url = next_url
+            redirect_chain.append(next_url)
     raise RuntimeError("official source redirect limit exceeded")
 
 
@@ -814,13 +824,29 @@ def _load_state(path: Path | None) -> dict[str, Any]:
     )
 
 
+def _selected_sources(source_ids: list[str] | tuple[str, ...] | None) -> dict[str, str]:
+    if source_ids is None:
+        return dict(SOURCES)
+    if (
+        not isinstance(source_ids, (list, tuple))
+        or not source_ids
+        or any(not isinstance(key, str) or not key or key not in SOURCES for key in source_ids)
+    ):
+        raise ValueError("source_ids must be a nonempty list of existing monitor source IDs")
+    selected = set(source_ids)
+    return {key: url for key, url in SOURCES.items() if key in selected}
+
+
 def monitor_sources(
     timeout: float = 15.0,
     *,
     previous_state: dict[str, Any] | None = None,
     accept_changes: bool = False,
     approval_ref: str = "",
+    original_store: LocalArtifactStore | None = None,
+    source_ids: list[str] | tuple[str, ...] | None = None,
 ) -> dict[str, Any]:
+    selected_sources = _selected_sources(source_ids)
     if accept_changes and not approval_ref.strip():
         raise ValueError("approval_ref is required when accepting a source baseline")
     rows: list[dict[str, Any]] = []
@@ -832,6 +858,7 @@ def monitor_sources(
     headers = {"User-Agent": "Tariff-regulatory-source-monitor/2.0"}
     next_sources = dict(previous_sources)
     response_cache: dict[tuple[str, str, str], Any] = {}
+    original_captures: dict[tuple[str, str, str], dict] = {}
     cached_bytes = 0
     with httpx.Client(
         follow_redirects=False,
@@ -840,7 +867,7 @@ def monitor_sources(
         trust_env=False,
         verify=True,
     ) as client:
-        for source_id, url in SOURCES.items():
+        for source_id, url in selected_sources.items():
             previous = previous_sources.get(source_id) or {}
             monitor_mode = SOURCE_MODES.get(source_id, "legal_drift")
             request_headers: dict[str, str] = {}
@@ -849,9 +876,9 @@ def monitor_sources(
             # Reusing the approved ETag here could yield 304 and accidentally
             # hide the pending review from the run report.
             has_pending_review = bool(previous.get("pending_sha256"))
-            if previous.get("etag") and not has_pending_review:
+            if previous.get("etag") and not has_pending_review and original_store is None:
                 request_headers["If-None-Match"] = str(previous["etag"])
-            if previous.get("last_modified") and not has_pending_review:
+            if previous.get("last_modified") and not has_pending_review and original_store is None:
                 request_headers["If-Modified-Since"] = str(previous["last_modified"])
             try:
                 cache_key = (
@@ -948,6 +975,36 @@ def monitor_sources(
                     content_type=content_type,
                     body=body,
                 )
+                original_capture = None
+                if original_store is not None and ok:
+                    try:
+                        original_capture = original_captures.get(cache_key)
+                        if original_capture is None:
+                            # Registry entries can share a request. Keep every
+                            # source identity on one immutable observation.
+                            capture_source_ids = {
+                                key for key, target in SOURCES.items() if target == url
+                            }
+                            capture_source_ids.update(
+                                entry.source_id
+                                for entry in REGULATORY_SOURCE_REGISTRY
+                                if entry.authority_level in SOURCE_OF_TRUTH_LEVELS
+                                and url in {
+                                    _secure_monitor_url(target)
+                                    for target in (entry.official_url, *entry.monitor_urls)
+                                    if target
+                                }
+                            )
+                            original_capture = capture_original(
+                                original_store, body=body, source_ids=sorted(capture_source_ids),
+                                requested_url=url, final_url=final_url,
+                                redirect_chain=list(response.extensions["official_redirect_chain"]),
+                                retrieved_at=response.extensions["official_retrieved_at"],
+                                status_code=response.status_code, content_type=content_type,
+                            )
+                            original_captures[cache_key] = original_capture
+                    except Exception:
+                        raise RuntimeError("original_capture_failed") from None
                 (
                     revision_body,
                     artifact_identity_verified,
@@ -1064,6 +1121,8 @@ def monitor_sources(
                     ),
                     "baseline_advanced": baseline_advanced,
                 }
+                if original_store is not None:
+                    row["original_capture"] = original_capture
                 rows.append(row)
                 if ok and baseline_advanced:
                     next_sources[source_id] = {
@@ -1083,6 +1142,8 @@ def monitor_sources(
                         )
                     }
                     next_sources[source_id]["monitor_mode"] = monitor_mode
+                    if original_capture is not None:
+                        next_sources[source_id]["original_capture"] = original_capture
                     if monitor_mode == "legal_drift" and approval_authorized:
                         next_sources[source_id]["approved_at"] = datetime.now(timezone.utc).isoformat()
                         next_sources[source_id]["approval_ref"] = approval_ref.strip()
@@ -1099,6 +1160,8 @@ def monitor_sources(
                             "pending_final_url": final_url,
                         }
                     )
+                    if original_capture is not None:
+                        pending["pending_original_capture"] = original_capture
                     next_sources[source_id] = pending
             except Exception as exc:
                 rows.append(
@@ -1127,10 +1190,13 @@ def monitor_sources(
                                 "unexpected_response_url",
                                 "official source redirect is missing Location",
                                 "official source redirect limit exceeded",
+                                "original_capture_failed",
                             }
                             else "source_fetch_failed"
                         ),
-                        "error": str(exc),
+                        # A transport exception can contain signed redirect
+                        # URLs. Optional capture reports never copy that text.
+                        "error": type(exc).__name__ if original_store is not None else str(exc),
                     }
                 )
     changed_ids = [row["source_id"] for row in rows if row.get("changed")]
@@ -1171,8 +1237,21 @@ def monitor_sources(
         for row in rows
         if row.get("requires_approval") and row.get("approval_allowed") is not True
     ]
-    return {
+    selected_coverage_complete = (
+        bool(revision_candidate_rows)
+        and not revision_gap_rows
+        and len(revision_rows) == len(revision_candidate_rows)
+    )
+    report = {
         "checked_at": datetime.now(timezone.utc).isoformat(),
+        "monitor_scope": "selected_sources" if source_ids is not None else "all_registered_monitor_sources",
+        "selected_source_ids": list(selected_sources),
+        "selected_source_count": len(selected_sources),
+        "registered_monitor_source_count": len(SOURCES),
+        "full_registry_checked": source_ids is None,
+        "selected_revision_coverage_complete": selected_coverage_complete,
+        # Availability and the operational gate refer to the explicit scope
+        # above. Selecting sources never establishes full-registry coverage.
         "all_available": all(row.get("ok") is True for row in rows),
         "had_previous_baseline": has_previous_baseline,
         "changed_source_ids": changed_ids,
@@ -1194,9 +1273,7 @@ def monitor_sources(
         "availability_only_source_count": (
             len(explicit_availability_rows) + len(revision_gap_rows)
         ),
-        "revision_coverage_complete": bool(revision_candidate_rows)
-        and not revision_gap_rows
-        and len(revision_rows) == len(revision_candidate_rows),
+        "revision_coverage_complete": source_ids is None and selected_coverage_complete,
         # Availability-only sources are reported as coverage gaps but cannot
         # make the operational gate impossible.  The covered subset remains
         # fail-closed; ``all([])`` is intentional for an availability-only
@@ -1215,6 +1292,47 @@ def monitor_sources(
             "sources": next_sources,
         },
     }
+    if original_store is not None:
+        report["original_capture_requested"] = True
+        report["original_capture_complete"] = bool(rows) and all(
+            row.get("ok") is True and row.get("original_capture") is not None
+            for row in rows
+        )
+        report["original_capture_count"] = len(original_captures)
+        # Keep signed transport URLs out of both reports and persisted state.
+        # Exact URL hashes remain bound in the original receipt.
+        def safe_url(value):
+            try:
+                return url_identity(value)["url"]
+            except ValueError:
+                return "redacted_invalid_source_url"
+
+        def safe_urls(value):
+            if isinstance(value, dict):
+                return {
+                    key: (
+                        safe_url(item)
+                        if key in {"url", "final_url", "pending_final_url"}
+                        and isinstance(item, str)
+                        else safe_urls(item)
+                    )
+                    for key, item in value.items()
+                }
+            if isinstance(value, list):
+                return [safe_urls(item) for item in value]
+            return value
+        state = report.pop("next_state")
+        report = safe_urls(report)
+        # Unselected or failed source baselines are caller-owned historical
+        # data and must remain unchanged, including their existing metadata.
+        state["sources"] = {
+            key: safe_urls(value)
+            if key in selected_sources and value is not previous_sources.get(key)
+            else value
+            for key, value in state["sources"].items()
+        }
+        report["next_state"] = state
+    return report
 
 
 def main() -> int:
@@ -1229,15 +1347,26 @@ def main() -> int:
     )
     parser.add_argument("--accept-changes", action="store_true", help="Advance legal baselines after explicit review")
     parser.add_argument("--approval-ref", default="", help="Required issue/PR/reference for --accept-changes")
+    parser.add_argument("--capture-originals", action="store_true", help="Retain original response bytes and receipts; no legal approval")
+    parser.add_argument("--store-root", type=Path, help="Private local CAS directory; requires --capture-originals")
+    parser.add_argument("--source-id", action="append", help="Select an exact monitor source ID; repeat for multiple sources")
     args = parser.parse_args()
-    previous_state = _load_state(args.state)
     if args.accept_changes and not args.approval_ref.strip():
         parser.error("--approval-ref is required with --accept-changes")
+    if args.capture_originals != (args.store_root is not None):
+        parser.error("--capture-originals and --store-root must be supplied together")
+    try:
+        _selected_sources(args.source_id)
+    except ValueError as exc:
+        parser.error(str(exc))
+    previous_state = _load_state(args.state)
     report = monitor_sources(
         args.timeout,
         previous_state=previous_state,
         accept_changes=args.accept_changes,
         approval_ref=args.approval_ref,
+        original_store=LocalArtifactStore(args.store_root) if args.capture_originals else None,
+        source_ids=args.source_id,
     )
     next_state = report.pop("next_state")
     text = json.dumps(report, ensure_ascii=False, indent=2)
@@ -1257,6 +1386,8 @@ def main() -> int:
         and report["revision_monitor_gate_ok"]
         and not report["review_required"]
     )
+    if args.capture_originals and not report["original_capture_complete"]:
+        return 1
     return 0 if gate_ok or not args.strict else 1
 
 

@@ -116,5 +116,12 @@ approval remain unfinished. The DB-derived ETT stays quarantined.
 These sets overlap and must not be added into a claimed total. The CI selection
 now includes the changed source, payment, TR, routing and identity contracts.
 An initial local integrated run ended without a pytest summary at 64%; it is
-not recorded as successful. A final completed CI run must identify the exact
-published commit before claiming the integrated gate is green.
+not recorded as successful and its cause is unknown. A subsequent run with
+JUnit and process-completion evidence finished successfully: **4,403 passed,
+2 skipped, 2 warnings, 73 subtests passed**, zero failures/errors and exit 0.
+The skipped tests require live FSA or the separate full integration dataset.
+
+Published correction commit: `819226f181b9624822216cc04298b06b520750d6`.
+Both [PR CI](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/34598161580)
+and [push CI](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/34598153219)
+completed successfully. No merge or deployment followed those checks.
