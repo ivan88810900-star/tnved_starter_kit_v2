@@ -52,7 +52,10 @@ jobs:
             --capture-originals --store-root "$RATE_CAPTURE_ROOT/store" \
             --timeout 45 \
             --source-id trade_remedies_official \
-            --source-id rf_excise_tax_code \
+            --source-id trade_remedies_official__artifact_2 \
+            --source-id trade_remedies_official__artifact_3 \
+            --source-id trade_remedies_official__artifact_4 \
+            --source-id rf_vat_tax_code \
             --source-id eec_odata_vat_preferences \
             --state "$RATE_CAPTURE_ROOT/observed-state.json" \
             --output "$RATE_CAPTURE_ROOT/report.json" \
@@ -78,7 +81,11 @@ jobs:
               "commit_sha": os.environ["EVIDENCE_COMMIT"],
               "run_id": os.environ["EVIDENCE_RUN_ID"],
               "capture_outcome": os.environ["CAPTURE_OUTCOME"],
-              "selected_monitor_ids": ["trade_remedies_official", "rf_excise_tax_code", "eec_odata_vat_preferences"],
+              "selected_monitor_ids": [
+                  "trade_remedies_official", "trade_remedies_official__artifact_2",
+                  "trade_remedies_official__artifact_3", "trade_remedies_official__artifact_4",
+                  "rf_vat_tax_code", "eec_odata_vat_preferences",
+              ],
               "application_database_created": sentinel.exists(),
               "legal_inventory_complete": False,
               "legal_approval": False,

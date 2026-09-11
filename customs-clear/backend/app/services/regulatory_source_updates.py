@@ -235,6 +235,7 @@ _MONITOR_ONLY = {
     "trade_remedies_special_safeguard_official",
     "trade_remedies_countervailing_official",
     "rf_excise_tax_code",
+    "rf_vat_tax_code",
     "eec_odata_vat_preferences",
 }
 _LOCAL_RECONCILE = {

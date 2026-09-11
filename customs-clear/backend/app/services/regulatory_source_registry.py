@@ -704,7 +704,13 @@ REGULATORY_SOURCE_REGISTRY: tuple[RegulatorySourceEntry, ...] = (
         source_id="trade_remedies_official",
         title="Официальный контур антидемпинговых мер ЕЭК",
         authority_level="official_binding",
-        official_url="https://eec.eaeunion.org/comission/department/deptexsec/trade_remedies/",
+        official_url="https://eec.eaeunion.org/comission/department/podm/",
+        monitor_urls=(
+            "https://eec.eaeunion.org/comission/department/podm/",
+            "https://docs.eaeunion.org/documents/?filter_departament%5B%5D=14",
+            "https://remedies.eaeunion.org/dimd/ru",
+            "https://docs.eaeunion.org/upload/iblock/072/gnl5h50x3mzkg7zd1b0d593t4mtizhg1/Reshenie-Kollegii-_-121-ot-8-sentbrya-2026-g.pdf",
+        ),
         description="Official anti-dumping measures contour (special_duties + EEC_ANTI_DUMPING).",
         local_paths=("data/raw_normative/eec_anti_dumping.json",),
         db_probe="special_duties_anti_dumping",
@@ -713,6 +719,8 @@ REGULATORY_SOURCE_REGISTRY: tuple[RegulatorySourceEntry, ...] = (
         known_gaps=(
             "MVP: локальный canonical bundle; полный перечень мер — отдельный data curation.",
             "geo_special_duties и hs_rates antidumping_* не считаются official proof.",
+            "Новые URL обнаружены через официальную навигацию ЕЭК 11.09.2026; индекс содержит решения и расследования, не только действующие ставки.",
+            "Решение Коллегии №121 от 08.09.2026 — отдельный оригинал для review; публикация 10.09.2026 не означает автоматического применения.",
         ),
         manual_review_default=True,
     ),
@@ -720,7 +728,7 @@ REGULATORY_SOURCE_REGISTRY: tuple[RegulatorySourceEntry, ...] = (
         source_id="trade_remedies_special_safeguard_official",
         title="Официальный контур специальных защитных мер ЕЭК",
         authority_level="official_binding",
-        official_url="https://eec.eaeunion.org/comission/department/deptexsec/trade_remedies/",
+        official_url="https://eec.eaeunion.org/comission/department/podm/",
         description=(
             "Official special-safeguard measures contour "
             "(special_duties + EEC_SPECIAL_SAFEGUARD)."
@@ -739,7 +747,7 @@ REGULATORY_SOURCE_REGISTRY: tuple[RegulatorySourceEntry, ...] = (
         source_id="trade_remedies_countervailing_official",
         title="Официальный контур компенсационных мер ЕЭК",
         authority_level="official_binding",
-        official_url="https://eec.eaeunion.org/comission/department/deptexsec/trade_remedies/",
+        official_url="https://eec.eaeunion.org/comission/department/podm/",
         description=(
             "Official countervailing measures contour "
             "(special_duties + EEC_COUNTERVAILING)."
@@ -755,26 +763,46 @@ REGULATORY_SOURCE_REGISTRY: tuple[RegulatorySourceEntry, ...] = (
         manual_review_default=True,
     ),
     RegulatorySourceEntry(
+        source_id="rf_vat_tax_code",
+        title="ФНС России — НДС и ссылки на правовые основания",
+        authority_level="official_reference",
+        official_url="https://www.nalog.gov.ru/rn77/taxation/taxes/nds/",
+        description="Официальное разъяснение ФНС; не полный версионный перечень ставок и исключений при ввозе.",
+        local_paths=("data/raw_normative/eec_ett_vat.json",),
+        source_status_code="EEC_VAT",
+        known_gaps=(
+            "HTML-страница не подтверждает ставку для каждого кода, страны, даты и характеристики товара.",
+            "Требуются исходные нормативные акты, проверка поправок и manifest-bound review; legacy EEC_VAT — только идентификатор.",
+        ),
+        manual_review_default=True,
+    ),
+    RegulatorySourceEntry(
         source_id="rf_excise_tax_code",
         title="Официальный контур ставок акцизов РФ",
-        authority_level="official_binding",
+        authority_level="official_reference",
         official_url="https://www.nalog.gov.ru/rn77/taxation/taxes/akciz/",
         description="НК РФ и официальные разъяснения ФНС по подакцизным товарам и ставкам.",
         local_paths=("data/raw_normative/eec_excise.json",),
         db_probe="hs_rates_excise_eec",
         source_status_code="EEC_EXCISE",
-        known_gaps=("Изменение ставок требует review канонического bundle до применения.",),
+        known_gaps=(
+            "Сохранённая страница ФНС содержит ссылки на ставки; таблица ставок и комбинированные формулы в ней отсутствуют.",
+            "Нужны исходные нормативные акты и manifest-bound review до применения; HTML checksum не подтверждает применимость.",
+        ),
         manual_review_default=True,
     ),
     RegulatorySourceEntry(
         source_id="eec_odata_vat_preferences",
-        title="Открытые данные ЕАЭС по льготам НДС",
+        title="Портал открытых данных ЕАЭС — поиск источника льгот НДС",
         authority_level="official_reference",
-        official_url="https://opendata.eaeunion.org/",
-        description="Машиночитаемые справочники льгот и решений ЕЭК по НДС.",
+        official_url="https://opendata.eaeunion.org/opendata/",
+        description="Подтверждённый официальный портал; конкретный источник льгот НДС, API и нормативные акты ещё не установлены.",
         db_probe="vat_preferences_eec_odata",
         source_status_code="EEC_ODATA",
-        known_gaps=("Требуется проверка правового основания и срока действия каждой строки.",),
+        known_gaps=(
+            "Новая landing-страница не подтверждает наличие VAT dataset или замену OData endpoint.",
+            "Требуются исходные акты и проверка правового основания и срока действия каждой строки.",
+        ),
         manual_review_default=True,
     ),
     RegulatorySourceEntry(

@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import hashlib
 import json
+import ast
+import shlex
 from copy import deepcopy
 from contextlib import contextmanager
 from pathlib import Path
@@ -11,6 +13,7 @@ from unittest.mock import patch
 
 import httpx
 import pytest
+import yaml
 
 from app.services.ett_artifacts import ArtifactIntegrityError, LocalArtifactStore
 from app.services.regulatory_source_capture import verify_original_capture
@@ -53,6 +56,9 @@ def _responses(
     with (
         patch.object(monitor, "SOURCES", source_map),
         patch.object(monitor, "SOURCE_MODES", {key: "legal_drift" for key in source_map}),
+        # Synthetic source maps have no production registry aliases. The
+        # workflow integration test below exercises the real registry graph.
+        patch.object(monitor, "REGULATORY_SOURCE_REGISTRY", ()),
         patch.object(monitor.httpx, "Client", return_value=client),
     ):
         yield requests
@@ -374,3 +380,104 @@ def test_cli_forwards_repeatable_source_selection(capsys):
         assert monitor.main() == 0
     assert run.call_args.kwargs["source_ids"] == ["first", "second"]
     json.loads(capsys.readouterr().out)
+
+
+def test_fns_vat_registry_is_separate_from_ett_and_cannot_enable_automatic_rates():
+    from app.services.payment_source_registry import get_payment_source_entry
+    from app.services.regulatory_source_registry import get_registry_entry
+    from app.services.regulatory_source_updates import UPDATE_POLICIES
+
+    vat = get_payment_source_entry("eec_ett_vat")
+    duty = get_payment_source_entry("eec_ett_tariff")
+    source = get_registry_entry(vat.registry_source_id)
+    assert vat.registry_source_id == "rf_vat_tax_code"
+    assert vat.registry_source_id != duty.registry_source_id
+    assert vat.official_url == source.official_url == HTML_URL
+    assert monitor.SOURCES[vat.registry_source_id] == HTML_URL
+    assert vat.authority_level == source.authority_level == "official_reference"
+    assert vat.loader_status == "manual_review_required"
+    assert vat.manual_review_default is source.manual_review_default is True
+    assert "ЕТТ" not in vat.legal_basis
+
+    policy_ids = {
+        "rf_vat_tax_code", "rf_excise_tax_code", "eec_odata_vat_preferences",
+        "trade_remedies_official", "trade_remedies_special_safeguard_official",
+        "trade_remedies_countervailing_official",
+    }
+    policies = {policy.source_id: policy for policy in UPDATE_POLICIES}
+    for source_id in policy_ids:
+        assert policies[source_id].strategy == "monitor_only"
+        assert policies[source_id].adapter_id is None
+
+
+def test_selected_capture_workflow_ids_bind_observed_urls_and_shared_family_receipts(tmp_path, capsys):
+    """Execute the workflow's CLI arguments with real registry construction.
+
+    Numbered monitor IDs can shift when URLs deduplicate; pin their intended
+    upstream identities, and ensure sharing the landing never labels the AD
+    decision PDF as a safeguard/countervailing original.
+    """
+    workflow_path = Path(__file__).resolve().parents[3] / ".github/workflows/official-rate-source-capture.yml"
+    workflow = yaml.load(workflow_path.read_text(), Loader=yaml.BaseLoader)
+    steps = workflow["jobs"]["capture"]["steps"]
+    acquire = next(step for step in steps if step.get("id") == "acquire")
+    tokens = shlex.split(acquire["run"].replace("\\\n", " "))
+    arguments = tokens[tokens.index("scripts/monitor_official_ntm_sources.py"):tokens.index(">")]
+    selected_ids = [arguments[i + 1] for i, value in enumerate(arguments) if value == "--source-id"]
+    expected = {
+        "trade_remedies_official": "https://eec.eaeunion.org/comission/department/podm/",
+        "trade_remedies_official__artifact_2": "https://docs.eaeunion.org/documents/?filter_departament%5B%5D=14",
+        "trade_remedies_official__artifact_3": "https://remedies.eaeunion.org/dimd/ru",
+        "trade_remedies_official__artifact_4": "https://docs.eaeunion.org/upload/iblock/072/gnl5h50x3mzkg7zd1b0d593t4mtizhg1/Reshenie-Kollegii-_-121-ot-8-sentbrya-2026-g.pdf",
+        "rf_vat_tax_code": HTML_URL,
+        "eec_odata_vat_preferences": "https://opendata.eaeunion.org/opendata/",
+    }
+    assert len(selected_ids) == len(set(selected_ids))
+    assert {key: monitor.SOURCES[key] for key in selected_ids} == expected
+    assert "--accept-changes" not in arguments and "--approval-ref" not in arguments
+    assert workflow["on"] == {"push": {"branches": ["ops/official-rate-source-capture"]}}
+    assert workflow["permissions"] == {"contents": "read"}
+
+    package = next(step for step in steps if "Record execution boundary" in step.get("name", ""))
+    embedded_python = package["run"].split("python - <<'PY'\n", 1)[1].split("\nPY", 1)[0]
+    declared_ids = []
+    for node in ast.walk(ast.parse(embedded_python)):
+        if isinstance(node, ast.Dict):
+            for key, value in zip(node.keys, node.values):
+                if isinstance(key, ast.Constant) and key.value == "selected_monitor_ids":
+                    declared_ids = ast.literal_eval(value)
+    assert declared_ids == selected_ids
+
+    requests = []
+    html = b'<html><body><a href="/law.pdf">Observed law</a><p>' + b"template " * 30 + b"</p></body></html>"
+
+    def respond(request):
+        requests.append(str(request.url))
+        is_pdf = request.url.path.endswith(".pdf")
+        return httpx.Response(200, content=PDF_BODY if is_pdf else html,
+                              headers={"content-type": "application/pdf" if is_pdf else "text/html"})
+
+    client = httpx.Client(transport=httpx.MockTransport(respond))
+    arguments = [value.replace("$RATE_CAPTURE_ROOT", str(tmp_path)) for value in arguments]
+    with patch.object(monitor.httpx, "Client", return_value=client), patch("sys.argv", arguments):
+        assert monitor.main() == 0
+
+    report = json.loads(capsys.readouterr().out)
+    assert set(requests) == set(expected.values()) and len(requests) == len(expected)
+    assert set(report["selected_source_ids"]) == set(selected_ids)
+    assert report["full_registry_checked"] is report["revision_coverage_complete"] is False
+    assert report["original_capture_complete"] is True
+    assert report["accepted_source_ids"] == []
+    assert report["review_required"] is True
+    rows = {row["source_id"]: row for row in report["sources"]}
+    families = {"trade_remedies_official", "trade_remedies_special_safeguard_official", "trade_remedies_countervailing_official"}
+    assert set(rows["trade_remedies_official"]["original_capture"]["source_ids"]) == families
+    decision_ids = set(rows["trade_remedies_official__artifact_4"]["original_capture"]["source_ids"])
+    assert decision_ids == {"trade_remedies_official", "trade_remedies_official__artifact_4"}
+    assert rows["rf_vat_tax_code"]["original_capture"]["source_ids"] == ["rf_vat_tax_code"]
+    assert "eec_ett_tnved" not in rows
+    store = LocalArtifactStore(tmp_path / "store", create=False)
+    for source_id, row in rows.items():
+        capture = row["original_capture"]
+        assert capture["requested"]["url_sha256"] == hashlib.sha256(expected[source_id].encode()).hexdigest()
+        verify_original_capture(store, capture["receipt_sha256"])

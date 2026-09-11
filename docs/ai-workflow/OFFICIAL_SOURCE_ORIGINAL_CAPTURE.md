@@ -78,3 +78,26 @@ already retained separately. The selected new acquisition avoids repeating
 those completed stages. Capturing a landing page still leaves document
 discovery, article/page/row binding, semantic interpretation, full applicability
 audit, manifest-bound human approval and permanent retention as separate work.
+# Observed capture and navigation repair, 11 September 2026
+
+Implementation commit `a5ef7f3` passed PR CI `34598906017` (4,434 backend
+tests, 2 skipped, 2 warnings, 73 subtests; frontend/types/build, workflow and
+staging checks passed). Acquisition run `34598954173` was incomplete: only
+the FNS excise original was retained. The obsolete EEC remedy URL failed and
+OpenData changed its requested path. The archived failures remain evidence;
+they are not silently relabelled successful.
+
+The FNS original contains links to rates and a tobacco retail-price registry,
+but no numerical excise table or combined tobacco formula. The exact body and
+receipt identities are recorded in
+[capture evidence](evidence/official-rate-originals-20260911.json).
+
+The next selected acquisition uses separately corroborated navigation URLs;
+see [observed links](evidence/eec-remedy-link-discovery-20260911.json).
+No redirect exception is added. The FNS VAT page is an official reference
+with links to legislation, not a per-code import-VAT dataset. The EEC department
+index includes investigation notices and draft reports as well as enacted
+decisions. The separately observed Decision 121 PDF is collected for review;
+publication does not establish its effective date or approve a duty. The new
+six-target capture does not repeat the already retained excise response and
+does not constitute a complete trade-remedy, VAT or OpenData inventory.
