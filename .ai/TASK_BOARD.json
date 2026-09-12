@@ -128,7 +128,7 @@
     }
   ],
   "max_concurrent_subagents": 3,
-  "revision": 117,
+  "revision": 119,
   "runs": [
     {
       "head_sha": null,
@@ -336,9 +336,9 @@
       "run_id": "a589f5d878e3453fb71b86540e692083",
       "session_id": "/root/a5_ad30_qa",
       "started_at": "2026-09-12T22:32:34.299387+00:00",
-      "status": "RUNNING",
+      "status": "FINISHED",
       "task_id": "TARIFF-A6-CROSS-BRANCH-CONTRACT-001",
-      "updated_at": "2026-09-12T22:32:34.299398+00:00"
+      "updated_at": "2026-09-12T22:35:09.733642+00:00"
     }
   ],
   "schema_version": 1,
@@ -752,7 +752,28 @@
       "goal": "Make the checked A6 audit adapter support product candidate commits that intentionally do not contain orchestration files by binding an explicitly selected immutable architecture contract blob/ref into the packet; preserve complete changed-path coverage, tamper detection, secret scanning, exact candidate base/head binding, and fail-closed behavior.",
       "id": "TARIFF-A6-CROSS-BRANCH-CONTRACT-001",
       "owner": "A4",
-      "qa": null,
+      "qa": {
+        "commands": [
+          {
+            "command": "Fresh A5 exact scope/tree and independent secret-ref/packet-metadata negative reproductions",
+            "exit_code": 0,
+            "output": "PASS: exact clean c0bccfd/2c1f012; secret-shaped and known-credential refs blocked before _commit/network; injected sensitive packet metadata blocked."
+          },
+          {
+            "command": "Fresh A5 contract finding line-bound and immutable evidence security review",
+            "exit_code": 0,
+            "output": "PASS: deleted base line accepted/out-of-range blocked; explicit-ref bounds correct; commit/blob/hash/text tamper, stale/missing ref, incomplete diff, secret/path and ambient Git negatives passed."
+          },
+          {
+            "command": "Fresh A5 scoped/full tests and real product packet replay",
+            "exit_code": 0,
+            "output": "PASS: 23/23 audit, 69/69 orchestration, compile/diff clean; exact product packet e0129b90; actual A6 UNAVAILABLE due named missing config, no outbound audit/secret exposure."
+          }
+        ],
+        "head_sha": "c0bccfd03def59e5f20826c47d513482618cab0b",
+        "reviewer_session_id": "/root/a5_ad30_qa",
+        "status": "PASSED"
+      },
       "refs": {
         "base_sha": "ad4935e318d947276178e2f269d4ffe1051ea6cb",
         "head_sha": "c0bccfd03def59e5f20826c47d513482618cab0b",
@@ -762,7 +783,7 @@
         "offline-safety"
       ],
       "risk": "high",
-      "status": "IMPLEMENTED",
+      "status": "QA_PASSED",
       "tests": {
         "commands": [
           {
@@ -788,9 +809,9 @@
         ],
         "head_sha": "c0bccfd03def59e5f20826c47d513482618cab0b"
       },
-      "updated_at": "2026-09-12T22:32:34.299401+00:00",
+      "updated_at": "2026-09-12T22:35:09.759933+00:00",
       "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-a6-cross-branch-contract-001-a5c4916ca6"
     }
   ],
-  "updated_at": "2026-09-12T22:32:34.299596+00:00"
+  "updated_at": "2026-09-12T22:35:09.760262+00:00"
 }
