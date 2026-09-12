@@ -1,5 +1,5 @@
 {
-  "board_revision": 31,
+  "board_revision": 42,
   "runs": [
     {
       "head_sha": null,
@@ -47,9 +47,29 @@
       "run_id": "50b81abe7288496b970435589584ad76",
       "session_id": "/root/smoke_rates",
       "started_at": "2026-09-12T20:56:54.166391+00:00",
+      "status": "FINISHED",
+      "task_id": "TARIFF-ADMISSION-RECHECK-001",
+      "updated_at": "2026-09-12T21:06:49.659387+00:00"
+    },
+    {
+      "head_sha": "161a9258d174e93266353ae1fd2cb0b3e4657679",
+      "role": "A5",
+      "run_id": "b222552b65af4cf88fc71dd5837c1bb6",
+      "session_id": "/root/a5_independent_qa",
+      "started_at": "2026-09-12T21:06:49.694049+00:00",
+      "status": "FINISHED",
+      "task_id": "TARIFF-ADMISSION-RECHECK-001",
+      "updated_at": "2026-09-12T21:08:51.524617+00:00"
+    },
+    {
+      "head_sha": null,
+      "role": "A1",
+      "run_id": "aa13d48b7b064643afd64e97a7e1fd86",
+      "session_id": "/root/smoke_rates",
+      "started_at": "2026-09-12T21:09:53.374768+00:00",
       "status": "RUNNING",
       "task_id": "TARIFF-ADMISSION-RECHECK-001",
-      "updated_at": "2026-09-12T20:56:54.166398+00:00"
+      "updated_at": "2026-09-12T21:09:53.374774+00:00"
     }
   ],
   "schema_version": 1

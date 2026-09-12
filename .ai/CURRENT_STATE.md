@@ -14,8 +14,15 @@ from code/QA/CI candidate SHAs). Read this branch's board on every wake-up.
 - Claude packet built/validated, but A6 is NOT_CONFIGURED: no Anthropic key/model.
   No request sent or external audit claimed. Native Work is the active runtime;
   optional Agents API adapter is SAFE_BOOTSTRAP_ONLY and not live verified.
-- PR #187 remains on observed22a7df55, PR #189 is unchanged/conflicting old pilot.
-  Active bounded task: TARIFF-ADMISSION-RECHECK-001, real A1 read-only current payment review.
+- PR #187 advanced externally to a9d15c74699c8cd7842404580ff6fd7bd957e9eb.
+  Its exact-head CI 34718655503/34718653080/34718400910 and Admission QA
+  34718400932 passed. These are upstream observations, not this setup A5/A6 execution.
+  PR #189 is unchanged/inactive. PR #191 is the separate A1 evidence report.
+- Confirmed A0-UPSTREAM-DRIFT-001 invalidated the historical 22a7df55 report
+  before A5 acceptance. Current A1 rechecks a9d15c74 in the isolated report branch;
+  upstream was merged without remote force push, with only the report differing.
+- Next queued A3 task: TARIFF-AD30-REVIEW-CANDIDATE-001, source-fact candidate
+  for Decision 12 -> 4 -> 121 per current focus. It grants no legal applicability.
 - Fresh native session /root/fresh_state_recovery recovered board revision 27 from
   separate Git common-dir snapshot c4d966e. See orchestration/FRESH_SESSION_RECOVERY.json.
 - Existing hourly Automation 6a2a8a215240819197f0879e5d47c90d enabled for A0 triage.

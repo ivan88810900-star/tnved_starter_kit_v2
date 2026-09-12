@@ -1,5 +1,5 @@
 {
-  "board_revision": 31,
+  "board_revision": 42,
   "files": {
     "docs/ai-workflow/PAYMENT_ADMISSION_RECHECK_20260912.md": {
       "branch": "agent/rates-tariff-admission-recheck-001-9231ffbdb5",

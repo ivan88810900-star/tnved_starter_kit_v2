@@ -1,5 +1,19 @@
 {
-  "board_revision": 31,
-  "findings": [],
+  "board_revision": 42,
+  "findings": [
+    {
+      "head_sha": "161a9258d174e93266353ae1fd2cb0b3e4657679",
+      "id": "A0-UPSTREAM-DRIFT-001",
+      "reporter": "A0",
+      "status": "CONFIRMED",
+      "summary": "PR187 advanced from pinned 22a7df55 to a9d15c74 with payment admission corrections; historical report must not be presented as current task state.",
+      "task_id": "TARIFF-ADMISSION-RECHECK-001",
+      "validation": {
+        "at": "2026-09-12T21:08:51.544244+00:00",
+        "evidence": "GitHub PR187 head and commit a9d15c74699c8cd7842404580ff6fd7bd957e9eb queried 2026-09-12; changed services, decisions and recovery task. A5 interrupted before any acceptance; no stale PASS reused.",
+        "validator": "A0"
+      }
+    }
+  ],
   "schema_version": 1
 }
