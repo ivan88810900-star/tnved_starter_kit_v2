@@ -1,11 +1,13 @@
 """MOCK external audit tests: real local Git, no live Anthropic API calls."""
 
 import copy
+import io
 import json
 import os
 import subprocess
 import tempfile
 import unittest
+from contextlib import redirect_stdout
 from pathlib import Path
 from unittest.mock import patch
 
@@ -46,6 +48,18 @@ class AuditTests(unittest.TestCase):
     def packet(self, **kwargs):
         return audit.build_packet(self.repo, self.base, self.head, self.paths, environ={}, **kwargs)
 
+    def cross_branch_candidate(self):
+        """Independent product history deliberately omits the orchestration contract."""
+        contract_ref = self.base
+        self.git("switch", "-q", "--orphan", "product-fixture")
+        self.write("src/payments.py", "amount = 11\n")
+        self.write("tests/check.py", "assert 1 + 1 == 2\n")
+        product_base = self.commit()
+        self.write("src/payments.py", "amount = 12\n")
+        product_head = self.commit()
+        paths = ["src/payments.py", "tests/check.py"]
+        return contract_ref, product_base, product_head, paths
+
     def findings(self, packet):
         return {"packet_sha256": packet["packet_sha256"], "head_sha": packet["head_sha"],
                 "findings": [{"id": "F1", "severity": "high", "category": "payment",
@@ -76,6 +90,130 @@ class AuditTests(unittest.TestCase):
         head = self.commit()
         with self.assertRaises(audit.AuditBlocked):
             audit.build_packet(self.repo, self.base, head, self.paths)
+
+    def test_explicit_contract_ref_supports_product_only_commits(self):
+        contract_ref, base, head, paths = self.cross_branch_candidate()
+        packet = audit.build_packet(self.repo, base, head, paths,
+                                    contract_ref=contract_ref, environ={})
+        self.assertEqual(packet["base_sha"], base)
+        self.assertEqual(packet["head_sha"], head)
+        self.assertEqual(packet["changed_paths"], ["src/payments.py"])
+        self.assertNotIn(audit.CONTRACT_PATH, packet["paths"])
+        self.assertEqual(packet["contract"]["mode"], "explicit_ref")
+        self.assertEqual(packet["contract"]["requested_ref"], contract_ref)
+        self.assertEqual(packet["contract"]["resolved_commit"], contract_ref)
+        self.assertRegex(packet["contract"]["git_oid"], r"^[0-9a-f]{40,64}$")
+        self.assertEqual(packet["contract"]["sha256"],
+                         audit._sha(packet["contract"]["text"].encode()))
+        self.assertEqual(audit.validate_packet(self.repo, packet, environ={}), packet)
+        findings = self.findings(packet)
+        findings["findings"][0].update(path=audit.CONTRACT_PATH, line=1,
+                                        evidence="Contract boundary requires A0 verification")
+        self.assertEqual(audit.validate_findings(findings, packet, environ={}), findings)
+        findings["findings"][0]["line"] = 2
+        with self.assertRaises(audit.AuditBlocked):
+            audit.validate_findings(findings, packet, environ={})
+
+    def test_cli_build_accepts_explicit_contract_ref(self):
+        contract_ref, base, head, paths = self.cross_branch_candidate()
+        output = self.repo / "audit-packet.json"
+        stdout = io.StringIO()
+        with redirect_stdout(stdout):
+            rc = audit.main(["--repo", str(self.repo), "build", "--base", base,
+                             "--head", head, "--path", paths[0], "--path", paths[1],
+                             "--contract-ref", contract_ref, "--output", str(output)])
+        self.assertEqual(rc, 0)
+        self.assertEqual(json.loads(stdout.getvalue())["status"], "PACKET_BUILT")
+        packet = json.loads(output.read_text())
+        self.assertEqual(packet["contract"]["resolved_commit"], contract_ref)
+        self.assertEqual(audit.validate_packet(self.repo, packet, environ={}), packet)
+
+    def test_explicit_contract_ref_absent_or_missing_contract_blocks(self):
+        contract_ref, base, head, paths = self.cross_branch_candidate()
+        for ref in ("refs/heads/absent-contract", head):
+            with self.subTest(ref=ref), self.assertRaises(audit.AuditBlocked):
+                audit.build_packet(self.repo, base, head, paths,
+                                   contract_ref=ref, environ={})
+
+    def test_secret_shaped_and_known_credential_contract_refs_block(self):
+        secret_ref = "sk-ant-" + "a" * 24
+        paths = ["src/payments.py", "tests/check.py"]
+        for ref, env in ((secret_ref, {}),
+                         (self.env["ANTHROPIC_API_KEY"], self.env)):
+            with self.subTest(ref_kind="static" if not env else "environment"), \
+                    patch.object(audit, "_commit", wraps=audit._commit) as commit:
+                with self.assertRaises(audit.AuditBlocked):
+                    audit.build_packet(self.repo, self.base, self.head, paths,
+                                       contract_ref=ref, environ=env)
+                resolved_refs = [item.args[1] for item in commit.call_args_list]
+                self.assertNotIn(ref, resolved_refs, "contract ref must be scanned before resolution")
+
+    def test_known_credential_ref_validation_blocks_before_network(self):
+        credential_ref = self.env["ANTHROPIC_API_KEY"]
+        self.git("branch", credential_ref, self.base)
+        _, base, head, paths = self.cross_branch_candidate()
+        packet = audit.build_packet(self.repo, base, head, paths,
+                                    contract_ref=credential_ref, environ={})
+        with patch.object(audit, "request_json") as request:
+            with self.assertRaises(audit.AuditBlocked):
+                audit.run_audit(self.repo, packet, environ=self.env)
+            request.assert_not_called()
+
+    def test_explicit_contract_packet_tamper_and_stale_ref_block(self):
+        self.git("branch", "contract-source", self.base)
+        _, base, head, paths = self.cross_branch_candidate()
+        packet = audit.build_packet(self.repo, base, head, paths,
+                                    contract_ref="contract-source", environ={})
+        for field, value in (("text", "tampered\n"),
+                             ("git_oid", "0" * 40),
+                             ("sha256", "0" * 64),
+                             ("resolved_commit", self.head),
+                             ("requested_ref", self.base)):
+            tampered = copy.deepcopy(packet)
+            tampered["contract"][field] = value
+            with self.subTest(field=field), self.assertRaises(audit.AuditBlocked):
+                audit.validate_packet(self.repo, tampered, environ={})
+        self.git("branch", "-f", "contract-source", self.head)
+        with self.assertRaises(audit.AuditBlocked):
+            audit.validate_packet(self.repo, packet, environ={})
+
+    def test_explicit_contract_mode_keeps_diff_complete_and_scans_contract(self):
+        contract_ref, base, head, paths = self.cross_branch_candidate()
+        with self.assertRaises(audit.AuditBlocked):
+            audit.build_packet(self.repo, base, head, ["tests/check.py"],
+                               contract_ref=contract_ref, environ={})
+        secret = "sk-ant-" + "a" * 24
+        self.git("switch", "-q", "--detach", contract_ref)
+        self.write(audit.CONTRACT_PATH, "credential = '" + secret + "'\n")
+        secret_contract = self.commit()
+        with self.assertRaises(audit.AuditBlocked):
+            audit.build_packet(self.repo, base, head, paths,
+                               contract_ref=secret_contract, environ={})
+
+    def test_candidate_head_contract_deletion_line_remains_in_finding_scope(self):
+        self.write(audit.CONTRACT_PATH, "retained line\ndeleted line\n")
+        base = self.commit()
+        self.write(audit.CONTRACT_PATH, "retained line\n")
+        head = self.commit()
+        packet = audit.build_packet(self.repo, base, head, [audit.CONTRACT_PATH], environ={})
+        findings = self.findings(packet)
+        findings["findings"][0].update(path=audit.CONTRACT_PATH, line=2,
+                                        evidence="The second contract line was deleted")
+        self.assertEqual(audit.validate_findings(findings, packet, environ={}), findings)
+        findings["findings"][0]["line"] = 3
+        with self.assertRaises(audit.AuditBlocked):
+            audit.validate_findings(findings, packet, environ={})
+
+    def test_persisted_v1_packet_rejects_fail_closed(self):
+        packet = self.packet()
+        packet["schema_version"] = 1
+        packet.pop("contract")
+        for entry in packet["files"]:
+            for side in ("base", "head"):
+                if entry[side]:
+                    entry[side].pop("git_oid")
+        with self.assertRaises(audit.AuditBlocked):
+            audit.validate_packet(self.repo, packet, environ={})
 
     def test_rejects_binary_symlink_and_oversize_without_truncation(self):
         for name, prepare in (
