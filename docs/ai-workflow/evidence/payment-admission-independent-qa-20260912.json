@@ -18,7 +18,7 @@
     "ntm_historical_cases_expected": 24,
     "source_quarantine_cases": 4,
     "live_http_requests_expected": 43,
-    "execution": "Next run verifies country correction and reproduces malformed legacy payload fields against c2fc39 before its final correction."
+    "execution": "Pending fresh green after exact A2 malformed-payload correction; previous red evidence retained."
   },
   "previous_fresh_proof": {
     "source_qa_commit": "1d2619fb37cd822a1b13288d04bf1c5fb02365a3",
@@ -73,5 +73,35 @@
       "ZZ/ZZ missing country_unverified"
     ],
     "skip_reason": "no non_tariff_measures in DB"
+  },
+  "payload_red": {
+    "commit": "02b46956a2ceac742aedc596836d3b5086ec85d0",
+    "run": 34716339523,
+    "job": 103614153883,
+    "passed": 1730,
+    "failed": 8,
+    "skipped": 1,
+    "subtests_passed": 85,
+    "failures": [
+      "permit_type dict and integer caused AttributeError.strip",
+      "six malformed text-field cases lost explicit unverified reason"
+    ],
+    "country_regressions_passed": 4
+  },
+  "final_ntm_dependency": {
+    "commit": "7f396872bb430c3e8140cd8f57197545ce4b8b27",
+    "mode": "exact three author blobs copied without edits"
+  },
+  "real_source_capture": {
+    "run": 34716176823,
+    "job": 103613710651,
+    "originals": 2,
+    "quarantined": 7,
+    "unretained": 0,
+    "original_complete": false,
+    "artifact_id": 10304930968,
+    "archive_sha256": "d728387c458413b8bdd992a0ed330a8f45e7760ccacc77fc948958d44de3f6a7",
+    "legal_review_verified": false,
+    "decision12_links": "discovery-only anchors7601/7640 in quarantined page3; document contents not thereby established"
   }
 }

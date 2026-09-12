@@ -213,14 +213,34 @@ def measure_compare_key_from_legacy_dict(m: dict[str, Any]) -> str:
     )
 
 
+def _legacy_text(
+    payload: dict[str, Any],
+    key: str,
+    reasons: list[str],
+    *,
+    fallback: str = "",
+    invalid_fallback: str = "",
+) -> str:
+    """Optional missing/null hints may fall back; malformed JSON is not legal text."""
+    value = payload.get(key)
+    if value is None:
+        return fallback
+    if not isinstance(value, str):
+        reasons.append(f"legacy_{key}_unverified")
+        return invalid_fallback
+    return value
+
+
 def legacy_measure_dict_to_broker_row(m: dict[str, Any]) -> dict[str, Any]:
     """Строка imported measure в формате broker layer (runtime + диагностика)."""
-    tr_raw = m.get("tr_ts_code")
-    tr_norm: str | None = (str(tr_raw).strip() if tr_raw else None) or None
-    pt = (m.get("permit_type") or "").strip()
-    mtype = str(m.get("measure_type") or "")
+    raw_reasons = m.get("context_review_reasons")
+    reasons = [value for value in raw_reasons if isinstance(value, str)] if isinstance(raw_reasons, list) else []
+    tr_norm = _legacy_text(m, "tr_ts_code", reasons).strip() or None
+    pt = _legacy_text(m, "permit_type", reasons).strip()
+    mtype = _legacy_text(m, "measure_type", reasons)
     mk = str(m.get("measure_kind") or measure_type_to_measure_kind(mtype))
-    legal_ref = str(m.get("legal_ref") or "")
+    legal_ref = _legacy_text(m, "legal_ref", reasons)
+    description = _legacy_text(m, "description", reasons)
     review = tr_ts_review_metadata(str(m.get("commodity_code") or ""), mtype)
     if review:
         pt = ""
@@ -228,7 +248,7 @@ def legacy_measure_dict_to_broker_row(m: dict[str, Any]) -> dict[str, Any]:
         "permit_type": pt,
         "tr_ts": tr_norm,
         "tr_ts_full_name": TR_TS_FULL_NAMES.get(tr_norm or "", "") if tr_norm else "",
-        "description": str(m.get("description") or "")[:500],
+        "description": description[:500],
         "legal_ref": legal_ref[:500],
         "matched_prefix": str(m.get("commodity_code") or "")[:16],
         "priority": 0,
@@ -249,8 +269,9 @@ def legacy_measure_dict_to_broker_row(m: dict[str, Any]) -> dict[str, Any]:
         **_review_metadata(),
         **{key: m[key] for key in (
             "stored_applicability", "stored_requires_manual_review", "as_of",
-            "context_review_reasons", "source_data_status",
+            "source_data_status",
         ) if key in m},
+        "context_review_reasons": sorted(set(reasons)),
         **review,
     }
 
@@ -388,19 +409,22 @@ def _find_v2_legacy_measures_for_code(
         legacy = payload.get("legacy_payload") if isinstance(payload.get("legacy_payload"), dict) else {}
         # Free text/legacy JSON is evidence to review, not a product predicate.
         reasons.append("product_applicability_unverified")
-        mtype = str(legacy.get("measure_type") or measure.measure_kind)
+        stored_kind = str(measure.measure_kind or "")
+        mtype = _legacy_text(legacy, "measure_type", reasons, fallback=stored_kind, invalid_fallback=stored_kind) or stored_kind
         review = tr_ts_review_metadata(rule_hs, mtype) or tr_ts_review_metadata(code, mtype)
-        permit_type = legacy.get("permit_type") if legacy.get("permit_type") is not None else measure.permit_type
+        permit_type = _legacy_text(legacy, "permit_type", reasons, fallback=measure.permit_type or "")
         if review:
             permit_type = None
         results.append({
             "commodity_code": rule.hs_code,
             "measure_type": mtype,
-            "description": str(legacy.get("description") or measure.title),
-            "document_required": str(legacy.get("document_required") or ""),
-            "legal_ref": str(legacy.get("legal_ref") or ""),
+            "description": _legacy_text(
+                legacy, "description", reasons, fallback=measure.title or "", invalid_fallback=measure.title or "",
+            ) or measure.title or "",
+            "document_required": _legacy_text(legacy, "document_required", reasons),
+            "legal_ref": _legacy_text(legacy, "legal_ref", reasons),
             "permit_type": permit_type,
-            "tr_ts_code": legacy.get("tr_ts_code") if legacy.get("tr_ts_code") is not None else (measure.tr_ts_act_code or None),
+            "tr_ts_code": _legacy_text(legacy, "tr_ts_code", reasons, fallback=measure.tr_ts_act_code or "") or None,
             "measure_kind": measure.measure_kind or measure_type_to_measure_kind(mtype),
             "match_prefix_len": len(rule_hs),
             "source_level": _LEN_TO_SOURCE_LEVEL.get(len(rule_hs), "prefix"),
