@@ -50,13 +50,10 @@ jobs:
           umask 077
           python scripts/monitor_official_ntm_sources.py \
             --capture-originals --store-root "$RATE_CAPTURE_ROOT/store" \
+            --capture-rejected-originals \
             --timeout 45 \
             --source-id trade_remedies_official \
             --source-id trade_remedies_official__artifact_2 \
-            --source-id trade_remedies_official__artifact_3 \
-            --source-id trade_remedies_official__artifact_4 \
-            --source-id rf_vat_tax_code \
-            --source-id eec_odata_vat_preferences \
             --state "$RATE_CAPTURE_ROOT/observed-state.json" \
             --output "$RATE_CAPTURE_ROOT/report.json" \
             > "$RATE_CAPTURE_ROOT/stdout.json"
@@ -83,9 +80,8 @@ jobs:
               "capture_outcome": os.environ["CAPTURE_OUTCOME"],
               "selected_monitor_ids": [
                   "trade_remedies_official", "trade_remedies_official__artifact_2",
-                  "trade_remedies_official__artifact_3", "trade_remedies_official__artifact_4",
-                  "rf_vat_tax_code", "eec_odata_vat_preferences",
               ],
+              "rejected_original_capture_requested": True,
               "application_database_created": sentinel.exists(),
               "legal_inventory_complete": False,
               "legal_approval": False,

@@ -427,14 +427,11 @@ def test_selected_capture_workflow_ids_bind_observed_urls_and_shared_family_rece
     expected = {
         "trade_remedies_official": "https://eec.eaeunion.org/comission/department/podm/",
         "trade_remedies_official__artifact_2": "https://docs.eaeunion.org/documents/?filter_departament%5B%5D=14",
-        "trade_remedies_official__artifact_3": "https://remedies.eaeunion.org/dimd/ru",
-        "trade_remedies_official__artifact_4": "https://docs.eaeunion.org/upload/iblock/072/gnl5h50x3mzkg7zd1b0d593t4mtizhg1/Reshenie-Kollegii-_-121-ot-8-sentbrya-2026-g.pdf",
-        "rf_vat_tax_code": HTML_URL,
-        "eec_odata_vat_preferences": "https://opendata.eaeunion.org/opendata/",
     }
     assert len(selected_ids) == len(set(selected_ids))
     assert {key: monitor.SOURCES[key] for key in selected_ids} == expected
     assert "--accept-changes" not in arguments and "--approval-ref" not in arguments
+    assert "--capture-rejected-originals" in arguments
     assert workflow["on"] == {"push": {"branches": ["ops/official-rate-source-capture"]}}
     assert workflow["permissions"] == {"contents": "read"}
 
@@ -468,16 +465,38 @@ def test_selected_capture_workflow_ids_bind_observed_urls_and_shared_family_rece
     assert report["full_registry_checked"] is report["revision_coverage_complete"] is False
     assert report["original_capture_complete"] is True
     assert report["accepted_source_ids"] == []
-    assert report["review_required"] is True
+    # Both selected HTML landings lack a complete revision identity in this
+    # synthetic response; they report gaps, not the old selection's PDF drift.
+    assert report["review_required"] is False
+    assert report["revision_gap_source_count"] == 2
     rows = {row["source_id"]: row for row in report["sources"]}
     families = {"trade_remedies_official", "trade_remedies_special_safeguard_official", "trade_remedies_countervailing_official"}
     assert set(rows["trade_remedies_official"]["original_capture"]["source_ids"]) == families
-    decision_ids = set(rows["trade_remedies_official__artifact_4"]["original_capture"]["source_ids"])
-    assert decision_ids == {"trade_remedies_official", "trade_remedies_official__artifact_4"}
-    assert rows["rf_vat_tax_code"]["original_capture"]["source_ids"] == ["rf_vat_tax_code"]
     assert "eec_ett_tnved" not in rows
     store = LocalArtifactStore(tmp_path / "store", create=False)
     for source_id, row in rows.items():
         capture = row["original_capture"]
         assert capture["requested"]["url_sha256"] == hashlib.sha256(expected[source_id].encode()).hexdigest()
         verify_original_capture(store, capture["receipt_sha256"])
+
+
+def test_previously_captured_decision_and_vat_source_identities_remain_isolated(tmp_path):
+    """The narrower new workflow must not erase the existing source identity gate."""
+    ids = ["trade_remedies_official__artifact_4", "rf_vat_tax_code"]
+    html = b'<html><body><a href="/law.pdf">Observed law</a>' + b"template " * 30 + b"</body></html>"
+
+    def respond(request):
+        is_pdf = request.url.path.endswith(".pdf")
+        return httpx.Response(200, content=PDF_BODY if is_pdf else html,
+                              headers={"content-type": "application/pdf" if is_pdf else "text/html"})
+
+    client = httpx.Client(transport=httpx.MockTransport(respond))
+    store = _store(tmp_path)
+    with patch.object(monitor.httpx, "Client", return_value=client):
+        report = monitor.monitor_sources(original_store=store, source_ids=ids)
+    assert report["review_required"] is True
+    rows = {row["source_id"]: row for row in report["sources"]}
+    assert set(rows[ids[0]]["original_capture"]["source_ids"]) == {"trade_remedies_official", ids[0]}
+    assert rows[ids[1]]["original_capture"]["source_ids"] == [ids[1]]
+    for row in rows.values():
+        verify_original_capture(store, row["original_capture"]["receipt_sha256"])

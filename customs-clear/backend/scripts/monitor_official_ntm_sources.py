@@ -45,7 +45,9 @@ from app.services.regulatory_source_registry import (  # noqa: E402
 )
 from app.services.regulatory_source_updates import UPDATE_POLICIES  # noqa: E402
 from app.services.ett_artifacts import LocalArtifactStore  # noqa: E402
-from app.services.regulatory_source_capture import capture_original, url_identity  # noqa: E402
+from app.services.regulatory_source_capture import (  # noqa: E402
+    QUARANTINABLE_CONTENT_ERRORS, capture_original, capture_rejected_original, url_identity,
+)
 
 SOURCES = {
     "eec_decision30_unified_list": DECISION_30_UNIFIED_LIST_URL,
@@ -844,9 +846,14 @@ def monitor_sources(
     accept_changes: bool = False,
     approval_ref: str = "",
     original_store: LocalArtifactStore | None = None,
+    capture_rejected_originals: bool = False,
     source_ids: list[str] | tuple[str, ...] | None = None,
 ) -> dict[str, Any]:
     selected_sources = _selected_sources(source_ids)
+    if type(capture_rejected_originals) is not bool:
+        raise ValueError("capture_rejected_originals must be a boolean")
+    if capture_rejected_originals and original_store is None:
+        raise ValueError("rejected original capture requires original capture and a store")
     if accept_changes and not approval_ref.strip():
         raise ValueError("approval_ref is required when accepting a source baseline")
     rows: list[dict[str, Any]] = []
@@ -859,6 +866,7 @@ def monitor_sources(
     next_sources = dict(previous_sources)
     response_cache: dict[tuple[str, str, str], Any] = {}
     original_captures: dict[tuple[str, str, str], dict] = {}
+    rejected_captures: dict[tuple[str, str, str], dict] = {}
     cached_bytes = 0
     with httpx.Client(
         follow_redirects=False,
@@ -976,10 +984,16 @@ def monitor_sources(
                     body=body,
                 )
                 original_capture = None
-                if original_store is not None and ok:
+                rejected_original_capture = None
+                quarantine = bool(
+                    capture_rejected_originals and not ok and response.status_code == 200
+                    and body and validation_error in QUARANTINABLE_CONTENT_ERRORS
+                )
+                if original_store is not None and (ok or quarantine):
                     try:
-                        original_capture = original_captures.get(cache_key)
-                        if original_capture is None:
+                        captures = rejected_captures if quarantine else original_captures
+                        capture = captures.get(cache_key)
+                        if capture is None:
                             # Registry entries can share a request. Keep every
                             # source identity on one immutable observation.
                             capture_source_ids = {
@@ -995,16 +1009,24 @@ def monitor_sources(
                                     if target
                                 }
                             )
-                            original_capture = capture_original(
+                            capture_function = capture_rejected_original if quarantine else capture_original
+                            capture = capture_function(
                                 original_store, body=body, source_ids=sorted(capture_source_ids),
                                 requested_url=url, final_url=final_url,
                                 redirect_chain=list(response.extensions["official_redirect_chain"]),
                                 retrieved_at=response.extensions["official_retrieved_at"],
                                 status_code=response.status_code, content_type=content_type,
+                                **({"validation_error": validation_error} if quarantine else {}),
                             )
-                            original_captures[cache_key] = original_capture
+                            captures[cache_key] = capture
+                        if quarantine:
+                            rejected_original_capture = capture
+                        else:
+                            original_capture = capture
                     except Exception:
-                        raise RuntimeError("original_capture_failed") from None
+                        raise RuntimeError(
+                            "rejected_original_capture_failed" if quarantine else "original_capture_failed"
+                        ) from None
                 (
                     revision_body,
                     artifact_identity_verified,
@@ -1104,8 +1126,8 @@ def monitor_sources(
                     "previous_sha256": previous.get("sha256"),
                     "observed_sha256": digest,
                     "validation_error": validation_error,
-                    "artifact_identity_verified": artifact_identity_verified,
-                    "revision_covered": revision_covered,
+                    "artifact_identity_verified": ok and artifact_identity_verified,
+                    "revision_covered": ok and revision_covered,
                     "revision_identity_kind": revision_identity_kind,
                     "revision_gap": revision_gap,
                     "revision_gap_reason": revision_identity_kind if revision_gap else None,
@@ -1114,7 +1136,7 @@ def monitor_sources(
                         if revision_gap or monitor_mode == "availability"
                         else monitor_mode
                     ),
-                    "approval_allowed": revision_covered,
+                    "approval_allowed": ok and revision_covered,
                     "requires_approval": requires_approval and not approval_authorized,
                     "approval_digest_mismatch": bool(
                         accept_changes and requires_approval and not pending_digest_matches
@@ -1123,6 +1145,8 @@ def monitor_sources(
                 }
                 if original_store is not None:
                     row["original_capture"] = original_capture
+                if capture_rejected_originals:
+                    row["rejected_original_capture"] = rejected_original_capture
                 rows.append(row)
                 if ok and baseline_advanced:
                     next_sources[source_id] = {
@@ -1191,6 +1215,7 @@ def monitor_sources(
                                 "official source redirect is missing Location",
                                 "official source redirect limit exceeded",
                                 "original_capture_failed",
+                                "rejected_original_capture_failed",
                             }
                             else "source_fetch_failed"
                         ),
@@ -1299,6 +1324,9 @@ def monitor_sources(
             for row in rows
         )
         report["original_capture_count"] = len(original_captures)
+        if capture_rejected_originals:
+            report["rejected_original_capture_requested"] = True
+            report["rejected_original_capture_count"] = len(rejected_captures)
         # Keep signed transport URLs out of both reports and persisted state.
         # Exact URL hashes remain bound in the original receipt.
         def safe_url(value):
@@ -1348,6 +1376,7 @@ def main() -> int:
     parser.add_argument("--accept-changes", action="store_true", help="Advance legal baselines after explicit review")
     parser.add_argument("--approval-ref", default="", help="Required issue/PR/reference for --accept-changes")
     parser.add_argument("--capture-originals", action="store_true", help="Retain original response bytes and receipts; no legal approval")
+    parser.add_argument("--capture-rejected-originals", action="store_true", help="Also quarantine content-rejected HTTP 200 bodies; requires --capture-originals and never satisfies capture completeness")
     parser.add_argument("--store-root", type=Path, help="Private local CAS directory; requires --capture-originals")
     parser.add_argument("--source-id", action="append", help="Select an exact monitor source ID; repeat for multiple sources")
     args = parser.parse_args()
@@ -1355,6 +1384,8 @@ def main() -> int:
         parser.error("--approval-ref is required with --accept-changes")
     if args.capture_originals != (args.store_root is not None):
         parser.error("--capture-originals and --store-root must be supplied together")
+    if args.capture_rejected_originals and not args.capture_originals:
+        parser.error("--capture-rejected-originals requires --capture-originals and --store-root")
     try:
         _selected_sources(args.source_id)
     except ValueError as exc:
@@ -1366,6 +1397,7 @@ def main() -> int:
         accept_changes=args.accept_changes,
         approval_ref=args.approval_ref,
         original_store=LocalArtifactStore(args.store_root) if args.capture_originals else None,
+        capture_rejected_originals=args.capture_rejected_originals,
         source_ids=args.source_id,
     )
     next_state = report.pop("next_state")

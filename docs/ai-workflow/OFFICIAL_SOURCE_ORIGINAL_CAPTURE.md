@@ -54,7 +54,8 @@ file. The isolated acquisition workflow starts with a new empty state.
 ## Isolated acquisition workflow
 
 `official-rate-source-capture.yml` runs only on an explicit push to
-`ops/official-rate-source-capture`. It selects the three targets above, uses
+`ops/official-rate-source-capture`. Its current selection is the two unresolved
+remedy navigation pages described below; it uses
 read-only repository permissions and private temporary evidence paths, and
 never supplies acceptance arguments. A database sentinel verifies that source
 capture did not create an application database. Even an incomplete attempt
@@ -101,3 +102,48 @@ decisions. The separately observed Decision 121 PDF is collected for review;
 publication does not establish its effective date or approve a duty. The new
 six-target capture does not repeat the already retained excise response and
 does not constitute a complete trade-remedy, VAT or OpenData inventory.
+
+## Quarantined rejected originals, 12 September 2026
+
+Run `34600642623` retained four of six requested originals. The department and
+document-index responses were HTTP 200 but failed content validation with
+`block_or_error_page_detected`. Their bodies were discarded by the previous
+`if ok` capture branch, so the report alone cannot establish why they matched.
+The four successful originals are already retained and are not requested again
+by the next isolated capture.
+
+The new explicit `--capture-rejected-originals` option requires both
+`--capture-originals` and `--store-root`. It keeps a nonempty HTTP 200 response
+only after the existing guarded transport succeeds and a listed content check
+rejects it. HTTPS, allowed redirect identity, encoding, bounded stream reads and
+Content-Length checks remain in force. Transport failures, oversize bodies,
+non-200 responses and empty responses have no quarantine capture. Missing MIME
+metadata may be retained as an empty receipt field, with failed validation.
+
+Rejected bodies and receipts use the same immutable content-addressed object
+store, but the receipt is explicitly `official_monitor_rejected_original` with
+`quarantine_status=content_rejected`. Only `verify_rejected_original_capture`
+can replay this receipt. `verify_original_capture` rejects it. Receipt integrity
+does not turn rejected content into a verified official artifact or candidate.
+
+The report exposes `rejected_original_capture` separately. It cannot change
+`ok`, `approval_allowed`, baseline or pending state, successful original count,
+or original/revision completeness. Capture still exits nonzero for any rejected
+source, even when its quarantine objects were successfully saved. All legal,
+retention, review and promotion assertions remain false. The tests also exposed
+and fixed a pre-existing diagnostic defect: a rejected PDF could still report
+verified artifact/revision identity solely from its URL shape.
+
+The workflow now selects only `trade_remedies_official` and
+`trade_remedies_official__artifact_2`, without acceptance arguments. No new live
+capture is claimed by this implementation checkpoint. Diagnosis of the resulting
+bytes is separate from changing the content validator or approving a source.
+
+Validation: 125 focused monitor/capture/integrity tests passed on an explicitly
+isolated database sentinel; the monitor did not create it. Cases cover both
+receipt verifiers, tampering, wrong/missing MIME, block responses, signed URL
+redaction, shared URLs, mixed successful/rejected counts, preserved pending
+baselines, transport failures, stream/declared size limits and CLI requirements.
+The older Decision 121 and FNS VAT source identity checks remain separate tests
+after narrowing the workflow selection. Independent QA, integration and remote
+CI are required before this checkpoint is integrated.
