@@ -1,0 +1,9 @@
+{
+  "task_id": "SMOKE-RATES-001",
+  "owner": "A1",
+  "session_id": "/root/smoke_rates",
+  "branch": "agent/rates-smoke-rates-001-00e2649498",
+  "base_sha": "b1741c04ec0f1eca2b73833b918e52c7cff564c5",
+  "synthetic": true,
+  "statement": "No rate or payment claim; isolation smoke only"
+}
