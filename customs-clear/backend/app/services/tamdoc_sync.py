@@ -15,10 +15,17 @@ from loguru import logger
 from sqlalchemy import desc
 
 from ..db import SessionLocal
-from ..models.core import TrTsAct
-from ..models.tnved import Commodity, NonTariffMeasure, SpecialDuty, TamdocSyncCandidate, VatPreference
+from ..models.tnved import TamdocSyncCandidate
 from .gemini_genai_configure import configure_google_generativeai
 from .normative_store import append_sync_log, upsert_source_status
+from .official_payment_admission import LEGAL_REVIEW_BLOCKER, blocked_payment_import
+
+NTM_REVIEW_BLOCKER = (
+    "curated_ntm_review_required: commercial extraction is pending evidence; "
+    "official source review, structured product applicability and separate approval "
+    "are required before writing active NTM or technical-regulation records"
+)
+
 
 TAMDOC_INDEX_URL = os.getenv("TAMDOC_INDEX_URL", "https://www.alta.ru/tamdoc/").strip()
 TAMDOC_SYNC_ENABLED = os.getenv("TAMDOC_SYNC_ENABLED", "1").lower() in ("1", "true", "yes")
@@ -268,47 +275,7 @@ def _extract_tr_ts_title_line(text: str, code: str) -> str:
 
 
 def _upsert_tr_ts_acts(act_codes: list[str], *, title: str, text: str, source_url: str, source_revision: str) -> tuple[int, int]:
-    if not act_codes:
-        return 0, 0
-    created = 0
-    updated = 0
-    with SessionLocal() as db:
-        for code in act_codes:
-            snippet = _extract_tr_ts_title_line(text, code)
-            label_prefix = "ТР ЕАЭС" if re.search(rf"тр\s*еаэс\s*{re.escape(code)}", f"{title}\n{text}", re.IGNORECASE) else "ТР ТС"
-            short_name = f"{label_prefix} {code}"[:512]
-            full_title = (snippet or title or short_name)[:4000]
-            row = db.query(TrTsAct).filter(TrTsAct.act_code == code).first()
-            if row is None:
-                db.add(
-                    TrTsAct(
-                        act_code=code,
-                        short_name=short_name,
-                        full_title=full_title,
-                        edition_note="Импортировано из локального архива tamdoc.",
-                        source_url=source_url[:4000],
-                        source_revision=source_revision[:128],
-                    )
-                )
-                created += 1
-            else:
-                changed = False
-                if not (row.short_name or "").strip():
-                    row.short_name = short_name
-                    changed = True
-                if not (row.full_title or "").strip():
-                    row.full_title = full_title
-                    changed = True
-                if source_url and row.source_url != source_url:
-                    row.source_url = source_url[:4000]
-                    changed = True
-                if source_revision and row.source_revision != source_revision:
-                    row.source_revision = source_revision[:128]
-                    changed = True
-                if changed:
-                    updated += 1
-        db.commit()
-    return created, updated
+    raise PermissionError(NTM_REVIEW_BLOCKER)
 
 
 def _extract_json_array_payload(raw: str) -> str:
@@ -559,37 +526,8 @@ def _expand_targets(hs_code: str, all_codes: set[str], leaf_codes: list[str]) ->
 
 
 def _upsert_vat_preferences(hs_codes: list[str], vat_rates: list[int], decree_info: str, comment: str) -> tuple[int, int]:
-    if not hs_codes or not vat_rates:
-        return 0, 0
-    created = 0
-    updated = 0
-    with SessionLocal() as db:
-        for hs in hs_codes:
-            for rate in vat_rates:
-                row = (
-                    db.query(VatPreference)
-                    .filter(
-                        VatPreference.hs_code_prefix == hs[:10],
-                        VatPreference.vat_rate == rate,
-                        VatPreference.decree_info == decree_info,
-                    )
-                    .first()
-                )
-                if row:
-                    row.comment = comment
-                    updated += 1
-                else:
-                    db.add(
-                        VatPreference(
-                            hs_code_prefix=hs[:10],
-                            vat_rate=rate,
-                            decree_info=decree_info,
-                            comment=comment,
-                        )
-                    )
-                    created += 1
-        db.commit()
-    return created, updated
+    # Commercial extraction cannot authorize an active legal rate.
+    raise PermissionError(LEGAL_REVIEW_BLOCKER)
 
 
 def _upsert_special_duties(
@@ -598,42 +536,8 @@ def _upsert_special_duties(
     percent_rates: list[float],
     regulatory_act: str,
 ) -> tuple[int, int]:
-    if not hs_codes or not percent_rates:
-        return 0, 0
-    countries = country_codes or ["ALL"]
-    created = 0
-    updated = 0
-    rate = max(percent_rates)
-    with SessionLocal() as db:
-        for hs in hs_codes:
-            for cc in countries:
-                row = (
-                    db.query(SpecialDuty)
-                    .filter(
-                        SpecialDuty.hs_code_prefix == hs[:10],
-                        SpecialDuty.origin_country == cc,
-                        SpecialDuty.regulatory_act == regulatory_act,
-                    )
-                    .first()
-                )
-                if row:
-                    row.rate_percent = rate
-                    row.currency_code = "RUB"
-                    updated += 1
-                else:
-                    db.add(
-                        SpecialDuty(
-                            hs_code_prefix=hs[:10],
-                            origin_country=cc,
-                            rate_percent=rate,
-                            rate_specific=0.0,
-                            currency_code="RUB",
-                            regulatory_act=regulatory_act,
-                        )
-                    )
-                    created += 1
-        db.commit()
-    return created, updated
+    # Commercial extraction cannot authorize an active legal rate.
+    raise PermissionError(LEGAL_REVIEW_BLOCKER)
 
 
 def _upsert_non_tariff(
@@ -642,46 +546,7 @@ def _upsert_non_tariff(
     regulatory_act: str,
     document_required: str,
 ) -> tuple[int, int]:
-    if not lines:
-        return 0, 0
-    created = 0
-    duplicates = 0
-    mtype = measure_type if measure_type in ALLOWED_MEASURE_TYPES else "other"
-    with SessionLocal() as db:
-        all_codes = {x[0] for x in db.query(Commodity.code).all()}
-        leaf_codes = [c for c in all_codes if len(c) == 10]
-        staged: set[tuple[str, str, str]] = set()
-        batch: list[NonTariffMeasure] = []
-        existing = {
-            (
-                m.commodity_code,
-                (m.measure_type or "").strip().lower(),
-                (m.regulatory_act or "").strip(),
-            )
-            for m in db.query(NonTariffMeasure).all()
-        }
-        for hs, desc in lines:
-            targets = _expand_targets(hs, all_codes, leaf_codes)
-            for code in targets:
-                key = (code, mtype, (regulatory_act or "").strip())
-                if key in existing or key in staged:
-                    duplicates += 1
-                    continue
-                staged.add(key)
-                batch.append(
-                    NonTariffMeasure(
-                        commodity_code=code,
-                        measure_type=mtype,
-                        description=desc,
-                        document_required=document_required,
-                        regulatory_act=regulatory_act,
-                    )
-                )
-        if batch:
-            db.bulk_save_objects(batch)
-            db.commit()
-            created = len(batch)
-    return created, duplicates
+    raise PermissionError(NTM_REVIEW_BLOCKER)
 
 
 def _stage_candidate(
@@ -826,66 +691,30 @@ def _iter_archive_files(base_dir: Path, max_files: int | None) -> list[Path]:
 
 
 def approve_tamdoc_candidate(candidate_id: int, include_non_tariff: bool = False) -> dict[str, Any]:
+    """Compatibility endpoint: mirror candidates cannot authorize legal application."""
     with SessionLocal() as db:
         row = db.query(TamdocSyncCandidate).filter(TamdocSyncCandidate.id == int(candidate_id)).first()
         if not row:
             return {"status": "ERROR", "error": "candidate_not_found", "candidate_id": candidate_id}
-
-        hs = (row.hs_prefix or "").strip()
-        vat_rates = _csv_to_ints(row.vat_rates)
-        percent_rates = _csv_to_floats(row.percent_rates)
-        country_codes = _csv_to_tokens(row.country_codes)
-        decree_info = (f"{row.doc_title} ({row.doc_url})" if row.doc_title else row.doc_url)[:255]
-        comment = (row.excerpt or "")[:250]
-
-        vat_created = vat_updated = 0
-        sp_created = sp_updated = 0
-        nt_created = nt_duplicates = 0
-
-        if not hs:
-            row.status = "rejected"
-            row.error_message = "Нельзя применить: отсутствует hs_prefix в кандидате"
-            db.commit()
-            return {"status": "REJECTED", "candidate_id": row.id, "reason": row.error_message}
-
-        if row.doc_type in {"vat", "mixed"} and vat_rates:
-            vat_created, vat_updated = _upsert_vat_preferences(
-                hs_codes=[hs],
-                vat_rates=vat_rates,
-                decree_info=decree_info,
-                comment=comment,
-            )
-        if row.doc_type in {"special", "mixed"} and percent_rates:
-            sp_created, sp_updated = _upsert_special_duties(
-                hs_codes=[hs],
-                country_codes=country_codes,
-                percent_rates=percent_rates,
-                regulatory_act=decree_info,
-            )
-        if include_non_tariff and hs:
-            mtype = row.measure_type_hint if row.measure_type_hint in ALLOWED_MEASURE_TYPES else "other"
-            doc_req = _default_document_required(mtype)
-            nt_created, nt_duplicates = _upsert_non_tariff(
-                lines=[(hs, comment or "Требование из tamdoc (staging)")],
-                measure_type=mtype,
-                regulatory_act=decree_info,
-                document_required=doc_req,
-            )
-
-        row.status = "approved"
-        row.error_message = ""
-        db.commit()
+        if (row.doc_type or "").strip().lower() in {"vat", "special", "mixed"} or row.vat_rates or row.percent_rates:
+            return {
+                **blocked_payment_import(source="ALTA_TAMDOC"),
+                "candidate_id": row.id,
+                "candidate_status": row.status,
+                "active_ntm_written": False,
+            }
         return {
-            "status": "OK",
+            "status": "manual_review_required",
+            "source": "ALTA_TAMDOC",
             "candidate_id": row.id,
-            "applied": {
-                "vat_created": vat_created,
-                "vat_updated": vat_updated,
-                "special_created": sp_created,
-                "special_updated": sp_updated,
-                "non_tariff_created": nt_created,
-                "non_tariff_duplicates": nt_duplicates,
-            },
+            "candidate_status": row.status,
+            "db_mutated": False,
+            "active_rates_written": False,
+            "active_ntm_written": False,
+            "source_evidence_verified": False,
+            "legal_review_verified": False,
+            "retention_verified": False,
+            "blockers": [NTM_REVIEW_BLOCKER],
         }
 
 
@@ -917,16 +746,27 @@ def approve_tamdoc_candidates_batch(
     ok = 0
     rejected = 0
     errors = 0
+    blocked = 0
+    blockers: set[str] = set()
     for cid in ids:
         res = approve_tamdoc_candidate(int(cid), include_non_tariff=include_non_tariff)
         if res.get("status") == "OK":
             ok += 1
+        elif res.get("status") == "manual_review_required":
+            blocked += 1
+            blockers.update(res.get("blockers") or [])
         elif res.get("status") == "REJECTED":
             rejected += 1
         else:
             errors += 1
     return {
-        "status": "OK" if errors == 0 else "WARNING",
+        "status": "manual_review_required" if blocked else ("OK" if errors == 0 else "WARNING"),
+        "blocked": blocked,
+        "db_mutated": bool(ok or rejected),
+        "active_rates_written": False,
+        "legal_review_verified": False,
+        "blockers": sorted(blockers),
+        "active_ntm_written": False,
         "processed": len(ids),
         "approved": ok,
         "rejected": rejected,
@@ -941,6 +781,8 @@ def sync_tamdoc_archive(
     include_non_tariff: bool = True,
     auto_approve_pending: bool = False,
 ) -> dict[str, Any]:
+    # Mirror extraction remains pending, including explicit apply requests.
+    staging_only = True
     base_dir = Path(archive_dir).expanduser().resolve() if archive_dir else TAMDOC_ARCHIVE_DIR.resolve()
     limit = max_files if max_files is not None else TAMDOC_ARCHIVE_MAX_FILES
     files = _iter_archive_files(base_dir, limit)
@@ -1003,15 +845,6 @@ def sync_tamdoc_archive(
             tr_ts_codes = _extract_tr_ts_act_codes(f"{title}\n{text}") if is_tr_ts else []
             if tr_ts_codes:
                 tr_ts_docs += 1
-                c_act, u_act = _upsert_tr_ts_acts(
-                    tr_ts_codes,
-                    title=title,
-                    text=text,
-                    source_url=f"file://{fp}",
-                    source_revision="archive",
-                )
-                tr_ts_acts_created += c_act
-                tr_ts_acts_updated += u_act
 
             _stage_candidate(
                 url=f"file://{fp}",
@@ -1024,7 +857,7 @@ def sync_tamdoc_archive(
                 measure_type_hint="tr_ts" if is_tr_ts else _measure_type_hint(text),
                 excerpt=text[:1200],
                 status="pending" if hs_codes else "skipped",
-                error_message="" if hs_codes else "Коды ТН ВЭД не найдены",
+                error_message=(LEGAL_REVIEW_BLOCKER if is_vat or is_special else NTM_REVIEW_BLOCKER) if hs_codes else "Коды ТН ВЭД не найдены",
             )
             staged_ok += 1
             if not hs_codes:
@@ -1033,73 +866,8 @@ def sync_tamdoc_archive(
 
             if is_vat:
                 vat_candidates += 1
-                if vat_rates and not staging_only:
-                    decree = "ПП РФ (из локального архива)"
-                    mdec = re.search(r"(пп\s*рф\s*№\s*\d+)", f"{title}\n{text}".lower())
-                    if mdec:
-                        decree = mdec.group(1).upper().replace("ПП РФ", "ПП РФ")
-                    c1, u1 = _upsert_vat_preferences(
-                        hs_codes=hs_codes,
-                        vat_rates=vat_rates,
-                        decree_info=decree[:255],
-                        comment=title[:250],
-                    )
-                    vat_created += c1
-                    vat_updated += u1
-
             if is_special:
                 special_candidates += 1
-                if rates and not staging_only:
-                    c2, u2 = _upsert_special_duties(
-                        hs_codes=hs_codes,
-                        country_codes=countries,
-                        percent_rates=rates,
-                        regulatory_act=title[:250],
-                    )
-                    sp_created += c2
-                    sp_updated += u2
-
-            if include_non_tariff:
-                grouped: dict[tuple[str, str, str], list[tuple[str, str]]] = {}
-                if extracted_items:
-                    for item in extracted_items:
-                        hs = _normalize_hs(str(item.get("hs_code") or ""))
-                        if not hs:
-                            continue
-                        mtype = str(item.get("measure_type") or ("tr_ts" if is_tr_ts else _measure_type_hint(text))).strip().lower()
-                        if is_tr_ts:
-                            mtype = "tr_ts"
-                        if mtype not in ALLOWED_MEASURE_TYPES:
-                            mtype = "other"
-                        doc_req = (str(item.get("document_required") or "") or _default_document_required(mtype))[:255]
-                        reg_act = (str(item.get("regulatory_act") or "") or title)[:255]
-                        desc = (str(item.get("description") or "") or title or "Требование из архива tamdoc")[:1000]
-                        grouped.setdefault((mtype, reg_act, doc_req), []).append((hs, desc))
-
-                if not grouped:
-                    lines = _extract_lines_with_code(text, max_lines=240)
-                    if is_tr_ts and tr_ts_codes:
-                        act_suffix = ", ".join(tr_ts_codes)
-                        reg_act = f"{title} ({act_suffix})"[:255]
-                        grouped[("tr_ts", reg_act, _default_document_required("tr_ts"))] = lines or [
-                            (hs, f"Требование ТР ТС/ТР ЕАЭС ({act_suffix})")
-                            for hs in hs_codes[:240]
-                        ]
-                    elif lines:
-                        hint = _measure_type_hint(text)
-                        grouped[(hint, title[:255], _default_document_required(hint))] = lines
-
-                for (mtype, reg_act, doc_req), rows in grouped.items():
-                    if not rows:
-                        continue
-                    c3, d3 = _upsert_non_tariff(
-                        lines=rows,
-                        measure_type=mtype,
-                        regulatory_act=reg_act,
-                        document_required=doc_req,
-                    )
-                    nt_created += c3
-                    nt_duplicates += d3
 
             docs_processed += 1
         except Exception as exc:
@@ -1133,6 +901,11 @@ def sync_tamdoc_archive(
         )
 
     summary = {
+        "active_rates_written": False,
+        "legal_review_verified": False,
+        "payment_application_status": "manual_review_required",
+        "active_ntm_written": False,
+        "ntm_application_status": "manual_review_required",
         "status": "OK" if docs_errors == 0 else "WARNING",
         "source": "ALTA_TAMDOC_ARCHIVE",
         "archive_dir": str(base_dir),
@@ -1163,7 +936,7 @@ def sync_tamdoc_archive(
         source_name="ALTA ТамДок (локальный архив)",
         source_url=f"file://{base_dir}",
         revision=f"docs:{docs_processed}",
-        is_stale=False if docs_errors == 0 else True,
+        is_stale=True,
         note=str(summary),
     )
     append_sync_log(
@@ -1203,6 +976,7 @@ async def sync_tamdoc_documents(max_docs: int | None = None) -> dict[str, Any]:
             logger.info(f"ALTA TAMDOC: найдено ссылок={len(links)} (лимит={lim_label})")
 
             docs_processed = 0
+            staged_ok = 0
             vat_created = vat_updated = 0
             sp_created = sp_updated = 0
             nt_created = nt_duplicates = 0
@@ -1226,48 +1000,38 @@ async def sync_tamdoc_documents(max_docs: int | None = None) -> dict[str, Any]:
 
                     low = text.lower()
 
-                    # VAT preferences (10% / 0%)
-                    if "ндс" in low:
-                        vrates = _extract_vat_rates(text)
-                        decree = "ПП РФ № 908/688"
-                        mdec = re.search(r"пп\s*рф\s*№\s*\d+", low)
-                        if mdec:
-                            decree = mdec.group(0).upper().replace("ПП РФ", "ПП РФ")
-                        c1, u1 = _upsert_vat_preferences(
-                            hs_codes=hs_codes,
-                            vat_rates=vrates,
-                            decree_info=decree,
-                            comment=title[:250],
+                    # Retain commercial extraction as pending evidence only.
+                    is_vat = "ндс" in low
+                    is_special = (
+                        any(k in low for k in ("антидемп", "компенсацион", "защитн", "специальн"))
+                        and "пошлин" in low
+                    )
+                    if is_vat:
+                        _stage_candidate(
+                            url=url, title=title, doc_type="vat", hs_codes=hs_codes,
+                            country_codes=_extract_country_codes(text),
+                            vat_rates=_extract_vat_rates(text), percent_rates=[],
+                            measure_type_hint=_measure_type_hint(text), excerpt=text[:1200],
+                            status="pending", error_message=LEGAL_REVIEW_BLOCKER,
                         )
-                        vat_created += c1
-                        vat_updated += u1
-
-                    # Special duties (anti-dumping/protective/compensatory)
-                    if any(k in low for k in ("антидемп", "компенсацион", "защитн", "специальн")) and "пошлин" in low:
-                        countries = _extract_country_codes(text)
-                        rates = _extract_percent_rates(text)
-                        c2, u2 = _upsert_special_duties(
-                            hs_codes=hs_codes,
-                            country_codes=countries,
-                            percent_rates=rates,
-                            regulatory_act=title[:250],
+                        staged_ok += 1
+                    if is_special:
+                        _stage_candidate(
+                            url=url, title=title, doc_type="special", hs_codes=hs_codes,
+                            country_codes=_extract_country_codes(text),
+                            vat_rates=[], percent_rates=_extract_percent_rates(text),
+                            measure_type_hint=_measure_type_hint(text), excerpt=text[:1200],
+                            status="pending", error_message=LEGAL_REVIEW_BLOCKER,
                         )
-                        sp_created += c2
-                        sp_updated += u2
-
-                    # Non-tariff hints from lines with code
-                    lines = _extract_lines_with_code(text, max_lines=25)
-                    if lines:
-                        mtype = _measure_type_hint(text)
-                        doc_req = _default_document_required(mtype)
-                        c3, d3 = _upsert_non_tariff(
-                            lines=lines,
-                            measure_type=mtype,
-                            regulatory_act=title[:250],
-                            document_required=doc_req,
+                        staged_ok += 1
+                    if not is_vat and not is_special:
+                        _stage_candidate(
+                            url=url, title=title, doc_type="other", hs_codes=hs_codes,
+                            country_codes=[], vat_rates=[], percent_rates=[],
+                            measure_type_hint=_measure_type_hint(text), excerpt=text[:1200],
+                            status="pending", error_message=NTM_REVIEW_BLOCKER,
                         )
-                        nt_created += c3
-                        nt_duplicates += d3
+                        staged_ok += 1
 
                     docs_processed += 1
                     if TAMDOC_MAX_DELAY_SEC > 0:
@@ -1293,9 +1057,15 @@ async def sync_tamdoc_documents(max_docs: int | None = None) -> dict[str, Any]:
                     logger.warning(f"ALTA TAMDOC: ошибка обработки {url}: {doc_exc}")
 
         summary = {
+            "active_rates_written": False,
+            "legal_review_verified": False,
+            "payment_application_status": "manual_review_required",
+            "active_ntm_written": False,
+            "ntm_application_status": "manual_review_required",
             "status": "OK" if errors == 0 else "WARNING",
             "source": "ALTA_TAMDOC",
             "docs_processed": docs_processed,
+            "staged_ok": staged_ok,
             "docs_errors": errors,
             "vat_created": vat_created,
             "vat_updated": vat_updated,
@@ -1311,14 +1081,14 @@ async def sync_tamdoc_documents(max_docs: int | None = None) -> dict[str, Any]:
             source_name="ALTA ТамДок (автопарсинг)",
             source_url=TAMDOC_INDEX_URL,
             revision=f"docs:{docs_processed}",
-            is_stale=False if errors == 0 else True,
+            is_stale=True,
             note=str(summary),
         )
         append_sync_log(
             source_code="ALTA_TAMDOC",
             status="OK" if errors == 0 else "WARNING",
             revision=f"docs:{docs_processed}",
-            rows_affected=vat_created + sp_created + nt_created,
+            rows_affected=staged_ok,
             note=str(summary),
         )
         return summary
@@ -1343,6 +1113,8 @@ async def sync_tamdoc_documents(max_docs: int | None = None) -> dict[str, Any]:
 
 async def sync_tamdoc_targeted(max_docs: int | None = None, staging_only: bool = False) -> dict[str, Any]:
     """Целевой парсинг документов tamdoc для НДС-льгот и спецпошлин."""
+    # Mirror extraction remains pending, including explicit apply requests.
+    staging_only = True
     if not TAMDOC_SYNC_ENABLED:
         return {"status": "SKIPPED", "source": "ALTA_TAMDOC_TARGETED", "note": "TAMDOC_SYNC_ENABLED=false"}
 
@@ -1428,37 +1200,14 @@ async def sync_tamdoc_targeted(max_docs: int | None = None, staging_only: bool =
                         measure_type_hint=measure_hint,
                         excerpt=text[:1200],
                         status="pending",
+                        error_message=LEGAL_REVIEW_BLOCKER if is_vat or is_special else NTM_REVIEW_BLOCKER,
                     )
                     staged_ok += 1
 
-                    if _looks_like_vat_doc(title, text):
+                    if is_vat:
                         vat_candidates += 1
-                        if vat_rates and not staging_only:
-                            decree = ""
-                            mdec = re.search(r"(пп\s*рф\s*№\s*\d+)", f"{title}\n{text}".lower())
-                            if mdec:
-                                decree = mdec.group(1).upper().replace("ПП РФ", "ПП РФ")
-                            decree = decree or "ПП РФ (из документа tamdoc)"
-                            c1, u1 = _upsert_vat_preferences(
-                                hs_codes=hs_codes,
-                                vat_rates=vat_rates,
-                                decree_info=decree,
-                                comment=title[:250],
-                            )
-                            vat_created += c1
-                            vat_updated += u1
-
-                    if _looks_like_special_doc(title, text):
+                    if is_special:
                         sp_candidates += 1
-                        if rates and not staging_only:
-                            c2, u2 = _upsert_special_duties(
-                                hs_codes=hs_codes,
-                                country_codes=countries,
-                                percent_rates=rates,
-                                regulatory_act=title[:250],
-                            )
-                            sp_created += c2
-                            sp_updated += u2
 
                     docs_processed += 1
                     if TAMDOC_MAX_DELAY_SEC > 0:
@@ -1485,6 +1234,11 @@ async def sync_tamdoc_targeted(max_docs: int | None = None, staging_only: bool =
                     logger.warning(f"ALTA TAMDOC TARGETED: ошибка обработки {url}: {doc_exc}")
 
         summary = {
+            "active_rates_written": False,
+            "legal_review_verified": False,
+            "payment_application_status": "manual_review_required",
+            "active_ntm_written": False,
+            "ntm_application_status": "manual_review_required",
             "status": "OK" if errors == 0 else "WARNING",
             "source": "ALTA_TAMDOC_TARGETED",
             "docs_processed": docs_processed,
@@ -1506,7 +1260,7 @@ async def sync_tamdoc_targeted(max_docs: int | None = None, staging_only: bool =
             source_name="ALTA ТамДок (целевой парсинг НДС/спецпошлин)",
             source_url=TAMDOC_INDEX_URL,
             revision=f"docs:{docs_processed}",
-            is_stale=False if errors == 0 else True,
+            is_stale=True,
             note=str(summary),
         )
         append_sync_log(
