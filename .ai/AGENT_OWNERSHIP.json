@@ -1,5 +1,5 @@
 {
-  "board_revision": 78,
+  "board_revision": 82,
   "files": {
     ".github/workflows/admission-agent-qa.yml": {
       "branch": "agent/rates-tariff-admission-recheck-001-9231ffbdb5",

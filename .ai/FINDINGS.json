@@ -1,5 +1,5 @@
 {
-  "board_revision": 78,
+  "board_revision": 82,
   "findings": [
     {
       "head_sha": "161a9258d174e93266353ae1fd2cb0b3e4657679",
@@ -52,6 +52,19 @@
       "validation": {
         "at": "2026-09-12T21:54:00.888985+00:00",
         "evidence": "A0 independently reproduced on exact clean candidate HEAD: the owned-file test failed because status was empty, but the following unconditional printf printed PASS and made the shell return 0; git diff --cached was empty. Finding is confirmed and must be fixed with fail-fast exact base/head checks.",
+        "validator": "A0"
+      }
+    },
+    {
+      "head_sha": "c5750fb266dd4946855eda0ef2f2083f32e5356f",
+      "id": "A5-AD30-002",
+      "reporter": "A5",
+      "status": "CONFIRMED",
+      "summary": "Embedded validation uses mapfile with process substitution, so jq failures do not propagate under set -euo pipefail; absent exact 33/23 count assertions allow false PASS at 0/0.",
+      "task_id": "TARIFF-AD30-REVIEW-CANDIDATE-001",
+      "validation": {
+        "at": "2026-09-12T22:01:34.795543+00:00",
+        "evidence": "A0 independently replaced jq with a nonexistent command in the embedded replay. It returned rc0 and emitted six PASS lines, including 0/0 bindings and 0/0 source literals. Finding confirmed.",
         "validator": "A0"
       }
     }
