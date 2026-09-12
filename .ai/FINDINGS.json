@@ -1,5 +1,5 @@
 {
-  "board_revision": 74,
+  "board_revision": 77,
   "findings": [
     {
       "head_sha": "161a9258d174e93266353ae1fd2cb0b3e4657679",
@@ -41,7 +41,12 @@
       "head_sha": "ea24f31eea57422ee78e662d93b518b422b0db03",
       "id": "A5-AD30-001",
       "reporter": "A5",
-      "status": "CONFIRMED",
+      "resolution": {
+        "evidence": "A0 replayed the new embedded set -euo pipefail validation on clean candidate HEAD: exact base-to-head one-file scope, evidence bindings and diff check all passed. The prior status/cached-diff false-positive commands were removed.",
+        "head_sha": "c5750fb266dd4946855eda0ef2f2083f32e5356f",
+        "validator": "A0"
+      },
+      "status": "RESOLVED",
       "summary": "Documented Commands 1-5 are not fail-fast and can print PASS after failed assertions; Command 1 checks dirty status instead of exact base-to-head scope and Command 6 checks an empty cached diff rather than the committed candidate.",
       "task_id": "TARIFF-AD30-REVIEW-CANDIDATE-001",
       "validation": {

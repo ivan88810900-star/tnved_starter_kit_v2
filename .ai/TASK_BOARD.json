@@ -40,7 +40,12 @@
       "head_sha": "ea24f31eea57422ee78e662d93b518b422b0db03",
       "id": "A5-AD30-001",
       "reporter": "A5",
-      "status": "CONFIRMED",
+      "resolution": {
+        "evidence": "A0 replayed the new embedded set -euo pipefail validation on clean candidate HEAD: exact base-to-head one-file scope, evidence bindings and diff check all passed. The prior status/cached-diff false-positive commands were removed.",
+        "head_sha": "c5750fb266dd4946855eda0ef2f2083f32e5356f",
+        "validator": "A0"
+      },
+      "status": "RESOLVED",
       "summary": "Documented Commands 1-5 are not fail-fast and can print PASS after failed assertions; Command 1 checks dirty status instead of exact base-to-head scope and Command 6 checks an empty cached diff rather than the committed candidate.",
       "task_id": "TARIFF-AD30-REVIEW-CANDIDATE-001",
       "validation": {
@@ -51,7 +56,7 @@
     }
   ],
   "max_concurrent_subagents": 3,
-  "revision": 74,
+  "revision": 77,
   "runs": [
     {
       "head_sha": null,
@@ -179,9 +184,9 @@
       "run_id": "e2e0a83c873e4e3aaa65778a74171597",
       "session_id": "/root/a3_ad30_review",
       "started_at": "2026-09-12T21:55:25.447756+00:00",
-      "status": "RUNNING",
+      "status": "FINISHED",
       "task_id": "TARIFF-AD30-REVIEW-CANDIDATE-001",
-      "updated_at": "2026-09-12T21:55:25.447769+00:00"
+      "updated_at": "2026-09-12T21:57:56.055985+00:00"
     }
   ],
   "schema_version": 1,
@@ -520,7 +525,7 @@
       "qa": null,
       "refs": {
         "base_sha": "1c0272a34cbcbb3b99d6f32c86d86949bc0adc06",
-        "head_sha": "ea24f31eea57422ee78e662d93b518b422b0db03",
+        "head_sha": "c5750fb266dd4946855eda0ef2f2083f32e5356f",
         "pr": null
       },
       "required_checks": [
@@ -531,11 +536,25 @@
         "admission"
       ],
       "risk": "high",
-      "status": "IN_PROGRESS",
-      "tests": [],
-      "updated_at": "2026-09-12T21:55:25.447771+00:00",
+      "status": "IMPLEMENTED",
+      "tests": {
+        "commands": [
+          {
+            "command": "Replay embedded fail-closed exact base-to-head validation",
+            "exit_code": 0,
+            "output": "PASS: exact one-file base..HEAD scope and clean worktree; 5/5 paths; 33/33 binding literals; 23/23 source literals; 8/8 dates; committed diff check."
+          },
+          {
+            "command": "Negative-control replay with invalid all-zero base",
+            "exit_code": 0,
+            "output": "PASS: validation process returned nonzero and emitted zero PASS lines, proving fail-closed behavior."
+          }
+        ],
+        "head_sha": "c5750fb266dd4946855eda0ef2f2083f32e5356f"
+      },
+      "updated_at": "2026-09-12T21:57:56.076108+00:00",
       "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-ad30-review-candidate-001-99f4e3fb32"
     }
   ],
-  "updated_at": "2026-09-12T21:55:25.447922+00:00"
+  "updated_at": "2026-09-12T21:57:56.101046+00:00"
 }
