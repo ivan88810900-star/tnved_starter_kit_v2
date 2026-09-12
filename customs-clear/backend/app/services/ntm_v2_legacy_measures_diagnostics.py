@@ -71,7 +71,7 @@ def _classify_imported_measure(measure: NtmMeasureV2, legacy: dict[str, Any]) ->
     if mk in ENFORCEMENT_CANDIDATE_KINDS:
         if mk == "other" or (not legal_ref and not description):
             return "ambiguous_candidate"
-        return "enforcement_candidate"
+        return "ambiguous_candidate"
 
     return "ambiguous_candidate"
 
@@ -117,7 +117,7 @@ def _classify_measure_impact(
         return "exactly_already_covered"
     if pt in baseline_types:
         return "permit_type_already_covered_different_tr_ts"
-    return "truly_new_permit_type"
+    return "manual_review_required"
 
 
 def analyze_legacy_measures_v2_distribution(session: Session | None = None) -> dict[str, Any]:
@@ -196,6 +196,8 @@ def analyze_legacy_measures_v2_distribution(session: Session | None = None) -> d
         ambiguous = by_suitability.get("ambiguous_candidate", 0)
 
         return {
+            "legal_review_verified": False,
+            "source_scope": "unreviewed_legacy_metadata",
             "measures": {
                 "total_imported": total_measures,
                 "by_measure_kind": dict(by_measure_kind.most_common()),
@@ -244,7 +246,6 @@ async def compare_legacy_measures_enforcement_impact(
     """
     from .non_tariff_service import check_position_non_tariff
 
-    _ = as_of
     baseline = await check_position_non_tariff(
         hs_code=hs_code,
         description=description,
@@ -255,8 +256,7 @@ async def compare_legacy_measures_enforcement_impact(
     )
 
     baseline_broker = _baseline_broker_rows(hs_code, description)
-    _ = as_of
-    measure_rows = get_v2_legacy_measures_broker_rows(hs_code, description)
+    measure_rows = get_v2_legacy_measures_broker_rows(hs_code, description, as_of=as_of, country=country)
     hypothetical_broker = merge_v2_legacy_measures_into_broker(baseline_broker, measure_rows)
 
     baseline_types = sorted({r["permit_type"] for r in baseline_broker if r.get("permit_type")})
@@ -273,10 +273,8 @@ async def compare_legacy_measures_enforcement_impact(
         baseline.get("rule_sources") or baseline.get("notes")
     )
     status_before = baseline.get("status")
-    status_after = _status_from_broker(
-        hypothetical_broker,
-        permits_result,
-        has_rules_or_measures=has_rules_or_measures,
+    status_after = status_before if hypothetical_broker == baseline_broker else _status_from_broker(
+        hypothetical_broker, permits_result, has_rules_or_measures=has_rules_or_measures,
     )
 
     impact_by_measure: list[dict[str, Any]] = []
@@ -303,6 +301,8 @@ async def compare_legacy_measures_enforcement_impact(
     return {
         "hs_code": normalize_hs_code(hs_code),
         "description": description,
+        "as_of": (as_of or date.today()).isoformat(),
+        "legal_review_verified": False,
         "baseline_required_permit_types": baseline_types,
         "hypothetical_required_permit_types": hypothetical_types,
         "added_permit_types": added_types,

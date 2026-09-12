@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from datetime import date
 from typing import Any, Iterator
 
 from sqlalchemy import select
@@ -12,7 +13,7 @@ from .. import db
 from ..datetime_util import utc_now_naive
 from ..models.ntm_v2 import NtmApplicabilityRuleV2, NtmMeasureV2
 from ..models.tnved import NonTariffMeasure
-from .hs_matching import get_hs_prefixes, normalize_hs_code
+from .hs_matching import normalize_hs_code
 from .non_tariff_rules import (
     _extract_tr_ts_code,
     _measure_to_permit_type,
@@ -23,6 +24,42 @@ from .tr_ts_catalog import TR_TS_FULL_NAMES
 
 MEASURES_SOURCE_KIND = "legacy_non_tariff_measures"
 MEASURES_SOURCE_REF_PREFIX = "non_tariff_measures"
+LEGACY_MEASURES_REVIEW_REASON = (
+    "Legacy code/text matches do not establish reviewed product applicability, "
+    "official source provenance or permission for missing-document enforcement."
+)
+
+
+def _review_metadata() -> dict[str, Any]:
+    return {
+        "applicability": "needs_clarification",
+        "requires_manual_review": True,
+        "used_for_missing_check": False,
+        "legal_review_verified": False,
+        "source_evidence_verified": False,
+        "applicability_reason": LEGACY_MEASURES_REVIEW_REASON,
+    }
+
+
+def _reference_date(as_of: date | None) -> date:
+    if as_of is None:
+        return date.today()
+    if type(as_of) is not date:
+        raise ValueError("as_of must be an explicit calendar date")
+    return as_of
+
+
+def _stored_date_status(rule: Any, measure: Any, ref: date) -> str:
+    bounds = ((rule.valid_from, rule.valid_to), (measure.valid_from, measure.valid_to))
+    if any(value is not None and type(value) is not date for pair in bounds for value in pair):
+        return "unverified"
+    if any(low is not None and high is not None and low > high for low, high in bounds):
+        return "unverified"
+    if any((low is not None and ref < low) or (high is not None and ref > high) for low, high in bounds):
+        return "inactive"
+    if not any(value is not None for pair in bounds for value in pair):
+        return "unverified"
+    return "active"
 
 _LEN_TO_SOURCE_LEVEL: dict[int, str] = {
     10: "exact",
@@ -190,6 +227,11 @@ def legacy_measure_dict_to_broker_row(m: dict[str, Any]) -> dict[str, Any]:
             "applicability", "requires_manual_review", "used_for_missing_check",
             "applicability_reason",
         ) if key in m},
+        **_review_metadata(),
+        **{key: m[key] for key in (
+            "stored_applicability", "stored_requires_manual_review", "as_of",
+            "context_review_reasons", "source_data_status",
+        ) if key in m},
         **review,
     }
 
@@ -199,15 +241,20 @@ def get_v2_legacy_measures_broker_rows(
     description: str = "",
     *,
     session: Session | None = None,
+    as_of: date | None = None,
+    direction: str = "import",
+    country: str | None = None,
 ) -> list[dict[str, Any]]:
-    """Matched v2 legacy measures для HS в формате broker rows."""
-    _ = description
+    """Unreviewed legacy candidates; never an enforceable legal determination."""
+    ref = _reference_date(as_of)
     close_session = False
     if session is None:
         session = db.SessionLocal()
         close_session = True
     try:
-        raw = _find_v2_legacy_measures_for_code(hs_code, session=session)
+        raw = _find_v2_legacy_measures_for_code(
+            hs_code, direction, session=session, as_of=ref, country=country, description=description,
+        )
         return [legacy_measure_dict_to_broker_row(m) for m in raw]
     finally:
         if close_session:
@@ -218,11 +265,8 @@ def merge_v2_legacy_measures_into_broker(
     broker_rows: list[dict[str, Any]],
     measure_rows: list[dict[str, Any]],
 ) -> list[dict[str, Any]]:
-    """Дедуп по ``(permit_type, tr_ts)``; пустой ``permit_type`` не добавляется."""
-    filtered = [r for r in measure_rows if (r.get("permit_type") or "").strip()
-                and r.get("applicability", "definite") == "definite"
-                and not r.get("requires_manual_review", False)]
-    return merge_v2_legacy_rules_into_broker(broker_rows, filtered)
+    """Preserve the broker baseline; legacy payloads cannot grant legal authority."""
+    return [dict(row) for row in broker_rows]
 
 
 def measure_compare_key_from_v2_measure(measure: NtmMeasureV2, legal_ref: str = "") -> str:
@@ -259,100 +303,95 @@ def _find_v2_legacy_measures_for_code(
     direction: str = "import",
     *,
     session: Session,
+    as_of: date | None = None,
+    country: str | None = None,
+    description: str = "",
 ) -> list[dict[str, Any]]:
-    """
-    Тот же алгоритм, что ``find_measures_for_code``: префиксы 10→2, стоп на первом уровне,
-    дедуп по ``row.id`` и ``compact_key`` на уровне.
-    """
-    _ = direction  # legacy ORM без direction; v2 rules — import
+    """Match stored scope without borrowing sibling leaves or approving legacy facts."""
+    ref = _reference_date(as_of)
     code = normalize_hs_code(hs_code)
     if not code:
         return []
-
-    prefixes: list[tuple[str, str, int]] = []
-    for pref in get_hs_prefixes(code, levels=(10, 8, 6, 4, 2)):
-        ln = len(pref)
-        prefixes.append((pref, _LEN_TO_SOURCE_LEVEL[ln], ln))
-    if not prefixes:
-        return []
-
-    all_rules = list(_iter_v2_legacy_measure_rules(session))
-    level_order = {
-        "exact": 0,
-        "8_digit": 1,
-        "6_digit": 2,
-        "4_digit": 3,
-        "chapter": 4,
-    }
+    try:
+        all_rules = list(_iter_v2_legacy_measure_rules(session))
+    except (ValueError, TypeError):
+        # Corrupt persisted date/JSON values can fail during ORM decoding.
+        # Retain unavailable-source evidence instead of a false empty result.
+        return [{
+            "commodity_code": code, "measure_type": "other", "measure_kind": "other",
+            "description": "Legacy source metadata could not be decoded",
+            "permit_type": "", "source_data_status": "unavailable", "as_of": ref.isoformat(),
+            "context_review_reasons": ["source_metadata_unavailable"], **_review_metadata(),
+        }]
     results: list[dict[str, Any]] = []
-    seen_import_keys: set[str] = set()
-
-    for pref, source_level, pref_len in prefixes:
-        level_seen: set[tuple[str, str, str, str]] = set()
-        level_rows: list[dict[str, Any]] = []
-        for rule in all_rules:
-            measure = rule.measure
-            # Эквивалент legacy SQL: commodity_code LIKE '{pref}%'
-            rule_hs = normalize_hs_code(rule.hs_code)
-            if not rule_hs.startswith(pref):
+    for rule in all_rules:
+        measure = rule.measure
+        rule_hs = normalize_hs_code(rule.hs_code)
+        if not rule_hs or not code.startswith(rule_hs):
+            continue
+        scope = (rule.hs_scope_mode or "").strip().lower()
+        if scope == "exact" and code != rule_hs:
+            continue
+        reasons: list[str] = []
+        if scope not in {"exact", "prefix"}:
+            reasons.append("hs_scope_unverified")
+        requested_direction = (direction or "").strip().lower()
+        source_direction = (rule.direction or "").strip().lower()
+        if source_direction in {"import", "export", "transit"} and requested_direction in {"import", "export", "transit"}:
+            if source_direction != requested_direction:
                 continue
-            ik = measure.import_key
-            if ik in seen_import_keys:
+        else:
+            reasons.append("direction_unverified")
+        source_country = (rule.country_iso or "").strip().upper()
+        requested_country = (country or "").strip().upper()
+        if source_country:
+            if (source_country == "EU" or len(source_country) != 2 or not source_country.isascii()
+                    or not source_country.isalpha() or len(requested_country) != 2
+                    or not requested_country.isascii() or not requested_country.isalpha()):
+                reasons.append("country_unverified")
+            elif source_country != requested_country:
                 continue
-            payload = rule.description_match_json if isinstance(rule.description_match_json, dict) else {}
-            legacy = payload.get("legacy_payload") if isinstance(payload.get("legacy_payload"), dict) else {}
-            mtype = str(legacy.get("measure_type") or measure.measure_kind)
-            legal_ref = str(legacy.get("legal_ref") or "")
-            desc = str(legacy.get("description") or measure.title)
-            doc = str(legacy.get("document_required") or "")
-            permit_type = legacy.get("permit_type") if legacy.get("permit_type") is not None else measure.permit_type
-            tr_ts = legacy.get("tr_ts_code") if legacy.get("tr_ts_code") is not None else (measure.tr_ts_act_code or None)
-            measure_kind = measure.measure_kind or measure_type_to_measure_kind(mtype)
-            # Old imported rows may still say definite until explicitly
-            # reimported. Never let that stale classification override the
-            # unresolved source/query scope on a read-only path.
-            review = (tr_ts_review_metadata(rule_hs, mtype)
-                      or tr_ts_review_metadata(code, mtype))
-            if review:
-                permit_type = None
-            compact_key = (
-                mtype.lower(),
-                legal_ref.lower(),
-                str(permit_type or ""),
-                str(tr_ts or ""),
-            )
-            if compact_key in level_seen:
+        date_status = _stored_date_status(rule, measure, ref)
+        if date_status == "inactive":
+            continue
+        if date_status == "unverified":
+            reasons.append("effective_dates_unverified")
+        excluded = rule.excluded_hs_json
+        if excluded is not None:
+            if (not isinstance(excluded, list)
+                    or any(not isinstance(value, str) or not value.isascii()
+                           or not value.isdigit() or not 2 <= len(value) <= 10 for value in excluded)):
+                reasons.append("exclusions_unverified")
+            elif any(code.startswith(value) for value in excluded):
                 continue
-            level_seen.add(compact_key)
-            seen_import_keys.add(ik)
-            level_rows.append(
-                {
-                    "commodity_code": legacy.get("commodity_code") or rule.hs_code,
-                    "measure_type": mtype,
-                    "description": desc,
-                    "document_required": doc,
-                    "legal_ref": legal_ref,
-                    "permit_type": permit_type,
-                    "tr_ts_code": tr_ts,
-                    "measure_kind": measure_kind,
-                    "match_prefix_len": pref_len,
-                    "source_level": source_level,
-                    "applicability": rule.applicability,
-                    "requires_manual_review": bool(rule.requires_manual_review),
-                    **review,
-                }
-            )
-        if level_rows:
-            results.extend(level_rows)
-            break
-
-    results.sort(
-        key=lambda m: (
-            level_order.get(str(m.get("source_level") or ""), 99),
-            -int(m.get("match_prefix_len") or 0),
-            str(m.get("commodity_code") or ""),
-        )
-    )
+        payload = rule.description_match_json if isinstance(rule.description_match_json, dict) else {}
+        legacy = payload.get("legacy_payload") if isinstance(payload.get("legacy_payload"), dict) else {}
+        # Free text/legacy JSON is evidence to review, not a product predicate.
+        reasons.append("product_applicability_unverified")
+        mtype = str(legacy.get("measure_type") or measure.measure_kind)
+        review = tr_ts_review_metadata(rule_hs, mtype) or tr_ts_review_metadata(code, mtype)
+        permit_type = legacy.get("permit_type") if legacy.get("permit_type") is not None else measure.permit_type
+        if review:
+            permit_type = None
+        results.append({
+            "commodity_code": rule.hs_code,
+            "measure_type": mtype,
+            "description": str(legacy.get("description") or measure.title),
+            "document_required": str(legacy.get("document_required") or ""),
+            "legal_ref": str(legacy.get("legal_ref") or ""),
+            "permit_type": permit_type,
+            "tr_ts_code": legacy.get("tr_ts_code") if legacy.get("tr_ts_code") is not None else (measure.tr_ts_act_code or None),
+            "measure_kind": measure.measure_kind or measure_type_to_measure_kind(mtype),
+            "match_prefix_len": len(rule_hs),
+            "source_level": _LEN_TO_SOURCE_LEVEL.get(len(rule_hs), "prefix"),
+            "stored_applicability": rule.applicability,
+            "stored_requires_manual_review": rule.requires_manual_review,
+            "as_of": ref.isoformat(),
+            "source_data_status": "unreviewed",
+            "context_review_reasons": sorted(set(reasons)),
+            **_review_metadata(), **review,
+        })
+    results.sort(key=lambda row: (-int(row.get("match_prefix_len") or 0), str(row.get("commodity_code") or "")))
     return results
 
 
@@ -478,8 +517,8 @@ def import_legacy_non_tariff_measures_to_ntm_v2(
                         hs_code=commodity_code,
                         excluded_hs_json=None,
                         description_match_json=payload,
-                        applicability="needs_clarification" if requires_scope_review else "definite",
-                        requires_manual_review=requires_scope_review,
+                        applicability="needs_clarification",
+                        requires_manual_review=True,
                         priority=0,
                         valid_from=None,
                         valid_to=None,
@@ -496,9 +535,8 @@ def import_legacy_non_tariff_measures_to_ntm_v2(
                 existing.hs_code = commodity_code
                 existing.hs_scope_mode = "prefix"
                 existing.description_match_json = payload
-                if requires_scope_review:
-                    existing.applicability = "needs_clarification"
-                    existing.requires_manual_review = True
+                existing.applicability = "needs_clarification"
+                existing.requires_manual_review = True
                 existing.updated_at = now
                 applicability_rules_updated += 1
                 duplicates_skipped += 1

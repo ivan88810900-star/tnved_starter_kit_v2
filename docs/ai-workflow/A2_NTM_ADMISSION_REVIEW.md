@@ -71,3 +71,40 @@ A3's retained Decision 121/2026 source references earlier Decisions 12/2021 and
 4/2026 and a publication-dependent start condition, without supplying a complete
 numeric/product scope. Positive remedy interpretation remains blocked pending
 the dependent official originals and reviewed temporal/product applicability.
+
+## Historical legacy-v2 reader correction (next checkpoint)
+
+The separate local reproduction found a persisted exact-code legacy row with
+expired validity, export direction, country restriction and exclusion text being
+returned for both its own code and a sibling leaf as definite. The shadow gate
+allowed its permit without product verification. This checkpoint corrects that
+read path without changing historical rows during reads.
+
+- Runtime candidates always expose needs_clarification, manual review and
+  used_for_missing_check=false; stored applicability remains separately visible.
+  Newly imported legacy metadata is also unreviewed. A forged positive field
+  cannot bypass the legacy merge or suitability gate.
+- Exact leaf rules do not attach to sibling/parent queries. Broader distinct
+  candidates remain visible instead of being hidden by the first exact hit.
+- Additive keyword-only as_of, country and direction context reaches the legacy
+  reader and existing adapter. Explicit invalid as_of fails before opening the
+  DB. Existing non-tariff callsite forwards its country/direction. No historical
+  API endpoint or complete historical legal coverage is claimed.
+- Known stored date/direction/country/code exclusions constrain technical matches.
+  Missing, malformed or unavailable metadata remains a clarification diagnostic,
+  never a positive legal absence statement. Existing stored valid_to convention
+  is inclusive. This is not legal approval of the stored dates.
+- Diagnostic counts remain available separately from legal authority. No legacy
+  item is labeled an enforcement candidate from a code/text marker alone.
+- The separate official exact/curated services remain the authority for their
+  bounded reviewed contracts. This change does not copy their business rules.
+
+Nine tests asserting the retired code-only positive contract were updated to
+assert explicit nonpromotion, preserved metadata and unchanged missing/status
+results. Existing mapping, source payload, idempotency, catalog permit hints and
+unknown-TR regressions remain checked. The new
+tests/test_ntm_legacy_review_boundary.py covers persisted/forged approval,
+sibling leakage, broader family retention, both row/measure historical boundaries,
+direction/country/exclusion constraints, malformed metadata, no-write reads and
+context propagation. Fresh CI and independent A5 review of this exact new tree
+are required; the disconnected local pre-adaptation run is not completion proof.
