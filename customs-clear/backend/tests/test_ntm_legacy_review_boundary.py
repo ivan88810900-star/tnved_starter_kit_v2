@@ -206,3 +206,36 @@ def test_existing_country_identities_preserve_known_scope(database, stored, requ
     rows = read(database, country=requested)
     assert len(rows) == expected
     assert all("country_unverified" not in row["context_review_reasons"] for row in rows)
+
+
+@pytest.mark.parametrize("field", [
+    "measure_type", "description", "document_required", "legal_ref", "permit_type", "tr_ts_code",
+])
+@pytest.mark.parametrize("value", [{"forged": "approved"}, ["ВС"], 7, True, False, None])
+def test_legacy_json_text_fields_never_become_authority_or_hide_candidates(database, field, value):
+    seed(database, description_match_json={"legacy_payload": {field: value}})
+    rows = read(database)
+    assert len(rows) == 1
+    row = rows[0]
+    assert row["applicability"] == "needs_clarification"
+    assert row["used_for_missing_check"] is False and row["legal_review_verified"] is False
+    assert enforcement.classify_v2_measure_for_enforcement(row, []) in {"manual_review", "skip"}
+    assert service.merge_v2_legacy_measures_into_broker([], rows) == []
+    if value is not None:
+        assert f"legacy_{field}_unverified" in row["context_review_reasons"]
+        if field == "permit_type":
+            assert row["permit_type"] == ""
+        if field == "tr_ts_code":
+            assert row["tr_ts"] is None
+        if field == "legal_ref":
+            assert row["legal_ref"] == ""
+
+
+@pytest.mark.parametrize("value", [{"approved": True}, ["ВС"], 7, True, False, None])
+def test_direct_broker_converter_rejects_malformed_permit_hint_without_crashing(value):
+    row = service.legacy_measure_dict_to_broker_row(
+        {"commodity_code": "1234567890", "measure_type": "vet_control", "permit_type": value})
+    assert row["permit_type"] == "" and row["requires_manual_review"] is True
+    assert row["used_for_missing_check"] is False
+    if value is not None:
+        assert "legacy_permit_type_unverified" in row["context_review_reasons"]

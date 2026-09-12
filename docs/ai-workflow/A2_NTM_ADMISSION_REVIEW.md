@@ -148,3 +148,30 @@ The one skip in the earlier agent profile is the unchanged
 populated legacy catalog in the global test database. Agent CI uses a fresh
 disposable DB; synthetic per-test regressions run independently. No application
 database was used to satisfy that optional historical-data smoke.
+
+## Final malformed legacy-payload boundary correction
+
+A5 independently traced an additional failure at `c2fc39b`: a nonempty JSON
+object or number in `legacy_payload.permit_type` reached `.strip()` and raised
+`AttributeError` instead of returning an advisory candidate. The final bounded
+correction checks all six consumed legacy string fields: `measure_type`,
+`description`, `document_required`, `legal_ref`, `permit_type`, and
+`tr_ts_code`. Objects, arrays, numbers and booleans add a concrete
+`legacy_<field>_unverified` reason. Unusable permit, TR and legal-reference hints
+are cleared; descriptions/type may use separately stored unreviewed metadata.
+Missing/null optional fields retain their existing fallback semantics.
+
+The candidate stays visible and requires manual review. Neither malformed nor
+empty metadata grants a required permit or legal source authority. The public
+broker converter also guards malformed permit hints directly. Agent fixtures
+cover every field with object/list/number/true/false/null values plus direct
+converter calls (42 cases); A5 owns separate hostile regressions. Fresh CI and
+independent QA on this correction are required before integration. Feature scope
+is frozen after this final boundary correction.
+
+At `c2fc39b`, country-correction agent QA
+[34715989638](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/34715989638)
+passed (221 passed, 1 skipped), and full CI
+[34715989650](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/34715989650)
+passed. These results precede the malformed-payload correction above; they are
+not its validation evidence.
