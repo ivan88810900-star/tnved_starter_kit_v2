@@ -38,7 +38,7 @@
     }
   ],
   "max_concurrent_subagents": 3,
-  "revision": 68,
+  "revision": 69,
   "runs": [
     {
       "head_sha": null,
@@ -149,6 +149,16 @@
       "status": "FINISHED",
       "task_id": "TARIFF-AD30-REVIEW-CANDIDATE-001",
       "updated_at": "2026-09-12T21:48:18.773987+00:00"
+    },
+    {
+      "head_sha": "ea24f31eea57422ee78e662d93b518b422b0db03",
+      "role": "A5",
+      "run_id": "5986f50dc9aa40398f05a36f7393e069",
+      "session_id": "/root/a5_ad30_qa",
+      "started_at": "2026-09-12T21:49:22.297980+00:00",
+      "status": "RUNNING",
+      "task_id": "TARIFF-AD30-REVIEW-CANDIDATE-001",
+      "updated_at": "2026-09-12T21:49:22.297995+00:00"
     }
   ],
   "schema_version": 1,
@@ -509,9 +519,9 @@
         ],
         "head_sha": "ea24f31eea57422ee78e662d93b518b422b0db03"
       },
-      "updated_at": "2026-09-12T21:48:18.794123+00:00",
+      "updated_at": "2026-09-12T21:49:22.297997+00:00",
       "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-ad30-review-candidate-001-99f4e3fb32"
     }
   ],
-  "updated_at": "2026-09-12T21:48:18.794410+00:00"
+  "updated_at": "2026-09-12T21:49:22.298155+00:00"
 }
