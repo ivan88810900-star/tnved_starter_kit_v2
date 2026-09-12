@@ -1,164 +1,145 @@
 # Payment admission recheck — 12 September 2026
 
 Task: TARIFF-ADMISSION-RECHECK-001. Author: A1, native session `/root/smoke_rates`.
-Reviewed PR #187 source: `22a7df5590a7442d943d89af285feb1228e80938`.
+Current reviewed PR #187 source: `a9d15c74699c8cd7842404580ff6fd7bd957e9eb`.
 Report branch: `agent/rates-tariff-admission-recheck-001-9231ffbdb5`.
 Worktree: `/workspace/scratch/cd6734a40504/tariff-agent-worktrees/tariff-admission-recheck-001-9231ffbdb5`.
+Starting report-branch merge: `2e5da9ecfb74ef386b6695eba24abd62ae993776`.
 
-This is a bounded technical evidence report. Product code, databases and flags were
-not changed. No production, HTTP, external source or provider request was made.
-Git object retrieval was used to read the pinned source in this sparse checkout.
-No legal applicability, rate approval, CI, independent QA or A6 pass is asserted.
+## Current conclusions and superseded evidence
 
-## Conclusions
+A0 finding `A0-UPSTREAM-DRIFT-001` invalidated the previous report's claims about
+**current** open admission paths. Its observations at
+`22a7df5590a7442d943d89af285feb1228e80938` remain historical only:
+import-duty apply, Tamdoc approval and marker-based readiness then lacked the
+current guards. They are **fixed upstream at the current source SHA**; do not
+repeat those completed fixes. The old A5 run was interrupted and gives no pass
+for this revision.
 
-| Item | Classification | Evidence and consequence |
+| Question | Current classification | Evidence |
 |---|---|---|
-| A special-duty candidate has `applied=False` and `legal_review_verified=False`, but contributes to raw total and VAT base | **CONFIRMED / INTENTIONAL** | The resolver's computable branch explicitly produces `status=provisional`, a retained amount and `legal_review_unverified`. The current corrective document permits this preliminary arithmetic. The two booleans do not assert that arithmetic must be absent. |
-| That preliminary amount becomes a definitive quote or savings comparison | **UNCONFIRMED; existing safeguards present** | Four isolated executions preserve `REVIEW_REQUIRED`, null special-duty/VAT quote amounts, null VAT quote basis and null final quote total. Comparison deltas are null. Historical correction is present at the reviewed SHA; this report introduces no fix. |
-| Pending counters disagree | **UNCONFIRMED** | The quote service/schema has no exported `pending_count` or shared pending-summary counter. Its `preference_pending` is a boolean. Adjacent payment coverage/audit summaries inspected below expose no pending counter to compare. No concrete conflicting outputs or shared counting contract were identified; do not open a defect from this hypothesis. |
-| Payment admission recovery is already complete | **Not supported; confirmed open implementation paths** | The inspected import-duty apply and Tamdoc approval paths can reach rate writers without manifest-bound legal review. This agrees with the recovery task's unfinished scope; it is not a newly discovered legal interpretation. |
+| Unapplied/unreviewed computable remedy enters raw total and VAT base | **CONFIRMED / INTENTIONAL** | The resolver keeps `applied=False`, `legal_review_verified=False`, `status=provisional`; raw results remain `REVIEW_REQUIRED`. Current decisions preserve this distinction. |
+| Preliminary money escapes as a final quote or proven savings | **UNCONFIRMED; safeguards reproduced** | Four current-source cases produce null final quote, null remedy/dependent VAT amounts and VAT basis, null comparison deltas, warnings and conservative history metadata. |
+| Pending counters disagree | **UNCONFIRMED as a counter defect** | No shared exported pending counter was found in quote/schema or the inspected payment coverage summaries. The related A6 finding about evaluating `pending` before appending `legal_review_unverified` is explicitly **intentional**: calculability and legal approval are separate axes. |
+| Previously open dedicated apply/Tamdoc/readiness paths | **FIXED UPSTREAM / RECHECKED** | All six apply success-parser branches reject admission; parser errors remain errors. Tamdoc writers reject, approval preserves pending candidates, and readiness cannot grant admission from parsing/SourceStatus. |
+| Full legally approved rate/source coverage is complete | **Not established** | The completed block is technical admission safety. Formal temporal applicability, dependent acts, specific-duty units, retention and human authorization remain separate gates. |
 
-## Current authority and exact code anchors
+Read current `AGENTS.md`, `.ai/DECISIONS.md`, the
+[latest focus](CURRENT_PROJECT_FOCUS.md), [completed admission task](TASK-RATE-ADMISSION-RECOVERY.md)
+and [A6 reconciliation](A6_PAYMENT_AUDIT_RECONCILIATION.md). The September 12
+implementation clarification supersedes historical next-step paragraphs and the
+old upward-coefficient exception in the preference document. It records three
+upstream corrections: nonneutral/invalid coefficients, cross-store antidumping
+overlap and displayed-cent reconciliation. None establishes a new legal rounding
+policy or manifest approval. DM-0014 remains a future authorization gate.
 
-Read `AGENTS.md`, `.ai/DECISIONS.md`, `CURRENT_PROJECT_FOCUS.md` and
-`TASK-RATE-ADMISSION-RECOVERY.md` on the pinned product branch. The current owner
-mandate authorizes this scoped technical commit despite older manual commit clauses.
+## Exact current anchors
 
-- [Payment preference contract](PAYMENT_PREFERENCE_REVIEW_GUARD.md), Decision:
-  retain explicitly preliminary arithmetic and suppress final payable quotes.
-- [Rate-source corrections](RATE_SOURCE_FAIL_CLOSED_CORRECTIONS.md), “Unresolved
-  trade-remedy applicability”: source-marked computable remedies supply provisional
-  arithmetic only; unresolved candidates have no applied amount. Source markers
-  are not manifest-bound legal approval.
-- [Current focus](CURRENT_PROJECT_FOCUS.md), “Next recommended implementation tasks”,
-  and [DM-0014](../../.ai/decisions/DM-0014-ett-review-authority.md): Option A remains
-  accepted; fail-closed technical work continues. The human legal authorization
-  policy remains a future gate.
-- [Admission recovery task](TASK-RATE-ADMISSION-RECOVERY.md) explicitly states that
-  later uncommitted admission changes were lost and are not proof of fixed paths.
+Service paths below are relative to `customs-clear/backend/app/services/`;
+anchors refer to `a9d15c74699c8cd7842404580ff6fd7bd957e9eb`.
 
-All following service paths are under `customs-clear/backend/app/services/`;
-line anchors refer to the reviewed source SHA.
-
-| Function / branch | Observed behavior |
+| Function / starting line | Current boundary |
 |---|---|
-| `payment_engine.py:_resolve_special_duties` (194; branches 328–353) | Temporal/condition/provenance/unit/overlap uncertainty gives `needs_clarification` and no amount. The computable branch adds preliminary money while retaining false approval flags. |
-| `payment_engine.py:compute_payments` (564; 769–855, 865–868, 933–937) | Both remedy uncertainty states become review reasons. Preliminary special duty enters VAT base and raw `total_payable`; the result remains provisional. |
-| `payment_quote_service.py:_resolve_special_duty_line` (167); `build_payment_quote` (384; 474–518, 547–560) | Both remedy states block special-duty money and dependent VAT money/basis. Any provisional result or uncertain blocking line suppresses `total_payable_rub`. |
-| `payment_quote_service.py:_build_assumptions` (303) | Retained raw totals are explicitly preliminary assumptions. Source lists and a partial subtotal are not approval evidence. |
-| `payment_engine.py:compare_payment_scenarios` (1005; 1088–1103); `payment_profile_builder.py:build_compare_payment_profiles` (88; 129–144) | Pending scenarios cannot establish savings; profile comparisons also expose `comparison_complete=False`. |
-| `payment_profile_builder.py:_map_raw_to_profile` (17); `payment_result_status.py:payment_result_metadata` (11), `aggregate_payment_metadata` (41) | Profile/history metadata preserves provisional status/reasons. Unknown legacy finality is not promoted to verified. Profile `total_payable` is explicitly provisional in `app/schemas/payment_profile.py:12`. |
-| `payment_quote_service.py`, `app/schemas/payment_quote.py`; `payment_data_coverage.py:run_payment_data_coverage_report` (1008); `official_payment_coverage_audit.py:_build_domain_summary` (610) | Bounded pending-counter inspection: no common exported pending count found. Coverage categories must not be silently treated as legal-review queue counts. |
+| `official_payment_admission.py:payment_admission_blocker` (23), `blocked_payment_import` (29) | Shared rejection contract has no positive grant or payload override. |
+| `import_duty_ingestion.py:run_import_duty_apply` (578); `vat_ingestion.py:run_vat_apply` (686); `excise_ingestion.py:run_excise_apply` (716) | Valid legacy parsing ends in a blocked response before planning/rate/provenance writes; invalid parsing retains its error classification. |
+| `anti_dumping_ingestion.py:run_anti_dumping_apply` (735); `special_safeguard_ingestion.py:run_special_safeguard_apply` (727); `countervailing_ingestion.py:run_countervailing_apply` (726) | Same public rejection boundary; all six named functions and their real blocked-response helpers were replayed. |
+| `tamdoc_sync.py:_upsert_vat_preferences` (528), `_upsert_special_duties` (533), `approve_tamdoc_candidate` (693), `approve_tamdoc_candidates_batch` (732) | Writers raise before opening a session; candidate approval returns review-required without changing status; batch reports blocked separately from approved. |
+| `payment_source_ingestion.py:_provenance_kind` (83), `_candidate_readiness` (369) | Plausible revision becomes ambiguous; even a supplied official label with parsed/present state returns manual review. |
+| `payment_engine.py:_resolve_special_duties` (210), `compute_payments` (580), `compare_payment_scenarios` (1051) | Provisional arithmetic remains visible with review reasons; definitive comparisons remain unavailable. `_sum_displayed_amounts` (57) now uses Decimal to sum rounded display components. |
+| `payment_quote_service.py:_resolve_special_duty_line` (167), `build_payment_quote` (384); `payment_profile_builder.py:_map_raw_to_profile` (17), `build_compare_payment_profiles` (88) | Quote finality and dependent VAT guards remain; profile status/reasons and incomplete-comparison flags are retained. |
 
-Admission paths below were **statically inspected, not executed**:
+Current repository tests read, **not locally executed**:
+`test_official_payment_admission.py` (six-domain admission and cache boundary),
+`test_tamdoc_payment_admission.py` (approval preservation, blocked writers/batch),
+`test_payment_admission_redteam.py` (independent storage/HTTP boundaries),
+`test_payment_a6_reconciliation.py`, `test_payment_reconciliation_redteam.py`
+and the existing payment-special-duty/consumer/history/quote regressions.
+The current A6 document identifies exact confirmed and intentional cases.
 
-- `import_duty_ingestion.py:run_import_duty_apply` (565) calls
-  `_validate_bundle_for_ingest` (391), then `_apply_duty_rows` (604 call site)
-  and provenance writers. The inspected validation covers legacy revisions,
-  URLs, parsing and row scope, not manifest-bound review.
-- `tamdoc_sync.py:approve_tamdoc_candidate` (828) calls
-  `_upsert_vat_preferences` / `_upsert_special_duties` for parsed candidate
-  rates and then marks the candidate approved. Those helpers commit writes
-  (561–636). `approve_tamdoc_candidates_batch` (903) delegates to it.
-- `payment_source_ingestion.py:_candidate_readiness` (359–420) can return
-  `ready_to_ingest` from “official” legacy provenance, parse/SourceStatus and
-  normalization state. This is another recovery-contract gap, not proof of
-  legal review. This report is not an exhaustive audit of all six ingestors.
+## Executed local verification and its limits
 
-## Verification
+Initial branch/status checks matched the assigned branch and merge SHA; the
+worktree was clean and only this report differed from current upstream.
 
-Executed on the report worktree:
+The old replay with only its source SHA changed failed with `NameError: Decimal`
+in the new `_sum_displayed_amounts` helper. This was an isolated-harness missing
+dependency, not a product failure. The replay below supplies standard-library
+`Decimal` to the namespace; the source functions are unchanged.
 
-- `git branch --show-current`, `git rev-parse HEAD`, initial
-  `git status --short --untracked-files=all`: expected branch/source SHA,
-  clean worktree, exit 0.
-- The complete Python replay below: **4 cases passed, exit 0**. It compiles
-  unchanged function ASTs and constants from the pinned Git objects. Real
-  revision/URL marker helpers are retained. Synthetic lookup/session objects,
-  fee/FX/description dependencies and DTO constructors replace application
-  infrastructure. No application module or database is opened.
-- An initial replay-harness setup failed before completing a scenario
-  (`KeyError: '__name__' not in globals`). Setting the isolated namespace/import
-  hook before compiling functions corrected the harness; no product code changed.
-- Dependency probe: `pytest=False, sqlalchemy=False, fastapi=False`.
-  Repository pytest, real SQLAlchemy/Pydantic integration, HTTP smoke and CI
-  were **not run**. The replay is narrower than those tests and does not
-  verify SQL filtering, DTO validation, legal data or every downstream renderer.
+**Current complete replay: exit 0.** It checks:
+four provisional money/quote/compare/metadata cases; six public apply functions
+with both successful-parse and parser-failure stubs; two rejecting Tamdoc writers;
+pending-candidate/batch preservation; and the conservative readiness branch.
 
-The synthetic baseline is customs value 100,000, ordinary duty 10,000,
-fee 1,000 and VAT arithmetic at 22%; these values are test inputs, not a rate claim.
-
-| Replay case | Raw special duty | Raw VAT base | Raw total | Final quote | Quote partial |
+| Synthetic case | Raw special duty | VAT base | Raw total | Final quote | Partial quote |
 |---|---:|---:|---:|---|---:|
 | Computable 5% candidate | 5,000 | 115,000 | 41,300 | null | 11,000 |
 | Unresolved producer condition | 0 | 110,000 | 35,200 | null | 11,000 |
-| Unresolved candidate + computable 3% other family | 3,000 | 113,000 | 38,860 | null | 11,000 |
+| Unresolved + computable 3% distinct family | 3,000 | 113,000 | 38,860 | null | 11,000 |
 | Explicit zero candidate | 0 | 110,000 | 35,200 | null | 11,000 |
 
-Every case also asserts review flags, warnings, preliminary assumptions, null
-dependent VAT/basis, null comparison deltas and conservative aggregate metadata.
+These are synthetic inputs, not a rate claim. The replay compiles real function
+ASTs/constants from pinned Git objects. Database/lookup/parser/provenance/DTO
+dependencies are synthetic; real marker helpers and blocked-response functions
+remain. It does not exercise actual parsers, SQL filtering, Pydantic validation,
+HTTP, cache persistence, complete A6 regression coverage or all consumers.
+No product module, database, provider or external source was opened.
+Git object reads support the sparse checkout.
 
-Existing tests **read, not executed**:
+Dependency probe: `pytest=False, sqlalchemy=False, fastapi=False`.
+No local repository pytest, HTTP smoke or CI was run.
 
-- `tests/test_payment_special_duty_applicability.py`:
-  `test_unproved_rows_keep_evidence_and_block_money_and_dependent_vat`,
-  `test_known_distinct_family_partial_is_retained_but_never_final`,
-  `test_explicit_unconditional_zero_is_provisional_arithmetic_and_different_from_unknown`.
-- `tests/test_payment_consumer_review.py`:
-  `test_extended_comparison_does_not_rank_pending_estimates`,
-  `test_profile_comparison_keeps_provisional_contract_and_nulls_deltas`.
-- `tests/test_payment_history_uncertainty.py`:
-  `test_one_pending_item_keeps_entire_history_summary_under_review`,
-  `test_batch_unknown_member_cannot_become_confirmed`.
-- `tests/test_payment_quote.py` and `tests/test_payment_quote_explanation.py`:
-  incomplete quotes and explanatory bases; no shared pending-counter contract.
-- `tests/test_import_duty_ingestion.py` still has positive legacy apply tests
-  such as `test_apply_imports_official_rows_with_provenance` and
-  `test_versioned_ett_revision_accepted`. Their existence does not prove
-  current legal authorization; the admission recovery must distinguish public
-  rejection from explicitly isolated technical fixtures.
+**A0 remote observation, not this author's local verification:** A0 queried
+GitHub and reported success at exact `a9d15c74699c8cd7842404580ff6fd7bd957e9eb`
+for CI [34718655503](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/34718655503),
+[34718653080](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/34718653080),
+[34718400910](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/34718400910)
+and Admission agent QA [34718400932](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/34718400932).
+These upstream observations do **not** satisfy the new report candidate's own
+CI/A5 gate. This report's independent QA and CI remain pending.
 
-## Minimal next tasks
+## Next bounded task
 
-1. A5 independently reruns this pinned replay and inspects the report diff.
-   Run the existing disposable backend CI profile separately; bind its actual
-   completion to the relevant source/report commits.
-2. Continue `TASK-RATE-ADMISSION-RECOVERY` in separately owned code tasks:
-   first the public dedicated apply boundary, then Tamdoc payment approval,
-   preserving parse diagnostics/staging and proving no writes/provenance/cache
-   mutation on rejection. Align marker-based readiness reports with that boundary.
-   Keep generic writers and the other listed recovery paths in the existing task;
-   this report does not certify them.
-3. Preserve the intentional preliminary arithmetic and existing finality guards.
-   Do not change amount semantics or open a counter defect without a concrete
-   reproducer. No human legal authority or production action is requested here.
+After independent A5 review and CI of this report candidate, follow the latest
+focus: prepare a **non-activating formal review candidate for Decision 12 → 4 → 121**.
+Reuse retained originals and the existing Decision 4/12 review evidence; bind
+literal product, producer, code and date clauses to exact source identities.
+Make incomplete amendment coverage, nomenclature/interval dependencies and
+unresolved interpretations explicit. A3 records facts, A2 owns formal applicability,
+and A5 independently checks the packet. No source reading or AI review grants
+human legal approval, writes rates or activates enforcement.
 
-## Reproduce the executed check
+Do not reacquire completed evidence or restart the admission fixes. Broader ETT
+notes and VAT/excise/remedy/preference/origin temporal coverage follow the current
+sequence; preserve the existing four-code, one-day 111C candidate.
 
-From this repository, run the following Python with `python3` (stdlib only).
-It reads the exact source SHA irrespective of the report branch HEAD.
-This is the full executed replay, without private fixtures or hidden state.
+## Reproduce
+
+Run this Python from the repository with `python3`. The source SHA is pinned,
+independent of report-branch HEAD. No private fixture or hidden state is needed.
 
 ```python
 import ast, builtins, importlib.util, re, subprocess, __future__
 from collections import Counter
 from datetime import date
+from decimal import Decimal
 from math import isfinite
 from types import SimpleNamespace as NS
 from urllib.parse import urlparse
 
-SHA = "22a7df5590a7442d943d89af285feb1228e80938"
+SHA = "a9d15c74699c8cd7842404580ff6fd7bd957e9eb"
 ROOT = "customs-clear/backend/app/services/"
 def blocked_import(name, *args, **kwargs):
     if name == "rate_display":
         return NS(resolve_excise_for_hs=lambda hs: ("none", 0, ""))
+    if name == "official_payment_admission": return NS(**admission)
     raise AssertionError("Unexpected application import: " + name)
-def load(name):
+def load(name, only=None):
     source = subprocess.check_output(["git", "show", SHA + ":" + ROOT + name + ".py"], text=True)
     tree = ast.parse(source)
-    nodes = [n for n in tree.body if isinstance(n, (ast.FunctionDef, ast.Assign, ast.AnnAssign))]
-    scope = dict(re=re, Counter=Counter, date=date, isfinite=isfinite, urlparse=urlparse,
+    nodes = [n for n in tree.body if (isinstance(n, ast.FunctionDef) and (only is None or n.name in only))
+             or (only is None and isinstance(n, (ast.Assign, ast.AnnAssign)))]
+    scope = dict(re=re, Counter=Counter, date=date, isfinite=isfinite, urlparse=urlparse, Decimal=Decimal,
                  __name__=name, __builtins__=dict(vars(builtins), __import__=blocked_import))
     exec(compile(ast.Module(body=nodes, type_ignores=[]), name,
                  "exec", flags=__future__.annotations.compiler_flag), scope)
@@ -244,4 +225,73 @@ for label, rows, amount, vat_base, raw_total in [
 assert metadata["payment_result_metadata"]({})["amounts_provisional"] is None
 print("PASS: 4 AST-isolated cases; quote/compare/metadata guards; no database or application imports")
 print("Dependency availability:", {x: importlib.util.find_spec(x) is not None for x in ("pytest", "sqlalchemy", "fastapi")})
+
+# Current admission branches; parser/storage infrastructure remains synthetic.
+admission = load("official_payment_admission")
+class DTO(NS):
+    def model_dump(self, **kwargs): return vars(self)
+for domain, stem in [
+    ("import_duty", "ImportDuty"), ("vat", "Vat"), ("excise", "Excise"),
+    ("anti_dumping", "AntiDumping"), ("special_safeguard", "SpecialSafeguard"),
+    ("countervailing", "Countervailing")]:
+    func = "run_" + domain + "_apply"
+    scope = load(domain + "_ingestion", {func, "_blocked_response"})
+    scope.update(_utc_now_iso=lambda: "synthetic-only",
+                 _build_provenance=lambda **kw: NS(),
+                 payment_admission_blocker=admission["payment_admission_blocker"])
+    scope["discover_" + domain + "_bundle_path"] = lambda **kw: "synthetic-only"
+    scope[stem + "IngestionResponse"] = DTO
+    scope[stem + "RowCounts"] = DTO
+    for parse_blockers in ([], ["parser_failed: synthetic malformed input"]):
+        scope["_validate_bundle_for_ingest"] = lambda path: (
+            {"legal_review_verified": True}, {"status": "parsed" if not parse_blockers else "parser_failed"},
+            "synthetic-only", [{}], parse_blockers)
+        result = scope[func]()
+        expected = "parser_failed" if parse_blockers else "manual_review_required"
+        assert result["status"] == expected
+        assert result["db_mutated"] is result["active_rates_written"] is result["legal_review_verified"] is False
+        if not parse_blockers:
+            assert result["row_counts"].blocked == 1 and result["blockers"]
+    print(domain + ": apply blocked; parser_failed preserved; no write dependency called")
+
+# Select only the named functions: no module setup, provider or database import.
+tamdoc = load("tamdoc_sync", {"_upsert_vat_preferences", "_upsert_special_duties",
+                             "approve_tamdoc_candidate", "approve_tamdoc_candidates_batch"})
+tamdoc.update(LEGAL_REVIEW_BLOCKER=admission["LEGAL_REVIEW_BLOCKER"],
+              blocked_payment_import=admission["blocked_payment_import"])
+for name, args in [
+    ("_upsert_vat_preferences", (["850940"], [10], "synthetic", "")),
+    ("_upsert_special_duties", (["850940"], ["CN"], [5], "synthetic"))]:
+    try:
+        tamdoc[name](*args)
+        raise AssertionError("Writer unexpectedly returned")
+    except PermissionError as exc:
+        assert str(exc) == admission["LEGAL_REVIEW_BLOCKER"]
+class CandidateField:
+    def __eq__(self, value): return True
+    def asc(self): return self
+class CandidateSession(Session):
+    def first(self): return rows[0]
+    def order_by(self, *args): return self
+    def limit(self, *args): return self
+rows = [NS(id=1, doc_type="vat", vat_rates="10", percent_rates="", status="pending")]
+tamdoc.update(SessionLocal=CandidateSession,
+              TamdocSyncCandidate=NS(id=CandidateField(), status=CandidateField(), updated_at=CandidateField()))
+result = tamdoc["approve_tamdoc_candidate"](1)
+assert result["status"] == "manual_review_required" and result["db_mutated"] is False
+assert rows[0].status == result["candidate_status"] == "pending"
+batch = tamdoc["approve_tamdoc_candidates_batch"]()
+assert batch["processed"] == batch["blocked"] == 1
+assert batch["approved"] == batch["rejected"] == batch["errors"] == 0
+assert batch["status"] == "manual_review_required" and batch["db_mutated"] is False
+print("tamdoc: writers raise; candidate remains pending; batch processed=blocked=1, approved=0")
+readiness = load("payment_source_ingestion", {"_candidate_readiness"})
+readiness["_lookup_source_status"] = lambda code: NS(is_stale=False)
+status, blockers, manual = readiness["_candidate_readiness"](
+    NS(manual_review_default=False, loader_status="ready", source_status_code="synthetic"),
+    "official", {"status": "parsed"}, domain_normalization_status="present")
+assert status == "manual_review_required" and manual is True
+assert admission["LEGAL_REVIEW_BLOCKER"] in blockers
+print("readiness: parsed + official label + present normalization remains manual_review_required")
+print("PASS: current admission branch replay; no database, provider or product module opened")
 ```

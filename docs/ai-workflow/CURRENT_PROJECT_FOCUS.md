@@ -6,9 +6,62 @@ Active
 
 ## Last updated
 
-2026-09-11
+2026-09-12
 
-## Strategic direction
+## Latest continuation, 12 September 2026
+
+Ivan explicitly prioritizes complete official rates/payments, contextual NTM and
+source provenance. Existing Canonical, semantic search, MVP payment presentation
+and grounded-assistant slices are retained; they are not being reimplemented.
+A0 coordinates actual isolated A1–A5 branches. Current progress and exact QA
+boundaries are recorded in [the admission task](TASK-RATE-ADMISSION-RECOVERY.md)
+and [remote recovery log](REMOTE_EXECUTOR_RECOVERY_20260912.md).
+Historical counts and old next-step paragraphs below describe earlier snapshots;
+they do not override current GitHub evidence or authorize production.
+
+## Current priority and completed bounded block
+
+Official rates/payments, contextual NTM and verifiable sources are the current
+priority. The admission/payment-consistency/source-evidence task is implemented
+and independently approved; final publication is gated by the assembled commit's
+CI and A5 review. See the linked task and evidence for exact commit-scoped results.
+
+A6's eight findings were independently classified: preference asymmetry,
+cross-store antidumping overlap and cent reconciliation were corrected by A1,
+with author regressions and independent A5 tests. Missing specific-duty units,
+public historical-payment support and legal authority are still explicit limits.
+NTM unknown-country/malformed-field handling and AI diagnostic-file boundaries
+were independently checked without promoting legacy or AI data into legal rules.
+
+Current source configuration: 49 registry entries, 49 policies, 72 default monitor
+URLs, plus 11 isolated review targets. Captures 34716176823 and 34717159548
+retained all eleven response bodies with original/quarantine separation.
+Their acquisition failures remain visible; no legal baseline or rate was accepted.
+Decision 12/4/121 source facts are prepared for formal applicability review.
+
+The next implementation sequence is:
+
+1. Formal review candidate for the retained Decision 12 → 4 → 121 chain, with exact product, producer, code and effective-date evidence and incomplete amendment coverage made explicit.
+2. Remaining ETT note/dependent-act and VAT/excise/remedy/preference/origin temporal rules; preserve the existing four-code one-day 111C candidate and full dependency worklist without repeating acquisition.
+3. Product-specific NTM exceptions and uncovered quota/GOST/marking scopes, keeping code-only results advisory.
+4. Stable canonical read contracts for these reviewed facts; AI explanations consume services and never duplicate rates/NTM applicability logic.
+
+Durable backup does not attest versioning/retention/legal hold. Manifest-bound
+human review and separate approval remain future admission gates; DM-0014 is not
+a technical development hold. Existing Python rounding has not become a new
+legal declaration-rounding policy. The legacy diagnostic invoice VAT override/
+Excel path remains outside grounded canonical payment guarantees.
+
+No main merge, production deployment/database change, enforcement or Canonical
+flag activation; PR #189 remains separate and inactive.
+
+## Historical implementation record
+
+The following material records earlier product milestones and previous next-step
+snapshots. Old source counts, HEAD/CI references and ordering below are historical;
+the current priority and counts above supersede them.
+
+## Earlier strategic direction
 
 The current active workstream is the **CustomsClear MVP application**: end-to-end product slices for TN VED usage, normative requirements, payments, sanctions/risk, and an AI assistant grounded in internal modules.
 
@@ -156,7 +209,7 @@ ingestion.
   the separate official ETT manifest/as-of gate described above. Evidence:
   `evidence/mvp-acceptance-20260721.json`.
 
-## Current top priority
+## Earlier priority snapshot
 
 Recovery on 2026-09-11 verified `main=9712c7b`, PR #187 base `a5a811e` and
 published head `a5c884d3`. The already-successful Council capture commit
@@ -215,7 +268,7 @@ legal review and promotion are implemented.
 Keep the curated official bridge OFF before proposing any exact-rule production
 enforcement.
 
-## Next recommended implementation tasks
+## Earlier implementation tasks and retained references
 
 Payment correctness follow-up (2026-09-10): country-only legacy discounts and
 missing duty/VAT source lookups now produce explicit provisional arithmetic,

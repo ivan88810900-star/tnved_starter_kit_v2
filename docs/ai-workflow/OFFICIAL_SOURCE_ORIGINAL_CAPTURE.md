@@ -147,3 +147,93 @@ baselines, transport failures, stream/declared size limits and CLI requirements.
 The older Decision 121 and FNS VAT source identity checks remain separate tests
 after narrowing the workflow selection. Independent QA, integration and remote
 CI are required before this checkpoint is integrated.
+
+## Explicit observed sources after the navigation capture
+
+Run `34714034422` retained both rejected navigation bodies, with zero successful
+originals and no accepted source IDs. Both rejected receipts and bodies replayed
+successfully before the executor disconnected; the ordinary original verifier
+rejected both receipts. Their header scripts contain the literal `captcha` token
+inside `window['recaptchaFreeOptions']`: byte 5,363 on line 50 of the department
+body, and byte 3,376 on line 22 of the document-index body. These observations
+explain the validator match, but do not approve the content or relax validation.
+
+The exact index original exposes pagination hrefs for pages 2, 3, 4 and 5.
+The next explicit acquisition selects those four observed URLs and five observed
+act references: Decision 4 page/PDF, Decision 121 page, the AD30 completion notice
+and final investigation report. The already retained Decision 121 PDF and first
+navigation pages are excluded. The exact request and source provenance are in
+[evidence/eec-ad30-acquisition-plan-20260912.json](evidence/eec-ad30-acquisition-plan-20260912.json).
+
+`REVIEW_ONLY_SOURCES` is separate from the 72 registered monitor targets and
+does not add a policy or scheduled target. These IDs require explicit selection,
+original capture and a store. Any acceptance request containing one of these IDs
+is rejected before network or CLI store initialization, including mixed selections.
+Review-only observations never create or replace accepted or pending baseline
+records. Reports distinguish registered and review-only selection, and every legal,
+retention, production and promotion assertion remains false. Standard content and
+transport validators remain unchanged.
+
+The implementation was reconstructed from immutable remote files after the local
+execution server disconnected. No local test result is claimed for this new
+nine-target checkpoint. Its focused tests, independent A5 review and fresh GitHub
+Actions must pass before integration and the next acquisition.
+
+
+### Read-only inspection of the selected nine-target capture
+
+The isolated workflow invokes `scripts/inspect_observed_source_capture.py`
+after acquisition, including a failed acquisition. It reuses the existing
+`LocalArtifactStore(create=False)` and the separate original/quarantine
+receipt verifiers; it does not fetch, put objects, accept baselines or access
+an application database. The original transport and content gates are unchanged.
+
+`inspection.json` binds the exact selected IDs and original URL hashes to
+verified receipts and body hashes. Original, quarantined and unretained counts
+are separate; retained quarantined bytes cannot satisfy original completeness.
+Malformed reports, switched receipts or corrupt CAS objects produce a sanitized
+unavailable result and a failed inspection step. The output must be a new file
+outside the CAS and distinct from its input report.
+
+The four pagination observations expose bounded official document/PDF anchors,
+their observed href hashes, normalized anchor text and parent receipt/body hashes.
+Anchor values are HTMLParser-decoded attributes, not asserted raw byte spelling.
+Anchor line numbers refer to the decoded captured HTML; normalized text and a
+date-pattern candidate flag are discovery aids, not legal facts or a validated
+Decision 12 match. Query/fragment-bearing hrefs are redacted and remain hash-bound.
+Untrusted hosts are omitted. At most 300 distinct links per page are emitted,
+with an explicit truncation indicator. Even a successful inspection leaves all
+legal approval, promotion and permanent-retention claims false.
+
+The JSON is included in the temporary source artifact. Compact source summaries
+and pagination discovery records are also printed into the same Actions job logs,
+so reading verified retained evidence does not require repeating the acquisition.
+
+
+### Named replay plans and Decision 12 follow-up
+
+The completed nine-target acquisition is retained as the immutable named plan
+`ad30-discovery-20260912`. It remains the inspector's default replay scope.
+The separate `ad30-decision12-20260912` plan contains only the newly observed
+Decision 12 card and PDF. The isolated workflow now explicitly selects this
+two-target plan; it does not acquire the completed nine-target selection again.
+Both plans are fixed tuples in a read-only mapping. All targets remain outside
+the 72 registered/default monitor URLs.
+
+The two new links derive from quarantined page 3 in run 34716176823. Evidence,
+archive persistence identifiers, actual capture counts and parent body/receipt
+hashes are in `evidence/eec-ad30-capture-34716176823.json`. A page anchor
+is a discovery observation; it has not established the original act's contents,
+rates, historical applicability or amendments.
+
+With explicit `--extract-native-pdf-text`, the inspector passes only verified
+original PDFs to the existing bounded `ett_pdf_evidence` child process.
+It keeps physical row text/coordinates, row hashes, page text hashes, original
+PDF SHA and parser source/engine provenance. Page text hashes refer to extracted
+physical rows joined with LF, not to independently serialized PDF page bytes.
+Whitespace is the existing parser's declared serialization. No rate candidates
+are imported or promoted. The wrapper limits output to 30 pages and 2 MiB;
+native extraction failure or empty text remains explicit, and no OCR is used.
+Quarantined PDFs never reach this extractor. This optional derivation writes
+only the existing parser's private temporary files and the new inspection result;
+CAS originals and input reports remain unchanged.

@@ -118,18 +118,20 @@ def test_distribution_counts(memory_sessionmaker: sessionmaker) -> None:
     assert dist["measures"]["total_imported"] == 1
     assert dist["measures"]["nonempty_permit_type"] >= 1
     assert dist["rules"]["total_imported"] == 1
-    assert "enforcement_candidate" in dist["measures"]["suitability"]
+    assert dist["measures"]["suitability"]["enforcement_candidate"] == 0
+    assert dist["measures"]["suitability"]["ambiguous_candidate"] == 1
+    assert dist["legal_review_verified"] is False
 
 
-def test_merge_skips_empty_permit() -> None:
+def test_merge_cannot_promote_either_empty_or_unreviewed_permit() -> None:
     broker = [{"permit_type": "РУ", "tr_ts": None}]
     rows = [
         {"permit_type": "", "tr_ts": None},
         {"permit_type": "ДС", "tr_ts": "004/2011"},
     ]
     merged = merge_v2_legacy_measures_into_broker(broker, rows)
-    assert len(merged) == 2
-    assert ("ДС", "004/2011") in {(r["permit_type"], r.get("tr_ts")) for r in merged}
+    assert merged == broker
+    assert ("ДС", "004/2011") not in {(r["permit_type"], r.get("tr_ts")) for r in merged}
 
 
 def test_impact_baseline_unchanged_without_enforcement_match(
@@ -143,7 +145,7 @@ def test_impact_baseline_unchanged_without_enforcement_match(
     assert cmp["changed"] is False or not cmp["added_permit_types"]
 
 
-def test_impact_adds_new_permit_type(
+def test_unreviewed_metadata_remains_visible_without_legal_impact(
     memory_sessionmaker: sessionmaker,
     minimal_ntm_patches: None,
 ) -> None:
@@ -151,8 +153,9 @@ def test_impact_adds_new_permit_type(
     cmp = asyncio.run(
         compare_legacy_measures_enforcement_impact("3004909200", description="Лекарство")
     )
-    assert "ДС" in cmp["added_permit_types"] or "ДС" in cmp["added_missing_permit_types"]
-    assert cmp["changed"] is True
+    assert cmp["added_permit_types"] == cmp["added_missing_permit_types"] == []
+    assert cmp["changed"] is False
+    assert cmp["impact_by_measure"][0]["classification"] == "manual_review_required"
     assert cmp["baseline_required_permit_types"] == ["РУ"]
 
 
@@ -250,5 +253,5 @@ def test_matrix_changed_unchanged(
         )
     )
     assert matrix["total_cases"] == 2
-    assert matrix["changed_cases"] >= 1
-    assert matrix["unchanged_cases"] >= 0
+    assert matrix["changed_cases"] == 0
+    assert matrix["unchanged_cases"] == 2

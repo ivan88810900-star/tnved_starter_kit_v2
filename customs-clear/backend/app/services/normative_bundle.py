@@ -1,6 +1,9 @@
 """Импорт единого пакета: ТН ВЭД (наименования), ставки, нетарифка, примечания."""
 from __future__ import annotations
 
+from .official_payment_admission import blocked_payment_import
+from .official_rate_validation import load_official_rate_json
+
 import json
 import re
 from typing import Any
@@ -118,6 +121,25 @@ def _normalize_rate_row(raw: dict[str, Any]) -> dict[str, Any] | None:
 
 
 def import_normative_bundle_dict(
+    data: dict[str, Any],
+    *,
+    filename: str = "bundle.json",
+    source_code: str = "NORMATIVE_BUNDLE",
+    source_name: str = "Пакет ТН ВЭД / ЕТТ / нетарифка",
+) -> dict[str, Any]:
+    if not isinstance(data, dict):
+        raise ValueError("Пакет должен быть JSON-объектом")
+    # Every legacy file-import alias must be inspected before any catalog write.
+    # Bundle dispatch must not silently drop source_import's data alias.
+    if any(key in data and (type(data[key]) is not list or bool(data[key]))
+           for key in ("rates", "rows", "data")):
+        return blocked_payment_import(source=source_code, domain="import_duty")
+    return _import_normative_bundle_dict(
+        data, filename=filename, source_code=source_code, source_name=source_name,
+    )
+
+
+def _import_normative_bundle_dict(
     data: dict[str, Any],
     *,
     filename: str = "bundle.json",
@@ -279,7 +301,13 @@ def import_normative_bundle_bytes(
     filename: str = "bundle.json",
     **kwargs: Any,
 ) -> dict[str, Any]:
-    data = json.loads(content.decode("utf-8", errors="strict"))
+    data = _parse_normative_bundle_bytes(content)
+    return import_normative_bundle_dict(data, filename=filename, **kwargs)
+
+
+def _parse_normative_bundle_bytes(content: bytes) -> dict[str, Any]:
+    """Validate JSON before persistence or status records."""
+    data = load_official_rate_json(content)
     if not isinstance(data, dict):
         raise ValueError("Пакет должен быть JSON-объектом")
     if not _is_bundle_payload(data):
@@ -289,4 +317,4 @@ def import_normative_bundle_bytes(
         )
     data.setdefault("format", BUNDLE_FORMAT_KEY)
     data.setdefault("bundle_version", BUNDLE_VERSION)
-    return import_normative_bundle_dict(data, filename=filename, **kwargs)
+    return data

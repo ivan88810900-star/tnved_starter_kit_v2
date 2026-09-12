@@ -141,6 +141,48 @@ class _BundleFixture:
             self._tmpdir.cleanup()
 
 
+
+def _store_isolated_fixture(*, rel_path: str, domain: str = "vat") -> dict:
+    """Explicit in-memory storage regression; never call/approve public admission."""
+    import importlib
+    from datetime import datetime, timezone
+
+    service = importlib.import_module(f"app.services.{domain}_ingestion")
+    # Enforce that this helper cannot touch a file-backed application DB.
+    with service.SessionLocal() as db:
+        assert db.get_bind().url.database == ":memory:"
+        before = (db.query(SourceStatus).count(), db.query(SyncLog).count())
+    payload, parsed, revision, rows, blockers = service._validate_bundle_for_ingest(rel_path)
+    assert not blockers, blockers
+    assert parsed["status"] == "parsed"
+    now = datetime.now(timezone.utc).replace(tzinfo=None)
+    provenance = service._build_provenance(
+        rel_path=rel_path, revision=revision, payload=payload,
+        parser_result=parsed, loaded_at=now.isoformat(),
+    )
+    if domain == "import_duty":
+        counts = service._apply_duty_rows(rows)
+    elif domain in {"vat", "excise"}:
+        counts = getattr(service, f"_apply_{domain}_rows")(
+            rows, bundle_revision=revision, bundle_url=provenance.official_url, synced_at=now,
+        )
+    else:
+        counts = getattr(service, f"_apply_{domain}_rows")(rows, synced_at=now)
+    assert counts is not None, "Fixture writer rejected rows atomically"
+    with service.SessionLocal() as db:
+        assert (db.query(SourceStatus).count(), db.query(SyncLog).count()) == before
+    return {"fixture_only": True, "row_counts": counts.model_dump(),
+            "provenance": provenance.model_dump(), "parser_result": parsed}
+
+
+def _store_isolated_payload(payload: dict) -> dict:
+    import app.services.vat_ingestion as service
+
+    with _BundleFixture(payload) as (root, rel):
+        with unittest.mock.patch.object(service, "_BACKEND_ROOT", root):
+            return _store_isolated_fixture(rel_path=rel)
+
+
 class TestVatMissingSource(unittest.TestCase):
     def setUp(self) -> None:
         self.sm = _memory_sessionmaker()
@@ -258,16 +300,16 @@ class TestVatApplyOfficial(unittest.TestCase):
     def tearDown(self) -> None:
         _stop_patches(*self._patches)
 
-    def test_apply_imports_official_vat_with_provenance(self) -> None:
+    def test_isolated_fixture_apply_imports_official_vat_with_provenance(self) -> None:
         import app.services.vat_ingestion as vi
 
         _seed_hs_rates_for_bundle(self.sm, duty_revision="ett:2026-05-01")
         with _BundleFixture(_official_vat_bundle_payload()) as (root, rel):
             with unittest.mock.patch.object(vi, "_BACKEND_ROOT", root):
-                report = run_vat_apply(rel_path=rel)
+                report = _store_isolated_fixture(rel_path=rel, domain="vat")
 
-        self.assertEqual(report["status"], "OK")
-        self.assertTrue(report["db_mutated"])
+        self.assertTrue(report["fixture_only"])
+        self.assertTrue(report["fixture_only"])
         self.assertEqual(report["provenance"]["revision"], "vat:2026-05-01")
         self.assertEqual(report["provenance"]["source_code"], "EEC_VAT")
 
@@ -282,10 +324,10 @@ class TestVatApplyOfficial(unittest.TestCase):
             self.assertEqual(row.vat_source_code, "EEC_VAT")
             self.assertEqual(row.vat_source_revision, "vat:2026-05-01")
             st = db.query(SourceStatus).filter(SourceStatus.source_code == "EEC_VAT").first()
-            self.assertIsNotNone(st)
+            self.assertIsNone(st)
             logs = db.query(SyncLog).filter(SyncLog.source_code == "EEC_VAT").all()
-            self.assertEqual(len(logs), 1)
-            self.assertEqual(logs[0].status, "OK")
+            self.assertEqual(len(logs), 0)
+
 
     def test_blank_row_revision_does_not_create_hs_rate(self) -> None:
         import app.services.vat_ingestion as vi
@@ -311,7 +353,7 @@ class TestVatApplyOfficial(unittest.TestCase):
         with self.sm() as db:
             self.assertIsNone(db.query(HsRate).filter(HsRate.hs_code == "9401300000").first())
 
-    def test_apply_updates_seed_row_vat_only(self) -> None:
+    def test_isolated_fixture_apply_updates_seed_row_vat_only(self) -> None:
         import app.services.vat_ingestion as vi
 
         with self.sm() as db:
@@ -333,9 +375,9 @@ class TestVatApplyOfficial(unittest.TestCase):
         )
         with _BundleFixture(payload) as (root, rel):
             with unittest.mock.patch.object(vi, "_BACKEND_ROOT", root):
-                report = run_vat_apply(rel_path=rel)
+                report = _store_isolated_fixture(rel_path=rel, domain="vat")
 
-        self.assertEqual(report["status"], "OK")
+        self.assertTrue(report["fixture_only"])
         with self.sm() as db:
             row = db.query(HsRate).filter(HsRate.hs_code == "3004909200").first()
             self.assertEqual(row.source_revision, "seed-2026-03")
@@ -575,17 +617,17 @@ class TestVatAtomicApply(unittest.TestCase):
         self.assertEqual(report["status"], "manual_review_required")
         self.assertFalse(report["db_mutated"])
 
-    def test_all_existing_rows_apply_ok(self) -> None:
+    def test_isolated_fixture_all_existing_rows_apply_ok(self) -> None:
         import app.services.vat_ingestion as vi
 
         _seed_hs_rates_for_bundle(self.sm)
         with _BundleFixture(_official_vat_bundle_payload()) as (root, rel):
             with unittest.mock.patch.object(vi, "_BACKEND_ROOT", root):
-                report = run_vat_apply(rel_path=rel)
-        self.assertEqual(report["status"], "OK")
-        self.assertTrue(report["db_mutated"])
+                report = _store_isolated_fixture(rel_path=rel, domain="vat")
+        self.assertTrue(report["fixture_only"])
+        self.assertTrue(report["fixture_only"])
         with self.sm() as db:
-            self.assertEqual(db.query(SyncLog).filter(SyncLog.status == "OK").count(), 1)
+            self.assertEqual(db.query(SyncLog).filter(SyncLog.status == "OK").count(), 0)
 
 
 class TestVatExplicitZeroRate(unittest.TestCase):
@@ -622,7 +664,7 @@ class TestVatExplicitZeroRate(unittest.TestCase):
                 dry = run_vat_dry_run(rel_path=rel)
         self.assertEqual(dry["row_counts"]["update"], 1)
 
-    def test_zero_numeric_rate_apply_sets_zero(self) -> None:
+    def test_isolated_fixture_zero_numeric_rate_apply_sets_zero(self) -> None:
         import app.services.vat_ingestion as vi
 
         with self.sm() as db:
@@ -643,14 +685,14 @@ class TestVatExplicitZeroRate(unittest.TestCase):
         )
         with _BundleFixture(payload) as (root, rel):
             with unittest.mock.patch.object(vi, "_BACKEND_ROOT", root):
-                report = run_vat_apply(rel_path=rel)
-        self.assertEqual(report["status"], "OK")
+                report = _store_isolated_fixture(rel_path=rel, domain="vat")
+        self.assertTrue(report["fixture_only"])
         with self.sm() as db:
             row = db.query(HsRate).filter(HsRate.hs_code == "3004909200").one()
             self.assertEqual(float(row.vat_import_rate), 0.0)
             self.assertEqual(row.vat_rule, "zero")
 
-    def test_zero_string_rate_apply_sets_zero(self) -> None:
+    def test_isolated_fixture_zero_string_rate_apply_sets_zero(self) -> None:
         import app.services.vat_ingestion as vi
 
         with self.sm() as db:
@@ -671,8 +713,8 @@ class TestVatExplicitZeroRate(unittest.TestCase):
         )
         with _BundleFixture(payload) as (root, rel):
             with unittest.mock.patch.object(vi, "_BACKEND_ROOT", root):
-                report = run_vat_apply(rel_path=rel)
-        self.assertEqual(report["status"], "OK")
+                report = _store_isolated_fixture(rel_path=rel, domain="vat")
+        self.assertTrue(report["fixture_only"])
         with self.sm() as db:
             row = db.query(HsRate).filter(HsRate.hs_code == "8471300000").one()
             self.assertEqual(float(row.vat_import_rate), 0.0)
@@ -688,7 +730,7 @@ class TestVatPreserveDutyProvenance(unittest.TestCase):
     def tearDown(self) -> None:
         _stop_patches(*self._patches)
 
-    def test_seed_duty_provenance_unchanged_after_vat_apply(self) -> None:
+    def test_isolated_fixture_seed_duty_provenance_unchanged_after_vat_apply(self) -> None:
         import app.services.vat_ingestion as vi
 
         with self.sm() as db:
@@ -710,8 +752,8 @@ class TestVatPreserveDutyProvenance(unittest.TestCase):
         )
         with _BundleFixture(payload) as (root, rel):
             with unittest.mock.patch.object(vi, "_BACKEND_ROOT", root):
-                report = run_vat_apply(rel_path=rel)
-        self.assertEqual(report["status"], "OK")
+                report = _store_isolated_fixture(rel_path=rel, domain="vat")
+        self.assertTrue(report["fixture_only"])
         with self.sm() as db:
             row = db.query(HsRate).filter(HsRate.hs_code == "8471300000").one()
             self.assertEqual(row.source_revision, "seed-2026-03")
@@ -720,7 +762,7 @@ class TestVatPreserveDutyProvenance(unittest.TestCase):
         duty = diagnose_duty_rates()
         self.assertNotEqual(duty.status, "present")
 
-    def test_official_duty_provenance_unchanged_after_vat_apply(self) -> None:
+    def test_isolated_fixture_official_duty_provenance_unchanged_after_vat_apply(self) -> None:
         import app.services.vat_ingestion as vi
         from datetime import datetime, timezone
 
@@ -754,8 +796,8 @@ class TestVatPreserveDutyProvenance(unittest.TestCase):
         )
         with _BundleFixture(payload) as (root, rel):
             with unittest.mock.patch.object(vi, "_BACKEND_ROOT", root):
-                report = run_vat_apply(rel_path=rel)
-        self.assertEqual(report["status"], "OK")
+                report = _store_isolated_fixture(rel_path=rel, domain="vat")
+        self.assertTrue(report["fixture_only"])
         with self.sm() as db:
             row = db.query(HsRate).filter(HsRate.hs_code == "3004909200").one()
             self.assertEqual(row.source_revision, "ett:2026-05-01")
@@ -772,27 +814,27 @@ class TestVatCoverageAfterImport(unittest.TestCase):
     def tearDown(self) -> None:
         _stop_patches(*self._patches)
 
-    def test_official_vat_seen_in_coverage_and_normalization(self) -> None:
+    def test_isolated_fixture_official_vat_seen_in_coverage_and_normalization(self) -> None:
         import app.services.vat_ingestion as vi
 
         _seed_hs_rates_for_bundle(self.sm, duty_revision="seed-2026-03")
         with _BundleFixture(_official_vat_bundle_payload()) as (root, rel):
             with unittest.mock.patch.object(vi, "_BACKEND_ROOT", root):
-                report = run_vat_apply(rel_path=rel)
-        self.assertEqual(report["status"], "OK")
+                report = _store_isolated_fixture(rel_path=rel, domain="vat")
+        self.assertTrue(report["fixture_only"])
 
         vat_cov = diagnose_vat_rates()
-        self.assertEqual(vat_cov.status, "present")
-        self.assertFalse(vat_cov.manual_review_required)
+        self.assertEqual(vat_cov.status, "partial")
+        self.assertTrue(vat_cov.manual_review_required)
 
         duty_cov = diagnose_duty_rates()
         self.assertNotEqual(duty_cov.status, "present")
 
         norm = run_payment_data_normalization_report()
-        self.assertEqual(norm["domains"]["vat"]["coverage_status"], "present")
+        self.assertEqual(norm["domains"]["vat"]["coverage_status"], "partial")
 
         cov = run_payment_data_coverage_report()
-        self.assertEqual(cov["summary"]["vat_rates"]["status"], "present")
+        self.assertEqual(cov["summary"]["vat_rates"]["status"], "partial")
 
     def test_seed_vat_not_present_in_coverage(self) -> None:
         with self.sm() as db:
@@ -847,8 +889,10 @@ class TestVatValidatorIndependence(unittest.TestCase):
                     dry = run_vat_dry_run(rel_path=rel)
                     report = run_vat_apply(rel_path=rel)
         self.assertEqual(dry["status"], "OK")
-        self.assertEqual(report["status"], "OK")
-        self.assertTrue(report["db_mutated"])
+        self.assertEqual(report["status"], "manual_review_required")
+        self.assertFalse(report["db_mutated"])
+        self.assertEqual(report["parser_result"]["status"], "parsed")
+        self.assertFalse(report["db_mutated"])
 
 
 class TestVatRevisionValidation(unittest.TestCase):
@@ -881,8 +925,10 @@ class TestVatRevisionValidation(unittest.TestCase):
         dry = self._dry_run(payload)
         self.assertEqual(dry["status"], "OK")
         report = self._apply(payload)
-        self.assertEqual(report["status"], "OK")
-        self.assertTrue(report["db_mutated"])
+        self.assertEqual(report["status"], "manual_review_required")
+        self.assertFalse(report["db_mutated"])
+        self.assertEqual(report["parser_result"]["status"], "parsed")
+        self.assertFalse(report["db_mutated"])
         self.assertEqual(report["provenance"]["revision"], "vat:2026-05-01")
 
     def test_eec_vat_revision_accepted(self) -> None:
@@ -891,7 +937,9 @@ class TestVatRevisionValidation(unittest.TestCase):
         dry = self._dry_run(payload)
         self.assertEqual(dry["status"], "OK")
         report = self._apply(payload)
-        self.assertEqual(report["status"], "OK")
+        self.assertEqual(report["status"], "manual_review_required")
+        self.assertFalse(report["db_mutated"])
+        self.assertEqual(report["parser_result"]["status"], "parsed")
 
     def test_ett_revision_rejected_in_vat_ingestion(self) -> None:
         report = self._apply(_official_vat_bundle_payload(revision="ett:2026-05-01"))
@@ -930,7 +978,9 @@ class TestVatRevisionValidation(unittest.TestCase):
             rates=[{"hs_code": "3004909200", "vat_import_rate": 10, "vat_rule": "reduced10"}],
         )
         report = self._apply(payload)
-        self.assertEqual(report["status"], "OK")
+        self.assertEqual(report["status"], "manual_review_required")
+        self.assertFalse(report["db_mutated"])
+        self.assertEqual(report["parser_result"]["status"], "parsed")
 
     def test_explicit_unsafe_row_revision_blocked(self) -> None:
         payload = _official_vat_bundle_payload(

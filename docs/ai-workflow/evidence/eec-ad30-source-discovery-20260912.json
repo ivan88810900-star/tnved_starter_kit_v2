@@ -1,0 +1,110 @@
+{
+  "schema_version": 1,
+  "evidence_kind": "bounded_official_source_observation_and_retained_pdf_review",
+  "observed_on": "2026-09-12",
+  "new_original_response_bytes_retained": false,
+  "legal_review_verified": false,
+  "product_applicability_verified": false,
+  "numeric_rates_verified": false,
+  "active_rates_written": false,
+  "can_promote": false,
+  "legal_inventory_complete": false,
+  "retained_original_reused": {
+    "capture_run_id": "34600642623",
+    "document_number": "121",
+    "adopted_on": "2026-09-08",
+    "url": "https://docs.eaeunion.org/upload/iblock/072/gnl5h50x3mzkg7zd1b0d593t4mtizhg1/Reshenie-Kollegii-_-121-ot-8-sentbrya-2026-g.pdf",
+    "sha256": "56ffd2701fc5e0d85a2d02e1e9219c35a5ba4c59610aebe8d9f64eb496ce2e4c",
+    "receipt_sha256": "95f085ef2d262a5d3c107da18089c86969f38c8650458dffad912da3004d4819",
+    "page_count": 2,
+    "inspection": "Both retained pages rendered with Poppler and visually read; native text extraction returned no text.",
+    "literal_content_observations": [
+      {
+        "page": 1,
+        "clause": "1",
+        "observation": "Extends the anti-dumping measure established by Collegium Decision 12 of 9 February 2021 through 7 September 2031 inclusive. The cited title continues on page 2."
+      },
+      {
+        "page": 2,
+        "clause": "2",
+        "observation": "Refers to the duty amounts provided by Decision 12 of 9 February 2021 and to crediting amounts paid or collected under Decision 4 of 20 January 2026. No numerical rate table or commodity-code list is printed."
+      },
+      {
+        "page": 2,
+        "clause": "3",
+        "observation": "Declares Decision 4 of 20 January 2026 no longer in force."
+      },
+      {
+        "page": 2,
+        "clause": "4",
+        "quote": "Настоящее Решение вступает в силу по истечении 30 календарных дней с даты его официального опубликования.",
+        "absolute_effective_date_interpreted": false
+      }
+    ]
+  },
+  "official_web_observations": [
+    {
+      "card_url": "https://docs.eaeunion.org/documents/463/10918/",
+      "discovered_from": "https://eec.eaeunion.org/comission/department/podm/",
+      "document_number": "121",
+      "adopted_on_card": "2026-09-08",
+      "published_on_card": "2026-09-10",
+      "effective_on_card": null,
+      "card_original_retained": false
+    },
+    {
+      "card_url": "https://docs.eaeunion.org/documents/463/10454/",
+      "discovered_from": "https://docs.eaeunion.org/documents/?filter_departament%5B%5D=14",
+      "document_number": "4",
+      "adopted_on_card": "2026-01-20",
+      "published_on_card": "2026-01-23",
+      "effective_on_card": "2026-03-14",
+      "date_semantics": "Literal portal metadata only; no legal rule or approved interval is created.",
+      "observed_pdf_url": "https://docs.eaeunion.org/upload/iblock/798/59qwa6jpe6b76n24wtn0uu9eygvlznkr/Reshenie-Kollegii-_-4-ot-20-yanvarya-2026-g.pdf",
+      "pdf_pages_reported_by_web": 2,
+      "pdf_body_visually_read": false,
+      "card_original_retained": false,
+      "pdf_original_retained": false
+    },
+    {
+      "card_url": "https://docs.eaeunion.org/documents/166/10919/",
+      "discovered_from": "https://eec.eaeunion.org/comission/department/podm/",
+      "document_type": "Investigation completion notice",
+      "published_on_card": "2026-09-10",
+      "observed_pdf_url": "https://docs.eaeunion.org/upload/iblock/75c/h3m62bw3jc8solzxiw14jc7qhmnycmmy/AD30R1_notice_fin.pdf",
+      "publication_id_on_pdf": "2026/512/AD30R1",
+      "pdf_pages_reported_by_web": 1,
+      "pdf_text_exposed_by_web": true,
+      "source_text_observation": "The notice identifies Decision 12 of 9 February 2021 and links the newly adopted Decision 121 and the final AD30R1 investigation report.",
+      "observed_report_url": "https://remedies.eaeunion.org/dimd/filestorage/AD30R1_report_final.pdf",
+      "report_body_read": false,
+      "original_retained": false,
+      "duty_rule_created": false
+    }
+  ],
+  "acquisition_attempt": {
+    "transport": "existing bounded HTTPS official-source monitor transport",
+    "targets": [
+      "https://docs.eaeunion.org/upload/iblock/798/59qwa6jpe6b76n24wtn0uu9eygvlznkr/Reshenie-Kollegii-_-4-ot-20-yanvarya-2026-g.pdf",
+      "https://remedies.eaeunion.org/dimd/filestorage/AD30R1_report_final.pdf"
+    ],
+    "outcomes": ["ConnectError", "ConnectError"],
+    "retained_original_count": 0,
+    "application_database_created": false,
+    "interpretation": "Workspace transport was unavailable. This does not establish absence of the official documents. An isolated acquisition host is required."
+  },
+  "unresolved_dependencies": [
+    "Official original Decision 12 of 9 February 2021, its attachments and relevant amendments: exact URL and retained bytes not established by this bounded discovery.",
+    "Retained original Decision 4 of 20 January 2026 and its publication/effective-date metadata.",
+    "Retained Decision 121 publication card and independently reviewed effective-date interpretation.",
+    "Verified numeric rates, commodity/product scope, producer exceptions and complete historical intervals.",
+    "Source-bound legal interpretation by the responsible domain agent, independent QA, manifest-bound human review and separate approval.",
+    "Permanent object versioning, retention and legal-hold attestation remain separate unfinished gates."
+  ],
+  "discovery_limits": [
+    "Search results outside primary official domains were discarded; they do not establish a source or duty amount.",
+    "Official department index pagination links were visible, but the web tool did not resolve them. Query parameters or act URLs were not guessed.",
+    "The existing legacy bundle and migration cite Decision 12, but their percent/date fields are not official-source evidence and were not copied into a new rule.",
+    "A source title, publication card or investigation notice does not establish complete current trade-remedy coverage."
+  ]
+}

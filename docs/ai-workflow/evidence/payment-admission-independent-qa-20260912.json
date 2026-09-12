@@ -1,0 +1,274 @@
+{
+  "schema_version": 1,
+  "date": "2026-09-12",
+  "role": "A5 independent QA",
+  "repository": "ivan88810900-star/tnved_starter_kit_v2",
+  "status": "admission_history_maintenance_sources_and_a6_independently_verified",
+  "candidate_commit": "d300f92e697a448efe71a41ad1971f9884ed6b04",
+  "candidate_tree": "15ad7d788128cc45ab6ef7f43d34d1d96a14ce97",
+  "feature_inputs": {
+    "A0": "772aff03b15af7deb3637728c1e0116893db43a2",
+    "A1": "15d5dfc0ec87a37b222113f71fd255a2de65a641",
+    "A2": "7f396872bb430c3e8140cd8f57197545ce4b8b27",
+    "A3_in_combined_candidate": "4ee35fcb1214252a1fec236dbe8b50d34a961688",
+    "A3_separately_verified_named_source_plan": "a1ce31b25c9dc03793804a98962b0804ecbf2158",
+    "A4": "d0b524398ea5f6341f559e61fc539f6a26a1474d"
+  },
+  "independent_tests": {
+    "payment_admission_cases_expected": 83,
+    "ntm_historical_cases_expected": 24,
+    "source_quarantine_cases": 4,
+    "live_http_requests_expected": 43,
+    "execution": "127 new independent admission/history/A6 cases pass; 4 earlier independent source-quarantine cases retained. All required CI jobs pass at d300f92e.",
+    "payment_reconciliation_cases_passed": 20
+  },
+  "previous_fresh_proof": {
+    "source_qa_commit": "1d2619fb37cd822a1b13288d04bf1c5fb02365a3",
+    "source_qa_run": 34715016021,
+    "source_qa_result": "129 passed",
+    "source_normal_ci_run": 34715015985
+  },
+  "boundaries": {
+    "application_database_used": false,
+    "production_mutated": false,
+    "enforcement_enabled": false,
+    "external_ai_called": false,
+    "legal_review_verified": false,
+    "retention_attested": false,
+    "full_legal_coverage_claimed": false
+  },
+  "limitations": [
+    "This verifies technical admission, historical advisory boundaries, legacy maintenance, source evidence handling and bounded A6 arithmetic reconciliation; it does not establish full legal rate/NTM coverage.",
+    "Existing _round2 policy is preserved. Displayed-component reconciliation is not a legal declaration rounding-policy approval.",
+    "Capture34716176823 retained2 originals/7 quarantined bodies; capture34717159548 retained1 original PDF/1 quarantined card. Both have original_capture_complete=false; these counts establish retained artifacts, not current legal coverage.",
+    "Historical complete payment quotes, exact manifest-reviewed rate releases and durable legal retention remain outside this technical approval.",
+    "One focused skip is the pre-existing real legacy catalog smoke on an empty disposable database."
+  ],
+  "first_reconstructed_run": {
+    "commit": "bbe96d8ae94bf29d7493b3a525d8e58fef7fe3e1",
+    "run_id": 34715761659,
+    "job_id": 103612598692,
+    "passed": 1657,
+    "skipped": 1,
+    "subtests_passed": 85,
+    "errors": 12,
+    "errors_scope": "Independent NTM test fixture omitted required tr_ts_act_code; no feature conclusion from those setup errors.",
+    "independent_payment_ai_wal_passed": 83,
+    "live_uvicorn_http_requests_passed": 43
+  },
+  "second_candidate": {
+    "commit": "772aff03b15af7deb3637728c1e0116893db43a2",
+    "tree": "6bebca4bb826a1299ef75957dade736f276a1966",
+    "A1": "d66606f83ba3294ccae4752dd61bae44e4800680",
+    "A2": "c2fc39beeaa8fb60215cdb866c8f7bf59bd75279",
+    "A3": "4ee35fcb1214252a1fec236dbe8b50d34a961688"
+  },
+  "country_red": {
+    "commit": "289b23158e03a52eb15f2a39ea3a50438cbef21b",
+    "run": 34716035235,
+    "job": 103613326002,
+    "passed": 1670,
+    "failed": 3,
+    "skipped": 1,
+    "subtests_passed": 85,
+    "failures": [
+      "ZZ/CN candidate discarded",
+      "CN/ZZ candidate discarded",
+      "ZZ/ZZ missing country_unverified"
+    ],
+    "skip_reason": "no non_tariff_measures in DB"
+  },
+  "payload_red": {
+    "commit": "02b46956a2ceac742aedc596836d3b5086ec85d0",
+    "run": 34716339523,
+    "job": 103614153883,
+    "passed": 1730,
+    "failed": 8,
+    "skipped": 1,
+    "subtests_passed": 85,
+    "failures": [
+      "permit_type dict and integer caused AttributeError.strip",
+      "six malformed text-field cases lost explicit unverified reason"
+    ],
+    "country_regressions_passed": 4
+  },
+  "final_ntm_dependency": {
+    "commit": "7f396872bb430c3e8140cd8f57197545ce4b8b27",
+    "mode": "exact three author blobs copied without edits"
+  },
+  "real_source_capture": {
+    "run": 34716176823,
+    "job": 103613710651,
+    "originals": 2,
+    "quarantined": 7,
+    "unretained": 0,
+    "original_complete": false,
+    "artifact_id": 10304930968,
+    "archive_sha256": "d728387c458413b8bdd992a0ed330a8f45e7760ccacc77fc948958d44de3f6a7",
+    "legal_review_verified": false,
+    "decision12_links": "discovery-only anchors7601/7640 in quarantined page3; document contents not thereby established"
+  },
+  "final_green": {
+    "commit": "7bb5dca7e2cdcbc04a5ae16ec810a893f1e9d907",
+    "focused_run": 34716499930,
+    "focused_job": 103614580351,
+    "focused_passed": 1780,
+    "focused_skipped": 1,
+    "focused_subtests_passed": 85,
+    "normal_ci_run": 34716499953,
+    "normal_ci_status": "success",
+    "full_backend_job": 103614666809,
+    "frontend_tests": 50,
+    "typescript": "success",
+    "production_build": "success",
+    "isolated_staging_smoke": "success",
+    "scheduled_workflow_contracts": "success",
+    "independent_new_cases_passed": 107,
+    "live_uvicorn_http_requests_passed": 43,
+    "full_backend_summary": "5113 passed, 2 skipped, 2 warnings, 85 subtests passed in 206.84s (0:03:26)"
+  },
+  "a6": {
+    "status": "independently_verified",
+    "author_commit": "15d5dfc0ec87a37b222113f71fd255a2de65a641",
+    "author_red": {
+      "commit": "d04e964e4158925d043b37157c1b50087b84d39a",
+      "run": 34716429404,
+      "failed": 16,
+      "passed": 1257
+    },
+    "independent_cases": 20,
+    "scope": [
+      "unreviewed multiplier",
+      "cross-store AD overlap remains unknown and final quote unavailable",
+      "displayed cent reconciliation"
+    ],
+    "provisional_and_historical_contracts_preserved": true,
+    "author_green": {
+      "run": 34716718914,
+      "passed": 1273,
+      "subtests_passed": 85,
+      "full_ci_run": 34716718892
+    },
+    "independent_green": {
+      "commit": "d300f92e697a448efe71a41ad1971f9884ed6b04",
+      "tree": "15ad7d788128cc45ab6ef7f43d34d1d96a14ce97",
+      "focused_run": 34716890248,
+      "focused_job": 103615640155,
+      "focused_passed": 1968,
+      "focused_skipped": 1,
+      "focused_subtests_passed": 85,
+      "focused_summary": "1968 passed, 1 skipped, 2 warnings, 85 subtests passed in 34.65s",
+      "independent_new_cases_passed": 20,
+      "prior_independent_cases_retained": 107,
+      "normal_ci_run": 34716890270,
+      "normal_ci_status": "success",
+      "full_backend_job": 103615640430,
+      "full_backend_summary": "5113 passed, 2 skipped, 2 warnings, 85 subtests passed in 280.41s",
+      "frontend_tests": 50,
+      "typescript": "success",
+      "production_build": "success",
+      "isolated_staging_smoke": "success",
+      "scheduled_workflow_contracts": "success",
+      "scope_note": "The explicit44-suite independent workflow includes authorA6 and independentA6 tests; the existing normalCI backend profile separately verifies5113 regressions."
+    },
+    "unchanged_provisional_contracts": [
+      1,
+      2,
+      4,
+      5,
+      7
+    ],
+    "confirmed_and_corrected_findings": [
+      3,
+      6,
+      8
+    ],
+    "feature_files_copied_without_qa_edits": [
+      {
+        "mode": "100644",
+        "path": "customs-clear/backend/app/services/payment_engine.py",
+        "sha": "3921c7178b1245327181f13988d98c71b57392fb",
+        "type": "blob"
+      },
+      {
+        "mode": "100644",
+        "path": "customs-clear/backend/tests/test_payment_a6_reconciliation.py",
+        "sha": "9807ce1febeaa805875985ae6734ee486a978301",
+        "type": "blob"
+      },
+      {
+        "mode": "100644",
+        "path": "customs-clear/backend/tests/test_payment_preference_eligibility.py",
+        "sha": "1fee3830891c41a75c0ecdb48e01523e4a871a96",
+        "type": "blob"
+      },
+      {
+        "mode": "100644",
+        "path": "docs/ai-workflow/A6_PAYMENT_AUDIT_RECONCILIATION.md",
+        "sha": "b3088c53fd66ca635f1681c3209671db49396f3e",
+        "type": "blob"
+      }
+    ]
+  },
+  "source_plan_independent_review": {
+    "commit": "a1ce31b25c9dc03793804a98962b0804ecbf2158",
+    "focused_run": 34716832672,
+    "focused_job": 103615480441,
+    "focused_passed": 161,
+    "normal_ci_run": 34716832650,
+    "normal_ci_status": "success",
+    "scope": "Exact named old9 replay/new2 Decision12 acquisition plans; immutable selection, quarantine exclusion and existing bounded native PDF evidence parser. Approved for isolated source-only acquisition.",
+    "legal_review_verified": false,
+    "rate_applicability_verified": false
+  },
+  "retained_pdf_visual_review": {
+    "evidence_blob": "0f783a1da7d7b52d9e82ee2eda3bb09fe16ddf09",
+    "reviewer": "A5",
+    "reviewed_render_pages": 3,
+    "documents": [
+      "Decision4/2026 pages1-2",
+      "AD30R1 completion notice page1"
+    ],
+    "result": "Page-bound observations agree with the rendered retained originals: referenced Decision12 rates, printed extension/entry-into-force clauses and notice dates/links. No absolute rule interval or numeric/product rate applicability derived.",
+    "legal_review_verified": false
+  },
+  "decision12_independent_source_review": {
+    "run": 34717159548,
+    "job": 103616352628,
+    "artifact_id": 10305550676,
+    "archive_sha256": "df8bc0fcc89780f53d6e29839e9b7a26835f2b19aa322fc6d4eb2b6546c5768e",
+    "archive_independently_rehashed": true,
+    "cas_objects_independently_rehashed": 4,
+    "cas_object_bytes": 913329,
+    "pdf_body_sha256": "1d6936be2b492b2976e03b3558c55c36062a89dc612ffe54f7e54af49a372c4b",
+    "pdf_receipt_sha256": "75b91c72da6a9a11e1e7d3a704747188a0c911a1f5348aedf2c658cb24a8a866",
+    "originals": 1,
+    "quarantined": 1,
+    "unretained": 0,
+    "original_capture_complete": false,
+    "native_pdf_text_status": "native_text_incomplete",
+    "native_empty_pages": 3,
+    "ocr_used": false,
+    "independently_visually_reviewed_pages": 3,
+    "source_observations_checked": [
+      "Decision12 dated9February2021; clause1 product geometry/China/four printed HS codes and stated five-year duration.",
+      "Clause2 directs use of both HS codes and product name; clause3 states30calendar days after official publication, without an absolute date computed by QA.",
+      "Annex prints Foshan Vinmay Stainless Steel Co., Ltd.14.62; Guangdong Sumwin New Material Group Co., Ltd.17.28; other producers17.28 percent of customs value. Producer addresses are also present in the source."
+    ],
+    "scope": "Only the rendered retained original and exact printed source observations were checked. No current rate rule, producer match, applicability interval or active import approval follows.",
+    "legal_review_verified": false,
+    "rate_applicability_verified": false,
+    "can_promote": false
+  },
+  "initial_candidate": {
+    "commit": "68530dce424d5c16ea56fa1344715312c546d108",
+    "tree": "a5e8939c967f98f351b6fe4dc746d94a0bb61987",
+    "feature_inputs": {
+      "A0": "f47b880",
+      "A1": "d7881ad47e054c0e39db6ec27b7452f732891ea4",
+      "A2": "3335f808cff072e12ea4120cef72c9d1595cf86d",
+      "A3": "7e46713e839886ee121012cfb2941ebebfed1af3",
+      "A4": "d0b524398ea5f6341f559e61fc539f6a26a1474d"
+    }
+  }
+}

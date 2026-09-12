@@ -5,6 +5,68 @@
 
 ---
 
+## 0. Актуальный итог интеграции, 12 сентября 2026
+
+Завершён ограниченный технический блок admission/payment consistency/source
+evidence, а не полный юридический охват ставок и NTM. Изменения A1–A4 прошли
+независимую A5-проверку и объединены с существующей работой PR #187.
+Публикация feature HEAD требует зелёного CI собранного коммита; актуальные
+HEAD/checks брать из GitHub, не из исторических SHA ниже.
+Main остаётся `9712c7b`, base — `a5a811e`; deployment, production DB и
+enforcement не изменяются. PR #189 остаётся отдельным неактивным draft.
+
+- Закрыты выявленные публичные пути записи неподтверждённых ставок: шесть
+  импортёров, generic bundles/feeds, Tamdoc, TWS, AI extraction, backfill и
+  maintenance CLI. Отказы не создают ложную свежесть и не меняют preview cache.
+- NTM сохраняет неопределённость даты, страны, направления, характеристик,
+  исключений и повреждённых полей. Code-only и старые definite-маркеры не
+  становятся разрешением на обязательный документ.
+- Независимо проверены все восемь findings A6. Подтверждены и исправлены
+  несимметричная преференция, возможный двойной антидемпинг и расхождение
+  отображаемых компонентов с итогом. Provisional arithmetic, missing specific
+  units и отказ public as_of сохраняют существующие safety boundaries.
+  [Полная классификация](../docs/ai-workflow/A6_PAYMENT_AUDIT_RECONCILIATION.md).
+- A5 `d300f92e`: focused run 34716890248 — 1 968 passed, 1 known skipped;
+  full CI 34716890270 — backend profile 5 113 passed, 2 known skipped,
+  2 warnings, 85 subtests; frontend 50, TypeScript/build, staging и workflow
+  contracts прошли. 43 real HTTP cases использовали изолированную временную БД.
+  Эти результаты относятся к указанному QA-коммиту; финальная сборка добавляет
+  два A6 suite в обычный CI и отдельно проверенные изменения A3.
+- A3 `a1ce31b2`: full CI 34716832650 и focused 34716832672 (161 passed)
+  успешны. Capture 34716176823 сохранил 2 originals / 7 quarantined;
+  34717159548 — 1 original / 1 quarantined. Acquisition failed сохраняется,
+  поскольку полнота оригиналов не достигнута; inspector и сохранение успешны.
+  Архивы и все CAS SHA повторно проверены. Решения 12/4 и notice прочитаны
+  A3/A5 как факты источника, без утверждения юридического интервала/ставки.
+- Фактическая конфигурация: 49 source registry entries, 49 policies,
+  72 default monitor URLs; ещё 11 изолированных review-only targets.
+  Это технические количества, не юридическое покрытие.
+
+Следующий этап: формальный review candidate цепочки 12 → 4 → 121 и оставшаяся
+source-bound временная/продуктовая применимость ЕТТ, НДС, акцизов, защитных мер,
+преференций и происхождения. Полный NTM scope, квоты 2.27/3.1/3.2 и конкретные
+ГОСТ/маркировка также не закрыты. Public historical payments и source-bound
+specific-duty units остаются ограничены; сохранённый 111C — четыре кода и один
+день, не весь текущий ЕТТ. Backup не подтверждает retention/legal hold.
+Manifest-bound human review и отдельное утверждение ещё необходимы до применения;
+DM-0014 не останавливает техническую разработку.
+
+Legacy diagnostic invoice_analyzer VAT override/Excel path остаётся вне
+гарантии grounded canonical payments; ограничение и read-only call-graph audit
+описаны в [AI_NORMATIVE_ADMISSION](../docs/ai-workflow/AI_NORMATIVE_ADMISSION.md).
+Текущее исправление cent reconciliation не задаёт новый юридический rounding policy.
+
+[Завершённый технический TASK](../docs/ai-workflow/TASK-RATE-ADMISSION-RECOVERY.md),
+[восстановление и коммиты](../docs/ai-workflow/REMOTE_EXECUTOR_RECOVERY_20260912.md),
+[A5 evidence](../docs/ai-workflow/evidence/payment-admission-independent-qa-20260912.json),
+[источники 12/4/121](../docs/ai-workflow/evidence/eec-ad30-decision12-capture-review-20260912.json).
+
+Разделы ниже сохраняют историю прежних реализаций и прогонов. Старые HEAD,
+количества, слова «следующий» и промежуточные описания отключённой среды
+не переопределяют этот итог и актуальное состояние GitHub.
+
+---
+
 ## 1. Реализованные функции
 
 ### Ядро платформы
@@ -37,7 +99,22 @@
 
 ---
 
-## 2. Активная задача
+## 2. История активной задачи до итоговой интеграции
+
+Проверенный source checkpoint `22a7df5590a7442d943d89af285feb1228e80938`
+включён в PR #187; CI #34714034429 / #34714027008 успешны. Два ранее
+отклонённых HTML теперь сохранены отдельно в карантине, без acceptance.
+Archive SHA `10ceb2d8810642cab8d80496b5ff1489f6c49f3446b8c49b600f56f201d7bab4`;
+capture #34714034422 остаётся failed: 0 обычных / 2 quarantined originals.
+
+Execution server отключился; локальная интеграция и последние команды тестов
+не подтверждены. Работа продолжается через GitHub в реальных отдельных
+agent-ветках. Восстановленные деревья проходят новый CI и независимый A5;
+старые локальные результаты не переносятся на них как доказательство.
+Фактические remote HEAD, роли, локальные checkpoint и незавершённые проверки:
+[REMOTE_EXECUTOR_RECOVERY_20260912](../docs/ai-workflow/REMOTE_EXECUTOR_RECOVERY_20260912.md).
+Полный нормативный блок не завершён; main, production DB и enforcement не менялись.
+
 
 Восстановление 12.09: remote PR #187 подтверждён на `5f715ae69443c29187785b3a1f17e0d41d1f2368`.
 Рабочая директория предыдущей сессии потеряна; её незакоммиченные изменения

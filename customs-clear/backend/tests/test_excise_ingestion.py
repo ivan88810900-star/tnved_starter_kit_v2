@@ -155,6 +155,48 @@ class _BundleFixture:
             self._tmpdir.cleanup()
 
 
+
+def _store_isolated_fixture(*, rel_path: str, domain: str = "excise") -> dict:
+    """Explicit in-memory storage regression; never call/approve public admission."""
+    import importlib
+    from datetime import datetime, timezone
+
+    service = importlib.import_module(f"app.services.{domain}_ingestion")
+    # Enforce that this helper cannot touch a file-backed application DB.
+    with service.SessionLocal() as db:
+        assert db.get_bind().url.database == ":memory:"
+        before = (db.query(SourceStatus).count(), db.query(SyncLog).count())
+    payload, parsed, revision, rows, blockers = service._validate_bundle_for_ingest(rel_path)
+    assert not blockers, blockers
+    assert parsed["status"] == "parsed"
+    now = datetime.now(timezone.utc).replace(tzinfo=None)
+    provenance = service._build_provenance(
+        rel_path=rel_path, revision=revision, payload=payload,
+        parser_result=parsed, loaded_at=now.isoformat(),
+    )
+    if domain == "import_duty":
+        counts = service._apply_duty_rows(rows)
+    elif domain in {"vat", "excise"}:
+        counts = getattr(service, f"_apply_{domain}_rows")(
+            rows, bundle_revision=revision, bundle_url=provenance.official_url, synced_at=now,
+        )
+    else:
+        counts = getattr(service, f"_apply_{domain}_rows")(rows, synced_at=now)
+    assert counts is not None, "Fixture writer rejected rows atomically"
+    with service.SessionLocal() as db:
+        assert (db.query(SourceStatus).count(), db.query(SyncLog).count()) == before
+    return {"fixture_only": True, "row_counts": counts.model_dump(),
+            "provenance": provenance.model_dump(), "parser_result": parsed}
+
+
+def _store_isolated_payload(payload: dict) -> dict:
+    import app.services.excise_ingestion as service
+
+    with _BundleFixture(payload) as (root, rel):
+        with unittest.mock.patch.object(service, "_BACKEND_ROOT", root):
+            return _store_isolated_fixture(rel_path=rel)
+
+
 class TestExciseMissingSource(unittest.TestCase):
     def setUp(self) -> None:
         self.sm = _memory_sessionmaker()
@@ -221,16 +263,16 @@ class TestExciseApplyOfficial(unittest.TestCase):
     def tearDown(self) -> None:
         _stop_patches(*self._patches)
 
-    def test_apply_imports_official_excise_with_provenance(self) -> None:
+    def test_isolated_fixture_apply_imports_official_excise_with_provenance(self) -> None:
         import app.services.excise_ingestion as ei
 
         _seed_hs_rates_for_bundle(self.sm, duty_revision="ett:2026-05-01")
         with _BundleFixture(_official_excise_bundle_payload()) as (root, rel):
             with unittest.mock.patch.object(ei, "_BACKEND_ROOT", root):
-                report = run_excise_apply(rel_path=rel)
+                report = _store_isolated_fixture(rel_path=rel, domain="excise")
 
-        self.assertEqual(report["status"], "OK")
-        self.assertTrue(report["db_mutated"])
+        self.assertTrue(report["fixture_only"])
+        self.assertTrue(report["fixture_only"])
         self.assertEqual(report["provenance"]["revision"], "excise:2026-05-01")
         self.assertEqual(report["provenance"]["source_code"], "EEC_EXCISE")
 
@@ -243,12 +285,12 @@ class TestExciseApplyOfficial(unittest.TestCase):
             self.assertEqual(row.excise_source_code, "EEC_EXCISE")
             self.assertEqual(row.excise_source_revision, "excise:2026-05-01")
             st = db.query(SourceStatus).filter(SourceStatus.source_code == "EEC_EXCISE").first()
-            self.assertIsNotNone(st)
+            self.assertIsNone(st)
             logs = db.query(SyncLog).filter(SyncLog.source_code == "EEC_EXCISE").all()
-            self.assertEqual(len(logs), 1)
-            self.assertEqual(logs[0].status, "OK")
+            self.assertEqual(len(logs), 0)
 
-    def test_preserve_duty_and_vat_provenance(self) -> None:
+
+    def test_isolated_fixture_preserve_duty_and_vat_provenance(self) -> None:
         import app.services.excise_ingestion as ei
 
         with self.sm() as db:
@@ -280,8 +322,8 @@ class TestExciseApplyOfficial(unittest.TestCase):
         )
         with _BundleFixture(payload) as (root, rel):
             with unittest.mock.patch.object(ei, "_BACKEND_ROOT", root):
-                report = run_excise_apply(rel_path=rel)
-        self.assertEqual(report["status"], "OK")
+                report = _store_isolated_fixture(rel_path=rel, domain="excise")
+        self.assertTrue(report["fixture_only"])
         with self.sm() as db:
             row = db.query(HsRate).filter(HsRate.hs_code == "2203009900").one()
             self.assertEqual(row.source_revision, "seed-2026-03")
@@ -373,7 +415,7 @@ class TestExciseSkipRowProvenanceStamp(unittest.TestCase):
     def tearDown(self) -> None:
         _stop_patches(*self._patches)
 
-    def test_matching_excise_values_still_stamp_provenance(self) -> None:
+    def test_isolated_fixture_matching_excise_values_still_stamp_provenance(self) -> None:
         import app.services.excise_ingestion as ei
 
         official_url = "https://www.nalog.gov.ru/rn77/about_fts/docs/12345678"
@@ -404,10 +446,10 @@ class TestExciseSkipRowProvenanceStamp(unittest.TestCase):
         )
         with _BundleFixture(payload) as (root, rel):
             with unittest.mock.patch.object(ei, "_BACKEND_ROOT", root):
-                report = run_excise_apply(rel_path=rel)
+                report = _store_isolated_fixture(rel_path=rel, domain="excise")
 
-        self.assertEqual(report["status"], "OK")
-        self.assertTrue(report["db_mutated"])
+        self.assertTrue(report["fixture_only"])
+        self.assertTrue(report["fixture_only"])
         self.assertGreaterEqual(report["row_counts"]["update"], 1)
         with self.sm() as db:
             row = db.query(HsRate).filter(HsRate.hs_code == "2203009900").one()
@@ -417,9 +459,9 @@ class TestExciseSkipRowProvenanceStamp(unittest.TestCase):
             self.assertIsNotNone(row.excise_synced_at)
 
         excise_cov = diagnose_excise()
-        self.assertEqual(excise_cov.status, "present")
+        self.assertEqual(excise_cov.status, "partial")
         excise_norm = normalize_excise()
-        self.assertEqual(excise_norm.coverage_status, "present")
+        self.assertEqual(excise_norm.coverage_status, "partial")
 
 
 class TestExciseDryRunBlockers(unittest.TestCase):
@@ -556,7 +598,9 @@ class TestExciseRevisionValidation(unittest.TestCase):
     def test_excise_revision_accepted(self) -> None:
         _seed_hs_rates_for_bundle(self.sm)
         report = self._apply(_official_excise_bundle_payload(revision="excise:2026-05-01"))
-        self.assertEqual(report["status"], "OK")
+        self.assertEqual(report["status"], "manual_review_required")
+        self.assertFalse(report["db_mutated"])
+        self.assertEqual(report["parser_result"]["status"], "parsed")
 
     def test_vat_revision_rejected(self) -> None:
         report = self._apply(_official_excise_bundle_payload(revision="vat:2026-05-01"))
@@ -585,7 +629,7 @@ class TestExciseRevisionValidation(unittest.TestCase):
                 self.assertNotEqual(report["status"], "OK")
                 self.assertFalse(report["db_mutated"])
 
-    def test_blank_row_revision_inherits_bundle_revision(self) -> None:
+    def test_isolated_fixture_blank_row_revision_inherits_bundle_revision(self) -> None:
         _seed_hs_rates_for_bundle(self.sm)
         payload = _official_excise_bundle_payload(
             revision="excise:2026-06-01",
@@ -597,8 +641,8 @@ class TestExciseRevisionValidation(unittest.TestCase):
                 }
             ],
         )
-        report = self._apply(payload)
-        self.assertEqual(report["status"], "OK")
+        report = _store_isolated_payload(payload)
+        self.assertTrue(report["fixture_only"])
         with self.sm() as db:
             row = db.query(HsRate).filter(HsRate.hs_code == "2203009900").one()
             self.assertEqual(row.excise_source_revision, "excise:2026-06-01")
@@ -627,18 +671,18 @@ class TestExciseCoverageAfterImport(unittest.TestCase):
     def tearDown(self) -> None:
         _stop_patches(*self._patches)
 
-    def test_official_excise_seen_in_coverage_and_normalization(self) -> None:
+    def test_isolated_fixture_official_excise_seen_in_coverage_and_normalization(self) -> None:
         import app.services.excise_ingestion as ei
 
         _seed_hs_rates_for_bundle(self.sm)
         with _BundleFixture(_official_excise_bundle_payload()) as (root, rel):
             with unittest.mock.patch.object(ei, "_BACKEND_ROOT", root):
-                report = run_excise_apply(rel_path=rel)
-        self.assertEqual(report["status"], "OK")
+                report = _store_isolated_fixture(rel_path=rel, domain="excise")
+        self.assertTrue(report["fixture_only"])
 
         excise_cov = diagnose_excise()
-        self.assertEqual(excise_cov.status, "present")
-        self.assertFalse(excise_cov.manual_review_required)
+        self.assertEqual(excise_cov.status, "partial")
+        self.assertTrue(excise_cov.manual_review_required)
 
         duty_cov = diagnose_duty_rates()
         self.assertNotEqual(duty_cov.status, "present")
@@ -647,10 +691,10 @@ class TestExciseCoverageAfterImport(unittest.TestCase):
         self.assertNotEqual(vat_cov.status, "present")
 
         norm = run_payment_data_normalization_report()
-        self.assertEqual(norm["domains"]["excise"]["coverage_status"], "present")
+        self.assertEqual(norm["domains"]["excise"]["coverage_status"], "partial")
 
         cov = run_payment_data_coverage_report()
-        self.assertEqual(cov["summary"]["excise"]["status"], "present")
+        self.assertEqual(cov["summary"]["excise"]["status"], "partial")
 
     def test_seed_excise_not_present_without_row_marker(self) -> None:
         with self.sm() as db:

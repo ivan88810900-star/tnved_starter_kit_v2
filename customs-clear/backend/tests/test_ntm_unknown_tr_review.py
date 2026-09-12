@@ -122,13 +122,13 @@ def test_previously_imported_definite_row_is_safe_before_and_after_reimport(sess
         assert measure.permit_type == ""
 
 
-def test_known_imported_tr_rule_is_not_reclassified(sessions):
+def test_known_catalog_retains_permit_hint_without_approving_legacy_scope(sessions):
     seed(sessions, "8471300000")
     with sessions() as session:
         import_legacy_non_tariff_measures_to_ntm_v2(session)
         rule = session.scalars(select(NtmApplicabilityRuleV2)).one()
         measure = session.scalars(select(NtmMeasureV2)).one()
-        assert rule.applicability == "definite" and not rule.requires_manual_review
+        assert rule.applicability == "needs_clarification" and rule.requires_manual_review
         assert measure.permit_type == "ДС"
 
 

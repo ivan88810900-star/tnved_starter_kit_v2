@@ -6,7 +6,7 @@ converts a positive unrepresentable value to zero. It does not establish legal
 applicability or convert a permissive legacy normalizer into an official parser.
 """
 
-from decimal import Decimal
+from decimal import Decimal, DecimalException
 import json
 import math
 import re
@@ -42,8 +42,12 @@ def load_official_rate_json(source: bytes | str) -> object:
         source = source.decode("utf-8")
     if type(source) is not str:
         raise ValueError("official_json_requires_utf8_source")
-    return json.loads(source, parse_float=Decimal, object_pairs_hook=_unique_json_object,
-                      parse_constant=_reject_json_constant)
+    try:
+        return json.loads(source, parse_float=Decimal, object_pairs_hook=_unique_json_object,
+                          parse_constant=_reject_json_constant)
+    except (DecimalException, OverflowError, RecursionError) as exc:
+        # Decoder failures must not become transport/persistence error writes.
+        raise ValueError("invalid_or_unsupported_json_number_or_structure") from exc
 
 
 def explicit_nonnegative_rate(value: object) -> float:

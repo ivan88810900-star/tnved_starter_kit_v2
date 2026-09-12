@@ -18,6 +18,7 @@ from ..schemas.countervailing_ingestion import (
 )
 from .normative_store import append_sync_log, upsert_source_status
 from .official_rate_validation import load_official_rate_json
+from .official_payment_admission import payment_admission_blocker
 from .payment_data_coverage import run_payment_data_coverage_report
 from .payment_revision_utils import (
     is_anti_dumping_only_bundle_path,
@@ -526,7 +527,13 @@ def _blocked_response(
         parser_result=parser_result or {},
         notes=notes or [],
     )
-    return response.model_dump(mode="json")
+    return {
+        **response.model_dump(mode="json"),
+        "active_rates_written": False,
+        "source_evidence_verified": False,
+        "legal_review_verified": False,
+        "retention_verified": False,
+    }
 
 
 def _validate_bundle_for_ingest(
@@ -635,11 +642,17 @@ def run_countervailing_dry_run(*, rel_path: str | None = None) -> dict[str, Any]
         },
         notes=[
             "Dry-run не мутирует БД.",
-            "Apply доступен только при status=OK dry-run и official provenance.",
-            "Coverage present требует official countervailing rows (не seed/fallback).",
+            payment_admission_blocker("countervailing"),
+            "Row counts and declared source metadata are technical diagnostics, not verified legal coverage.",
         ],
     )
-    return response.model_dump(mode="json")
+    return {
+        **response.model_dump(mode="json"),
+        "active_rates_written": False,
+        "source_evidence_verified": False,
+        "legal_review_verified": False,
+        "retention_verified": False,
+    }
 
 
 def _stamp_row_provenance(existing: SpecialDuty, *, row: dict[str, Any], synced_at: datetime) -> None:
@@ -711,7 +724,7 @@ def _apply_countervailing_rows(
 
 
 def run_countervailing_apply(*, rel_path: str | None = None) -> dict[str, Any]:
-    """Guarded apply: мутирует БД только при official provenance и отсутствии blockers."""
+    """Legacy apply: техническая проверка без применения до manifest-bound review."""
     loaded_at = _utc_now_iso()
     bundle_path = discover_countervailing_bundle_path(rel_path=rel_path)
     if not bundle_path:
@@ -748,59 +761,13 @@ def run_countervailing_apply(*, rel_path: str | None = None) -> dict[str, Any]:
             notes=["Apply отменён — SourceStatus/SyncLog не записаны."],
         )
 
-    synced_at = datetime.now(timezone.utc).replace(tzinfo=None)
-    applied = _apply_countervailing_rows(rows, synced_at=synced_at)
-    if applied is None:
-        return _blocked_response(
-            status="manual_review_required",
-            mode="apply",
-            dry_run=False,
-            blockers=["atomic_apply_aborted: invalid measure row detected during apply"],
-            parser_result=parser_result,
-            provenance=provenance,
-            notes=["Apply атомарно отменён.", "SourceStatus/SyncLog не записаны."],
-        )
-    row_counts = applied
-
-    entry = get_payment_source_entry(_REGISTRY_SOURCE_CODE)
-    note_txt = (
-        f"countervailing apply {bundle_path}: revision={revision}; "
-        f"insert={row_counts.insert}, update={row_counts.update}, skip={row_counts.skip}; "
-        f"checksum={provenance.checksum_sha256 or 'n/a'}"
-    )
-    upsert_source_status(
-        source_code=_COUNTERVAILING_SOURCE_CODE,
-        source_name=entry.name if entry else provenance.source_name,
-        source_url=provenance.official_url or bundle_path,
-        revision=revision,
-        is_stale=False,
-        note=note_txt,
-    )
-    append_sync_log(
-        source_code=_COUNTERVAILING_SOURCE_CODE,
-        status="OK",
-        revision=revision,
-        rows_affected=row_counts.insert + row_counts.update,
-        note=note_txt,
-    )
-
-    coverage = run_payment_data_coverage_report()
-    response = CountervailingIngestionResponse(
-        status="OK",
+    return _blocked_response(
+        status="manual_review_required",
         mode="apply",
         dry_run=False,
-        db_mutated=(row_counts.insert + row_counts.update) > 0,
-        provenance=provenance,
-        row_counts=row_counts,
-        blockers=[],
+        blockers=[payment_admission_blocker("countervailing")],
         parser_result=parser_result,
-        coverage_link={
-            "trade_remedies_status": (coverage.get("summary") or {}).get("trade_remedies", {}).get("status"),
-            "generated_at": coverage.get("generated_at"),
-        },
-        notes=[
-            "Countervailing slice: обновляет только special_duties с measure_type=countervailing.",
-            "Import-duty/VAT/excise/anti-dumping/special-safeguard поля не изменяются.",
-        ],
+        provenance=provenance,
+        row_counts=CountervailingRowCounts(total_in_source=len(rows), blocked=len(rows)),
+        notes=["Технический разбор сохранён; DB planning, SourceStatus и SyncLog не выполнялись."],
     )
-    return response.model_dump(mode="json")

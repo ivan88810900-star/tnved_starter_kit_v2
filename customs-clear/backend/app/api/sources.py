@@ -59,6 +59,23 @@ _DATA_DIR = Path(__file__).resolve().parent.parent.parent / "data"
 router = APIRouter()
 
 
+def _source_write_reported(result: dict) -> bool:
+    if result.get("db_mutated") is False:
+        return False
+    if result.get("db_mutated") is True:
+        return True
+    children = result.get("sources")
+    if isinstance(children, list):
+        return any(_source_write_reported(child) for child in children if isinstance(child, dict))
+    return result.get("status") == "OK"
+
+
+def _clear_preview_after_source_write(result: dict) -> None:
+    """Rejected applies must not alter persistent application revisions."""
+    if _source_write_reported(result):
+        clear_preview_cache()
+
+
 class RegulatoryReviewResolutionIn(BaseModel):
     asserted_by: str = Field(min_length=1, max_length=128)
     resolution_ref: str = Field(min_length=1, max_length=2048)
@@ -240,7 +257,7 @@ async def sources_import_duty_apply(
     """Guarded apply import-duty из локального official EEC/ETT bundle."""
     require_admin_token(x_admin_token)
     data = run_import_duty_apply()
-    clear_preview_cache()
+    _clear_preview_after_source_write(data)
     return JSONResponse(data)
 
 
@@ -254,10 +271,10 @@ async def sources_vat_dry_run() -> JSONResponse:
 async def sources_vat_apply(
     x_admin_token: str | None = Header(None, alias="X-Admin-Token"),
 ) -> JSONResponse:
-    """Guarded apply VAT из локального official EEC/ETT bundle."""
+    """Проверить legacy VAT-кандидат; применение требует manifest-bound review."""
     require_admin_token(x_admin_token)
     data = run_vat_apply()
-    clear_preview_cache()
+    _clear_preview_after_source_write(data)
     return JSONResponse(data)
 
 
@@ -274,7 +291,7 @@ async def sources_excise_apply(
     """Guarded apply excise из локального official bundle."""
     require_admin_token(x_admin_token)
     data = run_excise_apply()
-    clear_preview_cache()
+    _clear_preview_after_source_write(data)
     return JSONResponse(data)
 
 
@@ -291,7 +308,7 @@ async def sources_anti_dumping_apply(
     """Guarded apply anti-dumping из локального official EEC bundle."""
     require_admin_token(x_admin_token)
     data = run_anti_dumping_apply()
-    clear_preview_cache()
+    _clear_preview_after_source_write(data)
     return JSONResponse(data)
 
 
@@ -308,7 +325,7 @@ async def sources_special_safeguard_apply(
     """Guarded apply special-safeguard из локального official EEC bundle."""
     require_admin_token(x_admin_token)
     data = run_special_safeguard_apply()
-    clear_preview_cache()
+    _clear_preview_after_source_write(data)
     return JSONResponse(data)
 
 
@@ -325,7 +342,7 @@ async def sources_countervailing_apply(
     """Guarded apply countervailing из локального official EEC bundle."""
     require_admin_token(x_admin_token)
     data = run_countervailing_apply()
-    clear_preview_cache()
+    _clear_preview_after_source_write(data)
     return JSONResponse(data)
 
 
@@ -349,7 +366,7 @@ async def sources_sync(x_admin_token: str | None = Header(None, alias="X-Admin-T
     """Полная синхронизация: ЕЭК, OData, PDF ЕТТ, фиды."""
     require_admin_token(x_admin_token)
     data = await sync_all_sources()
-    clear_preview_cache()
+    _clear_preview_after_source_write(data)
     return JSONResponse(data)
 
 
@@ -358,23 +375,23 @@ async def sources_sync_tamdoc(
     max_docs: int = Query(12, ge=1, le=200, description="Сколько документов tamdoc обработать за запуск"),
     x_admin_token: str | None = Header(None, alias="X-Admin-Token"),
 ) -> JSONResponse:
-    """Синхронизация нормативки с alta.ru/tamdoc (автопарсинг в БД)."""
+    """Собрать коммерческие кандидаты для проверки без применения нормативных правил."""
     require_admin_token(x_admin_token)
     data = await sync_tamdoc_documents(max_docs=max_docs)
-    clear_preview_cache()
+    _clear_preview_after_source_write(data)
     return JSONResponse(data)
 
 
 @router.post("/sync/tamdoc/targeted")
 async def sources_sync_tamdoc_targeted(
     max_docs: int = Query(60, ge=1, le=500, description="Сколько документов tamdoc обработать за запуск"),
-    staging_only: bool = Query(False, description="Только собрать кандидатов в staging, без записи в боевые таблицы"),
+    staging_only: bool = Query(False, description="Параметр совместимости: сбор всегда ограничен кандидатами для проверки"),
     x_admin_token: str | None = Header(None, alias="X-Admin-Token"),
 ) -> JSONResponse:
     """Целевой парсинг alta.ru/tamdoc для НДС-льгот и спецпошлин."""
     require_admin_token(x_admin_token)
     data = await sync_tamdoc_targeted(max_docs=max_docs, staging_only=staging_only)
-    clear_preview_cache()
+    _clear_preview_after_source_write(data)
     return JSONResponse(data)
 
 
@@ -392,12 +409,12 @@ async def sources_sync_tamdoc_candidates(
 @router.post("/sync/tamdoc/candidates/{candidate_id}/approve")
 async def sources_sync_tamdoc_candidate_approve(
     candidate_id: int,
-    include_non_tariff: bool = Query(False, description="Добавлять ли также generic-запись в non_tariff_measures"),
+    include_non_tariff: bool = Query(False, description="Параметр совместимости; неподтверждённые меры не применяются"),
     x_admin_token: str | None = Header(None, alias="X-Admin-Token"),
 ) -> JSONResponse:
     require_admin_token(x_admin_token)
     data = approve_tamdoc_candidate(candidate_id=candidate_id, include_non_tariff=include_non_tariff)
-    clear_preview_cache()
+    _clear_preview_after_source_write(data)
     if data.get("status") == "ERROR":
         raise HTTPException(status_code=404, detail=str(data.get("error", "candidate_not_found")))
     return JSONResponse(data)
@@ -411,7 +428,7 @@ async def sources_sync_tamdoc_candidate_reject(
 ) -> JSONResponse:
     require_admin_token(x_admin_token)
     data = reject_tamdoc_candidate(candidate_id=candidate_id, reason=reason or "")
-    clear_preview_cache()
+    _clear_preview_after_source_write(data)
     if data.get("status") == "ERROR":
         raise HTTPException(status_code=404, detail=str(data.get("error", "candidate_not_found")))
     return JSONResponse(data)
@@ -421,7 +438,7 @@ async def sources_sync_tamdoc_candidate_reject(
 async def sources_sync_tamdoc_candidates_approve_batch(
     limit: int = Query(100, ge=1, le=1000),
     status: str = Query("pending", description="Какой статус кандидатов брать в батч"),
-    include_non_tariff: bool = Query(False, description="Добавлять ли также generic-запись в non_tariff_measures"),
+    include_non_tariff: bool = Query(False, description="Параметр совместимости; неподтверждённые меры не применяются"),
     x_admin_token: str | None = Header(None, alias="X-Admin-Token"),
 ) -> JSONResponse:
     require_admin_token(x_admin_token)
@@ -430,7 +447,7 @@ async def sources_sync_tamdoc_candidates_approve_batch(
         status=status,
         include_non_tariff=include_non_tariff,
     )
-    clear_preview_cache()
+    _clear_preview_after_source_write(data)
     return JSONResponse(data)
 
 
@@ -439,8 +456,8 @@ async def sources_sync_tamdoc_archive(
     archive_dir: Optional[str] = Query(None, description="Путь к локальной папке с документами (.html/.txt/.md)"),
     max_files: int = Query(500, ge=1, le=10000),
     staging_only: bool = Query(True, description="Только staging-кандидаты"),
-    include_non_tariff: bool = Query(True, description="Импортировать найденные нетарифные строки в БД"),
-    auto_approve_pending: bool = Query(False, description="Авто-апрув всех pending-кандидатов после прохода"),
+    include_non_tariff: bool = Query(True, description="Сохранить найденные нетарифные строки только как кандидаты для проверки"),
+    auto_approve_pending: bool = Query(False, description="Параметр совместимости; автоматическое утверждение не разрешено"),
     x_admin_token: str | None = Header(None, alias="X-Admin-Token"),
 ) -> JSONResponse:
     require_admin_token(x_admin_token)
@@ -451,7 +468,7 @@ async def sources_sync_tamdoc_archive(
         include_non_tariff=include_non_tariff,
         auto_approve_pending=auto_approve_pending,
     )
-    clear_preview_cache()
+    _clear_preview_after_source_write(data)
     return JSONResponse(data)
 
 
@@ -460,7 +477,7 @@ async def sources_sync_trois(x_admin_token: str | None = Header(None, alias="X-A
     """Синхронизация ТРОИС из alta/customs с upsert в БД."""
     require_admin_token(x_admin_token)
     data = await sync_trois_sources()
-    clear_preview_cache()
+    _clear_preview_after_source_write(data)
     return JSONResponse(data)
 
 
@@ -481,7 +498,7 @@ async def sources_sync_odata(x_admin_token: str | None = Header(None, alias="X-A
     require_admin_token(x_admin_token)
     from ..services.ett_odata_parser import sync_all_odata
     data = await sync_all_odata()
-    clear_preview_cache()
+    _clear_preview_after_source_write(data)
     return JSONResponse(data)
 
 
@@ -490,7 +507,7 @@ async def sources_sync_bundle(x_admin_token: str | None = Header(None, alias="X-
     """Подтянуть пакет ТН ВЭД/ЕТТ/нетарифка с URL из NORMATIVE_BUNDLE_URL."""
     require_admin_token(x_admin_token)
     data = await sync_normative_bundle_url()
-    clear_preview_cache()
+    _clear_preview_after_source_write(data)
     return JSONResponse(data)
 
 
@@ -533,7 +550,7 @@ async def sources_import(
     try:
         content = await file.read()
         result = import_normative_file(file.filename or "normative_file", content)
-        clear_preview_cache()
+        _clear_preview_after_source_write(result)
         return JSONResponse(result)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc))
@@ -554,7 +571,7 @@ async def sources_import_bundle(
     try:
         content = await file.read()
         result = import_normative_bundle_bytes(content, filename=file.filename or "bundle.json")
-        clear_preview_cache()
+        _clear_preview_after_source_write(result)
         return JSONResponse(result)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc))

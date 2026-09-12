@@ -185,6 +185,29 @@ def _official_cv_payload(**kwargs: object) -> dict:
     return base
 
 
+
+def _store_marked_remedy_fixture(domain: str, rel_path: str) -> None:
+    """Legacy marker inventory in an isolated DB, with no public admission grant."""
+    import importlib
+
+    service = importlib.import_module(f"app.services.{domain}_ingestion")
+    payload, parsed, revision, rows, blockers = service._validate_bundle_for_ingest(rel_path)
+    assert not blockers and parsed["status"] == "parsed"
+    now = datetime.now(timezone.utc).replace(tzinfo=None)
+    with service.SessionLocal() as db:
+        assert db.get_bind().url.database == ":memory:"
+    getattr(service, f"_apply_{domain}_rows")(rows, synced_at=now)
+    # Deliberately populate a plausible historical SourceStatus: it must still
+    # fail to establish review or permit run_apply / positive coverage.
+    with service.SessionLocal() as db:
+        db.add(SourceStatus(
+            source_code=f"EEC_{domain.upper()}", source_name="Legacy test marker",
+            source_url=payload["official_url"], revision=revision,
+            synced_at=now, is_stale=False,
+        ))
+        db.commit()
+
+
 class TestOfficialPaymentCoverageAuditEmpty(unittest.TestCase):
     def setUp(self) -> None:
         self.sm = _memory_sessionmaker()
@@ -270,8 +293,8 @@ class TestOfficialPaymentCoverageAuditSourcePresentNotApplied(unittest.TestCase)
         self.assertGreater(cv["parsed_rows"], 0)
         self.assertEqual(cv["official_row_count"], 0)
         self.assertTrue(cv["source_present_but_not_applied"])
-        self.assertEqual(cv["recommended_next_action"], "run_apply")
-        self.assertEqual(cv["backfill_situation"], "official_source_present_not_applied")
+        self.assertEqual(cv["recommended_next_action"], "manual_review_required")
+        self.assertEqual(cv["backfill_situation"], "completeness_not_verified")
 
 
 class TestOfficialPaymentCoverageAuditOfficialRows(unittest.TestCase):
@@ -287,13 +310,13 @@ class TestOfficialPaymentCoverageAuditOfficialRows(unittest.TestCase):
             _official_cv_payload(), rel_path="data/raw_normative/eec_countervailing.json"
         ) as (root, rel):
             with _IngestionRootPatch(root):
-                run_countervailing_apply(rel_path=rel)
+                _store_marked_remedy_fixture("countervailing", rel)
                 report = run_official_payment_coverage_audit()
         cv = _domain(report, "EEC_COUNTERVAILING")
         self.assertGreater(cv["official_row_count"], 0)
         self.assertEqual(cv["legacy_row_count"], 0)
         self.assertFalse(cv["source_present_but_not_applied"])
-        self.assertEqual(cv["coverage_status"], "manual_review_required")
+        self.assertEqual(cv["coverage_status"], "partial")
         self.assertFalse(cv["domain_unsupported"])
         self.assertTrue(cv["countervailing_source_url"])
         self.assertTrue(cv["countervailing_synced_at"])
@@ -315,7 +338,7 @@ class TestOfficialPaymentCoverageAuditOfficialRows(unittest.TestCase):
             _official_ad_payload(), rel_path="data/raw_normative/eec_anti_dumping.json"
         ) as (root, rel):
             with _IngestionRootPatch(root):
-                run_anti_dumping_apply(rel_path=rel)
+                _store_marked_remedy_fixture("anti_dumping", rel)
                 report = run_official_payment_coverage_audit()
         ad = _domain(report, "EEC_ANTI_DUMPING")
         self.assertGreater(ad["official_row_count"], 0)
@@ -418,8 +441,8 @@ class TestOfficialPaymentCoverageAuditReapplyRecommendation(unittest.TestCase):
         cv = _domain(report, "EEC_COUNTERVAILING")
         self.assertGreater(cv["row_count"], 0)
         self.assertEqual(cv["official_row_count"], 0)
-        self.assertEqual(cv["recommended_next_action"], "reapply_official_bundle")
-        self.assertEqual(cv["backfill_situation"], "applied_no_row_provenance")
+        self.assertEqual(cv["recommended_next_action"], "manual_review_required")
+        self.assertEqual(cv["backfill_situation"], "completeness_not_verified")
 
 
 class TestOfficialPaymentCoverageAuditCountervailingRealDomain(unittest.TestCase):
@@ -435,7 +458,7 @@ class TestOfficialPaymentCoverageAuditCountervailingRealDomain(unittest.TestCase
             _official_cv_payload(), rel_path="data/raw_normative/eec_countervailing.json"
         ) as (root, rel):
             with _IngestionRootPatch(root):
-                run_countervailing_apply(rel_path=rel)
+                _store_marked_remedy_fixture("countervailing", rel)
                 report = run_official_payment_coverage_audit()
         cv = _domain(report, "EEC_COUNTERVAILING")
         self.assertEqual(cv["domain"], "countervailing")
@@ -546,7 +569,7 @@ class TestOfficialPaymentCoverageAuditScript(unittest.TestCase):
             _official_cv_payload(), rel_path="data/raw_normative/eec_countervailing.json"
         ) as (root, rel):
             with _IngestionRootPatch(root):
-                run_countervailing_apply(rel_path=rel)
+                _store_marked_remedy_fixture("countervailing", rel)
                 buf = StringIO()
                 with unittest.mock.patch("sys.stdout", buf):
                     self.assertEqual(main(["--json"]), 0)
@@ -694,7 +717,8 @@ class TestCoverageTable(unittest.TestCase):
     def test_table_has_text_table_string(self) -> None:
         self.assertIsInstance(self._table["text_table"], str)
         self.assertIn("Domain", self._table["text_table"])
-        self.assertIn("Coverage %", self._table["text_table"])
+        self.assertIn("Marker %", self._table["text_table"])
+        self.assertNotIn("Coverage %", self._table["text_table"])
 
     def test_coverage_pct_zero_when_no_rows(self) -> None:
         for row in self._table["rows"]:
@@ -841,3 +865,46 @@ class TestCoverageBackfillScript(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+def test_manual_parser_outcome_is_not_a_parsed_backfill_candidate():
+    from dataclasses import replace
+    import app.services.official_payment_coverage_audit as audit
+
+    base = next(spec for spec in audit._DOMAIN_SPECS if spec.domain == "vat")
+    for parse_status in ("manual_review_required", "missing_source", "", "unknown"):
+        spec = replace(
+            base,
+            discover_bundle=lambda: "diagnostic-fixture.json",
+            load_bundle=lambda _: (
+                {"revision": "vat:2026-09-12", "source_url": "https://www.nalog.gov.ru/"},
+                {"status": parse_status, "rates_count": 5, "reason": "unsupported_layout"},
+            ),
+        )
+        with (
+            unittest.mock.patch.object(audit, "_lookup_source_status", return_value=None),
+            unittest.mock.patch.object(audit, "_proven_for_domain", return_value=(False, None)),
+            unittest.mock.patch.object(audit, "_count_domain_db_rows", return_value=(0, 0, 0)),
+        ):
+            result = audit._audit_domain(spec, None)
+        assert result.source_present_but_not_applied is False
+        assert result.recommended_next_action == "manual_review_required"
+        assert result.manual_review_required is True
+
+
+def test_complete_marker_ratio_has_no_legal_coverage_or_apply_action():
+    import app.services.official_payment_coverage_audit as audit
+
+    assert audit._derive_coverage_status(
+        missing_source=False, parser_failed=False, stale_source_status=False,
+        unsafe_revision=False, unsafe_url=False, proven=True, official_row_count=100,
+        row_count=100, parsed_rows=100, trade_remedy=False,
+    ) == "partial"
+    action, _, notes = audit._derive_backfill(
+        missing_source=False, parser_failed=False, unsafe_revision=False, unsafe_url=False,
+        stale_source_status=False, source_present_but_not_applied=False, partial_rows=False,
+        proven=True, official_row_count=100, row_count=100, trade_remedy=False,
+    )
+    assert action == "manual_review_required"
+    assert any("manifest_bound_legal_review_required" in note for note in notes)
+

@@ -175,10 +175,10 @@ class TestPaymentNormalizationFullDutyPresent(unittest.TestCase):
     def tearDown(self) -> None:
         _stop_db_patches(*self._patches)
 
-    def test_present_when_all_catalog_codes_covered(self) -> None:
+    def test_full_catalog_markers_do_not_prove_legal_coverage(self) -> None:
         duty = normalize_import_duty()
-        self.assertEqual(duty.coverage_status, "present")
-        self.assertFalse(duty.manual_review_required)
+        self.assertEqual(duty.coverage_status, "partial")
+        self.assertTrue(duty.manual_review_required)
         self.assertEqual(duty.mapped_hs_codes, 120)
         self.assertEqual(duty.total_catalog_codes, 120)
 
@@ -214,10 +214,10 @@ class TestPaymentNormalizationVat(unittest.TestCase):
     def tearDown(self) -> None:
         _stop_db_patches(*self._patches)
 
-    def test_vat_present_with_preferences(self) -> None:
+    def test_vat_preferences_remain_unverified(self) -> None:
         vat = normalize_vat()
-        self.assertEqual(vat.coverage_status, "present")
-        self.assertFalse(vat.manual_review_required)
+        self.assertEqual(vat.coverage_status, "partial")
+        self.assertTrue(vat.manual_review_required)
 
     def test_vat_partial_without_preferences(self) -> None:
         with self.sm() as db:
@@ -489,3 +489,46 @@ class TestPaymentNormalizationApi(unittest.TestCase):
         self.assertIn("excise", body["domains"])
         self.assertIn("anti_dumping", body["domains"])
         self.assertIn("overall_readiness", body)
+
+
+class TestLegacySourceStatusIsNotLegalReview(unittest.TestCase):
+    def test_all_domains_reject_complete_and_empty_status_markers(self) -> None:
+        from types import SimpleNamespace
+        import app.services.payment_data_normalization as normalization
+
+        now = datetime(2026, 9, 12)
+        domains = {
+            "_eec_proven": "ett:2026-09-12",
+            "_vat_proven": "vat:2026-09-12",
+            "_excise_proven": "excise:2026-09-12",
+            "_anti_dumping_proven": "anti-dumping:2026-09-12",
+            "_special_safeguard_proven": "special-safeguard:2026-09-12",
+            "_countervailing_proven": "countervailing:2026-09-12",
+        }
+        for name, revision in domains.items():
+            for url, timestamp in (("", None), ("https://eec.eaeunion.org/", now)):
+                with self.subTest(domain=name, url=url):
+                    marker = SimpleNamespace(
+                        revision=revision, is_stale=False, source_url=url,
+                        synced_at=timestamp, legal_review_verified=True,
+                        retention_verified=True, approval_status="approved",
+                    )
+                    with unittest.mock.patch.object(
+                        normalization, "_lookup_source_status", return_value=marker,
+                    ):
+                        proven, observed_at = getattr(normalization, name)()
+                    self.assertFalse(proven)
+                    self.assertEqual(observed_at, timestamp.isoformat() if timestamp else None)
+
+    def test_vat_registry_reference_is_fns_and_rows_remain_unverified(self) -> None:
+        sm = _memory_sessionmaker()
+        patches = _start_db_patches(sm)
+        try:
+            report = normalize_vat()
+        finally:
+            _stop_db_patches(*patches)
+        self.assertEqual(report.sources[0].id, "rf_vat_tax_code")
+        self.assertEqual(report.authority_level, "unverified")
+        self.assertEqual(report.sources[0].authority_level, "unverified")
+        self.assertTrue(any("manifest_bound_legal_review_required" in g for g in report.known_gaps))
+

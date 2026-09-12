@@ -4,8 +4,8 @@
 
 - Обходит открытые страницы (по умолчанию хосты из seed URL), пагинация через BFS.
 - Находит ссылки на приказы / решения / письма / PDF / DOCX / HTML.
-- Скачивает документ, извлекает текст (httpx или Playwright), передаёт в Gemini и UPSERT в БД
-  (тот же пайплайн, что и bulk_ai_importer: apply_structured_rows).
+- Скачивает документ, извлекает текст и сохраняет непринятые source/model evidence.
+- Gemini не применяет ставки, обязательные документы, запреты или правила применимости.
 
 Паузы:
 - между HTTP-запросами: --http-delay (по умолчанию из HISTORICAL_CRAWLER_HTTP_DELAY или 2 с);
@@ -37,14 +37,13 @@ load_dotenv()
 
 import argparse
 import asyncio
+import json
 import os
 import sys
 
 ROOT = _ROOT
 sys.path.insert(0, str(ROOT))
 
-from app.db import SessionLocal  # noqa: E402
-from app.models import HistoricalCrawlCheckpoint  # noqa: E402
 from app.services.historical_crawler_engine import (  # noqa: E402
     CrawlerSettings,
     run_historical_crawl,
@@ -63,7 +62,7 @@ def _print_progress(info: dict) -> None:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Исторический краулер нормативки + ИИ в БД")
+    parser = argparse.ArgumentParser(description="Historical source extraction to unreviewed evidence; active application remains blocked")
     parser.add_argument("--year-from", type=int, default=None)
     parser.add_argument("--year-to", type=int, default=None)
     parser.add_argument("--http-delay", type=float, default=None)
@@ -86,15 +85,17 @@ def main() -> None:
         metavar="SUBSTRING",
         help='Игнорировать ссылки, в URL-пути которых нет подстроки (например: "/ru-ru/")',
     )
-    parser.add_argument("--reset-checkpoints", action="store_true", help="Очистить historical_crawl_checkpoints перед запуском")
+    parser.add_argument("--reset-checkpoints", action="store_true", help="Disabled: historical extraction/review checkpoints cannot be deleted by this CLI")
     parser.add_argument("--skip-checkpoint", action="store_true", help="Игнорировать чекпоинты для документов")
     args = parser.parse_args()
 
     if args.reset_checkpoints:
-        with SessionLocal() as db:
-            n = db.query(HistoricalCrawlCheckpoint).delete()
-            db.commit()
-            print(f"Удалено чекпоинтов краулера: {n}", flush=True)
+        print(json.dumps({
+            "status": "manual_review_required", "db_mutated": False,
+            "checkpoints_deleted": False,
+            "blockers": ["checkpoint_deletion_disabled: retain historical extraction/review evidence"],
+        }))
+        raise SystemExit(2)
 
     allowed: set[str] | None = None
     if args.allowed_hosts:
@@ -148,7 +149,11 @@ def main() -> None:
     summary = asyncio.run(
         run_historical_crawl(settings, skip_checkpoint=args.skip_checkpoint, progress_cb=_print_progress)
     )
-    print("Итог:", summary, flush=True)
+    print(json.dumps(summary, ensure_ascii=False), flush=True)
+    if summary.get("status") == "error":
+        raise SystemExit(1)
+    if summary.get("status") == "manual_review_required":
+        raise SystemExit(2)
 
 
 if __name__ == "__main__":

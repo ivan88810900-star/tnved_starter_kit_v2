@@ -272,9 +272,9 @@ class TestPaymentIngestionOfficialProvenanceRequired(unittest.TestCase):
         duty = report["domains"]["import_duty"]
         self.assertIn("normalization_status", duty)
         eec = next(c for c in duty["candidates"] if c["source_code"] == "eec_ett_tariff")
-        self.assertEqual(eec["provenance_kind"], "official")
+        self.assertEqual(eec["provenance_kind"], "ambiguous")
         if duty["normalization_status"] == "present":
-            self.assertEqual(eec["readiness"], "ready_to_ingest")
+            self.assertEqual(eec["readiness"], "manual_review_required")
         else:
             self.assertNotEqual(duty["readiness"], "ready_to_ingest")
 
@@ -623,7 +623,7 @@ class TestPaymentIngestionStaleSourceStatusBlocked(unittest.TestCase):
         cand = next(
             c for c in vat["candidates"] if c["source_code"] == "eec_odata_vat_preferences"
         )
-        self.assertEqual(cand["provenance_kind"], "official")
+        self.assertEqual(cand["provenance_kind"], "ambiguous")
         self.assertTrue(cand["source_status_stale"])
         self.assertNotEqual(cand["readiness"], "ready_to_ingest")
         self.assertTrue(cand["manual_review_required"])
@@ -740,3 +740,36 @@ class TestPaymentIngestionApi(unittest.TestCase):
         body = r.json()
         self.assertEqual(body["status"], "OK")
         self.assertGreater(len(body["sources"]), 0)
+
+
+def test_parsed_candidate_and_forged_positive_normalization_do_not_authorize_ingestion():
+    from dataclasses import replace
+    from app.services.payment_source_ingestion import _candidate_readiness, _provenance_kind
+    from app.services.payment_source_registry import get_payment_source_entry
+
+    entry = replace(get_payment_source_entry("eec_ett_tariff"), loader_status="ready")
+    with unittest.mock.patch("app.services.payment_source_ingestion._lookup_source_status", return_value=None):
+        assert _provenance_kind(entry, revision="ett:2026-09-12") == "ambiguous"
+        status, blockers, manual = _candidate_readiness(
+            entry, "official", {"status": "parsed", "legal_review_verified": True},
+            domain_normalization_status="present",
+        )
+    assert status == "manual_review_required"
+    assert manual is True
+    assert any("manifest_bound_legal_review_required" in b for b in blockers)
+
+
+def test_source_plan_parser_rejects_ambiguous_json_and_non_object_roots(tmp_path):
+    import app.services.payment_source_ingestion as ingestion
+
+    cases = (
+        '[]', 'null', '12',
+        '{"revision":"ett:2026-09-12","revision":"seed","rates":[]}',
+        '{"revision":"ett:2026-09-12","rates":[{"value":NaN}]}',
+    )
+    for raw in cases:
+        (tmp_path / "bundle.json").write_text(raw, encoding="utf-8")
+        with unittest.mock.patch.object(ingestion, "_BACKEND_ROOT", tmp_path):
+            result = ingestion.parse_normative_bundle_file("bundle.json")
+        assert result["status"] == "parser_failed", raw
+

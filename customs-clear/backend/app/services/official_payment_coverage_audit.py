@@ -387,23 +387,11 @@ def _derive_backfill(
     if stale_source_status:
         notes.append("SourceStatus помечен is_stale — требуется refresh sync.")
         return "refresh_official_source", "stale_source_status", notes
-    if source_present_but_not_applied:
-        notes.append("Official bundle распарсен, но строки не применены в БД.")
-        return "run_apply", "official_source_present_not_applied", notes
-    if partial_rows or (proven and official_row_count == 0 and row_count > 0):
-        notes.append("Есть локальные строки без row-level official provenance.")
-        return "reapply_official_bundle", "applied_no_row_provenance", notes
-    if trade_remedy and official_row_count > 0:
-        notes.append("Trade-remedy contour synced; completeness not verified.")
-        return "manual_review_required", "completeness_not_verified", notes
-    if proven and official_row_count > 0:
-        notes.append("Official contour applied с row-level provenance.")
-        return "none", "ok", notes
-    if row_count > 0:
-        notes.append("Локальные данные без полного official proof.")
-        return "manual_review_required", "applied_no_row_provenance", notes
-    notes.append("Нет локальных строк и нет подтверждённого apply.")
-    return "none", "ok", notes
+    from .official_payment_admission import LEGAL_REVIEW_BLOCKER
+
+    # Even a complete marker table or a successful parser has no reviewed manifest.
+    notes.append(LEGAL_REVIEW_BLOCKER)
+    return "manual_review_required", "completeness_not_verified", notes
 
 
 def _derive_coverage_status(
@@ -427,16 +415,8 @@ def _derive_coverage_status(
         return "stale"
     if unsafe_revision or unsafe_url:
         return "manual_review_required"
-    if trade_remedy:
-        if official_row_count > 0 and proven:
-            return "manual_review_required"
-        if row_count > 0 or parsed_rows > 0:
-            return "partial"
-        return "missing"
-    if proven and official_row_count > 0:
-        if official_row_count >= row_count and row_count > 0:
-            return "present"
-        return "partial"
+    # Every legacy domain lacks manifest-bound legal admission. Marker ratios
+    # describe inventory only, even if a caller supplied a positive marker flag.
     if row_count > 0 or parsed_rows > 0:
         return "partial"
     return "missing"
@@ -493,7 +473,10 @@ def _audit_domain(spec: _DomainSpec, entry: PaymentSourceEntry | None) -> Offici
     row_count, official_row_count, legacy_row_count = _count_domain_db_rows(spec)
     missing_source = not local_present
 
-    bundle_parsed_ok = local_present and not parser_failed and not unsafe_revision and not unsafe_url
+    bundle_parsed_ok = (
+        local_present and parser_result.get("status") == "parsed"
+        and not parser_failed and not unsafe_revision and not unsafe_url
+    )
     source_present_but_not_applied = bool(
         bundle_parsed_ok and parsed_rows > 0 and official_row_count == 0 and not proven
     )
@@ -527,7 +510,9 @@ def _audit_domain(spec: _DomainSpec, entry: PaymentSourceEntry | None) -> Offici
         trade_remedy=spec.trade_remedy,
     )
 
-    known_gaps: list[str] = []
+    from .official_payment_admission import payment_admission_blocker
+
+    known_gaps: list[str] = [payment_admission_blocker(spec.domain)]
     if missing_source:
         known_gaps.append(f"Нет локального bundle для {spec.domain_key}.")
     if parser_failed:
@@ -539,21 +524,13 @@ def _audit_domain(spec: _DomainSpec, entry: PaymentSourceEntry | None) -> Offici
     if stale_source_status:
         known_gaps.append(f"{spec.source_status_code} SourceStatus is_stale=true.")
     if source_present_but_not_applied:
-        known_gaps.append("Official bundle present, но apply не выполнен (нет row-level provenance).")
+        known_gaps.append("Технически распарсенный bundle ожидает проверки оригиналов и manifest-bound review; применение закрыто.")
     if legacy_row_count > 0:
         known_gaps.append(f"Legacy rows без official marker: {legacy_row_count}.")
     if spec.trade_remedy and official_row_count > 0:
         known_gaps.append("Completeness not verified — present не выдаётся для trade remedies.")
     if entry and entry.known_gaps:
         known_gaps.extend(entry.known_gaps[:2])
-
-    manual_review = (
-        coverage_status in {"manual_review_required", "partial", "stale", "parser_failed"}
-        or spec.trade_remedy
-        or legacy_row_count > 0
-        or unsafe_revision
-        or unsafe_url
-    )
 
     countervailing_source_url: str | None = None
     countervailing_synced_at: str | None = None
@@ -590,7 +567,7 @@ def _audit_domain(spec: _DomainSpec, entry: PaymentSourceEntry | None) -> Offici
         parsed_rows=parsed_rows,
         missing_source=missing_source,
         parser_failed=parser_failed,
-        manual_review_required=manual_review,
+        manual_review_required=True,
         source_present_but_not_applied=source_present_but_not_applied,
         stale_source_status=stale_source_status,
         unsafe_revision=unsafe_revision,
@@ -663,7 +640,7 @@ def run_official_payment_coverage_audit() -> dict[str, Any]:
         notes=[
             "Read-only audit: SourceStatus/SyncLog/HsRate/SpecialDuty не мутируются.",
             "Countervailing — отдельный supported domain (trade_remedies_countervailing_official).",
-            "Trade remedies: manual_review_required при official rows; aggregate present не выдаётся.",
+            "All six legacy domains lack legal review; row-marker counts and ratios are technical inventory only.",
         ],
     )
     return response.model_dump(mode="json")
@@ -708,6 +685,8 @@ def build_coverage_table() -> dict[str, Any]:
                 "official": official,
                 "legacy": d["legacy_row_count"],
                 "coverage_pct": _coverage_pct(official, in_db),
+                "metric_kind": "legacy_row_markers_not_legal_coverage",
+                "legal_review_verified": False,
                 "coverage_status": d["coverage_status"],
                 "recommended_next_action": d["recommended_next_action"],
                 "backfill_situation": d["backfill_situation"],
@@ -718,8 +697,8 @@ def build_coverage_table() -> dict[str, Any]:
     header = (
         f"{'Domain':<{col_w['domain']}} "
         f"{'In DB':>{col_w['in_db']}} "
-        f"{'Official':>{col_w['official']}} "
-        f"{'Coverage %':>{col_w['pct']}} "
+        f"{'Marked':>{col_w['official']}} "
+        f"{'Marker %':>{col_w['pct']}} "
         f"{'Status':<{col_w['status']}} "
         f"{'Next Action':<{col_w['action']}}"
     )
@@ -748,7 +727,7 @@ def build_backfill_plan() -> dict[str, Any]:
     """Issue #51: deterministic dry-run backfill plan across 6 official domains.
 
     Returns prioritised list of actions. Does not mutate the database.
-    Priority order: acquire > run_apply > reapply > refresh > manual_review.
+    Priority order: acquire > refresh > manual_review. Legacy application is closed.
     """
     audit = run_official_payment_coverage_audit()
     plan: list[dict[str, Any]] = []
@@ -780,6 +759,6 @@ def build_backfill_plan() -> dict[str, Any]:
         "notes": [
             "Dry-run only — no DB mutations performed.",
             "Verify each action manually before execution.",
-            "run_apply and reapply_official_bundle require official bundle present locally.",
+            "Legacy bundles remain closed to application; row-marker counts are not legal coverage.",
         ],
     }

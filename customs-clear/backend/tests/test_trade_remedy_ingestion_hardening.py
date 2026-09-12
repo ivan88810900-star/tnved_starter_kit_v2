@@ -206,6 +206,7 @@ def test_json_number_magnitude_is_preserved_until_validation(
 def test_valid_simple_rate_reaches_isolated_storage_unchanged(
     family: str, fields: dict, percent: float, specific: float, monkeypatch: pytest.MonkeyPatch
 ) -> None:
+    from datetime import datetime, timezone
     from sqlalchemy import create_engine
     from sqlalchemy.orm import sessionmaker
     from app.db import Base
@@ -226,7 +227,32 @@ def test_valid_simple_rate_reaches_isolated_storage_unchanged(
     ))
     try:
         result = getattr(module, "run_" + family + "_apply")(rel_path="fixture.json")
-        assert result["status"] == "OK"
+        assert result["status"] == "manual_review_required"
+        assert result["db_mutated"] is False
+        assert result["active_rates_written"] is False
+        with sessions() as db:
+            assert db.query(SpecialDuty).count() == 0
+            assert db.query(SourceStatus).count() == 0
+            assert db.query(SyncLog).count() == 0
+
+        def store_isolated_fixture() -> dict:
+            # Exercise persistence, never impersonate a reviewed public import.
+            assert engine.url.database == ":memory:"
+            _, parser, _, rows, blockers = module._validate_bundle_for_ingest("fixture.json")
+            assert parser["status"] == "parsed"
+            assert blockers == []
+            counts = getattr(module, "_apply_" + family + "_rows")(
+                rows, synced_at=datetime.now(timezone.utc)
+            )
+            assert counts is not None
+            with sessions() as db:
+                assert db.query(SourceStatus).count() == 0
+                assert db.query(SyncLog).count() == 0
+            return {"fixture_only": True, "row_counts": counts.model_dump()}
+
+        stored = store_isolated_fixture()
+        assert stored["fixture_only"] is True
+        assert stored["row_counts"]["insert"] == 1
         with sessions() as db:
             row = db.query(SpecialDuty).one()
             assert row.rate_percent == percent
@@ -240,7 +266,12 @@ def test_valid_simple_rate_reaches_isolated_storage_unchanged(
         payload["measures"][0]["needs_verification"] = changed_flag
         plan = getattr(module, "run_" + family + "_dry_run")(rel_path="fixture.json")
         assert plan["row_counts"]["update"] == 1
-        updated = getattr(module, "run_" + family + "_apply")(rel_path="fixture.json")
+        blocked = getattr(module, "run_" + family + "_apply")(rel_path="fixture.json")
+        assert blocked["status"] == "manual_review_required"
+        with sessions() as db:
+            assert db.query(SpecialDuty).one().needs_verification is fields.get("needs_verification", True)
+        updated = store_isolated_fixture()
+        assert updated["fixture_only"] is True
         assert updated["row_counts"]["update"] == 1
         with sessions() as db:
             assert db.query(SpecialDuty).one().needs_verification is changed_flag

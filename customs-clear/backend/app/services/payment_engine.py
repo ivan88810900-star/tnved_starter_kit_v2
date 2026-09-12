@@ -4,6 +4,7 @@ import re
 from collections import Counter
 from dataclasses import dataclass
 from datetime import date
+from decimal import Decimal
 from math import isfinite
 from typing import Any
 
@@ -53,6 +54,15 @@ def _round2(v: Any | None) -> float:
     return round(_num(v), 2)
 
 
+def _sum_displayed_amounts(*parts: Any | None) -> float:
+    """Sum the existing two-decimal display values without binary carry drift.
+
+    This is a provisional presentation invariant, not a declaration rounding rule.
+    Each component retains the existing _round2 behavior.
+    """
+    return float(sum((Decimal(str(_round2(part))) for part in parts), Decimal("0.00")))
+
+
 # Confidence levels based on HS-prefix match length
 _CONFIDENCE_MAP = {
     10: "high",
@@ -75,10 +85,10 @@ SPECIAL_DUTIES_COUNTRY_WARNING = (
 )
 
 TARIFF_PREFERENCE_REVIEW_REASON = (
-    "В прежнем справочнике стран указано снижение пошлины, но право на него "
-    "для этого товара и даты не подтверждено. Страна происхождения сама по себе "
-    "не подтверждает преференцию. Предварительные суммы рассчитаны без снижения; "
-    "проверьте действующий режим, товар, происхождение и условия поставки."
+    "В прежнем справочнике стран указан коэффициент пошлины, но его применимость "
+    "для этого товара и даты не подтверждена. Страна происхождения сама по себе "
+    "не подтверждает изменение ставки. Предварительные суммы рассчитаны без "
+    "коэффициента; проверьте действующий режим, товар, происхождение и условия поставки."
 )
 
 DUTY_SOURCE_MISSING_REASON = (
@@ -100,6 +110,12 @@ SPECIAL_DUTY_LEGAL_REVIEW_REASON = (
     "не подтверждают юридическое утверждение применимости к этой поставке. "
     "Суммы торговых пошлин, зависимого НДС и итог не подтверждены к уплате."
 )
+LEGACY_ANTIDUMPING_OVERLAP_REASON = (
+    "В двух прежних справочниках найдены кандидаты антидемпинговой пошлины; "
+    "не подтверждено, являются ли они одной мерой, альтернативами или независимыми "
+    "мерами. Сумма антидемпинга и зависимый НДС требуют проверки."
+)
+
 LEGACY_PAYMENT_AS_OF_UNSUPPORTED = (
     "Расчёт платежей по дате as_of пока недоступен: текущий справочник не "
     "подтверждает исторические версии всех ставок и сборов. Дата не будет "
@@ -345,8 +361,8 @@ def _resolve_special_duties(
                             warning=SPECIAL_DUTY_REVIEW_REASON)
                 item["review_reasons"].append("calculation_overflow")
                 continue
-            total += part
             item["amount"] = _round2(part)
+            total = _sum_displayed_amounts(total, item["amount"])
             item["review_reasons"].append("legal_review_unverified")
             item["warning"] = SPECIAL_DUTY_LEGAL_REVIEW_REASON
     details.sort(key=lambda x: int(x.get("match_len", 0)), reverse=True)
@@ -686,14 +702,21 @@ def compute_payments(payload: dict[str, Any]) -> dict[str, Any]:
     preference_review_required = False
     user_duty_rate = payload.get("duty_rate")
     if tariff_pref and user_duty_rate is None and geo_meta.get("duty_override_rate") is None:
-        coeff = tariff_pref.duty_coefficient
-        if coeff < 1.0:
+        raw_coeff = tariff_pref.duty_coefficient
+        try:
+            coeff = None if isinstance(raw_coeff, bool) else float(raw_coeff)
+        except (TypeError, ValueError, OverflowError):
+            coeff = None
+        if coeff is not None and (not isfinite(coeff) or coeff < 0):
+            coeff = None
+        if coeff is None or coeff != 1.0:
             preference_review_required = True
             tariff_pref_meta = {
                 "applied": False,
                 "status": "needs_review",
                 "preference_type": tariff_pref.preference_type,
                 "candidate_duty_coefficient": coeff,
+                **({"candidate_duty_coefficient_text": str(raw_coeff)[:128]} if coeff is None else {}),
                 "duty_coefficient": 1.0,
                 "eligibility_verified": False,
                 "source_kind": "legacy_country_tariff_preferences",
@@ -706,18 +729,6 @@ def compute_payments(payload: dict[str, Any]) -> dict[str, Any]:
                     "origin_evidence",
                     "shipment_conditions_and_exceptions",
                 ],
-            }
-        elif coeff > 1.0:
-            duty = duty * coeff
-            if ad_valorem_amount is not None:
-                ad_valorem_amount = ad_valorem_amount * coeff
-            if specific_amount_rub is not None:
-                specific_amount_rub = specific_amount_rub * coeff
-            tariff_pref_meta = {
-                "applied": True,
-                "preference_type": tariff_pref.preference_type,
-                "duty_coefficient": coeff,
-                "legal_ref": tariff_pref.legal_ref or "",
             }
 
     # Excise
@@ -766,6 +777,37 @@ def compute_payments(payload: dict[str, Any]) -> dict[str, Any]:
         quantity=qty,
         fx_rates=payload.get("_fx_rates") if isinstance(payload.get("_fx_rates"), dict) else None,
     )
+    legacy_antidumping_candidate = None
+    overlap = (
+        antidumping_status in {"applied", "manual_review"}
+        and any(item.get("measure_family") == "anti_dumping" for item in special_duties_details)
+    )
+    if overlap:
+        # The two legacy projections lack a shared source-bound measure identity.
+        # Neither choosing one nor adding both establishes lawful cumulation.
+        legacy_antidumping_candidate = {
+            "status": "needs_clarification", "source_kind": "legacy_hs_rates",
+            "applied": False, "legal_review_verified": False, "amount": None,
+            "rate_type": antidumping_type, "rate_value": antidumping_value,
+            "origin_country_scope": antidumping_countries,
+            "condition": antidumping_condition,
+            "source_revision": getattr(rate, "source_revision", "") or "",
+            "source_url": getattr(rate, "source_url", "") or "",
+            "effective_from": getattr(rate, "valid_from", "") or "",
+            "effective_to": getattr(rate, "valid_to", "") or "",
+            "review_reasons": ["legacy_antidumping_overlap_unverified"],
+        }
+        for item in special_duties_details:
+            if item.get("measure_family") == "anti_dumping":
+                item["review_reasons"].append("legacy_antidumping_overlap_unverified")
+                item.update(status="needs_clarification", calculation_available=False,
+                            amount=None, warning=LEGACY_ANTIDUMPING_OVERLAP_REASON)
+        special_duties_amount = _sum_displayed_amounts(*(
+            item["amount"] for item in special_duties_details if item.get("calculation_available")
+        ))
+        antidumping = 0.0  # Incomplete provisional subtotal, never a confirmed zero liability.
+        antidumping_status = "manual_review"
+        antidumping_reason = LEGACY_ANTIDUMPING_OVERLAP_REASON
     special_duty_review_required = any(
         item.get("status") == "needs_clarification" for item in special_duties_details
     )
@@ -854,18 +896,20 @@ def compute_payments(payload: dict[str, Any]) -> dict[str, Any]:
     amounts_provisional = bool(review_reasons)
     payment_review_reason = " ".join(review_messages) or None
 
-    duty_amount = _num(duty)
-    excise_amount = _num(excise)
-    antidumping_amount = _num(antidumping)
-    special_duties_total = _num(special_duties_amount)
-    customs_fee_amount = _num(customs_fee)
+    duty_amount = _round2(duty)
+    excise_amount = _round2(excise)
+    antidumping_amount = _round2(antidumping)
+    special_duties_total = _round2(special_duties_amount)
+    customs_fee_amount = _round2(customs_fee)
 
-    recycling_fee_total = _num(recycling_fee_amount)
+    recycling_fee_total = _round2(recycling_fee_amount)
 
-    vat_base = _sum_amounts(customs_value, duty_amount, excise_amount, antidumping_amount, special_duties_total)
-    vat = _num(vat_base) * _num(vat_rate) / 100.0
+    # The shown VAT base and total reconcile to their shown monetary components.
+    # This does not certify these provisional amounts or a legal rounding scheme.
+    vat_base = _sum_displayed_amounts(customs_value, duty_amount, excise_amount, antidumping_amount, special_duties_total)
+    vat = _round2(vat_base * _num(vat_rate) / 100.0)
 
-    total = _sum_amounts(customs_fee_amount, duty_amount, excise_amount, antidumping_amount, special_duties_total, vat, recycling_fee_total)
+    total = _sum_displayed_amounts(customs_fee_amount, duty_amount, excise_amount, antidumping_amount, special_duties_total, vat, recycling_fee_total)
 
     # Sources: интегрированные данные в приложении (без внешних ссылок)
     stats = get_integrated_data_stats()
@@ -994,6 +1038,8 @@ def compute_payments(payload: dict[str, Any]) -> dict[str, Any]:
         "sources": applied_sources,
         "tnved_context": tnved_context,
         "special_duties": special_duties_details,
+        **({"legacy_antidumping_candidate": legacy_antidumping_candidate}
+           if legacy_antidumping_candidate is not None else {}),
         "special_duties_amount": _round2(special_duties_amount),
         "special_duties_warning": special_duties_warning,
         "geo": geo_meta,

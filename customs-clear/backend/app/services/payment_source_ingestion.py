@@ -93,9 +93,9 @@ def _provenance_kind(entry: PaymentSourceEntry, *, revision: str | None = None) 
         rev = (st.revision or "").strip().lower() if st else ""
     if not rev:
         return "missing"
-    # Official только если revision реально проходит единый _is_official_revision().
+    # A plausible revision is only a label; it cannot establish original evidence or legal review.
     if _is_official_revision(rev):
-        return "official"
+        return "ambiguous"
     if _is_seed_or_fallback_revision(rev) or rev in _NON_OFFICIAL_FILE_REVISIONS:
         return "seed" if "seed" in rev or rev in {"seed", "legacy", "legacy_seed"} else "fallback"
     # example-/demo-/test-* и прочие non-official, но non-seed ревизии — не official.
@@ -118,9 +118,15 @@ def parse_normative_bundle_file(rel_path: str) -> dict[str, Any]:
             "error": f"file not found: {rel_path}",
             "record_count": 0,
         }
+    from .official_rate_validation import load_official_rate_json
+
     try:
-        payload = json.loads(path.read_text(encoding="utf-8"))
-    except (json.JSONDecodeError, OSError) as exc:
+        source_bytes = path.read_bytes()
+        checksum = hashlib.sha256(source_bytes).hexdigest()
+        payload = load_official_rate_json(source_bytes)
+        if not isinstance(payload, dict):
+            raise ValueError("Normative bundle must be a JSON object")
+    except (ValueError, OSError) as exc:
         return {
             "status": "parser_failed",
             "error": str(exc),
@@ -140,7 +146,7 @@ def parse_normative_bundle_file(rel_path: str) -> dict[str, Any]:
             "error": f"bundle '{container_err.split('_')[1]}' must be a JSON array",
             "revision": revision,
             "record_count": 0,
-            "checksum_sha256": _file_sha256(rel_path),
+            "checksum_sha256": checksum,
         }
     # Non-object строки в rates/rows → parser_failed (без silent skip / AttributeError).
     if any(not isinstance(r, dict) for r in rates):
@@ -151,7 +157,7 @@ def parse_normative_bundle_file(rel_path: str) -> dict[str, Any]:
             "revision": revision,
             "record_count": len(rates),
             "rates_count": len(rates),
-            "checksum_sha256": _file_sha256(rel_path),
+            "checksum_sha256": checksum,
         }
     raw_tnved = payload.get("tnved")
     tnved = raw_tnved if isinstance(raw_tnved, list) else []
@@ -165,7 +171,7 @@ def parse_normative_bundle_file(rel_path: str) -> dict[str, Any]:
             "record_count": len(rates) + len(tnved),
             "rates_count": len(rates),
             "tnved_count": len(tnved),
-            "checksum_sha256": _file_sha256(rel_path),
+            "checksum_sha256": checksum,
         }
 
     # Любой explicit (непустой) row-level revision, который не official, блокирует весь bundle.
@@ -184,7 +190,7 @@ def parse_normative_bundle_file(rel_path: str) -> dict[str, Any]:
             "unsafe_row_revisions": sorted(set(explicit_unsafe))[:10],
             "record_count": len(rates),
             "rates_count": len(rates),
-            "checksum_sha256": _file_sha256(rel_path),
+            "checksum_sha256": checksum,
         }
 
     # Defensive net: на effective revision (row.source_revision или inherited bundle revision)
@@ -202,7 +208,7 @@ def parse_normative_bundle_file(rel_path: str) -> dict[str, Any]:
             "reason": "all_rates_seed_revision",
             "revision": revision,
             "record_count": len(rates),
-            "checksum_sha256": _file_sha256(rel_path),
+            "checksum_sha256": checksum,
         }
 
     return {
@@ -212,7 +218,7 @@ def parse_normative_bundle_file(rel_path: str) -> dict[str, Any]:
         "record_count": len(rates) + len(tnved),
         "rates_count": len(rates),
         "tnved_count": len(tnved),
-        "checksum_sha256": _file_sha256(rel_path),
+        "checksum_sha256": checksum,
     }
 
 
@@ -310,8 +316,12 @@ def _estimate_rows_for_candidate(
         return {
             "skip": RowEstimate(
                 action="skip",
-                count=None,
-                note="Оценки недоступны: источник не official или заблокирован.",
+                count=(
+                    parser_result.get("rates_count", parser_result.get("record_count"))
+                    if parser_result.get("status") == "parsed"
+                    else None
+                ),
+                note="Технический объём файла сохранён; legal admission закрыт, применение не планируется.",
             )
         }
 
@@ -403,21 +413,13 @@ def _candidate_readiness(
         )
         return "manual_review_required", blockers, True
 
-    if provenance_kind == "official" and entry.loader_status in ("partial", "ready"):
-        st = _lookup_source_status(entry.source_status_code) if entry.source_status_code else None
-        # Stale official contour не может быть ready, даже если normalization present.
-        if st is not None and st.is_stale:
-            blockers.append(
-                f"source_status_stale: SourceStatus {entry.source_status_code} is_stale=True — "
-                "stale official contour не может быть ready_to_ingest."
-            )
-            return "manual_review_required", blockers, True
-        if parse_status in ("parsed", None) or (
-            st is not None and _is_official_revision(st.revision)
-        ):
-            return "ready_to_ingest", [], False
+    from .official_payment_admission import LEGAL_REVIEW_BLOCKER
 
-    return "manual_review_required", blockers or ["Условия ready_to_ingest не выполнены."], True
+    st = _lookup_source_status(entry.source_status_code) if entry.source_status_code else None
+    if st is not None and st.is_stale:
+        blockers.append(f"source_status_stale: SourceStatus {entry.source_status_code} is_stale=True.")
+    # Technical parsing and SourceStatus cannot authorize legal data admission.
+    return "manual_review_required", [*blockers, LEGAL_REVIEW_BLOCKER], True
 
 
 def _build_candidate(
@@ -617,7 +619,7 @@ def run_payment_source_ingestion_plan(*, dry_run: bool = False) -> dict[str, Any
         notes=[
             "Dry-run/plan не мутирует БД.",
             "seed/fallback/commercial_mirror/legacy_seed blocked from official ingestion.",
-            "ready_to_ingest только при official provenance + normalization не блокирует.",
+            "Legacy candidates require retained originals and manifest-bound legal review; parsing is not admission.",
         ],
     )
     return response.model_dump(mode="json")

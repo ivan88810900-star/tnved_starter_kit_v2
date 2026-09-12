@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
-"""Консольный запуск массового ИИ-импорта нормативных документов из data/raw_normative/."""
+"""Extract uploaded documents into unreviewed evidence; never apply inferred measures."""
 
 from __future__ import annotations
 
 import argparse
 import asyncio
+import json
 import os
 import sys
 from pathlib import Path
@@ -18,13 +19,12 @@ load_dotenv(ROOT / ".env")
 load_dotenv()
 
 from app.services.bulk_normative_ai import (  # noqa: E402
+    RAW_NORMATIVE_DIR,
     create_import_job,
+    get_job_status,
     list_input_files,
-    raw_normative_dir,
     run_bulk_import,
 )
-from app.db import SessionLocal  # noqa: E402
-from app.models import BulkImportFileCheckpoint  # noqa: E402
 
 
 def _print_progress(info: dict) -> None:
@@ -39,12 +39,13 @@ def _print_progress(info: dict) -> None:
         extra = f" [ошибка: {info['error'][:120]}]"
     if info.get("llm_rows") is not None:
         extra += f" строк JSON от LLM: {info['llm_rows']}"
-    print(f"[{pf}/{tf}] мер применено: {ma} · {fn}{extra}", flush=True)
+    status = info.get("status") or ("error" if info.get("error") else "manual_review_required")
+    print(f"[{pf}/{tf}] {status}; active measures applied={ma} · {fn}{extra}", flush=True)
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(
-        description="Массовый ИИ-импорт PDF/DOCX/HTML из data/raw_normative/ в БД (Gemini, паузы, 429 backoff, чекпоинты)."
+        description="Extract PDF/DOCX/HTML to unreviewed evidence/checkpoints; active application remains blocked."
     )
     parser.add_argument(
         "--delay",
@@ -55,7 +56,7 @@ def main() -> None:
     parser.add_argument(
         "--reset-checkpoints",
         action="store_true",
-        help="Очистить таблицу bulk_import_file_checkpoints перед запуском (все файлы обработаются заново)",
+        help="Disabled: historical extraction/review checkpoints cannot be deleted by this CLI",
     )
     parser.add_argument(
         "--skip-checkpoint",
@@ -65,7 +66,15 @@ def main() -> None:
     parser.add_argument("--list-only", action="store_true", help="Только перечислить файлы и выйти")
     args = parser.parse_args()
 
-    raw = raw_normative_dir()
+    if args.reset_checkpoints:
+        print(json.dumps({
+            "status": "manual_review_required", "db_mutated": False,
+            "checkpoints_deleted": False,
+            "blockers": ["checkpoint_deletion_disabled: retain historical extraction/review evidence"],
+        }))
+        raise SystemExit(2)
+
+    raw = RAW_NORMATIVE_DIR
     files = list_input_files(raw)
     print(f"Каталог: {raw}", flush=True)
     print(f"Найдено файлов: {len(files)}", flush=True)
@@ -73,12 +82,6 @@ def main() -> None:
         for p in files:
             print(f"  - {p.relative_to(raw)}")
         return
-
-    if args.reset_checkpoints:
-        with SessionLocal() as db:
-            n = db.query(BulkImportFileCheckpoint).delete()
-            db.commit()
-            print(f"Сброшено чекпоинтов: {n}", flush=True)
 
     if not os.getenv("GEMINI_API_KEY") and not os.getenv("GOOGLE_API_KEY"):
         print("Предупреждение: не задан GEMINI_API_KEY / GOOGLE_API_KEY — LLM вызовы завершатся ошибкой.", flush=True)
@@ -95,7 +98,13 @@ def main() -> None:
         )
 
     asyncio.run(_go())
-    print("Готово.", flush=True)
+    status = get_job_status(job_id)
+    print(json.dumps(status, ensure_ascii=False), flush=True)
+    job_status = (status.get("job") or {}).get("status")
+    if job_status == "error":
+        raise SystemExit(1)
+    if job_status == "manual_review_required":
+        raise SystemExit(2)
 
 
 if __name__ == "__main__":

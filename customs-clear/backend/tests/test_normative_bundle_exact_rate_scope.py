@@ -7,10 +7,10 @@ from sqlalchemy.pool import StaticPool
 from app.db import Base
 from app.models.core import HsRate, SourceStatus, SyncLog
 from app.services import normative_store
-from app.services.normative_bundle import import_normative_bundle_dict
+from app.services.normative_bundle import _import_normative_bundle_dict
 
 
-def test_exact_bundle_rate_cannot_leak_to_missing_sibling(monkeypatch) -> None:
+def test_isolated_fixture_rate_cannot_leak_to_missing_sibling(monkeypatch) -> None:
     engine = create_engine(
         "sqlite://",
         connect_args={"check_same_thread": False},
@@ -29,7 +29,7 @@ def test_exact_bundle_rate_cannot_leak_to_missing_sibling(monkeypatch) -> None:
     monkeypatch.setattr(normative_store, "SessionLocal", testing_session)
 
     try:
-        result = import_normative_bundle_dict(
+        result = _import_normative_bundle_dict(
             {
                 "format": "customs_clear_normative_bundle",
                 "revision": "ett:scope-regression",

@@ -199,9 +199,11 @@ def _import_active_ett(
     active_payload = dict(payload)
     active_payload["rates"] = rows
 
-    from app.services.normative_bundle import import_normative_bundle_dict
+    # Pinned inputs and a fresh isolated structural test DB are required above.
+    # Fixture rows do not authorize the quarantined legacy rates.
+    from app.services.normative_bundle import _import_normative_bundle_dict
 
-    result = import_normative_bundle_dict(
+    result = _import_normative_bundle_dict(
         active_payload,
         filename=ett_path.name,
         source_code="EEC_ETT_STAGING_BUILD",

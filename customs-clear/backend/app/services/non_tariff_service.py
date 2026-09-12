@@ -532,6 +532,8 @@ async def check_position_non_tariff(
             broker_required_permits,
             hs_code,
             description or "",
+            country=country,
+            direction=movement_direction,
         )
 
     curated_enforcement_audit: Dict[str, Any] | None = None
