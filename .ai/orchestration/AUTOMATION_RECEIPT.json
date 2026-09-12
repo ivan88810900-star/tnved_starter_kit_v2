@@ -1,0 +1,55 @@
+{
+  "schema_version": 1,
+  "checked_at": "2026-09-12T21:35:27.412Z",
+  "platform_session_id": null,
+  "capability_status": "CAPABILITY_VERIFIED",
+  "capabilities": {
+    "native_subagents": {
+      "available": true,
+      "mechanism": "OpenAI Work native collaboration controls (spawn_agent/list_agents); list_agents returned the active /root session",
+      "max_concurrent_children": 3,
+      "recursive_spawn_allowed": false
+    },
+    "shell_git": {
+      "available": true,
+      "mechanism": "exec shell with git",
+      "verification": "Fetched current remote branches and created detached isolated Git worktrees for orchestration-state and the current product ref."
+    },
+    "github": {
+      "available": true,
+      "mechanism": "installed GitHub connector",
+      "write_scope_verified": "CAS lease update_file succeeded on explicit agent/orchestration-state branch; no protected branch action."
+    }
+  },
+  "read_only_checks": [
+    {
+      "kind": "pull_request",
+      "numbers": [
+        190,
+        187,
+        189
+      ],
+      "result": "Fetched current head/base refs, draft/state and mergeability from GitHub."
+    },
+    {
+      "kind": "ci",
+      "result": "Fetched exact-head workflow runs for PR #190, #187 and #189; observed completed successful runs."
+    },
+    {
+      "kind": "runtime_state",
+      "ref": "agent/orchestration-state",
+      "result": "Read current task board, current state, ownership, findings, decisions, run history and orchestration contracts."
+    },
+    {
+      "kind": "product_state",
+      "ref": "feat/ntm-official-full-contours",
+      "head_sha": "a9d15c74699c8cd7842404580ff6fd7bd957e9eb",
+      "result": "Read current project focus, product decisions and Decision 12/4/121 retained source evidence."
+    }
+  ],
+  "limitations": [
+    "No platform-provided scheduled run/session identifier was exposed; platform_session_id is null.",
+    "CAPABILITY_VERIFIED confirms mechanisms only; it is not feature, QA, A6 or CI-cycle completion.",
+    "Anthropic A6 credentials were not inspected or claimed."
+  ]
+}
