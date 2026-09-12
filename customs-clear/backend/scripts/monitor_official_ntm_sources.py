@@ -139,6 +139,21 @@ for _entry in REGULATORY_SOURCE_REGISTRY:
         )
         _registered_urls.add(_official_url)
 
+# Explicit observations for isolated original capture, not registered daily
+# targets or approved baselines. Provenance: eec-ad30-acquisition-plan-20260912.json.
+# The already retained Decision 121 PDF and first navigation page are absent.
+REVIEW_ONLY_SOURCES = {
+    "review_ad30_decision4_2026_page": "https://docs.eaeunion.org/documents/463/10454/",
+    "review_ad30_decision4_2026_pdf": "https://docs.eaeunion.org/upload/iblock/798/59qwa6jpe6b76n24wtn0uu9eygvlznkr/Reshenie-Kollegii-_-4-ot-20-yanvarya-2026-g.pdf",
+    "review_ad30_decision121_2026_page": "https://docs.eaeunion.org/documents/463/10918/",
+    "review_ad30_completion_notice_pdf": "https://docs.eaeunion.org/upload/iblock/75c/h3m62bw3jc8solzxiw14jc7qhmnycmmy/AD30R1_notice_fin.pdf",
+    "review_ad30_final_report_pdf": "https://remedies.eaeunion.org/dimd/filestorage/AD30R1_report_final.pdf",
+    "review_remedy_index_page_2": "https://docs.eaeunion.org/documents/?filter_departament%5B0%5D=14&PAGEN_1=2",
+    "review_remedy_index_page_3": "https://docs.eaeunion.org/documents/?filter_departament%5B0%5D=14&PAGEN_1=3",
+    "review_remedy_index_page_4": "https://docs.eaeunion.org/documents/?filter_departament%5B0%5D=14&PAGEN_1=4",
+    "review_remedy_index_page_5": "https://docs.eaeunion.org/documents/?filter_departament%5B0%5D=14&PAGEN_1=5"
+}
+
 _BLOCK_PAGE_MARKERS = (
     b"captcha",
     b"access denied",
@@ -829,14 +844,26 @@ def _load_state(path: Path | None) -> dict[str, Any]:
 def _selected_sources(source_ids: list[str] | tuple[str, ...] | None) -> dict[str, str]:
     if source_ids is None:
         return dict(SOURCES)
+    selectable = {**SOURCES, **REVIEW_ONLY_SOURCES}
     if (
         not isinstance(source_ids, (list, tuple))
         or not source_ids
-        or any(not isinstance(key, str) or not key or key not in SOURCES for key in source_ids)
+        or any(not isinstance(key, str) or not key or key not in selectable for key in source_ids)
     ):
         raise ValueError("source_ids must be a nonempty list of existing monitor source IDs")
     selected = set(source_ids)
-    return {key: url for key, url in SOURCES.items() if key in selected}
+    return {key: url for key, url in selectable.items() if key in selected}
+
+
+def _validate_review_only_selection(
+    selected_sources: dict[str, str], *, capture_requested: bool, accept_changes: bool,
+) -> None:
+    if not set(selected_sources).intersection(REVIEW_ONLY_SOURCES):
+        return
+    if accept_changes:
+        raise ValueError("review-only sources cannot accept or advance a monitor baseline")
+    if not capture_requested:
+        raise ValueError("review-only sources require --capture-originals and --store-root")
 
 
 def monitor_sources(
@@ -850,6 +877,9 @@ def monitor_sources(
     source_ids: list[str] | tuple[str, ...] | None = None,
 ) -> dict[str, Any]:
     selected_sources = _selected_sources(source_ids)
+    _validate_review_only_selection(
+        selected_sources, capture_requested=original_store is not None, accept_changes=accept_changes,
+    )
     if type(capture_rejected_originals) is not bool:
         raise ValueError("capture_rejected_originals must be a boolean")
     if capture_rejected_originals and original_store is None:
@@ -876,6 +906,7 @@ def monitor_sources(
         verify=True,
     ) as client:
         for source_id, url in selected_sources.items():
+            review_only = source_id in REVIEW_ONLY_SOURCES
             previous = previous_sources.get(source_id) or {}
             monitor_mode = SOURCE_MODES.get(source_id, "legal_drift")
             request_headers: dict[str, str] = {}
@@ -1000,6 +1031,9 @@ def monitor_sources(
                                 key for key, target in SOURCES.items() if target == url
                             }
                             capture_source_ids.update(
+                                key for key, target in selected_sources.items() if target == url
+                            )
+                            capture_source_ids.update(
                                 entry.source_id
                                 for entry in REGULATORY_SOURCE_REGISTRY
                                 if entry.authority_level in SOURCE_OF_TRUTH_LEVELS
@@ -1105,6 +1139,7 @@ def monitor_sources(
                     # an HTML identity.  It remains visible as a coverage gap
                     # until the state is deliberately migrated/rebuilt.
                     and not (revision_gap and previous.get("pending_sha256"))
+                    and not review_only
                 )
                 row = {
                     "source_id": source_id,
@@ -1136,7 +1171,7 @@ def monitor_sources(
                         if revision_gap or monitor_mode == "availability"
                         else monitor_mode
                     ),
-                    "approval_allowed": ok and revision_covered,
+                    "approval_allowed": ok and revision_covered and not review_only,
                     "requires_approval": requires_approval and not approval_authorized,
                     "approval_digest_mismatch": bool(
                         accept_changes and requires_approval and not pending_digest_matches
@@ -1148,6 +1183,10 @@ def monitor_sources(
                 if capture_rejected_originals:
                     row["rejected_original_capture"] = rejected_original_capture
                 rows.append(row)
+                if review_only:
+                    # This isolated acquisition does not create or rewrite a
+                    # registered baseline, including its pending metadata.
+                    continue
                 if ok and baseline_advanced:
                     next_sources[source_id] = {
                         key: row.get(key)
@@ -1224,6 +1263,10 @@ def monitor_sources(
                         "error": type(exc).__name__ if original_store is not None else str(exc),
                     }
                 )
+    for row in rows:
+        row["source_scope"] = (
+            "review_only_observed" if row["source_id"] in REVIEW_ONLY_SOURCES else "registered_monitor"
+        )
     changed_ids = [row["source_id"] for row in rows if row.get("changed")]
     new_ids = [row["source_id"] for row in rows if row.get("new_source")]
     pending_ids = [row["source_id"] for row in rows if row.get("requires_approval")]
@@ -1273,6 +1316,10 @@ def monitor_sources(
         "selected_source_ids": list(selected_sources),
         "selected_source_count": len(selected_sources),
         "registered_monitor_source_count": len(SOURCES),
+        "selected_registered_source_ids": [key for key in selected_sources if key in SOURCES],
+        "selected_registered_source_count": sum(key in SOURCES for key in selected_sources),
+        "selected_review_only_source_ids": [key for key in selected_sources if key in REVIEW_ONLY_SOURCES],
+        "selected_review_only_source_count": sum(key in REVIEW_ONLY_SOURCES for key in selected_sources),
         "full_registry_checked": source_ids is None,
         "selected_revision_coverage_complete": selected_coverage_complete,
         # Availability and the operational gate refer to the explicit scope
@@ -1324,6 +1371,10 @@ def monitor_sources(
             for row in rows
         )
         report["original_capture_count"] = len(original_captures)
+        report["legal_review_verified"] = False
+        report["active_rates_written"] = False
+        report["durable_legal_retention_attested"] = False
+        report["can_promote"] = False
         if capture_rejected_originals:
             report["rejected_original_capture_requested"] = True
             report["rejected_original_capture_count"] = len(rejected_captures)
@@ -1387,7 +1438,10 @@ def main() -> int:
     if args.capture_rejected_originals and not args.capture_originals:
         parser.error("--capture-rejected-originals requires --capture-originals and --store-root")
     try:
-        _selected_sources(args.source_id)
+        selected = _selected_sources(args.source_id)
+        _validate_review_only_selection(
+            selected, capture_requested=args.capture_originals, accept_changes=args.accept_changes,
+        )
     except ValueError as exc:
         parser.error(str(exc))
     previous_state = _load_state(args.state)
