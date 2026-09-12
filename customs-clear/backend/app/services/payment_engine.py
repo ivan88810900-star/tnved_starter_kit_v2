@@ -4,6 +4,7 @@ import re
 from collections import Counter
 from dataclasses import dataclass
 from datetime import date
+from decimal import Decimal
 from math import isfinite
 from typing import Any
 
@@ -51,6 +52,15 @@ def _sum_amounts(*parts: Any | None) -> float:
 
 def _round2(v: Any | None) -> float:
     return round(_num(v), 2)
+
+
+def _sum_displayed_amounts(*parts: Any | None) -> float:
+    """Sum the existing two-decimal display values without binary carry drift.
+
+    This is a provisional presentation invariant, not a declaration rounding rule.
+    Each component retains the existing _round2 behavior.
+    """
+    return float(sum((Decimal(str(_round2(part))) for part in parts), Decimal("0.00")))
 
 
 # Confidence levels based on HS-prefix match length
@@ -351,8 +361,8 @@ def _resolve_special_duties(
                             warning=SPECIAL_DUTY_REVIEW_REASON)
                 item["review_reasons"].append("calculation_overflow")
                 continue
-            total += part
             item["amount"] = _round2(part)
+            total = _sum_displayed_amounts(total, item["amount"])
             item["review_reasons"].append("legal_review_unverified")
             item["warning"] = SPECIAL_DUTY_LEGAL_REVIEW_REASON
     details.sort(key=lambda x: int(x.get("match_len", 0)), reverse=True)
@@ -792,7 +802,7 @@ def compute_payments(payload: dict[str, Any]) -> dict[str, Any]:
                 item["review_reasons"].append("legacy_antidumping_overlap_unverified")
                 item.update(status="needs_clarification", calculation_available=False,
                             amount=None, warning=LEGACY_ANTIDUMPING_OVERLAP_REASON)
-        special_duties_amount = _sum_amounts(*(
+        special_duties_amount = _sum_displayed_amounts(*(
             item["amount"] for item in special_duties_details if item.get("calculation_available")
         ))
         antidumping = 0.0  # Incomplete provisional subtotal, never a confirmed zero liability.
@@ -886,18 +896,20 @@ def compute_payments(payload: dict[str, Any]) -> dict[str, Any]:
     amounts_provisional = bool(review_reasons)
     payment_review_reason = " ".join(review_messages) or None
 
-    duty_amount = _num(duty)
-    excise_amount = _num(excise)
-    antidumping_amount = _num(antidumping)
-    special_duties_total = _num(special_duties_amount)
-    customs_fee_amount = _num(customs_fee)
+    duty_amount = _round2(duty)
+    excise_amount = _round2(excise)
+    antidumping_amount = _round2(antidumping)
+    special_duties_total = _round2(special_duties_amount)
+    customs_fee_amount = _round2(customs_fee)
 
-    recycling_fee_total = _num(recycling_fee_amount)
+    recycling_fee_total = _round2(recycling_fee_amount)
 
-    vat_base = _sum_amounts(customs_value, duty_amount, excise_amount, antidumping_amount, special_duties_total)
-    vat = _num(vat_base) * _num(vat_rate) / 100.0
+    # The shown VAT base and total reconcile to their shown monetary components.
+    # This does not certify these provisional amounts or a legal rounding scheme.
+    vat_base = _sum_displayed_amounts(customs_value, duty_amount, excise_amount, antidumping_amount, special_duties_total)
+    vat = _round2(vat_base * _num(vat_rate) / 100.0)
 
-    total = _sum_amounts(customs_fee_amount, duty_amount, excise_amount, antidumping_amount, special_duties_total, vat, recycling_fee_total)
+    total = _sum_displayed_amounts(customs_fee_amount, duty_amount, excise_amount, antidumping_amount, special_duties_total, vat, recycling_fee_total)
 
     # Sources: интегрированные данные в приложении (без внешних ссылок)
     stats = get_integrated_data_stats()
