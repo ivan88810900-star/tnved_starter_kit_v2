@@ -38,7 +38,7 @@
     }
   ],
   "max_concurrent_subagents": 3,
-  "revision": 66,
+  "revision": 68,
   "runs": [
     {
       "head_sha": null,
@@ -146,9 +146,9 @@
       "run_id": "79979a63b86447fb8c61f519e9beaee0",
       "session_id": "/root/a3_ad30_review",
       "started_at": "2026-09-12T21:39:29.265101+00:00",
-      "status": "RUNNING",
+      "status": "FINISHED",
       "task_id": "TARIFF-AD30-REVIEW-CANDIDATE-001",
-      "updated_at": "2026-09-12T21:39:29.265114+00:00"
+      "updated_at": "2026-09-12T21:48:18.773987+00:00"
     }
   ],
   "schema_version": 1,
@@ -487,7 +487,7 @@
       "qa": null,
       "refs": {
         "base_sha": "1c0272a34cbcbb3b99d6f32c86d86949bc0adc06",
-        "head_sha": null,
+        "head_sha": "ea24f31eea57422ee78e662d93b518b422b0db03",
         "pr": null
       },
       "required_checks": [
@@ -498,11 +498,20 @@
         "admission"
       ],
       "risk": "high",
-      "status": "IN_PROGRESS",
-      "tests": [],
-      "updated_at": "2026-09-12T21:39:29.265116+00:00",
+      "status": "IMPLEMENTED",
+      "tests": {
+        "commands": [
+          {
+            "command": "A3 owned-file/evidence binding validation and git diff checks",
+            "exit_code": 0,
+            "output": "PASS: one owned file; 5/5 evidence paths; 33/33 hash/run/artifact bindings; 23/23 product/code/producer/rate literals; 8/8 portal date literals; clean committed worktree. A0 independently replayed base-to-head scope plus 5 paths, 33 bindings and 23 literals."
+          }
+        ],
+        "head_sha": "ea24f31eea57422ee78e662d93b518b422b0db03"
+      },
+      "updated_at": "2026-09-12T21:48:18.794123+00:00",
       "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-ad30-review-candidate-001-99f4e3fb32"
     }
   ],
-  "updated_at": "2026-09-12T21:39:29.265298+00:00"
+  "updated_at": "2026-09-12T21:48:18.794410+00:00"
 }
