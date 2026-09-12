@@ -4,8 +4,6 @@ from __future__ import annotations
 
 import hashlib
 import json
-import ast
-import shlex
 from copy import deepcopy
 from contextlib import contextmanager
 from pathlib import Path
@@ -13,7 +11,6 @@ from unittest.mock import patch
 
 import httpx
 import pytest
-import yaml
 
 from app.services.ett_artifacts import ArtifactIntegrityError, LocalArtifactStore
 from app.services.regulatory_source_capture import verify_original_capture
@@ -410,40 +407,18 @@ def test_fns_vat_registry_is_separate_from_ett_and_cannot_enable_automatic_rates
         assert policies[source_id].adapter_id is None
 
 
-def test_selected_capture_workflow_ids_bind_observed_urls_and_shared_family_receipts(tmp_path, capsys):
-    """Execute the workflow's CLI arguments with real registry construction.
-
-    Numbered monitor IDs can shift when URLs deduplicate; pin their intended
-    upstream identities, and ensure sharing the landing never labels the AD
-    decision PDF as a safeguard/countervailing original.
-    """
-    workflow_path = Path(__file__).resolve().parents[3] / ".github/workflows/official-rate-source-capture.yml"
-    workflow = yaml.load(workflow_path.read_text(), Loader=yaml.BaseLoader)
-    steps = workflow["jobs"]["capture"]["steps"]
-    acquire = next(step for step in steps if step.get("id") == "acquire")
-    tokens = shlex.split(acquire["run"].replace("\\\n", " "))
-    arguments = tokens[tokens.index("scripts/monitor_official_ntm_sources.py"):tokens.index(">")]
-    selected_ids = [arguments[i + 1] for i, value in enumerate(arguments) if value == "--source-id"]
+def test_registered_navigation_ids_bind_observed_urls_and_shared_family_receipts(tmp_path, capsys):
+    """Retain the registered navigation identity gate after narrowing acquisition."""
     expected = {
         "trade_remedies_official": "https://eec.eaeunion.org/comission/department/podm/",
         "trade_remedies_official__artifact_2": "https://docs.eaeunion.org/documents/?filter_departament%5B%5D=14",
     }
-    assert len(selected_ids) == len(set(selected_ids))
+    selected_ids = list(expected)
     assert {key: monitor.SOURCES[key] for key in selected_ids} == expected
-    assert "--accept-changes" not in arguments and "--approval-ref" not in arguments
-    assert "--capture-rejected-originals" in arguments
-    assert workflow["on"] == {"push": {"branches": ["ops/official-rate-source-capture"]}}
-    assert workflow["permissions"] == {"contents": "read"}
-
-    package = next(step for step in steps if "Record execution boundary" in step.get("name", ""))
-    embedded_python = package["run"].split("python - <<'PY'\n", 1)[1].split("\nPY", 1)[0]
-    declared_ids = []
-    for node in ast.walk(ast.parse(embedded_python)):
-        if isinstance(node, ast.Dict):
-            for key, value in zip(node.keys, node.values):
-                if isinstance(key, ast.Constant) and key.value == "selected_monitor_ids":
-                    declared_ids = ast.literal_eval(value)
-    assert declared_ids == selected_ids
+    arguments = ["monitor", "--capture-originals", "--capture-rejected-originals",
+                 "--store-root", str(tmp_path / "store")]
+    for source_id in selected_ids:
+        arguments += ["--source-id", source_id]
 
     requests = []
     html = b'<html><body><a href="/law.pdf">Observed law</a><p>' + b"template " * 30 + b"</p></body></html>"

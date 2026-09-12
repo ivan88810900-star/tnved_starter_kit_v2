@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+from .official_payment_admission import blocked_payment_import
+from .official_rate_validation import load_official_rate_json
+
 import csv
 import io
 import json
@@ -69,7 +72,7 @@ def _rows_from_csv(content: bytes) -> list[dict[str, Any]]:
 
 
 def _rows_from_json(content: bytes) -> tuple[list[dict[str, Any]], str]:
-    data = json.loads(content.decode("utf-8", errors="ignore"))
+    data = load_official_rate_json(content)
     if isinstance(data, list):
         return [dict(x) for x in data if isinstance(x, dict)], "import-json"
     if isinstance(data, dict):
@@ -169,10 +172,7 @@ def import_normative_file(
     if name.endswith(".csv"):
         rows = _rows_from_csv(content)
     elif name.endswith(".json"):
-        try:
-            parsed = json.loads(content.decode("utf-8", errors="ignore"))
-        except json.JSONDecodeError:
-            parsed = None
+        parsed = load_official_rate_json(content)
         if isinstance(parsed, dict):
             from .normative_bundle import _is_bundle_payload, import_normative_bundle_dict
 
@@ -192,6 +192,13 @@ def import_normative_file(
     else:
         raise ValueError("Поддерживаются .csv, .json, .xml, .xlsx, .xlsm")
 
+    # Parsing a legacy rate file does not authorize active legal rates.
+    return blocked_payment_import(source=source_code, domain="import_duty")
+
+
+def _store_legacy_rate_fixture(rows: list[dict[str, Any]], *, filename: str,
+                               revision: str, source_code: str, source_name: str) -> dict[str, Any]:
+    """Private fixture persistence; public imports never call it."""
     imported = 0
     skipped = 0
     for raw in rows:

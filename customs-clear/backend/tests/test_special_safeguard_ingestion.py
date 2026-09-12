@@ -140,6 +140,48 @@ class _BundleFixture:
             self._tmpdir.cleanup()
 
 
+
+def _store_isolated_fixture(*, rel_path: str, domain: str = "special_safeguard") -> dict:
+    """Explicit in-memory storage regression; never call/approve public admission."""
+    import importlib
+    from datetime import datetime, timezone
+
+    service = importlib.import_module(f"app.services.{domain}_ingestion")
+    # Enforce that this helper cannot touch a file-backed application DB.
+    with service.SessionLocal() as db:
+        assert db.get_bind().url.database == ":memory:"
+        before = (db.query(SourceStatus).count(), db.query(SyncLog).count())
+    payload, parsed, revision, rows, blockers = service._validate_bundle_for_ingest(rel_path)
+    assert not blockers, blockers
+    assert parsed["status"] == "parsed"
+    now = datetime.now(timezone.utc).replace(tzinfo=None)
+    provenance = service._build_provenance(
+        rel_path=rel_path, revision=revision, payload=payload,
+        parser_result=parsed, loaded_at=now.isoformat(),
+    )
+    if domain == "import_duty":
+        counts = service._apply_duty_rows(rows)
+    elif domain in {"vat", "excise"}:
+        counts = getattr(service, f"_apply_{domain}_rows")(
+            rows, bundle_revision=revision, bundle_url=provenance.official_url, synced_at=now,
+        )
+    else:
+        counts = getattr(service, f"_apply_{domain}_rows")(rows, synced_at=now)
+    assert counts is not None, "Fixture writer rejected rows atomically"
+    with service.SessionLocal() as db:
+        assert (db.query(SourceStatus).count(), db.query(SyncLog).count()) == before
+    return {"fixture_only": True, "row_counts": counts.model_dump(),
+            "provenance": provenance.model_dump(), "parser_result": parsed}
+
+
+def _store_isolated_payload(payload: dict) -> dict:
+    import app.services.special_safeguard_ingestion as service
+
+    with _BundleFixture(payload) as (root, rel):
+        with unittest.mock.patch.object(service, "_BACKEND_ROOT", root):
+            return _store_isolated_fixture(rel_path=rel)
+
+
 class TestSpecialSafeguardMissingSource(unittest.TestCase):
     def setUp(self) -> None:
         self.sm = _memory_sessionmaker()
@@ -204,14 +246,14 @@ class TestSpecialSafeguardApplyProvenance(unittest.TestCase):
     def tearDown(self) -> None:
         _stop_patches(*self._patches)
 
-    def test_apply_writes_special_duties_with_provenance(self) -> None:
+    def test_isolated_fixture_apply_writes_special_duties_with_provenance(self) -> None:
         import app.services.special_safeguard_ingestion as ssi
 
         with _BundleFixture(_official_special_safeguard_payload()) as (root, rel):
             with unittest.mock.patch.object(ssi, "_BACKEND_ROOT", root):
-                report = run_special_safeguard_apply(rel_path=rel)
-        self.assertEqual(report["status"], "OK")
-        self.assertTrue(report["db_mutated"])
+                report = _store_isolated_fixture(rel_path=rel, domain="special_safeguard")
+        self.assertTrue(report["fixture_only"])
+        self.assertTrue(report["fixture_only"])
         self.assertEqual(report["provenance"]["source_code"], "EEC_SPECIAL_SAFEGUARD")
         with self.sm() as db:
             rows = db.query(SpecialDuty).filter(SpecialDuty.measure_type == "special_safeguard").all()
@@ -229,10 +271,10 @@ class TestSpecialSafeguardApplyProvenance(unittest.TestCase):
                 self.assertEqual(row.source_url, "")
                 self.assertIsNone(row.synced_at)
             st = db.query(SourceStatus).filter(SourceStatus.source_code == "EEC_SPECIAL_SAFEGUARD").first()
-            self.assertIsNotNone(st)
+            self.assertIsNone(st)
             logs = db.query(SyncLog).filter(SyncLog.source_code == "EEC_SPECIAL_SAFEGUARD").all()
-            self.assertEqual(len(logs), 1)
-            self.assertEqual(logs[0].status, "OK")
+            self.assertEqual(len(logs), 0)
+
 
 
 class TestSpecialSafeguardRevisionValidation(unittest.TestCase):
@@ -252,12 +294,16 @@ class TestSpecialSafeguardRevisionValidation(unittest.TestCase):
 
     def test_official_revision_accepted(self) -> None:
         report = self._apply(_official_special_safeguard_payload(revision="special-safeguard:2026-05-01"))
-        self.assertEqual(report["status"], "OK")
-        self.assertTrue(report["db_mutated"])
+        self.assertEqual(report["status"], "manual_review_required")
+        self.assertFalse(report["db_mutated"])
+        self.assertEqual(report["parser_result"]["status"], "parsed")
+        self.assertFalse(report["db_mutated"])
 
     def test_eec_special_safeguard_revision_accepted(self) -> None:
         report = self._apply(_official_special_safeguard_payload(revision="eec-special-safeguard:2026-05-01"))
-        self.assertEqual(report["status"], "OK")
+        self.assertEqual(report["status"], "manual_review_required")
+        self.assertFalse(report["db_mutated"])
+        self.assertEqual(report["parser_result"]["status"], "parsed")
 
     def test_wrong_domain_duty_revision_rejected(self) -> None:
         report = self._apply(_official_special_safeguard_payload(revision="ett:2026-05-01"))
@@ -486,7 +532,7 @@ class TestSpecialSafeguardAntiDumpingIsolation(unittest.TestCase):
                     self.assertIsNone(discover_anti_dumping_bundle_path(rel_path=ss_rel))
                     self.assertIsNone(discover_special_safeguard_bundle_path(rel_path=ad_rel))
 
-    def test_special_safeguard_apply_does_not_touch_anti_dumping_rows(self) -> None:
+    def test_isolated_fixture_special_safeguard_apply_does_not_touch_anti_dumping_rows(self) -> None:
         import app.services.anti_dumping_ingestion as adi
         import app.services.special_safeguard_ingestion as ssi
 
@@ -506,11 +552,11 @@ class TestSpecialSafeguardAntiDumpingIsolation(unittest.TestCase):
         }
         with _BundleFixture(ad_payload, rel_path="data/raw_normative/eec_anti_dumping.json") as (root, ad_rel):
             with unittest.mock.patch.object(adi, "_BACKEND_ROOT", root):
-                run_anti_dumping_apply(rel_path=ad_rel)
+                _store_isolated_fixture(rel_path=ad_rel, domain="anti_dumping")
         with _BundleFixture(_official_special_safeguard_payload()) as (root2, ss_rel):
             with unittest.mock.patch.object(ssi, "_BACKEND_ROOT", root2):
-                report = run_special_safeguard_apply(rel_path=ss_rel)
-        self.assertEqual(report["status"], "OK")
+                report = _store_isolated_fixture(rel_path=ss_rel, domain="special_safeguard")
+        self.assertTrue(report["fixture_only"])
         with self.sm() as db:
             ad_rows = db.query(SpecialDuty).filter(SpecialDuty.measure_type == "anti_dumping").all()
             ss_rows = db.query(SpecialDuty).filter(SpecialDuty.measure_type == "special_safeguard").all()
@@ -616,7 +662,7 @@ class TestSpecialSafeguardProvenanceIsolation(unittest.TestCase):
 
         with _BundleFixture(payload or _official_special_safeguard_payload()) as (root, rel):
             with unittest.mock.patch.object(ssi, "_BACKEND_ROOT", root):
-                return run_special_safeguard_apply(rel_path=rel)
+                return _store_isolated_fixture(rel_path=rel, domain="special_safeguard")
 
     def _apply_anti_dumping(self) -> dict:
         import app.services.anti_dumping_ingestion as adi
@@ -637,7 +683,7 @@ class TestSpecialSafeguardProvenanceIsolation(unittest.TestCase):
         }
         with _BundleFixture(ad_payload, rel_path="data/raw_normative/eec_anti_dumping.json") as (root, rel):
             with unittest.mock.patch.object(adi, "_BACKEND_ROOT", root):
-                return run_anti_dumping_apply(rel_path=rel)
+                return _store_isolated_fixture(rel_path=rel, domain="anti_dumping")
 
     def test_official_safeguard_revision_in_generic_source_revision(self) -> None:
         """eec_special_safeguard revision должна быть строго safeguard-domain."""
@@ -700,12 +746,12 @@ class TestSpecialSafeguardProvenanceIsolation(unittest.TestCase):
         trade = diagnose_trade_remedies()
         self.assertNotEqual(trade.status, "present")
 
-    def test_trade_remedies_partial_even_with_both_official(self) -> None:
+    def test_isolated_fixture_trade_remedies_partial_even_with_both_official(self) -> None:
         """P1: trade_remedies остаётся manual_review_required даже при AD + SS official."""
         ad_report = self._apply_anti_dumping()
         ss_report = self._apply_safeguard()
-        self.assertEqual(ad_report["status"], "OK")
-        self.assertEqual(ss_report["status"], "OK")
+        self.assertTrue(ad_report["fixture_only"])
+        self.assertTrue(ss_report["fixture_only"])
         trade = diagnose_trade_remedies()
         self.assertIn(trade.status, ("manual_review_required", "partial"))
         self.assertNotEqual(trade.status, "present")

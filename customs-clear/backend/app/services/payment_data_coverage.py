@@ -274,6 +274,8 @@ def _duty_official_provenance(db) -> tuple[bool, int, int]:
 
 
 def diagnose_duty_rates() -> CoverageDomainSummary:
+    from .official_payment_admission import payment_admission_blocker
+
     with SessionLocal() as db:
         hs_count = db.query(HsRate).count()
         duty_rules = db.query(HsDutyRule).count()
@@ -286,7 +288,7 @@ def diagnose_duty_rates() -> CoverageDomainSummary:
     label, authority = _registry_label("eec_ett_tnved")
     eec = _lookup_source_status("EEC_ETT")
     last_ok = _latest_sync_ok("EEC_ETT")
-    gaps: list[str] = []
+    gaps: list[str] = [payment_admission_blocker("import_duty")]
     notes: list[str] = []
 
     if hs_count == 0:
@@ -329,6 +331,14 @@ def diagnose_duty_rates() -> CoverageDomainSummary:
     else:
         status = "partial" if hs_count > 0 else "missing"
 
+    # Retain technical gaps even when the independent legal-review gate fails first.
+    if seed_count > 0:
+        gaps.append(f"Technical seed/fallback rows: {seed_count}/{hs_count}.")
+    if total_codes == 0:
+        gaps.append("No TN VED 10-digit catalog available to measure technical coverage.")
+    if total_codes > 0 and official_covered < total_codes:
+        missing_samples = official_missing or missing_samples
+        gaps.append(f"Row-marker coverage only: {official_covered}/{total_codes}; not legal coverage.")
     if duty_rules == 0:
         gaps.append("hs_duty_rules пуст — структурированные ставки не импортированы.")
 
@@ -346,7 +356,7 @@ def diagnose_duty_rates() -> CoverageDomainSummary:
         total_codes=total_codes if total_codes else None,
         manual_review_required=manual,
         source_label=label or "hs_rates / hs_duty_rules (ЕТТ ЕАЭС)",
-        authority_level=resolved_authority,
+        authority_level="unverified",
         last_successful_sync_at=last_ok or (eec.synced_at.isoformat() if eec and eec.synced_at else None),
         gaps=gaps,
         missing_samples=missing_samples,
@@ -395,15 +405,13 @@ def _vat_official_provenance(db) -> tuple[bool, int, int]:
             official_vat_rows += 1
         else:
             legacy_vat_signal_rows += 1
-    if not vat_ok:
-        return False, 0, legacy_vat_signal_rows
     return vat_ok, official_vat_rows, legacy_vat_signal_rows
 
 
 def _hs_rate_has_vat_signal_from_parts(vat_rule: str | None, vat_rate: float | None, vat_basis: str | None) -> bool:
     if (vat_rule or "none") != "none":
         return True
-    if float(vat_rate or 22.0) != 22.0:
+    if float(vat_rate if vat_rate is not None else 22.0) != 22.0:
         return True
     if (vat_basis or "").strip():
         return True
@@ -411,6 +419,8 @@ def _hs_rate_has_vat_signal_from_parts(vat_rule: str | None, vat_rate: float | N
 
 
 def diagnose_vat_rates() -> CoverageDomainSummary:
+    from .official_payment_admission import payment_admission_blocker
+
     with SessionLocal() as db:
         hs_count = db.query(HsRate).count()
         pref_count = db.query(VatPreference).count()
@@ -418,8 +428,8 @@ def diagnose_vat_rates() -> CoverageDomainSummary:
         with_rule = db.query(HsRate).filter(HsRate.vat_rule != "none").count()
         vat_ok, official_vat_rows, seed_vat_rows = _vat_official_provenance(db)
 
-    label, authority = _registry_label("eec_ett_tnved")
-    gaps: list[str] = []
+    label, authority = _registry_label("rf_vat_tax_code")
+    gaps: list[str] = [payment_admission_blocker("vat")]
     notes = [f"vat_preferences: {pref_count}", f"hs_rates с нестандартным НДС: {reduced + with_rule}"]
 
     if hs_count == 0:
@@ -448,6 +458,9 @@ def diagnose_vat_rates() -> CoverageDomainSummary:
     else:
         status = "partial"
 
+    notes.append(f"VAT row markers: {official_vat_rows}; not verified legal rates.")
+    if official_vat_rows == 0 and (with_rule > 0 or reduced > 0 or pref_count > 0):
+        gaps.append("VAT signal has no row-level marker; even a marker would not establish legal review.")
     manual = status != "present"
     resolved_authority = authority or "official_binding"
     if status != "present" and (not vat_ok or seed_vat_rows > 0):
@@ -459,7 +472,7 @@ def diagnose_vat_rates() -> CoverageDomainSummary:
         covered_codes=official_vat_rows if official_vat_rows else (with_rule + reduced),
         manual_review_required=manual,
         source_label=label or "hs_rates + vat_preferences",
-        authority_level=resolved_authority if status == "present" else (resolved_authority or "legacy_seed"),
+        authority_level="unverified",
         gaps=gaps,
         notes=notes,
     )
@@ -478,6 +491,8 @@ def diagnose_customs_fees() -> CoverageDomainSummary:
 
 
 def diagnose_excise() -> CoverageDomainSummary:
+    from .official_payment_admission import payment_admission_blocker
+
     with SessionLocal() as db:
         hs_count = db.query(HsRate).count()
         excise_ok, official_excise_rows, legacy_excise_rows = _excise_official_provenance(db)
@@ -492,7 +507,7 @@ def diagnose_excise() -> CoverageDomainSummary:
             label = reg.name
             authority = AUTHORITY_LEVEL_LABELS.get(reg.authority_level, reg.authority_level)
 
-    gaps: list[str] = []
+    gaps: list[str] = [payment_admission_blocker("excise")]
     notes: list[str] = []
 
     if hs_count == 0:
@@ -522,7 +537,7 @@ def diagnose_excise() -> CoverageDomainSummary:
         count=official_excise_rows or legacy_excise_rows,
         manual_review_required=manual,
         source_label=label or "не настроен",
-        authority_level=authority if status == "present" else "legacy_seed",
+        authority_level="unverified",
         gaps=gaps,
         notes=notes
         + [
@@ -568,8 +583,6 @@ def _excise_official_provenance(db) -> tuple[bool, int, int]:
             official_excise_rows += 1
         else:
             legacy_excise_rows += 1
-    if not excise_ok:
-        return False, 0, legacy_excise_rows
     return excise_ok, official_excise_rows, legacy_excise_rows
 
 
@@ -589,6 +602,8 @@ def diagnose_trade_remedies() -> CoverageDomainSummary:
     ad_ok, _ = _anti_dumping_proven()
     ss_ok, _ = _special_safeguard_proven()
     cv_ok, _ = _countervailing_proven()
+    from .official_payment_admission import payment_admission_blocker
+
     with SessionLocal() as db:
         special = db.query(SpecialDuty).count()
         geo = db.query(GeoSpecialDuty).count()
@@ -645,7 +660,7 @@ def diagnose_trade_remedies() -> CoverageDomainSummary:
                 else:
                     legacy_cv_rows += 1
 
-    gaps: list[str] = []
+    gaps: list[str] = [payment_admission_blocker("anti_dumping")]
     total_rows = special + geo + ad_hs
     trade_contours_ok = ad_ok or ss_ok or cv_ok
     official_trade_rows = official_ad_rows + official_ss_rows + official_cv_rows
@@ -689,9 +704,9 @@ def diagnose_trade_remedies() -> CoverageDomainSummary:
     manual = status != "present"
     notes = [
         f"special_duties: {special}",
-        f"official anti-dumping special_duties rows: {official_ad_rows}",
-        f"official special-safeguard special_duties rows: {official_ss_rows}",
-        f"official countervailing special_duties rows: {official_cv_rows}",
+        f"marked anti-dumping special_duties rows: {official_ad_rows}",
+        f"marked special-safeguard special_duties rows: {official_ss_rows}",
+        f"marked countervailing special_duties rows: {official_cv_rows}",
         f"geo_special_duties: {geo}",
         f"hs_rates has_antidumping: {ad_hs}",
         f"hs_rates antidumping_type percent/fixed: {ad_fields}",
@@ -718,7 +733,7 @@ def diagnose_trade_remedies() -> CoverageDomainSummary:
         count=total_rows,
         manual_review_required=manual,
         source_label=label or "special_duties / geo_special_duties / hs_rates",
-        authority_level=authority,
+        authority_level="unverified",
         gaps=gaps,
         notes=notes,
     )

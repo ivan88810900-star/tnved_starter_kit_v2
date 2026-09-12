@@ -117,7 +117,7 @@ def test_flag_default_off(monkeypatch: pytest.MonkeyPatch) -> None:
     assert is_ntm_v2_measures_enforcement_enabled() is False
 
 
-def test_gate_allow_vet_vs(memory_sessionmaker: sessionmaker) -> None:
+def test_gate_requires_review_for_legacy_vet_vs(memory_sessionmaker: sessionmaker) -> None:
     row = {
         "source_kind": "legacy_non_tariff_measures",
         "measure_kind": "vet",
@@ -125,7 +125,7 @@ def test_gate_allow_vet_vs(memory_sessionmaker: sessionmaker) -> None:
         "tr_ts": None,
         "measure_key": "vet|ВС||",
     }
-    assert classify_v2_measure_for_enforcement(row, []) == "allow"
+    assert classify_v2_measure_for_enforcement(row, []) == "manual_review"
 
 
 def test_gate_skip_sgr(memory_sessionmaker: sessionmaker) -> None:
@@ -149,7 +149,7 @@ def test_gate_skip_baseline_has_vs() -> None:
     assert classify_v2_measure_for_enforcement(row, baseline) == "skip"
 
 
-def test_enforcement_adds_vs(
+def test_enforcement_option_cannot_promote_unreviewed_vs(
     memory_sessionmaker: sessionmaker,
     minimal_ntm_patches: None,
     monkeypatch: pytest.MonkeyPatch,
@@ -163,11 +163,12 @@ def test_enforcement_adds_vs(
     off = asyncio.run(_check("0201100000", "Говядина", enforcement=False, monkeypatch=monkeypatch))
     on = asyncio.run(_check("0201100000", "Говядина", enforcement=True, monkeypatch=monkeypatch))
     assert "ВС" not in off["required_permit_types"]
-    assert "ВС" in on["required_permit_types"]
-    assert "ВС" in on["missing_permit_types"]
+    assert on["required_permit_types"] == off["required_permit_types"]
+    assert "ВС" not in on["missing_permit_types"]
+    assert on["measures_enforcement_audit"]["manual_review_measure_keys"]
 
 
-def test_enforcement_adds_fss_when_layers_missing(
+def test_missing_layers_do_not_approve_unreviewed_fss(
     memory_sessionmaker: sessionmaker,
     minimal_ntm_patches: None,
     monkeypatch: pytest.MonkeyPatch,
@@ -181,7 +182,8 @@ def test_enforcement_adds_fss_when_layers_missing(
     off = asyncio.run(_check("0808108000", "Яблоки", enforcement=False, monkeypatch=monkeypatch))
     on = asyncio.run(_check("0808108000", "Яблоки", enforcement=True, monkeypatch=monkeypatch))
     assert "ФСС" not in off["required_permit_types"]
-    assert "ФСС" in on["required_permit_types"]
+    assert on["required_permit_types"] == off["required_permit_types"]
+    assert on["measures_enforcement_audit"]["manual_review_measure_keys"]
 
 
 def test_skip_when_baseline_has_vs_from_layers(
@@ -231,7 +233,7 @@ def test_sgr_not_added_with_flag_on(
     assert "СГР" not in on["required_permit_types"]
 
 
-def test_status_ok_to_error_when_new_vs(
+def test_unreviewed_legacy_vs_does_not_change_status_or_missing(
     memory_sessionmaker: sessionmaker,
     minimal_ntm_patches: None,
     monkeypatch: pytest.MonkeyPatch,
@@ -245,8 +247,8 @@ def test_status_ok_to_error_when_new_vs(
     off = asyncio.run(_check("1301900000", "", enforcement=False, monkeypatch=monkeypatch))
     on = asyncio.run(_check("1301900000", "", enforcement=True, monkeypatch=monkeypatch))
     assert off["status"] in ("OK", "WARNING")
-    assert on["status"] == "ERROR"
-    assert "ВС" in on["missing_permit_types"]
+    assert on["status"] == off["status"]
+    assert "ВС" not in on["missing_permit_types"]
 
 
 def test_compare_diagnostic(
@@ -263,8 +265,8 @@ def test_compare_diagnostic(
     cmp = asyncio.run(
         compare_non_tariff_check_measures_enforcement("0201100000", description="Говядина")
     )
-    assert cmp["changed"] is True
-    assert "ВС" in cmp["added_permit_types"]
+    assert cmp["changed"] is False
+    assert cmp["added_permit_types"] == []
 
 
 def test_regression_matrix_only_vs_fss(

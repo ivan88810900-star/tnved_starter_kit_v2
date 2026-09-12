@@ -98,6 +98,8 @@ def test_import_one_measure_creates_measure_and_rule(memory_sessionmaker: sessio
         rule = s.query(NtmApplicabilityRuleV2).filter_by(source_kind=MEASURES_SOURCE_KIND).one()
         assert rule.hs_code == "8517620000"
         assert rule.hs_scope_mode == "prefix"
+        assert rule.applicability == "needs_clarification"
+        assert rule.requires_manual_review is True
         payload = rule.description_match_json["legacy_payload"]
         assert payload["commodity_code"] == "8517620000"
         assert payload["legal_ref"] == "ТР ТС 004/2011"

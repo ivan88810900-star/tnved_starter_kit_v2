@@ -81,6 +81,7 @@ jobs:
             agent/ntm-compliance)
               tests=(
                 tests/test_tamdoc_payment_admission.py
+                tests/test_ntm_legacy_review_boundary.py
                 tests/test_non_tariff_rule_validity.py
                 tests/test_ntm_layers_legal_guards.py
                 tests/test_official_ntm_contours.py
@@ -92,6 +93,7 @@ jobs:
               ;;
             agent/source-registry)
               tests=(
+                tests/test_observed_source_review_capture.py
                 tests/test_rejected_source_original_capture.py
                 tests/test_official_source_original_capture.py
                 tests/test_opendata_source_integrity.py
