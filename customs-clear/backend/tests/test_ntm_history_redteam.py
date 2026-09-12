@@ -19,6 +19,7 @@ def database():
     with factory() as db:
         measure = NtmMeasureV2(
             measure_kind="vet", permit_type="ВС", title="Synthetic conditional source text",
+            tr_ts_act_code="",
             source_kind="legacy_non_tariff_measures", source_ref="independent:unreviewed",
             import_key="independent:measure", status="active",
             valid_from=date(2020, 1, 1), valid_to=date(2030, 12, 31),
@@ -112,3 +113,19 @@ def test_stored_exclusion_and_mutually_inconsistent_dates_never_grant(database):
     assert "effective_dates_unverified" in rows[0]["context_review_reasons"]
     assert rows[0]["used_for_missing_check"] is False
     assert rows[0]["legal_review_verified"] is False
+
+
+@pytest.mark.parametrize("stored,requested", [
+    ("ZZ", "CN"), ("CN", "ZZ"), ("ZZ", "ZZ"), ("EU", "CN"),
+])
+def test_unknown_country_identifiers_cannot_silently_discard_candidate(database, stored, requested):
+    with database() as db:
+        db.query(NtmApplicabilityRuleV2).one().country_iso = stored
+        db.commit()
+        rows = reader.get_v2_legacy_measures_broker_rows(
+            "8517130000", "Processed excluded product", session=db,
+            as_of=date(2025, 6, 1), country=requested, direction="export")
+    assert len(rows) == 1, "An unrecognized country is unresolved metadata, not established inapplicability"
+    assert "country_unverified" in rows[0]["context_review_reasons"]
+    assert rows[0]["applicability"] == "needs_clarification"
+    assert rows[0]["used_for_missing_check"] is False

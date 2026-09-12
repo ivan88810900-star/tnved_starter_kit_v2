@@ -15,10 +15,10 @@
   },
   "independent_tests": {
     "payment_admission_cases_expected": 83,
-    "ntm_historical_cases_expected": 12,
+    "ntm_historical_cases_expected": 16,
     "source_quarantine_cases": 4,
     "live_http_requests_expected": 43,
-    "execution": "pending fresh GitHub Actions on this reconstructed tree"
+    "execution": "A5 fixture corrected; four country regressions added against old3335 reader before integrating c2fc39 correction."
   },
   "previous_fresh_proof": {
     "source_qa_commit": "1d2619fb37cd822a1b13288d04bf1c5fb02365a3",
@@ -39,5 +39,17 @@
     "This is admission-boundary QA, not a legal rate or NTM coverage audit.",
     "A1 maintenance follow-up and A3 acquisition-inspection follow-up are outside this candidate.",
     "Old executor-local counts are not proof for reconstructed trees."
-  ]
+  ],
+  "first_reconstructed_run": {
+    "commit": "bbe96d8ae94bf29d7493b3a525d8e58fef7fe3e1",
+    "run_id": 34715761659,
+    "job_id": 103612598692,
+    "passed": 1657,
+    "skipped": 1,
+    "subtests_passed": 85,
+    "errors": 12,
+    "errors_scope": "Independent NTM test fixture omitted required tr_ts_act_code; no feature conclusion from those setup errors.",
+    "independent_payment_ai_wal_passed": 83,
+    "live_uvicorn_http_requests_passed": 43
+  }
 }
