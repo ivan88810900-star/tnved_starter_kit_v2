@@ -43,7 +43,9 @@
       "id": "6a9930970cc88191b08b5b08f740992a",
       "notification_policy": "significant verified blocks, human decisions, critical blockers, protected actions only",
       "mutations_allowed": false
-    }
+    },
+    "immediate_test_dispatch": "PLANNED_AFTER_COORDINATOR_RELEASE",
+    "completion_evidence": "Read .ai/orchestration/AUTOMATION_RECEIPT.json from agent/orchestration-state after the first free-lease run. Scheduling/run-request metadata alone is not execution proof."
   },
   "state_branch": "agent/orchestration-state",
   "protected_actions_performed": [],
@@ -61,7 +63,7 @@
   "continuation": {
     "task": "TARIFF-ADMISSION-RECHECK-001",
     "pr": 191,
-    "status": "A5_PASSED_FULL_CI_PENDING",
+    "status": "READY_FOR_HUMAN_APPROVAL",
     "finding": "A0-UPSTREAM-DRIFT-001",
     "next_task": "TARIFF-AD30-REVIEW-CANDIDATE-001",
     "head_sha": "1c0272a34cbcbb3b99d6f32c86d86949bc0adc06",
@@ -70,6 +72,21 @@
       "A0-CI-BRANCH-SCOPE-001"
     ],
     "admission_ci": 34719777792,
-    "full_ci": 34719777785
-  }
+    "full_ci": 34719777785,
+    "backend_tests": {
+      "passed": 5168,
+      "skipped": 2,
+      "warnings": 2,
+      "subtests_passed": 85
+    },
+    "admission_tests": {
+      "passed": 1975,
+      "skipped": 1,
+      "warnings": 2,
+      "subtests_passed": 85,
+      "test_files": 44
+    },
+    "test_counts_overlap": true
+  },
+  "infrastructure_readiness": "READY_FOR_HUMAN_APPROVAL"
 }

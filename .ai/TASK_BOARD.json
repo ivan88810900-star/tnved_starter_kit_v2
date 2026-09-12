@@ -38,7 +38,7 @@
     }
   ],
   "max_concurrent_subagents": 3,
-  "revision": 61,
+  "revision": 62,
   "runs": [
     {
       "head_sha": null,
@@ -319,7 +319,47 @@
         "/root/smoke_rates"
       ],
       "branch": "agent/rates-tariff-admission-recheck-001-9231ffbdb5",
-      "ci": null,
+      "ci": {
+        "checks": [
+          {
+            "conclusion": "success",
+            "head_sha": "1c0272a34cbcbb3b99d6f32c86d86949bc0adc06",
+            "name": "Validate and build local staging images",
+            "run_id": 34719777785,
+            "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/34719777785"
+          },
+          {
+            "conclusion": "success",
+            "head_sha": "1c0272a34cbcbb3b99d6f32c86d86949bc0adc06",
+            "name": "Scheduled workflow and locked environment",
+            "run_id": 34719777785,
+            "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/34719777785"
+          },
+          {
+            "conclusion": "success",
+            "head_sha": "1c0272a34cbcbb3b99d6f32c86d86949bc0adc06",
+            "name": "Backend NTM safety suite",
+            "run_id": 34719777785,
+            "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/34719777785"
+          },
+          {
+            "conclusion": "success",
+            "head_sha": "1c0272a34cbcbb3b99d6f32c86d86949bc0adc06",
+            "name": "Frontend tests, types and build",
+            "run_id": 34719777785,
+            "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/34719777785"
+          },
+          {
+            "conclusion": "success",
+            "head_sha": "1c0272a34cbcbb3b99d6f32c86d86949bc0adc06",
+            "name": "admission",
+            "run_id": 34719777792,
+            "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/34719777792"
+          }
+        ],
+        "head_sha": "1c0272a34cbcbb3b99d6f32c86d86949bc0adc06",
+        "status": "PASSED"
+      },
       "ci_profile_decision": "A0 selected full existing CI plus admission job from actual a9d15c74 workflows after upstream reconciliation; existing checks unchanged.",
       "dependencies": [],
       "external_audit": {
@@ -396,7 +436,7 @@
         }
       ],
       "risk": "low",
-      "status": "AUDIT_PASSED",
+      "status": "READY_FOR_HUMAN_APPROVAL",
       "tests": {
         "commands": [
           {
@@ -407,7 +447,7 @@
         ],
         "head_sha": "1c0272a34cbcbb3b99d6f32c86d86949bc0adc06"
       },
-      "updated_at": "2026-09-12T21:25:09.141215+00:00",
+      "updated_at": "2026-09-12T21:28:43.669296+00:00",
       "upstream_reconciliation": {
         "a0_local_merge_sha": "2e5da9ecfb74ef386b6695eba24abd62ae993776",
         "owned_diff_vs_new_base": [
@@ -452,5 +492,5 @@
       "worktree": null
     }
   ],
-  "updated_at": "2026-09-12T21:26:09.002926+00:00"
+  "updated_at": "2026-09-12T21:28:43.669589+00:00"
 }

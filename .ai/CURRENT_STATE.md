@@ -20,8 +20,9 @@ from code/QA/CI candidate SHAs). Read this branch's board on every wake-up.
   PR #189 is unchanged/inactive. PR #191 is the separate A1 evidence report.
 - PR #191 candidate 1c0272a34cbcbb3b99d6f32c86d86949bc0adc06 now rechecks
   current a9d15c74 and fixes the discovered CI branch matcher. Independent A5
-  passed; Admission QA 34719777792 passed all selected scope. Full CI 34719777785
-  still awaits backend completion. No READY or merge is inferred yet.
+  passed; Admission QA 34719777792 and full CI 34719777785 passed at exactHEAD.
+  Backend: 5168 passed/2 skipped; Admission:1975 passed/1 skipped in44 files.
+  These suites overlap. Task is READY_FOR_HUMAN_APPROVAL; no merge performed.
 - A0-UPSTREAM-DRIFT-001 and A0-CI-BRANCH-SCOPE-001 are resolved with exact-head
   evidence. Real author/QA sessions repeated; no test was removed or weakened.
 - Next queued A3 task: TARIFF-AD30-REVIEW-CANDIDATE-001, source-fact candidate
