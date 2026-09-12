@@ -1,5 +1,5 @@
 {
-  "board_revision": 105,
+  "board_revision": 112,
   "findings": [
     {
       "head_sha": "161a9258d174e93266353ae1fd2cb0b3e4657679",
@@ -88,6 +88,32 @@
       "validation": {
         "at": "2026-09-12T22:16:11.268262+00:00",
         "evidence": "A0 executed checked adapter build against exact 1c0272a..5bff452 with the complete changed report plus required contract path; adapter returned BLOCKED: Audit file is not tracked in either commit. git ls-tree confirms the contract is absent in both product commits.",
+        "validator": "A0"
+      }
+    },
+    {
+      "head_sha": "57ac89cc059fb2c3155003ba98431603d05f5200",
+      "id": "A5-A6-CONTRACT-001",
+      "reporter": "A5",
+      "status": "CONFIRMED",
+      "summary": "Explicit contract_ref/requested_ref metadata bypasses credential/private-data scanning and can be serialized into the outbound A6 packet.",
+      "task_id": "TARIFF-A6-CROSS-BRANCH-CONTRACT-001",
+      "validation": {
+        "at": "2026-09-12T22:28:34.329289+00:00",
+        "evidence": "A0 accepts independent A5 reproduction: a secret-shaped ref passed build and packet validation without network.",
+        "validator": "A0"
+      }
+    },
+    {
+      "head_sha": "57ac89cc059fb2c3155003ba98431603d05f5200",
+      "id": "A5-A6-CONTRACT-002",
+      "reporter": "A5",
+      "status": "CONFIRMED",
+      "summary": "Candidate-head contract finding line bounds overwrite max(base,head), rejecting findings about deleted base contract lines.",
+      "task_id": "TARIFF-A6-CROSS-BRANCH-CONTRACT-001",
+      "validation": {
+        "at": "2026-09-12T22:28:34.343648+00:00",
+        "evidence": "A0 accepts independent A5 reproduction: base contract 3 lines/head 1 line and a line-3 finding was rejected by the new unconditional override.",
         "validator": "A0"
       }
     }

@@ -89,10 +89,36 @@
         "evidence": "A0 executed checked adapter build against exact 1c0272a..5bff452 with the complete changed report plus required contract path; adapter returned BLOCKED: Audit file is not tracked in either commit. git ls-tree confirms the contract is absent in both product commits.",
         "validator": "A0"
       }
+    },
+    {
+      "head_sha": "57ac89cc059fb2c3155003ba98431603d05f5200",
+      "id": "A5-A6-CONTRACT-001",
+      "reporter": "A5",
+      "status": "CONFIRMED",
+      "summary": "Explicit contract_ref/requested_ref metadata bypasses credential/private-data scanning and can be serialized into the outbound A6 packet.",
+      "task_id": "TARIFF-A6-CROSS-BRANCH-CONTRACT-001",
+      "validation": {
+        "at": "2026-09-12T22:28:34.329289+00:00",
+        "evidence": "A0 accepts independent A5 reproduction: a secret-shaped ref passed build and packet validation without network.",
+        "validator": "A0"
+      }
+    },
+    {
+      "head_sha": "57ac89cc059fb2c3155003ba98431603d05f5200",
+      "id": "A5-A6-CONTRACT-002",
+      "reporter": "A5",
+      "status": "CONFIRMED",
+      "summary": "Candidate-head contract finding line bounds overwrite max(base,head), rejecting findings about deleted base contract lines.",
+      "task_id": "TARIFF-A6-CROSS-BRANCH-CONTRACT-001",
+      "validation": {
+        "at": "2026-09-12T22:28:34.343648+00:00",
+        "evidence": "A0 accepts independent A5 reproduction: base contract 3 lines/head 1 line and a line-3 finding was rejected by the new unconditional override.",
+        "validator": "A0"
+      }
     }
   ],
   "max_concurrent_subagents": 3,
-  "revision": 105,
+  "revision": 112,
   "runs": [
     {
       "head_sha": null,
@@ -280,9 +306,19 @@
       "run_id": "49f75598acb44b80974ddf0907607c0b",
       "session_id": "/root/a5_ad30_qa",
       "started_at": "2026-09-12T22:22:23.828192+00:00",
+      "status": "FINISHED",
+      "task_id": "TARIFF-A6-CROSS-BRANCH-CONTRACT-001",
+      "updated_at": "2026-09-12T22:28:34.293610+00:00"
+    },
+    {
+      "head_sha": "57ac89cc059fb2c3155003ba98431603d05f5200",
+      "role": "A4",
+      "run_id": "821654c5f6bc44c1aa6b876d4193db0f",
+      "session_id": "/root/a4_a6_contract_fix",
+      "started_at": "2026-09-12T22:28:34.350839+00:00",
       "status": "RUNNING",
       "task_id": "TARIFF-A6-CROSS-BRANCH-CONTRACT-001",
-      "updated_at": "2026-09-12T22:22:23.828207+00:00"
+      "updated_at": "2026-09-12T22:28:34.350845+00:00"
     }
   ],
   "schema_version": 1,
@@ -706,35 +742,11 @@
         "offline-safety"
       ],
       "risk": "high",
-      "status": "IMPLEMENTED",
-      "tests": {
-        "commands": [
-          {
-            "command": "python -m unittest discover -s tests/agent_orchestration -p test_audit.py -v",
-            "exit_code": 0,
-            "output": "PASS: 19/19 audit adapter tests including explicit contract ref, tamper/stale/missing/secret/incomplete-diff negatives."
-          },
-          {
-            "command": "python -m unittest discover -s tests/agent_orchestration -p test_*.py",
-            "exit_code": 0,
-            "output": "PASS: 65/65 full orchestration tests."
-          },
-          {
-            "command": "python -m compileall -q tools/tariff_agents tests/agent_orchestration; git diff --check base..HEAD",
-            "exit_code": 0,
-            "output": "PASS: compileall and diff check."
-          },
-          {
-            "command": "A0 real cross-branch packet build for product 1c0272a..5bff452 with contract-ref ad4935",
-            "exit_code": 0,
-            "output": "PASS: schema v2 packet e0129b90...; candidate one-file diff complete; contract commit/blob/hash bound. Adapter run returned explicit NOT_CONFIGURED receipt with missing variable names only (rc2 expected)."
-          }
-        ],
-        "head_sha": "57ac89cc059fb2c3155003ba98431603d05f5200"
-      },
-      "updated_at": "2026-09-12T22:22:23.828209+00:00",
+      "status": "IN_PROGRESS",
+      "tests": [],
+      "updated_at": "2026-09-12T22:28:34.350848+00:00",
       "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-a6-cross-branch-contract-001-a5c4916ca6"
     }
   ],
-  "updated_at": "2026-09-12T22:22:23.828426+00:00"
+  "updated_at": "2026-09-12T22:28:34.351025+00:00"
 }
