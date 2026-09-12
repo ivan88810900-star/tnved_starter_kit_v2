@@ -35,10 +35,23 @@
         "evidence": "GitHub run34719511047 job103622657602 failed Run explicit branch scope; exact workflow case routes dynamic rate branch to default exit2. Remedy is full existing integration suite for dynamic agent branches; no test removal/skipping or weaker gate.",
         "validator": "A0"
       }
+    },
+    {
+      "head_sha": "ea24f31eea57422ee78e662d93b518b422b0db03",
+      "id": "A5-AD30-001",
+      "reporter": "A5",
+      "status": "CONFIRMED",
+      "summary": "Documented Commands 1-5 are not fail-fast and can print PASS after failed assertions; Command 1 checks dirty status instead of exact base-to-head scope and Command 6 checks an empty cached diff rather than the committed candidate.",
+      "task_id": "TARIFF-AD30-REVIEW-CANDIDATE-001",
+      "validation": {
+        "at": "2026-09-12T21:54:00.888985+00:00",
+        "evidence": "A0 independently reproduced on exact clean candidate HEAD: the owned-file test failed because status was empty, but the following unconditional printf printed PASS and made the shell return 0; git diff --cached was empty. Finding is confirmed and must be fixed with fail-fast exact base/head checks.",
+        "validator": "A0"
+      }
     }
   ],
   "max_concurrent_subagents": 3,
-  "revision": 69,
+  "revision": 73,
   "runs": [
     {
       "head_sha": null,
@@ -156,9 +169,9 @@
       "run_id": "5986f50dc9aa40398f05a36f7393e069",
       "session_id": "/root/a5_ad30_qa",
       "started_at": "2026-09-12T21:49:22.297980+00:00",
-      "status": "RUNNING",
+      "status": "FINISHED",
       "task_id": "TARIFF-AD30-REVIEW-CANDIDATE-001",
-      "updated_at": "2026-09-12T21:49:22.297995+00:00"
+      "updated_at": "2026-09-12T21:54:00.856035+00:00"
     }
   ],
   "schema_version": 1,
@@ -508,20 +521,11 @@
         "admission"
       ],
       "risk": "high",
-      "status": "IMPLEMENTED",
-      "tests": {
-        "commands": [
-          {
-            "command": "A3 owned-file/evidence binding validation and git diff checks",
-            "exit_code": 0,
-            "output": "PASS: one owned file; 5/5 evidence paths; 33/33 hash/run/artifact bindings; 23/23 product/code/producer/rate literals; 8/8 portal date literals; clean committed worktree. A0 independently replayed base-to-head scope plus 5 paths, 33 bindings and 23 literals."
-          }
-        ],
-        "head_sha": "ea24f31eea57422ee78e662d93b518b422b0db03"
-      },
-      "updated_at": "2026-09-12T21:49:22.297997+00:00",
+      "status": "CHANGES_REQUESTED",
+      "tests": [],
+      "updated_at": "2026-09-12T21:54:00.889002+00:00",
       "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-ad30-review-candidate-001-99f4e3fb32"
     }
   ],
-  "updated_at": "2026-09-12T21:49:22.298155+00:00"
+  "updated_at": "2026-09-12T21:54:00.889147+00:00"
 }
