@@ -143,10 +143,10 @@ for _entry in REGULATORY_SOURCE_REGISTRY:
 # targets or approved baselines. Provenance: eec-ad30-acquisition-plan-20260912.json.
 # The already retained Decision 121 PDF and first navigation page are absent.
 REVIEW_ONLY_SOURCES = {
+    "review_ad30_completion_notice_pdf": "https://docs.eaeunion.org/upload/iblock/75c/h3m62bw3jc8solzxiw14jc7qhmnycmmy/AD30R1_notice_fin.pdf",
+    "review_ad30_decision121_2026_page": "https://docs.eaeunion.org/documents/463/10918/",
     "review_ad30_decision4_2026_page": "https://docs.eaeunion.org/documents/463/10454/",
     "review_ad30_decision4_2026_pdf": "https://docs.eaeunion.org/upload/iblock/798/59qwa6jpe6b76n24wtn0uu9eygvlznkr/Reshenie-Kollegii-_-4-ot-20-yanvarya-2026-g.pdf",
-    "review_ad30_decision121_2026_page": "https://docs.eaeunion.org/documents/463/10918/",
-    "review_ad30_completion_notice_pdf": "https://docs.eaeunion.org/upload/iblock/75c/h3m62bw3jc8solzxiw14jc7qhmnycmmy/AD30R1_notice_fin.pdf",
     "review_ad30_final_report_pdf": "https://remedies.eaeunion.org/dimd/filestorage/AD30R1_report_final.pdf",
     "review_remedy_index_page_2": "https://docs.eaeunion.org/documents/?filter_departament%5B0%5D=14&PAGEN_1=2",
     "review_remedy_index_page_3": "https://docs.eaeunion.org/documents/?filter_departament%5B0%5D=14&PAGEN_1=3",
