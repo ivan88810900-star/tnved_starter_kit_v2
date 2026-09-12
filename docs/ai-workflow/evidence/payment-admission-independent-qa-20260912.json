@@ -3,7 +3,7 @@
   "date": "2026-09-12",
   "role": "A5 independent QA",
   "repository": "ivan88810900-star/tnved_starter_kit_v2",
-  "status": "integration_verification_pending",
+  "status": "admission_history_maintenance_sources_independently_verified",
   "candidate_commit": "68530dce424d5c16ea56fa1344715312c546d108",
   "candidate_tree": "a5e8939c967f98f351b6fe4dc746d94a0bb61987",
   "feature_inputs": {
@@ -18,7 +18,7 @@
     "ntm_historical_cases_expected": 24,
     "source_quarantine_cases": 4,
     "live_http_requests_expected": 43,
-    "execution": "Pending fresh green after exact A2 malformed-payload correction; previous red evidence retained."
+    "execution": "All107 new independent cases pass, source4-case redteam retained; all required CI jobs green."
   },
   "previous_fresh_proof": {
     "source_qa_commit": "1d2619fb37cd822a1b13288d04bf1c5fb02365a3",
@@ -36,9 +36,11 @@
     "full_legal_coverage_claimed": false
   },
   "limitations": [
-    "This is admission-boundary QA, not a legal rate or NTM coverage audit.",
-    "A1 maintenance follow-up and A3 acquisition-inspection follow-up are outside this candidate.",
-    "Old executor-local counts are not proof for reconstructed trees."
+    "This verifies admission, historical advisory boundaries, legacy maintenance and source evidence handling; it does not establish full legal rate/NTM coverage.",
+    "A6 payment-engine reconciliation is a separate next QA package; this verified feature tree still has the pre-A6 engine.",
+    "Current-source acquisition retained2 originals and7 quarantined bodies; this is not complete original or legal coverage.",
+    "Historical complete payment quotes, exact reviewed rate releases and durable legal retention remain outside this technical approval.",
+    "One focused skip is the pre-existing real legacy catalog smoke on an empty disposable database."
   ],
   "first_reconstructed_run": {
     "commit": "bbe96d8ae94bf29d7493b3a525d8e58fef7fe3e1",
@@ -103,5 +105,41 @@
     "archive_sha256": "d728387c458413b8bdd992a0ed330a8f45e7760ccacc77fc948958d44de3f6a7",
     "legal_review_verified": false,
     "decision12_links": "discovery-only anchors7601/7640 in quarantined page3; document contents not thereby established"
+  },
+  "final_green": {
+    "commit": "7bb5dca7e2cdcbc04a5ae16ec810a893f1e9d907",
+    "focused_run": 34716499930,
+    "focused_job": 103614580351,
+    "focused_passed": 1780,
+    "focused_skipped": 1,
+    "focused_subtests_passed": 85,
+    "normal_ci_run": 34716499953,
+    "normal_ci_status": "success",
+    "full_backend_job": 103614666809,
+    "frontend_tests": 50,
+    "typescript": "success",
+    "production_build": "success",
+    "isolated_staging_smoke": "success",
+    "scheduled_workflow_contracts": "success",
+    "independent_new_cases_passed": 107,
+    "live_uvicorn_http_requests_passed": 43,
+    "full_backend_summary": "5113 passed, 2 skipped, 2 warnings, 85 subtests passed in 206.84s (0:03:26)"
+  },
+  "a6": {
+    "status": "independent_verification_pending",
+    "author_commit": "15d5dfc0ec87a37b222113f71fd255a2de65a641",
+    "author_red": {
+      "commit": "d04e964e4158925d043b37157c1b50087b84d39a",
+      "run": 34716429404,
+      "failed": 16,
+      "passed": 1257
+    },
+    "independent_cases": 20,
+    "scope": [
+      "unreviewed multiplier",
+      "cross-store AD overlap remains unknown and final quote unavailable",
+      "displayed cent reconciliation"
+    ],
+    "provisional_and_historical_contracts_preserved": true
   }
 }

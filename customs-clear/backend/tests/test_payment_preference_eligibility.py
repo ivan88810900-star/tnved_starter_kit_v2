@@ -101,14 +101,17 @@ def test_caller_claims_do_not_bypass_review(payment_data, claims):
     assert result["breakdown"]["duty"] == 10_000
 
 
-@pytest.mark.parametrize("coefficient, expected_duty, applied", [(1.0, 10_000, False), (2.0, 20_000, True)])
-def test_mfn_and_increased_coefficients_are_unchanged(payment_data, coefficient, expected_duty, applied):
+@pytest.mark.parametrize("coefficient, expected_status", [(1.0, "OK"), (2.0, "REVIEW_REQUIRED")])
+def test_neutral_coefficient_preserves_arithmetic_and_upward_requires_review(payment_data, coefficient, expected_status):
     payment_data.coefficient = coefficient
     result = engine.compute_payments(_payload())
-    assert result["status"] == "OK"
-    assert result["amounts_provisional"] is False
-    assert result["breakdown"]["duty"] == expected_duty
-    assert result["tariff_preference"]["applied"] is applied
+    assert result["status"] == expected_status
+    assert result["amounts_provisional"] is (coefficient != 1.0)
+    assert result["breakdown"]["duty"] == 10_000
+    assert result["tariff_preference"]["applied"] is False
+    if coefficient != 1.0:
+        assert result["tariff_preference"]["candidate_duty_coefficient"] == coefficient
+        assert result["tariff_preference"]["eligibility_verified"] is False
 
 
 @pytest.mark.parametrize("manual_rate", [0.0, 5.0, 17.0])
