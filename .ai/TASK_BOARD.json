@@ -74,7 +74,7 @@
     }
   ],
   "max_concurrent_subagents": 3,
-  "revision": 89,
+  "revision": 92,
   "runs": [
     {
       "head_sha": null,
@@ -235,6 +235,16 @@
       "status": "FINISHED",
       "task_id": "TARIFF-AD30-REVIEW-CANDIDATE-001",
       "updated_at": "2026-09-12T22:09:10.259481+00:00"
+    },
+    {
+      "head_sha": "5bff4523ec20f7a29fe6f7b997ffccfc479c9bff",
+      "role": "A5",
+      "run_id": "3bd0344331a0471ab4f642f9361d1f88",
+      "session_id": "/root/a5_ad30_qa",
+      "started_at": "2026-09-12T22:11:39.681635+00:00",
+      "status": "RUNNING",
+      "task_id": "TARIFF-AD30-REVIEW-CANDIDATE-001",
+      "updated_at": "2026-09-12T22:11:39.681648+00:00"
     }
   ],
   "schema_version": 1,
@@ -570,32 +580,20 @@
       "goal": "Assemble a bounded source-fact review candidate for the retained Decision 12 -> 4 -> 121 chain, binding exact product text, producer rows, printed codes, dates and provenance while explicitly preserving incomplete amendment coverage and making no legal applicability, rate admission, promotion, production or enforcement claim.",
       "id": "TARIFF-AD30-REVIEW-CANDIDATE-001",
       "owner": "A3",
-      "qa": {
-        "commands": [
-          {
-            "command": "A5 exact Git scope, HEAD/tree, merge-base and one-owned-file diff verification",
-            "exit_code": 0,
-            "output": "PASS: clean exact ca664142/e008c16; base and merge-base 1c0272a; sole changed file AD30_CHAIN_REVIEW_CANDIDATE.md; diff-check clean."
-          },
-          {
-            "command": "A5 embedded positive replay and fail-closed cardinality/missing-jq negative controls",
-            "exit_code": 0,
-            "output": "PASS: positive 5/5, 33/33, 23/23, 8/8; cardinality negative rc1 and missing-jq negative rc127, both zero PASS lines."
-          },
-          {
-            "command": "A5 independent evidence reconstruction and substantive source-boundary review",
-            "exit_code": 0,
-            "output": "PASS: independent pointers 8/8, bindings 33/33, source literals 23/23, dates 8/8; 16/16 normalized boundary assertions; no material finding. No binary/PDF replay claimed."
-          }
-        ],
-        "head_sha": "ca664142de9c7c0568ef03bd854fa60c74025fee",
-        "reviewer_session_id": "/root/a5_ad30_qa",
-        "status": "PASSED"
-      },
+      "qa": null,
       "refs": {
         "base_sha": "1c0272a34cbcbb3b99d6f32c86d86949bc0adc06",
-        "head_sha": "ca664142de9c7c0568ef03bd854fa60c74025fee",
-        "pr": null
+        "head_sha": "5bff4523ec20f7a29fe6f7b997ffccfc479c9bff",
+        "pr": null,
+        "publication_mapping": {
+          "identical_trees_verified": true,
+          "local_base_sha": "1c0272a34cbcbb3b99d6f32c86d86949bc0adc06",
+          "local_head_sha": "ca664142de9c7c0568ef03bd854fa60c74025fee",
+          "local_tree_sha": "e008c16cc6e62c943935aa373bf7795f274d7747",
+          "published_base_sha": "1c0272a34cbcbb3b99d6f32c86d86949bc0adc06",
+          "published_head_sha": "5bff4523ec20f7a29fe6f7b997ffccfc479c9bff",
+          "published_tree_sha": "e008c16cc6e62c943935aa373bf7795f274d7747"
+        }
       },
       "required_checks": [
         "Validate and build local staging images",
@@ -605,25 +603,25 @@
         "admission"
       ],
       "risk": "high",
-      "status": "QA_PASSED",
+      "status": "IMPLEMENTED",
       "tests": {
         "commands": [
           {
-            "command": "Replay embedded fail-closed exact base-to-head validation with exact cardinality assertions",
+            "command": "Replay embedded fail-closed exact base-to-published-head validation with exact cardinality assertions",
             "exit_code": 0,
-            "output": "PASS: exact one-file clean scope; paths 5/5; bindings 33/33; source literals 23/23; dates 8/8; committed diff clean."
+            "output": "PASS: published full tree e008c16 exactly equals locally executed tree; exact one-file scope; 5/5 paths, 33/33 bindings, 23/23 source literals, 8/8 dates; diff clean."
           },
           {
-            "command": "Cardinality assertion and missing-jq producer negative controls",
+            "command": "Cardinality assertion and missing-jq producer negative controls on identical candidate tree",
             "exit_code": 0,
-            "output": "PASS: assertion mismatch exited 1 with zero PASS output; missing jq producer exited 127 with zero PASS output. A0 independently reproduced missing-jq rc127 and no PASS output."
+            "output": "PASS: locally executed identical tree produced rc1 and rc127 respectively with zero PASS lines."
           }
         ],
-        "head_sha": "ca664142de9c7c0568ef03bd854fa60c74025fee"
+        "head_sha": "5bff4523ec20f7a29fe6f7b997ffccfc479c9bff"
       },
-      "updated_at": "2026-09-12T22:09:10.279809+00:00",
+      "updated_at": "2026-09-12T22:11:39.681651+00:00",
       "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-ad30-review-candidate-001-99f4e3fb32"
     }
   ],
-  "updated_at": "2026-09-12T22:09:10.280021+00:00"
+  "updated_at": "2026-09-12T22:11:39.681807+00:00"
 }
