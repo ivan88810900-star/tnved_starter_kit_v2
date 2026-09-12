@@ -38,7 +38,7 @@
     }
   ],
   "max_concurrent_subagents": 3,
-  "revision": 65,
+  "revision": 66,
   "runs": [
     {
       "head_sha": null,
@@ -139,6 +139,16 @@
       "status": "FINISHED",
       "task_id": "TARIFF-ADMISSION-RECHECK-001",
       "updated_at": "2026-09-12T21:25:09.118182+00:00"
+    },
+    {
+      "head_sha": null,
+      "role": "A3",
+      "run_id": "79979a63b86447fb8c61f519e9beaee0",
+      "session_id": "/root/a3_ad30_review",
+      "started_at": "2026-09-12T21:39:29.265101+00:00",
+      "status": "RUNNING",
+      "task_id": "TARIFF-AD30-REVIEW-CANDIDATE-001",
+      "updated_at": "2026-09-12T21:39:29.265114+00:00"
     }
   ],
   "schema_version": 1,
@@ -459,7 +469,9 @@
       "worktree": "/workspace/scratch/cd6734a40504/tariff-agent-worktrees/tariff-admission-recheck-001-9231ffbdb5"
     },
     {
-      "author_sessions": [],
+      "author_sessions": [
+        "/root/a3_ad30_review"
+      ],
       "branch": "agent/sources-tariff-ad30-review-candidate-001-99f4e3fb32",
       "ci": null,
       "dependencies": [
@@ -486,11 +498,11 @@
         "admission"
       ],
       "risk": "high",
-      "status": "ALLOCATED",
+      "status": "IN_PROGRESS",
       "tests": [],
-      "updated_at": "2026-09-12T21:36:52.451196+00:00",
+      "updated_at": "2026-09-12T21:39:29.265116+00:00",
       "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-ad30-review-candidate-001-99f4e3fb32"
     }
   ],
-  "updated_at": "2026-09-12T21:36:52.451544+00:00"
+  "updated_at": "2026-09-12T21:39:29.265298+00:00"
 }
