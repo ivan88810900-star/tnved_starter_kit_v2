@@ -94,7 +94,12 @@
       "head_sha": "57ac89cc059fb2c3155003ba98431603d05f5200",
       "id": "A5-A6-CONTRACT-001",
       "reporter": "A5",
-      "status": "CONFIRMED",
+      "resolution": {
+        "evidence": "A0 confirmed contract_ref is scanned before Git resolution and whole serialized packet is scanned before hash/send; secret-shaped and environment-known credential ref regressions block before network.",
+        "head_sha": "c0bccfd03def59e5f20826c47d513482618cab0b",
+        "validator": "A0"
+      },
+      "status": "RESOLVED",
       "summary": "Explicit contract_ref/requested_ref metadata bypasses credential/private-data scanning and can be serialized into the outbound A6 packet.",
       "task_id": "TARIFF-A6-CROSS-BRANCH-CONTRACT-001",
       "validation": {
@@ -107,7 +112,12 @@
       "head_sha": "57ac89cc059fb2c3155003ba98431603d05f5200",
       "id": "A5-A6-CONTRACT-002",
       "reporter": "A5",
-      "status": "CONFIRMED",
+      "resolution": {
+        "evidence": "A0 confirmed line bound now preserves max candidate base/head and explicit contract content; deleted base line accepted and out-of-range rejected.",
+        "head_sha": "c0bccfd03def59e5f20826c47d513482618cab0b",
+        "validator": "A0"
+      },
+      "status": "RESOLVED",
       "summary": "Candidate-head contract finding line bounds overwrite max(base,head), rejecting findings about deleted base contract lines.",
       "task_id": "TARIFF-A6-CROSS-BRANCH-CONTRACT-001",
       "validation": {
@@ -118,7 +128,7 @@
     }
   ],
   "max_concurrent_subagents": 3,
-  "revision": 112,
+  "revision": 117,
   "runs": [
     {
       "head_sha": null,
@@ -316,9 +326,19 @@
       "run_id": "821654c5f6bc44c1aa6b876d4193db0f",
       "session_id": "/root/a4_a6_contract_fix",
       "started_at": "2026-09-12T22:28:34.350839+00:00",
+      "status": "FINISHED",
+      "task_id": "TARIFF-A6-CROSS-BRANCH-CONTRACT-001",
+      "updated_at": "2026-09-12T22:32:20.823330+00:00"
+    },
+    {
+      "head_sha": "c0bccfd03def59e5f20826c47d513482618cab0b",
+      "role": "A5",
+      "run_id": "a589f5d878e3453fb71b86540e692083",
+      "session_id": "/root/a5_ad30_qa",
+      "started_at": "2026-09-12T22:32:34.299387+00:00",
       "status": "RUNNING",
       "task_id": "TARIFF-A6-CROSS-BRANCH-CONTRACT-001",
-      "updated_at": "2026-09-12T22:28:34.350845+00:00"
+      "updated_at": "2026-09-12T22:32:34.299398+00:00"
     }
   ],
   "schema_version": 1,
@@ -735,18 +755,42 @@
       "qa": null,
       "refs": {
         "base_sha": "ad4935e318d947276178e2f269d4ffe1051ea6cb",
-        "head_sha": "57ac89cc059fb2c3155003ba98431603d05f5200",
+        "head_sha": "c0bccfd03def59e5f20826c47d513482618cab0b",
         "pr": null
       },
       "required_checks": [
         "offline-safety"
       ],
       "risk": "high",
-      "status": "IN_PROGRESS",
-      "tests": [],
-      "updated_at": "2026-09-12T22:28:34.350848+00:00",
+      "status": "IMPLEMENTED",
+      "tests": {
+        "commands": [
+          {
+            "command": "python -m unittest discover -s tests/agent_orchestration -p test_audit.py -v",
+            "exit_code": 0,
+            "output": "PASS: 23/23 including secret-shaped/known credential refs, pre-network block, candidate-head deleted-line bounds, explicit-ref bounds and persisted-v1 fail-closed."
+          },
+          {
+            "command": "python -m tools.tariff_agents.verify",
+            "exit_code": 0,
+            "output": "PASS: 69/69 full orchestration tests."
+          },
+          {
+            "command": "python -m compileall -q tools/tariff_agents tests/agent_orchestration; git diff --check; clean owned scope",
+            "exit_code": 0,
+            "output": "PASS: compile/diff/clean; exactly audit.py and test_audit.py."
+          },
+          {
+            "command": "A0 exact product cross-branch packet build/run using immutable contract ref",
+            "exit_code": 0,
+            "output": "PASS: packet e0129b90 exact one-file candidate diff and contract commit/blob/hash; run returned UNAVAILABLE only for missing named configuration, rc2 expected, no secret values exposed."
+          }
+        ],
+        "head_sha": "c0bccfd03def59e5f20826c47d513482618cab0b"
+      },
+      "updated_at": "2026-09-12T22:32:34.299401+00:00",
       "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-a6-cross-branch-contract-001-a5c4916ca6"
     }
   ],
-  "updated_at": "2026-09-12T22:28:34.351025+00:00"
+  "updated_at": "2026-09-12T22:32:34.299596+00:00"
 }

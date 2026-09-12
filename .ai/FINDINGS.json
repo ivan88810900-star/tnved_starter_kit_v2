@@ -1,5 +1,5 @@
 {
-  "board_revision": 112,
+  "board_revision": 117,
   "findings": [
     {
       "head_sha": "161a9258d174e93266353ae1fd2cb0b3e4657679",
@@ -95,7 +95,12 @@
       "head_sha": "57ac89cc059fb2c3155003ba98431603d05f5200",
       "id": "A5-A6-CONTRACT-001",
       "reporter": "A5",
-      "status": "CONFIRMED",
+      "resolution": {
+        "evidence": "A0 confirmed contract_ref is scanned before Git resolution and whole serialized packet is scanned before hash/send; secret-shaped and environment-known credential ref regressions block before network.",
+        "head_sha": "c0bccfd03def59e5f20826c47d513482618cab0b",
+        "validator": "A0"
+      },
+      "status": "RESOLVED",
       "summary": "Explicit contract_ref/requested_ref metadata bypasses credential/private-data scanning and can be serialized into the outbound A6 packet.",
       "task_id": "TARIFF-A6-CROSS-BRANCH-CONTRACT-001",
       "validation": {
@@ -108,7 +113,12 @@
       "head_sha": "57ac89cc059fb2c3155003ba98431603d05f5200",
       "id": "A5-A6-CONTRACT-002",
       "reporter": "A5",
-      "status": "CONFIRMED",
+      "resolution": {
+        "evidence": "A0 confirmed line bound now preserves max candidate base/head and explicit contract content; deleted base line accepted and out-of-range rejected.",
+        "head_sha": "c0bccfd03def59e5f20826c47d513482618cab0b",
+        "validator": "A0"
+      },
+      "status": "RESOLVED",
       "summary": "Candidate-head contract finding line bounds overwrite max(base,head), rejecting findings about deleted base contract lines.",
       "task_id": "TARIFF-A6-CROSS-BRANCH-CONTRACT-001",
       "validation": {
