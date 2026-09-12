@@ -75,10 +75,10 @@ SPECIAL_DUTIES_COUNTRY_WARNING = (
 )
 
 TARIFF_PREFERENCE_REVIEW_REASON = (
-    "В прежнем справочнике стран указано снижение пошлины, но право на него "
-    "для этого товара и даты не подтверждено. Страна происхождения сама по себе "
-    "не подтверждает преференцию. Предварительные суммы рассчитаны без снижения; "
-    "проверьте действующий режим, товар, происхождение и условия поставки."
+    "В прежнем справочнике стран указан коэффициент пошлины, но его применимость "
+    "для этого товара и даты не подтверждена. Страна происхождения сама по себе "
+    "не подтверждает изменение ставки. Предварительные суммы рассчитаны без "
+    "коэффициента; проверьте действующий режим, товар, происхождение и условия поставки."
 )
 
 DUTY_SOURCE_MISSING_REASON = (
@@ -686,14 +686,21 @@ def compute_payments(payload: dict[str, Any]) -> dict[str, Any]:
     preference_review_required = False
     user_duty_rate = payload.get("duty_rate")
     if tariff_pref and user_duty_rate is None and geo_meta.get("duty_override_rate") is None:
-        coeff = tariff_pref.duty_coefficient
-        if coeff < 1.0:
+        raw_coeff = tariff_pref.duty_coefficient
+        try:
+            coeff = None if isinstance(raw_coeff, bool) else float(raw_coeff)
+        except (TypeError, ValueError, OverflowError):
+            coeff = None
+        if coeff is not None and (not isfinite(coeff) or coeff < 0):
+            coeff = None
+        if coeff is None or coeff != 1.0:
             preference_review_required = True
             tariff_pref_meta = {
                 "applied": False,
                 "status": "needs_review",
                 "preference_type": tariff_pref.preference_type,
                 "candidate_duty_coefficient": coeff,
+                **({"candidate_duty_coefficient_text": str(raw_coeff)[:128]} if coeff is None else {}),
                 "duty_coefficient": 1.0,
                 "eligibility_verified": False,
                 "source_kind": "legacy_country_tariff_preferences",
@@ -706,18 +713,6 @@ def compute_payments(payload: dict[str, Any]) -> dict[str, Any]:
                     "origin_evidence",
                     "shipment_conditions_and_exceptions",
                 ],
-            }
-        elif coeff > 1.0:
-            duty = duty * coeff
-            if ad_valorem_amount is not None:
-                ad_valorem_amount = ad_valorem_amount * coeff
-            if specific_amount_rub is not None:
-                specific_amount_rub = specific_amount_rub * coeff
-            tariff_pref_meta = {
-                "applied": True,
-                "preference_type": tariff_pref.preference_type,
-                "duty_coefficient": coeff,
-                "legal_ref": tariff_pref.legal_ref or "",
             }
 
     # Excise
