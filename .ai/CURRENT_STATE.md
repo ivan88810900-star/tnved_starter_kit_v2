@@ -1,21 +1,27 @@
 # Autonomous orchestration status — 2026-09-12
 
-Infrastructure branch: `agent/orchestration-v1`, based on main `9712c7b1380af7457fb6c89ef7710d8cda0e968b`.
-This section is the orchestration status; historical product notes follow unchanged.
-For product work, fetch current PR #187 and its .ai/source-ref decisions first.
+Infrastructure: PR #190, `agent/orchestration-v1` -> `main`.
+Verified code HEAD: `a6ba8474d8bbb8d299e9c88a003ea20218f42d4f`.
+Persistent runtime authority: `agent/orchestration-state` (state commits separate
+from code/QA/CI candidate SHAs). Read this branch's board on every wake-up.
 
-- Discovery: PR #187 draft `22a7df5590a7442d943d89af285feb1228e80938` ->
-  canonical `a5a811e618ffa001b39cb491bbbf7a9ceb93f9a7`; CI 34714625756 success.
-- PR #189 draft `1be6da4d38694a299280b26a596b8f346199e2bf`, conflicting old pilot;
-  its CI success does not establish autonomous multi-agent capability.
-- main has no workflows at discovery; GitHub reports protected=false. No
-  repository permission/secret/branch protection setting was changed.
-- Native Work subagents available. OpenAI/Anthropic API credentials and Codex
-  exec-server absent from this session; no claim of live API or A6 verification.
-- Product flags not touched. Accepted NTM full advisory default ON is preserved;
-  enforcement/production activation is not authorized. Deployed values uninspected.
-- Current task board and evidence: TASK_BOARD.json, RUN_HISTORY.json, FINDINGS.json,
-  AGENT_OWNERSHIP.json and orchestration/. No chat-memory dependence.
+- 60 offline tests passed including independent A5 cases; CI 34717945276 and
+  34717942948 succeeded at the exact verified code HEAD.
+- Real native Work children `/root/smoke_rates` and `/root/smoke_sources` executed
+  isolated branches/worktrees. Independent `/root/a5_independent_qa` accepted both.
+- Both smoke branches passed separate GitHub CI, then integrated on the agent
+  infrastructure branch. No protected/main merge or production action occurred.
+- Claude packet built/validated, but A6 is NOT_CONFIGURED: no Anthropic key/model.
+  No request sent or external audit claimed. Native Work is the active runtime;
+  optional Agents API adapter is SAFE_BOOTSTRAP_ONLY and not live verified.
+- PR #187 remains on observed22a7df55, PR #189 is unchanged/conflicting old pilot.
+  Next bounded task: TARIFF-ADMISSION-RECHECK-001, read-only current payment review.
+- GitHub reported main protected=false; no permissions/secrets were changed.
+  Controller and coordinator guards are not external server branch protection.
+- Existing accepted NTM advisory default ON preserved; enforcement/production flags
+  not activated. Deployed values uninspected. Product source decisions live at the
+  current product ref, not the historical main notes below.
+
 
 ---
 

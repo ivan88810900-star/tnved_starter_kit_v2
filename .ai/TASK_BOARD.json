@@ -1,7 +1,7 @@
 {
   "findings": [],
   "max_concurrent_subagents": 3,
-  "revision": 24,
+  "revision": 27,
   "runs": [
     {
       "head_sha": null,
@@ -90,6 +90,10 @@
         ".ai/orchestration/smoke/rates.json"
       ],
       "goal": "Write a nonfinancial synthetic isolation receipt proving real A1 worktree execution; no product code.",
+      "handoff": {
+        "at": "2026-09-12T20:45:02.874188+00:00",
+        "evidence": "A0 checked same owned-file content in integration; independent A5 and integration CI 34717945276 /34717942948 success at exact a6ba8474"
+      },
       "id": "SMOKE-RATES-001",
       "owner": "A1",
       "qa": {
@@ -107,6 +111,7 @@
       "refs": {
         "base_sha": "1526f494523dabb8c6b979f1b747c171beeb6915",
         "head_sha": "ca7285cc6bc241ec8538e1748a5b2a39636a9adb",
+        "integration_sha": "a6ba8474d8bbb8d299e9c88a003ea20218f42d4f",
         "pr": null,
         "publication_mapping": {
           "identical_trees_verified": true,
@@ -120,7 +125,7 @@
         "offline-safety"
       ],
       "risk": "low",
-      "status": "READY_FOR_HUMAN_APPROVAL",
+      "status": "INTEGRATED",
       "tests": {
         "commands": [
           {
@@ -163,6 +168,10 @@
         ".ai/orchestration/smoke/sources.json"
       ],
       "goal": "Write a synthetic source-handling receipt proving real A3 worktree execution; no legal claim.",
+      "handoff": {
+        "at": "2026-09-12T20:45:02.899886+00:00",
+        "evidence": "A0 checked same owned-file content in integration; independent A5 and integration CI 34717945276 /34717942948 success at exact a6ba8474"
+      },
       "id": "SMOKE-SOURCES-001",
       "owner": "A3",
       "qa": {
@@ -180,6 +189,7 @@
       "refs": {
         "base_sha": "1526f494523dabb8c6b979f1b747c171beeb6915",
         "head_sha": "b80e8947304215f50b40387591f7a7e6d11a2811",
+        "integration_sha": "a6ba8474d8bbb8d299e9c88a003ea20218f42d4f",
         "pr": null,
         "publication_mapping": {
           "identical_trees_verified": true,
@@ -193,7 +203,7 @@
         "offline-safety"
       ],
       "risk": "low",
-      "status": "READY_FOR_HUMAN_APPROVAL",
+      "status": "INTEGRATED",
       "tests": {
         "commands": [
           {
@@ -206,7 +216,34 @@
       },
       "updated_at": "2026-09-12T20:42:44.145242+00:00",
       "worktree": "/workspace/scratch/cd6734a40504/tariff-agent-worktrees/smoke-sources-001-6fd9065039"
+    },
+    {
+      "author_sessions": [],
+      "branch": null,
+      "ci": null,
+      "dependencies": [],
+      "external_audit": null,
+      "files": [
+        "docs/ai-workflow/PAYMENT_ADMISSION_RECHECK_20260912.md"
+      ],
+      "goal": "Read-only recheck of current PR187 payment admission and provisional-payment audit findings against current code; produce evidence and scoped next fixes, no product/DB/flag writes.",
+      "id": "TARIFF-ADMISSION-RECHECK-001",
+      "owner": "A1",
+      "qa": null,
+      "refs": {
+        "base_sha": null,
+        "head_sha": null,
+        "pr": null
+      },
+      "required_checks": [
+        "offline-safety"
+      ],
+      "risk": "low",
+      "status": "NEW",
+      "tests": [],
+      "updated_at": "2026-09-12T20:45:02.906672+00:00",
+      "worktree": null
     }
   ],
-  "updated_at": "2026-09-12T20:42:44.145554+00:00"
+  "updated_at": "2026-09-12T20:45:02.906771+00:00"
 }

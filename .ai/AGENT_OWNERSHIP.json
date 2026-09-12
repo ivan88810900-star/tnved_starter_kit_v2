@@ -1,18 +1,5 @@
 {
-  "board_revision": 24,
-  "files": {
-    ".ai/orchestration/smoke/rates.json": {
-      "branch": "agent/rates-smoke-rates-001-00e2649498",
-      "owner": "A1",
-      "task_id": "SMOKE-RATES-001",
-      "worktree": "/workspace/scratch/cd6734a40504/tariff-agent-worktrees/smoke-rates-001-00e2649498"
-    },
-    ".ai/orchestration/smoke/sources.json": {
-      "branch": "agent/sources-smoke-sources-001-6fd9065039",
-      "owner": "A3",
-      "task_id": "SMOKE-SOURCES-001",
-      "worktree": "/workspace/scratch/cd6734a40504/tariff-agent-worktrees/smoke-sources-001-6fd9065039"
-    }
-  },
+  "board_revision": 27,
+  "files": {},
   "schema_version": 1
 }
