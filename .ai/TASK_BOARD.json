@@ -38,7 +38,7 @@
     }
   ],
   "max_concurrent_subagents": 3,
-  "revision": 62,
+  "revision": 65,
   "runs": [
     {
       "head_sha": null,
@@ -460,7 +460,7 @@
     },
     {
       "author_sessions": [],
-      "branch": null,
+      "branch": "agent/sources-tariff-ad30-review-candidate-001-99f4e3fb32",
       "ci": null,
       "dependencies": [
         "TARIFF-ADMISSION-RECHECK-001"
@@ -469,28 +469,28 @@
       "files": [
         "docs/ai-workflow/AD30_CHAIN_REVIEW_CANDIDATE.md"
       ],
-      "goal": "Prepare a non-admitted formal source-fact review candidate for retained Decision 12 -> 4 -> 121 using current official-source receipts and existing captures; exact product/producer/code/date evidence and missing amendment coverage. A3 records facts only; A1/A2 independently assess applicability and A5 reviews provenance. No numeric rule admission, production write, flags or repeated acquisition without a demonstrated gap. Follow latest CURRENT_PROJECT_FOCUS; recheck whether another session already completed this before allocation.",
+      "goal": "Assemble a bounded source-fact review candidate for the retained Decision 12 -> 4 -> 121 chain, binding exact product text, producer rows, printed codes, dates and provenance while explicitly preserving incomplete amendment coverage and making no legal applicability, rate admission, promotion, production or enforcement claim.",
       "id": "TARIFF-AD30-REVIEW-CANDIDATE-001",
       "owner": "A3",
       "qa": null,
       "refs": {
-        "base_sha": null,
+        "base_sha": "1c0272a34cbcbb3b99d6f32c86d86949bc0adc06",
         "head_sha": null,
         "pr": null
       },
       "required_checks": [
+        "Validate and build local staging images",
         "Scheduled workflow and locked environment",
         "Backend NTM safety suite",
         "Frontend tests, types and build",
-        "Validate and build local staging images",
         "admission"
       ],
       "risk": "high",
-      "status": "NEW",
+      "status": "ALLOCATED",
       "tests": [],
-      "updated_at": "2026-09-12T21:11:27.172023+00:00",
-      "worktree": null
+      "updated_at": "2026-09-12T21:36:52.451196+00:00",
+      "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-ad30-review-candidate-001-99f4e3fb32"
     }
   ],
-  "updated_at": "2026-09-12T21:28:43.669589+00:00"
+  "updated_at": "2026-09-12T21:36:52.451544+00:00"
 }

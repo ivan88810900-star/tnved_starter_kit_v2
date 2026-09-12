@@ -1,11 +1,17 @@
 {
-  "board_revision": 62,
+  "board_revision": 65,
   "files": {
     ".github/workflows/admission-agent-qa.yml": {
       "branch": "agent/rates-tariff-admission-recheck-001-9231ffbdb5",
       "owner": "A1",
       "task_id": "TARIFF-ADMISSION-RECHECK-001",
       "worktree": "/workspace/scratch/cd6734a40504/tariff-agent-worktrees/tariff-admission-recheck-001-9231ffbdb5"
+    },
+    "docs/ai-workflow/AD30_CHAIN_REVIEW_CANDIDATE.md": {
+      "branch": "agent/sources-tariff-ad30-review-candidate-001-99f4e3fb32",
+      "owner": "A3",
+      "task_id": "TARIFF-AD30-REVIEW-CANDIDATE-001",
+      "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-ad30-review-candidate-001-99f4e3fb32"
     },
     "docs/ai-workflow/PAYMENT_ADMISSION_RECHECK_20260912.md": {
       "branch": "agent/rates-tariff-admission-recheck-001-9231ffbdb5",
