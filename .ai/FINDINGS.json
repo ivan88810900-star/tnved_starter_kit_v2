@@ -1,5 +1,5 @@
 {
-  "board_revision": 92,
+  "board_revision": 101,
   "findings": [
     {
       "head_sha": "161a9258d174e93266353ae1fd2cb0b3e4657679",
@@ -70,6 +70,19 @@
       "validation": {
         "at": "2026-09-12T22:01:34.795543+00:00",
         "evidence": "A0 independently replaced jq with a nonexistent command in the embedded replay. It returned rc0 and emitted six PASS lines, including 0/0 bindings and 0/0 source literals. Finding confirmed.",
+        "validator": "A0"
+      }
+    },
+    {
+      "head_sha": "ad4935e318d947276178e2f269d4ffe1051ea6cb",
+      "id": "A0-A6-CONTRACT-REF-001",
+      "reporter": "A0",
+      "status": "CONFIRMED",
+      "summary": "Checked A6 packet builder requires .ai/orchestration/CONTRACT.md in candidate commits; product base 1c0272a and published AD30 head 5bff452 contain no orchestration contract, so audit build returns BLOCKED before configuration availability can be verified.",
+      "task_id": "TARIFF-A6-CROSS-BRANCH-CONTRACT-001",
+      "validation": {
+        "at": "2026-09-12T22:16:11.268262+00:00",
+        "evidence": "A0 executed checked adapter build against exact 1c0272a..5bff452 with the complete changed report plus required contract path; adapter returned BLOCKED: Audit file is not tracked in either commit. git ls-tree confirms the contract is absent in both product commits.",
         "validator": "A0"
       }
     }

@@ -71,10 +71,23 @@
         "evidence": "A0 independently replaced jq with a nonexistent command in the embedded replay. It returned rc0 and emitted six PASS lines, including 0/0 bindings and 0/0 source literals. Finding confirmed.",
         "validator": "A0"
       }
+    },
+    {
+      "head_sha": "ad4935e318d947276178e2f269d4ffe1051ea6cb",
+      "id": "A0-A6-CONTRACT-REF-001",
+      "reporter": "A0",
+      "status": "CONFIRMED",
+      "summary": "Checked A6 packet builder requires .ai/orchestration/CONTRACT.md in candidate commits; product base 1c0272a and published AD30 head 5bff452 contain no orchestration contract, so audit build returns BLOCKED before configuration availability can be verified.",
+      "task_id": "TARIFF-A6-CROSS-BRANCH-CONTRACT-001",
+      "validation": {
+        "at": "2026-09-12T22:16:11.268262+00:00",
+        "evidence": "A0 executed checked adapter build against exact 1c0272a..5bff452 with the complete changed report plus required contract path; adapter returned BLOCKED: Audit file is not tracked in either commit. git ls-tree confirms the contract is absent in both product commits.",
+        "validator": "A0"
+      }
     }
   ],
   "max_concurrent_subagents": 3,
-  "revision": 92,
+  "revision": 101,
   "runs": [
     {
       "head_sha": null,
@@ -242,9 +255,19 @@
       "run_id": "3bd0344331a0471ab4f642f9361d1f88",
       "session_id": "/root/a5_ad30_qa",
       "started_at": "2026-09-12T22:11:39.681635+00:00",
-      "status": "RUNNING",
+      "status": "FINISHED",
       "task_id": "TARIFF-AD30-REVIEW-CANDIDATE-001",
-      "updated_at": "2026-09-12T22:11:39.681648+00:00"
+      "updated_at": "2026-09-12T22:15:11.618950+00:00"
+    },
+    {
+      "head_sha": null,
+      "role": "A4",
+      "run_id": "98a8a564d54d420d90b850eb29a1d902",
+      "session_id": "/root/a4_a6_contract_fix",
+      "started_at": "2026-09-12T22:16:11.275575+00:00",
+      "status": "RUNNING",
+      "task_id": "TARIFF-A6-CROSS-BRANCH-CONTRACT-001",
+      "updated_at": "2026-09-12T22:16:11.275583+00:00"
     }
   ],
   "schema_version": 1,
@@ -580,11 +603,32 @@
       "goal": "Assemble a bounded source-fact review candidate for the retained Decision 12 -> 4 -> 121 chain, binding exact product text, producer rows, printed codes, dates and provenance while explicitly preserving incomplete amendment coverage and making no legal applicability, rate admission, promotion, production or enforcement claim.",
       "id": "TARIFF-AD30-REVIEW-CANDIDATE-001",
       "owner": "A3",
-      "qa": null,
+      "qa": {
+        "commands": [
+          {
+            "command": "Fresh A5 exact published Git/GitHub ref, HEAD/tree, parent, merge-base and one-file scope verification",
+            "exit_code": 0,
+            "output": "PASS: remote and local 5bff4523; tree e008c16; parent/base 1c0272a; GitHub compare ahead 1/behind 0; sole added owned file; clean diff."
+          },
+          {
+            "command": "Fresh A5 embedded positive and cardinality/missing-jq fail-closed negative controls",
+            "exit_code": 0,
+            "output": "PASS: positive 5/5, 33/33, 23/23, 8/8; cardinality rc1 and missing-jq rc127, both zero PASS lines."
+          },
+          {
+            "command": "Fresh A5 independent evidence reconstruction and substantive boundary audit",
+            "exit_code": 0,
+            "output": "PASS: pointers 8/8, bindings 33/33, literals 23/23, dates 8/8, boundaries 16/16; no material finding; no binary/PDF replay claimed."
+          }
+        ],
+        "head_sha": "5bff4523ec20f7a29fe6f7b997ffccfc479c9bff",
+        "reviewer_session_id": "/root/a5_ad30_qa",
+        "status": "PASSED"
+      },
       "refs": {
         "base_sha": "1c0272a34cbcbb3b99d6f32c86d86949bc0adc06",
         "head_sha": "5bff4523ec20f7a29fe6f7b997ffccfc479c9bff",
-        "pr": null,
+        "pr": 192,
         "publication_mapping": {
           "identical_trees_verified": true,
           "local_base_sha": "1c0272a34cbcbb3b99d6f32c86d86949bc0adc06",
@@ -603,7 +647,7 @@
         "admission"
       ],
       "risk": "high",
-      "status": "IMPLEMENTED",
+      "status": "QA_PASSED",
       "tests": {
         "commands": [
           {
@@ -619,9 +663,39 @@
         ],
         "head_sha": "5bff4523ec20f7a29fe6f7b997ffccfc479c9bff"
       },
-      "updated_at": "2026-09-12T22:11:39.681651+00:00",
+      "updated_at": "2026-09-12T22:15:11.637577+00:00",
       "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-ad30-review-candidate-001-99f4e3fb32"
+    },
+    {
+      "author_sessions": [
+        "/root/a4_a6_contract_fix"
+      ],
+      "branch": "agent/classification-tariff-a6-cross-branch-contract-001-a5c4916ca6",
+      "ci": null,
+      "dependencies": [],
+      "external_audit": null,
+      "files": [
+        "tools/tariff_agents/audit.py",
+        "tests/agent_orchestration/test_audit.py"
+      ],
+      "goal": "Make the checked A6 audit adapter support product candidate commits that intentionally do not contain orchestration files by binding an explicitly selected immutable architecture contract blob/ref into the packet; preserve complete changed-path coverage, tamper detection, secret scanning, exact candidate base/head binding, and fail-closed behavior.",
+      "id": "TARIFF-A6-CROSS-BRANCH-CONTRACT-001",
+      "owner": "A4",
+      "qa": null,
+      "refs": {
+        "base_sha": "ad4935e318d947276178e2f269d4ffe1051ea6cb",
+        "head_sha": null,
+        "pr": null
+      },
+      "required_checks": [
+        "offline-safety"
+      ],
+      "risk": "high",
+      "status": "IN_PROGRESS",
+      "tests": [],
+      "updated_at": "2026-09-12T22:16:11.275585+00:00",
+      "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-a6-cross-branch-contract-001-a5c4916ca6"
     }
   ],
-  "updated_at": "2026-09-12T22:11:39.681807+00:00"
+  "updated_at": "2026-09-12T22:16:11.275758+00:00"
 }

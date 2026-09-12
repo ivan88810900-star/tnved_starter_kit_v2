@@ -1,5 +1,5 @@
 {
-  "board_revision": 92,
+  "board_revision": 101,
   "runs": [
     {
       "head_sha": null,
@@ -167,9 +167,19 @@
       "run_id": "3bd0344331a0471ab4f642f9361d1f88",
       "session_id": "/root/a5_ad30_qa",
       "started_at": "2026-09-12T22:11:39.681635+00:00",
-      "status": "RUNNING",
+      "status": "FINISHED",
       "task_id": "TARIFF-AD30-REVIEW-CANDIDATE-001",
-      "updated_at": "2026-09-12T22:11:39.681648+00:00"
+      "updated_at": "2026-09-12T22:15:11.618950+00:00"
+    },
+    {
+      "head_sha": null,
+      "role": "A4",
+      "run_id": "98a8a564d54d420d90b850eb29a1d902",
+      "session_id": "/root/a4_a6_contract_fix",
+      "started_at": "2026-09-12T22:16:11.275575+00:00",
+      "status": "RUNNING",
+      "task_id": "TARIFF-A6-CROSS-BRANCH-CONTRACT-001",
+      "updated_at": "2026-09-12T22:16:11.275583+00:00"
     }
   ],
   "schema_version": 1
