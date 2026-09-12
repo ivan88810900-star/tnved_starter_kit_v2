@@ -2,15 +2,30 @@
 
 from __future__ import annotations
 
-from sqlalchemy.orm import Session
+from typing import TYPE_CHECKING
 
-from ..models.core import HsRate
-from ..models.tnved import Commodity, HsDutyRule
-from .duty_parser import DutyParser
+from .official_payment_admission import blocked_payment_import
+
+if TYPE_CHECKING:
+    from sqlalchemy.orm import Session
 
 
-def backfill_duty_rules_from_hs_rates(db: Session, *, only_missing: bool = True) -> dict[str, int]:
-    """Создаёт/обновляет hs_duty_rules по hs_rates.duty_rate через DutyParser."""
+def backfill_duty_rules_from_hs_rates(db: Session, *, only_missing: bool = True) -> dict:
+    """Legacy DB-derived rates cannot authorize structured active duty rules."""
+    return {
+        **blocked_payment_import(source="hs_rates_duty_rules_backfill", domain="import_duty"),
+        "created": 0, "updated": 0, "skipped": 0,
+    }
+
+
+def _backfill_fixture_duty_rules(db: Session, *, only_missing: bool = True) -> dict[str, int]:
+    """Persistence/arithmetic test helper; only an explicit in-memory database."""
+    bind = db.get_bind()
+    if bind.dialect.name != "sqlite" or bind.url.database != ":memory:":
+        raise ValueError("fixture_backfill_requires_explicit_in_memory_database")
+    from ..models.core import HsRate
+    from ..models.tnved import Commodity, HsDutyRule
+    from .duty_parser import DutyParser
     existing = {r.commodity_code: r for r in db.query(HsDutyRule).all()}
     valid_codes = {code for (code,) in db.query(Commodity.code)}
     pending: set[str] = set()
