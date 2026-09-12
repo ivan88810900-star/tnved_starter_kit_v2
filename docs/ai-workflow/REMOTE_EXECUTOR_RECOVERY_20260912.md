@@ -1,71 +1,79 @@
 # Remote continuation after executor disconnect, 12 September 2026
 
-Status: In progress. PR #187; issue #188 Option A remains binding.
+Status: Recovered implementation independently checked and assembled for PR #187.
+Final publication is gated by the assembled commit's Actions and A5 review.
+Issue #188 Option A remains binding.
 
-## Confirmed remote state
+## Factual recovery
 
-The GitHub repository is exclusively `ivan88810900-star/tnved_starter_kit_v2`.
-PR #187 now includes the independently checked source quarantine checkpoint
-`22a7df5590a7442d943d89af285feb1228e80938`, mapped from local `63d7377`
-with equal tree `97ab0dc91f96fef0089213bdd2a1a307a0c62e15`.
-CI 34714034429 and 34714027008 passed. Main remains `9712c7b`;
-base `feat/canonical-read-path` remains `a5a811e`. Draft PR #189 is separate.
+Repository: `ivan88810900-star/tnved_starter_kit_v2`.
+Recovered PR head was `22a7df5590a7442d943d89af285feb1228e80938`;
+base `feat/canonical-read-path` was `a5a811e618ffa001b39cb491bbbf7a9ceb93f9a7`;
+main remained `9712c7b1380af7457fb6c89ef7710d8cda0e968b`.
+PR #189 is a separate draft and contributes no changes here.
+Read the live PR head and Actions before continuing; this recovery anchor is historical.
 
-The two previously rejected navigation responses are now retained in quarantine.
-Capture 34714034422 deliberately remains failed: zero accepted originals and two
-quarantined originals, no database creation, baseline acceptance or legal grant.
-The archive and every object hash were verified and the archive retained beyond
-temporary Actions storage. See
-[evidence](evidence/official-rate-rejected-originals-20260912.json).
+The disconnected executor did not complete its queued integration process.
+Uncommitted files and old local test reports were not assumed recovered.
+Actual GitHub files, GitData commits and isolated Actions reconstructed the work.
+Later source-artifact materialization provisioned a usable executor, but the original
+worktrees did not return. New archives were verified there; old unrelated working
+directories were not modified. GitHub remains authoritative for the integrated code.
 
-## Executor failure and recovery
+## Real roles and ownership
 
-The execution server disconnected. Read-only retries, including from the root
-directory, returned transport-disconnected, recovery-timeout and environment-offline
-errors. The queued root command to integrate agent commits failed to create its
-process; it is not evidence of completed integration. Do not assume uncommitted
-files or queued test-writing commands survived.
-
-GitHub tools remained available, so work continues through GitData and isolated
-Actions. Recovered patches use actual remote files and assertion-checked edits.
-A new tree requires fresh CI and independent QA; earlier local test counts are
-historical evidence only. No production/application DB or deployment is involved.
-
-The shared no-positive-grant admission interface is published at `22473e172c042f08cd5b72aece5dd221c54bdc9d`.
-The generic import/cache/decoder recovery checkpoint is
-`062fcb90b85d33acec525e1d49f07d6c76ef8101` on `agent/admission-integration`.
-Independent agent QA has a separate workflow with explicit per-branch test paths,
-fresh temporary databases, no external LLM keys and all enforcement flags off.
-
-## Ownership and pending work
-
-| Role | Branch | Scope |
+| Role | Isolated branch | Owned scope |
 | --- | --- | --- |
-| A0 lead | `agent/admission-integration` | Shared admission, generic imports, source API cache, integration, CI and state |
-| A1 rates | `agent/rates-full` | Six ingestion services, payment diagnostics, TWS and rate/maintenance CLIs |
-| A2 NTM | `agent/ntm-compliance` | Tamdoc candidates and legacy-v2 contextual read safeguards |
-| A3 sources | `agent/source-registry` | Original/quarantined captures, explicit observed-source acquisitions and evidence |
-| A4 classification/AI | `agent/classification-ai` | AI extraction admission, CLI safety and read-only diagnostic snapshots |
-| A5 independent QA | `agent/qa-integration` | Adversarial tests, isolated integration and Actions verification |
+| A0 lead | agent/admission-integration | Shared admission, generic imports, source API cache, integration, CI and state |
+| A1 rates | agent/rates-full | Six apply services, diagnostics, rate/maintenance CLIs and payment arithmetic |
+| A2 NTM | agent/ntm-compliance | Tamdoc candidates and contextual legacy NTM reads |
+| A3 sources | agent/source-registry | Original/quarantine acquisition, bounded inspection and source evidence |
+| A4 classification/AI | agent/classification-ai | AI admission and safe diagnostic snapshots |
+| A5 independent QA | agent/qa-integration | Independent hostile, HTTP/integration tests and Actions review |
 
-A0 allocates disjoint files before editing. Three principal implementation tracks
-run concurrently; a fourth is used only for independent files after ownership
-review. A5 does not repair feature code to conceal a failing test.
+Ownership was fixed before parallel edits; A5 returned defects to owners.
+After the disconnect, separate remote branches replaced unavailable worktrees.
+Agent branches were not merged wholesale: A0 copied exact approved file blobs
+onto its actual current tree, preserving unrelated work and shared interfaces.
 
-Local checkpoints before disconnect, not automatically present remotely:
-A0 `97ad963/29c5ad1`; A1 `db1f454/3a6114f/8e5ad92/61c8fe8`;
-A2 `d620fff/b3b117a`; A3 `63d7377/6cfe571`;
-A4 `6dd1971/631e6dd/685d522`; A5 `06e24df/bbabd49/fbf2e21`.
-Inspect actual remote branch heads and local worktrees if they become available;
-do not replay an already recovered patch or overwrite newer work.
+## Integrated checkpoints
 
-Concrete unfinished checks include legacy-v2 date/direction/exclusion matching,
-WAL/journal-safe optional CLI snapshots, the remaining maintenance entrypoints,
-and acquisition of nine explicitly observed review-only source URLs. The original
-four successful sources and the two quarantined navigation bodies are reused.
+| Checkpoint | Evidence |
+| --- | --- |
+| Shared admission 22473e17; generic boundaries 062fcb90 | Preserved in later assembled candidates |
+| Combined candidate 68530dce | CI 34715616460: backend 4,907 passed, 2 skipped, 2 warnings, 85 subtests; other gates passed |
+| Maintenance/country/inspector candidate 772aff03 | CI 34716281013 and agent QA 34716281022 passed |
+| A1 maintenance d66606f8 | Focused 34715920010: 1,105 passed; full CI 34715919970 passed |
+| A1 A6 corrections f34c6cca / 7babea85 / 15d5dfc0 | Red 34716429404; green 34716718914: 1,273 passed; full CI 34716718892 passed |
+| A2 final 7f396872 | Country and malformed-payload red/green evidence; 34716294137: 263 passed, 1 known skipped; full CI 34716294033 passed |
+| A3 final a1ce31b2 | 34716832672: 161 passed; full CI 34716832650 passed |
+| A4 code d0b52439 / docs b40145a3 | 65 author cases; independently checked safe reads and no admission |
+| A5 combined d300f92e | 34716890248: 1,968 passed, 1 known skipped; full 34716890270: 5,113 passed, 2 known skipped; frontend 50 and other gates passed |
 
-The full rates/NTM/source legal block remains incomplete: complete ETT note and
-dependent-act interpretation, VAT/excise/remedy/origin applicability, durable legal
-retention and manifest-bound human authorization are separate gates. DM-0014 does
-not block technical preparation; AI QA is not human legal approval. No merge,
-deployment, database rollout or enforcement activation is authorized here.
+Subsequent final integration adds the two A6 regression files to the normal backend
+CI profile and the disjoint A3 two-target inspection changes. Component counts
+above are historical results on their named commits; exact final CI belongs to
+the assembled commit/PR checks.
+
+See [completed bounded task](TASK-RATE-ADMISSION-RECOVERY.md),
+[independent evidence](evidence/payment-admission-independent-qa-20260912.json) and
+[A6 classification](A6_PAYMENT_AUDIT_RECONCILIATION.md).
+
+## Source preservation without acceptance
+
+Prior successful originals and first quarantine capture 34714034422 were reused.
+Capture nine (34716176823) retained 2 originals and 7 quarantined responses;
+capture two (34717159548) retained Decision 12 PDF plus its quarantined card.
+Acquisition failures remain visible, inspectors succeeded, and no baseline was
+accepted. A0/A3 independently verified all original/receipt object hashes;
+A5 additionally rehashed the second archive and independently reviewed the source pages.
+
+- Nine-target archive: SHA d728387c458413b8bdd992a0ed330a8f45e7760ccacc77fc948958d44de3f6a7; 1,093,658 bytes; 18 CAS objects / 3,826,229 bytes.
+- Two-target archive: SHA df8bc0fcc89780f53d6e29839e9b7a26835f2b19aa322fc6d4eb2b6546c5768e; 655,764 bytes; 4 CAS objects / 913,329 bytes.
+- Exact durable backup identities are in the capture evidence. Backup restoration is not retention/legal-hold attestation.
+- Native Decision 4/12 text was empty; separately recorded A3/A5 visual source observations do not fabricate machine-extracted text or approve business rules.
+
+The full official legal block remains partial. The saved ETT dependency worklist,
+amendment originals and four-code one-day candidate must not be rebuilt as a new
+milestone. Continue formal source-bound applicability and review preparation.
+No main merge, deployment, production/application DB write or enforcement activation.

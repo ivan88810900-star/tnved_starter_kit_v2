@@ -129,3 +129,33 @@ def test_unknown_country_identifiers_cannot_silently_discard_candidate(database,
     assert "country_unverified" in rows[0]["context_review_reasons"]
     assert rows[0]["applicability"] == "needs_clarification"
     assert rows[0]["used_for_missing_check"] is False
+
+
+@pytest.mark.parametrize("field,value", [
+    ("measure_type", {"unexpected": "vet_control"}),
+    ("description", {"unexpected": "conditional"}),
+    ("document_required", {"unexpected": "certificate"}),
+    ("legal_ref", {"unexpected": "claimed authority"}),
+    ("permit_type", {"unexpected": "ВС"}),
+    ("permit_type", 7),
+    ("tr_ts_code", {"unexpected": "ТР ТС 021"}),
+    ("tr_ts_code", ["ТР ТС 021"]),
+])
+def test_malformed_legacy_payload_fields_remain_advisory_without_reader_crash(database, field, value):
+    with database() as db:
+        row = db.query(NtmApplicabilityRuleV2).one()
+        row.description_match_json = {"legacy_payload": {
+            "measure_type": "vet_control", "description": "Only raw materials",
+            field: value,
+        }}
+        db.commit()
+        rows = reader.get_v2_legacy_measures_broker_rows(
+            "8517130000", "Processed excluded goods", session=db,
+            as_of=date(2025, 6, 1), country="CN", direction="export")
+    assert len(rows) == 1
+    assert "legacy_" + field + "_unverified" in rows[0]["context_review_reasons"]
+    assert rows[0]["requires_manual_review"] is True
+    assert rows[0]["used_for_missing_check"] is False
+    assert rows[0]["legal_review_verified"] is False
+    if field == "permit_type":
+        assert rows[0]["permit_type"] == ""

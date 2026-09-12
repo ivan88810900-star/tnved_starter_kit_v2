@@ -16,7 +16,9 @@ from app.services.ett_artifacts import ArtifactIntegrityError, LocalArtifactStor
 from app.services.regulatory_source_capture import (
     url_identity, verify_original_capture, verify_rejected_original_capture,
 )
-from scripts.monitor_official_ntm_sources import REVIEW_ONLY_SOURCES
+from scripts.monitor_official_ntm_sources import REVIEW_ONLY_CAPTURE_PLANS, REVIEW_ONLY_SOURCES
+
+DEFAULT_CAPTURE_PLAN = "ad30-discovery-20260912"
 
 _MAX_REPORT_BYTES = 4 * 1024 * 1024
 _MAX_LINKS = 300
@@ -136,9 +138,48 @@ class _Links(HTMLParser):
         }
 
 
-def inspect_capture(store, report):
-    """Replay exact receipts and bind observations to the selected nine targets."""
-    ids = list(REVIEW_ONLY_SOURCES)
+def _native_pdf_text(body, source_id):
+    """Expose existing native rows only; an empty text layer remains empty."""
+    from app.services.ett_pdf_evidence import extract_pdf_evidence
+
+    try:
+        evidence = extract_pdf_evidence(body, artifact_id=source_id)
+        _require(evidence["artifact_sha256"] == hashlib.sha256(body).hexdigest())
+        _require(evidence["size_bytes"] == len(body) and 1 <= evidence["page_count"] <= 30)
+        pages = []
+        for page in evidence["pages"]:
+            rows = [
+                {key: row[key] for key in ("row", "raw_text", "raw_text_sha256", "bbox")}
+                for row in page["rows"]
+            ]
+            text = "\n".join(row["raw_text"] for row in rows)
+            pages.append({
+                "page": page["page"], "rows": rows,
+                "page_text_sha256": hashlib.sha256(text.encode("utf-8")).hexdigest(),
+                "has_native_text": bool(text.strip()),
+            })
+        _require(len(pages) == evidence["page_count"])
+        _require(len(json.dumps(pages, ensure_ascii=False).encode("utf-8")) <= 2 * 1024 * 1024)
+        complete = all(page["has_native_text"] for page in pages)
+        return {
+            "status": "native_text_extracted" if complete else "native_text_incomplete",
+            "artifact_sha256": evidence["artifact_sha256"],
+            "parser": evidence["parser"], "text_serialization": evidence["text_serialization"],
+            "page_count": len(pages), "pages": pages, "all_pages_have_native_text": complete,
+            "ocr_used": False, "legal_review_verified": False, "can_promote": False,
+        }
+    except Exception:
+        return {
+            "status": "unavailable", "reason": "native_pdf_text_could_not_be_extracted",
+            "ocr_used": False, "legal_review_verified": False, "can_promote": False,
+        }
+
+
+def inspect_capture(store, report, *, capture_plan=DEFAULT_CAPTURE_PLAN, extract_native_pdf_text=False):
+    """Replay receipts against one named, fixed observation scope."""
+    _require(isinstance(capture_plan, str) and capture_plan in REVIEW_ONLY_CAPTURE_PLANS)
+    _require(type(extract_native_pdf_text) is bool)
+    ids = list(REVIEW_ONLY_CAPTURE_PLANS[capture_plan])
     _require(type(report) is dict and report.get("selected_source_ids") == ids)
     _require(report.get("accepted_source_ids") == [])
     _require(report.get("full_registry_checked") is False)
@@ -151,6 +192,8 @@ def inspect_capture(store, report):
     _require([row.get("source_id") for row in rows] == ids)
     result = {
         "schema_version": 1, "kind": "read_only_observed_capture_inspection",
+        "capture_plan": capture_plan,
+        "native_pdf_text_requested": extract_native_pdf_text,
         "inspection_status": "verified_retained_evidence",
         "selected_source_count": len(ids), "original_count": 0, "quarantined_count": 0,
         "unretained_count": 0, "sources": [], **dict.fromkeys(_FALSE_CLAIMS, False),
@@ -192,6 +235,8 @@ def inspect_capture(store, report):
             "requested": receipt["requested"], "response": receipt["response"],
             "validation_error": receipt.get("validation_error"),
         })
+        if extract_native_pdf_text and rejected is None and receipt["content_type"].split(";", 1)[0].strip().lower() == "application/pdf":
+            item["native_pdf_text"] = _native_pdf_text(store.read(receipt["original_body_sha256"]), source_id)
         if source_id.startswith("review_remedy_index_page_"):
             body = store.read(receipt["original_body_sha256"])
             parser = _Links(REVIEW_ONLY_SOURCES[source_id])
@@ -215,6 +260,8 @@ def main(argv=None):
     parser.add_argument("--store-root", type=Path, required=True)
     parser.add_argument("--report", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--capture-plan", choices=tuple(REVIEW_ONLY_CAPTURE_PLANS), default=DEFAULT_CAPTURE_PLAN)
+    parser.add_argument("--extract-native-pdf-text", action="store_true", help="Extract verified original PDF rows for review; never OCR or approve")
     args = parser.parse_args(argv)
     output = args.output.resolve()
     if output == args.report.resolve() or output.is_relative_to(args.store_root.resolve()):
@@ -224,7 +271,10 @@ def main(argv=None):
             raw = source.read(_MAX_REPORT_BYTES + 1)
         _require(0 < len(raw) <= _MAX_REPORT_BYTES)
         report = json.loads(raw, object_pairs_hook=_object)
-        result = inspect_capture(LocalArtifactStore(args.store_root, create=False), report)
+        result = inspect_capture(
+            LocalArtifactStore(args.store_root, create=False), report,
+            capture_plan=args.capture_plan, extract_native_pdf_text=args.extract_native_pdf_text,
+        )
         result["input_report_sha256"] = hashlib.sha256(raw).hexdigest()
         exit_code = 0
     except Exception:
@@ -241,7 +291,20 @@ def main(argv=None):
     summary = {key: value for key, value in result.items() if key != "sources"}
     print(json.dumps(summary, ensure_ascii=False, sort_keys=True))
     for source in result.get("sources", []):
-        print(json.dumps({key: value for key, value in source.items() if key != "pagination_discovery"}, ensure_ascii=False, sort_keys=True))
+        print(json.dumps({key: value for key, value in source.items() if key not in {"pagination_discovery", "native_pdf_text"}}, ensure_ascii=False, sort_keys=True))
+        native = source.get("native_pdf_text")
+        if native is not None:
+            print(json.dumps({
+                "source_id": source["source_id"], "body_sha256": source["body_sha256"],
+                "receipt_sha256": source["receipt_sha256"],
+                "native_pdf_text": {key: value for key, value in native.items() if key != "pages"},
+            }, ensure_ascii=False, sort_keys=True))
+            for page in native.get("pages", []):
+                print(json.dumps({
+                    "source_id": source["source_id"], "body_sha256": source["body_sha256"],
+                    "receipt_sha256": source["receipt_sha256"], "native_pdf_page": page,
+                    "discovery_only": True, "legal_review_verified": False,
+                }, ensure_ascii=False, sort_keys=True))
         discovery = source.get("pagination_discovery")
         if discovery is not None:
             print(json.dumps({

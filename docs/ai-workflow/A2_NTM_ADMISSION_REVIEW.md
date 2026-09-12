@@ -13,7 +13,8 @@ confirmed behavior from actual GitHub source blob
 reader changes were excluded from that first recovery checkpoint and are added
 in `3335f808cff072e12ea4120cef72c9d1595cf86d`, described below. These are new remote
 trees; old local test counts and HTTP smoke are not their validation evidence.
-Independent A5 review and A0 integration remain required.
+Independent A5 review is complete for final feature checkpoint `7f396872`, as
+recorded below. A0 integration and checks on the combined PR tree remain required.
 
 ## Root causes and corrected behavior
 
@@ -148,3 +149,60 @@ The one skip in the earlier agent profile is the unchanged
 populated legacy catalog in the global test database. Agent CI uses a fresh
 disposable DB; synthetic per-test regressions run independently. No application
 database was used to satisfy that optional historical-data smoke.
+
+## Final malformed legacy-payload boundary correction
+
+A5 independently traced an additional failure at `c2fc39b`: a nonempty JSON
+object or number in `legacy_payload.permit_type` reached `.strip()` and raised
+`AttributeError` instead of returning an advisory candidate. The final bounded
+correction checks all six consumed legacy string fields: `measure_type`,
+`description`, `document_required`, `legal_ref`, `permit_type`, and
+`tr_ts_code`. Objects, arrays, numbers and booleans add a concrete
+`legacy_<field>_unverified` reason. Unusable permit, TR and legal-reference hints
+are cleared; descriptions/type may use separately stored unreviewed metadata.
+Missing/null optional fields retain their existing fallback semantics.
+
+The candidate stays visible and requires manual review. Neither malformed nor
+empty metadata grants a required permit or legal source authority. The public
+broker converter also guards malformed permit hints directly. Agent fixtures
+cover every field with object/list/number/true/false/null values plus direct
+converter calls (42 cases); A5 owns separate hostile regressions. Fresh CI and
+independent QA on this correction passed, as recorded below; integration checks
+on the combined PR tree remain required. Feature scope
+is frozen after this final boundary correction.
+
+At `c2fc39b`, country-correction agent QA
+[34715989638](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/34715989638)
+passed (221 passed, 1 skipped), and full CI
+[34715989650](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/34715989650)
+passed. These results precede the malformed-payload correction above; they are
+not its validation evidence.
+
+## Final A2 acceptance evidence
+
+Final feature checkpoint: `7f396872bb430c3e8140cd8f57197545ce4b8b27`.
+
+- Agent QA [34716294137](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/34716294137)
+  passed: 263 tests passed, 1 pre-existing empty-catalog smoke skipped.
+- Full CI [34716294033](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/34716294033)
+  passed: backend NTM safety, frontend tests/types/build, scheduled contracts and
+  disposable local staging smoke. Official acquisition was skipped on the agent
+  branch; no deployment or production DB operation occurred.
+- A5 reproduced the malformed-payload defect before the correction:
+  [34716339523](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/34716339523)
+  at QA `02b469` had 1730 passed and 8 failed. The permit object/integer cases
+  raised the actual `AttributeError`; other malformed fields lost uncertainty
+  reasons. The four independent country cases already passed.
+- A5 then copied the exact final feature blobs without feature edits and reran
+  unchanged assertions at QA `7bb5dca7e2cdcbc04a5ae16ec810a893f1e9d907`:
+  [34716499930](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/34716499930)
+  passed, 1780 tests passed, 1 explained skip and 85 subtests across 38 suites.
+  All 24 independent historical cases passed, including four country and eight
+  malformed-field regressions. The combined QA also passed 83 admission/AI/WAL
+  cases and a real HTTP smoke covering 43 requests.
+- A5 explicitly approved the final A2 NTM scope. No further feature finding remains
+  in this bounded correction. A0 owns integration and final combined-tree checks.
+
+This acceptance covers the Tamdoc admission and historical legacy-reader safety
+changes only. It does not certify full official rates/NTM coverage, historical
+legal applicability, retained-source completeness or permission to enable flags.

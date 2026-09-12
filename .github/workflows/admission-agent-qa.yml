@@ -76,6 +76,11 @@ jobs:
                 tests/test_tws_payment_admission.py
                 tests/test_duty_rules_backfill.py
                 tests/test_legacy_rate_maintenance_admission.py
+                tests/test_payment_a6_reconciliation.py
+                tests/test_payment_preference_eligibility.py
+                tests/test_payment_special_duty_applicability.py
+                tests/test_payment_engine.py
+                tests/test_special_duties.py
                 tests/test_official_rate_validation.py
                 tests/test_trade_remedy_ingestion_hardening.py
               )
@@ -120,6 +125,7 @@ jobs:
               # Exact reviewed integration dependencies; missing suites fail.
               tests=(
                 tests/test_payment_admission_redteam.py
+                tests/test_payment_reconciliation_redteam.py
                 tests/test_ntm_history_redteam.py
                 tests/test_source_quarantine_redteam.py
                 tests/test_official_payment_admission.py
@@ -134,6 +140,13 @@ jobs:
                 tests/test_payment_source_ingestion.py
                 tests/test_official_payment_coverage_audit.py
                 tests/test_tws_payment_admission.py
+                tests/test_duty_rules_backfill.py
+                tests/test_legacy_rate_maintenance_admission.py
+                tests/test_payment_a6_reconciliation.py
+                tests/test_payment_preference_eligibility.py
+                tests/test_payment_special_duty_applicability.py
+                tests/test_payment_engine.py
+                tests/test_special_duties.py
                 tests/test_official_rate_validation.py
                 tests/test_trade_remedy_ingestion_hardening.py
                 tests/test_tamdoc_payment_admission.py

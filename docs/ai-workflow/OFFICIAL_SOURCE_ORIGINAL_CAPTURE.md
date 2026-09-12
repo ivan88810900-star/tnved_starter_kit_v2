@@ -208,3 +208,32 @@ legal approval, promotion and permanent-retention claims false.
 The JSON is included in the temporary source artifact. Compact source summaries
 and pagination discovery records are also printed into the same Actions job logs,
 so reading verified retained evidence does not require repeating the acquisition.
+
+
+### Named replay plans and Decision 12 follow-up
+
+The completed nine-target acquisition is retained as the immutable named plan
+`ad30-discovery-20260912`. It remains the inspector's default replay scope.
+The separate `ad30-decision12-20260912` plan contains only the newly observed
+Decision 12 card and PDF. The isolated workflow now explicitly selects this
+two-target plan; it does not acquire the completed nine-target selection again.
+Both plans are fixed tuples in a read-only mapping. All targets remain outside
+the 72 registered/default monitor URLs.
+
+The two new links derive from quarantined page 3 in run 34716176823. Evidence,
+archive persistence identifiers, actual capture counts and parent body/receipt
+hashes are in `evidence/eec-ad30-capture-34716176823.json`. A page anchor
+is a discovery observation; it has not established the original act's contents,
+rates, historical applicability or amendments.
+
+With explicit `--extract-native-pdf-text`, the inspector passes only verified
+original PDFs to the existing bounded `ett_pdf_evidence` child process.
+It keeps physical row text/coordinates, row hashes, page text hashes, original
+PDF SHA and parser source/engine provenance. Page text hashes refer to extracted
+physical rows joined with LF, not to independently serialized PDF page bytes.
+Whitespace is the existing parser's declared serialization. No rate candidates
+are imported or promoted. The wrapper limits output to 30 pages and 2 MiB;
+native extraction failure or empty text remains explicit, and no OCR is used.
+Quarantined PDFs never reach this extractor. This optional derivation writes
+only the existing parser's private temporary files and the new inspection result;
+CAS originals and input reports remain unchanged.

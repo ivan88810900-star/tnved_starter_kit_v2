@@ -16,6 +16,7 @@ import sys
 import xml.etree.ElementTree as ET
 from datetime import datetime, timezone
 from pathlib import Path
+from types import MappingProxyType
 from typing import Any
 from urllib.parse import parse_qsl, urljoin, urlparse
 
@@ -140,7 +141,8 @@ for _entry in REGULATORY_SOURCE_REGISTRY:
         _registered_urls.add(_official_url)
 
 # Explicit observations for isolated original capture, not registered daily
-# targets or approved baselines. Provenance: eec-ad30-acquisition-plan-20260912.json.
+# targets or approved baselines. Provenance: eec-ad30-acquisition-plan-20260912.json
+# and eec-ad30-capture-34716176823.json (Decision 12 links from retained page 3).
 # The already retained Decision 121 PDF and first navigation page are absent.
 REVIEW_ONLY_SOURCES = {
     "review_ad30_completion_notice_pdf": "https://docs.eaeunion.org/upload/iblock/75c/h3m62bw3jc8solzxiw14jc7qhmnycmmy/AD30R1_notice_fin.pdf",
@@ -151,8 +153,29 @@ REVIEW_ONLY_SOURCES = {
     "review_remedy_index_page_2": "https://docs.eaeunion.org/documents/?filter_departament%5B0%5D=14&PAGEN_1=2",
     "review_remedy_index_page_3": "https://docs.eaeunion.org/documents/?filter_departament%5B0%5D=14&PAGEN_1=3",
     "review_remedy_index_page_4": "https://docs.eaeunion.org/documents/?filter_departament%5B0%5D=14&PAGEN_1=4",
-    "review_remedy_index_page_5": "https://docs.eaeunion.org/documents/?filter_departament%5B0%5D=14&PAGEN_1=5"
+    "review_remedy_index_page_5": "https://docs.eaeunion.org/documents/?filter_departament%5B0%5D=14&PAGEN_1=5",
+    "review_ad30_decision12_2021_page": "https://docs.eaeunion.org/documents/379/5653/",
+    "review_ad30_decision12_2021_pdf": "https://docs.eaeunion.org/upload/iblock/08a/wp70m6eckvicuanvf0sfo4sxqaro4aax/err_12022021_12_doc.pdf"
 }
+
+# Named selections are fixed acquisition/replay scopes, not legal coverage.
+REVIEW_ONLY_CAPTURE_PLANS = MappingProxyType({
+    "ad30-discovery-20260912": (
+        "review_ad30_completion_notice_pdf",
+        "review_ad30_decision121_2026_page",
+        "review_ad30_decision4_2026_page",
+        "review_ad30_decision4_2026_pdf",
+        "review_ad30_final_report_pdf",
+        "review_remedy_index_page_2",
+        "review_remedy_index_page_3",
+        "review_remedy_index_page_4",
+        "review_remedy_index_page_5",
+    ),
+    "ad30-decision12-20260912": (
+        "review_ad30_decision12_2021_page",
+        "review_ad30_decision12_2021_pdf",
+    ),
+})
 
 _BLOCK_PAGE_MARKERS = (
     b"captcha",

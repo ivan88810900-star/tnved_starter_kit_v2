@@ -318,6 +318,8 @@ jobs:
           tests/test_legacy_rate_maintenance_admission.py
           tests/test_payment_admission_redteam.py
           tests/test_ntm_history_redteam.py
+          tests/test_payment_a6_reconciliation.py
+          tests/test_payment_reconciliation_redteam.py
           tests/test_payment_engine.py
           tests/test_special_duties.py
           tests/test_ntm_noise_classifier.py

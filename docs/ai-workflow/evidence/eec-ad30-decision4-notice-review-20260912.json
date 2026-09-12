@@ -1,0 +1,142 @@
+{
+  "schema_version": 1,
+  "evidence_kind": "source_only_visual_and_native_review_of_retained_official_pdfs",
+  "observed_on": "2026-09-12",
+  "capture_run_id": "34716176823",
+  "archive_sha256": "d728387c458413b8bdd992a0ed330a8f45e7760ccacc77fc948958d44de3f6a7",
+  "archive_library_file_id": "libfile_5d9fe0490d248191b651befe63ecf6c3",
+  "new_network_acquisition": false,
+  "inspection_method": {
+    "originals": "Read directly from the retained ZIP/TAR; each PDF body SHA was checked before rendering.",
+    "renderer": "pymupdf",
+    "renderer_version": "1.26.6",
+    "render_matrix": [
+      1.5,
+      1.5
+    ],
+    "ocr_used": false,
+    "source_reader": "A3",
+    "independent_visual_review_recorded": true,
+    "independent_reviewer": "A5",
+    "independent_review_scope": "All three rendered pages compared with these source-content observations; no absolute legal interval, numeric duty or product applicability was approved."
+  },
+  "documents": [
+    {
+      "document_number": "4",
+      "document_date_printed": "2026-01-20",
+      "official_url": "https://docs.eaeunion.org/upload/iblock/798/59qwa6jpe6b76n24wtn0uu9eygvlznkr/Reshenie-Kollegii-_-4-ot-20-yanvarya-2026-g.pdf",
+      "body_sha256": "44a277edf5f9bf76a0ccd79d6e41f9820548fcbaa1b638d1cd44469a79344aef",
+      "receipt_sha256": "bfc2c3e618f5023ec2ce46252718fb4638d3b1a8c385d723cd023e6521220dfe",
+      "size_bytes": 563455,
+      "page_count": 2,
+      "native_text": {
+        "method": "pymupdf.Page.get_text()",
+        "page_character_counts": [
+          0,
+          0
+        ],
+        "machine_transcription_available": false
+      },
+      "observations": [
+        {
+          "page": 1,
+          "locator": "heading and document identifier",
+          "observation": "The heading identifies Collegium Decision 4 dated 20 January 2026. Its subject is an extension of the anti-dumping measure concerning welded tubes, pipes and hollow profiles of corrosion-resistant (stainless) steel originating in China and imported into the EAEU customs territory."
+        },
+        {
+          "page": 1,
+          "locator": "clause 1",
+          "observation": "Extends the measure established by Collegium Decision 12 of 9 February 2021 through 12 November 2026 inclusive.",
+          "short_literal_excerpt": "Продлить по 12 ноября 2026 г. включительно",
+          "rule_interval_created": false
+        },
+        {
+          "page": 2,
+          "locator": "clause 2",
+          "observation": "Addresses the member states' customs authorities. From entry into force of this decision through 12 November 2026 inclusive, it refers to collection at rates established by Decision 12 of 9 February 2021 under the procedure for collecting provisional anti-dumping duties.",
+          "numeric_rate_values_printed": false,
+          "collection_procedure_interpreted": false
+        },
+        {
+          "page": 2,
+          "locator": "clause 3",
+          "observation": "The clause specifies entry into force after 30 calendar days from official publication, but not earlier than 14 March 2026.",
+          "short_literal_excerpt": "но не ранее 14 марта 2026 г.",
+          "absolute_effective_date_computed": false
+        }
+      ],
+      "renders": [
+        {
+          "page": 1,
+          "png_sha256": "b82b10dd14ca3d51250bd48102ffb0f5f5b1e1f8378ab6126aadb00a350f0de6"
+        },
+        {
+          "page": 2,
+          "png_sha256": "aa43ac29ba103e61da666a4662dca978d2412685a98f940963616f27bfc5811d"
+        }
+      ],
+      "scope_limit": "This act references Decision 12 for rates. No code-level/product/producer rule or currently applicable rate is inferred from this reading."
+    },
+    {
+      "document_type": "AD30R1 investigation completion notice",
+      "official_url": "https://docs.eaeunion.org/upload/iblock/75c/h3m62bw3jc8solzxiw14jc7qhmnycmmy/AD30R1_notice_fin.pdf",
+      "body_sha256": "db9177ce8da5061afef33e17c7e11dc2fbc23d7b8cec08ffcf3d29f3e8f601c9",
+      "receipt_sha256": "e1f44b777ce6f0bed42aef63e796a395e6b2e84861e3adedd4a9c541ba1873ef",
+      "size_bytes": 399748,
+      "page_count": 1,
+      "native_text": {
+        "method": "pymupdf.Page.get_text()",
+        "page_character_counts": [
+          2849
+        ],
+        "page_text_sha256": "8475dab340e8bc3f56cf06c75dd555c9e2cddd75dd307fd8ec2bb6db45ad0007",
+        "serialization": "Unmodified Unicode returned by Page.get_text(), encoded as UTF-8.",
+        "visually_compared": true
+      },
+      "observations": [
+        {
+          "page": 1,
+          "locator": "upper-left publication block",
+          "observation": "Printed publication date is 10 September 2026 and publication identifier is 2026/512/AD30R1."
+        },
+        {
+          "page": 1,
+          "locator": "title and first body paragraph",
+          "observation": "The notice concerns completion of the expiry review for the welded stainless-steel tube/pipe/hollow-profile measure concerning China. It references Decision 12 of 9 February 2021 and a Collegium decision adopted on 8 September 2026 extending the measure through 7 September 2031."
+        },
+        {
+          "page": 1,
+          "locator": "paragraph beginning with the investigation completion date",
+          "observation": "The notice states 8 September 2026 as the completion date of that repeated investigation. This is not treated as a duty's effective-from date."
+        },
+        {
+          "page": 1,
+          "locator": "printed decision and final report links",
+          "observation": "The printed links point to the previously retained Decision 121 card and to the final AD30R1 report endpoint.",
+          "observed_urls": [
+            "https://docs.eaeunion.org/documents/463/10918/",
+            "https://remedies.eaeunion.org/dimd/filestorage/AD30R1_report_final.pdf"
+          ],
+          "linked_report_content_verified": false
+        }
+      ],
+      "renders": [
+        {
+          "page": 1,
+          "png_sha256": "096064559eece20723ba9896ae9736f5f1ba65e8f044e419d9b913462a05f249"
+        }
+      ],
+      "scope_limit": "This notice is not a rate table. The linked final-report endpoint returned quarantined HTML in the actual capture; its report contents remain unavailable."
+    }
+  ],
+  "handoff": "A2 may use these page-bound source observations when reviewing the Decision 12 -> 4 -> 121 dependency chain after the Decision 12 original is acquired and independently inspected. This evidence does not authorize a legal rule or application.",
+  "legal_review_verified": false,
+  "numeric_rates_verified": false,
+  "product_applicability_verified": false,
+  "effective_dates_verified": false,
+  "legal_inventory_complete": false,
+  "active_rates_written": false,
+  "can_promote": false,
+  "production_ready": false,
+  "durable_legal_retention_attested": false
+}

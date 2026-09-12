@@ -5,6 +5,23 @@
 
 ---
 
+## Implementation clarification — 12 September 2026
+
+This is an implementation record under accepted Option A of issue #188,
+DM-0011 and DM-0013; it does not accept a new legal rule or change DM-0014's status.
+
+- Technical parsing, literal official-source facts, interpreted applicability and legal authorization remain separate. Legacy/AI/admin markers cannot grant rate admission.
+- Provisional computable amounts remain distinct from confirmed payable amounts. Nonneutral or invalid preference coefficients require review. Unresolved HsRate/SpecialDuty antidumping overlap preserves evidence but withholds both ambiguous amounts instead of summing or silently selecting one.
+- Displayed rounded components are summed consistently using decimal arithmetic. Existing Python rounding is unchanged; legal declaration-rounding policy is not decided here.
+- Missing source-bound specific-duty units and unsupported public as_of remain fail-closed. Retaining unknown-country candidates for clarification does not apply them to every country.
+- Capture plans retain originals and quarantined bodies separately, without accepting source drift or asserting legal completeness. A3 records source content, A2 owns formal applicability, A5 verifies independently; none of these steps alone constitutes human manifest approval.
+- DM-0014 remains a future human-review/approval decision, not a prerequisite for technical preparation. No feature flag, production DB, merge or deployment is authorized by this record.
+
+Evidence and precise A6 classification:
+[admission task](../docs/ai-workflow/TASK-RATE-ADMISSION-RECOVERY.md),
+[A6 review](../docs/ai-workflow/A6_PAYMENT_AUDIT_RECONCILIATION.md),
+[independent QA](../docs/ai-workflow/evidence/payment-admission-independent-qa-20260912.json).
+
 ## Индекс ADR / DM
 
 | ADR | Название | Статус | Принял | Дата | Документ |
