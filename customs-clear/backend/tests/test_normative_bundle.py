@@ -5,7 +5,7 @@ from pathlib import Path
 from fastapi.testclient import TestClient
 
 from app.main import app
-from app.services.normative_bundle import import_normative_bundle_dict, is_ett_test_hs
+from app.services.normative_bundle import _import_normative_bundle_dict, is_ett_test_hs
 from app.services.normative_store import find_tnved_entry, init_db
 from app.services.payment_engine import compute_payments
 
@@ -15,8 +15,8 @@ class NormativeBundleTests(unittest.TestCase):
     def setUpClass(cls):
         init_db()
 
-    def test_import_bundle_dict(self):
-        res = import_normative_bundle_dict(
+    def test_isolated_fixture_bundle_storage(self):
+        res = _import_normative_bundle_dict(
             {
                 "format": "customs_clear_normative_bundle",
                 "revision": "test-b1",
@@ -71,7 +71,7 @@ class NormativeBundleTests(unittest.TestCase):
         self.assertIsInstance(data.get("results"), list)
 
     def test_blank_row_revision_inherits_bundle_revision(self):
-        import_normative_bundle_dict(
+        _import_normative_bundle_dict(
             {
                 "format": "customs_clear_normative_bundle",
                 "revision": "ett:2026-05-01",
@@ -96,7 +96,7 @@ class NormativeBundleTests(unittest.TestCase):
         self.assertEqual(row.source_revision, "ett:2026-05-01")
 
     def test_explicit_seed_row_revision_preserved(self):
-        import_normative_bundle_dict(
+        _import_normative_bundle_dict(
             {
                 "format": "customs_clear_normative_bundle",
                 "revision": "ett:2026-05-01",
@@ -121,7 +121,7 @@ class NormativeBundleTests(unittest.TestCase):
         self.assertEqual(row.source_revision, "seed-2026-03")
 
     def test_ett_test_hs_codes_skipped_on_import(self):
-        res = import_normative_bundle_dict(
+        res = _import_normative_bundle_dict(
             {
                 "format": "customs_clear_normative_bundle",
                 "revision": "ett:test-guard",
@@ -157,20 +157,21 @@ _EXAMPLE = Path(__file__).resolve().parent.parent / "data" / "normative_bundle.e
 
 
 class ExampleBundleFileTests(unittest.TestCase):
-    """Проверка, что репозиторный example.json валиден для импорта."""
+    """The example parses but cannot authorize active legal rates."""
 
     @classmethod
     def setUpClass(cls):
         init_db()
 
-    def test_example_file_imports(self):
-        if not _EXAMPLE.exists():
-            self.skipTest("example bundle missing")
+    def test_example_rate_file_requires_review(self):
+        self.assertTrue(_EXAMPLE.exists())
         raw = _EXAMPLE.read_bytes()
         from app.services.normative_bundle import import_normative_bundle_bytes
 
         res = import_normative_bundle_bytes(raw, filename="normative_bundle.example.json")
-        self.assertEqual(res["status"], "OK")
+        self.assertEqual(res["status"], "manual_review_required")
+        self.assertFalse(res["db_mutated"])
+        self.assertFalse(res["legal_review_verified"])
 
 
 if __name__ == "__main__":

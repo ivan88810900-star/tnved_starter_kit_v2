@@ -5,7 +5,7 @@ import unittest
 from openpyxl import Workbook
 
 from app.services.normative_store import find_rate_for_hs, init_db, upsert_hs_rate
-from app.services.source_import import import_normative_file
+from app.services.source_import import _normalize_row, _rows_from_xlsx, import_normative_file
 
 
 class SourceImportTests(unittest.TestCase):
@@ -50,24 +50,30 @@ class SourceImportTests(unittest.TestCase):
         self.assertIsNotNone(rate)
         self.assertIn("CN", (rate.antidumping_countries or ""))
 
-    def test_import_xlsx_with_headers(self) -> None:
+    def test_xlsx_headers_parse_but_public_rate_import_is_blocked(self) -> None:
         wb = Workbook()
         ws = wb.active
         ws.append(["Код ТН ВЭД", "Наименование", "Ставка ввозной пошлины %"])
         ws.append([8509400000, "Чайники", 12.5])
         buf = io.BytesIO()
         wb.save(buf)
+        rows = _rows_from_xlsx(buf.getvalue())
+        normalized = _normalize_row(rows[0])
+        self.assertEqual(normalized["hs_code"], "8509400000")
+        self.assertEqual(str(normalized["duty_rate"]).strip(), "12.5")
+        before, _ = find_rate_for_hs("8509400000")
+        before_duty = before.duty_rate if before else None
         res = import_normative_file(
             "tws_like.xlsx",
             buf.getvalue(),
             source_code="TEST_XLSX",
             source_name="test xlsx",
         )
-        self.assertEqual(res["status"], "OK")
-        self.assertGreaterEqual(res["imported"], 1)
+        self.assertEqual(res["status"], "manual_review_required")
+        self.assertFalse(res["db_mutated"])
+        self.assertEqual(res["imported"], 0)
         rate, _ = find_rate_for_hs("8509400000")
-        self.assertIsNotNone(rate)
-        self.assertEqual(str(rate.duty_rate).strip(), "12.5")
+        self.assertEqual(rate.duty_rate if rate else None, before_duty)
 
 
 if __name__ == "__main__":
