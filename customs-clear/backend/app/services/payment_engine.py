@@ -100,6 +100,12 @@ SPECIAL_DUTY_LEGAL_REVIEW_REASON = (
     "не подтверждают юридическое утверждение применимости к этой поставке. "
     "Суммы торговых пошлин, зависимого НДС и итог не подтверждены к уплате."
 )
+LEGACY_ANTIDUMPING_OVERLAP_REASON = (
+    "В двух прежних справочниках найдены кандидаты антидемпинговой пошлины; "
+    "не подтверждено, являются ли они одной мерой, альтернативами или независимыми "
+    "мерами. Сумма антидемпинга и зависимый НДС требуют проверки."
+)
+
 LEGACY_PAYMENT_AS_OF_UNSUPPORTED = (
     "Расчёт платежей по дате as_of пока недоступен: текущий справочник не "
     "подтверждает исторические версии всех ставок и сборов. Дата не будет "
@@ -761,6 +767,37 @@ def compute_payments(payload: dict[str, Any]) -> dict[str, Any]:
         quantity=qty,
         fx_rates=payload.get("_fx_rates") if isinstance(payload.get("_fx_rates"), dict) else None,
     )
+    legacy_antidumping_candidate = None
+    overlap = (
+        antidumping_status in {"applied", "manual_review"}
+        and any(item.get("measure_family") == "anti_dumping" for item in special_duties_details)
+    )
+    if overlap:
+        # The two legacy projections lack a shared source-bound measure identity.
+        # Neither choosing one nor adding both establishes lawful cumulation.
+        legacy_antidumping_candidate = {
+            "status": "needs_clarification", "source_kind": "legacy_hs_rates",
+            "applied": False, "legal_review_verified": False, "amount": None,
+            "rate_type": antidumping_type, "rate_value": antidumping_value,
+            "origin_country_scope": antidumping_countries,
+            "condition": antidumping_condition,
+            "source_revision": getattr(rate, "source_revision", "") or "",
+            "source_url": getattr(rate, "source_url", "") or "",
+            "effective_from": getattr(rate, "valid_from", "") or "",
+            "effective_to": getattr(rate, "valid_to", "") or "",
+            "review_reasons": ["legacy_antidumping_overlap_unverified"],
+        }
+        for item in special_duties_details:
+            if item.get("measure_family") == "anti_dumping":
+                item["review_reasons"].append("legacy_antidumping_overlap_unverified")
+                item.update(status="needs_clarification", calculation_available=False,
+                            amount=None, warning=LEGACY_ANTIDUMPING_OVERLAP_REASON)
+        special_duties_amount = _sum_amounts(*(
+            item["amount"] for item in special_duties_details if item.get("calculation_available")
+        ))
+        antidumping = 0.0  # Incomplete provisional subtotal, never a confirmed zero liability.
+        antidumping_status = "manual_review"
+        antidumping_reason = LEGACY_ANTIDUMPING_OVERLAP_REASON
     special_duty_review_required = any(
         item.get("status") == "needs_clarification" for item in special_duties_details
     )
@@ -989,6 +1026,8 @@ def compute_payments(payload: dict[str, Any]) -> dict[str, Any]:
         "sources": applied_sources,
         "tnved_context": tnved_context,
         "special_duties": special_duties_details,
+        **({"legacy_antidumping_candidate": legacy_antidumping_candidate}
+           if legacy_antidumping_candidate is not None else {}),
         "special_duties_amount": _round2(special_duties_amount),
         "special_duties_warning": special_duties_warning,
         "geo": geo_meta,

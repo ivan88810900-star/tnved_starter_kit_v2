@@ -76,6 +76,12 @@ def test_legacy_and_structured_antidumping_are_not_assumed_cumulative(remedies, 
     assert candidate["regulatory_act"] == "Synthetic remedy fixture"
     assert result["auto_detected"]["antidumping_value"] == legacy_value
     assert result["auto_detected"]["antidumping_countries"] == "CN"
+    legacy = result["legacy_antidumping_candidate"]
+    assert legacy["rate_value"] == legacy_value and legacy["origin_country_scope"] == "CN"
+    assert legacy["source_revision"] == "test"
+    assert legacy["amount"] is None and legacy["applied"] is False
+    assert legacy["legal_review_verified"] is False
+    assert legacy["status"] == "needs_clarification"
     quote = quotes.build_payment_quote(payload())
     lines = {line.code: line for line in quote.line_items}
     assert lines["antidumping"].amount_rub is None
