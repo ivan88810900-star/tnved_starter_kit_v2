@@ -10,8 +10,13 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
 from app.db import Base
-from app.models.core import HsRate, SourceStatus, SyncLog
-from app.models.tnved import Chapter, Commodity, HsDutyRule, Section
+from app.models.core import (
+    CountryRisk, CustomsCalculationHistory, GeoSpecialDuty, HsRate, IngestedDocument,
+    NonTariffRule, NormativeNote, SourceStatus, SyncLog, TnvedEntry, TnvedEntryEmbedding, TrTsAct,
+)
+from app.models.tnved import (
+    Chapter, Commodity, CountryTariffPreference, HsDutyRule, Section, SpecialDuty, VatPreference,
+)
 from app.services.duty_rules_backfill import (
     _backfill_fixture_duty_rules,
     backfill_duty_rules_from_hs_rates,
@@ -27,7 +32,16 @@ class IsolatedDutyFixture(unittest.TestCase):
         @event.listens_for(self.engine, "connect")
         def foreign_keys(connection, _):
             connection.execute("PRAGMA foreign_keys=ON")
-        Base.metadata.create_all(self.engine)
+        # Explicit duty/read dependencies: do not initialize unrelated global
+        # metadata (CountrySpecificRule currently declares duplicate indexes).
+        Base.metadata.create_all(self.engine, tables=[
+            model.__table__ for model in (
+                Section, Chapter, Commodity, HsRate, HsDutyRule, SourceStatus, SyncLog,
+                CountryRisk, GeoSpecialDuty, CountryTariffPreference, SpecialDuty, VatPreference,
+                NonTariffRule, TnvedEntry, NormativeNote, TrTsAct, IngestedDocument,
+                TnvedEntryEmbedding, CustomsCalculationHistory,
+            )
+        ])
         self.sessions = sessionmaker(bind=self.engine)
         self.stack = ExitStack()
         self.addCleanup(self.engine.dispose)
