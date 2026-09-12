@@ -64,10 +64,20 @@ jobs:
             --state "$RATE_CAPTURE_ROOT/observed-state.json" \
             --output "$RATE_CAPTURE_ROOT/report.json" \
             > "$RATE_CAPTURE_ROOT/stdout.json"
+      - name: Verify retained bytes and discover pagination links without fetching
+        id: inspect
+        if: ${{ always() && steps.prepare.outcome == 'success' }}
+        run: |
+          umask 077
+          python scripts/inspect_observed_source_capture.py \
+            --store-root "$RATE_CAPTURE_ROOT/store" \
+            --report "$RATE_CAPTURE_ROOT/report.json" \
+            --output "$RATE_CAPTURE_ROOT/inspection.json"
       - name: Record execution boundary and package retained originals
         if: ${{ always() && steps.prepare.outcome == 'success' }}
         env:
           CAPTURE_OUTCOME: ${{ steps.acquire.outcome }}
+          INSPECTION_OUTCOME: ${{ steps.inspect.outcome }}
           EVIDENCE_COMMIT: ${{ github.sha }}
           EVIDENCE_RUN_ID: ${{ github.run_id }}
         run: |
@@ -85,6 +95,7 @@ jobs:
               "commit_sha": os.environ["EVIDENCE_COMMIT"],
               "run_id": os.environ["EVIDENCE_RUN_ID"],
               "capture_outcome": os.environ["CAPTURE_OUTCOME"],
+              "inspection_outcome": os.environ["INSPECTION_OUTCOME"],
               "selected_monitor_ids": [
                   "review_ad30_completion_notice_pdf",
                   "review_ad30_decision121_2026_page",
@@ -120,6 +131,7 @@ jobs:
           name: official-rate-originals-${{ github.run_id }}
           path: |
             ${{ runner.temp }}/official-rate-originals/report.json
+            ${{ runner.temp }}/official-rate-originals/inspection.json
             ${{ runner.temp }}/official-rate-originals/observed-state.json
             ${{ runner.temp }}/official-rate-originals/workflow-status.json
             ${{ runner.temp }}/official-rate-originals/objects.tar.gz
