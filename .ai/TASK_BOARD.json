@@ -74,7 +74,7 @@
     }
   ],
   "max_concurrent_subagents": 3,
-  "revision": 87,
+  "revision": 89,
   "runs": [
     {
       "head_sha": null,
@@ -232,9 +232,9 @@
       "run_id": "a2d1005612de4cefbaaf597033709fff",
       "session_id": "/root/a5_ad30_qa",
       "started_at": "2026-09-12T22:07:40.872603+00:00",
-      "status": "RUNNING",
+      "status": "FINISHED",
       "task_id": "TARIFF-AD30-REVIEW-CANDIDATE-001",
-      "updated_at": "2026-09-12T22:07:40.872615+00:00"
+      "updated_at": "2026-09-12T22:09:10.259481+00:00"
     }
   ],
   "schema_version": 1,
@@ -570,7 +570,28 @@
       "goal": "Assemble a bounded source-fact review candidate for the retained Decision 12 -> 4 -> 121 chain, binding exact product text, producer rows, printed codes, dates and provenance while explicitly preserving incomplete amendment coverage and making no legal applicability, rate admission, promotion, production or enforcement claim.",
       "id": "TARIFF-AD30-REVIEW-CANDIDATE-001",
       "owner": "A3",
-      "qa": null,
+      "qa": {
+        "commands": [
+          {
+            "command": "A5 exact Git scope, HEAD/tree, merge-base and one-owned-file diff verification",
+            "exit_code": 0,
+            "output": "PASS: clean exact ca664142/e008c16; base and merge-base 1c0272a; sole changed file AD30_CHAIN_REVIEW_CANDIDATE.md; diff-check clean."
+          },
+          {
+            "command": "A5 embedded positive replay and fail-closed cardinality/missing-jq negative controls",
+            "exit_code": 0,
+            "output": "PASS: positive 5/5, 33/33, 23/23, 8/8; cardinality negative rc1 and missing-jq negative rc127, both zero PASS lines."
+          },
+          {
+            "command": "A5 independent evidence reconstruction and substantive source-boundary review",
+            "exit_code": 0,
+            "output": "PASS: independent pointers 8/8, bindings 33/33, source literals 23/23, dates 8/8; 16/16 normalized boundary assertions; no material finding. No binary/PDF replay claimed."
+          }
+        ],
+        "head_sha": "ca664142de9c7c0568ef03bd854fa60c74025fee",
+        "reviewer_session_id": "/root/a5_ad30_qa",
+        "status": "PASSED"
+      },
       "refs": {
         "base_sha": "1c0272a34cbcbb3b99d6f32c86d86949bc0adc06",
         "head_sha": "ca664142de9c7c0568ef03bd854fa60c74025fee",
@@ -584,7 +605,7 @@
         "admission"
       ],
       "risk": "high",
-      "status": "IMPLEMENTED",
+      "status": "QA_PASSED",
       "tests": {
         "commands": [
           {
@@ -600,9 +621,9 @@
         ],
         "head_sha": "ca664142de9c7c0568ef03bd854fa60c74025fee"
       },
-      "updated_at": "2026-09-12T22:07:40.872617+00:00",
+      "updated_at": "2026-09-12T22:09:10.279809+00:00",
       "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-ad30-review-candidate-001-99f4e3fb32"
     }
   ],
-  "updated_at": "2026-09-12T22:07:40.872772+00:00"
+  "updated_at": "2026-09-12T22:09:10.280021+00:00"
 }
