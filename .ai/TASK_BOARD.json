@@ -76,7 +76,12 @@
       "head_sha": "ad4935e318d947276178e2f269d4ffe1051ea6cb",
       "id": "A0-A6-CONTRACT-REF-001",
       "reporter": "A0",
-      "status": "CONFIRMED",
+      "resolution": {
+        "evidence": "A0 independently ran 19 scoped and 65 full orchestration tests and built the formerly blocked exact product candidate packet with immutable contract commit/blob provenance; unavailable A6 was then reported only for the two missing configuration names.",
+        "head_sha": "57ac89cc059fb2c3155003ba98431603d05f5200",
+        "validator": "A0"
+      },
+      "status": "RESOLVED",
       "summary": "Checked A6 packet builder requires .ai/orchestration/CONTRACT.md in candidate commits; product base 1c0272a and published AD30 head 5bff452 contain no orchestration contract, so audit build returns BLOCKED before configuration availability can be verified.",
       "task_id": "TARIFF-A6-CROSS-BRANCH-CONTRACT-001",
       "validation": {
@@ -87,7 +92,7 @@
     }
   ],
   "max_concurrent_subagents": 3,
-  "revision": 101,
+  "revision": 105,
   "runs": [
     {
       "head_sha": null,
@@ -265,9 +270,19 @@
       "run_id": "98a8a564d54d420d90b850eb29a1d902",
       "session_id": "/root/a4_a6_contract_fix",
       "started_at": "2026-09-12T22:16:11.275575+00:00",
+      "status": "FINISHED",
+      "task_id": "TARIFF-A6-CROSS-BRANCH-CONTRACT-001",
+      "updated_at": "2026-09-12T22:22:07.946550+00:00"
+    },
+    {
+      "head_sha": "57ac89cc059fb2c3155003ba98431603d05f5200",
+      "role": "A5",
+      "run_id": "49f75598acb44b80974ddf0907607c0b",
+      "session_id": "/root/a5_ad30_qa",
+      "started_at": "2026-09-12T22:22:23.828192+00:00",
       "status": "RUNNING",
       "task_id": "TARIFF-A6-CROSS-BRANCH-CONTRACT-001",
-      "updated_at": "2026-09-12T22:16:11.275583+00:00"
+      "updated_at": "2026-09-12T22:22:23.828207+00:00"
     }
   ],
   "schema_version": 1,
@@ -684,18 +699,42 @@
       "qa": null,
       "refs": {
         "base_sha": "ad4935e318d947276178e2f269d4ffe1051ea6cb",
-        "head_sha": null,
+        "head_sha": "57ac89cc059fb2c3155003ba98431603d05f5200",
         "pr": null
       },
       "required_checks": [
         "offline-safety"
       ],
       "risk": "high",
-      "status": "IN_PROGRESS",
-      "tests": [],
-      "updated_at": "2026-09-12T22:16:11.275585+00:00",
+      "status": "IMPLEMENTED",
+      "tests": {
+        "commands": [
+          {
+            "command": "python -m unittest discover -s tests/agent_orchestration -p test_audit.py -v",
+            "exit_code": 0,
+            "output": "PASS: 19/19 audit adapter tests including explicit contract ref, tamper/stale/missing/secret/incomplete-diff negatives."
+          },
+          {
+            "command": "python -m unittest discover -s tests/agent_orchestration -p test_*.py",
+            "exit_code": 0,
+            "output": "PASS: 65/65 full orchestration tests."
+          },
+          {
+            "command": "python -m compileall -q tools/tariff_agents tests/agent_orchestration; git diff --check base..HEAD",
+            "exit_code": 0,
+            "output": "PASS: compileall and diff check."
+          },
+          {
+            "command": "A0 real cross-branch packet build for product 1c0272a..5bff452 with contract-ref ad4935",
+            "exit_code": 0,
+            "output": "PASS: schema v2 packet e0129b90...; candidate one-file diff complete; contract commit/blob/hash bound. Adapter run returned explicit NOT_CONFIGURED receipt with missing variable names only (rc2 expected)."
+          }
+        ],
+        "head_sha": "57ac89cc059fb2c3155003ba98431603d05f5200"
+      },
+      "updated_at": "2026-09-12T22:22:23.828209+00:00",
       "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-a6-cross-branch-contract-001-a5c4916ca6"
     }
   ],
-  "updated_at": "2026-09-12T22:16:11.275758+00:00"
+  "updated_at": "2026-09-12T22:22:23.828426+00:00"
 }
