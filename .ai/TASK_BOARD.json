@@ -128,7 +128,7 @@
     }
   ],
   "max_concurrent_subagents": 3,
-  "revision": 119,
+  "revision": 122,
   "runs": [
     {
       "head_sha": null,
@@ -339,6 +339,16 @@
       "status": "FINISHED",
       "task_id": "TARIFF-A6-CROSS-BRANCH-CONTRACT-001",
       "updated_at": "2026-09-12T22:35:09.733642+00:00"
+    },
+    {
+      "head_sha": "c39248672a6299b64bc2db5637e2027579a4624e",
+      "role": "A5",
+      "run_id": "2b49b4f9c34e46fd984a948a8c29fad8",
+      "session_id": "/root/a5_ad30_qa",
+      "started_at": "2026-09-12T22:37:17.885432+00:00",
+      "status": "RUNNING",
+      "task_id": "TARIFF-A6-CROSS-BRANCH-CONTRACT-001",
+      "updated_at": "2026-09-12T22:37:17.885438+00:00"
     }
   ],
   "schema_version": 1,
@@ -752,66 +762,44 @@
       "goal": "Make the checked A6 audit adapter support product candidate commits that intentionally do not contain orchestration files by binding an explicitly selected immutable architecture contract blob/ref into the packet; preserve complete changed-path coverage, tamper detection, secret scanning, exact candidate base/head binding, and fail-closed behavior.",
       "id": "TARIFF-A6-CROSS-BRANCH-CONTRACT-001",
       "owner": "A4",
-      "qa": {
-        "commands": [
-          {
-            "command": "Fresh A5 exact scope/tree and independent secret-ref/packet-metadata negative reproductions",
-            "exit_code": 0,
-            "output": "PASS: exact clean c0bccfd/2c1f012; secret-shaped and known-credential refs blocked before _commit/network; injected sensitive packet metadata blocked."
-          },
-          {
-            "command": "Fresh A5 contract finding line-bound and immutable evidence security review",
-            "exit_code": 0,
-            "output": "PASS: deleted base line accepted/out-of-range blocked; explicit-ref bounds correct; commit/blob/hash/text tamper, stale/missing ref, incomplete diff, secret/path and ambient Git negatives passed."
-          },
-          {
-            "command": "Fresh A5 scoped/full tests and real product packet replay",
-            "exit_code": 0,
-            "output": "PASS: 23/23 audit, 69/69 orchestration, compile/diff clean; exact product packet e0129b90; actual A6 UNAVAILABLE due named missing config, no outbound audit/secret exposure."
-          }
-        ],
-        "head_sha": "c0bccfd03def59e5f20826c47d513482618cab0b",
-        "reviewer_session_id": "/root/a5_ad30_qa",
-        "status": "PASSED"
-      },
+      "qa": null,
       "refs": {
         "base_sha": "ad4935e318d947276178e2f269d4ffe1051ea6cb",
-        "head_sha": "c0bccfd03def59e5f20826c47d513482618cab0b",
-        "pr": null
+        "head_sha": "c39248672a6299b64bc2db5637e2027579a4624e",
+        "pr": 193,
+        "publication_mapping": {
+          "identical_trees_verified": true,
+          "local_base_sha": "ad4935e318d947276178e2f269d4ffe1051ea6cb",
+          "local_head_sha": "c0bccfd03def59e5f20826c47d513482618cab0b",
+          "local_tree_sha": "2c1f012c76b6eda13883f2d207c1d74ffc0d9c50",
+          "published_base_sha": "ad4935e318d947276178e2f269d4ffe1051ea6cb",
+          "published_head_sha": "c39248672a6299b64bc2db5637e2027579a4624e",
+          "published_tree_sha": "2c1f012c76b6eda13883f2d207c1d74ffc0d9c50"
+        }
       },
       "required_checks": [
         "offline-safety"
       ],
       "risk": "high",
-      "status": "QA_PASSED",
+      "status": "IMPLEMENTED",
       "tests": {
         "commands": [
           {
-            "command": "python -m unittest discover -s tests/agent_orchestration -p test_audit.py -v",
+            "command": "Published full-tree identity plus A0 scoped/full adapter verification",
             "exit_code": 0,
-            "output": "PASS: 23/23 including secret-shaped/known credential refs, pre-network block, candidate-head deleted-line bounds, explicit-ref bounds and persisted-v1 fail-closed."
+            "output": "PASS: published tree 2c1f012 exactly equals executed local tree; 23/23 audit, 69/69 orchestration, compile/diff clean."
           },
           {
-            "command": "python -m tools.tariff_agents.verify",
+            "command": "A0 exact product cross-branch packet replay through repaired adapter",
             "exit_code": 0,
-            "output": "PASS: 69/69 full orchestration tests."
-          },
-          {
-            "command": "python -m compileall -q tools/tariff_agents tests/agent_orchestration; git diff --check; clean owned scope",
-            "exit_code": 0,
-            "output": "PASS: compile/diff/clean; exactly audit.py and test_audit.py."
-          },
-          {
-            "command": "A0 exact product cross-branch packet build/run using immutable contract ref",
-            "exit_code": 0,
-            "output": "PASS: packet e0129b90 exact one-file candidate diff and contract commit/blob/hash; run returned UNAVAILABLE only for missing named configuration, rc2 expected, no secret values exposed."
+            "output": "PASS: exact packet e0129b90; candidate and immutable contract evidence bound; safe run UNAVAILABLE only for missing named A6 configuration."
           }
         ],
-        "head_sha": "c0bccfd03def59e5f20826c47d513482618cab0b"
+        "head_sha": "c39248672a6299b64bc2db5637e2027579a4624e"
       },
-      "updated_at": "2026-09-12T22:35:09.759933+00:00",
+      "updated_at": "2026-09-12T22:37:17.885441+00:00",
       "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-a6-cross-branch-contract-001-a5c4916ca6"
     }
   ],
-  "updated_at": "2026-09-12T22:35:09.760262+00:00"
+  "updated_at": "2026-09-12T22:37:17.885623+00:00"
 }
