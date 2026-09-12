@@ -271,7 +271,7 @@ async def sources_vat_dry_run() -> JSONResponse:
 async def sources_vat_apply(
     x_admin_token: str | None = Header(None, alias="X-Admin-Token"),
 ) -> JSONResponse:
-    """Guarded apply VAT из локального official EEC/ETT bundle."""
+    """Проверить legacy VAT-кандидат; применение требует manifest-bound review."""
     require_admin_token(x_admin_token)
     data = run_vat_apply()
     _clear_preview_after_source_write(data)
@@ -375,7 +375,7 @@ async def sources_sync_tamdoc(
     max_docs: int = Query(12, ge=1, le=200, description="Сколько документов tamdoc обработать за запуск"),
     x_admin_token: str | None = Header(None, alias="X-Admin-Token"),
 ) -> JSONResponse:
-    """Синхронизация нормативки с alta.ru/tamdoc (автопарсинг в БД)."""
+    """Собрать коммерческие кандидаты для проверки без применения нормативных правил."""
     require_admin_token(x_admin_token)
     data = await sync_tamdoc_documents(max_docs=max_docs)
     _clear_preview_after_source_write(data)
@@ -385,7 +385,7 @@ async def sources_sync_tamdoc(
 @router.post("/sync/tamdoc/targeted")
 async def sources_sync_tamdoc_targeted(
     max_docs: int = Query(60, ge=1, le=500, description="Сколько документов tamdoc обработать за запуск"),
-    staging_only: bool = Query(False, description="Только собрать кандидатов в staging, без записи в боевые таблицы"),
+    staging_only: bool = Query(False, description="Параметр совместимости: сбор всегда ограничен кандидатами для проверки"),
     x_admin_token: str | None = Header(None, alias="X-Admin-Token"),
 ) -> JSONResponse:
     """Целевой парсинг alta.ru/tamdoc для НДС-льгот и спецпошлин."""
@@ -409,7 +409,7 @@ async def sources_sync_tamdoc_candidates(
 @router.post("/sync/tamdoc/candidates/{candidate_id}/approve")
 async def sources_sync_tamdoc_candidate_approve(
     candidate_id: int,
-    include_non_tariff: bool = Query(False, description="Добавлять ли также generic-запись в non_tariff_measures"),
+    include_non_tariff: bool = Query(False, description="Параметр совместимости; неподтверждённые меры не применяются"),
     x_admin_token: str | None = Header(None, alias="X-Admin-Token"),
 ) -> JSONResponse:
     require_admin_token(x_admin_token)
@@ -438,7 +438,7 @@ async def sources_sync_tamdoc_candidate_reject(
 async def sources_sync_tamdoc_candidates_approve_batch(
     limit: int = Query(100, ge=1, le=1000),
     status: str = Query("pending", description="Какой статус кандидатов брать в батч"),
-    include_non_tariff: bool = Query(False, description="Добавлять ли также generic-запись в non_tariff_measures"),
+    include_non_tariff: bool = Query(False, description="Параметр совместимости; неподтверждённые меры не применяются"),
     x_admin_token: str | None = Header(None, alias="X-Admin-Token"),
 ) -> JSONResponse:
     require_admin_token(x_admin_token)
@@ -456,8 +456,8 @@ async def sources_sync_tamdoc_archive(
     archive_dir: Optional[str] = Query(None, description="Путь к локальной папке с документами (.html/.txt/.md)"),
     max_files: int = Query(500, ge=1, le=10000),
     staging_only: bool = Query(True, description="Только staging-кандидаты"),
-    include_non_tariff: bool = Query(True, description="Импортировать найденные нетарифные строки в БД"),
-    auto_approve_pending: bool = Query(False, description="Авто-апрув всех pending-кандидатов после прохода"),
+    include_non_tariff: bool = Query(True, description="Сохранить найденные нетарифные строки только как кандидаты для проверки"),
+    auto_approve_pending: bool = Query(False, description="Параметр совместимости; автоматическое утверждение не разрешено"),
     x_admin_token: str | None = Header(None, alias="X-Admin-Token"),
 ) -> JSONResponse:
     require_admin_token(x_admin_token)

@@ -314,6 +314,10 @@ jobs:
           tests/test_tws_payment_admission.py
           tests/test_observed_source_review_capture.py
           tests/test_ntm_legacy_review_boundary.py
+          tests/test_duty_rules_backfill.py
+          tests/test_legacy_rate_maintenance_admission.py
+          tests/test_payment_admission_redteam.py
+          tests/test_ntm_history_redteam.py
           tests/test_payment_engine.py
           tests/test_special_duties.py
           tests/test_ntm_noise_classifier.py

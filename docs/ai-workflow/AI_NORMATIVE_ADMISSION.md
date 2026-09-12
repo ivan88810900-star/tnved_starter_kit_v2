@@ -1,6 +1,7 @@
 # AI normative extraction admission
 
-Status: reconstructed for independent review and fresh CI. This does not complete
+Status: recovered implementation has fresh passing CI; independent A5 review is
+pending. This does not complete
 official-source coverage or authorize rates, obligations, prohibitions or legal
 applicability. A0 owns integration into PR #187.
 
@@ -98,6 +99,54 @@ errors exit 1. Existing `--reset-checkpoints` arguments now return a non-mutatin
 block before DB access, preserving historical review/extraction evidence.
 Bulk `--list-only` creates neither an input directory nor a job.
 
+## Bounded read-only audit of the legacy invoice VAT output
+
+This audit read GitHub files pinned to
+`22473e172c042f08cd5b72aece5dd221c54bdc9d`, based on actual feature HEAD
+`22a7df5590a7442d943d89af285feb1228e80938`. It did not execute the invoice
+pipeline or a model/provider call: the disconnected local executor remained
+unavailable. The following is a verified call graph, not runtime reproduction
+of a false grounded payment or proof that every possible consumer is safe.
+
+The audit covered all 29 Python API files, the current invoice/document,
+classification and assistant consumers, and all 10 feature workflows. In the
+read current API paths, the model VAT override was not reached:
+
+- `/api/invoice/upload` and `/api/invoice/calculate-batch` call
+  `invoice_batch_service.calculate_line_payments`, which passes a whitelist of
+  code, value, currency, country, weight and vehicle attributes to
+  `payment_engine_compat.compute_payments`. It does not pass
+  `vat_rate_final` or `vat_import_override`.
+- `/api/v1/documents/analyze` uses `document_invoice_analyze._normalize_items`
+  to return name, suggested HS code, price, net weight and currency.
+  `CalculatorInvoiceAnalyzeSection.tsx` passes those commercial attributes to
+  calculator prefill; it supplies no inferred tax rate.
+- `/api/classify/image` uses `smart_classifier`. The legacy
+  `classify_enhancements.classify_by_image_base64` helper is not the mounted
+  image route. Imports of `invoice_analyzer` in `payment_engine` and
+  `packing_list_parser` use the lexical duty parser and image extraction
+  helper, respectively, not the VAT expertise/override path.
+
+A concrete legacy diagnostic/export path does remain outside this admission
+correction. `scripts/test_invoice_parsing.py` lines 353-365 passes the model's
+`vat_rate_final` to `enrich_with_customs_data(..., vat_import_override=...)`.
+In `invoice_analyzer.py`, lines 4145-4163 obtain that value and its explanation
+from `gemini_vat_expertise_preferential`; lines 4589-4590 override the VAT rate
+and lines 4681-4688 calculate legacy payment amounts. The exporter writes
+`vat_rate`, `vat_amount`, `total_tax_pay`, and model `vat_logic` under the
+heading `ОБОСНОВАНИЕ_НДС` (lines 488-498), then emits
+`data/processed_invoices/processed_*.xlsx` (lines 555-561).
+`scripts/vat_22_stress_validate.py` lines 136-149 has the same explicit
+model-to-override path.
+
+The separately attached `payment_profile` at invoice analyzer lines 4690-4710
+does not replace those legacy amounts, and that exporter does not export the
+profile's status or evidence. These diagnostic outputs cannot establish reviewed
+VAT applicability or serve as grounded payment facts. The current writer
+admission gate does not remove this residual output path. No runtime repro or
+legal coverage claim is made for it; changing this larger service/export contract
+requires a separately scoped correction and independent review.
+
 ## Verification gate
 
 The dedicated A5-owned `admission-agent-qa.yml` executes these explicit files on
@@ -112,7 +161,27 @@ fresh disposable databases, with schedulers, enforcement and provider keys off:
   dangling-link rejection, FIFO replacement without blocking, size limits and
   source mutations.
 
-All provider/network responses in tests are mocked. Fresh CI and independent A5
-review are required before integration; reconstructed definitions are not a test
-result. No positive legal approval, flag activation, application DB migration,
-merge, production deployment or source acceptance is included.
+The reconstructed code was published as
+`d0b524398ea5f6341f559e61fc539f6a26a1474d` on
+`agent/classification-ai`, with parent `22473e172c042f08cd5b72aece5dd221c54bdc9d`.
+Fresh GitHub Actions verified that exact code commit:
+
+- [Admission agent QA run 34715417802](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/34715417802):
+  **65 passed, 2 dependency deprecation warnings**, in 2.61 seconds, job
+  `103611662585`, on Python 3.11.16 with a disposable database.
+- [Standard CI run 34715417792](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/34715417792):
+  backend job `103611693027` reported **4437 passed, 2 skipped, 2 warnings,
+  73 subtests passed**, in 226.49 seconds. Frontend tests/types/build, local
+  staging images/smoke, and scheduled-workflow contracts succeeded. Official ETT
+  candidate acquisition was skipped by the workflow contract.
+
+These are fresh results for the recovered tree, not the disconnected executor's
+old local test evidence. Provider/network responses in the two focused AI
+admission test modules are mocked. A5 independently approved this bounded admission/snapshot scope after its
+83 hostile payment/Tamdoc/AI cases and 43-request real Uvicorn smoke passed
+on QA commit bbe96d8 (run 34715761659). That run also reported 12 separate
+NTM fixture setup errors, so it is not described as a wholly successful QA run. This documentation checkpoint changes no feature code; the CI
+evidence above is attached to the explicitly named code commit.
+
+No positive legal approval, flag activation, application DB migration, merge,
+production deployment or source acceptance is included.

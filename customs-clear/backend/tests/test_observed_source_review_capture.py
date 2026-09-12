@@ -242,3 +242,204 @@ def test_workflow_exact_nine_target_cli_and_packaged_scope(tmp_path, capsys):
     assert report["selected_review_only_source_ids"] == selected
     assert report["accepted_source_ids"] == []
     assert json.loads((tmp_path / "observed-state.json").read_text())["sources"] == {}
+
+
+def _capture_for_inspection(tmp_path, *, page_body=None):
+    store = LocalArtifactStore(tmp_path / "objects")
+
+    def respond(request):
+        is_pdf = request.url.path.endswith(".pdf")
+        body = PDF if is_pdf else HTML
+        if page_body is not None and "PAGEN_1" in request.url.params:
+            body = page_body
+        return httpx.Response(
+            200, content=body,
+            headers={"content-type": "application/pdf" if is_pdf else "text/html"},
+        )
+
+    client = httpx.Client(transport=httpx.MockTransport(respond))
+    with patch.object(monitor.httpx, "Client", return_value=client):
+        report = monitor.monitor_sources(
+            source_ids=list(monitor.REVIEW_ONLY_SOURCES), original_store=store,
+            capture_rejected_originals=True,
+        )
+    return report
+
+
+def _pagination_fixture():
+    return (
+        '<html><head><title>Fixture official index</title></head><body>captcha'
+        '<a href="/documents/463/fixture-12/">Fixture Решение № 12 от 9 февраля 2021 года</a>'
+        '<a href="/upload/report.pdf?signature=private-fixture-secret">Fixture PDF</a>'
+        '<a href="https://untrusted.example/documents/12/">Untrusted fixture</a>'
+        '<a href="javascript:alert(1)">Ignored fixture</a>'
+        + " filler " * 25 + "</body></html>"
+    ).encode("utf-8")
+
+
+def test_read_only_inspection_verifies_all_receipts_without_network_or_store_writes(tmp_path, capsys):
+    from scripts import inspect_observed_source_capture as inspector
+
+    report = _capture_for_inspection(tmp_path)
+    source = tmp_path / "report.json"
+    source.write_text(json.dumps(report))
+    output = tmp_path / "inspection.json"
+    before = {path.name: path.read_bytes() for path in (tmp_path / "objects").iterdir()}
+    with patch.object(monitor.httpx, "Client") as client, patch.object(LocalArtifactStore, "put") as put:
+        assert inspector.main([
+            "--store-root", str(tmp_path / "objects"),
+            "--report", str(source), "--output", str(output),
+        ]) == 0
+    client.assert_not_called()
+    put.assert_not_called()
+    after = {path.name: path.read_bytes() for path in (tmp_path / "objects").iterdir()}
+    assert before == after
+    assert json.loads(source.read_text()) == report
+    result = json.loads(output.read_text())
+    assert result["original_count"] == 9
+    assert result["quarantined_count"] == result["unretained_count"] == 0
+    assert result["all_selected_bodies_retained"] is result["original_capture_complete"] is True
+    assert result["input_report_sha256"] == hashlib.sha256(source.read_bytes()).hexdigest()
+    assert result["legal_review_verified"] is result["can_promote"] is False
+    assert "verified_retained_evidence" in capsys.readouterr().out
+
+
+def test_quarantined_pagination_links_are_discovery_only_with_exact_parent_hashes(tmp_path, capsys):
+    from scripts import inspect_observed_source_capture as inspector
+
+    report = _capture_for_inspection(tmp_path, page_body=_pagination_fixture())
+    source = tmp_path / "report.json"
+    source.write_text(json.dumps(report))
+    output = tmp_path / "inspection.json"
+    assert inspector.main([
+        "--store-root", str(tmp_path / "objects"),
+        "--report", str(source), "--output", str(output),
+    ]) == 0
+    result = json.loads(output.read_text())
+    assert result["original_count"] == 5 and result["quarantined_count"] == 4
+    assert result["original_capture_complete"] is False
+    assert result["all_selected_bodies_retained"] is True
+    for item in result["sources"]:
+        if not item["source_id"].startswith("review_remedy_index_page_"):
+            continue
+        assert item["capture_status"] == "quarantined_content_rejected"
+        assert item["monitor_ok"] is False
+        assert item["body_sha256"] == hashlib.sha256(_pagination_fixture()).hexdigest()
+        discovery = item["pagination_discovery"]
+        assert discovery["discovery_only"] is True and discovery["links_truncated"] is False
+        candidates = discovery["links"]
+        assert len(candidates) == 2
+        assert candidates[0]["href_observed"] == "/documents/463/fixture-12/"
+        assert candidates[0]["decision12_date_candidate"] is True
+        assert candidates[0]["discovery_only"] is True
+        assert candidates[0]["legal_review_verified"] is False
+        assert candidates[1]["href_observed"] is None
+        assert candidates[1]["resolved"]["query_redacted"] is True
+        assert candidates[1]["resolved"]["url"] == "https://docs.eaeunion.org/upload/report.pdf"
+    rendered = output.read_text() + capsys.readouterr().out
+    assert "private-fixture-secret" not in rendered
+    assert "untrusted.example" not in rendered
+
+
+@pytest.mark.parametrize("mutation", [
+    "duplicate_id", "wrong_receipt", "body_sha", "legal_claim",
+    "claimed_complete", "quarantine_as_original", "report_count",
+])
+def test_inspection_rejects_unbound_or_relabelled_evidence(tmp_path, mutation):
+    from app.services.ett_artifacts import ArtifactIntegrityError
+    from scripts import inspect_observed_source_capture as inspector
+
+    report = _capture_for_inspection(tmp_path, page_body=_pagination_fixture())
+    if mutation == "duplicate_id":
+        report["sources"][-1]["source_id"] = report["sources"][0]["source_id"]
+    elif mutation == "wrong_receipt":
+        report["sources"][0]["original_capture"] = report["sources"][1]["original_capture"]
+    elif mutation == "body_sha":
+        report["sources"][0]["original_capture"]["original_body_sha256"] = "0" * 64
+    elif mutation == "legal_claim":
+        report["legal_review_verified"] = True
+    elif mutation == "claimed_complete":
+        report["original_capture_complete"] = True
+    elif mutation == "quarantine_as_original":
+        row = report["sources"][-1]
+        row["original_capture"] = row.pop("rejected_original_capture")
+    else:
+        report["original_capture_count"] = True
+    with pytest.raises(ArtifactIntegrityError):
+        inspector.inspect_capture(LocalArtifactStore(tmp_path / "objects", create=False), report)
+
+
+def test_inspection_reports_unretained_transport_failure_without_claiming_completeness(tmp_path):
+    from scripts import inspect_observed_source_capture as inspector
+
+    report = _capture_for_inspection(tmp_path)
+    row = report["sources"][-1]
+    row["original_capture"] = None
+    row["ok"] = False
+    report["original_capture_count"] -= 1
+    report["original_capture_complete"] = False
+    result = inspector.inspect_capture(LocalArtifactStore(tmp_path / "objects", create=False), report)
+    assert result["original_count"] == 8 and result["unretained_count"] == 1
+    assert result["all_selected_bodies_retained"] is result["original_capture_complete"] is False
+    assert result["sources"][-1]["capture_status"] == "not_retained"
+
+
+def test_corrupt_cas_inspection_fails_closed_and_emits_only_sanitized_error(tmp_path, capsys):
+    from scripts import inspect_observed_source_capture as inspector
+
+    report = _capture_for_inspection(tmp_path)
+    body_sha = report["sources"][0]["original_capture"]["original_body_sha256"]
+    blob = tmp_path / "objects" / (body_sha + ".blob")
+    blob.chmod(0o600)
+    blob.write_bytes(b"damaged bytes; signature=private-fixture-secret")
+    blob.chmod(0o400)
+    source = tmp_path / "report.json"
+    source.write_text(json.dumps(report))
+    output = tmp_path / "inspection.json"
+    assert inspector.main([
+        "--store-root", str(tmp_path / "objects"),
+        "--report", str(source), "--output", str(output),
+    ]) == 1
+    result = json.loads(output.read_text())
+    assert result["inspection_status"] == "unavailable"
+    assert "original_count" not in result and "sources" not in result
+    assert result["legal_review_verified"] is result["can_promote"] is False
+    assert "private-fixture-secret" not in output.read_text() + capsys.readouterr().out
+
+
+@pytest.mark.parametrize("target", ["input_report", "store"])
+def test_inspector_cannot_overwrite_input_or_store(tmp_path, target):
+    from scripts import inspect_observed_source_capture as inspector
+
+    report = _capture_for_inspection(tmp_path)
+    source = tmp_path / "report.json"
+    source.write_text(json.dumps(report))
+    output = source if target == "input_report" else tmp_path / "objects" / "output.json"
+    with pytest.raises(SystemExit) as exc:
+        inspector.main([
+            "--store-root", str(tmp_path / "objects"),
+            "--report", str(source), "--output", str(output),
+        ])
+    assert exc.value.code == 2
+    assert json.loads(source.read_text()) == report
+    assert not (tmp_path / "objects" / "output.json").exists()
+
+
+def test_workflow_inspects_existing_store_even_after_capture_failure_and_uploads_json():
+    workflow = yaml.load(
+        (ROOT / ".github/workflows/official-rate-source-capture.yml").read_text(),
+        Loader=yaml.BaseLoader,
+    )
+    steps = workflow["jobs"]["capture"]["steps"]
+    acquire_index = next(i for i, step in enumerate(steps) if step.get("id") == "acquire")
+    inspect_index = next(i for i, step in enumerate(steps) if step.get("id") == "inspect")
+    package_index = next(i for i, step in enumerate(steps) if "Record execution boundary" in step.get("name", ""))
+    assert acquire_index < inspect_index < package_index
+    step = steps[inspect_index]
+    assert step["if"] == "$" + "{{ always() && steps.prepare.outcome == 'success' }}"
+    assert "scripts/inspect_observed_source_capture.py" in step["run"]
+    assert '--store-root "$RATE_CAPTURE_ROOT/store"' in step["run"]
+    assert '--report "$RATE_CAPTURE_ROOT/report.json"' in step["run"]
+    assert '--output "$RATE_CAPTURE_ROOT/inspection.json"' in step["run"]
+    upload = next(step for step in steps if step.get("name") == "Upload temporary source evidence")
+    assert "$" + "{{ runner.temp }}/official-rate-originals/inspection.json" in upload["with"]["path"]

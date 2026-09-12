@@ -1,0 +1,55 @@
+{
+  "schema_version": 1,
+  "date": "2026-09-12",
+  "role": "A5 independent QA",
+  "repository": "ivan88810900-star/tnved_starter_kit_v2",
+  "status": "integration_verification_pending",
+  "candidate_commit": "68530dce424d5c16ea56fa1344715312c546d108",
+  "candidate_tree": "a5e8939c967f98f351b6fe4dc746d94a0bb61987",
+  "feature_inputs": {
+    "A0": "f47b880",
+    "A1": "d7881ad47e054c0e39db6ec27b7452f732891ea4",
+    "A2": "3335f808cff072e12ea4120cef72c9d1595cf86d",
+    "A3": "7e46713e839886ee121012cfb2941ebebfed1af3",
+    "A4": "d0b524398ea5f6341f559e61fc539f6a26a1474d"
+  },
+  "independent_tests": {
+    "payment_admission_cases_expected": 83,
+    "ntm_historical_cases_expected": 16,
+    "source_quarantine_cases": 4,
+    "live_http_requests_expected": 43,
+    "execution": "A5 fixture corrected; four country regressions added against old3335 reader before integrating c2fc39 correction."
+  },
+  "previous_fresh_proof": {
+    "source_qa_commit": "1d2619fb37cd822a1b13288d04bf1c5fb02365a3",
+    "source_qa_run": 34715016021,
+    "source_qa_result": "129 passed",
+    "source_normal_ci_run": 34715015985
+  },
+  "boundaries": {
+    "application_database_used": false,
+    "production_mutated": false,
+    "enforcement_enabled": false,
+    "external_ai_called": false,
+    "legal_review_verified": false,
+    "retention_attested": false,
+    "full_legal_coverage_claimed": false
+  },
+  "limitations": [
+    "This is admission-boundary QA, not a legal rate or NTM coverage audit.",
+    "A1 maintenance follow-up and A3 acquisition-inspection follow-up are outside this candidate.",
+    "Old executor-local counts are not proof for reconstructed trees."
+  ],
+  "first_reconstructed_run": {
+    "commit": "bbe96d8ae94bf29d7493b3a525d8e58fef7fe3e1",
+    "run_id": 34715761659,
+    "job_id": 103612598692,
+    "passed": 1657,
+    "skipped": 1,
+    "subtests_passed": 85,
+    "errors": 12,
+    "errors_scope": "Independent NTM test fixture omitted required tr_ts_act_code; no feature conclusion from those setup errors.",
+    "independent_payment_ai_wal_passed": 83,
+    "live_uvicorn_http_requests_passed": 43
+  }
+}

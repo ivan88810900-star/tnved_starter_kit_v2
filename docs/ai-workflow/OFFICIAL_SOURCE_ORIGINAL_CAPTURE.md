@@ -178,3 +178,33 @@ The implementation was reconstructed from immutable remote files after the local
 execution server disconnected. No local test result is claimed for this new
 nine-target checkpoint. Its focused tests, independent A5 review and fresh GitHub
 Actions must pass before integration and the next acquisition.
+
+
+### Read-only inspection of the selected nine-target capture
+
+The isolated workflow invokes `scripts/inspect_observed_source_capture.py`
+after acquisition, including a failed acquisition. It reuses the existing
+`LocalArtifactStore(create=False)` and the separate original/quarantine
+receipt verifiers; it does not fetch, put objects, accept baselines or access
+an application database. The original transport and content gates are unchanged.
+
+`inspection.json` binds the exact selected IDs and original URL hashes to
+verified receipts and body hashes. Original, quarantined and unretained counts
+are separate; retained quarantined bytes cannot satisfy original completeness.
+Malformed reports, switched receipts or corrupt CAS objects produce a sanitized
+unavailable result and a failed inspection step. The output must be a new file
+outside the CAS and distinct from its input report.
+
+The four pagination observations expose bounded official document/PDF anchors,
+their observed href hashes, normalized anchor text and parent receipt/body hashes.
+Anchor values are HTMLParser-decoded attributes, not asserted raw byte spelling.
+Anchor line numbers refer to the decoded captured HTML; normalized text and a
+date-pattern candidate flag are discovery aids, not legal facts or a validated
+Decision 12 match. Query/fragment-bearing hrefs are redacted and remain hash-bound.
+Untrusted hosts are omitted. At most 300 distinct links per page are emitted,
+with an explicit truncation indicator. Even a successful inspection leaves all
+legal approval, promotion and permanent-retention claims false.
+
+The JSON is included in the temporary source artifact. Compact source summaries
+and pagination discovery records are also printed into the same Actions job logs,
+so reading verified retained evidence does not require repeating the acquisition.
