@@ -141,6 +141,48 @@ class _BundleFixture:
             self._tmpdir.cleanup()
 
 
+
+def _store_isolated_fixture(*, rel_path: str, domain: str = "anti_dumping") -> dict:
+    """Explicit in-memory storage regression; never call/approve public admission."""
+    import importlib
+    from datetime import datetime, timezone
+
+    service = importlib.import_module(f"app.services.{domain}_ingestion")
+    # Enforce that this helper cannot touch a file-backed application DB.
+    with service.SessionLocal() as db:
+        assert db.get_bind().url.database == ":memory:"
+        before = (db.query(SourceStatus).count(), db.query(SyncLog).count())
+    payload, parsed, revision, rows, blockers = service._validate_bundle_for_ingest(rel_path)
+    assert not blockers, blockers
+    assert parsed["status"] == "parsed"
+    now = datetime.now(timezone.utc).replace(tzinfo=None)
+    provenance = service._build_provenance(
+        rel_path=rel_path, revision=revision, payload=payload,
+        parser_result=parsed, loaded_at=now.isoformat(),
+    )
+    if domain == "import_duty":
+        counts = service._apply_duty_rows(rows)
+    elif domain in {"vat", "excise"}:
+        counts = getattr(service, f"_apply_{domain}_rows")(
+            rows, bundle_revision=revision, bundle_url=provenance.official_url, synced_at=now,
+        )
+    else:
+        counts = getattr(service, f"_apply_{domain}_rows")(rows, synced_at=now)
+    assert counts is not None, "Fixture writer rejected rows atomically"
+    with service.SessionLocal() as db:
+        assert (db.query(SourceStatus).count(), db.query(SyncLog).count()) == before
+    return {"fixture_only": True, "row_counts": counts.model_dump(),
+            "provenance": provenance.model_dump(), "parser_result": parsed}
+
+
+def _store_isolated_payload(payload: dict) -> dict:
+    import app.services.anti_dumping_ingestion as service
+
+    with _BundleFixture(payload) as (root, rel):
+        with unittest.mock.patch.object(service, "_BACKEND_ROOT", root):
+            return _store_isolated_fixture(rel_path=rel)
+
+
 class TestAntiDumpingMissingSource(unittest.TestCase):
     def setUp(self) -> None:
         self.sm = _memory_sessionmaker()
@@ -205,14 +247,14 @@ class TestAntiDumpingApplyProvenance(unittest.TestCase):
     def tearDown(self) -> None:
         _stop_patches(*self._patches)
 
-    def test_apply_writes_special_duties_with_provenance(self) -> None:
+    def test_isolated_fixture_apply_writes_special_duties_with_provenance(self) -> None:
         import app.services.anti_dumping_ingestion as adi
 
         with _BundleFixture(_official_anti_dumping_payload()) as (root, rel):
             with unittest.mock.patch.object(adi, "_BACKEND_ROOT", root):
-                report = run_anti_dumping_apply(rel_path=rel)
-        self.assertEqual(report["status"], "OK")
-        self.assertTrue(report["db_mutated"])
+                report = _store_isolated_fixture(rel_path=rel, domain="anti_dumping")
+        self.assertTrue(report["fixture_only"])
+        self.assertTrue(report["fixture_only"])
         self.assertEqual(report["provenance"]["source_code"], "EEC_ANTI_DUMPING")
         with self.sm() as db:
             rows = db.query(SpecialDuty).all()
@@ -222,10 +264,10 @@ class TestAntiDumpingApplyProvenance(unittest.TestCase):
                 self.assertEqual(row.source_revision, "anti-dumping:2026-05-01")
                 self.assertEqual(row.measure_type, "anti_dumping")
             st = db.query(SourceStatus).filter(SourceStatus.source_code == "EEC_ANTI_DUMPING").first()
-            self.assertIsNotNone(st)
+            self.assertIsNone(st)
             logs = db.query(SyncLog).filter(SyncLog.source_code == "EEC_ANTI_DUMPING").all()
-            self.assertEqual(len(logs), 1)
-            self.assertEqual(logs[0].status, "OK")
+            self.assertEqual(len(logs), 0)
+
 
 
 class TestAntiDumpingMeasureIdentity(unittest.TestCase):
@@ -270,13 +312,13 @@ class TestAntiDumpingMeasureIdentity(unittest.TestCase):
 
         with _BundleFixture(payload) as (root, rel):
             with unittest.mock.patch.object(adi, "_BACKEND_ROOT", root):
-                return run_anti_dumping_apply(rel_path=rel)
+                return _store_isolated_fixture(rel_path=rel, domain="anti_dumping")
 
-    def test_different_manufacturer_creates_separate_rows(self) -> None:
+    def test_isolated_fixture_different_manufacturer_creates_separate_rows(self) -> None:
         payload = self._two_manufacturer_payload()
         report = self._apply(payload)
-        self.assertEqual(report["status"], "OK")
-        self.assertTrue(report["db_mutated"])
+        self.assertTrue(report["fixture_only"])
+        self.assertTrue(report["fixture_only"])
         self.assertEqual(report["row_counts"]["insert"], 2)
         with self.sm() as db:
             rows = (
@@ -297,11 +339,11 @@ class TestAntiDumpingMeasureIdentity(unittest.TestCase):
                 self.assertEqual(r.source_code, "EEC_ANTI_DUMPING")
                 self.assertEqual(r.source_revision, "anti-dumping:2026-05-01")
 
-    def test_reapply_is_idempotent_no_duplicate_or_overwrite(self) -> None:
+    def test_isolated_fixture_reapply_is_idempotent_no_duplicate_or_overwrite(self) -> None:
         payload = self._two_manufacturer_payload()
         self._apply(payload)
         report2 = self._apply(payload)
-        self.assertEqual(report2["status"], "OK")
+        self.assertTrue(report2["fixture_only"])
         self.assertEqual(report2["row_counts"]["insert"], 0)
         self.assertEqual(report2["row_counts"]["update"], 0)
         self.assertEqual(report2["row_counts"]["skip"], 2)
@@ -315,7 +357,7 @@ class TestAntiDumpingMeasureIdentity(unittest.TestCase):
             by_manuf = {r.manufacturer_exporter: r.rate_percent for r in rows}
             self.assertEqual(by_manuf, {"Alpha Steel Co": 18.0, "Beta Metallurg LLC": 25.0})
 
-    def test_different_effective_window_not_overwritten(self) -> None:
+    def test_isolated_fixture_different_effective_window_not_overwritten(self) -> None:
         payload = _official_anti_dumping_payload(
             measures=[
                 {
@@ -343,7 +385,7 @@ class TestAntiDumpingMeasureIdentity(unittest.TestCase):
             ]
         )
         report = self._apply(payload)
-        self.assertEqual(report["status"], "OK")
+        self.assertTrue(report["fixture_only"])
         self.assertEqual(report["row_counts"]["insert"], 2)
         with self.sm() as db:
             rows = db.query(SpecialDuty).filter(SpecialDuty.hs_code_prefix == "7214").all()
@@ -410,8 +452,10 @@ class TestAntiDumpingUnsafeUrls(unittest.TestCase):
                 official_url="https://eec.eaeunion.org/comission/department/deptexsec/trade_remedies/"
             )
         )
-        self.assertEqual(report["status"], "OK")
-        self.assertTrue(report["db_mutated"])
+        self.assertEqual(report["status"], "manual_review_required")
+        self.assertFalse(report["db_mutated"])
+        self.assertEqual(report["parser_result"]["status"], "parsed")
+        self.assertFalse(report["db_mutated"])
 
 
 class TestAntiDumpingRevisionValidation(unittest.TestCase):
@@ -431,12 +475,16 @@ class TestAntiDumpingRevisionValidation(unittest.TestCase):
 
     def test_official_revision_accepted(self) -> None:
         report = self._apply(_official_anti_dumping_payload(revision="anti-dumping:2026-05-01"))
-        self.assertEqual(report["status"], "OK")
-        self.assertTrue(report["db_mutated"])
+        self.assertEqual(report["status"], "manual_review_required")
+        self.assertFalse(report["db_mutated"])
+        self.assertEqual(report["parser_result"]["status"], "parsed")
+        self.assertFalse(report["db_mutated"])
 
     def test_eec_anti_dumping_revision_accepted(self) -> None:
         report = self._apply(_official_anti_dumping_payload(revision="eec-anti-dumping:2026-05-01"))
-        self.assertEqual(report["status"], "OK")
+        self.assertEqual(report["status"], "manual_review_required")
+        self.assertFalse(report["db_mutated"])
+        self.assertEqual(report["parser_result"]["status"], "parsed")
 
     def test_wrong_domain_duty_revision_rejected(self) -> None:
         report = self._apply(_official_anti_dumping_payload(revision="ett:2026-05-01"))
@@ -466,7 +514,7 @@ class TestAntiDumpingRevisionValidation(unittest.TestCase):
                 self.assertNotEqual(report["status"], "OK")
                 self.assertFalse(report["db_mutated"])
 
-    def test_blank_row_revision_inherits_bundle_revision(self) -> None:
+    def test_isolated_fixture_blank_row_revision_inherits_bundle_revision(self) -> None:
         payload = _official_anti_dumping_payload(
             revision="anti-dumping:2026-06-01",
             measures=[
@@ -479,8 +527,8 @@ class TestAntiDumpingRevisionValidation(unittest.TestCase):
                 }
             ],
         )
-        report = self._apply(payload)
-        self.assertEqual(report["status"], "OK")
+        report = _store_isolated_payload(payload)
+        self.assertTrue(report["fixture_only"])
         with self.sm() as db:
             row = db.query(SpecialDuty).one()
             self.assertEqual(row.source_revision, "anti-dumping:2026-06-01")
@@ -606,13 +654,13 @@ class TestAntiDumpingLegacyRowsNotOfficial(unittest.TestCase):
     def tearDown(self) -> None:
         _stop_patches(*self._patches)
 
-    def test_legacy_rows_stay_non_official_after_successful_sync(self) -> None:
+    def test_isolated_fixture_legacy_rows_stay_non_official_after_successful_sync(self) -> None:
         import app.services.anti_dumping_ingestion as adi
 
         with _BundleFixture(_official_anti_dumping_payload()) as (root, rel):
             with unittest.mock.patch.object(adi, "_BACKEND_ROOT", root):
-                report = run_anti_dumping_apply(rel_path=rel)
-        self.assertEqual(report["status"], "OK")
+                report = _store_isolated_fixture(rel_path=rel, domain="anti_dumping")
+        self.assertTrue(report["fixture_only"])
         with self.sm() as db:
             legacy = (
                 db.query(SpecialDuty)

@@ -18,6 +18,7 @@ from ..schemas.import_duty_ingestion import (
 )
 from .normative_bundle import _normalize_rate_row
 from .normative_store import append_sync_log, normalize_hs_duty_rate_string, upsert_source_status
+from .official_payment_admission import payment_admission_blocker
 from .payment_data_coverage import run_payment_data_coverage_report
 from .payment_revision_utils import is_import_duty_bundle_path
 from .payment_revision_utils import is_official_eec_ett_revision as _is_official_eec_ett_revision
@@ -385,7 +386,13 @@ def _blocked_response(
         parser_result=parser_result or {},
         notes=notes or [],
     )
-    return response.model_dump(mode="json")
+    return {
+        **response.model_dump(mode="json"),
+        "active_rates_written": False,
+        "source_evidence_verified": False,
+        "legal_review_verified": False,
+        "retention_verified": False,
+    }
 
 
 def _validate_bundle_for_ingest(
@@ -508,11 +515,17 @@ def run_import_duty_dry_run(*, rel_path: str | None = None) -> dict[str, Any]:
         },
         notes=[
             "Dry-run не мутирует БД.",
-            "Apply доступен только при status=OK dry-run и official provenance.",
-            "Coverage present требует полного покрытия каталога ТН ВЭД.",
+            payment_admission_blocker("import_duty"),
+            "Row counts and declared source metadata are technical diagnostics, not verified legal coverage.",
         ],
     )
-    return response.model_dump(mode="json")
+    return {
+        **response.model_dump(mode="json"),
+        "active_rates_written": False,
+        "source_evidence_verified": False,
+        "legal_review_verified": False,
+        "retention_verified": False,
+    }
 
 
 def _apply_duty_rows(rows: list[dict[str, Any]]) -> ImportDutyRowCounts:
@@ -563,7 +576,7 @@ def _apply_duty_rows(rows: list[dict[str, Any]]) -> ImportDutyRowCounts:
 
 
 def run_import_duty_apply(*, rel_path: str | None = None) -> dict[str, Any]:
-    """Guarded apply: мутирует БД только при official provenance и отсутствии blockers."""
+    """Legacy apply: техническая проверка без применения до manifest-bound review."""
     loaded_at = _utc_now_iso()
     bundle_path = discover_import_duty_bundle_path(rel_path=rel_path)
     if not bundle_path:
@@ -600,48 +613,13 @@ def run_import_duty_apply(*, rel_path: str | None = None) -> dict[str, Any]:
             notes=["Apply отменён — SourceStatus/SyncLog не записаны."],
         )
 
-    entry = get_payment_source_entry(_REGISTRY_SOURCE_CODE)
-    row_counts = _apply_duty_rows(rows)
-
-    note_txt = (
-        f"import-duty apply {bundle_path}: revision={revision}; "
-        f"insert={row_counts.insert}, update={row_counts.update}, skip={row_counts.skip}, "
-        f"blocked={row_counts.blocked}; checksum={provenance.checksum_sha256 or 'n/a'}"
-    )
-    upsert_source_status(
-        source_code=_EEC_SOURCE_CODE,
-        source_name=entry.name if entry else provenance.source_name,
-        source_url=provenance.official_url or bundle_path,
-        revision=revision,
-        is_stale=False,
-        note=note_txt,
-    )
-    append_sync_log(
-        source_code=_EEC_SOURCE_CODE,
-        status="OK",
-        revision=revision,
-        rows_affected=row_counts.insert + row_counts.update,
-        note=note_txt,
-    )
-
-    coverage = run_payment_data_coverage_report()
-    response = ImportDutyIngestionResponse(
-        status="OK",
+    return _blocked_response(
+        status="manual_review_required",
         mode="apply",
         dry_run=False,
-        db_mutated=True,
-        provenance=provenance,
-        row_counts=row_counts,
-        blockers=[],
+        blockers=[payment_admission_blocker("import_duty")],
         parser_result=parser_result,
-        coverage_link={
-            "duty_rates_status": (coverage.get("summary") or {}).get("duty_rates", {}).get("status"),
-            "duty_authority_level": (coverage.get("summary") or {}).get("duty_rates", {}).get("authority_level"),
-            "generated_at": coverage.get("generated_at"),
-        },
-        notes=[
-            "Import-duty slice: обновлены только duty_rate/source_* в hs_rates.",
-            "VAT/excise/trade remedies не импортируются в этом срезе.",
-        ],
+        provenance=provenance,
+        row_counts=ImportDutyRowCounts(total_in_source=len(rows), blocked=len(rows)),
+        notes=["Технический разбор сохранён; DB planning, SourceStatus и SyncLog не выполнялись."],
     )
-    return response.model_dump(mode="json")
