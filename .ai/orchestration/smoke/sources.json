@@ -1,0 +1,9 @@
+{
+  "task_id": "SMOKE-SOURCES-001",
+  "owner": "A3",
+  "session_id": "/root/smoke_sources",
+  "branch": "agent/sources-smoke-sources-001-6fd9065039",
+  "base_sha": "b1741c04ec0f1eca2b73833b918e52c7cff564c5",
+  "synthetic": true,
+  "statement": "Source facts do not authorize legal applicability; isolation smoke only"
+}
