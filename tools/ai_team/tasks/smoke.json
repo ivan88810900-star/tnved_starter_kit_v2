@@ -1,0 +1,4 @@
+{
+  "goal": "Create docs/ai-workflow/AI_TEAM_SMOKE_RESULT.md containing only '# AI team smoke test\n\nNOT_PRODUCTION_READY\n'. Do not modify any other file, run tests, access the network, or change Git state. This checks candidate generation only.",
+  "allowed_paths": ["docs/ai-workflow/AI_TEAM_SMOKE_RESULT.md"]
+}

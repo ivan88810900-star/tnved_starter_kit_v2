@@ -1,0 +1,81 @@
+name: Tariff AI — Codex candidate (manual, disabled by default)
+
+on:
+  workflow_dispatch:
+    inputs:
+      task_id:
+        description: Reviewed task ID already present in the approved commit
+        type: string
+        default: smoke
+        required: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tariff-ai-pilot
+  cancel-in-progress: false
+
+jobs:
+  candidate:
+    if: >-
+      vars.TARIFF_AI_ENABLED == 'true' &&
+      vars.TARIFF_AI_IMPLEMENT_ENABLED == 'true' &&
+      vars.TARIFF_AI_APPROVED_SHA != '' &&
+      github.sha == vars.TARIFF_AI_APPROVED_SHA &&
+      github.ref == vars.TARIFF_AI_TRUSTED_REF &&
+      github.actor == github.repository_owner &&
+      github.triggering_actor == github.repository_owner
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    environment: tariff-ai-implement
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - name: Validate model and key presence without printing either
+        env:
+          CODEX_MODEL: ${{ vars.TARIFF_CODEX_MODEL }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          python3 -I - <<'PY'
+          import os, re
+          if not os.environ.get('OPENAI_API_KEY') or not re.fullmatch(r'[A-Za-z0-9_.-]{1,100}', os.environ.get('CODEX_MODEL', '')):
+              raise SystemExit('BLOCKED: explicit model and provider key required')
+          PY
+      - name: Freeze validator and baseline outside the writable workspace
+        env:
+          TASK_ID: ${{ inputs.task_id }}
+        run: |
+          sudo install -d -o root -g root -m 755 /opt/tariff-ai-control
+          sudo install -o root -g root -m 444 tools/ai_team/runner.py /opt/tariff-ai-control/runner.py
+          sudo env GITHUB_SHA="$GITHUB_SHA" python3 -I /opt/tariff-ai-control/runner.py prepare \
+            --root "$GITHUB_WORKSPACE" --task "$TASK_ID" --frozen /opt/tariff-ai-control
+          sudo chmod 444 /opt/tariff-ai-control/state.json /opt/tariff-ai-control/prompt.txt
+      - name: Generate a candidate; no GitHub write token or production access
+        uses: openai/codex-action@86365089eb2b84e0a8fb0717b304f8bdcb13b20e # v1, peeled commit
+        timeout-minutes: 10
+        with:
+          openai-api-key: ${{ secrets.OPENAI_API_KEY }}
+          prompt-file: /opt/tariff-ai-control/prompt.txt
+          model: ${{ vars.TARIFF_CODEX_MODEL }}
+          codex-version: '0.138.0'
+          permission-profile: ':workspace'
+          safety-strategy: drop-sudo
+          effort: medium
+          allow-bots: false
+      - name: Validate all workspace changes using the frozen validator
+        # Never execute a validator, hook, test, dependency install or script
+        # from the agent-writable checkout after the Codex step.
+        run: >-
+          python3 -I /opt/tariff-ai-control/runner.py candidate
+          --root "$GITHUB_WORKSPACE" --frozen /opt/tariff-ai-control
+          --out "$RUNNER_TEMP/tariff-ai-candidate"
+      - name: Export candidate only; no commit, push, PR, merge or deployment
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: tariff-ai-candidate-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/tariff-ai-candidate/
+          retention-days: 7
+          if-no-files-found: error
