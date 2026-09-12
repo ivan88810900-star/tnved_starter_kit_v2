@@ -73,6 +73,9 @@ tests. Unresolved product/legal choices require an owner decision; routine techn
 choices do not. Existing accepted advisory rollout decisions remain valid.
 
 Persist evidence bound to commit SHA in `.ai/`; recover from GitHub, not chat memory.
+Runtime board/lease authority is `agent/orchestration-state`; infrastructure code
+is reviewed in PR #190 / `agent/orchestration-v1`. Read that state branch before
+resuming work; task-board copies on code/product branches are snapshots.
 Only report complete verified blocks, owner decisions, critical blockers or required
 protected actions. Missing A6/CI/runtime proof must be shown as missing.
 

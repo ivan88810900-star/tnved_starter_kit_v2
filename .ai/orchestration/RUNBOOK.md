@@ -93,8 +93,8 @@ updates/PR readiness; perform daily regression review using persisted last-run
 markers. Read current GitHub source on every wake-up. Skip duplicate run keys.
 
 GitHub PR webhooks do not signal every CI completion. Hourly CI polling is explicit,
-not represented as instant events. Until the infra PR is merged, recover code and
-state from agent/orchestration-v1; never merge automatically to activate scheduling.
+not represented as instant events. Recover current infrastructure code from agent/orchestration-v1 and authoritative
+runtime state from agent/orchestration-state; never merge automatically to activate scheduling.
 An automation execution with no native subagent/execution capability records a
 capability blocker; scheduler existence is not proof of autonomous coding.
 

@@ -1,12 +1,12 @@
 # Autonomous orchestration status — 2026-09-12
 
 Infrastructure: PR #190, `agent/orchestration-v1` -> `main`.
-Verified code HEAD: `a6ba8474d8bbb8d299e9c88a003ea20218f42d4f`.
+Verified code HEAD: `ad4935e318d947276178e2f269d4ffe1051ea6cb`.
 Persistent runtime authority: `agent/orchestration-state` (state commits separate
 from code/QA/CI candidate SHAs). Read this branch's board on every wake-up.
 
-- 60 offline tests passed including independent A5 cases; CI 34717945276 and
-  34717942948 succeeded at the exact verified code HEAD.
+- 60 offline tests passed including independent A5 cases; CI 34718310831 and
+  34718309255 succeeded at the exact verified code HEAD.
 - Real native Work children `/root/smoke_rates` and `/root/smoke_sources` executed
   isolated branches/worktrees. Independent `/root/a5_independent_qa` accepted both.
 - Both smoke branches passed separate GitHub CI, then integrated on the agent
@@ -15,7 +15,12 @@ from code/QA/CI candidate SHAs). Read this branch's board on every wake-up.
   No request sent or external audit claimed. Native Work is the active runtime;
   optional Agents API adapter is SAFE_BOOTSTRAP_ONLY and not live verified.
 - PR #187 remains on observed22a7df55, PR #189 is unchanged/conflicting old pilot.
-  Next bounded task: TARIFF-ADMISSION-RECHECK-001, read-only current payment review.
+  Active bounded task: TARIFF-ADMISSION-RECHECK-001, real A1 read-only current payment review.
+- Fresh native session /root/fresh_state_recovery recovered board revision 27 from
+  separate Git common-dir snapshot c4d966e. See orchestration/FRESH_SESSION_RECOVERY.json.
+- Existing hourly Automation 6a2a8a215240819197f0879e5d47c90d enabled for A0 triage.
+  Scheduled background native development has not yet been verified; scheduling
+  metadata alone does not prove execution. No self-written scheduler.
 - GitHub reported main protected=false; no permissions/secrets were changed.
   Controller and coordinator guards are not external server branch protection.
 - Existing accepted NTM advisory default ON preserved; enforcement/production flags

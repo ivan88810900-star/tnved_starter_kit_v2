@@ -1,7 +1,7 @@
 {
   "findings": [],
   "max_concurrent_subagents": 3,
-  "revision": 27,
+  "revision": 31,
   "runs": [
     {
       "head_sha": null,
@@ -42,6 +42,16 @@
       "status": "FINISHED",
       "task_id": "SMOKE-SOURCES-001",
       "updated_at": "2026-09-12T20:42:24.715325+00:00"
+    },
+    {
+      "head_sha": null,
+      "role": "A1",
+      "run_id": "50b81abe7288496b970435589584ad76",
+      "session_id": "/root/smoke_rates",
+      "started_at": "2026-09-12T20:56:54.166391+00:00",
+      "status": "RUNNING",
+      "task_id": "TARIFF-ADMISSION-RECHECK-001",
+      "updated_at": "2026-09-12T20:56:54.166398+00:00"
     }
   ],
   "schema_version": 1,
@@ -218,9 +228,12 @@
       "worktree": "/workspace/scratch/cd6734a40504/tariff-agent-worktrees/smoke-sources-001-6fd9065039"
     },
     {
-      "author_sessions": [],
-      "branch": null,
+      "author_sessions": [
+        "/root/smoke_rates"
+      ],
+      "branch": "agent/rates-tariff-admission-recheck-001-9231ffbdb5",
       "ci": null,
+      "ci_profile_decision": "A0 selected actual PR187 CI job names from exact base ci.yml before implementation; orchestration offline-safety does not exist on product branch. No existing test or check removed from product CI.",
       "dependencies": [],
       "external_audit": null,
       "files": [
@@ -231,19 +244,22 @@
       "owner": "A1",
       "qa": null,
       "refs": {
-        "base_sha": null,
+        "base_sha": "22a7df5590a7442d943d89af285feb1228e80938",
         "head_sha": null,
         "pr": null
       },
       "required_checks": [
-        "offline-safety"
+        "Scheduled workflow and locked environment",
+        "Backend NTM safety suite",
+        "Frontend tests, types and build",
+        "Validate and build local staging images"
       ],
       "risk": "low",
-      "status": "NEW",
+      "status": "IN_PROGRESS",
       "tests": [],
-      "updated_at": "2026-09-12T20:45:02.906672+00:00",
-      "worktree": null
+      "updated_at": "2026-09-12T20:56:54.166401+00:00",
+      "worktree": "/workspace/scratch/cd6734a40504/tariff-agent-worktrees/tariff-admission-recheck-001-9231ffbdb5"
     }
   ],
-  "updated_at": "2026-09-12T20:45:02.906771+00:00"
+  "updated_at": "2026-09-12T20:56:54.166567+00:00"
 }

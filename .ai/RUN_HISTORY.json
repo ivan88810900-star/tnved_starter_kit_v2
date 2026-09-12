@@ -1,5 +1,5 @@
 {
-  "board_revision": 27,
+  "board_revision": 31,
   "runs": [
     {
       "head_sha": null,
@@ -40,6 +40,16 @@
       "status": "FINISHED",
       "task_id": "SMOKE-SOURCES-001",
       "updated_at": "2026-09-12T20:42:24.715325+00:00"
+    },
+    {
+      "head_sha": null,
+      "role": "A1",
+      "run_id": "50b81abe7288496b970435589584ad76",
+      "session_id": "/root/smoke_rates",
+      "started_at": "2026-09-12T20:56:54.166391+00:00",
+      "status": "RUNNING",
+      "task_id": "TARIFF-ADMISSION-RECHECK-001",
+      "updated_at": "2026-09-12T20:56:54.166398+00:00"
     }
   ],
   "schema_version": 1

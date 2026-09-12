@@ -1,10 +1,10 @@
 {
   "schema_version": 1,
-  "code_head": "a6ba8474d8bbb8d299e9c88a003ea20218f42d4f",
+  "code_head": "ad4935e318d947276178e2f269d4ffe1051ea6cb",
   "pr": 190,
   "ci_runs": [
-    34717945276,
-    34717942948
+    34718310831,
+    34718309255
   ],
   "offline_tests": 60,
   "a5_status": "PASSED",
@@ -27,8 +27,19 @@
     "scope": "SAFE_BOOTSTRAP_ONLY",
     "live_verified": false
   },
-  "fresh_native_session_recovery": "PENDING",
-  "automation_activation": "PENDING",
+  "fresh_native_session_recovery": {
+    "status": "PASSED",
+    "session_id": "/root/fresh_state_recovery",
+    "evidence": ".ai/orchestration/FRESH_SESSION_RECOVERY.json",
+    "snapshot_sha": "c4d966ea505f35d1081453262f493f5c0b37bf33"
+  },
+  "automation_activation": {
+    "status": "ENABLED",
+    "id": "6a2a8a215240819197f0879e5d47c90d",
+    "title": "Tariff — автономный A0",
+    "schedule": "hourly at minute 10",
+    "background_native_execution": "NOT_YET_VERIFIED"
+  },
   "state_branch": "agent/orchestration-state",
   "protected_actions_performed": []
 }

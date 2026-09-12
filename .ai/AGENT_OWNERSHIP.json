@@ -1,5 +1,12 @@
 {
-  "board_revision": 27,
-  "files": {},
+  "board_revision": 31,
+  "files": {
+    "docs/ai-workflow/PAYMENT_ADMISSION_RECHECK_20260912.md": {
+      "branch": "agent/rates-tariff-admission-recheck-001-9231ffbdb5",
+      "owner": "A1",
+      "task_id": "TARIFF-ADMISSION-RECHECK-001",
+      "worktree": "/workspace/scratch/cd6734a40504/tariff-agent-worktrees/tariff-admission-recheck-001-9231ffbdb5"
+    }
+  },
   "schema_version": 1
 }
