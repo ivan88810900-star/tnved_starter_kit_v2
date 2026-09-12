@@ -18,9 +18,12 @@ from code/QA/CI candidate SHAs). Read this branch's board on every wake-up.
   Its exact-head CI 34718655503/34718653080/34718400910 and Admission QA
   34718400932 passed. These are upstream observations, not this setup A5/A6 execution.
   PR #189 is unchanged/inactive. PR #191 is the separate A1 evidence report.
-- Confirmed A0-UPSTREAM-DRIFT-001 invalidated the historical 22a7df55 report
-  before A5 acceptance. Current A1 rechecks a9d15c74 in the isolated report branch;
-  upstream was merged without remote force push, with only the report differing.
+- PR #191 candidate 1c0272a34cbcbb3b99d6f32c86d86949bc0adc06 now rechecks
+  current a9d15c74 and fixes the discovered CI branch matcher. Independent A5
+  passed; Admission QA 34719777792 passed all selected scope. Full CI 34719777785
+  still awaits backend completion. No READY or merge is inferred yet.
+- A0-UPSTREAM-DRIFT-001 and A0-CI-BRANCH-SCOPE-001 are resolved with exact-head
+  evidence. Real author/QA sessions repeated; no test was removed or weakened.
 - Next queued A3 task: TARIFF-AD30-REVIEW-CANDIDATE-001, source-fact candidate
   for Decision 12 -> 4 -> 121 per current focus. It grants no legal applicability.
 - Fresh native session /root/fresh_state_recovery recovered board revision 27 from

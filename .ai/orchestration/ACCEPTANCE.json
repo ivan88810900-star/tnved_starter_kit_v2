@@ -38,8 +38,38 @@
     "id": "6a2a8a215240819197f0879e5d47c90d",
     "title": "Tariff — автономный A0",
     "schedule": "hourly at minute 10",
-    "background_native_execution": "NOT_YET_VERIFIED"
+    "background_native_execution": "NOT_YET_VERIFIED",
+    "weekly_read_only": {
+      "id": "6a9930970cc88191b08b5b08f740992a",
+      "notification_policy": "significant verified blocks, human decisions, critical blockers, protected actions only",
+      "mutations_allowed": false
+    }
   },
   "state_branch": "agent/orchestration-state",
-  "protected_actions_performed": []
+  "protected_actions_performed": [],
+  "current_product_observation": {
+    "pr": 187,
+    "head_sha": "a9d15c74699c8cd7842404580ff6fd7bd957e9eb",
+    "ci_runs": [
+      34718655503,
+      34718653080,
+      34718400910,
+      34718400932
+    ],
+    "interpretation": "Observed upstream CI success. Upstream A5/A6 claims are separate from infrastructure smoke; not reclassified as our live external audit."
+  },
+  "continuation": {
+    "task": "TARIFF-ADMISSION-RECHECK-001",
+    "pr": 191,
+    "status": "A5_PASSED_FULL_CI_PENDING",
+    "finding": "A0-UPSTREAM-DRIFT-001",
+    "next_task": "TARIFF-AD30-REVIEW-CANDIDATE-001",
+    "head_sha": "1c0272a34cbcbb3b99d6f32c86d86949bc0adc06",
+    "closed_findings": [
+      "A0-UPSTREAM-DRIFT-001",
+      "A0-CI-BRANCH-SCOPE-001"
+    ],
+    "admission_ci": 34719777792,
+    "full_ci": 34719777785
+  }
 }

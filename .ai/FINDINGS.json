@@ -1,16 +1,39 @@
 {
-  "board_revision": 42,
+  "board_revision": 61,
   "findings": [
     {
       "head_sha": "161a9258d174e93266353ae1fd2cb0b3e4657679",
       "id": "A0-UPSTREAM-DRIFT-001",
       "reporter": "A0",
-      "status": "CONFIRMED",
+      "resolution": {
+        "evidence": "A0 read current report and latest PR187 decisions; A5 independently replayed current a9d15c74 functions and accepted explicit supersession of historical22 assertions. Current report blob retained unchanged in final candidate.",
+        "head_sha": "1c0272a34cbcbb3b99d6f32c86d86949bc0adc06",
+        "validator": "A0"
+      },
+      "status": "RESOLVED",
       "summary": "PR187 advanced from pinned 22a7df55 to a9d15c74 with payment admission corrections; historical report must not be presented as current task state.",
       "task_id": "TARIFF-ADMISSION-RECHECK-001",
       "validation": {
         "at": "2026-09-12T21:08:51.544244+00:00",
         "evidence": "GitHub PR187 head and commit a9d15c74699c8cd7842404580ff6fd7bd957e9eb queried 2026-09-12; changed services, decisions and recovery task. A5 interrupted before any acceptance; no stale PASS reused.",
+        "validator": "A0"
+      }
+    },
+    {
+      "head_sha": "4e40100252e899e659bc2c51eb59d785f78947b0",
+      "id": "A0-CI-BRANCH-SCOPE-001",
+      "reporter": "A0",
+      "resolution": {
+        "evidence": "Independent A5 Bash/byte comparisons pass; exact GitHub Admission agent QA run34719777792 job103623383630 completed success after full44-file selection. No test/gate/env/permission weakened. Overall CI readiness still awaits full backend job.",
+        "head_sha": "1c0272a34cbcbb3b99d6f32c86d86949bc0adc06",
+        "validator": "A0"
+      },
+      "status": "RESOLVED",
+      "summary": "Admission agent QA triggers on agent/** but only accepts six fixed historical branch names; dynamic isolated agent branch exits 2 before tests.",
+      "task_id": "TARIFF-ADMISSION-RECHECK-001",
+      "validation": {
+        "at": "2026-09-12T21:19:15.477565+00:00",
+        "evidence": "GitHub run34719511047 job103622657602 failed Run explicit branch scope; exact workflow case routes dynamic rate branch to default exit2. Remedy is full existing integration suite for dynamic agent branches; no test removal/skipping or weaker gate.",
         "validator": "A0"
       }
     }
