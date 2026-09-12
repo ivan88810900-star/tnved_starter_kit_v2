@@ -1,5 +1,5 @@
 """
-Синхронизация ставок ТН ВЭД из публичного Excel tws.by в таблицу hs_rates.
+Технический разбор коммерческого Excel tws.by без допуска в активные ставки.
 
 Используется скриптом scripts/sync_tws_data.py и может быть вызвана из планировщика.
 """
@@ -19,9 +19,6 @@ from loguru import logger
 TWS_DOWNLOAD_PAGE = "https://www.tws.by/tws/tnved/download"
 TWS_EXCEL_FALLBACK_URL = "https://www.tws.by/tws/tnved/download/excel"
 SOURCE_LABEL = "tws.by"
-
-# Если в выгрузке tws.by нет колонки НДС — в hs_rates подставляем эту ставку (проектный дефолт).
-DEFAULT_VAT_IMPORT_RATE: int = 22
 
 # Локальное сохранение скачанного файла (относительно корня backend).
 _DEFAULT_TMP_DIR = Path(__file__).resolve().parents[2] / "data" / "tmp"
@@ -203,25 +200,25 @@ def load_tws_tariff_dataframe(
     )
 
 
-def parse_vat_cell(raw: Any, *, default: float | None = None) -> float:
-    if default is None:
-        default = DEFAULT_VAT_IMPORT_RATE
-    if raw is None or (isinstance(raw, float) and pd.isna(raw)):
-        return float(default)
-    s = str(raw).strip().replace(",", ".")
-    s = re.sub(r"\s+", "", s)
-    m = re.search(r"(\d+(?:\.\d+)?)\s*%?", s)
-    if m:
-        return float(m.group(1))
-    m2 = re.search(r"(\d+(?:\.\d+)?)", s)
-    if m2:
-        v = float(m2.group(1))
-        if 0 <= v <= 30:
-            return v
-    return float(default)
+def parse_vat_cell(raw: Any, *, default: float | None = None) -> float | None:
+    """A single explicit number only; missing/ambiguous VAT never gets a default.
+
+    The compatibility argument default cannot supply source facts.
+    """
+    from .official_rate_validation import explicit_nonnegative_rate
+
+    if raw is None or isinstance(raw, bool) or (isinstance(raw, float) and pd.isna(raw)):
+        return None
+    value = str(raw).strip().replace(",", ".")
+    if not re.fullmatch(r"\d+(?:\.\d+)?\s*%?", value):
+        return None
+    try:
+        return explicit_nonnegative_rate(value.rstrip("%").strip())
+    except ValueError:
+        return None
 
 
-def parse_excise_cell(raw: Any) -> tuple[str, float, str]:
+def parse_excise_cell(raw: Any) -> tuple[str, float | None, str]:
     """
     Возвращает (excise_type, excise_value, excise_basis) из сырой ячейки Excel.
     Поддерживает:
@@ -229,29 +226,31 @@ def parse_excise_cell(raw: Any) -> tuple[str, float, str]:
     - фиксированные ставки (fixed), если есть валюта/единица измерения;
     - none, если данных нет.
     """
+    from .official_rate_validation import explicit_nonnegative_rate
+
     if raw is None or (isinstance(raw, float) and pd.isna(raw)):
-        return "none", 0.0, ""
+        return "unavailable", None, ""
     txt = str(raw).strip()
     if not txt or txt in {"—", "-", "…"}:
-        return "none", 0.0, ""
+        return "unavailable", None, ""
     low = txt.lower()
-    if "не облага" in low or re.fullmatch(r"0+(?:[.,]0+)?%?", low):
+    if low in {"не облагается", "не облагается акцизом"} or re.fullmatch(r"0+(?:[.,]0+)?%?", low):
         return "none", 0.0, txt[:4000]
-    m_pct = re.search(r"(\d+(?:[.,]\d+)?)\s*%", txt)
+    m_pct = re.fullmatch(r"(\d+(?:[.,]\d+)?)\s*%", txt)
     if m_pct:
         try:
-            val = float(m_pct.group(1).replace(",", "."))
+            val = explicit_nonnegative_rate(m_pct.group(1))
             return "percent", val, txt[:4000]
         except ValueError:
             pass
-    m_num = re.search(r"(\d+(?:[.,]\d+)?)", txt)
+    m_num = re.fullmatch(r"(\d+(?:[.,]\d+)?)\s*(?:руб(?:\.|лей)?|eur|usd)\s*(?:/\s*(?:л|кг|шт)|за (?:литр|кг|шт))", low)
     if m_num and any(u in low for u in ("руб", "eur", "usd", "/л", "/кг", "/шт", "за литр", "за кг", "за шт")):
         try:
-            val = float(m_num.group(1).replace(",", "."))
+            val = explicit_nonnegative_rate(m_num.group(1))
             return "fixed", val, txt[:4000]
         except ValueError:
             pass
-    return "none", 0.0, txt[:4000]
+    return "unavailable", None, txt[:4000]
 
 
 def parse_duty_text_to_hs_fields(duty_raw: Any) -> dict[str, Any]:
@@ -263,14 +262,14 @@ def parse_duty_text_to_hs_fields(duty_raw: Any) -> dict[str, Any]:
     - antidumping_condition: полный исходный текст при наличии «не менее»/специфики.
     """
     if duty_raw is None or (isinstance(duty_raw, float) and pd.isna(duty_raw)):
-        return {"duty_rate": "0", "vat_rule_basis": "", "antidumping_condition": ""}
+        return {"duty_rate": None, "vat_rule_basis": "", "antidumping_condition": ""}
 
     text = str(duty_raw).strip()
     if not text or text in ("—", "-", "…"):
-        return {"duty_rate": "0", "vat_rule_basis": "", "antidumping_condition": ""}
+        return {"duty_rate": None, "vat_rule_basis": "", "antidumping_condition": ""}
 
     low = text.lower()
-    if "беспошлин" in low or "освобожден от пошлины" in low or re.match(r"^0\s*%?\s*$", low) or low == "free":
+    if low in {"беспошлинно", "освобожден от пошлины", "free"} or re.fullmatch(r"0(?:[.,]0+)?\s*%?", low):
         return {"duty_rate": "0", "vat_rule_basis": text[:500], "antidumping_condition": ""}
 
     percents: list[float] = []
@@ -297,13 +296,19 @@ def parse_duty_text_to_hs_fields(duty_raw: Any) -> dict[str, Any]:
     }
 
 
+def _cell_source_text(value: Any) -> str:
+    if value is None or (isinstance(value, float) and pd.isna(value)):
+        return ""
+    return str(value)
+
+
 def dataframe_to_hs_rate_rows(
     df: pd.DataFrame,
     *,
     revision: str | None = None,
     columns: tuple[str | None, str | None, str | None, str | None] | None = None,
 ) -> list[dict[str, Any]]:
-    """Строки для upsert_hs_rate."""
+    """Unverified technical candidates; this output is not admitted to active tables."""
     code_c, duty_c, vat_c, excise_c = columns if columns is not None else sniff_tws_columns(df)
     if not code_c or not duty_c:
         raise ValueError(f"Не удалось определить колонки кода/пошлины. Заголовки: {list(df.columns)}")
@@ -315,19 +320,27 @@ def dataframe_to_hs_rate_rows(
         raw_code = r.get(code_c)
         if raw_code is None or (isinstance(raw_code, float) and pd.isna(raw_code)):
             continue
-        digits = re.sub(r"\D", "", str(raw_code))
-        if len(digits) < 10:
+        digits = re.sub(r"\s+", "", str(raw_code))
+        if not re.fullmatch(r"[0-9]{10}", digits):
             continue
-        hs_code = digits[:10]
+        hs_code = digits
 
         duty_part = parse_duty_text_to_hs_fields(r.get(duty_c))
-        vat = parse_vat_cell(r.get(vat_c) if vat_c else None, default=DEFAULT_VAT_IMPORT_RATE)
+        vat = parse_vat_cell(r.get(vat_c) if vat_c else None)
         ex_type, ex_val, ex_basis = parse_excise_cell(r.get(excise_c) if excise_c else None)
 
         rows.append(
             {
                 "hs_code": hs_code,
-                "hs_prefix": hs_code[:4],
+                "hs_prefix": "",
+                "candidate_only": True,
+                "legal_review_verified": False,
+                "source_evidence_verified": False,
+                "source_text": {
+                    "duty": _cell_source_text(r.get(duty_c)),
+                    "vat": _cell_source_text(r.get(vat_c) if vat_c else None),
+                    "excise": _cell_source_text(r.get(excise_c) if excise_c else None),
+                },
                 "duty_rate": duty_part["duty_rate"],
                 "vat_import_rate": vat,
                 "vat_rule": "none",
@@ -349,14 +362,13 @@ def run_tws_tariff_sync(
     limit: int | None = None,
     dest_dir: Path | None = None,
 ) -> dict[str, Any]:
-    """
-    Полный цикл: скачать Excel tws.by → разобрать → upsert_hs_rate для каждой строки.
+    """Read-only commercial extraction; legacy apply is permanently closed."""
+    from .official_payment_admission import blocked_payment_import
 
-    Возвращает словарь со статистикой.
-    """
-    from .normative_store import append_sync_log, init_db, upsert_hs_rate
+    admission = blocked_payment_import(source="TWS_BY_TNVED", domain="import_duty")
+    if not dry_run:
+        return {**admission, "dry_run": False, "rows_parsed": 0, "rows_upserted": 0}
 
-    init_db()
     path, blob = download_tws_tariff_excel(dest_dir=dest_dir)
     df, sniff, sheet_used = load_tws_tariff_dataframe(blob)
     if sniff[0] is None or sniff[1] is None:
@@ -379,35 +391,17 @@ def run_tws_tariff_sync(
     if limit is not None:
         rate_rows = rate_rows[: max(0, int(limit))]
 
-    n = 0
-    err_note = ""
-    if not dry_run:
-        for row in rate_rows:
-            try:
-                upsert_hs_rate(row)
-                n += 1
-            except Exception as e:
-                logger.warning("tws upsert skip {}: {}", row.get("hs_code"), e)
-                err_note = str(e)[:200]
-
-        try:
-            append_sync_log(
-                source_code="TWS_BY_TNVED",
-                status="OK",
-                revision=rev[:128],
-                rows_affected=n,
-                note=f"Файл: {path.name}, импортировано: {n}/{len(rate_rows)} {err_note}",
-            )
-        except Exception as e:
-            logger.warning("tws append_sync_log: {}", e)
-    else:
-        n = len(rate_rows)
-
     return {
-        "status": "OK" if not dry_run else "DRY_RUN",
+        **admission,
+        "dry_run": True,
+        "candidate_only": True,
+        "parser_result": {"status": "parsed", "rates_count": len(rate_rows)},
         "downloaded_path": str(path),
         "sheet": sheet_used,
         "rows_parsed": len(rate_rows),
-        "rows_upserted": n if not dry_run else 0,
+        "rows_upserted": 0,
+        "unresolved_duty_rows": sum(row["duty_rate"] is None for row in rate_rows),
+        "unresolved_vat_rows": sum(row["vat_import_rate"] is None for row in rate_rows),
+        "unresolved_excise_rows": sum(row["excise_type"] == "unavailable" for row in rate_rows),
         "columns": {"code": sniff[0], "duty": sniff[1], "vat": sniff[2], "excise": sniff[3]},
     }

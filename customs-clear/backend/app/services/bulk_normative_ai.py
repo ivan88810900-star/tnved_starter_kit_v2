@@ -18,14 +18,28 @@ from sqlalchemy.orm import Session
 
 from ..datetime_util import utc_now_naive
 from ..db import SessionLocal
-from ..models import BulkImportFileCheckpoint, BulkImportJob, HsRate
-from ..models.tnved import Commodity, NonTariffMeasure, SpecialDuty
+from ..models import BulkImportFileCheckpoint, BulkImportJob
+from ..models.tnved import Commodity
 from .gemini_genai_configure import normalize_gemini_api_endpoint_for_sdk, resolved_gemini_model_name
-from .normative_store import normalize_hs_duty_rate_string
+from .ett_artifacts import LocalArtifactStore
+from .official_payment_admission import LEGAL_REVIEW_BLOCKER
 
 BACKEND_ROOT = Path(__file__).resolve().parents[2]
 RAW_NORMATIVE_DIR = BACKEND_ROOT / "data" / "raw_normative"
 LLM_RAW_DIR = BACKEND_ROOT / "logs" / "llm_raw"
+AI_REVIEW_DIR = BACKEND_ROOT / "data" / "runtime" / "ai_normative_review"
+
+AI_NORMATIVE_ADMISSION_BLOCKER = (
+    "ai_normative_review_required: вывод модели не подтверждает ставку, "
+    "обязательный документ, запрет или применимость меры. " + LEGAL_REVIEW_BLOCKER
+)
+# Both checkpoint models have String(16); the public status remains explicit.
+AI_REVIEW_CHECKPOINT_STATUS = "pending_review"
+
+
+class AINormativeAdmissionError(PermissionError):
+    """AI extraction has no authority to mutate active normative data."""
+
 
 BULK_SYSTEM_PROMPT = (
     "Ты анализируешь таможенный нормативный акт. Твоя задача — извлечь конкретные меры регулирования. "
@@ -404,16 +418,6 @@ def _parse_valid_from_str(value: Any) -> str:
     return cand
 
 
-def _apply_hs_rate_fields_from_row(obj: HsRate, row: dict[str, Any]) -> None:
-    """Доп. поля из JSON: vat_rate → vat_import_rate, valid_from → valid_from."""
-    vat_f = _parse_vat_rate_value(row.get("vat_rate"))
-    if vat_f is not None:
-        obj.vat_import_rate = float(vat_f)
-    vf = _parse_valid_from_str(row.get("valid_from"))
-    if vf:
-        obj.valid_from = vf[:20]
-
-
 def _save_llm_raw_response(raw: str) -> None:
     """Сохранить сырой текст ответа модели для отладки (в т.ч. при measures_applied=0)."""
     try:
@@ -433,161 +437,66 @@ def apply_structured_rows(
     *,
     source_tag: str,
 ) -> int:
-    """UPSERT в non_tariff_measures / special_duties / hs_rates (акцизы и пошлины). Возвращает число применённых строк."""
-    applied = 0
-    rev = f"bulk-ai:{source_tag[:80]}"
+    """Reject every inferred rate/obligation before any DB access or row mutation.
 
-    for row in rows:
-        if not isinstance(row, dict):
-            continue
-        cat = _normalize_measure_category(row.get("measure_category"))
-        hs_codes = row.get("hs_codes") if isinstance(row.get("hs_codes"), list) else []
-        hs_strs = [str(x) for x in hs_codes if x is not None]
-        rate_txt = str(row.get("rate_or_requirement") or "").strip()
-        act = str(row.get("regulatory_act") or "").strip()[:255] or "Импорт из нормативного архива"
-        origin = str(row.get("origin_country") or "").strip().upper()[:8]
+    The legacy callable is retained so direct callers cannot bypass the boundary.
+    A source tag, confidence score or model-provided approval field is not review.
+    Use stage_structured_rows_for_review for unreviewed extraction evidence.
+    """
+    raise AINormativeAdmissionError(AI_NORMATIVE_ADMISSION_BLOCKER)
 
-        if cat == "import_ban":
-            measure_type = "ban"
-        elif cat == "non_tariff":
-            measure_type = _nt_measure_type_for_non_tariff(rate_txt + " " + act)
-        else:
-            measure_type = ""
 
-        codes = _resolve_commodity_codes(db, hs_strs)
-        prefix_union = ""
-        if hs_strs:
-            prefix_union = _hs_prefix_for_rates(_normalize_hs_token(hs_strs[0]) or hs_strs[0])
+def stage_structured_rows_for_review(
+    *,
+    source_tag: str,
+    source_bytes: bytes,
+    extracted_text: str,
+    raw_model_output: str,
+    rows: list[dict[str, Any]],
+) -> dict[str, Any]:
+    """Retain exact inputs and untrusted output in a local CAS, never active data.
 
-        if cat in ("import_ban", "non_tariff") and codes:
-            doc_req = rate_txt[:255] if len(rate_txt) <= 255 else rate_txt[:252] + "…"
-            desc = (rate_txt + " — " + act)[:4000]
-            for c in codes:
-                existing = (
-                    db.query(NonTariffMeasure)
-                    .filter(
-                        NonTariffMeasure.commodity_code == c,
-                        NonTariffMeasure.measure_type == measure_type,
-                        NonTariffMeasure.regulatory_act == act,
-                    )
-                    .first()
-                )
-                if existing:
-                    existing.description = desc[:4000]
-                    existing.document_required = doc_req
-                else:
-                    db.add(
-                        NonTariffMeasure(
-                            commodity_code=c,
-                            measure_type=measure_type,
-                            description=desc[:4000],
-                            document_required=doc_req,
-                            regulatory_act=act,
-                        )
-                    )
-                applied += 1
-
-        elif cat == "special_duty" and prefix_union and origin and (rate_txt or "").strip():
-            pct = _parse_percent(rate_txt) or 0.0
-            spec = _parse_fixed_rub(rate_txt) or 0.0
-            if pct <= 0 and spec <= 0:
-                continue
-            existing = (
-                db.query(SpecialDuty)
-                .filter(
-                    SpecialDuty.hs_code_prefix == prefix_union[:16],
-                    SpecialDuty.origin_country == origin,
-                    SpecialDuty.regulatory_act == act,
-                )
-                .first()
-            )
-            if existing:
-                existing.rate_percent = float(pct)
-                existing.rate_specific = float(spec)
-                existing.currency_code = "RUB"
-            else:
-                db.add(
-                    SpecialDuty(
-                        hs_code_prefix=prefix_union[:16],
-                        origin_country=origin,
-                        rate_percent=float(pct),
-                        rate_specific=float(spec),
-                        currency_code="RUB",
-                        regulatory_act=act,
-                    )
-                )
-            applied += 1
-
-        elif cat == "duty" and prefix_union:
-            pct = _parse_percent(rate_txt)
-            vat_f = _parse_vat_rate_value(row.get("vat_rate"))
-            vf = _parse_valid_from_str(row.get("valid_from"))
-            if pct is None and vat_f is None and not vf:
-                continue
-            pref = prefix_union[:10]
-            rt = (rate_txt or "").strip()
-            duty_stored: str | None
-            if rt:
-                duty_stored = normalize_hs_duty_rate_string(rt)
-            elif pct is not None:
-                duty_stored = normalize_hs_duty_rate_string(pct)
-            else:
-                duty_stored = None
-            obj = db.query(HsRate).filter(HsRate.hs_prefix == pref).first()
-            if obj:
-                if duty_stored is not None:
-                    obj.duty_rate = duty_stored
-                obj.source_revision = rev[:128]
-                _apply_hs_rate_fields_from_row(obj, row)
-            else:
-                obj = HsRate(
-                    hs_code=pref,
-                    hs_prefix=pref,
-                    duty_rate=duty_stored if duty_stored is not None else "0",
-                    source_revision=rev[:128],
-                    source_url="bulk-normative-ai",
-                )
-                _apply_hs_rate_fields_from_row(obj, row)
-                db.add(obj)
-            applied += 1
-
-        elif cat == "excise" and prefix_union:
-            pct = _parse_percent(rate_txt)
-            fixed = _parse_fixed_rub(rate_txt)
-            pref = prefix_union[:10]
-            obj = db.query(HsRate).filter(HsRate.hs_prefix == pref).first()
-            if fixed is not None and (pct is None or ("руб" in rate_txt.lower() or "фикс" in rate_txt.lower())):
-                ex_type = "fixed"
-                ex_val = float(fixed)
-                basis = rate_txt[:500] or act
-            elif pct is not None:
-                ex_type = "percent"
-                ex_val = float(pct)
-                basis = rate_txt[:500] or act
-            else:
-                continue
-            if obj:
-                obj.excise_type = ex_type
-                obj.excise_value = ex_val
-                obj.excise_basis = basis[:4000]
-                obj.source_revision = rev[:128]
-                _apply_hs_rate_fields_from_row(obj, row)
-            else:
-                obj = HsRate(
-                    hs_code=pref,
-                    hs_prefix=pref,
-                    duty_rate="0",
-                    excise_type=ex_type,
-                    excise_value=ex_val,
-                    excise_basis=basis[:4000],
-                    source_revision=rev[:128],
-                    source_url="bulk-normative-ai",
-                )
-                _apply_hs_rate_fields_from_row(obj, row)
-                db.add(obj)
-            applied += 1
-
-    return applied
+    This is extraction evidence only: local storage is not legal retention and
+    an uploaded/fetched body is not authenticated official-source provenance.
+    Serialization/storage failures propagate; no successful checkpoint is issued.
+    """
+    AI_REVIEW_DIR.parent.mkdir(parents=True, exist_ok=True)
+    store = LocalArtifactStore(AI_REVIEW_DIR)
+    evidence = {
+        "schema_version": 1,
+        "source_kind": "ai_extraction_unreviewed",
+        "source_tag": source_tag,
+        "captured_at": datetime.now(timezone.utc).isoformat(),
+        "source_sha256": store.put(source_bytes),
+        "source_size_bytes": len(source_bytes),
+        "extracted_text_sha256": store.put(extracted_text.encode("utf-8")),
+        "raw_model_output_sha256": store.put(raw_model_output.encode("utf-8")),
+        "system_prompt_sha256": store.put(BULK_SYSTEM_PROMPT.encode("utf-8")),
+        "model_input_truncated": len(extracted_text.strip()) > _MAX_TEXT_CHARS,
+        "rows": rows,
+        "status": "manual_review_required",
+        "source_evidence_verified": False,
+        "legal_review_verified": False,
+        "retention_verified": False,
+        "active_rates_written": False,
+        "active_measures_written": False,
+        "measures_applied": 0,
+        "blockers": [AI_NORMATIVE_ADMISSION_BLOCKER],
+    }
+    content = json.dumps(evidence, ensure_ascii=False, sort_keys=True, allow_nan=False).encode("utf-8")
+    evidence_sha256 = store.put(content)
+    return {
+        "status": "manual_review_required",
+        "evidence_sha256": evidence_sha256,
+        "extracted_rows": len(rows),
+        "source_evidence_verified": False,
+        "legal_review_verified": False,
+        "retention_verified": False,
+        "active_rates_written": False,
+        "active_measures_written": False,
+        "measures_applied": 0,
+        "blockers": [AI_NORMATIVE_ADMISSION_BLOCKER],
+    }
 
 
 async def call_gemini_with_throttle(
@@ -680,7 +589,7 @@ def parse_llm_json_array(raw: str) -> list[dict[str, Any]]:
 
 def _checkpoint_ok(db: Session, digest: str) -> bool:
     row = db.query(BulkImportFileCheckpoint).filter(BulkImportFileCheckpoint.file_sha256 == digest).first()
-    return row is not None and (row.status or "") == "ok"
+    return row is not None and (row.status or "") in {"ok", AI_REVIEW_CHECKPOINT_STATUS}
 
 
 def _save_checkpoint(
@@ -768,6 +677,8 @@ async def run_bulk_import(
                 db.commit()
 
             total_measures = 0
+            review_files = 0
+            errors = 0
             done = 0
             for path in files:
                 rel = str(path.relative_to(root))
@@ -775,6 +686,7 @@ async def run_bulk_import(
                 with SessionLocal() as db:
                     if not skip_checkpoint and _checkpoint_ok(db, digest):
                         done += 1
+                        review_files += 1
                         _update_job(db, job_id, processed=done, current=rel)
                         db.commit()
                         if progress_cb:
@@ -784,14 +696,21 @@ async def run_bulk_import(
                                     "total_files": len(files),
                                     "measures_applied": total_measures,
                                     "skipped": True,
+                                    "status": "manual_review_required",
+                                    "active_rates_written": False,
+                                    "active_measures_written": False,
                                     "file": rel,
                                 }
                             )
                         continue
 
                 try:
-                    text = extract_text_from_file(path)
+                    source_bytes = path.read_bytes()
+                    if hashlib.sha256(source_bytes).hexdigest() != digest:
+                        raise ValueError("Source file changed after checkpoint digest")
+                    text = extract_text_from_bytes(source_bytes, source_hint=rel)
                 except Exception as e:
+                    errors += 1
                     logger.warning(f"bulk import: не удалось прочитать {rel}: {e}")
                     with SessionLocal() as db:
                         _save_checkpoint(
@@ -814,6 +733,7 @@ async def run_bulk_import(
                     continue
 
                 if not text.strip():
+                    errors += 1
                     with SessionLocal() as db:
                         _save_checkpoint(
                             db,
@@ -834,6 +754,7 @@ async def run_bulk_import(
                     raw = await call_gemini_with_throttle(text, min_interval_sec=delay_sec)
                     rows = parse_llm_json_array(raw)
                 except Exception as e:
+                    errors += 1
                     logger.exception(f"bulk import LLM {rel}: {e}")
                     with SessionLocal() as db:
                         _save_checkpoint(
@@ -857,11 +778,14 @@ async def run_bulk_import(
 
                 with SessionLocal() as db:
                     try:
-                        n = apply_structured_rows(db, rows, source_tag=rel)
-                        db.commit()
+                        review = stage_structured_rows_for_review(
+                            source_tag=rel, source_bytes=source_bytes, extracted_text=text,
+                            raw_model_output=raw, rows=rows,
+                        )
                     except Exception as e:
+                        errors += 1
                         db.rollback()
-                        logger.exception(f"bulk import DB {rel}: {e}")
+                        logger.exception(f"bulk import evidence {rel}: {e}")
                         _save_checkpoint(
                             db, digest=digest, rel=rel, status="error", measures=0, err=str(e), job_id=job_id
                         )
@@ -881,8 +805,11 @@ async def run_bulk_import(
                         await asyncio.sleep(delay_sec)
                         continue
 
-                    _save_checkpoint(db, digest=digest, rel=rel, status="ok", measures=n, err="", job_id=job_id)
-                    total_measures += n
+                    _save_checkpoint(
+                        db, digest=digest, rel=rel, status=AI_REVIEW_CHECKPOINT_STATUS,
+                        measures=0, err=json.dumps(review, ensure_ascii=False), job_id=job_id,
+                    )
+                    review_files += 1
                     done += 1
                     _update_job(db, job_id, processed=done, measures=total_measures, current=rel, error="")
                     db.commit()
@@ -895,6 +822,7 @@ async def run_bulk_import(
                             "measures_applied": total_measures,
                             "file": rel,
                             "llm_rows": len(rows),
+                            **review,
                         }
                     )
 
@@ -902,16 +830,13 @@ async def run_bulk_import(
 
             with SessionLocal() as db:
                 _update_job(
-                    db, job_id, status="completed", processed=done, measures=total_measures, current="", error=""
+                    db, job_id,
+                    status="error" if errors else ("manual_review_required" if review_files else "completed"),
+                    processed=done, measures=total_measures, current="",
+                    error=(f"{errors} extraction/evidence error(s); " if errors else "")
+                    + (AI_NORMATIVE_ADMISSION_BLOCKER if review_files else ""),
                 )
                 db.commit()
-            try:
-                from .preview_cache_revision import bump_preview_cache_revision
-
-                if total_measures > 0:
-                    bump_preview_cache_revision("bulk_normative_ai")
-            except Exception as e:
-                logger.warning(f"bump_preview_cache_revision: {e}")
         except Exception as e:
             logger.exception(f"bulk import job {job_id}: {e}")
             with SessionLocal() as db:
@@ -943,6 +868,10 @@ def get_job_status(job_id: int | None = None) -> dict[str, Any]:
                 "updated_at": job.updated_at.isoformat() if job.updated_at else None,
             },
             "worker_busy": is_import_running(),
+            "application_status": "manual_review_required",
+            "active_write_path_enabled": False,
+            "legal_review_verified": False,
+            "blockers": [AI_NORMATIVE_ADMISSION_BLOCKER],
         }
 
 

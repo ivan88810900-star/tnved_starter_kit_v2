@@ -52,8 +52,15 @@ jobs:
             --capture-originals --store-root "$RATE_CAPTURE_ROOT/store" \
             --capture-rejected-originals \
             --timeout 45 \
-            --source-id trade_remedies_official \
-            --source-id trade_remedies_official__artifact_2 \
+            --source-id review_ad30_completion_notice_pdf \
+            --source-id review_ad30_decision121_2026_page \
+            --source-id review_ad30_decision4_2026_page \
+            --source-id review_ad30_decision4_2026_pdf \
+            --source-id review_ad30_final_report_pdf \
+            --source-id review_remedy_index_page_2 \
+            --source-id review_remedy_index_page_3 \
+            --source-id review_remedy_index_page_4 \
+            --source-id review_remedy_index_page_5 \
             --state "$RATE_CAPTURE_ROOT/observed-state.json" \
             --output "$RATE_CAPTURE_ROOT/report.json" \
             > "$RATE_CAPTURE_ROOT/stdout.json"
@@ -79,8 +86,17 @@ jobs:
               "run_id": os.environ["EVIDENCE_RUN_ID"],
               "capture_outcome": os.environ["CAPTURE_OUTCOME"],
               "selected_monitor_ids": [
-                  "trade_remedies_official", "trade_remedies_official__artifact_2",
+                  "review_ad30_completion_notice_pdf",
+                  "review_ad30_decision121_2026_page",
+                  "review_ad30_decision4_2026_page",
+                  "review_ad30_decision4_2026_pdf",
+                  "review_ad30_final_report_pdf",
+                  "review_remedy_index_page_2",
+                  "review_remedy_index_page_3",
+                  "review_remedy_index_page_4",
+                  "review_remedy_index_page_5",
               ],
+              "source_scope": "review_only_observed",
               "rejected_original_capture_requested": True,
               "application_database_created": sentinel.exists(),
               "legal_inventory_complete": False,

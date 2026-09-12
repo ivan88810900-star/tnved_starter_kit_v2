@@ -641,7 +641,7 @@ class TestPaymentDataCoverageOfficialOnlyDuty(unittest.TestCase):
         self.assertTrue(duty.missing_samples)
         self.assertTrue(any("official" in g.lower() for g in duty.gaps))
 
-    def test_full_official_coverage_can_be_present(self) -> None:
+    def test_full_marker_coverage_remains_unverified(self) -> None:
         sm = _memory_sessionmaker()
         base = 8_500_000_000
         with sm() as db:
@@ -664,8 +664,8 @@ class TestPaymentDataCoverageOfficialOnlyDuty(unittest.TestCase):
             duty = diagnose_duty_rates()
         finally:
             _stop_coverage_db_patches(patch_cov, patch_norm)
-        self.assertEqual(duty.status, "present")
-        self.assertFalse(duty.manual_review_required)
+        self.assertEqual(duty.status, "partial")
+        self.assertTrue(duty.manual_review_required)
 
     def _build_catalog_with_revision(self, sm, *, revision: str, base: int) -> None:
         with sm() as db:
@@ -699,7 +699,7 @@ class TestPaymentDataCoverageOfficialOnlyDuty(unittest.TestCase):
             self.assertEqual(duty.status, "partial")
             self.assertTrue(duty.missing_samples)
 
-    def test_versioned_revision_allows_present(self) -> None:
+    def test_versioned_revision_does_not_approve_rates(self) -> None:
         sm = _memory_sessionmaker()
         self._build_catalog_with_revision(sm, revision="ett:2026-05-01", base=8_700_000_000)
         patch_cov, patch_norm = _start_coverage_db_patches(sm)
@@ -707,7 +707,7 @@ class TestPaymentDataCoverageOfficialOnlyDuty(unittest.TestCase):
             duty = diagnose_duty_rates()
         finally:
             _stop_coverage_db_patches(patch_cov, patch_norm)
-        self.assertEqual(duty.status, "present")
+        self.assertEqual(duty.status, "partial")
 
     def test_mixed_non_versioned_full_with_partial_strict_official_not_present(self) -> None:
         sm = _memory_sessionmaker()
@@ -784,7 +784,7 @@ class TestVatCoverageViaEecVatSourceStatus(unittest.TestCase):
             )
         )
 
-    def test_seed_duty_row_with_eec_vat_status_present(self) -> None:
+    def test_seed_duty_row_vat_marker_is_unverified(self) -> None:
         sm = _memory_sessionmaker()
         with sm() as db:
             self._add_vat_signal_row(db, vat_marker=True)
@@ -796,7 +796,7 @@ class TestVatCoverageViaEecVatSourceStatus(unittest.TestCase):
             duty = diagnose_duty_rates()
         finally:
             _stop_coverage_db_patches(patch_cov, patch_norm)
-        self.assertEqual(vat.status, "present")
+        self.assertEqual(vat.status, "partial")
         self.assertNotEqual(duty.status, "present")
 
     def test_legacy_vat_row_not_official_after_eec_vat_sync(self) -> None:
@@ -811,8 +811,8 @@ class TestVatCoverageViaEecVatSourceStatus(unittest.TestCase):
             vat = diagnose_vat_rates()
         finally:
             _stop_coverage_db_patches(patch_cov, patch_norm)
-        self.assertEqual(vat.status, "present")
-        self.assertIn("official VAT hs_rates rows: 1", " ".join(vat.notes))
+        self.assertEqual(vat.status, "partial")
+        self.assertIn("VAT row markers: 1; not verified legal rates.", " ".join(vat.notes))
 
     def test_eec_vat_status_without_row_marker_not_present(self) -> None:
         sm = _memory_sessionmaker()
@@ -989,12 +989,12 @@ class TestPaymentDataCoverageTopLevelEecRevision(unittest.TestCase):
         duty = self._diagnose(sm)
         self.assertNotEqual(duty.status, "present")
 
-    def test_versioned_top_level_revision_present_allowed(self) -> None:
+    def test_versioned_top_level_revision_is_not_legal_review(self) -> None:
         sm = _memory_sessionmaker()
         self._build_full_official_catalog(sm, source_revision="ett:2026-05-01", is_stale=False, base=9_100_000_000)
         duty = self._diagnose(sm)
-        self.assertEqual(duty.status, "present")
-        self.assertFalse(duty.manual_review_required)
+        self.assertEqual(duty.status, "partial")
+        self.assertTrue(duty.manual_review_required)
 
     def test_stale_top_level_with_strict_revision_not_present(self) -> None:
         sm = _memory_sessionmaker()
@@ -1021,3 +1021,25 @@ class TestPaymentDataCoverageApi(unittest.TestCase):
         self.assertIn("tnved_entries", body["summary"])
         self.assertIn("duty_rates", body["summary"])
         self.assertIn("excise", body["summary"])
+
+
+def test_zero_vat_marker_inventory_survives_failed_legal_review():
+    from app.services.payment_data_coverage import _vat_official_provenance
+    from app.services.payment_data_normalization import _count_vat_signal_hs_rows
+
+    # A genuine numeric zero is a signal, not a missing value/default.
+    engine = create_engine("sqlite:///:memory:")
+    HsRate.__table__.create(engine)
+    sm = sessionmaker(bind=engine)
+    with sm() as db:
+        db.add(HsRate(
+            hs_code="7112300000", hs_prefix="", duty_rate="15%",
+            vat_import_rate=0, vat_rule="none", vat_source_code="EEC_VAT",
+            vat_source_revision="vat:2026-09-12",
+        ))
+        db.commit()
+        with unittest.mock.patch("app.services.payment_data_normalization._vat_proven", return_value=(False, None)):
+            marker_result = _vat_official_provenance(db)
+        assert marker_result == (False, 1, 0)
+        assert _count_vat_signal_hs_rows(db) == 1
+

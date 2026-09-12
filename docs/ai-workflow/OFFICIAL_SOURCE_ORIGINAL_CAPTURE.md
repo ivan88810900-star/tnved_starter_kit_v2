@@ -147,3 +147,34 @@ baselines, transport failures, stream/declared size limits and CLI requirements.
 The older Decision 121 and FNS VAT source identity checks remain separate tests
 after narrowing the workflow selection. Independent QA, integration and remote
 CI are required before this checkpoint is integrated.
+
+## Explicit observed sources after the navigation capture
+
+Run `34714034422` retained both rejected navigation bodies, with zero successful
+originals and no accepted source IDs. Both rejected receipts and bodies replayed
+successfully before the executor disconnected; the ordinary original verifier
+rejected both receipts. Their header scripts contain the literal `captcha` token
+inside `window['recaptchaFreeOptions']`: byte 5,363 on line 50 of the department
+body, and byte 3,376 on line 22 of the document-index body. These observations
+explain the validator match, but do not approve the content or relax validation.
+
+The exact index original exposes pagination hrefs for pages 2, 3, 4 and 5.
+The next explicit acquisition selects those four observed URLs and five observed
+act references: Decision 4 page/PDF, Decision 121 page, the AD30 completion notice
+and final investigation report. The already retained Decision 121 PDF and first
+navigation pages are excluded. The exact request and source provenance are in
+[evidence/eec-ad30-acquisition-plan-20260912.json](evidence/eec-ad30-acquisition-plan-20260912.json).
+
+`REVIEW_ONLY_SOURCES` is separate from the 72 registered monitor targets and
+does not add a policy or scheduled target. These IDs require explicit selection,
+original capture and a store. Any acceptance request containing one of these IDs
+is rejected before network or CLI store initialization, including mixed selections.
+Review-only observations never create or replace accepted or pending baseline
+records. Reports distinguish registered and review-only selection, and every legal,
+retention, production and promotion assertion remains false. Standard content and
+transport validators remain unchanged.
+
+The implementation was reconstructed from immutable remote files after the local
+execution server disconnected. No local test result is claimed for this new
+nine-target checkpoint. Its focused tests, independent A5 review and fresh GitHub
+Actions must pass before integration and the next acquisition.

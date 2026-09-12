@@ -299,6 +299,21 @@ jobs:
           tests/test_anti_dumping_ingestion.py
           tests/test_special_safeguard_ingestion.py
           tests/test_countervailing_ingestion.py
+          tests/test_import_duty_ingestion.py
+          tests/test_payment_data_normalization.py
+          tests/test_payment_source_ingestion.py
+          tests/test_official_payment_coverage_audit.py
+          tests/test_normative_bundle.py
+          tests/test_source_import.py
+          tests/test_official_payment_admission.py
+          tests/test_tamdoc_payment_admission.py
+          tests/test_rejected_source_original_capture.py
+          tests/test_source_quarantine_redteam.py
+          tests/test_ai_normative_admission.py
+          tests/test_ai_normative_cli_admission.py
+          tests/test_tws_payment_admission.py
+          tests/test_observed_source_review_capture.py
+          tests/test_ntm_legacy_review_boundary.py
           tests/test_payment_engine.py
           tests/test_special_duties.py
           tests/test_ntm_noise_classifier.py
