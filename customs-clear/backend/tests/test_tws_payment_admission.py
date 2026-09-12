@@ -113,3 +113,77 @@ def test_default_cli_exits_blocked_and_does_not_create_database(tmp_path):
     assert body["status"] == "manual_review_required"
     assert body["db_mutated"] is False
     assert not db.exists()
+
+
+@pytest.mark.parametrize("script, function", [
+    ("import_vat_preferences", "import_json"),
+    ("import_special_duties", "import_special_duties"),
+])
+def test_standalone_rate_importers_block_before_parsing_or_database_access(tmp_path, script, function):
+    import importlib.util
+
+    backend = Path(__file__).resolve().parents[1]
+    spec = importlib.util.spec_from_file_location(script, backend / "scripts" / f"{script}.py")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    missing = tmp_path / "input-not-even-opened.json"
+    with patch.object(Path, "read_text", side_effect=AssertionError("read")):
+        result = getattr(module, function)(missing)
+    assert result["status"] == "manual_review_required"
+    assert result["imported"] == 0
+    for field in ("db_mutated", "active_rates_written", "source_evidence_verified", "legal_review_verified", "retention_verified"):
+        assert result[field] is False
+
+
+@pytest.mark.parametrize("script", ["import_vat_preferences", "import_special_duties"])
+def test_standalone_cli_preserves_existing_database_and_cache_bytes(tmp_path, script):
+    import hashlib
+    import sqlite3
+
+    backend = Path(__file__).resolve().parents[1]
+    db = tmp_path / "isolated-existing.db"
+    with sqlite3.connect(db) as connection:
+        connection.execute("CREATE TABLE sentinel (value TEXT)")
+        connection.execute("INSERT INTO sentinel VALUES ('unchanged')")
+    marker = tmp_path / "cache.txt"
+    marker.write_text("unchanged-cache")
+    source = tmp_path / "forged.json"
+    source.write_text(json.dumps({
+        "items": [{"hs_code_prefix": "7112300000", "vat_rate": 0, "rate_percent": 18,
+                   "origin_country": "CN", "regulatory_act": "UNREVIEWED_TEST_FIXTURE"}],
+        "legal_review_verified": True, "retention_verified": True,
+    }))
+    before = hashlib.sha256(db.read_bytes()).hexdigest()
+    result = subprocess.run(
+        [sys.executable, str(backend / "scripts" / f"{script}.py"), str(source)],
+        cwd=tmp_path,
+        env={**os.environ, "DATABASE_URL": f"sqlite:///{db}", "TNVED_PREVIEW_CACHE_REVISION_FILE": str(marker)},
+        capture_output=True, text=True, timeout=30,
+    )
+    assert result.returncode == 2, result.stderr
+    body = json.loads(result.stdout)
+    assert body["status"] == "manual_review_required"
+    assert body["db_mutated"] is False
+    assert body["legal_review_verified"] is False
+    assert hashlib.sha256(db.read_bytes()).hexdigest() == before
+    assert marker.read_text() == "unchanged-cache"
+
+
+@pytest.mark.parametrize("script", ["import_vat_preferences", "import_special_duties"])
+def test_sample_generation_has_no_asserted_legal_authority_or_database(tmp_path, script):
+    backend = Path(__file__).resolve().parents[1]
+    db = tmp_path / "never-created.db"
+    output = tmp_path / "sample.json"
+    result = subprocess.run(
+        [sys.executable, str(backend / "scripts" / f"{script}.py"), "--generate-sample", str(output)],
+        cwd=tmp_path, env={**os.environ, "DATABASE_URL": f"sqlite:///{db}"},
+        capture_output=True, text=True, timeout=30,
+    )
+    assert result.returncode == 0, result.stderr
+    rows = json.loads(output.read_text())
+    assert rows
+    for row in rows:
+        assert row["candidate_only"] is True
+        assert row["legal_review_verified"] is False
+        assert (row.get("decree_info") or row.get("regulatory_act")) == "UNREVIEWED_EXAMPLE_NO_LEGAL_AUTHORITY"
+    assert not db.exists()

@@ -10,9 +10,6 @@ from typing import Any
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-from app.db import SessionLocal
-from app.models.tnved import VatPreference
-from app.services.preview_cache_revision import bump_preview_cache_revision
 
 
 def _norm_prefix(raw: object) -> str:
@@ -42,71 +39,37 @@ def _extract_items(payload: Any) -> list[dict[str, Any]]:
     return []
 
 
-def import_json(path: Path) -> None:
-    if not path.exists():
-        raise FileNotFoundError(f"Файл не найден: {path}")
-    payload = json.loads(path.read_text(encoding="utf-8"))
-    items = _extract_items(payload)
-    if not items:
-        raise ValueError("JSON не содержит массива записей")
+def import_json(path: Path) -> dict[str, Any]:
+    """Legacy CLI application is closed before file parsing or DB access."""
+    from app.services.official_payment_admission import blocked_payment_import
 
-    created = 0
-    updated = 0
-    skipped = 0
-    with SessionLocal() as db:
-        for it in items:
-            pref = _norm_prefix(it.get("hs_code_prefix") or it.get("hs_code"))
-            rate = _norm_rate(it.get("vat_rate"))
-            decree = str(it.get("decree_info") or "").strip()
-            comment = str(it.get("comment") or it.get("description") or "").strip()
-            if not pref or rate is None:
-                skipped += 1
-                continue
-            row = (
-                db.query(VatPreference)
-                .filter(
-                    VatPreference.hs_code_prefix == pref,
-                    VatPreference.vat_rate == rate,
-                    VatPreference.decree_info == decree,
-                )
-                .first()
-            )
-            if row:
-                row.comment = comment
-                updated += 1
-            else:
-                db.add(
-                    VatPreference(
-                        hs_code_prefix=pref,
-                        vat_rate=rate,
-                        decree_info=decree,
-                        comment=comment,
-                    )
-                )
-                created += 1
-        db.commit()
-    bump_preview_cache_revision("import_vat_preferences")
-    print(f"[OK] VAT preferences: created={created}, updated={updated}, skipped={skipped}")
+    return blocked_payment_import(source="import_vat_preferences", domain="vat")
 
 
 def generate_sample(path: Path) -> None:
     sample = [
         {
+            "candidate_only": True,
+            "legal_review_verified": False,
             "hs_code_prefix": "0101",
             "vat_rate": 10,
-            "decree_info": "ПП РФ № 908",
+            "decree_info": "UNREVIEWED_EXAMPLE_NO_LEGAL_AUTHORITY",
             "comment": "Продовольственные товары (пример)",
         },
         {
+            "candidate_only": True,
+            "legal_review_verified": False,
             "hs_code_prefix": "3004",
             "vat_rate": 10,
-            "decree_info": "ПП РФ № 688",
+            "decree_info": "UNREVIEWED_EXAMPLE_NO_LEGAL_AUTHORITY",
             "comment": "Лекарственные средства (пример)",
         },
         {
+            "candidate_only": True,
+            "legal_review_verified": False,
             "hs_code_prefix": "9018",
             "vat_rate": 10,
-            "decree_info": "ПП РФ № 688 от 15.09.2008 (медицинские товары)",
+            "decree_info": "UNREVIEWED_EXAMPLE_NO_LEGAL_AUTHORITY",
             "comment": "Инструменты и аппаратура медицинские",
         },
     ]
@@ -115,19 +78,21 @@ def generate_sample(path: Path) -> None:
     print(f"[OK] Sample VAT JSON создан: {path}")
 
 
-def main() -> None:
-    parser = argparse.ArgumentParser(description="Импорт льготных ставок НДС из JSON (ПП РФ №908/№688)")
+def main() -> int:
+    parser = argparse.ArgumentParser(description="Формат legacy НДС; применение без manifest-bound review закрыто")
     parser.add_argument("input", nargs="?", help="Путь к JSON-файлу")
     parser.add_argument("--generate-sample", default="", help="Создать sample JSON и выйти")
     args = parser.parse_args()
 
     if args.generate_sample:
         generate_sample(Path(args.generate_sample))
-        return
+        return 0
     if not args.input:
         raise SystemExit("Укажите путь к JSON или используйте --generate-sample")
-    import_json(Path(args.input))
+    result = import_json(Path(args.input))
+    print(json.dumps(result, ensure_ascii=False, indent=2))
+    return 2
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

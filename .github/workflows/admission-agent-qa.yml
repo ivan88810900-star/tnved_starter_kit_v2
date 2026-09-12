@@ -1,0 +1,143 @@
+name: Admission agent QA
+
+on:
+  push:
+    branches:
+      - 'agent/**'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: admission-agent-qa-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  admission:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        shell: bash
+        working-directory: customs-clear/backend
+    env:
+      DATABASE_URL: sqlite:////tmp/tariff-admission-agent-qa.db
+      SECRET_KEY: isolated-admission-agent-qa-secret
+      ADMIN_PASSWORD: isolated-admission-admin-password
+      VIEWER_PASSWORD: isolated-admission-viewer-password
+      DECLARANT_PASSWORD: isolated-admission-declarant-password
+      ADMIN_API_TOKEN: isolated-admission-admin-token
+      CUSTOMSCLEAR_READ_ONLY: "0"
+      SCHEDULER_ENABLED: "0"
+      REGULATORY_SYNC_SCHEDULER_ENABLED: "0"
+      CUSTOMSCLEAR_ALLOW_LEGACY_AUTOMATION: "0"
+      NTM_V2_MEASURES_ENFORCEMENT_ENABLED: "0"
+      NTM_V2_RULES_ENFORCEMENT_ENABLED: "0"
+      NTM_V2_OFFICIAL_CURATED_ENFORCEMENT_ENABLED: "0"
+      NTM_V2_EXACT_TRADE_CURATED_ALLOWLIST_ENABLED: "0"
+      TNVED_PREVIEW_CACHE_REVISION_FILE: /tmp/tariff-admission-agent-cache.txt
+      GEMINI_API_KEY: ""
+      GOOGLE_API_KEY: ""
+      ANTHROPIC_API_KEY: ""
+      OPENAI_API_KEY: ""
+    steps:
+      - name: Check out exact agent commit
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: customs-clear/backend/requirements.txt
+
+      - name: Install declared backend dependencies
+        run: python -m pip install --disable-pip-version-check -r requirements.txt
+
+      - name: Run explicit branch scope on disposable databases
+        run: |
+          set -euo pipefail
+          test ! -e /tmp/tariff-admission-agent-qa.db
+          case "$GITHUB_REF_NAME" in
+            agent/rates-full)
+              tests=(
+                tests/test_import_duty_ingestion.py
+                tests/test_vat_ingestion.py
+                tests/test_excise_ingestion.py
+                tests/test_anti_dumping_ingestion.py
+                tests/test_special_safeguard_ingestion.py
+                tests/test_countervailing_ingestion.py
+                tests/test_payment_data_normalization.py
+                tests/test_payment_data_coverage.py
+                tests/test_payment_source_ingestion.py
+                tests/test_official_payment_coverage_audit.py
+                tests/test_tws_payment_admission.py
+                tests/test_official_rate_validation.py
+                tests/test_trade_remedy_ingestion_hardening.py
+              )
+              ;;
+            agent/ntm-compliance)
+              tests=(
+                tests/test_tamdoc_payment_admission.py
+                tests/test_non_tariff_rule_validity.py
+                tests/test_ntm_layers_legal_guards.py
+                tests/test_official_ntm_contours.py
+                tests/test_ntm_v2_legacy_measures_import.py
+                tests/test_ntm_v2_legacy_measures_diagnostics.py
+                tests/test_ntm_v2_measures_enforcement.py
+                tests/test_ntm_unknown_tr_review.py
+              )
+              ;;
+            agent/source-registry)
+              tests=(
+                tests/test_rejected_source_original_capture.py
+                tests/test_official_source_original_capture.py
+                tests/test_opendata_source_integrity.py
+              )
+              ;;
+            agent/classification-ai)
+              tests=(
+                tests/test_ai_normative_admission.py
+                tests/test_ai_normative_cli_admission.py
+              )
+              ;;
+            agent/admission-integration)
+              tests=(
+                tests/test_normative_bundle.py
+                tests/test_normative_bundle_exact_rate_scope.py
+                tests/test_source_import.py
+                tests/test_official_rate_validation.py
+                tests/test_build_full_staging_snapshot.py
+              )
+              ;;
+            agent/qa-integration)
+              # Initial reconstructed source-only QA checkpoint; expand after
+              # the upstream admission dependencies are integrated.
+              tests=(
+                tests/test_source_quarantine_redteam.py
+                tests/test_rejected_source_original_capture.py
+                tests/test_official_source_original_capture.py
+                tests/test_opendata_source_integrity.py
+              )
+              ;;
+            *)
+              printf 'No reviewed admission QA scope for branch %s\n' "$GITHUB_REF_NAME" >&2
+              exit 2
+              ;;
+          esac
+          for test_path in "${tests[@]}"; do
+            test -f "$test_path" || { printf 'Required test missing: %s\n' "$test_path" >&2; exit 2; }
+          done
+          printf 'Exact commit: %s; explicit test files: %s\n' "$GITHUB_SHA" "${#tests[@]}"
+          python -m pytest -q "${tests[@]}" --junitxml=/tmp/tariff-admission-agent-qa.xml
+
+      - name: Preserve aggregate test results
+        if: always()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        with:
+          name: admission-agent-qa-${{ github.run_id }}-${{ github.run_attempt }}
+          path: /tmp/tariff-admission-agent-qa.xml
+          if-no-files-found: warn
+          retention-days: 14
