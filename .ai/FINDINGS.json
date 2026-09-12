@@ -1,5 +1,5 @@
 {
-  "board_revision": 83,
+  "board_revision": 86,
   "findings": [
     {
       "head_sha": "161a9258d174e93266353ae1fd2cb0b3e4657679",
@@ -59,7 +59,12 @@
       "head_sha": "c5750fb266dd4946855eda0ef2f2083f32e5356f",
       "id": "A5-AD30-002",
       "reporter": "A5",
-      "status": "CONFIRMED",
+      "resolution": {
+        "evidence": "A0 replayed positive validation and a missing-jq producer negative on the clean new HEAD. Producer failure now propagates as rc127 with no PASS output; exact counts 5, 33, 23 and 8 are asserted before results.",
+        "head_sha": "ca664142de9c7c0568ef03bd854fa60c74025fee",
+        "validator": "A0"
+      },
+      "status": "RESOLVED",
       "summary": "Embedded validation uses mapfile with process substitution, so jq failures do not propagate under set -euo pipefail; absent exact 33/23 count assertions allow false PASS at 0/0.",
       "task_id": "TARIFF-AD30-REVIEW-CANDIDATE-001",
       "validation": {

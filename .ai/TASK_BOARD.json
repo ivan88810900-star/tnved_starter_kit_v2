@@ -58,7 +58,12 @@
       "head_sha": "c5750fb266dd4946855eda0ef2f2083f32e5356f",
       "id": "A5-AD30-002",
       "reporter": "A5",
-      "status": "CONFIRMED",
+      "resolution": {
+        "evidence": "A0 replayed positive validation and a missing-jq producer negative on the clean new HEAD. Producer failure now propagates as rc127 with no PASS output; exact counts 5, 33, 23 and 8 are asserted before results.",
+        "head_sha": "ca664142de9c7c0568ef03bd854fa60c74025fee",
+        "validator": "A0"
+      },
+      "status": "RESOLVED",
       "summary": "Embedded validation uses mapfile with process substitution, so jq failures do not propagate under set -euo pipefail; absent exact 33/23 count assertions allow false PASS at 0/0.",
       "task_id": "TARIFF-AD30-REVIEW-CANDIDATE-001",
       "validation": {
@@ -69,7 +74,7 @@
     }
   ],
   "max_concurrent_subagents": 3,
-  "revision": 83,
+  "revision": 86,
   "runs": [
     {
       "head_sha": null,
@@ -217,9 +222,9 @@
       "run_id": "b2fd57ee8ed948cca6cdb2a51195f94b",
       "session_id": "/root/a3_ad30_review",
       "started_at": "2026-09-12T22:02:19.551444+00:00",
-      "status": "RUNNING",
+      "status": "FINISHED",
       "task_id": "TARIFF-AD30-REVIEW-CANDIDATE-001",
-      "updated_at": "2026-09-12T22:02:19.551463+00:00"
+      "updated_at": "2026-09-12T22:04:30.501004+00:00"
     }
   ],
   "schema_version": 1,
@@ -558,7 +563,7 @@
       "qa": null,
       "refs": {
         "base_sha": "1c0272a34cbcbb3b99d6f32c86d86949bc0adc06",
-        "head_sha": "c5750fb266dd4946855eda0ef2f2083f32e5356f",
+        "head_sha": "ca664142de9c7c0568ef03bd854fa60c74025fee",
         "pr": null
       },
       "required_checks": [
@@ -569,11 +574,25 @@
         "admission"
       ],
       "risk": "high",
-      "status": "IN_PROGRESS",
-      "tests": [],
-      "updated_at": "2026-09-12T22:02:19.551466+00:00",
+      "status": "IMPLEMENTED",
+      "tests": {
+        "commands": [
+          {
+            "command": "Replay embedded fail-closed exact base-to-head validation with exact cardinality assertions",
+            "exit_code": 0,
+            "output": "PASS: exact one-file clean scope; paths 5/5; bindings 33/33; source literals 23/23; dates 8/8; committed diff clean."
+          },
+          {
+            "command": "Cardinality assertion and missing-jq producer negative controls",
+            "exit_code": 0,
+            "output": "PASS: assertion mismatch exited 1 with zero PASS output; missing jq producer exited 127 with zero PASS output. A0 independently reproduced missing-jq rc127 and no PASS output."
+          }
+        ],
+        "head_sha": "ca664142de9c7c0568ef03bd854fa60c74025fee"
+      },
+      "updated_at": "2026-09-12T22:04:30.519784+00:00",
       "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-ad30-review-candidate-001-99f4e3fb32"
     }
   ],
-  "updated_at": "2026-09-12T22:02:19.551625+00:00"
+  "updated_at": "2026-09-12T22:04:30.538394+00:00"
 }
