@@ -10,6 +10,7 @@ from unittest.mock import AsyncMock, patch
 from app.services.permit_extractor import extract_permits_from_text
 from app.services.permits_jobs import permits_job_items_as_csv
 from app.services.permits_service import check_permits, normalize_number
+from tests.support_auth import login_declarant
 
 
 # Реальный формат из практики (пользовательский пример)
@@ -112,6 +113,7 @@ class PermitsVerifyEndpointTests(unittest.TestCase):
 
         init_db()
         cls.client = TestClient(app)
+        login_declarant(cls.client)
 
     @patch("app.api.permits.check_permits", new_callable=AsyncMock)
     def test_post_verify_user_declaration(self, mock_check):

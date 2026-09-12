@@ -1,0 +1,124 @@
+{
+  "schema_version": 1,
+  "evidence_kind": "official_web_navigation_link_discovery",
+  "observed_on": "2026-09-11",
+  "original_response_bytes_retained_in_this_discovery": false,
+  "network_guards_changed": false,
+  "registry_changed": false,
+  "legal_ready": false,
+  "can_promote": false,
+  "active_rates_written": false,
+  "full_current_measure_coverage_confirmed": false,
+  "navigation": [
+    {
+      "parent_url": "https://eec.eaeunion.org/",
+      "observed_label": "Департаменты ЕЭК",
+      "target_url": "https://eec.eaeunion.org/comission/collegium/"
+    },
+    {
+      "parent_url": "https://eec.eaeunion.org/comission/collegium/",
+      "observed_label": "Департамент защиты внутреннего рынка",
+      "target_url": "https://eec.eaeunion.org/comission/department/podm/"
+    },
+    {
+      "parent_url": "https://eec.eaeunion.org/",
+      "observed_label": "Торговля",
+      "target_url": "https://eec.eaeunion.org/comission/direction/trade/"
+    },
+    {
+      "parent_url": "https://eec.eaeunion.org/comission/department/podm/",
+      "observed_label": "Тематический раздел Защита внутреннего рынка",
+      "target_url": "https://remedies.eaeunion.org/dimd/ru"
+    },
+    {
+      "parent_url": "https://eec.eaeunion.org/comission/direction/trade/",
+      "observed_label": "Защитные меры и текущие расследования",
+      "target_url": "https://remedies.eaeunion.org/dimd/ru"
+    },
+    {
+      "parent_url": "https://eec.eaeunion.org/comission/department/podm/",
+      "observed_label": "Все документы по теме",
+      "target_url": "https://docs.eaeunion.org/documents/?filter_departament%5B%5D=14"
+    }
+  ],
+  "department_scope_observation": {
+    "url": "https://eec.eaeunion.org/comission/department/podm/",
+    "observed_families": ["anti_dumping", "countervailing", "safeguard"],
+    "interpretation": "Department responsibility and navigation scope only; no complete current-duty register was extracted."
+  },
+  "document_observations": [
+    {
+      "card_url": "https://docs.eaeunion.org/documents/463/10918/",
+      "observed_from": [
+        "https://eec.eaeunion.org/",
+        "https://eec.eaeunion.org/comission/department/podm/"
+      ],
+      "document_type": "Решение Коллегии ЕЭК",
+      "number": "121",
+      "adopted_on_card": "2026-09-08",
+      "published_on_card": "2026-09-10",
+      "effective_on_card": null,
+      "topic": "Extension of anti-dumping measure for welded stainless pipes, tubes and hollow profiles from China; repeal of Decision 4 of 20 January 2026.",
+      "observed_pdf_url": "https://docs.eaeunion.org/upload/iblock/072/gnl5h50x3mzkg7zd1b0d593t4mtizhg1/Reshenie-Kollegii-_-121-ot-8-sentbrya-2026-g.pdf",
+      "pdf_pages_reported_by_web": 2,
+      "pdf_text_extracted_by_web": false,
+      "effective_date_clause_reviewed": false,
+      "rate_or_current_applicability_confirmed": false
+    },
+    {
+      "card_url": "https://docs.eaeunion.org/documents/463/10894/",
+      "observed_from": ["https://docs.eaeunion.org/documents/?filter_departament%5B%5D=14"],
+      "document_type": "Решение Коллегии ЕЭК",
+      "number": "111",
+      "adopted_on_card": "2026-08-25",
+      "published_on_card": "2026-08-28",
+      "effective_on_card": "2026-09-27",
+      "topic": "Extension of anti-dumping measure for leaf springs and leaves from China; repeal of Decision 19 of 17 February 2026.",
+      "date_observation_limit": "The card's effective date is later than this discovery date; the newly published act cannot be treated as already effective on 2026-09-11.",
+      "rate_or_current_applicability_confirmed": false
+    },
+    {
+      "card_url": "https://docs.eaeunion.org/documents/166/10904/",
+      "observed_from": ["https://eec.eaeunion.org/comission/department/podm/"],
+      "document_type": "Investigation initiation notice",
+      "published_on_pdf": "2026-09-07",
+      "publication_id_on_pdf": "2026/510/SG15",
+      "topic": "Safeguard investigation concerning polymer-coated metal products.",
+      "observed_pdf_url": "https://docs.eaeunion.org/upload/iblock/0ce/ndjzv1mueylkyv2kupaoxh4w1l0n0msq/SG15_notice_initiation.pdf",
+      "pdf_pages_reported_by_web": 5,
+      "pdf_text_extracted_by_web": true,
+      "current_safeguard_duty_established": false,
+      "document_role_limit": "Notice of investigation initiation, not a decision imposing a duty."
+    },
+    {
+      "card_url": "https://docs.eaeunion.org/documents/166/10903/",
+      "observed_from": ["https://eec.eaeunion.org/comission/department/podm/"],
+      "document_type": "Notice of publication of draft investigation report",
+      "adopted_on_card": "2026-08-31",
+      "topic": "Draft safeguard investigation report concerning tinplate.",
+      "current_safeguard_duty_established": false
+    }
+  ],
+  "opendata_replacement_observations": {
+    "requested_url": "https://opendata.eaeunion.org/",
+    "observed_final_url": "https://opendata.eaeunion.org/opendata/",
+    "corroborating_parent_url": "https://eec.eaeunion.org/",
+    "observed_parent_link_label": "База НСИ",
+    "observed_parent_link_url": "https://opendata.eaeunion.org/ru-ru/Pages/resources.aspx",
+    "parent_link_observed_final_url": "https://opendata.eaeunion.org/opendata/",
+    "observed_page_title": "Портал общих информационных ресурсов и открытых данных",
+    "intermediate_redirect_statuses_exposed_by_web": false,
+    "replacement_landing_corroborated": true,
+    "vat_dataset_replacement_confirmed": false,
+    "odata_api_endpoint_confirmed": false,
+    "downloadable_legal_rate_original_confirmed": false
+  },
+  "availability_limits": [
+    "The obsolete /comission/department/deptexsec/trade_remedies/ URL did not open through web; the existing acquisition report independently recorded its HTTP failure.",
+    "The corroborated remedies portal returned its title through web but no extractable body. One bounded ordinary urllib request from this workspace returned HTTP 502. No portal API, internal route or current-measure table was guessed.",
+    "The public department document index includes decisions, investigation notices and draft reports, with publication/effective dates; it is not itself a verified current-duty register.",
+    "Specific current countervailing decisions and full safeguard applicability were not established in the bounded accessible navigation. This is an evidence gap, not evidence of no measures.",
+    "Pagination links were visible in the legal index, but tool navigation could not resolve them; older pages were not audited.",
+    "The opendata final landing had no extractable body in web. A corroborated landing replacement does not establish a VAT or OData source replacement."
+  ]
+}

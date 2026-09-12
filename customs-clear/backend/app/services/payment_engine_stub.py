@@ -140,6 +140,7 @@ def compare_payment_scenarios(payload: dict[str, Any]) -> dict[str, Any]:
                 "vat_rate_applied": res["breakdown"]["vat_rate"],
                 "data_quality": res.get("data_quality"),
                 "tnved_title": (tv.get("title") or "")[:300] if isinstance(tv, dict) else "",
+                "payment_result": res,
             }
         )
 

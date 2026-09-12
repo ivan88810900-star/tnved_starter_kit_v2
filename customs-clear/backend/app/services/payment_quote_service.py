@@ -23,6 +23,25 @@ def _digits_hs(code: str) -> str:
     return re.sub(r"\D", "", (code or ""))[:10]
 
 
+def _amounts_require_review(raw: dict[str, Any]) -> bool:
+    return bool(
+        raw.get("amounts_provisional")
+        or raw.get("status") == "REVIEW_REQUIRED"
+        or (raw.get("data_quality") or {}).get("amounts_provisional")
+        or (raw.get("tariff_preference") or {}).get("status") == "needs_review"
+    )
+
+
+def _amount_review_reason(raw: dict[str, Any]) -> str:
+    return str(
+        raw.get("payment_review_reason")
+        or (raw.get("data_quality") or {}).get("payment_review_reason")
+        or (raw.get("tariff_preference") or {}).get("reason")
+        or (raw.get("data_quality") or {}).get("tariff_preference_warning")
+        or "Применимость ставки требует проверки; суммы являются предварительными."
+    )
+
+
 def _special_duty_prefixes(hs_code: str) -> list[str]:
     d = _digits_hs(hs_code)
     if not d:
@@ -64,6 +83,9 @@ def _resolve_excise_status(
     if user_excise is not None:
         return "manual_override", float(amount) if amount is not None else float(user_excise), reason
 
+    if "excise_applicability_unverified" in (raw.get("payment_review_reasons") or []):
+        return "manual_review_required", None, reason or "Тип, значение или применимость ставки акциза требуют проверки."
+
     if excise_type in {"percent", "fixed"}:
         return "applied", float(amount or 0.0), reason
 
@@ -75,7 +97,7 @@ def _resolve_excise_status(
     if int(dq.get("match_length") or 0) == 0:
         return "unknown", None, "Применимость акциза не определена — нет данных по коду в локальной базе."
 
-    return "not_applicable", 0.0, reason or "Акциз не применяется."
+    return "manual_review_required", None, reason or "Тип или применимость ставки акциза требуют проверки."
 
 
 def _resolve_antidumping_line(
@@ -153,6 +175,16 @@ def _resolve_special_duty_line(
     details = list(raw.get("special_duties") or [])
     configured = _special_duties_configured_for_hs(hs_code)
 
+    if any(item.get("status") in {"needs_clarification", "provisional"} for item in details):
+        return PaymentQuoteLineItem(
+            code="special_duty",
+            label="Специальные / защитные / компенсационные пошлины",
+            amount_rub=None,
+            status="manual_review_required",
+            reason=str(raw.get("special_duties_warning") or "Применимость найденных торговых мер требует проверки."),
+            source="special_duties",
+        )
+
     if amount > 0 and details:
         acts = ", ".join({str(d.get("regulatory_act") or "").strip() for d in details if d.get("regulatory_act")})
         return PaymentQuoteLineItem(
@@ -207,6 +239,13 @@ def _resolve_special_duty_line(
 def _build_warnings(line_items: list[PaymentQuoteLineItem], raw: dict[str, Any]) -> list[PaymentQuoteWarning]:
     warnings: list[PaymentQuoteWarning] = []
     dq = raw.get("data_quality") or {}
+
+    if _amounts_require_review(raw):
+        warnings.append(PaymentQuoteWarning(
+            code="payment_review_required",
+            message=_amount_review_reason(raw),
+            severity="warning",
+        ))
 
     confidence = str(dq.get("confidence") or "")
     if confidence in {"low", "none"}:
@@ -313,6 +352,32 @@ def _build_assumptions(payload: dict[str, Any], raw: dict[str, Any]) -> list[Pay
         assumptions.append(
             PaymentQuoteAssumption(key="net_weight_kg", label="Вес нетто", value=f"{weight} кг")
         )
+    if _amounts_require_review(raw):
+        preference_pending = (raw.get("tariff_preference") or {}).get("status") == "needs_review"
+        assumptions.append(PaymentQuoteAssumption(
+            key="tariff_preference_review" if preference_pending else "payment_source_review",
+            label="Проверка права на преференцию" if preference_pending else "Проверка исходных данных расчёта",
+            value=_amount_review_reason(raw),
+        ))
+        breakdown = raw.get("breakdown") or {}
+        suffix = " без преференции" if preference_pending else " (исходные ставки требуют проверки)"
+        for key, label in (
+            ("duty", f"Предварительная пошлина{suffix}"),
+            ("vat", f"Предварительный НДС{suffix}"),
+            ("total_payable", f"Предварительная сумма{suffix}"),
+        ):
+            if breakdown.get(key) is not None:
+                assumptions.append(PaymentQuoteAssumption(
+                    key=f"provisional_{key}_rub",
+                    label=label,
+                    value=f"{float(breakdown[key]):,.2f} RUB".replace(",", " "),
+                ))
+        if any(item.get("status") in {"needs_clarification", "provisional"} for item in raw.get("special_duties") or []):
+            assumptions.append(PaymentQuoteAssumption(
+                key="provisional_special_duties_rub",
+                label="Рассчитанная часть торговых пошлин без непроверенных мер",
+                value=f"{float(breakdown.get('special_duties_amount') or 0):,.2f} RUB".replace(",", " "),
+            ))
     return assumptions
 
 
@@ -387,22 +452,58 @@ def build_payment_quote(payload: dict[str, Any]) -> PaymentQuoteResponse:
             canonical_anchor=canonical_anchor,
         )
 
+    amounts_provisional = _amounts_require_review(raw)
+    preference_pending = (raw.get("tariff_preference") or {}).get("status") == "needs_review"
+    auto = raw.get("auto_detected") or {}
     duty_status: PaymentLineStatus = "applied"
     duty_reason = str((raw.get("legal_basis") or {}).get("duty") or "")
-    if int(dq.get("match_length") or 0) == 0:
+    if payload.get("duty_rate") is not None:
+        duty_status = "manual_override"
+        duty_reason = f"Ставка пошлины указана вручную: {payload['duty_rate']}%."
+    elif not (
+        int(dq.get("match_length") or 0)
+        or int(auto.get("duty_rule_match_len") or 0)
+        or (raw.get("geo") or {}).get("duty_override_rate") is not None
+    ):
         duty_status = "unknown"
-        duty_reason = duty_reason or "Ставка пошлины не найдена в локальной базе; применена ставка 0% для расчёта."
+        duty_reason = "Ставка пошлины не найдена в локальной базе; сумма пошлины не определена."
+    if preference_pending:
+        duty_status = "manual_review_required"
+        duty_reason = _amount_review_reason(raw)
 
+    duty_uncertain = duty_status in {"unknown", "manual_review_required"}
+    special_duty_uncertain = any(
+        item.get("status") in {"needs_clarification", "provisional"} for item in raw.get("special_duties") or []
+    )
     excise_status, excise_amount, excise_reason = _resolve_excise_status(raw=raw, user_excise=user_excise)
+    antidumping_line = _resolve_antidumping_line(raw=raw)
+    uncertain_bases = {"manual_review_required", "unknown", "not_configured"}
+    vat_basis_uncertain = (duty_uncertain or special_duty_uncertain
+                           or excise_status in uncertain_bases
+                           or antidumping_line.status in uncertain_bases)
+    vat_status: PaymentLineStatus = "manual_override" if payload.get("vat_rate") is not None else "applied"
+    vat_reason = str(breakdown.get("vat_reason") or "")
+    if vat_basis_uncertain:
+        vat_status = "manual_review_required"
+        vat_reason += " База НДС зависит от непроверенной пошлины или акциза."
+        if amounts_provisional:
+            vat_reason += " Предварительный расчёт приведён в допущениях."
+    elif payload.get("vat_rate") is None and not (
+        int(dq.get("match_length") or 0) or int(auto.get("vat_pref_match_len") or 0)
+    ):
+        vat_status = "unknown"
+        vat_reason = "Ставка НДС не найдена в локальной базе; сумма НДС не определена."
+    vat_uncertain = vat_status in {"unknown", "manual_review_required"}
 
     line_items: list[PaymentQuoteLineItem] = [
         PaymentQuoteLineItem(
             code="duty",
             label="Ввозная пошлина",
-            amount_rub=float(breakdown.get("duty") or 0.0),
+            amount_rub=None if duty_uncertain else float(breakdown.get("duty") or 0.0),
             status=duty_status,
             reason=duty_reason,
-            source="hs_duty_rules / hs_rates (ЕТТ ЕАЭС)",
+            source=("hs_duty_rules / hs_rates; legacy_country_tariff_preferences (не подтверждено)"
+                    if preference_pending else "hs_duty_rules / hs_rates (ЕТТ ЕАЭС)"),
             rate_label=f"{breakdown.get('duty_rate')}%" if breakdown.get("duty_rate") is not None else None,
             basis_label="Таможенная стоимость",
             basis_amount_rub=float(raw.get("customs_value") or 0.0),
@@ -410,13 +511,13 @@ def build_payment_quote(payload: dict[str, Any]) -> PaymentQuoteResponse:
         PaymentQuoteLineItem(
             code="vat",
             label="НДС",
-            amount_rub=float(breakdown.get("vat") or 0.0),
-            status="applied",
-            reason=str(breakdown.get("vat_reason") or ""),
+            amount_rub=None if vat_uncertain else float(breakdown.get("vat") or 0.0),
+            status=vat_status,
+            reason=vat_reason,
             source="hs_rates / vat_preferences (НК РФ)",
             rate_label=f"{breakdown.get('vat_rate')}%",
             basis_label="Стоимость + пошлина + акциз + торговые пошлины",
-            basis_amount_rub=float(breakdown.get("vat_base") or 0.0),
+            basis_amount_rub=None if vat_basis_uncertain else float(breakdown.get("vat_base") or 0.0),
         ),
         PaymentQuoteLineItem(
             code="customs_fee",
@@ -436,7 +537,7 @@ def build_payment_quote(payload: dict[str, Any]) -> PaymentQuoteResponse:
             reason=excise_reason,
             source="hs_rates (НК РФ ст. 193)",
         ),
-        _resolve_antidumping_line(raw=raw),
+        antidumping_line,
         _resolve_special_duty_line(raw=raw, country=country, hs_code=hs_code),
     ]
 
@@ -444,7 +545,7 @@ def build_payment_quote(payload: dict[str, Any]) -> PaymentQuoteResponse:
     assumptions = _build_assumptions(payload, raw)
 
     uncertain_statuses = {"manual_review_required", "unknown", "not_configured", "embargo"}
-    blocking_codes = {"excise", "antidumping", "special_duty"}
+    blocking_codes = {"duty", "vat", "excise", "antidumping", "special_duty"}
     has_uncertain = any(
         item.status in uncertain_statuses and item.code in blocking_codes for item in line_items
     )
@@ -453,10 +554,10 @@ def build_payment_quote(payload: dict[str, Any]) -> PaymentQuoteResponse:
         2,
     )
     engine_total = float(breakdown.get("total_payable") or 0.0)
-    total_payable: float | None = None if has_uncertain else engine_total
+    total_payable: float | None = None if has_uncertain or amounts_provisional else engine_total
 
     return PaymentQuoteResponse(
-        status=str(raw.get("status") or "OK"),
+        status="REVIEW_REQUIRED" if amounts_provisional else str(raw.get("status") or "OK"),
         hs_code=hs_code,
         country=country,
         description=description,

@@ -16,6 +16,13 @@
 | DM-0005 | Guided `2204` PDO interval | Accepted — Option A | Ivan | 2026-08-05 | [`decisions/DM-0005-guided-2204-pdo-interval.md`](decisions/DM-0005-guided-2204-pdo-interval.md) |
 | DM-0006 | Guided `0304` product-form chain | Accepted — Option A | Ivan | 2026-08-06 | [`decisions/DM-0006-guided-0304-product-form-chain.md`](decisions/DM-0006-guided-0304-product-form-chain.md) |
 | DM-0007 | Guided `0406` fat/moisture chain | Accepted — Option A | Ivan | 2026-08-07 | [`decisions/DM-0007-guided-0406-moisture-chain.md`](decisions/DM-0007-guided-0406-moisture-chain.md) |
+| DM-0008 | Rollout и enforcement официального NTM-контура | Accepted — Option A (advisory-only) | Ivan | 2026-08-15 | [`decisions/DM-0008-official-ntm-enforcement.md`](decisions/DM-0008-official-ntm-enforcement.md) |
+| DM-0009 | Отдельное семейство экспортного контроля | Accepted — Option A (advisory-only) | Ivan | 2026-08-15 | [`decisions/DM-0009-export-control-family.md`](decisions/DM-0009-export-control-family.md) |
+| DM-0010 | Правовые контуры NTM и fail-closed полнота каталога | Accepted boundary — full gate passed | Ivan | 2026-08-15 | [`decisions/DM-0010-ntm-legal-contours-catalog-fail-closed.md`](decisions/DM-0010-ntm-legal-contours-catalog-fail-closed.md) |
+| DM-0011 | Структурированная применимость NTM и curated shadow enforcement | Accepted — implementation; activation deferred | Ivan | 2026-08-15 | [`decisions/DM-0011-structured-ntm-applicability-shadow-enforcement.md`](decisions/DM-0011-structured-ntm-applicability-shadow-enforcement.md) |
+| DM-0012 | Guided `2204`: retained «прочие» boundaries | Accepted — Option A | Ivan | 2026-08-18 | [`decisions/DM-0012-guided-2204-retained-other-boundaries.md`](decisions/DM-0012-guided-2204-retained-other-boundaries.md) |
+| DM-0013 | Automatic regulatory-source updates | Accepted | Ivan | 2026-08-23 | [`decisions/DM-0013-regulatory-source-automatic-updates.md`](decisions/DM-0013-regulatory-source-automatic-updates.md) |
+| DM-0014 | Authority for manifest-bound legal review | Proposed for future legal authorization; development continues | Ivan at authorization gate | 2026-09-11 | [`decisions/DM-0014-ett-review-authority.md`](decisions/DM-0014-ett-review-authority.md) |
 
 ---
 
@@ -189,6 +196,69 @@ Ivan выбрал Option A. Option B с повторяющимися «проч�
 18,211/18,211. DM не разрешает merge, rollout/deploy, включение флагов или
 DB/API/frontend/LLM изменения. Полный документ:
 [`decisions/DM-0007-guided-0406-moisture-chain.md`](decisions/DM-0007-guided-0406-moisture-chain.md).
+
+---
+
+## DM-0008 — Rollout и enforcement официального NTM-контура
+
+**Статус:** Accepted — Option A (Ivan, 2026-08-15).
+
+Ivan одобрил default-ON показ полного официального NTM-контура только как
+advisory. `NTM_V2_OFFICIAL_FULL_ADVISORY_ENABLED=false` является kill switch.
+Все prefix/«из»/marker-совпадения остаются `needs_clarification` и
+`used_for_missing_check=false`. **Enforcement не одобрен** и требует нового
+отдельного решения. Полный документ:
+[`decisions/DM-0008-official-ntm-enforcement.md`](decisions/DM-0008-official-ntm-enforcement.md).
+
+## DM-0009 — Отдельное семейство экспортного контроля
+
+**Статус:** Accepted — Option A (Ivan, 2026-08-15).
+
+Экспортный контроль ПП РФ №1284–1288 и №1299 выделен в девятое семейство.
+Source-faithful union содержит 1 087 raw HS-кандидатов; после исключения двух
+versioned retired exact-кодов runtime использует 1 085 effective-кандидатов.
+Совпадения требуют идентификации по техническим параметрам и не участвуют в
+enforcement. Полный документ:
+[`decisions/DM-0009-export-control-family.md`](decisions/DM-0009-export-control-family.md).
+
+## DM-0010 — Правовые контуры NTM и fail-closed полнота каталога
+
+**Статус:** Accepted boundary — full gate passed (Ivan, 2026-08-15).
+
+Fail-closed граница запрещает повышать partial/code-only результат до полного.
+После parser baseline fix временная DB, rebuilt из 96 tracked official PDFs,
+прошла текущий gate: exact 21/96/17 809 unique, 0 duplicate/invalid и 17 774
+непустых описания. Все 35 blank catalog codes absent from the pinned active ETT
+rate snapshot; это нейтральная проверка множества, не вывод о причине или статусе
+кодов. Все 13 290 кодов revision `ett:2026-06-18` присутствуют и описаны.
+Pinned PDF-manifest, parser, ETT code-set, catalog code-set и code+description
+digests совпали. Audit использовал временный read-only artifact и не изменял
+production DB; отчёт имеет `full_commodity_catalog`, `catalog_complete=true` и
+`ok=true`. Полный документ:
+[`decisions/DM-0010-ntm-legal-contours-catalog-fail-closed.md`](decisions/DM-0010-ntm-legal-contours-catalog-fail-closed.md).
+
+## DM-0011 — Структурированная применимость и shadow enforcement
+
+**Статус:** Accepted — implementation boundary; production activation deferred
+(Ivan, 2026-08-15).
+
+API/UI принимают необязательные structured facts и показывают bounded exact
+`definite`/`excluded` выводы отдельно от broker/missing-check. Запросы без facts
+сохраняют broad-only контракт. Versioned curated bridge реализован, но
+`NTM_V2_OFFICIAL_CURATED_ENFORCEMENT_ENABLED` по умолчанию выключен; включение
+требует нового rollout-решения и доверенных source adapters. Полный документ:
+[`decisions/DM-0011-structured-ntm-applicability-shadow-enforcement.md`](decisions/DM-0011-structured-ntm-applicability-shadow-enforcement.md).
+
+## DM-0012 — Guided 2204 retained «прочие» boundaries
+
+**Статус:** Accepted — Option A (Ivan, 2026-08-18).
+
+Две точные retained source-boundary создают codeless «прочие» вопросы 16/16
+внутри PDO `220421` и 7/7 под `220422`. Все 211 source codes и 170 leaves
+сохранены; catalog maximum снижен до 29/27, full census остаётся 1,263/1,263,
+Gate-2 — 18,246/18,246. Потерянный на page break заголовок «белые» не
+синтезируется. Полный документ:
+[`decisions/DM-0012-guided-2204-retained-other-boundaries.md`](decisions/DM-0012-guided-2204-retained-other-boundaries.md).
 
 ---
 

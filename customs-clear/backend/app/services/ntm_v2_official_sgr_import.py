@@ -16,6 +16,7 @@ from ..datetime_util import utc_now_naive
 from ..models.ntm_v2 import NtmApplicabilityRuleV2, NtmMeasureV2
 from .hs_matching import normalize_hs_code
 from .ntm_v2_legacy_rules_import import ADVISORY_APPLICABILITIES, advisory_reason_for_applicability
+from .ntm_v2_official_sgr_dataset_validation import validate_official_sgr_dataset
 
 OFFICIAL_SGR_SOURCE_KIND = "official_sgr_registry"
 OFFICIAL_SGR_SOURCE_REF_PREFIX = "official_sgr_registry"
@@ -139,6 +140,12 @@ def import_official_sgr_rules_to_ntm_v2(
     """
     data = payload if payload is not None else load_official_sgr_payload(seed_path)
     rules_in = data.get("rules") or []
+    validation = validate_official_sgr_dataset(data)
+    if not validation.get("valid") or not rules_in:
+        raise ValueError(
+            "official SGR dataset failed validation: "
+            + json.dumps(validation.get("errors") or ["rules array is empty"], ensure_ascii=False)
+        )
     source_document = str(data.get("source_document") or "official_sgr_registry")
     source_revision = str(data.get("source_revision") or "")
     source_url = str(data.get("source_url") or "")
@@ -153,6 +160,7 @@ def import_official_sgr_rules_to_ntm_v2(
     rules_updated = 0
     rules_skipped = 0
     rules_invalid = 0
+    rules_removed = 0
 
     try:
         mik = _measure_import_key()
@@ -184,6 +192,21 @@ def import_official_sgr_rules_to_ntm_v2(
             measure.title = "Государственная регистрация продукции (официальный контур)"
             measure.regulatory_document_id = measure.regulatory_document_id or "EEC-299"
             measure.updated_at = now
+
+        incoming_rule_keys = {
+            _rule_import_key(str(row.get("rule_id") or "").strip())
+            for row in rules_in
+            if isinstance(row, dict) and str(row.get("rule_id") or "").strip()
+        }
+        existing_official_rules = session.scalars(
+            select(NtmApplicabilityRuleV2).where(
+                NtmApplicabilityRuleV2.source_kind == OFFICIAL_SGR_SOURCE_KIND
+            )
+        ).all()
+        for existing_rule in existing_official_rules:
+            if existing_rule.rule_import_key not in incoming_rule_keys:
+                session.delete(existing_rule)
+                rules_removed += 1
 
         for row in rules_in:
             if not isinstance(row, dict):
@@ -261,6 +284,8 @@ def import_official_sgr_rules_to_ntm_v2(
         "rules_created": rules_created,
         "rules_updated": rules_updated,
         "rules_skipped_duplicates": rules_skipped,
+        "rules_removed": rules_removed,
+        "dataset_validated": True,
         "source_kind": OFFICIAL_SGR_SOURCE_KIND,
     }
 

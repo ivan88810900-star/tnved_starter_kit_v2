@@ -44,6 +44,7 @@ async def risk_check(
             country=req.country,
             destination_country=req.destination_country,
             counterparty_name=req.counterparty_name,
+            movement_direction=req.movement_direction,
         )
     except HTTPException:
         raise
@@ -71,6 +72,7 @@ async def risk_check_batch(
                 country=item.country,
                 destination_country=item.destination_country,
                 counterparty_name=item.counterparty_name,
+                movement_direction=item.movement_direction,
             )
         )
     return RiskCheckBatchResponse(status=_overall_status(items), items=items)

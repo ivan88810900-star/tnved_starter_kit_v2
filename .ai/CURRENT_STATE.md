@@ -1,7 +1,7 @@
 # CURRENT_STATE.md — Текущее состояние проекта
 
-> Дата: 2026-08-10
-> Активная ветка: `feat/canonical-read-path`
+> Дата: 2026-09-12
+> Активная ветка: `feat/ntm-official-full-contours`, Draft PR #187 → `feat/canonical-read-path`
 
 ---
 
@@ -13,7 +13,7 @@
   гибридный поиск, карточка товара и отдельный Canonical-backed «Умный маршрут»
   по смысловым группам без фиктивных кодов
 - **AI-классификация** — Gemini structured JSON (код, обоснование, confidence_score, атрибуты), Claude Vision для фото
-- **Расчёт платежей** — пошлина, НДС (22%/10%), акциз, антидемпинг, спецпошлины, утильсбор (РОП), тарифные преференции (161 страна)
+- **Расчёт платежей** — пошлина, НДС, акциз, антидемпинг, спецпошлины, утильсбор (РОП); старый справочник стран сохраняется как неподтверждённый кандидат преференции
 - **Нетарифные меры** — ТР ТС каталог (96+ глав), NTM v2 контур, noise-classifier (22K записей), структурированный UI без сырого TKS-текста
 - **Инвойс / пакинг-лист** — загрузка XLSX/CSV, Vision-классификация, async-задачи, экспорт в Excel
 - **ТРОИС** — opendata ФТС (CSV ~42MB), fuzzy-поиск, cron-синхронизация
@@ -21,19 +21,308 @@
 - **AI-ассистент** — grounded chat/copilot по TN VED, платежам, definite/advisory
   требованиям и risk coverage; цитаты, no-key fallback, guarded LLM, batch и журнал решений
 - **РОП / экосбор** — ставки ПП №1041/2414, 39 категорий ТС, audit 97 глав
-- **Официальные данные** — ETT 99.8%, VAT 100%, Excise 100%, Anti-dumping 82.8%, Special Safeguard 100%, Countervailing 100%
+- **Официальные данные** — coverage-диагностика отделена от юридической актуальности.
+  Старые процентные метрики не доказывают актуальность ставок. DB-derived ЕТТ
+  находится в карантине (см. №188), положительный staging gate закрыт.
 
 ### Инфраструктура
 
 - Alembic: ~60 миграций, merge-голова восстановлена (PR #115)
-- APScheduler: cron-задачи (курсы ЦБ, ФТС краулер, РОП, ТРОИС, ФСА)
-- GitHub Actions: auto-merge, claude-pr-reviewer, cursor-task-agent, opendata-sync (05:00 UTC)
+- APScheduler: guarded daily/weekly structured-sync и monthly review; legacy
+  automation default OFF. Новый runtime scheduler ещё не задеплоен этим PR.
+- GitHub Actions: CI, мониторинг источников и review-notifications; без записи
+  в production DB, автоматического утверждения legal-drift и merge этого PR.
 - Rate limit middleware, JWT auth, admin token
 - Docker + nginx.conf для production
 
 ---
 
 ## 2. Активная задача
+
+Восстановление 12.09: remote PR #187 подтверждён на `5f715ae69443c29187785b3a1f17e0d41d1f2368`.
+Рабочая директория предыдущей сессии потеряна; её незакоммиченные изменения
+admission/import/diagnostics не считаются внедрёнными. Повторно используются
+опубликованные коммиты и сохранённые оригиналы. CI #34600648803 выявил один
+устаревший тест количества целей монитора: фактически 72 вместо 68; остальные
+4 435 backend-тестов прошли, 2 skipped, 73 subtests. Проверяемое обновление
+контракта: 72 цели, 28 файловых источников, 36 legal-drift HTML и 8 availability.
+Локальная проверка двух затронутых наборов: 92 passed, отдельный read-only
+sentinel вместо application DB. Следующий незакрытый блок — все публичные
+пути применения legacy ставок и корректность provenance/readiness; см.
+`docs/ai-workflow/TASK-RATE-ADMISSION-RECOVERY.md`.
+
+Сохранённый capture #34600642623 содержит 4/6 оригиналов: FNS VAT, Decision121
+PDF и две оболочки порталов. Архив `official-rate-originals-34600642623.zip`,
+SHA `749ada66c4cd6759f9ef1eb1d3f55b4ecedac085c5f7db3aba7059f3fba39d5f`,
+500 381 байт. Две страницы навигации отклонены валидатором; их тела не сохранены,
+поэтому причина `block_or_error_page_detected` ещё не диагностирована.
+Этот run неполный; юридическая полнота и применение не подтверждены.
+
+Продолжение после `d757dfb` (11.09.2026): прежняя остановка всей разработки из-за
+DM-0014 была преждевременной. Иван поручил продолжить работу; независимая
+техническая проверка выполняется агентами, без выдачи её за юридическое
+утверждение. DM-0014 касается будущей положительной авторизации, а не запрета
+на подготовку кандидатов, исправления и тесты.
+
+Потерянные байты позднего пакета 111C не найдены. Вместо них из сохранённого
+proposal v2 и исходных объектов построен и сохранён **новый** воспроизводимый
+пакет: manifest `55d25bcc…b9b1045`, dossier `d6c83c3e…357720`, архив
+`639bfb47…ca727`. Замыкание содержит 113 объектов / 43 850 110 байт;
+проверены 124/124 цитаты, 143 случая выбора ставки и четыре повреждения.
+Охват кандидата — четыре кода 7112 и только `[2026-09-08, 2026-09-09)`.
+Это не восстановление прежних SHA и не текущий полный ЕТТ. Подробные идентичности:
+`docs/ai-workflow/evidence/ett-111c-reconstruction-20260911.json`.
+
+Добавлен изолированный `preview-duty`: точная предварительная арифметика пяти
+существующих видов пошлины после выбора кандидата и повторной проверки цитат.
+Дата, страна, характеристики, стоимость и количество задаются явно; неясность
+не становится нулевой ставкой или финальным платежом. Курс валюты, переданный
+оператором, не получает статус проверенного источника. На новом реальном
+кандидате пройдены 12 CLI-сценариев: явный ноль в пределах покрытия, отсутствие
+стоимости и дата вне покрытия. Временная пяти-табличная БД и байты источников
+не изменились при preview; application DB не создавалась. Контракт:
+`docs/ai-workflow/ETT_DUTY_PREVIEW.md`.
+
+Preview опубликован в `5526b6df`; CI #34596589318 прошёл: 3 344 backend-теста,
+frontend/typecheck/build, workflow contract и staging smoke успешно.
+
+Отдельная диагностика полного backend-набора на свежей тестовой БД сравнила
+`a5c884d3` и `d757dfb`: соответственно 4 622 / 4 657 passed, одинаковые
+130 failed, 2 skipped и 73 subtests. Все 35 добавленных тестов прошли; новых
+failed ID нет. 120 падений связаны с отсутствующим полным интеграционным
+набором данных в demo seed, остальные выявили проверяемые ошибки контрактов.
+Это диагностический прогон, не успешная full-data acceptance. Нормативные
+данные для зелёных тестов не выдумывались. Исправлены перехват authenticated
+permit-job маршрута публичным catch-all, отключение логгеров при Alembic,
+устаревшая авторизация тестов и виртуальная карточка неизвестного кода,
+которая заимствовала название/ставку соседа. Точная существующая карточка и
+её мягкий Canonical fallback сохранены.
+
+Продолжение проверки выявило подмену ошибочных входных чисел в официальных
+VAT/excise/trade-remedy импортерах. Теперь неправильные/отсутствующие значения
+и неподдерживаемые формы блокируют bundle до планирования записей; истинный
+ноль сохраняется. Две исходные `combined` строки табачных акцизов остаются
+неподдержанными и дают `parser_failed`, без исправления нормативных байтов.
+Неопределённые TR-записи неполного legacy-каталога сохраняются для advisory
+review, без превращения в обязательные документы. См.
+`docs/ai-workflow/RATE_SOURCE_FAIL_CLOSED_CORRECTIONS.md`.
+
+Исправления опубликованы в `819226f1`; CI #34598161580 / #34598153219 успешно.
+Точный расширенный backend-профиль локально: 4 403 passed, 2 skipped,
+2 warnings, 73 subtests passed; JUnit без failures/errors, exit 0.
+HTTP smoke после перезапуска backend подтвердил новые границы и неизменность
+временной read-only БД. Полный юридический блок пока не завершён.
+
+В `a5ef7f3` монитор дополнен сохранением исходных ответов и проверяемых receipts,
+а не только revision checksum. CI #34598906017 / #34598902309 успешно:
+4 434 passed, 2 skipped, 2 warnings, 73 subtests; остальные CI jobs зелёные.
+Изолированный read-only capture #34598954173 сохранил оригинал ФНС по акцизам,
+но завершился неполно: прежняя ссылка торговых мер вернула HTTP-ошибку,
+OpenData — запрещённую смену пути при redirect. Это не успешное полное получение
+источников. Сохранённый HTML не содержит таблицы акцизных ставок или табачной
+комбинированной формулы. Архив и точные SHA зафиксированы в
+`docs/ai-workflow/evidence/official-rate-originals-20260911.json`.
+
+Через официальное меню ЕЭК обнаружены фактический департамент `podm`, портал
+торговых мер и индекс актов; OpenData подтверждён на `/opendata/`.
+Сетевые проверки redirect не ослаблены. ФНС по НДС добавлена отдельным
+справочным источником: старый идентификатор `eec_ett_vat` сохранён, но НДС РФ
+больше не представляется ставкой из ЕТТ. Реестр и monitor-only политики теперь
+содержат 49 записей. Очередное получение выбирает шесть новых целей, включая
+оригинал Решения Коллегии №121; уже сохранённый акцизный HTML не загружается
+повторно. Навигация, публикация акта и checksum не подтверждают ставку или
+её вступление в силу. См. `evidence/eec-remedy-link-discovery-20260911.json`.
+
+Восстановление 2026-09-11 выполнено по GitHub, а не по истории чата. `main`
+остаётся на `9712c7b`, base — `a5a811e`; опубликованный HEAD PR #187 при
+восстановлении — `a5c884d3`, его CI #34486721242 успешен (3 193 backend / 50
+frontend). Независимый draft PR #189 не переносился и не активировался.
+Найден дополнительный уже опубликованный commit `177da64` в технической ветке
+`ops/ett-council-list-capture`: он является прямым потомком `a5c884d3`, а не
+новой альтернативной реализацией. Этот commit восстановлен без повторного
+написания кода и без merge-коммита. CI #34584814418: 3 217 backend, 50 frontend,
+typecheck/build, workflow contract и staging smoke успешны.
+
+Успешный capture #34584814626 уже содержит оригиналы решений Совета №75/77/80
+от 09.07.2026. Архив восстановлен с проверкой его SHA, всех 18 объектов и полного
+HTML→PDF графа; наблюдаемый список и связи list→detail→PDF повторно проверены
+офлайн. Все 7 страниц трёх PDF визуально прочитаны. №80 находится на карточке
+`461/10854`, меняет п.15 Порядка №728 и не является основополагающим актом
+№80/2021. №75/77 содержат зависимое начало действия; у №77 отдельно указан
+ретроактивный охват отношений с 01.07.2026. Эти наблюдения не превращены в
+действующие ставки, юридическое утверждение или подтверждённое наличие квоты.
+Исходный архив сохранён отдельно от временных CI artifacts. См.
+`docs/ai-workflow/evidence/ett-council-originals-20260911.json`.
+
+Три новых PDF добавлены только в `monitor_only`: теперь 48 источников / политик
+и 68 URL. Исторический observation-файл на девять источников неизменён; три
+новых pin хранятся отдельно с собственным capture SHA. Повторяемый аргумент
+`--observed-baseline` сравнивает их совместно, отклоняя пересечения до загрузки,
+но не выдаёт объединение за один исходный capture. Страница №72 сохраняется в
+обоих workflow. Checksum acceptance, применение ставок и enforcement не добавлены.
+Контролируемый локальный прогон точного backend CI-профиля: 3 228 passed,
+2 dependency warnings; HTTP smoke и workflow contract успешны. Это не full-data
+legal acceptance и не утверждение о прохождении всех тестов вне CI-профиля;
+ограничения отдельного непрофильного прогона записаны в документе мониторинга.
+
+Дополнение 2026-09-10: актуальный код восстановлен в отдельном checkout от
+`ec1a200`; прежняя рабочая папка после восстановления среды имела старую версию
+`6bcaa31`. Два пользовательских PDF в ней сохранены без изменения. Восстановлены
+и по SHA проверены резервные архивы исходного корпуса и полного графа зависимостей.
+Новый пакет review 111C, который не успел сохраниться до отключения среды,
+в восстановленной папке отсутствует; не считать его восстановленным из Git.
+
+Исправлен страновой дисконт без проверки применимости: исторический коэффициент
+меньше единицы не снижает пошлину автоматически. Суммы сохраняются как
+предварительные с причиной. Отсутствующая ставка пошлины/НДС также требует
+проверки, настоящий ноль и ручной ввод различаются. Quote не выдаёт окончательный
+итог при неопределённости пошлины или зависимого НДС. Статус проходит через
+сравнение, историю, инвойсы, документы, CSV/XLSX/PDF и ИИ-помощника; старым строкам
+без флагов не приписывается подтверждённость. Исправлен реальный контракт
+двухкодового сравнения (вложенный profile вместо ошибочных плоских полей).
+
+Добавлен ограниченный захват оригиналов по наблюдаемым ссылкам тарифных льгот
+и GSP, включая выбранную страницу акта №72. Успешная загрузка не подтверждает
+юридическую полноту или даты. Полный блок ставок, manifest-bound legal review,
+retention attestation и production promotion остаются незавершёнными. Merge,
+deployment, production DB и NTM enforcement не выполнялись. Детали:
+`docs/ai-workflow/PAYMENT_PREFERENCE_REVIEW_GUARD.md`.
+
+На этапе 10.09.2026 ежедневный монитор был расширен до 45 источников / 45 политик /
+62 URL (актуальные 48/48/68 после добавления №75/77/80 описаны выше). Девять новых
+PDF работают в monitor_only; исходные контрольные суммы остаются наблюдениями
+для review, не утверждёнными baseline. Текущие ссылки на страницах льгот/GSP
+захватываются и сравниваются отдельно, чтобы обнаруживать замену адреса PDF.
+Новые/пропавшие ссылки и изменения байтов не обновляют ставки автоматически.
+Проверенный этап платежей `b3f6241` прошёл CI #34483670679: backend 3 137 passed,
+frontend 50 passed, typecheck/build, workflow contract и staging smoke успешно.
+
+Приоритет на 2026-09-08: официальные ставки ЕТТ и точность нормативных источников.
+Ivan принял Option A решения №188 и разрешил продолжать разработку без покупки
+облака. Предыдущий опубликованный этап: `5db8245`, дерево совпадает с локальным
+`399fc6b`. PR #187 остаётся Draft. Его CI: 2 928 backend-тестов, frontend tests /
+typecheck / build, staging images и scheduled-workflow contract прошли.
+Следующий проверенный этап добавляет детерминированный пакет review для реального
+кандидата 111C; это ещё не полный блок ставок.
+
+TASK-ETT-001–003 реализуют изолированные версионные кандидаты, пять таблиц,
+выбор выражения ставки по точному коду, дате, стране и характеристикам,
+получение оригиналов и воспроизводимую проверку PDF-строк. Старые небезопасные
+PDF/OData/index-hash пути переведены в REVIEW_REQUIRED. Активные ставки и НДС
+не переписывались. Производный перечень поправок теперь связан с исходным
+индексом, парсером и точными байтами отчёта: staging/preview повторяет разбор,
+вымышленный официальный URL не требуется, старые v2 SHA сохранены.
+
+Полный технический capture Run #34244241195 имеет проверенный v2 receipt
+`ab67a2d3055a3fcd8416c874b9bc388ce0b0919e4b964e5de7c1f18c08a6f72e`:
+106 оригиналов, включая 100 core PDF. По текущим 96 главам / 1 537 страницам
+разобраны 13 293 точных кода, полные описания и ячейки ставок; 124 примечания,
+0 неразобранных ячеек, дубликатов и непривязанных номеров сносок. Оригиналы
+сохранены отдельно от временных GitHub artifacts; восстановление receipt проверено.
+Это полнота поддерживаемого плана загрузки и извлечения, а не юридическое
+подтверждение ставок. Старые incomplete captures сохраняют прежний статус.
+
+Run #34248830768 сохранил десять наблюдаемых страниц поиска / 500 результатов.
+Повторный разбор нашёл 96/105 поправок, 59/61 ссылок из примечаний и отдельный
+основополагающий акт №80 — исходный план из 97 точных URL. Ни дата публикации
+в метаданных, ни пустой поисковый ответ не подтверждают юридический эффект.
+Run #34251758308 сохранил свежий индекс/примечания, десять страниц поиска и
+девять дополнительных запросов. Найдены 104/105 поправок, все 61 зависимости
+примечаний и основополагающий акт; сохранены 105 HTML и 85 PDF. Загрузка
+завершилась с 20 ошибками разбора метаданных. Повторная проверка оригиналов
+выявила 18 заголовков без пробела после № и два сокращённых заголовка с полной
+категорией ЕЭК; узкая совместимость исправлена, все 105 HTML теперь проходят.
+Resume Run #34255440473 завершён успешно: повторно использованы 105 HTML + 85 PDF,
+загружены 20 недостающих PDF, всего 105 HTML + 105 PDF без ошибок. Байты,
+timestamps, URL и redirects повторно использованных записей сверены; исходный
+неуспешный отчёт неизменён. Все 302 исходных объекта сохранены, новый архив
+содержит 344 объекта / 178 543 558 байт. Проверенная добавка из 42 объектов
+сохранена вместе со ссылкой на пять базовых частей резервного архива.
+Единственный нестрого сопоставленный акт №42 содержит опечатку и на detail page;
+номер, дата, категория и независимая подпись PDF-ссылки согласуются. Оригинальный
+PDF отдельно сохранён Run #34256700964 и визуально проверен по обеим страницам;
+прежняя диагностика не исправляется. В совокупности получены оригинальные PDF
+всех 105 именованных поправок и основополагающего №80. Это не полнота всех
+применимых актов, исключений или вложений.
+
+Native-прогон 85 PDF: 76 файлов / 353 страницы без извлекаемого текста;
+девять неподдержанных файлов — восемь с поворотом 270° и основополагающий
+№80 на 1470 страниц при лимите 1000. Повреждения и шифрование не выявлены.
+Это разные состояния, ошибки worker не считаются отсутствием текста.
+На текущих 13 293 кодах отдельно пройден NTM compatibility audit: 9 семейств
+для каждого кода, 15 695 advisory-требований, 0 утечек в enforcement;
+рабочая БД и проверка юридической применимости в этот аудит не входят.
+
+29 страниц двух сканов обработаны OCR, оригиналы/модель/изображения/TSV связаны
+контрольными суммами. Визуальная проверка обнаружила ошибки сносок и чисел;
+OCR не утверждает ставки. Два ZIP-вложения перепроверены без повторной загрузки:
+4 DOC и 1 DOCX, исходный отчёт с ошибками сохранён отдельно от новой проверки.
+
+Новый opt-in OCR CLI сохраняет оригинал, pinned rus model/license, PNG, TSV/TXT,
+слова/confidence и точные SHA. Отдельный ограниченный worker допускает явно
+выбранные страницы больших/повёрнутых PDF (до 64); native-лимиты не подняты.
+Реальные проверки: первые 2 из 1470 страниц №80 и две страницы с поворотом 270°
+обработаны; оставшиеся страницы №80 явно не проверены. Визуально найдено OCR
+«|» вместо «1» в п.4 №80; исправление хранится отдельно от исходного OCR.
+OCR завершён: 104 акта / 426 страниц, отдельно №42 / 2 страницы и первые
+2 страницы №80 — всего 106 наборов / 430 страниц. Проверены SHA оригиналов,
+PNG, TSV/TXT, модели и отчётов; оставшиеся 1468 страниц №80 не обработаны.
+23 части резервного архива сохранены и перепроверены, отсутствующих data
+dependencies нет. Отдельный literal inventory содержит 1638 точных совпадений
+по 104 актам; он не вычисляет юридические даты и не утверждает ставки.
+Native worker теперь также отклоняет Encrypt trailer с пустым user password.
+Его новый SHA требует новой derivation notes/audit: прежние отчёты не изменяются
+и не объявляются воспроизводимыми другим парсером. Прямые OCR-кандидаты отдельно
+связывают оригинальные байты и фактически использованную версию парсера.
+
+Typed HTML evidence теперь разрешён только в effective_evidence и сохраняет
+точные строку/label/value, identity акта и ссылку на оригинальный PDF без
+вымышленного номера страницы. Mixed verifier повторяет native PDF и HTML
+проверки; прежние canonical v2 SHA и строгость PDF verifier сохранены.
+CLI: `ett_candidates.py verify-evidence`. Исправлена типизация результата preview.
+
+Первый реальный review manifest `8f1c56eac5a3d6082084a6eba7e463eee563c1c170572df2fceaaf70f10fe832`:
+4 кода 7112, 101 оригинальный artifact, 4 правила 0% по 111C, 2 примечания.
+124/124 source references проверены, независимая повторная сборка идентична.
+Coverage 08–09.09.2026 отделён от предложенного периода 25.01.2026–01.01.2029;
+первое введение кодов не утверждается. Portal date, ограниченная история кодов
+и охват 5 стран явно остаются review-интерпретациями. Старые 15% не подставляются
+вне coverage. Свежая изолированная Alembic DB: 46 сценариев, 64 остальные таблицы
+не изменены. Полное приложение: 30 HTTP-проверок с JWT, БД осталась побайтно
+неизменной, startup read-only. Проверяется выбор выражения, не активный расчёт.
+213 связанных тестов прошли локально; опубликованный этап прошёл общую CI выше.
+
+Review package реализован: exact canonical manifest/prior, полный v2 core receipt,
+source-role и response metadata, свежие inventory/notes/mixed evidence, semantic
+diff и closure повторно вычисляются. Дополнительные источники проверяются только
+по выбранным capture records и исходным HTML→PDF связям; полный discovery/search
+plan не объявляется повторно проверенным. CLI build/verify не открывает БД/сеть,
+не меняет originals и не перезаписывает готовый output. Пакет v2 SHA
+`4d4f22daccaef53b14429e3f958359273dcc47467a89d8594b69c9907c586e8c`:
+921 041 байт, 113 объектов / 43 850 110 байт, 124/124 ссылок, воспроизведение
+из изолированного closure и CLI идентично. 63 service/CLI теста прошли.
+`assembly_ready=true` означает готовность технического dossier к review;
+legal/source completeness, retention и promotion остаются false.
+
+Полная юридическая привязка условий и дат, manifest-bound legal review,
+подтверждённое архивное хранение и reviewed promotion остаются незавершёнными.
+Первый четырёхкодовый кандидат не меняет `legal_inventory_complete=false`
+и `production_ready=false` и не утверждает юридическую применимость 13 293 ставок.
+Облако, merge, deployment и NTM enforcement не включались. Контракты и evidence:
+`ETT_VERSIONED_CANDIDATES.md`, `ETT_TABLE_INTERPRETATION.md`,
+`ETT_REVIEW_PACKAGE_READINESS.md` в `docs/ai-workflow/`.
+Смысловая навигация ниже остаётся достигнутым baseline, а не текущим rollout.
+
+Recovery checkpoint 2026-09-11: PR #187 опубликован на `dc1cd389` поверх
+сохранённого `177da64`; CI #34589072638 и #34589067268 успешны. `main` остаётся
+`9712c7b`, PR #189 — отдельный Draft на `1be6da4`. Восстановлены, а не пересобраны,
+8 файлов полного dependency worklist (13 293 кода / 124 примечания) и 6 файлов
+legal-interpretation backup; все SHA совпали. Это не восстановление утраченных
+байтов более позднего manifest/review package 111C и не юридическое утверждение.
+[DM-0014](decisions/DM-0014-ett-review-authority.md) запрашивает выбор полномочий
+для положительного manifest-bound legal review и отдельного approval. Option A
+№188 остаётся принятым; отсутствие купленного облака не объявляется блокером
+offline-разработки. Полный блок ставок ещё не завершён, production не изменён.
 
 ### Intelligent TN VED structure — whole-catalog hardening
 
@@ -51,17 +340,17 @@
 3. Publication boundary физически замораживает published nodes и `parent` links.
    `children` становятся tuple, standard metadata containers — recursively
    immutable; Builder output до публикации mutable, retained aliases отсоединены.
-4. Full Gate-2: 18,211/18,211 legacy-vs-Canonical paths, 0 mismatch/unresolved.
-5. Whole-catalog Guided census: 1,228/1,228 headings, 16,708/16,708 source-backed
+4. Full Gate-2: 18,246/18,246 legacy-vs-Canonical paths, 0 mismatch/unresolved.
+5. Whole-catalog Guided census: 1,263/1,263 headings, 16,708/16,708 source-backed
    code nodes reachable/Canonical-bound, из них 13,254 declarable leaves; leaf-role
    проверяется по Canonical, а не по отсутствию semantic children.
-6. На текущей feature branch semantic questions есть у 548 headings (44.6254%)
-   и покрывают 6,945 leaves (52.3993%). Это честный проверенный baseline, но не
-   разрешение на merge или rollout.
-7. Bounded official PDO slice для `2204` реализован и проверен: шаг `220421`
-   сократился с 50/47 до 18/14 choices/direct codes; выбор PDO открывает точные
-   33/33. Это новый candidate catalog-wide максимум и один честный noncritical
-   `oversized_unsplit_group`, без ослабления глобального лимита 30.
+6. На текущей feature branch semantic questions покрывают 6,949 из 13,254 leaves.
+   Catalog-wide максимум шага равен 29 choices / 27 direct codes; это честный
+   проверенный baseline, но не разрешение на rollout.
+7. DM-0012/TASK-SEMANTIC-009 завершили bounded `2204` slice: точный PDO-набор
+   `220421` сохранён как 18/17 + вложенные «прочие» 16/16; соседний `220422` —
+   27/25 + «прочие» 7/7. Все 211/211 source codes и 170/170 leaves сохранены,
+   oversized-шагов более 30 больше нет.
 8. DM-0005 Accepted — Option A (Ivan, 2026-08-05); TASK-SEMANTIC-006 имеет статус
    Completed. Код пока остаётся только на feature branch: этот docs-only update не
    выполняет merge, rollout или deploy.
@@ -75,6 +364,76 @@
     подняла semantic coverage 10/47 → 21/47 при неизменных 54/54 source nodes и
     47/47 leaves. Whole census 1,228/1,228, golden 7/7, Gate-2 18,211/18,211.
     Это не выполняет merge/rollout/deploy и не включает флаги.
+11. Официальный NTM-срез восстановлен и завершён как безопасный advisory-контур:
+    93 уникальных диапазона разделов 2.16/2.19, индекс 30 **базовых** разделов
+    приложений 1 и 2 Решения ЕЭК №30 и стабильная матрица 9 семейств мер.
+    Квотные 2.27/3.1/3.2 не выдаются за code-only правила. Ivan принял
+    advisory-only rollout 2026-08-15: показ default ON, kill switch —
+    `NTM_V2_OFFICIAL_FULL_ADVISORY_ENABLED=false`. Контур не пишет в БД и не
+    участвует в missing-check; enforcement не одобрен (DM-0008).
+12. Legal-contours уточнены по первичным источникам: prefix/«из»/свободный marker
+    всегда остаётся `needs_clarification`; Решение КТС №299 проверяется по коду,
+    наименованию, назначению и исключениям; ветеринарный контроль не выдаётся за
+    универсальный документ `ВС`; фитосанитарный контур разделяет высокий риск
+    (advisory ФСС) и низкий риск (без ФСС). Для Решения №30 исправлены исключения
+    и overbroad/missing-контуры, включая 2.2, 2.6, 2.11, 2.16, 2.17, 2.20, 2.23 и
+    import-only 2.30. Реестр технических регламентов содержит 53 позиции (001–053).
+13. Раздел II Решения КТС №299 содержит 98 текущих advisory code-ranges, включая
+    ранее пропущенные `4812000000` и `7412`. Экспортный контроль ПП РФ
+    №1284–1288/№1299 выделен в девятое семейство: source-faithful union содержит
+    1 087 raw HS-кандидатов, два versioned retired exact-кода исключены, поэтому
+    runtime effective count равен 1 085. Направление — `export`; идентификация по
+    техническим параметрам обязательна; enforcement отсутствует (DM-0009).
+14. Full-catalog claim остаётся fail-closed (DM-0010), и его критерий теперь
+    выполнен. После parser baseline fix все 96 tracked official PDFs rebuilt во
+    временный audit-only SQLite artifact: exact 21 раздел / 96 групп / 17 809
+    уникальных позиций, 0 duplicate/invalid, 17 774 непустых описания. Все 35
+    blank catalog codes absent from the pinned active ETT rate snapshot; причина
+    или юридический статус из этого не выводятся. Все 13 290 кодов revision
+    `ett:2026-06-18` присутствуют и описаны. Pinned PDF-manifest, parser, ETT
+    code-set, catalog code-set и code+description digests совпали. Artifact был
+    открыт audit-процессом read-only; production/application DB не изменялась.
+    `ntm-full-gate-20260815.json` имеет
+    `ok=true`, `full_commodity_catalog`, `catalog_complete=true`, 9/9 семейств,
+    30/30 базовых разделов и 0 enforcement leaks. Code-only и partial evidence
+    сохранены как supplementary, но не подменяют full result. Этот исторический
+    аудит подтверждает каталог/NTM, **не** текущие ставки пошлин и **не** разрешение
+    на положительный staging launch: тарифная часть прежнего вывода отозвана.
+15. DM-0011 добавляет structured `facts` в NTM API/UI и bounded exact advisory
+    для санитарных/ветеринарных/фитосанитарных мер, РЭС/ВЧУ, криптографии,
+    Решения №30 и экспортного контроля. Запрос без facts сохраняет broad-only
+    контракт. Exact `definite`/`excluded` всегда остаётся вне missing-check.
+    Versioned curated broker bridge реализован для shadow-аудита, но
+    `NTM_V2_OFFICIAL_CURATED_ENFORCEMENT_ENABLED=0` является обязательным default;
+    production activation отложен до отдельного решения и trusted source adapters.
+    Caller-supplied exact facts fail-closed даже при включённом флаге; для
+    export/transit legacy import broker/payment отключены, catch-all имеет отдельный
+    transaction-risk UI, а санкционный country/HS screening маркируется неполным.
+16. CI проверяет backend safety/semantic suites, frontend tests/types/build,
+    workflow contracts и read-only staging. Schema-v1 baseline теперь строго
+    quarantine-only: без одобренного schema-v2 и temporal-rate модели невозможно
+    сформировать положительный full staging snapshot. Enforcement остаётся OFF.
+17. DM-0013 подключает полный update-policy для 36/36 зарегистрированных
+    нормативных источников. Семь структурированных официальных реестров (ЦБ,
+    СГР, нотификации ФСБ, РЭС/ВЧУ, ФСА, ТРОИС и справочники ФТС) получили
+    строгие ежедневные/еженедельные адаптеры с snapshot-gates.
+    OFAC и ЕС автоматически загружаются и валидируются, но scheduled-контур не
+    меняет blocking-таблицы. Нормативные документы контролируются по ETag/SHA-256
+    и ставятся в review issue при drift; никакое изменение источника не включает
+    NTM enforcement.
+18. Монитор v4 содержит 50 URL: шесть legal PDF требуют digest-bound approval,
+    девять structured artifacts автоматически обновляют техническую свежесть,
+    27 legal HTML — явные revision gaps, восемь landing — availability-only.
+    36/36 update-policy не означает автоматическое юридическое обновление всего.
+    Пять курируемых слоёв используют durable очередь с CAS, SHA и generation.
+19. В ЕТТ выявлены 13 319 raw / 13 290 unique кодов, две невалидные строки,
+    27 дубликатов по 23 кодам и 18 материальных конфликтов ставок. Требуется
+    [решение №188](https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/188).
+    Никакой дефолтный или автоматически выбранный last-row тариф не публикуется.
+20. Добавлены bounded HTTP streaming, исходные SHA-256, exact NSI pins,
+    проверенная распаковка ФСА на py7zr 1.1.3 и атомарная CBR provenance.
+    Browser-session файлы удалены из текущего дерева и исключены из Git/Docker;
+    старые сессии Alta необходимо отозвать, история не переписывалась.
 
 Основные `CANONICAL_TREE_ENABLED` / `CANONICAL_TREE_SHADOW` остаются default OFF.
 
@@ -261,14 +620,13 @@ Builder собирает дерево напрямую из recovery-резул�
 - UI различает «Смысловую группу» и «Смысловое уточнение» и показывает вложенность
   как следующий вопрос, не выдавая бескодовую группу за код ТН ВЭД.
 - Основные `CANONICAL_TREE_ENABLED` / `CANONICAL_TREE_SHADOW` остаются OFF.
-- Feature-branch candidate TASK-SEMANTIC-006 реализует только для `2204`
-  exact-source PDO projection:
-  `(2204210900, 2204217800]` должен совпасть с allowlist из 33 Canonical sibling
-  leaves под `2204210000` и точными PDO/PGI markers. Любой source/topology drift
-  fail-closed сохраняет полный плоский маршрут. Шаг `220421` теперь 18/14, выбор
-  PDO — 33/33; глобальный лимит 30 не менялся, поэтому одна noncritical
-  `oversized_unsplit_group` warning намеренно сохранена. DM-0005 Accepted — Option A;
-  реализация проверена, но этот docs-only update не выполняет merge/rollout/deploy.
+- TASK-SEMANTIC-006 и TASK-SEMANTIC-009 реализуют только для `2204` exact-source
+  projection. Исходный PDO scope из 33 Canonical sibling leaves остаётся полным;
+  retained depth-7 «прочие» создаёт вложенный шаг 16/16, а независимый retained
+  boundary под `2204220000` — шаг 7/7. Любой source/topology drift атомарно
+  возвращает полный прежний маршрут. Итоговый catalog/`2204` максимум — 29/27,
+  oversized warning более 30 отсутствует. DM-0005 и DM-0012 приняты; rollout и
+  feature activation этим не разрешены.
 - TASK-SEMANTIC-007 — завершённый и принятый через DM-0006 Option A bounded slice
   для `0304`. Пять product-form
   titles с exact `(anchor, stop]` source scopes, ordered tuples и полной Canonical
@@ -277,13 +635,13 @@ Builder собирает дерево напрямую из recovery-резул�
   Full official titles меняют codeless guide IDs; coded-node `stable_id`
   неизменны. Merge/rollout/flag activation не выполнялись.
 - Feature-branch full-data read-only Gate на пользовательском экспорте:
-  1,228/1,228 heading,
+  1,263/1,263 heading,
   16,708/16,708 source-backed code nodes reachable/Canonical-bound и 13,254
   Canonical declarable leaves на одном snapshot; fake/duplicate/critical/degraded/
   empty-root/leaf-role/Canonical-parent mismatch = 0, golden hierarchy 7/7.
-  Semantic choices покрывают 548 heading (44.6254%) и 6,945 leaves
-  (52.3993%); quality distributions не подменяют correctness gate произвольным
-  threshold. Canonical runtime flags оставались OFF.
+  Semantic choices покрывают 6,949 leaves; maximum step 29/27. Quality
+  distributions не подменяют correctness gate произвольным threshold. Canonical
+  runtime flags оставались OFF.
 - Текстовое описание товара теперь даёт ранжированные Canonical-позиции для
   запуска Guided-вопросов. Curated semantic evidence выше случайного full-text:
   на полном Gate-2 экспорте «смартфон» ведёт сначала в `8517`, «портативный
@@ -346,6 +704,9 @@ URL/API-контракты не менялись; backend, БД, флаги и �
 
 | Коммит | Дата | Описание |
 |--------|------|---------|
+| TASK-SEMANTIC-009 / DM-0012 | 2026-08-18 | Exact retained `2204` «прочие» boundaries; max 29/27, census 1,263/1,263, Gate-2 18,246/18,246 |
+| DM-0011 + exact NTM applicability | 2026-08-15 | Structured facts, bounded exact advisory/exclusions and versioned default-OFF curated broker bridge; production activation deferred |
+| DM-0008/0009/0010 + official NTM contour | 2026-08-15 | Ivan approved advisory-only default-ON rollout with kill switch; enforcement not approved; 9 families / 30 base sections; temp read-only 96-PDF artifact passed exact 21/96/17 809 gate with pinned digests and no production DB mutation |
 | TASK-SEMANTIC-008 | 2026-08-10 | Completed; DM-0007 Option A, exact `0406` moisture chain, 27/26 → 16/15, golden 7/7 |
 | TASK-SEMANTIC-007 | 2026-08-06 | Completed; DM-0006 Option A |
 | TASK-SEMANTIC-006 (feature branch) | 2026-08-05 | Completed and accepted via DM-0005 Option A: exact bounded `2204` PDO slice, 50/47 → 18/14 → PDO 33/33, census 1,228/1,228 and golden 5/5; not merged/rolled out/deployed |
@@ -416,6 +777,11 @@ URL/API-контракты не менялись; backend, БД, флаги и �
 | **TASK-MVP-RISK-001** — санкционный скрининг: scope, evidence, coverage, sources | ✅ Completed; semantics remain diagnostic | — |
 | **TASK-MVP-ASSISTANT-001** — grounded assistant: серверные факты, цитаты, no-key fallback, guarded LLM | ✅ Completed | — |
 | Full-data MVP acceptance | ✅ Completed: полная пользовательская БД, strict read-only, auth + 4/4, evidence сохранён | — |
+| Official full NTM advisory rollout | ✅ Accepted Ivan 2026-08-15: default ON, explicit false kill switch, 9 families / 30 base sections, no broker impact | — |
+| Full-catalog NTM audit on current code | ✅ Passed on temp read-only audit artifact rebuilt from 96 tracked official PDFs: exact 21/96/17 809, 17 774 described + 35 blank codes absent from pinned active ETT rate snapshot; pinned digests match; no production DB mutation | Повторять при source/parser revision |
+| Official NTM enforcement | Not approved; every contour match remains advisory and outside missing-check | New Ivan decision required |
+| Structured exact NTM applicability | ✅ Implemented under DM-0011: additive facts API/UI, exact advisory/exclusions, no default broker effect | Trusted registry/source adapters before rollout |
+| Curated official NTM bridge | ✅ Implemented and tested in shadow; default OFF, two frozen exact rule IDs | Explicit rollout decision required to enable |
 | Guided TN VED v1 | ✅ Completed locally: API/UI, 100% Canonical binding gate, safe fallback | — |
 | Full-data guided acceptance (`0302/0303/5208/8517`) | ✅ Completed: 328/328 target codes, 100% Canonical coverage, hierarchy green | — |
 | **TASK-SEMANTIC-003** — controlled nesting смысловых подгрупп | ✅ Completed: full-data hierarchy gate green | — |
@@ -424,6 +790,7 @@ URL/API-контракты не менялись; backend, БД, флаги и �
 | **TASK-SEMANTIC-006** — bounded official PDO interval for `2204` | ✅ Completed and accepted via DM-0005 Option A; implemented + verified on feature branch: exact 33-leaf allowlist, 18/14 → PDO 33/33, census 1,228/1,228 and golden 5/5; flags OFF | No merge/rollout/deploy in this docs update |
 | TASK-SEMANTIC-007 | ✅ Completed; DM-0006 Option A | No rollout |
 | TASK-SEMANTIC-008 | ✅ Completed; DM-0007 Option A, exact `0406` moisture chain, 16/15 and 21/47 | No merge/rollout/flag activation |
+| TASK-SEMANTIC-009 | ✅ Completed; DM-0012 Option A, exact retained `2204` «прочие» boundaries, max 29/27, census 1,263/1,263 | No runtime rollout/flag activation |
 | **TASK-MVP-FRONTEND-ACCEPTANCE-001** — поиск → Guided → реальный код → карточка | ✅ Completed: автоматический DOM-level acceptance; accessibility hardening | — |
 | **TASK-MVP-FRONTEND-ACCEPTANCE-002** — карточка → платежи → документы → риск → assistant | ✅ Completed: verified/failure DOM-level paths; fail-safe evidence UI | — |
 | **TASK-MVP-FRONTEND-ACCEPTANCE-003** — реальный card → assistant → grounded response | ✅ Completed: route bridge + deterministic/guarded-LLM UI contracts | — |
@@ -432,6 +799,7 @@ URL/API-контракты не менялись; backend, БД, флаги и �
 | Interactive frontend acceptance | Search → Guided → card ✅; card → payments → requirements/risk → grounded assistant response ✅; live-browser QA ожидает достижимый URL | Высокий |
 | DM-0004: nomenclature history / code transitions | Proposed; awaiting Ivan and official-source feasibility audit; no schema/runtime authorized | Decision |
 | DM-0005: Guided `2204` PDO interval | ✅ Accepted — Option A (Ivan, 2026-08-05); TASK-SEMANTIC-006 completed on feature branch | No merge/rollout/deploy in this docs update |
+| DM-0012: retained `2204` «прочие» boundaries | ✅ Accepted — Option A; TASK-SEMANTIC-009 completed and verified | No runtime rollout/flag activation |
 | Fine-tune модели на `training_pairs.jsonl` | Вне репозитория | Низкий |
 | Live-parсер ФТС предрешений (tks.ru JS) | Decision Memo #135 | Средний |
 | Мульти-воркер ФСА (Redis-очередь) | Бэклог | Низкий |
@@ -450,21 +818,29 @@ URL/API-контракты не менялись; backend, БД, флаги и �
   подтверждает финальный итог и показывает только известную частичную сумму
 - **ФТС предрешения:** live-парсер не реализован (customs.gov.ru/folder/519 — статистика, не предрешения)
 - **ТРОИС:** fuzzy-поиск может давать false positives на коротких запросах
+- **NTM full-catalog evidence:** gate пройден на временном audit-only SQLite
+  artifact, rebuilt из 96 tracked official PDFs и открытом read-only. Production
+  DB не заменялась и не изменялась. Результат привязан к exact 21/96/17 809,
+  pinned manifest/parser/ETT/code/code+description digests и должен
+  пересчитываться при их обновлении. Partial/code-only отчёты supplementary
 - **Semantic embeddings:** в доступных QA-БД нет готовых векторов и серверный ключ
   провайдера не настроен; умный поиск и ассистент используют детерминированный hybrid/evidence fallback
 
 ### Архитектура
 - **SQLite** — ограничение параллельных записей; для production рекомендуется PostgreSQL (DATABASE_URL поддерживает)
 - **FTS5** — вне Alembic, создаётся только при старте приложения
-- **NTM v2 feature flags** — по умолчанию OFF, требует явного включения Иваном
+- **Official full NTM advisory** — default ON по решению Ivan от 2026-08-15;
+  `NTM_V2_OFFICIAL_FULL_ADVISORY_ENABLED=false` является kill switch. Это не
+  включает enforcement
+- **Прочие NTM v2/enforcement flags** — не активируются решением advisory rollout;
+  влияние на broker/missing-check требует отдельного одобрения Ivan
 - **L6/L8 синтез** — производительность: на каждый запрос к дереву пересчитывается из БД (кэш не реализован)
 - **Semantic Guided quality** — strict integrity доказана для supplied Gate-2
-  snapshot по всем 1,228 heading, но смысловые вопросы сейчас есть у 44.6254%
-  headings; 680 headings остаются прямыми code-choice маршрутами. На feature-branch
-  candidate после bounded PDO slice catalog-wide максимум равен 33/33 в `2204`;
-  эта official 33-code группа честно сохраняет одну noncritical oversized warning.
-  DM-0005 Option A принят; дальнейшее разбиение и другие outliers требуют отдельных
-  evidence-backed UX-задач. Текущий branch-код ещё не merged/rolled out/deployed.
+  snapshot по всем 1,263 heading. Semantic questions покрывают 6,949/13,254
+  declarable leaves; остальные ветки сохраняют прямые code-choice маршруты.
+  После bounded DM-0012 slice catalog-wide максимум равен 29/27 в `220429`;
+  шагов более 30 нет. Дальнейшая оптимизация требует отдельных source-backed
+  UX-задач; runtime rollout флагов не выполнен.
 
 ### Frontend
 - **Тайпскрипт типы** — `openapi.generated.ts` требует ручной регенерации (`npm run gen:api-types`) при изменении схемы API
@@ -569,6 +945,10 @@ URL/API-контракты не менялись; backend, БД, флаги и �
 | **Deadline for legacy `build_tree` removal** | Open (oracle до parity) | Двойная логика — долг; нужен критерий «parity достигнута → удаляем» | После content-parity + стабилизации flag (Этап 6) |
 | **First production read-path** | ✅ Completed — `/children` структурный слой за default-OFF флагом; Gate-2 green | Какой эндпоинт первым читает CanonicalModel и как сверяется с legacy | Отдельное решение Ivan о rollout |
 | **Nomenclature history / legal code transitions** | Proposed: DM-0004, current-only Canonical remains unchanged | Нужны official source, revision/effective dates, many-to-many split/merge semantics and provenance; нельзя смешивать с lexical synonyms/stable-ID aliases | Ivan decision after source-feasibility audit |
+| **Official NTM advisory rollout** | ✅ Closed: DM-0008 Option A, Ivan 2026-08-15; default ON with explicit-false kill switch | Пользователь видит 9 семейств / 30 базовых разделов без broker-влияния | Revisit only for rollout rollback or a new enforcement decision |
+| **Export-control family** | ✅ Closed: DM-0009 Option A; 1 087 raw / 1 085 effective candidates | Справочный код не заменяет параметрическую идентификацию | Any enforcement requires a new Ivan decision |
+| **NTM legal/catalog completeness** | ✅ Boundary closed by DM-0010; full gate passed on rebuilt official-PDF temp read-only artifact with pinned digests; production DB unchanged | Code-only/partial scope по-прежнему нельзя выдавать за full; 35 blank catalog codes are absent from the pinned active ETT rate snapshot, без вывода о причине/статусе | Повторять gate при PDF/ETT/parser revision |
+| **Structured exact NTM / curated bridge** | ✅ DM-0011 implementation boundary closed; exact rows remain advisory and bridge is default OFF | Caller-supplied facts are not a live registry lookup | New explicit rollout decision + trusted adapters before enabling |
 | **Guided `2204` PDO interval** | ✅ Closed: DM-0005 Option A Accepted; bounded implementation completed + verified on feature branch | Exact user-visible PDO/PGI boundary accepted; flat/generic-parser options not selected | No merge/rollout/deploy in this docs update; flags OFF |
 | Guided `0304` | ✅ DM-0006 Option A | Visible semantics | No rollout |
 

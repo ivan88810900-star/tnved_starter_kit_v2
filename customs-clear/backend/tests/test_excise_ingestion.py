@@ -739,7 +739,14 @@ class TestExciseApi(unittest.TestCase):
         r = self.client.post("/api/sources/payment-ingestion/excise/dry-run")
         self.assertEqual(r.status_code, 200)
         body = r.json()
-        self.assertIn(body["status"], ("OK", "missing_official_source", "manual_review_required"))
+        self.assertIn(body["status"], ("OK", "missing_official_source", "manual_review_required", "parser_failed"))
+        if body["status"] == "parser_failed":
+            self.assertFalse(body["db_mutated"])
+            self.assertTrue(body["blockers"])
+            # The tracked source currently includes a combined tobacco form
+            # that the fixed/percent storage contract cannot represent.
+            self.assertEqual(body["parser_result"].get("reason"), "invalid_excise_rate_value")
+            self.assertTrue(body["parser_result"].get("rate_diagnostics"))
         self.assertTrue(body["dry_run"])
         self.assertFalse(body["db_mutated"])
 

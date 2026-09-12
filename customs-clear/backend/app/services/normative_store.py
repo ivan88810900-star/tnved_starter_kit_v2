@@ -3,6 +3,7 @@ from __future__ import annotations
 # Классификационные решения ФТС: ORM `ClassificationDecision` в app.models.core;
 # upsert/search — функции ниже (данные с tks.ru и др.).
 
+import os
 import re
 from difflib import SequenceMatcher
 from datetime import date, datetime, timezone
@@ -10,6 +11,7 @@ from typing import Any, Literal
 
 from loguru import logger
 from sqlalchemy import func, inspect, literal, or_
+from sqlalchemy.orm import Session
 
 from ..db import SessionLocal, engine
 from .hs_matching import get_hs_prefixes, normalize_hs_code, specificity
@@ -574,6 +576,17 @@ def _run_alembic_upgrade_to_head() -> None:
 
 
 def init_db() -> None:
+    # Automatic source adapters run after deployment migrations.  They receive a
+    # table-level write allowlist and must never invoke Alembic or seed mutable
+    # tariff/NTM facts as a side effect of refreshing an evidence registry.
+    if (os.getenv("CUSTOMSCLEAR_REGULATORY_ADAPTER_MODE") or "").strip().lower() in {
+        "1",
+        "true",
+        "yes",
+        "on",
+    }:
+        logger.info("init_db skipped in guarded regulatory adapter mode")
+        return
     _run_alembic_upgrade_to_head()
     _sqlite_patch_non_tariff_columns()
     seed_data()
@@ -698,6 +711,39 @@ def seed_data() -> None:
         db.commit()
 
 
+def stage_source_status(
+    db: Session,
+    source_code: str,
+    source_name: str,
+    source_url: str,
+    revision: str,
+    is_stale: bool,
+    note: str,
+) -> None:
+    """Stage source status in the caller's transaction without committing it."""
+    obj = db.query(SourceStatus).filter(SourceStatus.source_code == source_code).first()
+    now = datetime.now(timezone.utc).replace(tzinfo=None)
+    if not obj:
+        db.add(
+            SourceStatus(
+                source_code=source_code,
+                source_name=source_name,
+                source_url=source_url,
+                revision=revision,
+                synced_at=now,
+                is_stale=is_stale,
+                note=note,
+            )
+        )
+    else:
+        obj.source_name = source_name
+        obj.source_url = source_url
+        obj.revision = revision
+        obj.synced_at = now
+        obj.is_stale = is_stale
+        obj.note = note
+
+
 def upsert_source_status(
     source_code: str,
     source_name: str,
@@ -707,28 +753,37 @@ def upsert_source_status(
     note: str,
 ) -> None:
     with SessionLocal() as db:
-        obj = db.query(SourceStatus).filter(SourceStatus.source_code == source_code).first()
-        now = datetime.now(timezone.utc).replace(tzinfo=None)
-        if not obj:
-            db.add(
-                SourceStatus(
-                    source_code=source_code,
-                    source_name=source_name,
-                    source_url=source_url,
-                    revision=revision,
-                    synced_at=now,
-                    is_stale=is_stale,
-                    note=note,
-                )
-            )
-        else:
-            obj.source_name = source_name
-            obj.source_url = source_url
-            obj.revision = revision
-            obj.synced_at = now
-            obj.is_stale = is_stale
-            obj.note = note
+        stage_source_status(
+            db,
+            source_code=source_code,
+            source_name=source_name,
+            source_url=source_url,
+            revision=revision,
+            is_stale=is_stale,
+            note=note,
+        )
         db.commit()
+
+
+def stage_sync_log(
+    db: Session,
+    source_code: str,
+    status: str,
+    revision: str,
+    rows_affected: int,
+    note: str,
+) -> None:
+    """Stage a sync-log row in the caller's transaction without committing it."""
+    db.add(
+        SyncLog(
+            source_code=source_code,
+            synced_at=datetime.now(timezone.utc).replace(tzinfo=None),
+            status=status,
+            revision=revision,
+            rows_affected=rows_affected,
+            note=note,
+        )
+    )
 
 
 def append_sync_log(
@@ -739,15 +794,13 @@ def append_sync_log(
     note: str,
 ) -> None:
     with SessionLocal() as db:
-        db.add(
-            SyncLog(
-                source_code=source_code,
-                synced_at=datetime.now(timezone.utc).replace(tzinfo=None),
-                status=status,
-                revision=revision,
-                rows_affected=rows_affected,
-                note=note,
-            )
+        stage_sync_log(
+            db,
+            source_code=source_code,
+            status=status,
+            revision=revision,
+            rows_affected=rows_affected,
+            note=note,
         )
         db.commit()
 

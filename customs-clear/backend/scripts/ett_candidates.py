@@ -1,0 +1,171 @@
+#!/usr/bin/env python3
+"""Explicit local ETT candidate staging/preview; no promotion command exists."""
+from __future__ import annotations
+
+import argparse
+from datetime import date
+from decimal import Decimal
+import json
+import os
+from pathlib import Path
+import sqlite3
+import stat
+import sys
+from urllib.parse import quote
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
+from fastapi.encoders import jsonable_encoder
+from sqlalchemy import create_engine
+from sqlalchemy.orm import Session
+
+from app.services.ett_artifacts import LocalArtifactStore
+from app.services.ett_manifest import validate_manifest
+from app.services.ett_repository import candidate_readiness, load_candidate, semantic_diff, stage_candidate
+from app.services.ett_resolver import resolve_rate
+
+
+def read_json(path: Path, maximum: int = 64 * 1024 * 1024):
+    def unique_pairs(pairs):
+        result = {}
+        for key, value in pairs:
+            if key in result:
+                raise ValueError("Duplicate JSON key")
+            result[key] = value
+        return result
+
+    def invalid_constant(value):
+        raise ValueError("Non-finite JSON number")
+
+    descriptor = os.open(path, os.O_RDONLY | os.O_NONBLOCK | os.O_CLOEXEC)
+    try:
+        metadata = os.fstat(descriptor)
+        if not stat.S_ISREG(metadata.st_mode) or not 0 < metadata.st_size <= maximum:
+            raise ValueError("ETT input requires a bounded regular file")
+        with os.fdopen(descriptor, "rb") as source:
+            descriptor = None
+            raw = source.read(maximum + 1)
+    finally:
+        if descriptor is not None:
+            os.close(descriptor)
+    if not 0 < len(raw) <= maximum:
+        raise ValueError("ETT input exceeds the size limit")
+    return json.loads(raw, object_pairs_hook=unique_pairs, parse_constant=invalid_constant)
+
+
+def main(argv=None) -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    commands = parser.add_subparsers(dest="command", required=True)
+    validate = commands.add_parser("validate")
+    validate.add_argument("manifest", type=Path)
+    diff = commands.add_parser("diff")
+    diff.add_argument("before", type=Path)
+    diff.add_argument("after", type=Path)
+    stage = commands.add_parser("stage")
+    stage.add_argument("manifest", type=Path)
+    acquire = commands.add_parser("acquire", help="Capture the actual official index and linked documents; no database writes")
+    acquire.add_argument("--store-root", required=True, type=Path)
+    extract = commands.add_parser("extract", help="Extract coordinate-bound PDF evidence from a verified acquisition receipt")
+    extract.add_argument("digest")
+    extract.add_argument("--store-root", required=True, type=Path)
+    analyze = commands.add_parser("analyze", help="Assemble captured tables, duty expressions and tariff-note references for review")
+    analyze.add_argument("digest")
+    analyze.add_argument("--store-root", required=True, type=Path)
+    incomplete = commands.add_parser("analyze-incomplete", help="Analyze a verified incomplete capture only when all core PDFs exist; never a complete receipt")
+    incomplete.add_argument("digest")
+    incomplete.add_argument("--store-root", required=True, type=Path)
+    verify_rows = commands.add_parser("verify-rows", help="Re-extract PDF quotes referenced by a candidate; does not approve rates or dates")
+    verify_rows.add_argument("manifest", type=Path)
+    verify_rows.add_argument("--store-root", required=True, type=Path)
+    verify_evidence = commands.add_parser("verify-evidence", help="Verify referenced native PDF rows and typed portal metadata; never approve legal meaning")
+    verify_evidence.add_argument("manifest", type=Path)
+    verify_evidence.add_argument("--store-root", required=True, type=Path)
+    preview = commands.add_parser("preview")
+    preview_duty = commands.add_parser("preview-duty", help="Replay candidate quotes and calculate provisional unrounded duty; no final payment or approval")
+    preview_duty.add_argument("--calculation-inputs", required=True, type=Path,
+                              help="Explicit currency, customs value, total duty-unit quantity and optional dated currency factor")
+    for command in (preview, preview_duty):
+        command.add_argument("digest")
+        command.add_argument("--code", required=True)
+        command.add_argument("--as-of", required=True, type=date.fromisoformat)
+        command.add_argument("--destination", required=True, choices=["AM", "BY", "KZ", "KG", "RU"])
+        command.add_argument("--facts", type=Path)
+    for command in (stage, preview, preview_duty):
+        command.add_argument("--database", required=True, type=Path, help="Explicit migrated local SQLite candidate database")
+        command.add_argument("--store-root", required=True, type=Path)
+    args = parser.parse_args(argv)
+    try:
+        if args.command == "validate":
+            result = candidate_readiness(validate_manifest(read_json(args.manifest)))
+        elif args.command == "diff":
+            result = semantic_diff(validate_manifest(read_json(args.before)), validate_manifest(read_json(args.after)))
+        elif args.command in {"acquire", "extract", "analyze", "analyze-incomplete"}:
+            from app.services.ett_acquisition import acquire_official, extract_acquisition
+            store = LocalArtifactStore(args.store_root)
+            if args.command in {"analyze", "analyze-incomplete"}:
+                from app.services.ett_analysis import analyze_acquisition, analyze_incomplete_capture
+                result = (analyze_acquisition if args.command == "analyze" else analyze_incomplete_capture)(store, args.digest)
+            else:
+                result = acquire_official(store) if args.command == "acquire" else extract_acquisition(store, args.digest)
+        elif args.command == "verify-rows":
+            from app.services.ett_evidence_binding import verify_manifest_source_rows
+            store = LocalArtifactStore(args.store_root, create=False)
+            result = verify_manifest_source_rows(validate_manifest(read_json(args.manifest)), store)
+        elif args.command == "verify-evidence":
+            from app.services.ett_metadata_binding import verify_manifest_source_evidence
+            store = LocalArtifactStore(args.store_root, create=False)
+            result = verify_manifest_source_evidence(validate_manifest(read_json(args.manifest)), store)
+        else:
+            if not args.database.is_file() or args.database.is_symlink():
+                raise ValueError("An explicit existing migrated SQLite database is required")
+            store = LocalArtifactStore(args.store_root, create=args.command == "stage")
+            mode = "rw" if args.command == "stage" else "ro"
+            uri = "file:" + quote(str(args.database.absolute()), safe="/") + "?mode=" + mode
+            def connect():
+                connection = sqlite3.connect(uri, uri=True)
+                connection.execute("PRAGMA foreign_keys=ON")
+                if mode == "ro":
+                    connection.execute("PRAGMA query_only=ON")
+                return connection
+            engine = create_engine("sqlite://", creator=connect)
+            try:
+                with Session(engine) as db:
+                    if args.command == "stage":
+                        result = stage_candidate(db, store, validate_manifest(read_json(args.manifest)))
+                    else:
+                        manifest = load_candidate(db, store, args.digest)
+                        facts = read_json(args.facts) if args.facts else None
+                        if args.command == "preview-duty":
+                            from app.services.ett_candidate_duty_preview import preview_candidate_duty
+                            result = preview_candidate_duty(
+                                manifest, store, code=args.code, as_of=args.as_of,
+                                destination=args.destination, facts=facts,
+                                calculation_inputs=read_json(args.calculation_inputs, 1024 * 1024),
+                            )
+                        else:
+                            result = resolve_rate(manifest, args.code, args.as_of, args.destination, facts)
+            finally:
+                engine.dispose()
+        print(json.dumps(jsonable_encoder(result, custom_encoder={Decimal: str}), ensure_ascii=False, allow_nan=False))
+        if args.command == "verify-rows" and not result["rows_verified"]:
+            return 2
+        if args.command == "verify-evidence" and not result["source_evidence_verified"]:
+            return 2
+        if args.command == "preview-duty" and result["status"] != "calculated":
+            return 3
+        return 0
+    except Exception as exc:
+        # Structured failure, no secret-bearing source payload or database path.
+        failure = {"status": "ERROR", "error": "ETT candidate validation or operation failed", "error_type": type(exc).__name__, "production_ready": False}
+        if args.command == "acquire":
+            from app.services.ett_acquisition import AcquisitionDownloadError
+            if isinstance(exc, AcquisitionDownloadError):
+                failure["failed_public_source_url"] = exc.requested_url
+                if getattr(exc, "progress_report_sha256", None) is not None:
+                    failure["incomplete_capture_report_sha256"] = exc.progress_report_sha256
+        print(json.dumps(failure))
+        return 2
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

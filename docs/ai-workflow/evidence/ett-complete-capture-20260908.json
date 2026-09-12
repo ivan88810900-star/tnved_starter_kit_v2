@@ -1,0 +1,273 @@
+{
+  "schema_version": 1,
+  "kind": "ett_complete_technical_capture_evidence",
+  "evaluated_at": "2026-09-08T15:40:50.302672+00:00",
+  "capture_run_id": 34244241195,
+  "capture_commit_sha": "ad8ed8ba055e3371c19e6d614c9809db4086df46",
+  "scope": "Complete technical capture of the supported document plan discovered from the official ETT index. This does not establish a complete legal inventory or applicable rates.",
+  "original_runner_archive": {
+    "archive_filename": "Tariff_ETT_complete_evidence_2026-09-08.zip",
+    "archive_sha256": "eaf56f9cbb148d6a8ed109886893df23b361fa2b107fe5738a0dc4b1626157a5",
+    "archive_bytes": 65123470,
+    "tar_entries": 311,
+    "blob_count": 310,
+    "blob_bytes": 287597964
+  },
+  "archive_validation": {
+    "zip_flat_regular_entries": 5,
+    "zip_max_entries": 12,
+    "zip_aggregate_limit_bytes": 1073741824,
+    "tar_max_entries": 1000,
+    "tar_individual_limit_bytes": 67108864,
+    "tar_aggregate_limit_bytes": 1073741824,
+    "tar_regular_sha256_blobs_only": true,
+    "tar_fixed_store_prefix_discarded": true,
+    "links_traversal_sparse_and_duplicate_entries_rejected": true,
+    "blob_filename_hashes_verified": 310,
+    "extractall_used": false
+  },
+  "capture": {
+    "receipt_schema_version": 2,
+    "receipt_sha256": "ab67a2d3055a3fcd8416c874b9bc388ce0b0919e4b964e5de7c1f18c08a6f72e",
+    "status": "acquired_for_review",
+    "supported_discovered_plan_complete": true,
+    "index_start": {
+      "requested_url": "https://eec.eaeunion.org/comission/department/catr/ett/",
+      "url": "https://eec.eaeunion.org/comission/department/catr/ett/",
+      "sha256": "72574ee25f90531902cd0e8cf1fe2c5731a9e0ed2f533fb720958401d47e2ab5",
+      "size_bytes": 132800,
+      "media_type": "text/html",
+      "retrieved_at": "2026-09-08T15:22:23.782074Z",
+      "redirect_chain": []
+    },
+    "index_end": {
+      "requested_url": "https://eec.eaeunion.org/comission/department/catr/ett/",
+      "url": "https://eec.eaeunion.org/comission/department/catr/ett/",
+      "sha256": "97e28f7c0c597f37f20ecc4ed64ba270071216ac63afd9bfc3ccdd7f63a25231",
+      "size_bytes": 132800,
+      "media_type": "text/html",
+      "retrieved_at": "2026-09-08T15:25:21.982992Z",
+      "redirect_chain": []
+    },
+    "discovery_sha256": "9d28ff3acc9f7fce67ae2f2224ca94fa374890fc148fcdc5421275822abe48db",
+    "index_semantic_plan_stable_during_capture": true,
+    "index_start_end_bytes_identical": false,
+    "downloaded_documents_excluding_index": 104,
+    "core_pdfs": 100,
+    "linked_legal_pages": 2,
+    "linked_legal_pdf_attachments": 2,
+    "source_download_records_including_index": 106,
+    "unique_original_source_blobs": 106,
+    "original_source_bytes": 42836101,
+    "legal_attachment_inventory_sha256": "47e28ed22a971d929ae3a902fe1f7fea3eea401e1fda6ab25124b7e65ac415ef"
+  },
+  "analysis": {
+    "schema_version": 1,
+    "kind": "ett_acquisition_analysis",
+    "status": "analyzed_for_review",
+    "acquisition_complete": true,
+    "receipt_sha256": "ab67a2d3055a3fcd8416c874b9bc388ce0b0919e4b964e5de7c1f18c08a6f72e",
+    "incomplete_capture_report_sha256": null,
+    "tariff_notes_report_sha256": "5e4e06a5cce4b4010d97f736111c129db896fbe278110e5d97aa84710d3532f3",
+    "amendment_inventory_report_sha256": "1af4b8cd63c6c0e190477db5848869a5afb6a4866139fa5abce10e980e7e02a8",
+    "amendment_inventory_named_count": 105,
+    "amendment_inventory_linked_count": 2,
+    "amendment_inventory_missing_link_count": 103,
+    "amendment_effective_clauses_verified": 0,
+    "notes": 124,
+    "duplicate_note_ids": [],
+    "note_inventory_diagnostics": [],
+    "unassigned_note_rows": 2,
+    "all_note_source_rows_accounted": true,
+    "chapter_count": 96,
+    "table_records": 13293,
+    "unique_table_codes": 13293,
+    "parsed_duty_cells": 13293,
+    "unresolved_duty_cells": 0,
+    "full_description_paths": 13293,
+    "excluded_code_mentions": 29,
+    "duplicate_table_codes": [],
+    "empty_table_chapters": [],
+    "source_pages_without_text_count": 0,
+    "source_pages_without_headers_count": 140,
+    "assembly_diagnostics": {
+      "reserved_heading": 37
+    },
+    "row_diagnostics": {},
+    "analysis_component_sha256": {
+      "ett_analysis": "bc4a0fdccb88ee42ed7d13c9779ec1cb79e7baae6e4f6fe0d2f1a43811e45490",
+      "ett_duty_cells": "c3c15e306355f42149e83ea254eb3966f359ae280186bb78dc9c5bb0e090a51e",
+      "ett_duty_typography": "1c095b0c97790dee252a9af4b17a6bb92907b14b57127a329bf33450a83ddde7",
+      "ett_manifest": "4e7a3638a45f137bf3d93ebdff5fc8aa528ca14fea1663801e2a63c91da176e9",
+      "ett_amendment_inventory": "c91332e956237382e8a98c579a6a1deb0b015fca1320c7da0bdf341925f33ca4"
+    },
+    "unbound_footnote_references": {},
+    "legal_attachment_inventory_bound": true,
+    "linked_legal_pdf_capture": true,
+    "additional_legal_pdfs_captured": 2,
+    "blockers": [
+      "current_edition_and_complete_amendments_not_legally_verified",
+      "note_conditions_and_effective_dates_require_interpretation",
+      "manifest_bound_legal_review_missing",
+      "production_promotion_not_implemented"
+    ],
+    "legal_rates_resolved": 0,
+    "complete_rate_catalog_verified": false,
+    "production_ready": false,
+    "active_rates_written": false,
+    "report_sha256": "4fc68dfa5cdbc043d9b374e292c12b44dc2c391ea643260eff679ca323bd9991"
+  },
+  "report_verification": {
+    "kind": "ett_complete_capture_report_verification",
+    "run_id": "34244241195",
+    "commit_sha": "ad8ed8ba055e3371c19e6d614c9809db4086df46",
+    "receipt_sha256": "ab67a2d3055a3fcd8416c874b9bc388ce0b0919e4b964e5de7c1f18c08a6f72e",
+    "analysis_report_sha256": "4fc68dfa5cdbc043d9b374e292c12b44dc2c391ea643260eff679ca323bd9991",
+    "extraction_report_sha256": "02a799b291dbc7f1f035227e1acc0271e3d37357af73069f3c300f4b8c1dbf62",
+    "analysis_cli_matches_original_summary": true,
+    "analysis_chapter_report_sha_and_original_source_sha_verified": 96,
+    "extraction_report_sha_and_original_source_sha_verified": 102,
+    "chapter_reports_byte_identical_to_previous_local_full_audit": 96,
+    "all_parser_hashes_match_run_git_commit": true,
+    "chapter_pages": 1537,
+    "chapter_records": 13293,
+    "parsed_duty_cells": 13293,
+    "unresolved_duty_cells": 0,
+    "extraction_pdf_pages": 1592,
+    "extraction_words": 384597,
+    "raw_source_download_records": 106,
+    "raw_source_unique_objects": 106,
+    "raw_source_unique_bytes": 42836101,
+    "index_bytes_identical": false,
+    "acquisition_complete": true,
+    "legal_inventory_complete": false,
+    "effective_dates_verified": false,
+    "production_ready": false,
+    "active_rates_written": false
+  },
+  "parsers": {
+    "extractor": {
+      "engine": "pymupdf",
+      "engine_version": "1.28.2",
+      "mupdf_version": "1.28.2",
+      "name": "ett_pdf_physical_rows",
+      "sha256": "b2b51ccd213426a32fe3260c655bd8163bbbaa2f45e8cab141893338117c4d5b",
+      "version": "2"
+    },
+    "assembler": {
+      "name": "ett_coordinate_table_rows",
+      "sha256": "f5389c537a68975d0362ca99a63a6a3f199e90772fcba8b31bb3b8a4709d2e90",
+      "version": "1"
+    }
+  },
+  "parser_component_sha256": {
+    "ett_amendment_inventory": "c91332e956237382e8a98c579a6a1deb0b015fca1320c7da0bdf341925f33ca4",
+    "ett_analysis": "bc4a0fdccb88ee42ed7d13c9779ec1cb79e7baae6e4f6fe0d2f1a43811e45490",
+    "ett_duty_cells": "c3c15e306355f42149e83ea254eb3966f359ae280186bb78dc9c5bb0e090a51e",
+    "ett_duty_typography": "1c095b0c97790dee252a9af4b17a6bb92907b14b57127a329bf33450a83ddde7",
+    "ett_manifest": "4e7a3638a45f137bf3d93ebdff5fc8aa528ca14fea1663801e2a63c91da176e9",
+    "ett_pdf_evidence": "b2b51ccd213426a32fe3260c655bd8163bbbaa2f45e8cab141893338117c4d5b",
+    "ett_table_assembly": "f5389c537a68975d0362ca99a63a6a3f199e90772fcba8b31bb3b8a4709d2e90"
+  },
+  "legal_pdf_scan_diagnostics": [
+    {
+      "source": {
+        "requested_url": "https://docs.eaeunion.org/upload/iblock/393/f3ak35ptlhz2u9paqn79dontu4r2kj8h/err_28042022_66_doc.pdf",
+        "url": "https://docs.eaeunion.org/upload/iblock/393/f3ak35ptlhz2u9paqn79dontu4r2kj8h/err_28042022_66_doc.pdf",
+        "sha256": "10b9315c8c86efadf53f773c8d984d22247bc5485c432d5039352a66113179d5",
+        "size_bytes": 3083603,
+        "media_type": "application/pdf",
+        "retrieved_at": "2026-09-08T15:25:14.128143Z",
+        "redirect_chain": []
+      },
+      "extraction_report_sha256": "7f6e4939ff17101c164dfcb612f049bded8b1e2dd71721fc8b0f9379e3fe79cd",
+      "pages": 12,
+      "words": 0,
+      "rows": 0,
+      "ocr_performed": false,
+      "legal_identity_and_effective_dates_interpreted": false
+    },
+    {
+      "source": {
+        "requested_url": "https://docs.eaeunion.org/upload/iblock/82b/1h7ofr72qrt3q86uvgi7kwy36d0l66m6/err_28042022_76_doc.pdf",
+        "url": "https://docs.eaeunion.org/upload/iblock/82b/1h7ofr72qrt3q86uvgi7kwy36d0l66m6/err_28042022_76_doc.pdf",
+        "sha256": "d0fbfe320d18465519a9baadc9f00d1b0c88124c2102f70830207dfba95a48fc",
+        "size_bytes": 4800950,
+        "media_type": "application/pdf",
+        "retrieved_at": "2026-09-08T15:25:20.568540Z",
+        "redirect_chain": []
+      },
+      "extraction_report_sha256": "7fb0fea1ce83bdfa113860408c52dadc54d1e2b8bb8b097346f92f853c2f3513",
+      "pages": 17,
+      "words": 0,
+      "rows": 0,
+      "ocr_performed": false,
+      "legal_identity_and_effective_dates_interpreted": false
+    }
+  ],
+  "unsupported_legal_references": {
+    "reference_occurrences": 20,
+    "unique_urls": 11,
+    "media_type_occurrences": {
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document": 11,
+      "application/msword": 3,
+      "application/zip": 6
+    },
+    "unsupported_zip_urls": [
+      "https://docs.eaeunion.org/upload/iblock/30f/1ejbrxx8u338qjf970tal0715afq9li8/err_28042022_66_att.zip",
+      "https://docs.eaeunion.org/upload/iblock/f8b/4n8tf0bp9hkvrg1mwvd3o992yckghgn3/err_28042022_76_att.zip"
+    ]
+  },
+  "retention": {
+    "original_workflow": {
+      "schema_version": 1,
+      "commit_sha": "ad8ed8ba055e3371c19e6d614c9809db4086df46",
+      "run_id": "34244241195",
+      "run_attempt": "1",
+      "acquisition_outcome": "success",
+      "extraction_outcome": "success",
+      "analysis_outcome": "success",
+      "production_ready": false,
+      "active_rates_written": false,
+      "retention_kind": "temporary_github_actions_artifact",
+      "retention_days_requested": 90,
+      "durable_legal_retention_attested": false
+    },
+    "durable_legal_retention_attested": false
+  },
+  "legal_limitations": [
+    "105 named amendments remain declared by the original index; only 2 have literal linked publication pages, leaving 103 without links there.",
+    "Both captured legal attachments have zero extractable text (29 pages total); preserving these scans does not interpret their legal identity, clauses or effective dates.",
+    "Unsupported DOC/DOCX/ZIP references are retained in the attachment inventory but their bytes were not captured by this supported PDF/HTML acquisition.",
+    "Stable semantic start/end discovery plans do not imply identical index HTML or prove atomic stability of every remote PDF during download.",
+    "All 13,293 duty-cell results are syntactic candidates; matching footnote IDs does not establish current legal rates.",
+    "Manifest-bound legal review and production promotion remain unimplemented."
+  ],
+  "production_ready": false,
+  "legal_inventory_complete": false,
+  "effective_dates_verified": false,
+  "legal_rates_resolved": 0,
+  "active_rates_written": false,
+  "database_writes": false,
+  "original_source_backup": {
+    "filename": "Tariff_ETT_original_sources_2026-09-08_complete.zip",
+    "sha256": "3ee382ec8d7b186bbcbd9c7f5ad45f275908a151708f65218af189b2698feeb1",
+    "bytes": 36476554,
+    "entries": 116,
+    "original_source_blobs": 106,
+    "retained_store_objects": 109,
+    "source_backup_manifest_sha256": "37b2c67f9662f94be08d516a05b2ee9b67bb1ffdda6741f59332a1ff7351abbd",
+    "all_backup_entries_reopened_and_hash_verified": true,
+    "contains_large_reproducible_extraction_or_chapter_reports": false,
+    "compact_audit_core_sha256": "34bf89e7be2e636148d5efc64f119e5d5d9d1933d68b09c44919def28edd642e",
+    "compact_audit_core_excludes_backup_container_digest": true,
+    "restore_check": {
+      "restore_verified_with_LocalArtifactStore_and_load_acquisition": true,
+      "restored_objects": 109,
+      "chapters": 96,
+      "downloaded_documents": 104,
+      "receipt_sha256": "ab67a2d3055a3fcd8416c874b9bc388ce0b0919e4b964e5de7c1f18c08a6f72e",
+      "complete_receipt_remains_loadable_without_detailed_analysis_reports": true
+    }
+  }
+}

@@ -75,48 +75,24 @@ async def _http_get_with_retries(url: str, *, timeout: float) -> httpx.Response:
 
 
 async def sync_eec_snapshot() -> dict[str, Any]:
-    """Обновляет метаданные официального источника ЕЭК ТН ВЭД/ЕТТ.
+    """Retired index-hash freshness path, quarantined under Decision #188.
 
-    Ревизия фиксируется по хэшу страницы-индекса.
+    Landing-page availability does not establish current duty rates. In
+    particular, this compatibility call must never overwrite an approved
+    EEC_ETT SourceStatus with a page hash or downgrade it after a failed fetch.
+    The separate official-source monitor owns availability checks.
     """
-    try:
-        r = await _http_get_with_retries(EEC_ETT_URL, timeout=25.0)
-        r.raise_for_status()
-        digest = hashlib.sha256(r.text.encode("utf-8", errors="ignore")).hexdigest()[:16]
-        upsert_source_status(
-            source_code="EEC_ETT",
-            source_name="ТН ВЭД и ЕТТ ЕАЭС",
-            source_url=EEC_ETT_URL,
-            revision=digest,
-            is_stale=False,
-            note="Ревизия определена по хэшу страницы ЕЭК.",
-        )
-        append_sync_log(
-            source_code="EEC_ETT",
-            status="OK",
-            revision=digest,
-            rows_affected=0,
-            note="Страница ЕЭК доступна, хэш обновлён.",
-        )
-        return {"status": "OK", "source": "EEC_ETT", "revision": digest}
-    except Exception as exc:
-        upsert_source_status(
-            source_code="EEC_ETT",
-            source_name="ТН ВЭД и ЕТТ ЕАЭС",
-            source_url=EEC_ETT_URL,
-            revision="unavailable",
-            is_stale=True,
-            note=f"Ошибка синхронизации: {exc}",
-        )
-        append_sync_log(
-            source_code="EEC_ETT",
-            status="ERROR",
-            revision="unavailable",
-            rows_affected=0,
-            note=str(exc),
-        )
-        logger.warning(f"EEC ETT sync failed: {exc}")
-        return {"status": "ERROR", "source": "EEC_ETT", "error": str(exc)}
+    from .ett_pdf_parser import ETT_REVIEW_DECISION
+
+    return {
+        "status": "REVIEW_REQUIRED",
+        "source": "EEC_ETT",
+        "rows": 0,
+        "quarantined": True,
+        "reason": "index_availability_is_not_rate_freshness",
+        "decision_url": ETT_REVIEW_DECISION,
+        "note": "Хэш страницы ЕЭК не подтверждает актуальность ставок ЕТТ.",
+    }
 
 
 async def sync_trade_defense() -> dict[str, Any]:

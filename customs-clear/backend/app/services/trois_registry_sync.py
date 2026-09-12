@@ -15,8 +15,10 @@ import httpx
 from bs4 import BeautifulSoup
 from bs4.element import Tag
 from loguru import logger
+from sqlalchemy.orm import Session
 from ..db import SessionLocal
 from ..models.tnved import TroisRegistry
+from .snapshot_safety import validate_full_snapshot
 
 DEFAULT_ALTA_URL = "https://www.alta.ru/rois/all/"
 REQUEST_TIMEOUT = float(os.getenv("TROIS_ALTA_TIMEOUT", "90") or "90")
@@ -319,56 +321,88 @@ def fetch_alta_html(
             browser.close()
 
 
-def upsert_trois_registry_rows(rows: list[dict[str, str]]) -> dict[str, int]:
+def upsert_trois_registry_rows(
+    rows: list[dict[str, str]],
+    *,
+    replace_snapshot: bool = False,
+    db: Session | None = None,
+    commit: bool = True,
+    minimum_rows: int = 1,
+) -> dict[str, int]:
     created = updated = skipped = 0
-    with SessionLocal() as db:
-        seen_in_batch: set[str] = set()
-        for row in rows:
-            reg = _clean_cell(row.get("reg_number", ""))
-            if not reg or not REG_NUMBER_RE.match(reg):
-                skipped += 1
-                continue
-            tm = normalize_trademark_for_registry(row.get("trademark", ""))
-            brand = normalize_trademark_for_registry(row.get("brand", "")) or tm
-            if not tm:
-                skipped += 1
-                continue
-            rh = _clean_cell(row.get("right_holder", ""))[:500]
-            st = _clean_cell(row.get("status", ""))[:120]
-            vu = _clean_cell(row.get("valid_until", ""))[:128]
-            reps = _clean_cell(row.get("representatives", ""))[:1200]
-            active = compute_trois_is_active(vu)
-            existing = db.query(TroisRegistry).filter(TroisRegistry.reg_number == reg).one_or_none()
-            if existing:
-                existing.brand = brand[:512]
-                existing.trademark = tm[:512]
-                existing.right_holder = rh[:512]
-                existing.status = st[:128]
-                existing.valid_until = vu[:128]
-                existing.representatives = reps
-                existing.is_active = active
-                updated += 1
-            elif reg in seen_in_batch:
-                skipped += 1
-                continue
-            else:
-                db.add(
-                    TroisRegistry(
-                        brand=brand[:512],
-                        trademark=tm[:512],
-                        right_holder=rh[:512],
-                        reg_number=reg[:256],
-                        status=st[:128],
-                        valid_until=vu[:128],
-                        representatives=reps,
-                        is_active=active,
-                    )
+    # Normalize and deduplicate first.  This both prevents unique-key failures
+    # and gives the full-snapshot guard the exact number that will be committed.
+    candidates: dict[str, dict[str, Any]] = {}
+    for row in rows:
+        reg = _clean_cell(row.get("reg_number", ""))
+        tm = normalize_trademark_for_registry(row.get("trademark", ""))
+        if not reg or not REG_NUMBER_RE.match(reg) or not tm:
+            skipped += 1
+            continue
+        if reg in candidates:
+            skipped += 1
+        brand = normalize_trademark_for_registry(row.get("brand", "")) or tm
+        vu = _clean_cell(row.get("valid_until", ""))[:128]
+        candidates[reg] = {
+            "brand": brand[:512],
+            "trademark": tm[:512],
+            "right_holder": _clean_cell(row.get("right_holder", ""))[:512],
+            "reg_number": reg[:256],
+            "status": _clean_cell(row.get("status", ""))[:128],
+            "valid_until": vu,
+            "representatives": _clean_cell(row.get("representatives", ""))[:1200],
+            "is_active": compute_trois_is_active(vu),
+        }
+
+    owns_session = db is None
+    work_db = db or SessionLocal()
+    try:
+        if replace_snapshot:
+            if not candidates:
+                raise RuntimeError(
+                    "TROIS full snapshot contains zero valid rows; live table preserved"
                 )
-                seen_in_batch.add(reg)
+            existing_count = work_db.query(TroisRegistry).count()
+            validate_full_snapshot(
+                source_id="fts_trois_registry",
+                candidate_count=len(candidates),
+                existing_count=existing_count,
+                minimum_rows=minimum_rows,
+            )
+            work_db.query(TroisRegistry).delete(synchronize_session=False)
+
+        for reg, values in candidates.items():
+            existing = None
+            if not replace_snapshot:
+                existing = (
+                    work_db.query(TroisRegistry)
+                    .filter(TroisRegistry.reg_number == reg)
+                    .one_or_none()
+                )
+            if existing:
+                for field, value in values.items():
+                    if field != "reg_number":
+                        setattr(existing, field, value)
+                updated += 1
+            else:
+                work_db.add(TroisRegistry(**values))
                 created += 1
-            if (created + updated) % 2000 == 0:
-                db.commit()
-        db.commit()
+            if (
+                owns_session
+                and commit
+                and not replace_snapshot
+                and (created + updated) % 2000 == 0
+            ):
+                work_db.commit()
+        if commit:
+            work_db.commit()
+    except Exception:
+        if owns_session or commit:
+            work_db.rollback()
+        raise
+    finally:
+        if owns_session:
+            work_db.close()
     return {"created": created, "updated": updated, "skipped": skipped}
 
 

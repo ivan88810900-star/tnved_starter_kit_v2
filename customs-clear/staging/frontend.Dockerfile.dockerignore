@@ -1,0 +1,16 @@
+**
+!staging/
+!staging/frontend.Dockerfile
+!staging/nginx.conf
+!frontend/
+!frontend/package.json
+!frontend/package-lock.json
+!frontend/index.html
+!frontend/postcss.config.cjs
+!frontend/tailwind.config.cjs
+!frontend/tsconfig.json
+!frontend/vite.config.ts
+!frontend/public/
+!frontend/public/**
+!frontend/src/
+!frontend/src/**

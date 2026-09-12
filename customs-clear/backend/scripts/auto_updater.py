@@ -1,6 +1,11 @@
 #!/usr/bin/env python3
 """
-Единый планировщик фоновых краулеров (Law.TKS, нетарифка TKS, IFCG, курсы ЦБ, реестры ФСБ/РЭС, СГР).
+Устаревший планировщик фоновых краулеров (Law.TKS, нетарифка TKS, IFCG,
+курсы ЦБ, реестры ФСБ/РЭС, СГР).
+
+По умолчанию запуск заблокирован. Для разового совместимого запуска оператор
+должен явно выставить ``CUSTOMSCLEAR_ALLOW_LEGACY_AUTOMATION=1``. Production
+должен использовать ``app.services.scheduler``.
 
 Запуск из каталога ``customs-clear/backend``::
 
@@ -33,6 +38,15 @@ LOG_FILE = LOG_DIR / "updater.log"
 # Главы ТН ВЭД 01–97 для ежемесячной докачки IFCG, кроме 77 (резервная пустая глава).
 IFCG_MONTHLY_CHAPTERS = [f"{i:02d}" for i in range(1, 98) if i != 77]
 IFCG_MAX_CODES_PER_CHAPTER = 500
+
+
+def _legacy_automation_enabled() -> bool:
+    return os.environ.get("CUSTOMSCLEAR_ALLOW_LEGACY_AUTOMATION", "0").strip().lower() in {
+        "1",
+        "true",
+        "yes",
+        "on",
+    }
 
 
 def _child_env() -> dict[str, str]:
@@ -283,6 +297,14 @@ def main() -> int:
         help="С --run-once ifcg-one: одна глава для проверки",
     )
     args = ap.parse_args()
+
+    if not _legacy_automation_enabled():
+        LOG.error(
+            "Legacy automation is disabled. Use app.services.scheduler; "
+            "set CUSTOMSCLEAR_ALLOW_LEGACY_AUTOMATION=1 only for an explicit "
+            "operator-approved compatibility run."
+        )
+        return 2
 
     if args.run_once == "law":
         return run_subprocess("sync_law_full.py", [], job_id="law_once")

@@ -215,6 +215,20 @@ _PDO_2204_SLICE = (
     "2204217700",
     "2204217800",
 )
+_PDO_2204_PRE_OTHER_SLICE = _PDO_2204_SLICE[:17]
+_PDO_2204_OTHER_TITLE = "прочие"
+_PDO_2204_OTHER_SLICE = _PDO_2204_SLICE[17:]
+_BULK_2204_PARENT_CODE = "2204220000"
+_BULK_2204_OTHER_TITLE = "прочие"
+_BULK_2204_OTHER_SLICE = (
+    "2204224200",
+    "2204224300",
+    "2204224400",
+    "2204224600",
+    "2204224700",
+    "2204224800",
+    "2204225800",
+)
 
 
 def _normalise_title(raw: str) -> str:
@@ -555,11 +569,31 @@ def _hierarchy_checks(
         ]
         pdo = pdo_candidates[0] if len(pdo_candidates) == 1 else None
         pdo_codes = subtree_codes(pdo) if pdo is not None else ()
+        pdo_children = list(pdo.get("children") or []) if pdo else []
+        pdo_direct_codes = tuple(
+            str(node["code"])
+            for node in pdo_children
+            if node.get("code")
+        )
         pdo_leaf_roles = bool(pdo) and all(
             node.get("role") == "declarable_code"
             for node in all_nodes
             if node.get("code") in set(_PDO_2204_SLICE)
         )
+        pdo_other_candidates = [
+            node
+            for node in pdo_children
+            if node.get("role") == "semantic_choice"
+            and node.get("kind") == "classification_subgroup"
+            and _normalise_title(node.get("title") or "")
+            == _normalise_title(_PDO_2204_OTHER_TITLE)
+        ]
+        pdo_other = (
+            pdo_other_candidates[0]
+            if len(pdo_other_candidates) == 1
+            else None
+        )
+        pdo_other_codes = subtree_codes(pdo_other) if pdo_other else ()
         pgi_candidates = [
             node
             for node in parent_children
@@ -576,6 +610,39 @@ def _hierarchy_checks(
             and "2204217900" in pgi_codes
             and not set(_PDO_2204_SLICE).intersection(pgi_codes)
         )
+        bulk_parent_candidates = [
+            node
+            for node in all_nodes
+            if node.get("code") == _BULK_2204_PARENT_CODE
+        ]
+        bulk_parent = (
+            bulk_parent_candidates[0]
+            if len(bulk_parent_candidates) == 1
+            else None
+        )
+        bulk_children = (
+            list(bulk_parent.get("children") or []) if bulk_parent else []
+        )
+        bulk_other_candidates = [
+            node
+            for node in bulk_children
+            if node.get("role") == "semantic_choice"
+            and node.get("kind") == "classification_group"
+            and node.get("code") is None
+            and _normalise_title(node.get("title") or "")
+            == _normalise_title(_BULK_2204_OTHER_TITLE)
+        ]
+        bulk_other = (
+            bulk_other_candidates[0]
+            if len(bulk_other_candidates) == 1
+            else None
+        )
+        bulk_other_codes = subtree_codes(bulk_other) if bulk_other else ()
+        bulk_leaf_roles = bool(bulk_other) and all(
+            node.get("role") == "declarable_code"
+            for node in all_nodes
+            if node.get("code") in set(_BULK_2204_OTHER_SLICE)
+        )
         return {
             "pdo_official_group_present": pdo is not None,
             "pdo_group_is_codeless": bool(pdo) and pdo.get("code") is None,
@@ -586,13 +653,51 @@ def _hierarchy_checks(
             "pdo_parent_step_14_direct_codes": (
                 _unsplit_code_count(parent) == 14 if parent is not None else False
             ),
-            "pdo_step_33_choices": (
-                len(pdo.get("children") or []) == 33 if pdo is not None else False
+            "pdo_step_18_choices": (
+                len(pdo_children) == 18 if pdo is not None else False
             ),
-            "pdo_step_33_direct_codes": (
-                _unsplit_code_count(pdo) == 33 if pdo is not None else False
+            "pdo_step_17_direct_codes": (
+                _unsplit_code_count(pdo) == 17 if pdo is not None else False
+            ),
+            "pdo_direct_pre_other_slice_exact": (
+                pdo_direct_codes == _PDO_2204_PRE_OTHER_SLICE
+            ),
+            "pdo_other_subgroup_present": pdo_other is not None,
+            "pdo_other_exact_16_leaf_slice": (
+                pdo_other_codes == _PDO_2204_OTHER_SLICE
+            ),
+            "pdo_other_step_16_choices": (
+                len(pdo_other.get("children") or []) == 16
+                if pdo_other is not None
+                else False
+            ),
+            "pdo_other_step_16_direct_codes": (
+                _unsplit_code_count(pdo_other) == 16
+                if pdo_other is not None
+                else False
             ),
             "pgi_boundary_after_pdo_slice": pgi_boundary,
+            "bulk_220422_other_group_present": bulk_other is not None,
+            "bulk_220422_other_exact_7_leaf_slice": (
+                bulk_other_codes == _BULK_2204_OTHER_SLICE
+                and bulk_leaf_roles
+            ),
+            "bulk_220422_parent_step_27_choices": len(bulk_children) == 27,
+            "bulk_220422_parent_step_25_direct_codes": (
+                _unsplit_code_count(bulk_parent) == 25
+                if bulk_parent is not None
+                else False
+            ),
+            "bulk_220422_other_step_7_choices": (
+                len(bulk_other.get("children") or []) == 7
+                if bulk_other is not None
+                else False
+            ),
+            "bulk_220422_other_step_7_direct_codes": (
+                _unsplit_code_count(bulk_other) == 7
+                if bulk_other is not None
+                else False
+            ),
         }
     if heading == "8517":
         accepted_titles: set[str] = set()

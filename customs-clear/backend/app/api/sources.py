@@ -5,12 +5,23 @@ from typing import Optional
 
 from fastapi import APIRouter, File, Header, HTTPException, Query, UploadFile
 from fastapi.responses import FileResponse, JSONResponse
+from pydantic import BaseModel, Field
 
+from ..db import is_read_only_mode
 from ..services.normative_store import get_integrated_data_stats, get_normative_data_hints, list_source_status, list_sync_log
 from ..services.regulatory_source_completeness import (
     list_registry_snapshot,
     run_regulatory_source_completeness_report,
 )
+from ..services.regulatory_source_updates import (
+    build_update_plan,
+    list_regulatory_source_reviews,
+    load_last_update_report,
+    regulatory_review_queue_summary,
+    resolve_regulatory_source_review,
+    run_regulatory_update_cycle,
+)
+from ..services.scheduler import is_scheduler_running, regulatory_jobs_status
 from ..services.official_payment_coverage_audit import run_official_payment_coverage_audit
 from ..services.payment_data_coverage import run_payment_data_coverage_report
 from ..services.payment_data_normalization import run_payment_data_normalization_report
@@ -48,6 +59,13 @@ _DATA_DIR = Path(__file__).resolve().parent.parent.parent / "data"
 router = APIRouter()
 
 
+class RegulatoryReviewResolutionIn(BaseModel):
+    asserted_by: str = Field(min_length=1, max_length=128)
+    resolution_ref: str = Field(min_length=1, max_length=2048)
+    evidence_sha256: str = Field(pattern="^[0-9a-f]{64}$")
+    evidence_generation: int = Field(ge=1)
+
+
 @router.get("/status")
 async def sources_status() -> JSONResponse:
     return JSONResponse(
@@ -70,6 +88,113 @@ async def sources_registry() -> JSONResponse:
 async def sources_completeness() -> JSONResponse:
     """Gap-отчёт полноты нормативных источников: missing/stale/partial/parser_failed."""
     return JSONResponse(run_regulatory_source_completeness_report())
+
+
+@router.get("/updates/plan")
+async def sources_updates_plan() -> JSONResponse:
+    """Lifecycle-policy каждого источника: auto, validation, review или disabled."""
+    return JSONResponse(build_update_plan())
+
+
+@router.get("/updates/status")
+async def sources_updates_status() -> JSONResponse:
+    """Последний persisted-отчёт и следующее расписание обновлений."""
+    last_run = load_last_update_report()
+    review_queue = regulatory_review_queue_summary()
+    effective_status = (
+        "review_required"
+        if review_queue["notification_required"]
+        else (
+            "ok"
+            if last_run and str(last_run.get("status") or "") == "review_required"
+            else (str(last_run.get("status") or "unknown") if last_run else "never_run")
+        )
+    )
+    return JSONResponse(
+        {
+            "status": effective_status,
+            "read_only": is_read_only_mode(),
+            "scheduler": {
+                "running": is_scheduler_running(),
+                "jobs": regulatory_jobs_status(),
+            },
+            "last_run": last_run,
+            "review_queue": review_queue,
+        }
+    )
+
+
+@router.get("/updates/reviews")
+async def sources_updates_reviews(
+    status: str = Query(
+        "pending",
+        pattern="^(pending|resolved|superseded|all)$",
+    ),
+    limit: int = Query(200, ge=1, le=1000),
+    x_admin_token: str | None = Header(None, alias="X-Admin-Token"),
+) -> JSONResponse:
+    """Durable review items; pending rows are the machine-readable alert contract."""
+    require_admin_token(x_admin_token)
+    summary = regulatory_review_queue_summary()
+    rows = list_regulatory_source_reviews(status=status, limit=limit)  # type: ignore[arg-type]
+    return JSONResponse(
+        {
+            "status": summary["status"],
+            "notification_required": summary["notification_required"],
+            "review_queue": {key: value for key, value in summary.items() if key != "items"},
+            "items": rows,
+        }
+    )
+
+
+@router.post("/updates/reviews/{review_id}/resolve")
+async def sources_updates_review_resolve(
+    review_id: int,
+    payload: RegulatoryReviewResolutionIn,
+    x_admin_token: str | None = Header(None, alias="X-Admin-Token"),
+) -> JSONResponse:
+    """Resolve a reviewed item with named reviewer and durable evidence reference."""
+    authenticated_actor = require_admin_token(x_admin_token)
+    if is_read_only_mode():
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "error_code": "read_only_mode",
+                "message": "Изменение очереди review запрещено в CUSTOMSCLEAR_READ_ONLY режиме.",
+            },
+        )
+    try:
+        row = resolve_regulatory_source_review(
+            review_id,
+            authenticated_actor=authenticated_actor,
+            asserted_by=payload.asserted_by,
+            resolution_ref=payload.resolution_ref,
+            evidence_sha256=payload.evidence_sha256,
+            evidence_generation=payload.evidence_generation,
+        )
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    return JSONResponse({"status": "resolved", "review": row})
+
+
+@router.post("/updates/run")
+async def sources_updates_run(
+    cadence: str = Query("daily", pattern="^(daily|weekly|monthly|all)$"),
+    x_admin_token: str | None = Header(None, alias="X-Admin-Token"),
+) -> JSONResponse:
+    """Ручной guarded-запуск тех же безопасных structured-sync, что и scheduler."""
+    require_admin_token(x_admin_token)
+    if is_read_only_mode():
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "error_code": "read_only_mode",
+                "message": "Обновление источников запрещено в CUSTOMSCLEAR_READ_ONLY режиме.",
+            },
+        )
+    return JSONResponse(await run_regulatory_update_cycle(cadence, apply_safe=True))  # type: ignore[arg-type]
 
 
 @router.get("/payment-coverage")
@@ -341,13 +466,12 @@ async def sources_sync_trois(x_admin_token: str | None = Header(None, alias="X-A
 
 @router.post("/sync/ett")
 async def sources_sync_ett(x_admin_token: str | None = Header(None, alias="X-Admin-Token")) -> JSONResponse:
-    """Синхронизация ЕТТ из PDF (прямой парсинг сайта ЕЭК)."""
+    """Quarantined legacy ETT sync; no downloads, rate writes or cache revision."""
     require_admin_token(x_admin_token)
     from ..services.ett_pdf_parser import sync_ett_from_pdfs
     import os
     max_groups = int(os.getenv("ETT_PDF_MAX_GROUPS", "0") or "0")
     data = await sync_ett_from_pdfs(max_groups=max_groups)
-    clear_preview_cache()
     return JSONResponse(data)
 
 
@@ -448,4 +572,3 @@ async def sources_template_bundle() -> FileResponse:
         media_type="application/json; charset=utf-8",
         filename="normative_bundle.example.json",
     )
-

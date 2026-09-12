@@ -3,8 +3,10 @@ import { api } from '../api/client';
 import { getUserFacingApiError } from '../api/error';
 import { PackingListUploader } from '../components/PackingListUploader';
 import { PageHeader } from '../components/PageHeader';
+import { hasProvisionalPayments, paymentAmountNote, type PaymentReviewState } from '../utils/paymentReview';
 
-type InvoiceLine = {
+type InvoiceLine = PaymentReviewState & {
+  tariff_preference_warning?: string | null;
   description: string;
   hs_code: string;
   customs_value: number;
@@ -15,9 +17,10 @@ type InvoiceLine = {
   total_payable: number;
 };
 
-type BatchResult = {
+type BatchResult = PaymentReviewState & {
+  tariff_preference_warning?: string | null;
   lines: InvoiceLine[];
-  totals: Record<string, number>;
+  totals: PaymentReviewState & { total_payable: number; tariff_preference_warning?: string | null };
 };
 
 export function InvoicePage() {
@@ -25,6 +28,8 @@ export function InvoicePage() {
   const [error, setError] = useState('');
   const [result, setResult] = useState<BatchResult | null>(null);
   const [dragOver, setDragOver] = useState(false);
+  const totalNeedsReview = result != null && (paymentAmountNote(result.totals) != null || paymentAmountNote(result) != null || result.lines.some((line) => paymentAmountNote(line) != null));
+  const totalLabel = totalNeedsReview ? 'Предварительная сумма' : 'ИТОГО';
 
   const onFile = useCallback(async (file: File) => {
     setError('');
@@ -62,7 +67,7 @@ export function InvoicePage() {
 
   const exportExcel = () => {
     if (!result?.lines?.length) return;
-    const header = ['Описание', 'HS', 'Стоимость', 'Валюта', 'Пошлина', 'НДС', 'РОП', 'ИТОГО'];
+    const header = ['Описание', 'HS', 'Стоимость', 'Валюта', 'Пошлина', 'НДС', 'РОП', 'Сумма', 'Статус платежей', 'Предварительная сумма', 'Примечание', 'Причина', 'Причины проверки (коды)'];
     const rows = result.lines.map((ln) => [
       ln.description,
       ln.hs_code || '',
@@ -72,9 +77,24 @@ export function InvoicePage() {
       String(ln.vat),
       String(ln.rop?.total_rop_rub || 0),
       String(ln.total_payable),
+      ln.payment_status ?? ln.payments_status ?? ln.status ?? '',
+      hasProvisionalPayments(ln) ? 'true' : ln.amounts_provisional == null ? '' : String(ln.amounts_provisional),
+      paymentAmountNote(ln) ?? '',
+      ln.payment_review_reason ?? ln.tariff_preference_warning ?? ln.tariff_preference?.reason ?? '',
+      (ln.payment_review_reasons ?? []).join(', '),
     ]);
-    rows.push(['ИТОГО', '', '', '', '', '', '', String(result.totals.total_payable)]);
-    const csv = [header, ...rows].map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(';')).join('\n');
+    rows.push([totalLabel, '', '', '', '', '', '', String(result.totals.total_payable),
+      result.payment_status ?? result.payments_status ?? result.status ?? '',
+      result.amounts_provisional == null ? '' : String(result.amounts_provisional),
+      totalNeedsReview ? 'Есть предварительные суммы или суммы без сохранённого статуса проверки' : '',
+      result.payment_review_reason ?? result.tariff_preference_warning ?? result.totals.payment_review_reason ?? result.totals.tariff_preference_warning ?? '',
+      (result.payment_review_reasons ?? result.totals.payment_review_reasons ?? []).join(', '),
+    ]);
+    const escapeCell = (value: string) => {
+      const safe = /^[=+@\-\t\r]/.test(value) ? "'" + value : value;
+      return '"' + safe.replaceAll('"', '""') + '"';
+    };
+    const csv = [header, ...rows].map((row) => row.map(escapeCell).join(';')).join('\n');
     const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -129,6 +149,7 @@ export function InvoicePage() {
             <button type="button" className="cc-btn-secondary text-sm" onClick={exportExcel}>
               Экспорт в Excel (CSV)
             </button>
+            {totalNeedsReview ? <p role="status" className="text-sm text-amber-800">В расчёте есть предварительные суммы или суммы без сохранённого статуса проверки. Итог к уплате не подтверждён.</p> : null}
             <div className="overflow-x-auto rounded-lg border border-cargo-border bg-cargo-surface">
               <table className="min-w-[720px] w-full text-left text-sm">
                 <thead className="bg-cargo-cloud text-[11px] uppercase tracking-[0.06em] text-cargo-light">
@@ -139,7 +160,8 @@ export function InvoicePage() {
                     <th className="px-3 py-2">Пошлина</th>
                     <th className="px-3 py-2">НДС</th>
                     <th className="px-3 py-2">РОП</th>
-                    <th className="px-3 py-2">ИТОГО</th>
+                    <th className="px-3 py-2">Сумма</th>
+                    <th className="px-3 py-2">Статус платежей</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -152,15 +174,20 @@ export function InvoicePage() {
                       <td className="px-3 py-2">{Number(ln.vat).toLocaleString('ru-RU')}</td>
                       <td className="px-3 py-2">{Number(ln.rop?.total_rop_rub || 0).toLocaleString('ru-RU')}</td>
                       <td className="px-3 py-2 font-medium">{Number(ln.total_payable).toLocaleString('ru-RU')}</td>
+                      <td className="px-3 py-2">
+                        <span className={paymentAmountNote(ln) ? 'text-amber-800' : ''}>{paymentAmountNote(ln) ?? 'Расчёт выполнен'}</span>
+                        {(ln.payment_review_reason ?? ln.tariff_preference_warning ?? ln.tariff_preference?.reason) ? <span className="block text-amber-800">{ln.payment_review_reason ?? ln.tariff_preference_warning ?? ln.tariff_preference?.reason}</span> : null}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
                 <tfoot className="bg-cargo-deep font-medium text-white">
                   <tr>
                     <td className="px-3 py-2" colSpan={6}>
-                      ИТОГО
+                      {totalLabel}
                     </td>
                     <td className="px-3 py-2">{Number(result.totals.total_payable).toLocaleString('ru-RU')} ₽</td>
+                    <td className="px-3 py-2">{result.payment_review_reason ?? result.tariff_preference_warning ?? result.totals.payment_review_reason ?? result.totals.tariff_preference_warning}</td>
                   </tr>
                 </tfoot>
               </table>

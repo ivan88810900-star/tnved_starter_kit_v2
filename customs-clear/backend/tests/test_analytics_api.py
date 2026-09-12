@@ -1,6 +1,8 @@
 """Сводная аналитика GET /api/analytics/overview."""
 import importlib.util
+import os
 import unittest
+from unittest.mock import patch
 
 try:
     from fastapi.testclient import TestClient
@@ -20,7 +22,11 @@ class AnalyticsOverviewTests(unittest.TestCase):
         cls.client = TestClient(app)
 
     def test_overview_ok(self):
-        r = self.client.get("/api/analytics/overview")
+        with patch.dict(os.environ, {"ADMIN_API_TOKEN": "test-analytics-admin-token"}):
+            r = self.client.get(
+                "/api/analytics/overview",
+                headers={"X-Admin-Token": "test-analytics-admin-token"},
+            )
         self.assertEqual(r.status_code, 200, r.text)
         body = r.json()
         self.assertEqual(body.get("status"), "OK")

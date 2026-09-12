@@ -1,6 +1,14 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+case "${CUSTOMSCLEAR_ALLOW_LEGACY_AUTOMATION:-0}" in
+  1|true|TRUE|yes|YES|on|ON) ;;
+  *)
+    echo "[FATAL] Legacy auto_update.sh is disabled. Use the regulatory source scheduler; set CUSTOMSCLEAR_ALLOW_LEGACY_AUTOMATION=1 only for an explicit operator-approved compatibility run." >&2
+    exit 2
+    ;;
+esac
+
 # Базовый PATH для cron (macOS часто запускает cron с урезанным окружением).
 export PATH="/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:${PATH:-}"
 

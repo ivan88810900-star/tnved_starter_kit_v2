@@ -17,7 +17,12 @@ SOURCE_LABELS: dict[str, str] = {
     "sensitive_override": "Чувствительная группа товара",
     "legacy_non_tariff_rules": "Историческое правило (подсказка)",
     "legacy_non_tariff_measures": "Legacy меры (справочно)",
-    "official_sgr_registry": "Решение ЕЭК №299",
+    "official_sgr_registry": "Решение КТС №299",
+    "official_ntm_contours": "Официальные перечни ЕЭК / РФ",
+    "official_export_control": "Экспортный контроль РФ (ФСТЭК)",
+    "official_ntm_exact_devices_shadow": "Точные правила РЭС/ВЧУ и криптографии",
+    "official_ntm_exact_health": "Точные санитарные, ветеринарные и фитосанитарные правила",
+    "official_ntm_exact_trade": "Точные торговые и экспортные ограничения",
     "domain_default": "Доменная форма подтверждения (ЕЭК №620)",
     "non_tariff_measures": "Нетарифные меры (runtime)",
     "rules_db": "Правила нетарифного контроля",
@@ -91,7 +96,12 @@ def _required_document_from_broker(row: dict[str, Any]) -> dict[str, Any]:
 def _enrich_advisory_item(item: dict[str, Any]) -> dict[str, Any]:
     enriched = dict(item)
     src = (enriched.get("source") or "").strip()
-    if not enriched.get("source_label"):
+    # №299 принято Комиссией Таможенного союза. Не пропускаем в UI старую
+    # ошибочную атрибуцию «ЕЭК», даже если она сохранилась в импортированной
+    # advisory-строке.
+    if src == "official_sgr_registry":
+        enriched["source_label"] = source_label_for(src)
+    elif not enriched.get("source_label"):
         enriched["source_label"] = source_label_for(src)
     enriched.setdefault("used_for_missing_check", False)
     return enriched
@@ -154,6 +164,14 @@ def build_normative_requirements_block(non_tariff_result: dict[str, Any]) -> dic
         "required_documents": required_documents,
         "missing_documents": missing_documents,
         "advisory_requirements": advisory_requirements,
+        "measure_families": list(non_tariff_result.get("measure_families") or []),
+        "measure_families_disclaimer": non_tariff_result.get("measure_families_disclaimer"),
+        "official_ntm_applicability": non_tariff_result.get("official_ntm_applicability"),
+        "official_ntm_resolved_exclusions": list(
+            non_tariff_result.get("official_ntm_resolved_exclusions") or []
+        ),
+        "official_ntm_catch_all": non_tariff_result.get("official_ntm_catch_all"),
+        "curated_enforcement_audit": non_tariff_result.get("curated_enforcement_audit"),
         "sources_summary": sources_summary,
         "empty_message": empty_message,
         "tr_ts": list(non_tariff_result.get("tr_ts") or []),

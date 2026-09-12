@@ -1,0 +1,15 @@
+# CI-only runtime override. The production-like staging definition keeps its
+# mandatory full-catalog audit command; this override exists solely to exercise
+# container startup against a tiny, read-only SQLite fixture on every PR.
+services:
+  backend:
+    command:
+      - python
+      - -m
+      - uvicorn
+      - app.main:app
+      - --host
+      - 0.0.0.0
+      - --port
+      - "8000"
+      - --no-access-log

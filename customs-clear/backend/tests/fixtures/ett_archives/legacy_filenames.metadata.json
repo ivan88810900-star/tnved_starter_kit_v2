@@ -1,0 +1,62 @@
+{
+  "fixture_kind": "observed_filename_metadata_with_synthetic_document_payloads",
+  "capture_run_id": "34249284880",
+  "capture_report_sha256": "9069c511677db2afe8032915ebdd78e0100a0f1a56b9ac5588f987abc85488cf",
+  "filename_identity": "raw bytes and ZIP UTF-8 flag; CP866 display remains unverified",
+  "archives": [
+    {
+      "source_url": "https://docs.eaeunion.org/upload/iblock/30f/1ejbrxx8u338qjf970tal0715afq9li8/err_28042022_66_att.zip",
+      "archive_sha256": "02f44a63a37fff844b63d4e9ab4dc76d9c81c5a94a860aabe89776d7fee4102d",
+      "archive_size_bytes": 507747,
+      "members": [
+        {
+          "raw_filename_hex": "322d322e8fe0a8abaea6a5ada8a520aa208aaeababa5a3a8a82031342e30342e323032322e646f63",
+          "utf8_filename_declared": false,
+          "unverified_cp866_display": "2-2.Приложение к Коллегии 14.04.2022.doc",
+          "original_member_sha256": "91700ef7f994dd0ec59aeaa91efbd036633a6593899fedc12ba223f65c210392",
+          "original_member_size_bytes": 237056,
+          "kind": "ole_doc_candidate"
+        },
+        {
+          "raw_filename_hex": "90a5e8a5ada8ef208aaeababa5a3a8a820fc363620aee220313920a0afe0a5abef203230323220a32e202e646f63",
+          "utf8_filename_declared": false,
+          "unverified_cp866_display": "Решения Коллегии №66 от 19 апреля 2022 г. .doc",
+          "original_member_sha256": "b5a690b99267ea788b11aaf62b18700d70edd5e3704a9dea880972ec27f54304",
+          "original_member_size_bytes": 1275392,
+          "kind": "ole_doc_candidate"
+        }
+      ]
+    },
+    {
+      "source_url": "https://docs.eaeunion.org/upload/iblock/f8b/4n8tf0bp9hkvrg1mwvd3o992yckghgn3/err_28042022_76_att.zip",
+      "archive_sha256": "18ceb819fa6b0564ef893eadff9145c3e87bcd50317f5efdd53982e042f782cb",
+      "archive_size_bytes": 530516,
+      "members": [
+        {
+          "raw_filename_hex": "8fe0a8abaea6a5ada8a520312e646f63",
+          "utf8_filename_declared": false,
+          "unverified_cp866_display": "Приложение 1.doc",
+          "original_member_sha256": "ca1ef46ed593f93366026905f71605739549e89d5e6dbb4d7ab44d00876c7540",
+          "original_member_size_bytes": 176640,
+          "kind": "ole_doc_candidate"
+        },
+        {
+          "raw_filename_hex": "8fe0a8abaea6a5ada8a520322e646f6378",
+          "utf8_filename_declared": false,
+          "unverified_cp866_display": "Приложение 2.docx",
+          "original_member_sha256": "2be75d8f4d01d9ea41be1b44cc7fc08dd47de5452721bad47913be6967456f49",
+          "original_member_size_bytes": 29415,
+          "kind": "ooxml_docx_candidate"
+        },
+        {
+          "raw_filename_hex": "90a5e8a5ada8a52091aea2a5e2a020fc20373620aee220313520a0afe0a5abef203230323220a32e646f63",
+          "utf8_filename_declared": false,
+          "unverified_cp866_display": "Решение Совета № 76 от 15 апреля 2022 г.doc",
+          "original_member_sha256": "423a860341ec93bf29eba485be7661137bd4b347a45f537dabe00bfb124aba86",
+          "original_member_size_bytes": 1282560,
+          "kind": "ole_doc_candidate"
+        }
+      ]
+    }
+  ]
+}

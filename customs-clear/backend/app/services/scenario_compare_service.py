@@ -71,18 +71,33 @@ def compare_scenarios_extended(payload: dict[str, Any]) -> dict[str, Any]:
                     "total": round(total, 2),
                     "preference": res.get("tariff_preference"),
                     "payments_status": res.get("status"),
+                    "amounts_provisional": bool(res.get("amounts_provisional")),
+                    "payment_review_reason": res.get("payment_review_reason"),
+                    "payment_review_reasons": res.get("payment_review_reasons") or [],
                 }
             )
 
     if not out:
         raise ValueError("Нет валидных сценариев")
 
-    best = min(out, key=lambda x: float(x["total"]))
-    worst = max(out, key=lambda x: float(x["total"]))
-    savings = round(float(worst["total"]) - float(best["total"]), 2)
+    # Arithmetic remains visible as an estimate, but a pending or blocked
+    # scenario cannot establish the cheapest option or a savings claim.
+    comparison_complete = all(
+        row["payments_status"] == "OK" and not row["amounts_provisional"]
+        for row in out
+    )
+    best_name = None
+    savings = None
+    if comparison_complete:
+        best = min(out, key=lambda x: float(x["total"]))
+        worst = max(out, key=lambda x: float(x["total"]))
+        best_name = best["name"]
+        savings = round(float(worst["total"]) - float(best["total"]), 2)
 
     return {
-        "status": "OK",
+        "status": "OK" if comparison_complete else "REVIEW_REQUIRED",
+        "amounts_provisional": any(row["amounts_provisional"] for row in out),
+        "comparison_complete": comparison_complete,
         "base": {
             "hs_code": hs_base,
             "customs_value": customs_value,
@@ -92,6 +107,6 @@ def compare_scenarios_extended(payload: dict[str, Any]) -> dict[str, Any]:
             "weight_net_kg": net,
         },
         "scenarios": out,
-        "best_scenario": best["name"],
+        "best_scenario": best_name,
         "savings_vs_worst": savings,
     }

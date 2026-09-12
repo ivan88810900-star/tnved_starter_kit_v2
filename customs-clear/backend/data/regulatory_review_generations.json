@@ -1,0 +1,50 @@
+{
+  "contract_version": 1,
+  "sources": {
+    "country_risks_geopolitics": {
+      "generation": 1,
+      "artifacts": [
+        {
+          "path": "data/fixtures/sanctions_risk.sample.json",
+          "sha256": "4d0fd9e973efff402da1bb7e278faa4ed2591526dbee0840b032850207d32637"
+        }
+      ]
+    },
+    "geo_special_duties_embargo": {
+      "generation": 1,
+      "artifacts": [
+        {
+          "path": "data/fixtures/sanctions_risk.sample.json",
+          "sha256": "4d0fd9e973efff402da1bb7e278faa4ed2591526dbee0840b032850207d32637"
+        }
+      ]
+    },
+    "legacy_ntm_tr_catalog": {
+      "generation": 1,
+      "artifacts": [
+        {
+          "path": "app/services/tr_ts_catalog.py",
+          "sha256": "aec903bc46162f6568bdf01658f78ecc9791b14480af9f8ef88abb6e526d755d"
+        }
+      ]
+    },
+    "official_sgr_ntm_v2_curated": {
+      "generation": 1,
+      "artifacts": [
+        {
+          "path": "data/official_sgr_rules.seed.json",
+          "sha256": "13990e051c85f994d52b8b27ece5d783f11dc5121beebb96e6a0b17f17f167c8"
+        }
+      ]
+    },
+    "sanction_import_risks": {
+      "generation": 1,
+      "artifacts": [
+        {
+          "path": "data/fixtures/sanctions_risk.sample.json",
+          "sha256": "4d0fd9e973efff402da1bb7e278faa4ed2591526dbee0840b032850207d32637"
+        }
+      ]
+    }
+  }
+}

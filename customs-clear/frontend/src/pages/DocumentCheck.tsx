@@ -4,6 +4,7 @@ import { useDropzone } from 'react-dropzone';
 import { CloudUpload, FileText, Files } from 'lucide-react';
 import { api } from '../api/client';
 import { getUserFacingApiError, userFacingMessage } from '../api/error';
+import { hasProvisionalPayments, paymentAmountNote, type PaymentReviewState } from '../utils/paymentReview';
 
 const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
 
@@ -89,7 +90,10 @@ type DeclarationDraft = {
 
 type CopilotBundleRow = {
   effective_hs_code?: string;
-  payment?: { breakdown?: { total_payable?: number } };
+  payment?: PaymentReviewState & {
+    breakdown?: { total_payable?: number };
+    tariff_preference_warning?: string | null;
+  };
   non_tariff?: { status?: string };
 };
 
@@ -139,6 +143,12 @@ function buildVedExportPayload(result: Result): object {
     effective_hs_code: b.effective_hs_code,
     non_tariff_status: b.non_tariff?.status,
     total_payable: b.payment?.breakdown?.total_payable,
+    payment_status: b.payment?.status ?? b.payment?.payment_status ?? b.payment?.payments_status ?? null,
+    amounts_provisional: hasProvisionalPayments(b.payment) ? true : b.payment?.amounts_provisional ?? null,
+    payment_review_reason: b.payment?.payment_review_reason ?? null,
+    payment_review_reasons: b.payment?.payment_review_reasons ?? [],
+    tariff_preference_warning: b.payment?.tariff_preference_warning ?? b.payment?.tariff_preference?.reason ?? null,
+    tariff_preference: b.payment?.tariff_preference ?? null,
   }));
   return {
     exported_at: new Date().toISOString(),
@@ -256,7 +266,7 @@ export const DocumentCheck: React.FC = () => {
 
   const [calcDocId, setCalcDocId] = useState(() => localStorage.getItem('cc_last_ingested_id') || '');
   const [calcRows, setCalcRows] = useState<
-    Array<{ id: string; kind?: string; total_payable?: number | null; created_at?: string | null }>
+    Array<PaymentReviewState & { id: string; kind?: string; total_payable?: number | null; created_at?: string | null; tariff_preference_warning?: string | null }>
   >([]);
   const [calcLoading, setCalcLoading] = useState(false);
   const loadCalculationsForDoc = async () => {
@@ -615,6 +625,8 @@ export const DocumentCheck: React.FC = () => {
                   <span className="text-slate-500">{r.kind || '—'}</span>
                   <span className="tabular-nums text-slate-400">
                     {r.total_payable != null ? `${r.total_payable.toLocaleString('ru-RU')} ₽` : '—'}
+                    <span className="ml-2 text-amber-700">{paymentAmountNote(r)}</span>
+                    {(r.payment_review_reason ?? r.tariff_preference_warning) ? <span className="block text-amber-700">{r.payment_review_reason ?? r.tariff_preference_warning}</span> : null}
                   </span>
                   <a
                     href={`/api/calculator/history/${encodeURIComponent(r.id)}`}
@@ -950,7 +962,8 @@ export const DocumentCheck: React.FC = () => {
                     <th className="px-2 py-2">Строка</th>
                     <th className="px-2 py-2">ТН ВЭД</th>
                     <th className="px-2 py-2">Нетарифка</th>
-                    <th className="px-2 py-2 text-right">Платежи Σ, ₽</th>
+                    <th className="px-2 py-2 text-right">Сумма платежей, ₽</th>
+                    <th className="px-2 py-2">Статус платежей</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -965,6 +978,10 @@ export const DocumentCheck: React.FC = () => {
                               maximumFractionDigits: 0,
                             })
                           : '—'}
+                      </td>
+                      <td className="px-2 py-1.5">
+                        <span className={paymentAmountNote(b.payment) ? 'text-amber-200' : 'text-slate-300'}>{paymentAmountNote(b.payment) ?? 'Расчёт выполнен'}</span>
+                        {(b.payment?.payment_review_reason ?? b.payment?.tariff_preference_warning ?? b.payment?.tariff_preference?.reason) ? <span className="block text-amber-200">{b.payment?.payment_review_reason ?? b.payment?.tariff_preference_warning ?? b.payment?.tariff_preference?.reason}</span> : null}
                       </td>
                     </tr>
                   ))}

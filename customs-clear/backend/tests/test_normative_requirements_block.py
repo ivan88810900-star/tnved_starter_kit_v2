@@ -19,7 +19,6 @@ from app.services.non_tariff_service import check_position_non_tariff
 from app.services.ntm_v2_legacy_rules_import import import_legacy_non_tariff_rules_to_ntm_v2
 from app.services.ntm_v2_official_sgr_import import (
     OFFICIAL_SGR_SOURCE_KIND,
-    OFFICIAL_SGR_SOURCE_LABEL,
     should_apply_official_sgr_advisory,
 )
 
@@ -188,11 +187,34 @@ def test_official_sgr_advisory_in_block_not_required(
     block = res["normative_block"]
     official = [a for a in block["advisory_requirements"] if a.get("source") == OFFICIAL_SGR_SOURCE_KIND]
     if official:
-        assert official[0]["source_label"] == OFFICIAL_SGR_SOURCE_LABEL
+        assert official[0]["source_label"] == source_label_for(OFFICIAL_SGR_SOURCE_KIND)
         assert official[0]["used_for_missing_check"] is False
         assert "СГР" not in {d["permit_type"] for d in block["required_documents"]}
         assert "СГР" not in {d["permit_type"] for d in block["missing_documents"]}
     assert res["status"] in ("OK", "WARNING", "ERROR")
+
+
+def test_official_sgr_label_corrects_stale_eec_issuer() -> None:
+    block = build_normative_requirements_block(
+        {
+            "status": "OK",
+            "hs_code": "3304990000",
+            "description": "Косметическое средство",
+            "required_permits": [],
+            "missing_permit_types": [],
+            "advisory_requirements": [
+                {
+                    "permit_type": "СГР",
+                    "source": "official_sgr_registry",
+                    "source_label": "Решение ЕЭК №299",
+                    "used_for_missing_check": False,
+                    "reason": "Нужно уточнить назначение товара.",
+                }
+            ],
+        }
+    )
+
+    assert block["advisory_requirements"][0]["source_label"] == "Решение КТС №299"
 
 
 def test_empty_state_message() -> None:
@@ -241,3 +263,136 @@ def test_check_includes_normative_block(
     assert res["missing_permit_types"] == ["ДС"]
     assert block["missing_documents"][0]["permit_type"] == "ДС"
     assert all(a.get("used_for_missing_check") is False for a in block["advisory_requirements"])
+
+
+def _hcb_facts() -> dict[str, object]:
+    return {
+        "direction": "import",
+        "origin_country": "DE",
+        "destination_country": "RU",
+        "cas_numbers": ["118-74-1"],
+        "intended_use": "laboratory reference standard",
+        "technical_parameters_confirmed": True,
+        "product_name_matches_official_row": True,
+        "manufacturer_documents_verified": True,
+        "sealed_container": True,
+        "package_volume_ml": 5,
+    }
+
+
+def test_export_direction_never_reuses_import_only_legacy_broker(
+    memory_sessionmaker: sessionmaker,
+    minimal_ntm_patches: None,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(
+        "app.services.non_tariff_service.get_full_ntm_requirements",
+        lambda _hs, _d="": [{
+            "permit_type": "ДС",
+            "tr_ts": "004/2011",
+            "description": "Import-only legacy row",
+            "legal_ref": "catalog",
+        }],
+    )
+    monkeypatch.setattr(
+        "app.services.non_tariff_service.get_sensitive_override",
+        lambda _hs: "ЛЗ",
+    )
+
+    result = asyncio.run(
+        check_position_non_tariff(
+            hs_code="8471300000",
+            description="ноутбук",
+            country="RU",
+            permits=[],
+            skip_registry_verify=True,
+            official_ntm_advisory_enabled=True,
+            transaction_facts={
+                "direction": "export",
+                "destination_country": "CN",
+            },
+        )
+    )
+
+    assert result["movement_direction"] == "export"
+    assert result["legacy_import_broker_applied"] is False
+    assert result["required_permits"] == []
+    assert result["required_permit_types"] == []
+    assert result["missing_permit_types"] == []
+    assert any("legacy-контур требований ввоза отключён" in note for note in result["notes"])
+
+
+def test_exact_official_row_is_visible_but_not_missing_by_default(
+    memory_sessionmaker: sessionmaker,
+    minimal_ntm_patches: None,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    async def no_enrichment(**_kwargs: object) -> list[dict]:
+        return []
+
+    monkeypatch.setattr(
+        "app.services.non_tariff_service.enrich_measures_by_description",
+        no_enrichment,
+    )
+    result = asyncio.run(
+        check_position_non_tariff(
+            hs_code="2903920000",
+            description="гексахлорбензол HCB, лабораторный стандарт",
+            country="DE",
+            permits=[],
+            skip_registry_verify=True,
+            official_ntm_advisory_enabled=True,
+            official_curated_enforcement_enabled=False,
+            transaction_facts=_hcb_facts(),
+        )
+    )
+    exact = next(
+        row
+        for row in result["advisory_requirements"]
+        if row.get("rule_id") == "D30-2.30-HCB-2903920000"
+    )
+    assert exact["applicability"] == "definite"
+    assert exact["used_for_missing_check"] is False
+    assert "ЛЗ/заключение" not in result["required_permit_types"]
+    assert "ЛЗ/заключение" not in result["missing_permit_types"]
+    assert result["curated_enforcement_audit"]["enabled"] is False
+    assert result["curated_enforcement_audit"]["eligible_rule_ids"] == []
+    assert result["curated_enforcement_audit"]["shadow_candidate_rule_ids"] == [
+        "D30-2.30-HCB-2903920000"
+    ]
+    assert result["normative_block"]["official_ntm_applicability"][
+        "definite_advisory_count"
+    ] == 1
+
+
+def test_explicit_curated_flag_still_rejects_caller_supplied_exact_facts(
+    memory_sessionmaker: sessionmaker,
+    minimal_ntm_patches: None,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    async def no_enrichment(**_kwargs: object) -> list[dict]:
+        return []
+
+    monkeypatch.setattr(
+        "app.services.non_tariff_service.enrich_measures_by_description",
+        no_enrichment,
+    )
+    result = asyncio.run(
+        check_position_non_tariff(
+            hs_code="2903920000",
+            description="гексахлорбензол HCB, лабораторный стандарт",
+            country="DE",
+            permits=[],
+            skip_registry_verify=True,
+            official_ntm_advisory_enabled=True,
+            official_curated_enforcement_enabled=True,
+            transaction_facts=_hcb_facts(),
+        )
+    )
+    assert "ЛЗ/заключение" not in result["required_permit_types"]
+    assert "ЛЗ/заключение" not in result["missing_permit_types"]
+    assert result["curated_enforcement_audit"]["applied_rule_ids"] == []
+    assert result["curated_enforcement_audit"]["broker_changed"] is False
+    assert {
+        row["reason"] for row in result["curated_enforcement_audit"]["rejected"]
+    } == {"source_policy_disallows_enforcement"}

@@ -1,0 +1,50 @@
+{
+  "active_rates_written": false,
+  "capture_run_id": 34255440473,
+  "captured_document_pages": 105,
+  "captured_unique_pdfs": 105,
+  "code_commit": "d80d119d50ab6fb3354dc528914716db064edd15",
+  "durable_legal_retention_attested": false,
+  "effective_dates_verified": false,
+  "failed_operations": 0,
+  "kind": "ett_completed_retained_capture_evidence",
+  "legal_inventory_complete": false,
+  "limits": [
+    "105 captured PDFs cover the supported 104 amendment and one founding-act discovery plan, not all applicable law.",
+    "The remaining index act has a non-strict short title; its observed detail page is preserved separately.",
+    "Archive attachments and scanned body interpretation require separate review.",
+    "Native parser encryption guard changes derived parser identity; historical reports stay unchanged and do not replay under a different parser."
+  ],
+  "new_pdf_downloads": 20,
+  "new_source_pdf_bytes": 14009687,
+  "original_object_count": 302,
+  "original_objects_missing": 0,
+  "persistent_backup": {
+    "base_manifest_sha256": "3470e3c90d2e5794a4eac0b508bcbe882c1f95a35b2e379af41bd86508d6aab4",
+    "base_parts_required": 5,
+    "delta_manifest_sha256": "158df2d0f383b2c5e6be9501fd363cb969e7f4c1f4f57c6445571a68d24b1ce7",
+    "delta_objects": 42,
+    "delta_zip_bytes": 11052534,
+    "delta_zip_sha256": "9140af8e95387dd7bee418c345722ad1a76f1a9f8ee1bd9792319aeff5dfacbd",
+    "kind": "incremental_original_capture"
+  },
+  "planned_document_pages": 105,
+  "primary_act_bodies_verified": false,
+  "production_ready": false,
+  "restored_object_bytes": 178543558,
+  "restored_object_count": 344,
+  "resumed_archive_sha256": "ca098cb9e282b5c812e5c9aeb3d5ba5316f8a87e1dc01232f7f54c187e699f72",
+  "resumed_capture_report_sha256": "9a6f61e26d21a49abaa00d9ef77ae5d75b8d11f64a8d611248068eb4782d2e35",
+  "reused_bytes_timestamps_urls_and_redirects_verified": true,
+  "reused_original_html": 105,
+  "reused_original_pdfs": 85,
+  "review_only_detail_page": {
+    "identity_verified": false,
+    "observed_url": "https://docs.eaeunion.org/documents/399/6485/",
+    "outside_automatic_identity_plan": true,
+    "source_sha256": "41060074475c8fccb3fee9f875d3b0433ebf1b6c6aa341317f63e93a30d111ce"
+  },
+  "schema_version": 1,
+  "source_capture_report_sha256": "12c3c7b1e60f3b495192acb89364008538542fbed1b71fb91758adc734b5a795",
+  "supported_capture_plan_completed": true
+}

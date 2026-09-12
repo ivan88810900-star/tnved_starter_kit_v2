@@ -100,6 +100,13 @@ class PermitsVerifyJobsOwnershipTests(unittest.TestCase):
         self.assertIn(jid_decl, ids)
         self.assertIn(jid_view, ids)
 
+    def test_job_detail_requires_authentication(self) -> None:
+        from fastapi.testclient import TestClient
+        from app.main import app
+
+        response = TestClient(app).get(f"/api/permits/verify/jobs/{uuid4().hex}")
+        self.assertEqual(response.status_code, 401, response.text)
+
     def test_legacy_job_without_owner_hidden_from_non_admin(self) -> None:
         self._cleanup_ids = []
         jid = uuid4().hex

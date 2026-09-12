@@ -1,0 +1,74 @@
+{
+  "schema_version": 1,
+  "kind": "new_reconstruction_of_retained_111c_proposal",
+  "recorded_on": "2026-09-11",
+  "previous_failed_upload_bytes_recovered": false,
+  "reused_completed_work": [
+    "official core source capture",
+    "selected additional act capture",
+    "retained 111C interpretation proposal v2",
+    "existing deterministic manifest and review-package builders"
+  ],
+  "repeated_source_acquisition_or_ocr": false,
+  "manifest_sha256": "55d25bcc4a3436e2629136a9bcbf31ed11d1318c7343e02501612992bb9b1045",
+  "manifest_size_bytes": 108105,
+  "review_package_sha256": "d6c83c3ed61ac85863108cd543ea0de5ce25344357c83b525eff522e44357720",
+  "review_package_size_bytes": 920588,
+  "object_closure_count": 113,
+  "object_closure_size_bytes": 43850110,
+  "saved_archive": {
+    "name": "ett-111c-reconstruction-20260911-v1.zip",
+    "sha256": "639bfb47787e1a4c3e3b2627bc882d117a8f40b6afa9b7b9819fb607c2cca727",
+    "size_bytes": 37073854,
+    "members_verified": 124,
+    "saved_outside_temporary_actions_artifacts": true,
+    "durable_legal_retention_attested": false
+  },
+  "candidate_scope": {
+    "codes": ["7112300000", "7112910000", "7112920000", "7112990000"],
+    "snapshot_coverage_from": "2026-09-08",
+    "snapshot_coverage_to_exclusive": "2026-09-09",
+    "destinations_proposed": ["AM", "BY", "KZ", "KG", "RU"],
+    "proposed_rule_from": "2026-01-25",
+    "proposed_rule_to_exclusive": "2029-01-01",
+    "proposed_dates_and_common_import_scope_legally_approved": false,
+    "baseline_15_percent_and_explicit_zero_note_preserved": true
+  },
+  "technical_verification": {
+    "independent_automated_review_is_human_legal_review": false,
+    "canonical_manifest_reproduced": true,
+    "isolated_review_package_reproduced": true,
+    "source_quote_occurrences_total": 124,
+    "source_quote_occurrences_verified": 124,
+    "native_pdf_occurrences": 108,
+    "typed_html_occurrences": 16,
+    "rate_preview_cases": 143,
+    "tamper_cases_rejected": 4,
+    "original_store_bytes_and_mtime_unchanged": true
+  },
+  "monetary_cli_smoke": {
+    "cases_passed": 12,
+    "on_coverage_date_with_explicit_123_40_rub": "calculated_zero_unapproved_candidate",
+    "missing_customs_value": "needs_clarification_without_amount",
+    "on_2026_09_11": "unavailable_outside_snapshot_coverage",
+    "isolated_candidate_tables": 5,
+    "isolated_database_sha256_before_and_after": "367082a9e9b2b986b2bdd07b4382682a377418a596ea0169853f74dcafa9738e",
+    "candidate_store_unchanged": true,
+    "application_database_created": false,
+    "detailed_report_sha256": "f798aaf9254b2c7d2979805440fda047bf0363ee6077c1f670a347c5fce3b2e1"
+  },
+  "legal_inventory_complete": false,
+  "legal_approval": false,
+  "retention_attested": false,
+  "can_promote": false,
+  "production_ready": false,
+  "active_rates_written": false,
+  "enforcement_enabled": false,
+  "limitations": [
+    "new identities do not restore the hashes of the previously lost package",
+    "quotation verification does not approve rate, code lifetime or effective-date interpretation",
+    "four-code one-day preview does not establish current or full-catalog coverage",
+    "full VAT, excise, trade-defence and origin applicability is not certified",
+    "saved reproducible source closure is not object-lock or retention attestation"
+  ]
+}

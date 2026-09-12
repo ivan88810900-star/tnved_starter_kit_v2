@@ -15,7 +15,7 @@ from app.main import app
 from app.models.core import ExchangeRate, GeoSpecialDuty, HsRate, SourceStatus, SyncLog, TnvedEntry
 from app.models.tnved import Chapter, Commodity, HsDutyRule, Section, SpecialDuty, VatPreference
 from app.services.normative_store import init_db
-from app.services.exchange_rates import CBRF_SOURCE_CODE, FALLBACK, TRACKED, update_exchange_rates_from_cbrf
+from app.services.exchange_rates import CBRRateSnapshot, CBRF_SOURCE_CODE, FALLBACK, TRACKED, update_exchange_rates_from_cbrf
 from app.services.payment_data_coverage import (
     diagnose_duty_rates,
     diagnose_excise,
@@ -393,13 +393,15 @@ class TestExchangeRatesCbrfProvenanceRecording(unittest.IsolatedAsyncioTestCase)
         patch_norm = unittest.mock.patch("app.services.normative_store.SessionLocal", sm)
         patch_fetch = unittest.mock.patch(
             "app.services.exchange_rates.fetch_cbr_rates",
-            unittest.mock.AsyncMock(return_value=("2026-05-21", live_rows)),
+            unittest.mock.AsyncMock(
+                return_value=CBRRateSnapshot(datetime.now(timezone.utc).strftime("%Y-%m-%d"), live_rows, "a" * 64)
+            ),
         )
         patch_ex.start()
         patch_norm.start()
         patch_fetch.start()
         try:
-            result = await update_exchange_rates_from_cbrf()
+            result = await update_exchange_rates_from_cbrf(allow_fallback=True)
             self.assertEqual(result["source"], "CBRF")
 
             patch_cov, patch_norm_diag = _start_coverage_db_patches(sm)
@@ -427,7 +429,7 @@ class TestExchangeRatesCbrfProvenanceRecording(unittest.IsolatedAsyncioTestCase)
         patch_norm.start()
         patch_fetch.start()
         try:
-            result = await update_exchange_rates_from_cbrf()
+            result = await update_exchange_rates_from_cbrf(allow_fallback=True)
             self.assertEqual(result["source"], "fallback")
 
             patch_cov, patch_norm_diag = _start_coverage_db_patches(sm)
@@ -442,7 +444,37 @@ class TestExchangeRatesCbrfProvenanceRecording(unittest.IsolatedAsyncioTestCase)
             patch_norm.stop()
             patch_ex.stop()
 
-    async def test_provenance_write_failure_does_not_clobber_live_cbr_rates(self) -> None:
+    async def test_failed_fetch_preserves_existing_rates_even_when_fallback_allowed(self) -> None:
+        sm = _memory_sessionmaker()
+        with sm() as db:
+            db.add(
+                ExchangeRate(
+                    currency_code="USD",
+                    rate=77.25,
+                    nominal=1.0,
+                    updated_at=datetime.now(timezone.utc).replace(tzinfo=None),
+                )
+            )
+            db.commit()
+
+        with (
+            unittest.mock.patch("app.services.exchange_rates.SessionLocal", sm),
+            unittest.mock.patch("app.services.normative_store.SessionLocal", sm),
+            unittest.mock.patch(
+                "app.services.exchange_rates.fetch_cbr_rates",
+                unittest.mock.AsyncMock(side_effect=RuntimeError("network down")),
+            ),
+        ):
+            result = await update_exchange_rates_from_cbrf(allow_fallback=True)
+
+        self.assertEqual(result["status"], "ERROR")
+        self.assertEqual(result["source"], "preserved_last_good")
+        self.assertEqual(result["updated"], 0)
+        with sm() as db:
+            usd = db.query(ExchangeRate).filter(ExchangeRate.currency_code == "USD").one()
+            self.assertAlmostEqual(float(usd.rate), 77.25)
+
+    async def test_provenance_write_failure_rolls_back_candidate_rates(self) -> None:
         sm = _memory_sessionmaker()
         live_rows = {code: (50.0 + idx * 3.7, 1.0) for idx, code in enumerate(TRACKED)}
 
@@ -450,7 +482,9 @@ class TestExchangeRatesCbrfProvenanceRecording(unittest.IsolatedAsyncioTestCase)
         patch_norm = unittest.mock.patch("app.services.normative_store.SessionLocal", sm)
         patch_fetch = unittest.mock.patch(
             "app.services.exchange_rates.fetch_cbr_rates",
-            unittest.mock.AsyncMock(return_value=("2026-05-21", live_rows)),
+            unittest.mock.AsyncMock(
+                return_value=CBRRateSnapshot(datetime.now(timezone.utc).strftime("%Y-%m-%d"), live_rows, "a" * 64)
+            ),
         )
         patch_record_ok = unittest.mock.patch(
             "app.services.exchange_rates._record_cbrf_sync_success",
@@ -461,19 +495,12 @@ class TestExchangeRatesCbrfProvenanceRecording(unittest.IsolatedAsyncioTestCase)
         patch_fetch.start()
         patch_record_ok.start()
         try:
-            result = await update_exchange_rates_from_cbrf()
-            self.assertEqual(result["source"], "CBRF")
+            result = await update_exchange_rates_from_cbrf(allow_fallback=True)
+            self.assertEqual(result["status"], "ERROR")
             self.assertFalse(result.get("provenance_recorded"))
-            self.assertIn("provenance_error", result)
-
+            self.assertIn("provenance db lock", result["error"])
             with sm() as db:
-                usd = (
-                    db.query(ExchangeRate)
-                    .filter(ExchangeRate.currency_code == "USD")
-                    .one()
-                )
-                self.assertAlmostEqual(float(usd.rate), live_rows["USD"][0], places=4)
-                self.assertNotAlmostEqual(float(usd.rate), FALLBACK["USD"], places=4)
+                self.assertEqual(db.query(ExchangeRate).count(), 0)
 
             patch_cov, patch_norm_diag = _start_coverage_db_patches(sm)
             try:
@@ -495,14 +522,16 @@ class TestExchangeRatesCbrfProvenanceRecording(unittest.IsolatedAsyncioTestCase)
         patch_norm = unittest.mock.patch("app.services.normative_store.SessionLocal", sm)
         patch_fetch = unittest.mock.patch(
             "app.services.exchange_rates.fetch_cbr_rates",
-            unittest.mock.AsyncMock(return_value=("2026-05-21", partial_rows)),
+            unittest.mock.AsyncMock(
+                return_value=CBRRateSnapshot(datetime.now(timezone.utc).strftime("%Y-%m-%d"), partial_rows, "a" * 64)
+            ),
         )
         patch_ex.start()
         patch_norm.start()
         patch_fetch.start()
         try:
-            result = await update_exchange_rates_from_cbrf()
-            self.assertEqual(result["source"], "fallback")
+            result = await update_exchange_rates_from_cbrf(allow_fallback=True)
+            self.assertEqual(result["source"], "incomplete")
             self.assertEqual(result.get("missing_currencies"), ["CNY", "BYN", "KZT"])
 
             with sm() as db:
@@ -520,7 +549,7 @@ class TestExchangeRatesCbrfProvenanceRecording(unittest.IsolatedAsyncioTestCase)
             try:
                 fx = diagnose_exchange_rates()
                 self.assertNotEqual(fx.status, "present")
-                self.assertIn(fx.status, ("partial", "manual_review_required"))
+                self.assertEqual(fx.status, "missing")
                 self.assertNotEqual(fx.authority_level, "official_binding")
             finally:
                 _stop_coverage_db_patches(patch_cov, patch_norm_diag)

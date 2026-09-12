@@ -1,0 +1,499 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      ett_acquire:
+        description: "Acquire official ETT source evidence into a temporary artifact (no rate activation)"
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ett-acquisition:
+    name: Acquire official ETT candidate evidence
+    if: ${{ (github.event_name == 'workflow_dispatch' && inputs.ett_acquire == true) || (github.event_name == 'push' && github.ref == 'refs/heads/ops/ett-source-capture') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 80
+    permissions:
+      contents: read
+    defaults:
+      run:
+        working-directory: customs-clear/backend
+        shell: bash
+    env:
+      CUSTOMSCLEAR_READ_ONLY: "1"
+      SCHEDULER_ENABLED: "0"
+      REGULATORY_SYNC_SCHEDULER_ENABLED: "0"
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Prepare private temporary evidence directory
+        id: prepare
+        run: |
+          umask 077
+          ETT_EVIDENCE_ROOT="$RUNNER_TEMP/ett-acquisition"
+          ETT_STORE_ROOT="$ETT_EVIDENCE_ROOT/store"
+          mkdir -m 700 "$ETT_EVIDENCE_ROOT"
+          mkdir -m 700 "$ETT_STORE_ROOT"
+          printf 'ETT_EVIDENCE_ROOT=%s\nETT_STORE_ROOT=%s\n' "$ETT_EVIDENCE_ROOT" "$ETT_STORE_ROOT" >> "$GITHUB_ENV"
+
+      - name: Set up Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: customs-clear/backend/requirements.txt
+
+      - name: Install backend acquisition and PDF dependencies
+        run: python -m pip install --disable-pip-version-check -r requirements.txt
+
+      - name: Acquire original official source bytes
+        id: acquire
+        run: |
+          umask 077
+          python scripts/ett_candidates.py acquire \
+            --store-root "$ETT_STORE_ROOT" \
+            > "$ETT_EVIDENCE_ROOT/acquisition.json"
+
+      - name: Extract PDF evidence from the exact acquisition receipt
+        id: extract
+        run: |
+          umask 077
+          receipt_sha256="$(python - "$ETT_EVIDENCE_ROOT/acquisition.json" <<'PY'
+          import json
+          import re
+          import sys
+
+          with open(sys.argv[1], encoding="utf-8") as source:
+              report = json.load(source)
+          digest = report.get("receipt_sha256")
+          if not isinstance(digest, str) or re.fullmatch(r"[0-9a-f]{64}", digest) is None:
+              raise SystemExit("Acquisition did not return a valid receipt digest")
+          if report.get("production_ready") is not False:
+              raise SystemExit("Acquisition must remain non-production evidence")
+          print(digest)
+          PY
+          )"
+          python scripts/ett_candidates.py extract "$receipt_sha256" \
+            --store-root "$ETT_STORE_ROOT" \
+            > "$ETT_EVIDENCE_ROOT/extraction.json"
+          printf 'receipt_sha256=%s\n' "$receipt_sha256" >> "$GITHUB_OUTPUT"
+
+      - name: Assemble tariff tables and note evidence for review
+        id: analyze
+        env:
+          ETT_RECEIPT_SHA256: ${{ steps.extract.outputs.receipt_sha256 }}
+        run: |
+          umask 077
+          python scripts/ett_candidates.py analyze "$ETT_RECEIPT_SHA256" \
+            --store-root "$ETT_STORE_ROOT" \
+            > "$ETT_EVIDENCE_ROOT/analysis.json"
+
+      - name: Package immutable source objects and execution status
+        if: ${{ always() && steps.prepare.outcome == 'success' }}
+        env:
+          ACQUISITION_OUTCOME: ${{ steps.acquire.outcome }}
+          EXTRACTION_OUTCOME: ${{ steps.extract.outcome }}
+          ANALYSIS_OUTCOME: ${{ steps.analyze.outcome }}
+          EVIDENCE_COMMIT: ${{ github.sha }}
+          EVIDENCE_RUN_ID: ${{ github.run_id }}
+          EVIDENCE_RUN_ATTEMPT: ${{ github.run_attempt }}
+        run: |
+          umask 077
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          report = {
+              "schema_version": 1,
+              "commit_sha": os.environ["EVIDENCE_COMMIT"],
+              "run_id": os.environ["EVIDENCE_RUN_ID"],
+              "run_attempt": os.environ["EVIDENCE_RUN_ATTEMPT"],
+              "acquisition_outcome": os.environ["ACQUISITION_OUTCOME"],
+              "extraction_outcome": os.environ["EXTRACTION_OUTCOME"],
+              "analysis_outcome": os.environ["ANALYSIS_OUTCOME"],
+              "production_ready": False,
+              "active_rates_written": False,
+              "retention_kind": "temporary_github_actions_artifact",
+              "retention_days_requested": 90,
+              "durable_legal_retention_attested": False,
+          }
+          target = Path(os.environ["ETT_EVIDENCE_ROOT"]) / "workflow-status.json"
+          target.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
+          PY
+          # The tar preserves private store permissions lost by a plain ZIP upload.
+          tar -C "$ETT_EVIDENCE_ROOT" -czf \
+            "$ETT_EVIDENCE_ROOT/ett-acquisition-store.tar.gz" store
+          cat >> "$GITHUB_STEP_SUMMARY" <<'SUMMARY'
+          Official ETT source acquisition is candidate evidence only. The artifact
+          contains original source objects, the acquisition receipt and extraction
+          reports and assembled tariff analysis when those steps complete.
+          Check workflow-status.json for failures. Parsed cells do not certify legal
+          applicability or effective dates.
+          GitHub artifact retention is temporary (up to the requested 90 days); it is
+          not durable legal retention, legal review or approval to activate rates.
+          SUMMARY
+
+      - name: Upload temporary official ETT evidence
+        if: ${{ always() && steps.prepare.outcome == 'success' }}
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        with:
+          name: ett-acquisition-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            ${{ runner.temp }}/ett-acquisition/ett-acquisition-store.tar.gz
+            ${{ runner.temp }}/ett-acquisition/acquisition.json
+            ${{ runner.temp }}/ett-acquisition/extraction.json
+            ${{ runner.temp }}/ett-acquisition/analysis.json
+            ${{ runner.temp }}/ett-acquisition/workflow-status.json
+          if-no-files-found: error
+          retention-days: 90
+
+  workflow-contract:
+    name: Scheduled workflow and locked environment
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: customs-clear/backend
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Reject tracked browser session state
+        run: |
+          tracked_session_files="$(
+            git ls-files -- ':(top)customs-clear/backend/data/alta_session/**'
+          )"
+          if [[ -n "$tracked_session_files" ]]; then
+            echo "Browser session state must never be tracked:" >&2
+            echo "$tracked_session_files" >&2
+            exit 1
+          fi
+
+      - name: Set up Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: customs-clear/backend/requirements-monitor.txt
+
+      - name: Install exact scheduled-monitor environment
+        run: |
+          python -m pip install \
+            --disable-pip-version-check \
+            --only-binary=:all: \
+            --require-hashes \
+            --requirement requirements-monitor.txt
+          python -m pip check
+
+      - name: Validate scheduled workflow contracts
+        run: |
+          python scripts/validate_scheduled_workflow_contract.py
+          python scripts/run_regulatory_source_updates.py \
+            --plan --strict --output /tmp/regulatory-source-update-plan.json
+          python scripts/build_ntm_full_catalog_baseline.py --check-sources-only
+
+  backend-ntm:
+    name: Backend NTM safety suite
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: customs-clear/backend
+    env:
+      DATABASE_URL: sqlite:////tmp/customs-clear-ci.db
+      SECRET_KEY: ci-only-secret-key-not-valid-outside-github-actions
+      ADMIN_PASSWORD: test-admin-password
+      VIEWER_PASSWORD: test-viewer-password
+      DECLARANT_PASSWORD: test-declarant-password
+      ADMIN_API_TOKEN: ci-only-admin-api-token
+      CUSTOMSCLEAR_READ_ONLY: "0"
+      SCHEDULER_ENABLED: "0"
+      REGULATORY_SYNC_SCHEDULER_ENABLED: "0"
+      NTM_V2_MEASURES_ENFORCEMENT_ENABLED: "0"
+      NTM_V2_RULES_ENFORCEMENT_ENABLED: "0"
+      NTM_V2_OFFICIAL_CURATED_ENFORCEMENT_ENABLED: "0"
+      NTM_V2_EXACT_TRADE_CURATED_ALLOWLIST_ENABLED: "0"
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: customs-clear/backend/requirements.txt
+
+      - name: Install backend dependencies
+        run: python -m pip install --disable-pip-version-check -r requirements.txt
+
+      - name: Run focused NTM and enforcement-boundary tests
+        run: >-
+          python -m pytest -q
+          tests/test_non_tariff_rule_validity.py
+          tests/test_ntm_layers_legal_guards.py
+          tests/test_ntm_v2_advisory_requirements.py
+          tests/test_ntm_v2_measures_enforcement.py
+          tests/test_ntm_v2_rules_enforcement.py
+          tests/test_ntm_v2_source_isolation.py
+          tests/test_official_ntm_contours.py
+          tests/test_ntm_applicability_schema.py
+          tests/test_official_ntm_exact_*.py
+          tests/test_official_ntm_curated_enforcement.py
+          tests/test_regulatory_source_updates.py
+          tests/test_tariff_relief_source_monitor.py
+          tests/test_regulatory_adapter_scripts.py
+          tests/test_regulatory_adapter_write_guard.py
+          tests/test_regulatory_review_queue.py
+          tests/test_regulatory_scheduler_api.py
+          tests/test_regulatory_snapshot_atomicity.py
+          tests/test_opendata_source_integrity.py
+          tests/test_opendata_version_guards.py
+          tests/test_sgr_state_source_hardening.py
+          tests/test_legacy_automation_guards.py
+          tests/test_official_source_monitor.py
+          tests/test_official_source_original_capture.py
+          tests/test_regulatory_source_completeness.py
+          tests/test_data_refresh.py
+          tests/test_build_full_staging_snapshot.py
+          tests/test_normative_bundle_exact_rate_scope.py
+          tests/test_ett_*.py
+          tests/test_ntm_catalog_baseline.py
+          tests/test_run_e2e_scenarios.py
+          tests/test_payment_data_coverage.py
+          tests/test_cbr_exchange_rate_hardening.py
+          tests/test_source_resource_limits.py
+          tests/test_safe_fsa_archive.py
+          tests/test_payment_registry_references.py
+          tests/test_tariff_preferences.py
+          tests/test_payment_preference_eligibility.py
+          tests/test_payment_consumer_review.py
+          tests/test_payment_history_uncertainty.py
+          tests/test_payment_document_uncertainty.py
+          tests/test_assistant_payment_review.py
+          tests/test_payment_quote_explanation.py
+          tests/test_payment_special_duty_applicability.py
+          tests/test_trade_remedy_ingestion_hardening.py
+          tests/test_official_rate_validation.py
+          tests/test_vat_ingestion.py
+          tests/test_excise_ingestion.py
+          tests/test_anti_dumping_ingestion.py
+          tests/test_special_safeguard_ingestion.py
+          tests/test_countervailing_ingestion.py
+          tests/test_payment_engine.py
+          tests/test_special_duties.py
+          tests/test_ntm_noise_classifier.py
+          tests/test_ntm_unknown_tr_review.py
+          tests/test_ntm_v2_legacy_measures_import.py
+          tests/test_ntm_v2_legacy_measures_diagnostics.py
+          tests/test_analytics_api.py
+          tests/test_ntm_v2_layers.py::test_empty_layers_db_warning
+          tests/test_ntm_v2_pipeline_flag.py::test_empty_v2_falls_back_to_legacy_catalog
+          tests/test_permits_normalize_and_api.py
+          tests/test_permits_verify_jobs_ownership.py
+          tests/test_sensitive_endpoints_auth.py
+          tests/test_tnved_catalog_api.py::TnvedCatalogApiTests::test_detail_404
+          tests/test_tnved_catalog_api.py::TnvedCatalogApiTests::test_missing_exact_code_does_not_borrow_sibling_card
+          tests/test_tnved_catalog_api.py::TnvedCatalogApiTests::test_exact_rate_without_commodity_does_not_create_card
+          tests/test_tnved_catalog_api.py::TnvedCatalogApiTests::test_exact_card_keeps_rate_fallback_without_borrowing_identity
+          tests/test_tnved_catalog_api.py::TnvedCatalogApiTests::test_canonical_provider_failure_keeps_exact_database_card
+          tests/test_trois_is_active.py
+          tests/test_normative_requirements_block.py
+          tests/test_sanctions_risk_block.py
+          tests/test_semantic_navigation_2204_pdo.py
+          tests/test_diagnose_guided_tnved_navigation_catalog.py
+          tests/test_api_integration.py::ApiIntegrationTests::test_export_compliance_skips_import_payment_and_antidumping
+          tests/test_api_integration.py::ApiIntegrationTests::test_calculator_eaeu_country_preference
+
+      - name: Confirm quarantined ETT blocks a positive staging snapshot
+        run: |
+          staging_snapshot="$RUNNER_TEMP/customs-clear-full-staging.db"
+          readiness_report="$RUNNER_TEMP/customs-clear-staging-input-readiness.json"
+          untouched_database="$RUNNER_TEMP/customs-clear-builder-must-not-touch.db"
+          set +e
+          python scripts/build_full_staging_snapshot.py \
+            --check-inputs --report "$readiness_report"
+          readiness_status=$?
+          set -e
+          test "$readiness_status" -eq 1
+          python - "$readiness_report" <<'PY'
+          import json
+          import sys
+
+          report = json.load(open(sys.argv[1], encoding="utf-8"))
+          assert report["positive_snapshot_allowed"] is False
+          assert report["baseline_contract"] == {
+              "schema_version": "1",
+              "validation_mode": "quarantine_only",
+              "positive_validation_implemented": False,
+          }
+          assert report["ett"]["invalid_code_rows"] == 2
+          assert report["ett"]["duplicate_rows"] == 27
+          assert report["ett"]["duplicate_code_count"] == 23
+          assert report["ett"]["material_conflict_code_count"] == 18
+          assert report["ett"]["structurally_publishable"] is False
+          assert report["release_gate"]["current_official_ett_verified"] is False
+          assert report["release_gate"]["temporal_footnotes_verified"] is False
+          PY
+
+          test ! -e "$untouched_database"
+          set +e
+          DATABASE_URL="sqlite:///$untouched_database" \
+            python scripts/build_full_staging_snapshot.py "$staging_snapshot" \
+            > "$RUNNER_TEMP/customs-clear-staging-quarantine.log" 2>&1
+          build_status=$?
+          set -e
+          test "$build_status" -ne 0
+          grep --quiet "positive staging snapshot blocked" \
+            "$RUNNER_TEMP/customs-clear-staging-quarantine.log"
+          test ! -e "$staging_snapshot"
+          test ! -e "$untouched_database"
+
+  frontend:
+    name: Frontend tests, types and build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: customs-clear/frontend
+    env:
+      CI: "true"
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: customs-clear/frontend/package-lock.json
+
+      - name: Install frontend dependencies
+        run: npm ci
+
+      - name: Run frontend tests
+        run: npm test
+
+      - name: Check TypeScript
+        run: npm run typecheck
+
+      - name: Build frontend
+        run: npm run build
+
+  staging-definition:
+    name: Validate and build local staging images
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      STAGING_DATABASE_PATH: /tmp/customs-clear-ci.db
+      STAGING_SECRET_KEY: ci-only-secret-key-not-valid-outside-github-actions
+      STAGING_ADMIN_PASSWORD: ci-only-admin-password
+      STAGING_VIEWER_PASSWORD: ci-only-viewer-password
+      STAGING_DECLARANT_PASSWORD: ci-only-declarant-password
+      STAGING_ADMIN_API_TOKEN: ci-only-admin-api-token
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Render Compose configuration
+        working-directory: customs-clear
+        run: docker compose -f docker-compose.staging.yml config --quiet
+
+      - name: Build staging images
+        working-directory: customs-clear
+        run: docker compose -f docker-compose.staging.yml build
+
+      - name: Create read-only smoke database
+        run: >-
+          python3 -c
+          "import sqlite3;
+          db=sqlite3.connect('/tmp/customs-clear-ci.db');
+          db.execute('CREATE TABLE smoke_marker (id INTEGER PRIMARY KEY)');
+          db.commit();
+          db.close()"
+
+      - name: Confirm full-catalog gate rejects the smoke database
+        working-directory: customs-clear
+        run: |
+          chmod 0444 /tmp/customs-clear-ci.db
+          set +e
+          docker compose -f docker-compose.staging.yml run --rm --no-deps backend \
+            python /workspace/customs-clear/staging/prepare_database.py \
+            --validate-only /data/customs.db > /tmp/schema-gate.log 2>&1
+          schema_status=$?
+          set -e
+          cat /tmp/schema-gate.log
+          if [ "$schema_status" -eq 0 ]; then
+            echo "Schema/catalog validation unexpectedly accepted the lightweight database" >&2
+            exit 1
+          fi
+          grep --quiet "missing tables" /tmp/schema-gate.log
+
+          set +e
+          docker compose -f docker-compose.staging.yml run --rm --no-deps backend \
+            python scripts/run_ntm_full_coverage_audit.py --database /data/customs.db \
+            > /tmp/ntm-gate.log 2>&1
+          audit_status=$?
+          set -e
+          cat /tmp/ntm-gate.log
+          if [ "$audit_status" -eq 0 ]; then
+            echo "Full-catalog audit unexpectedly accepted the lightweight database" >&2
+            exit 1
+          fi
+          grep --quiet '"catalog_complete": false' /tmp/ntm-gate.log
+          grep --quiet "no such table: tnved_sections" /tmp/ntm-gate.log
+
+      - name: Start read-only smoke stack
+        working-directory: customs-clear
+        run: >-
+          docker compose
+          -f docker-compose.staging.yml
+          -f staging/ci-smoke.override.yml
+          up --detach --wait
+
+      - name: Smoke backend and frontend proxy
+        run: |
+          curl --fail --show-error http://127.0.0.1:8001/api/health/ready
+          curl --fail --show-error http://127.0.0.1:3000/api/health/ready
+
+      - name: Show staging logs on failure
+        if: failure()
+        working-directory: customs-clear
+        run: >-
+          docker compose
+          -f docker-compose.staging.yml
+          -f staging/ci-smoke.override.yml
+          logs --no-color
+
+      - name: Stop smoke stack
+        if: always()
+        working-directory: customs-clear
+        run: >-
+          docker compose
+          -f docker-compose.staging.yml
+          -f staging/ci-smoke.override.yml
+          down --remove-orphans

@@ -1,0 +1,60 @@
+{
+  "schema_version": 1,
+  "kind": "selected_official_rate_original_capture_evidence",
+  "observed_on": "2026-09-11",
+  "repository": "ivan88810900-star/tnved_starter_kit_v2",
+  "head": "a5ef7f3b6c4234a76c95ff2934ae00a1d048a33c",
+  "ci": {
+    "pull_request_run": 34598906017,
+    "push_run": 34598902309,
+    "conclusion": "success",
+    "backend_passed": 4434,
+    "backend_skipped": 2,
+    "backend_warnings": 2,
+    "backend_subtests_passed": 73
+  },
+  "capture": {
+    "run_id": 34598954173,
+    "artifact_id": 10263113293,
+    "conclusion": "failure",
+    "requested_sources": 3,
+    "originals_retained": 1,
+    "archive_sha256": "20055e6c438dffe63be548fb62141a51e945c9b53ffd308cb76c357f20f33bd4",
+    "archive_bytes": 22032,
+    "saved_archive": "official-rate-originals-34598954173.zip",
+    "library_file_id": "libfile_51b18e6970d881919185606548de6ba1"
+  },
+  "retained_original": {
+    "source_id": "rf_excise_tax_code",
+    "url": "https://www.nalog.gov.ru/rn77/taxation/taxes/akciz/",
+    "body_sha256": "02df1f775a95a57dc2b2209e2e43ef2152704726c2ca59079dfda935a7181def",
+    "body_bytes": 101950,
+    "receipt_sha256": "d71b468278842bf419dd9f915a44005f5fa18235fb0102ccaca8d619ae91f02f",
+    "retrieved_at": "2026-09-11T12:28:12.682265+00:00",
+    "replayed": true,
+    "literal_discovery_sha256": "2c2419a2634238cc08c74ccfd4b9daadc5eddcb197c0718600723f3acfe58be3",
+    "numeric_rate_table_present": false,
+    "tobacco_combined_formula_present": false
+  },
+  "failed_sources": [
+    {
+      "source_id": "trade_remedies_official",
+      "url": "https://eec.eaeunion.org/comission/department/deptexsec/trade_remedies/",
+      "reason": "HTTPStatusError"
+    },
+    {
+      "source_id": "eec_odata_vat_preferences",
+      "url": "https://opendata.eaeunion.org/",
+      "reason": "unexpected_redirect_target"
+    }
+  ],
+  "followup": "Replace stale navigation URLs only after corroboration; retain original new bodies in a separate run; do not label this incomplete acquisition successful.",
+  "full_registry_checked": false,
+  "legal_inventory_complete": false,
+  "legal_approval": false,
+  "active_rates_written": false,
+  "application_database_created": false,
+  "production_ready": false,
+  "can_promote": false,
+  "durable_legal_retention_attested": false
+}

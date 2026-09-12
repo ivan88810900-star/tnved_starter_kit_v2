@@ -18,6 +18,7 @@ from .non_tariff_rules import (
     _measure_to_permit_type,
 )
 from .ntm_v2_legacy_rules_import import merge_v2_legacy_rules_into_broker
+from .ntm_noise_classifier import tr_ts_review_metadata, tr_ts_scope_requires_review
 from .tr_ts_catalog import TR_TS_FULL_NAMES
 
 MEASURES_SOURCE_KIND = "legacy_non_tariff_measures"
@@ -164,6 +165,9 @@ def legacy_measure_dict_to_broker_row(m: dict[str, Any]) -> dict[str, Any]:
     mtype = str(m.get("measure_type") or "")
     mk = str(m.get("measure_kind") or measure_type_to_measure_kind(mtype))
     legal_ref = str(m.get("legal_ref") or "")
+    review = tr_ts_review_metadata(str(m.get("commodity_code") or ""), mtype)
+    if review:
+        pt = ""
     return {
         "permit_type": pt,
         "tr_ts": tr_norm,
@@ -182,6 +186,11 @@ def legacy_measure_dict_to_broker_row(m: dict[str, Any]) -> dict[str, Any]:
             tr_ts_act_code=tr_norm,
             legal_ref=legal_ref,
         ),
+        **{key: m[key] for key in (
+            "applicability", "requires_manual_review", "used_for_missing_check",
+            "applicability_reason",
+        ) if key in m},
+        **review,
     }
 
 
@@ -210,7 +219,9 @@ def merge_v2_legacy_measures_into_broker(
     measure_rows: list[dict[str, Any]],
 ) -> list[dict[str, Any]]:
     """Дедуп по ``(permit_type, tr_ts)``; пустой ``permit_type`` не добавляется."""
-    filtered = [r for r in measure_rows if (r.get("permit_type") or "").strip()]
+    filtered = [r for r in measure_rows if (r.get("permit_type") or "").strip()
+                and r.get("applicability", "definite") == "definite"
+                and not r.get("requires_manual_review", False)]
     return merge_v2_legacy_rules_into_broker(broker_rows, filtered)
 
 
@@ -297,6 +308,13 @@ def _find_v2_legacy_measures_for_code(
             permit_type = legacy.get("permit_type") if legacy.get("permit_type") is not None else measure.permit_type
             tr_ts = legacy.get("tr_ts_code") if legacy.get("tr_ts_code") is not None else (measure.tr_ts_act_code or None)
             measure_kind = measure.measure_kind or measure_type_to_measure_kind(mtype)
+            # Old imported rows may still say definite until explicitly
+            # reimported. Never let that stale classification override the
+            # unresolved source/query scope on a read-only path.
+            review = (tr_ts_review_metadata(rule_hs, mtype)
+                      or tr_ts_review_metadata(code, mtype))
+            if review:
+                permit_type = None
             compact_key = (
                 mtype.lower(),
                 legal_ref.lower(),
@@ -319,6 +337,9 @@ def _find_v2_legacy_measures_for_code(
                     "measure_kind": measure_kind,
                     "match_prefix_len": pref_len,
                     "source_level": source_level,
+                    "applicability": rule.applicability,
+                    "requires_manual_review": bool(rule.requires_manual_review),
+                    **review,
                 }
             )
         if level_rows:
@@ -382,6 +403,7 @@ def import_legacy_non_tariff_measures_to_ntm_v2(
 
             permit_type, tr_ts = _derive_permit_and_tr_ts(row, commodity_code)
             mtype = (row.measure_type or "").strip()
+            requires_scope_review = tr_ts_scope_requires_review(commodity_code, mtype)
             mk = measure_type_to_measure_kind(mtype)
             desc = (row.description or "").strip()
             legal_ref = (row.regulatory_act or "").strip()
@@ -456,8 +478,8 @@ def import_legacy_non_tariff_measures_to_ntm_v2(
                         hs_code=commodity_code,
                         excluded_hs_json=None,
                         description_match_json=payload,
-                        applicability="definite",
-                        requires_manual_review=False,
+                        applicability="needs_clarification" if requires_scope_review else "definite",
+                        requires_manual_review=requires_scope_review,
                         priority=0,
                         valid_from=None,
                         valid_to=None,
@@ -474,6 +496,9 @@ def import_legacy_non_tariff_measures_to_ntm_v2(
                 existing.hs_code = commodity_code
                 existing.hs_scope_mode = "prefix"
                 existing.description_match_json = payload
+                if requires_scope_review:
+                    existing.applicability = "needs_clarification"
+                    existing.requires_manual_review = True
                 existing.updated_at = now
                 applicability_rules_updated += 1
                 duplicates_skipped += 1

@@ -78,7 +78,19 @@ def _normalize_rate_row(raw: dict[str, Any]) -> dict[str, Any] | None:
         digits = re.sub(r"\D", "", str(hc_raw))[:10]
         if len(digits) >= 4:
             row["hs_code"] = digits
-            if not str(row.get("hs_prefix") or "").strip():
+            # A leaf-rate row must never create a broad fallback for sibling
+            # commodities.  Historically this normalizer stored the first
+            # four digits even for an exact ten-digit HS code, so a missing
+            # sibling could inherit an unrelated rate through
+            # ``find_rate_for_hs``.  A deliberately prefix-scoped rate must
+            # opt in with ``prefix_scope``/``prefix_rate``; an unmarked broad
+            # ``hs_prefix`` attached to a leaf is not trusted.
+            explicit_prefix_scope = (
+                row.get("prefix_scope") is True or row.get("prefix_rate") is True
+            )
+            if len(digits) == 10 and not explicit_prefix_scope:
+                row["hs_prefix"] = digits
+            elif not str(row.get("hs_prefix") or "").strip():
                 row["hs_prefix"] = digits[:4]
     hs_prefix = str(row.get("hs_prefix") or row.get("hs_code") or "").strip()
     if not hs_prefix:

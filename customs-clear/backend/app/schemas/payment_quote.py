@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Literal
 
-from pydantic import AliasChoices, BaseModel, ConfigDict, Field
+from pydantic import AliasChoices, BaseModel, ConfigDict, Field, model_validator
 
 from .tnved_catalog import CanonicalAnchorOut
 
@@ -44,7 +44,18 @@ class PaymentQuoteWarning(BaseModel):
     severity: Literal["info", "warning", "error"] = "warning"
 
 
-class PaymentQuoteRequest(BaseModel):
+class CurrentPaymentRequest(BaseModel):
+    """Legacy money requests cannot silently drop an unsupported historical date."""
+
+    @model_validator(mode="before")
+    @classmethod
+    def reject_unsupported_as_of(cls, value):
+        if isinstance(value, dict) and "as_of" in value:
+            raise ValueError("as_of пока не поддерживается: исторические версии всех ставок и сборов не подтверждены")
+        return value
+
+
+class PaymentQuoteRequest(CurrentPaymentRequest):
     model_config = ConfigDict(populate_by_name=True, extra="ignore")
 
     hs_code: str

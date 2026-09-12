@@ -150,32 +150,22 @@ async def fetch_metadata_list() -> list[str]:
 
 
 async def try_fetch_ett_registry(registry_names: list[str]) -> dict[str, Any]:
-    """Попытка загрузить реестр ЕТТ (ставки по кодам) по списку возможных имён.
+    """Quarantined compatibility entry: guessed OData names are not ETT provenance.
 
-    Реестр ЕТТ на портале может называться по-разному. Если найден реестр
-    с полями, похожими на hs_code/duty_rate, нормализуем в hs_rates.
+    Decision #188 requires an official artifact manifest and reviewed promotion.
+    Even matching column names cannot establish source identity, complete
+    coverage, applicability or effective dates. No request is made here.
     """
-    for name in registry_names:
-        rows, err = await fetch_odata_registry(name, top=100)
-        if err:
-            continue
-        if not rows:
-            continue
-        # Проверяем структуру — есть ли поля для ставок
-        sample = rows[0] if rows else {}
-        keys = set(sample.keys())
-        # Ищем поля, похожие на код ТН ВЭД или ставку
-        duty_key = next((k for k in keys if "duty" in k.lower() or "ставк" in k.lower() or "rate" in k.lower()), None)
-        hs_key = next((k for k in keys if "code" in k.lower() or "код" in k.lower() or "hs" in k.lower()), None)
-        if duty_key or hs_key:
-            return {
-                "status": "OK",
-                "source": "ODATA_ETT",
-                "registry": name,
-                "rows": len(rows),
-                "sample_keys": list(keys)[:15],
-            }
-    return {"status": "NOT_FOUND", "source": "ODATA_ETT", "tried": registry_names}
+    from .ett_pdf_parser import ETT_REVIEW_DECISION
+
+    return {
+        "status": "REVIEW_REQUIRED",
+        "source": "ODATA_ETT",
+        "rows": 0,
+        "quarantined": True,
+        "reason": "guessed_odata_registry_is_not_ett_provenance",
+        "decision_url": ETT_REVIEW_DECISION,
+    }
 
 
 async def sync_all_odata() -> dict[str, Any]:
@@ -186,19 +176,8 @@ async def sync_all_odata() -> dict[str, Any]:
     pref = await sync_preferential_duties()
     results.append(pref)
 
-    # 2. Попытка ETT (если известны имена реестров)
-    import os
-    ett_names = os.getenv("ETT_ODATA_REGISTRY_NAMES", "").strip()
-    if ett_names:
-        names = [n.strip() for n in ett_names.split(",") if n.strip()]
-    else:
-        names = [
-            "Единая товарная номенклатура внешнеэкономической деятельности Евразийского экономического союза",
-            "Единый таможенный тариф Евразийского экономического союза",
-            "Единая товарная номенклатура",
-            "Единый таможенный тариф",
-        ]
-    ett = await try_fetch_ett_registry(names)
+    # Guessed ETT dataset names, including environment overrides, are retired.
+    ett = await try_fetch_ett_registry([])
     results.append(ett)
 
     ok = all(r.get("status") in ("OK", "NOT_FOUND") for r in results)

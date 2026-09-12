@@ -1,0 +1,233 @@
+{
+  "schema_version": 1,
+  "kind": "ett_primary_capture_backup_and_inventory_evidence",
+  "capture_run_id": 34251758308,
+  "capture_run_url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/34251758308",
+  "original_archive": {
+    "original_archive_filename": "Tariff_ETT_primary_acts_2026-09-08.zip",
+    "original_archive_bytes": 123360171,
+    "original_archive_sha256": "87eadc278f377170d41dbce51dd0bc2a79606c4b61738eb17c9eeddd2340152a",
+    "original_tar_sha256": "a47ac71dab2a06fd7f0f8ada38c95ff077d4d0fc0ccb58217fcc95bff9976fce"
+  },
+  "original_membership": {
+    "zip_entries": 6,
+    "json_metadata_reports": 5,
+    "tar_entries": 303,
+    "blob_objects": 302,
+    "blob_bytes": 164100656,
+    "all_filename_hashes_verified_from_original_tar": true,
+    "all_objects_verified_against_retained_local_store": true,
+    "native_agent_later_derived_objects_excluded": true,
+    "object_kinds": "original archived source and derived input objects; not 302 primary PDF bodies",
+    "unsafe_paths_links_sparse_duplicate_or_nonregular_files_rejected": true
+  },
+  "source_reports": [
+    {
+      "original_archive_path": "discovery.json",
+      "backup_path": "reports/discovery.json",
+      "bytes": 2657762,
+      "sha256": "64bf12bc27614d36bb2238b2c85cec4c7071f75b8bbc28adeaed615feaec8c51"
+    },
+    {
+      "original_archive_path": "inputs/inputs.json",
+      "backup_path": "reports/inputs/inputs.json",
+      "bytes": 1771,
+      "sha256": "928e441def0b551a97b3142cbd1bbfd33889935ab3ef5d3e34e573665c8bfae5"
+    },
+    {
+      "original_archive_path": "legal-documents.json",
+      "backup_path": "reports/legal-documents.json",
+      "bytes": 285132,
+      "sha256": "12c3c7b1e60f3b495192acb89364008538542fbed1b71fb91758adc734b5a795"
+    },
+    {
+      "original_archive_path": "missing-queries.json",
+      "backup_path": "reports/missing-queries.json",
+      "bytes": 6155,
+      "sha256": "49356297c0e9ab83c5c1b57c6c65102e9b6486e5254725b93d0548a2c31a6f98"
+    },
+    {
+      "original_archive_path": "pagination.json",
+      "backup_path": "reports/pagination.json",
+      "bytes": 21172,
+      "sha256": "57c26538708481b55b48a7d7381ae03e860290375730e5e9192dfcf8e962a554"
+    }
+  ],
+  "discovery": {
+    "page_count": 19,
+    "pagination_page_count": 10,
+    "supplementary_page_count": 9,
+    "row_count": 890,
+    "distinct_observed_identity_count": 515,
+    "named_amendment_count": 105,
+    "matched_amendment_count": 104,
+    "notes_identity_count": 61,
+    "matched_notes_identity_count": 61,
+    "capture_target_count": 105,
+    "capture_plan_sha256": "adac6bb8b6ee822f35636b9d14a8b49fe71d4606aec83bf9919a01628f416ddd",
+    "source_identity_verified": false,
+    "primary_bodies_verified": false
+  },
+  "founding_act_match": {
+    "identity": {
+      "adoption_date": "2021-09-14",
+      "issuing_body": "council",
+      "number": "80"
+    },
+    "legal_dates_verified": false,
+    "observations": [
+      {
+        "document_link": {
+          "href": "/documents/386/6099/",
+          "locator": "html:a:203:line:5637:column:40",
+          "text": "Решение Совета ЕЭК № 80",
+          "url": "https://docs.eaeunion.org/documents/386/6099/"
+        },
+        "evidence": {
+          "locator": "html:search-row:15:line:5633:column:8",
+          "text": "Акты Евразийской экономической комиссии – Совет Евразийской экономической комиссии – Решения – 2021 Решение Совета ЕЭК № 80 Об утверждении единой Товарной номенклатуры внешнеэкономической деятельности Евразийского экономического союза и Единого таможенного тарифа Евразийского экономического союза, а также об изменении и признании утратившими силу некоторых решений Совета Евразийской экономической комиссии Рус Հայ Қаз Кыр Дата принятия документа: 14.09.2021 Дата опубликования документа: 06.10.2021 Дата вступления в силу: 01.01.2022 Документы Рус Հայ Қаз Кыр pdf Решение Совета № 80 от 14 сентября 2021 г Скачать Приложения Рус zip скачать в word Скачать",
+          "text_sha256": "ecb1cbe8bb2949d26d99d8b77d4befedcb848ee8ed3a02e3723b138e7d8a08e6"
+        },
+        "observed_adoption_date": "2021-09-14",
+        "observed_entry_into_force_date": "2022-01-01",
+        "observed_publication_date": "2021-10-06",
+        "row_index": 15,
+        "source_sha256": "efae346bae51cebb8f3cae4dcbd4cc858c0a8adb1f421e37cb297a068fb9d610",
+        "source_size_bytes": 579325,
+        "source_url": "https://docs.eaeunion.org/documents/search/?q=%D0%95%D0%B4%D0%B8%D0%BD%D0%BE%D0%B3%D0%BE+%D1%82%D0%B0%D0%BC%D0%BE%D0%B6%D0%B5%D0%BD%D0%BD%D0%BE%D0%B3%D0%BE+%D1%82%D0%B0%D1%80%D0%B8%D1%84%D0%B0&PAGEN_1=2",
+        "title": "Об утверждении единой Товарной номенклатуры внешнеэкономической деятельности Евразийского экономического союза и Единого таможенного тарифа Евразийского экономического союза, а также об изменении и признании утратившими силу некоторых решений Совета Евразийской экономической комиссии"
+      }
+    ],
+    "primary_body_verified": false,
+    "status": "observed_unambiguous_identity"
+  },
+  "unmatched_amendments": [
+    {
+      "adoption_date": "2022-03-15",
+      "issuing_body": "collegium",
+      "number": "42"
+    }
+  ],
+  "capture": {
+    "kind": "ett_observed_legal_document_capture",
+    "status": "incomplete",
+    "stop_reason": "capture_failures",
+    "started_at": "2026-09-08T16:35:09.420210+00:00",
+    "finished_at": "2026-09-08T16:41:18.537857+00:00",
+    "planned_document_pages": 105,
+    "attempted_document_pages": 105,
+    "captured_document_pages": 105,
+    "identity_matched_document_pages": 85,
+    "attempted_unique_pdfs": 85,
+    "captured_unique_pdfs": 85,
+    "failed_operations": 20,
+    "unsupported_attachment_references": 575,
+    "retained_source_bytes": 149833671,
+    "supported_capture_plan_completed": false,
+    "primary_act_bodies_verified": false,
+    "legal_inventory_complete": false,
+    "effective_dates_verified": false,
+    "legal_approval_verified": false
+  },
+  "document_failure_reason_counts": {
+    "attachment_or_metadata_parse_failed": 2,
+    "document_metadata_identity_mismatch": 18
+  },
+  "retained_page_and_pdf_url_hash_size_records_verified": 190,
+  "pagination": {
+    "captured_pages": 10,
+    "accepted_pages": 10,
+    "observed_chain_exhausted": true,
+    "cross_page_snapshot_consistency_verified": false
+  },
+  "missing_number_queries": {
+    "attempted_queries": 9,
+    "captured_queries": 9,
+    "failed_queries": 0,
+    "document_absence_verified": false
+  },
+  "backup_set_manifest_sha256": "3470e3c90d2e5794a4eac0b508bcbe882c1f95a35b2e379af41bd86508d6aab4",
+  "backup_part_count": 5,
+  "backup_part_size_limit_bytes": 47185920,
+  "backup_parts": [
+    {
+      "part_number": 1,
+      "filename": "Tariff_ETT_primary_acts_2026-09-08_part01-of05.zip",
+      "bytes": 26650319,
+      "sha256": "ce8a4974a565f0fa7941f12cb29c21b6368bd8317144a9531deab7b85a2fbde6",
+      "entries": 73,
+      "object_count": 66,
+      "object_bytes": 34765815,
+      "backup_set_manifest_sha256": "3470e3c90d2e5794a4eac0b508bcbe882c1f95a35b2e379af41bd86508d6aab4"
+    },
+    {
+      "part_number": 2,
+      "filename": "Tariff_ETT_primary_acts_2026-09-08_part02-of05.zip",
+      "bytes": 37581346,
+      "sha256": "4729b50eb3f08e33068ed3a1bb004d0add9827bed66877560153c20294ea5757",
+      "entries": 29,
+      "object_count": 22,
+      "object_bytes": 41723435,
+      "backup_set_manifest_sha256": "3470e3c90d2e5794a4eac0b508bcbe882c1f95a35b2e379af41bd86508d6aab4"
+    },
+    {
+      "part_number": 3,
+      "filename": "Tariff_ETT_primary_acts_2026-09-08_part03-of05.zip",
+      "bytes": 27818469,
+      "sha256": "0aada95e2467d7a4bc20b5bb74238da07f7cc5dfd46e5ed7047353312180bf6f",
+      "entries": 99,
+      "object_count": 92,
+      "object_bytes": 41937745,
+      "backup_set_manifest_sha256": "3470e3c90d2e5794a4eac0b508bcbe882c1f95a35b2e379af41bd86508d6aab4"
+    },
+    {
+      "part_number": 4,
+      "filename": "Tariff_ETT_primary_acts_2026-09-08_part04-of05.zip",
+      "bytes": 29957752,
+      "sha256": "d459eb560c6590f579e35f2df3843fb3938bab0eeb18a7fa9416b64d2f5f4dbe",
+      "entries": 102,
+      "object_count": 95,
+      "object_bytes": 41591770,
+      "backup_set_manifest_sha256": "3470e3c90d2e5794a4eac0b508bcbe882c1f95a35b2e379af41bd86508d6aab4"
+    },
+    {
+      "part_number": 5,
+      "filename": "Tariff_ETT_primary_acts_2026-09-08_part05-of05.zip",
+      "bytes": 2690843,
+      "sha256": "41e76d9da942e215e60a7601916da23aeb3d8aa3610f05e8ebda1ef1bc4c8671",
+      "entries": 34,
+      "object_count": 27,
+      "object_bytes": 4081891,
+      "backup_set_manifest_sha256": "3470e3c90d2e5794a4eac0b508bcbe882c1f95a35b2e379af41bd86508d6aab4"
+    }
+  ],
+  "backup_verification": {
+    "each_part_reopened_and_every_entry_size_and_sha_verified": true,
+    "same_cross_part_manifest_verified_in_each_part": true,
+    "union_equals_exact_302_original_objects": true,
+    "duplicate_objects_across_parts": 0,
+    "all_original_metadata_reports_preserved_verbatim_in_each_part": true,
+    "all_parts_required_to_restore_full_original_archive_membership": true
+  },
+  "limitations": [
+    "Observed exact identity matches are discovery evidence; they do not verify primary-body content or effective legal rates.",
+    "All 105 planned HTML pages were retained. Eighteen document-metadata identity mismatches and two attachment/metadata parsing failures left 20 unresolved document checks; only 85 distinct PDFs were captured and supported_capture_plan_completed remains false.",
+    "575 unsupported attachment reference occurrences remain recorded; no absent body is synthesized.",
+    "The original 302-object membership includes source and derived input objects. Later native-text/OCR outputs are deliberately excluded from this backup set.",
+    "Metadata reports and object bytes are preserved; this backup does not attest immutable legal retention, legal approval or production readiness."
+  ],
+  "supported_capture_plan_completed": false,
+  "legal_inventory_complete": false,
+  "effective_dates_verified": false,
+  "primary_act_bodies_verified": false,
+  "production_ready": false,
+  "active_rates_written": false,
+  "durable_legal_retention_attested": false,
+  "document_page_retention_status_counts": {
+    "captured": 105
+  },
+  "document_attachment_parse_status_counts": {
+    "unresolved": 20,
+    "parsed": 85
+  }
+}

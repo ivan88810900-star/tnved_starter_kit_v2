@@ -8,9 +8,11 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 
+from ..schemas.ntm_applicability import NtmTransactionFacts, dump_ntm_transaction_facts
 from ..services.calculation_history_service import save_calculation_record
 from ..services.non_tariff_service import check_position_non_tariff
 from ..services.payment_engine_compat import compute_payments
+from ..services.payment_result_status import aggregate_payment_metadata, payment_result_metadata
 from ..security import require_authenticated_user
 
 router = APIRouter(dependencies=[Depends(require_authenticated_user)])
@@ -33,6 +35,7 @@ class ComplianceItemIn(BaseModel):
     vat_rate: float | None = None
     excise: float | None = None
     quantity: float | None = None
+    facts: NtmTransactionFacts | None = None
 
 
 class ComplianceRequest(BaseModel):
@@ -40,6 +43,51 @@ class ComplianceRequest(BaseModel):
     save_history: bool = Field(False, description="Сохранить сводку проверки в customs_calculation_history")
     document_id: str | None = Field(None, description="Связь с ingested_documents.id")
     user_ref: str = Field("", description="Пользователь / клиент для журнала")
+
+
+def _non_import_payment(direction: str) -> dict[str, Any]:
+    """Stable UI contract when the import-payment engine is out of scope."""
+
+    reason = f"Импортные таможенные платежи не рассчитываются для направления {direction}."
+    return {
+        "status": "NOT_APPLICABLE",
+        "not_applicable_direction": direction,
+        "breakdown": {
+            "duty": 0.0,
+            "vat": 0.0,
+            "excise": 0.0,
+            "antidumping": 0.0,
+            "recycling_fee": 0.0,
+            "total_payable": 0.0,
+            "vat_rate": 0.0,
+            "duty_rate": 0.0,
+            "vat_reason": reason,
+            "excise_reason": reason,
+            "antidumping_reason": reason,
+            "antidumping_status": "not_applicable",
+        },
+        "auto_detected": {
+            "duty_rate": 0.0,
+            "vat_rate": 0.0,
+            "antidumping_type": "none",
+            "antidumping_value": 0.0,
+            "antidumping_condition": reason,
+            "antidumping_countries": "",
+        },
+        "data_quality": {
+            "confidence": "none",
+            "matched_prefix": "",
+            "match_length": 0,
+            "antidumping_status": "not_applicable",
+        },
+        "sources": [
+            {
+                "name": "Контур импортных платежей",
+                "integrated": False,
+                "data_info": reason,
+            }
+        ],
+    }
 
 
 @router.post("/check")
@@ -53,12 +101,19 @@ async def compliance_check(req: ComplianceRequest) -> JSONResponse:
 
     results: List[Dict[str, Any]] = []
     for item in req.items:
-        payment = compute_payments(item.model_dump())
+        facts = dump_ntm_transaction_facts(item.facts)
+        direction = str(facts.get("direction") or "import")
+        payment = (
+            compute_payments(item.model_dump())
+            if direction == "import"
+            else _non_import_payment(direction)
+        )
         non_tariff = await check_position_non_tariff(
             item.hs_code,
             item.description,
             item.country,
             [{"type": p.type, "number": p.number} for p in item.permits],
+            transaction_facts=facts,
         )
         # Документы: требуемые и предоставленные разрешения
         documents = {
@@ -72,6 +127,11 @@ async def compliance_check(req: ComplianceRequest) -> JSONResponse:
             risks.append(f"Отсутствуют разрешительные документы: {', '.join(documents['missing'])}")
         if payment.get("data_quality", {}).get("antidumping_status") == "manual_review":
             risks.append("Антидемпинговые меры требуют ручной проверки (страна не указана)")
+        payment_metadata = payment_result_metadata(payment)
+        if payment_metadata["tariff_preference_warning"]:
+            risks.append(payment_metadata["tariff_preference_warning"])
+        if payment_metadata["payment_review_reason"] and payment_metadata["payment_review_reason"] not in risks:
+            risks.append(payment_metadata["payment_review_reason"])
         if non_tariff.get("data_freshness", {}).get("is_stale"):
             risks.append("Данные нормативных источников устарели")
         permits_rows = non_tariff.get("permits") or []
@@ -116,6 +176,9 @@ async def compliance_check(req: ComplianceRequest) -> JSONResponse:
         overall = "ERROR"
     elif any(r["non_tariff"]["status"] == "WARNING" for r in results):
         overall = "WARNING"
+    payment_metadata = aggregate_payment_metadata(r["payment"] for r in results)
+    if overall == "OK" and payment_metadata["amounts_provisional"] is True:
+        overall = "WARNING"
 
     # Summary data quality from payment engine
     all_confidences = [r["payment"]["data_quality"]["confidence"] for r in results]
@@ -125,6 +188,7 @@ async def compliance_check(req: ComplianceRequest) -> JSONResponse:
     )
     any_manual_review = any(
         r["payment"]["data_quality"].get("antidumping_status") == "manual_review"
+        or payment_result_metadata(r["payment"])["amounts_provisional"] is True
         for r in results
     )
 
@@ -133,6 +197,7 @@ async def compliance_check(req: ComplianceRequest) -> JSONResponse:
         "data_confidence": all_confidences,
         "any_stale_source": any_stale,
         "any_manual_review": any_manual_review,
+        **payment_metadata,
     }
 
     if save_hist:
@@ -159,6 +224,8 @@ async def compliance_check(req: ComplianceRequest) -> JSONResponse:
                     "nt_status": r["non_tariff"]["status"],
                     "total_payable": r["payment"]["breakdown"]["total_payable"],
                     "risks_count": len(r["risks"]),
+                    **payment_result_metadata(r["payment"]),
+                    "tariff_preference": r["payment"].get("tariff_preference"),
                 }
                 for r in results
             ],

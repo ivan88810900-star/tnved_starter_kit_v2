@@ -7,6 +7,7 @@ from ..schemas.payment_profile import (
     PaymentCompareResponse,
     PaymentProfileResponse,
 )
+from ..schemas.payment_quote import CurrentPaymentRequest
 from ..services.calculation_history_service import save_calculation_record
 from ..services.exchange_rates import get_rates_map
 from ..services.payment_profile_builder import (
@@ -28,7 +29,7 @@ def _round2(value: float) -> float:
 
 router = APIRouter()
 
-class CompareSharedEconomics(BaseModel):
+class CompareSharedEconomics(CurrentPaymentRequest):
     """Общие параметры для всех сценариев сравнения."""
     model_config = ConfigDict(populate_by_name=True, extra="ignore")
 
@@ -43,7 +44,7 @@ class CompareSharedEconomics(BaseModel):
     apply_reduced_vat: bool = False
 
 
-class CompareScenarioIn(BaseModel):
+class CompareScenarioIn(CurrentPaymentRequest):
     hs_code: str
     label: str | None = None
     country: str | None = None
@@ -52,7 +53,7 @@ class CompareScenarioIn(BaseModel):
     excise: float | None = None
 
 
-class CompareRequest(BaseModel):
+class CompareRequest(CurrentPaymentRequest):
     """Сравнение платежей при разных ТН ВЭД и одинаковой стоимости поставки."""
 
     shared: CompareSharedEconomics
@@ -62,7 +63,7 @@ class CompareRequest(BaseModel):
     user_ref: str = Field("", description="Пользователь / клиент для журнала")
 
 
-class CalculatorRequest(BaseModel):
+class CalculatorRequest(CurrentPaymentRequest):
     """Вход расчётного движка: ТН ВЭД, стоимость, фрахт, страховка, количество, признаки льгот."""
     model_config = ConfigDict(populate_by_name=True, extra="ignore")
 
@@ -224,7 +225,7 @@ async def compare(req: CompareRequest) -> PaymentCompareResponse:
         raise HTTPException(status_code=500, detail=f"Ошибка сравнения: {exc}")
 
 
-class ScenarioCompareBase(BaseModel):
+class ScenarioCompareBase(CurrentPaymentRequest):
     hs_code: str
     customs_value: float
     currency: str = "USD"
@@ -233,14 +234,14 @@ class ScenarioCompareBase(BaseModel):
     country: str | None = None
 
 
-class ScenarioCompareItem(BaseModel):
+class ScenarioCompareItem(CurrentPaymentRequest):
     name: str = "Сценарий"
     hs_code: str | None = None
     country_of_origin: str | None = None
     procedure_code: str | None = None
 
 
-class ScenarioCompareRequest(BaseModel):
+class ScenarioCompareRequest(CurrentPaymentRequest):
     base: ScenarioCompareBase
     scenarios: list[ScenarioCompareItem] = Field(..., min_length=2, max_length=8)
 
@@ -352,4 +353,3 @@ async def calculator_history_item(calc_id: str) -> JSONResponse:
     if not row:
         raise HTTPException(status_code=404, detail="Запись не найдена")
     return JSONResponse({"status": "OK", **row})
-

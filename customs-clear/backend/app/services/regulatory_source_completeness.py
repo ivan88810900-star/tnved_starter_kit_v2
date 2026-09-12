@@ -35,6 +35,10 @@ def _count_db_probe(probe: str | None) -> int | None:
     if not probe:
         return None
     with SessionLocal() as db:
+        if probe == "exchange_rates":
+            from ..models.core import ExchangeRate
+
+            return db.query(ExchangeRate).count()
         if probe == "tnved_entries":
             from ..models.core import TnvedEntry
 
@@ -97,6 +101,70 @@ def _count_db_probe(probe: str | None) -> int | None:
             )
         if probe == "sgr_certificates":
             return db.query(SgrCertificate).count()
+        if probe == "fss_notifications":
+            from ..models.core import FssNotification
+
+            return db.query(FssNotification).count()
+        if probe == "reo_registry":
+            from ..models.core import ReoRegistryEntry
+
+            return db.query(ReoRegistryEntry).count()
+        if probe == "fsa_certificates":
+            from ..models.tnved import FsaCertificate
+
+            return db.query(FsaCertificate).count()
+        if probe == "trois_registry":
+            from ..models.tnved import TroisRegistry
+
+            return db.query(TroisRegistry).count()
+        if probe == "customs_doc_masks":
+            from ..models.tnved import CustomsDocMask
+
+            return db.query(CustomsDocMask).count()
+        if probe == "special_duties_anti_dumping":
+            from ..models.tnved import SpecialDuty
+
+            return (
+                db.query(SpecialDuty)
+                .filter(
+                    SpecialDuty.measure_type == "anti_dumping",
+                    SpecialDuty.source_code == "EEC_ANTI_DUMPING",
+                )
+                .count()
+            )
+        if probe == "special_duties_special_safeguard":
+            from ..models.tnved import SpecialDuty
+
+            return (
+                db.query(SpecialDuty)
+                .filter(
+                    SpecialDuty.measure_type == "special_safeguard",
+                    SpecialDuty.safeguard_source_code == "EEC_SPECIAL_SAFEGUARD",
+                )
+                .count()
+            )
+        if probe == "special_duties_countervailing":
+            from ..models.tnved import SpecialDuty
+
+            return (
+                db.query(SpecialDuty)
+                .filter(
+                    SpecialDuty.measure_type == "countervailing",
+                    SpecialDuty.countervailing_source_code == "EEC_COUNTERVAILING",
+                )
+                .count()
+            )
+        if probe == "hs_rates_excise_eec":
+            from ..models.core import HsRate
+
+            return db.query(HsRate).filter(HsRate.excise_source_code == "EEC_EXCISE").count()
+        if probe == "vat_preferences_eec_odata":
+            from ..models.tnved import VatPreference
+
+            # VatPreference predates row-level provenance.  A positive count is
+            # therefore only evidence when the matching EEC_ODATA SourceStatus
+            # is independently healthy (enforced by _derive_coverage_status).
+            return db.query(VatPreference).count()
         if probe == "ntm_v2_official_sgr_rules":
             return (
                 db.query(NtmApplicabilityRuleV2)
@@ -115,9 +183,6 @@ def _count_db_probe(probe: str | None) -> int | None:
             return db.query(RegulatoryAiExtract).count()
         if probe == "non_tariff_measures":
             return db.query(NonTariffMeasure).count()
-        if probe == "permits_fsa_usage":
-            # Нет отдельной таблицы bulk — маркер «runtime-only»
-            return -1
         if probe == "ofac_sdn_list":
             from ..models.core import OfacSdnList
 
@@ -163,6 +228,81 @@ def _lookup_source_status(
     return status_by_code.get(code)
 
 
+_INVALID_SOURCE_REVISIONS = frozenset({"", "unavailable", "seed", "unknown"})
+
+
+def _as_utc(value: Any) -> datetime | None:
+    if isinstance(value, datetime):
+        parsed = value
+    elif isinstance(value, str) and value.strip():
+        try:
+            parsed = datetime.fromisoformat(value.strip().replace("Z", "+00:00"))
+        except ValueError:
+            return None
+    else:
+        return None
+    if parsed.tzinfo is None:
+        return parsed.replace(tzinfo=timezone.utc)
+    return parsed.astimezone(timezone.utc)
+
+
+def _revision_is_verified(value: Any) -> bool:
+    revision = str(value or "").strip().lower()
+    return bool(
+        revision
+        and revision not in _INVALID_SOURCE_REVISIONS
+        and not revision.startswith("seed-")
+        and not revision.startswith("fallback")
+    )
+
+
+def _source_freshness(
+    entry: RegulatorySourceEntry,
+    source_status: dict[str, Any] | None,
+    *,
+    checked_at: datetime,
+) -> dict[str, Any]:
+    synced_at = _as_utc((source_status or {}).get("synced_at"))
+    age_hours: float | None = None
+    if synced_at is not None:
+        age_hours = max(0.0, (checked_at - synced_at).total_seconds() / 3600.0)
+    overdue = bool(
+        entry.max_age_hours is not None
+        and (age_hours is None or age_hours > float(entry.max_age_hours))
+    )
+    explicitly_stale = bool((source_status or {}).get("is_stale"))
+    return {
+        "cadence": entry.refresh_cadence,
+        "max_age_hours": entry.max_age_hours,
+        "age_hours": round(age_hours, 2) if age_hours is not None else None,
+        "is_overdue": overdue,
+        "is_stale": explicitly_stale or overdue,
+    }
+
+
+def _requires_verified_source_status(entry: RegulatorySourceEntry) -> bool:
+    return bool(entry.db_probe and entry.authority_level in SOURCE_OF_TRUTH_LEVELS)
+
+
+def _has_verified_source_status(
+    entry: RegulatorySourceEntry,
+    source_status: dict[str, Any] | None,
+    last_sync: dict[str, Any] | None,
+    freshness: dict[str, Any],
+) -> bool:
+    if not _requires_verified_source_status(entry):
+        return False
+    if not entry.source_status_code or not source_status:
+        return False
+    if freshness.get("is_stale") or not _revision_is_verified(source_status.get("revision")):
+        return False
+    # A newer failed run invalidates a green claim even when the adapter
+    # correctly preserved the previous DB snapshot.
+    if (last_sync or {}).get("status", "").upper() == "ERROR":
+        return False
+    return True
+
+
 def _latest_sync_for_code(code: str | None) -> dict[str, Any] | None:
     if not code:
         return None
@@ -175,15 +315,19 @@ def _derive_parser_status(
     source_status: dict[str, Any] | None,
     last_sync: dict[str, Any] | None,
     doc_count: int | None,
+    freshness: dict[str, Any],
+    source_status_verified: bool,
 ) -> str:
     sync_status = (last_sync or {}).get("status", "").upper()
     if sync_status == "ERROR":
         return "failed"
-    if source_status and source_status.get("is_stale"):
+    if freshness.get("is_stale"):
         return "stale"
     rev = (source_status or {}).get("revision") or ""
     if rev in ("unavailable",):
         return "failed"
+    if _requires_verified_source_status(entry) and not source_status_verified:
+        return "unverified"
     if doc_count is not None and doc_count < 0:
         return "runtime_only"
     if doc_count is not None and doc_count == 0 and not entry.local_paths:
@@ -203,6 +347,8 @@ def _derive_coverage_status(
     doc_count: int | None,
     source_status: dict[str, Any] | None,
     parser_status: str,
+    freshness: dict[str, Any],
+    source_status_verified: bool,
 ) -> CoverageStatus:
     if doc_count is not None and doc_count < 0:
         return "not_applicable"
@@ -210,7 +356,7 @@ def _derive_coverage_status(
     has_db = doc_count is not None and doc_count > 0
     if parser_status == "failed":
         return "parser_failed"
-    if source_status and source_status.get("is_stale"):
+    if freshness.get("is_stale"):
         return "stale"
     if not has_local and not has_db:
         return "missing"
@@ -220,6 +366,8 @@ def _derive_coverage_status(
             and entry.min_document_count > 0
             and doc_count < entry.min_document_count
         ):
+            return "partial"
+        if _requires_verified_source_status(entry) and not source_status_verified:
             return "partial"
         rev = (source_status or {}).get("revision") or ""
         if rev in ("seed", "unknown") and entry.authority_level in SOURCE_OF_TRUTH_LEVELS:
@@ -254,13 +402,32 @@ def diagnose_source_entry(
     generated_at: str | None = None,
 ) -> dict[str, Any]:
     """Диагностика одной записи реестра."""
-    status_by_code = status_by_code or {r["source_code"]: r for r in list_source_status()}
+    if status_by_code is None:
+        status_by_code = {r["source_code"]: r for r in list_source_status()}
     local = _local_paths_status(entry.local_paths)
     doc_count = _count_db_probe(entry.db_probe)
     src_st = _lookup_source_status(entry.source_status_code, status_by_code)
     last_sync = _latest_sync_for_code(entry.source_status_code)
-    parser_status = _derive_parser_status(entry, src_st, last_sync, doc_count)
-    coverage_status = _derive_coverage_status(entry, local, doc_count, src_st, parser_status)
+    checked_at = _as_utc(generated_at) or datetime.now(timezone.utc)
+    freshness = _source_freshness(entry, src_st, checked_at=checked_at)
+    source_status_verified = _has_verified_source_status(entry, src_st, last_sync, freshness)
+    parser_status = _derive_parser_status(
+        entry,
+        src_st,
+        last_sync,
+        doc_count,
+        freshness,
+        source_status_verified,
+    )
+    coverage_status = _derive_coverage_status(
+        entry,
+        local,
+        doc_count,
+        src_st,
+        parser_status,
+        freshness,
+        source_status_verified,
+    )
     manual = _manual_review_required(entry, coverage_status)
 
     last_checked = (src_st or {}).get("synced_at")
@@ -287,6 +454,9 @@ def diagnose_source_entry(
             "last_checked_at": last_checked,
             "last_successful_sync_at": last_success,
             "source_status": src_st,
+            "source_status_required": _requires_verified_source_status(entry),
+            "source_status_verified": source_status_verified,
+            "freshness": freshness,
             "last_sync_log": last_sync,
             "manual_review_required": manual,
             "reported_at": generated_at,

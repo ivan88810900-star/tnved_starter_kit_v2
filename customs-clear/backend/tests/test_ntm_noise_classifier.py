@@ -49,8 +49,8 @@ NOISE_CASES: list[tuple[str, str, bool]] = [
     ("0201100000", "certificate", False),
     ("6403990000", "certificate", False),
 
-    # TR TS: valid where TR TS catalog has prefixes or food chapters
-    ("8517120000", "tr_ts", False),  # smartphone — TR TS valid
+    # Retention is not legal applicability; catalog-unknown TR rows need review.
+    ("8517120000", "tr_ts", False),  # historical phone code — retain for review
     ("9503007500", "tr_ts", False),  # toy — TR TS valid (008/2011)
     ("0201100000", "tr_ts", False),  # beef — TR TS valid (021/2011)
 
@@ -63,9 +63,9 @@ NOISE_CASES: list[tuple[str, str, bool]] = [
 @pytest.mark.parametrize("hs_code,measure_type,expected_noise", NOISE_CASES)
 def test_noise_classification(hs_code: str, measure_type: str, expected_noise: bool) -> None:
     result = is_measure_noise(hs_code, measure_type)
-    label = "noise" if expected_noise else "legitimate"
+    label = "noise" if expected_noise else "retained"
     assert result == expected_noise, (
-        f"{hs_code} + {measure_type}: expected {label}, got {'noise' if result else 'legitimate'}"
+        f"{hs_code} + {measure_type}: expected {label}, got {'noise' if result else 'retained'}"
     )
 
 

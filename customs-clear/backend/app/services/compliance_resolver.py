@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
+import json
 import re
 from dataclasses import dataclass
-from typing import Any, Callable
+from typing import Any, Callable, Iterable
 
 from loguru import logger
 from sqlalchemy import or_
@@ -44,6 +45,184 @@ def _norm_hs(raw: Any) -> str:
 
 def _norm_text(*parts: str) -> str:
     return " ".join(str(p or "") for p in parts).strip().lower()
+
+
+_ENTITY_LEGAL_SUFFIXES = frozenset(
+    {
+        "ao",
+        "co",
+        "corp",
+        "corporation",
+        "inc",
+        "incorporated",
+        "jsc",
+        "limited",
+        "llc",
+        "ltd",
+        "ooo",
+        "pjsc",
+        "зао",
+        "оао",
+        "ооо",
+        "пао",
+    }
+)
+_ENTITY_BROAD_TOKENS = frozenset(
+    {
+        "bank",
+        "company",
+        "entity",
+        "group",
+        "holding",
+        "international",
+        "of",
+        "the",
+        "trading",
+        "банк",
+        "группа",
+        "компания",
+        "международная",
+        "организация",
+        "холдинг",
+    }
+)
+
+
+@dataclass(frozen=True)
+class _EntityNameMatch:
+    row: Any
+    matched_name: str
+    method: str
+    score: float
+    blocking: bool
+
+
+def _entity_name_tokens(raw: Any) -> list[str]:
+    """Normalize an entity name to literal Unicode alphanumeric tokens.
+
+    SQL wildcard characters and punctuation never survive this step, so input
+    such as ``%`` or ``_`` cannot turn into a match-all predicate.
+    """
+    normalized = re.sub(r"[_\W]+", " ", str(raw or "").casefold(), flags=re.UNICODE)
+    return [token for token in normalized.split() if token and token not in _ENTITY_LEGAL_SUFFIXES]
+
+
+def _normalized_entity_name(raw: Any) -> str:
+    return " ".join(_entity_name_tokens(raw))
+
+
+def _distinctive_entity_tokens(raw: Any) -> list[str]:
+    return [
+        token
+        for token in _entity_name_tokens(raw)
+        if token not in _ENTITY_BROAD_TOKENS and len(token) >= 3
+    ]
+
+
+def _verified_entity_shape(raw: Any) -> bool:
+    all_tokens = _entity_name_tokens(raw)
+    distinctive = _distinctive_entity_tokens(raw)
+    if len(distinctive) >= 2:
+        return sum(len(token) for token in distinctive) >= 8
+    if len(distinctive) == 1:
+        token = distinctive[0]
+        # A single distinctive official name can be conclusive only when it is
+        # long enough, or when the full name contains another non-legal token.
+        return len(token) >= 7 or (len(token) >= 5 and len(all_tokens) >= 2)
+    return False
+
+
+def _classify_entity_name_match(query: Any, candidate: Any) -> tuple[str, float, bool] | None:
+    query_norm = _normalized_entity_name(query)
+    candidate_norm = _normalized_entity_name(candidate)
+    if not query_norm or not candidate_norm:
+        return None
+
+    query_distinctive = set(_distinctive_entity_tokens(query))
+    candidate_distinctive = set(_distinctive_entity_tokens(candidate))
+    verified_shape = _verified_entity_shape(query)
+    if query_norm == candidate_norm:
+        return (
+            "name_exact_verified" if verified_shape else "name_ambiguous",
+            1.0,
+            verified_shape,
+        )
+
+    # Legal/generic suffix differences are accepted only when at least two
+    # distinctive tokens agree exactly. This is deterministic, not fuzzy.
+    if (
+        verified_shape
+        and len(query_distinctive) >= 2
+        and query_distinctive == candidate_distinctive
+    ):
+        return "name_strong_verified", 0.97, True
+
+    query_tokens = _entity_name_tokens(query)
+    candidate_tokens = _entity_name_tokens(candidate)
+    if any(
+        len(token) >= 4
+        and any(token == other or token in other or other in token for other in candidate_tokens)
+        for token in query_tokens
+        if token not in _ENTITY_LEGAL_SUFFIXES
+    ):
+        return "name_ambiguous", 0.5, False
+    return None
+
+
+def _parse_entity_aliases(raw: Any) -> list[str]:
+    text = str(raw or "").strip()
+    if not text:
+        return []
+    try:
+        payload = json.loads(text)
+        if isinstance(payload, list):
+            return [str(value).strip() for value in payload if str(value or "").strip()]
+    except (TypeError, ValueError, json.JSONDecodeError):
+        pass
+    return [part.strip() for part in re.split(r"[;,|\n]+", text) if part.strip()]
+
+
+def _escape_like_literal(value: str) -> str:
+    return value.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+
+
+def _entity_candidate_conditions(column: Any, raw: Any) -> list[Any]:
+    tokens = sorted(set(_distinctive_entity_tokens(raw)), key=lambda value: (-len(value), value))
+    if not tokens:
+        return []
+    conditions: list[Any] = []
+    for token in tokens[:3]:
+        for variant in {token, token.upper()}:
+            literal = _escape_like_literal(variant)
+            conditions.append(column.ilike(f"%{literal}%", escape="\\"))
+    return conditions
+
+
+def _best_entity_match(
+    query: Any,
+    candidates: Iterable[tuple[Any, Iterable[str]]],
+) -> _EntityNameMatch | None:
+    best: _EntityNameMatch | None = None
+    rank = {"name_exact_verified": 3, "name_strong_verified": 2, "name_ambiguous": 1}
+    for row, names in candidates:
+        for candidate_name in names:
+            classified = _classify_entity_name_match(query, candidate_name)
+            if classified is None:
+                continue
+            method, score, blocking = classified
+            current = _EntityNameMatch(
+                row=row,
+                matched_name=str(candidate_name or "").strip(),
+                method=method,
+                score=score,
+                blocking=blocking,
+            )
+            if best is None or (rank[current.method], current.score) > (
+                rank[best.method],
+                best.score,
+            ):
+                best = current
+    return best
 
 
 def _hs_prefix_chain(hs_code: str, *, min_len: int = 2) -> list[str]:
@@ -875,6 +1054,37 @@ def _ai_keyword_warnings(hs: str, item_data: dict[str, Any] | None) -> list[dict
     return out
 
 
+def _find_ofac_entity_match(name: str, db: Session) -> _EntityNameMatch | None:
+    conditions = [
+        *_entity_candidate_conditions(OfacSdnList.name, name),
+        *_entity_candidate_conditions(OfacSdnList.aliases, name),
+    ]
+    if not conditions:
+        return None
+    rows = db.query(OfacSdnList).filter(or_(*conditions)).limit(250).all()
+    return _best_entity_match(
+        name,
+        (
+            (
+                row,
+                [str(row.name or "").strip(), *_parse_entity_aliases(row.aliases)],
+            )
+            for row in rows
+        ),
+    )
+
+
+def _find_eu_entity_match(name: str, db: Session) -> _EntityNameMatch | None:
+    conditions = _entity_candidate_conditions(EuSanctionsList.entity_name, name)
+    if not conditions:
+        return None
+    rows = db.query(EuSanctionsList).filter(or_(*conditions)).limit(250).all()
+    return _best_entity_match(
+        name,
+        ((row, [str(row.entity_name or "").strip()]) for row in rows),
+    )
+
+
 def _check_sanction_risks(
     hs_code: str,
     country: str | None,
@@ -885,7 +1095,7 @@ def _check_sanction_risks(
     Проверка санкционных рисков:
     - sanction_import_risks по иерархии префиксов HS (10/9/.../4);
     - country_risks + geo_special_duties(embargo);
-    - entity-check по OFAC/EU (ILIKE) для производителя/контрагента.
+    - entity-check по OFAC/EU через literal query и проверку полного имени.
     """
     docs: list[dict[str, Any]] = []
     blocking_issue = False
@@ -1009,51 +1219,76 @@ def _check_sanction_risks(
         entities: list[str] = []
         seen_entities: set[str] = set()
         for raw in entities_raw:
-            name = str(raw or "").strip()
-            key = name.casefold()
-            if not name or key in seen_entities:
+            name = str(raw or "").strip()[:512]
+            key = _normalized_entity_name(name)
+            if not key or key in seen_entities:
                 continue
             seen_entities.add(key)
             entities.append(name)
         for name in entities[:8]:
-            if len(name) < 3:
-                continue
-            ofac_hit = db.query(OfacSdnList).filter(OfacSdnList.name.ilike(f"%{name}%")).first()
-            if ofac_hit:
-                blocking_issue = True
+            ofac_match = _find_ofac_entity_match(name, db)
+            if ofac_match:
+                ofac_hit = ofac_match.row
+                if ofac_match.blocking:
+                    blocking_issue = True
+                status = "CRITICAL_RISK" if ofac_match.blocking else "WARNING"
                 docs.append(
                     {
                         "doc_type": "SANCTION_CONTROL",
                         "legal_ref": "OFAC SDN",
-                        "title": f"Контрагент/производитель найден в SDN: {name}",
-                        "detail": f"Совпадение с OFAC SDN: {ofac_hit.name} ({ofac_hit.type}). Требуется блокирующая проверка.",
+                        "title": (
+                            f"Контрагент/производитель найден в SDN: {name}"
+                            if ofac_match.blocking
+                            else f"Возможное совпадение с SDN требует проверки: {name}"
+                        ),
+                        "detail": (
+                            f"Совпадение с OFAC SDN: {ofac_hit.name} ({ofac_hit.type}); "
+                            f"сопоставленное имя: {ofac_match.matched_name}. "
+                            + (
+                                "Подтверждено полное/сильное совпадение наименования."
+                                if ofac_match.blocking
+                                else "Совпадение неоднозначно и не является основанием для автоматической блокировки."
+                            )
+                        ),
                         "source": "ofac_sdn_list",
                         "matched_entity": str(ofac_hit.name or "").strip() or None,
-                        "match_method": "name_substring",
-                        "priority": 1700,
+                        "match_method": ofac_match.method,
+                        "priority": 1700 if ofac_match.blocking else 1200,
                         "registry_match": None,
-                        "compliance_status": "CRITICAL_RISK",
+                        "compliance_status": status,
                     }
                 )
-            eu_hit = db.query(EuSanctionsList).filter(EuSanctionsList.entity_name.ilike(f"%{name}%")).first()
-            if eu_hit:
+            eu_match = _find_eu_entity_match(name, db)
+            if eu_match:
+                eu_hit = eu_match.row
+                if eu_match.blocking:
+                    blocking_issue = True
                 docs.append(
                     {
                         "doc_type": "SANCTION_CONTROL",
                         "legal_ref": f"EU sanctions / HS {eu_hit.hs_code or 'N/A'}",
-                        "title": f"Контрагент/производитель найден в списке санкций ЕС: {name}",
-                        "detail": str(eu_hit.description or eu_hit.entity_name or "")[:1200],
+                        "title": (
+                            f"Контрагент/производитель найден в списке санкций ЕС: {name}"
+                            if eu_match.blocking
+                            else f"Возможное совпадение со списком санкций ЕС требует проверки: {name}"
+                        ),
+                        "detail": (
+                            str(eu_hit.description or eu_hit.entity_name or "")[:900]
+                            + (
+                                " Подтверждено полное/сильное совпадение наименования."
+                                if eu_match.blocking
+                                else " Совпадение неоднозначно и не является основанием для автоматической блокировки."
+                            )
+                        )[:1200],
                         "source": "eu_sanctions_list",
                         "matched_entity": str(eu_hit.entity_name or "").strip() or None,
                         "matched_hs_prefix": str(eu_hit.hs_code or "").strip() or None,
-                        "match_method": "name_substring",
-                        "priority": 1450,
+                        "match_method": eu_match.method,
+                        "priority": 1650 if eu_match.blocking else 1200,
                         "registry_match": None,
-                        "compliance_status": "CRITICAL_RISK" if (eu_hit.hs_code and hs.startswith(str(eu_hit.hs_code))) else "WARNING",
+                        "compliance_status": "CRITICAL_RISK" if eu_match.blocking else "WARNING",
                     }
                 )
-                if eu_hit.hs_code and hs.startswith(str(eu_hit.hs_code)):
-                    blocking_issue = True
     except Exception as e:
         logger.warning("_check_sanction_risks: entity sanctions lookup failed: {}", e)
 

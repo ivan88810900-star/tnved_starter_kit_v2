@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from typing import Any
 
+import pytest
+
 from scripts import run_e2e_scenarios as e2e
 
 
@@ -142,6 +144,23 @@ def test_full_data_minimums_require_every_core_table() -> None:
     exact_minimums["tnved_commodities"] -= 1
     assert e2e._meets_full_data_minimums(exact_minimums) is False
     assert e2e._meets_full_data_minimums({}) is False
+
+
+def test_primary_search_gate_rejects_like_fallback() -> None:
+    class Client:
+        def get(self, path: str, **kwargs) -> _Response:  # noqa: ANN003
+            assert path == "/api/v1/tnved/search"
+            return _Response(
+                200,
+                {
+                    "results": [{"code": "8509400000", "name": "Прибор"}],
+                    "search": {"strategy": "like_fallback"},
+                },
+            )
+
+    context = e2e.AcceptanceContext(require_primary_search=True)
+    with pytest.raises(AssertionError, match="Недопустимая стратегия"):
+        e2e.scenario_search_and_card(Client(), context)  # type: ignore[arg-type]
 
 
 def test_json_report_is_atomic_and_serializes_metrics(tmp_path) -> None:
