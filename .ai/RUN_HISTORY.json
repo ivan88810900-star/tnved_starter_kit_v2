@@ -1,5 +1,5 @@
 {
-  "board_revision": 82,
+  "board_revision": 83,
   "runs": [
     {
       "head_sha": null,
@@ -140,6 +140,16 @@
       "status": "FINISHED",
       "task_id": "TARIFF-AD30-REVIEW-CANDIDATE-001",
       "updated_at": "2026-09-12T22:01:34.758686+00:00"
+    },
+    {
+      "head_sha": "c5750fb266dd4946855eda0ef2f2083f32e5356f",
+      "role": "A3",
+      "run_id": "b2fd57ee8ed948cca6cdb2a51195f94b",
+      "session_id": "/root/a3_ad30_review",
+      "started_at": "2026-09-12T22:02:19.551444+00:00",
+      "status": "RUNNING",
+      "task_id": "TARIFF-AD30-REVIEW-CANDIDATE-001",
+      "updated_at": "2026-09-12T22:02:19.551463+00:00"
     }
   ],
   "schema_version": 1
