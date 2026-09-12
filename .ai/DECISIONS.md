@@ -78,3 +78,16 @@ overlay не меняет структуру, AI ничего не изменя�
 ---
 
 *Журнал обновляется при принятии каждого нового ADR.*
+
+
+## ORCH-20260912 — Autonomous development mandate
+
+Accepted by Ivan's explicit task on 2026-09-12: A0 coordinates actual OpenAI
+subagents, initial concurrency three; GitHub and .ai are durable truth; independent
+A5 and optional no-secret Claude A6. Routine commits/agent pushes/PRs/technical
+fixes are preauthorized. Protected production actions and unresolved legal/product
+choices remain owner-only. See orchestration/CONTRACT.md.
+
+Implementation is a separate main-based draft PR, not a merge of PR #187 or #189.
+Existing feature-branch decisions are read from that branch when executing product
+tasks; this main-based historical decision registry does not supersede them.

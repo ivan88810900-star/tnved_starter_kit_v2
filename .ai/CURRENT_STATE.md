@@ -1,3 +1,24 @@
+# Autonomous orchestration status — 2026-09-12
+
+Infrastructure branch: `agent/orchestration-v1`, based on main `9712c7b1380af7457fb6c89ef7710d8cda0e968b`.
+This section is the orchestration status; historical product notes follow unchanged.
+For product work, fetch current PR #187 and its .ai/source-ref decisions first.
+
+- Discovery: PR #187 draft `22a7df5590a7442d943d89af285feb1228e80938` ->
+  canonical `a5a811e618ffa001b39cb491bbbf7a9ceb93f9a7`; CI 34714625756 success.
+- PR #189 draft `1be6da4d38694a299280b26a596b8f346199e2bf`, conflicting old pilot;
+  its CI success does not establish autonomous multi-agent capability.
+- main has no workflows at discovery; GitHub reports protected=false. No
+  repository permission/secret/branch protection setting was changed.
+- Native Work subagents available. OpenAI/Anthropic API credentials and Codex
+  exec-server absent from this session; no claim of live API or A6 verification.
+- Product flags not touched. Accepted NTM full advisory default ON is preserved;
+  enforcement/production activation is not authorized. Deployed values uninspected.
+- Current task board and evidence: TASK_BOARD.json, RUN_HISTORY.json, FINDINGS.json,
+  AGENT_OWNERSHIP.json and orchestration/. No chat-memory dependence.
+
+---
+
 # CURRENT_STATE.md — Текущее состояние проекта
 
 > Дата: 2026-06-26

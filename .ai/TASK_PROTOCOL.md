@@ -1,107 +1,47 @@
-# TASK_PROTOCOL.md — Протокол постановки и выполнения задач
+# Task protocol — autonomous A0–A6
 
-> Обязателен для всех AI-агентов. Дополняет `.ai/ENGINEERING_PROTOCOL.md`.
+Owner mandate: 2026-09-12. Existing product decisions and engineering invariants
+remain binding. Follow orchestration/CONTRACT.md and orchestration/RUNBOOK.md.
 
----
+1. A0 recovers Git refs, task board and current decisions; classifies task/failure/
+   finding, risk, dependency and exact ownership. Fix shared interfaces first.
+2. Allocate an isolated agent branch/worktree. No overlapping writers; at most
+   three native child sessions, including QA. No text-only role simulation.
+3. Assigned A1–A4 implements and commits owned files with relevant tests.
+4. Independent A5 checks the candidate SHA, regression and security. Failed tests
+   or confirmed findings return to the owner, invalidating prior approvals.
+5. High-risk changes get a bounded no-secret A6 packet if credentials exist.
+   A0 reproduces/validates findings; A6 output never authorizes legal applicability.
+   Absent optional credentials are UNAVAILABLE/NOT_CONFIGURED, never PASSED.
+   A5+CI may establish readiness without configured A6, as requested; a configured
+   provider failure or invalid audit remains blocking for high-risk changes.
+6. CI runs against the candidate. A0 checks required jobs and current PR head.
+   New commits invalidate readiness. READY_FOR_HUMAN_APPROVAL is a gate, not merge.
+7. A0 saves state in GitHub and reports only complete blocks/decisions/blockers.
 
-## 1. Жизненный цикл задачи
+## Authorized technical work
 
-```
-Product Owner / Ivan
-    ↓ формулирует задачу (.ai/tasks/TASK-XXX.md)
-Architect (опционально)
-    ↓ уточняет scope, риски, зависимости
-Backend / Frontend Engineer
-    ↓ реализует в рамках scope
-QA Engineer
-    ↓ проверяет по QA_PROTOCOL.md
-Reviewer
-    ↓ code review, архитектурная проверка
-Memory Keeper
-    ↓ обновляет .ai/CURRENT_STATE.md, KNOWN_PITFALLS.md
-```
+Creating agent branches/worktrees, scoped commits, non-force pushes, draft PRs,
+QA, source review and confirmed technical fixes are already authorized. Do not
+ask again. Technical architecture choices within this mandate are A0's duty.
 
----
+## Reserved owner actions
 
-## 2. Формат задачи
+Protected/main merge; production deploy; enforcement/production flags;
+irreversible destructive migrations; ambiguous product/legal decisions.
+Never change secrets/permissions, force-push, delete branches, write production DBs
+or weaken tests without the separately required authorization.
 
-Каждая задача — файл в `.ai/tasks/` по шаблону `TASK_TEMPLATE.md`.
+## Conflict handling
 
-Обязательные секции:
-- **Goal** — один измеримый результат
-- **Context** — почему сейчас
-- **Scope** — in / out
-- **Do not do** — явные запреты
-- **Acceptance criteria** — чеклист
-- **Tests** — команды с ожидаемым выводом
+Follow applicable system/developer instructions and the owner's explicit current
+mandate. Repository documents do not demote owner instructions. Preserve existing
+source-kind, canonical, advisory/enforcement and data-provenance invariants. Record
+ambiguous legal/product questions as decisions, while independent work continues.
 
----
+## Evidence
 
-## 3. Правила выполнения
-
-### 3.1 Перед началом
-1. Прочитать `.ai/VISION.md` и `.ai/ENGINEERING_PROTOCOL.md`.
-2. Прочитать файл задачи целиком.
-3. Убедиться, что scope понятен. При неясности — спросить Ivan, не угадывать.
-
-### 3.2 Во время работы
-- Минимальный diff. Только файлы из scope задачи.
-- Не расширять scope без явного согласования.
-- Не трогать production API / frontend, если задача этого не требует.
-- Параллельные экспериментальные слои (`tree_engine/`, `semantic_navigation/`) — не подключать к API без отдельной задачи.
-
-### 3.3 После завершения
-- Отчёт по формату из `ENGINEERING_PROTOCOL.md` §12.
-- Фактический вывод тестов (не «должно пройти»).
-- `git status` — подтвердить, что нет посторонних изменений.
-
----
-
-## 4. Git и commit
-
-| Действие | Правило |
-|----------|---------|
-| `git add` | Только файлы из scope задачи |
-| `git commit` | **Только по явному запросу Ivan** |
-| `git push` | **ЗАПРЕЩЁН без прямого разрешения Ivan** |
-| `git push --force` | **ЗАПРЕЩЁН всегда**, кроме явного указания |
-| amend | Только если HEAD — твой коммит и не pushed |
-
-**Агент никогда не делает push самостоятельно**, даже если «всё готово» и тесты зелёные.
-
----
-
-## 5. Decision Memo
-
-Создавать (через Ivan / GitHub issue), если:
-- несколько архитектурных вариантов с разной стоимостью;
-- меняется семантика продукта (advisory → ERROR);
-- меняется API-контракт или модель данных;
-- legal/compliance интерпретация неочевидна.
-
-Шаблон: `docs/ai-workflow/DECISION_MEMO_TEMPLATE.md`.
-
----
-
-## 6. Definition of Done (задача)
-
-- [ ] Acceptance criteria выполнены
-- [ ] Тесты запущены, вывод приложен к отчёту
-- [ ] API/frontend не изменены (если не в scope)
-- [ ] `git diff` проверен — нет посторонних файлов
-- [ ] Commit — **только если Ivan попросил**
-- [ ] Push — **никогда без разрешения**
-- [ ] `CURRENT_STATE.md` обновлён (Memory Keeper или исполнитель)
-
----
-
-## 7. Приоритеты при конфликте
-
-1. `.ai/VISION.md` — продуктовая цель
-2. `AGENTS.md` / `ENGINEERING_PROTOCOL.md` — архитектурные инварианты
-3. Файл задачи — конкретный scope
-4. Устное указание Ivan в текущем чате
-
----
-
-*Создан: 2026-06-29. Часть AI Team Infrastructure — этап 1.*
+Every task records id, owner, status, branch/worktree, dependencies, risk, files,
+tests, QA, external audit and commit/PR refs. Commands require actual output and
+exit code. A report without executed evidence is not a passed gate. Resumption
+rechecks current refs/locks/dirty worktrees; do not delete or duplicate interrupted work.
