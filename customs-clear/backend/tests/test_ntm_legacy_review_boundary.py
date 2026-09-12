@@ -182,3 +182,27 @@ def test_candidate_read_has_one_joined_select_and_no_write_statements(database):
     finally:
         event.remove(engine, "before_cursor_execute", capture)
     assert len(statements) == 1 and statements[0].lstrip().upper().startswith("SELECT")
+
+
+@pytest.mark.parametrize("stored,requested", [
+    ("ZZ", "CN"), ("CN", "ZZ"), ("ZZ", "ZZ"), ("EU", "CN"), ("CN", "EU"),
+    ("CN", ["CN"]), ("CN", False), ("CN", "中国"), ("CN", "CN,DE"), ("CN,DE", "CN"),
+])
+def test_unknown_country_identity_never_proves_exclusion(database, stored, requested):
+    seed(database, country_iso=stored)
+    rows = read(database, country=requested)
+    assert len(rows) == 1
+    assert rows[0]["applicability"] == "needs_clarification"
+    assert "country_unverified" in rows[0]["context_review_reasons"]
+    assert rows[0]["used_for_missing_check"] is False
+
+
+@pytest.mark.parametrize("stored,requested,expected", [
+    ("CN", "DE", 0), ("DE", "CN", 0), (" cn ", "CN", 1), ("DE", " de ", 1),
+    ("RU", "CN", 0), ("CN", "RU", 0),
+])
+def test_existing_country_identities_preserve_known_scope(database, stored, requested, expected):
+    seed(database, country_iso=stored)
+    rows = read(database, country=requested)
+    assert len(rows) == expected
+    assert all("country_unverified" not in row["context_review_reasons"] for row in rows)

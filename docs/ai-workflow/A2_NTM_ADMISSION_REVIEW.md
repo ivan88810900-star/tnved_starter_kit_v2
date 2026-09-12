@@ -7,11 +7,13 @@ plus A0 shared admission dependency `22473e172c042f08cd5b72aece5dd221c54bdc9d`.
 ## Recovery and verification status
 
 The executor disconnected after local Tamdoc commits `d620fff` and `b3b117a`.
-This remote checkpoint reconstructs their confirmed behavior from the actual
-GitHub source blob `543d2973f06eeb40d53f640e673d1c80effc4fa3` and recorded
-edits. It is a new tree; old local test counts and HTTP smoke do not validate it.
-Fresh agent CI and independent A5 review are required before A0 integration.
-The unfinished historical legacy-v2 reader changes are not included here.
+Recovery commit `bfc70cb621c9267ab3945f0e79c2a1cccb720000` reconstructs their
+confirmed behavior from actual GitHub source blob
+`543d2973f06eeb40d53f640e673d1c80effc4fa3` and recorded edits. Historical legacy-v2
+reader changes were excluded from that first recovery checkpoint and are added
+in `3335f808cff072e12ea4120cef72c9d1595cf86d`, described below. These are new remote
+trees; old local test counts and HTTP smoke are not their validation evidence.
+Independent A5 review and A0 integration remain required.
 
 ## Root causes and corrected behavior
 
@@ -52,14 +54,26 @@ nonmutation, archive staging/automatic approval combinations, prefix expansion,
 TR catalog protection, source freshness and preserved rejection/listing.
 The agent workflow supplies an explicit temporary `DATABASE_URL` before imports.
 No external mirror, AI request or application DB is used for these fixtures.
-Current CI results must be attached to the new remote SHA by A0/A5.
+Fresh GitHub checks on the exact remote trees:
+
+- `bfc70cb`: agent QA [34715094064](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/34715094064)
+  passed, 177 tests passed and 1 skipped; full CI
+  [34715094035](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/34715094035) passed.
+- `3335f808`: agent QA [34715397545](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/34715397545)
+  passed, 205 tests passed and 1 skipped, including 28 historical boundary cases;
+  full CI [34715397563](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/34715397563) passed.
+  The full CI includes backend NTM safety, frontend tests/types/build, scheduled
+  workflow contracts and disposable local staging smoke. Official evidence
+  acquisition was skipped on the agent branch; no deployment occurred.
+
+These checks do not replace independent A5 hostile-case review or the final
+integration checks on the combined PR tree.
 
 ## Remaining limitations
 
-Historical mirror/v2 rows need a separate read-path correction: persisted
-code-only `definite` is not reviewed applicability, and the old reader can borrow
-a sibling leaf and ignore dates, direction, country and exclusions. That
-reproduction and unfinished code must not be described as fixed by this commit.
+The historical legacy-v2 reader defect described below is corrected in
+`3335f808`. This is a safe interpretation boundary for that reader, not an audit
+or cleanup of all historical mirror records or every other legacy read path.
 The legacy candidate table stores one HS prefix and bounded excerpts; it is not
 an immutable official manifest or a complete representation of document rules.
 
@@ -72,7 +86,7 @@ A3's retained Decision 121/2026 source references earlier Decisions 12/2021 and
 numeric/product scope. Positive remedy interpretation remains blocked pending
 the dependent official originals and reviewed temporal/product applicability.
 
-## Historical legacy-v2 reader correction (next checkpoint)
+## Historical legacy-v2 reader correction (`3335f808`)
 
 The separate local reproduction found a persisted exact-code legacy row with
 expired validity, export direction, country restriction and exclusion text being
@@ -106,5 +120,31 @@ unknown-TR regressions remain checked. The new
 tests/test_ntm_legacy_review_boundary.py covers persisted/forged approval,
 sibling leakage, broader family retention, both row/measure historical boundaries,
 direction/country/exclusion constraints, malformed metadata, no-write reads and
-context propagation. Fresh CI and independent A5 review of this exact new tree
-are required; the disconnected local pre-adaptation run is not completion proof.
+context propagation. Fresh CI results are recorded above. Independent A5 review
+is still required; the disconnected local pre-adaptation run is not completion
+proof.
+
+## Independent country-marker finding and corrective checkpoint
+
+A5 independently confirmed that the first historical-reader checkpoint accepted
+any two ASCII letters as a known country: stored `ZZ` and requested `CN` silently
+dropped a candidate, while `ZZ`/`ZZ` omitted the country uncertainty reason.
+The correction recognizes only the existing project's 161 country dictionary
+keys in `scripts/seed_tariff_preferences.py` (at `3335f808`) plus `RU` already
+listed in `frontend/src/pages/Calculator.tsx`. Only identities are copied;
+preference groups, coefficients, legal references and seed execution are not
+imported. No new legal rule or country table is introduced.
+
+This set is deliberately incomplete. An unlisted valid country, unknown marker,
+aggregate such as `EU`, or malformed stored/requested value remains a candidate
+with `country_unverified`, never an exclusion inferred from an unknown token.
+Known normalized identities still permit a technical mismatch filter; all retained
+legacy candidates remain unreviewed. Agent fixtures add both unknown and known
+country cases; independent A5 fixtures cover `ZZ`/`CN`, `CN`/`ZZ`, `ZZ`/`ZZ`
+and `EU`/`CN`. Fresh corrective-checkpoint CI is required.
+
+The one skip in the earlier agent profile is the unchanged
+`test_ntm_v2_legacy_measures_import.py::test_smoke_real_db_sample`: it requires a
+populated legacy catalog in the global test database. Agent CI uses a fresh
+disposable DB; synthetic per-test regressions run independently. No application
+database was used to satisfy that optional historical-data smoke.

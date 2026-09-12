@@ -61,6 +61,25 @@ def _stored_date_status(rule: Any, measure: Any, ref: date) -> str:
         return "unverified"
     return "active"
 
+# Bounded technical identities already listed in scripts/seed_tariff_preferences.py
+# (dictionary keys only) and Calculator.tsx (RU). This is not a complete country
+# registry, tariff eligibility or legal applicability. Unlisted/aggregate tokens
+# remain unverified; they cannot establish a country mismatch.
+_LEGACY_COUNTRY_IDENTITIES: frozenset[str] = frozenset({
+    "AE", "AF", "AL", "AM", "AR", "AT", "AU", "AZ", "BA", "BD", "BE", "BF", "BG", "BH",
+    "BI", "BJ", "BO", "BR", "BW", "BY", "BZ", "CA", "CD", "CF", "CG", "CH", "CI", "CL",
+    "CM", "CN", "CO", "CR", "CU", "CY", "CZ", "DE", "DJ", "DK", "DO", "DZ", "EC", "EE",
+    "EG", "ER", "ES", "ET", "FI", "FJ", "FR", "GA", "GB", "GE", "GH", "GM", "GN", "GQ",
+    "GR", "GT", "GW", "GY", "HK", "HN", "HR", "HT", "HU", "ID", "IE", "IL", "IN", "IQ",
+    "IR", "IS", "IT", "JM", "JO", "JP", "KE", "KG", "KH", "KM", "KP", "KR", "KW", "KZ",
+    "LA", "LB", "LK", "LR", "LS", "LT", "LU", "LV", "MA", "MD", "ME", "MG", "MK", "ML",
+    "MM", "MN", "MR", "MT", "MU", "MW", "MX", "MY", "MZ", "NA", "NE", "NG", "NI", "NL",
+    "NO", "NP", "NZ", "OM", "PA", "PE", "PH", "PK", "PL", "PT", "PY", "QA", "RO", "RS",
+    "RU", "RW", "SA", "SB", "SD", "SE", "SG", "SI", "SK", "SL", "SN", "SO", "SR", "SS",
+    "ST", "SV", "SY", "TD", "TG", "TH", "TJ", "TL", "TN", "TR", "TT", "TW", "TZ", "UA",
+    "UG", "US", "UY", "UZ", "VN", "YE", "ZA", "ZM",
+})
+
 _LEN_TO_SOURCE_LEVEL: dict[int, str] = {
     10: "exact",
     8: "8_digit",
@@ -342,12 +361,13 @@ def _find_v2_legacy_measures_for_code(
                 continue
         else:
             reasons.append("direction_unverified")
-        source_country = (rule.country_iso or "").strip().upper()
-        requested_country = (country or "").strip().upper()
-        if source_country:
-            if (source_country == "EU" or len(source_country) != 2 or not source_country.isascii()
-                    or not source_country.isalpha() or len(requested_country) != 2
-                    or not requested_country.isascii() or not requested_country.isalpha()):
+        source_country = rule.country_iso.strip().upper() if isinstance(rule.country_iso, str) else ""
+        requested_country = country.strip().upper() if isinstance(country, str) else ""
+        if country is not None and requested_country not in _LEGACY_COUNTRY_IDENTITIES:
+            reasons.append("country_unverified")
+        if rule.country_iso:
+            if (source_country not in _LEGACY_COUNTRY_IDENTITIES
+                    or requested_country not in _LEGACY_COUNTRY_IDENTITIES):
                 reasons.append("country_unverified")
             elif source_country != requested_country:
                 continue
