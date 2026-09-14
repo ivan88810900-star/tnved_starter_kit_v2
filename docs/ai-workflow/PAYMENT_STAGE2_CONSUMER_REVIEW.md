@@ -125,5 +125,8 @@ lockfile. Only two existing text expectations changed; no scenarios or safety
 assertions were removed. Build tooling emitted its existing SWC/esbuild and
 Browserslist notices, without a test, type or build failure.
 
-Independent A5 acceptance and the exact combined candidate's CI remain the final
-integration gates. This document does not claim those results in advance.
+The owner record above preceded independent acceptance. A5 subsequently accepted
+the exact A4 copy/test/doc blob after replaying the same 10 tests. Combined
+candidate `599c3af0` passed full CI 34829794572 and admission 34829794668; see
+[publication evidence](evidence/payment-a6-stage2-publication-20260914.json).
+Final feature HEAD and documentation-child push/PR checks are recorded in PR #187.

@@ -1,8 +1,8 @@
 # A6 payment audit, stage 2
 
-Date: 2026-09-14. Status: owner corrections implemented and locally tested;
-independent A5 acceptance and final CI pending. This document grants no legal
-applicability or admission.
+Date: 2026-09-14. Status: owner corrections independently accepted by A5;
+exact published candidate CI/admission passed. The historical owner execution
+record below is preserved. This document grants no legal applicability or admission.
 
 ## Actual execution boundary
 
@@ -117,3 +117,13 @@ Later replay uses an explicit temporary application database path. The resolver
 is outside this correction's scope. These setup errors were not treated as feature
 defects or fixed by weakening tests. The final ordered CI profile remains a
 required gate.
+
+## Independent completion record
+
+A5 independently accepted the unchanged owner/test blobs: 97 new cases, a
+335-case combined profile, 12 fresh-process HTTP cases and 10 consumer frontend
+tests passed. Exact published candidate `599c3af0` passed full CI 34829794572
+(5,615 backend / 50 frontend plus types/build/staging/workflows) and admission
+34829794668 (2,422). Known skips/warnings and exact identities are recorded in
+[evidence](evidence/payment-a6-stage2-publication-20260914.json). Final feature
+HEAD and documentation-child push/PR checks are recorded in PR #187.

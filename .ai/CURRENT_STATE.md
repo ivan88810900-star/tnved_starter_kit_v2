@@ -11,8 +11,14 @@ A1 исправил payment-дефекты, независимо воспрои�
 `dab1f8aa` и base `a5a811e6`. A5 одобрил неизменённый код: 97 новых regressions
 (49 author + 48 independent), объединённый профиль 335 passed, 2 dependency
 warnings; 12 HTTP-сценариев через свежий uvicorn и реальные curl прошли.
-Полный CI точного публикуемого кандидата остаётся обязательным следующим gate;
-прежние запуски не подтверждают новые изменения.
+Точный опубликованный кандидат `599c3af0` прошёл CI 34829794572:
+backend 5 615 passed, 2 skipped, 2 warnings, 85 subtests; frontend 50,
+TypeScript/build, staging smoke и workflow contracts успешны. Admission QA
+34829794668: 2 422 passed, 1 known skipped, 2 warnings, 85 subtests, 51 suite.
+[Publication evidence](../docs/ai-workflow/evidence/payment-a6-stage2-publication-20260914.json)
+сохраняет exact tree и 13 local→GitHub logical commit mappings. Финальные feature
+HEAD и push/PR CI документационного child фиксируются в PR #187; runtime/test
+blobs совпадают с проверенным кандидатом. Прежние CI не подменяют эти результаты.
 
 Закрыты унаследованные проблемы geo/preference, единиц fixed antidumping,
 FX без source/date provenance, потери FX в extended comparison, пустых/повреждённых
@@ -34,7 +40,7 @@ A4 проверил consumer contract и заменил вводящую в за
 72 default URLs + 11 isolated review targets; технический учёт не равен legal coverage.
 
 [Текущий TASK](tasks/TASK-PAYMENT-A6-STAGE2-001.md) фиксирует ownership и gate.
-Следующий этап после этой коррекции — оставшийся source-bound temporal/amendment,
+Следующий этап — оставшийся source-bound temporal/amendment,
 producer/nomenclature review AD30, затем другие ставки и продуктовые NTM исключения.
 Полный юридический охват остаётся частичным: verified FX, полная историческая
 применимость, manifest-bound human review и отдельное утверждение не добавлены.

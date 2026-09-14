@@ -1,6 +1,6 @@
 # TASK-PAYMENT-A6-STAGE2-001
 
-Status: INDEPENDENT_QA_PASSED; exact assembled CI/publication pending.
+Status: COMPLETED — bounded correction independently reviewed and exact candidate CI passed.
 Started 2026-09-14 under Ivan's explicit stage-2 audit request.
 
 ## Goal and current state
@@ -117,9 +117,31 @@ feature/test blobs after independent code review, 97 new cases (49 author + 48
 independent), a 12-suite combined profile of 335 passed / 2 dependency warnings,
 and 12 fresh-process uvicorn/curl HTTP cases. The source audit was independently
 accepted. A4's bounded copy/doc handoff was independently accepted after the
-same 10 frontend tests passed. Exact assembled GitHub CI remains a gate.
+same 10 frontend tests passed. Exact assembled GitHub CI passed as recorded below.
 
 The initial isolated fixture/profile-session and loopback namespace setup issues
 were corrected by QA without changing feature code or weakening assertions.
 No setup error is counted as an A6 product defect. Final evidence records the
 actual boundaries; a synthetic fixture is not a legal or production acceptance.
+
+## Exact published candidate acceptance
+
+Candidate `599c3af02a6f990226b47b8f76b802db6e2408c5`, tree
+`3b95f88a307f28b9f4044974ba4b5fd338b37b60`, reproduces the approved local
+`2f320926f30ab4eea5b2ec349525279b80ede1eb` tree exactly. Each of 13 logical
+Git Data commits was checked for exact local tree equality before publication.
+
+- Full CI 34829794572: 5,615 backend passed, 2 skipped, 2 warnings,
+  85 subtests; frontend 50, TypeScript/build, isolated staging and scheduled
+  workflow contracts passed. Optional acquisition was not requested.
+- Admission 34829794668: 2,422 passed, 1 known skipped, 2 warnings,
+  85 subtests, 51 explicit files; no previous suites removed.
+- A5 independently checked the published tree and exact CI/log results.
+  The final documentation-only child preserves approved runtime/test blobs;
+  final feature SHA and its push/PR CI are recorded in PR #187 after publication.
+
+[Independent local/runtime evidence](../../docs/ai-workflow/evidence/payment-a6-stage2-independent-qa-20260914.json),
+[publication mapping and CI](../../docs/ai-workflow/evidence/payment-a6-stage2-publication-20260914.json).
+This completes the declared A6 correction, not full legal rates/NTM coverage.
+Remaining source authority, temporal and product review is explicit in state/focus;
+no production, application database or enforcement change was performed.

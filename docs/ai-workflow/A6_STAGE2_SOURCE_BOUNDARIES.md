@@ -2,8 +2,10 @@
 
 Status: source/code audit completed by A3 and independently accepted by A5 on
 2026-09-14 after checking the code and both primary CBR pages. This acceptance
-concerns the documented source boundary, not rate admission or the pending
-implementation/CI gates.
+concerns the documented source boundary, not rate admission. This audit records
+the pre-correction `dab1f8aa` input. Subsequent owner repairs and exact candidate
+CI are recorded in [reconciliation](A6_PAYMENT_STAGE2_RECONCILIATION.md) and
+[publication evidence](evidence/payment-a6-stage2-publication-20260914.json).
 Observed 14 September 2026 against PR #187 feature commit
 `dab1f8aae5a114a51505763bf9ea0a0d8161ed38`.
 This is a read-only source-input audit, not A1's implementation report or a claim

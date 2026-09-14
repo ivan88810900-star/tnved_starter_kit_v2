@@ -8,12 +8,17 @@ Active
 
 2026-09-14
 
-## Current priority: publish the reviewed A6 stage-2 correction
+## Completed A6 stage-2 correction and next priority
 
 Actual recovery HEAD was `dab1f8aa`; A1's bounded corrections now have independent
 A5 code/regression/runtime acceptance: 97 new cases, 335-case combined profile
-and 12 fresh-process HTTP scenarios. Exact published full CI/admission remain
-required. A3 independently checked source boundaries; A4 preserves the shared
+and 12 fresh-process HTTP scenarios. Exact published candidate `599c3af0` passed
+CI 34829794572: backend 5,615 passed / 2 skipped / 2 warnings / 85 subtests,
+frontend 50, types/build/staging/workflows. Admission 34829794668 passed 2,422
+cases / 1 known skipped / 2 warnings / 85 subtests across 51 explicit suites.
+[Publication evidence](evidence/payment-a6-stage2-publication-20260914.json) records
+exact trees and commit mapping; final feature HEAD and documentation-child push/PR
+CI are recorded in PR #187. A3 independently checked source boundaries; A4 preserves the shared
 review contract and labels the quote's partial sum accurately.
 See [the stage-2 task](../../.ai/tasks/TASK-PAYMENT-A6-STAGE2-001.md) and
 [execution-backed classification](A6_PAYMENT_STAGE2_RECONCILIATION.md).
@@ -25,7 +30,7 @@ requests remain rejected. Existing provisional/applied, upward-coefficient,
 overlap and cent guards remain intact. The quote includes the already calculated
 recycling fee without adding a rate or changing VAT policy.
 
-After exact CI/publication, resume the outstanding AD30 temporal/amendment,
+Next, resume the outstanding AD30 temporal/amendment,
 producer and nomenclature review, then remaining rates and contextual NTM.
 Complete legal coverage and source admission remain partial; this repair does
 not authorize rates/FX or enable historical calculations. Production, application
