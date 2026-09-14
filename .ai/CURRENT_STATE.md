@@ -1,3 +1,30 @@
+# Autonomous orchestration status — 2026-09-12
+
+Infrastructure: PR #190, `agent/orchestration-v1` -> `main`.
+Verified code HEAD: `a6ba8474d8bbb8d299e9c88a003ea20218f42d4f`.
+Persistent runtime authority: `agent/orchestration-state` (state commits separate
+from code/QA/CI candidate SHAs). Read this branch's board on every wake-up.
+
+- 60 offline tests passed including independent A5 cases; CI 34717945276 and
+  34717942948 succeeded at the exact verified code HEAD.
+- Real native Work children `/root/smoke_rates` and `/root/smoke_sources` executed
+  isolated branches/worktrees. Independent `/root/a5_independent_qa` accepted both.
+- Both smoke branches passed separate GitHub CI, then integrated on the agent
+  infrastructure branch. No protected/main merge or production action occurred.
+- Claude packet built/validated, but A6 is NOT_CONFIGURED: no Anthropic key/model.
+  No request sent or external audit claimed. Native Work is the active runtime;
+  optional Agents API adapter is SAFE_BOOTSTRAP_ONLY and not live verified.
+- PR #187 remains on observed22a7df55, PR #189 is unchanged/conflicting old pilot.
+  Next bounded task: TARIFF-ADMISSION-RECHECK-001, read-only current payment review.
+- GitHub reported main protected=false; no permissions/secrets were changed.
+  Controller and coordinator guards are not external server branch protection.
+- Existing accepted NTM advisory default ON preserved; enforcement/production flags
+  not activated. Deployed values uninspected. Product source decisions live at the
+  current product ref, not the historical main notes below.
+
+
+---
+
 # CURRENT_STATE.md — Текущее состояние проекта
 
 > Дата: 2026-06-26

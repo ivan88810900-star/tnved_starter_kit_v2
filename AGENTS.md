@@ -53,16 +53,31 @@ Workflow kit: `docs/ai-workflow/`.
 
 ## AI team workflow
 
-| Роль | Инструмент | Ответственность |
-|------|------------|-----------------|
-| **Cursor** | Cursor IDE / Cloud Agents | Код, тесты, PR с отчётом |
-| **Codex** | ChatGPT Codex + GitHub | Ревью PR, следующие задачи, Decision Memo |
-| **Ivan** | GitHub merge, issues | Утверждение merge и стратегии |
-| **Strategic ChatGPT review** | Внешний чат | Арбитраж Decision Memo |
+The current owner mandate (2026-09-12) is autonomous A0–A6 development.
+Read `.ai/orchestration/CONTRACT.md` and `.ai/orchestration/RUNBOOK.md` first,
+then `.ai/TASK_BOARD.json`, `.ai/CURRENT_STATE.md`, `.ai/DECISIONS.md` and the
+active task's source-ref documents. Older Cursor handoff, routine Decision Memo,
+and per-commit approval clauses are superseded for this workstream.
 
-Цикл: `docs/ai-workflow/WORKFLOW.md`.
+A0 is the sole coordinator. Use real native OpenAI subagents, at most three
+concurrently, no recursive spawning. Assign an exclusive branch/worktree and
+exact file list before a writer starts. A1 rates/payments, A2 NTM, A3 source facts,
+A4 canonical classification/AI, A5 independent QA, optional A6 Claude audit.
+The author is never their sole reviewer. A0 independently validates A6 findings.
 
-Актуальный стратегический фокус: `docs/ai-workflow/CURRENT_PROJECT_FOCUS.md`.
+A0 may autonomously commit/push agent branches, fix technical defects, run tests,
+and open/update draft PRs. Never merge main/protected branches, deploy production,
+activate enforcement/production flags, change secrets/permissions, force-push,
+delete branches, write production DBs, or run destructive migrations. Do not weaken
+tests. Unresolved product/legal choices require an owner decision; routine technical
+choices do not. Existing accepted advisory rollout decisions remain valid.
+
+Persist evidence bound to commit SHA in `.ai/`; recover from GitHub, not chat memory.
+Runtime board/lease authority is `agent/orchestration-state`; infrastructure code
+is reviewed in PR #190 / `agent/orchestration-v1`. Read that state branch before
+resuming work; task-board copies on code/product branches are snapshots.
+Only report complete verified blocks, owner decisions, critical blockers or required
+protected actions. Missing A6/CI/runtime proof must be shown as missing.
 
 ---
 

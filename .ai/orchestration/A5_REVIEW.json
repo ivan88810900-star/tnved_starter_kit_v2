@@ -1,0 +1,69 @@
+{
+  "schema_version": 1,
+  "reviewer": "A5",
+  "native_session_id": "/root/a5_independent_qa",
+  "reviewed_implementation_sha": "b1741c04ec0f1eca2b73833b918e52c7cff564c5",
+  "qa_branch": "agent/qa-orchestration",
+  "status": "LOCAL_INDEPENDENT_REVIEW_PASSED",
+  "scope": "Autonomous orchestration infrastructure; no Tariff product feature or production database change",
+  "commands": [
+    {
+      "command": "PYTHONDONTWRITEBYTECODE=1 python3 -m tools.tariff_agents.verify",
+      "exit_code": 0,
+      "output": "Ran 60 tests in 4.706s; OK",
+      "context": "Implementation at reviewed_implementation_sha plus the two independent test cases committed with this report"
+    },
+    {
+      "command": "git diff --check",
+      "exit_code": 0,
+      "output": "No whitespace errors"
+    }
+  ],
+  "independent_fault_injection": [
+    "Failure after atomic task-board write but before companion projections: separate Python process restores the durable task and all projection revisions without duplicate launch permission",
+    "Tamper an otherwise complete persisted READY record to make the function author its QA reviewer: separate Python process rejects recovery with independent_qa_required"
+  ],
+  "review_findings": [
+    {
+      "id": "A5-ORCH-001",
+      "severity": "high",
+      "finding": "Persisted READY accepted no branch, worktree, QA, audit or CI",
+      "validation": "Reproduced with pure-memory validate_board input before fix; command exited zero",
+      "resolution": "Fixed: persisted readiness validates exact commit, independent sessions, tests, audit disposition and CI provenance; regression executed"
+    },
+    {
+      "id": "A5-ORCH-002",
+      "severity": "medium",
+      "finding": "Completed task retained file ownership indefinitely",
+      "resolution": "Fixed: explicit verified integration handoff releases ownership without deleting a branch or worktree; dependency content checked"
+    },
+    {
+      "id": "A5-ORCH-003",
+      "severity": "high",
+      "finding": "External audit pass accepted an arbitrary string evidence reference",
+      "resolution": "Fixed: bound provider receipt, packet hash and A0 adjudication required; missing configuration stays explicitly UNAVAILABLE"
+    },
+    {
+      "id": "A5-ORCH-004",
+      "severity": "medium",
+      "finding": "Generic unittest discovery can pass an empty suite",
+      "resolution": "Fixed: deterministic runner requires each core test module and nonzero discovered cases; workflow invokes it"
+    },
+    {
+      "id": "A5-ORCH-005",
+      "severity": "medium",
+      "finding": "Expired crashed coordinator had no autonomous verified takeover path",
+      "resolution": "Fixed: CAS takeover requires expired lease and current platform termination evidence; expiry alone cannot authorize takeover"
+    }
+  ],
+  "unresolved_code_blockers": [],
+  "evidence_limits": {
+    "remote_github_ci": "PENDING_A0_EXACT_REMOTE_HEAD_VERIFICATION",
+    "live_native_two_worker_smoke": "PENDING_SEPARATE_SMOKE_EVIDENCE",
+    "fresh_native_session_recovery": "PENDING_SEPARATE_NATIVE_SESSION; subprocess recovery independently passed",
+    "live_agents_api": "NOT_EXECUTED_BY_A5; provider tests use fixtures",
+    "live_anthropic_a6": "NOT_EXECUTED_BY_A5; provider tests use fixtures",
+    "security_boundary": "Worktrees, coordinator policy and cooperating-session CAS do not sandbox OS privileges or enforce GitHub server permissions"
+  },
+  "publication_rule": "This report is supporting local A5 evidence. Any final integration or remotely published SHA requires its own exact-head checks. No merge or production approval is implied."
+}

@@ -1,0 +1,14 @@
+{
+  "auditor": "A6",
+  "base_sha": "1526f494523dabb8c6b979f1b747c171beeb6915",
+  "head_sha": "ca7285cc6bc241ec8538e1748a5b2a39636a9adb",
+  "packet_sha256": "9f9993c568b1d5d1f10df1189d935e0f64cb0731e2782344c4b6ea12ba5f3d3b",
+  "advisory_only": true,
+  "a0_validation": "PENDING",
+  "status": "UNAVAILABLE",
+  "missing": [
+    "ANTHROPIC_API_KEY",
+    "TARIFF_ANTHROPIC_MODEL"
+  ],
+  "live_verified": false
+}

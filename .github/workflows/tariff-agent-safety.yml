@@ -1,0 +1,29 @@
+name: Tariff agent safety
+on:
+  pull_request:
+    branches: [main, feat/canonical-read-path]
+    paths: ['tools/tariff_agents/**', 'tests/agent_orchestration/**', '.ai/**', 'AGENTS.md', '.github/workflows/tariff-agent-safety.yml', '.github/workflows/tariff-a6-live.yml']
+  push:
+    branches: ['agent/**']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: tariff-agent-safety-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  offline-safety:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Deterministic control and adapter tests (no credentials)
+        env:
+          PYTHONDONTWRITEBYTECODE: '1'
+        run: |
+          python3 -m tools.tariff_agents.verify
+          python3 -m unittest -v tests.agent_orchestration.test_cli_snapshot
+      - name: Committed persistent state schema
+        run: python3 -m tools.tariff_agents validate-snapshot
