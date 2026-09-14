@@ -5,10 +5,12 @@ from pathlib import Path
 import subprocess
 import sys
 import tempfile
+import types
 import unittest
 from unittest.mock import patch
 
 from tools.tariff_agents.control import StateStore
+from tools.tariff_agents import verify
 
 
 class IndependentA5Tests(unittest.TestCase):
@@ -17,7 +19,7 @@ class IndependentA5Tests(unittest.TestCase):
         self.addCleanup(self.scratch.cleanup)
         self.root = Path(self.scratch.name) / "repository"
         self.root.mkdir()
-        self.git(self.root, "init", "-b", "agent/independent-fixture")
+        self.git(self.root, "init", "-b", "agent/orchestration-state")
         self.git(self.root, "config", "user.name", "Independent QA fixture")
         self.git(self.root, "config", "user.email", "qa@example.org")
         (self.root / "document.md").write_text("baseline\n")
@@ -25,6 +27,9 @@ class IndependentA5Tests(unittest.TestCase):
         self.git(self.root, "commit", "-m", "isolated non-secret baseline")
         self.base = self.git(self.root, "rev-parse", "HEAD")
         self.store = StateStore(self.root)
+        self.store.bootstrap_authority(
+            "ivan88810900-star/tnved_starter_kit_v2",
+            "refs/heads/agent/orchestration-state", self.base)
         self.store.initialize()
 
     def git(self, root, *args):
@@ -86,6 +91,21 @@ class IndependentA5Tests(unittest.TestCase):
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("independent_qa_required", result.stderr)
         self.assertNotIn("ready_tasks", result.stdout)
+
+    def test_verifier_requires_independent_a5_module_and_nonzero_tests(self):
+        self.assertIn("test_a5_independent", verify.REQUIRED)
+        real_import = verify.importlib.import_module
+
+        def import_with_empty_independent(name):
+            if name == "test_a5_independent":
+                return types.ModuleType(name)
+            return real_import(name)
+
+        with patch.object(verify.importlib, "import_module",
+                          side_effect=import_with_empty_independent):
+            with self.assertRaisesRegex(RuntimeError,
+                                        "test_a5_independent"):
+                verify.main()
 
 
 if __name__ == "__main__":

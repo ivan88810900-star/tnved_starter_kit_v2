@@ -1,6 +1,7 @@
 """Real temporary Git repositories exercise state, isolation and review gates."""
 import importlib.util
 import json
+import os
 from pathlib import Path
 import subprocess
 import sys
@@ -29,7 +30,7 @@ class ControlTests(unittest.TestCase):
         self.addCleanup(self.temp.cleanup)
         self.root = Path(self.temp.name) / "repo"
         self.root.mkdir()
-        git(self.root, "init", "-b", "agent/integration")
+        git(self.root, "init", "-b", "agent/orchestration-state")
         git(self.root, "config", "user.email", "fixture@example.invalid")
         git(self.root, "config", "user.name", "Fixture")
         (self.root / "docs").mkdir()
@@ -40,6 +41,7 @@ class ControlTests(unittest.TestCase):
         git(self.root, "commit", "-m", "fixture")
         self.base = git(self.root, "rev-parse", "HEAD")
         self.store = c.StateStore(self.root)
+        self.store.bootstrap_authority(c.REPOSITORY, c.STATE_LOCAL_REF, self.base)
         self.store.initialize()
 
     def task(self, name="T1", risk="low", files=None):
@@ -105,7 +107,7 @@ class ControlTests(unittest.TestCase):
             self.store.allocate("B", self.base)
 
     def test_no_arbitrary_protected_branch_or_path(self):
-        for value in ("main", "feat/canonical-read-path", "feat/ntm-official-full-contours", "agent/a/../../main", "agent/a.lock", "--evil"):
+        for value in ("main", "feat/canonical-read-path", "feat/ntm-official-full-contours", "agent/orchestration-state", "agent/a/../../main", "agent/a.lock", "--evil"):
             with self.subTest(branch=value), self.assertRaises(c.PolicyError):
                 c.safe_branch(value)
         for value in ("../docs/a.md", "docs//a.md", "docs/./a.md", "/tmp/a.md", ".git/config", "docs\\a.md", ".env", "x/.env.production", "prod.db", "keys/token.txt"):
@@ -121,6 +123,101 @@ class ControlTests(unittest.TestCase):
         self.assertFalse((Path(b["worktree"]) / "docs/A.md").exists())
         self.assertEqual(c.StateStore(a["worktree"]).load(), self.store.load())
         self.assertEqual(self.store.allocate("B", self.base)["worktree"], b["worktree"])
+
+    def test_missing_authority_fails_closed_outside_state_checkout(self):
+        worker = Path(self.task()["worktree"])
+        pointer = self.store.control / "authority.json"
+        pointer.unlink()
+        with self.assertRaisesRegex(c.PolicyError, "state_authority_missing"):
+            c.StateStore(worker).load()
+        with self.assertRaisesRegex(c.PolicyError, "state_authority_missing"):
+            c.StateStore(self.root).initialize()
+        self.assertFalse(pointer.exists())
+
+        # Explicit evidence-bound bootstrap works after A0 persists its state.
+        git(self.root, "add", ".ai")
+        git(self.root, "commit", "-m", "persist state")
+        state_head = git(self.root, "rev-parse", "HEAD")
+        c.StateStore(self.root).bootstrap_authority(
+            c.REPOSITORY, c.STATE_LOCAL_REF, state_head)
+        self.assertEqual(c.StateStore(self.root).load()["tasks"][0]["id"], "T1")
+        authority = json.loads(pointer.read_text())
+        self.assertEqual(authority, {
+            "schema_version": 1,
+            "root": str(self.root),
+            "repository": c.REPOSITORY,
+            "state_ref": "refs/heads/agent/orchestration-state",
+            "github_ref_sha": state_head,
+        })
+
+    def test_authority_pointer_rejects_non_state_checkout(self):
+        worker = Path(self.task()["worktree"])
+        pointer = self.store.control / "authority.json"
+        pointer.write_text(json.dumps({
+            "schema_version": 1,
+            "root": str(worker),
+            "repository": c.REPOSITORY,
+            "state_ref": c.STATE_LOCAL_REF,
+            "github_ref_sha": self.base,
+        }))
+        with self.assertRaisesRegex(c.PolicyError, "state_authority_ref_mismatch"):
+            c.StateStore(self.root).load()
+
+    def test_legacy_pointer_requires_explicit_evidence_bound_migration(self):
+        pointer = self.store.control / "authority.json"
+        git(self.root, "add", ".ai")
+        git(self.root, "commit", "-m", "persist legacy state")
+        state_head = git(self.root, "rev-parse", "HEAD")
+        pointer.write_text(json.dumps({"root": str(self.root)}))
+        with self.assertRaisesRegex(c.PolicyError,
+                                    "state_authority_migration_required"):
+            self.store.load()
+        with self.assertRaisesRegex(c.PolicyError,
+                                    "state_authority_already_initialized"):
+            self.store.bootstrap_authority(
+                c.REPOSITORY, c.STATE_LOCAL_REF, state_head)
+        migrated = self.store.bootstrap_authority(
+            c.REPOSITORY, c.STATE_LOCAL_REF, state_head, migrate_legacy=True)
+        self.assertEqual(migrated["github_ref_sha"], state_head)
+        self.assertEqual(self.store.load()["tasks"], [])
+
+    def test_dirty_or_github_mismatched_state_branch_cannot_bootstrap(self):
+        pointer = self.store.control / "authority.json"
+        git(self.root, "add", ".ai")
+        git(self.root, "commit", "-m", "persist initial state")
+        clean_head = git(self.root, "rev-parse", "HEAD")
+        pointer.unlink()
+        (self.root / "untracked.txt").write_text("dirty\n")
+        with self.assertRaisesRegex(c.PolicyError, "dirty_worktree"):
+            self.store.bootstrap_authority(
+                c.REPOSITORY, c.STATE_LOCAL_REF, clean_head)
+        (self.root / "untracked.txt").unlink()
+
+        (self.root / "tracked.txt").write_text("new state history\n")
+        git(self.root, "add", "tracked.txt")
+        git(self.root, "commit", "-m", "unfetched state history")
+        with self.assertRaisesRegex(c.PolicyError,
+                                    "state_authority_github_sha_mismatch"):
+            self.store.bootstrap_authority(
+                c.REPOSITORY, c.STATE_LOCAL_REF, clean_head)
+
+    def test_forged_reserved_branch_and_remote_ref_do_not_self_elect(self):
+        pointer = self.store.control / "authority.json"
+        pointer.unlink()
+        git(self.root, "update-ref",
+            "refs/remotes/origin/agent/orchestration-state",
+            git(self.root, "rev-parse", "HEAD"))
+        with self.assertRaisesRegex(c.PolicyError, "state_authority_missing"):
+            self.store.load()
+        with self.assertRaisesRegex(c.PolicyError, "state_authority_missing"):
+            self.store.initialize()
+
+    def test_established_authority_allows_local_state_mutations(self):
+        pointer = json.loads((self.store.control / "authority.json").read_text())
+        self.store.add_task("STATE-MUTATION", "A3", ["docs/state.md"])
+        self.assertEqual(self.store.load()["tasks"][0]["id"], "STATE-MUTATION")
+        self.assertEqual(json.loads((self.store.control / "authority.json").read_text()),
+                         pointer)
 
     def test_lock_cross_process_and_worktree(self):
         task = self.task()
@@ -202,6 +299,36 @@ class ControlTests(unittest.TestCase):
         with self.assertRaisesRegex(c.PolicyError, "candidate_outside_file_ownership"):
             self.store.implemented("T1", git(path, "rev-parse", "HEAD"), TESTS)
 
+    def test_local_replace_ref_cannot_hide_out_of_scope_change(self):
+        task = self.task(files=["owned.md"])
+        path = Path(task["worktree"])
+        self.store.start("T1", "author-T1")
+        (path / "owned.md").write_text("owned\n")
+        (path / "outside.md").write_text("outside\n")
+        git(path, "add", "owned.md", "outside.md")
+        git(path, "commit", "-m", "scope escape hidden by replacement")
+        head = git(path, "rev-parse", "HEAD")
+
+        # Forge a replacement for the base whose tree already contains the
+        # out-of-scope file. Raw Git then reports only the owned delta.
+        blob = git(path, "hash-object", "-w", "outside.md")
+        entries = git(path, "ls-tree", self.base)
+        tree_input = entries + f"\n100644 blob {blob}\toutside.md\n"
+        tree = subprocess.run(["git", "-C", str(path), "mktree"], input=tree_input,
+                              capture_output=True, text=True, check=True).stdout.strip()
+        fake_base = subprocess.run(["git", "-C", str(path), "commit-tree", tree],
+                                   input="forged base\n", capture_output=True,
+                                   text=True, check=True).stdout.strip()
+        git(path, "replace", self.base, fake_base)
+        self.assertEqual(git(path, "diff", "--name-only", self.base, head), "owned.md")
+        actual_env = dict(os.environ, GIT_NO_REPLACE_OBJECTS="1")
+        actual = subprocess.run(["git", "-C", str(path), "diff", "--name-only",
+                                 self.base, head], env=actual_env, capture_output=True,
+                                text=True, check=True).stdout.splitlines()
+        self.assertEqual(actual, ["outside.md", "owned.md"])
+        with self.assertRaisesRegex(c.PolicyError, "candidate_outside_file_ownership"):
+            self.store.implemented("T1", head, TESTS)
+
     def test_ready_requires_all_successful_current_ci_checks(self):
         _, head = self.qa()
         self.store.record_audit("T1", head, "NOT_REQUIRED", "low risk")
@@ -237,6 +364,19 @@ class ControlTests(unittest.TestCase):
         self.assertIsNone(row["ci"])
         self.assertEqual(result["ready_tasks"], [])
 
+    def test_recovery_invalidates_implemented_candidate_on_worktree_drift(self):
+        task, _ = self.candidate()
+        path = Path(task["worktree"])
+        (path / "docs/T1.md").write_text("uncommitted drift\n")
+        result = self.store.recover()
+        row = result["board"]["tasks"][0]
+        self.assertEqual(result["worktree_issues"], ["T1"])
+        self.assertEqual(row["status"], "CHANGES_REQUESTED")
+        self.assertEqual(row["tests"], [])
+        self.assertIsNone(row["qa"])
+        self.assertIsNone(row["external_audit"])
+        self.assertIsNone(row["ci"])
+
     def test_confirmed_finding_invalidates_gates_and_routes_owner(self):
         task, head = self.ready()
         self.store.add_finding("F1", "T1", "A6", "reproducible issue", head)
@@ -255,7 +395,10 @@ class ControlTests(unittest.TestCase):
         git(self.root, "commit", "-m", "persist state")
         clone = Path(self.temp.name) / "fresh"
         git(self.root, "clone", "--no-hardlinks", str(self.root), str(clone))
-        recovered = c.StateStore(clone).recover()
+        clone_store = c.StateStore(clone)
+        clone_store.bootstrap_authority(
+            c.REPOSITORY, c.STATE_LOCAL_REF, git(clone, "rev-parse", "HEAD"))
+        recovered = clone_store.recover()
         self.assertEqual(recovered["worktree_issues"], ["T1"])
         self.assertFalse(recovered["duplicate_launch_authorized"])
         self.assertEqual(recovered["board"]["tasks"][0]["status"], "CHANGES_REQUESTED")
