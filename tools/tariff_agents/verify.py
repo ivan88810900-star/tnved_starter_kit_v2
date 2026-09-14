@@ -4,7 +4,8 @@ from pathlib import Path
 import sys
 import unittest
 
-REQUIRED = ('test_control', 'test_runtime', 'test_audit', 'test_lease')
+REQUIRED = ('test_control', 'test_runtime', 'test_audit', 'test_lease',
+            'test_a5_independent')
 
 
 def main():
@@ -12,13 +13,14 @@ def main():
     sys.path.insert(0, str(directory))
     loader = unittest.TestLoader()
     suite = unittest.TestSuite()
-    for name in REQUIRED:
+    names = list(REQUIRED)
+    names.extend(sorted(path.stem for path in directory.glob('test_a5_*.py')
+                        if path.stem not in REQUIRED))
+    for name in names:
         tests = loader.loadTestsFromModule(importlib.import_module(name))
         if tests.countTestCases() == 0:
             raise RuntimeError('Required test module collected zero tests: '+name)
         suite.addTests(tests)
-    # Independent A5 cases, when present, are required through this discovery too.
-    suite.addTests(loader.discover(str(directory), pattern='test_a5_*.py'))
     result = unittest.TextTestRunner(verbosity=2).run(suite)
     return 0 if result.wasSuccessful() else 1
 
