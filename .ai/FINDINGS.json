@@ -1,5 +1,5 @@
 {
-  "board_revision": 460,
+  "board_revision": 524,
   "findings": [
     {
       "head_sha": "161a9258d174e93266353ae1fd2cb0b3e4657679",
@@ -611,6 +611,78 @@
       "validation": {
         "at": "2026-09-14T19:38:16.989029+00:00",
         "evidence": "A0 reproduced the exact-head CI evidence: the assertion expects legacy OK while the reviewed source-unbound admission contract requires REVIEW_REQUIRED; correction is limited to preserving tnved_context checks while updating admission expectations.",
+        "validator": "A0"
+      }
+    },
+    {
+      "head_sha": "1970cb1c279ccaa130b15f9d276b3c7e1b0d13cb",
+      "id": "A5-AD30-SEARCH-OBSERVATION-001",
+      "reporter": "A5",
+      "resolution": {
+        "evidence": "A0 matched the corrected text to the fresh official-domain search: indexed metadata is recorded narrowly and explicitly cannot establish body/version/rate/producer/code/legal effect; exact document access remains blocked.",
+        "head_sha": "c3893d929ea29f1f11cddb05073c41383640b83a",
+        "validator": "A0"
+      },
+      "status": "RESOLVED",
+      "summary": "The report broadly states official-domain searches returned no indexed AD30R1 results, but current official remedies.eaeunion.org search exposes AD-30-R1 index metadata. Record that discovery without treating it as verified body/rate/legal evidence.",
+      "task_id": "TARIFF-AD30-FRESHNESS-EVIDENCE-008",
+      "validation": {
+        "at": "2026-09-14T20:52:24.731720+00:00",
+        "evidence": "A0 independently queried the official remedies.eaeunion.org domain on 2026-09-14 and reproduced an indexed AD-30-R1 result snippet. Exact document bodies still timed out; this confirms only a wording/discovery-metadata defect.",
+        "validator": "A0"
+      }
+    },
+    {
+      "head_sha": "121377d16c5dc11ec76064216d763195cea36842",
+      "id": "A5-NTM-EVIDENCE-001",
+      "reporter": "A5",
+      "resolution": {
+        "evidence": "A0 verified the corrected report is a new one-file commit and contains the exact bounded correction required by the confirmed finding; fresh A5 is required before publication.",
+        "head_sha": "254144516cb0753be2dd8eeff64fbfe1d1d8cf71",
+        "validator": "A0"
+      },
+      "status": "RESOLVED",
+      "summary": "The report omits the newer current-table compatibility evidence evaluating 13,293 official-table codes and 15,695 advisory rows; it must include this bounded observation without treating it as the legacy 17,809 catalog gate or legal/runtime approval.",
+      "task_id": "TARIFF-NTM-COMPLETENESS-RECHECK-001",
+      "validation": {
+        "at": "2026-09-14T21:04:35.410663+00:00",
+        "evidence": "A0 read the 2026-09-08 JSON: source_positions=13293, advisory rows include official_ntm_contours=13670 and official_export_control=2025 (15695 total), compatibility_ok=true but legal/runtime/production flags false and legacy_17809_catalog_gate_run=false.",
+        "validator": "A0"
+      }
+    },
+    {
+      "head_sha": "121377d16c5dc11ec76064216d763195cea36842",
+      "id": "A5-NTM-PROVENANCE-002",
+      "reporter": "A5",
+      "resolution": {
+        "evidence": "A0 verified the corrected report is a new one-file commit and contains the exact bounded correction required by the confirmed finding; fresh A5 is required before publication.",
+        "head_sha": "254144516cb0753be2dd8eeff64fbfe1d1d8cf71",
+        "validator": "A0"
+      },
+      "status": "RESOLVED",
+      "summary": "The report overstates exact-health and export-control provenance: retained repository data contains official URLs/ETag/date metadata and six Alta extraction reference URLs, but no retained primary official bytes, content hashes, locators or quotations proving extraction.",
+      "task_id": "TARIFF-NTM-COMPLETENESS-RECHECK-001",
+      "validation": {
+        "at": "2026-09-14T21:04:35.421793+00:00",
+        "evidence": "A0 confirmed official_ntm_exact_health.py stores only official URL identifiers plus ETag/observed metadata; export seed has six official_url values and six extraction_reference_url values on alta.ru, with no retained source bytes/quotes proving extraction.",
+        "validator": "A0"
+      }
+    },
+    {
+      "head_sha": "121377d16c5dc11ec76064216d763195cea36842",
+      "id": "A5-NTM-AUTHORITY-003",
+      "reporter": "A5",
+      "resolution": {
+        "evidence": "A0 verified the corrected report is a new one-file commit and contains the exact bounded correction required by the confirmed finding; fresh A5 is required before publication.",
+        "head_sha": "254144516cb0753be2dd8eeff64fbfe1d1d8cf71",
+        "validator": "A0"
+      },
+      "status": "RESOLVED",
+      "summary": "The report cites DM-0014 as the NTM authority boundary although accepted NTM decisions are DM-0008 and DM-0011; DM-0014 is the proposed manifest-bound ETT rate review authority.",
+      "task_id": "TARIFF-NTM-COMPLETENESS-RECHECK-001",
+      "validation": {
+        "at": "2026-09-14T21:04:35.432980+00:00",
+        "evidence": "A0 confirmed .ai/DECISIONS.md: DM-0008 and DM-0011 are accepted NTM decisions; DM-0014 is proposed manifest-bound ETT rate review authority.",
         "validator": "A0"
       }
     }
