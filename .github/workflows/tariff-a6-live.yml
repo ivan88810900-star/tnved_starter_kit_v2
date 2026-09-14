@@ -1,0 +1,110 @@
+name: Tariff trusted A6 live audit
+
+on:
+  repository_dispatch:
+    types: [tariff-a6-live]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tariff-a6-live-${{ github.run_id }}
+  cancel-in-progress: false
+
+jobs:
+  context-gate:
+    # This job is deliberately never skipped: a wrong-ref dispatch must make the
+    # workflow fail, not appear successful because the credentialed job skipped.
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Checkout only the workflow commit without retained credentials
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 1
+          persist-credentials: false
+      - name: Require manual default-branch trusted workflow context
+        env:
+          A6_EVENT_NAME: ${{ github.event_name }}
+          A6_EVENT_ACTION: ${{ github.event.action }}
+          A6_ACTUAL_REF: ${{ github.ref }}
+          A6_EXPECTED_REF: refs/heads/${{ github.event.repository.default_branch }}
+          A6_WORKFLOW_SHA: ${{ github.sha }}
+        run: |
+          test "$A6_EVENT_NAME" = repository_dispatch
+          test "$A6_EVENT_ACTION" = tariff-a6-live
+          test "$A6_ACTUAL_REF" = "$A6_EXPECTED_REF"
+          test "$(git rev-parse HEAD)" = "$A6_WORKFLOW_SHA"
+          [[ "$A6_WORKFLOW_SHA" =~ ^[0-9a-f]{40}$ ]]
+
+  live-audit:
+    # A workflow dispatched at an agent/PR ref fails in context-gate, so this
+    # credentialed job never starts and the overall run cannot look successful.
+    needs: context-gate
+    environment: tariff-a6-trusted
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Checkout trusted default-branch bridge only
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Fetch immutable candidate objects and build packet without credentials
+        env:
+          A6_REQUEST_ID: ${{ github.event.client_payload.request_id }}
+          A6_BASE_SHA: ${{ github.event.client_payload.base_sha }}
+          A6_HEAD_SHA: ${{ github.event.client_payload.head_sha }}
+          A6_CONTRACT_SHA: ${{ github.event.client_payload.contract_sha }}
+          A6_PATHS_JSON: ${{ github.event.client_payload.paths_json }}
+          A6_SOURCES_JSON: ${{ github.event.client_payload.official_sources_json }}
+        run: |
+          python3 -m tools.tariff_agents.audit_bridge --repo . prepare \
+            --request-id "$A6_REQUEST_ID" \
+            --base "$A6_BASE_SHA" \
+            --head "$A6_HEAD_SHA" \
+            --contract "$A6_CONTRACT_SHA" \
+            --paths-json "$A6_PATHS_JSON" \
+            --sources-json "$A6_SOURCES_JSON" \
+            --output "$RUNNER_TEMP/a6-packet.json"
+
+      - name: Invoke checked adapter once with A6 credentials
+        id: live
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          TARIFF_ANTHROPIC_MODEL: ${{ vars.TARIFF_ANTHROPIC_MODEL }}
+          A6_REQUEST_ID: ${{ github.event.client_payload.request_id }}
+          A6_BASE_SHA: ${{ github.event.client_payload.base_sha }}
+          A6_HEAD_SHA: ${{ github.event.client_payload.head_sha }}
+          A6_CONTRACT_SHA: ${{ github.event.client_payload.contract_sha }}
+        run: |
+          set +e
+          python3 -m tools.tariff_agents.audit_bridge --repo . run \
+            --request-id "$A6_REQUEST_ID" \
+            --base "$A6_BASE_SHA" \
+            --head "$A6_HEAD_SHA" \
+            --contract "$A6_CONTRACT_SHA" \
+            --packet "$RUNNER_TEMP/a6-packet.json" \
+            --receipt "$RUNNER_TEMP/a6-receipt.json"
+          code=$?
+          echo "code=$code" >> "$GITHUB_OUTPUT"
+          exit 0
+
+      - name: Upload scrubbed commit-bound receipt and findings
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: tariff-a6-live-${{ github.run_id }}
+          path: ${{ runner.temp }}/a6-receipt.json
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Enforce fail-closed live result
+        if: always()
+        env:
+          A6_EXIT_CODE: ${{ steps.live.outputs.code }}
+        run: |
+          test "$A6_EXIT_CODE" = 0
