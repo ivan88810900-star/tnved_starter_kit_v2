@@ -1,5 +1,5 @@
 {
-  "board_revision": 328,
+  "board_revision": 336,
   "runs": [
     {
       "head_sha": null,
@@ -610,6 +610,26 @@
       "status": "FINISHED",
       "task_id": "TARIFF-A6-LIVE-BRIDGE-001",
       "updated_at": "2026-09-14T14:11:59.133521+00:00"
+    },
+    {
+      "head_sha": null,
+      "role": "A1",
+      "run_id": "72cecb1a3bf448bb8e5df4f5aac42073",
+      "session_id": "/root/a1_payment_source_recheck",
+      "started_at": "2026-09-14T15:09:46.506039+00:00",
+      "status": "RUNNING",
+      "task_id": "TARIFF-PAYMENT-SOURCE-RECHECK-002",
+      "updated_at": "2026-09-14T15:09:46.506047+00:00"
+    },
+    {
+      "head_sha": null,
+      "role": "A3",
+      "run_id": "87042e4b474a43d681323abc81142ffb",
+      "session_id": "/root/a3_official_source_delta",
+      "started_at": "2026-09-14T15:09:47.675196+00:00",
+      "status": "RUNNING",
+      "task_id": "TARIFF-OFFICIAL-SOURCE-DELTA-002",
+      "updated_at": "2026-09-14T15:09:47.675203+00:00"
     }
   ],
   "schema_version": 1

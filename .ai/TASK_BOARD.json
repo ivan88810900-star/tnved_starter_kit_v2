@@ -509,7 +509,7 @@
     }
   ],
   "max_concurrent_subagents": 3,
-  "revision": 328,
+  "revision": 336,
   "runs": [
     {
       "head_sha": null,
@@ -1120,6 +1120,26 @@
       "status": "FINISHED",
       "task_id": "TARIFF-A6-LIVE-BRIDGE-001",
       "updated_at": "2026-09-14T14:11:59.133521+00:00"
+    },
+    {
+      "head_sha": null,
+      "role": "A1",
+      "run_id": "72cecb1a3bf448bb8e5df4f5aac42073",
+      "session_id": "/root/a1_payment_source_recheck",
+      "started_at": "2026-09-14T15:09:46.506039+00:00",
+      "status": "RUNNING",
+      "task_id": "TARIFF-PAYMENT-SOURCE-RECHECK-002",
+      "updated_at": "2026-09-14T15:09:46.506047+00:00"
+    },
+    {
+      "head_sha": null,
+      "role": "A3",
+      "run_id": "87042e4b474a43d681323abc81142ffb",
+      "session_id": "/root/a3_official_source_delta",
+      "started_at": "2026-09-14T15:09:47.675196+00:00",
+      "status": "RUNNING",
+      "task_id": "TARIFF-OFFICIAL-SOURCE-DELTA-002",
+      "updated_at": "2026-09-14T15:09:47.675203+00:00"
     }
   ],
   "schema_version": 1,
@@ -1425,18 +1445,6 @@
       ],
       "branch": "agent/classification-tariff-a6-cross-branch-contract-001-a5c4916ca6",
       "ci": null,
-      "observed_ci": {
-        "conclusion": "success",
-        "head_sha": "0126404cd78fd293f3634bd20c5fd09f937e83ba",
-        "name": "Tariff agent safety",
-        "run_id": 34852521668,
-        "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/34852521668"
-      },
-      "protected_merge_gate": {
-        "status": "OWNER_PERMISSION_REQUIRED",
-        "sequence": [190, 193, 194],
-        "reason": "Exact-head A5 and CI passed for the combined chain; A6 cannot run until the reviewed workflow is on main."
-      },
       "dependencies": [],
       "external_audit": null,
       "files": [
@@ -1445,7 +1453,23 @@
       ],
       "goal": "Make the checked A6 audit adapter support product candidate commits that intentionally do not contain orchestration files by binding an explicitly selected immutable architecture contract blob/ref into the packet; preserve complete changed-path coverage, tamper detection, secret scanning, exact candidate base/head binding, and fail-closed behavior.",
       "id": "TARIFF-A6-CROSS-BRANCH-CONTRACT-001",
+      "observed_ci": {
+        "conclusion": "success",
+        "head_sha": "0126404cd78fd293f3634bd20c5fd09f937e83ba",
+        "name": "Tariff agent safety",
+        "run_id": 34852521668,
+        "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/34852521668"
+      },
       "owner": "A4",
+      "protected_merge_gate": {
+        "reason": "Exact-head A5 and CI passed for the combined chain; A6 cannot run until the reviewed workflow is on main.",
+        "sequence": [
+          190,
+          193,
+          194
+        ],
+        "status": "OWNER_PERMISSION_REQUIRED"
+      },
       "qa": {
         "commands": [
           {
@@ -1511,25 +1535,13 @@
       "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-pr193"
     },
     {
+      "a6_status": "BLOCKED_PENDING_DEFAULT_BRANCH_MERGE",
       "author_sessions": [
         "/root/a4_a6_live_bridge",
         "/root/a4_bridge_doc_sync"
       ],
       "branch": "agent/classification-tariff-a6-live-bridge-001-f5839c6c98",
       "ci": null,
-      "observed_ci": {
-        "conclusion": "success",
-        "head_sha": "47da2e4763261cddc638cc276573b3375508a9ac",
-        "name": "Tariff agent safety",
-        "run_id": 34852829770,
-        "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/34852829770"
-      },
-      "a6_status": "BLOCKED_PENDING_DEFAULT_BRANCH_MERGE",
-      "protected_merge_gate": {
-        "status": "OWNER_PERMISSION_REQUIRED",
-        "sequence": [190, 193, 194],
-        "reason": "Reviewed trusted workflow is not yet on main; live provider request remains forbidden."
-      },
       "dependencies": [
         "TARIFF-A6-CROSS-BRANCH-CONTRACT-001"
       ],
@@ -1548,7 +1560,23 @@
       ],
       "goal": "Implement a minimal trusted GitHub Actions bridge that invokes the checked commit-bound tools.tariff_agents.audit adapter with only ANTHROPIC_API_KEY and TARIFF_ANTHROPIC_MODEL, never executes candidate code, grants read-only contents permission, exposes no credentials to PR workers, and records only validated non-secret A6 evidence; manual dispatch must fail closed unless the workflow runs from the reviewed default-branch implementation.",
       "id": "TARIFF-A6-LIVE-BRIDGE-001",
+      "observed_ci": {
+        "conclusion": "success",
+        "head_sha": "47da2e4763261cddc638cc276573b3375508a9ac",
+        "name": "Tariff agent safety",
+        "run_id": 34852829770,
+        "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/34852829770"
+      },
       "owner": "A4",
+      "protected_merge_gate": {
+        "reason": "Reviewed trusted workflow is not yet on main; live provider request remains forbidden.",
+        "sequence": [
+          190,
+          193,
+          194
+        ],
+        "status": "OWNER_PERMISSION_REQUIRED"
+      },
       "qa": {
         "commands": [
           {
@@ -1830,7 +1858,65 @@
       },
       "updated_at": "2026-09-14T13:39:33.957848+00:00",
       "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-orch-ci-snapshot-validation-001-2b97826c17"
+    },
+    {
+      "author_sessions": [
+        "/root/a1_payment_source_recheck"
+      ],
+      "branch": "agent/rates-tariff-payment-source-recheck-002-c1549329dc",
+      "ci": null,
+      "dependencies": [],
+      "external_audit": null,
+      "files": [
+        "docs/ai-workflow/PAYMENT_SOURCE_BOUND_RECHECK_20260914.md"
+      ],
+      "goal": "On exact PR187 HEAD, reproduce and classify only remaining payment/rate gaps involving source-bound dates, editions, units, FX and final-amount admission; produce a factual evidence report and exact next implementation ownership without changing product code, database, flags or legal policy.",
+      "id": "TARIFF-PAYMENT-SOURCE-RECHECK-002",
+      "owner": "A1",
+      "qa": null,
+      "refs": {
+        "base_sha": "5d3b0c1dc7dd8e396c4f812db2bf6f1fa6d293f9",
+        "head_sha": null,
+        "pr": null
+      },
+      "required_checks": [
+        "offline-safety"
+      ],
+      "risk": "medium",
+      "status": "IN_PROGRESS",
+      "tests": [],
+      "updated_at": "2026-09-14T15:09:46.506050+00:00",
+      "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-payment-source-recheck-002-c1549329dc"
+    },
+    {
+      "author_sessions": [
+        "/root/a3_official_source_delta"
+      ],
+      "branch": "agent/sources-tariff-official-source-delta-002-753e289be4",
+      "ci": null,
+      "dependencies": [],
+      "external_audit": null,
+      "files": [
+        "docs/ai-workflow/OFFICIAL_SOURCE_TEMPORAL_AD30_RECHECK_20260914.md"
+      ],
+      "goal": "On exact PR187 HEAD, inventory official source/date/edition/amendment and AD30 producer/nomenclature evidence gaps; verify public official facts without deciding legal applicability and produce a bounded evidence report plus exact dependencies for A1/A2.",
+      "id": "TARIFF-OFFICIAL-SOURCE-DELTA-002",
+      "owner": "A3",
+      "qa": null,
+      "refs": {
+        "base_sha": "5d3b0c1dc7dd8e396c4f812db2bf6f1fa6d293f9",
+        "head_sha": null,
+        "pr": null
+      },
+      "required_checks": [
+        "offline-safety"
+      ],
+      "risk": "high",
+      "status": "IN_PROGRESS",
+      "tests": [],
+      "updated_at": "2026-09-14T15:09:47.675206+00:00",
+      "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-official-source-delta-002-753e289be4"
     }
   ],
-  "updated_at": "2026-09-14T14:11:59.166129+00:00"
+  "updated_at": "2026-09-14T15:09:47.675644+00:00"
 }

@@ -1,5 +1,5 @@
 {
-  "board_revision": 328,
+  "board_revision": 336,
   "files": {
     ".ai/orchestration/A6_LIVE_BRIDGE.md": {
       "branch": "agent/classification-tariff-a6-live-bridge-001-f5839c6c98",
@@ -31,11 +31,23 @@
       "task_id": "TARIFF-AD30-REVIEW-CANDIDATE-001",
       "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-ad30-review-candidate-001-99f4e3fb32"
     },
+    "docs/ai-workflow/OFFICIAL_SOURCE_TEMPORAL_AD30_RECHECK_20260914.md": {
+      "branch": "agent/sources-tariff-official-source-delta-002-753e289be4",
+      "owner": "A3",
+      "task_id": "TARIFF-OFFICIAL-SOURCE-DELTA-002",
+      "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-official-source-delta-002-753e289be4"
+    },
     "docs/ai-workflow/PAYMENT_ADMISSION_RECHECK_20260912.md": {
       "branch": "agent/rates-tariff-admission-recheck-001-9231ffbdb5",
       "owner": "A1",
       "task_id": "TARIFF-ADMISSION-RECHECK-001",
       "worktree": "/workspace/scratch/cd6734a40504/tariff-agent-worktrees/tariff-admission-recheck-001-9231ffbdb5"
+    },
+    "docs/ai-workflow/PAYMENT_SOURCE_BOUND_RECHECK_20260914.md": {
+      "branch": "agent/rates-tariff-payment-source-recheck-002-c1549329dc",
+      "owner": "A1",
+      "task_id": "TARIFF-PAYMENT-SOURCE-RECHECK-002",
+      "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-payment-source-recheck-002-c1549329dc"
     },
     "tests/agent_orchestration/test_a5_independent.py": {
       "branch": "agent/classification-tariff-orch-control-hardening-001-6689c2a339",
