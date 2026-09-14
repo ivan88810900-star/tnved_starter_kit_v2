@@ -1,6 +1,7 @@
 # TASK-AD30-EXECUTABLE-REVIEW-001
 
-Status: IN_PROGRESS. Started 2026-09-14 under Ivan's current PR #187 mandate.
+Status: IMPLEMENTED_AND_A5_APPROVED; exact publication CI gate remains.
+Started 2026-09-14 under Ivan's current PR #187 mandate.
 
 ## Goal and factual starting point
 
@@ -9,7 +10,7 @@ source candidate: exact source-record integrity, explicit product conditions,
 and exact hypothetical arithmetic for an explicitly selected printed source row.
 This prepares review; it cannot determine current legal liability or admit rates.
 
-GitHub PR #187 remains at `a9d15c74699c8cd7842404580ff6fd7bd957e9eb`,
+At recovery, GitHub PR #187 was at `a9d15c74699c8cd7842404580ff6fd7bd957e9eb`,
 base `a5a811e618ffa001b39cb491bbbf7a9ceb93f9a7`; main remains `9712c7b`.
 The repeated eight A6 findings are already reconciled there. The engine and both
 regression suites match their approved blobs; do not repeat those fixes.
@@ -36,8 +37,8 @@ work simultaneously; A5 starts independently after a developer hands off.
 | A1 /root/a1_rates | agent/rates-ad30-20260914 / tariff-sept14-a1 | app/services/ad30_duty_preview.py; scripts/preview_ad30_candidate.py; tests/test_ad30_duty_preview.py; tests/test_ad30_candidate_cli.py |
 | A2 /root/a2_ntm | agent/ntm-ad30-20260914 / tariff-sept14-a2 | app/services/ad30_applicability.py; tests/test_ad30_applicability.py; docs/ai-workflow/AD30_APPLICABILITY_REVIEW.md |
 | A3 /root/a3_sources | agent/sources-ad30-20260914 / tariff-sept14-a3 | app/services/ad30_source_facts.py; app/data/official_sources/ad30_source_facts_v1.json; tests/test_ad30_source_facts.py; docs/ai-workflow/AD30_SOURCE_FACT_DOSSIER.md |
-| A5 | Assigned after handoff | Independent tests and review evidence only; never feature repairs |
-| A4 | Waits for stable interfaces | No feature implementation assigned |
+| A5 /root/a5_qa | agent/qa-ad30-20260914 / tariff-sept14-a5 | tests/test_ad30_review_redteam.py; docs/ai-workflow/evidence/ad30-independent-qa-20260914.json |
+| A4 /root/a4_ai | agent/ai-ad30-contract-20260914 / tariff-sept14-a4 | docs/ai-workflow/AD30_REVIEW_CONSUMER_CONTRACT.md; documentation only after interfaces stabilized |
 
 Application/script/test paths in this table are relative to `customs-clear/backend/`.
 Documentation paths are repository-relative. Worktrees live under the current
@@ -106,6 +107,38 @@ fetches sources, opens a database, writes rates or changes runtime configuration
 
 ## Evidence
 
-Pending implementation and independent QA. Historical passing CI for `a9d15c74`
-is not evidence for the new candidate. Optional external A6 is not claimed to
-have audited this task; user-supplied A6 findings remain independently evaluated.
+Implementation and independent A5 review are complete. The same red assertions
+reproduced four failures before owner fixes and passed all 28 after them. A5's
+final independent suite passed 43 cases, including 15 real CLI processes with
+traps for attempted network/DB/write/application-startup side effects. Combined
+new author/red-team plus existing ETT arithmetic profile: 449 passed.
+
+A5 independently matched the integrated feature, data, tests and evidence blobs
+to its reviewed tree. A4's consumer contract was also independently approved;
+no live AI/API integration is claimed. A0 assumed documentation ownership after
+A2/A3 handoff to record acceptance without rewriting their historical test runs.
+
+| Work | Author/local commit | Integrated commit |
+| --- | --- | --- |
+| A3 dossier | 2bfa1799 | 96c771c8 |
+| A2 product assessment | b0904fa1 | cd7404db |
+| A1 hypothetical arithmetic | f27eae01 | bd151b6f |
+| A1 strict CLI | 1c642b89 | 8d371a19 |
+| A3 source-label correction | 5c18618c | 182af82b |
+| A1 complete row/unit evidence | 9aafade5 | b9774b7f |
+| A4 consumer contract | fbdc9397 | b548e27f |
+| A5 independent regressions | 5882ce3 / 96141d2e | ab25f165 / 87c6d4ba |
+| A5 evidence | 27304a4c | a7abc9a2 |
+
+Author hashes identify isolated local worktrees; integrated commits are the
+publication ancestry. The assembly preserves exact approved feature/test blobs.
+The dynamic agent matcher from PR #191 is reused; generic agent QA retains all
+44 existing files and adds five AD30 suites. Ordinary backend CI also retains
+its existing selection and adds the same five suites. No test is weakened.
+
+[Executable reviewer guide](../../docs/ai-workflow/AD30_EXECUTABLE_REVIEW.md),
+[independent A5 evidence](../../docs/ai-workflow/evidence/ad30-independent-qa-20260914.json).
+Exact assembled/published CI must still be recorded before final completion;
+historical green CI for a9d15c74 is not evidence for this candidate. Optional
+external A6 is not claimed to have audited this task. The same eight earlier
+findings remain independently evaluated in the existing A6 reconciliation.

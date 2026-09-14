@@ -319,6 +319,11 @@ jobs:
           tests/test_payment_admission_redteam.py
           tests/test_ntm_history_redteam.py
           tests/test_payment_a6_reconciliation.py
+          tests/test_ad30_source_facts.py
+          tests/test_ad30_applicability.py
+          tests/test_ad30_duty_preview.py
+          tests/test_ad30_candidate_cli.py
+          tests/test_ad30_review_redteam.py
           tests/test_payment_reconciliation_redteam.py
           tests/test_payment_engine.py
           tests/test_special_duties.py

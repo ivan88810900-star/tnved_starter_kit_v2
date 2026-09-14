@@ -6,9 +6,33 @@ Active
 
 ## Last updated
 
-2026-09-12
+2026-09-14
 
-## Latest continuation, 12 September 2026
+## Latest continuation, 14 September 2026
+
+The bounded AD30 executable review is implemented and independently approved:
+pinned source facts → explicit product assessment → exact hypothetical source-row
+arithmetic, with a strict offline CLI. A4 documented its stable output contract;
+no live consumer was added. A5's 43 independent cases and combined 449-case
+profile passed after two owner repairs. Exact publication CI remains a separate
+gate; see [the task](../../.ai/tasks/TASK-AD30-EXECUTABLE-REVIEW-001.md) and
+[review guide](AD30_EXECUTABLE_REVIEW.md) for current evidence and boundaries.
+
+The actual recovery base was PR #187 `a9d15c74`, not the old A6 `22a7df55`.
+Those eight findings are already reconciled; no duplicate engine fix was made.
+PR #191's reviewed matcher and PR #192's source preparation were reused.
+Separate orchestration/runtime-state work (#190/#193), #189 and existing
+worktrees were inspected without modification. No source was recaptured.
+
+Next is the remaining source-bound temporal/amendment, producer and nomenclature
+review for AD30, followed by the other ETT/VAT/excise/remedy/preference/origin
+and contextual NTM dependencies. The new bounded candidate does not resolve
+those legal gaps. Current counts remain 49 sources / 49 policies / 72 default
+URLs + 11 isolated review targets. Production, flags, active rates and DB stay
+unchanged. The material below is the previous continuation, not a new instruction
+to repeat completed source acquisition or the now implemented candidate.
+
+## Previous continuation, 12 September 2026
 
 Ivan explicitly prioritizes complete official rates/payments, contextual NTM and
 source provenance. Existing Canonical, semantic search, MVP payment presentation

@@ -1,7 +1,7 @@
 # AD30 product assessment for an offline review candidate
 
-Status: implementation and author tests complete; independent A5 review pending,
-2026-09-14.
+Status: implementation complete and independently approved by A5, 2026-09-14.
+Exact integrated/publication CI is recorded by the integration task.
 
 This adds an executable interpretation of the retained Decision 12 product
 wording to the source-fact preparation already recorded in PR #192. It does not
@@ -128,8 +128,10 @@ python -m pytest -q tests/test_ad30_source_facts.py tests/test_ad30_applicabilit
 200 passed in 0.64s
 ```
 
-This is 44 source tests and 156 product-assessment tests. A5 still performs
-independent source interpretation and hostile case verification before
-integration; this author result is not independent acceptance. No runtime API
+This historical author run is 44 source tests and 156 product-assessment tests.
+A5 subsequently completed independent source interpretation and hostile-case
+verification: 43 independent cases and a 449-case combined profile passed.
+See [A5 evidence](evidence/ad30-independent-qa-20260914.json); the original author
+run alone is not independent acceptance. No runtime API
 was added or changed; runtime HTTP and full CI checks belong to the combined
 integration gate and are not claimed by this isolated pure-function test run.

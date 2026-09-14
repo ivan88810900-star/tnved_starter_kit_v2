@@ -5,6 +5,32 @@
 
 ---
 
+## Implementation clarification — 14 September 2026
+
+Under accepted issue #188 Option A, the retained AD30 source candidate now has
+an executable offline review path. This changes no legal decision or admission
+policy and does not resolve DM-0014.
+
+- Source-record identity, literal transcription, recorded visual summary,
+  interpreted product predicate and hypothetical money remain separate layers.
+  A normalized origin label is not a verbatim PDF excerpt.
+- The source DTO is revalidated at each business boundary. Source-record SHA
+  checks do not claim original-PDF replay, native-text proof or human review.
+- A product match requires code AND declared characteristics. Known exclusion
+  concerns this candidate only; missing/invalid/contradictory input is explicit.
+- A selected producer row is only an explicit hypothetical operand. Its complete
+  row/unit evidence accompanies the amount. Unknown producer never means other.
+- Exact unrounded arithmetic reuses ETT preview; it never enters the live VAT
+  base or final payable. Explicit dates are preserved without inventing legal
+  intervals. There is no new live API/AI integration or enforcement flag.
+- A3 supplies facts, A2 interpretation, A1 arithmetic, A4 consumer documentation;
+  independent A5 reproduced defects and approved owner fixes. This sequence does
+  not replace future manifest-bound human review and separate legal approval.
+
+[Task](tasks/TASK-AD30-EXECUTABLE-REVIEW-001.md),
+[review guide](../docs/ai-workflow/AD30_EXECUTABLE_REVIEW.md),
+[A5 evidence](../docs/ai-workflow/evidence/ad30-independent-qa-20260914.json).
+
 ## Implementation clarification — 12 September 2026
 
 This is an implementation record under accepted Option A of issue #188,

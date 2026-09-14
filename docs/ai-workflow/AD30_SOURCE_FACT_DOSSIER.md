@@ -1,7 +1,7 @@
 # AD30 source-fact dossier for offline review
 
-Status: implemented and author-tested, 14 September 2026. Independent A5 and
-integrated CI acceptance are separate gates recorded by the integration task.
+Status: implemented and independently approved by A5, 14 September 2026.
+Exact integrated/publication CI is recorded by the integration task.
 This implements a machine-readable input contract for the retained Decision
 12 → 4 → 121 observations; it does not repeat acquisition or the prose review
 candidate already published separately in PR #192.
@@ -107,3 +107,8 @@ pin above were updated together. A targeted regression rejects reintroducing the
 transcription label even with the copied new digest. The same bounded author
 suite now has 45 passing cases. This is a source-observation label correction,
 not a new country applicability rule or legal interpretation.
+
+A0 acceptance update: A5 independently reproduced and verified this correction,
+then approved the complete bounded dossier/product/CLI path (43 independent
+cases; 449 combined). See [A5 evidence](evidence/ad30-independent-qa-20260914.json).
+Original author counts above remain the historical runs, not final CI totals.
