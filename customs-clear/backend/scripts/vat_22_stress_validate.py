@@ -138,15 +138,18 @@ def main() -> None:
         apply_smart_net_weight_to_line_item(item, hs, df=mapped, row_index=i)
         logic = (hs_payload.get("vat_logic") or "").strip().replace("\n", " ")[:58]
         pref = hs_payload.get("preferential_vat_group")
-        vat_override = None
+        vat_candidate = None
         if pref is not None:
             vf = hs_payload.get("vat_rate_final")
             try:
                 if vf is not None and float(vf) in (10.0, float(DEFAULT_VAT_RATE)):
-                    vat_override = float(vf)
+                    vat_candidate = float(vf)
             except (TypeError, ValueError):
                 pass
-        enr = enrich_with_customs_data(hs, item, vat_import_override=vat_override) if hs else {}
+        enr = enrich_with_customs_data(hs, item, vat_import_override=vat_candidate) if hs else {}
+        vat_review = enr.get("vat_override_review") or {}
+        if vat_review.get("status") == "REVIEW_REQUIRED":
+            logic = f"[МОДЕЛЬНЫЙ КАНДИДАТ НЕ ПРИМЕНЕН] {logic}".strip()
         vat_pct = enr.get("vat_import_rate")
         vat_s = f"{float(vat_pct):g}" if isinstance(vat_pct, (int, float)) else "—"
         cv = _parse_number(item.get("customs_value"))
@@ -184,6 +187,10 @@ def main() -> None:
                 "quantity": item.get("quantity") or "1",
                 "duty_rate": enr.get("duty_rate") if enr.get("duty_rate") is not None else "",
                 "vat_rate": vat_s,
+                "vat_candidate_rate": vat_review.get("candidate_rate")
+                if vat_review.get("candidate_rate") is not None
+                else "",
+                "vat_candidate_status": vat_review.get("status") or "",
                 "item_price_rub": item.get("item_price_rub") or "",
                 "allocated_freight_rub": item.get("allocated_freight_rub") or "",
                 "customs_value": item.get("customs_value") or "",
@@ -205,6 +212,8 @@ def main() -> None:
             "quantity": "1",
             "duty_rate": 5,
             "vat_rate": "22",
+            "vat_candidate_rate": "",
+            "vat_candidate_status": "",
             "item_price_rub": 100.0,
             "allocated_freight_rub": 0.0,
             "customs_value": 100.0,
