@@ -16,7 +16,7 @@ from typing import Any
 
 from app.services.official_rate_validation import load_official_rate_json
 
-DOSSIER_SHA256 = "c4c93fabad9cb8e87a67811c54d5f4d9f554b18cd77cf2db12839343e6ccdde9"
+DOSSIER_SHA256 = "f3f9722c1f67ec0ea4cc2fa6d495d54d0de981cb351d8aef71104ec6eb584894"
 _DOSSIER_PATH = "customs-clear/backend/app/data/official_sources/ad30_source_facts_v1.json"
 _EVIDENCE_PATHS = frozenset({
     "docs/ai-workflow/evidence/eec-ad30-decision12-capture-review-20260912.json",

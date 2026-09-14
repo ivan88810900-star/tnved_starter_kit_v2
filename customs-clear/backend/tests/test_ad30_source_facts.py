@@ -169,3 +169,17 @@ def test_source_record_fifo_rejected_without_reading(tmp_path):
     os.mkfifo(path)
     with pytest.raises(AD30SourceFactsError, match="regular_file"):
         load_ad30_source_facts(tmp_path)
+
+
+def test_origin_record_label_is_not_a_literal_transcription_of_inflected_pdf_text():
+    bundle = load_ad30_source_facts()
+    fact = next(f for f in bundle.facts if f.fact_id == "d12.origin")
+    assert json.loads(fact.value_json) == "Китайская Народная Республика"
+    assert fact.json_pointer == "/document_observations/product_text_basis/printed_origin"
+    assert fact.observation_kind == "recorded_origin_label"
+    assert fact.page == 2
+    assert not bundle.source_text_verified
+    incorrect = replace(fact, observation_kind="recorded_visual_transcription")
+    forged = replace(bundle, facts=tuple(incorrect if f.fact_id == fact.fact_id else f for f in bundle.facts))
+    with pytest.raises(AD30SourceFactsError):
+        validate_ad30_source_facts(forged)

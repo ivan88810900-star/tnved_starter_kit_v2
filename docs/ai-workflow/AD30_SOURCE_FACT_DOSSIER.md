@@ -30,7 +30,7 @@ observations remain JSON strings inside the immutable DTO, not mutable mappings.
   strings remain `14,62` and `17,28`; this module does not parse or calculate them.
 
 The canonical dossier SHA is
-`c4c93fabad9cb8e87a67811c54d5f4d9f554b18cd77cf2db12839343e6ccdde9`.
+`f3f9722c1f67ec0ea4cc2fa6d495d54d0de981cb351d8aef71104ec6eb584894`.
 The canonical serialization uses UTF-8, sorted JSON object keys, separators
 `,`/`:`, unescaped Unicode, and no NaN values. Evidence-record SHA checks use
 unaltered file bytes, including whitespace; their source and receipt identities
@@ -92,3 +92,18 @@ runtime integrity grant, amendment completeness or legal applicability review.
 
 No existing capture evidence, PR #192 document, application DB, flag or workflow
 was modified by this source-only task.
+
+## A5-AD30-SOURCE-LABEL-001 correction
+
+A5 independently compared Decision 12 page 2 with the dossier. The retained
+record's `printed_origin` field contains the nominative country label
+`Китайская Народная Республика`, while the source clause prints the inflected
+phrase `происходящих из Китайской Народной Республики`. The original dossier
+mistakenly labeled that exact record value `recorded_visual_transcription`.
+
+The dossier now labels `d12.origin` as `recorded_origin_label`; its value and
+original evidence record remain unchanged. The canonical dossier SHA and module
+pin above were updated together. A targeted regression rejects reintroducing the
+transcription label even with the copied new digest. The same bounded author
+suite now has 45 passing cases. This is a source-observation label correction,
+not a new country applicability rule or legal interpretation.
