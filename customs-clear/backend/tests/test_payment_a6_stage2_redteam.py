@@ -309,3 +309,21 @@ def test_compute_quote_and_asgi_do_not_mutate_fixture_tables(qa_database):
         assert client.post("/api/calculator/compute", json=payload(save_history=False)).status_code == 200
         assert client.post("/api/payments/quote", json=payload()).status_code == 200
     assert rows() == before
+
+
+@pytest.mark.parametrize("currency", ["USD", "ZZZ"])
+def test_extended_comparison_cannot_erase_foreign_fx_review(qa_database, monkeypatch, currency):
+    from app.services import scenario_compare_service as extended
+    monkeypatch.setattr(extended, "SessionLocal", qa_database)
+    monkeypatch.setattr(extended, "get_rates_map", lambda: {"RUB": 1.0, "USD": 90.0})
+    request = {"base": {"hs_code": HS, "customs_value": 1000,
+                       "currency": currency, "country": "CN"},
+               "scenarios": [{"name": "A"}, {"name": "B"}]}
+    try:
+        result = extended.compare_scenarios_extended(request)
+    except ValueError:
+        return  # Unknown FX may be rejected, but must not become identity=1.
+    assert result["status"] == "REVIEW_REQUIRED"
+    assert result["comparison_complete"] is False
+    assert result["best_scenario"] is None
+    assert result["savings_vs_worst"] is None
