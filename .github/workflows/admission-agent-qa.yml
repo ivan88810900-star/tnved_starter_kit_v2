@@ -121,7 +121,8 @@ jobs:
                 tests/test_build_full_staging_snapshot.py
               )
               ;;
-            agent/qa-integration)
+            agent/qa-integration|agent/*)
+              # Dynamic isolated agent branches run the full reviewed integration union.
               # Exact reviewed integration dependencies; missing suites fail.
               tests=(
                 tests/test_payment_admission_redteam.py
