@@ -124,15 +124,21 @@ def test_explicit_manual_duty_is_not_replaced_or_discounted(payment_data, manual
     assert result["breakdown"]["duty"] == 1_000 * manual_rate
 
 
-def test_geo_override_path_is_unchanged(payment_data):
+def test_geo_candidate_cannot_replace_duty_or_hide_preference_review(payment_data):
     payment_data.duty_rule = None
     payment_data.geo_override = SimpleNamespace(duty_rate="35%", document_basis="Geo fixture", document_link="")
     result = engine.compute_payments(_payload())
-    assert result["status"] == "OK"
-    assert result["amounts_provisional"] is False
+    assert result["status"] == "REVIEW_REQUIRED"
+    assert result["amounts_provisional"] is True
     assert result["geo"]["duty_override_rate"] == 35
-    assert result["breakdown"]["duty"] == 35_000
+    assert result["geo"]["applied"] is False and result["geo"]["legal_review_verified"] is False
+    assert result["breakdown"]["duty"] == 10_000
     assert result["tariff_preference"]["applied"] is False
+    assert result["tariff_preference"]["status"] == "needs_review"
+    quote = quotes.build_payment_quote(_payload())
+    lines = {line.code: line for line in quote.line_items}
+    assert lines["duty"].amount_rub is None and lines["vat"].amount_rub is None
+    assert quote.total_payable_rub is None
 
 
 def test_structured_specific_amount_is_not_discounted(payment_data):
@@ -200,22 +206,23 @@ def test_vat_preference_is_an_independent_source_but_duty_stays_unknown(payment_
     assert result["status"] == "REVIEW_REQUIRED"
 
 
-def test_geo_duty_and_explicit_vat_do_not_require_missing_rate_fallback(payment_data, monkeypatch):
+def test_geo_candidate_and_explicit_vat_do_not_fill_missing_duty_source(payment_data, monkeypatch):
     payment_data.duty_rule = None
     payment_data.geo_override = SimpleNamespace(duty_rate="35%", document_basis="Geo fixture", document_link="")
     monkeypatch.setattr(engine, "find_rate_for_hs", lambda _: (None, 0))
     result = engine.compute_payments(_payload(country="CN", vat_rate=10))
-    assert result["status"] == "OK"
-    assert result["payment_review_reasons"] == []
-    assert result["breakdown"]["duty"] == 35_000
-    assert "geo_special_duties" in result["legal_basis"]["duty"]
+    assert result["status"] == "REVIEW_REQUIRED"
+    assert set(result["payment_review_reasons"]) == {"duty_source_missing", "geo_duty_applicability_unverified"}
+    assert result["breakdown"]["duty"] == 0  # Explicitly incomplete subtotal, not a zero-rate grant.
+    assert result["geo"]["applied"] is False and result["geo"]["legal_review_verified"] is False
     quote = quotes.build_payment_quote(_payload(country="CN", vat_rate=10))
     lines = {line.code: line for line in quote.line_items}
-    assert lines["duty"].status == "applied"
-    assert lines["duty"].amount_rub == 35_000
+    assert lines["duty"].status == "manual_review_required"
+    assert lines["duty"].amount_rub is None
     # The explicit VAT percentage cannot determine a base with unknown excise/AD.
     assert lines["vat"].status == "manual_review_required"
     assert lines["vat"].amount_rub is None
+    assert quote.total_payable_rub is None
 
 
 def test_known_zero_duty_is_distinct_from_missing_zero_fallback(payment_data):

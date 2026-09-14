@@ -10,6 +10,7 @@ from ..schemas.payment_profile import (
 from ..schemas.payment_quote import CurrentPaymentRequest
 from ..services.calculation_history_service import save_calculation_record
 from ..services.exchange_rates import get_rates_map
+from ..services.payment_engine import observed_fx_rate
 from ..services.payment_profile_builder import (
     build_compare_payment_profiles,
 )
@@ -128,15 +129,16 @@ async def compute(req: CalculatorRequest) -> JSONResponse:
         payload = req.model_dump(exclude={"save_history", "document_id", "user_ref"})
         rates = get_rates_map()
         invoice_currency = (req.invoice_currency or "RUB").upper().strip()
-        if invoice_currency not in rates:
+        if invoice_currency != "RUB" and invoice_currency not in rates:
             raise HTTPException(status_code=400, detail=f"Неизвестная валюта инвойса: {invoice_currency}")
-        invoice_fx_rate = float(rates.get(invoice_currency) or 1.0)
+        invoice_fx_rate = observed_fx_rate(rates, invoice_currency)
         invoice_amount = float(req.customs_value)
         customs_value_rub = invoice_amount * invoice_fx_rate
         payload["customs_value"] = customs_value_rub
         payload["hs_code"] = req.hs_code
         payload["country"] = req.country
         payload["_fx_rates"] = rates
+        payload["invoice_currency"] = invoice_currency
         result = compute_payments(payload)
         result["invoice"] = {
             "currency": invoice_currency,
@@ -144,7 +146,7 @@ async def compute(req: CalculatorRequest) -> JSONResponse:
             "fx_rate": _round2(invoice_fx_rate),
             "customs_value_rub": _round2(customs_value_rub),
         }
-        result["fx_source"] = "ЦБ РФ"
+        result["fx_source"] = "RUB identity" if invoice_currency == "RUB" else "Неподтверждённое наблюдение курса; требуется проверка источника и даты"
         if req.save_history:
             save_calculation_record(
                 input_payload=payload,
@@ -197,11 +199,12 @@ async def compare(req: CompareRequest) -> PaymentCompareResponse:
         rates = get_rates_map()
         shared = req.shared.model_dump(exclude_none=True)
         invoice_currency = (shared.get("invoice_currency") or "RUB").upper().strip()
-        if invoice_currency not in rates:
+        if invoice_currency != "RUB" and invoice_currency not in rates:
             raise HTTPException(status_code=400, detail=f"Неизвестная валюта инвойса: {invoice_currency}")
-        invoice_fx_rate = float(rates.get(invoice_currency) or 1.0)
+        invoice_fx_rate = observed_fx_rate(rates, invoice_currency)
         shared["customs_value"] = float(shared.get("customs_value") or 0.0) * invoice_fx_rate
         shared["_fx_rates"] = rates
+        shared["invoice_currency"] = invoice_currency
         payload = {
             "shared": shared,
             "scenarios": [s.model_dump(exclude_none=True) for s in req.scenarios],

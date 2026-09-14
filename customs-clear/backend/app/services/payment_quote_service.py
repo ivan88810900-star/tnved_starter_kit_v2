@@ -16,6 +16,7 @@ from ..schemas.payment_quote import (
 )
 from .exchange_rates import get_rates_map
 from .payment_engine_compat import compute_payments
+from .payment_engine import observed_fx_rate
 from .tnved_code_card import canonical_anchor_for_hs
 
 
@@ -389,11 +390,11 @@ def build_payment_quote(payload: dict[str, Any]) -> PaymentQuoteResponse:
     user_excise = float(payload["excise"]) if payload.get("excise") is not None else None
 
     rates = get_rates_map()
-    if invoice_currency not in rates:
+    if invoice_currency != "RUB" and invoice_currency not in rates:
         raise ValueError(f"Неизвестная валюта инвойса: {invoice_currency}")
 
     calc_payload = dict(payload)
-    invoice_fx = float(rates.get(invoice_currency) or 1.0)
+    invoice_fx = observed_fx_rate(rates, invoice_currency)
     calc_payload["customs_value"] = float(payload.get("customs_value") or 0.0) * invoice_fx
     calc_payload["_fx_rates"] = rates
     calc_payload["invoice_currency"] = invoice_currency
@@ -453,6 +454,7 @@ def build_payment_quote(payload: dict[str, Any]) -> PaymentQuoteResponse:
         )
 
     amounts_provisional = _amounts_require_review(raw)
+    component_review = raw.get("payment_component_review") or {}
     preference_pending = (raw.get("tariff_preference") or {}).get("status") == "needs_review"
     auto = raw.get("auto_detected") or {}
     duty_status: PaymentLineStatus = "applied"
@@ -470,6 +472,9 @@ def build_payment_quote(payload: dict[str, Any]) -> PaymentQuoteResponse:
     if preference_pending:
         duty_status = "manual_review_required"
         duty_reason = _amount_review_reason(raw)
+    if component_review.get("duty"):
+        duty_status = "manual_review_required"
+        duty_reason = _amount_review_reason(raw)
 
     duty_uncertain = duty_status in {"unknown", "manual_review_required"}
     special_duty_uncertain = any(
@@ -477,13 +482,19 @@ def build_payment_quote(payload: dict[str, Any]) -> PaymentQuoteResponse:
     )
     excise_status, excise_amount, excise_reason = _resolve_excise_status(raw=raw, user_excise=user_excise)
     antidumping_line = _resolve_antidumping_line(raw=raw)
+    if component_review.get("excise"):
+        excise_status, excise_amount, excise_reason = "manual_review_required", None, _amount_review_reason(raw)
+    if component_review.get("antidumping"):
+        antidumping_line = antidumping_line.model_copy(update={
+            "status": "manual_review_required", "amount_rub": None, "reason": _amount_review_reason(raw),
+        })
     uncertain_bases = {"manual_review_required", "unknown", "not_configured"}
     vat_basis_uncertain = (duty_uncertain or special_duty_uncertain
                            or excise_status in uncertain_bases
                            or antidumping_line.status in uncertain_bases)
     vat_status: PaymentLineStatus = "manual_override" if payload.get("vat_rate") is not None else "applied"
     vat_reason = str(breakdown.get("vat_reason") or "")
-    if vat_basis_uncertain:
+    if vat_basis_uncertain or component_review.get("vat"):
         vat_status = "manual_review_required"
         vat_reason += " База НДС зависит от непроверенной пошлины или акциза."
         if amounts_provisional:
@@ -506,7 +517,7 @@ def build_payment_quote(payload: dict[str, Any]) -> PaymentQuoteResponse:
                     if preference_pending else "hs_duty_rules / hs_rates (ЕТТ ЕАЭС)"),
             rate_label=f"{breakdown.get('duty_rate')}%" if breakdown.get("duty_rate") is not None else None,
             basis_label="Таможенная стоимость",
-            basis_amount_rub=float(raw.get("customs_value") or 0.0),
+            basis_amount_rub=None if component_review.get("customs_fee") else float(raw.get("customs_value") or 0.0),
         ),
         PaymentQuoteLineItem(
             code="vat",
@@ -517,17 +528,17 @@ def build_payment_quote(payload: dict[str, Any]) -> PaymentQuoteResponse:
             source="hs_rates / vat_preferences (НК РФ)",
             rate_label=f"{breakdown.get('vat_rate')}%",
             basis_label="Стоимость + пошлина + акциз + торговые пошлины",
-            basis_amount_rub=None if vat_basis_uncertain else float(breakdown.get("vat_base") or 0.0),
+            basis_amount_rub=None if vat_uncertain else float(breakdown.get("vat_base") or 0.0),
         ),
         PaymentQuoteLineItem(
             code="customs_fee",
             label="Таможенный сбор",
-            amount_rub=float(breakdown.get("customs_fee") or 0.0),
-            status="applied",
-            reason=str((raw.get("legal_basis") or {}).get("customs_fee") or "Шкала таможенных сборов РФ 2026."),
+            amount_rub=None if component_review.get("customs_fee") else float(breakdown.get("customs_fee") or 0.0),
+            status="manual_review_required" if component_review.get("customs_fee") else "applied",
+            reason=_amount_review_reason(raw) if component_review.get("customs_fee") else str((raw.get("legal_basis") or {}).get("customs_fee") or "Шкала таможенных сборов РФ 2026."),
             source="customs_fees",
             basis_label="Таможенная стоимость",
-            basis_amount_rub=float(raw.get("customs_value") or 0.0),
+            basis_amount_rub=None if component_review.get("customs_fee") else float(raw.get("customs_value") or 0.0),
         ),
         PaymentQuoteLineItem(
             code="excise",
@@ -540,6 +551,22 @@ def build_payment_quote(payload: dict[str, Any]) -> PaymentQuoteResponse:
         antidumping_line,
         _resolve_special_duty_line(raw=raw, country=country, hs_code=hs_code),
     ]
+
+    if component_review.get("special_duty"):
+        line_items = [item.model_copy(update={
+            "status": "manual_review_required", "amount_rub": None, "reason": _amount_review_reason(raw),
+        }) if item.code == "special_duty" else item for item in line_items]
+    recycling_amount = float(breakdown.get("recycling_fee") or 0.0)
+    if recycling_amount:
+        recycling = raw.get("recycling_fee") or {}
+        line_items.append(PaymentQuoteLineItem(
+            code="recycling_fee", label="Утилизационный сбор", amount_rub=recycling_amount,
+            status="applied", source="recycling_fee",
+            reason=str(recycling.get("legal_ref") or recycling.get("description") or "Утилизационный сбор из существующего расчёта."),
+            rate_label=str(recycling["coefficient"]) if recycling.get("coefficient") is not None else None,
+            basis_label="Базовая ставка × коэффициент",
+            basis_amount_rub=float(recycling["base_rate"]) if recycling.get("base_rate") is not None else None,
+        ))
 
     warnings = _build_warnings(line_items, raw)
     assumptions = _build_assumptions(payload, raw)

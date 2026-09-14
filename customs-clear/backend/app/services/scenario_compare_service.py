@@ -9,23 +9,26 @@ from typing import Any
 from ..db import SessionLocal
 from .exchange_rates import get_rates_map
 from .payment_engine_compat import compute_payments
+from .payment_engine import LEGACY_PAYMENT_AS_OF_UNSUPPORTED, observed_fx_rate
 from .rop_calculator import calculate_rop
 
 
 def compare_scenarios_extended(payload: dict[str, Any]) -> dict[str, Any]:
     base = payload.get("base") or {}
     scenarios = payload.get("scenarios") or []
+    if payload.get("as_of") is not None or base.get("as_of") is not None or any(isinstance(row, dict) and row.get("as_of") is not None for row in scenarios):
+        raise ValueError(LEGACY_PAYMENT_AS_OF_UNSUPPORTED)
     if len(scenarios) < 2:
         raise ValueError("Укажите минимум 2 сценария")
 
     hs_base = str(base.get("hs_code") or "").strip()
     customs_value = float(base.get("customs_value") or 0)
-    currency = str(base.get("currency") or base.get("invoice_currency") or "USD").upper()
+    currency = str(base.get("currency") or base.get("invoice_currency") or "USD").upper().strip()
     gross = base.get("weight_gross_kg")
     net = base.get("weight_net_kg")
 
     rates = get_rates_map()
-    fx = float(rates.get(currency) or 1.0)
+    fx = observed_fx_rate(rates, currency)
     cv_rub = customs_value * fx
 
     out: list[dict[str, Any]] = []
@@ -41,7 +44,8 @@ def compare_scenarios_extended(payload: dict[str, Any]) -> dict[str, Any]:
             pay_in: dict[str, Any] = {
                 "hs_code": hs,
                 "customs_value": cv_rub,
-                "invoice_currency": "RUB",
+                "invoice_currency": currency,
+                "_fx_rates": rates,
                 "country": country or None,
             }
             if net is not None:

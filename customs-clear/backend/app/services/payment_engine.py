@@ -122,6 +122,70 @@ LEGACY_PAYMENT_AS_OF_UNSUPPORTED = (
     "заменена сегодняшней."
 )
 
+SOURCE_REVIEW_REASONS = {
+    "geo_duty_applicability_unverified": "Найдена географическая ставка-кандидат; её применимость и приоритет не утверждены. Обычная ставка показана только предварительно.",
+    "foreign_fx_source_unverified": "Курс иностранной валюты не связан с подтверждённым источником и датой расчёта; зависимые суммы предварительные.",
+    "duty_expression_incomplete": "В выражении пошлины отсутствует или повреждён обязательный компонент, единица либо валюта. Сумма пошлины не определена, а не равна нулю.",
+    "hs_rate_effective_period_unverified": "Заполненные даты строки hs_rates повреждены либо не включают текущую дату. Зависимые автоматические ставки не подтверждены.",
+}
+
+
+def observed_fx_rate(rates: dict[str, Any], currency: str) -> float:
+    """Validate an observed factor without granting source/date authenticity."""
+    if currency == "RUB":
+        return 1.0  # Unit identity, never a mutable map's conversion factor.
+    value = rates.get(currency)
+    try:
+        factor = None if isinstance(value, bool) else float(value)
+    except (TypeError, ValueError, OverflowError):
+        factor = None
+    if factor is None or not isfinite(factor) or factor <= 0:
+        raise ValueError(f"Курс {currency} должен быть явно задан положительным конечным числом")
+    return factor
+
+
+def _hs_rate_period_unverified(rate) -> bool:
+    if rate is None:
+        return False
+    bounds = []
+    for name in ("valid_from", "valid_to"):
+        literal = getattr(rate, name, None)
+        if literal is None or literal == "":
+            bounds.append(None)  # No positive legal grant from missing bounds.
+            continue
+        try:
+            if type(literal) is not str:
+                return True
+            parsed = date.fromisoformat(literal)
+            if parsed.isoformat() != literal:
+                return True
+            bounds.append(parsed)
+        except ValueError:
+            return True
+    start, end = bounds
+    today = date.today()
+    return bool((start and end and start > end) or (start and today < start) or (end and today > end))
+
+
+def _duty_expression_incomplete(rule) -> bool:
+    if rule is None:
+        return False
+    kind = (rule.type or "").strip().lower()
+    if kind not in {"ad_valorem", "specific", "combined_max", "combined_min"}:
+        return True
+    if kind == "ad_valorem":
+        return False  # Existing explicit ad-valorem/fallback path is separate.
+    for field in (("specific_amount",) if kind == "specific" else ("specific_amount", "ad_valorem_pct")):
+        value = getattr(rule, field, None)
+        try:
+            if isinstance(value, bool) or value is None or not isfinite(float(value)) or float(value) < 0:
+                return True
+        except (TypeError, ValueError, OverflowError):
+            return True
+    unit = (rule.specific_uom or "").lower().strip()
+    currency = (rule.specific_currency or "").upper().strip()
+    return unit not in {"kg", "l", "pcs", "m2", "m3", "t"} or re.fullmatch(r"[A-Z]{3}", currency) is None
+
 
 def _digits_hs(code: str) -> str:
     return re.sub(r"\D", "", (code or ""))[:10]
@@ -412,10 +476,10 @@ def _compute_structured_duty(
             raise ValueError("Для точного расчета необходимо указать вес/количество")
         specific_qty_used = q_used
         rates = dict(_FALLBACK_FX_RATES)
-        rates.update({(k or "").upper(): float(v) for k, v in (fx_rates or {}).items()})
+        rates.update({(k or "").upper(): v for k, v in (fx_rates or {}).items()})
         if ccy not in rates:
             raise ValueError(f"Неизвестная валюта специфической ставки: {ccy or 'EMPTY'}")
-        fx_rate = _num(rates.get(ccy) or 1.0)
+        fx_rate = observed_fx_rate(rates, ccy)
         specific_amount_rub = amount * q_used * float(fx_rate)
 
     # simple ad valorem
@@ -538,7 +602,11 @@ def _resolve_antidumping(
         return 0.0, "Не применяется", "n/a"
 
     # Check country applicability
-    applicable_countries = [c.strip().upper() for c in antidumping_countries.split(",") if c.strip()]
+    applicable_countries = [c.strip().upper() for c in antidumping_countries.split(",")]
+    if not applicable_countries or any(re.fullmatch(r"[A-Z]{2}", c) is None for c in applicable_countries):
+        return 0.0, "Страна действия антидемпинга не определена однозначно; пустой или повреждённый список не означает все страны.", "manual_review"
+    if country and re.fullmatch(r"[A-Z]{2}", country) is None:
+        return 0.0, "Код страны происхождения требует уточнения перед проверкой антидемпинга.", "manual_review"
 
     country_match = True
     if applicable_countries and country:
@@ -567,12 +635,7 @@ def _resolve_antidumping(
         return amount, reason, "applied"
 
     if antidumping_type == "fixed":
-        amount = antidumping_value * quantity
-        reason = (
-            f"Применяется фикс. ставка {antidumping_value} руб./ед. × {quantity} ед. "
-            f"{antidumping_condition or ''} Страна: {country}."
-        ).strip()
-        return amount, reason, "applied"
+        return 0.0, "Для фиксированной антидемпинговой ставки не подтверждены валюта, единица и знаменатель. Общее количество товара не определяет сумму пошлины.", "manual_review"
 
     return 0.0, "Тип антидемпинговой ставки не определён; требуется проверка", "manual_review"
 
@@ -679,20 +742,18 @@ def compute_payments(payload: dict[str, Any]) -> dict[str, Any]:
     # Duty (структурированные правила hs_duty_rules + fallback на историческую ставку)
     duty_rule, duty_rule_match_len = _find_duty_rule_for_hs(hs_code)
     manual_duty_rate = float(payload.get("duty_rate")) if payload.get("duty_rate") is not None else None
-    # Гео-подмена ставки применяется к базовой (исторической) адвалорной логике;
-    # структурированное правило hs_duty_rules остаётся приоритетным.
-    if manual_duty_rate is None and duty_rule is None and geo_meta.get("duty_override_rate") is not None:
-        manual_duty_rate = float(geo_meta["duty_override_rate"])
-    duty, duty_rate, ad_valorem_amount, specific_amount_rub, selected_rule, fx_rate, specific_qty_used = _compute_structured_duty(
-        customs_value=customs_value,
-        quantity=qty,
-        net_weight_kg=net_weight_kg,
-        extra_quantity=extra_quantity,
-        duty_rule=duty_rule,
-        manual_duty_rate=manual_duty_rate,
-        auto_duty_rate=auto_duty_rate,
-        fx_rates=payload.get("_fx_rates") if isinstance(payload.get("_fx_rates"), dict) else None,
-    )
+    # A geographic candidate cannot establish precedence or act as a manual grant.
+    duty_incomplete = manual_duty_rate is None and _duty_expression_incomplete(duty_rule)
+    if duty_incomplete:
+        duty, duty_rate, ad_valorem_amount, specific_amount_rub, selected_rule, fx_rate, specific_qty_used = (
+            0.0, 0.0, None, None, "unavailable:incomplete_expression", None, None)
+    else:
+        duty, duty_rate, ad_valorem_amount, specific_amount_rub, selected_rule, fx_rate, specific_qty_used = _compute_structured_duty(
+            customs_value=customs_value, quantity=qty, net_weight_kg=net_weight_kg,
+            extra_quantity=extra_quantity, duty_rule=duty_rule, manual_duty_rate=manual_duty_rate,
+            auto_duty_rate=auto_duty_rate,
+            fx_rates=payload.get("_fx_rates") if isinstance(payload.get("_fx_rates"), dict) else None,
+        )
     duty_source_missing = manual_duty_rate is None and duty_rule is None and rate is None
 
     # A legacy country row is a review candidate, not proof of eligibility for
@@ -701,7 +762,7 @@ def compute_payments(payload: dict[str, Any]) -> dict[str, Any]:
     tariff_pref_meta: dict[str, Any] = {"applied": False}
     preference_review_required = False
     user_duty_rate = payload.get("duty_rate")
-    if tariff_pref and user_duty_rate is None and geo_meta.get("duty_override_rate") is None:
+    if tariff_pref and user_duty_rate is None:
         raw_coeff = tariff_pref.duty_coefficient
         try:
             coeff = None if isinstance(raw_coeff, bool) else float(raw_coeff)
@@ -879,6 +940,51 @@ def compute_payments(payload: dict[str, Any]) -> dict[str, Any]:
     if vat_source_missing:
         vat_reason = VAT_SOURCE_MISSING_REASON
 
+    component_review: dict[str, list[str]] = {}
+    fx_observations: list[dict[str, Any]] = []
+
+    def require_component_review(code: str, *components: str) -> None:
+        for component in components:
+            reasons = component_review.setdefault(component, [])
+            if code not in reasons:
+                reasons.append(code)
+
+    if duty_incomplete:
+        require_component_review("duty_expression_incomplete", "duty", "vat")
+    if geo_meta.get("duty_override_rate") is not None:
+        geo_meta.update(status="needs_review", applied=False, legal_review_verified=False)
+        require_component_review("geo_duty_applicability_unverified", "duty", "vat")
+    rate_period_unverified = _hs_rate_period_unverified(rate)
+    if rate_period_unverified:
+        if manual_duty_rate is None:
+            require_component_review("hs_rate_effective_period_unverified", "duty", "vat")
+        if payload.get("vat_rate") is None and vat_pref is None:
+            require_component_review("hs_rate_effective_period_unverified", "vat")
+        if payload.get("excise") is None:
+            require_component_review("hs_rate_effective_period_unverified", "excise", "vat")
+        require_component_review("hs_rate_effective_period_unverified", "antidumping", "vat")
+        antidumping_status = "manual_review"
+        antidumping_reason = SOURCE_REVIEW_REASONS["hs_rate_effective_period_unverified"]
+    specific_currency = (duty_rule.specific_currency or "").upper().strip() if duty_rule else ""
+    if fx_rate is not None and specific_currency != "RUB":
+        require_component_review("foreign_fx_source_unverified", "duty", "vat")
+        supplied_rates = payload.get("_fx_rates") or {}
+        fx_observations.append({
+            "usage": "specific_duty", "currency": specific_currency, "rub_per_unit": fx_rate,
+            "source_kind": "unverified_rate_map" if specific_currency in supplied_rates else "fallback_constant",
+            "source_date": None, "source_evidence_verified": False, "legal_review_verified": False,
+        })
+    invoice_currency = str(payload.get("invoice_currency") or "RUB").upper().strip()
+    if invoice_currency != "RUB":
+        require_component_review("foreign_fx_source_unverified", "duty", "vat", "customs_fee", "excise", "antidumping", "special_duty")
+        invoice_rates = payload.get("_fx_rates") if isinstance(payload.get("_fx_rates"), dict) else {}
+        invoice_factor = observed_fx_rate(invoice_rates, invoice_currency) if invoice_currency in invoice_rates else None
+        fx_observations.append({
+            "usage": "invoice", "currency": invoice_currency, "rub_per_unit": invoice_factor,
+            "source_kind": "unverified_rate_map" if invoice_factor is not None else "unavailable",
+            "source_date": None, "source_evidence_verified": False, "legal_review_verified": False,
+        })
+
     review_reasons: list[str] = []
     review_messages: list[str] = []
     for required, code, reason in (
@@ -893,6 +999,10 @@ def compute_payments(payload: dict[str, Any]) -> dict[str, Any]:
         if required:
             review_reasons.append(code)
             review_messages.append(reason)
+    for code in SOURCE_REVIEW_REASONS:
+        if any(code in reasons for reasons in component_review.values()):
+            review_reasons.append(code)
+            review_messages.append(SOURCE_REVIEW_REASONS[code])
     amounts_provisional = bool(review_reasons)
     payment_review_reason = " ".join(review_messages) or None
 
@@ -955,13 +1065,13 @@ def compute_payments(payload: dict[str, Any]) -> dict[str, Any]:
             "tariff_preference_status": "needs_review",
             "tariff_preference_warning": TARIFF_PREFERENCE_REVIEW_REASON,
         })
+    data_quality["payment_component_review"] = component_review
+    data_quality["fx_observations"] = fx_observations
 
     tnved_context = get_tnved_context_for_hs(hs_code)
 
     if user_duty_rate is not None:
         duty_reason = f"Ставка пошлины указана вручную: {duty_rate}%."
-    elif manual_duty_rate is not None:
-        duty_reason = f"Подмена ставки по geo_special_duties: {duty_rate}%. {geo_meta['document_basis']}".strip()
     elif duty_rule is not None:
         duty_reason = (
             f"Структурированное правило: {duty_rule.type} "
@@ -973,12 +1083,29 @@ def compute_payments(payload: dict[str, Any]) -> dict[str, Any]:
         duty_reason = DUTY_SOURCE_MISSING_REASON
     if preference_review_required:
         duty_reason += f" {TARIFF_PREFERENCE_REVIEW_REASON}"
+    for code in component_review.get("duty", []):
+        duty_reason += " " + SOURCE_REVIEW_REASONS[code]
 
     return {
         "status": "REVIEW_REQUIRED" if amounts_provisional else "OK",
         "amounts_provisional": amounts_provisional,
         "payment_review_reason": payment_review_reason,
         "payment_review_reasons": review_reasons,
+        "payment_component_review": component_review,
+        "fx_observations": fx_observations,
+        **({"hs_rate_period_candidate": {
+            "status": "needs_review", "source_kind": "legacy_hs_rates",
+            "valid_from": getattr(rate, "valid_from", None), "valid_to": getattr(rate, "valid_to", None),
+            "source_revision": getattr(rate, "source_revision", ""), "source_url": getattr(rate, "source_url", ""),
+            "legal_review_verified": False,
+        }} if rate_period_unverified else {}),
+        **({"duty_candidate": {
+            "status": "needs_clarification", "amount": None, "calculation_available": False,
+            "applied": False, "legal_review_verified": False,
+            "reason": "duty_expression_incomplete", "code": duty_rule.commodity_code,
+            "rule_type": duty_rule.type, "specific_amount_text": str(duty_rule.specific_amount)[:128],
+            "specific_currency": duty_rule.specific_currency, "specific_uom": duty_rule.specific_uom,
+        }} if duty_incomplete else {}),
         "hs_code": hs_code,
         "country": country,
         "customs_value": _round2(customs_value),

@@ -30,7 +30,7 @@ def isolated_payments(monkeypatch):
     for model in (HsRate, HsDutyRule, SpecialDuty):
         model.__table__.create(database)
     sessions = sessionmaker(bind=database)
-    state = SimpleNamespace(coefficient=1.0, geo=None, fx={"RUB": 1.0})
+    state = SimpleNamespace(coefficient=1.0, geo=None, fx={"RUB": 1.0}, sessions=sessions)
     monkeypatch.setattr(engine, "SessionLocal", sessions)
     monkeypatch.setattr(store, "SessionLocal", sessions)
     monkeypatch.setattr(engine, "find_rate_for_hs", store.find_rate_for_hs)
@@ -223,3 +223,98 @@ def test_displayed_components_still_reconcile_exactly(isolated_payments):
     part = raw["breakdown"]
     displayed = sum(Decimal(str(part[key])) for key in ("duty", "vat", "excise", "antidumping", "special_duties_amount", "customs_fee", "recycling_fee"))
     assert Decimal(str(part["total_payable"])) == displayed
+
+
+@pytest.mark.parametrize("value", [0, -1, True, float("nan"), float("inf")])
+def test_invalid_specific_fx_never_becomes_one_or_a_confirmed_amount(isolated_payments, value):
+    isolated_payments.set_duty(type="specific", ad_valorem_pct=None, specific_amount=2,
+                               specific_currency="EUR", specific_uom="kg")
+    with pytest.raises(ValueError):
+        engine.compute_payments(request(net_weight_kg=100, _fx_rates={"EUR": value}))
+
+
+@pytest.mark.parametrize("value", [0, -1, True, float("nan"), float("inf")])
+def test_invalid_invoice_fx_never_becomes_one(isolated_payments, value):
+    isolated_payments.fx["EUR"] = value
+    with pytest.raises(ValueError):
+        quotes.build_payment_quote(request(invoice_currency="EUR"))
+
+
+@pytest.mark.parametrize("changes", [
+    {"specific_currency": ""}, {"specific_uom": ""}, {"specific_uom": "unknown"},
+    {"specific_amount": -1}, {"specific_amount": float("inf")},
+])
+def test_missing_or_invalid_specific_basis_is_explicitly_unavailable(isolated_payments, changes):
+    isolated_payments.set_duty(type="specific", ad_valorem_pct=None, specific_amount=2,
+                               specific_currency="RUB", specific_uom="kg")
+    isolated_payments.set_duty(**changes)
+    raw, quote, lines = observe(f"incomplete_specific_{changes}", request(net_weight_kg=100))
+    needs_review(raw, quote, lines)
+    assert raw["duty_candidate"]["amount"] is None
+    assert raw["duty_candidate"]["calculation_available"] is False
+
+
+def test_rub_identity_is_not_taken_from_mutable_fx_map(isolated_payments):
+    isolated_payments.fx["RUB"] = 17
+    isolated_payments.set_duty(type="specific", ad_valorem_pct=None, specific_amount=2,
+                               specific_currency="RUB", specific_uom="kg")
+    raw, quote, lines = observe("RUB_identity", request(net_weight_kg=100, _fx_rates={"RUB": 17}))
+    assert raw["breakdown"]["duty"] == lines["duty"].amount_rub == 200
+    assert quote.customs_value_rub == 1_000_000
+    assert raw["breakdown"]["fx_rate"] == 1
+
+
+def test_invoice_fx_also_withholds_fee_and_other_dependent_components(isolated_payments):
+    isolated_payments.fx["EUR"] = 100
+    quote = quotes.build_payment_quote(request(invoice_currency="EUR"))
+    lines = {line.code: line for line in quote.line_items}
+    for key in ("duty", "vat", "customs_fee", "excise", "antidumping", "special_duty"):
+        assert lines[key].status == "manual_review_required"
+        assert lines[key].amount_rub is None
+    assert quote.total_payable_rub is None
+    assert lines["customs_fee"].basis_amount_rub is None
+
+
+def test_existing_recycling_amount_is_visible_and_reconciles_without_recalculation(isolated_payments, monkeypatch):
+    monkeypatch.setattr(engine, "get_recycling_fee", lambda *a, **kw: [{
+        "fee_amount": 30000.0, "vehicle_type": "synthetic", "is_new": True,
+        "base_rate": 20000.0, "coefficient": 1.5, "description": "Synthetic recycling fixture", "legal_ref": "Synthetic source",
+    }])
+    raw, quote, lines = observe("existing_recycling_amount")
+    line = lines["recycling_fee"]
+    assert line.amount_rub == raw["breakdown"]["recycling_fee"] == 30000
+    assert line.reason == "Synthetic source"
+    assert line.basis_amount_rub == 20000 and line.rate_label == "1.5"
+    shown = sum(Decimal(str(line.amount_rub)) for line in quote.line_items if line.amount_rub is not None)
+    assert shown == Decimal(str(quote.total_partial_rub)) == Decimal(str(quote.total_payable_rub))
+
+
+@pytest.mark.parametrize("currency,fx", [("USD", 90), ("RUB", 17)])
+def test_extended_scenario_preserves_original_invoice_currency_review(isolated_payments, monkeypatch, currency, fx):
+    from app.services import scenario_compare_service as scenarios
+    monkeypatch.setattr(scenarios, "SessionLocal", isolated_payments.sessions)
+    monkeypatch.setattr(scenarios, "get_rates_map", lambda: {currency: fx})
+    monkeypatch.setattr(scenarios, "compute_payments", engine.compute_payments)
+    result = scenarios.compare_scenarios_extended({
+        "base": {"hs_code": CODE, "country": "CN", "customs_value": 1000, "currency": currency},
+        "scenarios": [{"name": "A"}, {"name": "B"}],
+    })
+    if currency == "USD":
+        assert result["status"] == "REVIEW_REQUIRED" and result["comparison_complete"] is False
+        assert result["best_scenario"] is None and result["savings_vs_worst"] is None
+        assert all("foreign_fx_source_unverified" in row["payment_review_reasons"] for row in result["scenarios"])
+        assert result["base"]["customs_value_rub"] == 90000
+    else:
+        assert result["base"]["customs_value_rub"] == 1000
+
+
+@pytest.mark.parametrize("fx", [None, 0, -1, True, float("nan"), float("inf")])
+def test_extended_scenario_never_falls_back_to_one_for_bad_currency_factor(isolated_payments, monkeypatch, fx):
+    from app.services import scenario_compare_service as scenarios
+    monkeypatch.setattr(scenarios, "SessionLocal", isolated_payments.sessions)
+    monkeypatch.setattr(scenarios, "get_rates_map", lambda: {} if fx is None else {"ZZZ": fx})
+    with pytest.raises(ValueError):
+        scenarios.compare_scenarios_extended({
+            "base": {"hs_code": CODE, "country": "CN", "customs_value": 1000, "currency": "ZZZ"},
+            "scenarios": [{"name": "A"}, {"name": "B"}],
+        })
