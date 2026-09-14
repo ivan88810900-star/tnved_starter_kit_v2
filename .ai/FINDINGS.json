@@ -1,5 +1,5 @@
 {
-  "board_revision": 440,
+  "board_revision": 449,
   "findings": [
     {
       "head_sha": "161a9258d174e93266353ae1fd2cb0b3e4657679",
@@ -600,7 +600,12 @@
       "head_sha": "ce1abd85df41a4d4cac4ffeabe891339e917795a",
       "id": "A5-PAYMENT-NORMATIVE-BUNDLE-001",
       "reporter": "A5",
-      "status": "CONFIRMED",
+      "resolution": {
+        "evidence": "A0 verified the published exact-tree fix: the normative bundle test retains tnved_context/notes checks and now asserts REVIEW_REQUIRED plus duty/VAT/final withholding; 107 tests passed.",
+        "head_sha": "ee81a66eafaba008c2205cac65e5256f939822e2",
+        "validator": "A0"
+      },
+      "status": "RESOLVED",
       "summary": "Exact-head CI test_normative_bundle still asserts legacy OK instead of source-unbound REVIEW_REQUIRED; preserve tnved_context assertions and align the contract test.",
       "task_id": "TARIFF-PAYMENT-UNBOUND-ADMISSION-006",
       "validation": {
