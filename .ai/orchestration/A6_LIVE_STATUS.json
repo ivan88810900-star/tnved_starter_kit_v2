@@ -1,0 +1,52 @@
+{
+  "schema_version": 1,
+  "checked_at": "2026-09-14T17:18:16Z",
+  "status": "BLOCKED_CONNECTOR_NO_REPOSITORY_DISPATCH",
+  "live_verified": false,
+  "provider_called": false,
+  "secret_values_read": false,
+  "environment_assertion": {
+    "name": "tariff-a6-trusted",
+    "allowed_branch": "main",
+    "anthropic_api_key_scope": "environment_secret",
+    "model_scope": "environment_variable",
+    "repository_level_copies_removed": true,
+    "source": "owner_assertion_only"
+  },
+  "authorized_merges": [
+    {
+      "pr": 190,
+      "reviewed_head": "0195a2b5eef30a96feaf866061ce2a706d1c08f3",
+      "merge_commit": "9afee755a90ab834300008f3de9164a2c6a4c298",
+      "ci_run": 34852286695
+    },
+    {
+      "pr": 193,
+      "reviewed_head": "0126404cd78fd293f3634bd20c5fd09f937e83ba",
+      "merge_commit": "8d38d5966012ed3e34fa2b55eedc23ac22578339",
+      "ci_run": 34852521668,
+      "a5": "PASS"
+    },
+    {
+      "pr": 194,
+      "reviewed_head": "47da2e4763261cddc638cc276573b3375508a9ac",
+      "reviewed_tree": "b46ba60f12cba31de30f8b4d25b2feff6c90e38b",
+      "merge_commit": "4b115d418318222d5750a9c34072751c0d0765d7",
+      "main_tree": "b46ba60f12cba31de30f8b4d25b2feff6c90e38b",
+      "ci_run": 34852829770,
+      "a5": "PASS"
+    }
+  ],
+  "trusted_workflow": {
+    "path": ".github/workflows/tariff-a6-live.yml",
+    "default_branch_head": "4b115d418318222d5750a9c34072751c0d0765d7",
+    "trigger": "repository_dispatch:tariff-a6-live",
+    "workflow_present_on_default_branch": true
+  },
+  "blocker": {
+    "capability": "repository_dispatch write action",
+    "available_in_current_github_connector": false,
+    "reason": "Current connector exposes Actions reads/reruns but no repository_dispatch creation action. Environment credentials are intentionally inaccessible outside the trusted Actions job, so A0 cannot substitute a local/provider call.",
+    "safe_next_step": "Trigger one tariff-a6-live repository_dispatch externally with the exact reviewed smoke payload, then A0 can poll the run, download the scrubbed artifact, validate commit/packet binding, and set LIVE_VERIFIED only on a valid Anthropic response."
+  }
+}
