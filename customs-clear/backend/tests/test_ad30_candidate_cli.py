@@ -1,4 +1,5 @@
 """Real offline CLI process: strict inputs, explicit review and no DB writes."""
+import hashlib
 import json
 import os
 from pathlib import Path
@@ -58,6 +59,34 @@ def test_regular_file_is_read_without_any_write_or_output_artifact(tmp_path):
     code, output = run_cli(tmp_path, filename=path)
     assert code == 0 and output["amount"] == "0.001728"
     assert path.read_text() == raw
+
+
+@pytest.mark.parametrize("row_id,row_index", [("foshan_vinmay", 0), ("guangdong_sumwin", 1), ("other_producers", 2)])
+@pytest.mark.parametrize("customs_value", ["1000", None])
+def test_selected_row_and_percent_unit_have_complete_standalone_source_evidence(tmp_path, row_id, row_index, customs_value):
+    code, output = run_cli(tmp_path, data=scenario(source_row_id=row_id, customs_value=customs_value))
+    assert code == (0 if customs_value is not None else 3)
+    selected = output["selected_source_row"]
+    evidence = selected["source_evidence"]
+    assert [item["fact_id"] for item in evidence] == [f"d12.{row_id}_row", "d12.rate_unit"]
+    root = Path(__file__).resolve().parents[3]
+    for item in evidence:
+        assert item["body_sha256"] == "1d6936be2b492b2976e03b3558c55c36062a89dc612ffe54f7e54af49a372c4b"
+        assert item["source_url"] == "https://docs.eaeunion.org/upload/iblock/08a/wp70m6eckvicuanvf0sfo4sxqaro4aax/err_12022021_12_doc.pdf"
+        assert item["page"] == 3
+        assert item["locator"] and item["observation_kind"]
+        assert item["evidence_path"] == "docs/ai-workflow/evidence/eec-ad30-decision12-capture-review-20260912.json"
+        raw = (root / item["evidence_path"]).read_bytes()
+        assert hashlib.sha256(raw).hexdigest() == item["evidence_file_sha256"]
+        pointed = json.loads(raw)
+        for token in item["json_pointer"].split("/")[1:]:
+            pointed = pointed[int(token)] if isinstance(pointed, list) else pointed[token]
+        assert json.loads(item["value_json"]) == pointed
+    assert evidence[0]["json_pointer"] == f"/document_observations/annex/producer_rows/{row_index}"
+    assert json.loads(evidence[0]["value_json"])["rate_text_printed"] == selected["rate_percent_literal"]
+    assert json.loads(evidence[1]["value_json"]) == "процентов от таможенной стоимости"
+    assert output["original_artifacts_verified"] is False
+    assert output["source_text_verified"] is False
 
 
 @pytest.mark.parametrize("changes", [{"source_row_id": None}, {"customs_value": None}, {"facts": {}}, {"facts": candidate_facts(welded=False)}])

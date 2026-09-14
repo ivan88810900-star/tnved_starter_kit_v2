@@ -8,6 +8,7 @@ caller-supplied assessments and approval markers are not accepted.
 from __future__ import annotations
 
 from collections.abc import Mapping
+from dataclasses import asdict
 from datetime import date
 from typing import Any
 
@@ -87,12 +88,14 @@ unavailable for every result. No DB, network or application startup is used.
     }
     if source_row_id is not None:
         row = rows[source_row_id]
+        source_by_id = {fact.fact_id: fact for fact in bundle.facts}
         result["selected_source_row"] = {
             "row_id": row.row_id,
             "producer_name": row.producer_name,
             "producer_address": row.producer_address,
             "rate_percent_literal": row.rate_percent_literal,
             "evidence_ids": row.evidence_ids,
+            "source_evidence": [asdict(source_by_id[fact_id]) for fact_id in row.evidence_ids],
         }
     if assessment["candidate_scope"] == "outside_source_candidate":
         result.update(status="unavailable", reason="outside_literal_source_candidate")
