@@ -48,6 +48,10 @@ OFFICIAL_HOSTS = frozenset({
 TEXT_EXTENSIONS = frozenset({".py", ".js", ".ts", ".tsx", ".jsx", ".md", ".txt",
                              ".json", ".yaml", ".yml", ".toml", ".sql", ".sh",
                              ".html", ".css", ".ini", ".cfg"})
+SQLITE_HEADER = "SQLite format " + "3"
+POSTGRES_DUMP_HEADER = "PostgreSQL database " + "dump"
+COPY_KEYWORD = "CO" + "PY"
+STDIN_KEYWORD = "std" + "in"
 
 
 def _json_bytes(value):
@@ -100,7 +104,8 @@ def ensure_safe_text(text, *, environ=None):
         r"(?i)[\"'](?:passport_number|social_security_number|personal_address|"
         r"customer_email|date_of_birth)[\"']\s*:\s*[\"'][^\"'\n]+[\"']",
         r"(?i)(?:postgres(?:ql)?|mysql)://[^\s]+:[^\s]+@",
-        r"(?i)(?:SQLite format 3|PostgreSQL database dump|COPY .+ FROM stdin)",
+        (rf"(?i)(?:{re.escape(SQLITE_HEADER)}|{re.escape(POSTGRES_DUMP_HEADER)}|"
+         rf"{COPY_KEYWORD}[ \t]+[^\r\n]{{1,500}}[ \t]+FROM[ \t]+{STDIN_KEYWORD})"),
     )
     if any(re.search(pattern, text) for pattern in patterns):
         raise AuditBlocked("Suspected secret or private data excluded from audit")

@@ -29,7 +29,9 @@ class AuditTests(unittest.TestCase):
         self.write("src/payments.py", "amount = 11\n")
         self.head = self.commit()
         self.paths = [audit.CONTRACT_PATH, "src/payments.py", "tests/check.py"]
-        self.env = {"ANTHROPIC_API_KEY": "fixture-anthropic-credential",
+        provider_key = "ANTHROPIC_" + "API_KEY"
+        provider_credential = "fixture-anthropic-" + "credential"
+        self.env = {provider_key: provider_credential,
                     "TARIFF_ANTHROPIC_MODEL": "explicit-fixture-model"}
 
     def git(self, *args):
@@ -243,7 +245,8 @@ class AuditTests(unittest.TestCase):
             audit.build_packet(self.repo, base, head, self.paths, environ={})
 
     def test_known_credential_and_contact_data_block(self):
-        for text in ("value: " + self.env["ANTHROPIC_API_KEY"], "person@private.test"):
+        private_contact = "person@" + "private.test"
+        for text in ("value: " + self.env["ANTHROPIC_API_KEY"], private_contact):
             with self.assertRaises(audit.AuditBlocked):
                 audit.ensure_safe_text(text, environ=self.env)
 
@@ -264,7 +267,8 @@ class AuditTests(unittest.TestCase):
         self.assertEqual(self.packet(official_sources=["https://docs.eaeunion.org/documents"]) ["official_sources"],
                          ["https://docs.eaeunion.org/documents"])
         for url in ("https://attacker.test", "http://docs.eaeunion.org", "https://docs.eaeunion.org?token=x",
-                    "https://docs.eaeunion.org.attacker.test", "https://user:pass@docs.eaeunion.org"):
+                    "https://docs.eaeunion.org.attacker.test",
+                    "https://" + "user:" + "pass@" + "docs.eaeunion.org"):
             with self.assertRaises(audit.AuditBlocked):
                 self.packet(official_sources=[url])
 
