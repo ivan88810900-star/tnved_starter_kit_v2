@@ -1,5 +1,5 @@
 {
-  "board_revision": 440,
+  "board_revision": 449,
   "files": {
     ".ai/orchestration/A6_LIVE_BRIDGE.md": {
       "branch": "agent/classification-tariff-a6-live-bridge-001-f5839c6c98",
@@ -72,6 +72,12 @@
       "owner": "A4",
       "task_id": "TARIFF-LEGACY-VAT-BOUNDARY-003",
       "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-legacy-vat-boundary-003-dbe8461b66"
+    },
+    "customs-clear/backend/tests/test_normative_bundle.py": {
+      "branch": "agent/rates-tariff-payment-unbound-admission-006-c8a905e03d",
+      "owner": "A1",
+      "task_id": "TARIFF-PAYMENT-UNBOUND-ADMISSION-006",
+      "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-payment-unbound-admission-006-c8a905e03d"
     },
     "customs-clear/backend/tests/test_payment_a6_stage2.py": {
       "branch": "agent/rates-tariff-payment-unbound-admission-006-c8a905e03d",
