@@ -4461,6 +4461,10 @@ def enrich_with_customs_data(
     MAX («не менее»), ADD («+»), STANDARD — см. ``_parse_duty_rate`` / ``_compute_base_duty_rub``.
     ``vat_amount`` = (таможенная стоимость + ``base_duty_amount``) × ставка НДС (10% / 22% по множителям проекта).
     ``total_tax_pay`` = пошлина + НДС.
+
+    ``vat_import_override`` сохраняется только как диагностический кандидат от
+    legacy/LLM-скриптов. У этого аргумента нет source-bound admission token,
+    поэтому он никогда не подменяет ставку, сумму НДС или итоговый платёж.
     """
     p = re.sub(r"\D", "", hs_code or "")[:10]
     out: dict[str, Any] = {
@@ -4576,8 +4580,7 @@ def enrich_with_customs_data(
         try:
             vat_rate_resolved, vat_basis = resolve_vat_rate_for_hs(p, db)
             out["vat_rule_basis"] = (vat_basis or "")[:255]
-            if vat_import_override is None:
-                out["vat_import_rate"] = float(vat_rate_resolved)
+            out["vat_import_rate"] = float(vat_rate_resolved)
         except Exception as e:
             logger.warning("resolve_vat_rate_for_hs: {}", e)
 
@@ -4586,8 +4589,28 @@ def enrich_with_customs_data(
         except Exception as e:
             logger.warning("apply_compliance_resolution_to_enrichment: {}", e)
 
-    if vat_import_override is not None and vat_import_override in (10.0, float(DEFAULT_VAT_RATE)):
-        out["vat_import_rate"] = float(vat_import_override)
+    if vat_import_override is not None:
+        candidate: float | None = None
+        if not isinstance(vat_import_override, bool):
+            try:
+                parsed_candidate = float(vat_import_override)
+            except (TypeError, ValueError):
+                parsed_candidate = None
+            if parsed_candidate in (10.0, float(DEFAULT_VAT_RATE)):
+                candidate = parsed_candidate
+        status = "REVIEW_REQUIRED" if candidate is not None else "INVALID"
+        out["vat_override_review"] = {
+            "source_kind": "caller_supplied_diagnostic",
+            "candidate_rate": candidate,
+            "status": status,
+            "applied": False,
+            "reason": (
+                "Диагностическая ставка НДС не применена: отсутствует отдельное "
+                "source-bound подтверждение применимости."
+                if candidate is not None
+                else "Диагностическая ставка НДС отклонена: допустимы только числовые кандидаты 10 или 22."
+            ),
+        }
 
     _apply_sweet_drink_excise_2026(out, p, item_data)
 

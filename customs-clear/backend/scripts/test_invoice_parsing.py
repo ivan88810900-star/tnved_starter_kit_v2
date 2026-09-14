@@ -352,20 +352,24 @@ def main() -> None:
                 compliance_raw = hs_payload.get("compliance_warnings") or []
                 vat_logic_cell = (hs_payload.get("vat_logic") or "").strip()
                 pref_g = hs_payload.get("preferential_vat_group")
-                vat_override: float | None = None
+                vat_candidate: float | None = None
                 if pref_g is not None:
                     vf = hs_payload.get("vat_rate_final")
                     try:
                         if vf is not None and float(vf) in (10.0, float(DEFAULT_VAT_RATE)):
-                            vat_override = float(vf)
+                            vat_candidate = float(vf)
                     except (TypeError, ValueError):
                         pass
     
                 enr = (
-                    enrich_with_customs_data(hs, item, vat_import_override=vat_override)
+                    enrich_with_customs_data(hs, item, vat_import_override=vat_candidate)
                     if hs
                     else enrich_with_customs_data("", item)
                 )
+                vat_review = enr.get("vat_override_review") or {}
+                if vat_review.get("status") == "REVIEW_REQUIRED":
+                    provisional = "[ПРЕДВАРИТЕЛЬНАЯ МОДЕЛЬНАЯ РЕКОМЕНДАЦИЯ; НЕ ПРИМЕНЕНА]"
+                    vat_logic_cell = f"{provisional} {vat_logic_cell}".strip()
                 if args.fast_mode:
                     risks = "FAST-MODE: AI-анализ рисков пропущен (включить без --fast-mode для полного отчёта)."
                 else:
@@ -487,6 +491,10 @@ def main() -> None:
                         "geopolitical_duty_note": (enr.get("geopolitical_duty_note") or "").strip(),
                         "duty_rate": duty if duty is not None else "",
                         "vat_rate": vat if vat is not None else "",
+                        "vat_candidate_rate": vat_review.get("candidate_rate")
+                        if vat_review.get("candidate_rate") is not None
+                        else "",
+                        "vat_candidate_status": vat_review.get("status") or "",
                         "ОБОСНОВАНИЕ_НДС": vat_logic_cell,
                         "customs_value_base": enr.get("customs_value_base")
                         if enr.get("customs_value_base") is not None

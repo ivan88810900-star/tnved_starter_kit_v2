@@ -39,7 +39,14 @@ def _must_not_have(blob: str, needles: list[str], case_name: str) -> None:
 
 def _run_case(case_name: str, hs: str, item: dict[str, Any], *, vat: float | None = None) -> dict[str, Any]:
     enr = enrich_with_customs_data(hs, item, vat_import_override=vat)
-    print(f"[OK] {case_name}: hs={hs} vat={enr.get('vat_import_rate')} excise={enr.get('excise_value')}")
+    vat_review = enr.get("vat_override_review") or {}
+    if vat is not None and vat_review.get("applied") is not False:
+        raise AssertionError(f"{case_name}: диагностический VAT-кандидат не должен применяться")
+    print(
+        f"[OK] {case_name}: hs={hs} vat={enr.get('vat_import_rate')} "
+        f"vat_candidate_status={vat_review.get('status') or 'NOT_REQUESTED'} "
+        f"excise={enr.get('excise_value')}"
+    )
     return enr
 
 
