@@ -46,7 +46,7 @@ scenario operand, not a finding that this producer or rate applies to a shipment
 `as_of` is retained without selecting an effective legal interval.
 
 `--input scenario.json` accepts a regular file; stdin is the default. JSON input
-is bounded to 64 KiB and rejects duplicate/unknown fields, floats, nonfinite
+is bounded to 64 KiB and rejects duplicate keys, unknown top-level fields, floats, nonfinite
 values and forged approval claims. Decimal fractions must be plain strings.
 The script never starts the application, accesses a DB, downloads a source or
 writes a result file. These properties are independently checked in real CLI
@@ -79,8 +79,9 @@ source-row and percent-unit evidence in the standalone result.
   commits, CI scope and publication evidence.
 
 Source-record integrity does not attest original PDF replay or native scanned
-text. A5 corrected a normalized country label mistakenly presented as literal
-transcription; original historical evidence stayed unchanged. A1 corrected
+text. A5 identified a normalized country label mistakenly presented as literal
+transcription; A3 corrected its observation label, keeping original historical
+evidence unchanged. A1 corrected
 incomplete monetary-row provenance without changing arithmetic or legal guards.
 
 ## Remaining work
