@@ -1,5 +1,5 @@
 {
-  "board_revision": 127,
+  "board_revision": 154,
   "findings": [
     {
       "head_sha": "161a9258d174e93266353ae1fd2cb0b3e4657679",
@@ -150,6 +150,24 @@
       "validation": {
         "at": "2026-09-14T09:18:42.223840+00:00",
         "evidence": "GitHub refs and current product state verified 2026-09-14: PR #192 remains 5bff4523ec20f7a29fe6f7b997ffccfc479c9bff based on PR #191 head 1c0272a34cbcbb3b99d6f32c86d86949bc0adc06, whereas PR #187 is dab1f8aae5a114a51505763bf9ea0a0d8161ed38. The active product branch adds the AD30 executable review path and changes .ai/CURRENT_STATE.md, .ai/DECISIONS.md, task/evidence docs, services, scripts, and tests. Exact-head CI run 34825453006 succeeded, but that does not preserve PR #192 QA/readiness on its stale stack.",
+        "validator": "A0"
+      }
+    },
+    {
+      "head_sha": "4c199a8202958ec8c90e222db9298a44f38ef2f3",
+      "id": "A5-A6-BRIDGE-SECRET-BOUNDARY-001",
+      "reporter": "A5",
+      "resolution": {
+        "evidence": "A0 inspected the fix: workflow now uses narrow repository_dispatch, binds the credentialed job to tariff-a6-trusted environment, validates the default-branch action/ref/SHA and exact payload, and documents that the repository secret is unsafe and must be migrated/removed before live use. No settings or secrets were changed.",
+        "head_sha": "8080413c3a77bc108c256053ed9f6c8b0e03e9d8",
+        "validator": "A0"
+      },
+      "status": "RESOLVED",
+      "summary": "CRITICAL: workflow_dispatch can execute a branch-modified workflow and repository-level ANTHROPIC_API_KEY is not isolated from same-repository branch workflows; the static in-workflow gate is not a credential boundary. Require default-branch repository_dispatch plus a dedicated protected GitHub Environment secret and document/assert that external policy prerequisite.",
+      "task_id": "TARIFF-A6-LIVE-BRIDGE-001",
+      "validation": {
+        "at": "2026-09-14T10:39:19.449580+00:00",
+        "evidence": "A0 reproduced against GitHub workflow_dispatch semantics: after the workflow exists on default, a selected branch supplies that branch copy of the workflow, so its own gate can be removed before secrets resolution. Repository-level secret scope cannot satisfy the stated worker/PR isolation invariant. A protected environment restricted to the default branch and repository_dispatch default-branch execution are required; live audit remains blocked.",
         "validator": "A0"
       }
     }

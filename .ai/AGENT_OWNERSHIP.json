@@ -1,11 +1,23 @@
 {
-  "board_revision": 127,
+  "board_revision": 154,
   "files": {
+    ".ai/orchestration/A6_LIVE_BRIDGE.md": {
+      "branch": "agent/classification-tariff-a6-live-bridge-001-f5839c6c98",
+      "owner": "A4",
+      "task_id": "TARIFF-A6-LIVE-BRIDGE-001",
+      "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-a6-live-bridge-001-f5839c6c98"
+    },
     ".github/workflows/admission-agent-qa.yml": {
       "branch": "agent/rates-tariff-admission-recheck-001-9231ffbdb5",
       "owner": "A1",
       "task_id": "TARIFF-ADMISSION-RECHECK-001",
       "worktree": "/workspace/scratch/cd6734a40504/tariff-agent-worktrees/tariff-admission-recheck-001-9231ffbdb5"
+    },
+    ".github/workflows/tariff-a6-live.yml": {
+      "branch": "agent/classification-tariff-a6-live-bridge-001-f5839c6c98",
+      "owner": "A4",
+      "task_id": "TARIFF-A6-LIVE-BRIDGE-001",
+      "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-a6-live-bridge-001-f5839c6c98"
     },
     "docs/ai-workflow/AD30_CHAIN_REVIEW_CANDIDATE.md": {
       "branch": "agent/sources-tariff-ad30-review-candidate-001-99f4e3fb32",
@@ -23,13 +35,25 @@
       "branch": "agent/classification-tariff-a6-cross-branch-contract-001-a5c4916ca6",
       "owner": "A4",
       "task_id": "TARIFF-A6-CROSS-BRANCH-CONTRACT-001",
-      "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-a6-cross-branch-contract-001-a5c4916ca6"
+      "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-pr193"
+    },
+    "tests/agent_orchestration/test_audit_bridge.py": {
+      "branch": "agent/classification-tariff-a6-live-bridge-001-f5839c6c98",
+      "owner": "A4",
+      "task_id": "TARIFF-A6-LIVE-BRIDGE-001",
+      "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-a6-live-bridge-001-f5839c6c98"
     },
     "tools/tariff_agents/audit.py": {
       "branch": "agent/classification-tariff-a6-cross-branch-contract-001-a5c4916ca6",
       "owner": "A4",
       "task_id": "TARIFF-A6-CROSS-BRANCH-CONTRACT-001",
-      "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-a6-cross-branch-contract-001-a5c4916ca6"
+      "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-pr193"
+    },
+    "tools/tariff_agents/audit_bridge.py": {
+      "branch": "agent/classification-tariff-a6-live-bridge-001-f5839c6c98",
+      "owner": "A4",
+      "task_id": "TARIFF-A6-LIVE-BRIDGE-001",
+      "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-a6-live-bridge-001-f5839c6c98"
     }
   },
   "schema_version": 1

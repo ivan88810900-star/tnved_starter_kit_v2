@@ -151,10 +151,28 @@
         "evidence": "GitHub refs and current product state verified 2026-09-14: PR #192 remains 5bff4523ec20f7a29fe6f7b997ffccfc479c9bff based on PR #191 head 1c0272a34cbcbb3b99d6f32c86d86949bc0adc06, whereas PR #187 is dab1f8aae5a114a51505763bf9ea0a0d8161ed38. The active product branch adds the AD30 executable review path and changes .ai/CURRENT_STATE.md, .ai/DECISIONS.md, task/evidence docs, services, scripts, and tests. Exact-head CI run 34825453006 succeeded, but that does not preserve PR #192 QA/readiness on its stale stack.",
         "validator": "A0"
       }
+    },
+    {
+      "head_sha": "4c199a8202958ec8c90e222db9298a44f38ef2f3",
+      "id": "A5-A6-BRIDGE-SECRET-BOUNDARY-001",
+      "reporter": "A5",
+      "resolution": {
+        "evidence": "A0 inspected the fix: workflow now uses narrow repository_dispatch, binds the credentialed job to tariff-a6-trusted environment, validates the default-branch action/ref/SHA and exact payload, and documents that the repository secret is unsafe and must be migrated/removed before live use. No settings or secrets were changed.",
+        "head_sha": "8080413c3a77bc108c256053ed9f6c8b0e03e9d8",
+        "validator": "A0"
+      },
+      "status": "RESOLVED",
+      "summary": "CRITICAL: workflow_dispatch can execute a branch-modified workflow and repository-level ANTHROPIC_API_KEY is not isolated from same-repository branch workflows; the static in-workflow gate is not a credential boundary. Require default-branch repository_dispatch plus a dedicated protected GitHub Environment secret and document/assert that external policy prerequisite.",
+      "task_id": "TARIFF-A6-LIVE-BRIDGE-001",
+      "validation": {
+        "at": "2026-09-14T10:39:19.449580+00:00",
+        "evidence": "A0 reproduced against GitHub workflow_dispatch semantics: after the workflow exists on default, a selected branch supplies that branch copy of the workflow, so its own gate can be removed before secrets resolution. Repository-level secret scope cannot satisfy the stated worker/PR isolation invariant. A protected environment restricted to the default branch and repository_dispatch default-branch execution are required; live audit remains blocked.",
+        "validator": "A0"
+      }
     }
   ],
   "max_concurrent_subagents": 3,
-  "revision": 127,
+  "revision": 154,
   "runs": [
     {
       "head_sha": null,
@@ -375,6 +393,66 @@
       "status": "FINISHED",
       "task_id": "TARIFF-A6-CROSS-BRANCH-CONTRACT-001",
       "updated_at": "2026-09-14T09:13:33.744572+00:00"
+    },
+    {
+      "head_sha": "c39248672a6299b64bc2db5637e2027579a4624e",
+      "role": "A5",
+      "run_id": "9f53ceace5a04c3ebc82e8ad7790767c",
+      "session_id": "/root/a5_pr193_qa",
+      "started_at": "2026-09-14T10:22:41.524477+00:00",
+      "status": "FINISHED",
+      "task_id": "TARIFF-A6-CROSS-BRANCH-CONTRACT-001",
+      "updated_at": "2026-09-14T10:26:36.450989+00:00"
+    },
+    {
+      "head_sha": null,
+      "role": "A4",
+      "run_id": "e80fa364ede343a99ca689d27ea72354",
+      "session_id": "/root/a4_a6_live_bridge",
+      "started_at": "2026-09-14T10:24:28.895349+00:00",
+      "status": "FINISHED",
+      "task_id": "TARIFF-A6-LIVE-BRIDGE-001",
+      "updated_at": "2026-09-14T10:32:38.916631+00:00"
+    },
+    {
+      "head_sha": "4c199a8202958ec8c90e222db9298a44f38ef2f3",
+      "role": "A5",
+      "run_id": "b748e81cec90438da520663e96ca6e92",
+      "session_id": "/root/a5_a6_live_bridge",
+      "started_at": "2026-09-14T10:33:10.739969+00:00",
+      "status": "FINISHED",
+      "task_id": "TARIFF-A6-LIVE-BRIDGE-001",
+      "updated_at": "2026-09-14T10:39:19.440848+00:00"
+    },
+    {
+      "head_sha": "4c199a8202958ec8c90e222db9298a44f38ef2f3",
+      "role": "A4",
+      "run_id": "5fd797b23760491cbdc55b155074fd2f",
+      "session_id": "/root/a4_a6_live_bridge",
+      "started_at": "2026-09-14T10:42:51.431798+00:00",
+      "status": "FINISHED",
+      "task_id": "TARIFF-A6-LIVE-BRIDGE-001",
+      "updated_at": "2026-09-14T10:42:51.435431+00:00"
+    },
+    {
+      "head_sha": "8080413c3a77bc108c256053ed9f6c8b0e03e9d8",
+      "role": "A5",
+      "run_id": "aa570a149f1b49ee9da17447fc066aac",
+      "session_id": "/root/a5_a6_live_bridge",
+      "started_at": "2026-09-14T10:42:56.916528+00:00",
+      "status": "FINISHED",
+      "task_id": "TARIFF-A6-LIVE-BRIDGE-001",
+      "updated_at": "2026-09-14T10:45:08.641876+00:00"
+    },
+    {
+      "head_sha": "ceec320e61070a96061f32096f61d92fc928415a",
+      "role": "A5",
+      "run_id": "d4ec7dd5067a48caafeed7560e2bbebf",
+      "session_id": "/root/a5_a6_live_bridge",
+      "started_at": "2026-09-14T10:47:28.197509+00:00",
+      "status": "FINISHED",
+      "task_id": "TARIFF-A6-LIVE-BRIDGE-001",
+      "updated_at": "2026-09-14T10:48:26.441514+00:00"
     }
   ],
   "schema_version": 1,
@@ -688,7 +766,39 @@
       "goal": "Make the checked A6 audit adapter support product candidate commits that intentionally do not contain orchestration files by binding an explicitly selected immutable architecture contract blob/ref into the packet; preserve complete changed-path coverage, tamper detection, secret scanning, exact candidate base/head binding, and fail-closed behavior.",
       "id": "TARIFF-A6-CROSS-BRANCH-CONTRACT-001",
       "owner": "A4",
-      "qa": null,
+      "qa": {
+        "commands": [
+          {
+            "command": "python -m unittest tests/agent_orchestration/test_audit.py -v",
+            "exit_code": 0,
+            "output": "PASS 23/23 on exact published c3924867; clean tree and exact two-file scope verified."
+          },
+          {
+            "command": "python -m tools.tariff_agents.verify",
+            "exit_code": 0,
+            "output": "PASS 69/69 full orchestration verification on published tree 2c1f012c."
+          },
+          {
+            "command": "python -m compileall -q tools/tariff_agents tests/agent_orchestration plus socket-blocked audit suite",
+            "exit_code": 0,
+            "output": "PASS compile and 23/23 audit tests with Python socket connections blocked; no network attempted."
+          },
+          {
+            "command": "Independent cross-branch packet build/validate",
+            "exit_code": 0,
+            "output": "PASS packet e0129b90, product 1c0272a..5bff452, contract commit ad4935e3/blob 667e622c; no live provider call."
+          }
+        ],
+        "head_sha": "c39248672a6299b64bc2db5637e2027579a4624e",
+        "reviewer_session_id": "/root/a5_pr193_qa",
+        "status": "PASSED"
+      },
+      "recovery_history": [
+        {
+          "by": "A0",
+          "reason": "Workspace maintenance removed the prior local worktree; A0 fetched exact published c3924867 and created a clean detached replacement solely for independent verification."
+        }
+      ],
       "refs": {
         "base_sha": "ad4935e318d947276178e2f269d4ffe1051ea6cb",
         "head_sha": "c39248672a6299b64bc2db5637e2027579a4624e",
@@ -707,7 +817,7 @@
         "offline-safety"
       ],
       "risk": "high",
-      "status": "IMPLEMENTED",
+      "status": "QA_PASSED",
       "tests": {
         "commands": [
           {
@@ -723,9 +833,104 @@
         ],
         "head_sha": "c39248672a6299b64bc2db5637e2027579a4624e"
       },
-      "updated_at": "2026-09-12T22:37:17.885441+00:00",
-      "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-a6-cross-branch-contract-001-a5c4916ca6"
+      "updated_at": "2026-09-14T10:27:06.569053+00:00",
+      "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-pr193"
+    },
+    {
+      "author_sessions": [
+        "/root/a4_a6_live_bridge"
+      ],
+      "branch": "agent/classification-tariff-a6-live-bridge-001-f5839c6c98",
+      "ci": null,
+      "dependencies": [],
+      "dependency_decisions": [
+        {
+          "by": "A0",
+          "reason": "Implementation must proceed on the exact published PR #193 adapter tree to break the bootstrap cycle. PR #193 readiness remains a separate mandatory gate; this bridge cannot be marked ready or live-verified until both published heads receive current A5/CI and the trusted workflow is merged to the default branch."
+        }
+      ],
+      "external_audit": null,
+      "files": [
+        ".github/workflows/tariff-a6-live.yml",
+        "tools/tariff_agents/audit_bridge.py",
+        "tests/agent_orchestration/test_audit_bridge.py",
+        ".ai/orchestration/A6_LIVE_BRIDGE.md"
+      ],
+      "goal": "Implement a minimal trusted GitHub Actions bridge that invokes the checked commit-bound tools.tariff_agents.audit adapter with only ANTHROPIC_API_KEY and TARIFF_ANTHROPIC_MODEL, never executes candidate code, grants read-only contents permission, exposes no credentials to PR workers, and records only validated non-secret A6 evidence; manual dispatch must fail closed unless the workflow runs from the reviewed default-branch implementation.",
+      "id": "TARIFF-A6-LIVE-BRIDGE-001",
+      "owner": "A4",
+      "qa": {
+        "commands": [
+          {
+            "command": "git rev-parse HEAD HEAD^{tree}; git diff 8080413c3a77bc108c256053ed9f6c8b0e03e9d8 ceec320e61070a96061f32096f61d92fc928415a",
+            "exit_code": 0,
+            "output": "PASS published HEAD ceec320e/tree 0d9b1be5; parent c3924867; byte-identical to previously reviewed local tree."
+          },
+          {
+            "command": "python -m unittest tests.agent_orchestration.test_audit_bridge -v",
+            "exit_code": 0,
+            "output": "PASS 7/7 scoped bridge security tests on published candidate."
+          },
+          {
+            "command": "python -m unittest discover -s tests/agent_orchestration -v",
+            "exit_code": 0,
+            "output": "PASS 76/76 full discovery on published candidate."
+          },
+          {
+            "command": "python -m tools.tariff_agents.verify; python -m compileall -q tools/tariff_agents tests/agent_orchestration; git diff --check",
+            "exit_code": 0,
+            "output": "PASS 69/69 verifier, compile, diff, exact four-file scope and clean worktree."
+          }
+        ],
+        "head_sha": "ceec320e61070a96061f32096f61d92fc928415a",
+        "reviewer_session_id": "/root/a5_a6_live_bridge",
+        "status": "PASSED"
+      },
+      "readiness_dependencies": [
+        "TARIFF-A6-CROSS-BRANCH-CONTRACT-001"
+      ],
+      "refs": {
+        "base_sha": "c39248672a6299b64bc2db5637e2027579a4624e",
+        "head_sha": "ceec320e61070a96061f32096f61d92fc928415a",
+        "pr": 194,
+        "publication_mapping": {
+          "identical_trees_verified": true,
+          "local_base_sha": "c39248672a6299b64bc2db5637e2027579a4624e",
+          "local_head_sha": "8080413c3a77bc108c256053ed9f6c8b0e03e9d8",
+          "local_tree_sha": "0d9b1be5deeb0591f114db3555e2c7bb80e69668",
+          "published_base_sha": "c39248672a6299b64bc2db5637e2027579a4624e",
+          "published_head_sha": "ceec320e61070a96061f32096f61d92fc928415a",
+          "published_tree_sha": "0d9b1be5deeb0591f114db3555e2c7bb80e69668"
+        }
+      },
+      "required_checks": [
+        "offline-safety"
+      ],
+      "risk": "high",
+      "status": "QA_PASSED",
+      "tests": {
+        "commands": [
+          {
+            "command": "GitHub Git data publication plus local fetch verification",
+            "exit_code": 0,
+            "output": "PASS: published commit ceec320e has exact reviewed tree 0d9b1be5 and four owned files; base c3924867; force=false/new agent branch."
+          },
+          {
+            "command": "python -m unittest tests.agent_orchestration.test_audit_bridge -v",
+            "exit_code": 0,
+            "output": "PASS 7/7 on identical published tree."
+          },
+          {
+            "command": "python -m unittest discover -s tests/agent_orchestration -v; python -m tools.tariff_agents.verify",
+            "exit_code": 0,
+            "output": "PASS 76/76 discovery and 69/69 verifier on identical published tree."
+          }
+        ],
+        "head_sha": "ceec320e61070a96061f32096f61d92fc928415a"
+      },
+      "updated_at": "2026-09-14T10:48:26.459480+00:00",
+      "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-a6-live-bridge-001-f5839c6c98"
     }
   ],
-  "updated_at": "2026-09-14T09:18:42.224016+00:00"
+  "updated_at": "2026-09-14T10:48:26.459815+00:00"
 }

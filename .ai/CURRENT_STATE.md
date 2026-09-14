@@ -7,6 +7,43 @@ from code/QA/CI candidate SHAs). Read this branch's board on every wake-up.
 
 ## Automation update — 2026-09-14
 
+### Trusted A6 bridge checkpoint — 2026-09-14 10:49 UTC
+
+- Draft PR #194 publishes the separate four-file trusted A6 bridge at exact
+  HEAD `ceec320e61070a96061f32096f61d92fc928415a`, tree
+  `0d9b1be5deeb0591f114db3555e2c7bb80e69668`, stacked on PR #193. The
+  published tree is byte-identical to the locally executed candidate. Exact-head
+  offline Tariff agent safety run 34834783075 succeeded.
+- Independent A5 first rejected the `workflow_dispatch` design with confirmed
+  critical finding `A5-A6-BRIDGE-SECRET-BOUNDARY-001`: another same-repository
+  branch could modify the dispatched workflow before repository-secret
+  resolution. A4 replaced it with a narrow `repository_dispatch` default-branch
+  workflow plus dedicated `tariff-a6-trusted` Environment boundary. A0 reproduced
+  and resolved the finding; fresh A5 passed both the fixed local tree and exact
+  published HEAD. Tests on the published tree: bridge 7/7, full orchestration
+  76/76, verifier 69/69, compile/diff/scope clean.
+- A6 is still `BLOCKED`, not `LIVE_VERIFIED`: no provider call was made and no
+  secret value was read. Safe live use requires the owner to create/protect the
+  `tariff-a6-trusted` Environment, restrict it to the protected default branch,
+  migrate `ANTHROPIC_API_KEY` into that Environment, and remove the repository-
+  level copy. PR #190, PR #193 and PR #194 must then pass protected review/merge
+  before the first repository dispatch. The current GitHub connector can inspect
+  runs and artifacts but cannot create `repository_dispatch`, so the first smoke
+  also requires an owner-triggered dispatch (or a later connector capability).
+- PR #193 exact HEAD `c39248672a6299b64bc2db5637e2027579a4624e`
+  now has fresh independent A5 PASS: audit tests 23/23, orchestration verifier
+  69/69, compile/diff clean, and a socket-blocked replay made no network calls.
+  Exact-head offline CI run 34723187303 succeeded. This supersedes the older
+  capability-limit note below; live A6 remains unavailable.
+- Current product PR #187 HEAD is
+  `5d3b0c1dc7dd8e396c4f812db2bf6f1fa6d293f9`; exact-head CI runs
+  34830630369 (pull request) and 34830626784 (push) succeeded. Existing drift
+  findings already invalidate PR #191/#192 evidence, so no duplicate was added.
+- Hourly triage found no new source-monitor failure beyond the already recorded
+  runs 34717159548/34716176823, no new deduplicated finding, and no stale active
+  subagent session. PR #190 remains at `ad4935e3` with successful exact-head CI;
+  its six unresolved review inputs are not treated as reproduced defects.
+
 - PR #187 advanced 15 commits from the previously reviewed base `a9d15c74` to
   current product HEAD `dab1f8aae5a114a51505763bf9ea0a0d8161ed38`. Exact-head
   CI run 34825453006 succeeded, but the 22-file change set includes current
