@@ -48,7 +48,12 @@ def validate(record):
             raise LeaseError('Missing real A0 session identity')
         if not re.fullmatch(r'[a-f0-9]{32}', record.get('token', '')):
             raise LeaseError('Invalid fencing token')
-        _time(record.get('expires_at'))
+        updated_at = _time(record.get('updated_at'))
+        expires_at = _time(record.get('expires_at'))
+        if expires_at <= updated_at:
+            raise LeaseError('Lease expiry must follow its update timestamp')
+    elif record.get('updated_at') is not None:
+        _time(record['updated_at'])
     return record
 
 
@@ -77,6 +82,8 @@ def propose(record, blob_sha, action, holder, *, token=None, now=None, ttl_secon
     now = now or utcnow()
     if now.tzinfo is None:
         raise LeaseError('Timezone required')
+    if record.get('updated_at') is not None and now < _time(record['updated_at']):
+        raise LeaseError('Lease mutation timestamp cannot move backward')
     new = dict(record)
     if action == 'acquire':
         if record['state'] != 'released':
@@ -88,13 +95,18 @@ def propose(record, blob_sha, action, holder, *, token=None, now=None, ttl_secon
             raise LeaseError('Takeover requires an expired active lease')
         evidence = ended_evidence
         if (not isinstance(evidence, dict) or evidence.get('holder') != record['holder'] or
+                evidence.get('token') != record['token'] or
+                type(evidence.get('generation')) is not int or
+                evidence['generation'] != record['generation'] or
                 evidence.get('terminal_status') not in {'completed', 'failed', 'cancelled', 'terminated'} or
                 evidence.get('source') not in {'native_work', 'agents_api'} or
                 not isinstance(evidence.get('evidence_ref'), str) or not evidence['evidence_ref'].strip()):
             raise LeaseError('Verified previous-session termination evidence required')
         observed = _time(evidence.get('observed_at'))
-        if observed > now or (now-observed).total_seconds() > 3600:
-            raise LeaseError('Termination evidence must be current')
+        incarnation_started = _time(record.get('updated_at'))
+        if (observed < incarnation_started or observed > now or
+                (now-observed).total_seconds() > 3600):
+            raise LeaseError('Termination evidence must match the current lease incarnation')
         new.update(state='active', generation=record['generation']+1,
                    holder=holder, token=uuid.uuid4().hex, previous_holder_end=evidence)
     elif action in {'renew', 'release'}:
