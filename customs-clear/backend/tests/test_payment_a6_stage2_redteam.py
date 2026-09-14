@@ -18,7 +18,7 @@ from app import db as database_module
 from app.models import core, tnved
 from app.services import payment_engine as engine
 from app.services import payment_quote_service as quotes
-from app.services import normative_store, rate_display, compliance_resolver
+from app.services import normative_store, rate_display, compliance_resolver, payment_profile_builder
 from app.api import calculator, payments
 
 HS = "8501100000"
@@ -27,7 +27,9 @@ MODELS = (core.HsRate, core.NonTariffRule, core.TnvedEntry, core.NormativeNote,
           core.CustomsCalculationHistory, core.CountryRisk, core.GeoSpecialDuty,
           core.SourceStatus, tnved.Section, tnved.Chapter, tnved.Commodity,
           tnved.HsDutyRule, tnved.SpecialDuty, tnved.VatPreference,
-          tnved.CountryTariffPreference, tnved.RecyclingFee)
+          tnved.CountryTariffPreference, tnved.RecyclingFee, tnved.NonTariffMeasure,
+          core.RegulatoryAiExtract, core.SanctionImportRisk, core.OfacSdnList, core.EuSanctionsList,
+          core.FssNotification, core.ReoRegistryEntry, core.SgrCertificate)
 
 
 @pytest.fixture
@@ -36,7 +38,11 @@ def qa_database(monkeypatch):
                         connect_args={"check_same_thread": False})
     database_module.Base.metadata.create_all(sql, tables=[m.__table__ for m in MODELS])
     factory = sessionmaker(bind=sql)
-    for module in (database_module, engine, quotes, normative_store, rate_display, compliance_resolver):
+    def forbidden_default_database(*_args, **_kwargs):
+        raise AssertionError("payment test escaped the dedicated in-memory database")
+    monkeypatch.setattr(database_module.engine, "connect", forbidden_default_database)
+    for module in (database_module, engine, quotes, normative_store, rate_display,
+                   compliance_resolver, payment_profile_builder):
         if hasattr(module, "SessionLocal"):
             monkeypatch.setattr(module, "SessionLocal", factory)
     # This additive display provider and FX acquisition are external boundaries,
