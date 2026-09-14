@@ -43,6 +43,14 @@ export function PermitDocumentsBlock({
 
   const required = normativeBlock?.required_documents ?? [];
   const permits = required.filter((d) => ['СС', 'ДС', 'СГР'].includes(String(d.permit_type || '').toUpperCase()));
+  const hasAdvisoryOrClarificationSignals = Boolean(
+    normativeBlock?.advisory_requirements?.length
+      || normativeBlock?.measure_families?.some(
+        (family) => family.status === 'needs_clarification'
+          || family.status === 'legacy_signal'
+          || (family.signals_count ?? 0) > 0,
+      ),
+  );
 
   const runVerify = async () => {
     if (!certNumber.trim()) return;
@@ -83,6 +91,11 @@ export function PermitDocumentsBlock({
       ) : !normativeBlock ? (
         <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-[12px] text-amber-900">
           Нормативный блок не вернул подтверждённых данных. Проверьте требования на вкладке «Документы».
+        </p>
+      ) : permits.length === 0 && hasAdvisoryOrClarificationSignals ? (
+        <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-[12px] text-amber-900">
+          Обязательных документов СС/ДС/СГР в брокерском списке нет. При этом выявлены нетарифные сигналы —
+          требуется уточнить их применимость на вкладке «Документы».
         </p>
       ) : permits.length === 0 ? (
         <p className="text-[12px] text-emerald-700">✅ Специальных разрешительных документов (СС/ДС/СГР) по нормативному блоку не выявлено.</p>
