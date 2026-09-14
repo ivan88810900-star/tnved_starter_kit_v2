@@ -6,11 +6,41 @@ import json
 from pathlib import Path
 
 
+def _validate_committed_snapshot(repo: Path) -> dict:
+    """Validate the board committed at HEAD without selecting state authority.
+
+    This path is intentionally read-only and is suitable for untrusted/offline
+    CI checkouts.  Controller commands continue to require the separately
+    bootstrapped state-authority pointer.
+    """
+    from .control import PolicyError, git, need, validate_board
+
+    size_text = git(repo, 'cat-file', '-s', 'HEAD:.ai/TASK_BOARD.json')
+    try:
+        size = int(size_text)
+    except (TypeError, ValueError):
+        raise PolicyError('invalid_snapshot_size') from None
+    need(0 <= size <= 8_000_000, 'state_too_large')
+    content = git(repo, 'show', 'HEAD:.ai/TASK_BOARD.json')
+    try:
+        board = json.loads(content)
+    except (TypeError, ValueError):
+        raise PolicyError('invalid_json_state') from None
+    validate_board(board)
+    return {
+        'valid': True,
+        'source': 'HEAD:.ai/TASK_BOARD.json',
+        'head_sha': git(repo, 'rev-parse', 'HEAD'),
+        'revision': board['revision'],
+        'task_count': len(board['tasks']),
+    }
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--repo', default='.')
     sub = parser.add_subparsers(dest='command', required=True)
-    for name in ('init', 'validate', 'recover', 'status'):
+    for name in ('init', 'validate', 'validate-snapshot', 'recover', 'status'):
         sub.add_parser(name)
     add = sub.add_parser('add')
     add.add_argument('task_id')
@@ -24,6 +54,10 @@ def main() -> int:
     alloc.add_argument('task_id')
     alloc.add_argument('--base-sha', required=True)
     args = parser.parse_args()
+    if args.command == 'validate-snapshot':
+        result = _validate_committed_snapshot(Path(args.repo).resolve())
+        print(json.dumps(result, ensure_ascii=False, indent=2))
+        return 0
     from .control import StateStore
     store = StateStore(Path(args.repo).resolve())
     if args.command == 'init':
