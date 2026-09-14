@@ -1,0 +1,90 @@
+name: Tariff AI — shadow review (manual, disabled by default)
+
+on:
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: Same-repository open PR number
+        type: string
+        required: true
+      expected_head_sha:
+        description: Exact 40-character PR head SHA approved for disclosure
+        type: string
+        required: true
+
+permissions:
+  contents: read
+  pull-requests: read
+
+concurrency:
+  group: tariff-ai-pilot
+  cancel-in-progress: false
+
+jobs:
+  review:
+    if: >-
+      vars.TARIFF_AI_ENABLED == 'true' &&
+      vars.TARIFF_AI_APPROVED_SHA != '' &&
+      github.sha == vars.TARIFF_AI_APPROVED_SHA &&
+      github.ref == vars.TARIFF_AI_TRUSTED_REF &&
+      github.actor == github.repository_owner &&
+      github.triggering_actor == github.repository_owner
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    environment: tariff-ai-review
+    steps:
+      - name: Read approved control code only; never check out the PR
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+          sparse-checkout: tools/ai_team
+      - name: Collect bounded PR patches without provider keys
+        id: collect
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ inputs.pr_number }}
+          EXPECTED_HEAD: ${{ inputs.expected_head_sha }}
+        run: >-
+          python3 -I tools/ai_team/runner.py collect-pr
+          --pr "$PR_NUMBER" --head "$EXPECTED_HEAD"
+          --out "$RUNNER_TEMP/tariff-ai-context.json"
+      - name: Independent Claude review; no tools and no write credentials
+        env:
+          TARIFF_AI_ENABLED: ${{ vars.TARIFF_AI_ENABLED }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          REVIEW_MODEL: ${{ vars.TARIFF_CLAUDE_MODEL }}
+        run: >-
+          python3 -I tools/ai_team/runner.py review
+          --provider claude --model "$REVIEW_MODEL"
+          --context "$RUNNER_TEMP/tariff-ai-context.json"
+          --out "$RUNNER_TEMP/tariff-ai-reports/claude.json"
+      - name: Gemini source-extract audit; missing evidence is NOT success
+        if: ${{ !cancelled() && steps.collect.outcome == 'success' }}
+        env:
+          TARIFF_AI_ENABLED: ${{ vars.TARIFF_AI_ENABLED }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          AUDIT_MODEL: ${{ vars.TARIFF_GEMINI_MODEL }}
+          PR_NUMBER: ${{ inputs.pr_number }}
+        run: >-
+          python3 -I tools/ai_team/runner.py review
+          --provider gemini --model "$AUDIT_MODEL"
+          --context "$RUNNER_TEMP/tariff-ai-context.json"
+          --evidence "tools/ai_team/evidence/pr-$PR_NUMBER.json"
+          --out "$RUNNER_TEMP/tariff-ai-reports/gemini.json"
+      - name: Invalidate reports if either PR ref changed or cannot be verified
+        if: ${{ !cancelled() && steps.collect.outcome == 'success' }}
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: >-
+          python3 -I tools/ai_team/runner.py verify-pr
+          --context "$RUNNER_TEMP/tariff-ai-context.json"
+          --reports "$RUNNER_TEMP/tariff-ai-reports"
+      - name: Preserve advisory reports, not secrets or raw source bundles
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: tariff-ai-review-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/tariff-ai-reports/*.json
+          retention-days: 7
+          if-no-files-found: warn
