@@ -32,7 +32,8 @@ class PaymentEngineTests(unittest.TestCase):
     def test_vat_22_default(self):
         """Код 8509: НДС 22% (бытовая техника, основная ставка)."""
         res = self._calc(hs_code="8509400000", customs_value=500_000, freight=45_000)
-        self.assertEqual(res["status"], "OK")
+        self.assertEqual(res["status"], "REVIEW_REQUIRED")
+        self.assertIn("hs_rate_source_binding_unverified", res["payment_review_reasons"])
         self.assertEqual(res["breakdown"]["vat_rate"], 22.0)
         self.assertGreater(res["breakdown"]["vat"], 0)
         self.assertIn("vat_reason", res["breakdown"])
@@ -204,17 +205,20 @@ class PaymentEngineTests(unittest.TestCase):
         self.assertEqual(res["data_quality"]["antidumping_status"], "manual_review")
 
     def test_antidumping_not_applied_de(self):
-        """Код 7214 из Германии: антидемпинг не применяется."""
+        """Кандидат для 7214 не доказывает отсутствие меры для Германии."""
         res = self._calc(hs_code="7214990000", customs_value=100_000, freight=0, country="DE")
         self.assertEqual(res["breakdown"]["antidumping"], 0.0)
-        self.assertEqual(res["data_quality"]["antidumping_status"], "n/a")
+        self.assertEqual(res["auto_detected"]["antidumping_value"], 18.0)
+        self.assertEqual(res["data_quality"]["antidumping_status"], "manual_review")
+        self.assertIn("hs_rate_source_binding_unverified", res["payment_review_reasons"])
 
     def test_antidumping_manual_review_no_country(self):
         """Код 7214 без страны: требуется ручная проверка антидемпинга."""
         res = self._calc(hs_code="7214990000", customs_value=100_000, freight=0, country=None)
         self.assertEqual(res["data_quality"]["antidumping_status"], "manual_review")
         self.assertEqual(res["breakdown"]["antidumping"], 0.0)
-        self.assertIn("ручная проверка", res["breakdown"]["antidumping_reason"])
+        self.assertEqual(res["auto_detected"]["antidumping_value"], 18.0)
+        self.assertIn("hs_rate_source_binding_unverified", res["payment_review_reasons"])
 
     def test_no_antidumping_for_electronics(self):
         """Бытовая техника: антидемпинга нет."""
@@ -268,7 +272,8 @@ class PaymentEngineTests(unittest.TestCase):
             "freight": 45_000,
             "country": "CN",
         })
-        self.assertEqual(res["status"], "OK")
+        self.assertEqual(res["status"], "REVIEW_REQUIRED")
+        self.assertIn("hs_rate_source_binding_unverified", res["payment_review_reasons"])
         dr = res["auto_detected"]["duty_rate"]
         duty = round(500_000 * dr / 100.0, 2)
         self.assertAlmostEqual(res["breakdown"]["duty"], duty, places=0)
@@ -397,14 +402,16 @@ class PaymentEngineTests(unittest.TestCase):
                 ],
             }
         )
-        self.assertEqual(out["status"], "OK")
+        self.assertEqual(out["status"], "REVIEW_REQUIRED")
         self.assertEqual(len(out["scenarios"]), 2)
         self.assertIsNone(out["scenarios"][0]["delta_total_vs_first_rub"])
-        self.assertIsNotNone(out["scenarios"][1]["delta_total_vs_first_rub"])
+        self.assertIsNone(out["scenarios"][1]["delta_total_vs_first_rub"])
         first_total = float(out["scenarios"][0]["total_payable"])
         second_total = float(out["scenarios"][1]["total_payable"])
-        expected_delta = round(second_total - first_total, 2)
-        self.assertEqual(out["scenarios"][1]["delta_total_vs_first_rub"], expected_delta)
+        self.assertGreater(first_total, 0)
+        self.assertGreater(second_total, 0)
+        for scenario in out["scenarios"]:
+            self.assertIn("hs_rate_source_binding_unverified", scenario["payment_review_reasons"])
 
     def test_compare_requires_two(self):
         with self.assertRaises(ValueError):

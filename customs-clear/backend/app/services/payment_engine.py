@@ -127,6 +127,8 @@ SOURCE_REVIEW_REASONS = {
     "foreign_fx_source_unverified": "Курс иностранной валюты не связан с подтверждённым источником и датой расчёта; зависимые суммы предварительные.",
     "duty_expression_incomplete": "В выражении пошлины отсутствует или повреждён обязательный компонент, единица либо валюта. Сумма пошлины не определена, а не равна нулю.",
     "hs_rate_effective_period_unverified": "Заполненные даты строки hs_rates повреждены либо не включают текущую дату. Зависимые автоматические ставки не подтверждены.",
+    "hs_rate_source_binding_unverified": "Строка hs_rates не содержит полной привязки к источнику, редакции и интервалу действия. Зависимые автоматические ставки показаны только предварительно.",
+    "duty_rule_source_binding_unverified": "Структурированное правило hs_duty_rules не привязано к неизменяемой строке источника и редакции. Расчёт пошлины показан только предварительно.",
 }
 
 
@@ -165,6 +167,20 @@ def _hs_rate_period_unverified(rate) -> bool:
     start, end = bounds
     today = date.today()
     return bool((start and end and start > end) or (start and today < start) or (end and today > end))
+
+
+def _hs_rate_source_binding_unverified(rate) -> bool:
+    """Legacy HsRate rows have no typed, independently reviewed admission token.
+
+    Dates, URLs and revision strings are observations only: their mere presence
+    cannot prove immutable source identity, applicability or human approval.
+    """
+    return rate is not None
+
+
+def _duty_rule_source_binding_unverified(rule) -> bool:
+    """HsDutyRule operands currently have no persisted source identity."""
+    return isinstance(rule, HsDutyRule)
 
 
 def _duty_expression_incomplete(rule) -> bool:
@@ -965,6 +981,24 @@ def compute_payments(payload: dict[str, Any]) -> dict[str, Any]:
         require_component_review("hs_rate_effective_period_unverified", "antidumping", "vat")
         antidumping_status = "manual_review"
         antidumping_reason = SOURCE_REVIEW_REASONS["hs_rate_effective_period_unverified"]
+    antidumping_applicability_review_required = antidumping_status == "manual_review"
+    rate_source_binding_unverified = _hs_rate_source_binding_unverified(rate)
+    if rate_source_binding_unverified:
+        if manual_duty_rate is None:
+            require_component_review("hs_rate_source_binding_unverified", "duty", "vat")
+        if payload.get("vat_rate") is None and vat_pref is None:
+            require_component_review("hs_rate_source_binding_unverified", "vat")
+        if payload.get("excise") is None:
+            require_component_review("hs_rate_source_binding_unverified", "excise", "vat")
+        require_component_review("hs_rate_source_binding_unverified", "antidumping", "vat")
+        antidumping_status = "manual_review"
+        if not antidumping_applicability_review_required:
+            antidumping_reason = SOURCE_REVIEW_REASONS["hs_rate_source_binding_unverified"]
+    duty_rule_source_binding_unverified = (
+        manual_duty_rate is None and _duty_rule_source_binding_unverified(duty_rule)
+    )
+    if duty_rule_source_binding_unverified:
+        require_component_review("duty_rule_source_binding_unverified", "duty", "vat")
     specific_currency = (duty_rule.specific_currency or "").upper().strip() if duty_rule else ""
     if fx_rate is not None and specific_currency != "RUB":
         require_component_review("foreign_fx_source_unverified", "duty", "vat")
@@ -994,7 +1028,7 @@ def compute_payments(payload: dict[str, Any]) -> dict[str, Any]:
         (special_duty_review_required, "special_duty_applicability_unverified", SPECIAL_DUTY_REVIEW_REASON),
         (special_duty_legal_review_required, "special_duty_legal_review_unverified", SPECIAL_DUTY_LEGAL_REVIEW_REASON),
         (excise_review_required, "excise_applicability_unverified", excise_reason),
-        (antidumping_status == "manual_review", "antidumping_applicability_unverified", antidumping_reason),
+        (antidumping_applicability_review_required, "antidumping_applicability_unverified", antidumping_reason),
     ):
         if required:
             review_reasons.append(code)
@@ -1099,6 +1133,18 @@ def compute_payments(payload: dict[str, Any]) -> dict[str, Any]:
             "source_revision": getattr(rate, "source_revision", ""), "source_url": getattr(rate, "source_url", ""),
             "legal_review_verified": False,
         }} if rate_period_unverified else {}),
+        **({"hs_rate_source_candidate": {
+            "status": "needs_review", "source_kind": "legacy_hs_rates",
+            "valid_from": getattr(rate, "valid_from", None), "valid_to": getattr(rate, "valid_to", None),
+            "source_revision": getattr(rate, "source_revision", ""), "source_url": getattr(rate, "source_url", ""),
+            "source_evidence_verified": False, "legal_review_verified": False,
+        }} if rate_source_binding_unverified else {}),
+        **({"duty_rule_source_candidate": {
+            "status": "needs_review", "source_kind": "legacy_hs_duty_rules",
+            "code": duty_rule.commodity_code, "rule_type": duty_rule.type,
+            "source_evidence_verified": False, "legal_review_verified": False,
+            "reason": "duty_rule_source_binding_unverified",
+        }} if duty_rule_source_binding_unverified else {}),
         **({"duty_candidate": {
             "status": "needs_clarification", "amount": None, "calculation_available": False,
             "applied": False, "legal_review_verified": False,
