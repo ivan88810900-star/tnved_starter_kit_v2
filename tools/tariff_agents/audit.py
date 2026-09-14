@@ -48,6 +48,9 @@ OFFICIAL_HOSTS = frozenset({
 TEXT_EXTENSIONS = frozenset({".py", ".js", ".ts", ".tsx", ".jsx", ".md", ".txt",
                              ".json", ".yaml", ".yml", ".toml", ".sql", ".sh",
                              ".html", ".css", ".ini", ".cfg"})
+CONNECTION_SCHEMES = frozenset({"postgres", "postgresql", "mysql", "mongodb",
+                                "redis", "rediss"})
+CANONICAL_CREDENTIAL_KEYS = frozenset({"PGPASSWORD", "MYSQL_PWD", "REDISCLI_AUTH"})
 SQLITE_HEADER = "SQLite format " + "3"
 POSTGRES_DUMP_HEADER = "PostgreSQL database " + "dump"
 COPY_KEYWORD = "CO" + "PY"
@@ -82,15 +85,45 @@ def ensure_safe_path(path):
     return path
 
 
+def _credential_variants(value, *, minimum_length=8):
+    if not isinstance(value, str) or len(value) < minimum_length:
+        return set()
+    raw = value.encode()
+    return {value, base64.b64encode(raw).decode(), raw.hex(),
+            urllib.parse.quote(value, safe="")}
+
+
+def _ambient_credential_values(key, value):
+    """Return credential values paired with a false-positive-safe length bound."""
+    if not isinstance(key, str) or not isinstance(value, str):
+        return ()
+    upper = key.upper()
+    if upper in CANONICAL_CREDENTIAL_KEYS:
+        return ((value, 4),)
+    if re.search(r"(?:^|_)(?:TOKEN|SECRET|PASSWORD|PASSWD|PASS|CREDENTIAL|KEY)$", upper):
+        return ((value, 8),)
+    if not re.search(r"(?:^|_)(?:URL|URI)$", upper):
+        return ()
+    try:
+        parsed = urllib.parse.urlsplit(value)
+        scheme = parsed.scheme.lower().split("+", 1)[0]
+        password = parsed.password
+    except ValueError:
+        return ()
+    if scheme not in CONNECTION_SCHEMES or not password:
+        return ()
+    decoded_password = urllib.parse.unquote(password)
+    credentials = ((value, 8), (password, 4), (decoded_password, 4))
+    return tuple(dict.fromkeys(credentials))
+
+
 def ensure_safe_text(text, *, environ=None):
     if not isinstance(text, str) or any(ord(c) < 32 and c not in "\n\r\t" for c in text):
         raise AuditBlocked("Binary or invalid audit text")
     env = os.environ if environ is None else environ
     for key, value in env.items():
-        if (re.search(r"(TOKEN|SECRET|PASSWORD|CREDENTIAL|(?:^|_)KEY)$", key.upper()) and
-                isinstance(value, str) and len(value) >= 8):
-            variants = {value, base64.b64encode(value.encode()).decode(),
-                        value.encode().hex(), urllib.parse.quote(value, safe="")}
+        for credential, minimum_length in _ambient_credential_values(key, value):
+            variants = _credential_variants(credential, minimum_length=minimum_length)
             if any(variant in text for variant in variants):
                 raise AuditBlocked("Credential content excluded from audit")
     patterns = (
@@ -103,9 +136,9 @@ def ensure_safe_text(text, *, environ=None):
         r"[\"']?\s*[:=]\s*[\"'][^\"'\n]{4,}[\"']",
         r"(?i)[\"'](?:passport_number|social_security_number|personal_address|"
         r"customer_email|date_of_birth)[\"']\s*:\s*[\"'][^\"'\n]+[\"']",
-        r"(?i)(?:postgres(?:ql)?|mysql)://[^\s]+:[^\s]+@",
+        r"(?i)(?:postgres(?:ql)?|mysql|mongodb(?:\+srv)?|rediss?)://[^\s/@]*:[^\s/@]+@",
         (rf"(?i)(?:{re.escape(SQLITE_HEADER)}|{re.escape(POSTGRES_DUMP_HEADER)}|"
-         rf"{COPY_KEYWORD}[ \t]+[^\r\n]{{1,500}}[ \t]+FROM[ \t]+{STDIN_KEYWORD})"),
+         rf"{COPY_KEYWORD}[ \t]+[^\r\n]*[ \t]+FROM[ \t]+{STDIN_KEYWORD})"),
     )
     if any(re.search(pattern, text) for pattern in patterns):
         raise AuditBlocked("Suspected secret or private data excluded from audit")
