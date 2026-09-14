@@ -1,0 +1,358 @@
+{
+  "schema_version": 1,
+  "kind": "ad30_pinned_source_fact_dossier",
+  "source_record_integrity_scope": "Exact tracked evidence records and JSON pointer values; no original PDF row or current legal applicability verification.",
+  "evidence_records": [
+    {
+      "path": "docs/ai-workflow/evidence/eec-ad30-decision12-capture-review-20260912.json",
+      "sha256": "9abf33b60135888c0282f6ef37c886971f088dc85dbf64946002f79aa7489153"
+    },
+    {
+      "path": "docs/ai-workflow/evidence/eec-ad30-decision4-notice-review-20260912.json",
+      "sha256": "642415be4c272ac6d54f9a73781ef61a1996d52c4d325483610d7620ca2bd721"
+    },
+    {
+      "path": "docs/ai-workflow/evidence/eec-ad30-source-discovery-20260912.json",
+      "sha256": "0e35d2f8ce44f8c356f4bddf538de0c2ae405ef5f1a2806af65ccf76a4f9dd94"
+    }
+  ],
+  "facts": [
+    {
+      "fact_id": "d12.product",
+      "value_json": "\"Welded tubes, pipes and hollow profiles of corrosion-resistant (stainless) steel, originating in China and imported into the EAEU customs territory. The scope includes the following printed dimensional conditions.\"",
+      "evidence_path": "docs/ai-workflow/evidence/eec-ad30-decision12-capture-review-20260912.json",
+      "evidence_file_sha256": "9abf33b60135888c0282f6ef37c886971f088dc85dbf64946002f79aa7489153",
+      "json_pointer": "/document_observations/product_text_basis/observation",
+      "body_sha256": "1d6936be2b492b2976e03b3558c55c36062a89dc612ffe54f7e54af49a372c4b",
+      "source_url": "https://docs.eaeunion.org/upload/iblock/08a/wp70m6eckvicuanvf0sfo4sxqaro4aax/err_12022021_12_doc.pdf",
+      "page": null,
+      "locator": "clause 1; pages 1–2",
+      "observation_kind": "recorded_visual_summary"
+    },
+    {
+      "fact_id": "d12.wall",
+      "value_json": "\"с толщиной стенки от 0,4 до 6 мм включительно\"",
+      "evidence_path": "docs/ai-workflow/evidence/eec-ad30-decision12-capture-review-20260912.json",
+      "evidence_file_sha256": "9abf33b60135888c0282f6ef37c886971f088dc85dbf64946002f79aa7489153",
+      "json_pointer": "/document_observations/product_text_basis/printed_condition_fragments/0/text",
+      "body_sha256": "1d6936be2b492b2976e03b3558c55c36062a89dc612ffe54f7e54af49a372c4b",
+      "source_url": "https://docs.eaeunion.org/upload/iblock/08a/wp70m6eckvicuanvf0sfo4sxqaro4aax/err_12022021_12_doc.pdf",
+      "page": 1,
+      "locator": "clause 1",
+      "observation_kind": "recorded_visual_transcription"
+    },
+    {
+      "fact_id": "d12.round_diameter",
+      "value_json": "\"круглого поперечного сечения с наружным диаметром от 6 до 115 мм включительно\"",
+      "evidence_path": "docs/ai-workflow/evidence/eec-ad30-decision12-capture-review-20260912.json",
+      "evidence_file_sha256": "9abf33b60135888c0282f6ef37c886971f088dc85dbf64946002f79aa7489153",
+      "json_pointer": "/document_observations/product_text_basis/printed_condition_fragments/1/text",
+      "body_sha256": "1d6936be2b492b2976e03b3558c55c36062a89dc612ffe54f7e54af49a372c4b",
+      "source_url": "https://docs.eaeunion.org/upload/iblock/08a/wp70m6eckvicuanvf0sfo4sxqaro4aax/err_12022021_12_doc.pdf",
+      "page": 1,
+      "locator": "clause 1",
+      "observation_kind": "recorded_visual_transcription"
+    },
+    {
+      "fact_id": "d12.square_perimeter",
+      "value_json": "\"квадратного поперечного сечения с периметром поперечного сечения не более 400 мм\"",
+      "evidence_path": "docs/ai-workflow/evidence/eec-ad30-decision12-capture-review-20260912.json",
+      "evidence_file_sha256": "9abf33b60135888c0282f6ef37c886971f088dc85dbf64946002f79aa7489153",
+      "json_pointer": "/document_observations/product_text_basis/printed_condition_fragments/2/text",
+      "body_sha256": "1d6936be2b492b2976e03b3558c55c36062a89dc612ffe54f7e54af49a372c4b",
+      "source_url": "https://docs.eaeunion.org/upload/iblock/08a/wp70m6eckvicuanvf0sfo4sxqaro4aax/err_12022021_12_doc.pdf",
+      "page": 1,
+      "locator": "clause 1",
+      "observation_kind": "recorded_visual_transcription"
+    },
+    {
+      "fact_id": "d12.rectangle_dimensions",
+      "value_json": "\"прямоугольного поперечного сечения с периметром поперечного сечения не более 400 мм и наибольшим размером стороны сечения до 120 мм включительно\"",
+      "evidence_path": "docs/ai-workflow/evidence/eec-ad30-decision12-capture-review-20260912.json",
+      "evidence_file_sha256": "9abf33b60135888c0282f6ef37c886971f088dc85dbf64946002f79aa7489153",
+      "json_pointer": "/document_observations/product_text_basis/printed_condition_fragments/3/text",
+      "body_sha256": "1d6936be2b492b2976e03b3558c55c36062a89dc612ffe54f7e54af49a372c4b",
+      "source_url": "https://docs.eaeunion.org/upload/iblock/08a/wp70m6eckvicuanvf0sfo4sxqaro4aax/err_12022021_12_doc.pdf",
+      "page": 2,
+      "locator": "clause 1",
+      "observation_kind": "recorded_visual_transcription"
+    },
+    {
+      "fact_id": "d12.origin",
+      "value_json": "\"Китайская Народная Республика\"",
+      "evidence_path": "docs/ai-workflow/evidence/eec-ad30-decision12-capture-review-20260912.json",
+      "evidence_file_sha256": "9abf33b60135888c0282f6ef37c886971f088dc85dbf64946002f79aa7489153",
+      "json_pointer": "/document_observations/product_text_basis/printed_origin",
+      "body_sha256": "1d6936be2b492b2976e03b3558c55c36062a89dc612ffe54f7e54af49a372c4b",
+      "source_url": "https://docs.eaeunion.org/upload/iblock/08a/wp70m6eckvicuanvf0sfo4sxqaro4aax/err_12022021_12_doc.pdf",
+      "page": 2,
+      "locator": "clause 1",
+      "observation_kind": "recorded_visual_transcription"
+    },
+    {
+      "fact_id": "d12.codes",
+      "value_json": "[\"7306 40 200 9\",\"7306 40 800 1\",\"7306 40 800 8\",\"7306 61 100 9\"]",
+      "evidence_path": "docs/ai-workflow/evidence/eec-ad30-decision12-capture-review-20260912.json",
+      "evidence_file_sha256": "9abf33b60135888c0282f6ef37c886971f088dc85dbf64946002f79aa7489153",
+      "json_pointer": "/document_observations/codes_printed/values",
+      "body_sha256": "1d6936be2b492b2976e03b3558c55c36062a89dc612ffe54f7e54af49a372c4b",
+      "source_url": "https://docs.eaeunion.org/upload/iblock/08a/wp70m6eckvicuanvf0sfo4sxqaro4aax/err_12022021_12_doc.pdf",
+      "page": 2,
+      "locator": "clause 1",
+      "observation_kind": "recorded_visual_transcription"
+    },
+    {
+      "fact_id": "d12.joint_code_description",
+      "value_json": "\"руководствуясь как кодами ТН ВЭД ЕАЭС, так и наименованием товара\"",
+      "evidence_path": "docs/ai-workflow/evidence/eec-ad30-decision12-capture-review-20260912.json",
+      "evidence_file_sha256": "9abf33b60135888c0282f6ef37c886971f088dc85dbf64946002f79aa7489153",
+      "json_pointer": "/document_observations/joint_code_and_description_requirement/text",
+      "body_sha256": "1d6936be2b492b2976e03b3558c55c36062a89dc612ffe54f7e54af49a372c4b",
+      "source_url": "https://docs.eaeunion.org/upload/iblock/08a/wp70m6eckvicuanvf0sfo4sxqaro4aax/err_12022021_12_doc.pdf",
+      "page": 2,
+      "locator": "clause 2",
+      "observation_kind": "recorded_visual_transcription"
+    },
+    {
+      "fact_id": "d12.duration",
+      "value_json": "\"установив срок действия данной антидемпинговой меры 5 лет\"",
+      "evidence_path": "docs/ai-workflow/evidence/eec-ad30-decision12-capture-review-20260912.json",
+      "evidence_file_sha256": "9abf33b60135888c0282f6ef37c886971f088dc85dbf64946002f79aa7489153",
+      "json_pointer": "/document_observations/duration_printed/text",
+      "body_sha256": "1d6936be2b492b2976e03b3558c55c36062a89dc612ffe54f7e54af49a372c4b",
+      "source_url": "https://docs.eaeunion.org/upload/iblock/08a/wp70m6eckvicuanvf0sfo4sxqaro4aax/err_12022021_12_doc.pdf",
+      "page": 2,
+      "locator": "clause 1",
+      "observation_kind": "recorded_visual_transcription"
+    },
+    {
+      "fact_id": "d12.effective_clause",
+      "value_json": "\"Entry into force is stated as after 30 calendar days from official publication.\"",
+      "evidence_path": "docs/ai-workflow/evidence/eec-ad30-decision12-capture-review-20260912.json",
+      "evidence_file_sha256": "9abf33b60135888c0282f6ef37c886971f088dc85dbf64946002f79aa7489153",
+      "json_pointer": "/document_observations/effective_clause_observation/observation",
+      "body_sha256": "1d6936be2b492b2976e03b3558c55c36062a89dc612ffe54f7e54af49a372c4b",
+      "source_url": "https://docs.eaeunion.org/upload/iblock/08a/wp70m6eckvicuanvf0sfo4sxqaro4aax/err_12022021_12_doc.pdf",
+      "page": 2,
+      "locator": "clause 3",
+      "observation_kind": "recorded_visual_summary"
+    },
+    {
+      "fact_id": "d12.rate_unit",
+      "value_json": "\"процентов от таможенной стоимости\"",
+      "evidence_path": "docs/ai-workflow/evidence/eec-ad30-decision12-capture-review-20260912.json",
+      "evidence_file_sha256": "9abf33b60135888c0282f6ef37c886971f088dc85dbf64946002f79aa7489153",
+      "json_pointer": "/document_observations/annex/rate_column_unit_printed",
+      "body_sha256": "1d6936be2b492b2976e03b3558c55c36062a89dc612ffe54f7e54af49a372c4b",
+      "source_url": "https://docs.eaeunion.org/upload/iblock/08a/wp70m6eckvicuanvf0sfo4sxqaro4aax/err_12022021_12_doc.pdf",
+      "page": 3,
+      "locator": "annex rate column heading",
+      "observation_kind": "recorded_visual_transcription"
+    },
+    {
+      "fact_id": "d12.foshan_vinmay_row",
+      "value_json": "{\"producer_address_printed\":\"No. 6 Jingang Avenue, Baini Town, Sanshui District, Foshan City, Guangdong Province, China\",\"producer_name_printed\":\"Foshan Vinmay Stainless Steel Co., Ltd.\",\"rate_text_printed\":\"14,62\",\"row_order\":1}",
+      "evidence_path": "docs/ai-workflow/evidence/eec-ad30-decision12-capture-review-20260912.json",
+      "evidence_file_sha256": "9abf33b60135888c0282f6ef37c886971f088dc85dbf64946002f79aa7489153",
+      "json_pointer": "/document_observations/annex/producer_rows/0",
+      "body_sha256": "1d6936be2b492b2976e03b3558c55c36062a89dc612ffe54f7e54af49a372c4b",
+      "source_url": "https://docs.eaeunion.org/upload/iblock/08a/wp70m6eckvicuanvf0sfo4sxqaro4aax/err_12022021_12_doc.pdf",
+      "page": 3,
+      "locator": "annex producer row 1",
+      "observation_kind": "recorded_visual_transcription"
+    },
+    {
+      "fact_id": "d12.guangdong_sumwin_row",
+      "value_json": "{\"producer_address_printed\":\"South Sanhe Rd., East Renhe Rd., Yanhe Town, Gaoming District, Foshan, China\",\"producer_name_printed\":\"Guangdong Sumwin New Material Group Co., Ltd.\",\"rate_text_printed\":\"17,28\",\"row_order\":2}",
+      "evidence_path": "docs/ai-workflow/evidence/eec-ad30-decision12-capture-review-20260912.json",
+      "evidence_file_sha256": "9abf33b60135888c0282f6ef37c886971f088dc85dbf64946002f79aa7489153",
+      "json_pointer": "/document_observations/annex/producer_rows/1",
+      "body_sha256": "1d6936be2b492b2976e03b3558c55c36062a89dc612ffe54f7e54af49a372c4b",
+      "source_url": "https://docs.eaeunion.org/upload/iblock/08a/wp70m6eckvicuanvf0sfo4sxqaro4aax/err_12022021_12_doc.pdf",
+      "page": 3,
+      "locator": "annex producer row 2",
+      "observation_kind": "recorded_visual_transcription"
+    },
+    {
+      "fact_id": "d12.other_producers_row",
+      "value_json": "{\"producer_address_printed\":null,\"producer_name_printed\":\"прочие\",\"rate_text_printed\":\"17,28\",\"row_order\":3}",
+      "evidence_path": "docs/ai-workflow/evidence/eec-ad30-decision12-capture-review-20260912.json",
+      "evidence_file_sha256": "9abf33b60135888c0282f6ef37c886971f088dc85dbf64946002f79aa7489153",
+      "json_pointer": "/document_observations/annex/producer_rows/2",
+      "body_sha256": "1d6936be2b492b2976e03b3558c55c36062a89dc612ffe54f7e54af49a372c4b",
+      "source_url": "https://docs.eaeunion.org/upload/iblock/08a/wp70m6eckvicuanvf0sfo4sxqaro4aax/err_12022021_12_doc.pdf",
+      "page": 3,
+      "locator": "annex producer row 3",
+      "observation_kind": "recorded_visual_transcription"
+    },
+    {
+      "fact_id": "d4.extension",
+      "value_json": "\"Extends the measure established by Collegium Decision 12 of 9 February 2021 through 12 November 2026 inclusive.\"",
+      "evidence_path": "docs/ai-workflow/evidence/eec-ad30-decision4-notice-review-20260912.json",
+      "evidence_file_sha256": "642415be4c272ac6d54f9a73781ef61a1996d52c4d325483610d7620ca2bd721",
+      "json_pointer": "/documents/0/observations/1/observation",
+      "body_sha256": "44a277edf5f9bf76a0ccd79d6e41f9820548fcbaa1b638d1cd44469a79344aef",
+      "source_url": "https://docs.eaeunion.org/upload/iblock/798/59qwa6jpe6b76n24wtn0uu9eygvlznkr/Reshenie-Kollegii-_-4-ot-20-yanvarya-2026-g.pdf",
+      "page": 1,
+      "locator": "clause 1",
+      "observation_kind": "recorded_visual_summary"
+    },
+    {
+      "fact_id": "d4.collection_procedure",
+      "value_json": "\"Addresses the member states' customs authorities. From entry into force of this decision through 12 November 2026 inclusive, it refers to collection at rates established by Decision 12 of 9 February 2021 under the procedure for collecting provisional anti-dumping duties.\"",
+      "evidence_path": "docs/ai-workflow/evidence/eec-ad30-decision4-notice-review-20260912.json",
+      "evidence_file_sha256": "642415be4c272ac6d54f9a73781ef61a1996d52c4d325483610d7620ca2bd721",
+      "json_pointer": "/documents/0/observations/2/observation",
+      "body_sha256": "44a277edf5f9bf76a0ccd79d6e41f9820548fcbaa1b638d1cd44469a79344aef",
+      "source_url": "https://docs.eaeunion.org/upload/iblock/798/59qwa6jpe6b76n24wtn0uu9eygvlznkr/Reshenie-Kollegii-_-4-ot-20-yanvarya-2026-g.pdf",
+      "page": 2,
+      "locator": "clause 2",
+      "observation_kind": "recorded_visual_summary"
+    },
+    {
+      "fact_id": "d4.effective_clause",
+      "value_json": "\"The clause specifies entry into force after 30 calendar days from official publication, but not earlier than 14 March 2026.\"",
+      "evidence_path": "docs/ai-workflow/evidence/eec-ad30-decision4-notice-review-20260912.json",
+      "evidence_file_sha256": "642415be4c272ac6d54f9a73781ef61a1996d52c4d325483610d7620ca2bd721",
+      "json_pointer": "/documents/0/observations/3/observation",
+      "body_sha256": "44a277edf5f9bf76a0ccd79d6e41f9820548fcbaa1b638d1cd44469a79344aef",
+      "source_url": "https://docs.eaeunion.org/upload/iblock/798/59qwa6jpe6b76n24wtn0uu9eygvlznkr/Reshenie-Kollegii-_-4-ot-20-yanvarya-2026-g.pdf",
+      "page": 2,
+      "locator": "clause 3",
+      "observation_kind": "recorded_visual_summary"
+    },
+    {
+      "fact_id": "d121.extension",
+      "value_json": "\"Extends the anti-dumping measure established by Collegium Decision 12 of 9 February 2021 through 7 September 2031 inclusive. The cited title continues on page 2.\"",
+      "evidence_path": "docs/ai-workflow/evidence/eec-ad30-source-discovery-20260912.json",
+      "evidence_file_sha256": "0e35d2f8ce44f8c356f4bddf538de0c2ae405ef5f1a2806af65ccf76a4f9dd94",
+      "json_pointer": "/retained_original_reused/literal_content_observations/0/observation",
+      "body_sha256": "56ffd2701fc5e0d85a2d02e1e9219c35a5ba4c59610aebe8d9f64eb496ce2e4c",
+      "source_url": "https://docs.eaeunion.org/upload/iblock/072/gnl5h50x3mzkg7zd1b0d593t4mtizhg1/Reshenie-Kollegii-_-121-ot-8-sentbrya-2026-g.pdf",
+      "page": 1,
+      "locator": "clause 1",
+      "observation_kind": "recorded_visual_summary"
+    },
+    {
+      "fact_id": "d121.crediting",
+      "value_json": "\"Refers to the duty amounts provided by Decision 12 of 9 February 2021 and to crediting amounts paid or collected under Decision 4 of 20 January 2026. No numerical rate table or commodity-code list is printed.\"",
+      "evidence_path": "docs/ai-workflow/evidence/eec-ad30-source-discovery-20260912.json",
+      "evidence_file_sha256": "0e35d2f8ce44f8c356f4bddf538de0c2ae405ef5f1a2806af65ccf76a4f9dd94",
+      "json_pointer": "/retained_original_reused/literal_content_observations/1/observation",
+      "body_sha256": "56ffd2701fc5e0d85a2d02e1e9219c35a5ba4c59610aebe8d9f64eb496ce2e4c",
+      "source_url": "https://docs.eaeunion.org/upload/iblock/072/gnl5h50x3mzkg7zd1b0d593t4mtizhg1/Reshenie-Kollegii-_-121-ot-8-sentbrya-2026-g.pdf",
+      "page": 2,
+      "locator": "clause 2",
+      "observation_kind": "recorded_visual_summary"
+    },
+    {
+      "fact_id": "d121.repeal_d4",
+      "value_json": "\"Declares Decision 4 of 20 January 2026 no longer in force.\"",
+      "evidence_path": "docs/ai-workflow/evidence/eec-ad30-source-discovery-20260912.json",
+      "evidence_file_sha256": "0e35d2f8ce44f8c356f4bddf538de0c2ae405ef5f1a2806af65ccf76a4f9dd94",
+      "json_pointer": "/retained_original_reused/literal_content_observations/2/observation",
+      "body_sha256": "56ffd2701fc5e0d85a2d02e1e9219c35a5ba4c59610aebe8d9f64eb496ce2e4c",
+      "source_url": "https://docs.eaeunion.org/upload/iblock/072/gnl5h50x3mzkg7zd1b0d593t4mtizhg1/Reshenie-Kollegii-_-121-ot-8-sentbrya-2026-g.pdf",
+      "page": 2,
+      "locator": "clause 3",
+      "observation_kind": "recorded_visual_summary"
+    },
+    {
+      "fact_id": "d121.effective_clause",
+      "value_json": "\"Настоящее Решение вступает в силу по истечении 30 календарных дней с даты его официального опубликования.\"",
+      "evidence_path": "docs/ai-workflow/evidence/eec-ad30-source-discovery-20260912.json",
+      "evidence_file_sha256": "0e35d2f8ce44f8c356f4bddf538de0c2ae405ef5f1a2806af65ccf76a4f9dd94",
+      "json_pointer": "/retained_original_reused/literal_content_observations/3/quote",
+      "body_sha256": "56ffd2701fc5e0d85a2d02e1e9219c35a5ba4c59610aebe8d9f64eb496ce2e4c",
+      "source_url": "https://docs.eaeunion.org/upload/iblock/072/gnl5h50x3mzkg7zd1b0d593t4mtizhg1/Reshenie-Kollegii-_-121-ot-8-sentbrya-2026-g.pdf",
+      "page": 2,
+      "locator": "clause 4",
+      "observation_kind": "recorded_visual_transcription"
+    },
+    {
+      "fact_id": "d12.card_metadata",
+      "value_json": "{\"adopted_on_printed\":\"09.02.2021\",\"body_sha256\":\"1ff8131e8e781f6d28b4985afbfc94d9e1330fc7e924b7439192d19a3be13655\",\"capture_run\":\"34717159548\",\"capture_status\":\"quarantined_content_rejected\",\"document_number\":\"12\",\"effective_on_printed\":\"14.03.2021\",\"published_on_printed\":\"12.02.2021\",\"receipt_sha256\":\"618eedd2deaf306b13ad1a25b498832f9400df7aa4fc7843aa36879242ccbc55\",\"url\":\"https://docs.eaeunion.org/documents/379/5653/\"}",
+      "evidence_path": "docs/ai-workflow/evidence/eec-ad30-decision12-capture-review-20260912.json",
+      "evidence_file_sha256": "9abf33b60135888c0282f6ef37c886971f088dc85dbf64946002f79aa7489153",
+      "json_pointer": "/retained_card_metadata_observations/cards/0",
+      "body_sha256": "1ff8131e8e781f6d28b4985afbfc94d9e1330fc7e924b7439192d19a3be13655",
+      "source_url": "https://docs.eaeunion.org/documents/379/5653/",
+      "page": null,
+      "locator": "portal DocDetail fields",
+      "observation_kind": "quarantined_portal_metadata_observation"
+    },
+    {
+      "fact_id": "d4.card_metadata",
+      "value_json": "{\"adopted_on_printed\":\"20.01.2026\",\"body_sha256\":\"fcca5c74fba82a82427fd6c45eb305cc5c7ee9769ccb35356789cc8ca5c17169\",\"capture_run\":\"34716176823\",\"capture_status\":\"quarantined_content_rejected\",\"document_number\":\"4\",\"effective_on_printed\":\"14.03.2026\",\"published_on_printed\":\"23.01.2026\",\"receipt_sha256\":\"185c14d637681de8fa065ba868d218828c1646247ce48f5e711f6d62403fece1\",\"url\":\"https://docs.eaeunion.org/documents/463/10454/\"}",
+      "evidence_path": "docs/ai-workflow/evidence/eec-ad30-decision12-capture-review-20260912.json",
+      "evidence_file_sha256": "9abf33b60135888c0282f6ef37c886971f088dc85dbf64946002f79aa7489153",
+      "json_pointer": "/retained_card_metadata_observations/cards/1",
+      "body_sha256": "fcca5c74fba82a82427fd6c45eb305cc5c7ee9769ccb35356789cc8ca5c17169",
+      "source_url": "https://docs.eaeunion.org/documents/463/10454/",
+      "page": null,
+      "locator": "portal DocDetail fields",
+      "observation_kind": "quarantined_portal_metadata_observation"
+    },
+    {
+      "fact_id": "d121.card_metadata",
+      "value_json": "{\"adopted_on_printed\":\"08.09.2026\",\"body_sha256\":\"c9acebc19e2af89b9b90b65e37675a1d1b1aafcb3518e6e83a7d5f5bef03fdba\",\"capture_run\":\"34716176823\",\"capture_status\":\"quarantined_content_rejected\",\"document_number\":\"121\",\"effective_date_field_present\":false,\"published_on_printed\":\"10.09.2026\",\"receipt_sha256\":\"30d6a0c95f787dd4aa270235f13d71ca281931e5631d6314358d20bf3289c8c3\",\"url\":\"https://docs.eaeunion.org/documents/463/10918/\"}",
+      "evidence_path": "docs/ai-workflow/evidence/eec-ad30-decision12-capture-review-20260912.json",
+      "evidence_file_sha256": "9abf33b60135888c0282f6ef37c886971f088dc85dbf64946002f79aa7489153",
+      "json_pointer": "/retained_card_metadata_observations/cards/2",
+      "body_sha256": "c9acebc19e2af89b9b90b65e37675a1d1b1aafcb3518e6e83a7d5f5bef03fdba",
+      "source_url": "https://docs.eaeunion.org/documents/463/10918/",
+      "page": null,
+      "locator": "portal DocDetail fields",
+      "observation_kind": "quarantined_portal_metadata_observation"
+    }
+  ],
+  "rate_rows": [
+    {
+      "row_id": "foshan_vinmay",
+      "producer_name": "Foshan Vinmay Stainless Steel Co., Ltd.",
+      "producer_address": "No. 6 Jingang Avenue, Baini Town, Sanshui District, Foshan City, Guangdong Province, China",
+      "rate_percent_literal": "14,62",
+      "evidence_ids": [
+        "d12.foshan_vinmay_row",
+        "d12.rate_unit"
+      ]
+    },
+    {
+      "row_id": "guangdong_sumwin",
+      "producer_name": "Guangdong Sumwin New Material Group Co., Ltd.",
+      "producer_address": "South Sanhe Rd., East Renhe Rd., Yanhe Town, Gaoming District, Foshan, China",
+      "rate_percent_literal": "17,28",
+      "evidence_ids": [
+        "d12.guangdong_sumwin_row",
+        "d12.rate_unit"
+      ]
+    },
+    {
+      "row_id": "other_producers",
+      "producer_name": "прочие",
+      "producer_address": null,
+      "rate_percent_literal": "17,28",
+      "evidence_ids": [
+        "d12.other_producers_row",
+        "d12.rate_unit"
+      ]
+    }
+  ],
+  "unresolved": [
+    "complete_amendment_inventory",
+    "effective_intervals",
+    "historical_nomenclature_mapping",
+    "producer_identity_and_succession",
+    "final_investigation_report",
+    "manifest_bound_human_review_and_separate_approval",
+    "retention_and_legal_hold"
+  ],
+  "source_record_integrity_verified": true,
+  "original_artifacts_verified": false,
+  "source_text_verified": false,
+  "legal_review_verified": false,
+  "can_promote": false,
+  "production_ready": false,
+  "active_rates_written": false,
+  "durable_legal_retention_attested": false
+}
