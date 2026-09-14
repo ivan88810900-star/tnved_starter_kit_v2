@@ -578,7 +578,7 @@ def _resolve_antidumping(
 
 
 def compute_payments(payload: dict[str, Any]) -> dict[str, Any]:
-    if "as_of" in payload:
+    if payload.get("as_of") is not None:
         raise ValueError(LEGACY_PAYMENT_AS_OF_UNSUPPORTED)
     hs_code = str(payload.get("hs_code") or "").strip()
     hs_digits = _digits_hs(hs_code)
@@ -1052,7 +1052,7 @@ def compare_payment_scenarios(payload: dict[str, Any]) -> dict[str, Any]:
     """Сравнение 2–8 сценариев при общих экономических параметрах (что если другой ТН ВЭД)."""
     shared = payload.get("shared") or {}
     scenarios = payload.get("scenarios") or []
-    if "as_of" in payload or "as_of" in shared or any(isinstance(row, dict) and "as_of" in row for row in scenarios):
+    if payload.get("as_of") is not None or shared.get("as_of") is not None or any(isinstance(row, dict) and row.get("as_of") is not None for row in scenarios):
         raise ValueError(LEGACY_PAYMENT_AS_OF_UNSUPPORTED)
     if len(scenarios) < 2:
         raise ValueError("Укажите минимум 2 сценария (разные коды ТН ВЭД)")

@@ -50,7 +50,7 @@ class CurrentPaymentRequest(BaseModel):
     @model_validator(mode="before")
     @classmethod
     def reject_unsupported_as_of(cls, value):
-        if isinstance(value, dict) and "as_of" in value:
+        if isinstance(value, dict) and value.get("as_of") is not None:
             raise ValueError("as_of пока не поддерживается: исторические версии всех ставок и сборов не подтверждены")
         return value
 

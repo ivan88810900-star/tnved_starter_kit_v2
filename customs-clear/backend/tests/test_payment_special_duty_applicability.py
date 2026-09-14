@@ -244,8 +244,11 @@ def test_unresolved_legacy_antidumping_propagates_to_vat_and_review(remedies, ad
     assert quote.total_payable_rub is None and quote.total_partial_rub == 11_000
 
 
-@pytest.mark.parametrize("as_of", ["2026-09-08", "2020-01-01", "invalid", None])
+@pytest.mark.parametrize("as_of", ["2026-09-08", "2020-01-01", "invalid", None, "", False, 0])
 def test_legacy_engine_explicitly_rejects_date_instead_of_partial_temporal_claim(remedies, as_of):
+    if as_of is None:
+        assert resolve(as_of=None) == resolve()
+        return
     with pytest.raises(ValueError, match="as_of"):
         resolve(as_of=as_of)
 
