@@ -1,5 +1,5 @@
 {
-  "board_revision": 377,
+  "board_revision": 404,
   "files": {
     ".ai/orchestration/A6_LIVE_BRIDGE.md": {
       "branch": "agent/classification-tariff-a6-live-bridge-001-f5839c6c98",
@@ -38,10 +38,10 @@
       "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-legacy-vat-boundary-003-dbe8461b66"
     },
     "customs-clear/backend/app/services/payment_engine.py": {
-      "branch": "agent/rates-tariff-payment-unbound-admission-003-5132f27def",
+      "branch": "agent/rates-tariff-payment-unbound-admission-005-7a55b790a3",
       "owner": "A1",
-      "task_id": "TARIFF-PAYMENT-UNBOUND-ADMISSION-003",
-      "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-payment-unbound-admission-003-5132f27def"
+      "task_id": "TARIFF-PAYMENT-UNBOUND-ADMISSION-005",
+      "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-payment-unbound-admission-005-7a55b790a3"
     },
     "customs-clear/backend/scripts/test_compliance_resolver_golden.py": {
       "branch": "agent/classification-tariff-legacy-vat-boundary-003-dbe8461b66",
@@ -73,11 +73,35 @@
       "task_id": "TARIFF-LEGACY-VAT-BOUNDARY-003",
       "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-legacy-vat-boundary-003-dbe8461b66"
     },
-    "customs-clear/backend/tests/test_payment_source_admission.py": {
-      "branch": "agent/rates-tariff-payment-unbound-admission-003-5132f27def",
+    "customs-clear/backend/tests/test_payment_a6_stage2.py": {
+      "branch": "agent/rates-tariff-payment-unbound-admission-005-7a55b790a3",
       "owner": "A1",
-      "task_id": "TARIFF-PAYMENT-UNBOUND-ADMISSION-003",
-      "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-payment-unbound-admission-003-5132f27def"
+      "task_id": "TARIFF-PAYMENT-UNBOUND-ADMISSION-005",
+      "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-payment-unbound-admission-005-7a55b790a3"
+    },
+    "customs-clear/backend/tests/test_payment_a6_stage2_redteam.py": {
+      "branch": "agent/rates-tariff-payment-unbound-admission-005-7a55b790a3",
+      "owner": "A1",
+      "task_id": "TARIFF-PAYMENT-UNBOUND-ADMISSION-005",
+      "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-payment-unbound-admission-005-7a55b790a3"
+    },
+    "customs-clear/backend/tests/test_payment_engine.py": {
+      "branch": "agent/rates-tariff-payment-unbound-admission-005-7a55b790a3",
+      "owner": "A1",
+      "task_id": "TARIFF-PAYMENT-UNBOUND-ADMISSION-005",
+      "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-payment-unbound-admission-005-7a55b790a3"
+    },
+    "customs-clear/backend/tests/test_payment_quote.py": {
+      "branch": "agent/rates-tariff-payment-unbound-admission-005-7a55b790a3",
+      "owner": "A1",
+      "task_id": "TARIFF-PAYMENT-UNBOUND-ADMISSION-005",
+      "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-payment-unbound-admission-005-7a55b790a3"
+    },
+    "customs-clear/backend/tests/test_payment_source_admission.py": {
+      "branch": "agent/rates-tariff-payment-unbound-admission-005-7a55b790a3",
+      "owner": "A1",
+      "task_id": "TARIFF-PAYMENT-UNBOUND-ADMISSION-005",
+      "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-payment-unbound-admission-005-7a55b790a3"
     },
     "docs/ai-workflow/AD30_CHAIN_REVIEW_CANDIDATE.md": {
       "branch": "agent/sources-tariff-ad30-review-candidate-001-99f4e3fb32",
