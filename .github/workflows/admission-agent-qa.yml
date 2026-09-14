@@ -77,6 +77,8 @@ jobs:
                 tests/test_duty_rules_backfill.py
                 tests/test_legacy_rate_maintenance_admission.py
                 tests/test_payment_a6_reconciliation.py
+                tests/test_payment_a6_stage2.py
+                tests/test_payment_a6_stage2_redteam.py
                 tests/test_payment_preference_eligibility.py
                 tests/test_payment_special_duty_applicability.py
                 tests/test_payment_engine.py
@@ -149,6 +151,8 @@ jobs:
                 tests/test_duty_rules_backfill.py
                 tests/test_legacy_rate_maintenance_admission.py
                 tests/test_payment_a6_reconciliation.py
+                tests/test_payment_a6_stage2.py
+                tests/test_payment_a6_stage2_redteam.py
                 tests/test_payment_preference_eligibility.py
                 tests/test_payment_special_duty_applicability.py
                 tests/test_payment_engine.py

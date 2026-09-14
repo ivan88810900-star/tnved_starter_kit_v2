@@ -319,6 +319,8 @@ jobs:
           tests/test_payment_admission_redteam.py
           tests/test_ntm_history_redteam.py
           tests/test_payment_a6_reconciliation.py
+          tests/test_payment_a6_stage2.py
+          tests/test_payment_a6_stage2_redteam.py
           tests/test_ad30_source_facts.py
           tests/test_ad30_applicability.py
           tests/test_ad30_duty_preview.py

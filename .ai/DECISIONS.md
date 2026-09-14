@@ -5,6 +5,38 @@
 
 ---
 
+## A6 stage-2 implementation contract — 14 September 2026
+
+This correction follows independent execution on PR #187 `dab1f8aa` and base
+`a5a811e6`, under Ivan's explicit audit-stage-2 request. It grants no new legal
+rule or source admission. The completed AD30 review remains intact.
+
+- Preserve raw provisional arithmetic and legally unavailable final quotes as
+  separate outputs. `applied`, computational status and legal review are distinct
+  dimensions; already repaired preference/AD-overlap/cent guards remain intact.
+- Geo candidates never silently choose replacement/cumulation or suppress
+  preference review. Fixed legacy AD cannot infer currency, unit or denominator
+  from generic quantity. Empty/malformed country scope is unresolved.
+- Missing specific/combined operands and populated invalid/out-of-window HsRate
+  dates mark dependent components unavailable. Within-window or blank dates are
+  not a new legal approval. Legacy numeric zero may only be an explicitly
+  incomplete subtotal, with candidate amount and final quote unavailable.
+- Foreign FX maps, constants and global status markers cannot prove source/date
+  provenance. Preserve observations and review through compute, quote and both
+  comparison paths. RUB-to-RUB one is a unit identity; invalid foreign factors
+  never become an implicit identity. CBR Value/Nominal is already normalized.
+- A null `as_of` equals omission; every non-null historical request remains
+  rejected. No historical payment service or statutory rounding policy is added.
+- Quote rows must account for the existing recycling fee without recalculating
+  it or changing VAT policy. Partial amounts must be labelled partial, without
+  implying approval of unresolved evidence.
+- A1 owns feature corrections, A3 source facts, A4 the bounded consumer copy and
+  documentation, A5 independent adversarial/runtime verification. No activation,
+  production database write, migration, merge or deployment is authorized.
+
+[Stage-2 task](tasks/TASK-PAYMENT-A6-STAGE2-001.md),
+[source boundaries](../docs/ai-workflow/A6_STAGE2_SOURCE_BOUNDARIES.md).
+
 ## Implementation clarification — 14 September 2026
 
 Under accepted issue #188 Option A, the retained AD30 source candidate now has

@@ -1,6 +1,9 @@
 # A6 stage 2: FX and legacy duty source boundaries
 
-Status: source/code audit completed by A3; independent A5 review pending.
+Status: source/code audit completed by A3 and independently accepted by A5 on
+2026-09-14 after checking the code and both primary CBR pages. This acceptance
+concerns the documented source boundary, not rate admission or the pending
+implementation/CI gates.
 Observed 14 September 2026 against PR #187 feature commit
 `dab1f8aae5a114a51505763bf9ea0a0d8161ed38`.
 This is a read-only source-input audit, not A1's implementation report or a claim

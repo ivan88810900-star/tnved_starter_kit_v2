@@ -8,7 +8,21 @@ Active
 
 2026-09-14
 
-## Latest continuation, 14 September 2026
+## Current priority: A6 stage-2 payment correction
+
+Ivan's new audit-stage-2 request takes priority over the next AD30 temporal
+review. Actual recovery HEAD is `dab1f8aa`; the completed bounded AD30 block
+below is retained. A1 owns confirmed payment repairs, A3 source boundaries,
+A4 narrow consumer review/copy, and A5 independent regression/runtime QA.
+Implementation and exact published CI are pending; earlier green runs do not
+prove these changes. See [the stage-2 task](../../.ai/tasks/TASK-PAYMENT-A6-STAGE2-001.md).
+
+Geo/FX/unit/date/expression uncertainty must survive all payment projections.
+Null dates mean omission only; no historical API or legal source approval is
+introduced. The broader official rates/NTM/source coverage remains partial and
+will resume after this bounded correction. Production, DB and flags remain off.
+
+## Completed AD30 continuation, 14 September 2026
 
 The bounded AD30 executable review is implemented and independently approved:
 pinned source facts → explicit product assessment → exact hypothetical source-row

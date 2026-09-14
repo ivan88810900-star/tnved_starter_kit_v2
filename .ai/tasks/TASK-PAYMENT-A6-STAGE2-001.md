@@ -49,9 +49,10 @@ source audit can finish while A1 and A5 continue execution.
 | Agent | Branch / worktree basename | Owned files |
 | --- | --- | --- |
 | A0 | Current feature / tariff-sept14 | This task, state/focus/decisions, CI integration and publication evidence |
-| A1 Rates | agent/rates-a6-stage2-20260914 / tariff-a6-stage2-a1 | app/services/payment_engine.py, payment_quote_service.py; app/schemas/payment_quote.py; minimal app/api/calculator.py FX propagation; new tests/test_payment_a6_stage2.py and docs/ai-workflow/A6_PAYMENT_STAGE2_RECONCILIATION.md |
+| A1 Rates | agent/rates-a6-stage2-20260914 / tariff-a6-stage2-a1 | app/services/payment_engine.py, payment_quote_service.py, scenario_compare_service.py; app/schemas/payment_quote.py; minimal app/api/calculator.py FX propagation; new tests/test_payment_a6_stage2.py and docs/ai-workflow/A6_PAYMENT_STAGE2_RECONCILIATION.md; three obsolete null/geo expectations in test_payment_special_duty_applicability.py and test_payment_preference_eligibility.py |
 | A3 Sources | agent/sources-a6-stage2-20260914 / tariff-a6-stage2-a3 | New docs/ai-workflow/A6_STAGE2_SOURCE_BOUNDARIES.md only; no source or feature mutations |
 | A5 QA | agent/qa-a6-stage2-20260914 / tariff-a6-stage2-a5 | New tests/test_payment_a6_stage2_redteam.py and docs/ai-workflow/evidence/payment-a6-stage2-independent-qa-20260914.json only |
+| A4 Consumers | agent/ai-a6-stage2-20260914 / tariff-a6-stage2-a4 | New docs/ai-workflow/PAYMENT_STAGE2_CONSUMER_REVIEW.md; frontend/src/components/payments/SmartPaymentsBlock.tsx partial-sum label and its two existing paymentReview.test.tsx text assertions only; no consumer arithmetic or business-rule changes |
 
 App/script/test paths are relative to `customs-clear/backend/`; docs are
 repository-relative. Existing tests may change only through explicit A0 scope
@@ -79,8 +80,8 @@ to A1, never A5. Small logical commits precede independent review/integration.
 - Populated invalid/future/expired HsRate date bounds cannot be ignored when
   publishing confirmed dependent components. Checking a claimed interval is not
   approval of complete historical law or missing-date records.
-- Null as_of can be treated as no historical-date request if implemented
-  consistently; all non-null historical requests, including malformed values,
+- Null as_of is treated consistently as no historical-date request; all
+  non-null historical requests, including malformed values,
   must continue to fail closed. This does not add a historical payment API.
 - No new FX ingestion, models/migrations, source acceptance, legal rule,
   enforcement, Canonical activation, production DB write, merge or deploy.
