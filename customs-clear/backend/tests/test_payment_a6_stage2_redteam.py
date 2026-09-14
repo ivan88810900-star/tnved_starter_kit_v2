@@ -115,20 +115,25 @@ def observe(factory, case):
     request = payload()
     try:
         raw = engine.compute_payments(request)
+    except ValueError as exc:
+        return {"case": case, "error": str(exc), "rejected_by": "engine"}
+    try:
         quote = quotes.build_payment_quote(request)
-        return {"case": case, "raw_status": raw["status"],
+    except ValueError:
+        quote = None
+    return {"case": case, "raw_status": raw["status"],
                 "review": raw.get("amounts_provisional"),
                 "reasons": raw.get("payment_review_reasons"),
                 "duty": raw["breakdown"]["duty"],
                 "ad": raw["breakdown"]["antidumping"],
                 "special": raw["breakdown"].get("special_duties_amount"),
                 "total": raw["breakdown"]["total_payable"],
-                "quote_status": quote.status, "quote_total": quote.total_payable_rub,
-                "lines": {l.code: {"status": l.status, "amount": l.amount_rub} for l in quote.line_items},
+                "quote_status": quote.status if quote else "rejected",
+                "quote_total": quote.total_payable_rub if quote else None,
+                "lines": {l.code: {"status": l.status, "amount": l.amount_rub}
+                          for l in quote.line_items} if quote else {},
                 "geo": raw.get("geo"), "preference": raw.get("tariff_preference"),
                 "special_rows": raw.get("special_duties")}
-    except ValueError as exc:
-        return {"case": case, "error": str(exc)}
 
 
 @pytest.mark.parametrize("case", ["geo", "geo_preference", "fixed_ad", "empty_ad_country",
@@ -141,6 +146,11 @@ def test_unverified_inputs_never_become_confirmed_quote(qa_database, case):
     assert observation["raw_status"] == "REVIEW_REQUIRED"
     assert observation["review"] is True
     assert observation["quote_total"] is None
+    if observation["quote_status"] != "rejected":
+        dependent = {"antidumping", "vat"} if case in {"fixed_ad", "empty_ad_country"} else {"duty", "vat"}
+        for code in dependent:
+            assert observation["lines"][code]["amount"] is None
+            assert observation["lines"][code]["status"] in {"manual_review_required", "unknown"}
 
 
 def test_current_upward_preference_remains_unapplied(qa_database):
