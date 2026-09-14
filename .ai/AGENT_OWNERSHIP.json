@@ -1,17 +1,11 @@
 {
-  "board_revision": 449,
+  "board_revision": 460,
   "files": {
     ".ai/orchestration/A6_LIVE_BRIDGE.md": {
       "branch": "agent/classification-tariff-a6-live-bridge-001-f5839c6c98",
       "owner": "A4",
       "task_id": "TARIFF-A6-LIVE-BRIDGE-001",
       "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-a6-live-bridge-001-f5839c6c98"
-    },
-    ".github/workflows/admission-agent-qa.yml": {
-      "branch": "agent/rates-tariff-admission-recheck-001-9231ffbdb5",
-      "owner": "A1",
-      "task_id": "TARIFF-ADMISSION-RECHECK-001",
-      "worktree": "/workspace/scratch/cd6734a40504/tariff-agent-worktrees/tariff-admission-recheck-001-9231ffbdb5"
     },
     ".github/workflows/tariff-a6-live.yml": {
       "branch": "agent/classification-tariff-a6-live-bridge-001-f5839c6c98",
@@ -121,23 +115,23 @@
       "task_id": "TARIFF-PAYMENT-UNBOUND-ADMISSION-006",
       "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-payment-unbound-admission-006-c8a905e03d"
     },
-    "docs/ai-workflow/AD30_CHAIN_REVIEW_CANDIDATE.md": {
-      "branch": "agent/sources-tariff-ad30-review-candidate-001-99f4e3fb32",
+    "docs/ai-workflow/AD30_FRESHNESS_EVIDENCE_20260914.md": {
+      "branch": "agent/sources-tariff-ad30-freshness-evidence-008-6c868586f5",
       "owner": "A3",
-      "task_id": "TARIFF-AD30-REVIEW-CANDIDATE-001",
-      "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-ad30-review-candidate-001-99f4e3fb32"
+      "task_id": "TARIFF-AD30-FRESHNESS-EVIDENCE-008",
+      "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-ad30-freshness-evidence-008-6c868586f5"
+    },
+    "docs/ai-workflow/NTM_COMPLETENESS_RECHECK_20260914.md": {
+      "branch": "agent/ntm-tariff-ntm-completeness-recheck-001-c746d4f679",
+      "owner": "A2",
+      "task_id": "TARIFF-NTM-COMPLETENESS-RECHECK-001",
+      "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-ntm-completeness-recheck-001-c746d4f679"
     },
     "docs/ai-workflow/OFFICIAL_SOURCE_TEMPORAL_AD30_RECHECK_20260914.md": {
       "branch": "agent/sources-tariff-official-source-delta-002-753e289be4",
       "owner": "A3",
       "task_id": "TARIFF-OFFICIAL-SOURCE-DELTA-002",
       "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-official-source-delta-002-753e289be4"
-    },
-    "docs/ai-workflow/PAYMENT_ADMISSION_RECHECK_20260912.md": {
-      "branch": "agent/rates-tariff-admission-recheck-001-9231ffbdb5",
-      "owner": "A1",
-      "task_id": "TARIFF-ADMISSION-RECHECK-001",
-      "worktree": "/workspace/scratch/cd6734a40504/tariff-agent-worktrees/tariff-admission-recheck-001-9231ffbdb5"
     },
     "docs/ai-workflow/PAYMENT_SOURCE_BOUND_RECHECK_20260914.md": {
       "branch": "agent/rates-tariff-payment-source-recheck-002-c1549329dc",
