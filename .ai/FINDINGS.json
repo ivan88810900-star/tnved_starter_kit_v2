@@ -1,5 +1,5 @@
 {
-  "board_revision": 154,
+  "board_revision": 271,
   "findings": [
     {
       "head_sha": "161a9258d174e93266353ae1fd2cb0b3e4657679",
@@ -168,6 +168,240 @@
       "validation": {
         "at": "2026-09-14T10:39:19.449580+00:00",
         "evidence": "A0 reproduced against GitHub workflow_dispatch semantics: after the workflow exists on default, a selected branch supplies that branch copy of the workflow, so its own gate can be removed before secrets resolution. Repository-level secret scope cannot satisfy the stated worker/PR isolation invariant. A protected environment restricted to the default branch and repository_dispatch default-branch execution are required; live audit remains blocked.",
+        "validator": "A0"
+      }
+    },
+    {
+      "head_sha": "ad4935e318d947276178e2f269d4ffe1051ea6cb",
+      "id": "A0-PR190-LEASE-TAKEOVER-001",
+      "reporter": "A4",
+      "resolution": {
+        "evidence": "A0 inspected exact diff and reran deterministic reproduction/regressions: evidence now must match current holder/token/generation and observed_at must not predate record.updated_at; stale renewal evidence is rejected and current evidence succeeds.",
+        "head_sha": "ecc3f67e7346d7a481a473a5d47da1c7091eee54",
+        "validator": "A0"
+      },
+      "status": "RESOLVED",
+      "summary": "Takeover accepts terminal evidence observed before the current renewal/current lease incarnation, allowing replayed evidence to fence a subsequently active holder.",
+      "task_id": "TARIFF-ORCH-LEASE-TAKEOVER-HARDENING-001",
+      "validation": {
+        "at": "2026-09-14T12:19:36.715325+00:00",
+        "evidence": "A0 inspected lease.propose and the deterministic reproduction: evidence at T+30, same holder/token renewal at T+40, and takeover after renewed expiry at T+101 is accepted although evidence predates record.updated_at. Evidence must postdate the current lease update and bind holder/token/generation.",
+        "validator": "A0"
+      }
+    },
+    {
+      "head_sha": "c39248672a6299b64bc2db5637e2027579a4624e",
+      "id": "A0-PR190-AUDIT-AMBIENT-CREDENTIAL-001",
+      "reporter": "A4",
+      "resolution": {
+        "evidence": "A0 reran synthetic ambient credential cases and inspected exact diff: PASS/PASSWD and authenticated postgres/mysql/mongodb/redis/rediss URL/password variants now fail closed while public/unauthenticated controls remain allowed.",
+        "head_sha": "86bb2f6cbf7ecbc6a4324b4ccafa13100a8a68cb",
+        "validator": "A0"
+      },
+      "status": "RESOLVED",
+      "summary": "A6 packet scanner does not treat DB_PASS, DATABASE_URL or REDIS_URL as ambient credential names; synthetic exact values including authenticated rediss and MongoDB URLs can enter a packet.",
+      "task_id": "TARIFF-A6-CROSS-BRANCH-CONTRACT-001",
+      "validation": {
+        "at": "2026-09-14T12:21:09.205770+00:00",
+        "evidence": "A0 reproduced on exact PR193 HEAD: DB_PASS and authenticated REDIS_URL values are accepted; PostgreSQL DATABASE_URL is caught only by a scheme pattern while MongoDB/extracted password values are accepted. The env-key regex omits PASS and URL, so exact-value scanning is incomplete. PR193 inherited identical ensure_safe_text code from PR190.",
+        "validator": "A0"
+      }
+    },
+    {
+      "head_sha": "ad4935e318d947276178e2f269d4ffe1051ea6cb",
+      "id": "A0-PR190-AUTHORITY-PIN-001",
+      "reporter": "A4",
+      "resolution": {
+        "evidence": "A0 inspected exact owned diff and reran the corresponding deterministic regression plus scoped/full suites; the confirmed control-plane defect is fixed fail-closed on this new candidate.",
+        "head_sha": "a84c6be14e2fc5996c2248c96c01c6aaa431f5a6",
+        "validator": "A0"
+      },
+      "status": "RESOLVED",
+      "summary": "Missing authority pointer lets the first arbitrary worktree become task-board authority, splitting state across worktrees.",
+      "task_id": "TARIFF-ORCH-CONTROL-HARDENING-001",
+      "validation": {
+        "at": "2026-09-14T12:21:34.654433+00:00",
+        "evidence": "A0 reproduced by deleting authority.json and loading/initializing from a sibling non-state worktree; the sibling board became authoritative for the common git dir. Authority must fail closed or be pinned to the configured state branch checkout.",
+        "validator": "A0"
+      }
+    },
+    {
+      "head_sha": "ad4935e318d947276178e2f269d4ffe1051ea6cb",
+      "id": "A0-PR190-GIT-REPLACE-BYPASS-001",
+      "reporter": "A4",
+      "resolution": {
+        "evidence": "A0 inspected exact owned diff and reran the corresponding deterministic regression plus scoped/full suites; the confirmed control-plane defect is fixed fail-closed on this new candidate.",
+        "head_sha": "a84c6be14e2fc5996c2248c96c01c6aaa431f5a6",
+        "validator": "A0"
+      },
+      "status": "RESOLVED",
+      "summary": "Shared refs/replace can hide an out-of-scope candidate path from control.py git diff, allowing implemented() to accept a physical commit with unowned content.",
+      "task_id": "TARIFF-ORCH-CONTROL-HARDENING-001",
+      "validation": {
+        "at": "2026-09-14T12:21:34.676267+00:00",
+        "evidence": "A0 inspected the reproduced physical-vs-replaced diff: GIT_NO_REPLACE_OBJECTS=1 exposes outside.md while current git() sees only owned.md and accepts the actual head. All control Git evidence must disable replacement objects and unsafe ambient Git redirects.",
+        "validator": "A0"
+      }
+    },
+    {
+      "head_sha": "ad4935e318d947276178e2f269d4ffe1051ea6cb",
+      "id": "A0-PR190-RECOVER-IMPLEMENTED-DRIFT-001",
+      "reporter": "A4",
+      "resolution": {
+        "evidence": "A0 inspected exact owned diff and reran the corresponding deterministic regression plus scoped/full suites; the confirmed control-plane defect is fixed fail-closed on this new candidate.",
+        "head_sha": "a84c6be14e2fc5996c2248c96c01c6aaa431f5a6",
+        "validator": "A0"
+      },
+      "status": "RESOLVED",
+      "summary": "recover() reports an IMPLEMENTED dirty/missing/advanced worktree but retains IMPLEMENTED status/tests, leaving owner restart and A5 QA both blocked.",
+      "task_id": "TARIFF-ORCH-CONTROL-HARDENING-001",
+      "validation": {
+        "at": "2026-09-14T12:21:34.695807+00:00",
+        "evidence": "A0 confirmed recovery invalidation is conditional only on qa/ci/external_audit; a tests-only IMPLEMENTED candidate remains stuck after worktree drift. Recovery must invalidate any post-allocation evidence/state that can no longer bind the candidate.",
+        "validator": "A0"
+      }
+    },
+    {
+      "head_sha": "ad4935e318d947276178e2f269d4ffe1051ea6cb",
+      "id": "A0-PR190-VERIFY-A5-MODULE-001",
+      "reporter": "A4",
+      "resolution": {
+        "evidence": "A0 inspected exact owned diff and reran the corresponding deterministic regression plus scoped/full suites; the confirmed control-plane defect is fixed fail-closed on this new candidate.",
+        "head_sha": "a84c6be14e2fc5996c2248c96c01c6aaa431f5a6",
+        "validator": "A0"
+      },
+      "status": "RESOLVED",
+      "summary": "verify.py exits successfully when test_a5_independent.py is deleted because it is absent from REQUIRED and empty wildcard discovery is not rejected.",
+      "task_id": "TARIFF-ORCH-CONTROL-HARDENING-001",
+      "validation": {
+        "at": "2026-09-14T12:21:34.716801+00:00",
+        "evidence": "A0 confirmed REQUIRED omits test_a5_independent and the archived-fixture reproduction exits 0 with that module removed. The independent A5 regression module must be explicit and non-empty.",
+        "validator": "A0"
+      }
+    },
+    {
+      "head_sha": "ecc3f67e7346d7a481a473a5d47da1c7091eee54",
+      "id": "A5-LEASE-MONOTONIC-TIME-001",
+      "reporter": "A5",
+      "resolution": {
+        "evidence": "A0 reproduced the former rollback, inspected the fix and reran regressions: all mutation times are monotonic, timestamps/expiry validate fail-closed, and generation requires exact int.",
+        "head_sha": "213eeb1ca93d785d764100ecfecfd6bdbdfb16fb",
+        "validator": "A0"
+      },
+      "status": "RESOLVED",
+      "summary": "Renew accepts now earlier than current updated_at, rolling the incarnation boundary backward; takeover generation also accepts bool/float through Python equality.",
+      "task_id": "TARIFF-ORCH-LEASE-TAKEOVER-HARDENING-001",
+      "validation": {
+        "at": "2026-09-14T12:25:15.670915+00:00",
+        "evidence": "A0 reproduced exact candidate: acquire T0, renew T+40, second current-token renew at T+20 is accepted and rewrites updated_at backwards; evidence observed T+30 then passes takeover at T+81. generation=True also equals integer 1. Mutations must reject clock rollback and evidence generation must be exact int.",
+        "validator": "A0"
+      }
+    },
+    {
+      "head_sha": "a84c6be14e2fc5996c2248c96c01c6aaa431f5a6",
+      "id": "A5-CONTROL-AUTHORITY-UPSTREAM-BYPASS-001",
+      "reporter": "A5",
+      "resolution": {
+        "evidence": "A0 inspected and reran regressions: bootstrap ignores mutable upstream, requires the reserved local state branch at the fetched remote state SHA with a clean checkout, protects that branch from worker allocation, and established authority permits subsequent state mutations.",
+        "head_sha": "be88f90f5478642d47a3c0d0a4d1ab3408261e54",
+        "validator": "A0"
+      },
+      "status": "RESOLVED",
+      "summary": "Missing authority pointer can still be reconstructed by an arbitrary worker after it forges a local upstream to origin/agent/orchestration-state.",
+      "task_id": "TARIFF-ORCH-CONTROL-HARDENING-001",
+      "validation": {
+        "at": "2026-09-14T12:36:18.877081+00:00",
+        "evidence": "A0 reviewed the exact _state_ref logic and reproduction: @{upstream} is mutable worktree/local repository configuration, so accepting it as authority identity preserves self-election. Bootstrap must require an explicit reserved state branch checkout and fail closed on forged tracking configuration.",
+        "validator": "A0"
+      }
+    },
+    {
+      "head_sha": "86bb2f6cbf7ecbc6a4324b4ccafa13100a8a68cb",
+      "id": "A5-AUDIT-SELF-PACKET-001",
+      "reporter": "A5",
+      "resolution": {
+        "evidence": "A0 verified the two-commit remediation: packet-unsafe negative fixtures are fragmented without weakening scanner semantics, and the exact functional range 7bd5b9b..e0274ac builds and validates packet 5ea44409 over both changed files.",
+        "head_sha": "e0274acf6a32031c3659fe9eb258d79fb7747a93",
+        "validator": "A0"
+      },
+      "status": "RESOLVED",
+      "summary": "The exact credential-scanner fix cannot be represented in a fail-closed A6 packet because committed tests contain literal authenticated connection URLs that the scanner correctly rejects.",
+      "task_id": "TARIFF-A6-CROSS-BRANCH-CONTRACT-001",
+      "validation": {
+        "at": "2026-09-14T12:36:18.896226+00:00",
+        "evidence": "A0 reran exact build_packet for c3924867..86bb2f6c with both changed paths and immutable contract ref; it exits BLOCKED on suspected secret data. Secret-shaped negative fixtures must be constructed from non-matching fragments at runtime so the high-risk exact candidate remains auditable without weakening scanning.",
+        "validator": "A0"
+      }
+    },
+    {
+      "head_sha": "be88f90f5478642d47a3c0d0a4d1ab3408261e54",
+      "id": "A5-CONTROL-AUTHORITY-REMOTE-REF-FORGE-001",
+      "reporter": "A5",
+      "resolution": {
+        "evidence": "Explicit evidence-bound bootstrap is the only bootstrap; no local remote-tracking ref is trusted. A0 synthetic attack plus independent A5 passed.",
+        "head_sha": "8d2dd2fa5e4fa758514edcddf2256ab13b87455d",
+        "validator": "A0"
+      },
+      "status": "RESOLVED",
+      "summary": "Automatic authority bootstrap still trusts a mutable local remote-tracking ref; a worker can rename to the reserved branch, forge the local origin/state ref, and self-elect a clean arbitrary board.",
+      "task_id": "TARIFF-ORCH-CONTROL-HARDENING-001",
+      "validation": {
+        "at": "2026-09-14T12:52:00.672502+00:00",
+        "evidence": "A0 confirms local refs/remotes/origin/* is not platform proof of GitHub state and can be updated in the shared common dir. Automatic bootstrap from any local Git evidence must be removed; missing authority must fail closed until an explicit A0 bootstrap bound to separately obtained GitHub evidence.",
+        "validator": "A0"
+      }
+    },
+    {
+      "head_sha": "e0274acf6a32031c3659fe9eb258d79fb7747a93",
+      "id": "A5-AUDIT-COPY-DUMP-LIMIT-001",
+      "reporter": "A5",
+      "resolution": {
+        "evidence": "Unbounded newline-scoped COPY detector plus >1000-character regression; A0 and A5 confirm long header is blocked.",
+        "head_sha": "c4b4410fb6c8c9bcab35c8977554fb562aea7f0c",
+        "validator": "A0"
+      },
+      "status": "RESOLVED",
+      "summary": "Fixture-hygiene change caps PostgreSQL COPY dump detection at 500 characters, allowing realistic wide-table dump headers to pass.",
+      "task_id": "TARIFF-A6-CROSS-BRANCH-CONTRACT-001",
+      "validation": {
+        "at": "2026-09-14T12:52:00.690258+00:00",
+        "evidence": "A0 executed a synthetic 821-character COPY header on exact e0274ac and ensure_safe_text accepted it; the prior unlimited pattern blocked it. Remove the cap without reintroducing a packet-unsafe literal and add a >500-character regression.",
+        "validator": "A0"
+      }
+    },
+    {
+      "head_sha": "c4b4410fb6c8c9bcab35c8977554fb562aea7f0c",
+      "id": "A5-AUDIT-CANONICAL-CREDENTIAL-ALIASES-001",
+      "reporter": "A5",
+      "resolution": {
+        "evidence": "A0 synthetic reproduction now blocks; fresh independent A5 attack matrix PASS on exact head.",
+        "head_sha": "cd83f82599d91bd96e1d40d9dca169098e12a217",
+        "validator": "A0"
+      },
+      "status": "RESOLVED",
+      "summary": "Canonical ambient credential names PGPASSWORD, MYSQL_PWD and REDISCLI_AUTH bypass the new underscore-boundary credential matcher.",
+      "task_id": "TARIFF-A6-CROSS-BRANCH-CONTRACT-001",
+      "validation": {
+        "at": "2026-09-14T13:05:30.853376+00:00",
+        "evidence": "A0 reproduced using only synthetic 21+ character values; all were accepted by ensure_safe_text on c4b4410.",
+        "validator": "A0"
+      }
+    },
+    {
+      "head_sha": "c4b4410fb6c8c9bcab35c8977554fb562aea7f0c",
+      "id": "A5-AUDIT-SHORT-URL-PASSWORD-001",
+      "reporter": "A5",
+      "resolution": {
+        "evidence": "A0 synthetic reproduction now blocks; fresh independent A5 attack matrix PASS on exact head.",
+        "head_sha": "cd83f82599d91bd96e1d40d9dca169098e12a217",
+        "validator": "A0"
+      },
+      "status": "RESOLVED",
+      "summary": "Short password extracted from DATABASE_URL or REDIS_URL is discarded by the generic eight-character variant threshold.",
+      "task_id": "TARIFF-A6-CROSS-BRANCH-CONTRACT-001",
+      "validation": {
+        "at": "2026-09-14T13:05:30.873092+00:00",
+        "evidence": "A0 reproduced with synthetic password-only payloads short and tiny; both were accepted while the full URLs remained blocked.",
         "validator": "A0"
       }
     }
