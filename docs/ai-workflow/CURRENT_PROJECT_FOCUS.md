@@ -14,8 +14,12 @@ The bounded AD30 executable review is implemented and independently approved:
 pinned source facts → explicit product assessment → exact hypothetical source-row
 arithmetic, with a strict offline CLI. A4 documented its stable output contract;
 no live consumer was added. A5's 43 independent cases and combined 449-case
-profile passed after two owner repairs. Exact publication CI remains a separate
-gate; see [the task](../../.ai/tasks/TASK-AD30-EXECUTABLE-REVIEW-001.md) and
+profile passed after two owner repairs. Exact published candidate `2bb519bf`
+passed CI 34824532766 (backend 5,515; frontend 50; types/build/staging/workflows)
+and admission QA 34824532769 (2,322 passed). Known skips/warnings and the exact
+local-to-GitHub mapping are recorded in
+[publication evidence](evidence/ad30-publication-20260914.json). Final feature
+HEAD and post-publication checks are recorded in PR #187; see [the task](../../.ai/tasks/TASK-AD30-EXECUTABLE-REVIEW-001.md) and
 [review guide](AD30_EXECUTABLE_REVIEW.md) for current evidence and boundaries.
 
 The actual recovery base was PR #187 `a9d15c74`, not the old A6 `22a7df55`.

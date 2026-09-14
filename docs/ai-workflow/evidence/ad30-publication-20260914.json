@@ -1,0 +1,212 @@
+{
+  "candidate_ci": {
+    "head": "2bb519bf66bd3e13c321095f2ce661f8447d3774",
+    "full_ci": {
+      "run_id": 34824532766,
+      "attempt": 1,
+      "conclusion": "success",
+      "backend": {
+        "job_id": 103913475107,
+        "passed": 5515,
+        "skipped": 2,
+        "warnings": 2,
+        "subtests_passed": 85,
+        "duration_seconds": 347.51,
+        "scope": "existing_explicit_CI_profile_plus_five_AD30_suites"
+      },
+      "frontend": {
+        "job_id": 103913474739,
+        "passed": 50,
+        "test_files": 16,
+        "typescript": "success",
+        "production_build": "success"
+      },
+      "staging": {
+        "job_id": 103913475268,
+        "conclusion": "success",
+        "scope": "isolated_local_Docker_smoke_not_deployment"
+      },
+      "workflow_contracts": {
+        "job_id": 103913475001,
+        "conclusion": "success"
+      },
+      "quarantined_ett_positive_staging_gate": "correctly_blocked",
+      "optional_acquisition_job": "skipped_not_requested"
+    },
+    "admission_qa": {
+      "run_id": 34824532769,
+      "attempt": 1,
+      "job_id": 103913474991,
+      "conclusion": "success",
+      "explicit_test_files": 49,
+      "passed": 2322,
+      "skipped": 1,
+      "warnings": 2,
+      "subtests_passed": 85,
+      "duration_seconds": 59.33
+    },
+    "known_skips": [
+      "empty full NTM fixture / no non_tariff_measures",
+      "opt-in live FSA test (full CI only)"
+    ],
+    "known_warnings": [
+      "httpx/Starlette deprecation",
+      "anyio.abc.BlockingPortal deprecated alias"
+    ],
+    "new_skips_added": false,
+    "full_monorepo_data_acceptance_claimed": false,
+    "known_skip_basis": "Existing unchanged skip guards and prior CI baseline; agent QA -ra explicitly names the empty legacy NTM fixture. The full CI -q summary reports two skips without names."
+  },
+  "evidence_kind": "ad30_exact_tree_publication",
+  "independent_qa": {
+    "combined_local_passed": 449,
+    "evidence_path": "docs/ai-workflow/evidence/ad30-independent-qa-20260914.json",
+    "feature_fixes_by_qa": false,
+    "final_documentation_review": "A5",
+    "full_original_capture_reacquisition_claimed": false,
+    "independent_cases": 43,
+    "real_audited_cli_processes": 15,
+    "reviewer": "A5"
+  },
+  "observed_on": "2026-09-14",
+  "publication_followup": {
+    "description": "The completion evidence is a documentation-only child of the validated candidate. Its current PR feature HEAD and post-publication push/PR CI are recorded in PR #187, avoiding a self-referential final commit SHA.",
+    "pull_request_url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/187"
+  },
+  "publication_transport": {
+    "exact_tree_equality_verified_for_every_commit": true,
+    "force_used": false,
+    "local_to_github": [
+      {
+        "local": "20ade06a889efb9b393b480a20656c46809a7ee6",
+        "message": "docs: coordinate isolated AD30 review from current published evidence",
+        "remote": "4b0dd0a64fa37b939091c92ce7ae016383bf5fbe",
+        "tree": "eb780bc38d4f88cdd981de1ec517ba4454d9fd2e"
+      },
+      {
+        "local": "96c771c88c26bd6410f06ea8e6156f43cad718a7",
+        "message": "feat(sources): pin immutable AD30 source-fact dossier for offline review",
+        "remote": "3557c35f6932884813f5ed2b7f85da24182ec96c",
+        "tree": "4e0102da3c76ffb0dc3b5e06fe6449a82ca84430"
+      },
+      {
+        "local": "cd7404dbff7be021071e5c5d85dc88b10cff4f74",
+        "message": "feat(compliance): assess AD30 product facts in an offline review candidate",
+        "remote": "4d526bed196be2ec4974beefea138b0c47dfb929",
+        "tree": "39290e85424636438609cff2ec4cb16198a9085e"
+      },
+      {
+        "local": "bd151b6f9284f3f56b22637bc2226d59bc9066b8",
+        "message": "feat(payments): preview explicit AD30 source rows without legal admission",
+        "remote": "7dc135b41634840308fabd305e2b77f532fbf218",
+        "tree": "343944880e1ec70fe1992040a1b31661cccdedb8"
+      },
+      {
+        "local": "8d371a1924f814385facef4131cdab317da5f1fe",
+        "message": "feat(payments): add strict offline AD30 review scenario CLI",
+        "remote": "db9009604608b38cf4af3f7d0d1499566261be0e",
+        "tree": "ce984354d61320b2e3364aa6ccb07136c8274842"
+      },
+      {
+        "local": "182af82bda59b5801d4f8c3fd7d21a5e4236956e",
+        "message": "fix(sources): distinguish recorded origin label from literal source text",
+        "remote": "f28751453ef3c46be727a1feade7ef7ea41bd706",
+        "tree": "f82688b0688d4784517d4ff993054eb3a96aff94"
+      },
+      {
+        "local": "b9774b7f42063eb65809633ab686d61275427b2c",
+        "message": "fix(payments): include complete AD30 row and unit provenance in previews",
+        "remote": "34215e72dfd304e7913ee84201c4cccafac17a38",
+        "tree": "4385b5a722f9b50e49eda40444420ff55b775d37"
+      },
+      {
+        "local": "b548e27fa637835026f77bb839d4d0fa2c3e62b4",
+        "message": "docs(ai): define isolated AD30 review consumer contract",
+        "remote": "311341eb56dd40670a8cf2b8c54332367183d8bd",
+        "tree": "c1b5f08b6145d4b245279ecb412571db8e930c76"
+      },
+      {
+        "local": "ab25f165b040dc61cb718e0737ab83e02df9a7e1",
+        "message": "test(qa): expose AD30 source labeling and monetary provenance gaps",
+        "remote": "7e773c4bb66ef7be208d414acecc87b1ba9b279b",
+        "tree": "b102a7f6221a9571a02fa2601e48a36578499b4c"
+      },
+      {
+        "local": "87c6d4ba6e603b5db539c284e14c225ae7564fe3",
+        "message": "test(qa): verify isolated AD30 CLI against source tampering and side effects",
+        "remote": "2f3711b5678a77ab7bb6c4357dc0a91ed6b3b6ea",
+        "tree": "aa495f4f36792ec7e640d76bbee3917f30403bd6"
+      },
+      {
+        "local": "a7abc9a2c4d6160611e76d4a6ae724c1864b4f2c",
+        "message": "docs(qa): record independent AD30 red-green and isolated CLI evidence",
+        "remote": "6e531cc93437cd5d46f6d6085d78c3a3f53fedfc",
+        "tree": "733a62f7c22cbe3ba22ba12e8ac8d6c0bd9fb9b5"
+      },
+      {
+        "local": "7f8a6bffac0d510b9f44b0cc090325a046f1e8c9",
+        "message": "docs(ci): integrate independently reviewed AD30 candidate and preserve regression gates",
+        "remote": "a1df093458c1a9dd8f30d2dc5d41d0af072d27ed",
+        "tree": "521f97a1a45cd4d7432385e816f7d75468a2e70a"
+      },
+      {
+        "local": "0cb1e02df47a4288a6c0b27f3fbb6c251ec76c24",
+        "message": "docs: clarify AD30 input boundary and independent review attribution",
+        "remote": "b36c562bf0020cb2a034026a147ced3dd8c7b7f4",
+        "tree": "583effe31bd1b008bda148d686d4d5c53c95db90"
+      },
+      {
+        "local": "41eb526e1060ad1f77097145cab3b141129626bf",
+        "message": "docs: distinguish local review commits from GitHub publication identities",
+        "remote": "2bb519bf66bd3e13c321095f2ce661f8447d3774",
+        "tree": "2f0bc3fef852b88a6e4fee2163e98011ae069d61"
+      }
+    ],
+    "mechanism": "authorized_GitHub_Git_Data",
+    "reason": "direct_git_push_lacked_credentials"
+  },
+  "pull_request": 187,
+  "recovery": {
+    "base": "a5a811e618ffa001b39cb491bbbf7a9ceb93f9a7",
+    "existing_a6_fixes_verified_unchanged": true,
+    "head": "a9d15c74699c8cd7842404580ff6fd7bd957e9eb",
+    "main": "9712c7b1380af7457fb6c89ef7710d8cda0e968b",
+    "source_recapture": false,
+    "unrelated_prs_untouched": [
+      189,
+      190,
+      191,
+      192,
+      193
+    ]
+  },
+  "remaining_limits": [
+    "Complete AD30 amendment/repeal inventory and source-bound effective intervals.",
+    "Producer identity/succession, current nomenclature mapping and actual product/transaction evidence.",
+    "Native scanned-text verification and attested durable object versioning/retention/legal hold.",
+    "Bounded country identity and dimensional consistency coverage.",
+    "Remaining ETT/VAT/excise/remedy/preference/origin and contextual NTM categories; no full legal coverage claim.",
+    "Manifest-bound human review and separate approval before admission; DM-0014 is not a development hold."
+  ],
+  "repository": "ivan88810900-star/tnved_starter_kit_v2",
+  "schema_version": 1,
+  "scope": "bounded_offline_AD30_review_not_legal_admission",
+  "unchanged_boundaries": {
+    "active_rates_written": false,
+    "effective_dates_verified": false,
+    "enforcement_enabled": false,
+    "full_legal_coverage": false,
+    "legal_review_verified": false,
+    "main_merged": false,
+    "production_database_modified": false,
+    "production_deployed": false
+  },
+  "validated_candidate": {
+    "branch": "agent/ad30-integration-20260914",
+    "head": "2bb519bf66bd3e13c321095f2ce661f8447d3774",
+    "local_equivalent": "41eb526e1060ad1f77097145cab3b141129626bf",
+    "source_dossier_sha256": "f3f9722c1f67ec0ea4cc2fa6d495d54d0de981cb351d8aef71104ec6eb584894",
+    "tree": "2f0bc3fef852b88a6e4fee2163e98011ae069d61"
+  },
+  "status": "technical_candidate_validated"
+}

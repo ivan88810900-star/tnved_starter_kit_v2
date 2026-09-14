@@ -1,6 +1,7 @@
 # TASK-AD30-EXECUTABLE-REVIEW-001
 
-Status: IMPLEMENTED_AND_A5_APPROVED; exact publication CI gate remains.
+Status: COMPLETE — bounded offline review implementation, independent A5 and
+exact published candidate CI passed. Legal admission remains outside this task.
 Started 2026-09-14 under Ivan's current PR #187 mandate.
 
 ## Goal and factual starting point
@@ -142,7 +143,21 @@ its existing selection and adds the same five suites. No test is weakened.
 
 [Executable reviewer guide](../../docs/ai-workflow/AD30_EXECUTABLE_REVIEW.md),
 [independent A5 evidence](../../docs/ai-workflow/evidence/ad30-independent-qa-20260914.json).
-Exact assembled/published CI must still be recorded before final completion;
-historical green CI for a9d15c74 is not evidence for this candidate. Optional
-external A6 is not claimed to have audited this task. The same eight earlier
-findings remain independently evaluated in the existing A6 reconciliation.
+Exact published candidate `2bb519bf66bd3e13c321095f2ce661f8447d3774`, tree
+`2f0bc3fef852b88a6e4fee2163e98011ae069d61`, passed full
+[CI 34824532766](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/34824532766):
+5,515 backend passed, 2 known skipped, 2 warnings, 85 subtests; frontend 50,
+TypeScript/build, isolated staging smoke and workflow contracts passed. The
+quarantined ETT positive gate remained correctly blocked. Optional acquisition
+was not requested. [Admission QA 34824532769](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/34824532769):
+2,322 passed, 1 known skipped, 2 warnings, 85 subtests across 49 explicit files.
+No existing suite or guard was removed; no new skip was added.
+
+[Publication evidence](../../docs/ai-workflow/evidence/ad30-publication-20260914.json)
+records all 14 local-to-GitHub commit/tree mappings and exact CI results. This
+completion record is a documentation-only child of that validated candidate;
+its final feature HEAD and post-publication push/PR checks are recorded in
+[PR #187](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/187).
+Historical green CI for a9d15c74 is not evidence for this candidate. Optional
+external A6 is not claimed to have audited this task; the same eight earlier
+findings remain independently evaluated in the existing reconciliation.
