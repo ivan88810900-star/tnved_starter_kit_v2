@@ -1,14 +1,17 @@
 """Independent A5 fault injection: crash recovery and persisted review forgery."""
+import io
 import json
 import os
 from pathlib import Path
 import subprocess
 import sys
 import tempfile
+import types
 import unittest
 from unittest.mock import patch
 
 from tools.tariff_agents.control import StateStore
+from tools.tariff_agents import verify
 
 
 class IndependentA5Tests(unittest.TestCase):
@@ -17,7 +20,7 @@ class IndependentA5Tests(unittest.TestCase):
         self.addCleanup(self.scratch.cleanup)
         self.root = Path(self.scratch.name) / "repository"
         self.root.mkdir()
-        self.git(self.root, "init", "-b", "agent/independent-fixture")
+        self.git(self.root, "init", "-b", "agent/orchestration-state")
         self.git(self.root, "config", "user.name", "Independent QA fixture")
         self.git(self.root, "config", "user.email", "qa@example.org")
         (self.root / "document.md").write_text("baseline\n")
@@ -25,6 +28,9 @@ class IndependentA5Tests(unittest.TestCase):
         self.git(self.root, "commit", "-m", "isolated non-secret baseline")
         self.base = self.git(self.root, "rev-parse", "HEAD")
         self.store = StateStore(self.root)
+        self.store.bootstrap_authority(
+            "ivan88810900-star/tnved_starter_kit_v2",
+            "refs/heads/agent/orchestration-state", self.base)
         self.store.initialize()
 
     def git(self, root, *args):
@@ -86,6 +92,104 @@ class IndependentA5Tests(unittest.TestCase):
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("independent_qa_required", result.stderr)
         self.assertNotIn("ready_tasks", result.stdout)
+
+    def test_verifier_requires_independent_a5_module_and_nonzero_tests(self):
+        self.assertIn("test_a5_independent", verify.REQUIRED)
+        directory = Path(self.scratch.name) / "missing-a5"
+        directory.mkdir()
+        with self.assertRaisesRegex(RuntimeError, "test_a5_independent"):
+            verify._load_required(directory, "test_a5_independent",
+                                  unittest.TestLoader())
+        (directory / "test_a5_independent.py").write_text('"""empty"""\n')
+        with self.assertRaisesRegex(RuntimeError, "test_a5_independent"):
+            verify._load_required(directory, "test_a5_independent",
+                                  unittest.TestLoader())
+
+    def test_bridge_admission_is_conditional_and_fails_closed(self):
+        fixture = Path(self.scratch.name) / "bridge-admission"
+        directory = fixture / "tests/agent_orchestration"
+        directory.mkdir(parents=True)
+        self.assertNotIn(verify.BRIDGE_TEST,
+                         verify._required_names(fixture, directory))
+
+        # Each individual artifact is sufficient to require bridge tests.
+        for index, artifact in enumerate(verify.BRIDGE_ARTIFACTS):
+            root = fixture / str(index)
+            tests = root / "tests/agent_orchestration"
+            tests.mkdir(parents=True)
+            marker = root / artifact
+            marker.parent.mkdir(parents=True, exist_ok=True)
+            marker.write_text("fixture\n")
+            self.assertIn(verify.BRIDGE_TEST,
+                          verify._required_names(root, tests))
+
+        root = fixture / "missing-tests"
+        tests = root / "tests/agent_orchestration"
+        tests.mkdir(parents=True)
+        marker = root / verify.BRIDGE_ARTIFACTS[0]
+        marker.parent.mkdir(parents=True)
+        marker.write_text("fixture\n")
+        self.assertIn(verify.BRIDGE_TEST, verify._required_names(root, tests))
+        with self.assertRaisesRegex(RuntimeError, verify.BRIDGE_TEST):
+            verify._load_required(tests, verify.BRIDGE_TEST,
+                                  unittest.TestLoader())
+        (tests / "test_audit_bridge.py").write_text('"""empty"""\n')
+        with self.assertRaisesRegex(RuntimeError, verify.BRIDGE_TEST):
+            verify._load_required(tests, verify.BRIDGE_TEST,
+                                  unittest.TestLoader())
+
+    def test_broken_symlink_bridge_artifact_fails_admission(self):
+        root = Path(self.scratch.name) / "broken-bridge"
+        directory = root / "tests/agent_orchestration"
+        directory.mkdir(parents=True)
+        marker = root / verify.BRIDGE_ARTIFACTS[0]
+        marker.parent.mkdir(parents=True)
+        marker.symlink_to("missing-workflow.yml")
+        with self.assertRaisesRegex(RuntimeError, "Invalid bridge artifact"):
+            verify._required_names(root, directory)
+
+        root = Path(self.scratch.name) / "nonregular-bridge"
+        directory = root / "tests/agent_orchestration"
+        directory.mkdir(parents=True)
+        marker = root / verify.BRIDGE_ARTIFACTS[1]
+        marker.mkdir(parents=True)
+        with self.assertRaisesRegex(RuntimeError, "Invalid bridge artifact"):
+            verify._required_names(root, directory)
+
+    def test_required_suite_ignores_ambient_import_and_rejects_nonregular(self):
+        fixture = Path(self.scratch.name) / "exact-suite"
+        directory = fixture / "repository-tests"
+        ambient = fixture / "ambient"
+        directory.mkdir(parents=True)
+        ambient.mkdir()
+        (directory / "test_control.py").write_text(
+            "import unittest\n"
+            "class ExactTest(unittest.TestCase):\n"
+            "    def test_exact_repository_file(self): self.assertTrue(True)\n")
+        (ambient / "test_control.py").write_text("raise RuntimeError('ambient')\n")
+        poisoned = types.ModuleType("test_control")
+        poisoned.__file__ = str(ambient / "test_control.py")
+        with patch.dict(sys.modules, {
+                "test_control": poisoned,
+                "_tariff_required_test_control": poisoned,
+        }), patch.object(sys, "path", [str(ambient), *sys.path]), patch.dict(
+                os.environ, {"PYTHONPATH": str(ambient)}):
+            suite = verify._load_required(directory, "test_control",
+                                          unittest.TestLoader())
+            result = unittest.TextTestRunner(stream=io.StringIO()).run(suite)
+        self.assertTrue(result.wasSuccessful())
+        self.assertEqual(result.testsRun, 1)
+
+        symlink = directory / "test_runtime.py"
+        symlink.symlink_to("missing.py")
+        with self.assertRaisesRegex(RuntimeError, "Invalid required test file"):
+            verify._load_required(directory, "test_runtime",
+                                  unittest.TestLoader())
+        nonregular = directory / "test_audit.py"
+        nonregular.mkdir()
+        with self.assertRaisesRegex(RuntimeError, "Invalid required test file"):
+            verify._load_required(directory, "test_audit",
+                                  unittest.TestLoader())
 
 
 if __name__ == "__main__":

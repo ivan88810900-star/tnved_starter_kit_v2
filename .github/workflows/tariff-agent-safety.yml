@@ -2,7 +2,7 @@ name: Tariff agent safety
 on:
   pull_request:
     branches: [main, feat/canonical-read-path]
-    paths: ['tools/tariff_agents/**', 'tests/agent_orchestration/**', '.ai/**', 'AGENTS.md', '.github/workflows/tariff-agent-safety.yml']
+    paths: ['tools/tariff_agents/**', 'tests/agent_orchestration/**', '.ai/**', 'AGENTS.md', '.github/workflows/tariff-agent-safety.yml', '.github/workflows/tariff-a6-live.yml']
   push:
     branches: ['agent/**']
   workflow_dispatch:
@@ -22,6 +22,8 @@ jobs:
       - name: Deterministic control and adapter tests (no credentials)
         env:
           PYTHONDONTWRITEBYTECODE: '1'
-        run: python3 -m tools.tariff_agents.verify
-      - name: Persistent state schema and recovery invariants
-        run: python3 -m tools.tariff_agents validate
+        run: |
+          python3 -m tools.tariff_agents.verify
+          python3 -m unittest -v tests.agent_orchestration.test_cli_snapshot
+      - name: Committed persistent state schema
+        run: python3 -m tools.tariff_agents validate-snapshot
