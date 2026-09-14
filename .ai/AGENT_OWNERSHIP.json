@@ -1,5 +1,5 @@
 {
-  "board_revision": 271,
+  "board_revision": 328,
   "files": {
     ".ai/orchestration/A6_LIVE_BRIDGE.md": {
       "branch": "agent/classification-tariff-a6-live-bridge-001-f5839c6c98",
@@ -18,6 +18,12 @@
       "owner": "A4",
       "task_id": "TARIFF-A6-LIVE-BRIDGE-001",
       "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-a6-live-bridge-001-f5839c6c98"
+    },
+    ".github/workflows/tariff-agent-safety.yml": {
+      "branch": "agent/classification-tariff-orch-ci-snapshot-validation-001-2b97826c17",
+      "owner": "A4",
+      "task_id": "TARIFF-ORCH-CI-SNAPSHOT-VALIDATION-001",
+      "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-orch-ci-snapshot-validation-001-2b97826c17"
     },
     "docs/ai-workflow/AD30_CHAIN_REVIEW_CANDIDATE.md": {
       "branch": "agent/sources-tariff-ad30-review-candidate-001-99f4e3fb32",
@@ -49,6 +55,12 @@
       "task_id": "TARIFF-A6-LIVE-BRIDGE-001",
       "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-a6-live-bridge-001-f5839c6c98"
     },
+    "tests/agent_orchestration/test_cli_snapshot.py": {
+      "branch": "agent/classification-tariff-orch-ci-snapshot-validation-001-2b97826c17",
+      "owner": "A4",
+      "task_id": "TARIFF-ORCH-CI-SNAPSHOT-VALIDATION-001",
+      "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-orch-ci-snapshot-validation-001-2b97826c17"
+    },
     "tests/agent_orchestration/test_control.py": {
       "branch": "agent/classification-tariff-orch-control-hardening-001-6689c2a339",
       "owner": "A4",
@@ -60,6 +72,12 @@
       "owner": "A4",
       "task_id": "TARIFF-ORCH-LEASE-TAKEOVER-HARDENING-001",
       "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-orch-lease-takeover-hardening-001-b4b30adacd"
+    },
+    "tools/tariff_agents/__main__.py": {
+      "branch": "agent/classification-tariff-orch-ci-snapshot-validation-001-2b97826c17",
+      "owner": "A4",
+      "task_id": "TARIFF-ORCH-CI-SNAPSHOT-VALIDATION-001",
+      "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-orch-ci-snapshot-validation-001-2b97826c17"
     },
     "tools/tariff_agents/audit.py": {
       "branch": "agent/classification-tariff-a6-cross-branch-contract-001-a5c4916ca6",

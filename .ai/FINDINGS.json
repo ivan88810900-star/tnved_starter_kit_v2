@@ -1,5 +1,5 @@
 {
-  "board_revision": 271,
+  "board_revision": 328,
   "findings": [
     {
       "head_sha": "161a9258d174e93266353ae1fd2cb0b3e4657679",
@@ -402,6 +402,109 @@
       "validation": {
         "at": "2026-09-14T13:05:30.873092+00:00",
         "evidence": "A0 reproduced with synthetic password-only payloads short and tiny; both were accepted while the full URLs remained blocked.",
+        "validator": "A0"
+      }
+    },
+    {
+      "head_sha": "db2d340e4516aa8c6d42aa631aba945bed4652d8",
+      "id": "A5-PR190-CI-AUTHORITY-BOOTSTRAP-001",
+      "reporter": "A5",
+      "resolution": {
+        "evidence": "Explicit read-only validate-snapshot and live-workflow path admission implemented; author workflow simulation passes. Fresh A5 pending.",
+        "head_sha": "89405bbf71535c9ab61056a0e8ebf0624c46b99c",
+        "validator": "A0"
+      },
+      "status": "RESOLVED",
+      "summary": "Exact PR190 CI run 34847973127 passes 71/71 tests but invokes authoritative validate on a fresh checkout and fails state_authority_missing. CI needs an explicit pure read-only snapshot validation path.",
+      "task_id": "TARIFF-ORCH-CI-SNAPSHOT-VALIDATION-001",
+      "validation": {
+        "at": "2026-09-14T13:25:06.553426+00:00",
+        "evidence": "A0 inspected exact GitHub job logs and independently reproduced the failure; authority bootstrap must remain fail-closed, so fix is a non-mutating snapshot validator.",
+        "validator": "A0"
+      }
+    },
+    {
+      "head_sha": "0701e7592c3570c4372b078a94baf778f53155c0",
+      "id": "A5-BRIDGE-VERIFY-ADMISSION-001",
+      "reporter": "A5",
+      "resolution": {
+        "evidence": "Conditional fail-closed bridge feature admission implemented; author overlay verifies 95 tests and fails when bridge test is removed. Fresh A5 pending.",
+        "head_sha": "99d78631d4110cbd774ce22013476295372a39b8",
+        "validator": "A0"
+      },
+      "status": "RESOLVED",
+      "summary": "Required verifier omits test_audit_bridge, so seven credentialed bridge security tests can disappear while verifier passes.",
+      "task_id": "TARIFF-ORCH-CONTROL-HARDENING-001",
+      "validation": {
+        "at": "2026-09-14T13:25:50.964975+00:00",
+        "evidence": "A0 confirmed on exact PR194 head 0701e759: verifier runs 78 while full discovery runs 85 and lists seven bridge tests.",
+        "validator": "A0"
+      }
+    },
+    {
+      "head_sha": "0701e7592c3570c4372b078a94baf778f53155c0",
+      "id": "A5-BRIDGE-WORKFLOW-PATH-ADMISSION-001",
+      "reporter": "A5",
+      "resolution": {
+        "evidence": "Explicit read-only validate-snapshot and live-workflow path admission implemented; author workflow simulation passes. Fresh A5 pending.",
+        "head_sha": "89405bbf71535c9ab61056a0e8ebf0624c46b99c",
+        "validator": "A0"
+      },
+      "status": "RESOLVED",
+      "summary": "tariff-agent-safety pull_request path filter omits .github/workflows/tariff-a6-live.yml, so workflow-only bridge edits may skip offline safety CI.",
+      "task_id": "TARIFF-ORCH-CI-SNAPSHOT-VALIDATION-001",
+      "validation": {
+        "at": "2026-09-14T13:25:50.988414+00:00",
+        "evidence": "A0 inspected exact workflow on PR194 head 0701e759 and confirmed only tariff-agent-safety.yml is admitted under .github/workflows.",
+        "validator": "A0"
+      }
+    },
+    {
+      "head_sha": "0701e7592c3570c4372b078a94baf778f53155c0",
+      "id": "A5-A6-BRIDGE-CI-COLLECTION-001",
+      "reporter": "A5",
+      "status": "CONFIRMED",
+      "summary": "Bridge security tests and live-workflow-only changes are not obligatorily admitted by the offline verifier/workflow; exact-head CI is absent.",
+      "task_id": "TARIFF-A6-LIVE-BRIDGE-001",
+      "validation": {
+        "at": "2026-09-14T13:27:40.445364+00:00",
+        "evidence": "A0 reproduced 78 required versus 85 discovery and inspected the path filter. Component fixes are routed to control and CI snapshot tasks.",
+        "validator": "A0"
+      }
+    },
+    {
+      "head_sha": "99d78631d4110cbd774ce22013476295372a39b8",
+      "id": "A5-BRIDGE-ADMISSION-IMPORT-PATH-BYPASS-001",
+      "reporter": "A5",
+      "resolution": {
+        "evidence": "Exact-path isolated module loader and lstat-based artifact validation implemented; author attacks pass. Fresh A5 pending.",
+        "head_sha": "3b1ca7cd8acc2525726de4520ab1aeb3de29acf8",
+        "validator": "A0"
+      },
+      "status": "RESOLVED",
+      "summary": "Bare-name required-suite import can fall back to an ambient PYTHONPATH module when repository test_audit_bridge.py is absent.",
+      "task_id": "TARIFF-ORCH-CONTROL-HARDENING-001",
+      "validation": {
+        "at": "2026-09-14T13:36:30.431402+00:00",
+        "evidence": "A0 inspected verifier import_module/sys.path behavior; exact expected path is not bound, so the synthetic A5 reproduction is valid.",
+        "validator": "A0"
+      }
+    },
+    {
+      "head_sha": "99d78631d4110cbd774ce22013476295372a39b8",
+      "id": "A5-BRIDGE-ADMISSION-SYMLINK-BYPASS-001",
+      "reporter": "A5",
+      "resolution": {
+        "evidence": "Exact-path isolated module loader and lstat-based artifact validation implemented; author attacks pass. Fresh A5 pending.",
+        "head_sha": "3b1ca7cd8acc2525726de4520ab1aeb3de29acf8",
+        "validator": "A0"
+      },
+      "status": "RESOLVED",
+      "summary": "Broken symlink at a trusted bridge artifact path returns false from Path.exists and can suppress conditional bridge admission.",
+      "task_id": "TARIFF-ORCH-CONTROL-HARDENING-001",
+      "validation": {
+        "at": "2026-09-14T13:36:30.451911+00:00",
+        "evidence": "A0 confirmed Path.exists has broken-link false semantics; admission must use lexists/lstat and reject symlink/non-regular required files.",
         "validator": "A0"
       }
     }

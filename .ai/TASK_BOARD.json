@@ -403,10 +403,113 @@
         "evidence": "A0 reproduced with synthetic password-only payloads short and tiny; both were accepted while the full URLs remained blocked.",
         "validator": "A0"
       }
+    },
+    {
+      "head_sha": "db2d340e4516aa8c6d42aa631aba945bed4652d8",
+      "id": "A5-PR190-CI-AUTHORITY-BOOTSTRAP-001",
+      "reporter": "A5",
+      "resolution": {
+        "evidence": "Explicit read-only validate-snapshot and live-workflow path admission implemented; author workflow simulation passes. Fresh A5 pending.",
+        "head_sha": "89405bbf71535c9ab61056a0e8ebf0624c46b99c",
+        "validator": "A0"
+      },
+      "status": "RESOLVED",
+      "summary": "Exact PR190 CI run 34847973127 passes 71/71 tests but invokes authoritative validate on a fresh checkout and fails state_authority_missing. CI needs an explicit pure read-only snapshot validation path.",
+      "task_id": "TARIFF-ORCH-CI-SNAPSHOT-VALIDATION-001",
+      "validation": {
+        "at": "2026-09-14T13:25:06.553426+00:00",
+        "evidence": "A0 inspected exact GitHub job logs and independently reproduced the failure; authority bootstrap must remain fail-closed, so fix is a non-mutating snapshot validator.",
+        "validator": "A0"
+      }
+    },
+    {
+      "head_sha": "0701e7592c3570c4372b078a94baf778f53155c0",
+      "id": "A5-BRIDGE-VERIFY-ADMISSION-001",
+      "reporter": "A5",
+      "resolution": {
+        "evidence": "Conditional fail-closed bridge feature admission implemented; author overlay verifies 95 tests and fails when bridge test is removed. Fresh A5 pending.",
+        "head_sha": "99d78631d4110cbd774ce22013476295372a39b8",
+        "validator": "A0"
+      },
+      "status": "RESOLVED",
+      "summary": "Required verifier omits test_audit_bridge, so seven credentialed bridge security tests can disappear while verifier passes.",
+      "task_id": "TARIFF-ORCH-CONTROL-HARDENING-001",
+      "validation": {
+        "at": "2026-09-14T13:25:50.964975+00:00",
+        "evidence": "A0 confirmed on exact PR194 head 0701e759: verifier runs 78 while full discovery runs 85 and lists seven bridge tests.",
+        "validator": "A0"
+      }
+    },
+    {
+      "head_sha": "0701e7592c3570c4372b078a94baf778f53155c0",
+      "id": "A5-BRIDGE-WORKFLOW-PATH-ADMISSION-001",
+      "reporter": "A5",
+      "resolution": {
+        "evidence": "Explicit read-only validate-snapshot and live-workflow path admission implemented; author workflow simulation passes. Fresh A5 pending.",
+        "head_sha": "89405bbf71535c9ab61056a0e8ebf0624c46b99c",
+        "validator": "A0"
+      },
+      "status": "RESOLVED",
+      "summary": "tariff-agent-safety pull_request path filter omits .github/workflows/tariff-a6-live.yml, so workflow-only bridge edits may skip offline safety CI.",
+      "task_id": "TARIFF-ORCH-CI-SNAPSHOT-VALIDATION-001",
+      "validation": {
+        "at": "2026-09-14T13:25:50.988414+00:00",
+        "evidence": "A0 inspected exact workflow on PR194 head 0701e759 and confirmed only tariff-agent-safety.yml is admitted under .github/workflows.",
+        "validator": "A0"
+      }
+    },
+    {
+      "head_sha": "0701e7592c3570c4372b078a94baf778f53155c0",
+      "id": "A5-A6-BRIDGE-CI-COLLECTION-001",
+      "reporter": "A5",
+      "status": "CONFIRMED",
+      "summary": "Bridge security tests and live-workflow-only changes are not obligatorily admitted by the offline verifier/workflow; exact-head CI is absent.",
+      "task_id": "TARIFF-A6-LIVE-BRIDGE-001",
+      "validation": {
+        "at": "2026-09-14T13:27:40.445364+00:00",
+        "evidence": "A0 reproduced 78 required versus 85 discovery and inspected the path filter. Component fixes are routed to control and CI snapshot tasks.",
+        "validator": "A0"
+      }
+    },
+    {
+      "head_sha": "99d78631d4110cbd774ce22013476295372a39b8",
+      "id": "A5-BRIDGE-ADMISSION-IMPORT-PATH-BYPASS-001",
+      "reporter": "A5",
+      "resolution": {
+        "evidence": "Exact-path isolated module loader and lstat-based artifact validation implemented; author attacks pass. Fresh A5 pending.",
+        "head_sha": "3b1ca7cd8acc2525726de4520ab1aeb3de29acf8",
+        "validator": "A0"
+      },
+      "status": "RESOLVED",
+      "summary": "Bare-name required-suite import can fall back to an ambient PYTHONPATH module when repository test_audit_bridge.py is absent.",
+      "task_id": "TARIFF-ORCH-CONTROL-HARDENING-001",
+      "validation": {
+        "at": "2026-09-14T13:36:30.431402+00:00",
+        "evidence": "A0 inspected verifier import_module/sys.path behavior; exact expected path is not bound, so the synthetic A5 reproduction is valid.",
+        "validator": "A0"
+      }
+    },
+    {
+      "head_sha": "99d78631d4110cbd774ce22013476295372a39b8",
+      "id": "A5-BRIDGE-ADMISSION-SYMLINK-BYPASS-001",
+      "reporter": "A5",
+      "resolution": {
+        "evidence": "Exact-path isolated module loader and lstat-based artifact validation implemented; author attacks pass. Fresh A5 pending.",
+        "head_sha": "3b1ca7cd8acc2525726de4520ab1aeb3de29acf8",
+        "validator": "A0"
+      },
+      "status": "RESOLVED",
+      "summary": "Broken symlink at a trusted bridge artifact path returns false from Path.exists and can suppress conditional bridge admission.",
+      "task_id": "TARIFF-ORCH-CONTROL-HARDENING-001",
+      "validation": {
+        "at": "2026-09-14T13:36:30.451911+00:00",
+        "evidence": "A0 confirmed Path.exists has broken-link false semantics; admission must use lexists/lstat and reject symlink/non-regular required files.",
+        "validator": "A0"
+      }
     }
   ],
   "max_concurrent_subagents": 3,
-  "revision": 271,
+  "revision": 328,
   "runs": [
     {
       "head_sha": null,
@@ -904,9 +1007,119 @@
       "run_id": "79978ae35d334de1a0fa18517a5c45f5",
       "session_id": "/root/a5_a6_live_bridge_sync",
       "started_at": "2026-09-14T13:19:14.678498+00:00",
-      "status": "RUNNING",
+      "status": "FINISHED",
       "task_id": "TARIFF-A6-LIVE-BRIDGE-001",
-      "updated_at": "2026-09-14T13:19:14.678505+00:00"
+      "updated_at": "2026-09-14T13:27:40.396753+00:00"
+    },
+    {
+      "head_sha": null,
+      "role": "A4",
+      "run_id": "44b0e6b08e124f4488d4552e54796178",
+      "session_id": "/root/a4_ci_snapshot_validation",
+      "started_at": "2026-09-14T13:23:44.210944+00:00",
+      "status": "FINISHED",
+      "task_id": "TARIFF-ORCH-CI-SNAPSHOT-VALIDATION-001",
+      "updated_at": "2026-09-14T13:29:42.891559+00:00"
+    },
+    {
+      "head_sha": "090dc96e56611c9af7eaa454010e4fa8b358fd92",
+      "role": "A4",
+      "run_id": "c456d0c1570640fb8bf1efc68c2fa0c2",
+      "session_id": "/root/a4_control_hardening",
+      "started_at": "2026-09-14T13:25:51.001264+00:00",
+      "status": "FINISHED",
+      "task_id": "TARIFF-ORCH-CONTROL-HARDENING-001",
+      "updated_at": "2026-09-14T13:30:52.374418+00:00"
+    },
+    {
+      "head_sha": "0701e7592c3570c4372b078a94baf778f53155c0",
+      "role": "A4",
+      "run_id": "1b542db9a3ea40cdaa259ec5f220fb3d",
+      "session_id": "/root/a4_bridge_doc_sync",
+      "started_at": "2026-09-14T13:27:40.454971+00:00",
+      "status": "FINISHED",
+      "task_id": "TARIFF-A6-LIVE-BRIDGE-001",
+      "updated_at": "2026-09-14T13:29:43.003342+00:00"
+    },
+    {
+      "head_sha": "89405bbf71535c9ab61056a0e8ebf0624c46b99c",
+      "role": "A5",
+      "run_id": "3823f5a4ee31486bbc8ca772ed459451",
+      "session_id": "/root/a5_ci_snapshot_validation",
+      "started_at": "2026-09-14T13:29:42.993668+00:00",
+      "status": "FINISHED",
+      "task_id": "TARIFF-ORCH-CI-SNAPSHOT-VALIDATION-001",
+      "updated_at": "2026-09-14T13:34:50.399808+00:00"
+    },
+    {
+      "head_sha": "99d78631d4110cbd774ce22013476295372a39b8",
+      "role": "A5",
+      "run_id": "f00e3fcdf9bc46d1b64c1ff1428b8c9b",
+      "session_id": "/root/a5_control_hardening_fix2",
+      "started_at": "2026-09-14T13:30:52.447412+00:00",
+      "status": "FINISHED",
+      "task_id": "TARIFF-ORCH-CONTROL-HARDENING-001",
+      "updated_at": "2026-09-14T13:36:30.378841+00:00"
+    },
+    {
+      "head_sha": "64ce63fd3092f94a4924929457f22c4aefcaf2d8",
+      "role": "A5",
+      "run_id": "6b1935df80c3427f93821f114ed49956",
+      "session_id": "/root/a5_ci_snapshot_validation",
+      "started_at": "2026-09-14T13:36:30.367876+00:00",
+      "status": "FINISHED",
+      "task_id": "TARIFF-ORCH-CI-SNAPSHOT-VALIDATION-001",
+      "updated_at": "2026-09-14T13:39:33.928321+00:00"
+    },
+    {
+      "head_sha": "99d78631d4110cbd774ce22013476295372a39b8",
+      "role": "A4",
+      "run_id": "427c6012a8194f858c229f4a10416a0a",
+      "session_id": "/root/a4_control_hardening",
+      "started_at": "2026-09-14T13:36:30.461897+00:00",
+      "status": "FINISHED",
+      "task_id": "TARIFF-ORCH-CONTROL-HARDENING-001",
+      "updated_at": "2026-09-14T13:42:48.529718+00:00"
+    },
+    {
+      "head_sha": "3b1ca7cd8acc2525726de4520ab1aeb3de29acf8",
+      "role": "A5",
+      "run_id": "a95e025055974517a99090832440b084",
+      "session_id": "/root/a5_control_hardening_fix2",
+      "started_at": "2026-09-14T13:42:48.651567+00:00",
+      "status": "FINISHED",
+      "task_id": "TARIFF-ORCH-CONTROL-HARDENING-001",
+      "updated_at": "2026-09-14T13:54:06.685567+00:00"
+    },
+    {
+      "head_sha": "3b1ca7cd8acc2525726de4520ab1aeb3de29acf8",
+      "role": "A5",
+      "run_id": "c1eff1aa3c6744baa022af1ab25240ab",
+      "session_id": "/root/a5_control_regression",
+      "started_at": "2026-09-14T13:54:06.698551+00:00",
+      "status": "FINISHED",
+      "task_id": "TARIFF-ORCH-CONTROL-HARDENING-001",
+      "updated_at": "2026-09-14T13:54:06.710272+00:00"
+    },
+    {
+      "head_sha": "0126404cd78fd293f3634bd20c5fd09f937e83ba",
+      "role": "A5",
+      "run_id": "adcf4ddb381b4739bebecb44c4e75f00",
+      "session_id": "/root/a5_pr193_final",
+      "started_at": "2026-09-14T14:11:59.035025+00:00",
+      "status": "FINISHED",
+      "task_id": "TARIFF-A6-CROSS-BRANCH-CONTRACT-001",
+      "updated_at": "2026-09-14T14:11:59.046179+00:00"
+    },
+    {
+      "head_sha": "47da2e4763261cddc638cc276573b3375508a9ac",
+      "role": "A5",
+      "run_id": "815899b39aa149eab526d2004db60cee",
+      "session_id": "/root/a5_pr194_final",
+      "started_at": "2026-09-14T14:11:59.122833+00:00",
+      "status": "FINISHED",
+      "task_id": "TARIFF-A6-LIVE-BRIDGE-001",
+      "updated_at": "2026-09-14T14:11:59.133521+00:00"
     }
   ],
   "schema_version": 1,
@@ -1212,6 +1425,18 @@
       ],
       "branch": "agent/classification-tariff-a6-cross-branch-contract-001-a5c4916ca6",
       "ci": null,
+      "observed_ci": {
+        "conclusion": "success",
+        "head_sha": "0126404cd78fd293f3634bd20c5fd09f937e83ba",
+        "name": "Tariff agent safety",
+        "run_id": 34852521668,
+        "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/34852521668"
+      },
+      "protected_merge_gate": {
+        "status": "OWNER_PERMISSION_REQUIRED",
+        "sequence": [190, 193, 194],
+        "reason": "Exact-head A5 and CI passed for the combined chain; A6 cannot run until the reviewed workflow is on main."
+      },
       "dependencies": [],
       "external_audit": null,
       "files": [
@@ -1224,23 +1449,18 @@
       "qa": {
         "commands": [
           {
-            "command": "independent exact published PR193 tree/blob/two-file verification",
+            "command": "independent exact published-head review",
             "exit_code": 0,
-            "output": "PASS head 8f9f07d tree e9ae3129; cleanup 42f9633 tree c195dbe4; GitHub blobs exact."
+            "output": "PASS head 0126404, tree 5cabb7be, exact two-file scope."
           },
           {
-            "command": "published-head credential/COPY/contract/git/provider attack matrix",
+            "command": "verifier/discovery/audit/compile/diff/clean",
             "exit_code": 0,
-            "output": "PASS 32/32 audit, 78/78 verifier, 78/78 discovery; clean/integrity."
-          },
-          {
-            "command": "exact published functional packet 42f9633..8f9f07d contract ad4935e",
-            "exit_code": 0,
-            "output": "PASS packet sha256 d9d057ce723657d5ba8c18ffd5c6a526ee9883884954d37be0e1306e900afdde."
+            "output": "PASS 92/92, 96/96, 32/32; no concrete regressions."
           }
         ],
-        "head_sha": "8f9f07d10ab555c70aad4da65123cd63f65f0809",
-        "reviewer_session_id": "/root/a5_audit_copy_fix2",
+        "head_sha": "0126404cd78fd293f3634bd20c5fd09f937e83ba",
+        "reviewer_session_id": "/root/a5_pr193_final",
         "status": "PASSED"
       },
       "recovery_history": [
@@ -1250,21 +1470,21 @@
         }
       ],
       "refs": {
-        "base_sha": "ad4935e318d947276178e2f269d4ffe1051ea6cb",
-        "head_sha": "8f9f07d10ab555c70aad4da65123cd63f65f0809",
+        "base_sha": "0195a2b5eef30a96feaf866061ce2a706d1c08f3",
+        "head_sha": "0126404cd78fd293f3634bd20c5fd09f937e83ba",
         "pr": 193,
         "publication_mapping": {
           "identical_trees_verified": true,
           "local_base_sha": "c39248672a6299b64bc2db5637e2027579a4624e",
           "local_cleanup_sha": "7bd5b9b812803c6d4db602283b080ddd7d996285",
           "local_cleanup_tree_sha": "c195dbe4be2f7eb16420c0d6e0b5ca5e180a367d",
-          "local_head_sha": "cd83f82599d91bd96e1d40d9dca169098e12a217",
-          "local_tree_sha": "e9ae3129e5b77979c3601a88e75dab2f43447e4d",
-          "published_base_sha": "c39248672a6299b64bc2db5637e2027579a4624e",
+          "local_head_sha": "990855d3612b03c97c3ef2d6c7828041516f8389",
+          "local_tree_sha": "5cabb7be1a1602ce6abe472b92223b462f6e3271",
+          "published_base_sha": "0195a2b5eef30a96feaf866061ce2a706d1c08f3",
           "published_cleanup_sha": "42f9633dd846196b6c2421c70087ddb9b70dc2b7",
           "published_cleanup_tree_sha": "c195dbe4be2f7eb16420c0d6e0b5ca5e180a367d",
-          "published_head_sha": "8f9f07d10ab555c70aad4da65123cd63f65f0809",
-          "published_tree_sha": "e9ae3129e5b77979c3601a88e75dab2f43447e4d"
+          "published_head_sha": "0126404cd78fd293f3634bd20c5fd09f937e83ba",
+          "published_tree_sha": "5cabb7be1a1602ce6abe472b92223b462f6e3271"
         }
       },
       "required_checks": [
@@ -1275,27 +1495,41 @@
       "tests": {
         "commands": [
           {
-            "command": "published Git tree equality, exact parent chain and PR head verification",
+            "command": "final chained verifier/discovery/audit tests",
             "exit_code": 0,
-            "output": "PR193 head 8f9f07d, final tree e9ae3129 equals reviewed local; cleanup tree c195dbe4 also identical."
+            "output": "PASS 92/92 verifier, 96/96 discovery, 32/32 audit on exact tree 5cabb7be."
           },
           {
-            "command": "audit; verifier; discovery; packet",
+            "command": "exact local-to-published tree and scope",
             "exit_code": 0,
-            "output": "PASS 32/32, 78/78, 78/78 and exact functional packet on identical published trees."
+            "output": "PASS local 990855d and published 0126404 share tree 5cabb7be; PR diff exactly audit.py and test_audit.py."
           }
         ],
-        "head_sha": "8f9f07d10ab555c70aad4da65123cd63f65f0809"
+        "head_sha": "0126404cd78fd293f3634bd20c5fd09f937e83ba"
       },
-      "updated_at": "2026-09-14T13:16:21.447028+00:00",
+      "updated_at": "2026-09-14T14:11:59.077560+00:00",
       "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-pr193"
     },
     {
       "author_sessions": [
-        "/root/a4_a6_live_bridge"
+        "/root/a4_a6_live_bridge",
+        "/root/a4_bridge_doc_sync"
       ],
       "branch": "agent/classification-tariff-a6-live-bridge-001-f5839c6c98",
       "ci": null,
+      "observed_ci": {
+        "conclusion": "success",
+        "head_sha": "47da2e4763261cddc638cc276573b3375508a9ac",
+        "name": "Tariff agent safety",
+        "run_id": 34852829770,
+        "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/34852829770"
+      },
+      "a6_status": "BLOCKED_PENDING_DEFAULT_BRANCH_MERGE",
+      "protected_merge_gate": {
+        "status": "OWNER_PERMISSION_REQUIRED",
+        "sequence": [190, 193, 194],
+        "reason": "Reviewed trusted workflow is not yet on main; live provider request remains forbidden."
+      },
       "dependencies": [
         "TARIFF-A6-CROSS-BRANCH-CONTRACT-001"
       ],
@@ -1315,50 +1549,61 @@
       "goal": "Implement a minimal trusted GitHub Actions bridge that invokes the checked commit-bound tools.tariff_agents.audit adapter with only ANTHROPIC_API_KEY and TARIFF_ANTHROPIC_MODEL, never executes candidate code, grants read-only contents permission, exposes no credentials to PR workers, and records only validated non-secret A6 evidence; manual dispatch must fail closed unless the workflow runs from the reviewed default-branch implementation.",
       "id": "TARIFF-A6-LIVE-BRIDGE-001",
       "owner": "A4",
-      "qa": null,
+      "qa": {
+        "commands": [
+          {
+            "command": "independent exact published-head bridge review",
+            "exit_code": 0,
+            "output": "PASS head 47da2e4 tree b46ba60f; fail-closed trusted boundary."
+          },
+          {
+            "command": "bridge/verifier/discovery/compile/diff/clean",
+            "exit_code": 0,
+            "output": "PASS 7/7, 99/99, 103/103; no code defect."
+          }
+        ],
+        "head_sha": "47da2e4763261cddc638cc276573b3375508a9ac",
+        "reviewer_session_id": "/root/a5_pr194_final",
+        "status": "PASSED"
+      },
       "readiness_dependencies": [
         "TARIFF-A6-CROSS-BRANCH-CONTRACT-001"
       ],
       "refs": {
-        "base_sha": "8f9f07d10ab555c70aad4da65123cd63f65f0809",
-        "head_sha": "0701e7592c3570c4372b078a94baf778f53155c0",
+        "base_sha": "0126404cd78fd293f3634bd20c5fd09f937e83ba",
+        "head_sha": "47da2e4763261cddc638cc276573b3375508a9ac",
         "pr": 194,
         "publication_mapping": {
           "identical_trees_verified": true,
           "local_base_sha": "cd83f82599d91bd96e1d40d9dca169098e12a217",
-          "local_head_sha": "3e67b5613be346bdcd1c813401aee709ba8560a2",
-          "local_tree_sha": "dfb29c90a238dfd5f4f20b1a8a740eb0b5bca75c",
-          "published_base_sha": "8f9f07d10ab555c70aad4da65123cd63f65f0809",
-          "published_head_sha": "0701e7592c3570c4372b078a94baf778f53155c0",
-          "published_tree_sha": "dfb29c90a238dfd5f4f20b1a8a740eb0b5bca75c"
+          "local_head_sha": "9e130e6844957d9aee2e1004190234ef138ca8f3",
+          "local_tree_sha": "b46ba60f12cba31de30f8b4d25b2feff6c90e38b",
+          "published_base_sha": "0126404cd78fd293f3634bd20c5fd09f937e83ba",
+          "published_head_sha": "47da2e4763261cddc638cc276573b3375508a9ac",
+          "published_tree_sha": "b46ba60f12cba31de30f8b4d25b2feff6c90e38b"
         }
       },
       "required_checks": [
         "offline-safety"
       ],
       "risk": "high",
-      "status": "IMPLEMENTED",
+      "status": "QA_PASSED",
       "tests": {
         "commands": [
           {
-            "command": "dependency sync merge and published tree verification",
+            "command": "final bridge verifier/discovery tests",
             "exit_code": 0,
-            "output": "PR194 head 0701e75 merges ceec320 and reviewed PR193 8f9f07d; tree dfb29c90 equals local integration tree."
+            "output": "PASS 7/7 bridge, 99/99 verifier, 103/103 discovery on exact tree b46ba60f."
           },
           {
-            "command": "audit bridge + audit scoped tests",
+            "command": "exact local-to-published tree and scope",
             "exit_code": 0,
-            "output": "PASS 39/39 after dependency sync."
-          },
-          {
-            "command": "verifier; full discovery; compile/diff",
-            "exit_code": 0,
-            "output": "PASS 78/78 verifier, 85/85 discovery; exact bridge diff relative to new base; clean."
+            "output": "PASS local 9e130e6 and published 47da2e4 share tree b46ba60f; PR diff exactly four bridge files."
           }
         ],
-        "head_sha": "0701e7592c3570c4372b078a94baf778f53155c0"
+        "head_sha": "47da2e4763261cddc638cc276573b3375508a9ac"
       },
-      "updated_at": "2026-09-14T13:19:14.678507+00:00",
+      "updated_at": "2026-09-14T14:11:59.164172+00:00",
       "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-a6-live-bridge-001-f5839c6c98"
     },
     {
@@ -1381,29 +1626,34 @@
       "qa": {
         "commands": [
           {
-            "command": "independent exact published GitHub tree/blob/scope validation",
+            "command": "independent scoped regression review",
             "exit_code": 0,
-            "output": "PASS commit 090dc96e parent ad4935e, tree 54b0996b, exact four owned blobs."
+            "output": "PASS 6/6 on exact local candidate tree a4026f5f."
           },
           {
-            "command": "published-head control authority attack matrix; scoped/verifier/discovery",
+            "command": "verifier/full discovery/compile/diff/clean tree",
             "exit_code": 0,
-            "output": "PASS 39/39, 69/69, 69/69; compile/diff/integrity clean."
+            "output": "PASS 72/72 verifier, 72/72 discovery, compile and diff; no concrete defects."
           }
         ],
-        "head_sha": "090dc96e56611c9af7eaa454010e4fa8b358fd92",
-        "reviewer_session_id": "/root/a5_control_hardening_fix2",
+        "head_sha": "3b1ca7cd8acc2525726de4520ab1aeb3de29acf8",
+        "reviewer_session_id": "/root/a5_control_regression",
         "status": "PASSED"
       },
       "refs": {
         "base_sha": "ad4935e318d947276178e2f269d4ffe1051ea6cb",
-        "head_sha": "090dc96e56611c9af7eaa454010e4fa8b358fd92",
+        "head_sha": "3b1ca7cd8acc2525726de4520ab1aeb3de29acf8",
         "pr": 196,
         "publication_mapping": {
+          "followup_pr": 199,
+          "followup_published_head_sha": "11fa8a40de2ffe77335fdf753309de5e9ee29c89",
+          "followup_published_tree_sha": "777df306b65f6973a91c3cb399f9a50ca8d99da9",
           "identical_trees_verified": true,
+          "integration_sha": "0195a2b5eef30a96feaf866061ce2a706d1c08f3",
           "local_base_sha": "ad4935e318d947276178e2f269d4ffe1051ea6cb",
           "local_head_sha": "8d2dd2fa5e4fa758514edcddf2256ab13b87455d",
           "local_tree_sha": "54b0996b577be5ea3d1af30c5148c6d0489f7469",
+          "owned_blobs_match_reviewed_candidate": true,
           "published_base_sha": "ad4935e318d947276178e2f269d4ffe1051ea6cb",
           "published_head_sha": "090dc96e56611c9af7eaa454010e4fa8b358fd92",
           "published_tree_sha": "54b0996b577be5ea3d1af30c5148c6d0489f7469"
@@ -1417,19 +1667,24 @@
       "tests": {
         "commands": [
           {
-            "command": "published Git tree equality and exact parent verification",
+            "command": "exact-path suite loader and artifact lstat regressions",
             "exit_code": 0,
-            "output": "GitHub tree 54b0996b577be5ea3d1af30c5148c6d0489f7469 equals reviewed local tree; parent ad4935e."
+            "output": "PASS 6/6 including PYTHONPATH/sys.modules substitution, symlink and nonregular cases."
           },
           {
-            "command": "scoped control+A5; verifier; discovery",
+            "command": "pre-bridge verifier/discovery; PR194 overlay",
             "exit_code": 0,
-            "output": "PASS 39/39, 69/69, 69/69 on identical published tree."
+            "output": "PASS 72/72, 72/72, overlay 97/97; missing bridge test fails closed."
+          },
+          {
+            "command": "compile/diff/exact scope",
+            "exit_code": 0,
+            "output": "PASS clean cumulative four-file scope; new diff exactly verify.py/test_a5_independent.py."
           }
         ],
-        "head_sha": "090dc96e56611c9af7eaa454010e4fa8b358fd92"
+        "head_sha": "3b1ca7cd8acc2525726de4520ab1aeb3de29acf8"
       },
-      "updated_at": "2026-09-14T13:09:29.705194+00:00",
+      "updated_at": "2026-09-14T13:54:06.739077+00:00",
       "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-orch-control-hardening-001-6689c2a339"
     },
     {
@@ -1507,8 +1762,10 @@
       "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-orch-lease-takeover-hardening-001-b4b30adacd"
     },
     {
-      "author_sessions": [],
-      "branch": null,
+      "author_sessions": [
+        "/root/a4_ci_snapshot_validation"
+      ],
+      "branch": "agent/classification-tariff-orch-ci-snapshot-validation-001-2b97826c17",
       "ci": null,
       "dependencies": [],
       "external_audit": null,
@@ -1520,21 +1777,60 @@
       "goal": "Keep authority fail-closed while giving offline CI an explicit read-only snapshot schema validation command that never bootstraps or mutates state.",
       "id": "TARIFF-ORCH-CI-SNAPSHOT-VALIDATION-001",
       "owner": "A4",
-      "qa": null,
+      "qa": {
+        "commands": [
+          {
+            "command": "independent exact published PR197 commit/tree/blob/scope validation",
+            "exit_code": 0,
+            "output": "PASS head 64ce63fd parent db2d340e tree 9dcd2e70 and exact three GitHub blobs."
+          },
+          {
+            "command": "published-head snapshot/ambient Git/workflow matrix",
+            "exit_code": 0,
+            "output": "PASS 4/4 scoped, 71/71 verifier, 75/75 discovery, workflow simulation; no authority mutation."
+          }
+        ],
+        "head_sha": "64ce63fd3092f94a4924929457f22c4aefcaf2d8",
+        "reviewer_session_id": "/root/a5_ci_snapshot_validation",
+        "status": "PASSED"
+      },
       "refs": {
-        "base_sha": null,
-        "head_sha": null,
-        "pr": null
+        "base_sha": "db2d340e4516aa8c6d42aa631aba945bed4652d8",
+        "head_sha": "64ce63fd3092f94a4924929457f22c4aefcaf2d8",
+        "pr": 197,
+        "publication_mapping": {
+          "identical_trees_verified": true,
+          "local_base_sha": "db2d340e4516aa8c6d42aa631aba945bed4652d8",
+          "local_head_sha": "89405bbf71535c9ab61056a0e8ebf0624c46b99c",
+          "local_tree_sha": "9dcd2e70078718b09a715d0e16051636c57724e8",
+          "published_base_sha": "db2d340e4516aa8c6d42aa631aba945bed4652d8",
+          "published_head_sha": "64ce63fd3092f94a4924929457f22c4aefcaf2d8",
+          "published_tree_sha": "9dcd2e70078718b09a715d0e16051636c57724e8"
+        }
       },
       "required_checks": [
         "offline-safety"
       ],
       "risk": "high",
-      "status": "NEW",
-      "tests": [],
-      "updated_at": "2026-09-14T13:20:46.096694+00:00",
-      "worktree": null
+      "status": "QA_PASSED",
+      "tests": {
+        "commands": [
+          {
+            "command": "published Git exact parent/tree/blob verification",
+            "exit_code": 0,
+            "output": "HEAD 64ce63fd parent db2d340e, tree 9dcd2e70 exactly matches A5-reviewed local candidate."
+          },
+          {
+            "command": "scoped/verifier/discovery/workflow simulation",
+            "exit_code": 0,
+            "output": "PASS 4/4, 71/71, 75/75 on identical published tree."
+          }
+        ],
+        "head_sha": "64ce63fd3092f94a4924929457f22c4aefcaf2d8"
+      },
+      "updated_at": "2026-09-14T13:39:33.957848+00:00",
+      "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-orch-ci-snapshot-validation-001-2b97826c17"
     }
   ],
-  "updated_at": "2026-09-14T13:20:46.097059+00:00"
+  "updated_at": "2026-09-14T14:11:59.166129+00:00"
 }

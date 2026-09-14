@@ -7,6 +7,35 @@ from code/QA/CI candidate SHAs). Read this branch's board on every wake-up.
 
 ## Automation update — 2026-09-14
 
+### A6 chain ready for protected merge — 2026-09-14 14:12 UTC
+
+- The reviewed chain is synchronized and all three PRs are open and ready for
+  review in required order: PR #190 HEAD `0195a2b5eef30a96feaf866061ce2a706d1c08f3`,
+  PR #193 HEAD `0126404cd78fd293f3634bd20c5fd09f937e83ba`, and
+  PR #194 HEAD `47da2e4763261cddc638cc276573b3375508a9ac`.
+- Exact-head CI succeeded: #190 run 34852286695, #193 push run 34852521668,
+  #194 push run 34852829770. Independent exact-head A5 passed the combined
+  #193 chain (92/92 verifier, 96/96 discovery, 32/32 audit) and #194 bridge
+  (99/99 verifier, 103/103 discovery, 7/7 bridge). PR #190 alone is explicitly
+  conditional: five non-audit review defects are fixed and resolved, while the
+  sixth credential-scanner P1 is fixed only by stacked PR #193 and remains open
+  on #190 until that dependent merge lands.
+- A5 found and A0 fixed two final CI-admission defects before readiness: mandatory
+  suites are now loaded from exact regular repository files, bridge artifacts
+  require the bridge suite, and offline CI validates the committed state snapshot
+  without acquiring controller authority. Scoped PR #199 was independently
+  reviewed and integrated only into `agent/orchestration-v1`.
+- PR #194 documentation now records the completed Environment migration solely as
+  an uninspected owner assertion. No secret value or protected setting was read.
+  A6 remains `BLOCKED_PENDING_DEFAULT_BRANCH_MERGE`; no provider request occurred.
+- The only authorized next infrastructure action is an owner-approved protected
+  merge sequence #190 -> #193 -> #194. After those reviewed changes are on `main`,
+  A0 must run a commit-bound live smoke through `tariff-a6-trusted`; only a valid
+  bound Anthropic response may change A6 to `LIVE_VERIFIED`.
+- Product PR #187 remains independently queued at HEAD
+  `5d3b0c1dc7dd8e396c4f812db2bf6f1fa6d293f9`; this infrastructure block did not
+  modify it or inherit stale #191/#192 approvals.
+
 ### Trusted A6 bridge checkpoint — 2026-09-14 10:49 UTC
 
 - Draft PR #194 publishes the separate four-file trusted A6 bridge at exact

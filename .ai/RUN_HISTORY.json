@@ -1,5 +1,5 @@
 {
-  "board_revision": 271,
+  "board_revision": 328,
   "runs": [
     {
       "head_sha": null,
@@ -497,9 +497,119 @@
       "run_id": "79978ae35d334de1a0fa18517a5c45f5",
       "session_id": "/root/a5_a6_live_bridge_sync",
       "started_at": "2026-09-14T13:19:14.678498+00:00",
-      "status": "RUNNING",
+      "status": "FINISHED",
       "task_id": "TARIFF-A6-LIVE-BRIDGE-001",
-      "updated_at": "2026-09-14T13:19:14.678505+00:00"
+      "updated_at": "2026-09-14T13:27:40.396753+00:00"
+    },
+    {
+      "head_sha": null,
+      "role": "A4",
+      "run_id": "44b0e6b08e124f4488d4552e54796178",
+      "session_id": "/root/a4_ci_snapshot_validation",
+      "started_at": "2026-09-14T13:23:44.210944+00:00",
+      "status": "FINISHED",
+      "task_id": "TARIFF-ORCH-CI-SNAPSHOT-VALIDATION-001",
+      "updated_at": "2026-09-14T13:29:42.891559+00:00"
+    },
+    {
+      "head_sha": "090dc96e56611c9af7eaa454010e4fa8b358fd92",
+      "role": "A4",
+      "run_id": "c456d0c1570640fb8bf1efc68c2fa0c2",
+      "session_id": "/root/a4_control_hardening",
+      "started_at": "2026-09-14T13:25:51.001264+00:00",
+      "status": "FINISHED",
+      "task_id": "TARIFF-ORCH-CONTROL-HARDENING-001",
+      "updated_at": "2026-09-14T13:30:52.374418+00:00"
+    },
+    {
+      "head_sha": "0701e7592c3570c4372b078a94baf778f53155c0",
+      "role": "A4",
+      "run_id": "1b542db9a3ea40cdaa259ec5f220fb3d",
+      "session_id": "/root/a4_bridge_doc_sync",
+      "started_at": "2026-09-14T13:27:40.454971+00:00",
+      "status": "FINISHED",
+      "task_id": "TARIFF-A6-LIVE-BRIDGE-001",
+      "updated_at": "2026-09-14T13:29:43.003342+00:00"
+    },
+    {
+      "head_sha": "89405bbf71535c9ab61056a0e8ebf0624c46b99c",
+      "role": "A5",
+      "run_id": "3823f5a4ee31486bbc8ca772ed459451",
+      "session_id": "/root/a5_ci_snapshot_validation",
+      "started_at": "2026-09-14T13:29:42.993668+00:00",
+      "status": "FINISHED",
+      "task_id": "TARIFF-ORCH-CI-SNAPSHOT-VALIDATION-001",
+      "updated_at": "2026-09-14T13:34:50.399808+00:00"
+    },
+    {
+      "head_sha": "99d78631d4110cbd774ce22013476295372a39b8",
+      "role": "A5",
+      "run_id": "f00e3fcdf9bc46d1b64c1ff1428b8c9b",
+      "session_id": "/root/a5_control_hardening_fix2",
+      "started_at": "2026-09-14T13:30:52.447412+00:00",
+      "status": "FINISHED",
+      "task_id": "TARIFF-ORCH-CONTROL-HARDENING-001",
+      "updated_at": "2026-09-14T13:36:30.378841+00:00"
+    },
+    {
+      "head_sha": "64ce63fd3092f94a4924929457f22c4aefcaf2d8",
+      "role": "A5",
+      "run_id": "6b1935df80c3427f93821f114ed49956",
+      "session_id": "/root/a5_ci_snapshot_validation",
+      "started_at": "2026-09-14T13:36:30.367876+00:00",
+      "status": "FINISHED",
+      "task_id": "TARIFF-ORCH-CI-SNAPSHOT-VALIDATION-001",
+      "updated_at": "2026-09-14T13:39:33.928321+00:00"
+    },
+    {
+      "head_sha": "99d78631d4110cbd774ce22013476295372a39b8",
+      "role": "A4",
+      "run_id": "427c6012a8194f858c229f4a10416a0a",
+      "session_id": "/root/a4_control_hardening",
+      "started_at": "2026-09-14T13:36:30.461897+00:00",
+      "status": "FINISHED",
+      "task_id": "TARIFF-ORCH-CONTROL-HARDENING-001",
+      "updated_at": "2026-09-14T13:42:48.529718+00:00"
+    },
+    {
+      "head_sha": "3b1ca7cd8acc2525726de4520ab1aeb3de29acf8",
+      "role": "A5",
+      "run_id": "a95e025055974517a99090832440b084",
+      "session_id": "/root/a5_control_hardening_fix2",
+      "started_at": "2026-09-14T13:42:48.651567+00:00",
+      "status": "FINISHED",
+      "task_id": "TARIFF-ORCH-CONTROL-HARDENING-001",
+      "updated_at": "2026-09-14T13:54:06.685567+00:00"
+    },
+    {
+      "head_sha": "3b1ca7cd8acc2525726de4520ab1aeb3de29acf8",
+      "role": "A5",
+      "run_id": "c1eff1aa3c6744baa022af1ab25240ab",
+      "session_id": "/root/a5_control_regression",
+      "started_at": "2026-09-14T13:54:06.698551+00:00",
+      "status": "FINISHED",
+      "task_id": "TARIFF-ORCH-CONTROL-HARDENING-001",
+      "updated_at": "2026-09-14T13:54:06.710272+00:00"
+    },
+    {
+      "head_sha": "0126404cd78fd293f3634bd20c5fd09f937e83ba",
+      "role": "A5",
+      "run_id": "adcf4ddb381b4739bebecb44c4e75f00",
+      "session_id": "/root/a5_pr193_final",
+      "started_at": "2026-09-14T14:11:59.035025+00:00",
+      "status": "FINISHED",
+      "task_id": "TARIFF-A6-CROSS-BRANCH-CONTRACT-001",
+      "updated_at": "2026-09-14T14:11:59.046179+00:00"
+    },
+    {
+      "head_sha": "47da2e4763261cddc638cc276573b3375508a9ac",
+      "role": "A5",
+      "run_id": "815899b39aa149eab526d2004db60cee",
+      "session_id": "/root/a5_pr194_final",
+      "started_at": "2026-09-14T14:11:59.122833+00:00",
+      "status": "FINISHED",
+      "task_id": "TARIFF-A6-LIVE-BRIDGE-001",
+      "updated_at": "2026-09-14T14:11:59.133521+00:00"
     }
   ],
   "schema_version": 1
