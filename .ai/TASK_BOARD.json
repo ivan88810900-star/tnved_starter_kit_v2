@@ -563,7 +563,12 @@
       "head_sha": "cf66e45f595a00657768a4f6d1ed938932c76526",
       "id": "A5-CBR-OBS-NUMERIC-001",
       "reporter": "A5",
-      "status": "CONFIRMED",
+      "resolution": {
+        "evidence": "A0 reproduced the post-fix negative matrix: invalid/non-finite/nonpositive values are withheld with explicit invalid status, and parsed official evidence requires exact CBRF plus canonical CBR URL; raw metadata remains non-admitting.",
+        "head_sha": "84934856d52c04c503ddd33ba85fce325d7450ae",
+        "validator": "A0"
+      },
+      "status": "RESOLVED",
       "summary": "Invalid stored rate/nominal values are emitted without a fail-closed validity state.",
       "task_id": "TARIFF-CBR-RATE-OBSERVATION-003",
       "validation": {
@@ -576,7 +581,12 @@
       "head_sha": "cf66e45f595a00657768a4f6d1ed938932c76526",
       "id": "A5-CBR-OBS-SOURCE-002",
       "reporter": "A5",
-      "status": "CONFIRMED",
+      "resolution": {
+        "evidence": "A0 reproduced the post-fix negative matrix: invalid/non-finite/nonpositive values are withheld with explicit invalid status, and parsed official evidence requires exact CBRF plus canonical CBR URL; raw metadata remains non-admitting.",
+        "head_sha": "84934856d52c04c503ddd33ba85fce325d7450ae",
+        "validator": "A0"
+      },
+      "status": "RESOLVED",
       "summary": "Non-canonical CBR alias URL can promote a syntactically valid revision into parsed official evidence fields.",
       "task_id": "TARIFF-CBR-RATE-OBSERVATION-003",
       "validation": {
@@ -584,10 +594,23 @@
         "evidence": "A0 accepts independent exact-head reproduction: the model schema permits these rows; evidence fields must fail closed on invalid numerics and non-canonical source identity.",
         "validator": "A0"
       }
+    },
+    {
+      "head_sha": "ce1abd85df41a4d4cac4ffeabe891339e917795a",
+      "id": "A5-PAYMENT-NORMATIVE-BUNDLE-001",
+      "reporter": "A5",
+      "status": "CONFIRMED",
+      "summary": "Exact-head CI test_normative_bundle still asserts legacy OK instead of source-unbound REVIEW_REQUIRED; preserve tnved_context assertions and align the contract test.",
+      "task_id": "TARIFF-PAYMENT-UNBOUND-ADMISSION-006",
+      "validation": {
+        "at": "2026-09-14T19:38:16.989029+00:00",
+        "evidence": "A0 reproduced the exact-head CI evidence: the assertion expects legacy OK while the reviewed source-unbound admission contract requires REVIEW_REQUIRED; correction is limited to preserving tnved_context checks while updating admission expectations.",
+        "validator": "A0"
+      }
     }
   ],
   "max_concurrent_subagents": 3,
-  "revision": 404,
+  "revision": 440,
   "runs": [
     {
       "head_sha": null,
@@ -1315,9 +1338,9 @@
       "run_id": "9de4bbfe68be421b966fb66aec444138",
       "session_id": "/root/a3_cbr_observation",
       "started_at": "2026-09-14T19:15:16.978707+00:00",
-      "status": "RUNNING",
+      "status": "FINISHED",
       "task_id": "TARIFF-CBR-RATE-OBSERVATION-003",
-      "updated_at": "2026-09-14T19:15:16.978719+00:00"
+      "updated_at": "2026-09-14T19:18:17.440545+00:00"
     },
     {
       "head_sha": "7b526d3238c80d79aa7e6e8015df4f2e9237104c",
@@ -1335,9 +1358,79 @@
       "run_id": "99a1d3a017b14da997b7bc0b3c522dd1",
       "session_id": "/root/a1_payment_gate",
       "started_at": "2026-09-14T19:17:23.091792+00:00",
-      "status": "RUNNING",
+      "status": "FINISHED",
       "task_id": "TARIFF-PAYMENT-UNBOUND-ADMISSION-005",
-      "updated_at": "2026-09-14T19:17:23.091805+00:00"
+      "updated_at": "2026-09-14T19:21:55.404456+00:00"
+    },
+    {
+      "head_sha": "84934856d52c04c503ddd33ba85fce325d7450ae",
+      "role": "A5",
+      "run_id": "446e82355c574d938aca64f46ea2f978",
+      "session_id": "/root/a5_cbr_observation_fix",
+      "started_at": "2026-09-14T19:18:30.804827+00:00",
+      "status": "FINISHED",
+      "task_id": "TARIFF-CBR-RATE-OBSERVATION-003",
+      "updated_at": "2026-09-14T19:24:06.418546+00:00"
+    },
+    {
+      "head_sha": null,
+      "role": "A1",
+      "run_id": "7479aaa3bae8439f92f4a8f4ac0498b2",
+      "session_id": "/root/a1_payment_gate",
+      "started_at": "2026-09-14T19:22:10.111040+00:00",
+      "status": "FINISHED",
+      "task_id": "TARIFF-PAYMENT-UNBOUND-ADMISSION-006",
+      "updated_at": "2026-09-14T19:27:00.339017+00:00"
+    },
+    {
+      "head_sha": "b326d11ca4931c9c2e67bbde738fdbffca8d312a",
+      "role": "A5",
+      "run_id": "143b51f632f242ecae4191ebfac49651",
+      "session_id": "/root/a5_pr202_exact",
+      "started_at": "2026-09-14T19:26:26.441455+00:00",
+      "status": "FINISHED",
+      "task_id": "TARIFF-CBR-RATE-OBSERVATION-003",
+      "updated_at": "2026-09-14T19:33:17.843527+00:00"
+    },
+    {
+      "head_sha": "796ba45203ad4e3d9adcd76d62eb3ea4ece3399d",
+      "role": "A5",
+      "run_id": "0d6fd18a847e4eeaa9a39b606989fcb5",
+      "session_id": "/root/a5_payment_gate",
+      "started_at": "2026-09-14T19:27:14.321471+00:00",
+      "status": "FINISHED",
+      "task_id": "TARIFF-PAYMENT-UNBOUND-ADMISSION-006",
+      "updated_at": "2026-09-14T19:31:15.601551+00:00"
+    },
+    {
+      "head_sha": "dbb27aa857614b7b83111cddc0c5a1ed32f44580",
+      "role": "A5",
+      "run_id": "b00f37a410e7493ba0240586cbf2c2f0",
+      "session_id": "/root/a5_pr203_exact",
+      "started_at": "2026-09-14T19:28:47.281095+00:00",
+      "status": "FINISHED",
+      "task_id": "TARIFF-LEGACY-VAT-BOUNDARY-003",
+      "updated_at": "2026-09-14T19:36:44.995226+00:00"
+    },
+    {
+      "head_sha": "ce1abd85df41a4d4cac4ffeabe891339e917795a",
+      "role": "A5",
+      "run_id": "0bdc4138025c4e3f87a0a27c942e5eb2",
+      "session_id": "/root/a5_pr204_exact",
+      "started_at": "2026-09-14T19:32:41.069594+00:00",
+      "status": "FINISHED",
+      "task_id": "TARIFF-PAYMENT-UNBOUND-ADMISSION-006",
+      "updated_at": "2026-09-14T19:38:16.978620+00:00"
+    },
+    {
+      "head_sha": "ce1abd85df41a4d4cac4ffeabe891339e917795a",
+      "role": "A1",
+      "run_id": "2f4b127d85ec46f9ad540c5bf0644364",
+      "session_id": "/root/a1_payment_gate",
+      "started_at": "2026-09-14T19:38:17.013026+00:00",
+      "status": "RUNNING",
+      "task_id": "TARIFF-PAYMENT-UNBOUND-ADMISSION-006",
+      "updated_at": "2026-09-14T19:38:17.013032+00:00"
     }
   ],
   "schema_version": 1,
@@ -2271,11 +2364,47 @@
       "goal": "Expose a typed read-only CBR exchange-rate observation that preserves stored row identity and available official source date/revision evidence, remains explicitly unverified when no exact row-to-artifact binding exists, and never upgrades payment admission or writes production data.",
       "id": "TARIFF-CBR-RATE-OBSERVATION-003",
       "owner": "A3",
-      "qa": null,
+      "qa": {
+        "commands": [
+          {
+            "command": "independent exact published-head PR/tree/security review",
+            "exit_code": 0,
+            "output": "PASS PR202 base/head/tree/scope; 54/54 focused; SELECT-only no DML; P1/P2 matrix green"
+          },
+          {
+            "command": "published-head wider replay",
+            "exit_code": 0,
+            "output": "328 passed; same 5 unrelated failures reproduced on exact base; no candidate regression"
+          }
+        ],
+        "head_sha": "b326d11ca4931c9c2e67bbde738fdbffca8d312a",
+        "reviewer_session_id": "/root/a5_pr202_exact",
+        "status": "PASSED"
+      },
       "refs": {
         "base_sha": "5d3b0c1dc7dd8e396c4f812db2bf6f1fa6d293f9",
-        "head_sha": "cf66e45f595a00657768a4f6d1ed938932c76526",
-        "pr": null
+        "head_sha": "b326d11ca4931c9c2e67bbde738fdbffca8d312a",
+        "observed_ci": {
+          "head_sha": "b326d11ca4931c9c2e67bbde738fdbffca8d312a",
+          "not_promoted_to_ci_gate_reason": "A6 live audit is not yet LIVE_VERIFIED; controller requires explicit audit state before gated CI.",
+          "required_jobs": {
+            "Backend NTM safety suite": "success",
+            "Frontend tests, types and build": "success",
+            "Scheduled workflow and locked environment": "success",
+            "Validate and build local staging images": "success"
+          },
+          "run_id": 34886761307,
+          "status": "PASSED",
+          "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/34886761307"
+        },
+        "pr": 202,
+        "publication_mapping": {
+          "identical_trees_verified": true,
+          "local_head_sha": "84934856d52c04c503ddd33ba85fce325d7450ae",
+          "local_tree_sha": "77fb59695f887ab6e973957eb73e7eceb9760544",
+          "published_head_sha": "b326d11ca4931c9c2e67bbde738fdbffca8d312a",
+          "published_tree_sha": "77fb59695f887ab6e973957eb73e7eceb9760544"
+        }
       },
       "required_checks": [
         "Backend NTM safety suite",
@@ -2284,9 +2413,23 @@
         "Scheduled workflow and locked environment"
       ],
       "risk": "high",
-      "status": "IN_PROGRESS",
-      "tests": [],
-      "updated_at": "2026-09-14T19:15:16.978721+00:00",
+      "status": "QA_PASSED",
+      "tests": {
+        "commands": [
+          {
+            "command": "published Git tree equality",
+            "exit_code": 0,
+            "output": "local reviewed 8493485 and published b326d11 share exact tree 77fb59695f887ab6e973957eb73e7eceb9760544; parent 5d3b0c1d"
+          },
+          {
+            "command": "A0 exact published-head replay",
+            "exit_code": 0,
+            "output": "99 passed, 2 warnings in 2.72s; exact two-file scope; worktree clean"
+          }
+        ],
+        "head_sha": "b326d11ca4931c9c2e67bbde738fdbffca8d312a"
+      },
+      "updated_at": "2026-09-14T19:33:17.831188+00:00",
       "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-cbr-rate-observation-003-9dc4811432"
     },
     {
@@ -2310,24 +2453,44 @@
       "qa": {
         "commands": [
           {
-            "command": "independent focused/edge/relevant VAT consumer review",
+            "command": "independent exact published-head PR/tree/security review",
             "exit_code": 0,
-            "output": "11 focused, 12 edge probes, 65 relevant regressions passed; no candidate defect"
+            "output": "PASS PR203 base/head/tree/scope; VAT candidate remains diagnostic and applied=false; no mounted API/NTM/provider behavior change"
           },
           {
-            "command": "exact diff/scope/compile/clean verification",
+            "command": "focused, relevant and adversarial replay",
             "exit_code": 0,
-            "output": "PASS exact five files; diff --check and py_compile clean; no mounted API/NTM/provider change"
+            "output": "11 focused + 70 relevant + 30 edge probes passed; two unrelated legacy failures reproduced on exact base"
           }
         ],
-        "head_sha": "7b526d3238c80d79aa7e6e8015df4f2e9237104c",
-        "reviewer_session_id": "/root/a5_legacy_vat",
+        "head_sha": "dbb27aa857614b7b83111cddc0c5a1ed32f44580",
+        "reviewer_session_id": "/root/a5_pr203_exact",
         "status": "PASSED"
       },
       "refs": {
         "base_sha": "5d3b0c1dc7dd8e396c4f812db2bf6f1fa6d293f9",
-        "head_sha": "7b526d3238c80d79aa7e6e8015df4f2e9237104c",
-        "pr": null
+        "head_sha": "dbb27aa857614b7b83111cddc0c5a1ed32f44580",
+        "observed_ci": {
+          "head_sha": "dbb27aa857614b7b83111cddc0c5a1ed32f44580",
+          "not_promoted_to_ci_gate_reason": "A6 live audit is not yet LIVE_VERIFIED; controller requires explicit audit state before gated CI.",
+          "required_jobs": {
+            "Backend NTM safety suite": "success",
+            "Frontend tests, types and build": "success",
+            "Scheduled workflow and locked environment": "success",
+            "Validate and build local staging images": "success"
+          },
+          "run_id": 34887036498,
+          "status": "PASSED",
+          "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/34887036498"
+        },
+        "pr": 203,
+        "publication_mapping": {
+          "identical_trees_verified": true,
+          "local_head_sha": "7b526d3238c80d79aa7e6e8015df4f2e9237104c",
+          "local_tree_sha": "39f8f13e67d1f628c6278afdd0b339629153c855",
+          "published_head_sha": "dbb27aa857614b7b83111cddc0c5a1ed32f44580",
+          "published_tree_sha": "39f8f13e67d1f628c6278afdd0b339629153c855"
+        }
       },
       "required_checks": [
         "Backend NTM safety suite",
@@ -2340,19 +2503,19 @@
       "tests": {
         "commands": [
           {
-            "command": "A4 final focused and expanded legacy VAT/payment consumer profile",
+            "command": "published Git tree equality",
             "exit_code": 0,
-            "output": "152 passed, 2 warnings in 5.18s; py_compile/diff clean; final amended head 7b526d3"
+            "output": "local reviewed 7b526d3 and published dbb27aa share exact tree 39f8f13e67d1f628c6278afdd0b339629153c855; parent 5d3b0c1d"
           },
           {
-            "command": "A0 independent final focused replay",
+            "command": "A0 exact published-head VAT replay",
             "exit_code": 0,
-            "output": "52 passed, 2 warnings in 1.38s; exact five-file scope, NTM diagnostic mixing removed, diff clean"
+            "output": "52 passed, 2 warnings in 1.39s; exact five-file scope; worktree clean"
           }
         ],
-        "head_sha": "7b526d3238c80d79aa7e6e8015df4f2e9237104c"
+        "head_sha": "dbb27aa857614b7b83111cddc0c5a1ed32f44580"
       },
-      "updated_at": "2026-09-14T19:16:45.752663+00:00",
+      "updated_at": "2026-09-14T19:36:44.983506+00:00",
       "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-legacy-vat-boundary-003-dbe8461b66"
     },
     {
@@ -2422,11 +2585,69 @@
         "Scheduled workflow and locked environment"
       ],
       "risk": "high",
-      "status": "IN_PROGRESS",
+      "status": "CANCELLED",
       "tests": [],
       "updated_at": "2026-09-14T19:17:23.091808+00:00",
       "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-payment-unbound-admission-005-7a55b790a3"
+    },
+    {
+      "author_sessions": [
+        "/root/a1_payment_gate"
+      ],
+      "branch": "agent/rates-tariff-payment-unbound-admission-006-c8a905e03d",
+      "ci": null,
+      "dependencies": [],
+      "external_audit": null,
+      "files": [
+        "customs-clear/backend/app/services/payment_engine.py",
+        "customs-clear/backend/tests/test_payment_source_admission.py",
+        "customs-clear/backend/tests/test_payment_a6_stage2.py",
+        "customs-clear/backend/tests/test_payment_a6_stage2_redteam.py",
+        "customs-clear/backend/tests/test_payment_engine.py",
+        "customs-clear/backend/tests/test_payment_quote.py",
+        "customs-clear/backend/tests/test_payment_preference_eligibility.py",
+        "customs-clear/backend/tests/test_payment_special_duty_applicability.py"
+      ],
+      "goal": "Apply the all-legacy source-unbound admission gate consistently across payment engine, preference and special-duty scenarios, preserving raw candidate arithmetic and exact domain reasons while withholding automatic components and final quote until a future reviewed source token exists.",
+      "id": "TARIFF-PAYMENT-UNBOUND-ADMISSION-006",
+      "owner": "A1",
+      "qa": null,
+      "refs": {
+        "base_sha": "5d3b0c1dc7dd8e396c4f812db2bf6f1fa6d293f9",
+        "head_sha": "ce1abd85df41a4d4cac4ffeabe891339e917795a",
+        "observed_ci": {
+          "head_sha": "ce1abd85df41a4d4cac4ffeabe891339e917795a",
+          "required_jobs": {
+            "Backend NTM safety suite": "failure",
+            "Frontend tests, types and build": "success",
+            "Scheduled workflow and locked environment": "success",
+            "Validate and build local staging images": "success"
+          },
+          "run_id": 34887453306,
+          "status": "FAILED",
+          "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/34887453306"
+        },
+        "pr": 204,
+        "publication_mapping": {
+          "identical_trees_verified": true,
+          "local_head_sha": "796ba45203ad4e3d9adcd76d62eb3ea4ece3399d",
+          "local_tree_sha": "a500f6498d7c347c3e10fd25e4afe0ab268b7146",
+          "published_head_sha": "ce1abd85df41a4d4cac4ffeabe891339e917795a",
+          "published_tree_sha": "a500f6498d7c347c3e10fd25e4afe0ab268b7146"
+        }
+      },
+      "required_checks": [
+        "Backend NTM safety suite",
+        "Frontend tests, types and build",
+        "Validate and build local staging images",
+        "Scheduled workflow and locked environment"
+      ],
+      "risk": "high",
+      "status": "IN_PROGRESS",
+      "tests": [],
+      "updated_at": "2026-09-14T19:38:17.013035+00:00",
+      "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-payment-unbound-admission-006-c8a905e03d"
     }
   ],
-  "updated_at": "2026-09-14T19:17:23.092629+00:00"
+  "updated_at": "2026-09-14T19:38:38.821720+00:00"
 }
