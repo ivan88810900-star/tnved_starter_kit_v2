@@ -1,5 +1,5 @@
 {
-  "board_revision": 123,
+  "board_revision": 127,
   "findings": [
     {
       "head_sha": "161a9258d174e93266353ae1fd2cb0b3e4657679",
@@ -124,6 +124,32 @@
       "validation": {
         "at": "2026-09-12T22:28:34.343648+00:00",
         "evidence": "A0 accepts independent A5 reproduction: base contract 3 lines/head 1 line and a line-3 finding was rejected by the new unconditional override.",
+        "validator": "A0"
+      }
+    },
+    {
+      "head_sha": "1c0272a34cbcbb3b99d6f32c86d86949bc0adc06",
+      "id": "A0-UPSTREAM-DRIFT-002",
+      "reporter": "A0",
+      "status": "CONFIRMED",
+      "summary": "PR #187 advanced 15 commits from candidate base a9d15c74 to dab1f8aa; the prior admission recheck is no longer current against the active product head.",
+      "task_id": "TARIFF-ADMISSION-RECHECK-001",
+      "validation": {
+        "at": "2026-09-14T09:18:42.207542+00:00",
+        "evidence": "GitHub refs verified 2026-09-14: active product head dab1f8aae5a114a51505763bf9ea0a0d8161ed38 is 15 commits ahead of a9d15c74699c8cd7842404580ff6fd7bd957e9eb and changes 22 files including admission workflows, product decisions, AD30 services, scripts, tests, and evidence. PR #191 head remains 1c0272a34cbcbb3b99d6f32c86d86949bc0adc06 on the superseded base; its prior A5/CI cannot establish current-head readiness.",
+        "validator": "A0"
+      }
+    },
+    {
+      "head_sha": "5bff4523ec20f7a29fe6f7b997ffccfc479c9bff",
+      "id": "A0-UPSTREAM-DRIFT-003",
+      "reporter": "A0",
+      "status": "CONFIRMED",
+      "summary": "PR #192 is stacked on stale PR #191 while current PR #187 now contains a separately implemented AD30 executable review and updated product decisions; prior candidate QA is not current.",
+      "task_id": "TARIFF-AD30-REVIEW-CANDIDATE-001",
+      "validation": {
+        "at": "2026-09-14T09:18:42.223840+00:00",
+        "evidence": "GitHub refs and current product state verified 2026-09-14: PR #192 remains 5bff4523ec20f7a29fe6f7b997ffccfc479c9bff based on PR #191 head 1c0272a34cbcbb3b99d6f32c86d86949bc0adc06, whereas PR #187 is dab1f8aae5a114a51505763bf9ea0a0d8161ed38. The active product branch adds the AD30 executable review path and changes .ai/CURRENT_STATE.md, .ai/DECISIONS.md, task/evidence docs, services, scripts, and tests. Exact-head CI run 34825453006 succeeded, but that does not preserve PR #192 QA/readiness on its stale stack.",
         "validator": "A0"
       }
     }

@@ -125,10 +125,36 @@
         "evidence": "A0 accepts independent A5 reproduction: base contract 3 lines/head 1 line and a line-3 finding was rejected by the new unconditional override.",
         "validator": "A0"
       }
+    },
+    {
+      "head_sha": "1c0272a34cbcbb3b99d6f32c86d86949bc0adc06",
+      "id": "A0-UPSTREAM-DRIFT-002",
+      "reporter": "A0",
+      "status": "CONFIRMED",
+      "summary": "PR #187 advanced 15 commits from candidate base a9d15c74 to dab1f8aa; the prior admission recheck is no longer current against the active product head.",
+      "task_id": "TARIFF-ADMISSION-RECHECK-001",
+      "validation": {
+        "at": "2026-09-14T09:18:42.207542+00:00",
+        "evidence": "GitHub refs verified 2026-09-14: active product head dab1f8aae5a114a51505763bf9ea0a0d8161ed38 is 15 commits ahead of a9d15c74699c8cd7842404580ff6fd7bd957e9eb and changes 22 files including admission workflows, product decisions, AD30 services, scripts, tests, and evidence. PR #191 head remains 1c0272a34cbcbb3b99d6f32c86d86949bc0adc06 on the superseded base; its prior A5/CI cannot establish current-head readiness.",
+        "validator": "A0"
+      }
+    },
+    {
+      "head_sha": "5bff4523ec20f7a29fe6f7b997ffccfc479c9bff",
+      "id": "A0-UPSTREAM-DRIFT-003",
+      "reporter": "A0",
+      "status": "CONFIRMED",
+      "summary": "PR #192 is stacked on stale PR #191 while current PR #187 now contains a separately implemented AD30 executable review and updated product decisions; prior candidate QA is not current.",
+      "task_id": "TARIFF-AD30-REVIEW-CANDIDATE-001",
+      "validation": {
+        "at": "2026-09-14T09:18:42.223840+00:00",
+        "evidence": "GitHub refs and current product state verified 2026-09-14: PR #192 remains 5bff4523ec20f7a29fe6f7b997ffccfc479c9bff based on PR #191 head 1c0272a34cbcbb3b99d6f32c86d86949bc0adc06, whereas PR #187 is dab1f8aae5a114a51505763bf9ea0a0d8161ed38. The active product branch adds the AD30 executable review path and changes .ai/CURRENT_STATE.md, .ai/DECISIONS.md, task/evidence docs, services, scripts, and tests. Exact-head CI run 34825453006 succeeded, but that does not preserve PR #192 QA/readiness on its stale stack.",
+        "validator": "A0"
+      }
     }
   ],
   "max_concurrent_subagents": 3,
-  "revision": 123,
+  "revision": 127,
   "runs": [
     {
       "head_sha": null,
@@ -529,55 +555,10 @@
         "/root/smoke_rates"
       ],
       "branch": "agent/rates-tariff-admission-recheck-001-9231ffbdb5",
-      "ci": {
-        "checks": [
-          {
-            "conclusion": "success",
-            "head_sha": "1c0272a34cbcbb3b99d6f32c86d86949bc0adc06",
-            "name": "Validate and build local staging images",
-            "run_id": 34719777785,
-            "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/34719777785"
-          },
-          {
-            "conclusion": "success",
-            "head_sha": "1c0272a34cbcbb3b99d6f32c86d86949bc0adc06",
-            "name": "Scheduled workflow and locked environment",
-            "run_id": 34719777785,
-            "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/34719777785"
-          },
-          {
-            "conclusion": "success",
-            "head_sha": "1c0272a34cbcbb3b99d6f32c86d86949bc0adc06",
-            "name": "Backend NTM safety suite",
-            "run_id": 34719777785,
-            "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/34719777785"
-          },
-          {
-            "conclusion": "success",
-            "head_sha": "1c0272a34cbcbb3b99d6f32c86d86949bc0adc06",
-            "name": "Frontend tests, types and build",
-            "run_id": 34719777785,
-            "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/34719777785"
-          },
-          {
-            "conclusion": "success",
-            "head_sha": "1c0272a34cbcbb3b99d6f32c86d86949bc0adc06",
-            "name": "admission",
-            "run_id": 34719777792,
-            "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/34719777792"
-          }
-        ],
-        "head_sha": "1c0272a34cbcbb3b99d6f32c86d86949bc0adc06",
-        "status": "PASSED"
-      },
+      "ci": null,
       "ci_profile_decision": "A0 selected full existing CI plus admission job from actual a9d15c74 workflows after upstream reconciliation; existing checks unchanged.",
       "dependencies": [],
-      "external_audit": {
-        "evidence_ref": "Low-risk bounded evidence report plus stronger CI branch routing only; no product/legal-rate change. Optional A6 not configured in this runtime.",
-        "head_sha": "1c0272a34cbcbb3b99d6f32c86d86949bc0adc06",
-        "reviewer": "A6",
-        "status": "NOT_REQUIRED"
-      },
+      "external_audit": null,
       "files": [
         "docs/ai-workflow/PAYMENT_ADMISSION_RECHECK_20260912.md",
         ".github/workflows/admission-agent-qa.yml"
@@ -592,18 +573,7 @@
           "reason": "Confirmed workflow compatibility defect. A1 owns one reviewed matcher extension; no other agent edits this file. Dynamic agent/* branches must run the complete existing integration test array; exact historical profiles stay unchanged."
         }
       ],
-      "qa": {
-        "commands": [
-          {
-            "command": "Independent Bash replay of actual case; comparison of all arrays/remaining bytes; exact report blob, source, Git tree, ownership and diff checks",
-            "exit_code": 0,
-            "output": "Dynamic branches receive unchanged44 tests; all six historical choices byte-identical; non-agent refusedexit2. Report unchanged from independent current-source replay4e401. No local pytest/DB claimed."
-          }
-        ],
-        "head_sha": "1c0272a34cbcbb3b99d6f32c86d86949bc0adc06",
-        "reviewer_session_id": "/root/a5_independent_qa",
-        "status": "PASSED"
-      },
+      "qa": null,
       "refs": {
         "base_history": [
           {
@@ -646,18 +616,9 @@
         }
       ],
       "risk": "low",
-      "status": "READY_FOR_HUMAN_APPROVAL",
-      "tests": {
-        "commands": [
-          {
-            "command": "A1 bash replay of extracted workflow case; exact remainder comparison; git diff-tree --check; A0 Git full-tree publication equality",
-            "exit_code": 0,
-            "output": "Dynamic rates/sources/qa/nested agent branches receive all unchanged44 integration tests; six fixed scopes unchanged; non-agent fallback exit2. Report blob unchanged from independently replayed4e401. No local pytest/DB claimed."
-          }
-        ],
-        "head_sha": "1c0272a34cbcbb3b99d6f32c86d86949bc0adc06"
-      },
-      "updated_at": "2026-09-12T21:28:43.669296+00:00",
+      "status": "CHANGES_REQUESTED",
+      "tests": [],
+      "updated_at": "2026-09-14T09:18:42.207558+00:00",
       "upstream_reconciliation": {
         "a0_local_merge_sha": "2e5da9ecfb74ef386b6695eba24abd62ae993776",
         "owned_diff_vs_new_base": [
@@ -684,28 +645,7 @@
       "goal": "Assemble a bounded source-fact review candidate for the retained Decision 12 -> 4 -> 121 chain, binding exact product text, producer rows, printed codes, dates and provenance while explicitly preserving incomplete amendment coverage and making no legal applicability, rate admission, promotion, production or enforcement claim.",
       "id": "TARIFF-AD30-REVIEW-CANDIDATE-001",
       "owner": "A3",
-      "qa": {
-        "commands": [
-          {
-            "command": "Fresh A5 exact published Git/GitHub ref, HEAD/tree, parent, merge-base and one-file scope verification",
-            "exit_code": 0,
-            "output": "PASS: remote and local 5bff4523; tree e008c16; parent/base 1c0272a; GitHub compare ahead 1/behind 0; sole added owned file; clean diff."
-          },
-          {
-            "command": "Fresh A5 embedded positive and cardinality/missing-jq fail-closed negative controls",
-            "exit_code": 0,
-            "output": "PASS: positive 5/5, 33/33, 23/23, 8/8; cardinality rc1 and missing-jq rc127, both zero PASS lines."
-          },
-          {
-            "command": "Fresh A5 independent evidence reconstruction and substantive boundary audit",
-            "exit_code": 0,
-            "output": "PASS: pointers 8/8, bindings 33/33, literals 23/23, dates 8/8, boundaries 16/16; no material finding; no binary/PDF replay claimed."
-          }
-        ],
-        "head_sha": "5bff4523ec20f7a29fe6f7b997ffccfc479c9bff",
-        "reviewer_session_id": "/root/a5_ad30_qa",
-        "status": "PASSED"
-      },
+      "qa": null,
       "refs": {
         "base_sha": "1c0272a34cbcbb3b99d6f32c86d86949bc0adc06",
         "head_sha": "5bff4523ec20f7a29fe6f7b997ffccfc479c9bff",
@@ -728,23 +668,9 @@
         "admission"
       ],
       "risk": "high",
-      "status": "QA_PASSED",
-      "tests": {
-        "commands": [
-          {
-            "command": "Replay embedded fail-closed exact base-to-published-head validation with exact cardinality assertions",
-            "exit_code": 0,
-            "output": "PASS: published full tree e008c16 exactly equals locally executed tree; exact one-file scope; 5/5 paths, 33/33 bindings, 23/23 source literals, 8/8 dates; diff clean."
-          },
-          {
-            "command": "Cardinality assertion and missing-jq producer negative controls on identical candidate tree",
-            "exit_code": 0,
-            "output": "PASS: locally executed identical tree produced rc1 and rc127 respectively with zero PASS lines."
-          }
-        ],
-        "head_sha": "5bff4523ec20f7a29fe6f7b997ffccfc479c9bff"
-      },
-      "updated_at": "2026-09-12T22:15:11.637577+00:00",
+      "status": "CHANGES_REQUESTED",
+      "tests": [],
+      "updated_at": "2026-09-14T09:18:42.223850+00:00",
       "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-ad30-review-candidate-001-99f4e3fb32"
     },
     {
@@ -801,5 +727,5 @@
       "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-a6-cross-branch-contract-001-a5c4916ca6"
     }
   ],
-  "updated_at": "2026-09-14T09:13:33.744814+00:00"
+  "updated_at": "2026-09-14T09:18:42.224016+00:00"
 }

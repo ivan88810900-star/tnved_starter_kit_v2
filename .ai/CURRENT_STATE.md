@@ -7,12 +7,21 @@ from code/QA/CI candidate SHAs). Read this branch's board on every wake-up.
 
 ## Automation update — 2026-09-14
 
+- PR #187 advanced 15 commits from the previously reviewed base `a9d15c74` to
+  current product HEAD `dab1f8aae5a114a51505763bf9ea0a0d8161ed38`. Exact-head
+  CI run 34825453006 succeeded, but the 22-file change set includes current
+  product decisions, admission workflow, AD30 services/scripts/tests and
+  evidence. A0 confirmed `A0-UPSTREAM-DRIFT-002` and
+  `A0-UPSTREAM-DRIFT-003`: PR #191 and stacked PR #192 are stale, and both task
+  records are now `CHANGES_REQUESTED` with prior QA/CI gates invalidated. The
+  active product branch's separate AD30 executable review must be treated as the
+  current implementation; old approvals are not transferred to it.
 - Draft PR #192 publishes the bounded AD30 Decision 12 -> 4 -> 121 source-fact
   candidate at exact HEAD `5bff4523ec20f7a29fe6f7b997ffccfc479c9bff`.
-  Fresh independent A5 passed that published HEAD. Exact-head CI run 34722092821
-  and Admission agent QA run 34722005000 completed successfully. The task remains
-  gated because it is high risk and no checked A6 availability receipt has yet
-  been recorded against a fully verified published audit adapter.
+  Fresh independent A5 and exact-head CI run 34722092821 passed that historical
+  published HEAD, and Admission agent QA run 34722005000 completed successfully.
+  Those results are retained as provenance only and no longer establish current
+  readiness after the product-head drift above.
 - Draft PR #193 publishes the separate orchestration-only adapter fix at exact
   HEAD `c39248672a6299b64bc2db5637e2027579a4624e`, tree
   `2c1f012c76b6eda13883f2d207c1d74ffc0d9c50`, stacked on PR #190. It does not
