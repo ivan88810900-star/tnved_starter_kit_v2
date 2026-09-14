@@ -1,5 +1,5 @@
 {
-  "board_revision": 377,
+  "board_revision": 404,
   "findings": [
     {
       "head_sha": "161a9258d174e93266353ae1fd2cb0b3e4657679",
@@ -557,6 +557,32 @@
       "validation": {
         "at": "2026-09-14T15:35:36.584273+00:00",
         "evidence": "A0/A5 matched three pinned evidence hashes, 24 facts/3 rows and fail-closed gates; 442 tests passed; fresh official access returned proxy 502/timeouts, which is a freshness blocker and not evidence of absence or unchanged law.",
+        "validator": "A0"
+      }
+    },
+    {
+      "head_sha": "cf66e45f595a00657768a4f6d1ed938932c76526",
+      "id": "A5-CBR-OBS-NUMERIC-001",
+      "reporter": "A5",
+      "status": "CONFIRMED",
+      "summary": "Invalid stored rate/nominal values are emitted without a fail-closed validity state.",
+      "task_id": "TARIFF-CBR-RATE-OBSERVATION-003",
+      "validation": {
+        "at": "2026-09-14T19:15:02.018503+00:00",
+        "evidence": "A0 accepts independent exact-head reproduction: the model schema permits these rows; evidence fields must fail closed on invalid numerics and non-canonical source identity.",
+        "validator": "A0"
+      }
+    },
+    {
+      "head_sha": "cf66e45f595a00657768a4f6d1ed938932c76526",
+      "id": "A5-CBR-OBS-SOURCE-002",
+      "reporter": "A5",
+      "status": "CONFIRMED",
+      "summary": "Non-canonical CBR alias URL can promote a syntactically valid revision into parsed official evidence fields.",
+      "task_id": "TARIFF-CBR-RATE-OBSERVATION-003",
+      "validation": {
+        "at": "2026-09-14T19:15:02.039111+00:00",
+        "evidence": "A0 accepts independent exact-head reproduction: the model schema permits these rows; evidence fields must fail closed on invalid numerics and non-canonical source identity.",
         "validator": "A0"
       }
     }
