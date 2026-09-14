@@ -599,7 +599,12 @@
       "head_sha": "ce1abd85df41a4d4cac4ffeabe891339e917795a",
       "id": "A5-PAYMENT-NORMATIVE-BUNDLE-001",
       "reporter": "A5",
-      "status": "CONFIRMED",
+      "resolution": {
+        "evidence": "A0 verified the published exact-tree fix: the normative bundle test retains tnved_context/notes checks and now asserts REVIEW_REQUIRED plus duty/VAT/final withholding; 107 tests passed.",
+        "head_sha": "ee81a66eafaba008c2205cac65e5256f939822e2",
+        "validator": "A0"
+      },
+      "status": "RESOLVED",
       "summary": "Exact-head CI test_normative_bundle still asserts legacy OK instead of source-unbound REVIEW_REQUIRED; preserve tnved_context assertions and align the contract test.",
       "task_id": "TARIFF-PAYMENT-UNBOUND-ADMISSION-006",
       "validation": {
@@ -610,7 +615,7 @@
     }
   ],
   "max_concurrent_subagents": 3,
-  "revision": 440,
+  "revision": 449,
   "runs": [
     {
       "head_sha": null,
@@ -1428,9 +1433,19 @@
       "run_id": "2f4b127d85ec46f9ad540c5bf0644364",
       "session_id": "/root/a1_payment_gate",
       "started_at": "2026-09-14T19:38:17.013026+00:00",
-      "status": "RUNNING",
+      "status": "FINISHED",
       "task_id": "TARIFF-PAYMENT-UNBOUND-ADMISSION-006",
-      "updated_at": "2026-09-14T19:38:17.013032+00:00"
+      "updated_at": "2026-09-14T19:42:46.278715+00:00"
+    },
+    {
+      "head_sha": "ee81a66eafaba008c2205cac65e5256f939822e2",
+      "role": "A5",
+      "run_id": "f4b946c90c254a2785f0a684652e5398",
+      "session_id": "/root/a5_pr204_fix_exact",
+      "started_at": "2026-09-14T19:42:53.239400+00:00",
+      "status": "FINISHED",
+      "task_id": "TARIFF-PAYMENT-UNBOUND-ADMISSION-006",
+      "updated_at": "2026-09-14T19:48:36.571699+00:00"
     }
   ],
   "schema_version": 1,
@@ -2600,40 +2615,64 @@
       "external_audit": null,
       "files": [
         "customs-clear/backend/app/services/payment_engine.py",
-        "customs-clear/backend/tests/test_payment_source_admission.py",
+        "customs-clear/backend/tests/test_normative_bundle.py",
         "customs-clear/backend/tests/test_payment_a6_stage2.py",
         "customs-clear/backend/tests/test_payment_a6_stage2_redteam.py",
         "customs-clear/backend/tests/test_payment_engine.py",
-        "customs-clear/backend/tests/test_payment_quote.py",
         "customs-clear/backend/tests/test_payment_preference_eligibility.py",
+        "customs-clear/backend/tests/test_payment_quote.py",
+        "customs-clear/backend/tests/test_payment_source_admission.py",
         "customs-clear/backend/tests/test_payment_special_duty_applicability.py"
       ],
       "goal": "Apply the all-legacy source-unbound admission gate consistently across payment engine, preference and special-duty scenarios, preserving raw candidate arithmetic and exact domain reasons while withholding automatic components and final quote until a future reviewed source token exists.",
       "id": "TARIFF-PAYMENT-UNBOUND-ADMISSION-006",
       "owner": "A1",
-      "qa": null,
+      "qa": {
+        "commands": [
+          {
+            "command": "independent exact published-head PR/tree/security review",
+            "exit_code": 0,
+            "output": "PASS PR204 base/head/tree/parent/exact nine-file scope; bounded fix changes only normative bundle test without weakening"
+          },
+          {
+            "command": "focused and broad published-head replay",
+            "exit_code": 0,
+            "output": "260 focused passed; 735 broad passed plus 12 subtests; four unrelated failures reproduced on exact base"
+          },
+          {
+            "command": "exact-head CI 34888475765",
+            "exit_code": 0,
+            "output": "success; all four required jobs passed; backend 5615 passed, 2 skipped, 85 subtests; optional ETT job skipped and not counted as pass"
+          }
+        ],
+        "head_sha": "ee81a66eafaba008c2205cac65e5256f939822e2",
+        "reviewer_session_id": "/root/a5_pr204_fix_exact",
+        "status": "PASSED"
+      },
       "refs": {
         "base_sha": "5d3b0c1dc7dd8e396c4f812db2bf6f1fa6d293f9",
-        "head_sha": "ce1abd85df41a4d4cac4ffeabe891339e917795a",
+        "head_sha": "ee81a66eafaba008c2205cac65e5256f939822e2",
         "observed_ci": {
-          "head_sha": "ce1abd85df41a4d4cac4ffeabe891339e917795a",
+          "head_sha": "ee81a66eafaba008c2205cac65e5256f939822e2",
+          "not_promoted_to_ci_gate_reason": "A6 live audit is not yet LIVE_VERIFIED; controller requires explicit audit state before gated CI.",
           "required_jobs": {
-            "Backend NTM safety suite": "failure",
+            "Backend NTM safety suite": "success",
             "Frontend tests, types and build": "success",
             "Scheduled workflow and locked environment": "success",
             "Validate and build local staging images": "success"
           },
-          "run_id": 34887453306,
-          "status": "FAILED",
-          "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/34887453306"
+          "run_id": 34888475765,
+          "status": "PASSED",
+          "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/34888475765"
         },
         "pr": 204,
         "publication_mapping": {
           "identical_trees_verified": true,
-          "local_head_sha": "796ba45203ad4e3d9adcd76d62eb3ea4ece3399d",
-          "local_tree_sha": "a500f6498d7c347c3e10fd25e4afe0ab268b7146",
-          "published_head_sha": "ce1abd85df41a4d4cac4ffeabe891339e917795a",
-          "published_tree_sha": "a500f6498d7c347c3e10fd25e4afe0ab268b7146"
+          "local_head_sha": "2633871471801e97abcbacf6698c924968fb742c",
+          "local_tree_sha": "c1c655229f2971716d0d8d8718fe1f73e630bff7",
+          "published_head_sha": "ee81a66eafaba008c2205cac65e5256f939822e2",
+          "published_tree_sha": "c1c655229f2971716d0d8d8718fe1f73e630bff7",
+          "supersedes_published_head_sha": "ce1abd85df41a4d4cac4ffeabe891339e917795a"
         }
       },
       "required_checks": [
@@ -2643,11 +2682,25 @@
         "Scheduled workflow and locked environment"
       ],
       "risk": "high",
-      "status": "IN_PROGRESS",
-      "tests": [],
-      "updated_at": "2026-09-14T19:38:17.013035+00:00",
+      "status": "QA_PASSED",
+      "tests": {
+        "commands": [
+          {
+            "command": "published Git tree equality after bounded CI fix",
+            "exit_code": 0,
+            "output": "local reviewed 2633871 and published ee81a66 share exact tree c1c655229f2971716d0d8d8718fe1f73e630bff7; fast-forward parent ce1abd85"
+          },
+          {
+            "command": "A0 exact failing test plus source-gate replay",
+            "exit_code": 0,
+            "output": "107 passed, 2 warnings; exact added test scope; worktree clean"
+          }
+        ],
+        "head_sha": "ee81a66eafaba008c2205cac65e5256f939822e2"
+      },
+      "updated_at": "2026-09-14T19:48:36.556665+00:00",
       "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-payment-unbound-admission-006-c8a905e03d"
     }
   ],
-  "updated_at": "2026-09-14T19:38:38.821720+00:00"
+  "updated_at": "2026-09-14T19:48:36.584242+00:00"
 }
