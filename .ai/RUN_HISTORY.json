@@ -1,5 +1,5 @@
 {
-  "board_revision": 449,
+  "board_revision": 460,
   "runs": [
     {
       "head_sha": null,
@@ -830,6 +830,26 @@
       "status": "FINISHED",
       "task_id": "TARIFF-PAYMENT-UNBOUND-ADMISSION-006",
       "updated_at": "2026-09-14T19:48:36.571699+00:00"
+    },
+    {
+      "head_sha": null,
+      "role": "A3",
+      "run_id": "e0498f7ac73d4fe9a709e1e2a58bf300",
+      "session_id": "/root/a3_ad30_freshness",
+      "started_at": "2026-09-14T20:41:58.414057+00:00",
+      "status": "RUNNING",
+      "task_id": "TARIFF-AD30-FRESHNESS-EVIDENCE-008",
+      "updated_at": "2026-09-14T20:41:58.414064+00:00"
+    },
+    {
+      "head_sha": null,
+      "role": "A2",
+      "run_id": "f41d7fc1f94c41d982ce9dfb0fb76cfc",
+      "session_id": "/root/a2_ntm_recheck",
+      "started_at": "2026-09-14T20:41:58.424977+00:00",
+      "status": "RUNNING",
+      "task_id": "TARIFF-NTM-COMPLETENESS-RECHECK-001",
+      "updated_at": "2026-09-14T20:41:58.424983+00:00"
     }
   ],
   "schema_version": 1
