@@ -1,5 +1,5 @@
 {
-  "board_revision": 404,
+  "board_revision": 440,
   "runs": [
     {
       "head_sha": null,
@@ -727,9 +727,9 @@
       "run_id": "9de4bbfe68be421b966fb66aec444138",
       "session_id": "/root/a3_cbr_observation",
       "started_at": "2026-09-14T19:15:16.978707+00:00",
-      "status": "RUNNING",
+      "status": "FINISHED",
       "task_id": "TARIFF-CBR-RATE-OBSERVATION-003",
-      "updated_at": "2026-09-14T19:15:16.978719+00:00"
+      "updated_at": "2026-09-14T19:18:17.440545+00:00"
     },
     {
       "head_sha": "7b526d3238c80d79aa7e6e8015df4f2e9237104c",
@@ -747,9 +747,79 @@
       "run_id": "99a1d3a017b14da997b7bc0b3c522dd1",
       "session_id": "/root/a1_payment_gate",
       "started_at": "2026-09-14T19:17:23.091792+00:00",
-      "status": "RUNNING",
+      "status": "FINISHED",
       "task_id": "TARIFF-PAYMENT-UNBOUND-ADMISSION-005",
-      "updated_at": "2026-09-14T19:17:23.091805+00:00"
+      "updated_at": "2026-09-14T19:21:55.404456+00:00"
+    },
+    {
+      "head_sha": "84934856d52c04c503ddd33ba85fce325d7450ae",
+      "role": "A5",
+      "run_id": "446e82355c574d938aca64f46ea2f978",
+      "session_id": "/root/a5_cbr_observation_fix",
+      "started_at": "2026-09-14T19:18:30.804827+00:00",
+      "status": "FINISHED",
+      "task_id": "TARIFF-CBR-RATE-OBSERVATION-003",
+      "updated_at": "2026-09-14T19:24:06.418546+00:00"
+    },
+    {
+      "head_sha": null,
+      "role": "A1",
+      "run_id": "7479aaa3bae8439f92f4a8f4ac0498b2",
+      "session_id": "/root/a1_payment_gate",
+      "started_at": "2026-09-14T19:22:10.111040+00:00",
+      "status": "FINISHED",
+      "task_id": "TARIFF-PAYMENT-UNBOUND-ADMISSION-006",
+      "updated_at": "2026-09-14T19:27:00.339017+00:00"
+    },
+    {
+      "head_sha": "b326d11ca4931c9c2e67bbde738fdbffca8d312a",
+      "role": "A5",
+      "run_id": "143b51f632f242ecae4191ebfac49651",
+      "session_id": "/root/a5_pr202_exact",
+      "started_at": "2026-09-14T19:26:26.441455+00:00",
+      "status": "FINISHED",
+      "task_id": "TARIFF-CBR-RATE-OBSERVATION-003",
+      "updated_at": "2026-09-14T19:33:17.843527+00:00"
+    },
+    {
+      "head_sha": "796ba45203ad4e3d9adcd76d62eb3ea4ece3399d",
+      "role": "A5",
+      "run_id": "0d6fd18a847e4eeaa9a39b606989fcb5",
+      "session_id": "/root/a5_payment_gate",
+      "started_at": "2026-09-14T19:27:14.321471+00:00",
+      "status": "FINISHED",
+      "task_id": "TARIFF-PAYMENT-UNBOUND-ADMISSION-006",
+      "updated_at": "2026-09-14T19:31:15.601551+00:00"
+    },
+    {
+      "head_sha": "dbb27aa857614b7b83111cddc0c5a1ed32f44580",
+      "role": "A5",
+      "run_id": "b00f37a410e7493ba0240586cbf2c2f0",
+      "session_id": "/root/a5_pr203_exact",
+      "started_at": "2026-09-14T19:28:47.281095+00:00",
+      "status": "FINISHED",
+      "task_id": "TARIFF-LEGACY-VAT-BOUNDARY-003",
+      "updated_at": "2026-09-14T19:36:44.995226+00:00"
+    },
+    {
+      "head_sha": "ce1abd85df41a4d4cac4ffeabe891339e917795a",
+      "role": "A5",
+      "run_id": "0bdc4138025c4e3f87a0a27c942e5eb2",
+      "session_id": "/root/a5_pr204_exact",
+      "started_at": "2026-09-14T19:32:41.069594+00:00",
+      "status": "FINISHED",
+      "task_id": "TARIFF-PAYMENT-UNBOUND-ADMISSION-006",
+      "updated_at": "2026-09-14T19:38:16.978620+00:00"
+    },
+    {
+      "head_sha": "ce1abd85df41a4d4cac4ffeabe891339e917795a",
+      "role": "A1",
+      "run_id": "2f4b127d85ec46f9ad540c5bf0644364",
+      "session_id": "/root/a1_payment_gate",
+      "started_at": "2026-09-14T19:38:17.013026+00:00",
+      "status": "RUNNING",
+      "task_id": "TARIFF-PAYMENT-UNBOUND-ADMISSION-006",
+      "updated_at": "2026-09-14T19:38:17.013032+00:00"
     }
   ],
   "schema_version": 1
