@@ -1,5 +1,5 @@
 {
-  "board_revision": 336,
+  "board_revision": 365,
   "findings": [
     {
       "head_sha": "161a9258d174e93266353ae1fd2cb0b3e4657679",
@@ -505,6 +505,58 @@
       "validation": {
         "at": "2026-09-14T13:36:30.451911+00:00",
         "evidence": "A0 confirmed Path.exists has broken-link false semantics; admission must use lexists/lstat and reject symlink/non-regular required files.",
+        "validator": "A0"
+      }
+    },
+    {
+      "head_sha": "dd56cc5357b30ae4cd448ae7a1608dbfa73e0da2",
+      "id": "A0-PAYMENT-UNBOUND-FINAL-004",
+      "reporter": "A0",
+      "status": "CONFIRMED",
+      "summary": "HsRate rows with blank effective dates/source and source-unbound HsDutyRule specific RUB/kg rules can still produce status OK with non-null final quote.",
+      "task_id": "TARIFF-ADMISSION-RECHECK-001",
+      "validation": {
+        "at": "2026-09-14T15:35:36.526127+00:00",
+        "evidence": "A0 and independent A5 reproduced exact in-memory outcomes 346924 and 225168 on PR187 base 5d3b0c1d; model/code inspection confirms missing source/date fields and admission gate.",
+        "validator": "A0"
+      }
+    },
+    {
+      "head_sha": "dd56cc5357b30ae4cd448ae7a1608dbfa73e0da2",
+      "id": "A0-PAYMENT-FX-PROVENANCE-005",
+      "reporter": "A0",
+      "status": "CONFIRMED",
+      "summary": "Payment FX remains fail-closed for foreign maps, but get_rates_map erases stored CBR row date/revision identity so no verified quote-bound FX path exists.",
+      "task_id": "TARIFF-ADMISSION-RECHECK-001",
+      "validation": {
+        "at": "2026-09-14T15:35:36.546224+00:00",
+        "evidence": "A0/A5 code inspection and EUR 123.45 probe reproduced REVIEW_REQUIRED with unverified_rate_map, null source date and null final quote; no legal valuation-date rule inferred.",
+        "validator": "A0"
+      }
+    },
+    {
+      "head_sha": "dd56cc5357b30ae4cd448ae7a1608dbfa73e0da2",
+      "id": "A0-LEGACY-VAT-OVERRIDE-006",
+      "reporter": "A0",
+      "status": "CONFIRMED",
+      "summary": "Legacy diagnostic invoice enrichment accepts vat_import_override and changes legacy VAT/final totals without an admission state; mounted APIs were not shown to reach this path.",
+      "task_id": "TARIFF-ADMISSION-RECHECK-001",
+      "validation": {
+        "at": "2026-09-14T15:35:36.565121+00:00",
+        "evidence": "A0/A5 reproduced duty 100, VAT/total 242/342 changing to 110/210 under override=10; call-graph review found only non-mounted scripts, so scope is bounded.",
+        "validator": "A0"
+      }
+    },
+    {
+      "head_sha": "a304ff9003be44e9ec1bf4c4e313b3993c634d46",
+      "id": "A0-AD30-SOURCE-COMPLETENESS-007",
+      "reporter": "A0",
+      "status": "CONFIRMED",
+      "summary": "Current retained AD30 facts do not establish complete amendment/repeal history, final AD30R1 report, producer continuity, 2021-2026 nomenclature transitions or fresh official edition.",
+      "task_id": "TARIFF-AD30-REVIEW-CANDIDATE-001",
+      "validation": {
+        "at": "2026-09-14T15:35:36.584273+00:00",
+        "evidence": "A0/A5 matched three pinned evidence hashes, 24 facts/3 rows and fail-closed gates; 442 tests passed; fresh official access returned proxy 502/timeouts, which is a freshness blocker and not evidence of absence or unchanged law.",
         "validator": "A0"
       }
     }

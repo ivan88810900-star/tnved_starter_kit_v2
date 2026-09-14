@@ -506,10 +506,62 @@
         "evidence": "A0 confirmed Path.exists has broken-link false semantics; admission must use lexists/lstat and reject symlink/non-regular required files.",
         "validator": "A0"
       }
+    },
+    {
+      "head_sha": "dd56cc5357b30ae4cd448ae7a1608dbfa73e0da2",
+      "id": "A0-PAYMENT-UNBOUND-FINAL-004",
+      "reporter": "A0",
+      "status": "CONFIRMED",
+      "summary": "HsRate rows with blank effective dates/source and source-unbound HsDutyRule specific RUB/kg rules can still produce status OK with non-null final quote.",
+      "task_id": "TARIFF-ADMISSION-RECHECK-001",
+      "validation": {
+        "at": "2026-09-14T15:35:36.526127+00:00",
+        "evidence": "A0 and independent A5 reproduced exact in-memory outcomes 346924 and 225168 on PR187 base 5d3b0c1d; model/code inspection confirms missing source/date fields and admission gate.",
+        "validator": "A0"
+      }
+    },
+    {
+      "head_sha": "dd56cc5357b30ae4cd448ae7a1608dbfa73e0da2",
+      "id": "A0-PAYMENT-FX-PROVENANCE-005",
+      "reporter": "A0",
+      "status": "CONFIRMED",
+      "summary": "Payment FX remains fail-closed for foreign maps, but get_rates_map erases stored CBR row date/revision identity so no verified quote-bound FX path exists.",
+      "task_id": "TARIFF-ADMISSION-RECHECK-001",
+      "validation": {
+        "at": "2026-09-14T15:35:36.546224+00:00",
+        "evidence": "A0/A5 code inspection and EUR 123.45 probe reproduced REVIEW_REQUIRED with unverified_rate_map, null source date and null final quote; no legal valuation-date rule inferred.",
+        "validator": "A0"
+      }
+    },
+    {
+      "head_sha": "dd56cc5357b30ae4cd448ae7a1608dbfa73e0da2",
+      "id": "A0-LEGACY-VAT-OVERRIDE-006",
+      "reporter": "A0",
+      "status": "CONFIRMED",
+      "summary": "Legacy diagnostic invoice enrichment accepts vat_import_override and changes legacy VAT/final totals without an admission state; mounted APIs were not shown to reach this path.",
+      "task_id": "TARIFF-ADMISSION-RECHECK-001",
+      "validation": {
+        "at": "2026-09-14T15:35:36.565121+00:00",
+        "evidence": "A0/A5 reproduced duty 100, VAT/total 242/342 changing to 110/210 under override=10; call-graph review found only non-mounted scripts, so scope is bounded.",
+        "validator": "A0"
+      }
+    },
+    {
+      "head_sha": "a304ff9003be44e9ec1bf4c4e313b3993c634d46",
+      "id": "A0-AD30-SOURCE-COMPLETENESS-007",
+      "reporter": "A0",
+      "status": "CONFIRMED",
+      "summary": "Current retained AD30 facts do not establish complete amendment/repeal history, final AD30R1 report, producer continuity, 2021-2026 nomenclature transitions or fresh official edition.",
+      "task_id": "TARIFF-AD30-REVIEW-CANDIDATE-001",
+      "validation": {
+        "at": "2026-09-14T15:35:36.584273+00:00",
+        "evidence": "A0/A5 matched three pinned evidence hashes, 24 facts/3 rows and fail-closed gates; 442 tests passed; fresh official access returned proxy 502/timeouts, which is a freshness blocker and not evidence of absence or unchanged law.",
+        "validator": "A0"
+      }
     }
   ],
   "max_concurrent_subagents": 3,
-  "revision": 336,
+  "revision": 365,
   "runs": [
     {
       "head_sha": null,
@@ -1127,9 +1179,9 @@
       "run_id": "72cecb1a3bf448bb8e5df4f5aac42073",
       "session_id": "/root/a1_payment_source_recheck",
       "started_at": "2026-09-14T15:09:46.506039+00:00",
-      "status": "RUNNING",
+      "status": "FINISHED",
       "task_id": "TARIFF-PAYMENT-SOURCE-RECHECK-002",
-      "updated_at": "2026-09-14T15:09:46.506047+00:00"
+      "updated_at": "2026-09-14T15:22:03.900819+00:00"
     },
     {
       "head_sha": null,
@@ -1137,9 +1189,49 @@
       "run_id": "87042e4b474a43d681323abc81142ffb",
       "session_id": "/root/a3_official_source_delta",
       "started_at": "2026-09-14T15:09:47.675196+00:00",
-      "status": "RUNNING",
+      "status": "FINISHED",
       "task_id": "TARIFF-OFFICIAL-SOURCE-DELTA-002",
-      "updated_at": "2026-09-14T15:09:47.675203+00:00"
+      "updated_at": "2026-09-14T15:22:03.939505+00:00"
+    },
+    {
+      "head_sha": "fcc97a41573237aa6e680dc110241fffe26b348c",
+      "role": "A5",
+      "run_id": "7d7e01e36b9d48eaa92685d9da36c4a6",
+      "session_id": "/root/a5_payment_report",
+      "started_at": "2026-09-14T15:22:18.596912+00:00",
+      "status": "FINISHED",
+      "task_id": "TARIFF-PAYMENT-SOURCE-RECHECK-002",
+      "updated_at": "2026-09-14T15:27:10.583037+00:00"
+    },
+    {
+      "head_sha": "9c13ba79a0541657d62d56dc37e8fd92ac6569f1",
+      "role": "A5",
+      "run_id": "787b8eaa74ce4661bb02cf618838dc75",
+      "session_id": "/root/a5_source_report",
+      "started_at": "2026-09-14T15:22:18.607814+00:00",
+      "status": "FINISHED",
+      "task_id": "TARIFF-OFFICIAL-SOURCE-DELTA-002",
+      "updated_at": "2026-09-14T15:27:10.621744+00:00"
+    },
+    {
+      "head_sha": "dd56cc5357b30ae4cd448ae7a1608dbfa73e0da2",
+      "role": "A5",
+      "run_id": "0892f9cd9424459e9c5dba14bab563de",
+      "session_id": "/root/a5_payment_report",
+      "started_at": "2026-09-14T15:29:17.638116+00:00",
+      "status": "FINISHED",
+      "task_id": "TARIFF-PAYMENT-SOURCE-RECHECK-002",
+      "updated_at": "2026-09-14T15:30:36.233691+00:00"
+    },
+    {
+      "head_sha": "a304ff9003be44e9ec1bf4c4e313b3993c634d46",
+      "role": "A5",
+      "run_id": "70a754356d66490195d82851ac72cac1",
+      "session_id": "/root/a5_source_report",
+      "started_at": "2026-09-14T15:29:17.648002+00:00",
+      "status": "FINISHED",
+      "task_id": "TARIFF-OFFICIAL-SOURCE-DELTA-002",
+      "updated_at": "2026-09-14T15:30:36.270918+00:00"
     }
   ],
   "schema_version": 1,
@@ -1383,7 +1475,7 @@
       "risk": "low",
       "status": "CHANGES_REQUESTED",
       "tests": [],
-      "updated_at": "2026-09-14T09:18:42.207558+00:00",
+      "updated_at": "2026-09-14T15:35:36.565131+00:00",
       "upstream_reconciliation": {
         "a0_local_merge_sha": "2e5da9ecfb74ef386b6695eba24abd62ae993776",
         "owned_diff_vs_new_base": [
@@ -1435,7 +1527,7 @@
       "risk": "high",
       "status": "CHANGES_REQUESTED",
       "tests": [],
-      "updated_at": "2026-09-14T09:18:42.223850+00:00",
+      "updated_at": "2026-09-14T15:35:36.584283+00:00",
       "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-ad30-review-candidate-001-99f4e3fb32"
     },
     {
@@ -1864,28 +1956,101 @@
         "/root/a1_payment_source_recheck"
       ],
       "branch": "agent/rates-tariff-payment-source-recheck-002-c1549329dc",
-      "ci": null,
+      "ci": {
+        "checks": [
+          {
+            "conclusion": "success",
+            "head_sha": "dd56cc5357b30ae4cd448ae7a1608dbfa73e0da2",
+            "name": "Backend NTM safety suite",
+            "run_id": 34862392361,
+            "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/34862392361"
+          },
+          {
+            "conclusion": "success",
+            "head_sha": "dd56cc5357b30ae4cd448ae7a1608dbfa73e0da2",
+            "name": "Frontend tests, types and build",
+            "run_id": 34862392361,
+            "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/34862392361"
+          },
+          {
+            "conclusion": "success",
+            "head_sha": "dd56cc5357b30ae4cd448ae7a1608dbfa73e0da2",
+            "name": "Validate and build local staging images",
+            "run_id": 34862392361,
+            "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/34862392361"
+          },
+          {
+            "conclusion": "success",
+            "head_sha": "dd56cc5357b30ae4cd448ae7a1608dbfa73e0da2",
+            "name": "Scheduled workflow and locked environment",
+            "run_id": 34862392361,
+            "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/34862392361"
+          }
+        ],
+        "head_sha": "dd56cc5357b30ae4cd448ae7a1608dbfa73e0da2",
+        "status": "PASSED"
+      },
       "dependencies": [],
-      "external_audit": null,
+      "external_audit": {
+        "evidence_ref": "Docs-only bounded evidence report; medium risk; no product behavior, source acceptance, legal applicability, provider, database, flag or production change.",
+        "head_sha": "dd56cc5357b30ae4cd448ae7a1608dbfa73e0da2",
+        "reviewer": "A6",
+        "status": "NOT_REQUIRED"
+      },
       "files": [
         "docs/ai-workflow/PAYMENT_SOURCE_BOUND_RECHECK_20260914.md"
       ],
       "goal": "On exact PR187 HEAD, reproduce and classify only remaining payment/rate gaps involving source-bound dates, editions, units, FX and final-amount admission; produce a factual evidence report and exact next implementation ownership without changing product code, database, flags or legal policy.",
       "id": "TARIFF-PAYMENT-SOURCE-RECHECK-002",
       "owner": "A1",
-      "qa": null,
+      "qa": {
+        "commands": [
+          {
+            "command": "DATABASE_URL=sqlite:////tmp/a5-payment-report-published-head.sqlite python -m pytest -q five payment suites",
+            "exit_code": 0,
+            "output": "138 passed, 2 warnings in 5.20s"
+          },
+          {
+            "command": "published branch/head/parent/tree/scope verification",
+            "exit_code": 0,
+            "output": "remote and local dd56cc5; parent 5d3b0c1d; tree 4a622a73 byte-identical; one report; clean"
+          }
+        ],
+        "head_sha": "dd56cc5357b30ae4cd448ae7a1608dbfa73e0da2",
+        "reviewer_session_id": "/root/a5_payment_report",
+        "status": "PASSED"
+      },
       "refs": {
         "base_sha": "5d3b0c1dc7dd8e396c4f812db2bf6f1fa6d293f9",
-        "head_sha": null,
-        "pr": null
+        "head_sha": "dd56cc5357b30ae4cd448ae7a1608dbfa73e0da2",
+        "pr": 200,
+        "publication_mapping": {
+          "identical_trees_verified": true,
+          "local_head_sha": "fcc97a41573237aa6e680dc110241fffe26b348c",
+          "local_tree_sha": "4a622a73b14de394c4e4f9238655432b9d947870",
+          "published_head_sha": "dd56cc5357b30ae4cd448ae7a1608dbfa73e0da2",
+          "published_tree_sha": "4a622a73b14de394c4e4f9238655432b9d947870"
+        }
       },
       "required_checks": [
-        "offline-safety"
+        "Backend NTM safety suite",
+        "Frontend tests, types and build",
+        "Validate and build local staging images",
+        "Scheduled workflow and locked environment"
       ],
       "risk": "medium",
-      "status": "IN_PROGRESS",
-      "tests": [],
-      "updated_at": "2026-09-14T15:09:46.506050+00:00",
+      "status": "READY_FOR_HUMAN_APPROVAL",
+      "tests": {
+        "commands": [
+          {
+            "command": "GitHub Git Data publication with full-tree equality",
+            "exit_code": 0,
+            "output": "local fcc97a4 -> published dd56cc5; identical tree 4a622a73; one owned report; remote blob verified"
+          }
+        ],
+        "head_sha": "dd56cc5357b30ae4cd448ae7a1608dbfa73e0da2"
+      },
+      "updated_at": "2026-09-14T15:35:17.357277+00:00",
       "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-payment-source-recheck-002-c1549329dc"
     },
     {
@@ -1902,21 +2067,56 @@
       "goal": "On exact PR187 HEAD, inventory official source/date/edition/amendment and AD30 producer/nomenclature evidence gaps; verify public official facts without deciding legal applicability and produce a bounded evidence report plus exact dependencies for A1/A2.",
       "id": "TARIFF-OFFICIAL-SOURCE-DELTA-002",
       "owner": "A3",
-      "qa": null,
+      "qa": {
+        "commands": [
+          {
+            "command": "pytest exact AD30/source published-head QA profile",
+            "exit_code": 0,
+            "output": "442 passed in 10.52s"
+          },
+          {
+            "command": "published branch/head/parent/tree/hash/invariant verification",
+            "exit_code": 0,
+            "output": "remote/local a304ff9; parent 5d3b0c1d; tree 0633120d byte-identical; three evidence hashes exact; fail-closed gates preserved"
+          }
+        ],
+        "head_sha": "a304ff9003be44e9ec1bf4c4e313b3993c634d46",
+        "reviewer_session_id": "/root/a5_source_report",
+        "status": "PASSED"
+      },
       "refs": {
         "base_sha": "5d3b0c1dc7dd8e396c4f812db2bf6f1fa6d293f9",
-        "head_sha": null,
-        "pr": null
+        "head_sha": "a304ff9003be44e9ec1bf4c4e313b3993c634d46",
+        "pr": 201,
+        "publication_mapping": {
+          "identical_trees_verified": true,
+          "local_head_sha": "9c13ba79a0541657d62d56dc37e8fd92ac6569f1",
+          "local_tree_sha": "0633120d6fc8dfead252101c8cf323084c04da6e",
+          "published_head_sha": "a304ff9003be44e9ec1bf4c4e313b3993c634d46",
+          "published_tree_sha": "0633120d6fc8dfead252101c8cf323084c04da6e"
+        }
       },
       "required_checks": [
-        "offline-safety"
+        "Backend NTM safety suite",
+        "Frontend tests, types and build",
+        "Validate and build local staging images",
+        "Scheduled workflow and locked environment"
       ],
       "risk": "high",
-      "status": "IN_PROGRESS",
-      "tests": [],
-      "updated_at": "2026-09-14T15:09:47.675206+00:00",
+      "status": "QA_PASSED",
+      "tests": {
+        "commands": [
+          {
+            "command": "GitHub Git Data publication with full-tree equality",
+            "exit_code": 0,
+            "output": "local 9c13ba7 -> published a304ff9; identical tree 0633120d; one owned report; remote blob verified"
+          }
+        ],
+        "head_sha": "a304ff9003be44e9ec1bf4c4e313b3993c634d46"
+      },
+      "updated_at": "2026-09-14T15:30:36.298011+00:00",
       "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-official-source-delta-002-753e289be4"
     }
   ],
-  "updated_at": "2026-09-14T15:09:47.675644+00:00"
+  "updated_at": "2026-09-14T15:35:36.584734+00:00"
 }

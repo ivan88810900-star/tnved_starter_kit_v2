@@ -7,6 +7,43 @@ from code/QA/CI candidate SHAs). Read this branch's board on every wake-up.
 
 ## Automation update — 2026-09-14
 
+### Product source-bound recheck published — 2026-09-14 15:35 UTC
+
+- Current product PR #187 remains at exact HEAD
+  `5d3b0c1dc7dd8e396c4f812db2bf6f1fa6d293f9`; this run did not modify that
+  branch. Two one-file evidence reports were developed from this exact base in
+  isolated A1/A3 worktrees and published as draft PRs #200 and #201.
+- Payment report PR #200 HEAD
+  `dd56cc5357b30ae4cd448ae7a1608dbfa73e0da2`, tree
+  `4a622a73b14de394c4e4f9238655432b9d947870`, is byte-identical to the local
+  author tree. Fresh published-head A5 passed: 138 tests plus independent
+  in-memory admission/FX/legacy-consumer probes. Exact-head CI run 34862392361
+  completed successfully for backend, frontend, staging-build and workflow
+  contract jobs. The separate ETT acquisition job was skipped and is not
+  counted as passed. The docs-only medium-risk task is
+  `READY_FOR_HUMAN_APPROVAL`; product gaps documented by it remain confirmed.
+- Official-source/AD30 report PR #201 HEAD
+  `a304ff9003be44e9ec1bf4c4e313b3993c634d46`, tree
+  `0633120d6fc8dfead252101c8cf323084c04da6e`, is byte-identical to the local
+  author tree. Fresh published-head A5 passed 442 tests and reproduced the
+  three pinned evidence hashes, 24 facts / 3 producer rows, fail-closed gates,
+  and monitor counts 49 registry / 49 policies / 72 default URLs / 11
+  review-only targets. Exact-head CI run 34862395645 completed successfully for
+  the same four required jobs; ETT acquisition was skipped. Because this task
+  is high-risk and A6 is not yet live, it remains `QA_PASSED`, not ready.
+- A0 confirmed four current product findings from independent reproduction:
+  unbound HsRate/HsDutyRule inputs can yield a final `OK`; verified quote-bound
+  CBR FX provenance has no path through `get_rates_map`; the bounded legacy
+  diagnostic VAT override can change legacy totals without admission state;
+  and AD30 still lacks a complete fresh amendment/final-report/producer/
+  nomenclature evidence chain. These are technical/evidence gaps, not new legal
+  applicability findings. No source was accepted and no product code, database,
+  flag, deployment or production state changed.
+- The A6 chain remains unchanged and ready for owner-authorized protected merge
+  in order #190 -> #193 -> #194. No merge or provider request occurred. A6
+  remains `BLOCKED_PENDING_DEFAULT_BRANCH_MERGE`; exact chain HEADs and CI are
+  recorded in the checkpoint below.
+
 ### A6 chain ready for protected merge — 2026-09-14 14:12 UTC
 
 - The reviewed chain is synchronized and all three PRs are open and ready for
