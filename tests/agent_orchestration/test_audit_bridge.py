@@ -233,8 +233,10 @@ class AuditBridgeTests(unittest.TestCase):
         self.assertEqual(workflow.count("vars.TARIFF_ANTHROPIC_MODEL"), 1)
         documentation = (Path(__file__).resolve().parents[2] /
                          ".ai/orchestration/A6_LIVE_BRIDGE.md").read_text()
-        self.assertIn("repository-level `ANTHROPIC_API_KEY`", documentation)
-        self.assertIn("owner must remove it", documentation)
+        self.assertIn(
+            "former\n  repository-level copies have been removed", documentation)
+        self.assertIn("This is an owner assertion", documentation)
+        self.assertIn("Provider status remains\n  `BLOCKED`", documentation)
         self.assertIn("deployment-branch policy", documentation)
         self.assertNotIn("checkout candidate", workflow.lower())
         self.assertRegex(workflow, r"actions/checkout@[0-9a-f]{40}")

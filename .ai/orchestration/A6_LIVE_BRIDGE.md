@@ -28,17 +28,18 @@ runner, a legal decision maker, or an approval mechanism.
 - Workflow permissions are `contents: read`. Existing offline safety CI remains
   separate and credential-free.
 - The credentialed job is attached to the dedicated `tariff-a6-trusted` GitHub
-  Environment. Its deployment-branch policy must allow only the protected default
-  branch, and `ANTHROPIC_API_KEY` must be stored as an environment secret there.
-  The currently configured repository-level `ANTHROPIC_API_KEY` is outside this
-  trust boundary and is not accepted for live use: the owner must remove it after
-  migrating the value to the environment. Until both the environment policy and
-  migration are complete, A0 must not dispatch the bridge. These settings are a
-  protected human action and are not changed by this PR.
+  Environment. The owner confirms that its deployment-branch policy allows only
+  `main`, `ANTHROPIC_API_KEY` is stored as an environment secret,
+  `TARIFF_ANTHROPIC_MODEL` is stored as an environment variable, and the former
+  repository-level copies have been removed. This is an owner assertion: the
+  bridge review did not inspect protected setting values. These settings are a
+  protected human action and are not changed by this PR. Provider status remains
+  `BLOCKED` until this reviewed workflow is present on the allowed default-branch
+  path; no live request may be dispatched from this branch.
 
 ## A0 invocation protocol
 
-After the protected environment prerequisite above is verified, A0 chooses a
+After the reviewed workflow is present on the protected default branch, A0 chooses a
 unique request ID and sends the narrow repository dispatch. Its `client_payload`
 must contain exactly six string fields: `request_id`, exact `base_sha`, exact
 `head_sha`, exact `contract_sha`, `paths_json` containing every changed path, and
