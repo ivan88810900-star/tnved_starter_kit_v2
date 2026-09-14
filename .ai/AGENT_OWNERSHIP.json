@@ -1,5 +1,5 @@
 {
-  "board_revision": 524,
+  "board_revision": 540,
   "files": {
     ".ai/orchestration/A6_LIVE_BRIDGE.md": {
       "branch": "agent/classification-tariff-a6-live-bridge-001-f5839c6c98",
@@ -126,6 +126,18 @@
       "owner": "A1",
       "task_id": "TARIFF-PAYMENT-UNBOUND-ADMISSION-006",
       "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-payment-unbound-admission-006-c8a905e03d"
+    },
+    "customs-clear/frontend/src/components/tnved/PermitDocumentsBlock.test.tsx": {
+      "branch": "agent/ntm-tariff-ntm-advisory-summary-001-e2d7a9dc7e",
+      "owner": "A2",
+      "task_id": "TARIFF-NTM-ADVISORY-SUMMARY-001",
+      "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-ntm-advisory-summary-001-e2d7a9dc7e"
+    },
+    "customs-clear/frontend/src/components/tnved/PermitDocumentsBlock.tsx": {
+      "branch": "agent/ntm-tariff-ntm-advisory-summary-001-e2d7a9dc7e",
+      "owner": "A2",
+      "task_id": "TARIFF-NTM-ADVISORY-SUMMARY-001",
+      "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-ntm-advisory-summary-001-e2d7a9dc7e"
     },
     "docs/ai-workflow/AD30_FRESHNESS_EVIDENCE_20260914.md": {
       "branch": "agent/sources-tariff-ad30-freshness-evidence-008-6c868586f5",
