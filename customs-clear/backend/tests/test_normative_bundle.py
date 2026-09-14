@@ -8,6 +8,7 @@ from app.main import app
 from app.services.normative_bundle import _import_normative_bundle_dict, is_ett_test_hs
 from app.services.normative_store import find_tnved_entry, init_db
 from app.services.payment_engine import compute_payments
+from app.services.payment_quote_service import build_payment_quote
 
 
 class NormativeBundleTests(unittest.TestCase):
@@ -57,8 +58,18 @@ class NormativeBundleTests(unittest.TestCase):
         self.assertIn("Тестовая", ent.title or "")
 
     def test_compute_includes_tnved_context(self):
-        out = compute_payments({"hs_code": "8509400000", "customs_value": 100000})
-        self.assertEqual(out["status"], "OK")
+        request = {"hs_code": "8509400000", "customs_value": 100000}
+        out = compute_payments(request)
+        quote = build_payment_quote(request)
+        lines = {line.code: line for line in quote.line_items}
+
+        self.assertEqual(out["status"], "REVIEW_REQUIRED")
+        self.assertEqual(quote.status, "REVIEW_REQUIRED")
+        self.assertIn("hs_rate_source_binding_unverified", out["payment_review_reasons"])
+        self.assertTrue(out["amounts_provisional"])
+        self.assertIsNone(lines["duty"].amount_rub)
+        self.assertIsNone(lines["vat"].amount_rub)
+        self.assertIsNone(quote.total_payable_rub)
         self.assertIn("tnved_context", out)
         self.assertIn("notes", out["tnved_context"])
 
