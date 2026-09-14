@@ -1,9 +1,9 @@
 {
-  "expires_at": null,
-  "generation": 4,
-  "holder": null,
+  "expires_at": "2026-09-14T15:37:11.733048+00:00",
+  "generation": 5,
+  "holder": "work-ade3ba0ec8ff-root-product2",
   "schema_version": 1,
-  "state": "released",
-  "token": null,
-  "updated_at": "2026-09-14T14:15:36.175287+00:00"
+  "state": "active",
+  "token": "bdd99136fba142f48bbe0ecf278153ba",
+  "updated_at": "2026-09-14T15:07:11.733048+00:00"
 }
