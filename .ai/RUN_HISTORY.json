@@ -1,5 +1,5 @@
 {
-  "board_revision": 524,
+  "board_revision": 540,
   "runs": [
     {
       "head_sha": null,
@@ -960,6 +960,36 @@
       "status": "FINISHED",
       "task_id": "TARIFF-NTM-FRESHNESS-FAIL-CLOSED-001",
       "updated_at": "2026-09-14T21:23:13.925039+00:00"
+    },
+    {
+      "head_sha": null,
+      "role": "A2",
+      "run_id": "586381af1279402abdd9640ee8b82e39",
+      "session_id": "/root/a2_ntm_advisory_summary",
+      "started_at": "2026-09-14T22:18:38.812583+00:00",
+      "status": "FINISHED",
+      "task_id": "TARIFF-NTM-ADVISORY-SUMMARY-001",
+      "updated_at": "2026-09-14T22:21:31.642916+00:00"
+    },
+    {
+      "head_sha": "63537506fd1f4f03b8d83595f4107f7b9d1691ac",
+      "role": "A5",
+      "run_id": "ffdacafc24f841e987aac8dc826546a4",
+      "session_id": "/root/a5_ntm_advisory_summary",
+      "started_at": "2026-09-14T22:21:31.694577+00:00",
+      "status": "FINISHED",
+      "task_id": "TARIFF-NTM-ADVISORY-SUMMARY-001",
+      "updated_at": "2026-09-14T22:23:41.693969+00:00"
+    },
+    {
+      "head_sha": "6c88f7742fa4a0228e3227573f3857a07dc76431",
+      "role": "A5",
+      "run_id": "774ed24a306d4b23a6f28b629dce867f",
+      "session_id": "/root/a5_pr208_exact",
+      "started_at": "2026-09-14T22:24:51.947032+00:00",
+      "status": "FINISHED",
+      "task_id": "TARIFF-NTM-ADVISORY-SUMMARY-001",
+      "updated_at": "2026-09-14T22:30:49.657164+00:00"
     }
   ],
   "schema_version": 1
