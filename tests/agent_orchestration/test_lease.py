@@ -53,7 +53,8 @@ class LeaseTests(unittest.TestCase):
         now=self.now+dt.timedelta(hours=2)
         with self.assertRaises(LeaseError):
             propose(record,self.sha,'takeover','session-two',now=now)
-        evidence={'holder':'session-one','terminal_status':'completed','source':'native_work',
+        evidence={'holder':'session-one','token':record['token'],'generation':record['generation'],
+                  'terminal_status':'completed','source':'native_work',
                   'evidence_ref':'test-only-observation','observed_at':now.isoformat()}
         new=json.loads(propose(record,self.sha,'takeover','session-two',now=now,
                               ended_evidence=evidence)['content'])
@@ -61,6 +62,52 @@ class LeaseTests(unittest.TestCase):
         with self.assertRaises(LeaseError):
             propose(new,self.sha,'renew','session-one',token=record['token'],now=now)
         for bad in ({**evidence,'terminal_status':'running'}, {**evidence,'holder':'wrong'},
+                    {**evidence,'token':'0'*32}, {**evidence,'generation':0},
+                    {**evidence,'generation':True}, {**evidence,'generation':1.0},
                     {**evidence,'observed_at':self.now.isoformat()}):
             with self.assertRaises(LeaseError):
                 propose(record,self.sha,'takeover','session-two',now=now,ended_evidence=bad)
+
+    def test_lease_timestamps_are_well_formed_and_mutations_are_monotonic(self):
+        record=self.active()
+        renewed_at=self.now+dt.timedelta(seconds=40)
+        renewed=json.loads(propose(record,'b'*40,'renew','session-one',token=record['token'],
+                                   now=renewed_at,ttl_seconds=60)['content'])
+        rollback=self.now+dt.timedelta(seconds=30)
+        for action in ('renew','release'):
+            with self.assertRaises(LeaseError):
+                propose(renewed,'c'*40,action,'session-one',token=record['token'],now=rollback)
+
+        released=json.loads(propose(renewed,'c'*40,'release','session-one',
+                                    token=record['token'],now=renewed_at)['content'])
+        with self.assertRaises(LeaseError):
+            propose(released,'d'*40,'acquire','session-two',now=rollback)
+
+        for malformed in ({**record,'updated_at':None},
+                          {**record,'updated_at':'2026-09-12T00:00:00'},
+                          {**record,'expires_at':record['updated_at']}):
+            with self.assertRaises(LeaseError):
+                propose(malformed,'d'*40,'renew','session-one',token=record['token'],
+                        now=self.now)
+
+    def test_takeover_rejects_terminal_evidence_from_before_current_renewal(self):
+        record=self.active()
+        observed=self.now+dt.timedelta(seconds=30)
+        renewed_at=self.now+dt.timedelta(seconds=40)
+        renewed=json.loads(propose(record,'b'*40,'renew','session-one',token=record['token'],
+                                   now=renewed_at,ttl_seconds=60)['content'])
+        takeover_at=self.now+dt.timedelta(seconds=101)
+        stale_evidence={'holder':'session-one','token':renewed['token'],
+                        'generation':renewed['generation'],'terminal_status':'completed',
+                        'source':'native_work','evidence_ref':'pre-renewal-observation',
+                        'observed_at':observed.isoformat()}
+        with self.assertRaises(LeaseError):
+            propose(renewed,'c'*40,'takeover','session-two',now=takeover_at,
+                    ended_evidence=stale_evidence)
+
+        current_evidence={**stale_evidence,'evidence_ref':'current-incarnation-observation',
+                          'observed_at':takeover_at.isoformat()}
+        taken=json.loads(propose(renewed,'c'*40,'takeover','session-two',now=takeover_at,
+                                 ended_evidence=current_evidence)['content'])
+        self.assertEqual(taken['holder'],'session-two')
+        self.assertEqual(taken['generation'],renewed['generation']+1)

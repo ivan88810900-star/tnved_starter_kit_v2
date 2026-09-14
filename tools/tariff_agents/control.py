@@ -21,8 +21,10 @@ import tempfile
 import uuid
 
 REPOSITORY = "ivan88810900-star/tnved_starter_kit_v2"
+STATE_BRANCH = "agent/orchestration-state"
+STATE_LOCAL_REF = "refs/heads/" + STATE_BRANCH
 STATE_FILES = {".ai/TASK_BOARD.json", ".ai/AGENT_OWNERSHIP.json", ".ai/FINDINGS.json", ".ai/RUN_HISTORY.json"}
-PROTECTED_BRANCHES = {"main", "master", "production", "prod", "feat/canonical-read-path", "feat/ntm-official-full-contours"}
+PROTECTED_BRANCHES = {"main", "master", "production", "prod", "feat/canonical-read-path", "feat/ntm-official-full-contours", STATE_BRANCH}
 STATUSES = {"NEW", "ALLOCATING", "ALLOCATED", "IN_PROGRESS", "IMPLEMENTED", "QA_PASSED", "AUDIT_PASSED", "CI_PENDING", "READY_FOR_HUMAN_APPROVAL", "CHANGES_REQUESTED", "CANCELLED", "INTEGRATED"}
 ROLES = {"A1", "A2", "A3", "A4", "A5", "A6"}
 PREFIX = {"A1": "rates", "A2": "ntm", "A3": "sources", "A4": "classification", "A5": "qa"}
@@ -68,8 +70,18 @@ def no_symlinks(path):
 
 def git(root, *args):
     env = {k: v for k, v in os.environ.items() if not k.startswith("GIT_")}
-    env.update({"GIT_TERMINAL_PROMPT": "0", "GIT_CONFIG_NOSYSTEM": "1", "GIT_OPTIONAL_LOCKS": "0"})
-    result = subprocess.run(["git", "-c", "core.hooksPath=/dev/null", "-c", "core.fsmonitor=false", "-C", str(root), *args], env=env, capture_output=True, text=True, timeout=60)
+    env.update({
+        "GIT_TERMINAL_PROMPT": "0",
+        "GIT_CONFIG_NOSYSTEM": "1",
+        "GIT_CONFIG_GLOBAL": os.devnull,
+        "GIT_ATTR_NOSYSTEM": "1",
+        "GIT_NO_REPLACE_OBJECTS": "1",
+        "GIT_OPTIONAL_LOCKS": "0",
+    })
+    result = subprocess.run([
+        "git", "-c", "core.hooksPath=/dev/null", "-c", "core.fsmonitor=false",
+        "-c", "core.pager=cat", "-c", "diff.external=", "-C", str(root), *args,
+    ], env=env, capture_output=True, text=True, timeout=60)
     need(result.returncode == 0, "git_command_failed")
     return result.stdout.strip() if "-z" not in args else result.stdout
 
@@ -274,13 +286,89 @@ class StateStore:
         finally:
             os.close(fd)
 
+    def _branch_ref(self, path):
+        try:
+            return git(path, "symbolic-ref", "-q", "HEAD")
+        except PolicyError:
+            raise PolicyError("state_authority_ref_mismatch") from None
+
+    def _authority_evidence(self, path, expected_repository, expected_ref,
+                            expected_sha):
+        """Validate explicit GitHub ref evidence against a clean checkout."""
+        need(expected_repository == REPOSITORY, "state_authority_repository_mismatch")
+        need(expected_ref == STATE_LOCAL_REF, "state_authority_ref_mismatch")
+        need(isinstance(expected_sha, str) and SHA.fullmatch(expected_sha),
+             "full_state_authority_sha_required")
+        need(self._branch_ref(path) == STATE_LOCAL_REF,
+             "state_authority_ref_mismatch")
+        self._clean(path)
+        head = git(path, "rev-parse", "HEAD")
+        need(head == expected_sha, "state_authority_github_sha_mismatch")
+        return {
+            "schema_version": 1,
+            "root": str(path),
+            "repository": REPOSITORY,
+            "state_ref": STATE_LOCAL_REF,
+            "github_ref_sha": expected_sha,
+        }
+
+    def bootstrap_authority(self, expected_repository, expected_ref,
+                            expected_sha, *, migrate_legacy=False):
+        """Explicit A0 bootstrap from separately fetched GitHub ref evidence.
+
+        `load` and `initialize` never call this operation. For migration, A0 must
+        first prepare a clean reserved checkout at the current GitHub ref SHA and
+        opt in; no path/ref/SHA from a legacy pointer is trusted.
+        """
+        need(type(migrate_legacy) is bool, "invalid_migration_flag")
+        with self.lock():
+            pointer = self.control / "authority.json"
+            if pointer.exists():
+                existing = _json_read(pointer)
+                legacy_keys = (
+                    {"root"},
+                    {"root", "state_ref"},
+                    {"root", "state_ref", "bootstrap_sha"},
+                )
+                need(migrate_legacy and isinstance(existing, dict) and
+                     set(existing) in legacy_keys,
+                     "state_authority_already_initialized")
+            authority = self._authority_evidence(
+                self.root, expected_repository, expected_ref, expected_sha)
+            _atomic(pointer, authority)
+            return deepcopy(authority)
+
     def _root(self):
         pointer = self.control / "authority.json"
-        if not pointer.exists():
-            return self.root
-        path = no_symlinks(_json_read(pointer)["root"])
+        need(pointer.exists(), "state_authority_missing")
+        authority = _json_read(pointer)
+        legacy_keys = (
+            {"root"},
+            {"root", "state_ref"},
+            {"root", "state_ref", "bootstrap_sha"},
+        )
+        if isinstance(authority, dict) and set(authority) in legacy_keys:
+            raise PolicyError("state_authority_migration_required")
+        need(isinstance(authority, dict) and set(authority) == {
+            "schema_version", "root", "repository", "state_ref",
+            "github_ref_sha",
+        }, "invalid_state_authority")
+        need(authority["schema_version"] == 1 and
+             authority["repository"] == REPOSITORY,
+             "invalid_state_authority")
+        path = no_symlinks(authority["root"])
         need(path.is_dir(), "state_authority_missing")
         need(Path(git(path, "rev-parse", "--path-format=absolute", "--git-common-dir")) == self.common, "state_authority_repository_mismatch")
+        need(authority["state_ref"] == STATE_LOCAL_REF and
+             self._branch_ref(path) == STATE_LOCAL_REF,
+             "state_authority_ref_mismatch")
+        bootstrap = authority["github_ref_sha"]
+        need(isinstance(bootstrap, str) and SHA.fullmatch(bootstrap),
+             "invalid_state_authority")
+        need(git(path, "rev-parse", "--verify", bootstrap + "^{commit}") == bootstrap,
+             "state_authority_commit_missing")
+        need(git(path, "merge-base", bootstrap, "HEAD") == bootstrap,
+             "state_authority_history_mismatch")
         return path
 
     def _load(self):
@@ -307,8 +395,6 @@ class StateStore:
             else:
                 board = {"schema_version": 1, "revision": 0, "max_concurrent_subagents": 3, "tasks": [], "findings": [], "runs": [], "updated_at": utcnow()}
                 _atomic(root / ".ai/TASK_BOARD.json", board)
-            if not (self.control / "authority.json").exists():
-                _atomic(self.control / "authority.json", {"root": str(root)})
             self._project(board)
             return deepcopy(board)
 
@@ -624,7 +710,12 @@ class StateStore:
                             need(git(path, "rev-parse", "HEAD") == task["refs"]["head_sha"], "candidate_head_changed")
                     except (PolicyError, FileNotFoundError):
                         report["worktree_issues"].append(task["id"])
-                        if task["qa"] or task["ci"] or task["external_audit"]:
+                        evidence_status = task["status"] in {
+                            "IMPLEMENTED", "QA_PASSED", "AUDIT_PASSED",
+                            "CI_PENDING", "READY_FOR_HUMAN_APPROVAL",
+                        }
+                        if evidence_status or any(task[key] for key in (
+                                "tests", "qa", "ci", "external_audit")):
                             self._invalidate(task)
                             changed = True
                 if task["status"] == "READY_FOR_HUMAN_APPROVAL":
