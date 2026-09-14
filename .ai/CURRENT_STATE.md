@@ -5,6 +5,38 @@ Verified code HEAD: `ad4935e318d947276178e2f269d4ffe1051ea6cb`.
 Persistent runtime authority: `agent/orchestration-state` (state commits separate
 from code/QA/CI candidate SHAs). Read this branch's board on every wake-up.
 
+## Automation update — 2026-09-14
+
+- Draft PR #192 publishes the bounded AD30 Decision 12 -> 4 -> 121 source-fact
+  candidate at exact HEAD `5bff4523ec20f7a29fe6f7b997ffccfc479c9bff`.
+  Fresh independent A5 passed that published HEAD. Exact-head CI run 34722092821
+  and Admission agent QA run 34722005000 completed successfully. The task remains
+  gated because it is high risk and no checked A6 availability receipt has yet
+  been recorded against a fully verified published audit adapter.
+- Draft PR #193 publishes the separate orchestration-only adapter fix at exact
+  HEAD `c39248672a6299b64bc2db5637e2027579a4624e`, tree
+  `2c1f012c76b6eda13883f2d207c1d74ffc0d9c50`, stacked on PR #190. It does not
+  modify PR #187 or PR #192. Tariff agent safety run 34723187303 succeeded.
+- Before publication, independent A5 rejected the first adapter candidate for an
+  unscanned contract-ref metadata path and incorrect deleted-line bounds. A4 fixed
+  both; fresh A5 then passed the identical local tree with 23/23 audit tests and
+  69/69 full orchestration tests. The required new A5 run bound to published SHA
+  `c3924867` did not execute: the native subagent returned a platform usage-limit
+  failure with a retry time of 2026-09-19 18:47 (timezone not supplied). This is
+  `CAPABILITY_BLOCKED`, not QA evidence; task status remains `IMPLEMENTED` with
+  no current QA/audit/CI gate recorded.
+- The repaired adapter locally built the complete exact product packet
+  `e0129b90ab1409133b6e8487752f651786e9cda5ae0e5fa0800abfe39ca42660`
+  using immutable contract commit `ad4935e3`, and reported A6 `UNAVAILABLE` because
+  `ANTHROPIC_API_KEY` and `TARIFF_ANTHROPIC_MODEL` are not configured. No provider
+  request occurred and this is not an audit pass. The receipt is not promoted to
+  task readiness until PR #193 receives fresh published-HEAD A5 verification.
+- PR #190 remains open at `ad4935e3` with successful CI, but its 2026-09-12 Codex
+  review contains unresolved P1/P2 inputs. They are untrusted review findings and
+  require independent reproduction before any fix/readiness claim. No protected
+  merge, production change, feature-flag activation, secret/permission change, or
+  force push was performed.
+
 - 60 offline tests passed including independent A5 cases; CI 34718310831 and
   34718309255 succeeded at the exact verified code HEAD.
 - Real native Work children `/root/smoke_rates` and `/root/smoke_sources` executed
