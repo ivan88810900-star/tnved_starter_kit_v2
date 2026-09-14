@@ -5,25 +5,41 @@
 
 ---
 
-## Текущая коррекция A6, этап 2 — 14 сентября 2026
+## Коррекция A6, этап 2 — 14 сентября 2026
 
-По новому запросу Ивана A1 исправляет независимо воспроизведённые payment
-дефекты; A5 проверяет отдельные regressions и реальные изолированные API.
-Фактическая точка продолжения — опубликованный `dab1f8aa`, а не старый HEAD
-аудита. Предыдущий AD30 блок ниже завершён и не реализуется повторно.
+A1 исправил payment-дефекты, независимо воспроизведённые на опубликованном
+`dab1f8aa` и base `a5a811e6`. A5 одобрил неизменённый код: 97 новых regressions
+(49 author + 48 independent), объединённый профиль 335 passed, 2 dependency
+warnings; 12 HTTP-сценариев через свежий uvicorn и реальные curl прошли.
+Полный CI точного публикуемого кандидата остаётся обязательным следующим gate;
+прежние запуски не подтверждают новые изменения.
 
-Подтверждены унаследованные проблемы geo/preference, единиц фиксированного
-антидемпинга, FX без source/date provenance (включая extended comparison),
-пустых/повреждённых стран, неполных specific/combined выражений и дат HsRate.
-Также исправляются регрессия `as_of: null` и пропущенная строка существующего
-утилизационного сбора в quote. Текущие guards provisional/applied, повышающего
-коэффициента, AD overlap и суммирования копеек проверены исполнением.
+Закрыты унаследованные проблемы geo/preference, единиц fixed antidumping,
+FX без source/date provenance, потери FX в extended comparison, пустых/повреждённых
+стран, неполных specific/combined выражений, дат HsRate и пропущенной строки
+существующего recycling fee в quote. `as_of: null` снова равен отсутствию поля;
+все non-null historical requests отклоняются. Неподтверждённые компоненты,
+зависимый НДС и final quote недоступны; raw compatibility subtotal явно provisional.
 
-Состояние этой коррекции: реализация и независимые проверки в работе; прежние
-CI не подтверждают новые изменения. Точные результаты и классификация будут
-зафиксированы в [TASK](tasks/TASK-PAYMENT-A6-STAGE2-001.md) и evidence после QA.
-Правила Option A, неполный юридический охват, human review, отсутствие
-production/DB/flag/enforcement изменений сохраняются.
+Findings A6-A1/A2 оказались действующим conservative contract; A6-A3/A6 уже
+исправлены на actual HEAD и защищены новыми regressions. Нового дефекта округления
+копеек не воспроизведено. Классификация и точные наблюдения приведены в
+[reconciliation](../docs/ai-workflow/A6_PAYMENT_STAGE2_RECONCILIATION.md),
+границы первичных источников — в
+[A3 audit](../docs/ai-workflow/A6_STAGE2_SOURCE_BOUNDARIES.md).
+
+A4 проверил consumer contract и заменил вводящую в заблуждение подпись частичной
+суммы; 10 существующих frontend tests, TS/build прошли у владельца. A5 отдельно
+одобрил этот bounded UI/doc handoff после собственного прогона тех же 10 tests. Source registry остаётся 49 / policies 49 /
+72 default URLs + 11 isolated review targets; технический учёт не равен legal coverage.
+
+[Текущий TASK](tasks/TASK-PAYMENT-A6-STAGE2-001.md) фиксирует ownership и gate.
+Следующий этап после этой коррекции — оставшийся source-bound temporal/amendment,
+producer/nomenclature review AD30, затем другие ставки и продуктовые NTM исключения.
+Полный юридический охват остаётся частичным: verified FX, полная историческая
+применимость, manifest-bound human review и отдельное утверждение не добавлены.
+Production/main, application DB, deploy и enforcement не изменялись. Предыдущий
+завершённый AD30 блок ниже сохраняется без повторной реализации.
 
 ---
 

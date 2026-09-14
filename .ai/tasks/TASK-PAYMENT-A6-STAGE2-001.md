@@ -1,6 +1,7 @@
 # TASK-PAYMENT-A6-STAGE2-001
 
-Status: IN_PROGRESS. Started 2026-09-14 under Ivan's explicit stage-2 audit request.
+Status: INDEPENDENT_QA_PASSED; exact assembled CI/publication pending.
+Started 2026-09-14 under Ivan's explicit stage-2 audit request.
 
 ## Goal and current state
 
@@ -108,3 +109,17 @@ Local executor briefly disconnected during environment preparation, then
 recovered with the same clean repository. Declared backend dependencies are now
 installed in the shared isolated test venv. No unexecuted scenario is described
 as reproduced, and no old CI result is reused as proof of new behavior.
+
+## Independent owner acceptance before publication
+
+A5 approved A1 `fa74eddd` with the required null/date correction and unchanged
+feature/test blobs after independent code review, 97 new cases (49 author + 48
+independent), a 12-suite combined profile of 335 passed / 2 dependency warnings,
+and 12 fresh-process uvicorn/curl HTTP cases. The source audit was independently
+accepted. A4's bounded copy/doc handoff was independently accepted after the
+same 10 frontend tests passed. Exact assembled GitHub CI remains a gate.
+
+The initial isolated fixture/profile-session and loopback namespace setup issues
+were corrected by QA without changing feature code or weakening assertions.
+No setup error is counted as an A6 product defect. Final evidence records the
+actual boundaries; a synthetic fixture is not a legal or production acceptance.

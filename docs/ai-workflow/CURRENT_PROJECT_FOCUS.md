@@ -8,19 +8,28 @@ Active
 
 2026-09-14
 
-## Current priority: A6 stage-2 payment correction
+## Current priority: publish the reviewed A6 stage-2 correction
 
-Ivan's new audit-stage-2 request takes priority over the next AD30 temporal
-review. Actual recovery HEAD is `dab1f8aa`; the completed bounded AD30 block
-below is retained. A1 owns confirmed payment repairs, A3 source boundaries,
-A4 narrow consumer review/copy, and A5 independent regression/runtime QA.
-Implementation and exact published CI are pending; earlier green runs do not
-prove these changes. See [the stage-2 task](../../.ai/tasks/TASK-PAYMENT-A6-STAGE2-001.md).
+Actual recovery HEAD was `dab1f8aa`; A1's bounded corrections now have independent
+A5 code/regression/runtime acceptance: 97 new cases, 335-case combined profile
+and 12 fresh-process HTTP scenarios. Exact published full CI/admission remain
+required. A3 independently checked source boundaries; A4 preserves the shared
+review contract and labels the quote's partial sum accurately.
+See [the stage-2 task](../../.ai/tasks/TASK-PAYMENT-A6-STAGE2-001.md) and
+[execution-backed classification](A6_PAYMENT_STAGE2_RECONCILIATION.md).
 
-Geo/FX/unit/date/expression uncertainty must survive all payment projections.
-Null dates mean omission only; no historical API or legal source approval is
-introduced. The broader official rates/NTM/source coverage remains partial and
-will resume after this bounded correction. Production, DB and flags remain off.
+Geo, fixed-AD unit, foreign FX, incomplete expression and populated invalid-date
+uncertainty now reach dependent quote components and final totals. Extended
+comparison preserves FX review. Null dates mean omission only; non-null historical
+requests remain rejected. Existing provisional/applied, upward-coefficient,
+overlap and cent guards remain intact. The quote includes the already calculated
+recycling fee without adding a rate or changing VAT policy.
+
+After exact CI/publication, resume the outstanding AD30 temporal/amendment,
+producer and nomenclature review, then remaining rates and contextual NTM.
+Complete legal coverage and source admission remain partial; this repair does
+not authorize rates/FX or enable historical calculations. Production, application
+DB, flags and enforcement stay unchanged. The completed AD30 block below is retained.
 
 ## Completed AD30 continuation, 14 September 2026
 
