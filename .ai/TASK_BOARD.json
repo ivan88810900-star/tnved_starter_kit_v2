@@ -615,7 +615,7 @@
     }
   ],
   "max_concurrent_subagents": 3,
-  "revision": 449,
+  "revision": 460,
   "runs": [
     {
       "head_sha": null,
@@ -1446,6 +1446,26 @@
       "status": "FINISHED",
       "task_id": "TARIFF-PAYMENT-UNBOUND-ADMISSION-006",
       "updated_at": "2026-09-14T19:48:36.571699+00:00"
+    },
+    {
+      "head_sha": null,
+      "role": "A3",
+      "run_id": "e0498f7ac73d4fe9a709e1e2a58bf300",
+      "session_id": "/root/a3_ad30_freshness",
+      "started_at": "2026-09-14T20:41:58.414057+00:00",
+      "status": "RUNNING",
+      "task_id": "TARIFF-AD30-FRESHNESS-EVIDENCE-008",
+      "updated_at": "2026-09-14T20:41:58.414064+00:00"
+    },
+    {
+      "head_sha": null,
+      "role": "A2",
+      "run_id": "f41d7fc1f94c41d982ce9dfb0fb76cfc",
+      "session_id": "/root/a2_ntm_recheck",
+      "started_at": "2026-09-14T20:41:58.424977+00:00",
+      "status": "RUNNING",
+      "task_id": "TARIFF-NTM-COMPLETENESS-RECHECK-001",
+      "updated_at": "2026-09-14T20:41:58.424983+00:00"
     }
   ],
   "schema_version": 1,
@@ -1626,6 +1646,7 @@
         "/root/smoke_rates"
       ],
       "branch": "agent/rates-tariff-admission-recheck-001-9231ffbdb5",
+      "cancellation_reason": "Stale stacked report task; current PR187-head work and residual findings continue in the listed scoped tasks. Branch/PR retained.",
       "ci": null,
       "ci_profile_decision": "A0 selected full existing CI plus admission job from actual a9d15c74 workflows after upstream reconciliation; existing checks unchanged.",
       "dependencies": [],
@@ -1687,7 +1708,13 @@
         }
       ],
       "risk": "low",
-      "status": "CHANGES_REQUESTED",
+      "status": "CANCELLED",
+      "superseded_by": [
+        "TARIFF-PAYMENT-SOURCE-RECHECK-002",
+        "TARIFF-CBR-RATE-OBSERVATION-003",
+        "TARIFF-LEGACY-VAT-BOUNDARY-003",
+        "TARIFF-PAYMENT-UNBOUND-ADMISSION-006"
+      ],
       "tests": [],
       "updated_at": "2026-09-14T15:35:36.565131+00:00",
       "upstream_reconciliation": {
@@ -1705,6 +1732,7 @@
         "/root/a3_ad30_review"
       ],
       "branch": "agent/sources-tariff-ad30-review-candidate-001-99f4e3fb32",
+      "cancellation_reason": "Stale stacked report task; current PR187-head work and residual findings continue in the listed scoped tasks. Branch/PR retained.",
       "ci": null,
       "dependencies": [
         "TARIFF-ADMISSION-RECHECK-001"
@@ -1739,7 +1767,11 @@
         "admission"
       ],
       "risk": "high",
-      "status": "CHANGES_REQUESTED",
+      "status": "CANCELLED",
+      "superseded_by": [
+        "TARIFF-OFFICIAL-SOURCE-DELTA-002",
+        "TARIFF-AD30-FRESHNESS-EVIDENCE-008"
+      ],
       "tests": [],
       "updated_at": "2026-09-14T15:35:36.584283+00:00",
       "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-ad30-review-candidate-001-99f4e3fb32"
@@ -2700,7 +2732,71 @@
       },
       "updated_at": "2026-09-14T19:48:36.556665+00:00",
       "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-payment-unbound-admission-006-c8a905e03d"
+    },
+    {
+      "author_sessions": [
+        "/root/a3_ad30_freshness"
+      ],
+      "branch": "agent/sources-tariff-ad30-freshness-evidence-008-6c868586f5",
+      "ci": null,
+      "dependencies": [],
+      "external_audit": null,
+      "files": [
+        "docs/ai-workflow/AD30_FRESHNESS_EVIDENCE_20260914.md"
+      ],
+      "goal": "Build a fresh official-source evidence map for the retained AD30 chain: amendment/repeal history, final report identity, producer continuity and nomenclature transitions. Separate literal facts from applicability; fail closed on inaccessible or incomplete evidence; no rates, admission, DB, flags or legal authorization.",
+      "id": "TARIFF-AD30-FRESHNESS-EVIDENCE-008",
+      "owner": "A3",
+      "qa": null,
+      "refs": {
+        "base_sha": "5d3b0c1dc7dd8e396c4f812db2bf6f1fa6d293f9",
+        "head_sha": null,
+        "pr": null
+      },
+      "required_checks": [
+        "Backend NTM safety suite",
+        "Frontend tests, types and build",
+        "Validate and build local staging images",
+        "Scheduled workflow and locked environment"
+      ],
+      "risk": "high",
+      "status": "IN_PROGRESS",
+      "tests": [],
+      "updated_at": "2026-09-14T20:41:58.414067+00:00",
+      "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-ad30-freshness-evidence-008-6c868586f5"
+    },
+    {
+      "author_sessions": [
+        "/root/a2_ntm_recheck"
+      ],
+      "branch": "agent/ntm-tariff-ntm-completeness-recheck-001-c746d4f679",
+      "ci": null,
+      "dependencies": [],
+      "external_audit": null,
+      "files": [
+        "docs/ai-workflow/NTM_COMPLETENESS_RECHECK_20260914.md"
+      ],
+      "goal": "Independently recheck current PR187 NTM families, source/version/date bindings, fail-closed completeness gates and product-characteristic predicates against current code/tests and official-source references. Produce a bounded evidence-backed defect inventory without changing legal applicability, production data, flags or enforcement.",
+      "id": "TARIFF-NTM-COMPLETENESS-RECHECK-001",
+      "owner": "A2",
+      "qa": null,
+      "refs": {
+        "base_sha": "5d3b0c1dc7dd8e396c4f812db2bf6f1fa6d293f9",
+        "head_sha": null,
+        "pr": null
+      },
+      "required_checks": [
+        "Backend NTM safety suite",
+        "Frontend tests, types and build",
+        "Validate and build local staging images",
+        "Scheduled workflow and locked environment"
+      ],
+      "risk": "high",
+      "status": "IN_PROGRESS",
+      "tests": [],
+      "updated_at": "2026-09-14T20:41:58.424986+00:00",
+      "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-ntm-completeness-recheck-001-c746d4f679"
     }
   ],
-  "updated_at": "2026-09-14T19:48:36.584242+00:00"
+  "updated_at": "2026-09-14T20:41:58.425826+00:00"
 }
