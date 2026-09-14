@@ -687,7 +687,7 @@
     }
   ],
   "max_concurrent_subagents": 3,
-  "revision": 524,
+  "revision": 540,
   "runs": [
     {
       "head_sha": null,
@@ -1648,6 +1648,36 @@
       "status": "FINISHED",
       "task_id": "TARIFF-NTM-FRESHNESS-FAIL-CLOSED-001",
       "updated_at": "2026-09-14T21:23:13.925039+00:00"
+    },
+    {
+      "head_sha": null,
+      "role": "A2",
+      "run_id": "586381af1279402abdd9640ee8b82e39",
+      "session_id": "/root/a2_ntm_advisory_summary",
+      "started_at": "2026-09-14T22:18:38.812583+00:00",
+      "status": "FINISHED",
+      "task_id": "TARIFF-NTM-ADVISORY-SUMMARY-001",
+      "updated_at": "2026-09-14T22:21:31.642916+00:00"
+    },
+    {
+      "head_sha": "63537506fd1f4f03b8d83595f4107f7b9d1691ac",
+      "role": "A5",
+      "run_id": "ffdacafc24f841e987aac8dc826546a4",
+      "session_id": "/root/a5_ntm_advisory_summary",
+      "started_at": "2026-09-14T22:21:31.694577+00:00",
+      "status": "FINISHED",
+      "task_id": "TARIFF-NTM-ADVISORY-SUMMARY-001",
+      "updated_at": "2026-09-14T22:23:41.693969+00:00"
+    },
+    {
+      "head_sha": "6c88f7742fa4a0228e3227573f3857a07dc76431",
+      "role": "A5",
+      "run_id": "774ed24a306d4b23a6f28b629dce867f",
+      "session_id": "/root/a5_pr208_exact",
+      "started_at": "2026-09-14T22:24:51.947032+00:00",
+      "status": "FINISHED",
+      "task_id": "TARIFF-NTM-ADVISORY-SUMMARY-001",
+      "updated_at": "2026-09-14T22:30:49.657164+00:00"
     }
   ],
   "schema_version": 1,
@@ -3247,7 +3277,121 @@
       },
       "updated_at": "2026-09-14T21:23:13.980554+00:00",
       "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-ntm-freshness-fail-closed-001-7407bd6726"
+    },
+    {
+      "author_sessions": [
+        "/root/a2_ntm_advisory_summary"
+      ],
+      "branch": "agent/ntm-tariff-ntm-advisory-summary-001-e2d7a9dc7e",
+      "ci": {
+        "checks": [
+          {
+            "conclusion": "success",
+            "head_sha": "6c88f7742fa4a0228e3227573f3857a07dc76431",
+            "name": "Backend NTM safety suite",
+            "run_id": 34903963515,
+            "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/34903963515"
+          },
+          {
+            "conclusion": "success",
+            "head_sha": "6c88f7742fa4a0228e3227573f3857a07dc76431",
+            "name": "Frontend tests, types and build",
+            "run_id": 34903963515,
+            "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/34903963515"
+          },
+          {
+            "conclusion": "success",
+            "head_sha": "6c88f7742fa4a0228e3227573f3857a07dc76431",
+            "name": "Validate and build local staging images",
+            "run_id": 34903963515,
+            "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/34903963515"
+          },
+          {
+            "conclusion": "success",
+            "head_sha": "6c88f7742fa4a0228e3227573f3857a07dc76431",
+            "name": "Scheduled workflow and locked environment",
+            "run_id": 34903963515,
+            "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/34903963515"
+          }
+        ],
+        "head_sha": "6c88f7742fa4a0228e3227573f3857a07dc76431",
+        "status": "PASSED"
+      },
+      "dependencies": [],
+      "external_audit": {
+        "availability": "UNKNOWN",
+        "evidence_ref": "A6 live bridge is not LIVE_VERIFIED; current connector exposes no repository_dispatch write action and provider_called=false. No Anthropic audit performed.",
+        "head_sha": "6c88f7742fa4a0228e3227573f3857a07dc76431",
+        "rationale": "Audit unavailable; this is not a passed external audit.",
+        "reviewer": "A6",
+        "status": "UNAVAILABLE"
+      },
+      "files": [
+        "customs-clear/frontend/src/components/tnved/PermitDocumentsBlock.tsx",
+        "customs-clear/frontend/src/components/tnved/PermitDocumentsBlock.test.tsx"
+      ],
+      "goal": "Prevent the product-details permit summary from showing a green no-permits claim when official advisory requirements exist. Render a neutral clarification state that distinguishes no enforced broker document from no NTM detected, with executable component tests; do not change backend rules, legal applicability, flags, DB, or enforcement.",
+      "id": "TARIFF-NTM-ADVISORY-SUMMARY-001",
+      "owner": "A2",
+      "qa": {
+        "commands": [
+          {
+            "command": "independent exact published-head chain/tree/blob/UI security review",
+            "exit_code": 0,
+            "output": "PASS PR208 exact base/head/merge-base, two owned files/+106, local/origin tree and both blobs exact; safe UI precedence/API fields, no backend/rules/DB/flags/enforcement/secrets or findings"
+          },
+          {
+            "command": "independent exact-head frontend regression and build",
+            "exit_code": 0,
+            "output": "10 focused acceptance tests passed; full frontend 54 passed across 17 files; TypeScript and Vite production build passed; diff/status clean"
+          }
+        ],
+        "head_sha": "6c88f7742fa4a0228e3227573f3857a07dc76431",
+        "reviewer_session_id": "/root/a5_pr208_exact",
+        "status": "PASSED"
+      },
+      "refs": {
+        "base_sha": "5d3b0c1dc7dd8e396c4f812db2bf6f1fa6d293f9",
+        "head_sha": "6c88f7742fa4a0228e3227573f3857a07dc76431",
+        "pr": 208,
+        "publication_mapping": {
+          "identical_trees_verified": true,
+          "local_head_sha": "63537506fd1f4f03b8d83595f4107f7b9d1691ac",
+          "local_tree_sha": "4f63b67d17325a1dd2bee27f7e7890fefa6706b0",
+          "published_blob_shas": {
+            "customs-clear/frontend/src/components/tnved/PermitDocumentsBlock.test.tsx": "c6e1fe432db47f6f601a0e6d5d4f07fee5465863",
+            "customs-clear/frontend/src/components/tnved/PermitDocumentsBlock.tsx": "936709c0b168c92366f829f8d4d2a86db78495ff"
+          },
+          "published_head_sha": "6c88f7742fa4a0228e3227573f3857a07dc76431",
+          "published_tree_sha": "4f63b67d17325a1dd2bee27f7e7890fefa6706b0"
+        }
+      },
+      "required_checks": [
+        "Backend NTM safety suite",
+        "Frontend tests, types and build",
+        "Validate and build local staging images",
+        "Scheduled workflow and locked environment"
+      ],
+      "risk": "high",
+      "status": "CI_PENDING",
+      "tests": {
+        "commands": [
+          {
+            "command": "published parent/scope/blob/tree verification",
+            "exit_code": 0,
+            "output": "GitHub compare from exact PR187 base shows two commits and exactly two owned files/106 additions; both remote blobs equal local; published checkout tree equals reviewed tree 4f63b67d17325a1dd2bee27f7e7890fefa6706b0"
+          },
+          {
+            "command": "A0 exact published checkout frontend replay",
+            "exit_code": 0,
+            "output": "4 focused component tests and TypeScript typecheck passed on content-identical published tree; safe branch precedence preserved"
+          }
+        ],
+        "head_sha": "6c88f7742fa4a0228e3227573f3857a07dc76431"
+      },
+      "updated_at": "2026-09-14T22:30:49.718157+00:00",
+      "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-ntm-advisory-summary-001-e2d7a9dc7e"
     }
   ],
-  "updated_at": "2026-09-14T21:23:13.981675+00:00"
+  "updated_at": "2026-09-14T22:30:49.719324+00:00"
 }
