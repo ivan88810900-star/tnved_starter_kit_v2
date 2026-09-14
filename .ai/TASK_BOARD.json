@@ -561,7 +561,7 @@
     }
   ],
   "max_concurrent_subagents": 3,
-  "revision": 365,
+  "revision": 377,
   "runs": [
     {
       "head_sha": null,
@@ -1232,6 +1232,36 @@
       "status": "FINISHED",
       "task_id": "TARIFF-OFFICIAL-SOURCE-DELTA-002",
       "updated_at": "2026-09-14T15:30:36.270918+00:00"
+    },
+    {
+      "head_sha": null,
+      "role": "A1",
+      "run_id": "d7fa8f6c03744589ace20c5d57cd06c1",
+      "session_id": "/root/a1_payment_gate",
+      "started_at": "2026-09-14T19:07:05.420740+00:00",
+      "status": "RUNNING",
+      "task_id": "TARIFF-PAYMENT-UNBOUND-ADMISSION-003",
+      "updated_at": "2026-09-14T19:07:05.420752+00:00"
+    },
+    {
+      "head_sha": null,
+      "role": "A3",
+      "run_id": "80a63c0c88b34f33bf13c19266915c10",
+      "session_id": "/root/a3_cbr_observation",
+      "started_at": "2026-09-14T19:07:05.431987+00:00",
+      "status": "RUNNING",
+      "task_id": "TARIFF-CBR-RATE-OBSERVATION-003",
+      "updated_at": "2026-09-14T19:07:05.431994+00:00"
+    },
+    {
+      "head_sha": null,
+      "role": "A4",
+      "run_id": "6b098e77782e43ec9bc0a0af9bec525e",
+      "session_id": "/root/a4_legacy_vat",
+      "started_at": "2026-09-14T19:07:05.442112+00:00",
+      "status": "RUNNING",
+      "task_id": "TARIFF-LEGACY-VAT-BOUNDARY-003",
+      "updated_at": "2026-09-14T19:07:05.442119+00:00"
     }
   ],
   "schema_version": 1,
@@ -2116,7 +2146,109 @@
       },
       "updated_at": "2026-09-14T15:30:36.298011+00:00",
       "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-official-source-delta-002-753e289be4"
+    },
+    {
+      "author_sessions": [
+        "/root/a1_payment_gate"
+      ],
+      "branch": "agent/rates-tariff-payment-unbound-admission-003-5132f27def",
+      "ci": null,
+      "dependencies": [],
+      "external_audit": null,
+      "files": [
+        "customs-clear/backend/app/services/payment_engine.py",
+        "customs-clear/backend/tests/test_payment_source_admission.py"
+      ],
+      "goal": "Fail closed when legacy HsRate dates/source are blank or unbound and when structured HsDutyRule operands lack immutable source binding: return REVIEW_REQUIRED and withhold dependent final quote components without inventing legal applicability or changing manual override semantics.",
+      "id": "TARIFF-PAYMENT-UNBOUND-ADMISSION-003",
+      "owner": "A1",
+      "qa": null,
+      "refs": {
+        "base_sha": "5d3b0c1dc7dd8e396c4f812db2bf6f1fa6d293f9",
+        "head_sha": null,
+        "pr": null
+      },
+      "required_checks": [
+        "Backend NTM safety suite",
+        "Frontend tests, types and build",
+        "Validate and build local staging images",
+        "Scheduled workflow and locked environment"
+      ],
+      "risk": "high",
+      "status": "IN_PROGRESS",
+      "tests": [],
+      "updated_at": "2026-09-14T19:07:05.420755+00:00",
+      "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-payment-unbound-admission-003-5132f27def"
+    },
+    {
+      "author_sessions": [
+        "/root/a3_cbr_observation"
+      ],
+      "branch": "agent/sources-tariff-cbr-rate-observation-003-9dc4811432",
+      "ci": null,
+      "dependencies": [],
+      "external_audit": null,
+      "files": [
+        "customs-clear/backend/app/services/exchange_rates.py",
+        "customs-clear/backend/tests/test_cbr_exchange_rate_observation.py"
+      ],
+      "goal": "Expose a typed read-only CBR exchange-rate observation that preserves stored row identity and available official source date/revision evidence, remains explicitly unverified when no exact row-to-artifact binding exists, and never upgrades payment admission or writes production data.",
+      "id": "TARIFF-CBR-RATE-OBSERVATION-003",
+      "owner": "A3",
+      "qa": null,
+      "refs": {
+        "base_sha": "5d3b0c1dc7dd8e396c4f812db2bf6f1fa6d293f9",
+        "head_sha": null,
+        "pr": null
+      },
+      "required_checks": [
+        "Backend NTM safety suite",
+        "Frontend tests, types and build",
+        "Validate and build local staging images",
+        "Scheduled workflow and locked environment"
+      ],
+      "risk": "high",
+      "status": "IN_PROGRESS",
+      "tests": [],
+      "updated_at": "2026-09-14T19:07:05.431996+00:00",
+      "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-cbr-rate-observation-003-9dc4811432"
+    },
+    {
+      "author_sessions": [
+        "/root/a4_legacy_vat"
+      ],
+      "branch": "agent/classification-tariff-legacy-vat-boundary-003-dbe8461b66",
+      "ci": null,
+      "dependencies": [],
+      "external_audit": null,
+      "files": [
+        "customs-clear/backend/app/services/invoice_analyzer.py",
+        "customs-clear/backend/scripts/test_compliance_resolver_golden.py",
+        "customs-clear/backend/scripts/vat_22_stress_validate.py",
+        "customs-clear/backend/scripts/test_invoice_parsing.py",
+        "customs-clear/backend/tests/test_invoice_vat_admission.py"
+      ],
+      "goal": "Prevent diagnostic model-derived VAT overrides from being presented as final legacy VAT/total amounts without an explicit reviewed admission state; keep mounted API behavior unchanged and preserve a clearly provisional diagnostic path with focused regression tests.",
+      "id": "TARIFF-LEGACY-VAT-BOUNDARY-003",
+      "owner": "A4",
+      "qa": null,
+      "refs": {
+        "base_sha": "5d3b0c1dc7dd8e396c4f812db2bf6f1fa6d293f9",
+        "head_sha": null,
+        "pr": null
+      },
+      "required_checks": [
+        "Backend NTM safety suite",
+        "Frontend tests, types and build",
+        "Validate and build local staging images",
+        "Scheduled workflow and locked environment"
+      ],
+      "risk": "high",
+      "status": "IN_PROGRESS",
+      "tests": [],
+      "updated_at": "2026-09-14T19:07:05.442121+00:00",
+      "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-legacy-vat-boundary-003-dbe8461b66"
     }
   ],
-  "updated_at": "2026-09-14T15:35:36.584734+00:00"
+  "updated_at": "2026-09-14T19:07:05.442742+00:00"
 }
