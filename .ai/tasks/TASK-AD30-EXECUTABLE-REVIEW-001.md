@@ -118,7 +118,7 @@ to its reviewed tree. A4's consumer contract was also independently approved;
 no live AI/API integration is claimed. A0 assumed documentation ownership after
 A2/A3 handoff to record acceptance without rewriting their historical test runs.
 
-| Work | Author/local commit | Integrated commit |
+| Work | Author/local commit | Local integration commit |
 | --- | --- | --- |
 | A3 dossier | 2bfa1799 | 96c771c8 |
 | A2 product assessment | b0904fa1 | cd7404db |
@@ -130,8 +130,12 @@ A2/A3 handoff to record acceptance without rewriting their historical test runs.
 | A5 independent regressions | 5882ce3 / 96141d2e | ab25f165 / 87c6d4ba |
 | A5 evidence | 27304a4c | a7abc9a2 |
 
-Author hashes identify isolated local worktrees; integrated commits are the
-publication ancestry. The assembly preserves exact approved feature/test blobs.
+Author and local integration hashes identify the isolated worktrees. Direct
+git push has no credentials in the recovered environment; publication uses the
+authorized GitHub Git Data connection. Its commit metadata changes SHAs while
+preserving every exact tree/blob and logical commit boundary. The publication
+evidence records the local-to-GitHub mapping; local hashes alone are not claimed
+as published ancestry.
 The dynamic agent matcher from PR #191 is reused; generic agent QA retains all
 44 existing files and adds five AD30 suites. Ordinary backend CI also retains
 its existing selection and adds the same five suites. No test is weakened.
