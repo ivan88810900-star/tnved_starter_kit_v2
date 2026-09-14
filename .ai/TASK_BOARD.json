@@ -558,10 +558,36 @@
         "evidence": "A0/A5 matched three pinned evidence hashes, 24 facts/3 rows and fail-closed gates; 442 tests passed; fresh official access returned proxy 502/timeouts, which is a freshness blocker and not evidence of absence or unchanged law.",
         "validator": "A0"
       }
+    },
+    {
+      "head_sha": "cf66e45f595a00657768a4f6d1ed938932c76526",
+      "id": "A5-CBR-OBS-NUMERIC-001",
+      "reporter": "A5",
+      "status": "CONFIRMED",
+      "summary": "Invalid stored rate/nominal values are emitted without a fail-closed validity state.",
+      "task_id": "TARIFF-CBR-RATE-OBSERVATION-003",
+      "validation": {
+        "at": "2026-09-14T19:15:02.018503+00:00",
+        "evidence": "A0 accepts independent exact-head reproduction: the model schema permits these rows; evidence fields must fail closed on invalid numerics and non-canonical source identity.",
+        "validator": "A0"
+      }
+    },
+    {
+      "head_sha": "cf66e45f595a00657768a4f6d1ed938932c76526",
+      "id": "A5-CBR-OBS-SOURCE-002",
+      "reporter": "A5",
+      "status": "CONFIRMED",
+      "summary": "Non-canonical CBR alias URL can promote a syntactically valid revision into parsed official evidence fields.",
+      "task_id": "TARIFF-CBR-RATE-OBSERVATION-003",
+      "validation": {
+        "at": "2026-09-14T19:15:02.039111+00:00",
+        "evidence": "A0 accepts independent exact-head reproduction: the model schema permits these rows; evidence fields must fail closed on invalid numerics and non-canonical source identity.",
+        "validator": "A0"
+      }
     }
   ],
   "max_concurrent_subagents": 3,
-  "revision": 377,
+  "revision": 404,
   "runs": [
     {
       "head_sha": null,
@@ -1239,9 +1265,9 @@
       "run_id": "d7fa8f6c03744589ace20c5d57cd06c1",
       "session_id": "/root/a1_payment_gate",
       "started_at": "2026-09-14T19:07:05.420740+00:00",
-      "status": "RUNNING",
+      "status": "FINISHED",
       "task_id": "TARIFF-PAYMENT-UNBOUND-ADMISSION-003",
-      "updated_at": "2026-09-14T19:07:05.420752+00:00"
+      "updated_at": "2026-09-14T19:14:30.800522+00:00"
     },
     {
       "head_sha": null,
@@ -1249,9 +1275,9 @@
       "run_id": "80a63c0c88b34f33bf13c19266915c10",
       "session_id": "/root/a3_cbr_observation",
       "started_at": "2026-09-14T19:07:05.431987+00:00",
-      "status": "RUNNING",
+      "status": "FINISHED",
       "task_id": "TARIFF-CBR-RATE-OBSERVATION-003",
-      "updated_at": "2026-09-14T19:07:05.431994+00:00"
+      "updated_at": "2026-09-14T19:11:14.324134+00:00"
     },
     {
       "head_sha": null,
@@ -1259,9 +1285,59 @@
       "run_id": "6b098e77782e43ec9bc0a0af9bec525e",
       "session_id": "/root/a4_legacy_vat",
       "started_at": "2026-09-14T19:07:05.442112+00:00",
-      "status": "RUNNING",
+      "status": "FINISHED",
       "task_id": "TARIFF-LEGACY-VAT-BOUNDARY-003",
-      "updated_at": "2026-09-14T19:07:05.442119+00:00"
+      "updated_at": "2026-09-14T19:11:59.691332+00:00"
+    },
+    {
+      "head_sha": null,
+      "role": "A1",
+      "run_id": "540a2b8027e7496eb46b8057da908c73",
+      "session_id": "/root/a1_payment_gate",
+      "started_at": "2026-09-14T19:14:46.682911+00:00",
+      "status": "FINISHED",
+      "task_id": "TARIFF-PAYMENT-UNBOUND-ADMISSION-004",
+      "updated_at": "2026-09-14T19:17:08.105697+00:00"
+    },
+    {
+      "head_sha": "cf66e45f595a00657768a4f6d1ed938932c76526",
+      "role": "A5",
+      "run_id": "71c50132a682401fa22b2ce416e92d7b",
+      "session_id": "/root/a5_cbr_observation",
+      "started_at": "2026-09-14T19:15:01.959825+00:00",
+      "status": "FINISHED",
+      "task_id": "TARIFF-CBR-RATE-OBSERVATION-003",
+      "updated_at": "2026-09-14T19:15:01.997456+00:00"
+    },
+    {
+      "head_sha": "cf66e45f595a00657768a4f6d1ed938932c76526",
+      "role": "A3",
+      "run_id": "9de4bbfe68be421b966fb66aec444138",
+      "session_id": "/root/a3_cbr_observation",
+      "started_at": "2026-09-14T19:15:16.978707+00:00",
+      "status": "RUNNING",
+      "task_id": "TARIFF-CBR-RATE-OBSERVATION-003",
+      "updated_at": "2026-09-14T19:15:16.978719+00:00"
+    },
+    {
+      "head_sha": "7b526d3238c80d79aa7e6e8015df4f2e9237104c",
+      "role": "A5",
+      "run_id": "aecae9e4bf25408c9490e586483152e9",
+      "session_id": "/root/a5_legacy_vat",
+      "started_at": "2026-09-14T19:16:45.722448+00:00",
+      "status": "FINISHED",
+      "task_id": "TARIFF-LEGACY-VAT-BOUNDARY-003",
+      "updated_at": "2026-09-14T19:16:45.763824+00:00"
+    },
+    {
+      "head_sha": null,
+      "role": "A1",
+      "run_id": "99a1d3a017b14da997b7bc0b3c522dd1",
+      "session_id": "/root/a1_payment_gate",
+      "started_at": "2026-09-14T19:17:23.091792+00:00",
+      "status": "RUNNING",
+      "task_id": "TARIFF-PAYMENT-UNBOUND-ADMISSION-005",
+      "updated_at": "2026-09-14T19:17:23.091805+00:00"
     }
   ],
   "schema_version": 1,
@@ -2175,7 +2251,7 @@
         "Scheduled workflow and locked environment"
       ],
       "risk": "high",
-      "status": "IN_PROGRESS",
+      "status": "CANCELLED",
       "tests": [],
       "updated_at": "2026-09-14T19:07:05.420755+00:00",
       "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-payment-unbound-admission-003-5132f27def"
@@ -2198,7 +2274,7 @@
       "qa": null,
       "refs": {
         "base_sha": "5d3b0c1dc7dd8e396c4f812db2bf6f1fa6d293f9",
-        "head_sha": null,
+        "head_sha": "cf66e45f595a00657768a4f6d1ed938932c76526",
         "pr": null
       },
       "required_checks": [
@@ -2210,7 +2286,7 @@
       "risk": "high",
       "status": "IN_PROGRESS",
       "tests": [],
-      "updated_at": "2026-09-14T19:07:05.431996+00:00",
+      "updated_at": "2026-09-14T19:15:16.978721+00:00",
       "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-cbr-rate-observation-003-9dc4811432"
     },
     {
@@ -2231,6 +2307,108 @@
       "goal": "Prevent diagnostic model-derived VAT overrides from being presented as final legacy VAT/total amounts without an explicit reviewed admission state; keep mounted API behavior unchanged and preserve a clearly provisional diagnostic path with focused regression tests.",
       "id": "TARIFF-LEGACY-VAT-BOUNDARY-003",
       "owner": "A4",
+      "qa": {
+        "commands": [
+          {
+            "command": "independent focused/edge/relevant VAT consumer review",
+            "exit_code": 0,
+            "output": "11 focused, 12 edge probes, 65 relevant regressions passed; no candidate defect"
+          },
+          {
+            "command": "exact diff/scope/compile/clean verification",
+            "exit_code": 0,
+            "output": "PASS exact five files; diff --check and py_compile clean; no mounted API/NTM/provider change"
+          }
+        ],
+        "head_sha": "7b526d3238c80d79aa7e6e8015df4f2e9237104c",
+        "reviewer_session_id": "/root/a5_legacy_vat",
+        "status": "PASSED"
+      },
+      "refs": {
+        "base_sha": "5d3b0c1dc7dd8e396c4f812db2bf6f1fa6d293f9",
+        "head_sha": "7b526d3238c80d79aa7e6e8015df4f2e9237104c",
+        "pr": null
+      },
+      "required_checks": [
+        "Backend NTM safety suite",
+        "Frontend tests, types and build",
+        "Validate and build local staging images",
+        "Scheduled workflow and locked environment"
+      ],
+      "risk": "high",
+      "status": "QA_PASSED",
+      "tests": {
+        "commands": [
+          {
+            "command": "A4 final focused and expanded legacy VAT/payment consumer profile",
+            "exit_code": 0,
+            "output": "152 passed, 2 warnings in 5.18s; py_compile/diff clean; final amended head 7b526d3"
+          },
+          {
+            "command": "A0 independent final focused replay",
+            "exit_code": 0,
+            "output": "52 passed, 2 warnings in 1.38s; exact five-file scope, NTM diagnostic mixing removed, diff clean"
+          }
+        ],
+        "head_sha": "7b526d3238c80d79aa7e6e8015df4f2e9237104c"
+      },
+      "updated_at": "2026-09-14T19:16:45.752663+00:00",
+      "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-legacy-vat-boundary-003-dbe8461b66"
+    },
+    {
+      "author_sessions": [
+        "/root/a1_payment_gate"
+      ],
+      "branch": "agent/rates-tariff-payment-unbound-admission-004-7bbd2febf3",
+      "ci": null,
+      "dependencies": [],
+      "external_audit": null,
+      "files": [
+        "customs-clear/backend/app/services/payment_engine.py",
+        "customs-clear/backend/tests/test_payment_source_admission.py",
+        "customs-clear/backend/tests/test_payment_a6_stage2.py",
+        "customs-clear/backend/tests/test_payment_a6_stage2_redteam.py"
+      ],
+      "goal": "Implement the confirmed source-unbound payment admission gate and align existing positive-final fixtures with the fail-closed contract without weakening arithmetic, RUB identity, recycling-fee visibility or manual overrides.",
+      "id": "TARIFF-PAYMENT-UNBOUND-ADMISSION-004",
+      "owner": "A1",
+      "qa": null,
+      "refs": {
+        "base_sha": "5d3b0c1dc7dd8e396c4f812db2bf6f1fa6d293f9",
+        "head_sha": null,
+        "pr": null
+      },
+      "required_checks": [
+        "Backend NTM safety suite",
+        "Frontend tests, types and build",
+        "Validate and build local staging images",
+        "Scheduled workflow and locked environment"
+      ],
+      "risk": "high",
+      "status": "CANCELLED",
+      "tests": [],
+      "updated_at": "2026-09-14T19:14:46.682927+00:00",
+      "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-payment-unbound-admission-004-7bbd2febf3"
+    },
+    {
+      "author_sessions": [
+        "/root/a1_payment_gate"
+      ],
+      "branch": "agent/rates-tariff-payment-unbound-admission-005-7a55b790a3",
+      "ci": null,
+      "dependencies": [],
+      "external_audit": null,
+      "files": [
+        "customs-clear/backend/app/services/payment_engine.py",
+        "customs-clear/backend/tests/test_payment_source_admission.py",
+        "customs-clear/backend/tests/test_payment_a6_stage2.py",
+        "customs-clear/backend/tests/test_payment_a6_stage2_redteam.py",
+        "customs-clear/backend/tests/test_payment_engine.py",
+        "customs-clear/backend/tests/test_payment_quote.py"
+      ],
+      "goal": "Implement the confirmed source-unbound payment admission gate across legacy HsRate/HsDutyRule paths and align all affected payment regressions while preserving raw candidate arithmetic, RUB identity, recycling visibility, manual overrides and fail-closed final quote semantics.",
+      "id": "TARIFF-PAYMENT-UNBOUND-ADMISSION-005",
+      "owner": "A1",
       "qa": null,
       "refs": {
         "base_sha": "5d3b0c1dc7dd8e396c4f812db2bf6f1fa6d293f9",
@@ -2246,9 +2424,9 @@
       "risk": "high",
       "status": "IN_PROGRESS",
       "tests": [],
-      "updated_at": "2026-09-14T19:07:05.442121+00:00",
-      "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-legacy-vat-boundary-003-dbe8461b66"
+      "updated_at": "2026-09-14T19:17:23.091808+00:00",
+      "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-payment-unbound-admission-005-7a55b790a3"
     }
   ],
-  "updated_at": "2026-09-14T19:07:05.442742+00:00"
+  "updated_at": "2026-09-14T19:17:23.092629+00:00"
 }
