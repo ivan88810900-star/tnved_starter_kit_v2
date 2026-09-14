@@ -2,11 +2,12 @@ from __future__ import annotations
 
 from datetime import date, datetime, timezone
 from decimal import Decimal, InvalidOperation
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 import hashlib
 import math
 import os
 import re
+from typing import Literal
 import xml.etree.ElementTree as ET
 
 import httpx
@@ -47,6 +48,62 @@ class CBRRateSnapshot:
         # Existing read-only consumers may continue unpacking date and rates.
         yield self.date_key
         yield self.rows
+
+
+@dataclass(frozen=True)
+class CBRStoredRateRow:
+    """One persisted ``exchange_rates`` row, without inferred provenance.
+
+    ``updated_at`` is retained as storage metadata only.  It is deliberately not
+    called a source date and must not be used to bind the row to a CBR artifact.
+    """
+
+    row_id: int
+    currency_code: str
+    rub_per_unit: float | None
+    nominal: float | None
+    updated_at: datetime | None
+    stored_value_status: Literal["candidate", "invalid"]
+    invalid_reasons: tuple[str, ...]
+
+
+@dataclass(frozen=True)
+class CBRGlobalSourceEvidence:
+    """Current source-level CBR evidence kept separate from individual rows."""
+
+    status_row_id: int
+    source_code: str
+    source_url: str
+    source_revision: str
+    source_date: date | None
+    artifact_sha256: str | None
+    synced_at: datetime | None
+    is_stale: bool
+    canonical_source_identity: bool
+    evidence_scope: Literal["global_source_status"] = field(
+        default="global_source_status", init=False
+    )
+    exact_row_binding_verified: Literal[False] = field(default=False, init=False)
+
+
+@dataclass(frozen=True)
+class CBRRateObservation:
+    """Read-only stored FX facts plus explicitly non-row-bound source evidence.
+
+    The present schema does not store a source revision or artifact digest on an
+    ``exchange_rates`` row.  A global ``SourceStatus`` record may describe the
+    latest CBR snapshot, but even matching timestamps do not prove that a given
+    row was extracted from that artifact.  Consumers therefore cannot use this
+    object to grant payment admission.
+    """
+
+    rows: tuple[CBRStoredRateRow, ...]
+    global_source_evidence: tuple[CBRGlobalSourceEvidence, ...]
+    binding_status: Literal["unverified_no_exact_row_artifact_binding"] = field(
+        default="unverified_no_exact_row_artifact_binding", init=False
+    )
+    exact_row_artifact_binding_verified: Literal[False] = field(default=False, init=False)
+    payment_admission_granted: Literal[False] = field(default=False, init=False)
 
 
 def _configured_cbr_max_rate_age_days() -> int:
@@ -293,6 +350,54 @@ def _official_cbr_revision_date(revision: object) -> date | None:
     return parsed
 
 
+def _cbr_revision_evidence(revision: object) -> tuple[date | None, str | None]:
+    """Parse available global revision evidence without upgrading its trust."""
+    match = _CBR_REVISION_RE.fullmatch(str(revision or "").strip())
+    if match is None:
+        return None, None
+    try:
+        source_date = date.fromisoformat(match.group(1))
+    except ValueError:
+        return None, None
+    if source_date.isoformat() != match.group(1):
+        return None, None
+    digest = match.group(2)
+    return source_date, digest.lower() if digest else None
+
+
+def _cbr_stored_rate_row_observation(row: ExchangeRate) -> CBRStoredRateRow:
+    """Fail closed on malformed persisted numeric values without emitting them."""
+    invalid_reasons = []
+    try:
+        rate = float(row.rate)
+    except (TypeError, ValueError, OverflowError):
+        rate = None
+        invalid_reasons.append("rate_not_numeric")
+    try:
+        nominal = float(row.nominal)
+    except (TypeError, ValueError, OverflowError):
+        nominal = None
+        invalid_reasons.append("nominal_not_numeric")
+    if rate is not None and not math.isfinite(rate):
+        invalid_reasons.append("rate_not_finite")
+    elif rate is not None and rate <= 0:
+        invalid_reasons.append("rate_not_positive")
+    if nominal is not None and not math.isfinite(nominal):
+        invalid_reasons.append("nominal_not_finite")
+    elif nominal is not None and nominal <= 0:
+        invalid_reasons.append("nominal_not_positive")
+    invalid = bool(invalid_reasons)
+    return CBRStoredRateRow(
+        row_id=int(row.id),
+        currency_code=str(row.currency_code),
+        rub_per_unit=None if invalid else rate,
+        nominal=None if invalid else nominal,
+        updated_at=row.updated_at,
+        stored_value_status="invalid" if invalid else "candidate",
+        invalid_reasons=tuple(invalid_reasons),
+    )
+
+
 def _persisted_official_cbr_revisions(db, *, lock: bool = False) -> list[str]:
     """Read the durable CBR high-water mark from status and successful logs."""
     status_query = (
@@ -537,6 +642,60 @@ def get_rates_map() -> dict[str, float]:
         rates.setdefault(code, value)
     rates["RUB"] = 1.0
     return rates
+
+
+def get_cbr_rate_observation() -> CBRRateObservation:
+    """Return stored CBR candidates without inventing row-level provenance.
+
+    This is intentionally separate from :func:`get_rates_map`: it does not add
+    fallback constants, perform a refresh, mutate rows, or authorize a rate for
+    a payment.  Source-level records are returned in a separate collection
+    because the current database schema has no exact row-to-artifact key.
+    """
+    with SessionLocal() as db:
+        stored_rows = tuple(
+            _cbr_stored_rate_row_observation(row)
+            for row in (
+                db.query(ExchangeRate)
+                .filter(ExchangeRate.currency_code.in_(TRACKED))
+                .order_by(ExchangeRate.currency_code.asc(), ExchangeRate.id.asc())
+                .all()
+            )
+        )
+        source_evidence = []
+        for status in (
+            db.query(SourceStatus)
+            .filter(SourceStatus.source_code.in_(_CBR_SOURCE_CODES))
+            .order_by(SourceStatus.source_code.asc(), SourceStatus.id.asc())
+            .all()
+        ):
+            source_code = str(status.source_code)
+            source_url = str(status.source_url or "")
+            canonical_identity = (
+                source_code == CBRF_SOURCE_CODE and source_url == _CBR_OFFICIAL_URL
+            )
+            source_date, artifact_sha256 = (
+                _cbr_revision_evidence(status.revision)
+                if canonical_identity
+                else (None, None)
+            )
+            source_evidence.append(
+                CBRGlobalSourceEvidence(
+                    status_row_id=int(status.id),
+                    source_code=source_code,
+                    source_url=source_url,
+                    source_revision=str(status.revision or ""),
+                    source_date=source_date,
+                    artifact_sha256=artifact_sha256,
+                    synced_at=status.synced_at,
+                    is_stale=bool(status.is_stale),
+                    canonical_source_identity=canonical_identity,
+                )
+            )
+    return CBRRateObservation(
+        rows=stored_rows,
+        global_source_evidence=tuple(source_evidence),
+    )
 
 
 def get_rates_payload() -> dict[str, object]:
