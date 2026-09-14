@@ -1,5 +1,5 @@
 {
-  "board_revision": 460,
+  "board_revision": 524,
   "files": {
     ".ai/orchestration/A6_LIVE_BRIDGE.md": {
       "branch": "agent/classification-tariff-a6-live-bridge-001-f5839c6c98",
@@ -30,6 +30,12 @@
       "owner": "A4",
       "task_id": "TARIFF-LEGACY-VAT-BOUNDARY-003",
       "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-legacy-vat-boundary-003-dbe8461b66"
+    },
+    "customs-clear/backend/app/services/non_tariff_service.py": {
+      "branch": "agent/ntm-tariff-ntm-freshness-fail-closed-001-7407bd6726",
+      "owner": "A2",
+      "task_id": "TARIFF-NTM-FRESHNESS-FAIL-CLOSED-001",
+      "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-ntm-freshness-fail-closed-001-7407bd6726"
     },
     "customs-clear/backend/app/services/payment_engine.py": {
       "branch": "agent/rates-tariff-payment-unbound-admission-006-c8a905e03d",
@@ -66,6 +72,12 @@
       "owner": "A4",
       "task_id": "TARIFF-LEGACY-VAT-BOUNDARY-003",
       "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-legacy-vat-boundary-003-dbe8461b66"
+    },
+    "customs-clear/backend/tests/test_non_tariff_data_freshness.py": {
+      "branch": "agent/ntm-tariff-ntm-freshness-fail-closed-001-7407bd6726",
+      "owner": "A2",
+      "task_id": "TARIFF-NTM-FRESHNESS-FAIL-CLOSED-001",
+      "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-ntm-freshness-fail-closed-001-7407bd6726"
     },
     "customs-clear/backend/tests/test_normative_bundle.py": {
       "branch": "agent/rates-tariff-payment-unbound-admission-006-c8a905e03d",
