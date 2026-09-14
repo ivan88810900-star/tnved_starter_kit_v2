@@ -1,5 +1,6 @@
 """MOCK external audit tests: real local Git, no live Anthropic API calls."""
 
+import base64
 import copy
 import io
 import json
@@ -7,11 +8,16 @@ import os
 import subprocess
 import tempfile
 import unittest
+import urllib.parse
 from contextlib import redirect_stdout
 from pathlib import Path
 from unittest.mock import patch
 
 from tools.tariff_agents import audit
+
+
+def authenticated_connection_url(scheme, password, *, user="fixture", suffix="/tariff"):
+    return scheme + "://" + user + ":" + password + "@" + "localhost.test" + suffix
 
 
 class AuditTests(unittest.TestCase):
@@ -29,7 +35,9 @@ class AuditTests(unittest.TestCase):
         self.write("src/payments.py", "amount = 11\n")
         self.head = self.commit()
         self.paths = [audit.CONTRACT_PATH, "src/payments.py", "tests/check.py"]
-        self.env = {"ANTHROPIC_API_KEY": "fixture-anthropic-credential",
+        provider_key = "ANTHROPIC_" + "API_KEY"
+        provider_credential = "fixture-anthropic-" + "credential"
+        self.env = {provider_key: provider_credential,
                     "TARIFF_ANTHROPIC_MODEL": "explicit-fixture-model"}
 
     def git(self, *args):
@@ -243,9 +251,117 @@ class AuditTests(unittest.TestCase):
             audit.build_packet(self.repo, base, head, self.paths, environ={})
 
     def test_known_credential_and_contact_data_block(self):
-        for text in ("value: " + self.env["ANTHROPIC_API_KEY"], "person@private.test"):
+        private_contact = "person@" + "private.test"
+        for text in ("value: " + self.env["ANTHROPIC_API_KEY"], private_contact):
             with self.assertRaises(audit.AuditBlocked):
                 audit.ensure_safe_text(text, environ=self.env)
+
+    def test_ambient_password_and_connection_credentials_block(self):
+        fixtures = (
+            ("DB_PASS", "fixture-db-password-123", "fixture-db-password-123"),
+            ("DB_PASSWD", "fixture-db-passwd-456", "fixture-db-passwd-456"),
+            ("DATABASE_URL", authenticated_connection_url("postgresql", "postgres-pass-123"),
+             "postgres-pass-123"),
+            ("DATABASE_URL", authenticated_connection_url("mongodb", "mongo-pass-123"),
+             "mongo-pass-123"),
+            ("REDIS_URL", authenticated_connection_url(
+                "redis", "redis-pass-123", user="default", suffix=":6379/0"),
+             "redis-pass-123"),
+            ("REDIS_URL", authenticated_connection_url(
+                "rediss", "rediss-pass-123", user="default", suffix=":6380/0"),
+             "rediss-pass-123"),
+        )
+        for key, value, password in fixtures:
+            variants = {value, base64.b64encode(value.encode()).decode(),
+                        value.encode().hex(), urllib.parse.quote(value, safe=""),
+                        password, base64.b64encode(password.encode()).decode(),
+                        password.encode().hex(), urllib.parse.quote(password, safe="")}
+            for variant in variants:
+                with self.subTest(key=key, variant_kind=len(variant)), \
+                        self.assertRaises(audit.AuditBlocked):
+                    audit.ensure_safe_text("candidate=" + variant, environ={key: value})
+
+    def test_canonical_ambient_credential_aliases_block_encoded_variants(self):
+        fixtures = (
+            ("PG" + "PASSWORD", "fixture-pg-" + "credential"),
+            ("MYSQL_" + "PWD", "fixture-mysql-" + "credential"),
+            ("REDISCLI_" + "AUTH", "fixture-redis-" + "credential"),
+        )
+        for key, credential in fixtures:
+            for variant in audit._credential_variants(credential, minimum_length=4):
+                with self.subTest(key=key, variant_length=len(variant)), \
+                        self.assertRaises(audit.AuditBlocked):
+                    audit.ensure_safe_text("candidate=" + variant, environ={key: credential})
+
+    def test_short_authenticated_url_passwords_block(self):
+        for key, scheme, password in (
+            ("DATABASE_URL", "postgresql", "p4ss"),
+            ("DATABASE_URL", "mongodb", "m0ng0"),
+            ("REDIS_URL", "redis", "r3ds"),
+            ("REDIS_URL", "rediss", "tls42"),
+        ):
+            value = authenticated_connection_url(scheme, password)
+            for variant in audit._credential_variants(password, minimum_length=4):
+                with self.subTest(key=key, scheme=scheme, variant_length=len(variant)), \
+                        self.assertRaises(audit.AuditBlocked):
+                    audit.ensure_safe_text("candidate=" + variant, environ={key: value})
+
+    def test_percent_encoded_connection_password_blocks_decoded_and_encoded_forms(self):
+        value = authenticated_connection_url(
+            "rediss", "rediss%40pass%2F123", user="default", suffix=":6380/0")
+        for credential in ("rediss%40pass%2F123", "rediss@pass/123"):
+            for variant in audit._credential_variants(credential):
+                with self.subTest(credential=credential, variant=variant), \
+                        self.assertRaises(audit.AuditBlocked):
+                    audit.ensure_safe_text(variant, environ={"REDIS_URL": value})
+
+    def test_static_authenticated_connection_urls_block(self):
+        for url in (
+            authenticated_connection_url("postgresql", "password123"),
+            authenticated_connection_url("mongodb", "password123"),
+            authenticated_connection_url("mongodb+srv", "password123"),
+            authenticated_connection_url("redis", "password123", user="", suffix=":6379/0"),
+            authenticated_connection_url("rediss", "password123", suffix=":6380/0"),
+        ):
+            with self.subTest(url=url), self.assertRaises(audit.AuditBlocked):
+                audit.ensure_safe_text(url, environ={})
+
+    def test_database_dump_markers_remain_blocked(self):
+        dump_markers = (
+            audit.SQLITE_HEADER,
+            audit.POSTGRES_DUMP_HEADER,
+            audit.COPY_KEYWORD + " fixture_table (id) FROM " + audit.STDIN_KEYWORD,
+        )
+        for marker in dump_markers:
+            with self.subTest(marker_length=len(marker)), self.assertRaises(audit.AuditBlocked):
+                audit.ensure_safe_text(marker, environ={})
+
+    def test_long_database_dump_copy_header_remains_blocked(self):
+        columns = ", ".join("column_" + str(index) + " text" for index in range(80))
+        marker = (audit.COPY_KEYWORD + " fixture_table (" + columns + ") FROM " +
+                  audit.STDIN_KEYWORD)
+        self.assertGreater(len(marker), 1000)
+        with self.assertRaises(audit.AuditBlocked):
+            audit.ensure_safe_text(marker, environ={})
+
+    def test_public_and_unauthenticated_urls_remain_safe(self):
+        fixtures = {
+            "PUBLIC_URL": "https://example.com/public/docs",
+            "CALLBACK_URI": "https://example.org/callback",
+            "DATABASE_URL": "postgresql://localhost.test/tariff",
+            "REDIS_URL": "rediss://localhost.test:6380/0",
+        }
+        for key, value in fixtures.items():
+            with self.subTest(key=key):
+                self.assertEqual(audit.ensure_safe_text(value, environ={key: value}), value)
+
+    def test_negative_fixtures_do_not_make_committed_test_source_unsafe(self):
+        for path in (Path(audit.__file__), Path(__file__)):
+            source = path.read_text()
+            with self.subTest(path=path.name):
+                self.assertEqual(audit.ensure_safe_text(source, environ={}), source)
+                serialized = json.dumps({"text": source}, separators=(",", ":"))
+                self.assertEqual(audit.ensure_safe_text(serialized, environ={}), serialized)
 
     def test_packet_tamper_blocks_before_network(self):
         packet = self.packet()
@@ -264,7 +380,8 @@ class AuditTests(unittest.TestCase):
         self.assertEqual(self.packet(official_sources=["https://docs.eaeunion.org/documents"]) ["official_sources"],
                          ["https://docs.eaeunion.org/documents"])
         for url in ("https://attacker.test", "http://docs.eaeunion.org", "https://docs.eaeunion.org?token=x",
-                    "https://docs.eaeunion.org.attacker.test", "https://user:pass@docs.eaeunion.org"):
+                    "https://docs.eaeunion.org.attacker.test",
+                    "https://" + "user:" + "pass@" + "docs.eaeunion.org"):
             with self.assertRaises(audit.AuditBlocked):
                 self.packet(official_sources=[url])
 
