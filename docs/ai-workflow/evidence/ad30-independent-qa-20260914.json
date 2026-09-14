@@ -1,0 +1,131 @@
+{
+  "schema_version": 1,
+  "evidence_kind": "independent_offline_candidate_qa",
+  "observed_on": "2026-09-14",
+  "reviewer": "A5",
+  "status": "independent_local_review_approved_pending_exact_integrated_ci",
+  "product_base_commit": "a9d15c74699c8cd7842404580ff6fd7bd957e9eb",
+  "tested_qa_commit": "96141d2eaa9d9891fc17391578d3214b6cbae5b6",
+  "approved_owner_commits": {
+    "A1": [
+      "f27eae01c5acd3d0323ec4ef995f4b6d3bebad30",
+      "1c642b8953c1bdba3f8a689ec390a30fefa90b9c",
+      "9aafade5ef89e00c6094c7803e4b54b4312bb231"
+    ],
+    "A2": [
+      "b0904fa171877de4ee7c5c32710d76d041a38181"
+    ],
+    "A3": [
+      "2bfa1799e11eefb371b548ace46aca9feee47fd2",
+      "5c18618c6e49b1992b0c6787e6993f90f66e8b90"
+    ],
+    "A4": [
+      "fbdc9397ba370b44d9ed116f1d7359266a38953a"
+    ]
+  },
+  "source_dossier_sha256": "f3f9722c1f67ec0ea4cc2fa6d495d54d0de981cb351d8aef71104ec6eb584894",
+  "findings": [
+    {
+      "id": "A5-AD30-SOURCE-LABEL-001",
+      "classification": "confirmed_defect",
+      "owner": "A3",
+      "root_cause": "Nominative country label was represented as a literal visual transcription, while the preserved PDF prints an inflected phrase.",
+      "fix": "Relabel as recorded_origin_label; preserve historical source evidence bytes and selected value; independently repin new dossier.",
+      "owner_fix_commit": "5c18618c6e49b1992b0c6787e6993f90f66e8b90",
+      "status": "fixed_and_independently_retested"
+    },
+    {
+      "id": "A5-AD30-ROW-EVIDENCE-001",
+      "classification": "confirmed_defect",
+      "owner": "A1",
+      "root_cause": "Standalone hypothetical-money output named source fact IDs but omitted the complete source bindings of the selected producer row and rate unit.",
+      "fix": "Include both validated source facts with exact value_json, record SHA/path/pointer, body SHA, official URL, page, locator and observation kind.",
+      "owner_fix_commit": "9aafade5ef89e00c6094c7803e4b54b4312bb231",
+      "status": "fixed_and_independently_retested"
+    }
+  ],
+  "red_green": {
+    "red_test_commit": "5882ce3",
+    "pre_fix_feature_commit": "841e393",
+    "before": {
+      "failed": 4,
+      "passed": 24
+    },
+    "after_same_assertions": {
+      "failed": 0,
+      "passed": 28
+    },
+    "feature_repairs_by_qa": false,
+    "assertions_weakened": false
+  },
+  "verification": {
+    "independent_suite": {
+      "command": "python -m pytest tests/test_ad30_review_redteam.py -q",
+      "passed": 43,
+      "failed": 0,
+      "duration_seconds": 2.57
+    },
+    "combined_profile": {
+      "command": "python -m pytest tests/test_ad30_source_facts.py tests/test_ad30_applicability.py tests/test_ad30_duty_preview.py tests/test_ad30_candidate_cli.py tests/test_ad30_review_redteam.py tests/test_ett_duty_preview.py -q",
+      "passed": 449,
+      "failed": 0,
+      "duration_seconds": 9.72
+    },
+    "cli_process_audits": {
+      "count": 15,
+      "method": "Fresh real CLI interpreters with audit hooks rejecting attempted socket, SQLite, subprocess, database-file access, filesystem mutations, or application startup. Bytecode writes disabled; isolated non-SQLite sentinel DB and input/source bytes verified unchanged.",
+      "repository_byte_cases": [
+        "unaltered isolated copy",
+        "raw evidence whitespace drift",
+        "caller-rewritten evidence hash",
+        "zero-rate dossier substitution",
+        "missing evidence record"
+      ],
+      "all_passed": true
+    },
+    "source_binding_review": {
+      "facts_checked": 24,
+      "rows_checked": 3,
+      "method": "Compared body SHA, URL, recorded capture status, page bounds and record SHA to retained capture/source records, separately from self-consistent dossier hashes. Independently reread all three preserved Decision 12 pages and matched render hashes to prior capture evidence.",
+      "decision12_render_sha256": [
+        "7415faf48cdb1dd2031fb41edb5aed095a86fcc25ee1d295702ed3aac92cb4fd",
+        "c1cac0361fd7e37055040c687479d58d23334d57cd86da37a0bde2f1ce5a521b",
+        "6d37aa50efc9f68eb4370a5639912ab609e3ce595ff8589c4246d634fa2d14c3"
+      ],
+      "new_network_acquisition": false,
+      "all_original_archives_rehashed_again": false
+    },
+    "boundaries": [
+      "Code alone never permits arithmetic.",
+      "Missing, malformed, outside or contradictory product candidates yield no amount, not zero liability.",
+      "DTO source/rate/approval forgeries are rejected at both product and money boundaries.",
+      "Unknown producer never selects the other-producers row automatically.",
+      "Printed row arithmetic retains exact sub-cent amounts under hostile ambient Decimal precision.",
+      "Dates before, within and after printed historical horizons never establish legal or temporal applicability.",
+      "All three hypothetical monetary rows expose complete source-row and unit provenance."
+    ],
+    "consumer_document_review": {
+      "commit": "fbdc9397ba370b44d9ed116f1d7359266a38953a",
+      "path": "docs/ai-workflow/AD30_REVIEW_CONSUMER_CONTRACT.md",
+      "status": "independently_approved",
+      "method": "Compared all result-state, evidence, decimal and CLI exit descriptions to the combined code and independent subprocess outputs; independently searched current API/assistant/classifier paths for AD30 imports and found none.",
+      "runtime_ai_integration_claimed": false,
+      "existing_payment_review_helper_is_ad30_adapter": false
+    }
+  },
+  "scope_limits": [
+    "This accepts the isolated technical review candidate, not current or historical AD30 liability.",
+    "Source record integrity does not imply native scanned-text verification, complete amendment inventory, producer identity/succession or nomenclature mapping.",
+    "Only already-published preserved evidence and Decision 12 page renders were reused; no new official-source acquisition or full legal audit was performed.",
+    "The product evaluator intentionally uses a bounded country-identity set and the documented limited dimensional consistency checks; it is not a general geometry or conformity validator.",
+    "A0 must record successful exact assembled and published HEAD CI, frontend/types/build and staging verification before the task is complete."
+  ],
+  "legal_review_verified": false,
+  "effective_dates_verified": false,
+  "full_legal_coverage": false,
+  "active_rates_written": false,
+  "production_database_modified": false,
+  "enforcement_enabled": false,
+  "main_merged": false,
+  "production_deployed": false
+}
