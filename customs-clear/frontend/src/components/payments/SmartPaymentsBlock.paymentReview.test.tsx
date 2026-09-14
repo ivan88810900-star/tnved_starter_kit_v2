@@ -27,7 +27,7 @@ describe('Quote totals with uncertain eligibility', () => {
       expect(within(row).getByTitle('Сумма не определена')).toHaveTextContent('—');
     }
     expect(within(table).getByText('не определено')).toBeInTheDocument();
-    expect(screen.getByText('Подтверждённая часть')).toBeInTheDocument();
+    expect(screen.getByText('Частичная сумма')).toBeInTheDocument();
     expect(within(table).getByText(/частичная сумма:/)).toHaveTextContent(/1\s000,00 ₽/);
     expect(within(table).queryByText('0,00 ₽')).not.toBeInTheDocument();
   });
@@ -38,7 +38,7 @@ describe('Quote totals with uncertain eligibility', () => {
     render(<SmartPaymentsBlock hsCode="8509400000" />);
     const table = await screen.findByRole('table');
     expect(within(table).queryByText('не определено')).not.toBeInTheDocument();
-    expect(screen.queryByText('Подтверждённая часть')).not.toBeInTheDocument();
+    expect(screen.queryByText('Частичная сумма')).not.toBeInTheDocument();
     expect(within(table).getAllByText('0,00 ₽')).toHaveLength(4);
   });
 });

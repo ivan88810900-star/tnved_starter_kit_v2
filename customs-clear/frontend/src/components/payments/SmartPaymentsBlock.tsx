@@ -236,7 +236,7 @@ export const SmartPaymentsBlock: React.FC<Props> = ({ hsCode, description, class
             </div>
             <div className={`rounded-xl border px-4 py-3 ${quote.total_payable_rub == null ? 'border-amber-200 bg-amber-50' : 'border-emerald-200 bg-emerald-50'}`}>
               <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-600">
-                {quote.total_payable_rub == null ? 'Подтверждённая часть' : 'Итого к уплате'}
+                {quote.total_payable_rub == null ? 'Частичная сумма' : 'Итого к уплате'}
               </p>
               <p className="mt-1 font-mono text-base font-bold text-slate-900">
                 {formatRub(quote.total_payable_rub ?? quote.total_partial_rub)}
