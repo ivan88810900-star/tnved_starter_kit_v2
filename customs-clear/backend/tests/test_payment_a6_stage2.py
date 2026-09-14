@@ -259,9 +259,11 @@ def test_rub_identity_is_not_taken_from_mutable_fx_map(isolated_payments):
     isolated_payments.set_duty(type="specific", ad_valorem_pct=None, specific_amount=2,
                                specific_currency="RUB", specific_uom="kg")
     raw, quote, lines = observe("RUB_identity", request(net_weight_kg=100, _fx_rates={"RUB": 17}))
-    assert raw["breakdown"]["duty"] == lines["duty"].amount_rub == 200
+    assert raw["breakdown"]["duty"] == 200
     assert quote.customs_value_rub == 1_000_000
     assert raw["breakdown"]["fx_rate"] == 1
+    assert "duty_rule_source_binding_unverified" in raw["payment_review_reasons"]
+    needs_review(raw, quote, lines)
 
 
 def test_invoice_fx_also_withholds_fee_and_other_dependent_components(isolated_payments):
@@ -286,7 +288,9 @@ def test_existing_recycling_amount_is_visible_and_reconciles_without_recalculati
     assert line.reason == "Synthetic source"
     assert line.basis_amount_rub == 20000 and line.rate_label == "1.5"
     shown = sum(Decimal(str(line.amount_rub)) for line in quote.line_items if line.amount_rub is not None)
-    assert shown == Decimal(str(quote.total_partial_rub)) == Decimal(str(quote.total_payable_rub))
+    assert shown == Decimal(str(quote.total_partial_rub))
+    assert quote.total_payable_rub is None
+    needs_review(raw, quote, lines)
 
 
 @pytest.mark.parametrize("currency,fx", [("USD", 90), ("RUB", 17)])

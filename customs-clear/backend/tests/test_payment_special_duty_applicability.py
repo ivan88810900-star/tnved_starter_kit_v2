@@ -116,7 +116,9 @@ def test_unproved_rows_keep_evidence_and_block_money_and_dependent_vat(remedies,
                      applicability_verified=True, amounts_provisional=False)
     assert result["status"] == "REVIEW_REQUIRED"
     assert result["amounts_provisional"] is True
-    assert result["payment_review_reasons"] == ["special_duty_applicability_unverified"]
+    assert result["payment_review_reasons"] == [
+        "special_duty_applicability_unverified", "hs_rate_source_binding_unverified",
+    ]
     item = result["special_duties"][0]
     assert item["candidate_id"] == candidate_id
     assert item["status"] == "needs_clarification" and item["applied"] is False
@@ -132,11 +134,14 @@ def test_unproved_rows_keep_evidence_and_block_money_and_dependent_vat(remedies,
     assert lines["special_duty"].amount_rub is None
     assert lines["vat"].status == "manual_review_required"
     assert lines["vat"].amount_rub is None and lines["vat"].basis_amount_rub is None
-    assert lines["duty"].amount_rub == 10_000
-    assert quote.total_payable_rub is None and quote.total_partial_rub == 11_000
+    assert result["breakdown"]["duty"] == 10_000
+    assert lines["duty"].status == "manual_review_required" and lines["duty"].amount_rub is None
+    assert quote.total_payable_rub is None and quote.total_partial_rub == 1_000
     metadata = payment_result_metadata(result)
     assert metadata["payment_status"] == "REVIEW_REQUIRED" and metadata["amounts_provisional"] is True
-    assert metadata["payment_review_reasons"] == ["special_duty_applicability_unverified"]
+    assert metadata["payment_review_reasons"] == [
+        "special_duty_applicability_unverified", "hs_rate_source_binding_unverified",
+    ]
 
 
 def test_missing_origin_is_review_while_a_known_other_origin_is_excluded(remedies):
@@ -172,7 +177,8 @@ def test_known_distinct_family_partial_is_retained_but_never_final(remedies):
     quote = quotes.build_payment_quote(payload())
     lines = {line.code: line for line in quote.line_items}
     assert lines["special_duty"].amount_rub is None and lines["vat"].amount_rub is None
-    assert quote.total_payable_rub is None and quote.total_partial_rub == 11_000
+    assert lines["duty"].amount_rub is None
+    assert quote.total_payable_rub is None and quote.total_partial_rub == 1_000
     assumption = next(item for item in quote.assumptions if item.key == "provisional_special_duties_rub")
     assert assumption.value == "3 000.00 RUB"
 
@@ -200,7 +206,9 @@ def test_explicit_unconditional_zero_is_provisional_arithmetic_and_different_fro
 def test_nonmatching_producer_condition_does_not_make_future_row_block_current(remedies):
     remedies(manufacturer_exporter="Producer A", effective_from="2027-01-01", effective_to="2027-12-31")
     result = resolve()
-    assert result["special_duties"] == [] and result["amounts_provisional"] is False
+    assert result["special_duties"] == [] and result["amounts_provisional"] is True
+    assert result["breakdown"]["duty"] == 10_000
+    assert result["payment_review_reasons"] == ["hs_rate_source_binding_unverified"]
 
 
 def test_safeguard_synonyms_do_not_bypass_overlapping_alternative_guard(remedies):
@@ -220,12 +228,15 @@ def test_unknown_excise_propagates_to_dependent_vat_and_recorded_status(remedies
     rate.excise_type = excise_type
     rate.excise_value = value
     result = resolve()
-    assert result["payment_review_reasons"] == ["excise_applicability_unverified"]
+    assert result["payment_review_reasons"] == [
+        "excise_applicability_unverified", "hs_rate_source_binding_unverified",
+    ]
+    assert result["breakdown"]["duty"] == 10_000
     quote = quotes.build_payment_quote(payload())
     lines = {line.code: line for line in quote.line_items}
     assert lines["excise"].status == "manual_review_required" and lines["excise"].amount_rub is None
     assert lines["vat"].amount_rub is None and lines["vat"].basis_amount_rub is None
-    assert quote.total_payable_rub is None and quote.total_partial_rub == 11_000
+    assert quote.total_payable_rub is None and quote.total_partial_rub == 1_000
 
 
 @pytest.mark.parametrize("ad_type,condition,country", [
@@ -237,11 +248,15 @@ def test_unresolved_legacy_antidumping_propagates_to_vat_and_review(remedies, ad
     rate.antidumping_type, rate.antidumping_value = ad_type, 20
     rate.antidumping_condition, rate.antidumping_countries = condition, "CN"
     result = resolve(country=country)
-    assert result["payment_review_reasons"] == ["antidumping_applicability_unverified"]
+    assert result["payment_review_reasons"] == [
+        "antidumping_applicability_unverified", "hs_rate_source_binding_unverified",
+    ]
+    assert result["auto_detected"]["antidumping_value"] == 20
+    assert result["breakdown"]["duty"] == 10_000
     quote = quotes.build_payment_quote(payload(country=country))
     lines = {line.code: line for line in quote.line_items}
     assert lines["antidumping"].amount_rub is None and lines["vat"].amount_rub is None
-    assert quote.total_payable_rub is None and quote.total_partial_rub == 11_000
+    assert quote.total_payable_rub is None and quote.total_partial_rub == 1_000
 
 
 @pytest.mark.parametrize("as_of", ["2026-09-08", "2020-01-01", "invalid", None, "", False, 0])

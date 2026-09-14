@@ -101,15 +101,17 @@ def test_caller_claims_do_not_bypass_review(payment_data, claims):
     assert result["breakdown"]["duty"] == 10_000
 
 
-@pytest.mark.parametrize("coefficient, expected_status", [(1.0, "OK"), (2.0, "REVIEW_REQUIRED")])
-def test_neutral_coefficient_preserves_arithmetic_and_upward_requires_review(payment_data, coefficient, expected_status):
+@pytest.mark.parametrize("coefficient", [1.0, 2.0])
+def test_neutral_coefficient_preserves_arithmetic_and_upward_requires_review(payment_data, coefficient):
     payment_data.coefficient = coefficient
     result = engine.compute_payments(_payload())
-    assert result["status"] == expected_status
-    assert result["amounts_provisional"] is (coefficient != 1.0)
+    assert result["status"] == "REVIEW_REQUIRED"
+    assert result["amounts_provisional"] is True
     assert result["breakdown"]["duty"] == 10_000
     assert result["tariff_preference"]["applied"] is False
+    assert "hs_rate_source_binding_unverified" in result["payment_review_reasons"]
     if coefficient != 1.0:
+        assert "tariff_preference_eligibility_unverified" in result["payment_review_reasons"]
         assert result["tariff_preference"]["candidate_duty_coefficient"] == coefficient
         assert result["tariff_preference"]["eligibility_verified"] is False
 
@@ -117,8 +119,9 @@ def test_neutral_coefficient_preserves_arithmetic_and_upward_requires_review(pay
 @pytest.mark.parametrize("manual_rate", [0.0, 5.0, 17.0])
 def test_explicit_manual_duty_is_not_replaced_or_discounted(payment_data, manual_rate):
     result = engine.compute_payments(_payload(duty_rate=manual_rate))
-    assert result["status"] == "OK"
-    assert result["amounts_provisional"] is False
+    assert result["status"] == "REVIEW_REQUIRED"
+    assert result["amounts_provisional"] is True
+    assert "hs_rate_source_binding_unverified" in result["payment_review_reasons"]
     assert result["tariff_preference"]["applied"] is False
     assert result["breakdown"]["selected_rule"] == "manual_rate"
     assert result["breakdown"]["duty"] == 1_000 * manual_rate
@@ -230,9 +233,9 @@ def test_known_zero_duty_is_distinct_from_missing_zero_fallback(payment_data):
     result = engine.compute_payments(_payload(country="CN"))
     assert result["breakdown"]["duty"] == 0
     assert result["breakdown"]["duty_rate"] == 0
-    assert result["status"] == "OK"
-    assert result["amounts_provisional"] is False
-    assert result["payment_review_reasons"] == []
+    assert result["status"] == "REVIEW_REQUIRED"
+    assert result["amounts_provisional"] is True
+    assert result["payment_review_reasons"] == ["hs_rate_source_binding_unverified"]
 
 
 def test_caller_source_claims_and_reduced_vat_flag_do_not_verify_missing_sources(payment_data, monkeypatch):
@@ -268,10 +271,13 @@ def test_pending_quote_excludes_provisional_duty_and_vat_from_known_amounts(paym
 
 def test_normal_quote_retains_known_total(payment_data):
     quote = quotes.build_payment_quote(_payload(country="CN"))
-    assert quote.status == "OK"
-    assert quote.total_payable_rub == 35_200
-    assert quote.total_partial_rub == 35_200
-    assert not any(item.key.startswith("provisional_") for item in quote.assumptions)
+    assert quote.status == "REVIEW_REQUIRED"
+    assert quote.total_payable_rub is None
+    assert quote.total_partial_rub == 1_000
+    assumptions = {item.key: item for item in quote.assumptions}
+    assert assumptions["provisional_duty_rub"].value == "10 000.00 RUB"
+    assert assumptions["provisional_vat_rub"].value == "24 200.00 RUB"
+    assert assumptions["provisional_total_payable_rub"].value == "35 200.00 RUB"
 
 
 def test_unknown_duty_and_dependent_vat_are_not_known_partial_amounts(payment_data, monkeypatch):
@@ -344,11 +350,16 @@ def test_comparison_preserves_manual_result_and_effective_inputs(payment_data):
             {"hs_code": "8509400000", "country": "BR", "duty_rate": 5},
         ],
     })
-    assert result["status"] == "OK"
-    assert result["amounts_provisional"] is False
+    assert result["status"] == "REVIEW_REQUIRED"
+    assert result["amounts_provisional"] is True
+    assert all(row["delta_total_vs_first_rub"] is None for row in result["scenarios"])
     manual = result["scenarios"][1]
-    assert manual["delta_total_vs_first_rub"] == -6_100
+    candidate_delta = round(
+        manual["total_payable"] - result["scenarios"][0]["total_payable"], 2
+    )
+    assert candidate_delta == -6_100
     assert manual["payment_result"]["breakdown"]["selected_rule"] == "manual_rate"
+    assert "hs_rate_source_binding_unverified" in manual["payment_review_reasons"]
     assert manual["calculation_payload"]["duty_rate"] == 5
     assert manual["calculation_payload"]["net_weight_kg"] == 15
     assert manual["calculation_payload"]["extra_quantity"] == 4

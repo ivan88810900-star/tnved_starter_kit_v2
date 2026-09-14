@@ -288,12 +288,16 @@ def test_quote_visible_components_include_nonzero_recycling_fee(qa_database):
     request = payload(hs_code=code, vehicle_is_new=True, engine_volume=1500)
     raw, quote = engine.compute_payments(request), quotes.build_payment_quote(request)
     assert raw["breakdown"]["recycling_fee"] == 30_000
-    assert quote.total_payable_rub is not None
+    assert raw["breakdown"]["total_payable"] > raw["breakdown"]["recycling_fee"]
+    assert raw["status"] == quote.status == "REVIEW_REQUIRED"
+    assert quote.total_payable_rub is None
+    lines = {line.code: line for line in quote.line_items}
+    assert lines["duty"].amount_rub is None
+    assert lines["vat"].amount_rub is None
     visible = sum((Decimal(str(line.amount_rub)) for line in quote.line_items
                    if line.amount_rub is not None), Decimal(0))
-    assert Decimal(str(quote.total_payable_rub)) == visible
     assert Decimal(str(quote.total_partial_rub)) == visible
-    assert next(line.amount_rub for line in quote.line_items if line.code == "recycling_fee") == 30_000
+    assert lines["recycling_fee"].amount_rub == 30_000
 
 
 @pytest.mark.parametrize("case", ["special", "specific_fx", "combined_fx"])
