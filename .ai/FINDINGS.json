@@ -1,5 +1,5 @@
 {
-  "board_revision": 404,
+  "board_revision": 440,
   "findings": [
     {
       "head_sha": "161a9258d174e93266353ae1fd2cb0b3e4657679",
@@ -564,7 +564,12 @@
       "head_sha": "cf66e45f595a00657768a4f6d1ed938932c76526",
       "id": "A5-CBR-OBS-NUMERIC-001",
       "reporter": "A5",
-      "status": "CONFIRMED",
+      "resolution": {
+        "evidence": "A0 reproduced the post-fix negative matrix: invalid/non-finite/nonpositive values are withheld with explicit invalid status, and parsed official evidence requires exact CBRF plus canonical CBR URL; raw metadata remains non-admitting.",
+        "head_sha": "84934856d52c04c503ddd33ba85fce325d7450ae",
+        "validator": "A0"
+      },
+      "status": "RESOLVED",
       "summary": "Invalid stored rate/nominal values are emitted without a fail-closed validity state.",
       "task_id": "TARIFF-CBR-RATE-OBSERVATION-003",
       "validation": {
@@ -577,12 +582,30 @@
       "head_sha": "cf66e45f595a00657768a4f6d1ed938932c76526",
       "id": "A5-CBR-OBS-SOURCE-002",
       "reporter": "A5",
-      "status": "CONFIRMED",
+      "resolution": {
+        "evidence": "A0 reproduced the post-fix negative matrix: invalid/non-finite/nonpositive values are withheld with explicit invalid status, and parsed official evidence requires exact CBRF plus canonical CBR URL; raw metadata remains non-admitting.",
+        "head_sha": "84934856d52c04c503ddd33ba85fce325d7450ae",
+        "validator": "A0"
+      },
+      "status": "RESOLVED",
       "summary": "Non-canonical CBR alias URL can promote a syntactically valid revision into parsed official evidence fields.",
       "task_id": "TARIFF-CBR-RATE-OBSERVATION-003",
       "validation": {
         "at": "2026-09-14T19:15:02.039111+00:00",
         "evidence": "A0 accepts independent exact-head reproduction: the model schema permits these rows; evidence fields must fail closed on invalid numerics and non-canonical source identity.",
+        "validator": "A0"
+      }
+    },
+    {
+      "head_sha": "ce1abd85df41a4d4cac4ffeabe891339e917795a",
+      "id": "A5-PAYMENT-NORMATIVE-BUNDLE-001",
+      "reporter": "A5",
+      "status": "CONFIRMED",
+      "summary": "Exact-head CI test_normative_bundle still asserts legacy OK instead of source-unbound REVIEW_REQUIRED; preserve tnved_context assertions and align the contract test.",
+      "task_id": "TARIFF-PAYMENT-UNBOUND-ADMISSION-006",
+      "validation": {
+        "at": "2026-09-14T19:38:16.989029+00:00",
+        "evidence": "A0 reproduced the exact-head CI evidence: the assertion expects legacy OK while the reviewed source-unbound admission contract requires REVIEW_REQUIRED; correction is limited to preserving tnved_context checks while updating admission expectations.",
         "validator": "A0"
       }
     }
