@@ -178,7 +178,10 @@ def _data_freshness() -> Dict[str, Any]:
         "source_name": "Локальная база правил",
         "source_code": "LOCAL",
         "synced_at": None,
-        "is_stale": False,
+        # Without a verified EEC status there is no evidence that the bundled
+        # seed is current.  Keep the legacy response shape, but fail closed so
+        # callers surface the existing stale-data warning.
+        "is_stale": True,
         "revision": "seed",
     }
 
