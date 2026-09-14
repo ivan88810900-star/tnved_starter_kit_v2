@@ -1,5 +1,5 @@
 {
-  "board_revision": 365,
+  "board_revision": 377,
   "runs": [
     {
       "head_sha": null,
@@ -670,6 +670,36 @@
       "status": "FINISHED",
       "task_id": "TARIFF-OFFICIAL-SOURCE-DELTA-002",
       "updated_at": "2026-09-14T15:30:36.270918+00:00"
+    },
+    {
+      "head_sha": null,
+      "role": "A1",
+      "run_id": "d7fa8f6c03744589ace20c5d57cd06c1",
+      "session_id": "/root/a1_payment_gate",
+      "started_at": "2026-09-14T19:07:05.420740+00:00",
+      "status": "RUNNING",
+      "task_id": "TARIFF-PAYMENT-UNBOUND-ADMISSION-003",
+      "updated_at": "2026-09-14T19:07:05.420752+00:00"
+    },
+    {
+      "head_sha": null,
+      "role": "A3",
+      "run_id": "80a63c0c88b34f33bf13c19266915c10",
+      "session_id": "/root/a3_cbr_observation",
+      "started_at": "2026-09-14T19:07:05.431987+00:00",
+      "status": "RUNNING",
+      "task_id": "TARIFF-CBR-RATE-OBSERVATION-003",
+      "updated_at": "2026-09-14T19:07:05.431994+00:00"
+    },
+    {
+      "head_sha": null,
+      "role": "A4",
+      "run_id": "6b098e77782e43ec9bc0a0af9bec525e",
+      "session_id": "/root/a4_legacy_vat",
+      "started_at": "2026-09-14T19:07:05.442112+00:00",
+      "status": "RUNNING",
+      "task_id": "TARIFF-LEGACY-VAT-BOUNDARY-003",
+      "updated_at": "2026-09-14T19:07:05.442119+00:00"
     }
   ],
   "schema_version": 1
