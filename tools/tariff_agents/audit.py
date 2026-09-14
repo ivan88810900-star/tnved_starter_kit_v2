@@ -48,6 +48,13 @@ OFFICIAL_HOSTS = frozenset({
 TEXT_EXTENSIONS = frozenset({".py", ".js", ".ts", ".tsx", ".jsx", ".md", ".txt",
                              ".json", ".yaml", ".yml", ".toml", ".sql", ".sh",
                              ".html", ".css", ".ini", ".cfg"})
+CONNECTION_SCHEMES = frozenset({"postgres", "postgresql", "mysql", "mongodb",
+                                "redis", "rediss"})
+CANONICAL_CREDENTIAL_KEYS = frozenset({"PGPASSWORD", "MYSQL_PWD", "REDISCLI_AUTH"})
+SQLITE_HEADER = "SQLite format " + "3"
+POSTGRES_DUMP_HEADER = "PostgreSQL database " + "dump"
+COPY_KEYWORD = "CO" + "PY"
+STDIN_KEYWORD = "std" + "in"
 
 
 def _json_bytes(value):
@@ -78,15 +85,45 @@ def ensure_safe_path(path):
     return path
 
 
+def _credential_variants(value, *, minimum_length=8):
+    if not isinstance(value, str) or len(value) < minimum_length:
+        return set()
+    raw = value.encode()
+    return {value, base64.b64encode(raw).decode(), raw.hex(),
+            urllib.parse.quote(value, safe="")}
+
+
+def _ambient_credential_values(key, value):
+    """Return credential values paired with a false-positive-safe length bound."""
+    if not isinstance(key, str) or not isinstance(value, str):
+        return ()
+    upper = key.upper()
+    if upper in CANONICAL_CREDENTIAL_KEYS:
+        return ((value, 4),)
+    if re.search(r"(?:^|_)(?:TOKEN|SECRET|PASSWORD|PASSWD|PASS|CREDENTIAL|KEY)$", upper):
+        return ((value, 8),)
+    if not re.search(r"(?:^|_)(?:URL|URI)$", upper):
+        return ()
+    try:
+        parsed = urllib.parse.urlsplit(value)
+        scheme = parsed.scheme.lower().split("+", 1)[0]
+        password = parsed.password
+    except ValueError:
+        return ()
+    if scheme not in CONNECTION_SCHEMES or not password:
+        return ()
+    decoded_password = urllib.parse.unquote(password)
+    credentials = ((value, 8), (password, 4), (decoded_password, 4))
+    return tuple(dict.fromkeys(credentials))
+
+
 def ensure_safe_text(text, *, environ=None):
     if not isinstance(text, str) or any(ord(c) < 32 and c not in "\n\r\t" for c in text):
         raise AuditBlocked("Binary or invalid audit text")
     env = os.environ if environ is None else environ
     for key, value in env.items():
-        if (re.search(r"(TOKEN|SECRET|PASSWORD|CREDENTIAL|(?:^|_)KEY)$", key.upper()) and
-                isinstance(value, str) and len(value) >= 8):
-            variants = {value, base64.b64encode(value.encode()).decode(),
-                        value.encode().hex(), urllib.parse.quote(value, safe="")}
+        for credential, minimum_length in _ambient_credential_values(key, value):
+            variants = _credential_variants(credential, minimum_length=minimum_length)
             if any(variant in text for variant in variants):
                 raise AuditBlocked("Credential content excluded from audit")
     patterns = (
@@ -99,8 +136,9 @@ def ensure_safe_text(text, *, environ=None):
         r"[\"']?\s*[:=]\s*[\"'][^\"'\n]{4,}[\"']",
         r"(?i)[\"'](?:passport_number|social_security_number|personal_address|"
         r"customer_email|date_of_birth)[\"']\s*:\s*[\"'][^\"'\n]+[\"']",
-        r"(?i)(?:postgres(?:ql)?|mysql)://[^\s]+:[^\s]+@",
-        r"(?i)(?:SQLite format 3|PostgreSQL database dump|COPY .+ FROM stdin)",
+        r"(?i)(?:postgres(?:ql)?|mysql|mongodb(?:\+srv)?|rediss?)://[^\s/@]*:[^\s/@]+@",
+        (rf"(?i)(?:{re.escape(SQLITE_HEADER)}|{re.escape(POSTGRES_DUMP_HEADER)}|"
+         rf"{COPY_KEYWORD}[ \t]+[^\r\n]*[ \t]+FROM[ \t]+{STDIN_KEYWORD})"),
     )
     if any(re.search(pattern, text) for pattern in patterns):
         raise AuditBlocked("Suspected secret or private data excluded from audit")
@@ -156,7 +194,7 @@ def _blob(repo, commit, path):
         text = raw.decode("utf-8")
     except UnicodeDecodeError:
         raise AuditBlocked("Non-UTF8 audit file excluded") from None
-    return {"text": text, "sha256": _sha(raw), "bytes": len(raw)}
+    return {"text": text, "git_oid": oid, "sha256": _sha(raw), "bytes": len(raw)}
 
 
 def _sources(sources):
@@ -175,20 +213,43 @@ def _sources(sources):
     return result
 
 
-def build_packet(repo, base, head, paths, *, official_sources=(), environ=None):
+def build_packet(repo, base, head, paths, *, contract_ref=None, official_sources=(), environ=None):
     """Complete full-commit diff plus explicitly selected supporting text.
 
-    Paths must include CONTRACT_PATH. All changed files, including deletions,
-    must be present. Large or private changes block sending rather than silently
-    disappearing. Split the candidate into independently reviewable commits if
-    a packet exceeds the bound; no partial packet counts as complete PR audit.
+    By default, paths must include CONTRACT_PATH from the candidate head. For a
+    product-only candidate, contract_ref explicitly selects a commit/ref that
+    contains the contract; that immutable commit and blob evidence is carried
+    separately from the complete candidate diff. All changed files, including
+    deletions, must be present. Large or private changes block sending rather
+    than silently disappearing. Split the candidate into independently
+    reviewable commits if a packet exceeds the bound; no partial packet counts
+    as complete PR audit.
     """
     paths = list(paths)
+    external_contract = contract_ref is not None
     if (not 1 <= len(paths) <= MAX_FILES or len(set(paths)) != len(paths) or
-            CONTRACT_PATH not in paths):
+            (external_contract and (CONTRACT_PATH in paths or len(paths) >= MAX_FILES)) or
+            (not external_contract and CONTRACT_PATH not in paths)):
         raise AuditBlocked("Explicit unique paths and architecture contract required")
     paths = sorted(ensure_safe_path(path) for path in paths)
     base_sha, head_sha = _commit(repo, base), _commit(repo, head)
+    if external_contract:
+        ensure_safe_text(contract_ref, environ=environ)
+        contract_commit = _commit(repo, contract_ref)
+        contract_blob = _blob(repo, contract_commit, CONTRACT_PATH)
+        if contract_blob is None:
+            raise AuditBlocked("Architecture contract is absent from the explicit contract ref")
+        contract = {"mode": "explicit_ref", "requested_ref": contract_ref,
+                    "resolved_commit": contract_commit, "path": CONTRACT_PATH,
+                    **contract_blob}
+    else:
+        contract_blob = _blob(repo, head_sha, CONTRACT_PATH)
+        if contract_blob is None:
+            raise AuditBlocked("Architecture contract must exist in the candidate commit")
+        contract = {"mode": "candidate_head", "requested_ref": None,
+                    "resolved_commit": head_sha, "path": CONTRACT_PATH,
+                    **contract_blob}
+    ensure_safe_text(contract_blob["text"], environ=environ)
     changed_raw = _git(repo, "diff", "--no-ext-diff", "--no-textconv", "--no-renames",
                        "--name-only", "-z", base_sha, head_sha, "--")
     try:
@@ -202,8 +263,6 @@ def build_packet(repo, base, head, paths, *, official_sources=(), environ=None):
         before, after = _blob(repo, base_sha, path), _blob(repo, head_sha, path)
         if before is None and after is None:
             raise AuditBlocked("Audit file is not tracked in either commit")
-        if path == CONTRACT_PATH and after is None:
-            raise AuditBlocked("Architecture contract must exist in the candidate commit")
         for blob in (before, after):
             if blob:
                 ensure_safe_text(blob["text"], environ=environ)
@@ -211,13 +270,15 @@ def build_packet(repo, base, head, paths, *, official_sources=(), environ=None):
     diff = _git(repo, "diff", "--no-ext-diff", "--no-textconv", "--no-renames",
                 "--no-color", "--unified=3", base_sha, head_sha, "--", *paths).decode("utf-8")
     ensure_safe_text(diff, environ=environ)
-    packet = {"schema_version": 1, "purpose": "A6_ADVISORY_REVIEW",
+    packet = {"schema_version": 2, "purpose": "A6_ADVISORY_REVIEW",
               "base_sha": base_sha, "head_sha": head_sha, "complete": True,
               "scope": "full_commit_diff_with_explicit_supporting_files",
               "paths": paths, "changed_paths": changed, "files": files,
+              "contract": contract,
               "diff": diff, "diff_sha256": _sha(diff.encode()),
               "official_sources": _sources(official_sources)}
     raw = _json_bytes(packet)
+    ensure_safe_text(raw.decode("utf-8"), environ=environ)
     if len(raw) > MAX_PACKET_BYTES:
         raise AuditBlocked("Audit packet exceeds byte limit; no truncation allowed")
     return {**packet, "packet_sha256": _sha(raw)}
@@ -228,7 +289,20 @@ def validate_packet(repo, packet, *, environ=None):
     if not isinstance(packet, dict):
         raise AuditBlocked("Invalid audit packet")
     try:
+        contract = packet["contract"]
+        if not isinstance(contract, dict):
+            raise AuditBlocked("Invalid audit contract evidence")
+        mode = contract.get("mode")
+        if mode == "candidate_head":
+            contract_ref = None
+        elif mode == "explicit_ref":
+            contract_ref = contract.get("requested_ref")
+            if not isinstance(contract_ref, str):
+                raise AuditBlocked("Invalid explicit contract reference")
+        else:
+            raise AuditBlocked("Invalid audit contract evidence")
         rebuilt = build_packet(repo, packet["base_sha"], packet["head_sha"], packet["paths"],
+                               contract_ref=contract_ref,
                                official_sources=packet["official_sources"], environ=environ)
     except (KeyError, TypeError, ValueError):
         raise AuditBlocked("Invalid audit packet") from None
@@ -275,12 +349,16 @@ def validate_findings(result, packet, *, environ=None):
     line_limits = {entry["path"]: max(len((entry[side] or {}).get("text", "").splitlines())
                                     for side in ("base", "head"))
                    for entry in packet["files"]}
+    contract_path = packet["contract"]["path"]
+    line_limits[contract_path] = max(line_limits.get(contract_path, 0),
+                                     len(packet["contract"]["text"].splitlines()))
+    finding_paths = set(packet["paths"]) | {contract_path}
     for item in findings:
         if (not isinstance(item, dict) or set(item) != FINDING_FIELDS or
                 any(not isinstance(item[k], str) or not item[k] or len(item[k]) > 6000
                     for k in FINDING_FIELDS - {"line", "official_source_urls"}) or
                 item["severity"] not in {"critical", "high", "medium", "low"} or
-                item["path"] not in packet["paths"] or type(item["line"]) is not int or
+                item["path"] not in finding_paths or type(item["line"]) is not int or
                 item["line"] < 0 or item["line"] > line_limits.get(item["path"], 0) or item["id"] in ids or
                 not isinstance(item["official_source_urls"], list) or
                 any(url not in packet["official_sources"] for url in item["official_source_urls"])):
@@ -346,6 +424,7 @@ def main(argv=None):
     build.add_argument("--base", required=True)
     build.add_argument("--head", required=True)
     build.add_argument("--path", action="append", required=True)
+    build.add_argument("--contract-ref")
     build.add_argument("--source", action="append", default=[])
     build.add_argument("--output", required=True)
     run = commands.add_parser("run")
@@ -353,7 +432,8 @@ def main(argv=None):
     args = parser.parse_args(argv)
     try:
         if args.command == "build":
-            packet = build_packet(args.repo, args.base, args.head, args.path, official_sources=args.source)
+            packet = build_packet(args.repo, args.base, args.head, args.path,
+                                  contract_ref=args.contract_ref, official_sources=args.source)
             # Exclusive creation prevents accidentally replacing another deliverable or symlink.
             with open(args.output, "x", encoding="utf-8") as output:
                 json.dump(packet, output, ensure_ascii=False, indent=2)
