@@ -15,7 +15,7 @@ from app.main import app
 from app.models.core import ExchangeRate, GeoSpecialDuty, HsRate, SourceStatus, SyncLog, TnvedEntry
 from app.models.tnved import Chapter, Commodity, HsDutyRule, Section, SpecialDuty, VatPreference
 from app.services.normative_store import init_db
-from app.services.exchange_rates import CBRF_SOURCE_CODE, FALLBACK, TRACKED, update_exchange_rates_from_cbrf
+from app.services.exchange_rates import CBRRateSnapshot, CBRF_SOURCE_CODE, FALLBACK, TRACKED, update_exchange_rates_from_cbrf
 from app.services.payment_data_coverage import (
     diagnose_duty_rates,
     diagnose_excise,
@@ -393,13 +393,15 @@ class TestExchangeRatesCbrfProvenanceRecording(unittest.IsolatedAsyncioTestCase)
         patch_norm = unittest.mock.patch("app.services.normative_store.SessionLocal", sm)
         patch_fetch = unittest.mock.patch(
             "app.services.exchange_rates.fetch_cbr_rates",
-            unittest.mock.AsyncMock(return_value=("2026-05-21", live_rows)),
+            unittest.mock.AsyncMock(
+                return_value=CBRRateSnapshot(datetime.now(timezone.utc).strftime("%Y-%m-%d"), live_rows, "a" * 64)
+            ),
         )
         patch_ex.start()
         patch_norm.start()
         patch_fetch.start()
         try:
-            result = await update_exchange_rates_from_cbrf()
+            result = await update_exchange_rates_from_cbrf(allow_fallback=True)
             self.assertEqual(result["source"], "CBRF")
 
             patch_cov, patch_norm_diag = _start_coverage_db_patches(sm)
@@ -427,7 +429,7 @@ class TestExchangeRatesCbrfProvenanceRecording(unittest.IsolatedAsyncioTestCase)
         patch_norm.start()
         patch_fetch.start()
         try:
-            result = await update_exchange_rates_from_cbrf()
+            result = await update_exchange_rates_from_cbrf(allow_fallback=True)
             self.assertEqual(result["source"], "fallback")
 
             patch_cov, patch_norm_diag = _start_coverage_db_patches(sm)
@@ -442,7 +444,37 @@ class TestExchangeRatesCbrfProvenanceRecording(unittest.IsolatedAsyncioTestCase)
             patch_norm.stop()
             patch_ex.stop()
 
-    async def test_provenance_write_failure_does_not_clobber_live_cbr_rates(self) -> None:
+    async def test_failed_fetch_preserves_existing_rates_even_when_fallback_allowed(self) -> None:
+        sm = _memory_sessionmaker()
+        with sm() as db:
+            db.add(
+                ExchangeRate(
+                    currency_code="USD",
+                    rate=77.25,
+                    nominal=1.0,
+                    updated_at=datetime.now(timezone.utc).replace(tzinfo=None),
+                )
+            )
+            db.commit()
+
+        with (
+            unittest.mock.patch("app.services.exchange_rates.SessionLocal", sm),
+            unittest.mock.patch("app.services.normative_store.SessionLocal", sm),
+            unittest.mock.patch(
+                "app.services.exchange_rates.fetch_cbr_rates",
+                unittest.mock.AsyncMock(side_effect=RuntimeError("network down")),
+            ),
+        ):
+            result = await update_exchange_rates_from_cbrf(allow_fallback=True)
+
+        self.assertEqual(result["status"], "ERROR")
+        self.assertEqual(result["source"], "preserved_last_good")
+        self.assertEqual(result["updated"], 0)
+        with sm() as db:
+            usd = db.query(ExchangeRate).filter(ExchangeRate.currency_code == "USD").one()
+            self.assertAlmostEqual(float(usd.rate), 77.25)
+
+    async def test_provenance_write_failure_rolls_back_candidate_rates(self) -> None:
         sm = _memory_sessionmaker()
         live_rows = {code: (50.0 + idx * 3.7, 1.0) for idx, code in enumerate(TRACKED)}
 
@@ -450,7 +482,9 @@ class TestExchangeRatesCbrfProvenanceRecording(unittest.IsolatedAsyncioTestCase)
         patch_norm = unittest.mock.patch("app.services.normative_store.SessionLocal", sm)
         patch_fetch = unittest.mock.patch(
             "app.services.exchange_rates.fetch_cbr_rates",
-            unittest.mock.AsyncMock(return_value=("2026-05-21", live_rows)),
+            unittest.mock.AsyncMock(
+                return_value=CBRRateSnapshot(datetime.now(timezone.utc).strftime("%Y-%m-%d"), live_rows, "a" * 64)
+            ),
         )
         patch_record_ok = unittest.mock.patch(
             "app.services.exchange_rates._record_cbrf_sync_success",
@@ -461,19 +495,12 @@ class TestExchangeRatesCbrfProvenanceRecording(unittest.IsolatedAsyncioTestCase)
         patch_fetch.start()
         patch_record_ok.start()
         try:
-            result = await update_exchange_rates_from_cbrf()
-            self.assertEqual(result["source"], "CBRF")
+            result = await update_exchange_rates_from_cbrf(allow_fallback=True)
+            self.assertEqual(result["status"], "ERROR")
             self.assertFalse(result.get("provenance_recorded"))
-            self.assertIn("provenance_error", result)
-
+            self.assertIn("provenance db lock", result["error"])
             with sm() as db:
-                usd = (
-                    db.query(ExchangeRate)
-                    .filter(ExchangeRate.currency_code == "USD")
-                    .one()
-                )
-                self.assertAlmostEqual(float(usd.rate), live_rows["USD"][0], places=4)
-                self.assertNotAlmostEqual(float(usd.rate), FALLBACK["USD"], places=4)
+                self.assertEqual(db.query(ExchangeRate).count(), 0)
 
             patch_cov, patch_norm_diag = _start_coverage_db_patches(sm)
             try:
@@ -495,14 +522,16 @@ class TestExchangeRatesCbrfProvenanceRecording(unittest.IsolatedAsyncioTestCase)
         patch_norm = unittest.mock.patch("app.services.normative_store.SessionLocal", sm)
         patch_fetch = unittest.mock.patch(
             "app.services.exchange_rates.fetch_cbr_rates",
-            unittest.mock.AsyncMock(return_value=("2026-05-21", partial_rows)),
+            unittest.mock.AsyncMock(
+                return_value=CBRRateSnapshot(datetime.now(timezone.utc).strftime("%Y-%m-%d"), partial_rows, "a" * 64)
+            ),
         )
         patch_ex.start()
         patch_norm.start()
         patch_fetch.start()
         try:
-            result = await update_exchange_rates_from_cbrf()
-            self.assertEqual(result["source"], "fallback")
+            result = await update_exchange_rates_from_cbrf(allow_fallback=True)
+            self.assertEqual(result["source"], "incomplete")
             self.assertEqual(result.get("missing_currencies"), ["CNY", "BYN", "KZT"])
 
             with sm() as db:
@@ -520,7 +549,7 @@ class TestExchangeRatesCbrfProvenanceRecording(unittest.IsolatedAsyncioTestCase)
             try:
                 fx = diagnose_exchange_rates()
                 self.assertNotEqual(fx.status, "present")
-                self.assertIn(fx.status, ("partial", "manual_review_required"))
+                self.assertEqual(fx.status, "missing")
                 self.assertNotEqual(fx.authority_level, "official_binding")
             finally:
                 _stop_coverage_db_patches(patch_cov, patch_norm_diag)
@@ -612,7 +641,7 @@ class TestPaymentDataCoverageOfficialOnlyDuty(unittest.TestCase):
         self.assertTrue(duty.missing_samples)
         self.assertTrue(any("official" in g.lower() for g in duty.gaps))
 
-    def test_full_official_coverage_can_be_present(self) -> None:
+    def test_full_marker_coverage_remains_unverified(self) -> None:
         sm = _memory_sessionmaker()
         base = 8_500_000_000
         with sm() as db:
@@ -635,8 +664,8 @@ class TestPaymentDataCoverageOfficialOnlyDuty(unittest.TestCase):
             duty = diagnose_duty_rates()
         finally:
             _stop_coverage_db_patches(patch_cov, patch_norm)
-        self.assertEqual(duty.status, "present")
-        self.assertFalse(duty.manual_review_required)
+        self.assertEqual(duty.status, "partial")
+        self.assertTrue(duty.manual_review_required)
 
     def _build_catalog_with_revision(self, sm, *, revision: str, base: int) -> None:
         with sm() as db:
@@ -670,7 +699,7 @@ class TestPaymentDataCoverageOfficialOnlyDuty(unittest.TestCase):
             self.assertEqual(duty.status, "partial")
             self.assertTrue(duty.missing_samples)
 
-    def test_versioned_revision_allows_present(self) -> None:
+    def test_versioned_revision_does_not_approve_rates(self) -> None:
         sm = _memory_sessionmaker()
         self._build_catalog_with_revision(sm, revision="ett:2026-05-01", base=8_700_000_000)
         patch_cov, patch_norm = _start_coverage_db_patches(sm)
@@ -678,7 +707,7 @@ class TestPaymentDataCoverageOfficialOnlyDuty(unittest.TestCase):
             duty = diagnose_duty_rates()
         finally:
             _stop_coverage_db_patches(patch_cov, patch_norm)
-        self.assertEqual(duty.status, "present")
+        self.assertEqual(duty.status, "partial")
 
     def test_mixed_non_versioned_full_with_partial_strict_official_not_present(self) -> None:
         sm = _memory_sessionmaker()
@@ -755,7 +784,7 @@ class TestVatCoverageViaEecVatSourceStatus(unittest.TestCase):
             )
         )
 
-    def test_seed_duty_row_with_eec_vat_status_present(self) -> None:
+    def test_seed_duty_row_vat_marker_is_unverified(self) -> None:
         sm = _memory_sessionmaker()
         with sm() as db:
             self._add_vat_signal_row(db, vat_marker=True)
@@ -767,7 +796,7 @@ class TestVatCoverageViaEecVatSourceStatus(unittest.TestCase):
             duty = diagnose_duty_rates()
         finally:
             _stop_coverage_db_patches(patch_cov, patch_norm)
-        self.assertEqual(vat.status, "present")
+        self.assertEqual(vat.status, "partial")
         self.assertNotEqual(duty.status, "present")
 
     def test_legacy_vat_row_not_official_after_eec_vat_sync(self) -> None:
@@ -782,8 +811,8 @@ class TestVatCoverageViaEecVatSourceStatus(unittest.TestCase):
             vat = diagnose_vat_rates()
         finally:
             _stop_coverage_db_patches(patch_cov, patch_norm)
-        self.assertEqual(vat.status, "present")
-        self.assertIn("official VAT hs_rates rows: 1", " ".join(vat.notes))
+        self.assertEqual(vat.status, "partial")
+        self.assertIn("VAT row markers: 1; not verified legal rates.", " ".join(vat.notes))
 
     def test_eec_vat_status_without_row_marker_not_present(self) -> None:
         sm = _memory_sessionmaker()
@@ -960,12 +989,12 @@ class TestPaymentDataCoverageTopLevelEecRevision(unittest.TestCase):
         duty = self._diagnose(sm)
         self.assertNotEqual(duty.status, "present")
 
-    def test_versioned_top_level_revision_present_allowed(self) -> None:
+    def test_versioned_top_level_revision_is_not_legal_review(self) -> None:
         sm = _memory_sessionmaker()
         self._build_full_official_catalog(sm, source_revision="ett:2026-05-01", is_stale=False, base=9_100_000_000)
         duty = self._diagnose(sm)
-        self.assertEqual(duty.status, "present")
-        self.assertFalse(duty.manual_review_required)
+        self.assertEqual(duty.status, "partial")
+        self.assertTrue(duty.manual_review_required)
 
     def test_stale_top_level_with_strict_revision_not_present(self) -> None:
         sm = _memory_sessionmaker()
@@ -992,3 +1021,25 @@ class TestPaymentDataCoverageApi(unittest.TestCase):
         self.assertIn("tnved_entries", body["summary"])
         self.assertIn("duty_rates", body["summary"])
         self.assertIn("excise", body["summary"])
+
+
+def test_zero_vat_marker_inventory_survives_failed_legal_review():
+    from app.services.payment_data_coverage import _vat_official_provenance
+    from app.services.payment_data_normalization import _count_vat_signal_hs_rows
+
+    # A genuine numeric zero is a signal, not a missing value/default.
+    engine = create_engine("sqlite:///:memory:")
+    HsRate.__table__.create(engine)
+    sm = sessionmaker(bind=engine)
+    with sm() as db:
+        db.add(HsRate(
+            hs_code="7112300000", hs_prefix="", duty_rate="15%",
+            vat_import_rate=0, vat_rule="none", vat_source_code="EEC_VAT",
+            vat_source_revision="vat:2026-09-12",
+        ))
+        db.commit()
+        with unittest.mock.patch("app.services.payment_data_normalization._vat_proven", return_value=(False, None)):
+            marker_result = _vat_official_provenance(db)
+        assert marker_result == (False, 1, 0)
+        assert _count_vat_signal_hs_rows(db) == 1
+

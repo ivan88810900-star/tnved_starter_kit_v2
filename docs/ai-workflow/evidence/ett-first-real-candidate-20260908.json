@@ -1,0 +1,102 @@
+{
+  "schema_version": 1,
+  "kind": "ett_first_real_candidate_source_and_runtime_evidence",
+  "date": "2026-09-08",
+  "manifest_sha256": "8f1c56eac5a3d6082084a6eba7e463eee563c1c170572df2fceaaf70f10fe832",
+  "codes": [
+    "7112300000",
+    "7112910000",
+    "7112920000",
+    "7112990000"
+  ],
+  "candidate_artifacts": 101,
+  "candidate_rate_rules": 4,
+  "candidate_footnotes": 2,
+  "candidate_duty": {
+    "kind": "ad_valorem",
+    "ad_valorem_percent": "0"
+  },
+  "requested_coverage": {
+    "from": "2026-09-08",
+    "to_exclusive": "2026-09-09"
+  },
+  "proposed_code_and_rule_interval": {
+    "from": "2026-01-25",
+    "to_exclusive": "2029-01-01",
+    "bounded_review_inference": true,
+    "first_code_introduction_claimed": false
+  },
+  "metadata_parser_sha256": "5f5337d94716ca5bf03cf5fa4261910a5acfbb79420811cc479417ab043ec4e2",
+  "references": {
+    "total": 124,
+    "verified": 124,
+    "failed": 0,
+    "native": 108,
+    "portal_metadata": 16
+  },
+  "isolated_staging": {
+    "alembic_head_upgraded": true,
+    "cases": 46,
+    "non_ett_tables_unchanged": 64,
+    "idempotent": true
+  },
+  "authenticated_full_app_http": {
+    "checks": 30,
+    "database_bytes_unchanged": true,
+    "read_only_startup_confirmed": true,
+    "anonymous_status": 401,
+    "viewer_status": 403,
+    "absent_promotion_operations_status": 405,
+    "spa_get_catch_all_explains_405": true
+  },
+  "provenance_files": [
+    {
+      "filename": "ett-111c-candidate-20260908/v1/candidate-manifest.json",
+      "size_bytes": 108511,
+      "sha256": "8f1c56eac5a3d6082084a6eba7e463eee563c1c170572df2fceaaf70f10fe832"
+    },
+    {
+      "filename": "ett-111c-candidate-20260908/v1/review-assumptions.json",
+      "size_bytes": 3889,
+      "sha256": "b36c0b64ca2184f536240027d5aeb35aebfd26ef11c4f3f22e5fdb9d2bb1f845"
+    },
+    {
+      "filename": "ett-111c-candidate-20260908/independent-audit.json",
+      "size_bytes": 1935,
+      "sha256": "b88fe7ffc97c3b9e949e7de5e262189a96dc591479d3244463ef037055903e7a"
+    },
+    {
+      "filename": "ett-111c-independent-review-20260908/independent-review.json",
+      "size_bytes": 4869,
+      "sha256": "9854e940783071d3badd4b5c6863a2964d7ae7297db2e1923a84d6068c98f5bd"
+    },
+    {
+      "filename": "ett-111c-runtime-20260908/source-evidence-replayed.json",
+      "size_bytes": 15508,
+      "sha256": "c245861038889850190b5623747857fc738ead6c79a972c609bdc47dbbebc735"
+    },
+    {
+      "filename": "ett-111c-runtime-20260908/staging-verification.json",
+      "size_bytes": 6850,
+      "sha256": "ecd6bb78b0d8a2a5737ea3bd4711967c30a518eaf703f9a36f3f43aa08f495c9"
+    },
+    {
+      "filename": "ett-111c-runtime-20260908/http-verification.json",
+      "size_bytes": 4502,
+      "sha256": "504fecb34d6e0e89d58d6774f3389f08ab398a13329898bd58b0d052c1d997af"
+    },
+    {
+      "filename": "ett-111c-candidate-20260908/build_review_candidate.py",
+      "size_bytes": 13616,
+      "sha256": "f62b89ae57690d8231ef03fb6672f89e40af015be8fb2f15fdeaacaaeb06c180"
+    }
+  ],
+  "scope": "One four-code general EAEU import candidate; source field/quote binding and rate-expression selection, not monetary calculation or all-catalog legal verification. Native 15% cell and temporary111C zero retained separately. No fallback outside coverage. Dates/country/code lifetime remain manifest-bound review interpretations.",
+  "legal_approval": false,
+  "complete_current_legal_inventory_verified": false,
+  "legal_retention_attested": false,
+  "production_ready": false,
+  "can_promote": false,
+  "production_database_opened": false,
+  "active_rates_written": false
+}

@@ -1,0 +1,20 @@
+{
+  "kind": "original_metadata_fragment_not_complete_document",
+  "source_url": "https://docs.eaeunion.org/documents/379/6148/",
+  "source_sha256": "ff9d3a1f4db4885cb547166a4b9420c6d993c4a4d121ce424c1f1e3f20b61480",
+  "source_size_bytes": 52894,
+  "source_byte_span": [
+    11286,
+    17330
+  ],
+  "fragment_sha256": "36f22d9ada001d6500147b4e2fba30d0f87ddd054e8d6afbd4e228fe2a9c5392",
+  "fragment_size_bytes": 6044,
+  "expected_identity": {
+    "adoption_date": "2021-10-26",
+    "issuing_body": "collegium",
+    "number": "142"
+  },
+  "original_capture_report_sha256": "12c3c7b1e60f3b495192acb89364008538542fbed1b71fb91758adc734b5a795",
+  "legal_dates_verified": false,
+  "primary_body_identity_verified": false
+}

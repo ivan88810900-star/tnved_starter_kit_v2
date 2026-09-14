@@ -1,0 +1,82 @@
+{
+  "schema_version": 1,
+  "kind": "ett_manifest_bound_review_package_evidence",
+  "date": "2026-09-08",
+  "package_sha256": "4d4f22daccaef53b14429e3f958359273dcc47467a89d8594b69c9907c586e8c",
+  "package_size_bytes": 921041,
+  "candidate": {
+    "artifact_count": 101,
+    "canonical_size_bytes": 108511,
+    "code_count": 4,
+    "manifest_sha256": "8f1c56eac5a3d6082084a6eba7e463eee563c1c170572df2fceaaf70f10fe832",
+    "rate_rule_count": 4,
+    "snapshot_id": "ett-111c-four-code-review-20260908-v1"
+  },
+  "builder": {
+    "components": {
+      "ett_acquisition.py": "eec5060584a94f25042c50cb7ca71b83692db3cc7e18a2053bacacd3a09b1ed0",
+      "ett_derived_inventory.py": "458003dffcbc9cc04f23748b56d2577dca925fb7e7331f3fc0ea662718723262",
+      "ett_evidence_binding.py": "dc3c6508e19ac133f9f5c1673dda11c69b13183d77c3ef882aa435e55737367f",
+      "ett_index.py": "cd5e3f967c7809667b5214a43cdc0042a65dc1f4b363022a8f7d1677abe68a07",
+      "ett_legal_attachments.py": "c94e6081b97c888fb78c400599e05b5e802494b6abc0a403ce1cb198dcddce95",
+      "ett_legal_capture.py": "ca5c7c85f20e91e1fc8d876895ead5feddbdfe9c1d1d7862e025b36c2c07d159",
+      "ett_manifest.py": "1f8106a071b58814ab558d1d4d09ebc7ee79503ff4f34055e421db632d483cfe",
+      "ett_metadata_binding.py": "c4ab4ac3c630718d777b1d40a608fc8477c71e5eb52bdb17abe5dec825b09834",
+      "ett_notes.py": "130efc6551a7e7ca3a4a15e5a651c6711c1f65f73782b8cbed8a954bdf465dc5",
+      "ett_review_package.py": "97fcb5f4cb180e55918cdb91191f254eaabcb1ada346386c2b3702b16c05ee55",
+      "ett_transport.py": "e92af393fb89763882acf98a76d8c7ba6a75f2c0455631207c4d8cc58957bdfb"
+    },
+    "name": "ett-review-package",
+    "sha256": "e2ba8801cefb95407d761de5fc53e66a06824cb45c863ee9f0f77e08c826d1d6",
+    "version": "1"
+  },
+  "core_receipt_sha256": "ab67a2d3055a3fcd8416c874b9bc388ce0b0919e4b964e5de7c1f18c08a6f72e",
+  "supplemental_capture_report_sha256": "12c3c7b1e60f3b495192acb89364008538542fbed1b71fb91758adc734b5a795",
+  "source_scope": "core_v2_plan_and_candidate_sources_with_selected_additional_capture_bindings",
+  "supplemental_discovery_plan_replayed": false,
+  "required_objects": 113,
+  "required_source_bytes": 43850110,
+  "source_references_verified": 124,
+  "source_references_failed": 0,
+  "assembly_ready": true,
+  "canonical_replay_from_isolated_closure": true,
+  "cli_build_byte_identical": true,
+  "focused_tests_passed": 63,
+  "unresolved": [
+    "complete_legal_inventory_not_verified",
+    "legal_date_and_code_version_interpretation_not_approved",
+    "rate_and_footnote_interpretation_not_approved",
+    "local_storage_is_not_retention_attestation",
+    "no_legal_approval_or_production_promotion",
+    "selected_additional_source_discovery_plan_not_replayed",
+    "supplied_review_assumptions_are_unverified"
+  ],
+  "source_complete": false,
+  "legal_ready": false,
+  "retention_attested": false,
+  "can_promote": false,
+  "production_ready": false,
+  "active_rates_written": false,
+  "provenance_files": [
+    {
+      "filename": "review-package.json",
+      "sha256": "4d4f22daccaef53b14429e3f958359273dcc47467a89d8594b69c9907c586e8c",
+      "size_bytes": 921041
+    },
+    {
+      "filename": "replay-summary.json",
+      "sha256": "b92aff303791115327ef7867d8250ec3ec8f59bd786f388e02b7e423c97b02c2",
+      "size_bytes": 1901
+    },
+    {
+      "filename": "cli-replay-verification.json",
+      "sha256": "e9cc3e71bf1817e5518131fd6f97cc713638e51eff8612dd9934bb1c03d04bf6",
+      "size_bytes": 4110
+    },
+    {
+      "filename": "assembly-script.py",
+      "sha256": "30982020e988a5180e2da3ef71d26c48e238e61e01defc0b90216e0631d8f4c6",
+      "size_bytes": 6987
+    }
+  ]
+}

@@ -12,6 +12,29 @@ from app.services.semantic_navigation import (
     SemanticStructureExtractor,
     SourceRecord,
 )
+from app.services.semantic_navigation.bounded_slices import (
+    BULK_2204_CONTEXT_SIGNATURE,
+    BULK_2204_OTHER_ANCHOR_CODE,
+    BULK_2204_OTHER_CODES,
+    BULK_2204_OTHER_DEPTH,
+    BULK_2204_OTHER_LEAF_COUNT,
+    BULK_2204_OTHER_RAW,
+    BULK_2204_OTHER_REASON,
+    BULK_2204_OTHER_SCOPE_KIND,
+    BULK_2204_OTHER_STOP_CODE,
+    BULK_2204_PARENT_CODE,
+    BULK_2204_PARENT_DESCRIPTION,
+    BULK_2204_ROOT_ANCHOR_CODE,
+    BULK_2204_ROOT_ANCHOR_DESCRIPTION,
+    PDO_2204_COLOUR_SIGNATURE,
+    PDO_2204_OTHER_ANCHOR_CODE,
+    PDO_2204_OTHER_CODES,
+    PDO_2204_OTHER_DEPTH,
+    PDO_2204_OTHER_LEAF_COUNT,
+    PDO_2204_OTHER_RAW,
+    PDO_2204_OTHER_REASON,
+    PDO_2204_OTHER_SCOPE_KIND,
+)
 from app.services.tree_engine import (
     CanonicalModel,
     ClassificationGroupNode,
@@ -82,6 +105,10 @@ STOP_DESCRIPTION = (
     "– – – – – – – – прочие "
     f"– – – – – – {PGI_OFFICIAL_HEADER}:"
 )
+PDO_SOURCE_DESCRIPTIONS = {
+    code: description
+    for code, _parent, _is_leaf, description in PDO_2204_COLOUR_SIGNATURE
+}
 
 
 def _records() -> list[SourceRecord]:
@@ -106,11 +133,7 @@ def _records() -> list[SourceRecord]:
     records.extend(
         SourceRecord(
             code=code,
-            description=(
-                STOP_DESCRIPTION
-                if code == STOP_CODE
-                else f"– – – – – – – – официальный товар {code}"
-            ),
+            description=PDO_SOURCE_DESCRIPTIONS[code],
             is_leaf=True,
             parent_code=PARENT_CODE,
         )
@@ -127,11 +150,66 @@ def _records() -> list[SourceRecord]:
     return records
 
 
+def _bulk_records() -> list[SourceRecord]:
+    records = [
+        SourceRecord(
+            code="2204",
+            description="Вина виноградные натуральные",
+            is_leaf=False,
+        ),
+        SourceRecord(
+            code=BULK_2204_PARENT_CODE,
+            description=BULK_2204_PARENT_DESCRIPTION,
+            is_leaf=False,
+        ),
+        SourceRecord(
+            code=BULK_2204_ROOT_ANCHOR_CODE,
+            description=BULK_2204_ROOT_ANCHOR_DESCRIPTION,
+            is_leaf=True,
+            parent_code=BULK_2204_PARENT_CODE,
+        ),
+    ]
+    records.extend(
+        SourceRecord(
+            code=code,
+            description=description,
+            is_leaf=is_leaf,
+            parent_code=parent,
+        )
+        for code, parent, is_leaf, description in BULK_2204_CONTEXT_SIGNATURE
+    )
+    records.append(
+        SourceRecord(
+            code="2204227900",
+            description="– – – – – – – – прочий товар",
+            is_leaf=True,
+            parent_code=BULK_2204_PARENT_CODE,
+        )
+    )
+    return records
+
+
 def _pdo_group(tree):
     return next(
         node
         for node in tree.group_nodes()
         if node.metadata.get("reason") == "bounded_2204_official_pdo_chain"
+    )
+
+
+def _pdo_other_group(tree):
+    return next(
+        node
+        for node in tree.group_nodes()
+        if node.metadata.get("reason") == PDO_2204_OTHER_REASON
+    )
+
+
+def _bulk_other_group(tree):
+    return next(
+        node
+        for node in tree.group_nodes()
+        if node.metadata.get("reason") == BULK_2204_OTHER_REASON
     )
 
 
@@ -211,9 +289,75 @@ def test_exact_later_packed_header_and_same_depth_boundary_are_accepted() -> Non
     assert pdo.verified_scope_leaf_count == 33
 
 
-def test_builder_keeps_exact_33_leaf_boundary_and_provenance() -> None:
+def test_exact_retained_pdo_other_boundary_is_accepted() -> None:
+    extraction = SemanticStructureExtractor().extract("2204", _records())
+    other = next(
+        group
+        for group in extraction.groups
+        if group.reason == PDO_2204_OTHER_REASON
+    )
+
+    assert other.title == "прочие"
+    assert other.raw == PDO_2204_OTHER_RAW
+    assert other.source_code == PDO_2204_OTHER_ANCHOR_CODE
+    assert other.after_code == PDO_2204_OTHER_ANCHOR_CODE
+    assert other.dash_depth == PDO_2204_OTHER_DEPTH == 7
+    assert other.confidence == "high"
+    assert other.verified_scope_kind == PDO_2204_OTHER_SCOPE_KIND
+    assert other.verified_scope_start_exclusive == PDO_2204_OTHER_ANCHOR_CODE
+    assert other.verified_scope_end_inclusive == STOP_CODE
+    assert other.verified_scope_parent_code == PARENT_CODE
+    assert other.verified_scope_leaf_count == PDO_2204_OTHER_LEAF_COUNT == 16
+
+
+def test_exact_retained_220422_other_boundary_is_accepted() -> None:
+    extraction = SemanticStructureExtractor().extract("2204", _bulk_records())
+    other = next(
+        group
+        for group in extraction.groups
+        if group.reason == BULK_2204_OTHER_REASON
+    )
+
+    assert other.title == "прочие"
+    assert other.raw == BULK_2204_OTHER_RAW
+    assert other.source_code == BULK_2204_OTHER_ANCHOR_CODE
+    assert other.after_code == BULK_2204_OTHER_ANCHOR_CODE
+    assert other.dash_depth == BULK_2204_OTHER_DEPTH == 7
+    assert other.confidence == "high"
+    assert other.verified_scope_kind == BULK_2204_OTHER_SCOPE_KIND
+    assert other.verified_scope_start_exclusive == BULK_2204_OTHER_ANCHOR_CODE
+    assert other.verified_scope_end_inclusive == BULK_2204_OTHER_STOP_CODE
+    assert other.verified_scope_parent_code == BULK_2204_PARENT_CODE
+    assert other.verified_scope_leaf_count == BULK_2204_OTHER_LEAF_COUNT == 7
+
+
+def test_builder_places_exact_220422_other_group_under_canonical_parent() -> None:
+    tree = SemanticNavigationBuilder().build_heading_from_records(
+        "2204",
+        _bulk_records(),
+    )
+    other = _bulk_other_group(tree)
+    parent = next(
+        node for node in tree.all_nodes() if node.code == BULK_2204_PARENT_CODE
+    )
+
+    assert other.node_type == SemanticNodeType.CLASSIFICATION_GROUP
+    assert other.parent_id == parent.id
+    assert tuple(node.code for node in other.children) == BULK_2204_OTHER_CODES
+    assert len(other.children) == BULK_2204_OTHER_LEAF_COUNT == 7
+    assert set(tree.real_codes_in_tree()) == set(tree.expected_real_codes)
+    validation = SemanticNavigationValidator().validate(
+        tree,
+        db_codes=tree.expected_real_codes,
+    )
+    assert not validation.has_critical
+    assert all(issue.code != "oversized_unsplit_group" for issue in validation.issues)
+
+
+def test_builder_keeps_exact_33_leaf_boundary_with_retained_other_step() -> None:
     tree = SemanticNavigationBuilder().build_heading_from_records("2204", _records())
     pdo = _pdo_group(tree)
+    other = _pdo_other_group(tree)
     parent = next(node for node in tree.all_nodes() if node.code == PARENT_CODE)
     code_nodes = [node for node in pdo.iter_descendants() if node.code]
 
@@ -224,7 +368,12 @@ def test_builder_keeps_exact_33_leaf_boundary_and_provenance() -> None:
     assert pdo.metadata["extracted_from"] == ANCHOR_CODE
     assert pdo.metadata["raw"] == f"– – – – – – {PDO_OFFICIAL_HEADER}:"
     assert tuple(node.code for node in code_nodes) == PDO_CODES
-    assert len(pdo.children) == len(PDO_CODES) == 33
+    assert len(pdo.children) == 18
+    assert sum(child.carries_real_code for child in pdo.children) == 17
+    assert other.node_type == SemanticNodeType.CLASSIFICATION_SUBGROUP
+    assert other.parent_id == pdo.id
+    assert tuple(node.code for node in other.children) == PDO_2204_OTHER_CODES
+    assert len(other.children) == PDO_2204_OTHER_LEAF_COUNT == 16
     assert all(node.node_type == SemanticNodeType.LEAF for node in code_nodes)
     assert STOP_CODE in {str(node.code) for node in code_nodes}
     assert AFTER_STOP_CODE not in {str(node.code) for node in code_nodes}
@@ -235,9 +384,7 @@ def test_builder_keeps_exact_33_leaf_boundary_and_provenance() -> None:
         db_codes=tree.expected_real_codes,
     )
     assert not validation.has_critical
-    assert [
-        (issue.code, issue.severity) for issue in validation.issues
-    ] == [("oversized_unsplit_group", "warning")]
+    assert validation.issues == []
 
 
 def test_rule_requires_canonical_evidence_and_exact_heading() -> None:
@@ -275,6 +422,152 @@ def test_shuffled_source_records_build_the_same_verified_slice() -> None:
     assert tuple(
         node.code for node in _pdo_group(shuffled).iter_descendants() if node.code
     ) == PDO_CODES
+
+
+@pytest.mark.parametrize(
+    "drift",
+    ("other_anchor_product_text", "other_boundary_colon", "other_leaf_text"),
+)
+def test_pdo_other_source_drift_keeps_original_pdo_flat(drift: str) -> None:
+    records = _records()
+    by_code = {record.code: record for record in records}
+    if drift == "other_anchor_product_text":
+        by_code[PDO_2204_OTHER_ANCHOR_CODE].description = by_code[
+            PDO_2204_OTHER_ANCHOR_CODE
+        ].description.replace(
+            "прочие – – – – – – – прочие:",
+            "прочие (редакция) – – – – – – – прочие:",
+        )
+    elif drift == "other_boundary_colon":
+        by_code[PDO_2204_OTHER_ANCHOR_CODE].description = by_code[
+            PDO_2204_OTHER_ANCHOR_CODE
+        ].description.removesuffix(":")
+    else:
+        by_code[PDO_2204_OTHER_CODES[0]].description += " (редакция источника)"
+
+    extraction = SemanticStructureExtractor().extract("2204", records)
+    assert all(group.reason != PDO_2204_OTHER_REASON for group in extraction.groups)
+    tree = SemanticNavigationBuilder().build_heading_from_records("2204", records)
+    pdo = _pdo_group(tree)
+
+    assert all(
+        group.metadata.get("reason") != PDO_2204_OTHER_REASON
+        for group in tree.group_nodes()
+    )
+    assert len(pdo.children) == len(PDO_CODES) == 33
+    assert tuple(node.code for node in pdo.children) == PDO_CODES
+    assert set(tree.real_codes_in_tree()) == set(tree.expected_real_codes)
+
+
+@pytest.mark.parametrize(
+    "drift",
+    ("parent_text", "root_anchor_text", "other_boundary_text", "leaf_text"),
+)
+def test_220422_other_source_drift_fails_flat_without_code_loss(drift: str) -> None:
+    records = _bulk_records()
+    by_code = {record.code: record for record in records}
+    if drift == "parent_text":
+        by_code[BULK_2204_PARENT_CODE].description += " (редакция)"
+    elif drift == "root_anchor_text":
+        by_code[BULK_2204_ROOT_ANCHOR_CODE].description += " (редакция)"
+    elif drift == "other_boundary_text":
+        by_code[BULK_2204_OTHER_ANCHOR_CODE].description = by_code[
+            BULK_2204_OTHER_ANCHOR_CODE
+        ].description.replace("– – – – – – – прочие:", "– – – – – – – иные:")
+    else:
+        by_code[BULK_2204_OTHER_CODES[0]].description += " (редакция)"
+
+    extraction = SemanticStructureExtractor().extract("2204", records)
+    assert all(group.reason != BULK_2204_OTHER_REASON for group in extraction.groups)
+    tree = SemanticNavigationBuilder().build_heading_from_records("2204", records)
+    assert all(
+        group.metadata.get("reason") != BULK_2204_OTHER_REASON
+        for group in tree.group_nodes()
+    )
+    assert set(tree.real_codes_in_tree()) == set(tree.expected_real_codes)
+
+
+@pytest.mark.parametrize("drift", ("leaf_count", "identity", "raw"))
+def test_builder_unwraps_malformed_pdo_other_but_keeps_all_33_pdo_leaves(
+    drift: str,
+) -> None:
+    extraction = SemanticStructureExtractor().extract("2204", _records())
+    other = next(
+        group
+        for group in extraction.groups
+        if group.reason == PDO_2204_OTHER_REASON
+    )
+    if drift == "leaf_count":
+        other.verified_scope_leaf_count -= 1
+    elif drift == "identity":
+        other.reason = "tampered"
+        other.verified_scope_kind = "tampered"
+    else:
+        other.raw += " "
+
+    tree = SemanticNavigationBuilder()._assemble(
+        "2204",
+        "Вина виноградные натуральные",
+        extraction,
+    )
+    pdo = _pdo_group(tree)
+
+    assert all(
+        group.metadata.get("reason") != PDO_2204_OTHER_REASON
+        for group in tree.group_nodes()
+    )
+    assert tuple(node.code for node in pdo.children) == PDO_CODES
+    assert set(tree.real_codes_in_tree()) == set(tree.expected_real_codes)
+
+
+def test_builder_rechecks_parent_role_before_publishing_pdo_other() -> None:
+    extraction = SemanticStructureExtractor().extract("2204", _records())
+    extraction.records_by_code[PARENT_CODE].is_leaf = True
+
+    tree = SemanticNavigationBuilder()._assemble(
+        "2204",
+        "Вина виноградные натуральные",
+        extraction,
+    )
+    pdo = _pdo_group(tree)
+
+    assert all(
+        group.metadata.get("reason") != PDO_2204_OTHER_REASON
+        for group in tree.group_nodes()
+    )
+    assert tuple(node.code for node in pdo.children) == PDO_CODES
+    assert set(tree.real_codes_in_tree()) == set(tree.expected_real_codes)
+
+
+@pytest.mark.parametrize("drift", ("leaf_count", "identity", "raw"))
+def test_builder_unwraps_malformed_220422_other_without_code_loss(
+    drift: str,
+) -> None:
+    extraction = SemanticStructureExtractor().extract("2204", _bulk_records())
+    other = next(
+        group
+        for group in extraction.groups
+        if group.reason == BULK_2204_OTHER_REASON
+    )
+    if drift == "leaf_count":
+        other.verified_scope_leaf_count -= 1
+    elif drift == "identity":
+        other.reason = "tampered"
+        other.verified_scope_kind = "tampered"
+    else:
+        other.raw += " "
+
+    tree = SemanticNavigationBuilder()._assemble(
+        "2204",
+        "Вина виноградные натуральные",
+        extraction,
+    )
+
+    assert all(
+        group.metadata.get("reason") != BULK_2204_OTHER_REASON
+        for group in tree.group_nodes()
+    )
+    assert set(tree.real_codes_in_tree()) == set(tree.expected_real_codes)
 
 
 @pytest.mark.parametrize(

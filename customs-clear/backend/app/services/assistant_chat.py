@@ -9,7 +9,11 @@ from typing import Any
 from loguru import logger
 
 from .claude_service import _ask_llm, llm_provider_chain
-from .grounded_assistant import build_chat_grounding_bundle, render_chat_grounded_answer
+from .grounded_assistant import (
+    build_chat_grounding_bundle,
+    payment_requires_review,
+    render_chat_grounded_answer,
+)
 
 _CHAT_SYSTEM_PROMPT = (
     "Ты — редактор ответа таможенного помощника Tariff. Факты уже рассчитаны серверными движками.\n"
@@ -108,7 +112,12 @@ async def run_assistant_chat(
     citations = list(bundle.get("citations") or [])
     allowed_ids = {str(row.get("id")) for row in citations if row.get("id")}
     # With no trustworthy facts, a model rewrite only increases hallucination risk.
-    if llm_configured and bundle.get("coverage") != "needs_context" and allowed_ids:
+    if (
+        llm_configured
+        and bundle.get("coverage") != "needs_context"
+        and allowed_ids
+        and not payment_requires_review(bundle.get("payment"))
+    ):
         payload = {
             "CURRENT_QUESTION": user_message,
             "CONVERSATION_FOR_LANGUAGE_ONLY": _bounded_history(history),

@@ -21,6 +21,7 @@ from ..models.core import (
     SanctionImportRisk,
 )
 from ..schemas.sanctions_risk import (
+    MovementDirection,
     RiskBlockStatus,
     RiskCheckScopeOut,
     RiskSeverity,
@@ -263,25 +264,35 @@ def _build_screening_scope(
     hs_code: str,
     country: str | None,
     counterparty: str | None,
+    country_label: str = "Страна происхождения",
+    direction_supported: bool = True,
 ) -> list[RiskCheckScopeOut]:
     country_value = (country or "").strip().upper() or None
     return [
         RiskCheckScopeOut(
             code="hs_code",
             label="Код ТН ВЭД",
-            status="checked",
+            status="checked" if direction_supported else "not_checked",
             value=hs_code or None,
-            explanation="Проверены локальные ограничения и санкционные признаки по коду и его префиксам.",
+            explanation=(
+                "Проверены локальные ограничения и санкционные признаки по коду и его префиксам."
+                if direction_supported
+                else "Локальный HS-справочник санкций ориентирован на импорт; для этого направления код не проверен."
+            ),
         ),
         RiskCheckScopeOut(
             code="country",
-            label="Страна происхождения",
-            status="checked" if country_value else "not_checked",
+            label=country_label,
+            status="checked" if country_value and direction_supported else "not_checked",
             value=country_value,
             explanation=(
                 "Проверены страновые риски и эмбарго по указанной стране."
-                if country_value
-                else "Страна не указана — страновые риски и эмбарго не проверены."
+                if country_value and direction_supported
+                else (
+                    "Локальные страновые источники ориентированы на импорт; страна назначения не проверена."
+                    if country_value
+                    else "Страна не указана — страновые риски и эмбарго не проверены."
+                )
             ),
         ),
         RiskCheckScopeOut(
@@ -321,12 +332,20 @@ def build_sanctions_risk_block(
     country: str | None = None,
     destination_country: str | None = None,
     counterparty_name: str | None = None,
+    movement_direction: MovementDirection | None = None,
     db=None,
 ) -> SanctionsRiskBlockOut:
     """Собирает продуктовый блок санкций/рисков для позиции."""
+    direction = (movement_direction or "import").strip().lower()
+    if direction not in {"import", "export", "transit"}:
+        raise ValueError(
+            "movement_direction must be one of: import, export, transit"
+        )
     own = db is None
     session = db or SessionLocal()
     hs = _norm_hs(hs_code)
+    screen_destination = direction in {"export", "transit"}
+    screening_country = destination_country if screen_destination else country
     counterparty = (counterparty_name or "").strip() or None
     item_data: dict[str, Any] = {}
     if counterparty:
@@ -338,9 +357,15 @@ def build_sanctions_risk_block(
         coverage_rows, status_by_id = diagnose_sanctions_source_coverage(session)
         coverage_complete = _scope_coverage_complete(
             status_by_id=status_by_id,
-            country=country,
+            country=country if not screen_destination else None,
             counterparty=counterparty,
         )
+        if screen_destination:
+            coverage_complete = False
+            warnings.append(
+                "Локальные HS/страновые санкционные источники ориентированы на импорт; "
+                "для вывоза/транзита проверен только указанный контрагент, а страна назначения требует ручной проверки."
+            )
 
         missing_sources = [r for r in coverage_rows if r.coverage_status in {"missing", "not_configured"}]
         partial_sources = [r for r in coverage_rows if r.coverage_status == "partial"]
@@ -356,7 +381,12 @@ def build_sanctions_risk_block(
                 + ", ".join(r.title for r in partial_sources[:5])
             )
 
-        sanction_docs, _blocking = _check_sanction_risks(hs, country, item_data or None, session)
+        sanction_docs, _blocking = _check_sanction_risks(
+            hs if not screen_destination else "",
+            country if not screen_destination else None,
+            item_data or None,
+            session,
+        )
         signals = [_doc_to_signal(d) for d in sanction_docs]
 
         manual_review_present = [
@@ -391,13 +421,20 @@ def build_sanctions_risk_block(
             country=(country or "").strip().upper() or None,
             destination_country=(destination_country or "").strip().upper() or None,
             counterparty_name=counterparty,
+            movement_direction=direction,
             signals=signals,
             warnings=warnings,
             source_coverage=coverage_rows,
             screening_scope=_build_screening_scope(
                 hs_code=hs,
-                country=country,
+                country=screening_country,
                 counterparty=counterparty,
+                country_label=(
+                    "Страна назначения"
+                    if screen_destination
+                    else "Страна происхождения"
+                ),
+                direction_supported=not screen_destination,
             ),
             coverage_complete=coverage_complete,
             empty_message=empty_message,

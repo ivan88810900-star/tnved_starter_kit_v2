@@ -190,16 +190,18 @@ class PaymentEngineTests(unittest.TestCase):
         self.assertEqual(res["breakdown"]["excise"], 0.0)
 
     # ------------------------------------------------------------------ Antidumping
-    def test_antidumping_applied_cn(self):
-        """Код 7214 из Китая: антидемпинг 18% применяется."""
+    def test_antidumping_condition_requires_review_cn(self):
+        """Условия прежней строки 7214 нельзя подтвердить только страной CN."""
         res = self._calc(hs_code="7214990000", customs_value=100_000, freight=10_000, country="CN")
-        self.assertGreater(res["breakdown"]["antidumping"], 0)
-        self.assertEqual(res["data_quality"]["antidumping_status"], "applied")
+        self.assertEqual(res["breakdown"]["antidumping"], 0)
+        self.assertEqual(res["data_quality"]["antidumping_status"], "manual_review")
+        self.assertIn("antidumping_applicability_unverified", res["payment_review_reasons"])
 
-    def test_antidumping_applied_ua(self):
-        """Код 7214 из Украины: антидемпинг 18% применяется."""
+    def test_antidumping_condition_requires_review_ua(self):
+        """Условия прежней строки 7214 нельзя подтвердить только страной UA."""
         res = self._calc(hs_code="7214990000", customs_value=100_000, freight=0, country="UA")
-        self.assertGreater(res["breakdown"]["antidumping"], 0)
+        self.assertEqual(res["breakdown"]["antidumping"], 0)
+        self.assertEqual(res["data_quality"]["antidumping_status"], "manual_review")
 
     def test_antidumping_not_applied_de(self):
         """Код 7214 из Германии: антидемпинг не применяется."""
@@ -291,8 +293,10 @@ class PaymentEngineTests(unittest.TestCase):
         })
         # duty = 100000 * 10% = 10000
         self.assertAlmostEqual(res["breakdown"]["duty"], 10_000.0, places=0)
-        # antidumping = 100000 * 18% = 18000
-        self.assertAlmostEqual(res["breakdown"]["antidumping"], 18_000.0, places=0)
+        # The conditional legacy 18% row is retained for review, not applied.
+        self.assertEqual(res["auto_detected"]["antidumping_value"], 18.0)
+        self.assertEqual(res["breakdown"]["antidumping"], 0)
+        self.assertEqual(res["status"], "REVIEW_REQUIRED")
         b = res["breakdown"]
         vat_base_expected = 100_000 + b["duty"] + b["excise"] + b["antidumping"] + b["special_duties_amount"]
         self.assertAlmostEqual(b["vat_base"], vat_base_expected, places=0)

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from .official_payment_admission import blocked_payment_import
+
 import hashlib
 import os
 import asyncio
@@ -75,48 +77,24 @@ async def _http_get_with_retries(url: str, *, timeout: float) -> httpx.Response:
 
 
 async def sync_eec_snapshot() -> dict[str, Any]:
-    """Обновляет метаданные официального источника ЕЭК ТН ВЭД/ЕТТ.
+    """Retired index-hash freshness path, quarantined under Decision #188.
 
-    Ревизия фиксируется по хэшу страницы-индекса.
+    Landing-page availability does not establish current duty rates. In
+    particular, this compatibility call must never overwrite an approved
+    EEC_ETT SourceStatus with a page hash or downgrade it after a failed fetch.
+    The separate official-source monitor owns availability checks.
     """
-    try:
-        r = await _http_get_with_retries(EEC_ETT_URL, timeout=25.0)
-        r.raise_for_status()
-        digest = hashlib.sha256(r.text.encode("utf-8", errors="ignore")).hexdigest()[:16]
-        upsert_source_status(
-            source_code="EEC_ETT",
-            source_name="ТН ВЭД и ЕТТ ЕАЭС",
-            source_url=EEC_ETT_URL,
-            revision=digest,
-            is_stale=False,
-            note="Ревизия определена по хэшу страницы ЕЭК.",
-        )
-        append_sync_log(
-            source_code="EEC_ETT",
-            status="OK",
-            revision=digest,
-            rows_affected=0,
-            note="Страница ЕЭК доступна, хэш обновлён.",
-        )
-        return {"status": "OK", "source": "EEC_ETT", "revision": digest}
-    except Exception as exc:
-        upsert_source_status(
-            source_code="EEC_ETT",
-            source_name="ТН ВЭД и ЕТТ ЕАЭС",
-            source_url=EEC_ETT_URL,
-            revision="unavailable",
-            is_stale=True,
-            note=f"Ошибка синхронизации: {exc}",
-        )
-        append_sync_log(
-            source_code="EEC_ETT",
-            status="ERROR",
-            revision="unavailable",
-            rows_affected=0,
-            note=str(exc),
-        )
-        logger.warning(f"EEC ETT sync failed: {exc}")
-        return {"status": "ERROR", "source": "EEC_ETT", "error": str(exc)}
+    from .ett_pdf_parser import ETT_REVIEW_DECISION
+
+    return {
+        "status": "REVIEW_REQUIRED",
+        "source": "EEC_ETT",
+        "rows": 0,
+        "quarantined": True,
+        "reason": "index_availability_is_not_rate_freshness",
+        "decision_url": ETT_REVIEW_DECISION,
+        "note": "Хэш страницы ЕЭК не подтверждает актуальность ставок ЕТТ.",
+    }
 
 
 async def sync_trade_defense() -> dict[str, Any]:
@@ -167,114 +145,17 @@ async def sync_trade_defense() -> dict[str, Any]:
 
 
 async def sync_rates_feed() -> dict[str, Any]:
-    """Синхронизация ставок из внешнего JSON-фида.
-
-    Формат фида:
-    {
-      "revision": "...",
-      "rows": [{ "hs_prefix": "...", "duty_rate": 0, "vat_import_rate": 22, ... }]
-    }
-    """
+    """Legacy rate feeds cannot authorize active rates."""
     if not NORMATIVE_FEED_URL:
         return {"status": "SKIPPED", "source": "NORMATIVE_FEED", "note": "NORMATIVE_FEED_URL is not set"}
-    try:
-        r = await _http_get_with_retries(NORMATIVE_FEED_URL, timeout=25.0)
-        r.raise_for_status()
-        data = r.json()
-        revision = str(data.get("revision") or "unknown")
-        rows = data.get("rows") or []
-        count = 0
-        for row in rows:
-            if isinstance(row, dict):
-                upsert_hs_rate(row)
-                count += 1
-        upsert_source_status(
-            source_code="NORMATIVE_FEED",
-            source_name="Нормативный фид ставок",
-            source_url=NORMATIVE_FEED_URL,
-            revision=revision,
-            is_stale=False,
-            note=f"Загружено строк: {count}",
-        )
-        append_sync_log(
-            source_code="NORMATIVE_FEED",
-            status="OK",
-            revision=revision,
-            rows_affected=count,
-            note=f"Загружено/обновлено строк: {count}",
-        )
-        return {"status": "OK", "source": "NORMATIVE_FEED", "revision": revision, "rows": count}
-    except Exception as exc:
-        upsert_source_status(
-            source_code="NORMATIVE_FEED",
-            source_name="Нормативный фид ставок",
-            source_url=NORMATIVE_FEED_URL,
-            revision="unavailable",
-            is_stale=True,
-            note=f"Ошибка синхронизации: {exc}",
-        )
-        append_sync_log(
-            source_code="NORMATIVE_FEED",
-            status="ERROR",
-            revision="unavailable",
-            rows_affected=0,
-            note=str(exc),
-        )
-        logger.warning(f"NORMATIVE_FEED sync failed: {exc}")
-        return {"status": "ERROR", "source": "NORMATIVE_FEED", "error": str(exc)}
+    return blocked_payment_import(source="NORMATIVE_FEED", domain="import_duty")
 
 
 async def sync_csv_feed() -> dict[str, Any]:
-    """Синхронизация ставок из внешнего CSV по URL.
-
-    Формат: стандартный CSV с колонками hs_prefix, duty_rate, vat_import_rate и т.д.
-    """
+    """Legacy rate feeds cannot authorize active rates."""
     if not NORMATIVE_CSV_URL:
         return {"status": "SKIPPED", "source": "NORMATIVE_CSV", "note": "NORMATIVE_CSV_URL is not set"}
-    try:
-        r = await _http_get_with_retries(NORMATIVE_CSV_URL, timeout=60.0)
-        r.raise_for_status()
-        content = r.content
-        # Use source_import for parsing and upsert
-        from .source_import import import_normative_file
-        filename = NORMATIVE_CSV_URL.split("/")[-1] or "normative.csv"
-        result = import_normative_file(
-            filename,
-            content,
-            source_code="NORMATIVE_CSV",
-            source_name="CSV-фид нормативных ставок",
-        )
-        append_sync_log(
-            source_code="NORMATIVE_CSV",
-            status="OK",
-            revision=result.get("revision", "import-csv"),
-            rows_affected=result.get("imported", 0),
-            note=f"Загружено из {NORMATIVE_CSV_URL}, импортировано: {result.get('imported', 0)}",
-        )
-        return {
-            "status": "OK",
-            "source": "NORMATIVE_CSV",
-            "revision": result.get("revision"),
-            "imported": result.get("imported", 0),
-        }
-    except Exception as exc:
-        upsert_source_status(
-            source_code="NORMATIVE_CSV",
-            source_name="CSV-фид нормативных ставок",
-            source_url=NORMATIVE_CSV_URL,
-            revision="unavailable",
-            is_stale=True,
-            note=f"Ошибка синхронизации: {exc}",
-        )
-        append_sync_log(
-            source_code="NORMATIVE_CSV",
-            status="ERROR",
-            revision="unavailable",
-            rows_affected=0,
-            note=str(exc),
-        )
-        logger.warning(f"NORMATIVE_CSV sync failed: {exc}")
-        return {"status": "ERROR", "source": "NORMATIVE_CSV", "error": str(exc)}
+    return blocked_payment_import(source="NORMATIVE_CSV", domain="import_duty")
 
 
 async def sync_normative_bundle_url() -> dict[str, Any]:
@@ -288,14 +169,21 @@ async def sync_normative_bundle_url() -> dict[str, Any]:
     try:
         r = await _http_get_with_retries(NORMATIVE_BUNDLE_URL, timeout=120.0)
         r.raise_for_status()
-        from .normative_bundle import import_normative_bundle_bytes
+        from .normative_bundle import _parse_normative_bundle_bytes, import_normative_bundle_dict
 
-        result = import_normative_bundle_bytes(
-            r.content,
+        try:
+            payload = _parse_normative_bundle_bytes(r.content)
+        except ValueError:
+            return {"status": "parser_failed", "source": "NORMATIVE_BUNDLE",
+                    "db_mutated": False, "error": "invalid_or_ambiguous_bundle"}
+        result = import_normative_bundle_dict(
+            payload,
             filename=NORMATIVE_BUNDLE_URL.split("/")[-1] or "bundle.json",
             source_code="NORMATIVE_BUNDLE",
             source_name="Пакет нормативных данных (URL)",
         )
+        if result.get("status") != "OK":
+            return {**result, "source": "NORMATIVE_BUNDLE"}
         return {
             "status": "OK",
             "source": "NORMATIVE_BUNDLE",

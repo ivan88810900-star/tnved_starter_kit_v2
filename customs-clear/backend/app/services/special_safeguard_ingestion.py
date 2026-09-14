@@ -3,9 +3,9 @@
 from __future__ import annotations
 
 import hashlib
-import json
 import re
 from datetime import datetime, timezone
+from decimal import DecimalException
 from pathlib import Path
 from typing import Any
 
@@ -18,6 +18,8 @@ from ..schemas.special_safeguard_ingestion import (
     SpecialSafeguardRowCounts,
 )
 from .normative_store import append_sync_log, upsert_source_status
+from .official_rate_validation import load_official_rate_json
+from .official_payment_admission import payment_admission_blocker
 from .payment_data_coverage import run_payment_data_coverage_report
 from .payment_revision_utils import (
     is_anti_dumping_only_bundle_path,
@@ -31,6 +33,7 @@ from .payment_revision_utils import (
     raw_measure_rows,
 )
 from .payment_source_registry import get_payment_source_entry
+from .trade_remedy_rate_validation import normalize_trade_remedy_rate
 
 
 def _registry_official_special_safeguard_url() -> str | None:
@@ -225,6 +228,19 @@ def _validate_official_special_safeguard_bundle_payload(
             "checksum_sha256": checksum,
         }
 
+    for row_index, row in enumerate(measures):
+        try:
+            normalize_trade_remedy_rate(row, family_alias="special_safeguard")
+        except ValueError as exc:
+            return {
+                "status": "parser_failed",
+                "reason": "invalid_special_safeguard_rate_value",
+                "error": f"invalid_measure_rate: row_index={row_index}: {exc}",
+                "revision": revision,
+                "record_count": len(measures),
+                "checksum_sha256": checksum,
+            }
+
     return {
         "status": "parsed",
         "revision": revision,
@@ -243,13 +259,17 @@ def _load_bundle_payload(rel_path: str) -> tuple[dict[str, Any] | None, dict[str
             "error": f"file not found: {rel_path}",
             "record_count": 0,
         }
+    checksum: str | None = None
     try:
-        payload = json.loads(path.read_text(encoding="utf-8"))
-    except (json.JSONDecodeError, OSError) as exc:
-        return None, {"status": "parser_failed", "error": str(exc), "record_count": 0}
+        source_bytes = path.read_bytes()
+        checksum = hashlib.sha256(source_bytes).hexdigest()
+        payload = load_official_rate_json(source_bytes)
+    except (ValueError, DecimalException, RecursionError, OSError) as exc:
+        return None, {"status": "parser_failed", "reason": "invalid_bundle_json", "error": str(exc),
+                      "record_count": 0, "checksum_sha256": checksum}
     if not isinstance(payload, dict):
-        return None, {"status": "parser_failed", "error": "bundle must be JSON object", "record_count": 0}
-    checksum = _file_sha256_at(path)
+        return None, {"status": "parser_failed", "error": "bundle must be JSON object",
+                      "record_count": 0, "checksum_sha256": checksum}
     return payload, _validate_official_special_safeguard_bundle_payload(
         payload, rel_path=rel_path, checksum=checksum
     )
@@ -294,15 +314,7 @@ def _normalize_measure_row(raw: dict[str, Any]) -> dict[str, Any] | None:
     if not prefix:
         return None
     origin = str(raw.get("origin_country") or raw.get("country_iso") or raw.get("country") or "").strip().upper()
-    rate_type = str(
-        raw.get("rate_type") or raw.get("special_safeguard_type") or raw.get("duty_type") or "percent"
-    ).strip().lower()
-    rate_value = raw.get("rate_value")
-    if rate_value is None:
-        rate_value = raw.get("rate_percent")
-    if rate_value is None:
-        rate_value = raw.get("special_safeguard_value")
-    rate_specific = float(raw.get("rate_specific") or raw.get("rate_specific_value") or 0.0)
+    rate_type, rate_percent, rate_specific = normalize_trade_remedy_rate(raw, family_alias="special_safeguard")
     currency = str(raw.get("currency_code") or raw.get("currency") or "").strip().upper()
     regulatory_act = str(
         raw.get("regulatory_act") or raw.get("legal_basis") or raw.get("document_basis") or ""
@@ -314,8 +326,9 @@ def _normalize_measure_row(raw: dict[str, Any]) -> dict[str, Any] | None:
         "origin_country": origin,
         "measure_type": "special_safeguard",
         "rate_type": rate_type,
-        "rate_percent": float(rate_value or 0.0) if rate_type == "percent" else 0.0,
-        "rate_specific": rate_specific if rate_type in ("fixed", "specific") else 0.0,
+        "rate_percent": rate_percent,
+        "rate_specific": rate_specific,
+        "needs_verification": raw.get("needs_verification", True),
         "currency_code": currency,
         "regulatory_act": regulatory_act,
         "manufacturer_exporter": str(raw.get("manufacturer_exporter") or raw.get("manufacturer") or "").strip(),
@@ -343,12 +356,17 @@ def _extract_special_safeguard_rows(
         if container_err is not None:
             return revision, [], [f"parser_failed: {container_err}"]
 
-    for raw in rows_in or []:
+    for row_index, raw in enumerate(rows_in or []):
         if not isinstance(raw, dict):
             return revision, [], ["parser_failed: malformed_measure_row (row not an object)"]
         if not _raw_row_has_special_safeguard_signal(raw):
+            blockers.append(f"invalid_measure_rate: row_index={row_index}: missing_rate_value")
             continue
-        normalized = _normalize_measure_row(raw)
+        try:
+            normalized = _normalize_measure_row(raw)
+        except ValueError as exc:
+            blockers.append(f"invalid_measure_rate: row_index={row_index}: {exc}")
+            continue
         if not normalized:
             blockers.append(
                 f"invalid_measure_row: hs={raw.get('hs_code')!r} origin={raw.get('origin_country')!r}"
@@ -421,6 +439,8 @@ def _lookup_special_duty(db, row: dict[str, Any]) -> SpecialDuty | None:
 
 
 def _row_needs_update(existing: SpecialDuty, row: dict[str, Any]) -> bool:
+    if existing.needs_verification != row.get("needs_verification", True):
+        return True
     if float(existing.rate_percent or 0) != float(row.get("rate_percent") or 0):
         return True
     if float(existing.rate_specific or 0) != float(row.get("rate_specific") or 0):
@@ -507,7 +527,13 @@ def _blocked_response(
         parser_result=parser_result or {},
         notes=notes or [],
     )
-    return response.model_dump(mode="json")
+    return {
+        **response.model_dump(mode="json"),
+        "active_rates_written": False,
+        "source_evidence_verified": False,
+        "legal_review_verified": False,
+        "retention_verified": False,
+    }
 
 
 def _validate_bundle_for_ingest(
@@ -616,11 +642,17 @@ def run_special_safeguard_dry_run(*, rel_path: str | None = None) -> dict[str, A
         },
         notes=[
             "Dry-run не мутирует БД.",
-            "Apply доступен только при status=OK dry-run и official provenance.",
-            "Coverage present требует official special-safeguard rows (не seed/fallback).",
+            payment_admission_blocker("special_safeguard"),
+            "Row counts and declared source metadata are technical diagnostics, not verified legal coverage.",
         ],
     )
-    return response.model_dump(mode="json")
+    return {
+        **response.model_dump(mode="json"),
+        "active_rates_written": False,
+        "source_evidence_verified": False,
+        "legal_review_verified": False,
+        "retention_verified": False,
+    }
 
 
 def _stamp_row_provenance(existing: SpecialDuty, *, row: dict[str, Any], synced_at: datetime) -> None:
@@ -633,6 +665,7 @@ def _stamp_row_provenance(existing: SpecialDuty, *, row: dict[str, Any], synced_
 
 
 def _apply_row_fields(existing: SpecialDuty, row: dict[str, Any]) -> None:
+    existing.needs_verification = row["needs_verification"]
     existing.hs_code_prefix = row["hs_code_prefix"]
     existing.origin_country = row["origin_country"]
     existing.rate_percent = float(row.get("rate_percent") or 0.0)
@@ -667,6 +700,7 @@ def _apply_special_safeguard_rows(
                         rate_percent=float(row.get("rate_percent") or 0.0),
                         rate_specific=float(row.get("rate_specific") or 0.0),
                         currency_code=str(row.get("currency_code") or ""),
+                        needs_verification=row["needs_verification"],
                         regulatory_act=row["regulatory_act"],
                         measure_type="special_safeguard",
                         manufacturer_exporter=str(row.get("manufacturer_exporter") or ""),
@@ -691,7 +725,7 @@ def _apply_special_safeguard_rows(
 
 
 def run_special_safeguard_apply(*, rel_path: str | None = None) -> dict[str, Any]:
-    """Guarded apply: мутирует БД только при official provenance и отсутствии blockers."""
+    """Legacy apply: техническая проверка без применения до manifest-bound review."""
     loaded_at = _utc_now_iso()
     bundle_path = discover_special_safeguard_bundle_path(rel_path=rel_path)
     if not bundle_path:
@@ -728,59 +762,13 @@ def run_special_safeguard_apply(*, rel_path: str | None = None) -> dict[str, Any
             notes=["Apply отменён — SourceStatus/SyncLog не записаны."],
         )
 
-    synced_at = datetime.now(timezone.utc).replace(tzinfo=None)
-    applied = _apply_special_safeguard_rows(rows, synced_at=synced_at)
-    if applied is None:
-        return _blocked_response(
-            status="manual_review_required",
-            mode="apply",
-            dry_run=False,
-            blockers=["atomic_apply_aborted: invalid measure row detected during apply"],
-            parser_result=parser_result,
-            provenance=provenance,
-            notes=["Apply атомарно отменён.", "SourceStatus/SyncLog не записаны."],
-        )
-    row_counts = applied
-
-    entry = get_payment_source_entry(_REGISTRY_SOURCE_CODE)
-    note_txt = (
-        f"special-safeguard apply {bundle_path}: revision={revision}; "
-        f"insert={row_counts.insert}, update={row_counts.update}, skip={row_counts.skip}; "
-        f"checksum={provenance.checksum_sha256 or 'n/a'}"
-    )
-    upsert_source_status(
-        source_code=_SPECIAL_SAFEGUARD_SOURCE_CODE,
-        source_name=entry.name if entry else provenance.source_name,
-        source_url=provenance.official_url or bundle_path,
-        revision=revision,
-        is_stale=False,
-        note=note_txt,
-    )
-    append_sync_log(
-        source_code=_SPECIAL_SAFEGUARD_SOURCE_CODE,
-        status="OK",
-        revision=revision,
-        rows_affected=row_counts.insert + row_counts.update,
-        note=note_txt,
-    )
-
-    coverage = run_payment_data_coverage_report()
-    response = SpecialSafeguardIngestionResponse(
-        status="OK",
+    return _blocked_response(
+        status="manual_review_required",
         mode="apply",
         dry_run=False,
-        db_mutated=(row_counts.insert + row_counts.update) > 0,
-        provenance=provenance,
-        row_counts=row_counts,
-        blockers=[],
+        blockers=[payment_admission_blocker("special_safeguard")],
         parser_result=parser_result,
-        coverage_link={
-            "trade_remedies_status": (coverage.get("summary") or {}).get("trade_remedies", {}).get("status"),
-            "generated_at": coverage.get("generated_at"),
-        },
-        notes=[
-            "Special-safeguard slice: обновляет только special_duties с measure_type=special_safeguard.",
-            "Import-duty/VAT/excise/anti-dumping поля не изменяются.",
-        ],
+        provenance=provenance,
+        row_counts=SpecialSafeguardRowCounts(total_in_source=len(rows), blocked=len(rows)),
+        notes=["Технический разбор сохранён; DB planning, SourceStatus и SyncLog не выполнялись."],
     )
-    return response.model_dump(mode="json")

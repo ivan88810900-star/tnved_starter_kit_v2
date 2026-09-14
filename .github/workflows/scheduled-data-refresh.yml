@@ -4,6 +4,24 @@ on:
   schedule:
     - cron: "17 3 * * *"
   workflow_dispatch:
+    inputs:
+      approve_source_baseline:
+        description: Advance reviewed legal-source checksum baselines
+        required: false
+        default: false
+        type: boolean
+      approval_ref:
+        description: Existing repository issue or PR (#123 or full URL)
+        required: false
+        type: string
+      approval_source_ids:
+        description: Comma-separated pending source IDs; must match the pending set exactly
+        required: false
+        type: string
+      approval_source_digests:
+        description: Exact JSON object mapping every pending source ID to its reviewed SHA-256
+        required: false
+        type: string
 
 permissions:
   contents: read
@@ -13,29 +31,979 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  cbr_check:
-    name: CBR and regulatory bundle freshness
+  monitor:
+    name: Regulatory source monitor
     runs-on: ubuntu-latest
-    timeout-minutes: 15
-    defaults:
-      run:
-        working-directory: customs-clear/backend
+    timeout-minutes: 40
+    permissions:
+      contents: read
+      issues: read
     env:
       SECRET_KEY: ci-data-refresh-check-only
-      CBR_SOURCE_URL: https://www.cbr.ru/currency_base/daily/
     steps:
       - name: Check out repository
-        uses: actions/checkout@v7
+        id: checkout
+        continue-on-error: true
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       - name: Set up Python
-        uses: actions/setup-python@v6
+        id: setup_python
+        continue-on-error: true
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
         with:
           python-version: "3.12"
           cache: pip
-          cache-dependency-path: customs-clear/backend/requirements.txt
+          cache-dependency-path: customs-clear/backend/requirements-monitor.txt
 
-      - name: Install backend dependencies
-        run: python -m pip install --disable-pip-version-check -r requirements.txt
+      - name: Install locked monitor dependencies
+        id: install
+        continue-on-error: true
+        working-directory: customs-clear/backend
+        run: |
+          python -m pip install \
+            --disable-pip-version-check \
+            --only-binary=:all: \
+            --require-hashes \
+            --requirement requirements-monitor.txt
+          python -m pip check
 
-      - name: Check CBR and regulatory data freshness
-        run: python -m scripts.data_refresh --check-only --json
+      - name: Restore official-source checksum baseline
+        id: restore_baseline
+        continue-on-error: true
+        uses: actions/cache/restore@caa296126883cff596d87d8935842f9db880ef25 # v5
+        with:
+          path: customs-clear/backend/data/runtime/source-monitor-state.json
+          key: regulatory-source-monitor-v4-${{ github.ref_name }}-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: |
+            regulatory-source-monitor-v4-${{ github.ref_name }}-
+
+      - name: Validate automatic update policy for every registered source
+        id: update_plan
+        continue-on-error: true
+        working-directory: customs-clear/backend
+        run: |
+          set -o pipefail
+          python scripts/run_regulatory_source_updates.py \
+            --plan \
+            --strict \
+            --output regulatory-source-update-plan.json \
+            2>&1 | tee regulatory-source-update-plan.log
+
+      - name: Validate live CBR source without database writes
+        id: cbr_source
+        continue-on-error: true
+        working-directory: customs-clear/backend
+        run: |
+          set -o pipefail
+          python scripts/update_rates.py --validate-only --json --strict \
+            2>&1 | tee cbr-source-validation.log
+
+      - name: Monitor official NTM source documents
+        id: source_monitor
+        continue-on-error: true
+        working-directory: customs-clear/backend
+        env:
+          APPROVE_SOURCE_BASELINE: ${{ inputs.approve_source_baseline }}
+          APPROVAL_REF: ${{ inputs.approval_ref }}
+          APPROVAL_SOURCE_IDS: ${{ inputs.approval_source_ids }}
+          APPROVAL_SOURCE_DIGESTS: ${{ inputs.approval_source_digests }}
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -o pipefail
+          args=(
+            --strict
+            --state data/runtime/source-monitor-state.json
+            --output ntm-source-monitor.json
+          )
+          if [[ "$APPROVE_SOURCE_BASELINE" == "true" ]]; then
+            if [[ "$GITHUB_REF" != "refs/heads/$DEFAULT_BRANCH" ]]; then
+              echo "Legal-source baselines can only be approved from the default branch" >&2
+              exit 2
+            fi
+            actor_permission="$(
+              gh api "repos/$GITHUB_REPOSITORY/collaborators/$GITHUB_ACTOR/permission" \
+                --jq '.permission // ""'
+            )"
+            case "$actor_permission" in
+              admin|write) ;;
+              *)
+                echo "Baseline approval requires effective write or admin access; actor=$GITHUB_ACTOR permission=$actor_permission" >&2
+                exit 2
+                ;;
+            esac
+            if [[ -z "${APPROVAL_REF//[[:space:]]/}" ]]; then
+              echo "approval_ref is required when approve_source_baseline is true" >&2
+              exit 2
+            fi
+            if [[ -z "${APPROVAL_SOURCE_IDS//[[:space:]]/}" ]]; then
+              echo "approval_source_ids is required when approve_source_baseline is true" >&2
+              exit 2
+            fi
+            if [[ -z "${APPROVAL_SOURCE_DIGESTS//[[:space:]]/}" ]]; then
+              echo "approval_source_digests is required when approve_source_baseline is true" >&2
+              exit 2
+            fi
+            approval_validation="$({
+              python - <<'PY'
+          import hashlib
+          import json
+          import os
+          import re
+          import sys
+          from pathlib import Path
+
+          reference = os.environ["APPROVAL_REF"].strip()
+          repository = os.environ["GITHUB_REPOSITORY"]
+          short = re.fullmatch(r"#([1-9][0-9]*)", reference)
+          full = re.fullmatch(
+              rf"https://github\.com/{re.escape(repository)}/(?:issues|pull)/([1-9][0-9]*)",
+              reference,
+          )
+          if not (short or full):
+              raise SystemExit(
+                  "approval_ref must be #<issue> or an issue/PR URL in this repository"
+              )
+
+          selected_values = [
+              value.strip()
+              for value in os.environ["APPROVAL_SOURCE_IDS"].split(",")
+              if value.strip()
+          ]
+          if len(selected_values) != len(set(selected_values)):
+              raise SystemExit("approval_source_ids must not contain duplicates")
+          selected = set(selected_values)
+          state_path = Path("data/runtime/source-monitor-state.json")
+          try:
+              state = json.loads(state_path.read_text(encoding="utf-8"))
+          except (OSError, ValueError) as exc:
+              raise SystemExit(f"cannot read pending source baseline: {exc}")
+          pending = {
+              source_id: str(row.get("pending_sha256") or "").lower()
+              for source_id, row in (state.get("sources") or {}).items()
+              if isinstance(row, dict) and row.get("pending_sha256")
+          }
+          if selected != set(pending):
+              raise SystemExit(
+                  "approval_source_ids must exactly match pending source IDs; "
+                  f"selected={sorted(selected)!r}, pending={sorted(pending)!r}"
+              )
+          try:
+              reviewed = json.loads(os.environ["APPROVAL_SOURCE_DIGESTS"])
+          except (TypeError, ValueError) as exc:
+              raise SystemExit(f"approval_source_digests must be a JSON object: {exc}")
+          if not isinstance(reviewed, dict):
+              raise SystemExit("approval_source_digests must be a JSON object")
+          reviewed = {str(key): str(value).lower() for key, value in reviewed.items()}
+          if any(not re.fullmatch(r"[0-9a-f]{64}", digest) for digest in reviewed.values()):
+              raise SystemExit("approval_source_digests contains an invalid SHA-256")
+          if reviewed != pending:
+              raise SystemExit(
+                  "approval_source_digests must exactly match pending source digests; "
+                  f"reviewed={reviewed!r}, pending={pending!r}"
+              )
+          canonical = json.dumps(pending, ensure_ascii=True, sort_keys=True, separators=(",", ":"))
+          binding = hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+          print(f"{(short or full).group(1)}|{binding}")
+          PY
+            } 2>&1)" || {
+              echo "$approval_validation" >&2
+              exit 2
+            }
+            IFS='|' read -r approval_issue_number approval_binding <<< "$approval_validation"
+            gh api "repos/$GITHUB_REPOSITORY/issues/$approval_issue_number" \
+              --jq '.number' >/dev/null
+            gh api --paginate --slurp \
+              "repos/$GITHUB_REPOSITORY/issues/$approval_issue_number/comments?per_page=100" \
+              > /tmp/regulatory-approval-comments.json
+            APPROVAL_BINDING="$approval_binding" python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          pages = json.loads(
+              Path("/tmp/regulatory-approval-comments.json").read_text(encoding="utf-8")
+          )
+          comments = []
+          for page in pages if isinstance(pages, list) else []:
+              if isinstance(page, list):
+                  comments.extend(page)
+              elif isinstance(page, dict):
+                  comments.append(page)
+          actor = os.environ["GITHUB_ACTOR"].casefold()
+          marker = "REGULATORY_BASELINE_APPROVAL_SHA256=" + os.environ["APPROVAL_BINDING"]
+          approved = any(
+              str((comment.get("user") or {}).get("login") or "").casefold() == actor
+              and marker in {
+                  line.strip().strip("`")
+                  for line in str(comment.get("body") or "").splitlines()
+              }
+              for comment in comments
+              if isinstance(comment, dict)
+          )
+          if not approved:
+              raise SystemExit(
+                  "approval_ref must contain a comment by the trusted dispatcher with exact line: "
+                  + marker
+              )
+          PY
+            args+=(--accept-changes --approval-ref "$APPROVAL_REF")
+          elif [[ -n "${APPROVAL_REF//[[:space:]]/}" || -n "${APPROVAL_SOURCE_IDS//[[:space:]]/}" || -n "${APPROVAL_SOURCE_DIGESTS//[[:space:]]/}" ]]; then
+            echo "approval_ref/source IDs/source digests require approve_source_baseline=true" >&2
+            exit 2
+          fi
+          python scripts/monitor_official_ntm_sources.py "${args[@]}" \
+            2>&1 | tee ntm-source-monitor.log
+
+      - name: Capture and compare live tariff relief and GSP PDF links
+        id: tariff_relief_capture
+        continue-on-error: true
+        working-directory: customs-clear/backend
+        env:
+          CUSTOMSCLEAR_READ_ONLY: "1"
+          SCHEDULER_ENABLED: "0"
+          REGULATORY_SYNC_SCHEDULER_ENABLED: "0"
+        run: |
+          umask 077
+          mkdir -m 700 "$RUNNER_TEMP/ett-tariff-relief-store"
+          python scripts/capture_ett_tariff_relief.py \
+            --store-root "$RUNNER_TEMP/ett-tariff-relief-store" \
+            --output ett-tariff-relief-report.json \
+            --observed-baseline data/ett_tariff_relief_source_observations.json \
+            --observed-baseline data/ett_tariff_relief_council_source_observations.json \
+            --detail-url https://docs.eaeunion.org/documents/461/10843/ \
+            --detail-url https://docs.eaeunion.org/documents/461/10846/ \
+            --detail-url https://docs.eaeunion.org/documents/461/10848/ \
+            --detail-url https://docs.eaeunion.org/documents/461/10854/
+
+      - name: Retain original tariff relief and GSP capture objects
+        id: tariff_relief_objects
+        if: always()
+        continue-on-error: true
+        working-directory: customs-clear/backend
+        run: |
+          tar -C "$RUNNER_TEMP" -czf ett-tariff-relief-objects.tar.gz ett-tariff-relief-store
+
+      - name: Verify current export-control list extraction
+        id: export_control
+        continue-on-error: true
+        working-directory: customs-clear/backend
+        run: |
+          set -o pipefail
+          python scripts/build_official_export_control_dataset.py --check \
+            2>&1 | tee export-control-source-check.log
+
+      - name: Verify pinned TN VED PDF and ETT source manifests
+        id: source_manifests
+        continue-on-error: true
+        working-directory: customs-clear/backend
+        run: |
+          set -o pipefail
+          python scripts/build_ntm_full_catalog_baseline.py --check-sources-only \
+            2>&1 | tee catalog-source-manifest-check.log
+
+      - name: Audit pinned ETT code scope and every rule probe
+        id: code_scope
+        continue-on-error: true
+        working-directory: customs-clear/backend
+        run: |
+          set -o pipefail
+          mkdir -p data/runtime
+          python - <<'PY'
+          import sqlite3
+          from pathlib import Path
+
+          path = Path("data/runtime/ntm-full-catalog.db")
+          path.unlink(missing_ok=True)
+          with sqlite3.connect(path) as db:
+              db.executescript(
+                  """
+                  CREATE TABLE tnved_sections (
+                      id INTEGER PRIMARY KEY AUTOINCREMENT,
+                      roman_number TEXT NOT NULL UNIQUE,
+                      title TEXT,
+                      notes TEXT
+                  );
+                  CREATE TABLE tnved_chapters (
+                      id INTEGER PRIMARY KEY AUTOINCREMENT,
+                      section_id INTEGER NOT NULL,
+                      code TEXT NOT NULL UNIQUE,
+                      title TEXT,
+                      notes TEXT
+                  );
+                  CREATE TABLE tnved_commodities (
+                      id INTEGER PRIMARY KEY AUTOINCREMENT,
+                      chapter_id INTEGER NOT NULL,
+                      code TEXT NOT NULL UNIQUE,
+                      description TEXT,
+                      unit TEXT,
+                      import_duty TEXT
+                  );
+                  """
+              )
+          PY
+          python scripts/import_pdf.py \
+            --data-dir ../../backend/app/services/source_sync/data \
+            --db data/runtime/ntm-full-catalog.db \
+            2>&1 | tee ntm-catalog-import.log
+          python scripts/run_ntm_full_coverage_audit.py \
+            --database data/runtime/ntm-full-catalog.db \
+            --require-code-catalog \
+            --output ntm-code-scope.json \
+            2>&1 | tee ntm-code-scope.log
+
+      - name: Build immutable gate summary
+        id: gate_summary
+        if: always()
+        env:
+          CHECKOUT_OUTCOME: ${{ steps.checkout.outcome }}
+          SETUP_PYTHON_OUTCOME: ${{ steps.setup_python.outcome }}
+          INSTALL_OUTCOME: ${{ steps.install.outcome }}
+          RESTORE_BASELINE_OUTCOME: ${{ steps.restore_baseline.outcome }}
+          UPDATE_PLAN_OUTCOME: ${{ steps.update_plan.outcome }}
+          CBR_SOURCE_OUTCOME: ${{ steps.cbr_source.outcome }}
+          SOURCE_MONITOR_OUTCOME: ${{ steps.source_monitor.outcome }}
+          TARIFF_RELIEF_CAPTURE_OUTCOME: ${{ steps.tariff_relief_capture.outcome }}
+          TARIFF_RELIEF_OBJECTS_OUTCOME: ${{ steps.tariff_relief_objects.outcome }}
+          EXPORT_CONTROL_OUTCOME: ${{ steps.export_control.outcome }}
+          SOURCE_MANIFESTS_OUTCOME: ${{ steps.source_manifests.outcome }}
+          CODE_SCOPE_OUTCOME: ${{ steps.code_scope.outcome }}
+          APPROVAL_REQUESTED: ${{ inputs.approve_source_baseline }}
+          APPROVAL_REF: ${{ inputs.approval_ref }}
+          APPROVAL_SOURCE_IDS: ${{ inputs.approval_source_ids }}
+          APPROVAL_SOURCE_DIGESTS: ${{ inputs.approval_source_digests }}
+        run: |
+          mkdir -p customs-clear/backend
+          jq -n \
+            --arg checked_at "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            --arg repository "$GITHUB_REPOSITORY" \
+            --arg workflow "$GITHUB_WORKFLOW" \
+            --arg run_id "$GITHUB_RUN_ID" \
+            --arg run_attempt "$GITHUB_RUN_ATTEMPT" \
+            --arg commit "$GITHUB_SHA" \
+            --arg event "$GITHUB_EVENT_NAME" \
+            --arg checkout "$CHECKOUT_OUTCOME" \
+            --arg setup_python "$SETUP_PYTHON_OUTCOME" \
+            --arg install "$INSTALL_OUTCOME" \
+            --arg restore_baseline "$RESTORE_BASELINE_OUTCOME" \
+            --arg update_plan "$UPDATE_PLAN_OUTCOME" \
+            --arg cbr_source "$CBR_SOURCE_OUTCOME" \
+            --arg source_monitor "$SOURCE_MONITOR_OUTCOME" \
+            --arg tariff_relief_capture "$TARIFF_RELIEF_CAPTURE_OUTCOME" \
+            --arg tariff_relief_objects "$TARIFF_RELIEF_OBJECTS_OUTCOME" \
+            --arg export_control "$EXPORT_CONTROL_OUTCOME" \
+            --arg source_manifests "$SOURCE_MANIFESTS_OUTCOME" \
+            --arg code_scope "$CODE_SCOPE_OUTCOME" \
+            --arg approval_requested "$APPROVAL_REQUESTED" \
+            --arg approval_ref "$APPROVAL_REF" \
+            --arg approval_source_ids "$APPROVAL_SOURCE_IDS" \
+            --arg approval_source_digests "$APPROVAL_SOURCE_DIGESTS" \
+            '{
+              checked_at: $checked_at,
+              repository: $repository,
+              workflow: $workflow,
+              run_id: $run_id,
+              run_attempt: $run_attempt,
+              commit: $commit,
+              event: $event,
+              run_url: ("https://github.com/" + $repository + "/actions/runs/" + $run_id),
+              baseline_approval: {
+                requested: ($approval_requested == "true"),
+                reference: $approval_ref,
+                requested_source_ids: ($approval_source_ids | split(",") | map(gsub("^\\s+|\\s+$"; "")) | map(select(length > 0))),
+                requested_source_digests: (
+                  try ($approval_source_digests | fromjson)
+                  catch {invalid_json: true}
+                )
+              },
+              steps: {
+                checkout: $checkout,
+                setup_python: $setup_python,
+                install: $install,
+                restore_baseline: $restore_baseline,
+                update_plan: $update_plan,
+                cbr_source: $cbr_source,
+                source_monitor: $source_monitor,
+                tariff_relief_capture: $tariff_relief_capture,
+                tariff_relief_objects: $tariff_relief_objects,
+                export_control: $export_control,
+                source_manifests: $source_manifests,
+                code_scope: $code_scope,
+                evidence_upload: "pending",
+                baseline_save: "blocked_until_evidence_and_validation"
+              },
+              phase: "pre_baseline_save"
+            }' > customs-clear/backend/refresh-gate-summary.json
+
+      - name: Validate evidence manifest
+        id: evidence_manifest
+        if: always()
+        continue-on-error: true
+        working-directory: customs-clear/backend
+        run: |
+          missing=()
+          for evidence_file in \
+            refresh-gate-summary.json \
+            regulatory-source-update-plan.json \
+            regulatory-source-update-plan.log \
+            cbr-source-validation.log \
+            ntm-source-monitor.json \
+            ntm-source-monitor.log \
+            ett-tariff-relief-report.json \
+            ett-tariff-relief-objects.tar.gz \
+            data/runtime/source-monitor-state.json \
+            export-control-source-check.log \
+            catalog-source-manifest-check.log \
+            ntm-catalog-import.log \
+            ntm-code-scope.json \
+            ntm-code-scope.log
+          do
+            if [[ ! -s "$evidence_file" ]]; then
+              missing+=("$evidence_file")
+            fi
+          done
+          if (( ${#missing[@]} > 0 )); then
+            printf 'Missing required evidence: %s\n' "${missing[*]}" >&2
+            exit 1
+          fi
+
+      - name: Upload regulatory evidence bundle
+        id: upload_evidence
+        if: always()
+        continue-on-error: true
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        with:
+          name: regulatory-source-evidence-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            customs-clear/backend/refresh-gate-summary.json
+            customs-clear/backend/regulatory-source-update-plan.json
+            customs-clear/backend/regulatory-source-update-plan.log
+            customs-clear/backend/cbr-source-validation.log
+            customs-clear/backend/ntm-source-monitor.json
+            customs-clear/backend/ntm-source-monitor.log
+            customs-clear/backend/ett-tariff-relief-report.json
+            customs-clear/backend/ett-tariff-relief-objects.tar.gz
+            customs-clear/backend/data/runtime/source-monitor-state.json
+            customs-clear/backend/export-control-source-check.log
+            customs-clear/backend/catalog-source-manifest-check.log
+            customs-clear/backend/ntm-catalog-import.log
+            customs-clear/backend/ntm-code-scope.json
+            customs-clear/backend/ntm-code-scope.log
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Validate state persistence after evidence upload
+        id: state_persistence_gate
+        if: always()
+        continue-on-error: true
+        env:
+          CHECKOUT_OUTCOME: ${{ steps.checkout.outcome }}
+          SETUP_PYTHON_OUTCOME: ${{ steps.setup_python.outcome }}
+          INSTALL_OUTCOME: ${{ steps.install.outcome }}
+          RESTORE_BASELINE_OUTCOME: ${{ steps.restore_baseline.outcome }}
+          UPDATE_PLAN_OUTCOME: ${{ steps.update_plan.outcome }}
+          CBR_SOURCE_OUTCOME: ${{ steps.cbr_source.outcome }}
+          SOURCE_MONITOR_OUTCOME: ${{ steps.source_monitor.outcome }}
+          TARIFF_RELIEF_CAPTURE_OUTCOME: ${{ steps.tariff_relief_capture.outcome }}
+          TARIFF_RELIEF_OBJECTS_OUTCOME: ${{ steps.tariff_relief_objects.outcome }}
+          EXPORT_CONTROL_OUTCOME: ${{ steps.export_control.outcome }}
+          SOURCE_MANIFESTS_OUTCOME: ${{ steps.source_manifests.outcome }}
+          CODE_SCOPE_OUTCOME: ${{ steps.code_scope.outcome }}
+          GATE_SUMMARY_OUTCOME: ${{ steps.gate_summary.outcome }}
+          EVIDENCE_MANIFEST_OUTCOME: ${{ steps.evidence_manifest.outcome }}
+          UPLOAD_EVIDENCE_OUTCOME: ${{ steps.upload_evidence.outcome }}
+          APPROVAL_REQUESTED: ${{ inputs.approve_source_baseline }}
+          APPROVAL_SOURCE_IDS: ${{ inputs.approval_source_ids }}
+          APPROVAL_SOURCE_DIGESTS: ${{ inputs.approval_source_digests }}
+        run: |
+          failures=()
+          for name in \
+            CHECKOUT \
+            SETUP_PYTHON \
+            INSTALL \
+            RESTORE_BASELINE \
+            UPDATE_PLAN \
+            CBR_SOURCE \
+            TARIFF_RELIEF_CAPTURE \
+            TARIFF_RELIEF_OBJECTS \
+            EXPORT_CONTROL \
+            SOURCE_MANIFESTS \
+            CODE_SCOPE \
+            GATE_SUMMARY \
+            EVIDENCE_MANIFEST \
+            UPLOAD_EVIDENCE
+          do
+            variable="${name}_OUTCOME"
+            if [[ "${!variable}" != "success" ]]; then
+              failures+=("$name=${!variable}")
+            fi
+          done
+          if (( ${#failures[@]} > 0 )); then
+            printf 'State persistence blocked: %s\n' "${failures[*]}" >&2
+            exit 1
+          fi
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          report = json.loads(
+              Path("customs-clear/backend/ntm-source-monitor.json").read_text(encoding="utf-8")
+          )
+          state = json.loads(
+              Path("customs-clear/backend/data/runtime/source-monitor-state.json").read_text(
+                  encoding="utf-8"
+              )
+          )
+          if state.get("version") != 4:
+              raise SystemExit(
+                  f"unsupported source-monitor state schema: {state.get('version')!r}"
+              )
+          if report.get("all_available") is not True:
+              raise SystemExit("source state is unavailable or invalid")
+          if report.get("revision_monitor_gate_ok") is not True:
+              raise SystemExit("revision-covered official-source monitor failed")
+          report_rows = report.get("sources") or []
+          if not isinstance(report_rows, list):
+              raise SystemExit("source-monitor report rows must be a list")
+          count_fields = {
+              field: report.get(field)
+              for field in (
+                  "monitored_url_count",
+                  "revision_candidate_source_count",
+                  "revision_covered_source_count",
+                  "revision_gap_source_count",
+                  "revision_unavailable_source_count",
+                  "explicit_availability_source_count",
+                  "availability_only_source_count",
+              )
+          }
+          if any(type(value) is not int or value < 0 for value in count_fields.values()):
+              raise SystemExit(f"invalid source-monitor coverage counts: {count_fields!r}")
+          if count_fields["monitored_url_count"] != len(report_rows):
+              raise SystemExit(
+                  "source-monitor row count mismatch: "
+                  f"counts={count_fields!r}, rows={len(report_rows)!r}"
+              )
+          if count_fields["monitored_url_count"] != (
+              count_fields["revision_candidate_source_count"]
+              + count_fields["explicit_availability_source_count"]
+          ):
+              raise SystemExit(f"source-monitor universe counts do not balance: {count_fields!r}")
+          if count_fields["revision_candidate_source_count"] != (
+              count_fields["revision_covered_source_count"]
+              + count_fields["revision_gap_source_count"]
+              + count_fields["revision_unavailable_source_count"]
+          ):
+              raise SystemExit(f"source-monitor revision counts do not balance: {count_fields!r}")
+          if count_fields["availability_only_source_count"] != (
+              count_fields["explicit_availability_source_count"]
+              + count_fields["revision_gap_source_count"]
+          ):
+              raise SystemExit(f"source-monitor availability counts do not balance: {count_fields!r}")
+          report_source_ids = {
+              str(row.get("source_id") or "")
+              for row in report_rows
+              if isinstance(row, dict) and row.get("source_id")
+          }
+          saved_sources = state.get("sources") or {}
+          if not isinstance(saved_sources, dict) or set(saved_sources) != report_source_ids:
+              raise SystemExit(
+                  "saved source-state universe differs from the current monitor universe; "
+                  f"saved={sorted(saved_sources) if isinstance(saved_sources, dict) else 'invalid'!r}, "
+                  f"current={sorted(report_source_ids)!r}"
+              )
+          saved_pending = {
+              source_id: str(row.get("pending_sha256") or "").lower()
+              for source_id, row in saved_sources.items()
+              if isinstance(row, dict) and row.get("pending_sha256")
+          }
+          report_pending = {
+              str(row["source_id"]): str(row.get("observed_sha256") or "").lower()
+              for row in report_rows
+              if isinstance(row, dict)
+              and row.get("source_id")
+              and row.get("requires_approval") is True
+          }
+          if saved_pending != report_pending:
+              raise SystemExit(
+                  "saved pending digests differ from the current review set; "
+                  f"saved={saved_pending!r}, current={report_pending!r}"
+              )
+          approval_requested = os.environ.get("APPROVAL_REQUESTED") == "true"
+          source_monitor_outcome = os.environ.get("SOURCE_MONITOR_OUTCOME")
+          pending_review_exit = (
+              not approval_requested
+              and source_monitor_outcome == "failure"
+              and report.get("review_required") is True
+          )
+          if source_monitor_outcome != "success" and not pending_review_exit:
+              raise SystemExit(
+                  "source monitor failed for a reason other than an unapproved legal drift: "
+                  f"outcome={source_monitor_outcome!r}"
+              )
+          if approval_requested:
+              selected = sorted(
+                  value.strip()
+                  for value in os.environ.get("APPROVAL_SOURCE_IDS", "").split(",")
+                  if value.strip()
+              )
+              accepted = sorted(report.get("accepted_source_ids") or [])
+              try:
+                  reviewed_digests = json.loads(
+                      os.environ.get("APPROVAL_SOURCE_DIGESTS", "")
+                  )
+              except (TypeError, ValueError) as exc:
+                  raise SystemExit(f"invalid approval_source_digests at persistence gate: {exc}")
+              if not isinstance(reviewed_digests, dict):
+                  raise SystemExit("approval_source_digests must remain a JSON object")
+              reviewed_digests = {
+                  str(source_id): str(digest).lower()
+                  for source_id, digest in reviewed_digests.items()
+              }
+              accepted_digests = {
+                  row["source_id"]: str(row.get("observed_sha256") or "").lower()
+                  for row in report.get("sources") or []
+                  if row.get("source_id") in accepted
+              }
+              if report.get("review_required") is True or accepted != selected:
+                  raise SystemExit(
+                      "baseline approval was not atomic; "
+                      f"selected={selected!r}, accepted={accepted!r}, "
+                      f"review_required={report.get('review_required')!r}"
+                  )
+              if accepted_digests != reviewed_digests:
+                  raise SystemExit(
+                      "accepted source digests differ from the reviewed mapping; "
+                      f"accepted={accepted_digests!r}, reviewed={reviewed_digests!r}"
+                  )
+          PY
+
+      - name: Save reviewed or pending official-source state
+        id: save_baseline
+        if: >-
+          always() &&
+          steps.state_persistence_gate.outcome == 'success' &&
+          hashFiles('customs-clear/backend/data/runtime/source-monitor-state.json') != ''
+        continue-on-error: true
+        uses: actions/cache/save@caa296126883cff596d87d8935842f9db880ef25 # v5
+        with:
+          path: customs-clear/backend/data/runtime/source-monitor-state.json
+          key: regulatory-source-monitor-v4-${{ github.ref_name }}-${{ github.run_id }}-${{ github.run_attempt }}
+
+      - name: Enforce monitor gate after evidence and state persistence
+        if: always()
+        env:
+          STATE_PERSISTENCE_GATE_OUTCOME: ${{ steps.state_persistence_gate.outcome }}
+          SAVE_BASELINE_OUTCOME: ${{ steps.save_baseline.outcome }}
+          TARIFF_RELIEF_CAPTURE_OUTCOME: ${{ steps.tariff_relief_capture.outcome }}
+          TARIFF_RELIEF_OBJECTS_OUTCOME: ${{ steps.tariff_relief_objects.outcome }}
+        run: |
+          failures=()
+          if [[ "$STATE_PERSISTENCE_GATE_OUTCOME" != "success" ]]; then
+            failures+=("STATE_PERSISTENCE_GATE=$STATE_PERSISTENCE_GATE_OUTCOME")
+          fi
+          if [[ "$SAVE_BASELINE_OUTCOME" != "success" ]]; then
+            failures+=("SAVE_BASELINE=$SAVE_BASELINE_OUTCOME")
+          fi
+          if [[ "$TARIFF_RELIEF_CAPTURE_OUTCOME" != "success" ]]; then
+            failures+=("TARIFF_RELIEF_CAPTURE=$TARIFF_RELIEF_CAPTURE_OUTCOME")
+          fi
+          if [[ "$TARIFF_RELIEF_OBJECTS_OUTCOME" != "success" ]]; then
+            failures+=("TARIFF_RELIEF_OBJECTS=$TARIFF_RELIEF_OBJECTS_OUTCOME")
+          fi
+          if ! jq -e '.all_available == true and .revision_monitor_gate_ok == true and .review_required == false' \
+            customs-clear/backend/ntm-source-monitor.json >/dev/null
+          then
+            failures+=("LEGAL_SOURCE_REVIEW=pending_or_invalid")
+          fi
+          if ! jq -e '.capture_complete == true and .reconciliation.source_graph_verified == true and .reconciliation.operational_ok == true' \
+            customs-clear/backend/ett-tariff-relief-report.json >/dev/null
+          then
+            failures+=("TARIFF_RELIEF_REVIEW=pending_or_invalid")
+          fi
+          if (( ${#failures[@]} > 0 )); then
+            printf 'Regulatory monitor gate failed: %s\n' "${failures[*]}" >&2
+            exit 1
+          fi
+
+  notify:
+    name: Regulatory source notification
+    if: always()
+    needs: monitor
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      actions: read
+      contents: read
+      issues: write
+    steps:
+      - name: Download monitor evidence
+        id: download_evidence
+        continue-on-error: true
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
+        with:
+          name: regulatory-source-evidence-${{ github.run_id }}-${{ github.run_attempt }}
+          path: evidence
+
+      - name: Open, update, or close the source-review issue
+        if: always()
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
+        env:
+          MONITOR_RESULT: ${{ needs.monitor.result }}
+          DOWNLOAD_OUTCOME: ${{ steps.download_evidence.outcome }}
+        with:
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+            const crypto = require('crypto');
+
+            const title = 'Regulatory source change or availability failure';
+            const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+            const defaultBranch = context.payload.repository?.default_branch || '';
+            const isDefaultBranch =
+              Boolean(defaultBranch) && context.ref === `refs/heads/${defaultBranch}`;
+
+            function findByBasename(root, basename) {
+              if (!fs.existsSync(root)) return null;
+              const pending = [root];
+              while (pending.length) {
+                const current = pending.pop();
+                for (const entry of fs.readdirSync(current, {withFileTypes: true})) {
+                  const candidate = path.join(current, entry.name);
+                  if (entry.isDirectory()) pending.push(candidate);
+                  if (entry.isFile() && entry.name === basename) return candidate;
+                }
+              }
+              return null;
+            }
+
+            function readJson(basename) {
+              const filename = findByBasename('evidence', basename);
+              if (!filename) return null;
+              try {
+                return JSON.parse(fs.readFileSync(filename, 'utf8'));
+              } catch (error) {
+                core.warning(`Cannot parse ${basename}: ${error.message}`);
+                return null;
+              }
+            }
+
+            const summary = readJson('refresh-gate-summary.json');
+            const sourceReport = readJson('ntm-source-monitor.json');
+            const tariffReliefReport = readJson('ett-tariff-relief-report.json');
+            const updatePlan = readJson('regulatory-source-update-plan.json');
+            const expectedLocalReviewSourceIds = [
+              'country_risks_geopolitics',
+              'geo_special_duties_embargo',
+              'legacy_ntm_tr_catalog',
+              'official_sgr_ntm_v2_curated',
+              'sanction_import_risks'
+            ];
+            const localReviewRows = Array.isArray(updatePlan?.sources)
+              ? updatePlan.sources.filter(source =>
+                  source?.strategy === 'local_reconcile' &&
+                  source?.cadence === 'monthly' &&
+                  source?.operational_state === 'scheduled_review_due')
+              : [];
+            const localReviewSourceIds = localReviewRows
+              .map(source => String(source.source_id || ''))
+              .sort();
+            const localReviewContractValid =
+              updatePlan?.coverage?.valid === true &&
+              localReviewSourceIds.length === expectedLocalReviewSourceIds.length &&
+              localReviewSourceIds.every(
+                (sourceId, index) => sourceId === expectedLocalReviewSourceIds[index]);
+            const localReviewContractError = localReviewContractValid
+              ? null
+              : `expected ${JSON.stringify(expectedLocalReviewSourceIds)}, observed ${JSON.stringify(localReviewSourceIds)}`;
+            const unavailable = (sourceReport?.sources || []).filter(source => source.ok !== true);
+            const accepted = sourceReport?.accepted_source_ids || [];
+            const approval = summary?.baseline_approval || {};
+            const infrastructureFailure =
+              process.env.MONITOR_RESULT !== 'success' ||
+              process.env.DOWNLOAD_OUTCOME !== 'success' ||
+              !summary ||
+              !sourceReport ||
+              !tariffReliefReport ||
+              !updatePlan ||
+              !localReviewContractValid;
+            const needsAttention =
+              infrastructureFailure ||
+              sourceReport?.all_available !== true ||
+              sourceReport?.revision_monitor_gate_ok !== true ||
+              Number(sourceReport?.revision_gap_source_count || 0) > 0 ||
+              sourceReport?.review_required === true;
+            const tariffReliefNeedsAttention =
+              tariffReliefReport?.capture_complete !== true ||
+              tariffReliefReport?.reconciliation?.source_graph_verified !== true ||
+              tariffReliefReport?.reconciliation?.operational_ok !== true ||
+              tariffReliefReport?.reconciliation?.review_required !== false;
+
+            const stepRows = Object.entries(summary?.steps || {})
+              .map(([name, outcome]) => `| ${name} | ${outcome} |`)
+              .join('\n') || '| evidence | missing |';
+            const pendingRows = (sourceReport?.sources || [])
+              .filter(source => source.requires_approval)
+              .map(source =>
+                `- \`${source.source_id}\`: \`${source.previous_sha256 || 'none'}\` → \`${source.observed_sha256 || 'unknown'}\``)
+              .join('\n') || '- none';
+            const pendingMapping = Object.fromEntries(
+              (sourceReport?.sources || [])
+                .filter(source => source.requires_approval && source.observed_sha256)
+                // Match Python json.dumps(sort_keys=True): source IDs are
+                // registry-controlled ASCII, so compare code units directly.
+                // Locale collation can reverse underscores/digits and produce
+                // an approval binding that Python can never verify.
+                .sort((left, right) =>
+                  left.source_id < right.source_id
+                    ? -1
+                    : left.source_id > right.source_id
+                      ? 1
+                      : 0)
+                .map(source => [source.source_id, source.observed_sha256])
+            );
+            const pendingCanonical = JSON.stringify(pendingMapping);
+            const approvalBinding = Object.keys(pendingMapping).length
+              ? crypto.createHash('sha256').update(pendingCanonical, 'utf8').digest('hex')
+              : null;
+            const unavailableRows = unavailable
+              .map(source =>
+                `- \`${source.source_id}\`: ${source.validation_error || source.error || `HTTP ${source.status_code || 'unknown'}`}`)
+              .join('\n') || '- none';
+            const localReviewRowsMarkdown = localReviewRows
+              .map(source => `- \`${source.source_id}\`: ${source.reason || 'primary-source reconciliation required'}`)
+              .join('\n') || '- INVALID: no complete monthly local-reconcile source set';
+            const revisionGapRows = (sourceReport?.revision_gap_source_ids || [])
+              .map(sourceId => `- \`${sourceId}\``)
+              .join('\n') || '- none';
+
+            const body = [
+              `Run: ${runUrl}`,
+              `Commit: \`${context.sha}\``,
+              `Monitor job: \`${process.env.MONITOR_RESULT}\`; evidence download: \`${process.env.DOWNLOAD_OUTCOME}\``,
+              '',
+              '### Gate steps',
+              '| Step | Outcome |',
+              '|---|---|',
+              stepRows,
+              '',
+              '### Legal-source baselines awaiting approval',
+              pendingRows,
+              '',
+              `Pending digest mapping: \`${pendingCanonical}\``,
+              approvalBinding
+                ? `After review, a trusted dispatcher must add a comment containing this exact line before the approval run: \`REGULATORY_BASELINE_APPROVAL_SHA256=${approvalBinding}\``
+                : 'Approval binding: none',
+              '',
+              `Approval requested: ${approval.requested === true ? 'yes' : 'no'}; reference: ${approval.reference || 'none'}`,
+              `Requested source IDs: ${(approval.requested_source_ids || []).length ? approval.requested_source_ids.map(id => `\`${id}\``).join(', ') : 'none'}`,
+              `Requested source digests: \`${JSON.stringify(approval.requested_source_digests || {})}\``,
+              '',
+              '### Live tariff relief and GSP document links',
+              `Capture complete: ${tariffReliefReport?.capture_complete === true}; current original-link graph replayed: ${tariffReliefReport?.reconciliation?.source_graph_verified === true}; operational checks passed: ${tariffReliefReport?.reconciliation?.operational_ok === true}`,
+              `Comparison: ${tariffReliefReport?.reconciliation?.status || 'missing'}; added PDF URLs: ${tariffReliefReport?.reconciliation?.added_pdf_urls?.length ?? 'unknown'}; missing PDF URLs: ${tariffReliefReport?.reconciliation?.missing_pdf_urls?.length ?? 'unknown'}; changed PDF sources: ${tariffReliefReport?.reconciliation?.changed_pdfs?.length ?? 'unknown'}`,
+              'Observation pins are unapproved. This capture never accepts or updates a baseline; originals and the detailed comparison are in the run evidence artifact.',
+              '',
+              '### Unavailable or invalid sources',
+              unavailableRows,
+              '',
+              '### Revision-monitor coverage',
+              `Monitored URLs: ${sourceReport?.monitored_url_count ?? 'unknown'}; revision candidates: ${sourceReport?.revision_candidate_source_count ?? 'unknown'}; revision-covered: ${sourceReport?.revision_covered_source_count ?? 'unknown'}; revision gaps: ${sourceReport?.revision_gap_source_count ?? 'unknown'}; explicit availability-only: ${sourceReport?.explicit_availability_source_count ?? 'unknown'}`,
+              'Availability-only legal landing pages do not prove legal revision coverage and cannot be approved as legal baselines:',
+              revisionGapRows,
+              '',
+              '### Monthly local-reconcile notification contract',
+              `Contract: ${localReviewContractValid ? 'valid' : `INVALID — ${localReviewContractError}`}`,
+              localReviewRowsMarkdown,
+              '',
+              `Accepted in this run: ${accepted.length ? accepted.map(id => `\`${id}\``).join(', ') : 'none'}`,
+              '',
+              'Legal-source checksum changes are not accepted automatically. Re-run this workflow manually with the baseline approval input and an auditable approval reference only after review.'
+            ].join('\n');
+
+            const issues = await github.paginate(github.rest.issues.listForRepo, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'all',
+              per_page: 100
+            });
+            const existing = issues.find(
+              issue => !issue.pull_request && issue.state === 'open' && issue.title === title);
+
+            // The runtime database queue is the operational source of truth.
+            // This period-scoped issue is the redundant GitHub notification:
+            // searching open and closed issues makes creation idempotent even
+            // after a reviewer closes the month's issue.
+            if (localReviewContractValid && isDefaultBranch) {
+              const reviewPeriod = new Date().toISOString().slice(0, 7);
+              const monthlyTitle = `Monthly curated regulatory-source review ${reviewPeriod}`;
+              const monthlyMarker = `<!-- regulatory-local-review:${reviewPeriod}:v1 -->`;
+              const existingMonthly = issues.find(
+                issue =>
+                  !issue.pull_request &&
+                  issue.title === monthlyTitle &&
+                  issue.user?.login === 'github-actions[bot]' &&
+                  String(issue.body || '').includes(monthlyMarker));
+              if (!existingMonthly) {
+                const monthlyBody = [
+                  monthlyMarker,
+                  `Review period: \`${reviewPeriod}\``,
+                  `Run: ${runUrl}`,
+                  '',
+                  'The automatic update policy requires primary-source reconciliation for exactly these five curated sources:',
+                  localReviewRowsMarkdown,
+                  '',
+                  'Resolve the corresponding durable runtime queue items with a named reviewer and an evidence reference. Closing this GitHub issue records notification handling only; it does not resolve the runtime queue.'
+                ].join('\n');
+                await github.rest.issues.create({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  title: monthlyTitle,
+                  body: monthlyBody
+                });
+              }
+            }
+
+            if (needsAttention || tariffReliefNeedsAttention) {
+              if (existing) {
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: existing.number,
+                  body
+                });
+              } else {
+                await github.rest.issues.create({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  title,
+                  body
+                });
+              }
+              return;
+            }
+
+            if (existing) {
+              const recoveryBody = [
+                'Recovered: all regulatory-source checks passed and no baseline review is pending.',
+                '',
+                `Run: ${runUrl}`,
+                `Accepted in this run: ${accepted.length ? accepted.map(id => `\`${id}\``).join(', ') : 'none'}`,
+                `Approval reference: ${approval.reference || 'none'}`
+              ].join('\n');
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existing.number,
+                body: recoveryBody
+              });
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existing.number,
+                state: 'closed'
+              });
+            }

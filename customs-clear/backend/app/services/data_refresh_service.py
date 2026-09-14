@@ -120,13 +120,16 @@ async def refresh_currency_rates() -> dict[str, Any]:
     from .exchange_rates import update_exchange_rates_from_cbrf
 
     try:
-        result = await update_exchange_rates_from_cbrf()
+        result = await update_exchange_rates_from_cbrf(allow_fallback=False)
+        upstream_status = str(result.get("status", "ERROR")).upper()
+        upstream_source = str(result.get("source", "unknown"))
         return {
             "domain": "CBRF",
-            "status": "ok",
-            "source": result.get("source", "unknown"),
+            "status": "ok" if upstream_status == "OK" and upstream_source == "CBRF" else "error",
+            "source": upstream_source,
             "date": result.get("date", ""),
             "updated": result.get("updated", 0),
+            **({"error": result.get("error", "CBRF validation failed")} if upstream_status != "OK" else {}),
         }
     except Exception as e:
         logger.exception(f"Currency refresh failed: {e}")

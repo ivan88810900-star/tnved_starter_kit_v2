@@ -201,6 +201,18 @@ async def permits_verify_job_export(
     )
 
 
+@router.get("/verify/jobs/{job_id}")
+async def permits_verify_job_status(
+    job_id: str,
+    user: dict[str, Any] = Depends(require_authenticated_user),
+) -> JSONResponse:
+    username, is_admin = _viewer_access(user)
+    row = await get_job(job_id, access_username=username, access_is_admin=is_admin)
+    if not row:
+        raise HTTPException(status_code=404, detail="Задание не найдено")
+    return JSONResponse({"status": "OK", "job_id": job_id, **row})
+
+
 @router.get("/verify/{number:path}")
 async def permits_verify_short(
     number: str,
@@ -234,19 +246,6 @@ async def permits_search(
             "disclaimer": PERMITS_DISCLAIMER_RU,
         }
     )
-
-
-
-@router.get("/verify/jobs/{job_id}")
-async def permits_verify_job_status(
-    job_id: str,
-    user: dict[str, Any] = Depends(require_authenticated_user),
-) -> JSONResponse:
-    username, is_admin = _viewer_access(user)
-    row = await get_job(job_id, access_username=username, access_is_admin=is_admin)
-    if not row:
-        raise HTTPException(status_code=404, detail="Задание не найдено")
-    return JSONResponse({"status": "OK", "job_id": job_id, **row})
 
 
 @router.get("/metrics")

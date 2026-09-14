@@ -1,0 +1,376 @@
+{
+  "schema_version": 1,
+  "evidence_kind": "retained_official_observations_and_next_bounded_discovery",
+  "observed_on": "2026-09-12",
+  "capture": {
+    "run_id": "34716176823",
+    "job_id": "103613710651",
+    "commit_sha": "4ee35fcb1214252a1fec236dbe8b50d34a961688",
+    "capture_plan": "ad30-discovery-20260912",
+    "acquisition_step": "failure",
+    "inspection_step": "success",
+    "application_database_created": false,
+    "active_rates_written": false,
+    "all_selected_bodies_retained": true,
+    "can_promote": false,
+    "durable_legal_retention_attested": false,
+    "input_report_sha256": "a7f6d0fb490624ed2e79dff6d85f5e40f27d5763e1bc0153e2c0f8620f6bba0d",
+    "inspection_status": "verified_retained_evidence",
+    "kind": "read_only_observed_capture_inspection",
+    "legal_review_verified": false,
+    "original_capture_complete": false,
+    "original_count": 2,
+    "production_ready": false,
+    "quarantined_count": 7,
+    "schema_version": 1,
+    "selected_source_count": 9,
+    "unretained_count": 0
+  },
+  "evidence_verification": {
+    "actions_inspector_receipt_and_body_replay": true,
+    "independent_a5_log_review": true,
+    "local_archive_rehash_verified": true,
+    "local_cas_object_hashes_verified": true,
+    "local_verifiers": [
+      "A0",
+      "A3"
+    ],
+    "cas_object_count": 18,
+    "cas_total_bytes": 3826229,
+    "local_verification_method": "Read ZIP/TAR members without extraction; every blob filename SHA equals body SHA. Existing receipt replay was performed by the exact Actions inspector, not claimed as a new local receipt replay."
+  },
+  "archive": {
+    "artifact_id": "10304930968",
+    "filename": "official-rate-originals-34716176823.zip",
+    "size_bytes": 1093658,
+    "sha256": "d728387c458413b8bdd992a0ed330a8f45e7760ccacc77fc948958d44de3f6a7",
+    "sha256_origin": [
+      "GitHub Actions upload log",
+      "independent local archive rehash by A0 and A3"
+    ],
+    "library_file_id": "libfile_5d9fe0490d248191b651befe63ecf6c3",
+    "library_content_file_id": "file_00000000c5a881f4b385f574b87ca4a0",
+    "library_version": 0,
+    "durable_legal_retention_attested": false
+  },
+  "sources": [
+    {
+      "body_sha256": "db9177ce8da5061afef33e17c7e11dc2fbc23d7b8cec08ffcf3d29f3e8f601c9",
+      "capture_status": "original_retained",
+      "content_type": "application/pdf",
+      "discovery_only": true,
+      "monitor_ok": true,
+      "receipt_sha256": "e1f44b777ce6f0bed42aef63e796a395e6b2e84861e3adedd4a9c541ba1873ef",
+      "requested": {
+        "fragment_redacted": false,
+        "query_redacted": false,
+        "url": "https://docs.eaeunion.org/upload/iblock/75c/h3m62bw3jc8solzxiw14jc7qhmnycmmy/AD30R1_notice_fin.pdf",
+        "url_sha256": "dba4fcb0b1c9385dab196d2646410067c804fd6081a10ca7f1770d0a7df9e5c5"
+      },
+      "response": {
+        "fragment_redacted": false,
+        "query_redacted": false,
+        "url": "https://docs.eaeunion.org/upload/iblock/75c/h3m62bw3jc8solzxiw14jc7qhmnycmmy/AD30R1_notice_fin.pdf",
+        "url_sha256": "dba4fcb0b1c9385dab196d2646410067c804fd6081a10ca7f1770d0a7df9e5c5"
+      },
+      "retrieved_at": "2026-09-12T20:08:31.778377+00:00",
+      "size_bytes": 399748,
+      "source_id": "review_ad30_completion_notice_pdf",
+      "status_code": 200,
+      "validation_error": null
+    },
+    {
+      "body_sha256": "c9acebc19e2af89b9b90b65e37675a1d1b1aafcb3518e6e83a7d5f5bef03fdba",
+      "capture_status": "quarantined_content_rejected",
+      "content_type": "text/html; charset=UTF-8",
+      "discovery_only": true,
+      "monitor_ok": false,
+      "receipt_sha256": "30d6a0c95f787dd4aa270235f13d71ca281931e5631d6314358d20bf3289c8c3",
+      "requested": {
+        "fragment_redacted": false,
+        "query_redacted": false,
+        "url": "https://docs.eaeunion.org/documents/463/10918/",
+        "url_sha256": "7141fa6278de7b1c952b0f8697fce128e83ddb351e3c0f5bce65de83922b0304"
+      },
+      "response": {
+        "fragment_redacted": false,
+        "query_redacted": false,
+        "url": "https://docs.eaeunion.org/documents/463/10918/",
+        "url_sha256": "7141fa6278de7b1c952b0f8697fce128e83ddb351e3c0f5bce65de83922b0304"
+      },
+      "retrieved_at": "2026-09-12T20:08:32.345521+00:00",
+      "size_bytes": 53266,
+      "source_id": "review_ad30_decision121_2026_page",
+      "status_code": 200,
+      "validation_error": "block_or_error_page_detected"
+    },
+    {
+      "body_sha256": "fcca5c74fba82a82427fd6c45eb305cc5c7ee9769ccb35356789cc8ca5c17169",
+      "capture_status": "quarantined_content_rejected",
+      "content_type": "text/html; charset=UTF-8",
+      "discovery_only": true,
+      "monitor_ok": false,
+      "receipt_sha256": "185c14d637681de8fa065ba868d218828c1646247ce48f5e711f6d62403fece1",
+      "requested": {
+        "fragment_redacted": false,
+        "query_redacted": false,
+        "url": "https://docs.eaeunion.org/documents/463/10454/",
+        "url_sha256": "e58f809f4a052a804252b3d78feedade6d531a9679c212d4ea1b3cc980d5268d"
+      },
+      "response": {
+        "fragment_redacted": false,
+        "query_redacted": false,
+        "url": "https://docs.eaeunion.org/documents/463/10454/",
+        "url_sha256": "e58f809f4a052a804252b3d78feedade6d531a9679c212d4ea1b3cc980d5268d"
+      },
+      "retrieved_at": "2026-09-12T20:08:32.660010+00:00",
+      "size_bytes": 53969,
+      "source_id": "review_ad30_decision4_2026_page",
+      "status_code": 200,
+      "validation_error": "block_or_error_page_detected"
+    },
+    {
+      "body_sha256": "44a277edf5f9bf76a0ccd79d6e41f9820548fcbaa1b638d1cd44469a79344aef",
+      "capture_status": "original_retained",
+      "content_type": "application/pdf",
+      "discovery_only": true,
+      "monitor_ok": true,
+      "receipt_sha256": "bfc2c3e618f5023ec2ce46252718fb4638d3b1a8c385d723cd023e6521220dfe",
+      "requested": {
+        "fragment_redacted": false,
+        "query_redacted": false,
+        "url": "https://docs.eaeunion.org/upload/iblock/798/59qwa6jpe6b76n24wtn0uu9eygvlznkr/Reshenie-Kollegii-_-4-ot-20-yanvarya-2026-g.pdf",
+        "url_sha256": "fd2852299959362c280e6d94d1a343dec30278a2c005001e81e46b48a2d607ea"
+      },
+      "response": {
+        "fragment_redacted": false,
+        "query_redacted": false,
+        "url": "https://docs.eaeunion.org/upload/iblock/798/59qwa6jpe6b76n24wtn0uu9eygvlznkr/Reshenie-Kollegii-_-4-ot-20-yanvarya-2026-g.pdf",
+        "url_sha256": "fd2852299959362c280e6d94d1a343dec30278a2c005001e81e46b48a2d607ea"
+      },
+      "retrieved_at": "2026-09-12T20:08:33.852322+00:00",
+      "size_bytes": 563455,
+      "source_id": "review_ad30_decision4_2026_pdf",
+      "status_code": 200,
+      "validation_error": null
+    },
+    {
+      "body_sha256": "b42e98ffdaec05fc5fb8c5240d126b145b96bcf1ae986381f15386e1bac3b293",
+      "capture_status": "quarantined_content_rejected",
+      "content_type": "text/html",
+      "discovery_only": true,
+      "monitor_ok": false,
+      "receipt_sha256": "d629a8b6bba5abbe318492ad0207f9cc192a607f0a1699d4fa5acf7858513a87",
+      "requested": {
+        "fragment_redacted": false,
+        "query_redacted": false,
+        "url": "https://remedies.eaeunion.org/dimd/filestorage/AD30R1_report_final.pdf",
+        "url_sha256": "2a24c171db43153817ec73851f6afa7cc28c79859c578f1d5d506fc4fa992d40"
+      },
+      "response": {
+        "fragment_redacted": false,
+        "query_redacted": false,
+        "url": "https://remedies.eaeunion.org/dimd/filestorage/AD30R1_report_final.pdf",
+        "url_sha256": "2a24c171db43153817ec73851f6afa7cc28c79859c578f1d5d506fc4fa992d40"
+      },
+      "retrieved_at": "2026-09-12T20:08:34.800702+00:00",
+      "size_bytes": 4642,
+      "source_id": "review_ad30_final_report_pdf",
+      "status_code": 200,
+      "validation_error": "invalid_pdf_content"
+    },
+    {
+      "body_sha256": "5695b254ac958afa85e258be1c19e454e99bbc8b67042fc15ffb3c7ef2351abd",
+      "capture_status": "quarantined_content_rejected",
+      "content_type": "text/html; charset=UTF-8",
+      "discovery_only": true,
+      "monitor_ok": false,
+      "receipt_sha256": "0634aeb422bc4e8887ce96a0b91d71ed629e56fc2a0c3651626dd2a00f932da6",
+      "requested": {
+        "fragment_redacted": false,
+        "query_redacted": true,
+        "url": "https://docs.eaeunion.org/documents/",
+        "url_sha256": "c273c871813bc67d9565939f78f28cf9c4b58e1f96b4892d592d642214f06e24"
+      },
+      "response": {
+        "fragment_redacted": false,
+        "query_redacted": true,
+        "url": "https://docs.eaeunion.org/documents/",
+        "url_sha256": "c273c871813bc67d9565939f78f28cf9c4b58e1f96b4892d592d642214f06e24"
+      },
+      "retrieved_at": "2026-09-12T20:08:37.369805+00:00",
+      "size_bytes": 729950,
+      "source_id": "review_remedy_index_page_2",
+      "status_code": 200,
+      "validation_error": "block_or_error_page_detected"
+    },
+    {
+      "body_sha256": "bf2a98beb992960916c0830ea16115acbed27dd4073a59912e345a8f0f4262d9",
+      "capture_status": "quarantined_content_rejected",
+      "content_type": "text/html; charset=UTF-8",
+      "discovery_only": true,
+      "monitor_ok": false,
+      "receipt_sha256": "d143b221ffeef9269f66f3472220005802ed6fdc055af8946a76a8ebb9d1d636",
+      "requested": {
+        "fragment_redacted": false,
+        "query_redacted": true,
+        "url": "https://docs.eaeunion.org/documents/",
+        "url_sha256": "8bb125a59eba255bb29c85fd3e433c878a37174e157ec604cb7fc723a7d33b9f"
+      },
+      "response": {
+        "fragment_redacted": false,
+        "query_redacted": true,
+        "url": "https://docs.eaeunion.org/documents/",
+        "url_sha256": "8bb125a59eba255bb29c85fd3e433c878a37174e157ec604cb7fc723a7d33b9f"
+      },
+      "retrieved_at": "2026-09-12T20:08:40.111025+00:00",
+      "size_bytes": 724780,
+      "source_id": "review_remedy_index_page_3",
+      "status_code": 200,
+      "validation_error": "block_or_error_page_detected"
+    },
+    {
+      "body_sha256": "f19811b6106e9111904b9accf6e903aaa04fac8d69170e4be0079c6c41393719",
+      "capture_status": "quarantined_content_rejected",
+      "content_type": "text/html; charset=UTF-8",
+      "discovery_only": true,
+      "monitor_ok": false,
+      "receipt_sha256": "d8c08ecb10258ea4fcd62490f5fb8e1f8cbe94dcd0570dbc03cd68ce60bae225",
+      "requested": {
+        "fragment_redacted": false,
+        "query_redacted": true,
+        "url": "https://docs.eaeunion.org/documents/",
+        "url_sha256": "2b5c992a2e7fa2595fa50aab9011a30323fc14753193bb5eb13bc748d4fd03d9"
+      },
+      "response": {
+        "fragment_redacted": false,
+        "query_redacted": true,
+        "url": "https://docs.eaeunion.org/documents/",
+        "url_sha256": "2b5c992a2e7fa2595fa50aab9011a30323fc14753193bb5eb13bc748d4fd03d9"
+      },
+      "retrieved_at": "2026-09-12T20:08:42.877160+00:00",
+      "size_bytes": 723923,
+      "source_id": "review_remedy_index_page_4",
+      "status_code": 200,
+      "validation_error": "block_or_error_page_detected"
+    },
+    {
+      "body_sha256": "629bbe39c589fbf2b22a236a4e5c3406fd6d46138818d5c8179272ff62edb4a0",
+      "capture_status": "quarantined_content_rejected",
+      "content_type": "text/html; charset=UTF-8",
+      "discovery_only": true,
+      "monitor_ok": false,
+      "receipt_sha256": "fe14b89daf8412897d6a0a3ae59fb26908dec5d6b0764ad0b57a36b4256982f7",
+      "requested": {
+        "fragment_redacted": false,
+        "query_redacted": true,
+        "url": "https://docs.eaeunion.org/documents/",
+        "url_sha256": "2fdb2e74172b1730cc4a31d051b7001c92db7d140e2bdb26bd1e50695aebfe80"
+      },
+      "response": {
+        "fragment_redacted": false,
+        "query_redacted": true,
+        "url": "https://docs.eaeunion.org/documents/",
+        "url_sha256": "2fdb2e74172b1730cc4a31d051b7001c92db7d140e2bdb26bd1e50695aebfe80"
+      },
+      "retrieved_at": "2026-09-12T20:08:45.446684+00:00",
+      "size_bytes": 560028,
+      "source_id": "review_remedy_index_page_5",
+      "status_code": 200,
+      "validation_error": "block_or_error_page_detected"
+    }
+  ],
+  "pagination": [
+    {
+      "source_id": "review_remedy_index_page_2",
+      "parent_body_sha256": "5695b254ac958afa85e258be1c19e454e99bbc8b67042fc15ffb3c7ef2351abd",
+      "parent_receipt_sha256": "0634aeb422bc4e8887ce96a0b91d71ed629e56fc2a0c3651626dd2a00f932da6",
+      "discovered_document_link_count": 200,
+      "links_truncated": false
+    },
+    {
+      "source_id": "review_remedy_index_page_3",
+      "parent_body_sha256": "bf2a98beb992960916c0830ea16115acbed27dd4073a59912e345a8f0f4262d9",
+      "parent_receipt_sha256": "d143b221ffeef9269f66f3472220005802ed6fdc055af8946a76a8ebb9d1d636",
+      "discovered_document_link_count": 200,
+      "links_truncated": false
+    },
+    {
+      "source_id": "review_remedy_index_page_4",
+      "parent_body_sha256": "f19811b6106e9111904b9accf6e903aaa04fac8d69170e4be0079c6c41393719",
+      "parent_receipt_sha256": "d8c08ecb10258ea4fcd62490f5fb8e1f8cbe94dcd0570dbc03cd68ce60bae225",
+      "discovered_document_link_count": 198,
+      "links_truncated": false
+    },
+    {
+      "source_id": "review_remedy_index_page_5",
+      "parent_body_sha256": "629bbe39c589fbf2b22a236a4e5c3406fd6d46138818d5c8179272ff62edb4a0",
+      "parent_receipt_sha256": "fe14b89daf8412897d6a0a3ae59fb26908dec5d6b0764ad0b57a36b4256982f7",
+      "discovered_document_link_count": 121,
+      "links_truncated": false
+    }
+  ],
+  "next_capture_plan": {
+    "plan_id": "ad30-decision12-20260912",
+    "capture_originals": true,
+    "capture_rejected_originals": true,
+    "accept_changes": false,
+    "repeat_completed_nine_target_capture": false,
+    "sources": [
+      {
+        "source_id": "review_ad30_decision12_2021_page",
+        "url": "https://docs.eaeunion.org/documents/379/5653/",
+        "observed_href": "/documents/379/5653/",
+        "observed_anchor_text": "Решение Коллегии ЕЭК № 12",
+        "anchor_line": 7601,
+        "parent_source_id": "review_remedy_index_page_3",
+        "parent_body_sha256": "bf2a98beb992960916c0830ea16115acbed27dd4073a59912e345a8f0f4262d9",
+        "parent_receipt_sha256": "d143b221ffeef9269f66f3472220005802ed6fdc055af8946a76a8ebb9d1d636",
+        "parent_capture_status": "quarantined_content_rejected",
+        "raw_href_byte_spelling_verified": true,
+        "raw_anchor_line_sha256": "70bec8691e55a75061b59d0d88a4b3e01b1c0989229ad3f771fbcecf5b76db13",
+        "raw_line_hash_serialization": "original byte line excluding its newline separator",
+        "verification": "A3 read and rehashed retained page 3 directly from the ZIP/TAR after executor recovery; href byte spelling matched these exact lines.",
+        "new_target_body_retained": false,
+        "original_document_content_verified": false
+      },
+      {
+        "source_id": "review_ad30_decision12_2021_pdf",
+        "url": "https://docs.eaeunion.org/upload/iblock/08a/wp70m6eckvicuanvf0sfo4sxqaro4aax/err_12022021_12_doc.pdf",
+        "observed_href": "/upload/iblock/08a/wp70m6eckvicuanvf0sfo4sxqaro4aax/err_12022021_12_doc.pdf",
+        "observed_anchor_text": "Решение Коллегии № 12 от 9 февраля 2021 г",
+        "anchor_line": 7640,
+        "parent_source_id": "review_remedy_index_page_3",
+        "parent_body_sha256": "bf2a98beb992960916c0830ea16115acbed27dd4073a59912e345a8f0f4262d9",
+        "parent_receipt_sha256": "d143b221ffeef9269f66f3472220005802ed6fdc055af8946a76a8ebb9d1d636",
+        "parent_capture_status": "quarantined_content_rejected",
+        "raw_href_byte_spelling_verified": true,
+        "raw_anchor_line_sha256": "4b22e2da251fe01518a8e773c97a1a7161183df27a8b8269f2d348cc7251d93e",
+        "raw_line_hash_serialization": "original byte line excluding its newline separator",
+        "verification": "A3 read and rehashed retained page 3 directly from the ZIP/TAR after executor recovery; href byte spelling matched these exact lines.",
+        "new_target_body_retained": false,
+        "original_document_content_verified": false
+      }
+    ]
+  },
+  "newly_observed_target_web_verification": {
+    "exact_urls_open_attempted": true,
+    "outcome": "Both exact URLs returned web-tool non-retryable safety/fetch errors; exact primary-domain searches were empty.",
+    "document_absence_established": false,
+    "source_content_read": false
+  },
+  "limits": [
+    "Page anchors are discovery evidence only; Decision 12 body, publication/effective-date metadata and amendments remain unverified pending original capture and review.",
+    "The final AD30 report endpoint returned the already known 4642-byte JavaScript shell, not a PDF. Its bytes remain quarantined as invalid_pdf_content.",
+    "Card and pagination originals remain quarantined under the unchanged content validator.",
+    "A native text layer, if extractable from the next PDF, is review evidence only; no OCR guessing, numeric rule import, historical interval interpretation or approval is authorized here."
+  ],
+  "legal_review_verified": false,
+  "numeric_rates_verified": false,
+  "product_applicability_verified": false,
+  "legal_inventory_complete": false,
+  "active_rates_written": false,
+  "can_promote": false,
+  "production_ready": false,
+  "durable_legal_retention_attested": false
+}

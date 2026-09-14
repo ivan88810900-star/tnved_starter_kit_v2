@@ -29,6 +29,7 @@ from .payment_data_coverage import (
 )
 from .regulatory_source_registry import AUTHORITY_LEVEL_LABELS, get_registry_entry
 from .payment_source_registry import get_payment_source_entry
+from .official_payment_admission import payment_admission_blocker
 
 _BACKEND_ROOT = Path(__file__).resolve().parent.parent.parent
 # Exact seed/fallback/ambiguous tokens (для legacy совместимости и явных значений).
@@ -70,83 +71,45 @@ def _worst_status(*statuses: PaymentNormalizationStatus) -> PaymentNormalization
 
 
 def _eec_proven() -> tuple[bool, str | None]:
-    from .payment_revision_utils import is_official_eec_ett_revision
-
+    """Legacy markers are observations, never manifest-bound legal review."""
     st = _lookup_source_status("EEC_ETT")
-    if st is None:
-        return False, None
-    synced = st.synced_at.isoformat() if st.synced_at else None
-    # Official EEC/ETT provenance: не stale и revision строго versioned EEC/ETT.
-    # Это отсекает seed/fallback/legacy/demo/test/example и arbitrary non-versioned
-    # (local-copy/manual/foo/official/prod) — единый strict rule с import-duty ingestion.
-    if st.is_stale or not is_official_eec_ett_revision(st.revision):
-        return False, synced
-    return True, synced
+    synced = st.synced_at.isoformat() if st and st.synced_at else None
+    return False, synced
 
 
 def _vat_proven() -> tuple[bool, str | None]:
-    """Official VAT contour proof через SourceStatus EEC_VAT (не duty source_revision)."""
-    from .payment_revision_utils import is_official_vat_revision
-
+    """Legacy markers are observations, never manifest-bound legal review."""
     st = _lookup_source_status("EEC_VAT")
-    if st is None:
-        return False, None
-    synced = st.synced_at.isoformat() if st.synced_at else None
-    if st.is_stale or not is_official_vat_revision(st.revision):
-        return False, synced
-    return True, synced
+    synced = st.synced_at.isoformat() if st and st.synced_at else None
+    return False, synced
 
 
 def _excise_proven() -> tuple[bool, str | None]:
-    """Official excise contour proof через SourceStatus EEC_EXCISE."""
-    from .payment_revision_utils import is_official_excise_revision
-
+    """Legacy markers are observations, never manifest-bound legal review."""
     st = _lookup_source_status("EEC_EXCISE")
-    if st is None:
-        return False, None
-    synced = st.synced_at.isoformat() if st.synced_at else None
-    if st.is_stale or not is_official_excise_revision(st.revision):
-        return False, synced
-    return True, synced
+    synced = st.synced_at.isoformat() if st and st.synced_at else None
+    return False, synced
 
 
 def _anti_dumping_proven() -> tuple[bool, str | None]:
-    """Official anti-dumping contour proof через SourceStatus EEC_ANTI_DUMPING."""
-    from .payment_revision_utils import is_official_anti_dumping_revision
-
+    """Legacy markers are observations, never manifest-bound legal review."""
     st = _lookup_source_status("EEC_ANTI_DUMPING")
-    if st is None:
-        return False, None
-    synced = st.synced_at.isoformat() if st.synced_at else None
-    if st.is_stale or not is_official_anti_dumping_revision(st.revision):
-        return False, synced
-    return True, synced
+    synced = st.synced_at.isoformat() if st and st.synced_at else None
+    return False, synced
 
 
 def _special_safeguard_proven() -> tuple[bool, str | None]:
-    """Official special-safeguard contour proof через SourceStatus EEC_SPECIAL_SAFEGUARD."""
-    from .payment_revision_utils import is_official_special_safeguard_revision
-
+    """Legacy markers are observations, never manifest-bound legal review."""
     st = _lookup_source_status("EEC_SPECIAL_SAFEGUARD")
-    if st is None:
-        return False, None
-    synced = st.synced_at.isoformat() if st.synced_at else None
-    if st.is_stale or not is_official_special_safeguard_revision(st.revision):
-        return False, synced
-    return True, synced
+    synced = st.synced_at.isoformat() if st and st.synced_at else None
+    return False, synced
 
 
 def _countervailing_proven() -> tuple[bool, str | None]:
-    """Official countervailing contour proof через SourceStatus EEC_COUNTERVAILING."""
-    from .payment_revision_utils import is_official_countervailing_revision
-
+    """Legacy markers are observations, never manifest-bound legal review."""
     st = _lookup_source_status("EEC_COUNTERVAILING")
-    if st is None:
-        return False, None
-    synced = st.synced_at.isoformat() if st.synced_at else None
-    if st.is_stale or not is_official_countervailing_revision(st.revision):
-        return False, synced
-    return True, synced
+    synced = st.synced_at.isoformat() if st and st.synced_at else None
+    return False, synced
 
 
 def _local_path_present(rel_path: str) -> bool:
@@ -167,6 +130,8 @@ def _source_ref(
         AUTHORITY_LEVEL_LABELS.get(entry.authority_level, entry.authority_level) if entry else None
     )
     notes = list(extra_notes or [])
+    if authority:
+        notes.append(f"Declared publisher authority: {authority}; local rows remain unverified.")
     if entry and entry.local_paths:
         for p in entry.local_paths:
             if _local_path_present(p):
@@ -177,7 +142,7 @@ def _source_ref(
         present=present,
         record_count=record_count,
         mapped_hs_codes=mapped_hs_codes,
-        authority_level=authority,
+        authority_level="unverified",
         notes=notes,
     )
 
@@ -217,7 +182,7 @@ def normalize_import_duty() -> PaymentDomainNormalization:
         duty_rules = db.query(HsDutyRule).count()
         covered, total, missing_samples = _full_tnved_duty_coverage(db)
 
-    gaps = list(duty_cov.gaps)
+    gaps = [*duty_cov.gaps, payment_admission_blocker("import_duty")]
     manual = True
     hs_total = stats["hs_rates_total"]
     seed_total = stats["hs_rates_seed"]
@@ -250,6 +215,11 @@ def normalize_import_duty() -> PaymentDomainNormalization:
     else:
         status = "partial" if hs_total > 0 else "missing"
 
+    if seed_total > 0:
+        gaps.append(f"Technical seed/fallback rows: {seed_total}/{hs_total}; markers are not legal evidence.")
+    if not total:
+        gaps.append("No TN VED 10-digit catalog available to measure technical coverage.")
+
     sources = [
         _source_ref("eec_ett_tnved", present=eec_ok, record_count=hs_total, mapped_hs_codes=covered),
         NormalizedSourceRef(
@@ -257,7 +227,7 @@ def normalize_import_duty() -> PaymentDomainNormalization:
             label="hs_duty_rules (структурированные ставки)",
             present=duty_rules > 0,
             record_count=duty_rules,
-            authority_level=authority,
+            authority_level="unverified",
         ),
     ]
 
@@ -267,13 +237,14 @@ def normalize_import_duty() -> PaymentDomainNormalization:
         "catalog_codes_total": total,
         "catalog_codes_covered": covered,
         "eec_ett_proven": eec_ok,
+        "legal_review_verified": False,
         "eec_last_sync": eec_sync,
     }
 
     return PaymentDomainNormalization(
         domain="import_duty",
         coverage_status=status,
-        authority_level=authority if eec_ok else "legacy_seed",
+        authority_level="unverified",
         sources=sources,
         record_count=hs_total,
         mapped_hs_codes=covered if total else hs_total,
@@ -296,7 +267,7 @@ def _count_vat_signal_hs_rows(db) -> int:
         if (vat_rule or "none") != "none":
             count += 1
             continue
-        if float(vat_rate or 22.0) != 22.0:
+        if float(vat_rate if vat_rate is not None else 22.0) != 22.0:
             count += 1
             continue
         if (vat_basis or "").strip():
@@ -318,7 +289,7 @@ def _count_official_vat_marker_rows(db) -> int:
     ).all():
         if not (
             (vat_rule or "none") != "none"
-            or float(vat_rate or 22.0) != 22.0
+            or float(vat_rate if vat_rate is not None else 22.0) != 22.0
             or (vat_basis or "").strip()
         ):
             continue
@@ -333,7 +304,7 @@ def _count_official_vat_marker_rows(db) -> int:
 def normalize_vat() -> PaymentDomainNormalization:
     """НДС: hs_rates + vat_preferences; seed-only → не present."""
     vat_cov = diagnose_vat_rates()
-    label, authority = _registry_label("eec_ett_tnved")
+    label, authority = _registry_label("rf_vat_tax_code")
     vat_ok, _ = _vat_proven()
 
     with SessionLocal() as db:
@@ -343,7 +314,7 @@ def normalize_vat() -> PaymentDomainNormalization:
         vat_signal_rows = _count_vat_signal_hs_rows(db)
         official_vat_marker_rows = _count_official_vat_marker_rows(db)
 
-    gaps = list(vat_cov.gaps)
+    gaps = [*vat_cov.gaps, payment_admission_blocker("vat")]
     manual = True
     hs_total = stats["hs_rates_total"]
     seed_total = stats["hs_rates_seed"]
@@ -370,7 +341,7 @@ def normalize_vat() -> PaymentDomainNormalization:
 
     sources = [
         _source_ref(
-            "eec_ett_tnved",
+            "rf_vat_tax_code",
             present=vat_ok and official_vat_marker_rows > 0,
             record_count=hs_total,
             mapped_hs_codes=official_vat_marker_rows,
@@ -381,14 +352,14 @@ def normalize_vat() -> PaymentDomainNormalization:
             present=has_prefs,
             record_count=pref_count,
             mapped_hs_codes=int(pref_codes),
-            authority_level=authority,
+            authority_level="unverified",
         ),
     ]
 
     return PaymentDomainNormalization(
         domain="vat",
         coverage_status=status,
-        authority_level=authority if status == "present" else "legacy_seed",
+        authority_level="unverified",
         sources=sources,
         record_count=hs_total,
         mapped_hs_codes=official_vat_marker_rows
@@ -414,7 +385,7 @@ def normalize_excise() -> PaymentDomainNormalization:
         excise_signal_rows = _count_excise_signal_hs_rows(db)
         official_excise_marker_rows = _count_official_excise_marker_rows(db)
 
-    gaps = list(excise_cov.gaps)
+    gaps = [*excise_cov.gaps, payment_admission_blocker("excise")]
     manual = True
 
     if stats["hs_rates_total"] == 0:
@@ -443,7 +414,7 @@ def normalize_excise() -> PaymentDomainNormalization:
     return PaymentDomainNormalization(
         domain="excise",
         coverage_status=status,
-        authority_level=excise_cov.authority_level or "legacy_seed",
+        authority_level="unverified",
         sources=[
             NormalizedSourceRef(
                 id="hs_rates.excise",
@@ -451,7 +422,7 @@ def normalize_excise() -> PaymentDomainNormalization:
                 present=official_excise_marker_rows > 0 and excise_ok,
                 record_count=stats["hs_rates_excise"],
                 mapped_hs_codes=official_excise_marker_rows,
-                authority_level="official_binding" if status == "present" else "legacy_seed",
+                authority_level="unverified",
                 notes=[
                     "Official excise требует EEC_EXCISE SourceStatus и excise_source_* на строке.",
                 ],
@@ -462,7 +433,7 @@ def normalize_excise() -> PaymentDomainNormalization:
                 present=excise_ok and official_excise_marker_rows > 0,
                 record_count=official_excise_marker_rows,
                 mapped_hs_codes=official_excise_marker_rows,
-                authority_level="official_binding" if status == "present" else "legacy_seed",
+                authority_level="unverified",
             ),
         ],
         record_count=stats["hs_rates_excise"],
@@ -554,7 +525,7 @@ def normalize_anti_dumping() -> PaymentDomainNormalization:
         stats = _hs_rate_stats(db)
 
     local_rows = special + geo_ad + stats["hs_rates_antidumping_flag"] + stats["hs_rates_antidumping_typed"]
-    gaps: list[str] = []
+    gaps: list[str] = [payment_admission_blocker("anti_dumping")]
 
     if local_rows == 0 and not configured and not ad_ok:
         status: PaymentNormalizationStatus = "missing"
@@ -588,7 +559,7 @@ def normalize_anti_dumping() -> PaymentDomainNormalization:
             present=special > 0,
             record_count=special,
             mapped_hs_codes=int(special_prefixes),
-            authority_level=authority or "legacy_seed",
+            authority_level="unverified",
             notes=[f"official row markers: {official_rows}", f"legacy rows: {legacy_rows}"],
         ),
         NormalizedSourceRef(
@@ -596,7 +567,7 @@ def normalize_anti_dumping() -> PaymentDomainNormalization:
             label="hs_rates (antidumping_*)",
             present=stats["hs_rates_antidumping_typed"] > 0 or stats["hs_rates_antidumping_flag"] > 0,
             record_count=stats["hs_rates_antidumping_typed"] + stats["hs_rates_antidumping_flag"],
-            authority_level="legacy_seed",
+            authority_level="unverified",
             notes=["Не обновляется official anti-dumping ingestion MVP."],
         ),
         _source_ref(
@@ -616,7 +587,7 @@ def normalize_anti_dumping() -> PaymentDomainNormalization:
     return PaymentDomainNormalization(
         domain="anti_dumping",
         coverage_status=status,
-        authority_level=authority or "legacy_seed",
+        authority_level="unverified",
         sources=sources,
         record_count=local_rows,
         mapped_hs_codes=int(special_prefixes) if special else None,
@@ -663,7 +634,7 @@ def normalize_special_safeguard() -> PaymentDomainNormalization:
             else:
                 legacy_rows += 1
 
-    gaps: list[str] = []
+    gaps: list[str] = [payment_admission_blocker("special_safeguard")]
     if special == 0 and not configured and not ss_ok:
         status: PaymentNormalizationStatus = "missing"
         gaps.append("Нет локальных строк special-safeguard и официальный контур не настроен.")
@@ -695,7 +666,7 @@ def normalize_special_safeguard() -> PaymentDomainNormalization:
             present=special > 0,
             record_count=special,
             mapped_hs_codes=int(special_prefixes),
-            authority_level=authority or "legacy_seed",
+            authority_level="unverified",
             notes=[f"official row markers: {official_rows}", f"legacy rows: {legacy_rows}"],
         ),
         _source_ref(
@@ -709,7 +680,7 @@ def normalize_special_safeguard() -> PaymentDomainNormalization:
     return PaymentDomainNormalization(
         domain="special_safeguard",
         coverage_status=status,
-        authority_level=authority or "legacy_seed",
+        authority_level="unverified",
         sources=sources,
         record_count=special,
         mapped_hs_codes=int(special_prefixes) if special else None,
@@ -795,7 +766,7 @@ def normalize_countervailing() -> PaymentDomainNormalization:
             else:
                 legacy_rows += 1
 
-    gaps: list[str] = []
+    gaps: list[str] = [payment_admission_blocker("countervailing")]
     if special == 0 and not configured and not cv_ok:
         status: PaymentNormalizationStatus = "missing"
         gaps.append("Нет локальных строк countervailing и официальный контур не настроен.")
@@ -827,7 +798,7 @@ def normalize_countervailing() -> PaymentDomainNormalization:
             present=special > 0,
             record_count=special,
             mapped_hs_codes=int(special_prefixes),
-            authority_level=authority or "legacy_seed",
+            authority_level="unverified",
             notes=[f"official row markers: {official_rows}", f"legacy rows: {legacy_rows}"],
         ),
         _source_ref(
@@ -841,7 +812,7 @@ def normalize_countervailing() -> PaymentDomainNormalization:
     return PaymentDomainNormalization(
         domain="countervailing",
         coverage_status=status,
-        authority_level=authority or "legacy_seed",
+        authority_level="unverified",
         sources=sources,
         record_count=special,
         mapped_hs_codes=int(special_prefixes) if special else None,

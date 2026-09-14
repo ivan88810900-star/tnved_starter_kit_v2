@@ -1,0 +1,31 @@
+{
+  "kind": "original_metadata_fragment_not_complete_document",
+  "source_url": "https://docs.eaeunion.org/documents/399/6485/",
+  "source_sha256": "41060074475c8fccb3fee9f875d3b0433ebf1b6c6aa341317f63e93a30d111ce",
+  "source_size_bytes": 52960,
+  "source_byte_span": [
+    11248,
+    17332
+  ],
+  "fragment_sha256": "c91ca208de95d0166e05a78b0356418a12f7189c20d3f5004831bcc14731c980",
+  "fragment_size_bytes": 6084,
+  "expected_index_identity": {
+    "issuing_body": "collegium",
+    "adoption_date": "2022-03-15",
+    "number": "42"
+  },
+  "observed_short_title": "Решение Коллеги ЕЭК №42",
+  "source_typo_modified": false,
+  "descriptive_pdf_anchor": {
+    "source_byte_span": [
+      18332,
+      18502
+    ],
+    "raw_html": "<a href=\"/upload/iblock/f50/46fwofvvh6dw34qku7vyou54j81p9zml/err_17032022_42_doc.pdf\" target=\"_blank\">Решение Коллегии №42 от 15 марта 2022 г</a>",
+    "raw_html_sha256": "13b3f47402970514650cd2b41cdb5d0747bc14a46f98b061f274ae0b2e7f0883",
+    "source_locator": "html:a:16:line:176:column:8"
+  },
+  "original_capture_report_sha256": "0cae56d4492a330d0b9890ef5322869e3198f5db4817f3d6e3ab9f60e6b98156",
+  "legal_dates_verified": false,
+  "primary_body_identity_verified": false
+}

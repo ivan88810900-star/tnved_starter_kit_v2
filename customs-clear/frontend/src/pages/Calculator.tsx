@@ -45,6 +45,7 @@ import {
 import { CalculatorInvoiceAnalyzeSection } from '../components/calculator/CalculatorInvoiceAnalyzeSection';
 import { CalculatorScenarioCompareSection } from '../components/calculator/CalculatorScenarioCompareSection';
 import { formatTnvedCommodityName, TNVED_COMMODITY_NAME_CLASS } from '../utils/tnvedDisplayText';
+import { hasProvisionalPayments, PAYMENT_REVIEW_MESSAGE } from '../utils/paymentReview';
 import { TradeRemediesDisclaimer } from '../components/payments/TradeRemediesDisclaimer';
 import { AnimatedNumber } from '../components/AnimatedNumber';
 import { PaymentBreakdownCard } from '../components/PaymentBreakdownCard';
@@ -75,6 +76,11 @@ function buildAssistantCalcContext(
     product_name,
     origin_country: data.country,
     total_payable: b.total_payable,
+    payment_status: data.status,
+    amounts_provisional: data.amounts_provisional,
+    payment_review_reason: data.payment_review_reason,
+    payment_review_reasons: data.payment_review_reasons,
+    tariff_preference: data.tariff_preference,
     duty_rate_pct: typeof b.duty_rate === 'number' ? b.duty_rate : undefined,
     vat_rate_pct: typeof b.vat_rate === 'number' ? b.vat_rate : undefined,
     duty_rub: b.duty,
@@ -130,7 +136,7 @@ function isVehicleHs(hs: string): boolean {
 }
 
 function preferenceLabel(pref?: CalculatorTariffPreference | null): string | null {
-  if (!pref || !pref.applied) return null;
+  if (!pref || !pref.applied || pref.status === 'needs_review') return null;
   const map: Record<string, string> = {
     eaeu: 'ЕАЭС',
     cis: 'СНГ',
@@ -977,6 +983,11 @@ export const Calculator: React.FC = () => {
                   <span className="text-slate-400">{h.hs_code || '—'}</span>
                   <span className="tabular-nums text-slate-700">
                     {h.total_payable != null ? `${h.total_payable.toLocaleString('ru-RU')} ₽` : '—'}
+                    <span className="ml-2 text-amber-800" title={h.payment_review_reason ?? h.tariff_preference_warning ?? undefined}>
+                      {hasProvisionalPayments(h) ? 'Предварительно: требуется проверка'
+                        : h.amounts_provisional == null ? 'Статус проверки суммы не сохранён' : null}
+                    </span>
+                    {(h.payment_review_reason ?? h.tariff_preference_warning) ? <span className="block text-amber-800">{h.payment_review_reason ?? h.tariff_preference_warning}</span> : null}
                   </span>
                   <a
                     href={`/api/calculator/history/${encodeURIComponent(h.id)}`}
@@ -1251,34 +1262,28 @@ export const Calculator: React.FC = () => {
                   <tr>
                     <th className="p-2">Вариант</th>
                     <th className="p-2">ТН ВЭД</th>
-                    <th className="p-2">Пошлина %</th>
-                    <th className="p-2">НДС %</th>
-                    <th className="p-2">К уплате ₽</th>
+                    <th className="p-2">Пошлина ₽</th>
+                    <th className="p-2">НДС ₽</th>
+                    <th className="p-2">{hasProvisionalPayments(cmpResult) || cmpResult.scenarios.some((scenario) => hasProvisionalPayments(scenario.profile)) ? 'Предварительно ₽' : 'К уплате ₽'}</th>
                     <th className="p-2">Δ к A ₽</th>
                   </tr>
                 </thead>
                 <tbody className="text-slate-700">
                   {cmpResult.scenarios.map((s, i) => (
                     <tr key={i} className="border-b border-slate-200">
-                      <td className="p-2">{s.label}</td>
-                      <td className="cc-mono p-2 text-indigo-700">{s.hs_code}</td>
-                      <td className="p-2">{s.duty_rate_applied}</td>
-                      <td className="p-2">{s.vat_rate_applied}</td>
-                      <td className="p-2 font-medium">{s.total_payable.toLocaleString('ru-RU')}</td>
+                      <td className="p-2">{s.label}{hasProvisionalPayments(s.profile) ? <span className="block text-amber-800">Требуется проверка</span> : null}{(s.profile.payment_review_reason ?? s.profile.tariff_preference?.reason) ? <span className="block text-amber-800">{s.profile.payment_review_reason ?? s.profile.tariff_preference?.reason}</span> : null}</td>
+                      <td className="cc-mono p-2 text-indigo-700">{s.profile.hs_code}</td>
+                      <td className="p-2">{s.profile.breakdown.base_duty.toLocaleString('ru-RU')}</td>
+                      <td className="p-2">{s.profile.breakdown.vat.toLocaleString('ru-RU')}</td>
+                      <td className="p-2 font-medium">{s.profile.breakdown.total_payable.toLocaleString('ru-RU')}</td>
                       <td className="p-2 text-slate-500">
-                        {s.delta_total_vs_first_rub == null ? '—' : s.delta_total_vs_first_rub.toLocaleString('ru-RU')}
+                        {cmpResult.comparison_complete === false || hasProvisionalPayments(cmpResult) || cmpResult.scenarios.some((scenario) => hasProvisionalPayments(scenario.profile) || scenario.profile.status !== 'OK') || s.delta_total_vs_first_rub == null ? '—' : s.delta_total_vs_first_rub.toLocaleString('ru-RU')}
                       </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
-              {cmpResult.scenarios[0]?.tnved_title && (
-                <p
-                  className={`border-t border-slate-200 p-2 text-[11px] text-slate-600 ${TNVED_COMMODITY_NAME_CLASS}`}
-                >
-                  {formatTnvedCommodityName(cmpResult.scenarios[0].tnved_title)}
-                </p>
-              )}
+
             </div>
           )}
         </div>
@@ -1581,8 +1586,15 @@ export const Calculator: React.FC = () => {
                 ? [{ label: 'Утильсбор', amount: result.breakdown.recycling_fee ?? 0 }]
                 : []),
             ]}
+            totalLabel={hasProvisionalPayments(result) ? 'Предварительная сумма' : 'Итого к уплате'}
             totalAmount={result.breakdown.total_payable ?? 0}
           />
+          {hasProvisionalPayments(result) ? (
+            <div role="status" className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+              <p>{PAYMENT_REVIEW_MESSAGE}</p>
+              {(result.payment_review_reason ?? result.tariff_preference?.reason) ? <p className="mt-1">{result.payment_review_reason ?? result.tariff_preference?.reason}</p> : null}
+            </div>
+          ) : null}
           {assistantVisible ? (
             <div className="flex flex-wrap justify-end gap-2">
               <button
@@ -1791,7 +1803,7 @@ export const Calculator: React.FC = () => {
             <div className="rounded-xl border border-blue-200 bg-gradient-to-br from-blue-50 to-white p-4">
               <div className="flex flex-wrap items-end justify-between gap-3">
                 <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Итого к уплате</p>
+                  <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">{hasProvisionalPayments(result) ? 'Предварительная сумма' : 'Итого к уплате'}</p>
                   <p className="mt-0.5 text-3xl font-extrabold tracking-tight text-blue-900 sm:text-4xl">
                     <AnimatedNumber value={result.breakdown.total_payable} format="currency" />
                   </p>

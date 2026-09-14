@@ -119,6 +119,48 @@ class _BundleFixture:
             self._tmpdir.cleanup()
 
 
+
+def _store_isolated_fixture(*, rel_path: str, domain: str = "import_duty") -> dict:
+    """Explicit in-memory storage regression; never call/approve public admission."""
+    import importlib
+    from datetime import datetime, timezone
+
+    service = importlib.import_module(f"app.services.{domain}_ingestion")
+    # Enforce that this helper cannot touch a file-backed application DB.
+    with service.SessionLocal() as db:
+        assert db.get_bind().url.database == ":memory:"
+        before = (db.query(SourceStatus).count(), db.query(SyncLog).count())
+    payload, parsed, revision, rows, blockers = service._validate_bundle_for_ingest(rel_path)
+    assert not blockers, blockers
+    assert parsed["status"] == "parsed"
+    now = datetime.now(timezone.utc).replace(tzinfo=None)
+    provenance = service._build_provenance(
+        rel_path=rel_path, revision=revision, payload=payload,
+        parser_result=parsed, loaded_at=now.isoformat(),
+    )
+    if domain == "import_duty":
+        counts = service._apply_duty_rows(rows)
+    elif domain in {"vat", "excise"}:
+        counts = getattr(service, f"_apply_{domain}_rows")(
+            rows, bundle_revision=revision, bundle_url=provenance.official_url, synced_at=now,
+        )
+    else:
+        counts = getattr(service, f"_apply_{domain}_rows")(rows, synced_at=now)
+    assert counts is not None, "Fixture writer rejected rows atomically"
+    with service.SessionLocal() as db:
+        assert (db.query(SourceStatus).count(), db.query(SyncLog).count()) == before
+    return {"fixture_only": True, "row_counts": counts.model_dump(),
+            "provenance": provenance.model_dump(), "parser_result": parsed}
+
+
+def _store_isolated_payload(payload: dict) -> dict:
+    import app.services.import_duty_ingestion as service
+
+    with _BundleFixture(payload) as (root, rel):
+        with unittest.mock.patch.object(service, "_BACKEND_ROOT", root):
+            return _store_isolated_fixture(rel_path=rel)
+
+
 class TestImportDutyMissingSource(unittest.TestCase):
     def setUp(self) -> None:
         self.sm = _memory_sessionmaker()
@@ -230,15 +272,15 @@ class TestImportDutyApplyOfficial(unittest.TestCase):
     def tearDown(self) -> None:
         _stop_patches(*self._patches)
 
-    def test_apply_imports_official_rows_with_provenance(self) -> None:
+    def test_isolated_fixture_apply_imports_official_rows_with_provenance(self) -> None:
         import app.services.import_duty_ingestion as idi
 
         with _BundleFixture(_official_bundle_payload()) as (root, rel):
             with unittest.mock.patch.object(idi, "_BACKEND_ROOT", root):
-                report = run_import_duty_apply(rel_path=rel)
+                report = _store_isolated_fixture(rel_path=rel, domain="import_duty")
 
-        self.assertEqual(report["status"], "OK")
-        self.assertTrue(report["db_mutated"])
+        self.assertTrue(report["fixture_only"])
+        self.assertTrue(report["fixture_only"])
         self.assertEqual(report["provenance"]["revision"], "ett:2026-05-01")
         self.assertEqual(report["provenance"]["source_code"], "EEC_ETT")
         self.assertIsNotNone(report["provenance"]["checksum_sha256"])
@@ -249,14 +291,13 @@ class TestImportDutyApplyOfficial(unittest.TestCase):
             self.assertEqual(row.source_revision, "ett:2026-05-01")
             self.assertEqual(row.duty_rate, "5%")
             st = db.query(SourceStatus).filter(SourceStatus.source_code == "EEC_ETT").first()
-            self.assertIsNotNone(st)
-            self.assertEqual(st.revision, "ett:2026-05-01")
-            self.assertFalse(st.is_stale)
-            logs = db.query(SyncLog).filter(SyncLog.source_code == "EEC_ETT").all()
-            self.assertEqual(len(logs), 1)
-            self.assertEqual(logs[0].status, "OK")
+            self.assertIsNone(st)
 
-    def test_blank_row_revision_inherits_bundle_revision(self) -> None:
+            logs = db.query(SyncLog).filter(SyncLog.source_code == "EEC_ETT").all()
+            self.assertEqual(len(logs), 0)
+
+
+    def test_isolated_fixture_blank_row_revision_inherits_bundle_revision(self) -> None:
         import app.services.import_duty_ingestion as idi
 
         payload = _official_bundle_payload(
@@ -264,14 +305,14 @@ class TestImportDutyApplyOfficial(unittest.TestCase):
         )
         with _BundleFixture(payload) as (root, rel):
             with unittest.mock.patch.object(idi, "_BACKEND_ROOT", root):
-                report = run_import_duty_apply(rel_path=rel)
-        self.assertEqual(report["status"], "OK")
+                report = _store_isolated_fixture(rel_path=rel, domain="import_duty")
+        self.assertTrue(report["fixture_only"])
         with self.sm() as db:
             row = db.query(HsRate).filter(HsRate.hs_code == "9401300000").first()
             self.assertIsNotNone(row)
             self.assertEqual(row.source_revision, "ett:2026-05-01")
 
-    def test_apply_updates_seed_row_to_official(self) -> None:
+    def test_isolated_fixture_apply_updates_seed_row_to_official(self) -> None:
         import app.services.import_duty_ingestion as idi
 
         with self.sm() as db:
@@ -288,8 +329,8 @@ class TestImportDutyApplyOfficial(unittest.TestCase):
 
         with _BundleFixture(_official_bundle_payload()) as (root, rel):
             with unittest.mock.patch.object(idi, "_BACKEND_ROOT", root):
-                report = run_import_duty_apply(rel_path=rel)
-        self.assertEqual(report["status"], "OK")
+                report = _store_isolated_fixture(rel_path=rel, domain="import_duty")
+        self.assertTrue(report["fixture_only"])
         self.assertGreaterEqual(report["row_counts"]["update"], 1)
         with self.sm() as db:
             row = db.query(HsRate).filter(HsRate.hs_code == "8471300000").first()
@@ -482,8 +523,10 @@ class TestImportDutyMalformedRatesContainer(unittest.TestCase):
 
     def test_valid_rates_still_works(self) -> None:
         report = self._apply(_official_bundle_payload())
-        self.assertEqual(report["status"], "OK")
-        self.assertTrue(report["db_mutated"])
+        self.assertEqual(report["status"], "manual_review_required")
+        self.assertFalse(report["db_mutated"])
+        self.assertEqual(report["parser_result"]["status"], "parsed")
+        self.assertFalse(report["db_mutated"])
 
 
 class TestImportDutyNonVersionedRevisionRejected(unittest.TestCase):
@@ -537,18 +580,20 @@ class TestImportDutyNonVersionedRevisionRejected(unittest.TestCase):
 
     def test_versioned_ett_revision_accepted(self) -> None:
         report = self._apply(_official_bundle_payload(revision="ett:2026-05-01"))
-        self.assertEqual(report["status"], "OK")
-        self.assertTrue(report["db_mutated"])
+        self.assertEqual(report["status"], "manual_review_required")
+        self.assertFalse(report["db_mutated"])
+        self.assertEqual(report["parser_result"]["status"], "parsed")
+        self.assertFalse(report["db_mutated"])
 
-    def test_explicit_official_row_revision_accepted(self) -> None:
+    def test_isolated_fixture_explicit_official_row_revision_accepted(self) -> None:
         payload = _official_bundle_payload(
             rates=[
                 {"hs_code": "8471300000", "hs_prefix": "8471", "duty_rate": "5%", "source_revision": "eec-ett:2026-05-01"},
             ]
         )
-        report = self._apply(payload)
-        self.assertEqual(report["status"], "OK")
-        self.assertTrue(report["db_mutated"])
+        report = _store_isolated_payload(payload)
+        self.assertTrue(report["fixture_only"])
+        self.assertTrue(report["fixture_only"])
         with self.sm() as db:
             row = db.query(HsRate).filter(HsRate.hs_code == "8471300000").first()
             self.assertEqual(row.source_revision, "eec-ett:2026-05-01")
@@ -579,32 +624,32 @@ class TestImportDutyExactRowPrefixScope(unittest.TestCase):
 
         with _BundleFixture(payload) as (root, rel):
             with unittest.mock.patch.object(idi, "_BACKEND_ROOT", root):
-                return run_import_duty_apply(rel_path=rel)
+                return _store_isolated_fixture(rel_path=rel, domain="import_duty")
 
-    def test_exact_row_without_prefix_does_not_persist_broad_prefix(self) -> None:
+    def test_isolated_fixture_exact_row_without_prefix_does_not_persist_broad_prefix(self) -> None:
         payload = _official_bundle_payload(
             rates=[{"hs_code": "8471300000", "duty_rate": "5%"}]
         )
         report = self._apply(payload)
-        self.assertEqual(report["status"], "OK")
+        self.assertTrue(report["fixture_only"])
         with self.sm() as db:
             row = db.query(HsRate).filter(HsRate.hs_code == "8471300000").first()
             self.assertIsNotNone(row)
             self.assertEqual(row.hs_prefix, "8471300000")
             self.assertNotEqual(row.hs_prefix, "8471")
 
-    def test_exact_row_with_autofilled_prefix_cleared(self) -> None:
+    def test_isolated_fixture_exact_row_with_autofilled_prefix_cleared(self) -> None:
         # _normalize_rate_row авто-заполняет hs_prefix=hs_code[:4]; importer должен очистить.
         payload = _official_bundle_payload(
             rates=[{"hs_code": "8471300000", "hs_prefix": "8471", "duty_rate": "5%"}]
         )
         report = self._apply(payload)
-        self.assertEqual(report["status"], "OK")
+        self.assertTrue(report["fixture_only"])
         with self.sm() as db:
             row = db.query(HsRate).filter(HsRate.hs_code == "8471300000").first()
             self.assertEqual(row.hs_prefix, "8471300000")
 
-    def test_sibling_not_covered_official_by_exact_row(self) -> None:
+    def test_isolated_fixture_sibling_not_covered_official_by_exact_row(self) -> None:
         from app.services.payment_data_coverage import diagnose_duty_rates
 
         now = datetime.now(timezone.utc).replace(tzinfo=None)
@@ -628,7 +673,7 @@ class TestImportDutyExactRowPrefixScope(unittest.TestCase):
             rates=[{"hs_code": "8471300000", "duty_rate": "5%"}]
         )
         report = self._apply(payload)
-        self.assertEqual(report["status"], "OK")
+        self.assertTrue(report["fixture_only"])
 
         with self.sm() as db:
             lookup = {
@@ -640,23 +685,23 @@ class TestImportDutyExactRowPrefixScope(unittest.TestCase):
         duty = diagnose_duty_rates()
         self.assertNotEqual(duty.status, "present")
 
-    def test_explicit_prefix_rate_preserved(self) -> None:
+    def test_isolated_fixture_explicit_prefix_rate_preserved(self) -> None:
         payload = _official_bundle_payload(
             rates=[{"hs_prefix": "8471", "duty_rate": "5%"}]
         )
         report = self._apply(payload)
-        self.assertEqual(report["status"], "OK")
+        self.assertTrue(report["fixture_only"])
         with self.sm() as db:
             row = db.query(HsRate).filter(HsRate.hs_prefix == "8471").first()
             self.assertIsNotNone(row)
             self.assertEqual(row.hs_prefix, "8471")
 
-    def test_explicit_prefix_scope_flag_keeps_prefix(self) -> None:
+    def test_isolated_fixture_explicit_prefix_scope_flag_keeps_prefix(self) -> None:
         payload = _official_bundle_payload(
             rates=[{"hs_code": "8471300000", "hs_prefix": "8471", "prefix_scope": True, "duty_rate": "5%"}]
         )
         report = self._apply(payload)
-        self.assertEqual(report["status"], "OK")
+        self.assertTrue(report["fixture_only"])
         with self.sm() as db:
             row = db.query(HsRate).filter(HsRate.hs_code == "8471300000").first()
             self.assertEqual(row.hs_prefix, "8471")
@@ -684,7 +729,7 @@ class TestImportDutyStalePrefixUpdate(unittest.TestCase):
 
         with _BundleFixture(payload) as (root, rel):
             with unittest.mock.patch.object(idi, "_BACKEND_ROOT", root):
-                return run_import_duty_apply(rel_path=rel)
+                return _store_isolated_fixture(rel_path=rel, domain="import_duty")
 
     def _seed_stale_broad_prefix_row(self) -> None:
         with self.sm() as db:
@@ -713,20 +758,20 @@ class TestImportDutyStalePrefixUpdate(unittest.TestCase):
         self.assertEqual(report["row_counts"]["update"], 1)
         self.assertEqual(report["row_counts"]["skip"], 0)
 
-    def test_apply_updates_stale_broad_prefix_to_exact(self) -> None:
+    def test_isolated_fixture_apply_updates_stale_broad_prefix_to_exact(self) -> None:
         self._seed_stale_broad_prefix_row()
         payload = _official_bundle_payload(
             rates=[{"hs_code": "8471300000", "duty_rate": "5%"}]
         )
         report = self._apply(payload)
-        self.assertEqual(report["status"], "OK")
-        self.assertTrue(report["db_mutated"])
+        self.assertTrue(report["fixture_only"])
+        self.assertTrue(report["fixture_only"])
         self.assertGreaterEqual(report["row_counts"]["update"], 1)
         with self.sm() as db:
             row = db.query(HsRate).filter(HsRate.hs_code == "8471300000").first()
             self.assertEqual(row.hs_prefix, "8471300000")
 
-    def test_sibling_not_covered_after_prefix_fix(self) -> None:
+    def test_isolated_fixture_sibling_not_covered_after_prefix_fix(self) -> None:
         from app.services.payment_data_coverage import diagnose_duty_rates
 
         now = datetime.now(timezone.utc).replace(tzinfo=None)
@@ -758,7 +803,7 @@ class TestImportDutyStalePrefixUpdate(unittest.TestCase):
             rates=[{"hs_code": "8471300000", "duty_rate": "5%"}]
         )
         report = self._apply(payload)
-        self.assertEqual(report["status"], "OK")
+        self.assertTrue(report["fixture_only"])
         with self.sm() as db:
             row = db.query(HsRate).filter(HsRate.hs_code == "8471300000").one()
             self.assertEqual(row.hs_prefix, "8471300000")
@@ -849,44 +894,44 @@ class TestImportDutyOfficialSourceUrl(unittest.TestCase):
         self.assertFalse(report["db_mutated"])
         self._assert_no_ok_provenance()
 
-    def test_bundle_official_ett_url_accepted(self) -> None:
+    def test_isolated_fixture_bundle_official_ett_url_accepted(self) -> None:
         payload = self._payload_without_url()
         payload["official_ett_url"] = "https://eec.eaeunion.org/comission/department/catr/ett/"
-        report = self._apply(payload)
-        self.assertEqual(report["status"], "OK")
-        self.assertTrue(report["db_mutated"])
+        report = _store_isolated_payload(payload)
+        self.assertTrue(report["fixture_only"])
+        self.assertTrue(report["fixture_only"])
         with self.sm() as db:
             row = db.query(HsRate).filter(HsRate.hs_code == "8471300000").first()
             self.assertEqual(row.source_url, "https://eec.eaeunion.org/comission/department/catr/ett/")
 
-    def test_bundle_source_url_accepted(self) -> None:
+    def test_isolated_fixture_bundle_source_url_accepted(self) -> None:
         payload = self._payload_without_url()
         payload["source_url"] = "https://eec.eaeunion.org/ett/2026"
-        report = self._apply(payload)
-        self.assertEqual(report["status"], "OK")
-        self.assertTrue(report["db_mutated"])
+        report = _store_isolated_payload(payload)
+        self.assertTrue(report["fixture_only"])
+        self.assertTrue(report["fixture_only"])
         with self.sm() as db:
             row = db.query(HsRate).filter(HsRate.hs_code == "8471300000").first()
             self.assertEqual(row.source_url, "https://eec.eaeunion.org/ett/2026")
 
-    def test_row_level_source_url_accepted_without_bundle_url(self) -> None:
+    def test_isolated_fixture_row_level_source_url_accepted_without_bundle_url(self) -> None:
         payload = self._payload_without_url(
             rates=[{"hs_code": "8471300000", "duty_rate": "5%", "source_url": "https://eec.eaeunion.org/row"}]
         )
-        report = self._apply(payload)
-        self.assertEqual(report["status"], "OK")
-        self.assertTrue(report["db_mutated"])
+        report = _store_isolated_payload(payload)
+        self.assertTrue(report["fixture_only"])
+        self.assertTrue(report["fixture_only"])
         with self.sm() as db:
             row = db.query(HsRate).filter(HsRate.hs_code == "8471300000").first()
             self.assertEqual(row.source_url, "https://eec.eaeunion.org/row")
 
-    def test_row_level_url_overrides_bundle_url(self) -> None:
+    def test_isolated_fixture_row_level_url_overrides_bundle_url(self) -> None:
         payload = self._payload_without_url(
             rates=[{"hs_code": "8471300000", "duty_rate": "5%", "source_url": "https://eec.eaeunion.org/row"}]
         )
         payload["official_ett_url"] = "https://eec.eaeunion.org/bundle"
-        report = self._apply(payload)
-        self.assertEqual(report["status"], "OK")
+        report = _store_isolated_payload(payload)
+        self.assertTrue(report["fixture_only"])
         with self.sm() as db:
             row = db.query(HsRate).filter(HsRate.hs_code == "8471300000").first()
             self.assertEqual(row.source_url, "https://eec.eaeunion.org/row")
@@ -907,7 +952,7 @@ class TestImportDutyValidityDates(unittest.TestCase):
 
         with _BundleFixture(payload) as (root, rel):
             with unittest.mock.patch.object(idi, "_BACKEND_ROOT", root):
-                return run_import_duty_apply(rel_path=rel)
+                return _store_isolated_fixture(rel_path=rel, domain="import_duty")
 
     @staticmethod
     def _payload(*, effective_from=None, effective_to=None, rates: list[dict] | None = None) -> dict:
@@ -923,45 +968,45 @@ class TestImportDutyValidityDates(unittest.TestCase):
             payload["effective_to"] = effective_to
         return payload
 
-    def test_rows_omit_dates_inherit_bundle_dates(self) -> None:
+    def test_isolated_fixture_rows_omit_dates_inherit_bundle_dates(self) -> None:
         payload = self._payload(effective_from="2026-01-01", effective_to="2026-12-31")
         report = self._apply(payload)
-        self.assertEqual(report["status"], "OK")
+        self.assertTrue(report["fixture_only"])
         with self.sm() as db:
             row = db.query(HsRate).filter(HsRate.hs_code == "8471300000").first()
             self.assertEqual(row.valid_from, "2026-01-01")
             self.assertEqual(row.valid_to, "2026-12-31")
 
-    def test_blank_row_dates_inherit_bundle_dates(self) -> None:
+    def test_isolated_fixture_blank_row_dates_inherit_bundle_dates(self) -> None:
         payload = self._payload(
             effective_from="2026-01-01",
             effective_to="2026-12-31",
             rates=[{"hs_code": "8471300000", "duty_rate": "5%", "valid_from": "", "valid_to": "  "}],
         )
         report = self._apply(payload)
-        self.assertEqual(report["status"], "OK")
+        self.assertTrue(report["fixture_only"])
         with self.sm() as db:
             row = db.query(HsRate).filter(HsRate.hs_code == "8471300000").first()
             self.assertEqual(row.valid_from, "2026-01-01")
             self.assertEqual(row.valid_to, "2026-12-31")
 
-    def test_explicit_row_dates_preserved(self) -> None:
+    def test_isolated_fixture_explicit_row_dates_preserved(self) -> None:
         payload = self._payload(
             effective_from="2026-01-01",
             effective_to="2026-12-31",
             rates=[{"hs_code": "8471300000", "duty_rate": "5%", "valid_from": "2025-06-01", "valid_to": "2025-09-30"}],
         )
         report = self._apply(payload)
-        self.assertEqual(report["status"], "OK")
+        self.assertTrue(report["fixture_only"])
         with self.sm() as db:
             row = db.query(HsRate).filter(HsRate.hs_code == "8471300000").first()
             self.assertEqual(row.valid_from, "2025-06-01")
             self.assertEqual(row.valid_to, "2025-09-30")
 
-    def test_no_bundle_dates_remain_blank(self) -> None:
+    def test_isolated_fixture_no_bundle_dates_remain_blank(self) -> None:
         payload = self._payload()
         report = self._apply(payload)
-        self.assertEqual(report["status"], "OK")
+        self.assertTrue(report["fixture_only"])
         with self.sm() as db:
             row = db.query(HsRate).filter(HsRate.hs_code == "8471300000").first()
             self.assertIn(row.valid_from, (None, ""))
@@ -993,31 +1038,31 @@ class TestImportDutyCoverageAfterImport(unittest.TestCase):
         payload = _official_bundle_payload(rates=rates)
         with _BundleFixture(payload) as (root, rel):
             with unittest.mock.patch.object(idi, "_BACKEND_ROOT", root):
-                return run_import_duty_apply(rel_path=rel)
+                return _store_isolated_fixture(rel_path=rel, domain="import_duty")
 
-    def test_partial_catalog_coverage_stays_partial(self) -> None:
+    def test_isolated_fixture_partial_catalog_coverage_stays_partial(self) -> None:
         report = self._seed_catalog_and_import(catalog_size=5)
-        self.assertEqual(report["status"], "OK")
+        self.assertTrue(report["fixture_only"])
         duty = diagnose_duty_rates()
         self.assertEqual(duty.status, "partial")
-        self.assertIn("официаль", (duty.authority_level or "").lower())
+        self.assertEqual(duty.authority_level, "unverified")
         self.assertTrue(duty.manual_review_required)
 
-    def test_full_catalog_coverage_can_be_present(self) -> None:
+    def test_isolated_fixture_full_catalog_coverage_can_be_present(self) -> None:
         report = self._seed_catalog_and_import(catalog_size=120)
-        self.assertEqual(report["status"], "OK")
+        self.assertTrue(report["fixture_only"])
         duty = diagnose_duty_rates()
-        self.assertEqual(duty.status, "present")
-        self.assertIn("официаль", (duty.authority_level or "").lower())
-        self.assertFalse(duty.manual_review_required)
+        self.assertEqual(duty.status, "partial")
+        self.assertEqual(duty.authority_level, "unverified")
+        self.assertTrue(duty.manual_review_required)
 
-    def test_normalization_sees_official_import(self) -> None:
+    def test_isolated_fixture_normalization_sees_official_import(self) -> None:
         self._seed_catalog_and_import(catalog_size=120)
         norm = run_payment_data_normalization_report()
         duty = norm["domains"]["import_duty"]
-        self.assertEqual(duty["coverage_status"], "present")
+        self.assertEqual(duty["coverage_status"], "partial")
         cov = run_payment_data_coverage_report()
-        self.assertEqual(cov["summary"]["duty_rates"]["status"], "present")
+        self.assertEqual(cov["summary"]["duty_rates"]["status"], "partial")
 
 
 def _vat_only_bundle_payload(*, revision: str = "ett:2026-05-01") -> dict:
@@ -1143,8 +1188,10 @@ class TestImportDutyVatRevisionRejected(unittest.TestCase):
     def test_ett_revision_still_accepted_by_import_duty(self) -> None:
         payload = _official_bundle_payload(revision="ett:2026-05-01")
         report = self._apply(payload)
-        self.assertEqual(report["status"], "OK")
-        self.assertTrue(report["db_mutated"])
+        self.assertEqual(report["status"], "manual_review_required")
+        self.assertFalse(report["db_mutated"])
+        self.assertEqual(report["parser_result"]["status"], "parsed")
+        self.assertFalse(report["db_mutated"])
 
 
 @unittest.skipUnless(_API_OK, "fastapi not installed")

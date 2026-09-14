@@ -31,6 +31,14 @@
 set -u
 set -o pipefail
 
+case "${CUSTOMSCLEAR_ALLOW_LEGACY_AUTOMATION:-0}" in
+  1|true|TRUE|yes|YES|on|ON) ;;
+  *)
+    echo "[FATAL] Legacy run_critical_syncs.sh is disabled. Use the regulatory source scheduler; set CUSTOMSCLEAR_ALLOW_LEGACY_AUTOMATION=1 only for an explicit operator-approved compatibility run." >&2
+    exit 2
+    ;;
+esac
+
 # ---------------------------------------------------------------------------
 # Обязательно запускаем из каталога customs-clear/backend.
 # ---------------------------------------------------------------------------
@@ -168,7 +176,8 @@ sleep 5
 # БЛОК 2. Санкции OFAC (США): прямой XML с treasury.gov — лёгкий.
 # ===========================================================================
 if [[ "${SKIP_OFAC:-0}" != "1" ]]; then
-  run_step "OFAC SDN" scripts/sync_ofac_sanctions.py --timeout 60 --retries 4
+  run_step "OFAC SDN validation" scripts/sync_ofac_sanctions.py \
+    --official-only --validate-only --strict --json --timeout 60 --retries 4
   record "ofac_sanctions" "$?"
 else
   log "ПРОПУСК: OFAC (SKIP_OFAC=1)"
@@ -181,7 +190,8 @@ sleep 10
 # БЛОК 3. Санкции ЕС: прямой XML/XLSX с webgate.ec.europa.eu.
 # ===========================================================================
 if [[ "${SKIP_EU:-0}" != "1" ]]; then
-  run_step "EU sanctions" scripts/sync_eu_sanctions.py --timeout 60 --retries 4
+  run_step "EU sanctions validation" scripts/sync_eu_sanctions.py \
+    --official-only --validate-only --strict --json --timeout 60 --retries 4
   record "eu_sanctions" "$?"
 else
   log "ПРОПУСК: EU (SKIP_EU=1)"

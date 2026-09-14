@@ -174,6 +174,7 @@ _MEASURE_TYPE_TO_BADGE: dict[str, str] = {
     "license": "ЛЗ",
     "marking": "Марк",
     "fsetc": "ФСТЭК",
+    "fsb": "НФ",
     "radiation_control": "Рад",
     "вс": "ВС",
     "фсс": "ФСС",
@@ -189,7 +190,8 @@ _MEASURE_DESCRIPTIONS: dict[str, str] = {
     "certificate": "Карантинный сертификат / разрешение на ввоз",
     "license": "Лицензия на ввоз",
     "marking": "Маркировка (ЧЗ / ЕГАИС / Меркурий)",
-    "fsetc": "Нотификация ФСТЭК",
+    "fsetc": "Требования ФСТЭК в сфере экспортного контроля",
+    "fsb": "Нотификация ФСБ",
     "radiation_control": "Радиационный контроль",
     "sgr": "Свидетельство государственной регистрации",
 }
@@ -220,7 +222,7 @@ _NTM_V2_PERMIT_TYPE_LABELS: dict[str, str] = {
     "СГР": "Свидетельство государственной регистрации",
     "ВС": "Ветеринарный сертификат",
     "ФСС": "Фитосанитарный сертификат страны экспорта",
-    "НФ": "Нотификация ФСТЭК",
+    "НФ": "Нотификация ФСБ",
     "ЛЗ": "Лицензия на ввоз",
     "РУ": "Разрешение на ввоз",
 }
@@ -233,7 +235,7 @@ def _measure_type_for_v2_permit(permit_type: str, tr_ts: str | None) -> str:
     return {
         "ВС": "vet_control",
         "ФСС": "phyto_control",
-        "НФ": "fsetc",
+        "НФ": "fsb",
         "СГР": "sgr",
         "ЛЗ": "license",
         "РУ": "license",
@@ -1726,35 +1728,8 @@ def get_commodity_by_code(code: str, db: Session = Depends(get_db)) -> dict[str,
             .order_by(Commodity.id.asc())
             .first()
         )
-    if not row and len(norm) == 10:
-        out_code = norm.zfill(10)
-        name_row = (
-            db.query(Commodity)
-            .filter(Commodity.code.like(f"{norm[:6]}%"))
-            .order_by(Commodity.code.asc())
-            .first()
-        )
-        measures = _measures_for_api(out_code)
-        return {
-            "status": "OK",
-            "code": out_code,
-            "name": _strip_leading_dashes((name_row.description or "").strip()) if name_row else "",
-            "description": (name_row.description or "").strip() if name_row else "",
-            "unit": "",
-            "supp_unit": "",
-            "weight_coeff": 0.0,
-            "import_duty": _resolve_duty_for_display(name_row, out_code) if name_row else "",
-            "notes": "",
-            "notes_combined": "",
-            "non_tariff_measures": [],
-            "measures": measures,
-            "intellectual_properties": [],
-            "preliminary_decisions": find_preliminary_decisions_for_hs(db, out_code),
-            "canonical_anchor": canonical_anchor_for_hs(out_code),
-            "chapter": None,
-            "section": None,
-        }
     if not row:
+        # A neighbouring code or a rate row cannot establish commodity identity.
         raise HTTPException(status_code=404, detail="Позиция не найдена")
 
     ch = row.chapter

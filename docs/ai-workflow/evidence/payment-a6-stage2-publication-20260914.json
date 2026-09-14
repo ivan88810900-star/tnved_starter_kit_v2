@@ -1,0 +1,152 @@
+{
+  "acceptance_limits": [
+    "Technical stage-two correction only; complete legal rates/NTM coverage remains partial.",
+    "No source/rate/FX admission, manifest approval, historical payment service or new statutory rounding policy.",
+    "Existing raw/profile/AI numeric subtotals remain explicitly provisional; structured quote withholds uncertain components and final amounts.",
+    "Within-window or blank HsRate dates do not establish legal approval.",
+    "Existing source counts remain 49 registry / 49 policies / 72 default URLs plus 11 isolated review targets.",
+    "Full CI denotes the explicit established CI profile, not complete production/legal data acceptance; full backend -q output reports two unnamed skips; admission explicitly identifies the missing-NTM fixture skip, and dependency warnings are retained.",
+    "No production/application DB writes, destructive migrations, flag/enforcement activation, merge or deploy."
+  ],
+  "admission_qa": {
+    "conclusion": "success",
+    "explicit_test_files": 51,
+    "head": "599c3af02a6f990226b47b8f76b802db6e2408c5",
+    "log_job_id": 103930168681,
+    "passed": 2422,
+    "run_id": 34829794668,
+    "skipped": 1,
+    "subtests": 85,
+    "warnings": 2
+  },
+  "base": "a5a811e618ffa001b39cb491bbbf7a9ceb93f9a7",
+  "candidate": {
+    "a5_exact_tree_accepted": true,
+    "branch": "agent/qa-a6-stage2-integration-20260914",
+    "head": "599c3af02a6f990226b47b8f76b802db6e2408c5",
+    "local": "2f320926f30ab4eea5b2ec349525279b80ede1eb",
+    "tree": "3b95f88a307f28b9f4044974ba4b5fd338b37b60",
+    "a5_exact_ci_accepted": true
+  },
+  "candidate_ci": {
+    "backend_log_job_id": 103930168793,
+    "conclusion": "success",
+    "frontend_passed": 50,
+    "head": "599c3af02a6f990226b47b8f76b802db6e2408c5",
+    "isolated_staging_smoke": "success",
+    "optional_source_acquisition": "skipped",
+    "passed": 5615,
+    "production_build": "success",
+    "run_id": 34829794572,
+    "scheduled_workflow_contracts": "success",
+    "skipped": 2,
+    "subtests": 85,
+    "typescript": "success",
+    "warnings": 2
+  },
+  "independent_qa": {
+    "author_cases": 49,
+    "dependency_warnings": 2,
+    "evidence": "payment-a6-stage2-independent-qa-20260914.json",
+    "feature_author_is_not_final_reviewer": true,
+    "fresh_process_http_cases": 12,
+    "frontend_consumer_tests": 10,
+    "independent_cases": 48,
+    "integration_profile_passed": 335,
+    "new_combined_passed": 97
+  },
+  "logical_commit_mapping": [
+    {
+      "local": "82bf37eb09150ef9bb46a106490aa2364f189321",
+      "message": "docs: scope independent A6 stage-two payment reproduction and correction",
+      "remote": "2c2fbfdc358246b5b65cae549e425b208c73e42c",
+      "tree": "e17ad89271724f4bcc287c08827cfae030119a24"
+    },
+    {
+      "local": "7a992d9f955fb4956d16137b2b00a99c6dd6d27d",
+      "message": "docs(sources): audit A6 stage2 FX and legacy duty evidence boundaries",
+      "remote": "4330ec93380095ba368ee3f6c64a550a9d3bbecd",
+      "tree": "8a6b985e217d960a231f43fc0a1294067168dd14"
+    },
+    {
+      "local": "1177f22839d7eafbf38ca09db06e9217efe9cadd",
+      "message": "chore: preserve stage-two contracts and add independent CI suites",
+      "remote": "84827ea816b56ed49ca7ef04643a2b34330a4645",
+      "tree": "63a2a00ad9f92ef672e95482f189f69c53688a2d"
+    },
+    {
+      "local": "11d8e30b0b8cb2b84d07d372b636423f150ce801",
+      "message": "test(payments): reproduce A6 stage-two source and arithmetic gaps",
+      "remote": "09e2f56539a7e64bb30b418b36124bad261ecaae",
+      "tree": "4434ea5eba0c82e7f3c963fa406af740074e3c81"
+    },
+    {
+      "local": "f8ec310581c3e167b3863e4b7dedb4d04afbced9",
+      "message": "test(payments): independently reproduce stage2 review boundary defects",
+      "remote": "4836e7bc6d0ca41ca7019c14ffebd58c8d5c1c9f",
+      "tree": "ca5529e93b2e26b92a5981fea8dcb1971e1adc52"
+    },
+    {
+      "local": "d2169ddea751c29c26dd3389978a2ab55ab78807",
+      "message": "test(payments): preserve FX review through extended comparison",
+      "remote": "73edff667b187c605d59ab4d6805192a6737a622",
+      "tree": "02a86102d4322da13825897b0e0570280a21af8f"
+    },
+    {
+      "local": "c835ec9d6d7c1fdae95ceb74a6f6f09b1b52e9b8",
+      "message": "fix(payments): treat null dates as omission while rejecting historical values",
+      "remote": "2e115cd118ece910170e6ce2a3e16bf7a6eabeac",
+      "tree": "0c5ff3dd125f95edd8606cba909d0e84166ca4f5"
+    },
+    {
+      "local": "ae3a14cad3e5a46fe47002baa7c1ce9474c65e58",
+      "message": "test(payments): fully isolate comparison profile database queries",
+      "remote": "b3b883c53049e16e3b7d5623efe97cf60b6d5b38",
+      "tree": "78010c06042c0b6b3dbbd39d2037d24ede8637ec"
+    },
+    {
+      "local": "3447c741b798e64c315c6741ad5fcbb3121f78e9",
+      "message": "test(payments): reject confirmed dependent lines and distinguish quote errors",
+      "remote": "fd625cb695052158156f4893f8b559f35da9d249",
+      "tree": "042acc313939a1c97b3844d8d4aa86d7d340ad90"
+    },
+    {
+      "local": "47e1aec68588c5470fdd08256918db73095b20fc",
+      "message": "fix(payments): withhold source-uncertain components and preserve FX review",
+      "remote": "8015d5583d4b413b26e7b0c597f6de5d0d2d6f2e",
+      "tree": "2bbdd24088be87b222acdc171a388a00c62bc41b"
+    },
+    {
+      "local": "e6c2467526e2da698285d063cf26de89e8da7ba3",
+      "message": "fix(ui): label partial payment sums without legal confirmation",
+      "remote": "6533f3fbdefaf8c9b7d470e6350f8ae666c76fd3",
+      "tree": "908daeca0eb4830fdc4fade5299d97fb2592a05f"
+    },
+    {
+      "local": "e14b54de9985727aad00a0a2683bb00cab7f3249",
+      "message": "docs: record independent stage-two review and preserve remaining legal limits",
+      "remote": "0f24b754e01404473e6db5de078d7a736fe5fb8e",
+      "tree": "4298c58fcee9f6ef59e4d0babaa0cb53d55700f2"
+    },
+    {
+      "local": "2f320926f30ab4eea5b2ec349525279b80ede1eb",
+      "message": "docs(qa): record independent stage2 red-green and live HTTP verification",
+      "remote": "599c3af02a6f990226b47b8f76b802db6e2408c5",
+      "tree": "3b95f88a307f28b9f4044974ba4b5fd338b37b60"
+    }
+  ],
+  "main": "9712c7b1380af7457fb6c89ef7710d8cda0e968b",
+  "pr": 187,
+  "publication_method": "GitHub Git Data, one parent per logical commit, exact local tree equality verified before each commit; no main/PR merge",
+  "recorded_at": "2026-09-14",
+  "repository": "ivan88810900-star/tnved_starter_kit_v2",
+  "schema_version": 1,
+  "scope": "Bounded A6 stage-two payment/source-confidence and consumer correction",
+  "starting_feature_head": "dab1f8aae5a114a51505763bf9ea0a0d8161ed38",
+  "status": "reviewed_candidate_ci_passed",
+  "final_publication": {
+    "method": "Documentation-only completion child, then fast-forward the existing feature ref after rechecking remote HEAD; no merge operation.",
+    "final_feature_head_and_push_pr_checks": "Recorded in PR #187 after the completion child is published; this evidence does not predict its self-referential commit SHA.",
+    "runtime_feature_and_test_blobs": "Unchanged from the independently reviewed and CI-passed candidate."
+  }
+}

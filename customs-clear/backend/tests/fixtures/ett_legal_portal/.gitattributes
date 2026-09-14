@@ -1,0 +1,2 @@
+# Original response bytes are hash-bound parser inputs, never executable pages.
+*.html -text -diff -merge

@@ -1,11 +1,12 @@
 from __future__ import annotations
 
 import re
+from collections import Counter
 from dataclasses import dataclass
 from datetime import date
+from decimal import Decimal
+from math import isfinite
 from typing import Any
-
-from sqlalchemy import or_
 
 from ..db import SessionLocal
 from ..models.tnved import Commodity, HsDutyRule, SpecialDuty, VatPreference
@@ -22,6 +23,12 @@ from .normative_store import (
     get_tnved_context_for_hs,
 )
 from .compliance_resolver import pick_vat_preference_row
+from .payment_revision_utils import (
+    is_official_anti_dumping_row_marker,
+    is_official_countervailing_row_marker,
+    is_official_special_safeguard_row_marker,
+    is_safe_official_anti_dumping_source_url,
+)
 
 
 @dataclass
@@ -47,6 +54,15 @@ def _round2(v: Any | None) -> float:
     return round(_num(v), 2)
 
 
+def _sum_displayed_amounts(*parts: Any | None) -> float:
+    """Sum the existing two-decimal display values without binary carry drift.
+
+    This is a provisional presentation invariant, not a declaration rounding rule.
+    Each component retains the existing _round2 behavior.
+    """
+    return float(sum((Decimal(str(_round2(part))) for part in parts), Decimal("0.00")))
+
+
 # Confidence levels based on HS-prefix match length
 _CONFIDENCE_MAP = {
     10: "high",
@@ -67,6 +83,108 @@ SPECIAL_DUTIES_COUNTRY_WARNING = (
     "страны происхождения. Данные по мерам защиты рынка могут быть неполными — "
     "см. remedies.eaeunion.org"
 )
+
+TARIFF_PREFERENCE_REVIEW_REASON = (
+    "В прежнем справочнике стран указан коэффициент пошлины, но его применимость "
+    "для этого товара и даты не подтверждена. Страна происхождения сама по себе "
+    "не подтверждает изменение ставки. Предварительные суммы рассчитаны без "
+    "коэффициента; проверьте действующий режим, товар, происхождение и условия поставки."
+)
+
+DUTY_SOURCE_MISSING_REASON = (
+    "Ставка пошлины не найдена в локальных источниках и не задана вручную. "
+    "Нулевое значение в предварительной арифметике не подтверждает нулевую ставку."
+)
+VAT_SOURCE_MISSING_REASON = (
+    "Ставка НДС не найдена в локальных источниках и не задана вручную. "
+    "Ставка по умолчанию использована только для предварительной арифметики."
+)
+SPECIAL_DUTY_REVIEW_REASON = (
+    "Найдены кандидаты специальных, защитных или компенсационных пошлин, "
+    "но их применимость не подтверждена по дате, стране, изготовителю, товару "
+    "или единице специфической ставки. Неопределённые меры не включены "
+    "в предварительную сумму; база НДС и итог требуют проверки."
+)
+SPECIAL_DUTY_LEGAL_REVIEW_REASON = (
+    "Арифметика торговых пошлин предварительная: метки официального источника "
+    "не подтверждают юридическое утверждение применимости к этой поставке. "
+    "Суммы торговых пошлин, зависимого НДС и итог не подтверждены к уплате."
+)
+LEGACY_ANTIDUMPING_OVERLAP_REASON = (
+    "В двух прежних справочниках найдены кандидаты антидемпинговой пошлины; "
+    "не подтверждено, являются ли они одной мерой, альтернативами или независимыми "
+    "мерами. Сумма антидемпинга и зависимый НДС требуют проверки."
+)
+
+LEGACY_PAYMENT_AS_OF_UNSUPPORTED = (
+    "Расчёт платежей по дате as_of пока недоступен: текущий справочник не "
+    "подтверждает исторические версии всех ставок и сборов. Дата не будет "
+    "заменена сегодняшней."
+)
+
+SOURCE_REVIEW_REASONS = {
+    "geo_duty_applicability_unverified": "Найдена географическая ставка-кандидат; её применимость и приоритет не утверждены. Обычная ставка показана только предварительно.",
+    "foreign_fx_source_unverified": "Курс иностранной валюты не связан с подтверждённым источником и датой расчёта; зависимые суммы предварительные.",
+    "duty_expression_incomplete": "В выражении пошлины отсутствует или повреждён обязательный компонент, единица либо валюта. Сумма пошлины не определена, а не равна нулю.",
+    "hs_rate_effective_period_unverified": "Заполненные даты строки hs_rates повреждены либо не включают текущую дату. Зависимые автоматические ставки не подтверждены.",
+}
+
+
+def observed_fx_rate(rates: dict[str, Any], currency: str) -> float:
+    """Validate an observed factor without granting source/date authenticity."""
+    if currency == "RUB":
+        return 1.0  # Unit identity, never a mutable map's conversion factor.
+    value = rates.get(currency)
+    try:
+        factor = None if isinstance(value, bool) else float(value)
+    except (TypeError, ValueError, OverflowError):
+        factor = None
+    if factor is None or not isfinite(factor) or factor <= 0:
+        raise ValueError(f"Курс {currency} должен быть явно задан положительным конечным числом")
+    return factor
+
+
+def _hs_rate_period_unverified(rate) -> bool:
+    if rate is None:
+        return False
+    bounds = []
+    for name in ("valid_from", "valid_to"):
+        literal = getattr(rate, name, None)
+        if literal is None or literal == "":
+            bounds.append(None)  # No positive legal grant from missing bounds.
+            continue
+        try:
+            if type(literal) is not str:
+                return True
+            parsed = date.fromisoformat(literal)
+            if parsed.isoformat() != literal:
+                return True
+            bounds.append(parsed)
+        except ValueError:
+            return True
+    start, end = bounds
+    today = date.today()
+    return bool((start and end and start > end) or (start and today < start) or (end and today > end))
+
+
+def _duty_expression_incomplete(rule) -> bool:
+    if rule is None:
+        return False
+    kind = (rule.type or "").strip().lower()
+    if kind not in {"ad_valorem", "specific", "combined_max", "combined_min"}:
+        return True
+    if kind == "ad_valorem":
+        return False  # Existing explicit ad-valorem/fallback path is separate.
+    for field in (("specific_amount",) if kind == "specific" else ("specific_amount", "ad_valorem_pct")):
+        value = getattr(rule, field, None)
+        try:
+            if isinstance(value, bool) or value is None or not isfinite(float(value)) or float(value) < 0:
+                return True
+        except (TypeError, ValueError, OverflowError):
+            return True
+    unit = (rule.specific_uom or "").lower().strip()
+    currency = (rule.specific_currency or "").upper().strip()
+    return unit not in {"kg", "l", "pcs", "m2", "m3", "t"} or re.fullmatch(r"[A-Z]{3}", currency) is None
 
 
 def _digits_hs(code: str) -> str:
@@ -159,70 +277,158 @@ def _resolve_special_duties(
     customs_value: float,
     quantity: float,
     fx_rates: dict[str, float] | None,
+    as_of: date | str | None = None,
 ) -> tuple[float, list[dict[str, Any]]]:
+    """Keep unproved applicability separate from known local arithmetic.
+
+    Legacy rows have no structured producer/product matcher, specific-rate unit
+    or cumulative-measure identity. Neither free text nor generic quantity/FX
+    inputs establish those missing facts. Such rows remain review candidates.
+    """
+    if as_of is None:
+        requested_date = date.today()  # Existing no-date callers retain this default.
+    elif type(as_of) is date:
+        requested_date = as_of
+    elif type(as_of) is str:
+        requested_date = date.fromisoformat(as_of)
+        if requested_date.isoformat() != as_of:
+            raise ValueError("Дата проверки специальных пошлин должна иметь формат YYYY-MM-DD")
+    else:
+        raise ValueError("Дата проверки специальных пошлин должна быть календарной датой")
     cands = _special_duty_prefix_candidates(hs_code)
     if not cands:
         return 0.0, []
     by_prefix = {p: m for p, m in cands}
-    today = date.today().isoformat()
     country_norm = (country or "").strip().upper() or None
 
     with SessionLocal() as db:
-        query = db.query(SpecialDuty).filter(
+        rows = db.query(SpecialDuty).filter(
             SpecialDuty.hs_code_prefix.in_(list(by_prefix.keys())),
-            or_(
-                SpecialDuty.effective_to.is_(None),
-                SpecialDuty.effective_to == "",
-                SpecialDuty.effective_to >= today,
-            ),
-        )
-        if country_norm:
-            query = query.filter(SpecialDuty.origin_country == country_norm)
-        rows = query.all()
-
-    if not rows:
-        return 0.0, []
-
-    if not country_norm:
-        return 0.0, [
-            {
-                "warning": (
-                    "Страна происхождения не указана. "
-                    "Возможно применение антидемпинговых и иных специальных пошлин."
-                ),
-                "affected_codes": sorted({r.hs_code_prefix for r in rows}),
-                "origin_countries": sorted({r.origin_country for r in rows if r.origin_country}),
-            }
-        ]
-
-    rates = dict(_FALLBACK_FX_RATES)
-    rates.update({(k or "").upper(): float(v) for k, v in (fx_rates or {}).items()})
+        ).all()
     details: list[dict[str, Any]] = []
-    total = 0.0
     for r in rows:
-        part_ad = customs_value * float(r.rate_percent or 0.0) / 100.0
-        ccy = (r.currency_code or "RUB").upper().strip()
-        if ccy not in rates:
-            raise ValueError(f"Неизвестная валюта спецпошлины: {ccy}")
-        fx = float(rates.get(ccy) or 1.0)
-        part_spec = float(r.rate_specific or 0.0) * float(quantity or 0.0) * fx
-        part = part_ad + part_spec
-        total += part
-        details.append(
-            {
+        origin = (r.origin_country or "").strip().upper()
+        origin_known = re.fullmatch(r"[A-Z]{2}", origin) is not None
+        if country_norm and origin_known and origin != country_norm:
+            continue
+        issues: list[str] = []
+        boundaries = []
+        for literal in (r.effective_from, r.effective_to):
+            try:
+                parsed = date.fromisoformat(literal) if literal else None
+                if parsed is None or parsed.isoformat() != literal:
+                    raise ValueError("Unbound calendar date")
+                boundaries.append(parsed)
+            except (TypeError, ValueError):
+                boundaries.append(None)
+        start, end = boundaries
+        if start is not None and end is not None and start > end:
+            issues.append("effective_period_invalid")
+        elif (start is not None and requested_date < start) or (end is not None and requested_date > end):
+            continue
+        if None in boundaries:
+            issues.append("effective_period_unverified")
+        if not country_norm:
+            issues.append("origin_country_missing")
+        if not origin_known:
+            issues.append("origin_country_scope_unverified")
+        if (r.manufacturer_exporter or "").strip():
+            issues.append("manufacturer_exporter_condition_unverified")
+        if (r.product_description or "").strip():
+            issues.append("product_characteristics_unverified")
+        if bool(r.needs_verification):
+            issues.append("source_row_requires_verification")
+        measure_type = (r.measure_type or "").strip()
+        if measure_type not in {"anti_dumping", "special_safeguard", "special_protective", "countervailing"}:
+            issues.append("measure_type_unverified")
+        family = "special_safeguard" if measure_type == "special_protective" else measure_type
+        if family == "anti_dumping":
+            source_marker = is_official_anti_dumping_row_marker(
+                source_code=r.source_code, source_revision=r.source_revision)
+            source_url = r.source_url
+        elif family == "special_safeguard":
+            source_marker = is_official_special_safeguard_row_marker(
+                safeguard_source_code=r.safeguard_source_code, safeguard_source_revision=r.safeguard_source_revision)
+            source_url = r.safeguard_source_url
+        elif family == "countervailing":
+            source_marker = is_official_countervailing_row_marker(
+                countervailing_source_code=r.countervailing_source_code,
+                countervailing_source_revision=r.countervailing_source_revision)
+            source_url = r.countervailing_source_url
+        else:
+            source_marker, source_url = False, ""
+        source_marker_bound = source_marker and is_safe_official_anti_dumping_source_url(source_url)
+        if not source_marker_bound:
+            issues.append("source_provenance_unverified")
+
+        def rate_number(value):
+            try:
+                result = float(value)
+                return result if isfinite(result) and result >= 0 else None
+            except (TypeError, ValueError, OverflowError):
+                return None
+
+        percent, specific = rate_number(r.rate_percent), rate_number(r.rate_specific)
+        if percent is None or specific is None:
+            issues.append("rate_expression_unverified")
+        if specific is not None and specific > 0:
+            # SpecialDuty has no source-bound rate unit or denominator. Generic
+            # invoice quantity, supplied weight or FX cannot fill that gap.
+            issues.append("specific_unit_basis_unverified")
+        if not isfinite(customs_value) or customs_value < 0:
+            issues.append("customs_value_invalid")
+        details.append({
+                "candidate_id": r.id,
                 "hs_code_prefix": r.hs_code_prefix,
                 "origin_country": r.origin_country,
-                "measure_type": r.measure_type or "anti_dumping",
-                "rate_percent": float(r.rate_percent or 0.0),
-                "rate_specific": float(r.rate_specific or 0.0),
-                "currency_code": ccy,
-                "fx_rate": fx,
+                "measure_type": measure_type,
+                "measure_family": family,
+                "official_source_marker_present": source_marker_bound,
+                "legal_review_verified": False,
+                "rate_percent": percent,
+                "rate_specific": specific,
+                "currency_code": (r.currency_code or "").upper().strip(),
+                "fx_rate": None,
                 "regulatory_act": r.regulatory_act or "",
-                "needs_verification": bool(getattr(r, "needs_verification", False)),
-                "amount": _round2(part),
+                "manufacturer_exporter": r.manufacturer_exporter or "",
+                "product_description": r.product_description or "",
+                "effective_from": r.effective_from,
+                "effective_to": r.effective_to,
+                "as_of": requested_date.isoformat(),
+                "needs_verification": bool(r.needs_verification),
+                "review_reasons": issues,
+                "amount": None,
                 "match_len": by_prefix.get(r.hs_code_prefix, 0),
-            }
-        )
+                **{field: getattr(r, field) for field in (
+                    "source_code", "source_revision", "source_url",
+                    "safeguard_source_code", "safeguard_source_revision", "safeguard_source_url",
+                    "countervailing_source_code", "countervailing_source_revision", "countervailing_source_url",
+                )},
+            })
+    counts = Counter(item["measure_family"] for item in details)
+    total = 0.0
+    for item in details:
+        if counts[item["measure_family"]] > 1:
+            # Prefix matches can be default/producer alternatives or amended
+            # measures. No schema field establishes that they are cumulative.
+            item["review_reasons"].append("overlapping_measure_candidates")
+        pending = bool(item["review_reasons"])
+        item["status"] = "needs_clarification" if pending else "provisional"
+        item["applied"] = False
+        item["calculation_available"] = not pending
+        if pending:
+            item["warning"] = SPECIAL_DUTY_REVIEW_REASON
+        else:
+            part = customs_value * item["rate_percent"] / 100.0
+            if not isfinite(part) or not isfinite(total + part):
+                item.update(status="needs_clarification", calculation_available=False,
+                            warning=SPECIAL_DUTY_REVIEW_REASON)
+                item["review_reasons"].append("calculation_overflow")
+                continue
+            item["amount"] = _round2(part)
+            total = _sum_displayed_amounts(total, item["amount"])
+            item["review_reasons"].append("legal_review_unverified")
+            item["warning"] = SPECIAL_DUTY_LEGAL_REVIEW_REASON
     details.sort(key=lambda x: int(x.get("match_len", 0)), reverse=True)
     return total, details
 
@@ -270,16 +476,16 @@ def _compute_structured_duty(
             raise ValueError("Для точного расчета необходимо указать вес/количество")
         specific_qty_used = q_used
         rates = dict(_FALLBACK_FX_RATES)
-        rates.update({(k or "").upper(): float(v) for k, v in (fx_rates or {}).items()})
+        rates.update({(k or "").upper(): v for k, v in (fx_rates or {}).items()})
         if ccy not in rates:
             raise ValueError(f"Неизвестная валюта специфической ставки: {ccy or 'EMPTY'}")
-        fx_rate = _num(rates.get(ccy) or 1.0)
+        fx_rate = observed_fx_rate(rates, ccy)
         specific_amount_rub = amount * q_used * float(fx_rate)
 
     # simple ad valorem
     if rule_type == "ad_valorem":
         duty = ad_valorem_amount if ad_valorem_amount is not None else customs_value * auto_duty_rate / 100.0
-        used_rate = ad_pct if ad_pct > 0 else auto_duty_rate
+        used_rate = ad_pct if ad_pct_raw is not None else auto_duty_rate
         return duty, used_rate, ad_valorem_amount, specific_amount_rub, "ad_valorem", fx_rate, specific_qty_used
 
     # simple specific
@@ -389,11 +595,18 @@ def _resolve_antidumping(
     quantity: float,
 ) -> tuple[float, str, str]:
     """Return (antidumping_amount, antidumping_reason, confidence)."""
+    if (not isfinite(antidumping_value) or antidumping_value < 0
+            or (antidumping_type in {"none", ""} and antidumping_value != 0)):
+        return 0.0, "Тип и значение антидемпинговой ставки противоречат друг другу; требуется проверка", "manual_review"
     if antidumping_type == "none" or antidumping_type == "":
         return 0.0, "Не применяется", "n/a"
 
     # Check country applicability
-    applicable_countries = [c.strip().upper() for c in antidumping_countries.split(",") if c.strip()]
+    applicable_countries = [c.strip().upper() for c in antidumping_countries.split(",")]
+    if not applicable_countries or any(re.fullmatch(r"[A-Z]{2}", c) is None for c in applicable_countries):
+        return 0.0, "Страна действия антидемпинга не определена однозначно; пустой или повреждённый список не означает все страны.", "manual_review"
+    if country and re.fullmatch(r"[A-Z]{2}", country) is None:
+        return 0.0, "Код страны происхождения требует уточнения перед проверкой антидемпинга.", "manual_review"
 
     country_match = True
     if applicable_countries and country:
@@ -410,6 +623,9 @@ def _resolve_antidumping(
     if not country_match:
         return 0.0, f"Не применяется: страна {country} не входит в список ({antidumping_countries})", "n/a"
 
+    if antidumping_condition.strip():
+        return 0.0, f"Требуется проверка условий антидемпинга: {antidumping_condition}", "manual_review"
+
     if antidumping_type == "percent":
         amount = customs_value * antidumping_value / 100.0
         reason = (
@@ -419,17 +635,14 @@ def _resolve_antidumping(
         return amount, reason, "applied"
 
     if antidumping_type == "fixed":
-        amount = antidumping_value * quantity
-        reason = (
-            f"Применяется фикс. ставка {antidumping_value} руб./ед. × {quantity} ед. "
-            f"{antidumping_condition or ''} Страна: {country}."
-        ).strip()
-        return amount, reason, "applied"
+        return 0.0, "Для фиксированной антидемпинговой ставки не подтверждены валюта, единица и знаменатель. Общее количество товара не определяет сумму пошлины.", "manual_review"
 
-    return 0.0, "Не применяется (неизвестный тип)", "n/a"
+    return 0.0, "Тип антидемпинговой ставки не определён; требуется проверка", "manual_review"
 
 
 def compute_payments(payload: dict[str, Any]) -> dict[str, Any]:
+    if payload.get("as_of") is not None:
+        raise ValueError(LEGACY_PAYMENT_AS_OF_UNSUPPORTED)
     hs_code = str(payload.get("hs_code") or "").strip()
     hs_digits = _digits_hs(hs_code)
     customs_value = float(payload.get("customs_value") or 0.0)
@@ -529,45 +742,69 @@ def compute_payments(payload: dict[str, Any]) -> dict[str, Any]:
     # Duty (структурированные правила hs_duty_rules + fallback на историческую ставку)
     duty_rule, duty_rule_match_len = _find_duty_rule_for_hs(hs_code)
     manual_duty_rate = float(payload.get("duty_rate")) if payload.get("duty_rate") is not None else None
-    # Гео-подмена ставки применяется к базовой (исторической) адвалорной логике;
-    # структурированное правило hs_duty_rules остаётся приоритетным.
-    if manual_duty_rate is None and duty_rule is None and geo_meta.get("duty_override_rate") is not None:
-        manual_duty_rate = float(geo_meta["duty_override_rate"])
-    duty, duty_rate, ad_valorem_amount, specific_amount_rub, selected_rule, fx_rate, specific_qty_used = _compute_structured_duty(
-        customs_value=customs_value,
-        quantity=qty,
-        net_weight_kg=net_weight_kg,
-        extra_quantity=extra_quantity,
-        duty_rule=duty_rule,
-        manual_duty_rate=manual_duty_rate,
-        auto_duty_rate=auto_duty_rate,
-        fx_rates=payload.get("_fx_rates") if isinstance(payload.get("_fx_rates"), dict) else None,
-    )
+    # A geographic candidate cannot establish precedence or act as a manual grant.
+    duty_incomplete = manual_duty_rate is None and _duty_expression_incomplete(duty_rule)
+    if duty_incomplete:
+        duty, duty_rate, ad_valorem_amount, specific_amount_rub, selected_rule, fx_rate, specific_qty_used = (
+            0.0, 0.0, None, None, "unavailable:incomplete_expression", None, None)
+    else:
+        duty, duty_rate, ad_valorem_amount, specific_amount_rub, selected_rule, fx_rate, specific_qty_used = _compute_structured_duty(
+            customs_value=customs_value, quantity=qty, net_weight_kg=net_weight_kg,
+            extra_quantity=extra_quantity, duty_rule=duty_rule, manual_duty_rate=manual_duty_rate,
+            auto_duty_rate=auto_duty_rate,
+            fx_rates=payload.get("_fx_rates") if isinstance(payload.get("_fx_rates"), dict) else None,
+        )
+    duty_source_missing = manual_duty_rate is None and duty_rule is None and rate is None
 
-    # Tariff preference: apply country-of-origin duty coefficient
+    # A legacy country row is a review candidate, not proof of eligibility for
+    # this commodity, date and shipment. Caller assertions cannot authorize it.
     tariff_pref = get_tariff_preference(country) if country else None
     tariff_pref_meta: dict[str, Any] = {"applied": False}
+    preference_review_required = False
     user_duty_rate = payload.get("duty_rate")
-    if tariff_pref and user_duty_rate is None and geo_meta.get("duty_override_rate") is None:
-        coeff = tariff_pref.duty_coefficient
-        if coeff != 1.0:
-            duty = duty * coeff
-            if ad_valorem_amount is not None:
-                ad_valorem_amount = ad_valorem_amount * coeff
-            if specific_amount_rub is not None:
-                specific_amount_rub = specific_amount_rub * coeff
+    if tariff_pref and user_duty_rate is None:
+        raw_coeff = tariff_pref.duty_coefficient
+        try:
+            coeff = None if isinstance(raw_coeff, bool) else float(raw_coeff)
+        except (TypeError, ValueError, OverflowError):
+            coeff = None
+        if coeff is not None and (not isfinite(coeff) or coeff < 0):
+            coeff = None
+        if coeff is None or coeff != 1.0:
+            preference_review_required = True
             tariff_pref_meta = {
-                "applied": True,
+                "applied": False,
+                "status": "needs_review",
                 "preference_type": tariff_pref.preference_type,
-                "duty_coefficient": coeff,
+                "candidate_duty_coefficient": coeff,
+                **({"candidate_duty_coefficient_text": str(raw_coeff)[:128]} if coeff is None else {}),
+                "duty_coefficient": 1.0,
+                "eligibility_verified": False,
+                "source_kind": "legacy_country_tariff_preferences",
                 "legal_ref": tariff_pref.legal_ref or "",
+                "reason": TARIFF_PREFERENCE_REVIEW_REASON,
+                "missing_eligibility": [
+                    "current_regime",
+                    "exact_code_and_date",
+                    "origin_and_goods_status",
+                    "origin_evidence",
+                    "shipment_conditions_and_exceptions",
+                ],
             }
 
     # Excise
     user_excise = payload.get("excise")
+    excise_review_required = user_excise is None and (
+        excise_type not in {"", "none", "percent", "fixed"}
+        or not isfinite(excise_value) or excise_value < 0
+        or (excise_type in {"", "none"} and excise_value != 0)
+    )
     if user_excise is not None:
         excise = float(user_excise)
         excise_reason = "Указано вручную"
+    elif excise_review_required:
+        excise = 0.0
+        excise_reason = "Тип, значение или применимость ставки акциза требуют проверки"
     elif excise_type == "percent":
         excise = customs_value * excise_value / 100.0
         basis_str = excise_basis or f"НК РФ ст. 193: {excise_value}% от таможенной стоимости"
@@ -582,7 +819,7 @@ def compute_payments(payload: dict[str, Any]) -> dict[str, Any]:
         excise_reason = "Уточните ставку акциза"
     else:
         excise = 0.0
-        excise_reason = "Не применяется"
+        excise_reason = "Не применяется" if excise_type in ("", "none") else "Тип ставки акциза не определён; требуется проверка"
 
     # Antidumping
     antidumping, antidumping_reason, antidumping_status = _resolve_antidumping(
@@ -601,9 +838,47 @@ def compute_payments(payload: dict[str, Any]) -> dict[str, Any]:
         quantity=qty,
         fx_rates=payload.get("_fx_rates") if isinstance(payload.get("_fx_rates"), dict) else None,
     )
+    legacy_antidumping_candidate = None
+    overlap = (
+        antidumping_status in {"applied", "manual_review"}
+        and any(item.get("measure_family") == "anti_dumping" for item in special_duties_details)
+    )
+    if overlap:
+        # The two legacy projections lack a shared source-bound measure identity.
+        # Neither choosing one nor adding both establishes lawful cumulation.
+        legacy_antidumping_candidate = {
+            "status": "needs_clarification", "source_kind": "legacy_hs_rates",
+            "applied": False, "legal_review_verified": False, "amount": None,
+            "rate_type": antidumping_type, "rate_value": antidumping_value,
+            "origin_country_scope": antidumping_countries,
+            "condition": antidumping_condition,
+            "source_revision": getattr(rate, "source_revision", "") or "",
+            "source_url": getattr(rate, "source_url", "") or "",
+            "effective_from": getattr(rate, "valid_from", "") or "",
+            "effective_to": getattr(rate, "valid_to", "") or "",
+            "review_reasons": ["legacy_antidumping_overlap_unverified"],
+        }
+        for item in special_duties_details:
+            if item.get("measure_family") == "anti_dumping":
+                item["review_reasons"].append("legacy_antidumping_overlap_unverified")
+                item.update(status="needs_clarification", calculation_available=False,
+                            amount=None, warning=LEGACY_ANTIDUMPING_OVERLAP_REASON)
+        special_duties_amount = _sum_displayed_amounts(*(
+            item["amount"] for item in special_duties_details if item.get("calculation_available")
+        ))
+        antidumping = 0.0  # Incomplete provisional subtotal, never a confirmed zero liability.
+        antidumping_status = "manual_review"
+        antidumping_reason = LEGACY_ANTIDUMPING_OVERLAP_REASON
+    special_duty_review_required = any(
+        item.get("status") == "needs_clarification" for item in special_duties_details
+    )
+    special_duty_legal_review_required = any(
+        item.get("status") == "provisional" for item in special_duties_details
+    )
     special_duties_warning: str | None = None
-    if special_duties_details and special_duties_details[0].get("warning"):
-        special_duties_warning = str(special_duties_details[0]["warning"])
+    warnings = list(dict.fromkeys(str(item["warning"]) for item in special_duties_details if item.get("warning")))
+    if warnings:
+        special_duties_warning = " ".join(warnings)
 
     # Recycling fee (утильсбор) for vehicles (8701-8705, 8711)
     recycling_fee_amount = 0.0
@@ -661,18 +936,90 @@ def compute_payments(payload: dict[str, Any]) -> dict[str, Any]:
         else:
             vat_reason = "Базовая ставка 22% (нет hs_rates и записи в vat_preferences)"
 
-    duty_amount = _num(duty)
-    excise_amount = _num(excise)
-    antidumping_amount = _num(antidumping)
-    special_duties_total = _num(special_duties_amount)
-    customs_fee_amount = _num(customs_fee)
+    vat_source_missing = payload.get("vat_rate") is None and vat_pref is None and rate is None
+    if vat_source_missing:
+        vat_reason = VAT_SOURCE_MISSING_REASON
 
-    recycling_fee_total = _num(recycling_fee_amount)
+    component_review: dict[str, list[str]] = {}
+    fx_observations: list[dict[str, Any]] = []
 
-    vat_base = _sum_amounts(customs_value, duty_amount, excise_amount, antidumping_amount, special_duties_total)
-    vat = _num(vat_base) * _num(vat_rate) / 100.0
+    def require_component_review(code: str, *components: str) -> None:
+        for component in components:
+            reasons = component_review.setdefault(component, [])
+            if code not in reasons:
+                reasons.append(code)
 
-    total = _sum_amounts(customs_fee_amount, duty_amount, excise_amount, antidumping_amount, special_duties_total, vat, recycling_fee_total)
+    if duty_incomplete:
+        require_component_review("duty_expression_incomplete", "duty", "vat")
+    if geo_meta.get("duty_override_rate") is not None:
+        geo_meta.update(status="needs_review", applied=False, legal_review_verified=False)
+        require_component_review("geo_duty_applicability_unverified", "duty", "vat")
+    rate_period_unverified = _hs_rate_period_unverified(rate)
+    if rate_period_unverified:
+        if manual_duty_rate is None:
+            require_component_review("hs_rate_effective_period_unverified", "duty", "vat")
+        if payload.get("vat_rate") is None and vat_pref is None:
+            require_component_review("hs_rate_effective_period_unverified", "vat")
+        if payload.get("excise") is None:
+            require_component_review("hs_rate_effective_period_unverified", "excise", "vat")
+        require_component_review("hs_rate_effective_period_unverified", "antidumping", "vat")
+        antidumping_status = "manual_review"
+        antidumping_reason = SOURCE_REVIEW_REASONS["hs_rate_effective_period_unverified"]
+    specific_currency = (duty_rule.specific_currency or "").upper().strip() if duty_rule else ""
+    if fx_rate is not None and specific_currency != "RUB":
+        require_component_review("foreign_fx_source_unverified", "duty", "vat")
+        supplied_rates = payload.get("_fx_rates") or {}
+        fx_observations.append({
+            "usage": "specific_duty", "currency": specific_currency, "rub_per_unit": fx_rate,
+            "source_kind": "unverified_rate_map" if specific_currency in supplied_rates else "fallback_constant",
+            "source_date": None, "source_evidence_verified": False, "legal_review_verified": False,
+        })
+    invoice_currency = str(payload.get("invoice_currency") or "RUB").upper().strip()
+    if invoice_currency != "RUB":
+        require_component_review("foreign_fx_source_unverified", "duty", "vat", "customs_fee", "excise", "antidumping", "special_duty")
+        invoice_rates = payload.get("_fx_rates") if isinstance(payload.get("_fx_rates"), dict) else {}
+        invoice_factor = observed_fx_rate(invoice_rates, invoice_currency) if invoice_currency in invoice_rates else None
+        fx_observations.append({
+            "usage": "invoice", "currency": invoice_currency, "rub_per_unit": invoice_factor,
+            "source_kind": "unverified_rate_map" if invoice_factor is not None else "unavailable",
+            "source_date": None, "source_evidence_verified": False, "legal_review_verified": False,
+        })
+
+    review_reasons: list[str] = []
+    review_messages: list[str] = []
+    for required, code, reason in (
+        (duty_source_missing, "duty_source_missing", DUTY_SOURCE_MISSING_REASON),
+        (vat_source_missing, "vat_source_missing", VAT_SOURCE_MISSING_REASON),
+        (preference_review_required, "tariff_preference_eligibility_unverified", TARIFF_PREFERENCE_REVIEW_REASON),
+        (special_duty_review_required, "special_duty_applicability_unverified", SPECIAL_DUTY_REVIEW_REASON),
+        (special_duty_legal_review_required, "special_duty_legal_review_unverified", SPECIAL_DUTY_LEGAL_REVIEW_REASON),
+        (excise_review_required, "excise_applicability_unverified", excise_reason),
+        (antidumping_status == "manual_review", "antidumping_applicability_unverified", antidumping_reason),
+    ):
+        if required:
+            review_reasons.append(code)
+            review_messages.append(reason)
+    for code in SOURCE_REVIEW_REASONS:
+        if any(code in reasons for reasons in component_review.values()):
+            review_reasons.append(code)
+            review_messages.append(SOURCE_REVIEW_REASONS[code])
+    amounts_provisional = bool(review_reasons)
+    payment_review_reason = " ".join(review_messages) or None
+
+    duty_amount = _round2(duty)
+    excise_amount = _round2(excise)
+    antidumping_amount = _round2(antidumping)
+    special_duties_total = _round2(special_duties_amount)
+    customs_fee_amount = _round2(customs_fee)
+
+    recycling_fee_total = _round2(recycling_fee_amount)
+
+    # The shown VAT base and total reconcile to their shown monetary components.
+    # This does not certify these provisional amounts or a legal rounding scheme.
+    vat_base = _sum_displayed_amounts(customs_value, duty_amount, excise_amount, antidumping_amount, special_duties_total)
+    vat = _round2(vat_base * _num(vat_rate) / 100.0)
+
+    total = _sum_displayed_amounts(customs_fee_amount, duty_amount, excise_amount, antidumping_amount, special_duties_total, vat, recycling_fee_total)
 
     # Sources: интегрированные данные в приложении (без внешних ссылок)
     stats = get_integrated_data_stats()
@@ -706,11 +1053,59 @@ def compute_payments(payload: dict[str, Any]) -> dict[str, Any]:
         "source_code": "EEC_ETT" if rate else None,
         "antidumping_status": antidumping_status,
     }
+    if amounts_provisional:
+        data_quality.update({
+            "status": "REVIEW_REQUIRED",
+            "amounts_provisional": True,
+            "payment_review_reason": payment_review_reason,
+            "payment_review_reasons": review_reasons,
+        })
+    if preference_review_required:
+        data_quality.update({
+            "tariff_preference_status": "needs_review",
+            "tariff_preference_warning": TARIFF_PREFERENCE_REVIEW_REASON,
+        })
+    data_quality["payment_component_review"] = component_review
+    data_quality["fx_observations"] = fx_observations
 
     tnved_context = get_tnved_context_for_hs(hs_code)
 
+    if user_duty_rate is not None:
+        duty_reason = f"Ставка пошлины указана вручную: {duty_rate}%."
+    elif duty_rule is not None:
+        duty_reason = (
+            f"Структурированное правило: {duty_rule.type} "
+            f"(код {duty_rule.commodity_code}). Выбрано: {selected_rule}."
+        )
+    elif matched:
+        duty_reason = f"Ввозная пошлина {duty_rate}% по коду ТН ВЭД/ЕТТ ЕАЭС."
+    else:
+        duty_reason = DUTY_SOURCE_MISSING_REASON
+    if preference_review_required:
+        duty_reason += f" {TARIFF_PREFERENCE_REVIEW_REASON}"
+    for code in component_review.get("duty", []):
+        duty_reason += " " + SOURCE_REVIEW_REASONS[code]
+
     return {
-        "status": "OK",
+        "status": "REVIEW_REQUIRED" if amounts_provisional else "OK",
+        "amounts_provisional": amounts_provisional,
+        "payment_review_reason": payment_review_reason,
+        "payment_review_reasons": review_reasons,
+        "payment_component_review": component_review,
+        "fx_observations": fx_observations,
+        **({"hs_rate_period_candidate": {
+            "status": "needs_review", "source_kind": "legacy_hs_rates",
+            "valid_from": getattr(rate, "valid_from", None), "valid_to": getattr(rate, "valid_to", None),
+            "source_revision": getattr(rate, "source_revision", ""), "source_url": getattr(rate, "source_url", ""),
+            "legal_review_verified": False,
+        }} if rate_period_unverified else {}),
+        **({"duty_candidate": {
+            "status": "needs_clarification", "amount": None, "calculation_available": False,
+            "applied": False, "legal_review_verified": False,
+            "reason": "duty_expression_incomplete", "code": duty_rule.commodity_code,
+            "rule_type": duty_rule.type, "specific_amount_text": str(duty_rule.specific_amount)[:128],
+            "specific_currency": duty_rule.specific_currency, "specific_uom": duty_rule.specific_uom,
+        }} if duty_incomplete else {}),
         "hs_code": hs_code,
         "country": country,
         "customs_value": _round2(customs_value),
@@ -761,18 +1156,7 @@ def compute_payments(payload: dict[str, Any]) -> dict[str, Any]:
         },
         "legal_basis": {
             "vat": vat_reason,
-            "duty": (
-                (
-                    f"Структурированное правило: {duty_rule.type} "
-                    f"(код {duty_rule.commodity_code}). Выбрано: {selected_rule}."
-                )
-                if duty_rule
-                else (
-                    f"Ввозная пошлина {duty_rate}% по коду ТН ВЭД/ЕТТ ЕАЭС."
-                    if matched else
-                    "Ставка пошлины не найдена в локальной базе; применена ставка 0%."
-                )
-            ),
+            "duty": duty_reason,
             "customs_fee": "Таможенный сбор рассчитан по шкале РФ 2026 по таможенной стоимости.",
             "antidumping": antidumping_reason,
             "excise": excise_reason,
@@ -781,6 +1165,8 @@ def compute_payments(payload: dict[str, Any]) -> dict[str, Any]:
         "sources": applied_sources,
         "tnved_context": tnved_context,
         "special_duties": special_duties_details,
+        **({"legacy_antidumping_candidate": legacy_antidumping_candidate}
+           if legacy_antidumping_candidate is not None else {}),
         "special_duties_amount": _round2(special_duties_amount),
         "special_duties_warning": special_duties_warning,
         "geo": geo_meta,
@@ -793,6 +1179,8 @@ def compare_payment_scenarios(payload: dict[str, Any]) -> dict[str, Any]:
     """Сравнение 2–8 сценариев при общих экономических параметрах (что если другой ТН ВЭД)."""
     shared = payload.get("shared") or {}
     scenarios = payload.get("scenarios") or []
+    if payload.get("as_of") is not None or shared.get("as_of") is not None or any(isinstance(row, dict) and row.get("as_of") is not None for row in scenarios):
+        raise ValueError(LEGACY_PAYMENT_AS_OF_UNSUPPORTED)
     if len(scenarios) < 2:
         raise ValueError("Укажите минимум 2 сценария (разные коды ТН ВЭД)")
     if len(scenarios) > 8:
@@ -814,6 +1202,13 @@ def compare_payment_scenarios(payload: dict[str, Any]) -> dict[str, Any]:
         econ["country"] = str(shared["country"]).strip().upper()
     if shared.get("quantity") is not None:
         econ["quantity"] = float(shared["quantity"])
+    for key in ("net_weight_kg", "extra_quantity"):
+        if shared.get(key) is not None:
+            econ[key] = float(shared[key])
+    if shared.get("apply_reduced_vat") is not None:
+        econ["apply_reduced_vat"] = bool(shared["apply_reduced_vat"])
+    if shared.get("invoice_currency") is not None:
+        econ["invoice_currency"] = str(shared["invoice_currency"])
 
     out_scenarios: list[dict[str, Any]] = []
     first_total: float | None = None
@@ -843,6 +1238,13 @@ def compare_payment_scenarios(payload: dict[str, Any]) -> dict[str, Any]:
                 "label": label,
                 "hs_code": hs,
                 "country": (merged.get("country") or None),
+                "status": res.get("status") or "OK",
+                "amounts_provisional": bool(res.get("amounts_provisional")),
+                "payment_review_reason": res.get("payment_review_reason"),
+                "payment_review_reasons": res.get("payment_review_reasons"),
+                "tariff_preference": res.get("tariff_preference"),
+                "payment_result": res,
+                "calculation_payload": merged,
                 "delta_total_vs_first_rub": delta,
                 "total_payable": _round2(total),
                 "duty": res["breakdown"]["duty"],
@@ -856,8 +1258,19 @@ def compare_payment_scenarios(payload: dict[str, Any]) -> dict[str, Any]:
             }
         )
 
+    # Even the first row cannot be a comparison baseline while any scenario is
+    # unresolved or blocked. Keep estimates, but do not imply proven savings.
+    comparison_requires_review = any(
+        row["amounts_provisional"] or row["status"] != "OK"
+        for row in out_scenarios
+    )
+    if comparison_requires_review:
+        for row in out_scenarios:
+            row["delta_total_vs_first_rub"] = None
+
     return {
-        "status": "OK",
+        "status": "REVIEW_REQUIRED" if comparison_requires_review else "OK",
+        "amounts_provisional": any(row["amounts_provisional"] for row in out_scenarios),
         "shared_economic": econ,
         "scenarios": out_scenarios,
     }

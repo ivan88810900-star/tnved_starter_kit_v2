@@ -1,0 +1,1551 @@
+{
+  "schema_version": 1,
+  "kind": "retained_legal_list_metadata_discovery",
+  "capture_run_id": "34241158561",
+  "parser_sha256": "7b5878b746f966822cf14aae2526bb294beeff3995f635c34985007698bc09b8",
+  "source_inventory_sha256": "970488df7a417ebcd48799b80eb69aef6d76c62c8f19eabaaa0cfbec595ad695",
+  "note_inventory_sha256": "68c736e54340018aac3fc4a1f7e4b0b6d35cc9b59f0700804a2912b3a2092228",
+  "lists": [
+    {
+      "source_url": "https://docs.eaeunion.org/documents/399/",
+      "source_sha256": "d9c2c6856efd697ce8a54bda27f7673e88bd344aeaeb9aa5d06331546e1da729",
+      "size_bytes": 913243,
+      "observed_category": "Акты Евразийской экономической комиссии - Коллегия Евразийской экономической комиссии - Решения - 2022",
+      "document_count": 100,
+      "reported_result_count": 205,
+      "pagination_links": [
+        {
+          "url": "https://docs.eaeunion.org/documents/399/?sphrase_id=528328&PAGEN_1=2",
+          "href": "/documents/399/?sphrase_id=528328&PAGEN_1=2",
+          "text": "2",
+          "locator": "html:a:1612:line:13474:column:2"
+        },
+        {
+          "url": "https://docs.eaeunion.org/documents/399/?sphrase_id=528328&PAGEN_1=3",
+          "href": "/documents/399/?sphrase_id=528328&PAGEN_1=3",
+          "text": "3",
+          "locator": "html:a:1613:line:13475:column:2"
+        },
+        {
+          "url": "https://docs.eaeunion.org/documents/399/?sphrase_id=528328&PAGEN_1=2",
+          "href": "/documents/399/?sphrase_id=528328&PAGEN_1=2",
+          "text": "След.",
+          "locator": "html:a:1614:line:13476:column:2"
+        }
+      ],
+      "records_sha256": "7456e8d6a8923e1c92565fac5b9d12beaecb08c1f33a4ef45390bce3d4510252"
+    },
+    {
+      "source_url": "https://docs.eaeunion.org/documents/401/",
+      "source_sha256": "79c4909e92cb4a573dc2347e997dbb7bc7b186d560d1c374a209860d16af586f",
+      "size_bytes": 905173,
+      "observed_category": "Акты Евразийской экономической комиссии - Совет Евразийской экономической комиссии - Решения - 2022",
+      "document_count": 100,
+      "reported_result_count": 170,
+      "pagination_links": [
+        {
+          "url": "https://docs.eaeunion.org/documents/401/?sphrase_id=691361&PAGEN_1=2",
+          "href": "/documents/401/?sphrase_id=691361&PAGEN_1=2",
+          "text": "2",
+          "locator": "html:a:1618:line:13522:column:2"
+        },
+        {
+          "url": "https://docs.eaeunion.org/documents/401/?sphrase_id=691361&PAGEN_1=2",
+          "href": "/documents/401/?sphrase_id=691361&PAGEN_1=2",
+          "text": "След.",
+          "locator": "html:a:1619:line:13523:column:2"
+        }
+      ],
+      "records_sha256": "19a7103494fb527d662a3cd927c20e27b5365eda477247aa824ab9095e59788e"
+    }
+  ],
+  "inventory_matches": [
+    {
+      "source_url": "https://docs.eaeunion.org/documents/399/",
+      "source_sha256": "d9c2c6856efd697ce8a54bda27f7673e88bd344aeaeb9aa5d06331546e1da729",
+      "document": {
+        "issuing_body": "collegium",
+        "number": "154",
+        "observed_adoption_date": "2022-10-25",
+        "observed_publication_date": "2022-11-07",
+        "observed_entry_into_force_date": "2022-11-17",
+        "title": "Об установлении ставок ввозных таможенных пошлин Единого таможенного тарифа Евразийского экономического союза в отношении отдельных видов пищевых продуктов и кнопочных переключателей",
+        "document_link": {
+          "url": "https://docs.eaeunion.org/documents/399/7040/",
+          "href": "/documents/399/7040/",
+          "text": "Решение Коллегии ЕЭК № 154",
+          "locator": "html:a:652:line:8118:column:84"
+        },
+        "evidence": {
+          "locator": "html:list-row:41:line:8114:column:0",
+          "text": "Акты Евразийской экономической комиссии – Коллегия Евразийской экономической комиссии – Решения – 2022 Решение Коллегии ЕЭК № 154 Об установлении ставок ввозных таможенных пошлин Единого таможенного тарифа Евразийского экономического союза в отношении отдельных видов пищевых продуктов и кнопочных переключателей Рус Հայ Бел Қаз Кыр Дата принятия документа: 25.10.2022 Дата опубликования документа: 07.11.2022 Дата вступления в силу: 17.11.2022 Документы Рус Հայ Бел Қаз Кыр pdf Решение Коллегии №154 от 25 октября 2022 г Скачать Приложения Рус doc Решение Коллегии №154 от 25 октября 2022 г Скачать",
+          "text_sha256": "9900844d5bbe02cc7c9040bfc9b55683d8b8c40f8aa7855033bf90cf1f7fb1ab"
+        },
+        "pdf_references": [
+          {
+            "url": "https://docs.eaeunion.org/upload/iblock/443/itj3hz1prxv00y3prchhunjbfdj0fnmh/err_07112022_154_doc.pdf",
+            "href": "/upload/iblock/443/itj3hz1prxv00y3prchhunjbfdj0fnmh/err_07112022_154_doc.pdf",
+            "raw_href": "/upload/iblock/443/itj3hz1prxv00y3prchhunjbfdj0fnmh/err_07112022_154_doc.pdf",
+            "text": "Рус",
+            "locator": "html:a:653:line:8124:column:44",
+            "media_type": "application/pdf",
+            "role": "legal_attachment_pdf"
+          },
+          {
+            "url": "https://docs.eaeunion.org/upload/iblock/443/itj3hz1prxv00y3prchhunjbfdj0fnmh/err_07112022_154_doc.pdf",
+            "href": "/upload/iblock/443/itj3hz1prxv00y3prchhunjbfdj0fnmh/err_07112022_154_doc.pdf",
+            "raw_href": "/upload/iblock/443/itj3hz1prxv00y3prchhunjbfdj0fnmh/err_07112022_154_doc.pdf",
+            "text": "Рус",
+            "locator": "html:a:658:line:8155:column:12",
+            "media_type": "application/pdf",
+            "role": "legal_attachment_pdf"
+          },
+          {
+            "url": "https://docs.eaeunion.org/upload/iblock/443/itj3hz1prxv00y3prchhunjbfdj0fnmh/err_07112022_154_doc.pdf",
+            "href": "/upload/iblock/443/itj3hz1prxv00y3prchhunjbfdj0fnmh/err_07112022_154_doc.pdf",
+            "raw_href": "/upload/iblock/443/itj3hz1prxv00y3prchhunjbfdj0fnmh/err_07112022_154_doc.pdf",
+            "text": "Решение Коллегии №154 от 25 октября 2022 г",
+            "locator": "html:a:663:line:8159:column:8",
+            "media_type": "application/pdf",
+            "role": "legal_attachment_pdf"
+          },
+          {
+            "url": "https://docs.eaeunion.org/upload/iblock/443/itj3hz1prxv00y3prchhunjbfdj0fnmh/err_07112022_154_doc.pdf",
+            "href": "/upload/iblock/443/itj3hz1prxv00y3prchhunjbfdj0fnmh/err_07112022_154_doc.pdf",
+            "raw_href": "/upload/iblock/443/itj3hz1prxv00y3prchhunjbfdj0fnmh/err_07112022_154_doc.pdf",
+            "text": "Скачать",
+            "locator": "html:a:664:line:8163:column:8",
+            "media_type": "application/pdf",
+            "role": "legal_attachment_pdf"
+          }
+        ],
+        "unsupported_references": [
+          {
+            "url": "https://docs.eaeunion.org/upload/iblock/55e/n73a92pmunw289qb1plruy4xlwpg62b3/err_07112022_154_doc.docx",
+            "href": "/upload/iblock/55e/n73a92pmunw289qb1plruy4xlwpg62b3/err_07112022_154_doc.docx",
+            "raw_href": "/upload/iblock/55e/n73a92pmunw289qb1plruy4xlwpg62b3/err_07112022_154_doc.docx",
+            "text": "Հայ",
+            "locator": "html:a:654:line:8125:column:88",
+            "media_type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            "role": "unsupported_legal_attachment"
+          },
+          {
+            "url": "https://docs.eaeunion.org/upload/iblock/922/ua7f7f5wpzbfrqzxgeyw6wrl8288uk3o/err_07112022_doc.docx",
+            "href": "/upload/iblock/922/ua7f7f5wpzbfrqzxgeyw6wrl8288uk3o/err_07112022_doc.docx",
+            "raw_href": "/upload/iblock/922/ua7f7f5wpzbfrqzxgeyw6wrl8288uk3o/err_07112022_doc.docx",
+            "text": "Бел",
+            "locator": "html:a:655:line:8126:column:88",
+            "media_type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            "role": "unsupported_legal_attachment"
+          },
+          {
+            "url": "https://docs.eaeunion.org/upload/iblock/d81/7lgbp1q9jwi6k138kmr10w5xhvbnvv1e/err_07112022_154_doc.doc",
+            "href": "/upload/iblock/d81/7lgbp1q9jwi6k138kmr10w5xhvbnvv1e/err_07112022_154_doc.doc",
+            "raw_href": "/upload/iblock/d81/7lgbp1q9jwi6k138kmr10w5xhvbnvv1e/err_07112022_154_doc.doc",
+            "text": "Қаз",
+            "locator": "html:a:656:line:8127:column:88",
+            "media_type": "application/msword",
+            "role": "unsupported_legal_attachment"
+          },
+          {
+            "url": "https://docs.eaeunion.org/upload/iblock/fb1/w6gvxd3izy2tbxs0ms21olty1lcyu2ez/err_07112022_154_doc.doc",
+            "href": "/upload/iblock/fb1/w6gvxd3izy2tbxs0ms21olty1lcyu2ez/err_07112022_154_doc.doc",
+            "raw_href": "/upload/iblock/fb1/w6gvxd3izy2tbxs0ms21olty1lcyu2ez/err_07112022_154_doc.doc",
+            "text": "Кыр",
+            "locator": "html:a:657:line:8128:column:88",
+            "media_type": "application/msword",
+            "role": "unsupported_legal_attachment"
+          },
+          {
+            "url": "https://docs.eaeunion.org/upload/iblock/55e/n73a92pmunw289qb1plruy4xlwpg62b3/err_07112022_154_doc.docx",
+            "href": "/upload/iblock/55e/n73a92pmunw289qb1plruy4xlwpg62b3/err_07112022_154_doc.docx",
+            "raw_href": "/upload/iblock/55e/n73a92pmunw289qb1plruy4xlwpg62b3/err_07112022_154_doc.docx",
+            "text": "Հայ",
+            "locator": "html:a:659:line:8155:column:122",
+            "media_type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            "role": "unsupported_legal_attachment"
+          },
+          {
+            "url": "https://docs.eaeunion.org/upload/iblock/922/ua7f7f5wpzbfrqzxgeyw6wrl8288uk3o/err_07112022_doc.docx",
+            "href": "/upload/iblock/922/ua7f7f5wpzbfrqzxgeyw6wrl8288uk3o/err_07112022_doc.docx",
+            "raw_href": "/upload/iblock/922/ua7f7f5wpzbfrqzxgeyw6wrl8288uk3o/err_07112022_doc.docx",
+            "text": "Бел",
+            "locator": "html:a:660:line:8155:column:233",
+            "media_type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            "role": "unsupported_legal_attachment"
+          },
+          {
+            "url": "https://docs.eaeunion.org/upload/iblock/d81/7lgbp1q9jwi6k138kmr10w5xhvbnvv1e/err_07112022_154_doc.doc",
+            "href": "/upload/iblock/d81/7lgbp1q9jwi6k138kmr10w5xhvbnvv1e/err_07112022_154_doc.doc",
+            "raw_href": "/upload/iblock/d81/7lgbp1q9jwi6k138kmr10w5xhvbnvv1e/err_07112022_154_doc.doc",
+            "text": "Қаз",
+            "locator": "html:a:661:line:8155:column:340",
+            "media_type": "application/msword",
+            "role": "unsupported_legal_attachment"
+          },
+          {
+            "url": "https://docs.eaeunion.org/upload/iblock/fb1/w6gvxd3izy2tbxs0ms21olty1lcyu2ez/err_07112022_154_doc.doc",
+            "href": "/upload/iblock/fb1/w6gvxd3izy2tbxs0ms21olty1lcyu2ez/err_07112022_154_doc.doc",
+            "raw_href": "/upload/iblock/fb1/w6gvxd3izy2tbxs0ms21olty1lcyu2ez/err_07112022_154_doc.doc",
+            "text": "Кыр",
+            "locator": "html:a:662:line:8155:column:450",
+            "media_type": "application/msword",
+            "role": "unsupported_legal_attachment"
+          },
+          {
+            "url": "https://docs.eaeunion.org/upload/iblock/506/pz5abhaeqankq5mfqc7eeiow12jn0gjf/err_07112022_154_att.doc",
+            "href": "/upload/iblock/506/pz5abhaeqankq5mfqc7eeiow12jn0gjf/err_07112022_154_att.doc",
+            "raw_href": "/upload/iblock/506/pz5abhaeqankq5mfqc7eeiow12jn0gjf/err_07112022_154_att.doc",
+            "text": "Рус",
+            "locator": "html:a:665:line:8177:column:12",
+            "media_type": "application/msword",
+            "role": "unsupported_legal_attachment"
+          },
+          {
+            "url": "https://docs.eaeunion.org/upload/iblock/506/pz5abhaeqankq5mfqc7eeiow12jn0gjf/err_07112022_154_att.doc",
+            "href": "/upload/iblock/506/pz5abhaeqankq5mfqc7eeiow12jn0gjf/err_07112022_154_att.doc",
+            "raw_href": "/upload/iblock/506/pz5abhaeqankq5mfqc7eeiow12jn0gjf/err_07112022_154_att.doc",
+            "text": "Решение Коллегии №154 от 25 октября 2022 г",
+            "locator": "html:a:666:line:8181:column:8",
+            "media_type": "application/msword",
+            "role": "unsupported_legal_attachment"
+          },
+          {
+            "url": "https://docs.eaeunion.org/upload/iblock/506/pz5abhaeqankq5mfqc7eeiow12jn0gjf/err_07112022_154_att.doc",
+            "href": "/upload/iblock/506/pz5abhaeqankq5mfqc7eeiow12jn0gjf/err_07112022_154_att.doc",
+            "raw_href": "/upload/iblock/506/pz5abhaeqankq5mfqc7eeiow12jn0gjf/err_07112022_154_att.doc",
+            "text": "Скачать",
+            "locator": "html:a:667:line:8185:column:8",
+            "media_type": "application/msword",
+            "role": "unsupported_legal_attachment"
+          }
+        ],
+        "primary_body_verified": false,
+        "legal_dates_verified": false
+      }
+    },
+    {
+      "source_url": "https://docs.eaeunion.org/documents/399/",
+      "source_sha256": "d9c2c6856efd697ce8a54bda27f7673e88bd344aeaeb9aa5d06331546e1da729",
+      "document": {
+        "issuing_body": "collegium",
+        "number": "135",
+        "observed_adoption_date": "2022-09-28",
+        "observed_publication_date": "2022-09-30",
+        "observed_entry_into_force_date": "2022-10-10",
+        "title": "Об установлении ставок ввозных таможенных пошлин Единого таможенного тарифа Евразийского экономического союза в отношении отдельных видов товаров, ввозимых на таможенную территорию Евразийского экономического союза в целях обеспечения устойчивости экономик государств – членов Евразийского экономического союза",
+        "document_link": {
+          "url": "https://docs.eaeunion.org/documents/399/6952/",
+          "href": "/documents/399/6952/",
+          "text": "Решение Коллегии ЕЭК №135",
+          "locator": "html:a:1148:line:10887:column:84"
+        },
+        "evidence": {
+          "locator": "html:list-row:72:line:10883:column:0",
+          "text": "Акты Евразийской экономической комиссии – Коллегия Евразийской экономической комиссии – Решения – 2022 Решение Коллегии ЕЭК №135 Об установлении ставок ввозных таможенных пошлин Единого таможенного тарифа Евразийского экономического союза в отношении отдельных видов товаров, ввозимых на таможенную территорию Евразийского экономического союза в целях обеспечения устойчивости экономик государств – членов Евразийского экономического союза Рус Հայ Бел Қаз Кыр Дата принятия документа: 28.09.2022 Дата опубликования документа: 30.09.2022 Дата вступления в силу: 10.10.2022 Документы Рус Հայ Бел Қаз Кыр pdf Решение Коллегии №135 от 28 сентября 2022 г Скачать Приложения Рус zip Решение Коллегии №135 от 28 сентября 2022 г Скачать",
+          "text_sha256": "d000b6fafb1d7bde4be59a2876b81031b8ced30ae1b2de911c8b4ff99dcbf998"
+        },
+        "pdf_references": [
+          {
+            "url": "https://docs.eaeunion.org/upload/iblock/905/atvcjvt4ylanrbnxnoqzsf62gahwn5un/err_30092022_135_doc.pdf",
+            "href": "/upload/iblock/905/atvcjvt4ylanrbnxnoqzsf62gahwn5un/err_30092022_135_doc.pdf",
+            "raw_href": "/upload/iblock/905/atvcjvt4ylanrbnxnoqzsf62gahwn5un/err_30092022_135_doc.pdf",
+            "text": "Рус",
+            "locator": "html:a:1149:line:10893:column:44",
+            "media_type": "application/pdf",
+            "role": "legal_attachment_pdf"
+          },
+          {
+            "url": "https://docs.eaeunion.org/upload/iblock/905/atvcjvt4ylanrbnxnoqzsf62gahwn5un/err_30092022_135_doc.pdf",
+            "href": "/upload/iblock/905/atvcjvt4ylanrbnxnoqzsf62gahwn5un/err_30092022_135_doc.pdf",
+            "raw_href": "/upload/iblock/905/atvcjvt4ylanrbnxnoqzsf62gahwn5un/err_30092022_135_doc.pdf",
+            "text": "Рус",
+            "locator": "html:a:1154:line:10924:column:12",
+            "media_type": "application/pdf",
+            "role": "legal_attachment_pdf"
+          },
+          {
+            "url": "https://docs.eaeunion.org/upload/iblock/905/atvcjvt4ylanrbnxnoqzsf62gahwn5un/err_30092022_135_doc.pdf",
+            "href": "/upload/iblock/905/atvcjvt4ylanrbnxnoqzsf62gahwn5un/err_30092022_135_doc.pdf",
+            "raw_href": "/upload/iblock/905/atvcjvt4ylanrbnxnoqzsf62gahwn5un/err_30092022_135_doc.pdf",
+            "text": "Решение Коллегии №135 от 28 сентября 2022 г",
+            "locator": "html:a:1159:line:10928:column:8",
+            "media_type": "application/pdf",
+            "role": "legal_attachment_pdf"
+          },
+          {
+            "url": "https://docs.eaeunion.org/upload/iblock/905/atvcjvt4ylanrbnxnoqzsf62gahwn5un/err_30092022_135_doc.pdf",
+            "href": "/upload/iblock/905/atvcjvt4ylanrbnxnoqzsf62gahwn5un/err_30092022_135_doc.pdf",
+            "raw_href": "/upload/iblock/905/atvcjvt4ylanrbnxnoqzsf62gahwn5un/err_30092022_135_doc.pdf",
+            "text": "Скачать",
+            "locator": "html:a:1160:line:10932:column:8",
+            "media_type": "application/pdf",
+            "role": "legal_attachment_pdf"
+          }
+        ],
+        "unsupported_references": [
+          {
+            "url": "https://docs.eaeunion.org/upload/iblock/975/11zksxalec6de08uavc2zkxe1vx3kci9/err_30092022_doc.docx",
+            "href": "/upload/iblock/975/11zksxalec6de08uavc2zkxe1vx3kci9/err_30092022_doc.docx",
+            "raw_href": "/upload/iblock/975/11zksxalec6de08uavc2zkxe1vx3kci9/err_30092022_doc.docx",
+            "text": "Հայ",
+            "locator": "html:a:1150:line:10894:column:88",
+            "media_type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            "role": "unsupported_legal_attachment"
+          },
+          {
+            "url": "https://docs.eaeunion.org/upload/iblock/882/4lped7taadyv8qgolfb9rsjpy6vywgtn/err_30092022_135_doc.docx",
+            "href": "/upload/iblock/882/4lped7taadyv8qgolfb9rsjpy6vywgtn/err_30092022_135_doc.docx",
+            "raw_href": "/upload/iblock/882/4lped7taadyv8qgolfb9rsjpy6vywgtn/err_30092022_135_doc.docx",
+            "text": "Бел",
+            "locator": "html:a:1151:line:10895:column:88",
+            "media_type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            "role": "unsupported_legal_attachment"
+          },
+          {
+            "url": "https://docs.eaeunion.org/upload/iblock/31c/0mxbfdu9ceq18zib2juxxu8pg1gmgyb8/err_30092022_135_doc.doc",
+            "href": "/upload/iblock/31c/0mxbfdu9ceq18zib2juxxu8pg1gmgyb8/err_30092022_135_doc.doc",
+            "raw_href": "/upload/iblock/31c/0mxbfdu9ceq18zib2juxxu8pg1gmgyb8/err_30092022_135_doc.doc",
+            "text": "Қаз",
+            "locator": "html:a:1152:line:10896:column:88",
+            "media_type": "application/msword",
+            "role": "unsupported_legal_attachment"
+          },
+          {
+            "url": "https://docs.eaeunion.org/upload/iblock/3b0/mg1l4635qjvbgnky7bldk7w62anjoe01/err_30092022_135_doc.doc",
+            "href": "/upload/iblock/3b0/mg1l4635qjvbgnky7bldk7w62anjoe01/err_30092022_135_doc.doc",
+            "raw_href": "/upload/iblock/3b0/mg1l4635qjvbgnky7bldk7w62anjoe01/err_30092022_135_doc.doc",
+            "text": "Кыр",
+            "locator": "html:a:1153:line:10897:column:88",
+            "media_type": "application/msword",
+            "role": "unsupported_legal_attachment"
+          },
+          {
+            "url": "https://docs.eaeunion.org/upload/iblock/975/11zksxalec6de08uavc2zkxe1vx3kci9/err_30092022_doc.docx",
+            "href": "/upload/iblock/975/11zksxalec6de08uavc2zkxe1vx3kci9/err_30092022_doc.docx",
+            "raw_href": "/upload/iblock/975/11zksxalec6de08uavc2zkxe1vx3kci9/err_30092022_doc.docx",
+            "text": "Հայ",
+            "locator": "html:a:1155:line:10924:column:122",
+            "media_type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            "role": "unsupported_legal_attachment"
+          },
+          {
+            "url": "https://docs.eaeunion.org/upload/iblock/882/4lped7taadyv8qgolfb9rsjpy6vywgtn/err_30092022_135_doc.docx",
+            "href": "/upload/iblock/882/4lped7taadyv8qgolfb9rsjpy6vywgtn/err_30092022_135_doc.docx",
+            "raw_href": "/upload/iblock/882/4lped7taadyv8qgolfb9rsjpy6vywgtn/err_30092022_135_doc.docx",
+            "text": "Бел",
+            "locator": "html:a:1156:line:10924:column:229",
+            "media_type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            "role": "unsupported_legal_attachment"
+          },
+          {
+            "url": "https://docs.eaeunion.org/upload/iblock/31c/0mxbfdu9ceq18zib2juxxu8pg1gmgyb8/err_30092022_135_doc.doc",
+            "href": "/upload/iblock/31c/0mxbfdu9ceq18zib2juxxu8pg1gmgyb8/err_30092022_135_doc.doc",
+            "raw_href": "/upload/iblock/31c/0mxbfdu9ceq18zib2juxxu8pg1gmgyb8/err_30092022_135_doc.doc",
+            "text": "Қаз",
+            "locator": "html:a:1157:line:10924:column:340",
+            "media_type": "application/msword",
+            "role": "unsupported_legal_attachment"
+          },
+          {
+            "url": "https://docs.eaeunion.org/upload/iblock/3b0/mg1l4635qjvbgnky7bldk7w62anjoe01/err_30092022_135_doc.doc",
+            "href": "/upload/iblock/3b0/mg1l4635qjvbgnky7bldk7w62anjoe01/err_30092022_135_doc.doc",
+            "raw_href": "/upload/iblock/3b0/mg1l4635qjvbgnky7bldk7w62anjoe01/err_30092022_135_doc.doc",
+            "text": "Кыр",
+            "locator": "html:a:1158:line:10924:column:450",
+            "media_type": "application/msword",
+            "role": "unsupported_legal_attachment"
+          },
+          {
+            "url": "https://docs.eaeunion.org/upload/iblock/51b/fpzktjj7fvdn2ji6k2xlqztztoktsuq7/err_30092022_135_att.zip",
+            "href": "/upload/iblock/51b/fpzktjj7fvdn2ji6k2xlqztztoktsuq7/err_30092022_135_att.zip",
+            "raw_href": "/upload/iblock/51b/fpzktjj7fvdn2ji6k2xlqztztoktsuq7/err_30092022_135_att.zip",
+            "text": "Рус",
+            "locator": "html:a:1161:line:10946:column:12",
+            "media_type": "application/zip",
+            "role": "unsupported_legal_attachment"
+          },
+          {
+            "url": "https://docs.eaeunion.org/upload/iblock/51b/fpzktjj7fvdn2ji6k2xlqztztoktsuq7/err_30092022_135_att.zip",
+            "href": "/upload/iblock/51b/fpzktjj7fvdn2ji6k2xlqztztoktsuq7/err_30092022_135_att.zip",
+            "raw_href": "/upload/iblock/51b/fpzktjj7fvdn2ji6k2xlqztztoktsuq7/err_30092022_135_att.zip",
+            "text": "Решение Коллегии №135 от 28 сентября 2022 г",
+            "locator": "html:a:1162:line:10950:column:8",
+            "media_type": "application/zip",
+            "role": "unsupported_legal_attachment"
+          },
+          {
+            "url": "https://docs.eaeunion.org/upload/iblock/51b/fpzktjj7fvdn2ji6k2xlqztztoktsuq7/err_30092022_135_att.zip",
+            "href": "/upload/iblock/51b/fpzktjj7fvdn2ji6k2xlqztztoktsuq7/err_30092022_135_att.zip",
+            "raw_href": "/upload/iblock/51b/fpzktjj7fvdn2ji6k2xlqztztoktsuq7/err_30092022_135_att.zip",
+            "text": "Скачать",
+            "locator": "html:a:1163:line:10954:column:8",
+            "media_type": "application/zip",
+            "role": "unsupported_legal_attachment"
+          }
+        ],
+        "primary_body_verified": false,
+        "legal_dates_verified": false
+      }
+    },
+    {
+      "source_url": "https://docs.eaeunion.org/documents/399/",
+      "source_sha256": "d9c2c6856efd697ce8a54bda27f7673e88bd344aeaeb9aa5d06331546e1da729",
+      "document": {
+        "issuing_body": "collegium",
+        "number": "129",
+        "observed_adoption_date": "2022-09-13",
+        "observed_publication_date": "2022-09-19",
+        "observed_entry_into_force_date": "2022-10-07",
+        "title": "Об установлении ставки ввозной таможенной пошлины Единого таможенного тарифа Евразийского экономического союза в отношении отдельных видов контейнеров",
+        "document_link": {
+          "url": "https://docs.eaeunion.org/documents/399/6921/",
+          "href": "/documents/399/6921/",
+          "text": "Решение Коллегии ЕЭК №129",
+          "locator": "html:a:1244:line:11423:column:84"
+        },
+        "evidence": {
+          "locator": "html:list-row:78:line:11419:column:0",
+          "text": "Акты Евразийской экономической комиссии – Коллегия Евразийской экономической комиссии – Решения – 2022 Решение Коллегии ЕЭК №129 Об установлении ставки ввозной таможенной пошлины Единого таможенного тарифа Евразийского экономического союза в отношении отдельных видов контейнеров Рус Հայ Бел Қаз Кыр Дата принятия документа: 13.09.2022 Дата опубликования документа: 19.09.2022 Дата вступления в силу: 07.10.2022 Документы Рус Հայ Бел Қаз Кыр pdf Решение Коллегии №129 от 13 сентября 2022 г Скачать Приложения Рус doc Решение Коллегии №129 от 13 сентября 2022 г Скачать",
+          "text_sha256": "62cd68427bf5893785ff5f2a6a6861125250a50238e86c2b0506d194ef3f8a48"
+        },
+        "pdf_references": [
+          {
+            "url": "https://docs.eaeunion.org/upload/iblock/cd3/cz5ucsuvp22x1iyskt4ouj259lm9w0d5/err_19092022_129_doc.pdf",
+            "href": "/upload/iblock/cd3/cz5ucsuvp22x1iyskt4ouj259lm9w0d5/err_19092022_129_doc.pdf",
+            "raw_href": "/upload/iblock/cd3/cz5ucsuvp22x1iyskt4ouj259lm9w0d5/err_19092022_129_doc.pdf",
+            "text": "Рус",
+            "locator": "html:a:1245:line:11429:column:44",
+            "media_type": "application/pdf",
+            "role": "legal_attachment_pdf"
+          },
+          {
+            "url": "https://docs.eaeunion.org/upload/iblock/cd3/cz5ucsuvp22x1iyskt4ouj259lm9w0d5/err_19092022_129_doc.pdf",
+            "href": "/upload/iblock/cd3/cz5ucsuvp22x1iyskt4ouj259lm9w0d5/err_19092022_129_doc.pdf",
+            "raw_href": "/upload/iblock/cd3/cz5ucsuvp22x1iyskt4ouj259lm9w0d5/err_19092022_129_doc.pdf",
+            "text": "Рус",
+            "locator": "html:a:1250:line:11460:column:12",
+            "media_type": "application/pdf",
+            "role": "legal_attachment_pdf"
+          },
+          {
+            "url": "https://docs.eaeunion.org/upload/iblock/cd3/cz5ucsuvp22x1iyskt4ouj259lm9w0d5/err_19092022_129_doc.pdf",
+            "href": "/upload/iblock/cd3/cz5ucsuvp22x1iyskt4ouj259lm9w0d5/err_19092022_129_doc.pdf",
+            "raw_href": "/upload/iblock/cd3/cz5ucsuvp22x1iyskt4ouj259lm9w0d5/err_19092022_129_doc.pdf",
+            "text": "Решение Коллегии №129 от 13 сентября 2022 г",
+            "locator": "html:a:1255:line:11464:column:8",
+            "media_type": "application/pdf",
+            "role": "legal_attachment_pdf"
+          },
+          {
+            "url": "https://docs.eaeunion.org/upload/iblock/cd3/cz5ucsuvp22x1iyskt4ouj259lm9w0d5/err_19092022_129_doc.pdf",
+            "href": "/upload/iblock/cd3/cz5ucsuvp22x1iyskt4ouj259lm9w0d5/err_19092022_129_doc.pdf",
+            "raw_href": "/upload/iblock/cd3/cz5ucsuvp22x1iyskt4ouj259lm9w0d5/err_19092022_129_doc.pdf",
+            "text": "Скачать",
+            "locator": "html:a:1256:line:11468:column:8",
+            "media_type": "application/pdf",
+            "role": "legal_attachment_pdf"
+          }
+        ],
+        "unsupported_references": [
+          {
+            "url": "https://docs.eaeunion.org/upload/iblock/9eb/2rpzgit1mf2b50wfn261j4wt5rzvlxdd/err_19092022_doc.docx",
+            "href": "/upload/iblock/9eb/2rpzgit1mf2b50wfn261j4wt5rzvlxdd/err_19092022_doc.docx",
+            "raw_href": "/upload/iblock/9eb/2rpzgit1mf2b50wfn261j4wt5rzvlxdd/err_19092022_doc.docx",
+            "text": "Հայ",
+            "locator": "html:a:1246:line:11430:column:88",
+            "media_type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            "role": "unsupported_legal_attachment"
+          },
+          {
+            "url": "https://docs.eaeunion.org/upload/iblock/013/fbe4pglq0cpg77ue5nh00c6mth6f0d3d/err_19092022_129_doc.docx",
+            "href": "/upload/iblock/013/fbe4pglq0cpg77ue5nh00c6mth6f0d3d/err_19092022_129_doc.docx",
+            "raw_href": "/upload/iblock/013/fbe4pglq0cpg77ue5nh00c6mth6f0d3d/err_19092022_129_doc.docx",
+            "text": "Бел",
+            "locator": "html:a:1247:line:11431:column:88",
+            "media_type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            "role": "unsupported_legal_attachment"
+          },
+          {
+            "url": "https://docs.eaeunion.org/upload/iblock/457/h9wg5g0ojsffj4g6lgqw6yghkbdd5eau/err_19092022_129_doc.doc",
+            "href": "/upload/iblock/457/h9wg5g0ojsffj4g6lgqw6yghkbdd5eau/err_19092022_129_doc.doc",
+            "raw_href": "/upload/iblock/457/h9wg5g0ojsffj4g6lgqw6yghkbdd5eau/err_19092022_129_doc.doc",
+            "text": "Қаз",
+            "locator": "html:a:1248:line:11432:column:88",
+            "media_type": "application/msword",
+            "role": "unsupported_legal_attachment"
+          },
+          {
+            "url": "https://docs.eaeunion.org/upload/iblock/947/hmfw0y4xss6vjw35vj2gcc2wgecf427v/err_19092022_129_doc.doc",
+            "href": "/upload/iblock/947/hmfw0y4xss6vjw35vj2gcc2wgecf427v/err_19092022_129_doc.doc",
+            "raw_href": "/upload/iblock/947/hmfw0y4xss6vjw35vj2gcc2wgecf427v/err_19092022_129_doc.doc",
+            "text": "Кыр",
+            "locator": "html:a:1249:line:11433:column:88",
+            "media_type": "application/msword",
+            "role": "unsupported_legal_attachment"
+          },
+          {
+            "url": "https://docs.eaeunion.org/upload/iblock/9eb/2rpzgit1mf2b50wfn261j4wt5rzvlxdd/err_19092022_doc.docx",
+            "href": "/upload/iblock/9eb/2rpzgit1mf2b50wfn261j4wt5rzvlxdd/err_19092022_doc.docx",
+            "raw_href": "/upload/iblock/9eb/2rpzgit1mf2b50wfn261j4wt5rzvlxdd/err_19092022_doc.docx",
+            "text": "Հայ",
+            "locator": "html:a:1251:line:11460:column:122",
+            "media_type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            "role": "unsupported_legal_attachment"
+          },
+          {
+            "url": "https://docs.eaeunion.org/upload/iblock/013/fbe4pglq0cpg77ue5nh00c6mth6f0d3d/err_19092022_129_doc.docx",
+            "href": "/upload/iblock/013/fbe4pglq0cpg77ue5nh00c6mth6f0d3d/err_19092022_129_doc.docx",
+            "raw_href": "/upload/iblock/013/fbe4pglq0cpg77ue5nh00c6mth6f0d3d/err_19092022_129_doc.docx",
+            "text": "Бел",
+            "locator": "html:a:1252:line:11460:column:229",
+            "media_type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            "role": "unsupported_legal_attachment"
+          },
+          {
+            "url": "https://docs.eaeunion.org/upload/iblock/457/h9wg5g0ojsffj4g6lgqw6yghkbdd5eau/err_19092022_129_doc.doc",
+            "href": "/upload/iblock/457/h9wg5g0ojsffj4g6lgqw6yghkbdd5eau/err_19092022_129_doc.doc",
+            "raw_href": "/upload/iblock/457/h9wg5g0ojsffj4g6lgqw6yghkbdd5eau/err_19092022_129_doc.doc",
+            "text": "Қаз",
+            "locator": "html:a:1253:line:11460:column:340",
+            "media_type": "application/msword",
+            "role": "unsupported_legal_attachment"
+          },
+          {
+            "url": "https://docs.eaeunion.org/upload/iblock/947/hmfw0y4xss6vjw35vj2gcc2wgecf427v/err_19092022_129_doc.doc",
+            "href": "/upload/iblock/947/hmfw0y4xss6vjw35vj2gcc2wgecf427v/err_19092022_129_doc.doc",
+            "raw_href": "/upload/iblock/947/hmfw0y4xss6vjw35vj2gcc2wgecf427v/err_19092022_129_doc.doc",
+            "text": "Кыр",
+            "locator": "html:a:1254:line:11460:column:450",
+            "media_type": "application/msword",
+            "role": "unsupported_legal_attachment"
+          },
+          {
+            "url": "https://docs.eaeunion.org/upload/iblock/70f/p60j6pri1vvq622hpfzkklyhp7423c2t/err_19092022_129_att.doc",
+            "href": "/upload/iblock/70f/p60j6pri1vvq622hpfzkklyhp7423c2t/err_19092022_129_att.doc",
+            "raw_href": "/upload/iblock/70f/p60j6pri1vvq622hpfzkklyhp7423c2t/err_19092022_129_att.doc",
+            "text": "Рус",
+            "locator": "html:a:1257:line:11482:column:12",
+            "media_type": "application/msword",
+            "role": "unsupported_legal_attachment"
+          },
+          {
+            "url": "https://docs.eaeunion.org/upload/iblock/70f/p60j6pri1vvq622hpfzkklyhp7423c2t/err_19092022_129_att.doc",
+            "href": "/upload/iblock/70f/p60j6pri1vvq622hpfzkklyhp7423c2t/err_19092022_129_att.doc",
+            "raw_href": "/upload/iblock/70f/p60j6pri1vvq622hpfzkklyhp7423c2t/err_19092022_129_att.doc",
+            "text": "Решение Коллегии №129 от 13 сентября 2022 г",
+            "locator": "html:a:1258:line:11486:column:8",
+            "media_type": "application/msword",
+            "role": "unsupported_legal_attachment"
+          },
+          {
+            "url": "https://docs.eaeunion.org/upload/iblock/70f/p60j6pri1vvq622hpfzkklyhp7423c2t/err_19092022_129_att.doc",
+            "href": "/upload/iblock/70f/p60j6pri1vvq622hpfzkklyhp7423c2t/err_19092022_129_att.doc",
+            "raw_href": "/upload/iblock/70f/p60j6pri1vvq622hpfzkklyhp7423c2t/err_19092022_129_att.doc",
+            "text": "Скачать",
+            "locator": "html:a:1259:line:11490:column:8",
+            "media_type": "application/msword",
+            "role": "unsupported_legal_attachment"
+          }
+        ],
+        "primary_body_verified": false,
+        "legal_dates_verified": false
+      }
+    },
+    {
+      "source_url": "https://docs.eaeunion.org/documents/399/",
+      "source_sha256": "d9c2c6856efd697ce8a54bda27f7673e88bd344aeaeb9aa5d06331546e1da729",
+      "document": {
+        "issuing_body": "collegium",
+        "number": "116",
+        "observed_adoption_date": "2022-08-16",
+        "observed_publication_date": "2022-08-19",
+        "observed_entry_into_force_date": null,
+        "title": "Об установлении ставок ввозных таможенных пошлин Единого таможенного тарифа Евразийского экономического союза в отношении отдельных видов комплектующих для производства ручных электроинструментов",
+        "document_link": {
+          "url": "https://docs.eaeunion.org/documents/399/6839/",
+          "href": "/documents/399/6839/",
+          "text": "Решение Коллегии ЕЭК №116",
+          "locator": "html:a:1452:line:12585:column:84"
+        },
+        "evidence": {
+          "locator": "html:list-row:91:line:12581:column:0",
+          "text": "Акты Евразийской экономической комиссии – Коллегия Евразийской экономической комиссии – Решения – 2022 Решение Коллегии ЕЭК №116 Об установлении ставок ввозных таможенных пошлин Единого таможенного тарифа Евразийского экономического союза в отношении отдельных видов комплектующих для производства ручных электроинструментов Рус Հայ Бел Қаз Кыр Дата принятия документа: 16.08.2022 Дата опубликования документа: 19.08.2022 Документы Рус Հայ Бел Қаз Кыр pdf Решение Коллегии №116 от 16 августа 2022 г Скачать Приложения Рус doc Решение Коллегии №116 от 16 августа 2022 г Скачать",
+          "text_sha256": "bd7e3c92474d4ec3ec38cc56c5cb2c41a717ae43f1b4d3de275a6e25b81d943b"
+        },
+        "pdf_references": [
+          {
+            "url": "https://docs.eaeunion.org/upload/iblock/99b/2yzlv7hw8pnh2buy5f0ieyky5xiozufd/err_19082022_116_doc.pdf",
+            "href": "/upload/iblock/99b/2yzlv7hw8pnh2buy5f0ieyky5xiozufd/err_19082022_116_doc.pdf",
+            "raw_href": "/upload/iblock/99b/2yzlv7hw8pnh2buy5f0ieyky5xiozufd/err_19082022_116_doc.pdf",
+            "text": "Рус",
+            "locator": "html:a:1453:line:12590:column:44",
+            "media_type": "application/pdf",
+            "role": "legal_attachment_pdf"
+          },
+          {
+            "url": "https://docs.eaeunion.org/upload/iblock/99b/2yzlv7hw8pnh2buy5f0ieyky5xiozufd/err_19082022_116_doc.pdf",
+            "href": "/upload/iblock/99b/2yzlv7hw8pnh2buy5f0ieyky5xiozufd/err_19082022_116_doc.pdf",
+            "raw_href": "/upload/iblock/99b/2yzlv7hw8pnh2buy5f0ieyky5xiozufd/err_19082022_116_doc.pdf",
+            "text": "Рус",
+            "locator": "html:a:1458:line:12620:column:12",
+            "media_type": "application/pdf",
+            "role": "legal_attachment_pdf"
+          },
+          {
+            "url": "https://docs.eaeunion.org/upload/iblock/99b/2yzlv7hw8pnh2buy5f0ieyky5xiozufd/err_19082022_116_doc.pdf",
+            "href": "/upload/iblock/99b/2yzlv7hw8pnh2buy5f0ieyky5xiozufd/err_19082022_116_doc.pdf",
+            "raw_href": "/upload/iblock/99b/2yzlv7hw8pnh2buy5f0ieyky5xiozufd/err_19082022_116_doc.pdf",
+            "text": "Решение Коллегии №116 от 16 августа 2022 г",
+            "locator": "html:a:1463:line:12624:column:8",
+            "media_type": "application/pdf",
+            "role": "legal_attachment_pdf"
+          },
+          {
+            "url": "https://docs.eaeunion.org/upload/iblock/99b/2yzlv7hw8pnh2buy5f0ieyky5xiozufd/err_19082022_116_doc.pdf",
+            "href": "/upload/iblock/99b/2yzlv7hw8pnh2buy5f0ieyky5xiozufd/err_19082022_116_doc.pdf",
+            "raw_href": "/upload/iblock/99b/2yzlv7hw8pnh2buy5f0ieyky5xiozufd/err_19082022_116_doc.pdf",
+            "text": "Скачать",
+            "locator": "html:a:1464:line:12628:column:8",
+            "media_type": "application/pdf",
+            "role": "legal_attachment_pdf"
+          }
+        ],
+        "unsupported_references": [
+          {
+            "url": "https://docs.eaeunion.org/upload/iblock/cab/lgd1c4dj69n78avzdyjz7irhlfhxkgg4/err_19082022_doc.docx",
+            "href": "/upload/iblock/cab/lgd1c4dj69n78avzdyjz7irhlfhxkgg4/err_19082022_doc.docx",
+            "raw_href": "/upload/iblock/cab/lgd1c4dj69n78avzdyjz7irhlfhxkgg4/err_19082022_doc.docx",
+            "text": "Հայ",
+            "locator": "html:a:1454:line:12591:column:88",
+            "media_type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            "role": "unsupported_legal_attachment"
+          },
+          {
+            "url": "https://docs.eaeunion.org/upload/iblock/165/2uugmd3in2sfdibyhgim3y5bd71yeqes/err_19082022_116_doc.docx",
+            "href": "/upload/iblock/165/2uugmd3in2sfdibyhgim3y5bd71yeqes/err_19082022_116_doc.docx",
+            "raw_href": "/upload/iblock/165/2uugmd3in2sfdibyhgim3y5bd71yeqes/err_19082022_116_doc.docx",
+            "text": "Бел",
+            "locator": "html:a:1455:line:12592:column:88",
+            "media_type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            "role": "unsupported_legal_attachment"
+          },
+          {
+            "url": "https://docs.eaeunion.org/upload/iblock/7a4/c7izco6xx72taowdokqn89xd2iovwywz/err_19082022_116_doc.doc",
+            "href": "/upload/iblock/7a4/c7izco6xx72taowdokqn89xd2iovwywz/err_19082022_116_doc.doc",
+            "raw_href": "/upload/iblock/7a4/c7izco6xx72taowdokqn89xd2iovwywz/err_19082022_116_doc.doc",
+            "text": "Қаз",
+            "locator": "html:a:1456:line:12593:column:88",
+            "media_type": "application/msword",
+            "role": "unsupported_legal_attachment"
+          },
+          {
+            "url": "https://docs.eaeunion.org/upload/iblock/85b/0jlegcinabge2nksqq93j4rnxnypkuqs/err_19082022_116_doc.doc",
+            "href": "/upload/iblock/85b/0jlegcinabge2nksqq93j4rnxnypkuqs/err_19082022_116_doc.doc",
+            "raw_href": "/upload/iblock/85b/0jlegcinabge2nksqq93j4rnxnypkuqs/err_19082022_116_doc.doc",
+            "text": "Кыр",
+            "locator": "html:a:1457:line:12594:column:88",
+            "media_type": "application/msword",
+            "role": "unsupported_legal_attachment"
+          },
+          {
+            "url": "https://docs.eaeunion.org/upload/iblock/cab/lgd1c4dj69n78avzdyjz7irhlfhxkgg4/err_19082022_doc.docx",
+            "href": "/upload/iblock/cab/lgd1c4dj69n78avzdyjz7irhlfhxkgg4/err_19082022_doc.docx",
+            "raw_href": "/upload/iblock/cab/lgd1c4dj69n78avzdyjz7irhlfhxkgg4/err_19082022_doc.docx",
+            "text": "Հայ",
+            "locator": "html:a:1459:line:12620:column:122",
+            "media_type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            "role": "unsupported_legal_attachment"
+          },
+          {
+            "url": "https://docs.eaeunion.org/upload/iblock/165/2uugmd3in2sfdibyhgim3y5bd71yeqes/err_19082022_116_doc.docx",
+            "href": "/upload/iblock/165/2uugmd3in2sfdibyhgim3y5bd71yeqes/err_19082022_116_doc.docx",
+            "raw_href": "/upload/iblock/165/2uugmd3in2sfdibyhgim3y5bd71yeqes/err_19082022_116_doc.docx",
+            "text": "Бел",
+            "locator": "html:a:1460:line:12620:column:229",
+            "media_type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            "role": "unsupported_legal_attachment"
+          },
+          {
+            "url": "https://docs.eaeunion.org/upload/iblock/7a4/c7izco6xx72taowdokqn89xd2iovwywz/err_19082022_116_doc.doc",
+            "href": "/upload/iblock/7a4/c7izco6xx72taowdokqn89xd2iovwywz/err_19082022_116_doc.doc",
+            "raw_href": "/upload/iblock/7a4/c7izco6xx72taowdokqn89xd2iovwywz/err_19082022_116_doc.doc",
+            "text": "Қаз",
+            "locator": "html:a:1461:line:12620:column:340",
+            "media_type": "application/msword",
+            "role": "unsupported_legal_attachment"
+          },
+          {
+            "url": "https://docs.eaeunion.org/upload/iblock/85b/0jlegcinabge2nksqq93j4rnxnypkuqs/err_19082022_116_doc.doc",
+            "href": "/upload/iblock/85b/0jlegcinabge2nksqq93j4rnxnypkuqs/err_19082022_116_doc.doc",
+            "raw_href": "/upload/iblock/85b/0jlegcinabge2nksqq93j4rnxnypkuqs/err_19082022_116_doc.doc",
+            "text": "Кыр",
+            "locator": "html:a:1462:line:12620:column:450",
+            "media_type": "application/msword",
+            "role": "unsupported_legal_attachment"
+          },
+          {
+            "url": "https://docs.eaeunion.org/upload/iblock/dad/99w3gdykvqnugp581939h8kdfxrimiv9/err_19082022_116_att.doc",
+            "href": "/upload/iblock/dad/99w3gdykvqnugp581939h8kdfxrimiv9/err_19082022_116_att.doc",
+            "raw_href": "/upload/iblock/dad/99w3gdykvqnugp581939h8kdfxrimiv9/err_19082022_116_att.doc",
+            "text": "Рус",
+            "locator": "html:a:1465:line:12642:column:12",
+            "media_type": "application/msword",
+            "role": "unsupported_legal_attachment"
+          },
+          {
+            "url": "https://docs.eaeunion.org/upload/iblock/dad/99w3gdykvqnugp581939h8kdfxrimiv9/err_19082022_116_att.doc",
+            "href": "/upload/iblock/dad/99w3gdykvqnugp581939h8kdfxrimiv9/err_19082022_116_att.doc",
+            "raw_href": "/upload/iblock/dad/99w3gdykvqnugp581939h8kdfxrimiv9/err_19082022_116_att.doc",
+            "text": "Решение Коллегии №116 от 16 августа 2022 г",
+            "locator": "html:a:1466:line:12646:column:8",
+            "media_type": "application/msword",
+            "role": "unsupported_legal_attachment"
+          },
+          {
+            "url": "https://docs.eaeunion.org/upload/iblock/dad/99w3gdykvqnugp581939h8kdfxrimiv9/err_19082022_116_att.doc",
+            "href": "/upload/iblock/dad/99w3gdykvqnugp581939h8kdfxrimiv9/err_19082022_116_att.doc",
+            "raw_href": "/upload/iblock/dad/99w3gdykvqnugp581939h8kdfxrimiv9/err_19082022_116_att.doc",
+            "text": "Скачать",
+            "locator": "html:a:1467:line:12650:column:8",
+            "media_type": "application/msword",
+            "role": "unsupported_legal_attachment"
+          }
+        ],
+        "primary_body_verified": false,
+        "legal_dates_verified": false
+      }
+    },
+    {
+      "source_url": "https://docs.eaeunion.org/documents/401/",
+      "source_sha256": "79c4909e92cb4a573dc2347e997dbb7bc7b186d560d1c374a209860d16af586f",
+      "document": {
+        "issuing_body": "council",
+        "number": "168",
+        "observed_adoption_date": "2022-12-14",
+        "observed_publication_date": "2022-12-22",
+        "observed_entry_into_force_date": "2023-01-01",
+        "title": "Об установлении ставки ввозной таможенной пошлины Единого таможенного тарифа Евразийского экономического союза в отношении отдельных видов двигателей внутреннего сгорания",
+        "document_link": {
+          "url": "https://docs.eaeunion.org/documents/401/7135/",
+          "href": "/documents/401/7135/",
+          "text": "Решение Совета ЕЭК № 168",
+          "locator": "html:a:194:line:5578:column:84"
+        },
+        "evidence": {
+          "locator": "html:list-row:12:line:5574:column:0",
+          "text": "Акты Евразийской экономической комиссии – Совет Евразийской экономической комиссии – Решения – 2022 Решение Совета ЕЭК № 168 Об установлении ставки ввозной таможенной пошлины Единого таможенного тарифа Евразийского экономического союза в отношении отдельных видов двигателей внутреннего сгорания Рус Հայ Бел Қаз Кыр Дата принятия документа: 14.12.2022 Дата опубликования документа: 22.12.2022 Дата вступления в силу: 01.01.2023 Документы Рус Հայ Бел Қаз Кыр pdf Решение Совета № 168 от 14 декабря 2022 г Скачать Приложения Рус doc Решение Совета № 168 от 14 декабря 2022 г Скачать",
+          "text_sha256": "e9f518eff6da48debf488a741802ae9e2753abb0431a0ae35de45073d864a590"
+        },
+        "pdf_references": [
+          {
+            "url": "https://docs.eaeunion.org/upload/iblock/75a/csmv2kt1csii6wr7bet2sgubhl3dcvgz/err_22122022_168_doc.pdf",
+            "href": "/upload/iblock/75a/csmv2kt1csii6wr7bet2sgubhl3dcvgz/err_22122022_168_doc.pdf",
+            "raw_href": "/upload/iblock/75a/csmv2kt1csii6wr7bet2sgubhl3dcvgz/err_22122022_168_doc.pdf",
+            "text": "Рус",
+            "locator": "html:a:195:line:5583:column:44",
+            "media_type": "application/pdf",
+            "role": "legal_attachment_pdf"
+          },
+          {
+            "url": "https://docs.eaeunion.org/upload/iblock/75a/csmv2kt1csii6wr7bet2sgubhl3dcvgz/err_22122022_168_doc.pdf",
+            "href": "/upload/iblock/75a/csmv2kt1csii6wr7bet2sgubhl3dcvgz/err_22122022_168_doc.pdf",
+            "raw_href": "/upload/iblock/75a/csmv2kt1csii6wr7bet2sgubhl3dcvgz/err_22122022_168_doc.pdf",
+            "text": "Рус",
+            "locator": "html:a:200:line:5614:column:12",
+            "media_type": "application/pdf",
+            "role": "legal_attachment_pdf"
+          },
+          {
+            "url": "https://docs.eaeunion.org/upload/iblock/75a/csmv2kt1csii6wr7bet2sgubhl3dcvgz/err_22122022_168_doc.pdf",
+            "href": "/upload/iblock/75a/csmv2kt1csii6wr7bet2sgubhl3dcvgz/err_22122022_168_doc.pdf",
+            "raw_href": "/upload/iblock/75a/csmv2kt1csii6wr7bet2sgubhl3dcvgz/err_22122022_168_doc.pdf",
+            "text": "Решение Совета № 168 от 14 декабря 2022 г",
+            "locator": "html:a:205:line:5618:column:8",
+            "media_type": "application/pdf",
+            "role": "legal_attachment_pdf"
+          },
+          {
+            "url": "https://docs.eaeunion.org/upload/iblock/75a/csmv2kt1csii6wr7bet2sgubhl3dcvgz/err_22122022_168_doc.pdf",
+            "href": "/upload/iblock/75a/csmv2kt1csii6wr7bet2sgubhl3dcvgz/err_22122022_168_doc.pdf",
+            "raw_href": "/upload/iblock/75a/csmv2kt1csii6wr7bet2sgubhl3dcvgz/err_22122022_168_doc.pdf",
+            "text": "Скачать",
+            "locator": "html:a:206:line:5622:column:8",
+            "media_type": "application/pdf",
+            "role": "legal_attachment_pdf"
+          }
+        ],
+        "unsupported_references": [
+          {
+            "url": "https://docs.eaeunion.org/upload/iblock/ed1/cs7ycw23032dg4s2rxlecxcdxrwrah6w/err_22122022_168_doc.docx",
+            "href": "/upload/iblock/ed1/cs7ycw23032dg4s2rxlecxcdxrwrah6w/err_22122022_168_doc.docx",
+            "raw_href": "/upload/iblock/ed1/cs7ycw23032dg4s2rxlecxcdxrwrah6w/err_22122022_168_doc.docx",
+            "text": "Հայ",
+            "locator": "html:a:196:line:5584:column:88",
+            "media_type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            "role": "unsupported_legal_attachment"
+          },
+          {
+            "url": "https://docs.eaeunion.org/upload/iblock/60e/olp1q306gyloxyv6zk5oapmcual4co0r/err_22122022_doc.docx",
+            "href": "/upload/iblock/60e/olp1q306gyloxyv6zk5oapmcual4co0r/err_22122022_doc.docx",
+            "raw_href": "/upload/iblock/60e/olp1q306gyloxyv6zk5oapmcual4co0r/err_22122022_doc.docx",
+            "text": "Бел",
+            "locator": "html:a:197:line:5585:column:88",
+            "media_type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            "role": "unsupported_legal_attachment"
+          },
+          {
+            "url": "https://docs.eaeunion.org/upload/iblock/c5d/mhngf3pj5j19kaw5vt3tf1dnkyi3xbth/err_22122022_168_doc.docx",
+            "href": "/upload/iblock/c5d/mhngf3pj5j19kaw5vt3tf1dnkyi3xbth/err_22122022_168_doc.docx",
+            "raw_href": "/upload/iblock/c5d/mhngf3pj5j19kaw5vt3tf1dnkyi3xbth/err_22122022_168_doc.docx",
+            "text": "Қаз",
+            "locator": "html:a:198:line:5586:column:88",
+            "media_type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            "role": "unsupported_legal_attachment"
+          },
+          {
+            "url": "https://docs.eaeunion.org/upload/iblock/d6b/iv2puemh1nwxg3wqjdld39tffnebg3sq/err_22122022_168_doc.doc",
+            "href": "/upload/iblock/d6b/iv2puemh1nwxg3wqjdld39tffnebg3sq/err_22122022_168_doc.doc",
+            "raw_href": "/upload/iblock/d6b/iv2puemh1nwxg3wqjdld39tffnebg3sq/err_22122022_168_doc.doc",
+            "text": "Кыр",
+            "locator": "html:a:199:line:5587:column:88",
+            "media_type": "application/msword",
+            "role": "unsupported_legal_attachment"
+          },
+          {
+            "url": "https://docs.eaeunion.org/upload/iblock/ed1/cs7ycw23032dg4s2rxlecxcdxrwrah6w/err_22122022_168_doc.docx",
+            "href": "/upload/iblock/ed1/cs7ycw23032dg4s2rxlecxcdxrwrah6w/err_22122022_168_doc.docx",
+            "raw_href": "/upload/iblock/ed1/cs7ycw23032dg4s2rxlecxcdxrwrah6w/err_22122022_168_doc.docx",
+            "text": "Հայ",
+            "locator": "html:a:201:line:5614:column:122",
+            "media_type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            "role": "unsupported_legal_attachment"
+          },
+          {
+            "url": "https://docs.eaeunion.org/upload/iblock/60e/olp1q306gyloxyv6zk5oapmcual4co0r/err_22122022_doc.docx",
+            "href": "/upload/iblock/60e/olp1q306gyloxyv6zk5oapmcual4co0r/err_22122022_doc.docx",
+            "raw_href": "/upload/iblock/60e/olp1q306gyloxyv6zk5oapmcual4co0r/err_22122022_doc.docx",
+            "text": "Бел",
+            "locator": "html:a:202:line:5614:column:233",
+            "media_type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            "role": "unsupported_legal_attachment"
+          },
+          {
+            "url": "https://docs.eaeunion.org/upload/iblock/c5d/mhngf3pj5j19kaw5vt3tf1dnkyi3xbth/err_22122022_168_doc.docx",
+            "href": "/upload/iblock/c5d/mhngf3pj5j19kaw5vt3tf1dnkyi3xbth/err_22122022_168_doc.docx",
+            "raw_href": "/upload/iblock/c5d/mhngf3pj5j19kaw5vt3tf1dnkyi3xbth/err_22122022_168_doc.docx",
+            "text": "Қаз",
+            "locator": "html:a:203:line:5614:column:340",
+            "media_type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            "role": "unsupported_legal_attachment"
+          },
+          {
+            "url": "https://docs.eaeunion.org/upload/iblock/d6b/iv2puemh1nwxg3wqjdld39tffnebg3sq/err_22122022_168_doc.doc",
+            "href": "/upload/iblock/d6b/iv2puemh1nwxg3wqjdld39tffnebg3sq/err_22122022_168_doc.doc",
+            "raw_href": "/upload/iblock/d6b/iv2puemh1nwxg3wqjdld39tffnebg3sq/err_22122022_168_doc.doc",
+            "text": "Кыр",
+            "locator": "html:a:204:line:5614:column:451",
+            "media_type": "application/msword",
+            "role": "unsupported_legal_attachment"
+          },
+          {
+            "url": "https://docs.eaeunion.org/upload/iblock/51f/kwlut9khqyzjg3p084v7uusspa6owp8k/err_22122022_168_att.doc",
+            "href": "/upload/iblock/51f/kwlut9khqyzjg3p084v7uusspa6owp8k/err_22122022_168_att.doc",
+            "raw_href": "/upload/iblock/51f/kwlut9khqyzjg3p084v7uusspa6owp8k/err_22122022_168_att.doc",
+            "text": "Рус",
+            "locator": "html:a:207:line:5636:column:12",
+            "media_type": "application/msword",
+            "role": "unsupported_legal_attachment"
+          },
+          {
+            "url": "https://docs.eaeunion.org/upload/iblock/51f/kwlut9khqyzjg3p084v7uusspa6owp8k/err_22122022_168_att.doc",
+            "href": "/upload/iblock/51f/kwlut9khqyzjg3p084v7uusspa6owp8k/err_22122022_168_att.doc",
+            "raw_href": "/upload/iblock/51f/kwlut9khqyzjg3p084v7uusspa6owp8k/err_22122022_168_att.doc",
+            "text": "Решение Совета № 168 от 14 декабря 2022 г",
+            "locator": "html:a:208:line:5640:column:8",
+            "media_type": "application/msword",
+            "role": "unsupported_legal_attachment"
+          },
+          {
+            "url": "https://docs.eaeunion.org/upload/iblock/51f/kwlut9khqyzjg3p084v7uusspa6owp8k/err_22122022_168_att.doc",
+            "href": "/upload/iblock/51f/kwlut9khqyzjg3p084v7uusspa6owp8k/err_22122022_168_att.doc",
+            "raw_href": "/upload/iblock/51f/kwlut9khqyzjg3p084v7uusspa6owp8k/err_22122022_168_att.doc",
+            "text": "Скачать",
+            "locator": "html:a:209:line:5644:column:8",
+            "media_type": "application/msword",
+            "role": "unsupported_legal_attachment"
+          }
+        ],
+        "primary_body_verified": false,
+        "legal_dates_verified": false
+      }
+    },
+    {
+      "source_url": "https://docs.eaeunion.org/documents/401/",
+      "source_sha256": "79c4909e92cb4a573dc2347e997dbb7bc7b186d560d1c374a209860d16af586f",
+      "document": {
+        "issuing_body": "council",
+        "number": "150",
+        "observed_adoption_date": "2022-09-23",
+        "observed_publication_date": "2022-09-26",
+        "observed_entry_into_force_date": null,
+        "title": "Об установлении ставок ввозных таможенных пошлин Единого таможенного тарифа Евразийского экономического союза в отношении отдельных видов товаров, а также о внесении изменений в некоторые решения Комиссии Таможенного союза и Совета Евразийской экономической комиссии",
+        "document_link": {
+          "url": "https://docs.eaeunion.org/documents/401/6933/",
+          "href": "/documents/401/6933/",
+          "text": "Решение Совета ЕЭК № 150",
+          "locator": "html:a:674:line:8251:column:84"
+        },
+        "evidence": {
+          "locator": "html:list-row:42:line:8247:column:0",
+          "text": "Акты Евразийской экономической комиссии – Совет Евразийской экономической комиссии – Решения – 2022 Решение Совета ЕЭК № 150 Об установлении ставок ввозных таможенных пошлин Единого таможенного тарифа Евразийского экономического союза в отношении отдельных видов товаров, а также о внесении изменений в некоторые решения Комиссии Таможенного союза и Совета Евразийской экономической комиссии Рус Հայ Бел Қаз Кыр Дата принятия документа: 23.09.2022 Дата опубликования документа: 26.09.2022 Документы Рус Հայ Бел Қаз Кыр pdf Решение Совета № 150 от 23 сентября 2022 г Скачать Приложения Рус zip скачать в word Скачать",
+          "text_sha256": "0fe378d39a8d17fce4fdd82b5d869e59a190d1d1d3952442adea2103a08052ea"
+        },
+        "pdf_references": [
+          {
+            "url": "https://docs.eaeunion.org/upload/iblock/0c8/6rf0lnd7g2eunjyfbruwsfrz6ir0gipx/err_26092022_150_doc.pdf",
+            "href": "/upload/iblock/0c8/6rf0lnd7g2eunjyfbruwsfrz6ir0gipx/err_26092022_150_doc.pdf",
+            "raw_href": "/upload/iblock/0c8/6rf0lnd7g2eunjyfbruwsfrz6ir0gipx/err_26092022_150_doc.pdf",
+            "text": "Рус",
+            "locator": "html:a:675:line:8256:column:44",
+            "media_type": "application/pdf",
+            "role": "legal_attachment_pdf"
+          },
+          {
+            "url": "https://docs.eaeunion.org/upload/iblock/0c8/6rf0lnd7g2eunjyfbruwsfrz6ir0gipx/err_26092022_150_doc.pdf",
+            "href": "/upload/iblock/0c8/6rf0lnd7g2eunjyfbruwsfrz6ir0gipx/err_26092022_150_doc.pdf",
+            "raw_href": "/upload/iblock/0c8/6rf0lnd7g2eunjyfbruwsfrz6ir0gipx/err_26092022_150_doc.pdf",
+            "text": "Рус",
+            "locator": "html:a:680:line:8286:column:12",
+            "media_type": "application/pdf",
+            "role": "legal_attachment_pdf"
+          },
+          {
+            "url": "https://docs.eaeunion.org/upload/iblock/0c8/6rf0lnd7g2eunjyfbruwsfrz6ir0gipx/err_26092022_150_doc.pdf",
+            "href": "/upload/iblock/0c8/6rf0lnd7g2eunjyfbruwsfrz6ir0gipx/err_26092022_150_doc.pdf",
+            "raw_href": "/upload/iblock/0c8/6rf0lnd7g2eunjyfbruwsfrz6ir0gipx/err_26092022_150_doc.pdf",
+            "text": "Решение Совета № 150 от 23 сентября 2022 г",
+            "locator": "html:a:685:line:8290:column:8",
+            "media_type": "application/pdf",
+            "role": "legal_attachment_pdf"
+          },
+          {
+            "url": "https://docs.eaeunion.org/upload/iblock/0c8/6rf0lnd7g2eunjyfbruwsfrz6ir0gipx/err_26092022_150_doc.pdf",
+            "href": "/upload/iblock/0c8/6rf0lnd7g2eunjyfbruwsfrz6ir0gipx/err_26092022_150_doc.pdf",
+            "raw_href": "/upload/iblock/0c8/6rf0lnd7g2eunjyfbruwsfrz6ir0gipx/err_26092022_150_doc.pdf",
+            "text": "Скачать",
+            "locator": "html:a:686:line:8294:column:8",
+            "media_type": "application/pdf",
+            "role": "legal_attachment_pdf"
+          }
+        ],
+        "unsupported_references": [
+          {
+            "url": "https://docs.eaeunion.org/upload/iblock/fb8/khovgh84lrhntl2v09fs1n8qnq1sjwpq/err_26092022_doc.docx",
+            "href": "/upload/iblock/fb8/khovgh84lrhntl2v09fs1n8qnq1sjwpq/err_26092022_doc.docx",
+            "raw_href": "/upload/iblock/fb8/khovgh84lrhntl2v09fs1n8qnq1sjwpq/err_26092022_doc.docx",
+            "text": "Հայ",
+            "locator": "html:a:676:line:8257:column:88",
+            "media_type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            "role": "unsupported_legal_attachment"
+          },
+          {
+            "url": "https://docs.eaeunion.org/upload/iblock/f05/2q47knrvpk3g6k63a2w0lt185whqgsbr/err_26092022_150_doc.doc",
+            "href": "/upload/iblock/f05/2q47knrvpk3g6k63a2w0lt185whqgsbr/err_26092022_150_doc.doc",
+            "raw_href": "/upload/iblock/f05/2q47knrvpk3g6k63a2w0lt185whqgsbr/err_26092022_150_doc.doc",
+            "text": "Бел",
+            "locator": "html:a:677:line:8258:column:88",
+            "media_type": "application/msword",
+            "role": "unsupported_legal_attachment"
+          },
+          {
+            "url": "https://docs.eaeunion.org/upload/iblock/b4d/23d0s2pchays1lf0ss8woxsbifh2k0ow/err_26092022_150_doc.docx",
+            "href": "/upload/iblock/b4d/23d0s2pchays1lf0ss8woxsbifh2k0ow/err_26092022_150_doc.docx",
+            "raw_href": "/upload/iblock/b4d/23d0s2pchays1lf0ss8woxsbifh2k0ow/err_26092022_150_doc.docx",
+            "text": "Қаз",
+            "locator": "html:a:678:line:8259:column:88",
+            "media_type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            "role": "unsupported_legal_attachment"
+          },
+          {
+            "url": "https://docs.eaeunion.org/upload/iblock/1a3/4qrnr08quyqu8ds0r5p5fddk2t17boay/err_26092022_150_doc.docx",
+            "href": "/upload/iblock/1a3/4qrnr08quyqu8ds0r5p5fddk2t17boay/err_26092022_150_doc.docx",
+            "raw_href": "/upload/iblock/1a3/4qrnr08quyqu8ds0r5p5fddk2t17boay/err_26092022_150_doc.docx",
+            "text": "Кыр",
+            "locator": "html:a:679:line:8260:column:88",
+            "media_type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            "role": "unsupported_legal_attachment"
+          },
+          {
+            "url": "https://docs.eaeunion.org/upload/iblock/fb8/khovgh84lrhntl2v09fs1n8qnq1sjwpq/err_26092022_doc.docx",
+            "href": "/upload/iblock/fb8/khovgh84lrhntl2v09fs1n8qnq1sjwpq/err_26092022_doc.docx",
+            "raw_href": "/upload/iblock/fb8/khovgh84lrhntl2v09fs1n8qnq1sjwpq/err_26092022_doc.docx",
+            "text": "Հայ",
+            "locator": "html:a:681:line:8286:column:122",
+            "media_type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            "role": "unsupported_legal_attachment"
+          },
+          {
+            "url": "https://docs.eaeunion.org/upload/iblock/f05/2q47knrvpk3g6k63a2w0lt185whqgsbr/err_26092022_150_doc.doc",
+            "href": "/upload/iblock/f05/2q47knrvpk3g6k63a2w0lt185whqgsbr/err_26092022_150_doc.doc",
+            "raw_href": "/upload/iblock/f05/2q47knrvpk3g6k63a2w0lt185whqgsbr/err_26092022_150_doc.doc",
+            "text": "Бел",
+            "locator": "html:a:682:line:8286:column:229",
+            "media_type": "application/msword",
+            "role": "unsupported_legal_attachment"
+          },
+          {
+            "url": "https://docs.eaeunion.org/upload/iblock/b4d/23d0s2pchays1lf0ss8woxsbifh2k0ow/err_26092022_150_doc.docx",
+            "href": "/upload/iblock/b4d/23d0s2pchays1lf0ss8woxsbifh2k0ow/err_26092022_150_doc.docx",
+            "raw_href": "/upload/iblock/b4d/23d0s2pchays1lf0ss8woxsbifh2k0ow/err_26092022_150_doc.docx",
+            "text": "Қаз",
+            "locator": "html:a:683:line:8286:column:339",
+            "media_type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            "role": "unsupported_legal_attachment"
+          },
+          {
+            "url": "https://docs.eaeunion.org/upload/iblock/1a3/4qrnr08quyqu8ds0r5p5fddk2t17boay/err_26092022_150_doc.docx",
+            "href": "/upload/iblock/1a3/4qrnr08quyqu8ds0r5p5fddk2t17boay/err_26092022_150_doc.docx",
+            "raw_href": "/upload/iblock/1a3/4qrnr08quyqu8ds0r5p5fddk2t17boay/err_26092022_150_doc.docx",
+            "text": "Кыр",
+            "locator": "html:a:684:line:8286:column:450",
+            "media_type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            "role": "unsupported_legal_attachment"
+          },
+          {
+            "url": "https://docs.eaeunion.org/upload/iblock/59c/al3uswjj5gwmjsl2du9m9fx3nbzlek9v/err_26092022_150_att.zip",
+            "href": "/upload/iblock/59c/al3uswjj5gwmjsl2du9m9fx3nbzlek9v/err_26092022_150_att.zip",
+            "raw_href": "/upload/iblock/59c/al3uswjj5gwmjsl2du9m9fx3nbzlek9v/err_26092022_150_att.zip",
+            "text": "Рус",
+            "locator": "html:a:687:line:8308:column:12",
+            "media_type": "application/zip",
+            "role": "unsupported_legal_attachment"
+          },
+          {
+            "url": "https://docs.eaeunion.org/upload/iblock/59c/al3uswjj5gwmjsl2du9m9fx3nbzlek9v/err_26092022_150_att.zip",
+            "href": "/upload/iblock/59c/al3uswjj5gwmjsl2du9m9fx3nbzlek9v/err_26092022_150_att.zip",
+            "raw_href": "/upload/iblock/59c/al3uswjj5gwmjsl2du9m9fx3nbzlek9v/err_26092022_150_att.zip",
+            "text": "скачать в word",
+            "locator": "html:a:688:line:8312:column:8",
+            "media_type": "application/zip",
+            "role": "unsupported_legal_attachment"
+          },
+          {
+            "url": "https://docs.eaeunion.org/upload/iblock/59c/al3uswjj5gwmjsl2du9m9fx3nbzlek9v/err_26092022_150_att.zip",
+            "href": "/upload/iblock/59c/al3uswjj5gwmjsl2du9m9fx3nbzlek9v/err_26092022_150_att.zip",
+            "raw_href": "/upload/iblock/59c/al3uswjj5gwmjsl2du9m9fx3nbzlek9v/err_26092022_150_att.zip",
+            "text": "Скачать",
+            "locator": "html:a:689:line:8316:column:8",
+            "media_type": "application/zip",
+            "role": "unsupported_legal_attachment"
+          }
+        ],
+        "primary_body_verified": false,
+        "legal_dates_verified": false
+      }
+    },
+    {
+      "source_url": "https://docs.eaeunion.org/documents/401/",
+      "source_sha256": "79c4909e92cb4a573dc2347e997dbb7bc7b186d560d1c374a209860d16af586f",
+      "document": {
+        "issuing_body": "council",
+        "number": "100",
+        "observed_adoption_date": "2022-06-21",
+        "observed_publication_date": "2022-06-22",
+        "observed_entry_into_force_date": "2022-07-02",
+        "title": "Об установлении ставки ввозной таможенной пошлины Единого таможенного тарифа Евразийского экономического союза в отношении машин свекловичных ботворезных и машин свеклоуборочных и о внесении изменений в перечень товаров, в отношении которых Республикой Казахстан в соответствии с обязательствами, принятыми в качестве условия присоединения к Всемирной торговой организации, применяются ставки ввозных таможенных пошлин, более низкие по сравнению со ставками пошлин Единого таможенного тарифа Евразийского экономического союза, и размеров таких ставок пошлин",
+        "document_link": {
+          "url": "https://docs.eaeunion.org/documents/401/6735/",
+          "href": "/documents/401/6735/",
+          "text": "Решение Совета ЕЭК № 100",
+          "locator": "html:a:1234:line:11381:column:84"
+        },
+        "evidence": {
+          "locator": "html:list-row:77:line:11377:column:0",
+          "text": "Акты Евразийской экономической комиссии – Совет Евразийской экономической комиссии – Решения – 2022 Решение Совета ЕЭК № 100 Об установлении ставки ввозной таможенной пошлины Единого таможенного тарифа Евразийского экономического союза в отношении машин свекловичных ботворезных и машин свеклоуборочных и о внесении изменений в перечень товаров, в отношении которых Республикой Казахстан в соответствии с обязательствами, принятыми в качестве условия присоединения к Всемирной торговой организации, применяются ставки ввозных таможенных пошлин, более низкие по сравнению со ставками пошлин Единого таможенного тарифа Евразийского экономического союза, и размеров таких ставок пошлин Рус Հայ Бел Қаз Кыр Дата принятия документа: 21.06.2022 Дата опубликования документа: 22.06.2022 Дата вступления в силу: 02.07.2022 Документы Рус Հայ Бел Қаз Кыр pdf Решение Совета № 100 от 21 июня 2022 г Скачать Приложения Рус docx Решение Совета № 100 от 21 июня 2022 г Скачать",
+          "text_sha256": "58a842735ca51ac3251908a7dae703fd02d7bb1f15ff0ab676f6170ef663ebd5"
+        },
+        "pdf_references": [
+          {
+            "url": "https://docs.eaeunion.org/upload/iblock/8b7/squ1to9rwshv8qhebgobjiczikopa5vb/err_22062022_100_doc.pdf",
+            "href": "/upload/iblock/8b7/squ1to9rwshv8qhebgobjiczikopa5vb/err_22062022_100_doc.pdf",
+            "raw_href": "/upload/iblock/8b7/squ1to9rwshv8qhebgobjiczikopa5vb/err_22062022_100_doc.pdf",
+            "text": "Рус",
+            "locator": "html:a:1235:line:11386:column:44",
+            "media_type": "application/pdf",
+            "role": "legal_attachment_pdf"
+          },
+          {
+            "url": "https://docs.eaeunion.org/upload/iblock/8b7/squ1to9rwshv8qhebgobjiczikopa5vb/err_22062022_100_doc.pdf",
+            "href": "/upload/iblock/8b7/squ1to9rwshv8qhebgobjiczikopa5vb/err_22062022_100_doc.pdf",
+            "raw_href": "/upload/iblock/8b7/squ1to9rwshv8qhebgobjiczikopa5vb/err_22062022_100_doc.pdf",
+            "text": "Рус",
+            "locator": "html:a:1240:line:11417:column:12",
+            "media_type": "application/pdf",
+            "role": "legal_attachment_pdf"
+          },
+          {
+            "url": "https://docs.eaeunion.org/upload/iblock/8b7/squ1to9rwshv8qhebgobjiczikopa5vb/err_22062022_100_doc.pdf",
+            "href": "/upload/iblock/8b7/squ1to9rwshv8qhebgobjiczikopa5vb/err_22062022_100_doc.pdf",
+            "raw_href": "/upload/iblock/8b7/squ1to9rwshv8qhebgobjiczikopa5vb/err_22062022_100_doc.pdf",
+            "text": "Решение Совета № 100 от 21 июня 2022 г",
+            "locator": "html:a:1245:line:11421:column:8",
+            "media_type": "application/pdf",
+            "role": "legal_attachment_pdf"
+          },
+          {
+            "url": "https://docs.eaeunion.org/upload/iblock/8b7/squ1to9rwshv8qhebgobjiczikopa5vb/err_22062022_100_doc.pdf",
+            "href": "/upload/iblock/8b7/squ1to9rwshv8qhebgobjiczikopa5vb/err_22062022_100_doc.pdf",
+            "raw_href": "/upload/iblock/8b7/squ1to9rwshv8qhebgobjiczikopa5vb/err_22062022_100_doc.pdf",
+            "text": "Скачать",
+            "locator": "html:a:1246:line:11425:column:8",
+            "media_type": "application/pdf",
+            "role": "legal_attachment_pdf"
+          }
+        ],
+        "unsupported_references": [
+          {
+            "url": "https://docs.eaeunion.org/upload/iblock/dd4/axtijk5gwqy3fp6mlhzis52lgkjiaksz/err_22062022_doc.docx",
+            "href": "/upload/iblock/dd4/axtijk5gwqy3fp6mlhzis52lgkjiaksz/err_22062022_doc.docx",
+            "raw_href": "/upload/iblock/dd4/axtijk5gwqy3fp6mlhzis52lgkjiaksz/err_22062022_doc.docx",
+            "text": "Հայ",
+            "locator": "html:a:1236:line:11387:column:88",
+            "media_type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            "role": "unsupported_legal_attachment"
+          },
+          {
+            "url": "https://docs.eaeunion.org/upload/iblock/f78/l3tl00bswl1if1m3g6uizz0qayg3kt19/err_22062022_100_doc.docx",
+            "href": "/upload/iblock/f78/l3tl00bswl1if1m3g6uizz0qayg3kt19/err_22062022_100_doc.docx",
+            "raw_href": "/upload/iblock/f78/l3tl00bswl1if1m3g6uizz0qayg3kt19/err_22062022_100_doc.docx",
+            "text": "Бел",
+            "locator": "html:a:1237:line:11388:column:88",
+            "media_type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            "role": "unsupported_legal_attachment"
+          },
+          {
+            "url": "https://docs.eaeunion.org/upload/iblock/249/qfxyuhir8c6i5dugkk3xyi73f9cwr99p/err_22062022_100_doc.docx",
+            "href": "/upload/iblock/249/qfxyuhir8c6i5dugkk3xyi73f9cwr99p/err_22062022_100_doc.docx",
+            "raw_href": "/upload/iblock/249/qfxyuhir8c6i5dugkk3xyi73f9cwr99p/err_22062022_100_doc.docx",
+            "text": "Қаз",
+            "locator": "html:a:1238:line:11389:column:88",
+            "media_type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            "role": "unsupported_legal_attachment"
+          },
+          {
+            "url": "https://docs.eaeunion.org/upload/iblock/a9d/3tik6yhjet1lqz2b70w917n4l11w4spq/err_22062022_100_doc.docx",
+            "href": "/upload/iblock/a9d/3tik6yhjet1lqz2b70w917n4l11w4spq/err_22062022_100_doc.docx",
+            "raw_href": "/upload/iblock/a9d/3tik6yhjet1lqz2b70w917n4l11w4spq/err_22062022_100_doc.docx",
+            "text": "Кыр",
+            "locator": "html:a:1239:line:11390:column:88",
+            "media_type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            "role": "unsupported_legal_attachment"
+          },
+          {
+            "url": "https://docs.eaeunion.org/upload/iblock/dd4/axtijk5gwqy3fp6mlhzis52lgkjiaksz/err_22062022_doc.docx",
+            "href": "/upload/iblock/dd4/axtijk5gwqy3fp6mlhzis52lgkjiaksz/err_22062022_doc.docx",
+            "raw_href": "/upload/iblock/dd4/axtijk5gwqy3fp6mlhzis52lgkjiaksz/err_22062022_doc.docx",
+            "text": "Հայ",
+            "locator": "html:a:1241:line:11417:column:122",
+            "media_type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            "role": "unsupported_legal_attachment"
+          },
+          {
+            "url": "https://docs.eaeunion.org/upload/iblock/f78/l3tl00bswl1if1m3g6uizz0qayg3kt19/err_22062022_100_doc.docx",
+            "href": "/upload/iblock/f78/l3tl00bswl1if1m3g6uizz0qayg3kt19/err_22062022_100_doc.docx",
+            "raw_href": "/upload/iblock/f78/l3tl00bswl1if1m3g6uizz0qayg3kt19/err_22062022_100_doc.docx",
+            "text": "Бел",
+            "locator": "html:a:1242:line:11417:column:229",
+            "media_type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            "role": "unsupported_legal_attachment"
+          },
+          {
+            "url": "https://docs.eaeunion.org/upload/iblock/249/qfxyuhir8c6i5dugkk3xyi73f9cwr99p/err_22062022_100_doc.docx",
+            "href": "/upload/iblock/249/qfxyuhir8c6i5dugkk3xyi73f9cwr99p/err_22062022_100_doc.docx",
+            "raw_href": "/upload/iblock/249/qfxyuhir8c6i5dugkk3xyi73f9cwr99p/err_22062022_100_doc.docx",
+            "text": "Қаз",
+            "locator": "html:a:1243:line:11417:column:340",
+            "media_type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            "role": "unsupported_legal_attachment"
+          },
+          {
+            "url": "https://docs.eaeunion.org/upload/iblock/a9d/3tik6yhjet1lqz2b70w917n4l11w4spq/err_22062022_100_doc.docx",
+            "href": "/upload/iblock/a9d/3tik6yhjet1lqz2b70w917n4l11w4spq/err_22062022_100_doc.docx",
+            "raw_href": "/upload/iblock/a9d/3tik6yhjet1lqz2b70w917n4l11w4spq/err_22062022_100_doc.docx",
+            "text": "Кыр",
+            "locator": "html:a:1244:line:11417:column:451",
+            "media_type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            "role": "unsupported_legal_attachment"
+          },
+          {
+            "url": "https://docs.eaeunion.org/upload/iblock/9e6/c5h5chbykr8yo3c9gfe07cqbg00tqu38/err_22062022_100_att.docx",
+            "href": "/upload/iblock/9e6/c5h5chbykr8yo3c9gfe07cqbg00tqu38/err_22062022_100_att.docx",
+            "raw_href": "/upload/iblock/9e6/c5h5chbykr8yo3c9gfe07cqbg00tqu38/err_22062022_100_att.docx",
+            "text": "Рус",
+            "locator": "html:a:1247:line:11439:column:12",
+            "media_type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            "role": "unsupported_legal_attachment"
+          },
+          {
+            "url": "https://docs.eaeunion.org/upload/iblock/9e6/c5h5chbykr8yo3c9gfe07cqbg00tqu38/err_22062022_100_att.docx",
+            "href": "/upload/iblock/9e6/c5h5chbykr8yo3c9gfe07cqbg00tqu38/err_22062022_100_att.docx",
+            "raw_href": "/upload/iblock/9e6/c5h5chbykr8yo3c9gfe07cqbg00tqu38/err_22062022_100_att.docx",
+            "text": "Решение Совета № 100 от 21 июня 2022 г",
+            "locator": "html:a:1248:line:11443:column:8",
+            "media_type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            "role": "unsupported_legal_attachment"
+          },
+          {
+            "url": "https://docs.eaeunion.org/upload/iblock/9e6/c5h5chbykr8yo3c9gfe07cqbg00tqu38/err_22062022_100_att.docx",
+            "href": "/upload/iblock/9e6/c5h5chbykr8yo3c9gfe07cqbg00tqu38/err_22062022_100_att.docx",
+            "raw_href": "/upload/iblock/9e6/c5h5chbykr8yo3c9gfe07cqbg00tqu38/err_22062022_100_att.docx",
+            "text": "Скачать",
+            "locator": "html:a:1249:line:11447:column:8",
+            "media_type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            "role": "unsupported_legal_attachment"
+          }
+        ],
+        "primary_body_verified": false,
+        "legal_dates_verified": false
+      }
+    },
+    {
+      "source_url": "https://docs.eaeunion.org/documents/401/",
+      "source_sha256": "79c4909e92cb4a573dc2347e997dbb7bc7b186d560d1c374a209860d16af586f",
+      "document": {
+        "issuing_body": "council",
+        "number": "99",
+        "observed_adoption_date": "2022-06-10",
+        "observed_publication_date": "2022-06-22",
+        "observed_entry_into_force_date": "2022-07-02",
+        "title": "Об установлении ставок ввозных таможенных пошлин Единого таможенного тарифа Евразийского экономического союза в отношении отдельных видов машин стиральных и аппаратуры приемной для телевизионной связи",
+        "document_link": {
+          "url": "https://docs.eaeunion.org/documents/401/6734/",
+          "href": "/documents/401/6734/",
+          "text": "Решение Совета ЕЭК № 99",
+          "locator": "html:a:1250:line:11470:column:84"
+        },
+        "evidence": {
+          "locator": "html:list-row:78:line:11466:column:0",
+          "text": "Акты Евразийской экономической комиссии – Совет Евразийской экономической комиссии – Решения – 2022 Решение Совета ЕЭК № 99 Об установлении ставок ввозных таможенных пошлин Единого таможенного тарифа Евразийского экономического союза в отношении отдельных видов машин стиральных и аппаратуры приемной для телевизионной связи Рус Հայ Бел Қаз Кыр Дата принятия документа: 10.06.2022 Дата опубликования документа: 22.06.2022 Дата вступления в силу: 02.07.2022 Документы Рус Հայ Бел Қаз Кыр pdf Решение Совета № 99 от 10 июня 2022 г Скачать Приложения Рус docx Решение Совета № 99 от 10 июня 2022 г Скачать",
+          "text_sha256": "bec7e18f1fda2087ee306f11cb7b49181e6f8595526fd24694793200b4b7cdd5"
+        },
+        "pdf_references": [
+          {
+            "url": "https://docs.eaeunion.org/upload/iblock/76d/jm71rjsqrvitp96v46a4t3woxf0qtkwb/err_22062022_99_doc.pdf",
+            "href": "/upload/iblock/76d/jm71rjsqrvitp96v46a4t3woxf0qtkwb/err_22062022_99_doc.pdf",
+            "raw_href": "/upload/iblock/76d/jm71rjsqrvitp96v46a4t3woxf0qtkwb/err_22062022_99_doc.pdf",
+            "text": "Рус",
+            "locator": "html:a:1251:line:11475:column:44",
+            "media_type": "application/pdf",
+            "role": "legal_attachment_pdf"
+          },
+          {
+            "url": "https://docs.eaeunion.org/upload/iblock/76d/jm71rjsqrvitp96v46a4t3woxf0qtkwb/err_22062022_99_doc.pdf",
+            "href": "/upload/iblock/76d/jm71rjsqrvitp96v46a4t3woxf0qtkwb/err_22062022_99_doc.pdf",
+            "raw_href": "/upload/iblock/76d/jm71rjsqrvitp96v46a4t3woxf0qtkwb/err_22062022_99_doc.pdf",
+            "text": "Рус",
+            "locator": "html:a:1256:line:11506:column:12",
+            "media_type": "application/pdf",
+            "role": "legal_attachment_pdf"
+          },
+          {
+            "url": "https://docs.eaeunion.org/upload/iblock/76d/jm71rjsqrvitp96v46a4t3woxf0qtkwb/err_22062022_99_doc.pdf",
+            "href": "/upload/iblock/76d/jm71rjsqrvitp96v46a4t3woxf0qtkwb/err_22062022_99_doc.pdf",
+            "raw_href": "/upload/iblock/76d/jm71rjsqrvitp96v46a4t3woxf0qtkwb/err_22062022_99_doc.pdf",
+            "text": "Решение Совета № 99 от 10 июня 2022 г",
+            "locator": "html:a:1261:line:11510:column:8",
+            "media_type": "application/pdf",
+            "role": "legal_attachment_pdf"
+          },
+          {
+            "url": "https://docs.eaeunion.org/upload/iblock/76d/jm71rjsqrvitp96v46a4t3woxf0qtkwb/err_22062022_99_doc.pdf",
+            "href": "/upload/iblock/76d/jm71rjsqrvitp96v46a4t3woxf0qtkwb/err_22062022_99_doc.pdf",
+            "raw_href": "/upload/iblock/76d/jm71rjsqrvitp96v46a4t3woxf0qtkwb/err_22062022_99_doc.pdf",
+            "text": "Скачать",
+            "locator": "html:a:1262:line:11514:column:8",
+            "media_type": "application/pdf",
+            "role": "legal_attachment_pdf"
+          }
+        ],
+        "unsupported_references": [
+          {
+            "url": "https://docs.eaeunion.org/upload/iblock/a9e/s5cucy879d65sj8a12894bm75sjyf24k/err_22062022_doc.docx",
+            "href": "/upload/iblock/a9e/s5cucy879d65sj8a12894bm75sjyf24k/err_22062022_doc.docx",
+            "raw_href": "/upload/iblock/a9e/s5cucy879d65sj8a12894bm75sjyf24k/err_22062022_doc.docx",
+            "text": "Հայ",
+            "locator": "html:a:1252:line:11476:column:88",
+            "media_type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            "role": "unsupported_legal_attachment"
+          },
+          {
+            "url": "https://docs.eaeunion.org/upload/iblock/13c/0l7xtpyy6vf8xyvv4lo2z6rs1ntflchd/err_22062022_99_doc.docx",
+            "href": "/upload/iblock/13c/0l7xtpyy6vf8xyvv4lo2z6rs1ntflchd/err_22062022_99_doc.docx",
+            "raw_href": "/upload/iblock/13c/0l7xtpyy6vf8xyvv4lo2z6rs1ntflchd/err_22062022_99_doc.docx",
+            "text": "Бел",
+            "locator": "html:a:1253:line:11477:column:88",
+            "media_type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            "role": "unsupported_legal_attachment"
+          },
+          {
+            "url": "https://docs.eaeunion.org/upload/iblock/054/vwh24dpoffyav9ybzcs1g0x3r7vnsa5i/err_22062022_99_doc.docx",
+            "href": "/upload/iblock/054/vwh24dpoffyav9ybzcs1g0x3r7vnsa5i/err_22062022_99_doc.docx",
+            "raw_href": "/upload/iblock/054/vwh24dpoffyav9ybzcs1g0x3r7vnsa5i/err_22062022_99_doc.docx",
+            "text": "Қаз",
+            "locator": "html:a:1254:line:11478:column:88",
+            "media_type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            "role": "unsupported_legal_attachment"
+          },
+          {
+            "url": "https://docs.eaeunion.org/upload/iblock/1f0/283pv96jd1725kbk2xdf9d9ujhy2jdp8/err_22062022_99_doc.docx",
+            "href": "/upload/iblock/1f0/283pv96jd1725kbk2xdf9d9ujhy2jdp8/err_22062022_99_doc.docx",
+            "raw_href": "/upload/iblock/1f0/283pv96jd1725kbk2xdf9d9ujhy2jdp8/err_22062022_99_doc.docx",
+            "text": "Кыр",
+            "locator": "html:a:1255:line:11479:column:88",
+            "media_type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            "role": "unsupported_legal_attachment"
+          },
+          {
+            "url": "https://docs.eaeunion.org/upload/iblock/a9e/s5cucy879d65sj8a12894bm75sjyf24k/err_22062022_doc.docx",
+            "href": "/upload/iblock/a9e/s5cucy879d65sj8a12894bm75sjyf24k/err_22062022_doc.docx",
+            "raw_href": "/upload/iblock/a9e/s5cucy879d65sj8a12894bm75sjyf24k/err_22062022_doc.docx",
+            "text": "Հայ",
+            "locator": "html:a:1257:line:11506:column:121",
+            "media_type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            "role": "unsupported_legal_attachment"
+          },
+          {
+            "url": "https://docs.eaeunion.org/upload/iblock/13c/0l7xtpyy6vf8xyvv4lo2z6rs1ntflchd/err_22062022_99_doc.docx",
+            "href": "/upload/iblock/13c/0l7xtpyy6vf8xyvv4lo2z6rs1ntflchd/err_22062022_99_doc.docx",
+            "raw_href": "/upload/iblock/13c/0l7xtpyy6vf8xyvv4lo2z6rs1ntflchd/err_22062022_99_doc.docx",
+            "text": "Бел",
+            "locator": "html:a:1258:line:11506:column:228",
+            "media_type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            "role": "unsupported_legal_attachment"
+          },
+          {
+            "url": "https://docs.eaeunion.org/upload/iblock/054/vwh24dpoffyav9ybzcs1g0x3r7vnsa5i/err_22062022_99_doc.docx",
+            "href": "/upload/iblock/054/vwh24dpoffyav9ybzcs1g0x3r7vnsa5i/err_22062022_99_doc.docx",
+            "raw_href": "/upload/iblock/054/vwh24dpoffyav9ybzcs1g0x3r7vnsa5i/err_22062022_99_doc.docx",
+            "text": "Қаз",
+            "locator": "html:a:1259:line:11506:column:338",
+            "media_type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            "role": "unsupported_legal_attachment"
+          },
+          {
+            "url": "https://docs.eaeunion.org/upload/iblock/1f0/283pv96jd1725kbk2xdf9d9ujhy2jdp8/err_22062022_99_doc.docx",
+            "href": "/upload/iblock/1f0/283pv96jd1725kbk2xdf9d9ujhy2jdp8/err_22062022_99_doc.docx",
+            "raw_href": "/upload/iblock/1f0/283pv96jd1725kbk2xdf9d9ujhy2jdp8/err_22062022_99_doc.docx",
+            "text": "Кыр",
+            "locator": "html:a:1260:line:11506:column:448",
+            "media_type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            "role": "unsupported_legal_attachment"
+          },
+          {
+            "url": "https://docs.eaeunion.org/upload/iblock/61e/y8e6tw46htgcibtxoid91b6f6y43dctx/err_22062022_99_att.docx",
+            "href": "/upload/iblock/61e/y8e6tw46htgcibtxoid91b6f6y43dctx/err_22062022_99_att.docx",
+            "raw_href": "/upload/iblock/61e/y8e6tw46htgcibtxoid91b6f6y43dctx/err_22062022_99_att.docx",
+            "text": "Рус",
+            "locator": "html:a:1263:line:11528:column:12",
+            "media_type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            "role": "unsupported_legal_attachment"
+          },
+          {
+            "url": "https://docs.eaeunion.org/upload/iblock/61e/y8e6tw46htgcibtxoid91b6f6y43dctx/err_22062022_99_att.docx",
+            "href": "/upload/iblock/61e/y8e6tw46htgcibtxoid91b6f6y43dctx/err_22062022_99_att.docx",
+            "raw_href": "/upload/iblock/61e/y8e6tw46htgcibtxoid91b6f6y43dctx/err_22062022_99_att.docx",
+            "text": "Решение Совета № 99 от 10 июня 2022 г",
+            "locator": "html:a:1264:line:11532:column:8",
+            "media_type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            "role": "unsupported_legal_attachment"
+          },
+          {
+            "url": "https://docs.eaeunion.org/upload/iblock/61e/y8e6tw46htgcibtxoid91b6f6y43dctx/err_22062022_99_att.docx",
+            "href": "/upload/iblock/61e/y8e6tw46htgcibtxoid91b6f6y43dctx/err_22062022_99_att.docx",
+            "raw_href": "/upload/iblock/61e/y8e6tw46htgcibtxoid91b6f6y43dctx/err_22062022_99_att.docx",
+            "text": "Скачать",
+            "locator": "html:a:1265:line:11536:column:8",
+            "media_type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            "role": "unsupported_legal_attachment"
+          }
+        ],
+        "primary_body_verified": false,
+        "legal_dates_verified": false
+      }
+    }
+  ],
+  "note_matches": [
+    {
+      "source_url": "https://docs.eaeunion.org/documents/401/",
+      "source_sha256": "79c4909e92cb4a573dc2347e997dbb7bc7b186d560d1c374a209860d16af586f",
+      "document": {
+        "issuing_body": "council",
+        "number": "168",
+        "observed_adoption_date": "2022-12-14",
+        "observed_publication_date": "2022-12-22",
+        "observed_entry_into_force_date": "2023-01-01",
+        "title": "Об установлении ставки ввозной таможенной пошлины Единого таможенного тарифа Евразийского экономического союза в отношении отдельных видов двигателей внутреннего сгорания",
+        "document_link": {
+          "url": "https://docs.eaeunion.org/documents/401/7135/",
+          "href": "/documents/401/7135/",
+          "text": "Решение Совета ЕЭК № 168",
+          "locator": "html:a:194:line:5578:column:84"
+        },
+        "evidence": {
+          "locator": "html:list-row:12:line:5574:column:0",
+          "text": "Акты Евразийской экономической комиссии – Совет Евразийской экономической комиссии – Решения – 2022 Решение Совета ЕЭК № 168 Об установлении ставки ввозной таможенной пошлины Единого таможенного тарифа Евразийского экономического союза в отношении отдельных видов двигателей внутреннего сгорания Рус Հայ Бел Қаз Кыр Дата принятия документа: 14.12.2022 Дата опубликования документа: 22.12.2022 Дата вступления в силу: 01.01.2023 Документы Рус Հայ Бел Қаз Кыр pdf Решение Совета № 168 от 14 декабря 2022 г Скачать Приложения Рус doc Решение Совета № 168 от 14 декабря 2022 г Скачать",
+          "text_sha256": "e9f518eff6da48debf488a741802ae9e2753abb0431a0ae35de45073d864a590"
+        },
+        "pdf_references": [
+          {
+            "url": "https://docs.eaeunion.org/upload/iblock/75a/csmv2kt1csii6wr7bet2sgubhl3dcvgz/err_22122022_168_doc.pdf",
+            "href": "/upload/iblock/75a/csmv2kt1csii6wr7bet2sgubhl3dcvgz/err_22122022_168_doc.pdf",
+            "raw_href": "/upload/iblock/75a/csmv2kt1csii6wr7bet2sgubhl3dcvgz/err_22122022_168_doc.pdf",
+            "text": "Рус",
+            "locator": "html:a:195:line:5583:column:44",
+            "media_type": "application/pdf",
+            "role": "legal_attachment_pdf"
+          },
+          {
+            "url": "https://docs.eaeunion.org/upload/iblock/75a/csmv2kt1csii6wr7bet2sgubhl3dcvgz/err_22122022_168_doc.pdf",
+            "href": "/upload/iblock/75a/csmv2kt1csii6wr7bet2sgubhl3dcvgz/err_22122022_168_doc.pdf",
+            "raw_href": "/upload/iblock/75a/csmv2kt1csii6wr7bet2sgubhl3dcvgz/err_22122022_168_doc.pdf",
+            "text": "Рус",
+            "locator": "html:a:200:line:5614:column:12",
+            "media_type": "application/pdf",
+            "role": "legal_attachment_pdf"
+          },
+          {
+            "url": "https://docs.eaeunion.org/upload/iblock/75a/csmv2kt1csii6wr7bet2sgubhl3dcvgz/err_22122022_168_doc.pdf",
+            "href": "/upload/iblock/75a/csmv2kt1csii6wr7bet2sgubhl3dcvgz/err_22122022_168_doc.pdf",
+            "raw_href": "/upload/iblock/75a/csmv2kt1csii6wr7bet2sgubhl3dcvgz/err_22122022_168_doc.pdf",
+            "text": "Решение Совета № 168 от 14 декабря 2022 г",
+            "locator": "html:a:205:line:5618:column:8",
+            "media_type": "application/pdf",
+            "role": "legal_attachment_pdf"
+          },
+          {
+            "url": "https://docs.eaeunion.org/upload/iblock/75a/csmv2kt1csii6wr7bet2sgubhl3dcvgz/err_22122022_168_doc.pdf",
+            "href": "/upload/iblock/75a/csmv2kt1csii6wr7bet2sgubhl3dcvgz/err_22122022_168_doc.pdf",
+            "raw_href": "/upload/iblock/75a/csmv2kt1csii6wr7bet2sgubhl3dcvgz/err_22122022_168_doc.pdf",
+            "text": "Скачать",
+            "locator": "html:a:206:line:5622:column:8",
+            "media_type": "application/pdf",
+            "role": "legal_attachment_pdf"
+          }
+        ],
+        "unsupported_references": [
+          {
+            "url": "https://docs.eaeunion.org/upload/iblock/ed1/cs7ycw23032dg4s2rxlecxcdxrwrah6w/err_22122022_168_doc.docx",
+            "href": "/upload/iblock/ed1/cs7ycw23032dg4s2rxlecxcdxrwrah6w/err_22122022_168_doc.docx",
+            "raw_href": "/upload/iblock/ed1/cs7ycw23032dg4s2rxlecxcdxrwrah6w/err_22122022_168_doc.docx",
+            "text": "Հայ",
+            "locator": "html:a:196:line:5584:column:88",
+            "media_type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            "role": "unsupported_legal_attachment"
+          },
+          {
+            "url": "https://docs.eaeunion.org/upload/iblock/60e/olp1q306gyloxyv6zk5oapmcual4co0r/err_22122022_doc.docx",
+            "href": "/upload/iblock/60e/olp1q306gyloxyv6zk5oapmcual4co0r/err_22122022_doc.docx",
+            "raw_href": "/upload/iblock/60e/olp1q306gyloxyv6zk5oapmcual4co0r/err_22122022_doc.docx",
+            "text": "Бел",
+            "locator": "html:a:197:line:5585:column:88",
+            "media_type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            "role": "unsupported_legal_attachment"
+          },
+          {
+            "url": "https://docs.eaeunion.org/upload/iblock/c5d/mhngf3pj5j19kaw5vt3tf1dnkyi3xbth/err_22122022_168_doc.docx",
+            "href": "/upload/iblock/c5d/mhngf3pj5j19kaw5vt3tf1dnkyi3xbth/err_22122022_168_doc.docx",
+            "raw_href": "/upload/iblock/c5d/mhngf3pj5j19kaw5vt3tf1dnkyi3xbth/err_22122022_168_doc.docx",
+            "text": "Қаз",
+            "locator": "html:a:198:line:5586:column:88",
+            "media_type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            "role": "unsupported_legal_attachment"
+          },
+          {
+            "url": "https://docs.eaeunion.org/upload/iblock/d6b/iv2puemh1nwxg3wqjdld39tffnebg3sq/err_22122022_168_doc.doc",
+            "href": "/upload/iblock/d6b/iv2puemh1nwxg3wqjdld39tffnebg3sq/err_22122022_168_doc.doc",
+            "raw_href": "/upload/iblock/d6b/iv2puemh1nwxg3wqjdld39tffnebg3sq/err_22122022_168_doc.doc",
+            "text": "Кыр",
+            "locator": "html:a:199:line:5587:column:88",
+            "media_type": "application/msword",
+            "role": "unsupported_legal_attachment"
+          },
+          {
+            "url": "https://docs.eaeunion.org/upload/iblock/ed1/cs7ycw23032dg4s2rxlecxcdxrwrah6w/err_22122022_168_doc.docx",
+            "href": "/upload/iblock/ed1/cs7ycw23032dg4s2rxlecxcdxrwrah6w/err_22122022_168_doc.docx",
+            "raw_href": "/upload/iblock/ed1/cs7ycw23032dg4s2rxlecxcdxrwrah6w/err_22122022_168_doc.docx",
+            "text": "Հայ",
+            "locator": "html:a:201:line:5614:column:122",
+            "media_type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            "role": "unsupported_legal_attachment"
+          },
+          {
+            "url": "https://docs.eaeunion.org/upload/iblock/60e/olp1q306gyloxyv6zk5oapmcual4co0r/err_22122022_doc.docx",
+            "href": "/upload/iblock/60e/olp1q306gyloxyv6zk5oapmcual4co0r/err_22122022_doc.docx",
+            "raw_href": "/upload/iblock/60e/olp1q306gyloxyv6zk5oapmcual4co0r/err_22122022_doc.docx",
+            "text": "Бел",
+            "locator": "html:a:202:line:5614:column:233",
+            "media_type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            "role": "unsupported_legal_attachment"
+          },
+          {
+            "url": "https://docs.eaeunion.org/upload/iblock/c5d/mhngf3pj5j19kaw5vt3tf1dnkyi3xbth/err_22122022_168_doc.docx",
+            "href": "/upload/iblock/c5d/mhngf3pj5j19kaw5vt3tf1dnkyi3xbth/err_22122022_168_doc.docx",
+            "raw_href": "/upload/iblock/c5d/mhngf3pj5j19kaw5vt3tf1dnkyi3xbth/err_22122022_168_doc.docx",
+            "text": "Қаз",
+            "locator": "html:a:203:line:5614:column:340",
+            "media_type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            "role": "unsupported_legal_attachment"
+          },
+          {
+            "url": "https://docs.eaeunion.org/upload/iblock/d6b/iv2puemh1nwxg3wqjdld39tffnebg3sq/err_22122022_168_doc.doc",
+            "href": "/upload/iblock/d6b/iv2puemh1nwxg3wqjdld39tffnebg3sq/err_22122022_168_doc.doc",
+            "raw_href": "/upload/iblock/d6b/iv2puemh1nwxg3wqjdld39tffnebg3sq/err_22122022_168_doc.doc",
+            "text": "Кыр",
+            "locator": "html:a:204:line:5614:column:451",
+            "media_type": "application/msword",
+            "role": "unsupported_legal_attachment"
+          },
+          {
+            "url": "https://docs.eaeunion.org/upload/iblock/51f/kwlut9khqyzjg3p084v7uusspa6owp8k/err_22122022_168_att.doc",
+            "href": "/upload/iblock/51f/kwlut9khqyzjg3p084v7uusspa6owp8k/err_22122022_168_att.doc",
+            "raw_href": "/upload/iblock/51f/kwlut9khqyzjg3p084v7uusspa6owp8k/err_22122022_168_att.doc",
+            "text": "Рус",
+            "locator": "html:a:207:line:5636:column:12",
+            "media_type": "application/msword",
+            "role": "unsupported_legal_attachment"
+          },
+          {
+            "url": "https://docs.eaeunion.org/upload/iblock/51f/kwlut9khqyzjg3p084v7uusspa6owp8k/err_22122022_168_att.doc",
+            "href": "/upload/iblock/51f/kwlut9khqyzjg3p084v7uusspa6owp8k/err_22122022_168_att.doc",
+            "raw_href": "/upload/iblock/51f/kwlut9khqyzjg3p084v7uusspa6owp8k/err_22122022_168_att.doc",
+            "text": "Решение Совета № 168 от 14 декабря 2022 г",
+            "locator": "html:a:208:line:5640:column:8",
+            "media_type": "application/msword",
+            "role": "unsupported_legal_attachment"
+          },
+          {
+            "url": "https://docs.eaeunion.org/upload/iblock/51f/kwlut9khqyzjg3p084v7uusspa6owp8k/err_22122022_168_att.doc",
+            "href": "/upload/iblock/51f/kwlut9khqyzjg3p084v7uusspa6owp8k/err_22122022_168_att.doc",
+            "raw_href": "/upload/iblock/51f/kwlut9khqyzjg3p084v7uusspa6owp8k/err_22122022_168_att.doc",
+            "text": "Скачать",
+            "locator": "html:a:209:line:5644:column:8",
+            "media_type": "application/msword",
+            "role": "unsupported_legal_attachment"
+          }
+        ],
+        "primary_body_verified": false,
+        "legal_dates_verified": false
+      }
+    }
+  ],
+  "all_pages_captured": false,
+  "primary_act_bodies_verified": false,
+  "legal_dates_verified": false,
+  "legal_inventory_complete": false,
+  "active_rates_written": false,
+  "inventory_matched_count": 8,
+  "inventory_named_count": 105,
+  "note_matched_count": 1,
+  "note_identity_count": 61
+}

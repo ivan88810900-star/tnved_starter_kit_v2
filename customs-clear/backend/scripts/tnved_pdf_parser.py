@@ -94,12 +94,24 @@ def _is_table_header_row(words: list[dict]) -> bool:
     return bool(_TABLE_HEADER_RE.search(text))
 
 
-def _group_by_y(words: list[dict], tolerance: int = 4) -> dict[int, list[dict]]:
-    """Группирует слова по строкам с допуском по y-координате."""
-    rows: dict[int, list[dict]] = {}
-    for w in words:
-        y_key = int(round(w["top"] / tolerance)) * tolerance
-        rows.setdefault(y_key, []).append(w)
+def _group_by_y(words: list[dict], tolerance: int = 4) -> dict[float, list[dict]]:
+    """Группирует слова по строкам с допуском по y-координате.
+
+    Обычное округление к сетке разрывало одну строку, если базовая линия
+    попадала по разные стороны границы бакета. В официальном PDF группы 85,
+    например, код ``8544 49 930 9`` имеет ``top=542.509``, а его описание —
+    ``top=542.269``. Кластеризация по фактическому расстоянию сохраняет такую
+    строку целиком и при этом не склеивает соседние строки таблицы.
+    """
+    rows: dict[float, list[dict]] = {}
+    for word in sorted(
+        words,
+        key=lambda item: (float(item.get("top") or 0.0), float(item.get("x0") or 0.0)),
+    ):
+        top = float(word.get("top") or 0.0)
+        candidates = [key for key in rows if abs(key - top) <= tolerance]
+        y_key = min(candidates, key=lambda key: abs(key - top)) if candidates else top
+        rows.setdefault(y_key, []).append(word)
     return rows
 
 

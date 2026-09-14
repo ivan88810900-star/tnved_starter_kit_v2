@@ -1,0 +1,192 @@
+{
+  "active_rates_written": false,
+  "backup": {
+    "entries_verified": 103,
+    "filename": "Tariff_ETT_scanned_acts_OCR_candidates_2026-09-08.zip",
+    "manifest_sha256": "a2cbab2ed1d552c6f67182a35f4789260dc07b900f15b463250bd2c8668616ec",
+    "maximum_size_bytes": 47185920,
+    "reopened_and_all_hashes_verified": true,
+    "sha256": "e49f4db2a53f39eb6046e79ea3c4a751bb418f98816a87d0234cca583743a86b",
+    "size_bytes": 20188758
+  },
+  "counts": {
+    "archived_png_pages": 6,
+    "confidence_below_60_words": 498,
+    "ocr_pages_failed": 0,
+    "ocr_pages_succeeded": 29,
+    "ocr_words": 5501,
+    "omitted_png_pages_regenerable": 23,
+    "pages": 29,
+    "source_documents": 2,
+    "visually_reviewed_pages": 6
+  },
+  "current_legal_inventory_verified": false,
+  "date": "2026-09-08",
+  "elapsed_seconds": 92.45,
+  "embedded_pdf_text": false,
+  "engine": "tesseract 5.3.4",
+  "global_model_installation": false,
+  "kind": "scanned_legal_act_ocr_candidate_evidence",
+  "legal_effective_dates_verified": false,
+  "legal_identity_approval": false,
+  "limits": [
+    "OCR text is machine generated, not an embedded PDF text layer.",
+    "Only specified pages were visually reviewed; all29pages were OCRprocessed.",
+    "Superscript footnotes and table figures contain concrete OCR errors.",
+    "Official publication dates, dependencies, exceptions and current amendments still need source-bound legal review."
+  ],
+  "model": {
+    "git_blob_pin_verified": true,
+    "git_blob_sha1": "b146cb2263acbc6383f8e92ea0ce759537687bb8",
+    "installed_globally": false,
+    "kind": "pinned_ocr_model_download",
+    "language": "rus",
+    "legal_approval": false,
+    "license": {
+      "filename": "LICENSE",
+      "git_blob_sha1": "d645695673349e3947e8e5ae42332d0ac3164cd7",
+      "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+      "size_bytes": 11358,
+      "source_url": "https://raw.githubusercontent.com/tesseract-ocr/tessdata_fast/87416418657359cb625c412a48b6e1d6d41c29bd/LICENSE"
+    },
+    "model_executed": false,
+    "model_filename": "rus.traineddata",
+    "retrieved_at": "2026-09-08T16:06:18.971152+00:00",
+    "schema_version": 1,
+    "sha256": "e16e5e036cce1d9ec2b00063cf8b54472625b9e14d893a169e2b0dedeb4df225",
+    "size_bytes": 3861738,
+    "source_url": "https://raw.githubusercontent.com/tesseract-ocr/tessdata_fast/87416418657359cb625c412a48b6e1d6d41c29bd/rus.traineddata",
+    "upstream_commit": "87416418657359cb625c412a48b6e1d6d41c29bd",
+    "upstream_license": "Apache-2.0",
+    "upstream_repository": "tesseract-ocr/tessdata_fast",
+    "usage": "ocr_candidate_generation_only"
+  },
+  "ocr_confidence_is_not_legal_accuracy": true,
+  "parameters": {
+    "aggregate_budget_seconds": 900,
+    "dpi": 300,
+    "language": "rus",
+    "ocr_timeout_seconds": 60,
+    "oem": 1,
+    "psm": 3,
+    "render_timeout_seconds": 45,
+    "threads": 1
+  },
+  "production_ready": false,
+  "renderer": "pdftoppm version 24.02.0",
+  "schema_version": 1,
+  "source_acquisition_receipt_sha256": "ab67a2d3055a3fcd8416c874b9bc388ce0b0919e4b964e5de7c1f18c08a6f72e",
+  "sources": [
+    {
+      "acquisition": {
+        "media_type": "application/pdf",
+        "redirect_chain": [],
+        "requested_url": "https://docs.eaeunion.org/upload/iblock/393/f3ak35ptlhz2u9paqn79dontu4r2kj8h/err_28042022_66_doc.pdf",
+        "retrieved_at": "2026-09-08T15:25:14.128143Z",
+        "sha256": "10b9315c8c86efadf53f773c8d984d22247bc5485c432d5039352a66113179d5",
+        "size_bytes": 3083603,
+        "url": "https://docs.eaeunion.org/upload/iblock/393/f3ak35ptlhz2u9paqn79dontu4r2kj8h/err_28042022_66_doc.pdf"
+      },
+      "artifact_id": "eec-collegium-66",
+      "page_count": 12,
+      "source_pdf_sha256": "10b9315c8c86efadf53f773c8d984d22247bc5485c432d5039352a66113179d5"
+    },
+    {
+      "acquisition": {
+        "media_type": "application/pdf",
+        "redirect_chain": [],
+        "requested_url": "https://docs.eaeunion.org/upload/iblock/82b/1h7ofr72qrt3q86uvgi7kwy36d0l66m6/err_28042022_76_doc.pdf",
+        "retrieved_at": "2026-09-08T15:25:20.568540Z",
+        "sha256": "d0fbfe320d18465519a9baadc9f00d1b0c88124c2102f70830207dfba95a48fc",
+        "size_bytes": 4800950,
+        "url": "https://docs.eaeunion.org/upload/iblock/82b/1h7ofr72qrt3q86uvgi7kwy36d0l66m6/err_28042022_76_doc.pdf"
+      },
+      "artifact_id": "eec-council-76",
+      "page_count": 17,
+      "source_pdf_sha256": "d0fbfe320d18465519a9baadc9f00d1b0c88124c2102f70830207dfba95a48fc"
+    }
+  ],
+  "status": "review_required",
+  "summary_sha256": "329a2690e98794bf99ccb7b3df50301698930d97dd6e9198897ad8af535ad4f6",
+  "visual_findings": [
+    {
+      "artifact_id": "eec-collegium-66",
+      "effective_date_resolved": false,
+      "image_sha256": "f28c72001686d29e52a3a84ec7f9930ea949e92659584dafc0d9b9e680a6bf34",
+      "legal_approval": false,
+      "ocr_report_sha256": "89052585f1d1a1b160a8e7943f498f93d5466fbeaff360e945cdb938266c131a",
+      "source_page": 1,
+      "source_pdf_sha256": "10b9315c8c86efadf53f773c8d984d22247bc5485c432d5039352a66113179d5",
+      "visual_observations": [
+        "Коллегия ЕЭК, Решение №66 от 19 апреля 2022 года.",
+        "Это наблюдаемая дата принятия на изображении, а не утверждение о дате вступления в силу или действующей редакции."
+      ]
+    },
+    {
+      "artifact_id": "eec-collegium-66",
+      "effective_date_resolved": false,
+      "image_sha256": "24288e750f4881e631518e171cfea45ce1cfdea9eb9b11a4549608f192a8538e",
+      "legal_approval": false,
+      "ocr_report_sha256": "dfafa3c3fd3dd66de57c0971c1af58026756c603c3178a2c26e65a6bf65fe1fc",
+      "source_page": 2,
+      "source_pdf_sha256": "10b9315c8c86efadf53f773c8d984d22247bc5485c432d5039352a66113179d5",
+      "visual_observations": [
+        "Подпункт б) и надстрочный маркер 67C искажены в OCR (6) и «70).",
+        "Визуально читаются 30.09.2022 включительно; 10 календарных дней после официального опубликования; правоотношения с 28 марта 2022 года."
+      ]
+    },
+    {
+      "artifact_id": "eec-collegium-66",
+      "effective_date_resolved": false,
+      "image_sha256": "7bd62f2a373d4a59a10b2e4dc0b0281ee497b09cadcf51639b891f88747945c6",
+      "legal_approval": false,
+      "ocr_report_sha256": "bb3f8847144361af7e020e4ee48f2d80447cef87e8e2618c74080aabb5376c3b",
+      "source_page": 3,
+      "source_pdf_sha256": "10b9315c8c86efadf53f773c8d984d22247bc5485c432d5039352a66113179d5",
+      "visual_observations": [
+        "Заголовок приложения визуально указывает Решение Коллегии от 19 апреля 2022 года №66.",
+        "Таблица показывает ставки с отдельными надстрочными сносками: например 10 и 67C. OCR склеивает/искажает их как 1079, 10670 и другие строки; такие значения нельзя считать ставками."
+      ]
+    },
+    {
+      "artifact_id": "eec-council-76",
+      "effective_date_resolved": false,
+      "image_sha256": "fc60c5d6ab6550adc4da970e1efcb74e99b3012ed9dc6a9c81e4115c364a475a",
+      "legal_approval": false,
+      "ocr_report_sha256": "a49cabe73bc437efe506449fa9f766db07d8d031c7f62bc006652bf1425228bc",
+      "source_page": 1,
+      "source_pdf_sha256": "d0fbfe320d18465519a9baadc9f00d1b0c88124c2102f70830207dfba95a48fc",
+      "visual_observations": [
+        "Совет ЕЭК, Решение №76 от 15 апреля 2022 года.",
+        "Это наблюдаемая дата принятия на изображении, а не утверждение о дате вступления в силу или действующей редакции."
+      ]
+    },
+    {
+      "artifact_id": "eec-council-76",
+      "effective_date_resolved": false,
+      "image_sha256": "074aab264f21ed2f5cd19140d36f51fa789d321af8e035822c1cea8ca5a5d6d7",
+      "legal_approval": false,
+      "ocr_report_sha256": "e236647bffa15ccd4743b846e30e10d35e7ae6ec8dde6337e8eda91d419acfc7",
+      "source_page": 2,
+      "source_pdf_sha256": "d0fbfe320d18465519a9baadc9f00d1b0c88124c2102f70830207dfba95a48fc",
+      "visual_observations": [
+        "Пункт 4 содержит 10 календарных дней после официального опубликования и зависимость от вступления в силу связанного решения Коллегии.",
+        "Положение продолжается на следующей странице; OCR отдельной страницы недостаточен для интерпретации."
+      ]
+    },
+    {
+      "artifact_id": "eec-council-76",
+      "effective_date_resolved": false,
+      "image_sha256": "655befefc8e558169defc85194ea2b5d6beabe7836ba2bf47ec012cb05a35cbf",
+      "legal_approval": false,
+      "ocr_report_sha256": "eaee78cf346f03558ce11ddc0425e59f8d47c7eb7e5824949d72815e07205983",
+      "source_page": 3,
+      "source_pdf_sha256": "d0fbfe320d18465519a9baadc9f00d1b0c88124c2102f70830207dfba95a48fc",
+      "visual_observations": [
+        "Продолжение пункта 4 содержит распространение на правоотношения с 28 марта 2022 года и явные исключения: пункт 3 решения и пункты 1 и 3 изменений приложения №2.",
+        "Отдельный абзац регулирует вступление в силу указанных исключений; это не одна общая дата для всех положений."
+      ]
+    }
+  ],
+  "visual_review_sha256": "e2c864a66f3f9a2d94be0a1677231248c6041acef845075e1de4d714fb84cd78"
+}

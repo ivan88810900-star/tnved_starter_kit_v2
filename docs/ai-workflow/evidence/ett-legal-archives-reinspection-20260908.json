@@ -1,0 +1,98 @@
+{
+  "schema_version": 1,
+  "audit_kind": "official_archive_compatibility_reinspection",
+  "capture_run_url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/34249284880",
+  "original_failed_report_sha256": "9069c511677db2afe8032915ebdd78e0100a0f1a56b9ac5588f987abc85488cf",
+  "original_failed_report_unchanged": true,
+  "original_capture_outcome": {
+    "all_selected_archives_inspected": false,
+    "failed_sources": 2,
+    "inspected_sources": 0
+  },
+  "reinspection_report_sha256": "33fc2afa24ab6eb40f523b27c6ad1f0a7aae8117cbe8648f4641c0709c827dd5",
+  "archive_parser_path": "customs-clear/backend/app/services/ett_legal_archives.py",
+  "archive_parser_sha256": "01e2dd0cebeae725c5722aa9a412629dd293fc7209ed0cae6b785991aee35874",
+  "parser_dependency_sha256": {
+    "app/services/ett_transport.py": "e92af393fb89763882acf98a76d8c7ba6a75f2c0455631207c4d8cc58957bdfb",
+    "app/services/source_document.py": "2218c52717c88234208f996b38a8447c8702506ecebdcd4017a57c49df2be4cf"
+  },
+  "compatibility_fix": "Validate original and NFKC-normalized path components and normalization/case aliases; preserve raw filename bytes and the declared UTF-8 flag. CP437 remains the ZIP-convention identity for unflagged names; CP866 is only an unverified display candidate.",
+  "validation": {
+    "archive_tests_passed": 88,
+    "network_requests": 0,
+    "archive_sources_inspected": 2,
+    "original_source_objects_copied": 2,
+    "selected_member_objects": 5,
+    "ole_doc_candidates": 4,
+    "ooxml_docx_candidates": 1
+  },
+  "archive_validation_passed": true,
+  "source_identity_verified": false,
+  "adoption_dates_verified": false,
+  "effective_dates_verified": false,
+  "legal_text_verified": false,
+  "amendment_inventory_complete": false,
+  "production_ready": false,
+  "active_rates_written": false,
+  "pdf_acquisition_receipt_created": false,
+  "storage_kind": "local_development",
+  "results": [
+    {
+      "source_id": "collegium_66_zip",
+      "requested_url": "https://docs.eaeunion.org/upload/iblock/30f/1ejbrxx8u338qjf970tal0715afq9li8/err_28042022_66_att.zip",
+      "archive_sha256": "02f44a63a37fff844b63d4e9ab4dc76d9c81c5a94a860aabe89776d7fee4102d",
+      "size_bytes": 507747,
+      "original_capture_status": "failed",
+      "original_capture_archive_validation_passed": false,
+      "reinspection_archive_validation_passed": true,
+      "members": [
+        {
+          "raw_filename_hex": "322d322e8fe0a8abaea6a5ada8a520aa208aaeababa5a3a8a82031342e30342e323032322e646f63",
+          "unverified_cp866_display": "2-2.Приложение к Коллегии 14.04.2022.doc",
+          "kind": "ole_doc_candidate",
+          "size_bytes": 237056,
+          "sha256": "91700ef7f994dd0ec59aeaa91efbd036633a6593899fedc12ba223f65c210392"
+        },
+        {
+          "raw_filename_hex": "90a5e8a5ada8ef208aaeababa5a3a8a820fc363620aee220313920a0afe0a5abef203230323220a32e202e646f63",
+          "unverified_cp866_display": "Решения Коллегии №66 от 19 апреля 2022 г. .doc",
+          "kind": "ole_doc_candidate",
+          "size_bytes": 1275392,
+          "sha256": "b5a690b99267ea788b11aaf62b18700d70edd5e3704a9dea880972ec27f54304"
+        }
+      ]
+    },
+    {
+      "source_id": "council_76_zip",
+      "requested_url": "https://docs.eaeunion.org/upload/iblock/f8b/4n8tf0bp9hkvrg1mwvd3o992yckghgn3/err_28042022_76_att.zip",
+      "archive_sha256": "18ceb819fa6b0564ef893eadff9145c3e87bcd50317f5efdd53982e042f782cb",
+      "size_bytes": 530516,
+      "original_capture_status": "failed",
+      "original_capture_archive_validation_passed": false,
+      "reinspection_archive_validation_passed": true,
+      "members": [
+        {
+          "raw_filename_hex": "8fe0a8abaea6a5ada8a520312e646f63",
+          "unverified_cp866_display": "Приложение 1.doc",
+          "kind": "ole_doc_candidate",
+          "size_bytes": 176640,
+          "sha256": "ca1ef46ed593f93366026905f71605739549e89d5e6dbb4d7ab44d00876c7540"
+        },
+        {
+          "raw_filename_hex": "8fe0a8abaea6a5ada8a520322e646f6378",
+          "unverified_cp866_display": "Приложение 2.docx",
+          "kind": "ooxml_docx_candidate",
+          "size_bytes": 29415,
+          "sha256": "2be75d8f4d01d9ea41be1b44cc7fc08dd47de5452721bad47913be6967456f49"
+        },
+        {
+          "raw_filename_hex": "90a5e8a5ada8a52091aea2a5e2a020fc20373620aee220313520a0afe0a5abef203230323220a32e646f63",
+          "unverified_cp866_display": "Решение Совета № 76 от 15 апреля 2022 г.doc",
+          "kind": "ole_doc_candidate",
+          "size_bytes": 1282560,
+          "sha256": "423a860341ec93bf29eba485be7661137bd4b347a45f537dabe00bfb124aba86"
+        }
+      ]
+    }
+  ]
+}

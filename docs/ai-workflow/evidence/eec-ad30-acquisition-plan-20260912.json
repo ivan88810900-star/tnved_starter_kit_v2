@@ -1,0 +1,161 @@
+{
+  "schema_version": 1,
+  "request_kind": "explicit_observed_official_remedy_sources_for_review",
+  "observed_on": "2026-09-12",
+  "capture_execution": "not yet run for this exact nine-target selection",
+  "source_evidence_path": "docs/ai-workflow/evidence/eec-ad30-source-discovery-20260912.json",
+  "capture_originals": true,
+  "capture_rejected_originals": true,
+  "accept_changes": false,
+  "registry_update": false,
+  "legal_review_verified": false,
+  "active_rates_written": false,
+  "can_promote": false,
+  "production_ready": false,
+  "sources": [
+    {
+      "source_id": "review_ad30_completion_notice_pdf",
+      "url": "https://docs.eaeunion.org/upload/iblock/75c/h3m62bw3jc8solzxiw14jc7qhmnycmmy/AD30R1_notice_fin.pdf",
+      "expected_media_type": "application/pdf",
+      "observed_from": "https://docs.eaeunion.org/documents/166/10919/",
+      "discovery_kind": "official web navigation observation; see source evidence",
+      "original_body_retained": false
+    },
+    {
+      "source_id": "review_ad30_decision121_2026_page",
+      "url": "https://docs.eaeunion.org/documents/463/10918/",
+      "expected_media_type": "text/html",
+      "observed_from": "https://eec.eaeunion.org/comission/department/podm/",
+      "discovery_kind": "official web navigation observation; see source evidence",
+      "original_body_retained": false
+    },
+    {
+      "source_id": "review_ad30_decision4_2026_page",
+      "url": "https://docs.eaeunion.org/documents/463/10454/",
+      "expected_media_type": "text/html",
+      "observed_from": "https://docs.eaeunion.org/documents/?filter_departament%5B%5D=14",
+      "discovery_kind": "official web navigation observation; see source evidence",
+      "original_body_retained": false
+    },
+    {
+      "source_id": "review_ad30_decision4_2026_pdf",
+      "url": "https://docs.eaeunion.org/upload/iblock/798/59qwa6jpe6b76n24wtn0uu9eygvlznkr/Reshenie-Kollegii-_-4-ot-20-yanvarya-2026-g.pdf",
+      "expected_media_type": "application/pdf",
+      "observed_from": "https://docs.eaeunion.org/documents/463/10454/",
+      "discovery_kind": "official web navigation observation; see source evidence",
+      "original_body_retained": false
+    },
+    {
+      "source_id": "review_ad30_final_report_pdf",
+      "url": "https://remedies.eaeunion.org/dimd/filestorage/AD30R1_report_final.pdf",
+      "expected_media_type": "application/pdf",
+      "observed_from": "https://docs.eaeunion.org/upload/iblock/75c/h3m62bw3jc8solzxiw14jc7qhmnycmmy/AD30R1_notice_fin.pdf",
+      "discovery_kind": "official web navigation observation; see source evidence",
+      "original_body_retained": false
+    },
+    {
+      "source_id": "review_remedy_index_page_2",
+      "url": "https://docs.eaeunion.org/documents/?filter_departament%5B0%5D=14&PAGEN_1=2",
+      "expected_media_type": "text/html",
+      "observed_from": "https://docs.eaeunion.org/documents/?filter_departament%5B%5D=14",
+      "discovery_kind": "resolved literal HTML href observed before executor disconnection",
+      "parent_body_sha256": "f818b7025a7b14d93083938f77629c84f80e9e90ee90cbaef9e98658db9b5148",
+      "parent_receipt_sha256": "f1d25da0e6378c679d000cb44556edf5a0bbf89cc1cb07bad4cf718c74c2ba22",
+      "parent_capture_status": "quarantined_content_rejected",
+      "resolved_href_observed": "https://docs.eaeunion.org/documents/?filter_departament%5B0%5D=14&PAGEN_1=2",
+      "raw_href_byte_locator_recorded": false
+    },
+    {
+      "source_id": "review_remedy_index_page_3",
+      "url": "https://docs.eaeunion.org/documents/?filter_departament%5B0%5D=14&PAGEN_1=3",
+      "expected_media_type": "text/html",
+      "observed_from": "https://docs.eaeunion.org/documents/?filter_departament%5B%5D=14",
+      "discovery_kind": "resolved literal HTML href observed before executor disconnection",
+      "parent_body_sha256": "f818b7025a7b14d93083938f77629c84f80e9e90ee90cbaef9e98658db9b5148",
+      "parent_receipt_sha256": "f1d25da0e6378c679d000cb44556edf5a0bbf89cc1cb07bad4cf718c74c2ba22",
+      "parent_capture_status": "quarantined_content_rejected",
+      "resolved_href_observed": "https://docs.eaeunion.org/documents/?filter_departament%5B0%5D=14&PAGEN_1=3",
+      "raw_href_byte_locator_recorded": false
+    },
+    {
+      "source_id": "review_remedy_index_page_4",
+      "url": "https://docs.eaeunion.org/documents/?filter_departament%5B0%5D=14&PAGEN_1=4",
+      "expected_media_type": "text/html",
+      "observed_from": "https://docs.eaeunion.org/documents/?filter_departament%5B%5D=14",
+      "discovery_kind": "resolved literal HTML href observed before executor disconnection",
+      "parent_body_sha256": "f818b7025a7b14d93083938f77629c84f80e9e90ee90cbaef9e98658db9b5148",
+      "parent_receipt_sha256": "f1d25da0e6378c679d000cb44556edf5a0bbf89cc1cb07bad4cf718c74c2ba22",
+      "parent_capture_status": "quarantined_content_rejected",
+      "resolved_href_observed": "https://docs.eaeunion.org/documents/?filter_departament%5B0%5D=14&PAGEN_1=4",
+      "raw_href_byte_locator_recorded": false
+    },
+    {
+      "source_id": "review_remedy_index_page_5",
+      "url": "https://docs.eaeunion.org/documents/?filter_departament%5B0%5D=14&PAGEN_1=5",
+      "expected_media_type": "text/html",
+      "observed_from": "https://docs.eaeunion.org/documents/?filter_departament%5B%5D=14",
+      "discovery_kind": "resolved literal HTML href observed before executor disconnection",
+      "parent_body_sha256": "f818b7025a7b14d93083938f77629c84f80e9e90ee90cbaef9e98658db9b5148",
+      "parent_receipt_sha256": "f1d25da0e6378c679d000cb44556edf5a0bbf89cc1cb07bad4cf718c74c2ba22",
+      "parent_capture_status": "quarantined_content_rejected",
+      "resolved_href_observed": "https://docs.eaeunion.org/documents/?filter_departament%5B0%5D=14&PAGEN_1=5",
+      "raw_href_byte_locator_recorded": false
+    }
+  ],
+  "navigation_capture_reused": {
+    "run_id": "34714034422",
+    "archive_sha256": "10ceb2d8810642cab8d80496b5ff1489f6c49f3446b8c49b600f56f201d7bab4",
+    "archive_size_bytes": 60478,
+    "archive_library_file_id": "libfile_89f2ec5e95f481918aaa0062121162e8",
+    "original_capture_count": 0,
+    "rejected_original_capture_count": 2,
+    "original_capture_complete": false,
+    "accepted_source_ids": [],
+    "receipts_verified_before_executor_disconnection": true,
+    "normal_original_verifier_rejected_both": true,
+    "trigger_observations": [
+      {
+        "source_id": "trade_remedies_official",
+        "body_sha256": "e87e50e48dc6140d66c75728251270e03fbb8f7291f79b2df9e898137a27ecd3",
+        "receipt_sha256": "29f859c41e5d215cf59e5414d8c9df2be294a0ac5e1b3b5ea4507fb7151fdf56",
+        "matched_bytes": "captcha",
+        "byte_offset_0_based": 5363,
+        "line_1_based": 50,
+        "context": "window['recaptchaFreeOptions']"
+      },
+      {
+        "source_id": "trade_remedies_official__artifact_2",
+        "body_sha256": "f818b7025a7b14d93083938f77629c84f80e9e90ee90cbaef9e98658db9b5148",
+        "receipt_sha256": "f1d25da0e6378c679d000cb44556edf5a0bbf89cc1cb07bad4cf718c74c2ba22",
+        "matched_bytes": "captcha",
+        "byte_offset_0_based": 3376,
+        "line_1_based": 22,
+        "context": "window['recaptchaFreeOptions']"
+      }
+    ]
+  },
+  "excluded_already_retained": [
+    {
+      "document": "Decision 121 of 2026 PDF",
+      "body_sha256": "56ffd2701fc5e0d85a2d02e1e9219c35a5ba4c59610aebe8d9f64eb496ce2e4c"
+    },
+    {
+      "document": "Department navigation body",
+      "body_sha256": "e87e50e48dc6140d66c75728251270e03fbb8f7291f79b2df9e898137a27ecd3"
+    },
+    {
+      "document": "First department document-index body",
+      "body_sha256": "f818b7025a7b14d93083938f77629c84f80e9e90ee90cbaef9e98658db9b5148"
+    }
+  ],
+  "unresolved_not_guessed": [
+    "Decision 12 of 2021 exact card/PDF URL and amendments",
+    "Numeric rates, product/producer scope and historical intervals",
+    "Manifest-bound review, separate approval and durable legal retention"
+  ],
+  "limits": [
+    "Quarantined HTML is used only to discover explicit navigation links; it remains content-rejected.",
+    "The captcha marker has not been removed or weakened.",
+    "No implementation tests ran locally after execution-server disconnection; new GitHub Actions and independent QA are required."
+  ]
+}

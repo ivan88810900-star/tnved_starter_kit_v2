@@ -1,0 +1,325 @@
+{
+  "all_archive_entries_reopened_and_sha_verified": true,
+  "closure_audit": {
+    "sha256": "3f60eb7554358e642e6acaaa3ff2001667d555782eabe18a4bc1934debff6b26",
+    "size_bytes": 6419356
+  },
+  "date": "2026-09-08",
+  "durable_saved_parts": [
+    {
+      "filename": "Tariff_ETT_OCR_2026-09-08_part01-of-23.zip",
+      "size_bytes": 36955606,
+      "status": "succeeded"
+    },
+    {
+      "filename": "Tariff_ETT_OCR_2026-09-08_part02-of-23.zip",
+      "size_bytes": 41023778,
+      "status": "succeeded"
+    },
+    {
+      "filename": "Tariff_ETT_OCR_2026-09-08_part03-of-23.zip",
+      "size_bytes": 41130000,
+      "status": "succeeded"
+    },
+    {
+      "filename": "Tariff_ETT_OCR_2026-09-08_part04-of-23.zip",
+      "size_bytes": 40192192,
+      "status": "succeeded"
+    },
+    {
+      "filename": "Tariff_ETT_OCR_2026-09-08_part05-of-23.zip",
+      "size_bytes": 32557417,
+      "status": "succeeded"
+    },
+    {
+      "filename": "Tariff_ETT_OCR_2026-09-08_part06-of-23.zip",
+      "size_bytes": 41985866,
+      "status": "succeeded"
+    },
+    {
+      "filename": "Tariff_ETT_OCR_2026-09-08_part07-of-23.zip",
+      "size_bytes": 41125333,
+      "status": "succeeded"
+    },
+    {
+      "filename": "Tariff_ETT_OCR_2026-09-08_part08-of-23.zip",
+      "size_bytes": 38048174,
+      "status": "succeeded"
+    },
+    {
+      "filename": "Tariff_ETT_OCR_2026-09-08_part09-of-23.zip",
+      "size_bytes": 39051811,
+      "status": "succeeded"
+    },
+    {
+      "filename": "Tariff_ETT_OCR_2026-09-08_part10-of-23.zip",
+      "size_bytes": 40634497,
+      "status": "succeeded"
+    },
+    {
+      "filename": "Tariff_ETT_OCR_2026-09-08_part11-of-23.zip",
+      "size_bytes": 38848822,
+      "status": "succeeded"
+    },
+    {
+      "filename": "Tariff_ETT_OCR_2026-09-08_part12-of-23.zip",
+      "size_bytes": 40379258,
+      "status": "succeeded"
+    },
+    {
+      "filename": "Tariff_ETT_OCR_2026-09-08_part13-of-23.zip",
+      "size_bytes": 40799848,
+      "status": "succeeded"
+    },
+    {
+      "filename": "Tariff_ETT_OCR_2026-09-08_part14-of-23.zip",
+      "size_bytes": 41543126,
+      "status": "succeeded"
+    },
+    {
+      "filename": "Tariff_ETT_OCR_2026-09-08_part15-of-23.zip",
+      "size_bytes": 42324140,
+      "status": "succeeded"
+    },
+    {
+      "filename": "Tariff_ETT_OCR_2026-09-08_part16-of-23.zip",
+      "size_bytes": 39736717,
+      "status": "succeeded"
+    },
+    {
+      "filename": "Tariff_ETT_OCR_2026-09-08_part21-of-23.zip",
+      "size_bytes": 40763209,
+      "status": "succeeded"
+    },
+    {
+      "filename": "Tariff_ETT_OCR_2026-09-08_part22-of-23.zip",
+      "size_bytes": 41198333,
+      "status": "succeeded"
+    },
+    {
+      "filename": "Tariff_ETT_OCR_2026-09-08_part23-of-23.zip",
+      "size_bytes": 2355715,
+      "status": "succeeded"
+    },
+    {
+      "filename": "Tariff_ETT_OCR_2026-09-08_part17-of-23.zip",
+      "size_bytes": 41135894,
+      "status": "succeeded"
+    },
+    {
+      "filename": "Tariff_ETT_OCR_2026-09-08_part18-of-23.zip",
+      "size_bytes": 41959355,
+      "status": "succeeded"
+    },
+    {
+      "filename": "Tariff_ETT_OCR_2026-09-08_part19-of-23.zip",
+      "size_bytes": 39965408,
+      "status": "succeeded"
+    },
+    {
+      "filename": "Tariff_ETT_OCR_2026-09-08_part20-of-23.zip",
+      "size_bytes": 40597043,
+      "status": "succeeded"
+    }
+  ],
+  "kind": "ett_scanned_primary_sources_durable_backup",
+  "legal_approval_verified": false,
+  "legal_retention_attested": false,
+  "manifest_sha256": "1623adf6db7b15297c38d0f1335d99396fdc485c2aac528783b5d61656e100f1",
+  "missing_data_dependencies": 0,
+  "ocr_pages": 430,
+  "ocr_sets": 106,
+  "part_count": 23,
+  "parts": [
+    {
+      "entry_count": 94,
+      "filename": "Tariff_ETT_OCR_2026-09-08_part01-of-23.zip",
+      "part_number": 1,
+      "sha256": "313e60fd3123d2e968dc25e43fc21faa0fcb168b3fcf619bd246395ff3bac959",
+      "size_bytes": 36955606,
+      "uncompressed_entry_bytes": 45667593
+    },
+    {
+      "entry_count": 99,
+      "filename": "Tariff_ETT_OCR_2026-09-08_part02-of-23.zip",
+      "part_number": 2,
+      "sha256": "c08039a8c7ca8586bfa501cc8009979b793123fac590da0e15d9c5934a8e3d5e",
+      "size_bytes": 41023778,
+      "uncompressed_entry_bytes": 45020333
+    },
+    {
+      "entry_count": 117,
+      "filename": "Tariff_ETT_OCR_2026-09-08_part03-of-23.zip",
+      "part_number": 3,
+      "sha256": "cbac42f52ebde390099821119f51caf69615b00d250fd228f94c96c86e5e418c",
+      "size_bytes": 41130000,
+      "uncompressed_entry_bytes": 45012959
+    },
+    {
+      "entry_count": 117,
+      "filename": "Tariff_ETT_OCR_2026-09-08_part04-of-23.zip",
+      "part_number": 4,
+      "sha256": "402036b249025738c5e979670f73a9e7981ab2035ccace4fafa410b1f348998a",
+      "size_bytes": 40192192,
+      "uncompressed_entry_bytes": 44635599
+    },
+    {
+      "entry_count": 113,
+      "filename": "Tariff_ETT_OCR_2026-09-08_part05-of-23.zip",
+      "part_number": 5,
+      "sha256": "e5db9398e6ca21781d8eb78ac42d24e295065d26d0463b716016b696759fbae5",
+      "size_bytes": 32557417,
+      "uncompressed_entry_bytes": 35914660
+    },
+    {
+      "entry_count": 21,
+      "filename": "Tariff_ETT_OCR_2026-09-08_part06-of-23.zip",
+      "part_number": 6,
+      "sha256": "441a92f2079b273d0bbf3f3134d4a5703a1d818b0bb9dd21e39f0ad7d957bc45",
+      "size_bytes": 41985866,
+      "uncompressed_entry_bytes": 45239604
+    },
+    {
+      "entry_count": 107,
+      "filename": "Tariff_ETT_OCR_2026-09-08_part07-of-23.zip",
+      "part_number": 7,
+      "sha256": "f93db511cb7c33a75dcd3e0aa96156574c4d2e1fae6179b3b4ea0851c1b6741c",
+      "size_bytes": 41125333,
+      "uncompressed_entry_bytes": 44394339
+    },
+    {
+      "entry_count": 91,
+      "filename": "Tariff_ETT_OCR_2026-09-08_part08-of-23.zip",
+      "part_number": 8,
+      "sha256": "0b8f5566dba339fc2ecc67d83143feee96bc808c84f0058b30e1605ae1632876",
+      "size_bytes": 38048174,
+      "uncompressed_entry_bytes": 40367605
+    },
+    {
+      "entry_count": 115,
+      "filename": "Tariff_ETT_OCR_2026-09-08_part09-of-23.zip",
+      "part_number": 9,
+      "sha256": "10ba0122cd4e89da3deef091a9fa497ee9994467303c54241fe2946411d21252",
+      "size_bytes": 39051811,
+      "uncompressed_entry_bytes": 44499462
+    },
+    {
+      "entry_count": 126,
+      "filename": "Tariff_ETT_OCR_2026-09-08_part10-of-23.zip",
+      "part_number": 10,
+      "sha256": "623b0ff73e5ff320c6c3352364632409c84d5f65b2fd47577117d3ad872288fb",
+      "size_bytes": 40634497,
+      "uncompressed_entry_bytes": 45554691
+    },
+    {
+      "entry_count": 103,
+      "filename": "Tariff_ETT_OCR_2026-09-08_part11-of-23.zip",
+      "part_number": 11,
+      "sha256": "45af811a846c666b652463e5d9b0ef6e76c389d4b101c317544b82cc69e0ed71",
+      "size_bytes": 38848822,
+      "uncompressed_entry_bytes": 43850280
+    },
+    {
+      "entry_count": 135,
+      "filename": "Tariff_ETT_OCR_2026-09-08_part12-of-23.zip",
+      "part_number": 12,
+      "sha256": "5bd74d5739045bc9eeb59a982276ad8623fe071eafed440a7621160320201f31",
+      "size_bytes": 40379258,
+      "uncompressed_entry_bytes": 45063794
+    },
+    {
+      "entry_count": 165,
+      "filename": "Tariff_ETT_OCR_2026-09-08_part13-of-23.zip",
+      "part_number": 13,
+      "sha256": "b367d8a0891cb95bf7de70901ec4e91232f291515beef61ed03c5e08d548e16e",
+      "size_bytes": 40799848,
+      "uncompressed_entry_bytes": 45211918
+    },
+    {
+      "entry_count": 147,
+      "filename": "Tariff_ETT_OCR_2026-09-08_part14-of-23.zip",
+      "part_number": 14,
+      "sha256": "780ce4fff33ebd5abf18dd69b2715c32514492e05c591d0afea14173ebd2b81a",
+      "size_bytes": 41543126,
+      "uncompressed_entry_bytes": 45571657
+    },
+    {
+      "entry_count": 133,
+      "filename": "Tariff_ETT_OCR_2026-09-08_part15-of-23.zip",
+      "part_number": 15,
+      "sha256": "786dc404856c8a6fe220b7cb37fc2b4f9bf985de3736dd9c39dd439ee76a67db",
+      "size_bytes": 42324140,
+      "uncompressed_entry_bytes": 46135162
+    },
+    {
+      "entry_count": 190,
+      "filename": "Tariff_ETT_OCR_2026-09-08_part16-of-23.zip",
+      "part_number": 16,
+      "sha256": "4551aa6f0af39beab95ca8e14cfeeab6336ef7de8f554540e38bbbf895bb1cb8",
+      "size_bytes": 39736717,
+      "uncompressed_entry_bytes": 45463767
+    },
+    {
+      "entry_count": 125,
+      "filename": "Tariff_ETT_OCR_2026-09-08_part17-of-23.zip",
+      "part_number": 17,
+      "sha256": "7451fd14c2cce31501a61535f8b20d504afaca3fb1174a8fa61371ea6f079653",
+      "size_bytes": 41135894,
+      "uncompressed_entry_bytes": 45640922
+    },
+    {
+      "entry_count": 111,
+      "filename": "Tariff_ETT_OCR_2026-09-08_part18-of-23.zip",
+      "part_number": 18,
+      "sha256": "78fd382c2f15a0b7f156b93cd64d2e478132bc9b03df15233540b8046889438c",
+      "size_bytes": 41959355,
+      "uncompressed_entry_bytes": 45118579
+    },
+    {
+      "entry_count": 103,
+      "filename": "Tariff_ETT_OCR_2026-09-08_part19-of-23.zip",
+      "part_number": 19,
+      "sha256": "6000d28dcbb597c56bc2b64c6a8b1296846005a3ec1321753ec046abeb4ed985",
+      "size_bytes": 39965408,
+      "uncompressed_entry_bytes": 45076108
+    },
+    {
+      "entry_count": 115,
+      "filename": "Tariff_ETT_OCR_2026-09-08_part20-of-23.zip",
+      "part_number": 20,
+      "sha256": "478448e5e63cb95f562ffe5dbce0eeef9226dded598d4ab65a85e8344d15c5b5",
+      "size_bytes": 40597043,
+      "uncompressed_entry_bytes": 46093582
+    },
+    {
+      "entry_count": 163,
+      "filename": "Tariff_ETT_OCR_2026-09-08_part21-of-23.zip",
+      "part_number": 21,
+      "sha256": "b2925ff7d8bb3e0fc51c4668c408215433a098c94ef200a8337889875774674e",
+      "size_bytes": 40763209,
+      "uncompressed_entry_bytes": 45380268
+    },
+    {
+      "entry_count": 117,
+      "filename": "Tariff_ETT_OCR_2026-09-08_part22-of-23.zip",
+      "part_number": 22,
+      "sha256": "bcdb30bfe11c2c2af109b73a98fce63ac43e800facbc1d71bc785a77cb094147",
+      "size_bytes": 41198333,
+      "uncompressed_entry_bytes": 43768615
+    },
+    {
+      "entry_count": 1,
+      "filename": "Tariff_ETT_OCR_2026-09-08_part23-of-23.zip",
+      "part_number": 23,
+      "sha256": "28348a2842ad1fc982cc3a0dffe2add5b1879f9684e13ae8f6ba58e020018ef2",
+      "size_bytes": 2355715,
+      "uncompressed_entry_bytes": 2410571
+    }
+  ],
+  "production_ready": false,
+  "schema_version": 1,
+  "scope": "105 amendment PDFs (428 complete pages) plus explicitly selected first 2 pages of the 1470-page founding Decision 80; not all applicable law",
+  "total_zip_bytes": 884311542,
+  "unique_data_bytes": 973999177,
+  "unique_data_objects": 2600
+}

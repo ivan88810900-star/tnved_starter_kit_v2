@@ -1,0 +1,330 @@
+{
+  "schema_version": 1,
+  "evidence_kind": "retained_decision12_original_and_source_only_dependency_review",
+  "observed_on": "2026-09-12",
+  "capture": {
+    "run_id": "34717159548",
+    "job_id": "103616352628",
+    "commit_sha": "a1ce31b25c9dc03793804a98962b0804ecbf2158",
+    "capture_step": "failure",
+    "inspection_step": "success",
+    "application_database_created": false,
+    "active_rates_written": false,
+    "all_selected_bodies_retained": true,
+    "can_promote": false,
+    "capture_plan": "ad30-decision12-20260912",
+    "durable_legal_retention_attested": false,
+    "input_report_sha256": "cb3eef3766347d0b039461d65c7ef5d2b3ab708cfeb259d232b0d27cc8c70baf",
+    "inspection_status": "verified_retained_evidence",
+    "kind": "read_only_observed_capture_inspection",
+    "legal_review_verified": false,
+    "native_pdf_text_requested": true,
+    "original_capture_complete": false,
+    "original_count": 1,
+    "production_ready": false,
+    "quarantined_count": 1,
+    "schema_version": 1,
+    "selected_source_count": 2,
+    "unretained_count": 0,
+    "sources": [
+      {
+        "body_sha256": "1ff8131e8e781f6d28b4985afbfc94d9e1330fc7e924b7439192d19a3be13655",
+        "capture_status": "quarantined_content_rejected",
+        "content_type": "text/html; charset=UTF-8",
+        "discovery_only": true,
+        "monitor_ok": false,
+        "receipt_sha256": "618eedd2deaf306b13ad1a25b498832f9400df7aa4fc7843aa36879242ccbc55",
+        "requested": {
+          "fragment_redacted": false,
+          "query_redacted": false,
+          "url": "https://docs.eaeunion.org/documents/379/5653/",
+          "url_sha256": "36f30c9faff29a20e76fa7a782c6de31ba3dee4b06de89f5ec307ee59811ce4f"
+        },
+        "response": {
+          "fragment_redacted": false,
+          "query_redacted": false,
+          "url": "https://docs.eaeunion.org/documents/379/5653/",
+          "url_sha256": "36f30c9faff29a20e76fa7a782c6de31ba3dee4b06de89f5ec307ee59811ce4f"
+        },
+        "retrieved_at": "2026-09-12T20:28:26.789506+00:00",
+        "size_bytes": 53804,
+        "source_id": "review_ad30_decision12_2021_page",
+        "status_code": 200,
+        "validation_error": "block_or_error_page_detected"
+      },
+      {
+        "body_sha256": "1d6936be2b492b2976e03b3558c55c36062a89dc612ffe54f7e54af49a372c4b",
+        "capture_status": "original_retained",
+        "content_type": "application/pdf",
+        "discovery_only": true,
+        "monitor_ok": true,
+        "receipt_sha256": "75b91c72da6a9a11e1e7d3a704747188a0c911a1f5348aedf2c658cb24a8a866",
+        "requested": {
+          "fragment_redacted": false,
+          "query_redacted": false,
+          "url": "https://docs.eaeunion.org/upload/iblock/08a/wp70m6eckvicuanvf0sfo4sxqaro4aax/err_12022021_12_doc.pdf",
+          "url_sha256": "5aa754fb85307c17fdaf0a2909124dae1bffce91af99e7545d49e454e977b9ab"
+        },
+        "response": {
+          "fragment_redacted": false,
+          "query_redacted": false,
+          "url": "https://docs.eaeunion.org/upload/iblock/08a/wp70m6eckvicuanvf0sfo4sxqaro4aax/err_12022021_12_doc.pdf",
+          "url_sha256": "5aa754fb85307c17fdaf0a2909124dae1bffce91af99e7545d49e454e977b9ab"
+        },
+        "retrieved_at": "2026-09-12T20:28:28.701697+00:00",
+        "size_bytes": 856783,
+        "source_id": "review_ad30_decision12_2021_pdf",
+        "status_code": 200,
+        "validation_error": null
+      }
+    ]
+  },
+  "archive": {
+    "artifact_id": "10305550676",
+    "filename": "official-rate-originals-34717159548.zip",
+    "sha256": "df8bc0fcc89780f53d6e29839e9b7a26835f2b19aa322fc6d4eb2b6546c5768e",
+    "size_bytes": 655764,
+    "sha256_origin": [
+      "GitHub Actions upload log",
+      "independent A3 and A5 local rehash"
+    ],
+    "library_file_id": "libfile_3576fea57b188191b617c1f2a1182ce8",
+    "library_content_file_id": "file_0000000049d08210a863c015fefb4bf1",
+    "library_version": 0,
+    "local_archive_rehash_verified": true,
+    "local_cas_hashes_verified": true,
+    "local_cas_object_count": 4,
+    "local_cas_total_bytes": 913329,
+    "durable_legal_retention_attested": false
+  },
+  "provenance": {
+    "discovered_from_capture_run": "34716176823",
+    "discovered_from_source_id": "review_remedy_index_page_3",
+    "parent_body_sha256": "bf2a98beb992960916c0830ea16115acbed27dd4073a59912e345a8f0f4262d9",
+    "parent_receipt_sha256": "d143b221ffeef9269f66f3472220005802ed6fdc055af8946a76a8ebb9d1d636",
+    "parent_capture_status": "quarantined_content_rejected",
+    "card_anchor_line": 7601,
+    "pdf_anchor_line": 7640,
+    "raw_href_byte_spelling_verified": true,
+    "previous_nine_targets_refetched": false
+  },
+  "native_text_evidence": {
+    "all_pages_have_native_text": false,
+    "artifact_sha256": "1d6936be2b492b2976e03b3558c55c36062a89dc612ffe54f7e54af49a372c4b",
+    "can_promote": false,
+    "legal_review_verified": false,
+    "ocr_used": false,
+    "page_count": 3,
+    "parser": {
+      "engine": "pymupdf",
+      "engine_version": "1.28.2",
+      "mupdf_version": "1.28.2",
+      "name": "ett_pdf_physical_rows",
+      "sha256": "44fba892da6c5387f6254ee39159841eee73adf29e3f65bf5b9bbafb2099d567",
+      "version": "2"
+    },
+    "status": "native_text_incomplete",
+    "text_serialization": "physical-row words joined with U+0020; original word text retained",
+    "pages": [
+      {
+        "has_native_text": false,
+        "page": 1,
+        "page_text_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "rows": []
+      },
+      {
+        "has_native_text": false,
+        "page": 2,
+        "page_text_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "rows": []
+      },
+      {
+        "has_native_text": false,
+        "page": 3,
+        "page_text_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "rows": []
+      }
+    ],
+    "interpretation": "All three retained PDF pages have an empty native text layer. No source text was synthesized from that absence; no OCR was used."
+  },
+  "visual_reading": {
+    "source_reader": "A3",
+    "independent_reader": "A5",
+    "independent_visual_review_recorded": true,
+    "producer_names_addresses_and_printed_values_transcription_confirmed": true,
+    "review_scope": "Source-only reading of all three retained pages; not legal applicability, producer identity/succession, a historical interval or rate admission.",
+    "renderer": "pymupdf",
+    "renderer_version": "1.26.6",
+    "render_matrix": [
+      1.7,
+      1.7
+    ],
+    "pages": [
+      {
+        "page": 1,
+        "png_sha256": "7415faf48cdb1dd2031fb41edb5aed095a86fcc25ee1d295702ed3aac92cb4fd"
+      },
+      {
+        "page": 2,
+        "png_sha256": "c1cac0361fd7e37055040c687479d58d23334d57cd86da37a0bde2f1ce5a521b"
+      },
+      {
+        "page": 3,
+        "png_sha256": "6d37aa50efc9f68eb4370a5639912ab609e3ce595ff8589c4246d634fa2d14c3"
+      }
+    ]
+  },
+  "document_observations": {
+    "document_number_printed": "12",
+    "date_printed": "09 февраля 2021 г.",
+    "issuing_body_printed": "Коллегия Евразийской экономической комиссии",
+    "product_text_basis": {
+      "pages": [
+        1,
+        2
+      ],
+      "clause": "1",
+      "observation": "Welded tubes, pipes and hollow profiles of corrosion-resistant (stainless) steel, originating in China and imported into the EAEU customs territory. The scope includes the following printed dimensional conditions.",
+      "printed_condition_fragments": [
+        {
+          "page": 1,
+          "text": "с толщиной стенки от 0,4 до 6 мм включительно"
+        },
+        {
+          "page": 1,
+          "text": "круглого поперечного сечения с наружным диаметром от 6 до 115 мм включительно"
+        },
+        {
+          "page": 1,
+          "text": "квадратного поперечного сечения с периметром поперечного сечения не более 400 мм"
+        },
+        {
+          "page": 2,
+          "text": "прямоугольного поперечного сечения с периметром поперечного сечения не более 400 мм и наибольшим размером стороны сечения до 120 мм включительно"
+        }
+      ],
+      "printed_origin": "Китайская Народная Республика",
+      "formal_product_rule_created": false
+    },
+    "codes_printed": {
+      "page": 2,
+      "clause": "1 continued",
+      "values": [
+        "7306 40 200 9",
+        "7306 40 800 1",
+        "7306 40 800 8",
+        "7306 61 100 9"
+      ],
+      "historical_code_mapping_verified": false
+    },
+    "duration_printed": {
+      "page": 2,
+      "clause": "1 continued",
+      "text": "установив срок действия данной антидемпинговой меры 5 лет",
+      "absolute_interval_computed": false
+    },
+    "joint_code_and_description_requirement": {
+      "page": 2,
+      "clause": "2",
+      "text": "руководствуясь как кодами ТН ВЭД ЕАЭС, так и наименованием товара",
+      "code_only_applicability_inferred": false
+    },
+    "effective_clause_observation": {
+      "page": 2,
+      "clause": "3",
+      "observation": "Entry into force is stated as after 30 calendar days from official publication.",
+      "absolute_effective_date_computed": false
+    },
+    "annex": {
+      "page": 3,
+      "title_printed": "РАЗМЕРЫ СТАВОК антидемпинговой пошлины",
+      "rate_column_unit_printed": "процентов от таможенной стоимости",
+      "product_column_basis": "The product column refers back to the welded stainless-steel tubes/pipes/hollow profiles specified in clause 1 of Decision 12.",
+      "producer_rows": [
+        {
+          "row_order": 1,
+          "producer_name_printed": "Foshan Vinmay Stainless Steel Co., Ltd.",
+          "producer_address_printed": "No. 6 Jingang Avenue, Baini Town, Sanshui District, Foshan City, Guangdong Province, China",
+          "rate_text_printed": "14,62"
+        },
+        {
+          "row_order": 2,
+          "producer_name_printed": "Guangdong Sumwin New Material Group Co., Ltd.",
+          "producer_address_printed": "South Sanhe Rd., East Renhe Rd., Yanhe Town, Gaoming District, Foshan, China",
+          "rate_text_printed": "17,28"
+        },
+        {
+          "row_order": 3,
+          "producer_name_printed": "прочие",
+          "producer_address_printed": null,
+          "rate_text_printed": "17,28"
+        }
+      ],
+      "numeric_business_rules_created": false,
+      "producer_identity_or_succession_verified": false
+    }
+  },
+  "retained_card_metadata_observations": {
+    "method": "A3 rehashed each retained original HTML body and read DocDetail_Col _title/_value fields with Python HTMLParser; normalized whitespace only.",
+    "independent_card_metadata_review_recorded": false,
+    "cards": [
+      {
+        "document_number": "12",
+        "capture_run": "34717159548",
+        "url": "https://docs.eaeunion.org/documents/379/5653/",
+        "body_sha256": "1ff8131e8e781f6d28b4985afbfc94d9e1330fc7e924b7439192d19a3be13655",
+        "receipt_sha256": "618eedd2deaf306b13ad1a25b498832f9400df7aa4fc7843aa36879242ccbc55",
+        "capture_status": "quarantined_content_rejected",
+        "adopted_on_printed": "09.02.2021",
+        "published_on_printed": "12.02.2021",
+        "effective_on_printed": "14.03.2021"
+      },
+      {
+        "document_number": "4",
+        "capture_run": "34716176823",
+        "url": "https://docs.eaeunion.org/documents/463/10454/",
+        "body_sha256": "fcca5c74fba82a82427fd6c45eb305cc5c7ee9769ccb35356789cc8ca5c17169",
+        "receipt_sha256": "185c14d637681de8fa065ba868d218828c1646247ce48f5e711f6d62403fece1",
+        "capture_status": "quarantined_content_rejected",
+        "adopted_on_printed": "20.01.2026",
+        "published_on_printed": "23.01.2026",
+        "effective_on_printed": "14.03.2026"
+      },
+      {
+        "document_number": "121",
+        "capture_run": "34716176823",
+        "url": "https://docs.eaeunion.org/documents/463/10918/",
+        "body_sha256": "c9acebc19e2af89b9b90b65e37675a1d1b1aafcb3518e6e83a7d5f5bef03fdba",
+        "receipt_sha256": "30d6a0c95f787dd4aa270235f13d71ca281931e5631d6314358d20bf3289c8c3",
+        "capture_status": "quarantined_content_rejected",
+        "adopted_on_printed": "08.09.2026",
+        "published_on_printed": "10.09.2026",
+        "effective_date_field_present": false
+      }
+    ],
+    "legal_effective_intervals_established": false
+  },
+  "related_source_evidence": [
+    "docs/ai-workflow/evidence/eec-ad30-source-discovery-20260912.json",
+    "docs/ai-workflow/evidence/eec-ad30-capture-34716176823.json",
+    "docs/ai-workflow/evidence/eec-ad30-decision4-notice-review-20260912.json"
+  ],
+  "handoff_to_domain_review": "A2 may now prepare a separate formal review candidate for the observed Decision 12 -> 4 -> 121 dependency chain. Preserve source-specific product conditions, printed producer names and addresses, original codes, and the distinction between publication metadata and interpreted effective dates. A5 remains the independent verifier; this evidence grants no legal approval.",
+  "unresolved": [
+    "Complete amendment/history audit beyond the retained acts has not been established.",
+    "Historical code mappings and current product/producer applicability require domain review.",
+    "The linked AD30R1 final report remains unavailable: the actual endpoint returned quarantined HTML.",
+    "Source-only reading and retained bytes are not manifest-bound legal approval or separate rate-admission authorization.",
+    "Permanent object versioning/retention/legal-hold attestation remains a separate unmet gate."
+  ],
+  "legal_review_verified": false,
+  "effective_dates_verified": false,
+  "product_applicability_verified": false,
+  "numeric_rate_rules_admitted": false,
+  "complete_amendment_inventory_verified": false,
+  "legal_inventory_complete": false,
+  "active_rates_written": false,
+  "can_promote": false,
+  "production_ready": false,
+  "durable_legal_retention_attested": false
+}

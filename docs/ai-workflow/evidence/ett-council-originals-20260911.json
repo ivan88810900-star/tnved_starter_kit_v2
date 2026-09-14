@@ -1,0 +1,111 @@
+{
+  "schema_version": 1,
+  "evidence_kind": "recovered_observed_council_originals",
+  "observed_on": "2026-09-11",
+  "repository": "ivan88810900-star/tnved_starter_kit_v2",
+  "capture_commit": "177da64e10c4880ec158ec2bbde2eac3b60ee7f2",
+  "capture_parent": "a5c884d3b49eef4746a588efca6effbd94103d1c",
+  "capture_run": 34584814626,
+  "capture_ci_run": 34584814418,
+  "artifact_id": 10193161343,
+  "artifact_name": "ett-council-originals-34584814626",
+  "artifact_created_at": "2026-09-11T09:35:05Z",
+  "artifact_expires_at": "2026-12-10T09:33:34Z",
+  "artifact_expired_at_recovery": false,
+  "archive_name": "ett-council-originals-34584814626.zip",
+  "archive_sha256": "b688049d28355e91305d8b798999703f812d8a2f21f3f89d69bf7ba95da2c13f",
+  "archive_size_bytes": 5652258,
+  "listing_report_sha256": "2a95b37a7f0e04e06f7d0d1f9c3a2190c3982512ed95d3406b01b05a2c5ac156",
+  "originals_report_sha256": "5100837b60cf40857ab88da2fcf94f150cb5232c531365ea435f1d8c034746d3",
+  "restoration": {
+    "source_objects_verified": 18,
+    "source_object_bytes": 7183746,
+    "sha256_mismatches": 0,
+    "listing_replayed_except_execution_clock": true,
+    "source_retrieval_timestamps_preserved": true,
+    "originals_full_html_pdf_graph_replayed": true,
+    "listing_detail_pdf_links_bound": true,
+    "new_network_capture_performed": false,
+    "source_originals_modified": false,
+    "capture_pdf_count": 11,
+    "selected_council_pdf_count": 3,
+    "accepted_listing_pages": 1,
+    "accepted_listing_rows": 86
+  },
+  "visual_inspection": {
+    "method": "Poppler rendering of exact original PDFs; all seven pages visually inspected by Codex",
+    "scope": "Source-reading observations for later human review; not manifest-bound legal approval",
+    "ocr_output_used_as_legal_authority": false,
+    "documents": [
+      {
+        "issuing_body": "council",
+        "act_type": "decision",
+        "number": "75",
+        "adoption_date_literal": "2026-07-09",
+        "detail_url": "https://docs.eaeunion.org/documents/461/10846/",
+        "pdf_url": "https://docs.eaeunion.org/upload/iblock/d3e/9lg968qn50bptr5cyr3yfazjc9qagqbo/Reshenie-Soveta-_-75-ot-9-iyulya-2026-g.pdf",
+        "pdf_sha256": "e45b887e9fdb5dd08da38443b104abfd9676adb16364428a25f16aa329cbd1d8",
+        "pdf_size_bytes": 400111,
+        "pages_inspected": [1, 2, 3],
+        "observations": [
+          {"page": 1, "locator": "header and paragraph 1", "finding": "Council decision 75 adopted 9 July 2026 adds paragraph 7.1.96 to Decision 130; commodity 8112929101, vanadium-aluminium master alloy for titanium ingots, alloys and slabs, imported into Kazakhstan."},
+          {"page": 2, "locator": "paragraph 1, continuation of 7.1.96", "finding": "Separate caps of 450 tonnes: from commencement through 31 August 2027 inclusive, and 1 September 2027 through 31 August 2028 inclusive. Requires an authorized Kazakhstan purpose/quantity/supplier/importer document and specified declaration or pre-declaration-release registration dates. Restrictions on use/disposal and warehouse-receipt evidence continue onto page 3."},
+          {"page": 3, "locator": "paragraph 2", "finding": "Commencement is ten calendar days after official publication, but not earlier than commencement of the Council amendment to paragraph 15 of the exemption procedure. Publication metadata alone cannot resolve this dependency."}
+        ]
+      },
+      {
+        "issuing_body": "council",
+        "act_type": "decision",
+        "number": "77",
+        "adoption_date_literal": "2026-07-09",
+        "detail_url": "https://docs.eaeunion.org/documents/461/10848/",
+        "pdf_url": "https://docs.eaeunion.org/upload/iblock/e55/zu15kv2j4zgiyjdxlpqgobqgspjrbazy/Reshenie-Soveta-_-77-ot-9-iyulya-2026-g.pdf",
+        "pdf_sha256": "a5954811f605fa486a7dbf65e113521c197eb3791fff6056ece94b5282af5db6",
+        "pdf_size_bytes": 521434,
+        "pages_inspected": [1, 2],
+        "observations": [
+          {"page": 1, "locator": "header and paragraph 1", "finding": "Council decision 77 adopted 9 July 2026 adds paragraph 7.1.97 to Decision 130; commodity 8433533000, beet-topping and beet-harvesting machines, caps of 15 units for Belarus and 155 units for Russia."},
+          {"page": 2, "locator": "paragraph 1, continuation of 7.1.97", "finding": "Requires a competent national authority document identifying goods, quantity, value and importing organizations; declaration or pre-declaration-release registration from 1 July 2026 through 31 December 2027 inclusive."},
+          {"page": 2, "locator": "paragraph 2", "finding": "Ten-day publication rule is conditional on commencement of the amendment to procedure paragraph 15. Separately extends to legal relationships arising from 1 July 2026. Retroactive relationship scope is not the act's commencement date."}
+        ]
+      },
+      {
+        "issuing_body": "council",
+        "act_type": "decision",
+        "number": "80",
+        "adoption_date_literal": "2026-07-09",
+        "detail_url": "https://docs.eaeunion.org/documents/461/10854/",
+        "pdf_url": "https://docs.eaeunion.org/upload/iblock/1cd/eomzmq4w7qi56jj1hkdyagwds9x22q0f/Reshenie-Soveta-_-80-ot-9-iyulya-2026-g.pdf",
+        "pdf_sha256": "a71f9f0513bee3906b5f3a78508f95cfd5899e6fd6196765a08386dfbe957af8",
+        "pdf_size_bytes": 356481,
+        "pages_inspected": [1, 2],
+        "observations": [
+          {"page": 1, "locator": "header and paragraph 1", "finding": "Council decision 80 adopted 9 July 2026 replaces paragraph 15 of the procedure approved by Decision 728 of 15 July 2011. For goods outside the procedure but exempted under paragraph 7 of Decision 130, determining an additional exemption procedure is not required. This is not cancellation of documents and conditions imposed by individual exemptions."},
+          {"page": 2, "locator": "paragraph 2", "finding": "Commencement is thirty calendar days after official publication. This act is distinct from founding ETT Council Decision 80 of 14 September 2021."}
+        ]
+      }
+    ]
+  },
+  "unresolved": [
+    "Human legal interpretation and manifest-bound approval have not been supplied.",
+    "Observed portal publication/entry dates are not independently attested publication events.",
+    "Aggregate quota availability, competent-authority documents, destination, product use and procedural conditions cannot be proved by code or individual shipment quantity alone.",
+    "Six unique Russian/Kazakh DOCX references are observed but are not captured or compared to the selected PDFs.",
+    "Neither this bounded listing nor the original capture establishes completeness of all applicable acts or subsequent amendments.",
+    "Permanent versioned object storage retention/legal hold is not configured or attested. A retained recovery archive does not satisfy that requirement.",
+    "Full ETT, VAT, excise, trade-defence, preference and origin applicability remains outside this selected source-reading slice."
+  ],
+  "is_accepted_monitor_baseline": false,
+  "is_legal_approval": false,
+  "source_inventory_complete": false,
+  "source_identity_verified": false,
+  "adoption_dates_verified": false,
+  "effective_dates_verified": false,
+  "legal_inventory_complete": false,
+  "cross_page_snapshot_consistency_verified": false,
+  "legal_ready": false,
+  "can_promote": false,
+  "production_ready": false,
+  "durable_legal_retention_attested": false,
+  "active_rates_written": false
+}

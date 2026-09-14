@@ -1,0 +1,32 @@
+{
+  "format": "ett-local-candidate-verification-v1",
+  "date": "2026-09-08",
+  "decision": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/188#issuecomment-5584102215",
+  "backend_ci_equivalent": {"passed": 1056, "failed": 0},
+  "new_ett_tests": 304,
+  "schema_revision": "e1t2t3s4n5p6",
+  "sqlite_upgrade_downgrade_upgrade": true,
+  "postgresql_offline_ddl": true,
+  "postgresql_live_tested": false,
+  "http_smoke": {
+    "authenticated": true,
+    "read_only_startup": true,
+    "health": 200,
+    "candidate_list": 200,
+    "candidate_readiness": 200,
+    "candidate_preview": 200,
+    "existing_ntm_check": 200
+  },
+  "test_data": "explicitly_synthetic_not_current_legal_evidence",
+  "candidate_mode": "candidate_preview",
+  "storage": "local_development",
+  "official_acquisition_and_pdf_row_binding_verified": false,
+  "full_current_rate_catalog_verified": false,
+  "manifest_legally_approved": false,
+  "production_promotion_implemented": false,
+  "production_database_mutated": false,
+  "paid_storage_created": false,
+  "runtime_flags_changed": false,
+  "merged": false,
+  "deployed": false
+}

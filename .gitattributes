@@ -1,0 +1,3 @@
+# Never render browser-session artifacts in textual diffs. They are also
+# ignored and rejected by CI; this protects reviews of the historical cleanup.
+customs-clear/backend/data/alta_session/** binary

@@ -19,6 +19,7 @@ RiskSeverity = Literal[
 
 RiskBlockStatus = Literal["OK", "WARNING", "CRITICAL", "MANUAL_REVIEW"]
 RiskScopeStatus = Literal["checked", "not_checked"]
+MovementDirection = Literal["import", "export", "transit"]
 
 
 class RiskCheckRequest(BaseModel):
@@ -27,6 +28,7 @@ class RiskCheckRequest(BaseModel):
     country: str | None = None
     destination_country: str | None = None
     counterparty_name: str | None = None
+    movement_direction: MovementDirection = "import"
 
 
 class RiskSignalOut(BaseModel):
@@ -71,6 +73,7 @@ class SanctionsRiskBlockOut(BaseModel):
     country: str | None = None
     destination_country: str | None = None
     counterparty_name: str | None = None
+    movement_direction: MovementDirection = "import"
     signals: list[RiskSignalOut] = Field(default_factory=list)
     warnings: list[str] = Field(default_factory=list)
     source_coverage: list[SourceCoverageOut] = Field(default_factory=list)

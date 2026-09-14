@@ -1,0 +1,67 @@
+{
+  "active_rates_written": false,
+  "all_amendment_glyphs_visually_reviewed": false,
+  "current_parser_replays_old_discovery_claimed": false,
+  "effective_dates_verified": false,
+  "founding_council_80": {
+    "entire_source_ocr_complete": false,
+    "ocr_report_sha256": "bf2498b6cc8529cd23e352967ac3ccd97958c55c81cce6e2da7f69ed34adbcd7",
+    "original_page_count": 1470,
+    "reviewed_pages": [
+      1,
+      2
+    ],
+    "uninspected_page_ranges": [
+      [
+        3,
+        1470
+      ]
+    ],
+    "visual_review_sha256": "e597a83ddd897bbf8943768c4286ab41394a7feb7d904b1fdb317e9c8fe3a1e6"
+  },
+  "founding_original_pdfs": 1,
+  "kind": "ett_primary_scan_corpus_evidence",
+  "known_amendment_original_pdfs": 105,
+  "legal_inventory_complete": false,
+  "legal_rates_resolved": 0,
+  "notes": [
+    "OCR completion means the bounded engine produced review candidates for all selected pages; it does not mean the text is correct.",
+    "Founding pages3–1470 were not inspected by this OCR review; current tariff tables have a separate96-chapter native analysis.",
+    "The remaining short-title typo is corroborated by independent fields and a separately reviewed original PDF; the old strict search diagnostic is unchanged.",
+    "A complete primary PDF set for the known index is not proof that every applicable act, attachment or later change has been identified."
+  ],
+  "ocr_confidence_is_legal_accuracy": false,
+  "original_and_resumed_batches": {
+    "attachment_references_checked": 312,
+    "exact_ocr_words": 67562,
+    "failed_pages": 0,
+    "independent_audit_sha256": "23949af6c6cee4757eb8e58490345abe61db641c213537a2cf29c5152432db8a",
+    "mismatches": 0,
+    "non_founding_pdfs": 104,
+    "ocr_completed_pages": 426,
+    "original_checkpoint_sha256": "eb8a18ffafeaef606d27e444aaa04bda59a0af3191df824e9fd3f53d88398f95",
+    "original_pages": 426,
+    "parents_checked": 104,
+    "resumed_checkpoint_sha256": "25e9db12daa8fce41bfc236c9b6a53bdf3e07f122d33ee09f86f5748cae67968",
+    "unique_checked_artifacts": 2653
+  },
+  "production_ready": false,
+  "published_code_commit": "5e4b30aae294c8f50d28077c21cf1f4e6f0a57b2",
+  "published_code_tree": "2bfb79343a697607736e41c69e52fb67343e7372",
+  "scanned_amendment_pages_ocr_completed": 428,
+  "schema_version": 1,
+  "separate_collegium_42": {
+    "automatic_discovery_plan_modified": false,
+    "body_identity_visually_matches_expected": true,
+    "capture_report_sha256": "41eb3d61c840e838c03dedfde8d221c4a7420f5f350c409c8ef2fcec9aa8ca3d",
+    "capture_run_id": 34256700964,
+    "ocr_completed_pages": 2,
+    "ocr_report_sha256": "8300fd89759fa397ce7bb7cc0f7cb2c0729b0cda91ffe6e5c641ca5e861892c9",
+    "original_short_title_typo_retained": true,
+    "source_pages": 2,
+    "source_pdf_sha256": "630667046ca86c65c07f08da475aa36c24d5765200c848c90a380c6498723a29",
+    "standalone_detail_candidate_sha256": "9431737581634090232e86ed13b1aa501e64ec9f4781f20cae1a7ad83e637ab0",
+    "visual_review_sha256": "0c7b4b39d411977ea25f2a35be60c8bc6535c493e6db8967f678ddbe644c1bf8"
+  },
+  "total_ocr_completed_pages": 430
+}

@@ -1,0 +1,17 @@
+{
+  "fixture_kind": "original_official_html_bytes",
+  "source_url": "https://eec.eaeunion.org/comission/department/catr/ett/",
+  "sha256": "75991416897e2764afc58f20c72dcaff49753b564f8504c383414028a0633072",
+  "size_bytes": 132800,
+  "github_repository": "ivan88810900-star/tnved_starter_kit_v2",
+  "github_actions_run_id": "34235767121",
+  "github_actions_run_attempt": "1",
+  "github_commit_sha": "18aba335f71005f3d00fe9cd623692b9384aae21",
+  "github_artifact_id": "10059779813",
+  "acquisition_outcome": "failure_after_original_index_retention",
+  "transformation": "none; original CRLF and final-byte boundary retained",
+  "purpose": "replay exact source DOM compatibility; parse only, never execute page scripts",
+  "amendment_inventory_complete": false,
+  "legal_applicability_verified": false,
+  "production_ready": false
+}

@@ -124,9 +124,102 @@ def test_positive_counterparty_ofac_match(memory_sessionmaker: sessionmaker) -> 
     assert block.overall_severity == "high"
     ofac = next(s for s in block.signals if s.category == "counterparty_ofac")
     assert ofac.matched_entity == "FIXTURE SANCTIONED ENTITY LLC"
-    assert ofac.match_method == "name_substring"
+    assert ofac.match_method == "name_exact_verified"
     assert ofac.source_url == "https://ofac.treasury.gov/specially-designated-nationals-list-sdn-list"
     assert len([s for s in block.signals if s.category == "counterparty_ofac"]) == 1
+
+
+@pytest.mark.parametrize("counterparty", ["%", "_", "FI", "LLC", "ENTITY", "BANK"])
+def test_wildcard_short_or_common_entity_input_never_blocks(
+    memory_sessionmaker: sessionmaker,
+    counterparty: str,
+) -> None:
+    with memory_sessionmaker() as db:
+        load_sanctions_risk_fixture(db)
+        block = build_sanctions_risk_block(
+            hs_code="8509400000",
+            description="Пылесос",
+            country="CN",
+            counterparty_name=counterparty,
+            db=db,
+        )
+
+    assert block.status != "CRITICAL"
+    assert block.overall_severity != "high"
+    assert not any(
+        signal.category in {"counterparty_ofac", "counterparty_eu"}
+        and signal.severity == "high"
+        for signal in block.signals
+    )
+
+
+def test_single_token_substring_is_advisory_only(memory_sessionmaker: sessionmaker) -> None:
+    with memory_sessionmaker() as db:
+        load_sanctions_risk_fixture(db)
+        block = build_sanctions_risk_block(
+            hs_code="8509400000",
+            description="Пылесос",
+            country="CN",
+            counterparty_name="FIXTURE",
+            db=db,
+        )
+
+    signal = next(row for row in block.signals if row.category == "counterparty_ofac")
+    assert signal.severity == "medium"
+    assert signal.match_method == "name_ambiguous"
+    assert block.status != "CRITICAL"
+
+
+def test_exact_eu_entity_match_is_verified_and_blocking(memory_sessionmaker: sessionmaker) -> None:
+    with memory_sessionmaker() as db:
+        load_sanctions_risk_fixture(db)
+        db.add(
+            EuSanctionsList(
+                hs_code="",
+                entity_name="EXACT EUROPEAN TARGET LTD",
+                description="Official consolidated entity entry",
+            )
+        )
+        db.commit()
+        block = build_sanctions_risk_block(
+            hs_code="8509400000",
+            description="Пылесос",
+            country="CN",
+            counterparty_name="EXACT EUROPEAN TARGET LTD",
+            db=db,
+        )
+
+    signal = next(row for row in block.signals if row.category == "counterparty_eu")
+    assert signal.severity == "high"
+    assert signal.match_method == "name_exact_verified"
+    assert block.status == "CRITICAL"
+
+
+def test_export_scope_screens_end_user_but_never_reuses_import_country_or_hs_rules(
+    memory_sessionmaker: sessionmaker,
+) -> None:
+    with memory_sessionmaker() as db:
+        load_sanctions_risk_fixture(db)
+        block = build_sanctions_risk_block(
+            hs_code="0406100000",
+            description="Сыр на вывоз",
+            country="RU",
+            destination_country="IT",
+            counterparty_name="FIXTURE SANCTIONED ENTITY LLC",
+            movement_direction="export",
+            db=db,
+        )
+
+    assert any(signal.category == "counterparty_ofac" for signal in block.signals)
+    assert not any(signal.category in {"embargo", "hs_sanctions"} for signal in block.signals)
+    assert block.movement_direction == "export"
+    assert block.coverage_complete is False
+    scope = {item.code: item for item in block.screening_scope}
+    assert scope["hs_code"].status == "not_checked"
+    assert scope["country"].label == "Страна назначения"
+    assert scope["country"].value == "IT"
+    assert scope["country"].status == "not_checked"
+    assert scope["counterparty"].status == "checked"
 
 
 def test_risk_block_carries_canonical_anchor_and_typed_evidence(
@@ -228,3 +321,67 @@ def test_risk_api_endpoint(memory_sessionmaker: sessionmaker) -> None:
     assert "screening_scope" in body
     assert "canonical_anchor" in body
     assert body.get("disclaimer")
+
+
+def test_public_risk_endpoints_forward_typed_export_direction(
+    memory_sessionmaker: sessionmaker,
+) -> None:
+    pytest.importorskip("fastapi")
+    from fastapi.testclient import TestClient
+
+    from app.main import app
+    from app.security import require_authenticated_user
+
+    payload = {
+        "hs_code": "0406100000",
+        "description": "Сыр на вывоз",
+        "country": "IT",
+        "destination_country": "IT",
+        "counterparty_name": "FOREIGN CUSTOMER",
+        "movement_direction": "export",
+    }
+    app.dependency_overrides[require_authenticated_user] = lambda: {"sub": "test"}
+    client = TestClient(app)
+    try:
+        with memory_sessionmaker() as db:
+            load_sanctions_risk_fixture(db)
+        single = client.post("/api/risk/check", json=payload)
+        batch = client.post(
+            "/api/risk/check-batch",
+            json={"items": [payload]},
+        )
+        alias = client.post(
+            "/api/risk/block",
+            json={"items": [payload]},
+        )
+        product = client.post(
+            "/api/non_tariff/risk-block",
+            json={"items": [payload]},
+        )
+        invalid = client.post(
+            "/api/risk/check",
+            json={**payload, "movement_direction": "sideways"},
+        )
+    finally:
+        app.dependency_overrides.clear()
+
+    assert single.status_code == 200
+    assert batch.status_code == 200
+    assert alias.status_code == 200
+    assert product.status_code == 200
+    assert invalid.status_code == 422
+    blocks = [
+        single.json(),
+        batch.json()["items"][0],
+        alias.json()["items"][0],
+        product.json()["items"][0]["risk_block"],
+    ]
+    for block in blocks:
+        assert block["movement_direction"] == "export"
+        assert not any(
+            signal["category"] in {"embargo", "hs_sanctions"}
+            for signal in block["signals"]
+        )
+        scope = {item["code"]: item for item in block["screening_scope"]}
+        assert scope["hs_code"]["status"] == "not_checked"
+        assert scope["country"]["label"] == "Страна назначения"

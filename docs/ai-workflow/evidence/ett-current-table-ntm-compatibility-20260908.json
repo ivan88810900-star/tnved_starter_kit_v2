@@ -1,0 +1,462 @@
+{
+  "schema_version": 1,
+  "kind": "current_official_table_ntm_compatibility",
+  "evaluated_at": "2026-09-08T16:41:36.884222+00:00",
+  "status": "compatible_with_official_advisory_contour",
+  "compatibility_ok": true,
+  "audit_scope": "all_exact_codes_and_hierarchy_descriptions_from_verified_current_ett_tables",
+  "source_complete_receipt_sha256": "ab67a2d3055a3fcd8416c874b9bc388ce0b0919e4b964e5de7c1f18c08a6f72e",
+  "source_complete_analysis_sha256": "4fc68dfa5cdbc043d9b374e292c12b44dc2c391ea643260eff679ca323bd9991",
+  "source_capture_run_id": 34244241195,
+  "source_capture_git_revision": "ad8ed8ba055e3371c19e6d614c9809db4086df46",
+  "source_analysis_component_sha256": {
+    "ett_amendment_inventory": "c91332e956237382e8a98c579a6a1deb0b015fca1320c7da0bdf341925f33ca4",
+    "ett_analysis": "bc4a0fdccb88ee42ed7d13c9779ec1cb79e7baae6e4f6fe0d2f1a43811e45490",
+    "ett_duty_cells": "c3c15e306355f42149e83ea254eb3966f359ae280186bb78dc9c5bb0e090a51e",
+    "ett_duty_typography": "1c095b0c97790dee252a9af4b17a6bb92907b14b57127a329bf33450a83ddde7",
+    "ett_manifest": "4e7a3638a45f137bf3d93ebdff5fc8aa528ca14fea1663801e2a63c91da176e9"
+  },
+  "source_table_reports_verified": 96,
+  "source_chapters": 96,
+  "source_positions": 13293,
+  "descriptions_present": 13293,
+  "description_kind": "unambiguous_source_hierarchy_full_description",
+  "sorted_code_description_input_sha256": "7e9fbce03accd33ef4d900ad82cfb9e815757f444062667bdae86cdde4a04f77",
+  "ntm_git_revision": "3158cf26f9121c5d30a7e786b9f9442c36cb3f9b",
+  "ntm_component_sha256": {
+    "customs-clear/backend/app/services/hs_matching.py": "d7e67c1c56c927cbec7e5b673eabe4d1336abaf209b6f5d2aaf084c85227c5cf",
+    "customs-clear/backend/app/services/ntm_catalog_baseline.py": "3aa985a0d4bdaa1e1debd151d5a0f72326019bc6947741c6a8377c1a1d2e0ebb",
+    "customs-clear/backend/app/services/ntm_engine_v2.py": "393806c7c2f4ed77b14a3652f0c3fc922f86ce25c3e9fbfce5127f234b642c95",
+    "customs-clear/backend/app/services/ntm_full_coverage_audit.py": "6601431beb2d7b0b8342ab7cde52cd374b346d7ceed01f1bdcb6acc3b4165081",
+    "customs-clear/backend/app/services/ntm_layers.py": "8e9f8ff348780b25b3e30b50a9c056e2f8b717537d40adac054765ae0c495f93",
+    "customs-clear/backend/app/services/official_export_control.py": "8ab555cbe2dd0442c3c04555d223353f80d7abf7e1e42340c16edf26e4d8edb4",
+    "customs-clear/backend/app/services/official_ntm_contours.py": "97346615a44a217fe179b526ce3fb7127e9782afaa7bd24a32710b825990fb06",
+    "customs-clear/backend/app/services/official_ntm_curated_enforcement.py": "06b956fb8cf6563425f5315ea7cd6428b7fbb3270dd1c645d68f5be3daa5a910",
+    "customs-clear/backend/app/services/official_ntm_exact_applicability.py": "5221ca6f1750714cca0abe306bf540aeea0ec6d07dd17bbff8417c976128f58a",
+    "customs-clear/backend/app/services/official_ntm_exact_devices.py": "ec5bfe9710164e6b0378735c370f129e2c10d8ba442df8c484ae67a003a60624",
+    "customs-clear/backend/app/services/official_ntm_exact_health.py": "918138de878172555ca5316ab510033836716c3644f4e06ec6d185112bad81a3",
+    "customs-clear/backend/app/services/official_ntm_exact_trade.py": "a86c3638fdf3458ab1a8c1662203375a99b01a12f0d03f0cb6506d88f4290924",
+    "customs-clear/backend/app/services/tr_ts_catalog.py": "aec903bc46162f6568bdf01658f78ecc9791b14480af9f8ef88abb6e526d755d",
+    "customs-clear/backend/data/official_export_control_rules.seed.json": "40fae25e96f2ac6ffd0d938f975c3467a8fac80b27d574988664a33204aa1056"
+  },
+  "exact_applicability_revision": "bounded-curated-2026-08-15.1",
+  "curated_allowlist_version": "official-ntm-curated-2026-08-15.1",
+  "existing_auditor": "app.services.ntm_full_coverage_audit.audit_ntm_full_coverage",
+  "existing_enforcement_bridge": "app.services.official_ntm_curated_enforcement.apply_curated_official_enforcement",
+  "auditor_result": {
+    "positions_evaluated": 13293,
+    "families_per_position": 9,
+    "invalid_matrix_count": 0,
+    "invalid_matrix_examples": [],
+    "enforcement_leak_count": 0,
+    "enforcement_leak_examples": [],
+    "official_contour_enforcement_leak_count": 0,
+    "official_contour_enforcement_leak_examples": [],
+    "decision_30_sections_indexed": 30,
+    "decision_30_sections_with_primary_filter": 30,
+    "decision_30_sections_without_primary_filter": [],
+    "decision_30_sections_observed": [
+      "1.1",
+      "1.12",
+      "1.2",
+      "1.3",
+      "1.4",
+      "1.6",
+      "1.7",
+      "1.8",
+      "1.9",
+      "2.1",
+      "2.10",
+      "2.11",
+      "2.12",
+      "2.13",
+      "2.14",
+      "2.16",
+      "2.17",
+      "2.19",
+      "2.2",
+      "2.20",
+      "2.21",
+      "2.22",
+      "2.23",
+      "2.3",
+      "2.30",
+      "2.4",
+      "2.6",
+      "2.7",
+      "2.8",
+      "2.9"
+    ],
+    "decision_30_sections_not_observed": [],
+    "decision_299_sgr_ranges": 98,
+    "export_control_hs_candidates": 1087,
+    "export_control_hs_candidates_raw": 1087,
+    "export_control_hs_candidates_effective": 1085,
+    "export_control_retired_exact_codes": 2,
+    "export_control_identification_scope": "hs_candidates_only",
+    "export_control_technical_parameters_covered": false,
+    "technical_regulations_registered": 53,
+    "technical_regulations_with_broker_hs_rules": 42,
+    "technical_regulations_with_primary_filter": 49,
+    "technical_regulations_without_hs_filter": [
+      "047/2018",
+      "048/2019",
+      "049/2020",
+      "053/2026"
+    ],
+    "technical_regulations_unexpected_gaps": [],
+    "status_counts": {
+      "not_detected": 100332,
+      "needs_clarification": 13254,
+      "legacy_signal": 6051
+    },
+    "requirements_evaluated": 15695,
+    "requirement_family_counts": {
+      "cryptography": 107,
+      "export_control_dual_use": 2025,
+      "licensing": 7577,
+      "phytosanitary_control": 1114,
+      "prohibitions_restrictions": 838,
+      "radio_frequency": 601,
+      "sanitary_registration": 1162,
+      "technical_conformity": 637,
+      "veterinary_control": 1634
+    },
+    "requirement_permit_counts": {
+      "CITES": 1516,
+      "ВЕТКОНТРОЛЬ": 1634,
+      "ДС": 363,
+      "ДС/СС": 80,
+      "ДС/СС/СГР": 188,
+      "ЗАПРЕТ": 838,
+      "ЛЗ": 5979,
+      "ЛЗ/разрешение ФСТЭК": 2025,
+      "НФ/ЛЗ": 107,
+      "РУ": 82,
+      "РЭВЧУ": 601,
+      "СГР": 1162,
+      "СС": 6,
+      "ФИТОКОНТРОЛЬ (без ФСС)": 334,
+      "ФСС": 780
+    },
+    "ok": true
+  },
+  "additional_diagnostic_counts": {
+    "positions": 13293,
+    "broad_rows": 15695,
+    "default_bridge_positions_checked": 13293,
+    "enabled_bridge_broad_rejection_positions_checked": 13293
+  },
+  "additional_failures": {
+    "automatic_document_requirement": {
+      "count": 0,
+      "examples": []
+    },
+    "used_for_missing_check": {
+      "count": 0,
+      "examples": []
+    },
+    "missing_manual_review_marker": {
+      "count": 0,
+      "examples": []
+    },
+    "nonempty_exact_rows_without_structured_facts": {
+      "count": 0,
+      "examples": []
+    },
+    "summary_broker_effect": {
+      "count": 0,
+      "examples": []
+    },
+    "default_bridge_broker_additions": {
+      "count": 0,
+      "examples": []
+    },
+    "broad_rows_pass_enabled_bridge": {
+      "count": 0,
+      "examples": []
+    }
+  },
+  "requirements_by_applicability": {
+    "needs_clarification": 15695
+  },
+  "requirements_by_source_kind": {
+    "official_ntm_contours": 13670,
+    "official_export_control": 2025
+  },
+  "matrix_status_counts_by_family": {
+    "cryptography": {
+      "not_detected": 13126,
+      "needs_clarification": 107,
+      "legacy_signal": 60
+    },
+    "export_control_dual_use": {
+      "not_detected": 11268,
+      "needs_clarification": 2025
+    },
+    "licensing": {
+      "needs_clarification": 5220,
+      "not_detected": 7763,
+      "legacy_signal": 310
+    },
+    "phytosanitary_control": {
+      "not_detected": 12176,
+      "needs_clarification": 1114,
+      "legacy_signal": 3
+    },
+    "prohibitions_restrictions": {
+      "not_detected": 12539,
+      "needs_clarification": 754
+    },
+    "radio_frequency": {
+      "not_detected": 12692,
+      "needs_clarification": 601
+    },
+    "sanitary_registration": {
+      "not_detected": 12058,
+      "needs_clarification": 1162,
+      "legacy_signal": 73
+    },
+    "technical_conformity": {
+      "not_detected": 7079,
+      "legacy_signal": 5577,
+      "needs_clarification": 637
+    },
+    "veterinary_control": {
+      "needs_clarification": 1634,
+      "not_detected": 11631,
+      "legacy_signal": 28
+    }
+  },
+  "new_3215_descendants": [
+    {
+      "code": "3215110001",
+      "present_in_current_table": true,
+      "description": "Краска полиграфическая, чернила или тушь для письма или рисования и прочие чернила, концентрированные или неконцентрированные, твердые или нетвердые / краска полиграфическая / черная / с пленкообразующим веществом, диспергированным или растворенным в спиртах, сложных эфирах, гликолевых эфирах, гептане или гексане, в том числе в любой смеси этих веществ",
+      "chapter": "32",
+      "source_sha256": "645cc95586cabb4bf6fafb353c5b99d79cbd13183dd4560ab28e19f1a791da84",
+      "table_report_sha256": "b59e6edecb6302c80948ffc6e8d5c5e95254541216758db3496f662587a0cd8f",
+      "source_row": "p0010:r00020",
+      "source_page": 10,
+      "measure_families": {
+        "technical_conformity": "not_detected",
+        "sanitary_registration": "not_detected",
+        "veterinary_control": "not_detected",
+        "phytosanitary_control": "not_detected",
+        "radio_frequency": "not_detected",
+        "cryptography": "not_detected",
+        "licensing": "not_detected",
+        "prohibitions_restrictions": "not_detected",
+        "export_control_dual_use": "not_detected"
+      },
+      "requirements": [],
+      "applicability_mode": "broad_candidate_only"
+    },
+    {
+      "code": "3215110002",
+      "present_in_current_table": true,
+      "description": "Краска полиграфическая, чернила или тушь для письма или рисования и прочие чернила, концентрированные или неконцентрированные, твердые или нетвердые / краска полиграфическая / черная / с пленкообразующим веществом, диспергированным в водной среде",
+      "chapter": "32",
+      "source_sha256": "645cc95586cabb4bf6fafb353c5b99d79cbd13183dd4560ab28e19f1a791da84",
+      "table_report_sha256": "b59e6edecb6302c80948ffc6e8d5c5e95254541216758db3496f662587a0cd8f",
+      "source_row": "p0010:r00027",
+      "source_page": 10,
+      "measure_families": {
+        "technical_conformity": "not_detected",
+        "sanitary_registration": "not_detected",
+        "veterinary_control": "not_detected",
+        "phytosanitary_control": "not_detected",
+        "radio_frequency": "not_detected",
+        "cryptography": "not_detected",
+        "licensing": "not_detected",
+        "prohibitions_restrictions": "not_detected",
+        "export_control_dual_use": "not_detected"
+      },
+      "requirements": [],
+      "applicability_mode": "broad_candidate_only"
+    },
+    {
+      "code": "3215110009",
+      "present_in_current_table": true,
+      "description": "Краска полиграфическая, чернила или тушь для письма или рисования и прочие чернила, концентрированные или неконцентрированные, твердые или нетвердые / краска полиграфическая / черная / прочая",
+      "chapter": "32",
+      "source_sha256": "645cc95586cabb4bf6fafb353c5b99d79cbd13183dd4560ab28e19f1a791da84",
+      "table_report_sha256": "b59e6edecb6302c80948ffc6e8d5c5e95254541216758db3496f662587a0cd8f",
+      "source_row": "p0010:r00030",
+      "source_page": 10,
+      "measure_families": {
+        "technical_conformity": "not_detected",
+        "sanitary_registration": "not_detected",
+        "veterinary_control": "not_detected",
+        "phytosanitary_control": "not_detected",
+        "radio_frequency": "not_detected",
+        "cryptography": "not_detected",
+        "licensing": "not_detected",
+        "prohibitions_restrictions": "not_detected",
+        "export_control_dual_use": "not_detected"
+      },
+      "requirements": [],
+      "applicability_mode": "broad_candidate_only"
+    },
+    {
+      "code": "3215190001",
+      "present_in_current_table": true,
+      "description": "Краска полиграфическая, чернила или тушь для письма или рисования и прочие чернила, концентрированные или неконцентрированные, твердые или нетвердые / краска полиграфическая / прочая / с пленкообразующим веществом, диспергированным или растворенным в спиртах, сложных эфирах, гликолевых эфирах, гептане или гексане, в том числе в любой смеси этих веществ",
+      "chapter": "32",
+      "source_sha256": "645cc95586cabb4bf6fafb353c5b99d79cbd13183dd4560ab28e19f1a791da84",
+      "table_report_sha256": "b59e6edecb6302c80948ffc6e8d5c5e95254541216758db3496f662587a0cd8f",
+      "source_row": "p0010:r00032",
+      "source_page": 10,
+      "measure_families": {
+        "technical_conformity": "not_detected",
+        "sanitary_registration": "not_detected",
+        "veterinary_control": "not_detected",
+        "phytosanitary_control": "not_detected",
+        "radio_frequency": "not_detected",
+        "cryptography": "not_detected",
+        "licensing": "not_detected",
+        "prohibitions_restrictions": "not_detected",
+        "export_control_dual_use": "not_detected"
+      },
+      "requirements": [],
+      "applicability_mode": "broad_candidate_only"
+    },
+    {
+      "code": "3215190002",
+      "present_in_current_table": true,
+      "description": "Краска полиграфическая, чернила или тушь для письма или рисования и прочие чернила, концентрированные или неконцентрированные, твердые или нетвердые / краска полиграфическая / прочая / с пленкообразующим веществом, диспергированным в водной среде",
+      "chapter": "32",
+      "source_sha256": "645cc95586cabb4bf6fafb353c5b99d79cbd13183dd4560ab28e19f1a791da84",
+      "table_report_sha256": "b59e6edecb6302c80948ffc6e8d5c5e95254541216758db3496f662587a0cd8f",
+      "source_row": "p0010:r00039",
+      "source_page": 10,
+      "measure_families": {
+        "technical_conformity": "not_detected",
+        "sanitary_registration": "not_detected",
+        "veterinary_control": "not_detected",
+        "phytosanitary_control": "not_detected",
+        "radio_frequency": "not_detected",
+        "cryptography": "not_detected",
+        "licensing": "not_detected",
+        "prohibitions_restrictions": "not_detected",
+        "export_control_dual_use": "not_detected"
+      },
+      "requirements": [],
+      "applicability_mode": "broad_candidate_only"
+    },
+    {
+      "code": "3215190009",
+      "present_in_current_table": true,
+      "description": "Краска полиграфическая, чернила или тушь для письма или рисования и прочие чернила, концентрированные или неконцентрированные, твердые или нетвердые / краска полиграфическая / прочая / прочая",
+      "chapter": "32",
+      "source_sha256": "645cc95586cabb4bf6fafb353c5b99d79cbd13183dd4560ab28e19f1a791da84",
+      "table_report_sha256": "b59e6edecb6302c80948ffc6e8d5c5e95254541216758db3496f662587a0cd8f",
+      "source_row": "p0010:r00042",
+      "source_page": 10,
+      "measure_families": {
+        "technical_conformity": "not_detected",
+        "sanitary_registration": "not_detected",
+        "veterinary_control": "not_detected",
+        "phytosanitary_control": "not_detected",
+        "radio_frequency": "not_detected",
+        "cryptography": "not_detected",
+        "licensing": "not_detected",
+        "prohibitions_restrictions": "not_detected",
+        "export_control_dual_use": "not_detected"
+      },
+      "requirements": [],
+      "applicability_mode": "broad_candidate_only"
+    }
+  ],
+  "removed_3215_historical_controls": [
+    {
+      "code": "3215110000",
+      "present_in_current_table": false,
+      "excluded_from_13293_position_audit": true,
+      "historical_description": "Краска полиграфическая, чернила или тушь для письма или рисования и прочие чернила, концентрированные или неконцентрированные, твердые или нетвердые / краска полиграфическая / черная",
+      "historical_source_sha256": "235eea305fc9e929903b7c731361c2b8d93dd446aeef5b3243c817cff11b6cb4",
+      "direct_evaluator_still_accepts_arbitrary_code": true,
+      "measure_families": {
+        "technical_conformity": "not_detected",
+        "sanitary_registration": "not_detected",
+        "veterinary_control": "not_detected",
+        "phytosanitary_control": "not_detected",
+        "radio_frequency": "not_detected",
+        "cryptography": "not_detected",
+        "licensing": "not_detected",
+        "prohibitions_restrictions": "not_detected",
+        "export_control_dual_use": "not_detected"
+      },
+      "requirements": [],
+      "applicability_mode": "broad_candidate_only"
+    },
+    {
+      "code": "3215190000",
+      "present_in_current_table": false,
+      "excluded_from_13293_position_audit": true,
+      "historical_description": "Краска полиграфическая, чернила или тушь для письма или рисования и прочие чернила, концентрированные или неконцентрированные, твердые или нетвердые / краска полиграфическая / прочая",
+      "historical_source_sha256": "235eea305fc9e929903b7c731361c2b8d93dd446aeef5b3243c817cff11b6cb4",
+      "direct_evaluator_still_accepts_arbitrary_code": true,
+      "measure_families": {
+        "technical_conformity": "not_detected",
+        "sanitary_registration": "not_detected",
+        "veterinary_control": "not_detected",
+        "phytosanitary_control": "not_detected",
+        "radio_frequency": "not_detected",
+        "cryptography": "not_detected",
+        "licensing": "not_detected",
+        "prohibitions_restrictions": "not_detected",
+        "export_control_dual_use": "not_detected"
+      },
+      "requirements": [],
+      "applicability_mode": "broad_candidate_only"
+    }
+  ],
+  "read_only_isolation": {
+    "sqlite_and_network_connect_audit_events_forbidden": true,
+    "connection_attempt_counts": {},
+    "database_file_created": false,
+    "db_backed_ntm_v2_catalog_flags": false,
+    "curated_enforcement_runtime_flag": false,
+    "enabled_bridge_call_scope": "pure-function negative check: all broad candidate rows must still be rejected",
+    "database_or_schema_writes": false
+  },
+  "elapsed_seconds_existing_full_auditor": 9.126,
+  "legacy_17809_catalog_gate_run": false,
+  "db_backed_broker_runtime_verified": false,
+  "transaction_or_registry_facts_supplied": false,
+  "runtime_product_catalog_updated": false,
+  "current_legal_ntm_coverage_approved": false,
+  "legal_applicability_proven_for_every_position": false,
+  "production_ready": false,
+  "limitations": [
+    "This verifies the official advisory evaluator and curated enforcement boundary on current ETT code/description inputs; it does not approve every applicable legal measure.",
+    "No synthetic full catalog or production DB was created. The legacy pinned 17,809-row gate was neither run nor relabeled as passing.",
+    "No trade direction, destination, product facts or trusted registry evidence was supplied; exact applicability remains outside this broad-candidate regression.",
+    "DB-backed broker rules, permit matching, API/UI serving and deployment behavior were not exercised.",
+    "The NTM evaluator accepts arbitrary code strings and is not an active-code validator. Removed 3215 controls still yield a nine-family candidate matrix when directly invoked, but are absent from and excluded from the verified current source corpus.",
+    "The six new descendants are verified in the source input and advisory output only; production catalog lookup/reindexing has not been changed or proven here."
+  ],
+  "source_pdf_extractor": {
+    "engine": "pymupdf",
+    "engine_version": "1.28.2",
+    "mupdf_version": "1.28.2",
+    "name": "ett_pdf_physical_rows",
+    "sha256": "b2b51ccd213426a32fe3260c655bd8163bbbaa2f45e8cab141893338117c4d5b",
+    "version": "2"
+  },
+  "source_table_assembler": {
+    "name": "ett_coordinate_table_rows",
+    "sha256": "f5389c537a68975d0362ca99a63a6a3f199e90772fcba8b31bb3b8a4709d2e90",
+    "version": "1"
+  },
+  "ntm_component_hashes_match_git_revision": true,
+  "auditor_observation_wrapper": "Calls the existing official evaluator without changing its inputs or outputs; records diagnostics and independently invokes the existing curated bridge.",
+  "reproduction": {
+    "input": "Read source-complete analysis chapter reports and use sorted (code, full_description) pairs, rejecting duplicate/invalid codes and missing descriptions.",
+    "entrypoint": "audit_ntm_full_coverage(positions)",
+    "catalog_loader_or_17809_gate_called": false,
+    "structured_facts": null,
+    "signal_sources": "Existing get_full_ntm_requirements catalog/layer fallback with DB-backed v2 catalog flags disabled for this isolated run."
+  }
+}

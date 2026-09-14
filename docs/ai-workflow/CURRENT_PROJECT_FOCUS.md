@@ -6,9 +6,118 @@ Active
 
 ## Last updated
 
-2026-08-06
+2026-09-14
 
-## Strategic direction
+## Completed A6 stage-2 correction and next priority
+
+Actual recovery HEAD was `dab1f8aa`; A1's bounded corrections now have independent
+A5 code/regression/runtime acceptance: 97 new cases, 335-case combined profile
+and 12 fresh-process HTTP scenarios. Exact published candidate `599c3af0` passed
+CI 34829794572: backend 5,615 passed / 2 skipped / 2 warnings / 85 subtests,
+frontend 50, types/build/staging/workflows. Admission 34829794668 passed 2,422
+cases / 1 known skipped / 2 warnings / 85 subtests across 51 explicit suites.
+[Publication evidence](evidence/payment-a6-stage2-publication-20260914.json) records
+exact trees and commit mapping; final feature HEAD and documentation-child push/PR
+CI are recorded in PR #187. A3 independently checked source boundaries; A4 preserves the shared
+review contract and labels the quote's partial sum accurately.
+See [the stage-2 task](../../.ai/tasks/TASK-PAYMENT-A6-STAGE2-001.md) and
+[execution-backed classification](A6_PAYMENT_STAGE2_RECONCILIATION.md).
+
+Geo, fixed-AD unit, foreign FX, incomplete expression and populated invalid-date
+uncertainty now reach dependent quote components and final totals. Extended
+comparison preserves FX review. Null dates mean omission only; non-null historical
+requests remain rejected. Existing provisional/applied, upward-coefficient,
+overlap and cent guards remain intact. The quote includes the already calculated
+recycling fee without adding a rate or changing VAT policy.
+
+Next, resume the outstanding AD30 temporal/amendment,
+producer and nomenclature review, then remaining rates and contextual NTM.
+Complete legal coverage and source admission remain partial; this repair does
+not authorize rates/FX or enable historical calculations. Production, application
+DB, flags and enforcement stay unchanged. The completed AD30 block below is retained.
+
+## Completed AD30 continuation, 14 September 2026
+
+The bounded AD30 executable review is implemented and independently approved:
+pinned source facts → explicit product assessment → exact hypothetical source-row
+arithmetic, with a strict offline CLI. A4 documented its stable output contract;
+no live consumer was added. A5's 43 independent cases and combined 449-case
+profile passed after two owner repairs. Exact published candidate `2bb519bf`
+passed CI 34824532766 (backend 5,515; frontend 50; types/build/staging/workflows)
+and admission QA 34824532769 (2,322 passed). Known skips/warnings and the exact
+local-to-GitHub mapping are recorded in
+[publication evidence](evidence/ad30-publication-20260914.json). Final feature
+HEAD and post-publication checks are recorded in PR #187; see [the task](../../.ai/tasks/TASK-AD30-EXECUTABLE-REVIEW-001.md) and
+[review guide](AD30_EXECUTABLE_REVIEW.md) for current evidence and boundaries.
+
+The actual recovery base was PR #187 `a9d15c74`, not the old A6 `22a7df55`.
+Those eight findings are already reconciled; no duplicate engine fix was made.
+PR #191's reviewed matcher and PR #192's source preparation were reused.
+Separate orchestration/runtime-state work (#190/#193), #189 and existing
+worktrees were inspected without modification. No source was recaptured.
+
+Next is the remaining source-bound temporal/amendment, producer and nomenclature
+review for AD30, followed by the other ETT/VAT/excise/remedy/preference/origin
+and contextual NTM dependencies. The new bounded candidate does not resolve
+those legal gaps. Current counts remain 49 sources / 49 policies / 72 default
+URLs + 11 isolated review targets. Production, flags, active rates and DB stay
+unchanged. The material below is the previous continuation, not a new instruction
+to repeat completed source acquisition or the now implemented candidate.
+
+## Previous continuation, 12 September 2026
+
+Ivan explicitly prioritizes complete official rates/payments, contextual NTM and
+source provenance. Existing Canonical, semantic search, MVP payment presentation
+and grounded-assistant slices are retained; they are not being reimplemented.
+A0 coordinates actual isolated A1–A5 branches. Current progress and exact QA
+boundaries are recorded in [the admission task](TASK-RATE-ADMISSION-RECOVERY.md)
+and [remote recovery log](REMOTE_EXECUTOR_RECOVERY_20260912.md).
+Historical counts and old next-step paragraphs below describe earlier snapshots;
+they do not override current GitHub evidence or authorize production.
+
+## Current priority and completed bounded block
+
+Official rates/payments, contextual NTM and verifiable sources are the current
+priority. The admission/payment-consistency/source-evidence task is implemented
+and independently approved; final publication is gated by the assembled commit's
+CI and A5 review. See the linked task and evidence for exact commit-scoped results.
+
+A6's eight findings were independently classified: preference asymmetry,
+cross-store antidumping overlap and cent reconciliation were corrected by A1,
+with author regressions and independent A5 tests. Missing specific-duty units,
+public historical-payment support and legal authority are still explicit limits.
+NTM unknown-country/malformed-field handling and AI diagnostic-file boundaries
+were independently checked without promoting legacy or AI data into legal rules.
+
+Current source configuration: 49 registry entries, 49 policies, 72 default monitor
+URLs, plus 11 isolated review targets. Captures 34716176823 and 34717159548
+retained all eleven response bodies with original/quarantine separation.
+Their acquisition failures remain visible; no legal baseline or rate was accepted.
+Decision 12/4/121 source facts are prepared for formal applicability review.
+
+The next implementation sequence is:
+
+1. Formal review candidate for the retained Decision 12 → 4 → 121 chain, with exact product, producer, code and effective-date evidence and incomplete amendment coverage made explicit.
+2. Remaining ETT note/dependent-act and VAT/excise/remedy/preference/origin temporal rules; preserve the existing four-code one-day 111C candidate and full dependency worklist without repeating acquisition.
+3. Product-specific NTM exceptions and uncovered quota/GOST/marking scopes, keeping code-only results advisory.
+4. Stable canonical read contracts for these reviewed facts; AI explanations consume services and never duplicate rates/NTM applicability logic.
+
+Durable backup does not attest versioning/retention/legal hold. Manifest-bound
+human review and separate approval remain future admission gates; DM-0014 is not
+a technical development hold. Existing Python rounding has not become a new
+legal declaration-rounding policy. The legacy diagnostic invoice VAT override/
+Excel path remains outside grounded canonical payment guarantees.
+
+No main merge, production deployment/database change, enforcement or Canonical
+flag activation; PR #189 remains separate and inactive.
+
+## Historical implementation record
+
+The following material records earlier product milestones and previous next-step
+snapshots. Old source counts, HEAD/CI references and ordering below are historical;
+the current priority and counts above supersede them.
+
+## Earlier strategic direction
 
 The current active workstream is the **CustomsClear MVP application**: end-to-end product slices for TN VED usage, normative requirements, payments, sanctions/risk, and an AI assistant grounded in internal modules.
 
@@ -16,17 +125,68 @@ Official SGR and NTM v2 normative datasets remain important **data contours**, b
 
 The normative requirements, TN VED search/code-card, explainable Smart Payments,
 evidence-first sanctions/risk and grounded assistant slices are complete. Full-data
-end-to-end product acceptance is also complete; the current focus is post-acceptance
-product hardening, intelligent TN VED navigation and interactive UI verification.
+end-to-end product-flow acceptance is also complete, but it does not establish the
+current legal correctness of every duty rate. The current focus is post-acceptance
+product and data-source hardening, intelligent TN VED navigation and interactive UI
+verification.
 This does not authorize Canonical runtime flag rollout or automatic semantic-vector
 ingestion.
 
 ## What has already been completed
 
 - NTM v2 storage model and applicability semantics (`definite` / `possible` / `needs_clarification`)
-- Safe enforcement policy: only `definite` in broker; official SGR advisory-only by default
+- Safe enforcement policy: only separately authorized `definite` sources may enter
+  broker; the official full NTM contour is advisory-only
+- Official full NTM advisory rollout accepted by Ivan on 2026-08-15: default ON
+  with `NTM_V2_OFFICIAL_FULL_ADVISORY_ENABLED=false` as kill switch, 9 measure
+  families and 30 base Decision-30 sections; enforcement is not approved
+- Structured NTM applicability (DM-0011): the API/UI accepts optional transaction
+  and product facts, bounded source-backed exact rules expose explainable
+  `definite`/`excluded` advisory results, and requests without facts retain the
+  broad-only contract. The versioned curated broker bridge is implemented for
+  shadow audit but remains default OFF; caller-supplied evidence is rejected by
+  the broker trust gate even if the flag is enabled, and production activation
+  is not approved. Export/transit requests do not reuse import broker/payment
+  semantics and expose catch-all transaction risk separately.
+- The NTM catalog topology gate independently verifies the tracked 96-PDF corpus:
+  exact 21 sections, 96 chapters, 17,809 unique commodities, 0 duplicate/invalid
+  catalog rows and 17,774 nonempty descriptions. The earlier tariff-rate portion
+  of the full staging claim is withdrawn: the DB-derived `ett:2026-06-18` bundle
+  has 13,319 raw rows, 2 invalid rows and 27 duplicate rows across 23 codes,
+  including 18 material rate conflicts, and it does not represent current EEC
+  amendments or temporary/as-of footnotes. It is now explicitly quarantined and
+  cannot produce a positive staging snapshot. Existing aggregate evidence remains
+  useful only for catalog/NTM structure; it is not evidence of current duty-rate
+  correctness. No production/application DB was mutated.
 - Advisory requirements UI/API foundation
 - Official SGR contour: importer, diagnostics, seed dataset, validator
+- Automatic source lifecycle (DM-0013): 48/48 registry entries have an explicit
+  policy; this is policy coverage, not proof that all 48 sources are refreshed
+  automatically or legally current. Seven trusted structured sources update daily/weekly through strict,
+  table-scoped adapters and atomic full-snapshot replacement where applicable;
+  OFAC and EU feeds run validation-only and cannot mutate blocking tables;
+  the expanded official monitor currently covers exactly 68 URLs: 27 direct
+  PDF/machine-readable artifacts have revision-digest coverage, 33 legal HTML
+  pages are explicit revision gaps checked for availability/identity only, and
+  eight additional landing URLs are availability-only. HTML gaps are reported
+  without masquerading as revision coverage or making the operational workflow
+  permanently fail, while the notifier keeps them visible in an issue; covered
+  artifact failures remain fail-closed. Of the 27 covered artifacts, 18 legal
+  PDFs require digest-bound review; nine structured artifacts advance technical
+  freshness automatically after validation. Five curated layers
+  raise a monthly review, four commercial mirrors remain disabled and one AI layer
+  remains manual. Revision-covered legal checksum changes stay pending until an explicit referenced
+  approval and never change enforcement automatically. FTS/FSA open-data adapters
+  now pin official identities, TLS, redirect paths and artifact schemas. The five
+  curated monthly sources use a durable evidence-bound review queue whose resolve
+  and refresh operations are compare-and-set safe. Scheduler overlap is blocked
+  across processes/replicas and every run persists an observable status.
+- Source ingestion hardening: bounded identity-encoded streaming, exact NSI
+  dictionary pins, original-byte sanctions evidence, strict OOXML fallback
+  validation, private streamed FSA downloads and patched `py7zr==1.1.3` with
+  allowlisted CSV extraction. CBR rates and digest-bound provenance are atomic,
+  first-run/concurrent writers serialize, and stale workers cannot downgrade a
+  newer success. This does not enable enforcement or deploy the scheduler.
 - Normative requirements block MVP (backend aggregation + frontend block on NonTariff/compliance)
 - Canonical anchor identity plus additive TN VED search/code-card bridge
 - Additive guided TN VED v1: semantic choices from official descriptions are bound
@@ -71,24 +231,19 @@ ingestion.
   descendants are now real declarable leaves under their stable four-digit heading
   wrappers in both legacy and Canonical projections. Gate-2 now independently
   requires these source-backed leaves and passes 18,211/18,211 paths.
-- Whole-catalog Guided census: on the supplied Gate-2 snapshot, all 1,228 Canonical
+- Whole-catalog Guided census: on the supplied Gate-2 snapshot, all 1,263 Canonical
   headings and 16,708 source-backed code nodes pass reachability, binding and nearest
   Canonical-parent integrity. The model contains 13,254 actual declarable leaves;
   leaf roles are checked against Canonical rather than inferred from the absence of
-  semantic children. On the current feature branch, semantic questions cover 548
-  headings (44.6254%) and 6,945 leaves (52.3993%); these are measured product-quality
-  baselines, not a claim that every heading is already semantically optimized.
-- Feature-branch candidate TASK-SEMANTIC-006 implements a bounded official `2204`
-  PDO slice: an exact 33-leaf Canonical sibling allowlist under `2204210000` is
-  staged only while the official PDO/PGI markers and source topology match. The
-  affected step is 18 choices / 14 direct codes, followed by PDO 33/33; source drift
-  fails closed to the complete flat route. The unchanged global limit of 30 leaves
-  one honest noncritical oversized warning. Whole-catalog correctness remains
-  1,228/1,228, golden assertions are 5/5, serving flags remain OFF and no database,
-  API or LLM contract changed. Ivan accepted Option A in DM-0005 on 2026-08-05;
-  TASK-SEMANTIC-006 is completed and accepted, with implementation + verification
-  still on the feature branch. This docs-only update performs no merge, rollout or
-  deployment.
+  semantic children. On the current feature branch, semantic questions cover 6,949
+  leaves; these are measured product-quality baselines, not a claim that every
+  heading is already semantically optimized.
+- TASK-SEMANTIC-006 plus DM-0012/TASK-SEMANTIC-009 provide a bounded official
+  `2204` slice. Exact retained «прочие» boundaries split the 33-leaf PDO scope into
+  18/17 plus 16/16 and the neighboring `220422` step into 27/25 plus 7/7. Source
+  drift fails closed to the complete prior route. Whole-catalog correctness remains
+  1,263/1,263, golden 7/7 and Gate-2 18,246/18,246; catalog maximum is 29/27 and
+  no step above 30 remains. Serving flags remain OFF.
 - Explainable Smart Payments in the TN VED card: bases, statuses, sources, assumptions,
   uncertainty and optional Canonical grounding anchor
 - Evidence-first sanctions/risk checks in the TN VED card: explicit scope, conservative
@@ -106,9 +261,22 @@ ingestion.
 - Full-data gate passed on the user's 6.78 GB `customs.db`: 21 sections, 96 chapters,
   17,809 commodities and 13,322 rates. Authentication and all four MVP scenarios
   passed; the main database file remained unchanged; Canonical flags and external LLM
-  remained OFF. Evidence: `evidence/mvp-acceptance-20260721.json`.
+  remained OFF. This is product-flow/read-only evidence only; the rate rows require
+  the separate official ETT manifest/as-of gate described above. Evidence:
+  `evidence/mvp-acceptance-20260721.json`.
 
-## Current top priority
+## Earlier priority snapshot
+
+Recovery on 2026-09-11 verified `main=9712c7b`, PR #187 base `a5a811e` and
+published head `a5c884d3`. The already-successful Council capture commit
+`177da64` was found on an ops branch and reused, without reimplementation or a
+merge commit. Its capture run `34584814626` and CI `34584814418` are green.
+The retained listing and all 18 source objects were restored and replayed
+offline; all seven pages of Council 75/77/80 of 9 July 2026 were visually read.
+These conditional relief sources do not constitute a full legal tariff snapshot.
+See [recovery evidence](evidence/ett-council-originals-20260911.json) and
+[relief source monitoring](TARIFF_RELIEF_SOURCE_MONITOR.md).
+PR #189 remains a separate, inactive draft; nothing from that pilot is included.
 
 **CustomsClear MVP application workstream** — deliver integrated product slices in this order:
 
@@ -122,11 +290,104 @@ ingestion.
 7. **Intelligent TN VED structure** — Canonical-backed semantic routes and
    understandable product questions without virtual/fake customs codes
 
-Parallel (not blocking MVP UI): continue curating `official_sgr_rules.seed.json` and validation — **without** enabling official SGR broker enforcement until a separate approved workstream.
+Parallel (not blocking MVP UI): maintain the official NTM datasets and the DM-0013
+automatic source lifecycle. Ivan accepted Decision #188 Option A for a versioned
+official ETT manifest, temporal/as-of rate model and reviewed atomic promotion.
+TASK-ETT-001 now implements isolated local candidates, schema-v2 validation,
+versioned tables and date-specific previews without a cloud purchase. The next
+data task is completing amendment-body evidence and legal footnote/date
+interpretation. TASK-ETT-002 implements the transport, actual-index discovery,
+original-byte receipts, reproducible PDF rows and referenced-quote verification;
+TASK-ETT-003 now assembles and lexically parses all 13,289 commodity rows in the
+96 pinned PDFs, preserving typography, note clauses and source diagnostics. The
+old padded heading 0406900000 is not inserted. This is historical evidence.
+[Run #34244241195](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/34244241195)
+has now completed the supported current-source capture with a verified v2 receipt:
+100 core PDFs, two legal portal pages, two PDF attachments and both index captures
+(106 original objects). The [complete-capture evidence](evidence/ett-complete-capture-20260908.json)
+verifies 13,293 current table rows across 96 chapters and 124 note identifiers,
+with no unresolved cells or unbound note references. All 96 chapter reports match
+the prior local audit byte-for-byte; source and parser digests are retained.
+The source-only backup has passed restoration, but legal retention is not attested.
+That original capture included two scanned legal PDFs. Subsequent search/resume
+and the separately corroborated Decision 42 retained original PDFs for all 105
+named amendments plus founding Decision 80. OCR now covers all 428 amendment
+pages and the explicitly selected first two founding pages; the other 1,468
+founding pages remain uninspected. Unsupported attachment references remain
+visible. A first real four-code 111C candidate binds native quotations and exact
+HTML date metadata, with reproducible manifest identity, 124 verified references,
+isolated staging and authenticated API checks. This is a bounded review candidate,
+not legal approval of all 13,293 rates. Complete legal applicability and reviewed
+effective-date interpretation remain unverified. An isolated ops/ett-source-capture push can request
+read-only GitHub acquisition without merging application changes. Positive production staging remains closed until
+legal review and promotion are implemented.
+Keep the curated official bridge OFF before proposing any exact-rule production
+enforcement.
 
-## Next recommended implementation tasks
+## Earlier implementation tasks and retained references
+
+Payment correctness follow-up (2026-09-10): country-only legacy discounts and
+missing duty/VAT source lookups now produce explicit provisional arithmetic,
+not a confirmed final payable amount. The reason survives quotes, scenarios,
+invoice/document batches, histories, CSV/XLSX/PDF and grounded assistant output.
+See [corrective decision and contract](PAYMENT_PREFERENCE_REVIEW_GUARD.md).
+This closes an actual calculation/status defect; it does not certify the legacy
+rates or resolve the full official ETT promotion gate. Original-source capture
+now additionally covers observed tariff relief/GSP landing links and explicitly
+selected act detail pages, with legal completeness remaining false.
+The nine observed relief/origin PDFs are registered as daily `monitor_only`
+sources. Their captured byte observations are unaccepted review references,
+not approved monitor baselines. The existing daily workflow also captures and
+reconciles current links, so a replacement PDF address cannot stay invisible
+merely because the old PDF remains online. New links/digests require review;
+this does not update payment rates or enable enforcement.
 
 Current next tasks:
+
+Recovery checkpoint, 11 September 2026: `dc1cd389` is published in PR #187 with
+green CI `34589072638` / `34589067268`. The existing full-catalog dependency
+worklist and literal legal-clause backup have been restored with every saved
+file digest verified; do not rebuild them as a new implementation milestone.
+The full rates block remains incomplete. Before adding positive legal-review
+authorization, [DM-0014](../../.ai/decisions/DM-0014-ett-review-authority.md)
+requires Ivan to choose the human reviewer/approver authority and whether those
+actors must differ. This does not reopen Option A or block ordinary offline
+preparation on missing cloud procurement; no legal approval is inferred.
+Ivan's subsequent instruction is to continue the implementation and use another
+agent for independent technical verification when useful. The previous complete
+task pause was premature. Continue fail-closed development and source work;
+DM-0014 remains a future human authorization policy, not a coding prerequisite.
+
+The lost later 111C bytes remain lost; a new replacement now has independently
+reproduced manifest/review hashes and a saved 113-object closure. Do not rebuild
+it again or confuse its four-code, one-day coverage with a full current ETT.
+See [reconstruction evidence](evidence/ett-111c-reconstruction-20260911.json).
+[Source-bound duty arithmetic](ETT_DUTY_PREVIEW.md) adds an isolated read-only
+monetary preview with explicit inputs and permanently provisional results.
+
+`819226f1` also closes concrete invalid-number, unresolved trade-remedy and
+unknown-TR promotion defects; both CI runs are green and the expanded backend
+profile passed 4,403 tests. See [corrective evidence](RATE_SOURCE_FAIL_CLOSED_CORRECTIONS.md).
+The next source task is retaining originals outside the already completed ETT
+and relief captures. [Optional original-body capture](OFFICIAL_SOURCE_ORIGINAL_CAPTURE.md)
+keeps raw-response hashes separate from monitor revision identities, with a
+bounded three-source isolated acquisition workflow and no acceptance arguments.
+
+- [ETT source-of-truth Decision Memo #188](https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/188): Option A accepted and [TASK-ETT-001 implemented](ETT_VERSIONED_CANDIDATES.md).
+  Local candidate history and temporal previews are tested. Real official
+  acquisition and reproducible row verification are implemented in
+  [TASK-ETT-002](ETT_SOURCE_EVIDENCE.md). [TASK-ETT-003](ETT_TABLE_INTERPRETATION.md)
+  adds full cells, source-proven superscript separation, note clauses and actual
+  legal attachment capture, with explicit dispatch/isolated-branch CI acquisition.
+  The supported capture completed in Run #34244241195; its 106 originals and
+  receipt have a verified restorable backup. Subsequent acquisition retained all
+  105 named amendment PDFs and a 430-page OCR evidence set; the original reports
+  retain their narrower historical scope. The first four-code 111C review candidate
+  is concrete and passes source/staging/API checks. Full legal footnote/date interpretation,
+  durable legal-retention attestation, manifest-bound legal review and production
+  promotion remain unfinished. An exact quote match alone does not approve a rate.
+  The DB-derived bundle remains quarantined; old direct PDF/OData/index-hash
+  paths now return REVIEW_REQUIRED and cannot publish rates or false freshness.
 
 - ✅ ADR-0003 / TASK-CANONICAL-005: `stable_id` + `snapshot_id` lifecycle frozen
 - ✅ TASK-CANONICAL-006: TN VED search + code-card consume the additive Canonical
@@ -163,6 +424,11 @@ Current next tasks:
   preserving all 54 source nodes and 47 leaves. Census is 1,228/1,228, golden
   7/7 and Gate-2 18,211/18,211. Acceptance does not merge, roll out or activate
   flags.
+- ✅ TASK-SEMANTIC-009 is implemented and accepted through DM-0012 Option A.
+  Exact retained `2204` «прочие» boundaries preserve 211/211 source codes and
+  170/170 leaves, reduce the catalog maximum to 29/27, and pass the current
+  1,263/1,263 census plus 18,246/18,246 Gate-2. Missing page-break labels are not
+  synthesized; runtime flags remain OFF.
 - ✅ TASK-MVP-SEARCH-QUALITY-001: hybrid search ranking, typo recovery and
   explainable main-UI results
 - ✅ TASK-MVP-PAYMENTS-001: Smart payment explanation block in the TN VED card
@@ -176,6 +442,10 @@ Current next tasks:
 - ✅ Full-data end-to-end acceptance on the user's current DB (4/4, full-data
   thresholds passed, strict read-only confirmed). Evidence:
   `evidence/mvp-acceptance-20260721.json`
+- ✅ TASK-NTM-EXACT-001 / DM-0011: additive structured facts contract, bounded
+  exact health/device/trade evaluators, explicit exclusions and transaction-level
+  export catch-all note are integrated into the normative block. Exact rows remain
+  advisory; the two-rule versioned enforcement bridge is default OFF and audited.
 - ✅ Guided TN VED v1 backend + frontend: a heading exposes a separate smart route;
   semantic group IDs are deterministic, all real codes are bound to the current
   Canonical snapshot, and any integrity failure returns a safe ordinary-tree fallback
@@ -209,10 +479,9 @@ Current next tasks:
 - Improve semantic question coverage and reduce measured high-branching outliers
   in bounded, evidence-backed slices. Do not set arbitrary global usability
   thresholds until a reviewed baseline policy exists; preserve whole-catalog
-  integrity and the seven golden hierarchy assertions. The first official `2204`
-  PDO slice is accepted via DM-0005 Option A and completed/verified on the feature
-  branch, but is not merged, rolled out or deployed by this update. Its remaining
-  33/33 step and other outliers need separate source-backed slices.
+  integrity and the seven golden hierarchy assertions. The source-backed `2204`
+  follow-up is accepted via DM-0012 and leaves a bounded 29/27 residual at `220429`;
+  any further split requires new retained source evidence.
 - Preserve the DM-0006 Option A boundary for `0304`. Exact official titles change
   codeless guide IDs while real Canonical coded-node IDs remain stable; no guide-ID
   alias/history layer is included. Any source/topology drift must fail closed.
@@ -254,13 +523,19 @@ python3 scripts/diagnose_guided_tnved_navigation.py \
 
 Official SGR dataset tasks (when not conflicting with MVP slices):
 
-- Expand `data/official_sgr_rules.seed.json` (ЕЭК №299 and related contours)
+- Expand `data/official_sgr_rules.seed.json` (Решение КТС №299 and related contours)
 - Extend `validate_official_sgr_dataset(...)` and dataset report coverage
 - Regression: toys `9503`, adult cosmetics `3304`, child/special SGR cases
+- ✅ Rebuilt the exact 21/96/17,809 catalog from 96 tracked official PDFs into a
+  temp audit-only artifact and verified the catalog/NTM topology without production
+  DB mutation. Do not reuse the retired positive rate-snapshot conclusion: the
+  current ETT bundle is quarantined until a reviewed schema-v2 official manifest
+  and temporal-rate model exist.
 
 ## What is not the next priority
 
-- Official SGR **enforcement** in broker / missing-check (separate Decision Memo required)
+- Official NTM/SGR **enforcement** in broker / missing-check (not approved; a new
+  Ivan decision is required)
 - Broad legacy SGR heuristics promoted to broker as “official”
 - Unrelated refactors or legacy root `backend/` expansion
 - Broad UI redesign outside MVP slices

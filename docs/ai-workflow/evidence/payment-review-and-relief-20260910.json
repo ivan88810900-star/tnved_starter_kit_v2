@@ -1,0 +1,92 @@
+{
+  "schema_version": 1,
+  "date": "2026-09-10",
+  "scope": "Payment uncertainty propagation and observed tariff-relief originals",
+  "base_commit": "ec1a20009331df996811d067cb2d719896235ba7",
+  "capture_commit": "00903bd44a023b3d658076772b48f4691a2cc123",
+  "validation": {
+    "backend_ci_suite_local": {
+      "passed": 3127,
+      "warnings": 1,
+      "seconds": 155.31,
+      "scope": "CI selection before addition of document uncertainty test module; final changed paths covered by targeted regression"
+    },
+    "backend_final_targeted": {
+      "passed": 117,
+      "warnings": 1
+    },
+    "frontend": {
+      "passed": 50,
+      "files": 16,
+      "typecheck": true,
+      "production_build": true
+    },
+    "http": {
+      "schema_version": 1,
+      "http_checks": [
+        "public_stateless_calculation_route",
+        "login",
+        "country_only_review",
+        "caller_flags_no_bypass",
+        "manual_zero_retained",
+        "nested_compare_no_savings",
+        "quote_has_no_final_total"
+      ],
+      "passed": 7,
+      "database_unchanged": true,
+      "production_database_used": false,
+      "server": "full_application_read_only",
+      "source_legality_approved": false
+    },
+    "backend_published_ci": {
+      "commit": "b3f6241b2080100977da53caabd0df09b42b80dc",
+      "run_id": 34483670679,
+      "passed": 3137,
+      "warnings": 2,
+      "seconds": 321.07,
+      "conclusion": "success"
+    }
+  },
+  "capture": {
+    "run_id": 34482224480,
+    "complete": true,
+    "originals": 12,
+    "bytes": 5443667,
+    "report_sha256": "afc55fd41c2bea027e2cb8c39d9c26ca90b7ad8731dfb8876a995d36232db396",
+    "originals_reopened_and_verified": true
+  },
+  "decision72_review": {
+    "original_sha256": "2314978d462d907249d9bc61a34d141b00f8d9834f2a15c5536cc1d139d40f47",
+    "review_sha256": "4c684f3411c1eb0d13036606c8767820e0bd89364646b36fa4b32313f5e6a776",
+    "original_adoption_date": "2026-01-30",
+    "portal_publication_date": "2026-08-07",
+    "portal_entry_date": "2026-08-17",
+    "consolidated130_header_date_conflict_retained": true
+  },
+  "source_backup": {
+    "size_bytes": 7062707,
+    "sha256": "de9132be651118e42f2f49fe237f035a8528fad55635a527b5d7fdf06e68b34a",
+    "entries": 29,
+    "original_sources": 12,
+    "legal_complete": false,
+    "version_reason": "Preserve immutable artifact permissions and add verified restoration instructions",
+    "version": 2,
+    "durable_save_confirmed": true
+  },
+  "production_database_modified": false,
+  "full_current_rates_legally_verified": false,
+  "production_ready": false,
+  "merge_performed": false,
+  "deployment_performed": false,
+  "ntm_enforcement_enabled": false,
+  "source_backup_history": [
+    {
+      "size_bytes": 7062526,
+      "sha256": "68f8c495e5f8575688a09c0927f5854e8b3e706609b2eb1b06efb7a164bae800",
+      "entries": 29,
+      "original_sources": 12,
+      "legal_complete": false,
+      "version": 1
+    }
+  ]
+}

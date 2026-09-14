@@ -41,6 +41,7 @@ from .api import (  # noqa: E402
     currency,
     documents,
     documents_v1,
+    ett_candidates,
     finance,
     non_tariff,
     permits,
@@ -61,7 +62,7 @@ from .services.exchange_rates import update_exchange_rates_from_cbrf  # noqa: E4
 async def _refresh_exchange_rates_after_startup() -> None:
     """Обновить курсы без блокировки готовности HTTP-сервера."""
     try:
-        result = await update_exchange_rates_from_cbrf()
+        result = await update_exchange_rates_from_cbrf(allow_fallback=False)
         logger.info(
             "exchange_rates: фоновое обновление завершено, "
             f"source={result.get('source', 'unknown')}, updated={result.get('updated', 0)}"
@@ -100,11 +101,10 @@ async def lifespan(app: FastAPI):
             from .services.scheduler import start_apscheduler
 
             start_apscheduler()
-            scheduler_started = True
-        except ImportError:
-            logger.warning("Пакет apscheduler не установлен — планировщик отключён")
-        except Exception as e:
-            logger.warning(f"Планировщик не запущен: {e}")
+        except Exception as exc:
+            logger.exception(f"Планировщик не запущен; startup aborted: {exc}")
+            raise
+        scheduler_started = True
 
         exchange_refresh_task = asyncio.create_task(
             _refresh_exchange_rates_after_startup(),
@@ -253,6 +253,7 @@ app.include_router(assistant.chat_router, prefix="/api/assistant", tags=["assist
 # Обратная совместимость: старые клиенты вызывали /api/tnved/classify
 app.include_router(classify.router, prefix="/api/tnved/classify", tags=["classify-compat"])
 app.include_router(sources.router, prefix="/api/sources", tags=["sources"])
+app.include_router(ett_candidates.router, prefix="/api/sources/ett/candidates", tags=["ett-candidates"])
 app.include_router(compliance.router, prefix="/api/compliance", tags=["compliance"])
 app.include_router(risk.router, prefix="/api/risk", tags=["risk"])
 app.include_router(search.router, prefix="/api/search", tags=["search"])

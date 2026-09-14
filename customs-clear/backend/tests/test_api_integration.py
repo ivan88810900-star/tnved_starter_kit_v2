@@ -160,7 +160,7 @@ class ApiIntegrationTests(unittest.TestCase):
         self.assertFalse(meta.get("is_new"))
 
     def test_calculator_eaeu_country_preference(self):
-        """Страна ЕАЭС (BY) применяет тарифную преференцию (нулевая пошлина)."""
+        """Страна ЕАЭС сама по себе не подтверждает статус товара и нулевую пошлину."""
         preference = SimpleNamespace(
             duty_coefficient=0.0,
             preference_type="eaeu",
@@ -174,9 +174,13 @@ class ApiIntegrationTests(unittest.TestCase):
             })
         self.assertEqual(r.status_code, 200)
         pref = r.json()["tariff_preference"]
-        self.assertTrue(pref.get("applied"))
+        self.assertFalse(pref.get("applied"))
         self.assertEqual(pref.get("preference_type"), "eaeu")
-        self.assertEqual(r.json()["breakdown"]["duty"], 0.0)
+        self.assertEqual(pref.get("status"), "needs_review")
+        self.assertEqual(pref.get("candidate_duty_coefficient"), 0.0)
+        self.assertEqual(pref.get("duty_coefficient"), 1.0)
+        self.assertEqual(r.json()["status"], "REVIEW_REQUIRED")
+        self.assertTrue(r.json()["amounts_provisional"])
 
     def test_calculator_vat_reason_present(self):
         r = self.client.post("/api/calculator/compute", json={
@@ -290,6 +294,34 @@ class ApiIntegrationTests(unittest.TestCase):
         self.assertIn("data_confidence", meta)
         self.assertIn("any_stale_source", meta)
         self.assertIn("any_manual_review", meta)
+
+    def test_export_compliance_skips_import_payment_and_antidumping(self):
+        r = self.client.post("/api/compliance/check", json={
+            "items": [{
+                "hs_code": "7214990000",
+                "description": "Стальной товар на вывоз",
+                "country": "RU",
+                "customs_value": 100_000,
+                "freight": 0,
+                "facts": {
+                    "direction": "export",
+                    "destination_country": "CN",
+                    "end_user": "foreign industrial customer",
+                },
+            }]
+        })
+        self.assertEqual(r.status_code, 200)
+        body = r.json()
+        item = body["items"][0]
+        self.assertEqual(item["payment"]["status"], "NOT_APPLICABLE")
+        self.assertEqual(item["payment"]["breakdown"]["total_payable"], 0)
+        self.assertEqual(
+            item["payment"]["data_quality"]["antidumping_status"],
+            "not_applicable",
+        )
+        self.assertFalse(body["meta"]["any_manual_review"])
+        self.assertFalse(item["non_tariff"]["legacy_import_broker_applied"])
+        self.assertNotIn("Антидемпинговые меры", " ".join(item["risks"]))
 
     def test_compliance_empty_list(self):
         r = self.client.post("/api/compliance/check", json={"items": []})

@@ -311,6 +311,10 @@ export interface CalculatorComputeRequest {
 }
 
 export interface CalculatorDataQuality {
+  amounts_provisional?: boolean;
+  payment_review_reason?: string | null;
+  payment_review_reasons?: string[];
+  tariff_preference_warning?: string;
   confidence: 'high' | 'medium' | 'low' | 'none';
   matched_prefix: string;
   match_length: number;
@@ -377,6 +381,12 @@ export interface CalculatorBreakdown {
 
 export interface CalculatorTariffPreference {
   applied: boolean;
+  status?: string;
+  candidate_duty_coefficient?: number;
+  eligibility_verified?: boolean;
+  source_kind?: string;
+  reason?: string;
+  missing_eligibility?: string[];
   preference_type?: string;
   duty_coefficient?: number;
   legal_ref?: string;
@@ -431,7 +441,10 @@ export interface CalculatorClarificationResponse {
 }
 
 export interface CalculatorComputeResponse {
-  status: 'OK';
+  status: 'OK' | 'REVIEW_REQUIRED';
+  amounts_provisional?: boolean;
+  payment_review_reason?: string | null;
+  payment_review_reasons?: string[];
   hs_code: string;
   country: string | null;
   customs_value: number;
@@ -514,23 +527,37 @@ export interface CalculatorCompareSharedEconomic {
   _fx_rates?: Record<string, number>;
 }
 
+export interface CalculatorPaymentProfile {
+  status: string;
+  hs_code: string;
+  country?: string | null;
+  amounts_provisional?: boolean | null;
+  payment_review_reason?: string | null;
+  payment_review_reasons?: string[];
+  tariff_preference?: CalculatorTariffPreference | null;
+  data_quality?: CalculatorDataQuality | null;
+  breakdown: {
+    base_duty: number;
+    vat: number;
+    excise: number;
+    anti_dumping: number;
+    customs_fee: number;
+    total_payable: number;
+  };
+}
+
 export interface CalculatorCompareScenarioResult {
   label: string;
-  hs_code: string;
   delta_total_vs_first_rub: number | null;
-  total_payable: number;
-  duty: number;
-  vat: number;
-  excise: number;
-  antidumping: number;
-  duty_rate_applied: number;
-  vat_rate_applied: number;
-  data_quality: CalculatorDataQuality;
-  tnved_title: string;
+  profile: CalculatorPaymentProfile;
 }
 
 export interface CalculatorCompareResponse {
-  status: 'OK';
+  status: string;
+  comparison_complete?: boolean | null;
+  amounts_provisional?: boolean | null;
+  payment_review_reason?: string | null;
+  payment_review_reasons?: string[];
   shared_economic: CalculatorCompareSharedEconomic;
   scenarios: CalculatorCompareScenarioResult[];
   invoice?: CalculatorInvoiceInfo;
@@ -549,12 +576,19 @@ export interface ScenarioCompareScenarioResult {
   recycling_fee: number;
   rop: number;
   total: number;
-  preference?: unknown;
+  preference?: CalculatorTariffPreference;
   payments_status?: string;
+  amounts_provisional?: boolean;
+  payment_review_reason?: string | null;
+  payment_review_reasons?: string[];
 }
 
 export interface ScenarioCompareResponse {
-  status: 'OK';
+  status: 'OK' | 'REVIEW_REQUIRED';
+  amounts_provisional?: boolean;
+  payment_review_reason?: string | null;
+  payment_review_reasons?: string[];
+  comparison_complete?: boolean;
   base: {
     hs_code: string;
     customs_value: number;
@@ -564,8 +598,8 @@ export interface ScenarioCompareResponse {
     weight_net_kg?: number | null;
   };
   scenarios: ScenarioCompareScenarioResult[];
-  best_scenario: string;
-  savings_vs_worst: number;
+  best_scenario: string | null;
+  savings_vs_worst: number | null;
 }
 
 export type CalculationHistoryKind = 'compute' | 'compare' | 'compliance' | 'copilot' | 'copilot_batch';
@@ -579,6 +613,11 @@ export interface CalculatorHistorySummaryResponse {
 }
 
 export interface CalculatorHistoryListItem {
+  payment_status?: string | null;
+  amounts_provisional?: boolean | null;
+  payment_review_reason?: string | null;
+  payment_review_reasons?: string[];
+  tariff_preference_warning?: string | null;
   id: string;
   document_id: string | null;
   user_ref: string;
@@ -712,12 +751,35 @@ export type AdvisoryRequirement = {
   applicability: 'possible' | 'needs_clarification' | 'definite' | string;
   source: string;
   source_label?: string | null;
+  source_url?: string | null;
+  direction?: 'import' | 'export' | 'both' | string;
+  section?: string | null;
   used_for_missing_check: false;
   requires_manual_review: boolean;
   hs_prefix?: string | null;
   rule_name?: string | null;
   reason: string;
   note?: string | null;
+  outcome?: string | null;
+  matched_rule?: string | null;
+  matched_hs_scope?: string | null;
+  missing_facts?: string[];
+  exclusion_reason?: string | null;
+  source_revision?: string | null;
+  eligible_for_enforcement?: boolean;
+  curated_enforcement_key?: string | null;
+  transaction_level?: boolean;
+  risk_level?: string | null;
+  certificate_required?: boolean | null;
+  exact_advisory?: boolean;
+  evidence_trust?: string | null;
+  trusted_source_verified?: boolean;
+  identification_url?: string | null;
+  source_documents?: Array<{
+    number?: number | string | null;
+    title?: string | null;
+    official_url?: string | null;
+  }>;
 };
 
 export type NormativeDocument = {
@@ -740,6 +802,48 @@ export type NormativeRequirementsBlockData = {
   required_documents: NormativeDocument[];
   missing_documents: NormativeDocument[];
   advisory_requirements: AdvisoryRequirement[];
+  measure_families?: Array<{
+    family: string;
+    label: string;
+    status: 'definite' | 'needs_clarification' | 'legacy_signal' | 'not_detected' | string;
+    requirements_count: number;
+    signals_count?: number;
+    permit_types?: string[];
+    regulations?: string[];
+    matched_sections?: string[];
+    directions?: string[];
+    source_labels?: string[];
+  }>;
+  measure_families_disclaimer?: string | null;
+  official_ntm_applicability?: {
+    mode?: string;
+    structured_facts_received?: number;
+    exact_rows_count?: number;
+    definite_advisory_count?: number;
+    excluded_count?: number;
+    exact_needs_clarification_count?: number;
+    missing_fact_keys?: string[];
+    broker_effect?: boolean;
+    facts_trust_boundary?: string;
+  } | null;
+  official_ntm_resolved_exclusions?: Array<Record<string, unknown>>;
+  official_ntm_catch_all?: {
+    status?: string;
+    applicability?: string;
+    reason?: string;
+    recommended_action?: string;
+    missing_facts?: string[];
+    source_url?: string | null;
+    source_revision?: string | null;
+    automatic_document_requirement?: boolean;
+  } | null;
+  curated_enforcement_audit?: {
+    enabled?: boolean;
+    default?: boolean;
+    allowlist_version?: string;
+    applied_rule_ids?: string[];
+    broker_changed?: boolean;
+  } | null;
   sources_summary?: string[];
   empty_message?: string | null;
   tr_ts?: string[];
@@ -898,6 +1002,11 @@ export interface AssistantChatNonTariffMeasureContext {
 }
 
 export interface AssistantCalculationCurrentContext {
+  payment_status?: string;
+  amounts_provisional?: boolean;
+  payment_review_reason?: string | null;
+  payment_review_reasons?: string[];
+  tariff_preference?: CalculatorTariffPreference;
   hs_code?: string;
   product_name?: string;
   origin_country?: string | null;

@@ -90,7 +90,9 @@ def classify_v2_measure_for_enforcement(
     if (permit_type, tr_norm) in _baseline_pairs(baseline_broker_required_permits):
         return "skip"
 
-    return "allow"
+    # Stored legacy labels cannot establish reviewed product applicability.
+    # The canonical curated service has its own independent authority boundary.
+    return "manual_review"
 
 
 def filter_v2_measures_for_enforcement(
@@ -124,10 +126,13 @@ def apply_v2_measures_enforcement_to_broker(
     description: str = "",
     *,
     as_of: date | None = None,
+    country: str | None = None,
+    direction: str = "import",
 ) -> tuple[list[dict[str, Any]], dict[str, list[str]]]:
     """Добавляет в broker только vet/phyto measures, прошедшие gate."""
-    _ = as_of
-    candidates = get_v2_legacy_measures_broker_rows(hs_code, description)
+    candidates = get_v2_legacy_measures_broker_rows(
+        hs_code, description, as_of=as_of, country=country, direction=direction,
+    )
     allowed, audit = filter_v2_measures_for_enforcement(candidates, broker_rows)
     merged = merge_v2_legacy_measures_into_broker(broker_rows, allowed)
     return merged, audit

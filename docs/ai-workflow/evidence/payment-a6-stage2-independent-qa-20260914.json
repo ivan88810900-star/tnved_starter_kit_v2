@@ -1,0 +1,1682 @@
+{
+  "schema_version": 1,
+  "reviewer": "A5 independent QA",
+  "review_date": "2026-09-14",
+  "repository": "ivan88810900-star/tnved_starter_kit_v2",
+  "pr": 187,
+  "scope": "Bounded A6 stage-two payments/source-confidence and consumer corrections",
+  "status": "independent_local_qa_passed_exact_candidate_github_ci_pending",
+  "starting_feature_head": "dab1f8aae5a114a51505763bf9ea0a0d8161ed38",
+  "comparison_base": "a5a811e618ffa001b39cb491bbbf7a9ceb93f9a7",
+  "reviewed_local_commit": "02abdae2372cc440be6e7cebb1efdc383085db80",
+  "reviewed_local_tree": "af3227bcd40c9860265e28fc6611e685c93e8343",
+  "owner_handoffs": {
+    "A1_red": "290d72a7",
+    "A1_null": "9698dfcba8bf30fd77c7d5f9b27b1159108f33d8",
+    "A1_feature": "fa74edddda135fe736228b0a8784da3bc21724c3",
+    "A3_source_doc": "3c8c0aee2540d45d6b9f5b9937ab2646a619d116",
+    "A4_copy_doc": "842402ed782a9ad6a1c98ba15a472a3cd7d6d7bc"
+  },
+  "qa_test_history": [
+    "fd25287",
+    "1af168c",
+    "f4095ae",
+    "3d8531a"
+  ],
+  "reviewed_files": {
+    "customs-clear/backend/app/services/payment_engine.py": {
+      "git_blob": "33fbda1c343b91477e7f93b3031823cc653cd11b",
+      "sha256": "75e53c0ab443f4307a1bfc6b2fe8a70f29797575b183ec6fbe0efc538ac4240f"
+    },
+    "customs-clear/backend/app/services/payment_quote_service.py": {
+      "git_blob": "244f2f7341dc5960aae780f49bac030bbab7c02e",
+      "sha256": "28b01b88bb2e0b2154e762562013bc15ac1b6daa96a967c0da783dfc0ef7db93"
+    },
+    "customs-clear/backend/app/services/scenario_compare_service.py": {
+      "git_blob": "49756cf7166a1068c546cc88e234f10661154449",
+      "sha256": "33a96a49425c3d06e1d1704fd3ed7ab7d4d1b8fa3f6126faaca3785f8a192a6e"
+    },
+    "customs-clear/backend/app/api/calculator.py": {
+      "git_blob": "318fe14136792fe90b566bfebe7fcc51007a7fe4",
+      "sha256": "9f1270ee470bbc42e7266831df6e0452a32da6c4c60c53f4e8a0a30eb533faf6"
+    },
+    "customs-clear/backend/app/schemas/payment_quote.py": {
+      "git_blob": "328e597927d29210e96e0a2bf7492bb6f1295589",
+      "sha256": "617a675274b6e2c082e268064ed415ac688aa47aa7e1493e18e054a333590b98"
+    },
+    "customs-clear/backend/tests/test_payment_a6_stage2.py": {
+      "git_blob": "1eaf134763c55b830ff32da22609a70b646b50b1",
+      "sha256": "dc8c7762a8162b8702f547eebdf65dbac68489b2a20f00d088216677771e157c"
+    },
+    "customs-clear/backend/tests/test_payment_a6_stage2_redteam.py": {
+      "git_blob": "db1b413394bed69e3bfbdfbbfed762ec72f5f3b5",
+      "sha256": "87ed11d1074d1f1e4ad77ee86ae7ef8bb4289be8f0dc802f79f5d90111eae2bc"
+    },
+    "customs-clear/frontend/src/components/payments/SmartPaymentsBlock.tsx": {
+      "git_blob": "7720d9d84b740d9de07764f00fec0a0ff42d2f60",
+      "sha256": "59a75de63fef0ba75ea48769b1918c5935abcca926653cb5e5c2289314e9251d"
+    },
+    "docs/ai-workflow/A6_STAGE2_SOURCE_BOUNDARIES.md": {
+      "git_blob": "e780163b0c0859899d50794fcd3fe55d30988e3b",
+      "sha256": "522bef7fa2dae553865093e52a9b12d315bb87ffabd991369dfce4cb9cb28868"
+    },
+    "docs/ai-workflow/PAYMENT_STAGE2_CONSUMER_REVIEW.md": {
+      "git_blob": "a59a1afba822f56a107e4ee06f012923fe8d031d",
+      "sha256": "b9ff0d54eb063db7677e96a02824df628493846d5122d8d4e1063b1d92ce7379"
+    }
+  },
+  "findings": [
+    {
+      "id": "A6-A1",
+      "classification": "intentional_behavior",
+      "result": "An arithmetically available special-duty preview may contribute 70000 to provisional raw sums while applied=false and legal_review_verified=false. Raw requires review; quote special/VAT/final amounts are null."
+    },
+    {
+      "id": "A6-A2",
+      "classification": "intentional_behavior",
+      "result": "A provisional candidate with legal_review_unverified is distinct from needs_clarification for unresolved calculation/applicability inputs. Overall review stays required; no status contradiction was reproduced."
+    },
+    {
+      "id": "A6-A3",
+      "classification": "false_positive_at_current_head_previously_fixed",
+      "result": "Upward coefficient1.25 is unapplied and reviewed on dab1; base applied125000 duty and released377424 total."
+    },
+    {
+      "id": "A6-A6",
+      "classification": "false_positive_at_current_head_previously_fixed",
+      "result": "Current unresolved cross-store overlap withholds both remedy amounts and quote final. Base counted both70000 amounts and released517724 total."
+    },
+    {
+      "id": "A6-A9",
+      "classification": "confirmed_inherited_defect",
+      "result": "Geo35% candidate left ordinary10% duty while suppressing coefficient review on both base/current. Fixed as unresolved candidate, no legal rate substitution."
+    },
+    {
+      "id": "A6-A10",
+      "classification": "confirmed_inherited_defect",
+      "result": "Legacy fixed AD assumed RUB per universal quantity without stored currency/unit/denominator. Fixed to unavailable AD and dependent VAT/final."
+    },
+    {
+      "id": "A6-A11",
+      "classification": "confirmed_inherited_defect",
+      "result": "Empty AD countries incorrectly meant worldwide application; unknown scope now requires review."
+    },
+    {
+      "id": "A6-A12",
+      "classification": "confirmed_inherited_defect",
+      "result": "Missing specific/combined operands and unknown unit silently produced calculable/zero amounts. Incomplete candidate now has null amount and unavailable quote duty/VAT/final."
+    },
+    {
+      "id": "A6-A13",
+      "classification": "confirmed_inherited_defect",
+      "result": "Foreign specific/invoice FX constants or plain maps lacked source/date review. Factors remain unverified observations; affected components/final withheld; invalid used factors rejected. RUB1 is identity."
+    },
+    {
+      "id": "A5-STAGE2-SOURCE-DATE",
+      "classification": "confirmed_inherited_defect",
+      "result": "Populated expired/future/malformed/reversed HsRate windows were ignored; affected automatic lines now unavailable with preserved source candidate."
+    },
+    {
+      "id": "A5-STAGE2-NULL-DATE",
+      "classification": "confirmed_current_compatibility_defect",
+      "result": "Base null equals omitted, current dab1 rejects. Corrected raw, quote, compare and real request schemas normalize null only; false/0/empty/non-null dates rejected."
+    },
+    {
+      "id": "A5-STAGE2-QUOTE-ROP-001",
+      "classification": "confirmed_inherited_defect",
+      "result": "Raw/quote final376924 included30000 recycling fee, but six visible lines and partial total summed346924. Existing nonzero fee is now faithfully projected as an extra quote line."
+    },
+    {
+      "id": "A5-STAGE2-EXTENDED-FX",
+      "classification": "confirmed_inherited_defect",
+      "result": "A4 observation independently reproduced with actual service+engine: USD1000 at90 and unknownZZZ produced bestA, totals32011/1573. Original FX context now survives and unresolved comparisons cannot rank or claim savings."
+    },
+    {
+      "id": "A5-STAGE2-ROUNDING",
+      "classification": "no_new_defect_reproduced",
+      "result": "Nine subcent special/specific/combined scenarios reconcile displayed components and VAT base. Existing _round2 behavior retained; no statutory rounding policy approved."
+    }
+  ],
+  "baseline_actual_engine_observations": [
+    {
+      "case": "geo",
+      "raw_status": "OK",
+      "review": null,
+      "reasons": null,
+      "duty": 100000.0,
+      "ad": 0.0,
+      "special": 0.0,
+      "total": 346924.0,
+      "quote_status": "OK",
+      "quote_total": 346924.0,
+      "lines": {
+        "duty": {
+          "status": "applied",
+          "amount": 100000.0
+        },
+        "vat": {
+          "status": "applied",
+          "amount": 242000.0
+        },
+        "customs_fee": {
+          "status": "applied",
+          "amount": 4924.0
+        },
+        "excise": {
+          "status": "not_applicable",
+          "amount": 0.0
+        },
+        "antidumping": {
+          "status": "not_applicable",
+          "amount": 0.0
+        },
+        "special_duty": {
+          "status": "not_applicable",
+          "amount": 0.0
+        }
+      }
+    },
+    {
+      "case": "geo_preference",
+      "raw_status": "OK",
+      "review": null,
+      "reasons": null,
+      "duty": 100000.0,
+      "ad": 0.0,
+      "special": 0.0,
+      "total": 346924.0,
+      "quote_status": "OK",
+      "quote_total": 346924.0,
+      "lines": {
+        "duty": {
+          "status": "applied",
+          "amount": 100000.0
+        },
+        "vat": {
+          "status": "applied",
+          "amount": 242000.0
+        },
+        "customs_fee": {
+          "status": "applied",
+          "amount": 4924.0
+        },
+        "excise": {
+          "status": "not_applicable",
+          "amount": 0.0
+        },
+        "antidumping": {
+          "status": "not_applicable",
+          "amount": 0.0
+        },
+        "special_duty": {
+          "status": "not_applicable",
+          "amount": 0.0
+        }
+      }
+    },
+    {
+      "case": "fixed_ad",
+      "raw_status": "OK",
+      "review": null,
+      "reasons": null,
+      "duty": 100000.0,
+      "ad": 700.0,
+      "special": 0.0,
+      "total": 347778.0,
+      "quote_status": "OK",
+      "quote_total": 347778.0,
+      "lines": {
+        "duty": {
+          "status": "applied",
+          "amount": 100000.0
+        },
+        "vat": {
+          "status": "applied",
+          "amount": 242154.0
+        },
+        "customs_fee": {
+          "status": "applied",
+          "amount": 4924.0
+        },
+        "excise": {
+          "status": "not_applicable",
+          "amount": 0.0
+        },
+        "antidumping": {
+          "status": "applied",
+          "amount": 700.0
+        },
+        "special_duty": {
+          "status": "not_applicable",
+          "amount": 0.0
+        }
+      }
+    },
+    {
+      "case": "empty_ad_country",
+      "raw_status": "OK",
+      "review": null,
+      "reasons": null,
+      "duty": 100000.0,
+      "ad": 70000.0,
+      "special": 0.0,
+      "total": 432324.0,
+      "quote_status": "OK",
+      "quote_total": 432324.0,
+      "lines": {
+        "duty": {
+          "status": "applied",
+          "amount": 100000.0
+        },
+        "vat": {
+          "status": "applied",
+          "amount": 257400.0
+        },
+        "customs_fee": {
+          "status": "applied",
+          "amount": 4924.0
+        },
+        "excise": {
+          "status": "not_applicable",
+          "amount": 0.0
+        },
+        "antidumping": {
+          "status": "applied",
+          "amount": 70000.0
+        },
+        "special_duty": {
+          "status": "not_applicable",
+          "amount": 0.0
+        }
+      }
+    },
+    {
+      "case": "specific_missing",
+      "raw_status": "OK",
+      "review": null,
+      "reasons": null,
+      "duty": 0.0,
+      "ad": 0.0,
+      "special": 0.0,
+      "total": 224924.0,
+      "quote_status": "OK",
+      "quote_total": 224924.0,
+      "lines": {
+        "duty": {
+          "status": "applied",
+          "amount": 0.0
+        },
+        "vat": {
+          "status": "applied",
+          "amount": 220000.0
+        },
+        "customs_fee": {
+          "status": "applied",
+          "amount": 4924.0
+        },
+        "excise": {
+          "status": "not_applicable",
+          "amount": 0.0
+        },
+        "antidumping": {
+          "status": "not_applicable",
+          "amount": 0.0
+        },
+        "special_duty": {
+          "status": "not_applicable",
+          "amount": 0.0
+        }
+      }
+    },
+    {
+      "case": "specific_fx",
+      "raw_status": "OK",
+      "review": null,
+      "reasons": null,
+      "duty": 20000.0,
+      "ad": 0.0,
+      "special": 0.0,
+      "total": 249324.0,
+      "quote_status": "OK",
+      "quote_total": 249324.0,
+      "lines": {
+        "duty": {
+          "status": "applied",
+          "amount": 20000.0
+        },
+        "vat": {
+          "status": "applied",
+          "amount": 224400.0
+        },
+        "customs_fee": {
+          "status": "applied",
+          "amount": 4924.0
+        },
+        "excise": {
+          "status": "not_applicable",
+          "amount": 0.0
+        },
+        "antidumping": {
+          "status": "not_applicable",
+          "amount": 0.0
+        },
+        "special_duty": {
+          "status": "not_applicable",
+          "amount": 0.0
+        }
+      }
+    },
+    {
+      "case": "specific_unit",
+      "raw_status": "OK",
+      "review": null,
+      "reasons": null,
+      "duty": 200.0,
+      "ad": 0.0,
+      "special": 0.0,
+      "total": 225168.0,
+      "quote_status": "OK",
+      "quote_total": 225168.0,
+      "lines": {
+        "duty": {
+          "status": "applied",
+          "amount": 200.0
+        },
+        "vat": {
+          "status": "applied",
+          "amount": 220044.0
+        },
+        "customs_fee": {
+          "status": "applied",
+          "amount": 4924.0
+        },
+        "excise": {
+          "status": "not_applicable",
+          "amount": 0.0
+        },
+        "antidumping": {
+          "status": "not_applicable",
+          "amount": 0.0
+        },
+        "special_duty": {
+          "status": "not_applicable",
+          "amount": 0.0
+        }
+      }
+    },
+    {
+      "case": "combined_missing",
+      "raw_status": "OK",
+      "review": null,
+      "reasons": null,
+      "duty": 100000.0,
+      "ad": 0.0,
+      "special": 0.0,
+      "total": 346924.0,
+      "quote_status": "OK",
+      "quote_total": 346924.0,
+      "lines": {
+        "duty": {
+          "status": "applied",
+          "amount": 100000.0
+        },
+        "vat": {
+          "status": "applied",
+          "amount": 242000.0
+        },
+        "customs_fee": {
+          "status": "applied",
+          "amount": 4924.0
+        },
+        "excise": {
+          "status": "not_applicable",
+          "amount": 0.0
+        },
+        "antidumping": {
+          "status": "not_applicable",
+          "amount": 0.0
+        },
+        "special_duty": {
+          "status": "not_applicable",
+          "amount": 0.0
+        }
+      }
+    },
+    {
+      "case": "combined_fx",
+      "raw_status": "OK",
+      "review": null,
+      "reasons": null,
+      "duty": 100000.0,
+      "ad": 0.0,
+      "special": 0.0,
+      "total": 346924.0,
+      "quote_status": "OK",
+      "quote_total": 346924.0,
+      "lines": {
+        "duty": {
+          "status": "applied",
+          "amount": 100000.0
+        },
+        "vat": {
+          "status": "applied",
+          "amount": 242000.0
+        },
+        "customs_fee": {
+          "status": "applied",
+          "amount": 4924.0
+        },
+        "excise": {
+          "status": "not_applicable",
+          "amount": 0.0
+        },
+        "antidumping": {
+          "status": "not_applicable",
+          "amount": 0.0
+        },
+        "special_duty": {
+          "status": "not_applicable",
+          "amount": 0.0
+        }
+      }
+    },
+    {
+      "case": "expired",
+      "raw_status": "OK",
+      "review": null,
+      "reasons": null,
+      "duty": 100000.0,
+      "ad": 0.0,
+      "special": 0.0,
+      "total": 346924.0,
+      "quote_status": "OK",
+      "quote_total": 346924.0,
+      "lines": {
+        "duty": {
+          "status": "applied",
+          "amount": 100000.0
+        },
+        "vat": {
+          "status": "applied",
+          "amount": 242000.0
+        },
+        "customs_fee": {
+          "status": "applied",
+          "amount": 4924.0
+        },
+        "excise": {
+          "status": "not_applicable",
+          "amount": 0.0
+        },
+        "antidumping": {
+          "status": "not_applicable",
+          "amount": 0.0
+        },
+        "special_duty": {
+          "status": "not_applicable",
+          "amount": 0.0
+        }
+      }
+    },
+    {
+      "case": "preference",
+      "raw_status": "OK",
+      "review": null,
+      "reasons": null,
+      "duty": 125000.0,
+      "ad": 0.0,
+      "special": 0.0,
+      "total": 377424.0,
+      "quote_status": "OK",
+      "quote_total": 377424.0,
+      "lines": {
+        "duty": {
+          "status": "applied",
+          "amount": 125000.0
+        },
+        "vat": {
+          "status": "applied",
+          "amount": 247500.0
+        },
+        "customs_fee": {
+          "status": "applied",
+          "amount": 4924.0
+        },
+        "excise": {
+          "status": "not_applicable",
+          "amount": 0.0
+        },
+        "antidumping": {
+          "status": "not_applicable",
+          "amount": 0.0
+        },
+        "special_duty": {
+          "status": "not_applicable",
+          "amount": 0.0
+        }
+      }
+    },
+    {
+      "case": "special",
+      "raw_status": "OK",
+      "review": null,
+      "reasons": null,
+      "duty": 100000.0,
+      "ad": 0.0,
+      "special": 70000.0,
+      "total": 432324.0,
+      "quote_status": "OK",
+      "quote_total": 432324.0,
+      "lines": {
+        "duty": {
+          "status": "applied",
+          "amount": 100000.0
+        },
+        "vat": {
+          "status": "applied",
+          "amount": 257400.0
+        },
+        "customs_fee": {
+          "status": "applied",
+          "amount": 4924.0
+        },
+        "excise": {
+          "status": "not_applicable",
+          "amount": 0.0
+        },
+        "antidumping": {
+          "status": "not_applicable",
+          "amount": 0.0
+        },
+        "special_duty": {
+          "status": "applied",
+          "amount": 70000.0
+        }
+      }
+    },
+    {
+      "case": "overlap",
+      "raw_status": "OK",
+      "review": null,
+      "reasons": null,
+      "duty": 100000.0,
+      "ad": 70000.0,
+      "special": 70000.0,
+      "total": 517724.0,
+      "quote_status": "OK",
+      "quote_total": 517724.0,
+      "lines": {
+        "duty": {
+          "status": "applied",
+          "amount": 100000.0
+        },
+        "vat": {
+          "status": "applied",
+          "amount": 272800.0
+        },
+        "customs_fee": {
+          "status": "applied",
+          "amount": 4924.0
+        },
+        "excise": {
+          "status": "not_applicable",
+          "amount": 0.0
+        },
+        "antidumping": {
+          "status": "applied",
+          "amount": 70000.0
+        },
+        "special_duty": {
+          "status": "applied",
+          "amount": 70000.0
+        }
+      }
+    }
+  ],
+  "starting_head_actual_engine_observations": [
+    {
+      "case": "geo",
+      "raw_status": "OK",
+      "review": false,
+      "reasons": [],
+      "duty": 100000.0,
+      "ad": 0.0,
+      "special": 0.0,
+      "total": 346924.0,
+      "quote_status": "OK",
+      "quote_total": 346924.0,
+      "lines": {
+        "duty": {
+          "status": "applied",
+          "amount": 100000.0
+        },
+        "vat": {
+          "status": "applied",
+          "amount": 242000.0
+        },
+        "customs_fee": {
+          "status": "applied",
+          "amount": 4924.0
+        },
+        "excise": {
+          "status": "not_applicable",
+          "amount": 0.0
+        },
+        "antidumping": {
+          "status": "not_applicable",
+          "amount": 0.0
+        },
+        "special_duty": {
+          "status": "not_applicable",
+          "amount": 0.0
+        }
+      }
+    },
+    {
+      "case": "geo_preference",
+      "raw_status": "OK",
+      "review": false,
+      "reasons": [],
+      "duty": 100000.0,
+      "ad": 0.0,
+      "special": 0.0,
+      "total": 346924.0,
+      "quote_status": "OK",
+      "quote_total": 346924.0,
+      "lines": {
+        "duty": {
+          "status": "applied",
+          "amount": 100000.0
+        },
+        "vat": {
+          "status": "applied",
+          "amount": 242000.0
+        },
+        "customs_fee": {
+          "status": "applied",
+          "amount": 4924.0
+        },
+        "excise": {
+          "status": "not_applicable",
+          "amount": 0.0
+        },
+        "antidumping": {
+          "status": "not_applicable",
+          "amount": 0.0
+        },
+        "special_duty": {
+          "status": "not_applicable",
+          "amount": 0.0
+        }
+      }
+    },
+    {
+      "case": "fixed_ad",
+      "raw_status": "OK",
+      "review": false,
+      "reasons": [],
+      "duty": 100000.0,
+      "ad": 700.0,
+      "special": 0.0,
+      "total": 347778.0,
+      "quote_status": "OK",
+      "quote_total": 347778.0,
+      "lines": {
+        "duty": {
+          "status": "applied",
+          "amount": 100000.0
+        },
+        "vat": {
+          "status": "applied",
+          "amount": 242154.0
+        },
+        "customs_fee": {
+          "status": "applied",
+          "amount": 4924.0
+        },
+        "excise": {
+          "status": "not_applicable",
+          "amount": 0.0
+        },
+        "antidumping": {
+          "status": "applied",
+          "amount": 700.0
+        },
+        "special_duty": {
+          "status": "not_applicable",
+          "amount": 0.0
+        }
+      }
+    },
+    {
+      "case": "empty_ad_country",
+      "raw_status": "OK",
+      "review": false,
+      "reasons": [],
+      "duty": 100000.0,
+      "ad": 70000.0,
+      "special": 0.0,
+      "total": 432324.0,
+      "quote_status": "OK",
+      "quote_total": 432324.0,
+      "lines": {
+        "duty": {
+          "status": "applied",
+          "amount": 100000.0
+        },
+        "vat": {
+          "status": "applied",
+          "amount": 257400.0
+        },
+        "customs_fee": {
+          "status": "applied",
+          "amount": 4924.0
+        },
+        "excise": {
+          "status": "not_applicable",
+          "amount": 0.0
+        },
+        "antidumping": {
+          "status": "applied",
+          "amount": 70000.0
+        },
+        "special_duty": {
+          "status": "not_applicable",
+          "amount": 0.0
+        }
+      }
+    },
+    {
+      "case": "specific_missing",
+      "raw_status": "OK",
+      "review": false,
+      "reasons": [],
+      "duty": 0.0,
+      "ad": 0.0,
+      "special": 0.0,
+      "total": 224924.0,
+      "quote_status": "OK",
+      "quote_total": 224924.0,
+      "lines": {
+        "duty": {
+          "status": "applied",
+          "amount": 0.0
+        },
+        "vat": {
+          "status": "applied",
+          "amount": 220000.0
+        },
+        "customs_fee": {
+          "status": "applied",
+          "amount": 4924.0
+        },
+        "excise": {
+          "status": "not_applicable",
+          "amount": 0.0
+        },
+        "antidumping": {
+          "status": "not_applicable",
+          "amount": 0.0
+        },
+        "special_duty": {
+          "status": "not_applicable",
+          "amount": 0.0
+        }
+      }
+    },
+    {
+      "case": "specific_fx",
+      "raw_status": "OK",
+      "review": false,
+      "reasons": [],
+      "duty": 20000.0,
+      "ad": 0.0,
+      "special": 0.0,
+      "total": 249324.0,
+      "quote_status": "OK",
+      "quote_total": 249324.0,
+      "lines": {
+        "duty": {
+          "status": "applied",
+          "amount": 20000.0
+        },
+        "vat": {
+          "status": "applied",
+          "amount": 224400.0
+        },
+        "customs_fee": {
+          "status": "applied",
+          "amount": 4924.0
+        },
+        "excise": {
+          "status": "not_applicable",
+          "amount": 0.0
+        },
+        "antidumping": {
+          "status": "not_applicable",
+          "amount": 0.0
+        },
+        "special_duty": {
+          "status": "not_applicable",
+          "amount": 0.0
+        }
+      }
+    },
+    {
+      "case": "specific_unit",
+      "raw_status": "OK",
+      "review": false,
+      "reasons": [],
+      "duty": 200.0,
+      "ad": 0.0,
+      "special": 0.0,
+      "total": 225168.0,
+      "quote_status": "OK",
+      "quote_total": 225168.0,
+      "lines": {
+        "duty": {
+          "status": "applied",
+          "amount": 200.0
+        },
+        "vat": {
+          "status": "applied",
+          "amount": 220044.0
+        },
+        "customs_fee": {
+          "status": "applied",
+          "amount": 4924.0
+        },
+        "excise": {
+          "status": "not_applicable",
+          "amount": 0.0
+        },
+        "antidumping": {
+          "status": "not_applicable",
+          "amount": 0.0
+        },
+        "special_duty": {
+          "status": "not_applicable",
+          "amount": 0.0
+        }
+      }
+    },
+    {
+      "case": "combined_missing",
+      "raw_status": "OK",
+      "review": false,
+      "reasons": [],
+      "duty": 100000.0,
+      "ad": 0.0,
+      "special": 0.0,
+      "total": 346924.0,
+      "quote_status": "OK",
+      "quote_total": 346924.0,
+      "lines": {
+        "duty": {
+          "status": "applied",
+          "amount": 100000.0
+        },
+        "vat": {
+          "status": "applied",
+          "amount": 242000.0
+        },
+        "customs_fee": {
+          "status": "applied",
+          "amount": 4924.0
+        },
+        "excise": {
+          "status": "not_applicable",
+          "amount": 0.0
+        },
+        "antidumping": {
+          "status": "not_applicable",
+          "amount": 0.0
+        },
+        "special_duty": {
+          "status": "not_applicable",
+          "amount": 0.0
+        }
+      }
+    },
+    {
+      "case": "combined_fx",
+      "raw_status": "OK",
+      "review": false,
+      "reasons": [],
+      "duty": 100000.0,
+      "ad": 0.0,
+      "special": 0.0,
+      "total": 346924.0,
+      "quote_status": "OK",
+      "quote_total": 346924.0,
+      "lines": {
+        "duty": {
+          "status": "applied",
+          "amount": 100000.0
+        },
+        "vat": {
+          "status": "applied",
+          "amount": 242000.0
+        },
+        "customs_fee": {
+          "status": "applied",
+          "amount": 4924.0
+        },
+        "excise": {
+          "status": "not_applicable",
+          "amount": 0.0
+        },
+        "antidumping": {
+          "status": "not_applicable",
+          "amount": 0.0
+        },
+        "special_duty": {
+          "status": "not_applicable",
+          "amount": 0.0
+        }
+      }
+    },
+    {
+      "case": "expired",
+      "raw_status": "OK",
+      "review": false,
+      "reasons": [],
+      "duty": 100000.0,
+      "ad": 0.0,
+      "special": 0.0,
+      "total": 346924.0,
+      "quote_status": "OK",
+      "quote_total": 346924.0,
+      "lines": {
+        "duty": {
+          "status": "applied",
+          "amount": 100000.0
+        },
+        "vat": {
+          "status": "applied",
+          "amount": 242000.0
+        },
+        "customs_fee": {
+          "status": "applied",
+          "amount": 4924.0
+        },
+        "excise": {
+          "status": "not_applicable",
+          "amount": 0.0
+        },
+        "antidumping": {
+          "status": "not_applicable",
+          "amount": 0.0
+        },
+        "special_duty": {
+          "status": "not_applicable",
+          "amount": 0.0
+        }
+      }
+    }
+  ],
+  "base_extra": {
+    "null_equals_omitted": true,
+    "rop_visible_invariant": "failed",
+    "extended": {
+      "USD": {
+        "status": "OK",
+        "best_scenario": "A",
+        "totals": [
+          32011.0,
+          32011.0
+        ]
+      },
+      "ZZZ": {
+        "status": "OK",
+        "best_scenario": "A",
+        "totals": [
+          1573.0,
+          1573.0
+        ]
+      }
+    }
+  },
+  "execution": {
+    "red_independent_final": {
+      "passed": 15,
+      "failed": 33,
+      "warnings": 2,
+      "seconds": 4.67,
+      "exit_code": 1,
+      "tests": 48,
+      "log_sha256": "8197e15bca5cb6438b61195f0a9bbc5a60f6702049d424a321957952ddab33cf"
+    },
+    "green_owner_plus_independent": {
+      "passed": 97,
+      "failed": 0,
+      "warnings": 2,
+      "seconds": 4.86,
+      "owner_tests": 49,
+      "independent_tests": 48
+    },
+    "green_combined": {
+      "passed": 335,
+      "failed": 0,
+      "warnings": 2,
+      "seconds": 6.47,
+      "suites": [
+        "test_payment_a6_stage2.py",
+        "test_payment_a6_stage2_redteam.py",
+        "test_payment_a6_reconciliation.py",
+        "test_payment_reconciliation_redteam.py",
+        "test_payment_preference_eligibility.py",
+        "test_payment_special_duty_applicability.py",
+        "test_payment_consumer_review.py",
+        "test_payment_history_uncertainty.py",
+        "test_payment_document_uncertainty.py",
+        "test_assistant_payment_review.py",
+        "test_payment_quote_explanation.py",
+        "test_cbr_exchange_rate_hardening.py"
+      ]
+    },
+    "frontend_independent": {
+      "passed": 10,
+      "failed": 0,
+      "suites": 3,
+      "seconds": 2.1,
+      "scope": "SmartPaymentsBlock, Calculator and extended comparison payment-review suites"
+    },
+    "warning_basis": [
+      "Starlette TestClient httpx deprecation",
+      "anyio.abc.BlockingPortal alias deprecation"
+    ],
+    "isolation": "Final A5 fixture creates27 explicit synthetic in-memory SQLite tables, patches real service factories including payment_profile_builder, rejects default-engine connections and outbound socket.connect. Real repositories, engine, quote, compare, ASGI routes execute. Canonical-anchor enrichment and FX acquisition are explicit external stubs. Pure compute/quote/ASGI save_history=false leave fixture rows unchanged.",
+    "fixture_correction": "Earlier comparison fixture omitted the payment_profile_builder imported SessionLocal alias, causing missing-table500 against a newly empty4096-byte local scratch default SQLite. This was a QA setup issue, not feature failure. Corrected fixture routes all profile queries to its27-table memory DB and rejects default-engine access; omitted compare returns200 and explicit null was422 before feature correction.",
+    "full_ordered_ci": "Pending exact assembled candidate GitHub Actions; isolated335-case profile does not replace full CI/staging/admission gates."
+  },
+  "fresh_process_http": {
+    "transport": "12 actual curl POSTs to fresh uvicorn on127.0.0.1:18762; real mounted calculator/payments routers, same27-table synthetic memory fixture, no app startup/scheduler. Server and curl are distinct processes within one exec network namespace. Server terminated after requests.",
+    "initial_environment_issue": "Separate exec calls have separate sandbox network namespaces; first external curl could not reach the earlier server. That server was stopped. Successful run launches server and curl in a shared command namespace; no permissions weakened.",
+    "passed": 12,
+    "failed": 0,
+    "null_equals_omitted": true,
+    "harness_sha256": {
+      "/tmp/a5_stage2_http_server.py": "c5feae147937531d0cda4dad08063d4668f80d7366f7087c3fa90d924bae78f4",
+      "/tmp/a5_stage2_http_client.py": "81b89b63f1f9c293e53fbe0e68fe4eaed5d1c09ad72811c27504145e8929fbce"
+    },
+    "cases": [
+      {
+        "case": "compute_control",
+        "endpoint": "/api/calculator/compute",
+        "request": {
+          "hs_code": "8501100000",
+          "country": "CN",
+          "customs_value": 1000000,
+          "insurance": 0,
+          "quantity": 100,
+          "net_weight_kg": 100,
+          "save_history": false
+        },
+        "status_code": 200,
+        "passed": true,
+        "response_status": "OK",
+        "review_reasons": [],
+        "total_payable_rub": null,
+        "comparison_complete": null,
+        "best_scenario": null,
+        "line_items": null
+      },
+      {
+        "case": "compute_null",
+        "endpoint": "/api/calculator/compute",
+        "request": {
+          "hs_code": "8501100000",
+          "country": "CN",
+          "customs_value": 1000000,
+          "insurance": 0,
+          "quantity": 100,
+          "net_weight_kg": 100,
+          "save_history": false,
+          "as_of": null
+        },
+        "status_code": 200,
+        "passed": true,
+        "response_status": "OK",
+        "review_reasons": [],
+        "total_payable_rub": null,
+        "comparison_complete": null,
+        "best_scenario": null,
+        "line_items": null
+      },
+      {
+        "case": "compute_date",
+        "endpoint": "/api/calculator/compute",
+        "request": {
+          "hs_code": "8501100000",
+          "country": "CN",
+          "customs_value": 1000000,
+          "insurance": 0,
+          "quantity": 100,
+          "net_weight_kg": 100,
+          "save_history": false,
+          "as_of": "2020-01-01"
+        },
+        "status_code": 422,
+        "passed": true,
+        "response_status": null,
+        "review_reasons": null,
+        "total_payable_rub": null,
+        "comparison_complete": null,
+        "best_scenario": null,
+        "line_items": null
+      },
+      {
+        "case": "compute_geo",
+        "endpoint": "/api/calculator/compute",
+        "request": {
+          "hs_code": "8501200000",
+          "country": "CN",
+          "customs_value": 1000000,
+          "insurance": 0,
+          "quantity": 100,
+          "net_weight_kg": 100,
+          "save_history": false
+        },
+        "status_code": 200,
+        "passed": true,
+        "response_status": "REVIEW_REQUIRED",
+        "review_reasons": [
+          "geo_duty_applicability_unverified"
+        ],
+        "total_payable_rub": null,
+        "comparison_complete": null,
+        "best_scenario": null,
+        "line_items": null
+      },
+      {
+        "case": "quote_geo",
+        "endpoint": "/api/payments/quote",
+        "request": {
+          "hs_code": "8501200000",
+          "country": "CN",
+          "customs_value": 1000000,
+          "insurance": 0,
+          "quantity": 100,
+          "net_weight_kg": 100,
+          "save_history": false
+        },
+        "status_code": 200,
+        "passed": true,
+        "response_status": "REVIEW_REQUIRED",
+        "review_reasons": null,
+        "total_payable_rub": null,
+        "comparison_complete": null,
+        "best_scenario": null,
+        "line_items": [
+          {
+            "code": "duty",
+            "label": "Ввозная пошлина",
+            "amount_rub": null,
+            "status": "manual_review_required",
+            "reason": "Найдена географическая ставка-кандидат; её применимость и приоритет не утверждены. Обычная ставка показана только предварительно.",
+            "source": "hs_duty_rules / hs_rates (ЕТТ ЕАЭС)",
+            "rate_label": "10.0%",
+            "basis_label": "Таможенная стоимость",
+            "basis_amount_rub": 1000000.0
+          },
+          {
+            "code": "vat",
+            "label": "НДС",
+            "amount_rub": null,
+            "status": "manual_review_required",
+            "reason": "Ставка НДС по справочнику hs_rates: 22.0% База НДС зависит от непроверенной пошлины или акциза. Предварительный расчёт приведён в допущениях.",
+            "source": "hs_rates / vat_preferences (НК РФ)",
+            "rate_label": "22.0%",
+            "basis_label": "Стоимость + пошлина + акциз + торговые пошлины",
+            "basis_amount_rub": null
+          },
+          {
+            "code": "customs_fee",
+            "label": "Таможенный сбор",
+            "amount_rub": 4924.0,
+            "status": "applied",
+            "reason": "Таможенный сбор рассчитан по шкале РФ 2026 по таможенной стоимости.",
+            "source": "customs_fees",
+            "rate_label": null,
+            "basis_label": "Таможенная стоимость",
+            "basis_amount_rub": 1000000.0
+          },
+          {
+            "code": "excise",
+            "label": "Акциз",
+            "amount_rub": 0.0,
+            "status": "not_applicable",
+            "reason": "Не применяется",
+            "source": "hs_rates (НК РФ ст. 193)",
+            "rate_label": null,
+            "basis_label": "",
+            "basis_amount_rub": null
+          },
+          {
+            "code": "antidumping",
+            "label": "Антидемпинговая пошлина",
+            "amount_rub": 0.0,
+            "status": "not_applicable",
+            "reason": "Не применяется",
+            "source": "hs_rates",
+            "rate_label": null,
+            "basis_label": "",
+            "basis_amount_rub": null
+          },
+          {
+            "code": "special_duty",
+            "label": "Специальные / защитные / компенсационные пошлины",
+            "amount_rub": 0.0,
+            "status": "not_applicable",
+            "reason": "Для страны CN спецпошлины по коду не найдены в локальной базе.",
+            "source": "special_duties",
+            "rate_label": null,
+            "basis_label": "",
+            "basis_amount_rub": null
+          }
+        ]
+      },
+      {
+        "case": "compute_fixed_ad",
+        "endpoint": "/api/calculator/compute",
+        "request": {
+          "hs_code": "8501310000",
+          "country": "CN",
+          "customs_value": 1000000,
+          "insurance": 0,
+          "quantity": 100,
+          "net_weight_kg": 100,
+          "save_history": false
+        },
+        "status_code": 200,
+        "passed": true,
+        "response_status": "REVIEW_REQUIRED",
+        "review_reasons": [
+          "antidumping_applicability_unverified"
+        ],
+        "total_payable_rub": null,
+        "comparison_complete": null,
+        "best_scenario": null,
+        "line_items": null
+      },
+      {
+        "case": "quote_expired",
+        "endpoint": "/api/payments/quote",
+        "request": {
+          "hs_code": "8501320000",
+          "country": "CN",
+          "customs_value": 1000000,
+          "insurance": 0,
+          "quantity": 100,
+          "net_weight_kg": 100,
+          "save_history": false
+        },
+        "status_code": 200,
+        "passed": true,
+        "response_status": "REVIEW_REQUIRED",
+        "review_reasons": null,
+        "total_payable_rub": null,
+        "comparison_complete": null,
+        "best_scenario": null,
+        "line_items": [
+          {
+            "code": "duty",
+            "label": "Ввозная пошлина",
+            "amount_rub": null,
+            "status": "manual_review_required",
+            "reason": "Заполненные даты строки hs_rates повреждены либо не включают текущую дату. Зависимые автоматические ставки не подтверждены. Заполненные даты строки hs_rates повреждены либо не включают текущую дату. Зависимые автоматические ставки не подтверждены.",
+            "source": "hs_duty_rules / hs_rates (ЕТТ ЕАЭС)",
+            "rate_label": "10.0%",
+            "basis_label": "Таможенная стоимость",
+            "basis_amount_rub": 1000000.0
+          },
+          {
+            "code": "vat",
+            "label": "НДС",
+            "amount_rub": null,
+            "status": "manual_review_required",
+            "reason": "Ставка НДС по справочнику hs_rates: 22.0% База НДС зависит от непроверенной пошлины или акциза. Предварительный расчёт приведён в допущениях.",
+            "source": "hs_rates / vat_preferences (НК РФ)",
+            "rate_label": "22.0%",
+            "basis_label": "Стоимость + пошлина + акциз + торговые пошлины",
+            "basis_amount_rub": null
+          },
+          {
+            "code": "customs_fee",
+            "label": "Таможенный сбор",
+            "amount_rub": 4924.0,
+            "status": "applied",
+            "reason": "Таможенный сбор рассчитан по шкале РФ 2026 по таможенной стоимости.",
+            "source": "customs_fees",
+            "rate_label": null,
+            "basis_label": "Таможенная стоимость",
+            "basis_amount_rub": 1000000.0
+          },
+          {
+            "code": "excise",
+            "label": "Акциз",
+            "amount_rub": null,
+            "status": "manual_review_required",
+            "reason": "Заполненные даты строки hs_rates повреждены либо не включают текущую дату. Зависимые автоматические ставки не подтверждены. Заполненные даты строки hs_rates повреждены либо не включают текущую дату. Зависимые автоматические ставки не подтверждены.",
+            "source": "hs_rates (НК РФ ст. 193)",
+            "rate_label": null,
+            "basis_label": "",
+            "basis_amount_rub": null
+          },
+          {
+            "code": "antidumping",
+            "label": "Антидемпинговая пошлина",
+            "amount_rub": null,
+            "status": "manual_review_required",
+            "reason": "Заполненные даты строки hs_rates повреждены либо не включают текущую дату. Зависимые автоматические ставки не подтверждены. Заполненные даты строки hs_rates повреждены либо не включают текущую дату. Зависимые автоматические ставки не подтверждены.",
+            "source": "hs_rates / меры торговой защиты ЕАЭС",
+            "rate_label": null,
+            "basis_label": "",
+            "basis_amount_rub": null
+          },
+          {
+            "code": "special_duty",
+            "label": "Специальные / защитные / компенсационные пошлины",
+            "amount_rub": 0.0,
+            "status": "not_applicable",
+            "reason": "Для страны CN спецпошлины по коду не найдены в локальной базе.",
+            "source": "special_duties",
+            "rate_label": null,
+            "basis_label": "",
+            "basis_amount_rub": null
+          }
+        ]
+      },
+      {
+        "case": "compute_missing_specific",
+        "endpoint": "/api/calculator/compute",
+        "request": {
+          "hs_code": "8501330000",
+          "country": "CN",
+          "customs_value": 1000000,
+          "insurance": 0,
+          "quantity": 100,
+          "net_weight_kg": 100,
+          "save_history": false
+        },
+        "status_code": 200,
+        "passed": true,
+        "response_status": "REVIEW_REQUIRED",
+        "review_reasons": [
+          "duty_expression_incomplete"
+        ],
+        "total_payable_rub": null,
+        "comparison_complete": null,
+        "best_scenario": null,
+        "line_items": null
+      },
+      {
+        "case": "quote_foreign_fx",
+        "endpoint": "/api/payments/quote",
+        "request": {
+          "hs_code": "8501100000",
+          "country": "CN",
+          "customs_value": 1000000,
+          "insurance": 0,
+          "quantity": 100,
+          "net_weight_kg": 100,
+          "save_history": false,
+          "invoice_currency": "USD"
+        },
+        "status_code": 200,
+        "passed": true,
+        "response_status": "REVIEW_REQUIRED",
+        "review_reasons": null,
+        "total_payable_rub": null,
+        "comparison_complete": null,
+        "best_scenario": null,
+        "line_items": [
+          {
+            "code": "duty",
+            "label": "Ввозная пошлина",
+            "amount_rub": null,
+            "status": "manual_review_required",
+            "reason": "Курс иностранной валюты не связан с подтверждённым источником и датой расчёта; зависимые суммы предварительные.",
+            "source": "hs_duty_rules / hs_rates (ЕТТ ЕАЭС)",
+            "rate_label": "10.0%",
+            "basis_label": "Таможенная стоимость",
+            "basis_amount_rub": null
+          },
+          {
+            "code": "vat",
+            "label": "НДС",
+            "amount_rub": null,
+            "status": "manual_review_required",
+            "reason": "Ставка НДС по справочнику hs_rates: 22.0% База НДС зависит от непроверенной пошлины или акциза. Предварительный расчёт приведён в допущениях.",
+            "source": "hs_rates / vat_preferences (НК РФ)",
+            "rate_label": "22.0%",
+            "basis_label": "Стоимость + пошлина + акциз + торговые пошлины",
+            "basis_amount_rub": null
+          },
+          {
+            "code": "customs_fee",
+            "label": "Таможенный сбор",
+            "amount_rub": null,
+            "status": "manual_review_required",
+            "reason": "Курс иностранной валюты не связан с подтверждённым источником и датой расчёта; зависимые суммы предварительные.",
+            "source": "customs_fees",
+            "rate_label": null,
+            "basis_label": "Таможенная стоимость",
+            "basis_amount_rub": null
+          },
+          {
+            "code": "excise",
+            "label": "Акциз",
+            "amount_rub": null,
+            "status": "manual_review_required",
+            "reason": "Курс иностранной валюты не связан с подтверждённым источником и датой расчёта; зависимые суммы предварительные.",
+            "source": "hs_rates (НК РФ ст. 193)",
+            "rate_label": null,
+            "basis_label": "",
+            "basis_amount_rub": null
+          },
+          {
+            "code": "antidumping",
+            "label": "Антидемпинговая пошлина",
+            "amount_rub": null,
+            "status": "manual_review_required",
+            "reason": "Курс иностранной валюты не связан с подтверждённым источником и датой расчёта; зависимые суммы предварительные.",
+            "source": "hs_rates",
+            "rate_label": null,
+            "basis_label": "",
+            "basis_amount_rub": null
+          },
+          {
+            "code": "special_duty",
+            "label": "Специальные / защитные / компенсационные пошлины",
+            "amount_rub": null,
+            "status": "manual_review_required",
+            "reason": "Курс иностранной валюты не связан с подтверждённым источником и датой расчёта; зависимые суммы предварительные.",
+            "source": "special_duties",
+            "rate_label": null,
+            "basis_label": "",
+            "basis_amount_rub": null
+          }
+        ]
+      },
+      {
+        "case": "quote_recycling",
+        "endpoint": "/api/payments/quote",
+        "request": {
+          "hs_code": "8703231910",
+          "country": "CN",
+          "customs_value": 1000000,
+          "insurance": 0,
+          "quantity": 100,
+          "net_weight_kg": 100,
+          "save_history": false
+        },
+        "status_code": 200,
+        "passed": true,
+        "response_status": "OK",
+        "review_reasons": null,
+        "total_payable_rub": 376924.0,
+        "comparison_complete": null,
+        "best_scenario": null,
+        "line_items": [
+          {
+            "code": "duty",
+            "label": "Ввозная пошлина",
+            "amount_rub": 100000.0,
+            "status": "applied",
+            "reason": "Структурированное правило: ad_valorem (код 8703231910). Выбрано: ad_valorem.",
+            "source": "hs_duty_rules / hs_rates (ЕТТ ЕАЭС)",
+            "rate_label": "10.0%",
+            "basis_label": "Таможенная стоимость",
+            "basis_amount_rub": 1000000.0
+          },
+          {
+            "code": "vat",
+            "label": "НДС",
+            "amount_rub": 242000.0,
+            "status": "applied",
+            "reason": "Ставка НДС по справочнику hs_rates: 22.0%",
+            "source": "hs_rates / vat_preferences (НК РФ)",
+            "rate_label": "22.0%",
+            "basis_label": "Стоимость + пошлина + акциз + торговые пошлины",
+            "basis_amount_rub": 1100000.0
+          },
+          {
+            "code": "customs_fee",
+            "label": "Таможенный сбор",
+            "amount_rub": 4924.0,
+            "status": "applied",
+            "reason": "Таможенный сбор рассчитан по шкале РФ 2026 по таможенной стоимости.",
+            "source": "customs_fees",
+            "rate_label": null,
+            "basis_label": "Таможенная стоимость",
+            "basis_amount_rub": 1000000.0
+          },
+          {
+            "code": "excise",
+            "label": "Акциз",
+            "amount_rub": 0.0,
+            "status": "applied",
+            "reason": "Авто: 0.0% — НК РФ ст. 193: 0.0% от таможенной стоимости",
+            "source": "hs_rates (НК РФ ст. 193)",
+            "rate_label": null,
+            "basis_label": "",
+            "basis_amount_rub": null
+          },
+          {
+            "code": "antidumping",
+            "label": "Антидемпинговая пошлина",
+            "amount_rub": 0.0,
+            "status": "not_applicable",
+            "reason": "Не применяется",
+            "source": "hs_rates",
+            "rate_label": null,
+            "basis_label": "",
+            "basis_amount_rub": null
+          },
+          {
+            "code": "special_duty",
+            "label": "Специальные / защитные / компенсационные пошлины",
+            "amount_rub": 0.0,
+            "status": "not_applicable",
+            "reason": "Для страны CN спецпошлины по коду не найдены в локальной базе.",
+            "source": "special_duties",
+            "rate_label": null,
+            "basis_label": "",
+            "basis_amount_rub": null
+          },
+          {
+            "code": "recycling_fee",
+            "label": "Утилизационный сбор",
+            "amount_rub": 30000.0,
+            "status": "applied",
+            "reason": "Утилизационный сбор из существующего расчёта.",
+            "source": "recycling_fee",
+            "rate_label": "1.5",
+            "basis_label": "Базовая ставка × коэффициент",
+            "basis_amount_rub": 20000.0
+          }
+        ]
+      },
+      {
+        "case": "compare",
+        "endpoint": "/api/calculator/compare",
+        "request": {
+          "shared": {
+            "hs_code": "8501100000",
+            "country": "CN",
+            "customs_value": 1000000,
+            "insurance": 0,
+            "quantity": 100,
+            "net_weight_kg": 100,
+            "save_history": false
+          },
+          "save_history": false,
+          "scenarios": [
+            {
+              "hs_code": "8501100000"
+            },
+            {
+              "hs_code": "8501200000"
+            }
+          ]
+        },
+        "status_code": 200,
+        "passed": true,
+        "response_status": "REVIEW_REQUIRED",
+        "review_reasons": null,
+        "total_payable_rub": null,
+        "comparison_complete": false,
+        "best_scenario": null,
+        "line_items": null
+      },
+      {
+        "case": "extended_foreign_fx",
+        "endpoint": "/api/calculator/compare-scenarios",
+        "request": {
+          "base": {
+            "hs_code": "8501100000",
+            "customs_value": 1000,
+            "currency": "USD",
+            "country": "CN"
+          },
+          "scenarios": [
+            {
+              "name": "A"
+            },
+            {
+              "name": "B"
+            }
+          ]
+        },
+        "status_code": 200,
+        "passed": true,
+        "response_status": "REVIEW_REQUIRED",
+        "review_reasons": null,
+        "total_payable_rub": null,
+        "comparison_complete": false,
+        "best_scenario": null,
+        "line_items": null
+      }
+    ]
+  },
+  "source_review": {
+    "accepted": true,
+    "urls": [
+      "https://www.cbr.ru/development/SXML/",
+      "https://www.cbr.ru/currency_base/daily/"
+    ],
+    "observations": "Official documentation says omitted date_req returns latest registered date; daily table separately identifies units and rate date. Code stores Value/Nominal once. SourceStatus marker alone does not bind mutable FX rows. No current numeric rate was captured or admitted."
+  },
+  "remaining_limits": [
+    "No official rates coverage/completeness or legal applicability claim.",
+    "Foreign FX observations remain provisional until row/date provenance and applicable valuation basis are established.",
+    "Historical non-null as_of remains unsupported.",
+    "Raw/profile numeric subtotals remain compatibility previews with review state; not every consumer exposes per-component evidence.",
+    "Empty HsRate bounds and candidate metadata do not establish legal approval.",
+    "Adjacent currency display and diagnostic invoice/Excel paths remain outside this bounded correction.",
+    "No migration, enforcement activation, production database change, merge or deploy by A5.",
+    "A0 final assembled tree and exact GitHub Actions/admission remain to be independently verified."
+  ]
+}

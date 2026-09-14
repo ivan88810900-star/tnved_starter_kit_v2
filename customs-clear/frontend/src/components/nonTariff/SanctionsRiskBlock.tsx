@@ -43,6 +43,9 @@ const MATCH_METHOD_LABELS: Record<string, string> = {
   country: 'Совпадение по стране',
   country_hs_prefix: 'Совпадение по стране и префиксу ТН ВЭД',
   name_substring: 'Предварительное текстовое совпадение наименования',
+  name_ambiguous: 'Неоднозначное совпадение — требует ручной проверки',
+  name_exact_verified: 'Подтверждённое точное совпадение наименования',
+  name_strong_verified: 'Подтверждённое сильное совпадение наименования',
 };
 
 type Props = {

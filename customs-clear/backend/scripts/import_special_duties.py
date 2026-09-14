@@ -12,9 +12,6 @@ import pandas as pd
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-from app.db import SessionLocal
-from app.models.tnved import SpecialDuty
-from app.services.preview_cache_revision import bump_preview_cache_revision
 
 REQUIRED_COLUMNS = {
     "hs_code_prefix",
@@ -106,72 +103,34 @@ def _normalize_row(src: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def import_special_duties(path: Path) -> None:
-    if not path.exists():
-        raise FileNotFoundError(f"Файл не найден: {path}")
-    rows = _read_table(path)
-    if not rows:
-        raise ValueError("Во входном файле нет валидных записей")
+def import_special_duties(path: Path) -> dict[str, Any]:
+    """Legacy CLI application is closed before file parsing or DB access."""
+    from app.services.official_payment_admission import blocked_payment_import
 
-    created = 0
-    updated = 0
-    skipped = 0
-    with SessionLocal() as db:
-        for row in rows:
-            if not row["hs_code_prefix"] or not row["origin_country"]:
-                skipped += 1
-                continue
-            if (row["rate_percent"] <= 0.0) and (row["rate_specific"] <= 0.0):
-                skipped += 1
-                continue
-            existing = (
-                db.query(SpecialDuty)
-                .filter(
-                    SpecialDuty.hs_code_prefix == row["hs_code_prefix"],
-                    SpecialDuty.origin_country == row["origin_country"],
-                    SpecialDuty.regulatory_act == row["regulatory_act"],
-                )
-                .first()
-            )
-            if existing:
-                existing.rate_percent = row["rate_percent"]
-                existing.rate_specific = row["rate_specific"]
-                existing.currency_code = row["currency_code"]
-                updated += 1
-            else:
-                db.add(
-                    SpecialDuty(
-                        hs_code_prefix=row["hs_code_prefix"],
-                        origin_country=row["origin_country"],
-                        rate_percent=row["rate_percent"],
-                        rate_specific=row["rate_specific"],
-                        currency_code=row["currency_code"],
-                        regulatory_act=row["regulatory_act"],
-                    )
-                )
-                created += 1
-        db.commit()
-    bump_preview_cache_revision("import_special_duties")
-    print(f"[OK] Special duties import: created={created}, updated={updated}, skipped={skipped}")
+    return blocked_payment_import(source="import_special_duties", domain="anti_dumping")
 
 
 def generate_sample(path: Path) -> None:
     rows = [
         {
+            "candidate_only": True,
+            "legal_review_verified": False,
             "hs_code_prefix": "7214",
             "origin_country": "CN",
             "rate_percent": 18.0,
             "rate_specific": 0.0,
             "currency_code": "RUB",
-            "regulatory_act": "Решение Коллегии ЕЭК № 186",
+            "regulatory_act": "UNREVIEWED_EXAMPLE_NO_LEGAL_AUTHORITY",
         },
         {
+            "candidate_only": True,
+            "legal_review_verified": False,
             "hs_code_prefix": "7214",
             "origin_country": "MY",
             "rate_percent": 12.5,
             "rate_specific": 0.0,
             "currency_code": "RUB",
-            "regulatory_act": "Решение Коллегии ЕЭК № 186",
+            "regulatory_act": "UNREVIEWED_EXAMPLE_NO_LEGAL_AUTHORITY",
         },
     ]
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -182,19 +141,21 @@ def generate_sample(path: Path) -> None:
     print(f"[OK] Sample special duties создан: {path}")
 
 
-def main() -> None:
-    parser = argparse.ArgumentParser(description="Импорт спецпошлин (антидемпинговых/защитных/компенсационных)")
+def main() -> int:
+    parser = argparse.ArgumentParser(description="Формат legacy спецпошлин; применение без manifest-bound review закрыто")
     parser.add_argument("input", nargs="?", help="Путь к .json/.csv/.xlsx")
     parser.add_argument("--generate-sample", default="", help="Создать sample файл (.json/.xlsx)")
     args = parser.parse_args()
 
     if args.generate_sample:
         generate_sample(Path(args.generate_sample))
-        return
+        return 0
     if not args.input:
         raise SystemExit("Укажите входной файл или используйте --generate-sample")
-    import_special_duties(Path(args.input))
+    result = import_special_duties(Path(args.input))
+    print(json.dumps(result, ensure_ascii=False, indent=2))
+    return 2
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

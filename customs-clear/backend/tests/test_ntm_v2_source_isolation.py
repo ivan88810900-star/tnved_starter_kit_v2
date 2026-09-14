@@ -60,10 +60,10 @@ def test_tr_ts_adapter_ignores_legacy_measures(memory_sessionmaker: sessionmaker
     import_tr_ts_catalog_to_ntm_v2()
     _ensure_chapter(memory_sessionmaker, "85")
     with memory_sessionmaker() as s:
-        s.add(Commodity(chapter_id=s.query(Chapter).first().id, code="8517620000", description="t"))
+        s.add(Commodity(chapter_id=s.query(Chapter).first().id, code="8517110000", description="t"))
         s.add(
             NonTariffMeasure(
-                commodity_code="8517620000",
+                commodity_code="8517110000",
                 measure_type="certificate",
                 description="Сертификат соответствия ТР ТС 020/2011",
                 regulatory_act="ТР ТС 020/2011",
@@ -73,7 +73,7 @@ def test_tr_ts_adapter_ignores_legacy_measures(memory_sessionmaker: sessionmaker
         s.commit()
     import_legacy_non_tariff_measures_to_ntm_v2()
 
-    rows = get_tr_ts_requirements_v2_legacy_shape("8517620000", "")
+    rows = get_tr_ts_requirements_v2_legacy_shape("8517110000", "")
     permits = {r["permit_type"] for r in rows}
     assert "СС" not in permits
     assert "СГР" not in permits

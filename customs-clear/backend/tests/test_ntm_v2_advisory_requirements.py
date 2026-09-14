@@ -139,6 +139,7 @@ async def _check(
     monkeypatch: pytest.MonkeyPatch,
     *,
     enforcement: bool = True,
+    official_advisory: bool | None = False,
 ) -> dict:
     from app.services.non_tariff_service import check_position_non_tariff
 
@@ -150,6 +151,7 @@ async def _check(
         permits=[],
         skip_registry_verify=True,
         rules_enforcement_enabled=enforcement,
+        official_ntm_advisory_enabled=official_advisory,
     )
 
 
@@ -287,6 +289,72 @@ def test_advisory_empty_list_always_present(
     res = asyncio.run(_check("0101210000", "Коровы", monkeypatch, enforcement=False))
     assert "advisory_requirements" in res
     assert res["advisory_requirements"] == []
+
+
+def test_default_official_rollout_populates_every_family_without_enforcement(
+    memory_sessionmaker: sessionmaker,
+    minimal_ntm_patches: None,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    res = asyncio.run(
+        _check(
+            "6110209100",
+            "джемпер хлопчатобумажный",
+            monkeypatch,
+            enforcement=False,
+            official_advisory=None,
+        )
+    )
+    assert len(res["measure_families"]) == 9
+    assert len(res["normative_block"]["measure_families"]) == 9
+    assert all(
+        row.get("used_for_missing_check") is False
+        for row in res["advisory_requirements"]
+    )
+    assert res["required_permit_types"] == []
+    assert res["missing_permit_types"] == []
+
+
+def test_official_advisory_is_preserved_when_legacy_broker_has_same_permit(
+    memory_sessionmaker: sessionmaker,
+    minimal_ntm_patches: None,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(
+        "app.services.non_tariff_service.get_full_ntm_requirements",
+        lambda _hs, _d="": [
+            {
+                "permit_type": "СГР",
+                "tr_ts": None,
+                "tr_ts_full_name": "",
+                "description": "Legacy каталог",
+                "legal_ref": "legacy",
+                "matched_prefix": "3808",
+                "priority": 1,
+                "trigger": None,
+            }
+        ],
+    )
+
+    res = asyncio.run(
+        _check(
+            "3808919000",
+            "инсектицид для сельского хозяйства",
+            monkeypatch,
+            enforcement=False,
+            official_advisory=True,
+        )
+    )
+
+    assert "СГР" in res["required_permit_types"]
+    official_sgr = [
+        row
+        for row in res["advisory_requirements"]
+        if row.get("source") == "official_ntm_contours"
+        and row.get("permit_type") == "СГР"
+    ]
+    assert official_sgr
+    assert all(row["used_for_missing_check"] is False for row in official_sgr)
 
 
 def test_advisory_dedup_same_key(

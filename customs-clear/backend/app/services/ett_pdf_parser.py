@@ -1,200 +1,121 @@
-"""Парсер PDF ЕТТ ЕАЭС с сайта ЕЭК.
+"""Quarantined compatibility entry points for the retired ETT PDF importer.
 
-Источник: https://eec.eaeunion.org/comission/department/catr/ett/
-Формат: PDF по группам (ru.01_2022.pdf, ru.02_2022.pdf, ...)
+Decision #188 requires immutable, versioned official artifacts and manifest-bound
+review before applying rates. Flattened PDF text cannot establish a duty cell,
+its footnotes or effective dates. ETT is not a VAT source. These helpers may
+identify unreviewed code candidates, but never produce active tariff records.
 """
 from __future__ import annotations
 
+from decimal import Decimal
 import re
 from typing import Any
-from urllib.parse import urljoin
-
-import httpx
-from bs4 import BeautifulSoup
-from loguru import logger
-
-from .normative_store import normalize_hs_duty_rate_string
-
-try:
-    import pdfplumber
-except ImportError:
-    pdfplumber = None  # type: ignore
 
 EEC_ETT_INDEX = "https://eec.eaeunion.org/comission/department/catr/ett/"
 EEC_ETT_BASE = "https://eec.eaeunion.org"
+ETT_REVIEW_DECISION = (
+    "https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/188"
+)
 
 
 def _normalize_hs(code: str) -> str | None:
-    """Нормализация кода ТН ВЭД до 10 цифр."""
-    if not code:
+    """Accept exact ten-digit codes; never pad headings into invented leaves."""
+    if not isinstance(code, str):
         return None
-    digits = re.sub(r"[^\d]", "", code)
-    if len(digits) == 10 and digits.isdigit():
-        return digits
-    if len(digits) >= 4:
-        return (digits + "000000")[:10]
+    digits = re.sub(r"[ \t\r\n]+", "", code)
+    return digits if re.fullmatch(r"[0-9]{10}", digits) else None
+
+
+def _extract_duty_from_line(line: str) -> str | None:
+    """Read only an isolated, explicit percentage cell, not a flattened row.
+
+    This lexical helper does not establish applicability or approve a rate.
+    Combined/specific duties, footnotes and bare numbers require the versioned
+    parser. A description's final number is never a rate; failure is not zero.
+    """
+    match = re.fullmatch(r"[ \t]*([0-9]+(?:[.,][0-9]+)?)[ \t]*%[ \t]*", line)
+    if match is None:
+        return None
+    number = Decimal(match.group(1).replace(",", "."))
+    # Fixed-point formatting avoids context-sensitive normalize() rounding.
+    value = format(number, "f")
+    if "." in value:
+        value = value.rstrip("0").rstrip(".")
+    return f"{value}%"
+
+
+def _extract_vat_from_line(line: str) -> None:
+    """Compatibility helper: no text in ETT establishes a VAT rate."""
     return None
 
 
-def _extract_duty_from_line(line: str) -> str:
-    """Извлечь формулировку ставки пошлины из строки PDF (нормализованная строка для БД)."""
-    m = re.search(r"(\d+[,.]?\d*)\s*%", line)
-    if m:
-        return normalize_hs_duty_rate_string(m.group(1).replace(",", ".") + "%")
-    numbers = re.findall(r"\b(\d+(?:[.,]\d+)?)\b", line)
-    if numbers:
-        return normalize_hs_duty_rate_string(numbers[-1].replace(",", "."))
-    return "0"
-
-
-def _extract_vat_from_line(line: str) -> float:
-    """Извлечь ставку НДС из строки. По умолчанию 22%."""
-    m = re.search(r"НДС[:\s]*(\d+(?:[.,]\d+)?)\s*%?", line, re.I)
-    if m:
-        return float(m.group(1).replace(",", "."))
-    return 22.0
-
-
 def _parse_pdf_text(text: str) -> list[dict[str, Any]]:
-    """Извлечь тарифные записи из текста PDF."""
+    """Retain unreviewed code candidates, without inferred duties or VAT.
+
+    Duplicate candidates stay visible: a later reviewed parser must resolve
+    conflicting rows, footnotes and validity intervals explicitly. A candidate
+    is not an hs_rates import payload.
+    """
     records: list[dict[str, Any]] = []
-    for line in text.split("\n"):
-        line = line.strip()
-        if not line:
+    for raw_line in text.splitlines():
+        line = raw_line.strip()
+        match = re.match(
+            r"^([0-9]{10}|[0-9]{4}[ \t]+[0-9]{2}[ \t]+[0-9]{3}[ \t]+[0-9])(?=\s|$)",
+            line,
+        )
+        if match is None:
             continue
-        # Код ТН ВЭД: 4 цифры + пробел + 2 цифры + пробел + 3 цифры + пробел + 1 цифра
-        m = re.search(r"(\d{4}\s+\d{2}\s+\d{3}\s+\d{1})", line)
-        if not m:
-            m = re.search(r"(\d{4}\s*\d{2}\s*\d{3}\s*\d{1})", line)
-        if not m:
-            continue
-        hs = _normalize_hs(m.group(1))
-        if not hs:
-            continue
-        duty = _extract_duty_from_line(line)
-        vat = _extract_vat_from_line(line)
-        records.append({
-            "hs_code": hs,
-            "hs_prefix": hs[:4],
-            "duty_rate": duty,
-            "vat_import_rate": vat,
-            "vat_rule": "none",
-            "vat_rule_basis": "НК РФ ст. 164 п. 3 (общая ставка 22%)" if vat >= 22 else "",
-            "excise_type": "none",
-            "excise_value": 0.0,
-            "has_antidumping": False,
-            "source_url": EEC_ETT_INDEX,
-            "source_revision": "ett-pdf",
-        })
+        code = _normalize_hs(match.group(1))
+        if code is not None:
+            records.append({
+                "hs_code": code,
+                "raw_text": raw_line,
+                "candidate_only": True,
+                "review_status": "REVIEW_REQUIRED",
+            })
+    return records
+
+
+def _parse_table_to_records(table: list[list[str]]) -> list[dict[str, Any]]:
+    """Unknown table columns cannot establish a rate cell or an effective date."""
+    records: list[dict[str, Any]] = []
+    for row in table:
+        records.extend(_parse_pdf_text(" ".join(str(cell or "") for cell in row)))
     return records
 
 
 async def _fetch_pdf_links() -> list[str]:
-    """Получить список URL PDF-файлов ЕТТ со страницы ЕЭК."""
-    urls: list[str] = []
-    try:
-        async with httpx.AsyncClient(timeout=60.0, follow_redirects=True) as client:
-            r = await client.get(EEC_ETT_INDEX)
-        r.raise_for_status()
-        soup = BeautifulSoup(r.text, "html.parser")
-        for a in soup.find_all("a", href=True):
-            href = a["href"]
-            if "ru." in href and ".pdf" in href.lower():
-                full = urljoin(EEC_ETT_BASE, href)
-                if full not in urls:
-                    urls.append(full)
-    except Exception as e:
-        logger.warning(f"Fetch ETT index failed: {e}")
-    return urls
-
-
-def _parse_table_to_records(table: list[list[str]]) -> list[dict[str, Any]]:
-    """Извлечь записи из таблицы PDF (колонки: код, описание, ставка...)."""
-    records: list[dict[str, Any]] = []
-    for row in table:
-        line = " ".join(str(c or "") for c in row)
-        recs = _parse_pdf_text(line)
-        records.extend(recs)
-    return records
+    """Retired discovery path; acquisition belongs to the versioned pipeline."""
+    return []
 
 
 async def parse_ett_pdf_from_url(pdf_url: str) -> list[dict[str, Any]]:
-    """Загрузить PDF по URL и извлечь тарифные записи (текст + таблицы)."""
-    if not pdfplumber:
-        logger.warning("pdfplumber not installed, skipping PDF parse")
-        return []
-    records: list[dict[str, Any]] = []
-    seen: set[str] = set()
-    try:
-        async with httpx.AsyncClient(timeout=120.0, follow_redirects=True) as client:
-            r = await client.get(pdf_url)
-        r.raise_for_status()
-        import io
-        with pdfplumber.open(io.BytesIO(r.content)) as pdf:
-            for page in pdf.pages:
-                text = page.extract_text()
-                if text:
-                    for rec in _parse_pdf_text(text):
-                        key = rec.get("hs_code", "")
-                        if key and key not in seen:
-                            seen.add(key)
-                            records.append(rec)
-                # Дополнительно: таблицы (ЕЭК PDF часто в табличном виде)
-                tables = page.extract_tables()
-                for table in tables or []:
-                    for rec in _parse_table_to_records(table):
-                        key = rec.get("hs_code", "")
-                        if key and key not in seen:
-                            seen.add(key)
-                            records.append(rec)
-    except Exception as e:
-        logger.warning(f"Parse PDF {pdf_url}: {e}")
-    return records
+    """Retired URL parser, retained for compatibility without network access.
+
+    The old downloader had neither artifact identity nor a versioned manifest.
+    Callers must use the reviewed snapshot pipeline. Returning no records must
+    not be interpreted as zero duty.
+    """
+    return []
 
 
 async def sync_ett_from_pdfs(max_groups: int = 5) -> dict[str, Any]:
-    """Синхронизация ЕТТ из PDF-файлов ЕЭК.
+    """Report the review boundary without downloads or database side effects.
 
-    max_groups: ограничение числа групп для первой загрузки (для теста).
-    Установите 0 или большое число для полной загрузки.
+    max_groups remains accepted for existing API/scheduler callers. It cannot
+    enable the retired partial-corpus importer, even when set to zero.
     """
-    if not pdfplumber:
-        return {"status": "SKIPPED", "source": "ETT_PDF", "note": "pdfplumber not installed"}
-
-    links = await _fetch_pdf_links()
-    if not links:
-        return {"status": "ERROR", "source": "ETT_PDF", "error": "No PDF links found", "rows": 0}
-
-    if max_groups > 0:
-        links = links[:max_groups]  # 0 = без ограничения
-
-    from .normative_store import upsert_hs_rate, append_sync_log, upsert_source_status
-
-    total = 0
-    seen: set[str] = set()
-    for url in links:
-        rows = await parse_ett_pdf_from_url(url)
-        for r in rows:
-            key = r.get("hs_code") or r.get("hs_prefix", "")
-            if key and key not in seen:
-                seen.add(key)
-                upsert_hs_rate(r)
-                total += 1
-
-    revision = f"ett-pdf-{len(links)}gr-{total}rows"
-    upsert_source_status(
-        source_code="EEC_ETT_PDF",
-        source_name="ЕТТ ЕАЭС (парсинг PDF)",
-        source_url=EEC_ETT_INDEX,
-        revision=revision,
-        is_stale=False,
-        note=f"Загружено из {len(links)} PDF, импортировано {total} записей",
-    )
-    append_sync_log(
-        source_code="EEC_ETT_PDF",
-        status="OK",
-        revision=revision,
-        rows_affected=total,
-        note=f"PDF sync: {len(links)} files, {total} rows",
-    )
-    return {"status": "OK", "source": "ETT_PDF", "rows": total, "files": len(links), "revision": revision}
+    return {
+        "status": "REVIEW_REQUIRED",
+        "source": "ETT_PDF",
+        "rows": 0,
+        "files": 0,
+        "quarantined": True,
+        "reason": "versioned_manifest_review_required",
+        "decision_url": ETT_REVIEW_DECISION,
+        "note": (
+            "Прямой импорт ЕТТ из PDF отключён. Требуется версия официального "
+            "снимка с подтверждёнными источниками, датами действия и утверждением "
+            "точной контрольной суммы перед применением ставок."
+        ),
+    }

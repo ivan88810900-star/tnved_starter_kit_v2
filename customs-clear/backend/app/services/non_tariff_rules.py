@@ -11,6 +11,7 @@ from typing import Any, Dict, List
 from ..db import SessionLocal
 from ..models.tnved import NonTariffMeasure
 from .hs_matching import get_hs_prefixes, match_hs_prefix, normalize_hs_code
+from .ntm_noise_classifier import tr_ts_review_metadata, tr_ts_scope_requires_review
 
 NEGATIVE_MARKERS = [
     "не требуется",
@@ -284,6 +285,8 @@ def _measure_to_permit_type(measure_type: str, text: str, hs_code: str = "") -> 
     Определяет тип permit на основе measure_type и текста.
     Использует точные паттерны и проверку на негативные маркеры.
     """
+    if tr_ts_scope_requires_review(hs_code, measure_type):
+        return None
     full_text = f"{measure_type} {text}".lower()
 
     for neg in NEGATIVE_MARKERS:
@@ -379,6 +382,10 @@ def find_measures_for_code(hs_code: str, direction: str = "import") -> list[dict
                 hs_code=code,
             )
             tr_ts_code = _extract_tr_ts_code(desc, legal_ref, doc)
+            review = (tr_ts_review_metadata(row.commodity_code, mtype)
+                      or tr_ts_review_metadata(code, mtype))
+            if review:
+                permit_type = None
             results.append(
                 {
                     "commodity_code": row.commodity_code,
@@ -391,6 +398,7 @@ def find_measures_for_code(hs_code: str, direction: str = "import") -> list[dict
                     "match_prefix_len": pref_len,
                     "source_level": source_level,
                     "direction": direction_norm if direction_exists else None,
+                    **review,
                 }
             )
 
@@ -483,6 +491,10 @@ def _find_measures_cumulative_all_levels(hs_code: str, direction: str = "import"
                     hs_code=code,
                 )
                 tr_ts_code = _extract_tr_ts_code(desc, legal_ref, doc)
+                review = (tr_ts_review_metadata(row.commodity_code, mtype)
+                          or tr_ts_review_metadata(code, mtype))
+                if review:
+                    permit_type = None
                 compact_key = (mtype.lower(), legal_ref.lower(), permit_type, tr_ts_code)
                 if compact_key in global_compact_seen:
                     continue
@@ -500,6 +512,7 @@ def _find_measures_cumulative_all_levels(hs_code: str, direction: str = "import"
                         "match_prefix_len": pref_len,
                         "source_level": source_level,
                         "direction": direction_norm if direction_exists else None,
+                        **review,
                     }
                 )
 

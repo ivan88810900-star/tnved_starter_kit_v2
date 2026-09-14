@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Первичное последовательное наполнение БД:
+Устаревшее первичное последовательное наполнение БД:
 нетарифка → ПКР/предварительные решения → ФСБ/РЭС → СГР → Law.TKS →
 ТРОИС/IP → geo/спецпошлины → санкционные списки → IFCG по главам → экосбор.
 
@@ -9,8 +9,8 @@
 
 Лог: ``logs/initial_sync.log`` (перезаписывается при каждом запуске) + дублирование маркеров в stdout.
 
-  PYTHONPATH=. python3 scripts/initial_sync.py
-  PYTHONPATH=. python3 scripts/initial_sync.py --proxy "http://user:pass@host:port"
+По умолчанию запуск заблокирован. Для разового совместимого запуска оператор
+должен явно выставить ``CUSTOMSCLEAR_ALLOW_LEGACY_AUTOMATION=1``.
 """
 
 from __future__ import annotations
@@ -28,6 +28,26 @@ LOG_FILE = LOG_DIR / "initial_sync.log"
 
 # Глава 77 в ТН ВЭД зарезервирована и штатно пуста — исключаем из IFCG прогона.
 IFCG_CHAPTERS = [f"{i:02d}" for i in range(1, 98) if i != 77]
+
+
+def _legacy_automation_enabled() -> bool:
+    return os.environ.get("CUSTOMSCLEAR_ALLOW_LEGACY_AUTOMATION", "0").strip().lower() in {
+        "1",
+        "true",
+        "yes",
+        "on",
+    }
+
+
+def _sanctions_validation_argv(script: str, url: str = "") -> list[str]:
+    """Build a non-mutating sanctions command for a legacy orchestration path."""
+    argv = [script, "--validate-only", "--strict", "--json"]
+    normalized_url = (url or "").strip()
+    if normalized_url:
+        argv.extend(["--url", normalized_url])
+    else:
+        argv.append("--official-only")
+    return argv
 
 
 def _child_env() -> dict[str, str]:
@@ -230,6 +250,15 @@ def main() -> int:
     )
     args = ap.parse_args()
 
+    if not _legacy_automation_enabled():
+        print(
+            "Legacy initial_sync.py is disabled. Use the regulatory source scheduler; "
+            "set CUSTOMSCLEAR_ALLOW_LEGACY_AUTOMATION=1 only for an explicit "
+            "operator-approved compatibility run.",
+            file=sys.stderr,
+        )
+        return 2
+
     LOG_DIR.mkdir(parents=True, exist_ok=True)
     exit_codes: list[tuple[str, int]] = []
 
@@ -378,22 +407,23 @@ def main() -> int:
 
         # 10. Санкционный комплаенс (OFAC / EU / country rules / sanction risks)
         if not args.skip_sanctions:
-            ofac_argv = ["scripts/sync_ofac_sanctions.py"]
-            eu_argv = ["scripts/sync_eu_sanctions.py"]
+            ofac_url = (args.ofac_url or "").strip()
+            eu_url = (args.eu_url or "").strip()
+            ofac_argv = _sanctions_validation_argv(
+                "scripts/sync_ofac_sanctions.py",
+                ofac_url,
+            )
+            eu_argv = _sanctions_validation_argv(
+                "scripts/sync_eu_sanctions.py",
+                eu_url,
+            )
             country_rules_argv = ["scripts/sync_country_rules.py"]
             sanction_risks_argv = ["scripts/sync_sanction_risks.py", "--from-geo"]
 
-            ofac_url = (args.ofac_url or "").strip()
-            eu_url = (args.eu_url or "").strip()
             country_rules_input = (args.country_rules_input or "").strip()
             country_rules_url = (args.country_rules_url or "").strip()
             sanction_risks_input = (args.sanction_risks_input or "").strip()
             sanction_risks_url = (args.sanction_risks_url or "").strip()
-
-            if ofac_url:
-                ofac_argv.extend(["--url", ofac_url])
-            if eu_url:
-                eu_argv.extend(["--url", eu_url])
 
             if country_rules_input:
                 country_rules_argv.extend(["--input", country_rules_input])

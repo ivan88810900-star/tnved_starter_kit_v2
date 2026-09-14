@@ -1,0 +1,20 @@
+{
+  "fixture_kind": "literal_first_line_from_retained_official_originals",
+  "first_line": "%PDF-1.4 Sharp Scanned ImagePDF\n",
+  "capture_run_id": "34243355657",
+  "sources": [
+    {
+      "url": "https://docs.eaeunion.org/upload/iblock/393/f3ak35ptlhz2u9paqn79dontu4r2kj8h/err_28042022_66_doc.pdf",
+      "sha256": "10b9315c8c86efadf53f773c8d984d22247bc5485c432d5039352a66113179d5",
+      "size_bytes": 3083603
+    },
+    {
+      "url": "https://docs.eaeunion.org/upload/iblock/82b/1h7ofr72qrt3q86uvgi7kwy36d0l66m6/err_28042022_76_doc.pdf",
+      "sha256": "d0fbfe320d18465519a9baadc9f00d1b0c88124c2102f70830207dfba95a48fc",
+      "size_bytes": 4800950
+    }
+  ],
+  "fixture_limit": "Only the exact observed first line is reproduced; synthetic tests are not complete PDF documents.",
+  "document_identity_verified": false,
+  "legal_applicability_verified": false
+}

@@ -5,6 +5,81 @@
 
 ---
 
+## A6 stage-2 implementation contract — 14 September 2026
+
+This correction follows independent execution on PR #187 `dab1f8aa` and base
+`a5a811e6`, under Ivan's explicit audit-stage-2 request. It grants no new legal
+rule or source admission. The completed AD30 review remains intact.
+
+- Preserve raw provisional arithmetic and legally unavailable final quotes as
+  separate outputs. `applied`, computational status and legal review are distinct
+  dimensions; already repaired preference/AD-overlap/cent guards remain intact.
+- Geo candidates never silently choose replacement/cumulation or suppress
+  preference review. Fixed legacy AD cannot infer currency, unit or denominator
+  from generic quantity. Empty/malformed country scope is unresolved.
+- Missing specific/combined operands and populated invalid/out-of-window HsRate
+  dates mark dependent components unavailable. Within-window or blank dates are
+  not a new legal approval. Legacy numeric zero may only be an explicitly
+  incomplete subtotal, with candidate amount and final quote unavailable.
+- Foreign FX maps, constants and global status markers cannot prove source/date
+  provenance. Preserve observations and review through compute, quote and both
+  comparison paths. RUB-to-RUB one is a unit identity; invalid foreign factors
+  never become an implicit identity. CBR Value/Nominal is already normalized.
+- A null `as_of` equals omission; every non-null historical request remains
+  rejected. No historical payment service or statutory rounding policy is added.
+- Quote rows must account for the existing recycling fee without recalculating
+  it or changing VAT policy. Partial amounts must be labelled partial, without
+  implying approval of unresolved evidence.
+- A1 owns feature corrections, A3 source facts, A4 the bounded consumer copy and
+  documentation, A5 independent adversarial/runtime verification. No activation,
+  production database write, migration, merge or deployment is authorized.
+
+[Stage-2 task](tasks/TASK-PAYMENT-A6-STAGE2-001.md),
+[source boundaries](../docs/ai-workflow/A6_STAGE2_SOURCE_BOUNDARIES.md).
+
+## Implementation clarification — 14 September 2026
+
+Under accepted issue #188 Option A, the retained AD30 source candidate now has
+an executable offline review path. This changes no legal decision or admission
+policy and does not resolve DM-0014.
+
+- Source-record identity, literal transcription, recorded visual summary,
+  interpreted product predicate and hypothetical money remain separate layers.
+  A normalized origin label is not a verbatim PDF excerpt.
+- The source DTO is revalidated at each business boundary. Source-record SHA
+  checks do not claim original-PDF replay, native-text proof or human review.
+- A product match requires code AND declared characteristics. Known exclusion
+  concerns this candidate only; missing/invalid/contradictory input is explicit.
+- A selected producer row is only an explicit hypothetical operand. Its complete
+  row/unit evidence accompanies the amount. Unknown producer never means other.
+- Exact unrounded arithmetic reuses ETT preview; it never enters the live VAT
+  base or final payable. Explicit dates are preserved without inventing legal
+  intervals. There is no new live API/AI integration or enforcement flag.
+- A3 supplies facts, A2 interpretation, A1 arithmetic, A4 consumer documentation;
+  independent A5 reproduced defects and approved owner fixes. This sequence does
+  not replace future manifest-bound human review and separate legal approval.
+
+[Task](tasks/TASK-AD30-EXECUTABLE-REVIEW-001.md),
+[review guide](../docs/ai-workflow/AD30_EXECUTABLE_REVIEW.md),
+[A5 evidence](../docs/ai-workflow/evidence/ad30-independent-qa-20260914.json).
+
+## Implementation clarification — 12 September 2026
+
+This is an implementation record under accepted Option A of issue #188,
+DM-0011 and DM-0013; it does not accept a new legal rule or change DM-0014's status.
+
+- Technical parsing, literal official-source facts, interpreted applicability and legal authorization remain separate. Legacy/AI/admin markers cannot grant rate admission.
+- Provisional computable amounts remain distinct from confirmed payable amounts. Nonneutral or invalid preference coefficients require review. Unresolved HsRate/SpecialDuty antidumping overlap preserves evidence but withholds both ambiguous amounts instead of summing or silently selecting one.
+- Displayed rounded components are summed consistently using decimal arithmetic. Existing Python rounding is unchanged; legal declaration-rounding policy is not decided here.
+- Missing source-bound specific-duty units and unsupported public as_of remain fail-closed. Retaining unknown-country candidates for clarification does not apply them to every country.
+- Capture plans retain originals and quarantined bodies separately, without accepting source drift or asserting legal completeness. A3 records source content, A2 owns formal applicability, A5 verifies independently; none of these steps alone constitutes human manifest approval.
+- DM-0014 remains a future human-review/approval decision, not a prerequisite for technical preparation. No feature flag, production DB, merge or deployment is authorized by this record.
+
+Evidence and precise A6 classification:
+[admission task](../docs/ai-workflow/TASK-RATE-ADMISSION-RECOVERY.md),
+[A6 review](../docs/ai-workflow/A6_PAYMENT_AUDIT_RECONCILIATION.md),
+[independent QA](../docs/ai-workflow/evidence/payment-admission-independent-qa-20260912.json).
+
 ## Индекс ADR / DM
 
 | ADR | Название | Статус | Принял | Дата | Документ |
@@ -16,6 +91,13 @@
 | DM-0005 | Guided `2204` PDO interval | Accepted — Option A | Ivan | 2026-08-05 | [`decisions/DM-0005-guided-2204-pdo-interval.md`](decisions/DM-0005-guided-2204-pdo-interval.md) |
 | DM-0006 | Guided `0304` product-form chain | Accepted — Option A | Ivan | 2026-08-06 | [`decisions/DM-0006-guided-0304-product-form-chain.md`](decisions/DM-0006-guided-0304-product-form-chain.md) |
 | DM-0007 | Guided `0406` fat/moisture chain | Accepted — Option A | Ivan | 2026-08-07 | [`decisions/DM-0007-guided-0406-moisture-chain.md`](decisions/DM-0007-guided-0406-moisture-chain.md) |
+| DM-0008 | Rollout и enforcement официального NTM-контура | Accepted — Option A (advisory-only) | Ivan | 2026-08-15 | [`decisions/DM-0008-official-ntm-enforcement.md`](decisions/DM-0008-official-ntm-enforcement.md) |
+| DM-0009 | Отдельное семейство экспортного контроля | Accepted — Option A (advisory-only) | Ivan | 2026-08-15 | [`decisions/DM-0009-export-control-family.md`](decisions/DM-0009-export-control-family.md) |
+| DM-0010 | Правовые контуры NTM и fail-closed полнота каталога | Accepted boundary — full gate passed | Ivan | 2026-08-15 | [`decisions/DM-0010-ntm-legal-contours-catalog-fail-closed.md`](decisions/DM-0010-ntm-legal-contours-catalog-fail-closed.md) |
+| DM-0011 | Структурированная применимость NTM и curated shadow enforcement | Accepted — implementation; activation deferred | Ivan | 2026-08-15 | [`decisions/DM-0011-structured-ntm-applicability-shadow-enforcement.md`](decisions/DM-0011-structured-ntm-applicability-shadow-enforcement.md) |
+| DM-0012 | Guided `2204`: retained «прочие» boundaries | Accepted — Option A | Ivan | 2026-08-18 | [`decisions/DM-0012-guided-2204-retained-other-boundaries.md`](decisions/DM-0012-guided-2204-retained-other-boundaries.md) |
+| DM-0013 | Automatic regulatory-source updates | Accepted | Ivan | 2026-08-23 | [`decisions/DM-0013-regulatory-source-automatic-updates.md`](decisions/DM-0013-regulatory-source-automatic-updates.md) |
+| DM-0014 | Authority for manifest-bound legal review | Proposed for future legal authorization; development continues | Ivan at authorization gate | 2026-09-11 | [`decisions/DM-0014-ett-review-authority.md`](decisions/DM-0014-ett-review-authority.md) |
 
 ---
 
@@ -189,6 +271,69 @@ Ivan выбрал Option A. Option B с повторяющимися «проч�
 18,211/18,211. DM не разрешает merge, rollout/deploy, включение флагов или
 DB/API/frontend/LLM изменения. Полный документ:
 [`decisions/DM-0007-guided-0406-moisture-chain.md`](decisions/DM-0007-guided-0406-moisture-chain.md).
+
+---
+
+## DM-0008 — Rollout и enforcement официального NTM-контура
+
+**Статус:** Accepted — Option A (Ivan, 2026-08-15).
+
+Ivan одобрил default-ON показ полного официального NTM-контура только как
+advisory. `NTM_V2_OFFICIAL_FULL_ADVISORY_ENABLED=false` является kill switch.
+Все prefix/«из»/marker-совпадения остаются `needs_clarification` и
+`used_for_missing_check=false`. **Enforcement не одобрен** и требует нового
+отдельного решения. Полный документ:
+[`decisions/DM-0008-official-ntm-enforcement.md`](decisions/DM-0008-official-ntm-enforcement.md).
+
+## DM-0009 — Отдельное семейство экспортного контроля
+
+**Статус:** Accepted — Option A (Ivan, 2026-08-15).
+
+Экспортный контроль ПП РФ №1284–1288 и №1299 выделен в девятое семейство.
+Source-faithful union содержит 1 087 raw HS-кандидатов; после исключения двух
+versioned retired exact-кодов runtime использует 1 085 effective-кандидатов.
+Совпадения требуют идентификации по техническим параметрам и не участвуют в
+enforcement. Полный документ:
+[`decisions/DM-0009-export-control-family.md`](decisions/DM-0009-export-control-family.md).
+
+## DM-0010 — Правовые контуры NTM и fail-closed полнота каталога
+
+**Статус:** Accepted boundary — full gate passed (Ivan, 2026-08-15).
+
+Fail-closed граница запрещает повышать partial/code-only результат до полного.
+После parser baseline fix временная DB, rebuilt из 96 tracked official PDFs,
+прошла текущий gate: exact 21/96/17 809 unique, 0 duplicate/invalid и 17 774
+непустых описания. Все 35 blank catalog codes absent from the pinned active ETT
+rate snapshot; это нейтральная проверка множества, не вывод о причине или статусе
+кодов. Все 13 290 кодов revision `ett:2026-06-18` присутствуют и описаны.
+Pinned PDF-manifest, parser, ETT code-set, catalog code-set и code+description
+digests совпали. Audit использовал временный read-only artifact и не изменял
+production DB; отчёт имеет `full_commodity_catalog`, `catalog_complete=true` и
+`ok=true`. Полный документ:
+[`decisions/DM-0010-ntm-legal-contours-catalog-fail-closed.md`](decisions/DM-0010-ntm-legal-contours-catalog-fail-closed.md).
+
+## DM-0011 — Структурированная применимость и shadow enforcement
+
+**Статус:** Accepted — implementation boundary; production activation deferred
+(Ivan, 2026-08-15).
+
+API/UI принимают необязательные structured facts и показывают bounded exact
+`definite`/`excluded` выводы отдельно от broker/missing-check. Запросы без facts
+сохраняют broad-only контракт. Versioned curated bridge реализован, но
+`NTM_V2_OFFICIAL_CURATED_ENFORCEMENT_ENABLED` по умолчанию выключен; включение
+требует нового rollout-решения и доверенных source adapters. Полный документ:
+[`decisions/DM-0011-structured-ntm-applicability-shadow-enforcement.md`](decisions/DM-0011-structured-ntm-applicability-shadow-enforcement.md).
+
+## DM-0012 — Guided 2204 retained «прочие» boundaries
+
+**Статус:** Accepted — Option A (Ivan, 2026-08-18).
+
+Две точные retained source-boundary создают codeless «прочие» вопросы 16/16
+внутри PDO `220421` и 7/7 под `220422`. Все 211 source codes и 170 leaves
+сохранены; catalog maximum снижен до 29/27, full census остаётся 1,263/1,263,
+Gate-2 — 18,246/18,246. Потерянный на page break заголовок «белые» не
+синтезируется. Полный документ:
+[`decisions/DM-0012-guided-2204-retained-other-boundaries.md`](decisions/DM-0012-guided-2204-retained-other-boundaries.md).
 
 ---
 

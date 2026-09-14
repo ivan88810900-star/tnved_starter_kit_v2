@@ -43,7 +43,7 @@ def is_ntm_v2_tr_ts_enabled() -> bool:
     """
     Feature flag ``NTM_V2_TR_TS_ENABLED``: подмена слоя ТР ТС в ``get_full_ntm_requirements``.
 
-    По умолчанию — ``tr_ts_catalog.NTM_V2_TR_TS_ENABLED`` (True).
+    По умолчанию — ``tr_ts_catalog.NTM_V2_TR_TS_ENABLED`` (False).
     Явное выключение: ``0``, ``false``, ``no``, ``off``.
     Явное включение: ``1``, ``true``, ``yes``, ``on``.
     """

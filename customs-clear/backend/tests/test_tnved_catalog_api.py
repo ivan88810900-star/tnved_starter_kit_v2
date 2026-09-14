@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import unittest
+from unittest.mock import patch
 
 try:
     from fastapi.testclient import TestClient
@@ -163,6 +164,64 @@ class TnvedCatalogApiTests(unittest.TestCase):
         r = self.client.get("/api/v1/tnved/9999999999")
         self.assertEqual(r.status_code, 404)
 
+    def test_missing_exact_code_does_not_borrow_sibling_card(self):
+        # The fixture contains 9901210000 with a name and 10% duty. The requested
+        # code shares its six-digit prefix but has no commodity identity.
+        with patch("app.api.tnved_catalog._measures_for_api") as measures:
+            r = self.client.get("/api/v1/tnved/9901219999")
+        self.assertEqual(r.status_code, 404, r.text)
+        self.assertEqual(r.json(), {"detail": "Позиция не найдена"})
+        measures.assert_not_called()
+
+    def test_exact_rate_without_commodity_does_not_create_card(self):
+        with SessionLocal() as db:
+            rate = HsRate(hs_code="9901219999", hs_prefix="9901219999", duty_rate="17")
+            db.add(rate)
+            db.commit()
+            rate_id = rate.id
+        try:
+            r = self.client.get("/api/v1/tnved/9901219999")
+            self.assertEqual(r.status_code, 404, r.text)
+        finally:
+            with SessionLocal() as db:
+                db.query(HsRate).filter(HsRate.id == rate_id).delete()
+                db.commit()
+
+    def test_exact_card_keeps_rate_fallback_without_borrowing_identity(self):
+        with SessionLocal() as db:
+            commodity = Commodity(
+                chapter_id=self._chapter_id,
+                code="9901220000",
+                description="Точное название из тестового каталога",
+                unit="кг",
+                import_duty="",
+            )
+            rate = HsRate(hs_code="9901220000", hs_prefix="9901220000", duty_rate="17")
+            db.add_all([commodity, rate])
+            db.commit()
+            commodity_id, rate_id = commodity.id, rate.id
+        try:
+            r = self.client.get("/api/v1/tnved/9901220000")
+            self.assertEqual(r.status_code, 200, r.text)
+            self.assertEqual(r.json()["name"], "Точное название из тестового каталога")
+            self.assertEqual(r.json()["import_duty"], "17%")
+        finally:
+            with SessionLocal() as db:
+                db.query(HsRate).filter(HsRate.id == rate_id).delete()
+                db.query(Commodity).filter(Commodity.id == commodity_id).delete()
+                db.commit()
+
+    def test_canonical_provider_failure_keeps_exact_database_card(self):
+        with patch(
+            "app.services.tnved_code_card.get_canonical_model",
+            side_effect=RuntimeError("test provider unavailable"),
+        ):
+            r = self.client.get("/api/v1/tnved/9901210000")
+        self.assertEqual(r.status_code, 200, r.text)
+        self.assertEqual(r.json()["name"], "Тестовый товар 10 знаков")
+        self.assertEqual(r.json()["import_duty"], "10%")
+        self.assertIsNone(r.json()["canonical_anchor"])
+
     def test_invalid_code_length(self):
         r = self.client.get("/api/v1/tnved/123")
         self.assertEqual(r.status_code, 400)
@@ -285,4 +344,3 @@ class TnvedCatalogApiTests(unittest.TestCase):
         self.assertIn(leaf.get("import_duty"), ("10 %", "10%"))
         self.assertTrue("name" in leaf or "title_ru" in leaf)
         self.assertIn("children", leaf)
-

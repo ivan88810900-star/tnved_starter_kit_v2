@@ -176,9 +176,10 @@ def _desc_match_any_substrings(substrings: tuple[str, ...] | list[str]) -> dict[
 
 def import_ntm_layers_to_ntm_v2(session: Session | None = None) -> dict[str, Any]:
     """
-    Импортирует HS-правила и условия по описанию из ``ntm_layers`` в v2.
+    Синхронизирует HS-правила и условия из ``ntm_layers`` с v2.
 
-    Не удаляет и не пересоздаёт меры/правила ТР ТС (другой ``source_kind``).
+    Удаляет устаревшие правила только из своего generated namespace;
+    меры/правила ТР ТС и официальных контуров не затрагивает.
     """
     close_session = False
     if session is None:
@@ -189,6 +190,7 @@ def import_ntm_layers_to_ntm_v2(session: Session | None = None) -> dict[str, Any
     measures_skipped = 0
     rules_created = 0
     rules_skipped = 0
+    rules_removed = 0
 
     samples: list[tuple[str, str, Callable[[], dict[str, Any] | None]]] = [
         ("vet", "ВС", lambda: ntm_layers_mod.get_vet_requirement("0101000000")),
@@ -225,8 +227,17 @@ def import_ntm_layers_to_ntm_v2(session: Session | None = None) -> dict[str, Any
             if ik in measure_by_key:
                 measures_skipped += 1
                 measure = measure_by_key[ik]
+                measure.measure_kind = measure_kind
+                measure.permit_type = permit_type
                 measure.short_description = meta_json
                 measure.title = str(sample.get("tr_ts_full_name") or permit_type)[:512]
+                measure.tr_ts_act_code = ""
+                measure.regulatory_document_id = None
+                measure.valid_from = None
+                measure.valid_to = None
+                measure.status = "active"
+                measure.source_kind = LAYERS_SOURCE_KIND
+                measure.source_ref = f"{LAYERS_SOURCE_REF}:{measure_kind}"
                 measure.updated_at = now
             else:
                 measure = NtmMeasureV2(
@@ -257,238 +268,147 @@ def import_ntm_layers_to_ntm_v2(session: Session | None = None) -> dict[str, Any
                 raise KeyError(ik2)
             return m2
 
+        desired_rules: list[dict[str, Any]] = []
         pri = 10_000
+
+        def _plan_rule(
+            *,
+            measure: NtmMeasureV2,
+            layer_key: str,
+            suffix: str,
+            hs_code: str,
+            source_ref: str,
+            description_match_json: dict[str, Any] | None = None,
+        ) -> None:
+            nonlocal pri
+            pri += 1
+            desired_rules.append({
+                "measure_id": measure.id,
+                "direction": "import",
+                "country_iso": None,
+                "hs_scope_mode": "prefix",
+                "hs_code": hs_code,
+                "excluded_hs_json": None,
+                "description_match_json": description_match_json,
+                "applicability": "definite",
+                "requires_manual_review": False,
+                "priority": pri,
+                "valid_from": None,
+                "valid_to": None,
+                "source_kind": LAYERS_SOURCE_KIND,
+                "source_ref": source_ref,
+                "rule_import_key": _layer_rule_import_key(layer_key, suffix),
+            })
 
         vet_m = _ensure_measure("vet", "ВС")
         for p in sorted(set(ntm_layers_mod.VET_DOMAINS), key=lambda x: (-len(x), x)):
-            rk = _layer_rule_import_key("vet", f"hs|{p}")
-            pri += 1
-            ex = session.scalar(select(NtmApplicabilityRuleV2).where(NtmApplicabilityRuleV2.rule_import_key == rk))
-            if ex is None:
-                session.add(
-                    NtmApplicabilityRuleV2(
-                        measure_id=vet_m.id,
-                        direction="import",
-                        country_iso=None,
-                        hs_scope_mode="prefix",
-                        hs_code=p,
-                        excluded_hs_json=None,
-                        description_match_json=None,
-                        applicability="definite",
-                        requires_manual_review=False,
-                        priority=pri,
-                        valid_from=None,
-                        valid_to=None,
-                        source_kind=LAYERS_SOURCE_KIND,
-                        source_ref=f"{LAYERS_SOURCE_REF}:get_vet_requirement:{p}",
-                        rule_import_key=rk,
-                        created_at=now,
-                        updated_at=now,
-                    )
-                )
-                rules_created += 1
-            else:
-                ex.priority = pri
-                ex.updated_at = now
-                rules_skipped += 1
+            _plan_rule(
+                measure=vet_m,
+                layer_key="vet",
+                suffix=f"hs|{p}",
+                hs_code=p,
+                source_ref=f"{LAYERS_SOURCE_REF}:get_vet_requirement:{p}",
+            )
 
         phy_m = _ensure_measure("phyto", "ФСС")
         for p in sorted(set(ntm_layers_mod.PHYTO_DOMAINS), key=lambda x: (-len(x), x)):
-            rk = _layer_rule_import_key("phyto", f"hs|{p}")
-            pri += 1
-            ex = session.scalar(select(NtmApplicabilityRuleV2).where(NtmApplicabilityRuleV2.rule_import_key == rk))
-            if ex is None:
-                session.add(
-                    NtmApplicabilityRuleV2(
-                        measure_id=phy_m.id,
-                        direction="import",
-                        country_iso=None,
-                        hs_scope_mode="prefix",
-                        hs_code=p,
-                        excluded_hs_json=None,
-                        description_match_json=None,
-                        applicability="definite",
-                        requires_manual_review=False,
-                        priority=pri,
-                        valid_from=None,
-                        valid_to=None,
-                        source_kind=LAYERS_SOURCE_KIND,
-                        source_ref=f"{LAYERS_SOURCE_REF}:get_phyto_requirement:{p}",
-                        rule_import_key=rk,
-                        created_at=now,
-                        updated_at=now,
-                    )
-                )
-                rules_created += 1
-            else:
-                ex.priority = pri
-                ex.updated_at = now
-                rules_skipped += 1
+            _plan_rule(
+                measure=phy_m,
+                layer_key="phyto",
+                suffix=f"hs|{p}",
+                hs_code=p,
+                source_ref=f"{LAYERS_SOURCE_REF}:get_phyto_requirement:{p}",
+            )
 
         nf_m = _ensure_measure("notification", "НФ")
         for p in sorted(set(ntm_layers_mod.NF_DOMAINS), key=lambda x: (-len(x), x)):
-            rk = _layer_rule_import_key("nf", f"hs|{p}")
-            pri += 1
-            ex = session.scalar(select(NtmApplicabilityRuleV2).where(NtmApplicabilityRuleV2.rule_import_key == rk))
-            if ex is None:
-                session.add(
-                    NtmApplicabilityRuleV2(
-                        measure_id=nf_m.id,
-                        direction="import",
-                        country_iso=None,
-                        hs_scope_mode="prefix",
-                        hs_code=p,
-                        excluded_hs_json=None,
-                        description_match_json=None,
-                        applicability="definite",
-                        requires_manual_review=False,
-                        priority=pri,
-                        valid_from=None,
-                        valid_to=None,
-                        source_kind=LAYERS_SOURCE_KIND,
-                        source_ref=f"{LAYERS_SOURCE_REF}:get_nf_requirement:{p}",
-                        rule_import_key=rk,
-                        created_at=now,
-                        updated_at=now,
-                    )
-                )
-                rules_created += 1
-            else:
-                ex.priority = pri
-                ex.updated_at = now
-                rules_skipped += 1
+            _plan_rule(
+                measure=nf_m,
+                layer_key="nf",
+                suffix=f"hs|{p}",
+                hs_code=p,
+                source_ref=f"{LAYERS_SOURCE_REF}:get_nf_requirement:{p}",
+            )
 
         lz_m = _ensure_measure("license", "ЛЗ")
         for p in sorted(set(ntm_layers_mod.LICENCE_DOMAINS), key=lambda x: (-len(x), x)):
-            rk = _layer_rule_import_key("lz", f"hs|{p}")
-            pri += 1
-            ex = session.scalar(select(NtmApplicabilityRuleV2).where(NtmApplicabilityRuleV2.rule_import_key == rk))
-            if ex is None:
-                session.add(
-                    NtmApplicabilityRuleV2(
-                        measure_id=lz_m.id,
-                        direction="import",
-                        country_iso=None,
-                        hs_scope_mode="prefix",
-                        hs_code=p,
-                        excluded_hs_json=None,
-                        description_match_json=None,
-                        applicability="definite",
-                        requires_manual_review=False,
-                        priority=pri,
-                        valid_from=None,
-                        valid_to=None,
-                        source_kind=LAYERS_SOURCE_KIND,
-                        source_ref=f"{LAYERS_SOURCE_REF}:get_licence_requirement:{p}",
-                        rule_import_key=rk,
-                        created_at=now,
-                        updated_at=now,
-                    )
-                )
-                rules_created += 1
-            else:
-                ex.priority = pri
-                ex.updated_at = now
-                rules_skipped += 1
+            _plan_rule(
+                measure=lz_m,
+                layer_key="lz",
+                suffix=f"hs|{p}",
+                hs_code=p,
+                source_ref=f"{LAYERS_SOURCE_REF}:get_licence_requirement:{p}",
+            )
 
         sgr_m = _ensure_measure("sgr", "СГР")
         sgr_subs = tuple(sgr_desc_triggers) + SGR_WATER_HINTS
-        for p in sorted(set(ntm_layers_mod.SGR_DOMAINS) - {"2201"}, key=lambda x: (-len(x), x)):
-            rk = _layer_rule_import_key("sgr", f"hs|{p}")
-            pri += 1
-            ex = session.scalar(select(NtmApplicabilityRuleV2).where(NtmApplicabilityRuleV2.rule_import_key == rk))
-            if ex is None:
+        for p in sorted(
+            set(ntm_layers_mod.SGR_DOMAINS) - {"2201"},
+            key=lambda x: (-len(x), x),
+        ):
+            _plan_rule(
+                measure=sgr_m,
+                layer_key="sgr",
+                suffix=f"hs|{p}",
+                hs_code=p,
+                source_ref=f"{LAYERS_SOURCE_REF}:get_sgr_requirement:hs:{p}",
+            )
+        _plan_rule(
+            measure=sgr_m,
+            layer_key="sgr",
+            suffix="hs|2201|desc",
+            hs_code="2201",
+            source_ref=f"{LAYERS_SOURCE_REF}:get_sgr_requirement:2201",
+            description_match_json=_desc_match_any_substrings(sgr_subs),
+        )
+        _plan_rule(
+            measure=sgr_m,
+            layer_key="sgr",
+            suffix="desc_any",
+            hs_code="",
+            source_ref=f"{LAYERS_SOURCE_REF}:get_sgr_requirement:desc_any",
+            description_match_json=_desc_match_any_substrings(
+                tuple(ntm_layers_mod.SGR_DESCRIPTION_TRIGGERS)
+            ),
+        )
+
+        existing_generated = {
+            rule.rule_import_key: rule
+            for rule in session.scalars(
+                select(NtmApplicabilityRuleV2).where(
+                    NtmApplicabilityRuleV2.source_kind == LAYERS_SOURCE_KIND,
+                    NtmApplicabilityRuleV2.rule_import_key.like(
+                        f"{LAYERS_SOURCE_KIND}|%"
+                    ),
+                )
+            ).all()
+        }
+        desired_keys = {str(spec["rule_import_key"]) for spec in desired_rules}
+        for spec in desired_rules:
+            rule_import_key = str(spec["rule_import_key"])
+            existing = existing_generated.get(rule_import_key)
+            if existing is None:
                 session.add(
                     NtmApplicabilityRuleV2(
-                        measure_id=sgr_m.id,
-                        direction="import",
-                        country_iso=None,
-                        hs_scope_mode="prefix",
-                        hs_code=p,
-                        excluded_hs_json=None,
-                        description_match_json=None,
-                        applicability="definite",
-                        requires_manual_review=False,
-                        priority=pri,
-                        valid_from=None,
-                        valid_to=None,
-                        source_kind=LAYERS_SOURCE_KIND,
-                        source_ref=f"{LAYERS_SOURCE_REF}:get_sgr_requirement:hs:{p}",
-                        rule_import_key=rk,
+                        **spec,
                         created_at=now,
                         updated_at=now,
                     )
                 )
                 rules_created += 1
-            else:
-                ex.priority = pri
-                ex.updated_at = now
-                rules_skipped += 1
-
-        rk2201 = _layer_rule_import_key("sgr", "hs|2201|desc")
-        pri += 1
-        ex2201 = session.scalar(select(NtmApplicabilityRuleV2).where(NtmApplicabilityRuleV2.rule_import_key == rk2201))
-        if ex2201 is None:
-            session.add(
-                NtmApplicabilityRuleV2(
-                    measure_id=sgr_m.id,
-                    direction="import",
-                    country_iso=None,
-                    hs_scope_mode="prefix",
-                    hs_code="2201",
-                    excluded_hs_json=None,
-                    description_match_json=_desc_match_any_substrings(sgr_subs),
-                    applicability="definite",
-                    requires_manual_review=False,
-                    priority=pri,
-                    valid_from=None,
-                    valid_to=None,
-                    source_kind=LAYERS_SOURCE_KIND,
-                    source_ref=f"{LAYERS_SOURCE_REF}:get_sgr_requirement:2201",
-                    rule_import_key=rk2201,
-                    created_at=now,
-                    updated_at=now,
-                )
-            )
-            rules_created += 1
-        else:
-            ex2201.priority = pri
-            ex2201.description_match_json = _desc_match_any_substrings(sgr_subs)
-            ex2201.updated_at = now
+                continue
+            for field, value in spec.items():
+                setattr(existing, field, value)
+            existing.updated_at = now
             rules_skipped += 1
 
-        rk_desc = _layer_rule_import_key("sgr", "desc_any")
-        pri += 1
-        exd = session.scalar(select(NtmApplicabilityRuleV2).where(NtmApplicabilityRuleV2.rule_import_key == rk_desc))
-        desc_only_subs = tuple(ntm_layers_mod.SGR_DESCRIPTION_TRIGGERS)
-        if exd is None:
-            session.add(
-                NtmApplicabilityRuleV2(
-                    measure_id=sgr_m.id,
-                    direction="import",
-                    country_iso=None,
-                    hs_scope_mode="prefix",
-                    hs_code="",
-                    excluded_hs_json=None,
-                    description_match_json=_desc_match_any_substrings(desc_only_subs),
-                    applicability="definite",
-                    requires_manual_review=False,
-                    priority=pri,
-                    valid_from=None,
-                    valid_to=None,
-                    source_kind=LAYERS_SOURCE_KIND,
-                    source_ref=f"{LAYERS_SOURCE_REF}:get_sgr_requirement:desc_any",
-                    rule_import_key=rk_desc,
-                    created_at=now,
-                    updated_at=now,
-                )
-            )
-            rules_created += 1
-        else:
-            exd.priority = pri
-            exd.description_match_json = _desc_match_any_substrings(desc_only_subs)
-            exd.updated_at = now
-            rules_skipped += 1
+        # Это generated snapshot одного импортера. Удаляем только его собственные
+        # ключи и source_kind; official/legacy-rules/TR-TS контуры не затрагиваются.
+        for rule_import_key, stale_rule in existing_generated.items():
+            if rule_import_key in desired_keys:
+                continue
+            session.delete(stale_rule)
+            rules_removed += 1
 
         session.commit()
     except Exception:
@@ -503,4 +423,5 @@ def import_ntm_layers_to_ntm_v2(session: Session | None = None) -> dict[str, Any
         "layers_measures_skipped": measures_skipped,
         "layers_rules_created": rules_created,
         "layers_rules_skipped": rules_skipped,
+        "layers_rules_removed": rules_removed,
     }

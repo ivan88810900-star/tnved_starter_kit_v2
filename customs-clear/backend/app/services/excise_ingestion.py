@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 import hashlib
-import json
 from datetime import datetime, timezone
+from decimal import DecimalException
 from pathlib import Path
 from typing import Any
 
@@ -13,6 +13,8 @@ from ..models.core import HsRate
 from ..schemas.excise_ingestion import ExciseIngestionResponse, ExciseProvenance, ExciseRowCounts
 from .normative_bundle import _normalize_rate_row
 from .normative_store import append_sync_log, upsert_source_status
+from .official_rate_validation import explicit_nonnegative_rate, load_official_rate_json, rate_value_diagnostic
+from .official_payment_admission import payment_admission_blocker
 from .payment_data_coverage import run_payment_data_coverage_report
 from .payment_revision_utils import (
     is_conservative_official_excise_source_url,
@@ -175,6 +177,20 @@ def _validate_official_excise_bundle_payload(
             "checksum_sha256": checksum,
         }
 
+    numeric_blockers = _excise_numeric_blockers(rates)
+    if numeric_blockers:
+        return {
+            "status": "parser_failed",
+            "reason": "invalid_excise_rate_value",
+            "error": "; ".join(numeric_blockers[:10]),
+            "invalid_rate_count": len(numeric_blockers),
+            "rate_diagnostics": numeric_blockers[:10],
+            "revision": revision,
+            "record_count": len(rates),
+            "rates_count": len(rates),
+            "checksum_sha256": checksum,
+        }
+
     return {
         "status": "parsed",
         "revision": revision,
@@ -194,13 +210,17 @@ def _load_bundle_payload(rel_path: str) -> tuple[dict[str, Any] | None, dict[str
             "error": f"file not found: {rel_path}",
             "record_count": 0,
         }
+    checksum: str | None = None
     try:
-        payload = json.loads(path.read_text(encoding="utf-8"))
-    except (json.JSONDecodeError, OSError) as exc:
-        return None, {"status": "parser_failed", "error": str(exc), "record_count": 0}
+        source_bytes = path.read_bytes()
+        checksum = hashlib.sha256(source_bytes).hexdigest()
+        payload = load_official_rate_json(source_bytes)
+    except (ValueError, DecimalException, RecursionError, OSError) as exc:
+        return None, {"status": "parser_failed", "reason": "invalid_bundle_json", "error": str(exc),
+                      "record_count": 0, "checksum_sha256": checksum}
     if not isinstance(payload, dict):
-        return None, {"status": "parser_failed", "error": "bundle must be JSON object", "record_count": 0}
-    checksum = _file_sha256_at(path)
+        return None, {"status": "parser_failed", "error": "bundle must be JSON object",
+                      "record_count": 0, "checksum_sha256": checksum}
     return payload, _validate_official_excise_bundle_payload(payload, rel_path=rel_path, checksum=checksum)
 
 
@@ -227,14 +247,50 @@ def discover_excise_bundle_path(*, rel_path: str | None = None) -> str | None:
 
 
 def _raw_row_has_excise_signal(raw: dict[str, Any]) -> bool:
-    ex_type = str(raw.get("excise_type") or "none").strip().lower()
-    if ex_type in {"percent", "fixed"}:
+    if "excise_type" in raw:
         return True
-    if raw.get("excise_value") is not None and str(raw.get("excise_value") or "").strip():
+    if "excise_value" in raw:
         return True
     if str(raw.get("excise_basis") or "").strip():
         return True
     return False
+
+
+def _explicit_excise_type(raw: dict[str, Any], value: float) -> str:
+    """Keep only the explicit forms represented by the current storage/engine.
+
+    ``none`` with zero is the existing non-excisable representation. Neither a
+    missing form nor an unsupported combined expression may become that state.
+    This checks representability only, not whether an excise legally applies.
+    """
+    kind = raw.get("excise_type")
+    if kind is None or type(kind) is str and not kind.strip():
+        raise ValueError("missing_excise_type")
+    if type(kind) is not str:
+        raise ValueError("invalid_excise_type")
+    kind = kind.strip().lower()
+    if kind not in {"percent", "fixed", "none"}:
+        raise ValueError("unsupported_excise_type")
+    if kind == "none" and value != 0:
+        raise ValueError("nonzero_non_excisable_value")
+    return kind
+
+
+def _excise_numeric_blockers(rows: list[dict[str, Any]], *, start: int = 1) -> list[str]:
+    blockers: list[str] = []
+    for index, raw in enumerate(rows, start=start):
+        if not _raw_row_has_excise_signal(raw):
+            continue
+        try:
+            value = explicit_nonnegative_rate(raw.get("excise_value"))
+            _explicit_excise_type(raw, value)
+        except ValueError as exc:
+            blockers.append(
+                f"invalid_excise_rate: row={index} hs_code={rate_value_diagnostic(raw.get('hs_code'))} "
+                f"raw={rate_value_diagnostic(raw.get('excise_value'))} "
+                f"excise_type={rate_value_diagnostic(raw.get('excise_type'))} reason={exc}"
+            )
+    return blockers
 
 
 def _registry_official_excise_url() -> str | None:
@@ -268,15 +324,22 @@ def _extract_excise_rows(
         if container_err is not None:
             return revision, [], [f"parser_failed: {container_err}"]
 
-    for raw in rows_in or []:
+    for index, raw in enumerate(rows_in or [], start=1):
         if not isinstance(raw, dict):
             return revision, [], ["parser_failed: malformed_rate_row (rate row not an object)"]
         if not _raw_row_has_excise_signal(raw):
             continue
+        numeric_blockers = _excise_numeric_blockers([raw], start=index)
+        if numeric_blockers:
+            blockers.extend(numeric_blockers)
+            continue
+        explicit_rate = explicit_nonnegative_rate(raw.get("excise_value"))
         normalized = _normalize_rate_row(raw)
         if not normalized:
             blockers.append(f"invalid_rate_row: hs_code={raw.get('hs_code')!r}")
             continue
+        normalized["excise_value"] = explicit_rate
+        normalized["excise_type"] = _explicit_excise_type(raw, explicit_rate)
         if not str(normalized.get("source_revision") or "").strip():
             normalized["source_revision"] = revision
         row_rev = str(normalized.get("source_revision") or "").strip().lower()
@@ -426,7 +489,13 @@ def _blocked_response(
         parser_result=parser_result or {},
         notes=notes or [],
     )
-    return response.model_dump(mode="json")
+    return {
+        **response.model_dump(mode="json"),
+        "active_rates_written": False,
+        "source_evidence_verified": False,
+        "legal_review_verified": False,
+        "retention_verified": False,
+    }
 
 
 def _validate_bundle_for_ingest(
@@ -560,11 +629,17 @@ def run_excise_dry_run(*, rel_path: str | None = None) -> dict[str, Any]:
         },
         notes=[
             "Dry-run не мутирует БД.",
-            "Apply доступен только при status=OK dry-run и official provenance.",
-            "Coverage present требует official excise rows (не seed/fallback).",
+            payment_admission_blocker("excise"),
+            "Row counts and declared source metadata are technical diagnostics, not verified legal coverage.",
         ],
     )
-    return response.model_dump(mode="json")
+    return {
+        **response.model_dump(mode="json"),
+        "active_rates_written": False,
+        "source_evidence_verified": False,
+        "legal_review_verified": False,
+        "retention_verified": False,
+    }
 
 
 def _apply_excise_field(existing: HsRate, row: dict[str, Any], field: str) -> None:
@@ -639,7 +714,7 @@ def _apply_excise_rows(
 
 
 def run_excise_apply(*, rel_path: str | None = None) -> dict[str, Any]:
-    """Guarded apply: мутирует БД только при official provenance и отсутствии blockers."""
+    """Legacy apply: техническая проверка без применения до manifest-bound review."""
     loaded_at = _utc_now_iso()
     bundle_path = discover_excise_bundle_path(rel_path=rel_path)
     if not bundle_path:
@@ -676,87 +751,13 @@ def run_excise_apply(*, rel_path: str | None = None) -> dict[str, Any]:
             notes=["Apply отменён — SourceStatus/SyncLog не записаны."],
         )
 
-    row_counts, missing_blockers = _plan_excise_rows(rows)
-    if row_counts.blocked > 0:
-        apply_blockers = list(missing_blockers)
-        apply_blockers.append(
-            f"excise_rows_without_hs_rate: {row_counts.blocked} "
-            "(excise slice не создаёт hs_rates/duty_rate=0)."
-        )
-        return _blocked_response(
-            status="manual_review_required",
-            mode="apply",
-            dry_run=False,
-            blockers=apply_blockers,
-            parser_result=parser_result,
-            provenance=provenance,
-            row_counts=row_counts,
-            notes=[
-                "Apply атомарно отменён — ни одна excise row не обновлена.",
-                "SourceStatus/SyncLog не записаны.",
-            ],
-        )
-
-    synced_at = datetime.now(timezone.utc).replace(tzinfo=None)
-    applied = _apply_excise_rows(
-        rows,
-        bundle_revision=revision,
-        bundle_url=provenance.official_url,
-        synced_at=synced_at,
-    )
-    if applied is None:
-        return _blocked_response(
-            status="manual_review_required",
-            mode="apply",
-            dry_run=False,
-            blockers=list(missing_blockers) + ["atomic_apply_aborted: missing_hs_rate detected during apply"],
-            parser_result=parser_result,
-            provenance=provenance,
-            row_counts=row_counts,
-            notes=["Apply атомарно отменён — ни одна excise row не обновлена.", "SourceStatus/SyncLog не записаны."],
-        )
-    row_counts = applied
-
-    entry = get_payment_source_entry(_REGISTRY_SOURCE_CODE)
-    note_txt = (
-        f"excise apply {bundle_path}: revision={revision}; "
-        f"update={row_counts.update}, skip={row_counts.skip}, "
-        f"blocked={row_counts.blocked}; checksum={provenance.checksum_sha256 or 'n/a'}"
-    )
-    upsert_source_status(
-        source_code=_EXCISE_SOURCE_CODE,
-        source_name=entry.name if entry else provenance.source_name,
-        source_url=provenance.official_url or bundle_path,
-        revision=revision,
-        is_stale=False,
-        note=note_txt,
-    )
-    append_sync_log(
-        source_code=_EXCISE_SOURCE_CODE,
-        status="OK",
-        revision=revision,
-        rows_affected=row_counts.update,
-        note=note_txt,
-    )
-
-    coverage = run_payment_data_coverage_report()
-    response = ExciseIngestionResponse(
-        status="OK",
+    return _blocked_response(
+        status="manual_review_required",
         mode="apply",
         dry_run=False,
-        db_mutated=row_counts.update > 0,
-        provenance=provenance,
-        row_counts=row_counts,
-        blockers=[],
+        blockers=[payment_admission_blocker("excise")],
         parser_result=parser_result,
-        coverage_link={
-            "excise_status": (coverage.get("summary") or {}).get("excise", {}).get("status"),
-            "excise_authority_level": (coverage.get("summary") or {}).get("excise", {}).get("authority_level"),
-            "generated_at": coverage.get("generated_at"),
-        },
-        notes=[
-            "Excise slice: обновлены только excise_type/excise_value/excise_basis.",
-            "Import-duty / VAT поля (duty_rate, source_revision, vat_source_*) не изменяются.",
-        ],
+        provenance=provenance,
+        row_counts=ExciseRowCounts(total_in_source=len(rows), blocked=len(rows)),
+        notes=["Технический разбор сохранён; DB planning, SourceStatus и SyncLog не выполнялись."],
     )
-    return response.model_dump(mode="json")

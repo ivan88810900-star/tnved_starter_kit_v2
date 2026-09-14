@@ -14,6 +14,9 @@ from ..models.tnved import TroisRegistry
 from .trois_fuzzy import normalize_brand_key
 
 
+_DB_CACHE_KEYS: set[str] = set()
+
+
 def _backend_data_dir() -> Path:
     return Path(__file__).resolve().parents[2] / "data"
 
@@ -72,6 +75,13 @@ def sync_db_to_local_cache(force: bool = False) -> int:
     if db_count < min_reload and not force:
         return 0
 
+    # A full DB snapshot is authoritative for DB-derived keys. Remove keys from
+    # the previous snapshot first so delisted/expired trademarks do not survive
+    # indefinitely in a long-lived web process.
+    for key in tuple(_DB_CACHE_KEYS):
+        trois_service._LOCAL_CACHE.pop(key, None)
+    _DB_CACHE_KEYS.clear()
+
     added = 0
     seen_keys: set[str] = set()
     with SessionLocal() as db:
@@ -91,6 +101,7 @@ def sync_db_to_local_cache(force: bool = False) -> int:
                 goods = (row.status or "—").strip()
                 trois_service._LOCAL_CACHE[key] = trois_service._mk(name.upper(), holder, goods)
                 seen_keys.add(key)
+                _DB_CACHE_KEYS.add(key)
                 added += 1
     if added:
         logger.info("trois_registry_loader: +{} brands from DB (total cache {})", added, len(trois_service._LOCAL_CACHE))

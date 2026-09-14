@@ -95,6 +95,7 @@ class AcceptanceContext:
     hs_code: str = ""
     product_name: str = ""
     payment: dict[str, Any] = field(default_factory=dict)
+    require_primary_search: bool = False
 
 
 @dataclass
@@ -118,6 +119,11 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         "--require-full-data",
         action="store_true",
         help="Fail unless the database meets the full-data minimum row counts.",
+    )
+    parser.add_argument(
+        "--require-primary-search",
+        action="store_true",
+        help="Fail unless product search uses the prebuilt hybrid FTS index.",
     )
     return parser.parse_args(argv)
 
@@ -259,7 +265,15 @@ def scenario_search_and_card(client: TestClient, ctx: AcceptanceContext) -> Scen
             break
     _assert(selected is not None, "Поиск не вернул ни одного кода ТН ВЭД")
     strategy = str((selected_body.get("search") or {}).get("strategy") or "")
-    _assert(strategy in {"hybrid_fts", "like_fallback"}, f"Неизвестная стратегия поиска: {strategy}")
+    allowed_strategies = (
+        {"hybrid_fts"}
+        if ctx.require_primary_search
+        else {"hybrid_fts", "like_fallback"}
+    )
+    _assert(
+        strategy in allowed_strategies,
+        f"Недопустимая стратегия поиска для acceptance: {strategy}",
+    )
 
     ctx.hs_code = str(selected.get("code") or "")
     ctx.product_name = str(selected.get("name") or "")
@@ -449,6 +463,7 @@ def main(argv: list[str] | None = None) -> int:
         "format": "customsclear-mvp-acceptance-v1",
         "generated_at": generated_at,
         "require_full_data": bool(args.require_full_data),
+        "require_primary_search": bool(args.require_primary_search),
         "read_only": {
             "requested": True,
             "startup_mutations_disabled": False,
@@ -522,7 +537,7 @@ def main(argv: list[str] | None = None) -> int:
         f"sections={counts.get('tnved_sections')}, chapters={counts.get('tnved_chapters')}, "
         f"commodities={counts.get('tnved_commodities')}, hs_rates={counts.get('hs_rates')}\n"
     )
-    ctx = AcceptanceContext()
+    ctx = AcceptanceContext(require_primary_search=bool(args.require_primary_search))
     scenarios: list[Callable[[TestClient, AcceptanceContext], ScenarioResult]] = [
         scenario_search_and_card,
         scenario_payments,

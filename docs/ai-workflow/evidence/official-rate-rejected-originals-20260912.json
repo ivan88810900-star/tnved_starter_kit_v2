@@ -1,0 +1,69 @@
+{
+  "schema_version": 1,
+  "kind": "quarantined_official_navigation_originals",
+  "observed_at": "2026-09-12T19:24:27.608087+00:00",
+  "repository": "ivan88810900-star/tnved_starter_kit_v2",
+  "source_commit": "22a7df5590a7442d943d89af285feb1228e80938",
+  "workflow_run_id": 34714034422,
+  "artifact_id": 10304376651,
+  "archive": {
+    "name": "official-rate-originals-34714034422.zip",
+    "size_bytes": 60478,
+    "sha256": "10ceb2d8810642cab8d80496b5ff1489f6c49f3446b8c49b600f56f201d7bab4",
+    "library_file_id": "libfile_89f2ec5e95f481918aaa0062121162e8",
+    "library_version": 0
+  },
+  "verification": {
+    "archive_sha_verified": true,
+    "cas_objects": 4,
+    "cas_object_bytes": 878969,
+    "all_object_hashes_verified": true,
+    "rejected_receipts_verified": 2,
+    "normal_verifier_rejects_quarantined_receipts": true
+  },
+  "capture": {
+    "original_capture_count": 0,
+    "rejected_original_capture_count": 2,
+    "original_capture_complete": false,
+    "accepted_source_ids": [],
+    "application_database_created": false
+  },
+  "sources": [
+    {
+      "id": "trade_remedies_official",
+      "requested_url": "https://eec.eaeunion.org/comission/department/podm/",
+      "http_status": 200,
+      "size_bytes": 143334,
+      "original_body_sha256": "e87e50e48dc6140d66c75728251270e03fbb8f7291f79b2df9e898137a27ecd3",
+      "receipt_sha256": "29f859c41e5d215cf59e5414d8c9df2be294a0ac5e1b3b5ea4507fb7151fdf56",
+      "retrieved_at": "2026-09-12T19:24:22.435241+00:00"
+    },
+    {
+      "id": "trade_remedies_official__artifact_2",
+      "requested_url": "https://docs.eaeunion.org/documents/?filter_departament%5B%5D=14",
+      "http_status": 200,
+      "size_bytes": 732738,
+      "original_body_sha256": "f818b7025a7b14d93083938f77629c84f80e9e90ee90cbaef9e98658db9b5148",
+      "receipt_sha256": "f1d25da0e6378c679d000cb44556edf5a0bbf89cc1cb07bad4cf718c74c2ba22",
+      "retrieved_at": "2026-09-12T19:24:27.513445+00:00"
+    }
+  ],
+  "validation_error": "block_or_error_page_detected",
+  "literal_diagnostic": {
+    "matched_token": "captcha",
+    "container": "window['recaptchaFreeOptions']",
+    "scope": "A3 literal inspection of retained bytes; not a validation waiver"
+  },
+  "legal_inventory_complete": false,
+  "legal_review_verified": false,
+  "retention_verified": false,
+  "active_rates_written": false,
+  "production_ready": false,
+  "can_promote": false,
+  "limitations": [
+    "Content remains rejected; these captures never count as accepted originals.",
+    "A matching captcha token alone does not establish whether the full response is a challenge page.",
+    "New pagination/document links require explicit acquisition and independent source review.",
+    "No rate, effective-date interpretation or NTM obligation is approved."
+  ]
+}

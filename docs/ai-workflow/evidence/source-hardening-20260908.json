@@ -1,0 +1,52 @@
+{
+  "format": "tariff-source-hardening-local-verification-v1",
+  "date": "2026-09-08",
+  "branch": "feat/ntm-official-full-contours",
+  "base_commit": "4c543c1dc636e8203e0b7e75b607e788702af6cd",
+  "pull_request": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/187",
+  "backend_ci_equivalent": {"passed": 752, "failed": 0},
+  "final_transport_regression": {"passed": 115, "failed": 0},
+  "frontend": {"test_files": 11, "tests_passed": 37, "typecheck": true, "production_build": true},
+  "migrations": {
+    "sqlite_upgrade_head": true,
+    "sqlite_downgrade_to_parent_and_upgrade": true,
+    "postgresql_new_revision_offline_sql": true,
+    "postgresql_live_migration_tested": false,
+    "head": "r1s2t3u4v5w6"
+  },
+  "http_smoke": {
+    "isolated_temporary_database": true,
+    "read_only": true,
+    "scheduler_enabled": false,
+    "health_ready": 200,
+    "source_update_status": 200,
+    "authenticated_non_tariff_check": 200
+  },
+  "workflow_contract": {"valid": true, "pinned_actions": 7, "bash_blocks": 11, "python_heredocs": 4, "javascript_blocks": 1},
+  "source_policy_coverage": {"registry_entries": 36, "policies": 36, "valid": true},
+  "monitor_url_policy": {"total": 50, "legal_pdf_revision_review": 6, "structured_artifact_freshness": 9, "legal_html_revision_gaps": 27, "additional_availability_only": 8},
+  "source_manifest_check": {"pdf": true, "ett_artifact_fingerprint": true, "parser": true, "proves_current_legal_rates": false},
+  "ett_release_gate": {
+    "positive_snapshot_allowed": false,
+    "validation_mode": "quarantine_only",
+    "raw_rows": 13319,
+    "unique_codes": 13290,
+    "invalid_rows": 2,
+    "duplicate_rows": 27,
+    "duplicate_codes": 23,
+    "material_rate_conflicts": 18,
+    "decision_required": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/188"
+  },
+  "security": {
+    "py7zr_version": "1.1.3",
+    "archive_extractall_used": false,
+    "browser_sessions_removed_from_tracked_tree": true,
+    "alta_server_side_revocation_confirmed": false,
+    "git_history_rewritten": false
+  },
+  "production_database_mutated": false,
+  "deployed": false,
+  "merged": false,
+  "enforcement_enabled": false,
+  "unrelated_local_pdf_preserved_and_excluded": "data/ingest/data/raw/tariff_cet/2025-01-01/ru.44_2022_16.06.2022.pdf"
+}

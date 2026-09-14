@@ -1,9 +1,11 @@
 """SQLAlchemy-модели приложения (пакет для разбиения по модулям)."""
 
 from .core import *  # noqa: F403
+from .ett import ETTArtifact, ETTCodeVersion, ETTFootnote, ETTRateRule, ETTSnapshot  # noqa: F401
 from .regulatory import (  # noqa: F401
     RegulatoryDocHsMapping,
     RegulatoryDocument,
+    RegulatorySourceReview,
     RegulatorySyncLog,
 )
 from .ntm_v2 import NtmApplicabilityRuleV2, NtmMeasureV2  # noqa: F401

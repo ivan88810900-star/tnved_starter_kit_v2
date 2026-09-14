@@ -185,6 +185,10 @@ def bundle_for_llm(bundle: Dict[str, Any]) -> Dict[str, Any]:
     if isinstance(b, dict) and b:
         slim["payment_summary"] = {
             "status": pay.get("status"),
+            "amounts_provisional": pay.get("amounts_provisional"),
+            "tariff_preference": pay.get("tariff_preference"),
+            "payment_review_reason": pay.get("payment_review_reason"),
+            "payment_review_reasons": pay.get("payment_review_reasons") or [],
             "duty": b.get("duty"),
             "duty_rate": b.get("duty_rate"),
             "vat": b.get("vat"),

@@ -9,7 +9,7 @@ class MoneyBreakdown(BaseModel):
     excise: float = Field(description="Акциз, RUB.")
     anti_dumping: float = Field(description="Антидемпинговая составляющая, RUB.")
     customs_fee: float = Field(description="Таможенный сбор, RUB.")
-    total_payable: float = Field(description="Итого к уплате, RUB.")
+    total_payable: float = Field(description="Расчётный итог, RUB; предварительный при amounts_provisional=true.")
 
 
 class ComplianceDocumentItem(BaseModel):
@@ -32,6 +32,10 @@ class PaymentProfileResponse(BaseModel):
     blocking_issue: bool = False
     geo: dict | None = None
     data_quality: dict | None = None
+    amounts_provisional: bool | None = None
+    tariff_preference: dict | None = None
+    payment_review_reason: str | None = None
+    payment_review_reasons: list[str] = Field(default_factory=list)
 
 
 class PaymentCompareScenarioItem(BaseModel):
@@ -44,3 +48,5 @@ class PaymentCompareResponse(BaseModel):
     status: str
     shared_economic: dict
     scenarios: list[PaymentCompareScenarioItem] = Field(default_factory=list)
+    amounts_provisional: bool | None = None
+    comparison_complete: bool | None = None

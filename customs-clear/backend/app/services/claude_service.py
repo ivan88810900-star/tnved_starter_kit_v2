@@ -11,7 +11,7 @@ from loguru import logger
 from .classify_response_parser import parse_classify_response
 from .decision_history import journal_hints_for_classifier
 from .gemini_genai_configure import gemini_generate_content_rest_url, resolved_gemini_model_name
-from .grounded_assistant import build_copilot_deterministic_summary
+from .grounded_assistant import build_copilot_deterministic_summary, payment_requires_review
 from .safe_http_errors import safe_ai_error_note
 
 ANTHROPIC_URL = "https://api.anthropic.com/v1/messages"
@@ -401,6 +401,15 @@ async def analyze_copilot_bundle(
 ) -> dict[str, Any]:
     """Серверная сводка; LLM — только проверяемый слой формулировки."""
     fallback = build_copilot_deterministic_summary(bundle_slim)
+    positions = bundle_slim.get("positions")
+    rows = positions if isinstance(positions, list) and positions else [bundle_slim]
+    if any(
+        isinstance(row, dict) and payment_requires_review(row.get("payment_summary"))
+        for row in rows
+    ):
+        # Citation validation cannot prove preservation of a material caveat.
+        # Keep pending-payment wording deterministic until eligibility is known.
+        return fallback
     provider, key = _choose_provider()
     if not key or provider == "none":
         return fallback

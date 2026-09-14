@@ -1,9 +1,10 @@
-"""Асинхронный краулер открытых нормативных источников + пайплайн Gemini/UPSERT (как bulk_normative_ai)."""
+"""Асинхронный краулер открытых нормативных источников + извлечение Gemini в непринятые evidence/checkpoints."""
 
 from __future__ import annotations
 
 import asyncio
 import hashlib
+import json
 import os
 import re
 from collections import deque
@@ -21,7 +22,9 @@ from ..datetime_util import utc_now_naive
 from ..db import SessionLocal
 from ..models import HistoricalCrawlCheckpoint
 from .bulk_normative_ai import (
-    apply_structured_rows,
+    AI_NORMATIVE_ADMISSION_BLOCKER,
+    AI_REVIEW_CHECKPOINT_STATUS,
+    stage_structured_rows_for_review,
     call_gemini_with_throttle,
     extract_text_from_bytes,
     parse_llm_json_array,
@@ -256,7 +259,7 @@ class HistoricalCrawler:
 
     def _checkpoint_ok(self, db: Session, digest: str) -> bool:
         row = self._checkpoint_row(db, digest)
-        return row is not None and (row.status or "") == "ok"
+        return row is not None and (row.status or "") in {"ok", AI_REVIEW_CHECKPOINT_STATUS}
 
     def _save_checkpoint(
         self,
@@ -605,12 +608,16 @@ class HistoricalCrawler:
                     if abs_url not in seen_pages:
                         q.append((abs_url, depth + 1))
 
-    async def process_url_pipeline(self, url: str, *, skip_checkpoint: bool = False) -> dict[str, int | str]:
-        """Скачать документ → Gemini → UPSERT. Возвращает {measures, status, error}."""
+    async def process_url_pipeline(self, url: str, *, skip_checkpoint: bool = False) -> dict[str, Any]:
+        """Скачать документ → Gemini → непринятые evidence; активные данные не меняются."""
         digest = _url_hash(url)
         with SessionLocal() as db:
             if not skip_checkpoint and self._checkpoint_ok(db, digest):
-                return {"measures": 0, "status": "skipped", "error": ""}
+                return {
+                    "measures": 0, "status": "manual_review_required", "error": "",
+                    "skipped": True, "active_rates_written": False, "active_measures_written": False,
+                    "legal_review_verified": False, "blockers": [AI_NORMATIVE_ADMISSION_BLOCKER],
+                }
 
         try:
             status, body = await self.fetch_document(url)
@@ -647,18 +654,23 @@ class HistoricalCrawler:
 
         with SessionLocal() as db:
             try:
-                n = apply_structured_rows(db, rows, source_tag=f"crawler:{url[:200]}")
-                db.commit()
+                review = stage_structured_rows_for_review(
+                    source_tag=f"crawler:{url}", source_bytes=body, extracted_text=text,
+                    raw_model_output=raw, rows=rows,
+                )
             except Exception as e:
                 db.rollback()
-                logger.exception(f"historical_crawler DB {url}: {e}")
+                logger.exception(f"historical_crawler evidence {url}: {e}")
                 self._save_checkpoint(db, digest=digest, url=url, status="error", measures=0, err=str(e))
                 db.commit()
                 return {"measures": 0, "status": "error", "error": str(e)}
 
-            self._save_checkpoint(db, digest=digest, url=url, status="ok", measures=n, err="")
+            self._save_checkpoint(
+                db, digest=digest, url=url, status=AI_REVIEW_CHECKPOINT_STATUS,
+                measures=0, err=json.dumps(review, ensure_ascii=False),
+            )
             db.commit()
-        return {"measures": int(n), "status": "ok", "error": ""}
+        return {"measures": 0, "error": "", **review}
 
 
 async def run_historical_crawl(
@@ -666,11 +678,12 @@ async def run_historical_crawl(
     *,
     skip_checkpoint: bool = False,
     progress_cb: Callable[[dict[str, Any]], None] | None = None,
-) -> dict[str, int]:
-    """Полный прогон: обход + обработка каждого URL."""
+) -> dict[str, Any]:
+    """Полный прогон извлечения; проверка источника и правовая оценка остаются отдельными."""
     docs = 0
     measures_total = 0
     errors = 0
+    review_documents = 0
     async with HistoricalCrawler(settings) as crawler:
         async for doc_url in crawler.iter_document_urls():
             docs += 1
@@ -678,6 +691,8 @@ async def run_historical_crawl(
             measures_total += int(res.get("measures") or 0)
             if res.get("status") == "error":
                 errors += 1
+            elif res.get("status") == "manual_review_required":
+                review_documents += 1
             if progress_cb:
                 progress_cb(
                     {
@@ -690,15 +705,13 @@ async def run_historical_crawl(
                 )
             await asyncio.sleep(settings.http_delay_sec)
 
-    if measures_total > 0:
-        try:
-            from .preview_cache_revision import bump_preview_cache_revision
-
-            bump_preview_cache_revision("historical_crawler")
-        except Exception as e:
-            logger.warning(f"bump_preview_cache_revision: {e}")
-
-    return {"documents_tried": docs, "measures_applied": measures_total, "errors": errors}
+    return {
+        "documents_tried": docs, "measures_applied": measures_total, "errors": errors,
+        "review_documents": review_documents,
+        "status": "error" if errors else ("manual_review_required" if review_documents else "completed"),
+        "active_rates_written": False, "active_measures_written": False,
+        "legal_review_verified": False, "blockers": [AI_NORMATIVE_ADMISSION_BLOCKER],
+    }
 
 
 def settings_from_env(

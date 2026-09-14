@@ -9,6 +9,7 @@ from typing import Any, Dict, List
 
 import fitz
 
+from .payment_result_status import aggregate_payment_metadata, payment_result_metadata
 
 def _esc(x: Any) -> str:
     if x is None:
@@ -72,20 +73,37 @@ def build_ved_report_html(data: Dict[str, Any]) -> str:
     pos = data.get("copilot_positions")
     if isinstance(pos, list) and pos:
         parts.append("<h2>Позиции (платежи / нетарифка)</h2>")
+        metadata = aggregate_payment_metadata(pos)
+        if metadata["amounts_provisional"] is True:
+            parts.append("<p><strong>Платежи предварительные: требуется проверка.</strong></p>")
+        elif metadata["amounts_provisional"] is None:
+            parts.append("<p>Для части позиций статус проверки суммы не сохранён.</p>")
         parts.append(
-            "<table><thead><tr><th>№</th><th>ТН ВЭД</th><th>Нетарифка</th><th>Платежи Σ, ₽</th></tr></thead><tbody>"
+            "<table><thead><tr><th>№</th><th>ТН ВЭД</th><th>Нетарифка</th><th>Сумма расчёта, ₽</th></tr></thead><tbody>"
         )
         for i, row in enumerate(pos[:300], start=1):
             if not isinstance(row, dict):
                 continue
+            row_metadata = payment_result_metadata(row)
+            provisional = row_metadata["amounts_provisional"]
+            amount_label = "Предварительно" if provisional is True else (
+                "Статус проверки суммы не сохранён" if provisional is None else "Расчёт"
+            )
             parts.append(
                 "<tr>"
                 f"<td>{i}</td>"
                 f"<td>{_esc(row.get('effective_hs_code'))}</td>"
                 f"<td>{_esc(row.get('non_tariff_status'))}</td>"
-                f"<td>{_esc(row.get('total_payable'))}</td>"
+                f"<td>{_esc(row.get('total_payable'))}<br/>{amount_label}</td>"
                 "</tr>"
             )
+            if row_metadata["payment_status"] or row_metadata["payment_review_reason"]:
+                parts.append(
+                    "<tr><td colspan=\"4\">"
+                    f"Статус платежей: {_esc(row_metadata['payment_status'])}. "
+                    f"{_esc(row_metadata['payment_review_reason'])}"
+                    "</td></tr>"
+                )
         parts.append("</tbody></table>")
 
     aa = data.get("ai_analyst") or {}

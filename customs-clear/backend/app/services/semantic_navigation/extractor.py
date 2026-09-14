@@ -23,6 +23,21 @@ from dataclasses import dataclass, field
 
 from ..tnved_tree.helpers import digits, strip_leading_dashes
 from .bounded_slices import (
+    BULK_2204_CONTEXT_CODES,
+    BULK_2204_CONTEXT_SIGNATURE,
+    BULK_2204_OTHER_ANCHOR_CODE,
+    BULK_2204_OTHER_CODES,
+    BULK_2204_OTHER_DEPTH,
+    BULK_2204_OTHER_LEAF_COUNT,
+    BULK_2204_OTHER_RAW,
+    BULK_2204_OTHER_REASON,
+    BULK_2204_OTHER_SCOPE_KIND,
+    BULK_2204_OTHER_STOP_CODE,
+    BULK_2204_OTHER_TITLE,
+    BULK_2204_PARENT_CODE,
+    BULK_2204_PARENT_DESCRIPTION,
+    BULK_2204_ROOT_ANCHOR_CODE,
+    BULK_2204_ROOT_ANCHOR_DESCRIPTION,
     Bounded0304GroupSpec,
     CHEESE_0406_AFTER_CODE,
     CHEESE_0406_AFTER_DESCRIPTION,
@@ -39,15 +54,27 @@ from .bounded_slices import (
     CHEESE_0406_STOP_CODE,
     CHEESE_0406_STOP_DESCRIPTION,
     PDO_2204_ANCHOR_CODE,
+    PDO_2204_ANCHOR_DESCRIPTION,
     PDO_2204_CODES,
+    PDO_2204_COLOUR_SIGNATURE,
     PDO_2204_DEPTH,
     PDO_2204_HEADING,
     PDO_2204_LEAF_COUNT,
     PDO_2204_OFFICIAL_HEADER,
+    PDO_2204_OTHER_ANCHOR_CODE,
+    PDO_2204_OTHER_CODES,
+    PDO_2204_OTHER_DEPTH,
+    PDO_2204_OTHER_HIERARCHY_HINT,
+    PDO_2204_OTHER_LEAF_COUNT,
+    PDO_2204_OTHER_RAW,
+    PDO_2204_OTHER_REASON,
+    PDO_2204_OTHER_SCOPE_KIND,
+    PDO_2204_OTHER_TITLE,
     PDO_2204_PARENT_CODE,
     PDO_2204_REASON,
     PDO_2204_SCOPE_KIND,
     PDO_2204_STOP_CODE,
+    PDO_2204_TITLE,
     PGI_2204_OFFICIAL_HEADER,
     PGI_2204_TITLE,
     STATE_0304_PAD_CODE,
@@ -422,6 +449,177 @@ def _bounded_2204_pdo_group(
         verified_scope_end_inclusive=PDO_2204_STOP_CODE,
         verified_scope_parent_code=PDO_2204_PARENT_CODE,
         verified_scope_leaf_count=PDO_2204_LEAF_COUNT,
+    )
+
+
+def _source_signature(
+    commodity_codes: list[str],
+    records_by_code: dict[str, SourceRecord],
+    expected_codes: tuple[str, ...],
+) -> tuple[tuple[str, str, bool | None, str], ...]:
+    """Exact ordered code/parent/role/description signature."""
+
+    return tuple(
+        (
+            code,
+            str(records_by_code[code].parent_code or ""),
+            records_by_code[code].is_leaf,
+            records_by_code[code].description,
+        )
+        for code in commodity_codes
+        if code in expected_codes
+    )
+
+
+def _bounded_2204_pdo_other_group(
+    *,
+    heading: str,
+    commodity_codes: list[str],
+    records_by_code: dict[str, SourceRecord],
+    pdo_group: ExtractedGroup | None,
+) -> ExtractedGroup | None:
+    """Nest only the retained depth-7 ``прочие`` PDO boundary."""
+
+    if heading != PDO_2204_HEADING or pdo_group is None:
+        return None
+    anchor = records_by_code.get(PDO_2204_ANCHOR_CODE)
+    other_anchor = records_by_code.get(PDO_2204_OTHER_ANCHOR_CODE)
+    if (
+        anchor is None
+        or anchor.description != PDO_2204_ANCHOR_DESCRIPTION
+        or other_anchor is None
+        or _source_signature(
+            commodity_codes, records_by_code, PDO_2204_CODES
+        ) != PDO_2204_COLOUR_SIGNATURE
+    ):
+        return None
+    headers = _packed_headers(other_anchor.description)
+    boundary = [
+        (index, header)
+        for index, header in enumerate(headers)
+        if header.dash_depth == PDO_2204_OTHER_DEPTH
+    ]
+    if (
+        len(boundary) != 1
+        or boundary[0][0] == 0
+        or boundary[0][0] != len(headers) - 1
+        or boundary[0][1].raw != PDO_2204_OTHER_RAW
+        or boundary[0][1].exact_title != PDO_2204_OTHER_TITLE
+        or boundary[0][1].has_terminal_colon is not True
+    ):
+        return None
+    start = commodity_codes.index(PDO_2204_OTHER_ANCHOR_CODE)
+    stop = commodity_codes.index(PDO_2204_STOP_CODE)
+    slice_codes = commodity_codes[start + 1 : stop + 1]
+    if (
+        tuple(slice_codes) != PDO_2204_OTHER_CODES
+        or any(
+            header.dash_depth <= PDO_2204_OTHER_DEPTH
+            for code in commodity_codes[start + 1 : stop]
+            for header in _packed_headers(records_by_code[code].description)
+        )
+    ):
+        return None
+    return ExtractedGroup(
+        title=PDO_2204_OTHER_TITLE,
+        raw=PDO_2204_OTHER_RAW,
+        source_code=PDO_2204_OTHER_ANCHOR_CODE,
+        after_code=PDO_2204_OTHER_ANCHOR_CODE,
+        confidence=HIGH,
+        reason=PDO_2204_OTHER_REASON,
+        dash_depth=PDO_2204_OTHER_DEPTH,
+        parent_title_hint=PDO_2204_TITLE,
+        parent_source_code_hint=PDO_2204_ANCHOR_CODE,
+        hierarchy_hint=PDO_2204_OTHER_HIERARCHY_HINT,
+        verified_scope_kind=PDO_2204_OTHER_SCOPE_KIND,
+        verified_scope_start_exclusive=PDO_2204_OTHER_ANCHOR_CODE,
+        verified_scope_end_inclusive=PDO_2204_STOP_CODE,
+        verified_scope_parent_code=PDO_2204_PARENT_CODE,
+        verified_scope_leaf_count=PDO_2204_OTHER_LEAF_COUNT,
+    )
+
+
+def _bounded_2204_bulk_other_group(
+    *,
+    heading: str,
+    commodity_codes: list[str],
+    records_by_code: dict[str, SourceRecord],
+    accepted_groups: list[ExtractedGroup],
+) -> ExtractedGroup | None:
+    """Return the exact retained 220422 ``прочие`` interval."""
+
+    parent = records_by_code.get(BULK_2204_PARENT_CODE)
+    root_anchor = records_by_code.get(BULK_2204_ROOT_ANCHOR_CODE)
+    other_anchor = records_by_code.get(BULK_2204_OTHER_ANCHOR_CODE)
+    if (
+        heading != PDO_2204_HEADING
+        or parent is None
+        or parent.is_leaf is not False
+        or parent.description != BULK_2204_PARENT_DESCRIPTION
+        or root_anchor is None
+        or root_anchor.is_leaf is not True
+        or root_anchor.parent_code != BULK_2204_PARENT_CODE
+        or root_anchor.description != BULK_2204_ROOT_ANCHOR_DESCRIPTION
+        or other_anchor is None
+        or _source_signature(
+            commodity_codes, records_by_code, BULK_2204_CONTEXT_CODES
+        ) != BULK_2204_CONTEXT_SIGNATURE
+    ):
+        return None
+    headers = _packed_headers(other_anchor.description)
+    boundary = [
+        (index, header)
+        for index, header in enumerate(headers)
+        if header.dash_depth == BULK_2204_OTHER_DEPTH
+    ]
+    if (
+        len(boundary) != 1
+        or boundary[0][0] == 0
+        or boundary[0][0] != len(headers) - 1
+        or boundary[0][1].raw != BULK_2204_OTHER_RAW
+        or boundary[0][1].exact_title != BULK_2204_OTHER_TITLE
+        or boundary[0][1].has_terminal_colon is not True
+        or sum(
+            group.source_code == BULK_2204_OTHER_STOP_CODE
+            and group.after_code == BULK_2204_OTHER_STOP_CODE
+            and group.dash_depth == PDO_2204_DEPTH
+            and _normalise_title(group.title) == _normalise_title(PGI_2204_TITLE)
+            for group in accepted_groups
+        ) != 1
+    ):
+        return None
+    start = commodity_codes.index(BULK_2204_OTHER_ANCHOR_CODE)
+    stop = commodity_codes.index(BULK_2204_OTHER_STOP_CODE)
+    slice_codes = commodity_codes[start + 1 : stop + 1]
+    if (
+        tuple(slice_codes) != BULK_2204_OTHER_CODES
+        or any(
+            header.dash_depth <= BULK_2204_OTHER_DEPTH
+            for code in commodity_codes[start + 1 : stop]
+            for header in _packed_headers(records_by_code[code].description)
+        )
+        or any(
+            group.after_code is not None
+            and BULK_2204_OTHER_ANCHOR_CODE
+            < group.after_code
+            < BULK_2204_OTHER_STOP_CODE
+            for group in accepted_groups
+        )
+    ):
+        return None
+    return ExtractedGroup(
+        title=BULK_2204_OTHER_TITLE,
+        raw=BULK_2204_OTHER_RAW,
+        source_code=BULK_2204_OTHER_ANCHOR_CODE,
+        after_code=BULK_2204_OTHER_ANCHOR_CODE,
+        confidence=HIGH,
+        reason=BULK_2204_OTHER_REASON,
+        dash_depth=BULK_2204_OTHER_DEPTH,
+        verified_scope_kind=BULK_2204_OTHER_SCOPE_KIND,
+        verified_scope_start_exclusive=BULK_2204_OTHER_ANCHOR_CODE,
+        verified_scope_end_inclusive=BULK_2204_OTHER_STOP_CODE,
+        verified_scope_parent_code=BULK_2204_PARENT_CODE,
+        verified_scope_leaf_count=BULK_2204_OTHER_LEAF_COUNT,
     )
 
 
@@ -955,6 +1153,42 @@ class SemanticStructureExtractor:
                 len(groups),
             )
             groups.insert(insert_at, bounded_pdo)
+
+        bounded_pdo_other = _bounded_2204_pdo_other_group(
+            heading=heading4,
+            commodity_codes=commodity_codes,
+            records_by_code=records_by_code,
+            pdo_group=bounded_pdo,
+        )
+        if bounded_pdo_other is not None:
+            insert_at = next(
+                (
+                    index
+                    for index, group in enumerate(groups)
+                    if group.after_code is not None
+                    and group.after_code > PDO_2204_OTHER_ANCHOR_CODE
+                ),
+                len(groups),
+            )
+            groups.insert(insert_at, bounded_pdo_other)
+
+        bounded_bulk_other = _bounded_2204_bulk_other_group(
+            heading=heading4,
+            commodity_codes=commodity_codes,
+            records_by_code=records_by_code,
+            accepted_groups=groups,
+        )
+        if bounded_bulk_other is not None:
+            insert_at = next(
+                (
+                    index
+                    for index, group in enumerate(groups)
+                    if group.after_code is not None
+                    and group.after_code > BULK_2204_OTHER_ANCHOR_CODE
+                ),
+                len(groups),
+            )
+            groups.insert(insert_at, bounded_bulk_other)
 
         return ExtractionResult(
             heading=heading4,
