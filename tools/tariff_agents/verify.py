@@ -5,7 +5,7 @@ import stat
 import unittest
 
 REQUIRED = ('test_control', 'test_runtime', 'test_audit', 'test_lease',
-            'test_a5_independent')
+            'test_a5_independent', 'test_a6_provider_timeout')
 BRIDGE_TEST = 'test_audit_bridge'
 BRIDGE_ARTIFACTS = (
     '.github/workflows/tariff-a6-live.yml',

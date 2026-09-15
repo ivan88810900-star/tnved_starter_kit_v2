@@ -36,6 +36,7 @@ class AuditBlocked(RuntimeBlocked):
 MAX_FILES = 64
 MAX_FILE_BYTES = 100_000
 MAX_PACKET_BYTES = 600_000
+A6_PROVIDER_TIMEOUT_SECONDS = 300
 CONTRACT_PATH = ".ai/orchestration/CONTRACT.md"
 OFFICIAL_HOSTS = frozenset({
     "eec.eaeunion.org", "docs.eaeunion.org", "portal.eaeunion.org", "eaeunion.org",
@@ -397,7 +398,8 @@ def run_audit(repo, packet, *, environ=None):
     try:
         response = request_json("https://api.anthropic.com/v1/messages", method="POST",
             headers={"x-api-key": env["ANTHROPIC_API_KEY"], "anthropic-version": "2023-06-01",
-                     "Content-Type": "application/json"}, payload=payload)
+                     "Content-Type": "application/json"}, payload=payload,
+            timeout=A6_PROVIDER_TIMEOUT_SECONDS)
         if response.get("stop_reason") != "end_turn":
             raise AuditBlocked("External audit did not finish normally")
         blocks = response.get("content")
