@@ -1,64 +1,70 @@
 {
-  "schema_version": 1,
-  "checked_at": "2026-09-14T17:18:16Z",
-  "status": "BLOCKED_CONNECTOR_NO_REPOSITORY_DISPATCH",
-  "live_verified": false,
-  "provider_called": false,
-  "secret_values_read": false,
+  "authorized_merges": [
+    {
+      "ci_run": 34852286695,
+      "merge_commit": "9afee755a90ab834300008f3de9164a2c6a4c298",
+      "pr": 190,
+      "reviewed_head": "0195a2b5eef30a96feaf866061ce2a706d1c08f3"
+    },
+    {
+      "a5": "PASS",
+      "ci_run": 34852521668,
+      "merge_commit": "8d38d5966012ed3e34fa2b55eedc23ac22578339",
+      "pr": 193,
+      "reviewed_head": "0126404cd78fd293f3634bd20c5fd09f937e83ba"
+    },
+    {
+      "a5": "PASS",
+      "ci_run": 34852829770,
+      "main_tree": "b46ba60f12cba31de30f8b4d25b2feff6c90e38b",
+      "merge_commit": "4b115d418318222d5750a9c34072751c0d0765d7",
+      "pr": 194,
+      "reviewed_head": "47da2e4763261cddc638cc276573b3375508a9ac",
+      "reviewed_tree": "b46ba60f12cba31de30f8b4d25b2feff6c90e38b"
+    }
+  ],
+  "blocker": {
+    "capability": "fresh reviewed bridge fix and new one-time smoke authorization",
+    "reason": "The previously authorized one-time dispatch has been consumed. A6 remains not LIVE_VERIFIED because the provider was never called.",
+    "safe_next_step": "Publish a scoped bridge-fixture fix, obtain fresh independent A5 and exact-head CI, then request owner approval for one new commit-bound smoke dispatch."
+  },
+  "checked_at": "2026-09-15T10:02:59.829287+00:00",
+  "confirmed_failure": {
+    "evidence": "Run 34954553183 passed the default-branch context gate, then audit_bridge prepare returned BLOCKED before the credentialed provider step; provider step was skipped and no artifact was created. Static source line in tests/agent_orchestration/test_audit_bridge.py assigns ANTHROPIC_API_KEY to safe-test-key-value and matches the adapter's credential-pattern backstop.",
+    "id": "A0-A6-LIVE-PACKET-FIXTURE-001",
+    "remediation": "Keep scanner unchanged. Rewrite the test fixture so key name/value are composed at runtime while preserving the same security assertions, then run local bridge tests, independent A5 when native subagents are available, and exact-head CI before requesting a new one-time live smoke authorization.",
+    "summary": "Fail-closed audit packet scanning rejects test_audit_bridge.py because the committed fixture contains a static credential-like API key assignment."
+  },
   "environment_assertion": {
-    "name": "tariff-a6-trusted",
     "allowed_branch": "main",
     "anthropic_api_key_scope": "environment_secret",
     "model_scope": "environment_variable",
+    "name": "tariff-a6-trusted",
     "repository_level_copies_removed": true,
     "source": "owner_assertion_only"
   },
-  "authorized_merges": [
-    {
-      "pr": 190,
-      "reviewed_head": "0195a2b5eef30a96feaf866061ce2a706d1c08f3",
-      "merge_commit": "9afee755a90ab834300008f3de9164a2c6a4c298",
-      "ci_run": 34852286695
-    },
-    {
-      "pr": 193,
-      "reviewed_head": "0126404cd78fd293f3634bd20c5fd09f937e83ba",
-      "merge_commit": "8d38d5966012ed3e34fa2b55eedc23ac22578339",
-      "ci_run": 34852521668,
-      "a5": "PASS"
-    },
-    {
-      "pr": 194,
-      "reviewed_head": "47da2e4763261cddc638cc276573b3375508a9ac",
-      "reviewed_tree": "b46ba60f12cba31de30f8b4d25b2feff6c90e38b",
-      "merge_commit": "4b115d418318222d5750a9c34072751c0d0765d7",
-      "main_tree": "b46ba60f12cba31de30f8b4d25b2feff6c90e38b",
-      "ci_run": 34852829770,
-      "a5": "PASS"
-    }
-  ],
+  "live_smoke_attempt": {
+    "artifact_uploaded": false,
+    "conclusion": "failure",
+    "consumed": true,
+    "context_gate": "success",
+    "event_type": "tariff-a6-live",
+    "packet_prepare": "failure",
+    "provider_step": "skipped",
+    "request_id": "a6-live-smoke-20260914-1718z",
+    "workflow_head_sha": "4b115d418318222d5750a9c34072751c0d0765d7",
+    "workflow_run_id": 34954553183
+  },
+  "live_verified": false,
+  "pending_live_smoke": null,
+  "provider_called": false,
+  "schema_version": 1,
+  "secret_values_read": false,
+  "status": "BLOCKED_PACKET_PREPARE",
   "trusted_workflow": {
-    "path": ".github/workflows/tariff-a6-live.yml",
     "default_branch_head": "4b115d418318222d5750a9c34072751c0d0765d7",
+    "path": ".github/workflows/tariff-a6-live.yml",
     "trigger": "repository_dispatch:tariff-a6-live",
     "workflow_present_on_default_branch": true
-  },
-  "pending_live_smoke": {
-    "event_type": "tariff-a6-live",
-    "client_payload": {
-      "request_id": "a6-live-smoke-20260914-1718z",
-      "base_sha": "8d38d5966012ed3e34fa2b55eedc23ac22578339",
-      "head_sha": "47da2e4763261cddc638cc276573b3375508a9ac",
-      "contract_sha": "0195a2b5eef30a96feaf866061ce2a706d1c08f3",
-      "paths_json": "[\".ai/orchestration/A6_LIVE_BRIDGE.md\",\".github/workflows/tariff-a6-live.yml\",\"tests/agent_orchestration/test_audit_bridge.py\",\"tools/tariff_agents/audit_bridge.py\"]",
-      "official_sources_json": "[]"
-    },
-    "contains_secrets": false
-  },
-  "blocker": {
-    "capability": "repository_dispatch write action",
-    "available_in_current_github_connector": false,
-    "reason": "Current connector exposes Actions reads/reruns but no repository_dispatch creation action. Environment credentials are intentionally inaccessible outside the trusted Actions job, so A0 cannot substitute a local/provider call.",
-    "safe_next_step": "Trigger the recorded tariff-a6-live repository_dispatch externally exactly once. A0 can then poll that run, download the scrubbed artifact, validate commit/packet binding, and set LIVE_VERIFIED only on a valid Anthropic response."
   }
 }
