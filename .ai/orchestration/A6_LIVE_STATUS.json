@@ -1,4 +1,11 @@
 {
+  "analysis": {
+    "abandoned_branch": "agent/a6-live-fixture-scan-fix-001",
+    "abandoned_branch_note": "Branch was created from main during initial triage but no file or commit was changed; branch deletion remains prohibited without owner approval.",
+    "conclusion": "NO_BRIDGE_CODE_CHANGE_REQUIRED",
+    "finding_id": "A0-A6-LIVE-PACKET-SCOPE-001",
+    "reason": "The bridge fail-closed behavior is correct. The first smoke packet unnecessarily included tests/agent_orchestration/test_audit_bridge.py, whose deliberate credential-like fixture is supposed to be rejected by the packet scanner. A live-connectivity smoke should instead use a minimal reviewed non-secret supporting file with base=head at the trusted main commit."
+  },
   "authorized_merges": [
     {
       "ci_run": 34852286695,
@@ -24,17 +31,12 @@
     }
   ],
   "blocker": {
-    "capability": "fresh reviewed bridge fix and new one-time smoke authorization",
-    "reason": "The previously authorized one-time dispatch has been consumed. A6 remains not LIVE_VERIFIED because the provider was never called.",
-    "safe_next_step": "Publish a scoped bridge-fixture fix, obtain fresh independent A5 and exact-head CI, then request owner approval for one new commit-bound smoke dispatch."
+    "available_in_current_github_connector": false,
+    "capability": "new one-time smoke authorization and external repository_dispatch",
+    "reason": "The first authorized dispatch was consumed and failed before provider invocation due packet scope. The connector still cannot create repository_dispatch.",
+    "safe_next_step": "Owner approves the exact new pending_live_smoke payload and triggers it once with authenticated gh; A0 then polls the exact run and validates only the scrubbed receipt."
   },
-  "checked_at": "2026-09-15T10:02:59.829287+00:00",
-  "confirmed_failure": {
-    "evidence": "Run 34954553183 passed the default-branch context gate, then audit_bridge prepare returned BLOCKED before the credentialed provider step; provider step was skipped and no artifact was created. Static source line in tests/agent_orchestration/test_audit_bridge.py assigns ANTHROPIC_API_KEY to safe-test-key-value and matches the adapter's credential-pattern backstop.",
-    "id": "A0-A6-LIVE-PACKET-FIXTURE-001",
-    "remediation": "Keep scanner unchanged. Rewrite the test fixture so key name/value are composed at runtime while preserving the same security assertions, then run local bridge tests, independent A5 when native subagents are available, and exact-head CI before requesting a new one-time live smoke authorization.",
-    "summary": "Fail-closed audit packet scanning rejects test_audit_bridge.py because the committed fixture contains a static credential-like API key assignment."
-  },
+  "checked_at": "2026-09-15T10:04:32.106108+00:00",
   "environment_assertion": {
     "allowed_branch": "main",
     "anthropic_api_key_scope": "environment_secret",
@@ -56,11 +58,24 @@
     "workflow_run_id": 34954553183
   },
   "live_verified": false,
-  "pending_live_smoke": null,
+  "pending_live_smoke": {
+    "authorization_status": "REQUIRES_OWNER_APPROVAL",
+    "client_payload": {
+      "base_sha": "4b115d418318222d5750a9c34072751c0d0765d7",
+      "contract_sha": "4b115d418318222d5750a9c34072751c0d0765d7",
+      "head_sha": "4b115d418318222d5750a9c34072751c0d0765d7",
+      "official_sources_json": "[]",
+      "paths_json": "[\".ai/orchestration/A6_LIVE_BRIDGE.md\"]",
+      "request_id": "a6-live-smoke-20260915-minimal-001"
+    },
+    "contains_secrets": false,
+    "event_type": "tariff-a6-live",
+    "rationale": "Minimal connectivity/schema smoke: one reviewed non-secret bridge document, empty commit diff, exact main commit and exact contract binding."
+  },
   "provider_called": false,
   "schema_version": 1,
   "secret_values_read": false,
-  "status": "BLOCKED_PACKET_PREPARE",
+  "status": "BLOCKED_AWAITING_NEW_SMOKE_AUTHORIZATION",
   "trusted_workflow": {
     "default_branch_head": "4b115d418318222d5750a9c34072751c0d0765d7",
     "path": ".github/workflows/tariff-a6-live.yml",
