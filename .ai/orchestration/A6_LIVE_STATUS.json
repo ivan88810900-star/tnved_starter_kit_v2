@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "checked_at": "2026-09-15T10:11:54.647103+00:00",
+  "checked_at": "2026-09-15T10:21:30+00:00",
   "status": "UNAVAILABLE_PROVIDER_OR_RESPONSE",
   "live_verified": false,
   "provider_called": true,
@@ -59,14 +59,45 @@
   "diagnosis": {
     "id": "A0-A6-PROVIDER-TIMEOUT-001",
     "status": "HIGH_CONFIDENCE_HYPOTHESIS",
-    "summary": "The checked adapter reached the provider step but returned UNAVAILABLE without a valid response. The provider step lasted approximately 45.2 seconds, matching tools.tariff_agents.runtime.request_json default timeout=45 seconds. The configured model identifier is a current Claude API model identifier, so the timeout boundary is the leading technical explanation, not proof of a configuration error.",
+    "summary": "The checked adapter reached the provider step but returned UNAVAILABLE without a valid response. The provider step lasted approximately 45.2 seconds, matching tools.tariff_agents.runtime.request_json default timeout=45 seconds. Timeout is the leading technical explanation, not direct proof of the provider failure reason.",
     "evidence": "Workflow run 34956230055: provider invocation started 10:07:32.801Z and returned UNAVAILABLE at 10:08:18.028Z; runtime.request_json default timeout is 45 seconds. The scrubbed receipt intentionally does not persist provider error bodies.",
-    "next_action": "Create a scoped non-main candidate that gives the A6 Anthropic request an explicit bounded timeout longer than 45 seconds, retain fail-closed no-retry behavior, add regression coverage, run exact-head CI and independent A5 before any protected merge or new live smoke."
+    "remediation_candidate": {
+      "pr": 209,
+      "branch": "agent/a6-provider-timeout-001",
+      "head_sha": "ada0b689bfd538e5742223a8d103088ba4dd6df7",
+      "base_sha": "4b115d418318222d5750a9c34072751c0d0765d7",
+      "changes": [
+        "tools/tariff_agents/audit.py",
+        "tests/agent_orchestration/test_a6_provider_timeout.py",
+        "tools/tariff_agents/verify.py"
+      ],
+      "behavior": "Explicit A6-only request timeout raised from inherited 45 seconds to bounded 300 seconds; no retries; fail-closed UNAVAILABLE behavior retained.",
+      "exact_head_ci": {
+        "run_id": 34957340166,
+        "conclusion": "success",
+        "mandatory_verifier": "101/101",
+        "timeout_regressions": "2/2",
+        "snapshot_tests": "4/4",
+        "snapshot_validation": "valid"
+      },
+      "independent_a5": {
+        "status": "NOT_RUN_CAPABILITY_UNAVAILABLE",
+        "reason": "This interactive runtime exposes GitHub/shell tooling but no native OpenAI subagent/spawn mechanism. A5 is therefore not imitated and no A5 PASS is claimed."
+      },
+      "readiness": "DRAFT_NOT_READY_FOR_MERGE"
+    }
+  },
+  "product_triage": {
+    "pr": 187,
+    "head_sha": "5d3b0c1dc7dd8e396c4f812db2bf6f1fa6d293f9",
+    "state": "open_draft_mergeable",
+    "write_action_this_run": false,
+    "reason": "No native A1/A2/A3/A4 subagent mechanism is exposed in this interactive runtime; no product agent execution was imitated."
   },
   "pending_live_smoke": null,
   "blocker": {
-    "capability": "A6 live verification",
-    "reason": "A real provider request was attempted for request_id a6-live-smoke-20260915-minimal-001 but no valid Anthropic response was obtained. This request must not be repeated automatically.",
+    "capability": "fresh independent A5 before protected merge of PR 209",
+    "reason": "Exact-head CI and deterministic regressions pass, but the current runtime cannot launch a real independent A5 subagent. A6 remains not LIVE_VERIFIED and the consumed provider request must not be retried automatically.",
     "owner_action_now": null
   }
 }
