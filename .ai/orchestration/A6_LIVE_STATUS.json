@@ -1,85 +1,72 @@
 {
-  "analysis": {
-    "abandoned_branch": "agent/a6-live-fixture-scan-fix-001",
-    "abandoned_branch_note": "Branch was created from main during initial triage but no file or commit was changed; branch deletion remains prohibited without owner approval.",
-    "conclusion": "NO_BRIDGE_CODE_CHANGE_REQUIRED",
-    "finding_id": "A0-A6-LIVE-PACKET-SCOPE-001",
-    "reason": "The bridge fail-closed behavior is correct. The first smoke packet unnecessarily included tests/agent_orchestration/test_audit_bridge.py, whose deliberate credential-like fixture is supposed to be rejected by the packet scanner. A live-connectivity smoke should instead use a minimal reviewed non-secret supporting file with base=head at the trusted main commit."
-  },
-  "authorized_merges": [
-    {
-      "ci_run": 34852286695,
-      "merge_commit": "9afee755a90ab834300008f3de9164a2c6a4c298",
-      "pr": 190,
-      "reviewed_head": "0195a2b5eef30a96feaf866061ce2a706d1c08f3"
-    },
-    {
-      "a5": "PASS",
-      "ci_run": 34852521668,
-      "merge_commit": "8d38d5966012ed3e34fa2b55eedc23ac22578339",
-      "pr": 193,
-      "reviewed_head": "0126404cd78fd293f3634bd20c5fd09f937e83ba"
-    },
-    {
-      "a5": "PASS",
-      "ci_run": 34852829770,
-      "main_tree": "b46ba60f12cba31de30f8b4d25b2feff6c90e38b",
-      "merge_commit": "4b115d418318222d5750a9c34072751c0d0765d7",
-      "pr": 194,
-      "reviewed_head": "47da2e4763261cddc638cc276573b3375508a9ac",
-      "reviewed_tree": "b46ba60f12cba31de30f8b4d25b2feff6c90e38b"
-    }
-  ],
-  "blocker": {
-    "available_in_current_github_connector": false,
-    "capability": "new one-time smoke authorization and external repository_dispatch",
-    "reason": "The first authorized dispatch was consumed and failed before provider invocation due packet scope. The connector still cannot create repository_dispatch.",
-    "safe_next_step": "Owner approves the exact new pending_live_smoke payload and triggers it once with authenticated gh; A0 then polls the exact run and validates only the scrubbed receipt."
-  },
-  "checked_at": "2026-09-15T10:04:32.106108+00:00",
+  "schema_version": 1,
+  "checked_at": "2026-09-15T10:11:54.647103+00:00",
+  "status": "UNAVAILABLE_PROVIDER_OR_RESPONSE",
+  "live_verified": false,
+  "provider_called": true,
+  "secret_values_read": false,
   "environment_assertion": {
+    "name": "tariff-a6-trusted",
     "allowed_branch": "main",
     "anthropic_api_key_scope": "environment_secret",
     "model_scope": "environment_variable",
-    "name": "tariff-a6-trusted",
     "repository_level_copies_removed": true,
     "source": "owner_assertion_only"
   },
-  "live_smoke_attempt": {
-    "artifact_uploaded": false,
-    "conclusion": "failure",
-    "consumed": true,
-    "context_gate": "success",
-    "event_type": "tariff-a6-live",
-    "packet_prepare": "failure",
-    "provider_step": "skipped",
-    "request_id": "a6-live-smoke-20260914-1718z",
-    "workflow_head_sha": "4b115d418318222d5750a9c34072751c0d0765d7",
-    "workflow_run_id": 34954553183
-  },
-  "live_verified": false,
-  "pending_live_smoke": {
-    "authorization_status": "REQUIRES_OWNER_APPROVAL",
-    "client_payload": {
-      "base_sha": "4b115d418318222d5750a9c34072751c0d0765d7",
-      "contract_sha": "4b115d418318222d5750a9c34072751c0d0765d7",
-      "head_sha": "4b115d418318222d5750a9c34072751c0d0765d7",
-      "official_sources_json": "[]",
-      "paths_json": "[\".ai/orchestration/A6_LIVE_BRIDGE.md\"]",
-      "request_id": "a6-live-smoke-20260915-minimal-001"
-    },
-    "contains_secrets": false,
-    "event_type": "tariff-a6-live",
-    "rationale": "Minimal connectivity/schema smoke: one reviewed non-secret bridge document, empty commit diff, exact main commit and exact contract binding."
-  },
-  "provider_called": false,
-  "schema_version": 1,
-  "secret_values_read": false,
-  "status": "BLOCKED_AWAITING_NEW_SMOKE_AUTHORIZATION",
   "trusted_workflow": {
-    "default_branch_head": "4b115d418318222d5750a9c34072751c0d0765d7",
     "path": ".github/workflows/tariff-a6-live.yml",
+    "default_branch_head": "4b115d418318222d5750a9c34072751c0d0765d7",
     "trigger": "repository_dispatch:tariff-a6-live",
     "workflow_present_on_default_branch": true
+  },
+  "attempts": [
+    {
+      "request_id": "a6-live-smoke-20260914-1718z",
+      "workflow_run_id": 34954553183,
+      "result": "BLOCKED_PACKET_PREPARE",
+      "provider_called": false,
+      "artifact_uploaded": false
+    },
+    {
+      "request_id": "a6-live-smoke-20260915-minimal-001",
+      "workflow_run_id": 34956230055,
+      "workflow_head_sha": "4b115d418318222d5750a9c34072751c0d0765d7",
+      "context_gate": "success",
+      "packet_prepare": "success",
+      "provider_step": "executed",
+      "provider_called": true,
+      "workflow_conclusion": "failure",
+      "bridge_status": "UNAVAILABLE",
+      "audit_status": "UNAVAILABLE",
+      "artifact_id": 10391232264,
+      "artifact_digest": "sha256:57958c7d3bb7feb1bc9d910270546743d16c9e0443869b971d26f391f9ef2e0c",
+      "receipt_sha256": "f450105a7815151064fa5e2423fa0108dc5ac4a832274e069e6f96c5c61c99e1",
+      "packet_sha256": "56e594ffbec979ce5ee035071ccfd0751179c74b1bb3ae1a7876101a15f254af",
+      "base_sha": "4b115d418318222d5750a9c34072751c0d0765d7",
+      "head_sha": "4b115d418318222d5750a9c34072751c0d0765d7",
+      "contract_sha": "4b115d418318222d5750a9c34072751c0d0765d7",
+      "trusted_workflow_sha": "4b115d418318222d5750a9c34072751c0d0765d7",
+      "provider_message_id": null,
+      "validated": {
+        "receipt_hash": true,
+        "request_binding": true,
+        "commit_binding": true,
+        "workflow_binding": true,
+        "packet_hash_matches_prepare_log": true
+      }
+    }
+  ],
+  "diagnosis": {
+    "id": "A0-A6-PROVIDER-TIMEOUT-001",
+    "status": "HIGH_CONFIDENCE_HYPOTHESIS",
+    "summary": "The checked adapter reached the provider step but returned UNAVAILABLE without a valid response. The provider step lasted approximately 45.2 seconds, matching tools.tariff_agents.runtime.request_json default timeout=45 seconds. The configured model identifier is a current Claude API model identifier, so the timeout boundary is the leading technical explanation, not proof of a configuration error.",
+    "evidence": "Workflow run 34956230055: provider invocation started 10:07:32.801Z and returned UNAVAILABLE at 10:08:18.028Z; runtime.request_json default timeout is 45 seconds. The scrubbed receipt intentionally does not persist provider error bodies.",
+    "next_action": "Create a scoped non-main candidate that gives the A6 Anthropic request an explicit bounded timeout longer than 45 seconds, retain fail-closed no-retry behavior, add regression coverage, run exact-head CI and independent A5 before any protected merge or new live smoke."
+  },
+  "pending_live_smoke": null,
+  "blocker": {
+    "capability": "A6 live verification",
+    "reason": "A real provider request was attempted for request_id a6-live-smoke-20260915-minimal-001 but no valid Anthropic response was obtained. This request must not be repeated automatically.",
+    "owner_action_now": null
   }
 }
