@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "checked_at": "2026-09-15T10:21:30+00:00",
+  "checked_at": "2026-09-16T08:59:58+00:00",
   "status": "UNAVAILABLE_PROVIDER_OR_RESPONSE",
   "live_verified": false,
   "provider_called": true,
@@ -81,10 +81,24 @@
         "snapshot_validation": "valid"
       },
       "independent_a5": {
-        "status": "NOT_RUN_CAPABILITY_UNAVAILABLE",
-        "reason": "This interactive runtime exposes GitHub/shell tooling but no native OpenAI subagent/spawn mechanism. A5 is therefore not imitated and no A5 PASS is claimed."
+        "status": "PASSED",
+        "session_id": "/root/a5_pr209_exact",
+        "head_sha": "ada0b689bfd538e5742223a8d103088ba4dd6df7",
+        "tree_sha": "c5cb9cce7642282a9bcfcf17efa75e03481807ac",
+        "reviewed_at": "2026-09-16T08:59:58+00:00",
+        "findings": [],
+        "evidence": {
+          "focused_timeout_tests": "2/2",
+          "agent_orchestration_regression": "105/105",
+          "deterministic_verifier": "101/101",
+          "snapshot_tests": "4/4",
+          "snapshot_validation": "valid",
+          "git_diff_check": "clean",
+          "git_status": "clean",
+          "verdict": "No material findings; one bounded 300-second A6 provider request, no retry, fail-closed UNAVAILABLE and all packet/head/response validation retained."
+        }
       },
-      "readiness": "DRAFT_NOT_READY_FOR_MERGE"
+      "readiness": "READY_FOR_OWNER_MERGE_APPROVAL"
     }
   },
   "product_triage": {
@@ -96,8 +110,8 @@
   },
   "pending_live_smoke": null,
   "blocker": {
-    "capability": "fresh independent A5 before protected merge of PR 209",
-    "reason": "Exact-head CI and deterministic regressions pass, but the current runtime cannot launch a real independent A5 subagent. A6 remains not LIVE_VERIFIED and the consumed provider request must not be retried automatically.",
-    "owner_action_now": null
+    "capability": "protected merge of PR 209",
+    "reason": "PR 209 has fresh independent native A5 PASS and exact-head CI success. The next step is the protected merge to main; A6 remains not LIVE_VERIFIED and the consumed provider request must not be retried.",
+    "owner_action_now": "Authorize merge of PR 209 into main."
   }
 }
