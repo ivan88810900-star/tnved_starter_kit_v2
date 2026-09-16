@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "checked_at": "2026-09-16T10:44:00+00:00",
-  "status": "UNAVAILABLE_ADAPTER_FIX_IMPLEMENTED_PENDING_FRESH_A5",
+  "checked_at": "2026-09-16T11:29:48.210Z",
+  "status": "ADAPTER_FIX_A5_AND_CI_PASSED_AWAITING_OWNER_MERGE_AUTHORIZATION",
   "live_verified": false,
   "provider_called": true,
   "secret_values_read": false,
@@ -114,14 +114,14 @@
   ],
   "diagnosis": {
     "id": "A0-A6-POST-TIMEOUT-LIVE-001",
-    "status": "CONFIRMED_ADAPTER_DEFECT_FIX_IMPLEMENTED_PENDING_FRESH_A5",
+    "status": "CONFIRMED_ADAPTER_DEFECT_FIX_VERIFIED_AWAITING_OWNER_MERGE_AUTHORIZATION",
     "summary": "The old adapter rejected valid leading thinking/redacted_thinking blocks before final text. PR 210 fixes that compatibility defect and provides safe stage codes. Supplemental A0 review then reproduced non-string JSON discriminator TypeErrors in the first fix; the follow-up now preserves bounded UNAVAILABLE and validated packet binding and allowlists persisted diagnostic codes.",
     "exact_non_secret_reason": "The consumed live run's exact terminal cause is unrecoverable because the old adapter collapsed HTTP, transport, stop-reason, content-shape, JSON and validation failures. The parser defect is confirmed, but not proven to be the historical run's cause. STOP_MAX_TOKENS remains a hypothesis; null provider_message_id is not proof that no provider response arrived because the old code checked the ID after content validation.",
     "constraints": [
       "No automatic or manual retry of consumed requests.",
       "No provider success may be inferred from provider_called=true or synthetic test responses.",
-      "A6 remains unavailable until reviewed code is merged with owner approval and a distinct authorized live verification returns valid evidence.",
-      "The new PR head invalidates the prior native A5 approval and prior CI readiness."
+      "A6 remains unavailable until the exact reviewed code is merged with owner approval and one distinct authorized live verification returns valid evidence.",
+      "Fresh A5 and CI apply only to exact PR 210 HEAD 08b59755929486ee07dc35df3d01fecb9219a05c; any new HEAD invalidates them."
     ],
     "remediation_candidate": {
       "pr": 210,
@@ -141,10 +141,17 @@
       "pull_request_ci": "success",
       "pull_request_ci_checkout": "810200e740b2b46ff629a4143846b37c2932f191",
       "independent_a5": {
-        "status": "NOT_RUN_CAPABILITY_BLOCKED",
+        "status": "PASSED",
         "head_sha": "08b59755929486ee07dc35df3d01fecb9219a05c",
-        "session_id": null,
-        "reason": "This interactive runtime has no native subagent spawn mechanism; no reviewer was imitated. A native-capable coordinator must launch a fresh independent A5 on this exact head."
+        "base_sha": "fd4fa346beae824661452624709f9252321ca155",
+        "session_id": "/root/a5_pr210_exact_08b59755",
+        "findings": [],
+        "mandatory_verifier": "112/112",
+        "snapshot_tests": "4/4",
+        "adversarial_replay": "9/9 test methods; 86 explicit cases",
+        "compileall": "passed",
+        "diff_check": "clean",
+        "provider_calls": 0
       },
       "historical_a5": {
         "status": "PASSED_ON_SUPERSEDED_HEAD_ONLY",
@@ -158,8 +165,9 @@
       },
       "scope": "Leading thinking/redacted_thinking plus exactly one terminal text block; fixed safe diagnostics; type guards preserve packet binding; mandatory regression tests. No retry, provider call, workflow, permission or production change.",
       "evidence_ref": ".ai/orchestration/evidence/pr210-diagnostics-followup-20260916.json",
-      "readiness": "IMPLEMENTED_CI_PASSED_PENDING_FRESH_INDEPENDENT_A5",
-      "merge_ready": false
+      "readiness": "READY_FOR_OWNER_MERGE_AUTHORIZATION",
+      "merge_ready": true,
+      "merge_authorized": false
     }
   },
   "product_triage": {
@@ -173,9 +181,9 @@
   },
   "pending_live_smoke": null,
   "blocker": {
-    "capability": "fresh independent native A5 execution on current PR210 head",
-    "reason": "Implementation and exact-head CI are complete, but current interactive tools cannot start a native A5. Old A5 PASS on 62269d7 cannot approve follow-up head 08b5975. No merge or new live smoke is ready yet.",
-    "owner_action_now": null,
-    "retry_policy": "DO_NOT_RETRY_OLD_REQUEST; NO_NEW_LIVE_REQUEST_IN_THIS_RUN"
+    "protected_action": "merge PR 210 into main",
+    "reason": "PR 210 exact HEAD has fresh independent A5 PASS and exact-head CI success. Merge into main is the only gate before one new commit-bound live A6 smoke.",
+    "owner_action_now": "AUTHORIZE_OR_DECLINE_PR210_MERGE",
+    "retry_policy": "DO_NOT_RETRY_OLD_REQUEST; AFTER_AUTHORIZED_MERGE_RUN_EXACTLY_ONE_DISTINCT_LIVE_SMOKE"
   }
 }
