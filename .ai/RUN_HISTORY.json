@@ -1,5 +1,5 @@
 {
-  "board_revision": 580,
+  "board_revision": 581,
   "runs": [
     {
       "head_sha": null,
@@ -1060,6 +1060,16 @@
       "status": "FINISHED",
       "task_id": "TARIFF-NTM-FRESHNESS-FAIL-CLOSED-001",
       "updated_at": "2026-09-16T17:01:48.371975+00:00"
+    },
+    {
+      "head_sha": "a286f7b24953f338a9fa4f910fb605ebc4328978",
+      "role": "A5",
+      "run_id": "7948907f5aeb448c9b4adf1e2de7f03f",
+      "session_id": "/root/a5_ntm_freshness_a286",
+      "started_at": "2026-09-16T17:02:37.472134+00:00",
+      "status": "RUNNING",
+      "task_id": "TARIFF-NTM-FRESHNESS-FAIL-CLOSED-001",
+      "updated_at": "2026-09-16T17:02:37.472146+00:00"
     }
   ],
   "schema_version": 1

@@ -723,7 +723,7 @@
     }
   ],
   "max_concurrent_subagents": 3,
-  "revision": 580,
+  "revision": 581,
   "runs": [
     {
       "head_sha": null,
@@ -1784,6 +1784,16 @@
       "status": "FINISHED",
       "task_id": "TARIFF-NTM-FRESHNESS-FAIL-CLOSED-001",
       "updated_at": "2026-09-16T17:01:48.371975+00:00"
+    },
+    {
+      "head_sha": "a286f7b24953f338a9fa4f910fb605ebc4328978",
+      "role": "A5",
+      "run_id": "7948907f5aeb448c9b4adf1e2de7f03f",
+      "session_id": "/root/a5_ntm_freshness_a286",
+      "started_at": "2026-09-16T17:02:37.472134+00:00",
+      "status": "RUNNING",
+      "task_id": "TARIFF-NTM-FRESHNESS-FAIL-CLOSED-001",
+      "updated_at": "2026-09-16T17:02:37.472146+00:00"
     }
   ],
   "schema_version": 1,
@@ -2858,7 +2868,7 @@
         ],
         "head_sha": "a286f7b24953f338a9fa4f910fb605ebc4328978"
       },
-      "updated_at": "2026-09-16T17:01:48.362587+00:00",
+      "updated_at": "2026-09-16T17:02:37.472148+00:00",
       "worktree": "/workspace/scratch/ecdeb44a862e/tariff-agent-worktrees/tariff-ntm-freshness-fail-closed-001-restored-g22"
     },
     {
@@ -3195,5 +3205,5 @@
       "worktree": "/workspace/scratch/ecdeb44a862e/tariff-agent-worktrees/tariff-ad30-recurring-artifacts-009-c5c1c819a3"
     }
   ],
-  "updated_at": "2026-09-16T17:01:48.398546+00:00"
+  "updated_at": "2026-09-16T17:02:37.473401+00:00"
 }
