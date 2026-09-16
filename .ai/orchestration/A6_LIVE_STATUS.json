@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "checked_at": "2026-09-16T09:42:50.005779+00:00",
-  "status": "BLOCKED_RUNTIME_DISPATCH_CAPABILITY",
+  "checked_at": "2026-09-16T09:51:23.834018+00:00",
+  "status": "BLOCKED_PACKET_SCOPE_CORRECTED_PENDING_DISPATCH",
   "live_verified": false,
   "provider_called": true,
   "secret_values_read": false,
@@ -54,13 +54,32 @@
         "workflow_binding": true,
         "packet_hash_matches_prepare_log": true
       }
+    },
+    {
+      "request_id": "a6-live-smoke-20260916-094250z-b4faa187",
+      "workflow_run_id": 35081603165,
+      "workflow_head_sha": "fd4fa346beae824661452624709f9252321ca155",
+      "context_gate": "success",
+      "packet_prepare": "blocked",
+      "provider_step": "skipped",
+      "provider_called": false,
+      "workflow_conclusion": "failure",
+      "bridge_status": "BLOCKED",
+      "audit_status": "NOT_RUN",
+      "artifact_uploaded": false,
+      "base_sha": "fd4fa346beae824661452624709f9252321ca155",
+      "head_sha": "fd4fa346beae824661452624709f9252321ca155",
+      "contract_sha": "fd4fa346beae824661452624709f9252321ca155",
+      "trusted_workflow_sha": "fd4fa346beae824661452624709f9252321ca155",
+      "reason_code": "A0_EMPTY_PATH_SCOPE",
+      "reason": "A0 dispatched paths_json=[]; audit.build_packet fail-closes unless paths contains at least one unique allowed tracked text path. The credentialed provider invocation was skipped, so no Anthropic request was consumed."
     }
   ],
   "diagnosis": {
     "id": "A0-A6-PROVIDER-TIMEOUT-001",
     "status": "REMEDIATION_MERGED_PENDING_LIVE_VERIFICATION",
     "summary": "The prior checked adapter reached the provider step but returned UNAVAILABLE at approximately the inherited 45-second transport boundary. PR #209 raised only the A6 request timeout to bounded 300 seconds with no retries and was merged after fresh independent A5 PASS and exact-head CI success.",
-    "evidence": "PR #209 exact candidate ada0b689bfd538e5742223a8d103088ba4dd6df7 had independent A5 PASS and Tariff agent safety run 34957340166 success; owner-authorized merge created main commit fd4fa346beae824661452624709f9252321ca155 on 2026-09-16T09:39:34Z.",
+    "evidence": "PR #209 exact candidate ada0b689bfd538e5742223a8d103088ba4dd6df7 had independent A5 PASS and Tariff agent safety run 34957340166 success; owner-authorized merge created main commit fd4fa346beae824661452624709f9252321ca155 on 2026-09-16T09:39:34Z. Post-merge run 35081603165 failed in packet preparation because A0 supplied an empty path scope; the provider step was skipped and therefore does not test the 300-second remediation.",
     "remediation_candidate": {
       "pr": 209,
       "branch": "agent/a6-provider-timeout-001",
@@ -98,7 +117,7 @@
           "verdict": "No material findings; one bounded 300-second A6 provider request, no retry, fail-closed UNAVAILABLE and all packet/head/response validation retained."
         }
       },
-      "readiness": "MERGED_PENDING_ONE_FRESH_LIVE_SMOKE"
+      "readiness": "MERGED_PENDING_ONE_FRESH_PROVIDER_CALL"
     }
   },
   "product_triage": {
@@ -111,24 +130,24 @@
     "reason": "No native A1/A2/A3/A4 subagent spawn mechanism is exposed in this interactive runtime; no product agent execution was imitated. GitHub/CI triage was refreshed only."
   },
   "pending_live_smoke": {
-    "request_id": "a6-live-smoke-20260916-094250z-b4faa187",
+    "request_id": "a6-live-smoke-20260916-095123z-corrected-001",
     "dispatch_count": 0,
     "consumed": false,
     "event_type": "tariff-a6-live",
     "workflow_sha": "fd4fa346beae824661452624709f9252321ca155",
     "client_payload": {
-      "request_id": "a6-live-smoke-20260916-094250z-b4faa187",
+      "request_id": "a6-live-smoke-20260916-095123z-corrected-001",
       "base_sha": "fd4fa346beae824661452624709f9252321ca155",
       "head_sha": "fd4fa346beae824661452624709f9252321ca155",
       "contract_sha": "fd4fa346beae824661452624709f9252321ca155",
-      "paths_json": "[]",
+      "paths_json": "[\".ai/orchestration/A6_LIVE_BRIDGE.md\"]",
       "official_sources_json": "[]"
     },
-    "rationale": "Minimal fresh transport smoke bound to the post-merge default-branch commit. It does not reuse the consumed prior request and is intended to exercise the newly merged 300-second A6-only timeout exactly once."
+    "rationale": "Corrected minimal transport smoke bound to the post-merge default-branch commit. The immediately prior dispatch never reached the provider because its empty path scope was rejected during credential-free packet preparation; this corrected request mirrors the previously proven minimal supporting-file scope and is the single remaining fresh provider call for the merged 300-second timeout."
   },
   "blocker": {
     "capability": "repository_dispatch write action unavailable in current ChatGPT GitHub tool surface",
-    "reason": "The trusted live workflow intentionally accepts only repository_dispatch. The connected GitHub tool can merge/read CI and perform repository writes but exposes no repository_dispatch/workflow-dispatch action, and the execution container has no authenticated GitHub CLI/network route. Changing the workflow trigger or permissions would weaken the reviewed trust boundary and is not allowed.",
-    "owner_action_now": "Send exactly the pending repository_dispatch once through an authenticated GitHub API/CLI path, then return here; A0 can poll the resulting run and validate the scrubbed receipt. Do not retry it if the provider fails."
+    "reason": "The trusted live workflow intentionally accepts only repository_dispatch. The connected GitHub tool can merge/read CI and perform repository writes but exposes no repository_dispatch/workflow-dispatch action. Changing the workflow trigger or permissions would weaken the reviewed trust boundary and is not allowed.",
+    "owner_action_now": "Send exactly the corrected pending repository_dispatch once through the already authenticated GitHub CLI path. Do not reuse either prior request id and do not retry if the provider is reached and fails."
   }
 }
