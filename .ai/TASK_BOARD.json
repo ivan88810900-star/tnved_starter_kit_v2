@@ -707,7 +707,12 @@
       "head_sha": "5230d8175ec31eca274fc9f72faaf7988b50d5a7",
       "id": "A2-NTM-EEC-FRESHNESS-SCOPE-010",
       "reporter": "A2",
-      "status": "CONFIRMED",
+      "resolution": {
+        "evidence": "A0 inspected exact two-file diff and tree mapping. _data_freshness no longer consumes EEC_ETT tariff status and always fails closed LOCAL/seed/stale pending a dedicated NTM freshness source; author focused/broader regressions passed and applicability/enforcement code is unchanged.",
+        "head_sha": "a286f7b24953f338a9fa4f910fb605ebc4328978",
+        "validator": "A0"
+      },
+      "status": "RESOLVED",
       "summary": "EEC_ETT freshness metadata describes the tariff source and cannot certify complete or current NTM rule coverage; current HEAD can expose false-fresh NTM data_freshness.",
       "task_id": "TARIFF-NTM-FRESHNESS-FAIL-CLOSED-001",
       "validation": {
@@ -718,7 +723,7 @@
     }
   ],
   "max_concurrent_subagents": 3,
-  "revision": 577,
+  "revision": 580,
   "runs": [
     {
       "head_sha": null,
@@ -1776,9 +1781,9 @@
       "run_id": "91e977b016984b728269cc928a3e45c3",
       "session_id": "/root/a2_ntm_freshness_fix",
       "started_at": "2026-09-16T16:52:14.702045+00:00",
-      "status": "RUNNING",
+      "status": "FINISHED",
       "task_id": "TARIFF-NTM-FRESHNESS-FAIL-CLOSED-001",
-      "updated_at": "2026-09-16T16:52:14.702058+00:00"
+      "updated_at": "2026-09-16T17:01:48.371975+00:00"
     }
   ],
   "schema_version": 1,
@@ -2806,7 +2811,7 @@
       },
       "refs": {
         "base_sha": "5d3b0c1dc7dd8e396c4f812db2bf6f1fa6d293f9",
-        "head_sha": "5230d8175ec31eca274fc9f72faaf7988b50d5a7",
+        "head_sha": "a286f7b24953f338a9fa4f910fb605ebc4328978",
         "pr": 207,
         "publication_mapping": {
           "identical_trees_verified": true,
@@ -2827,9 +2832,33 @@
         "Scheduled workflow and locked environment"
       ],
       "risk": "high",
-      "status": "IN_PROGRESS",
-      "tests": [],
-      "updated_at": "2026-09-16T16:52:14.702061+00:00",
+      "status": "IMPLEMENTED",
+      "tests": {
+        "commands": [
+          {
+            "command": "author focused data freshness",
+            "exit_code": 0,
+            "output": "3 passed"
+          },
+          {
+            "command": "author freshness/compliance/unknown-TR regression",
+            "exit_code": 0,
+            "output": "27 passed"
+          },
+          {
+            "command": "author broader official/enforcement-boundary NTM regression",
+            "exit_code": 0,
+            "output": "226 passed"
+          },
+          {
+            "command": "A0 exact diff scope and git diff --check",
+            "exit_code": 0,
+            "output": "exactly two owned files; clean; published tree 6fb77bfb matches local 43a9b708 tree"
+          }
+        ],
+        "head_sha": "a286f7b24953f338a9fa4f910fb605ebc4328978"
+      },
+      "updated_at": "2026-09-16T17:01:48.362587+00:00",
       "worktree": "/workspace/scratch/ecdeb44a862e/tariff-agent-worktrees/tariff-ntm-freshness-fail-closed-001-restored-g22"
     },
     {
@@ -3166,5 +3195,5 @@
       "worktree": "/workspace/scratch/ecdeb44a862e/tariff-agent-worktrees/tariff-ad30-recurring-artifacts-009-c5c1c819a3"
     }
   ],
-  "updated_at": "2026-09-16T16:52:14.703217+00:00"
+  "updated_at": "2026-09-16T17:01:48.398546+00:00"
 }

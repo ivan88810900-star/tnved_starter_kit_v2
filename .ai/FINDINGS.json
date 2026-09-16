@@ -1,5 +1,5 @@
 {
-  "board_revision": 577,
+  "board_revision": 580,
   "findings": [
     {
       "head_sha": "161a9258d174e93266353ae1fd2cb0b3e4657679",
@@ -708,7 +708,12 @@
       "head_sha": "5230d8175ec31eca274fc9f72faaf7988b50d5a7",
       "id": "A2-NTM-EEC-FRESHNESS-SCOPE-010",
       "reporter": "A2",
-      "status": "CONFIRMED",
+      "resolution": {
+        "evidence": "A0 inspected exact two-file diff and tree mapping. _data_freshness no longer consumes EEC_ETT tariff status and always fails closed LOCAL/seed/stale pending a dedicated NTM freshness source; author focused/broader regressions passed and applicability/enforcement code is unchanged.",
+        "head_sha": "a286f7b24953f338a9fa4f910fb605ebc4328978",
+        "validator": "A0"
+      },
+      "status": "RESOLVED",
       "summary": "EEC_ETT freshness metadata describes the tariff source and cannot certify complete or current NTM rule coverage; current HEAD can expose false-fresh NTM data_freshness.",
       "task_id": "TARIFF-NTM-FRESHNESS-FAIL-CLOSED-001",
       "validation": {
