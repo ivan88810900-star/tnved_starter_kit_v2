@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "checked_at": "2026-09-16T08:59:58+00:00",
-  "status": "UNAVAILABLE_PROVIDER_OR_RESPONSE",
+  "checked_at": "2026-09-16T09:42:50.005779+00:00",
+  "status": "BLOCKED_RUNTIME_DISPATCH_CAPABILITY",
   "live_verified": false,
   "provider_called": true,
   "secret_values_read": false,
@@ -15,7 +15,7 @@
   },
   "trusted_workflow": {
     "path": ".github/workflows/tariff-a6-live.yml",
-    "default_branch_head": "4b115d418318222d5750a9c34072751c0d0765d7",
+    "default_branch_head": "fd4fa346beae824661452624709f9252321ca155",
     "trigger": "repository_dispatch:tariff-a6-live",
     "workflow_present_on_default_branch": true
   },
@@ -58,14 +58,14 @@
   ],
   "diagnosis": {
     "id": "A0-A6-PROVIDER-TIMEOUT-001",
-    "status": "HIGH_CONFIDENCE_HYPOTHESIS",
-    "summary": "The checked adapter reached the provider step but returned UNAVAILABLE without a valid response. The provider step lasted approximately 45.2 seconds, matching tools.tariff_agents.runtime.request_json default timeout=45 seconds. Timeout is the leading technical explanation, not direct proof of the provider failure reason.",
-    "evidence": "Workflow run 34956230055: provider invocation started 10:07:32.801Z and returned UNAVAILABLE at 10:08:18.028Z; runtime.request_json default timeout is 45 seconds. The scrubbed receipt intentionally does not persist provider error bodies.",
+    "status": "REMEDIATION_MERGED_PENDING_LIVE_VERIFICATION",
+    "summary": "The prior checked adapter reached the provider step but returned UNAVAILABLE at approximately the inherited 45-second transport boundary. PR #209 raised only the A6 request timeout to bounded 300 seconds with no retries and was merged after fresh independent A5 PASS and exact-head CI success.",
+    "evidence": "PR #209 exact candidate ada0b689bfd538e5742223a8d103088ba4dd6df7 had independent A5 PASS and Tariff agent safety run 34957340166 success; owner-authorized merge created main commit fd4fa346beae824661452624709f9252321ca155 on 2026-09-16T09:39:34Z.",
     "remediation_candidate": {
       "pr": 209,
       "branch": "agent/a6-provider-timeout-001",
       "head_sha": "ada0b689bfd538e5742223a8d103088ba4dd6df7",
-      "base_sha": "4b115d418318222d5750a9c34072751c0d0765d7",
+      "merged_main_sha": "fd4fa346beae824661452624709f9252321ca155",
       "changes": [
         "tools/tariff_agents/audit.py",
         "tests/agent_orchestration/test_a6_provider_timeout.py",
@@ -98,20 +98,37 @@
           "verdict": "No material findings; one bounded 300-second A6 provider request, no retry, fail-closed UNAVAILABLE and all packet/head/response validation retained."
         }
       },
-      "readiness": "READY_FOR_OWNER_MERGE_APPROVAL"
+      "readiness": "MERGED_PENDING_ONE_FRESH_LIVE_SMOKE"
     }
   },
   "product_triage": {
     "pr": 187,
     "head_sha": "5d3b0c1dc7dd8e396c4f812db2bf6f1fa6d293f9",
     "state": "open_draft_mergeable",
+    "exact_head_ci_run_id": 34830630369,
+    "exact_head_ci": "success",
     "write_action_this_run": false,
-    "reason": "No native A1/A2/A3/A4 subagent mechanism is exposed in this interactive runtime; no product agent execution was imitated."
+    "reason": "No native A1/A2/A3/A4 subagent spawn mechanism is exposed in this interactive runtime; no product agent execution was imitated. GitHub/CI triage was refreshed only."
   },
-  "pending_live_smoke": null,
+  "pending_live_smoke": {
+    "request_id": "a6-live-smoke-20260916-094250z-b4faa187",
+    "dispatch_count": 0,
+    "consumed": false,
+    "event_type": "tariff-a6-live",
+    "workflow_sha": "fd4fa346beae824661452624709f9252321ca155",
+    "client_payload": {
+      "request_id": "a6-live-smoke-20260916-094250z-b4faa187",
+      "base_sha": "fd4fa346beae824661452624709f9252321ca155",
+      "head_sha": "fd4fa346beae824661452624709f9252321ca155",
+      "contract_sha": "fd4fa346beae824661452624709f9252321ca155",
+      "paths_json": "[]",
+      "official_sources_json": "[]"
+    },
+    "rationale": "Minimal fresh transport smoke bound to the post-merge default-branch commit. It does not reuse the consumed prior request and is intended to exercise the newly merged 300-second A6-only timeout exactly once."
+  },
   "blocker": {
-    "capability": "protected merge of PR 209",
-    "reason": "PR 209 has fresh independent native A5 PASS and exact-head CI success. The next step is the protected merge to main; A6 remains not LIVE_VERIFIED and the consumed provider request must not be retried.",
-    "owner_action_now": "Authorize merge of PR 209 into main."
+    "capability": "repository_dispatch write action unavailable in current ChatGPT GitHub tool surface",
+    "reason": "The trusted live workflow intentionally accepts only repository_dispatch. The connected GitHub tool can merge/read CI and perform repository writes but exposes no repository_dispatch/workflow-dispatch action, and the execution container has no authenticated GitHub CLI/network route. Changing the workflow trigger or permissions would weaken the reviewed trust boundary and is not allowed.",
+    "owner_action_now": "Send exactly the pending repository_dispatch once through an authenticated GitHub API/CLI path, then return here; A0 can poll the resulting run and validate the scrubbed receipt. Do not retry it if the provider fails."
   }
 }
