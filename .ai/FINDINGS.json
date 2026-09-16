@@ -1,5 +1,5 @@
 {
-  "board_revision": 566,
+  "board_revision": 569,
   "findings": [
     {
       "head_sha": "161a9258d174e93266353ae1fd2cb0b3e4657679",
@@ -690,7 +690,12 @@
       "head_sha": "abafd8b24ba248852185ac5cdbb1530f9e6e624e",
       "id": "A0-AD30-MONITOR-COUNT-009",
       "reporter": "A0",
-      "status": "CONFIRMED",
+      "resolution": {
+        "evidence": "A0 replayed the four failed exact tests on the published fix head: all 4 pass. The correction changes only explicit 72-to-76 and 28-to-32 coverage contracts; review-only 11 and discovery 9 remain unchanged.",
+        "head_sha": "fc19df03904430649e356978cf2086a616e6d244",
+        "validator": "A0"
+      },
+      "status": "RESOLVED",
       "summary": "Exact-head PR #212 CI run 35111917913 failed four deterministic assertions because the registered monitor source count increased from 72 to 76 while two explicit coverage-count test files remained stale.",
       "task_id": "TARIFF-AD30-RECURRING-ARTIFACTS-009",
       "validation": {

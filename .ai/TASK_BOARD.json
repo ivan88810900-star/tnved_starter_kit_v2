@@ -689,7 +689,12 @@
       "head_sha": "abafd8b24ba248852185ac5cdbb1530f9e6e624e",
       "id": "A0-AD30-MONITOR-COUNT-009",
       "reporter": "A0",
-      "status": "CONFIRMED",
+      "resolution": {
+        "evidence": "A0 replayed the four failed exact tests on the published fix head: all 4 pass. The correction changes only explicit 72-to-76 and 28-to-32 coverage contracts; review-only 11 and discovery 9 remain unchanged.",
+        "head_sha": "fc19df03904430649e356978cf2086a616e6d244",
+        "validator": "A0"
+      },
+      "status": "RESOLVED",
       "summary": "Exact-head PR #212 CI run 35111917913 failed four deterministic assertions because the registered monitor source count increased from 72 to 76 while two explicit coverage-count test files remained stale.",
       "task_id": "TARIFF-AD30-RECURRING-ARTIFACTS-009",
       "validation": {
@@ -700,7 +705,7 @@
     }
   ],
   "max_concurrent_subagents": 3,
-  "revision": 566,
+  "revision": 569,
   "runs": [
     {
       "head_sha": null,
@@ -1738,9 +1743,9 @@
       "run_id": "d4605ef652e442c7b64772364d6ab125",
       "session_id": "/root/a3_sources_triage",
       "started_at": "2026-09-16T15:03:35.024712+00:00",
-      "status": "RUNNING",
+      "status": "FINISHED",
       "task_id": "TARIFF-AD30-RECURRING-ARTIFACTS-009",
-      "updated_at": "2026-09-16T15:03:35.024727+00:00"
+      "updated_at": "2026-09-16T15:07:11.768256+00:00"
     }
   ],
   "schema_version": 1,
@@ -3035,7 +3040,7 @@
       "qa": null,
       "refs": {
         "base_sha": "5d3b0c1dc7dd8e396c4f812db2bf6f1fa6d293f9",
-        "head_sha": "abafd8b24ba248852185ac5cdbb1530f9e6e624e",
+        "head_sha": "fc19df03904430649e356978cf2086a616e6d244",
         "pr": 212
       },
       "required_checks": [
@@ -3045,11 +3050,30 @@
         "exact-head CI"
       ],
       "risk": "high",
-      "status": "IN_PROGRESS",
-      "tests": [],
-      "updated_at": "2026-09-16T15:03:35.024730+00:00",
+      "status": "IMPLEMENTED",
+      "tests": {
+        "commands": [
+          {
+            "command": "pytest four exact previously failing monitor-count contracts",
+            "exit_code": 0,
+            "output": "4 passed on published head fc19df03904430649e356978cf2086a616e6d244"
+          },
+          {
+            "command": "pytest complete test_opendata_source_integrity.py and test_observed_source_review_capture.py",
+            "exit_code": 0,
+            "output": "95 passed"
+          },
+          {
+            "command": "pytest combined six-file source regression set",
+            "exit_code": 0,
+            "output": "203 passed, one pre-existing Starlette/httpx warning; git diff --check passed"
+          }
+        ],
+        "head_sha": "fc19df03904430649e356978cf2086a616e6d244"
+      },
+      "updated_at": "2026-09-16T15:07:11.743109+00:00",
       "worktree": "/workspace/scratch/ecdeb44a862e/tariff-agent-worktrees/tariff-ad30-recurring-artifacts-009-c5c1c819a3"
     }
   ],
-  "updated_at": "2026-09-16T15:03:35.025899+00:00"
+  "updated_at": "2026-09-16T15:07:11.803723+00:00"
 }
