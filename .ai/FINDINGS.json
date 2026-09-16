@@ -1,5 +1,5 @@
 {
-  "board_revision": 563,
+  "board_revision": 566,
   "findings": [
     {
       "head_sha": "161a9258d174e93266353ae1fd2cb0b3e4657679",
@@ -683,6 +683,19 @@
       "validation": {
         "at": "2026-09-14T21:04:35.432980+00:00",
         "evidence": "A0 confirmed .ai/DECISIONS.md: DM-0008 and DM-0011 are accepted NTM decisions; DM-0014 is proposed manifest-bound ETT rate review authority.",
+        "validator": "A0"
+      }
+    },
+    {
+      "head_sha": "abafd8b24ba248852185ac5cdbb1530f9e6e624e",
+      "id": "A0-AD30-MONITOR-COUNT-009",
+      "reporter": "A0",
+      "status": "CONFIRMED",
+      "summary": "Exact-head PR #212 CI run 35111917913 failed four deterministic assertions because the registered monitor source count increased from 72 to 76 while two explicit coverage-count test files remained stale.",
+      "task_id": "TARIFF-AD30-RECURRING-ARTIFACTS-009",
+      "validation": {
+        "at": "2026-09-16T15:03:06.293787+00:00",
+        "evidence": "A0 reproduced all four failures locally on exact published head: configured and registered monitor counts are 76 after four intended AD30 targets, while tests still assert 72. Other three CI jobs succeeded.",
         "validator": "A0"
       }
     }

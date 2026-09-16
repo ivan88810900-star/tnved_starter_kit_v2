@@ -684,10 +684,23 @@
         "evidence": "A0 confirmed .ai/DECISIONS.md: DM-0008 and DM-0011 are accepted NTM decisions; DM-0014 is proposed manifest-bound ETT rate review authority.",
         "validator": "A0"
       }
+    },
+    {
+      "head_sha": "abafd8b24ba248852185ac5cdbb1530f9e6e624e",
+      "id": "A0-AD30-MONITOR-COUNT-009",
+      "reporter": "A0",
+      "status": "CONFIRMED",
+      "summary": "Exact-head PR #212 CI run 35111917913 failed four deterministic assertions because the registered monitor source count increased from 72 to 76 while two explicit coverage-count test files remained stale.",
+      "task_id": "TARIFF-AD30-RECURRING-ARTIFACTS-009",
+      "validation": {
+        "at": "2026-09-16T15:03:06.293787+00:00",
+        "evidence": "A0 reproduced all four failures locally on exact published head: configured and registered monitor counts are 76 after four intended AD30 targets, while tests still assert 72. Other three CI jobs succeeded.",
+        "validator": "A0"
+      }
     }
   ],
   "max_concurrent_subagents": 3,
-  "revision": 563,
+  "revision": 566,
   "runs": [
     {
       "head_sha": null,
@@ -1718,6 +1731,16 @@
       "status": "FINISHED",
       "task_id": "TARIFF-AD30-RECURRING-ARTIFACTS-009",
       "updated_at": "2026-09-16T14:55:29.217453+00:00"
+    },
+    {
+      "head_sha": "abafd8b24ba248852185ac5cdbb1530f9e6e624e",
+      "role": "A3",
+      "run_id": "d4605ef652e442c7b64772364d6ab125",
+      "session_id": "/root/a3_sources_triage",
+      "started_at": "2026-09-16T15:03:35.024712+00:00",
+      "status": "RUNNING",
+      "task_id": "TARIFF-AD30-RECURRING-ARTIFACTS-009",
+      "updated_at": "2026-09-16T15:03:35.024727+00:00"
     }
   ],
   "schema_version": 1,
@@ -2992,33 +3015,24 @@
       "files": [
         "customs-clear/backend/app/services/regulatory_source_registry.py",
         "customs-clear/backend/tests/test_official_source_original_capture.py",
-        "customs-clear/backend/tests/test_official_source_monitor.py"
+        "customs-clear/backend/tests/test_official_source_monitor.py",
+        "customs-clear/backend/tests/test_observed_source_review_capture.py",
+        "customs-clear/backend/tests/test_opendata_source_integrity.py"
       ],
       "goal": "Add four known direct AD30 official documents to the existing monitor-only legal-drift contour without promoting baselines or deciding legal applicability.",
       "id": "TARIFF-AD30-RECURRING-ARTIFACTS-009",
       "owner": "A3",
-      "qa": {
-        "commands": [
-          {
-            "command": "git diff --check 5d3b0c1dc7dd8e396c4f812db2bf6f1fa6d293f9..abafd8b24ba248852185ac5cdbb1530f9e6e624e",
-            "exit_code": 0,
-            "output": "success; exact three-file scope and clean published worktree verified"
-          },
-          {
-            "command": "uv run --isolated --with-requirements requirements-monitor.txt --with-requirements requirements.txt python -m pytest -q tests/test_official_source_monitor.py tests/test_official_source_original_capture.py tests/test_regulatory_source_completeness.py tests/test_regulatory_source_updates.py tests/test_source_quarantine_redteam.py tests/test_rejected_source_original_capture.py",
-            "exit_code": 0,
-            "output": "144 passed"
-          },
-          {
-            "command": "uv run --isolated --with-requirements requirements-monitor.txt --with-requirements requirements.txt python -m pytest -q tests/test_regulatory_review_queue.py tests/test_payment_registry_references.py",
-            "exit_code": 0,
-            "output": "28 passed; adversarial harness separately passed 30 assertions"
-          }
-        ],
-        "head_sha": "abafd8b24ba248852185ac5cdbb1530f9e6e624e",
-        "reviewer_session_id": "/root/a5_ad30_recurring_exact",
-        "status": "PASSED"
-      },
+      "ownership_decisions": [
+        {
+          "by": "A0",
+          "files": [
+            "customs-clear/backend/tests/test_observed_source_review_capture.py",
+            "customs-clear/backend/tests/test_opendata_source_integrity.py"
+          ],
+          "reason": "Exact-head CI exposed two unowned explicit monitor-count contracts. A0 independently reproduced the four stale 72-to-76 assertions; A3 owns only the scoped expectation updates."
+        }
+      ],
+      "qa": null,
       "refs": {
         "base_sha": "5d3b0c1dc7dd8e396c4f812db2bf6f1fa6d293f9",
         "head_sha": "abafd8b24ba248852185ac5cdbb1530f9e6e624e",
@@ -3031,20 +3045,11 @@
         "exact-head CI"
       ],
       "risk": "high",
-      "status": "QA_PASSED",
-      "tests": {
-        "commands": [
-          {
-            "command": "uv run --isolated --with-requirements requirements-monitor.txt --with-requirements requirements.txt python -m pytest -q tests/test_official_source_monitor.py tests/test_official_source_original_capture.py tests/test_regulatory_source_updates.py tests/test_regulatory_source_completeness.py",
-            "exit_code": 0,
-            "output": "108 passed, 1 Starlette deprecation warning; git diff --check passed; exact three-file scope verified"
-          }
-        ],
-        "head_sha": "abafd8b24ba248852185ac5cdbb1530f9e6e624e"
-      },
-      "updated_at": "2026-09-16T14:55:29.205290+00:00",
+      "status": "IN_PROGRESS",
+      "tests": [],
+      "updated_at": "2026-09-16T15:03:35.024730+00:00",
       "worktree": "/workspace/scratch/ecdeb44a862e/tariff-agent-worktrees/tariff-ad30-recurring-artifacts-009-c5c1c819a3"
     }
   ],
-  "updated_at": "2026-09-16T14:55:29.218598+00:00"
+  "updated_at": "2026-09-16T15:03:35.025899+00:00"
 }
