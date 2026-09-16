@@ -189,6 +189,21 @@ class AuditBridgeTests(unittest.TestCase):
         self.assertNotIn(self.env["ANTHROPIC_API_KEY"], saved)
         self.assertNotIn("missing", saved)
 
+    def test_unavailable_receipt_keeps_only_bounded_safe_provider_failure_code(self):
+        packet_path = self.prepare()
+        packet = json.loads(packet_path.read_text())
+        unavailable = {**self.valid_result(packet), "status": "UNAVAILABLE",
+                       "live_verified": False, "failure_code": "CONTENT_SHAPE"}
+        receipt_path = self.repo / "safe-diagnostic.json"
+        with patch.object(audit, "run_audit", return_value=unavailable):
+            receipt, code = audit_bridge.run(
+                self.repo, request_id="A6-123", base=self.base, head=self.head,
+                contract=self.head, packet_path=packet_path, receipt_path=receipt_path,
+                environ=self.env)
+        self.assertEqual(code, 2)
+        self.assertEqual(receipt["provider_failure_code"], "CONTENT_SHAPE")
+        self.assertNotIn(self.env["ANTHROPIC_API_KEY"], receipt_path.read_text())
+
     def test_invalid_or_secret_shaped_adapter_result_fails_closed(self):
         packet_path = self.prepare()
         packet = json.loads(packet_path.read_text())
