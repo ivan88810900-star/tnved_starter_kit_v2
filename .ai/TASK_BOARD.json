@@ -723,7 +723,7 @@
     }
   ],
   "max_concurrent_subagents": 3,
-  "revision": 586,
+  "revision": 587,
   "runs": [
     {
       "head_sha": null,
@@ -2981,37 +2981,57 @@
       "goal": "Propagate fail-closed NTM data_freshness into the primary normative requirements product flow as a neutral or amber visibility signal without changing applicability, enforcement, flags, database state, or legal-currentness claims.",
       "id": "TARIFF-NTM-NORMATIVE-FRESHNESS-VISIBILITY-002",
       "owner": "A2",
-      "qa": null,
+      "qa": {
+        "status": "PASSED",
+        "head_sha": "564cc34b3c6b5d18c4d9a960b1c342257ec9f5e7",
+        "reviewer_session_id": "/root/a5_ntm_restack_564cc34b",
+        "findings": [],
+        "commands": [
+          {
+            "command": "independent two-parent/tree/scope and git diff --check",
+            "exit_code": 0,
+            "output": "exact conflict-free union; eight files; 467 additions, 16 deletions; clean"
+          },
+          {
+            "command": "independent backend focused freshness/normative",
+            "exit_code": 0,
+            "output": "18 passed"
+          },
+          {
+            "command": "independent frontend focused and full",
+            "exit_code": 0,
+            "output": "12 focused; 62 full passed"
+          },
+          {
+            "command": "independent typecheck and production build",
+            "exit_code": 0,
+            "output": "PASS"
+          },
+          {
+            "command": "broader NTM diagnostic",
+            "exit_code": 0,
+            "output": "596 passed, 1 skipped; 230 environment failures from absent untracked populated SQLite table, not code findings"
+          }
+        ]
+      },
       "refs": {
         "base_sha": "a286f7b24953f338a9fa4f910fb605ebc4328978",
         "head_sha": "564cc34b3c6b5d18c4d9a960b1c342257ec9f5e7",
         "observed_ci": {
-          "head_sha": "5330e6aebd777fd880d938da6b4891a1ec8cf864",
-          "not_promoted_to_ci_gate_reason": "High-risk A6 remains LIVE_VERIFIED=false; exact-head CI is observed but controller readiness requires current bound audit evidence.",
-          "pull_request_run": {
-            "head_sha": "5330e6aebd777fd880d938da6b4891a1ec8cf864",
-            "optional_job": {
-              "Acquire official ETT candidate evidence": "skipped"
-            },
-            "required_jobs": {
-              "Backend NTM safety suite": "success",
-              "Frontend tests, types and build": "success",
-              "Scheduled workflow and locked environment": "success",
-              "Validate and build local staging images": "success"
-            },
-            "run_id": 35096956458,
-            "status": "PASSED",
-            "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/35096956458"
-          },
+          "head_sha": "564cc34b3c6b5d18c4d9a960b1c342257ec9f5e7",
+          "run_id": 35127475218,
+          "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/35127475218",
+          "status": "PASSED",
           "required_jobs": {
             "Backend NTM safety suite": "success",
             "Frontend tests, types and build": "success",
             "Scheduled workflow and locked environment": "success",
             "Validate and build local staging images": "success"
           },
-          "run_id": 35096571047,
-          "status": "PASSED",
-          "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/35096571047"
+          "optional_job": {
+            "Acquire official ETT candidate evidence": "skipped"
+          },
+          "not_promoted_to_ci_gate_reason": "High-risk A6 remains LIVE_VERIFIED=false; exact-head CI is supporting evidence only."
         },
         "pr": 211,
         "publication_mapping": {
@@ -3032,7 +3052,7 @@
         "Scheduled workflow and locked environment"
       ],
       "risk": "high",
-      "status": "IMPLEMENTED",
+      "status": "QA_PASSED",
       "tests": {
         "head_sha": "564cc34b3c6b5d18c4d9a960b1c342257ec9f5e7",
         "commands": [
@@ -3058,7 +3078,7 @@
           }
         ]
       },
-      "updated_at": "2026-09-16T17:27:49.274+00:00",
+      "updated_at": "2026-09-16T17:34:12.473+00:00",
       "worktree": "/workspace/scratch/ecdeb44a862e/tariff-agent-worktrees/tariff-ntm-normative-freshness-visibility-002-5fc1946031"
     },
     {
@@ -3246,5 +3266,5 @@
       "updated_at": "2026-09-16T17:25:43.736+00:00"
     }
   ],
-  "updated_at": "2026-09-16T17:27:49.274+00:00"
+  "updated_at": "2026-09-16T17:34:12.473+00:00"
 }
