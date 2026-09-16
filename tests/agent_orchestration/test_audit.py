@@ -410,6 +410,60 @@ class AuditTests(unittest.TestCase):
         self.assertEqual(payload["output_config"]["format"]["type"], "json_schema")
         self.assertNotIn(self.env["ANTHROPIC_API_KEY"], json.dumps(payload))
 
+    @patch.object(audit, "request_json")
+    def test_opus5_thinking_prefixes_are_allowed_before_terminal_text(self, request):
+        packet = self.packet()
+        text = json.dumps(self.findings(packet))
+        for prefix in (
+            [{"type": "thinking", "thinking": "", "signature": "fixture"}],
+            [{"type": "thinking", "thinking": "", "signature": "one"},
+             {"type": "thinking", "thinking": "", "signature": "two"}],
+            [{"type": "redacted_thinking", "data": "fixture"}],
+        ):
+            request.return_value = {"id": "msg_mock", "stop_reason": "end_turn",
+                                    "content": [*prefix, {"type": "text", "text": text}]}
+            result = audit.run_audit(self.repo, packet, environ=self.env)
+            self.assertEqual(result["status"], "NEEDS_A0_VALIDATION")
+
+    @patch.object(audit, "request_json")
+    def test_nonterminal_duplicate_missing_and_unknown_text_shapes_fail_closed(self, request):
+        packet = self.packet()
+        text = json.dumps(self.findings(packet))
+        responses = (
+            [{"type": "text", "text": text},
+             {"type": "thinking", "thinking": "", "signature": "fixture"}],
+            [{"type": "text", "text": text}, {"type": "text", "text": text}],
+            [{"type": "thinking", "thinking": "", "signature": "fixture"}],
+            [{"type": "tool_use", "id": "tool_fixture"},
+             {"type": "text", "text": text}],
+            [{"type": "text"}],
+        )
+        for blocks in responses:
+            request.return_value = {"id": "msg_mock", "stop_reason": "end_turn",
+                                    "content": blocks}
+            result = audit.run_audit(self.repo, packet, environ=self.env)
+            self.assertEqual(result["status"], "UNAVAILABLE")
+            self.assertEqual(result["failure_code"], "CONTENT_SHAPE")
+
+    @patch.object(audit, "request_json")
+    def test_safe_failure_codes_distinguish_stop_transport_and_validation(self, request):
+        packet = self.packet()
+        request.return_value = {"id": "msg_mock", "stop_reason": "max_tokens", "content": []}
+        self.assertEqual(audit.run_audit(self.repo, packet, environ=self.env)["failure_code"],
+                         "STOP_MAX_TOKENS")
+        request.return_value = {"id": "msg_mock", "stop_reason": "refusal", "content": []}
+        self.assertEqual(audit.run_audit(self.repo, packet, environ=self.env)["failure_code"],
+                         "STOP_REFUSAL")
+        request.side_effect = audit.RuntimeBlocked("API request failed (HTTP 529)")
+        result = audit.run_audit(self.repo, packet, environ=self.env)
+        self.assertEqual(result["failure_code"], "PROVIDER_HTTP_529")
+        self.assertNotIn(self.env["ANTHROPIC_API_KEY"], json.dumps(result))
+        request.side_effect = None
+        request.return_value = {"id": "msg_mock", "stop_reason": "end_turn",
+                                "content": [{"type": "text", "text": "not json"}]}
+        self.assertEqual(audit.run_audit(self.repo, packet, environ=self.env)["failure_code"],
+                         "OUTPUT_JSON")
+
     def test_invalid_findings_binding_scope_lines_and_extra_keys(self):
         packet = self.packet()
         for mutate in (

@@ -9,9 +9,10 @@ public. A0 must choose only reviewed code, contracts and non-secret fixtures.
 No repository-wide content scan, directory upload, remote URL fetch or Claude tool
 is used. Changed paths must all be included; an incomplete diff is never sent.
 
-Official API references checked 2026-09-12:
+Official API references checked 2026-09-16:
 https://platform.claude.com/docs/en/api/messages/create
 https://platform.claude.com/docs/en/build-with-claude/structured-outputs
+https://platform.claude.com/docs/en/models/opus-5/whats-new-opus-5
 """
 
 from __future__ import annotations
@@ -335,6 +336,68 @@ FINDINGS_SCHEMA = {
 }
 
 
+A6_FAILURE_CODES = frozenset({
+    "PROVIDER_TRANSPORT_OR_JSON", "PROVIDER_REDIRECT_REFUSED",
+    "PROVIDER_RESPONSE_TOO_LARGE", "PROVIDER_RESPONSE_NOT_OBJECT",
+    "PROVIDER_RUNTIME_BLOCKED", "STOP_MAX_TOKENS", "STOP_REFUSAL", "STOP_OTHER",
+    "CONTENT_SHAPE", "OUTPUT_JSON", "FINDINGS_VALIDATION", "INVALID_MESSAGE_ID",
+})
+
+
+def is_safe_failure_code(value):
+    """Only fixed diagnostic labels and bounded HTTP codes may be persisted."""
+    return isinstance(value, str) and (
+        value in A6_FAILURE_CODES or
+        re.fullmatch(r"PROVIDER_HTTP_[1-5][0-9]{2}", value) is not None)
+
+
+def _unavailable(binding, failure_code):
+    """Return a fail-closed result with a bounded, non-secret diagnostic enum."""
+    return {**binding, "status": "UNAVAILABLE",
+            "reason": "External audit failed or returned invalid evidence",
+            "failure_code": (failure_code if is_safe_failure_code(failure_code)
+                             else "PROVIDER_RUNTIME_BLOCKED"),
+            "live_verified": False}
+
+
+def _runtime_failure_code(exc):
+    """Classify only adapter-owned safe messages; never persist remote bodies."""
+    message = str(exc)
+    match = re.fullmatch(r"API request failed \(HTTP ([1-5][0-9]{2})\)", message)
+    if match:
+        return "PROVIDER_HTTP_" + match.group(1)
+    return {
+        "API transport or JSON response failed": "PROVIDER_TRANSPORT_OR_JSON",
+        "API redirect refused": "PROVIDER_REDIRECT_REFUSED",
+        "API response exceeds byte limit": "PROVIDER_RESPONSE_TOO_LARGE",
+        "API response is not an object": "PROVIDER_RESPONSE_NOT_OBJECT",
+    }.get(message, "PROVIDER_RUNTIME_BLOCKED")
+
+
+def _structured_text(blocks):
+    """Select one terminal text block while allowing Opus 5 thinking prefixes."""
+    if not isinstance(blocks, list) or not blocks:
+        raise AuditBlocked("Unexpected external audit content")
+    text = None
+    for index, block in enumerate(blocks):
+        if not isinstance(block, dict):
+            raise AuditBlocked("Unexpected external audit content")
+        kind = block.get("type")
+        if not isinstance(kind, str):
+            raise AuditBlocked("Unexpected external audit content")
+        if kind in {"thinking", "redacted_thinking"}:
+            if text is not None:
+                raise AuditBlocked("Unexpected external audit content")
+            continue
+        if (kind != "text" or text is not None or index != len(blocks) - 1 or
+                not isinstance(block.get("text"), str)):
+            raise AuditBlocked("Unexpected external audit content")
+        text = block["text"]
+    if text is None:
+        raise AuditBlocked("Unexpected external audit content")
+    return text
+
+
 def validate_findings(result, packet, *, environ=None):
     if (not isinstance(result, dict) or set(result) !=
             {"packet_sha256", "head_sha", "findings", "limitations"} or
@@ -400,19 +463,32 @@ def run_audit(repo, packet, *, environ=None):
             headers={"x-api-key": env["ANTHROPIC_API_KEY"], "anthropic-version": "2023-06-01",
                      "Content-Type": "application/json"}, payload=payload,
             timeout=A6_PROVIDER_TIMEOUT_SECONDS)
-        if response.get("stop_reason") != "end_turn":
-            raise AuditBlocked("External audit did not finish normally")
-        blocks = response.get("content")
-        if (not isinstance(blocks, list) or len(blocks) != 1 or
-                blocks[0].get("type") != "text"):
-            raise AuditBlocked("Unexpected external audit content")
-        result = validate_findings(json.loads(blocks[0]["text"]), packet, environ=env)
-        request_id = response.get("id")
-        if not isinstance(request_id, str) or not re.fullmatch(r"[A-Za-z0-9_-]{1,180}", request_id):
-            raise AuditBlocked("External audit response has no valid message ID")
+    except RuntimeBlocked as exc:
+        return _unavailable(binding, _runtime_failure_code(exc))
+    stop_reason = response.get("stop_reason")
+    if not isinstance(stop_reason, str):
+        return _unavailable(binding, "STOP_OTHER")
+    if stop_reason != "end_turn":
+        failure_code = {
+            "max_tokens": "STOP_MAX_TOKENS",
+            "refusal": "STOP_REFUSAL",
+        }.get(stop_reason, "STOP_OTHER")
+        return _unavailable(binding, failure_code)
+    try:
+        text = _structured_text(response.get("content"))
+    except AuditBlocked:
+        return _unavailable(binding, "CONTENT_SHAPE")
+    try:
+        decoded = json.loads(text)
+    except (ValueError, TypeError):
+        return _unavailable(binding, "OUTPUT_JSON")
+    try:
+        result = validate_findings(decoded, packet, environ=env)
     except (RuntimeBlocked, ValueError, KeyError, TypeError, AttributeError):
-        return {**binding, "status": "UNAVAILABLE", "reason": "External audit failed or returned invalid evidence",
-                "live_verified": False}
+        return _unavailable(binding, "FINDINGS_VALIDATION")
+    request_id = response.get("id")
+    if not isinstance(request_id, str) or not re.fullmatch(r"[A-Za-z0-9_-]{1,180}", request_id):
+        return _unavailable(binding, "INVALID_MESSAGE_ID")
     return {**binding, "status": "NEEDS_A0_VALIDATION", "live_verified": True,
             "message_id": request_id, "model": model, "findings": result["findings"],
             "limitations": result["limitations"]}
