@@ -1,5 +1,5 @@
 {
-  "board_revision": 572,
+  "board_revision": 576,
   "files": {
     ".ai/orchestration/A6_LIVE_BRIDGE.md": {
       "branch": "agent/classification-tariff-a6-live-bridge-001-f5839c6c98",
@@ -35,7 +35,7 @@
       "branch": "agent/ntm-tariff-ntm-freshness-fail-closed-001-7407bd6726",
       "owner": "A2",
       "task_id": "TARIFF-NTM-FRESHNESS-FAIL-CLOSED-001",
-      "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-ntm-freshness-fail-closed-001-7407bd6726"
+      "worktree": "/workspace/scratch/ecdeb44a862e/tariff-agent-worktrees/tariff-ntm-freshness-fail-closed-001-restored-g22"
     },
     "customs-clear/backend/app/services/normative_requirements_block.py": {
       "branch": "agent/ntm-tariff-ntm-normative-freshness-visibility-002-5fc1946031",
@@ -89,7 +89,7 @@
       "branch": "agent/ntm-tariff-ntm-freshness-fail-closed-001-7407bd6726",
       "owner": "A2",
       "task_id": "TARIFF-NTM-FRESHNESS-FAIL-CLOSED-001",
-      "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-ntm-freshness-fail-closed-001-7407bd6726"
+      "worktree": "/workspace/scratch/ecdeb44a862e/tariff-agent-worktrees/tariff-ntm-freshness-fail-closed-001-restored-g22"
     },
     "customs-clear/backend/tests/test_normative_bundle.py": {
       "branch": "agent/rates-tariff-payment-unbound-admission-006-c8a905e03d",

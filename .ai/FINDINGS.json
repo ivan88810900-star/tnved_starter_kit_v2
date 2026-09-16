@@ -1,5 +1,5 @@
 {
-  "board_revision": 572,
+  "board_revision": 576,
   "findings": [
     {
       "head_sha": "161a9258d174e93266353ae1fd2cb0b3e4657679",
@@ -701,6 +701,19 @@
       "validation": {
         "at": "2026-09-16T15:03:06.293787+00:00",
         "evidence": "A0 reproduced all four failures locally on exact published head: configured and registered monitor counts are 76 after four intended AD30 targets, while tests still assert 72. Other three CI jobs succeeded.",
+        "validator": "A0"
+      }
+    },
+    {
+      "head_sha": "5230d8175ec31eca274fc9f72faaf7988b50d5a7",
+      "id": "A2-NTM-EEC-FRESHNESS-SCOPE-010",
+      "reporter": "A2",
+      "status": "CONFIRMED",
+      "summary": "EEC_ETT freshness metadata describes the tariff source and cannot certify complete or current NTM rule coverage; current HEAD can expose false-fresh NTM data_freshness.",
+      "task_id": "TARIFF-NTM-FRESHNESS-FAIL-CLOSED-001",
+      "validation": {
+        "at": "2026-09-16T16:50:31.791642+00:00",
+        "evidence": "A0 accepted independent read-only A2 code/state triage on exact PR207 HEAD 5230d817: EEC_ETT is a tariff source, while NTM completeness/currentness remains unverified. The existing task 003 duplicates the same two-file ownership and was cancelled; fix stays on task 001/PR207.",
         "validator": "A0"
       }
     }

@@ -702,10 +702,23 @@
         "evidence": "A0 reproduced all four failures locally on exact published head: configured and registered monitor counts are 76 after four intended AD30 targets, while tests still assert 72. Other three CI jobs succeeded.",
         "validator": "A0"
       }
+    },
+    {
+      "head_sha": "5230d8175ec31eca274fc9f72faaf7988b50d5a7",
+      "id": "A2-NTM-EEC-FRESHNESS-SCOPE-010",
+      "reporter": "A2",
+      "status": "CONFIRMED",
+      "summary": "EEC_ETT freshness metadata describes the tariff source and cannot certify complete or current NTM rule coverage; current HEAD can expose false-fresh NTM data_freshness.",
+      "task_id": "TARIFF-NTM-FRESHNESS-FAIL-CLOSED-001",
+      "validation": {
+        "at": "2026-09-16T16:50:31.791642+00:00",
+        "evidence": "A0 accepted independent read-only A2 code/state triage on exact PR207 HEAD 5230d817: EEC_ETT is a tariff source, while NTM completeness/currentness remains unverified. The existing task 003 duplicates the same two-file ownership and was cancelled; fix stays on task 001/PR207.",
+        "validator": "A0"
+      }
     }
   ],
   "max_concurrent_subagents": 3,
-  "revision": 572,
+  "revision": 576,
   "runs": [
     {
       "head_sha": null,
@@ -2775,6 +2788,11 @@
       "id": "TARIFF-NTM-FRESHNESS-FAIL-CLOSED-001",
       "owner": "A2",
       "qa": null,
+      "recovery": {
+        "evidence": "All recorded sessions were FINISHED; clean same-repository worktree restored at exact existing PR207 HEAD without force-push.",
+        "lease_generation": 22,
+        "restored_by": "A0"
+      },
       "refs": {
         "base_sha": "5d3b0c1dc7dd8e396c4f812db2bf6f1fa6d293f9",
         "head_sha": "5230d8175ec31eca274fc9f72faaf7988b50d5a7",
@@ -2800,8 +2818,8 @@
       "risk": "high",
       "status": "CHANGES_REQUESTED",
       "tests": [],
-      "updated_at": "2026-09-16T12:14:00.048335+00:00",
-      "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-ntm-freshness-fail-closed-001-7407bd6726"
+      "updated_at": "2026-09-16T16:50:31.791686+00:00",
+      "worktree": "/workspace/scratch/ecdeb44a862e/tariff-agent-worktrees/tariff-ntm-freshness-fail-closed-001-restored-g22"
     },
     {
       "author_sessions": [
@@ -3014,7 +3032,7 @@
         "exact-head CI"
       ],
       "risk": "high",
-      "status": "NEW",
+      "status": "CANCELLED",
       "tests": [],
       "updated_at": "2026-09-16T14:44:14.959805+00:00",
       "worktree": null
@@ -3137,5 +3155,5 @@
       "worktree": "/workspace/scratch/ecdeb44a862e/tariff-agent-worktrees/tariff-ad30-recurring-artifacts-009-c5c1c819a3"
     }
   ],
-  "updated_at": "2026-09-16T15:11:19.630020+00:00"
+  "updated_at": "2026-09-16T16:50:31.801441+00:00"
 }
