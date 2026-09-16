@@ -1,9 +1,9 @@
 {
-  "expires_at": null,
-  "generation": 14,
-  "holder": null,
+  "expires_at": "2026-09-16T10:21:23.834018+00:00",
+  "generation": 15,
+  "holder": "chatgpt-a0-20260916-0951",
   "schema_version": 1,
-  "state": "released",
-  "token": null,
-  "updated_at": "2026-09-16T09:44:07.299595+00:00"
+  "state": "active",
+  "token": "a0-0951-35081603165",
+  "updated_at": "2026-09-16T09:51:23.834018+00:00"
 }
