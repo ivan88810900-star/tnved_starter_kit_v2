@@ -687,7 +687,7 @@
     }
   ],
   "max_concurrent_subagents": 3,
-  "revision": 544,
+  "revision": 545,
   "runs": [
     {
       "head_sha": null,
@@ -2770,7 +2770,9 @@
       "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-ntm-advisory-summary-001-e2d7a9dc7e"
     },
     {
-      "author_sessions": [],
+      "author_sessions": [
+        "/root/a2_ntm_freshness_visibility"
+      ],
       "branch": "agent/ntm-tariff-ntm-normative-freshness-visibility-002-5fc1946031",
       "ci": null,
       "dependencies": [],
@@ -2805,5 +2807,5 @@
       "worktree": "/workspace/scratch/ecdeb44a862e/tariff-agent-worktrees/tariff-ntm-normative-freshness-visibility-002-5fc1946031"
     }
   ],
-  "updated_at": "2026-09-16T12:15:11.209667+00:00"
+  "updated_at": "2026-09-16T12:17:30.000000+00:00"
 }
