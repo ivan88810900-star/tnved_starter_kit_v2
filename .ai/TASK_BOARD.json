@@ -687,7 +687,7 @@
     }
   ],
   "max_concurrent_subagents": 3,
-  "revision": 552,
+  "revision": 553,
   "runs": [
     {
       "head_sha": null,
@@ -2857,6 +2857,19 @@
         "published_initial_sha": "34d2974731b27ac4427cbb7b6c99ad2216fd9d76",
         "published_head_sha": "5330e6aebd777fd880d938da6b4891a1ec8cf864",
         "published_tree_sha": "8d8482d37d7bc6971f223d076c1bbe7453b6f1b9"
+      },
+      "observed_ci": {
+        "head_sha": "5330e6aebd777fd880d938da6b4891a1ec8cf864",
+        "run_id": 35096571047,
+        "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/35096571047",
+        "status": "PASSED",
+        "required_jobs": {
+          "Backend NTM safety suite": "success",
+          "Frontend tests, types and build": "success",
+          "Validate and build local staging images": "success",
+          "Scheduled workflow and locked environment": "success"
+        },
+        "not_promoted_to_ci_gate_reason": "High-risk A6 remains LIVE_VERIFIED=false; exact-head CI is observed but controller readiness requires current bound audit evidence."
       }
     },
       "required_checks": [
@@ -2901,5 +2914,5 @@
       "worktree": "/workspace/scratch/ecdeb44a862e/tariff-agent-worktrees/tariff-ntm-normative-freshness-visibility-002-5fc1946031"
     }
   ],
-  "updated_at": "2026-09-16T12:38:20.000000+00:00"
+  "updated_at": "2026-09-16T12:42:30.000000+00:00"
 }

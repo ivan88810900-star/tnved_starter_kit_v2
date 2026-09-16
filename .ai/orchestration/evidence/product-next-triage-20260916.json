@@ -70,8 +70,10 @@
       "published_head_sha": "5330e6aebd777fd880d938da6b4891a1ec8cf864",
       "published_tree_sha": "8d8482d37d7bc6971f223d076c1bbe7453b6f1b9",
       "pr": 211,
-      "status": "QA_PASSED_AWAITING_A6_AND_EXACT_HEAD_CI",
+      "status": "QA_AND_EXACT_HEAD_CI_PASSED_AWAITING_A6",
       "a5": "PASS",
+      "exact_head_ci_run_id": 35096571047,
+      "exact_head_ci": "success",
       "live_a6_verified": false
     },
     "a1_execution": {
