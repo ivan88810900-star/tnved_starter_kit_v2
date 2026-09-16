@@ -1,5 +1,5 @@
 {
-  "board_revision": 540,
+  "board_revision": 544,
   "files": {
     ".ai/orchestration/A6_LIVE_BRIDGE.md": {
       "branch": "agent/classification-tariff-a6-live-bridge-001-f5839c6c98",
@@ -36,6 +36,12 @@
       "owner": "A2",
       "task_id": "TARIFF-NTM-FRESHNESS-FAIL-CLOSED-001",
       "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-ntm-freshness-fail-closed-001-7407bd6726"
+    },
+    "customs-clear/backend/app/services/normative_requirements_block.py": {
+      "branch": "agent/ntm-tariff-ntm-normative-freshness-visibility-002-5fc1946031",
+      "owner": "A2",
+      "task_id": "TARIFF-NTM-NORMATIVE-FRESHNESS-VISIBILITY-002",
+      "worktree": "/workspace/scratch/ecdeb44a862e/tariff-agent-worktrees/tariff-ntm-normative-freshness-visibility-002-5fc1946031"
     },
     "customs-clear/backend/app/services/payment_engine.py": {
       "branch": "agent/rates-tariff-payment-unbound-admission-006-c8a905e03d",
@@ -85,6 +91,12 @@
       "task_id": "TARIFF-PAYMENT-UNBOUND-ADMISSION-006",
       "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-payment-unbound-admission-006-c8a905e03d"
     },
+    "customs-clear/backend/tests/test_normative_requirements_block.py": {
+      "branch": "agent/ntm-tariff-ntm-normative-freshness-visibility-002-5fc1946031",
+      "owner": "A2",
+      "task_id": "TARIFF-NTM-NORMATIVE-FRESHNESS-VISIBILITY-002",
+      "worktree": "/workspace/scratch/ecdeb44a862e/tariff-agent-worktrees/tariff-ntm-normative-freshness-visibility-002-5fc1946031"
+    },
     "customs-clear/backend/tests/test_payment_a6_stage2.py": {
       "branch": "agent/rates-tariff-payment-unbound-admission-006-c8a905e03d",
       "owner": "A1",
@@ -127,6 +139,24 @@
       "task_id": "TARIFF-PAYMENT-UNBOUND-ADMISSION-006",
       "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-payment-unbound-admission-006-c8a905e03d"
     },
+    "customs-clear/frontend/src/components/nonTariff/NormativeRequirementsBlock.freshness.test.tsx": {
+      "branch": "agent/ntm-tariff-ntm-normative-freshness-visibility-002-5fc1946031",
+      "owner": "A2",
+      "task_id": "TARIFF-NTM-NORMATIVE-FRESHNESS-VISIBILITY-002",
+      "worktree": "/workspace/scratch/ecdeb44a862e/tariff-agent-worktrees/tariff-ntm-normative-freshness-visibility-002-5fc1946031"
+    },
+    "customs-clear/frontend/src/components/nonTariff/NormativeRequirementsBlock.tsx": {
+      "branch": "agent/ntm-tariff-ntm-normative-freshness-visibility-002-5fc1946031",
+      "owner": "A2",
+      "task_id": "TARIFF-NTM-NORMATIVE-FRESHNESS-VISIBILITY-002",
+      "worktree": "/workspace/scratch/ecdeb44a862e/tariff-agent-worktrees/tariff-ntm-normative-freshness-visibility-002-5fc1946031"
+    },
+    "customs-clear/frontend/src/components/nonTariff/normativeBlockHelpers.ts": {
+      "branch": "agent/ntm-tariff-ntm-normative-freshness-visibility-002-5fc1946031",
+      "owner": "A2",
+      "task_id": "TARIFF-NTM-NORMATIVE-FRESHNESS-VISIBILITY-002",
+      "worktree": "/workspace/scratch/ecdeb44a862e/tariff-agent-worktrees/tariff-ntm-normative-freshness-visibility-002-5fc1946031"
+    },
     "customs-clear/frontend/src/components/tnved/PermitDocumentsBlock.test.tsx": {
       "branch": "agent/ntm-tariff-ntm-advisory-summary-001-e2d7a9dc7e",
       "owner": "A2",
@@ -138,6 +168,12 @@
       "owner": "A2",
       "task_id": "TARIFF-NTM-ADVISORY-SUMMARY-001",
       "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-ntm-advisory-summary-001-e2d7a9dc7e"
+    },
+    "customs-clear/frontend/src/types/api.types.ts": {
+      "branch": "agent/ntm-tariff-ntm-normative-freshness-visibility-002-5fc1946031",
+      "owner": "A2",
+      "task_id": "TARIFF-NTM-NORMATIVE-FRESHNESS-VISIBILITY-002",
+      "worktree": "/workspace/scratch/ecdeb44a862e/tariff-agent-worktrees/tariff-ntm-normative-freshness-visibility-002-5fc1946031"
     },
     "docs/ai-workflow/AD30_FRESHNESS_EVIDENCE_20260914.md": {
       "branch": "agent/sources-tariff-ad30-freshness-evidence-008-6c868586f5",

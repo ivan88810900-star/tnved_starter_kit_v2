@@ -687,7 +687,7 @@
     }
   ],
   "max_concurrent_subagents": 3,
-  "revision": 540,
+  "revision": 544,
   "runs": [
     {
       "head_sha": null,
@@ -2020,23 +2020,7 @@
         ],
         "status": "OWNER_PERMISSION_REQUIRED"
       },
-      "qa": {
-        "commands": [
-          {
-            "command": "independent exact published-head review",
-            "exit_code": 0,
-            "output": "PASS head 0126404, tree 5cabb7be, exact two-file scope."
-          },
-          {
-            "command": "verifier/discovery/audit/compile/diff/clean",
-            "exit_code": 0,
-            "output": "PASS 92/92, 96/96, 32/32; no concrete regressions."
-          }
-        ],
-        "head_sha": "0126404cd78fd293f3634bd20c5fd09f937e83ba",
-        "reviewer_session_id": "/root/a5_pr193_final",
-        "status": "PASSED"
-      },
+      "qa": null,
       "recovery_history": [
         {
           "by": "A0",
@@ -2065,23 +2049,9 @@
         "offline-safety"
       ],
       "risk": "high",
-      "status": "QA_PASSED",
-      "tests": {
-        "commands": [
-          {
-            "command": "final chained verifier/discovery/audit tests",
-            "exit_code": 0,
-            "output": "PASS 92/92 verifier, 96/96 discovery, 32/32 audit on exact tree 5cabb7be."
-          },
-          {
-            "command": "exact local-to-published tree and scope",
-            "exit_code": 0,
-            "output": "PASS local 990855d and published 0126404 share tree 5cabb7be; PR diff exactly audit.py and test_audit.py."
-          }
-        ],
-        "head_sha": "0126404cd78fd293f3634bd20c5fd09f937e83ba"
-      },
-      "updated_at": "2026-09-14T14:11:59.077560+00:00",
+      "status": "CHANGES_REQUESTED",
+      "tests": [],
+      "updated_at": "2026-09-16T12:14:00.048026+00:00",
       "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-pr193"
     },
     {
@@ -2127,23 +2097,7 @@
         ],
         "status": "OWNER_PERMISSION_REQUIRED"
       },
-      "qa": {
-        "commands": [
-          {
-            "command": "independent exact published-head bridge review",
-            "exit_code": 0,
-            "output": "PASS head 47da2e4 tree b46ba60f; fail-closed trusted boundary."
-          },
-          {
-            "command": "bridge/verifier/discovery/compile/diff/clean",
-            "exit_code": 0,
-            "output": "PASS 7/7, 99/99, 103/103; no code defect."
-          }
-        ],
-        "head_sha": "47da2e4763261cddc638cc276573b3375508a9ac",
-        "reviewer_session_id": "/root/a5_pr194_final",
-        "status": "PASSED"
-      },
+      "qa": null,
       "readiness_dependencies": [
         "TARIFF-A6-CROSS-BRANCH-CONTRACT-001"
       ],
@@ -2165,23 +2119,9 @@
         "offline-safety"
       ],
       "risk": "high",
-      "status": "QA_PASSED",
-      "tests": {
-        "commands": [
-          {
-            "command": "final bridge verifier/discovery tests",
-            "exit_code": 0,
-            "output": "PASS 7/7 bridge, 99/99 verifier, 103/103 discovery on exact tree b46ba60f."
-          },
-          {
-            "command": "exact local-to-published tree and scope",
-            "exit_code": 0,
-            "output": "PASS local 9e130e6 and published 47da2e4 share tree b46ba60f; PR diff exactly four bridge files."
-          }
-        ],
-        "head_sha": "47da2e4763261cddc638cc276573b3375508a9ac"
-      },
-      "updated_at": "2026-09-14T14:11:59.164172+00:00",
+      "status": "CHANGES_REQUESTED",
+      "tests": [],
+      "updated_at": "2026-09-16T12:14:00.048071+00:00",
       "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-a6-live-bridge-001-f5839c6c98"
     },
     {
@@ -2201,23 +2141,7 @@
       "goal": "Reproduce and, only if A0 confirms, fix PR #190 authority pinning, Git replacement-object bypass, IMPLEMENTED worktree-recovery deadlock, and mandatory A5 verifier coverage without weakening gates.",
       "id": "TARIFF-ORCH-CONTROL-HARDENING-001",
       "owner": "A4",
-      "qa": {
-        "commands": [
-          {
-            "command": "independent scoped regression review",
-            "exit_code": 0,
-            "output": "PASS 6/6 on exact local candidate tree a4026f5f."
-          },
-          {
-            "command": "verifier/full discovery/compile/diff/clean tree",
-            "exit_code": 0,
-            "output": "PASS 72/72 verifier, 72/72 discovery, compile and diff; no concrete defects."
-          }
-        ],
-        "head_sha": "3b1ca7cd8acc2525726de4520ab1aeb3de29acf8",
-        "reviewer_session_id": "/root/a5_control_regression",
-        "status": "PASSED"
-      },
+      "qa": null,
       "refs": {
         "base_sha": "ad4935e318d947276178e2f269d4ffe1051ea6cb",
         "head_sha": "3b1ca7cd8acc2525726de4520ab1aeb3de29acf8",
@@ -2241,28 +2165,9 @@
         "offline-safety"
       ],
       "risk": "high",
-      "status": "QA_PASSED",
-      "tests": {
-        "commands": [
-          {
-            "command": "exact-path suite loader and artifact lstat regressions",
-            "exit_code": 0,
-            "output": "PASS 6/6 including PYTHONPATH/sys.modules substitution, symlink and nonregular cases."
-          },
-          {
-            "command": "pre-bridge verifier/discovery; PR194 overlay",
-            "exit_code": 0,
-            "output": "PASS 72/72, 72/72, overlay 97/97; missing bridge test fails closed."
-          },
-          {
-            "command": "compile/diff/exact scope",
-            "exit_code": 0,
-            "output": "PASS clean cumulative four-file scope; new diff exactly verify.py/test_a5_independent.py."
-          }
-        ],
-        "head_sha": "3b1ca7cd8acc2525726de4520ab1aeb3de29acf8"
-      },
-      "updated_at": "2026-09-14T13:54:06.739077+00:00",
+      "status": "CHANGES_REQUESTED",
+      "tests": [],
+      "updated_at": "2026-09-16T12:14:00.048100+00:00",
       "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-orch-control-hardening-001-6689c2a339"
     },
     {
@@ -2280,23 +2185,7 @@
       "goal": "Reproduce and, only if A0 confirms, bind takeover termination evidence to the current lease incarnation so stale observations cannot fence a renewed coordinator.",
       "id": "TARIFF-ORCH-LEASE-TAKEOVER-HARDENING-001",
       "owner": "A4",
-      "qa": {
-        "commands": [
-          {
-            "command": "independent published-head lease attack matrix",
-            "exit_code": 0,
-            "output": "PASS 32 cases; exact GitHub SHA/tree/blob scope."
-          },
-          {
-            "command": "lease tests; verifier; discovery; compile; diff",
-            "exit_code": 0,
-            "output": "PASS 7/7, 62/62, 62/62 and clean exact two-file scope."
-          }
-        ],
-        "head_sha": "faa1a30f6a74a716fd05133c4f7744eec48bd2f7",
-        "reviewer_session_id": "/root/a5_lease_published",
-        "status": "PASSED"
-      },
+      "qa": null,
       "refs": {
         "base_sha": "ad4935e318d947276178e2f269d4ffe1051ea6cb",
         "head_sha": "faa1a30f6a74a716fd05133c4f7744eec48bd2f7",
@@ -2315,28 +2204,9 @@
         "offline-safety"
       ],
       "risk": "high",
-      "status": "QA_PASSED",
-      "tests": {
-        "commands": [
-          {
-            "command": "published Git tree equality and exact parent verification",
-            "exit_code": 0,
-            "output": "GitHub tree c14ea17cb5b9b42dfd0f4189a7e07567251f492e equals reviewed local tree; parent ad4935e."
-          },
-          {
-            "command": "python -m unittest tests.agent_orchestration.test_lease -v",
-            "exit_code": 0,
-            "output": "PASS 7/7 on identical published tree."
-          },
-          {
-            "command": "python -m tools.tariff_agents.verify; python -m unittest discover -s tests/agent_orchestration -v",
-            "exit_code": 0,
-            "output": "PASS 62/62 on identical published tree."
-          }
-        ],
-        "head_sha": "faa1a30f6a74a716fd05133c4f7744eec48bd2f7"
-      },
-      "updated_at": "2026-09-14T13:05:30.793149+00:00",
+      "status": "CHANGES_REQUESTED",
+      "tests": [],
+      "updated_at": "2026-09-16T12:14:00.048126+00:00",
       "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-orch-lease-takeover-hardening-001-b4b30adacd"
     },
     {
@@ -2355,23 +2225,7 @@
       "goal": "Keep authority fail-closed while giving offline CI an explicit read-only snapshot schema validation command that never bootstraps or mutates state.",
       "id": "TARIFF-ORCH-CI-SNAPSHOT-VALIDATION-001",
       "owner": "A4",
-      "qa": {
-        "commands": [
-          {
-            "command": "independent exact published PR197 commit/tree/blob/scope validation",
-            "exit_code": 0,
-            "output": "PASS head 64ce63fd parent db2d340e tree 9dcd2e70 and exact three GitHub blobs."
-          },
-          {
-            "command": "published-head snapshot/ambient Git/workflow matrix",
-            "exit_code": 0,
-            "output": "PASS 4/4 scoped, 71/71 verifier, 75/75 discovery, workflow simulation; no authority mutation."
-          }
-        ],
-        "head_sha": "64ce63fd3092f94a4924929457f22c4aefcaf2d8",
-        "reviewer_session_id": "/root/a5_ci_snapshot_validation",
-        "status": "PASSED"
-      },
+      "qa": null,
       "refs": {
         "base_sha": "db2d340e4516aa8c6d42aa631aba945bed4652d8",
         "head_sha": "64ce63fd3092f94a4924929457f22c4aefcaf2d8",
@@ -2390,23 +2244,9 @@
         "offline-safety"
       ],
       "risk": "high",
-      "status": "QA_PASSED",
-      "tests": {
-        "commands": [
-          {
-            "command": "published Git exact parent/tree/blob verification",
-            "exit_code": 0,
-            "output": "HEAD 64ce63fd parent db2d340e, tree 9dcd2e70 exactly matches A5-reviewed local candidate."
-          },
-          {
-            "command": "scoped/verifier/discovery/workflow simulation",
-            "exit_code": 0,
-            "output": "PASS 4/4, 71/71, 75/75 on identical published tree."
-          }
-        ],
-        "head_sha": "64ce63fd3092f94a4924929457f22c4aefcaf2d8"
-      },
-      "updated_at": "2026-09-14T13:39:33.957848+00:00",
+      "status": "CHANGES_REQUESTED",
+      "tests": [],
+      "updated_at": "2026-09-16T12:14:00.048151+00:00",
       "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-orch-ci-snapshot-validation-001-2b97826c17"
     },
     {
@@ -2414,70 +2254,16 @@
         "/root/a1_payment_source_recheck"
       ],
       "branch": "agent/rates-tariff-payment-source-recheck-002-c1549329dc",
-      "ci": {
-        "checks": [
-          {
-            "conclusion": "success",
-            "head_sha": "dd56cc5357b30ae4cd448ae7a1608dbfa73e0da2",
-            "name": "Backend NTM safety suite",
-            "run_id": 34862392361,
-            "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/34862392361"
-          },
-          {
-            "conclusion": "success",
-            "head_sha": "dd56cc5357b30ae4cd448ae7a1608dbfa73e0da2",
-            "name": "Frontend tests, types and build",
-            "run_id": 34862392361,
-            "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/34862392361"
-          },
-          {
-            "conclusion": "success",
-            "head_sha": "dd56cc5357b30ae4cd448ae7a1608dbfa73e0da2",
-            "name": "Validate and build local staging images",
-            "run_id": 34862392361,
-            "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/34862392361"
-          },
-          {
-            "conclusion": "success",
-            "head_sha": "dd56cc5357b30ae4cd448ae7a1608dbfa73e0da2",
-            "name": "Scheduled workflow and locked environment",
-            "run_id": 34862392361,
-            "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/34862392361"
-          }
-        ],
-        "head_sha": "dd56cc5357b30ae4cd448ae7a1608dbfa73e0da2",
-        "status": "PASSED"
-      },
+      "ci": null,
       "dependencies": [],
-      "external_audit": {
-        "evidence_ref": "Docs-only bounded evidence report; medium risk; no product behavior, source acceptance, legal applicability, provider, database, flag or production change.",
-        "head_sha": "dd56cc5357b30ae4cd448ae7a1608dbfa73e0da2",
-        "reviewer": "A6",
-        "status": "NOT_REQUIRED"
-      },
+      "external_audit": null,
       "files": [
         "docs/ai-workflow/PAYMENT_SOURCE_BOUND_RECHECK_20260914.md"
       ],
       "goal": "On exact PR187 HEAD, reproduce and classify only remaining payment/rate gaps involving source-bound dates, editions, units, FX and final-amount admission; produce a factual evidence report and exact next implementation ownership without changing product code, database, flags or legal policy.",
       "id": "TARIFF-PAYMENT-SOURCE-RECHECK-002",
       "owner": "A1",
-      "qa": {
-        "commands": [
-          {
-            "command": "DATABASE_URL=sqlite:////tmp/a5-payment-report-published-head.sqlite python -m pytest -q five payment suites",
-            "exit_code": 0,
-            "output": "138 passed, 2 warnings in 5.20s"
-          },
-          {
-            "command": "published branch/head/parent/tree/scope verification",
-            "exit_code": 0,
-            "output": "remote and local dd56cc5; parent 5d3b0c1d; tree 4a622a73 byte-identical; one report; clean"
-          }
-        ],
-        "head_sha": "dd56cc5357b30ae4cd448ae7a1608dbfa73e0da2",
-        "reviewer_session_id": "/root/a5_payment_report",
-        "status": "PASSED"
-      },
+      "qa": null,
       "refs": {
         "base_sha": "5d3b0c1dc7dd8e396c4f812db2bf6f1fa6d293f9",
         "head_sha": "dd56cc5357b30ae4cd448ae7a1608dbfa73e0da2",
@@ -2497,18 +2283,9 @@
         "Scheduled workflow and locked environment"
       ],
       "risk": "medium",
-      "status": "READY_FOR_HUMAN_APPROVAL",
-      "tests": {
-        "commands": [
-          {
-            "command": "GitHub Git Data publication with full-tree equality",
-            "exit_code": 0,
-            "output": "local fcc97a4 -> published dd56cc5; identical tree 4a622a73; one owned report; remote blob verified"
-          }
-        ],
-        "head_sha": "dd56cc5357b30ae4cd448ae7a1608dbfa73e0da2"
-      },
-      "updated_at": "2026-09-14T15:35:17.357277+00:00",
+      "status": "CHANGES_REQUESTED",
+      "tests": [],
+      "updated_at": "2026-09-16T12:14:00.048175+00:00",
       "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-payment-source-recheck-002-c1549329dc"
     },
     {
@@ -2525,23 +2302,7 @@
       "goal": "On exact PR187 HEAD, inventory official source/date/edition/amendment and AD30 producer/nomenclature evidence gaps; verify public official facts without deciding legal applicability and produce a bounded evidence report plus exact dependencies for A1/A2.",
       "id": "TARIFF-OFFICIAL-SOURCE-DELTA-002",
       "owner": "A3",
-      "qa": {
-        "commands": [
-          {
-            "command": "pytest exact AD30/source published-head QA profile",
-            "exit_code": 0,
-            "output": "442 passed in 10.52s"
-          },
-          {
-            "command": "published branch/head/parent/tree/hash/invariant verification",
-            "exit_code": 0,
-            "output": "remote/local a304ff9; parent 5d3b0c1d; tree 0633120d byte-identical; three evidence hashes exact; fail-closed gates preserved"
-          }
-        ],
-        "head_sha": "a304ff9003be44e9ec1bf4c4e313b3993c634d46",
-        "reviewer_session_id": "/root/a5_source_report",
-        "status": "PASSED"
-      },
+      "qa": null,
       "refs": {
         "base_sha": "5d3b0c1dc7dd8e396c4f812db2bf6f1fa6d293f9",
         "head_sha": "a304ff9003be44e9ec1bf4c4e313b3993c634d46",
@@ -2561,18 +2322,9 @@
         "Scheduled workflow and locked environment"
       ],
       "risk": "high",
-      "status": "QA_PASSED",
-      "tests": {
-        "commands": [
-          {
-            "command": "GitHub Git Data publication with full-tree equality",
-            "exit_code": 0,
-            "output": "local 9c13ba7 -> published a304ff9; identical tree 0633120d; one owned report; remote blob verified"
-          }
-        ],
-        "head_sha": "a304ff9003be44e9ec1bf4c4e313b3993c634d46"
-      },
-      "updated_at": "2026-09-14T15:30:36.298011+00:00",
+      "status": "CHANGES_REQUESTED",
+      "tests": [],
+      "updated_at": "2026-09-16T12:14:00.048199+00:00",
       "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-official-source-delta-002-753e289be4"
     },
     {
@@ -2623,23 +2375,7 @@
       "goal": "Expose a typed read-only CBR exchange-rate observation that preserves stored row identity and available official source date/revision evidence, remains explicitly unverified when no exact row-to-artifact binding exists, and never upgrades payment admission or writes production data.",
       "id": "TARIFF-CBR-RATE-OBSERVATION-003",
       "owner": "A3",
-      "qa": {
-        "commands": [
-          {
-            "command": "independent exact published-head PR/tree/security review",
-            "exit_code": 0,
-            "output": "PASS PR202 base/head/tree/scope; 54/54 focused; SELECT-only no DML; P1/P2 matrix green"
-          },
-          {
-            "command": "published-head wider replay",
-            "exit_code": 0,
-            "output": "328 passed; same 5 unrelated failures reproduced on exact base; no candidate regression"
-          }
-        ],
-        "head_sha": "b326d11ca4931c9c2e67bbde738fdbffca8d312a",
-        "reviewer_session_id": "/root/a5_pr202_exact",
-        "status": "PASSED"
-      },
+      "qa": null,
       "refs": {
         "base_sha": "5d3b0c1dc7dd8e396c4f812db2bf6f1fa6d293f9",
         "head_sha": "b326d11ca4931c9c2e67bbde738fdbffca8d312a",
@@ -2672,23 +2408,9 @@
         "Scheduled workflow and locked environment"
       ],
       "risk": "high",
-      "status": "QA_PASSED",
-      "tests": {
-        "commands": [
-          {
-            "command": "published Git tree equality",
-            "exit_code": 0,
-            "output": "local reviewed 8493485 and published b326d11 share exact tree 77fb59695f887ab6e973957eb73e7eceb9760544; parent 5d3b0c1d"
-          },
-          {
-            "command": "A0 exact published-head replay",
-            "exit_code": 0,
-            "output": "99 passed, 2 warnings in 2.72s; exact two-file scope; worktree clean"
-          }
-        ],
-        "head_sha": "b326d11ca4931c9c2e67bbde738fdbffca8d312a"
-      },
-      "updated_at": "2026-09-14T19:33:17.831188+00:00",
+      "status": "CHANGES_REQUESTED",
+      "tests": [],
+      "updated_at": "2026-09-16T12:14:00.048222+00:00",
       "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-cbr-rate-observation-003-9dc4811432"
     },
     {
@@ -2709,23 +2431,7 @@
       "goal": "Prevent diagnostic model-derived VAT overrides from being presented as final legacy VAT/total amounts without an explicit reviewed admission state; keep mounted API behavior unchanged and preserve a clearly provisional diagnostic path with focused regression tests.",
       "id": "TARIFF-LEGACY-VAT-BOUNDARY-003",
       "owner": "A4",
-      "qa": {
-        "commands": [
-          {
-            "command": "independent exact published-head PR/tree/security review",
-            "exit_code": 0,
-            "output": "PASS PR203 base/head/tree/scope; VAT candidate remains diagnostic and applied=false; no mounted API/NTM/provider behavior change"
-          },
-          {
-            "command": "focused, relevant and adversarial replay",
-            "exit_code": 0,
-            "output": "11 focused + 70 relevant + 30 edge probes passed; two unrelated legacy failures reproduced on exact base"
-          }
-        ],
-        "head_sha": "dbb27aa857614b7b83111cddc0c5a1ed32f44580",
-        "reviewer_session_id": "/root/a5_pr203_exact",
-        "status": "PASSED"
-      },
+      "qa": null,
       "refs": {
         "base_sha": "5d3b0c1dc7dd8e396c4f812db2bf6f1fa6d293f9",
         "head_sha": "dbb27aa857614b7b83111cddc0c5a1ed32f44580",
@@ -2758,23 +2464,9 @@
         "Scheduled workflow and locked environment"
       ],
       "risk": "high",
-      "status": "QA_PASSED",
-      "tests": {
-        "commands": [
-          {
-            "command": "published Git tree equality",
-            "exit_code": 0,
-            "output": "local reviewed 7b526d3 and published dbb27aa share exact tree 39f8f13e67d1f628c6278afdd0b339629153c855; parent 5d3b0c1d"
-          },
-          {
-            "command": "A0 exact published-head VAT replay",
-            "exit_code": 0,
-            "output": "52 passed, 2 warnings in 1.39s; exact five-file scope; worktree clean"
-          }
-        ],
-        "head_sha": "dbb27aa857614b7b83111cddc0c5a1ed32f44580"
-      },
-      "updated_at": "2026-09-14T19:36:44.983506+00:00",
+      "status": "CHANGES_REQUESTED",
+      "tests": [],
+      "updated_at": "2026-09-16T12:14:00.048244+00:00",
       "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-legacy-vat-boundary-003-dbe8461b66"
     },
     {
@@ -2871,28 +2563,7 @@
       "goal": "Apply the all-legacy source-unbound admission gate consistently across payment engine, preference and special-duty scenarios, preserving raw candidate arithmetic and exact domain reasons while withholding automatic components and final quote until a future reviewed source token exists.",
       "id": "TARIFF-PAYMENT-UNBOUND-ADMISSION-006",
       "owner": "A1",
-      "qa": {
-        "commands": [
-          {
-            "command": "independent exact published-head PR/tree/security review",
-            "exit_code": 0,
-            "output": "PASS PR204 base/head/tree/parent/exact nine-file scope; bounded fix changes only normative bundle test without weakening"
-          },
-          {
-            "command": "focused and broad published-head replay",
-            "exit_code": 0,
-            "output": "260 focused passed; 735 broad passed plus 12 subtests; four unrelated failures reproduced on exact base"
-          },
-          {
-            "command": "exact-head CI 34888475765",
-            "exit_code": 0,
-            "output": "success; all four required jobs passed; backend 5615 passed, 2 skipped, 85 subtests; optional ETT job skipped and not counted as pass"
-          }
-        ],
-        "head_sha": "ee81a66eafaba008c2205cac65e5256f939822e2",
-        "reviewer_session_id": "/root/a5_pr204_fix_exact",
-        "status": "PASSED"
-      },
+      "qa": null,
       "refs": {
         "base_sha": "5d3b0c1dc7dd8e396c4f812db2bf6f1fa6d293f9",
         "head_sha": "ee81a66eafaba008c2205cac65e5256f939822e2",
@@ -2926,23 +2597,9 @@
         "Scheduled workflow and locked environment"
       ],
       "risk": "high",
-      "status": "QA_PASSED",
-      "tests": {
-        "commands": [
-          {
-            "command": "published Git tree equality after bounded CI fix",
-            "exit_code": 0,
-            "output": "local reviewed 2633871 and published ee81a66 share exact tree c1c655229f2971716d0d8d8718fe1f73e630bff7; fast-forward parent ce1abd85"
-          },
-          {
-            "command": "A0 exact failing test plus source-gate replay",
-            "exit_code": 0,
-            "output": "107 passed, 2 warnings; exact added test scope; worktree clean"
-          }
-        ],
-        "head_sha": "ee81a66eafaba008c2205cac65e5256f939822e2"
-      },
-      "updated_at": "2026-09-14T19:48:36.556665+00:00",
+      "status": "CHANGES_REQUESTED",
+      "tests": [],
+      "updated_at": "2026-09-16T12:14:00.048267+00:00",
       "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-payment-unbound-admission-006-c8a905e03d"
     },
     {
@@ -2950,72 +2607,16 @@
         "/root/a3_ad30_freshness"
       ],
       "branch": "agent/sources-tariff-ad30-freshness-evidence-008-6c868586f5",
-      "ci": {
-        "checks": [
-          {
-            "conclusion": "success",
-            "head_sha": "d1324027cec636d05f2eb6b474a4bbb66758fcef",
-            "name": "Backend NTM safety suite",
-            "run_id": 34896270157,
-            "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/34896270157"
-          },
-          {
-            "conclusion": "success",
-            "head_sha": "d1324027cec636d05f2eb6b474a4bbb66758fcef",
-            "name": "Frontend tests, types and build",
-            "run_id": 34896270157,
-            "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/34896270157"
-          },
-          {
-            "conclusion": "success",
-            "head_sha": "d1324027cec636d05f2eb6b474a4bbb66758fcef",
-            "name": "Validate and build local staging images",
-            "run_id": 34896270157,
-            "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/34896270157"
-          },
-          {
-            "conclusion": "success",
-            "head_sha": "d1324027cec636d05f2eb6b474a4bbb66758fcef",
-            "name": "Scheduled workflow and locked environment",
-            "run_id": 34896270157,
-            "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/34896270157"
-          }
-        ],
-        "head_sha": "d1324027cec636d05f2eb6b474a4bbb66758fcef",
-        "status": "PASSED"
-      },
+      "ci": null,
       "dependencies": [],
-      "external_audit": {
-        "availability": "UNKNOWN",
-        "evidence_ref": "A6 live bridge exists on main but provider has not been live-verified; current runtime exposes no repository_dispatch write action and provider_called=false. No Anthropic audit performed.",
-        "head_sha": "d1324027cec636d05f2eb6b474a4bbb66758fcef",
-        "rationale": "Audit unavailable; this is not a passed external audit.",
-        "reviewer": "A6",
-        "status": "UNAVAILABLE"
-      },
+      "external_audit": null,
       "files": [
         "docs/ai-workflow/AD30_FRESHNESS_EVIDENCE_20260914.md"
       ],
       "goal": "Build a fresh official-source evidence map for the retained AD30 chain: amendment/repeal history, final report identity, producer continuity and nomenclature transitions. Separate literal facts from applicability; fail closed on inaccessible or incomplete evidence; no rates, admission, DB, flags or legal authorization.",
       "id": "TARIFF-AD30-FRESHNESS-EVIDENCE-008",
       "owner": "A3",
-      "qa": {
-        "commands": [
-          {
-            "command": "independent exact published-head PR/tree/security review",
-            "exit_code": 0,
-            "output": "PASS PR205 base 5d3b0c1d, head d1324027, parent/tree/blob exact, one owned file/248 lines, no secrets or findings"
-          },
-          {
-            "command": "retained evidence hashes, fail-closed assertions and focused replay",
-            "exit_code": 0,
-            "output": "four SHA-256 values exact; seven fail-closed assertions passed; 303 focused AD30 tests passed; git diff --check clean"
-          }
-        ],
-        "head_sha": "d1324027cec636d05f2eb6b474a4bbb66758fcef",
-        "reviewer_session_id": "/root/a5_pr205_exact",
-        "status": "PASSED"
-      },
+      "qa": null,
       "refs": {
         "base_sha": "5d3b0c1dc7dd8e396c4f812db2bf6f1fa6d293f9",
         "head_sha": "d1324027cec636d05f2eb6b474a4bbb66758fcef",
@@ -3035,23 +2636,9 @@
         "Scheduled workflow and locked environment"
       ],
       "risk": "high",
-      "status": "CI_PENDING",
-      "tests": {
-        "commands": [
-          {
-            "command": "published Git tree equality and scoped parent verification",
-            "exit_code": 0,
-            "output": "local reviewed c3893d929ea29f1f11cddb05073c41383640b83a and published d1324027cec636d05f2eb6b474a4bbb66758fcef share exact tree faafcce928ed19647f46d27bd6ea083f699d5d48; published parent is exact PR187 base 5d3b0c1d; one owned file only"
-          },
-          {
-            "command": "A0 retained evidence and focused AD30 replay",
-            "exit_code": 0,
-            "output": "four retained SHA-256 checks and fail-closed invariants passed; 303 focused tests passed; official index metadata is discovery-only; live official body access blocked and can_promote=false preserved"
-          }
-        ],
-        "head_sha": "d1324027cec636d05f2eb6b474a4bbb66758fcef"
-      },
-      "updated_at": "2026-09-14T21:07:34.721714+00:00",
+      "status": "CHANGES_REQUESTED",
+      "tests": [],
+      "updated_at": "2026-09-16T12:14:00.048289+00:00",
       "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-ad30-freshness-evidence-008-6c868586f5"
     },
     {
@@ -3059,72 +2646,16 @@
         "/root/a2_ntm_recheck"
       ],
       "branch": "agent/ntm-tariff-ntm-completeness-recheck-001-c746d4f679",
-      "ci": {
-        "checks": [
-          {
-            "conclusion": "success",
-            "head_sha": "fd702a3f37c673666f8792321b5ae72435c28cd5",
-            "name": "Backend NTM safety suite",
-            "run_id": 34897276890,
-            "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/34897276890"
-          },
-          {
-            "conclusion": "success",
-            "head_sha": "fd702a3f37c673666f8792321b5ae72435c28cd5",
-            "name": "Frontend tests, types and build",
-            "run_id": 34897276890,
-            "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/34897276890"
-          },
-          {
-            "conclusion": "success",
-            "head_sha": "fd702a3f37c673666f8792321b5ae72435c28cd5",
-            "name": "Validate and build local staging images",
-            "run_id": 34897276890,
-            "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/34897276890"
-          },
-          {
-            "conclusion": "success",
-            "head_sha": "fd702a3f37c673666f8792321b5ae72435c28cd5",
-            "name": "Scheduled workflow and locked environment",
-            "run_id": 34897276890,
-            "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/34897276890"
-          }
-        ],
-        "head_sha": "fd702a3f37c673666f8792321b5ae72435c28cd5",
-        "status": "PASSED"
-      },
+      "ci": null,
       "dependencies": [],
-      "external_audit": {
-        "availability": "UNKNOWN",
-        "evidence_ref": "A6 live bridge is not LIVE_VERIFIED; current connector still has no repository_dispatch write action and provider_called=false. No Anthropic audit performed.",
-        "head_sha": "fd702a3f37c673666f8792321b5ae72435c28cd5",
-        "rationale": "Audit unavailable; this is not a passed external audit.",
-        "reviewer": "A6",
-        "status": "UNAVAILABLE"
-      },
+      "external_audit": null,
       "files": [
         "docs/ai-workflow/NTM_COMPLETENESS_RECHECK_20260914.md"
       ],
       "goal": "Independently recheck current PR187 NTM families, source/version/date bindings, fail-closed completeness gates and product-characteristic predicates against current code/tests and official-source references. Produce a bounded evidence-backed defect inventory without changing legal applicability, production data, flags or enforcement.",
       "id": "TARIFF-NTM-COMPLETENESS-RECHECK-001",
       "owner": "A2",
-      "qa": {
-        "commands": [
-          {
-            "command": "independent exact published-head PR/tree/blob/source review",
-            "exit_code": 0,
-            "output": "PASS PR206 exact base/head/parent/tree/blob, one owned file/203 additions; prior evidence/provenance/authority findings resolved; no new finding"
-          },
-          {
-            "command": "independent focused NTM/source replay",
-            "exit_code": 0,
-            "output": "114 exact NTM + 169 source/registry/assistant tests passed; two technical defects reproduced; fail-closed nine-family/enforcement boundaries confirmed"
-          }
-        ],
-        "head_sha": "fd702a3f37c673666f8792321b5ae72435c28cd5",
-        "reviewer_session_id": "/root/a5_pr206_exact",
-        "status": "PASSED"
-      },
+      "qa": null,
       "refs": {
         "base_sha": "5d3b0c1dc7dd8e396c4f812db2bf6f1fa6d293f9",
         "head_sha": "fd702a3f37c673666f8792321b5ae72435c28cd5",
@@ -3145,23 +2676,9 @@
         "Scheduled workflow and locked environment"
       ],
       "risk": "high",
-      "status": "CI_PENDING",
-      "tests": {
-        "commands": [
-          {
-            "command": "published parent/scope/blob/tree verification",
-            "exit_code": 0,
-            "output": "GitHub compare base 5d3b0c1d to published fd702a3 shows ahead_by=1, one added owned file/203 lines; remote blob 2821a035 equals local blob; local and published checkout tree 656e48a744e0af3052880269f9da5aaa4e26a107"
-          },
-          {
-            "command": "A0 focused corrected-report replay",
-            "exit_code": 0,
-            "output": "283 selected tests passed; exact bounded evidence numbers, six URL pairs and decision boundaries verified; fail-open freshness and advisory-blind UI defects remain accurately documented"
-          }
-        ],
-        "head_sha": "fd702a3f37c673666f8792321b5ae72435c28cd5"
-      },
-      "updated_at": "2026-09-14T21:17:44.677593+00:00",
+      "status": "CHANGES_REQUESTED",
+      "tests": [],
+      "updated_at": "2026-09-16T12:14:00.048312+00:00",
       "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-ntm-completeness-recheck-001-c746d4f679"
     },
     {
@@ -3169,49 +2686,9 @@
         "/root/a2_ntm_freshness_gate"
       ],
       "branch": "agent/ntm-tariff-ntm-freshness-fail-closed-001-7407bd6726",
-      "ci": {
-        "checks": [
-          {
-            "conclusion": "success",
-            "head_sha": "5230d8175ec31eca274fc9f72faaf7988b50d5a7",
-            "name": "Backend NTM safety suite",
-            "run_id": 34897917832,
-            "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/34897917832"
-          },
-          {
-            "conclusion": "success",
-            "head_sha": "5230d8175ec31eca274fc9f72faaf7988b50d5a7",
-            "name": "Frontend tests, types and build",
-            "run_id": 34897917832,
-            "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/34897917832"
-          },
-          {
-            "conclusion": "success",
-            "head_sha": "5230d8175ec31eca274fc9f72faaf7988b50d5a7",
-            "name": "Validate and build local staging images",
-            "run_id": 34897917832,
-            "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/34897917832"
-          },
-          {
-            "conclusion": "success",
-            "head_sha": "5230d8175ec31eca274fc9f72faaf7988b50d5a7",
-            "name": "Scheduled workflow and locked environment",
-            "run_id": 34897917832,
-            "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/34897917832"
-          }
-        ],
-        "head_sha": "5230d8175ec31eca274fc9f72faaf7988b50d5a7",
-        "status": "PASSED"
-      },
+      "ci": null,
       "dependencies": [],
-      "external_audit": {
-        "availability": "UNKNOWN",
-        "evidence_ref": "A6 live bridge is not LIVE_VERIFIED; current connector exposes no repository_dispatch write action and provider_called=false. No Anthropic audit performed.",
-        "head_sha": "5230d8175ec31eca274fc9f72faaf7988b50d5a7",
-        "rationale": "Audit unavailable; this is not a passed external audit.",
-        "reviewer": "A6",
-        "status": "UNAVAILABLE"
-      },
+      "external_audit": null,
       "files": [
         "customs-clear/backend/app/services/non_tariff_service.py",
         "customs-clear/backend/tests/test_non_tariff_data_freshness.py"
@@ -3219,23 +2696,7 @@
       "goal": "Make NTM data freshness fail closed when EEC_ETT source status is absent or unreadable: preserve API shape but never report unknown local seed state as fresh. Add executable regression coverage; do not change legal rules, DB, flags, enforcement, or frontend.",
       "id": "TARIFF-NTM-FRESHNESS-FAIL-CLOSED-001",
       "owner": "A2",
-      "qa": {
-        "commands": [
-          {
-            "command": "independent exact published-head chain/tree/blob/security review",
-            "exit_code": 0,
-            "output": "PASS PR207 base/2-commit chain/tree/blobs and exact two-file scope; no legal/DB/flag/frontend/secret/network/enforcement changes or findings"
-          },
-          {
-            "command": "independent boundary and regression replay",
-            "exit_code": 0,
-            "output": "123 tests plus 8 boundary probes passed; missing/unreadable/null/unrelated/malformed statuses fail closed, valid fresh/stale EEC statuses preserved"
-          }
-        ],
-        "head_sha": "5230d8175ec31eca274fc9f72faaf7988b50d5a7",
-        "reviewer_session_id": "/root/a5_pr207_exact",
-        "status": "PASSED"
-      },
+      "qa": null,
       "refs": {
         "base_sha": "5d3b0c1dc7dd8e396c4f812db2bf6f1fa6d293f9",
         "head_sha": "5230d8175ec31eca274fc9f72faaf7988b50d5a7",
@@ -3259,23 +2720,9 @@
         "Scheduled workflow and locked environment"
       ],
       "risk": "high",
-      "status": "CI_PENDING",
-      "tests": {
-        "commands": [
-          {
-            "command": "published parent/scope/blob/tree verification",
-            "exit_code": 0,
-            "output": "GitHub compare from exact PR187 base shows 2 commits and exactly 2 owned files; both remote blob SHAs equal local; published checkout tree equals reviewed local tree a3bd727450759a1a15f8bd50cb574200417a7036"
-          },
-          {
-            "command": "A0 exact published checkout regression",
-            "exit_code": 0,
-            "output": "27 freshness/compliance/unknown-TR tests passed on content-identical published tree; missing/exception paths stale and verified status preserved"
-          }
-        ],
-        "head_sha": "5230d8175ec31eca274fc9f72faaf7988b50d5a7"
-      },
-      "updated_at": "2026-09-14T21:23:13.980554+00:00",
+      "status": "CHANGES_REQUESTED",
+      "tests": [],
+      "updated_at": "2026-09-16T12:14:00.048335+00:00",
       "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-ntm-freshness-fail-closed-001-7407bd6726"
     },
     {
@@ -3283,49 +2730,9 @@
         "/root/a2_ntm_advisory_summary"
       ],
       "branch": "agent/ntm-tariff-ntm-advisory-summary-001-e2d7a9dc7e",
-      "ci": {
-        "checks": [
-          {
-            "conclusion": "success",
-            "head_sha": "6c88f7742fa4a0228e3227573f3857a07dc76431",
-            "name": "Backend NTM safety suite",
-            "run_id": 34903963515,
-            "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/34903963515"
-          },
-          {
-            "conclusion": "success",
-            "head_sha": "6c88f7742fa4a0228e3227573f3857a07dc76431",
-            "name": "Frontend tests, types and build",
-            "run_id": 34903963515,
-            "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/34903963515"
-          },
-          {
-            "conclusion": "success",
-            "head_sha": "6c88f7742fa4a0228e3227573f3857a07dc76431",
-            "name": "Validate and build local staging images",
-            "run_id": 34903963515,
-            "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/34903963515"
-          },
-          {
-            "conclusion": "success",
-            "head_sha": "6c88f7742fa4a0228e3227573f3857a07dc76431",
-            "name": "Scheduled workflow and locked environment",
-            "run_id": 34903963515,
-            "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/34903963515"
-          }
-        ],
-        "head_sha": "6c88f7742fa4a0228e3227573f3857a07dc76431",
-        "status": "PASSED"
-      },
+      "ci": null,
       "dependencies": [],
-      "external_audit": {
-        "availability": "UNKNOWN",
-        "evidence_ref": "A6 live bridge is not LIVE_VERIFIED; current connector exposes no repository_dispatch write action and provider_called=false. No Anthropic audit performed.",
-        "head_sha": "6c88f7742fa4a0228e3227573f3857a07dc76431",
-        "rationale": "Audit unavailable; this is not a passed external audit.",
-        "reviewer": "A6",
-        "status": "UNAVAILABLE"
-      },
+      "external_audit": null,
       "files": [
         "customs-clear/frontend/src/components/tnved/PermitDocumentsBlock.tsx",
         "customs-clear/frontend/src/components/tnved/PermitDocumentsBlock.test.tsx"
@@ -3333,23 +2740,7 @@
       "goal": "Prevent the product-details permit summary from showing a green no-permits claim when official advisory requirements exist. Render a neutral clarification state that distinguishes no enforced broker document from no NTM detected, with executable component tests; do not change backend rules, legal applicability, flags, DB, or enforcement.",
       "id": "TARIFF-NTM-ADVISORY-SUMMARY-001",
       "owner": "A2",
-      "qa": {
-        "commands": [
-          {
-            "command": "independent exact published-head chain/tree/blob/UI security review",
-            "exit_code": 0,
-            "output": "PASS PR208 exact base/head/merge-base, two owned files/+106, local/origin tree and both blobs exact; safe UI precedence/API fields, no backend/rules/DB/flags/enforcement/secrets or findings"
-          },
-          {
-            "command": "independent exact-head frontend regression and build",
-            "exit_code": 0,
-            "output": "10 focused acceptance tests passed; full frontend 54 passed across 17 files; TypeScript and Vite production build passed; diff/status clean"
-          }
-        ],
-        "head_sha": "6c88f7742fa4a0228e3227573f3857a07dc76431",
-        "reviewer_session_id": "/root/a5_pr208_exact",
-        "status": "PASSED"
-      },
+      "qa": null,
       "refs": {
         "base_sha": "5d3b0c1dc7dd8e396c4f812db2bf6f1fa6d293f9",
         "head_sha": "6c88f7742fa4a0228e3227573f3857a07dc76431",
@@ -3373,25 +2764,46 @@
         "Scheduled workflow and locked environment"
       ],
       "risk": "high",
-      "status": "CI_PENDING",
-      "tests": {
-        "commands": [
-          {
-            "command": "published parent/scope/blob/tree verification",
-            "exit_code": 0,
-            "output": "GitHub compare from exact PR187 base shows two commits and exactly two owned files/106 additions; both remote blobs equal local; published checkout tree equals reviewed tree 4f63b67d17325a1dd2bee27f7e7890fefa6706b0"
-          },
-          {
-            "command": "A0 exact published checkout frontend replay",
-            "exit_code": 0,
-            "output": "4 focused component tests and TypeScript typecheck passed on content-identical published tree; safe branch precedence preserved"
-          }
-        ],
-        "head_sha": "6c88f7742fa4a0228e3227573f3857a07dc76431"
-      },
-      "updated_at": "2026-09-14T22:30:49.718157+00:00",
+      "status": "CHANGES_REQUESTED",
+      "tests": [],
+      "updated_at": "2026-09-16T12:14:00.048357+00:00",
       "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-ntm-advisory-summary-001-e2d7a9dc7e"
+    },
+    {
+      "author_sessions": [],
+      "branch": "agent/ntm-tariff-ntm-normative-freshness-visibility-002-5fc1946031",
+      "ci": null,
+      "dependencies": [],
+      "external_audit": null,
+      "files": [
+        "customs-clear/backend/app/services/normative_requirements_block.py",
+        "customs-clear/backend/tests/test_normative_requirements_block.py",
+        "customs-clear/frontend/src/components/nonTariff/normativeBlockHelpers.ts",
+        "customs-clear/frontend/src/components/nonTariff/NormativeRequirementsBlock.tsx",
+        "customs-clear/frontend/src/components/nonTariff/NormativeRequirementsBlock.freshness.test.tsx",
+        "customs-clear/frontend/src/types/api.types.ts"
+      ],
+      "goal": "Propagate fail-closed NTM data_freshness into the primary normative requirements product flow as a neutral or amber visibility signal without changing applicability, enforcement, flags, database state, or legal-currentness claims.",
+      "id": "TARIFF-NTM-NORMATIVE-FRESHNESS-VISIBILITY-002",
+      "owner": "A2",
+      "qa": null,
+      "refs": {
+        "base_sha": "5230d8175ec31eca274fc9f72faaf7988b50d5a7",
+        "head_sha": null,
+        "pr": null
+      },
+      "required_checks": [
+        "Backend NTM safety suite",
+        "Frontend tests, types and build",
+        "Validate and build local staging images",
+        "Scheduled workflow and locked environment"
+      ],
+      "risk": "high",
+      "status": "ALLOCATED",
+      "tests": [],
+      "updated_at": "2026-09-16T12:15:11.208230+00:00",
+      "worktree": "/workspace/scratch/ecdeb44a862e/tariff-agent-worktrees/tariff-ntm-normative-freshness-visibility-002-5fc1946031"
     }
   ],
-  "updated_at": "2026-09-14T22:30:49.719324+00:00"
+  "updated_at": "2026-09-16T12:15:11.209667+00:00"
 }
