@@ -3,16 +3,19 @@
   "task_id": "TARIFF-A6-RESPONSE-DIAGNOSTICS-FOLLOWUP-001",
   "kind": "A0_SCOPED_TECHNICAL_FOLLOWUP",
   "owner": "A0",
-  "status": "IN_PROGRESS",
+  "status": "IMPLEMENTED_PENDING_INDEPENDENT_A5",
   "pr": 210,
   "branch": "agent/a6-opus5-response-shape-001",
   "base_head_sha": "62269d789c57743235ce1d66b22cfee3179152c9",
+  "head_sha": "08b59755929486ee07dc35df3d01fecb9219a05c",
+  "tree_sha": "76b072a93168d2a387f6ccdd046e02091411ebb6",
   "coordination": {
     "previous_lease_release_commit": "f38d171a4565906d9cf9d6023f854941f9c9cc91",
-    "current_lease_generation": 17,
-    "current_holder": "chatgpt-a0-pr210-followup-47381371c97a",
+    "lease_generation": 17,
+    "holder": "chatgpt-a0-pr210-followup-47381371c97a",
     "branch_and_state_writes_started_only_after_release_and_CAS_acquisition": true,
-    "existing_product_task_board_and_ownership_not_reassigned": true
+    "existing_product_task_board_and_ownership_not_reassigned": true,
+    "followup_allocation_commit": "46054228e5c29d3243dc8fd98659526c6bb01902"
   },
   "exclusive_files": [
     "tools/tariff_agents/audit.py",
@@ -20,27 +23,81 @@
     "tools/tariff_agents/verify.py",
     "tests/agent_orchestration/test_a6_response_diagnostics.py"
   ],
+  "published_blobs": {
+    "tools/tariff_agents/audit.py": "26ef9a97a6062ee6ade0e2a9140942355714f93e",
+    "tools/tariff_agents/audit_bridge.py": "d34c8553f837602b9b4a2f481b5d192efbf65a6b",
+    "tools/tariff_agents/verify.py": "16fc138499222de064db2fc245e845e389c64938",
+    "tests/agent_orchestration/test_a6_response_diagnostics.py": "c1dd08dd6d173beca43fd987bd75157f1537638e"
+  },
   "scope": [
     "Reject non-string JSON response discriminators without uncaught type errors or loss of validated packet binding.",
     "Restrict persistent failure diagnostics to fixed codes and the bounded HTTP status family.",
-    "Require regression tests in deterministic verification; preserve all existing tests and admission guards."
+    "Require the new seven-test suite in deterministic verification; preserve all existing tests and admission guards."
   ],
   "findings": [
     {
       "id": "A0-A6-210-DIAGNOSTIC-TYPE-001",
-      "status": "CONFIRMED",
+      "status": "FIX_IMPLEMENTED_AUTHOR_AND_CI_VERIFIED_PENDING_A5",
       "severity": "medium",
       "source_head_sha": "62269d789c57743235ce1d66b22cfee3179152c9",
       "source_blob_sha": "64be3787f18ccb297d116ca3e6a889ba429d9193",
-      "evidence": "Four offline responses with list/dict stop_reason or block type cause TypeError instead of bounded UNAVAILABLE; normal thinking/text responses succeed. Same 14 cases pass with explicit type guards in an unpublished proposal.",
+      "fixed_head_sha": "08b59755929486ee07dc35df3d01fecb9219a05c",
+      "evidence": "Four offline responses with list/dict stop_reason or block type previously raised TypeError. They now return STOP_OTHER or CONTENT_SHAPE, with the real bridge preserving request, base/head/contract/workflow, packet and canonical receipt-hash binding. Positive thinking/text cases remain accepted only as synthetic valid evidence.",
       "pr_comment_ids": [5695917322, 5695957687]
     },
     {
       "id": "A0-A6-210-DIAGNOSTIC-ALLOWLIST-001",
-      "status": "DEFENSE_IN_DEPTH",
-      "evidence": "The receipt regex accepts arbitrary uppercase strings, not only the fixed adapter codes. The current adapter emits constants; no live secret leak is asserted."
+      "status": "DEFENSE_IN_DEPTH_IMPLEMENTED_PENDING_A5",
+      "fixed_head_sha": "08b59755929486ee07dc35df3d01fecb9219a05c",
+      "evidence": "Receipt now accepts only fixed adapter codes and PROVIDER_HTTP_[1-5][0-9]{2}. Unknown uppercase strings and wrong JSON types are omitted; arbitrary runtime exception and thinking contents are not persisted. No historical live leak is asserted."
     }
   ],
+  "author_tests": {
+    "new_test_methods": 7,
+    "before_fix": {
+      "head_sha": "62269d789c57743235ce1d66b22cfee3179152c9",
+      "successful": false,
+      "failures": 5,
+      "subtest_errors": 15,
+      "note": "Expected red run of the added regressions against the original PR head, including absent new helper/verifier admission."
+    },
+    "after_fix": {
+      "successful": true,
+      "passed": 7,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "harness": "Sparse hash-verified source cache and disposable Git fixtures, real audit/bridge/verify source; HTTP transport is synthetic and network-denying. Not a full repository worktree, native A5 or live provider test.",
+    "secret_scanner_for_four_changed_files": "PASSED_UNCHANGED_SCANNER",
+    "provider_calls": 0
+  },
+  "ci": {
+    "head_sha": "08b59755929486ee07dc35df3d01fecb9219a05c",
+    "exact_head_push": {
+      "run_id": 35086286368,
+      "job_id": 104761765023,
+      "status": "completed",
+      "conclusion": "success",
+      "checkout_sha": "08b59755929486ee07dc35df3d01fecb9219a05c",
+      "mandatory_verifier": "112/112",
+      "snapshot_tests": "4/4",
+      "snapshot_validation": "valid"
+    },
+    "pull_request": {
+      "run_id": 35086290296,
+      "job_id": 104761771594,
+      "status": "completed",
+      "conclusion": "success",
+      "checkout_sha": "810200e740b2b46ff629a4143846b37c2932f191",
+      "checkout_kind": "GitHub generated merge preview for current PR head",
+      "mandatory_verifier": "112/112",
+      "snapshot_tests": "4/4",
+      "snapshot_validation": "valid"
+    },
+    "warnings": ["The existing pinned checkout action declares Node 20; GitHub runs it on Node 24 and emits a deprecation warning. No action pin or workflow was changed."],
+    "scope_note": "These are orchestration/security suites, not product-payment or full-monorepo acceptance. Unit test names mentioning A5 do not constitute a native A5 agent review."
+  },
   "runtime": {
     "native_subagent_spawn": "UNAVAILABLE_IN_THIS_INTERACTIVE_TOOL_SURFACE",
     "native_agents_started": 0,
@@ -53,8 +110,13 @@
   "review_gate": {
     "previous_a5_head": "62269d789c57743235ce1d66b22cfee3179152c9",
     "previous_a5_pass_does_not_resolve_new_findings": true,
-    "new_head_requires_fresh_native_a5_and_exact_head_ci": true,
+    "current_head_a5": "NOT_RUN_CAPABILITY_BLOCKED",
+    "new_head_requires_fresh_native_a5": true,
+    "exact_head_ci": "PASSED",
     "merge_authorized": false,
+    "merge_ready": false,
     "live_verified": false
-  }
+  },
+  "next_action": "A native-capable A0 session must recover the released lease and run a real independent A5 on exact HEAD 08b59755929486ee07dc35df3d01fecb9219a05c, including supplemental response and receipt regressions. If code changes, invalidate A5 and CI again. Request protected merge permission only after current-head gates pass. Never repeat consumed live requests.",
+  "owner_action_now": null
 }
