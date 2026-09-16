@@ -1,0 +1,59 @@
+{
+  "schema_version": 1,
+  "kind": "READ_ONLY_PRODUCT_TRIAGE",
+  "checked_at": "2026-09-16T11:33:39+00:00",
+  "pr187": {
+    "head_sha": "5d3b0c1dc7dd8e396c4f812db2bf6f1fa6d293f9",
+    "write_action": false
+  },
+  "a1": {
+    "session_id": "/root/a1_pr187_next_rates",
+    "status": "TRIAGE_COMPLETE_CONFIRMED_DEFECT",
+    "recommended_task_id": "TARIFF-PAYMENT-SOURCE-ATTRIBUTION-007",
+    "recommended_base_sha": "ee81a66eafaba008c2205cac65e5256f939822e2",
+    "dependency": "PR 204 exact head",
+    "summary": "Legacy HsRate and HsDutyRule rows are correctly treated as source-unbound for admission, but payment engine and quote metadata still present verified-looking ETT/EEC/NK/trade-measure source identity. Correct attribution without changing arithmetic, status or admission.",
+    "proposed_files": [
+      "customs-clear/backend/app/services/payment_engine.py",
+      "customs-clear/backend/app/services/payment_quote_service.py",
+      "customs-clear/backend/tests/test_payment_source_attribution.py"
+    ],
+    "risk": "high",
+    "may_start_before_dependency_integration": true,
+    "start_condition": "Only as a stacked branch from exact ee81a66eafaba008c2205cac65e5256f939822e2; any parent change requires fresh review.",
+    "boundaries": [
+      "No positive source admission.",
+      "No arithmetic, rounding, status, schema, DB, flag or legal-policy change.",
+      "Manual overrides remain explicitly user-supplied."
+    ]
+  },
+  "a2": {
+    "session_id": "/root/a2_pr187_next_ntm",
+    "status": "TRIAGE_COMPLETE_CONFIRMED_DEFECT",
+    "recommended_task_id": "TARIFF-NTM-NORMATIVE-FRESHNESS-VISIBILITY-002",
+    "recommended_base_sha": "5230d8175ec31eca274fc9f72faaf7988b50d5a7",
+    "dependency": "PR 207 exact head",
+    "summary": "The fail-closed NTM data_freshness signal is dropped by the normative block and cannot be shown in the primary product-details flow. Propagate it as a neutral or amber visibility signal without changing applicability or enforcement.",
+    "proposed_files": [
+      "customs-clear/backend/app/services/normative_requirements_block.py",
+      "customs-clear/backend/tests/test_normative_requirements_block.py",
+      "customs-clear/frontend/src/components/nonTariff/normativeBlockHelpers.ts",
+      "customs-clear/frontend/src/components/nonTariff/NormativeRequirementsBlock.tsx",
+      "customs-clear/frontend/src/components/nonTariff/NormativeRequirementsBlock.freshness.test.tsx",
+      "customs-clear/frontend/src/types/api.types.ts"
+    ],
+    "risk": "medium",
+    "may_start_before_dependency_integration": true,
+    "start_condition": "Only as a stacked branch from exact 5230d8175ec31eca274fc9f72faaf7988b50d5a7; integration waits for PR 207.",
+    "boundaries": [
+      "No change to required, missing or advisory measures.",
+      "No enforcement, source-kind isolation, flags, DB or legal-currentness claim.",
+      "Fresh EEC_ETT alone must not imply complete/current NTM coverage."
+    ]
+  },
+  "allocation": {
+    "tasks_created": false,
+    "writers_started": false,
+    "reason": "Read-only triage only; exact task-board allocation and exclusive worktrees are required before implementation."
+  }
+}
