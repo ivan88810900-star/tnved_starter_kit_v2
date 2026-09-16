@@ -687,7 +687,7 @@
     }
   ],
   "max_concurrent_subagents": 3,
-  "revision": 545,
+  "revision": 552,
   "runs": [
     {
       "head_sha": null,
@@ -1678,6 +1678,26 @@
       "status": "FINISHED",
       "task_id": "TARIFF-NTM-ADVISORY-SUMMARY-001",
       "updated_at": "2026-09-14T22:30:49.657164+00:00"
+    },
+    {
+      "head_sha": null,
+      "role": "A2",
+      "run_id": "70d411176b234b6b928c13f55e74805b",
+      "session_id": "/root/a2_ntm_freshness_visibility",
+      "started_at": "2026-09-16T12:35:01.072888+00:00",
+      "status": "FINISHED",
+      "task_id": "TARIFF-NTM-NORMATIVE-FRESHNESS-VISIBILITY-002",
+      "updated_at": "2026-09-16T12:35:01.108155+00:00"
+    },
+    {
+      "head_sha": "5330e6aebd777fd880d938da6b4891a1ec8cf864",
+      "role": "A5",
+      "run_id": "d2666c706cda4dd59d7a98859f395955",
+      "session_id": "/root/a5_ntm_freshness_exact",
+      "started_at": "2026-09-16T12:35:01.115212+00:00",
+      "status": "FINISHED",
+      "task_id": "TARIFF-NTM-NORMATIVE-FRESHNESS-VISIBILITY-002",
+      "updated_at": "2026-09-16T12:37:27.750833+00:00"
     }
   ],
   "schema_version": 1,
@@ -2788,12 +2808,57 @@
       "goal": "Propagate fail-closed NTM data_freshness into the primary normative requirements product flow as a neutral or amber visibility signal without changing applicability, enforcement, flags, database state, or legal-currentness claims.",
       "id": "TARIFF-NTM-NORMATIVE-FRESHNESS-VISIBILITY-002",
       "owner": "A2",
-      "qa": null,
-      "refs": {
-        "base_sha": "5230d8175ec31eca274fc9f72faaf7988b50d5a7",
-        "head_sha": null,
-        "pr": null
+      "qa": {
+        "commands": [
+          {
+            "command": "exact published parent/tree/six-file scope and git diff --check",
+            "exit_code": 0,
+            "output": "PASS HEAD 5330e6ae tree 8d8482d3; corrective diff exactly 2 frontend files; cumulative scope 6; clean"
+          },
+          {
+            "command": "backend focused normative tests and outcome-neutrality probe",
+            "exit_code": 0,
+            "output": "18 passed; neutrality PASS"
+          },
+          {
+            "command": "frontend focused adversarial freshness matrix",
+            "exit_code": 0,
+            "output": "12 tests and independent 16-case matrix passed; previous HIGH closed"
+          },
+          {
+            "command": "frontend full suite",
+            "exit_code": 0,
+            "output": "17 files, 62 tests passed"
+          },
+          {
+            "command": "npm run typecheck && npm run build",
+            "exit_code": 0,
+            "output": "PASS; build transformed 3075 modules"
+          },
+          {
+            "command": "broader NTM regression with fresh-base replay",
+            "exit_code": 0,
+            "output": "656 passed; 2 unrelated runtime-diagnostic fixture failures reproduced unchanged on base"
+          }
+        ],
+        "head_sha": "5330e6aebd777fd880d938da6b4891a1ec8cf864",
+        "reviewer_session_id": "/root/a5_ntm_freshness_exact",
+        "status": "PASSED"
       },
+    "refs": {
+      "base_sha": "5230d8175ec31eca274fc9f72faaf7988b50d5a7",
+      "head_sha": "5330e6aebd777fd880d938da6b4891a1ec8cf864",
+      "pr": 211,
+      "publication_mapping": {
+        "identical_trees_verified": true,
+        "local_initial_sha": "3e03b633208190721f02cd6b3032622216240acf",
+        "local_fix_sha": "9c3403a2b94a68bc5f8cb62cb5f9ea0f65efecca",
+        "local_tree_sha": "8d8482d37d7bc6971f223d076c1bbe7453b6f1b9",
+        "published_initial_sha": "34d2974731b27ac4427cbb7b6c99ad2216fd9d76",
+        "published_head_sha": "5330e6aebd777fd880d938da6b4891a1ec8cf864",
+        "published_tree_sha": "8d8482d37d7bc6971f223d076c1bbe7453b6f1b9"
+      }
+    },
       "required_checks": [
         "Backend NTM safety suite",
         "Frontend tests, types and build",
@@ -2801,11 +2866,40 @@
         "Scheduled workflow and locked environment"
       ],
       "risk": "high",
-      "status": "ALLOCATED",
-      "tests": [],
-      "updated_at": "2026-09-16T12:15:11.208230+00:00",
+      "status": "QA_PASSED",
+      "tests": {
+        "commands": [
+          {
+            "command": "backend selected normative/NTM tests",
+            "exit_code": 0,
+            "output": "104 passed; 2 dependency warnings"
+          },
+          {
+            "command": "frontend full test suite after A5 fix",
+            "exit_code": 0,
+            "output": "17 files, 62 tests passed"
+          },
+          {
+            "command": "npm run typecheck",
+            "exit_code": 0,
+            "output": "PASS"
+          },
+          {
+            "command": "npm run build",
+            "exit_code": 0,
+            "output": "PASS"
+          },
+          {
+            "command": "git diff --check cumulative base..HEAD",
+            "exit_code": 0,
+            "output": "PASS; exact six-file owned scope"
+          }
+        ],
+        "head_sha": "5330e6aebd777fd880d938da6b4891a1ec8cf864"
+      },
+      "updated_at": "2026-09-16T12:37:27.740363+00:00",
       "worktree": "/workspace/scratch/ecdeb44a862e/tariff-agent-worktrees/tariff-ntm-normative-freshness-visibility-002-5fc1946031"
     }
   ],
-  "updated_at": "2026-09-16T12:17:30.000000+00:00"
+  "updated_at": "2026-09-16T12:38:20.000000+00:00"
 }

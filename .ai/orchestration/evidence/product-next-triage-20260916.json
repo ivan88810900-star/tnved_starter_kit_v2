@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "kind": "READ_ONLY_PRODUCT_TRIAGE",
-  "checked_at": "2026-09-16T11:33:39+00:00",
+  "kind": "PRODUCT_TRIAGE_AND_EXECUTION",
+  "checked_at": "2026-09-16T12:38:20+00:00",
   "pr187": {
     "head_sha": "5d3b0c1dc7dd8e396c4f812db2bf6f1fa6d293f9",
     "write_action": false
@@ -19,8 +19,17 @@
       "customs-clear/backend/tests/test_payment_source_attribution.py"
     ],
     "risk": "high",
-    "may_start_before_dependency_integration": true,
-    "start_condition": "Only as a stacked branch from exact ee81a66eafaba008c2205cac65e5256f939822e2; any parent change requires fresh review.",
+    "may_start_before_dependency_integration": false,
+    "start_condition": "Wait until PR 204 ownership is finalized or released because a complete correction necessarily changes payment_engine.py.",
+    "independent_followup": {
+      "session_id": "/root/a1_payment_attribution_triage",
+      "status": "CONFIRMED",
+      "head_sha": "ee81a66eafaba008c2205cac65e5256f939822e2",
+      "focused_tests": "11 passed",
+      "runtime_reproductions": 2,
+      "quote_only_fix_complete": false,
+      "reason": "Calculator compute, compliance and assistant expose the payment_engine result directly; changing quote metadata alone would leave the raw/API attribution defect."
+    },
     "boundaries": [
       "No positive source admission.",
       "No arithmetic, rounding, status, schema, DB, flag or legal-policy change.",
@@ -42,7 +51,7 @@
       "customs-clear/frontend/src/components/nonTariff/NormativeRequirementsBlock.freshness.test.tsx",
       "customs-clear/frontend/src/types/api.types.ts"
     ],
-    "risk": "medium",
+    "risk": "high",
     "may_start_before_dependency_integration": true,
     "start_condition": "Only as a stacked branch from exact 5230d8175ec31eca274fc9f72faaf7988b50d5a7; integration waits for PR 207.",
     "boundaries": [
@@ -52,8 +61,22 @@
     ]
   },
   "allocation": {
-    "tasks_created": false,
-    "writers_started": false,
-    "reason": "Read-only triage only; exact task-board allocation and exclusive worktrees are required before implementation."
+    "tasks_created": true,
+    "writers_started": true,
+    "a2_execution": {
+      "task_id": "TARIFF-NTM-NORMATIVE-FRESHNESS-VISIBILITY-002",
+      "author_session": "/root/a2_ntm_freshness_visibility",
+      "a5_session": "/root/a5_ntm_freshness_exact",
+      "published_head_sha": "5330e6aebd777fd880d938da6b4891a1ec8cf864",
+      "published_tree_sha": "8d8482d37d7bc6971f223d076c1bbe7453b6f1b9",
+      "pr": 211,
+      "status": "QA_PASSED_AWAITING_A6_AND_EXACT_HEAD_CI",
+      "a5": "PASS",
+      "live_a6_verified": false
+    },
+    "a1_execution": {
+      "task_created": false,
+      "reason": "Confirmed complete fix overlaps unfinished PR 204 payment_engine.py ownership; no concurrent writer started."
+    }
   }
 }

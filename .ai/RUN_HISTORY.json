@@ -1,5 +1,5 @@
 {
-  "board_revision": 544,
+  "board_revision": 551,
   "runs": [
     {
       "head_sha": null,
@@ -990,6 +990,26 @@
       "status": "FINISHED",
       "task_id": "TARIFF-NTM-ADVISORY-SUMMARY-001",
       "updated_at": "2026-09-14T22:30:49.657164+00:00"
+    },
+    {
+      "head_sha": null,
+      "role": "A2",
+      "run_id": "70d411176b234b6b928c13f55e74805b",
+      "session_id": "/root/a2_ntm_freshness_visibility",
+      "started_at": "2026-09-16T12:35:01.072888+00:00",
+      "status": "FINISHED",
+      "task_id": "TARIFF-NTM-NORMATIVE-FRESHNESS-VISIBILITY-002",
+      "updated_at": "2026-09-16T12:35:01.108155+00:00"
+    },
+    {
+      "head_sha": "5330e6aebd777fd880d938da6b4891a1ec8cf864",
+      "role": "A5",
+      "run_id": "d2666c706cda4dd59d7a98859f395955",
+      "session_id": "/root/a5_ntm_freshness_exact",
+      "started_at": "2026-09-16T12:35:01.115212+00:00",
+      "status": "FINISHED",
+      "task_id": "TARIFF-NTM-NORMATIVE-FRESHNESS-VISIBILITY-002",
+      "updated_at": "2026-09-16T12:37:27.750833+00:00"
     }
   ],
   "schema_version": 1
