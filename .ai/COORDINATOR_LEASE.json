@@ -1,9 +1,9 @@
 {
-  "expires_at": "2026-09-16T11:52:55.597733+00:00",
+  "expires_at": null,
   "generation": 18,
-  "holder": "codex-a0-automation-20260916t112033z",
+  "holder": null,
   "schema_version": 1,
-  "state": "active",
-  "token": "b79fa7f407d841c6b0607d987cfb274b",
-  "updated_at": "2026-09-16T11:22:55.597733+00:00"
+  "state": "released",
+  "token": null,
+  "updated_at": "2026-09-16T11:34:23.140046+00:00"
 }
