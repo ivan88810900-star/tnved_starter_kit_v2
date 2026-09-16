@@ -1,5 +1,5 @@
 {
-  "board_revision": 569,
+  "board_revision": 570,
   "runs": [
     {
       "head_sha": null,
@@ -1040,6 +1040,16 @@
       "status": "FINISHED",
       "task_id": "TARIFF-AD30-RECURRING-ARTIFACTS-009",
       "updated_at": "2026-09-16T15:07:11.768256+00:00"
+    },
+    {
+      "head_sha": "fc19df03904430649e356978cf2086a616e6d244",
+      "role": "A5",
+      "run_id": "10c56230140649d999f28014a8ba37c4",
+      "session_id": "/root/a5_ad30_recurring_fix_exact",
+      "started_at": "2026-09-16T15:07:53.444483+00:00",
+      "status": "RUNNING",
+      "task_id": "TARIFF-AD30-RECURRING-ARTIFACTS-009",
+      "updated_at": "2026-09-16T15:07:53.444499+00:00"
     }
   ],
   "schema_version": 1
