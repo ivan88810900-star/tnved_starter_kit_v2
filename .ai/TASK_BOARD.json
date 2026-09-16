@@ -723,7 +723,7 @@
     }
   ],
   "max_concurrent_subagents": 3,
-  "revision": 587,
+  "revision": 588,
   "runs": [
     {
       "head_sha": null,
@@ -3234,7 +3234,7 @@
     {
       "id": "TARIFF-GROUNDED-NTM-FRESHNESS-001",
       "owner": "A4",
-      "status": "ALLOCATED",
+      "status": "IMPLEMENTED",
       "risk": "high",
       "goal": "Propagate the normalized NTM data_freshness signal into grounded assistant chat and batch-copilot output without changing applicability, enforcement, source admission, database state, or feature flags.",
       "dependencies": [
@@ -3251,20 +3251,45 @@
       ],
       "refs": {
         "base_sha": "564cc34b3c6b5d18c4d9a960b1c342257ec9f5e7",
-        "head_sha": null,
-        "pr": null
+        "head_sha": "0fe81e67b800f1b2ccce00e253e705f7c5ced02a",
+        "pr": 213,
+        "publication_mapping": {
+          "identical_trees_verified": true,
+          "local_head_sha": "198b0818437bb5da7d9e6ef0608ff32b58807b28",
+          "published_head_sha": "0fe81e67b800f1b2ccce00e253e705f7c5ced02a",
+          "tree_sha": "911aa204c83726b63a7d26b36985c2059ac43f36"
+        }
       },
       "required_checks": [
         "focused grounded assistant tests",
         "fresh independent A5",
         "exact-head CI"
       ],
-      "tests": null,
+      "tests": {
+        "head_sha": "0fe81e67b800f1b2ccce00e253e705f7c5ced02a",
+        "commands": [
+          {
+            "command": "author focused/relevant grounded assistant selection",
+            "exit_code": 0,
+            "output": "58 passed; 10 subtests; 2 existing dependency warnings"
+          },
+          {
+            "command": "author compile and fatal Ruff selection",
+            "exit_code": 0,
+            "output": "PASS"
+          },
+          {
+            "command": "git diff --check and exact scope",
+            "exit_code": 0,
+            "output": "PASS; exactly two owned files"
+          }
+        ]
+      },
       "qa": null,
       "ci": null,
       "external_audit": null,
-      "updated_at": "2026-09-16T17:25:43.736+00:00"
+      "updated_at": "2026-09-16T17:37:36.757+00:00"
     }
   ],
-  "updated_at": "2026-09-16T17:34:12.473+00:00"
+  "updated_at": "2026-09-16T17:37:36.757+00:00"
 }
