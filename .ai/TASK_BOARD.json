@@ -723,7 +723,7 @@
     }
   ],
   "max_concurrent_subagents": 3,
-  "revision": 585,
+  "revision": 586,
   "runs": [
     {
       "head_sha": null,
@@ -3016,12 +3016,9 @@
         "pr": 211,
         "publication_mapping": {
           "identical_trees_verified": true,
-          "local_fix_sha": "9c3403a2b94a68bc5f8cb62cb5f9ea0f65efecca",
-          "local_initial_sha": "3e03b633208190721f02cd6b3032622216240acf",
-          "local_tree_sha": "8d8482d37d7bc6971f223d076c1bbe7453b6f1b9",
           "published_head_sha": "564cc34b3c6b5d18c4d9a960b1c342257ec9f5e7",
-          "published_initial_sha": "34d2974731b27ac4427cbb7b6c99ad2216fd9d76",
-          "published_tree_sha": "622f6c400dc1aff922f5eb21002ad7c6e1eb3db8"
+          "published_tree_sha": "622f6c400dc1aff922f5eb21002ad7c6e1eb3db8",
+          "integration_method": "two-parent non-force merge"
         },
         "merge_parents": [
           "5330e6aebd777fd880d938da6b4891a1ec8cf864",
@@ -3040,33 +3037,28 @@
         "head_sha": "564cc34b3c6b5d18c4d9a960b1c342257ec9f5e7",
         "commands": [
           {
-            "command": "backend freshness + normative focused suite",
+            "command": "author focused backend freshness + normative",
             "exit_code": 0,
             "output": "18 passed"
           },
           {
-            "command": "frontend freshness focused suite",
+            "command": "author frontend freshness + full suite",
             "exit_code": 0,
-            "output": "12 passed"
+            "output": "12 focused; 17 files / 62 tests passed"
           },
           {
-            "command": "frontend full suite",
-            "exit_code": 0,
-            "output": "17 files, 62 tests passed"
-          },
-          {
-            "command": "npm run typecheck && npm run build",
+            "command": "author TypeScript + production build",
             "exit_code": 0,
             "output": "PASS; 3075 modules transformed"
           },
           {
-            "command": "git diff --check 5d3b0c1..564cc34b and exact cumulative scope",
+            "command": "git diff --check and cumulative scope",
             "exit_code": 0,
-            "output": "PASS; exactly eight authorized files"
+            "output": "PASS; exact eight-file cumulative scope, six-file delta from prerequisite"
           }
         ]
       },
-      "updated_at": "2026-09-16T17:25:43.736+00:00",
+      "updated_at": "2026-09-16T17:27:49.274+00:00",
       "worktree": "/workspace/scratch/ecdeb44a862e/tariff-agent-worktrees/tariff-ntm-normative-freshness-visibility-002-5fc1946031"
     },
     {
@@ -3254,5 +3246,5 @@
       "updated_at": "2026-09-16T17:25:43.736+00:00"
     }
   ],
-  "updated_at": "2026-09-16T17:25:43.736+00:00"
+  "updated_at": "2026-09-16T17:27:49.274+00:00"
 }
