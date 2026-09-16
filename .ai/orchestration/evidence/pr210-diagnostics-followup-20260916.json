@@ -1,0 +1,60 @@
+{
+  "schema_version": 1,
+  "task_id": "TARIFF-A6-RESPONSE-DIAGNOSTICS-FOLLOWUP-001",
+  "kind": "A0_SCOPED_TECHNICAL_FOLLOWUP",
+  "owner": "A0",
+  "status": "IN_PROGRESS",
+  "pr": 210,
+  "branch": "agent/a6-opus5-response-shape-001",
+  "base_head_sha": "62269d789c57743235ce1d66b22cfee3179152c9",
+  "coordination": {
+    "previous_lease_release_commit": "f38d171a4565906d9cf9d6023f854941f9c9cc91",
+    "current_lease_generation": 17,
+    "current_holder": "chatgpt-a0-pr210-followup-47381371c97a",
+    "branch_and_state_writes_started_only_after_release_and_CAS_acquisition": true,
+    "existing_product_task_board_and_ownership_not_reassigned": true
+  },
+  "exclusive_files": [
+    "tools/tariff_agents/audit.py",
+    "tools/tariff_agents/audit_bridge.py",
+    "tools/tariff_agents/verify.py",
+    "tests/agent_orchestration/test_a6_response_diagnostics.py"
+  ],
+  "scope": [
+    "Reject non-string JSON response discriminators without uncaught type errors or loss of validated packet binding.",
+    "Restrict persistent failure diagnostics to fixed codes and the bounded HTTP status family.",
+    "Require regression tests in deterministic verification; preserve all existing tests and admission guards."
+  ],
+  "findings": [
+    {
+      "id": "A0-A6-210-DIAGNOSTIC-TYPE-001",
+      "status": "CONFIRMED",
+      "severity": "medium",
+      "source_head_sha": "62269d789c57743235ce1d66b22cfee3179152c9",
+      "source_blob_sha": "64be3787f18ccb297d116ca3e6a889ba429d9193",
+      "evidence": "Four offline responses with list/dict stop_reason or block type cause TypeError instead of bounded UNAVAILABLE; normal thinking/text responses succeed. Same 14 cases pass with explicit type guards in an unpublished proposal.",
+      "pr_comment_ids": [5695917322, 5695957687]
+    },
+    {
+      "id": "A0-A6-210-DIAGNOSTIC-ALLOWLIST-001",
+      "status": "DEFENSE_IN_DEPTH",
+      "evidence": "The receipt regex accepts arbitrary uppercase strings, not only the fixed adapter codes. The current adapter emits constants; no live secret leak is asserted."
+    }
+  ],
+  "runtime": {
+    "native_subagent_spawn": "UNAVAILABLE_IN_THIS_INTERACTIVE_TOOL_SURFACE",
+    "native_agents_started": 0,
+    "independent_a5_started": false,
+    "local_source_cache": "/mnt/data/a6-pr210-review",
+    "local_cache_is_full_repository_worktree": false,
+    "publication_method": "GitHub Git objects from exact existing parent; non-force branch update",
+    "provider_calls": 0
+  },
+  "review_gate": {
+    "previous_a5_head": "62269d789c57743235ce1d66b22cfee3179152c9",
+    "previous_a5_pass_does_not_resolve_new_findings": true,
+    "new_head_requires_fresh_native_a5_and_exact_head_ci": true,
+    "merge_authorized": false,
+    "live_verified": false
+  }
+}
