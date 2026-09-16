@@ -206,6 +206,10 @@ def _receipt(context, request_id, packet, result, bridge_status, reason_code=Non
         "findings": result.get("findings", []),
         "limitations": result.get("limitations", []),
     }
+    failure_code = result.get("failure_code")
+    if (isinstance(failure_code, str) and
+            re.fullmatch(r"[A-Z][A-Z0-9_]{1,63}", failure_code)):
+        value["provider_failure_code"] = failure_code
     if reason_code:
         value["reason_code"] = reason_code
     value["receipt_sha256"] = _sha256(_canonical(value))
