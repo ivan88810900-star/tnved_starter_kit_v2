@@ -687,7 +687,7 @@
     }
   ],
   "max_concurrent_subagents": 3,
-  "revision": 558,
+  "revision": 560,
   "runs": [
     {
       "head_sha": null,
@@ -1705,9 +1705,9 @@
       "run_id": "6cc6c17e8c1c46ffb226b97bc7bd06ac",
       "session_id": "/root/a3_sources_triage",
       "started_at": "2026-09-16T14:46:40.655108+00:00",
-      "status": "RUNNING",
+      "status": "FINISHED",
       "task_id": "TARIFF-AD30-RECURRING-ARTIFACTS-009",
-      "updated_at": "2026-09-16T14:46:40.655123+00:00"
+      "updated_at": "2026-09-16T14:52:01.861486+00:00"
     }
   ],
   "schema_version": 1,
@@ -2990,7 +2990,7 @@
       "qa": null,
       "refs": {
         "base_sha": "5d3b0c1dc7dd8e396c4f812db2bf6f1fa6d293f9",
-        "head_sha": null,
+        "head_sha": "abafd8b24ba248852185ac5cdbb1530f9e6e624e",
         "pr": null
       },
       "required_checks": [
@@ -3000,11 +3000,20 @@
         "exact-head CI"
       ],
       "risk": "high",
-      "status": "IN_PROGRESS",
-      "tests": [],
-      "updated_at": "2026-09-16T14:46:40.655126+00:00",
+      "status": "IMPLEMENTED",
+      "tests": {
+        "commands": [
+          {
+            "command": "uv run --isolated --with-requirements requirements-monitor.txt --with-requirements requirements.txt python -m pytest -q tests/test_official_source_monitor.py tests/test_official_source_original_capture.py tests/test_regulatory_source_updates.py tests/test_regulatory_source_completeness.py",
+            "exit_code": 0,
+            "output": "108 passed, 1 Starlette deprecation warning; git diff --check passed; exact three-file scope verified"
+          }
+        ],
+        "head_sha": "abafd8b24ba248852185ac5cdbb1530f9e6e624e"
+      },
+      "updated_at": "2026-09-16T14:52:01.852727+00:00",
       "worktree": "/workspace/scratch/ecdeb44a862e/tariff-agent-worktrees/tariff-ad30-recurring-artifacts-009-c5c1c819a3"
     }
   ],
-  "updated_at": "2026-09-16T14:46:40.656305+00:00"
+  "updated_at": "2026-09-16T14:52:01.862614+00:00"
 }
