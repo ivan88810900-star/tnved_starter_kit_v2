@@ -844,6 +844,20 @@ export type NormativeRequirementsBlockData = {
     applied_rule_ids?: string[];
     broker_changed?: boolean;
   } | null;
+  data_freshness?: {
+    state: 'fresh' | 'stale' | 'unknown';
+    tone: 'neutral' | 'amber';
+    source_name: string | null;
+    source_code: string | null;
+    synced_at: string | null;
+    revision: string | null;
+    is_stale: boolean;
+    scope: 'technical_source_status_only';
+    affects_applicability: false;
+    affects_required_documents: false;
+    affects_missing_documents: false;
+    ntm_coverage_verified: false;
+  };
   sources_summary?: string[];
   empty_message?: string | null;
   tr_ts?: string[];

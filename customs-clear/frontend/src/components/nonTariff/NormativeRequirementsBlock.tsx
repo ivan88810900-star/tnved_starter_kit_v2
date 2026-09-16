@@ -6,6 +6,7 @@ import {
 import {
   countNormativeGroups,
   hasNormativeContent,
+  normalizeNormativeDataFreshness,
   type NormativeDocument,
   type NormativeRequirementsBlockData,
 } from './normativeBlockHelpers';
@@ -112,6 +113,17 @@ export const NormativeRequirementsBlock: React.FC<Props> = ({
   const ordinaryAdvisory = (block.advisory_requirements ?? []).filter(
     (item) => !item.transaction_level,
   );
+  const freshness = normalizeNormativeDataFreshness(block.data_freshness);
+  const freshnessLabel = freshness.state === 'fresh'
+    ? 'Источник данных отмечен как свежий'
+    : freshness.state === 'stale'
+      ? 'Данные источника устарели или требуют обновления'
+      : 'Свежесть данных источника не подтверждена';
+  const freshnessDetails = [
+    freshness.source_name,
+    freshness.revision ? `редакция ${freshness.revision}` : null,
+    freshness.synced_at ? `синхронизация ${freshness.synced_at}` : null,
+  ].filter(Boolean).join(' · ');
 
   return (
     <section
@@ -127,6 +139,24 @@ export const NormativeRequirementsBlock: React.FC<Props> = ({
             {counts.advisory > 0 && <span className="text-amber-700">потенциальных: {counts.advisory}</span>}
           </div>
         )}
+      </div>
+
+      <div
+        role="status"
+        data-testid="normative-data-freshness"
+        data-state={freshness.state}
+        className={`rounded-lg border px-2.5 py-2 text-[10px] leading-snug ${
+          freshness.tone === 'amber'
+            ? 'border-amber-200 bg-amber-50 text-amber-900'
+            : 'border-slate-200 bg-slate-50 text-slate-700'
+        }`}
+      >
+        <div className="font-medium">{freshnessLabel}</div>
+        {freshnessDetails && <div className="mt-0.5 opacity-80">{freshnessDetails}</div>}
+        <div className="mt-1 opacity-80">
+          Технический статус источника не меняет применимость мер и списки обязательных или отсутствующих
+          документов. Свежий ЕТТ не подтверждает полноту или актуальность покрытия нетарифных мер.
+        </div>
       </div>
 
       {!hasContent && (

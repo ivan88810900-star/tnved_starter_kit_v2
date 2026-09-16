@@ -34,6 +34,58 @@ _EMPTY_MESSAGE = (
     "Уточните код ТН ВЭД и описание товара."
 )
 
+_FRESHNESS_SCOPE = "technical_source_status_only"
+
+
+def _optional_text(value: Any) -> str | None:
+    if not isinstance(value, str):
+        return None
+    cleaned = value.strip()
+    return cleaned or None
+
+
+def _normalize_data_freshness(value: Any) -> dict[str, Any]:
+    """Return a fail-closed visibility signal without changing NTM outcomes."""
+    raw = value if isinstance(value, dict) else {}
+    source_name = _optional_text(raw.get("source_name"))
+    source_code = _optional_text(raw.get("source_code"))
+    synced_at = _optional_text(raw.get("synced_at"))
+    revision = _optional_text(raw.get("revision"))
+    raw_is_stale = raw.get("is_stale")
+
+    if raw_is_stale is True:
+        state = "stale"
+    elif (
+        raw_is_stale is False
+        and source_name
+        and source_code
+        and synced_at
+        and revision
+    ):
+        state = "fresh"
+    else:
+        # Missing, unreadable and incomplete source status must never be shown
+        # as fresh.  ``is_stale=True`` preserves the existing fail-closed
+        # consumer convention while ``state`` distinguishes unknown from stale.
+        state = "unknown"
+
+    return {
+        "state": state,
+        "tone": "neutral" if state == "fresh" else "amber",
+        "source_name": source_name,
+        "source_code": source_code,
+        "synced_at": synced_at,
+        "revision": revision,
+        "is_stale": state != "fresh",
+        "scope": _FRESHNESS_SCOPE,
+        "affects_applicability": False,
+        "affects_required_documents": False,
+        "affects_missing_documents": False,
+        # Even a fresh EEC_ETT status covers the tariff source status only.  It
+        # is not evidence that every NTM contour is complete or legally current.
+        "ntm_coverage_verified": False,
+    }
+
 
 def source_label_for(source: str | None) -> str:
     key = (source or "").strip()
@@ -172,6 +224,9 @@ def build_normative_requirements_block(non_tariff_result: dict[str, Any]) -> dic
         ),
         "official_ntm_catch_all": non_tariff_result.get("official_ntm_catch_all"),
         "curated_enforcement_audit": non_tariff_result.get("curated_enforcement_audit"),
+        "data_freshness": _normalize_data_freshness(
+            non_tariff_result.get("data_freshness")
+        ),
         "sources_summary": sources_summary,
         "empty_message": empty_message,
         "tr_ts": list(non_tariff_result.get("tr_ts") or []),

@@ -234,6 +234,105 @@ def test_empty_state_message() -> None:
     assert block["advisory_requirements"] == []
 
 
+@pytest.mark.parametrize(
+    ("freshness", "expected_state", "expected_tone"),
+    [
+        (None, "unknown", "amber"),
+        ("unreadable", "unknown", "amber"),
+        (
+            {
+                "source_name": "Локальная база правил",
+                "source_code": "LOCAL",
+                "synced_at": None,
+                "is_stale": True,
+                "revision": "seed",
+            },
+            "stale",
+            "amber",
+        ),
+        (
+            {
+                "source_name": "Единый таможенный тариф ЕАЭС",
+                "source_code": "EEC_ETT",
+                "synced_at": "2026-09-16T09:00:00+00:00",
+                "is_stale": False,
+                "revision": "ett:2026-09-16",
+            },
+            "fresh",
+            "neutral",
+        ),
+        (
+            {
+                "source_name": "Источник без подтверждённого статуса",
+                "source_code": "UNKNOWN",
+                "synced_at": "2026-09-16T09:00:00+00:00",
+                "is_stale": None,
+                "revision": "unknown",
+            },
+            "unknown",
+            "amber",
+        ),
+        (
+            {
+                "source_name": "Неполный источник",
+                "source_code": "INCOMPLETE",
+                "is_stale": False,
+            },
+            "unknown",
+            "amber",
+        ),
+    ],
+    ids=("missing", "unreadable", "stale", "fresh", "unknown", "incomplete-fresh"),
+)
+def test_data_freshness_is_fail_closed_and_outcome_neutral(
+    freshness: object,
+    expected_state: str,
+    expected_tone: str,
+) -> None:
+    nt = {
+        "status": "ERROR",
+        "hs_code": "8471300000",
+        "description": "Ноутбук",
+        "required_permits": [
+            {
+                "permit_type": "ДС",
+                "tr_ts": "004/2011",
+                "description": "ИТ-оборудование",
+                "legal_ref": "catalog",
+            }
+        ],
+        "missing_permit_types": ["ДС"],
+        "advisory_requirements": [
+            {
+                "permit_type": "НФ",
+                "source": "official_ntm_contours",
+                "applicability": "needs_clarification",
+                "used_for_missing_check": False,
+            }
+        ],
+    }
+    if freshness is not None:
+        nt["data_freshness"] = freshness
+
+    block = build_normative_requirements_block(nt)
+    signal = block["data_freshness"]
+
+    assert signal["state"] == expected_state
+    assert signal["tone"] == expected_tone
+    assert signal["is_stale"] is (expected_state != "fresh")
+    assert signal["scope"] == "technical_source_status_only"
+    assert signal["affects_applicability"] is False
+    assert signal["affects_required_documents"] is False
+    assert signal["affects_missing_documents"] is False
+    assert signal["ntm_coverage_verified"] is False
+
+    # Freshness is visibility-only: no variant may alter broker/advisory output.
+    assert block["status"] == "ERROR"
+    assert [row["permit_type"] for row in block["required_documents"]] == ["ДС"]
+    assert [row["permit_type"] for row in block["missing_documents"]] == ["ДС"]
+    assert [row["permit_type"] for row in block["advisory_requirements"]] == ["НФ"]
+
+
 def test_check_includes_normative_block(
     memory_sessionmaker: sessionmaker,
     minimal_ntm_patches: None,
