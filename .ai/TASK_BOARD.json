@@ -723,7 +723,7 @@
     }
   ],
   "max_concurrent_subagents": 3,
-  "revision": 581,
+  "revision": 584,
   "runs": [
     {
       "head_sha": null,
@@ -1791,9 +1791,9 @@
       "run_id": "7948907f5aeb448c9b4adf1e2de7f03f",
       "session_id": "/root/a5_ntm_freshness_a286",
       "started_at": "2026-09-16T17:02:37.472134+00:00",
-      "status": "RUNNING",
+      "status": "FINISHED",
       "task_id": "TARIFF-NTM-FRESHNESS-FAIL-CLOSED-001",
-      "updated_at": "2026-09-16T17:02:37.472146+00:00"
+      "updated_at": "2026-09-16T17:10:21.115053+00:00"
     }
   ],
   "schema_version": 1,
@@ -2813,7 +2813,38 @@
       "goal": "Make NTM data freshness fail closed when EEC_ETT source status is absent or unreadable: preserve API shape but never report unknown local seed state as fresh. Add executable regression coverage; do not change legal rules, DB, flags, enforcement, or frontend.",
       "id": "TARIFF-NTM-FRESHNESS-FAIL-CLOSED-001",
       "owner": "A2",
-      "qa": null,
+      "qa": {
+        "commands": [
+          {
+            "command": "exact scope/tree and git diff --check",
+            "exit_code": 0,
+            "output": "two owned files; clean; PR207 exact HEAD a286f7b"
+          },
+          {
+            "command": "focused plus adversarial source-status matrix",
+            "exit_code": 0,
+            "output": "36 passed; 7 adversarial missing/exception/fresh/stale/malformed cases"
+          },
+          {
+            "command": "broader NTM regression excluding known fixture-dependent files",
+            "exit_code": 0,
+            "output": "825 passed, 1 skipped"
+          },
+          {
+            "command": "old implementation replay against new expectation",
+            "exit_code": 0,
+            "output": "old false-fresh implementation failed as intended; regression is effective"
+          },
+          {
+            "command": "runtime outcome-neutrality comparison",
+            "exit_code": 0,
+            "output": "applicability, required/missing/advisory, official NTM and enforcement outputs unchanged"
+          }
+        ],
+        "head_sha": "a286f7b24953f338a9fa4f910fb605ebc4328978",
+        "reviewer_session_id": "/root/a5_ntm_freshness_a286",
+        "status": "PASSED"
+      },
       "recovery": {
         "evidence": "All recorded sessions were FINISHED; clean same-repository worktree restored at exact existing PR207 HEAD without force-push.",
         "lease_generation": 22,
@@ -2822,17 +2853,30 @@
       "refs": {
         "base_sha": "5d3b0c1dc7dd8e396c4f812db2bf6f1fa6d293f9",
         "head_sha": "a286f7b24953f338a9fa4f910fb605ebc4328978",
+        "observed_ci": {
+          "admission_agent_qa": {
+            "run_id": 35125530407,
+            "status": "PASSED",
+            "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/35125530407"
+          },
+          "head_sha": "a286f7b24953f338a9fa4f910fb605ebc4328978",
+          "not_promoted_to_ci_gate_reason": "High-risk A6 is not LIVE_VERIFIED; exact-head CI is supporting evidence only.",
+          "required_jobs": {
+            "Backend NTM safety suite": "success",
+            "Frontend tests, types and build": "success",
+            "Scheduled workflow and locked environment": "success",
+            "Validate and build local staging images": "success"
+          },
+          "run_id": 35125545355,
+          "status": "PASSED",
+          "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/35125545355"
+        },
         "pr": 207,
         "publication_mapping": {
           "identical_trees_verified": true,
-          "local_head_sha": "dcde828103bd5ca1896e8ada252a4d25d47ef295",
-          "local_tree_sha": "a3bd727450759a1a15f8bd50cb574200417a7036",
-          "published_blob_shas": {
-            "customs-clear/backend/app/services/non_tariff_service.py": "397ba0176a535971a4e4e6687223a99aa41cb42d",
-            "customs-clear/backend/tests/test_non_tariff_data_freshness.py": "a1d16b95e01a90c34acdb5323478d07435818215"
-          },
-          "published_head_sha": "5230d8175ec31eca274fc9f72faaf7988b50d5a7",
-          "published_tree_sha": "a3bd727450759a1a15f8bd50cb574200417a7036"
+          "local_head_sha": "43a9b708bb130acee9eff70c589d98465c42b188",
+          "published_head_sha": "a286f7b24953f338a9fa4f910fb605ebc4328978",
+          "tree_sha": "6fb77bfb119e2d93a92486d00d20fcb07a86a21d"
         }
       },
       "required_checks": [
@@ -2842,7 +2886,7 @@
         "Scheduled workflow and locked environment"
       ],
       "risk": "high",
-      "status": "IMPLEMENTED",
+      "status": "QA_PASSED",
       "tests": {
         "commands": [
           {
@@ -2868,7 +2912,7 @@
         ],
         "head_sha": "a286f7b24953f338a9fa4f910fb605ebc4328978"
       },
-      "updated_at": "2026-09-16T17:02:37.472148+00:00",
+      "updated_at": "2026-09-16T17:10:21.104566+00:00",
       "worktree": "/workspace/scratch/ecdeb44a862e/tariff-agent-worktrees/tariff-ntm-freshness-fail-closed-001-restored-g22"
     },
     {
@@ -3205,5 +3249,5 @@
       "worktree": "/workspace/scratch/ecdeb44a862e/tariff-agent-worktrees/tariff-ad30-recurring-artifacts-009-c5c1c819a3"
     }
   ],
-  "updated_at": "2026-09-16T17:02:37.473401+00:00"
+  "updated_at": "2026-09-16T17:10:21.124497+00:00"
 }
