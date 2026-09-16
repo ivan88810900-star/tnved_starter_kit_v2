@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "checked_at": "2026-09-16T09:58:17+00:00",
-  "status": "UNAVAILABLE_PROVIDER_OR_RESPONSE_NO_RETRY",
+  "checked_at": "2026-09-16T10:24:00+00:00",
+  "status": "UNAVAILABLE_CONFIRMED_ADAPTER_DEFECT_FIX_READY",
   "live_verified": false,
   "provider_called": true,
   "secret_values_read": false,
@@ -114,21 +114,31 @@
   ],
   "diagnosis": {
     "id": "A0-A6-POST-TIMEOUT-LIVE-001",
-    "status": "RECORDED_NO_RETRY",
-    "summary": "The merged 300-second A6-only timeout is active: the fresh provider invocation ran about 103.5 seconds, so the old approximately 45-second boundary did not terminate this request. Nevertheless the checked adapter returned UNAVAILABLE with no valid Anthropic message id, so LIVE_VERIFIED remains false.",
-    "exact_non_secret_reason": "The adapter returned status UNAVAILABLE with bridge reason_code PROVIDER_OR_CONFIG_UNAVAILABLE and internal safe reason 'External audit failed or returned invalid evidence'. The scrubbed receipt intentionally does not retain provider error bodies or a more specific remote failure detail.",
+    "status": "CONFIRMED_ADAPTER_DEFECT_FIX_READY_FOR_OWNER_MERGE",
+    "summary": "The 300-second timeout is active and the corrected provider invocation ran about 103.5 seconds. Independent review then confirmed a high-severity response parser defect: the adapter required exactly one text content block, while Claude Opus 5 enables adaptive thinking by default and may validly return one or more thinking or redacted_thinking blocks before the final structured text block. Such a valid response was deterministically downgraded to UNAVAILABLE.",
+    "exact_non_secret_reason": "The consumed run's exact terminal category is unrecoverable because the old adapter collapsed HTTP, transport, stop-reason, content-shape, JSON and validation failures into one generic code. The response-shape incompatibility is confirmed and fully explains a valid Opus 5 thinking response; STOP_MAX_TOKENS remains a secondary plausible path because the 8192-token limit includes hidden thinking. Model claude-opus-5, output_config.format and the submitted JSON Schema are otherwise current and supported.",
     "constraints": [
       "No automatic or manual retry of this consumed request.",
       "No provider success may be inferred from provider_called=true.",
-      "A6 remains advisory and unavailable until a future independently justified transport/response change is reviewed and a distinct owner-approved live verification is appropriate."
+      "A6 remains advisory and unavailable until PR 210 is merged with owner approval and a distinct owner-approved live verification is appropriate."
     ],
     "remediation_candidate": {
-      "pr": 209,
-      "candidate_head_sha": "ada0b689bfd538e5742223a8d103088ba4dd6df7",
-      "merged_main_sha": "fd4fa346beae824661452624709f9252321ca155",
-      "exact_head_ci_run_id": 34957340166,
-      "independent_a5": "PASSED",
-      "outcome": "45-second timeout boundary no longer reproduced; valid A6 response still not obtained"
+      "pr": 210,
+      "candidate_head_sha": "62269d789c57743235ce1d66b22cfee3179152c9",
+      "candidate_tree_sha": "6ec475769ee17e5b19b96787ba15a605c85cfadb",
+      "base_main_sha": "fd4fa346beae824661452624709f9252321ca155",
+      "exact_head_ci_run_id": 35084159981,
+      "exact_head_ci": "success",
+      "independent_a5": {
+        "status": "PASSED",
+        "session_id": "/root/a5_pr210_exact",
+        "findings": [],
+        "focused_tests": "56/56",
+        "orchestration_tests": "109/109",
+        "adversarial_probes": "13/13"
+      },
+      "scope": "Allow only leading thinking/redacted_thinking blocks followed by exactly one terminal text block; retain bounded non-secret failure-stage enums; no retry or provider call added.",
+      "readiness": "READY_FOR_OWNER_MERGE_APPROVAL"
     }
   },
   "product_triage": {
@@ -138,13 +148,13 @@
     "exact_head_ci_run_id": 34830630369,
     "exact_head_ci": "success",
     "write_action_this_run": false,
-    "reason": "No native A1/A2/A3/A4 subagent spawn mechanism is exposed in this interactive runtime; no product agent execution was imitated. GitHub/CI triage remains available independently of A6."
+    "reason": "No product HEAD change was made while the confirmed A6 adapter defect received a scoped fix, fresh independent A5 and exact-head CI. Product work remains independent of A6."
   },
   "pending_live_smoke": null,
   "blocker": {
-    "capability": "valid live Anthropic A6 response",
-    "reason": "The single corrected post-merge provider call completed as UNAVAILABLE after approximately 103.5 seconds. The safe adapter intentionally collapses transport/provider/invalid-response failures and scrubs remote bodies, so no narrower provider-side cause is retained in GitHub evidence.",
-    "owner_action_now": null,
-    "retry_policy": "DO_NOT_RETRY"
+    "capability": "protected merge of PR 210",
+    "reason": "PR 210 fixes the confirmed Opus 5 response-shape defect and adds scrubbed failure-stage diagnostics. Exact HEAD 62269d789c57743235ce1d66b22cfee3179152c9 has fresh independent A5 PASS and exact-head CI success. No new provider call has been made.",
+    "owner_action_now": "Authorize merge of PR 210 into main. After merge, authorize exactly one new commit-bound live A6 smoke.",
+    "retry_policy": "DO_NOT_RETRY_OLD_REQUEST; ONE_NEW_REQUEST_ONLY_AFTER_REVIEWED_MERGE_AND_OWNER_APPROVAL"
   }
 }
