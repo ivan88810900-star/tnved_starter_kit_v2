@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import unittest
+from copy import deepcopy
 from unittest.mock import AsyncMock, patch
 
 from app.services.assistant_chat import run_assistant_chat
@@ -55,6 +56,20 @@ def _chat_bundle() -> dict:
                     "citation_id": "S3",
                 }
             ],
+            "data_freshness": {
+                "state": "fresh",
+                "tone": "neutral",
+                "source_name": "Технический реестр источников",
+                "source_code": "NTM_TEST",
+                "synced_at": "2026-09-16T09:00:00+00:00",
+                "revision": "test-revision",
+                "is_stale": False,
+                "scope": "technical_source_status_only",
+                "affects_applicability": False,
+                "affects_required_documents": False,
+                "affects_missing_documents": False,
+                "ntm_coverage_verified": False,
+            },
         },
         "risk": {
             "overall_severity": "manual_review_required",
@@ -109,6 +124,20 @@ class GroundingBundleTests(unittest.IsolatedAsyncioTestCase):
                         "applicability": "needs_clarification",
                     }
                 ],
+                "data_freshness": {
+                    "state": "fresh",
+                    "tone": "neutral",
+                    "source_name": "Технический реестр источников",
+                    "source_code": "NTM_TEST",
+                    "synced_at": "2026-09-16T09:00:00+00:00",
+                    "revision": "test-revision",
+                    "is_stale": False,
+                    "scope": "technical_source_status_only",
+                    "affects_applicability": False,
+                    "affects_required_documents": False,
+                    "affects_missing_documents": False,
+                    "ntm_coverage_verified": False,
+                },
             },
             "risk_block": {
                 "status": "MANUAL_REVIEW",
@@ -174,6 +203,13 @@ class GroundingBundleTests(unittest.IsolatedAsyncioTestCase):
             "needs_clarification",
         )
         self.assertFalse(bundle["risk"]["coverage_complete"])
+        self.assertEqual(bundle["requirements"]["data_freshness"]["state"], "fresh")
+        self.assertFalse(
+            bundle["requirements"]["data_freshness"]["ntm_coverage_verified"]
+        )
+        self.assertTrue(
+            any("Полнота и юридическая актуальность" in item for item in bundle["limitations"])
+        )
         self.assertTrue(bundle["citations"])
 
     def test_seed_does_not_label_850940_as_kettle(self) -> None:
@@ -220,7 +256,63 @@ class DeterministicAnswerTests(unittest.TestCase):
         self.assertIn("[S2]", answer)
         self.assertIn("не означает «риска нет»", answer)
         self.assertIn("не считается обязательным", answer)
+        self.assertIn("Полнота и юридическая актуальность", answer)
         self.assertTrue(suggestions)
+
+    def test_normative_freshness_is_fail_closed_in_document_answer(self) -> None:
+        cases = (
+            (None, "Актуальность данных нетарифного контура не подтверждена"),
+            ("malformed", "Актуальность данных нетарифного контура не подтверждена"),
+            (
+                {
+                    "state": "stale",
+                    "is_stale": True,
+                    "ntm_coverage_verified": False,
+                },
+                "Данные нетарифного контура помечены как устаревшие",
+            ),
+            (
+                {
+                    "state": "fresh",
+                    "source_name": "Технический реестр источников",
+                    "source_code": "NTM_TEST",
+                    "synced_at": "2026-09-16T09:00:00+00:00",
+                    "revision": "test-revision",
+                    "is_stale": False,
+                    "scope": "technical_source_status_only",
+                    "ntm_coverage_verified": False,
+                },
+                "Полнота и юридическая актуальность покрытия нетарифных мер не подтверждены",
+            ),
+            (
+                {
+                    "state": "fresh",
+                    "source_name": 123,
+                    "source_code": "NTM_TEST",
+                    "synced_at": "2026-09-16T09:00:00+00:00",
+                    "revision": "test-revision",
+                    "is_stale": False,
+                    "scope": "technical_source_status_only",
+                    "ntm_coverage_verified": True,
+                },
+                "Актуальность данных нетарифного контура не подтверждена",
+            ),
+        )
+        for freshness, expected in cases:
+            with self.subTest(freshness=freshness):
+                bundle = deepcopy(_chat_bundle())
+                bundle["question"] = "Какие документы?"
+                bundle["requirements"] = {
+                    "required_documents": [],
+                    "unconfirmed_documents": [],
+                    "advisory_requirements": [],
+                    "empty_message": "В текущем контуре требования не выявлены.",
+                    "data_freshness": freshness,
+                }
+                answer, _ = render_chat_grounded_answer(bundle)
+                self.assertIn("В текущем контуре требования не выявлены", answer)
+                self.assertIn("Ограничение актуальности", answer)
+                self.assertIn(expected, answer)
 
 
 class AssistantChatGuardrailTests(unittest.IsolatedAsyncioTestCase):
@@ -353,6 +445,20 @@ class CopilotGroundingTests(unittest.IsolatedAsyncioTestCase):
                 ],
                 "missing_documents": [{"permit_type": "ДС"}],
                 "advisory_requirements": [],
+                "data_freshness": {
+                    "state": "fresh",
+                    "tone": "neutral",
+                    "source_name": "Технический реестр источников",
+                    "source_code": "NTM_TEST",
+                    "synced_at": "2026-09-16T09:00:00+00:00",
+                    "revision": "test-revision",
+                    "is_stale": False,
+                    "scope": "technical_source_status_only",
+                    "affects_applicability": False,
+                    "affects_required_documents": False,
+                    "affects_missing_documents": False,
+                    "ntm_coverage_verified": False,
+                },
             },
             "risk_summary": {
                 "overall_severity": "manual_review_required",
@@ -367,7 +473,63 @@ class CopilotGroundingTests(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(result["citations"])
         self.assertIn("29167", result["payment_comment"].replace(" ", ""))
         self.assertTrue(result["next_steps"])
+        self.assertIn("Полнота и юридическая актуальность", result["non_tariff_comment"])
         self.assertNotIn("Ключ ИИ", result.get("note", ""))
+
+    async def test_copilot_freshness_matrix_never_claims_complete_ntm_coverage(self) -> None:
+        cases = (
+            (None, "Актуальность данных нетарифного контура не подтверждена"),
+            ("malformed", "Актуальность данных нетарифного контура не подтверждена"),
+            (
+                {"state": "stale", "is_stale": True, "ntm_coverage_verified": False},
+                "помечены как устаревшие",
+            ),
+            (
+                {
+                    "state": "fresh",
+                    "source_name": "Технический реестр источников",
+                    "source_code": "NTM_TEST",
+                    "synced_at": "2026-09-16T09:00:00+00:00",
+                    "revision": "test-revision",
+                    "is_stale": False,
+                    "scope": "technical_source_status_only",
+                    "ntm_coverage_verified": False,
+                },
+                "Полнота и юридическая актуальность",
+            ),
+            (
+                {
+                    "state": "fresh",
+                    "source_name": 123,
+                    "source_code": "NTM_TEST",
+                    "synced_at": "2026-09-16T09:00:00+00:00",
+                    "revision": "test-revision",
+                    "is_stale": False,
+                    "scope": "technical_source_status_only",
+                    "ntm_coverage_verified": True,
+                },
+                "Актуальность данных нетарифного контура не подтверждена",
+            ),
+        )
+        for freshness, expected in cases:
+            with self.subTest(freshness=freshness):
+                context = self._context()
+                context["normative_requirements"] = {
+                    "required_documents": [],
+                    "missing_documents": [],
+                    "advisory_requirements": [],
+                    "data_freshness": freshness,
+                }
+                with patch(
+                    "app.services.claude_service._choose_provider",
+                    return_value=("none", None),
+                ):
+                    result = await analyze_copilot_bundle(context)
+                self.assertIn(expected, result["non_tariff_comment"])
+                self.assertTrue(
+                    any(expected in item for item in result["risks"]),
+                    result["risks"],
+                )
 
     async def test_copilot_reports_only_fact_blocks_that_were_present(self) -> None:
         context = self._context()
