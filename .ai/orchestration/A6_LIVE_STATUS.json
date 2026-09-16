@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "checked_at": "2026-09-16T12:46:00.000Z",
-  "status": "ADAPTER_FIX_A5_AND_CI_PASSED_OWNER_MERGE_AUTHORIZED",
+  "checked_at": "2026-09-16T12:49:30.000Z",
+  "status": "POST_MERGE_LIVE_SMOKE_REQUEST_PREPARED_DISPATCH_CAPABILITY_UNAVAILABLE",
   "live_verified": false,
   "provider_called": true,
   "secret_values_read": false,
@@ -15,7 +15,7 @@
   },
   "trusted_workflow": {
     "path": ".github/workflows/tariff-a6-live.yml",
-    "default_branch_head": "fd4fa346beae824661452624709f9252321ca155",
+    "default_branch_head": "afe407461e45381009a1c59ac06b0ac3609365df",
     "trigger": "repository_dispatch:tariff-a6-live",
     "workflow_present_on_default_branch": true
   },
@@ -165,7 +165,7 @@
       },
       "scope": "Leading thinking/redacted_thinking plus exactly one terminal text block; fixed safe diagnostics; type guards preserve packet binding; mandatory regression tests. No retry, provider call, workflow, permission or production change.",
       "evidence_ref": ".ai/orchestration/evidence/pr210-diagnostics-followup-20260916.json",
-      "readiness": "READY_FOR_OWNER_MERGE_AUTHORIZATION",
+      "readiness": "MERGED_TO_MAIN",
       "merge_ready": true,
       "merge_authorized": true,
       "owner_authorization": {
@@ -175,7 +175,16 @@
         "exact_head_sha": "08b59755929486ee07dc35df3d01fecb9219a05c",
         "reviewed_base_main_sha": "fd4fa346beae824661452624709f9252321ca155",
         "scope": "Merge PR 210 at the exact authorized head, then execute at most one distinct commit-bound live A6 smoke through tariff-a6-trusted.",
-        "consumed": false
+        "consumed": true,
+        "consumed_by": "merge PR 210 at exact authorized HEAD",
+        "consumed_at": "2026-09-16T12:46:12Z"
+      },
+      "merge_result": {
+        "merged": true,
+        "merge_sha": "afe407461e45381009a1c59ac06b0ac3609365df",
+        "merged_at": "2026-09-16T12:46:12Z",
+        "pr": 210,
+        "expected_head_sha": "08b59755929486ee07dc35df3d01fecb9219a05c"
       }
     }
   },
@@ -188,12 +197,27 @@
     "write_action_this_run": false,
     "reason": "No product code or ownership was changed by the scoped A6 follow-up. Product work remains independent of A6; the above product HEAD/CI are retained triage evidence, not a new product acceptance."
   },
-  "pending_live_smoke": null,
+  "pending_live_smoke": {
+    "request_id": "a6-live-smoke-20260916-1248z-pr210-afe40746",
+    "prepared_at": "2026-09-16T12:49:00Z",
+    "base_sha": "afe407461e45381009a1c59ac06b0ac3609365df",
+    "head_sha": "afe407461e45381009a1c59ac06b0ac3609365df",
+    "contract_sha": "afe407461e45381009a1c59ac06b0ac3609365df",
+    "paths_json": "[\".ai/orchestration/A6_LIVE_BRIDGE.md\"]",
+    "official_sources_json": "[]",
+    "packet_sha256": "b73670dee20579416547dd04fccbdc5889ac199428cd79181867a04483cf171d",
+    "packet_validation": "PASSED_OFFLINE_WITHOUT_CREDENTIALS",
+    "dispatched": false,
+    "consumed": false,
+    "dispatch_capability": "UNAVAILABLE_IN_CURRENT_GITHUB_CONNECTOR",
+    "dedup_key": "ivan88810900-star/tnved_starter_kit_v2|PR210|afe407461e45381009a1c59ac06b0ac3609365df|post-merge-live-a6"
+  },
   "blocker": {
-    "protected_action": "merge PR 210 into main",
-    "reason": "Owner authorization is recorded for exact HEAD 08b59755929486ee07dc35df3d01fecb9219a05c after fresh A5 and exact-head CI. A0 may now execute the merge with expected_head_sha after final recheck.",
+    "type": "CAPABILITY",
+    "action": "repository_dispatch tariff-a6-live",
+    "reason": "The installed GitHub connector exposes read/merge/state-write and workflow inspection, but no repository_dispatch creation action. The unique commit-bound request is prepared and validated but remains unused. No provider call was made and no run exists for merge SHA afe407461e45381009a1c59ac06b0ac3609365df.",
     "owner_action_now": null,
-    "retry_policy": "AFTER_MERGE_RUN_AT_MOST_ONE_NEW DISTINCT COMMIT_BOUND LIVE_SMOKE; NEVER RETRY CONSUMED REQUESTS"
+    "retry_policy": "Do not create another request. A future legitimate A0 holder with repository_dispatch capability must first recheck this exact pending request and Actions ledger, then dispatch it at most once."
   },
   "communication_policy": {
     "owner_decisions_single_delivery": true,
