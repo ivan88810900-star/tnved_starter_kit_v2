@@ -159,28 +159,13 @@ def _drop_spurious_ai_measures(
 
 
 def _data_freshness() -> Dict[str, Any]:
-    """Возвращает сведения об актуальности нетарифных правил."""
-    try:
-        from .normative_store import list_source_status
-        sources = list_source_status()
-        eec = next((s for s in sources if s["source_code"] == "EEC_ETT"), None)
-        if eec:
-            return {
-                "source_name": eec["source_name"],
-                "source_code": eec["source_code"],
-                "synced_at": eec["synced_at"],
-                "is_stale": eec["is_stale"],
-                "revision": eec["revision"],
-            }
-    except Exception:
-        pass
+    """Возвращает fail-closed актуальность локального набора NTM-правил."""
     return {
         "source_name": "Локальная база правил",
         "source_code": "LOCAL",
         "synced_at": None,
-        # Without a verified EEC status there is no evidence that the bundled
-        # seed is current.  Keep the legacy response shape, but fail closed so
-        # callers surface the existing stale-data warning.
+        # EEC_ETT tracks tariff data, not completeness of NTM rules. Until a
+        # dedicated NTM source proves this dataset current, always fail closed.
         "is_stale": True,
         "revision": "seed",
     }

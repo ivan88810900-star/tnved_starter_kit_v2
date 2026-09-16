@@ -27,7 +27,7 @@ def test_data_freshness_fails_closed_when_status_lookup_raises(monkeypatch):
     assert freshness["revision"] == "seed"
 
 
-def test_data_freshness_preserves_verified_eec_status(monkeypatch):
+def test_data_freshness_does_not_use_verified_eec_tariff_status(monkeypatch):
     verified = {
         "source_name": "Единый таможенный тариф ЕАЭС",
         "source_code": "EEC_ETT",
@@ -50,4 +50,10 @@ def test_data_freshness_preserves_verified_eec_status(monkeypatch):
         ],
     )
 
-    assert non_tariff_service._data_freshness() == verified
+    assert non_tariff_service._data_freshness() == {
+        "source_name": "Локальная база правил",
+        "source_code": "LOCAL",
+        "synced_at": None,
+        "is_stale": True,
+        "revision": "seed",
+    }
