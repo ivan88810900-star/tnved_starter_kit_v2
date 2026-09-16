@@ -336,11 +336,28 @@ FINDINGS_SCHEMA = {
 }
 
 
-def _unavailable(binding, failure_code, **details):
+A6_FAILURE_CODES = frozenset({
+    "PROVIDER_TRANSPORT_OR_JSON", "PROVIDER_REDIRECT_REFUSED",
+    "PROVIDER_RESPONSE_TOO_LARGE", "PROVIDER_RESPONSE_NOT_OBJECT",
+    "PROVIDER_RUNTIME_BLOCKED", "STOP_MAX_TOKENS", "STOP_REFUSAL", "STOP_OTHER",
+    "CONTENT_SHAPE", "OUTPUT_JSON", "FINDINGS_VALIDATION", "INVALID_MESSAGE_ID",
+})
+
+
+def is_safe_failure_code(value):
+    """Only fixed diagnostic labels and bounded HTTP codes may be persisted."""
+    return isinstance(value, str) and (
+        value in A6_FAILURE_CODES or
+        re.fullmatch(r"PROVIDER_HTTP_[1-5][0-9]{2}", value) is not None)
+
+
+def _unavailable(binding, failure_code):
     """Return a fail-closed result with a bounded, non-secret diagnostic enum."""
     return {**binding, "status": "UNAVAILABLE",
             "reason": "External audit failed or returned invalid evidence",
-            "failure_code": failure_code, "live_verified": False, **details}
+            "failure_code": (failure_code if is_safe_failure_code(failure_code)
+                             else "PROVIDER_RUNTIME_BLOCKED"),
+            "live_verified": False}
 
 
 def _runtime_failure_code(exc):
@@ -366,6 +383,8 @@ def _structured_text(blocks):
         if not isinstance(block, dict):
             raise AuditBlocked("Unexpected external audit content")
         kind = block.get("type")
+        if not isinstance(kind, str):
+            raise AuditBlocked("Unexpected external audit content")
         if kind in {"thinking", "redacted_thinking"}:
             if text is not None:
                 raise AuditBlocked("Unexpected external audit content")
@@ -447,6 +466,8 @@ def run_audit(repo, packet, *, environ=None):
     except RuntimeBlocked as exc:
         return _unavailable(binding, _runtime_failure_code(exc))
     stop_reason = response.get("stop_reason")
+    if not isinstance(stop_reason, str):
+        return _unavailable(binding, "STOP_OTHER")
     if stop_reason != "end_turn":
         failure_code = {
             "max_tokens": "STOP_MAX_TOKENS",
