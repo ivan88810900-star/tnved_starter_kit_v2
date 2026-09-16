@@ -1,5 +1,5 @@
 {
-  "board_revision": 576,
+  "board_revision": 577,
   "runs": [
     {
       "head_sha": null,
@@ -1050,6 +1050,16 @@
       "status": "FINISHED",
       "task_id": "TARIFF-AD30-RECURRING-ARTIFACTS-009",
       "updated_at": "2026-09-16T15:11:19.628849+00:00"
+    },
+    {
+      "head_sha": "5230d8175ec31eca274fc9f72faaf7988b50d5a7",
+      "role": "A2",
+      "run_id": "91e977b016984b728269cc928a3e45c3",
+      "session_id": "/root/a2_ntm_freshness_fix",
+      "started_at": "2026-09-16T16:52:14.702045+00:00",
+      "status": "RUNNING",
+      "task_id": "TARIFF-NTM-FRESHNESS-FAIL-CLOSED-001",
+      "updated_at": "2026-09-16T16:52:14.702058+00:00"
     }
   ],
   "schema_version": 1

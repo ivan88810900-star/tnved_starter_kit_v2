@@ -718,7 +718,7 @@
     }
   ],
   "max_concurrent_subagents": 3,
-  "revision": 576,
+  "revision": 577,
   "runs": [
     {
       "head_sha": null,
@@ -1769,6 +1769,16 @@
       "status": "FINISHED",
       "task_id": "TARIFF-AD30-RECURRING-ARTIFACTS-009",
       "updated_at": "2026-09-16T15:11:19.628849+00:00"
+    },
+    {
+      "head_sha": "5230d8175ec31eca274fc9f72faaf7988b50d5a7",
+      "role": "A2",
+      "run_id": "91e977b016984b728269cc928a3e45c3",
+      "session_id": "/root/a2_ntm_freshness_fix",
+      "started_at": "2026-09-16T16:52:14.702045+00:00",
+      "status": "RUNNING",
+      "task_id": "TARIFF-NTM-FRESHNESS-FAIL-CLOSED-001",
+      "updated_at": "2026-09-16T16:52:14.702058+00:00"
     }
   ],
   "schema_version": 1,
@@ -2774,7 +2784,8 @@
     },
     {
       "author_sessions": [
-        "/root/a2_ntm_freshness_gate"
+        "/root/a2_ntm_freshness_gate",
+        "/root/a2_ntm_freshness_fix"
       ],
       "branch": "agent/ntm-tariff-ntm-freshness-fail-closed-001-7407bd6726",
       "ci": null,
@@ -2816,9 +2827,9 @@
         "Scheduled workflow and locked environment"
       ],
       "risk": "high",
-      "status": "CHANGES_REQUESTED",
+      "status": "IN_PROGRESS",
       "tests": [],
-      "updated_at": "2026-09-16T16:50:31.791686+00:00",
+      "updated_at": "2026-09-16T16:52:14.702061+00:00",
       "worktree": "/workspace/scratch/ecdeb44a862e/tariff-agent-worktrees/tariff-ntm-freshness-fail-closed-001-restored-g22"
     },
     {
@@ -3155,5 +3166,5 @@
       "worktree": "/workspace/scratch/ecdeb44a862e/tariff-agent-worktrees/tariff-ad30-recurring-artifacts-009-c5c1c819a3"
     }
   ],
-  "updated_at": "2026-09-16T16:50:31.801441+00:00"
+  "updated_at": "2026-09-16T16:52:14.703217+00:00"
 }
