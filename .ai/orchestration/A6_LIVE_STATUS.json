@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "checked_at": "2026-09-16T10:24:00+00:00",
-  "status": "UNAVAILABLE_CONFIRMED_ADAPTER_DEFECT_FIX_READY",
+  "checked_at": "2026-09-16T10:44:00+00:00",
+  "status": "UNAVAILABLE_ADAPTER_FIX_IMPLEMENTED_PENDING_FRESH_A5",
   "live_verified": false,
   "provider_called": true,
   "secret_values_read": false,
@@ -114,31 +114,52 @@
   ],
   "diagnosis": {
     "id": "A0-A6-POST-TIMEOUT-LIVE-001",
-    "status": "CONFIRMED_ADAPTER_DEFECT_FIX_READY_FOR_OWNER_MERGE",
-    "summary": "The 300-second timeout is active and the corrected provider invocation ran about 103.5 seconds. Independent review then confirmed a high-severity response parser defect: the adapter required exactly one text content block, while Claude Opus 5 enables adaptive thinking by default and may validly return one or more thinking or redacted_thinking blocks before the final structured text block. Such a valid response was deterministically downgraded to UNAVAILABLE.",
-    "exact_non_secret_reason": "The consumed run's exact terminal category is unrecoverable because the old adapter collapsed HTTP, transport, stop-reason, content-shape, JSON and validation failures into one generic code. The response-shape incompatibility is confirmed and fully explains a valid Opus 5 thinking response; STOP_MAX_TOKENS remains a secondary plausible path because the 8192-token limit includes hidden thinking. Model claude-opus-5, output_config.format and the submitted JSON Schema are otherwise current and supported.",
+    "status": "CONFIRMED_ADAPTER_DEFECT_FIX_IMPLEMENTED_PENDING_FRESH_A5",
+    "summary": "The old adapter rejected valid leading thinking/redacted_thinking blocks before final text. PR 210 fixes that compatibility defect and provides safe stage codes. Supplemental A0 review then reproduced non-string JSON discriminator TypeErrors in the first fix; the follow-up now preserves bounded UNAVAILABLE and validated packet binding and allowlists persisted diagnostic codes.",
+    "exact_non_secret_reason": "The consumed live run's exact terminal cause is unrecoverable because the old adapter collapsed HTTP, transport, stop-reason, content-shape, JSON and validation failures. The parser defect is confirmed, but not proven to be the historical run's cause. STOP_MAX_TOKENS remains a hypothesis; null provider_message_id is not proof that no provider response arrived because the old code checked the ID after content validation.",
     "constraints": [
-      "No automatic or manual retry of this consumed request.",
-      "No provider success may be inferred from provider_called=true.",
-      "A6 remains advisory and unavailable until PR 210 is merged with owner approval and a distinct owner-approved live verification is appropriate."
+      "No automatic or manual retry of consumed requests.",
+      "No provider success may be inferred from provider_called=true or synthetic test responses.",
+      "A6 remains unavailable until reviewed code is merged with owner approval and a distinct authorized live verification returns valid evidence.",
+      "The new PR head invalidates the prior native A5 approval and prior CI readiness."
     ],
     "remediation_candidate": {
       "pr": 210,
-      "candidate_head_sha": "62269d789c57743235ce1d66b22cfee3179152c9",
-      "candidate_tree_sha": "6ec475769ee17e5b19b96787ba15a605c85cfadb",
+      "branch": "agent/a6-opus5-response-shape-001",
+      "candidate_head_sha": "08b59755929486ee07dc35df3d01fecb9219a05c",
+      "candidate_tree_sha": "76b072a93168d2a387f6ccdd046e02091411ebb6",
       "base_main_sha": "fd4fa346beae824661452624709f9252321ca155",
-      "exact_head_ci_run_id": 35084159981,
+      "followup_parent_sha": "62269d789c57743235ce1d66b22cfee3179152c9",
+      "author_followup_tests": "7/7",
+      "exact_head_ci_run_id": 35086286368,
+      "exact_head_ci_job_id": 104761765023,
       "exact_head_ci": "success",
+      "mandatory_verifier": "112/112",
+      "snapshot_tests": "4/4",
+      "snapshot_validation": "valid",
+      "pull_request_ci_run_id": 35086290296,
+      "pull_request_ci": "success",
+      "pull_request_ci_checkout": "810200e740b2b46ff629a4143846b37c2932f191",
       "independent_a5": {
-        "status": "PASSED",
+        "status": "NOT_RUN_CAPABILITY_BLOCKED",
+        "head_sha": "08b59755929486ee07dc35df3d01fecb9219a05c",
+        "session_id": null,
+        "reason": "This interactive runtime has no native subagent spawn mechanism; no reviewer was imitated. A native-capable coordinator must launch a fresh independent A5 on this exact head."
+      },
+      "historical_a5": {
+        "status": "PASSED_ON_SUPERSEDED_HEAD_ONLY",
+        "head_sha": "62269d789c57743235ce1d66b22cfee3179152c9",
         "session_id": "/root/a5_pr210_exact",
         "findings": [],
         "focused_tests": "56/56",
         "orchestration_tests": "109/109",
-        "adversarial_probes": "13/13"
+        "adversarial_probes": "13/13",
+        "not_current_approval": true
       },
-      "scope": "Allow only leading thinking/redacted_thinking blocks followed by exactly one terminal text block; retain bounded non-secret failure-stage enums; no retry or provider call added.",
-      "readiness": "READY_FOR_OWNER_MERGE_APPROVAL"
+      "scope": "Leading thinking/redacted_thinking plus exactly one terminal text block; fixed safe diagnostics; type guards preserve packet binding; mandatory regression tests. No retry, provider call, workflow, permission or production change.",
+      "evidence_ref": ".ai/orchestration/evidence/pr210-diagnostics-followup-20260916.json",
+      "readiness": "IMPLEMENTED_CI_PASSED_PENDING_FRESH_INDEPENDENT_A5",
+      "merge_ready": false
     }
   },
   "product_triage": {
@@ -148,13 +169,13 @@
     "exact_head_ci_run_id": 34830630369,
     "exact_head_ci": "success",
     "write_action_this_run": false,
-    "reason": "No product HEAD change was made while the confirmed A6 adapter defect received a scoped fix, fresh independent A5 and exact-head CI. Product work remains independent of A6."
+    "reason": "No product code or ownership was changed by the scoped A6 follow-up. Product work remains independent of A6; the above product HEAD/CI are retained triage evidence, not a new product acceptance."
   },
   "pending_live_smoke": null,
   "blocker": {
-    "capability": "protected merge of PR 210",
-    "reason": "PR 210 fixes the confirmed Opus 5 response-shape defect and adds scrubbed failure-stage diagnostics. Exact HEAD 62269d789c57743235ce1d66b22cfee3179152c9 has fresh independent A5 PASS and exact-head CI success. No new provider call has been made.",
-    "owner_action_now": "Authorize merge of PR 210 into main. After merge, authorize exactly one new commit-bound live A6 smoke.",
-    "retry_policy": "DO_NOT_RETRY_OLD_REQUEST; ONE_NEW_REQUEST_ONLY_AFTER_REVIEWED_MERGE_AND_OWNER_APPROVAL"
+    "capability": "fresh independent native A5 execution on current PR210 head",
+    "reason": "Implementation and exact-head CI are complete, but current interactive tools cannot start a native A5. Old A5 PASS on 62269d7 cannot approve follow-up head 08b5975. No merge or new live smoke is ready yet.",
+    "owner_action_now": null,
+    "retry_policy": "DO_NOT_RETRY_OLD_REQUEST; NO_NEW_LIVE_REQUEST_IN_THIS_RUN"
   }
 }
