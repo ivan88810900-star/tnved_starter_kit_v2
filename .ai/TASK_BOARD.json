@@ -687,7 +687,7 @@
     }
   ],
   "max_concurrent_subagents": 3,
-  "revision": 560,
+  "revision": 561,
   "runs": [
     {
       "head_sha": null,
@@ -1708,6 +1708,16 @@
       "status": "FINISHED",
       "task_id": "TARIFF-AD30-RECURRING-ARTIFACTS-009",
       "updated_at": "2026-09-16T14:52:01.861486+00:00"
+    },
+    {
+      "head_sha": "abafd8b24ba248852185ac5cdbb1530f9e6e624e",
+      "role": "A5",
+      "run_id": "7681333cf15941a5982a4005006fca47",
+      "session_id": "/root/a5_ad30_recurring_exact",
+      "started_at": "2026-09-16T14:52:43.889732+00:00",
+      "status": "RUNNING",
+      "task_id": "TARIFF-AD30-RECURRING-ARTIFACTS-009",
+      "updated_at": "2026-09-16T14:52:43.889749+00:00"
     }
   ],
   "schema_version": 1,
@@ -3011,9 +3021,9 @@
         ],
         "head_sha": "abafd8b24ba248852185ac5cdbb1530f9e6e624e"
       },
-      "updated_at": "2026-09-16T14:52:01.852727+00:00",
+      "updated_at": "2026-09-16T14:52:43.889752+00:00",
       "worktree": "/workspace/scratch/ecdeb44a862e/tariff-agent-worktrees/tariff-ad30-recurring-artifacts-009-c5c1c819a3"
     }
   ],
-  "updated_at": "2026-09-16T14:52:01.862614+00:00"
+  "updated_at": "2026-09-16T14:52:43.890947+00:00"
 }
