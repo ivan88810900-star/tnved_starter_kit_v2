@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "checked_at": "2026-09-16T11:29:48.210Z",
-  "status": "ADAPTER_FIX_A5_AND_CI_PASSED_AWAITING_OWNER_MERGE_AUTHORIZATION",
+  "checked_at": "2026-09-16T12:46:00.000Z",
+  "status": "ADAPTER_FIX_A5_AND_CI_PASSED_OWNER_MERGE_AUTHORIZED",
   "live_verified": false,
   "provider_called": true,
   "secret_values_read": false,
@@ -167,7 +167,16 @@
       "evidence_ref": ".ai/orchestration/evidence/pr210-diagnostics-followup-20260916.json",
       "readiness": "READY_FOR_OWNER_MERGE_AUTHORIZATION",
       "merge_ready": true,
-      "merge_authorized": false
+      "merge_authorized": true,
+      "owner_authorization": {
+        "receipt_id": "OWNER-PR210-08b59755-20260916-SINGLE-CHANNEL",
+        "received_at": "2026-09-16T12:40:28Z",
+        "source": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/210#issuecomment-5697575216",
+        "exact_head_sha": "08b59755929486ee07dc35df3d01fecb9219a05c",
+        "reviewed_base_main_sha": "fd4fa346beae824661452624709f9252321ca155",
+        "scope": "Merge PR 210 at the exact authorized head, then execute at most one distinct commit-bound live A6 smoke through tariff-a6-trusted.",
+        "consumed": false
+      }
     }
   },
   "product_triage": {
@@ -182,8 +191,22 @@
   "pending_live_smoke": null,
   "blocker": {
     "protected_action": "merge PR 210 into main",
-    "reason": "PR 210 exact HEAD has fresh independent A5 PASS and exact-head CI success. Merge into main is the only gate before one new commit-bound live A6 smoke.",
-    "owner_action_now": "AUTHORIZE_OR_DECLINE_PR210_MERGE",
-    "retry_policy": "DO_NOT_RETRY_OLD_REQUEST; AFTER_AUTHORIZED_MERGE_RUN_EXACTLY_ONE_DISTINCT_LIVE_SMOKE"
+    "reason": "Owner authorization is recorded for exact HEAD 08b59755929486ee07dc35df3d01fecb9219a05c after fresh A5 and exact-head CI. A0 may now execute the merge with expected_head_sha after final recheck.",
+    "owner_action_now": null,
+    "retry_policy": "AFTER_MERGE_RUN_AT_MOST_ONE_NEW DISTINCT COMMIT_BOUND LIVE_SMOKE; NEVER RETRY CONSUMED REQUESTS"
+  },
+  "communication_policy": {
+    "owner_decisions_single_delivery": true,
+    "deduplicate_by": [
+      "repository",
+      "pull_request",
+      "head_sha",
+      "action"
+    ],
+    "owner_need_not_copy_between_chats": true,
+    "duplicate_read_only_notifier": "disabled",
+    "create_second_notifier": false,
+    "arbitrary_chat_delivery_api_available": false,
+    "pr210_merge_authorization_already_received": true
   }
 }
