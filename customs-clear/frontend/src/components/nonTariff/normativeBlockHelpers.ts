@@ -98,16 +98,21 @@ export function normalizeNormativeDataFreshness(value: unknown): NormativeDataFr
   const syncedAt = optionalText(raw.synced_at);
   const revision = optionalText(raw.revision);
   const completeSourceStatus = Boolean(sourceName && sourceCode && syncedAt && revision);
+  const hasExplicitState = Object.prototype.hasOwnProperty.call(raw, 'state');
 
   let state: NormativeDataFreshness['state'] = 'unknown';
   if (raw.state === 'stale') {
     state = 'stale';
-  } else if (raw.state === 'fresh' && completeSourceStatus) {
+  } else if (
+    raw.state === 'fresh'
+    && raw.is_stale === false
+    && completeSourceStatus
+  ) {
     state = 'fresh';
-  } else if (raw.state !== 'unknown') {
+  } else if (!hasExplicitState) {
     // Backward-compatible normalization for the legacy top-level shape, which
-    // has no explicit state.  An explicit normalized ``unknown`` must remain
-    // unknown even though its fail-closed ``is_stale`` value is true.
+    // has no explicit state.  Conflicting or malformed explicit states must
+    // not fall through to this legacy path.
     if (raw.is_stale === true) {
       state = 'stale';
     } else if (raw.is_stale === false && completeSourceStatus) {

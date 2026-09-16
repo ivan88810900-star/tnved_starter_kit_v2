@@ -18,12 +18,29 @@ function block(dataFreshness?: NormativeRequirementsBlockData['data_freshness'])
   };
 }
 
+function completeSource(overrides: Record<string, unknown> = {}): Record<string, unknown> {
+  return {
+    state: 'fresh',
+    source_name: 'Единый таможенный тариф ЕАЭС',
+    source_code: 'EEC_ETT',
+    synced_at: '2026-09-16T09:00:00+00:00',
+    revision: 'ett:2026-09-16',
+    is_stale: false,
+    ...overrides,
+  };
+}
+
 describe('NormativeRequirementsBlock data freshness visibility', () => {
   it.each([
     ['missing', undefined],
     ['unreadable', 'unreadable'],
     ['explicit unknown', { is_stale: null, source_code: 'UNKNOWN' }],
     ['incomplete false', { is_stale: false, source_code: 'EEC_ETT' }],
+    ['fresh conflicting with stale true', completeSource({ is_stale: true })],
+    ['fresh with null stale marker', completeSource({ is_stale: null })],
+    ['fresh with string stale marker', completeSource({ is_stale: 'false' })],
+    ['fresh with incomplete source fields', completeSource({ synced_at: null })],
+    ['malformed explicit state', completeSource({ state: 'current' })],
   ])('renders missing or unreadable %s status as amber unknown', (_label, dataFreshness) => {
     const normalized = normativeBlockFromNonTariff({
       status: 'ERROR',
@@ -39,6 +56,21 @@ describe('NormativeRequirementsBlock data freshness visibility', () => {
     expect(signal).toHaveTextContent('Свежесть данных источника не подтверждена');
     expect(signal).toHaveClass('border-amber-200');
     expect(screen.getByText('Отсутствующие документы')).toBeInTheDocument();
+  });
+
+  it('accepts a complete legacy payload only when is_stale is explicitly false', () => {
+    const legacyFreshness = completeSource();
+    delete legacyFreshness.state;
+    const normalized = normativeBlockFromNonTariff({
+      status: 'OK',
+      data_freshness: legacyFreshness,
+    });
+
+    render(<NormativeRequirementsBlock block={normalized} />);
+
+    const signal = screen.getByTestId('normative-data-freshness');
+    expect(signal).toHaveAttribute('data-state', 'fresh');
+    expect(signal).toHaveClass('border-slate-200');
   });
 
   it('renders stale status in amber without changing document groups', () => {
