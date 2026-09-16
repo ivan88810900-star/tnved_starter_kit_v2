@@ -3077,6 +3077,32 @@
       "refs": {
         "base_sha": "5d3b0c1dc7dd8e396c4f812db2bf6f1fa6d293f9",
         "head_sha": "fc19df03904430649e356978cf2086a616e6d244",
+        "observed_ci": {
+          "admission_agent_qa": {
+            "run_id": 35113096953,
+            "status": "PASSED",
+            "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/35113096953"
+          },
+          "head_sha": "fc19df03904430649e356978cf2086a616e6d244",
+          "not_promoted_to_ci_gate_reason": "High-risk A6 remains LIVE_VERIFIED=false; exact-head CI is observed but controller readiness requires current bound audit evidence.",
+          "pull_request_run": {
+            "run_id": 35113096919,
+            "status": "PASSED",
+            "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/35113096919"
+          },
+          "push_run": {
+            "run_id": 35113097456,
+            "status": "PASSED",
+            "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/35113097456"
+          },
+          "required_jobs": {
+            "Backend NTM safety suite": "success",
+            "Frontend tests, types and build": "success",
+            "Scheduled workflow and locked environment": "success",
+            "Validate and build local staging images": "success"
+          },
+          "status": "PASSED"
+        },
         "pr": 212
       },
       "required_checks": [
