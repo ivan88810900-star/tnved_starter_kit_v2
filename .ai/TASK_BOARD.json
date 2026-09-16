@@ -687,7 +687,7 @@
     }
   ],
   "max_concurrent_subagents": 3,
-  "revision": 557,
+  "revision": 558,
   "runs": [
     {
       "head_sha": null,
@@ -1698,6 +1698,16 @@
       "status": "FINISHED",
       "task_id": "TARIFF-NTM-NORMATIVE-FRESHNESS-VISIBILITY-002",
       "updated_at": "2026-09-16T12:37:27.750833+00:00"
+    },
+    {
+      "head_sha": null,
+      "role": "A3",
+      "run_id": "6cc6c17e8c1c46ffb226b97bc7bd06ac",
+      "session_id": "/root/a3_sources_triage",
+      "started_at": "2026-09-16T14:46:40.655108+00:00",
+      "status": "RUNNING",
+      "task_id": "TARIFF-AD30-RECURRING-ARTIFACTS-009",
+      "updated_at": "2026-09-16T14:46:40.655123+00:00"
     }
   ],
   "schema_version": 1,
@@ -2962,7 +2972,9 @@
       "worktree": null
     },
     {
-      "author_sessions": [],
+      "author_sessions": [
+        "/root/a3_sources_triage"
+      ],
       "branch": "agent/sources-tariff-ad30-recurring-artifacts-009-c5c1c819a3",
       "ci": null,
       "dependencies": [],
@@ -2988,11 +3000,11 @@
         "exact-head CI"
       ],
       "risk": "high",
-      "status": "ALLOCATED",
+      "status": "IN_PROGRESS",
       "tests": [],
-      "updated_at": "2026-09-16T14:44:43.035376+00:00",
+      "updated_at": "2026-09-16T14:46:40.655126+00:00",
       "worktree": "/workspace/scratch/ecdeb44a862e/tariff-agent-worktrees/tariff-ad30-recurring-artifacts-009-c5c1c819a3"
     }
   ],
-  "updated_at": "2026-09-16T14:44:43.036786+00:00"
+  "updated_at": "2026-09-16T14:46:40.656305+00:00"
 }
