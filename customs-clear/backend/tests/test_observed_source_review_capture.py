@@ -58,7 +58,7 @@ def test_exact_observations_remain_outside_default_registry_and_policies():
     assert len(expected) == 9
     assert {key: monitor.REVIEW_ONLY_SOURCES[key] for key in DISCOVERY_IDS} == expected
     assert len(monitor.REVIEW_ONLY_SOURCES) == 11
-    assert len(monitor.SOURCES) == 72
+    assert len(monitor.SOURCES) == 76
     assert monitor._selected_sources(None) == monitor.SOURCES
     assert not set(expected).intersection(monitor.SOURCES)
     assert not set(expected).intersection(monitor.SOURCE_MODES)
@@ -150,7 +150,7 @@ def test_all_nine_targets_retain_receipts_but_no_accepted_or_pending_state(tmp_p
     assert report["selected_review_only_source_count"] == 9
     assert report["selected_registered_source_ids"] == []
     assert report["selected_registered_source_count"] == 0
-    assert report["registered_monitor_source_count"] == 72
+    assert report["registered_monitor_source_count"] == 76
     assert report["full_registry_checked"] is report["revision_coverage_complete"] is False
     assert report["original_capture_count"] == 9
     assert report["original_capture_complete"] is True

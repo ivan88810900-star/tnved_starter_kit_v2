@@ -28,6 +28,13 @@ FALSE_CLAIMS = (
     "durable_legal_retention_attested",
     "source_authenticity_attested",
 )
+AD30_REGISTERED_PDF_TARGETS = {
+    "trade_remedies_official__artifact_4": "https://docs.eaeunion.org/upload/iblock/072/gnl5h50x3mzkg7zd1b0d593t4mtizhg1/Reshenie-Kollegii-_-121-ot-8-sentbrya-2026-g.pdf",
+    "trade_remedies_official__artifact_5": "https://docs.eaeunion.org/upload/iblock/08a/wp70m6eckvicuanvf0sfo4sxqaro4aax/err_12022021_12_doc.pdf",
+    "trade_remedies_official__artifact_6": "https://docs.eaeunion.org/upload/iblock/798/59qwa6jpe6b76n24wtn0uu9eygvlznkr/Reshenie-Kollegii-_-4-ot-20-yanvarya-2026-g.pdf",
+    "trade_remedies_official__artifact_7": "https://docs.eaeunion.org/upload/iblock/75c/h3m62bw3jc8solzxiw14jc7qhmnycmmy/AD30R1_notice_fin.pdf",
+    "trade_remedies_official__artifact_8": "https://remedies.eaeunion.org/dimd/filestorage/AD30R1_report_final.pdf",
+}
 
 
 @contextmanager
@@ -405,6 +412,23 @@ def test_fns_vat_registry_is_separate_from_ett_and_cannot_enable_automatic_rates
     for source_id in policy_ids:
         assert policies[source_id].strategy == "monitor_only"
         assert policies[source_id].adapter_id is None
+
+
+def test_known_ad30_pdfs_are_default_monitor_only_legal_drift_targets():
+    from app.services.regulatory_source_registry import get_registry_entry
+    from app.services.regulatory_source_updates import UPDATE_POLICIES
+
+    source = get_registry_entry("trade_remedies_official")
+    policy = {item.source_id: item for item in UPDATE_POLICIES}[source.source_id]
+
+    assert {key: monitor.SOURCES[key] for key in AD30_REGISTERED_PDF_TARGETS} == (
+        AD30_REGISTERED_PDF_TARGETS
+    )
+    assert all(monitor.SOURCE_MODES[key] == "legal_drift" for key in AD30_REGISTERED_PDF_TARGETS)
+    assert source.monitor_urls[-5:] == tuple(AD30_REGISTERED_PDF_TARGETS.values())
+    assert policy.strategy == "monitor_only"
+    assert policy.adapter_id is None
+    assert source.manual_review_default is True
 
 
 def test_registered_navigation_ids_bind_observed_urls_and_shared_family_receipts(tmp_path, capsys):

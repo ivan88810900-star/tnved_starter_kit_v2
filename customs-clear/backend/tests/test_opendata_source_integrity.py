@@ -552,14 +552,14 @@ def test_monitor_configuration_has_explicit_current_coverage_counts() -> None:
         )
         for source_id, url in monitor.SOURCES.items()
     ]
-    # Corroborated remedy navigation, Decision 121 and the separate FNS VAT
-    # reference add four targets; coverage remains explicit and review-only.
-    assert len(configured) == 72
+    # The four known direct AD30 PDFs extend recurring monitor coverage; their
+    # dated capture aliases remain isolated in the separate review-only set.
+    assert len(configured) == 76
     assert sum(mode == "availability" for mode, _kind in configured) == 8
     assert sum(
         mode != "availability" and kind != "html_or_document"
         for mode, kind in configured
-    ) == 28
+    ) == 32
     assert sum(
         mode == "legal_drift" and kind == "html_or_document"
         for mode, kind in configured

@@ -186,6 +186,98 @@ def test_new_legal_source_requires_review_before_first_baseline() -> None:
     assert state["pending_sha256"] == row["observed_sha256"]
 
 
+@pytest.mark.parametrize(
+    "source_id",
+    (
+        "trade_remedies_official__artifact_5",
+        "trade_remedies_official__artifact_6",
+        "trade_remedies_official__artifact_7",
+        "trade_remedies_official__artifact_8",
+    ),
+)
+def test_new_registered_ad30_pdf_cannot_self_approve_first_baseline(source_id: str) -> None:
+    url = monitor.SOURCES[source_id]
+    body = b"%PDF-1.7\n" + b"new observed AD30 original" * 20
+    client = _Client(_Response(body, final_url=url))
+
+    with (
+        patch.object(monitor, "SOURCES", {source_id: url}),
+        patch.object(monitor, "SOURCE_MODES", {source_id: "legal_drift"}),
+        patch.object(monitor.httpx, "Client", return_value=client),
+    ):
+        report = monitor.monitor_sources(previous_state={"sources": {}})
+
+    row = report["sources"][0]
+    state = report["next_state"]["sources"][source_id]
+    assert report["pending_review_source_ids"] == [source_id]
+    assert report["accepted_source_ids"] == []
+    assert row["new_source"] is True
+    assert row["requires_approval"] is True
+    assert row["baseline_advanced"] is False
+    assert "sha256" not in state
+    assert state["pending_sha256"] == hashlib.sha256(body).hexdigest()
+
+
+def test_changed_registered_ad30_pdf_preserves_approved_baseline() -> None:
+    source_id = "trade_remedies_official__artifact_6"
+    url = monitor.SOURCES[source_id]
+    body = b"%PDF-1.7\n" + b"changed observed Decision 4 original" * 20
+    previous = {
+        "sources": {
+            source_id: {
+                "sha256": "known-approved-digest",
+                "etag": '"known-etag"',
+                "url": url,
+            }
+        }
+    }
+    client = _Client(_Response(body, final_url=url))
+
+    with (
+        patch.object(monitor, "SOURCES", {source_id: url}),
+        patch.object(monitor, "SOURCE_MODES", {source_id: "legal_drift"}),
+        patch.object(monitor.httpx, "Client", return_value=client),
+    ):
+        report = monitor.monitor_sources(previous_state=previous)
+
+    row = report["sources"][0]
+    state = report["next_state"]["sources"][source_id]
+    assert report["changed_source_ids"] == [source_id]
+    assert report["accepted_source_ids"] == []
+    assert row["requires_approval"] is True
+    assert row["baseline_advanced"] is False
+    assert state["sha256"] == "known-approved-digest"
+    assert state["pending_sha256"] == hashlib.sha256(body).hexdigest()
+
+
+def test_unavailable_registered_ad30_final_report_preserves_approved_baseline() -> None:
+    source_id = "trade_remedies_official__artifact_8"
+    url = monitor.SOURCES[source_id]
+    previous = {
+        "sources": {
+            source_id: {
+                "sha256": "known-approved-digest",
+                "url": url,
+            }
+        }
+    }
+    client = _Client(_Response(b"upstream unavailable", status_code=503, final_url=url))
+
+    with (
+        patch.object(monitor, "SOURCES", {source_id: url}),
+        patch.object(monitor, "SOURCE_MODES", {source_id: "legal_drift"}),
+        patch.object(monitor.httpx, "Client", return_value=client),
+    ):
+        report = monitor.monitor_sources(previous_state=previous)
+
+    state = report["next_state"]["sources"][source_id]
+    assert report["all_available"] is False
+    assert report["accepted_source_ids"] == []
+    assert report["changed_source_ids"] == []
+    assert state["sha256"] == "known-approved-digest"
+    assert "pending_sha256" not in state
+
+
 def test_structured_source_advances_automatically() -> None:
     previous = {"sources": {"only": {"sha256": "old", "url": "https://example.test/source.xml"}}}
     client = _Client(
