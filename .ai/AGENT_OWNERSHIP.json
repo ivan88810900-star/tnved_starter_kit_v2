@@ -1,5 +1,5 @@
 {
-  "board_revision": 551,
+  "board_revision": 557,
   "files": {
     ".ai/orchestration/A6_LIVE_BRIDGE.md": {
       "branch": "agent/classification-tariff-a6-live-bridge-001-f5839c6c98",
@@ -49,6 +49,12 @@
       "task_id": "TARIFF-PAYMENT-UNBOUND-ADMISSION-006",
       "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-payment-unbound-admission-006-c8a905e03d"
     },
+    "customs-clear/backend/app/services/regulatory_source_registry.py": {
+      "branch": "agent/sources-tariff-ad30-recurring-artifacts-009-c5c1c819a3",
+      "owner": "A3",
+      "task_id": "TARIFF-AD30-RECURRING-ARTIFACTS-009",
+      "worktree": "/workspace/scratch/ecdeb44a862e/tariff-agent-worktrees/tariff-ad30-recurring-artifacts-009-c5c1c819a3"
+    },
     "customs-clear/backend/scripts/test_compliance_resolver_golden.py": {
       "branch": "agent/classification-tariff-legacy-vat-boundary-003-dbe8461b66",
       "owner": "A4",
@@ -96,6 +102,18 @@
       "owner": "A2",
       "task_id": "TARIFF-NTM-NORMATIVE-FRESHNESS-VISIBILITY-002",
       "worktree": "/workspace/scratch/ecdeb44a862e/tariff-agent-worktrees/tariff-ntm-normative-freshness-visibility-002-5fc1946031"
+    },
+    "customs-clear/backend/tests/test_official_source_monitor.py": {
+      "branch": "agent/sources-tariff-ad30-recurring-artifacts-009-c5c1c819a3",
+      "owner": "A3",
+      "task_id": "TARIFF-AD30-RECURRING-ARTIFACTS-009",
+      "worktree": "/workspace/scratch/ecdeb44a862e/tariff-agent-worktrees/tariff-ad30-recurring-artifacts-009-c5c1c819a3"
+    },
+    "customs-clear/backend/tests/test_official_source_original_capture.py": {
+      "branch": "agent/sources-tariff-ad30-recurring-artifacts-009-c5c1c819a3",
+      "owner": "A3",
+      "task_id": "TARIFF-AD30-RECURRING-ARTIFACTS-009",
+      "worktree": "/workspace/scratch/ecdeb44a862e/tariff-agent-worktrees/tariff-ad30-recurring-artifacts-009-c5c1c819a3"
     },
     "customs-clear/backend/tests/test_payment_a6_stage2.py": {
       "branch": "agent/rates-tariff-payment-unbound-admission-006-c8a905e03d",

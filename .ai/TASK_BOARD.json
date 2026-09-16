@@ -687,7 +687,7 @@
     }
   ],
   "max_concurrent_subagents": 3,
-  "revision": 553,
+  "revision": 557,
   "runs": [
     {
       "head_sha": null,
@@ -2848,43 +2848,43 @@
       "refs": {
         "base_sha": "5230d8175ec31eca274fc9f72faaf7988b50d5a7",
         "head_sha": "5330e6aebd777fd880d938da6b4891a1ec8cf864",
-        "pr": 211,
-        "publication_mapping": {
-          "identical_trees_verified": true,
-          "local_initial_sha": "3e03b633208190721f02cd6b3032622216240acf",
-          "local_fix_sha": "9c3403a2b94a68bc5f8cb62cb5f9ea0f65efecca",
-          "local_tree_sha": "8d8482d37d7bc6971f223d076c1bbe7453b6f1b9",
-          "published_initial_sha": "34d2974731b27ac4427cbb7b6c99ad2216fd9d76",
-          "published_head_sha": "5330e6aebd777fd880d938da6b4891a1ec8cf864",
-          "published_tree_sha": "8d8482d37d7bc6971f223d076c1bbe7453b6f1b9"
-        },
         "observed_ci": {
           "head_sha": "5330e6aebd777fd880d938da6b4891a1ec8cf864",
-          "run_id": 35096571047,
-          "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/35096571047",
-          "status": "PASSED",
-          "required_jobs": {
-            "Backend NTM safety suite": "success",
-            "Frontend tests, types and build": "success",
-            "Validate and build local staging images": "success",
-            "Scheduled workflow and locked environment": "success"
-          },
           "not_promoted_to_ci_gate_reason": "High-risk A6 remains LIVE_VERIFIED=false; exact-head CI is observed but controller readiness requires current bound audit evidence.",
           "pull_request_run": {
             "head_sha": "5330e6aebd777fd880d938da6b4891a1ec8cf864",
-            "run_id": 35096956458,
-            "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/35096956458",
-            "status": "PASSED",
+            "optional_job": {
+              "Acquire official ETT candidate evidence": "skipped"
+            },
             "required_jobs": {
               "Backend NTM safety suite": "success",
               "Frontend tests, types and build": "success",
-              "Validate and build local staging images": "success",
-              "Scheduled workflow and locked environment": "success"
+              "Scheduled workflow and locked environment": "success",
+              "Validate and build local staging images": "success"
             },
-            "optional_job": {
-              "Acquire official ETT candidate evidence": "skipped"
-            }
-          }
+            "run_id": 35096956458,
+            "status": "PASSED",
+            "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/35096956458"
+          },
+          "required_jobs": {
+            "Backend NTM safety suite": "success",
+            "Frontend tests, types and build": "success",
+            "Scheduled workflow and locked environment": "success",
+            "Validate and build local staging images": "success"
+          },
+          "run_id": 35096571047,
+          "status": "PASSED",
+          "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/35096571047"
+        },
+        "pr": 211,
+        "publication_mapping": {
+          "identical_trees_verified": true,
+          "local_fix_sha": "9c3403a2b94a68bc5f8cb62cb5f9ea0f65efecca",
+          "local_initial_sha": "3e03b633208190721f02cd6b3032622216240acf",
+          "local_tree_sha": "8d8482d37d7bc6971f223d076c1bbe7453b6f1b9",
+          "published_head_sha": "5330e6aebd777fd880d938da6b4891a1ec8cf864",
+          "published_initial_sha": "34d2974731b27ac4427cbb7b6c99ad2216fd9d76",
+          "published_tree_sha": "8d8482d37d7bc6971f223d076c1bbe7453b6f1b9"
         }
       },
       "required_checks": [
@@ -2927,7 +2927,72 @@
       },
       "updated_at": "2026-09-16T12:37:27.740363+00:00",
       "worktree": "/workspace/scratch/ecdeb44a862e/tariff-agent-worktrees/tariff-ntm-normative-freshness-visibility-002-5fc1946031"
+    },
+    {
+      "author_sessions": [],
+      "branch": null,
+      "ci": null,
+      "dependencies": [
+        "TARIFF-NTM-FRESHNESS-FAIL-CLOSED-001"
+      ],
+      "external_audit": null,
+      "files": [
+        "customs-clear/backend/app/services/non_tariff_service.py",
+        "customs-clear/backend/tests/test_non_tariff_data_freshness.py"
+      ],
+      "goal": "Prevent EEC_ETT freshness metadata from certifying unrelated NTM rule coverage as fresh; preserve all applicability and enforcement outputs.",
+      "id": "TARIFF-NTM-EEC-ETT-FRESHNESS-BOUNDARY-003",
+      "owner": "A2",
+      "qa": null,
+      "refs": {
+        "base_sha": null,
+        "head_sha": null,
+        "pr": null
+      },
+      "required_checks": [
+        "focused NTM freshness tests",
+        "broader NTM regression",
+        "fresh independent A5",
+        "exact-head CI"
+      ],
+      "risk": "high",
+      "status": "NEW",
+      "tests": [],
+      "updated_at": "2026-09-16T14:44:14.959805+00:00",
+      "worktree": null
+    },
+    {
+      "author_sessions": [],
+      "branch": "agent/sources-tariff-ad30-recurring-artifacts-009-c5c1c819a3",
+      "ci": null,
+      "dependencies": [],
+      "external_audit": null,
+      "files": [
+        "customs-clear/backend/app/services/regulatory_source_registry.py",
+        "customs-clear/backend/tests/test_official_source_original_capture.py",
+        "customs-clear/backend/tests/test_official_source_monitor.py"
+      ],
+      "goal": "Add four known direct AD30 official documents to the existing monitor-only legal-drift contour without promoting baselines or deciding legal applicability.",
+      "id": "TARIFF-AD30-RECURRING-ARTIFACTS-009",
+      "owner": "A3",
+      "qa": null,
+      "refs": {
+        "base_sha": "5d3b0c1dc7dd8e396c4f812db2bf6f1fa6d293f9",
+        "head_sha": null,
+        "pr": null
+      },
+      "required_checks": [
+        "official source monitor tests",
+        "source completeness regressions",
+        "fresh independent A5",
+        "exact-head CI"
+      ],
+      "risk": "high",
+      "status": "ALLOCATED",
+      "tests": [],
+      "updated_at": "2026-09-16T14:44:43.035376+00:00",
+      "worktree": "/workspace/scratch/ecdeb44a862e/tariff-agent-worktrees/tariff-ad30-recurring-artifacts-009-c5c1c819a3"
     }
   ],
-  "updated_at": "2026-09-16T12:50:09.957+00:00"
+  "updated_at": "2026-09-16T14:44:43.036786+00:00"
 }
