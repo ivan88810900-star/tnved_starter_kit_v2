@@ -228,6 +228,46 @@ def test_unknown_excise_propagates_to_dependent_vat_and_recorded_status(remedies
     assert quote.total_payable_rub is None and quote.total_partial_rub == 11_000
 
 
+@pytest.mark.parametrize("value", [0, 613])
+def test_fixed_excise_without_structured_unit_never_uses_generic_quantity(remedies, value):
+    rate, _ = engine.find_rate_for_hs("8509400000")
+    rate.excise_type = "fixed"
+    rate.excise_value = value
+    rate.excise_basis = "Synthetic source text: fixed rate per an unspecified source unit"
+
+    result = resolve(quantity=20, net_weight_kg=500, extra_quantity=77)
+
+    assert result["status"] == "REVIEW_REQUIRED"
+    assert result["payment_review_reasons"] == ["excise_applicability_unverified"]
+    assert result["breakdown"]["excise"] == 0
+    assert "единица измерения" in result["breakdown"]["excise_reason"]
+    assert str(value * 20) not in result["breakdown"]["excise_reason"]
+
+    quote = quotes.build_payment_quote(payload(quantity=20, net_weight_kg=500, extra_quantity=77))
+    lines = {line.code: line for line in quote.line_items}
+    assert lines["excise"].status == "manual_review_required"
+    assert lines["excise"].amount_rub is None
+    assert lines["vat"].status == "manual_review_required"
+    assert lines["vat"].amount_rub is None
+    assert quote.total_payable_rub is None
+
+
+def test_manual_excise_amount_remains_an_explicit_override(remedies):
+    rate, _ = engine.find_rate_for_hs("8509400000")
+    rate.excise_type = "fixed"
+    rate.excise_value = 613
+    rate.excise_basis = "Synthetic source text without a structured unit"
+
+    result = resolve(quantity=20, excise=1_234)
+    assert "excise_applicability_unverified" not in result["payment_review_reasons"]
+    assert result["breakdown"]["excise"] == 1_234
+
+    quote = quotes.build_payment_quote(payload(quantity=20, excise=1_234))
+    lines = {line.code: line for line in quote.line_items}
+    assert lines["excise"].status == "manual_override"
+    assert lines["excise"].amount_rub == 1_234
+
+
 @pytest.mark.parametrize("ad_type,condition,country", [
     ("percent", "", None), ("percent", "Only a specified producer", "CN"),
     ("unsupported_positive_form", "", "CN"), ("none", "", "CN"),

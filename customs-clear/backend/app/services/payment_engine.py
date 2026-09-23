@@ -99,6 +99,11 @@ VAT_SOURCE_MISSING_REASON = (
     "Ставка НДС не найдена в локальных источниках и не задана вручную. "
     "Ставка по умолчанию использована только для предварительной арифметики."
 )
+FIXED_EXCISE_UNIT_REVIEW_REASON = (
+    "Для фиксированной ставки акциза в hs_rates не сохранены единица измерения "
+    "и знаменатель ставки. Общее количество товара не подтверждает литры, "
+    "килограммы, штуки или иную налоговую базу; сумма акциза требует проверки."
+)
 SPECIAL_DUTY_REVIEW_REASON = (
     "Найдены кандидаты специальных, защитных или компенсационных пошлин, "
     "но их применимость не подтверждена по дате, стране, изготовителю, товару "
@@ -798,22 +803,28 @@ def compute_payments(payload: dict[str, Any]) -> dict[str, Any]:
         excise_type not in {"", "none", "percent", "fixed"}
         or not isfinite(excise_value) or excise_value < 0
         or (excise_type in {"", "none"} and excise_value != 0)
+        # HsRate stores a scalar fixed value and free-text basis, but no
+        # structured unit/denominator. Generic invoice quantity cannot prove
+        # whether the source rate is per litre, kg, 1,000 units, etc.
+        or excise_type == "fixed"
     )
     if user_excise is not None:
         excise = float(user_excise)
         excise_reason = "Указано вручную"
     elif excise_review_required:
         excise = 0.0
-        excise_reason = "Тип, значение или применимость ставки акциза требуют проверки"
+        excise_reason = (
+            FIXED_EXCISE_UNIT_REVIEW_REASON
+            if excise_type == "fixed" and isfinite(excise_value) and excise_value >= 0
+            else "Тип, значение или применимость ставки акциза требуют проверки"
+        )
     elif excise_type == "percent":
         excise = customs_value * excise_value / 100.0
         basis_str = excise_basis or f"НК РФ ст. 193: {excise_value}% от таможенной стоимости"
         excise_reason = f"Авто: {excise_value}% — {basis_str}"
-    elif excise_type == "fixed":
-        qty = float(payload.get("quantity") or 1.0)
-        excise = excise_value * qty
-        basis_str = excise_basis or f"НК РФ ст. 193: фикс. ставка {excise_value} руб./ед."
-        excise_reason = f"Авто: {excise_value} руб./ед. × {qty} ед. — {basis_str}"
+    elif excise_type == "fixed":  # guarded above until a structured unit exists
+        excise = 0.0
+        excise_reason = FIXED_EXCISE_UNIT_REVIEW_REASON
     elif excise_type == "needs_review":
         excise = 0.0
         excise_reason = "Уточните ставку акциза"
