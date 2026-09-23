@@ -168,13 +168,15 @@ class PaymentEngineTests(unittest.TestCase):
         self.assertEqual(res["breakdown"]["excise"], 5_000.0)  # 5% от 100000
         self.assertIn("5.0%", res["breakdown"]["excise_reason"])
 
-    def test_excise_fixed(self):
-        """Код 2208: крепкий алкоголь — фиксированная ставка акциза (префикс из сида)."""
+    def test_excise_fixed_requires_structured_unit(self):
+        """Фиксированный scalar без единицы не умножается на общее quantity."""
         res = self._calc(hs_code="2208", customs_value=100_000, freight=0, quantity=10)
         ev = res["auto_detected"]["excise_value"]
         if res["auto_detected"]["excise_type"] == "fixed" and ev:
-            expected = round(float(ev) * 10, 2)
-            self.assertAlmostEqual(res["breakdown"]["excise"], expected, places=1)
+            self.assertEqual(res["breakdown"]["excise"], 0.0)
+            self.assertEqual(res["status"], "REVIEW_REQUIRED")
+            self.assertIn("excise_applicability_unverified", res["payment_review_reasons"])
+            self.assertIn("единица измерения", res["breakdown"]["excise_reason"])
         else:
             self.skipTest("В БД нет fixed-акциза для 2208 (перекрыто данными ЕТТ)")
 
