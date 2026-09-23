@@ -1,11 +1,9 @@
 {
-  "expires_at": null,
-  "generation": 23,
-  "holder": null,
   "schema_version": 1,
-  "state": "released",
-  "token": null,
-  "updated_at": "2026-09-23T18:31:00+00:00",
-  "release_reason": "owner_confirmed_recovery_2026-09-23",
-  "previous_holder": "/root/a0_automation_20260916T171024Z"
+  "state": "active",
+  "holder": "/root/a0_automation_20260923T183806Z",
+  "token": "31cb67f78c1db143566c193cec78576d",
+  "generation": 24,
+  "updated_at": "2026-09-23T18:39:53.140Z",
+  "expires_at": "2026-09-23T19:09:53.140Z"
 }
