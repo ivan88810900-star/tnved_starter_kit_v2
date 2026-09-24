@@ -1,0 +1,49 @@
+{
+  "schema_version": 1,
+  "recorded_at": "2026-09-24T01:12:22.671Z",
+  "coordinator": {
+    "holder": "/root/a0_automation_20260923T183806Z",
+    "generation": 24,
+    "lease_token_recorded": false
+  },
+  "recovery": {
+    "stale_generation_23_reused": false,
+    "lease_acquired_and_verified": true,
+    "hardening_pr": {
+      "number": 215,
+      "head": "abcd7a01da5518a4f6abfc2cdbb0441c88703e3b",
+      "a5": "PASS",
+      "ci_run": 35940005190,
+      "status": "READY_FOR_OWNER_APPROVAL"
+    }
+  },
+  "a6_bridge": {
+    "pr": 217,
+    "head": "f170a10eaa6f757f0aad8ca297ae77363e471cfb",
+    "a5": "PASS",
+    "ci_run": 35941216686,
+    "status": "READY_FOR_OWNER_APPROVAL",
+    "live_verified": false,
+    "provider_called": false,
+    "pending_request": "a6-live-smoke-20260916-1248z-pr210-afe40746",
+    "pending_request_dispatched": false,
+    "pending_request_consumed": false
+  },
+  "product": [
+    {
+      "pr": 213,
+      "head": "b60edb0049154e6a697d5914d501d7b7ca31eb9f",
+      "a5": "PASS",
+      "ci_run": 35940828893,
+      "status": "QA_PASSED_AWAITING_A6"
+    },
+    {
+      "pr": 216,
+      "head": "eb702ef05735cec12afd03278edbf23c93cbe51b",
+      "a5": "PASS",
+      "ci_run": 35905429319,
+      "status": "QA_PASSED_AWAITING_A6"
+    }
+  ],
+  "protected_actions_performed": []
+}
