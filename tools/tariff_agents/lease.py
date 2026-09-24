@@ -74,6 +74,10 @@ def _verified_owner_release(record, blob_sha, evidence, now):
     """Validate a connector-verified, exact-incarnation owner recovery receipt."""
     if not isinstance(evidence, dict):
         raise LeaseError('Verified owner recovery receipt required')
+    if type(evidence.get('generation')) is not int:
+        raise LeaseError('Owner recovery generation must be an integer')
+    if evidence.get('verified_by_connector') is not True:
+        raise LeaseError('Owner recovery receipt must be connector verified')
     expected = {
         'source': 'github_owner_receipt',
         'owner_login': 'ivan88810900-star',
