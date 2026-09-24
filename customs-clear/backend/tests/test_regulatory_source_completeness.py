@@ -9,12 +9,15 @@ from fastapi.testclient import TestClient
 from app.main import app
 from app.services.normative_store import init_db
 from app.services.regulatory_source_completeness import (
+    _derive_coverage_status,
+    _derive_edition_tracking_status,
     diagnose_source_entry,
     run_regulatory_source_completeness_report,
 )
 from app.services.regulatory_source_registry import (
     AUTHORITY_LEVEL_LABELS,
     REGULATORY_SOURCE_REGISTRY,
+    RegulatorySourceEntry,
     get_registry_entry,
     list_registry_entries,
 )
@@ -120,6 +123,71 @@ class TestRegulatorySourceRegistry(unittest.TestCase):
         self.assertFalse(row["is_source_of_truth"])
         self.assertTrue(row["manual_review_required"])
 
+    def test_official_local_copy_without_revision_tracking_is_partial(self) -> None:
+        entry = RegulatorySourceEntry(
+            source_id="test_official",
+            title="Test official source",
+            authority_level="official_binding",
+            official_url="https://example.test/official",
+            description="test",
+            source_status_code="TEST_OFFICIAL",
+            min_document_count=1,
+        )
+        tracking = _derive_edition_tracking_status(entry, None)
+        coverage = _derive_coverage_status(
+            entry,
+            {"exists": True},
+            None,
+            None,
+            "ok",
+            tracking,
+        )
+        self.assertEqual(tracking, "unverified")
+        self.assertEqual(coverage, "partial")
+
+    def test_official_tracking_requires_dated_non_stale_revision(self) -> None:
+        entry = RegulatorySourceEntry(
+            source_id="test_official",
+            title="Test official source",
+            authority_level="official_reference",
+            official_url="https://example.test/official",
+            description="test",
+            source_status_code="TEST_OFFICIAL",
+        )
+        for source_status in (
+            {"revision": "eec:2026-09-24", "synced_at": "2026-09-24T10:00:00"},
+            {"revision": "seed", "synced_at": "2026-09-24T10:00:00", "is_stale": False},
+            {"revision": "eec:2026-09-24", "is_stale": False},
+        ):
+            with self.subTest(source_status=source_status):
+                self.assertEqual(
+                    _derive_edition_tracking_status(entry, source_status),
+                    "unverified",
+                )
+
+        self.assertEqual(
+            _derive_edition_tracking_status(
+                entry,
+                {
+                    "revision": "eec:2026-09-24",
+                    "synced_at": "2026-09-24T10:00:00",
+                    "is_stale": False,
+                },
+            ),
+            "tracked",
+        )
+        self.assertEqual(
+            _derive_edition_tracking_status(
+                entry,
+                {
+                    "revision": "eec:2026-09-24",
+                    "synced_at": "2026-09-24T10:00:00",
+                    "is_stale": True,
+                },
+            ),
+            "stale",
+        )
+
 
 def _count_fcs_official_only() -> int:
     from app.services.fcs_preliminary_sync import count_fcs_official_decisions
@@ -149,3 +217,7 @@ class TestRegulatorySourceCompletenessApi(unittest.TestCase):
         self.assertIn("summary", body)
         self.assertIn("future_sync_notes", body)
         self.assertIn("official_source_gap_ids", body["summary"])
+        self.assertIn("official_edition_tracking_gap_ids", body["summary"])
+        self.assertTrue(body["summary"]["any_official_edition_tracking_gap"])
+        for row in body["sources"]:
+            self.assertIn("edition_tracking_status", row)
