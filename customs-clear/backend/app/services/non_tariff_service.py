@@ -35,6 +35,19 @@ _SENSITIVE_PERMIT_BASIS: Dict[str, tuple[str, str]] = {
     ),
 }
 
+_CHILD_DESCRIPTION_MARKERS = (
+    "детск", "для детей", "детям", "ребен", "ребён", "младен", "baby",
+)
+_CHILD_DESCRIPTION_EXCLUSIONS = ("для взросл", "не для дет", "18+", "старше 18")
+
+
+def _is_child_product_description(description: str) -> bool:
+    """Conservative child-product gate without matching unrelated ``дет*`` words."""
+    desc_l = (description or "").lower()
+    if any(marker in desc_l for marker in _CHILD_DESCRIPTION_EXCLUSIONS):
+        return False
+    return any(marker in desc_l for marker in _CHILD_DESCRIPTION_MARKERS)
+
 
 def _build_broker_required_permits(
     hs_code: str,
@@ -108,8 +121,7 @@ def _sanitize_ntm_rules_for_position(
     code = (hs_code or "").strip().replace(" ", "")
     if not code or not rules:
         return rules
-    desc_l = (description or "").lower()
-    child_cosmetic = any(x in desc_l for x in ("дет", "детск", "младен", "baby"))
+    child_cosmetic = _is_child_product_description(description)
     out: List[Dict[str, Any]] = []
     for r in rules:
         rp = [p for p in (r.get("required_permits") or []) if p]
@@ -132,7 +144,7 @@ def _drop_spurious_ai_measures(
 ) -> List[Dict[str, Any]]:
     """LLM иногда добавляет СГР/«сертификат» там, где домен и БД уже задают ДС/СС."""
     code = (hs_code or "").strip()
-    desc_l = (description or "").lower()
+    child_cosmetic = _is_child_product_description(description)
     out: List[Dict[str, Any]] = []
     for m in measures:
         if m.get("source_level") != "ai_enriched":
@@ -141,9 +153,8 @@ def _drop_spurious_ai_measures(
         mt = (str(m.get("measure_type") or "")).lower()
         if code.startswith("9503") and mt == "sgr":
             continue
-        if len(code) >= 2 and code[:2] == "33" and mt == "sgr":
-            if "дет" not in desc_l and "детск" not in desc_l and "младен" not in desc_l:
-                continue
+        if len(code) >= 2 and code[:2] == "33" and mt == "sgr" and not child_cosmetic:
+            continue
         if code.startswith("8517") and mt in ("certificate", "sgr"):
             continue
         if code.startswith("8528") and mt in ("certificate", "sgr"):
