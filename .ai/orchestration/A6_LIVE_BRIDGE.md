@@ -6,12 +6,21 @@ runner, a legal decision maker, or an approval mechanism.
 
 ## Trust boundary
 
-- The only trigger is `repository_dispatch` with event type `tariff-a6-live`.
-  GitHub resolves this event's workflow and ref from the default branch. A separate
-  credential-free context gate always runs and independently fails unless the event
-  type, default-branch ref, and exact workflow checkout SHA match. The credentialed
+- The only trigger is a newly created issue comment on issue `#214` whose body is
+  exactly `/tariff-a6-live run-pending`. GitHub resolves this workflow and ref from
+  the default branch. A separate credential-free context gate always runs and
+  independently fails unless the event type, exact command, issue number, non-PR
+  context, owner identity and association, default-branch ref, and exact workflow
+  checkout SHA match. The credentialed
   job depends on that gate, so invalid context fails rather than looking green
   because a job was skipped.
+- The command carries no request fields, paths, commits, or URLs. The bridge reads
+  the single validated, unconsumed `pending_live_smoke` from
+  `agent/orchestration-state`, verifies an unexpired A0 coordinator lease, and binds
+  the inert state checkout commit into the receipt. State files are never executed.
+- A repository-wide concurrency lock serializes accepted commands. Before any
+  environment credential is available, the gate uses read-only Actions metadata to
+  reject every later `issue_comment` delivery. A failed first delivery is not retried.
 - The workflow must first be reviewed and merged through the repository's normal
   protected-default-branch process. A workflow copied to or dispatched from an
   agent/PR ref cannot run the credentialed job. The first live smoke is therefore
@@ -25,8 +34,9 @@ runner, a legal decision maker, or an approval mechanism.
   receives `ANTHROPIC_API_KEY` and `TARIFF_ANTHROPIC_MODEL`. Claude receives the
   adapter's bounded packet and has no tools, GitHub token, database, shell,
   production, merge, deploy, or write permission.
-- Workflow permissions are `contents: read`. Existing offline safety CI remains
-  separate and credential-free.
+- Workflow permissions are only `contents: read` and `actions: read`; the latter is
+  used solely by the pre-credential duplicate-delivery gate. Existing offline safety
+  CI remains separate and credential-free.
 - The credentialed job is attached to the dedicated `tariff-a6-trusted` GitHub
   Environment. The owner confirms that its deployment-branch policy allows only
   `main`, `ANTHROPIC_API_KEY` is stored as an environment secret,
@@ -39,18 +49,19 @@ runner, a legal decision maker, or an approval mechanism.
 
 ## A0 invocation protocol
 
-After the reviewed workflow is present on the protected default branch, A0 chooses a
-unique request ID and sends the narrow repository dispatch. Its `client_payload`
-must contain exactly six string fields: `request_id`, exact `base_sha`, exact
-`head_sha`, exact `contract_sha`, `paths_json` containing every changed path, and
-`official_sources_json` containing a JSON array of public allowlisted source URLs
-(use `[]` when absent). All commits must be reachable in the same repository. A0
-polls that exact workflow run ID and downloads `tariff-a6-live-<run_id>`.
+After the reviewed workflow is present on the protected default branch, the lawful
+A0 holder rereads the Actions ledger and authoritative state. If the existing request
+is still validated, undispatched and unconsumed, A0 posts the exact command once to
+issue `#214` through the authorized owner GitHub context. The workflow accepts no
+request data from the comment. The pending record supplies the request ID, exact
+base/head/contract commits, complete `paths_json`, and allowlisted public sources.
+A0 polls that exact workflow run ID and downloads `tariff-a6-live-<run_id>`.
 
 The bridge rebuilds and validates the packet twice from committed blobs. A valid
 provider response must bind the packet hash and head commit and pass the adapter's
 strict finding schema. The receipt additionally binds the request, workflow run,
-trusted workflow commit, base/head/contract commits, and packet hash.
+triggering comment, authoritative state commit, A0 lease holder/generation, trusted
+workflow commit, base/head/contract commits, and packet hash.
 
 `bridge_status: LIVE_VERIFIED` means only that a real, structurally valid Anthropic
 response was received for that exact packet. Its `audit_status` remains
