@@ -290,7 +290,16 @@ def _permit_doc_types(raw: str) -> set[str]:
             continue
         if "ДС" in t or "ДЕКЛАР" in t:
             out.add("ДС")
-        if "СС" in t or "СЕРТИФ" in t:
+        # ``СС`` and ``ВЕТ`` used to be substring checks.  That made a
+        # veterinary/phytosanitary certificate look like a conformity
+        # certificate and even found veterinary control inside
+        # ``соответствия``.  Accept the short conformity code only as a
+        # standalone token; a spelled-out certificate must explicitly say
+        # that it is about conformity.
+        if re.search(r"(?<![А-ЯЁ0-9])СС(?![А-ЯЁ0-9])", t) or re.search(
+            r"СЕРТИФ\w*\s+(?:О\s+)?СООТВЕТСТВ\w*",
+            t,
+        ):
             out.add("СС")
         if "СГР" in t or "ГОСРЕГ" in t:
             out.add("СГР")
@@ -302,9 +311,9 @@ def _permit_doc_types(raw: str) -> set[str]:
             out.add("Маркировка")
         if t == "РУ" or ("РЕГИСТРАЦ" in t and "УДОСТ" in t):
             out.add("РУ")
-        if "ВЕТ" in t:
+        if _VET_PATTERN.search(t):
             out.add("Ветконтроль")
-        if "ФИТО" in t:
+        if _PHYTO_PATTERN.search(t):
             out.add("Фитоконтроль")
     return out
 
