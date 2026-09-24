@@ -330,6 +330,78 @@ def _note_rows(raw: Any) -> list[dict[str, Any]]:
     return rows
 
 
+def _normalize_normative_freshness(value: Any) -> dict[str, Any]:
+    """Consume the normative-block freshness contract without upgrading it."""
+    raw = value if isinstance(value, dict) else {}
+
+    def optional_text(field: str, limit: int) -> str | None:
+        raw_value = raw.get(field)
+        if not isinstance(raw_value, str):
+            return None
+        return _trim(raw_value, limit) or None
+
+    source_name = optional_text("source_name", 220)
+    source_code = optional_text("source_code", 120)
+    synced_at = optional_text("synced_at", 120)
+    revision = optional_text("revision", 160)
+    declared_state = raw.get("state")
+
+    if declared_state == "stale":
+        state = "stale"
+    elif (
+        declared_state == "fresh"
+        and raw.get("is_stale") is False
+        and source_name
+        and source_code
+        and synced_at
+        and revision
+        and raw.get("scope") == "technical_source_status_only"
+    ):
+        state = "fresh"
+    else:
+        # Missing, malformed, contradictory, or incomplete input must not be
+        # presented as fresh by the assistant, even if a truthy-looking field
+        # is present.
+        state = "unknown"
+
+    return {
+        "state": state,
+        "tone": "neutral" if state == "fresh" else "amber",
+        "source_name": source_name,
+        "source_code": source_code,
+        "synced_at": synced_at,
+        "revision": revision,
+        "is_stale": state != "fresh",
+        "scope": "technical_source_status_only",
+        "affects_applicability": False,
+        "affects_required_documents": False,
+        "affects_missing_documents": False,
+        "ntm_coverage_verified": (
+            state == "fresh" and raw.get("ntm_coverage_verified") is True
+        ),
+    }
+
+
+def _normative_freshness_warnings(freshness: Any) -> list[str]:
+    signal = _normalize_normative_freshness(freshness)
+    warnings: list[str] = []
+    if signal["state"] == "stale":
+        warnings.append(
+            "Данные нетарифного контура помечены как устаревшие; отсутствие требования "
+            "нельзя считать подтверждением его отсутствия."
+        )
+    elif signal["state"] == "unknown":
+        warnings.append(
+            "Актуальность данных нетарифного контура не подтверждена; отсутствие требования "
+            "нельзя считать подтверждением его отсутствия."
+        )
+    if not signal["ntm_coverage_verified"]:
+        warnings.append(
+            "Полнота и юридическая актуальность покрытия нетарифных мер не подтверждены."
+        )
+    return warnings
+
+
 def _normative_summary(
     raw: dict[str, Any],
     citations: _CitationCollector,
@@ -370,6 +442,7 @@ def _normative_summary(
         "unconfirmed_documents": normalize_docs(block.get("missing_documents")),
         "advisory_requirements": normalize_docs(block.get("advisory_requirements"), advisory=True),
         "tr_ts": [_trim(value, 120) for value in list(block.get("tr_ts") or [])[:12] if _trim(value, 120)],
+        "data_freshness": _normalize_normative_freshness(block.get("data_freshness")),
         "empty_message": _trim(block.get("empty_message"), 500) or None,
     }
 
@@ -541,6 +614,9 @@ async def build_chat_grounding_bundle(
             if canonical_anchor is None and isinstance(risk.get("canonical_anchor"), dict):
                 canonical_anchor = risk["canonical_anchor"]
             facts_used.extend(["requirements", "risk"])
+            limitations.extend(
+                _normative_freshness_warnings(normative.get("data_freshness"))
+            )
             if not risk.get("coverage_complete"):
                 limitations.append(
                     "Санкционный скрининг имеет неполное покрытие; отсутствие совпадений не означает отсутствие риска."
@@ -799,6 +875,13 @@ def render_chat_grounded_answer(bundle: dict[str, Any]) -> tuple[str, list[str]]
                     requirements.get("empty_message")
                     or "В локальном контуре обязательные документы не выявлены; это не отменяет проверку характеристик."
                 )
+            freshness_warnings = _normative_freshness_warnings(
+                requirements.get("data_freshness")
+            )
+            if freshness_warnings:
+                lines.append(
+                    "**Ограничение актуальности:** " + " ".join(freshness_warnings)
+                )
             parts.append("### Документы и нетарифные меры\n" + "\n\n".join(lines))
         else:
             parts.append("### Документы\nНетарифный контур не удалось проверить; не буду перечислять документы по памяти.")
@@ -937,6 +1020,18 @@ def build_copilot_deterministic_summary(context: dict[str, Any]) -> dict[str, An
         required = list(normative.get("required_documents") or [])
         missing = list(normative.get("missing_documents") or [])
         advisory = list(normative.get("advisory_requirements") or [])
+        if normative:
+            freshness_warnings = _normative_freshness_warnings(
+                normative.get("data_freshness")
+            )
+            for warning in freshness_warnings:
+                item = f"{prefix}{warning}"
+                ntm_notes.append(item)
+                risks.append(item)
+            if freshness_warnings:
+                next_steps.append(
+                    f"{prefix}проверить полноту и актуальную редакцию источников нетарифных мер."
+                )
         if required:
             labels = []
             for doc in required[:10]:
