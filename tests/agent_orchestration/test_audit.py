@@ -407,6 +407,9 @@ class AuditTests(unittest.TestCase):
         self.assertEqual(url, "https://api.anthropic.com/v1/messages")
         self.assertNotIn("tools", payload)
         self.assertNotIn("mcp_servers", payload)
+        self.assertEqual(payload["max_tokens"], audit.A6_MAX_OUTPUT_TOKENS)
+        self.assertEqual(payload["max_tokens"], 32_768)
+        self.assertEqual(payload["output_config"]["effort"], "medium")
         self.assertEqual(payload["output_config"]["format"]["type"], "json_schema")
         self.assertNotIn(self.env["ANTHROPIC_API_KEY"], json.dumps(payload))
 
