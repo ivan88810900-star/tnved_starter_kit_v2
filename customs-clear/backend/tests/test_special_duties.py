@@ -83,5 +83,124 @@ class SpecialDutiesTests(unittest.TestCase):
                 db.commit()
 
 
+    def test_effective_start_date_is_enforced_at_boundary(self) -> None:
+        today = date.today()
+        future_from = (today + timedelta(days=30)).isoformat()
+        future_to = (today + timedelta(days=365)).isoformat()
+        markers = {
+            "future": "TEST-FUTURE-SPECIAL-DUTY",
+            "today": "TEST-TODAY-SPECIAL-DUTY",
+            "legacy": "TEST-LEGACY-NO-START-SPECIAL-DUTY",
+        }
+        with SessionLocal() as db:
+            db.add_all(
+                [
+                    SpecialDuty(
+                        hs_code_prefix="9998",
+                        origin_country="ZZ",
+                        rate_percent=99.0,
+                        rate_specific=0.0,
+                        currency_code="RUB",
+                        regulatory_act=markers["future"],
+                        measure_type="anti_dumping",
+                        effective_from=future_from,
+                        effective_to=future_to,
+                    ),
+                    SpecialDuty(
+                        hs_code_prefix="9998",
+                        origin_country="ZZ",
+                        rate_percent=7.0,
+                        rate_specific=0.0,
+                        currency_code="RUB",
+                        regulatory_act=markers["today"],
+                        measure_type="special_safeguard",
+                        effective_from=today.isoformat(),
+                        effective_to=future_to,
+                    ),
+                    SpecialDuty(
+                        hs_code_prefix="9998",
+                        origin_country="ZZ",
+                        rate_percent=3.0,
+                        rate_specific=0.0,
+                        currency_code="RUB",
+                        regulatory_act=markers["legacy"],
+                        measure_type="countervailing",
+                        effective_from="",
+                        effective_to=future_to,
+                    ),
+                ]
+            )
+            db.commit()
+        try:
+            res = self._calc(hs_code="9998999999", country="ZZ")
+            details = [
+                d for d in (res.get("special_duties") or [])
+                if not d.get("warning") and d.get("regulatory_act") in markers.values()
+            ]
+            by_act = {d["regulatory_act"]: d for d in details}
+
+            self.assertNotIn(markers["future"], by_act)
+            self.assertIn(markers["today"], by_act)
+            self.assertIn(markers["legacy"], by_act)
+            self.assertEqual(by_act[markers["today"]]["effective_from"], today.isoformat())
+            self.assertEqual(by_act[markers["today"]]["effective_to"], future_to)
+            self.assertAlmostEqual(
+                sum(float(d["amount"]) for d in details),
+                10_000.0,
+                places=2,
+            )
+        finally:
+            with SessionLocal() as db:
+                db.query(SpecialDuty).filter(
+                    SpecialDuty.regulatory_act.in_(list(markers.values()))
+                ).delete(synchronize_session=False)
+                db.commit()
+
+    def test_non_iso_or_invalid_effective_dates_fail_closed(self) -> None:
+        future_to = (date.today() + timedelta(days=365)).isoformat()
+        markers = {
+            "dot": "TEST-NON-ISO-DOT-START",
+            "slash": "TEST-NON-ISO-SLASH-START",
+            "impossible": "TEST-IMPOSSIBLE-ISO-START",
+            "bad_end": "TEST-MALFORMED-END",
+        }
+        windows = {
+            markers["dot"]: ("01.10.2099", future_to),
+            markers["slash"]: ("10/01/2099", future_to),
+            markers["impossible"]: ("2099-02-30", future_to),
+            markers["bad_end"]: ("2020-01-01", "not-a-date"),
+        }
+        with SessionLocal() as db:
+            db.add_all(
+                [
+                    SpecialDuty(
+                        hs_code_prefix="9997",
+                        origin_country="ZZ",
+                        rate_percent=99.0,
+                        rate_specific=0.0,
+                        currency_code="RUB",
+                        regulatory_act=marker,
+                        measure_type="anti_dumping",
+                        effective_from=starts,
+                        effective_to=ends,
+                    )
+                    for marker, (starts, ends) in windows.items()
+                ]
+            )
+            db.commit()
+        try:
+            res = self._calc(hs_code="9997999999", country="ZZ")
+            details = res.get("special_duties") or []
+            acts = {d.get("regulatory_act") for d in details if not d.get("warning")}
+            self.assertTrue(acts.isdisjoint(markers.values()))
+            self.assertEqual(res["breakdown"]["special_duties_amount"], 0.0)
+        finally:
+            with SessionLocal() as db:
+                db.query(SpecialDuty).filter(
+                    SpecialDuty.regulatory_act.in_(list(markers.values()))
+                ).delete(synchronize_session=False)
+                db.commit()
+
+
 if __name__ == "__main__":
     unittest.main()
