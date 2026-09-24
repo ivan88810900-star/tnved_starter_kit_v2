@@ -117,6 +117,18 @@ class PaymentEngineTests(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError, "конечным неотрицательным числом"):
                     self._calc(**{field: value})
 
+    def test_finite_manual_payment_operands_that_overflow_are_rejected(self):
+        """Конечный operand не должен создавать infinity в сумме или итоге."""
+        cases = (
+            ("duty_rate", 1e308),
+            ("vat_rate", 1e308),
+            ("excise", 1.7e308),
+        )
+        for field, value in cases:
+            with self.subTest(field=field):
+                with self.assertRaisesRegex(ValueError, "конечный числовой диапазон"):
+                    self._calc(**{field: value})
+
     # ------------------------------------------------------------------ Duty
     def test_duty_auto_from_db(self):
         """Пошлина автоматически из БД (ставка из локальной базы / ЕТТ)."""

@@ -66,6 +66,13 @@ def _manual_nonnegative_number(payload: dict[str, Any], key: str, label: str) ->
     return value
 
 
+def _require_finite_amount(value: float, label: str) -> float:
+    """Reject arithmetic overflow before it reaches a JSON/payment result."""
+    if not isfinite(value):
+        raise ValueError(f"{label} выходит за конечный числовой диапазон")
+    return value
+
+
 def _sum_amounts(*parts: Any | None) -> float:
     return sum(_num(p) for p in parts)
 
@@ -470,7 +477,10 @@ def _compute_structured_duty(
 ) -> tuple[float, float, float | None, float | None, str, float | None, float | None]:
     """Возвращает: duty, duty_rate, ad_valorem_amount, specific_amount_rub, selected_rule, fx_rate, specific_qty_used."""
     if manual_duty_rate is not None:
-        duty = customs_value * manual_duty_rate / 100.0
+        duty = _require_finite_amount(
+            customs_value * manual_duty_rate / 100.0,
+            "Ручная сумма пошлины",
+        )
         return duty, manual_duty_rate, duty, None, "manual_rate", None, None
 
     # Фолбэк на старую логику, если правило не найдено.
@@ -1051,10 +1061,35 @@ def compute_payments(payload: dict[str, Any]) -> dict[str, Any]:
 
     # The shown VAT base and total reconcile to their shown monetary components.
     # This does not certify these provisional amounts or a legal rounding scheme.
-    vat_base = _sum_displayed_amounts(customs_value, duty_amount, excise_amount, antidumping_amount, special_duties_total)
-    vat = _round2(vat_base * _num(vat_rate) / 100.0)
+    vat_base = _require_finite_amount(
+        _sum_displayed_amounts(
+            customs_value,
+            duty_amount,
+            excise_amount,
+            antidumping_amount,
+            special_duties_total,
+        ),
+        "База НДС",
+    )
+    vat = _round2(
+        _require_finite_amount(
+            vat_base * _num(vat_rate) / 100.0,
+            "Сумма НДС",
+        )
+    )
 
-    total = _sum_displayed_amounts(customs_fee_amount, duty_amount, excise_amount, antidumping_amount, special_duties_total, vat, recycling_fee_total)
+    total = _require_finite_amount(
+        _sum_displayed_amounts(
+            customs_fee_amount,
+            duty_amount,
+            excise_amount,
+            antidumping_amount,
+            special_duties_total,
+            vat,
+            recycling_fee_total,
+        ),
+        "Итог платежей",
+    )
 
     # Sources: интегрированные данные в приложении (без внешних ссылок)
     stats = get_integrated_data_stats()
