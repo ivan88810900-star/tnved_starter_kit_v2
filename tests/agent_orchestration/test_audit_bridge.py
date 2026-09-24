@@ -77,6 +77,71 @@ class AuditBridgeTests(unittest.TestCase):
                              environ=self.env, fetch=False)
         return output
 
+    def issue_comment_env(self, *, body=audit_bridge.COMMENT_COMMAND,
+                          actor="owner", association="OWNER", consumed=False,
+                          expires_at="2099-01-01T00:00:00.000Z"):
+        state = self.repo / ".a6-state"
+        state.mkdir()
+        subprocess.run(["git", "init", "-q"], cwd=state, check=True)
+        subprocess.run(["git", "config", "user.email", "state@example.com"],
+                       cwd=state, check=True)
+        subprocess.run(["git", "config", "user.name", "State Test"],
+                       cwd=state, check=True)
+        packet = audit.build_packet(
+            self.repo, self.base, self.head, ["src/rates.py"],
+            contract_ref=self.head, official_sources=[], environ={})
+        status = {
+            "schema_version": 1,
+            "live_verified": False,
+            "pending_live_smoke": {
+                "request_id": "A6-pending-123",
+                "base_sha": self.base,
+                "head_sha": self.head,
+                "contract_sha": self.head,
+                "paths_json": '["src/rates.py"]',
+                "official_sources_json": "[]",
+                "packet_sha256": packet["packet_sha256"],
+                "packet_validation": "PASSED_OFFLINE_WITHOUT_CREDENTIALS",
+                "dispatched": False,
+                "consumed": consumed,
+            },
+        }
+        lease = {
+            "schema_version": 1,
+            "state": "active",
+            "holder": "/root/a0_test",
+            "token": "1" * 32,
+            "generation": 7,
+            "updated_at": "2026-09-23T00:00:00.000Z",
+            "expires_at": expires_at,
+        }
+        status_path = state / ".ai/orchestration/A6_LIVE_STATUS.json"
+        lease_path = state / ".ai/COORDINATOR_LEASE.json"
+        status_path.parent.mkdir(parents=True)
+        status_path.write_text(json.dumps(status), encoding="utf-8")
+        lease_path.write_text(json.dumps(lease), encoding="utf-8")
+        subprocess.run(["git", "add", "."], cwd=state, check=True)
+        subprocess.run(["git", "commit", "-qm", "state"], cwd=state, check=True)
+        event = {
+            "action": "created",
+            "repository": {"default_branch": "main", "owner": {"login": "owner"}},
+            "sender": {"login": actor},
+            "issue": {"number": 214},
+            "comment": {"id": 987654, "body": body,
+                        "author_association": association,
+                        "user": {"login": actor}},
+        }
+        event_path = self.repo / "issue-comment.json"
+        event_path.write_text(json.dumps(event), encoding="utf-8")
+        return {
+            **self.env,
+            "GITHUB_EVENT_NAME": "issue_comment",
+            "GITHUB_EVENT_PATH": str(event_path),
+            "A6_STATE_ROOT": str(state),
+            "A6_STATUS_PATH": str(status_path),
+            "A6_LEASE_PATH": str(lease_path),
+        }, packet
+
     def valid_result(self, packet):
         return {
             "auditor": "A6", "base_sha": self.base, "head_sha": self.head,
@@ -103,6 +168,54 @@ class AuditBridgeTests(unittest.TestCase):
         saved = json.loads(receipt_path.read_text())
         digest = saved.pop("receipt_sha256")
         self.assertEqual(digest, audit_bridge._sha256(audit_bridge._canonical(saved)))
+
+    def test_owner_comment_resolves_only_authoritative_pending_request(self):
+        env, packet = self.issue_comment_env()
+        request_path = self.repo / "resolved-request.json"
+        request = audit_bridge.resolve(self.repo, output=request_path, environ=env)
+        self.assertEqual(request["request_id"], "A6-pending-123")
+        self.assertEqual(request["packet_sha256"], packet["packet_sha256"])
+        self.assertEqual(request["lease_holder"], "/root/a0_test")
+        self.assertNotIn("token", request)
+        saved = request_path.read_text()
+        self.assertNotIn("1" * 32, saved)
+
+        packet_path = self.repo / "comment-packet.json"
+        audit_bridge.prepare(
+            self.repo, request_id=request["request_id"], base=request["base_sha"],
+            head=request["head_sha"], contract=request["contract_sha"],
+            paths_json=request["paths_json"],
+            sources_json=request["official_sources_json"], output=packet_path,
+            environ=env, fetch=False)
+        receipt_path = self.repo / "comment-receipt.json"
+        with patch.object(audit, "run_audit", return_value=self.valid_result(packet)):
+            receipt, code = audit_bridge.run(
+                self.repo, request_id=request["request_id"], base=request["base_sha"],
+                head=request["head_sha"], contract=request["contract_sha"],
+                packet_path=packet_path, receipt_path=receipt_path, environ=env)
+        self.assertEqual(code, 0)
+        self.assertEqual(receipt["trigger"], "issue_comment")
+        self.assertEqual(receipt["comment_id"], "987654")
+        self.assertEqual(receipt["state_sha"], request["state_sha"])
+        self.assertEqual(receipt["lease_generation"], 7)
+
+    def test_comment_bridge_rejects_untrusted_or_consumed_commands(self):
+        cases = (
+            {"body": "/tariff-a6-live run-pending now"},
+            {"actor": "attacker", "association": "CONTRIBUTOR"},
+            {"consumed": True},
+            {"expires_at": "2020-01-01T00:00:00.000Z"},
+        )
+        for index, changes in enumerate(cases):
+            with self.subTest(changes=changes):
+                if index:
+                    state = self.repo / ".a6-state"
+                    if state.exists():
+                        import shutil
+                        shutil.rmtree(state)
+                env, _ = self.issue_comment_env(**changes)
+                with self.assertRaises(audit_bridge.BridgeBlocked):
+                    audit_bridge.validate_trusted_context(self.repo, environ=env)
 
     def test_wrong_ref_and_non_manual_event_block_before_audit(self):
         for key, value in (("GITHUB_REF", "refs/heads/agent/evil"),
@@ -228,21 +341,28 @@ class AuditBridgeTests(unittest.TestCase):
     def test_workflow_has_static_security_boundary(self):
         workflow = (Path(__file__).resolve().parents[2] /
                     ".github/workflows/tariff-a6-live.yml").read_text()
-        self.assertIn("on:\n  repository_dispatch:\n    types: [tariff-a6-live]", workflow)
+        self.assertIn("on:\n  issue_comment:\n    types: [created]", workflow)
         self.assertNotIn("workflow_dispatch:", workflow)
         self.assertNotIn("pull_request:", workflow)
         self.assertNotIn("pull_request_target:", workflow)
         self.assertNotIn("\n  push:", workflow)
-        self.assertIn("permissions:\n  contents: read", workflow)
+        self.assertIn("permissions:\n  actions: read\n  contents: read", workflow)
         self.assertIn("github.event.repository.default_branch", workflow)
         self.assertIn("  context-gate:\n", workflow)
         self.assertIn("    needs: context-gate\n", workflow)
         self.assertIn("    environment: tariff-a6-trusted\n", workflow)
-        self.assertNotIn("if: github.ref ==", workflow)
+        self.assertIn("group: tariff-a6-live-pending-request", workflow)
+        self.assertIn("?event=issue_comment&per_page=100&page={page}", workflow)
+        self.assertIn('run.get("actor", {}).get("login")', workflow)
+        self.assertIn("test \"$A6_ISSUE_NUMBER\" = 214", workflow)
+        self.assertIn("test \"$A6_COMMENT_BODY\" = '/tariff-a6-live run-pending'", workflow)
+        self.assertIn("test \"$A6_AUTHOR_ASSOCIATION\" = OWNER", workflow)
+        self.assertIn("test \"$A6_ACTOR\" = \"$A6_REPOSITORY_OWNER\"", workflow)
         self.assertIn('test "$A6_ACTUAL_REF" = "$A6_EXPECTED_REF"', workflow)
-        self.assertIn('test "$A6_EVENT_ACTION" = tariff-a6-live', workflow)
         self.assertIn('test "$(git rev-parse HEAD)" = "$A6_WORKFLOW_SHA"', workflow)
         self.assertIn("ref: ${{ github.sha }}", workflow)
+        self.assertIn("ref: agent/orchestration-state", workflow)
+        self.assertIn("resolve-pending", workflow)
         self.assertIn("persist-credentials: false", workflow)
         self.assertEqual(workflow.count("secrets.ANTHROPIC_API_KEY"), 1)
         self.assertEqual(workflow.count("vars.TARIFF_ANTHROPIC_MODEL"), 1)
@@ -253,6 +373,8 @@ class AuditBridgeTests(unittest.TestCase):
         self.assertIn("This is an owner assertion", documentation)
         self.assertIn("Provider status remains\n  `BLOCKED`", documentation)
         self.assertIn("deployment-branch policy", documentation)
+        self.assertIn("A failed first delivery is not retried", documentation)
+        self.assertIn("accepts no\nrequest data from the comment", documentation)
         self.assertNotIn("checkout candidate", workflow.lower())
         self.assertRegex(workflow, r"actions/checkout@[0-9a-f]{40}")
         self.assertRegex(workflow, r"actions/upload-artifact@[0-9a-f]{40}")

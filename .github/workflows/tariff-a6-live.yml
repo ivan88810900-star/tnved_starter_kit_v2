@@ -1,46 +1,102 @@
 name: Tariff trusted A6 live audit
+run-name: Tariff A6 command ${{ github.event.comment.body }}
 
 on:
-  repository_dispatch:
-    types: [tariff-a6-live]
+  issue_comment:
+    types: [created]
 
 permissions:
+  actions: read
   contents: read
 
 concurrency:
-  group: tariff-a6-live-${{ github.run_id }}
+  group: tariff-a6-live-pending-request
   cancel-in-progress: false
 
 jobs:
   context-gate:
-    # This job is deliberately never skipped: a wrong-ref dispatch must make the
-    # workflow fail, not appear successful because the credentialed job skipped.
     runs-on: ubuntu-latest
     timeout-minutes: 3
     steps:
-      - name: Checkout only the workflow commit without retained credentials
+      - name: Require exact owner command on recovery issue
+        env:
+          A6_EVENT_NAME: ${{ github.event_name }}
+          A6_EVENT_ACTION: ${{ github.event.action }}
+          A6_ISSUE_NUMBER: ${{ github.event.issue.number }}
+          A6_IS_PULL_REQUEST: ${{ github.event.issue.pull_request != null }}
+          A6_COMMENT_BODY: ${{ github.event.comment.body }}
+          A6_COMMENT_AUTHOR: ${{ github.event.comment.user.login }}
+          A6_AUTHOR_ASSOCIATION: ${{ github.event.comment.author_association }}
+          A6_ACTOR: ${{ github.actor }}
+          A6_REPOSITORY_OWNER: ${{ github.repository_owner }}
+          A6_ACTUAL_REF: ${{ github.ref }}
+          A6_EXPECTED_REF: refs/heads/${{ github.event.repository.default_branch }}
+        run: |
+          test "$A6_EVENT_NAME" = issue_comment
+          test "$A6_EVENT_ACTION" = created
+          test "$A6_ISSUE_NUMBER" = 214
+          test "$A6_IS_PULL_REQUEST" = false
+          test "$A6_COMMENT_BODY" = '/tariff-a6-live run-pending'
+          test "$A6_COMMENT_AUTHOR" = "$A6_REPOSITORY_OWNER"
+          test "$A6_AUTHOR_ASSOCIATION" = OWNER
+          test "$A6_ACTOR" = "$A6_REPOSITORY_OWNER"
+          test "$A6_ACTUAL_REF" = "$A6_EXPECTED_REF"
+
+      - name: Reject every duplicate delivery before credentials
+        env:
+          GH_TOKEN: ${{ github.token }}
+          A6_API_URL: ${{ github.api_url }}
+          A6_REPOSITORY: ${{ github.repository }}
+          A6_REPOSITORY_OWNER: ${{ github.repository_owner }}
+          A6_RUN_ID: ${{ github.run_id }}
+        run: |
+          python3 - <<'PY'
+          import json
+          import os
+          import urllib.request
+
+          current = int(os.environ["A6_RUN_ID"])
+          title = "Tariff A6 command /tariff-a6-live run-pending"
+          for page in range(1, 11):
+              url = (f"{os.environ['A6_API_URL']}/repos/{os.environ['A6_REPOSITORY']}"
+                     "/actions/workflows/tariff-a6-live.yml/runs"
+                     f"?event=issue_comment&per_page=100&page={page}")
+              request = urllib.request.Request(
+                  url,
+                  headers={"Accept": "application/vnd.github+json",
+                           "Authorization": f"Bearer {os.environ['GH_TOKEN']}",
+                           "X-GitHub-Api-Version": "2022-11-28"},
+              )
+              with urllib.request.urlopen(request, timeout=30) as response:
+                  runs = json.load(response).get("workflow_runs", [])
+              duplicate = any(
+                  run.get("id") != current and run.get("display_title") == title and
+                  run.get("actor", {}).get("login") == os.environ["A6_REPOSITORY_OWNER"]
+                  for run in runs
+              )
+              if duplicate:
+                  raise SystemExit("A6 issue-comment command was already delivered")
+              if len(runs) < 100:
+                  break
+          else:
+              raise SystemExit("A6 issue-comment run ledger is too large to deduplicate")
+          PY
+
+      - name: Checkout only trusted default-branch workflow code
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
           ref: ${{ github.sha }}
           fetch-depth: 1
           persist-credentials: false
-      - name: Require manual default-branch trusted workflow context
+
+      - name: Verify exact trusted workflow checkout
         env:
-          A6_EVENT_NAME: ${{ github.event_name }}
-          A6_EVENT_ACTION: ${{ github.event.action }}
-          A6_ACTUAL_REF: ${{ github.ref }}
-          A6_EXPECTED_REF: refs/heads/${{ github.event.repository.default_branch }}
           A6_WORKFLOW_SHA: ${{ github.sha }}
         run: |
-          test "$A6_EVENT_NAME" = repository_dispatch
-          test "$A6_EVENT_ACTION" = tariff-a6-live
-          test "$A6_ACTUAL_REF" = "$A6_EXPECTED_REF"
-          test "$(git rev-parse HEAD)" = "$A6_WORKFLOW_SHA"
           [[ "$A6_WORKFLOW_SHA" =~ ^[0-9a-f]{40}$ ]]
+          test "$(git rev-parse HEAD)" = "$A6_WORKFLOW_SHA"
 
   live-audit:
-    # A workflow dispatched at an agent/PR ref fails in context-gate, so this
-    # credentialed job never starts and the overall run cannot look successful.
     needs: context-gate
     environment: tariff-a6-trusted
     runs-on: ubuntu-latest
@@ -53,44 +109,75 @@ jobs:
           fetch-depth: 1
           persist-credentials: false
 
-      - name: Fetch immutable candidate objects and build packet without credentials
+      - name: Checkout authoritative state as inert data
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: agent/orchestration-state
+          path: .a6-state
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Resolve immutable pending request and lawful A0 lease
         env:
-          A6_REQUEST_ID: ${{ github.event.client_payload.request_id }}
-          A6_BASE_SHA: ${{ github.event.client_payload.base_sha }}
-          A6_HEAD_SHA: ${{ github.event.client_payload.head_sha }}
-          A6_CONTRACT_SHA: ${{ github.event.client_payload.contract_sha }}
-          A6_PATHS_JSON: ${{ github.event.client_payload.paths_json }}
-          A6_SOURCES_JSON: ${{ github.event.client_payload.official_sources_json }}
+          A6_STATE_ROOT: ${{ github.workspace }}/.a6-state
+          A6_STATUS_PATH: ${{ github.workspace }}/.a6-state/.ai/orchestration/A6_LIVE_STATUS.json
+          A6_LEASE_PATH: ${{ github.workspace }}/.a6-state/.ai/COORDINATOR_LEASE.json
         run: |
-          python3 -m tools.tariff_agents.audit_bridge --repo . prepare \
-            --request-id "$A6_REQUEST_ID" \
-            --base "$A6_BASE_SHA" \
-            --head "$A6_HEAD_SHA" \
-            --contract "$A6_CONTRACT_SHA" \
-            --paths-json "$A6_PATHS_JSON" \
-            --sources-json "$A6_SOURCES_JSON" \
-            --output "$RUNNER_TEMP/a6-packet.json"
+          python3 -m tools.tariff_agents.audit_bridge --repo . resolve-pending \
+            --output "$RUNNER_TEMP/a6-request.json"
+
+      - name: Build packet from resolved request without provider credentials
+        env:
+          A6_STATE_ROOT: ${{ github.workspace }}/.a6-state
+          A6_STATUS_PATH: ${{ github.workspace }}/.a6-state/.ai/orchestration/A6_LIVE_STATUS.json
+          A6_LEASE_PATH: ${{ github.workspace }}/.a6-state/.ai/COORDINATOR_LEASE.json
+        run: |
+          python3 - <<'PY'
+          import json
+          import os
+          import subprocess
+
+          request = json.load(open(os.path.join(os.environ["RUNNER_TEMP"],
+                                                "a6-request.json"), encoding="utf-8"))
+          subprocess.run([
+              "python3", "-m", "tools.tariff_agents.audit_bridge", "--repo", ".",
+              "prepare", "--request-id", request["request_id"],
+              "--base", request["base_sha"], "--head", request["head_sha"],
+              "--contract", request["contract_sha"],
+              "--paths-json", request["paths_json"],
+              "--sources-json", request["official_sources_json"],
+              "--output", os.path.join(os.environ["RUNNER_TEMP"], "a6-packet.json"),
+          ], check=True)
+          PY
 
       - name: Invoke checked adapter once with A6 credentials
         id: live
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           TARIFF_ANTHROPIC_MODEL: ${{ vars.TARIFF_ANTHROPIC_MODEL }}
-          A6_REQUEST_ID: ${{ github.event.client_payload.request_id }}
-          A6_BASE_SHA: ${{ github.event.client_payload.base_sha }}
-          A6_HEAD_SHA: ${{ github.event.client_payload.head_sha }}
-          A6_CONTRACT_SHA: ${{ github.event.client_payload.contract_sha }}
+          A6_STATE_ROOT: ${{ github.workspace }}/.a6-state
+          A6_STATUS_PATH: ${{ github.workspace }}/.a6-state/.ai/orchestration/A6_LIVE_STATUS.json
+          A6_LEASE_PATH: ${{ github.workspace }}/.a6-state/.ai/COORDINATOR_LEASE.json
         run: |
           set +e
-          python3 -m tools.tariff_agents.audit_bridge --repo . run \
-            --request-id "$A6_REQUEST_ID" \
-            --base "$A6_BASE_SHA" \
-            --head "$A6_HEAD_SHA" \
-            --contract "$A6_CONTRACT_SHA" \
-            --packet "$RUNNER_TEMP/a6-packet.json" \
-            --receipt "$RUNNER_TEMP/a6-receipt.json"
-          code=$?
-          echo "code=$code" >> "$GITHUB_OUTPUT"
+          python3 - <<'PY'
+          import json
+          import os
+          import subprocess
+
+          request = json.load(open(os.path.join(os.environ["RUNNER_TEMP"],
+                                                "a6-request.json"), encoding="utf-8"))
+          completed = subprocess.run([
+              "python3", "-m", "tools.tariff_agents.audit_bridge", "--repo", ".",
+              "run", "--request-id", request["request_id"],
+              "--base", request["base_sha"], "--head", request["head_sha"],
+              "--contract", request["contract_sha"],
+              "--packet", os.path.join(os.environ["RUNNER_TEMP"], "a6-packet.json"),
+              "--receipt", os.path.join(os.environ["RUNNER_TEMP"], "a6-receipt.json"),
+          ], check=False)
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as output:
+              output.write(f"code={completed.returncode}\n")
+          PY
           exit 0
 
       - name: Upload scrubbed commit-bound receipt and findings

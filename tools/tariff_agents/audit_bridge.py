@@ -29,6 +29,8 @@ SHA_RE = re.compile(r"[0-9a-f]{40}")
 REQUEST_RE = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]{0,79}")
 MAX_INPUT_JSON_BYTES = 20_000
 DISPATCH_ACTION = "tariff-a6-live"
+COMMENT_COMMAND = "/tariff-a6-live run-pending"
+COMMENT_ISSUE = 214
 PAYLOAD_FIELDS = frozenset({"request_id", "base_sha", "head_sha", "contract_sha",
                             "paths_json", "official_sources_json"})
 
@@ -66,23 +68,133 @@ def _json_list(raw, label):
     return value
 
 
+def _read_regular_json(path, label):
+    target = Path(path)
+    try:
+        if target.is_symlink() or not target.is_file():
+            raise BridgeBlocked(f"{label} is unavailable")
+        raw = target.read_bytes()
+        if len(raw) > MAX_INPUT_JSON_BYTES:
+            raise BridgeBlocked(f"{label} is too large")
+        value = json.loads(raw)
+    except (OSError, ValueError, TypeError):
+        raise BridgeBlocked(f"{label} is unavailable") from None
+    if not isinstance(value, dict):
+        raise BridgeBlocked(f"{label} is invalid")
+    return value
+
+
+def _parse_utc(value, label):
+    if not isinstance(value, str) or not value.endswith("Z"):
+        raise BridgeBlocked(f"Invalid {label}")
+    try:
+        parsed = datetime.fromisoformat(value[:-1] + "+00:00")
+    except ValueError:
+        raise BridgeBlocked(f"Invalid {label}") from None
+    if parsed.tzinfo is None:
+        raise BridgeBlocked(f"Invalid {label}")
+    return parsed
+
+
+def _issue_comment_payload(repo, event, env):
+    repository = event.get("repository")
+    issue = event.get("issue")
+    comment = event.get("comment")
+    if not all(isinstance(value, dict) for value in (repository, issue, comment)):
+        raise BridgeBlocked("Invalid A6 issue comment event")
+    owner = repository.get("owner", {}).get("login")
+    actor = event.get("sender", {}).get("login")
+    if (event.get("action") != "created" or issue.get("number") != COMMENT_ISSUE or
+            "pull_request" in issue or comment.get("body") != COMMENT_COMMAND or
+            comment.get("author_association") != "OWNER" or actor != owner or
+            comment.get("user", {}).get("login") != owner):
+        raise BridgeBlocked("A6 issue comment is not an allowlisted owner command")
+    comment_id = comment.get("id")
+    if not isinstance(comment_id, int) or comment_id <= 0:
+        raise BridgeBlocked("Invalid A6 issue comment id")
+
+    state_root = Path(env.get("A6_STATE_ROOT", ""))
+    status_path = Path(env.get("A6_STATUS_PATH", ""))
+    lease_path = Path(env.get("A6_LEASE_PATH", ""))
+    try:
+        root = state_root.resolve(strict=True)
+        if (status_path.resolve(strict=True).parent.parent != root / ".ai" or
+                status_path.name != "A6_LIVE_STATUS.json" or
+                lease_path.resolve(strict=True).parent != root / ".ai" or
+                lease_path.name != "COORDINATOR_LEASE.json"):
+            raise BridgeBlocked("A6 state paths are outside the checked state tree")
+    except (OSError, RuntimeError):
+        raise BridgeBlocked("A6 state checkout is unavailable") from None
+    try:
+        state_sha = subprocess.check_output(
+            ["git", "rev-parse", "HEAD"], cwd=root, text=True,
+            stderr=subprocess.DEVNULL, timeout=10).strip()
+    except (OSError, subprocess.CalledProcessError, subprocess.TimeoutExpired):
+        raise BridgeBlocked("A6 state checkout cannot be verified") from None
+    _exact_sha(state_sha, "state SHA")
+
+    status = _read_regular_json(status_path, "A6 live status")
+    pending = status.get("pending_live_smoke")
+    if (status.get("live_verified") is not False or not isinstance(pending, dict) or
+            pending.get("dispatched") is not False or pending.get("consumed") is not False or
+            pending.get("packet_validation") != "PASSED_OFFLINE_WITHOUT_CREDENTIALS"):
+        raise BridgeBlocked("There is no validated unconsumed A6 request")
+    request_id = _request_id(pending.get("request_id"))
+    base = _exact_sha(pending.get("base_sha"), "base SHA")
+    head = _exact_sha(pending.get("head_sha"), "head SHA")
+    contract = _exact_sha(pending.get("contract_sha"), "contract SHA")
+    packet_sha = pending.get("packet_sha256")
+    if not isinstance(packet_sha, str) or not re.fullmatch(r"[0-9a-f]{64}", packet_sha):
+        raise BridgeBlocked("Invalid pending packet hash")
+    paths_json = pending.get("paths_json")
+    sources_json = pending.get("official_sources_json")
+    paths = _json_list(paths_json, "paths JSON")
+    _json_list(sources_json, "official sources JSON")
+    if not paths:
+        raise BridgeBlocked("Pending A6 request has empty path scope")
+
+    lease = _read_regular_json(lease_path, "coordinator lease")
+    now = datetime.now(timezone.utc)
+    if (lease.get("state") != "active" or
+            not isinstance(lease.get("holder"), str) or
+            not lease["holder"].startswith("/root/a0_") or
+            not isinstance(lease.get("generation"), int) or lease["generation"] < 1 or
+            not isinstance(lease.get("token"), str) or
+            not re.fullmatch(r"[0-9a-f]{32,128}", lease["token"]) or
+            _parse_utc(lease.get("expires_at"), "lease expiry") <= now):
+        raise BridgeBlocked("No current lawful A0 coordinator lease")
+
+    return ({"request_id": request_id, "base_sha": base, "head_sha": head,
+             "contract_sha": contract, "paths_json": paths_json,
+             "official_sources_json": sources_json},
+            {"trigger": "issue_comment", "comment_id": str(comment_id),
+             "state_sha": state_sha, "pending_packet_sha256": packet_sha,
+             "lease_holder": lease["holder"],
+             "lease_generation": lease["generation"]})
+
+
 def validate_trusted_context(repo, *, environ=None):
-    """Require the narrow dispatch running workflow code from the default branch."""
+    """Require a narrow trigger running workflow code from the default branch."""
     env = os.environ if environ is None else environ
-    if env.get("GITHUB_EVENT_NAME") != "repository_dispatch":
-        raise BridgeBlocked("A6 live bridge only accepts repository_dispatch")
+    event_name = env.get("GITHUB_EVENT_NAME")
+    if event_name not in {"repository_dispatch", "issue_comment"}:
+        raise BridgeBlocked("A6 live bridge received an unsupported event")
     event_path = env.get("GITHUB_EVENT_PATH", "")
     try:
         event = json.loads(Path(event_path).read_text(encoding="utf-8"))
         default_branch = event["repository"]["default_branch"]
         action = event["action"]
-        payload = event["client_payload"]
     except (OSError, ValueError, KeyError, TypeError):
         raise BridgeBlocked("Default branch evidence is unavailable") from None
-    if (action != DISPATCH_ACTION or not isinstance(payload, dict) or
-            set(payload) != PAYLOAD_FIELDS or
-            any(not isinstance(value, str) for value in payload.values())):
-        raise BridgeBlocked("Invalid A6 repository dispatch payload")
+    trigger = {"trigger": event_name}
+    if event_name == "repository_dispatch":
+        payload = event.get("client_payload")
+        if (action != DISPATCH_ACTION or not isinstance(payload, dict) or
+                set(payload) != PAYLOAD_FIELDS or
+                any(not isinstance(value, str) for value in payload.values())):
+            raise BridgeBlocked("Invalid A6 repository dispatch payload")
+    else:
+        payload, trigger = _issue_comment_payload(repo, event, env)
     if (not isinstance(default_branch, str) or not default_branch or
             env.get("GITHUB_REF") != f"refs/heads/{default_branch}"):
         raise BridgeBlocked("Workflow ref is not the repository default branch")
@@ -101,7 +213,7 @@ def validate_trusted_context(repo, *, environ=None):
         raise BridgeBlocked("Invalid repository identity")
     return {"default_branch": default_branch, "workflow_sha": workflow_sha,
             "workflow_run_id": run_id, "repository": repository,
-            "payload": payload}
+            "payload": payload, **trigger}
 
 
 def _validate_request_binding(context, *, request_id, base, head, contract,
@@ -178,10 +290,27 @@ def prepare(repo, *, request_id, base, head, contract, paths_json,
     if (packet["base_sha"] != base or packet["head_sha"] != head or
             packet["contract"]["resolved_commit"] != contract):
         raise BridgeBlocked("Prepared packet has invalid commit binding")
+    if (context.get("trigger") == "issue_comment" and
+            packet["packet_sha256"] != context["pending_packet_sha256"]):
+        raise BridgeBlocked("Prepared packet differs from the pending request")
     _write_exclusive(output, packet, environ=env)
     return {"status": "PACKET_BUILT", "request_id": request_id,
             "base_sha": base, "head_sha": head,
             "packet_sha256": packet["packet_sha256"]}
+
+
+def resolve(repo, *, output, environ=None):
+    """Resolve the single pending request from checked authoritative state."""
+    context = validate_trusted_context(repo, environ=environ)
+    if context.get("trigger") != "issue_comment":
+        raise BridgeBlocked("Pending request resolution requires issue_comment")
+    value = dict(context["payload"])
+    value.update(state_sha=context["state_sha"], comment_id=context["comment_id"],
+                 lease_holder=context["lease_holder"],
+                 lease_generation=context["lease_generation"],
+                 packet_sha256=context["pending_packet_sha256"])
+    _write_exclusive(output, value, environ={} if environ is None else environ)
+    return value
 
 
 def _receipt(context, request_id, packet, result, bridge_status, reason_code=None):
@@ -206,6 +335,11 @@ def _receipt(context, request_id, packet, result, bridge_status, reason_code=Non
         "findings": result.get("findings", []),
         "limitations": result.get("limitations", []),
     }
+    if context.get("trigger") == "issue_comment":
+        value.update(trigger="issue_comment", comment_id=context["comment_id"],
+                     state_sha=context["state_sha"],
+                     lease_holder=context["lease_holder"],
+                     lease_generation=context["lease_generation"])
     failure_code = result.get("failure_code")
     if audit.is_safe_failure_code(failure_code):
         value["provider_failure_code"] = failure_code
@@ -240,6 +374,9 @@ def run(repo, *, request_id, base, head, contract, packet_path, receipt_path,
                 packet["paths"] != dispatched_paths or
                 packet["official_sources"] != dispatched_sources):
             raise BridgeBlocked("Run request differs from packet binding")
+        if (context.get("trigger") == "issue_comment" and
+                packet["packet_sha256"] != context["pending_packet_sha256"]):
+            raise BridgeBlocked("Run packet differs from the pending request")
         result = audit.run_audit(repo, packet, environ=env)
         valid_live = (
             result.get("status") == "NEEDS_A0_VALIDATION" and
@@ -307,8 +444,16 @@ def main(argv=None):
     live.add_argument("--contract", required=True)
     live.add_argument("--packet", required=True)
     live.add_argument("--receipt", required=True)
+    resolve_command = commands.add_parser("resolve-pending")
+    resolve_command.add_argument("--output", required=True)
     args = parser.parse_args(argv)
     try:
+        if args.command == "resolve-pending":
+            summary = resolve(args.repo, output=args.output)
+            print(json.dumps({"status": "PENDING_RESOLVED",
+                              "request_id": summary["request_id"],
+                              "state_sha": summary["state_sha"]}, sort_keys=True))
+            return 0
         if args.command == "prepare":
             summary = prepare(args.repo, request_id=args.request_id, base=args.base,
                               head=args.head, contract=args.contract,
