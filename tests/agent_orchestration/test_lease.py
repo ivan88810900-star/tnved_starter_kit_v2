@@ -142,8 +142,11 @@ class LeaseTests(unittest.TestCase):
             {**evidence,'owner_login':'someone-else'},
             {**evidence,'holder':'wrong'},
             {**evidence,'generation':0},
+            {**evidence,'generation':True},
+            {**evidence,'generation':1.0},
             {**evidence,'lease_blob_sha':'b'*40},
             {**evidence,'verified_by_connector':False},
+            {**evidence,'verified_by_connector':1},
             {**evidence,'evidence_ref':'https://example.test/comment'},
             {**evidence,'confirmed_at':self.now.isoformat()},
         ):
