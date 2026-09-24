@@ -254,6 +254,7 @@ def bundle_for_llm(bundle: Dict[str, Any]) -> Dict[str, Any]:
             "required_documents": _normative_rows("required_documents"),
             "missing_documents": _normative_rows("missing_documents"),
             "advisory_requirements": _normative_rows("advisory_requirements"),
+            "data_freshness": normative.get("data_freshness"),
             "empty_message": normative.get("empty_message"),
         }
 
