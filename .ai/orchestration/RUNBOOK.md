@@ -21,6 +21,14 @@ operation rechecks the current token. Local common-dir locks alone cannot exclud
 another clone. This protocol coordinates cooperating A0 sessions, not arbitrary
 writers; GitHub permissions still define the external security boundary.
 
+If native lifecycle evidence is unavailable and the owner explicitly releases a
+stale holder, use `owner-release` instead of editing the lease by hand. Fetch the
+owner's repository comment through the authenticated GitHub connector, verify the
+author is `ivan88810900-star`, and bind the receipt to the exact current holder,
+generation and lease blob SHA. The lease must already be expired. Apply the
+proposal by CAS, reread the released record, then acquire normally. A generic
+approval, elapsed time, a scheduled wake-up, or an unverified URL is insufficient.
+
 Keep lease/state commits on `agent/orchestration-state`, separate from candidate
 code commits, so saving evidence does not invalidate its own candidate SHA.
 

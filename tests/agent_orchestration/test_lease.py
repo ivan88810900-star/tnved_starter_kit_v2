@@ -111,3 +111,65 @@ class LeaseTests(unittest.TestCase):
                                  ended_evidence=current_evidence)['content'])
         self.assertEqual(taken['holder'],'session-two')
         self.assertEqual(taken['generation'],renewed['generation']+1)
+
+    def test_owner_release_requires_exact_fresh_connector_verified_receipt(self):
+        record=self.active()
+        now=self.now+dt.timedelta(hours=2)
+        evidence={
+            'source':'github_owner_receipt',
+            'owner_login':'ivan88810900-star',
+            'decision':'release_stale_holder',
+            'holder':'session-one',
+            'generation':record['generation'],
+            'lease_blob_sha':self.sha,
+            'verified_by_connector':True,
+            'evidence_ref':(
+                'https://github.com/ivan88810900-star/tnved_starter_kit_v2/'
+                'issues/214#issuecomment-1'
+            ),
+            'confirmed_at':now.isoformat(),
+        }
+        released=json.loads(propose(
+            record,self.sha,'owner-release','recovery-session',now=now,
+            owner_release_evidence=evidence)['content'])
+        self.assertEqual(released['state'],'released')
+        self.assertIsNone(released['holder'])
+        self.assertIsNone(released['token'])
+        self.assertEqual(released['owner_recovery_release'],evidence)
+
+        for bad in (
+            None,
+            {**evidence,'owner_login':'someone-else'},
+            {**evidence,'holder':'wrong'},
+            {**evidence,'generation':0},
+            {**evidence,'generation':True},
+            {**evidence,'generation':1.0},
+            {**evidence,'lease_blob_sha':'b'*40},
+            {**evidence,'verified_by_connector':False},
+            {**evidence,'verified_by_connector':1},
+            {**evidence,'evidence_ref':'https://example.test/comment'},
+            {**evidence,'confirmed_at':self.now.isoformat()},
+        ):
+            with self.assertRaises(LeaseError):
+                propose(record,self.sha,'owner-release','recovery-session',now=now,
+                        owner_release_evidence=bad)
+
+    def test_owner_release_never_replaces_live_or_released_lease(self):
+        active=self.active()
+        evidence={
+            'source':'github_owner_receipt','owner_login':'ivan88810900-star',
+            'decision':'release_stale_holder','holder':'session-one',
+            'generation':active['generation'],'lease_blob_sha':self.sha,
+            'verified_by_connector':True,
+            'evidence_ref':(
+                'https://github.com/ivan88810900-star/tnved_starter_kit_v2/'
+                'issues/214#issuecomment-1'
+            ),
+            'confirmed_at':self.now.isoformat(),
+        }
+        with self.assertRaises(LeaseError):
+            propose(active,self.sha,'owner-release','recovery-session',now=self.now,
+                    owner_release_evidence=evidence)
+        with self.assertRaises(LeaseError):
+            propose(initial(),self.sha,'owner-release','recovery-session',now=self.now,
+                    owner_release_evidence=evidence)
