@@ -12,6 +12,8 @@ from ..models.ntm_v2 import NtmApplicabilityRuleV2
 from ..models.regulatory import RegulatoryDocument
 from ..models.tnved import NonTariffMeasure
 from .normative_store import list_source_status, list_sync_log
+from .ntm_v2_import import SOURCE_KIND as LEGACY_TR_TS_SOURCE_KIND
+from .ntm_v2_official_sgr_import import OFFICIAL_SGR_SOURCE_KIND
 from .regulatory_source_registry import (
     AUTHORITY_LEVEL_LABELS,
     REGULATORY_SOURCE_REGISTRY,
@@ -19,12 +21,24 @@ from .regulatory_source_registry import (
     RegulatorySourceEntry,
     registry_entry_to_dict,
 )
-from .ntm_v2_official_sgr_import import OFFICIAL_SGR_SOURCE_KIND
-from .ntm_v2_import import SOURCE_KIND as LEGACY_TR_TS_SOURCE_KIND
 
 _BACKEND_ROOT = Path(__file__).resolve().parents[2]
 
 CoverageStatus = str  # missing | present | stale | partial | parser_failed | not_applicable
+EditionTrackingStatus = str  # tracked | stale | unverified | not_assessed
+
+_UNVERIFIED_REVISIONS = frozenset(
+    {
+        "",
+        "fallback",
+        "import",
+        "local",
+        "manual",
+        "seed",
+        "unknown",
+        "unavailable",
+    }
+)
 
 
 def _backend_path(rel: str) -> Path:
@@ -203,6 +217,7 @@ def _derive_coverage_status(
     doc_count: int | None,
     source_status: dict[str, Any] | None,
     parser_status: str,
+    edition_tracking_status: EditionTrackingStatus,
 ) -> CoverageStatus:
     if doc_count is not None and doc_count < 0:
         return "not_applicable"
@@ -215,6 +230,15 @@ def _derive_coverage_status(
     if not has_local and not has_db:
         return "missing"
     if has_db or has_local:
+        # A local copy or populated table proves availability, not that the
+        # current official edition and its amendments were checked.  Official
+        # contours stay fail-closed until source_status carries explicit,
+        # non-stale revision provenance.
+        if (
+            entry.authority_level in SOURCE_OF_TRUTH_LEVELS
+            and edition_tracking_status != "tracked"
+        ):
+            return "partial"
         if (
             doc_count is not None
             and entry.min_document_count > 0
@@ -230,6 +254,30 @@ def _derive_coverage_status(
             return "stale"
         return "present"
     return "missing"
+
+
+def _derive_edition_tracking_status(
+    entry: RegulatorySourceEntry,
+    source_status: dict[str, Any] | None,
+) -> EditionTrackingStatus:
+    """Describe revision tracking without claiming legal currentness.
+
+    ``tracked`` only means that the configured official contour has a dated,
+    explicitly non-stale revision marker.  It does not prove that all
+    amendments were discovered or that a document is legally applicable.
+    """
+    if entry.authority_level not in SOURCE_OF_TRUTH_LEVELS:
+        return "not_assessed"
+    if not entry.source_status_code or not source_status:
+        return "unverified"
+    if source_status.get("is_stale") is True:
+        return "stale"
+    revision = str(source_status.get("revision") or "").strip().lower()
+    if source_status.get("is_stale") is not False:
+        return "unverified"
+    if not source_status.get("synced_at") or revision in _UNVERIFIED_REVISIONS:
+        return "unverified"
+    return "tracked"
 
 
 def _manual_review_required(
@@ -260,7 +308,15 @@ def diagnose_source_entry(
     src_st = _lookup_source_status(entry.source_status_code, status_by_code)
     last_sync = _latest_sync_for_code(entry.source_status_code)
     parser_status = _derive_parser_status(entry, src_st, last_sync, doc_count)
-    coverage_status = _derive_coverage_status(entry, local, doc_count, src_st, parser_status)
+    edition_tracking_status = _derive_edition_tracking_status(entry, src_st)
+    coverage_status = _derive_coverage_status(
+        entry,
+        local,
+        doc_count,
+        src_st,
+        parser_status,
+        edition_tracking_status,
+    )
     manual = _manual_review_required(entry, coverage_status)
 
     last_checked = (src_st or {}).get("synced_at")
@@ -282,6 +338,7 @@ def diagnose_source_entry(
         {
             "coverage_status": coverage_status,
             "parser_status": parser_status,
+            "edition_tracking_status": edition_tracking_status,
             "local_source": local,
             "local_document_count": doc_count if doc_count is not None and doc_count >= 0 else None,
             "last_checked_at": last_checked,
@@ -314,6 +371,7 @@ def run_regulatory_source_completeness_report() -> dict[str, Any]:
     by_authority: dict[str, int] = {}
     manual_queue: list[str] = []
     official_gaps: list[str] = []
+    official_edition_tracking_gaps: list[str] = []
     for s in sources:
         cov = s["coverage_status"]
         by_coverage[cov] = by_coverage.get(cov, 0) + 1
@@ -323,6 +381,8 @@ def run_regulatory_source_completeness_report() -> dict[str, Any]:
             manual_queue.append(s["source_id"])
         if s.get("is_source_of_truth") and cov in ("missing", "partial", "stale", "parser_failed"):
             official_gaps.append(s["source_id"])
+        if s.get("is_source_of_truth") and s.get("edition_tracking_status") != "tracked":
+            official_edition_tracking_gaps.append(s["source_id"])
 
     return {
         "status": "OK",
@@ -337,6 +397,8 @@ def run_regulatory_source_completeness_report() -> dict[str, Any]:
             "manual_review_queue": sorted(manual_queue),
             "official_source_gap_ids": sorted(official_gaps),
             "any_official_gap": bool(official_gaps),
+            "official_edition_tracking_gap_ids": sorted(official_edition_tracking_gaps),
+            "any_official_edition_tracking_gap": bool(official_edition_tracking_gaps),
         },
         "sources": sources,
         "future_sync_notes": [
