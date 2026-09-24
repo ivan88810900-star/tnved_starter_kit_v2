@@ -5,8 +5,6 @@ from dataclasses import dataclass
 from datetime import date
 from typing import Any
 
-from sqlalchemy import or_
-
 from ..db import SessionLocal
 from ..models.tnved import Commodity, HsDutyRule, SpecialDuty, VatPreference
 from .customs_fees import calculate_customs_fee
@@ -153,6 +151,33 @@ def _special_duty_prefix_candidates(hs_code: str) -> list[tuple[str, int]]:
     return [(p, m) for p, m in out if not (p in seen or seen.add(p))]
 
 
+def _special_duty_is_effective(
+    effective_from: Any | None,
+    effective_to: Any | None,
+    on_date: date,
+) -> bool:
+    """Validate an ISO date window and fail closed on malformed non-empty bounds."""
+    parsed: list[date | None] = []
+    for raw in (effective_from, effective_to):
+        value = str(raw or "").strip()
+        if not value:
+            parsed.append(None)
+            continue
+        if re.fullmatch(r"\d{4}-\d{2}-\d{2}", value) is None:
+            return False
+        try:
+            parsed.append(date.fromisoformat(value))
+        except ValueError:
+            return False
+
+    starts, ends = parsed
+    if starts is not None and starts > on_date:
+        return False
+    if ends is not None and ends < on_date:
+        return False
+    return True
+
+
 def _resolve_special_duties(
     hs_code: str,
     country: str | None,
@@ -164,26 +189,24 @@ def _resolve_special_duties(
     if not cands:
         return 0.0, []
     by_prefix = {p: m for p, m in cands}
-    today = date.today().isoformat()
+    today = date.today()
     country_norm = (country or "").strip().upper() or None
 
     with SessionLocal() as db:
         query = db.query(SpecialDuty).filter(
             SpecialDuty.hs_code_prefix.in_(list(by_prefix.keys())),
-            or_(
-                SpecialDuty.effective_from.is_(None),
-                SpecialDuty.effective_from == "",
-                SpecialDuty.effective_from <= today,
-            ),
-            or_(
-                SpecialDuty.effective_to.is_(None),
-                SpecialDuty.effective_to == "",
-                SpecialDuty.effective_to >= today,
-            ),
         )
         if country_norm:
             query = query.filter(SpecialDuty.origin_country == country_norm)
-        rows = query.all()
+        rows = [
+            row
+            for row in query.all()
+            if _special_duty_is_effective(
+                row.effective_from,
+                row.effective_to,
+                today,
+            )
+        ]
 
     if not rows:
         return 0.0, []
