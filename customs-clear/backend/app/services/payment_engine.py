@@ -46,6 +46,33 @@ def _num(v: Any | None) -> float:
     return 0.0 if v is None else float(v)
 
 
+def _manual_nonnegative_number(payload: dict[str, Any], key: str, label: str) -> float | None:
+    """Parse a manual payment operand without admitting invalid money.
+
+    Manual overrides intentionally remain supported, but a boolean, malformed,
+    non-finite or negative value cannot be a usable rate or RUB amount.  Reject
+    it before source lookups and arithmetic so it cannot poison VAT or a final
+    payable total.
+    """
+    raw = payload.get(key)
+    if raw is None:
+        return None
+    try:
+        value = None if isinstance(raw, bool) else float(raw)
+    except (TypeError, ValueError, OverflowError):
+        value = None
+    if value is None or not isfinite(value) or value < 0:
+        raise ValueError(f"{label} должна быть конечным неотрицательным числом")
+    return value
+
+
+def _require_finite_amount(value: float, label: str) -> float:
+    """Reject arithmetic overflow before it reaches a JSON/payment result."""
+    if not isfinite(value):
+        raise ValueError(f"{label} выходит за конечный числовой диапазон")
+    return value
+
+
 def _sum_amounts(*parts: Any | None) -> float:
     return sum(_num(p) for p in parts)
 
@@ -450,7 +477,10 @@ def _compute_structured_duty(
 ) -> tuple[float, float, float | None, float | None, str, float | None, float | None]:
     """Возвращает: duty, duty_rate, ad_valorem_amount, specific_amount_rub, selected_rule, fx_rate, specific_qty_used."""
     if manual_duty_rate is not None:
-        duty = customs_value * manual_duty_rate / 100.0
+        duty = _require_finite_amount(
+            customs_value * manual_duty_rate / 100.0,
+            "Ручная сумма пошлины",
+        )
         return duty, manual_duty_rate, duty, None, "manual_rate", None, None
 
     # Фолбэк на старую логику, если правило не найдено.
@@ -648,6 +678,11 @@ def _resolve_antidumping(
 def compute_payments(payload: dict[str, Any]) -> dict[str, Any]:
     if payload.get("as_of") is not None:
         raise ValueError(LEGACY_PAYMENT_AS_OF_UNSUPPORTED)
+    manual_duty_rate = _manual_nonnegative_number(
+        payload, "duty_rate", "Ручная ставка пошлины"
+    )
+    manual_vat_rate = _manual_nonnegative_number(payload, "vat_rate", "Ручная ставка НДС")
+    manual_excise = _manual_nonnegative_number(payload, "excise", "Ручная сумма акциза")
     hs_code = str(payload.get("hs_code") or "").strip()
     hs_digits = _digits_hs(hs_code)
     customs_value = float(payload.get("customs_value") or 0.0)
@@ -746,7 +781,6 @@ def compute_payments(payload: dict[str, Any]) -> dict[str, Any]:
 
     # Duty (структурированные правила hs_duty_rules + fallback на историческую ставку)
     duty_rule, duty_rule_match_len = _find_duty_rule_for_hs(hs_code)
-    manual_duty_rate = float(payload.get("duty_rate")) if payload.get("duty_rate") is not None else None
     # A geographic candidate cannot establish precedence or act as a manual grant.
     duty_incomplete = manual_duty_rate is None and _duty_expression_incomplete(duty_rule)
     if duty_incomplete:
@@ -766,7 +800,7 @@ def compute_payments(payload: dict[str, Any]) -> dict[str, Any]:
     tariff_pref = get_tariff_preference(country) if country else None
     tariff_pref_meta: dict[str, Any] = {"applied": False}
     preference_review_required = False
-    user_duty_rate = payload.get("duty_rate")
+    user_duty_rate = manual_duty_rate
     if tariff_pref and user_duty_rate is None:
         raw_coeff = tariff_pref.duty_coefficient
         try:
@@ -798,7 +832,7 @@ def compute_payments(payload: dict[str, Any]) -> dict[str, Any]:
             }
 
     # Excise
-    user_excise = payload.get("excise")
+    user_excise = manual_excise
     excise_review_required = user_excise is None and (
         excise_type not in {"", "none", "percent", "fixed"}
         or not isfinite(excise_value) or excise_value < 0
@@ -809,7 +843,7 @@ def compute_payments(payload: dict[str, Any]) -> dict[str, Any]:
         or excise_type == "fixed"
     )
     if user_excise is not None:
-        excise = float(user_excise)
+        excise = user_excise
         excise_reason = "Указано вручную"
     elif excise_review_required:
         excise = 0.0
@@ -921,8 +955,8 @@ def compute_payments(payload: dict[str, Any]) -> dict[str, Any]:
     auto_vat_rate = float(vat_pref.vat_rate) if vat_pref else 22.0
     vat_decree_info = (vat_pref.decree_info or "") if vat_pref else ""
     vat_pref_comment = (vat_pref.comment or "") if vat_pref else ""
-    if payload.get("vat_rate") is not None:
-        vat_rate = float(payload.get("vat_rate"))
+    if manual_vat_rate is not None:
+        vat_rate = manual_vat_rate
         vat_reason = f"Указано вручную: {vat_rate}%"
         vat_decree_info = ""
         vat_pref_comment = ""
@@ -947,7 +981,7 @@ def compute_payments(payload: dict[str, Any]) -> dict[str, Any]:
         else:
             vat_reason = "Базовая ставка 22% (нет hs_rates и записи в vat_preferences)"
 
-    vat_source_missing = payload.get("vat_rate") is None and vat_pref is None and rate is None
+    vat_source_missing = manual_vat_rate is None and vat_pref is None and rate is None
     if vat_source_missing:
         vat_reason = VAT_SOURCE_MISSING_REASON
 
@@ -969,9 +1003,9 @@ def compute_payments(payload: dict[str, Any]) -> dict[str, Any]:
     if rate_period_unverified:
         if manual_duty_rate is None:
             require_component_review("hs_rate_effective_period_unverified", "duty", "vat")
-        if payload.get("vat_rate") is None and vat_pref is None:
+        if manual_vat_rate is None and vat_pref is None:
             require_component_review("hs_rate_effective_period_unverified", "vat")
-        if payload.get("excise") is None:
+        if manual_excise is None:
             require_component_review("hs_rate_effective_period_unverified", "excise", "vat")
         require_component_review("hs_rate_effective_period_unverified", "antidumping", "vat")
         antidumping_status = "manual_review"
@@ -1027,10 +1061,35 @@ def compute_payments(payload: dict[str, Any]) -> dict[str, Any]:
 
     # The shown VAT base and total reconcile to their shown monetary components.
     # This does not certify these provisional amounts or a legal rounding scheme.
-    vat_base = _sum_displayed_amounts(customs_value, duty_amount, excise_amount, antidumping_amount, special_duties_total)
-    vat = _round2(vat_base * _num(vat_rate) / 100.0)
+    vat_base = _require_finite_amount(
+        _sum_displayed_amounts(
+            customs_value,
+            duty_amount,
+            excise_amount,
+            antidumping_amount,
+            special_duties_total,
+        ),
+        "База НДС",
+    )
+    vat = _round2(
+        _require_finite_amount(
+            vat_base * _num(vat_rate) / 100.0,
+            "Сумма НДС",
+        )
+    )
 
-    total = _sum_displayed_amounts(customs_fee_amount, duty_amount, excise_amount, antidumping_amount, special_duties_total, vat, recycling_fee_total)
+    total = _require_finite_amount(
+        _sum_displayed_amounts(
+            customs_fee_amount,
+            duty_amount,
+            excise_amount,
+            antidumping_amount,
+            special_duties_total,
+            vat,
+            recycling_fee_total,
+        ),
+        "Итог платежей",
+    )
 
     # Sources: интегрированные данные в приложении (без внешних ссылок)
     stats = get_integrated_data_stats()
