@@ -1,0 +1,58 @@
+{
+  "schema_version": 1,
+  "recorded_at": "2026-09-24T16:22:39.656Z",
+  "coordinator": {
+    "holder": "/root/a0_automation_20260924T075940Z",
+    "generation": 25,
+    "lease_token_recorded": false
+  },
+  "main": "306ebdafcba8106e7ec8243eb95977db1a23ce18",
+  "a6": {
+    "live_verified": false,
+    "status": "LIVE_SMOKE_CONSUMED_UNAVAILABLE_STOP_MAX_TOKENS_NO_RETRY",
+    "request_id": "a6-live-smoke-20260916-1248z-pr210-afe40746",
+    "run_id": 35972765980,
+    "failure_code": "STOP_MAX_TOKENS",
+    "consumed": true,
+    "retry_allowed": false
+  },
+  "candidates": [
+    {
+      "pr": 218,
+      "branch": "a0/fix-a6-output-budget-20260924",
+      "head": "b4cbc47d81129e0607d695f4b770c4c079924275",
+      "a5": "PASS",
+      "ci_run": 35973356480,
+      "status": "READY_FOR_OWNER_APPROVAL",
+      "a6": "UNAVAILABLE_NOT_REQUIRED_FOR_REMEDIATION_CODE"
+    },
+    {
+      "pr": 219,
+      "branch": "agent/sources-current-edition-manifest-001",
+      "head": "a230ec65ba9ff72a858550940b507071edb50961",
+      "a5": "PASS",
+      "ci_run": 35991346076,
+      "status": "READY_FOR_OWNER_APPROVAL",
+      "a6": "NOT_REQUIRED_DIAGNOSTIC_ONLY"
+    },
+    {
+      "pr": 220,
+      "branch": "agent/rates-final-rounding-next-011-eb702ef",
+      "head": "f6b7aab786c8dc698a216b865a373b73480bbf4a",
+      "a5": "PASS_AFTER_FIX",
+      "ci_run": 36025565874,
+      "status": "QA_PASSED_AWAITING_LIVE_A6",
+      "previous_finding": "finite_1e308_overflow_reproduced_and_fixed"
+    },
+    {
+      "pr": 221,
+      "branch": "agent/ntm-child-sgr-marker-hardening-001-306ebdaf",
+      "head": "41139591aa5b787a19965aa92ed616672b783af7",
+      "a5": "PASS",
+      "ci_run": 35991410633,
+      "status": "QA_PASSED_AWAITING_LIVE_A6"
+    }
+  ],
+  "protected_actions_performed": [],
+  "next_owner_decision": "approve exact-head merges for PR 218 and PR 219, and separately authorize one new commit-bound A6 smoke after PR 218 is on main"
+}
