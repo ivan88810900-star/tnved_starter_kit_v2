@@ -171,6 +171,11 @@ def _resolve_special_duties(
         query = db.query(SpecialDuty).filter(
             SpecialDuty.hs_code_prefix.in_(list(by_prefix.keys())),
             or_(
+                SpecialDuty.effective_from.is_(None),
+                SpecialDuty.effective_from == "",
+                SpecialDuty.effective_from <= today,
+            ),
+            or_(
                 SpecialDuty.effective_to.is_(None),
                 SpecialDuty.effective_to == "",
                 SpecialDuty.effective_to >= today,
@@ -218,6 +223,8 @@ def _resolve_special_duties(
                 "currency_code": ccy,
                 "fx_rate": fx,
                 "regulatory_act": r.regulatory_act or "",
+                "effective_from": r.effective_from or "",
+                "effective_to": r.effective_to or "",
                 "needs_verification": bool(getattr(r, "needs_verification", False)),
                 "amount": _round2(part),
                 "match_len": by_prefix.get(r.hs_code_prefix, 0),
