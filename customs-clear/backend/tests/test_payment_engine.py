@@ -91,6 +91,32 @@ class PaymentEngineTests(unittest.TestCase):
         self.assertEqual(res["breakdown"]["vat_rate"], 10.0)
         self.assertIn("вручную", res["breakdown"]["vat_reason"])
 
+    def test_zero_manual_payment_operands_remain_explicit_overrides(self):
+        """Нулевые ручные значения валидны и не превращаются в отсутствие ввода."""
+        res = self._calc(duty_rate=0, vat_rate=0, excise=0)
+        self.assertEqual(res["breakdown"]["selected_rule"], "manual_rate")
+        self.assertEqual(res["breakdown"]["duty"], 0)
+        self.assertEqual(res["breakdown"]["vat_rate"], 0)
+        self.assertEqual(res["breakdown"]["vat"], 0)
+        self.assertEqual(res["breakdown"]["excise"], 0)
+        self.assertIn("вручную", res["breakdown"]["vat_reason"].lower())
+        self.assertEqual(res["breakdown"]["excise_reason"], "Указано вручную")
+
+    def test_invalid_manual_payment_operands_are_rejected_before_arithmetic(self):
+        """Отрицательные/нечисловые operands не могут уменьшить final payable."""
+        cases = (
+            ("duty_rate", -0.01),
+            ("vat_rate", float("nan")),
+            ("vat_rate", float("inf")),
+            ("excise", float("-inf")),
+            ("excise", True),
+            ("duty_rate", "not-a-number"),
+        )
+        for field, value in cases:
+            with self.subTest(field=field, value=value):
+                with self.assertRaisesRegex(ValueError, "конечным неотрицательным числом"):
+                    self._calc(**{field: value})
+
     # ------------------------------------------------------------------ Duty
     def test_duty_auto_from_db(self):
         """Пошлина автоматически из БД (ставка из локальной базы / ЕТТ)."""
