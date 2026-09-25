@@ -297,7 +297,8 @@ def _permit_doc_types(raw: str) -> set[str]:
         # standalone token; a spelled-out certificate must explicitly say
         # that it is about conformity.
         if re.search(r"(?<![А-ЯЁ0-9])СС(?![А-ЯЁ0-9])", t) or re.search(
-            r"СЕРТИФ\w*\s+(?:О\s+)?СООТВЕТСТВ\w*",
+            r"СЕРТИФ\w*\s+(?:(?:О|НА)\s+)?"
+            r"СООТВЕТСТВИ(?:Е|Я|Ю|ЕМ|И)(?![А-ЯЁ])",
             t,
         ):
             out.add("СС")
