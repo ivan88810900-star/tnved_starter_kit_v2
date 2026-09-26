@@ -8,6 +8,7 @@ from pathlib import Path
 import subprocess
 import tempfile
 import unittest
+from io import BytesIO
 from unittest.mock import patch
 
 from tools.tariff_agents import audit, audit_bridge
@@ -79,7 +80,8 @@ class AuditBridgeTests(unittest.TestCase):
 
     def issue_comment_env(self, *, body=audit_bridge.COMMENT_COMMAND,
                           actor="owner", association="OWNER", consumed=False,
-                          expires_at="2099-01-01T00:00:00.000Z"):
+                          expires_at="2099-01-01T00:00:00.000Z",
+                          prepared_at="2026-09-24T08:00:00Z"):
         state = self.repo / ".a6-state"
         state.mkdir()
         subprocess.run(["git", "init", "-q"], cwd=state, check=True)
@@ -102,6 +104,7 @@ class AuditBridgeTests(unittest.TestCase):
                 "official_sources_json": "[]",
                 "packet_sha256": packet["packet_sha256"],
                 "packet_validation": "PASSED_OFFLINE_WITHOUT_CREDENTIALS",
+                "prepared_at": prepared_at,
                 "dispatched": False,
                 "consumed": consumed,
             },
@@ -176,6 +179,8 @@ class AuditBridgeTests(unittest.TestCase):
         self.assertEqual(request["request_id"], "A6-pending-123")
         self.assertEqual(request["packet_sha256"], packet["packet_sha256"])
         self.assertEqual(request["lease_holder"], "/root/a0_test")
+        self.assertEqual(request["prepared_at"], "2026-09-24T08:00:00Z")
+        self.assertRegex(request["delivery_generation"], r"^[0-9a-f]{64}$")
         self.assertNotIn("token", request)
         saved = request_path.read_text()
         self.assertNotIn("1" * 32, saved)
@@ -198,6 +203,71 @@ class AuditBridgeTests(unittest.TestCase):
         self.assertEqual(receipt["comment_id"], "987654")
         self.assertEqual(receipt["state_sha"], request["state_sha"])
         self.assertEqual(receipt["lease_generation"], 7)
+
+    def test_delivery_dedupe_is_scoped_to_pending_request_generation(self):
+        env, _ = self.issue_comment_env()
+        request_path = self.repo / "resolved-dedupe-request.json"
+        request = audit_bridge.resolve(self.repo, output=request_path, environ=env)
+        ledger_env = {
+            "GH_TOKEN": "synthetic-token-not-a-secret",
+            "A6_API_URL": "https://api.github.test",
+            "A6_REPOSITORY": "owner/repository",
+            "A6_REPOSITORY_OWNER": "owner",
+            "A6_RUN_ID": "300",
+            "GITHUB_RUN_ATTEMPT": "1",
+        }
+
+        class Response(BytesIO):
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *args):
+                self.close()
+
+        def opener_for(created_at):
+            def open_url(_request, timeout):
+                self.assertEqual(timeout, 30)
+                payload = {"workflow_runs": [{
+                    "id": 200,
+                    "display_title": "Tariff A6 command /tariff-a6-live run-pending",
+                    "actor": {"login": "owner"},
+                    "created_at": created_at,
+                }]}
+                return Response(json.dumps(payload).encode())
+            return open_url
+
+        summary = audit_bridge.dedupe_delivery(
+            request_path, environ=ledger_env,
+            opener=opener_for("2026-09-24T07:59:59Z"))
+        self.assertEqual(summary["delivery_generation"],
+                         request["delivery_generation"])
+        with self.assertRaisesRegex(audit_bridge.BridgeBlocked,
+                                    "already delivered"):
+            audit_bridge.dedupe_delivery(
+                request_path, environ=ledger_env,
+                opener=opener_for("2026-09-24T08:00:00Z"))
+
+    def test_delivery_dedupe_rejects_reruns_and_tampered_generation(self):
+        env, _ = self.issue_comment_env()
+        request_path = self.repo / "resolved-rerun-request.json"
+        audit_bridge.resolve(self.repo, output=request_path, environ=env)
+        ledger_env = {
+            "GH_TOKEN": "synthetic-token-not-a-secret",
+            "A6_API_URL": "https://api.github.test",
+            "A6_REPOSITORY": "owner/repository",
+            "A6_REPOSITORY_OWNER": "owner",
+            "A6_RUN_ID": "300",
+            "GITHUB_RUN_ATTEMPT": "2",
+        }
+        with self.assertRaisesRegex(audit_bridge.BridgeBlocked, "reruns"):
+            audit_bridge.dedupe_delivery(request_path, environ=ledger_env)
+        request = json.loads(request_path.read_text())
+        request["delivery_generation"] = "0" * 64
+        request_path.unlink()
+        request_path.write_text(json.dumps(request))
+        ledger_env["GITHUB_RUN_ATTEMPT"] = "1"
+        with self.assertRaisesRegex(audit_bridge.BridgeBlocked, "generation"):
+            audit_bridge.dedupe_delivery(request_path, environ=ledger_env)
 
     def test_comment_bridge_rejects_untrusted_or_consumed_commands(self):
         cases = (
@@ -352,8 +422,9 @@ class AuditBridgeTests(unittest.TestCase):
         self.assertIn("    needs: context-gate\n", workflow)
         self.assertIn("    environment: tariff-a6-trusted\n", workflow)
         self.assertIn("group: tariff-a6-live-pending-request", workflow)
-        self.assertIn("?event=issue_comment&per_page=100&page={page}", workflow)
-        self.assertIn('run.get("actor", {}).get("login")', workflow)
+        self.assertIn("dedupe-delivery", workflow)
+        self.assertIn("delivery-generation", workflow)
+        self.assertIn('test "$A6_RUN_ATTEMPT" = 1', workflow)
         self.assertIn("test \"$A6_ISSUE_NUMBER\" = 214", workflow)
         self.assertIn("test \"$A6_COMMENT_BODY\" = '/tariff-a6-live run-pending'", workflow)
         self.assertIn("test \"$A6_AUTHOR_ASSOCIATION\" = OWNER", workflow)

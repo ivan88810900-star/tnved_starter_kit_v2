@@ -19,8 +19,12 @@ runner, a legal decision maker, or an approval mechanism.
   `agent/orchestration-state`, verifies an unexpired A0 coordinator lease, and binds
   the inert state checkout commit into the receipt. State files are never executed.
 - A repository-wide concurrency lock serializes accepted commands. Before any
-  environment credential is available, the gate uses read-only Actions metadata to
-  reject every later `issue_comment` delivery. A failed first delivery is not retried.
+  environment credential is available, the gate resolves the immutable pending
+  request and uses read-only Actions metadata to reject another delivery from the
+  same request generation (`request_id`, packet hash and authoritative
+  `prepared_at`). Historical commands for older requests do not block a distinct
+  owner-authorized request. Workflow reruns and repeated delivery of the current
+  request are rejected. A failed first delivery is not retried.
 - The workflow must first be reviewed and merged through the repository's normal
   protected-default-branch process. A workflow copied to or dispatched from an
   agent/PR ref cannot run the credentialed job. The first live smoke is therefore
