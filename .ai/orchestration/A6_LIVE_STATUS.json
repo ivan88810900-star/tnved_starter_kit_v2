@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "checked_at": "2026-09-26T23:08:00Z",
-  "status": "LIVE_SMOKE_PENDING_PR218_POST_MERGE",
+  "checked_at": "2026-09-26T23:10:00Z",
+  "status": "LIVE_SMOKE_BLOCKED_PRE_CREDENTIAL_FUTURE_PREPARED_AT_NO_RETRY",
   "live_verified": false,
   "provider_called": true,
   "secret_values_read": false,
@@ -146,6 +146,40 @@
         "packet_hash": true,
         "lease_binding": true
       }
+    },
+    {
+      "request_id": "a6-live-smoke-20260926-pr218-aedb4614",
+      "workflow_run_id": 36278286455,
+      "workflow_head_sha": "ac8fce22d6b0f9770d648fe09b48c346822524b2",
+      "trigger": "issue_comment",
+      "comment_id": 5850724715,
+      "context_gate": "blocked_at_delivery_dedupe",
+      "packet_prepare": "skipped",
+      "provider_step": "skipped",
+      "provider_called": false,
+      "workflow_conclusion": "failure",
+      "bridge_status": "BLOCKED",
+      "audit_status": "NOT_RUN",
+      "live_verified": false,
+      "reason_code": "PENDING_PREPARED_AT_FUTURE",
+      "retry_allowed": false,
+      "prepared_at": "2026-09-26T23:08:00Z",
+      "workflow_created_at": "2026-09-26T23:04:23Z",
+      "base_sha": "306ebdafcba8106e7ec8243eb95977db1a23ce18",
+      "head_sha": "aedb46149267722218bcbf007e3c1eea3fcc250d",
+      "contract_sha": "aedb46149267722218bcbf007e3c1eea3fcc250d",
+      "packet_sha256": "590d6a45770e9dc75d6f214d924104b0196d79da416f653a85b739e8caf30aa0",
+      "state_sha": "92e6ee2fe598eacfe9370f944c77543647262e92",
+      "lease_generation": 29,
+      "lease_holder": "/root/a0_automation_20260926T230038Z",
+      "validated": {
+        "workflow_binding": true,
+        "request_binding": true,
+        "commit_binding": true,
+        "packet_hash": true,
+        "provider_not_called": true,
+        "live_job_skipped": true
+      }
     }
   ],
   "diagnosis": {
@@ -243,18 +277,23 @@
     "official_sources_json": "[]",
     "packet_sha256": "590d6a45770e9dc75d6f214d924104b0196d79da416f653a85b739e8caf30aa0",
     "packet_validation": "PASSED_OFFLINE_WITHOUT_CREDENTIALS",
-    "dispatched": false,
+    "dispatched": true,
     "consumed": false,
     "dispatch_transport": "issue_comment",
     "retry_allowed": false,
-    "dedup_key": "ivan88810900-star/tnved_starter_kit_v2|PR218|aedb46149267722218bcbf007e3c1eea3fcc250d|post-merge-live-a6"
+    "dedup_key": "ivan88810900-star/tnved_starter_kit_v2|PR218|aedb46149267722218bcbf007e3c1eea3fcc250d|post-merge-live-a6",
+    "dispatched_at": "2026-09-26T23:04:23Z",
+    "dispatch_comment_id": 5850724715,
+    "workflow_run_id": 36278286455,
+    "workflow_head_sha": "ac8fce22d6b0f9770d648fe09b48c346822524b2",
+    "result": "BLOCKED",
+    "reason_code": "PENDING_PREPARED_AT_FUTURE",
+    "provider_called": false
   },
   "blocker": {
-    "type": "CAPABILITY",
-    "action": "repository_dispatch tariff-a6-live",
-    "reason": "The installed GitHub connector exposes read/merge/state-write and workflow inspection, but no repository_dispatch creation action. The unique commit-bound request is prepared and validated but remains unused. No provider call was made and no run exists for merge SHA afe407461e45381009a1c59ac06b0ac3609365df.",
-    "owner_action_now": null,
-    "retry_policy": "Do not create another request. A future legitimate A0 holder with repository_dispatch capability must first recheck this exact pending request and Actions ledger, then dispatch it at most once."
+    "type": "VALIDATION",
+    "action": "tariff-a6-live issue_comment",
+    "reason": "The authorized distinct request was rejected before credentials because authoritative prepared_at was later than the workflow creation time. live-audit was skipped; no Anthropic request was made. The failed delivery is terminal and will not be retried."
   },
   "communication_policy": {
     "owner_decisions_single_delivery": true,
