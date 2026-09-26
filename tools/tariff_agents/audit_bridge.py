@@ -337,7 +337,7 @@ def resolve(repo, *, output, environ=None):
     return value
 
 
-def dedupe_delivery(request_path, *, environ=None, opener=None):
+def dedupe_delivery(request_path, *, environ=None, opener=None, now=None):
     """Reject a second delivery for the current pending-request generation.
 
     Historical commands for older pending requests are allowed. The generation
@@ -372,8 +372,20 @@ def dedupe_delivery(request_path, *, environ=None, opener=None):
 
     prepared = _parse_utc(request["prepared_at"],
                           "pending request preparation time")
+    checked_at = datetime.now(timezone.utc) if now is None else now
+    if not isinstance(checked_at, datetime) or checked_at.tzinfo is None:
+        raise BridgeBlocked("Invalid delivery check time")
+    checked_at = checked_at.astimezone(timezone.utc)
+    if prepared > checked_at:
+        raise BridgeBlocked("Pending request preparation time is in the future")
+    # GitHub's run ledger exposes creation timestamps only to whole seconds.
+    # Treat that loss of precision conservatively for older deliveries, while
+    # requiring the current run's timestamp to be no earlier than the exact
+    # authoritative preparation time.
+    duplicate_boundary = prepared.replace(microsecond=0)
     open_url = urllib.request.urlopen if opener is None else opener
     title = f"Tariff A6 command {COMMENT_COMMAND}"
+    current_created = None
     for page in range(1, 11):
         url = (f"{api_url}/repos/{repository}"
                "/actions/workflows/tariff-a6-live.yml/runs"
@@ -402,14 +414,20 @@ def dedupe_delivery(request_path, *, environ=None, opener=None):
             run_id = run.get("id")
             if not isinstance(run_id, int) or run_id <= 0:
                 raise BridgeBlocked("A6 Actions ledger is invalid")
-            if run_id == current:
-                continue
             created = _parse_utc(run.get("created_at"),
                                  "workflow run creation time")
-            if created >= prepared:
+            if run_id == current:
+                current_created = created
+                continue
+            if created >= duplicate_boundary:
                 raise BridgeBlocked(
                     "A6 pending request generation was already delivered")
         if len(runs) < 100:
+            if current_created is None:
+                raise BridgeBlocked("Current A6 workflow run is absent from ledger")
+            if current_created < prepared:
+                raise BridgeBlocked(
+                    "Current A6 workflow run predates pending request generation")
             return {"status": "DELIVERY_UNIQUE",
                     "delivery_generation": expected_generation}
     raise BridgeBlocked("A6 issue-comment run ledger is too large to deduplicate")

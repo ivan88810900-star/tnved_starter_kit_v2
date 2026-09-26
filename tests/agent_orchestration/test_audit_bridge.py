@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import os
+from datetime import datetime, timezone
 from pathlib import Path
 import subprocess
 import tempfile
@@ -224,15 +225,19 @@ class AuditBridgeTests(unittest.TestCase):
             def __exit__(self, *args):
                 self.close()
 
-        def opener_for(created_at):
+        def opener_for(created_at, *, current_at="2026-09-24T08:00:01Z"):
             def open_url(_request, timeout):
                 self.assertEqual(timeout, 30)
-                payload = {"workflow_runs": [{
-                    "id": 200,
-                    "display_title": "Tariff A6 command /tariff-a6-live run-pending",
-                    "actor": {"login": "owner"},
-                    "created_at": created_at,
-                }]}
+                payload = {"workflow_runs": [
+                    {"id": 300,
+                     "display_title": "Tariff A6 command /tariff-a6-live run-pending",
+                     "actor": {"login": "owner"},
+                     "created_at": current_at},
+                    {"id": 200,
+                     "display_title": "Tariff A6 command /tariff-a6-live run-pending",
+                     "actor": {"login": "owner"},
+                     "created_at": created_at},
+                ]}
                 return Response(json.dumps(payload).encode())
             return open_url
 
@@ -246,6 +251,77 @@ class AuditBridgeTests(unittest.TestCase):
             audit_bridge.dedupe_delivery(
                 request_path, environ=ledger_env,
                 opener=opener_for("2026-09-24T08:00:00Z"))
+
+    def test_delivery_dedupe_binds_current_run_and_timestamp_precision(self):
+        env, _ = self.issue_comment_env(
+            prepared_at="2026-09-24T08:00:00.500000Z")
+        request_path = self.repo / "resolved-boundary-request.json"
+        audit_bridge.resolve(self.repo, output=request_path, environ=env)
+        ledger_env = {
+            "GH_TOKEN": "synthetic-token-not-a-secret",
+            "A6_API_URL": "https://api.github.test",
+            "A6_REPOSITORY": "owner/repository",
+            "A6_REPOSITORY_OWNER": "owner",
+            "A6_RUN_ID": "300",
+            "GITHUB_RUN_ATTEMPT": "1",
+        }
+
+        class Response(BytesIO):
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *args):
+                self.close()
+
+        def ledger(*runs):
+            def open_url(_request, timeout):
+                self.assertEqual(timeout, 30)
+                return Response(json.dumps({"workflow_runs": list(runs)}).encode())
+            return open_url
+
+        command = "Tariff A6 command /tariff-a6-live run-pending"
+        current_same_second = {
+            "id": 300, "display_title": command,
+            "actor": {"login": "owner"},
+            "created_at": "2026-09-24T08:00:00Z",
+        }
+        with self.assertRaisesRegex(audit_bridge.BridgeBlocked, "predates"):
+            audit_bridge.dedupe_delivery(
+                request_path, environ=ledger_env,
+                opener=ledger(current_same_second),
+                now=datetime(2026, 9, 24, 8, 1, tzinfo=timezone.utc))
+
+        current_after = dict(current_same_second,
+                             created_at="2026-09-24T08:00:01Z")
+        prior_same_second = {
+            "id": 200, "display_title": command,
+            "actor": {"login": "owner"},
+            "created_at": "2026-09-24T08:00:00Z",
+        }
+        with self.assertRaisesRegex(audit_bridge.BridgeBlocked,
+                                    "already delivered"):
+            audit_bridge.dedupe_delivery(
+                request_path, environ=ledger_env,
+                opener=ledger(current_after, prior_same_second),
+                now=datetime(2026, 9, 24, 8, 1, tzinfo=timezone.utc))
+
+    def test_delivery_dedupe_rejects_future_prepared_at_before_ledger(self):
+        env, _ = self.issue_comment_env(prepared_at="2098-01-01T00:00:00Z")
+        request_path = self.repo / "resolved-future-request.json"
+        audit_bridge.resolve(self.repo, output=request_path, environ=env)
+        ledger_env = {
+            "GH_TOKEN": "synthetic-token-not-a-secret",
+            "A6_API_URL": "https://api.github.test",
+            "A6_REPOSITORY": "owner/repository",
+            "A6_REPOSITORY_OWNER": "owner",
+            "A6_RUN_ID": "300",
+            "GITHUB_RUN_ATTEMPT": "1",
+        }
+        with self.assertRaisesRegex(audit_bridge.BridgeBlocked, "future"):
+            audit_bridge.dedupe_delivery(
+                request_path, environ=ledger_env,
+                opener=lambda *_args, **_kwargs: self.fail("ledger must not be read"),
+                now=datetime(2026, 9, 24, 8, 1, tzinfo=timezone.utc))
 
     def test_delivery_dedupe_rejects_reruns_and_tampered_generation(self):
         env, _ = self.issue_comment_env()
