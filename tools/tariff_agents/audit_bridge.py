@@ -16,6 +16,7 @@ import os
 from pathlib import Path
 import re
 import subprocess
+import urllib.request
 
 from . import audit
 from .runtime import RuntimeBlocked
@@ -96,6 +97,21 @@ def _parse_utc(value, label):
     return parsed
 
 
+def _delivery_generation(*, request_id, packet_sha256, prepared_at):
+    """Return a stable, non-secret key for one immutable pending request."""
+    request_id = _request_id(request_id)
+    if (not isinstance(packet_sha256, str) or
+            re.fullmatch(r"[0-9a-f]{64}", packet_sha256) is None):
+        raise BridgeBlocked("Invalid pending packet hash")
+    prepared = _parse_utc(prepared_at, "pending request preparation time")
+    canonical_time = prepared.isoformat().replace("+00:00", "Z")
+    return _sha256(_canonical({
+        "request_id": request_id,
+        "packet_sha256": packet_sha256,
+        "prepared_at": canonical_time,
+    }))
+
+
 def _issue_comment_payload(repo, event, env):
     repository = event.get("repository")
     issue = event.get("issue")
@@ -146,6 +162,10 @@ def _issue_comment_payload(repo, event, env):
     packet_sha = pending.get("packet_sha256")
     if not isinstance(packet_sha, str) or not re.fullmatch(r"[0-9a-f]{64}", packet_sha):
         raise BridgeBlocked("Invalid pending packet hash")
+    prepared_at = pending.get("prepared_at")
+    delivery_generation = _delivery_generation(
+        request_id=request_id, packet_sha256=packet_sha,
+        prepared_at=prepared_at)
     paths_json = pending.get("paths_json")
     sources_json = pending.get("official_sources_json")
     paths = _json_list(paths_json, "paths JSON")
@@ -169,6 +189,8 @@ def _issue_comment_payload(repo, event, env):
              "official_sources_json": sources_json},
             {"trigger": "issue_comment", "comment_id": str(comment_id),
              "state_sha": state_sha, "pending_packet_sha256": packet_sha,
+             "pending_prepared_at": prepared_at,
+             "delivery_generation": delivery_generation,
              "lease_holder": lease["holder"],
              "lease_generation": lease["generation"]})
 
@@ -308,9 +330,107 @@ def resolve(repo, *, output, environ=None):
     value.update(state_sha=context["state_sha"], comment_id=context["comment_id"],
                  lease_holder=context["lease_holder"],
                  lease_generation=context["lease_generation"],
-                 packet_sha256=context["pending_packet_sha256"])
+                 packet_sha256=context["pending_packet_sha256"],
+                 prepared_at=context["pending_prepared_at"],
+                 delivery_generation=context["delivery_generation"])
     _write_exclusive(output, value, environ={} if environ is None else environ)
     return value
+
+
+def dedupe_delivery(request_path, *, environ=None, opener=None, now=None):
+    """Reject a second delivery for the current pending-request generation.
+
+    Historical commands for older pending requests are allowed. The generation
+    boundary comes only from the checked authoritative state, never from comment
+    text. Workflow-level concurrency serializes this check with provider calls.
+    """
+    env = os.environ if environ is None else environ
+    request = _read_regular_json(request_path, "resolved A6 request")
+    expected_generation = _delivery_generation(
+        request_id=request.get("request_id"),
+        packet_sha256=request.get("packet_sha256"),
+        prepared_at=request.get("prepared_at"),
+    )
+    if request.get("delivery_generation") != expected_generation:
+        raise BridgeBlocked("Resolved A6 request generation is invalid")
+    if env.get("GITHUB_RUN_ATTEMPT") != "1":
+        raise BridgeBlocked("A6 provider workflow reruns are not allowed")
+
+    current_raw = env.get("A6_RUN_ID", "")
+    if re.fullmatch(r"[1-9][0-9]{0,19}", current_raw) is None:
+        raise BridgeBlocked("Invalid current workflow run id")
+    current = int(current_raw)
+    repository = env.get("A6_REPOSITORY", "")
+    owner = env.get("A6_REPOSITORY_OWNER", "")
+    api_url = env.get("A6_API_URL", "")
+    token = env.get("GH_TOKEN", "")
+    if (re.fullmatch(r"[A-Za-z0-9_.-]{1,100}/[A-Za-z0-9_.-]{1,100}",
+                     repository) is None or
+            re.fullmatch(r"[A-Za-z0-9_.-]{1,100}", owner) is None or
+            not api_url.startswith("https://") or not token):
+        raise BridgeBlocked("Invalid Actions ledger context")
+
+    prepared = _parse_utc(request["prepared_at"],
+                          "pending request preparation time")
+    checked_at = datetime.now(timezone.utc) if now is None else now
+    if not isinstance(checked_at, datetime) or checked_at.tzinfo is None:
+        raise BridgeBlocked("Invalid delivery check time")
+    checked_at = checked_at.astimezone(timezone.utc)
+    if prepared > checked_at:
+        raise BridgeBlocked("Pending request preparation time is in the future")
+    # GitHub's run ledger exposes creation timestamps only to whole seconds.
+    # Treat that loss of precision conservatively for older deliveries, while
+    # requiring the current run's timestamp to be no earlier than the exact
+    # authoritative preparation time.
+    duplicate_boundary = prepared.replace(microsecond=0)
+    open_url = urllib.request.urlopen if opener is None else opener
+    title = f"Tariff A6 command {COMMENT_COMMAND}"
+    current_created = None
+    for page in range(1, 11):
+        url = (f"{api_url}/repos/{repository}"
+               "/actions/workflows/tariff-a6-live.yml/runs"
+               f"?event=issue_comment&per_page=100&page={page}")
+        http_request = urllib.request.Request(
+            url,
+            headers={"Accept": "application/vnd.github+json",
+                     "Authorization": f"Bearer {token}",
+                     "X-GitHub-Api-Version": "2022-11-28"},
+        )
+        try:
+            with open_url(http_request, timeout=30) as response:
+                ledger = json.load(response)
+        except Exception as exc:
+            raise BridgeBlocked("A6 Actions ledger is unavailable") from exc
+        runs = ledger.get("workflow_runs") if isinstance(ledger, dict) else None
+        if not isinstance(runs, list):
+            raise BridgeBlocked("A6 Actions ledger is invalid")
+        for run in runs:
+            if not isinstance(run, dict):
+                raise BridgeBlocked("A6 Actions ledger is invalid")
+            if (run.get("display_title") != title or
+                    not isinstance(run.get("actor"), dict) or
+                    run["actor"].get("login") != owner):
+                continue
+            run_id = run.get("id")
+            if not isinstance(run_id, int) or run_id <= 0:
+                raise BridgeBlocked("A6 Actions ledger is invalid")
+            created = _parse_utc(run.get("created_at"),
+                                 "workflow run creation time")
+            if run_id == current:
+                current_created = created
+                continue
+            if created >= duplicate_boundary:
+                raise BridgeBlocked(
+                    "A6 pending request generation was already delivered")
+        if len(runs) < 100:
+            if current_created is None:
+                raise BridgeBlocked("Current A6 workflow run is absent from ledger")
+            if current_created < prepared:
+                raise BridgeBlocked(
+                    "Current A6 workflow run predates pending request generation")
+            return {"status": "DELIVERY_UNIQUE",
+                    "delivery_generation": expected_generation}
+    raise BridgeBlocked("A6 issue-comment run ledger is too large to deduplicate")
 
 
 def _receipt(context, request_id, packet, result, bridge_status, reason_code=None):
@@ -446,6 +566,8 @@ def main(argv=None):
     live.add_argument("--receipt", required=True)
     resolve_command = commands.add_parser("resolve-pending")
     resolve_command.add_argument("--output", required=True)
+    dedupe_command = commands.add_parser("dedupe-delivery")
+    dedupe_command.add_argument("--request", required=True)
     args = parser.parse_args(argv)
     try:
         if args.command == "resolve-pending":
@@ -453,6 +575,10 @@ def main(argv=None):
             print(json.dumps({"status": "PENDING_RESOLVED",
                               "request_id": summary["request_id"],
                               "state_sha": summary["state_sha"]}, sort_keys=True))
+            return 0
+        if args.command == "dedupe-delivery":
+            summary = dedupe_delivery(args.request)
+            print(json.dumps(summary, sort_keys=True))
             return 0
         if args.command == "prepare":
             summary = prepare(args.repo, request_id=args.request_id, base=args.base,
