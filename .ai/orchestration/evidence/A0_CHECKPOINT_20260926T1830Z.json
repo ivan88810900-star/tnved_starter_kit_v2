@@ -1,0 +1,52 @@
+{
+  "schema_version": 1,
+  "checked_at": "2026-09-26T18:30:00Z",
+  "coordinator": {
+    "holder": "/root/a0_automation_20260926T180238Z",
+    "generation": 27
+  },
+  "main": {
+    "pr218": {
+      "authorized": true,
+      "head": "b4cbc47d81129e0607d695f4b770c4c079924275",
+      "merged": true,
+      "merge_sha": "aedb46149267722218bcbf007e3c1eea3fcc250d"
+    },
+    "pr219": {
+      "authorized": true,
+      "head": "a230ec65ba9ff72a858550940b507071edb50961",
+      "merged": false,
+      "waiting_for_owner_ordered_a6": true
+    }
+  },
+  "a6": {
+    "live_verified": false,
+    "prior_request": "a6-live-smoke-20260916-1248z-pr210-afe40746",
+    "prior_request_consumed": true,
+    "prior_result": "STOP_MAX_TOKENS",
+    "new_smoke_authorized": true,
+    "new_smoke_not_created": true,
+    "blocker": "default-branch bridge globally deduplicates all historical owner commands"
+  },
+  "remediation": {
+    "pr": 225,
+    "branch": "agent/a6-bridge-request-dedupe-20260926",
+    "head": "6773dce7a6347e399b3c4103d85365ea466bb84b",
+    "status": "READY_FOR_OWNER_APPROVAL",
+    "independent_a5": {
+      "status": "PASS",
+      "review_id": 5326923124,
+      "findings": []
+    },
+    "exact_head_ci": {
+      "run_id": 36262560336,
+      "status": "success"
+    },
+    "scope": "deduplicate exact immutable pending generation; preserve owner command, active lease, concurrency, read-only permissions, pre-credential fail-closed gate, re-resolution and one provider call",
+    "residual_risk": "possible conservative false-block from Actions ledger visibility/timestamp precision; fails closed without provider call"
+  },
+  "protected_actions": {
+    "performed_this_checkpoint": [],
+    "next_requires_owner_approval": "merge PR 225 at exact head before preparing and dispatching the authorized distinct A6 smoke"
+  }
+}
