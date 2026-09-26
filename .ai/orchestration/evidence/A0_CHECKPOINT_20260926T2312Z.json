@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "checked_at": "2026-09-26T23:12:00Z",
+  "coordinator": {
+    "holder": "/root/a0_automation_20260926T230038Z",
+    "generation": 29
+  },
+  "protected_actions": {
+    "pr225": {
+      "authorized": true,
+      "head": "6773dce7a6347e399b3c4103d85365ea466bb84b",
+      "merged": true,
+      "merge_sha": "ac8fce22d6b0f9770d648fe09b48c346822524b2"
+    },
+    "pr219": {
+      "authorized": true,
+      "head": "a230ec65ba9ff72a858550940b507071edb50961",
+      "merged": true,
+      "merge_sha": "08e030a6053ac9638957119373797e0fbf2b10c2"
+    }
+  },
+  "a6": {
+    "request_id": "a6-live-smoke-20260926-pr218-aedb4614",
+    "workflow_run_id": 36278286455,
+    "result": "BLOCKED_PRE_CREDENTIAL",
+    "reason_code": "PENDING_PREPARED_AT_FUTURE",
+    "provider_called": false,
+    "live_job_skipped": true,
+    "live_verified": false,
+    "retry_allowed": false,
+    "comment_id": 5850724715,
+    "workflow_head_sha": "ac8fce22d6b0f9770d648fe09b48c346822524b2",
+    "candidate_head_sha": "aedb46149267722218bcbf007e3c1eea3fcc250d",
+    "packet_sha256": "590d6a45770e9dc75d6f214d924104b0196d79da416f653a85b739e8caf30aa0"
+  },
+  "next": "Continue independent product work. High-risk merges remain blocked because A6 is not LIVE_VERIFIED. Do not retry this delivered request."
+}
