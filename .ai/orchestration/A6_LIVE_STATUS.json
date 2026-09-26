@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "checked_at": "2026-09-24T08:04:00.650Z",
-  "status": "LIVE_SMOKE_CONSUMED_UNAVAILABLE_STOP_MAX_TOKENS_NO_RETRY",
+  "checked_at": "2026-09-26T23:08:00Z",
+  "status": "LIVE_SMOKE_PENDING_PR218_POST_MERGE",
   "live_verified": false,
   "provider_called": true,
   "secret_values_read": false,
@@ -15,7 +15,7 @@
   },
   "trusted_workflow": {
     "path": ".github/workflows/tariff-a6-live.yml",
-    "default_branch_head": "306ebdafcba8106e7ec8243eb95977db1a23ce18",
+    "default_branch_head": "ac8fce22d6b0f9770d648fe09b48c346822524b2",
     "trigger": "issue_comment:/tariff-a6-live run-pending",
     "workflow_present_on_default_branch": true
   },
@@ -234,28 +234,20 @@
     "reason": "No product code or ownership was changed by the scoped A6 follow-up. Product work remains independent of A6; the above product HEAD/CI are retained triage evidence, not a new product acceptance."
   },
   "pending_live_smoke": {
-    "request_id": "a6-live-smoke-20260916-1248z-pr210-afe40746",
-    "prepared_at": "2026-09-16T12:49:00Z",
-    "base_sha": "afe407461e45381009a1c59ac06b0ac3609365df",
-    "head_sha": "afe407461e45381009a1c59ac06b0ac3609365df",
-    "contract_sha": "afe407461e45381009a1c59ac06b0ac3609365df",
-    "paths_json": "[\".ai/orchestration/A6_LIVE_BRIDGE.md\"]",
+    "request_id": "a6-live-smoke-20260926-pr218-aedb4614",
+    "prepared_at": "2026-09-26T23:08:00Z",
+    "base_sha": "306ebdafcba8106e7ec8243eb95977db1a23ce18",
+    "head_sha": "aedb46149267722218bcbf007e3c1eea3fcc250d",
+    "contract_sha": "aedb46149267722218bcbf007e3c1eea3fcc250d",
+    "paths_json": "[\"tests/agent_orchestration/test_audit.py\",\"tools/tariff_agents/audit.py\"]",
     "official_sources_json": "[]",
-    "packet_sha256": "b73670dee20579416547dd04fccbdc5889ac199428cd79181867a04483cf171d",
+    "packet_sha256": "590d6a45770e9dc75d6f214d924104b0196d79da416f653a85b739e8caf30aa0",
     "packet_validation": "PASSED_OFFLINE_WITHOUT_CREDENTIALS",
-    "dispatched": true,
-    "consumed": true,
-    "dispatch_capability": "UNAVAILABLE_IN_CURRENT_GITHUB_CONNECTOR",
-    "dedup_key": "ivan88810900-star/tnved_starter_kit_v2|PR210|afe407461e45381009a1c59ac06b0ac3609365df|post-merge-live-a6",
-    "dispatched_at": "2026-09-24T08:00:46Z",
-    "consumed_at": "2026-09-24T08:02:55.096203+00:00",
+    "dispatched": false,
+    "consumed": false,
     "dispatch_transport": "issue_comment",
-    "dispatch_comment_id": 5810228018,
-    "workflow_run_id": 35972765980,
-    "workflow_head_sha": "306ebdafcba8106e7ec8243eb95977db1a23ce18",
-    "result": "UNAVAILABLE",
-    "reason_code": "STOP_MAX_TOKENS",
-    "retry_allowed": false
+    "retry_allowed": false,
+    "dedup_key": "ivan88810900-star/tnved_starter_kit_v2|PR218|aedb46149267722218bcbf007e3c1eea3fcc250d|post-merge-live-a6"
   },
   "blocker": {
     "type": "CAPABILITY",
