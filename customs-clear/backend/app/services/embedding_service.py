@@ -45,10 +45,9 @@ def embed_texts_openai(texts: list[str]) -> list[list[float]]:
             items = sorted(data.get("data") or [], key=lambda x: x.get("index", 0))
             for it in items:
                 emb = it.get("embedding")
-                if isinstance(emb, list):
-                    out_vectors.append([float(x) for x in emb])
-                else:
-                    out_vectors.append([])
+                # Validate provider JSON before conversion: bools and numeric
+                # strings must never become apparently valid coordinates.
+                out_vectors.append(_finite_vector(emb) or [])
     if len(out_vectors) != len(texts):
         raise RuntimeError("Размер ответа embeddings не совпадает с запросом")
     return out_vectors
@@ -79,14 +78,17 @@ def cosine_sim(a: list[float], b: list[float]) -> float:
 
 
 def _finite_vector(value: Any) -> Optional[list[float]]:
-    """Return a numeric finite vector, or ``None`` for an unsafe stored value."""
+    """Return strict JSON numeric coordinates, or ``None`` for unsafe input."""
     if not isinstance(value, list) or not value:
         return None
     # JSON booleans are Python ints and numeric strings are float-coercible, but
     # neither is an embedding coordinate. Accept only plain JSON number types.
     if not all(type(item) in (int, float) for item in value):
         return None
-    vector = [float(item) for item in value]
+    try:
+        vector = [float(item) for item in value]
+    except OverflowError:
+        return None
     if not all(math.isfinite(item) for item in vector):
         return None
     return vector
