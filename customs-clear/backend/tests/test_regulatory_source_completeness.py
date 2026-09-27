@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import unittest
+from datetime import datetime, timezone
 
 from fastapi.testclient import TestClient
 
@@ -186,6 +187,87 @@ class TestRegulatorySourceRegistry(unittest.TestCase):
                 },
             ),
             "stale",
+        )
+
+    def test_official_tracking_rejects_undated_or_invalid_revision(self) -> None:
+        entry = RegulatorySourceEntry(
+            source_id="test_official",
+            title="Test official source",
+            authority_level="official_binding",
+            official_url="https://example.test/official",
+            description="test",
+            source_status_code="TEST_OFFICIAL",
+        )
+        current = datetime(2026, 9, 27, 5, 0, tzinfo=timezone.utc)
+        for revision in (
+            "prod-current",
+            "eec:2026-02-31",
+            "eec:2999-01-01",
+            "seed:2026-09-27",
+            "demo-2026-09-27",
+        ):
+            with self.subTest(revision=revision):
+                self.assertEqual(
+                    _derive_edition_tracking_status(
+                        entry,
+                        {
+                            "revision": revision,
+                            "synced_at": "2026-09-27T04:00:00Z",
+                            "is_stale": False,
+                        },
+                        now=current,
+                    ),
+                    "unverified",
+                )
+
+    def test_official_tracking_rejects_invalid_or_future_sync_timestamp(self) -> None:
+        entry = RegulatorySourceEntry(
+            source_id="test_official",
+            title="Test official source",
+            authority_level="official_reference",
+            official_url="https://example.test/official",
+            description="test",
+            source_status_code="TEST_OFFICIAL",
+        )
+        current = datetime(2026, 9, 27, 5, 0, tzinfo=timezone.utc)
+        for synced_at in (
+            "not-a-timestamp",
+            "2999-01-01T00:00:00Z",
+        ):
+            with self.subTest(synced_at=synced_at):
+                self.assertEqual(
+                    _derive_edition_tracking_status(
+                        entry,
+                        {
+                            "revision": "eec:2026-09-27",
+                            "synced_at": synced_at,
+                            "is_stale": False,
+                        },
+                        now=current,
+                    ),
+                    "unverified",
+                )
+
+    def test_official_tracking_accepts_valid_dated_provenance(self) -> None:
+        entry = RegulatorySourceEntry(
+            source_id="test_official",
+            title="Test official source",
+            authority_level="official_reference",
+            official_url="https://example.test/official",
+            description="test",
+            source_status_code="TEST_OFFICIAL",
+        )
+        self.assertEqual(
+            _derive_edition_tracking_status(
+                entry,
+                {
+                    "revision": "eec:2026-09-26",
+                    "synced_at": "2026-09-27T04:00:00+00:00",
+                    "is_stale": False,
+                },
+                now=datetime(2026, 9, 27, 5, 0, tzinfo=timezone.utc),
+            ),
+            "tracked",
         )
 
 
