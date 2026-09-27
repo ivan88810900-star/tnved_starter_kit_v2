@@ -25,7 +25,9 @@ def compare_scenarios_extended(payload: dict[str, Any]) -> dict[str, Any]:
     net = base.get("weight_net_kg")
 
     rates = get_rates_map()
-    fx = float(rates.get(currency) or 1.0)
+    if currency not in rates:
+        raise ValueError(f"Нет подтвержденного курса ЦБ РФ для валюты: {currency}")
+    fx = float(rates[currency])
     cv_rub = customs_value * fx
 
     out: list[dict[str, Any]] = []

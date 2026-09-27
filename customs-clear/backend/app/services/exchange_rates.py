@@ -1,13 +1,14 @@
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import date, datetime
+from math import isfinite
 import xml.etree.ElementTree as ET
 
 import httpx
 
 from ..datetime_util import utc_now_naive
 from ..db import SessionLocal
-from ..models.core import ExchangeRate
+from ..models.core import ExchangeRate, SourceStatus
 
 CBR_DAILY_URL = "https://www.cbr.ru/scripts/XML_daily.asp"
 CBRF_SOURCE_CODE = "CBRF"
@@ -26,10 +27,10 @@ FALLBACK: dict[str, float] = {
 def _parse_cbr_xml(xml_text: str) -> tuple[str, dict[str, tuple[float, float]]]:
     root = ET.fromstring(xml_text)
     date_raw = root.attrib.get("Date", "")
-    try:
-        date_key = datetime.strptime(date_raw, "%d.%m.%Y").strftime("%Y-%m-%d")
-    except Exception:
-        date_key = datetime.now().strftime("%Y-%m-%d")
+    source_date = datetime.strptime(date_raw, "%d.%m.%Y").date()
+    if source_date > date.today():
+        raise ValueError(f"CBRF XML contains a future rate date: {source_date.isoformat()}")
+    date_key = source_date.isoformat()
 
     out: dict[str, tuple[float, float]] = {}
     for valute in root.findall("Valute"):
@@ -195,13 +196,54 @@ async def update_exchange_rates_from_cbrf() -> dict[str, object]:
 
 
 def get_rates_map() -> dict[str, float]:
+    """Return only CBR-bound rates that are safe for payment calculations.
+
+    Persisted fallback constants remain available through the diagnostic payload,
+    but they must never silently turn into a final payable amount.  A successful
+    CBR provenance record is therefore required before a foreign rate is exposed
+    to calculator callers.
+    """
     with SessionLocal() as db:
-        rows = db.query(ExchangeRate).all()
-        rates = {r.currency_code: float(r.rate) for r in rows}
-    for code, value in FALLBACK.items():
-        rates.setdefault(code, value)
+        status = (
+            db.query(SourceStatus)
+            .filter(SourceStatus.source_code == CBRF_SOURCE_CODE)
+            .one_or_none()
+        )
+        if not _is_verified_cbrf_status(status):
+            return {"RUB": 1.0}
+
+        rows = (
+            db.query(ExchangeRate)
+            .filter(ExchangeRate.currency_code.in_(TRACKED))
+            .all()
+        )
+        rates: dict[str, float] = {}
+        for row in rows:
+            code = (row.currency_code or "").upper().strip()
+            rate = float(row.rate)
+            if (
+                code in TRACKED
+                and isfinite(rate)
+                and rate > 0
+                and row.updated_at is not None
+                and row.updated_at <= status.synced_at
+            ):
+                rates[code] = rate
     rates["RUB"] = 1.0
     return rates
+
+
+def _is_verified_cbrf_status(status: SourceStatus | None) -> bool:
+    if status is None or status.is_stale or status.synced_at is None:
+        return False
+    revision = str(status.revision or "")
+    if not revision.startswith("cbrf:"):
+        return False
+    try:
+        source_date = date.fromisoformat(revision.removeprefix("cbrf:"))
+    except ValueError:
+        return False
+    return source_date <= date.today()
 
 
 def get_rates_payload() -> dict[str, object]:
@@ -232,4 +274,3 @@ def get_rates_payload() -> dict[str, object]:
         "rates": items,
         "map": map_data,
     }
-
