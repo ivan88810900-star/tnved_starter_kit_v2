@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import date, datetime
+from datetime import date, datetime, timezone
 from math import isfinite
 import xml.etree.ElementTree as ET
 
@@ -57,9 +57,15 @@ def _missing_tracked_currencies(rows: dict[str, tuple[float, float]]) -> list[st
     return [code for code in TRACKED if code not in rows]
 
 
-def _upsert_rates(rows: dict[str, tuple[float, float]]) -> int:
+def _upsert_rates(
+    rows: dict[str, tuple[float, float]],
+    *,
+    synced_at: datetime | None = None,
+) -> int:
     changed = 0
-    now = utc_now_naive()
+    now = synced_at or utc_now_naive()
+    if now.tzinfo is not None:
+        now = now.astimezone(timezone.utc).replace(tzinfo=None)
     with SessionLocal() as db:
         for code in TRACKED:
             rate, nominal = rows.get(code, (FALLBACK[code], 1.0))
@@ -83,7 +89,12 @@ def _upsert_rates(rows: dict[str, tuple[float, float]]) -> int:
     return changed
 
 
-def _record_cbrf_sync_success(date_key: str, rows_updated: int) -> None:
+def _record_cbrf_sync_success(
+    date_key: str,
+    rows_updated: int,
+    *,
+    synced_at: datetime,
+) -> None:
     """Provenance для payment_data_coverage: успешный live CBRF sync."""
     from .normative_store import append_sync_log, upsert_source_status
 
@@ -96,6 +107,7 @@ def _record_cbrf_sync_success(date_key: str, rows_updated: int) -> None:
         revision=revision,
         is_stale=False,
         note=note,
+        synced_at=synced_at,
     )
     append_sync_log(
         source_code=CBRF_SOURCE_CODE,
@@ -172,12 +184,18 @@ async def update_exchange_rates_from_cbrf() -> dict[str, object]:
             "missing_currencies": missing,
         }
 
+    sync_marker = utc_now_naive()
     try:
-        changed = _upsert_rates(rows)
+        changed = _upsert_rates(rows, synced_at=sync_marker)
     except Exception as exc:
         return _apply_fallback_exchange_rates(f"CBR rates upsert failed: {exc}")
 
-    provenance_error = _safe_record_provenance(_record_cbrf_sync_success, date_key, changed)
+    provenance_error = _safe_record_provenance(
+        _record_cbrf_sync_success,
+        date_key,
+        changed,
+        synced_at=sync_marker,
+    )
     result: dict[str, object] = {
         "status": "OK",
         "source": "CBRF",
@@ -226,7 +244,7 @@ def get_rates_map() -> dict[str, float]:
                 and isfinite(rate)
                 and rate > 0
                 and row.updated_at is not None
-                and row.updated_at <= status.synced_at
+                and row.updated_at == status.synced_at
             ):
                 rates[code] = rate
     rates["RUB"] = 1.0
@@ -236,14 +254,20 @@ def get_rates_map() -> dict[str, float]:
 def _is_verified_cbrf_status(status: SourceStatus | None) -> bool:
     if status is None or status.is_stale or status.synced_at is None:
         return False
-    revision = str(status.revision or "")
-    if not revision.startswith("cbrf:"):
+    revision = status.revision
+    if not isinstance(revision, str) or not revision.startswith("cbrf:"):
         return False
     try:
         source_date = date.fromisoformat(revision.removeprefix("cbrf:"))
     except ValueError:
         return False
-    return source_date <= date.today()
+    synced_at = status.synced_at
+    if synced_at.tzinfo is None:
+        synced_at = synced_at.replace(tzinfo=timezone.utc)
+    else:
+        synced_at = synced_at.astimezone(timezone.utc)
+    now = datetime.now(timezone.utc)
+    return synced_at <= now and source_date <= now.date()
 
 
 def get_rates_payload() -> dict[str, object]:
