@@ -97,7 +97,7 @@ class ExchangeRateProvenanceTests(unittest.TestCase):
                     currency_code="EUR",
                     rate=101.25,
                     nominal=1.0,
-                    updated_at=updated_at or datetime.now(),
+                    updated_at=updated_at or datetime.now(timezone.utc).replace(tzinfo=None),
                 )
             )
             db.commit()
@@ -116,7 +116,7 @@ class ExchangeRateProvenanceTests(unittest.TestCase):
                     source_name="CBRF test",
                     source_url="https://www.cbr.ru/",
                     revision=revision,
-                    synced_at=synced_at or datetime.now(),
+                    synced_at=synced_at or datetime.now(timezone.utc).replace(tzinfo=None),
                     is_stale=is_stale,
                     note="test",
                 )
@@ -133,17 +133,17 @@ class ExchangeRateProvenanceTests(unittest.TestCase):
         self.assertEqual(get_rates_map(), {"RUB": 1.0})
 
     def test_verified_cbr_status_exposes_bound_persisted_rate(self) -> None:
-        synced_at = datetime.now()
+        synced_at = datetime.now(timezone.utc).replace(tzinfo=None)
         self._add_rate(updated_at=synced_at)
         self._add_status(
-            revision=f"cbrf:{date.today().isoformat()}",
+            revision=f"cbrf:{datetime.now(timezone.utc).date().isoformat()}",
             is_stale=False,
             synced_at=synced_at,
         )
         self.assertEqual(get_rates_map(), {"EUR": 101.25, "RUB": 1.0})
 
     def test_rate_not_from_exact_same_sync_is_hidden(self) -> None:
-        synced_at = datetime.now()
+        synced_at = datetime.now(timezone.utc).replace(tzinfo=None)
         for row_time in (
             synced_at - timedelta(days=30),
             synced_at - timedelta(seconds=1),
@@ -156,7 +156,7 @@ class ExchangeRateProvenanceTests(unittest.TestCase):
                     db.commit()
                 self._add_rate(updated_at=row_time)
                 self._add_status(
-                    revision=f"cbrf:{date.today().isoformat()}",
+                    revision=f"cbrf:{datetime.now(timezone.utc).date().isoformat()}",
                     is_stale=False,
                     synced_at=synced_at,
                 )
