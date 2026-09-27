@@ -296,9 +296,9 @@ def _permit_doc_types(raw: str) -> set[str]:
         # ``соответствия``.  Accept the short conformity code only as a
         # standalone token; a spelled-out certificate must explicitly say
         # that it is about conformity.
-        if re.search(r"(?<![А-ЯЁ0-9])СС(?![А-ЯЁ0-9])", t) or re.search(
+        if re.search(r"(?<!\w)СС(?!\w)", t) or re.search(
             r"СЕРТИФ\w*\s+(?:(?:О|НА)\s+)?"
-            r"СООТВЕТСТВИ(?:Е|Я|Ю|ЕМ|И)(?![А-ЯЁ])",
+            r"СООТВЕТСТВИ(?:Е|Я|Ю|ЕМ|И)(?!\w)",
             t,
         ):
             out.add("СС")
