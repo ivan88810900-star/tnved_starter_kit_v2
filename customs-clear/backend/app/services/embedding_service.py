@@ -54,18 +54,28 @@ def embed_texts_openai(texts: list[str]) -> list[list[float]]:
     return out_vectors
 
 
-def cosine_sim(a: list[float], b: list[float]) -> float:
+def _cosine_score(a: list[float], b: list[float]) -> Optional[float]:
     if not a or not b or len(a) != len(b):
-        return 0.0
+        return None
     if not all(math.isfinite(x) for x in a) or not all(math.isfinite(x) for x in b):
-        return 0.0
-    dot = sum(x * y for x, y in zip(a, b))
-    na = math.sqrt(sum(x * x for x in a))
-    nb = math.sqrt(sum(y * y for y in b))
-    if not all(math.isfinite(x) for x in (dot, na, nb)) or na <= 0 or nb <= 0:
-        return 0.0
-    score = dot / (na * nb)
-    return score if math.isfinite(score) else 0.0
+        return None
+    # hypot avoids the intermediate x*x overflow of the naive norm. A norm
+    # that still overflows is not comparable and must not become a score of 0.
+    na = math.hypot(*a)
+    nb = math.hypot(*b)
+    if not all(math.isfinite(x) and x > 0 for x in (na, nb)):
+        return None
+    score = math.fsum((x / na) * (y / nb) for x, y in zip(a, b))
+    if not math.isfinite(score):
+        return None
+    # Floating point round-off can exceed the mathematical range slightly.
+    return max(-1.0, min(1.0, score))
+
+
+def cosine_sim(a: list[float], b: list[float]) -> float:
+    """Compatibility wrapper; semantic ranking uses the nullable score."""
+    score = _cosine_score(a, b)
+    return score if score is not None else 0.0
 
 
 def _finite_vector(value: Any) -> Optional[list[float]]:
@@ -145,7 +155,7 @@ def semantic_search_tnved(query: str, top_k: int = 15) -> list[dict[str, Any]]:
     if len(query_vectors) != 1:
         return []
     qv = _finite_vector(query_vectors[0])
-    if not qv:
+    if not qv or _cosine_score(qv, qv) is None:
         return []
 
     query_model = _embedding_model()
@@ -171,7 +181,9 @@ def semantic_search_tnved(query: str, top_k: int = 15) -> list[dict[str, Any]]:
         vec = _finite_vector(emb_row.embedding)
         if vec is None or len(vec) != len(qv):
             continue
-        s = cosine_sim(qv, vec)
+        s = _cosine_score(qv, vec)
+        if s is None:
+            continue
         scored.append((s, ent, emb_row))
 
     scored.sort(key=lambda x: -x[0])
