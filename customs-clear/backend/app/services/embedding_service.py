@@ -82,10 +82,11 @@ def _finite_vector(value: Any) -> Optional[list[float]]:
     """Return a numeric finite vector, or ``None`` for an unsafe stored value."""
     if not isinstance(value, list) or not value:
         return None
-    try:
-        vector = [float(item) for item in value]
-    except (TypeError, ValueError, OverflowError):
+    # JSON booleans are Python ints and numeric strings are float-coercible, but
+    # neither is an embedding coordinate. Accept only plain JSON number types.
+    if not all(type(item) in (int, float) for item in value):
         return None
+    vector = [float(item) for item in value]
     if not all(math.isfinite(item) for item in vector):
         return None
     return vector
