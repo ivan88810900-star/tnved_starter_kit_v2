@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import math
 import unittest
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, timezone
 from unittest.mock import patch
 
 from sqlalchemy import create_engine
