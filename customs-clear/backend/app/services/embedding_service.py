@@ -57,12 +57,28 @@ def embed_texts_openai(texts: list[str]) -> list[list[float]]:
 def cosine_sim(a: list[float], b: list[float]) -> float:
     if not a or not b or len(a) != len(b):
         return 0.0
+    if not all(math.isfinite(x) for x in a) or not all(math.isfinite(x) for x in b):
+        return 0.0
     dot = sum(x * y for x, y in zip(a, b))
     na = math.sqrt(sum(x * x for x in a))
     nb = math.sqrt(sum(y * y for y in b))
-    if na <= 0 or nb <= 0:
+    if not all(math.isfinite(x) for x in (dot, na, nb)) or na <= 0 or nb <= 0:
         return 0.0
-    return dot / (na * nb)
+    score = dot / (na * nb)
+    return score if math.isfinite(score) else 0.0
+
+
+def _finite_vector(value: Any) -> Optional[list[float]]:
+    """Return a numeric finite vector, or ``None`` for an unsafe stored value."""
+    if not isinstance(value, list) or not value:
+        return None
+    try:
+        vector = [float(item) for item in value]
+    except (TypeError, ValueError, OverflowError):
+        return None
+    if not all(math.isfinite(item) for item in vector):
+        return None
+    return vector
 
 
 def ingest_tnved_embeddings_batch(
@@ -125,24 +141,37 @@ def semantic_search_tnved(query: str, top_k: int = 15) -> list[dict[str, Any]]:
     if len(q) < 2:
         return []
 
-    qv = embed_texts_openai([q])[0]
+    query_vectors = embed_texts_openai([q])
+    if len(query_vectors) != 1:
+        return []
+    qv = _finite_vector(query_vectors[0])
     if not qv:
         return []
+
+    query_model = _embedding_model()
 
     with SessionLocal() as db:
         rows = (
             db.query(TnvedEntryEmbedding, TnvedEntry)
             .join(TnvedEntry, TnvedEntry.id == TnvedEntryEmbedding.tnved_entry_id)
-            .filter(TnvedEntryEmbedding.embedding.isnot(None))
+            .filter(
+                TnvedEntryEmbedding.embedding.isnot(None),
+                TnvedEntryEmbedding.embedding_model == query_model,
+                TnvedEntryEmbedding.embedding_dim == len(qv),
+            )
             .all()
         )
 
     scored: list[tuple[float, Any, Any]] = []
     for emb_row, ent in rows:
-        vec = emb_row.embedding
-        if not isinstance(vec, list) or not vec:
+        # Repeat compatibility checks after the SQL filter so malformed rows and
+        # alternate storage backends can never enter a cross-model comparison.
+        if emb_row.embedding_model != query_model or emb_row.embedding_dim != len(qv):
             continue
-        s = cosine_sim(qv, [float(x) for x in vec])
+        vec = _finite_vector(emb_row.embedding)
+        if vec is None or len(vec) != len(qv):
+            continue
+        s = cosine_sim(qv, vec)
         scored.append((s, ent, emb_row))
 
     scored.sort(key=lambda x: -x[0])
