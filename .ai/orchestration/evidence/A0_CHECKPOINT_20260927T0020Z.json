@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "checked_at": "2026-09-27T00:20:00Z",
+  "coordinator": {
+    "holder": "/root/a0_automation_20260926T235914Z",
+    "generation": 30
+  },
+  "product": {
+    "pr224": {
+      "head": "080a6d49c417c2a8de0ccf23dbeea0bf132369f2",
+      "status": "QA_PASSED_AWAITING_LIVE_A6",
+      "author_tests": "66 passed",
+      "exact_head_ci": {
+        "run_id": 36281708365,
+        "status": "success"
+      },
+      "independent_a5": {
+        "status": "PASS",
+        "review_id": 5328212428,
+        "findings": []
+      },
+      "scope": "fail-closed separation of conformity certificates from veterinary/phytosanitary controls with Unicode-safe token boundaries",
+      "residual_risk": "conservative false negatives near combining/format characters; legal/source completeness outside scope"
+    }
+  },
+  "a6": {
+    "live_verified": false,
+    "last_request_retry_allowed": false,
+    "new_request_owner_authorization_received": false
+  },
+  "protected_actions": {
+    "performed_this_checkpoint": [],
+    "merge_pr224": false
+  }
+}
