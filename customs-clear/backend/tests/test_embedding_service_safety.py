@@ -75,8 +75,56 @@ class SemanticSearchSafetyTests(unittest.TestCase):
         self.assertEqual(results[0]["embedding_model"], "model-a")
         self.assertEqual(results[0]["score"], 1.0)
 
+    def test_search_does_not_rank_zero_or_overflowing_stored_norms(self) -> None:
+        rows = [
+            _row(model="model-a", dim=2, vector=[0.0, 0.0], hs_code="0101000000"),
+            _row(
+                model="model-a",
+                dim=2,
+                vector=[1.7e308, 1.7e308],
+                hs_code="0202000000",
+            ),
+        ]
+
+        with (
+            patch("app.services.embedding_service._embedding_model", return_value="model-a"),
+            patch("app.services.embedding_service.embed_texts_openai", return_value=[[1.0, 0.0]]),
+            patch("app.services.embedding_service.SessionLocal", return_value=_FakeSession(rows)),
+        ):
+            self.assertEqual(semantic_search_tnved("описание товара"), [])
+
+    def test_search_scores_large_finite_vectors_without_overflowing_to_zero(self) -> None:
+        rows = [
+            _row(
+                model="model-a",
+                dim=2,
+                vector=[1.0e308, 0.0],
+                hs_code="0101000000",
+            )
+        ]
+
+        with (
+            patch("app.services.embedding_service._embedding_model", return_value="model-a"),
+            patch(
+                "app.services.embedding_service.embed_texts_openai",
+                return_value=[[1.0e308, 0.0]],
+            ),
+            patch("app.services.embedding_service.SessionLocal", return_value=_FakeSession(rows)),
+        ):
+            results = semantic_search_tnved("описание товара")
+
+        self.assertEqual([item["hs_code"] for item in results], ["0101000000"])
+        self.assertEqual(results[0]["score"], 1.0)
+
     def test_search_fails_closed_on_invalid_query_embedding(self) -> None:
-        for vectors in ([], [[math.inf, 0.0]], [["bad", 0.0]], [[1.0], [2.0]]):
+        for vectors in (
+            [],
+            [[math.inf, 0.0]],
+            [["bad", 0.0]],
+            [[0.0, 0.0]],
+            [[1.7e308, 1.7e308]],
+            [[1.0], [2.0]],
+        ):
             with self.subTest(vectors=vectors):
                 with patch(
                     "app.services.embedding_service.embed_texts_openai",
