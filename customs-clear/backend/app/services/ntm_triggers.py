@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from typing import Any
 
 TRIGGERS: list[dict[str, Any]] = [
@@ -59,7 +60,14 @@ TRIGGERS: list[dict[str, Any]] = [
         },
     },
     {
-        "keywords": ["пищевой контакт", "контакт с пищ", "посуда", "столов"],
+        "keywords": ["пищевой контакт", "контакт с пищ", "посуда"],
+        "patterns": [
+            re.compile(
+                r"(?<![0-9a-zа-яё])столов\\w*\\s+"
+                r"(?:прибор\\w*|сервиз\\w*|лож\\w*|вилк\\w*|нож\\w*)"
+                r"(?![0-9a-zа-яё])"
+            )
+        ],
         "negative": [],
         "measure": {
             "measure_type": "certificate",
@@ -105,6 +113,17 @@ TRIGGERS: list[dict[str, Any]] = [
 ]
 
 
+def _first_positive_match(trigger: dict[str, Any], description: str) -> str | None:
+    for keyword in trigger["keywords"]:
+        if keyword in description:
+            return keyword
+    for pattern in trigger.get("patterns", []):
+        match = pattern.search(description)
+        if match:
+            return match.group(0)
+    return None
+
+
 def find_measures_by_description(description: str, hs_code: str) -> list[dict[str, Any]]:
     """Возвращает доп. меры на основе ключевых слов в описании."""
     if not description:
@@ -114,8 +133,8 @@ def find_measures_by_description(description: str, hs_code: str) -> list[dict[st
     result: list[dict[str, Any]] = []
 
     for trigger in TRIGGERS:
-        positive_match = any(kw in desc_lower for kw in trigger["keywords"])
-        if not positive_match:
+        positive_match = _first_positive_match(trigger, desc_lower)
+        if positive_match is None:
             continue
         negative_match = any(neg in desc_lower for neg in trigger.get("negative", []))
         if negative_match:
@@ -127,7 +146,7 @@ def find_measures_by_description(description: str, hs_code: str) -> list[dict[st
                 "tr_ts_code": None,
                 "match_prefix_len": 10,
                 "source_level": "trigger",
-                "trigger": next((kw for kw in trigger["keywords"] if kw in desc_lower), ""),
+                "trigger": positive_match,
                 "legal_ref": trigger["measure"].get("regulatory_act", ""),
             }
         )
