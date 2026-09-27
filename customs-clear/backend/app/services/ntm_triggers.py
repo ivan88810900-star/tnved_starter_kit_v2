@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import re
+import unicodedata
 from typing import Any
 
 TRIGGERS: list[dict[str, Any]] = [
@@ -63,8 +64,13 @@ TRIGGERS: list[dict[str, Any]] = [
         "keywords": ["пищевой контакт", "контакт с пищ", "посуда"],
         "patterns": [
             re.compile(
-                r"(?<![0-9a-zа-яё])столов\w*\s+"
-                r"(?:прибор\w*|сервиз\w*|лож\w*|вилк\w*|нож\w*)"
+                r"(?<![0-9a-zа-яё])"
+                r"столов(?:ый|ого|ому|ым|ом|ая|ой|ую|ое|ые|ых|ыми)\s+"
+                r"(?:прибор(?:ы|ов|ами|ах|ом|а|у|е)?"
+                r"|сервиз(?:ы|ов|ами|ах|ом|а|у|е)?"
+                r"|ложк(?:а|и|е|у|ой|ою|ам|ами|ах)|ложек"
+                r"|вилк(?:а|и|е|у|ой|ою|ам|ами|ах)|вилок"
+                r"|нож(?:и|а|у|ом|е|ей|ами|ах)?)"
                 r"(?![0-9a-zа-яё])"
             )
         ],
@@ -113,13 +119,24 @@ TRIGGERS: list[dict[str, Any]] = [
 ]
 
 
+def _continues_unicode_word(value: str, index: int) -> bool:
+    if index < 0 or index >= len(value):
+        return False
+    char = value[index]
+    category = unicodedata.category(char)
+    return char.isalnum() or char == "_" or category.startswith("M")
+
+
 def _first_positive_match(trigger: dict[str, Any], description: str) -> str | None:
     for keyword in trigger["keywords"]:
         if keyword in description:
             return keyword
     for pattern in trigger.get("patterns", []):
-        match = pattern.search(description)
-        if match:
+        for match in pattern.finditer(description):
+            if _continues_unicode_word(description, match.start() - 1):
+                continue
+            if _continues_unicode_word(description, match.end()):
+                continue
             return match.group(0)
     return None
 
