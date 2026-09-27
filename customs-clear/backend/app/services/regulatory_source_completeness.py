@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+import re
+from datetime import date, datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -39,6 +40,66 @@ _UNVERIFIED_REVISIONS = frozenset(
         "unavailable",
     }
 )
+_UNVERIFIED_REVISION_PREFIXES = (
+    "demo",
+    "example",
+    "fallback",
+    "import",
+    "legacy",
+    "local",
+    "manual",
+    "seed",
+    "test",
+    "unknown",
+    "unavailable",
+)
+_REVISION_DATE_RE = re.compile(r"(?<!\d)(\d{4}-\d{2}-\d{2})(?!\d)")
+
+
+def _parse_revision_date(revision: str) -> date | None:
+    """Extract a real calendar date from a revision marker.
+
+    A merely non-empty marker is not version provenance.  Calendar parsing also
+    rejects impossible dates such as ``2026-02-31``.
+    """
+    match = _REVISION_DATE_RE.search(revision)
+    if not match:
+        return None
+    try:
+        return date.fromisoformat(match.group(1))
+    except ValueError:
+        return None
+
+
+def _is_unverified_revision(revision: str) -> bool:
+    if revision in _UNVERIFIED_REVISIONS:
+        return True
+    return revision.startswith(
+        tuple(
+            f"{prefix}{separator}"
+            for prefix in _UNVERIFIED_REVISION_PREFIXES
+            for separator in ("-", ":", "_")
+        )
+    )
+
+
+def _parse_synced_at(value: Any) -> datetime | None:
+    """Parse a SourceStatus timestamp without accepting ambiguous values."""
+    if isinstance(value, datetime):
+        parsed = value
+    elif isinstance(value, str) and value.strip():
+        raw = value.strip()
+        if raw.endswith("Z"):
+            raw = f"{raw[:-1]}+00:00"
+        try:
+            parsed = datetime.fromisoformat(raw)
+        except ValueError:
+            return None
+    else:
+        return None
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=timezone.utc)
+    return parsed.astimezone(timezone.utc)
 
 
 def _backend_path(rel: str) -> Path:
@@ -259,6 +320,8 @@ def _derive_coverage_status(
 def _derive_edition_tracking_status(
     entry: RegulatorySourceEntry,
     source_status: dict[str, Any] | None,
+    *,
+    now: datetime | None = None,
 ) -> EditionTrackingStatus:
     """Describe revision tracking without claiming legal currentness.
 
@@ -275,7 +338,15 @@ def _derive_edition_tracking_status(
     revision = str(source_status.get("revision") or "").strip().lower()
     if source_status.get("is_stale") is not False:
         return "unverified"
-    if not source_status.get("synced_at") or revision in _UNVERIFIED_REVISIONS:
+    synced_at = _parse_synced_at(source_status.get("synced_at"))
+    revision_date = _parse_revision_date(revision)
+    if _is_unverified_revision(revision) or synced_at is None or revision_date is None:
+        return "unverified"
+    current = now or datetime.now(timezone.utc)
+    if current.tzinfo is None:
+        current = current.replace(tzinfo=timezone.utc)
+    current = current.astimezone(timezone.utc)
+    if synced_at > current or revision_date > current.date():
         return "unverified"
     return "tracked"
 
