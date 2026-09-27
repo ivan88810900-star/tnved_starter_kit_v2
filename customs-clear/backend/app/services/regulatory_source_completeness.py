@@ -84,11 +84,18 @@ def _is_unverified_revision(revision: str) -> bool:
 
 
 def _parse_synced_at(value: Any) -> datetime | None:
-    """Parse a SourceStatus timestamp without accepting ambiguous values."""
+    """Parse an explicit, timezone-aware SourceStatus timestamp.
+
+    Date-only and timezone-naive values are ambiguous provenance and therefore
+    fail closed.  UTC conversion can overflow for otherwise parseable extreme
+    offset timestamps, so conversion failures are treated as invalid input.
+    """
     if isinstance(value, datetime):
         parsed = value
     elif isinstance(value, str) and value.strip():
         raw = value.strip()
+        if len(raw) <= 10 or raw[10] not in ("T", "t", " "):
+            return None
         if raw.endswith("Z"):
             raw = f"{raw[:-1]}+00:00"
         try:
@@ -98,8 +105,13 @@ def _parse_synced_at(value: Any) -> datetime | None:
     else:
         return None
     if parsed.tzinfo is None:
-        parsed = parsed.replace(tzinfo=timezone.utc)
-    return parsed.astimezone(timezone.utc)
+        return None
+    try:
+        if parsed.utcoffset() is None:
+            return None
+        return parsed.astimezone(timezone.utc)
+    except (OverflowError, TypeError, ValueError):
+        return None
 
 
 def _backend_path(rel: str) -> Path:
@@ -335,8 +347,13 @@ def _derive_edition_tracking_status(
         return "unverified"
     if source_status.get("is_stale") is True:
         return "stale"
-    revision = str(source_status.get("revision") or "").strip().lower()
     if source_status.get("is_stale") is not False:
+        return "unverified"
+    raw_revision = source_status.get("revision")
+    if not isinstance(raw_revision, str):
+        return "unverified"
+    revision = raw_revision.strip().lower()
+    if not revision:
         return "unverified"
     synced_at = _parse_synced_at(source_status.get("synced_at"))
     revision_date = _parse_revision_date(revision)
