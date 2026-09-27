@@ -419,12 +419,18 @@ def _resolve_antidumping(
         return amount, reason, "applied"
 
     if antidumping_type == "fixed":
-        amount = antidumping_value * quantity
+        # ``hs_rates`` stores only the numeric fixed value.  It has no typed
+        # currency, source unit or denominator, so the generic invoice
+        # ``quantity`` cannot prove the operand required by a trade-remedy
+        # measure (kg, tonne, item, etc.).  Keep the candidate visible but do
+        # not admit an amount into VAT or the final payable total.
         reason = (
-            f"Применяется фикс. ставка {antidumping_value} руб./ед. × {quantity} ед. "
+            "Требуется ручная проверка: для фиксированной антидемпинговой ставки "
+            f"{antidumping_value} не указаны валюта, единица и знаменатель источника; "
+            f"универсальное количество {quantity} не применяется автоматически. "
             f"{antidumping_condition or ''} Страна: {country}."
         ).strip()
-        return amount, reason, "applied"
+        return 0.0, reason, "manual_review"
 
     return 0.0, "Не применяется (неизвестный тип)", "n/a"
 
