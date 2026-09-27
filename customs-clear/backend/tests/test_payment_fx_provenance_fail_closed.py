@@ -15,6 +15,7 @@ from app.db import Base
 from app.models.core import ExchangeRate, SourceStatus
 from app.models.tnved import HsDutyRule
 from app.services.exchange_rates import CBRF_SOURCE_CODE, _parse_cbr_xml, get_rates_map
+from app.services.invoice_batch_service import calculate_line_payments
 from app.services.payment_engine import _compute_structured_duty
 from app.services.scenario_compare_service import compare_scenarios_extended
 
@@ -133,7 +134,7 @@ class ExchangeRateProvenanceTests(unittest.TestCase):
 
     def test_verified_cbr_status_exposes_bound_persisted_rate(self) -> None:
         synced_at = datetime.now()
-        self._add_rate(updated_at=synced_at - timedelta(seconds=1))
+        self._add_rate(updated_at=synced_at)
         self._add_status(
             revision=f"cbrf:{date.today().isoformat()}",
             is_stale=False,
@@ -141,15 +142,25 @@ class ExchangeRateProvenanceTests(unittest.TestCase):
         )
         self.assertEqual(get_rates_map(), {"EUR": 101.25, "RUB": 1.0})
 
-    def test_rate_newer_than_provenance_is_hidden(self) -> None:
+    def test_rate_not_from_exact_same_sync_is_hidden(self) -> None:
         synced_at = datetime.now()
-        self._add_rate(updated_at=synced_at + timedelta(seconds=1))
-        self._add_status(
-            revision=f"cbrf:{date.today().isoformat()}",
-            is_stale=False,
-            synced_at=synced_at,
-        )
-        self.assertEqual(get_rates_map(), {"RUB": 1.0})
+        for row_time in (
+            synced_at - timedelta(days=30),
+            synced_at - timedelta(seconds=1),
+            synced_at + timedelta(seconds=1),
+        ):
+            with self.subTest(row_time=row_time):
+                with self.sm() as db:
+                    db.query(ExchangeRate).delete()
+                    db.query(SourceStatus).delete()
+                    db.commit()
+                self._add_rate(updated_at=row_time)
+                self._add_status(
+                    revision=f"cbrf:{date.today().isoformat()}",
+                    is_stale=False,
+                    synced_at=synced_at,
+                )
+                self.assertEqual(get_rates_map(), {"RUB": 1.0})
 
 
 class CbrXmlDateTests(unittest.TestCase):
@@ -180,6 +191,143 @@ class ScenarioFxFailClosedTests(unittest.TestCase):
         ):
             with self.assertRaisesRegex(ValueError, "подтвержденного курса"):
                 compare_scenarios_extended(payload)
+
+    def test_verified_map_reaches_each_scenario_payment(self) -> None:
+        payload = {
+            "base": {
+                "hs_code": "9999999999",
+                "customs_value": 1000,
+                "currency": "USD",
+            },
+            "scenarios": [{"name": "A"}, {"name": "B"}],
+        }
+        rates = {"USD": 92.0, "EUR": 101.25, "RUB": 1.0}
+        seen: list[dict[str, float]] = []
+
+        def fake_compute(pay_payload):
+            supplied = pay_payload.get("_fx_rates")
+            seen.append(supplied)
+            duty = _compute(_specific_eur_rule(), supplied)[0]
+            return {
+                "status": "OK",
+                "breakdown": {
+                    "duty": duty,
+                    "vat": 0.0,
+                    "customs_fee": 0.0,
+                    "excise": 0.0,
+                    "total_payable": duty,
+                },
+                "recycling_fee": {"fee_amount": 0.0},
+            }
+
+        with (
+            patch(
+                "app.services.scenario_compare_service.get_rates_map",
+                return_value=rates,
+            ),
+            patch(
+                "app.services.scenario_compare_service.compute_payments",
+                side_effect=fake_compute,
+            ),
+        ):
+            result = compare_scenarios_extended(payload)
+
+        self.assertEqual(result["status"], "OK")
+        self.assertEqual(seen, [rates, rates])
+        self.assertEqual(
+            [scenario["total"] for scenario in result["scenarios"]],
+            [2025.0, 2025.0],
+        )
+
+
+class InvoiceBatchFxFailClosedTests(unittest.TestCase):
+    @staticmethod
+    def _line(currency: str) -> dict[str, object]:
+        return {
+            "description": "test",
+            "hs_code": "8471300000",
+            "quantity": 2,
+            "unit_price": 50,
+            "currency": currency,
+            "country_of_origin": "CN",
+        }
+
+    @staticmethod
+    def _echo_payment(payload):
+        value = float(payload["customs_value"])
+        return {
+            "status": "OK",
+            "breakdown": {
+                "duty": 0.0,
+                "vat": 0.0,
+                "excise": 0.0,
+                "customs_fee": 0.0,
+                "total_payable": value,
+            },
+            "recycling_fee": {"fee_amount": 0.0},
+        }
+
+    def test_foreign_invoice_is_converted_and_passes_same_verified_map(self) -> None:
+        rates = {"USD": 92.0, "EUR": 101.25, "RUB": 1.0}
+        with (
+            patch(
+                "app.services.invoice_batch_service.get_rates_map",
+                return_value=rates,
+            ),
+            patch(
+                "app.services.invoice_batch_service.compute_payments",
+                side_effect=self._echo_payment,
+            ) as compute,
+        ):
+            result = calculate_line_payments(self._line("USD"))
+
+        payment_input = compute.call_args.args[0]
+        self.assertEqual(payment_input["customs_value"], 9200.0)
+        self.assertEqual(payment_input["invoice_currency"], "RUB")
+        self.assertEqual(payment_input["_fx_rates"], rates)
+        self.assertEqual(result["customs_value_original"], 100.0)
+        self.assertEqual(result["customs_value"], 9200.0)
+        self.assertEqual(result["total_payable"], 9200.0)
+        self.assertEqual(result["fx_rate"], 92.0)
+
+    def test_foreign_invoice_missing_or_invalid_rate_never_computes_final(self) -> None:
+        for rates in (
+            {"RUB": 1.0},
+            {"USD": 0.0, "RUB": 1.0},
+            {"USD": math.nan, "RUB": 1.0},
+            {"USD": True, "RUB": 1.0},
+        ):
+            with self.subTest(rates=rates):
+                with (
+                    patch(
+                        "app.services.invoice_batch_service.get_rates_map",
+                        return_value=rates,
+                    ),
+                    patch(
+                        "app.services.invoice_batch_service.compute_payments",
+                    ) as compute,
+                ):
+                    with self.assertRaises(ValueError):
+                        calculate_line_payments(self._line("USD"))
+                    compute.assert_not_called()
+
+    def test_rub_invoice_uses_identity_without_foreign_rate(self) -> None:
+        with (
+            patch(
+                "app.services.invoice_batch_service.get_rates_map",
+                return_value={"RUB": 1.0},
+            ),
+            patch(
+                "app.services.invoice_batch_service.compute_payments",
+                side_effect=self._echo_payment,
+            ) as compute,
+        ):
+            result = calculate_line_payments(self._line("RUB"))
+
+        self.assertEqual(compute.call_args.args[0]["customs_value"], 100.0)
+        self.assertEqual(result["customs_value"], 100.0)
+        self.assertEqual(result["total_payable"], 100.0)
+        self.assertEqual(result["fx_rate"], 1.0)
 
 
 if __name__ == "__main__":
