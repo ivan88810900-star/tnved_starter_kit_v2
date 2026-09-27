@@ -66,11 +66,11 @@ TRIGGERS: list[dict[str, Any]] = [
             re.compile(
                 r"(?<![0-9a-zа-яё])"
                 r"столов(?:ый|ого|ому|ым|ом|ая|ой|ую|ое|ые|ых|ыми)\s+"
-                r"(?:прибор(?:ы|ов|ами|ах|ом|а|у|е)?"
-                r"|сервиз(?:ы|ов|ами|ах|ом|а|у|е)?"
+                r"(?:прибор(?:ы|ов|ам|ами|ах|ом|а|у|е)?"
+                r"|сервиз(?:ы|ов|ам|ами|ах|ом|а|у|е)?"
                 r"|ложк(?:а|и|е|у|ой|ою|ам|ами|ах)|ложек"
                 r"|вилк(?:а|и|е|у|ой|ою|ам|ами|ах)|вилок"
-                r"|нож(?:и|а|у|ом|е|ей|ами|ах)?)"
+                r"|нож(?:и|а|у|ом|е|ей|ам|ами|ах)?)"
                 r"(?![0-9a-zа-яё])"
             )
         ],
@@ -124,7 +124,11 @@ def _continues_unicode_word(value: str, index: int) -> bool:
         return False
     char = value[index]
     category = unicodedata.category(char)
-    return char.isalnum() or char == "_" or category.startswith("M")
+    return (
+        char.isalnum()
+        or category.startswith("M")
+        or category in {"Pc", "Cf"}
+    )
 
 
 def _first_positive_match(trigger: dict[str, Any], description: str) -> str | None:
