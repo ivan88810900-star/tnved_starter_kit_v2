@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import json
 import re
+import unicodedata
 from typing import Any
 
 from loguru import logger
@@ -133,6 +134,34 @@ KEYWORD_HS_MAP: dict[str, list[str]] = {
 }
 
 
+# ``шина`` used to match inside ``машина`` / ``машины``.  That attached tyre
+# position 4011 to practical machinery regulations such as ``О безопасности
+# машин и оборудования``.  Preserve the legacy stem behaviour on the right
+# (``шинах``, ``шинами``) while requiring the keyword to start a token.
+LEFT_BOUNDED_KEYWORDS = frozenset({"шина"})
+
+
+def _is_token_continuation(char: str) -> bool:
+    """Return whether ``char`` can continue a Unicode token."""
+    if not char:
+        return False
+    category = unicodedata.category(char)
+    return char.isalnum() or category.startswith("M") or category in {"Pc", "Cf"}
+
+
+def _contains_left_bounded_keyword(text: str, keyword: str) -> bool:
+    """Match ``keyword`` only when it starts a token, preserving stem suffixes."""
+    start = 0
+    while True:
+        index = text.find(keyword, start)
+        if index < 0:
+            return False
+        left = text[index - 1] if index else ""
+        if not _is_token_continuation(left):
+            return True
+        start = index + 1
+
+
 def _extract_explicit_hs_codes(text: str) -> list[str]:
     """Explicit codes in text: 4-10 digits when in clear HS context, 6-10 standalone."""
     if not text:
@@ -168,7 +197,12 @@ def _extract_keyword_hs_codes(text: str) -> list[tuple[str, str]]:
     found: list[tuple[str, str]] = []
     seen: set[str] = set()
     for keyword, prefixes in KEYWORD_HS_MAP.items():
-        if keyword in text_lower:
+        matched = (
+            _contains_left_bounded_keyword(text_lower, keyword)
+            if keyword in LEFT_BOUNDED_KEYWORDS
+            else keyword in text_lower
+        )
+        if matched:
             for p in prefixes:
                 if p not in seen:
                     seen.add(p)
