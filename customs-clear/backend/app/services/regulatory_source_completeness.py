@@ -46,14 +46,22 @@ def _backend_path(rel: str) -> Path:
     return _BACKEND_ROOT / rel
 
 
-def _sync_entrypoint_status(sync_script: str | None) -> dict[str, Any]:
+def _sync_entrypoint_status(sync_script: Any) -> dict[str, Any]:
     """Report whether a registry sync entrypoint is actually runnable.
 
     ``sync_script`` is registry metadata, not proof that an automatic update is
     scheduled.  Keep the check deliberately local and fail closed: only a
     simple Python filename that exists under ``backend/scripts`` is available.
     """
-    script = str(sync_script or "").strip()
+    if sync_script is not None and not isinstance(sync_script, str):
+        return {
+            "status": "invalid",
+            "configured": True,
+            "exists": False,
+            "path": None,
+        }
+
+    script = (sync_script or "").strip()
     if not script:
         return {
             "status": "not_configured",
@@ -62,21 +70,14 @@ def _sync_entrypoint_status(sync_script: str | None) -> dict[str, Any]:
             "path": None,
         }
 
-    rel = Path(script)
     report_path = f"scripts/{script}"
-    if rel.name != script or rel.suffix != ".py":
-        return {
-            "status": "invalid",
-            "configured": True,
-            "exists": False,
-            "path": report_path,
-        }
-
-    scripts_root = (_BACKEND_ROOT / "scripts").resolve()
-    candidate = (scripts_root / rel).resolve()
     try:
-        candidate.relative_to(scripts_root)
-    except ValueError:
+        rel = Path(script)
+        invalid_shape = rel.name != script or rel.suffix != ".py"
+    except (OSError, ValueError):
+        invalid_shape = True
+        rel = None
+    if invalid_shape or rel is None:
         return {
             "status": "invalid",
             "configured": True,
@@ -84,7 +85,19 @@ def _sync_entrypoint_status(sync_script: str | None) -> dict[str, Any]:
             "path": report_path,
         }
 
-    exists = candidate.is_file()
+    try:
+        scripts_root = (_BACKEND_ROOT / "scripts").resolve()
+        candidate = (scripts_root / rel).resolve()
+        candidate.relative_to(scripts_root)
+        exists = candidate.is_file()
+    except (OSError, ValueError):
+        return {
+            "status": "invalid",
+            "configured": True,
+            "exists": False,
+            "path": report_path,
+        }
+
     return {
         "status": "available" if exists else "missing",
         "configured": True,

@@ -141,6 +141,25 @@ class TestRegulatorySourceRegistry(unittest.TestCase):
             with self.subTest(unsafe=unsafe):
                 self.assertEqual(_sync_entrypoint_status(unsafe)["status"], "invalid")
 
+    def test_sync_entrypoint_status_rejects_broken_path_and_wrong_types(self) -> None:
+        nul_path = _sync_entrypoint_status("nul\x00.py")
+        self.assertEqual(nul_path["status"], "invalid")
+        self.assertTrue(nul_path["configured"])
+        self.assertFalse(nul_path["exists"])
+
+        for wrong_type in (False, 0, [], {}):
+            with self.subTest(wrong_type=wrong_type):
+                result = _sync_entrypoint_status(wrong_type)
+                self.assertEqual(result["status"], "invalid")
+                self.assertTrue(result["configured"])
+                self.assertFalse(result["exists"])
+
+        for absent in (None, "", "   "):
+            with self.subTest(absent=absent):
+                result = _sync_entrypoint_status(absent)
+                self.assertEqual(result["status"], "not_configured")
+                self.assertFalse(result["configured"])
+
     def test_missing_official_sync_entrypoint_requires_manual_review(self) -> None:
         entry = RegulatorySourceEntry(
             source_id="test_missing_sync",
