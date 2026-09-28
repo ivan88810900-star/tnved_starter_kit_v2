@@ -1,0 +1,74 @@
+{
+  "schema_version": 1,
+  "checkpoint_at": "2026-09-28T16:25:00.000Z",
+  "coordinator": {
+    "holder": "/root/a0_automation_20260928T162139Z",
+    "generation": 38
+  },
+  "main_sha": "08e030a6053ac9638957119373797e0fbf2b10c2",
+  "a6": {
+    "status": "LIVE_VERIFIED",
+    "request_id": "a6-live-smoke-20260928-pr218-aedb4614-gen37",
+    "workflow_run_id": 36414936988,
+    "artifact_id": 10966893551,
+    "artifact_digest": "sha256:03e095b2eb0023a3a35c60e436d085d6ad13940bcae799813f4e6736c891c119",
+    "receipt_sha256": "f1b30d1b686aad66624e56d40920bb37f6302081ac9e8b895153eab23c18858e",
+    "validated": [
+      "provider_response",
+      "receipt_hash",
+      "artifact_digest",
+      "request_binding",
+      "commit_binding",
+      "workflow_binding",
+      "packet_hash",
+      "state_binding",
+      "lease_binding"
+    ],
+    "findings_validation": "completed; accepted documentation/prompt/test hardening only; unsupported-provider and timeout hypotheses rejected for current verified configuration"
+  },
+  "pull_requests": {
+    "232": {
+      "head": "fe4216997fd7adc5da487c5d917dbe95928ea2ef",
+      "a5": "PASS",
+      "review_id": 5333274652,
+      "ci_run_id": 36351414745,
+      "ci": "success",
+      "remaining": "live A6 after post-verify bridge activation; owner merge approval"
+    },
+    "234": {
+      "head": "d3632633ecb6223add9701ae73bdcd4155427238",
+      "a5": "PASS",
+      "review_id": 5333277122,
+      "ci_run_id": 36351360344,
+      "ci": "success",
+      "remaining": "live A6 after post-verify bridge activation; owner merge approval"
+    },
+    "235": {
+      "head": "fd7820da28e4aa5bcf934680e5d6c32f5bf571a5",
+      "author_tests": "57 passed, 19 subtests",
+      "ci_run_id": 36416482234,
+      "ci": "success",
+      "a5": "PENDING_FRESH_REVIEW_ON_LATEST_HEAD",
+      "note": "prior two A5 BLOCK reviews are stale; latest reviewer attempt hit transient usage limit"
+    },
+    "236": {
+      "head": "86b19d82e9cd91181b4488bab03e877d7653a854",
+      "a5": "PASS",
+      "review_id": 5337912669,
+      "ci_run_id": 36415657320,
+      "ci": "success",
+      "remaining": "owner merge approval if selected"
+    },
+    "237": {
+      "branch": "agent/a6-bridge-postverify-20260928",
+      "head": "f0183c1e0f4e1e5ed60fa93a4633e841e2ae8d9f",
+      "a5": "PASS",
+      "review_id": 5337924917,
+      "ci_run_id": 36415700790,
+      "ci": "success",
+      "remaining": "owner merge approval; current main cannot A6-audit this PR because the defect being fixed blocks all post-LIVE_VERIFIED issue-comment audits"
+    }
+  },
+  "protected_actions_performed": [],
+  "next_required_owner_decision": "Authorize or decline merge PR 237 at exact reviewed head f0183c1e0f4e1e5ed60fa93a4633e841e2ae8d9f."
+}
