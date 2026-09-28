@@ -81,6 +81,8 @@ class AuditBridgeTests(unittest.TestCase):
 
     def issue_comment_env(self, *, body=audit_bridge.COMMENT_COMMAND,
                           actor="owner", association="OWNER", consumed=False,
+                          dispatched=False, live_verified=False,
+                          include_live_verified=True,
                           expires_at="2099-01-01T00:00:00.000Z",
                           prepared_at="2026-09-24T08:00:00Z"):
         state = self.repo / ".a6-state"
@@ -95,7 +97,6 @@ class AuditBridgeTests(unittest.TestCase):
             contract_ref=self.head, official_sources=[], environ={})
         status = {
             "schema_version": 1,
-            "live_verified": False,
             "pending_live_smoke": {
                 "request_id": "A6-pending-123",
                 "base_sha": self.base,
@@ -106,10 +107,12 @@ class AuditBridgeTests(unittest.TestCase):
                 "packet_sha256": packet["packet_sha256"],
                 "packet_validation": "PASSED_OFFLINE_WITHOUT_CREDENTIALS",
                 "prepared_at": prepared_at,
-                "dispatched": False,
+                "dispatched": dispatched,
                 "consumed": consumed,
             },
         }
+        if include_live_verified:
+            status["live_verified"] = live_verified
         lease = {
             "schema_version": 1,
             "state": "active",
@@ -204,6 +207,45 @@ class AuditBridgeTests(unittest.TestCase):
         self.assertEqual(receipt["comment_id"], "987654")
         self.assertEqual(receipt["state_sha"], request["state_sha"])
         self.assertEqual(receipt["lease_generation"], 7)
+
+    def test_comment_bridge_accepts_pending_request_before_and_after_live_verification(self):
+        for live_verified in (False, True):
+            with self.subTest(live_verified=live_verified):
+                state = self.repo / ".a6-state"
+                if state.exists():
+                    import shutil
+                    shutil.rmtree(state)
+                env, packet = self.issue_comment_env(live_verified=live_verified)
+                context = audit_bridge.validate_trusted_context(
+                    self.repo, environ=env)
+                self.assertEqual(context["payload"]["request_id"],
+                                 "A6-pending-123")
+                self.assertEqual(context["pending_packet_sha256"],
+                                 packet["packet_sha256"])
+
+    def test_comment_bridge_rejects_invalid_verification_and_delivery_states(self):
+        cases = (
+            {"include_live_verified": False},
+            {"live_verified": None},
+            {"live_verified": 0},
+            {"live_verified": "false"},
+            {"dispatched": True},
+            {"dispatched": None},
+            {"consumed": True},
+            {"consumed": None},
+        )
+        for changes in cases:
+            with self.subTest(changes=changes):
+                state = self.repo / ".a6-state"
+                if state.exists():
+                    import shutil
+                    shutil.rmtree(state)
+                env, _ = self.issue_comment_env(**changes)
+                with self.assertRaisesRegex(
+                        audit_bridge.BridgeBlocked,
+                        "no validated unconsumed A6 request"):
+                    audit_bridge.validate_trusted_context(
+                        self.repo, environ=env)
 
     def test_delivery_dedupe_is_scoped_to_pending_request_generation(self):
         env, _ = self.issue_comment_env()
