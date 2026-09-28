@@ -71,6 +71,17 @@ def _sync_entrypoint_status(sync_script: Any) -> dict[str, Any]:
         }
 
     report_path = f"scripts/{script}"
+    if (
+        "/" in script
+        or "\\" in script
+        or any(ord(char) < 32 or ord(char) == 127 for char in script)
+    ):
+        return {
+            "status": "invalid",
+            "configured": True,
+            "exists": False,
+            "path": report_path,
+        }
     try:
         rel = Path(script)
         invalid_shape = rel.name != script or rel.suffix != ".py"

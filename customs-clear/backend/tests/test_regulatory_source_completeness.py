@@ -160,6 +160,25 @@ class TestRegulatorySourceRegistry(unittest.TestCase):
                 self.assertEqual(result["status"], "not_configured")
                 self.assertFalse(result["configured"])
 
+    def test_sync_entrypoint_status_rejects_controls_and_all_separators(self) -> None:
+        for unsafe in (
+            "line\nfeed.py",
+            "tab\tname.py",
+            "..\\escape.py",
+            "C:\\tmp\\x.py",
+            "nested/source.py",
+            "delete\x7fname.py",
+        ):
+            with self.subTest(unsafe=unsafe):
+                result = _sync_entrypoint_status(unsafe)
+                self.assertEqual(result["status"], "invalid")
+                self.assertTrue(result["configured"])
+                self.assertFalse(result["exists"])
+
+        unicode_name = _sync_entrypoint_status("синхронизация_етт.py")
+        self.assertNotEqual(unicode_name["status"], "invalid")
+        self.assertTrue(unicode_name["configured"])
+
     def test_missing_official_sync_entrypoint_requires_manual_review(self) -> None:
         entry = RegulatorySourceEntry(
             source_id="test_missing_sync",
