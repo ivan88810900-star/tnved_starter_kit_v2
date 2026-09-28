@@ -4,11 +4,40 @@ from __future__ import annotations
 
 import math
 import unittest
+from contextlib import contextmanager
 from types import SimpleNamespace
 from unittest.mock import patch
 
 from app.models.tnved import HsDutyRule
 from app.services.payment_engine import _compute_structured_duty, compute_payments
+
+
+@contextmanager
+def _isolated_legacy_rate(raw_value: object):
+    """Run compute_payments without relying on seeded or external lookup state."""
+    rate = AutomaticDutyOperandValidationTests._legacy_rate(raw_value)
+    patches = (
+        patch("app.services.payment_engine.find_rate_for_hs", return_value=(rate, 10)),
+        patch("app.services.payment_engine._find_duty_rule_for_hs", return_value=(None, 0)),
+        patch("app.services.rate_display.resolve_excise_for_hs", return_value=("none", 0.0, "")),
+        patch("app.services.payment_engine._resolve_special_duties", return_value=(0.0, [])),
+        patch("app.services.payment_engine.get_recycling_fee", return_value=[]),
+        patch("app.services.payment_engine._find_vat_preference", return_value=(None, 0)),
+        patch(
+            "app.services.payment_engine.get_integrated_data_stats",
+            return_value={"hs_rates_count": 1},
+        ),
+        patch("app.services.payment_engine.get_tnved_context_for_hs", return_value={}),
+    )
+    entered = []
+    try:
+        for item in patches:
+            item.start()
+            entered.append(item)
+        yield
+    finally:
+        for item in reversed(entered):
+            item.stop()
 
 
 def _compute(
@@ -151,39 +180,42 @@ class AutomaticDutyOperandValidationTests(unittest.TestCase):
         )
 
     def test_compute_payments_rejects_corrupt_raw_legacy_rates(self) -> None:
-        for value in (-5, "-5", "-5%", math.nan, math.inf, -math.inf, True, "bad"):
+        for value in (
+            -5,
+            "-5",
+            "-5%",
+            "−5%",
+            "–5%",
+            "—5%",
+            math.nan,
+            math.inf,
+            -math.inf,
+            True,
+            "bad",
+            b"5%",
+            ["5%"],
+            {"rate": "5%"},
+        ):
             with self.subTest(value=value):
-                with patch(
-                    "app.services.payment_engine.find_rate_for_hs",
-                    return_value=(self._legacy_rate(value), 10),
-                ):
+                with _isolated_legacy_rate(value):
                     with self.assertRaisesRegex(ValueError, "hs_rates"):
                         compute_payments({"hs_code": "9998000000", "customs_value": 100_000.0})
 
     def test_compute_payments_rejects_legacy_result_overflow_before_vat(self) -> None:
         huge_but_finite_decimal = "1" + ("0" * 307)
-        with patch(
-            "app.services.payment_engine.find_rate_for_hs",
-            return_value=(self._legacy_rate(huge_but_finite_decimal), 10),
-        ):
+        with _isolated_legacy_rate(huge_but_finite_decimal):
             with self.assertRaisesRegex(ValueError, "результат автоматического расчета"):
                 compute_payments({"hs_code": "9998000000", "customs_value": 100_000.0})
 
     def test_compute_payments_preserves_valid_legacy_formats(self) -> None:
         for value in ("0", "0%", "5", "5%", "10%, но не менее 0.2 евро/кг"):
             with self.subTest(value=value):
-                with patch(
-                    "app.services.payment_engine.find_rate_for_hs",
-                    return_value=(self._legacy_rate(value), 10),
-                ):
+                with _isolated_legacy_rate(value):
                     result = compute_payments({"hs_code": "9998000000", "customs_value": 100_000.0})
                     self.assertEqual(result["status"], "OK")
 
     def test_compute_payments_manual_override_skips_corrupt_legacy_source(self) -> None:
-        with patch(
-            "app.services.payment_engine.find_rate_for_hs",
-            return_value=(self._legacy_rate("bad"), 10),
-        ):
+        with _isolated_legacy_rate("bad"):
             result = compute_payments(
                 {"hs_code": "9998000000", "customs_value": 100_000.0, "duty_rate": 4.0}
             )

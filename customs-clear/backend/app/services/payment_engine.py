@@ -76,11 +76,16 @@ _LEGACY_DUTY_SPECIFIC_TOKEN_RE = re.compile(
 )
 _LEGACY_DUTY_PLAIN_RE = re.compile(r"\d+(?:\.\d+)?", re.IGNORECASE)
 _LEGACY_DUTY_NEGATIVE_TOKEN_RE = re.compile(r"-\s*\d")
+_LEGACY_DUTY_AMBIGUOUS_SIGN_RE = re.compile(r"[\u2212\u2013\u2014]")
 
 
 def _parse_validated_legacy_duty_rate(raw_value: Any) -> dict[str, Any]:
     """Parse only a source value that is bound to a supported non-negative rate token."""
-    if isinstance(raw_value, bool) or raw_value is None:
+    if (
+        isinstance(raw_value, bool)
+        or raw_value is None
+        or not isinstance(raw_value, (str, int, float))
+    ):
         raise ValueError("Некорректная автоматическая ставка пошлины в hs_rates")
     if isinstance(raw_value, (int, float)):
         _validated_automatic_duty_operand(raw_value, label="ставки пошлины в hs_rates")
@@ -91,7 +96,11 @@ def _parse_validated_legacy_duty_rate(raw_value: Any) -> dict[str, Any]:
             raise ValueError("Некорректная автоматическая ставка пошлины в hs_rates")
 
     low = raw_text.lower()
-    if _LEGACY_DUTY_NEGATIVE_TOKEN_RE.search(raw_text) or re.search(r"\b(?:nan|inf(?:inity)?)\b", low):
+    if (
+        _LEGACY_DUTY_NEGATIVE_TOKEN_RE.search(raw_text)
+        or _LEGACY_DUTY_AMBIGUOUS_SIGN_RE.search(raw_text)
+        or re.search(r"\b(?:nan|inf(?:inity)?)\b", low)
+    ):
         raise ValueError("Некорректная автоматическая ставка пошлины в hs_rates")
     if not (
         _LEGACY_DUTY_PERCENT_TOKEN_RE.search(raw_text)
