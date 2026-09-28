@@ -26,6 +26,7 @@ _BACKEND_ROOT = Path(__file__).resolve().parents[2]
 
 CoverageStatus = str  # missing | present | stale | partial | parser_failed | not_applicable
 EditionTrackingStatus = str  # tracked | stale | unverified | not_assessed
+SyncEntrypointStatus = str  # available | missing | invalid | not_configured
 
 _UNVERIFIED_REVISIONS = frozenset(
     {
@@ -43,6 +44,53 @@ _UNVERIFIED_REVISIONS = frozenset(
 
 def _backend_path(rel: str) -> Path:
     return _BACKEND_ROOT / rel
+
+
+def _sync_entrypoint_status(sync_script: str | None) -> dict[str, Any]:
+    """Report whether a registry sync entrypoint is actually runnable.
+
+    ``sync_script`` is registry metadata, not proof that an automatic update is
+    scheduled.  Keep the check deliberately local and fail closed: only a
+    simple Python filename that exists under ``backend/scripts`` is available.
+    """
+    script = str(sync_script or "").strip()
+    if not script:
+        return {
+            "status": "not_configured",
+            "configured": False,
+            "exists": False,
+            "path": None,
+        }
+
+    rel = Path(script)
+    report_path = f"scripts/{script}"
+    if rel.name != script or rel.suffix != ".py":
+        return {
+            "status": "invalid",
+            "configured": True,
+            "exists": False,
+            "path": report_path,
+        }
+
+    scripts_root = (_BACKEND_ROOT / "scripts").resolve()
+    candidate = (scripts_root / rel).resolve()
+    try:
+        candidate.relative_to(scripts_root)
+    except ValueError:
+        return {
+            "status": "invalid",
+            "configured": True,
+            "exists": False,
+            "path": report_path,
+        }
+
+    exists = candidate.is_file()
+    return {
+        "status": "available" if exists else "missing",
+        "configured": True,
+        "exists": exists,
+        "path": report_path,
+    }
 
 
 def _count_db_probe(probe: str | None) -> int | None:
@@ -283,12 +331,18 @@ def _derive_edition_tracking_status(
 def _manual_review_required(
     entry: RegulatorySourceEntry,
     coverage_status: CoverageStatus,
+    sync_entrypoint_status: SyncEntrypointStatus,
 ) -> bool:
     if entry.manual_review_default:
         return True
     if entry.authority_level in ("advisory_letter", "commercial_mirror", "ai_extracted", "legacy_seed"):
         return True
     if coverage_status in ("missing", "partial", "parser_failed", "stale"):
+        return True
+    if (
+        entry.authority_level in SOURCE_OF_TRUTH_LEVELS
+        and sync_entrypoint_status != "available"
+    ):
         return True
     if entry.known_gaps:
         return coverage_status != "present"
@@ -309,6 +363,7 @@ def diagnose_source_entry(
     last_sync = _latest_sync_for_code(entry.source_status_code)
     parser_status = _derive_parser_status(entry, src_st, last_sync, doc_count)
     edition_tracking_status = _derive_edition_tracking_status(entry, src_st)
+    sync_entrypoint = _sync_entrypoint_status(entry.sync_script)
     coverage_status = _derive_coverage_status(
         entry,
         local,
@@ -317,7 +372,11 @@ def diagnose_source_entry(
         parser_status,
         edition_tracking_status,
     )
-    manual = _manual_review_required(entry, coverage_status)
+    manual = _manual_review_required(
+        entry,
+        coverage_status,
+        sync_entrypoint["status"],
+    )
 
     last_checked = (src_st or {}).get("synced_at")
     if last_sync and last_sync.get("synced_at"):
@@ -339,6 +398,7 @@ def diagnose_source_entry(
             "coverage_status": coverage_status,
             "parser_status": parser_status,
             "edition_tracking_status": edition_tracking_status,
+            "sync_entrypoint": sync_entrypoint,
             "local_source": local,
             "local_document_count": doc_count if doc_count is not None and doc_count >= 0 else None,
             "last_checked_at": last_checked,
@@ -372,6 +432,7 @@ def run_regulatory_source_completeness_report() -> dict[str, Any]:
     manual_queue: list[str] = []
     official_gaps: list[str] = []
     official_edition_tracking_gaps: list[str] = []
+    official_sync_entrypoint_gaps: list[str] = []
     for s in sources:
         cov = s["coverage_status"]
         by_coverage[cov] = by_coverage.get(cov, 0) + 1
@@ -383,6 +444,11 @@ def run_regulatory_source_completeness_report() -> dict[str, Any]:
             official_gaps.append(s["source_id"])
         if s.get("is_source_of_truth") and s.get("edition_tracking_status") != "tracked":
             official_edition_tracking_gaps.append(s["source_id"])
+        if (
+            s.get("is_source_of_truth")
+            and (s.get("sync_entrypoint") or {}).get("status") != "available"
+        ):
+            official_sync_entrypoint_gaps.append(s["source_id"])
 
     return {
         "status": "OK",
@@ -399,10 +465,12 @@ def run_regulatory_source_completeness_report() -> dict[str, Any]:
             "any_official_gap": bool(official_gaps),
             "official_edition_tracking_gap_ids": sorted(official_edition_tracking_gaps),
             "any_official_edition_tracking_gap": bool(official_edition_tracking_gaps),
+            "official_sync_entrypoint_gap_ids": sorted(official_sync_entrypoint_gaps),
+            "any_official_sync_entrypoint_gap": bool(official_sync_entrypoint_gaps),
         },
         "sources": sources,
         "future_sync_notes": [
-            "Каждая запись реестра содержит sync_script — точка входа для следующих cursor-task на bulk download.",
+            "sync_entrypoint показывает только наличие локальной точки запуска; он не доказывает, что automatic update настроен или успешно выполняется.",
             "source_status_code связывает отчёт с POST /api/sources/sync и sync_log.",
             "official_sgr: sync_sgr_registry.py (OData/CSV) + import_official_sgr_rules_to_ntm_v2.py для curated NTM v2.",
             "ПКР FCS: scripts/sync_fcs_predecisions.py (fixture MVP) → source_status FCS_PRELIMINARY; "

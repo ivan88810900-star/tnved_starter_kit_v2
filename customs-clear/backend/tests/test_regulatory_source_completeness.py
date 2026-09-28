@@ -11,6 +11,7 @@ from app.services.normative_store import init_db
 from app.services.regulatory_source_completeness import (
     _derive_coverage_status,
     _derive_edition_tracking_status,
+    _sync_entrypoint_status,
     diagnose_source_entry,
     run_regulatory_source_completeness_report,
 )
@@ -123,6 +124,37 @@ class TestRegulatorySourceRegistry(unittest.TestCase):
         self.assertFalse(row["is_source_of_truth"])
         self.assertTrue(row["manual_review_required"])
 
+    def test_sync_entrypoint_status_fails_closed(self) -> None:
+        available = _sync_entrypoint_status("sync_sgr_registry.py")
+        self.assertEqual(available["status"], "available")
+        self.assertTrue(available["exists"])
+
+        self.assertEqual(
+            _sync_entrypoint_status("source_sync.py")["status"],
+            "missing",
+        )
+        self.assertEqual(
+            _sync_entrypoint_status(None)["status"],
+            "not_configured",
+        )
+        for unsafe in ("../source_sync.py", "nested/source_sync.py", "source_sync.sh"):
+            with self.subTest(unsafe=unsafe):
+                self.assertEqual(_sync_entrypoint_status(unsafe)["status"], "invalid")
+
+    def test_missing_official_sync_entrypoint_requires_manual_review(self) -> None:
+        entry = RegulatorySourceEntry(
+            source_id="test_missing_sync",
+            title="Test official source",
+            authority_level="official_binding",
+            official_url="https://example.test/official",
+            description="test",
+            local_paths=("data/official_sgr_rules.seed.json",),
+            sync_script="missing_sync_entrypoint.py",
+        )
+        row = diagnose_source_entry(entry, status_by_code={})
+        self.assertEqual(row["sync_entrypoint"]["status"], "missing")
+        self.assertTrue(row["manual_review_required"])
+
     def test_official_local_copy_without_revision_tracking_is_partial(self) -> None:
         entry = RegulatorySourceEntry(
             source_id="test_official",
@@ -219,5 +251,11 @@ class TestRegulatorySourceCompletenessApi(unittest.TestCase):
         self.assertIn("official_source_gap_ids", body["summary"])
         self.assertIn("official_edition_tracking_gap_ids", body["summary"])
         self.assertTrue(body["summary"]["any_official_edition_tracking_gap"])
+        self.assertTrue(body["summary"]["any_official_sync_entrypoint_gap"])
+        self.assertEqual(
+            body["summary"]["official_sync_entrypoint_gap_ids"],
+            sorted(body["summary"]["official_sync_entrypoint_gap_ids"]),
+        )
         for row in body["sources"]:
             self.assertIn("edition_tracking_status", row)
+            self.assertIn("sync_entrypoint", row)
