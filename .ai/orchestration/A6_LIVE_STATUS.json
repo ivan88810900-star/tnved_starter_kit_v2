@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
-  "checked_at": "2026-09-28T11:18:52.000Z",
-  "status": "LIVE_SMOKE_PENDING_DISTINCT_PREPARED",
-  "live_verified": false,
-  "provider_called": false,
+  "checked_at": "2026-09-28T11:22:36.817Z",
+  "status": "LIVE_VERIFIED",
+  "live_verified": true,
+  "provider_called": true,
   "secret_values_read": false,
   "environment_assertion": {
     "name": "tariff-a6-trusted",
@@ -15,7 +15,7 @@
   },
   "trusted_workflow": {
     "path": ".github/workflows/tariff-a6-live.yml",
-    "default_branch_head": "ac8fce22d6b0f9770d648fe09b48c346822524b2",
+    "default_branch_head": "08e030a6053ac9638957119373797e0fbf2b10c2",
     "trigger": "issue_comment:/tariff-a6-live run-pending",
     "workflow_present_on_default_branch": true
   },
@@ -180,6 +180,43 @@
         "provider_not_called": true,
         "live_job_skipped": true
       }
+    },
+    {
+      "request_id": "a6-live-smoke-20260928-pr218-aedb4614-gen37",
+      "workflow_run_id": 36414936988,
+      "workflow_head_sha": "08e030a6053ac9638957119373797e0fbf2b10c2",
+      "trigger": "issue_comment",
+      "comment_id": 5868816996,
+      "context_gate": "success",
+      "packet_prepare": "success",
+      "provider_step": "executed_once",
+      "provider_called": true,
+      "workflow_conclusion": "success",
+      "bridge_status": "LIVE_VERIFIED",
+      "audit_status": "NEEDS_A0_VALIDATION",
+      "live_verified": true,
+      "artifact_id": 10966893551,
+      "artifact_digest": "sha256:03e095b2eb0023a3a35c60e436d085d6ad13940bcae799813f4e6736c891c119",
+      "receipt_sha256": "f1b30d1b686aad66624e56d40920bb37f6302081ac9e8b895153eab23c18858e",
+      "packet_sha256": "3534553e36a05cb8ee6bf1442b7652da565ff23b74aef2317984172b129f082d",
+      "base_sha": "306ebdafcba8106e7ec8243eb95977db1a23ce18",
+      "head_sha": "aedb46149267722218bcbf007e3c1eea3fcc250d",
+      "contract_sha": "08e030a6053ac9638957119373797e0fbf2b10c2",
+      "state_sha": "34ccc2a9bff9b0ac01e0d5aa7c665c3ba75d0224",
+      "lease_generation": 37,
+      "lease_holder": "/root/a0_automation_20260928T111657Z",
+      "model": "claude-opus-5",
+      "provider_message_id": "msg_011CfVkHWRFa6roi2wHR1Uaj",
+      "validated": {
+        "artifact_digest": true,
+        "receipt_hash": true,
+        "request_binding": true,
+        "commit_binding": true,
+        "workflow_binding": true,
+        "packet_hash": true,
+        "lease_binding": true,
+        "state_before_dispatch": true
+      }
     }
   ],
   "diagnosis": {
@@ -277,13 +314,21 @@
     "official_sources_json": "[]",
     "packet_sha256": "3534553e36a05cb8ee6bf1442b7652da565ff23b74aef2317984172b129f082d",
     "packet_validation": "PASSED_OFFLINE_WITHOUT_CREDENTIALS",
-    "dispatched": false,
-    "consumed": false,
+    "dispatched": true,
+    "consumed": true,
     "dispatch_transport": "issue_comment",
     "retry_allowed": false,
     "dedup_key": "ivan88810900-star/tnved_starter_kit_v2|PR218|aedb46149267722218bcbf007e3c1eea3fcc250d|post-merge-live-a6-gen37",
     "lease_generation": 37,
-    "lease_holder": "/root/a0_automation_20260928T111657Z"
+    "lease_holder": "/root/a0_automation_20260928T111657Z",
+    "dispatched_at": "2026-09-28T11:19:08Z",
+    "dispatch_comment_id": 5868816996,
+    "workflow_run_id": 36414936988,
+    "workflow_head_sha": "08e030a6053ac9638957119373797e0fbf2b10c2",
+    "result": "LIVE_VERIFIED",
+    "provider_called": true,
+    "artifact_id": 10966893551,
+    "receipt_sha256": "f1b30d1b686aad66624e56d40920bb37f6302081ac9e8b895153eab23c18858e"
   },
   "communication_policy": {
     "owner_decisions_single_delivery": true,
@@ -305,5 +350,22 @@
     "current_main": "08e030a6053ac9638957119373797e0fbf2b10c2",
     "remediation": "Persist and reread the distinct immutable pending request before creating the allowlisted issue comment.",
     "code_change_required": false
+  },
+  "a0_finding_validation": {
+    "status": "COMPLETED",
+    "summary": "The live response is structurally valid. Findings were checked against the successful call and current official Anthropic documentation; they are advisory, not automatic blockers.",
+    "findings": {
+      "F1": "PARTIAL_ACCEPT: documentation references in code should be refreshed; live acceptance and current official docs confirm output_config.effort is valid, so high severity is not sustained.",
+      "F2": "REJECT: the exact live provider call accepted output_config.effort and completed successfully; no current outage.",
+      "F3": "PARTIAL_ACCEPT_AS_RESIDUAL: 32768 is valid for the configured Claude Opus 5 and succeeded live; arbitrary future model changes remain a configuration-compatibility risk.",
+      "F4": "REJECT_FOR_CURRENT_CONFIG: non-streaming call completed inside the 300-second timeout; no reproduced failure.",
+      "F5": "ACCEPT_LOW: prompt wording can state that all identified defects must be reported while keeping entries concise.",
+      "F6": "ACCEPT_LOW: tests should bind the effort assertion to the constant and explicitly cover fail-closed HTTP 400 diagnostics."
+    },
+    "authoritative_sources": [
+      "https://docs.anthropic.com/en/docs/build-with-claude/extended-thinking",
+      "https://docs.anthropic.com/en/docs/about-claude/models/overview"
+    ],
+    "followup": "Prepare a scoped non-behavioral hardening PR for documentation, prompt wording, and regression assertions; no provider retry."
   }
 }
