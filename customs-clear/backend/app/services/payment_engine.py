@@ -61,6 +61,51 @@ def _validated_automatic_duty_operand(value: Any, *, label: str) -> float:
     return number
 
 
+def _validated_automatic_duty_result(value: Any, *, label: str) -> float:
+    """Reject overflow/non-finite automatic duty results before dependent math."""
+    number = float(value)
+    if not isfinite(number) or number < 0:
+        raise ValueError(f"Некорректный результат автоматического расчета {label}")
+    return number
+
+
+_LEGACY_DUTY_PERCENT_TOKEN_RE = re.compile(r"\d+(?:\.\d+)?\s*%", re.IGNORECASE)
+_LEGACY_DUTY_SPECIFIC_TOKEN_RE = re.compile(
+    r"\d+(?:\.\d+)?\s*(?:евро\s*/\s*кг|евро\s*за|евро/кг|евро\b|eur\s*/\s*кг|eur/кг|eur\b|€\s*/\s*кг|€)",
+    re.IGNORECASE,
+)
+_LEGACY_DUTY_PLAIN_RE = re.compile(r"\d+(?:\.\d+)?", re.IGNORECASE)
+_LEGACY_DUTY_NEGATIVE_TOKEN_RE = re.compile(r"-\s*\d")
+
+
+def _parse_validated_legacy_duty_rate(raw_value: Any) -> dict[str, Any]:
+    """Parse only a source value that is bound to a supported non-negative rate token."""
+    if isinstance(raw_value, bool) or raw_value is None:
+        raise ValueError("Некорректная автоматическая ставка пошлины в hs_rates")
+    if isinstance(raw_value, (int, float)):
+        _validated_automatic_duty_operand(raw_value, label="ставки пошлины в hs_rates")
+        raw_text = f"{float(raw_value):g}"
+    else:
+        raw_text = str(raw_value).strip()
+        if not raw_text:
+            raise ValueError("Некорректная автоматическая ставка пошлины в hs_rates")
+
+    low = raw_text.lower()
+    if _LEGACY_DUTY_NEGATIVE_TOKEN_RE.search(raw_text) or re.search(r"\b(?:nan|inf(?:inity)?)\b", low):
+        raise ValueError("Некорректная автоматическая ставка пошлины в hs_rates")
+    if not (
+        _LEGACY_DUTY_PERCENT_TOKEN_RE.search(raw_text)
+        or _LEGACY_DUTY_SPECIFIC_TOKEN_RE.search(raw_text)
+        or _LEGACY_DUTY_PLAIN_RE.fullmatch(raw_text)
+    ):
+        raise ValueError("Некорректная автоматическая ставка пошлины в hs_rates")
+
+    parsed = _parse_duty_rate(raw_text)
+    _validated_automatic_duty_operand(parsed.get("ad_valorem"), label="ставки пошлины в hs_rates")
+    _validated_automatic_duty_operand(parsed.get("specific_eur"), label="специфической ставки в hs_rates")
+    return parsed
+
+
 # Confidence levels based on HS-prefix match length
 _CONFIDENCE_MAP = {
     10: "high",
@@ -124,7 +169,7 @@ def _find_duty_rule_for_hs(hs_code: str) -> tuple[HsDutyRule | _FallbackDutyRule
     rate, rate_match_len = find_rate_for_hs(hs_code)
     if not rate:
         return None, 0
-    parsed = _parse_duty_rate(rate.duty_rate or "0")
+    parsed = _parse_validated_legacy_duty_rate(rate.duty_rate)
     rule_type = "specific" if (parsed.get("specific_amount") is not None) else "ad_valorem"
     fallback = _FallbackDutyRule(
         commodity_code=str(rate.hs_code or rate.hs_prefix or _digits_hs(hs_code)),
@@ -263,7 +308,10 @@ def _compute_structured_duty(
 
     # Фолбэк на старую логику, если правило не найдено.
     if duty_rule is None:
-        duty = customs_value * auto_duty_rate / 100.0
+        duty = _validated_automatic_duty_result(
+            customs_value * auto_duty_rate / 100.0,
+            label="пошлины",
+        )
         return duty, auto_duty_rate, duty, None, "ad_valorem", None, None
 
     rule_type = (duty_rule.type or "ad_valorem").strip().lower()
@@ -276,7 +324,14 @@ def _compute_structured_duty(
         if ad_pct_raw is not None
         else 0.0
     )
-    ad_valorem_amount = customs_value * ad_pct / 100.0 if ad_pct_raw is not None else None
+    ad_valorem_amount = (
+        _validated_automatic_duty_result(
+            customs_value * ad_pct / 100.0,
+            label="адвалорной пошлины",
+        )
+        if ad_pct_raw is not None
+        else None
+    )
 
     specific_amount_rub: float | None = None
     fx_rate: float | None = None
@@ -303,11 +358,17 @@ def _compute_structured_duty(
         if ccy not in rates:
             raise ValueError(f"Неизвестная валюта специфической ставки: {ccy or 'EMPTY'}")
         fx_rate = _num(rates.get(ccy) or 1.0)
-        specific_amount_rub = amount * q_used * float(fx_rate)
+        specific_amount_rub = _validated_automatic_duty_result(
+            amount * q_used * float(fx_rate),
+            label="специфической пошлины",
+        )
 
     # simple ad valorem
     if rule_type == "ad_valorem":
-        duty = ad_valorem_amount if ad_valorem_amount is not None else customs_value * auto_duty_rate / 100.0
+        duty = ad_valorem_amount if ad_valorem_amount is not None else _validated_automatic_duty_result(
+            customs_value * auto_duty_rate / 100.0,
+            label="пошлины",
+        )
         used_rate = ad_pct if ad_pct > 0 else auto_duty_rate
         return duty, used_rate, ad_valorem_amount, specific_amount_rub, "ad_valorem", fx_rate, specific_qty_used
 
@@ -332,7 +393,10 @@ def _compute_structured_duty(
             duty = right_val
             selected = "specific"
         else:
-            duty = customs_value * auto_duty_rate / 100.0
+            duty = _validated_automatic_duty_result(
+                customs_value * auto_duty_rate / 100.0,
+                label="пошлины",
+            )
             selected = "fallback_auto"
         used_rate = auto_duty_rate if selected == "fallback_auto" else ad_pct
         return duty, used_rate, ad_valorem_amount, specific_amount_rub, f"combined_min:{selected}", fx_rate, specific_qty_used
@@ -348,7 +412,10 @@ def _compute_structured_duty(
         duty = right_val
         selected = "specific"
     else:
-        duty = customs_value * auto_duty_rate / 100.0
+        duty = _validated_automatic_duty_result(
+            customs_value * auto_duty_rate / 100.0,
+            label="пошлины",
+        )
         selected = "fallback_auto"
     used_rate = auto_duty_rate if selected == "fallback_auto" else ad_pct
     return duty, used_rate, ad_valorem_amount, specific_amount_rub, f"combined_max:{selected}", fx_rate, specific_qty_used
@@ -464,6 +531,7 @@ def compute_payments(payload: dict[str, Any]) -> dict[str, Any]:
     customs_value = float(payload.get("customs_value") or 0.0)
     freight = float(payload.get("freight") or 0.0)
     country = str(payload.get("country") or "").upper().strip() or None
+    manual_duty_rate_supplied = payload.get("duty_rate") is not None
 
     if customs_value <= 0:
         raise ValueError("Таможенная стоимость должна быть > 0")
@@ -509,8 +577,10 @@ def compute_payments(payload: dict[str, Any]) -> dict[str, Any]:
             }
         duty_override_row = find_geo_duty_override_row(hs_digits, country, country_is_unfriendly=is_unfriendly)
         if duty_override_row is not None:
-            parsed_geo = _parse_duty_rate(str(duty_override_row.duty_rate or "0"))
-            geo_rate = float(parsed_geo.get("ad_valorem") or 0.0)
+            geo_rate = None
+            if not manual_duty_rate_supplied:
+                parsed_geo = _parse_validated_legacy_duty_rate(duty_override_row.duty_rate)
+                geo_rate = float(parsed_geo.get("ad_valorem") or 0.0)
             geo_meta = {
                 "embargo": False,
                 "duty_override_rate": geo_rate,
@@ -527,10 +597,10 @@ def compute_payments(payload: dict[str, Any]) -> dict[str, Any]:
     matched = rate is not None
     confidence = _CONFIDENCE_MAP.get(match_len, "none")
 
-    if rate is None:
+    if rate is None or manual_duty_rate_supplied:
         auto_duty_rate = 0.0
     else:
-        auto_duty_rate = float(_parse_duty_rate(rate.duty_rate or "0").get("ad_valorem") or 0.0)
+        auto_duty_rate = float(_parse_validated_legacy_duty_rate(rate.duty_rate).get("ad_valorem") or 0.0)
     vat_rule = (rate.vat_rule if rate else "none") or "none"
     vat_rule_basis = (rate.vat_rule_basis if rate else "") or ""
     raw_vat_rate = float(rate.vat_import_rate) if rate else 22.0
@@ -556,8 +626,13 @@ def compute_payments(payload: dict[str, Any]) -> dict[str, Any]:
     extra_quantity = float(payload.get("extra_quantity") or 0.0) if payload.get("extra_quantity") is not None else None
 
     # Duty (структурированные правила hs_duty_rules + fallback на историческую ставку)
-    duty_rule, duty_rule_match_len = _find_duty_rule_for_hs(hs_code)
     manual_duty_rate = float(payload.get("duty_rate")) if payload.get("duty_rate") is not None else None
+    if manual_duty_rate is not None:
+        # Manual override is authoritative for this calculation. Do not parse or
+        # admit an otherwise unused automatic rule/source value.
+        duty_rule, duty_rule_match_len = None, 0
+    else:
+        duty_rule, duty_rule_match_len = _find_duty_rule_for_hs(hs_code)
     # Гео-подмена ставки применяется к базовой (исторической) адвалорной логике;
     # структурированное правило hs_duty_rules остаётся приоритетным.
     if manual_duty_rate is None and duty_rule is None and geo_meta.get("duty_override_rate") is not None:
@@ -591,6 +666,21 @@ def compute_payments(payload: dict[str, Any]) -> dict[str, Any]:
                 "duty_coefficient": coeff,
                 "legal_ref": tariff_pref.legal_ref or "",
             }
+
+    # Final automatic-duty barrier immediately before dependent VAT/final-payable
+    # arithmetic. This also covers automatic preference/geo transformations.
+    if not manual_duty_rate_supplied:
+        duty = _validated_automatic_duty_result(duty, label="пошлины")
+        if ad_valorem_amount is not None:
+            ad_valorem_amount = _validated_automatic_duty_result(
+                ad_valorem_amount,
+                label="адвалорной пошлины",
+            )
+        if specific_amount_rub is not None:
+            specific_amount_rub = _validated_automatic_duty_result(
+                specific_amount_rub,
+                label="специфической пошлины",
+            )
 
     # Excise
     user_excise = payload.get("excise")

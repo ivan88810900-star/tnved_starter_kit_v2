@@ -4,9 +4,11 @@ from __future__ import annotations
 
 import math
 import unittest
+from types import SimpleNamespace
+from unittest.mock import patch
 
 from app.models.tnved import HsDutyRule
-from app.services.payment_engine import _compute_structured_duty
+from app.services.payment_engine import _compute_structured_duty, compute_payments
 
 
 def _compute(
@@ -97,6 +99,96 @@ class AutomaticDutyOperandValidationTests(unittest.TestCase):
         )
         self.assertEqual(result[0], 4_000.0)
         self.assertEqual(result[4], "manual_rate")
+
+    def test_finite_operands_that_overflow_results_fail_closed_on_every_path(self) -> None:
+        cases = (
+            {"rule": None, "auto": 1e308},
+            {"rule_type": "ad_valorem", "ad": 1e308},
+            {"rule_type": "specific", "ad": None, "specific": 1e308},
+            {"rule_type": "combined_max", "ad": 5.0, "specific": 1e308},
+            # The infinite component must not be hidden by min(finite, inf).
+            {"rule_type": "combined_min", "ad": 5.0, "specific": 1e308},
+        )
+        for case in cases:
+            with self.subTest(case=case):
+                if case.get("rule", "present") is None:
+                    with self.assertRaisesRegex(ValueError, "результат автоматического расчета"):
+                        _compute_structured_duty(
+                            customs_value=100_000.0,
+                            quantity=10.0,
+                            net_weight_kg=10.0,
+                            extra_quantity=None,
+                            duty_rule=None,
+                            manual_duty_rate=None,
+                            auto_duty_rate=case["auto"],
+                            fx_rates={"RUB": 1.0},
+                        )
+                else:
+                    with self.assertRaisesRegex(ValueError, "результат автоматического расчета"):
+                        _compute(
+                            rule_type=case["rule_type"],
+                            ad_valorem_pct=case["ad"],
+                            specific_amount=case.get("specific"),
+                        )
+
+    @staticmethod
+    def _legacy_rate(raw_value: object) -> SimpleNamespace:
+        return SimpleNamespace(
+            hs_code="9998000000",
+            hs_prefix="9998",
+            duty_rate=raw_value,
+            vat_rule="none",
+            vat_rule_basis="",
+            vat_import_rate=22.0,
+            excise_type="none",
+            excise_value=0.0,
+            excise_basis="",
+            antidumping_type="none",
+            antidumping_value=0.0,
+            antidumping_condition="",
+            antidumping_countries="",
+            source_revision="test",
+        )
+
+    def test_compute_payments_rejects_corrupt_raw_legacy_rates(self) -> None:
+        for value in (-5, "-5", "-5%", math.nan, math.inf, -math.inf, True, "bad"):
+            with self.subTest(value=value):
+                with patch(
+                    "app.services.payment_engine.find_rate_for_hs",
+                    return_value=(self._legacy_rate(value), 10),
+                ):
+                    with self.assertRaisesRegex(ValueError, "hs_rates"):
+                        compute_payments({"hs_code": "9998000000", "customs_value": 100_000.0})
+
+    def test_compute_payments_rejects_legacy_result_overflow_before_vat(self) -> None:
+        huge_but_finite_decimal = "1" + ("0" * 307)
+        with patch(
+            "app.services.payment_engine.find_rate_for_hs",
+            return_value=(self._legacy_rate(huge_but_finite_decimal), 10),
+        ):
+            with self.assertRaisesRegex(ValueError, "результат автоматического расчета"):
+                compute_payments({"hs_code": "9998000000", "customs_value": 100_000.0})
+
+    def test_compute_payments_preserves_valid_legacy_formats(self) -> None:
+        for value in ("0", "0%", "5", "5%", "10%, но не менее 0.2 евро/кг"):
+            with self.subTest(value=value):
+                with patch(
+                    "app.services.payment_engine.find_rate_for_hs",
+                    return_value=(self._legacy_rate(value), 10),
+                ):
+                    result = compute_payments({"hs_code": "9998000000", "customs_value": 100_000.0})
+                    self.assertEqual(result["status"], "OK")
+
+    def test_compute_payments_manual_override_skips_corrupt_legacy_source(self) -> None:
+        with patch(
+            "app.services.payment_engine.find_rate_for_hs",
+            return_value=(self._legacy_rate("bad"), 10),
+        ):
+            result = compute_payments(
+                {"hs_code": "9998000000", "customs_value": 100_000.0, "duty_rate": 4.0}
+            )
+        self.assertEqual(result["breakdown"]["duty"], 4_000.0)
+        self.assertEqual(result["breakdown"]["selected_rule"], "manual_rate")
 
 
 if __name__ == "__main__":
