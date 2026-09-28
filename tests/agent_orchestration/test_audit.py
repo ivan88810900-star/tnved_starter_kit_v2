@@ -409,8 +409,11 @@ class AuditTests(unittest.TestCase):
         self.assertNotIn("mcp_servers", payload)
         self.assertEqual(payload["max_tokens"], audit.A6_MAX_OUTPUT_TOKENS)
         self.assertEqual(payload["max_tokens"], 32_768)
-        self.assertEqual(payload["output_config"]["effort"], "medium")
+        self.assertEqual(payload["output_config"]["effort"], audit.A6_EFFORT)
         self.assertEqual(payload["output_config"]["format"]["type"], "json_schema")
+        self.assertIn("Report every defect you identify", payload["system"])
+        self.assertIn("including lower-severity defects", payload["system"])
+        self.assertIn("concise, specific and non-redundant", payload["system"])
         self.assertNotIn(self.env["ANTHROPIC_API_KEY"], json.dumps(payload))
 
     @patch.object(audit, "request_json")
@@ -461,6 +464,11 @@ class AuditTests(unittest.TestCase):
         result = audit.run_audit(self.repo, packet, environ=self.env)
         self.assertEqual(result["failure_code"], "PROVIDER_HTTP_529")
         self.assertNotIn(self.env["ANTHROPIC_API_KEY"], json.dumps(result))
+        request.side_effect = audit.RuntimeBlocked("API request failed (HTTP 400)")
+        result = audit.run_audit(self.repo, packet, environ=self.env)
+        self.assertEqual(result["status"], "UNAVAILABLE")
+        self.assertIs(result["live_verified"], False)
+        self.assertEqual(result["failure_code"], "PROVIDER_HTTP_400")
         request.side_effect = None
         request.return_value = {"id": "msg_mock", "stop_reason": "end_turn",
                                 "content": [{"type": "text", "text": "not json"}]}
