@@ -9,9 +9,11 @@ public. A0 must choose only reviewed code, contracts and non-secret fixtures.
 No repository-wide content scan, directory upload, remote URL fetch or Claude tool
 is used. Changed paths must all be included; an incomplete diff is never sent.
 
-Official API references checked 2026-09-16:
+Official API references checked 2026-09-28:
 https://platform.claude.com/docs/en/api/messages/create
 https://platform.claude.com/docs/en/build-with-claude/structured-outputs
+https://platform.claude.com/docs/en/build-with-claude/effort
+https://platform.claude.com/docs/en/build-with-claude/context-windows
 https://platform.claude.com/docs/en/models/opus-5/whats-new-opus-5
 """
 
@@ -457,8 +459,9 @@ def run_audit(repo, packet, *, environ=None):
             "No tools, network, fetching URLs, commands or external data access. Official URLs are "
             "attribution metadata, not proof you have read their contents. Record missing source "
             "content/context in limitations. Findings are hypotheses requiring A0 verification. "
-            "Do not claim readiness, legal approval or a passed audit. Be concise: prioritize "
-            "actionable defects and keep evidence specific. Return the required JSON."),
+            "Do not claim readiness, legal approval or a passed audit. Report every defect you "
+            "identify, including lower-severity defects. Keep evidence concise, specific and "
+            "non-redundant. Return the required JSON."),
         "messages": [{"role": "user", "content": _json_bytes(packet).decode()}],
         "output_config": {"effort": A6_EFFORT,
                           "format": {"type": "json_schema", "schema": FINDINGS_SCHEMA}}}
