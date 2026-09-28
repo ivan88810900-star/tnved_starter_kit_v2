@@ -1,0 +1,72 @@
+{
+  "schema_version": 1,
+  "recorded_at": "2026-09-28T18:26:13.753Z",
+  "coordinator_lease": {
+    "generation": 39,
+    "holder": "/root/a0_automation_20260928T172430Z",
+    "state_at_checkpoint": "active"
+  },
+  "main_sha": "08e030a6053ac9638957119373797e0fbf2b10c2",
+  "a6": {
+    "status": "LIVE_VERIFIED",
+    "post_verify_bridge_pr": 237,
+    "bridge_head": "f0183c1e0f4e1e5ed60fa93a4633e841e2ae8d9f",
+    "owner_approval_pending": true,
+    "additional_live_audits_blocked_until_bridge_merge": true
+  },
+  "completed": [
+    {
+      "kind": "A5",
+      "pr": 235,
+      "head": "fd7820da28e4aa5bcf934680e5d6c32f5bf571a5",
+      "verdict": "PASS",
+      "review_id": 5342351998,
+      "ci_run": 36416482234,
+      "scope": "official-source sync entrypoint diagnostics"
+    },
+    {
+      "kind": "A5",
+      "pr": 238,
+      "head": "5b98d7c67a6b8b5d0a6dbd4a6313e1d656bf30b2",
+      "verdict": "PASS",
+      "review_id": 5342952876,
+      "ci_run": 36464322451,
+      "scope": "automatic duty operand and result fail-closed validation",
+      "high_risk": true,
+      "a6_pending": true
+    }
+  ],
+  "superseded_pr238_reviews": [
+    {
+      "head": "1ad23523302862ac2a4b19e63bdb0e5be4e236f1",
+      "review_id": 5342472997,
+      "verdict": "BLOCK"
+    },
+    {
+      "head": "ca8dcac04fffcc557056a902ad04e3460e3f866a",
+      "review_id": 5342580029,
+      "verdict": "BLOCK"
+    },
+    {
+      "head": "0a65f9ffb031e0f2863e04f56ce3f4da2a6bbbe8",
+      "review_id": 5342637031,
+      "verdict": "BLOCK"
+    },
+    {
+      "head": "e4ea6cfcd98a24e4fb31611eb496d7d22aedbbc2",
+      "review_id": 5342862998,
+      "verdict": "BLOCK"
+    }
+  ],
+  "lease_leak_investigation": {
+    "confirmed_repo_defect": false,
+    "evidence": "generation 37 omitted caller release; generation 38 released cleanly on same repo code; repository helpers cannot prove Work-session termination or apply connector CAS",
+    "action": "no speculative PR; normal-completion runtime must execute current-holder/token CAS release and reread"
+  },
+  "protected_actions_performed": [],
+  "next": [
+    "Owner decision remains pending for PR #237 exact head; do not repeat the merge request unless state or owner input changes.",
+    "PR #235 is non-high-risk diagnostic and ready for owner merge decision on exact head.",
+    "PR #238 requires live A6 after PR #237 is merged, then A0 validation and separate owner merge approval."
+  ]
+}
