@@ -55,7 +55,7 @@ def _validated_automatic_duty_operand(value: Any, *, label: str) -> float:
         raise ValueError(f"Некорректное автоматическое значение {label}")
     try:
         number = float(value)
-    except (TypeError, ValueError) as exc:
+    except (TypeError, ValueError, OverflowError) as exc:
         raise ValueError(f"Некорректное автоматическое значение {label}") from exc
     if not isfinite(number) or number < 0:
         raise ValueError(f"Некорректное автоматическое значение {label}")
@@ -70,12 +70,24 @@ def _validated_automatic_duty_result(value: Any, *, label: str) -> float:
     return number
 
 
-_LEGACY_DUTY_PERCENT_TOKEN_RE = re.compile(r"\d+(?:\.\d+)?\s*%", re.IGNORECASE)
-_LEGACY_DUTY_SPECIFIC_TOKEN_RE = re.compile(
-    r"\d+(?:\.\d+)?\s*(?:евро\s*/\s*кг|евро\s*за|евро/кг|евро\b|eur\s*/\s*кг|eur/кг|eur\b|€\s*/\s*кг|€)",
+_LEGACY_DUTY_NUMBER = r"\d+(?:\.\d+)?"
+_LEGACY_DUTY_UNIT = (
+    r"(?:евро(?:\s*/\s*кг|\s+за(?:\s+кг)?)?|eur(?:\s*/\s*кг)?|€(?:\s*/\s*кг)?)"
+)
+_LEGACY_DUTY_SIMPLE_RE = re.compile(
+    rf"(?:{_LEGACY_DUTY_NUMBER}|{_LEGACY_DUTY_NUMBER}\s*%)",
     re.IGNORECASE,
 )
-_LEGACY_DUTY_PLAIN_RE = re.compile(r"\d+(?:\.\d+)?", re.IGNORECASE)
+_LEGACY_DUTY_SPECIFIC_RE = re.compile(
+    rf"{_LEGACY_DUTY_NUMBER}\s*{_LEGACY_DUTY_UNIT}",
+    re.IGNORECASE,
+)
+_LEGACY_DUTY_COMBINED_RE = re.compile(
+    rf"{_LEGACY_DUTY_NUMBER}\s*%\s*(?:,\s*)?"
+    rf"(?:(?:но\s+)?(?:не\s+менее|не\s+меньше)|плюс)\s*"
+    rf"{_LEGACY_DUTY_NUMBER}\s*{_LEGACY_DUTY_UNIT}",
+    re.IGNORECASE,
+)
 
 
 def _contains_forbidden_legacy_sign(raw_text: str) -> bool:
@@ -102,8 +114,13 @@ def _parse_validated_legacy_duty_rate(raw_value: Any) -> dict[str, Any]:
     ):
         raise ValueError("Некорректная автоматическая ставка пошлины в hs_rates")
     if isinstance(raw_value, (int, float)):
-        _validated_automatic_duty_operand(raw_value, label="ставки пошлины в hs_rates")
-        raw_text = f"{float(raw_value):g}"
+        number = _validated_automatic_duty_operand(raw_value, label="ставки пошлины в hs_rates")
+        return {
+            "ad_valorem": number,
+            "specific_eur": 0.0,
+            "rule": "STANDARD",
+            "raw_text": str(raw_value),
+        }
     else:
         raw_text = str(raw_value).strip()
         if not raw_text:
@@ -115,10 +132,13 @@ def _parse_validated_legacy_duty_rate(raw_value: Any) -> dict[str, Any]:
         or re.search(r"\b(?:nan|inf(?:inity)?)\b", low)
     ):
         raise ValueError("Некорректная автоматическая ставка пошлины в hs_rates")
-    if not (
-        _LEGACY_DUTY_PERCENT_TOKEN_RE.search(raw_text)
-        or _LEGACY_DUTY_SPECIFIC_TOKEN_RE.search(raw_text)
-        or _LEGACY_DUTY_PLAIN_RE.fullmatch(raw_text)
+    if not any(
+        grammar.fullmatch(raw_text)
+        for grammar in (
+            _LEGACY_DUTY_SIMPLE_RE,
+            _LEGACY_DUTY_SPECIFIC_RE,
+            _LEGACY_DUTY_COMBINED_RE,
+        )
     ):
         raise ValueError("Некорректная автоматическая ставка пошлины в hs_rates")
 

@@ -192,6 +192,11 @@ class AutomaticDutyOperandValidationTests(unittest.TestCase):
             "+-5%",
             "+5%",
             "5%+",
+            "5,0%",
+            "0,5%",
+            "5..6%",
+            "5e1%",
+            "1/5%",
             math.nan,
             math.inf,
             -math.inf,
@@ -233,6 +238,40 @@ class AutomaticDutyOperandValidationTests(unittest.TestCase):
                             compute_payments(
                                 {"hs_code": "9998000000", "customs_value": 100_000.0}
                             )
+
+    def test_compute_payments_rejects_malformed_numeric_token_families(self) -> None:
+        malformed = set()
+        for separator in (",", "..", "/", "\\", "_", ":"):
+            malformed.add(f"5{separator}6%")
+            malformed.add(f"10% не менее 5{separator}6 евро/кг")
+        for exponent in ("e1", "E1", "e+1", "E+1", "e-1", "E-1"):
+            malformed.add(f"5{exponent}%")
+        for numerator, denominator in ((1, 5), (10, 2), (0, 5)):
+            malformed.add(f"{numerator}/{denominator}%")
+
+        for value in sorted(malformed):
+            with self.subTest(value=value):
+                with _isolated_legacy_rate(value):
+                    with self.assertRaisesRegex(ValueError, "hs_rates"):
+                        compute_payments(
+                            {"hs_code": "9998000000", "customs_value": 100_000.0}
+                        )
+
+    def test_compute_payments_accepts_finite_numeric_scalars_without_string_grammar(self) -> None:
+        for value, expected_duty in ((1e-5, 0.01), (1e20, 1e23)):
+            with self.subTest(value=value):
+                with _isolated_legacy_rate(value):
+                    result = compute_payments(
+                        {"hs_code": "9998000000", "customs_value": 100_000.0}
+                    )
+                self.assertTrue(
+                    math.isclose(result["breakdown"]["duty"], expected_duty, rel_tol=1e-15)
+                )
+
+    def test_compute_payments_rejects_integer_too_large_for_float_without_overflow_error(self) -> None:
+        with _isolated_legacy_rate(10**10_000):
+            with self.assertRaisesRegex(ValueError, "hs_rates"):
+                compute_payments({"hs_code": "9998000000", "customs_value": 100_000.0})
 
     def test_compute_payments_rejects_legacy_result_overflow_before_vat(self) -> None:
         huge_but_finite_decimal = "1" + ("0" * 307)
