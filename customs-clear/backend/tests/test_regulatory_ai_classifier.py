@@ -102,3 +102,40 @@ class TestExtractKeywordHsCodes:
         hits = _extract_keyword_hs_codes("Регистрация пестицидов и гербицидов")
         prefixes = [h[0] for h in hits]
         assert "3808" in prefixes
+
+    @pytest.mark.parametrize(
+        "text",
+        [
+            "Технический регламент о безопасности машин и оборудования",
+            "Требования к сельскохозяйственным машинам",
+            "Контроль авиамашин специального назначения",
+            "Описание электромашины",
+            "маркировка ма\u200dшин",
+            "маркировка ма＿шин",
+        ],
+    )
+    def test_machinery_words_do_not_create_tyres_mapping(self, text: str) -> None:
+        prefixes = {prefix for prefix, _keyword in _extract_keyword_hs_codes(text)}
+        assert "4011" not in prefixes
+
+    @pytest.mark.parametrize(
+        "text",
+        [
+            "Шина для легкового автомобиля",
+            "Требования к автомобильным шинам",
+            "Испытания шинами разных изготовителей",
+            "Категория: шина",
+        ],
+    )
+    def test_tyres_keyword_keeps_legacy_stem_forms(self, text: str) -> None:
+        prefixes = {prefix for prefix, _keyword in _extract_keyword_hs_codes(text)}
+        assert "4011" in prefixes
+
+    def test_rejected_machinery_occurrence_does_not_mask_later_tyres(self) -> None:
+        prefixes = {
+            prefix
+            for prefix, _keyword in _extract_keyword_hs_codes(
+                "Безопасность машин; отдельно регулируется шина",
+            )
+        }
+        assert "4011" in prefixes
