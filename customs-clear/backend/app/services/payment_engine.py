@@ -3,6 +3,7 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass
 from datetime import date
+from math import isfinite
 from typing import Any
 
 from sqlalchemy import or_
@@ -45,6 +46,19 @@ def _sum_amounts(*parts: Any | None) -> float:
 
 def _round2(v: Any | None) -> float:
     return round(_num(v), 2)
+
+
+def _validated_automatic_duty_operand(value: Any, *, label: str) -> float:
+    """Reject malformed stored duty operands before payment arithmetic."""
+    if isinstance(value, bool):
+        raise ValueError(f"Некорректное автоматическое значение {label}")
+    try:
+        number = float(value)
+    except (TypeError, ValueError) as exc:
+        raise ValueError(f"Некорректное автоматическое значение {label}") from exc
+    if not isfinite(number) or number < 0:
+        raise ValueError(f"Некорректное автоматическое значение {label}")
+    return number
 
 
 # Confidence levels based on HS-prefix match length
@@ -242,6 +256,11 @@ def _compute_structured_duty(
         duty = customs_value * manual_duty_rate / 100.0
         return duty, manual_duty_rate, duty, None, "manual_rate", None, None
 
+    auto_duty_rate = _validated_automatic_duty_operand(
+        auto_duty_rate,
+        label="ставки пошлины",
+    )
+
     # Фолбэк на старую логику, если правило не найдено.
     if duty_rule is None:
         duty = customs_value * auto_duty_rate / 100.0
@@ -249,14 +268,24 @@ def _compute_structured_duty(
 
     rule_type = (duty_rule.type or "ad_valorem").strip().lower()
     ad_pct_raw = duty_rule.ad_valorem_pct
-    ad_pct = _num(ad_pct_raw)
+    ad_pct = (
+        _validated_automatic_duty_operand(
+            ad_pct_raw,
+            label="адвалорной ставки",
+        )
+        if ad_pct_raw is not None
+        else 0.0
+    )
     ad_valorem_amount = customs_value * ad_pct / 100.0 if ad_pct_raw is not None else None
 
     specific_amount_rub: float | None = None
     fx_rate: float | None = None
     specific_qty_used: float | None = None
     if duty_rule.specific_amount is not None:
-        amount = _num(duty_rule.specific_amount)
+        amount = _validated_automatic_duty_operand(
+            duty_rule.specific_amount,
+            label="специфической ставки",
+        )
         ccy = (duty_rule.specific_currency or "").upper().strip()
         uom = (duty_rule.specific_uom or "").lower().strip()
         if uom == "kg":
