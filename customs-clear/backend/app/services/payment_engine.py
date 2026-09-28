@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import re
+import unicodedata
 from dataclasses import dataclass
 from datetime import date
 from math import isfinite
@@ -75,8 +76,21 @@ _LEGACY_DUTY_SPECIFIC_TOKEN_RE = re.compile(
     re.IGNORECASE,
 )
 _LEGACY_DUTY_PLAIN_RE = re.compile(r"\d+(?:\.\d+)?", re.IGNORECASE)
-_LEGACY_DUTY_NEGATIVE_TOKEN_RE = re.compile(r"-\s*\d")
-_LEGACY_DUTY_AMBIGUOUS_SIGN_RE = re.compile(r"[\u2212\u2013\u2014]")
+
+
+def _contains_forbidden_legacy_sign(raw_text: str) -> bool:
+    """Fail closed on signed/ambiguous rate text before permissive parsing."""
+    for char in raw_text:
+        name = unicodedata.name(char, "")
+        if (
+            unicodedata.category(char) == "Pd"
+            or "MINUS" in name
+            or "HYPHEN" in name
+            or "DASH" in name
+            or "PLUS SIGN" in name
+        ):
+            return True
+    return False
 
 
 def _parse_validated_legacy_duty_rate(raw_value: Any) -> dict[str, Any]:
@@ -97,8 +111,7 @@ def _parse_validated_legacy_duty_rate(raw_value: Any) -> dict[str, Any]:
 
     low = raw_text.lower()
     if (
-        _LEGACY_DUTY_NEGATIVE_TOKEN_RE.search(raw_text)
-        or _LEGACY_DUTY_AMBIGUOUS_SIGN_RE.search(raw_text)
+        _contains_forbidden_legacy_sign(raw_text)
         or re.search(r"\b(?:nan|inf(?:inity)?)\b", low)
     ):
         raise ValueError("Некорректная автоматическая ставка пошлины в hs_rates")

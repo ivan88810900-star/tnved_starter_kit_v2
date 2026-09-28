@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import math
+import unicodedata
 import unittest
 from contextlib import contextmanager
 from types import SimpleNamespace
@@ -187,6 +188,10 @@ class AutomaticDutyOperandValidationTests(unittest.TestCase):
             "−5%",
             "–5%",
             "—5%",
+            "-+5%",
+            "+-5%",
+            "+5%",
+            "5%+",
             math.nan,
             math.inf,
             -math.inf,
@@ -200,6 +205,34 @@ class AutomaticDutyOperandValidationTests(unittest.TestCase):
                 with _isolated_legacy_rate(value):
                     with self.assertRaisesRegex(ValueError, "hs_rates"):
                         compute_payments({"hs_code": "9998000000", "customs_value": 100_000.0})
+
+    def test_compute_payments_rejects_unicode_dash_minus_and_plus_sign_classes(self) -> None:
+        sign_chars = []
+        for codepoint in range(0x110000):
+            char = chr(codepoint)
+            name = unicodedata.name(char, "")
+            if (
+                unicodedata.category(char) == "Pd"
+                or "MINUS" in name
+                or "HYPHEN" in name
+                or "DASH" in name
+                or "PLUS SIGN" in name
+            ):
+                sign_chars.append(char)
+
+        self.assertIn("−", sign_chars)
+        self.assertIn("－", sign_chars)
+        self.assertIn("﹣", sign_chars)
+        self.assertIn("‒", sign_chars)
+        self.assertIn("+", sign_chars)
+        for sign in sign_chars:
+            for value in (f"{sign}5%", f"{sign}+5%"):
+                with self.subTest(codepoint=f"U+{ord(sign):04X}", value=value):
+                    with _isolated_legacy_rate(value):
+                        with self.assertRaisesRegex(ValueError, "hs_rates"):
+                            compute_payments(
+                                {"hs_code": "9998000000", "customs_value": 100_000.0}
+                            )
 
     def test_compute_payments_rejects_legacy_result_overflow_before_vat(self) -> None:
         huge_but_finite_decimal = "1" + ("0" * 307)
