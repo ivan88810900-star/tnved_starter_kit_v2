@@ -721,10 +721,12 @@ export type AdvisoryRequirement = {
 export type NormativeDocument = {
   permit_type: string;
   tr_ts?: string | null;
+  tr_ts_full_name?: string | null;
   source?: string;
   source_label?: string | null;
   applicability?: string;
   reason?: string | null;
+  note?: string | null;
   used_for_missing_check?: boolean;
   rule_name?: string | null;
 };
@@ -736,6 +738,32 @@ export type NormativeRequirementsBlockData = {
   required_documents: NormativeDocument[];
   missing_documents: NormativeDocument[];
   advisory_requirements: AdvisoryRequirement[];
+  measure_families?: Array<{
+    family: string;
+    label: string;
+    status: 'definite' | 'needs_clarification' | 'legacy_signal' | 'not_detected' | string;
+    requirements_count: number;
+    signals_count?: number;
+    permit_types?: string[];
+    regulations?: string[];
+    matched_sections?: string[];
+    directions?: string[];
+    source_labels?: string[];
+  }>;
+  data_freshness?: {
+    state: 'fresh' | 'stale' | 'unknown';
+    tone: 'neutral' | 'amber';
+    source_name: string | null;
+    source_code: string | null;
+    synced_at: string | null;
+    revision: string | null;
+    is_stale: boolean;
+    scope: 'technical_source_status_only';
+    affects_applicability: false;
+    affects_required_documents: false;
+    affects_missing_documents: false;
+    ntm_coverage_verified: false;
+  };
   sources_summary?: string[];
   empty_message?: string | null;
   tr_ts?: string[];
