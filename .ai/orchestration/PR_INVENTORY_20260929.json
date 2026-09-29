@@ -1,0 +1,220 @@
+{
+  "schema_version": 1,
+  "created_at": "2026-09-29T10:20:00.000Z",
+  "main_sha": "08e030a6053ac9638957119373797e0fbf2b10c2",
+  "model": "A0 + A-CORE + A-PRODUCT; ephemeral A5/A6",
+  "integration_branches": {
+    "customs_core": {
+      "branch": "integration/customs-core-v1",
+      "base_sha": "08e030a6053ac9638957119373797e0fbf2b10c2"
+    },
+    "compliance_ai": {
+      "branch": "integration/compliance-ai-v1",
+      "base_sha": "08e030a6053ac9638957119373797e0fbf2b10c2"
+    }
+  },
+  "classifications": [
+    {
+      "number": 240,
+      "classification": "ACTIVE_CORE",
+      "note": "source update health; gated A5/CI; consolidate into customs-core"
+    },
+    {
+      "number": 239,
+      "classification": "ACTIVE_PRODUCT",
+      "note": "NTM false-positive fix; gated A5/CI; requires A6 after #237"
+    },
+    {
+      "number": 238,
+      "classification": "ACTIVE_CORE",
+      "note": "payment admission hardening; gated A5/CI; requires A6 after #237"
+    },
+    {
+      "number": 237,
+      "classification": "INFRA_GATE",
+      "note": "blocking post-live-verification A6 admission; owner merge approval already requested"
+    },
+    {
+      "number": 236,
+      "classification": "INFRA_GATE",
+      "note": "non-blocking audit prompt hardening; evaluate separately"
+    },
+    {
+      "number": 235,
+      "classification": "ACTIVE_CORE",
+      "note": "source entrypoint diagnostics; gated A5/CI"
+    },
+    {
+      "number": 234,
+      "classification": "STALE_STACK",
+      "note": "NTM micro-fix to port/retest within compliance epic"
+    },
+    {
+      "number": 233,
+      "classification": "STALE_STACK",
+      "note": "NTM micro-fix to port/retest within compliance epic"
+    },
+    {
+      "number": 232,
+      "classification": "STALE_STACK",
+      "note": "FX candidate overlaps newer payment epic; compare before port"
+    },
+    {
+      "number": 231,
+      "classification": "STALE_STACK",
+      "note": "source provenance candidate to compare before port"
+    },
+    {
+      "number": 230,
+      "classification": "STALE_STACK",
+      "note": "NTM micro-fix to port/retest within compliance epic"
+    },
+    {
+      "number": 229,
+      "classification": "STALE_STACK",
+      "note": "antidumping-unit candidate to compare with #238/payment epic"
+    },
+    {
+      "number": 228,
+      "classification": "STALE_STACK",
+      "note": "CBR provenance candidate to compare with #232/payment epic"
+    },
+    {
+      "number": 227,
+      "classification": "STALE_STACK",
+      "note": "semantic-search candidate to port/retest within compliance epic"
+    },
+    {
+      "number": 226,
+      "classification": "STALE_STACK",
+      "note": "source revision candidate to compare within customs-core"
+    },
+    {
+      "number": 224,
+      "classification": "STALE_STACK",
+      "note": "NTM certificate parser candidate to port/retest"
+    },
+    {
+      "number": 223,
+      "classification": "STALE_STACK",
+      "note": "source observation candidate to compare within customs-core"
+    },
+    {
+      "number": 222,
+      "classification": "STALE_STACK",
+      "note": "special-duty date candidate to compare within payment epic"
+    },
+    {
+      "number": 221,
+      "classification": "STALE_STACK",
+      "note": "SGR false-positive candidate to port/retest"
+    },
+    {
+      "number": 220,
+      "classification": "STALE_STACK",
+      "note": "stacked payment candidate; rebase/port only if not superseded"
+    },
+    {
+      "number": 216,
+      "classification": "STALE_STACK",
+      "note": "old payment base candidate; dependency source for customs-core"
+    },
+    {
+      "number": 213,
+      "classification": "ACTIVE_PRODUCT",
+      "note": "assistant freshness candidate; gated A5/CI; requires A6 after #237"
+    },
+    {
+      "number": 212,
+      "classification": "STALE_STACK",
+      "note": "old source monitoring candidate; compare within customs-core"
+    },
+    {
+      "number": 211,
+      "classification": "SUPERSEDED",
+      "note": "stack predecessor of #213; close only after integration preserves behavior/evidence"
+    },
+    {
+      "number": 208,
+      "classification": "STALE_STACK",
+      "note": "old advisory UI candidate; compare within compliance epic"
+    },
+    {
+      "number": 207,
+      "classification": "STALE_STACK",
+      "note": "old freshness base candidate; compare within compliance epic"
+    },
+    {
+      "number": 206,
+      "classification": "DOC_ONLY",
+      "note": "bounded completeness evidence"
+    },
+    {
+      "number": 205,
+      "classification": "DOC_ONLY",
+      "note": "AD30 freshness evidence"
+    },
+    {
+      "number": 204,
+      "classification": "STALE_STACK",
+      "note": "old payment gate candidate; compare within customs-core"
+    },
+    {
+      "number": 203,
+      "classification": "STALE_STACK",
+      "note": "legacy VAT candidate; compare within customs-core"
+    },
+    {
+      "number": 202,
+      "classification": "STALE_STACK",
+      "note": "old CBR observation candidate; compare within customs-core"
+    },
+    {
+      "number": 201,
+      "classification": "DOC_ONLY",
+      "note": "official-source delta evidence"
+    },
+    {
+      "number": 200,
+      "classification": "DOC_ONLY",
+      "note": "payment gap evidence"
+    },
+    {
+      "number": 192,
+      "classification": "DOC_ONLY",
+      "note": "AD30 review evidence candidate"
+    },
+    {
+      "number": 191,
+      "classification": "STALE_STACK",
+      "note": "historical CI/admission branch; verify successor before close"
+    },
+    {
+      "number": 189,
+      "classification": "SUPERSEDED",
+      "note": "historical AI-team pilot replaced by merged orchestration/A6 line"
+    },
+    {
+      "number": 187,
+      "classification": "STALE_STACK",
+      "note": "large historical feature stack; mine selectively, never merge mechanically"
+    }
+  ],
+  "closure_policy": "Do not close SUPERSEDED or STALE_STACK PRs until a mapped successor/integration commit preserves relevant behavior and evidence.",
+  "active_candidates": {
+    "core": [
+      235,
+      238,
+      240
+    ],
+    "product": [
+      213,
+      239
+    ],
+    "infra": [
+      237,
+      236
+    ]
+  },
+  "target": "Reduce to two integration PRs plus only necessary infra gate after coherent candidates are rebuilt and freshly gated."
+}
