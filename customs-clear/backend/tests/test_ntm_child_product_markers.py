@@ -50,6 +50,37 @@ def test_explicit_child_description_keeps_legacy_sgr(description: str) -> None:
     assert sanitized[0]["required_permits"] == ["СГР", "ДС"]
 
 
+def test_mixed_adult_and_child_audience_keeps_legacy_and_ai_sgr() -> None:
+    description = "Крем универсальный для взрослых и детей"
+    rules = [{"required_permits": ["СГР", "ДС"]}]
+    measures = [
+        {"source_level": "ai_enriched", "measure_type": "sgr", "description": "СГР"},
+        {"source_level": "ai_enriched", "measure_type": "declaration", "description": "ДС"},
+    ]
+
+    sanitized = _sanitize_ntm_rules_for_position("3304990000", description, rules)
+    filtered = _drop_spurious_ai_measures("3304990000", description, measures)
+
+    assert sanitized[0]["required_permits"] == ["СГР", "ДС"]
+    assert [row["measure_type"] for row in filtered] == ["sgr", "declaration"]
+
+
+@pytest.mark.parametrize(
+    "description",
+    [
+        "Крем универсальный для взрослых",
+        "Крем 18+",
+        "Крем не для детей",
+    ],
+)
+def test_adult_only_or_explicitly_excluded_audience_drops_legacy_sgr(description: str) -> None:
+    rules = [{"required_permits": ["СГР", "ДС"]}]
+
+    sanitized = _sanitize_ntm_rules_for_position("3304990000", description, rules)
+
+    assert sanitized[0]["required_permits"] == ["ДС"]
+
+
 def test_unrelated_det_prefix_drops_ai_sgr() -> None:
     measures = [
         {"source_level": "ai_enriched", "measure_type": "sgr", "description": "СГР"},
@@ -70,6 +101,9 @@ def test_unrelated_det_prefix_drops_ai_sgr() -> None:
         ("Крем для детей", True),
         ("Крем для младенцев", True),
         ("Baby cream", True),
+        ("Крем универсальный для взрослых и детей", True),
+        ("Крем 18+", False),
+        ("Крем не для детей", False),
     ],
 )
 def test_official_3304_child_rule_uses_explicit_child_markers(

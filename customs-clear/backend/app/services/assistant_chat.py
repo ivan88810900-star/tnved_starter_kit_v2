@@ -12,6 +12,8 @@ from .claude_service import _ask_llm, llm_provider_chain
 from .grounded_assistant import (
     _normative_freshness_warnings,
     build_chat_grounding_bundle,
+    classification_status_invariant,
+    external_rewrite_touches_server_owned_legal_semantics,
     payment_requires_review,
     render_chat_grounded_answer,
 )
@@ -23,6 +25,8 @@ _CHAT_SYSTEM_PROMPT = (
     "Кандидаты поиска — не финальная классификация. possible и needs_clarification — только advisory.\n"
     "Если покрытие санкционных источников неполное, нельзя писать, что риска нет.\n"
     "Сохрани смысл и все оговорки черновика; разрешено только сделать формулировку яснее и ответить на вопрос короче.\n"
+    "Классификационная и юридически-финальная семантика принадлежит серверу: не упоминай код, ТН ВЭД, "
+    "классификацию или окончательный/юридический статус — сервер добавит обязательную оговорку сам.\n"
     "Каждое фактическое утверждение сопровождай ссылкой вида [S1]. Используй только ID из AVAILABLE_CITATION_IDS.\n"
     "Верни ТОЛЬКО JSON без markdown-обёртки: "
     '{"answer":"markdown-текст", "citation_ids":["S1"]}. '
@@ -48,7 +52,12 @@ def _strip_json_fence(value: str) -> str:
     return text.strip()
 
 
-def _validated_llm_answer(raw: str, allowed_ids: set[str]) -> tuple[str, list[str]] | None:
+def _validated_llm_answer(
+    raw: str,
+    allowed_ids: set[str],
+    *,
+    protected_hs_codes: tuple[str, ...] = (),
+) -> tuple[str, list[str]] | None:
     try:
         parsed = json.loads(_strip_json_fence(raw))
     except (TypeError, ValueError, json.JSONDecodeError):
@@ -70,6 +79,11 @@ def _validated_llm_answer(raw: str, allowed_ids: set[str]) -> tuple[str, list[st
     if allowed_ids and (not citation_ids or not inline_ids):
         return None
     if set(citation_ids) != inline_ids:
+        return None
+    if external_rewrite_touches_server_owned_legal_semantics(
+        answer,
+        protected_hs_codes=protected_hs_codes,
+    ):
         return None
     return answer, list(dict.fromkeys(citation_ids))
 
@@ -143,9 +157,17 @@ async def run_assistant_chat(
                 _CHAT_SYSTEM_PROMPT,
                 json.dumps(payload, ensure_ascii=False, indent=2, default=str),
             )
-            validated = _validated_llm_answer(str(llm_response.get("text") or ""), allowed_ids)
+            resolved_hs_code = str(bundle.get("resolved_hs_code") or "")
+            validated = _validated_llm_answer(
+                str(llm_response.get("text") or ""),
+                allowed_ids,
+                protected_hs_codes=(resolved_hs_code,),
+            )
             if validated is not None:
                 answer = validated[0]
+                classification_invariant = classification_status_invariant(resolved_hs_code)
+                if classification_invariant:
+                    answer = f"{answer}\n\n> {classification_invariant}"
                 provider = str(llm_response.get("provider") or "") or None
                 mode = "llm_grounded"
             else:

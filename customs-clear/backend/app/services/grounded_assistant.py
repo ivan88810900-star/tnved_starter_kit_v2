@@ -74,6 +74,24 @@ _CLASSIFICATION_KEYWORDS = (
     "позици",
 )
 
+# External wording models do not own classification or legal-finality semantics.
+# This is intentionally a bounded write-scope check, not an attempt to infer
+# whether arbitrary natural-language legal claims are true, false, or negated.
+_SERVER_OWNED_LEGAL_SEMANTIC_FRAGMENTS = (
+    "тн вэд",
+    "классиф",
+    "окончательн",
+    "финальн",
+    "юридическ",
+    "официально подтверж",
+    "решение таможенн",
+    "можно декларир",
+    "декларировать без",
+    "не требует провер",
+    "проверка не нуж",
+)
+_SERVER_OWNED_CODE_WORD_RE = re.compile(r"(?<![\w])код(?:а|е|ом|у|ы)?(?![\w])", re.IGNORECASE)
+
 _ASSISTANT_SEARCH_STOP_WORDS = frozenset(
     {
         "а",
@@ -117,6 +135,44 @@ _ASSISTANT_SEARCH_STOP_WORDS = frozenset(
 
 def _digits(value: Any) -> str:
     return re.sub(r"\D", "", str(value or ""))[:10]
+
+
+def external_rewrite_touches_server_owned_legal_semantics(
+    text: str,
+    *,
+    protected_hs_codes: list[str] | tuple[str, ...] = (),
+) -> bool:
+    """Reject external prose that enters a server-owned semantic domain.
+
+    Citation membership proves provenance identifiers, not the meaning of a
+    claim.  Rather than attempting unsafe generic legal-language inference, the
+    external rewriter is denied the classification/finality vocabulary and the
+    exact HS codes already resolved by the server.  The deterministic server
+    wording remains authoritative for those concepts.
+    """
+    value = str(text or "")
+    lowered = value.lower().replace("ё", "е")
+    if _SERVER_OWNED_CODE_WORD_RE.search(lowered):
+        return True
+    if any(fragment in lowered for fragment in _SERVER_OWNED_LEGAL_SEMANTIC_FRAGMENTS):
+        return True
+    compact = re.sub(r"[\s-]", "", lowered)
+    for raw_code in protected_hs_codes:
+        code = _digits(raw_code)
+        if len(code) in _VALID_HS_LENGTHS and code in compact:
+            return True
+    return False
+
+
+def classification_status_invariant(hs_code: Any) -> str:
+    """Canonical server-owned caveat for a resolved/working TN VED code."""
+    code = _digits(hs_code)
+    if len(code) not in _VALID_HS_LENGTHS:
+        return ""
+    return (
+        f"Код ТН ВЭД {code} используется как рабочий ориентир; его соответствие товару "
+        "не подтверждено без проверки характеристик и применения ОПИ."
+    )
 
 
 def _trim(value: Any, limit: int = 500) -> str:

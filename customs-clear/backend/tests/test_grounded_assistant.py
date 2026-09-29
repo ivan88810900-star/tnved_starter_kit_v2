@@ -365,6 +365,47 @@ class AssistantChatGuardrailTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(result["grounding"]["mode"], "llm_grounded")
         self.assertEqual(result["grounding"]["provider"], "anthropic")
         self.assertIn("[S2]", result["answer"])
+        self.assertIn("используется как рабочий ориентир", result["answer"])
+        self.assertIn("не подтверждено без проверки характеристик", result["answer"])
+
+    async def test_valid_citation_cannot_make_code_final_or_legally_binding(self) -> None:
+        bundle = deepcopy(_chat_bundle())
+        bundle["requirements"]["data_freshness"]["ntm_coverage_verified"] = True
+        response = json.dumps(
+            {
+                "answer": (
+                    "Код 8516108008 окончательный и юридически обязательный; "
+                    "товар можно декларировать без дополнительной проверки. [S1]"
+                ),
+                "citation_ids": ["S1"],
+            },
+            ensure_ascii=False,
+        )
+        with (
+            patch(
+                "app.services.assistant_chat.build_chat_grounding_bundle",
+                new=AsyncMock(return_value=bundle),
+            ),
+            patch(
+                "app.services.assistant_chat.llm_provider_chain",
+                return_value=[("anthropic", "test")],
+            ),
+            patch(
+                "app.services.assistant_chat._ask_llm",
+                new=AsyncMock(return_value={"provider": "anthropic", "text": response}),
+            ),
+        ):
+            result = await run_assistant_chat(
+                message="Код окончательный?",
+                history=[],
+                current_context={"hs_code": "8516108008"},
+            )
+        self.assertEqual(result["grounding"]["mode"], "deterministic")
+        self.assertNotIn("юридически обязательный", result["answer"])
+        self.assertIn("Если код не соответствует фактическим характеристикам", result["answer"])
+        self.assertTrue(
+            any("не прошёл проверку" in item for item in result["grounding"]["limitations"])
+        )
 
     async def test_citation_valid_llm_cannot_erase_ntm_freshness_caveats(self) -> None:
         bundle = deepcopy(_chat_bundle())
@@ -665,6 +706,54 @@ class CopilotGroundingTests(unittest.IsolatedAsyncioTestCase):
             result = await analyze_copilot_bundle(context)
         self.assertNotIn("payments", result["grounding"]["facts_used"])
         self.assertIn("tnved", result["grounding"]["facts_used"])
+
+    async def test_copilot_keeps_classification_server_owned_for_safe_rewrite(self) -> None:
+        context = self._context()
+        context["normative_requirements"]["data_freshness"]["ntm_coverage_verified"] = True
+        with patch("app.services.claude_service._choose_provider", return_value=("none", None)):
+            deterministic = await analyze_copilot_bundle(context)
+        response = json.dumps(
+            {
+                "summary": "Проверены переданные серверные факты. [S1]",
+                "classification_advice": "",
+                "citation_ids": ["S1"],
+            },
+            ensure_ascii=False,
+        )
+        with (
+            patch("app.services.claude_service._choose_provider", return_value=("anthropic", "test")),
+            patch(
+                "app.services.claude_service._ask_llm",
+                new=AsyncMock(return_value={"provider": "anthropic", "text": response}),
+            ),
+        ):
+            result = await analyze_copilot_bundle(context)
+        self.assertEqual(result["grounding"]["mode"], "llm_grounded")
+        self.assertEqual(result["classification_advice"], deterministic["classification_advice"])
+        self.assertIn("требует проверки характеристик по ОПИ", result["classification_advice"])
+
+    async def test_valid_citation_cannot_make_copilot_code_final_or_legally_binding(self) -> None:
+        context = self._context()
+        context["normative_requirements"]["data_freshness"]["ntm_coverage_verified"] = True
+        response = json.dumps(
+            {
+                "summary": "Код 8516108008 окончательный и юридически обязательный. [S1]",
+                "classification_advice": "Код подтверждён; дополнительная проверка не нужна. [S1]",
+                "citation_ids": ["S1"],
+            },
+            ensure_ascii=False,
+        )
+        with (
+            patch("app.services.claude_service._choose_provider", return_value=("anthropic", "test")),
+            patch(
+                "app.services.claude_service._ask_llm",
+                new=AsyncMock(return_value={"provider": "anthropic", "text": response}),
+            ),
+        ):
+            result = await analyze_copilot_bundle(context)
+        self.assertEqual(result["grounding"]["mode"], "deterministic")
+        self.assertNotIn("юридически обязательный", result["summary"])
+        self.assertIn("требует проверки характеристик по ОПИ", result["classification_advice"])
 
     async def test_citation_valid_copilot_cannot_erase_ntm_freshness_caveats(self) -> None:
         context = self._context()

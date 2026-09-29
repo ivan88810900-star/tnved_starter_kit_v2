@@ -36,17 +36,25 @@ _SENSITIVE_PERMIT_BASIS: Dict[str, tuple[str, str]] = {
 }
 
 _CHILD_DESCRIPTION_MARKERS = (
-    "детск", "для детей", "детям", "ребен", "ребён", "младен", "baby",
+    "детск", "для детей", "детей", "детям", "ребен", "ребён", "младен", "baby",
 )
-_CHILD_DESCRIPTION_EXCLUSIONS = ("для взросл", "не для дет", "18+", "старше 18")
+_CHILD_DESCRIPTION_NEGATIONS = ("не для дет",)
+_CHILD_DESCRIPTION_ADULT_ONLY_MARKERS = ("для взросл", "18+", "старше 18")
 
 
 def _is_child_product_description(description: str) -> bool:
     """Conservative child-product gate without matching unrelated ``дет*`` words."""
     desc_l = (description or "").lower()
-    if any(marker in desc_l for marker in _CHILD_DESCRIPTION_EXCLUSIONS):
+    if any(marker in desc_l for marker in _CHILD_DESCRIPTION_NEGATIONS):
         return False
-    return any(marker in desc_l for marker in _CHILD_DESCRIPTION_MARKERS)
+    # A mixed audience is still explicitly a child audience.  Adult-only
+    # markers may suppress ambiguous descriptions, but must not erase a direct
+    # positive child signal such as "для взрослых и детей".
+    if any(marker in desc_l for marker in _CHILD_DESCRIPTION_MARKERS):
+        return True
+    if any(marker in desc_l for marker in _CHILD_DESCRIPTION_ADULT_ONLY_MARKERS):
+        return False
+    return False
 
 
 def _build_broker_required_permits(
