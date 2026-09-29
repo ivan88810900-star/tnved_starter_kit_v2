@@ -456,3 +456,11 @@ legacy (сверх structural). Контур по-прежнему **не под
 ---
 
 *Обновлять после каждого значимого изменения.*
+
+## Operating model normalization — 2026-09-29
+
+- Active developer roles are now **A-CORE** on `integration/customs-core-v1` and **A-PRODUCT** on `integration/compliance-ai-v1`, coordinated by A0.
+- A5 is ephemeral independent QA; A6 is an external high-risk audit gate. A6 is LIVE_VERIFIED, while subsequent audits still require protected PR #237.
+- Persistent A1/A2/A3/A4 ownership is historical. Exact legacy ownership is archived at `.ai/orchestration/evidence/legacy-agent-ownership-archive-20260929-gen42.json`.
+- Open PR classification and consolidation routing are authoritative in `.ai/orchestration/PR_INVENTORY_20260929.json`.
+- Current main baseline: `08e030a6053ac9638957119373797e0fbf2b10c2`. No protected merge, deploy, production write, flag, permission, secret, destructive migration, force push, or branch deletion was performed during normalization.
