@@ -32,9 +32,11 @@ class PaymentEngineTests(unittest.TestCase):
     def test_vat_22_default(self):
         """Код 8509: НДС 22% (бытовая техника, основная ставка)."""
         res = self._calc(hs_code="8509400000", customs_value=500_000, freight=45_000)
-        self.assertEqual(res["status"], "OK")
+        self.assertEqual(res["status"], "REVIEW_REQUIRED")
+        self.assertIn("hs_rate_source_binding_unverified", res["payment_review_reasons"])
         self.assertEqual(res["breakdown"]["vat_rate"], 22.0)
-        self.assertGreater(res["breakdown"]["vat"], 0)
+        self.assertIsNone(res["breakdown"]["vat"])
+        self.assertGreater(res["breakdown"]["vat_provisional"], 0)
         self.assertIn("vat_reason", res["breakdown"])
 
     def test_vat_10_food(self):
@@ -97,7 +99,8 @@ class PaymentEngineTests(unittest.TestCase):
         self.assertEqual(res["breakdown"]["selected_rule"], "manual_rate")
         self.assertEqual(res["breakdown"]["duty"], 0)
         self.assertEqual(res["breakdown"]["vat_rate"], 0)
-        self.assertEqual(res["breakdown"]["vat"], 0)
+        self.assertIsNone(res["breakdown"]["vat"])
+        self.assertEqual(res["breakdown"]["vat_provisional"], 0)
         self.assertEqual(res["breakdown"]["excise"], 0)
         self.assertIn("вручную", res["breakdown"]["vat_reason"].lower())
         self.assertEqual(res["breakdown"]["excise_reason"], "Указано вручную")
@@ -239,7 +242,8 @@ class PaymentEngineTests(unittest.TestCase):
         """Код 7214 из Китая: антидемпинг 18% применяется."""
         res = self._calc(hs_code="7214990000", customs_value=100_000, freight=10_000, country="CN")
         self.assertGreater(res["breakdown"]["antidumping"], 0)
-        self.assertEqual(res["data_quality"]["antidumping_status"], "applied")
+        self.assertEqual(res["data_quality"]["antidumping_status"], "manual_review")
+        self.assertIn("hs_rate_source_binding_unverified", res["payment_review_reasons"])
 
     def test_antidumping_applied_ua(self):
         """Код 7214 из Украины: антидемпинг 18% применяется."""
@@ -250,14 +254,15 @@ class PaymentEngineTests(unittest.TestCase):
         """Код 7214 из Германии: антидемпинг не применяется."""
         res = self._calc(hs_code="7214990000", customs_value=100_000, freight=0, country="DE")
         self.assertEqual(res["breakdown"]["antidumping"], 0.0)
-        self.assertEqual(res["data_quality"]["antidumping_status"], "n/a")
+        self.assertEqual(res["data_quality"]["antidumping_status"], "manual_review")
+        self.assertIn("hs_rate_source_binding_unverified", res["payment_review_reasons"])
 
     def test_antidumping_manual_review_no_country(self):
         """Код 7214 без страны: требуется ручная проверка антидемпинга."""
         res = self._calc(hs_code="7214990000", customs_value=100_000, freight=0, country=None)
         self.assertEqual(res["data_quality"]["antidumping_status"], "manual_review")
         self.assertEqual(res["breakdown"]["antidumping"], 0.0)
-        self.assertIn("ручная проверка", res["breakdown"]["antidumping_reason"])
+        self.assertIn("ручн", res["breakdown"]["antidumping_reason"])
 
     def test_no_antidumping_for_electronics(self):
         """Бытовая техника: антидемпинга нет."""
@@ -273,7 +278,8 @@ class PaymentEngineTests(unittest.TestCase):
         antidumping = res["breakdown"]["antidumping"]
         spec = res["breakdown"]["special_duties_amount"]
         expected_base = 100_000 + duty + excise + antidumping + spec
-        self.assertAlmostEqual(res["breakdown"]["vat_base"], expected_base, places=1)
+        self.assertIsNone(res["breakdown"]["vat_base"])
+        self.assertAlmostEqual(res["breakdown"]["vat_base_provisional"], expected_base, places=1)
 
     def test_total_payable_includes_excise_and_antidumping(self):
         """Итог к уплате включает пошлину, НДС, сбор, акциз и антидемпинг."""
@@ -287,8 +293,9 @@ class PaymentEngineTests(unittest.TestCase):
             }
         )
         b = res["breakdown"]
-        expected_total = b["customs_fee"] + b["duty"] + b["excise"] + b["antidumping"] + b["special_duties_amount"] + b["vat"]
-        self.assertAlmostEqual(b["total_payable"], expected_total, places=2)
+        expected_total = b["customs_fee"] + b["duty"] + b["excise"] + b["antidumping"] + b["special_duties_amount"] + b["vat_provisional"]
+        self.assertIsNone(b["total_payable"])
+        self.assertAlmostEqual(b["total_payable_provisional"], expected_total, places=2)
 
     # ------------------------------------------------------------------ Confidence
     def test_confidence_high_10digits(self):
@@ -311,20 +318,24 @@ class PaymentEngineTests(unittest.TestCase):
             "freight": 45_000,
             "country": "CN",
         })
-        self.assertEqual(res["status"], "OK")
+        self.assertEqual(res["status"], "REVIEW_REQUIRED")
+        self.assertIn("hs_rate_source_binding_unverified", res["payment_review_reasons"])
         dr = res["auto_detected"]["duty_rate"]
         duty = round(500_000 * dr / 100.0, 2)
         self.assertAlmostEqual(res["breakdown"]["duty"], duty, places=0)
         self.assertAlmostEqual(res["insurance"], 817.5, places=1)
         vat_base = 500_000 + duty
         fee = res["breakdown"]["customs_fee"]
-        self.assertAlmostEqual(res["breakdown"]["vat_base"], vat_base, places=0)
-        self.assertAlmostEqual(res["breakdown"]["vat"], round(vat_base * 0.22, 2), places=0)
+        self.assertIsNone(res["breakdown"]["vat_base"])
+        self.assertAlmostEqual(res["breakdown"]["vat_base_provisional"], vat_base, places=0)
+        self.assertIsNone(res["breakdown"]["vat"])
+        self.assertAlmostEqual(res["breakdown"]["vat_provisional"], round(vat_base * 0.22, 2), places=0)
         self.assertAlmostEqual(
-            res["breakdown"]["total_payable"],
+            res["breakdown"]["total_payable_provisional"],
             round(fee + duty + vat_base * 0.22, 2),
             places=0,
         )
+        self.assertIsNone(res["breakdown"]["total_payable"])
 
     def test_golden_steel_cn_antidumping(self):
         """Золотой тест: арматура из Китая с антидемпингом (+ спецпошлины из БД, если есть)."""
@@ -340,11 +351,14 @@ class PaymentEngineTests(unittest.TestCase):
         self.assertAlmostEqual(res["breakdown"]["antidumping"], 18_000.0, places=0)
         b = res["breakdown"]
         vat_base_expected = 100_000 + b["duty"] + b["excise"] + b["antidumping"] + b["special_duties_amount"]
-        self.assertAlmostEqual(b["vat_base"], vat_base_expected, places=0)
-        self.assertAlmostEqual(b["vat"], round(vat_base_expected * 0.22, 2), places=0)
+        self.assertIsNone(b["vat_base"])
+        self.assertAlmostEqual(b["vat_base_provisional"], vat_base_expected, places=0)
+        self.assertIsNone(b["vat"])
+        self.assertAlmostEqual(b["vat_provisional"], round(vat_base_expected * 0.22, 2), places=0)
         fee = b["customs_fee"]
-        total_expected = fee + b["duty"] + b["excise"] + b["antidumping"] + b["special_duties_amount"] + b["vat"]
-        self.assertAlmostEqual(b["total_payable"], total_expected, places=0)
+        total_expected = fee + b["duty"] + b["excise"] + b["antidumping"] + b["special_duties_amount"] + b["vat_provisional"]
+        self.assertIsNone(b["total_payable"])
+        self.assertAlmostEqual(b["total_payable_provisional"], total_expected, places=0)
 
     def test_golden_beer_excise(self):
         """Золотой тест: пиво — акциз процентный."""
@@ -358,11 +372,14 @@ class PaymentEngineTests(unittest.TestCase):
         # excise = 200000 * 5% = 10000
         self.assertAlmostEqual(res["breakdown"]["excise"], 10_000.0, places=0)
         # vat_base = 200000 + 10000 + 10000 = 220000
-        self.assertAlmostEqual(res["breakdown"]["vat_base"], 220_000.0, places=0)
+        self.assertIsNone(res["breakdown"]["vat_base"])
+        self.assertAlmostEqual(res["breakdown"]["vat_base_provisional"], 220_000.0, places=0)
         # vat = 220000 * 22% = 48400
-        self.assertAlmostEqual(res["breakdown"]["vat"], 48_400.0, places=0)
+        self.assertIsNone(res["breakdown"]["vat"])
+        self.assertAlmostEqual(res["breakdown"]["vat_provisional"], 48_400.0, places=0)
         fee = res["breakdown"]["customs_fee"]
-        self.assertAlmostEqual(res["breakdown"]["total_payable"], fee + 68_400.0, places=0)
+        self.assertIsNone(res["breakdown"]["total_payable"])
+        self.assertAlmostEqual(res["breakdown"]["total_payable_provisional"], fee + 68_400.0, places=0)
 
     def test_golden_food_vat10(self):
         """Золотой тест: мясо — НДС 10% (через apply_reduced_vat)."""
@@ -377,11 +394,14 @@ class PaymentEngineTests(unittest.TestCase):
         duty = res["breakdown"]["duty"]
         self.assertGreater(duty, 0)
         vat_base = 500_000 + duty + res["breakdown"]["excise"] + res["breakdown"]["antidumping"] + res["breakdown"]["special_duties_amount"]
-        self.assertAlmostEqual(res["breakdown"]["vat_base"], vat_base, places=0)
-        self.assertAlmostEqual(res["breakdown"]["vat"], round(vat_base * 0.10, 2), places=0)
+        self.assertIsNone(res["breakdown"]["vat_base"])
+        self.assertAlmostEqual(res["breakdown"]["vat_base_provisional"], vat_base, places=0)
+        self.assertIsNone(res["breakdown"]["vat"])
+        self.assertAlmostEqual(res["breakdown"]["vat_provisional"], round(vat_base * 0.10, 2), places=0)
         fee = res["breakdown"]["customs_fee"]
-        total_exp = fee + duty + res["breakdown"]["excise"] + res["breakdown"]["antidumping"] + res["breakdown"]["special_duties_amount"] + res["breakdown"]["vat"]
-        self.assertAlmostEqual(res["breakdown"]["total_payable"], total_exp, places=0)
+        total_exp = fee + duty + res["breakdown"]["excise"] + res["breakdown"]["antidumping"] + res["breakdown"]["special_duties_amount"] + res["breakdown"]["vat_provisional"]
+        self.assertIsNone(res["breakdown"]["total_payable"])
+        self.assertAlmostEqual(res["breakdown"]["total_payable_provisional"], total_exp, places=0)
 
     def test_sources_in_result(self):
         """В ответе есть источники (интегрированные данные)."""

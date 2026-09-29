@@ -336,6 +336,12 @@ def build_payment_quote(payload: dict[str, Any]) -> PaymentQuoteResponse:
     breakdown = raw.get("breakdown") or {}
     country = raw.get("country") or (str(payload.get("country") or "").upper().strip() or None)
     dq = raw.get("data_quality") or {}
+    review_reasons = set(raw.get("payment_review_reasons") or [])
+    rate_source_pending = bool(
+        {"hs_rate_source_binding_unverified", "hs_rate_source_missing"}
+        & review_reasons
+    )
+    duty_rule_source_pending = "duty_rule_source_binding_unverified" in review_reasons
 
     if raw.get("status") == "EMBARGO":
         geo = raw.get("geo") or {}
@@ -384,28 +390,47 @@ def build_payment_quote(payload: dict[str, Any]) -> PaymentQuoteResponse:
             geo=geo,
         )
 
-    duty_status: PaymentLineStatus = "applied"
+    manual_duty = payload.get("duty_rate") is not None
+    duty_source_pending = duty_rule_source_pending or (rate_source_pending and not manual_duty)
+    duty_status: PaymentLineStatus = "manual_override" if manual_duty else "applied"
     duty_reason = str((raw.get("legal_basis") or {}).get("duty") or "")
-    if int(dq.get("match_length") or 0) == 0:
+    if duty_source_pending:
+        duty_status = "manual_review_required"
+        duty_reason = (
+            "Автоматическая пошлина рассчитана только предварительно: строка ставки "
+            "или структурированное правило не имеют проверенной неизменяемой привязки к источнику."
+        )
+    elif int(dq.get("match_length") or 0) == 0 and not manual_duty:
         duty_status = "unknown"
         duty_reason = duty_reason or "Ставка пошлины не найдена в локальной базе; применена ставка 0% для расчёта."
 
     excise_status, excise_amount, excise_reason = _resolve_excise_status(raw=raw, user_excise=user_excise)
+    if rate_source_pending and user_excise is None:
+        excise_status = "manual_review_required"
+        excise_amount = None
+        excise_reason = (
+            "Применимость и ставка акциза из hs_rates не имеют проверенной "
+            "неизменяемой привязки к источнику."
+        )
     vat_pending = str(breakdown.get("vat_status") or "applied") == "manual_review"
     vat_amount = None if vat_pending else float(breakdown.get("vat") or 0.0)
     vat_status: PaymentLineStatus = "manual_review_required" if vat_pending else "applied"
     vat_reason = str(breakdown.get("vat_reason") or "")
     if vat_pending:
         vat_reason = (
-            "Сумма НДС не окончательна: антидемпинговая пошлина входит в базу НДС "
-            "и требует ручной проверки."
+            "Сумма НДС не окончательна: хотя бы один вход в базу НДС или сама ставка "
+            "не имеют подтверждённой применимости и требуют ручной проверки."
         )
 
     line_items: list[PaymentQuoteLineItem] = [
         PaymentQuoteLineItem(
             code="duty",
             label="Ввозная пошлина",
-            amount_rub=float(breakdown.get("duty") or 0.0),
+            amount_rub=(
+                None
+                if duty_source_pending
+                else float(breakdown.get("duty") or 0.0)
+            ),
             status=duty_status,
             reason=duty_reason,
             source="hs_duty_rules / hs_rates (ЕТТ ЕАЭС)",
@@ -444,7 +469,7 @@ def build_payment_quote(payload: dict[str, Any]) -> PaymentQuoteResponse:
     assumptions = _build_assumptions(payload, raw)
 
     uncertain_statuses = {"manual_review_required", "unknown", "not_configured", "embargo"}
-    blocking_codes = {"excise", "antidumping", "special_duty"}
+    blocking_codes = {"duty", "vat", "excise", "antidumping", "special_duty"}
     has_uncertain = any(
         item.status in uncertain_statuses and item.code in blocking_codes for item in line_items
     )
@@ -452,8 +477,10 @@ def build_payment_quote(payload: dict[str, Any]) -> PaymentQuoteResponse:
         sum(item.amount_rub for item in line_items if item.amount_rub is not None),
         2,
     )
-    engine_total = float(breakdown.get("total_payable") or 0.0)
-    total_payable: float | None = None if has_uncertain else engine_total
+    engine_total = breakdown.get("total_payable")
+    total_payable: float | None = (
+        None if has_uncertain or engine_total is None else float(engine_total)
+    )
 
     return PaymentQuoteResponse(
         status=str(raw.get("status") or "OK"),

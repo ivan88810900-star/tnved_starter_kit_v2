@@ -25,33 +25,32 @@ class SpecialDutiesTests(unittest.TestCase):
         defaults.update(kwargs)
         return compute_payments(defaults)
 
-    def test_cn_without_country_returns_warning_not_silent_zero(self) -> None:
+    def test_unbound_7214_without_country_withholds_final_payment(self) -> None:
         res = self._calc(hs_code="7214990000", country=None)
-        self.assertEqual(res["status"], "OK")
+        self.assertEqual(res["status"], "REVIEW_REQUIRED")
         self.assertEqual(res["breakdown"]["special_duties_amount"], 0.0)
-        self.assertTrue(res.get("special_duties_warning") or res["special_duties"])
-        details = res.get("special_duties") or []
-        if details:
-            self.assertIn("warning", details[0])
+        self.assertIn("hs_rate_source_binding_unverified", res["payment_review_reasons"])
+        self.assertIsNone(res["breakdown"]["total_payable"])
 
-    def test_cn_7214_special_duty_applied(self) -> None:
+    def test_removed_legacy_7214_special_duty_is_not_reintroduced(self) -> None:
         res = self._calc(hs_code="7214990000", country="CN")
-        self.assertEqual(res["status"], "OK")
-        self.assertGreater(res["breakdown"]["special_duties_amount"], 0.0)
-        details = res.get("special_duties") or []
-        self.assertTrue(any(d.get("hs_code_prefix", "").startswith("7214") for d in details))
+        self.assertEqual(res["status"], "REVIEW_REQUIRED")
+        self.assertEqual(res["breakdown"]["special_duties_amount"], 0.0)
+        self.assertEqual(res.get("special_duties"), [])
+        self.assertIn("hs_rate_source_binding_unverified", res["payment_review_reasons"])
+        self.assertIsNone(res["breakdown"]["total_payable"])
 
     def test_kz_chapter_20_no_legacy_garbage(self) -> None:
         """После удаления id 1,2,4,5,6 — KZ + гл.20 не даёт 120% мусорной ставки."""
         res = self._calc(hs_code="2005400000", country="KZ", customs_value=50_000, net_weight_kg=100)
         self.assertEqual(res["breakdown"]["special_duties_amount"], 0.0)
 
-    def test_cn_8429_bulldozers_rate(self) -> None:
+    def test_missing_8429_rate_does_not_create_final_zero_measure(self) -> None:
         res = self._calc(hs_code="8429100000", country="CN", customs_value=500_000)
-        self.assertGreater(res["breakdown"]["special_duties_amount"], 0.0)
-        details = res.get("special_duties") or []
-        rates = [float(d.get("rate_percent") or 0) for d in details if not d.get("warning")]
-        self.assertTrue(any(abs(r - 44.65) < 0.01 for r in rates), f"rates={rates}")
+        self.assertEqual(res["status"], "REVIEW_REQUIRED")
+        self.assertEqual(res["breakdown"]["special_duties_amount"], 0.0)
+        self.assertIn("hs_rate_source_missing", res["payment_review_reasons"])
+        self.assertIsNone(res["breakdown"]["total_payable"])
 
     def test_expired_measure_not_applied(self) -> None:
         expired_to = (date.today() - timedelta(days=30)).isoformat()

@@ -186,6 +186,36 @@ SPECIAL_DUTIES_COUNTRY_WARNING = (
     "см. remedies.eaeunion.org"
 )
 
+HS_RATE_SOURCE_BINDING_REVIEW_REASON = (
+    "Строка hs_rates не содержит типизированной неизменяемой привязки к "
+    "официальному источнику, редакции и проверенному интервалу действия; "
+    "зависимые автоматические суммы являются предварительными и требуют ручной проверки."
+)
+DUTY_RULE_SOURCE_BINDING_REVIEW_REASON = (
+    "Структурированное правило hs_duty_rules не содержит типизированной "
+    "неизменяемой привязки к официальной строке источника и редакции; "
+    "автоматическая пошлина является предварительной."
+)
+HS_RATE_SOURCE_MISSING_REVIEW_REASON = (
+    "Для кода не найдена строка hs_rates с проверенной применимостью; нулевая "
+    "пошлина и отсутствие иных платежей не могут считаться подтверждёнными."
+)
+
+
+def _hs_rate_source_binding_unverified(rate: Any | None) -> bool:
+    """Treat legacy rate metadata as observations, never as admission proof.
+
+    The current ``HsRate`` schema stores mutable URL/revision/date strings but
+    no reviewed source-row identity or immutable admission token. Plausible
+    strings therefore cannot authorize a final customs payment.
+    """
+    return rate is not None
+
+
+def _duty_rule_source_binding_unverified(rule: Any | None) -> bool:
+    """Return whether a persisted structured duty rule lacks source identity."""
+    return isinstance(rule, HsDutyRule)
+
 
 def _resolve_fx_rate(currency: str, fx_rates: dict[str, float] | None) -> float:
     """Resolve a RUB conversion without inventing an unverified market rate."""
@@ -845,6 +875,25 @@ def compute_payments(payload: dict[str, Any]) -> dict[str, Any]:
         customs_value,
         qty,
     )
+    rate_source_binding_unverified = _hs_rate_source_binding_unverified(rate)
+    rate_source_missing = rate is None
+    duty_rule_source_binding_unverified = (
+        manual_duty_rate is None and _duty_rule_source_binding_unverified(duty_rule)
+    )
+    payment_review_reasons: list[str] = []
+    if rate_source_missing:
+        payment_review_reasons.append("hs_rate_source_missing")
+        antidumping_status = "manual_review"
+        antidumping_reason = HS_RATE_SOURCE_MISSING_REVIEW_REASON
+    if rate_source_binding_unverified:
+        payment_review_reasons.append("hs_rate_source_binding_unverified")
+        # Even a stored ``none`` conclusion for trade remedies is an automatic
+        # legal conclusion from the unbound row. Keep the arithmetic candidate
+        # visible but do not let it authorize dependent VAT/final totals.
+        antidumping_status = "manual_review"
+        antidumping_reason = HS_RATE_SOURCE_BINDING_REVIEW_REASON
+    if duty_rule_source_binding_unverified:
+        payment_review_reasons.append("duty_rule_source_binding_unverified")
     special_duties_amount, special_duties_details = _resolve_special_duties(
         hs_code=hs_code,
         country=country,
@@ -946,6 +995,8 @@ def compute_payments(payload: dict[str, Any]) -> dict[str, Any]:
     # must not be exposed as final amounts.  Keep them under explicitly named
     # provisional fields for diagnostics while withholding every final signal.
     antidumping_pending = antidumping_status == "manual_review"
+    source_binding_pending = bool(payment_review_reasons)
+    final_payment_pending = antidumping_pending or source_binding_pending
 
     # Sources: интегрированные данные в приложении (без внешних ссылок)
     stats = get_integrated_data_stats()
@@ -983,7 +1034,7 @@ def compute_payments(payload: dict[str, Any]) -> dict[str, Any]:
     tnved_context = get_tnved_context_for_hs(hs_code)
 
     return {
-        "status": "REVIEW_REQUIRED" if antidumping_pending else "OK",
+        "status": "REVIEW_REQUIRED" if final_payment_pending else "OK",
         "hs_code": hs_code,
         "country": country,
         "customs_value": _round2(customs_value),
@@ -1027,15 +1078,15 @@ def compute_payments(payload: dict[str, Any]) -> dict[str, Any]:
             "vat_reason": vat_reason,
             "vat_decree_info": vat_decree_info,
             "vat_pref_comment": vat_pref_comment,
-            "vat_base": None if antidumping_pending else _round2(vat_base),
-            "vat": None if antidumping_pending else _round2(vat),
-            "vat_status": "manual_review" if antidumping_pending else "applied",
-            "vat_base_provisional": _round2(vat_base) if antidumping_pending else None,
-            "vat_provisional": _round2(vat) if antidumping_pending else None,
+            "vat_base": None if final_payment_pending else _round2(vat_base),
+            "vat": None if final_payment_pending else _round2(vat),
+            "vat_status": "manual_review" if final_payment_pending else "applied",
+            "vat_base_provisional": _round2(vat_base) if final_payment_pending else None,
+            "vat_provisional": _round2(vat) if final_payment_pending else None,
             "recycling_fee": _round2(recycling_fee_total),
-            "total_payable": None if antidumping_pending else _round2(total),
-            "total_payable_status": "withheld" if antidumping_pending else "final",
-            "total_payable_provisional": _round2(total) if antidumping_pending else None,
+            "total_payable": None if final_payment_pending else _round2(total),
+            "total_payable_status": "withheld" if final_payment_pending else "final",
+            "total_payable_provisional": _round2(total) if final_payment_pending else None,
         },
         "legal_basis": {
             "vat": vat_reason,
@@ -1061,6 +1112,32 @@ def compute_payments(payload: dict[str, Any]) -> dict[str, Any]:
         "special_duties": special_duties_details,
         "special_duties_amount": _round2(special_duties_amount),
         "special_duties_warning": special_duties_warning,
+        "payment_review_reasons": payment_review_reasons,
+        **({"hs_rate_source_candidate": {
+            "status": "needs_review",
+            "source_kind": "legacy_hs_rates",
+            "valid_from": getattr(rate, "valid_from", None),
+            "valid_to": getattr(rate, "valid_to", None),
+            "source_revision": getattr(rate, "source_revision", ""),
+            "source_url": getattr(rate, "source_url", ""),
+            "source_evidence_verified": False,
+            "legal_review_verified": False,
+        }} if rate_source_binding_unverified else {}),
+        **({"hs_rate_source_candidate": {
+            "status": "missing",
+            "source_kind": "legacy_hs_rates",
+            "source_evidence_verified": False,
+            "legal_review_verified": False,
+        }} if rate_source_missing else {}),
+        **({"duty_rule_source_candidate": {
+            "status": "needs_review",
+            "source_kind": "legacy_hs_duty_rules",
+            "code": duty_rule.commodity_code,
+            "rule_type": duty_rule.type,
+            "source_evidence_verified": False,
+            "legal_review_verified": False,
+            "reason": "duty_rule_source_binding_unverified",
+        }} if duty_rule_source_binding_unverified else {}),
         "geo": geo_meta,
         "tariff_preference": tariff_pref_meta,
         "recycling_fee": recycling_fee_meta,

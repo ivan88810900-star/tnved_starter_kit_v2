@@ -13,7 +13,7 @@ current integration base.
 | #187 | `5d3b0c1dc7dd8e396c4f812db2bf6f1fa6d293f9` | historical product stack | Do not merge | Large stale stack. It remains evidence and a source for narrowly reviewed behavior only. |
 | #202 | `b326d11ca4931c9c2e67bbde738fdbffca8d312a` | #187 | Superseded for admission | Read-only CBR observation explicitly granted no payment admission. The strict same-sync binding from #232 is the selected runtime contract. |
 | #203 | `dbb27aa857614b7b83111cddc0c5a1ed32f44580` | #187 | Deferred | Legacy invoice VAT-candidate boundary is not mechanically portable without its historical invoice stack. It must be re-evaluated against a current invoice candidate before inclusion. |
-| #204 | `ee81a66eafaba008c2205cac65e5256f939822e2` | #187 | Required follow-up | Source-bound `HsRate`/`HsDutyRule` payment admission is the remaining major acceptance dependency. Its eight-file implementation cannot be copied safely without reconciling current-main payment changes. |
+| #204 | `ee81a66eafaba008c2205cac65e5256f939822e2` | #187 | Reimplemented | The gap was reproduced on the current integration base. A narrow current-base contract now treats mutable legacy metadata as observation only, withholds dependent VAT/final totals, preserves named provisional arithmetic, and fails closed when the rate row is missing. |
 | #205 | `d1324027cec636d05f2eb6b474a4bbb66758fcef` | #187 | Evidence only | Documentation records unresolved AD30 freshness and has no runtime behavior to integrate. |
 | #212 | `fc19df03904430649e356978cf2086a616e6d244` | #187 | Deferred | Monitor-only source expansion is independent of payment admission and remains based on the stale stack. Compare with the current registry before any replay. |
 | #216 | `eb702ef05735cec12afd03278edbf23c93cbe51b` | #187 | Reimplemented | The current engine now rejects automatic fixed excise without a typed unit/denominator while preserving an explicit manual amount. |
@@ -33,6 +33,9 @@ current integration base.
 
 - Automatic and manual payment operands cannot inject negative, boolean,
   non-finite, overflowed, or partially parsed values into VAT or final totals.
+- A legacy `HsRate` or `HsDutyRule` cannot authorize final payment from mutable
+  URL/revision/date strings. Existing and missing rows both require reviewed,
+  typed source binding; raw arithmetic remains explicitly provisional.
 - Fixed excise and fixed antidumping amounts cannot reuse generic invoice
   quantity when their stored unit and denominator are unknown.
 - Foreign-currency calculations require a rate from the same verified CBRF
@@ -44,29 +47,30 @@ current integration base.
 
 ## Evidence and remaining gates
 
-Focused payment author selection:
+Focused payment/source-admission author selection:
 
-- `77 passed, 343 subtests passed`.
+- `95 passed, 343 subtests passed`.
+
+Expanded payment regression selection:
+
+- `190 passed, 343 subtests passed`.
 
 Focused source author selection, excluding three pre-existing workflow-file
 assertions for a workflow absent from the exact integration base:
 
 - `63 passed, 3 deselected, 57 subtests passed`.
 
-The broader combined selection currently reports `154 passed, 3 deselected,
-400 subtests passed` and four failures reproduced unchanged on the exact base:
-three stale special-duty fixture expectations for removed rows and one quote
-expectation that contradicts the existing fail-closed `special_duty_not_configured`
-contract. These are baseline debt, not claimed as passing candidate tests.
+The combined payment/source selection reports `167 passed, 3 deselected, 400
+subtests passed`. The three deselected checks assert a scheduled refresh workflow
+file that is absent from the exact integration base; the runtime/source tests in
+the same files pass.
 
 This is an in-progress candidate, not integration-ready. Before integration it
 still requires:
 
-1. current-base implementation and tests for the #204 source-bound automatic
-   `HsRate` / `HsDutyRule` admission contract;
-2. fresh independent A5 on the final combined head;
-3. live A6 for the high-risk payment/source changes after the post-verify
+1. fresh independent A5 on the final combined head;
+2. live A6 for the high-risk payment/source changes after the post-verify
    admission bridge is available;
-4. A0 validation of every A5/A6 finding and exact-head CI.
+3. A0 validation of every A5/A6 finding and exact-head CI.
 
 No previous PR review or CI result is carried forward to the combined head.

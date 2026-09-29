@@ -284,7 +284,16 @@ class AutomaticDutyOperandValidationTests(unittest.TestCase):
             with self.subTest(value=value):
                 with _isolated_legacy_rate(value):
                     result = compute_payments({"hs_code": "9998000000", "customs_value": 100_000.0})
-                    self.assertEqual(result["status"], "OK")
+                    self.assertEqual(result["status"], "REVIEW_REQUIRED")
+                    self.assertIn(
+                        "hs_rate_source_binding_unverified",
+                        result["payment_review_reasons"],
+                    )
+                    self.assertIsNone(result["breakdown"]["total_payable"])
+                    self.assertGreaterEqual(
+                        result["breakdown"]["total_payable_provisional"],
+                        0,
+                    )
 
     def test_compute_payments_manual_override_skips_corrupt_legacy_source(self) -> None:
         with _isolated_legacy_rate("bad"):
