@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass, field
+from datetime import datetime, timezone
 from typing import Any
 
 from loguru import logger
@@ -342,7 +343,27 @@ def _normalize_normative_freshness(value: Any) -> dict[str, Any]:
 
     source_name = optional_text("source_name", 220)
     source_code = optional_text("source_code", 120)
-    synced_at = optional_text("synced_at", 120)
+    raw_synced_at = raw.get("synced_at")
+    synced_at: str | None = None
+    if isinstance(raw_synced_at, str):
+        candidate = raw_synced_at.strip()
+        # `synced_at` is a timestamp, not a free-form provenance label. Naive
+        # ISO datetimes are interpreted as UTC for compatibility with existing
+        # source snapshots; aware values are compared in UTC. Any malformed or
+        # future value is untrusted and therefore cannot establish freshness.
+        if candidate and len(candidate) <= 120 and "T" in candidate:
+            try:
+                parsed_synced_at = datetime.fromisoformat(
+                    candidate[:-1] + "+00:00" if candidate.endswith("Z") else candidate
+                )
+                if parsed_synced_at.tzinfo is None:
+                    parsed_synced_at = parsed_synced_at.replace(tzinfo=timezone.utc)
+                else:
+                    parsed_synced_at = parsed_synced_at.astimezone(timezone.utc)
+                if parsed_synced_at <= datetime.now(timezone.utc):
+                    synced_at = candidate
+            except (OverflowError, TypeError, ValueError):
+                synced_at = None
     revision = optional_text("revision", 160)
     declared_state = raw.get("state")
 

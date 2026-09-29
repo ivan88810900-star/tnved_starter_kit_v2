@@ -5,11 +5,13 @@ from __future__ import annotations
 import json
 import unittest
 from copy import deepcopy
+from datetime import datetime, timedelta, timezone
 from unittest.mock import AsyncMock, patch
 
 from app.services.assistant_chat import run_assistant_chat
 from app.services.claude_service import analyze_copilot_bundle
 from app.services.grounded_assistant import (
+    _normalize_normative_freshness,
     build_chat_grounding_bundle,
     render_chat_grounded_answer,
 )
@@ -408,6 +410,81 @@ class AssistantChatGuardrailTests(unittest.IsolatedAsyncioTestCase):
         self.assertNotIn("Покрытие полное", result["answer"])
         llm.assert_not_awaited()
 
+    async def test_invalid_or_future_sync_time_keeps_chat_caveat_server_owned(self) -> None:
+        invalid_dates = ("unknown", "not-a-date", "2999-01-01T00:00:00+00:00")
+        for synced_at in invalid_dates:
+            with self.subTest(synced_at=synced_at):
+                bundle = deepcopy(_chat_bundle())
+                bundle["question"] = "Требуются ли документы?"
+                bundle["requirements"] = {
+                    "required_documents": [],
+                    "unconfirmed_documents": [],
+                    "advisory_requirements": [],
+                    "empty_message": "В текущем контуре требования не выявлены.",
+                    "data_freshness": {
+                        "state": "fresh",
+                        "source_name": "Технический реестр источников",
+                        "source_code": "NTM_TEST",
+                        "synced_at": synced_at,
+                        "revision": "test-revision",
+                        "is_stale": False,
+                        "scope": "technical_source_status_only",
+                        "ntm_coverage_verified": True,
+                    },
+                }
+                response = json.dumps(
+                    {
+                        "answer": "Проверка полная: документы не требуются. [S1]",
+                        "citation_ids": ["S1"],
+                    },
+                    ensure_ascii=False,
+                )
+                llm = AsyncMock(
+                    return_value={"provider": "anthropic", "text": response}
+                )
+                with (
+                    patch(
+                        "app.services.assistant_chat.build_chat_grounding_bundle",
+                        new=AsyncMock(return_value=bundle),
+                    ),
+                    patch(
+                        "app.services.assistant_chat.llm_provider_chain",
+                        return_value=[("anthropic", "test")],
+                    ),
+                    patch("app.services.assistant_chat._ask_llm", new=llm),
+                ):
+                    result = await run_assistant_chat(
+                        message="Требуются ли документы?",
+                        history=[],
+                        current_context={"hs_code": "8516108008"},
+                    )
+                self.assertEqual(result["grounding"]["mode"], "deterministic")
+                self.assertIn("Актуальность данных", result["answer"])
+                self.assertNotIn("Проверка полная", result["answer"])
+                llm.assert_not_awaited()
+
+    def test_recent_iso_sync_time_accepts_aware_and_naive_utc_policy(self) -> None:
+        recent = datetime.now(timezone.utc) - timedelta(hours=1)
+        for synced_at in (
+            recent.isoformat(),
+            recent.replace(tzinfo=None).isoformat(),
+        ):
+            with self.subTest(synced_at=synced_at):
+                signal = _normalize_normative_freshness(
+                    {
+                        "state": "fresh",
+                        "source_name": "Технический реестр источников",
+                        "source_code": "NTM_TEST",
+                        "synced_at": synced_at,
+                        "revision": "test-revision",
+                        "is_stale": False,
+                        "scope": "technical_source_status_only",
+                        "ntm_coverage_verified": True,
+                    }
+                )
+                self.assertEqual(signal["state"], "fresh")
+                self.assertTrue(signal["ntm_coverage_verified"])
+
     async def test_unknown_llm_citation_falls_back_to_deterministic(self) -> None:
         bundle = deepcopy(_chat_bundle())
         bundle["requirements"]["data_freshness"]["ntm_coverage_verified"] = True
@@ -628,6 +705,52 @@ class CopilotGroundingTests(unittest.IsolatedAsyncioTestCase):
         )
         self.assertNotIn("Покрытие полное", result["non_tariff_comment"])
         llm.assert_not_awaited()
+
+    async def test_invalid_or_future_sync_time_keeps_copilot_caveat_server_owned(self) -> None:
+        invalid_dates = ("unknown", "not-a-date", "2999-01-01T00:00:00+00:00")
+        for synced_at in invalid_dates:
+            with self.subTest(synced_at=synced_at):
+                context = self._context()
+                context["normative_requirements"] = {
+                    "required_documents": [],
+                    "missing_documents": [],
+                    "advisory_requirements": [],
+                    "data_freshness": {
+                        "state": "fresh",
+                        "source_name": "Технический реестр источников",
+                        "source_code": "NTM_TEST",
+                        "synced_at": synced_at,
+                        "revision": "test-revision",
+                        "is_stale": False,
+                        "scope": "technical_source_status_only",
+                        "ntm_coverage_verified": True,
+                    },
+                }
+                response = json.dumps(
+                    {
+                        "summary": "Проверка завершена. [S1]",
+                        "non_tariff_comment": "Документы не требуются, покрытие полное. [S1]",
+                        "risks": ["Рисков нет. [S1]"],
+                        "next_steps": ["Дополнительная проверка не нужна. [S1]"],
+                        "citation_ids": ["S1"],
+                    },
+                    ensure_ascii=False,
+                )
+                llm = AsyncMock(
+                    return_value={"provider": "anthropic", "text": response}
+                )
+                with (
+                    patch(
+                        "app.services.claude_service._choose_provider",
+                        return_value=("anthropic", "test"),
+                    ),
+                    patch("app.services.claude_service._ask_llm", new=llm),
+                ):
+                    result = await analyze_copilot_bundle(context)
+                self.assertEqual(result["grounding"]["mode"], "deterministic")
+                self.assertIn("Актуальность данных", result["non_tariff_comment"])
+                self.assertNotIn("покрытие полное", result["non_tariff_comment"])
+                llm.assert_not_awaited()
 
     async def test_malformed_copilot_llm_response_does_not_expose_raw_text(self) -> None:
         context = self._context()
