@@ -14,11 +14,11 @@ class SyncStatusDiagnosticsTests(unittest.TestCase):
     def _payload(
         self,
         *,
-        completed_at: datetime | None,
-        trigger: str = "",
-        error: str = "",
-        scheduler_running: bool = True,
-        next_run: str | None = "2026-09-29T06:00:00+03:00",
+        completed_at: object,
+        trigger: object = "",
+        error: object = "",
+        scheduler_running: object = True,
+        next_run: object = "2026-09-29T06:00:00+03:00",
     ) -> dict:
         return build_sync_status_diagnostics(
             completed_at=completed_at,
@@ -109,7 +109,7 @@ class SyncStatusDiagnosticsTests(unittest.TestCase):
 
     def test_malformed_completion_timestamp_fails_closed(self) -> None:
         payload = self._payload(
-            completed_at="not-a-datetime",  # type: ignore[arg-type]
+            completed_at="not-a-datetime",
             trigger="scheduled",
         )
 
@@ -118,6 +118,19 @@ class SyncStatusDiagnosticsTests(unittest.TestCase):
         self.assertEqual(payload["automatic_update_status"], "incomplete_attempt_evidence")
         self.assertIsNone(payload["last_sync_iso"])
         self.assertIsNone(payload["last_successful_sync_at"])
+
+    def test_wrong_scalar_and_container_completion_types_fail_closed(self) -> None:
+        for invalid in (0, False, [], {}):
+            with self.subTest(invalid=invalid):
+                payload = self._payload(
+                    completed_at=invalid,
+                    trigger="scheduled",
+                )
+
+                self.assertEqual(payload["latest_attempt_status"], "invalid_timestamp")
+                self.assertEqual(payload["latest_attempt_time_status"], "invalid")
+                self.assertIsNone(payload["last_sync_iso"])
+                self.assertIsNone(payload["last_successful_sync_at"])
 
     def test_malformed_next_run_fails_closed(self) -> None:
         payload = self._payload(
@@ -129,6 +142,21 @@ class SyncStatusDiagnosticsTests(unittest.TestCase):
         self.assertEqual(payload["schedule_status"], "invalid_next_run")
         self.assertEqual(payload["next_run_time_status"], "invalid")
         self.assertEqual(payload["automatic_update_status"], "invalid_next_run")
+
+    def test_wrong_scalar_and_container_next_run_types_fail_closed(self) -> None:
+        for invalid in (0, False, [], {}):
+            with self.subTest(invalid=invalid):
+                payload = self._payload(
+                    completed_at=datetime(2026, 9, 28, 23, 0, tzinfo=timezone.utc),
+                    trigger="scheduled",
+                    next_run=invalid,
+                )
+
+                self.assertEqual(payload["schedule_status"], "invalid_next_run")
+                self.assertEqual(payload["next_run_input_status"], "invalid_type")
+                self.assertEqual(payload["next_run_time_status"], "invalid")
+                self.assertEqual(payload["automatic_update_status"], "invalid_next_run")
+                self.assertIsNone(payload["next_sync_iso"])
 
     def test_past_next_run_fails_closed(self) -> None:
         payload = self._payload(
@@ -164,6 +192,49 @@ class SyncStatusDiagnosticsTests(unittest.TestCase):
         )
         self.assertIsNone(payload["last_successful_sync_at"])
 
+    def test_falsey_wrong_typed_error_evidence_never_becomes_success(self) -> None:
+        for invalid in (0, False):
+            with self.subTest(invalid=invalid):
+                payload = self._payload(
+                    completed_at=datetime(2026, 9, 28, 23, 0, tzinfo=timezone.utc),
+                    trigger="scheduled",
+                    error=invalid,
+                )
+
+                self.assertEqual(payload["latest_attempt_status"], "invalid_error_evidence")
+                self.assertEqual(payload["automatic_update_status"], "invalid_error_evidence")
+                self.assertEqual(payload["last_error_evidence_status"], "invalid_type")
+                self.assertTrue(payload["last_error_present"])
+                self.assertIsNone(payload["last_successful_sync_at"])
+                self.assertIsNone(payload["last_successful_scheduled_sync_at"])
+
+    def test_container_error_evidence_never_becomes_success(self) -> None:
+        for invalid in ([], {}):
+            with self.subTest(invalid=invalid):
+                payload = self._payload(
+                    completed_at=datetime(2026, 9, 28, 23, 0, tzinfo=timezone.utc),
+                    trigger="scheduled",
+                    error=invalid,
+                )
+
+                self.assertEqual(payload["latest_attempt_status"], "invalid_error_evidence")
+                self.assertEqual(payload["automatic_update_status"], "invalid_error_evidence")
+                self.assertTrue(payload["last_error_present"])
+                self.assertIsNone(payload["last_successful_sync_at"])
+
+    def test_wrong_typed_trigger_evidence_never_becomes_success(self) -> None:
+        for invalid in (0, False, [], {}):
+            with self.subTest(invalid=invalid):
+                payload = self._payload(
+                    completed_at=datetime(2026, 9, 28, 23, 0, tzinfo=timezone.utc),
+                    trigger=invalid,
+                )
+
+                self.assertEqual(payload["latest_attempt_status"], "invalid_trigger_evidence")
+                self.assertEqual(payload["automatic_update_status"], "invalid_trigger_evidence")
+                self.assertEqual(payload["last_trigger_evidence_status"], "invalid_type")
+                self.assertIsNone(payload["last_successful_sync_at"])
+
     def test_partial_attempt_evidence_is_explicit_and_in_progress_unobservable(self) -> None:
         payload = self._payload(
             completed_at=None,
@@ -173,6 +244,21 @@ class SyncStatusDiagnosticsTests(unittest.TestCase):
         self.assertEqual(payload["latest_attempt_status"], "incomplete_evidence")
         self.assertEqual(payload["automatic_update_status"], "incomplete_attempt_evidence")
         self.assertFalse(payload["in_progress_observable"])
+        self.assertFalse(payload["last_started_at_observable"])
+
+    def test_non_boolean_scheduler_state_fails_closed(self) -> None:
+        for invalid in ("false", 0, 1, [], {}):
+            with self.subTest(invalid=invalid):
+                payload = self._payload(
+                    completed_at=datetime(2026, 9, 28, 23, 0, tzinfo=timezone.utc),
+                    trigger="scheduled",
+                    scheduler_running=invalid,
+                )
+
+                self.assertFalse(payload["scheduler_running"])
+                self.assertEqual(payload["scheduler_state_status"], "invalid_type")
+                self.assertEqual(payload["schedule_status"], "invalid_scheduler_state")
+                self.assertEqual(payload["automatic_update_status"], "invalid_scheduler_state")
 
     def test_running_scheduler_without_job_fails_closed(self) -> None:
         payload = self._payload(

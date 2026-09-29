@@ -38,11 +38,11 @@ def _parse_next_run(value: Any) -> datetime | None:
 
 def build_sync_status_diagnostics(
     *,
-    completed_at: datetime | None,
-    last_trigger: str | None,
-    last_error: str | None,
-    scheduler_running: bool,
-    next_sync_iso: str | None,
+    completed_at: Any,
+    last_trigger: Any,
+    last_error: Any,
+    scheduler_running: Any,
+    next_sync_iso: Any,
     now: datetime | None = None,
 ) -> dict[str, Any]:
     """Separate run evidence from schedule presence and legal currentness.
@@ -57,10 +57,36 @@ def build_sync_status_diagnostics(
     assert current is not None
     completed_utc = _normalize_utc(completed_at, naive_is_utc=True)
     last_iso = completed_utc.isoformat() if completed_utc else None
-    error = str(last_error or "").strip()
-    trigger = str(last_trigger or "").strip()
+    scheduler_state_status = (
+        "valid" if type(scheduler_running) is bool else "invalid_type"
+    )
+    scheduler_is_running = scheduler_running if scheduler_state_status == "valid" else False
 
-    if completed_at is None and error:
+    if last_error is None:
+        error_evidence_status = "missing"
+        error = ""
+    elif isinstance(last_error, str):
+        error_evidence_status = "valid"
+        error = last_error.strip()
+    else:
+        error_evidence_status = "invalid_type"
+        error = ""
+
+    if last_trigger is None:
+        trigger_evidence_status = "missing"
+        trigger = ""
+    elif isinstance(last_trigger, str):
+        trigger_evidence_status = "valid"
+        trigger = last_trigger.strip()
+    else:
+        trigger_evidence_status = "invalid_type"
+        trigger = ""
+
+    if error_evidence_status == "invalid_type":
+        latest_attempt_status = "invalid_error_evidence"
+    elif trigger_evidence_status == "invalid_type":
+        latest_attempt_status = "invalid_trigger_evidence"
+    elif completed_at is None and error:
         latest_attempt_status = "failed_without_timestamp"
     elif completed_at is None and trigger:
         latest_attempt_status = "incomplete_evidence"
@@ -82,10 +108,22 @@ def build_sync_status_diagnostics(
     else:
         attempt_time_status = "fresh"
 
+    next_run_missing = next_sync_iso is None or (
+        isinstance(next_sync_iso, str) and not next_sync_iso.strip()
+    )
+    next_run_input_status = (
+        "missing"
+        if next_run_missing
+        else "valid_type"
+        if isinstance(next_sync_iso, str)
+        else "invalid_type"
+    )
     next_run_utc = _parse_next_run(next_sync_iso)
-    if not scheduler_running:
+    if scheduler_state_status != "valid":
+        schedule_status = "invalid_scheduler_state"
+    elif not scheduler_is_running:
         schedule_status = "not_running"
-    elif not next_sync_iso:
+    elif next_run_missing:
         schedule_status = "job_missing"
     elif next_run_utc is None:
         schedule_status = "invalid_next_run"
@@ -102,6 +140,10 @@ def build_sync_status_diagnostics(
         automatic_update_status = "awaiting_first_run"
     elif latest_attempt_status == "failed_without_timestamp":
         automatic_update_status = "latest_attempt_failed_without_timestamp"
+    elif latest_attempt_status == "invalid_error_evidence":
+        automatic_update_status = "invalid_error_evidence"
+    elif latest_attempt_status == "invalid_trigger_evidence":
+        automatic_update_status = "invalid_trigger_evidence"
     elif latest_attempt_status in ("incomplete_evidence", "invalid_timestamp"):
         automatic_update_status = "incomplete_attempt_evidence"
     elif trigger != "scheduled":
@@ -123,9 +165,10 @@ def build_sync_status_diagnostics(
     return {
         # Compatibility fields: ``last_sync_iso`` is the latest completion,
         # not necessarily a success.
-        "scheduler_running": scheduler_running,
+        "scheduler_running": bool(scheduler_is_running),
+        "scheduler_state_status": scheduler_state_status,
         "last_sync_iso": last_iso,
-        "next_sync_iso": next_sync_iso,
+        "next_sync_iso": next_sync_iso if isinstance(next_sync_iso, str) else None,
         "schedule_status": schedule_status,
         "latest_attempt_status": latest_attempt_status,
         "latest_attempt_trigger": trigger or None,
@@ -139,11 +182,15 @@ def build_sync_status_diagnostics(
         ),
         "last_success_evidence_scope": "latest_attempt_only",
         "in_progress_observable": False,
+        "last_started_at_observable": False,
         "automatic_update_status": automatic_update_status,
-        "last_error_present": bool(error),
+        "last_error_present": error_evidence_status == "invalid_type" or bool(error),
+        "last_error_evidence_status": error_evidence_status,
+        "last_trigger_evidence_status": trigger_evidence_status,
+        "next_run_input_status": next_run_input_status,
         "next_run_time_status": (
             "missing"
-            if next_sync_iso is None
+            if next_run_missing
             else "invalid"
             if next_run_utc is None
             else "valid"
