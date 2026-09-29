@@ -1,306 +1,40 @@
 {
-  "board_revision": 584,
-  "files": {
-    ".ai/orchestration/A6_LIVE_BRIDGE.md": {
-      "branch": "agent/classification-tariff-a6-live-bridge-001-f5839c6c98",
-      "owner": "A4",
-      "task_id": "TARIFF-A6-LIVE-BRIDGE-001",
-      "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-a6-live-bridge-001-f5839c6c98"
+  "schema_version": 1,
+  "board_revision": 589,
+  "files": {},
+  "active_roles": {
+    "A0": {
+      "status": "active",
+      "holder": "/root/a0_automation_20260929T101754Z",
+      "responsibility": "lead_integrator"
     },
-    ".github/workflows/tariff-a6-live.yml": {
-      "branch": "agent/classification-tariff-a6-live-bridge-001-f5839c6c98",
-      "owner": "A4",
-      "task_id": "TARIFF-A6-LIVE-BRIDGE-001",
-      "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-a6-live-bridge-001-f5839c6c98"
+    "A-CORE": {
+      "status": "active",
+      "branch": "integration/customs-core-v1",
+      "responsibility": "customs_core_epic"
     },
-    ".github/workflows/tariff-agent-safety.yml": {
-      "branch": "agent/classification-tariff-orch-ci-snapshot-validation-001-2b97826c17",
-      "owner": "A4",
-      "task_id": "TARIFF-ORCH-CI-SNAPSHOT-VALIDATION-001",
-      "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-orch-ci-snapshot-validation-001-2b97826c17"
+    "A-PRODUCT": {
+      "status": "active",
+      "branch": "integration/compliance-ai-v1",
+      "responsibility": "compliance_ai_epic"
     },
-    "customs-clear/backend/app/services/exchange_rates.py": {
-      "branch": "agent/sources-tariff-cbr-rate-observation-003-9dc4811432",
-      "owner": "A3",
-      "task_id": "TARIFF-CBR-RATE-OBSERVATION-003",
-      "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-cbr-rate-observation-003-9dc4811432"
+    "A5": {
+      "status": "ephemeral",
+      "responsibility": "independent_review_only"
     },
-    "customs-clear/backend/app/services/invoice_analyzer.py": {
-      "branch": "agent/classification-tariff-legacy-vat-boundary-003-dbe8461b66",
-      "owner": "A4",
-      "task_id": "TARIFF-LEGACY-VAT-BOUNDARY-003",
-      "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-legacy-vat-boundary-003-dbe8461b66"
-    },
-    "customs-clear/backend/app/services/non_tariff_service.py": {
-      "branch": "agent/ntm-tariff-ntm-freshness-fail-closed-001-7407bd6726",
-      "owner": "A2",
-      "task_id": "TARIFF-NTM-FRESHNESS-FAIL-CLOSED-001",
-      "worktree": "/workspace/scratch/ecdeb44a862e/tariff-agent-worktrees/tariff-ntm-freshness-fail-closed-001-restored-g22"
-    },
-    "customs-clear/backend/app/services/normative_requirements_block.py": {
-      "branch": "agent/ntm-tariff-ntm-normative-freshness-visibility-002-5fc1946031",
-      "owner": "A2",
-      "task_id": "TARIFF-NTM-NORMATIVE-FRESHNESS-VISIBILITY-002",
-      "worktree": "/workspace/scratch/ecdeb44a862e/tariff-agent-worktrees/tariff-ntm-normative-freshness-visibility-002-5fc1946031"
-    },
-    "customs-clear/backend/app/services/payment_engine.py": {
-      "branch": "agent/rates-tariff-payment-unbound-admission-006-c8a905e03d",
-      "owner": "A1",
-      "task_id": "TARIFF-PAYMENT-UNBOUND-ADMISSION-006",
-      "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-payment-unbound-admission-006-c8a905e03d"
-    },
-    "customs-clear/backend/app/services/regulatory_source_registry.py": {
-      "branch": "agent/sources-tariff-ad30-recurring-artifacts-009-c5c1c819a3",
-      "owner": "A3",
-      "task_id": "TARIFF-AD30-RECURRING-ARTIFACTS-009",
-      "worktree": "/workspace/scratch/ecdeb44a862e/tariff-agent-worktrees/tariff-ad30-recurring-artifacts-009-c5c1c819a3"
-    },
-    "customs-clear/backend/scripts/test_compliance_resolver_golden.py": {
-      "branch": "agent/classification-tariff-legacy-vat-boundary-003-dbe8461b66",
-      "owner": "A4",
-      "task_id": "TARIFF-LEGACY-VAT-BOUNDARY-003",
-      "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-legacy-vat-boundary-003-dbe8461b66"
-    },
-    "customs-clear/backend/scripts/test_invoice_parsing.py": {
-      "branch": "agent/classification-tariff-legacy-vat-boundary-003-dbe8461b66",
-      "owner": "A4",
-      "task_id": "TARIFF-LEGACY-VAT-BOUNDARY-003",
-      "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-legacy-vat-boundary-003-dbe8461b66"
-    },
-    "customs-clear/backend/scripts/vat_22_stress_validate.py": {
-      "branch": "agent/classification-tariff-legacy-vat-boundary-003-dbe8461b66",
-      "owner": "A4",
-      "task_id": "TARIFF-LEGACY-VAT-BOUNDARY-003",
-      "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-legacy-vat-boundary-003-dbe8461b66"
-    },
-    "customs-clear/backend/tests/test_cbr_exchange_rate_observation.py": {
-      "branch": "agent/sources-tariff-cbr-rate-observation-003-9dc4811432",
-      "owner": "A3",
-      "task_id": "TARIFF-CBR-RATE-OBSERVATION-003",
-      "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-cbr-rate-observation-003-9dc4811432"
-    },
-    "customs-clear/backend/tests/test_invoice_vat_admission.py": {
-      "branch": "agent/classification-tariff-legacy-vat-boundary-003-dbe8461b66",
-      "owner": "A4",
-      "task_id": "TARIFF-LEGACY-VAT-BOUNDARY-003",
-      "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-legacy-vat-boundary-003-dbe8461b66"
-    },
-    "customs-clear/backend/tests/test_non_tariff_data_freshness.py": {
-      "branch": "agent/ntm-tariff-ntm-freshness-fail-closed-001-7407bd6726",
-      "owner": "A2",
-      "task_id": "TARIFF-NTM-FRESHNESS-FAIL-CLOSED-001",
-      "worktree": "/workspace/scratch/ecdeb44a862e/tariff-agent-worktrees/tariff-ntm-freshness-fail-closed-001-restored-g22"
-    },
-    "customs-clear/backend/tests/test_normative_bundle.py": {
-      "branch": "agent/rates-tariff-payment-unbound-admission-006-c8a905e03d",
-      "owner": "A1",
-      "task_id": "TARIFF-PAYMENT-UNBOUND-ADMISSION-006",
-      "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-payment-unbound-admission-006-c8a905e03d"
-    },
-    "customs-clear/backend/tests/test_normative_requirements_block.py": {
-      "branch": "agent/ntm-tariff-ntm-normative-freshness-visibility-002-5fc1946031",
-      "owner": "A2",
-      "task_id": "TARIFF-NTM-NORMATIVE-FRESHNESS-VISIBILITY-002",
-      "worktree": "/workspace/scratch/ecdeb44a862e/tariff-agent-worktrees/tariff-ntm-normative-freshness-visibility-002-5fc1946031"
-    },
-    "customs-clear/backend/tests/test_observed_source_review_capture.py": {
-      "branch": "agent/sources-tariff-ad30-recurring-artifacts-009-c5c1c819a3",
-      "owner": "A3",
-      "task_id": "TARIFF-AD30-RECURRING-ARTIFACTS-009",
-      "worktree": "/workspace/scratch/ecdeb44a862e/tariff-agent-worktrees/tariff-ad30-recurring-artifacts-009-c5c1c819a3"
-    },
-    "customs-clear/backend/tests/test_official_source_monitor.py": {
-      "branch": "agent/sources-tariff-ad30-recurring-artifacts-009-c5c1c819a3",
-      "owner": "A3",
-      "task_id": "TARIFF-AD30-RECURRING-ARTIFACTS-009",
-      "worktree": "/workspace/scratch/ecdeb44a862e/tariff-agent-worktrees/tariff-ad30-recurring-artifacts-009-c5c1c819a3"
-    },
-    "customs-clear/backend/tests/test_official_source_original_capture.py": {
-      "branch": "agent/sources-tariff-ad30-recurring-artifacts-009-c5c1c819a3",
-      "owner": "A3",
-      "task_id": "TARIFF-AD30-RECURRING-ARTIFACTS-009",
-      "worktree": "/workspace/scratch/ecdeb44a862e/tariff-agent-worktrees/tariff-ad30-recurring-artifacts-009-c5c1c819a3"
-    },
-    "customs-clear/backend/tests/test_opendata_source_integrity.py": {
-      "branch": "agent/sources-tariff-ad30-recurring-artifacts-009-c5c1c819a3",
-      "owner": "A3",
-      "task_id": "TARIFF-AD30-RECURRING-ARTIFACTS-009",
-      "worktree": "/workspace/scratch/ecdeb44a862e/tariff-agent-worktrees/tariff-ad30-recurring-artifacts-009-c5c1c819a3"
-    },
-    "customs-clear/backend/tests/test_payment_a6_stage2.py": {
-      "branch": "agent/rates-tariff-payment-unbound-admission-006-c8a905e03d",
-      "owner": "A1",
-      "task_id": "TARIFF-PAYMENT-UNBOUND-ADMISSION-006",
-      "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-payment-unbound-admission-006-c8a905e03d"
-    },
-    "customs-clear/backend/tests/test_payment_a6_stage2_redteam.py": {
-      "branch": "agent/rates-tariff-payment-unbound-admission-006-c8a905e03d",
-      "owner": "A1",
-      "task_id": "TARIFF-PAYMENT-UNBOUND-ADMISSION-006",
-      "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-payment-unbound-admission-006-c8a905e03d"
-    },
-    "customs-clear/backend/tests/test_payment_engine.py": {
-      "branch": "agent/rates-tariff-payment-unbound-admission-006-c8a905e03d",
-      "owner": "A1",
-      "task_id": "TARIFF-PAYMENT-UNBOUND-ADMISSION-006",
-      "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-payment-unbound-admission-006-c8a905e03d"
-    },
-    "customs-clear/backend/tests/test_payment_preference_eligibility.py": {
-      "branch": "agent/rates-tariff-payment-unbound-admission-006-c8a905e03d",
-      "owner": "A1",
-      "task_id": "TARIFF-PAYMENT-UNBOUND-ADMISSION-006",
-      "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-payment-unbound-admission-006-c8a905e03d"
-    },
-    "customs-clear/backend/tests/test_payment_quote.py": {
-      "branch": "agent/rates-tariff-payment-unbound-admission-006-c8a905e03d",
-      "owner": "A1",
-      "task_id": "TARIFF-PAYMENT-UNBOUND-ADMISSION-006",
-      "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-payment-unbound-admission-006-c8a905e03d"
-    },
-    "customs-clear/backend/tests/test_payment_source_admission.py": {
-      "branch": "agent/rates-tariff-payment-unbound-admission-006-c8a905e03d",
-      "owner": "A1",
-      "task_id": "TARIFF-PAYMENT-UNBOUND-ADMISSION-006",
-      "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-payment-unbound-admission-006-c8a905e03d"
-    },
-    "customs-clear/backend/tests/test_payment_special_duty_applicability.py": {
-      "branch": "agent/rates-tariff-payment-unbound-admission-006-c8a905e03d",
-      "owner": "A1",
-      "task_id": "TARIFF-PAYMENT-UNBOUND-ADMISSION-006",
-      "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-payment-unbound-admission-006-c8a905e03d"
-    },
-    "customs-clear/frontend/src/components/nonTariff/NormativeRequirementsBlock.freshness.test.tsx": {
-      "branch": "agent/ntm-tariff-ntm-normative-freshness-visibility-002-5fc1946031",
-      "owner": "A2",
-      "task_id": "TARIFF-NTM-NORMATIVE-FRESHNESS-VISIBILITY-002",
-      "worktree": "/workspace/scratch/ecdeb44a862e/tariff-agent-worktrees/tariff-ntm-normative-freshness-visibility-002-5fc1946031"
-    },
-    "customs-clear/frontend/src/components/nonTariff/NormativeRequirementsBlock.tsx": {
-      "branch": "agent/ntm-tariff-ntm-normative-freshness-visibility-002-5fc1946031",
-      "owner": "A2",
-      "task_id": "TARIFF-NTM-NORMATIVE-FRESHNESS-VISIBILITY-002",
-      "worktree": "/workspace/scratch/ecdeb44a862e/tariff-agent-worktrees/tariff-ntm-normative-freshness-visibility-002-5fc1946031"
-    },
-    "customs-clear/frontend/src/components/nonTariff/normativeBlockHelpers.ts": {
-      "branch": "agent/ntm-tariff-ntm-normative-freshness-visibility-002-5fc1946031",
-      "owner": "A2",
-      "task_id": "TARIFF-NTM-NORMATIVE-FRESHNESS-VISIBILITY-002",
-      "worktree": "/workspace/scratch/ecdeb44a862e/tariff-agent-worktrees/tariff-ntm-normative-freshness-visibility-002-5fc1946031"
-    },
-    "customs-clear/frontend/src/components/tnved/PermitDocumentsBlock.test.tsx": {
-      "branch": "agent/ntm-tariff-ntm-advisory-summary-001-e2d7a9dc7e",
-      "owner": "A2",
-      "task_id": "TARIFF-NTM-ADVISORY-SUMMARY-001",
-      "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-ntm-advisory-summary-001-e2d7a9dc7e"
-    },
-    "customs-clear/frontend/src/components/tnved/PermitDocumentsBlock.tsx": {
-      "branch": "agent/ntm-tariff-ntm-advisory-summary-001-e2d7a9dc7e",
-      "owner": "A2",
-      "task_id": "TARIFF-NTM-ADVISORY-SUMMARY-001",
-      "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-ntm-advisory-summary-001-e2d7a9dc7e"
-    },
-    "customs-clear/frontend/src/types/api.types.ts": {
-      "branch": "agent/ntm-tariff-ntm-normative-freshness-visibility-002-5fc1946031",
-      "owner": "A2",
-      "task_id": "TARIFF-NTM-NORMATIVE-FRESHNESS-VISIBILITY-002",
-      "worktree": "/workspace/scratch/ecdeb44a862e/tariff-agent-worktrees/tariff-ntm-normative-freshness-visibility-002-5fc1946031"
-    },
-    "docs/ai-workflow/AD30_FRESHNESS_EVIDENCE_20260914.md": {
-      "branch": "agent/sources-tariff-ad30-freshness-evidence-008-6c868586f5",
-      "owner": "A3",
-      "task_id": "TARIFF-AD30-FRESHNESS-EVIDENCE-008",
-      "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-ad30-freshness-evidence-008-6c868586f5"
-    },
-    "docs/ai-workflow/NTM_COMPLETENESS_RECHECK_20260914.md": {
-      "branch": "agent/ntm-tariff-ntm-completeness-recheck-001-c746d4f679",
-      "owner": "A2",
-      "task_id": "TARIFF-NTM-COMPLETENESS-RECHECK-001",
-      "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-ntm-completeness-recheck-001-c746d4f679"
-    },
-    "docs/ai-workflow/OFFICIAL_SOURCE_TEMPORAL_AD30_RECHECK_20260914.md": {
-      "branch": "agent/sources-tariff-official-source-delta-002-753e289be4",
-      "owner": "A3",
-      "task_id": "TARIFF-OFFICIAL-SOURCE-DELTA-002",
-      "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-official-source-delta-002-753e289be4"
-    },
-    "docs/ai-workflow/PAYMENT_SOURCE_BOUND_RECHECK_20260914.md": {
-      "branch": "agent/rates-tariff-payment-source-recheck-002-c1549329dc",
-      "owner": "A1",
-      "task_id": "TARIFF-PAYMENT-SOURCE-RECHECK-002",
-      "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-payment-source-recheck-002-c1549329dc"
-    },
-    "tests/agent_orchestration/test_a5_independent.py": {
-      "branch": "agent/classification-tariff-orch-control-hardening-001-6689c2a339",
-      "owner": "A4",
-      "task_id": "TARIFF-ORCH-CONTROL-HARDENING-001",
-      "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-orch-control-hardening-001-6689c2a339"
-    },
-    "tests/agent_orchestration/test_audit.py": {
-      "branch": "agent/classification-tariff-a6-cross-branch-contract-001-a5c4916ca6",
-      "owner": "A4",
-      "task_id": "TARIFF-A6-CROSS-BRANCH-CONTRACT-001",
-      "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-pr193"
-    },
-    "tests/agent_orchestration/test_audit_bridge.py": {
-      "branch": "agent/classification-tariff-a6-live-bridge-001-f5839c6c98",
-      "owner": "A4",
-      "task_id": "TARIFF-A6-LIVE-BRIDGE-001",
-      "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-a6-live-bridge-001-f5839c6c98"
-    },
-    "tests/agent_orchestration/test_cli_snapshot.py": {
-      "branch": "agent/classification-tariff-orch-ci-snapshot-validation-001-2b97826c17",
-      "owner": "A4",
-      "task_id": "TARIFF-ORCH-CI-SNAPSHOT-VALIDATION-001",
-      "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-orch-ci-snapshot-validation-001-2b97826c17"
-    },
-    "tests/agent_orchestration/test_control.py": {
-      "branch": "agent/classification-tariff-orch-control-hardening-001-6689c2a339",
-      "owner": "A4",
-      "task_id": "TARIFF-ORCH-CONTROL-HARDENING-001",
-      "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-orch-control-hardening-001-6689c2a339"
-    },
-    "tests/agent_orchestration/test_lease.py": {
-      "branch": "agent/classification-tariff-orch-lease-takeover-hardening-001-b4b30adacd",
-      "owner": "A4",
-      "task_id": "TARIFF-ORCH-LEASE-TAKEOVER-HARDENING-001",
-      "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-orch-lease-takeover-hardening-001-b4b30adacd"
-    },
-    "tools/tariff_agents/__main__.py": {
-      "branch": "agent/classification-tariff-orch-ci-snapshot-validation-001-2b97826c17",
-      "owner": "A4",
-      "task_id": "TARIFF-ORCH-CI-SNAPSHOT-VALIDATION-001",
-      "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-orch-ci-snapshot-validation-001-2b97826c17"
-    },
-    "tools/tariff_agents/audit.py": {
-      "branch": "agent/classification-tariff-a6-cross-branch-contract-001-a5c4916ca6",
-      "owner": "A4",
-      "task_id": "TARIFF-A6-CROSS-BRANCH-CONTRACT-001",
-      "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-pr193"
-    },
-    "tools/tariff_agents/audit_bridge.py": {
-      "branch": "agent/classification-tariff-a6-live-bridge-001-f5839c6c98",
-      "owner": "A4",
-      "task_id": "TARIFF-A6-LIVE-BRIDGE-001",
-      "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-a6-live-bridge-001-f5839c6c98"
-    },
-    "tools/tariff_agents/control.py": {
-      "branch": "agent/classification-tariff-orch-control-hardening-001-6689c2a339",
-      "owner": "A4",
-      "task_id": "TARIFF-ORCH-CONTROL-HARDENING-001",
-      "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-orch-control-hardening-001-6689c2a339"
-    },
-    "tools/tariff_agents/lease.py": {
-      "branch": "agent/classification-tariff-orch-lease-takeover-hardening-001-b4b30adacd",
-      "owner": "A4",
-      "task_id": "TARIFF-ORCH-LEASE-TAKEOVER-HARDENING-001",
-      "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-orch-lease-takeover-hardening-001-b4b30adacd"
-    },
-    "tools/tariff_agents/verify.py": {
-      "branch": "agent/classification-tariff-orch-control-hardening-001-6689c2a339",
-      "owner": "A4",
-      "task_id": "TARIFF-ORCH-CONTROL-HARDENING-001",
-      "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-orch-control-hardening-001-6689c2a339"
+    "A6": {
+      "status": "ephemeral",
+      "responsibility": "external_high_risk_audit_only",
+      "live_verified": true,
+      "post_verify_bridge_pr": 237
     }
   },
-  "schema_version": 1
+  "legacy_roles": {
+    "A1": "historical",
+    "A2": "historical",
+    "A3": "historical",
+    "A4": "historical"
+  },
+  "history_ref": ".ai/orchestration/evidence/legacy-agent-ownership-archive-20260929-gen42.json",
+  "inventory_ref": ".ai/orchestration/PR_INVENTORY_20260929.json"
 }
