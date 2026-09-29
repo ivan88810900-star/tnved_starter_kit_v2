@@ -335,6 +335,8 @@ class AssistantChatGuardrailTests(unittest.IsolatedAsyncioTestCase):
         self.assertNotIn("ключ", result["answer"].lower())
 
     async def test_configured_llm_must_return_known_inline_citation(self) -> None:
+        bundle = deepcopy(_chat_bundle())
+        bundle["requirements"]["data_freshness"]["ntm_coverage_verified"] = True
         response = json.dumps(
             {
                 "answer": "По серверному расчёту итог составляет 25 000 ₽. [S2]",
@@ -345,7 +347,7 @@ class AssistantChatGuardrailTests(unittest.IsolatedAsyncioTestCase):
         with (
             patch(
                 "app.services.assistant_chat.build_chat_grounding_bundle",
-                new=AsyncMock(return_value=_chat_bundle()),
+                new=AsyncMock(return_value=bundle),
             ),
             patch("app.services.assistant_chat.llm_provider_chain", return_value=[("anthropic", "test")]),
             patch(
@@ -362,7 +364,53 @@ class AssistantChatGuardrailTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(result["grounding"]["provider"], "anthropic")
         self.assertIn("[S2]", result["answer"])
 
+    async def test_citation_valid_llm_cannot_erase_ntm_freshness_caveats(self) -> None:
+        bundle = deepcopy(_chat_bundle())
+        bundle["question"] = "Требуются ли документы?"
+        bundle["requirements"] = {
+            "required_documents": [],
+            "unconfirmed_documents": [],
+            "advisory_requirements": [],
+            "empty_message": "В текущем контуре требования не выявлены.",
+            "data_freshness": {
+                "state": "stale",
+                "is_stale": True,
+                "ntm_coverage_verified": False,
+            },
+        }
+        response = json.dumps(
+            {
+                "answer": "Покрытие полное, иных требований и рисков нет. [S1]",
+                "citation_ids": ["S1"],
+            },
+            ensure_ascii=False,
+        )
+        llm = AsyncMock(return_value={"provider": "anthropic", "text": response})
+        with (
+            patch(
+                "app.services.assistant_chat.build_chat_grounding_bundle",
+                new=AsyncMock(return_value=bundle),
+            ),
+            patch(
+                "app.services.assistant_chat.llm_provider_chain",
+                return_value=[("anthropic", "test")],
+            ),
+            patch("app.services.assistant_chat._ask_llm", new=llm),
+        ):
+            result = await run_assistant_chat(
+                message="Требуются ли документы?",
+                history=[],
+                current_context={"hs_code": "8516108008"},
+            )
+        self.assertEqual(result["grounding"]["mode"], "deterministic")
+        self.assertIn("помечены как устаревшие", result["answer"])
+        self.assertIn("Полнота и юридическая актуальность", result["answer"])
+        self.assertNotIn("Покрытие полное", result["answer"])
+        llm.assert_not_awaited()
+
     async def test_unknown_llm_citation_falls_back_to_deterministic(self) -> None:
+        bundle = deepcopy(_chat_bundle())
+        bundle["requirements"]["data_freshness"]["ntm_coverage_verified"] = True
         response = json.dumps(
             {"answer": "Выдуманный факт. [S999]", "citation_ids": ["S999"]},
             ensure_ascii=False,
@@ -370,7 +418,7 @@ class AssistantChatGuardrailTests(unittest.IsolatedAsyncioTestCase):
         with (
             patch(
                 "app.services.assistant_chat.build_chat_grounding_bundle",
-                new=AsyncMock(return_value=_chat_bundle()),
+                new=AsyncMock(return_value=bundle),
             ),
             patch("app.services.assistant_chat.llm_provider_chain", return_value=[("gemini", "test")]),
             patch(
@@ -390,6 +438,8 @@ class AssistantChatGuardrailTests(unittest.IsolatedAsyncioTestCase):
         )
 
     async def test_unknown_declared_citation_falls_back_even_when_inline_id_is_valid(self) -> None:
+        bundle = deepcopy(_chat_bundle())
+        bundle["requirements"]["data_freshness"]["ntm_coverage_verified"] = True
         response = json.dumps(
             {
                 "answer": "По серверному расчёту итог составляет 25 000 ₽. [S2]",
@@ -400,7 +450,7 @@ class AssistantChatGuardrailTests(unittest.IsolatedAsyncioTestCase):
         with (
             patch(
                 "app.services.assistant_chat.build_chat_grounding_bundle",
-                new=AsyncMock(return_value=_chat_bundle()),
+                new=AsyncMock(return_value=bundle),
             ),
             patch("app.services.assistant_chat.llm_provider_chain", return_value=[("gemini", "test")]),
             patch(
@@ -539,7 +589,51 @@ class CopilotGroundingTests(unittest.IsolatedAsyncioTestCase):
         self.assertNotIn("payments", result["grounding"]["facts_used"])
         self.assertIn("tnved", result["grounding"]["facts_used"])
 
+    async def test_citation_valid_copilot_cannot_erase_ntm_freshness_caveats(self) -> None:
+        context = self._context()
+        context["normative_requirements"] = {
+            "required_documents": [],
+            "missing_documents": [],
+            "advisory_requirements": [],
+            "data_freshness": {
+                "state": "stale",
+                "is_stale": True,
+                "ntm_coverage_verified": False,
+            },
+        }
+        response = json.dumps(
+            {
+                "summary": "Проверка завершена. [S1]",
+                "non_tariff_comment": "Покрытие полное, иных требований нет. [S1]",
+                "risks": ["Рисков нет. [S1]"],
+                "next_steps": ["Дополнительная проверка не нужна. [S1]"],
+                "citation_ids": ["S1"],
+            },
+            ensure_ascii=False,
+        )
+        llm = AsyncMock(return_value={"provider": "anthropic", "text": response})
+        with (
+            patch(
+                "app.services.claude_service._choose_provider",
+                return_value=("anthropic", "test"),
+            ),
+            patch("app.services.claude_service._ask_llm", new=llm),
+        ):
+            result = await analyze_copilot_bundle(context)
+        self.assertEqual(result["grounding"]["mode"], "deterministic")
+        self.assertIn("помечены как устаревшие", result["non_tariff_comment"])
+        self.assertTrue(
+            any("Полнота и юридическая актуальность" in item for item in result["risks"]),
+            result["risks"],
+        )
+        self.assertNotIn("Покрытие полное", result["non_tariff_comment"])
+        llm.assert_not_awaited()
+
     async def test_malformed_copilot_llm_response_does_not_expose_raw_text(self) -> None:
+        context = self._context()
+        context["normative_requirements"]["data_freshness"][
+            "ntm_coverage_verified"
+        ] = True
         with (
             patch("app.services.claude_service._choose_provider", return_value=("anthropic", "test")),
             patch(
@@ -547,12 +641,16 @@ class CopilotGroundingTests(unittest.IsolatedAsyncioTestCase):
                 new=AsyncMock(return_value={"provider": "anthropic", "text": "not-json-secret"}),
             ),
         ):
-            result = await analyze_copilot_bundle(self._context())
+            result = await analyze_copilot_bundle(context)
         self.assertEqual(result["grounding"]["mode"], "deterministic")
         self.assertNotIn("raw", result)
         self.assertNotIn("not-json-secret", json.dumps(result, ensure_ascii=False))
 
     async def test_copilot_rejects_unknown_declared_citation(self) -> None:
+        context = self._context()
+        context["normative_requirements"]["data_freshness"][
+            "ntm_coverage_verified"
+        ] = True
         response = json.dumps(
             {
                 "summary": "Рабочий код требует проверки характеристик. [S1]",
@@ -567,7 +665,7 @@ class CopilotGroundingTests(unittest.IsolatedAsyncioTestCase):
                 new=AsyncMock(return_value={"provider": "anthropic", "text": response}),
             ),
         ):
-            result = await analyze_copilot_bundle(self._context())
+            result = await analyze_copilot_bundle(context)
         self.assertEqual(result["grounding"]["mode"], "deterministic")
         self.assertNotIn("S999", json.dumps(result, ensure_ascii=False))
 
