@@ -15,19 +15,52 @@
   },
   "classifications": [
     {
-      "number": 240,
+      "number": 242,
+      "classification": "ACTIVE_PRODUCT",
+      "note": "coherent compliance/AI consolidation; fresh A5 PASS and exact-head CI success; high-risk A6 pending post-verify admission",
+      "head": "bf27ef2cd243f0e2f9325c48a1cfad40a100b2fe",
+      "a5": {
+        "verdict": "PASS",
+        "review_id": 5351884301
+      },
+      "ci": {
+        "conclusion": "success",
+        "run_id": 36562105462
+      },
+      "a6": "PENDING_INFRA_GATE"
+    },
+    {
+      "number": 241,
       "classification": "ACTIVE_CORE",
-      "note": "source update health; gated A5/CI; consolidate into customs-core"
+      "note": "coherent customs-core consolidation; fresh A5 PASS and exact-head CI success; high-risk A6 pending post-verify admission",
+      "head": "f1921b63a452a059c1109c658560efc318127aad",
+      "a5": {
+        "verdict": "PASS",
+        "review_id": 5351957772
+      },
+      "ci": {
+        "conclusion": "success",
+        "run_id": 36563127291
+      },
+      "a6": "PENDING_INFRA_GATE"
+    },
+    {
+      "number": 240,
+      "classification": "STALE_STACK",
+      "note": "consolidated into PR #241; close only after gated integration preserves behavior/evidence",
+      "successor_candidate": 241
     },
     {
       "number": 239,
-      "classification": "ACTIVE_PRODUCT",
-      "note": "NTM false-positive fix; gated A5/CI; requires A6 after #237"
+      "classification": "STALE_STACK",
+      "note": "consolidated into PR #242; close only after gated integration preserves behavior/evidence",
+      "successor_candidate": 242
     },
     {
       "number": 238,
-      "classification": "ACTIVE_CORE",
-      "note": "payment admission hardening; gated A5/CI; requires A6 after #237"
+      "classification": "STALE_STACK",
+      "note": "consolidated into PR #241; close only after gated integration preserves behavior/evidence",
+      "successor_candidate": 241
     },
     {
       "number": 237,
@@ -41,8 +74,9 @@
     },
     {
       "number": 235,
-      "classification": "ACTIVE_CORE",
-      "note": "source entrypoint diagnostics; gated A5/CI"
+      "classification": "STALE_STACK",
+      "note": "consolidated into PR #241; close only after gated integration preserves behavior/evidence",
+      "successor_candidate": 241
     },
     {
       "number": 234,
@@ -121,8 +155,9 @@
     },
     {
       "number": 213,
-      "classification": "ACTIVE_PRODUCT",
-      "note": "assistant freshness candidate; gated A5/CI; requires A6 after #237"
+      "classification": "STALE_STACK",
+      "note": "consolidated into PR #242; close only after gated integration preserves behavior/evidence",
+      "successor_candidate": 242
     },
     {
       "number": 212,
@@ -203,18 +238,52 @@
   "closure_policy": "Do not close SUPERSEDED or STALE_STACK PRs until a mapped successor/integration commit preserves relevant behavior and evidence.",
   "active_candidates": {
     "core": [
-      235,
-      238,
-      240
+      241
     ],
     "product": [
-      213,
-      239
+      242
     ],
     "infra": [
       237,
       236
     ]
   },
-  "target": "Reduce to two integration PRs plus only necessary infra gate after coherent candidates are rebuilt and freshly gated."
+  "target": "Two coherent integration candidates (#241, #242) plus infra gates (#237, #236); close older PRs only after gated integration preserves mapped behavior and evidence.",
+  "updated_at": "2026-09-29T11:42:00.000Z",
+  "supersession_mapping": {
+    "241": [
+      216,
+      220,
+      222,
+      223,
+      226,
+      228,
+      229,
+      231,
+      232,
+      235,
+      238,
+      240,
+      202,
+      203,
+      204,
+      205,
+      212,
+      187
+    ],
+    "242": [
+      207,
+      208,
+      211,
+      213,
+      221,
+      224,
+      227,
+      230,
+      233,
+      234,
+      239,
+      187
+    ]
+  }
 }
