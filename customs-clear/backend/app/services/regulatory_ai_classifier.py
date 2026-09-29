@@ -136,9 +136,15 @@ KEYWORD_HS_MAP: dict[str, list[str]] = {
 
 # ``шина`` used to match inside ``машина`` / ``машины``.  That attached tyre
 # position 4011 to practical machinery regulations such as ``О безопасности
-# машин и оборудования``.  Preserve the legacy stem behaviour on the right
-# (``шинах``, ``шинами``) while requiring the keyword to start a token.
-LEFT_BOUNDED_KEYWORDS = frozenset({"шина"})
+# машин и оборудования``.  Enumerate tyre morphology and common closed
+# compounds instead of accepting an arbitrary substring.
+_TYRE_ROOTS = ("шин", "автошин", "мотошин", "велошин", "пневмошин")
+_TYRE_SUFFIXES = ("", "а", "ы", "у", "е", "ой", "ою", "ам", "ами", "ах")
+TYRE_KEYWORD_FORMS = tuple(
+    root + suffix
+    for root in _TYRE_ROOTS
+    for suffix in _TYRE_SUFFIXES
+)
 
 
 def _is_token_continuation(char: str) -> bool:
@@ -149,17 +155,24 @@ def _is_token_continuation(char: str) -> bool:
     return char.isalnum() or category.startswith("M") or category in {"Pc", "Cf"}
 
 
-def _contains_left_bounded_keyword(text: str, keyword: str) -> bool:
-    """Match ``keyword`` only when it starts a token, preserving stem suffixes."""
-    start = 0
-    while True:
-        index = text.find(keyword, start)
-        if index < 0:
-            return False
-        left = text[index - 1] if index else ""
-        if not _is_token_continuation(left):
-            return True
-        start = index + 1
+def _contains_bounded_form(text: str, forms: tuple[str, ...]) -> bool:
+    """Match an allowlisted complete token, rejecting Unicode continuations."""
+    for form in forms:
+        start = 0
+        while True:
+            index = text.find(form, start)
+            if index < 0:
+                break
+            end = index + len(form)
+            left = text[index - 1] if index else ""
+            right = text[end] if end < len(text) else ""
+            if (
+                not _is_token_continuation(left)
+                and not _is_token_continuation(right)
+            ):
+                return True
+            start = index + 1
+    return False
 
 
 def _extract_explicit_hs_codes(text: str) -> list[str]:
@@ -198,8 +211,8 @@ def _extract_keyword_hs_codes(text: str) -> list[tuple[str, str]]:
     seen: set[str] = set()
     for keyword, prefixes in KEYWORD_HS_MAP.items():
         matched = (
-            _contains_left_bounded_keyword(text_lower, keyword)
-            if keyword in LEFT_BOUNDED_KEYWORDS
+            _contains_bounded_form(text_lower, TYRE_KEYWORD_FORMS)
+            if keyword == "шина"
             else keyword in text_lower
         )
         if matched:
