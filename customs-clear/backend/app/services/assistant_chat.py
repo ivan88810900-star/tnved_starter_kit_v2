@@ -10,6 +10,7 @@ from loguru import logger
 
 from .claude_service import _ask_llm, llm_provider_chain
 from .grounded_assistant import (
+    _normative_freshness_warnings,
     build_chat_grounding_bundle,
     payment_requires_review,
     render_chat_grounded_answer,
@@ -111,12 +112,20 @@ async def run_assistant_chat(
 
     citations = list(bundle.get("citations") or [])
     allowed_ids = {str(row.get("id")) for row in citations if row.get("id")}
+    requirements = bundle.get("requirements")
+    has_server_owned_ntm_caveat = bool(
+        isinstance(requirements, dict)
+        and _normative_freshness_warnings(requirements.get("data_freshness"))
+    )
     # With no trustworthy facts, a model rewrite only increases hallucination risk.
     if (
         llm_configured
         and bundle.get("coverage") != "needs_context"
         and allowed_ids
         and not payment_requires_review(bundle.get("payment"))
+        # Citation membership cannot prove that a wording-only model preserved
+        # stale/unknown/incomplete NTM caveats. Keep those server-owned.
+        and not has_server_owned_ntm_caveat
     ):
         payload = {
             "CURRENT_QUESTION": user_message,

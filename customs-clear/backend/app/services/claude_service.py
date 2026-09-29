@@ -11,7 +11,11 @@ from loguru import logger
 from .classify_response_parser import parse_classify_response
 from .decision_history import journal_hints_for_classifier
 from .gemini_genai_configure import gemini_generate_content_rest_url, resolved_gemini_model_name
-from .grounded_assistant import build_copilot_deterministic_summary, payment_requires_review
+from .grounded_assistant import (
+    _normative_freshness_warnings,
+    build_copilot_deterministic_summary,
+    payment_requires_review,
+)
 from .safe_http_errors import safe_ai_error_note
 
 ANTHROPIC_URL = "https://api.anthropic.com/v1/messages"
@@ -409,6 +413,18 @@ async def analyze_copilot_bundle(
     ):
         # Citation validation cannot prove preservation of a material caveat.
         # Keep pending-payment wording deterministic until eligibility is known.
+        return fallback
+    if any(
+        isinstance(row, dict)
+        and isinstance(row.get("normative_requirements"), dict)
+        and _normative_freshness_warnings(
+            row["normative_requirements"].get("data_freshness")
+        )
+        for row in rows
+    ):
+        # Citation membership cannot prove preservation of material freshness
+        # and coverage caveats. Keep them server-owned until a validator can
+        # enforce their meaning rather than merely their JSON shape.
         return fallback
     provider, key = _choose_provider()
     if not key or provider == "none":

@@ -3,10 +3,16 @@ from __future__ import annotations
 
 import importlib.util
 import unittest
+from copy import deepcopy
 from unittest.mock import AsyncMock, patch
 
+from app.services.assistant_orchestrator import (
+    bundle_for_llm,
+    pick_hs_from_classification,
+    run_copilot_pipeline,
+)
+from app.services.claude_service import analyze_copilot_bundle
 from app.services.normative_store import init_db
-from app.services.assistant_orchestrator import run_copilot_pipeline, pick_hs_from_classification, bundle_for_llm
 
 
 class PickHsTests(unittest.TestCase):
@@ -94,6 +100,110 @@ class CopilotPipelineTests(unittest.IsolatedAsyncioTestCase):
         self.assertIn("non_tariff", b)
         slim = bundle_for_llm(b)
         self.assertIn("payment_summary", slim)
+
+
+class CopilotNormativeFreshnessIntegrationTests(unittest.IsolatedAsyncioTestCase):
+    @staticmethod
+    def _bundle(data_freshness):
+        return {
+            "effective_hs_code": "8509400000",
+            "description": "пылесос",
+            "country": "CN",
+            "non_tariff": {
+                "status": "NEEDS_DOCUMENTS",
+                "normative_block": {
+                    "status": "NEEDS_DOCUMENTS",
+                    "required_documents": [
+                        {
+                            "permit_type": "СС",
+                            "tr_ts": "ТР ТС 004/2011",
+                            "source": "ntm_v2",
+                            "source_label": "NTM v2",
+                            "applicability": "definite",
+                            "reason": "Обязательная сертификация",
+                        }
+                    ],
+                    "missing_documents": [
+                        {
+                            "permit_type": "СС",
+                            "tr_ts": "ТР ТС 004/2011",
+                            "source": "ntm_v2",
+                            "source_label": "NTM v2",
+                            "applicability": "definite",
+                            "reason": "Номер документа не предоставлен",
+                        }
+                    ],
+                    "advisory_requirements": [
+                        {
+                            "permit_type": "ДС",
+                            "tr_ts": "ТР ЕАЭС 037/2016",
+                            "source": "ntm_v2",
+                            "source_label": "NTM v2",
+                            "applicability": "needs_clarification",
+                            "reason": "Зависит от характеристик товара",
+                        }
+                    ],
+                    "data_freshness": data_freshness,
+                    "empty_message": None,
+                },
+            },
+        }
+
+    async def test_bundle_for_llm_propagates_freshness_into_real_copilot_path(self):
+        fresh = {
+            "state": "fresh",
+            "source_name": "Технический реестр источников",
+            "source_code": "NTM_TEST",
+            "synced_at": "2026-09-16T09:00:00+00:00",
+            "revision": "test-revision",
+            "is_stale": False,
+            "scope": "technical_source_status_only",
+            "ntm_coverage_verified": False,
+        }
+        cases = (
+            (fresh, "Полнота и юридическая актуальность"),
+            (
+                {"state": "stale", "is_stale": True, "ntm_coverage_verified": False},
+                "помечены как устаревшие",
+            ),
+            ("malformed", "Актуальность данных нетарифного контура не подтверждена"),
+        )
+
+        expected_documents = None
+        for data_freshness, expected_warning in cases:
+            with self.subTest(data_freshness=data_freshness):
+                slim = bundle_for_llm(self._bundle(data_freshness))
+                requirements = slim["normative_requirements"]
+                self.assertEqual(requirements["data_freshness"], data_freshness)
+
+                document_rows = {
+                    key: deepcopy(requirements[key])
+                    for key in (
+                        "required_documents",
+                        "missing_documents",
+                        "advisory_requirements",
+                    )
+                }
+                if expected_documents is None:
+                    expected_documents = document_rows
+                self.assertEqual(document_rows, expected_documents)
+
+                with patch(
+                    "app.services.claude_service._choose_provider",
+                    return_value=("none", None),
+                ):
+                    result = await analyze_copilot_bundle(slim)
+
+                self.assertIn(expected_warning, result["non_tariff_comment"])
+                self.assertIn("СС", result["documents_comment"])
+                self.assertTrue(
+                    any("СС" in item for item in result["risks"]),
+                    result["risks"],
+                )
+                self.assertTrue(
+                    any(expected_warning in item for item in result["risks"]),
+                    result["risks"],
+                )
 
 
 if __name__ == "__main__":
