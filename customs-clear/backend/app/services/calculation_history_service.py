@@ -244,7 +244,16 @@ def _history_list_row(r: CustomsCalculationHistory) -> dict[str, Any]:
     if kind == "compliance":
         items_s = out.get("items_summary") or []
         if isinstance(items_s, list) and items_s:
-            total = sum(float(x.get("total_payable") or 0) for x in items_s if isinstance(x, dict))
+            item_totals = [
+                x.get("total_payable")
+                for x in items_s
+                if isinstance(x, dict)
+            ]
+            total = (
+                sum(float(value) for value in item_totals)
+                if len(item_totals) == len(items_s) and all(value is not None for value in item_totals)
+                else None
+            )
             first = items_s[0] if items_s else None
             hc = first.get("hs_code") if isinstance(first, dict) else None
             if hc:
@@ -252,7 +261,12 @@ def _history_list_row(r: CustomsCalculationHistory) -> dict[str, Any]:
     elif kind == "copilot_batch":
         pays = out.get("payments") or []
         if isinstance(pays, list) and pays:
-            total = sum(float(x.get("total") or 0) for x in pays if isinstance(x, dict))
+            payment_totals = [x.get("total") for x in pays if isinstance(x, dict)]
+            total = (
+                sum(float(value) for value in payment_totals)
+                if len(payment_totals) == len(pays) and all(value is not None for value in payment_totals)
+                else None
+            )
         hs_code = hs_code or "batch"
     elif kind == "copilot":
         total = (out.get("breakdown") or {}).get("total_payable")

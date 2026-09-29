@@ -3,7 +3,7 @@ from __future__ import annotations
 import re
 import unicodedata
 from dataclasses import dataclass
-from datetime import date
+from datetime import date, datetime, timezone
 from math import isfinite
 from typing import Any
 
@@ -359,50 +359,78 @@ def _special_duty_is_effective(
     return True
 
 
-def _special_duty_has_admissible_provenance(row: SpecialDuty) -> bool:
-    """Admit a trade-remedy row only with measure-specific official evidence."""
+def _trade_remedy_timestamp_is_not_future(value: Any | None) -> bool:
+    if not isinstance(value, datetime):
+        return False
+    stamp = value.replace(tzinfo=timezone.utc) if value.tzinfo is None else value.astimezone(timezone.utc)
+    return stamp <= datetime.now(timezone.utc)
+
+
+def _trade_remedy_revision_is_not_future(value: Any | None) -> bool:
+    raw = str(value or "").strip()
+    try:
+        revision_date = date.fromisoformat(raw.rsplit(":", 1)[-1])
+    except ValueError:
+        return False
+    return revision_date <= date.today()
+
+
+def _special_duty_admission_failure(row: SpecialDuty) -> str | None:
+    """Return a fail-closed reason or admit measure-specific official evidence."""
     if bool(getattr(row, "needs_verification", False)):
-        return False
+        return "special_duty_provenance_unverified"
     if not str(getattr(row, "regulatory_act", "") or "").strip():
-        return False
+        return "special_duty_provenance_unverified"
     if not str(getattr(row, "effective_from", "") or "").strip():
-        return False
+        return "special_duty_provenance_unverified"
     if not str(getattr(row, "effective_to", "") or "").strip():
-        return False
+        return "special_duty_provenance_unverified"
+
+    # SpecialDuty has no persisted typed unit/denominator.  A positive specific
+    # rate therefore cannot safely be multiplied by generic quantity.
+    if float(getattr(row, "rate_specific", 0.0) or 0.0) != 0.0:
+        return "special_duty_specific_unit_unverified"
 
     measure_type = str(getattr(row, "measure_type", "") or "anti_dumping").strip().lower()
     if measure_type == "anti_dumping":
-        return bool(
-            getattr(row, "synced_at", None)
-            and is_official_anti_dumping_row_marker(
-                source_code=getattr(row, "source_code", None),
-                source_revision=getattr(row, "source_revision", None),
-            )
-            and is_safe_official_anti_dumping_source_url(getattr(row, "source_url", None))
+        revision = getattr(row, "source_revision", None)
+        synced_at = getattr(row, "synced_at", None)
+        marker_ok = is_official_anti_dumping_row_marker(
+            source_code=getattr(row, "source_code", None),
+            source_revision=revision,
         )
-    if measure_type in {"special_safeguard", "special_protective"}:
-        return bool(
-            getattr(row, "safeguard_synced_at", None)
-            and is_official_special_safeguard_row_marker(
-                safeguard_source_code=getattr(row, "safeguard_source_code", None),
-                safeguard_source_revision=getattr(row, "safeguard_source_revision", None),
-            )
-            and is_safe_official_special_safeguard_source_url(
-                getattr(row, "safeguard_source_url", None)
-            )
+        url_ok = is_safe_official_anti_dumping_source_url(getattr(row, "source_url", None))
+    elif measure_type in {"special_safeguard", "special_protective"}:
+        revision = getattr(row, "safeguard_source_revision", None)
+        synced_at = getattr(row, "safeguard_synced_at", None)
+        marker_ok = is_official_special_safeguard_row_marker(
+            safeguard_source_code=getattr(row, "safeguard_source_code", None),
+            safeguard_source_revision=revision,
         )
-    if measure_type == "countervailing":
-        return bool(
-            getattr(row, "countervailing_synced_at", None)
-            and is_official_countervailing_row_marker(
-                countervailing_source_code=getattr(row, "countervailing_source_code", None),
-                countervailing_source_revision=getattr(row, "countervailing_source_revision", None),
-            )
-            and is_safe_official_countervailing_source_url(
-                getattr(row, "countervailing_source_url", None)
-            )
+        url_ok = is_safe_official_special_safeguard_source_url(
+            getattr(row, "safeguard_source_url", None)
         )
-    return False
+    elif measure_type == "countervailing":
+        revision = getattr(row, "countervailing_source_revision", None)
+        synced_at = getattr(row, "countervailing_synced_at", None)
+        marker_ok = is_official_countervailing_row_marker(
+            countervailing_source_code=getattr(row, "countervailing_source_code", None),
+            countervailing_source_revision=revision,
+        )
+        url_ok = is_safe_official_countervailing_source_url(
+            getattr(row, "countervailing_source_url", None)
+        )
+    else:
+        return "special_duty_provenance_unverified"
+
+    if not marker_ok or not url_ok or not synced_at:
+        return "special_duty_provenance_unverified"
+    if (
+        not _trade_remedy_revision_is_not_future(revision)
+        or not _trade_remedy_timestamp_is_not_future(synced_at)
+    ):
+        return "special_duty_provenance_future"
+    return None
 
 
 def _special_duty_identity(row: SpecialDuty) -> tuple[Any, ...]:
@@ -477,16 +505,26 @@ def _resolve_special_duties(
             }
         ], True
 
-    inadmissible_rows = [row for row in rows if not _special_duty_has_admissible_provenance(row)]
+    inadmissible_rows = [
+        (row, failure)
+        for row in rows
+        if (failure := _special_duty_admission_failure(row)) is not None
+    ]
     if inadmissible_rows:
+        failure_reasons = {failure for _, failure in inadmissible_rows}
+        review_reason = (
+            next(iter(failure_reasons))
+            if len(failure_reasons) == 1
+            else "special_duty_admission_unresolved"
+        )
         return 0.0, [
             {
                 "warning": (
                     "Специальная пошлина не включена в итог: одна или несколько активных строк "
                     "не имеют полного официального подтверждения и требуют проверки."
                 ),
-                "affected_codes": sorted({r.hs_code_prefix for r in inadmissible_rows}),
-                "review_reason": "special_duty_provenance_unverified",
+                "affected_codes": sorted({r.hs_code_prefix for r, _ in inadmissible_rows}),
+                "review_reason": review_reason,
             }
         ], True
 

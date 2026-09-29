@@ -4,7 +4,10 @@ from __future__ import annotations
 import unittest
 from datetime import date, datetime, timedelta, timezone
 
+from fastapi.testclient import TestClient
+
 from app.db import SessionLocal
+from app.main import app
 from app.models.tnved import SpecialDuty
 from app.services.normative_store import init_db
 from app.services.payment_engine import compute_payments
@@ -24,6 +27,20 @@ class SpecialDutiesTests(unittest.TestCase):
         }
         defaults.update(kwargs)
         return compute_payments(defaults)
+
+    def _public_calc(self, *, hs_code: str, country: str) -> dict:
+        response = TestClient(app).post(
+            "/api/calculator/compute",
+            json={
+                "hs_code": hs_code,
+                "customs_value": 100_000.0,
+                "currency": "RUB",
+                "country_of_origin": country,
+                "quantity": 1.0,
+            },
+        )
+        self.assertEqual(response.status_code, 200, response.text)
+        return response.json()
 
     def test_unbound_7214_without_country_withholds_final_payment(self) -> None:
         res = self._calc(hs_code="7214990000", country=None)
@@ -223,6 +240,59 @@ class SpecialDutiesTests(unittest.TestCase):
             self.assertEqual(
                 res["special_duties"][0]["review_reason"],
                 "special_duty_provenance_unverified",
+            )
+        finally:
+            with SessionLocal() as db:
+                db.query(SpecialDuty).filter(SpecialDuty.regulatory_act == marker).delete()
+                db.commit()
+
+    def test_public_path_rejects_future_trade_remedy_revision_and_sync(self) -> None:
+        today = date.today()
+        markers = ["TEST-FUTURE-REVISION", "TEST-FUTURE-SYNC"]
+        revision_future = self._official_anti_dumping_row(act=markers[0])
+        revision_future.hs_code_prefix = "9995"
+        revision_future.source_revision = "anti-dumping:2099-01-01"
+        sync_future = self._official_anti_dumping_row(act=markers[1])
+        sync_future.hs_code_prefix = "9994"
+        sync_future.source_revision = f"anti-dumping:{today.isoformat()}"
+        sync_future.synced_at = datetime(2099, 1, 1)
+        with SessionLocal() as db:
+            db.add_all([revision_future, sync_future])
+            db.commit()
+        try:
+            for hs_code in ("9995999999", "9994999999"):
+                with self.subTest(hs_code=hs_code):
+                    result = self._public_calc(hs_code=hs_code, country="ZZ")
+                    self.assertEqual(result["status"], "REVIEW_REQUIRED")
+                    self.assertEqual(result["breakdown"]["special_duties_amount"], 0.0)
+                    self.assertIsNone(result["breakdown"]["total_payable"])
+                    self.assertIn(
+                        "special_duty_provenance_future",
+                        result["payment_review_reasons"],
+                    )
+        finally:
+            with SessionLocal() as db:
+                db.query(SpecialDuty).filter(SpecialDuty.regulatory_act.in_(markers)).delete(
+                    synchronize_session=False
+                )
+                db.commit()
+
+    def test_public_path_rejects_specific_trade_remedy_without_typed_unit(self) -> None:
+        marker = "TEST-UNITLESS-SPECIFIC-SPECIAL-DUTY"
+        row = self._official_anti_dumping_row(act=marker, rate=0.0)
+        row.hs_code_prefix = "9993"
+        row.rate_specific = 5_000.0
+        with SessionLocal() as db:
+            db.add(row)
+            db.commit()
+        try:
+            result = self._public_calc(hs_code="9993999999", country="ZZ")
+            self.assertEqual(result["status"], "REVIEW_REQUIRED")
+            self.assertEqual(result["breakdown"]["special_duties_amount"], 0.0)
+            self.assertIsNone(result["breakdown"]["total_payable"])
+            self.assertIn(
+                "special_duty_specific_unit_unverified",
+                result["payment_review_reasons"],
             )
         finally:
             with SessionLocal() as db:
