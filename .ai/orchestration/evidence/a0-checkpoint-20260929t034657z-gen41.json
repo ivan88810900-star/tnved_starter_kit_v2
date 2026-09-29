@@ -1,0 +1,56 @@
+{
+  "schema_version": 1,
+  "checkpointed_at": "2026-09-29T03:46:57Z",
+  "coordinator_lease": {
+    "generation": 41,
+    "holder": "/root/a0_automation_20260929T032023Z",
+    "release_intent": true,
+    "recovered_generation_40": {
+      "previous_holder": "/root/a0_automation_20260928T222445Z",
+      "termination_evidence": "platform inventory showed only /root live; PR #213/#239 heads and completed agent outputs were reconciled before takeover"
+    }
+  },
+  "main_sha": "08e030a6053ac9638957119373797e0fbf2b10c2",
+  "a6": {
+    "status": "LIVE_VERIFIED",
+    "live_verified": true,
+    "bridge_followup_pr": 237,
+    "bridge_followup_head": "f0183c1e0f4e1e5ed60fa93a4633e841e2ae8d9f",
+    "bridge_followup_state": "awaiting owner approval; not merged"
+  },
+  "completed_reviews": [
+    {
+      "pr": 213,
+      "head": "8884ef1a255e140a429f5681f7bd94acb7893f78",
+      "a5": "PASS",
+      "a5_review": 5347433344,
+      "ci_run": 36517754980,
+      "ci": "success",
+      "readiness": "requires live A6 after PR #237, A0 validation, and owner merge approval"
+    },
+    {
+      "pr": 239,
+      "head": "77cffca5c27c395b078dbbecf284ed48a063f2d6",
+      "a5": "PASS",
+      "a5_review": 5347336318,
+      "ci_run": 36516926323,
+      "ci": "success",
+      "readiness": "requires live A6 after PR #237, A0 validation, and owner merge approval"
+    },
+    {
+      "pr": 240,
+      "head": "ed341749b8a1dc39300fd2e81245949fe94fe26a",
+      "a5": "PASS",
+      "a5_review": 5347466900,
+      "ci_run": 36518456508,
+      "ci": "success",
+      "readiness": "diagnostic-only draft; protected merge still requires owner approval"
+    }
+  ],
+  "protected_actions_performed": [],
+  "next": [
+    "await existing owner decisions for PR #237 and PR #235 without repeating requests",
+    "after PR #237 is merged with owner approval, run live A6 for high-risk PR #213, PR #239, and PR #238",
+    "request owner approval for PR #240 only when batching will not duplicate or spam pending decisions"
+  ]
+}
