@@ -1,0 +1,99 @@
+{
+  "schema_version": 1,
+  "checkpoint_id": "a0-checkpoint-20260929T114300Z-gen42",
+  "created_at": "2026-09-29T11:43:00.000Z",
+  "coordinator_generation": 42,
+  "main_sha": "08e030a6053ac9638957119373797e0fbf2b10c2",
+  "operating_model": {
+    "active_roles": [
+      "A0",
+      "A-CORE",
+      "A-PRODUCT"
+    ],
+    "ephemeral_gates": [
+      "A5",
+      "A6"
+    ],
+    "max_concurrent_feature_workers": 2,
+    "legacy_roles": [
+      "A1",
+      "A2",
+      "A3",
+      "A4"
+    ],
+    "legacy_status": "historical_archived"
+  },
+  "integration_branches": {
+    "customs_core": "integration/customs-core-v1",
+    "compliance_ai": "integration/compliance-ai-v1"
+  },
+  "infra": {
+    "pr_237": {
+      "head": "f0183c1e0f4e1e5ed60fa93a4633e841e2ae8d9f",
+      "a5": "PASS",
+      "a5_review_id": 5337924917,
+      "ci_run_id": 36415700790,
+      "ci": "success",
+      "status": "OWNER_APPROVAL_ALREADY_REQUESTED",
+      "purpose": "post-live-verification A6 admission"
+    },
+    "pr_236": {
+      "head": "86b19d82e9cd91181b4488bab03e877d7653a854",
+      "a5": "PASS",
+      "a5_review_id": 5351094758,
+      "ci_run_id": 36415657320,
+      "ci": "success",
+      "status": "NONBLOCKING_INFRA_GATE"
+    }
+  },
+  "candidates": {
+    "core": {
+      "pr": 241,
+      "branch": "agent/core-consolidation-v1",
+      "base": "integration/customs-core-v1",
+      "head": "f1921b63a452a059c1109c658560efc318127aad",
+      "a5": "PASS",
+      "a5_review_id": 5351957772,
+      "ci": "success",
+      "ci_run_id": 36563127291,
+      "a0_validation": "A5 blockers reproduced/fixed; exact-head tests and CI corroborate nullable payment, remedy admission, grammar and timestamp controls",
+      "a6": "PENDING_PR_237",
+      "integration_status": "NOT_INTEGRATED"
+    },
+    "product": {
+      "pr": 242,
+      "branch": "agent/product-consolidation-v1",
+      "base": "integration/compliance-ai-v1",
+      "head": "bf27ef2cd243f0e2f9325c48a1cfad40a100b2fe",
+      "a5": "PASS",
+      "a5_review_id": 5351884301,
+      "ci": "success",
+      "ci_run_id": 36562105462,
+      "a0_validation": "A5 blockers reproduced/fixed; exact-head tests and CI corroborate server-owned legal semantics and SGR mixed-audience behavior",
+      "a6": "PENDING_PR_237",
+      "integration_status": "NOT_INTEGRATED"
+    }
+  },
+  "pr_hygiene": {
+    "inventory": ".ai/orchestration/PR_INVENTORY_20260929.json",
+    "active_product_candidates": [
+      241,
+      242
+    ],
+    "infra_gates": [
+      237,
+      236
+    ],
+    "old_pr_closure_status": "deferred until successor is fully gated and integrated"
+  },
+  "protected_actions_performed": [],
+  "non_main_integration_merges_performed": [],
+  "production_actions_performed": [],
+  "next_gates": [
+    "Owner-authorized merge of PR #237 remains required; do not ask again until owner responds or head/gates change",
+    "After #237, run live A6 independently on exact heads #241 and #242",
+    "A0 validate any A6 findings; fix and repeat fresh gates if heads change",
+    "Only then integrate candidates into non-main integration branches",
+    "Request owner approval only for final protected integration-to-main merge"
+  ]
+}
