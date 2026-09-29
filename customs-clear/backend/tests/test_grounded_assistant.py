@@ -336,13 +336,14 @@ class AssistantChatGuardrailTests(unittest.IsolatedAsyncioTestCase):
         self.assertIn("### Платежи", result["answer"])
         self.assertNotIn("ключ", result["answer"].lower())
 
-    async def test_configured_llm_must_return_known_inline_citation(self) -> None:
+    async def test_configured_llm_can_only_select_unchanged_server_draft(self) -> None:
         bundle = deepcopy(_chat_bundle())
         bundle["requirements"]["data_freshness"]["ntm_coverage_verified"] = True
+        deterministic_answer, _ = render_chat_grounded_answer(bundle)
         response = json.dumps(
             {
-                "answer": "По серверному расчёту итог составляет 25 000 ₽. [S2]",
-                "citation_ids": ["S2"],
+                "use_server_draft": True,
+                "citation_ids": ["S1", "S2", "S3", "S4"],
             },
             ensure_ascii=False,
         )
@@ -364,48 +365,53 @@ class AssistantChatGuardrailTests(unittest.IsolatedAsyncioTestCase):
             )
         self.assertEqual(result["grounding"]["mode"], "llm_grounded")
         self.assertEqual(result["grounding"]["provider"], "anthropic")
-        self.assertIn("[S2]", result["answer"])
-        self.assertIn("используется как рабочий ориентир", result["answer"])
-        self.assertIn("не подтверждено без проверки характеристик", result["answer"])
+        self.assertEqual(result["grounding"]["external_model_role"], "server_draft_selection")
+        self.assertEqual(result["answer"], deterministic_answer)
+        self.assertIn("Если код не соответствует фактическим характеристикам", result["answer"])
 
-    async def test_valid_citation_cannot_make_code_final_or_legally_binding(self) -> None:
+    async def test_valid_but_unrelated_citation_cannot_inject_material_claims(self) -> None:
         bundle = deepcopy(_chat_bundle())
         bundle["requirements"]["data_freshness"]["ntm_coverage_verified"] = True
-        response = json.dumps(
-            {
-                "answer": (
-                    "Код 8516108008 окончательный и юридически обязательный; "
-                    "товар можно декларировать без дополнительной проверки. [S1]"
-                ),
-                "citation_ids": ["S1"],
-            },
-            ensure_ascii=False,
+        injected_claims = (
+            "Товар можно сразу заявлять в ДТ, дополнительное подтверждение не потребуется. [S1]",
+            "Для товара обязательно нужен сертификат происхождения. [S1]",
+            "Ограничений не выявлено, сделка безопасна. [S1]",
+            "Выбранная товарная позиция имеет обязательную силу. [S1]",
         )
-        with (
-            patch(
-                "app.services.assistant_chat.build_chat_grounding_bundle",
-                new=AsyncMock(return_value=bundle),
-            ),
-            patch(
-                "app.services.assistant_chat.llm_provider_chain",
-                return_value=[("anthropic", "test")],
-            ),
-            patch(
-                "app.services.assistant_chat._ask_llm",
-                new=AsyncMock(return_value={"provider": "anthropic", "text": response}),
-            ),
-        ):
-            result = await run_assistant_chat(
-                message="Код окончательный?",
-                history=[],
-                current_context={"hs_code": "8516108008"},
+        for injected_claim in injected_claims:
+            response = json.dumps(
+                {
+                    "use_server_draft": True,
+                    "citation_ids": ["S1", "S2", "S3", "S4"],
+                    "answer": injected_claim,
+                },
+                ensure_ascii=False,
             )
-        self.assertEqual(result["grounding"]["mode"], "deterministic")
-        self.assertNotIn("юридически обязательный", result["answer"])
-        self.assertIn("Если код не соответствует фактическим характеристикам", result["answer"])
-        self.assertTrue(
-            any("не прошёл проверку" in item for item in result["grounding"]["limitations"])
-        )
+            with self.subTest(injected_claim=injected_claim):
+                with (
+                    patch(
+                        "app.services.assistant_chat.build_chat_grounding_bundle",
+                        new=AsyncMock(return_value=bundle),
+                    ),
+                    patch(
+                        "app.services.assistant_chat.llm_provider_chain",
+                        return_value=[("anthropic", "test")],
+                    ),
+                    patch(
+                        "app.services.assistant_chat._ask_llm",
+                        new=AsyncMock(return_value={"provider": "anthropic", "text": response}),
+                    ),
+                ):
+                    result = await run_assistant_chat(
+                        message="Можно подавать декларацию?",
+                        history=[],
+                        current_context={"hs_code": "8516108008"},
+                    )
+                self.assertEqual(result["grounding"]["mode"], "deterministic")
+                self.assertNotIn(injected_claim.removesuffix(" [S1]"), result["answer"])
+                self.assertTrue(
+                    any("не прошёл проверку" in item for item in result["grounding"]["limitations"])
+                )
 
     async def test_citation_valid_llm_cannot_erase_ntm_freshness_caveats(self) -> None:
         bundle = deepcopy(_chat_bundle())
@@ -707,16 +713,15 @@ class CopilotGroundingTests(unittest.IsolatedAsyncioTestCase):
         self.assertNotIn("payments", result["grounding"]["facts_used"])
         self.assertIn("tnved", result["grounding"]["facts_used"])
 
-    async def test_copilot_keeps_classification_server_owned_for_safe_rewrite(self) -> None:
+    async def test_copilot_model_can_only_select_unchanged_server_draft(self) -> None:
         context = self._context()
         context["normative_requirements"]["data_freshness"]["ntm_coverage_verified"] = True
         with patch("app.services.claude_service._choose_provider", return_value=("none", None)):
             deterministic = await analyze_copilot_bundle(context)
         response = json.dumps(
             {
-                "summary": "Проверены переданные серверные факты. [S1]",
-                "classification_advice": "",
-                "citation_ids": ["S1"],
+                "use_server_draft": True,
+                "citation_ids": [row["id"] for row in deterministic["citations"]],
             },
             ensure_ascii=False,
         )
@@ -729,31 +734,64 @@ class CopilotGroundingTests(unittest.IsolatedAsyncioTestCase):
         ):
             result = await analyze_copilot_bundle(context)
         self.assertEqual(result["grounding"]["mode"], "llm_grounded")
-        self.assertEqual(result["classification_advice"], deterministic["classification_advice"])
+        self.assertEqual(result["grounding"]["external_model_role"], "server_draft_selection")
+        for key in (
+            "summary",
+            "classification_advice",
+            "payment_comment",
+            "non_tariff_comment",
+            "documents_comment",
+            "risks",
+            "next_steps",
+            "disclaimer",
+        ):
+            self.assertEqual(result[key], deterministic[key])
         self.assertIn("требует проверки характеристик по ОПИ", result["classification_advice"])
 
-    async def test_valid_citation_cannot_make_copilot_code_final_or_legally_binding(self) -> None:
+    async def test_valid_but_unrelated_citation_cannot_inject_copilot_material_claims(self) -> None:
         context = self._context()
         context["normative_requirements"]["data_freshness"]["ntm_coverage_verified"] = True
-        response = json.dumps(
-            {
-                "summary": "Код 8516108008 окончательный и юридически обязательный. [S1]",
-                "classification_advice": "Код подтверждён; дополнительная проверка не нужна. [S1]",
-                "citation_ids": ["S1"],
-            },
-            ensure_ascii=False,
+        with patch("app.services.claude_service._choose_provider", return_value=("none", None)):
+            deterministic = await analyze_copilot_bundle(context)
+        all_ids = [row["id"] for row in deterministic["citations"]]
+        injected_fields = (
+            {"summary": "Товар можно сразу заявлять в ДТ. [S1]"},
+            {"documents_comment": "Сертификат происхождения обязателен. [S1]"},
+            {"risks": ["Ограничений нет, сделка безопасна. [S1]"]},
+            {"classification_advice": "Товарная позиция имеет обязательную силу. [S1]"},
         )
-        with (
-            patch("app.services.claude_service._choose_provider", return_value=("anthropic", "test")),
-            patch(
-                "app.services.claude_service._ask_llm",
-                new=AsyncMock(return_value={"provider": "anthropic", "text": response}),
-            ),
-        ):
-            result = await analyze_copilot_bundle(context)
-        self.assertEqual(result["grounding"]["mode"], "deterministic")
-        self.assertNotIn("юридически обязательный", result["summary"])
-        self.assertIn("требует проверки характеристик по ОПИ", result["classification_advice"])
+        for injected in injected_fields:
+            response = json.dumps(
+                {
+                    "use_server_draft": True,
+                    "citation_ids": all_ids,
+                    **injected,
+                },
+                ensure_ascii=False,
+            )
+            with self.subTest(injected=injected):
+                with (
+                    patch(
+                        "app.services.claude_service._choose_provider",
+                        return_value=("anthropic", "test"),
+                    ),
+                    patch(
+                        "app.services.claude_service._ask_llm",
+                        new=AsyncMock(return_value={"provider": "anthropic", "text": response}),
+                    ),
+                ):
+                    result = await analyze_copilot_bundle(context)
+                self.assertEqual(result["grounding"]["mode"], "deterministic")
+                for key in (
+                    "summary",
+                    "classification_advice",
+                    "payment_comment",
+                    "non_tariff_comment",
+                    "documents_comment",
+                    "risks",
+                    "next_steps",
+                ):
+                    self.assertEqual(result[key], deterministic[key])
 
     async def test_citation_valid_copilot_cannot_erase_ntm_freshness_caveats(self) -> None:
         context = self._context()
