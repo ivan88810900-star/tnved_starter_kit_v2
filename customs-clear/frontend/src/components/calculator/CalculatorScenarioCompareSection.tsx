@@ -61,17 +61,24 @@ export function CalculatorScenarioCompareSection({
   const exportCsv = () => {
     if (!result?.scenarios?.length) return;
     const header = ['Сценарий', 'ТН ВЭД', 'Страна', 'Пошлина', 'НДС', 'Сбор', 'РОП', 'ИТОГО', 'Экономия'];
-    const worstTotal = Math.max(...result.scenarios.map((s) => s.total));
+    const rankableTotals = result.scenarios
+      .map((s) => s.total)
+      .filter((value): value is number => value != null);
+    const worstTotal = rankableTotals.length === result.scenarios.length
+      ? Math.max(...rankableTotals)
+      : null;
     const rows = result.scenarios.map((s) => [
       s.name,
       s.hs_code,
       s.country_of_origin || '',
       String(s.duty),
-      String(s.vat),
+      s.vat == null ? 'ТРЕБУЕТ ПРОВЕРКИ' : String(s.vat),
       String(s.fee),
       String(s.rop),
-      String(s.total),
-      String(Math.round((worstTotal - s.total) * 100) / 100),
+      s.total == null ? 'ТРЕБУЕТ ПРОВЕРКИ' : String(s.total),
+      worstTotal == null || s.total == null
+        ? 'НЕДОСТУПНО'
+        : String(Math.round((worstTotal - s.total) * 100) / 100),
     ]);
     const csv = [header, ...rows].map((r) => r.join(';')).join('\n');
     const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8' });
@@ -180,8 +187,8 @@ export function CalculatorScenarioCompareSection({
         {result?.scenarios?.length ? (
           <div className="space-y-2">
             <p className="text-[11px] text-slate-500">
-              Лучший: <strong className="text-emerald-700">{result.best_scenario}</strong>
-              {result.savings_vs_worst > 0 ? (
+              Лучший: <strong className="text-emerald-700">{result.best_scenario ?? 'не определён — требуется проверка'}</strong>
+              {result.savings_vs_worst != null && result.savings_vs_worst > 0 ? (
                 <span>
                   {' '}
                   · экономия vs худший: {result.savings_vs_worst.toLocaleString('ru-RU')} ₽
@@ -203,9 +210,14 @@ export function CalculatorScenarioCompareSection({
                 </thead>
                 <tbody className="text-slate-700">
                   {result.scenarios.map((s, i) => {
-                    const worst = Math.max(...result.scenarios.map((x) => x.total));
-                    const savings = Math.round((worst - s.total) * 100) / 100;
-                    const isBest = s.name === result.best_scenario;
+                    const rankable = result.scenarios
+                      .map((x) => x.total)
+                      .filter((value): value is number => value != null);
+                    const worst = rankable.length === result.scenarios.length ? Math.max(...rankable) : null;
+                    const savings = worst == null || s.total == null
+                      ? null
+                      : Math.round((worst - s.total) * 100) / 100;
+                    const isBest = result.best_scenario != null && s.name === result.best_scenario;
                     return (
                       <tr
                         key={i}
@@ -213,11 +225,11 @@ export function CalculatorScenarioCompareSection({
                       >
                         <td className="p-2">{s.name}</td>
                         <td className="p-2">{Number(s.duty).toLocaleString('ru-RU')}</td>
-                        <td className="p-2">{Number(s.vat).toLocaleString('ru-RU')}</td>
+                        <td className="p-2">{s.vat == null ? 'Требует проверки' : s.vat.toLocaleString('ru-RU')}</td>
                         <td className="p-2">{Number(s.fee).toLocaleString('ru-RU')}</td>
                         <td className="p-2">{Number(s.rop).toLocaleString('ru-RU')}</td>
-                        <td className="p-2">{Number(s.total).toLocaleString('ru-RU')}</td>
-                        <td className="p-2 text-slate-500">{savings.toLocaleString('ru-RU')}</td>
+                        <td className="p-2">{s.total == null ? 'Требует проверки' : s.total.toLocaleString('ru-RU')}</td>
+                        <td className="p-2 text-slate-500">{savings == null ? '—' : savings.toLocaleString('ru-RU')}</td>
                       </tr>
                     );
                   })}

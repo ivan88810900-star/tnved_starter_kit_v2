@@ -458,14 +458,13 @@ class PaymentEngineTests(unittest.TestCase):
                 ],
             }
         )
-        self.assertEqual(out["status"], "OK")
+        self.assertEqual(out["status"], "REVIEW_REQUIRED")
         self.assertEqual(len(out["scenarios"]), 2)
         self.assertIsNone(out["scenarios"][0]["delta_total_vs_first_rub"])
-        self.assertIsNotNone(out["scenarios"][1]["delta_total_vs_first_rub"])
-        first_total = float(out["scenarios"][0]["total_payable"])
-        second_total = float(out["scenarios"][1]["total_payable"])
-        expected_delta = round(second_total - first_total, 2)
-        self.assertEqual(out["scenarios"][1]["delta_total_vs_first_rub"], expected_delta)
+        self.assertIsNone(out["scenarios"][1]["delta_total_vs_first_rub"])
+        self.assertIsNone(out["scenarios"][0]["total_payable"])
+        self.assertIsNone(out["scenarios"][1]["total_payable"])
+        self.assertTrue(out["scenarios"][0]["payment_review_reasons"])
 
     def test_compare_requires_two(self):
         with self.assertRaises(ValueError):

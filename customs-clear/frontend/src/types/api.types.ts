@@ -367,10 +367,15 @@ export interface CalculatorBreakdown {
   vat_reason: string;
   vat_decree_info: string;
   vat_pref_comment: string;
-  vat_base: number;
-  vat: number;
+  vat_base: number | null;
+  vat: number | null;
+  vat_status?: 'applied' | 'manual_review';
+  vat_base_provisional?: number | null;
+  vat_provisional?: number | null;
   recycling_fee?: number;
-  total_payable: number;
+  total_payable: number | null;
+  total_payable_status?: 'final' | 'withheld';
+  total_payable_provisional?: number | null;
 }
 
 export interface CalculatorTariffPreference {
@@ -429,7 +434,7 @@ export interface CalculatorClarificationResponse {
 }
 
 export interface CalculatorComputeResponse {
-  status: 'OK';
+  status: 'OK' | 'REVIEW_REQUIRED';
   hs_code: string;
   country: string | null;
   customs_value: number;
@@ -449,6 +454,7 @@ export interface CalculatorComputeResponse {
   tariff_preference?: CalculatorTariffPreference;
   recycling_fee?: CalculatorRecyclingFeeMeta;
   geo?: Record<string, unknown> | null;
+  payment_review_reasons?: string[];
 }
 
 export interface CalculatorDutyRuleInfo {
@@ -516,19 +522,20 @@ export interface CalculatorCompareScenarioResult {
   label: string;
   hs_code: string;
   delta_total_vs_first_rub: number | null;
-  total_payable: number;
+  total_payable: number | null;
   duty: number;
-  vat: number;
+  vat: number | null;
   excise: number;
   antidumping: number;
   duty_rate_applied: number;
   vat_rate_applied: number;
   data_quality: CalculatorDataQuality;
   tnved_title: string;
+  payment_review_reasons?: string[];
 }
 
 export interface CalculatorCompareResponse {
-  status: 'OK';
+  status: 'OK' | 'REVIEW_REQUIRED';
   shared_economic: CalculatorCompareSharedEconomic;
   scenarios: CalculatorCompareScenarioResult[];
   invoice?: CalculatorInvoiceInfo;
@@ -541,18 +548,18 @@ export interface ScenarioCompareScenarioResult {
   country_of_origin?: string | null;
   procedure_code?: string | null;
   duty: number;
-  vat: number;
+  vat: number | null;
   fee: number;
   excise: number;
   recycling_fee: number;
   rop: number;
-  total: number;
+  total: number | null;
   preference?: unknown;
   payments_status?: string;
 }
 
 export interface ScenarioCompareResponse {
-  status: 'OK';
+  status: 'OK' | 'REVIEW_REQUIRED';
   base: {
     hs_code: string;
     customs_value: number;
@@ -562,8 +569,8 @@ export interface ScenarioCompareResponse {
     weight_net_kg?: number | null;
   };
   scenarios: ScenarioCompareScenarioResult[];
-  best_scenario: string;
-  savings_vs_worst: number;
+  best_scenario: string | null;
+  savings_vs_worst: number | null;
 }
 
 export type CalculationHistoryKind = 'compute' | 'compare' | 'compliance' | 'copilot' | 'copilot_batch';
@@ -721,6 +728,8 @@ export type AdvisoryRequirement = {
 export type NormativeDocument = {
   permit_type: string;
   tr_ts?: string | null;
+  tr_ts_full_name?: string | null;
+  note?: string | null;
   source?: string;
   source_label?: string | null;
   applicability?: string;

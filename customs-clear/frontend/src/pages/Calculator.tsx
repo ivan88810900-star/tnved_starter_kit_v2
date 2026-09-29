@@ -55,6 +55,10 @@ function normHsCode(raw: string): string {
   return raw.replace(/\D/g, '').slice(0, 10);
 }
 
+function formatNullableRub(value: number | null | undefined): string {
+  return value == null ? 'недоступно' : `${value.toLocaleString('ru-RU')} ₽`;
+}
+
 function buildAssistantCalcContext(
   data: CalculatorComputeResponse,
   measures?: Array<{
@@ -74,17 +78,17 @@ function buildAssistantCalcContext(
     hs_code: data.hs_code,
     product_name,
     origin_country: data.country,
-    total_payable: b.total_payable,
+    total_payable: b.total_payable ?? undefined,
     duty_rate_pct: typeof b.duty_rate === 'number' ? b.duty_rate : undefined,
     vat_rate_pct: typeof b.vat_rate === 'number' ? b.vat_rate : undefined,
     duty_rub: b.duty,
-    vat_rub: b.vat,
+    vat_rub: b.vat ?? undefined,
     excise_rub: b.excise,
     customs_fee_rub: b.customs_fee,
     customs_value_rub: data.customs_value,
     antidumping_rub: b.antidumping,
     special_duties_rub: b.special_duties_amount,
-    vat_base_rub: b.vat_base,
+    vat_base_rub: b.vat_base ?? undefined,
     non_tariff_measures: (measures || []).map((m) => ({
       measure_type: m.measure_type,
       regulatory_act: m.regulatory_act,
@@ -1261,7 +1265,7 @@ export const Calculator: React.FC = () => {
                       <td className="cc-mono p-2 text-indigo-700">{s.hs_code}</td>
                       <td className="p-2">{s.duty_rate_applied}</td>
                       <td className="p-2">{s.vat_rate_applied}</td>
-                      <td className="p-2 font-medium">{s.total_payable.toLocaleString('ru-RU')}</td>
+                      <td className="p-2 font-medium">{formatNullableRub(s.total_payable)}</td>
                       <td className="p-2 text-slate-500">
                         {s.delta_total_vs_first_rub == null ? '—' : s.delta_total_vs_first_rub.toLocaleString('ru-RU')}
                       </td>
@@ -1571,14 +1575,14 @@ export const Calculator: React.FC = () => {
               },
               {
                 label: 'НДС',
-                amount: result.breakdown.vat ?? 0,
+                amount: result.breakdown.vat,
                 meta: `${result.breakdown.vat_rate ?? 0}%`,
               },
               ...(result.breakdown.recycling_fee
                 ? [{ label: 'Утильсбор', amount: result.breakdown.recycling_fee ?? 0 }]
                 : []),
             ]}
-            totalAmount={result.breakdown.total_payable ?? 0}
+            totalAmount={result.breakdown.total_payable}
           />
           {assistantVisible ? (
             <div className="flex flex-wrap justify-end gap-2">
@@ -1701,7 +1705,7 @@ export const Calculator: React.FC = () => {
                       </span>
                     ) : null}
                   </span>
-                  <span className="font-medium">{result.breakdown.vat.toLocaleString('ru-RU')} руб.</span>
+                  <span className="font-medium">{formatNullableRub(result.breakdown.vat)}</span>
                 </div>
                 <p className="text-gray-400 text-xs">
                   {result.breakdown.vat_rate === 10
@@ -1736,7 +1740,11 @@ export const Calculator: React.FC = () => {
 
             <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
               <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-slate-600">Структура платежей</p>
-              <div className="h-48 w-full">
+              {result.breakdown.total_payable == null ? (
+                <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-amber-800">
+                  Структура итогового платежа недоступна до проверки ставок и источников.
+                </div>
+              ) : <div className="h-48 w-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
@@ -1747,7 +1755,7 @@ export const Calculator: React.FC = () => {
                         { name: 'Утильсбор', value: Number(result.breakdown.recycling_fee || 0) },
                       ]
                         .filter((x) => x.value > 0)
-                        .map((x) => ({ ...x, pct: result.breakdown.total_payable > 0 ? (x.value / result.breakdown.total_payable) * 100 : 0 }))}
+                        .map((x) => ({ ...x, pct: result.breakdown.total_payable! > 0 ? (x.value / result.breakdown.total_payable!) * 100 : 0 }))}
                       cx="50%"
                       cy="50%"
                       innerRadius={45}
@@ -1774,10 +1782,10 @@ export const Calculator: React.FC = () => {
                     />
                   </PieChart>
                 </ResponsiveContainer>
-              </div>
+              </div>}
               <div className="mt-2 grid gap-1 text-[11px] text-slate-700">
                 <p>Пошлина: {result.breakdown.duty.toLocaleString('ru-RU')} ₽</p>
-                <p>НДС: {result.breakdown.vat.toLocaleString('ru-RU')} ₽</p>
+                <p>НДС: {formatNullableRub(result.breakdown.vat)}</p>
                 <p>Сборы: {(result.breakdown.customs_fee ?? 0).toLocaleString('ru-RU')} ₽</p>
                 {(result.breakdown.recycling_fee ?? 0) > 0 && (
                   <p>Утильсбор: {(result.breakdown.recycling_fee ?? 0).toLocaleString('ru-RU')} ₽</p>
@@ -1790,7 +1798,9 @@ export const Calculator: React.FC = () => {
                 <div>
                   <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Итого к уплате</p>
                   <p className="mt-0.5 text-3xl font-extrabold tracking-tight text-blue-900 sm:text-4xl">
-                    <AnimatedNumber value={result.breakdown.total_payable} format="currency" />
+                    {result.breakdown.total_payable == null
+                      ? 'Требует проверки'
+                      : <AnimatedNumber value={result.breakdown.total_payable} format="currency" />}
                   </p>
                 </div>
                 <button
@@ -1808,7 +1818,7 @@ export const Calculator: React.FC = () => {
                 </div>
                 <div className="flex justify-between gap-2">
                   <span className="text-slate-500">НДС</span>
-                  <span className="tabular-nums font-medium">{result.breakdown.vat.toLocaleString('ru-RU')}</span>
+                  <span className="tabular-nums font-medium">{formatNullableRub(result.breakdown.vat)}</span>
                 </div>
                 <div className="flex justify-between gap-2">
                   <span className="text-slate-500">Сборы</span>
@@ -1883,7 +1893,7 @@ export const Calculator: React.FC = () => {
             )}
 
             <p className="text-[11px] text-slate-500">
-              База НДС: таможенная стоимость + пошлина = {result.breakdown.vat_base.toLocaleString('ru-RU')} ₽ (таможенные сборы в базу НДС не включаются)
+              База НДС: таможенная стоимость + пошлина = {formatNullableRub(result.breakdown.vat_base)} (таможенные сборы в базу НДС не включаются)
             </p>
 
           </div>

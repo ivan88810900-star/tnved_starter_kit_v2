@@ -5,7 +5,7 @@ from __future__ import annotations
 import math
 import unittest
 from datetime import date, datetime, timedelta, timezone
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
@@ -17,6 +17,7 @@ from app.models.tnved import HsDutyRule
 from app.services.exchange_rates import CBRF_SOURCE_CODE, _parse_cbr_xml, get_rates_map
 from app.services.invoice_batch_service import calculate_line_payments
 from app.services.payment_engine import _compute_structured_duty
+from app.services.payment_profile_builder import _map_raw_to_profile
 from app.services.scenario_compare_service import compare_scenarios_extended
 
 
@@ -239,6 +240,38 @@ class ScenarioFxFailClosedTests(unittest.TestCase):
             [2025.0, 2025.0],
         )
 
+    def test_unavailable_payment_is_not_ranked_or_coerced_to_zero(self) -> None:
+        payload = {
+            "base": {"hs_code": "9999999999", "customs_value": 1000, "currency": "RUB"},
+            "scenarios": [{"name": "A"}, {"name": "B"}],
+        }
+
+        def unavailable(_payload):
+            return {
+                "status": "REVIEW_REQUIRED",
+                "payment_review_reasons": ["hs_rate_source_missing"],
+                "breakdown": {
+                    "duty": 0.0,
+                    "vat": None,
+                    "customs_fee": 0.0,
+                    "excise": 0.0,
+                    "total_payable": None,
+                },
+                "recycling_fee": {"fee_amount": 0.0},
+            }
+
+        with (
+            patch("app.services.scenario_compare_service.get_rates_map", return_value={"RUB": 1.0}),
+            patch("app.services.scenario_compare_service.compute_payments", side_effect=unavailable),
+        ):
+            result = compare_scenarios_extended(payload)
+
+        self.assertEqual(result["status"], "REVIEW_REQUIRED")
+        self.assertIsNone(result["best_scenario"])
+        self.assertIsNone(result["savings_vs_worst"])
+        self.assertTrue(all(row["total"] is None for row in result["scenarios"]))
+        self.assertTrue(all(row["vat"] is None for row in result["scenarios"]))
+
 
 class InvoiceBatchFxFailClosedTests(unittest.TestCase):
     @staticmethod
@@ -328,6 +361,66 @@ class InvoiceBatchFxFailClosedTests(unittest.TestCase):
         self.assertEqual(result["customs_value"], 100.0)
         self.assertEqual(result["total_payable"], 100.0)
         self.assertEqual(result["fx_rate"], 1.0)
+
+    def test_invoice_preserves_unavailable_vat_and_total(self) -> None:
+        unavailable = {
+            "status": "REVIEW_REQUIRED",
+            "payment_review_reasons": ["hs_rate_source_missing"],
+            "breakdown": {
+                "duty": 0.0,
+                "vat": None,
+                "excise": 0.0,
+                "customs_fee": 0.0,
+                "total_payable": None,
+            },
+            "recycling_fee": {"fee_amount": 0.0},
+        }
+        with (
+            patch("app.services.invoice_batch_service.get_rates_map", return_value={"RUB": 1.0}),
+            patch("app.services.invoice_batch_service.compute_payments", return_value=unavailable),
+        ):
+            result = calculate_line_payments(self._line("RUB"))
+
+        self.assertIsNone(result["vat"])
+        self.assertIsNone(result["total_payable"])
+        self.assertEqual(result["payments_status"], "REVIEW_REQUIRED")
+        self.assertEqual(result["payment_review_reasons"], ["hs_rate_source_missing"])
+
+
+class PaymentProfileFailClosedTests(unittest.TestCase):
+    def test_profile_preserves_unavailable_vat_and_total(self) -> None:
+        session = MagicMock()
+        session.__enter__.return_value = MagicMock()
+        session.__exit__.return_value = False
+        raw = {
+            "status": "REVIEW_REQUIRED",
+            "payment_review_reasons": ["hs_rate_source_missing"],
+            "breakdown": {
+                "duty": 0.0,
+                "vat": None,
+                "excise": 0.0,
+                "antidumping": 0.0,
+                "customs_fee": 0.0,
+                "total_payable": None,
+            },
+        }
+        with (
+            patch("app.services.payment_profile_builder.SessionLocal", return_value=session),
+            patch(
+                "app.services.payment_profile_builder.build_compliance_document_items",
+                return_value={"documents": [], "blocking_issue": False},
+            ),
+        ):
+            profile = _map_raw_to_profile(
+                hs_code="9999999999",
+                country="ZZ",
+                raw_result=raw,
+            )
+
+        self.assertEqual(profile.status, "REVIEW_REQUIRED")
+        self.assertIsNone(profile.breakdown.vat)
+        self.assertIsNone(profile.breakdown.total_payable)
+        self.assertEqual(profile.payment_review_reasons, ["hs_rate_source_missing"])
 
 
 if __name__ == "__main__":

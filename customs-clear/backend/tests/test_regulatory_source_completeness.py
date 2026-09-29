@@ -8,7 +8,7 @@ from datetime import datetime, timedelta, timezone
 from fastapi.testclient import TestClient
 
 from app.main import app
-from app.services.normative_store import init_db
+from app.services.normative_store import init_db, list_source_status, upsert_source_status
 from app.services.regulatory_source_completeness import (
     _derive_coverage_status,
     _derive_edition_tracking_status,
@@ -258,6 +258,46 @@ class TestRegulatorySourceRegistry(unittest.TestCase):
             ),
             "stale",
         )
+
+    def test_persisted_source_status_round_trips_as_explicit_utc_tracking_evidence(self) -> None:
+        from app.db import SessionLocal
+        from app.models.core import SourceStatus
+
+        source_code = "TEST_UTC_SOURCE_STATUS"
+        entry = RegulatorySourceEntry(
+            source_id="test_utc_status",
+            title="Test UTC source",
+            authority_level="official_reference",
+            official_url="https://example.test/official",
+            description="test",
+            source_status_code=source_code,
+        )
+        try:
+            upsert_source_status(
+                source_code=source_code,
+                source_name="Test UTC source",
+                source_url="https://example.test/official",
+                revision="eec:2026-09-29",
+                is_stale=False,
+                note="integration test",
+                synced_at=datetime(2026, 9, 29, 13, 30, tzinfo=timezone(timedelta(hours=3))),
+            )
+            persisted = next(
+                row for row in list_source_status() if row["source_code"] == source_code
+            )
+            self.assertEqual(persisted["synced_at"], "2026-09-29T10:30:00Z")
+            self.assertEqual(
+                _derive_edition_tracking_status(
+                    entry,
+                    persisted,
+                    now=datetime(2026, 9, 30, tzinfo=timezone.utc),
+                ),
+                "tracked",
+            )
+        finally:
+            with SessionLocal() as db:
+                db.query(SourceStatus).filter(SourceStatus.source_code == source_code).delete()
+                db.commit()
 
     def test_official_tracking_rejects_undated_or_invalid_revision(self) -> None:
         entry = RegulatorySourceEntry(

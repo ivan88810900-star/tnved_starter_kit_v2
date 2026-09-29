@@ -22,6 +22,14 @@ from .normative_store import (
     get_tnved_context_for_hs,
 )
 from .compliance_resolver import pick_vat_preference_row
+from .payment_revision_utils import (
+    is_official_anti_dumping_row_marker,
+    is_official_countervailing_row_marker,
+    is_official_special_safeguard_row_marker,
+    is_safe_official_anti_dumping_source_url,
+    is_safe_official_countervailing_source_url,
+    is_safe_official_special_safeguard_source_url,
+)
 
 
 @dataclass
@@ -93,7 +101,7 @@ def _validated_automatic_duty_result(value: Any, *, label: str) -> float:
     return number
 
 
-_LEGACY_DUTY_NUMBER = r"\d+(?:\.\d+)?"
+_LEGACY_DUTY_NUMBER = r"[0-9]+(?:\.[0-9]+)?"
 _LEGACY_DUTY_UNIT = (
     r"(?:евро(?:\s*/\s*кг|\s+за(?:\s+кг)?)?|eur(?:\s*/\s*кг)?|€(?:\s*/\s*кг)?)"
 )
@@ -351,16 +359,88 @@ def _special_duty_is_effective(
     return True
 
 
+def _special_duty_has_admissible_provenance(row: SpecialDuty) -> bool:
+    """Admit a trade-remedy row only with measure-specific official evidence."""
+    if bool(getattr(row, "needs_verification", False)):
+        return False
+    if not str(getattr(row, "regulatory_act", "") or "").strip():
+        return False
+    if not str(getattr(row, "effective_from", "") or "").strip():
+        return False
+    if not str(getattr(row, "effective_to", "") or "").strip():
+        return False
+
+    measure_type = str(getattr(row, "measure_type", "") or "anti_dumping").strip().lower()
+    if measure_type == "anti_dumping":
+        return bool(
+            getattr(row, "synced_at", None)
+            and is_official_anti_dumping_row_marker(
+                source_code=getattr(row, "source_code", None),
+                source_revision=getattr(row, "source_revision", None),
+            )
+            and is_safe_official_anti_dumping_source_url(getattr(row, "source_url", None))
+        )
+    if measure_type in {"special_safeguard", "special_protective"}:
+        return bool(
+            getattr(row, "safeguard_synced_at", None)
+            and is_official_special_safeguard_row_marker(
+                safeguard_source_code=getattr(row, "safeguard_source_code", None),
+                safeguard_source_revision=getattr(row, "safeguard_source_revision", None),
+            )
+            and is_safe_official_special_safeguard_source_url(
+                getattr(row, "safeguard_source_url", None)
+            )
+        )
+    if measure_type == "countervailing":
+        return bool(
+            getattr(row, "countervailing_synced_at", None)
+            and is_official_countervailing_row_marker(
+                countervailing_source_code=getattr(row, "countervailing_source_code", None),
+                countervailing_source_revision=getattr(row, "countervailing_source_revision", None),
+            )
+            and is_safe_official_countervailing_source_url(
+                getattr(row, "countervailing_source_url", None)
+            )
+        )
+    return False
+
+
+def _special_duty_identity(row: SpecialDuty) -> tuple[Any, ...]:
+    """Identity for exact duplicate suppression; no overlap policy is inferred."""
+    return (
+        str(row.hs_code_prefix or "").strip(),
+        str(row.origin_country or "").strip().upper(),
+        str(row.measure_type or "anti_dumping").strip().lower(),
+        float(row.rate_percent or 0.0),
+        float(row.rate_specific or 0.0),
+        str(row.currency_code or "RUB").strip().upper(),
+        str(row.regulatory_act or "").strip(),
+        str(row.manufacturer_exporter or "").strip(),
+        str(row.product_description or "").strip(),
+        str(row.effective_from or "").strip(),
+        str(row.effective_to or "").strip(),
+        str(row.source_code or "").strip(),
+        str(row.source_revision or "").strip(),
+        str(row.source_url or "").strip(),
+        str(row.safeguard_source_code or "").strip(),
+        str(row.safeguard_source_revision or "").strip(),
+        str(row.safeguard_source_url or "").strip(),
+        str(row.countervailing_source_code or "").strip(),
+        str(row.countervailing_source_revision or "").strip(),
+        str(row.countervailing_source_url or "").strip(),
+    )
+
+
 def _resolve_special_duties(
     hs_code: str,
     country: str | None,
     customs_value: float,
     quantity: float,
     fx_rates: dict[str, float] | None,
-) -> tuple[float, list[dict[str, Any]]]:
+) -> tuple[float, list[dict[str, Any]], bool]:
     cands = _special_duty_prefix_candidates(hs_code)
     if not cands:
-        return 0.0, []
+        return 0.0, [], False
     by_prefix = {p: m for p, m in cands}
     today = date.today()
     country_norm = (country or "").strip().upper() or None
@@ -382,7 +462,7 @@ def _resolve_special_duties(
         ]
 
     if not rows:
-        return 0.0, []
+        return 0.0, [], False
 
     if not country_norm:
         return 0.0, [
@@ -393,8 +473,38 @@ def _resolve_special_duties(
                 ),
                 "affected_codes": sorted({r.hs_code_prefix for r in rows}),
                 "origin_countries": sorted({r.origin_country for r in rows if r.origin_country}),
+                "review_reason": "special_duty_country_missing",
             }
-        ]
+        ], True
+
+    inadmissible_rows = [row for row in rows if not _special_duty_has_admissible_provenance(row)]
+    if inadmissible_rows:
+        return 0.0, [
+            {
+                "warning": (
+                    "Специальная пошлина не включена в итог: одна или несколько активных строк "
+                    "не имеют полного официального подтверждения и требуют проверки."
+                ),
+                "affected_codes": sorted({r.hs_code_prefix for r in inadmissible_rows}),
+                "review_reason": "special_duty_provenance_unverified",
+            }
+        ], True
+
+    unique_rows: dict[tuple[Any, ...], SpecialDuty] = {}
+    for row in rows:
+        unique_rows.setdefault(_special_duty_identity(row), row)
+    rows = list(unique_rows.values())
+    if len(rows) > 1:
+        return 0.0, [
+            {
+                "warning": (
+                    "Специальная пошлина не включена в итог: найдено несколько одновременно "
+                    "применимых мер, а правило их совместного применения не подтверждено."
+                ),
+                "affected_codes": sorted({r.hs_code_prefix for r in rows}),
+                "review_reason": "special_duty_overlap_unresolved",
+            }
+        ], True
 
     details: list[dict[str, Any]] = []
     total = 0.0
@@ -423,7 +533,7 @@ def _resolve_special_duties(
             }
         )
     details.sort(key=lambda x: int(x.get("match_len", 0)), reverse=True)
-    return total, details
+    return total, details, False
 
 
 def _compute_structured_duty(
@@ -894,7 +1004,7 @@ def compute_payments(payload: dict[str, Any]) -> dict[str, Any]:
         antidumping_reason = HS_RATE_SOURCE_BINDING_REVIEW_REASON
     if duty_rule_source_binding_unverified:
         payment_review_reasons.append("duty_rule_source_binding_unverified")
-    special_duties_amount, special_duties_details = _resolve_special_duties(
+    special_duties_amount, special_duties_details, special_duties_review_required = _resolve_special_duties(
         hs_code=hs_code,
         country=country,
         customs_value=customs_value,
@@ -904,6 +1014,12 @@ def compute_payments(payload: dict[str, Any]) -> dict[str, Any]:
     special_duties_warning: str | None = None
     if special_duties_details and special_duties_details[0].get("warning"):
         special_duties_warning = str(special_duties_details[0]["warning"])
+    if special_duties_review_required:
+        payment_review_reasons.append(
+            str(special_duties_details[0].get("review_reason") or "special_duty_manual_review")
+            if special_duties_details
+            else "special_duty_manual_review"
+        )
 
     # Recycling fee (утильсбор) for vehicles (8701-8705, 8711)
     recycling_fee_amount = 0.0
@@ -1099,7 +1215,8 @@ def compute_payments(payload: dict[str, Any]) -> dict[str, Any]:
                 else (
                     f"Ввозная пошлина {duty_rate}% по коду ТН ВЭД/ЕТТ ЕАЭС."
                     if matched else
-                    "Ставка пошлины не найдена в локальной базе; применена ставка 0%."
+                    "Ставка пошлины не найдена в локальной базе; нулевой кандидат не подтверждён, "
+                    "окончательный платёж удержан до ручной проверки."
                 )
             ),
             "customs_fee": "Таможенный сбор рассчитан по шкале РФ 2026 по таможенной стоимости.",
@@ -1172,6 +1289,7 @@ def compare_payment_scenarios(payload: dict[str, Any]) -> dict[str, Any]:
 
     out_scenarios: list[dict[str, Any]] = []
     first_total: float | None = None
+    any_review_required = False
 
     for i, sc in enumerate(scenarios):
         if not isinstance(sc, dict):
@@ -1188,10 +1306,16 @@ def compare_payment_scenarios(payload: dict[str, Any]) -> dict[str, Any]:
             if sc.get(opt) is not None:
                 merged[opt] = sc[opt]
         res = compute_payments(merged)
-        total = _num((res.get("breakdown") or {}).get("total_payable"))
-        delta = None if first_total is None else _round2(total - first_total)
-        if first_total is None:
+        raw_total = (res.get("breakdown") or {}).get("total_payable")
+        total = float(raw_total) if raw_total is not None else None
+        delta = (
+            None
+            if first_total is None or total is None
+            else _round2(total - first_total)
+        )
+        if i == 0:
             first_total = total
+        any_review_required = any_review_required or total is None or res.get("status") != "OK"
         tv = res.get("tnved_context") or {}
         out_scenarios.append(
             {
@@ -1199,7 +1323,7 @@ def compare_payment_scenarios(payload: dict[str, Any]) -> dict[str, Any]:
                 "hs_code": hs,
                 "country": (merged.get("country") or None),
                 "delta_total_vs_first_rub": delta,
-                "total_payable": _round2(total),
+                "total_payable": _round2(total) if total is not None else None,
                 "duty": res["breakdown"]["duty"],
                 "vat": res["breakdown"]["vat"],
                 "excise": res["breakdown"]["excise"],
@@ -1207,12 +1331,13 @@ def compare_payment_scenarios(payload: dict[str, Any]) -> dict[str, Any]:
                 "duty_rate_applied": res["breakdown"]["duty_rate"],
                 "vat_rate_applied": res["breakdown"]["vat_rate"],
                 "data_quality": res.get("data_quality"),
+                "payment_review_reasons": list(res.get("payment_review_reasons") or []),
                 "tnved_title": (tv.get("title") or "")[:300] if isinstance(tv, dict) else "",
             }
         )
 
     return {
-        "status": "OK",
+        "status": "REVIEW_REQUIRED" if any_review_required else "OK",
         "shared_economic": econ,
         "scenarios": out_scenarios,
     }

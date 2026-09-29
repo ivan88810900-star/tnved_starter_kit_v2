@@ -51,16 +51,21 @@ def _map_raw_to_profile(
         country=country,
         breakdown=MoneyBreakdown(
             base_duty=float(breakdown.get("duty") or 0.0),
-            vat=float(breakdown.get("vat") or 0.0),
+            vat=(float(breakdown["vat"]) if breakdown.get("vat") is not None else None),
             excise=float(breakdown.get("excise") or 0.0),
             anti_dumping=float(breakdown.get("antidumping") or 0.0),
             customs_fee=float(breakdown.get("customs_fee") or 0.0),
-            total_payable=float(breakdown.get("total_payable") or 0.0),
+            total_payable=(
+                float(breakdown["total_payable"])
+                if breakdown.get("total_payable") is not None
+                else None
+            ),
         ),
         documents=documents,
         blocking_issue=blocking_issue,
         geo=raw_result.get("geo"),
         data_quality=raw_result.get("data_quality"),
+        payment_review_reasons=list(raw_result.get("payment_review_reasons") or []),
     )
 
 

@@ -204,7 +204,12 @@ def calculate_line_payments(
             if own:
                 db.close()
 
-    total = float(bd.get("total_payable") or 0) + float(rop_block.get("total_rop_rub") or 0)
+    payment_total = bd.get("total_payable")
+    total = (
+        None
+        if payment_total is None
+        else float(payment_total) + float(rop_block.get("total_rop_rub") or 0)
+    )
     return {
         "description": line.get("description"),
         "hs_code": hs,
@@ -214,13 +219,14 @@ def calculate_line_payments(
         "fx_rate": round(fx_rate, 8),
         "country_of_origin": country,
         "duty": bd.get("duty", 0),
-        "vat": bd.get("vat", 0),
+        "vat": bd.get("vat"),
         "excise": bd.get("excise", 0),
         "customs_fee": bd.get("customs_fee", 0),
         "recycling_fee": (payments.get("recycling_fee") or {}).get("fee_amount", 0),
         "rop": rop_block,
-        "total_payable": round(total, 2),
+        "total_payable": round(total, 2) if total is not None else None,
         "payments_status": payments.get("status"),
+        "payment_review_reasons": list(payments.get("payment_review_reasons") or []),
         "tariff_preference": payments.get("tariff_preference"),
     }
 
@@ -251,14 +257,31 @@ async def calculate_batch_lines(
     totals = {
         "customs_value": round(sum(r["customs_value"] for r in results), 2),
         "duty": round(sum(float(r["duty"]) for r in results), 2),
-        "vat": round(sum(float(r["vat"]) for r in results), 2),
+        "vat": (
+            round(sum(float(r["vat"]) for r in results), 2)
+            if all(r["vat"] is not None for r in results)
+            else None
+        ),
         "excise": round(sum(float(r["excise"]) for r in results), 2),
         "customs_fee": round(sum(float(r["customs_fee"]) for r in results), 2),
         "recycling_fee": round(sum(float(r["recycling_fee"]) for r in results), 2),
         "rop": round(sum(float((r.get("rop") or {}).get("total_rop_rub") or 0) for r in results), 2),
-        "total_payable": round(sum(float(r["total_payable"]) for r in results), 2),
+        "total_payable": (
+            round(sum(float(r["total_payable"]) for r in results), 2)
+            if all(r["total_payable"] is not None for r in results)
+            else None
+        ),
     }
-    return {"lines": results, "totals": totals, "line_count": len(results)}
+    return {
+        "status": (
+            "REVIEW_REQUIRED"
+            if any(r.get("payments_status") != "OK" or r["total_payable"] is None for r in results)
+            else "OK"
+        ),
+        "lines": results,
+        "totals": totals,
+        "line_count": len(results),
+    }
 
 
 def build_invoice_template_xlsx() -> bytes:

@@ -21,7 +21,7 @@ def _isolated_legacy_rate(raw_value: object):
         patch("app.services.payment_engine.find_rate_for_hs", return_value=(rate, 10)),
         patch("app.services.payment_engine._find_duty_rule_for_hs", return_value=(None, 0)),
         patch("app.services.rate_display.resolve_excise_for_hs", return_value=("none", 0.0, "")),
-        patch("app.services.payment_engine._resolve_special_duties", return_value=(0.0, [])),
+        patch("app.services.payment_engine._resolve_special_duties", return_value=(0.0, [], False)),
         patch("app.services.payment_engine.get_recycling_fee", return_value=[]),
         patch("app.services.payment_engine._find_vat_preference", return_value=(None, 0)),
         patch(
@@ -250,6 +250,15 @@ class AutomaticDutyOperandValidationTests(unittest.TestCase):
             malformed.add(f"{numerator}/{denominator}%")
 
         for value in sorted(malformed):
+            with self.subTest(value=value):
+                with _isolated_legacy_rate(value):
+                    with self.assertRaisesRegex(ValueError, "hs_rates"):
+                        compute_payments(
+                            {"hs_code": "9998000000", "customs_value": 100_000.0}
+                        )
+
+    def test_compute_payments_rejects_non_ascii_decimal_digits(self) -> None:
+        for value in ("١٠%", "１０%", "൧൦%"):
             with self.subTest(value=value):
                 with _isolated_legacy_rate(value):
                     with self.assertRaisesRegex(ValueError, "hs_rates"):

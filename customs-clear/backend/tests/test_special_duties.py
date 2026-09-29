@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import unittest
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta, timezone
 
 from app.db import SessionLocal
 from app.models.tnved import SpecialDuty
@@ -51,6 +51,8 @@ class SpecialDutiesTests(unittest.TestCase):
         self.assertEqual(res["breakdown"]["special_duties_amount"], 0.0)
         self.assertIn("hs_rate_source_missing", res["payment_review_reasons"])
         self.assertIsNone(res["breakdown"]["total_payable"])
+        self.assertNotIn("применена ставка 0%", res["legal_basis"]["duty"])
+        self.assertIn("окончательный платёж удержан", res["legal_basis"]["duty"])
 
     def test_expired_measure_not_applied(self) -> None:
         expired_to = (date.today() - timedelta(days=30)).isoformat()
@@ -82,7 +84,7 @@ class SpecialDutiesTests(unittest.TestCase):
                 db.commit()
 
 
-    def test_effective_start_date_is_enforced_at_boundary(self) -> None:
+    def test_unverified_active_measure_fails_closed_at_effective_boundary(self) -> None:
         today = date.today()
         future_from = (today + timedelta(days=30)).isoformat()
         future_to = (today + timedelta(days=365)).isoformat()
@@ -132,27 +134,99 @@ class SpecialDutiesTests(unittest.TestCase):
             db.commit()
         try:
             res = self._calc(hs_code="9998999999", country="ZZ")
-            details = [
-                d for d in (res.get("special_duties") or [])
-                if not d.get("warning") and d.get("regulatory_act") in markers.values()
-            ]
-            by_act = {d["regulatory_act"]: d for d in details}
-
-            self.assertNotIn(markers["future"], by_act)
-            self.assertIn(markers["today"], by_act)
-            self.assertIn(markers["legacy"], by_act)
-            self.assertEqual(by_act[markers["today"]]["effective_from"], today.isoformat())
-            self.assertEqual(by_act[markers["today"]]["effective_to"], future_to)
-            self.assertAlmostEqual(
-                sum(float(d["amount"]) for d in details),
-                10_000.0,
-                places=2,
-            )
+            details = res.get("special_duties") or []
+            self.assertEqual(res["breakdown"]["special_duties_amount"], 0.0)
+            self.assertEqual(details[0]["review_reason"], "special_duty_provenance_unverified")
+            self.assertIn("special_duty_provenance_unverified", res["payment_review_reasons"])
+            self.assertIsNone(res["breakdown"]["total_payable"])
         finally:
             with SessionLocal() as db:
                 db.query(SpecialDuty).filter(
                     SpecialDuty.regulatory_act.in_(list(markers.values()))
                 ).delete(synchronize_session=False)
+                db.commit()
+
+    @staticmethod
+    def _official_anti_dumping_row(*, act: str, rate: float = 7.0) -> SpecialDuty:
+        today = date.today()
+        return SpecialDuty(
+            hs_code_prefix="9996",
+            origin_country="ZZ",
+            rate_percent=rate,
+            rate_specific=0.0,
+            currency_code="RUB",
+            regulatory_act=act,
+            measure_type="anti_dumping",
+            manufacturer_exporter="",
+            product_description="",
+            effective_from=(today - timedelta(days=1)).isoformat(),
+            effective_to=(today + timedelta(days=365)).isoformat(),
+            source_code="EEC_ANTI_DUMPING",
+            source_revision="anti-dumping:2026-09-29",
+            source_url="https://eec.eaeunion.org/comission/department/trade/trade-remedies/",
+            synced_at=datetime.now(timezone.utc).replace(tzinfo=None),
+            needs_verification=False,
+        )
+
+    def test_official_measure_is_applied_once_when_exact_duplicate_exists(self) -> None:
+        marker = "TEST-OFFICIAL-DUPLICATE-SPECIAL-DUTY"
+        with SessionLocal() as db:
+            db.add_all([
+                self._official_anti_dumping_row(act=marker),
+                self._official_anti_dumping_row(act=marker),
+            ])
+            db.commit()
+        try:
+            res = self._calc(hs_code="9996999999", country="ZZ")
+            self.assertEqual(res["breakdown"]["special_duties_amount"], 7_000.0)
+            applied = [d for d in res["special_duties"] if not d.get("warning")]
+            self.assertEqual(len(applied), 1)
+        finally:
+            with SessionLocal() as db:
+                db.query(SpecialDuty).filter(SpecialDuty.regulatory_act == marker).delete()
+                db.commit()
+
+    def test_overlapping_distinct_official_measures_fail_closed(self) -> None:
+        markers = ["TEST-OFFICIAL-OVERLAP-A", "TEST-OFFICIAL-OVERLAP-B"]
+        with SessionLocal() as db:
+            db.add_all([
+                self._official_anti_dumping_row(act=markers[0], rate=7.0),
+                self._official_anti_dumping_row(act=markers[1], rate=9.0),
+            ])
+            db.commit()
+        try:
+            res = self._calc(hs_code="9996999999", country="ZZ")
+            self.assertEqual(res["breakdown"]["special_duties_amount"], 0.0)
+            self.assertEqual(
+                res["special_duties"][0]["review_reason"],
+                "special_duty_overlap_unresolved",
+            )
+            self.assertIn("special_duty_overlap_unresolved", res["payment_review_reasons"])
+            self.assertIsNone(res["breakdown"]["total_payable"])
+        finally:
+            with SessionLocal() as db:
+                db.query(SpecialDuty).filter(SpecialDuty.regulatory_act.in_(markers)).delete(
+                    synchronize_session=False
+                )
+                db.commit()
+
+    def test_needs_verification_blocks_even_official_markers(self) -> None:
+        marker = "TEST-NEEDS-VERIFICATION-SPECIAL-DUTY"
+        row = self._official_anti_dumping_row(act=marker)
+        row.needs_verification = True
+        with SessionLocal() as db:
+            db.add(row)
+            db.commit()
+        try:
+            res = self._calc(hs_code="9996999999", country="ZZ")
+            self.assertEqual(res["breakdown"]["special_duties_amount"], 0.0)
+            self.assertEqual(
+                res["special_duties"][0]["review_reason"],
+                "special_duty_provenance_unverified",
+            )
+        finally:
+            with SessionLocal() as db:
+                db.query(SpecialDuty).filter(SpecialDuty.regulatory_act == marker).delete()
                 db.commit()
 
     def test_non_iso_or_invalid_effective_dates_fail_closed(self) -> None:
