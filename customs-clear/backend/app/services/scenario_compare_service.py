@@ -8,6 +8,7 @@ from typing import Any
 
 from ..db import SessionLocal
 from .exchange_rates import get_rates_map
+from .payment_engine import _resolve_fx_rate
 from .payment_engine_compat import compute_payments
 from .rop_calculator import calculate_rop
 
@@ -25,7 +26,7 @@ def compare_scenarios_extended(payload: dict[str, Any]) -> dict[str, Any]:
     net = base.get("weight_net_kg")
 
     rates = get_rates_map()
-    fx = float(rates.get(currency) or 1.0)
+    fx = _resolve_fx_rate(currency, rates)
     cv_rub = customs_value * fx
 
     out: list[dict[str, Any]] = []
@@ -43,6 +44,7 @@ def compare_scenarios_extended(payload: dict[str, Any]) -> dict[str, Any]:
                 "customs_value": cv_rub,
                 "invoice_currency": "RUB",
                 "country": country or None,
+                "_fx_rates": rates,
             }
             if net is not None:
                 pay_in["net_weight_kg"] = float(net)
@@ -55,7 +57,12 @@ def compare_scenarios_extended(payload: dict[str, Any]) -> dict[str, Any]:
             if hs and gross is not None and net is not None:
                 rop = calculate_rop(db, hs, float(gross), float(net))
 
-            total = float(bd.get("total_payable") or 0) + float(rop.get("total_rop_rub") or 0)
+            payment_total = bd.get("total_payable")
+            total = (
+                None
+                if payment_total is None
+                else float(payment_total) + float(rop.get("total_rop_rub") or 0)
+            )
             out.append(
                 {
                     "name": name,
@@ -63,26 +70,33 @@ def compare_scenarios_extended(payload: dict[str, Any]) -> dict[str, Any]:
                     "country_of_origin": country or None,
                     "procedure_code": procedure or None,
                     "duty": bd.get("duty", 0),
-                    "vat": bd.get("vat", 0),
+                    "vat": bd.get("vat"),
                     "fee": bd.get("customs_fee", 0),
                     "excise": bd.get("excise", 0),
                     "recycling_fee": (res.get("recycling_fee") or {}).get("fee_amount", 0),
                     "rop": rop.get("total_rop_rub", 0),
-                    "total": round(total, 2),
+                    "total": round(total, 2) if total is not None else None,
                     "preference": res.get("tariff_preference"),
                     "payments_status": res.get("status"),
+                    "payment_review_reasons": list(res.get("payment_review_reasons") or []),
                 }
             )
 
     if not out:
         raise ValueError("Нет валидных сценариев")
 
-    best = min(out, key=lambda x: float(x["total"]))
-    worst = max(out, key=lambda x: float(x["total"]))
-    savings = round(float(worst["total"]) - float(best["total"]), 2)
+    ranked = [row for row in out if row["total"] is not None and row["payments_status"] == "OK"]
+    all_rankable = len(ranked) == len(out)
+    best = min(ranked, key=lambda x: float(x["total"])) if all_rankable else None
+    worst = max(ranked, key=lambda x: float(x["total"])) if all_rankable else None
+    savings = (
+        round(float(worst["total"]) - float(best["total"]), 2)
+        if best is not None and worst is not None
+        else None
+    )
 
     return {
-        "status": "OK",
+        "status": "OK" if all_rankable else "REVIEW_REQUIRED",
         "base": {
             "hs_code": hs_base,
             "customs_value": customs_value,
@@ -92,6 +106,6 @@ def compare_scenarios_extended(payload: dict[str, Any]) -> dict[str, Any]:
             "weight_net_kg": net,
         },
         "scenarios": out,
-        "best_scenario": best["name"],
+        "best_scenario": best["name"] if best is not None else None,
         "savings_vs_worst": savings,
     }

@@ -5,6 +5,7 @@ from __future__ import annotations
 import unittest
 
 from app.services.normative_store import init_db
+from app.services.payment_engine import compute_payments
 from app.services.payment_quote_service import build_payment_quote
 
 try:
@@ -40,39 +41,35 @@ class PaymentQuoteServiceTests(unittest.TestCase):
 
     def test_successful_quote_has_core_line_items(self):
         quote = self._quote()
-        self.assertEqual(quote.status, "OK")
+        self.assertEqual(quote.status, "REVIEW_REQUIRED")
         codes = {item.code for item in quote.line_items}
         self.assertTrue({"duty", "vat", "customs_fee", "excise", "antidumping", "special_duty"}.issubset(codes))
         duty = self._line(quote, "duty")
         vat = self._line(quote, "vat")
         fee = self._line(quote, "customs_fee")
-        self.assertEqual(duty.status, "applied")
-        self.assertGreater(duty.amount_rub or 0, 0)
-        self.assertEqual(vat.status, "applied")
-        self.assertGreater(vat.amount_rub or 0, 0)
+        self.assertEqual(duty.status, "manual_review_required")
+        self.assertIsNone(duty.amount_rub)
+        self.assertEqual(vat.status, "manual_review_required")
+        self.assertIsNone(vat.amount_rub)
         self.assertEqual(fee.status, "applied")
-        special = self._line(quote, "special_duty")
-        if special.status == "not_configured":
-            self.assertIsNone(quote.total_payable_rub)
-            self.assertTrue(any(w.code == "special_duty_not_configured" for w in quote.warnings))
-        else:
-            self.assertIsNotNone(quote.total_payable_rub)
-            self.assertGreater(quote.total_payable_rub or 0, 0)
+        self.assertIsNone(quote.total_payable_rub)
 
     def test_excise_applied_for_beer(self):
+        raw = compute_payments({"hs_code": "2203009900", "customs_value": 200_000})
         quote = self._quote(hs_code="2203009900", customs_value=200_000)
         excise = self._line(quote, "excise")
-        self.assertEqual(excise.status, "applied")
-        self.assertGreater(excise.amount_rub or 0, 0)
+        self.assertGreater(raw["breakdown"]["excise"], 0)
+        self.assertEqual(excise.status, "manual_review_required")
+        self.assertIsNone(excise.amount_rub)
+        self.assertIsNone(quote.total_payable_rub)
 
     def test_excise_not_silently_zero_for_unknown_code(self):
         quote = self._quote(hs_code="4738291056", customs_value=100_000)
         excise = self._line(quote, "excise")
-        self.assertIn(excise.status, {"unknown", "not_applicable"})
-        if excise.status == "unknown":
-            self.assertIsNone(excise.amount_rub)
-            self.assertIsNone(quote.total_payable_rub)
-            self.assertTrue(any(w.code.startswith("excise_") for w in quote.warnings))
+        self.assertEqual(excise.status, "manual_review_required")
+        self.assertIsNone(excise.amount_rub)
+        self.assertIsNone(quote.total_payable_rub)
+        self.assertTrue(any(w.code.startswith("excise_") for w in quote.warnings))
 
     def test_antidumping_manual_review_without_country(self):
         quote = self._quote(hs_code="7214990000", customs_value=100_000)
@@ -83,11 +80,14 @@ class PaymentQuoteServiceTests(unittest.TestCase):
         self.assertTrue(any("antidumping" in w.code for w in quote.warnings))
 
     def test_antidumping_applied_with_country(self):
+        raw = compute_payments({"hs_code": "7214990000", "customs_value": 100_000, "country": "CN"})
         quote = self._quote(hs_code="7214990000", customs_value=100_000, country="CN")
         ad = self._line(quote, "antidumping")
-        self.assertEqual(ad.status, "applied")
-        self.assertGreater(ad.amount_rub or 0, 0)
-        self.assertIsNotNone(quote.total_payable_rub)
+        self.assertGreater(raw["breakdown"]["antidumping"], 0)
+        self.assertIn("hs_rate_source_binding_unverified", raw["payment_review_reasons"])
+        self.assertEqual(ad.status, "manual_review_required")
+        self.assertIsNone(ad.amount_rub)
+        self.assertIsNone(quote.total_payable_rub)
 
     def test_special_duty_not_configured_blocks_final_total(self):
         quote = self._quote(hs_code="8517120000", customs_value=50_000, country="CN")
@@ -124,14 +124,17 @@ class PaymentQuoteApiTests(unittest.TestCase):
         )
         self.assertEqual(r.status_code, 200)
         body = r.json()
-        self.assertEqual(body["status"], "OK")
+        self.assertEqual(body["status"], "REVIEW_REQUIRED")
         self.assertIn("line_items", body)
         self.assertGreater(len(body["line_items"]), 0)
         self.assertIn("warnings", body)
         self.assertIn("assumptions", body)
-        special = next(x for x in body["line_items"] if x["code"] == "special_duty")
-        if special["status"] == "not_configured":
-            self.assertIsNone(body["total_payable_rub"])
+        lines = {line["code"]: line for line in body["line_items"]}
+        self.assertEqual(lines["duty"]["status"], "manual_review_required")
+        self.assertIsNone(lines["duty"]["amount_rub"])
+        self.assertEqual(lines["vat"]["status"], "manual_review_required")
+        self.assertIsNone(lines["vat"]["amount_rub"])
+        self.assertIsNone(body["total_payable_rub"])
 
     def test_api_quote_antidumping_manual_review(self):
         r = self.client.post(
