@@ -1,11 +1,11 @@
 from __future__ import annotations
 
 import re
+import unicodedata
 from dataclasses import dataclass
 from datetime import date
+from math import isfinite
 from typing import Any
-
-from sqlalchemy import or_
 
 from ..db import SessionLocal
 from ..models.tnved import Commodity, HsDutyRule, SpecialDuty, VatPreference
@@ -39,12 +39,136 @@ def _num(v: Any | None) -> float:
     return 0.0 if v is None else float(v)
 
 
+def _manual_nonnegative_number(payload: dict[str, Any], key: str, label: str) -> float | None:
+    """Parse a manual override without admitting invalid money operands."""
+    raw = payload.get(key)
+    if raw is None:
+        return None
+    try:
+        value = None if isinstance(raw, bool) else float(raw)
+    except (TypeError, ValueError, OverflowError):
+        value = None
+    if value is None or not isfinite(value) or value < 0:
+        raise ValueError(f"{label} должна быть конечным неотрицательным числом")
+    return value
+
+
+def _validated_payment_result(value: Any, *, label: str) -> float:
+    """Fail closed when otherwise valid operands overflow dependent arithmetic."""
+    try:
+        number = float(value)
+    except (TypeError, ValueError, OverflowError) as exc:
+        raise ValueError(f"{label} выходит за конечный числовой диапазон") from exc
+    if not isfinite(number) or number < 0:
+        raise ValueError(f"{label} выходит за конечный числовой диапазон")
+    return number
+
+
 def _sum_amounts(*parts: Any | None) -> float:
     return sum(_num(p) for p in parts)
 
 
 def _round2(v: Any | None) -> float:
     return round(_num(v), 2)
+
+
+def _validated_automatic_duty_operand(value: Any, *, label: str) -> float:
+    """Reject malformed stored duty operands before payment arithmetic."""
+    if isinstance(value, bool):
+        raise ValueError(f"Некорректное автоматическое значение {label}")
+    try:
+        number = float(value)
+    except (TypeError, ValueError, OverflowError) as exc:
+        raise ValueError(f"Некорректное автоматическое значение {label}") from exc
+    if not isfinite(number) or number < 0:
+        raise ValueError(f"Некорректное автоматическое значение {label}")
+    return number
+
+
+def _validated_automatic_duty_result(value: Any, *, label: str) -> float:
+    """Reject overflow/non-finite automatic duty results before dependent math."""
+    number = float(value)
+    if not isfinite(number) or number < 0:
+        raise ValueError(f"Некорректный результат автоматического расчета {label}")
+    return number
+
+
+_LEGACY_DUTY_NUMBER = r"\d+(?:\.\d+)?"
+_LEGACY_DUTY_UNIT = (
+    r"(?:евро(?:\s*/\s*кг|\s+за(?:\s+кг)?)?|eur(?:\s*/\s*кг)?|€(?:\s*/\s*кг)?)"
+)
+_LEGACY_DUTY_SIMPLE_RE = re.compile(
+    rf"(?:{_LEGACY_DUTY_NUMBER}|{_LEGACY_DUTY_NUMBER}\s*%)",
+    re.IGNORECASE,
+)
+_LEGACY_DUTY_SPECIFIC_RE = re.compile(
+    rf"{_LEGACY_DUTY_NUMBER}\s*{_LEGACY_DUTY_UNIT}",
+    re.IGNORECASE,
+)
+_LEGACY_DUTY_COMBINED_RE = re.compile(
+    rf"{_LEGACY_DUTY_NUMBER}\s*%\s*(?:,\s*)?"
+    rf"(?:(?:но\s+)?(?:не\s+менее|не\s+меньше)|плюс)\s*"
+    rf"{_LEGACY_DUTY_NUMBER}\s*{_LEGACY_DUTY_UNIT}",
+    re.IGNORECASE,
+)
+
+
+def _contains_forbidden_legacy_sign(raw_text: str) -> bool:
+    """Fail closed on signed/ambiguous rate text before permissive parsing."""
+    for char in raw_text:
+        name = unicodedata.name(char, "")
+        if (
+            unicodedata.category(char) == "Pd"
+            or "MINUS" in name
+            or "HYPHEN" in name
+            or "DASH" in name
+            or "PLUS SIGN" in name
+        ):
+            return True
+    return False
+
+
+def _parse_validated_legacy_duty_rate(raw_value: Any) -> dict[str, Any]:
+    """Parse only a source value that is bound to a supported non-negative rate token."""
+    if (
+        isinstance(raw_value, bool)
+        or raw_value is None
+        or not isinstance(raw_value, (str, int, float))
+    ):
+        raise ValueError("Некорректная автоматическая ставка пошлины в hs_rates")
+    if isinstance(raw_value, (int, float)):
+        number = _validated_automatic_duty_operand(raw_value, label="ставки пошлины в hs_rates")
+        return {
+            "ad_valorem": number,
+            "specific_eur": 0.0,
+            "rule": "STANDARD",
+            "raw_text": str(raw_value),
+        }
+    else:
+        raw_text = str(raw_value).strip()
+        if not raw_text:
+            raise ValueError("Некорректная автоматическая ставка пошлины в hs_rates")
+
+    low = raw_text.lower()
+    if (
+        _contains_forbidden_legacy_sign(raw_text)
+        or re.search(r"\b(?:nan|inf(?:inity)?)\b", low)
+    ):
+        raise ValueError("Некорректная автоматическая ставка пошлины в hs_rates")
+    if not any(
+        grammar.fullmatch(raw_text)
+        for grammar in (
+            _LEGACY_DUTY_SIMPLE_RE,
+            _LEGACY_DUTY_SPECIFIC_RE,
+            _LEGACY_DUTY_COMBINED_RE,
+        )
+    ):
+        raise ValueError("Некорректная автоматическая ставка пошлины в hs_rates")
+
+    parsed = _parse_duty_rate(raw_text)
+    _validated_automatic_duty_operand(parsed.get("ad_valorem"), label="ставки пошлины в hs_rates")
+    _validated_automatic_duty_operand(parsed.get("specific_eur"), label="специфической ставки в hs_rates")
+    return parsed
 
 
 # Confidence levels based on HS-prefix match length
@@ -56,17 +180,34 @@ _CONFIDENCE_MAP = {
     0: "none",
 }
 
-_FALLBACK_FX_RATES: dict[str, float] = {
-    "EUR": 100.0,
-    "USD": 92.0,
-    "RUB": 1.0,
-}
-
 SPECIAL_DUTIES_COUNTRY_WARNING = (
     "Антидемпинговые и иные специальные пошлины проверяются только при указании "
     "страны происхождения. Данные по мерам защиты рынка могут быть неполными — "
     "см. remedies.eaeunion.org"
 )
+
+
+def _resolve_fx_rate(currency: str, fx_rates: dict[str, float] | None) -> float:
+    """Resolve a RUB conversion without inventing an unverified market rate."""
+    ccy = (currency or "").upper().strip()
+    if ccy == "RUB":
+        return 1.0
+    supplied = {
+        (str(key) if key is not None else "").upper().strip(): value
+        for key, value in (fx_rates or {}).items()
+    }
+    if not ccy or ccy not in supplied:
+        raise ValueError(f"Нет подтвержденного курса ЦБ РФ для валюты: {ccy or 'EMPTY'}")
+    raw_rate = supplied[ccy]
+    if isinstance(raw_rate, bool):
+        raise ValueError(f"Некорректный курс ЦБ РФ для валюты: {ccy}")
+    try:
+        rate = float(raw_rate)
+    except (TypeError, ValueError) as exc:
+        raise ValueError(f"Некорректный курс ЦБ РФ для валюты: {ccy}") from exc
+    if not isfinite(rate) or rate <= 0:
+        raise ValueError(f"Некорректный курс ЦБ РФ для валюты: {ccy}")
+    return rate
 
 
 def _digits_hs(code: str) -> str:
@@ -110,7 +251,7 @@ def _find_duty_rule_for_hs(hs_code: str) -> tuple[HsDutyRule | _FallbackDutyRule
     rate, rate_match_len = find_rate_for_hs(hs_code)
     if not rate:
         return None, 0
-    parsed = _parse_duty_rate(rate.duty_rate or "0")
+    parsed = _parse_validated_legacy_duty_rate(rate.duty_rate)
     rule_type = "specific" if (parsed.get("specific_amount") is not None) else "ad_valorem"
     fallback = _FallbackDutyRule(
         commodity_code=str(rate.hs_code or rate.hs_prefix or _digits_hs(hs_code)),
@@ -153,6 +294,33 @@ def _special_duty_prefix_candidates(hs_code: str) -> list[tuple[str, int]]:
     return [(p, m) for p, m in out if not (p in seen or seen.add(p))]
 
 
+def _special_duty_is_effective(
+    effective_from: Any | None,
+    effective_to: Any | None,
+    on_date: date,
+) -> bool:
+    """Validate an ISO date window and fail closed on malformed non-empty bounds."""
+    parsed: list[date | None] = []
+    for raw in (effective_from, effective_to):
+        value = str(raw or "").strip()
+        if not value:
+            parsed.append(None)
+            continue
+        if re.fullmatch(r"\d{4}-\d{2}-\d{2}", value) is None:
+            return False
+        try:
+            parsed.append(date.fromisoformat(value))
+        except ValueError:
+            return False
+
+    starts, ends = parsed
+    if starts is not None and starts > on_date:
+        return False
+    if ends is not None and ends < on_date:
+        return False
+    return True
+
+
 def _resolve_special_duties(
     hs_code: str,
     country: str | None,
@@ -164,21 +332,24 @@ def _resolve_special_duties(
     if not cands:
         return 0.0, []
     by_prefix = {p: m for p, m in cands}
-    today = date.today().isoformat()
+    today = date.today()
     country_norm = (country or "").strip().upper() or None
 
     with SessionLocal() as db:
         query = db.query(SpecialDuty).filter(
             SpecialDuty.hs_code_prefix.in_(list(by_prefix.keys())),
-            or_(
-                SpecialDuty.effective_to.is_(None),
-                SpecialDuty.effective_to == "",
-                SpecialDuty.effective_to >= today,
-            ),
         )
         if country_norm:
             query = query.filter(SpecialDuty.origin_country == country_norm)
-        rows = query.all()
+        rows = [
+            row
+            for row in query.all()
+            if _special_duty_is_effective(
+                row.effective_from,
+                row.effective_to,
+                today,
+            )
+        ]
 
     if not rows:
         return 0.0, []
@@ -195,16 +366,12 @@ def _resolve_special_duties(
             }
         ]
 
-    rates = dict(_FALLBACK_FX_RATES)
-    rates.update({(k or "").upper(): float(v) for k, v in (fx_rates or {}).items()})
     details: list[dict[str, Any]] = []
     total = 0.0
     for r in rows:
         part_ad = customs_value * float(r.rate_percent or 0.0) / 100.0
         ccy = (r.currency_code or "RUB").upper().strip()
-        if ccy not in rates:
-            raise ValueError(f"Неизвестная валюта спецпошлины: {ccy}")
-        fx = float(rates.get(ccy) or 1.0)
+        fx = _resolve_fx_rate(ccy, fx_rates)
         part_spec = float(r.rate_specific or 0.0) * float(quantity or 0.0) * fx
         part = part_ad + part_spec
         total += part
@@ -218,6 +385,8 @@ def _resolve_special_duties(
                 "currency_code": ccy,
                 "fx_rate": fx,
                 "regulatory_act": r.regulatory_act or "",
+                "effective_from": r.effective_from or "",
+                "effective_to": r.effective_to or "",
                 "needs_verification": bool(getattr(r, "needs_verification", False)),
                 "amount": _round2(part),
                 "match_len": by_prefix.get(r.hs_code_prefix, 0),
@@ -239,24 +408,52 @@ def _compute_structured_duty(
 ) -> tuple[float, float, float | None, float | None, str, float | None, float | None]:
     """Возвращает: duty, duty_rate, ad_valorem_amount, specific_amount_rub, selected_rule, fx_rate, specific_qty_used."""
     if manual_duty_rate is not None:
-        duty = customs_value * manual_duty_rate / 100.0
+        duty = _validated_payment_result(
+            customs_value * manual_duty_rate / 100.0,
+            label="ручной пошлины",
+        )
         return duty, manual_duty_rate, duty, None, "manual_rate", None, None
+
+    auto_duty_rate = _validated_automatic_duty_operand(
+        auto_duty_rate,
+        label="ставки пошлины",
+    )
 
     # Фолбэк на старую логику, если правило не найдено.
     if duty_rule is None:
-        duty = customs_value * auto_duty_rate / 100.0
+        duty = _validated_automatic_duty_result(
+            customs_value * auto_duty_rate / 100.0,
+            label="пошлины",
+        )
         return duty, auto_duty_rate, duty, None, "ad_valorem", None, None
 
     rule_type = (duty_rule.type or "ad_valorem").strip().lower()
     ad_pct_raw = duty_rule.ad_valorem_pct
-    ad_pct = _num(ad_pct_raw)
-    ad_valorem_amount = customs_value * ad_pct / 100.0 if ad_pct_raw is not None else None
+    ad_pct = (
+        _validated_automatic_duty_operand(
+            ad_pct_raw,
+            label="адвалорной ставки",
+        )
+        if ad_pct_raw is not None
+        else 0.0
+    )
+    ad_valorem_amount = (
+        _validated_automatic_duty_result(
+            customs_value * ad_pct / 100.0,
+            label="адвалорной пошлины",
+        )
+        if ad_pct_raw is not None
+        else None
+    )
 
     specific_amount_rub: float | None = None
     fx_rate: float | None = None
     specific_qty_used: float | None = None
     if duty_rule.specific_amount is not None:
-        amount = _num(duty_rule.specific_amount)
+        amount = _validated_automatic_duty_operand(
+            duty_rule.specific_amount,
+            label="специфической ставки",
+        )
         ccy = (duty_rule.specific_currency or "").upper().strip()
         uom = (duty_rule.specific_uom or "").lower().strip()
         if uom == "kg":
@@ -269,16 +466,18 @@ def _compute_structured_duty(
         if q_used <= 0:
             raise ValueError("Для точного расчета необходимо указать вес/количество")
         specific_qty_used = q_used
-        rates = dict(_FALLBACK_FX_RATES)
-        rates.update({(k or "").upper(): float(v) for k, v in (fx_rates or {}).items()})
-        if ccy not in rates:
-            raise ValueError(f"Неизвестная валюта специфической ставки: {ccy or 'EMPTY'}")
-        fx_rate = _num(rates.get(ccy) or 1.0)
-        specific_amount_rub = amount * q_used * float(fx_rate)
+        fx_rate = _resolve_fx_rate(ccy, fx_rates)
+        specific_amount_rub = _validated_automatic_duty_result(
+            amount * q_used * float(fx_rate),
+            label="специфической пошлины",
+        )
 
     # simple ad valorem
     if rule_type == "ad_valorem":
-        duty = ad_valorem_amount if ad_valorem_amount is not None else customs_value * auto_duty_rate / 100.0
+        duty = ad_valorem_amount if ad_valorem_amount is not None else _validated_automatic_duty_result(
+            customs_value * auto_duty_rate / 100.0,
+            label="пошлины",
+        )
         used_rate = ad_pct if ad_pct > 0 else auto_duty_rate
         return duty, used_rate, ad_valorem_amount, specific_amount_rub, "ad_valorem", fx_rate, specific_qty_used
 
@@ -303,7 +502,10 @@ def _compute_structured_duty(
             duty = right_val
             selected = "specific"
         else:
-            duty = customs_value * auto_duty_rate / 100.0
+            duty = _validated_automatic_duty_result(
+                customs_value * auto_duty_rate / 100.0,
+                label="пошлины",
+            )
             selected = "fallback_auto"
         used_rate = auto_duty_rate if selected == "fallback_auto" else ad_pct
         return duty, used_rate, ad_valorem_amount, specific_amount_rub, f"combined_min:{selected}", fx_rate, specific_qty_used
@@ -319,7 +521,10 @@ def _compute_structured_duty(
         duty = right_val
         selected = "specific"
     else:
-        duty = customs_value * auto_duty_rate / 100.0
+        duty = _validated_automatic_duty_result(
+            customs_value * auto_duty_rate / 100.0,
+            label="пошлины",
+        )
         selected = "fallback_auto"
     used_rate = auto_duty_rate if selected == "fallback_auto" else ad_pct
     return duty, used_rate, ad_valorem_amount, specific_amount_rub, f"combined_max:{selected}", fx_rate, specific_qty_used
@@ -389,8 +594,17 @@ def _resolve_antidumping(
     quantity: float,
 ) -> tuple[float, str, str]:
     """Return (antidumping_amount, antidumping_reason, confidence)."""
-    if antidumping_type == "none" or antidumping_type == "":
+    antidumping_type = str(antidumping_type or "").strip().lower()
+    if antidumping_type in {"none", ""}:
         return 0.0, "Не применяется", "n/a"
+
+    if antidumping_type not in {"percent", "fixed"}:
+        return (
+            0.0,
+            "Требуется ручная проверка: неизвестный тип антидемпинговой ставки "
+            f"«{antidumping_type}»; автоматический расчёт и вывод об отсутствии меры запрещены.",
+            "manual_review",
+        )
 
     # Check country applicability
     applicable_countries = [c.strip().upper() for c in antidumping_countries.split(",") if c.strip()]
@@ -419,22 +633,38 @@ def _resolve_antidumping(
         return amount, reason, "applied"
 
     if antidumping_type == "fixed":
-        amount = antidumping_value * quantity
+        # ``hs_rates`` stores only the numeric fixed value.  It has no typed
+        # currency, source unit or denominator, so the generic invoice
+        # ``quantity`` cannot prove the operand required by a trade-remedy
+        # measure (kg, tonne, item, etc.).  Keep the candidate visible but do
+        # not admit an amount into VAT or the final payable total.
         reason = (
-            f"Применяется фикс. ставка {antidumping_value} руб./ед. × {quantity} ед. "
+            "Требуется ручная проверка: для фиксированной антидемпинговой ставки "
+            f"{antidumping_value} не указаны валюта, единица и знаменатель источника; "
+            f"универсальное количество {quantity} не применяется автоматически. "
             f"{antidumping_condition or ''} Страна: {country}."
         ).strip()
-        return amount, reason, "applied"
+        return 0.0, reason, "manual_review"
 
-    return 0.0, "Не применяется (неизвестный тип)", "n/a"
+    raise AssertionError("unreachable antidumping type")
 
 
 def compute_payments(payload: dict[str, Any]) -> dict[str, Any]:
+    manual_duty_rate = _manual_nonnegative_number(
+        payload, "duty_rate", "Ручная ставка пошлины"
+    )
+    manual_vat_rate = _manual_nonnegative_number(
+        payload, "vat_rate", "Ручная ставка НДС"
+    )
+    manual_excise = _manual_nonnegative_number(
+        payload, "excise", "Ручная сумма акциза"
+    )
     hs_code = str(payload.get("hs_code") or "").strip()
     hs_digits = _digits_hs(hs_code)
     customs_value = float(payload.get("customs_value") or 0.0)
     freight = float(payload.get("freight") or 0.0)
     country = str(payload.get("country") or "").upper().strip() or None
+    manual_duty_rate_supplied = manual_duty_rate is not None
 
     if customs_value <= 0:
         raise ValueError("Таможенная стоимость должна быть > 0")
@@ -480,8 +710,10 @@ def compute_payments(payload: dict[str, Any]) -> dict[str, Any]:
             }
         duty_override_row = find_geo_duty_override_row(hs_digits, country, country_is_unfriendly=is_unfriendly)
         if duty_override_row is not None:
-            parsed_geo = _parse_duty_rate(str(duty_override_row.duty_rate or "0"))
-            geo_rate = float(parsed_geo.get("ad_valorem") or 0.0)
+            geo_rate = None
+            if not manual_duty_rate_supplied:
+                parsed_geo = _parse_validated_legacy_duty_rate(duty_override_row.duty_rate)
+                geo_rate = float(parsed_geo.get("ad_valorem") or 0.0)
             geo_meta = {
                 "embargo": False,
                 "duty_override_rate": geo_rate,
@@ -498,10 +730,10 @@ def compute_payments(payload: dict[str, Any]) -> dict[str, Any]:
     matched = rate is not None
     confidence = _CONFIDENCE_MAP.get(match_len, "none")
 
-    if rate is None:
+    if rate is None or manual_duty_rate_supplied:
         auto_duty_rate = 0.0
     else:
-        auto_duty_rate = float(_parse_duty_rate(rate.duty_rate or "0").get("ad_valorem") or 0.0)
+        auto_duty_rate = float(_parse_validated_legacy_duty_rate(rate.duty_rate).get("ad_valorem") or 0.0)
     vat_rule = (rate.vat_rule if rate else "none") or "none"
     vat_rule_basis = (rate.vat_rule_basis if rate else "") or ""
     raw_vat_rate = float(rate.vat_import_rate) if rate else 22.0
@@ -515,7 +747,7 @@ def compute_payments(payload: dict[str, Any]) -> dict[str, Any]:
         excise_type = resolved_type
         excise_value = resolved_value
         excise_basis = resolved_basis or excise_basis
-    antidumping_type = (rate.antidumping_type if rate else "none") or "none"
+    antidumping_type = str((rate.antidumping_type if rate else "none") or "none").strip().lower()
     antidumping_value = float(rate.antidumping_value) if rate else 0.0
     antidumping_condition = (rate.antidumping_condition if rate else "") or ""
     antidumping_countries = (rate.antidumping_countries if rate else "") or ""
@@ -527,8 +759,12 @@ def compute_payments(payload: dict[str, Any]) -> dict[str, Any]:
     extra_quantity = float(payload.get("extra_quantity") or 0.0) if payload.get("extra_quantity") is not None else None
 
     # Duty (структурированные правила hs_duty_rules + fallback на историческую ставку)
-    duty_rule, duty_rule_match_len = _find_duty_rule_for_hs(hs_code)
-    manual_duty_rate = float(payload.get("duty_rate")) if payload.get("duty_rate") is not None else None
+    if manual_duty_rate is not None:
+        # Manual override is authoritative for this calculation. Do not parse or
+        # admit an otherwise unused automatic rule/source value.
+        duty_rule, duty_rule_match_len = None, 0
+    else:
+        duty_rule, duty_rule_match_len = _find_duty_rule_for_hs(hs_code)
     # Гео-подмена ставки применяется к базовой (исторической) адвалорной логике;
     # структурированное правило hs_duty_rules остаётся приоритетным.
     if manual_duty_rate is None and duty_rule is None and geo_meta.get("duty_override_rate") is not None:
@@ -547,7 +783,7 @@ def compute_payments(payload: dict[str, Any]) -> dict[str, Any]:
     # Tariff preference: apply country-of-origin duty coefficient
     tariff_pref = get_tariff_preference(country) if country else None
     tariff_pref_meta: dict[str, Any] = {"applied": False}
-    user_duty_rate = payload.get("duty_rate")
+    user_duty_rate = manual_duty_rate
     if tariff_pref and user_duty_rate is None and geo_meta.get("duty_override_rate") is None:
         coeff = tariff_pref.duty_coefficient
         if coeff != 1.0:
@@ -563,20 +799,35 @@ def compute_payments(payload: dict[str, Any]) -> dict[str, Any]:
                 "legal_ref": tariff_pref.legal_ref or "",
             }
 
+    # Final automatic-duty barrier immediately before dependent VAT/final-payable
+    # arithmetic. This also covers automatic preference/geo transformations.
+    if not manual_duty_rate_supplied:
+        duty = _validated_automatic_duty_result(duty, label="пошлины")
+        if ad_valorem_amount is not None:
+            ad_valorem_amount = _validated_automatic_duty_result(
+                ad_valorem_amount,
+                label="адвалорной пошлины",
+            )
+        if specific_amount_rub is not None:
+            specific_amount_rub = _validated_automatic_duty_result(
+                specific_amount_rub,
+                label="специфической пошлины",
+            )
+
     # Excise
-    user_excise = payload.get("excise")
+    user_excise = manual_excise
     if user_excise is not None:
-        excise = float(user_excise)
+        excise = user_excise
         excise_reason = "Указано вручную"
     elif excise_type == "percent":
         excise = customs_value * excise_value / 100.0
         basis_str = excise_basis or f"НК РФ ст. 193: {excise_value}% от таможенной стоимости"
         excise_reason = f"Авто: {excise_value}% — {basis_str}"
     elif excise_type == "fixed":
-        qty = float(payload.get("quantity") or 1.0)
-        excise = excise_value * qty
-        basis_str = excise_basis or f"НК РФ ст. 193: фикс. ставка {excise_value} руб./ед."
-        excise_reason = f"Авто: {excise_value} руб./ед. × {qty} ед. — {basis_str}"
+        raise ValueError(
+            "Фиксированная ставка акциза не содержит подтверждённую единицу "
+            "и знаменатель; итоговый платёж требует ручной проверки"
+        )
     elif excise_type == "needs_review":
         excise = 0.0
         excise_reason = "Уточните ставку акциза"
@@ -635,8 +886,8 @@ def compute_payments(payload: dict[str, Any]) -> dict[str, Any]:
     auto_vat_rate = float(vat_pref.vat_rate) if vat_pref else 22.0
     vat_decree_info = (vat_pref.decree_info or "") if vat_pref else ""
     vat_pref_comment = (vat_pref.comment or "") if vat_pref else ""
-    if payload.get("vat_rate") is not None:
-        vat_rate = float(payload.get("vat_rate"))
+    if manual_vat_rate is not None:
+        vat_rate = manual_vat_rate
         vat_reason = f"Указано вручную: {vat_rate}%"
         vat_decree_info = ""
         vat_pref_comment = ""
@@ -669,10 +920,32 @@ def compute_payments(payload: dict[str, Any]) -> dict[str, Any]:
 
     recycling_fee_total = _num(recycling_fee_amount)
 
-    vat_base = _sum_amounts(customs_value, duty_amount, excise_amount, antidumping_amount, special_duties_total)
-    vat = _num(vat_base) * _num(vat_rate) / 100.0
+    vat_base = _validated_payment_result(
+        _sum_amounts(customs_value, duty_amount, excise_amount, antidumping_amount, special_duties_total),
+        label="базы НДС",
+    )
+    vat = _validated_payment_result(
+        _num(vat_base) * _num(vat_rate) / 100.0,
+        label="НДС",
+    )
 
-    total = _sum_amounts(customs_fee_amount, duty_amount, excise_amount, antidumping_amount, special_duties_total, vat, recycling_fee_total)
+    total = _validated_payment_result(
+        _sum_amounts(
+            customs_fee_amount,
+            duty_amount,
+            excise_amount,
+            antidumping_amount,
+            special_duties_total,
+            vat,
+            recycling_fee_total,
+        ),
+        label="итоговой суммы",
+    )
+    # VAT includes antidumping in its tax base.  When the antidumping amount is
+    # unknown, the numeric VAT and total below are only partial arithmetic and
+    # must not be exposed as final amounts.  Keep them under explicitly named
+    # provisional fields for diagnostics while withholding every final signal.
+    antidumping_pending = antidumping_status == "manual_review"
 
     # Sources: интегрированные данные в приложении (без внешних ссылок)
     stats = get_integrated_data_stats()
@@ -710,7 +983,7 @@ def compute_payments(payload: dict[str, Any]) -> dict[str, Any]:
     tnved_context = get_tnved_context_for_hs(hs_code)
 
     return {
-        "status": "OK",
+        "status": "REVIEW_REQUIRED" if antidumping_pending else "OK",
         "hs_code": hs_code,
         "country": country,
         "customs_value": _round2(customs_value),
@@ -754,10 +1027,15 @@ def compute_payments(payload: dict[str, Any]) -> dict[str, Any]:
             "vat_reason": vat_reason,
             "vat_decree_info": vat_decree_info,
             "vat_pref_comment": vat_pref_comment,
-            "vat_base": _round2(vat_base),
-            "vat": _round2(vat),
+            "vat_base": None if antidumping_pending else _round2(vat_base),
+            "vat": None if antidumping_pending else _round2(vat),
+            "vat_status": "manual_review" if antidumping_pending else "applied",
+            "vat_base_provisional": _round2(vat_base) if antidumping_pending else None,
+            "vat_provisional": _round2(vat) if antidumping_pending else None,
             "recycling_fee": _round2(recycling_fee_total),
-            "total_payable": _round2(total),
+            "total_payable": None if antidumping_pending else _round2(total),
+            "total_payable_status": "withheld" if antidumping_pending else "final",
+            "total_payable_provisional": _round2(total) if antidumping_pending else None,
         },
         "legal_basis": {
             "vat": vat_reason,

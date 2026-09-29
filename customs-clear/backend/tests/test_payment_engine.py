@@ -13,7 +13,7 @@ import unittest
 
 from app.db import SessionLocal
 from app.models.tnved import HsDutyRule, VatPreference
-from app.services.normative_store import init_db
+from app.services.normative_store import find_rate_for_hs, init_db
 from app.services.payment_engine import _compute_structured_duty, compare_payment_scenarios, compute_payments
 
 
@@ -90,6 +90,44 @@ class PaymentEngineTests(unittest.TestCase):
         res = self._calc(hs_code="8509400000", customs_value=100_000, vat_rate=10.0)
         self.assertEqual(res["breakdown"]["vat_rate"], 10.0)
         self.assertIn("вручную", res["breakdown"]["vat_reason"])
+
+    def test_zero_manual_payment_operands_remain_explicit_overrides(self):
+        """Нулевые ручные значения валидны и не превращаются в отсутствие ввода."""
+        res = self._calc(duty_rate=0, vat_rate=0, excise=0)
+        self.assertEqual(res["breakdown"]["selected_rule"], "manual_rate")
+        self.assertEqual(res["breakdown"]["duty"], 0)
+        self.assertEqual(res["breakdown"]["vat_rate"], 0)
+        self.assertEqual(res["breakdown"]["vat"], 0)
+        self.assertEqual(res["breakdown"]["excise"], 0)
+        self.assertIn("вручную", res["breakdown"]["vat_reason"].lower())
+        self.assertEqual(res["breakdown"]["excise_reason"], "Указано вручную")
+
+    def test_invalid_manual_payment_operands_are_rejected_before_arithmetic(self):
+        """Отрицательные/нечисловые operands не могут уменьшить final payable."""
+        cases = (
+            ("duty_rate", -0.01),
+            ("vat_rate", float("nan")),
+            ("vat_rate", float("inf")),
+            ("excise", float("-inf")),
+            ("excise", True),
+            ("duty_rate", "not-a-number"),
+        )
+        for field, value in cases:
+            with self.subTest(field=field, value=value):
+                with self.assertRaisesRegex(ValueError, "конечным неотрицательным числом"):
+                    self._calc(**{field: value})
+
+    def test_finite_manual_payment_operands_that_overflow_are_rejected(self):
+        """Конечный operand не должен создавать infinity в сумме или итоге."""
+        cases = (
+            ("duty_rate", 1e308),
+            ("vat_rate", 1e308),
+            ("excise", 1.7e308),
+        )
+        for field, value in cases:
+            with self.subTest(field=field):
+                with self.assertRaisesRegex(ValueError, "конечный числовой диапазон"):
+                    self._calc(**{field: value})
 
     # ------------------------------------------------------------------ Duty
     def test_duty_auto_from_db(self):
@@ -169,14 +207,21 @@ class PaymentEngineTests(unittest.TestCase):
         self.assertIn("5.0%", res["breakdown"]["excise_reason"])
 
     def test_excise_fixed(self):
-        """Код 2208: крепкий алкоголь — фиксированная ставка акциза (префикс из сида)."""
-        res = self._calc(hs_code="2208", customs_value=100_000, freight=0, quantity=10)
-        ev = res["auto_detected"]["excise_value"]
-        if res["auto_detected"]["excise_type"] == "fixed" and ev:
-            expected = round(float(ev) * 10, 2)
-            self.assertAlmostEqual(res["breakdown"]["excise"], expected, places=1)
-        else:
+        """Unitless fixed excise cannot multiply generic invoice quantity."""
+        rate, _ = find_rate_for_hs("2208")
+        if rate is None or str(rate.excise_type or "").strip().lower() != "fixed":
             self.skipTest("В БД нет fixed-акциза для 2208 (перекрыто данными ЕТТ)")
+        with self.assertRaisesRegex(ValueError, "единицу.*знаменатель"):
+            self._calc(hs_code="2208", customs_value=100_000, freight=0, quantity=10)
+
+        manual = self._calc(
+            hs_code="2208",
+            customs_value=100_000,
+            freight=0,
+            quantity=10,
+            excise=12_000,
+        )
+        self.assertEqual(manual["breakdown"]["excise"], 12_000.0)
 
     def test_excise_override(self):
         """Ручное переопределение акциза."""

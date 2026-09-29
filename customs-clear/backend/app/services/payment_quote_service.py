@@ -391,6 +391,15 @@ def build_payment_quote(payload: dict[str, Any]) -> PaymentQuoteResponse:
         duty_reason = duty_reason or "Ставка пошлины не найдена в локальной базе; применена ставка 0% для расчёта."
 
     excise_status, excise_amount, excise_reason = _resolve_excise_status(raw=raw, user_excise=user_excise)
+    vat_pending = str(breakdown.get("vat_status") or "applied") == "manual_review"
+    vat_amount = None if vat_pending else float(breakdown.get("vat") or 0.0)
+    vat_status: PaymentLineStatus = "manual_review_required" if vat_pending else "applied"
+    vat_reason = str(breakdown.get("vat_reason") or "")
+    if vat_pending:
+        vat_reason = (
+            "Сумма НДС не окончательна: антидемпинговая пошлина входит в базу НДС "
+            "и требует ручной проверки."
+        )
 
     line_items: list[PaymentQuoteLineItem] = [
         PaymentQuoteLineItem(
@@ -405,9 +414,9 @@ def build_payment_quote(payload: dict[str, Any]) -> PaymentQuoteResponse:
         PaymentQuoteLineItem(
             code="vat",
             label="НДС",
-            amount_rub=float(breakdown.get("vat") or 0.0),
-            status="applied",
-            reason=str(breakdown.get("vat_reason") or ""),
+            amount_rub=vat_amount,
+            status=vat_status,
+            reason=vat_reason,
             source="hs_rates / vat_preferences (НК РФ)",
             rate_label=f"{breakdown.get('vat_rate')}%",
         ),

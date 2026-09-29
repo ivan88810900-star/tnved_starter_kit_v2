@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+import re
+from datetime import date, datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -26,6 +27,7 @@ _BACKEND_ROOT = Path(__file__).resolve().parents[2]
 
 CoverageStatus = str  # missing | present | stale | partial | parser_failed | not_applicable
 EditionTrackingStatus = str  # tracked | stale | unverified | not_assessed
+SyncEntrypointStatus = str  # available | missing | invalid | not_configured
 
 _UNVERIFIED_REVISIONS = frozenset(
     {
@@ -39,10 +41,153 @@ _UNVERIFIED_REVISIONS = frozenset(
         "unavailable",
     }
 )
+_UNVERIFIED_REVISION_PREFIXES = (
+    "demo",
+    "example",
+    "fallback",
+    "import",
+    "legacy",
+    "local",
+    "manual",
+    "seed",
+    "test",
+    "unknown",
+    "unavailable",
+)
+_REVISION_DATE_RE = re.compile(r"(?<!\d)(\d{4}-\d{2}-\d{2})(?!\d)")
+
+
+def _parse_revision_date(revision: str) -> date | None:
+    """Extract a real calendar date from a revision marker.
+
+    A merely non-empty marker is not version provenance.  Calendar parsing also
+    rejects impossible dates such as ``2026-02-31``.
+    """
+    match = _REVISION_DATE_RE.search(revision)
+    if not match:
+        return None
+    try:
+        return date.fromisoformat(match.group(1))
+    except ValueError:
+        return None
+
+
+def _is_unverified_revision(revision: str) -> bool:
+    if revision in _UNVERIFIED_REVISIONS:
+        return True
+    return revision.startswith(
+        tuple(
+            f"{prefix}{separator}"
+            for prefix in _UNVERIFIED_REVISION_PREFIXES
+            for separator in ("-", ":", "_")
+        )
+    )
+
+
+def _parse_synced_at(value: Any) -> datetime | None:
+    """Parse an explicit, timezone-aware SourceStatus timestamp.
+
+    Date-only and timezone-naive values are ambiguous provenance and therefore
+    fail closed.  UTC conversion can overflow for otherwise parseable extreme
+    offset timestamps, so conversion failures are treated as invalid input.
+    """
+    if isinstance(value, datetime):
+        parsed = value
+    elif isinstance(value, str) and value.strip():
+        raw = value.strip()
+        if len(raw) <= 10 or raw[10] not in ("T", "t", " "):
+            return None
+        if raw.endswith("Z"):
+            raw = f"{raw[:-1]}+00:00"
+        try:
+            parsed = datetime.fromisoformat(raw)
+        except ValueError:
+            return None
+    else:
+        return None
+    if parsed.tzinfo is None:
+        return None
+    try:
+        if parsed.utcoffset() is None:
+            return None
+        return parsed.astimezone(timezone.utc)
+    except (OverflowError, TypeError, ValueError):
+        return None
 
 
 def _backend_path(rel: str) -> Path:
     return _BACKEND_ROOT / rel
+
+
+def _sync_entrypoint_status(sync_script: Any) -> dict[str, Any]:
+    """Report whether a registry sync entrypoint is actually runnable.
+
+    ``sync_script`` is registry metadata, not proof that an automatic update is
+    scheduled.  Keep the check deliberately local and fail closed: only a
+    simple Python filename that exists under ``backend/scripts`` is available.
+    """
+    if sync_script is not None and not isinstance(sync_script, str):
+        return {
+            "status": "invalid",
+            "configured": True,
+            "exists": False,
+            "path": None,
+        }
+
+    script = (sync_script or "").strip()
+    if not script:
+        return {
+            "status": "not_configured",
+            "configured": False,
+            "exists": False,
+            "path": None,
+        }
+
+    report_path = f"scripts/{script}"
+    if (
+        "/" in script
+        or "\\" in script
+        or any(ord(char) < 32 or ord(char) == 127 for char in script)
+    ):
+        return {
+            "status": "invalid",
+            "configured": True,
+            "exists": False,
+            "path": report_path,
+        }
+    try:
+        rel = Path(script)
+        invalid_shape = rel.name != script or rel.suffix != ".py"
+    except (OSError, ValueError):
+        invalid_shape = True
+        rel = None
+    if invalid_shape or rel is None:
+        return {
+            "status": "invalid",
+            "configured": True,
+            "exists": False,
+            "path": report_path,
+        }
+
+    try:
+        scripts_root = (_BACKEND_ROOT / "scripts").resolve()
+        candidate = (scripts_root / rel).resolve()
+        candidate.relative_to(scripts_root)
+        exists = candidate.is_file()
+    except (OSError, ValueError):
+        return {
+            "status": "invalid",
+            "configured": True,
+            "exists": False,
+            "path": report_path,
+        }
+
+    return {
+        "status": "available" if exists else "missing",
+        "configured": True,
+        "exists": exists,
+        "path": report_path,
+    }
 
 
 def _count_db_probe(probe: str | None) -> int | None:
@@ -259,6 +404,8 @@ def _derive_coverage_status(
 def _derive_edition_tracking_status(
     entry: RegulatorySourceEntry,
     source_status: dict[str, Any] | None,
+    *,
+    now: datetime | None = None,
 ) -> EditionTrackingStatus:
     """Describe revision tracking without claiming legal currentness.
 
@@ -272,10 +419,23 @@ def _derive_edition_tracking_status(
         return "unverified"
     if source_status.get("is_stale") is True:
         return "stale"
-    revision = str(source_status.get("revision") or "").strip().lower()
     if source_status.get("is_stale") is not False:
         return "unverified"
-    if not source_status.get("synced_at") or revision in _UNVERIFIED_REVISIONS:
+    raw_revision = source_status.get("revision")
+    if not isinstance(raw_revision, str):
+        return "unverified"
+    revision = raw_revision.strip().lower()
+    if not revision:
+        return "unverified"
+    synced_at = _parse_synced_at(source_status.get("synced_at"))
+    revision_date = _parse_revision_date(revision)
+    if _is_unverified_revision(revision) or synced_at is None or revision_date is None:
+        return "unverified"
+    current = now or datetime.now(timezone.utc)
+    if current.tzinfo is None:
+        current = current.replace(tzinfo=timezone.utc)
+    current = current.astimezone(timezone.utc)
+    if synced_at > current or revision_date > current.date():
         return "unverified"
     return "tracked"
 
@@ -283,12 +443,18 @@ def _derive_edition_tracking_status(
 def _manual_review_required(
     entry: RegulatorySourceEntry,
     coverage_status: CoverageStatus,
+    sync_entrypoint_status: SyncEntrypointStatus,
 ) -> bool:
     if entry.manual_review_default:
         return True
     if entry.authority_level in ("advisory_letter", "commercial_mirror", "ai_extracted", "legacy_seed"):
         return True
     if coverage_status in ("missing", "partial", "parser_failed", "stale"):
+        return True
+    if (
+        entry.authority_level in SOURCE_OF_TRUTH_LEVELS
+        and sync_entrypoint_status != "available"
+    ):
         return True
     if entry.known_gaps:
         return coverage_status != "present"
@@ -309,6 +475,7 @@ def diagnose_source_entry(
     last_sync = _latest_sync_for_code(entry.source_status_code)
     parser_status = _derive_parser_status(entry, src_st, last_sync, doc_count)
     edition_tracking_status = _derive_edition_tracking_status(entry, src_st)
+    sync_entrypoint = _sync_entrypoint_status(entry.sync_script)
     coverage_status = _derive_coverage_status(
         entry,
         local,
@@ -317,7 +484,11 @@ def diagnose_source_entry(
         parser_status,
         edition_tracking_status,
     )
-    manual = _manual_review_required(entry, coverage_status)
+    manual = _manual_review_required(
+        entry,
+        coverage_status,
+        sync_entrypoint["status"],
+    )
 
     last_checked = (src_st or {}).get("synced_at")
     if last_sync and last_sync.get("synced_at"):
@@ -339,6 +510,7 @@ def diagnose_source_entry(
             "coverage_status": coverage_status,
             "parser_status": parser_status,
             "edition_tracking_status": edition_tracking_status,
+            "sync_entrypoint": sync_entrypoint,
             "local_source": local,
             "local_document_count": doc_count if doc_count is not None and doc_count >= 0 else None,
             "last_checked_at": last_checked,
@@ -372,6 +544,7 @@ def run_regulatory_source_completeness_report() -> dict[str, Any]:
     manual_queue: list[str] = []
     official_gaps: list[str] = []
     official_edition_tracking_gaps: list[str] = []
+    official_sync_entrypoint_gaps: list[str] = []
     for s in sources:
         cov = s["coverage_status"]
         by_coverage[cov] = by_coverage.get(cov, 0) + 1
@@ -383,6 +556,11 @@ def run_regulatory_source_completeness_report() -> dict[str, Any]:
             official_gaps.append(s["source_id"])
         if s.get("is_source_of_truth") and s.get("edition_tracking_status") != "tracked":
             official_edition_tracking_gaps.append(s["source_id"])
+        if (
+            s.get("is_source_of_truth")
+            and (s.get("sync_entrypoint") or {}).get("status") != "available"
+        ):
+            official_sync_entrypoint_gaps.append(s["source_id"])
 
     return {
         "status": "OK",
@@ -399,10 +577,12 @@ def run_regulatory_source_completeness_report() -> dict[str, Any]:
             "any_official_gap": bool(official_gaps),
             "official_edition_tracking_gap_ids": sorted(official_edition_tracking_gaps),
             "any_official_edition_tracking_gap": bool(official_edition_tracking_gaps),
+            "official_sync_entrypoint_gap_ids": sorted(official_sync_entrypoint_gaps),
+            "any_official_sync_entrypoint_gap": bool(official_sync_entrypoint_gaps),
         },
         "sources": sources,
         "future_sync_notes": [
-            "Каждая запись реестра содержит sync_script — точка входа для следующих cursor-task на bulk download.",
+            "sync_entrypoint показывает только наличие локальной точки запуска; он не доказывает, что automatic update настроен или успешно выполняется.",
             "source_status_code связывает отчёт с POST /api/sources/sync и sync_log.",
             "official_sgr: sync_sgr_registry.py (OData/CSV) + import_official_sgr_rules_to_ntm_v2.py для curated NTM v2.",
             "ПКР FCS: scripts/sync_fcs_predecisions.py (fixture MVP) → source_status FCS_PRELIMINARY; "
