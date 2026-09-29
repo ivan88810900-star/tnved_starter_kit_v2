@@ -42,6 +42,7 @@ class SyncStatusDiagnosticsTests(unittest.TestCase):
         self.assertIsNone(payload["last_successful_scheduled_sync_at"])
         self.assertEqual(payload["last_success_evidence_scope"], "latest_attempt_only")
         self.assertTrue(payload["last_error_present"])
+        self.assertEqual(payload["last_error_evidence_status"], "error")
         self.assertEqual(payload["last_sync_iso"], "2026-09-28T04:00:00+00:00")
 
     def test_manual_success_is_not_scheduled_success_evidence(self) -> None:
@@ -191,6 +192,61 @@ class SyncStatusDiagnosticsTests(unittest.TestCase):
             "latest_attempt_failed_without_timestamp",
         )
         self.assertIsNone(payload["last_successful_sync_at"])
+
+    def test_missing_error_evidence_with_completion_is_unverified(self) -> None:
+        payload = self._payload(
+            completed_at=datetime(2026, 9, 28, 23, 0, tzinfo=timezone.utc),
+            trigger="scheduled",
+            error=None,
+        )
+
+        self.assertEqual(payload["last_error_evidence_status"], "missing")
+        self.assertEqual(payload["latest_attempt_status"], "unverified_error_evidence")
+        self.assertEqual(payload["automatic_update_status"], "unverified_error_evidence")
+        self.assertFalse(payload["last_error_present"])
+        self.assertIsNone(payload["last_successful_sync_at"])
+        self.assertIsNone(payload["last_successful_scheduled_sync_at"])
+
+    def test_null_error_without_attempt_remains_never_run(self) -> None:
+        payload = self._payload(
+            completed_at=None,
+            trigger=None,
+            error=None,
+        )
+
+        self.assertEqual(payload["last_error_evidence_status"], "missing")
+        self.assertEqual(payload["latest_attempt_status"], "never_run")
+        self.assertEqual(payload["automatic_update_status"], "awaiting_first_run")
+        self.assertIsNone(payload["last_successful_sync_at"])
+
+    def test_exact_empty_error_is_authoritative_no_error_sentinel(self) -> None:
+        payload = self._payload(
+            completed_at=datetime(2026, 9, 28, 23, 0, tzinfo=timezone.utc),
+            trigger="scheduled",
+            error="",
+        )
+
+        self.assertEqual(payload["last_error_evidence_status"], "explicit_no_error")
+        self.assertEqual(payload["latest_attempt_status"], "succeeded")
+        self.assertEqual(payload["automatic_update_status"], "latest_scheduled_run_succeeded")
+        self.assertEqual(
+            payload["last_successful_scheduled_sync_at"],
+            "2026-09-28T23:00:00+00:00",
+        )
+
+    def test_whitespace_error_is_not_no_error_sentinel(self) -> None:
+        payload = self._payload(
+            completed_at=datetime(2026, 9, 28, 23, 0, tzinfo=timezone.utc),
+            trigger="scheduled",
+            error="   ",
+        )
+
+        self.assertEqual(payload["last_error_evidence_status"], "invalid_blank")
+        self.assertEqual(payload["latest_attempt_status"], "invalid_error_evidence")
+        self.assertEqual(payload["automatic_update_status"], "invalid_error_evidence")
+        self.assertTrue(payload["last_error_present"])
+        self.assertIsNone(payload["last_successful_sync_at"])
+        self.assertIsNone(payload["last_successful_scheduled_sync_at"])
 
     def test_falsey_wrong_typed_error_evidence_never_becomes_success(self) -> None:
         for invalid in (0, False):

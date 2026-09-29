@@ -66,8 +66,15 @@ def build_sync_status_diagnostics(
         error_evidence_status = "missing"
         error = ""
     elif isinstance(last_error, str):
-        error_evidence_status = "valid"
         error = last_error.strip()
+        if last_error == "":
+            # RegulatorySyncState.last_error is non-nullable and writers use
+            # the exact empty string as the authoritative no-error sentinel.
+            error_evidence_status = "explicit_no_error"
+        elif not error:
+            error_evidence_status = "invalid_blank"
+        else:
+            error_evidence_status = "error"
     else:
         error_evidence_status = "invalid_type"
         error = ""
@@ -82,10 +89,12 @@ def build_sync_status_diagnostics(
         trigger_evidence_status = "invalid_type"
         trigger = ""
 
-    if error_evidence_status == "invalid_type":
+    if error_evidence_status in ("invalid_type", "invalid_blank"):
         latest_attempt_status = "invalid_error_evidence"
     elif trigger_evidence_status == "invalid_type":
         latest_attempt_status = "invalid_trigger_evidence"
+    elif completed_at is not None and error_evidence_status == "missing":
+        latest_attempt_status = "unverified_error_evidence"
     elif completed_at is None and error:
         latest_attempt_status = "failed_without_timestamp"
     elif completed_at is None and trigger:
@@ -142,6 +151,8 @@ def build_sync_status_diagnostics(
         automatic_update_status = "latest_attempt_failed_without_timestamp"
     elif latest_attempt_status == "invalid_error_evidence":
         automatic_update_status = "invalid_error_evidence"
+    elif latest_attempt_status == "unverified_error_evidence":
+        automatic_update_status = "unverified_error_evidence"
     elif latest_attempt_status == "invalid_trigger_evidence":
         automatic_update_status = "invalid_trigger_evidence"
     elif latest_attempt_status in ("incomplete_evidence", "invalid_timestamp"):
@@ -184,7 +195,11 @@ def build_sync_status_diagnostics(
         "in_progress_observable": False,
         "last_started_at_observable": False,
         "automatic_update_status": automatic_update_status,
-        "last_error_present": error_evidence_status == "invalid_type" or bool(error),
+        "last_error_present": error_evidence_status in (
+            "error",
+            "invalid_blank",
+            "invalid_type",
+        ),
         "last_error_evidence_status": error_evidence_status,
         "last_trigger_evidence_status": trigger_evidence_status,
         "next_run_input_status": next_run_input_status,
