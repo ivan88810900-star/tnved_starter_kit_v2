@@ -9,6 +9,8 @@
 """
 from __future__ import annotations
 
+from .ntm_description_matching import first_description_match
+
 
 # ════════════════════════════════════════════════════════════
 # ВЕТЕРИНАРНЫЙ КОНТРОЛЬ — Решение ЕЭК №317 от 18.06.2010
@@ -92,8 +94,24 @@ SGR_DOMAINS = [
 ]
 
 # Триггеры для СГР по описанию (не покрываются HS-доменами)
+# Сокращение и его русские формы должны быть целыми Unicode-токенами:
+# иначе ``бад`` в ``бадминтон``/``бадья`` создаёт СГР без основания.
+SGR_DESCRIPTION_WHOLE_TOKENS = (
+    "бад",
+    "бада",
+    "баду",
+    "бадом",
+    "баде",
+    "бады",
+    "бадов",
+    "бадам",
+    "бадами",
+    "бадах",
+)
+
 SGR_DESCRIPTION_TRIGGERS = [
-    "бад", "биологически активная добавка", "биодобавка",
+    *SGR_DESCRIPTION_WHOLE_TOKENS,
+    "биологически активная добавка", "биодобавка",
     "минеральная вода лечеб", "минеральная вода столов",
     "детское питание", "питание для детей",
     "диабетическ", "диетическ", "лечебное питание",
@@ -212,10 +230,11 @@ def get_sgr_requirement(hs_code: str, description: str = "") -> dict | None:
     matched_prefix = _matches_prefix(code, SGR_DOMAINS)
     matched_trigger: str | None = None
 
-    for trigger in SGR_DESCRIPTION_TRIGGERS:
-        if trigger in desc_lower:
-            matched_trigger = trigger
-            break
+    matched_trigger = first_description_match(
+        desc_lower,
+        SGR_DESCRIPTION_TRIGGERS,
+        whole_tokens=SGR_DESCRIPTION_WHOLE_TOKENS,
+    )
 
     # 2201: обычная питьевая вода без признаков регистрации — не цепляем СГР по одному HS
     if matched_prefix == "2201" and not matched_trigger:
