@@ -1,0 +1,52 @@
+{
+  "schema_version": 1,
+  "checkpoint_id": "a0-checkpoint-20260929T122000Z-gen43",
+  "created_at": "2026-09-29T12:20:00.000Z",
+  "coordinator_generation": 43,
+  "live_snapshot": {
+    "main_sha": "08e030a6053ac9638957119373797e0fbf2b10c2",
+    "a6_live_verified": true,
+    "post_verify_admission_available": false
+  },
+  "gates": {
+    "pr_237": {
+      "state": "open",
+      "draft": true,
+      "head": "f0183c1e0f4e1e5ed60fa93a4633e841e2ae8d9f",
+      "a5": "PASS",
+      "a5_review_id": 5337924917,
+      "ci": "success",
+      "ci_run_id": 36415700790,
+      "owner_approval": "PENDING_ALREADY_REQUESTED"
+    },
+    "pr_241": {
+      "state": "open",
+      "draft": true,
+      "head": "f1921b63a452a059c1109c658560efc318127aad",
+      "a5": "PASS",
+      "a5_review_id": 5351957772,
+      "ci": "success",
+      "ci_run_id": 36563127291,
+      "a6": "BLOCKED_BY_PR_237"
+    },
+    "pr_242": {
+      "state": "open",
+      "draft": true,
+      "head": "bf27ef2cd243f0e2f9325c48a1cfad40a100b2fe",
+      "a5": "PASS",
+      "a5_review_id": 5351884301,
+      "ci": "success",
+      "ci_run_id": 36562105462,
+      "a6": "BLOCKED_BY_PR_237"
+    }
+  },
+  "actions": {
+    "protected_merges": [],
+    "integration_merges": [],
+    "new_prs": [],
+    "repeated_owner_requests": [],
+    "product_head_changes": []
+  },
+  "decision": "Preserve exact reviewed product heads and their approvals; do not start new epic mutations or duplicate owner request while the sole next gate is protected PR #237.",
+  "next": "On authoritative owner approval, merge PR #237 with expected-head guard, validate live post-verify audit admission, then run independent A6 audits for #241 and #242."
+}
