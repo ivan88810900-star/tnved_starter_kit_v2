@@ -723,7 +723,7 @@
     }
   ],
   "max_concurrent_subagents": 3,
-  "revision": 588,
+  "revision": 589,
   "runs": [
     {
       "head_sha": null,
@@ -2165,10 +2165,16 @@
         "offline-safety"
       ],
       "risk": "high",
-      "status": "CHANGES_REQUESTED",
+      "status": "CANCELLED",
       "tests": [],
-      "updated_at": "2026-09-16T12:14:00.048026+00:00",
-      "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-pr193"
+      "updated_at": "2026-09-29T10:21:00.000Z",
+      "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-pr193",
+      "historical_status": "CHANGES_REQUESTED",
+      "normalization": {
+        "reason": "Legacy persistent A1-A4 ownership superseded by owner-authorized consolidated A-CORE/A-PRODUCT operating model.",
+        "provenance_preserved": true,
+        "successor_epic": "COMPLIANCE-AI-V1"
+      }
     },
     {
       "a6_status": "BLOCKED_PENDING_DEFAULT_BRANCH_MERGE",
@@ -2235,10 +2241,16 @@
         "offline-safety"
       ],
       "risk": "high",
-      "status": "CHANGES_REQUESTED",
+      "status": "CANCELLED",
       "tests": [],
-      "updated_at": "2026-09-16T12:14:00.048071+00:00",
-      "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-a6-live-bridge-001-f5839c6c98"
+      "updated_at": "2026-09-29T10:21:00.000Z",
+      "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-a6-live-bridge-001-f5839c6c98",
+      "historical_status": "CHANGES_REQUESTED",
+      "normalization": {
+        "reason": "Legacy persistent A1-A4 ownership superseded by owner-authorized consolidated A-CORE/A-PRODUCT operating model.",
+        "provenance_preserved": true,
+        "successor_epic": "COMPLIANCE-AI-V1"
+      }
     },
     {
       "author_sessions": [
@@ -2281,10 +2293,16 @@
         "offline-safety"
       ],
       "risk": "high",
-      "status": "CHANGES_REQUESTED",
+      "status": "CANCELLED",
       "tests": [],
-      "updated_at": "2026-09-16T12:14:00.048100+00:00",
-      "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-orch-control-hardening-001-6689c2a339"
+      "updated_at": "2026-09-29T10:21:00.000Z",
+      "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-orch-control-hardening-001-6689c2a339",
+      "historical_status": "CHANGES_REQUESTED",
+      "normalization": {
+        "reason": "Legacy persistent A1-A4 ownership superseded by owner-authorized consolidated A-CORE/A-PRODUCT operating model.",
+        "provenance_preserved": true,
+        "successor_epic": "COMPLIANCE-AI-V1"
+      }
     },
     {
       "author_sessions": [
@@ -2320,10 +2338,16 @@
         "offline-safety"
       ],
       "risk": "high",
-      "status": "CHANGES_REQUESTED",
+      "status": "CANCELLED",
       "tests": [],
-      "updated_at": "2026-09-16T12:14:00.048126+00:00",
-      "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-orch-lease-takeover-hardening-001-b4b30adacd"
+      "updated_at": "2026-09-29T10:21:00.000Z",
+      "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-orch-lease-takeover-hardening-001-b4b30adacd",
+      "historical_status": "CHANGES_REQUESTED",
+      "normalization": {
+        "reason": "Legacy persistent A1-A4 ownership superseded by owner-authorized consolidated A-CORE/A-PRODUCT operating model.",
+        "provenance_preserved": true,
+        "successor_epic": "COMPLIANCE-AI-V1"
+      }
     },
     {
       "author_sessions": [
@@ -2360,10 +2384,16 @@
         "offline-safety"
       ],
       "risk": "high",
-      "status": "CHANGES_REQUESTED",
+      "status": "CANCELLED",
       "tests": [],
-      "updated_at": "2026-09-16T12:14:00.048151+00:00",
-      "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-orch-ci-snapshot-validation-001-2b97826c17"
+      "updated_at": "2026-09-29T10:21:00.000Z",
+      "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-orch-ci-snapshot-validation-001-2b97826c17",
+      "historical_status": "CHANGES_REQUESTED",
+      "normalization": {
+        "reason": "Legacy persistent A1-A4 ownership superseded by owner-authorized consolidated A-CORE/A-PRODUCT operating model.",
+        "provenance_preserved": true,
+        "successor_epic": "COMPLIANCE-AI-V1"
+      }
     },
     {
       "author_sessions": [
@@ -2399,10 +2429,16 @@
         "Scheduled workflow and locked environment"
       ],
       "risk": "medium",
-      "status": "CHANGES_REQUESTED",
+      "status": "CANCELLED",
       "tests": [],
-      "updated_at": "2026-09-16T12:14:00.048175+00:00",
-      "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-payment-source-recheck-002-c1549329dc"
+      "updated_at": "2026-09-29T10:21:00.000Z",
+      "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-payment-source-recheck-002-c1549329dc",
+      "historical_status": "CHANGES_REQUESTED",
+      "normalization": {
+        "reason": "Legacy persistent A1-A4 ownership superseded by owner-authorized consolidated A-CORE/A-PRODUCT operating model.",
+        "provenance_preserved": true,
+        "successor_epic": "CUSTOMS-CORE-V1"
+      }
     },
     {
       "author_sessions": [
@@ -2438,10 +2474,16 @@
         "Scheduled workflow and locked environment"
       ],
       "risk": "high",
-      "status": "CHANGES_REQUESTED",
+      "status": "CANCELLED",
       "tests": [],
-      "updated_at": "2026-09-16T12:14:00.048199+00:00",
-      "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-official-source-delta-002-753e289be4"
+      "updated_at": "2026-09-29T10:21:00.000Z",
+      "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-official-source-delta-002-753e289be4",
+      "historical_status": "CHANGES_REQUESTED",
+      "normalization": {
+        "reason": "Legacy persistent A1-A4 ownership superseded by owner-authorized consolidated A-CORE/A-PRODUCT operating model.",
+        "provenance_preserved": true,
+        "successor_epic": "CUSTOMS-CORE-V1"
+      }
     },
     {
       "author_sessions": [
@@ -2524,10 +2566,16 @@
         "Scheduled workflow and locked environment"
       ],
       "risk": "high",
-      "status": "CHANGES_REQUESTED",
+      "status": "CANCELLED",
       "tests": [],
-      "updated_at": "2026-09-16T12:14:00.048222+00:00",
-      "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-cbr-rate-observation-003-9dc4811432"
+      "updated_at": "2026-09-29T10:21:00.000Z",
+      "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-cbr-rate-observation-003-9dc4811432",
+      "historical_status": "CHANGES_REQUESTED",
+      "normalization": {
+        "reason": "Legacy persistent A1-A4 ownership superseded by owner-authorized consolidated A-CORE/A-PRODUCT operating model.",
+        "provenance_preserved": true,
+        "successor_epic": "CUSTOMS-CORE-V1"
+      }
     },
     {
       "author_sessions": [
@@ -2580,10 +2628,16 @@
         "Scheduled workflow and locked environment"
       ],
       "risk": "high",
-      "status": "CHANGES_REQUESTED",
+      "status": "CANCELLED",
       "tests": [],
-      "updated_at": "2026-09-16T12:14:00.048244+00:00",
-      "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-legacy-vat-boundary-003-dbe8461b66"
+      "updated_at": "2026-09-29T10:21:00.000Z",
+      "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-legacy-vat-boundary-003-dbe8461b66",
+      "historical_status": "CHANGES_REQUESTED",
+      "normalization": {
+        "reason": "Legacy persistent A1-A4 ownership superseded by owner-authorized consolidated A-CORE/A-PRODUCT operating model.",
+        "provenance_preserved": true,
+        "successor_epic": "COMPLIANCE-AI-V1"
+      }
     },
     {
       "author_sessions": [
@@ -2713,10 +2767,16 @@
         "Scheduled workflow and locked environment"
       ],
       "risk": "high",
-      "status": "CHANGES_REQUESTED",
+      "status": "CANCELLED",
       "tests": [],
-      "updated_at": "2026-09-16T12:14:00.048267+00:00",
-      "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-payment-unbound-admission-006-c8a905e03d"
+      "updated_at": "2026-09-29T10:21:00.000Z",
+      "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-payment-unbound-admission-006-c8a905e03d",
+      "historical_status": "CHANGES_REQUESTED",
+      "normalization": {
+        "reason": "Legacy persistent A1-A4 ownership superseded by owner-authorized consolidated A-CORE/A-PRODUCT operating model.",
+        "provenance_preserved": true,
+        "successor_epic": "CUSTOMS-CORE-V1"
+      }
     },
     {
       "author_sessions": [
@@ -2752,10 +2812,16 @@
         "Scheduled workflow and locked environment"
       ],
       "risk": "high",
-      "status": "CHANGES_REQUESTED",
+      "status": "CANCELLED",
       "tests": [],
-      "updated_at": "2026-09-16T12:14:00.048289+00:00",
-      "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-ad30-freshness-evidence-008-6c868586f5"
+      "updated_at": "2026-09-29T10:21:00.000Z",
+      "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-ad30-freshness-evidence-008-6c868586f5",
+      "historical_status": "CHANGES_REQUESTED",
+      "normalization": {
+        "reason": "Legacy persistent A1-A4 ownership superseded by owner-authorized consolidated A-CORE/A-PRODUCT operating model.",
+        "provenance_preserved": true,
+        "successor_epic": "CUSTOMS-CORE-V1"
+      }
     },
     {
       "author_sessions": [
@@ -2792,10 +2858,16 @@
         "Scheduled workflow and locked environment"
       ],
       "risk": "high",
-      "status": "CHANGES_REQUESTED",
+      "status": "CANCELLED",
       "tests": [],
-      "updated_at": "2026-09-16T12:14:00.048312+00:00",
-      "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-ntm-completeness-recheck-001-c746d4f679"
+      "updated_at": "2026-09-29T10:21:00.000Z",
+      "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-ntm-completeness-recheck-001-c746d4f679",
+      "historical_status": "CHANGES_REQUESTED",
+      "normalization": {
+        "reason": "Legacy persistent A1-A4 ownership superseded by owner-authorized consolidated A-CORE/A-PRODUCT operating model.",
+        "provenance_preserved": true,
+        "successor_epic": "COMPLIANCE-AI-V1"
+      }
     },
     {
       "author_sessions": [
@@ -2886,7 +2958,7 @@
         "Scheduled workflow and locked environment"
       ],
       "risk": "high",
-      "status": "QA_PASSED",
+      "status": "CANCELLED",
       "tests": {
         "commands": [
           {
@@ -2912,8 +2984,14 @@
         ],
         "head_sha": "a286f7b24953f338a9fa4f910fb605ebc4328978"
       },
-      "updated_at": "2026-09-16T17:10:21.104566+00:00",
-      "worktree": "/workspace/scratch/ecdeb44a862e/tariff-agent-worktrees/tariff-ntm-freshness-fail-closed-001-restored-g22"
+      "updated_at": "2026-09-29T10:21:00.000Z",
+      "worktree": "/workspace/scratch/ecdeb44a862e/tariff-agent-worktrees/tariff-ntm-freshness-fail-closed-001-restored-g22",
+      "historical_status": "QA_PASSED",
+      "normalization": {
+        "reason": "Legacy persistent A1-A4 ownership superseded by owner-authorized consolidated A-CORE/A-PRODUCT operating model.",
+        "provenance_preserved": true,
+        "successor_epic": "COMPLIANCE-AI-V1"
+      }
     },
     {
       "author_sessions": [
@@ -2954,10 +3032,16 @@
         "Scheduled workflow and locked environment"
       ],
       "risk": "high",
-      "status": "CHANGES_REQUESTED",
+      "status": "CANCELLED",
       "tests": [],
-      "updated_at": "2026-09-16T12:14:00.048357+00:00",
-      "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-ntm-advisory-summary-001-e2d7a9dc7e"
+      "updated_at": "2026-09-29T10:21:00.000Z",
+      "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-ntm-advisory-summary-001-e2d7a9dc7e",
+      "historical_status": "CHANGES_REQUESTED",
+      "normalization": {
+        "reason": "Legacy persistent A1-A4 ownership superseded by owner-authorized consolidated A-CORE/A-PRODUCT operating model.",
+        "provenance_preserved": true,
+        "successor_epic": "COMPLIANCE-AI-V1"
+      }
     },
     {
       "author_sessions": [
@@ -3052,7 +3136,7 @@
         "Scheduled workflow and locked environment"
       ],
       "risk": "high",
-      "status": "QA_PASSED",
+      "status": "CANCELLED",
       "tests": {
         "head_sha": "564cc34b3c6b5d18c4d9a960b1c342257ec9f5e7",
         "commands": [
@@ -3078,8 +3162,14 @@
           }
         ]
       },
-      "updated_at": "2026-09-16T17:34:12.473+00:00",
-      "worktree": "/workspace/scratch/ecdeb44a862e/tariff-agent-worktrees/tariff-ntm-normative-freshness-visibility-002-5fc1946031"
+      "updated_at": "2026-09-29T10:21:00.000Z",
+      "worktree": "/workspace/scratch/ecdeb44a862e/tariff-agent-worktrees/tariff-ntm-normative-freshness-visibility-002-5fc1946031",
+      "historical_status": "QA_PASSED",
+      "normalization": {
+        "reason": "Legacy persistent A1-A4 ownership superseded by owner-authorized consolidated A-CORE/A-PRODUCT operating model.",
+        "provenance_preserved": true,
+        "successor_epic": "COMPLIANCE-AI-V1"
+      }
     },
     {
       "author_sessions": [],
@@ -3207,7 +3297,7 @@
         "exact-head CI"
       ],
       "risk": "high",
-      "status": "QA_PASSED",
+      "status": "CANCELLED",
       "tests": {
         "commands": [
           {
@@ -3228,13 +3318,19 @@
         ],
         "head_sha": "fc19df03904430649e356978cf2086a616e6d244"
       },
-      "updated_at": "2026-09-16T15:11:19.614566+00:00",
-      "worktree": "/workspace/scratch/ecdeb44a862e/tariff-agent-worktrees/tariff-ad30-recurring-artifacts-009-c5c1c819a3"
+      "updated_at": "2026-09-29T10:21:00.000Z",
+      "worktree": "/workspace/scratch/ecdeb44a862e/tariff-agent-worktrees/tariff-ad30-recurring-artifacts-009-c5c1c819a3",
+      "historical_status": "QA_PASSED",
+      "normalization": {
+        "reason": "Legacy persistent A1-A4 ownership superseded by owner-authorized consolidated A-CORE/A-PRODUCT operating model.",
+        "provenance_preserved": true,
+        "successor_epic": "CUSTOMS-CORE-V1"
+      }
     },
     {
       "id": "TARIFF-GROUNDED-NTM-FRESHNESS-001",
       "owner": "A4",
-      "status": "IMPLEMENTED",
+      "status": "CANCELLED",
       "risk": "high",
       "goal": "Propagate the normalized NTM data_freshness signal into grounded assistant chat and batch-copilot output without changing applicability, enforcement, source admission, database state, or feature flags.",
       "dependencies": [
@@ -3288,8 +3384,56 @@
       "qa": null,
       "ci": null,
       "external_audit": null,
-      "updated_at": "2026-09-16T17:37:36.757+00:00"
+      "updated_at": "2026-09-29T10:21:00.000Z",
+      "historical_status": "IMPLEMENTED",
+      "normalization": {
+        "reason": "Legacy persistent A1-A4 ownership superseded by owner-authorized consolidated A-CORE/A-PRODUCT operating model.",
+        "provenance_preserved": true,
+        "successor_epic": "COMPLIANCE-AI-V1"
+      }
     }
   ],
-  "updated_at": "2026-09-16T17:37:36.757+00:00"
+  "updated_at": "2026-09-29T10:21:00.000Z",
+  "max_concurrent_feature_workers": 2,
+  "active_role_model": {
+    "effective_at": "2026-09-29T10:21:00.000Z",
+    "coordinator": {
+      "role": "A0",
+      "holder": "/root/a0_automation_20260929T101754Z",
+      "responsibility": "lead_integrator"
+    },
+    "developers": [
+      {
+        "role": "A-CORE",
+        "branch": "integration/customs-core-v1",
+        "scope": "payments_rates_official_sources_ingestion_freshness"
+      },
+      {
+        "role": "A-PRODUCT",
+        "branch": "integration/compliance-ai-v1",
+        "scope": "ntm_classification_search_grounded_ai_ui"
+      }
+    ],
+    "ephemeral_gates": [
+      {
+        "role": "A5",
+        "mode": "independent_candidate_review_only"
+      },
+      {
+        "role": "A6",
+        "mode": "external_high_risk_audit_only",
+        "status": "LIVE_VERIFIED",
+        "post_verify_bridge_pr": 237
+      }
+    ],
+    "legacy_roles": {
+      "A1": "historical",
+      "A2": "historical",
+      "A3": "historical",
+      "A4": "historical"
+    },
+    "inventory_ref": ".ai/orchestration/PR_INVENTORY_20260929.json",
+    "ownership_archive_ref": ".ai/orchestration/evidence/legacy-agent-ownership-archive-20260929-gen42.json",
+    "note": "Legacy validator still permits three total subagents; operating policy limits concurrent feature developers to two."
+  }
 }
