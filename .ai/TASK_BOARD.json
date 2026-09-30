@@ -723,7 +723,7 @@
     }
   ],
   "max_concurrent_subagents": 3,
-  "revision": 592,
+  "revision": 593,
   "runs": [
     {
       "head_sha": null,
@@ -3551,25 +3551,81 @@
       "status": "IN_PROGRESS",
       "risk": "high",
       "worktree": null,
-      "files": [],
+      "files": [
+        "customs-clear/backend/app/services/assistant_chat.py",
+        "customs-clear/backend/app/services/assistant_orchestrator.py",
+        "customs-clear/backend/app/services/claude_service.py",
+        "customs-clear/backend/app/services/compliance_resolver.py",
+        "customs-clear/backend/app/services/embedding_service.py",
+        "customs-clear/backend/app/services/grounded_assistant.py",
+        "customs-clear/backend/app/services/non_tariff_service.py",
+        "customs-clear/backend/app/services/normative_requirements_block.py",
+        "customs-clear/backend/app/services/normative_store.py",
+        "customs-clear/backend/app/services/ntm_description_matching.py",
+        "customs-clear/backend/app/services/ntm_engine_v2.py",
+        "customs-clear/backend/app/services/ntm_layers.py",
+        "customs-clear/backend/app/services/ntm_triggers.py",
+        "customs-clear/backend/app/services/ntm_v2_import.py",
+        "customs-clear/backend/app/services/ntm_v2_official_sgr_dataset_validation.py",
+        "customs-clear/backend/app/services/regulatory_ai_classifier.py",
+        "customs-clear/backend/app/services/tnved_code_card.py",
+        "customs-clear/backend/app/services/tnved_fts.py",
+        "customs-clear/backend/data/official_sgr_rules.seed.json",
+        "customs-clear/backend/tests/test_assistant_copilot.py",
+        "customs-clear/backend/tests/test_assistant_payment_review.py",
+        "customs-clear/backend/tests/test_compliance_permit_parser.py",
+        "customs-clear/backend/tests/test_embedding_service_safety.py",
+        "customs-clear/backend/tests/test_grounded_assistant.py",
+        "customs-clear/backend/tests/test_non_tariff_data_freshness.py",
+        "customs-clear/backend/tests/test_normative_requirements_block.py",
+        "customs-clear/backend/tests/test_ntm_child_product_markers.py",
+        "customs-clear/backend/tests/test_ntm_sgr_bad_token_boundary.py",
+        "customs-clear/backend/tests/test_ntm_trigger_food_contact.py",
+        "customs-clear/backend/tests/test_regulatory_ai_classifier.py",
+        "customs-clear/backend/tests/test_regulatory_keyword_token_boundaries.py",
+        "customs-clear/backend/tests/test_smart_tnved_search.py",
+        "customs-clear/frontend/package-lock.json",
+        "customs-clear/frontend/package.json",
+        "customs-clear/frontend/src/components/nonTariff/NormativeRequirementsBlock.freshness.test.tsx",
+        "customs-clear/frontend/src/components/nonTariff/NormativeRequirementsBlock.tsx",
+        "customs-clear/frontend/src/components/nonTariff/normativeBlockHelpers.ts",
+        "customs-clear/frontend/src/components/tnved/PermitDocumentsBlock.test.tsx",
+        "customs-clear/frontend/src/components/tnved/PermitDocumentsBlock.tsx",
+        "customs-clear/frontend/src/test/setup.ts",
+        "customs-clear/frontend/src/types/api.types.ts",
+        "customs-clear/frontend/vitest.config.ts"
+      ],
       "author_sessions": [
         "/root/a_product"
       ],
-      "qa": null,
-      "ci": null,
-      "external_audit": null,
-      "updated_at": "2026-09-30T12:59:48.273Z",
-      "phase": "DEPENDENCY_MATRIX_IN_PROGRESS",
+      "qa": {
+        "status": "PASSED",
+        "head_sha": "bf27ef2cd243f0e2f9325c48a1cfad40a100b2fe",
+        "review_id": 5351884301,
+        "independent": true
+      },
+      "ci": {
+        "status": "PASSED",
+        "head_sha": "bf27ef2cd243f0e2f9325c48a1cfad40a100b2fe",
+        "run_id": 36562105462
+      },
+      "external_audit": {
+        "status": "BLOCKED_INFRA_GATE",
+        "requires_pr": 237,
+        "reason": "Subsequent high-risk A6 audits remain unavailable until PR #237 is merged to main."
+      },
+      "updated_at": "2026-09-30T13:09:41.433Z",
+      "phase": "CANDIDATE_READY_A6_BLOCKED",
       "quality_gate": "author focused+broad tests -> fresh independent A5 -> live A6 after PR #237 -> A0 validation -> exact-head CI -> non-main integration branch",
-      "ownership_note": "No write ownership allocated during matrix phase; exact repo-relative paths must be recorded before implementation.",
+      "ownership_note": "Exact 42-file candidate scope identified read-only. No new write granted because PR #242 is already coherent and any new HEAD would invalidate A5/CI.",
       "id": "COMPLIANCE-AI-V1",
       "owner": "A-PRODUCT",
-      "branch": "integration/compliance-ai-v1",
+      "branch": "agent/product-consolidation-v1",
       "goal": "Consolidate NTM, canonical TN VED/classification, semantic search, grounded assistant and freshness/citation UI into one coherent candidate on a fresh main-derived base without mechanically merging stale stacks.",
       "dependencies": [],
       "refs": {
         "base_sha": "08e030a6053ac9638957119373797e0fbf2b10c2",
-        "head_sha": "08e030a6053ac9638957119373797e0fbf2b10c2",
+        "head_sha": "bf27ef2cd243f0e2f9325c48a1cfad40a100b2fe",
         "pr": 242,
         "source_prs": [
           207,
@@ -3584,7 +3640,10 @@
           234,
           239,
           187
-        ]
+        ],
+        "integration_target": "integration/compliance-ai-v1",
+        "ci_run_id": 36562105462,
+        "a5_review_id": 5351884301
       },
       "acceptance_criteria": [
         "NTM false positives fail closed and completeness/freshness is never inferred or invented.",
@@ -3602,10 +3661,58 @@
         "A0 validation",
         "exact-head CI"
       ],
-      "tests": []
+      "tests": {
+        "head_sha": "bf27ef2cd243f0e2f9325c48a1cfad40a100b2fe",
+        "focused": "305 passed plus 44 subtests",
+        "adversarial": "94 passed plus 26 subtests",
+        "frontend": "18 passed; typecheck/build passed",
+        "broad": "1527 passed, 2 skipped, 177 failed, 13 errors, 120 subtests; explicitly diagnostic NOT PASS due residual fixture/data/environment failures"
+      },
+      "matrix": {
+        "recommendation": "retain PR #242; no cherry-pick or new candidate",
+        "superseded_intact": [
+          207,
+          224,
+          227,
+          230,
+          233,
+          234
+        ],
+        "superseded_with_deliberate_reimplementation": [
+          208,
+          211,
+          213,
+          221,
+          239
+        ],
+        "evidence_only": [
+          187
+        ],
+        "integration_conflicts_resolved": [
+          "strict malformed/future timestamp fail-closed",
+          "mixed-audience SGR remains positive",
+          "shared Unicode-bounded keyword matcher",
+          "closed selector schema prevents LLM legal-fact promotion"
+        ],
+        "closure_rule": "Close source PRs only after mapped gated integration preserves behavior and evidence."
+      },
+      "shared_boundaries": [
+        {
+          "path": "customs-clear/backend/app/services/normative_store.py",
+          "rule": "A-PRODUCT owns only TN VED search/seed hunks; coordinate any shared change."
+        },
+        {
+          "path": "customs-clear/backend/tests/test_assistant_payment_review.py",
+          "rule": "Consumes A-CORE payment status but must not redefine payment producer truth."
+        },
+        {
+          "path": "customs-clear/frontend/src/types/api.types.ts",
+          "rule": "Shared API surface; coordinate schema changes with A-CORE before either candidate head changes."
+        }
+      ]
     }
   ],
-  "updated_at": "2026-09-30T13:07:37.479Z",
+  "updated_at": "2026-09-30T13:09:41.433Z",
   "max_concurrent_feature_workers": 2,
   "active_role_model": {
     "effective_at": "2026-09-30T12:58:10.633Z",
