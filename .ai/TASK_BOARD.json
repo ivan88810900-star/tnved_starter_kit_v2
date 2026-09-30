@@ -720,10 +720,38 @@
         "evidence": "A0 accepted independent read-only A2 code/state triage on exact PR207 HEAD 5230d817: EEC_ETT is a tariff source, while NTM completeness/currentness remains unverified. The existing task 003 duplicates the same two-file ownership and was cancelled; fix stays on task 001/PR207.",
         "validator": "A0"
       }
+    },
+    {
+      "id": "A0-A6-PACKET-LIMIT-PR241-001",
+      "task_id": "CUSTOMS-CORE-V1",
+      "reporter": "A0",
+      "status": "CONFIRMED",
+      "head_sha": "f1921b63a452a059c1109c658560efc318127aad",
+      "summary": "PR #241 cannot pass the mandatory complete A6 packet gate at its current commit structure: full packet is about 1,362,140 bytes and two individual commits also exceed the 600,000-byte bound.",
+      "validation": {
+        "at": "2026-09-30T19:58:41.559Z",
+        "validator": "A0",
+        "evidence": "Live GitHub exact base/head blobs, full diffs and all 34 changed paths were reconstructed against audit.build_packet schema without truncation. Full packet 1,362,140 bytes; fd629f4f range 872,552; e60713e4 range 933,808. No file exceeds 100,000 bytes."
+      },
+      "resolution_plan": "A-CORE must rebuild equivalent logic on a fresh branch as smaller complete logical commits; no force-push, audit-limit increase, partial packet or stale A5/CI reuse."
+    },
+    {
+      "id": "A0-A6-PACKET-LIMIT-PR242-001",
+      "task_id": "COMPLIANCE-AI-V1",
+      "reporter": "A0",
+      "status": "CONFIRMED",
+      "head_sha": "bf27ef2cd243f0e2f9325c48a1cfad40a100b2fe",
+      "summary": "PR #242 cannot pass the mandatory complete A6 packet gate at its current commit structure: full packet is about 1,900,073 bytes and package-lock.json exceeds the 100,000-byte per-file bound.",
+      "validation": {
+        "at": "2026-09-30T19:58:41.559Z",
+        "validator": "A0",
+        "evidence": "Live GitHub exact base/head blobs, full diffs and all 42 changed paths were reconstructed against audit.build_packet schema without truncation. Full packet 1,900,073 bytes; first commit 1,873,507; customs-clear/frontend/package-lock.json is about 237,409 bytes. Later commits are within bounds."
+      },
+      "resolution_plan": "A-PRODUCT must rebuild on a fresh branch with A6-compatible high-risk commits and either avoid the lockfile delta or isolate it as explicitly non-high-risk dependency/test-infra evidence; no false full-A6 claim, force-push, limit increase or stale gate reuse."
     }
   ],
   "max_concurrent_subagents": 3,
-  "revision": 600,
+  "revision": 601,
   "runs": [
     {
       "head_sha": null,
@@ -3457,14 +3485,65 @@
         "run_id": 36563127291
       },
       "external_audit": {
-        "status": "BLOCKED_INFRA_GATE",
+        "status": "BLOCKED_PACKET_LIMIT_AND_INFRA_GATE",
         "requires_pr": 237,
-        "reason": "Subsequent high-risk A6 audits remain unavailable until PR #237 is merged to main."
+        "reason": "Current exact candidate cannot be sent as a complete A6 packet within fail-closed bounds; post-verify admission also remains unavailable until PR #237 is merged.",
+        "preflight": {
+          "checked_at": "2026-09-30T19:58:41.559Z",
+          "base_sha": "08e030a6053ac9638957119373797e0fbf2b10c2",
+          "head_sha": "f1921b63a452a059c1109c658560efc318127aad",
+          "path_count": 34,
+          "exact_scope_match": true,
+          "contract_ref": "08e030a6053ac9638957119373797e0fbf2b10c2",
+          "contract_blob_sha": "667e622cd38bc7d2a915e6aef40c3f70af889c7a",
+          "full_packet_bytes": 1362140,
+          "max_packet_bytes": 600000,
+          "max_file_bytes": 100000,
+          "oversized_files": [],
+          "commit_ranges": [
+            {
+              "base_sha": "08e030a6053ac9638957119373797e0fbf2b10c2",
+              "head_sha": "fd629f4f2f000ac8c2b8f2e6a5199b69dc2f4395",
+              "message": "feat(core): consolidate fail-closed payments and source health",
+              "path_count": 22,
+              "packet_bytes": 872552,
+              "oversized_files": [],
+              "within_bounds": false
+            },
+            {
+              "base_sha": "fd629f4f2f000ac8c2b8f2e6a5199b69dc2f4395",
+              "head_sha": "bde9a37107a74f032f2cb3c94aca188a2d476ae8",
+              "message": "fix(payments): require source-bound admission for final totals",
+              "path_count": 8,
+              "packet_bytes": 336564,
+              "oversized_files": [],
+              "within_bounds": true
+            },
+            {
+              "base_sha": "bde9a37107a74f032f2cb3c94aca188a2d476ae8",
+              "head_sha": "e60713e47d330275a6295ae301ba9fa4b4ad3e53",
+              "message": "fix(payments): preserve unavailable totals and verify remedies",
+              "path_count": 18,
+              "packet_bytes": 933808,
+              "oversized_files": [],
+              "within_bounds": false
+            },
+            {
+              "base_sha": "e60713e47d330275a6295ae301ba9fa4b4ad3e53",
+              "head_sha": "f1921b63a452a059c1109c658560efc318127aad",
+              "message": "fix(payments): keep unavailable exports fail closed",
+              "path_count": 5,
+              "packet_bytes": 217103,
+              "oversized_files": [],
+              "within_bounds": true
+            }
+          ]
+        }
       },
-      "updated_at": "2026-09-30T13:07:37.479Z",
-      "phase": "CANDIDATE_READY_A6_BLOCKED",
+      "updated_at": "2026-09-30T19:58:41.559Z",
+      "phase": "REPACKAGING_FOR_A6",
       "quality_gate": "author focused+broad tests -> fresh independent A5 -> live A6 after PR #237 -> A0 validation -> exact-head CI -> non-main integration branch",
-      "ownership_note": "Exact 34-file candidate scope identified read-only. No new write granted because PR #241 is already coherent and any new HEAD would invalidate A5/CI.",
+      "ownership_note": "A-CORE assigned to rebuild equivalent #241 logic on a fresh candidate branch with complete <=600k A6-auditable logical commits; current #241 remains immutable evidence.",
       "id": "CUSTOMS-CORE-V1",
       "owner": "A-CORE",
       "branch": "agent/core-consolidation-v1",
@@ -3610,14 +3689,60 @@
         "run_id": 36562105462
       },
       "external_audit": {
-        "status": "BLOCKED_INFRA_GATE",
+        "status": "BLOCKED_PACKET_LIMIT_AND_INFRA_GATE",
         "requires_pr": 237,
-        "reason": "Subsequent high-risk A6 audits remain unavailable until PR #237 is merged to main."
+        "reason": "Current exact candidate cannot be sent as a complete A6 packet within fail-closed bounds; post-verify admission also remains unavailable until PR #237 is merged.",
+        "preflight": {
+          "checked_at": "2026-09-30T19:58:41.559Z",
+          "base_sha": "08e030a6053ac9638957119373797e0fbf2b10c2",
+          "head_sha": "bf27ef2cd243f0e2f9325c48a1cfad40a100b2fe",
+          "path_count": 42,
+          "exact_scope_match": true,
+          "contract_ref": "08e030a6053ac9638957119373797e0fbf2b10c2",
+          "contract_blob_sha": "667e622cd38bc7d2a915e6aef40c3f70af889c7a",
+          "full_packet_bytes": 1900073,
+          "max_packet_bytes": 600000,
+          "max_file_bytes": 100000,
+          "oversized_files": [
+            "customs-clear/frontend/package-lock.json"
+          ],
+          "commit_ranges": [
+            {
+              "base_sha": "08e030a6053ac9638957119373797e0fbf2b10c2",
+              "head_sha": "ec9787cc478f25a26c6d076ce22784861036d546",
+              "message": "feat(product): consolidate compliance and grounded AI safeguards",
+              "path_count": 42,
+              "packet_bytes": 1873507,
+              "oversized_files": [
+                "customs-clear/frontend/package-lock.json"
+              ],
+              "within_bounds": false
+            },
+            {
+              "base_sha": "ec9787cc478f25a26c6d076ce22784861036d546",
+              "head_sha": "bc7ce6b838ae780e33a00ca8ad504c279d63621a",
+              "message": "fix(product): keep legal semantics server-owned",
+              "path_count": 7,
+              "packet_bytes": 414907,
+              "oversized_files": [],
+              "within_bounds": true
+            },
+            {
+              "base_sha": "bc7ce6b838ae780e33a00ca8ad504c279d63621a",
+              "head_sha": "bf27ef2cd243f0e2f9325c48a1cfad40a100b2fe",
+              "message": "fix(product): make LLM outputs server-draft only",
+              "path_count": 4,
+              "packet_bytes": 303199,
+              "oversized_files": [],
+              "within_bounds": true
+            }
+          ]
+        }
       },
-      "updated_at": "2026-09-30T13:09:41.433Z",
-      "phase": "CANDIDATE_READY_A6_BLOCKED",
+      "updated_at": "2026-09-30T19:58:41.559Z",
+      "phase": "REPACKAGING_FOR_A6",
       "quality_gate": "author focused+broad tests -> fresh independent A5 -> live A6 after PR #237 -> A0 validation -> exact-head CI -> non-main integration branch",
-      "ownership_note": "Exact 42-file candidate scope identified read-only. No new write granted because PR #242 is already coherent and any new HEAD would invalidate A5/CI.",
+      "ownership_note": "A-PRODUCT assigned to rebuild equivalent #242 logic on a fresh candidate branch with A6-auditable high-risk commits and an explicit honest boundary for the oversized lockfile; current #242 remains immutable evidence.",
       "id": "COMPLIANCE-AI-V1",
       "owner": "A-PRODUCT",
       "branch": "agent/product-consolidation-v1",
@@ -3712,7 +3837,7 @@
       ]
     }
   ],
-  "updated_at": "2026-09-30T18:50:43.022Z",
+  "updated_at": "2026-09-30T19:58:41.559Z",
   "max_concurrent_feature_workers": 2,
   "active_role_model": {
     "effective_at": "2026-09-30T12:58:10.633Z",
@@ -4106,5 +4231,29 @@
       ],
       "reason": "PR236 is technically ready but optional prompt hardening; it neither enables post-verify A6 admission nor blocks the two integration epics. PR237 remains the only immediate infra gate."
     }
+  },
+  "a6_candidate_preflight": {
+    "status": "BLOCKED_REPACKAGING_ASSIGNED",
+    "checked_at": "2026-09-30T19:58:41.559Z",
+    "bridge": {
+      "live_verified": true,
+      "current_pending_consumed": true,
+      "post_verify_admission_requires_pr": 237,
+      "pr237_merged": false
+    },
+    "contract": {
+      "ref": "08e030a6053ac9638957119373797e0fbf2b10c2",
+      "blob_sha": "667e622cd38bc7d2a915e6aef40c3f70af889c7a"
+    },
+    "limits": {
+      "max_files": 64,
+      "max_file_bytes": 100000,
+      "max_packet_bytes": 600000
+    },
+    "assignments": [
+      "/root/a_core",
+      "/root/a_product"
+    ],
+    "rule": "Do not weaken limits, send partial packets, reuse stale A5/CI, force-push, or claim A6 coverage for unaudited ranges."
   }
 }
