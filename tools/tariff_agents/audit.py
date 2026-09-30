@@ -240,7 +240,12 @@ def build_packet(repo, base, head, paths, *, contract_ref=None, official_sources
             (external_contract and (CONTRACT_PATH in paths or len(paths) >= MAX_FILES)) or
             (not external_contract and CONTRACT_PATH not in paths)):
         raise AuditBlocked("Explicit unique paths and architecture contract required")
-    paths = sorted(ensure_safe_path(path) for path in paths)
+    safe_paths = []
+    for path in paths:
+        safe_path = ensure_safe_path(path)
+        ensure_safe_text(safe_path, environ=environ)
+        safe_paths.append(safe_path)
+    paths = sorted(safe_paths)
     base_sha, head_sha = _commit(repo, base), _commit(repo, head)
     if external_contract:
         ensure_safe_text(contract_ref, environ=environ)
