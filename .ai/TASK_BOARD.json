@@ -723,7 +723,7 @@
     }
   ],
   "max_concurrent_subagents": 3,
-  "revision": 598,
+  "revision": 599,
   "runs": [
     {
       "head_sha": null,
@@ -3712,7 +3712,7 @@
       ]
     }
   ],
-  "updated_at": "2026-09-30T16:57:03.929Z",
+  "updated_at": "2026-09-30T17:55:15.679Z",
   "max_concurrent_feature_workers": 2,
   "active_role_model": {
     "effective_at": "2026-09-30T12:58:10.633Z",
@@ -3823,14 +3823,112 @@
       "subsequent_a6_available": false
     },
     "source_successor_comments": {
-      "published_at": "2026-09-30T16:57:03.929Z",
-      "state": "VERIFIED",
+      "published_at": "2026-09-30T17:55:15.679Z",
+      "state": "VERIFIED_COMPLETE",
       "receipts": [
+        {
+          "source_pr": 187,
+          "successor_pr": "241+242",
+          "disposition": "selective_mining_only",
+          "successor_head": "f1921b63a452a059c1109c658560efc318127aad/bf27ef2cd243f0e2f9325c48a1cfad40a100b2fe",
+          "comment_id": 5916729123
+        },
+        {
+          "source_pr": 202,
+          "successor_pr": 241,
+          "disposition": "preserved",
+          "successor_head": "f1921b63a452a059c1109c658560efc318127aad",
+          "comment_id": 5916727189
+        },
+        {
+          "source_pr": 203,
+          "successor_pr": 241,
+          "disposition": "deferred",
+          "successor_head": "f1921b63a452a059c1109c658560efc318127aad",
+          "comment_id": 5916728078
+        },
+        {
+          "source_pr": 204,
+          "successor_pr": 241,
+          "disposition": "preserved",
+          "successor_head": "f1921b63a452a059c1109c658560efc318127aad",
+          "comment_id": 5916727749
+        },
+        {
+          "source_pr": 205,
+          "successor_pr": 241,
+          "disposition": "evidence_only",
+          "successor_head": "f1921b63a452a059c1109c658560efc318127aad",
+          "comment_id": 5916727456
+        },
+        {
+          "source_pr": 207,
+          "successor_pr": 242,
+          "disposition": "preserved",
+          "successor_head": "bf27ef2cd243f0e2f9325c48a1cfad40a100b2fe",
+          "comment_id": 5916728835
+        },
+        {
+          "source_pr": 208,
+          "successor_pr": 242,
+          "disposition": "preserved",
+          "successor_head": "bf27ef2cd243f0e2f9325c48a1cfad40a100b2fe",
+          "comment_id": 5916728437
+        },
+        {
+          "source_pr": 211,
+          "successor_pr": 242,
+          "disposition": "preserved",
+          "successor_head": "bf27ef2cd243f0e2f9325c48a1cfad40a100b2fe",
+          "comment_id": 5916729443
+        },
+        {
+          "source_pr": 212,
+          "successor_pr": 241,
+          "disposition": "deferred",
+          "successor_head": "f1921b63a452a059c1109c658560efc318127aad",
+          "comment_id": 5916730082
+        },
         {
           "source_pr": 213,
           "successor_pr": 242,
           "successor_head": "bf27ef2cd243f0e2f9325c48a1cfad40a100b2fe",
           "comment_id": 5914742738
+        },
+        {
+          "source_pr": 216,
+          "successor_pr": 241,
+          "disposition": "preserved",
+          "successor_head": "f1921b63a452a059c1109c658560efc318127aad",
+          "comment_id": 5916726327
+        },
+        {
+          "source_pr": 220,
+          "successor_pr": 241,
+          "disposition": "preserved",
+          "successor_head": "f1921b63a452a059c1109c658560efc318127aad",
+          "comment_id": 5916726623
+        },
+        {
+          "source_pr": 221,
+          "successor_pr": 242,
+          "disposition": "preserved",
+          "successor_head": "bf27ef2cd243f0e2f9325c48a1cfad40a100b2fe",
+          "comment_id": 5916729810
+        },
+        {
+          "source_pr": 222,
+          "successor_pr": 241,
+          "disposition": "preserved",
+          "successor_head": "f1921b63a452a059c1109c658560efc318127aad",
+          "comment_id": 5916726056
+        },
+        {
+          "source_pr": 223,
+          "successor_pr": 241,
+          "disposition": "preserved",
+          "successor_head": "f1921b63a452a059c1109c658560efc318127aad",
+          "comment_id": 5916726907
         },
         {
           "source_pr": 224,
@@ -3917,7 +4015,46 @@
           "comment_id": 5914742472
         }
       ],
-      "closure_state": "DEFERRED_UNTIL_GATED_INTEGRATION"
+      "closure_state": "DEFERRED_UNTIL_GATED_INTEGRATION",
+      "unique_source_pr_count": 29,
+      "completeness": {
+        "core_source_prs": [
+          216,
+          220,
+          222,
+          223,
+          226,
+          228,
+          229,
+          231,
+          232,
+          235,
+          238,
+          240,
+          202,
+          203,
+          204,
+          205,
+          212,
+          187
+        ],
+        "product_source_prs": [
+          207,
+          208,
+          211,
+          213,
+          221,
+          224,
+          227,
+          230,
+          233,
+          234,
+          239,
+          187
+        ],
+        "unique_mapped_count": 29,
+        "missing": []
+      }
     }
   }
 }
