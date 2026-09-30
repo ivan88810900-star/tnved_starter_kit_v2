@@ -723,7 +723,7 @@
     }
   ],
   "max_concurrent_subagents": 3,
-  "revision": 595,
+  "revision": 596,
   "runs": [
     {
       "head_sha": null,
@@ -3712,7 +3712,7 @@
       ]
     }
   ],
-  "updated_at": "2026-09-30T13:57:55.759Z",
+  "updated_at": "2026-09-30T14:52:14.085Z",
   "max_concurrent_feature_workers": 2,
   "active_role_model": {
     "effective_at": "2026-09-30T12:58:10.633Z",
@@ -3812,6 +3812,15 @@
         }
       ],
       "closure_policy": "No stale/source PR closure before gated integration preserves mapped behavior and evidence."
+    },
+    "infra_gate_metadata": {
+      "published_at": "2026-09-30T14:52:14.085Z",
+      "state": "VERIFIED",
+      "pr": 237,
+      "head_sha": "f0183c1e0f4e1e5ed60fa93a4633e841e2ae8d9f",
+      "body_status": "fresh A5, exact-head CI and A0 validation published; draft retained",
+      "owner_gate": "explicit permission to mark ready and merge exact HEAD into main",
+      "subsequent_a6_available": false
     }
   }
 }
