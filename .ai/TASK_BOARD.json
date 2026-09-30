@@ -723,7 +723,7 @@
     }
   ],
   "max_concurrent_subagents": 3,
-  "revision": 590,
+  "revision": 591,
   "runs": [
     {
       "head_sha": null,
@@ -3407,12 +3407,14 @@
       "risk": "high",
       "worktree": null,
       "files": [],
-      "author_sessions": [],
+      "author_sessions": [
+        "/root/a_core"
+      ],
       "qa": null,
       "ci": null,
       "external_audit": null,
-      "updated_at": "2026-09-30T12:58:10.633Z",
-      "phase": "DEPENDENCY_MATRIX_AND_SELECTIVE_PORT",
+      "updated_at": "2026-09-30T12:59:48.273Z",
+      "phase": "DEPENDENCY_MATRIX_IN_PROGRESS",
       "quality_gate": "author focused+broad tests -> fresh independent A5 -> live A6 after PR #237 -> A0 validation -> exact-head CI -> non-main integration branch",
       "ownership_note": "No write ownership allocated during matrix phase; exact repo-relative paths must be recorded before implementation.",
       "id": "CUSTOMS-CORE-V1",
@@ -3467,12 +3469,14 @@
       "risk": "high",
       "worktree": null,
       "files": [],
-      "author_sessions": [],
+      "author_sessions": [
+        "/root/a_product"
+      ],
       "qa": null,
       "ci": null,
       "external_audit": null,
-      "updated_at": "2026-09-30T12:58:10.633Z",
-      "phase": "DEPENDENCY_MATRIX_AND_SELECTIVE_PORT",
+      "updated_at": "2026-09-30T12:59:48.273Z",
+      "phase": "DEPENDENCY_MATRIX_IN_PROGRESS",
       "quality_gate": "author focused+broad tests -> fresh independent A5 -> live A6 after PR #237 -> A0 validation -> exact-head CI -> non-main integration branch",
       "ownership_note": "No write ownership allocated during matrix phase; exact repo-relative paths must be recorded before implementation.",
       "id": "COMPLIANCE-AI-V1",
@@ -3518,7 +3522,7 @@
       "tests": []
     }
   ],
-  "updated_at": "2026-09-30T12:58:10.633Z",
+  "updated_at": "2026-09-30T12:59:48.273Z",
   "max_concurrent_feature_workers": 2,
   "active_role_model": {
     "effective_at": "2026-09-30T12:58:10.633Z",
