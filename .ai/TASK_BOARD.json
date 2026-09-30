@@ -748,10 +748,23 @@
         "evidence": "Live GitHub exact base/head blobs, full diffs and all 42 changed paths were reconstructed against audit.build_packet schema without truncation. Full packet 1,900,073 bytes; first commit 1,873,507; customs-clear/frontend/package-lock.json is about 237,409 bytes. Later commits are within bounds."
       },
       "resolution_plan": "A-PRODUCT must rebuild on a fresh branch with A6-compatible high-risk commits and either avoid the lockfile delta or isolate it as explicitly non-high-risk dependency/test-infra evidence; no false full-A6 claim, force-push, limit increase or stale gate reuse."
+    },
+    {
+      "id": "A5-PRODUCT-CHILD-NEGATION-001",
+      "task_id": "COMPLIANCE-AI-V1",
+      "reporter": "A5",
+      "head_sha": "233ed6a64b0e75175358f8cdf0e7bcc71191b67b",
+      "status": "CONFIRMED",
+      "summary": "Negated child-description phrases are promoted to definite official SGR applicability, violating fail-closed false-positive acceptance.",
+      "validation": {
+        "at": "2026-09-30T22:00:20.015Z",
+        "validator": "A0",
+        "evidence": "Independent A5 reproduced _is_child_product_description=True and has_definite_sgr=True for 'недетский крем' and 'не детский крем' at code 3304990000; result reaches user-visible official advisory as definite. A0 accepts finding and assigned A-PRODUCT repair; no stale PASS reused."
+      }
     }
   ],
   "max_concurrent_subagents": 3,
-  "revision": 605,
+  "revision": 606,
   "runs": [
     {
       "head_sha": null,
@@ -3933,7 +3946,7 @@
         }
       ],
       "a6_repack": {
-        "status": "PUBLISHED_A5_PENDING",
+        "status": "FIX_REQUIRED_A5_FAILED",
         "published_at": "2026-09-30T21:03:19.160Z",
         "branch": "candidate/product-a6-repack-v1",
         "base_sha": "08e030a6053ac9638957119373797e0fbf2b10c2",
@@ -3980,11 +3993,32 @@
           "live A6 per runtime slice",
           "A0 validation",
           "exact-head CI"
-        ]
+        ],
+        "blocker": {
+          "id": "A5-PRODUCT-CHILD-NEGATION-001",
+          "summary": "Negated child-description phrases 'недетский крем' and 'не детский крем' are classified as child products and promoted to definite official SGR applicability in user-visible advisory UI.",
+          "required_fix": "Unicode/token-aware negation boundary plus service and official-SGR regressions; then fresh A5 on new exact HEAD."
+        }
+      },
+      "a5": {
+        "status": "FAILED",
+        "head_sha": "233ed6a64b0e75175358f8cdf0e7bcc71191b67b",
+        "session_id": "/root/a5_core_candidate",
+        "reviewed_at": "2026-09-30T22:00:20.015Z",
+        "finding_ids": [
+          "A5-PRODUCT-CHILD-NEGATION-001"
+        ],
+        "evidence": {
+          "focused_backend": "255 passed plus 44 subtests",
+          "frontend": "18 passed; typecheck and build passed",
+          "bounded_broad": "359 passed, 23 failed; NOT PASS",
+          "packet_validation": "five runtime slices complete + validate_packet PASS"
+        },
+        "stale_on_new_head": true
       }
     }
   ],
-  "updated_at": "2026-09-30T21:54:22.236Z",
+  "updated_at": "2026-09-30T22:00:20.015Z",
   "max_concurrent_feature_workers": 2,
   "active_role_model": {
     "effective_at": "2026-09-30T12:58:10.633Z",
@@ -4400,8 +4434,8 @@
     }
   },
   "a6_candidate_preflight": {
-    "status": "CORE_A5_PASS_PRODUCT_A5_IN_PROGRESS_BLOCKED_PR236_PR237_MAIN_MERGES",
-    "checked_at": "2026-09-30T21:54:22.236Z",
+    "status": "CORE_A5_PASS_PRODUCT_FIX_REQUIRED_BLOCKED_PR236_PR237_MAIN_MERGES",
+    "checked_at": "2026-09-30T22:00:20.015Z",
     "bridge": {
       "live_verified": true,
       "current_pending_consumed": true,
@@ -4441,9 +4475,10 @@
       ],
       "non_runtime_a6_coverage": false,
       "broad_status": "NOT_PASS",
-      "next_gate": "fresh independent A5 candidate review; live A6 only after PR236 and PR237 merge",
-      "a5_status": "IN_PROGRESS",
-      "a5_session": "/root/a5_core_candidate"
+      "next_gate": "A-PRODUCT fix on same coherent branch, author regressions, then fresh A5; live A6 remains blocked by PR236/PR237 merges.",
+      "a5_status": "FAILED",
+      "a5_session": "/root/a5_core_candidate",
+      "blocker_id": "A5-PRODUCT-CHILD-NEGATION-001"
     },
     "core_candidate": {
       "branch": "candidate/core-a6-repack-v1",
