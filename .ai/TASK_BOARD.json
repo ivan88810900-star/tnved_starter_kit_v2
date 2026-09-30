@@ -774,7 +774,7 @@
     }
   ],
   "max_concurrent_subagents": 3,
-  "revision": 609,
+  "revision": 610,
   "runs": [
     {
       "head_sha": null,
@@ -3490,7 +3490,6 @@
         "customs-clear/frontend/src/components/calculator/CalculatorScenarioCompareSection.tsx",
         "customs-clear/frontend/src/pages/Calculator.tsx",
         "customs-clear/frontend/src/pages/Invoice.tsx",
-        "customs-clear/frontend/src/types/api.types.ts",
         "docs/ai-workflow/CUSTOMS_CORE_CONSOLIDATION_V1.md"
       ],
       "author_sessions": [
@@ -3603,7 +3602,43 @@
         "candidate_head_sha": "14e0ee8f034d94ffc5831d87e076f4d693a5a524",
         "candidate_tree_sha": "fbb3bf2c88aa75a9c037a43547da88185dba6829",
         "source_head_sha": "f1921b63a452a059c1109c658560efc318127aad",
-        "tree_equivalent_to_source": true
+        "tree_equivalent_to_source": true,
+        "candidate_diff_files": [
+          "customs-clear/backend/app/schemas/payment_profile.py",
+          "customs-clear/backend/app/services/calculation_history_service.py",
+          "customs-clear/backend/app/services/data_refresh_service.py",
+          "customs-clear/backend/app/services/exchange_rates.py",
+          "customs-clear/backend/app/services/export_service.py",
+          "customs-clear/backend/app/services/invoice_batch_service.py",
+          "customs-clear/backend/app/services/normative_store.py",
+          "customs-clear/backend/app/services/payment_engine.py",
+          "customs-clear/backend/app/services/payment_profile_builder.py",
+          "customs-clear/backend/app/services/payment_quote_service.py",
+          "customs-clear/backend/app/services/regulatory_source_completeness.py",
+          "customs-clear/backend/app/services/scenario_compare_service.py",
+          "customs-clear/backend/app/services/source_sync.py",
+          "customs-clear/backend/app/services/sync_engine.py",
+          "customs-clear/backend/app/services/sync_status_diagnostics.py",
+          "customs-clear/backend/tests/test_antidumping_fixed_unit_fail_closed.py",
+          "customs-clear/backend/tests/test_automatic_duty_operand_validation.py",
+          "customs-clear/backend/tests/test_data_refresh.py",
+          "customs-clear/backend/tests/test_invoice_and_compare.py",
+          "customs-clear/backend/tests/test_payment_engine.py",
+          "customs-clear/backend/tests/test_payment_fx_provenance_fail_closed.py",
+          "customs-clear/backend/tests/test_payment_quote.py",
+          "customs-clear/backend/tests/test_payment_source_admission.py",
+          "customs-clear/backend/tests/test_regulatory_source_completeness.py",
+          "customs-clear/backend/tests/test_source_sync_index_currentness.py",
+          "customs-clear/backend/tests/test_special_duties.py",
+          "customs-clear/backend/tests/test_sync_status_diagnostics.py",
+          "customs-clear/backend/tests/test_unavailable_payment_exports.py",
+          "customs-clear/frontend/src/components/PaymentBreakdownCard.tsx",
+          "customs-clear/frontend/src/components/calculator/CalculatorScenarioCompareSection.tsx",
+          "customs-clear/frontend/src/pages/Calculator.tsx",
+          "customs-clear/frontend/src/pages/Invoice.tsx",
+          "customs-clear/frontend/src/types/api.types.ts",
+          "docs/ai-workflow/CUSTOMS_CORE_CONSOLIDATION_V1.md"
+        ]
       },
       "acceptance_criteria": [
         "No unverified rate, FX value, trade-remedy measure, effective date or unit may produce final payable.",
@@ -3753,7 +3788,6 @@
         "customs-clear/backend/app/services/grounded_assistant.py",
         "customs-clear/backend/app/services/non_tariff_service.py",
         "customs-clear/backend/app/services/normative_requirements_block.py",
-        "customs-clear/backend/app/services/normative_store.py",
         "customs-clear/backend/app/services/ntm_description_matching.py",
         "customs-clear/backend/app/services/ntm_engine_v2.py",
         "customs-clear/backend/app/services/ntm_layers.py",
@@ -3887,7 +3921,51 @@
         "candidate_head_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
         "candidate_tree_sha": "6eeefb6f6adde1930a59ffbece5052c70e369d0b",
         "source_head_sha": "bf27ef2cd243f0e2f9325c48a1cfad40a100b2fe",
-        "tree_equivalent_to_source": true
+        "tree_equivalent_to_source": true,
+        "candidate_diff_files": [
+          "customs-clear/backend/app/services/assistant_chat.py",
+          "customs-clear/backend/app/services/assistant_orchestrator.py",
+          "customs-clear/backend/app/services/claude_service.py",
+          "customs-clear/backend/app/services/compliance_resolver.py",
+          "customs-clear/backend/app/services/embedding_service.py",
+          "customs-clear/backend/app/services/grounded_assistant.py",
+          "customs-clear/backend/app/services/non_tariff_service.py",
+          "customs-clear/backend/app/services/normative_requirements_block.py",
+          "customs-clear/backend/app/services/normative_store.py",
+          "customs-clear/backend/app/services/ntm_description_matching.py",
+          "customs-clear/backend/app/services/ntm_engine_v2.py",
+          "customs-clear/backend/app/services/ntm_layers.py",
+          "customs-clear/backend/app/services/ntm_triggers.py",
+          "customs-clear/backend/app/services/ntm_v2_import.py",
+          "customs-clear/backend/app/services/ntm_v2_official_sgr_dataset_validation.py",
+          "customs-clear/backend/app/services/regulatory_ai_classifier.py",
+          "customs-clear/backend/app/services/tnved_code_card.py",
+          "customs-clear/backend/app/services/tnved_fts.py",
+          "customs-clear/backend/data/official_sgr_rules.seed.json",
+          "customs-clear/backend/tests/test_assistant_copilot.py",
+          "customs-clear/backend/tests/test_assistant_payment_review.py",
+          "customs-clear/backend/tests/test_compliance_permit_parser.py",
+          "customs-clear/backend/tests/test_embedding_service_safety.py",
+          "customs-clear/backend/tests/test_grounded_assistant.py",
+          "customs-clear/backend/tests/test_non_tariff_data_freshness.py",
+          "customs-clear/backend/tests/test_normative_requirements_block.py",
+          "customs-clear/backend/tests/test_ntm_child_product_markers.py",
+          "customs-clear/backend/tests/test_ntm_sgr_bad_token_boundary.py",
+          "customs-clear/backend/tests/test_ntm_trigger_food_contact.py",
+          "customs-clear/backend/tests/test_regulatory_ai_classifier.py",
+          "customs-clear/backend/tests/test_regulatory_keyword_token_boundaries.py",
+          "customs-clear/backend/tests/test_smart_tnved_search.py",
+          "customs-clear/frontend/package-lock.json",
+          "customs-clear/frontend/package.json",
+          "customs-clear/frontend/src/components/nonTariff/NormativeRequirementsBlock.freshness.test.tsx",
+          "customs-clear/frontend/src/components/nonTariff/NormativeRequirementsBlock.tsx",
+          "customs-clear/frontend/src/components/nonTariff/normativeBlockHelpers.ts",
+          "customs-clear/frontend/src/components/tnved/PermitDocumentsBlock.test.tsx",
+          "customs-clear/frontend/src/components/tnved/PermitDocumentsBlock.tsx",
+          "customs-clear/frontend/src/test/setup.ts",
+          "customs-clear/frontend/src/types/api.types.ts",
+          "customs-clear/frontend/vitest.config.ts"
+        ]
       },
       "acceptance_criteria": [
         "NTM false positives fail closed and completeness/freshness is never inferred or invented.",
@@ -4059,7 +4137,7 @@
       }
     }
   ],
-  "updated_at": "2026-09-30T22:52:56.739Z",
+  "updated_at": "2026-09-30T23:59:42.454Z",
   "max_concurrent_feature_workers": 2,
   "active_role_model": {
     "effective_at": "2026-09-30T12:58:10.633Z",
@@ -4200,6 +4278,36 @@
       },
       "evidence_invalidation": "Any new HEAD requires fresh A5, A0 validation and exact-head CI.",
       "owner_gate": "Merge exact HEAD to main/protected requires separate explicit owner permission; A0 did not merge."
+    },
+    "role_model_v2": {
+      "status": "AUTHOR_IMPLEMENTED_A5_CI_PENDING",
+      "pr": 243,
+      "branch": "agent/orchestration-role-model-v2",
+      "base_sha": "08e030a6053ac9638957119373797e0fbf2b10c2",
+      "head_sha": "6ee3843c7a03276132cfca83981d68c4afa9cd81",
+      "draft": true,
+      "changed_files": [
+        "tools/tariff_agents/control.py",
+        "tools/tariff_agents/__main__.py",
+        "tests/agent_orchestration/test_control.py",
+        "tests/agent_orchestration/test_cli_snapshot.py"
+      ],
+      "author_tests": {
+        "focused": "42/42 PASS",
+        "required_verify": "121/121 PASS",
+        "diff_check": "PASS"
+      },
+      "state_normalization": {
+        "status": "PASS_SIMULATED_ON_REVISION_609",
+        "active_ownership": "disjoint",
+        "provenance": "full candidate file lists preserved in refs.candidate_diff_files"
+      },
+      "next_gates": [
+        "fresh independent A5",
+        "exact-head GitHub CI",
+        "A0 validation"
+      ],
+      "owner_gate": "No main/protected merge is authorized."
     }
   },
   "pr_hygiene": {
@@ -4500,6 +4608,13 @@
       ],
       "remaining_gate": "Owner-authorized merges of PR236 and PR237, then live A6, A0 validation and exact-head CI before non-main integration.",
       "closure_policy": "PR241 and PR242 remain open as evidence until their successors complete gated integration; neither source PR is separately mergeable."
+    },
+    "role_model_v2_candidate": {
+      "published_at": "2026-09-30T23:59:42.454Z",
+      "pr": 243,
+      "head_sha": "6ee3843c7a03276132cfca83981d68c4afa9cd81",
+      "state": "DRAFT_A5_CI_PENDING",
+      "reason": "Controller now accepts the two normalized active developer roles; historical role parsing remains available for archived evidence."
     }
   },
   "a6_candidate_preflight": {
