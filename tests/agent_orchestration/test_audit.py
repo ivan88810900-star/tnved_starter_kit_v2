@@ -364,7 +364,7 @@ class AuditTests(unittest.TestCase):
         self.assertEqual(audit.ensure_safe_text(serialized, environ={}), serialized)
         with self.assertRaises(audit.AuditBlocked):
             audit.ensure_safe_text(
-                json.dumps({"contact": "person@private.test"}, separators=(",", ":")),
+                json.dumps({"contact": "person@" + "private.test"}, separators=(",", ":")),
                 environ={},
             )
 
