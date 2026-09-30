@@ -355,6 +355,30 @@ class AuditTests(unittest.TestCase):
             with self.subTest(key=key):
                 self.assertEqual(audit.ensure_safe_text(value, environ={key: value}), value)
 
+    def test_serialized_module_decorators_are_not_personal_emails(self):
+        decorated = (
+            "\n@pytest.mark.parametrize('value', [1])\n"
+            "@unittest.skipUnless(True, 'fixture')\n"
+        )
+        serialized = json.dumps({"text": decorated}, separators=(",", ":"))
+        self.assertEqual(audit.ensure_safe_text(serialized, environ={}), serialized)
+        with self.assertRaises(audit.AuditBlocked):
+            audit.ensure_safe_text(
+                json.dumps({"contact": "person@private.test"}, separators=(",", ":")),
+                environ={},
+            )
+
+        self.write("tests/decorated.py", decorated)
+        head = self.commit()
+        packet = audit.build_packet(
+            self.repo,
+            self.head,
+            head,
+            [audit.CONTRACT_PATH, "tests/decorated.py"],
+            environ={},
+        )
+        self.assertEqual(packet["head_sha"], head)
+
     def test_negative_fixtures_do_not_make_committed_test_source_unsafe(self):
         for path in (Path(audit.__file__), Path(__file__)):
             source = path.read_text()
