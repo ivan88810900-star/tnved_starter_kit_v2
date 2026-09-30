@@ -760,11 +760,16 @@
         "at": "2026-09-30T22:00:20.015Z",
         "validator": "A0",
         "evidence": "Independent A5 reproduced _is_child_product_description=True and has_definite_sgr=True for 'недетский крем' and 'не детский крем' at code 3304990000; result reaches user-visible official advisory as definite. A0 accepts finding and assigned A-PRODUCT repair; no stale PASS reused."
+      },
+      "resolution_candidate": {
+        "head_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
+        "evidence": "Shared Unicode/token-aware child-audience predicate now rejects negated child phrases in legacy/service and official SGR paths while preserving explicit/mixed child audiences; fresh A5 required.",
+        "status": "PENDING_FRESH_A5"
       }
     }
   ],
   "max_concurrent_subagents": 3,
-  "revision": 606,
+  "revision": 607,
   "runs": [
     {
       "head_sha": null,
@@ -3874,7 +3879,7 @@
         "ci_run_id": 36562105462,
         "a5_review_id": 5351884301,
         "candidate_branch": "candidate/product-a6-repack-v1",
-        "candidate_head_sha": "233ed6a64b0e75175358f8cdf0e7bcc71191b67b",
+        "candidate_head_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
         "candidate_tree_sha": "6eeefb6f6adde1930a59ffbece5052c70e369d0b",
         "source_head_sha": "bf27ef2cd243f0e2f9325c48a1cfad40a100b2fe",
         "tree_equivalent_to_source": true
@@ -3946,11 +3951,11 @@
         }
       ],
       "a6_repack": {
-        "status": "FIX_REQUIRED_A5_FAILED",
+        "status": "FIX_PUBLISHED_FRESH_A5_PENDING",
         "published_at": "2026-09-30T21:03:19.160Z",
         "branch": "candidate/product-a6-repack-v1",
         "base_sha": "08e030a6053ac9638957119373797e0fbf2b10c2",
-        "head_sha": "233ed6a64b0e75175358f8cdf0e7bcc71191b67b",
+        "head_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
         "tree_sha": "6eeefb6f6adde1930a59ffbece5052c70e369d0b",
         "tree_identical_to_pr242_head": "bf27ef2cd243f0e2f9325c48a1cfad40a100b2fe",
         "runtime_slices": [
@@ -3987,10 +3992,10 @@
         ],
         "coverage_claim": "Only runtime slices are proposed for live A6. Non-runtime slices are not claimed A6-covered.",
         "gates_pending": [
-          "fresh independent A5",
-          "PR236 scanner fix",
+          "fresh independent A5 on e39e1978",
+          "PR236 merge",
           "PR237 merge for post-verify admission",
-          "live A6 per runtime slice",
+          "live A6 per runtime slice plus repair delta",
           "A0 validation",
           "exact-head CI"
         ],
@@ -3998,27 +4003,48 @@
           "id": "A5-PRODUCT-CHILD-NEGATION-001",
           "summary": "Negated child-description phrases 'недетский крем' and 'не детский крем' are classified as child products and promoted to definite official SGR applicability in user-visible advisory UI.",
           "required_fix": "Unicode/token-aware negation boundary plus service and official-SGR regressions; then fresh A5 on new exact HEAD."
+        },
+        "repair": {
+          "parent_sha": "233ed6a64b0e75175358f8cdf0e7bcc71191b67b",
+          "changed_files": 4,
+          "additions": 128,
+          "deletions": 22,
+          "behavior": {
+            "rejected": [
+              "недетский крем",
+              "не детский крем"
+            ],
+            "preserved": [
+              "детский крем",
+              "крем для взрослых и детей"
+            ]
+          },
+          "author_tests": {
+            "focused": "35 passed",
+            "official_sgr_related": "122 passed",
+            "broader": "137 passed, 4 unrelated date-sensitive failures for expired 8517 rules; NOT PASS"
+          },
+          "packet": {
+            "status": "PASSED",
+            "scope": "repair delta only",
+            "bytes": 121189,
+            "sha256": "9b2431878f1edd7a327037ed8b736d244e66ac2f06a85aad0fe925441826921e"
+          },
+          "full_candidate_packet": "BLOCKED as expected by 237409-byte package-lock.json over 100000 file limit; runtime slices remain the only proposed A6 coverage."
         }
       },
       "a5": {
-        "status": "FAILED",
-        "head_sha": "233ed6a64b0e75175358f8cdf0e7bcc71191b67b",
-        "session_id": "/root/a5_core_candidate",
-        "reviewed_at": "2026-09-30T22:00:20.015Z",
-        "finding_ids": [
+        "status": "PENDING_FRESH_REVIEW",
+        "required_head": "e39e19787bd913baeb6f85577a13e1116458e633",
+        "prior_failed_head": "233ed6a64b0e75175358f8cdf0e7bcc71191b67b",
+        "prior_finding_ids": [
           "A5-PRODUCT-CHILD-NEGATION-001"
         ],
-        "evidence": {
-          "focused_backend": "255 passed plus 44 subtests",
-          "frontend": "18 passed; typecheck and build passed",
-          "bounded_broad": "359 passed, 23 failed; NOT PASS",
-          "packet_validation": "five runtime slices complete + validate_packet PASS"
-        },
         "stale_on_new_head": true
       }
     }
   ],
-  "updated_at": "2026-09-30T22:00:20.015Z",
+  "updated_at": "2026-09-30T22:09:41.643Z",
   "max_concurrent_feature_workers": 2,
   "active_role_model": {
     "effective_at": "2026-09-30T12:58:10.633Z",
@@ -4434,8 +4460,8 @@
     }
   },
   "a6_candidate_preflight": {
-    "status": "CORE_A5_PASS_PRODUCT_FIX_REQUIRED_BLOCKED_PR236_PR237_MAIN_MERGES",
-    "checked_at": "2026-09-30T22:00:20.015Z",
+    "status": "CORE_A5_PASS_PRODUCT_FIX_PUBLISHED_A5_PENDING_BLOCKED_PR236_PR237_MAIN_MERGES",
+    "checked_at": "2026-09-30T22:09:41.643Z",
     "bridge": {
       "live_verified": true,
       "current_pending_consumed": true,
@@ -4464,7 +4490,7 @@
     },
     "product_candidate": {
       "branch": "candidate/product-a6-repack-v1",
-      "head_sha": "233ed6a64b0e75175358f8cdf0e7bcc71191b67b",
+      "head_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
       "tree_sha": "6eeefb6f6adde1930a59ffbece5052c70e369d0b",
       "runtime_slice_packet_bytes": [
         180640,
@@ -4475,10 +4501,15 @@
       ],
       "non_runtime_a6_coverage": false,
       "broad_status": "NOT_PASS",
-      "next_gate": "A-PRODUCT fix on same coherent branch, author regressions, then fresh A5; live A6 remains blocked by PR236/PR237 merges.",
-      "a5_status": "FAILED",
+      "next_gate": "fresh A5 on e39e1978; live A6 runtime slices plus repair delta only after PR236/PR237 merges.",
+      "a5_status": "PENDING_FRESH_REVIEW",
       "a5_session": "/root/a5_core_candidate",
-      "blocker_id": "A5-PRODUCT-CHILD-NEGATION-001"
+      "blocker_id": "A5-PRODUCT-CHILD-NEGATION-001",
+      "repair_delta_packet": {
+        "bytes": 121189,
+        "sha256": "9b2431878f1edd7a327037ed8b736d244e66ac2f06a85aad0fe925441826921e",
+        "status": "PASS"
+      }
     },
     "core_candidate": {
       "branch": "candidate/core-a6-repack-v1",
