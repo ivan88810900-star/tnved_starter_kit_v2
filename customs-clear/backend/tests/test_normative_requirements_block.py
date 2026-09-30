@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+from datetime import datetime, timedelta, timezone
 
 import pytest
 from sqlalchemy import create_engine
@@ -210,6 +211,77 @@ def test_empty_state_message() -> None:
     assert block["empty_message"] is not None
     assert block["required_documents"] == []
     assert block["advisory_requirements"] == []
+
+
+@pytest.mark.parametrize(
+    ("freshness", "expected_state"),
+    [
+        (None, "unknown"),
+        ("unreadable", "unknown"),
+        (
+            {
+                "source_name": "Локальная база правил",
+                "source_code": "LOCAL",
+                "synced_at": None,
+                "is_stale": True,
+                "revision": "seed",
+            },
+            "stale",
+        ),
+        (
+            {
+                "source_name": "Источник",
+                "source_code": "NTM_TEST",
+                "synced_at": "not-a-date",
+                "is_stale": False,
+                "revision": "current",
+            },
+            "unknown",
+        ),
+        (
+            {
+                "source_name": "Источник",
+                "source_code": "NTM_TEST",
+                "synced_at": "2999-01-01T00:00:00+00:00",
+                "is_stale": False,
+                "revision": "future",
+            },
+            "unknown",
+        ),
+        (
+            {
+                "source_name": "Источник",
+                "source_code": "NTM_TEST",
+                "synced_at": (
+                    datetime.now(timezone.utc) - timedelta(hours=1)
+                ).isoformat(),
+                "is_stale": False,
+                "revision": "current",
+            },
+            "fresh",
+        ),
+    ],
+)
+def test_data_freshness_fails_closed_without_changing_documents(
+    freshness: object,
+    expected_state: str,
+) -> None:
+    nt = {
+        "status": "ERROR",
+        "required_permits": [{"permit_type": "ДС", "legal_ref": "catalog"}],
+        "missing_permit_types": ["ДС"],
+        "advisory_requirements": [{"permit_type": "НФ", "source": "runtime_triggers"}],
+        "data_freshness": freshness,
+    }
+
+    block = build_normative_requirements_block(nt)
+
+    assert block["data_freshness"]["state"] == expected_state
+    assert block["data_freshness"]["is_stale"] is (expected_state != "fresh")
+    assert block["data_freshness"]["ntm_coverage_verified"] is False
+    assert [row["permit_type"] for row in block["required_documents"]] == ["ДС"]
+    assert [row["permit_type"] for row in block["missing_documents"]] == ["ДС"]
+    assert [row["permit_type"] for row in block["advisory_requirements"]] == ["НФ"]
 
 
 def test_check_includes_normative_block(
