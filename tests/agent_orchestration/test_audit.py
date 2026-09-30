@@ -379,6 +379,17 @@ class AuditTests(unittest.TestCase):
         )
         self.assertEqual(packet["head_sha"], head)
 
+    def test_backslash_prefixed_private_contacts_remain_blocked(self):
+        private_contact = "\\\\person@" + "private.test"
+        fixtures = (
+            private_contact,
+            json.dumps({"contact": private_contact}, separators=(",", ":")),
+        )
+        for text in fixtures:
+            with self.subTest(serialized=text.startswith("{")), \
+                    self.assertRaises(audit.AuditBlocked):
+                audit.ensure_safe_text(text, environ={})
+
     def test_negative_fixtures_do_not_make_committed_test_source_unsafe(self):
         for path in (Path(audit.__file__), Path(__file__)):
             source = path.read_text()
