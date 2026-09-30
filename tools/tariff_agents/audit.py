@@ -148,8 +148,8 @@ def ensure_safe_text(text, *, environ=None):
     )
     if any(re.search(pattern, text) for pattern in patterns):
         raise AuditBlocked("Suspected secret or private data excluded from audit")
-    # JSON escaping turns a column-zero decorator into \`\\n@pytest...\`; do not
-    # treat the escape marker \`n\` as an email local-part. Raw blob text is
+    # JSON escaping turns a column-zero decorator into `\\n@pytest...`; do not
+    # treat the escape marker `n` as an email local-part. Raw blob text is
     # scanned separately, so actual contacts remain blocked before serialization.
     for domain in re.findall(
             r"(?<!\\)\b[A-Za-z0-9._%+-]+@([A-Za-z0-9.-]+\.[A-Za-z]{2,})\b", text):
