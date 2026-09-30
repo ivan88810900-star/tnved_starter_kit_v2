@@ -148,12 +148,18 @@ def ensure_safe_text(text, *, environ=None):
     )
     if any(re.search(pattern, text) for pattern in patterns):
         raise AuditBlocked("Suspected secret or private data excluded from audit")
-    # JSON escaping turns a column-zero decorator into `\\n@pytest...`; do not
-    # treat the escape marker `n` as an email local-part. Raw blob text is
-    # scanned separately, so actual contacts remain blocked before serialization.
+    # JSON escaping turns a column-zero decorator into `\\n@pytest...`, and a
+    # serialized unified diff can contain `\\n+@pytest...`. Mask only those
+    # Python decorator markers before contact scanning. A general backslash
+    # exemption would let backslash-prefixed real contact values escape.
+    contact_scan_text = re.sub(
+        r"(?m)(^|\\[nr]|[\r\n])[+-]?@(?=(?:pytest|unittest)\.)",
+        lambda match: match.group(0).replace("@", "#", 1),
+        text,
+    )
     for domain in re.findall(
-            r"(?<![\\A-Za-z0-9._%+-])(?=[A-Za-z0-9._%+-]*[A-Za-z0-9]@)"
-            r"[A-Za-z0-9._%+-]+@([A-Za-z0-9.-]+\.[A-Za-z]{2,})\b", text):
+            r"\b[A-Za-z0-9._%+-]+@([A-Za-z0-9.-]+\.[A-Za-z]{2,})\b",
+            contact_scan_text):
         if domain.lower() not in {"example.com", "example.org", "example.net", "localhost.test"}:
             raise AuditBlocked("Personal contact data excluded from audit")
     return text
