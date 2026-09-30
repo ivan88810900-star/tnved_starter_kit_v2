@@ -123,7 +123,7 @@ def _ambient_credential_values(key, value):
     return tuple(dict.fromkeys(credentials))
 
 
-def ensure_safe_text(text, *, environ=None):
+def ensure_safe_text(text, *, environ=None, scan_contacts=True):
     if not isinstance(text, str) or any(ord(c) < 32 and c not in "\n\r\t" for c in text):
         raise AuditBlocked("Binary or invalid audit text")
     env = os.environ if environ is None else environ
@@ -148,20 +148,12 @@ def ensure_safe_text(text, *, environ=None):
     )
     if any(re.search(pattern, text) for pattern in patterns):
         raise AuditBlocked("Suspected secret or private data excluded from audit")
-    # JSON escaping turns a column-zero decorator into `\\n@pytest...`, and a
-    # serialized unified diff can contain `\\n+@pytest...`. Mask only those
-    # Python decorator markers before contact scanning. A general backslash
-    # exemption would let backslash-prefixed real contact values escape.
-    contact_scan_text = re.sub(
-        r"(?m)(^|\\[nr]|[\r\n])[+-]?@(?=(?:pytest|unittest)\.)",
-        lambda match: match.group(0).replace("@", "#", 1),
-        text,
-    )
-    for domain in re.findall(
-            r"\b[A-Za-z0-9._%+-]+@([A-Za-z0-9.-]+\.[A-Za-z]{2,})\b",
-            contact_scan_text):
-        if domain.lower() not in {"example.com", "example.org", "example.net", "localhost.test"}:
-            raise AuditBlocked("Personal contact data excluded from audit")
+    if scan_contacts:
+        for domain in re.findall(
+                r"\b[A-Za-z0-9._%+-]+@([A-Za-z0-9.-]+\.[A-Za-z]{2,})\b", text):
+            if domain.lower() not in {
+                    "example.com", "example.org", "example.net", "localhost.test"}:
+                raise AuditBlocked("Personal contact data excluded from audit")
     return text
 
 
@@ -295,7 +287,11 @@ def build_packet(repo, base, head, paths, *, contract_ref=None, official_sources
               "diff": diff, "diff_sha256": _sha(diff.encode()),
               "official_sources": _sources(official_sources)}
     raw = _json_bytes(packet)
-    ensure_safe_text(raw.decode("utf-8"), environ=environ)
+    # Every variable packet field is scanned above in its original form. JSON
+    # escaping can only add contact-shaped artifacts such as `\\n@pytest...`,
+    # so the final aggregate rescan repeats secret checks without reclassifying
+    # escape markers as email local-parts.
+    ensure_safe_text(raw.decode("utf-8"), environ=environ, scan_contacts=False)
     if len(raw) > MAX_PACKET_BYTES:
         raise AuditBlocked("Audit packet exceeds byte limit; no truncation allowed")
     return {**packet, "packet_sha256": _sha(raw)}
