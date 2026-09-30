@@ -8,6 +8,7 @@ import pytest
 
 from app.services.non_tariff_service import (
     _drop_spurious_ai_measures,
+    _is_child_product_description,
     _sanitize_ntm_rules_for_position,
 )
 from app.services.ntm_v2_official_sgr_dataset_validation import validate_official_sgr_dataset
@@ -48,6 +49,33 @@ def test_explicit_child_description_keeps_legacy_sgr(description: str) -> None:
     sanitized = _sanitize_ntm_rules_for_position("3304990000", description, rules)
 
     assert sanitized[0]["required_permits"] == ["СГР", "ДС"]
+
+
+@pytest.mark.parametrize(
+    "description",
+    [
+        "недетский крем",
+        "не детский крем",
+        "НЕ-ДЕТСКИЙ крем",
+        "крем не\u00a0для детей",
+        "крем без детских отдушек",
+    ],
+)
+def test_negated_child_audience_fails_closed_at_service_gate(description: str) -> None:
+    assert _is_child_product_description(description) is False
+
+
+@pytest.mark.parametrize(
+    "description",
+    [
+        "детский крем",
+        "крем для детей",
+        "крем для взрослых и детей",
+        "крем не только для детей, но и для взрослых",
+    ],
+)
+def test_explicit_or_mixed_child_audience_remains_true(description: str) -> None:
+    assert _is_child_product_description(description) is True
 
 
 def test_mixed_adult_and_child_audience_keeps_legacy_and_ai_sgr() -> None:
@@ -104,6 +132,10 @@ def test_unrelated_det_prefix_drops_ai_sgr() -> None:
         ("Крем универсальный для взрослых и детей", True),
         ("Крем 18+", False),
         ("Крем не для детей", False),
+        ("недетский крем", False),
+        ("не детский крем", False),
+        ("крем без детских отдушек", False),
+        ("крем для взрослых и детей", True),
     ],
 )
 def test_official_3304_child_rule_uses_explicit_child_markers(

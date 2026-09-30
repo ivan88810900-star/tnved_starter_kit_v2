@@ -15,6 +15,7 @@ from .non_tariff_rules import (
 )
 from .normative_store import extract_tr_ts_act_codes, find_normative_notes_for_hs, lookup_tr_ts_acts_by_codes
 from .ntm_effective_requirements import build_effective_requirements
+from .ntm_description_matching import is_child_product_description
 from .normative_requirements_block import build_normative_requirements_block
 from .sanctions_risk_block import build_sanctions_risk_block
 from .permits_service import check_permits
@@ -35,26 +36,9 @@ _SENSITIVE_PERMIT_BASIS: Dict[str, tuple[str, str]] = {
     ),
 }
 
-_CHILD_DESCRIPTION_MARKERS = (
-    "детск", "для детей", "детей", "детям", "ребен", "ребён", "младен", "baby",
-)
-_CHILD_DESCRIPTION_NEGATIONS = ("не для дет",)
-_CHILD_DESCRIPTION_ADULT_ONLY_MARKERS = ("для взросл", "18+", "старше 18")
-
-
 def _is_child_product_description(description: str) -> bool:
-    """Conservative child-product gate without matching unrelated ``дет*`` words."""
-    desc_l = (description or "").lower()
-    if any(marker in desc_l for marker in _CHILD_DESCRIPTION_NEGATIONS):
-        return False
-    # A mixed audience is still explicitly a child audience.  Adult-only
-    # markers may suppress ambiguous descriptions, but must not erase a direct
-    # positive child signal such as "для взрослых и детей".
-    if any(marker in desc_l for marker in _CHILD_DESCRIPTION_MARKERS):
-        return True
-    if any(marker in desc_l for marker in _CHILD_DESCRIPTION_ADULT_ONLY_MARKERS):
-        return False
-    return False
+    """Compatibility wrapper for the shared conservative audience gate."""
+    return is_child_product_description(description)
 
 
 def _build_broker_required_permits(
