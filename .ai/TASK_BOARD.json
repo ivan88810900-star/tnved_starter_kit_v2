@@ -751,7 +751,7 @@
     }
   ],
   "max_concurrent_subagents": 3,
-  "revision": 601,
+  "revision": 602,
   "runs": [
     {
       "head_sha": null,
@@ -3768,7 +3768,12 @@
         ],
         "integration_target": "integration/compliance-ai-v1",
         "ci_run_id": 36562105462,
-        "a5_review_id": 5351884301
+        "a5_review_id": 5351884301,
+        "candidate_branch": "candidate/product-a6-repack-v1",
+        "candidate_head_sha": "233ed6a64b0e75175358f8cdf0e7bcc71191b67b",
+        "candidate_tree_sha": "6eeefb6f6adde1930a59ffbece5052c70e369d0b",
+        "source_head_sha": "bf27ef2cd243f0e2f9325c48a1cfad40a100b2fe",
+        "tree_equivalent_to_source": true
       },
       "acceptance_criteria": [
         "NTM false positives fail closed and completeness/freshness is never inferred or invented.",
@@ -3787,11 +3792,12 @@
         "exact-head CI"
       ],
       "tests": {
-        "head_sha": "bf27ef2cd243f0e2f9325c48a1cfad40a100b2fe",
-        "focused": "305 passed plus 44 subtests",
-        "adversarial": "94 passed plus 26 subtests",
+        "head_sha": "233ed6a64b0e75175358f8cdf0e7bcc71191b67b",
+        "focused": "305 passed plus 44 subtests; related assistant/TN VED 26 passed; official SGR 24 passed",
+        "adversarial": "47 passed, 29 deselected, plus 27 subtests",
         "frontend": "18 passed; typecheck/build passed",
-        "broad": "1527 passed, 2 skipped, 177 failed, 13 errors, 120 subtests; explicitly diagnostic NOT PASS due residual fixture/data/environment failures"
+        "broad": "1523 passed, 2 skipped, 181 failed, 13 errors, 120 subtests; explicitly diagnostic NOT PASS",
+        "compile_diff_check": "passed"
       },
       "matrix": {
         "recommendation": "retain PR #242; no cherry-pick or new candidate",
@@ -3834,10 +3840,60 @@
           "path": "customs-clear/frontend/src/types/api.types.ts",
           "rule": "Shared API surface; coordinate schema changes with A-CORE before either candidate head changes."
         }
-      ]
+      ],
+      "a6_repack": {
+        "status": "PUBLISHED_A5_PENDING",
+        "published_at": "2026-09-30T21:03:19.160Z",
+        "branch": "candidate/product-a6-repack-v1",
+        "base_sha": "08e030a6053ac9638957119373797e0fbf2b10c2",
+        "head_sha": "233ed6a64b0e75175358f8cdf0e7bcc71191b67b",
+        "tree_sha": "6eeefb6f6adde1930a59ffbece5052c70e369d0b",
+        "tree_identical_to_pr242_head": "bf27ef2cd243f0e2f9325c48a1cfad40a100b2fe",
+        "runtime_slices": [
+          {
+            "sha": "8ccb50448187043fe0afc6853a97aba3b1aebef8",
+            "packet_bytes": 180694
+          },
+          {
+            "sha": "4b4bcf344c8c9d53b3c35a5cff86e4708d3e6832",
+            "packet_bytes": 400910
+          },
+          {
+            "sha": "32eb8fec0bb3db9951304b5df02ef7b2ccf3e710",
+            "packet_bytes": 289586
+          },
+          {
+            "sha": "51ee918560ca2b5da0c10e7ffe7bdca8ab0395c9",
+            "packet_bytes": 121160
+          },
+          {
+            "sha": "d217dd8d89107263b904fd1777f0dc17809fd9e5",
+            "packet_bytes": 119460
+          }
+        ],
+        "non_runtime_slices": [
+          {
+            "sha": "03fe65ebba9a2751cb8e84c54c51aee4d32fce6b",
+            "scope": "test/dependency setup including oversized lockfile; A5 and exact-head CI only"
+          },
+          {
+            "sha": "233ed6a64b0e75175358f8cdf0e7bcc71191b67b",
+            "scope": "test-only; A5 and exact-head CI only"
+          }
+        ],
+        "coverage_claim": "Only runtime slices are proposed for live A6. Non-runtime slices are not claimed A6-covered.",
+        "gates_pending": [
+          "fresh independent A5",
+          "PR236 scanner fix",
+          "PR237 merge for post-verify admission",
+          "live A6 per runtime slice",
+          "A0 validation",
+          "exact-head CI"
+        ]
+      }
     }
   ],
-  "updated_at": "2026-09-30T19:58:41.559Z",
+  "updated_at": "2026-09-30T21:03:19.160Z",
   "max_concurrent_feature_workers": 2,
   "active_role_model": {
     "effective_at": "2026-09-30T12:58:10.633Z",
@@ -3918,46 +3974,44 @@
       }
     },
     "pr236": {
-      "status": "DEFERRED_NONBLOCKING",
+      "status": "FRESH_A5_PENDING",
       "pr": 236,
       "base_sha": "08e030a6053ac9638957119373797e0fbf2b10c2",
-      "head_sha": "86b19d82e9cd91181b4488bab03e877d7653a854",
+      "head_sha": "f306fdbfbed1b3f3dc01f8b849cecb7a2d3dd6f3",
       "mergeable": true,
       "draft": true,
       "changed_files": [
         "tools/tariff_agents/audit.py",
         "tests/agent_orchestration/test_audit.py"
       ],
+      "scanner_fix": {
+        "finding": "JSON-serialized column-zero decorators and unified-diff +@pytest lines were falsely classified as personal emails, blocking valid A6 packets.",
+        "correction": "Boundary handling excludes JSON escape/diff prefixes as local-part starts while retaining rejection of real private contact data.",
+        "failed_superseded_head": "e7740115204c191796388d9a70e13c6d919a62ac",
+        "failed_superseded_run_id": 36776245129
+      },
       "a5": {
-        "status": "PASSED",
-        "review_id": 5351094758,
-        "reviewed_at": "2026-09-29T10:26:23Z",
-        "focused_tests": "42/42 passed",
-        "orchestration_verify": "120/120 passed",
-        "snapshots": "4/4 passed",
-        "diff_check": "passed"
+        "status": "PENDING",
+        "required_head": "f306fdbfbed1b3f3dc01f8b849cecb7a2d3dd6f3",
+        "stale_prior_evidence": true
       },
       "ci": {
         "status": "PASSED",
-        "run_id": 36415657320,
-        "attempt": 1,
+        "run_id": 36776529565,
         "exact_head": true
       },
       "a0_validation": {
-        "status": "PASSED",
-        "validated_at": "2026-09-30T18:50:43.022Z",
-        "validator": "A0",
-        "evidence": "Full runtime and regression delta reviewed on exact HEAD. Runtime change is prompt wording only; HTTP 400 remains UNAVAILABLE/live_verified=false/PROVIDER_HTTP_400. No retry, fallback, endpoint, model, token, transport, permission, credential, secret-scrubbing, schema or live-admission behavior changed."
+        "status": "PENDING_FRESH_A5"
       },
       "relationship_to_pr237": {
         "changed_files_overlap": false,
         "enables_post_verify_admission": false,
         "blocks_pr237": false,
-        "blocks_product_epics": false,
-        "disposition": "Keep draft and defer; PR237 remains the sole immediate infra owner gate."
+        "blocks_complete_candidate_packet_preflight": true,
+        "disposition": "Narrow scanner fix now required for honest complete-packet preflight; remains a separate owner gate from PR237."
       },
       "evidence_invalidation": "Any new HEAD requires fresh A5, A0 validation and exact-head CI.",
-      "owner_gate": "Merge to main/protected remains prohibited without separate explicit owner permission; no permission requested for this deferred candidate."
+      "owner_gate": "Merge to main/protected requires separate explicit owner permission; A0 did not merge."
     }
   },
   "pr_hygiene": {
@@ -4224,17 +4278,17 @@
       }
     },
     "deferred_infra_candidates": {
-      "state": "VERIFIED_DEFERRED",
-      "updated_at": "2026-09-30T18:50:43.022Z",
+      "state": "SCANNER_FIX_GATES_PENDING",
+      "updated_at": "2026-09-30T21:03:19.160Z",
       "prs": [
         236
       ],
-      "reason": "PR236 is technically ready but optional prompt hardening; it neither enables post-verify A6 admission nor blocks the two integration epics. PR237 remains the only immediate infra gate."
+      "reason": "PR236 advanced to exact scanner-fix HEAD f306fdbf... because current A6 preflight falsely blocks decorators. Exact-head CI passed; fresh A5/A0 remain pending."
     }
   },
   "a6_candidate_preflight": {
-    "status": "BLOCKED_REPACKAGING_ASSIGNED",
-    "checked_at": "2026-09-30T19:58:41.559Z",
+    "status": "PRODUCT_REPACK_PUBLISHED_CORE_IN_PROGRESS_SCANNER_FIX_PENDING",
+    "checked_at": "2026-09-30T21:03:19.160Z",
     "bridge": {
       "live_verified": true,
       "current_pending_consumed": true,
@@ -4251,9 +4305,30 @@
       "max_packet_bytes": 600000
     },
     "assignments": [
-      "/root/a_core",
-      "/root/a_product"
+      "/root/a_core"
     ],
-    "rule": "Do not weaken limits, send partial packets, reuse stale A5/CI, force-push, or claim A6 coverage for unaudited ranges."
+    "rule": "Do not weaken limits, send partial packets, reuse stale A5/CI, force-push, or claim A6 coverage for unaudited ranges.",
+    "scanner_fix_pr": {
+      "pr": 236,
+      "head_sha": "f306fdbfbed1b3f3dc01f8b849cecb7a2d3dd6f3",
+      "ci_run_id": 36776529565,
+      "ci_status": "PASSED",
+      "a5_status": "PENDING"
+    },
+    "product_candidate": {
+      "branch": "candidate/product-a6-repack-v1",
+      "head_sha": "233ed6a64b0e75175358f8cdf0e7bcc71191b67b",
+      "tree_sha": "6eeefb6f6adde1930a59ffbece5052c70e369d0b",
+      "runtime_slice_packet_bytes": [
+        180694,
+        400910,
+        289586,
+        121160,
+        119460
+      ],
+      "non_runtime_a6_coverage": false,
+      "broad_status": "NOT_PASS",
+      "next_gate": "fresh independent A5"
+    }
   }
 }
