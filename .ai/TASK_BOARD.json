@@ -751,7 +751,7 @@
     }
   ],
   "max_concurrent_subagents": 3,
-  "revision": 604,
+  "revision": 605,
   "runs": [
     {
       "head_sha": null,
@@ -3638,7 +3638,7 @@
         "closure_rule": "Close source PRs only after mapped gated integration preserves behavior and evidence."
       },
       "a6_repack": {
-        "status": "PUBLISHED_SCANNER_FIX_PENDING",
+        "status": "A5_PASSED_BLOCKED_INFRA_MERGES",
         "published_at": "2026-09-30T21:07:55.505Z",
         "branch": "candidate/core-a6-repack-v1",
         "base_sha": "08e030a6053ac9638957119373797e0fbf2b10c2",
@@ -3689,13 +3689,32 @@
         ],
         "coverage_claim": "All slices pass size/file limits. No A6 PASS is claimed for first three until the scanner fix is gated and replayed.",
         "gates_pending": [
-          "fresh independent A5",
-          "PR236 scanner fix",
+          "PR236 merge",
           "PR237 merge for post-verify admission",
           "live A6 per slice",
           "A0 validation",
           "exact-head CI"
         ]
+      },
+      "a5": {
+        "status": "PASSED",
+        "head_sha": "14e0ee8f034d94ffc5831d87e076f4d693a5a524",
+        "session_id": "/root/a5_core_candidate",
+        "reviewed_at": "2026-09-30T21:54:22.236Z",
+        "findings": [],
+        "evidence": {
+          "changed_area": "167 passed plus 405 subtests",
+          "refresh_candidate": "15 passed, 3 failed",
+          "refresh_base": "13 passed, identical 3 failures from absent scheduled-data-refresh.yml",
+          "diff_check": "passed",
+          "compileall": "passed",
+          "packet_validation": "all five linear complete packets build_packet + validate_packet PASS under 600 KB"
+        },
+        "limitations": [
+          "Full backend suite stopped by runtime security when an unrelated test attempted outbound api.proxyapi.ru; no bypass/retry and no full-suite PASS claim.",
+          "Frontend build/typecheck unavailable in isolated review tree without installed dependencies; nullable paths statically reviewed."
+        ],
+        "stale_on_new_head": true
       }
     },
     {
@@ -3965,7 +3984,7 @@
       }
     }
   ],
-  "updated_at": "2026-09-30T21:21:21.039Z",
+  "updated_at": "2026-09-30T21:54:22.236Z",
   "max_concurrent_feature_workers": 2,
   "active_role_model": {
     "effective_at": "2026-09-30T12:58:10.633Z",
@@ -4381,8 +4400,8 @@
     }
   },
   "a6_candidate_preflight": {
-    "status": "BOTH_REPACKS_PACKET_READY_BLOCKED_PR236_PR237_MAIN_MERGES",
-    "checked_at": "2026-09-30T21:21:21.039Z",
+    "status": "CORE_A5_PASS_PRODUCT_A5_IN_PROGRESS_BLOCKED_PR236_PR237_MAIN_MERGES",
+    "checked_at": "2026-09-30T21:54:22.236Z",
     "bridge": {
       "live_verified": true,
       "current_pending_consumed": true,
@@ -4422,7 +4441,9 @@
       ],
       "non_runtime_a6_coverage": false,
       "broad_status": "NOT_PASS",
-      "next_gate": "fresh independent A5 candidate review; live A6 only after PR236 and PR237 merge"
+      "next_gate": "fresh independent A5 candidate review; live A6 only after PR236 and PR237 merge",
+      "a5_status": "IN_PROGRESS",
+      "a5_session": "/root/a5_core_candidate"
     },
     "core_candidate": {
       "branch": "candidate/core-a6-repack-v1",
@@ -4442,7 +4463,13 @@
         "PASS",
         "PASS"
       ],
-      "next_gate": "fresh independent A5 candidate review; live A6 only after PR236 and PR237 merge"
+      "next_gate": "live A6 only after PR236 and PR237 merge; then A0 validation and exact-head CI",
+      "a5_status": "PASSED",
+      "a5_session": "/root/a5_core_candidate",
+      "a5_limitations": [
+        "Full backend suite stopped by runtime security when an unrelated test attempted outbound api.proxyapi.ru; no bypass/retry and no full-suite PASS claim.",
+        "Frontend build/typecheck unavailable in isolated review tree without installed dependencies; nullable paths statically reviewed."
+      ]
     }
   }
 }
