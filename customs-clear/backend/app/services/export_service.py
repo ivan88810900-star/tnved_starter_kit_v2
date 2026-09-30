@@ -115,6 +115,7 @@ def generate_final_customs_excel(items: list[dict[str, Any]]) -> bytes:
         profile = dict(it.get("payment_profile") or {})
         breakdown = dict(profile.get("breakdown") or {})
         docs = list(profile.get("documents") or [])
+        total_payable = breakdown.get("total_payable")
 
         ws.append(
             [
@@ -123,7 +124,7 @@ def generate_final_customs_excel(items: list[dict[str, Any]]) -> bytes:
                 str(profile.get("hs_code") or ""),
                 _duty_rate(profile, it),
                 _vat_rate(profile, it),
-                float(breakdown.get("total_payable") or 0.0),
+                float(total_payable) if total_payable is not None else None,
                 (_alerts_text(docs) + " | statuses: " + _compliance_status_text(profile))[:8000],
             ]
         )
@@ -172,4 +173,3 @@ def generate_final_customs_excel_from_ved_result(result: dict[str, Any]) -> byte
             }
         )
     return generate_final_customs_excel(rows)
-
