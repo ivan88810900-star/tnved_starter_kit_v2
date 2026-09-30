@@ -751,7 +751,7 @@
     }
   ],
   "max_concurrent_subagents": 3,
-  "revision": 603,
+  "revision": 604,
   "runs": [
     {
       "head_sha": null,
@@ -3965,7 +3965,7 @@
       }
     }
   ],
-  "updated_at": "2026-09-30T21:07:55.505Z",
+  "updated_at": "2026-09-30T21:21:21.039Z",
   "max_concurrent_feature_workers": 2,
   "active_role_model": {
     "effective_at": "2026-09-30T12:58:10.633Z",
@@ -4046,10 +4046,10 @@
       }
     },
     "pr236": {
-      "status": "FRESH_A5_AND_CI_PENDING",
+      "status": "READY_FOR_OWNER_APPROVAL",
       "pr": 236,
       "base_sha": "08e030a6053ac9638957119373797e0fbf2b10c2",
-      "head_sha": "307affa3432f1f0d900fe7c5af4fed1acaa7ebd6",
+      "head_sha": "825f4aaaff182c993045d28ef4d17e0e3aa3834e",
       "mergeable": true,
       "draft": true,
       "changed_files": [
@@ -4057,38 +4057,55 @@
         "tests/agent_orchestration/test_audit.py"
       ],
       "scanner_fix": {
-        "finding": "Serialized decorators were false-positive contacts. Intermediate f306 fix then allowed backslash-prefixed real contacts and was independently rejected.",
-        "correction": "Current head masks only serialized line-start pytest/unittest decorator markers and restores the original email matcher; raw and JSON backslash-prefixed contact regressions added.",
-        "rejected_head": "f306fdbfbed1b3f3dc01f8b849cecb7a2d3dd6f3",
-        "rejected_a5": {
-          "status": "FAILED",
-          "session_id": "/root/a5_pr236_scanner",
-          "evidence": "raw and JSON backslash-prefixed private contacts were incorrectly SAFE"
-        },
-        "current_author_tests": "44 audit/diagnostics; 122 verify; 4 snapshots; diff-check all passed"
+        "finding": "Final JSON contact scan misclassified serialized decorators; three intermediate remedies were independently rejected for real-contact gaps.",
+        "correction": "All variable inputs, including every explicit path, are fully contact/secret scanned before serialization. Final aggregate repeats secret/private/ambient-credential checks but omits only redundant contact matching.",
+        "rejected_heads": [
+          {
+            "head": "f306fdbfbed1b3f3dc01f8b849cecb7a2d3dd6f3",
+            "finding": "backslash-prefixed real contacts bypassed"
+          },
+          {
+            "head": "307affa3432f1f0d900fe7c5af4fed1acaa7ebd6",
+            "finding": "pytest/unittest prefix contact collisions bypassed"
+          },
+          {
+            "head": "cdbaab3a59124c5f96125f383504ddbd671a78b8",
+            "finding": "unchanged supporting contact-named paths were not contact-scanned"
+          }
+        ],
+        "current_author_tests": "46 audit/diagnostics; 124 verify; 4 snapshots; diff-check all passed",
+        "repack_packet_replay": "All five A-CORE and all five A-PRODUCT runtime slices built complete bounded packets."
       },
       "a5": {
-        "status": "PENDING",
-        "required_head": "307affa3432f1f0d900fe7c5af4fed1acaa7ebd6",
-        "stale_prior_evidence": true
+        "status": "PASSED",
+        "session_id": "/root/a5_pr236_scanner",
+        "head_sha": "825f4aaaff182c993045d28ef4d17e0e3aa3834e",
+        "focused": "60/60",
+        "verify": "124/124",
+        "snapshots": "4/4",
+        "adversarial": "19/19",
+        "findings": []
       },
       "ci": {
-        "status": "PENDING",
-        "run_id": 36777303635,
+        "status": "PASSED",
+        "run_id": 36778373373,
         "exact_head": true
       },
       "a0_validation": {
-        "status": "PENDING_FRESH_A5_AND_CI"
+        "status": "PASSED",
+        "validated_at": "2026-09-30T21:21:21.039Z",
+        "validator": "A0",
+        "evidence": "Reviewed exact diff and independent A5 dataflow enumeration; every variable packet input is pre-serialization contact/secret scanned, aggregate retains secret/private/ambient checks, all ten runtime slice packets replay complete under unchanged file/packet bounds."
       },
       "relationship_to_pr237": {
         "changed_files_overlap": false,
         "enables_post_verify_admission": false,
         "blocks_pr237": false,
-        "blocks_complete_candidate_packet_preflight": true,
-        "disposition": "Narrow scanner fix now required for honest complete-packet preflight; remains a separate owner gate from PR237."
+        "blocks_complete_candidate_packet_preflight": false,
+        "disposition": "Scanner fix is independently gated and ready; PR237 remains separately required before subsequent live A6 admission."
       },
       "evidence_invalidation": "Any new HEAD requires fresh A5, A0 validation and exact-head CI.",
-      "owner_gate": "Merge to main/protected requires separate explicit owner permission; A0 did not merge."
+      "owner_gate": "Merge exact HEAD to main/protected requires separate explicit owner permission; A0 did not merge."
     }
   },
   "pr_hygiene": {
@@ -4355,17 +4372,17 @@
       }
     },
     "deferred_infra_candidates": {
-      "state": "SCANNER_FIX_GATES_PENDING",
-      "updated_at": "2026-09-30T21:07:55.505Z",
+      "state": "READY_FOR_OWNER_APPROVAL",
+      "updated_at": "2026-09-30T21:21:21.039Z",
       "prs": [
         236
       ],
-      "reason": "A5 rejected superseded f306 for a backslash-contact false negative. Current exact HEAD 307affa adds a narrow mask and regressions; fresh A5 and exact-head CI are pending."
+      "reason": "PR236 exact HEAD 825f4aaa passed fresh independent A5, A0 validation, exact-head CI and all ten runtime packet replays. Separate protected merge permission is required."
     }
   },
   "a6_candidate_preflight": {
-    "status": "BOTH_REPACKS_PUBLISHED_SCANNER_FIX_GATES_PENDING",
-    "checked_at": "2026-09-30T21:07:55.505Z",
+    "status": "BOTH_REPACKS_PACKET_READY_BLOCKED_PR236_PR237_MAIN_MERGES",
+    "checked_at": "2026-09-30T21:21:21.039Z",
     "bridge": {
       "live_verified": true,
       "current_pending_consumed": true,
@@ -4382,28 +4399,30 @@
       "max_packet_bytes": 600000
     },
     "assignments": [],
-    "rule": "Do not weaken limits, send partial packets, reuse stale A5/CI, force-push, or claim A6 coverage for unaudited ranges.",
+    "rule": "Do not weaken limits, send partial packets, reuse stale A5/CI, force-push, or claim A6 coverage for unaudited ranges. Subsequent live A6 remains unavailable until PR237 is merged; scanner correction requires PR236 merge.",
     "scanner_fix_pr": {
       "pr": 236,
-      "head_sha": "307affa3432f1f0d900fe7c5af4fed1acaa7ebd6",
-      "ci_run_id": 36777303635,
-      "ci_status": "PENDING",
-      "a5_status": "PENDING"
+      "head_sha": "825f4aaaff182c993045d28ef4d17e0e3aa3834e",
+      "ci_run_id": 36778373373,
+      "ci_status": "PASSED",
+      "a5_status": "PASSED",
+      "a0_status": "PASSED",
+      "merged": false
     },
     "product_candidate": {
       "branch": "candidate/product-a6-repack-v1",
       "head_sha": "233ed6a64b0e75175358f8cdf0e7bcc71191b67b",
       "tree_sha": "6eeefb6f6adde1930a59ffbece5052c70e369d0b",
       "runtime_slice_packet_bytes": [
-        180694,
-        400910,
-        289586,
-        121160,
-        119460
+        180640,
+        400856,
+        289532,
+        121106,
+        119406
       ],
       "non_runtime_a6_coverage": false,
       "broad_status": "NOT_PASS",
-      "next_gate": "fresh independent A5"
+      "next_gate": "fresh independent A5 candidate review; live A6 only after PR236 and PR237 merge"
     },
     "core_candidate": {
       "branch": "candidate/core-a6-repack-v1",
@@ -4417,13 +4436,13 @@
         297322
       ],
       "build_packet_status": [
-        "BLOCKED_SCANNER",
-        "BLOCKED_SCANNER",
-        "BLOCKED_SCANNER",
+        "PASS",
+        "PASS",
+        "PASS",
         "PASS",
         "PASS"
       ],
-      "next_gate": "replay after PR236 scanner fix gates"
+      "next_gate": "fresh independent A5 candidate review; live A6 only after PR236 and PR237 merge"
     }
   }
 }
