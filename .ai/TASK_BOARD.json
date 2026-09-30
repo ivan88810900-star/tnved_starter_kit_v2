@@ -751,7 +751,7 @@
     }
   ],
   "max_concurrent_subagents": 3,
-  "revision": 602,
+  "revision": 603,
   "runs": [
     {
       "head_sha": null,
@@ -3575,7 +3575,12 @@
         ],
         "integration_target": "integration/customs-core-v1",
         "ci_run_id": 36563127291,
-        "a5_review_id": 5351957772
+        "a5_review_id": 5351957772,
+        "candidate_branch": "candidate/core-a6-repack-v1",
+        "candidate_head_sha": "14e0ee8f034d94ffc5831d87e076f4d693a5a524",
+        "candidate_tree_sha": "fbb3bf2c88aa75a9c037a43547da88185dba6829",
+        "source_head_sha": "f1921b63a452a059c1109c658560efc318127aad",
+        "tree_equivalent_to_source": true
       },
       "acceptance_criteria": [
         "No unverified rate, FX value, trade-remedy measure, effective date or unit may produce final payable.",
@@ -3592,7 +3597,14 @@
         "A0 validation",
         "exact-head CI"
       ],
-      "tests": [],
+      "tests": {
+        "head_sha": "14e0ee8f034d94ffc5831d87e076f4d693a5a524",
+        "focused": "182 passed plus 405 subtests; 3 failed",
+        "broad": "449 passed plus 153 subtests; same 3 failed",
+        "known_failures": "Three scheduled-data-refresh workflow tests fail because .github/workflows/scheduled-data-refresh.yml is absent; reproduced 3/3 on exact base and not introduced by repack.",
+        "frontend": "typecheck passed; production build passed with warnings",
+        "compile_diff_check": "passed"
+      },
       "matrix": {
         "recommendation": "retain PR #241; no cherry-pick or new candidate",
         "selected": [
@@ -3624,6 +3636,66 @@
           212
         ],
         "closure_rule": "Close source PRs only after mapped gated integration preserves behavior and evidence."
+      },
+      "a6_repack": {
+        "status": "PUBLISHED_SCANNER_FIX_PENDING",
+        "published_at": "2026-09-30T21:07:55.505Z",
+        "branch": "candidate/core-a6-repack-v1",
+        "base_sha": "08e030a6053ac9638957119373797e0fbf2b10c2",
+        "head_sha": "14e0ee8f034d94ffc5831d87e076f4d693a5a524",
+        "tree_sha": "fbb3bf2c88aa75a9c037a43547da88185dba6829",
+        "tree_identical_to_pr241_head": "f1921b63a452a059c1109c658560efc318127aad",
+        "slices": [
+          {
+            "sha": "6415f443",
+            "scope": "payment admission",
+            "files": 8,
+            "packet_bytes": 392432,
+            "max_file_bytes": 61641,
+            "build_packet": "BLOCKED_BY_DECORATOR_FALSE_POSITIVE"
+          },
+          {
+            "sha": "038258ce",
+            "scope": "FX invoice scenario provenance",
+            "files": 6,
+            "packet_bytes": 321444,
+            "max_file_bytes": 94970,
+            "build_packet": "BLOCKED_BY_DECORATOR_FALSE_POSITIVE"
+          },
+          {
+            "sha": "10b791f9",
+            "scope": "source update health",
+            "files": 10,
+            "packet_bytes": 303907,
+            "max_file_bytes": 27282,
+            "build_packet": "BLOCKED_BY_DECORATOR_FALSE_POSITIVE"
+          },
+          {
+            "sha": "6c124494",
+            "scope": "backend unavailable totals",
+            "files": 5,
+            "packet_bytes": 65312,
+            "max_file_bytes": 10102,
+            "build_packet": "PASSED_CURRENT_SCANNER"
+          },
+          {
+            "sha": "14e0ee8f",
+            "scope": "UI unavailable totals",
+            "files": 5,
+            "packet_bytes": 297322,
+            "max_file_bytes": 86899,
+            "build_packet": "PASSED_CURRENT_SCANNER"
+          }
+        ],
+        "coverage_claim": "All slices pass size/file limits. No A6 PASS is claimed for first three until the scanner fix is gated and replayed.",
+        "gates_pending": [
+          "fresh independent A5",
+          "PR236 scanner fix",
+          "PR237 merge for post-verify admission",
+          "live A6 per slice",
+          "A0 validation",
+          "exact-head CI"
+        ]
       }
     },
     {
@@ -3893,7 +3965,7 @@
       }
     }
   ],
-  "updated_at": "2026-09-30T21:03:19.160Z",
+  "updated_at": "2026-09-30T21:07:55.505Z",
   "max_concurrent_feature_workers": 2,
   "active_role_model": {
     "effective_at": "2026-09-30T12:58:10.633Z",
@@ -3974,10 +4046,10 @@
       }
     },
     "pr236": {
-      "status": "FRESH_A5_PENDING",
+      "status": "FRESH_A5_AND_CI_PENDING",
       "pr": 236,
       "base_sha": "08e030a6053ac9638957119373797e0fbf2b10c2",
-      "head_sha": "f306fdbfbed1b3f3dc01f8b849cecb7a2d3dd6f3",
+      "head_sha": "307affa3432f1f0d900fe7c5af4fed1acaa7ebd6",
       "mergeable": true,
       "draft": true,
       "changed_files": [
@@ -3985,23 +4057,28 @@
         "tests/agent_orchestration/test_audit.py"
       ],
       "scanner_fix": {
-        "finding": "JSON-serialized column-zero decorators and unified-diff +@pytest lines were falsely classified as personal emails, blocking valid A6 packets.",
-        "correction": "Boundary handling excludes JSON escape/diff prefixes as local-part starts while retaining rejection of real private contact data.",
-        "failed_superseded_head": "e7740115204c191796388d9a70e13c6d919a62ac",
-        "failed_superseded_run_id": 36776245129
+        "finding": "Serialized decorators were false-positive contacts. Intermediate f306 fix then allowed backslash-prefixed real contacts and was independently rejected.",
+        "correction": "Current head masks only serialized line-start pytest/unittest decorator markers and restores the original email matcher; raw and JSON backslash-prefixed contact regressions added.",
+        "rejected_head": "f306fdbfbed1b3f3dc01f8b849cecb7a2d3dd6f3",
+        "rejected_a5": {
+          "status": "FAILED",
+          "session_id": "/root/a5_pr236_scanner",
+          "evidence": "raw and JSON backslash-prefixed private contacts were incorrectly SAFE"
+        },
+        "current_author_tests": "44 audit/diagnostics; 122 verify; 4 snapshots; diff-check all passed"
       },
       "a5": {
         "status": "PENDING",
-        "required_head": "f306fdbfbed1b3f3dc01f8b849cecb7a2d3dd6f3",
+        "required_head": "307affa3432f1f0d900fe7c5af4fed1acaa7ebd6",
         "stale_prior_evidence": true
       },
       "ci": {
-        "status": "PASSED",
-        "run_id": 36776529565,
+        "status": "PENDING",
+        "run_id": 36777303635,
         "exact_head": true
       },
       "a0_validation": {
-        "status": "PENDING_FRESH_A5"
+        "status": "PENDING_FRESH_A5_AND_CI"
       },
       "relationship_to_pr237": {
         "changed_files_overlap": false,
@@ -4279,16 +4356,16 @@
     },
     "deferred_infra_candidates": {
       "state": "SCANNER_FIX_GATES_PENDING",
-      "updated_at": "2026-09-30T21:03:19.160Z",
+      "updated_at": "2026-09-30T21:07:55.505Z",
       "prs": [
         236
       ],
-      "reason": "PR236 advanced to exact scanner-fix HEAD f306fdbf... because current A6 preflight falsely blocks decorators. Exact-head CI passed; fresh A5/A0 remain pending."
+      "reason": "A5 rejected superseded f306 for a backslash-contact false negative. Current exact HEAD 307affa adds a narrow mask and regressions; fresh A5 and exact-head CI are pending."
     }
   },
   "a6_candidate_preflight": {
-    "status": "PRODUCT_REPACK_PUBLISHED_CORE_IN_PROGRESS_SCANNER_FIX_PENDING",
-    "checked_at": "2026-09-30T21:03:19.160Z",
+    "status": "BOTH_REPACKS_PUBLISHED_SCANNER_FIX_GATES_PENDING",
+    "checked_at": "2026-09-30T21:07:55.505Z",
     "bridge": {
       "live_verified": true,
       "current_pending_consumed": true,
@@ -4304,15 +4381,13 @@
       "max_file_bytes": 100000,
       "max_packet_bytes": 600000
     },
-    "assignments": [
-      "/root/a_core"
-    ],
+    "assignments": [],
     "rule": "Do not weaken limits, send partial packets, reuse stale A5/CI, force-push, or claim A6 coverage for unaudited ranges.",
     "scanner_fix_pr": {
       "pr": 236,
-      "head_sha": "f306fdbfbed1b3f3dc01f8b849cecb7a2d3dd6f3",
-      "ci_run_id": 36776529565,
-      "ci_status": "PASSED",
+      "head_sha": "307affa3432f1f0d900fe7c5af4fed1acaa7ebd6",
+      "ci_run_id": 36777303635,
+      "ci_status": "PENDING",
       "a5_status": "PENDING"
     },
     "product_candidate": {
@@ -4329,6 +4404,26 @@
       "non_runtime_a6_coverage": false,
       "broad_status": "NOT_PASS",
       "next_gate": "fresh independent A5"
+    },
+    "core_candidate": {
+      "branch": "candidate/core-a6-repack-v1",
+      "head_sha": "14e0ee8f034d94ffc5831d87e076f4d693a5a524",
+      "tree_sha": "fbb3bf2c88aa75a9c037a43547da88185dba6829",
+      "slice_packet_bytes": [
+        392432,
+        321444,
+        303907,
+        65312,
+        297322
+      ],
+      "build_packet_status": [
+        "BLOCKED_SCANNER",
+        "BLOCKED_SCANNER",
+        "BLOCKED_SCANNER",
+        "PASS",
+        "PASS"
+      ],
+      "next_gate": "replay after PR236 scanner fix gates"
     }
   }
 }
