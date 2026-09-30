@@ -723,7 +723,7 @@
     }
   ],
   "max_concurrent_subagents": 3,
-  "revision": 599,
+  "revision": 600,
   "runs": [
     {
       "head_sha": null,
@@ -3712,7 +3712,7 @@
       ]
     }
   ],
-  "updated_at": "2026-09-30T17:55:15.679Z",
+  "updated_at": "2026-09-30T18:50:43.022Z",
   "max_concurrent_feature_workers": 2,
   "active_role_model": {
     "effective_at": "2026-09-30T12:58:10.633Z",
@@ -3791,6 +3791,48 @@
         "validator": "A0",
         "evidence": "Reviewed full issue-comment admission context and adversarial tests on exact HEAD. Strict bool permits false/true only; pending request still requires exact false dispatched/consumed, validated packet, non-empty scope, authoritative state paths, exact bindings, owner-only command, trusted default-branch checkout, active lawful lease and generation-scoped dedupe."
       }
+    },
+    "pr236": {
+      "status": "DEFERRED_NONBLOCKING",
+      "pr": 236,
+      "base_sha": "08e030a6053ac9638957119373797e0fbf2b10c2",
+      "head_sha": "86b19d82e9cd91181b4488bab03e877d7653a854",
+      "mergeable": true,
+      "draft": true,
+      "changed_files": [
+        "tools/tariff_agents/audit.py",
+        "tests/agent_orchestration/test_audit.py"
+      ],
+      "a5": {
+        "status": "PASSED",
+        "review_id": 5351094758,
+        "reviewed_at": "2026-09-29T10:26:23Z",
+        "focused_tests": "42/42 passed",
+        "orchestration_verify": "120/120 passed",
+        "snapshots": "4/4 passed",
+        "diff_check": "passed"
+      },
+      "ci": {
+        "status": "PASSED",
+        "run_id": 36415657320,
+        "attempt": 1,
+        "exact_head": true
+      },
+      "a0_validation": {
+        "status": "PASSED",
+        "validated_at": "2026-09-30T18:50:43.022Z",
+        "validator": "A0",
+        "evidence": "Full runtime and regression delta reviewed on exact HEAD. Runtime change is prompt wording only; HTTP 400 remains UNAVAILABLE/live_verified=false/PROVIDER_HTTP_400. No retry, fallback, endpoint, model, token, transport, permission, credential, secret-scrubbing, schema or live-admission behavior changed."
+      },
+      "relationship_to_pr237": {
+        "changed_files_overlap": false,
+        "enables_post_verify_admission": false,
+        "blocks_pr237": false,
+        "blocks_product_epics": false,
+        "disposition": "Keep draft and defer; PR237 remains the sole immediate infra owner gate."
+      },
+      "evidence_invalidation": "Any new HEAD requires fresh A5, A0 validation and exact-head CI.",
+      "owner_gate": "Merge to main/protected remains prohibited without separate explicit owner permission; no permission requested for this deferred candidate."
     }
   },
   "pr_hygiene": {
@@ -4055,6 +4097,14 @@
         "unique_mapped_count": 29,
         "missing": []
       }
+    },
+    "deferred_infra_candidates": {
+      "state": "VERIFIED_DEFERRED",
+      "updated_at": "2026-09-30T18:50:43.022Z",
+      "prs": [
+        236
+      ],
+      "reason": "PR236 is technically ready but optional prompt hardening; it neither enables post-verify A6 admission nor blocks the two integration epics. PR237 remains the only immediate infra gate."
     }
   }
 }
