@@ -723,7 +723,7 @@
     }
   ],
   "max_concurrent_subagents": 3,
-  "revision": 591,
+  "revision": 592,
   "runs": [
     {
       "head_sha": null,
@@ -3406,25 +3406,73 @@
       "status": "IN_PROGRESS",
       "risk": "high",
       "worktree": null,
-      "files": [],
+      "files": [
+        "customs-clear/backend/app/schemas/payment_profile.py",
+        "customs-clear/backend/app/services/calculation_history_service.py",
+        "customs-clear/backend/app/services/data_refresh_service.py",
+        "customs-clear/backend/app/services/exchange_rates.py",
+        "customs-clear/backend/app/services/export_service.py",
+        "customs-clear/backend/app/services/invoice_batch_service.py",
+        "customs-clear/backend/app/services/normative_store.py",
+        "customs-clear/backend/app/services/payment_engine.py",
+        "customs-clear/backend/app/services/payment_profile_builder.py",
+        "customs-clear/backend/app/services/payment_quote_service.py",
+        "customs-clear/backend/app/services/regulatory_source_completeness.py",
+        "customs-clear/backend/app/services/scenario_compare_service.py",
+        "customs-clear/backend/app/services/source_sync.py",
+        "customs-clear/backend/app/services/sync_engine.py",
+        "customs-clear/backend/app/services/sync_status_diagnostics.py",
+        "customs-clear/backend/tests/test_antidumping_fixed_unit_fail_closed.py",
+        "customs-clear/backend/tests/test_automatic_duty_operand_validation.py",
+        "customs-clear/backend/tests/test_data_refresh.py",
+        "customs-clear/backend/tests/test_invoice_and_compare.py",
+        "customs-clear/backend/tests/test_payment_engine.py",
+        "customs-clear/backend/tests/test_payment_fx_provenance_fail_closed.py",
+        "customs-clear/backend/tests/test_payment_quote.py",
+        "customs-clear/backend/tests/test_payment_source_admission.py",
+        "customs-clear/backend/tests/test_regulatory_source_completeness.py",
+        "customs-clear/backend/tests/test_source_sync_index_currentness.py",
+        "customs-clear/backend/tests/test_special_duties.py",
+        "customs-clear/backend/tests/test_sync_status_diagnostics.py",
+        "customs-clear/backend/tests/test_unavailable_payment_exports.py",
+        "customs-clear/frontend/src/components/PaymentBreakdownCard.tsx",
+        "customs-clear/frontend/src/components/calculator/CalculatorScenarioCompareSection.tsx",
+        "customs-clear/frontend/src/pages/Calculator.tsx",
+        "customs-clear/frontend/src/pages/Invoice.tsx",
+        "customs-clear/frontend/src/types/api.types.ts",
+        "docs/ai-workflow/CUSTOMS_CORE_CONSOLIDATION_V1.md"
+      ],
       "author_sessions": [
         "/root/a_core"
       ],
-      "qa": null,
-      "ci": null,
-      "external_audit": null,
-      "updated_at": "2026-09-30T12:59:48.273Z",
-      "phase": "DEPENDENCY_MATRIX_IN_PROGRESS",
+      "qa": {
+        "status": "PASSED",
+        "head_sha": "f1921b63a452a059c1109c658560efc318127aad",
+        "review_id": 5351957772,
+        "independent": true
+      },
+      "ci": {
+        "status": "PASSED",
+        "head_sha": "f1921b63a452a059c1109c658560efc318127aad",
+        "run_id": 36563127291
+      },
+      "external_audit": {
+        "status": "BLOCKED_INFRA_GATE",
+        "requires_pr": 237,
+        "reason": "Subsequent high-risk A6 audits remain unavailable until PR #237 is merged to main."
+      },
+      "updated_at": "2026-09-30T13:07:37.479Z",
+      "phase": "CANDIDATE_READY_A6_BLOCKED",
       "quality_gate": "author focused+broad tests -> fresh independent A5 -> live A6 after PR #237 -> A0 validation -> exact-head CI -> non-main integration branch",
-      "ownership_note": "No write ownership allocated during matrix phase; exact repo-relative paths must be recorded before implementation.",
+      "ownership_note": "Exact 34-file candidate scope identified read-only. No new write granted because PR #241 is already coherent and any new HEAD would invalidate A5/CI.",
       "id": "CUSTOMS-CORE-V1",
       "owner": "A-CORE",
-      "branch": "integration/customs-core-v1",
+      "branch": "agent/core-consolidation-v1",
       "goal": "Consolidate customs payments, rates, trade remedies, official-source provenance, ingestion and freshness into one coherent candidate on a fresh main-derived base without mechanically merging stale stacks.",
       "dependencies": [],
       "refs": {
         "base_sha": "08e030a6053ac9638957119373797e0fbf2b10c2",
-        "head_sha": "08e030a6053ac9638957119373797e0fbf2b10c2",
+        "head_sha": "f1921b63a452a059c1109c658560efc318127aad",
         "pr": 241,
         "source_prs": [
           216,
@@ -3445,7 +3493,10 @@
           205,
           212,
           187
-        ]
+        ],
+        "integration_target": "integration/customs-core-v1",
+        "ci_run_id": 36563127291,
+        "a5_review_id": 5351957772
       },
       "acceptance_criteria": [
         "No unverified rate, FX value, trade-remedy measure, effective date or unit may produce final payable.",
@@ -3462,7 +3513,39 @@
         "A0 validation",
         "exact-head CI"
       ],
-      "tests": []
+      "tests": [],
+      "matrix": {
+        "recommendation": "retain PR #241; no cherry-pick or new candidate",
+        "selected": [
+          222,
+          223,
+          226,
+          229,
+          231,
+          232,
+          235,
+          238,
+          240
+        ],
+        "reimplemented": [
+          204,
+          216,
+          220
+        ],
+        "superseded": {
+          "202": 232,
+          "228": 232
+        },
+        "evidence_only": [
+          187,
+          205
+        ],
+        "deferred": [
+          203,
+          212
+        ],
+        "closure_rule": "Close source PRs only after mapped gated integration preserves behavior and evidence."
+      }
     },
     {
       "status": "IN_PROGRESS",
@@ -3522,7 +3605,7 @@
       "tests": []
     }
   ],
-  "updated_at": "2026-09-30T12:59:48.273Z",
+  "updated_at": "2026-09-30T13:07:37.479Z",
   "max_concurrent_feature_workers": 2,
   "active_role_model": {
     "effective_at": "2026-09-30T12:58:10.633Z",
@@ -3571,5 +3654,30 @@
   "active_epics": [
     "CUSTOMS-CORE-V1",
     "COMPLIANCE-AI-V1"
-  ]
+  ],
+  "infra_gates": {
+    "pr237": {
+      "status": "READY_FOR_OWNER_APPROVAL",
+      "pr": 237,
+      "base_sha": "08e030a6053ac9638957119373797e0fbf2b10c2",
+      "head_sha": "f0183c1e0f4e1e5ed60fa93a4633e841e2ae8d9f",
+      "mergeable": true,
+      "draft": true,
+      "a5": {
+        "status": "PASSED",
+        "session_id": "/root/a5_237_fresh",
+        "reviewed_at": "2026-09-30T13:07:37.479Z",
+        "focused_tests": "16 passed",
+        "broad_tests": "126 passed",
+        "diff_check": "passed"
+      },
+      "ci": {
+        "status": "PASSED",
+        "run_id": 36415700790,
+        "job": "offline-safety"
+      },
+      "owner_gate": "Merge to main/protected requires one explicit owner permission; A0 did not merge.",
+      "post_merge_effect": "Only after merge may subsequent high-risk A6 audits be claimed available."
+    }
+  }
 }
