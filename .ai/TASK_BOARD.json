@@ -723,7 +723,7 @@
     }
   ],
   "max_concurrent_subagents": 3,
-  "revision": 594,
+  "revision": 595,
   "runs": [
     {
       "head_sha": null,
@@ -3712,7 +3712,7 @@
       ]
     }
   ],
-  "updated_at": "2026-09-30T13:11:55.317Z",
+  "updated_at": "2026-09-30T13:57:55.759Z",
   "max_concurrent_feature_workers": 2,
   "active_role_model": {
     "effective_at": "2026-09-30T12:58:10.633Z",
@@ -3791,6 +3791,27 @@
         "validator": "A0",
         "evidence": "Reviewed full issue-comment admission context and adversarial tests on exact HEAD. Strict bool permits false/true only; pending request still requires exact false dispatched/consumed, validated packet, non-empty scope, authoritative state paths, exact bindings, owner-only command, trusted default-branch checkout, active lawful lease and generation-scoped dedupe."
       }
+    }
+  },
+  "pr_hygiene": {
+    "consolidated_candidate_metadata": {
+      "published_at": "2026-09-30T13:57:55.759Z",
+      "state": "VERIFIED",
+      "receipts": [
+        {
+          "pr": 241,
+          "head_sha": "f1921b63a452a059c1109c658560efc318127aad",
+          "base": "integration/customs-core-v1",
+          "body_status": "authoritative matrix and current A5/CI/A6 gates published"
+        },
+        {
+          "pr": 242,
+          "head_sha": "bf27ef2cd243f0e2f9325c48a1cfad40a100b2fe",
+          "base": "integration/compliance-ai-v1",
+          "body_status": "authoritative matrix, current gates and broad diagnostic NOT PASS published"
+        }
+      ],
+      "closure_policy": "No stale/source PR closure before gated integration preserves mapped behavior and evidence."
     }
   }
 }
