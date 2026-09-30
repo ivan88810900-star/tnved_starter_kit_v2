@@ -94,6 +94,50 @@ class SnapshotValidationTests(unittest.TestCase):
         )
         self.assertFalse(self.authority_path().exists())
 
+    def test_normalized_role_snapshot_is_valid(self) -> None:
+        value = board()
+        value["tasks"] = [
+            {
+                "id": "CORE",
+                "owner": "A-CORE",
+                "status": "NEW",
+                "risk": "high",
+                "files": ["docs/core.md"],
+                "dependencies": [],
+                "required_checks": ["offline-safety"],
+                "branch": None,
+                "worktree": None,
+                "tests": [],
+                "qa": None,
+                "external_audit": None,
+                "refs": {"base_sha": None, "head_sha": None, "pr": None},
+                "author_sessions": [],
+            },
+            {
+                "id": "PRODUCT",
+                "owner": "A-PRODUCT",
+                "status": "NEW",
+                "risk": "high",
+                "files": ["docs/product.md"],
+                "dependencies": [],
+                "required_checks": ["offline-safety"],
+                "branch": None,
+                "worktree": None,
+                "tests": [],
+                "qa": None,
+                "external_audit": None,
+                "refs": {"base_sha": None, "head_sha": None, "pr": None},
+                "author_sessions": [],
+            },
+        ]
+        self.commit_board(value)
+
+        result = run(self.root, "validate-snapshot")
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(json.loads(result.stdout)["task_count"], 2)
+        self.assertFalse(self.authority_path().exists())
+
     def test_missing_and_malformed_committed_snapshots_fail(self) -> None:
         (self.root / "README.md").write_text("fixture\n", encoding="utf-8")
         git(self.root, "add", "README.md")

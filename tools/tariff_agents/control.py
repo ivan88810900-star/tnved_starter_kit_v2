@@ -26,11 +26,23 @@ STATE_LOCAL_REF = "refs/heads/" + STATE_BRANCH
 STATE_FILES = {".ai/TASK_BOARD.json", ".ai/AGENT_OWNERSHIP.json", ".ai/FINDINGS.json", ".ai/RUN_HISTORY.json"}
 PROTECTED_BRANCHES = {"main", "master", "production", "prod", "feat/canonical-read-path", "feat/ntm-official-full-contours", STATE_BRANCH}
 STATUSES = {"NEW", "ALLOCATING", "ALLOCATED", "IN_PROGRESS", "IMPLEMENTED", "QA_PASSED", "AUDIT_PASSED", "CI_PENDING", "READY_FOR_HUMAN_APPROVAL", "CHANGES_REQUESTED", "CANCELLED", "INTEGRATED"}
-ROLES = {"A1", "A2", "A3", "A4", "A5", "A6"}
-PREFIX = {"A1": "rates", "A2": "ntm", "A3": "sources", "A4": "classification", "A5": "qa"}
+ROLES = {"A1", "A2", "A3", "A4", "A5", "A6", "A-CORE", "A-PRODUCT"}
+PREFIX = {
+    "A1": "rates",
+    "A2": "ntm",
+    "A3": "sources",
+    "A4": "classification",
+    "A5": "qa",
+    "A-CORE": "core",
+    "A-PRODUCT": "product",
+}
 SHA = re.compile(r"[0-9a-f]{40}\Z")
 ID = re.compile(r"[A-Za-z0-9][A-Za-z0-9_.-]{0,99}\Z")
 SESSION_ID = re.compile(r"[A-Za-z0-9_./:-]{1,240}\Z")
+NON_CREDENTIAL_TOKEN_TEST_PATHS = {
+    "customs-clear/backend/tests/test_ntm_sgr_bad_token_boundary.py",
+    "customs-clear/backend/tests/test_regulatory_keyword_token_boundaries.py",
+}
 
 
 class PolicyError(RuntimeError):
@@ -51,7 +63,8 @@ def safe_path(value):
     parts = value.split("/")
     need(not value.startswith("/") and all(p not in {"", ".", "..", ".git"} for p in parts), "unsafe_path")
     need(not any(p.lower().startswith(".env") for p in parts), "sensitive_path")
-    need(not any(re.search(r"(^|[_-])(secrets?|credentials?|passwords?|tokens?)([_.-]|$)", p, re.I) for p in parts), "sensitive_path")
+    if value not in NON_CREDENTIAL_TOKEN_TEST_PATHS:
+        need(not any(re.search(r"(^|[_-])(secrets?|credentials?|passwords?|tokens?)([_.-]|$)", p, re.I) for p in parts), "sensitive_path")
     need(PurePosixPath(value).suffix.lower() not in {".db", ".sqlite", ".sqlite3", ".pem", ".key", ".p12"}, "sensitive_path")
     return value
 
