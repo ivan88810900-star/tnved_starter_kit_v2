@@ -723,7 +723,7 @@
     }
   ],
   "max_concurrent_subagents": 3,
-  "revision": 589,
+  "revision": 590,
   "runs": [
     {
       "head_sha": null,
@@ -1877,7 +1877,7 @@
         "offline-safety"
       ],
       "risk": "low",
-      "status": "INTEGRATED",
+      "status": "CANCELLED",
       "tests": {
         "commands": [
           {
@@ -1888,8 +1888,13 @@
         ],
         "head_sha": "ca7285cc6bc241ec8538e1748a5b2a39636a9adb"
       },
-      "updated_at": "2026-09-12T20:42:44.122592+00:00",
-      "worktree": "/workspace/scratch/cd6734a40504/tariff-agent-worktrees/smoke-rates-001-00e2649498"
+      "updated_at": "2026-09-30T12:58:10.633Z",
+      "worktree": "/workspace/scratch/cd6734a40504/tariff-agent-worktrees/smoke-rates-001-00e2649498",
+      "historical_status": "INTEGRATED",
+      "normalization": {
+        "reason": "Historical orchestration smoke evidence; not an active developer epic under the owner-authorized A0/A-CORE/A-PRODUCT model.",
+        "provenance_preserved": true
+      }
     },
     {
       "author_sessions": [
@@ -1955,7 +1960,7 @@
         "offline-safety"
       ],
       "risk": "low",
-      "status": "INTEGRATED",
+      "status": "CANCELLED",
       "tests": {
         "commands": [
           {
@@ -1966,8 +1971,13 @@
         ],
         "head_sha": "b80e8947304215f50b40387591f7a7e6d11a2811"
       },
-      "updated_at": "2026-09-12T20:42:44.145242+00:00",
-      "worktree": "/workspace/scratch/cd6734a40504/tariff-agent-worktrees/smoke-sources-001-6fd9065039"
+      "updated_at": "2026-09-30T12:58:10.633Z",
+      "worktree": "/workspace/scratch/cd6734a40504/tariff-agent-worktrees/smoke-sources-001-6fd9065039",
+      "historical_status": "INTEGRATED",
+      "normalization": {
+        "reason": "Historical orchestration smoke evidence; not an active developer epic under the owner-authorized A0/A-CORE/A-PRODUCT model.",
+        "provenance_preserved": true
+      }
     },
     {
       "author_sessions": [
@@ -3391,25 +3401,142 @@
         "provenance_preserved": true,
         "successor_epic": "COMPLIANCE-AI-V1"
       }
+    },
+    {
+      "status": "IN_PROGRESS",
+      "risk": "high",
+      "worktree": null,
+      "files": [],
+      "author_sessions": [],
+      "qa": null,
+      "ci": null,
+      "external_audit": null,
+      "updated_at": "2026-09-30T12:58:10.633Z",
+      "phase": "DEPENDENCY_MATRIX_AND_SELECTIVE_PORT",
+      "quality_gate": "author focused+broad tests -> fresh independent A5 -> live A6 after PR #237 -> A0 validation -> exact-head CI -> non-main integration branch",
+      "ownership_note": "No write ownership allocated during matrix phase; exact repo-relative paths must be recorded before implementation.",
+      "id": "CUSTOMS-CORE-V1",
+      "owner": "A-CORE",
+      "branch": "integration/customs-core-v1",
+      "goal": "Consolidate customs payments, rates, trade remedies, official-source provenance, ingestion and freshness into one coherent candidate on a fresh main-derived base without mechanically merging stale stacks.",
+      "dependencies": [],
+      "refs": {
+        "base_sha": "08e030a6053ac9638957119373797e0fbf2b10c2",
+        "head_sha": "08e030a6053ac9638957119373797e0fbf2b10c2",
+        "pr": 241,
+        "source_prs": [
+          216,
+          220,
+          222,
+          223,
+          226,
+          228,
+          229,
+          231,
+          232,
+          235,
+          238,
+          240,
+          202,
+          203,
+          204,
+          205,
+          212,
+          187
+        ]
+      },
+      "acceptance_criteria": [
+        "No unverified rate, FX value, trade-remedy measure, effective date or unit may produce final payable.",
+        "Duty, VAT, excise, preferences, specific/combined units and trade remedies preserve effective-date history and deterministic rounding.",
+        "Official-source provenance, current editions/amendments, freshness and update health are explicit and fail closed.",
+        "Dependency/conflict/supersession matrix selects only current logic and records mappings before any stale PR closure.",
+        "One coherent candidate receives author focused+broad tests, fresh A5, live A6 after PR #237, A0 validation and exact-head CI."
+      ],
+      "required_checks": [
+        "Backend customs/payment regression",
+        "official-source ingestion/freshness regression",
+        "fresh independent A5",
+        "live A6 after PR #237",
+        "A0 validation",
+        "exact-head CI"
+      ],
+      "tests": []
+    },
+    {
+      "status": "IN_PROGRESS",
+      "risk": "high",
+      "worktree": null,
+      "files": [],
+      "author_sessions": [],
+      "qa": null,
+      "ci": null,
+      "external_audit": null,
+      "updated_at": "2026-09-30T12:58:10.633Z",
+      "phase": "DEPENDENCY_MATRIX_AND_SELECTIVE_PORT",
+      "quality_gate": "author focused+broad tests -> fresh independent A5 -> live A6 after PR #237 -> A0 validation -> exact-head CI -> non-main integration branch",
+      "ownership_note": "No write ownership allocated during matrix phase; exact repo-relative paths must be recorded before implementation.",
+      "id": "COMPLIANCE-AI-V1",
+      "owner": "A-PRODUCT",
+      "branch": "integration/compliance-ai-v1",
+      "goal": "Consolidate NTM, canonical TN VED/classification, semantic search, grounded assistant and freshness/citation UI into one coherent candidate on a fresh main-derived base without mechanically merging stale stacks.",
+      "dependencies": [],
+      "refs": {
+        "base_sha": "08e030a6053ac9638957119373797e0fbf2b10c2",
+        "head_sha": "08e030a6053ac9638957119373797e0fbf2b10c2",
+        "pr": 242,
+        "source_prs": [
+          207,
+          208,
+          211,
+          213,
+          221,
+          224,
+          227,
+          230,
+          233,
+          234,
+          239,
+          187
+        ]
+      },
+      "acceptance_criteria": [
+        "NTM false positives fail closed and completeness/freshness is never inferred or invented.",
+        "TR EAEU/TS, DS/SS, SGR, licenses/notifications, vet/phyto/sanitary, GOST, marking, quotas and exceptions retain explicit evidence and caveats.",
+        "Canonical code, classification, semantic search and LLM/heuristic output never become legal fact without grounded evidence.",
+        "Assistant and UI preserve citations, confidence boundaries, source freshness and legal caveats.",
+        "Dependency/conflict/supersession matrix selects only current logic and records mappings before any stale PR closure.",
+        "One coherent candidate receives author focused+broad tests, fresh A5, live A6 after PR #237, A0 validation and exact-head CI."
+      ],
+      "required_checks": [
+        "Backend NTM/classification/assistant regression",
+        "Frontend tests, types and build",
+        "fresh independent A5",
+        "live A6 after PR #237",
+        "A0 validation",
+        "exact-head CI"
+      ],
+      "tests": []
     }
   ],
-  "updated_at": "2026-09-29T10:21:00.000Z",
+  "updated_at": "2026-09-30T12:58:10.633Z",
   "max_concurrent_feature_workers": 2,
   "active_role_model": {
-    "effective_at": "2026-09-29T10:21:00.000Z",
+    "effective_at": "2026-09-30T12:58:10.633Z",
     "coordinator": {
       "role": "A0",
-      "holder": "/root/a0_automation_20260929T101754Z",
+      "holder": "/root/a0_automation_20260930T125035Z",
       "responsibility": "lead_integrator"
     },
     "developers": [
       {
         "role": "A-CORE",
+        "task_id": "CUSTOMS-CORE-V1",
         "branch": "integration/customs-core-v1",
         "scope": "payments_rates_official_sources_ingestion_freshness"
       },
       {
         "role": "A-PRODUCT",
+        "task_id": "COMPLIANCE-AI-V1",
         "branch": "integration/compliance-ai-v1",
         "scope": "ntm_classification_search_grounded_ai_ui"
       }
@@ -3422,8 +3549,9 @@
       {
         "role": "A6",
         "mode": "external_high_risk_audit_only",
-        "status": "LIVE_VERIFIED",
-        "post_verify_bridge_pr": 237
+        "status": "LIVE_VERIFIED_FIRST_SMOKE_ONLY",
+        "post_verify_bridge_pr": 237,
+        "subsequent_audits_available": false
       }
     ],
     "legacy_roles": {
@@ -3434,6 +3562,10 @@
     },
     "inventory_ref": ".ai/orchestration/PR_INVENTORY_20260929.json",
     "ownership_archive_ref": ".ai/orchestration/evidence/legacy-agent-ownership-archive-20260929-gen42.json",
-    "note": "Legacy validator still permits three total subagents; operating policy limits concurrent feature developers to two."
-  }
+    "note": "Exactly two active developer epics; A5/A6 are ephemeral gates, not feature workers."
+  },
+  "active_epics": [
+    "CUSTOMS-CORE-V1",
+    "COMPLIANCE-AI-V1"
+  ]
 }
