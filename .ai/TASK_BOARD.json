@@ -754,7 +754,7 @@
       "task_id": "COMPLIANCE-AI-V1",
       "reporter": "A5",
       "head_sha": "233ed6a64b0e75175358f8cdf0e7bcc71191b67b",
-      "status": "CONFIRMED",
+      "status": "RESOLVED",
       "summary": "Negated child-description phrases are promoted to definite official SGR applicability, violating fail-closed false-positive acceptance.",
       "validation": {
         "at": "2026-09-30T22:00:20.015Z",
@@ -764,12 +764,17 @@
       "resolution_candidate": {
         "head_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
         "evidence": "Shared Unicode/token-aware child-audience predicate now rejects negated child phrases in legacy/service and official SGR paths while preserving explicit/mixed child audiences; fresh A5 required.",
-        "status": "PENDING_FRESH_A5"
+        "status": "PASSED_FRESH_A5"
+      },
+      "resolution": {
+        "validator": "A0",
+        "head_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
+        "evidence": "Fresh independent A5 reproduced service=False and official_definite=False for negated child phrases, preserved explicit/mixed audiences, reviewed shared matcher use, and passed 122 targeted plus 268 changed-module tests with 44 subtests. Delta packet complete and validated."
       }
     }
   ],
   "max_concurrent_subagents": 3,
-  "revision": 607,
+  "revision": 608,
   "runs": [
     {
       "head_sha": null,
@@ -3951,7 +3956,7 @@
         }
       ],
       "a6_repack": {
-        "status": "FIX_PUBLISHED_FRESH_A5_PENDING",
+        "status": "A5_PASSED_BLOCKED_INFRA_MERGES",
         "published_at": "2026-09-30T21:03:19.160Z",
         "branch": "candidate/product-a6-repack-v1",
         "base_sha": "08e030a6053ac9638957119373797e0fbf2b10c2",
@@ -3992,7 +3997,6 @@
         ],
         "coverage_claim": "Only runtime slices are proposed for live A6. Non-runtime slices are not claimed A6-covered.",
         "gates_pending": [
-          "fresh independent A5 on e39e1978",
           "PR236 merge",
           "PR237 merge for post-verify admission",
           "live A6 per runtime slice plus repair delta",
@@ -4034,17 +4038,28 @@
         }
       },
       "a5": {
-        "status": "PENDING_FRESH_REVIEW",
-        "required_head": "e39e19787bd913baeb6f85577a13e1116458e633",
-        "prior_failed_head": "233ed6a64b0e75175358f8cdf0e7bcc71191b67b",
-        "prior_finding_ids": [
-          "A5-PRODUCT-CHILD-NEGATION-001"
+        "status": "PASSED",
+        "head_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
+        "session_id": "/root/a5_core_candidate",
+        "reviewed_at": "2026-09-30T22:13:11.522Z",
+        "findings": [],
+        "evidence": {
+          "blocker_replay": "negated child phrases service=False and official_definite=False; explicit and mixed child audiences preserved",
+          "targeted": "122 passed",
+          "changed_modules": "268 passed plus 44 subtests",
+          "diff_check": "passed",
+          "delta_packet": "complete 4-path build_packet + validate_packet PASS, 120520 bytes, SHA 706912165fb32d9d46b1d8ec48787ec4d93314b7a47d49360ca094cd593fd7eb"
+        },
+        "limitations": [
+          "Delta packet is not a full-candidate A6 packet; inherited non-runtime lockfile remains outside runtime A6 coverage.",
+          "Frontend unchanged by repair and not rerun in fresh A5.",
+          "No full/broad suite PASS claim; prior bounded parent run remained 359 passed/23 shared-DB/data-order failures not classified as candidate regressions."
         ],
         "stale_on_new_head": true
       }
     }
   ],
-  "updated_at": "2026-09-30T22:09:41.643Z",
+  "updated_at": "2026-09-30T22:13:11.522Z",
   "max_concurrent_feature_workers": 2,
   "active_role_model": {
     "effective_at": "2026-09-30T12:58:10.633Z",
@@ -4460,8 +4475,8 @@
     }
   },
   "a6_candidate_preflight": {
-    "status": "CORE_A5_PASS_PRODUCT_FIX_PUBLISHED_A5_PENDING_BLOCKED_PR236_PR237_MAIN_MERGES",
-    "checked_at": "2026-09-30T22:09:41.643Z",
+    "status": "BOTH_CANDIDATES_A5_PASS_PACKET_READY_BLOCKED_PR236_PR237_MAIN_MERGES",
+    "checked_at": "2026-09-30T22:13:11.522Z",
     "bridge": {
       "live_verified": true,
       "current_pending_consumed": true,
@@ -4501,14 +4516,14 @@
       ],
       "non_runtime_a6_coverage": false,
       "broad_status": "NOT_PASS",
-      "next_gate": "fresh A5 on e39e1978; live A6 runtime slices plus repair delta only after PR236/PR237 merges.",
-      "a5_status": "PENDING_FRESH_REVIEW",
+      "next_gate": "live A6 runtime slices plus repair delta only after PR236/PR237 merges; then A0 validation and exact-head CI.",
+      "a5_status": "PASSED",
       "a5_session": "/root/a5_core_candidate",
       "blocker_id": "A5-PRODUCT-CHILD-NEGATION-001",
       "repair_delta_packet": {
-        "bytes": 121189,
-        "sha256": "9b2431878f1edd7a327037ed8b736d244e66ac2f06a85aad0fe925441826921e",
-        "status": "PASS"
+        "bytes": 120520,
+        "sha256": "706912165fb32d9d46b1d8ec48787ec4d93314b7a47d49360ca094cd593fd7eb",
+        "status": "PASS_VALIDATED"
       }
     },
     "core_candidate": {
