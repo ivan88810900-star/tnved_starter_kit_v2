@@ -723,7 +723,7 @@
     }
   ],
   "max_concurrent_subagents": 3,
-  "revision": 593,
+  "revision": 594,
   "runs": [
     {
       "head_sha": null,
@@ -3712,7 +3712,7 @@
       ]
     }
   ],
-  "updated_at": "2026-09-30T13:09:41.433Z",
+  "updated_at": "2026-09-30T13:11:55.317Z",
   "max_concurrent_feature_workers": 2,
   "active_role_model": {
     "effective_at": "2026-09-30T12:58:10.633Z",
@@ -3784,7 +3784,13 @@
         "job": "offline-safety"
       },
       "owner_gate": "Merge to main/protected requires one explicit owner permission; A0 did not merge.",
-      "post_merge_effect": "Only after merge may subsequent high-risk A6 audits be claimed available."
+      "post_merge_effect": "Only after merge may subsequent high-risk A6 audits be claimed available.",
+      "a0_validation": {
+        "status": "PASSED",
+        "validated_at": "2026-09-30T13:11:55.317Z",
+        "validator": "A0",
+        "evidence": "Reviewed full issue-comment admission context and adversarial tests on exact HEAD. Strict bool permits false/true only; pending request still requires exact false dispatched/consumed, validated packet, non-empty scope, authoritative state paths, exact bindings, owner-only command, trusted default-branch checkout, active lawful lease and generation-scoped dedupe."
+      }
     }
   }
 }
