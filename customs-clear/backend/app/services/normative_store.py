@@ -694,10 +694,17 @@ def upsert_source_status(
     revision: str,
     is_stale: bool,
     note: str,
+    *,
+    synced_at: datetime | None = None,
 ) -> None:
     with SessionLocal() as db:
         obj = db.query(SourceStatus).filter(SourceStatus.source_code == source_code).first()
-        now = datetime.now(timezone.utc).replace(tzinfo=None)
+        now = synced_at or datetime.now(timezone.utc)
+        # ``DateTime`` is intentionally stored as UTC-naive for SQLite/Postgres
+        # compatibility.  At the API boundary it is re-attached to UTC so the
+        # current-edition verifier never receives an ambiguous timestamp.
+        if now.tzinfo is not None:
+            now = now.astimezone(timezone.utc).replace(tzinfo=None)
         if not obj:
             db.add(
                 SourceStatus(
@@ -718,6 +725,17 @@ def upsert_source_status(
             obj.is_stale = is_stale
             obj.note = note
         db.commit()
+
+
+def _source_status_synced_at_iso(value: datetime | None) -> str | None:
+    """Emit persisted UTC-naive SourceStatus values as explicit UTC evidence."""
+    if value is None:
+        return None
+    if value.tzinfo is None:
+        value = value.replace(tzinfo=timezone.utc)
+    else:
+        value = value.astimezone(timezone.utc)
+    return value.isoformat().replace("+00:00", "Z")
 
 
 def append_sync_log(
@@ -1854,7 +1872,7 @@ def list_source_status() -> list[dict[str, Any]]:
                 "source_name": r.source_name,
                 "source_url": r.source_url,
                 "revision": r.revision,
-                "synced_at": r.synced_at.isoformat() if r.synced_at else None,
+                "synced_at": _source_status_synced_at_iso(r.synced_at),
                 "is_stale": r.is_stale,
                 "fallback": r.is_stale or r.revision in ("unavailable", "seed"),
                 "note": r.note,
