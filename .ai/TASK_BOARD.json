@@ -774,7 +774,7 @@
     }
   ],
   "max_concurrent_subagents": 3,
-  "revision": 608,
+  "revision": 609,
   "runs": [
     {
       "head_sha": null,
@@ -4059,7 +4059,7 @@
       }
     }
   ],
-  "updated_at": "2026-09-30T22:13:11.522Z",
+  "updated_at": "2026-09-30T22:52:56.739Z",
   "max_concurrent_feature_workers": 2,
   "active_role_model": {
     "effective_at": "2026-09-30T12:58:10.633Z",
@@ -4472,6 +4472,34 @@
         236
       ],
       "reason": "PR236 exact HEAD 825f4aaa passed fresh independent A5, A0 validation, exact-head CI and all ten runtime packet replays. Separate protected merge permission is required."
+    },
+    "a6_repack_successor_comments": {
+      "published_at": "2026-09-30T22:52:56.739Z",
+      "state": "VERIFIED",
+      "receipts": [
+        {
+          "source_pr": 241,
+          "source_head_sha": "f1921b63a452a059c1109c658560efc318127aad",
+          "candidate_branch": "candidate/core-a6-repack-v1",
+          "candidate_head_sha": "14e0ee8f034d94ffc5831d87e076f4d693a5a524",
+          "candidate_tree_sha": "fbb3bf2c88aa75a9c037a43547da88185dba6829",
+          "a5_status": "PASSED",
+          "exact_head_ci_status": "MISSING",
+          "comment_id": 5921085369
+        },
+        {
+          "source_pr": 242,
+          "source_head_sha": "bf27ef2cd243f0e2f9325c48a1cfad40a100b2fe",
+          "candidate_branch": "candidate/product-a6-repack-v1",
+          "candidate_head_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
+          "candidate_tree_sha": "6eeefb6f6adde1930a59ffbece5052c70e369d0b",
+          "a5_status": "PASSED",
+          "exact_head_ci_status": "MISSING",
+          "comment_id": 5921085538
+        }
+      ],
+      "remaining_gate": "Owner-authorized merges of PR236 and PR237, then live A6, A0 validation and exact-head CI before non-main integration.",
+      "closure_policy": "PR241 and PR242 remain open as evidence until their successors complete gated integration; neither source PR is separately mergeable."
     }
   },
   "a6_candidate_preflight": {
