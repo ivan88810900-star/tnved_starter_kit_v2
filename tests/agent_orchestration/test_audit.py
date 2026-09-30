@@ -403,6 +403,21 @@ class AuditTests(unittest.TestCase):
                         self.assertRaises(audit.AuditBlocked):
                     audit.ensure_safe_text(text, environ={})
 
+    def test_unchanged_supporting_contact_path_remains_blocked(self):
+        contact_path = "tests/person@" + "outside.test.py"
+        self.write(contact_path, "SAFE = True\n")
+        base = self.commit()
+        self.write("src/value.py", "VALUE = 2\n")
+        head = self.commit()
+        with self.assertRaises(audit.AuditBlocked):
+            audit.build_packet(
+                self.repo,
+                base,
+                head,
+                [audit.CONTRACT_PATH, "src/value.py", contact_path],
+                environ={},
+            )
+
     def test_negative_fixtures_do_not_make_committed_test_source_unsafe(self):
         for path in (Path(audit.__file__), Path(__file__)):
             source = path.read_text()
