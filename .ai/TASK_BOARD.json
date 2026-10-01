@@ -774,7 +774,7 @@
     }
   ],
   "max_concurrent_subagents": 3,
-  "revision": 631,
+  "revision": 632,
   "runs": [
     {
       "head_sha": null,
@@ -4188,7 +4188,7 @@
       }
     }
   ],
-  "updated_at": "2026-10-01T21:48:00Z",
+  "updated_at": "2026-10-01T22:56:00Z",
   "max_concurrent_feature_workers": 2,
   "active_role_model": {
     "effective_at": "2026-09-30T12:58:10.633Z",
@@ -5756,6 +5756,44 @@
       ],
       "owner_approval_present": false,
       "merge_performed": false,
+      "protected_action_performed": false
+    },
+    "candidate_pr_a6_manifest_bodies_rev632": {
+      "checked_at": "2026-10-01T22:56:00Z",
+      "source_receipt": "state_integrity_receipts.a6_request_manifests_rev629",
+      "pr244": {
+        "head_sha": "14e0ee8f034d94ffc5831d87e076f4d693a5a524",
+        "draft": true,
+        "mergeable": true,
+        "body_status": "CURRENT_IMMUTABLE_A6_MANIFEST_LINKED",
+        "runtime_request_count": 5,
+        "provider_call_performed": false,
+        "a6_pass_claimed": false
+      },
+      "pr245": {
+        "head_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
+        "draft": true,
+        "mergeable": true,
+        "body_status": "CURRENT_IMMUTABLE_A6_MANIFEST_AND_EXCLUSIONS_LINKED",
+        "runtime_request_count": 5,
+        "repair_request_count": 1,
+        "excluded_setup_head_sha": "03fe65ebba9a2751cb8e84c54c51aee4d32fce6b",
+        "excluded_tests_only_head_sha": "233ed6a64b0e75175358f8cdf0e7bcc71191b67b",
+        "provider_call_performed": false,
+        "a6_pass_claimed": false
+      },
+      "protected_chain": {
+        "required_order": [
+          246,
+          247
+        ],
+        "pr246_head_sha": "dc0397c7815e092ad8d3bd41d0d98af197212e1e",
+        "pr247_head_sha": "c1f04847c2a40b01a3e1f0759d9e97e309cc2e3b",
+        "owner_approval_present": false,
+        "merged": false
+      },
+      "candidate_heads_changed": false,
+      "tests_weakened": false,
       "protected_action_performed": false
     }
   }
