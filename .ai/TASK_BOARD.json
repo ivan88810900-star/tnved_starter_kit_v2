@@ -774,7 +774,7 @@
     }
   ],
   "max_concurrent_subagents": 3,
-  "revision": 621,
+  "revision": 622,
   "runs": [
     {
       "head_sha": null,
@@ -5074,7 +5074,25 @@
           "a0_status": "PASSED"
         }
       ],
-      "source_pr_closure": "DEFERRED; old PRs remain open but explicitly superseded until successor gates are fresh. No branch deletion."
+      "source_pr_closure": "COMPLETED_AFTER_SUCCESSOR_GATES; stale draft PR236/PR237 closed without merge or branch deletion after exact mappings and fresh successor evidence were recorded.",
+      "superseded_source_closures": [
+        {
+          "pr": 236,
+          "state": "CLOSED_UNMERGED",
+          "successor_pr": 246,
+          "successor_head_sha": "dc0397c7815e092ad8d3bd41d0d98af197212e1e",
+          "mapping_comment_id": 5932075686,
+          "branch_deleted": false
+        },
+        {
+          "pr": 237,
+          "state": "CLOSED_UNMERGED",
+          "successor_pr": 247,
+          "successor_head_sha": "c1f04847c2a40b01a3e1f0759d9e97e309cc2e3b",
+          "mapping_comment_id": 5932075935,
+          "branch_deleted": false
+        }
+      ]
     }
   },
   "a6_candidate_preflight": {
