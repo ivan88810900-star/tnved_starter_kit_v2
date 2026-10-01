@@ -3,7 +3,7 @@ import { AnimatedNumber } from './AnimatedNumber';
 
 type Row = {
   label: string;
-  amount: number;
+  amount: number | null;
   meta?: string;
   tone?: 'default' | 'trust' | 'total';
 };
@@ -11,7 +11,7 @@ type Row = {
 type Props = {
   rows: Row[];
   totalLabel?: string;
-  totalAmount: number;
+  totalAmount: number | null;
 };
 
 export const PaymentBreakdownCard: React.FC<Props> = ({
@@ -35,7 +35,7 @@ export const PaymentBreakdownCard: React.FC<Props> = ({
                 row.tone === 'trust' ? 'text-[var(--cargo-trust)]' : 'text-[var(--cargo-deep)]'
               }`}
             >
-              {row.amount.toLocaleString('ru-RU')} ₽
+              {row.amount == null ? 'Недоступно' : `${row.amount.toLocaleString('ru-RU')} ₽`}
             </span>
             {row.meta ? (
               <span className="ml-1.5 text-xs text-[var(--cargo-light)]">{row.meta}</span>
@@ -50,7 +50,7 @@ export const PaymentBreakdownCard: React.FC<Props> = ({
     >
       <span className="text-[11px] font-bold uppercase tracking-widest text-white/50">{totalLabel}</span>
       <span className="text-[32px] font-light tabular-nums tracking-tight text-white">
-        <AnimatedNumber value={totalAmount} format="currency" />
+        {totalAmount == null ? 'Требует проверки' : <AnimatedNumber value={totalAmount} format="currency" />}
       </span>
     </div>
   </div>

@@ -11,6 +11,8 @@ from typing import Any
 import pandas as pd
 
 from ..db import SessionLocal
+from .exchange_rates import get_rates_map
+from .payment_engine import _resolve_fx_rate
 from .payment_engine_compat import compute_payments
 from .rop_calculator import calculate_rop
 
@@ -159,7 +161,11 @@ def calculate_line_payments(
     hs = re.sub(r"\D", "", str(line.get("hs_code") or ""))[:10]
     qty = float(line.get("quantity") or 1)
     price = float(line.get("unit_price") or 0)
-    customs_value = qty * price
+    invoice_value = qty * price
+    currency = str(line.get("currency") or "USD").upper().strip()
+    rates = get_rates_map()
+    fx_rate = _resolve_fx_rate(currency, rates)
+    customs_value = invoice_value * fx_rate
     gross = line.get("weight_gross_kg")
     net = line.get("weight_net_kg")
     country = (line.get("country_of_origin") or line.get("country") or "").strip().upper() or None
@@ -167,8 +173,9 @@ def calculate_line_payments(
     pay_payload: dict[str, Any] = {
         "hs_code": hs,
         "customs_value": customs_value,
-        "invoice_currency": str(line.get("currency") or "USD"),
+        "invoice_currency": "RUB",
         "country": country,
+        "_fx_rates": rates,
     }
     if net is not None:
         pay_payload["net_weight_kg"] = float(net)
@@ -197,21 +204,29 @@ def calculate_line_payments(
             if own:
                 db.close()
 
-    total = float(bd.get("total_payable") or 0) + float(rop_block.get("total_rop_rub") or 0)
+    payment_total = bd.get("total_payable")
+    total = (
+        None
+        if payment_total is None
+        else float(payment_total) + float(rop_block.get("total_rop_rub") or 0)
+    )
     return {
         "description": line.get("description"),
         "hs_code": hs,
         "customs_value": round(customs_value, 2),
-        "currency": line.get("currency") or "USD",
+        "customs_value_original": round(invoice_value, 2),
+        "currency": currency,
+        "fx_rate": round(fx_rate, 8),
         "country_of_origin": country,
         "duty": bd.get("duty", 0),
-        "vat": bd.get("vat", 0),
+        "vat": bd.get("vat"),
         "excise": bd.get("excise", 0),
         "customs_fee": bd.get("customs_fee", 0),
         "recycling_fee": (payments.get("recycling_fee") or {}).get("fee_amount", 0),
         "rop": rop_block,
-        "total_payable": round(total, 2),
+        "total_payable": round(total, 2) if total is not None else None,
         "payments_status": payments.get("status"),
+        "payment_review_reasons": list(payments.get("payment_review_reasons") or []),
         "tariff_preference": payments.get("tariff_preference"),
     }
 
@@ -242,14 +257,31 @@ async def calculate_batch_lines(
     totals = {
         "customs_value": round(sum(r["customs_value"] for r in results), 2),
         "duty": round(sum(float(r["duty"]) for r in results), 2),
-        "vat": round(sum(float(r["vat"]) for r in results), 2),
+        "vat": (
+            round(sum(float(r["vat"]) for r in results), 2)
+            if all(r["vat"] is not None for r in results)
+            else None
+        ),
         "excise": round(sum(float(r["excise"]) for r in results), 2),
         "customs_fee": round(sum(float(r["customs_fee"]) for r in results), 2),
         "recycling_fee": round(sum(float(r["recycling_fee"]) for r in results), 2),
         "rop": round(sum(float((r.get("rop") or {}).get("total_rop_rub") or 0) for r in results), 2),
-        "total_payable": round(sum(float(r["total_payable"]) for r in results), 2),
+        "total_payable": (
+            round(sum(float(r["total_payable"]) for r in results), 2)
+            if all(r["total_payable"] is not None for r in results)
+            else None
+        ),
     }
-    return {"lines": results, "totals": totals, "line_count": len(results)}
+    return {
+        "status": (
+            "REVIEW_REQUIRED"
+            if any(r.get("payments_status") != "OK" or r["total_payable"] is None for r in results)
+            else "OK"
+        ),
+        "lines": results,
+        "totals": totals,
+        "line_count": len(results),
+    }
 
 
 def build_invoice_template_xlsx() -> bytes:

@@ -10,15 +10,20 @@ type InvoiceLine = {
   customs_value: number;
   currency: string;
   duty: number;
-  vat: number;
+  vat: number | null;
   rop: { total_rop_rub?: number };
-  total_payable: number;
+  total_payable: number | null;
+  payment_review_reasons?: string[];
 };
 
 type BatchResult = {
   lines: InvoiceLine[];
-  totals: Record<string, number>;
+  totals: Record<string, number | null>;
+  status?: 'OK' | 'REVIEW_REQUIRED';
 };
+
+const displayAmount = (value: number | null | undefined) =>
+  value == null ? 'Требует проверки' : value.toLocaleString('ru-RU');
 
 export function InvoicePage() {
   const [loading, setLoading] = useState(false);
@@ -69,9 +74,9 @@ export function InvoicePage() {
       String(ln.customs_value),
       ln.currency,
       String(ln.duty),
-      String(ln.vat),
+      ln.vat == null ? 'ТРЕБУЕТ ПРОВЕРКИ' : String(ln.vat),
       String(ln.rop?.total_rop_rub || 0),
-      String(ln.total_payable),
+      ln.total_payable == null ? 'ТРЕБУЕТ ПРОВЕРКИ' : String(ln.total_payable),
     ]);
     rows.push(['ИТОГО', '', '', '', '', '', '', String(result.totals.total_payable)]);
     const csv = [header, ...rows].map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(';')).join('\n');
@@ -149,9 +154,9 @@ export function InvoicePage() {
                       <td className="px-3 py-2 font-mono text-cargo-trust">{ln.hs_code || '—'}</td>
                       <td className="px-3 py-2">{ln.customs_value.toLocaleString('ru-RU')} {ln.currency}</td>
                       <td className="px-3 py-2">{Number(ln.duty).toLocaleString('ru-RU')}</td>
-                      <td className="px-3 py-2">{Number(ln.vat).toLocaleString('ru-RU')}</td>
+                      <td className="px-3 py-2">{displayAmount(ln.vat)}</td>
                       <td className="px-3 py-2">{Number(ln.rop?.total_rop_rub || 0).toLocaleString('ru-RU')}</td>
-                      <td className="px-3 py-2 font-medium">{Number(ln.total_payable).toLocaleString('ru-RU')}</td>
+                      <td className="px-3 py-2 font-medium">{displayAmount(ln.total_payable)}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -160,7 +165,7 @@ export function InvoicePage() {
                     <td className="px-3 py-2" colSpan={6}>
                       ИТОГО
                     </td>
-                    <td className="px-3 py-2">{Number(result.totals.total_payable).toLocaleString('ru-RU')} ₽</td>
+                    <td className="px-3 py-2">{displayAmount(result.totals.total_payable)}{result.totals.total_payable == null ? '' : ' ₽'}</td>
                   </tr>
                 </tfoot>
               </table>
