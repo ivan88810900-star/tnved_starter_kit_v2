@@ -44,7 +44,11 @@ def main() -> int:
         sub.add_parser(name)
     add = sub.add_parser('add')
     add.add_argument('task_id')
-    add.add_argument('--owner', choices=['A1', 'A2', 'A3', 'A4', 'A5'], required=True)
+    add.add_argument(
+        '--owner',
+        choices=['A-CORE', 'A-PRODUCT', 'A1', 'A2', 'A3', 'A4', 'A5'],
+        required=True,
+    )
     add.add_argument('--file', action='append', required=True)
     add.add_argument('--dependency', action='append', default=[])
     add.add_argument('--risk', choices=['low', 'high'], default='high')

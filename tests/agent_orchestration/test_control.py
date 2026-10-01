@@ -94,6 +94,25 @@ class ControlTests(unittest.TestCase):
         with self.assertRaisesRegex(c.PolicyError, "task_id_conflict"):
             self.store.add_task("T1", "A1", ["docs/b.md"])
 
+    def test_normalized_developer_roles_validate_allocate_and_run(self):
+        for task_id, owner, prefix in (
+            ("CORE", "A-CORE", "agent/core-"),
+            ("PRODUCT", "A-PRODUCT", "agent/product-"),
+        ):
+            with self.subTest(owner=owner):
+                self.store.add_task(task_id, owner, [f"docs/{task_id}.md"])
+                task = self.store.allocate(task_id, self.base)
+                self.assertTrue(task["branch"].startswith(prefix))
+                run = self.store.start(task_id, f"/root/{task_id.lower()}")
+                self.assertEqual(run["role"], owner)
+                self.store.finish_session(run["session_id"])
+
+        board = self.store.load()
+        self.assertEqual(
+            [task["owner"] for task in board["tasks"]],
+            ["A-CORE", "A-PRODUCT"],
+        )
+
     def test_dependency_cycle_and_unknown_dependency_atomic_rejection(self):
         self.store.add_task("A", "A1", ["docs/a.md"])
         self.store.add_task("B", "A2", ["docs/b.md"], dependencies=["A"])
@@ -113,6 +132,12 @@ class ControlTests(unittest.TestCase):
         for value in ("../docs/a.md", "docs//a.md", "docs/./a.md", "/tmp/a.md", ".git/config", "docs\\a.md", ".env", "x/.env.production", "prod.db", "keys/token.txt"):
             with self.subTest(path=value), self.assertRaises(c.PolicyError):
                 c.safe_path(value)
+
+        for value in c.NON_CREDENTIAL_TOKEN_TEST_PATHS:
+            with self.subTest(path=value):
+                self.assertEqual(c.safe_path(value), value)
+        with self.assertRaisesRegex(c.PolicyError, "sensitive_path"):
+            c.safe_path("customs-clear/backend/tests/test_api_token.txt")
 
     def test_real_isolated_worktrees_and_shared_authority(self):
         a, b = self.task("A"), self.task("B")
