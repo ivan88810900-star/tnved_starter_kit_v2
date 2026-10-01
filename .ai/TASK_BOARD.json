@@ -774,7 +774,7 @@
     }
   ],
   "max_concurrent_subagents": 3,
-  "revision": 622,
+  "revision": 623,
   "runs": [
     {
       "head_sha": null,
@@ -4389,13 +4389,15 @@
       "post_merge_note": "The explicit owner permission applied only to PR243 exact HEAD 6ee3843c7a03276132cfca83981d68c4afa9cd81 and is fully consumed."
     },
     "pr246": {
-      "status": "GATES_PASSED_READY_AS_STACK_BASE",
+      "status": "READY_FOR_OWNER_APPROVAL",
       "pr": 246,
       "branch": "agent/a6-findings-post243-v2",
       "base_branch": "main",
       "base_sha": "4a7f78e2835d036be3f1137de1786615d31dcedd",
       "head_sha": "dc0397c7815e092ad8d3bd41d0d98af197212e1e",
-      "draft": true,
+      "draft": false,
+      "ready_for_review": true,
+      "ready_transition_at": "2026-10-01T13:54:38Z",
       "mergeable": true,
       "changed_files": [
         "tests/agent_orchestration/test_audit.py",
@@ -4577,7 +4579,9 @@
       "base_branch": "agent/a6-findings-post243-v2",
       "base_head_sha": "dc0397c7815e092ad8d3bd41d0d98af197212e1e",
       "head_sha": "c1f04847c2a40b01a3e1f0759d9e97e309cc2e3b",
-      "draft": true,
+      "draft": false,
+      "ready_for_review": true,
+      "ready_transition_at": "2026-10-01T13:54:37Z",
       "mergeable": true,
       "changed_files": [
         "tests/agent_orchestration/test_audit_bridge.py",
@@ -4977,6 +4981,37 @@
       ],
       "code_or_head_changed": false,
       "remaining_action": "explicit owner-authorized merge to main"
+    },
+    "infra_successor_ready_transitions": {
+      "published_at": "2026-10-01T13:54:38Z",
+      "state": "VERIFIED",
+      "receipts": [
+        {
+          "pr": 246,
+          "head_sha": "dc0397c7815e092ad8d3bd41d0d98af197212e1e",
+          "base": "main",
+          "draft": false,
+          "mergeable": true,
+          "a5_status": "PASSED",
+          "a0_status": "PASSED",
+          "exact_head_ci_run_id": 36862783125
+        },
+        {
+          "pr": 247,
+          "head_sha": "c1f04847c2a40b01a3e1f0759d9e97e309cc2e3b",
+          "base": "agent/a6-findings-post243-v2",
+          "base_head_sha": "dc0397c7815e092ad8d3bd41d0d98af197212e1e",
+          "draft": false,
+          "mergeable": true,
+          "a5_status": "PASSED",
+          "a0_status": "PASSED",
+          "exact_head_ci_run_id": 36865520378
+        }
+      ],
+      "code_or_head_changed": false,
+      "permission_required": true,
+      "permission_granted": false,
+      "remaining_action": "one explicit owner decision for the exact protected merge order PR246 dc0397c7 then PR247 c1f04847"
     },
     "final_integration_prs_v1": {
       "published_at": "2026-10-01T10:52:00.000Z",
