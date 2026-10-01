@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
-  "state": "released",
-  "holder": null,
-  "token": null,
-  "generation": 64,
-  "updated_at": "2026-10-01T17:55:37.779971Z",
-  "expires_at": null
+  "state": "active",
+  "holder": "/root/a0_automation_20261001T184546Z",
+  "token": "a0-20261001184718609-701aade603747",
+  "generation": 65,
+  "updated_at": "2026-10-01T18:47:18.609Z",
+  "expires_at": "2026-10-01T19:32:18.609Z"
 }
