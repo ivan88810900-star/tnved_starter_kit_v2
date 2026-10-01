@@ -774,7 +774,7 @@
     }
   ],
   "max_concurrent_subagents": 3,
-  "revision": 628,
+  "revision": 629,
   "runs": [
     {
       "head_sha": null,
@@ -4186,7 +4186,7 @@
       }
     }
   ],
-  "updated_at": "2026-10-01T18:50:00Z",
+  "updated_at": "2026-10-01T20:03:00Z",
   "max_concurrent_feature_workers": 2,
   "active_role_model": {
     "effective_at": "2026-09-30T12:58:10.633Z",
@@ -5479,6 +5479,229 @@
       "candidate_heads_changed": false,
       "old_approvals_transferred": false,
       "protected_action_performed": false
+    },
+    "a6_request_manifests_rev629": {
+      "prepared_at": "2026-10-01T20:03:00Z",
+      "status": "PREPARED_OFFLINE_NOT_DISPATCHABLE",
+      "scanner_protocol": {
+        "pr": 246,
+        "head_sha": "dc0397c7815e092ad8d3bd41d0d98af197212e1e"
+      },
+      "postverify_protocol": {
+        "pr": 247,
+        "head_sha": "c1f04847c2a40b01a3e1f0759d9e97e309cc2e3b"
+      },
+      "contract_sha": "08e030a6053ac9638957119373797e0fbf2b10c2",
+      "limits": {
+        "max_files": 64,
+        "max_file_bytes": 100000,
+        "max_packet_bytes": 600000
+      },
+      "core_runtime_requests": [
+        {
+          "request_id": "core-s1-6415f443120f",
+          "base_sha": "08e030a6053ac9638957119373797e0fbf2b10c2",
+          "head_sha": "6415f443120fe09d9ca857c475c8e93654b46fe7",
+          "contract_sha": "08e030a6053ac9638957119373797e0fbf2b10c2",
+          "paths_json": "[\"customs-clear/backend/app/services/payment_engine.py\",\"customs-clear/backend/app/services/payment_quote_service.py\",\"customs-clear/backend/tests/test_antidumping_fixed_unit_fail_closed.py\",\"customs-clear/backend/tests/test_automatic_duty_operand_validation.py\",\"customs-clear/backend/tests/test_payment_engine.py\",\"customs-clear/backend/tests/test_payment_quote.py\",\"customs-clear/backend/tests/test_payment_source_admission.py\",\"customs-clear/backend/tests/test_special_duties.py\"]",
+          "official_sources_json": "[]",
+          "packet_binding_sha256": "7b0d6d57598c32d3e8d2f91cd2e6fa0eea9a88d944d7ae0c5bd466490fa50625",
+          "canonical_packet_bytes": 392432,
+          "serialized_packet_bytes": 392515,
+          "serialized_canonical_sha256": "607318d12dba85b0bec84ceaa849a2d1183f6ef88b066386e38e894bc8b5182d",
+          "changed_file_count": 8,
+          "max_file_bytes": 61641,
+          "offline_validation": "PASSED_OFFLINE_WITHOUT_PROVIDER"
+        },
+        {
+          "request_id": "core-s2-038258cedc44",
+          "base_sha": "6415f443120fe09d9ca857c475c8e93654b46fe7",
+          "head_sha": "038258cedc440f67248c814325558daad050d48d",
+          "contract_sha": "08e030a6053ac9638957119373797e0fbf2b10c2",
+          "paths_json": "[\"customs-clear/backend/app/services/exchange_rates.py\",\"customs-clear/backend/app/services/invoice_batch_service.py\",\"customs-clear/backend/app/services/normative_store.py\",\"customs-clear/backend/app/services/scenario_compare_service.py\",\"customs-clear/backend/tests/test_invoice_and_compare.py\",\"customs-clear/backend/tests/test_payment_fx_provenance_fail_closed.py\"]",
+          "official_sources_json": "[]",
+          "packet_binding_sha256": "db43de0d95ee0c235f0b913fdbeb0ff0b26edaddfaa51c0b08781904a8deaf44",
+          "canonical_packet_bytes": 321444,
+          "serialized_packet_bytes": 321527,
+          "serialized_canonical_sha256": "eb2fd7fd9c395e07c34454d3ecaaa5a26bf1b9a8001f9d1f525771f2a792f0b8",
+          "changed_file_count": 6,
+          "max_file_bytes": 94970,
+          "offline_validation": "PASSED_OFFLINE_WITHOUT_PROVIDER"
+        },
+        {
+          "request_id": "core-s3-10b791f98f25",
+          "base_sha": "038258cedc440f67248c814325558daad050d48d",
+          "head_sha": "10b791f98f2526ac409ea4dc9cca366c3103685a",
+          "contract_sha": "08e030a6053ac9638957119373797e0fbf2b10c2",
+          "paths_json": "[\"customs-clear/backend/app/services/data_refresh_service.py\",\"customs-clear/backend/app/services/regulatory_source_completeness.py\",\"customs-clear/backend/app/services/source_sync.py\",\"customs-clear/backend/app/services/sync_engine.py\",\"customs-clear/backend/app/services/sync_status_diagnostics.py\",\"customs-clear/backend/tests/test_data_refresh.py\",\"customs-clear/backend/tests/test_regulatory_source_completeness.py\",\"customs-clear/backend/tests/test_source_sync_index_currentness.py\",\"customs-clear/backend/tests/test_sync_status_diagnostics.py\",\"docs/ai-workflow/CUSTOMS_CORE_CONSOLIDATION_V1.md\"]",
+          "official_sources_json": "[]",
+          "packet_binding_sha256": "b786d33b9f3c25e6541a987c9100d1c8e52369509a4cbe8ecbdecd1a4e6e7d59",
+          "canonical_packet_bytes": 303907,
+          "serialized_packet_bytes": 303990,
+          "serialized_canonical_sha256": "9da6325329ce8815c214177becfbcb79b309f2b9dbb9ec5d743bb3e93018dae7",
+          "changed_file_count": 10,
+          "max_file_bytes": 27282,
+          "offline_validation": "PASSED_OFFLINE_WITHOUT_PROVIDER"
+        },
+        {
+          "request_id": "core-s4-6c124494319d",
+          "base_sha": "10b791f98f2526ac409ea4dc9cca366c3103685a",
+          "head_sha": "6c124494319d984bd1d3b567f1396a9e3b6b1401",
+          "contract_sha": "08e030a6053ac9638957119373797e0fbf2b10c2",
+          "paths_json": "[\"customs-clear/backend/app/schemas/payment_profile.py\",\"customs-clear/backend/app/services/calculation_history_service.py\",\"customs-clear/backend/app/services/export_service.py\",\"customs-clear/backend/app/services/payment_profile_builder.py\",\"customs-clear/backend/tests/test_unavailable_payment_exports.py\"]",
+          "official_sources_json": "[]",
+          "packet_binding_sha256": "e09102fc497fe3cf0a141dc190d61e0d194377f2914fead1a76c06a708a0c0c9",
+          "canonical_packet_bytes": 65312,
+          "serialized_packet_bytes": 65395,
+          "serialized_canonical_sha256": "9b0ae60377f09105bb3221fb13cc94d071a40400af84ff44907485a82bf977ff",
+          "changed_file_count": 5,
+          "max_file_bytes": 10102,
+          "offline_validation": "PASSED_OFFLINE_WITHOUT_PROVIDER"
+        },
+        {
+          "request_id": "core-s5-14e0ee8f034d",
+          "base_sha": "6c124494319d984bd1d3b567f1396a9e3b6b1401",
+          "head_sha": "14e0ee8f034d94ffc5831d87e076f4d693a5a524",
+          "contract_sha": "08e030a6053ac9638957119373797e0fbf2b10c2",
+          "paths_json": "[\"customs-clear/frontend/src/components/PaymentBreakdownCard.tsx\",\"customs-clear/frontend/src/components/calculator/CalculatorScenarioCompareSection.tsx\",\"customs-clear/frontend/src/pages/Calculator.tsx\",\"customs-clear/frontend/src/pages/Invoice.tsx\",\"customs-clear/frontend/src/types/api.types.ts\"]",
+          "official_sources_json": "[]",
+          "packet_binding_sha256": "9f1096cb66485f7591d9b5ded4734d4058993f0774d2c9d2423470c758a5521a",
+          "canonical_packet_bytes": 297322,
+          "serialized_packet_bytes": 297405,
+          "serialized_canonical_sha256": "f0b65a26909b5ef54cb7710a013e4914322d1b828e017707dd86d4a11425b052",
+          "changed_file_count": 5,
+          "max_file_bytes": 86899,
+          "offline_validation": "PASSED_OFFLINE_WITHOUT_PROVIDER"
+        }
+      ],
+      "product_runtime_requests": [
+        {
+          "request_id": "product-r1-8ccb50448187",
+          "base_sha": "03fe65ebba9a2751cb8e84c54c51aee4d32fce6b",
+          "head_sha": "8ccb50448187043fe0afc6853a97aba3b1aebef8",
+          "contract_sha": "08e030a6053ac9638957119373797e0fbf2b10c2",
+          "paths_json": "[\"customs-clear/backend/app/services/non_tariff_service.py\",\"customs-clear/backend/app/services/normative_requirements_block.py\",\"customs-clear/frontend/src/components/nonTariff/NormativeRequirementsBlock.tsx\",\"customs-clear/frontend/src/components/nonTariff/normativeBlockHelpers.ts\",\"customs-clear/frontend/src/components/tnved/PermitDocumentsBlock.tsx\",\"customs-clear/frontend/src/types/api.types.ts\"]",
+          "official_sources_json": "[]",
+          "packet_binding_sha256": "fb0e3b2c4ab2f6cedfdfcfeba5c06fd2faa5906d6dee3498600d2b088ab3e157",
+          "canonical_packet_bytes": 180640,
+          "serialized_packet_bytes": 180723,
+          "serialized_canonical_sha256": "f1362be93d24a497433134635f1b5c061b866d06660b1b665d74b985ee3b03bd",
+          "changed_file_count": 6,
+          "max_file_bytes": 25009,
+          "offline_validation": "PASSED_OFFLINE_WITHOUT_PROVIDER"
+        },
+        {
+          "request_id": "product-r2-4b4bcf344c8c",
+          "base_sha": "8ccb50448187043fe0afc6853a97aba3b1aebef8",
+          "head_sha": "4b4bcf344c8c9d53b3c35a5cff86e4708d3e6832",
+          "contract_sha": "08e030a6053ac9638957119373797e0fbf2b10c2",
+          "paths_json": "[\"customs-clear/backend/app/services/compliance_resolver.py\",\"customs-clear/backend/app/services/ntm_description_matching.py\",\"customs-clear/backend/app/services/ntm_engine_v2.py\",\"customs-clear/backend/app/services/ntm_layers.py\",\"customs-clear/backend/app/services/ntm_triggers.py\",\"customs-clear/backend/app/services/ntm_v2_import.py\",\"customs-clear/backend/app/services/ntm_v2_official_sgr_dataset_validation.py\",\"customs-clear/backend/app/services/regulatory_ai_classifier.py\",\"customs-clear/backend/data/official_sgr_rules.seed.json\"]",
+          "official_sources_json": "[]",
+          "packet_binding_sha256": "96e1bc1d8121a469ab64ea6e1b0beb515028b30210394fe2c79c0f7d0e27f6fc",
+          "canonical_packet_bytes": 400856,
+          "serialized_packet_bytes": 400939,
+          "serialized_canonical_sha256": "225ea93b3bf02d24b0cbc86f9ac3a4d07edbda333ca9debc4a89b129badf2f97",
+          "changed_file_count": 9,
+          "max_file_bytes": 55781,
+          "offline_validation": "PASSED_OFFLINE_WITHOUT_PROVIDER"
+        },
+        {
+          "request_id": "product-r3-32eb8fec0bb3",
+          "base_sha": "4b4bcf344c8c9d53b3c35a5cff86e4708d3e6832",
+          "head_sha": "32eb8fec0bb3db9951304b5df02ef7b2ccf3e710",
+          "contract_sha": "08e030a6053ac9638957119373797e0fbf2b10c2",
+          "paths_json": "[\"customs-clear/backend/app/services/embedding_service.py\",\"customs-clear/backend/app/services/normative_store.py\",\"customs-clear/backend/app/services/tnved_code_card.py\",\"customs-clear/backend/app/services/tnved_fts.py\"]",
+          "official_sources_json": "[]",
+          "packet_binding_sha256": "e0929530949812a361e96d87a07f3b0fcad465405b14d2ba9b0fc941a181e746",
+          "canonical_packet_bytes": 289532,
+          "serialized_packet_bytes": 289615,
+          "serialized_canonical_sha256": "16082ba42add42331da87c9fe743fe5121f6542ff8b083550c1ff07764708161",
+          "changed_file_count": 4,
+          "max_file_bytes": 97334,
+          "offline_validation": "PASSED_OFFLINE_WITHOUT_PROVIDER"
+        },
+        {
+          "request_id": "product-r4-51ee918560ca",
+          "base_sha": "32eb8fec0bb3db9951304b5df02ef7b2ccf3e710",
+          "head_sha": "51ee918560ca2b5da0c10e7ffe7bdca8ab0395c9",
+          "contract_sha": "08e030a6053ac9638957119373797e0fbf2b10c2",
+          "paths_json": "[\"customs-clear/backend/app/services/grounded_assistant.py\"]",
+          "official_sources_json": "[]",
+          "packet_binding_sha256": "c4d384e172772a6feba5d8667572da8bcc31e34a01414545d3c0c333afa4321f",
+          "canonical_packet_bytes": 121106,
+          "serialized_packet_bytes": 121189,
+          "serialized_canonical_sha256": "e709b8d06b534b7fbeb1bc1fd0aba049087d21dcc77a0e651c21f2e632bdff6e",
+          "changed_file_count": 1,
+          "max_file_bytes": 54601,
+          "offline_validation": "PASSED_OFFLINE_WITHOUT_PROVIDER"
+        },
+        {
+          "request_id": "product-r5-d217dd8d8910",
+          "base_sha": "51ee918560ca2b5da0c10e7ffe7bdca8ab0395c9",
+          "head_sha": "d217dd8d89107263b904fd1777f0dc17809fd9e5",
+          "contract_sha": "08e030a6053ac9638957119373797e0fbf2b10c2",
+          "paths_json": "[\"customs-clear/backend/app/services/assistant_chat.py\",\"customs-clear/backend/app/services/assistant_orchestrator.py\",\"customs-clear/backend/app/services/claude_service.py\"]",
+          "official_sources_json": "[]",
+          "packet_binding_sha256": "54734705b84d6421b8863d8be7a7dd44292bb1a368e3ea683137d96c2db9fabe",
+          "canonical_packet_bytes": 119406,
+          "serialized_packet_bytes": 119489,
+          "serialized_canonical_sha256": "88b186769ddd20ea10706d9886b6532d5a7e5712df4ea684c2e1f16cbda02a79",
+          "changed_file_count": 3,
+          "max_file_bytes": 20260,
+          "offline_validation": "PASSED_OFFLINE_WITHOUT_PROVIDER"
+        }
+      ],
+      "product_repair_request": {
+        "request_id": "product-repair-e39e19787bd9",
+        "base_sha": "233ed6a64b0e75175358f8cdf0e7bcc71191b67b",
+        "head_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
+        "contract_sha": "08e030a6053ac9638957119373797e0fbf2b10c2",
+        "paths_json": "[\"customs-clear/backend/app/services/non_tariff_service.py\",\"customs-clear/backend/app/services/ntm_description_matching.py\",\"customs-clear/backend/app/services/ntm_v2_official_sgr_import.py\",\"customs-clear/backend/tests/test_ntm_child_product_markers.py\"]",
+        "official_sources_json": "[]",
+        "packet_binding_sha256": "9b2431878f1edd7a327037ed8b736d244e66ac2f06a85aad0fe925441826921e",
+        "canonical_packet_bytes": 120437,
+        "serialized_packet_bytes": 120520,
+        "serialized_canonical_sha256": "a4793541f87d0d52291e0094ec58640aaba68d2cd2d5b3bb645d0b68e12da7ab",
+        "changed_file_count": 4,
+        "max_file_bytes": 21194,
+        "offline_validation": "PASSED_OFFLINE_WITHOUT_PROVIDER"
+      },
+      "excluded_non_runtime": [
+        {
+          "head_sha": "03fe65ebba9a2751cb8e84c54c51aee4d32fce6b",
+          "policy": "A5_AND_EXACT_HEAD_CI_ONLY",
+          "offline_validation": "BLOCKED_EXPECTED_NON_RUNTIME",
+          "reason": "Audit file exceeds byte limit; no truncation allowed",
+          "largest_blob": {
+            "bytes": 237409,
+            "path": "customs-clear/frontend/package-lock.json"
+          }
+        },
+        {
+          "head_sha": "233ed6a64b0e75175358f8cdf0e7bcc71191b67b",
+          "policy": "A5_AND_EXACT_HEAD_CI_ONLY",
+          "offline_validation": "PASSED_OFFLINE_WITHOUT_PROVIDER",
+          "packet_binding_sha256": "0d30a490aeedd7ef3680bba9ddfc077053e1292704acb043539dafdbc0e11c47",
+          "canonical_packet_bytes": 269442
+        }
+      ],
+      "dispatch_gate": {
+        "required_order": [
+          246,
+          247
+        ],
+        "owner_approval_required": true,
+        "owner_approval_present": false,
+        "provider_call_performed": false,
+        "rule": "Do not dispatch until exact PR246 then PR247 are owner-authorized and merged; rebuild and compare every packet before provider call."
+      },
+      "checks": {
+        "dispatchable_request_count": 11,
+        "packet_rebuild_and_validate_passed": 11,
+        "candidate_heads_changed": false,
+        "tests_weakened": false,
+        "protected_action_performed": false
+      }
     }
   }
 }
