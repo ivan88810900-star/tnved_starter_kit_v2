@@ -774,7 +774,7 @@
     }
   ],
   "max_concurrent_subagents": 3,
-  "revision": 612,
+  "revision": 613,
   "runs": [
     {
       "head_sha": null,
@@ -4151,7 +4151,7 @@
       }
     }
   ],
-  "updated_at": "2026-10-01T00:08:15.953Z",
+  "updated_at": "2026-10-01T00:10:01.683Z",
   "max_concurrent_feature_workers": 2,
   "active_role_model": {
     "effective_at": "2026-09-30T12:58:10.633Z",
@@ -4294,7 +4294,7 @@
       "owner_gate": "Merge exact HEAD to main/protected requires separate explicit owner permission; A0 did not merge."
     },
     "role_model_v2": {
-      "status": "AUTHOR_AND_CI_PASS_A5_REVERIFYING_AFTER_STATE_LINEAGE_FIX",
+      "status": "READY_FOR_OWNER_APPROVAL",
       "pr": 243,
       "branch": "agent/orchestration-role-model-v2",
       "base_sha": "08e030a6053ac9638957119373797e0fbf2b10c2",
@@ -4321,12 +4321,32 @@
         "exact-head GitHub CI",
         "A0 validation"
       ],
-      "owner_gate": "No main/protected merge is authorized.",
+      "owner_gate": "Merge to main/protected requires explicit owner permission; A0 did not merge.",
       "ci": {
         "status": "PASSED",
         "run_id": 36793845988,
         "exact_head": true
-      }
+      },
+      "a5": {
+        "status": "PASSED",
+        "session_id": "/root/a5_role_model",
+        "head_sha": "6ee3843c7a03276132cfca83981d68c4afa9cd81",
+        "reviewed_state_revision": 612,
+        "reviewed_state_commit": "1a85cdc372ffc2c88f8eb6b7626a2a5dc47d03e2",
+        "focused": "42/42 PASS",
+        "required_verify": "121/121 PASS",
+        "snapshot": "PASS",
+        "adversarial_paths": "PASS",
+        "findings": []
+      },
+      "a0_validation": {
+        "status": "PASSED",
+        "validated_at": "2026-10-01T00:10:01.683Z",
+        "validator": "A0",
+        "evidence": "Reviewed exact four-file diff, exact-path test-fixture exemption, generic and near-miss sensitive-path rejection, full verifier, exact-head CI, and corrected authoritative candidate tree/diff lineage."
+      },
+      "state_revision": 613,
+      "evidence_invalidation": "Any new PR HEAD or authoritative state revision affecting these bindings requires fresh A5/A0 validation."
     }
   },
   "pr_hygiene": {
@@ -4632,8 +4652,11 @@
       "published_at": "2026-09-30T23:59:42.454Z",
       "pr": 243,
       "head_sha": "6ee3843c7a03276132cfca83981d68c4afa9cd81",
-      "state": "DRAFT_A5_CI_PENDING",
-      "reason": "Controller now accepts the two normalized active developer roles; historical role parsing remains available for archived evidence."
+      "state": "READY_FOR_OWNER_APPROVAL",
+      "reason": "Controller now accepts the two normalized active developer roles; historical role parsing remains available for archived evidence.",
+      "a5_status": "PASSED",
+      "ci_status": "PASSED",
+      "state_revision": 613
     }
   },
   "a6_candidate_preflight": {
