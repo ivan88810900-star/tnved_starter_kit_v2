@@ -774,7 +774,7 @@
     }
   ],
   "max_concurrent_subagents": 3,
-  "revision": 626,
+  "revision": 627,
   "runs": [
     {
       "head_sha": null,
@@ -3508,8 +3508,12 @@
       },
       "external_audit": {
         "status": "BLOCKED_PACKET_LIMIT_AND_INFRA_GATE",
-        "requires_pr": 237,
-        "reason": "Current exact candidate cannot be sent as a complete A6 packet within fail-closed bounds; post-verify admission also remains unavailable until PR #237 is merged.",
+        "requires_pr": 247,
+        "requires_pr_chain": [
+          246,
+          247
+        ],
+        "reason": "The repacked exact candidate has bounded complete slices, but subsequent live A6 remains unavailable until the owner-authorized protected successor chain PR246 then PR247 is merged.",
         "preflight": {
           "checked_at": "2026-09-30T19:58:41.559Z",
           "base_sha": "08e030a6053ac9638957119373797e0fbf2b10c2",
@@ -3563,9 +3567,9 @@
         }
       },
       "updated_at": "2026-09-30T19:58:41.559Z",
-      "phase": "REPACKAGING_FOR_A6",
-      "quality_gate": "author focused+broad tests -> fresh independent A5 -> live A6 after PR #237 -> A0 validation -> exact-head CI -> non-main integration branch",
-      "ownership_note": "A-CORE assigned to rebuild equivalent #241 logic on a fresh candidate branch with complete <=600k A6-auditable logical commits; current #241 remains immutable evidence.",
+      "phase": "A6_READY_BLOCKED_PROTECTED_CHAIN",
+      "quality_gate": "author focused+broad tests -> fresh independent A5 -> owner-authorized PR246 then PR247 -> fresh live A6 -> A0 validation -> non-main integration branch",
+      "ownership_note": "A-CORE owns the published coherent #244 candidate; #241 remains immutable source evidence and is not separately mergeable.",
       "id": "CUSTOMS-CORE-V1",
       "owner": "A-CORE",
       "branch": "agent/core-consolidation-v1",
@@ -3643,20 +3647,22 @@
         "candidate_pr_url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/244",
         "candidate_pr_base": "integration/customs-core-v1",
         "candidate_pr_draft": true,
-        "candidate_exact_head_ci_status": "MISSING_NO_ELIGIBLE_WORKFLOW"
+        "candidate_exact_head_ci_status": "PASSED",
+        "candidate_exact_head_ci_run_id": 36853205641,
+        "candidate_ci_alias_ref": "agent/core-a6-repack-v1"
       },
       "acceptance_criteria": [
         "No unverified rate, FX value, trade-remedy measure, effective date or unit may produce final payable.",
         "Duty, VAT, excise, preferences, specific/combined units and trade remedies preserve effective-date history and deterministic rounding.",
         "Official-source provenance, current editions/amendments, freshness and update health are explicit and fail closed.",
         "Dependency/conflict/supersession matrix selects only current logic and records mappings before any stale PR closure.",
-        "One coherent candidate receives author focused+broad tests, fresh A5, live A6 after PR #237, A0 validation and exact-head CI."
+        "One coherent candidate receives author focused+broad tests, fresh A5, fresh live A6 after the owner-authorized PR246 then PR247 chain, A0 validation and exact-head CI."
       ],
       "required_checks": [
         "Backend customs/payment regression",
         "official-source ingestion/freshness regression",
         "fresh independent A5",
-        "live A6 after PR #237",
+        "live A6 after owner-authorized PR246 then PR247",
         "A0 validation",
         "exact-head CI"
       ],
@@ -3669,7 +3675,7 @@
         "compile_diff_check": "passed"
       },
       "matrix": {
-        "recommendation": "retain PR #241; no cherry-pick or new candidate",
+        "recommendation": "use coherent candidate PR #244; retain PR #241 only as immutable source evidence",
         "selected": [
           222,
           223,
@@ -3752,11 +3758,11 @@
         ],
         "coverage_claim": "All slices pass size/file limits. No A6 PASS is claimed for first three until the scanner fix is gated and replayed.",
         "gates_pending": [
-          "PR236 merge",
-          "PR237 merge for post-verify admission",
+          "owner-authorized PR246 merge",
+          "owner-authorized PR247 merge after exact PR246",
           "live A6 per slice",
           "A0 validation",
-          "exact-head CI"
+          "non-main integration"
         ]
       },
       "a5": {
@@ -3844,8 +3850,12 @@
       },
       "external_audit": {
         "status": "BLOCKED_PACKET_LIMIT_AND_INFRA_GATE",
-        "requires_pr": 237,
-        "reason": "Current exact candidate cannot be sent as a complete A6 packet within fail-closed bounds; post-verify admission also remains unavailable until PR #237 is merged.",
+        "requires_pr": 247,
+        "requires_pr_chain": [
+          246,
+          247
+        ],
+        "reason": "The repacked exact candidate has bounded runtime slices and a bounded repair delta, but subsequent live A6 remains unavailable until the owner-authorized protected successor chain PR246 then PR247 is merged.",
         "preflight": {
           "checked_at": "2026-09-30T19:58:41.559Z",
           "base_sha": "08e030a6053ac9638957119373797e0fbf2b10c2",
@@ -3894,9 +3904,9 @@
         }
       },
       "updated_at": "2026-09-30T19:58:41.559Z",
-      "phase": "REPACKAGING_FOR_A6",
-      "quality_gate": "author focused+broad tests -> fresh independent A5 -> live A6 after PR #237 -> A0 validation -> exact-head CI -> non-main integration branch",
-      "ownership_note": "A-PRODUCT assigned to rebuild equivalent #242 logic on a fresh candidate branch with A6-auditable high-risk commits and an explicit honest boundary for the oversized lockfile; current #242 remains immutable evidence.",
+      "phase": "A6_READY_BLOCKED_PROTECTED_CHAIN",
+      "quality_gate": "author focused+broad tests -> fresh independent A5 -> owner-authorized PR246 then PR247 -> fresh live A6 -> A0 validation -> non-main integration branch",
+      "ownership_note": "A-PRODUCT owns the published coherent #245 candidate; #242 remains immutable source evidence and is not separately mergeable.",
       "id": "COMPLIANCE-AI-V1",
       "owner": "A-PRODUCT",
       "branch": "agent/product-consolidation-v1",
@@ -3977,7 +3987,9 @@
         "candidate_pr_url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/245",
         "candidate_pr_base": "integration/compliance-ai-v1",
         "candidate_pr_draft": true,
-        "candidate_exact_head_ci_status": "MISSING_NO_ELIGIBLE_WORKFLOW"
+        "candidate_exact_head_ci_status": "PASSED",
+        "candidate_exact_head_ci_run_id": 36853210034,
+        "candidate_ci_alias_ref": "agent/product-a6-repack-v1"
       },
       "acceptance_criteria": [
         "NTM false positives fail closed and completeness/freshness is never inferred or invented.",
@@ -3985,13 +3997,13 @@
         "Canonical code, classification, semantic search and LLM/heuristic output never become legal fact without grounded evidence.",
         "Assistant and UI preserve citations, confidence boundaries, source freshness and legal caveats.",
         "Dependency/conflict/supersession matrix selects only current logic and records mappings before any stale PR closure.",
-        "One coherent candidate receives author focused+broad tests, fresh A5, live A6 after PR #237, A0 validation and exact-head CI."
+        "One coherent candidate receives author focused+broad tests, fresh A5, fresh live A6 after the owner-authorized PR246 then PR247 chain, A0 validation and exact-head CI."
       ],
       "required_checks": [
         "Backend NTM/classification/assistant regression",
         "Frontend tests, types and build",
         "fresh independent A5",
-        "live A6 after PR #237",
+        "live A6 after owner-authorized PR246 then PR247",
         "A0 validation",
         "exact-head CI"
       ],
@@ -4004,7 +4016,7 @@
         "compile_diff_check": "passed"
       },
       "matrix": {
-        "recommendation": "retain PR #242; no cherry-pick or new candidate",
+        "recommendation": "use coherent candidate PR #245; retain PR #242 only as immutable source evidence",
         "superseded_intact": [
           207,
           224,
@@ -4086,16 +4098,17 @@
         ],
         "coverage_claim": "Only runtime slices are proposed for live A6. Non-runtime slices are not claimed A6-covered.",
         "gates_pending": [
-          "PR236 merge",
-          "PR237 merge for post-verify admission",
+          "owner-authorized PR246 merge",
+          "owner-authorized PR247 merge after exact PR246",
           "live A6 per runtime slice plus repair delta",
           "A0 validation",
-          "exact-head CI"
+          "non-main integration"
         ],
         "blocker": {
           "id": "A5-PRODUCT-CHILD-NEGATION-001",
           "summary": "Negated child-description phrases 'недетский крем' and 'не детский крем' are classified as child products and promoted to definite official SGR applicability in user-visible advisory UI.",
-          "required_fix": "Unicode/token-aware negation boundary plus service and official-SGR regressions; then fresh A5 on new exact HEAD."
+          "required_fix": "Unicode/token-aware negation boundary plus service and official-SGR regressions; then fresh A5 on new exact HEAD.",
+          "status": "FIXED_AND_A5_PASSED_ON_CURRENT_HEAD"
         },
         "repair": {
           "parent_sha": "233ed6a64b0e75175358f8cdf0e7bcc71191b67b",
@@ -5386,6 +5399,49 @@
         "base": "integration/compliance-ai-v1"
       },
       "candidate_heads_changed": false,
+      "protected_action_performed": false
+    },
+    "candidate_provenance_rev627": {
+      "checked_at": "2026-10-01T17:54:00Z",
+      "base_sha": "08e030a6053ac9638957119373797e0fbf2b10c2",
+      "core": {
+        "pr": 244,
+        "head_sha": "14e0ee8f034d94ffc5831d87e076f4d693a5a524",
+        "tree_sha": "fbb3bf2c88aa75a9c037a43547da88185dba6829",
+        "actual_diff_file_count": 34,
+        "recorded_diff_file_count": 34,
+        "diff_manifest_exact": true,
+        "active_owned_file_count": 33,
+        "excluded_shared_file": "customs-clear/frontend/src/types/api.types.ts",
+        "exact_head_ci_run_id": 36853205641
+      },
+      "product": {
+        "pr": 245,
+        "head_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
+        "tree_sha": "f31e36b3b9c3998f2a63440f58a756270f28d23e",
+        "actual_diff_file_count": 43,
+        "recorded_diff_file_count": 43,
+        "diff_manifest_exact": true,
+        "active_owned_file_count": 42,
+        "excluded_shared_file": "customs-clear/backend/app/services/normative_store.py",
+        "exact_head_ci_run_id": 36853210034
+      },
+      "actual_cross_candidate_files": [
+        "customs-clear/backend/app/services/normative_store.py",
+        "customs-clear/frontend/src/types/api.types.ts"
+      ],
+      "active_ownership_intersection": [],
+      "shared_boundary_assignment": {
+        "customs-clear/backend/app/services/normative_store.py": "A-CORE",
+        "customs-clear/frontend/src/types/api.types.ts": "A-PRODUCT"
+      },
+      "source_pr_mapping": {
+        "unique_expected": 29,
+        "unique_mapped": 29,
+        "missing": []
+      },
+      "stale_active_gate_metadata_normalized": true,
+      "old_approvals_transferred": false,
       "protected_action_performed": false
     }
   }
