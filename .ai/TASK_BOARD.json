@@ -774,7 +774,7 @@
     }
   ],
   "max_concurrent_subagents": 3,
-  "revision": 614,
+  "revision": 615,
   "runs": [
     {
       "head_sha": null,
@@ -3638,7 +3638,12 @@
           "customs-clear/frontend/src/pages/Invoice.tsx",
           "customs-clear/frontend/src/types/api.types.ts",
           "docs/ai-workflow/CUSTOMS_CORE_CONSOLIDATION_V1.md"
-        ]
+        ],
+        "candidate_pr": 244,
+        "candidate_pr_url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/244",
+        "candidate_pr_base": "integration/customs-core-v1",
+        "candidate_pr_draft": true,
+        "candidate_exact_head_ci_status": "MISSING_NO_ELIGIBLE_WORKFLOW"
       },
       "acceptance_criteria": [
         "No unverified rate, FX value, trade-remedy measure, effective date or unit may produce final payable.",
@@ -3967,7 +3972,12 @@
           "customs-clear/frontend/src/test/setup.ts",
           "customs-clear/frontend/src/types/api.types.ts",
           "customs-clear/frontend/vitest.config.ts"
-        ]
+        ],
+        "candidate_pr": 245,
+        "candidate_pr_url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/245",
+        "candidate_pr_base": "integration/compliance-ai-v1",
+        "candidate_pr_draft": true,
+        "candidate_exact_head_ci_status": "MISSING_NO_ELIGIBLE_WORKFLOW"
       },
       "acceptance_criteria": [
         "NTM false positives fail closed and completeness/freshness is never inferred or invented.",
@@ -4151,7 +4161,7 @@
       }
     }
   ],
-  "updated_at": "2026-10-01T00:52:36.777Z",
+  "updated_at": "2026-10-01T10:52:00.000Z",
   "max_concurrent_feature_workers": 2,
   "active_role_model": {
     "effective_at": "2026-09-30T12:58:10.633Z",
@@ -4689,6 +4699,30 @@
       ],
       "code_or_head_changed": false,
       "remaining_action": "explicit owner-authorized merge to main"
+    },
+    "final_integration_prs_v1": {
+      "published_at": "2026-10-01T10:52:00.000Z",
+      "state": "DRAFT_GATED",
+      "receipts": [
+        {
+          "pr": 244,
+          "head_sha": "14e0ee8f034d94ffc5831d87e076f4d693a5a524",
+          "base": "integration/customs-core-v1",
+          "draft": true,
+          "mergeable": true,
+          "exact_head_ci_status": "MISSING_NO_ELIGIBLE_WORKFLOW"
+        },
+        {
+          "pr": 245,
+          "head_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
+          "base": "integration/compliance-ai-v1",
+          "draft": true,
+          "mergeable": true,
+          "exact_head_ci_status": "MISSING_NO_ELIGIBLE_WORKFLOW"
+        }
+      ],
+      "rule": "Draft PRs provide the two coherent integration review surfaces. Do not merge until live A6, A0 validation and exact-head CI pass on the unchanged candidate heads.",
+      "ci_observation": "No workflow runs were created for either exact candidate commit because current default-branch workflow triggers do not include pull requests targeting the two integration branches. Absence is recorded as MISSING, not PASS."
     }
   },
   "a6_candidate_preflight": {
@@ -4741,7 +4775,10 @@
         "bytes": 120520,
         "sha256": "706912165fb32d9d46b1d8ec48787ec4d93314b7a47d49360ca094cd593fd7eb",
         "status": "PASS_VALIDATED"
-      }
+      },
+      "integration_pr": 245,
+      "integration_pr_draft": true,
+      "exact_head_ci_status": "MISSING_NO_ELIGIBLE_WORKFLOW"
     },
     "core_candidate": {
       "branch": "candidate/core-a6-repack-v1",
@@ -4767,7 +4804,10 @@
       "a5_limitations": [
         "Full backend suite stopped by runtime security when an unrelated test attempted outbound api.proxyapi.ru; no bypass/retry and no full-suite PASS claim.",
         "Frontend build/typecheck unavailable in isolated review tree without installed dependencies; nullable paths statically reviewed."
-      ]
+      ],
+      "integration_pr": 244,
+      "integration_pr_draft": true,
+      "exact_head_ci_status": "MISSING_NO_ELIGIBLE_WORKFLOW"
     }
   },
   "state_integrity_receipts": {
@@ -4799,6 +4839,21 @@
         "delta_changed_file_count": 4
       },
       "reason": "Fresh A5 found a remaining false tree-identity claim; replaced with explicit source and candidate lineage."
+    },
+    "candidate_integration_prs_rev615": {
+      "recorded_at": "2026-10-01T10:52:00.000Z",
+      "core": {
+        "pr": 244,
+        "head_sha": "14e0ee8f034d94ffc5831d87e076f4d693a5a524",
+        "base": "integration/customs-core-v1"
+      },
+      "product": {
+        "pr": 245,
+        "head_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
+        "base": "integration/compliance-ai-v1"
+      },
+      "candidate_heads_changed": false,
+      "protected_action_performed": false
     }
   }
 }
