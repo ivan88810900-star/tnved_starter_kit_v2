@@ -774,7 +774,7 @@
     }
   ],
   "max_concurrent_subagents": 3,
-  "revision": 613,
+  "revision": 614,
   "runs": [
     {
       "head_sha": null,
@@ -4151,7 +4151,7 @@
       }
     }
   ],
-  "updated_at": "2026-10-01T00:10:01.683Z",
+  "updated_at": "2026-10-01T00:52:36.777Z",
   "max_concurrent_feature_workers": 2,
   "active_role_model": {
     "effective_at": "2026-09-30T12:58:10.633Z",
@@ -4208,7 +4208,7 @@
       "base_sha": "08e030a6053ac9638957119373797e0fbf2b10c2",
       "head_sha": "f0183c1e0f4e1e5ed60fa93a4633e841e2ae8d9f",
       "mergeable": true,
-      "draft": true,
+      "draft": false,
       "a5": {
         "status": "PASSED",
         "session_id": "/root/a5_237_fresh",
@@ -4222,14 +4222,16 @@
         "run_id": 36415700790,
         "job": "offline-safety"
       },
-      "owner_gate": "Merge to main/protected requires one explicit owner permission; A0 did not merge.",
+      "owner_gate": "Only merge to main/protected remains; explicit owner permission required. A0 did not merge.",
       "post_merge_effect": "Only after merge may subsequent high-risk A6 audits be claimed available.",
       "a0_validation": {
         "status": "PASSED",
         "validated_at": "2026-09-30T13:11:55.317Z",
         "validator": "A0",
         "evidence": "Reviewed full issue-comment admission context and adversarial tests on exact HEAD. Strict bool permits false/true only; pending request still requires exact false dispatched/consumed, validated packet, non-empty scope, authoritative state paths, exact bindings, owner-only command, trusted default-branch checkout, active lawful lease and generation-scoped dedupe."
-      }
+      },
+      "ready_for_review": true,
+      "ready_transition_at": "2026-10-01T00:52:36.777Z"
     },
     "pr236": {
       "status": "READY_FOR_OWNER_APPROVAL",
@@ -4237,7 +4239,7 @@
       "base_sha": "08e030a6053ac9638957119373797e0fbf2b10c2",
       "head_sha": "825f4aaaff182c993045d28ef4d17e0e3aa3834e",
       "mergeable": true,
-      "draft": true,
+      "draft": false,
       "changed_files": [
         "tools/tariff_agents/audit.py",
         "tests/agent_orchestration/test_audit.py"
@@ -4291,7 +4293,9 @@
         "disposition": "Scanner fix is independently gated and ready; PR237 remains separately required before subsequent live A6 admission."
       },
       "evidence_invalidation": "Any new HEAD requires fresh A5, A0 validation and exact-head CI.",
-      "owner_gate": "Merge exact HEAD to main/protected requires separate explicit owner permission; A0 did not merge."
+      "owner_gate": "Only merge to main/protected remains; explicit owner permission required. A0 did not merge.",
+      "ready_for_review": true,
+      "ready_transition_at": "2026-10-01T00:52:36.777Z"
     },
     "role_model_v2": {
       "status": "READY_FOR_OWNER_APPROVAL",
@@ -4299,7 +4303,7 @@
       "branch": "agent/orchestration-role-model-v2",
       "base_sha": "08e030a6053ac9638957119373797e0fbf2b10c2",
       "head_sha": "6ee3843c7a03276132cfca83981d68c4afa9cd81",
-      "draft": true,
+      "draft": false,
       "changed_files": [
         "tools/tariff_agents/control.py",
         "tools/tariff_agents/__main__.py",
@@ -4321,7 +4325,7 @@
         "exact-head GitHub CI",
         "A0 validation"
       ],
-      "owner_gate": "Merge to main/protected requires explicit owner permission; A0 did not merge.",
+      "owner_gate": "Only merge to main/protected remains; explicit owner permission required. A0 did not merge.",
       "ci": {
         "status": "PASSED",
         "run_id": 36793845988,
@@ -4346,7 +4350,9 @@
         "evidence": "Reviewed exact four-file diff, exact-path test-fixture exemption, generic and near-miss sensitive-path rejection, full verifier, exact-head CI, and corrected authoritative candidate tree/diff lineage."
       },
       "state_revision": 613,
-      "evidence_invalidation": "Any new PR HEAD or authoritative state revision affecting these bindings requires fresh A5/A0 validation."
+      "evidence_invalidation": "Any new PR HEAD or authoritative state revision affecting these bindings requires fresh A5/A0 validation.",
+      "ready_for_review": true,
+      "ready_transition_at": "2026-10-01T00:52:36.777Z"
     }
   },
   "pr_hygiene": {
@@ -4374,7 +4380,7 @@
       "state": "VERIFIED",
       "pr": 237,
       "head_sha": "f0183c1e0f4e1e5ed60fa93a4633e841e2ae8d9f",
-      "body_status": "fresh A5, exact-head CI and A0 validation published; draft retained",
+      "body_status": "fresh A5, exact-head CI and A0 validation published; ready-for-review",
       "owner_gate": "explicit permission to mark ready and merge exact HEAD into main",
       "subsequent_a6_available": false
     },
@@ -4652,11 +4658,37 @@
       "published_at": "2026-09-30T23:59:42.454Z",
       "pr": 243,
       "head_sha": "6ee3843c7a03276132cfca83981d68c4afa9cd81",
-      "state": "READY_FOR_OWNER_APPROVAL",
+      "state": "READY_FOR_OWNER_MERGE",
       "reason": "Controller now accepts the two normalized active developer roles; historical role parsing remains available for archived evidence.",
       "a5_status": "PASSED",
       "ci_status": "PASSED",
       "state_revision": 613
+    },
+    "infra_ready_transitions": {
+      "published_at": "2026-10-01T00:52:36.777Z",
+      "state": "VERIFIED",
+      "receipts": [
+        {
+          "pr": 236,
+          "head_sha": "825f4aaaff182c993045d28ef4d17e0e3aa3834e",
+          "draft": false,
+          "mergeable": true
+        },
+        {
+          "pr": 237,
+          "head_sha": "f0183c1e0f4e1e5ed60fa93a4633e841e2ae8d9f",
+          "draft": false,
+          "mergeable": true
+        },
+        {
+          "pr": 243,
+          "head_sha": "6ee3843c7a03276132cfca83981d68c4afa9cd81",
+          "draft": false,
+          "mergeable": true
+        }
+      ],
+      "code_or_head_changed": false,
+      "remaining_action": "explicit owner-authorized merge to main"
     }
   },
   "a6_candidate_preflight": {
