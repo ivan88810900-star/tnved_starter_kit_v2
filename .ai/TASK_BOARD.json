@@ -774,7 +774,7 @@
     }
   ],
   "max_concurrent_subagents": 3,
-  "revision": 630,
+  "revision": 631,
   "runs": [
     {
       "head_sha": null,
@@ -4188,7 +4188,7 @@
       }
     }
   ],
-  "updated_at": "2026-10-01T20:49:00Z",
+  "updated_at": "2026-10-01T21:48:00Z",
   "max_concurrent_feature_workers": 2,
   "active_role_model": {
     "effective_at": "2026-09-30T12:58:10.633Z",
@@ -4426,6 +4426,8 @@
       "ready_for_review": true,
       "ready_transition_at": "2026-10-01T13:54:38Z",
       "mergeable": true,
+      "body_status": "CURRENT_READY_FOR_OWNER_APPROVAL",
+      "body_updated_at": "2026-10-01T21:47:07Z",
       "changed_files": [
         "tests/agent_orchestration/test_audit.py",
         "tools/tariff_agents/audit.py"
@@ -4610,6 +4612,8 @@
       "ready_for_review": true,
       "ready_transition_at": "2026-10-01T13:54:37Z",
       "mergeable": true,
+      "body_status": "CURRENT_READY_FOR_OWNER_APPROVAL",
+      "body_updated_at": "2026-10-01T21:47:06Z",
       "changed_files": [
         "tests/agent_orchestration/test_audit_bridge.py",
         "tools/tariff_agents/audit_bridge.py"
@@ -5722,6 +5726,36 @@
       "owner_approval_present": false,
       "candidate_heads_changed": false,
       "tests_weakened": false,
+      "protected_action_performed": false
+    },
+    "protected_chain_pr_bodies_rev631": {
+      "checked_at": "2026-10-01T21:48:00Z",
+      "pr246": {
+        "head_sha": "dc0397c7815e092ad8d3bd41d0d98af197212e1e",
+        "base_sha": "4a7f78e2835d036be3f1137de1786615d31dcedd",
+        "draft": false,
+        "mergeable": true,
+        "body_status": "CURRENT_READY_FOR_OWNER_APPROVAL",
+        "ci_run_id": 36862783125,
+        "a5": "PASSED",
+        "a0": "PASSED"
+      },
+      "pr247": {
+        "head_sha": "c1f04847c2a40b01a3e1f0759d9e97e309cc2e3b",
+        "base_head_sha": "dc0397c7815e092ad8d3bd41d0d98af197212e1e",
+        "draft": false,
+        "mergeable": true,
+        "body_status": "CURRENT_READY_FOR_OWNER_APPROVAL",
+        "ci_run_id": 36865520378,
+        "a5": "PASSED",
+        "a0": "PASSED"
+      },
+      "required_order": [
+        246,
+        247
+      ],
+      "owner_approval_present": false,
+      "merge_performed": false,
       "protected_action_performed": false
     }
   }
