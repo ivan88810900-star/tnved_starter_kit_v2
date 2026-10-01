@@ -774,7 +774,7 @@
     }
   ],
   "max_concurrent_subagents": 3,
-  "revision": 629,
+  "revision": 630,
   "runs": [
     {
       "head_sha": null,
@@ -3707,7 +3707,7 @@
         "closure_rule": "Close source PRs only after mapped gated integration preserves behavior and evidence."
       },
       "a6_repack": {
-        "status": "A5_PASSED_BLOCKED_INFRA_MERGES",
+        "status": "A6_REQUESTS_PREPARED_OFFLINE_BLOCKED_PROTECTED_CHAIN",
         "published_at": "2026-09-30T21:07:55.505Z",
         "branch": "candidate/core-a6-repack-v1",
         "base_sha": "08e030a6053ac9638957119373797e0fbf2b10c2",
@@ -3726,7 +3726,7 @@
             "files": 8,
             "packet_bytes": 392432,
             "max_file_bytes": 61641,
-            "build_packet": "BLOCKED_BY_DECORATOR_FALSE_POSITIVE"
+            "build_packet": "PASSED_OFFLINE_WITH_PR246_SCANNER_NOT_DISPATCHED"
           },
           {
             "sha": "038258ce",
@@ -3734,7 +3734,7 @@
             "files": 6,
             "packet_bytes": 321444,
             "max_file_bytes": 94970,
-            "build_packet": "BLOCKED_BY_DECORATOR_FALSE_POSITIVE"
+            "build_packet": "PASSED_OFFLINE_WITH_PR246_SCANNER_NOT_DISPATCHED"
           },
           {
             "sha": "10b791f9",
@@ -3742,7 +3742,7 @@
             "files": 10,
             "packet_bytes": 303907,
             "max_file_bytes": 27282,
-            "build_packet": "BLOCKED_BY_DECORATOR_FALSE_POSITIVE"
+            "build_packet": "PASSED_OFFLINE_WITH_PR246_SCANNER_NOT_DISPATCHED"
           },
           {
             "sha": "6c124494",
@@ -3750,7 +3750,7 @@
             "files": 5,
             "packet_bytes": 65312,
             "max_file_bytes": 10102,
-            "build_packet": "PASSED_CURRENT_SCANNER"
+            "build_packet": "PASSED_OFFLINE_WITH_PR246_SCANNER_NOT_DISPATCHED"
           },
           {
             "sha": "14e0ee8f",
@@ -3758,10 +3758,11 @@
             "files": 5,
             "packet_bytes": 297322,
             "max_file_bytes": 86899,
-            "build_packet": "PASSED_CURRENT_SCANNER"
+            "build_packet": "PASSED_OFFLINE_WITH_PR246_SCANNER_NOT_DISPATCHED"
           }
         ],
-        "coverage_claim": "All slices pass size/file limits. No A6 PASS is claimed for first three until the scanner fix is gated and replayed.",
+        "coverage_claim": "All five runtime slices rebuild and validate within unchanged limits under exact PR246 scanner HEAD. No provider call or A6 PASS is claimed; live dispatch remains blocked until the owner-authorized exact PR246 then PR247 chain is merged.",
+        "immutable_request_receipt": "state_integrity_receipts.a6_request_manifests_rev629",
         "gates_pending": [
           "owner-authorized PR246 merge",
           "owner-authorized PR247 merge after exact PR246",
@@ -4070,7 +4071,7 @@
         }
       ],
       "a6_repack": {
-        "status": "A5_PASSED_BLOCKED_INFRA_MERGES",
+        "status": "A6_REQUESTS_PREPARED_OFFLINE_BLOCKED_PROTECTED_CHAIN",
         "published_at": "2026-09-30T21:03:19.160Z",
         "branch": "candidate/product-a6-repack-v1",
         "base_sha": "08e030a6053ac9638957119373797e0fbf2b10c2",
@@ -4108,7 +4109,8 @@
             "scope": "test-only; A5 and exact-head CI only"
           }
         ],
-        "coverage_claim": "Only runtime slices are proposed for live A6. Non-runtime slices are not claimed A6-covered.",
+        "coverage_claim": "Five runtime slices plus the current repair delta rebuild and validate within unchanged limits under exact PR246 scanner HEAD. Non-runtime slices remain A5/exact-head-CI evidence only. No provider call or A6 PASS is claimed.",
+        "immutable_request_receipt": "state_integrity_receipts.a6_request_manifests_rev629",
         "gates_pending": [
           "owner-authorized PR246 merge",
           "owner-authorized PR247 merge after exact PR246",
@@ -4186,7 +4188,7 @@
       }
     }
   ],
-  "updated_at": "2026-10-01T20:03:00Z",
+  "updated_at": "2026-10-01T20:49:00Z",
   "max_concurrent_feature_workers": 2,
   "active_role_model": {
     "effective_at": "2026-09-30T12:58:10.633Z",
@@ -5185,7 +5187,7 @@
   },
   "a6_candidate_preflight": {
     "status": "BOTH_CANDIDATES_A5_PASS_EXACT_HEAD_CI_PASS_PACKET_READY_BLOCKED_SUCCESSOR_CHAIN",
-    "checked_at": "2026-10-01T12:04:00.000Z",
+    "checked_at": "2026-10-01T20:49:00Z",
     "bridge": {
       "live_verified": true,
       "current_pending_consumed": true,
@@ -5217,6 +5219,8 @@
     },
     "assignments": [],
     "rule": "Do not weaken limits, send partial packets, reuse stale A5/CI, force-push, or claim A6 coverage for unaudited ranges. Subsequent live A6 remains unavailable until the fresh successor chain PR246 then PR247 is owner-authorized and merged.",
+    "offline_request_status": "PREPARED_NOT_DISPATCHABLE",
+    "offline_request_receipt": "state_integrity_receipts.a6_request_manifests_rev629",
     "scanner_fix_pr": {
       "pr": 246,
       "predecessor_pr": 236,
@@ -5702,6 +5706,23 @@
         "tests_weakened": false,
         "protected_action_performed": false
       }
+    },
+    "active_a6_gate_normalization_rev630": {
+      "checked_at": "2026-10-01T20:49:00Z",
+      "source_receipt": "state_integrity_receipts.a6_request_manifests_rev629",
+      "active_epics_updated": [
+        "CUSTOMS-CORE-V1",
+        "COMPLIANCE-AI-V1"
+      ],
+      "scanner_head_sha": "dc0397c7815e092ad8d3bd41d0d98af197212e1e",
+      "postverify_head_sha": "c1f04847c2a40b01a3e1f0759d9e97e309cc2e3b",
+      "offline_request_count": 11,
+      "provider_call_performed": false,
+      "a6_pass_claimed": false,
+      "owner_approval_present": false,
+      "candidate_heads_changed": false,
+      "tests_weakened": false,
+      "protected_action_performed": false
     }
   }
 }
