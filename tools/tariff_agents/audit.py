@@ -179,15 +179,18 @@ def ensure_safe_text(text, *, environ=None, scan_contacts=True):
     if any(re.search(pattern, text) for pattern in patterns):
         raise AuditBlocked("Suspected secret or private data excluded from audit")
     if scan_contacts:
-        # Scan complete dot-atom and quoted local-part shapes. ``\w`` is
-        # intentionally Unicode-aware so SMTPUTF8 contacts fail closed. The
-        # quoted form requires at least one word character to avoid treating
-        # adjacent source-code string delimiters before a decorator
-        # as a contact while still covering quoted whitespace and escapes.
+        # Scan complete dot-atom and quoted local-part shapes. SMTPUTF8 local
+        # parts can contain combining marks and symbols (including emoji), so
+        # a Unicode ``\w`` class is not a fail-closed boundary. Admit any
+        # non-ASCII, non-control, non-delimiter code point to the conservative
+        # atom scanner; the quoted scanner intentionally accepts even
+        # punctuation-only and whitespace-only non-empty local parts.
         domain = r"(?P<domain>[\w.-]+\.[\w-]{2,63})"
-        atom = r"[\w!#$%&'*+/=?^_`{|}~-]"
+        ascii_atom = r"[A-Za-z0-9!#$%&'*+/=?^_`{|}~-]"
+        utf8_atom = r"[^\x00-\x7f\s()<>\[\]:;@\\,\"]"
+        atom = rf"(?:{ascii_atom}|{utf8_atom})"
         dot_atom = rf"{atom}+(?:\.{atom}+)*"
-        quoted_local = r'(?=[^"\r\n]{1,64}"@)(?=[^"\r\n]{0,63}\w)(?:[^"\\\r\n]|\\.){1,64}'
+        quoted_local = r'(?:[^"\\\r\n]|\\.){1,64}'
         contact_patterns = (
             rf'"{quoted_local}"@{domain}(?![\w-])',
             rf'\\"{quoted_local}\\"@{domain}(?![\w-])',

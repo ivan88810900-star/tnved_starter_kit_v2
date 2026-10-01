@@ -357,7 +357,8 @@ class AuditTests(unittest.TestCase):
 
     def test_packet_serialization_does_not_reclassify_module_decorators(self):
         decorated = (
-            "\n" + "@pytest.mark.parametrize('value', [1])\n"
+            "\n"
+            + "@pytest.mark.parametrize('value', [1])\n"
             "@unittest.skipUnless(True, 'fixture')\n"
         )
         with self.assertRaises(audit.AuditBlocked):
@@ -407,8 +408,14 @@ class AuditTests(unittest.TestCase):
         contacts = (
             '"' + "person" + '"' + "@" + "private.test",
             '"' + " person" + '"' + "@" + "private.test",
+            '"' + " " + '"' + "@" + "private.test",
+            '"' + "+" + '"' + "@" + "private.test",
+            '"' + "😀" + '"' + "@" + "private.test",
             "person+" + "@" + "private.test",
             "иван" + "@" + "компания.рф",
+            "e\u0301" + "@" + "private.test",
+            "x😀" + "@" + "private.test",
+            "क्" + "@" + "private.test",
             ("\\u0438\\u0432\\u0430\\u043d" + "@" +
              "\\u043a\\u043e\\u043c\\u043f\\u0430\\u043d\\u0438\\u044f."
              "\\u0440\\u0444"),
@@ -432,6 +439,18 @@ class AuditTests(unittest.TestCase):
                 self.head,
                 head,
                 [audit.CONTRACT_PATH, contact_path],
+                environ={},
+            )
+
+        blob_contacts = "\n".join(contacts[:10]) + "\n"
+        self.write("src/contacts.txt", blob_contacts)
+        blob_head = self.commit()
+        with self.assertRaises(audit.AuditBlocked):
+            audit.build_packet(
+                self.repo,
+                head,
+                blob_head,
+                [audit.CONTRACT_PATH, "src/contacts.txt"],
                 environ={},
             )
 
