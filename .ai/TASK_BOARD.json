@@ -774,7 +774,7 @@
     }
   ],
   "max_concurrent_subagents": 3,
-  "revision": 618,
+  "revision": 619,
   "runs": [
     {
       "head_sha": null,
@@ -4389,12 +4389,12 @@
       "post_merge_note": "The explicit owner permission applied only to PR243 exact HEAD 6ee3843c7a03276132cfca83981d68c4afa9cd81 and is fully consumed."
     },
     "pr246": {
-      "status": "SECOND_FIX_NEW_HEAD_FRESH_A5_AND_CI_PENDING",
+      "status": "THIRD_FIX_NEW_HEAD_FRESH_A5_AND_CI_PENDING",
       "pr": 246,
       "branch": "agent/a6-findings-post243-v2",
       "base_branch": "main",
       "base_sha": "4a7f78e2835d036be3f1137de1786615d31dcedd",
-      "head_sha": "a2098a0ed99e69c5f3b3f6d1ed5e732bd727cb68",
+      "head_sha": "dc0397c7815e092ad8d3bd41d0d98af197212e1e",
       "draft": true,
       "mergeable": true,
       "changed_files": [
@@ -4404,16 +4404,16 @@
       "provenance": {
         "successor_of_pr": 236,
         "source_head_sha": "825f4aaaff182c993045d28ef4d17e0e3aa3834e",
-        "transfer": "exact two-file clean transplant onto current main plus one A0 repair commit for fresh A5 findings"
+        "transfer": "exact two-file clean transplant onto current main plus three successive A0 repair commits for fresh A5 findings"
       },
       "ci": {
         "status": "PENDING_NEW_HEAD",
         "exact_head": true,
-        "head_sha": "a2098a0ed99e69c5f3b3f6d1ed5e732bd727cb68"
+        "head_sha": "dc0397c7815e092ad8d3bd41d0d98af197212e1e"
       },
       "a5": {
         "status": "PENDING_FRESH_NEW_HEAD",
-        "rule": "Both prior FAIL receipts are preserved; a fresh independent A5 must review a2098a0e."
+        "rule": "All three prior FAIL receipts are preserved; a fresh independent A5 must review dc0397c7."
       },
       "a0_validation": {
         "status": "PENDING_AFTER_FRESH_A5"
@@ -4487,6 +4487,20 @@
             "summary": "JSON-unicode escaped contacts, trailing-atext dot-atoms and quoted leading whitespace remained admissible in changed blobs."
           },
           "ci_run_id": 36860178638
+        },
+        {
+          "head_sha": "a2098a0ed99e69c5f3b3f6d1ed5e732bd727cb68",
+          "reviewer": "/root/a5_pr246_contact_final",
+          "status": "FAILED",
+          "focused": "40/40 PASS",
+          "required_verify": "126/126 PASS",
+          "broad": "131/131 PASS",
+          "finding": {
+            "id": "A5-PR246-CONTACT-003",
+            "severity": "HIGH",
+            "summary": "Combining-mark, symbol and punctuation-only quoted SMTPUTF8 local parts remained admissible in changed blobs."
+          },
+          "ci_run_id": 36861651770
         }
       ],
       "repair2": {
@@ -4510,6 +4524,30 @@
           "broad": "131/131 PASS",
           "diff_check": "PASS"
         }
+      },
+      "repair3": {
+        "parent_sha": "a2098a0ed99e69c5f3b3f6d1ed5e732bd727cb68",
+        "head_sha": "dc0397c7815e092ad8d3bd41d0d98af197212e1e",
+        "changed_files": [
+          "tests/agent_orchestration/test_audit.py",
+          "tools/tariff_agents/audit.py"
+        ],
+        "correction": "Extends conservative SMTPUTF8 atom scanning to non-ASCII combining marks and symbols and permits every non-empty quoted local part, while retaining source/decorator safety.",
+        "regressions": [
+          "combining-mark local part",
+          "emoji local part",
+          "Indic combining local part",
+          "quoted whitespace-only local part",
+          "quoted punctuation-only local part",
+          "quoted emoji local part",
+          "packet-level changed blob"
+        ],
+        "author_tests": {
+          "focused": "40/40 PASS",
+          "required_verify": "126/126 PASS",
+          "broad": "131/131 PASS",
+          "diff_check": "PASS"
+        }
       }
     },
     "pr247": {
@@ -4517,7 +4555,7 @@
       "pr": 247,
       "branch": "agent/a6-postverify-post243-v2",
       "base_branch": "agent/a6-findings-post243-v2",
-      "base_head_sha": "a2098a0ed99e69c5f3b3f6d1ed5e732bd727cb68",
+      "base_head_sha": "dc0397c7815e092ad8d3bd41d0d98af197212e1e",
       "head_sha": "c72a68dbe41f3b2d174c953bfb6c99491103aa24",
       "draft": true,
       "mergeable": true,
@@ -4533,7 +4571,7 @@
       "ci": {
         "status": "INVALIDATED_BY_STACK_BASE_CHANGE",
         "prior_head_sha": "c72a68dbe41f3b2d174c953bfb6c99491103aa24",
-        "changed_base_head_sha": "a2098a0ed99e69c5f3b3f6d1ed5e732bd727cb68"
+        "changed_base_head_sha": "dc0397c7815e092ad8d3bd41d0d98af197212e1e"
       },
       "a5": {
         "status": "BLOCKED_PENDING_RESTACK_AND_PR246_PASS",
@@ -4933,7 +4971,7 @@
           "source_pr": 236,
           "source_head_sha": "825f4aaaff182c993045d28ef4d17e0e3aa3834e",
           "successor_pr": 246,
-          "successor_head_sha": "a2098a0ed99e69c5f3b3f6d1ed5e732bd727cb68",
+          "successor_head_sha": "dc0397c7815e092ad8d3bd41d0d98af197212e1e",
           "changed_files_preserved": [
             "tests/agent_orchestration/test_audit.py",
             "tools/tariff_agents/audit.py"
@@ -4960,6 +4998,13 @@
               "head_sha": "a2098a0ed99e69c5f3b3f6d1ed5e732bd727cb68",
               "findings_fixed": [
                 "A5-PR246-CONTACT-002"
+              ],
+              "review_status": "FAILED_NEW_SMTPUTF8_VARIANTS"
+            },
+            {
+              "head_sha": "dc0397c7815e092ad8d3bd41d0d98af197212e1e",
+              "findings_fixed": [
+                "A5-PR246-CONTACT-003"
               ],
               "review_status": "PENDING_FRESH"
             }
@@ -4997,7 +5042,7 @@
       "pr247_merged": false,
       "subsequent_a6_available": false,
       "rule": "Do not call or simulate subsequent live A6 until owner-authorized protected merges complete in order PR246 then PR247.",
-      "pr246_head_sha": "a2098a0ed99e69c5f3b3f6d1ed5e732bd727cb68",
+      "pr246_head_sha": "dc0397c7815e092ad8d3bd41d0d98af197212e1e",
       "pr247_restack_required": true
     },
     "contract": {
@@ -5014,7 +5059,7 @@
     "scanner_fix_pr": {
       "pr": 246,
       "predecessor_pr": 236,
-      "head_sha": "a2098a0ed99e69c5f3b3f6d1ed5e732bd727cb68",
+      "head_sha": "dc0397c7815e092ad8d3bd41d0d98af197212e1e",
       "ci_run_ids": [],
       "ci_status": "PENDING_NEW_HEAD",
       "a5_status": "PENDING_FRESH_NEW_HEAD",
