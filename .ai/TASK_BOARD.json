@@ -774,7 +774,7 @@
     }
   ],
   "max_concurrent_subagents": 3,
-  "revision": 619,
+  "revision": 620,
   "runs": [
     {
       "head_sha": null,
@@ -4389,7 +4389,7 @@
       "post_merge_note": "The explicit owner permission applied only to PR243 exact HEAD 6ee3843c7a03276132cfca83981d68c4afa9cd81 and is fully consumed."
     },
     "pr246": {
-      "status": "THIRD_FIX_NEW_HEAD_FRESH_A5_AND_CI_PENDING",
+      "status": "GATES_PASSED_READY_AS_STACK_BASE",
       "pr": 246,
       "branch": "agent/a6-findings-post243-v2",
       "base_branch": "main",
@@ -4407,18 +4407,27 @@
         "transfer": "exact two-file clean transplant onto current main plus three successive A0 repair commits for fresh A5 findings"
       },
       "ci": {
-        "status": "PENDING_NEW_HEAD",
+        "status": "PASSED",
         "exact_head": true,
-        "head_sha": "dc0397c7815e092ad8d3bd41d0d98af197212e1e"
+        "head_sha": "dc0397c7815e092ad8d3bd41d0d98af197212e1e",
+        "run_id": 36862783125
       },
       "a5": {
-        "status": "PENDING_FRESH_NEW_HEAD",
-        "rule": "All three prior FAIL receipts are preserved; a fresh independent A5 must review dc0397c7."
+        "status": "PASSED",
+        "reviewer": "/root/a5_pr246_smtputf8_final",
+        "head_sha": "dc0397c7815e092ad8d3bd41d0d98af197212e1e",
+        "focused": "40/40 PASS",
+        "required_verify": "126/126 PASS",
+        "broad": "131/131 PASS",
+        "adversarial": "92/92 PASS",
+        "findings": []
       },
       "a0_validation": {
-        "status": "PENDING_AFTER_FRESH_A5"
+        "status": "PASSED",
+        "head_sha": "dc0397c7815e092ad8d3bd41d0d98af197212e1e",
+        "evidence": "A0 independently reviewed exact two-file diff and reran 40 focused, 126 required-verifier, 131 broad tests, validate-snapshot and diff check. All three prior A5 findings are closed on the unchanged exact head."
       },
-      "owner_gate": "Not ready: new HEAD invalidated prior A5/A0/CI. Fresh independent A5 and exact-head CI are required.",
+      "owner_gate": "PR246 exact head gates passed; protected merge remains blocked until stacked PR247 also receives fresh A5, A0 and exact-head CI.",
       "evidence_invalidation": "Any new HEAD resets A5, A0 validation and exact-head CI.",
       "prior_head": {
         "head_sha": "72d16b3054870357a1e76637d59ee479b3d2772b",
@@ -4501,6 +4510,17 @@
             "summary": "Combining-mark, symbol and punctuation-only quoted SMTPUTF8 local parts remained admissible in changed blobs."
           },
           "ci_run_id": 36861651770
+        },
+        {
+          "head_sha": "dc0397c7815e092ad8d3bd41d0d98af197212e1e",
+          "reviewer": "/root/a5_pr246_smtputf8_final",
+          "status": "PASSED",
+          "focused": "40/40 PASS",
+          "required_verify": "126/126 PASS",
+          "broad": "131/131 PASS",
+          "adversarial": "92/92 PASS",
+          "findings": [],
+          "ci_run_id": 36862783125
         }
       ],
       "repair2": {
@@ -4551,12 +4571,12 @@
       }
     },
     "pr247": {
-      "status": "BLOCKED_RESTACK_AFTER_PR246_NEW_HEAD",
+      "status": "RESTACKED_FRESH_A5_AND_CI_PENDING",
       "pr": 247,
       "branch": "agent/a6-postverify-post243-v2",
       "base_branch": "agent/a6-findings-post243-v2",
       "base_head_sha": "dc0397c7815e092ad8d3bd41d0d98af197212e1e",
-      "head_sha": "c72a68dbe41f3b2d174c953bfb6c99491103aa24",
+      "head_sha": "c1f04847c2a40b01a3e1f0759d9e97e309cc2e3b",
       "draft": true,
       "mergeable": true,
       "changed_files": [
@@ -4566,22 +4586,37 @@
       "provenance": {
         "successor_of_pr": 237,
         "source_head_sha": "f0183c1e0f4e1e5ed60fa93a4633e841e2ae8d9f",
-        "transfer": "exact two-file clean transplant stacked on PR246"
+        "transfer": "exact two-file clean transplant stacked on PR246 through a non-force merge commit",
+        "restack_parent_shas": [
+          "c72a68dbe41f3b2d174c953bfb6c99491103aa24",
+          "dc0397c7815e092ad8d3bd41d0d98af197212e1e"
+        ]
       },
       "ci": {
-        "status": "INVALIDATED_BY_STACK_BASE_CHANGE",
-        "prior_head_sha": "c72a68dbe41f3b2d174c953bfb6c99491103aa24",
-        "changed_base_head_sha": "dc0397c7815e092ad8d3bd41d0d98af197212e1e"
+        "status": "PENDING_NEW_HEAD",
+        "exact_head": true,
+        "head_sha": "c1f04847c2a40b01a3e1f0759d9e97e309cc2e3b"
       },
       "a5": {
-        "status": "BLOCKED_PENDING_RESTACK_AND_PR246_PASS",
-        "rule": "Restack without force-push after PR246 fresh gates, then review the new exact HEAD."
+        "status": "IN_PROGRESS_FRESH",
+        "reviewer": "/root/a5_pr247_post246_stack",
+        "rule": "Fresh review is bound only to c1f04847 over base dc0397c7."
       },
       "a0_validation": {
-        "status": "BLOCKED_PENDING_RESTACK_AND_FRESH_A5"
+        "status": "PENDING_AFTER_FRESH_A5"
       },
-      "owner_gate": "Not ready: stack base advanced to the repaired PR246 head; PR247 needs a new non-force-pushed head and all fresh gates.",
+      "owner_gate": "Not ready: restack is published, but fresh A5, A0 validation and exact-head CI are still required.",
       "evidence_invalidation": "Any new HEAD or changed stack base resets A5, A0 validation and exact-head CI.",
+      "restack": {
+        "method": "NON_FORCE_MERGE_COMMIT",
+        "head_sha": "c1f04847c2a40b01a3e1f0759d9e97e309cc2e3b",
+        "tree_sha": "abdb4776f39790875593bda8bff5f47dc042a8bd",
+        "focused": "56/56 PASS",
+        "required_verify": "128/128 PASS",
+        "broad": "133/133 PASS",
+        "snapshot": "PASS",
+        "diff_check": "PASS"
+      },
       "prior_ci": {
         "status": "PASSED",
         "exact_head": true,
@@ -5014,7 +5049,7 @@
           "source_pr": 237,
           "source_head_sha": "f0183c1e0f4e1e5ed60fa93a4633e841e2ae8d9f",
           "successor_pr": 247,
-          "successor_head_sha": "c72a68dbe41f3b2d174c953bfb6c99491103aa24",
+          "successor_head_sha": "c1f04847c2a40b01a3e1f0759d9e97e309cc2e3b",
           "changed_files_preserved": [
             "tests/agent_orchestration/test_audit_bridge.py",
             "tools/tariff_agents/audit_bridge.py"
@@ -5043,7 +5078,9 @@
       "subsequent_a6_available": false,
       "rule": "Do not call or simulate subsequent live A6 until owner-authorized protected merges complete in order PR246 then PR247.",
       "pr246_head_sha": "dc0397c7815e092ad8d3bd41d0d98af197212e1e",
-      "pr247_restack_required": true
+      "pr247_head_sha": "c1f04847c2a40b01a3e1f0759d9e97e309cc2e3b",
+      "pr247_restack_required": false,
+      "pr247_fresh_gates_pending": true
     },
     "contract": {
       "ref": "08e030a6053ac9638957119373797e0fbf2b10c2",
@@ -5060,10 +5097,12 @@
       "pr": 246,
       "predecessor_pr": 236,
       "head_sha": "dc0397c7815e092ad8d3bd41d0d98af197212e1e",
-      "ci_run_ids": [],
-      "ci_status": "PENDING_NEW_HEAD",
-      "a5_status": "PENDING_FRESH_NEW_HEAD",
-      "a0_status": "PENDING_AFTER_FRESH_A5",
+      "ci_run_ids": [
+        36862783125
+      ],
+      "ci_status": "PASSED",
+      "a5_status": "PASSED",
+      "a0_status": "PASSED",
       "merged": false
     },
     "product_candidate": {
