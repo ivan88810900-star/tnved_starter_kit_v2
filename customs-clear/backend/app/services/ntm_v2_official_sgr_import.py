@@ -15,6 +15,7 @@ from .. import db
 from ..datetime_util import utc_now_naive
 from ..models.ntm_v2 import NtmApplicabilityRuleV2, NtmMeasureV2
 from .hs_matching import normalize_hs_code
+from .ntm_description_matching import is_child_audience_marker, is_child_product_description
 from .ntm_v2_legacy_rules_import import ADVISORY_APPLICABILITIES, advisory_reason_for_applicability
 
 OFFICIAL_SGR_SOURCE_KIND = "official_sgr_registry"
@@ -57,6 +58,14 @@ def _normalize_desc_markers(values: Any) -> list[str]:
     return [str(x).lower() for x in (values or []) if str(x).strip()]
 
 
+def _description_marker_matches(description: str, desc_l: str, marker: str) -> bool:
+    if marker not in desc_l:
+        return False
+    if is_child_audience_marker(marker):
+        return is_child_product_description(description)
+    return True
+
+
 def official_sgr_description_matches(
     description: str,
     *,
@@ -75,13 +84,13 @@ def official_sgr_description_matches(
     """
     desc_l = (description or "").lower()
     excludes = _normalize_desc_markers(exclude_if_contains_any)
-    if any(x in desc_l for x in excludes if x):
+    if any(_description_marker_matches(description, desc_l, x) for x in excludes if x):
         return False
     contains = _normalize_desc_markers(description_contains_any)
     requires = _normalize_desc_markers(description_requires_any)
-    if requires and not any(x in desc_l for x in requires if x):
+    if requires and not any(_description_marker_matches(description, desc_l, x) for x in requires if x):
         return False
-    if contains and not any(x in desc_l for x in contains if x):
+    if contains and not any(_description_marker_matches(description, desc_l, x) for x in contains if x):
         return False
     return True
 

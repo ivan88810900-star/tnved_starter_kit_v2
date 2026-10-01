@@ -8,6 +8,7 @@
 """
 from __future__ import annotations
 
+from datetime import datetime, timezone
 from typing import Any
 
 SOURCE_LABELS: dict[str, str] = {
@@ -28,6 +29,71 @@ _EMPTY_MESSAGE = (
     "Для данной позиции не выявлено нормативных требований к разрешительным документам. "
     "Уточните код ТН ВЭД и описание товара."
 )
+_FRESHNESS_SCOPE = "technical_source_status_only"
+
+
+def _optional_text(value: Any) -> str | None:
+    if not isinstance(value, str):
+        return None
+    cleaned = value.strip()
+    return cleaned or None
+
+
+def _validated_sync_timestamp(value: Any) -> str | None:
+    if not isinstance(value, str):
+        return None
+    candidate = value.strip()
+    if not candidate or len(candidate) > 120 or "T" not in candidate:
+        return None
+    try:
+        parsed = datetime.fromisoformat(
+            candidate[:-1] + "+00:00" if candidate.endswith("Z") else candidate
+        )
+    except (OverflowError, TypeError, ValueError):
+        return None
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=timezone.utc)
+    else:
+        parsed = parsed.astimezone(timezone.utc)
+    return candidate if parsed <= datetime.now(timezone.utc) else None
+
+
+def _normalize_data_freshness(value: Any) -> dict[str, Any]:
+    """Expose source freshness without upgrading it into NTM legal coverage."""
+    raw = value if isinstance(value, dict) else {}
+    source_name = _optional_text(raw.get("source_name"))
+    source_code = _optional_text(raw.get("source_code"))
+    synced_at = _validated_sync_timestamp(raw.get("synced_at"))
+    revision = _optional_text(raw.get("revision"))
+    raw_is_stale = raw.get("is_stale")
+
+    if raw_is_stale is True:
+        state = "stale"
+    elif (
+        raw_is_stale is False
+        and source_name
+        and source_code
+        and synced_at
+        and revision
+    ):
+        state = "fresh"
+    else:
+        state = "unknown"
+
+    return {
+        "state": state,
+        "tone": "neutral" if state == "fresh" else "amber",
+        "source_name": source_name,
+        "source_code": source_code,
+        "synced_at": synced_at,
+        "revision": revision,
+        "is_stale": state != "fresh",
+        "scope": _FRESHNESS_SCOPE,
+        "affects_applicability": False,
+        "affects_required_documents": False,
+        "affects_missing_documents": False,
+        "ntm_coverage_verified": False,
+    }
 
 
 def source_label_for(source: str | None) -> str:
@@ -154,6 +220,9 @@ def build_normative_requirements_block(non_tariff_result: dict[str, Any]) -> dic
         "required_documents": required_documents,
         "missing_documents": missing_documents,
         "advisory_requirements": advisory_requirements,
+        "data_freshness": _normalize_data_freshness(
+            non_tariff_result.get("data_freshness")
+        ),
         "sources_summary": sources_summary,
         "empty_message": empty_message,
         "tr_ts": list(non_tariff_result.get("tr_ts") or []),

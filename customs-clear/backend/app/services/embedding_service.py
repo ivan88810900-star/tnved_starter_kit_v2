@@ -45,24 +45,53 @@ def embed_texts_openai(texts: list[str]) -> list[list[float]]:
             items = sorted(data.get("data") or [], key=lambda x: x.get("index", 0))
             for it in items:
                 emb = it.get("embedding")
-                if isinstance(emb, list):
-                    out_vectors.append([float(x) for x in emb])
-                else:
-                    out_vectors.append([])
+                # Validate provider JSON before conversion: bools and numeric
+                # strings must never become apparently valid coordinates.
+                out_vectors.append(_finite_vector(emb) or [])
     if len(out_vectors) != len(texts):
         raise RuntimeError("Размер ответа embeddings не совпадает с запросом")
     return out_vectors
 
 
-def cosine_sim(a: list[float], b: list[float]) -> float:
+def _cosine_score(a: list[float], b: list[float]) -> Optional[float]:
     if not a or not b or len(a) != len(b):
-        return 0.0
-    dot = sum(x * y for x, y in zip(a, b))
-    na = math.sqrt(sum(x * x for x in a))
-    nb = math.sqrt(sum(y * y for y in b))
-    if na <= 0 or nb <= 0:
-        return 0.0
-    return dot / (na * nb)
+        return None
+    if not all(math.isfinite(x) for x in a) or not all(math.isfinite(x) for x in b):
+        return None
+    # hypot avoids the intermediate x*x overflow of the naive norm. A norm
+    # that still overflows is not comparable and must not become a score of 0.
+    na = math.hypot(*a)
+    nb = math.hypot(*b)
+    if not all(math.isfinite(x) and x > 0 for x in (na, nb)):
+        return None
+    score = math.fsum((x / na) * (y / nb) for x, y in zip(a, b))
+    if not math.isfinite(score):
+        return None
+    # Floating point round-off can exceed the mathematical range slightly.
+    return max(-1.0, min(1.0, score))
+
+
+def cosine_sim(a: list[float], b: list[float]) -> float:
+    """Compatibility wrapper; semantic ranking uses the nullable score."""
+    score = _cosine_score(a, b)
+    return score if score is not None else 0.0
+
+
+def _finite_vector(value: Any) -> Optional[list[float]]:
+    """Return strict JSON numeric coordinates, or ``None`` for unsafe input."""
+    if not isinstance(value, list) or not value:
+        return None
+    # JSON booleans are Python ints and numeric strings are float-coercible, but
+    # neither is an embedding coordinate. Accept only plain JSON number types.
+    if not all(type(item) in (int, float) for item in value):
+        return None
+    try:
+        vector = [float(item) for item in value]
+    except OverflowError:
+        return None
+    if not all(math.isfinite(item) for item in vector):
+        return None
+    return vector
 
 
 def ingest_tnved_embeddings_batch(
@@ -125,24 +154,39 @@ def semantic_search_tnved(query: str, top_k: int = 15) -> list[dict[str, Any]]:
     if len(q) < 2:
         return []
 
-    qv = embed_texts_openai([q])[0]
-    if not qv:
+    query_vectors = embed_texts_openai([q])
+    if len(query_vectors) != 1:
         return []
+    qv = _finite_vector(query_vectors[0])
+    if not qv or _cosine_score(qv, qv) is None:
+        return []
+
+    query_model = _embedding_model()
 
     with SessionLocal() as db:
         rows = (
             db.query(TnvedEntryEmbedding, TnvedEntry)
             .join(TnvedEntry, TnvedEntry.id == TnvedEntryEmbedding.tnved_entry_id)
-            .filter(TnvedEntryEmbedding.embedding.isnot(None))
+            .filter(
+                TnvedEntryEmbedding.embedding.isnot(None),
+                TnvedEntryEmbedding.embedding_model == query_model,
+                TnvedEntryEmbedding.embedding_dim == len(qv),
+            )
             .all()
         )
 
     scored: list[tuple[float, Any, Any]] = []
     for emb_row, ent in rows:
-        vec = emb_row.embedding
-        if not isinstance(vec, list) or not vec:
+        # Repeat compatibility checks after the SQL filter so malformed rows and
+        # alternate storage backends can never enter a cross-model comparison.
+        if emb_row.embedding_model != query_model or emb_row.embedding_dim != len(qv):
             continue
-        s = cosine_sim(qv, [float(x) for x in vec])
+        vec = _finite_vector(emb_row.embedding)
+        if vec is None or len(vec) != len(qv):
+            continue
+        s = _cosine_score(qv, vec)
+        if s is None:
+            continue
         scored.append((s, ent, emb_row))
 
     scored.sort(key=lambda x: -x[0])

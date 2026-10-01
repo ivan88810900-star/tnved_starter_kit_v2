@@ -2,14 +2,17 @@
 
 from __future__ import annotations
 
+import logging
 import re
 from typing import Any
 
 from sqlalchemy.orm import Session
 
 from ..models.core import ClassificationDecision, PreliminaryDecision
+from .tree_engine import CanonicalModel
 
 _DIGITS_RE = re.compile(r"\D")
+logger = logging.getLogger(__name__)
 
 
 def _digits(raw: str) -> str:
@@ -29,6 +32,78 @@ def hs_prefix_candidates(hs_code: str) -> list[str]:
     if len(d) >= 4:
         out.append(d[:4])
     return list(dict.fromkeys(out))
+
+
+def canonical_anchor_for_hs(
+    hs_code: str,
+    *,
+    model: CanonicalModel | None = None,
+) -> dict[str, Any] | None:
+    """Resolve an additive Canonical anchor without changing legacy card behavior.
+
+    A supplied model makes the resolver cheap for batch/search callers and directly
+    testable. Without one, the shared provider is used. Provider/build failures are a
+    soft miss: search and code-card endpoints must keep their existing DB fallback.
+    """
+    code = _digits(hs_code)
+    if len(code) not in (4, 6, 8, 10):
+        return None
+    if model is None:
+        try:
+            from .tree_engine.provider import get_canonical_model
+
+            model = get_canonical_model()
+        except Exception:  # noqa: BLE001 — additive bridge must not break legacy card
+            logger.exception("Canonical anchor unavailable for TN VED code=%r", hs_code)
+            return None
+    if model is None:
+        return None
+
+    node = model.get_by_code(code) or model.get_by_display_code(code)
+    if node is None:
+        return None
+    stable_id = str(getattr(node, "stable_id", "") or "").strip()
+    snapshot_id = str(
+        getattr(node, "snapshot_id", "") or getattr(model, "snapshot_id", "") or ""
+    ).strip()
+    node_type = getattr(node, "node_type", None)
+    node_type_value = str(getattr(node_type, "value", node_type or "") or "").strip()
+    node_code = str(
+        getattr(node, "code", "")
+        or getattr(node, "metadata", {}).get("display_code")
+        or code
+    ).strip()
+    if not stable_id or not snapshot_id or not node_type_value or not node_code:
+        return None
+    return {
+        "stable_id": stable_id,
+        "snapshot_id": snapshot_id,
+        "code": node_code,
+        "node_type": node_type_value,
+    }
+
+
+def canonical_anchors_for_hs_codes(hs_codes: list[str]) -> dict[str, dict[str, Any]]:
+    """Resolve many search hits against one shared Canonical snapshot."""
+    if not hs_codes:
+        return {}
+    try:
+        from .tree_engine.provider import get_canonical_model
+
+        model = get_canonical_model()
+    except Exception:  # noqa: BLE001 — search remains available through legacy/FTS
+        logger.exception("Canonical anchors unavailable for TN VED search")
+        return {}
+    if model is None:
+        return {}
+
+    resolved: dict[str, dict[str, Any]] = {}
+    for raw in hs_codes:
+        code = _digits(raw)
+        anchor = canonical_anchor_for_hs(code, model=model)
+        if anchor is not None:
+            resolved[code] = anchor
+    return resolved
 
 
 def _serialize_classification(row: ClassificationDecision) -> dict[str, Any]:

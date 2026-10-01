@@ -15,6 +15,7 @@ from .non_tariff_rules import (
 )
 from .normative_store import extract_tr_ts_act_codes, find_normative_notes_for_hs, lookup_tr_ts_acts_by_codes
 from .ntm_effective_requirements import build_effective_requirements
+from .ntm_description_matching import is_child_product_description
 from .normative_requirements_block import build_normative_requirements_block
 from .sanctions_risk_block import build_sanctions_risk_block
 from .permits_service import check_permits
@@ -34,6 +35,10 @@ _SENSITIVE_PERMIT_BASIS: Dict[str, tuple[str, str]] = {
         "Решение Коллегии ЕЭК №30 (единый перечень лицензируемых товаров)",
     ),
 }
+
+def _is_child_product_description(description: str) -> bool:
+    """Compatibility wrapper for the shared conservative audience gate."""
+    return is_child_product_description(description)
 
 
 def _build_broker_required_permits(
@@ -108,8 +113,7 @@ def _sanitize_ntm_rules_for_position(
     code = (hs_code or "").strip().replace(" ", "")
     if not code or not rules:
         return rules
-    desc_l = (description or "").lower()
-    child_cosmetic = any(x in desc_l for x in ("дет", "детск", "младен", "baby"))
+    child_cosmetic = _is_child_product_description(description)
     out: List[Dict[str, Any]] = []
     for r in rules:
         rp = [p for p in (r.get("required_permits") or []) if p]
@@ -132,7 +136,7 @@ def _drop_spurious_ai_measures(
 ) -> List[Dict[str, Any]]:
     """LLM иногда добавляет СГР/«сертификат» там, где домен и БД уже задают ДС/СС."""
     code = (hs_code or "").strip()
-    desc_l = (description or "").lower()
+    child_cosmetic = _is_child_product_description(description)
     out: List[Dict[str, Any]] = []
     for m in measures:
         if m.get("source_level") != "ai_enriched":
@@ -141,9 +145,8 @@ def _drop_spurious_ai_measures(
         mt = (str(m.get("measure_type") or "")).lower()
         if code.startswith("9503") and mt == "sgr":
             continue
-        if len(code) >= 2 and code[:2] == "33" and mt == "sgr":
-            if "дет" not in desc_l and "детск" not in desc_l and "младен" not in desc_l:
-                continue
+        if len(code) >= 2 and code[:2] == "33" and mt == "sgr" and not child_cosmetic:
+            continue
         if code.startswith("8517") and mt in ("certificate", "sgr"):
             continue
         if code.startswith("8528") and mt in ("certificate", "sgr"):
@@ -153,26 +156,14 @@ def _drop_spurious_ai_measures(
 
 
 def _data_freshness() -> Dict[str, Any]:
-    """Возвращает сведения об актуальности нетарифных правил."""
-    try:
-        from .normative_store import list_source_status
-        sources = list_source_status()
-        eec = next((s for s in sources if s["source_code"] == "EEC_ETT"), None)
-        if eec:
-            return {
-                "source_name": eec["source_name"],
-                "source_code": eec["source_code"],
-                "synced_at": eec["synced_at"],
-                "is_stale": eec["is_stale"],
-                "revision": eec["revision"],
-            }
-    except Exception:
-        pass
+    """Возвращает fail-closed актуальность локального набора NTM-правил."""
     return {
         "source_name": "Локальная база правил",
         "source_code": "LOCAL",
         "synced_at": None,
-        "is_stale": False,
+        # EEC_ETT tracks tariff data, not completeness of NTM rules. Until a
+        # dedicated NTM source proves this dataset current, always fail closed.
+        "is_stale": True,
         "revision": "seed",
     }
 
