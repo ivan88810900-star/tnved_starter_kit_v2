@@ -774,7 +774,7 @@
     }
   ],
   "max_concurrent_subagents": 3,
-  "revision": 611,
+  "revision": 612,
   "runs": [
     {
       "head_sha": null,
@@ -4042,7 +4042,6 @@
         "base_sha": "08e030a6053ac9638957119373797e0fbf2b10c2",
         "head_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
         "tree_sha": "f31e36b3b9c3998f2a63440f58a756270f28d23e",
-        "tree_identical_to_pr242_head": "bf27ef2cd243f0e2f9325c48a1cfad40a100b2fe",
         "runtime_slices": [
           {
             "sha": "8ccb50448187043fe0afc6853a97aba3b1aebef8",
@@ -4115,6 +4114,19 @@
             "sha256": "9b2431878f1edd7a327037ed8b736d244e66ac2f06a85aad0fe925441826921e"
           },
           "full_candidate_packet": "BLOCKED as expected by 237409-byte package-lock.json over 100000 file limit; runtime slices remain the only proposed A6 coverage."
+        },
+        "source_head_sha": "bf27ef2cd243f0e2f9325c48a1cfad40a100b2fe",
+        "source_tree_sha": "6eeefb6f6adde1930a59ffbece5052c70e369d0b",
+        "tree_equivalent_to_source": false,
+        "delta_from_source_head": {
+          "changed_files": [
+            "customs-clear/backend/app/services/non_tariff_service.py",
+            "customs-clear/backend/app/services/ntm_description_matching.py",
+            "customs-clear/backend/app/services/ntm_v2_official_sgr_import.py",
+            "customs-clear/backend/tests/test_ntm_child_product_markers.py"
+          ],
+          "changed_file_count": 4,
+          "note": "Candidate includes the child-negation repair and official SGR importer delta; it is not tree-identical to PR242."
         }
       },
       "a5": {
@@ -4139,7 +4151,7 @@
       }
     }
   ],
-  "updated_at": "2026-10-01T00:06:25.139Z",
+  "updated_at": "2026-10-01T00:08:15.953Z",
   "max_concurrent_feature_workers": 2,
   "active_role_model": {
     "effective_at": "2026-09-30T12:58:10.633Z",
@@ -4282,7 +4294,7 @@
       "owner_gate": "Merge exact HEAD to main/protected requires separate explicit owner permission; A0 did not merge."
     },
     "role_model_v2": {
-      "status": "AUTHOR_AND_CI_PASS_A5_REVERIFYING_AFTER_STATE_PROVENANCE_FIX",
+      "status": "AUTHOR_AND_CI_PASS_A5_REVERIFYING_AFTER_STATE_LINEAGE_FIX",
       "pr": 243,
       "branch": "agent/orchestration-role-model-v2",
       "base_sha": "08e030a6053ac9638957119373797e0fbf2b10c2",
@@ -4719,6 +4731,19 @@
       ],
       "tree_equivalent_to_source": false,
       "reason": "Fresh independent A5 found stale source-tree and source-diff metadata; corrected to exact product candidate commit while preserving disjoint active ownership."
+    },
+    "product_candidate_provenance_rev612": {
+      "corrected_at": "2026-10-01T00:08:15.953Z",
+      "prior_false_field": "COMPLIANCE-AI-V1.a6_repack.tree_identical_to_pr242_head",
+      "replacement": {
+        "source_head_sha": "bf27ef2cd243f0e2f9325c48a1cfad40a100b2fe",
+        "source_tree_sha": "6eeefb6f6adde1930a59ffbece5052c70e369d0b",
+        "candidate_head_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
+        "candidate_tree_sha": "f31e36b3b9c3998f2a63440f58a756270f28d23e",
+        "tree_equivalent_to_source": false,
+        "delta_changed_file_count": 4
+      },
+      "reason": "Fresh A5 found a remaining false tree-identity claim; replaced with explicit source and candidate lineage."
     }
   }
 }
