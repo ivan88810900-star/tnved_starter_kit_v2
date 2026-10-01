@@ -1,3 +1,6 @@
+Warning: truncated output (original token count: 56580)
+Total output lines: 5033
+
 {
   "findings": [
     {
@@ -774,7 +777,7 @@
     }
   ],
   "max_concurrent_subagents": 3,
-  "revision": 615,
+  "revision": 616,
   "runs": [
     {
       "head_sha": null,
@@ -1099,2507 +1102,7 @@
     {
       "head_sha": "ecc3f67e7346d7a481a473a5d47da1c7091eee54",
       "role": "A4",
-      "run_id": "e2e7031fc40242919c0d060dd5447431",
-      "session_id": "/root/a4_lease_hardening",
-      "started_at": "2026-09-14T12:25:53.284490+00:00",
-      "status": "FINISHED",
-      "task_id": "TARIFF-ORCH-LEASE-TAKEOVER-HARDENING-001",
-      "updated_at": "2026-09-14T12:29:37.119829+00:00"
-    },
-    {
-      "head_sha": "a84c6be14e2fc5996c2248c96c01c6aaa431f5a6",
-      "role": "A5",
-      "run_id": "e0cf142b93c246cdba0ca75194d778ab",
-      "session_id": "/root/a5_control_hardening",
-      "started_at": "2026-09-14T12:29:57.234276+00:00",
-      "status": "FINISHED",
-      "task_id": "TARIFF-ORCH-CONTROL-HARDENING-001",
-      "updated_at": "2026-09-14T12:36:18.815348+00:00"
-    },
-    {
-      "head_sha": "86bb2f6cbf7ecbc6a4324b4ccafa13100a8a68cb",
-      "role": "A5",
-      "run_id": "54edc8c83a6d4856802a8851f0da73da",
-      "session_id": "/root/a5_audit_credential_fix",
-      "started_at": "2026-09-14T12:29:57.243530+00:00",
-      "status": "FINISHED",
-      "task_id": "TARIFF-A6-CROSS-BRANCH-CONTRACT-001",
-      "updated_at": "2026-09-14T12:36:18.825184+00:00"
-    },
-    {
-      "head_sha": "213eeb1ca93d785d764100ecfecfd6bdbdfb16fb",
-      "role": "A5",
-      "run_id": "5cc129db80d74cd7a0c2f599c0a2acbb",
-      "session_id": "/root/a5_lease_hardening_fix2",
-      "started_at": "2026-09-14T12:30:42.439455+00:00",
-      "status": "FINISHED",
-      "task_id": "TARIFF-ORCH-LEASE-TAKEOVER-HARDENING-001",
-      "updated_at": "2026-09-14T12:36:18.833905+00:00"
-    },
-    {
-      "head_sha": "a84c6be14e2fc5996c2248c96c01c6aaa431f5a6",
-      "role": "A4",
-      "run_id": "39aef7154b3e4074b5b3175eb3165b8e",
-      "session_id": "/root/a4_control_hardening",
-      "started_at": "2026-09-14T12:36:18.905990+00:00",
-      "status": "FINISHED",
-      "task_id": "TARIFF-ORCH-CONTROL-HARDENING-001",
-      "updated_at": "2026-09-14T12:48:06.365323+00:00"
-    },
-    {
-      "head_sha": "86bb2f6cbf7ecbc6a4324b4ccafa13100a8a68cb",
-      "role": "A4",
-      "run_id": "91bbcec7912b412480e21610711e9378",
-      "session_id": "/root/a4_audit_secret_repro",
-      "started_at": "2026-09-14T12:36:18.916085+00:00",
-      "status": "FINISHED",
-      "task_id": "TARIFF-A6-CROSS-BRANCH-CONTRACT-001",
-      "updated_at": "2026-09-14T12:48:06.426812+00:00"
-    },
-    {
-      "head_sha": "be88f90f5478642d47a3c0d0a4d1ab3408261e54",
-      "role": "A5",
-      "run_id": "ffff2b3dc4a04e56abdc3835efc2bd85",
-      "session_id": "/root/a5_control_hardening",
-      "started_at": "2026-09-14T12:48:14.960734+00:00",
-      "status": "FINISHED",
-      "task_id": "TARIFF-ORCH-CONTROL-HARDENING-001",
-      "updated_at": "2026-09-14T12:52:00.645031+00:00"
-    },
-    {
-      "head_sha": "e0274acf6a32031c3659fe9eb258d79fb7747a93",
-      "role": "A5",
-      "run_id": "409d79a751014609950f28f8babef130",
-      "session_id": "/root/a5_audit_credential_fix",
-      "started_at": "2026-09-14T12:48:14.969953+00:00",
-      "status": "FINISHED",
-      "task_id": "TARIFF-A6-CROSS-BRANCH-CONTRACT-001",
-      "updated_at": "2026-09-14T12:52:00.655152+00:00"
-    },
-    {
-      "head_sha": "be88f90f5478642d47a3c0d0a4d1ab3408261e54",
-      "role": "A4",
-      "run_id": "f3b716f8b3624b9dbbcb002662a53e11",
-      "session_id": "/root/a4_control_hardening",
-      "started_at": "2026-09-14T12:52:00.699256+00:00",
-      "status": "FINISHED",
-      "task_id": "TARIFF-ORCH-CONTROL-HARDENING-001",
-      "updated_at": "2026-09-14T12:59:59.783964+00:00"
-    },
-    {
-      "head_sha": "e0274acf6a32031c3659fe9eb258d79fb7747a93",
-      "role": "A4",
-      "run_id": "d9cc4ce3cd5b400da251e3a7246535ed",
-      "session_id": "/root/a4_audit_secret_repro",
-      "started_at": "2026-09-14T12:52:00.708907+00:00",
-      "status": "FINISHED",
-      "task_id": "TARIFF-A6-CROSS-BRANCH-CONTRACT-001",
-      "updated_at": "2026-09-14T12:57:29.632449+00:00"
-    },
-    {
-      "head_sha": "c4b4410fb6c8c9bcab35c8977554fb562aea7f0c",
-      "role": "A5",
-      "run_id": "84169bed81aa4a6e8ac393262eb9db9b",
-      "session_id": "/root/a5_audit_copy_fix2",
-      "started_at": "2026-09-14T12:57:29.674158+00:00",
-      "status": "FINISHED",
-      "task_id": "TARIFF-A6-CROSS-BRANCH-CONTRACT-001",
-      "updated_at": "2026-09-14T13:05:30.703193+00:00"
-    },
-    {
-      "head_sha": "8d2dd2fa5e4fa758514edcddf2256ab13b87455d",
-      "role": "A5",
-      "run_id": "9b9fbed174704076b6beabe1e4a2358d",
-      "session_id": "/root/a5_control_hardening_fix2",
-      "started_at": "2026-09-14T12:59:59.826320+00:00",
-      "status": "FINISHED",
-      "task_id": "TARIFF-ORCH-CONTROL-HARDENING-001",
-      "updated_at": "2026-09-14T13:05:30.693753+00:00"
-    },
-    {
-      "head_sha": "faa1a30f6a74a716fd05133c4f7744eec48bd2f7",
-      "role": "A5",
-      "run_id": "bac3cb8936ab4d759801109263006403",
-      "session_id": "/root/a5_lease_published",
-      "started_at": "2026-09-14T13:01:14.138486+00:00",
-      "status": "FINISHED",
-      "task_id": "TARIFF-ORCH-LEASE-TAKEOVER-HARDENING-001",
-      "updated_at": "2026-09-14T13:05:30.712468+00:00"
-    },
-    {
-      "head_sha": "c4b4410fb6c8c9bcab35c8977554fb562aea7f0c",
-      "role": "A4",
-      "run_id": "2724d4f411e742438910fb11d064ab53",
-      "session_id": "/root/a4_audit_secret_repro",
-      "started_at": "2026-09-14T13:05:30.905725+00:00",
-      "status": "FINISHED",
-      "task_id": "TARIFF-A6-CROSS-BRANCH-CONTRACT-001",
-      "updated_at": "2026-09-14T13:08:12.263959+00:00"
-    },
-    {
-      "head_sha": "090dc96e56611c9af7eaa454010e4fa8b358fd92",
-      "role": "A5",
-      "run_id": "e5ed01e46863470bb63fa22b146bb92f",
-      "session_id": "/root/a5_control_hardening_fix2",
-      "started_at": "2026-09-14T13:07:05.627678+00:00",
-      "status": "FINISHED",
-      "task_id": "TARIFF-ORCH-CONTROL-HARDENING-001",
-      "updated_at": "2026-09-14T13:09:29.675780+00:00"
-    },
-    {
-      "head_sha": "cd83f82599d91bd96e1d40d9dca169098e12a217",
-      "role": "A5",
-      "run_id": "6f261a1529234766a54a56e6b38e899f",
-      "session_id": "/root/a5_audit_copy_fix2",
-      "started_at": "2026-09-14T13:08:12.305988+00:00",
-      "status": "FINISHED",
-      "task_id": "TARIFF-A6-CROSS-BRANCH-CONTRACT-001",
-      "updated_at": "2026-09-14T13:10:49.882545+00:00"
-    },
-    {
-      "head_sha": "8f9f07d10ab555c70aad4da65123cd63f65f0809",
-      "role": "A5",
-      "run_id": "5b5e94b7c10446a18292f0ab2dd93276",
-      "session_id": "/root/a5_audit_copy_fix2",
-      "started_at": "2026-09-14T13:12:26.188336+00:00",
-      "status": "FINISHED",
-      "task_id": "TARIFF-A6-CROSS-BRANCH-CONTRACT-001",
-      "updated_at": "2026-09-14T13:16:21.415081+00:00"
-    },
-    {
-      "head_sha": "0701e7592c3570c4372b078a94baf778f53155c0",
-      "role": "A5",
-      "run_id": "79978ae35d334de1a0fa18517a5c45f5",
-      "session_id": "/root/a5_a6_live_bridge_sync",
-      "started_at": "2026-09-14T13:19:14.678498+00:00",
-      "status": "FINISHED",
-      "task_id": "TARIFF-A6-LIVE-BRIDGE-001",
-      "updated_at": "2026-09-14T13:27:40.396753+00:00"
-    },
-    {
-      "head_sha": null,
-      "role": "A4",
-      "run_id": "44b0e6b08e124f4488d4552e54796178",
-      "session_id": "/root/a4_ci_snapshot_validation",
-      "started_at": "2026-09-14T13:23:44.210944+00:00",
-      "status": "FINISHED",
-      "task_id": "TARIFF-ORCH-CI-SNAPSHOT-VALIDATION-001",
-      "updated_at": "2026-09-14T13:29:42.891559+00:00"
-    },
-    {
-      "head_sha": "090dc96e56611c9af7eaa454010e4fa8b358fd92",
-      "role": "A4",
-      "run_id": "c456d0c1570640fb8bf1efc68c2fa0c2",
-      "session_id": "/root/a4_control_hardening",
-      "started_at": "2026-09-14T13:25:51.001264+00:00",
-      "status": "FINISHED",
-      "task_id": "TARIFF-ORCH-CONTROL-HARDENING-001",
-      "updated_at": "2026-09-14T13:30:52.374418+00:00"
-    },
-    {
-      "head_sha": "0701e7592c3570c4372b078a94baf778f53155c0",
-      "role": "A4",
-      "run_id": "1b542db9a3ea40cdaa259ec5f220fb3d",
-      "session_id": "/root/a4_bridge_doc_sync",
-      "started_at": "2026-09-14T13:27:40.454971+00:00",
-      "status": "FINISHED",
-      "task_id": "TARIFF-A6-LIVE-BRIDGE-001",
-      "updated_at": "2026-09-14T13:29:43.003342+00:00"
-    },
-    {
-      "head_sha": "89405bbf71535c9ab61056a0e8ebf0624c46b99c",
-      "role": "A5",
-      "run_id": "3823f5a4ee31486bbc8ca772ed459451",
-      "session_id": "/root/a5_ci_snapshot_validation",
-      "started_at": "2026-09-14T13:29:42.993668+00:00",
-      "status": "FINISHED",
-      "task_id": "TARIFF-ORCH-CI-SNAPSHOT-VALIDATION-001",
-      "updated_at": "2026-09-14T13:34:50.399808+00:00"
-    },
-    {
-      "head_sha": "99d78631d4110cbd774ce22013476295372a39b8",
-      "role": "A5",
-      "run_id": "f00e3fcdf9bc46d1b64c1ff1428b8c9b",
-      "session_id": "/root/a5_control_hardening_fix2",
-      "started_at": "2026-09-14T13:30:52.447412+00:00",
-      "status": "FINISHED",
-      "task_id": "TARIFF-ORCH-CONTROL-HARDENING-001",
-      "updated_at": "2026-09-14T13:36:30.378841+00:00"
-    },
-    {
-      "head_sha": "64ce63fd3092f94a4924929457f22c4aefcaf2d8",
-      "role": "A5",
-      "run_id": "6b1935df80c3427f93821f114ed49956",
-      "session_id": "/root/a5_ci_snapshot_validation",
-      "started_at": "2026-09-14T13:36:30.367876+00:00",
-      "status": "FINISHED",
-      "task_id": "TARIFF-ORCH-CI-SNAPSHOT-VALIDATION-001",
-      "updated_at": "2026-09-14T13:39:33.928321+00:00"
-    },
-    {
-      "head_sha": "99d78631d4110cbd774ce22013476295372a39b8",
-      "role": "A4",
-      "run_id": "427c6012a8194f858c229f4a10416a0a",
-      "session_id": "/root/a4_control_hardening",
-      "started_at": "2026-09-14T13:36:30.461897+00:00",
-      "status": "FINISHED",
-      "task_id": "TARIFF-ORCH-CONTROL-HARDENING-001",
-      "updated_at": "2026-09-14T13:42:48.529718+00:00"
-    },
-    {
-      "head_sha": "3b1ca7cd8acc2525726de4520ab1aeb3de29acf8",
-      "role": "A5",
-      "run_id": "a95e025055974517a99090832440b084",
-      "session_id": "/root/a5_control_hardening_fix2",
-      "started_at": "2026-09-14T13:42:48.651567+00:00",
-      "status": "FINISHED",
-      "task_id": "TARIFF-ORCH-CONTROL-HARDENING-001",
-      "updated_at": "2026-09-14T13:54:06.685567+00:00"
-    },
-    {
-      "head_sha": "3b1ca7cd8acc2525726de4520ab1aeb3de29acf8",
-      "role": "A5",
-      "run_id": "c1eff1aa3c6744baa022af1ab25240ab",
-      "session_id": "/root/a5_control_regression",
-      "started_at": "2026-09-14T13:54:06.698551+00:00",
-      "status": "FINISHED",
-      "task_id": "TARIFF-ORCH-CONTROL-HARDENING-001",
-      "updated_at": "2026-09-14T13:54:06.710272+00:00"
-    },
-    {
-      "head_sha": "0126404cd78fd293f3634bd20c5fd09f937e83ba",
-      "role": "A5",
-      "run_id": "adcf4ddb381b4739bebecb44c4e75f00",
-      "session_id": "/root/a5_pr193_final",
-      "started_at": "2026-09-14T14:11:59.035025+00:00",
-      "status": "FINISHED",
-      "task_id": "TARIFF-A6-CROSS-BRANCH-CONTRACT-001",
-      "updated_at": "2026-09-14T14:11:59.046179+00:00"
-    },
-    {
-      "head_sha": "47da2e4763261cddc638cc276573b3375508a9ac",
-      "role": "A5",
-      "run_id": "815899b39aa149eab526d2004db60cee",
-      "session_id": "/root/a5_pr194_final",
-      "started_at": "2026-09-14T14:11:59.122833+00:00",
-      "status": "FINISHED",
-      "task_id": "TARIFF-A6-LIVE-BRIDGE-001",
-      "updated_at": "2026-09-14T14:11:59.133521+00:00"
-    },
-    {
-      "head_sha": null,
-      "role": "A1",
-      "run_id": "72cecb1a3bf448bb8e5df4f5aac42073",
-      "session_id": "/root/a1_payment_source_recheck",
-      "started_at": "2026-09-14T15:09:46.506039+00:00",
-      "status": "FINISHED",
-      "task_id": "TARIFF-PAYMENT-SOURCE-RECHECK-002",
-      "updated_at": "2026-09-14T15:22:03.900819+00:00"
-    },
-    {
-      "head_sha": null,
-      "role": "A3",
-      "run_id": "87042e4b474a43d681323abc81142ffb",
-      "session_id": "/root/a3_official_source_delta",
-      "started_at": "2026-09-14T15:09:47.675196+00:00",
-      "status": "FINISHED",
-      "task_id": "TARIFF-OFFICIAL-SOURCE-DELTA-002",
-      "updated_at": "2026-09-14T15:22:03.939505+00:00"
-    },
-    {
-      "head_sha": "fcc97a41573237aa6e680dc110241fffe26b348c",
-      "role": "A5",
-      "run_id": "7d7e01e36b9d48eaa92685d9da36c4a6",
-      "session_id": "/root/a5_payment_report",
-      "started_at": "2026-09-14T15:22:18.596912+00:00",
-      "status": "FINISHED",
-      "task_id": "TARIFF-PAYMENT-SOURCE-RECHECK-002",
-      "updated_at": "2026-09-14T15:27:10.583037+00:00"
-    },
-    {
-      "head_sha": "9c13ba79a0541657d62d56dc37e8fd92ac6569f1",
-      "role": "A5",
-      "run_id": "787b8eaa74ce4661bb02cf618838dc75",
-      "session_id": "/root/a5_source_report",
-      "started_at": "2026-09-14T15:22:18.607814+00:00",
-      "status": "FINISHED",
-      "task_id": "TARIFF-OFFICIAL-SOURCE-DELTA-002",
-      "updated_at": "2026-09-14T15:27:10.621744+00:00"
-    },
-    {
-      "head_sha": "dd56cc5357b30ae4cd448ae7a1608dbfa73e0da2",
-      "role": "A5",
-      "run_id": "0892f9cd9424459e9c5dba14bab563de",
-      "session_id": "/root/a5_payment_report",
-      "started_at": "2026-09-14T15:29:17.638116+00:00",
-      "status": "FINISHED",
-      "task_id": "TARIFF-PAYMENT-SOURCE-RECHECK-002",
-      "updated_at": "2026-09-14T15:30:36.233691+00:00"
-    },
-    {
-      "head_sha": "a304ff9003be44e9ec1bf4c4e313b3993c634d46",
-      "role": "A5",
-      "run_id": "70a754356d66490195d82851ac72cac1",
-      "session_id": "/root/a5_source_report",
-      "started_at": "2026-09-14T15:29:17.648002+00:00",
-      "status": "FINISHED",
-      "task_id": "TARIFF-OFFICIAL-SOURCE-DELTA-002",
-      "updated_at": "2026-09-14T15:30:36.270918+00:00"
-    },
-    {
-      "head_sha": null,
-      "role": "A1",
-      "run_id": "d7fa8f6c03744589ace20c5d57cd06c1",
-      "session_id": "/root/a1_payment_gate",
-      "started_at": "2026-09-14T19:07:05.420740+00:00",
-      "status": "FINISHED",
-      "task_id": "TARIFF-PAYMENT-UNBOUND-ADMISSION-003",
-      "updated_at": "2026-09-14T19:14:30.800522+00:00"
-    },
-    {
-      "head_sha": null,
-      "role": "A3",
-      "run_id": "80a63c0c88b34f33bf13c19266915c10",
-      "session_id": "/root/a3_cbr_observation",
-      "started_at": "2026-09-14T19:07:05.431987+00:00",
-      "status": "FINISHED",
-      "task_id": "TARIFF-CBR-RATE-OBSERVATION-003",
-      "updated_at": "2026-09-14T19:11:14.324134+00:00"
-    },
-    {
-      "head_sha": null,
-      "role": "A4",
-      "run_id": "6b098e77782e43ec9bc0a0af9bec525e",
-      "session_id": "/root/a4_legacy_vat",
-      "started_at": "2026-09-14T19:07:05.442112+00:00",
-      "status": "FINISHED",
-      "task_id": "TARIFF-LEGACY-VAT-BOUNDARY-003",
-      "updated_at": "2026-09-14T19:11:59.691332+00:00"
-    },
-    {
-      "head_sha": null,
-      "role": "A1",
-      "run_id": "540a2b8027e7496eb46b8057da908c73",
-      "session_id": "/root/a1_payment_gate",
-      "started_at": "2026-09-14T19:14:46.682911+00:00",
-      "status": "FINISHED",
-      "task_id": "TARIFF-PAYMENT-UNBOUND-ADMISSION-004",
-      "updated_at": "2026-09-14T19:17:08.105697+00:00"
-    },
-    {
-      "head_sha": "cf66e45f595a00657768a4f6d1ed938932c76526",
-      "role": "A5",
-      "run_id": "71c50132a682401fa22b2ce416e92d7b",
-      "session_id": "/root/a5_cbr_observation",
-      "started_at": "2026-09-14T19:15:01.959825+00:00",
-      "status": "FINISHED",
-      "task_id": "TARIFF-CBR-RATE-OBSERVATION-003",
-      "updated_at": "2026-09-14T19:15:01.997456+00:00"
-    },
-    {
-      "head_sha": "cf66e45f595a00657768a4f6d1ed938932c76526",
-      "role": "A3",
-      "run_id": "9de4bbfe68be421b966fb66aec444138",
-      "session_id": "/root/a3_cbr_observation",
-      "started_at": "2026-09-14T19:15:16.978707+00:00",
-      "status": "FINISHED",
-      "task_id": "TARIFF-CBR-RATE-OBSERVATION-003",
-      "updated_at": "2026-09-14T19:18:17.440545+00:00"
-    },
-    {
-      "head_sha": "7b526d3238c80d79aa7e6e8015df4f2e9237104c",
-      "role": "A5",
-      "run_id": "aecae9e4bf25408c9490e586483152e9",
-      "session_id": "/root/a5_legacy_vat",
-      "started_at": "2026-09-14T19:16:45.722448+00:00",
-      "status": "FINISHED",
-      "task_id": "TARIFF-LEGACY-VAT-BOUNDARY-003",
-      "updated_at": "2026-09-14T19:16:45.763824+00:00"
-    },
-    {
-      "head_sha": null,
-      "role": "A1",
-      "run_id": "99a1d3a017b14da997b7bc0b3c522dd1",
-      "session_id": "/root/a1_payment_gate",
-      "started_at": "2026-09-14T19:17:23.091792+00:00",
-      "status": "FINISHED",
-      "task_id": "TARIFF-PAYMENT-UNBOUND-ADMISSION-005",
-      "updated_at": "2026-09-14T19:21:55.404456+00:00"
-    },
-    {
-      "head_sha": "84934856d52c04c503ddd33ba85fce325d7450ae",
-      "role": "A5",
-      "run_id": "446e82355c574d938aca64f46ea2f978",
-      "session_id": "/root/a5_cbr_observation_fix",
-      "started_at": "2026-09-14T19:18:30.804827+00:00",
-      "status": "FINISHED",
-      "task_id": "TARIFF-CBR-RATE-OBSERVATION-003",
-      "updated_at": "2026-09-14T19:24:06.418546+00:00"
-    },
-    {
-      "head_sha": null,
-      "role": "A1",
-      "run_id": "7479aaa3bae8439f92f4a8f4ac0498b2",
-      "session_id": "/root/a1_payment_gate",
-      "started_at": "2026-09-14T19:22:10.111040+00:00",
-      "status": "FINISHED",
-      "task_id": "TARIFF-PAYMENT-UNBOUND-ADMISSION-006",
-      "updated_at": "2026-09-14T19:27:00.339017+00:00"
-    },
-    {
-      "head_sha": "b326d11ca4931c9c2e67bbde738fdbffca8d312a",
-      "role": "A5",
-      "run_id": "143b51f632f242ecae4191ebfac49651",
-      "session_id": "/root/a5_pr202_exact",
-      "started_at": "2026-09-14T19:26:26.441455+00:00",
-      "status": "FINISHED",
-      "task_id": "TARIFF-CBR-RATE-OBSERVATION-003",
-      "updated_at": "2026-09-14T19:33:17.843527+00:00"
-    },
-    {
-      "head_sha": "796ba45203ad4e3d9adcd76d62eb3ea4ece3399d",
-      "role": "A5",
-      "run_id": "0d6fd18a847e4eeaa9a39b606989fcb5",
-      "session_id": "/root/a5_payment_gate",
-      "started_at": "2026-09-14T19:27:14.321471+00:00",
-      "status": "FINISHED",
-      "task_id": "TARIFF-PAYMENT-UNBOUND-ADMISSION-006",
-      "updated_at": "2026-09-14T19:31:15.601551+00:00"
-    },
-    {
-      "head_sha": "dbb27aa857614b7b83111cddc0c5a1ed32f44580",
-      "role": "A5",
-      "run_id": "b00f37a410e7493ba0240586cbf2c2f0",
-      "session_id": "/root/a5_pr203_exact",
-      "started_at": "2026-09-14T19:28:47.281095+00:00",
-      "status": "FINISHED",
-      "task_id": "TARIFF-LEGACY-VAT-BOUNDARY-003",
-      "updated_at": "2026-09-14T19:36:44.995226+00:00"
-    },
-    {
-      "head_sha": "ce1abd85df41a4d4cac4ffeabe891339e917795a",
-      "role": "A5",
-      "run_id": "0bdc4138025c4e3f87a0a27c942e5eb2",
-      "session_id": "/root/a5_pr204_exact",
-      "started_at": "2026-09-14T19:32:41.069594+00:00",
-      "status": "FINISHED",
-      "task_id": "TARIFF-PAYMENT-UNBOUND-ADMISSION-006",
-      "updated_at": "2026-09-14T19:38:16.978620+00:00"
-    },
-    {
-      "head_sha": "ce1abd85df41a4d4cac4ffeabe891339e917795a",
-      "role": "A1",
-      "run_id": "2f4b127d85ec46f9ad540c5bf0644364",
-      "session_id": "/root/a1_payment_gate",
-      "started_at": "2026-09-14T19:38:17.013026+00:00",
-      "status": "FINISHED",
-      "task_id": "TARIFF-PAYMENT-UNBOUND-ADMISSION-006",
-      "updated_at": "2026-09-14T19:42:46.278715+00:00"
-    },
-    {
-      "head_sha": "ee81a66eafaba008c2205cac65e5256f939822e2",
-      "role": "A5",
-      "run_id": "f4b946c90c254a2785f0a684652e5398",
-      "session_id": "/root/a5_pr204_fix_exact",
-      "started_at": "2026-09-14T19:42:53.239400+00:00",
-      "status": "FINISHED",
-      "task_id": "TARIFF-PAYMENT-UNBOUND-ADMISSION-006",
-      "updated_at": "2026-09-14T19:48:36.571699+00:00"
-    },
-    {
-      "head_sha": null,
-      "role": "A3",
-      "run_id": "e0498f7ac73d4fe9a709e1e2a58bf300",
-      "session_id": "/root/a3_ad30_freshness",
-      "started_at": "2026-09-14T20:41:58.414057+00:00",
-      "status": "FINISHED",
-      "task_id": "TARIFF-AD30-FRESHNESS-EVIDENCE-008",
-      "updated_at": "2026-09-14T20:48:22.547776+00:00"
-    },
-    {
-      "head_sha": null,
-      "role": "A2",
-      "run_id": "f41d7fc1f94c41d982ce9dfb0fb76cfc",
-      "session_id": "/root/a2_ntm_recheck",
-      "started_at": "2026-09-14T20:41:58.424977+00:00",
-      "status": "FINISHED",
-      "task_id": "TARIFF-NTM-COMPLETENESS-RECHECK-001",
-      "updated_at": "2026-09-14T20:53:38.844911+00:00"
-    },
-    {
-      "head_sha": "1970cb1c279ccaa130b15f9d276b3c7e1b0d13cb",
-      "role": "A5",
-      "run_id": "43482807f3514c7e821a1eb8f86d17af",
-      "session_id": "/root/a5_ad30_freshness",
-      "started_at": "2026-09-14T20:48:22.560911+00:00",
-      "status": "FINISHED",
-      "task_id": "TARIFF-AD30-FRESHNESS-EVIDENCE-008",
-      "updated_at": "2026-09-14T20:52:24.720123+00:00"
-    },
-    {
-      "head_sha": "1970cb1c279ccaa130b15f9d276b3c7e1b0d13cb",
-      "role": "A3",
-      "run_id": "bcfd739ef46643e7a8f14a6fb43bfefd",
-      "session_id": "/root/a3_ad30_freshness",
-      "started_at": "2026-09-14T20:52:24.743036+00:00",
-      "status": "FINISHED",
-      "task_id": "TARIFF-AD30-FRESHNESS-EVIDENCE-008",
-      "updated_at": "2026-09-14T20:54:12.402886+00:00"
-    },
-    {
-      "head_sha": "121377d16c5dc11ec76064216d763195cea36842",
-      "role": "A5",
-      "run_id": "f2eb4ac5420a408285437266e586156a",
-      "session_id": "/root/a5_ntm_recheck",
-      "started_at": "2026-09-14T20:53:38.856505+00:00",
-      "status": "FINISHED",
-      "task_id": "TARIFF-NTM-COMPLETENESS-RECHECK-001",
-      "updated_at": "2026-09-14T21:04:35.399067+00:00"
-    },
-    {
-      "head_sha": "c3893d929ea29f1f11cddb05073c41383640b83a",
-      "role": "A5",
-      "run_id": "db878104efd34325955323f4ac05f6bf",
-      "session_id": "/root/a5_ad30_freshness_fix",
-      "started_at": "2026-09-14T20:54:12.414146+00:00",
-      "status": "FINISHED",
-      "task_id": "TARIFF-AD30-FRESHNESS-EVIDENCE-008",
-      "updated_at": "2026-09-14T20:59:35.052149+00:00"
-    },
-    {
-      "head_sha": "121377d16c5dc11ec76064216d763195cea36842",
-      "role": "A2",
-      "run_id": "61d109f6a3a94d45bef91d724471ff7b",
-      "session_id": "/root/a2_ntm_recheck",
-      "started_at": "2026-09-14T21:04:51.660730+00:00",
-      "status": "FINISHED",
-      "task_id": "TARIFF-NTM-COMPLETENESS-RECHECK-001",
-      "updated_at": "2026-09-14T21:07:00.695812+00:00"
-    },
-    {
-      "head_sha": "254144516cb0753be2dd8eeff64fbfe1d1d8cf71",
-      "role": "A5",
-      "run_id": "4a5b3c68d0414d4e92898d56fcea4067",
-      "session_id": "/root/a5_ntm_recheck_fix",
-      "started_at": "2026-09-14T21:07:05.523745+00:00",
-      "status": "FINISHED",
-      "task_id": "TARIFF-NTM-COMPLETENESS-RECHECK-001",
-      "updated_at": "2026-09-14T21:08:48.779561+00:00"
-    },
-    {
-      "head_sha": "d1324027cec636d05f2eb6b474a4bbb66758fcef",
-      "role": "A5",
-      "run_id": "bac02a5420cf46abbf9c2b6f0e51424b",
-      "session_id": "/root/a5_pr205_exact",
-      "started_at": "2026-09-14T21:07:34.628510+00:00",
-      "status": "FINISHED",
-      "task_id": "TARIFF-AD30-FRESHNESS-EVIDENCE-008",
-      "updated_at": "2026-09-14T21:07:34.667515+00:00"
-    },
-    {
-      "head_sha": null,
-      "role": "A2",
-      "run_id": "dbc95004c4154f72a4d516ed6a565123",
-      "session_id": "/root/a2_ntm_freshness_gate",
-      "started_at": "2026-09-14T21:08:09.206127+00:00",
-      "status": "FINISHED",
-      "task_id": "TARIFF-NTM-FRESHNESS-FAIL-CLOSED-001",
-      "updated_at": "2026-09-14T21:12:28.293901+00:00"
-    },
-    {
-      "head_sha": "fd702a3f37c673666f8792321b5ae72435c28cd5",
-      "role": "A5",
-      "run_id": "ab2c48e22fb64e34bc9f2a98f66cdf5d",
-      "session_id": "/root/a5_pr206_exact",
-      "started_at": "2026-09-14T21:10:39.736130+00:00",
-      "status": "FINISHED",
-      "task_id": "TARIFF-NTM-COMPLETENESS-RECHECK-001",
-      "updated_at": "2026-09-14T21:17:44.625486+00:00"
-    },
-    {
-      "head_sha": "dcde828103bd5ca1896e8ada252a4d25d47ef295",
-      "role": "A5",
-      "run_id": "9f059d31a0154d55b244f0f8cfba72b3",
-      "session_id": "/root/a5_ntm_freshness_gate",
-      "started_at": "2026-09-14T21:12:28.337385+00:00",
-      "status": "FINISHED",
-      "task_id": "TARIFF-NTM-FRESHNESS-FAIL-CLOSED-001",
-      "updated_at": "2026-09-14T21:16:00.531200+00:00"
-    },
-    {
-      "head_sha": "5230d8175ec31eca274fc9f72faaf7988b50d5a7",
-      "role": "A5",
-      "run_id": "31e07f67f6724198af1be1e2ccb46ff5",
-      "session_id": "/root/a5_pr207_exact",
-      "started_at": "2026-09-14T21:17:11.723327+00:00",
-      "status": "FINISHED",
-      "task_id": "TARIFF-NTM-FRESHNESS-FAIL-CLOSED-001",
-      "updated_at": "2026-09-14T21:23:13.925039+00:00"
-    },
-    {
-      "head_sha": null,
-      "role": "A2",
-      "run_id": "586381af1279402abdd9640ee8b82e39",
-      "session_id": "/root/a2_ntm_advisory_summary",
-      "started_at": "2026-09-14T22:18:38.812583+00:00",
-      "status": "FINISHED",
-      "task_id": "TARIFF-NTM-ADVISORY-SUMMARY-001",
-      "updated_at": "2026-09-14T22:21:31.642916+00:00"
-    },
-    {
-      "head_sha": "63537506fd1f4f03b8d83595f4107f7b9d1691ac",
-      "role": "A5",
-      "run_id": "ffdacafc24f841e987aac8dc826546a4",
-      "session_id": "/root/a5_ntm_advisory_summary",
-      "started_at": "2026-09-14T22:21:31.694577+00:00",
-      "status": "FINISHED",
-      "task_id": "TARIFF-NTM-ADVISORY-SUMMARY-001",
-      "updated_at": "2026-09-14T22:23:41.693969+00:00"
-    },
-    {
-      "head_sha": "6c88f7742fa4a0228e3227573f3857a07dc76431",
-      "role": "A5",
-      "run_id": "774ed24a306d4b23a6f28b629dce867f",
-      "session_id": "/root/a5_pr208_exact",
-      "started_at": "2026-09-14T22:24:51.947032+00:00",
-      "status": "FINISHED",
-      "task_id": "TARIFF-NTM-ADVISORY-SUMMARY-001",
-      "updated_at": "2026-09-14T22:30:49.657164+00:00"
-    },
-    {
-      "head_sha": null,
-      "role": "A2",
-      "run_id": "70d411176b234b6b928c13f55e74805b",
-      "session_id": "/root/a2_ntm_freshness_visibility",
-      "started_at": "2026-09-16T12:35:01.072888+00:00",
-      "status": "FINISHED",
-      "task_id": "TARIFF-NTM-NORMATIVE-FRESHNESS-VISIBILITY-002",
-      "updated_at": "2026-09-16T12:35:01.108155+00:00"
-    },
-    {
-      "head_sha": "5330e6aebd777fd880d938da6b4891a1ec8cf864",
-      "role": "A5",
-      "run_id": "d2666c706cda4dd59d7a98859f395955",
-      "session_id": "/root/a5_ntm_freshness_exact",
-      "started_at": "2026-09-16T12:35:01.115212+00:00",
-      "status": "FINISHED",
-      "task_id": "TARIFF-NTM-NORMATIVE-FRESHNESS-VISIBILITY-002",
-      "updated_at": "2026-09-16T12:37:27.750833+00:00"
-    },
-    {
-      "head_sha": null,
-      "role": "A3",
-      "run_id": "6cc6c17e8c1c46ffb226b97bc7bd06ac",
-      "session_id": "/root/a3_sources_triage",
-      "started_at": "2026-09-16T14:46:40.655108+00:00",
-      "status": "FINISHED",
-      "task_id": "TARIFF-AD30-RECURRING-ARTIFACTS-009",
-      "updated_at": "2026-09-16T14:52:01.861486+00:00"
-    },
-    {
-      "head_sha": "abafd8b24ba248852185ac5cdbb1530f9e6e624e",
-      "role": "A5",
-      "run_id": "7681333cf15941a5982a4005006fca47",
-      "session_id": "/root/a5_ad30_recurring_exact",
-      "started_at": "2026-09-16T14:52:43.889732+00:00",
-      "status": "FINISHED",
-      "task_id": "TARIFF-AD30-RECURRING-ARTIFACTS-009",
-      "updated_at": "2026-09-16T14:55:29.217453+00:00"
-    },
-    {
-      "head_sha": "abafd8b24ba248852185ac5cdbb1530f9e6e624e",
-      "role": "A3",
-      "run_id": "d4605ef652e442c7b64772364d6ab125",
-      "session_id": "/root/a3_sources_triage",
-      "started_at": "2026-09-16T15:03:35.024712+00:00",
-      "status": "FINISHED",
-      "task_id": "TARIFF-AD30-RECURRING-ARTIFACTS-009",
-      "updated_at": "2026-09-16T15:07:11.768256+00:00"
-    },
-    {
-      "head_sha": "fc19df03904430649e356978cf2086a616e6d244",
-      "role": "A5",
-      "run_id": "10c56230140649d999f28014a8ba37c4",
-      "session_id": "/root/a5_ad30_recurring_fix_exact",
-      "started_at": "2026-09-16T15:07:53.444483+00:00",
-      "status": "FINISHED",
-      "task_id": "TARIFF-AD30-RECURRING-ARTIFACTS-009",
-      "updated_at": "2026-09-16T15:11:19.628849+00:00"
-    },
-    {
-      "head_sha": "5230d8175ec31eca274fc9f72faaf7988b50d5a7",
-      "role": "A2",
-      "run_id": "91e977b016984b728269cc928a3e45c3",
-      "session_id": "/root/a2_ntm_freshness_fix",
-      "started_at": "2026-09-16T16:52:14.702045+00:00",
-      "status": "FINISHED",
-      "task_id": "TARIFF-NTM-FRESHNESS-FAIL-CLOSED-001",
-      "updated_at": "2026-09-16T17:01:48.371975+00:00"
-    },
-    {
-      "head_sha": "a286f7b24953f338a9fa4f910fb605ebc4328978",
-      "role": "A5",
-      "run_id": "7948907f5aeb448c9b4adf1e2de7f03f",
-      "session_id": "/root/a5_ntm_freshness_a286",
-      "started_at": "2026-09-16T17:02:37.472134+00:00",
-      "status": "FINISHED",
-      "task_id": "TARIFF-NTM-FRESHNESS-FAIL-CLOSED-001",
-      "updated_at": "2026-09-16T17:10:21.115053+00:00"
-    }
-  ],
-  "schema_version": 1,
-  "tasks": [
-    {
-      "author_sessions": [
-        "/root/smoke_rates"
-      ],
-      "branch": "agent/rates-smoke-rates-001-00e2649498",
-      "ci": {
-        "checks": [
-          {
-            "conclusion": "success",
-            "head_sha": "ca7285cc6bc241ec8538e1748a5b2a39636a9adb",
-            "name": "offline-safety",
-            "run_id": 34717733549,
-            "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/34717733549"
-          }
-        ],
-        "head_sha": "ca7285cc6bc241ec8538e1748a5b2a39636a9adb",
-        "status": "PASSED"
-      },
-      "dependencies": [],
-      "external_audit": {
-        "availability": "NOT_CONFIGURED",
-        "evidence_ref": {
-          "a0_validation": "PENDING",
-          "advisory_only": true,
-          "auditor": "A6",
-          "base_sha": "1526f494523dabb8c6b979f1b747c171beeb6915",
-          "head_sha": "ca7285cc6bc241ec8538e1748a5b2a39636a9adb",
-          "live_verified": false,
-          "missing": [
-            "ANTHROPIC_API_KEY",
-            "TARIFF_ANTHROPIC_MODEL"
-          ],
-          "packet_sha256": "9f9993c568b1d5d1f10df1189d935e0f64cb0731e2782344c4b6ea12ba5f3d3b",
-          "status": "UNAVAILABLE"
-        },
-        "head_sha": "ca7285cc6bc241ec8538e1748a5b2a39636a9adb",
-        "rationale": "Optional A6 not configured; no Claude audit performed.",
-        "reviewer": "A6",
-        "status": "UNAVAILABLE"
-      },
-      "files": [
-        ".ai/orchestration/smoke/rates.json"
-      ],
-      "goal": "Write a nonfinancial synthetic isolation receipt proving real A1 worktree execution; no product code.",
-      "handoff": {
-        "at": "2026-09-12T20:45:02.874188+00:00",
-        "evidence": "A0 checked same owned-file content in integration; independent A5 and integration CI 34717945276 /34717942948 success at exact a6ba8474"
-      },
-      "id": "SMOKE-RATES-001",
-      "owner": "A1",
-      "qa": {
-        "commands": [
-          {
-            "command": "A5 git rev-parse/status/diff; Python receipt, absent peer and full publication tree identity assertions; native collaboration.list_agents",
-            "exit_code": 0,
-            "output": "PASS: exact ca7285c, exclusive rates.json diff, absent sources.json, source/publication base and candidate trees identical; real completed /root/smoke_rates verified"
-          }
-        ],
-        "head_sha": "ca7285cc6bc241ec8538e1748a5b2a39636a9adb",
-        "reviewer_session_id": "/root/a5_independent_qa",
-        "status": "PASSED"
-      },
-      "refs": {
-        "base_sha": "1526f494523dabb8c6b979f1b747c171beeb6915",
-        "head_sha": "ca7285cc6bc241ec8538e1748a5b2a39636a9adb",
-        "integration_sha": "a6ba8474d8bbb8d299e9c88a003ea20218f42d4f",
-        "pr": null,
-        "publication_mapping": {
-          "identical_trees_verified": true,
-          "local_base_sha": "b1741c04ec0f1eca2b73833b918e52c7cff564c5",
-          "local_head_sha": "108e654d2e5652921ffe0df6d5e76adb099afb70",
-          "published_base_sha": "1526f494523dabb8c6b979f1b747c171beeb6915",
-          "published_head_sha": "ca7285cc6bc241ec8538e1748a5b2a39636a9adb"
-        }
-      },
-      "required_checks": [
-        "offline-safety"
-      ],
-      "risk": "low",
-      "status": "CANCELLED",
-      "tests": {
-        "commands": [
-          {
-            "command": "native worker JSON validation, git branch and sibling-file absence checks; A0 compared local and published full Git trees",
-            "exit_code": 0,
-            "output": "PASS: only owned synthetic receipt; clean worktree; other worker receipt absent; published tree exactly equals executed local commit"
-          }
-        ],
-        "head_sha": "ca7285cc6bc241ec8538e1748a5b2a39636a9adb"
-      },
-      "updated_at": "2026-09-30T12:58:10.633Z",
-      "worktree": "/workspace/scratch/cd6734a40504/tariff-agent-worktrees/smoke-rates-001-00e2649498",
-      "historical_status": "INTEGRATED",
-      "normalization": {
-        "reason": "Historical orchestration smoke evidence; not an active developer epic under the owner-authorized A0/A-CORE/A-PRODUCT model.",
-        "provenance_preserved": true
-      }
-    },
-    {
-      "author_sessions": [
-        "/root/smoke_sources"
-      ],
-      "branch": "agent/sources-smoke-sources-001-6fd9065039",
-      "ci": {
-        "checks": [
-          {
-            "conclusion": "success",
-            "head_sha": "b80e8947304215f50b40387591f7a7e6d11a2811",
-            "name": "offline-safety",
-            "run_id": 34717733694,
-            "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/34717733694"
-          }
-        ],
-        "head_sha": "b80e8947304215f50b40387591f7a7e6d11a2811",
-        "status": "PASSED"
-      },
-      "dependencies": [],
-      "external_audit": {
-        "evidence_ref": "Low-risk synthetic receipt only; no product or legal change. A6 is not required for this scope.",
-        "head_sha": "b80e8947304215f50b40387591f7a7e6d11a2811",
-        "reviewer": "A6",
-        "status": "NOT_REQUIRED"
-      },
-      "files": [
-        ".ai/orchestration/smoke/sources.json"
-      ],
-      "goal": "Write a synthetic source-handling receipt proving real A3 worktree execution; no legal claim.",
-      "handoff": {
-        "at": "2026-09-12T20:45:02.899886+00:00",
-        "evidence": "A0 checked same owned-file content in integration; independent A5 and integration CI 34717945276 /34717942948 success at exact a6ba8474"
-      },
-      "id": "SMOKE-SOURCES-001",
-      "owner": "A3",
-      "qa": {
-        "commands": [
-          {
-            "command": "A5 git rev-parse/status/diff; Python receipt, absent peer and full publication tree identity assertions; native collaboration.list_agents",
-            "exit_code": 0,
-            "output": "PASS: exact b80e894, exclusive sources.json diff, absent rates.json, source/publication base and candidate trees identical; real completed /root/smoke_sources verified"
-          }
-        ],
-        "head_sha": "b80e8947304215f50b40387591f7a7e6d11a2811",
-        "reviewer_session_id": "/root/a5_independent_qa",
-        "status": "PASSED"
-      },
-      "refs": {
-        "base_sha": "1526f494523dabb8c6b979f1b747c171beeb6915",
-        "head_sha": "b80e8947304215f50b40387591f7a7e6d11a2811",
-        "integration_sha": "a6ba8474d8bbb8d299e9c88a003ea20218f42d4f",
-        "pr": null,
-        "publication_mapping": {
-          "identical_trees_verified": true,
-          "local_base_sha": "b1741c04ec0f1eca2b73833b918e52c7cff564c5",
-          "local_head_sha": "92054267f2d2c5e11510133e3552b4dea8a7fe8c",
-          "published_base_sha": "1526f494523dabb8c6b979f1b747c171beeb6915",
-          "published_head_sha": "b80e8947304215f50b40387591f7a7e6d11a2811"
-        }
-      },
-      "required_checks": [
-        "offline-safety"
-      ],
-      "risk": "low",
-      "status": "CANCELLED",
-      "tests": {
-        "commands": [
-          {
-            "command": "native worker JSON validation, git branch and sibling-file absence checks; A0 compared local and published full Git trees",
-            "exit_code": 0,
-            "output": "PASS: only owned synthetic receipt; clean worktree; other worker receipt absent; published tree exactly equals executed local commit"
-          }
-        ],
-        "head_sha": "b80e8947304215f50b40387591f7a7e6d11a2811"
-      },
-      "updated_at": "2026-09-30T12:58:10.633Z",
-      "worktree": "/workspace/scratch/cd6734a40504/tariff-agent-worktrees/smoke-sources-001-6fd9065039",
-      "historical_status": "INTEGRATED",
-      "normalization": {
-        "reason": "Historical orchestration smoke evidence; not an active developer epic under the owner-authorized A0/A-CORE/A-PRODUCT model.",
-        "provenance_preserved": true
-      }
-    },
-    {
-      "author_sessions": [
-        "/root/smoke_rates"
-      ],
-      "branch": "agent/rates-tariff-admission-recheck-001-9231ffbdb5",
-      "cancellation_reason": "Stale stacked report task; current PR187-head work and residual findings continue in the listed scoped tasks. Branch/PR retained.",
-      "ci": null,
-      "ci_profile_decision": "A0 selected full existing CI plus admission job from actual a9d15c74 workflows after upstream reconciliation; existing checks unchanged.",
-      "dependencies": [],
-      "external_audit": null,
-      "files": [
-        "docs/ai-workflow/PAYMENT_ADMISSION_RECHECK_20260912.md",
-        ".github/workflows/admission-agent-qa.yml"
-      ],
-      "goal": "Read-only recheck of current PR187 payment admission and provisional-payment audit findings against current code; produce evidence and scoped next fixes, no product/DB/flag writes.",
-      "id": "TARIFF-ADMISSION-RECHECK-001",
-      "owner": "A1",
-      "ownership_decisions": [
-        {
-          "by": "A0",
-          "new_file": ".github/workflows/admission-agent-qa.yml",
-          "reason": "Confirmed workflow compatibility defect. A1 owns one reviewed matcher extension; no other agent edits this file. Dynamic agent/* branches must run the complete existing integration test array; exact historical profiles stay unchanged."
-        }
-      ],
-      "qa": null,
-      "refs": {
-        "base_history": [
-          {
-            "base_sha": "22a7df5590a7442d943d89af285feb1228e80938",
-            "head_sha": "161a9258d174e93266353ae1fd2cb0b3e4657679",
-            "reason": "Historical source superseded by independently published PR187 corrections; retained in branch history."
-          }
-        ],
-        "base_sha": "a9d15c74699c8cd7842404580ff6fd7bd957e9eb",
-        "head_sha": "1c0272a34cbcbb3b99d6f32c86d86949bc0adc06",
-        "pr": 191,
-        "publication_mapping": {
-          "identical_trees_verified": true,
-          "local_head_sha": "d54bbfc25586786b7d6210af8824d313a6c805c4",
-          "published_head_sha": "1c0272a34cbcbb3b99d6f32c86d86949bc0adc06",
-          "tree_sha": "f93b595d69edbcf719688b453af735c1d935d97c"
-        }
-      },
-      "required_checks": [
-        "Scheduled workflow and locked environment",
-        "Backend NTM safety suite",
-        "Frontend tests, types and build",
-        "Validate and build local staging images",
-        "admission"
-      ],
-      "review_history": [
-        {
-          "commands": [
-            {
-              "command": "Extracted sole Python block from current report and executed unchanged; reviewed current decisions/anchors and full tree/diff/clean checks",
-              "exit_code": 0,
-              "output": "4 payment cases; 6 apply success/parser-failure pairs; Tamdoc and readiness PASS. No full pytest/HTTP/SQL/legal completeness asserted."
-            }
-          ],
-          "head_sha": "4e40100252e899e659bc2c51eb59d785f78947b0",
-          "readiness": "BLOCKED_BY_CI_BRANCH_SCOPE",
-          "result": "PASSED",
-          "reviewer_session_id": "/root/a5_independent_qa",
-          "scope": "bounded report"
-        }
-      ],
-      "risk": "low",
-      "status": "CANCELLED",
-      "superseded_by": [
-        "TARIFF-PAYMENT-SOURCE-RECHECK-002",
-        "TARIFF-CBR-RATE-OBSERVATION-003",
-        "TARIFF-LEGACY-VAT-BOUNDARY-003",
-        "TARIFF-PAYMENT-UNBOUND-ADMISSION-006"
-      ],
-      "tests": [],
-      "updated_at": "2026-09-14T15:35:36.565131+00:00",
-      "upstream_reconciliation": {
-        "a0_local_merge_sha": "2e5da9ecfb74ef386b6695eba24abd62ae993776",
-        "owned_diff_vs_new_base": [
-          "docs/ai-workflow/PAYMENT_ADMISSION_RECHECK_20260912.md"
-        ],
-        "reason": "A0 integrated latest upstream into isolated report branch with a two-parent local merge, preserving remote history and all upstream product code.",
-        "remote_force_push": false
-      },
-      "worktree": "/workspace/scratch/cd6734a40504/tariff-agent-worktrees/tariff-admission-recheck-001-9231ffbdb5"
-    },
-    {
-      "author_sessions": [
-        "/root/a3_ad30_review"
-      ],
-      "branch": "agent/sources-tariff-ad30-review-candidate-001-99f4e3fb32",
-      "cancellation_reason": "Stale stacked report task; current PR187-head work and residual findings continue in the listed scoped tasks. Branch/PR retained.",
-      "ci": null,
-      "dependencies": [
-        "TARIFF-ADMISSION-RECHECK-001"
-      ],
-      "external_audit": null,
-      "files": [
-        "docs/ai-workflow/AD30_CHAIN_REVIEW_CANDIDATE.md"
-      ],
-      "goal": "Assemble a bounded source-fact review candidate for the retained Decision 12 -> 4 -> 121 chain, binding exact product text, producer rows, printed codes, dates and provenance while explicitly preserving incomplete amendment coverage and making no legal applicability, rate admission, promotion, production or enforcement claim.",
-      "id": "TARIFF-AD30-REVIEW-CANDIDATE-001",
-      "owner": "A3",
-      "qa": null,
-      "refs": {
-        "base_sha": "1c0272a34cbcbb3b99d6f32c86d86949bc0adc06",
-        "head_sha": "5bff4523ec20f7a29fe6f7b997ffccfc479c9bff",
-        "pr": 192,
-        "publication_mapping": {
-          "identical_trees_verified": true,
-          "local_base_sha": "1c0272a34cbcbb3b99d6f32c86d86949bc0adc06",
-          "local_head_sha": "ca664142de9c7c0568ef03bd854fa60c74025fee",
-          "local_tree_sha": "e008c16cc6e62c943935aa373bf7795f274d7747",
-          "published_base_sha": "1c0272a34cbcbb3b99d6f32c86d86949bc0adc06",
-          "published_head_sha": "5bff4523ec20f7a29fe6f7b997ffccfc479c9bff",
-          "published_tree_sha": "e008c16cc6e62c943935aa373bf7795f274d7747"
-        }
-      },
-      "required_checks": [
-        "Validate and build local staging images",
-        "Scheduled workflow and locked environment",
-        "Backend NTM safety suite",
-        "Frontend tests, types and build",
-        "admission"
-      ],
-      "risk": "high",
-      "status": "CANCELLED",
-      "superseded_by": [
-        "TARIFF-OFFICIAL-SOURCE-DELTA-002",
-        "TARIFF-AD30-FRESHNESS-EVIDENCE-008"
-      ],
-      "tests": [],
-      "updated_at": "2026-09-14T15:35:36.584283+00:00",
-      "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-ad30-review-candidate-001-99f4e3fb32"
-    },
-    {
-      "author_sessions": [
-        "/root/a4_a6_contract_fix",
-        "/root/a4_audit_secret_repro"
-      ],
-      "branch": "agent/classification-tariff-a6-cross-branch-contract-001-a5c4916ca6",
-      "ci": null,
-      "dependencies": [],
-      "external_audit": null,
-      "files": [
-        "tools/tariff_agents/audit.py",
-        "tests/agent_orchestration/test_audit.py"
-      ],
-      "goal": "Make the checked A6 audit adapter support product candidate commits that intentionally do not contain orchestration files by binding an explicitly selected immutable architecture contract blob/ref into the packet; preserve complete changed-path coverage, tamper detection, secret scanning, exact candidate base/head binding, and fail-closed behavior.",
-      "id": "TARIFF-A6-CROSS-BRANCH-CONTRACT-001",
-      "observed_ci": {
-        "conclusion": "success",
-        "head_sha": "0126404cd78fd293f3634bd20c5fd09f937e83ba",
-        "name": "Tariff agent safety",
-        "run_id": 34852521668,
-        "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/34852521668"
-      },
-      "owner": "A4",
-      "protected_merge_gate": {
-        "reason": "Exact-head A5 and CI passed for the combined chain; A6 cannot run until the reviewed workflow is on main.",
-        "sequence": [
-          190,
-          193,
-          194
-        ],
-        "status": "OWNER_PERMISSION_REQUIRED"
-      },
-      "qa": null,
-      "recovery_history": [
-        {
-          "by": "A0",
-          "reason": "Workspace maintenance removed the prior local worktree; A0 fetched exact published c3924867 and created a clean detached replacement solely for independent verification."
-        }
-      ],
-      "refs": {
-        "base_sha": "0195a2b5eef30a96feaf866061ce2a706d1c08f3",
-        "head_sha": "0126404cd78fd293f3634bd20c5fd09f937e83ba",
-        "pr": 193,
-        "publication_mapping": {
-          "identical_trees_verified": true,
-          "local_base_sha": "c39248672a6299b64bc2db5637e2027579a4624e",
-          "local_cleanup_sha": "7bd5b9b812803c6d4db602283b080ddd7d996285",
-          "local_cleanup_tree_sha": "c195dbe4be2f7eb16420c0d6e0b5ca5e180a367d",
-          "local_head_sha": "990855d3612b03c97c3ef2d6c7828041516f8389",
-          "local_tree_sha": "5cabb7be1a1602ce6abe472b92223b462f6e3271",
-          "published_base_sha": "0195a2b5eef30a96feaf866061ce2a706d1c08f3",
-          "published_cleanup_sha": "42f9633dd846196b6c2421c70087ddb9b70dc2b7",
-          "published_cleanup_tree_sha": "c195dbe4be2f7eb16420c0d6e0b5ca5e180a367d",
-          "published_head_sha": "0126404cd78fd293f3634bd20c5fd09f937e83ba",
-          "published_tree_sha": "5cabb7be1a1602ce6abe472b92223b462f6e3271"
-        }
-      },
-      "required_checks": [
-        "offline-safety"
-      ],
-      "risk": "high",
-      "status": "CANCELLED",
-      "tests": [],
-      "updated_at": "2026-09-29T10:21:00.000Z",
-      "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-pr193",
-      "historical_status": "CHANGES_REQUESTED",
-      "normalization": {
-        "reason": "Legacy persistent A1-A4 ownership superseded by owner-authorized consolidated A-CORE/A-PRODUCT operating model.",
-        "provenance_preserved": true,
-        "successor_epic": "COMPLIANCE-AI-V1"
-      }
-    },
-    {
-      "a6_status": "BLOCKED_PENDING_DEFAULT_BRANCH_MERGE",
-      "author_sessions": [
-        "/root/a4_a6_live_bridge",
-        "/root/a4_bridge_doc_sync"
-      ],
-      "branch": "agent/classification-tariff-a6-live-bridge-001-f5839c6c98",
-      "ci": null,
-      "dependencies": [
-        "TARIFF-A6-CROSS-BRANCH-CONTRACT-001"
-      ],
-      "dependency_decisions": [
-        {
-          "by": "A0",
-          "reason": "Implementation must proceed on the exact published PR #193 adapter tree to break the bootstrap cycle. PR #193 readiness remains a separate mandatory gate; this bridge cannot be marked ready or live-verified until both published heads receive current A5/CI and the trusted workflow is merged to the default branch."
-        }
-      ],
-      "external_audit": null,
-      "files": [
-        ".github/workflows/tariff-a6-live.yml",
-        "tools/tariff_agents/audit_bridge.py",
-        "tests/agent_orchestration/test_audit_bridge.py",
-        ".ai/orchestration/A6_LIVE_BRIDGE.md"
-      ],
-      "goal": "Implement a minimal trusted GitHub Actions bridge that invokes the checked commit-bound tools.tariff_agents.audit adapter with only ANTHROPIC_API_KEY and TARIFF_ANTHROPIC_MODEL, never executes candidate code, grants read-only contents permission, exposes no credentials to PR workers, and records only validated non-secret A6 evidence; manual dispatch must fail closed unless the workflow runs from the reviewed default-branch implementation.",
-      "id": "TARIFF-A6-LIVE-BRIDGE-001",
-      "observed_ci": {
-        "conclusion": "success",
-        "head_sha": "47da2e4763261cddc638cc276573b3375508a9ac",
-        "name": "Tariff agent safety",
-        "run_id": 34852829770,
-        "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/34852829770"
-      },
-      "owner": "A4",
-      "protected_merge_gate": {
-        "reason": "Reviewed trusted workflow is not yet on main; live provider request remains forbidden.",
-        "sequence": [
-          190,
-          193,
-          194
-        ],
-        "status": "OWNER_PERMISSION_REQUIRED"
-      },
-      "qa": null,
-      "readiness_dependencies": [
-        "TARIFF-A6-CROSS-BRANCH-CONTRACT-001"
-      ],
-      "refs": {
-        "base_sha": "0126404cd78fd293f3634bd20c5fd09f937e83ba",
-        "head_sha": "47da2e4763261cddc638cc276573b3375508a9ac",
-        "pr": 194,
-        "publication_mapping": {
-          "identical_trees_verified": true,
-          "local_base_sha": "cd83f82599d91bd96e1d40d9dca169098e12a217",
-          "local_head_sha": "9e130e6844957d9aee2e1004190234ef138ca8f3",
-          "local_tree_sha": "b46ba60f12cba31de30f8b4d25b2feff6c90e38b",
-          "published_base_sha": "0126404cd78fd293f3634bd20c5fd09f937e83ba",
-          "published_head_sha": "47da2e4763261cddc638cc276573b3375508a9ac",
-          "published_tree_sha": "b46ba60f12cba31de30f8b4d25b2feff6c90e38b"
-        }
-      },
-      "required_checks": [
-        "offline-safety"
-      ],
-      "risk": "high",
-      "status": "CANCELLED",
-      "tests": [],
-      "updated_at": "2026-09-29T10:21:00.000Z",
-      "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-a6-live-bridge-001-f5839c6c98",
-      "historical_status": "CHANGES_REQUESTED",
-      "normalization": {
-        "reason": "Legacy persistent A1-A4 ownership superseded by owner-authorized consolidated A-CORE/A-PRODUCT operating model.",
-        "provenance_preserved": true,
-        "successor_epic": "COMPLIANCE-AI-V1"
-      }
-    },
-    {
-      "author_sessions": [
-        "/root/a4_control_hardening"
-      ],
-      "branch": "agent/classification-tariff-orch-control-hardening-001-6689c2a339",
-      "ci": null,
-      "dependencies": [],
-      "external_audit": null,
-      "files": [
-        "tools/tariff_agents/control.py",
-        "tools/tariff_agents/verify.py",
-        "tests/agent_orchestration/test_control.py",
-        "tests/agent_orchestration/test_a5_independent.py"
-      ],
-      "goal": "Reproduce and, only if A0 confirms, fix PR #190 authority pinning, Git replacement-object bypass, IMPLEMENTED worktree-recovery deadlock, and mandatory A5 verifier coverage without weakening gates.",
-      "id": "TARIFF-ORCH-CONTROL-HARDENING-001",
-      "owner": "A4",
-      "qa": null,
-      "refs": {
-        "base_sha": "ad4935e318d947276178e2f269d4ffe1051ea6cb",
-        "head_sha": "3b1ca7cd8acc2525726de4520ab1aeb3de29acf8",
-        "pr": 196,
-        "publication_mapping": {
-          "followup_pr": 199,
-          "followup_published_head_sha": "11fa8a40de2ffe77335fdf753309de5e9ee29c89",
-          "followup_published_tree_sha": "777df306b65f6973a91c3cb399f9a50ca8d99da9",
-          "identical_trees_verified": true,
-          "integration_sha": "0195a2b5eef30a96feaf866061ce2a706d1c08f3",
-          "local_base_sha": "ad4935e318d947276178e2f269d4ffe1051ea6cb",
-          "local_head_sha": "8d2dd2fa5e4fa758514edcddf2256ab13b87455d",
-          "local_tree_sha": "54b0996b577be5ea3d1af30c5148c6d0489f7469",
-          "owned_blobs_match_reviewed_candidate": true,
-          "published_base_sha": "ad4935e318d947276178e2f269d4ffe1051ea6cb",
-          "published_head_sha": "090dc96e56611c9af7eaa454010e4fa8b358fd92",
-          "published_tree_sha": "54b0996b577be5ea3d1af30c5148c6d0489f7469"
-        }
-      },
-      "required_checks": [
-        "offline-safety"
-      ],
-      "risk": "high",
-      "status": "CANCELLED",
-      "tests": [],
-      "updated_at": "2026-09-29T10:21:00.000Z",
-      "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-orch-control-hardening-001-6689c2a339",
-      "historical_status": "CHANGES_REQUESTED",
-      "normalization": {
-        "reason": "Legacy persistent A1-A4 ownership superseded by owner-authorized consolidated A-CORE/A-PRODUCT operating model.",
-        "provenance_preserved": true,
-        "successor_epic": "COMPLIANCE-AI-V1"
-      }
-    },
-    {
-      "author_sessions": [
-        "/root/a4_lease_hardening"
-      ],
-      "branch": "agent/classification-tariff-orch-lease-takeover-hardening-001-b4b30adacd",
-      "ci": null,
-      "dependencies": [],
-      "external_audit": null,
-      "files": [
-        "tools/tariff_agents/lease.py",
-        "tests/agent_orchestration/test_lease.py"
-      ],
-      "goal": "Reproduce and, only if A0 confirms, bind takeover termination evidence to the current lease incarnation so stale observations cannot fence a renewed coordinator.",
-      "id": "TARIFF-ORCH-LEASE-TAKEOVER-HARDENING-001",
-      "owner": "A4",
-      "qa": null,
-      "refs": {
-        "base_sha": "ad4935e318d947276178e2f269d4ffe1051ea6cb",
-        "head_sha": "faa1a30f6a74a716fd05133c4f7744eec48bd2f7",
-        "pr": 195,
-        "publication_mapping": {
-          "identical_trees_verified": true,
-          "local_base_sha": "ad4935e318d947276178e2f269d4ffe1051ea6cb",
-          "local_head_sha": "213eeb1ca93d785d764100ecfecfd6bdbdfb16fb",
-          "local_tree_sha": "c14ea17cb5b9b42dfd0f4189a7e07567251f492e",
-          "published_base_sha": "ad4935e318d947276178e2f269d4ffe1051ea6cb",
-          "published_head_sha": "faa1a30f6a74a716fd05133c4f7744eec48bd2f7",
-          "published_tree_sha": "c14ea17cb5b9b42dfd0f4189a7e07567251f492e"
-        }
-      },
-      "required_checks": [
-        "offline-safety"
-      ],
-      "risk": "high",
-      "status": "CANCELLED",
-      "tests": [],
-      "updated_at": "2026-09-29T10:21:00.000Z",
-      "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-orch-lease-takeover-hardening-001-b4b30adacd",
-      "historical_status": "CHANGES_REQUESTED",
-      "normalization": {
-        "reason": "Legacy persistent A1-A4 ownership superseded by owner-authorized consolidated A-CORE/A-PRODUCT operating model.",
-        "provenance_preserved": true,
-        "successor_epic": "COMPLIANCE-AI-V1"
-      }
-    },
-    {
-      "author_sessions": [
-        "/root/a4_ci_snapshot_validation"
-      ],
-      "branch": "agent/classification-tariff-orch-ci-snapshot-validation-001-2b97826c17",
-      "ci": null,
-      "dependencies": [],
-      "external_audit": null,
-      "files": [
-        "tools/tariff_agents/__main__.py",
-        ".github/workflows/tariff-agent-safety.yml",
-        "tests/agent_orchestration/test_cli_snapshot.py"
-      ],
-      "goal": "Keep authority fail-closed while giving offline CI an explicit read-only snapshot schema validation command that never bootstraps or mutates state.",
-      "id": "TARIFF-ORCH-CI-SNAPSHOT-VALIDATION-001",
-      "owner": "A4",
-      "qa": null,
-      "refs": {
-        "base_sha": "db2d340e4516aa8c6d42aa631aba945bed4652d8",
-        "head_sha": "64ce63fd3092f94a4924929457f22c4aefcaf2d8",
-        "pr": 197,
-        "publication_mapping": {
-          "identical_trees_verified": true,
-          "local_base_sha": "db2d340e4516aa8c6d42aa631aba945bed4652d8",
-          "local_head_sha": "89405bbf71535c9ab61056a0e8ebf0624c46b99c",
-          "local_tree_sha": "9dcd2e70078718b09a715d0e16051636c57724e8",
-          "published_base_sha": "db2d340e4516aa8c6d42aa631aba945bed4652d8",
-          "published_head_sha": "64ce63fd3092f94a4924929457f22c4aefcaf2d8",
-          "published_tree_sha": "9dcd2e70078718b09a715d0e16051636c57724e8"
-        }
-      },
-      "required_checks": [
-        "offline-safety"
-      ],
-      "risk": "high",
-      "status": "CANCELLED",
-      "tests": [],
-      "updated_at": "2026-09-29T10:21:00.000Z",
-      "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-orch-ci-snapshot-validation-001-2b97826c17",
-      "historical_status": "CHANGES_REQUESTED",
-      "normalization": {
-        "reason": "Legacy persistent A1-A4 ownership superseded by owner-authorized consolidated A-CORE/A-PRODUCT operating model.",
-        "provenance_preserved": true,
-        "successor_epic": "COMPLIANCE-AI-V1"
-      }
-    },
-    {
-      "author_sessions": [
-        "/root/a1_payment_source_recheck"
-      ],
-      "branch": "agent/rates-tariff-payment-source-recheck-002-c1549329dc",
-      "ci": null,
-      "dependencies": [],
-      "external_audit": null,
-      "files": [
-        "docs/ai-workflow/PAYMENT_SOURCE_BOUND_RECHECK_20260914.md"
-      ],
-      "goal": "On exact PR187 HEAD, reproduce and classify only remaining payment/rate gaps involving source-bound dates, editions, units, FX and final-amount admission; produce a factual evidence report and exact next implementation ownership without changing product code, database, flags or legal policy.",
-      "id": "TARIFF-PAYMENT-SOURCE-RECHECK-002",
-      "owner": "A1",
-      "qa": null,
-      "refs": {
-        "base_sha": "5d3b0c1dc7dd8e396c4f812db2bf6f1fa6d293f9",
-        "head_sha": "dd56cc5357b30ae4cd448ae7a1608dbfa73e0da2",
-        "pr": 200,
-        "publication_mapping": {
-          "identical_trees_verified": true,
-          "local_head_sha": "fcc97a41573237aa6e680dc110241fffe26b348c",
-          "local_tree_sha": "4a622a73b14de394c4e4f9238655432b9d947870",
-          "published_head_sha": "dd56cc5357b30ae4cd448ae7a1608dbfa73e0da2",
-          "published_tree_sha": "4a622a73b14de394c4e4f9238655432b9d947870"
-        }
-      },
-      "required_checks": [
-        "Backend NTM safety suite",
-        "Frontend tests, types and build",
-        "Validate and build local staging images",
-        "Scheduled workflow and locked environment"
-      ],
-      "risk": "medium",
-      "status": "CANCELLED",
-      "tests": [],
-      "updated_at": "2026-09-29T10:21:00.000Z",
-      "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-payment-source-recheck-002-c1549329dc",
-      "historical_status": "CHANGES_REQUESTED",
-      "normalization": {
-        "reason": "Legacy persistent A1-A4 ownership superseded by owner-authorized consolidated A-CORE/A-PRODUCT operating model.",
-        "provenance_preserved": true,
-        "successor_epic": "CUSTOMS-CORE-V1"
-      }
-    },
-    {
-      "author_sessions": [
-        "/root/a3_official_source_delta"
-      ],
-      "branch": "agent/sources-tariff-official-source-delta-002-753e289be4",
-      "ci": null,
-      "dependencies": [],
-      "external_audit": null,
-      "files": [
-        "docs/ai-workflow/OFFICIAL_SOURCE_TEMPORAL_AD30_RECHECK_20260914.md"
-      ],
-      "goal": "On exact PR187 HEAD, inventory official source/date/edition/amendment and AD30 producer/nomenclature evidence gaps; verify public official facts without deciding legal applicability and produce a bounded evidence report plus exact dependencies for A1/A2.",
-      "id": "TARIFF-OFFICIAL-SOURCE-DELTA-002",
-      "owner": "A3",
-      "qa": null,
-      "refs": {
-        "base_sha": "5d3b0c1dc7dd8e396c4f812db2bf6f1fa6d293f9",
-        "head_sha": "a304ff9003be44e9ec1bf4c4e313b3993c634d46",
-        "pr": 201,
-        "publication_mapping": {
-          "identical_trees_verified": true,
-          "local_head_sha": "9c13ba79a0541657d62d56dc37e8fd92ac6569f1",
-          "local_tree_sha": "0633120d6fc8dfead252101c8cf323084c04da6e",
-          "published_head_sha": "a304ff9003be44e9ec1bf4c4e313b3993c634d46",
-          "published_tree_sha": "0633120d6fc8dfead252101c8cf323084c04da6e"
-        }
-      },
-      "required_checks": [
-        "Backend NTM safety suite",
-        "Frontend tests, types and build",
-        "Validate and build local staging images",
-        "Scheduled workflow and locked environment"
-      ],
-      "risk": "high",
-      "status": "CANCELLED",
-      "tests": [],
-      "updated_at": "2026-09-29T10:21:00.000Z",
-      "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-official-source-delta-002-753e289be4",
-      "historical_status": "CHANGES_REQUESTED",
-      "normalization": {
-        "reason": "Legacy persistent A1-A4 ownership superseded by owner-authorized consolidated A-CORE/A-PRODUCT operating model.",
-        "provenance_preserved": true,
-        "successor_epic": "CUSTOMS-CORE-V1"
-      }
-    },
-    {
-      "author_sessions": [
-        "/root/a1_payment_gate"
-      ],
-      "branch": "agent/rates-tariff-payment-unbound-admission-003-5132f27def",
-      "ci": null,
-      "dependencies": [],
-      "external_audit": null,
-      "files": [
-        "customs-clear/backend/app/services/payment_engine.py",
-        "customs-clear/backend/tests/test_payment_source_admission.py"
-      ],
-      "goal": "Fail closed when legacy HsRate dates/source are blank or unbound and when structured HsDutyRule operands lack immutable source binding: return REVIEW_REQUIRED and withhold dependent final quote components without inventing legal applicability or changing manual override semantics.",
-      "id": "TARIFF-PAYMENT-UNBOUND-ADMISSION-003",
-      "owner": "A1",
-      "qa": null,
-      "refs": {
-        "base_sha": "5d3b0c1dc7dd8e396c4f812db2bf6f1fa6d293f9",
-        "head_sha": null,
-        "pr": null
-      },
-      "required_checks": [
-        "Backend NTM safety suite",
-        "Frontend tests, types and build",
-        "Validate and build local staging images",
-        "Scheduled workflow and locked environment"
-      ],
-      "risk": "high",
-      "status": "CANCELLED",
-      "tests": [],
-      "updated_at": "2026-09-14T19:07:05.420755+00:00",
-      "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-payment-unbound-admission-003-5132f27def"
-    },
-    {
-      "author_sessions": [
-        "/root/a3_cbr_observation"
-      ],
-      "branch": "agent/sources-tariff-cbr-rate-observation-003-9dc4811432",
-      "ci": null,
-      "dependencies": [],
-      "external_audit": null,
-      "files": [
-        "customs-clear/backend/app/services/exchange_rates.py",
-        "customs-clear/backend/tests/test_cbr_exchange_rate_observation.py"
-      ],
-      "goal": "Expose a typed read-only CBR exchange-rate observation that preserves stored row identity and available official source date/revision evidence, remains explicitly unverified when no exact row-to-artifact binding exists, and never upgrades payment admission or writes production data.",
-      "id": "TARIFF-CBR-RATE-OBSERVATION-003",
-      "owner": "A3",
-      "qa": null,
-      "refs": {
-        "base_sha": "5d3b0c1dc7dd8e396c4f812db2bf6f1fa6d293f9",
-        "head_sha": "b326d11ca4931c9c2e67bbde738fdbffca8d312a",
-        "observed_ci": {
-          "head_sha": "b326d11ca4931c9c2e67bbde738fdbffca8d312a",
-          "not_promoted_to_ci_gate_reason": "A6 live audit is not yet LIVE_VERIFIED; controller requires explicit audit state before gated CI.",
-          "required_jobs": {
-            "Backend NTM safety suite": "success",
-            "Frontend tests, types and build": "success",
-            "Scheduled workflow and locked environment": "success",
-            "Validate and build local staging images": "success"
-          },
-          "run_id": 34886761307,
-          "status": "PASSED",
-          "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/34886761307"
-        },
-        "pr": 202,
-        "publication_mapping": {
-          "identical_trees_verified": true,
-          "local_head_sha": "84934856d52c04c503ddd33ba85fce325d7450ae",
-          "local_tree_sha": "77fb59695f887ab6e973957eb73e7eceb9760544",
-          "published_head_sha": "b326d11ca4931c9c2e67bbde738fdbffca8d312a",
-          "published_tree_sha": "77fb59695f887ab6e973957eb73e7eceb9760544"
-        }
-      },
-      "required_checks": [
-        "Backend NTM safety suite",
-        "Frontend tests, types and build",
-        "Validate and build local staging images",
-        "Scheduled workflow and locked environment"
-      ],
-      "risk": "high",
-      "status": "CANCELLED",
-      "tests": [],
-      "updated_at": "2026-09-29T10:21:00.000Z",
-      "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-cbr-rate-observation-003-9dc4811432",
-      "historical_status": "CHANGES_REQUESTED",
-      "normalization": {
-        "reason": "Legacy persistent A1-A4 ownership superseded by owner-authorized consolidated A-CORE/A-PRODUCT operating model.",
-        "provenance_preserved": true,
-        "successor_epic": "CUSTOMS-CORE-V1"
-      }
-    },
-    {
-      "author_sessions": [
-        "/root/a4_legacy_vat"
-      ],
-      "branch": "agent/classification-tariff-legacy-vat-boundary-003-dbe8461b66",
-      "ci": null,
-      "dependencies": [],
-      "external_audit": null,
-      "files": [
-        "customs-clear/backend/app/services/invoice_analyzer.py",
-        "customs-clear/backend/scripts/test_compliance_resolver_golden.py",
-        "customs-clear/backend/scripts/vat_22_stress_validate.py",
-        "customs-clear/backend/scripts/test_invoice_parsing.py",
-        "customs-clear/backend/tests/test_invoice_vat_admission.py"
-      ],
-      "goal": "Prevent diagnostic model-derived VAT overrides from being presented as final legacy VAT/total amounts without an explicit reviewed admission state; keep mounted API behavior unchanged and preserve a clearly provisional diagnostic path with focused regression tests.",
-      "id": "TARIFF-LEGACY-VAT-BOUNDARY-003",
-      "owner": "A4",
-      "qa": null,
-      "refs": {
-        "base_sha": "5d3b0c1dc7dd8e396c4f812db2bf6f1fa6d293f9",
-        "head_sha": "dbb27aa857614b7b83111cddc0c5a1ed32f44580",
-        "observed_ci": {
-          "head_sha": "dbb27aa857614b7b83111cddc0c5a1ed32f44580",
-          "not_promoted_to_ci_gate_reason": "A6 live audit is not yet LIVE_VERIFIED; controller requires explicit audit state before gated CI.",
-          "required_jobs": {
-            "Backend NTM safety suite": "success",
-            "Frontend tests, types and build": "success",
-            "Scheduled workflow and locked environment": "success",
-            "Validate and build local staging images": "success"
-          },
-          "run_id": 34887036498,
-          "status": "PASSED",
-          "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/34887036498"
-        },
-        "pr": 203,
-        "publication_mapping": {
-          "identical_trees_verified": true,
-          "local_head_sha": "7b526d3238c80d79aa7e6e8015df4f2e9237104c",
-          "local_tree_sha": "39f8f13e67d1f628c6278afdd0b339629153c855",
-          "published_head_sha": "dbb27aa857614b7b83111cddc0c5a1ed32f44580",
-          "published_tree_sha": "39f8f13e67d1f628c6278afdd0b339629153c855"
-        }
-      },
-      "required_checks": [
-        "Backend NTM safety suite",
-        "Frontend tests, types and build",
-        "Validate and build local staging images",
-        "Scheduled workflow and locked environment"
-      ],
-      "risk": "high",
-      "status": "CANCELLED",
-      "tests": [],
-      "updated_at": "2026-09-29T10:21:00.000Z",
-      "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-legacy-vat-boundary-003-dbe8461b66",
-      "historical_status": "CHANGES_REQUESTED",
-      "normalization": {
-        "reason": "Legacy persistent A1-A4 ownership superseded by owner-authorized consolidated A-CORE/A-PRODUCT operating model.",
-        "provenance_preserved": true,
-        "successor_epic": "COMPLIANCE-AI-V1"
-      }
-    },
-    {
-      "author_sessions": [
-        "/root/a1_payment_gate"
-      ],
-      "branch": "agent/rates-tariff-payment-unbound-admission-004-7bbd2febf3",
-      "ci": null,
-      "dependencies": [],
-      "external_audit": null,
-      "files": [
-        "customs-clear/backend/app/services/payment_engine.py",
-        "customs-clear/backend/tests/test_payment_source_admission.py",
-        "customs-clear/backend/tests/test_payment_a6_stage2.py",
-        "customs-clear/backend/tests/test_payment_a6_stage2_redteam.py"
-      ],
-      "goal": "Implement the confirmed source-unbound payment admission gate and align existing positive-final fixtures with the fail-closed contract without weakening arithmetic, RUB identity, recycling-fee visibility or manual overrides.",
-      "id": "TARIFF-PAYMENT-UNBOUND-ADMISSION-004",
-      "owner": "A1",
-      "qa": null,
-      "refs": {
-        "base_sha": "5d3b0c1dc7dd8e396c4f812db2bf6f1fa6d293f9",
-        "head_sha": null,
-        "pr": null
-      },
-      "required_checks": [
-        "Backend NTM safety suite",
-        "Frontend tests, types and build",
-        "Validate and build local staging images",
-        "Scheduled workflow and locked environment"
-      ],
-      "risk": "high",
-      "status": "CANCELLED",
-      "tests": [],
-      "updated_at": "2026-09-14T19:14:46.682927+00:00",
-      "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-payment-unbound-admission-004-7bbd2febf3"
-    },
-    {
-      "author_sessions": [
-        "/root/a1_payment_gate"
-      ],
-      "branch": "agent/rates-tariff-payment-unbound-admission-005-7a55b790a3",
-      "ci": null,
-      "dependencies": [],
-      "external_audit": null,
-      "files": [
-        "customs-clear/backend/app/services/payment_engine.py",
-        "customs-clear/backend/tests/test_payment_source_admission.py",
-        "customs-clear/backend/tests/test_payment_a6_stage2.py",
-        "customs-clear/backend/tests/test_payment_a6_stage2_redteam.py",
-        "customs-clear/backend/tests/test_payment_engine.py",
-        "customs-clear/backend/tests/test_payment_quote.py"
-      ],
-      "goal": "Implement the confirmed source-unbound payment admission gate across legacy HsRate/HsDutyRule paths and align all affected payment regressions while preserving raw candidate arithmetic, RUB identity, recycling visibility, manual overrides and fail-closed final quote semantics.",
-      "id": "TARIFF-PAYMENT-UNBOUND-ADMISSION-005",
-      "owner": "A1",
-      "qa": null,
-      "refs": {
-        "base_sha": "5d3b0c1dc7dd8e396c4f812db2bf6f1fa6d293f9",
-        "head_sha": null,
-        "pr": null
-      },
-      "required_checks": [
-        "Backend NTM safety suite",
-        "Frontend tests, types and build",
-        "Validate and build local staging images",
-        "Scheduled workflow and locked environment"
-      ],
-      "risk": "high",
-      "status": "CANCELLED",
-      "tests": [],
-      "updated_at": "2026-09-14T19:17:23.091808+00:00",
-      "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-payment-unbound-admission-005-7a55b790a3"
-    },
-    {
-      "author_sessions": [
-        "/root/a1_payment_gate"
-      ],
-      "branch": "agent/rates-tariff-payment-unbound-admission-006-c8a905e03d",
-      "ci": null,
-      "dependencies": [],
-      "external_audit": null,
-      "files": [
-        "customs-clear/backend/app/services/payment_engine.py",
-        "customs-clear/backend/tests/test_normative_bundle.py",
-        "customs-clear/backend/tests/test_payment_a6_stage2.py",
-        "customs-clear/backend/tests/test_payment_a6_stage2_redteam.py",
-        "customs-clear/backend/tests/test_payment_engine.py",
-        "customs-clear/backend/tests/test_payment_preference_eligibility.py",
-        "customs-clear/backend/tests/test_payment_quote.py",
-        "customs-clear/backend/tests/test_payment_source_admission.py",
-        "customs-clear/backend/tests/test_payment_special_duty_applicability.py"
-      ],
-      "goal": "Apply the all-legacy source-unbound admission gate consistently across payment engine, preference and special-duty scenarios, preserving raw candidate arithmetic and exact domain reasons while withholding automatic components and final quote until a future reviewed source token exists.",
-      "id": "TARIFF-PAYMENT-UNBOUND-ADMISSION-006",
-      "owner": "A1",
-      "qa": null,
-      "refs": {
-        "base_sha": "5d3b0c1dc7dd8e396c4f812db2bf6f1fa6d293f9",
-        "head_sha": "ee81a66eafaba008c2205cac65e5256f939822e2",
-        "observed_ci": {
-          "head_sha": "ee81a66eafaba008c2205cac65e5256f939822e2",
-          "not_promoted_to_ci_gate_reason": "A6 live audit is not yet LIVE_VERIFIED; controller requires explicit audit state before gated CI.",
-          "required_jobs": {
-            "Backend NTM safety suite": "success",
-            "Frontend tests, types and build": "success",
-            "Scheduled workflow and locked environment": "success",
-            "Validate and build local staging images": "success"
-          },
-          "run_id": 34888475765,
-          "status": "PASSED",
-          "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/34888475765"
-        },
-        "pr": 204,
-        "publication_mapping": {
-          "identical_trees_verified": true,
-          "local_head_sha": "2633871471801e97abcbacf6698c924968fb742c",
-          "local_tree_sha": "c1c655229f2971716d0d8d8718fe1f73e630bff7",
-          "published_head_sha": "ee81a66eafaba008c2205cac65e5256f939822e2",
-          "published_tree_sha": "c1c655229f2971716d0d8d8718fe1f73e630bff7",
-          "supersedes_published_head_sha": "ce1abd85df41a4d4cac4ffeabe891339e917795a"
-        }
-      },
-      "required_checks": [
-        "Backend NTM safety suite",
-        "Frontend tests, types and build",
-        "Validate and build local staging images",
-        "Scheduled workflow and locked environment"
-      ],
-      "risk": "high",
-      "status": "CANCELLED",
-      "tests": [],
-      "updated_at": "2026-09-29T10:21:00.000Z",
-      "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-payment-unbound-admission-006-c8a905e03d",
-      "historical_status": "CHANGES_REQUESTED",
-      "normalization": {
-        "reason": "Legacy persistent A1-A4 ownership superseded by owner-authorized consolidated A-CORE/A-PRODUCT operating model.",
-        "provenance_preserved": true,
-        "successor_epic": "CUSTOMS-CORE-V1"
-      }
-    },
-    {
-      "author_sessions": [
-        "/root/a3_ad30_freshness"
-      ],
-      "branch": "agent/sources-tariff-ad30-freshness-evidence-008-6c868586f5",
-      "ci": null,
-      "dependencies": [],
-      "external_audit": null,
-      "files": [
-        "docs/ai-workflow/AD30_FRESHNESS_EVIDENCE_20260914.md"
-      ],
-      "goal": "Build a fresh official-source evidence map for the retained AD30 chain: amendment/repeal history, final report identity, producer continuity and nomenclature transitions. Separate literal facts from applicability; fail closed on inaccessible or incomplete evidence; no rates, admission, DB, flags or legal authorization.",
-      "id": "TARIFF-AD30-FRESHNESS-EVIDENCE-008",
-      "owner": "A3",
-      "qa": null,
-      "refs": {
-        "base_sha": "5d3b0c1dc7dd8e396c4f812db2bf6f1fa6d293f9",
-        "head_sha": "d1324027cec636d05f2eb6b474a4bbb66758fcef",
-        "pr": 205,
-        "publication_mapping": {
-          "identical_trees_verified": true,
-          "local_head_sha": "c3893d929ea29f1f11cddb05073c41383640b83a",
-          "local_tree_sha": "faafcce928ed19647f46d27bd6ea083f699d5d48",
-          "published_head_sha": "d1324027cec636d05f2eb6b474a4bbb66758fcef",
-          "published_tree_sha": "faafcce928ed19647f46d27bd6ea083f699d5d48"
-        }
-      },
-      "required_checks": [
-        "Backend NTM safety suite",
-        "Frontend tests, types and build",
-        "Validate and build local staging images",
-        "Scheduled workflow and locked environment"
-      ],
-      "risk": "high",
-      "status": "CANCELLED",
-      "tests": [],
-      "updated_at": "2026-09-29T10:21:00.000Z",
-      "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-ad30-freshness-evidence-008-6c868586f5",
-      "historical_status": "CHANGES_REQUESTED",
-      "normalization": {
-        "reason": "Legacy persistent A1-A4 ownership superseded by owner-authorized consolidated A-CORE/A-PRODUCT operating model.",
-        "provenance_preserved": true,
-        "successor_epic": "CUSTOMS-CORE-V1"
-      }
-    },
-    {
-      "author_sessions": [
-        "/root/a2_ntm_recheck"
-      ],
-      "branch": "agent/ntm-tariff-ntm-completeness-recheck-001-c746d4f679",
-      "ci": null,
-      "dependencies": [],
-      "external_audit": null,
-      "files": [
-        "docs/ai-workflow/NTM_COMPLETENESS_RECHECK_20260914.md"
-      ],
-      "goal": "Independently recheck current PR187 NTM families, source/version/date bindings, fail-closed completeness gates and product-characteristic predicates against current code/tests and official-source references. Produce a bounded evidence-backed defect inventory without changing legal applicability, production data, flags or enforcement.",
-      "id": "TARIFF-NTM-COMPLETENESS-RECHECK-001",
-      "owner": "A2",
-      "qa": null,
-      "refs": {
-        "base_sha": "5d3b0c1dc7dd8e396c4f812db2bf6f1fa6d293f9",
-        "head_sha": "fd702a3f37c673666f8792321b5ae72435c28cd5",
-        "pr": 206,
-        "publication_mapping": {
-          "identical_trees_verified": true,
-          "local_head_sha": "254144516cb0753be2dd8eeff64fbfe1d1d8cf71",
-          "local_tree_sha": "656e48a744e0af3052880269f9da5aaa4e26a107",
-          "published_blob_sha": "2821a0359eceb27e63db540087fd32ec889f523a",
-          "published_head_sha": "fd702a3f37c673666f8792321b5ae72435c28cd5",
-          "published_tree_sha": "656e48a744e0af3052880269f9da5aaa4e26a107"
-        }
-      },
-      "required_checks": [
-        "Backend NTM safety suite",
-        "Frontend tests, types and build",
-        "Validate and build local staging images",
-        "Scheduled workflow and locked environment"
-      ],
-      "risk": "high",
-      "status": "CANCELLED",
-      "tests": [],
-      "updated_at": "2026-09-29T10:21:00.000Z",
-      "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-ntm-completeness-recheck-001-c746d4f679",
-      "historical_status": "CHANGES_REQUESTED",
-      "normalization": {
-        "reason": "Legacy persistent A1-A4 ownership superseded by owner-authorized consolidated A-CORE/A-PRODUCT operating model.",
-        "provenance_preserved": true,
-        "successor_epic": "COMPLIANCE-AI-V1"
-      }
-    },
-    {
-      "author_sessions": [
-        "/root/a2_ntm_freshness_gate",
-        "/root/a2_ntm_freshness_fix"
-      ],
-      "branch": "agent/ntm-tariff-ntm-freshness-fail-closed-001-7407bd6726",
-      "ci": null,
-      "dependencies": [],
-      "external_audit": null,
-      "files": [
-        "customs-clear/backend/app/services/non_tariff_service.py",
-        "customs-clear/backend/tests/test_non_tariff_data_freshness.py"
-      ],
-      "goal": "Make NTM data freshness fail closed when EEC_ETT source status is absent or unreadable: preserve API shape but never report unknown local seed state as fresh. Add executable regression coverage; do not change legal rules, DB, flags, enforcement, or frontend.",
-      "id": "TARIFF-NTM-FRESHNESS-FAIL-CLOSED-001",
-      "owner": "A2",
-      "qa": {
-        "commands": [
-          {
-            "command": "exact scope/tree and git diff --check",
-            "exit_code": 0,
-            "output": "two owned files; clean; PR207 exact HEAD a286f7b"
-          },
-          {
-            "command": "focused plus adversarial source-status matrix",
-            "exit_code": 0,
-            "output": "36 passed; 7 adversarial missing/exception/fresh/stale/malformed cases"
-          },
-          {
-            "command": "broader NTM regression excluding known fixture-dependent files",
-            "exit_code": 0,
-            "output": "825 passed, 1 skipped"
-          },
-          {
-            "command": "old implementation replay against new expectation",
-            "exit_code": 0,
-            "output": "old false-fresh implementation failed as intended; regression is effective"
-          },
-          {
-            "command": "runtime outcome-neutrality comparison",
-            "exit_code": 0,
-            "output": "applicability, required/missing/advisory, official NTM and enforcement outputs unchanged"
-          }
-        ],
-        "head_sha": "a286f7b24953f338a9fa4f910fb605ebc4328978",
-        "reviewer_session_id": "/root/a5_ntm_freshness_a286",
-        "status": "PASSED"
-      },
-      "recovery": {
-        "evidence": "All recorded sessions were FINISHED; clean same-repository worktree restored at exact existing PR207 HEAD without force-push.",
-        "lease_generation": 22,
-        "restored_by": "A0"
-      },
-      "refs": {
-        "base_sha": "5d3b0c1dc7dd8e396c4f812db2bf6f1fa6d293f9",
-        "head_sha": "a286f7b24953f338a9fa4f910fb605ebc4328978",
-        "observed_ci": {
-          "admission_agent_qa": {
-            "run_id": 35125530407,
-            "status": "PASSED",
-            "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/35125530407"
-          },
-          "head_sha": "a286f7b24953f338a9fa4f910fb605ebc4328978",
-          "not_promoted_to_ci_gate_reason": "High-risk A6 is not LIVE_VERIFIED; exact-head CI is supporting evidence only.",
-          "required_jobs": {
-            "Backend NTM safety suite": "success",
-            "Frontend tests, types and build": "success",
-            "Scheduled workflow and locked environment": "success",
-            "Validate and build local staging images": "success"
-          },
-          "run_id": 35125545355,
-          "status": "PASSED",
-          "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/35125545355"
-        },
-        "pr": 207,
-        "publication_mapping": {
-          "identical_trees_verified": true,
-          "local_head_sha": "43a9b708bb130acee9eff70c589d98465c42b188",
-          "published_head_sha": "a286f7b24953f338a9fa4f910fb605ebc4328978",
-          "tree_sha": "6fb77bfb119e2d93a92486d00d20fcb07a86a21d"
-        }
-      },
-      "required_checks": [
-        "Backend NTM safety suite",
-        "Frontend tests, types and build",
-        "Validate and build local staging images",
-        "Scheduled workflow and locked environment"
-      ],
-      "risk": "high",
-      "status": "CANCELLED",
-      "tests": {
-        "commands": [
-          {
-            "command": "author focused data freshness",
-            "exit_code": 0,
-            "output": "3 passed"
-          },
-          {
-            "command": "author freshness/compliance/unknown-TR regression",
-            "exit_code": 0,
-            "output": "27 passed"
-          },
-          {
-            "command": "author broader official/enforcement-boundary NTM regression",
-            "exit_code": 0,
-            "output": "226 passed"
-          },
-          {
-            "command": "A0 exact diff scope and git diff --check",
-            "exit_code": 0,
-            "output": "exactly two owned files; clean; published tree 6fb77bfb matches local 43a9b708 tree"
-          }
-        ],
-        "head_sha": "a286f7b24953f338a9fa4f910fb605ebc4328978"
-      },
-      "updated_at": "2026-09-29T10:21:00.000Z",
-      "worktree": "/workspace/scratch/ecdeb44a862e/tariff-agent-worktrees/tariff-ntm-freshness-fail-closed-001-restored-g22",
-      "historical_status": "QA_PASSED",
-      "normalization": {
-        "reason": "Legacy persistent A1-A4 ownership superseded by owner-authorized consolidated A-CORE/A-PRODUCT operating model.",
-        "provenance_preserved": true,
-        "successor_epic": "COMPLIANCE-AI-V1"
-      }
-    },
-    {
-      "author_sessions": [
-        "/root/a2_ntm_advisory_summary"
-      ],
-      "branch": "agent/ntm-tariff-ntm-advisory-summary-001-e2d7a9dc7e",
-      "ci": null,
-      "dependencies": [],
-      "external_audit": null,
-      "files": [
-        "customs-clear/frontend/src/components/tnved/PermitDocumentsBlock.tsx",
-        "customs-clear/frontend/src/components/tnved/PermitDocumentsBlock.test.tsx"
-      ],
-      "goal": "Prevent the product-details permit summary from showing a green no-permits claim when official advisory requirements exist. Render a neutral clarification state that distinguishes no enforced broker document from no NTM detected, with executable component tests; do not change backend rules, legal applicability, flags, DB, or enforcement.",
-      "id": "TARIFF-NTM-ADVISORY-SUMMARY-001",
-      "owner": "A2",
-      "qa": null,
-      "refs": {
-        "base_sha": "5d3b0c1dc7dd8e396c4f812db2bf6f1fa6d293f9",
-        "head_sha": "6c88f7742fa4a0228e3227573f3857a07dc76431",
-        "pr": 208,
-        "publication_mapping": {
-          "identical_trees_verified": true,
-          "local_head_sha": "63537506fd1f4f03b8d83595f4107f7b9d1691ac",
-          "local_tree_sha": "4f63b67d17325a1dd2bee27f7e7890fefa6706b0",
-          "published_blob_shas": {
-            "customs-clear/frontend/src/components/tnved/PermitDocumentsBlock.test.tsx": "c6e1fe432db47f6f601a0e6d5d4f07fee5465863",
-            "customs-clear/frontend/src/components/tnved/PermitDocumentsBlock.tsx": "936709c0b168c92366f829f8d4d2a86db78495ff"
-          },
-          "published_head_sha": "6c88f7742fa4a0228e3227573f3857a07dc76431",
-          "published_tree_sha": "4f63b67d17325a1dd2bee27f7e7890fefa6706b0"
-        }
-      },
-      "required_checks": [
-        "Backend NTM safety suite",
-        "Frontend tests, types and build",
-        "Validate and build local staging images",
-        "Scheduled workflow and locked environment"
-      ],
-      "risk": "high",
-      "status": "CANCELLED",
-      "tests": [],
-      "updated_at": "2026-09-29T10:21:00.000Z",
-      "worktree": "/workspace/scratch/ade3ba0ec8ff/tariff-agent-worktrees/tariff-ntm-advisory-summary-001-e2d7a9dc7e",
-      "historical_status": "CHANGES_REQUESTED",
-      "normalization": {
-        "reason": "Legacy persistent A1-A4 ownership superseded by owner-authorized consolidated A-CORE/A-PRODUCT operating model.",
-        "provenance_preserved": true,
-        "successor_epic": "COMPLIANCE-AI-V1"
-      }
-    },
-    {
-      "author_sessions": [
-        "/root/a2_ntm_freshness_visibility",
-        "/root/a2_ntm_triage"
-      ],
-      "branch": "agent/ntm-tariff-ntm-normative-freshness-visibility-002-5fc1946031",
-      "ci": null,
-      "dependencies": [
-        "TARIFF-NTM-FRESHNESS-FAIL-CLOSED-001"
-      ],
-      "external_audit": null,
-      "files": [
-        "customs-clear/backend/app/services/normative_requirements_block.py",
-        "customs-clear/backend/tests/test_normative_requirements_block.py",
-        "customs-clear/frontend/src/components/nonTariff/normativeBlockHelpers.ts",
-        "customs-clear/frontend/src/components/nonTariff/NormativeRequirementsBlock.tsx",
-        "customs-clear/frontend/src/components/nonTariff/NormativeRequirementsBlock.freshness.test.tsx",
-        "customs-clear/frontend/src/types/api.types.ts"
-      ],
-      "goal": "Propagate fail-closed NTM data_freshness into the primary normative requirements product flow as a neutral or amber visibility signal without changing applicability, enforcement, flags, database state, or legal-currentness claims.",
-      "id": "TARIFF-NTM-NORMATIVE-FRESHNESS-VISIBILITY-002",
-      "owner": "A2",
-      "qa": {
-        "status": "PASSED",
-        "head_sha": "564cc34b3c6b5d18c4d9a960b1c342257ec9f5e7",
-        "reviewer_session_id": "/root/a5_ntm_restack_564cc34b",
-        "findings": [],
-        "commands": [
-          {
-            "command": "independent two-parent/tree/scope and git diff --check",
-            "exit_code": 0,
-            "output": "exact conflict-free union; eight files; 467 additions, 16 deletions; clean"
-          },
-          {
-            "command": "independent backend focused freshness/normative",
-            "exit_code": 0,
-            "output": "18 passed"
-          },
-          {
-            "command": "independent frontend focused and full",
-            "exit_code": 0,
-            "output": "12 focused; 62 full passed"
-          },
-          {
-            "command": "independent typecheck and production build",
-            "exit_code": 0,
-            "output": "PASS"
-          },
-          {
-            "command": "broader NTM diagnostic",
-            "exit_code": 0,
-            "output": "596 passed, 1 skipped; 230 environment failures from absent untracked populated SQLite table, not code findings"
-          }
-        ]
-      },
-      "refs": {
-        "base_sha": "a286f7b24953f338a9fa4f910fb605ebc4328978",
-        "head_sha": "564cc34b3c6b5d18c4d9a960b1c342257ec9f5e7",
-        "observed_ci": {
-          "head_sha": "564cc34b3c6b5d18c4d9a960b1c342257ec9f5e7",
-          "run_id": 35127475218,
-          "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/35127475218",
-          "status": "PASSED",
-          "required_jobs": {
-            "Backend NTM safety suite": "success",
-            "Frontend tests, types and build": "success",
-            "Scheduled workflow and locked environment": "success",
-            "Validate and build local staging images": "success"
-          },
-          "optional_job": {
-            "Acquire official ETT candidate evidence": "skipped"
-          },
-          "not_promoted_to_ci_gate_reason": "High-risk A6 remains LIVE_VERIFIED=false; exact-head CI is supporting evidence only."
-        },
-        "pr": 211,
-        "publication_mapping": {
-          "identical_trees_verified": true,
-          "published_head_sha": "564cc34b3c6b5d18c4d9a960b1c342257ec9f5e7",
-          "published_tree_sha": "622f6c400dc1aff922f5eb21002ad7c6e1eb3db8",
-          "integration_method": "two-parent non-force merge"
-        },
-        "merge_parents": [
-          "5330e6aebd777fd880d938da6b4891a1ec8cf864",
-          "a286f7b24953f338a9fa4f910fb605ebc4328978"
-        ]
-      },
-      "required_checks": [
-        "Backend NTM safety suite",
-        "Frontend tests, types and build",
-        "Validate and build local staging images",
-        "Scheduled workflow and locked environment"
-      ],
-      "risk": "high",
-      "status": "CANCELLED",
-      "tests": {
-        "head_sha": "564cc34b3c6b5d18c4d9a960b1c342257ec9f5e7",
-        "commands": [
-          {
-            "command": "author focused backend freshness + normative",
-            "exit_code": 0,
-            "output": "18 passed"
-          },
-          {
-            "command": "author frontend freshness + full suite",
-            "exit_code": 0,
-            "output": "12 focused; 17 files / 62 tests passed"
-          },
-          {
-            "command": "author TypeScript + production build",
-            "exit_code": 0,
-            "output": "PASS; 3075 modules transformed"
-          },
-          {
-            "command": "git diff --check and cumulative scope",
-            "exit_code": 0,
-            "output": "PASS; exact eight-file cumulative scope, six-file delta from prerequisite"
-          }
-        ]
-      },
-      "updated_at": "2026-09-29T10:21:00.000Z",
-      "worktree": "/workspace/scratch/ecdeb44a862e/tariff-agent-worktrees/tariff-ntm-normative-freshness-visibility-002-5fc1946031",
-      "historical_status": "QA_PASSED",
-      "normalization": {
-        "reason": "Legacy persistent A1-A4 ownership superseded by owner-authorized consolidated A-CORE/A-PRODUCT operating model.",
-        "provenance_preserved": true,
-        "successor_epic": "COMPLIANCE-AI-V1"
-      }
-    },
-    {
-      "author_sessions": [],
-      "branch": null,
-      "ci": null,
-      "dependencies": [
-        "TARIFF-NTM-FRESHNESS-FAIL-CLOSED-001"
-      ],
-      "external_audit": null,
-      "files": [
-        "customs-clear/backend/app/services/non_tariff_service.py",
-        "customs-clear/backend/tests/test_non_tariff_data_freshness.py"
-      ],
-      "goal": "Prevent EEC_ETT freshness metadata from certifying unrelated NTM rule coverage as fresh; preserve all applicability and enforcement outputs.",
-      "id": "TARIFF-NTM-EEC-ETT-FRESHNESS-BOUNDARY-003",
-      "owner": "A2",
-      "qa": null,
-      "refs": {
-        "base_sha": null,
-        "head_sha": null,
-        "pr": null
-      },
-      "required_checks": [
-        "focused NTM freshness tests",
-        "broader NTM regression",
-        "fresh independent A5",
-        "exact-head CI"
-      ],
-      "risk": "high",
-      "status": "CANCELLED",
-      "tests": [],
-      "updated_at": "2026-09-16T14:44:14.959805+00:00",
-      "worktree": null
-    },
-    {
-      "author_sessions": [
-        "/root/a3_sources_triage"
-      ],
-      "branch": "agent/sources-tariff-ad30-recurring-artifacts-009-c5c1c819a3",
-      "ci": null,
-      "dependencies": [],
-      "external_audit": null,
-      "files": [
-        "customs-clear/backend/app/services/regulatory_source_registry.py",
-        "customs-clear/backend/tests/test_official_source_original_capture.py",
-        "customs-clear/backend/tests/test_official_source_monitor.py",
-        "customs-clear/backend/tests/test_observed_source_review_capture.py",
-        "customs-clear/backend/tests/test_opendata_source_integrity.py"
-      ],
-      "goal": "Add four known direct AD30 official documents to the existing monitor-only legal-drift contour without promoting baselines or deciding legal applicability.",
-      "id": "TARIFF-AD30-RECURRING-ARTIFACTS-009",
-      "owner": "A3",
-      "ownership_decisions": [
-        {
-          "by": "A0",
-          "files": [
-            "customs-clear/backend/tests/test_observed_source_review_capture.py",
-            "customs-clear/backend/tests/test_opendata_source_integrity.py"
-          ],
-          "reason": "Exact-head CI exposed two unowned explicit monitor-count contracts. A0 independently reproduced the four stale 72-to-76 assertions; A3 owns only the scoped expectation updates."
-        }
-      ],
-      "qa": {
-        "commands": [
-          {
-            "command": "git diff --check base..fc19df0 and exact five-file scope",
-            "exit_code": 0,
-            "output": "passed; clean published branch"
-          },
-          {
-            "command": "pytest prior four CI failures",
-            "exit_code": 0,
-            "output": "4 passed"
-          },
-          {
-            "command": "pytest monitor/original/update/completeness/redteam/review/payment-reference set",
-            "exit_code": 0,
-            "output": "298 passed, 2 third-party deprecation warnings"
-          },
-          {
-            "command": "adversarial matrix for four new AD30 PDFs",
-            "exit_code": 0,
-            "output": "12 of 12 passed; no self-approval, preserved baseline, fail-closed unavailable"
-          }
-        ],
-        "head_sha": "fc19df03904430649e356978cf2086a616e6d244",
-        "reviewer_session_id": "/root/a5_ad30_recurring_fix_exact",
-        "status": "PASSED"
-      },
-      "refs": {
-        "base_sha": "5d3b0c1dc7dd8e396c4f812db2bf6f1fa6d293f9",
-        "head_sha": "fc19df03904430649e356978cf2086a616e6d244",
-        "observed_ci": {
-          "admission_agent_qa": {
-            "run_id": 35113096953,
-            "status": "PASSED",
-            "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/35113096953"
-          },
-          "head_sha": "fc19df03904430649e356978cf2086a616e6d244",
-          "not_promoted_to_ci_gate_reason": "High-risk A6 remains LIVE_VERIFIED=false; exact-head CI is observed but controller readiness requires current bound audit evidence.",
-          "pull_request_run": {
-            "run_id": 35113096919,
-            "status": "PASSED",
-            "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/35113096919"
-          },
-          "push_run": {
-            "run_id": 35113097456,
-            "status": "PASSED",
-            "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/35113097456"
-          },
-          "required_jobs": {
-            "Backend NTM safety suite": "success",
-            "Frontend tests, types and build": "success",
-            "Scheduled workflow and locked environment": "success",
-            "Validate and build local staging images": "success"
-          },
-          "status": "PASSED"
-        },
-        "pr": 212
-      },
-      "required_checks": [
-        "official source monitor tests",
-        "source completeness regressions",
-        "fresh independent A5",
-        "exact-head CI"
-      ],
-      "risk": "high",
-      "status": "CANCELLED",
-      "tests": {
-        "commands": [
-          {
-            "command": "pytest four exact previously failing monitor-count contracts",
-            "exit_code": 0,
-            "output": "4 passed on published head fc19df03904430649e356978cf2086a616e6d244"
-          },
-          {
-            "command": "pytest complete test_opendata_source_integrity.py and test_observed_source_review_capture.py",
-            "exit_code": 0,
-            "output": "95 passed"
-          },
-          {
-            "command": "pytest combined six-file source regression set",
-            "exit_code": 0,
-            "output": "203 passed, one pre-existing Starlette/httpx warning; git diff --check passed"
-          }
-        ],
-        "head_sha": "fc19df03904430649e356978cf2086a616e6d244"
-      },
-      "updated_at": "2026-09-29T10:21:00.000Z",
-      "worktree": "/workspace/scratch/ecdeb44a862e/tariff-agent-worktrees/tariff-ad30-recurring-artifacts-009-c5c1c819a3",
-      "historical_status": "QA_PASSED",
-      "normalization": {
-        "reason": "Legacy persistent A1-A4 ownership superseded by owner-authorized consolidated A-CORE/A-PRODUCT operating model.",
-        "provenance_preserved": true,
-        "successor_epic": "CUSTOMS-CORE-V1"
-      }
-    },
-    {
-      "id": "TARIFF-GROUNDED-NTM-FRESHNESS-001",
-      "owner": "A4",
-      "status": "CANCELLED",
-      "risk": "high",
-      "goal": "Propagate the normalized NTM data_freshness signal into grounded assistant chat and batch-copilot output without changing applicability, enforcement, source admission, database state, or feature flags.",
-      "dependencies": [
-        "TARIFF-NTM-NORMATIVE-FRESHNESS-VISIBILITY-002"
-      ],
-      "branch": "agent/classification-tariff-grounded-ntm-freshness-001-564cc34b",
-      "worktree": "/workspace/scratch/ecdeb44a862e/tariff-agent-worktrees/tariff-grounded-ntm-freshness-001-564cc34b",
-      "files": [
-        "customs-clear/backend/app/services/grounded_assistant.py",
-        "customs-clear/backend/tests/test_grounded_assistant.py"
-      ],
-      "author_sessions": [
-        "/root/a4_canonical_triage"
-      ],
-      "refs": {
-        "base_sha": "564cc34b3c6b5d18c4d9a960b1c342257ec9f5e7",
-        "head_sha": "0fe81e67b800f1b2ccce00e253e705f7c5ced02a",
-        "pr": 213,
-        "publication_mapping": {
-          "identical_trees_verified": true,
-          "local_head_sha": "198b0818437bb5da7d9e6ef0608ff32b58807b28",
-          "published_head_sha": "0fe81e67b800f1b2ccce00e253e705f7c5ced02a",
-          "tree_sha": "911aa204c83726b63a7d26b36985c2059ac43f36"
-        }
-      },
-      "required_checks": [
-        "focused grounded assistant tests",
-        "fresh independent A5",
-        "exact-head CI"
-      ],
-      "tests": {
-        "head_sha": "0fe81e67b800f1b2ccce00e253e705f7c5ced02a",
-        "commands": [
-          {
-            "command": "author focused/relevant grounded assistant selection",
-            "exit_code": 0,
-            "output": "58 passed; 10 subtests; 2 existing dependency warnings"
-          },
-          {
-            "command": "author compile and fatal Ruff selection",
-            "exit_code": 0,
-            "output": "PASS"
-          },
-          {
-            "command": "git diff --check and exact scope",
-            "exit_code": 0,
-            "output": "PASS; exactly two owned files"
-          }
-        ]
-      },
-      "qa": null,
-      "ci": null,
-      "external_audit": null,
-      "updated_at": "2026-09-29T10:21:00.000Z",
-      "historical_status": "IMPLEMENTED",
-      "normalization": {
-        "reason": "Legacy persistent A1-A4 ownership superseded by owner-authorized consolidated A-CORE/A-PRODUCT operating model.",
-        "provenance_preserved": true,
-        "successor_epic": "COMPLIANCE-AI-V1"
-      }
-    },
-    {
-      "status": "IN_PROGRESS",
-      "risk": "high",
-      "worktree": null,
-      "files": [
-        "customs-clear/backend/app/schemas/payment_profile.py",
-        "customs-clear/backend/app/services/calculation_history_service.py",
-        "customs-clear/backend/app/services/data_refresh_service.py",
-        "customs-clear/backend/app/services/exchange_rates.py",
-        "customs-clear/backend/app/services/export_service.py",
-        "customs-clear/backend/app/services/invoice_batch_service.py",
-        "customs-clear/backend/app/services/normative_store.py",
-        "customs-clear/backend/app/services/payment_engine.py",
-        "customs-clear/backend/app/services/payment_profile_builder.py",
-        "customs-clear/backend/app/services/payment_quote_service.py",
-        "customs-clear/backend/app/services/regulatory_source_completeness.py",
-        "customs-clear/backend/app/services/scenario_compare_service.py",
-        "customs-clear/backend/app/services/source_sync.py",
-        "customs-clear/backend/app/services/sync_engine.py",
-        "customs-clear/backend/app/services/sync_status_diagnostics.py",
-        "customs-clear/backend/tests/test_antidumping_fixed_unit_fail_closed.py",
-        "customs-clear/backend/tests/test_automatic_duty_operand_validation.py",
-        "customs-clear/backend/tests/test_data_refresh.py",
-        "customs-clear/backend/tests/test_invoice_and_compare.py",
-        "customs-clear/backend/tests/test_payment_engine.py",
-        "customs-clear/backend/tests/test_payment_fx_provenance_fail_closed.py",
-        "customs-clear/backend/tests/test_payment_quote.py",
-        "customs-clear/backend/tests/test_payment_source_admission.py",
-        "customs-clear/backend/tests/test_regulatory_source_completeness.py",
-        "customs-clear/backend/tests/test_source_sync_index_currentness.py",
-        "customs-clear/backend/tests/test_special_duties.py",
-        "customs-clear/backend/tests/test_sync_status_diagnostics.py",
-        "customs-clear/backend/tests/test_unavailable_payment_exports.py",
-        "customs-clear/frontend/src/components/PaymentBreakdownCard.tsx",
-        "customs-clear/frontend/src/components/calculator/CalculatorScenarioCompareSection.tsx",
-        "customs-clear/frontend/src/pages/Calculator.tsx",
-        "customs-clear/frontend/src/pages/Invoice.tsx",
-        "docs/ai-workflow/CUSTOMS_CORE_CONSOLIDATION_V1.md"
-      ],
-      "author_sessions": [
-        "/root/a_core"
-      ],
-      "qa": {
-        "status": "PASSED",
-        "head_sha": "f1921b63a452a059c1109c658560efc318127aad",
-        "review_id": 5351957772,
-        "independent": true
-      },
-      "ci": {
-        "status": "PASSED",
-        "head_sha": "f1921b63a452a059c1109c658560efc318127aad",
-        "run_id": 36563127291
-      },
-      "external_audit": {
-        "status": "BLOCKED_PACKET_LIMIT_AND_INFRA_GATE",
-        "requires_pr": 237,
-        "reason": "Current exact candidate cannot be sent as a complete A6 packet within fail-closed bounds; post-verify admission also remains unavailable until PR #237 is merged.",
-        "preflight": {
-          "checked_at": "2026-09-30T19:58:41.559Z",
-          "base_sha": "08e030a6053ac9638957119373797e0fbf2b10c2",
-          "head_sha": "f1921b63a452a059c1109c658560efc318127aad",
-          "path_count": 34,
-          "exact_scope_match": true,
-          "contract_ref": "08e030a6053ac9638957119373797e0fbf2b10c2",
-          "contract_blob_sha": "667e622cd38bc7d2a915e6aef40c3f70af889c7a",
-          "full_packet_bytes": 1362140,
-          "max_packet_bytes": 600000,
-          "max_file_bytes": 100000,
-          "oversized_files": [],
-          "commit_ranges": [
-            {
-              "base_sha": "08e030a6053ac9638957119373797e0fbf2b10c2",
-              "head_sha": "fd629f4f2f000ac8c2b8f2e6a5199b69dc2f4395",
-              "message": "feat(core): consolidate fail-closed payments and source health",
-              "path_count": 22,
-              "packet_bytes": 872552,
-              "oversized_files": [],
-              "within_bounds": false
-            },
-            {
-              "base_sha": "fd629f4f2f000ac8c2b8f2e6a5199b69dc2f4395",
-              "head_sha": "bde9a37107a74f032f2cb3c94aca188a2d476ae8",
-              "message": "fix(payments): require source-bound admission for final totals",
-              "path_count": 8,
-              "packet_bytes": 336564,
-              "oversized_files": [],
-              "within_bounds": true
-            },
-            {
-              "base_sha": "bde9a37107a74f032f2cb3c94aca188a2d476ae8",
-              "head_sha": "e60713e47d330275a6295ae301ba9fa4b4ad3e53",
-              "message": "fix(payments): preserve unavailable totals and verify remedies",
-              "path_count": 18,
-              "packet_bytes": 933808,
-              "oversized_files": [],
-              "within_bounds": false
-            },
-            {
-              "base_sha": "e60713e47d330275a6295ae301ba9fa4b4ad3e53",
-              "head_sha": "f1921b63a452a059c1109c658560efc318127aad",
-              "message": "fix(payments): keep unavailable exports fail closed",
-              "path_count": 5,
-              "packet_bytes": 217103,
-              "oversized_files": [],
-              "within_bounds": true
-            }
-          ]
-        }
-      },
-      "updated_at": "2026-09-30T19:58:41.559Z",
-      "phase": "REPACKAGING_FOR_A6",
-      "quality_gate": "author focused+broad tests -> fresh independent A5 -> live A6 after PR #237 -> A0 validation -> exact-head CI -> non-main integration branch",
-      "ownership_note": "A-CORE assigned to rebuild equivalent #241 logic on a fresh candidate branch with complete <=600k A6-auditable logical commits; current #241 remains immutable evidence.",
-      "id": "CUSTOMS-CORE-V1",
-      "owner": "A-CORE",
-      "branch": "agent/core-consolidation-v1",
-      "goal": "Consolidate customs payments, rates, trade remedies, official-source provenance, ingestion and freshness into one coherent candidate on a fresh main-derived base without mechanically merging stale stacks.",
-      "dependencies": [],
-      "refs": {
-        "base_sha": "08e030a6053ac9638957119373797e0fbf2b10c2",
-        "head_sha": "f1921b63a452a059c1109c658560efc318127aad",
-        "pr": 241,
-        "source_prs": [
-          216,
-          220,
-          222,
-          223,
-          226,
-          228,
-          229,
-          231,
-          232,
-          235,
-          238,
-          240,
-          202,
-          203,
-          204,
-          205,
-          212,
-          187
-        ],
-        "integration_target": "integration/customs-core-v1",
-        "ci_run_id": 36563127291,
-        "a5_review_id": 5351957772,
-        "candidate_branch": "candidate/core-a6-repack-v1",
-        "candidate_head_sha": "14e0ee8f034d94ffc5831d87e076f4d693a5a524",
+      "run…26580 tokens truncated…     "candidate_head_sha": "14e0ee8f034d94ffc5831d87e076f4d693a5a524",
         "candidate_tree_sha": "fbb3bf2c88aa75a9c037a43547da88185dba6829",
         "source_head_sha": "f1921b63a452a059c1109c658560efc318127aad",
         "tree_equivalent_to_source": true,
@@ -4161,7 +1664,7 @@
       }
     }
   ],
-  "updated_at": "2026-10-01T10:52:00.000Z",
+  "updated_at": "2026-10-01T12:04:00.000Z",
   "max_concurrent_feature_workers": 2,
   "active_role_model": {
     "effective_at": "2026-09-30T12:58:10.633Z",
@@ -4213,7 +1716,7 @@
   ],
   "infra_gates": {
     "pr237": {
-      "status": "READY_FOR_OWNER_APPROVAL",
+      "status": "SUPERSEDED_STALE_AFTER_MAIN_ADVANCE",
       "pr": 237,
       "base_sha": "08e030a6053ac9638957119373797e0fbf2b10c2",
       "head_sha": "f0183c1e0f4e1e5ed60fa93a4633e841e2ae8d9f",
@@ -4241,10 +1744,19 @@
         "evidence": "Reviewed full issue-comment admission context and adversarial tests on exact HEAD. Strict bool permits false/true only; pending request still requires exact false dispatched/consumed, validated packet, non-empty scope, authoritative state paths, exact bindings, owner-only command, trusted default-branch checkout, active lawful lease and generation-scoped dedupe."
       },
       "ready_for_review": true,
-      "ready_transition_at": "2026-10-01T00:52:36.777Z"
+      "ready_transition_at": "2026-10-01T00:52:36.777Z",
+      "stale_against_main_sha": "4a7f78e2835d036be3f1137de1786615d31dcedd",
+      "successor": {
+        "pr": 247,
+        "branch": "agent/a6-postverify-post243-v2",
+        "head_sha": "c72a68dbe41f3b2d174c953bfb6c99491103aa24"
+      },
+      "evidence_reusable_for_successor": false,
+      "historical_evidence_preserved": true,
+      "closure_status": "OPEN_SUPERSEDED_MAPPING_RECORDED"
     },
     "pr236": {
-      "status": "READY_FOR_OWNER_APPROVAL",
+      "status": "SUPERSEDED_STALE_AFTER_MAIN_ADVANCE",
       "pr": 236,
       "base_sha": "08e030a6053ac9638957119373797e0fbf2b10c2",
       "head_sha": "825f4aaaff182c993045d28ef4d17e0e3aa3834e",
@@ -4305,10 +1817,19 @@
       "evidence_invalidation": "Any new HEAD requires fresh A5, A0 validation and exact-head CI.",
       "owner_gate": "Only merge to main/protected remains; explicit owner permission required. A0 did not merge.",
       "ready_for_review": true,
-      "ready_transition_at": "2026-10-01T00:52:36.777Z"
+      "ready_transition_at": "2026-10-01T00:52:36.777Z",
+      "stale_against_main_sha": "4a7f78e2835d036be3f1137de1786615d31dcedd",
+      "successor": {
+        "pr": 246,
+        "branch": "agent/a6-findings-post243-v2",
+        "head_sha": "72d16b3054870357a1e76637d59ee479b3d2772b"
+      },
+      "evidence_reusable_for_successor": false,
+      "historical_evidence_preserved": true,
+      "closure_status": "OPEN_SUPERSEDED_MAPPING_RECORDED"
     },
     "role_model_v2": {
-      "status": "READY_FOR_OWNER_APPROVAL",
+      "status": "MERGED_OWNER_AUTHORIZED_CONSUMED",
       "pr": 243,
       "branch": "agent/orchestration-role-model-v2",
       "base_sha": "08e030a6053ac9638957119373797e0fbf2b10c2",
@@ -4362,7 +1883,96 @@
       "state_revision": 613,
       "evidence_invalidation": "Any new PR HEAD or authoritative state revision affecting these bindings requires fresh A5/A0 validation.",
       "ready_for_review": true,
-      "ready_transition_at": "2026-10-01T00:52:36.777Z"
+      "ready_transition_at": "2026-10-01T00:52:36.777Z",
+      "merged_at": "2026-10-01T11:01:31Z",
+      "merge_commit_sha": "4a7f78e2835d036be3f1137de1786615d31dcedd",
+      "current_main_sha": "4a7f78e2835d036be3f1137de1786615d31dcedd",
+      "owner_permission_consumed": true,
+      "permission_reusable": false,
+      "post_merge_note": "The explicit owner permission applied only to PR243 exact HEAD 6ee3843c7a03276132cfca83981d68c4afa9cd81 and is fully consumed."
+    },
+    "pr246": {
+      "status": "FRESH_A5_PENDING",
+      "pr": 246,
+      "branch": "agent/a6-findings-post243-v2",
+      "base_branch": "main",
+      "base_sha": "4a7f78e2835d036be3f1137de1786615d31dcedd",
+      "head_sha": "72d16b3054870357a1e76637d59ee479b3d2772b",
+      "draft": true,
+      "mergeable": true,
+      "changed_files": [
+        "tests/agent_orchestration/test_audit.py",
+        "tools/tariff_agents/audit.py"
+      ],
+      "provenance": {
+        "successor_of_pr": 236,
+        "source_head_sha": "825f4aaaff182c993045d28ef4d17e0e3aa3834e",
+        "transfer": "exact two-file clean transplant onto current main"
+      },
+      "ci": {
+        "status": "PASSED",
+        "exact_head": true,
+        "runs": [
+          {
+            "id": 36853070798,
+            "event": "pull_request",
+            "conclusion": "success"
+          },
+          {
+            "id": 36853064560,
+            "event": "push",
+            "conclusion": "success"
+          }
+        ]
+      },
+      "a5": {
+        "status": "PENDING",
+        "rule": "Fresh independent review required; no PR236 approval transfers."
+      },
+      "a0_validation": {
+        "status": "PENDING"
+      },
+      "owner_gate": "Not ready: fresh A5 and A0 validation are required. Any protected merge remains prohibited without a new explicit owner permission.",
+      "evidence_invalidation": "Any new HEAD resets A5, A0 validation and exact-head CI."
+    },
+    "pr247": {
+      "status": "BLOCKED_ON_PR246_FRESH_GATES",
+      "pr": 247,
+      "branch": "agent/a6-postverify-post243-v2",
+      "base_branch": "agent/a6-findings-post243-v2",
+      "base_head_sha": "72d16b3054870357a1e76637d59ee479b3d2772b",
+      "head_sha": "c72a68dbe41f3b2d174c953bfb6c99491103aa24",
+      "draft": true,
+      "mergeable": true,
+      "changed_files": [
+        "tests/agent_orchestration/test_audit_bridge.py",
+        "tools/tariff_agents/audit_bridge.py"
+      ],
+      "provenance": {
+        "successor_of_pr": 237,
+        "source_head_sha": "f0183c1e0f4e1e5ed60fa93a4633e841e2ae8d9f",
+        "transfer": "exact two-file clean transplant stacked on PR246"
+      },
+      "ci": {
+        "status": "PASSED",
+        "exact_head": true,
+        "runs": [
+          {
+            "id": 36853120309,
+            "event": "push",
+            "conclusion": "success"
+          }
+        ]
+      },
+      "a5": {
+        "status": "PENDING",
+        "rule": "Fresh independent stacked review required after PR246 passes; no PR237 approval transfers."
+      },
+      "a0_validation": {
+        "status": "PENDING"
+      },
+      "owner_gate": "Not ready: PR246 fresh gates, then fresh PR247 A5 and A0 validation are required. Expected protected merge order is PR246 then PR247 only after one new explicit owner decision.",
+      "evidence_invalidation": "Any new HEAD or changed stack base resets A5, A0 validation and exact-head CI."
     }
   },
   "pr_hygiene": {
@@ -4668,11 +2278,14 @@
       "published_at": "2026-09-30T23:59:42.454Z",
       "pr": 243,
       "head_sha": "6ee3843c7a03276132cfca83981d68c4afa9cd81",
-      "state": "READY_FOR_OWNER_MERGE",
+      "state": "MERGED_OWNER_AUTHORIZED_CONSUMED",
       "reason": "Controller now accepts the two normalized active developer roles; historical role parsing remains available for archived evidence.",
       "a5_status": "PASSED",
       "ci_status": "PASSED",
-      "state_revision": 613
+      "state_revision": 613,
+      "merged_at": "2026-10-01T11:01:31Z",
+      "merge_commit_sha": "4a7f78e2835d036be3f1137de1786615d31dcedd",
+      "owner_permission_consumed": true
     },
     "infra_ready_transitions": {
       "published_at": "2026-10-01T00:52:36.777Z",
@@ -4702,7 +2315,7 @@
     },
     "final_integration_prs_v1": {
       "published_at": "2026-10-01T10:52:00.000Z",
-      "state": "DRAFT_GATED",
+      "state": "DRAFT_GATED_EXACT_HEAD_CI_PASS",
       "receipts": [
         {
           "pr": 244,
@@ -4710,7 +2323,10 @@
           "base": "integration/customs-core-v1",
           "draft": true,
           "mergeable": true,
-          "exact_head_ci_status": "MISSING_NO_ELIGIBLE_WORKFLOW"
+          "exact_head_ci_status": "PASSED",
+          "alias_ref": "agent/core-a6-repack-v1",
+          "run_id": 36853205641,
+          "alias_matches_candidate_head": true
         },
         {
           "pr": 245,
@@ -4718,21 +2334,62 @@
           "base": "integration/compliance-ai-v1",
           "draft": true,
           "mergeable": true,
-          "exact_head_ci_status": "MISSING_NO_ELIGIBLE_WORKFLOW"
+          "exact_head_ci_status": "PASSED",
+          "alias_ref": "agent/product-a6-repack-v1",
+          "run_id": 36853210034,
+          "alias_matches_candidate_head": true
         }
       ],
-      "rule": "Draft PRs provide the two coherent integration review surfaces. Do not merge until live A6, A0 validation and exact-head CI pass on the unchanged candidate heads.",
-      "ci_observation": "No workflow runs were created for either exact candidate commit because current default-branch workflow triggers do not include pull requests targeting the two integration branches. Absence is recorded as MISSING, not PASS."
+      "rule": "Draft PRs provide the two coherent integration review surfaces. Do not merge until the lawful live A6 gate is available, live A6 findings are reproduced or rejected with evidence, and A0 validation passes on unchanged candidate heads.",
+      "ci_observation": "Exact candidate SHAs received successful push CI through alias refs pointing to the identical commits; neither alias changes the candidate HEAD or code tree."
+    },
+    "infra_successor_mapping": {
+      "recorded_at": "2026-10-01T12:04:00.000Z",
+      "current_main_sha": "4a7f78e2835d036be3f1137de1786615d31dcedd",
+      "mappings": [
+        {
+          "source_pr": 236,
+          "source_head_sha": "825f4aaaff182c993045d28ef4d17e0e3aa3834e",
+          "successor_pr": 246,
+          "successor_head_sha": "72d16b3054870357a1e76637d59ee479b3d2772b",
+          "changed_files_preserved": [
+            "tests/agent_orchestration/test_audit.py",
+            "tools/tariff_agents/audit.py"
+          ],
+          "old_approvals_transfer": false
+        },
+        {
+          "source_pr": 237,
+          "source_head_sha": "f0183c1e0f4e1e5ed60fa93a4633e841e2ae8d9f",
+          "successor_pr": 247,
+          "successor_head_sha": "c72a68dbe41f3b2d174c953bfb6c99491103aa24",
+          "changed_files_preserved": [
+            "tests/agent_orchestration/test_audit_bridge.py",
+            "tools/tariff_agents/audit_bridge.py"
+          ],
+          "old_approvals_transfer": false
+        }
+      ],
+      "source_pr_closure": "DEFERRED; old PRs remain open but explicitly superseded until successor gates are fresh. No branch deletion."
     }
   },
   "a6_candidate_preflight": {
-    "status": "BOTH_CANDIDATES_A5_PASS_PACKET_READY_BLOCKED_PR236_PR237_MAIN_MERGES",
-    "checked_at": "2026-09-30T22:13:11.522Z",
+    "status": "BOTH_CANDIDATES_A5_PASS_EXACT_HEAD_CI_PASS_PACKET_READY_BLOCKED_SUCCESSOR_CHAIN",
+    "checked_at": "2026-10-01T12:04:00.000Z",
     "bridge": {
       "live_verified": true,
       "current_pending_consumed": true,
-      "post_verify_admission_requires_pr": 237,
-      "pr237_merged": false
+      "current_main_sha": "4a7f78e2835d036be3f1137de1786615d31dcedd",
+      "role_model_pr243_merged": true,
+      "role_model_owner_permission_consumed": true,
+      "successor_chain_required": [
+        246,
+        247
+      ],
+      "pr246_merged": false,
+      "pr247_merged": false,
+      "subsequent_a6_available": false,
+      "rule": "Do not call or simulate subsequent live A6 until owner-authorized protected merges complete in order PR246 then PR247."
     },
     "contract": {
       "ref": "08e030a6053ac9638957119373797e0fbf2b10c2",
@@ -4744,14 +2401,18 @@
       "max_packet_bytes": 600000
     },
     "assignments": [],
-    "rule": "Do not weaken limits, send partial packets, reuse stale A5/CI, force-push, or claim A6 coverage for unaudited ranges. Subsequent live A6 remains unavailable until PR237 is merged; scanner correction requires PR236 merge.",
+    "rule": "Do not weaken limits, send partial packets, reuse stale A5/CI, force-push, or claim A6 coverage for unaudited ranges. Subsequent live A6 remains unavailable until the fresh successor chain PR246 then PR247 is owner-authorized and merged.",
     "scanner_fix_pr": {
-      "pr": 236,
-      "head_sha": "825f4aaaff182c993045d28ef4d17e0e3aa3834e",
-      "ci_run_id": 36778373373,
+      "pr": 246,
+      "predecessor_pr": 236,
+      "head_sha": "72d16b3054870357a1e76637d59ee479b3d2772b",
+      "ci_run_ids": [
+        36853070798,
+        36853064560
+      ],
       "ci_status": "PASSED",
-      "a5_status": "PASSED",
-      "a0_status": "PASSED",
+      "a5_status": "PENDING_FRESH",
+      "a0_status": "PENDING_FRESH",
       "merged": false
     },
     "product_candidate": {
@@ -4767,7 +2428,7 @@
       ],
       "non_runtime_a6_coverage": false,
       "broad_status": "NOT_PASS",
-      "next_gate": "live A6 runtime slices plus repair delta only after PR236/PR237 merges; then A0 validation and exact-head CI.",
+      "next_gate": "live A6 runtime slices plus repair delta only after owner-authorized PR246 -> PR247 protected merge chain; then A0 validation before non-main integration",
       "a5_status": "PASSED",
       "a5_session": "/root/a5_core_candidate",
       "blocker_id": "A5-PRODUCT-CHILD-NEGATION-001",
@@ -4778,7 +2439,15 @@
       },
       "integration_pr": 245,
       "integration_pr_draft": true,
-      "exact_head_ci_status": "MISSING_NO_ELIGIBLE_WORKFLOW"
+      "exact_head_ci_status": "PASSED",
+      "exact_head_ci": {
+        "alias_ref": "agent/product-a6-repack-v1",
+        "head_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
+        "run_id": 36853210034,
+        "event": "push",
+        "conclusion": "success",
+        "candidate_head_unchanged": true
+      }
     },
     "core_candidate": {
       "branch": "candidate/core-a6-repack-v1",
@@ -4798,7 +2467,7 @@
         "PASS",
         "PASS"
       ],
-      "next_gate": "live A6 only after PR236 and PR237 merge; then A0 validation and exact-head CI",
+      "next_gate": "live A6 only after owner-authorized PR246 -> PR247 protected merge chain; then A0 validation before non-main integration",
       "a5_status": "PASSED",
       "a5_session": "/root/a5_core_candidate",
       "a5_limitations": [
@@ -4807,7 +2476,15 @@
       ],
       "integration_pr": 244,
       "integration_pr_draft": true,
-      "exact_head_ci_status": "MISSING_NO_ELIGIBLE_WORKFLOW"
+      "exact_head_ci_status": "PASSED",
+      "exact_head_ci": {
+        "alias_ref": "agent/core-a6-repack-v1",
+        "head_sha": "14e0ee8f034d94ffc5831d87e076f4d693a5a524",
+        "run_id": 36853205641,
+        "event": "push",
+        "conclusion": "success",
+        "candidate_head_unchanged": true
+      }
     }
   },
   "state_integrity_receipts": {
