@@ -355,6 +355,69 @@ class AuditTests(unittest.TestCase):
             with self.subTest(key=key):
                 self.assertEqual(audit.ensure_safe_text(value, environ={key: value}), value)
 
+    def test_packet_serialization_does_not_reclassify_module_decorators(self):
+        decorated = (
+            "\n" + "@pytest.mark.parametrize('value', [1])\n"
+            "@unittest.skipUnless(True, 'fixture')\n"
+        )
+        with self.assertRaises(audit.AuditBlocked):
+            audit.ensure_safe_text(
+                json.dumps({"contact": "person@" + "private.test"}, separators=(",", ":")),
+                environ={},
+            )
+
+        self.write("tests/decorated.py", decorated)
+        head = self.commit()
+        packet = audit.build_packet(
+            self.repo,
+            self.head,
+            head,
+            [audit.CONTRACT_PATH, "tests/decorated.py"],
+            environ={},
+        )
+        self.assertEqual(packet["head_sha"], head)
+
+    def test_backslash_prefixed_private_contacts_remain_blocked(self):
+        private_contact = "\\\\person@" + "private.test"
+        fixtures = (
+            private_contact,
+            json.dumps({"contact": private_contact}, separators=(",", ":")),
+        )
+        for text in fixtures:
+            with self.subTest(serialized=text.startswith("{")), \
+                    self.assertRaises(audit.AuditBlocked):
+                audit.ensure_safe_text(text, environ={})
+
+    def test_decorator_prefix_contact_collisions_remain_blocked(self):
+        contacts = (
+            "\\n@" + "pytest.private",
+            "\\r@" + "unittest.private",
+        )
+        for contact in contacts:
+            fixtures = (
+                contact,
+                json.dumps({"contact": contact}, separators=(",", ":")),
+            )
+            for text in fixtures:
+                with self.subTest(contact=contact, serialized=text.startswith("{")), \
+                        self.assertRaises(audit.AuditBlocked):
+                    audit.ensure_safe_text(text, environ={})
+
+    def test_unchanged_supporting_contact_path_remains_blocked(self):
+        contact_path = "tests/person@" + "outside.test.py"
+        self.write(contact_path, "SAFE = True\n")
+        base = self.commit()
+        self.write("src/value.py", "VALUE = 2\n")
+        head = self.commit()
+        with self.assertRaises(audit.AuditBlocked):
+            audit.build_packet(
+                self.repo,
+                base,
+                head,
+                [audit.CONTRACT_PATH, "src/value.py", contact_path],
+                environ={},
+            )
+
     def test_negative_fixtures_do_not_make_committed_test_source_unsafe(self):
         for path in (Path(audit.__file__), Path(__file__)):
             source = path.read_text()
@@ -409,8 +472,11 @@ class AuditTests(unittest.TestCase):
         self.assertNotIn("mcp_servers", payload)
         self.assertEqual(payload["max_tokens"], audit.A6_MAX_OUTPUT_TOKENS)
         self.assertEqual(payload["max_tokens"], 32_768)
-        self.assertEqual(payload["output_config"]["effort"], "medium")
+        self.assertEqual(payload["output_config"]["effort"], audit.A6_EFFORT)
         self.assertEqual(payload["output_config"]["format"]["type"], "json_schema")
+        self.assertIn("Report every defect you identify", payload["system"])
+        self.assertIn("including lower-severity defects", payload["system"])
+        self.assertIn("concise, specific and non-redundant", payload["system"])
         self.assertNotIn(self.env["ANTHROPIC_API_KEY"], json.dumps(payload))
 
     @patch.object(audit, "request_json")
@@ -461,6 +527,11 @@ class AuditTests(unittest.TestCase):
         result = audit.run_audit(self.repo, packet, environ=self.env)
         self.assertEqual(result["failure_code"], "PROVIDER_HTTP_529")
         self.assertNotIn(self.env["ANTHROPIC_API_KEY"], json.dumps(result))
+        request.side_effect = audit.RuntimeBlocked("API request failed (HTTP 400)")
+        result = audit.run_audit(self.repo, packet, environ=self.env)
+        self.assertEqual(result["status"], "UNAVAILABLE")
+        self.assertIs(result["live_verified"], False)
+        self.assertEqual(result["failure_code"], "PROVIDER_HTTP_400")
         request.side_effect = None
         request.return_value = {"id": "msg_mock", "stop_reason": "end_turn",
                                 "content": [{"type": "text", "text": "not json"}]}

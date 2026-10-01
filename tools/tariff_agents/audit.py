@@ -9,9 +9,11 @@ public. A0 must choose only reviewed code, contracts and non-secret fixtures.
 No repository-wide content scan, directory upload, remote URL fetch or Claude tool
 is used. Changed paths must all be included; an incomplete diff is never sent.
 
-Official API references checked 2026-09-16:
+Official API references checked 2026-09-28:
 https://platform.claude.com/docs/en/api/messages/create
 https://platform.claude.com/docs/en/build-with-claude/structured-outputs
+https://platform.claude.com/docs/en/build-with-claude/effort
+https://platform.claude.com/docs/en/build-with-claude/context-windows
 https://platform.claude.com/docs/en/models/opus-5/whats-new-opus-5
 """
 
@@ -121,7 +123,7 @@ def _ambient_credential_values(key, value):
     return tuple(dict.fromkeys(credentials))
 
 
-def ensure_safe_text(text, *, environ=None):
+def ensure_safe_text(text, *, environ=None, scan_contacts=True):
     if not isinstance(text, str) or any(ord(c) < 32 and c not in "\n\r\t" for c in text):
         raise AuditBlocked("Binary or invalid audit text")
     env = os.environ if environ is None else environ
@@ -146,9 +148,12 @@ def ensure_safe_text(text, *, environ=None):
     )
     if any(re.search(pattern, text) for pattern in patterns):
         raise AuditBlocked("Suspected secret or private data excluded from audit")
-    for domain in re.findall(r"\b[A-Za-z0-9._%+-]+@([A-Za-z0-9.-]+\.[A-Za-z]{2,})\b", text):
-        if domain.lower() not in {"example.com", "example.org", "example.net", "localhost.test"}:
-            raise AuditBlocked("Personal contact data excluded from audit")
+    if scan_contacts:
+        for domain in re.findall(
+                r"\b[A-Za-z0-9._%+-]+@([A-Za-z0-9.-]+\.[A-Za-z]{2,})\b", text):
+            if domain.lower() not in {
+                    "example.com", "example.org", "example.net", "localhost.test"}:
+                raise AuditBlocked("Personal contact data excluded from audit")
     return text
 
 
@@ -235,7 +240,12 @@ def build_packet(repo, base, head, paths, *, contract_ref=None, official_sources
             (external_contract and (CONTRACT_PATH in paths or len(paths) >= MAX_FILES)) or
             (not external_contract and CONTRACT_PATH not in paths)):
         raise AuditBlocked("Explicit unique paths and architecture contract required")
-    paths = sorted(ensure_safe_path(path) for path in paths)
+    safe_paths = []
+    for path in paths:
+        safe_path = ensure_safe_path(path)
+        ensure_safe_text(safe_path, environ=environ)
+        safe_paths.append(safe_path)
+    paths = sorted(safe_paths)
     base_sha, head_sha = _commit(repo, base), _commit(repo, head)
     if external_contract:
         ensure_safe_text(contract_ref, environ=environ)
@@ -282,7 +292,11 @@ def build_packet(repo, base, head, paths, *, contract_ref=None, official_sources
               "diff": diff, "diff_sha256": _sha(diff.encode()),
               "official_sources": _sources(official_sources)}
     raw = _json_bytes(packet)
-    ensure_safe_text(raw.decode("utf-8"), environ=environ)
+    # Every variable packet field is scanned above in its original form. JSON
+    # escaping can only add contact-shaped artifacts such as `\\n@pytest...`,
+    # so the final aggregate rescan repeats secret checks without reclassifying
+    # escape markers as email local-parts.
+    ensure_safe_text(raw.decode("utf-8"), environ=environ, scan_contacts=False)
     if len(raw) > MAX_PACKET_BYTES:
         raise AuditBlocked("Audit packet exceeds byte limit; no truncation allowed")
     return {**packet, "packet_sha256": _sha(raw)}
@@ -457,8 +471,9 @@ def run_audit(repo, packet, *, environ=None):
             "No tools, network, fetching URLs, commands or external data access. Official URLs are "
             "attribution metadata, not proof you have read their contents. Record missing source "
             "content/context in limitations. Findings are hypotheses requiring A0 verification. "
-            "Do not claim readiness, legal approval or a passed audit. Be concise: prioritize "
-            "actionable defects and keep evidence specific. Return the required JSON."),
+            "Do not claim readiness, legal approval or a passed audit. Report every defect you "
+            "identify, including lower-severity defects. Keep evidence concise, specific and "
+            "non-redundant. Return the required JSON."),
         "messages": [{"role": "user", "content": _json_bytes(packet).decode()}],
         "output_config": {"effort": A6_EFFORT,
                           "format": {"type": "json_schema", "schema": FINDINGS_SCHEMA}}}
