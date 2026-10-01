@@ -400,8 +400,35 @@ class AuditTests(unittest.TestCase):
             )
             for text in fixtures:
                 with self.subTest(contact=contact, serialized=text.startswith("{")), \
+                    self.assertRaises(audit.AuditBlocked):
+                    audit.ensure_safe_text(text, environ={})
+
+    def test_quoted_and_smtputf8_contacts_remain_blocked(self):
+        contacts = (
+            '"' + "person" + '"' + "@" + "private.test",
+            "иван" + "@" + "компания.рф",
+        )
+        for contact in contacts:
+            fixtures = (
+                contact,
+                json.dumps({"contact": contact}, separators=(",", ":"), ensure_ascii=False),
+            )
+            for text in fixtures:
+                with self.subTest(contact=contact, serialized=text.startswith("{")), \
                         self.assertRaises(audit.AuditBlocked):
                     audit.ensure_safe_text(text, environ={})
+
+        contact_path = 'src/"' + "person" + '"' + "@" + "private.test.py"
+        self.write(contact_path, "SAFE = True\n")
+        head = self.commit()
+        with self.assertRaises(audit.AuditBlocked):
+            audit.build_packet(
+                self.repo,
+                self.head,
+                head,
+                [audit.CONTRACT_PATH, contact_path],
+                environ={},
+            )
 
     def test_unchanged_supporting_contact_path_remains_blocked(self):
         contact_path = "tests/person@" + "outside.test.py"
@@ -472,7 +499,8 @@ class AuditTests(unittest.TestCase):
         self.assertNotIn("mcp_servers", payload)
         self.assertEqual(payload["max_tokens"], audit.A6_MAX_OUTPUT_TOKENS)
         self.assertEqual(payload["max_tokens"], 32_768)
-        self.assertEqual(payload["output_config"]["effort"], audit.A6_EFFORT)
+        self.assertEqual(audit.A6_EFFORT, "medium")
+        self.assertEqual(payload["output_config"]["effort"], "medium")
         self.assertEqual(payload["output_config"]["format"]["type"], "json_schema")
         self.assertIn("Report every defect you identify", payload["system"])
         self.assertIn("including lower-severity defects", payload["system"])

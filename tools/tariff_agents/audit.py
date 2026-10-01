@@ -149,11 +149,22 @@ def ensure_safe_text(text, *, environ=None, scan_contacts=True):
     if any(re.search(pattern, text) for pattern in patterns):
         raise AuditBlocked("Suspected secret or private data excluded from audit")
     if scan_contacts:
-        for domain in re.findall(
-                r"\b[A-Za-z0-9._%+-]+@([A-Za-z0-9.-]+\.[A-Za-z]{2,})\b", text):
-            if domain.lower() not in {
-                    "example.com", "example.org", "example.net", "localhost.test"}:
-                raise AuditBlocked("Personal contact data excluded from audit")
+        # Scan both conventional and SMTPUTF8-shaped addresses. Quoted local
+        # parts need their own expression because the quote immediately before
+        # ``@`` prevents the conventional expression from matching. ``\w`` is
+        # intentionally Unicode-aware here so non-ASCII contacts fail closed.
+        domain = r"(?P<domain>[\w.-]+\.[\w-]{2,63})"
+        quoted_local = r'[^\s"\\](?:[^"\\\r\n]{0,62}[^\s"\\])?'
+        contact_patterns = (
+            rf'"{quoted_local}"@{domain}(?![\w-])',
+            rf'\\"{quoted_local}\\"@{domain}(?![\w-])',
+            rf"(?<![\w.%+-])[\w](?:[\w.%+-]*[\w])?@{domain}(?![\w-])",
+        )
+        allowed = {"example.com", "example.org", "example.net", "localhost.test"}
+        for pattern in contact_patterns:
+            for match in re.finditer(pattern, text):
+                if match.group("domain").casefold() not in allowed:
+                    raise AuditBlocked("Personal contact data excluded from audit")
     return text
 
 
