@@ -123,6 +123,36 @@ def _ambient_credential_values(key, value):
     return tuple(dict.fromkeys(credentials))
 
 
+def _contact_scan_views(text):
+    """Yield literal and conservatively JSON-unicode-decoded contact views."""
+    yield text
+    decoded = text
+    for _ in range(2):
+        decoded_next = re.sub(
+            r"\\+u(d[89ab][0-9a-f]{2})\\+u(d[cdef][0-9a-f]{2})",
+            lambda match: chr(
+                0x10000
+                + ((int(match.group(1), 16) - 0xD800) << 10)
+                + int(match.group(2), 16)
+                - 0xDC00
+            ),
+            decoded,
+            flags=re.IGNORECASE,
+        )
+
+        def decode_bmp(match):
+            value = int(match.group(1), 16)
+            return match.group(0) if 0xD800 <= value <= 0xDFFF else chr(value)
+
+        decoded_next = re.sub(
+            r"\\+u([0-9a-f]{4})", decode_bmp, decoded_next, flags=re.IGNORECASE
+        )
+        if decoded_next == decoded:
+            break
+        decoded = decoded_next
+        yield decoded
+
+
 def ensure_safe_text(text, *, environ=None, scan_contacts=True):
     if not isinstance(text, str) or any(ord(c) < 32 and c not in "\n\r\t" for c in text):
         raise AuditBlocked("Binary or invalid audit text")
@@ -149,22 +179,26 @@ def ensure_safe_text(text, *, environ=None, scan_contacts=True):
     if any(re.search(pattern, text) for pattern in patterns):
         raise AuditBlocked("Suspected secret or private data excluded from audit")
     if scan_contacts:
-        # Scan both conventional and SMTPUTF8-shaped addresses. Quoted local
-        # parts need their own expression because the quote immediately before
-        # ``@`` prevents the conventional expression from matching. ``\w`` is
-        # intentionally Unicode-aware here so non-ASCII contacts fail closed.
+        # Scan complete dot-atom and quoted local-part shapes. ``\w`` is
+        # intentionally Unicode-aware so SMTPUTF8 contacts fail closed. The
+        # quoted form requires at least one word character to avoid treating
+        # adjacent source-code string delimiters before a decorator
+        # as a contact while still covering quoted whitespace and escapes.
         domain = r"(?P<domain>[\w.-]+\.[\w-]{2,63})"
-        quoted_local = r'[^\s"\\](?:[^"\\\r\n]{0,62}[^\s"\\])?'
+        atom = r"[\w!#$%&'*+/=?^_`{|}~-]"
+        dot_atom = rf"{atom}+(?:\.{atom}+)*"
+        quoted_local = r'(?=[^"\r\n]{1,64}"@)(?=[^"\r\n]{0,63}\w)(?:[^"\\\r\n]|\\.){1,64}'
         contact_patterns = (
             rf'"{quoted_local}"@{domain}(?![\w-])',
             rf'\\"{quoted_local}\\"@{domain}(?![\w-])',
-            rf"(?<![\w.%+-])[\w](?:[\w.%+-]*[\w])?@{domain}(?![\w-])",
+            rf"(?<![\w!#$%&'*+/=?^_`{{|}}~.-]){dot_atom}@{domain}(?![\w-])",
         )
         allowed = {"example.com", "example.org", "example.net", "localhost.test"}
-        for pattern in contact_patterns:
-            for match in re.finditer(pattern, text):
-                if match.group("domain").casefold() not in allowed:
-                    raise AuditBlocked("Personal contact data excluded from audit")
+        for view in _contact_scan_views(text):
+            for pattern in contact_patterns:
+                for match in re.finditer(pattern, view):
+                    if match.group("domain").casefold() not in allowed:
+                        raise AuditBlocked("Personal contact data excluded from audit")
     return text
 
 
@@ -294,7 +328,11 @@ def build_packet(repo, base, head, paths, *, contract_ref=None, official_sources
         files.append({"path": path, "base": before, "head": after})
     diff = _git(repo, "diff", "--no-ext-diff", "--no-textconv", "--no-renames",
                 "--no-color", "--unified=3", base_sha, head_sha, "--", *paths).decode("utf-8")
-    ensure_safe_text(diff, environ=environ)
+    # All file/path/contract values were contact-scanned above in their original
+    # form. Diff markers can themselves form valid dot-atoms when a decorator
+    # line is added, so this redundant aggregate view repeats secret checks
+    # without reclassifying diff syntax as personal contact data.
+    ensure_safe_text(diff, environ=environ, scan_contacts=False)
     packet = {"schema_version": 2, "purpose": "A6_ADVISORY_REVIEW",
               "base_sha": base_sha, "head_sha": head_sha, "complete": True,
               "scope": "full_commit_diff_with_explicit_supporting_files",

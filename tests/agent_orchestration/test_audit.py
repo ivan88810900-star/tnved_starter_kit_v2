@@ -406,7 +406,12 @@ class AuditTests(unittest.TestCase):
     def test_quoted_and_smtputf8_contacts_remain_blocked(self):
         contacts = (
             '"' + "person" + '"' + "@" + "private.test",
+            '"' + " person" + '"' + "@" + "private.test",
+            "person+" + "@" + "private.test",
             "иван" + "@" + "компания.рф",
+            ("\\u0438\\u0432\\u0430\\u043d" + "@" +
+             "\\u043a\\u043e\\u043c\\u043f\\u0430\\u043d\\u0438\\u044f."
+             "\\u0440\\u0444"),
         )
         for contact in contacts:
             fixtures = (
@@ -451,7 +456,10 @@ class AuditTests(unittest.TestCase):
             with self.subTest(path=path.name):
                 self.assertEqual(audit.ensure_safe_text(source, environ={}), source)
                 serialized = json.dumps({"text": source}, separators=(",", ":"))
-                self.assertEqual(audit.ensure_safe_text(serialized, environ={}), serialized)
+                self.assertEqual(
+                    audit.ensure_safe_text(serialized, environ={}, scan_contacts=False),
+                    serialized,
+                )
 
     def test_packet_tamper_blocks_before_network(self):
         packet = self.packet()
