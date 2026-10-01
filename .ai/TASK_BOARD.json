@@ -774,7 +774,7 @@
     }
   ],
   "max_concurrent_subagents": 3,
-  "revision": 623,
+  "revision": 624,
   "runs": [
     {
       "head_sha": null,
@@ -5012,6 +5012,34 @@
       "permission_required": true,
       "permission_granted": false,
       "remaining_action": "one explicit owner decision for the exact protected merge order PR246 dc0397c7 then PR247 c1f04847"
+    },
+    "integration_candidate_metadata_refresh": {
+      "published_at": "2026-10-01T14:51:20Z",
+      "state": "VERIFIED",
+      "receipts": [
+        {
+          "pr": 244,
+          "head_sha": "14e0ee8f034d94ffc5831d87e076f4d693a5a524",
+          "head_changed": false,
+          "draft": true,
+          "body_records_exact_head_ci_run_id": 36853205641,
+          "body_records_packet_preflight": true,
+          "body_records_current_protected_chain": [246, 247],
+          "limitations_preserved": true
+        },
+        {
+          "pr": 245,
+          "head_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
+          "head_changed": false,
+          "draft": true,
+          "body_records_exact_head_ci_run_id": 36853210034,
+          "body_records_packet_preflight": true,
+          "body_records_current_protected_chain": [246, 247],
+          "limitations_preserved": true
+        }
+      ],
+      "reason": "Removed stale #243 -> #236 -> #237 and missing-CI metadata from the two coherent integration review surfaces without changing candidate commits or carrying stale approvals.",
+      "remaining_gate": "Owner-authorized exact PR246 -> PR247 protected merge chain, then fresh live A6 and A0 validation on unchanged candidate heads."
     },
     "final_integration_prs_v1": {
       "published_at": "2026-10-01T10:52:00.000Z",
