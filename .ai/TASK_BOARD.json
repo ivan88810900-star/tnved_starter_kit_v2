@@ -774,7 +774,7 @@
     }
   ],
   "max_concurrent_subagents": 3,
-  "revision": 632,
+  "revision": 633,
   "runs": [
     {
       "head_sha": null,
@@ -4188,7 +4188,7 @@
       }
     }
   ],
-  "updated_at": "2026-10-01T22:56:00Z",
+  "updated_at": "2026-10-01T23:50:00Z",
   "max_concurrent_feature_workers": 2,
   "active_role_model": {
     "effective_at": "2026-09-30T12:58:10.633Z",
@@ -5793,6 +5793,41 @@
         "merged": false
       },
       "candidate_heads_changed": false,
+      "tests_weakened": false,
+      "protected_action_performed": false
+    },
+    "a6_request_aggregate_fingerprint_rev633": {
+      "checked_at": "2026-10-01T23:50:00Z",
+      "source_receipt": "state_integrity_receipts.a6_request_manifests_rev629",
+      "canonicalization": "jq -cS over schema_version, exact scanner/postverify protocols, contract, limits, ordered 11 requests, exclusions, and dispatch gate; trailing newline included",
+      "canonical_bytes": 11702,
+      "sha256": "496bb2f2eb9227cfd5e2e219ab877b24aa8c36f8f05d62bf0706ff06c1130ff1",
+      "request_count": 11,
+      "request_ids_unique": 11,
+      "packet_binding_hashes_unique": 11,
+      "serialized_packet_hashes_unique": 11,
+      "max_serialized_packet_bytes": 400939,
+      "limits": {
+        "max_files": 64,
+        "max_file_bytes": 100000,
+        "max_packet_bytes": 600000
+      },
+      "scanner_protocol": {
+        "pr": 246,
+        "head_sha": "dc0397c7815e092ad8d3bd41d0d98af197212e1e"
+      },
+      "postverify_protocol": {
+        "pr": 247,
+        "head_sha": "c1f04847c2a40b01a3e1f0759d9e97e309cc2e3b"
+      },
+      "candidate_pr_bodies_updated": [
+        244,
+        245
+      ],
+      "candidate_heads_changed": false,
+      "owner_approval_present": false,
+      "provider_call_performed": false,
+      "a6_pass_claimed": false,
       "tests_weakened": false,
       "protected_action_performed": false
     }
