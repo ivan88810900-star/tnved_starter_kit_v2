@@ -774,7 +774,7 @@
     }
   ],
   "max_concurrent_subagents": 3,
-  "revision": 625,
+  "revision": 626,
   "runs": [
     {
       "head_sha": null,
@@ -5248,6 +5248,30 @@
         "bytes": 120520,
         "sha256": "706912165fb32d9d46b1d8ec48787ec4d93314b7a47d49360ca094cd593fd7eb",
         "status": "PASS_VALIDATED"
+      },
+      "a0_supplemental_frontend_validation": {
+        "status": "PASSED",
+        "validated_at": "2026-10-01T16:50:10Z",
+        "head_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
+        "commands": [
+          "npm ls --all --offline",
+          "npm run typecheck",
+          "npm test",
+          "npm run build"
+        ],
+        "frontend_tests": "18/18 PASS",
+        "package_json_sha256": "bec98e22439edcb1402122fc5384a9670536e0b607a50210d9f02f6fb8502e2e",
+        "package_lock_sha256": "cd0ac340ea7e725c4b006f773e04f5602b9a2bd9ef89b7b8dea32b05d24eb391",
+        "dependency_method": "OFFLINE_EXISTING_TREE_VALIDATED_AGAINST_CANDIDATE_MANIFEST",
+        "head_changed": false,
+        "tracked_tree_changed": false,
+        "warnings": [
+          "optional happy-dom dependency absent; jsdom test environment present and used",
+          "existing Lightning CSS pseudo-class warning",
+          "existing Vite chunk-size warning",
+          "stale caniuse-lite advisory"
+        ],
+        "historical_a5_record_changed": false
       },
       "integration_pr": 245,
       "integration_pr_draft": true,
