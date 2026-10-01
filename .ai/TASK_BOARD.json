@@ -774,7 +774,7 @@
     }
   ],
   "max_concurrent_subagents": 3,
-  "revision": 624,
+  "revision": 625,
   "runs": [
     {
       "head_sha": null,
@@ -5286,6 +5286,26 @@
         "Full backend suite stopped by runtime security when an unrelated test attempted outbound api.proxyapi.ru; no bypass/retry and no full-suite PASS claim.",
         "Frontend build/typecheck unavailable in isolated review tree without installed dependencies; nullable paths statically reviewed."
       ],
+      "a0_supplemental_frontend_validation": {
+        "status": "PASSED",
+        "validated_at": "2026-10-01T15:49:01Z",
+        "head_sha": "14e0ee8f034d94ffc5831d87e076f4d693a5a524",
+        "commands": [
+          "npm run typecheck",
+          "npm run build"
+        ],
+        "package_json_sha256": "81c8d05d68d29190d7bf69a7c484d66b2988502bd837fde7574e543a7263c56b",
+        "package_lock_sha256": "1bd7a45bc3944e6c8975f2a290c37c9c76581505a921b2ed1b274d87c7d8bacd",
+        "dependency_method": "OFFLINE_REUSE_AFTER_EXACT_MANIFEST_AND_LOCK_MATCH",
+        "head_changed": false,
+        "tracked_tree_changed": false,
+        "warnings": [
+          "existing Lightning CSS pseudo-class warning",
+          "existing Vite chunk-size warning",
+          "stale caniuse-lite advisory"
+        ],
+        "historical_a5_record_changed": false
+      },
       "integration_pr": 244,
       "integration_pr_draft": true,
       "exact_head_ci_status": "PASSED",
