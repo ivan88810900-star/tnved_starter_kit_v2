@@ -774,7 +774,7 @@
     }
   ],
   "max_concurrent_subagents": 3,
-  "revision": 610,
+  "revision": 611,
   "runs": [
     {
       "head_sha": null,
@@ -3794,6 +3794,7 @@
         "customs-clear/backend/app/services/ntm_triggers.py",
         "customs-clear/backend/app/services/ntm_v2_import.py",
         "customs-clear/backend/app/services/ntm_v2_official_sgr_dataset_validation.py",
+        "customs-clear/backend/app/services/ntm_v2_official_sgr_import.py",
         "customs-clear/backend/app/services/regulatory_ai_classifier.py",
         "customs-clear/backend/app/services/tnved_code_card.py",
         "customs-clear/backend/app/services/tnved_fts.py",
@@ -3919,9 +3920,9 @@
         "a5_review_id": 5351884301,
         "candidate_branch": "candidate/product-a6-repack-v1",
         "candidate_head_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
-        "candidate_tree_sha": "6eeefb6f6adde1930a59ffbece5052c70e369d0b",
+        "candidate_tree_sha": "f31e36b3b9c3998f2a63440f58a756270f28d23e",
         "source_head_sha": "bf27ef2cd243f0e2f9325c48a1cfad40a100b2fe",
-        "tree_equivalent_to_source": true,
+        "tree_equivalent_to_source": false,
         "candidate_diff_files": [
           "customs-clear/backend/app/services/assistant_chat.py",
           "customs-clear/backend/app/services/assistant_orchestrator.py",
@@ -3938,6 +3939,7 @@
           "customs-clear/backend/app/services/ntm_triggers.py",
           "customs-clear/backend/app/services/ntm_v2_import.py",
           "customs-clear/backend/app/services/ntm_v2_official_sgr_dataset_validation.py",
+          "customs-clear/backend/app/services/ntm_v2_official_sgr_import.py",
           "customs-clear/backend/app/services/regulatory_ai_classifier.py",
           "customs-clear/backend/app/services/tnved_code_card.py",
           "customs-clear/backend/app/services/tnved_fts.py",
@@ -4039,7 +4041,7 @@
         "branch": "candidate/product-a6-repack-v1",
         "base_sha": "08e030a6053ac9638957119373797e0fbf2b10c2",
         "head_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
-        "tree_sha": "6eeefb6f6adde1930a59ffbece5052c70e369d0b",
+        "tree_sha": "f31e36b3b9c3998f2a63440f58a756270f28d23e",
         "tree_identical_to_pr242_head": "bf27ef2cd243f0e2f9325c48a1cfad40a100b2fe",
         "runtime_slices": [
           {
@@ -4137,7 +4139,7 @@
       }
     }
   ],
-  "updated_at": "2026-09-30T23:59:42.454Z",
+  "updated_at": "2026-10-01T00:06:25.139Z",
   "max_concurrent_feature_workers": 2,
   "active_role_model": {
     "effective_at": "2026-09-30T12:58:10.633Z",
@@ -4280,7 +4282,7 @@
       "owner_gate": "Merge exact HEAD to main/protected requires separate explicit owner permission; A0 did not merge."
     },
     "role_model_v2": {
-      "status": "AUTHOR_IMPLEMENTED_A5_CI_PENDING",
+      "status": "AUTHOR_AND_CI_PASS_A5_REVERIFYING_AFTER_STATE_PROVENANCE_FIX",
       "pr": 243,
       "branch": "agent/orchestration-role-model-v2",
       "base_sha": "08e030a6053ac9638957119373797e0fbf2b10c2",
@@ -4307,7 +4309,12 @@
         "exact-head GitHub CI",
         "A0 validation"
       ],
-      "owner_gate": "No main/protected merge is authorized."
+      "owner_gate": "No main/protected merge is authorized.",
+      "ci": {
+        "status": "PASSED",
+        "run_id": 36793845988,
+        "exact_head": true
+      }
     }
   },
   "pr_hygiene": {
@@ -4600,7 +4607,7 @@
           "source_head_sha": "bf27ef2cd243f0e2f9325c48a1cfad40a100b2fe",
           "candidate_branch": "candidate/product-a6-repack-v1",
           "candidate_head_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
-          "candidate_tree_sha": "6eeefb6f6adde1930a59ffbece5052c70e369d0b",
+          "candidate_tree_sha": "f31e36b3b9c3998f2a63440f58a756270f28d23e",
           "a5_status": "PASSED",
           "exact_head_ci_status": "MISSING",
           "comment_id": 5921085538
@@ -4649,7 +4656,7 @@
     "product_candidate": {
       "branch": "candidate/product-a6-repack-v1",
       "head_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
-      "tree_sha": "6eeefb6f6adde1930a59ffbece5052c70e369d0b",
+      "tree_sha": "f31e36b3b9c3998f2a63440f58a756270f28d23e",
       "runtime_slice_packet_bytes": [
         180640,
         400856,
@@ -4694,6 +4701,24 @@
         "Full backend suite stopped by runtime security when an unrelated test attempted outbound api.proxyapi.ru; no bypass/retry and no full-suite PASS claim.",
         "Frontend build/typecheck unavailable in isolated review tree without installed dependencies; nullable paths statically reviewed."
       ]
+    }
+  },
+  "state_integrity_receipts": {
+    "product_candidate_provenance_rev611": {
+      "corrected_at": "2026-10-01T00:06:25.139Z",
+      "candidate_head_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
+      "candidate_tree_sha": "f31e36b3b9c3998f2a63440f58a756270f28d23e",
+      "base_sha": "08e030a6053ac9638957119373797e0fbf2b10c2",
+      "candidate_diff_file_count": 43,
+      "active_owned_file_count": 42,
+      "excluded_cross_epic_ownership": [
+        "customs-clear/backend/app/services/normative_store.py"
+      ],
+      "added_missing_provenance": [
+        "customs-clear/backend/app/services/ntm_v2_official_sgr_import.py"
+      ],
+      "tree_equivalent_to_source": false,
+      "reason": "Fresh independent A5 found stale source-tree and source-diff metadata; corrected to exact product candidate commit while preserving disjoint active ownership."
     }
   }
 }
