@@ -774,7 +774,7 @@
     }
   ],
   "max_concurrent_subagents": 3,
-  "revision": 627,
+  "revision": 628,
   "runs": [
     {
       "head_sha": null,
@@ -3713,7 +3713,12 @@
         "base_sha": "08e030a6053ac9638957119373797e0fbf2b10c2",
         "head_sha": "14e0ee8f034d94ffc5831d87e076f4d693a5a524",
         "tree_sha": "fbb3bf2c88aa75a9c037a43547da88185dba6829",
-        "tree_identical_to_pr241_head": "f1921b63a452a059c1109c658560efc318127aad",
+        "source_pr": 241,
+        "source_head_sha": "f1921b63a452a059c1109c658560efc318127aad",
+        "source_tree_sha": "fbb3bf2c88aa75a9c037a43547da88185dba6829",
+        "candidate_head_sha": "14e0ee8f034d94ffc5831d87e076f4d693a5a524",
+        "candidate_tree_sha": "fbb3bf2c88aa75a9c037a43547da88185dba6829",
+        "tree_equivalent_to_source": true,
         "slices": [
           {
             "sha": "6415f443",
@@ -4008,12 +4013,19 @@
         "exact-head CI"
       ],
       "tests": {
-        "head_sha": "233ed6a64b0e75175358f8cdf0e7bcc71191b67b",
-        "focused": "305 passed plus 44 subtests; related assistant/TN VED 26 passed; official SGR 24 passed",
-        "adversarial": "47 passed, 29 deselected, plus 27 subtests",
-        "frontend": "18 passed; typecheck/build passed",
-        "broad": "1523 passed, 2 skipped, 181 failed, 13 errors, 120 subtests; explicitly diagnostic NOT PASS",
-        "compile_diff_check": "passed"
+        "head_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
+        "current_a5_status": "PASSED",
+        "focused": "122 passed on current post-repair exact head",
+        "changed_backend": "268 passed plus 44 subtests on current post-repair exact head",
+        "frontend": "18 passed; typecheck/build passed on current exact head",
+        "broad": "NOT PASS; no current broad-suite PASS is claimed",
+        "compile_diff_check": "passed",
+        "historical_parent_evidence": {
+          "head_sha": "233ed6a64b0e75175358f8cdf0e7bcc71191b67b",
+          "focused": "305 passed plus 44 subtests; related assistant/TN VED 26 passed; official SGR 24 passed",
+          "adversarial": "47 passed, 29 deselected, plus 27 subtests",
+          "broad": "1523 passed, 2 skipped, 181 failed, 13 errors, 120 subtests; explicitly diagnostic NOT PASS"
+        }
       },
       "matrix": {
         "recommendation": "use coherent candidate PR #245; retain PR #242 only as immutable source evidence",
@@ -4174,7 +4186,7 @@
       }
     }
   ],
-  "updated_at": "2026-10-01T12:24:00.000Z",
+  "updated_at": "2026-10-01T18:50:00Z",
   "max_concurrent_feature_workers": 2,
   "active_role_model": {
     "effective_at": "2026-09-30T12:58:10.633Z",
@@ -5441,6 +5453,30 @@
         "missing": []
       },
       "stale_active_gate_metadata_normalized": true,
+      "old_approvals_transferred": false,
+      "protected_action_performed": false
+    },
+    "active_candidate_evidence_rev628": {
+      "checked_at": "2026-10-01T18:50:00Z",
+      "core": {
+        "source_pr": 241,
+        "source_head_sha": "f1921b63a452a059c1109c658560efc318127aad",
+        "source_tree_sha": "fbb3bf2c88aa75a9c037a43547da88185dba6829",
+        "candidate_head_sha": "14e0ee8f034d94ffc5831d87e076f4d693a5a524",
+        "candidate_tree_sha": "fbb3bf2c88aa75a9c037a43547da88185dba6829",
+        "tree_equivalent_to_source": true,
+        "prior_malformed_field": "tree_identical_to_pr241_head contained a source HEAD string rather than a boolean"
+      },
+      "product": {
+        "historical_parent_head_sha": "233ed6a64b0e75175358f8cdf0e7bcc71191b67b",
+        "candidate_head_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
+        "current_exact_head_a5": "PASSED",
+        "current_focused": "122 passed",
+        "current_changed_backend": "268 passed plus 44 subtests",
+        "current_frontend": "18 passed; typecheck/build passed",
+        "current_broad_status": "NOT PASS"
+      },
+      "candidate_heads_changed": false,
       "old_approvals_transferred": false,
       "protected_action_performed": false
     }
