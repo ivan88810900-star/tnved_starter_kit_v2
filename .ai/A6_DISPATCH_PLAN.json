@@ -273,7 +273,7 @@
     "sha256": "9ed932aa8ffe47d3bcbe6007d06578c0a9f2ab9d523b7dbf4ea24cf6dd3c231f",
     "canonicalization": "RFC8259 compact JSON with recursively sorted object keys over protected chain, bridge contract, candidates, limits, prior-manifest rebuild, ordered requests, exclusions and dispatch invariants; trailing newline included"
   },
-  "updated_at": "2026-10-02T14:45:35Z",
+  "updated_at": "2026-10-02T15:44:36Z",
   "dispatch_history": [
     {
       "request_id": "core-s1-6415f443120f-g79",
@@ -345,5 +345,132 @@
     "credentials_read": false,
     "candidate_head_changed": false,
     "tests_weakened": false
+  },
+  "source_lineage_validation": {
+    "checked_at": "2026-10-02T15:44:36Z",
+    "status": "PASSED_LIVE_GITHUB_NO_PROVIDER",
+    "request_count": 11,
+    "available_ranges": 11,
+    "single_commit_linear_ranges": 11,
+    "exact_manifest_path_matches": 11,
+    "too_large_responses": 0,
+    "requests": [
+      {
+        "request_id": "core-s1-6415f443120f-g79",
+        "status": "ahead",
+        "ahead_by": 1,
+        "behind_by": 0,
+        "total_commits": 1,
+        "manifest_path_count": 8,
+        "compare_file_count": 8,
+        "exact_path_match": true
+      },
+      {
+        "request_id": "core-s2-038258cedc44-g79",
+        "status": "ahead",
+        "ahead_by": 1,
+        "behind_by": 0,
+        "total_commits": 1,
+        "manifest_path_count": 6,
+        "compare_file_count": 6,
+        "exact_path_match": true
+      },
+      {
+        "request_id": "core-s3-10b791f98f25-g79",
+        "status": "ahead",
+        "ahead_by": 1,
+        "behind_by": 0,
+        "total_commits": 1,
+        "manifest_path_count": 10,
+        "compare_file_count": 10,
+        "exact_path_match": true
+      },
+      {
+        "request_id": "core-s4-6c124494319d-g79",
+        "status": "ahead",
+        "ahead_by": 1,
+        "behind_by": 0,
+        "total_commits": 1,
+        "manifest_path_count": 5,
+        "compare_file_count": 5,
+        "exact_path_match": true
+      },
+      {
+        "request_id": "core-s5-14e0ee8f034d-g79",
+        "status": "ahead",
+        "ahead_by": 1,
+        "behind_by": 0,
+        "total_commits": 1,
+        "manifest_path_count": 5,
+        "compare_file_count": 5,
+        "exact_path_match": true
+      },
+      {
+        "request_id": "product-r1-8ccb50448187-g79",
+        "status": "ahead",
+        "ahead_by": 1,
+        "behind_by": 0,
+        "total_commits": 1,
+        "manifest_path_count": 6,
+        "compare_file_count": 6,
+        "exact_path_match": true
+      },
+      {
+        "request_id": "product-r2-4b4bcf344c8c-g79",
+        "status": "ahead",
+        "ahead_by": 1,
+        "behind_by": 0,
+        "total_commits": 1,
+        "manifest_path_count": 9,
+        "compare_file_count": 9,
+        "exact_path_match": true
+      },
+      {
+        "request_id": "product-r3-32eb8fec0bb3-g79",
+        "status": "ahead",
+        "ahead_by": 1,
+        "behind_by": 0,
+        "total_commits": 1,
+        "manifest_path_count": 4,
+        "compare_file_count": 4,
+        "exact_path_match": true
+      },
+      {
+        "request_id": "product-r4-51ee918560ca-g79",
+        "status": "ahead",
+        "ahead_by": 1,
+        "behind_by": 0,
+        "total_commits": 1,
+        "manifest_path_count": 1,
+        "compare_file_count": 1,
+        "exact_path_match": true
+      },
+      {
+        "request_id": "product-r5-d217dd8d8910-g79",
+        "status": "ahead",
+        "ahead_by": 1,
+        "behind_by": 0,
+        "total_commits": 1,
+        "manifest_path_count": 3,
+        "compare_file_count": 3,
+        "exact_path_match": true
+      },
+      {
+        "request_id": "product-repair-e39e19787bd9-g79",
+        "status": "ahead",
+        "ahead_by": 1,
+        "behind_by": 0,
+        "total_commits": 1,
+        "manifest_path_count": 4,
+        "compare_file_count": 4,
+        "exact_path_match": true
+      }
+    ],
+    "interpretation": "All 11 recorded historical base/head objects are fetchable on live GitHub. Every range is exactly one linear commit and its changed-file set exactly matches the immutable manifest path list.",
+    "limitations": "This validates object availability, ancestry, and path scope only. It does not constitute A6 review, provider execution, or permission to dispatch before PR248 is owner-approved and merged.",
+    "provider_call_performed": false,
+    "credentials_read": false,
+    "request_created": false,
+    "request_consumed": false
   }
 }
