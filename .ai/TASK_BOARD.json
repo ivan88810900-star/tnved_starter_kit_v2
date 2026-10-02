@@ -774,7 +774,7 @@
     }
   ],
   "max_concurrent_subagents": 3,
-  "revision": 646,
+  "revision": 647,
   "runs": [
     {
       "head_sha": null,
@@ -4188,7 +4188,7 @@
       }
     }
   ],
-  "updated_at": "2026-10-02T11:47:17Z",
+  "updated_at": "2026-10-02T11:48:10Z",
   "max_concurrent_feature_workers": 2,
   "active_role_model": {
     "effective_at": "2026-09-30T12:58:10.633Z",
@@ -4695,7 +4695,7 @@
       "tree_sha": "2d6c960568ab533c1b3a1021c3bfff65f2cbedb5",
       "base_branch": "main",
       "base_sha": "7a7911c9e3db56e825e41c411fa57a56428b5bc2",
-      "draft": true,
+      "draft": false,
       "mergeable": true,
       "changed_files": [
         "tools/tariff_agents/audit_bridge.py",
@@ -4737,7 +4737,7 @@
       "evidence_invalidation": "Any new HEAD resets A5, A0 validation and exact-head CI.",
       "protected_action_performed": false,
       "ready_for_review": true,
-      "ready_transition_at": "2026-10-02T11:47:17Z"
+      "ready_transition_at": "2026-10-02T11:48:10Z"
     }
   },
   "pr_hygiene": {
@@ -6400,6 +6400,18 @@
       "candidate_heads_changed": false,
       "tests_weakened": false,
       "provider_call_performed": false,
+      "protected_action_performed": false
+    },
+    "pr248_ready_transition_rev647": {
+      "checked_at": "2026-10-02T11:48:10Z",
+      "pr": 248,
+      "head_sha": "d96fd088e3a5093bc0a0ce53d7878007351da16e",
+      "base_sha": "7a7911c9e3db56e825e41c411fa57a56428b5bc2",
+      "draft": false,
+      "state": "open",
+      "mergeable": true,
+      "prior_gate_receipt": "state_integrity_receipts.a6_packet_writer_owner_gate_rev646",
+      "status": "READY_FOR_OWNER_APPROVAL",
       "protected_action_performed": false
     }
   }
