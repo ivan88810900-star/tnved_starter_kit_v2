@@ -774,7 +774,7 @@
     }
   ],
   "max_concurrent_subagents": 3,
-  "revision": 645,
+  "revision": 646,
   "runs": [
     {
       "head_sha": null,
@@ -4188,7 +4188,7 @@
       }
     }
   ],
-  "updated_at": "2026-10-02T11:02:37Z",
+  "updated_at": "2026-10-02T11:47:17Z",
   "max_concurrent_feature_workers": 2,
   "active_role_model": {
     "effective_at": "2026-09-30T12:58:10.633Z",
@@ -4686,7 +4686,7 @@
       "permission_reusable": false
     },
     "a6_packet_writer_pr248": {
-      "status": "AWAITING_FRESH_INDEPENDENT_A5",
+      "status": "READY_FOR_OWNER_APPROVAL",
       "pr": 248,
       "head_sha": "d96fd088e3a5093bc0a0ce53d7878007351da16e",
       "source_run_id": 36996924714,
@@ -4716,13 +4716,28 @@
         "evidence": "A0 reran the full orchestration suite on the exact current head: 134/134 tests plus 217 subtests passed. Exact production core-s1 packet rebuilt under current contract and serialized with unchanged binding 0b453b601410c2bab388c7a9a2a697a948bb14ee8f7227f9c12e50aa71756d5b (393596 bytes)."
       },
       "a5": {
-        "status": "MISSING",
-        "evidence_reusable": false,
-        "required": "Fresh independent review on exact head d96fd088e3a5093bc0a0ce53d7878007351da16e"
+        "status": "PASSED",
+        "reviewer": "/root/a5_pr248_exact",
+        "independent": true,
+        "base_sha": "7a7911c9e3db56e825e41c411fa57a56428b5bc2",
+        "head_sha": "d96fd088e3a5093bc0a0ce53d7878007351da16e",
+        "reviewed_at": "2026-10-02T11:47:17Z",
+        "exact_scope": "2 files; 56 additions / 3 deletions",
+        "focused": "57/57 PASS",
+        "verifier": "129/129 PASS",
+        "snapshot": "5/5 PASS",
+        "broad": "134/134 PASS",
+        "adversarial": "candidate/base-deleted/contract/source contacts blocked; secrets and ambient credentials blocked; only one production contact opt-out",
+        "findings": [],
+        "limitations": [
+          "No provider call or A6 dispatch performed; any new HEAD invalidates this review."
+        ]
       },
-      "owner_gate": "NOT_READY: fresh independent A5 is mandatory before asking for protected merge approval.",
+      "owner_gate": "Fresh A5, A0 and exact-head CI all PASS. Separate owner approval is required to merge exact PR248 HEAD into protected main; A0 did not merge.",
       "evidence_invalidation": "Any new HEAD resets A5, A0 validation and exact-head CI.",
-      "protected_action_performed": false
+      "protected_action_performed": false,
+      "ready_for_review": true,
+      "ready_transition_at": "2026-10-02T11:47:17Z"
     }
   },
   "pr_hygiene": {
@@ -6349,6 +6364,43 @@
       "provider_call_performed": false,
       "protected_action_performed": false,
       "next_gate": "Fresh independent A5 on exact PR248 HEAD; no live A6 dispatch and no protected merge before that review."
+    },
+    "a6_packet_writer_owner_gate_rev646": {
+      "checked_at": "2026-10-02T11:47:17Z",
+      "pr": 248,
+      "base_sha": "7a7911c9e3db56e825e41c411fa57a56428b5bc2",
+      "head_sha": "d96fd088e3a5093bc0a0ce53d7878007351da16e",
+      "tree_sha": "2d6c960568ab533c1b3a1021c3bfff65f2cbedb5",
+      "fresh_independent_a5": {
+        "status": "PASSED",
+        "reviewer": "/root/a5_pr248_exact",
+        "focused": "57/57",
+        "verifier": "129/129",
+        "snapshot": "5/5",
+        "broad": "134/134",
+        "findings": []
+      },
+      "exact_head_ci": {
+        "status": "PASSED",
+        "run_id": 36998232448,
+        "conclusion": "success"
+      },
+      "a0_validation": {
+        "status": "PASSED",
+        "source_receipt": "state_integrity_receipts.a6_packet_writer_current_head_gates_rev645"
+      },
+      "source_blocked_run": {
+        "run_id": 36996924714,
+        "provider_called": false,
+        "request_consumed": true,
+        "retry_allowed": false
+      },
+      "status": "READY_FOR_OWNER_APPROVAL",
+      "requested_protected_action": "Merge only exact PR248 HEAD d96fd088e3a5093bc0a0ce53d7878007351da16e into main after explicit owner approval.",
+      "candidate_heads_changed": false,
+      "tests_weakened": false,
+      "provider_call_performed": false,
+      "protected_action_performed": false
     }
   }
 }
