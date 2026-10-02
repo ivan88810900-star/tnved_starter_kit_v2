@@ -774,7 +774,7 @@
     }
   ],
   "max_concurrent_subagents": 3,
-  "revision": 639,
+  "revision": 640,
   "runs": [
     {
       "head_sha": null,
@@ -4188,7 +4188,7 @@
       }
     }
   ],
-  "updated_at": "2026-10-02T05:54:00Z",
+  "updated_at": "2026-10-02T06:56:00Z",
   "max_concurrent_feature_workers": 2,
   "active_role_model": {
     "effective_at": "2026-09-30T12:58:10.633Z",
@@ -6041,6 +6041,43 @@
       "historical_a5_or_ci_changed": false,
       "tracked_tree_changed": false,
       "candidate_head_changed": false,
+      "tests_weakened": false,
+      "protected_action_performed": false
+    },
+    "candidate_path_coverage_closure_rev640": {
+      "checked_at": "2026-10-02T06:56:00Z",
+      "source_receipt": "state_integrity_receipts.a6_request_manifests_rev629",
+      "request_scopes_exact": 11,
+      "chain_adjacency": "PASSED",
+      "core": {
+        "pr": 244,
+        "head_sha": "14e0ee8f034d94ffc5831d87e076f4d693a5a524",
+        "final_changed_paths": 34,
+        "runtime_covered_paths": 34,
+        "uncovered_paths": 0,
+        "extra_paths": 0,
+        "canonical_path_list_bytes": 1991,
+        "canonical_path_list_sha256": "210c7541e33f62b0576e4b41d988822ff8e7351029f1192ef52c968361653831"
+      },
+      "product": {
+        "pr": 245,
+        "head_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
+        "final_changed_paths": 43,
+        "runtime_union_paths": 23,
+        "setup_non_runtime_slice_paths": 4,
+        "tests_only_non_runtime_slice_paths": 15,
+        "repair_runtime_paths": 4,
+        "uncovered_paths": 0,
+        "extra_historical_paths": 0,
+        "canonical_path_list_bytes": 2532,
+        "canonical_path_list_sha256": "0a165aa5479d5802aef702a538e21c0f68c9c87d39184b49acfd0acfe6e64515",
+        "coverage_index_bytes": 3193,
+        "coverage_index_sha256": "5b4ef43ae1645f80557f036416fef54cff6bc0e0889c4439b5c689fa6b295512"
+      },
+      "interpretation": "Every final candidate path is accounted for by an exact runtime request or an explicit non-runtime exclusion; no excluded path is represented as live A6 coverage.",
+      "candidate_heads_changed": false,
+      "provider_call_performed": false,
+      "a6_pass_claimed": false,
       "tests_weakened": false,
       "protected_action_performed": false
     }
