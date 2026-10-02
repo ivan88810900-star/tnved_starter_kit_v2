@@ -151,7 +151,8 @@ def _issue_comment_payload(repo, event, env):
 
     status = _read_regular_json(status_path, "A6 live status")
     pending = status.get("pending_live_smoke")
-    if (status.get("live_verified") is not False or not isinstance(pending, dict) or
+    if (not isinstance(status.get("live_verified"), bool) or
+            not isinstance(pending, dict) or
             pending.get("dispatched") is not False or pending.get("consumed") is not False or
             pending.get("packet_validation") != "PASSED_OFFLINE_WITHOUT_CREDENTIALS"):
         raise BridgeBlocked("There is no validated unconsumed A6 request")
