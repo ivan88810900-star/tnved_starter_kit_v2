@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
-  "state": "released",
-  "holder": null,
-  "token": null,
-  "generation": 79,
-  "updated_at": "2026-10-02T09:58:00Z",
-  "expires_at": null
+  "state": "active",
+  "holder": "A0",
+  "token": "a0-20261002T1041Z-gen80-a6-core-s1",
+  "generation": 80,
+  "updated_at": "2026-10-02T10:40:47Z",
+  "expires_at": "2026-10-02T11:40:47Z"
 }
