@@ -774,7 +774,7 @@
     }
   ],
   "max_concurrent_subagents": 3,
-  "revision": 642,
+  "revision": 643,
   "runs": [
     {
       "head_sha": null,
@@ -4188,7 +4188,7 @@
       }
     }
   ],
-  "updated_at": "2026-10-02T09:57:36Z",
+  "updated_at": "2026-10-02T10:54:01Z",
   "max_concurrent_feature_workers": 2,
   "active_role_model": {
     "effective_at": "2026-09-30T12:58:10.633Z",
@@ -4684,6 +4684,14 @@
       "merge_commit_sha": "7a7911c9e3db56e825e41c411fa57a56428b5bc2",
       "owner_permission_consumed": true,
       "permission_reusable": false
+    },
+    "a6_packet_writer_pr248": {
+      "status": "DEVELOPER_CANDIDATE_AWAITING_A5_CI",
+      "pr": 248,
+      "head_sha": "d0a56d383bd34135ab78e30d625b723bd43c80fe",
+      "source_run_id": 36996924714,
+      "reason_code": "PACKET_JSON_CONTACT_RECLASSIFICATION",
+      "provider_called": false
     }
   },
   "pr_hygiene": {
@@ -5207,8 +5215,8 @@
     }
   },
   "a6_candidate_preflight": {
-    "status": "READY_FOR_SEQUENTIAL_LIVE_A6_DISPATCH",
-    "checked_at": "2026-10-02T09:57:36Z",
+    "status": "BLOCKED_A6_PACKET_WRITER_CONTACT_SCAN_FALSE_POSITIVE",
+    "checked_at": "2026-10-02T10:54:01Z",
     "bridge": {
       "live_verified": true,
       "current_pending_consumed": true,
@@ -5221,15 +5229,15 @@
       ],
       "pr246_merged": true,
       "pr247_merged": true,
-      "subsequent_a6_available": true,
-      "rule": "Merged bridge satisfies the unchanged current contract offline. Dispatch only the freshly rebuilt immutable requests in A6_DISPATCH_PLAN.json, sequentially with one pending request and an active coordinator lease.",
+      "subsequent_a6_available": false,
+      "rule": "Run 36996924714 passed context, dedupe, immutable request and lease gates, then failed closed before credentials because the packet writer reclassified escaped decorator diff markers as email addresses. Do not dispatch again until exact PR248 is independently reviewed, CI-passed, A0-validated, owner-approved and merged.",
       "pr246_head_sha": "dc0397c7815e092ad8d3bd41d0d98af197212e1e",
       "pr247_head_sha": "c1f04847c2a40b01a3e1f0759d9e97e309cc2e3b",
       "pr247_restack_required": false,
       "pr247_fresh_gates_pending": false,
       "protected_chain_ready_for_owner_approval": false,
       "owner_permission_consumed": true,
-      "status": "MERGED_BRIDGE_CURRENT_CONTRACT_OFFLINE_ADMISSION_PASS"
+      "status": "BLOCKED_PENDING_BRIDGE_FIX_PR248"
     },
     "contract": {
       "ref": "7a7911c9e3db56e825e41c411fa57a56428b5bc2",
@@ -5245,7 +5253,7 @@
     },
     "assignments": [],
     "rule": "Do not weaken limits, send partial packets, reuse consumed requests, claim A6 coverage before provider evidence, force-push, or change candidate heads. Dispatch one fresh current-contract request at a time under the merged bridge.",
-    "offline_request_status": "READY_FOR_SEQUENTIAL_LIVE_DISPATCH",
+    "offline_request_status": "BLOCKED_PENDING_BRIDGE_FIX_PR248",
     "offline_request_receipt": "state_integrity_receipts.a6_postmerge_packet_rebuild_rev642",
     "scanner_fix_pr": {
       "pr": 246,
@@ -5463,12 +5471,28 @@
     },
     "dispatch_plan": {
       "path": ".ai/A6_DISPATCH_PLAN.json",
-      "blob_sha": "6ca6cd545fe6c03643870d7f8995f9120e2cacaf",
-      "commit_sha": "91f48c3be74ea9de66952820cd42af54d2b8b3a3",
+      "blob_sha": "38ca2f62978428ce1bdf0c3319fc7e67bb23634e",
+      "commit_sha": "bf5b3034d4317b99d7a6bdc205a76f2e3023425d",
       "aggregate_sha256": "9ed932aa8ffe47d3bcbe6007d06578c0a9f2ab9d523b7dbf4ea24cf6dd3c231f",
       "request_count": 11,
-      "current_contract_requests": 11,
+      "consumed_blocked_pre_provider": 1,
+      "remaining_unconsumed": 10,
+      "replacement_requests_required": 1,
       "provider_call_performed": false
+    },
+    "bridge_fix_gate": {
+      "pr": 248,
+      "branch": "agent/a6-packet-writer-contact-scan-v1",
+      "head_sha": "d0a56d383bd34135ab78e30d625b723bd43c80fe",
+      "base_sha": "7a7911c9e3db56e825e41c411fa57a56428b5bc2",
+      "draft": true,
+      "author_tests": "134/134 orchestration PASS; exact production packet writer reproduction PASS",
+      "a5_status": "MISSING",
+      "a0_status": "AUTHOR_LOCAL_PASS_PENDING_INDEPENDENT_REVIEW",
+      "exact_head_ci_status": "PENDING",
+      "owner_approval_required": true,
+      "protected_merge_performed": false,
+      "rule": "Any HEAD change invalidates review and CI. No live A6 retry or replacement dispatch before exact PR248 is merged by separate owner approval."
     }
   },
   "state_integrity_receipts": {
@@ -6192,6 +6216,54 @@
       "tests_weakened": false,
       "protected_action_performed": false,
       "next_gate": "Publish one pending request and dispatch through the lawful bridge under an active lease; never retry a consumed request."
+    },
+    "a6_packet_writer_blocker_rev643": {
+      "checked_at": "2026-10-02T10:54:01Z",
+      "request": {
+        "request_id": "core-s1-6415f443120f-g79",
+        "packet_sha256": "0b453b601410c2bab388c7a9a2a697a948bb14ee8f7227f9c12e50aa71756d5b",
+        "dispatch_comment_id": 5950611452,
+        "workflow_run_id": 36996924714,
+        "state_sha": "d626090cbcef0c96fa3649067c7f657bfa17ec48",
+        "lease_generation": 80,
+        "consumed": true,
+        "retry_allowed": false
+      },
+      "gates": {
+        "context": "PASS",
+        "dedupe": "PASS",
+        "request_binding": "PASS",
+        "lease_binding": "PASS",
+        "packet_write": "BLOCKED",
+        "provider": "NOT_CALLED",
+        "artifact": "NOT_CREATED"
+      },
+      "root_cause": {
+        "reproduced": true,
+        "classification": "SERIALIZED_DIFF_DECORATOR_CONTACT_FALSE_POSITIVE",
+        "examples": [
+          "n+@pytest.fixture",
+          "n+@pytest.mark.parametrize",
+          "n@unittest.skipUnless"
+        ]
+      },
+      "fix": {
+        "pr": 248,
+        "head_sha": "d0a56d383bd34135ab78e30d625b723bd43c80fe",
+        "files": [
+          "tools/tariff_agents/audit_bridge.py",
+          "tests/agent_orchestration/test_audit_bridge.py"
+        ],
+        "author_tests": "134/134 PASS",
+        "exact_packet_binding_preserved": "0b453b601410c2bab388c7a9a2a697a948bb14ee8f7227f9c12e50aa71756d5b",
+        "exact_head_ci": "PENDING",
+        "independent_a5": "MISSING"
+      },
+      "candidate_heads_changed": false,
+      "tests_weakened": false,
+      "provider_call_performed": false,
+      "protected_action_performed": false,
+      "next_gate": "Fresh independent A5 and exact-head CI for PR248, then A0 validation and a new owner approval for exact-head protected merge."
     }
   }
 }
