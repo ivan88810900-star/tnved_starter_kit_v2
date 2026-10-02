@@ -774,7 +774,7 @@
     }
   ],
   "max_concurrent_subagents": 3,
-  "revision": 643,
+  "revision": 644,
   "runs": [
     {
       "head_sha": null,
@@ -4188,7 +4188,7 @@
       }
     }
   ],
-  "updated_at": "2026-10-02T10:54:01Z",
+  "updated_at": "2026-10-02T10:57:26Z",
   "max_concurrent_feature_workers": 2,
   "active_role_model": {
     "effective_at": "2026-09-30T12:58:10.633Z",
@@ -4686,12 +4686,13 @@
       "permission_reusable": false
     },
     "a6_packet_writer_pr248": {
-      "status": "DEVELOPER_CANDIDATE_AWAITING_A5_CI",
+      "status": "DEVELOPER_CANDIDATE_AWAITING_A5_AND_CURRENT_HEAD_CI",
       "pr": 248,
-      "head_sha": "d0a56d383bd34135ab78e30d625b723bd43c80fe",
+      "head_sha": "d96fd088e3a5093bc0a0ce53d7878007351da16e",
       "source_run_id": 36996924714,
       "reason_code": "PACKET_JSON_CONTACT_RECLASSIFICATION",
-      "provider_called": false
+      "provider_called": false,
+      "tree_sha": "2d6c960568ab533c1b3a1021c3bfff65f2cbedb5"
     }
   },
   "pr_hygiene": {
@@ -5216,7 +5217,7 @@
   },
   "a6_candidate_preflight": {
     "status": "BLOCKED_A6_PACKET_WRITER_CONTACT_SCAN_FALSE_POSITIVE",
-    "checked_at": "2026-10-02T10:54:01Z",
+    "checked_at": "2026-10-02T10:57:26Z",
     "bridge": {
       "live_verified": true,
       "current_pending_consumed": true,
@@ -5471,8 +5472,8 @@
     },
     "dispatch_plan": {
       "path": ".ai/A6_DISPATCH_PLAN.json",
-      "blob_sha": "38ca2f62978428ce1bdf0c3319fc7e67bb23634e",
-      "commit_sha": "bf5b3034d4317b99d7a6bdc205a76f2e3023425d",
+      "blob_sha": "fa683944716900bc48a598fc481ae8255c0addbb",
+      "commit_sha": "134348398785eb1a263074edc4aca967338ff545",
       "aggregate_sha256": "9ed932aa8ffe47d3bcbe6007d06578c0a9f2ab9d523b7dbf4ea24cf6dd3c231f",
       "request_count": 11,
       "consumed_blocked_pre_provider": 1,
@@ -5483,7 +5484,7 @@
     "bridge_fix_gate": {
       "pr": 248,
       "branch": "agent/a6-packet-writer-contact-scan-v1",
-      "head_sha": "d0a56d383bd34135ab78e30d625b723bd43c80fe",
+      "head_sha": "d96fd088e3a5093bc0a0ce53d7878007351da16e",
       "base_sha": "7a7911c9e3db56e825e41c411fa57a56428b5bc2",
       "draft": true,
       "author_tests": "134/134 orchestration PASS; exact production packet writer reproduction PASS",
@@ -5492,7 +5493,14 @@
       "exact_head_ci_status": "PENDING",
       "owner_approval_required": true,
       "protected_merge_performed": false,
-      "rule": "Any HEAD change invalidates review and CI. No live A6 retry or replacement dispatch before exact PR248 is merged by separate owner approval."
+      "rule": "Any HEAD change invalidates review and CI. No live A6 retry or replacement dispatch before exact PR248 is merged by separate owner approval.",
+      "tree_sha": "2d6c960568ab533c1b3a1021c3bfff65f2cbedb5",
+      "superseded_intermediate_head_ci": {
+        "head_sha": "d0a56d383bd34135ab78e30d625b723bd43c80fe",
+        "run_id": 36997920566,
+        "conclusion": "failure",
+        "reason": "double-escaped regression fixture on intermediate connector-published commit"
+      }
     }
   },
   "state_integrity_receipts": {
@@ -6249,7 +6257,7 @@
       },
       "fix": {
         "pr": 248,
-        "head_sha": "d0a56d383bd34135ab78e30d625b723bd43c80fe",
+        "head_sha": "d96fd088e3a5093bc0a0ce53d7878007351da16e",
         "files": [
           "tools/tariff_agents/audit_bridge.py",
           "tests/agent_orchestration/test_audit_bridge.py"
@@ -6264,6 +6272,27 @@
       "provider_call_performed": false,
       "protected_action_performed": false,
       "next_gate": "Fresh independent A5 and exact-head CI for PR248, then A0 validation and a new owner approval for exact-head protected merge."
+    },
+    "a6_packet_writer_corrected_head_rev644": {
+      "checked_at": "2026-10-02T10:57:26Z",
+      "pr": 248,
+      "current_head_sha": "d96fd088e3a5093bc0a0ce53d7878007351da16e",
+      "current_tree_sha": "2d6c960568ab533c1b3a1021c3bfff65f2cbedb5",
+      "tested_local_tree_sha": "2d6c960568ab533c1b3a1021c3bfff65f2cbedb5",
+      "tree_matches_author_tests": true,
+      "author_tests": "134/134 PASS plus exact production packet writer reproduction PASS",
+      "intermediate_head": {
+        "sha": "d0a56d383bd34135ab78e30d625b723bd43c80fe",
+        "ci_run_id": 36997920566,
+        "conclusion": "failure",
+        "superseded": true
+      },
+      "current_exact_head_ci": "PENDING",
+      "independent_a5": "MISSING",
+      "a0_validation": "PENDING_FRESH_CURRENT_HEAD",
+      "provider_call_performed": false,
+      "protected_action_performed": false,
+      "next_gate": "Fresh independent A5 and exact-head CI on d96fd088e3a5093bc0a0ce53d7878007351da16e."
     }
   }
 }
