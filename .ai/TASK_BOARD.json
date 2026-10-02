@@ -774,7 +774,7 @@
     }
   ],
   "max_concurrent_subagents": 3,
-  "revision": 657,
+  "revision": 658,
   "runs": [
     {
       "head_sha": null,
@@ -4188,7 +4188,7 @@
       }
     }
   ],
-  "updated_at": "2026-10-02T21:49:22.873Z",
+  "updated_at": "2026-10-02T22:46:44.431Z",
   "max_concurrent_feature_workers": 2,
   "active_role_model": {
     "effective_at": "2026-09-30T12:58:10.633Z",
@@ -6865,6 +6865,36 @@
       "tests_weakened": false,
       "protected_action_performed": false,
       "nonmain_merge_performed": false
+    },
+    "pr248_owner_only_blocker_automation_paused_rev658": {
+      "checked_at": "2026-10-02T22:46:44.431Z",
+      "lease_generation": 92,
+      "status": "PAUSED_FULLY_BLOCKED_OWNER_ACTION_ONLY",
+      "main_sha": "7a7911c9e3db56e825e41c411fa57a56428b5bc2",
+      "pr248": {
+        "head_sha": "d96fd088e3a5093bc0a0ce53d7878007351da16e",
+        "base_sha": "7a7911c9e3db56e825e41c411fa57a56428b5bc2",
+        "state": "open",
+        "draft": false,
+        "mergeable": true
+      },
+      "owner_approval_observed": false,
+      "safe_premerge_work_status": "COMPLETE",
+      "sole_blocker": "Explicit owner approval to merge exact PR248 HEAD into main.",
+      "automation": {
+        "id": "6a2a8a215240819197f0879e5d47c90d",
+        "title": "Tariff — фоновая разработка (не писать сюда)",
+        "is_enabled": false,
+        "reason": "Avoid repeated hourly no-op state churn while all lawful premerge work is complete and only owner approval can advance the gate."
+      },
+      "resume_condition": "Owner explicitly approves or rejects merge of exact PR248 HEAD, or PR248/main changes materially.",
+      "provider_call_performed": false,
+      "credentials_read": false,
+      "request_created": false,
+      "consumed_request_retry": false,
+      "product_heads_changed": false,
+      "tests_weakened": false,
+      "protected_action_performed": false
     }
   }
 }
