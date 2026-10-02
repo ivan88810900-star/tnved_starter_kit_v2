@@ -774,7 +774,7 @@
     }
   ],
   "max_concurrent_subagents": 3,
-  "revision": 651,
+  "revision": 652,
   "runs": [
     {
       "head_sha": null,
@@ -4188,7 +4188,7 @@
       }
     }
   ],
-  "updated_at": "2026-10-02T15:44:54Z",
+  "updated_at": "2026-10-02T16:44:13Z",
   "max_concurrent_feature_workers": 2,
   "active_role_model": {
     "effective_at": "2026-09-30T12:58:10.633Z",
@@ -5517,8 +5517,8 @@
     },
     "dispatch_plan": {
       "path": ".ai/A6_DISPATCH_PLAN.json",
-      "blob_sha": "1111d32c2aefbf03f2836038eff07be0b5afb1b4",
-      "commit_sha": "fd9203df8813f22c8f2da6f43540387a67567a42",
+      "blob_sha": "5d986f83ceed106993b5a5935c61028995ab65a0",
+      "commit_sha": "bf4777ddedaf117c163d3019e3ca685c1202a4da",
       "aggregate_sha256": "9ed932aa8ffe47d3bcbe6007d06578c0a9f2ab9d523b7dbf4ea24cf6dd3c231f",
       "request_count": 11,
       "consumed_blocked_pre_provider": 1,
@@ -5528,9 +5528,12 @@
       "status": "BLOCKED_AWAITING_OWNER_APPROVAL_PR248",
       "replacement_preflight": "RESERVED_NOT_DISPATCHABLE_PENDING_PR248_MERGE",
       "replacement_key": "core-s1-6415f443120f-r1-pr248",
-      "updated_at": "2026-10-02T15:44:54Z",
+      "updated_at": "2026-10-02T16:44:13Z",
       "source_lineage_validation": "PASSED_LIVE_GITHUB_NO_PROVIDER",
-      "source_lineage_request_count": 11
+      "source_lineage_request_count": 11,
+      "live_path_coverage_validation": "PASSED_LIVE_GITHUB_NO_PROVIDER",
+      "core_path_coverage": "34/34",
+      "product_path_coverage": "43/43"
     },
     "bridge_fix_gate": {
       "pr": 248,
@@ -6573,6 +6576,74 @@
       },
       "main_sha": "7a7911c9e3db56e825e41c411fa57a56428b5bc2",
       "interpretation": "Historical A6 slice objects are not the blocker: every recorded base/head remains fetchable and is a one-commit linear range whose live changed-file set equals the immutable manifest path list.",
+      "provider_call_performed": false,
+      "credentials_read": false,
+      "request_created": false,
+      "consumed_request_retry": false,
+      "product_heads_changed": false,
+      "tests_weakened": false,
+      "protected_action_performed": false
+    },
+    "a6_live_path_coverage_rev652": {
+      "checked_at": "2026-10-02T16:44:13Z",
+      "lease_generation": 86,
+      "status": "PASSED_LIVE_GITHUB_NO_PROVIDER",
+      "core": {
+        "pr": 244,
+        "head_sha": "14e0ee8f034d94ffc5831d87e076f4d693a5a524",
+        "candidate_paths": 34,
+        "runtime_manifest_union_paths": 34,
+        "coverage": "34/34",
+        "uncovered_paths": 0,
+        "extraneous_paths": 0
+      },
+      "product": {
+        "pr": 245,
+        "head_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
+        "candidate_paths": 43,
+        "runtime_manifest_union_paths": 25,
+        "excluded_range_path_counts": [
+          4,
+          15
+        ],
+        "assigned_union_paths": 43,
+        "coverage": "43/43",
+        "uncovered_paths": 0,
+        "extraneous_paths": 0
+      },
+      "excluded_ranges": [
+        {
+          "base": "08e030a6053ac9638957119373797e0fbf2b10c2",
+          "head": "03fe65ebba9a2751cb8e84c54c51aee4d32fce6b",
+          "status": "ahead",
+          "ahead_by": 1,
+          "behind_by": 0,
+          "total_commits": 1,
+          "path_count": 4
+        },
+        {
+          "base": "d217dd8d89107263b904fd1777f0dc17809fd9e5",
+          "head": "233ed6a64b0e75175358f8cdf0e7bcc71191b67b",
+          "status": "ahead",
+          "ahead_by": 1,
+          "behind_by": 0,
+          "total_commits": 1,
+          "path_count": 15
+        }
+      ],
+      "dispatch_plan": {
+        "path": ".ai/A6_DISPATCH_PLAN.json",
+        "blob_sha": "5d986f83ceed106993b5a5935c61028995ab65a0",
+        "commit_sha": "bf4777ddedaf117c163d3019e3ca685c1202a4da"
+      },
+      "pr248": {
+        "head_sha": "d96fd088e3a5093bc0a0ce53d7878007351da16e",
+        "state": "open",
+        "draft": false,
+        "mergeable": true,
+        "owner_approval_observed": false
+      },
+      "interpretation": "All live candidate paths are assigned to runtime/repair A6 slices or explicit A5+CI-only exclusions. This is coverage evidence, not an A6 PASS.",
       "provider_call_performed": false,
       "credentials_read": false,
       "request_created": false,
