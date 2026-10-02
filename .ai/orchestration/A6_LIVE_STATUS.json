@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
-  "checked_at": "2026-10-02T10:41:40Z",
-  "status": "PENDING_CURRENT_CONTRACT_A6",
+  "checked_at": "2026-10-02T10:53:19Z",
+  "status": "BLOCKED_PACKET_SERIALIZATION_FALSE_POSITIVE",
   "live_verified": true,
-  "provider_called": true,
+  "provider_called": false,
   "secret_values_read": false,
   "environment_assertion": {
     "name": "tariff-a6-trusted",
@@ -217,6 +217,38 @@
         "lease_binding": true,
         "state_before_dispatch": true
       }
+    },
+    {
+      "request_id": "core-s1-6415f443120f-g79",
+      "workflow_run_id": 36996924714,
+      "workflow_head_sha": "7a7911c9e3db56e825e41c411fa57a56428b5bc2",
+      "trigger": "issue_comment",
+      "comment_id": 5950611452,
+      "context_gate": "success",
+      "packet_prepare": "blocked_at_json_writer_contact_rescan",
+      "provider_step": "skipped",
+      "provider_called": false,
+      "workflow_conclusion": "failure",
+      "bridge_status": "BLOCKED",
+      "audit_status": "NOT_RUN",
+      "live_verified": false,
+      "reason_code": "PACKET_JSON_CONTACT_RECLASSIFICATION",
+      "retry_allowed": false,
+      "packet_sha256": "0b453b601410c2bab388c7a9a2a697a948bb14ee8f7227f9c12e50aa71756d5b",
+      "base_sha": "08e030a6053ac9638957119373797e0fbf2b10c2",
+      "head_sha": "6415f443120fe09d9ca857c475c8e93654b46fe7",
+      "contract_sha": "7a7911c9e3db56e825e41c411fa57a56428b5bc2",
+      "state_sha": "d626090cbcef0c96fa3649067c7f657bfa17ec48",
+      "lease_generation": 80,
+      "lease_holder": "/root/a0_automation_20261002T104047Z",
+      "validated": {
+        "request_binding": true,
+        "commit_binding": true,
+        "packet_hash": true,
+        "lease_binding": true,
+        "provider_not_called": true,
+        "live_job_failed_closed": true
+      }
     }
   ],
   "diagnosis": {
@@ -314,13 +346,23 @@
     "official_sources_json": "[]",
     "packet_sha256": "0b453b601410c2bab388c7a9a2a697a948bb14ee8f7227f9c12e50aa71756d5b",
     "packet_validation": "PASSED_OFFLINE_WITHOUT_CREDENTIALS",
-    "dispatched": false,
-    "consumed": false,
+    "dispatched": true,
+    "consumed": true,
     "dispatch_transport": "issue_comment",
     "retry_allowed": false,
     "dedup_key": "ivan88810900-star/tnved_starter_kit_v2|core-s1-6415f443120f-g79|0b453b601410c2bab388c7a9a2a697a948bb14ee8f7227f9c12e50aa71756d5b|gen80",
     "lease_generation": 80,
-    "lease_holder": "/root/a0_automation_20261002T104047Z"
+    "lease_holder": "/root/a0_automation_20261002T104047Z",
+    "dispatched_at": "2026-10-02T10:42:09Z",
+    "dispatch_comment_id": 5950611452,
+    "workflow_run_id": 36996924714,
+    "workflow_head_sha": "7a7911c9e3db56e825e41c411fa57a56428b5bc2",
+    "result": "BLOCKED_PACKET_SERIALIZATION_FALSE_POSITIVE",
+    "provider_called": false,
+    "artifact_uploaded": false,
+    "reason_code": "PACKET_JSON_CONTACT_RECLASSIFICATION",
+    "bridge_fix_pr": 248,
+    "bridge_fix_head_sha": "d0a56d383bd34135ab78e30d625b723bd43c80fe"
   },
   "communication_policy": {
     "owner_decisions_single_delivery": true,
@@ -337,12 +379,23 @@
     "pr210_merge_authorization_already_received": true
   },
   "current_sequence_diagnosis": {
-    "status": "CURRENT_CONTRACT_REQUEST_PREPARED_BEFORE_DISPATCH",
-    "current_main": "7a7911c9e3db56e825e41c411fa57a56428b5bc2",
+    "status": "CONFIRMED_BRIDGE_SERIALIZATION_DEFECT",
+    "workflow_run_id": 36996924714,
     "request_id": "core-s1-6415f443120f-g79",
-    "dispatch_plan_aggregate_sha256": "9ed932aa8ffe47d3bcbe6007d06578c0a9f2ab9d523b7dbf4ea24cf6dd3c231f",
-    "provider_called_for_current_request": false,
-    "remediation": "Persist and reread this immutable pending request before creating the single allowlisted issue comment."
+    "context_gate": "PASSED",
+    "packet_build": "BLOCKED_AFTER_REBUILD_DURING_EXCLUSIVE_JSON_WRITE",
+    "provider_step": "SKIPPED",
+    "provider_called": false,
+    "reproduced_matches": [
+      "n+@pytest.fixture -> false email classification",
+      "n+@pytest.mark.parametrize -> false email classification",
+      "n@unittest.skipUnless -> false email classification"
+    ],
+    "independent_local_reproduction": "CONFIRMED",
+    "fix_pr": 248,
+    "fix_head_sha": "d0a56d383bd34135ab78e30d625b723bd43c80fe",
+    "fix_tests": "134/134 orchestration PASS; exact packet write PASS with unchanged packet binding",
+    "retry_rule": "This request generation is consumed and must never be retried. Build a new request only after the exact bridge fix is owner-approved and merged."
   },
   "a0_finding_validation": {
     "status": "COMPLETED",
