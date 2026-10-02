@@ -320,7 +320,7 @@ def prepare(repo, *, request_id, base, head, contract, paths_json,
     # ``build_packet`` scans every variable text field in its original form and
     # then repeats aggregate secret checks without contact matching. Re-enabling
     # contact matching on JSON here would reinterpret escaped diff markers such
-    # as ``\\\\n+@pytest.fixture`` as email local-parts. Keep the packet boundary
+    # as ``\\n+@pytest.fixture`` as email local-parts. Keep the packet boundary
     # aligned with that validated serialization while receipts remain strict.
     _write_exclusive(output, packet, environ=env, scan_contacts=False)
     return {"status": "PACKET_BUILT", "request_id": request_id,
