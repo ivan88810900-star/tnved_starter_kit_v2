@@ -774,7 +774,7 @@
     }
   ],
   "max_concurrent_subagents": 3,
-  "revision": 653,
+  "revision": 654,
   "runs": [
     {
       "head_sha": null,
@@ -4188,7 +4188,7 @@
       }
     }
   ],
-  "updated_at": "2026-10-02T17:39:38Z",
+  "updated_at": "2026-10-02T18:44:46Z",
   "max_concurrent_feature_workers": 2,
   "active_role_model": {
     "effective_at": "2026-09-30T12:58:10.633Z",
@@ -4758,7 +4758,9 @@
           ]
         }
       },
-      "owner_approval_observed": false
+      "owner_approval_observed": false,
+      "body_live_owner_gate_packet": true,
+      "body_live_owner_gate_packet_at": "2026-10-02T18:44:46Z"
     }
   },
   "pr_hygiene": {
@@ -6700,6 +6702,34 @@
       },
       "owner_approval_observed": false,
       "conclusion": "GitHub currently constructs a conflict-free synthetic merge bound to the exact reviewed head and current main; its tree is identical to the exact PR head. This is dry-run evidence only and does not authorize merge.",
+      "provider_call_performed": false,
+      "credentials_read": false,
+      "product_heads_changed": false,
+      "tests_weakened": false,
+      "protected_action_performed": false
+    },
+    "pr248_live_owner_gate_body_rev654": {
+      "checked_at": "2026-10-02T18:44:46Z",
+      "lease_generation": 88,
+      "pr": 248,
+      "head_sha": "d96fd088e3a5093bc0a0ce53d7878007351da16e",
+      "base_sha": "7a7911c9e3db56e825e41c411fa57a56428b5bc2",
+      "state": "open",
+      "draft": false,
+      "mergeable": true,
+      "body_live_owner_gate_packet": true,
+      "body_evidence": [
+        "fresh independent A5 PASS",
+        "A0 exact-head PASS",
+        "exact-head CI 36998232448 PASS",
+        "two-file current-base scope",
+        "tree-equivalent synthetic merge",
+        "A6 lineage 11/11",
+        "candidate path coverage 34/34 and 43/43",
+        "reserved non-dispatchable replacement key"
+      ],
+      "requested_action": "Owner approve or reject merge of exact PR248 HEAD into main.",
+      "owner_approval_observed": false,
       "provider_call_performed": false,
       "credentials_read": false,
       "product_heads_changed": false,
