@@ -273,7 +273,7 @@
     "sha256": "9ed932aa8ffe47d3bcbe6007d06578c0a9f2ab9d523b7dbf4ea24cf6dd3c231f",
     "canonicalization": "RFC8259 compact JSON with recursively sorted object keys over protected chain, bridge contract, candidates, limits, prior-manifest rebuild, ordered requests, exclusions and dispatch invariants; trailing newline included"
   },
-  "updated_at": "2026-10-02T16:43:56Z",
+  "updated_at": "2026-10-02T19:39:43Z",
   "dispatch_history": [
     {
       "request_id": "core-s1-6415f443120f-g79",
@@ -553,5 +553,45 @@
     "request_created": false,
     "product_heads_changed": false,
     "tests_weakened": false
+  },
+  "premerge_readiness_completion": {
+    "checked_at": "2026-10-02T19:39:43Z",
+    "status": "COMPLETE_BLOCKED_OWNER_ACTION_ONLY",
+    "pr": 248,
+    "exact_head_sha": "d96fd088e3a5093bc0a0ce53d7878007351da16e",
+    "base_sha": "7a7911c9e3db56e825e41c411fa57a56428b5bc2",
+    "gates": {
+      "fresh_independent_a5": "PASSED",
+      "a0_exact_head": "PASSED",
+      "exact_head_ci": "PASSED_RUN_36998232448",
+      "mergeable": true,
+      "synthetic_merge_tree_equivalent": true
+    },
+    "a6_preparation": {
+      "source_lineage": "11/11",
+      "core_path_coverage": "34/34",
+      "product_path_coverage": "43/43",
+      "replacement_key": "core-s1-6415f443120f-r1-pr248",
+      "replacement_status": "RESERVED_NOT_DISPATCHABLE"
+    },
+    "exhausted_safe_premerge_work": [
+      "Root cause independently localized and fixed on exact PR248 HEAD.",
+      "Fresh A5, A0 and exact-head CI completed without findings.",
+      "All historical A6 ranges and manifest path scopes verified live.",
+      "Complete candidate path accounting verified live.",
+      "Conflict-free tree-equivalent protected merge surface verified.",
+      "Distinct replacement protocol reserved without creating or dispatching a request."
+    ],
+    "sole_blocker": "Explicit owner approval to merge exact PR248 HEAD into main.",
+    "prohibited_until_merge": [
+      "Create or dispatch replacement A6 request",
+      "Read provider credentials",
+      "Treat A6 as passed",
+      "Change product candidate HEADs for this infra issue"
+    ],
+    "provider_call_performed": false,
+    "credentials_read": false,
+    "request_created": false,
+    "protected_action_performed": false
   }
 }
