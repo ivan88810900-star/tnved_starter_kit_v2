@@ -774,7 +774,7 @@
     }
   ],
   "max_concurrent_subagents": 3,
-  "revision": 655,
+  "revision": 656,
   "runs": [
     {
       "head_sha": null,
@@ -4188,7 +4188,7 @@
       }
     }
   ],
-  "updated_at": "2026-10-02T19:40:10Z",
+  "updated_at": "2026-10-02T20:49:53.996Z",
   "max_concurrent_feature_workers": 2,
   "active_role_model": {
     "effective_at": "2026-09-30T12:58:10.633Z",
@@ -4763,7 +4763,8 @@
       "body_live_owner_gate_packet_at": "2026-10-02T18:44:46Z",
       "premerge_readiness_complete": true,
       "sole_blocker": "Explicit owner approval to merge exact HEAD into main.",
-      "updated_at": "2026-10-02T19:40:10Z"
+      "updated_at": "2026-10-02T19:40:10Z",
+      "last_owner_gate_revalidated_at": "2026-10-02T20:49:53.996Z"
     }
   },
   "pr_hygiene": {
@@ -6768,6 +6769,33 @@
         "commit_sha": "f6adc07e3b9115ede0cac20f83c1324dc2091209"
       },
       "owner_approval_observed": false,
+      "provider_call_performed": false,
+      "credentials_read": false,
+      "request_created": false,
+      "consumed_request_retry": false,
+      "product_heads_changed": false,
+      "tests_weakened": false,
+      "protected_action_performed": false
+    },
+    "pr248_owner_gate_revalidation_rev656": {
+      "checked_at": "2026-10-02T20:49:53.996Z",
+      "lease_generation": 90,
+      "status": "UNCHANGED_BLOCKED_OWNER_ACTION_ONLY",
+      "pr": 248,
+      "head_sha": "d96fd088e3a5093bc0a0ce53d7878007351da16e",
+      "base_sha": "7a7911c9e3db56e825e41c411fa57a56428b5bc2",
+      "state": "open",
+      "draft": false,
+      "mergeable": true,
+      "owner_approval_evidence": {
+        "issue_comments_checked": true,
+        "review_submissions_checked": true,
+        "owner_approval_observed": false,
+        "non_bot_issue_comment_count": 0,
+        "review_submission_count": 0
+      },
+      "sole_blocker": "Explicit owner approval to merge exact PR248 HEAD into main.",
+      "no_repeated_work": "Premerge readiness remains complete; no QA, request creation, dispatch, provider call, credential read, or product HEAD mutation repeated.",
       "provider_call_performed": false,
       "credentials_read": false,
       "request_created": false,
