@@ -79,6 +79,53 @@ class AuditBridgeTests(unittest.TestCase):
                              environ=self.env, fetch=False)
         return output
 
+    def test_prepare_serializes_valid_decorators_without_contact_reclassification(self):
+        self.write(
+            "src/rates.py",
+            "import pytest\\n\\n@pytest.fixture\\ndef rate():\\n    return 2\\n",
+        )
+        self.git("commit", "-qam", "decorated head")
+        head = self.sha()
+        payload = {
+            **self.payload,
+            "head_sha": head,
+            "contract_sha": head,
+        }
+        event = self.repo / "decorated-event.json"
+        event.write_text(json.dumps({
+            "action": "tariff-a6-live",
+            "client_payload": payload,
+            "repository": {"default_branch": "main"},
+        }))
+        env = {
+            **self.env,
+            "GITHUB_EVENT_PATH": str(event),
+            "GITHUB_SHA": head,
+        }
+        output = self.repo / "decorated-packet.json"
+
+        summary = audit_bridge.prepare(
+            self.repo,
+            request_id="A6-123",
+            base=self.base,
+            head=head,
+            contract=head,
+            paths_json=self.paths,
+            sources_json="[]",
+            output=output,
+            environ=env,
+            fetch=False,
+        )
+
+        self.assertEqual(summary["status"], "PACKET_BUILT")
+        self.assertEqual(json.loads(output.read_text())["head_sha"], head)
+        with self.assertRaises(audit.AuditBlocked):
+            audit_bridge._write_exclusive(
+                self.repo / "private-contact.json",
+                {"contact": "person@private.test"},
+                environ={},
+            )
+
     def issue_comment_env(self, *, body=audit_bridge.COMMENT_COMMAND,
                           actor="owner", association="OWNER", consumed=False,
                           dispatched=False, live_verified=False,
