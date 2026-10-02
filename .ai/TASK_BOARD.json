@@ -774,7 +774,7 @@
     }
   ],
   "max_concurrent_subagents": 3,
-  "revision": 656,
+  "revision": 657,
   "runs": [
     {
       "head_sha": null,
@@ -4188,7 +4188,7 @@
       }
     }
   ],
-  "updated_at": "2026-10-02T20:49:53.996Z",
+  "updated_at": "2026-10-02T21:49:22.873Z",
   "max_concurrent_feature_workers": 2,
   "active_role_model": {
     "effective_at": "2026-09-30T12:58:10.633Z",
@@ -6803,6 +6803,68 @@
       "product_heads_changed": false,
       "tests_weakened": false,
       "protected_action_performed": false
+    },
+    "product_candidate_live_drift_guard_rev657": {
+      "checked_at": "2026-10-02T21:49:22.873Z",
+      "lease_generation": 91,
+      "status": "PASSED_LIVE_GITHUB_NO_DRIFT",
+      "main_sha": "7a7911c9e3db56e825e41c411fa57a56428b5bc2",
+      "bridge_gate": {
+        "pr": 248,
+        "base_sha": "7a7911c9e3db56e825e41c411fa57a56428b5bc2",
+        "head_sha": "d96fd088e3a5093bc0a0ce53d7878007351da16e",
+        "state": "open",
+        "draft": false,
+        "mergeable": true,
+        "exact_head_ci": {
+          "run_id": 36998232448,
+          "status": "completed",
+          "conclusion": "success"
+        },
+        "owner_approval_observed": false
+      },
+      "core": {
+        "pr": 244,
+        "base_branch": "integration/customs-core-v1",
+        "base_sha": "08e030a6053ac9638957119373797e0fbf2b10c2",
+        "head_sha": "14e0ee8f034d94ffc5831d87e076f4d693a5a524",
+        "state": "open",
+        "draft": true,
+        "mergeable": true,
+        "exact_head_ci": {
+          "run_id": 36853205641,
+          "event": "push",
+          "alias_branch": "agent/core-a6-repack-v1",
+          "status": "completed",
+          "conclusion": "success"
+        }
+      },
+      "product": {
+        "pr": 245,
+        "base_branch": "integration/compliance-ai-v1",
+        "base_sha": "08e030a6053ac9638957119373797e0fbf2b10c2",
+        "head_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
+        "state": "open",
+        "draft": true,
+        "mergeable": true,
+        "exact_head_ci": {
+          "run_id": 36853210034,
+          "event": "push",
+          "alias_branch": "agent/product-a6-repack-v1",
+          "status": "completed",
+          "conclusion": "success"
+        }
+      },
+      "interpretation": "No protected-main, bridge-fix, candidate-head, integration-base, mergeability, or exact-head-CI drift was observed on live GitHub.",
+      "current_gate": "Explicit owner approval to merge exact PR248 HEAD; no A6 request creation or dispatch before that merge.",
+      "provider_call_performed": false,
+      "credentials_read": false,
+      "request_created": false,
+      "consumed_request_retry": false,
+      "product_heads_changed": false,
+      "tests_weakened": false,
+      "protected_action_performed": false,
+      "nonmain_merge_performed": false
     }
   }
 }
