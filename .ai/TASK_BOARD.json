@@ -774,7 +774,7 @@
     }
   ],
   "max_concurrent_subagents": 3,
-  "revision": 638,
+  "revision": 639,
   "runs": [
     {
       "head_sha": null,
@@ -4188,7 +4188,7 @@
       }
     }
   ],
-  "updated_at": "2026-10-02T04:52:00Z",
+  "updated_at": "2026-10-02T05:54:00Z",
   "max_concurrent_feature_workers": 2,
   "active_role_model": {
     "effective_at": "2026-09-30T12:58:10.633Z",
@@ -5410,6 +5410,24 @@
           "pass_scope": "TYPESCRIPT_AND_PRODUCTION_BUILD_ONLY"
         }
       },
+      "fresh_payment_semantic_revalidation_20261002": {
+        "checked_at": "2026-10-02T05:54:00Z",
+        "head_sha": "14e0ee8f034d94ffc5831d87e076f4d693a5a524",
+        "tree_sha": "fbb3bf2c88aa75a9c037a43547da88185dba6829",
+        "assertions": 47,
+        "operand_validation": "PASSED",
+        "fx_fail_closed": "PASSED",
+        "effective_date_windows": "PASSED",
+        "antidumping_admission": "PASSED",
+        "specific_combined_units": "PASSED",
+        "execution_method": "EXACT_TRACKED_PAYMENT_ENGINE_WITH_UNUSED_DB_AND_SOURCE_LOOKUPS_STUBBED",
+        "tracked_tree_changed": false,
+        "pass_scope": "PURE_PAYMENT_FAIL_CLOSED_SEMANTICS",
+        "limitations": [
+          "This is a direct exact-head semantic harness, not a pytest-suite execution.",
+          "DB and source lookup modules were stubbed; persisted-row admission and integration behavior remain covered only by the existing A5 and exact-head CI evidence."
+        ]
+      },
       "integration_pr": 244,
       "integration_pr_draft": true,
       "exact_head_ci_status": "PASSED",
@@ -5990,6 +6008,35 @@
       ],
       "execution_method": "EXACT_TRACKED_MODULES_AND_OFFICIAL_SEED_WITH_UNUSED_DB_IMPORTS_STUBBED",
       "pass_scope": "CHILD_AUDIENCE_AND_OFFICIAL_3304_SGR_SEMANTICS",
+      "pytest_suite_pass_claimed": false,
+      "historical_a5_or_ci_changed": false,
+      "tracked_tree_changed": false,
+      "candidate_head_changed": false,
+      "tests_weakened": false,
+      "protected_action_performed": false
+    },
+    "core_payment_semantic_revalidation_rev639": {
+      "checked_at": "2026-10-02T05:54:00Z",
+      "pr": 244,
+      "head_sha": "14e0ee8f034d94ffc5831d87e076f4d693a5a524",
+      "tree_sha": "fbb3bf2c88aa75a9c037a43547da88185dba6829",
+      "assertion_count": 47,
+      "results": {
+        "operand_validation": "PASSED",
+        "fx_fail_closed": "PASSED",
+        "effective_date_windows": "PASSED",
+        "antidumping_admission": "PASSED",
+        "specific_combined_units": "PASSED"
+      },
+      "cases_include": [
+        "boolean, negative, non-finite and malformed operands",
+        "missing or invalid FX rates",
+        "malformed, future and expired effective-date windows",
+        "fixed, percentage, country-mismatch and unknown antidumping types",
+        "specific kg and combined pcs calculations with explicit units"
+      ],
+      "execution_method": "EXACT_TRACKED_PAYMENT_ENGINE_WITH_UNUSED_DB_AND_SOURCE_LOOKUPS_STUBBED",
+      "pass_scope": "PURE_PAYMENT_FAIL_CLOSED_SEMANTICS",
       "pytest_suite_pass_claimed": false,
       "historical_a5_or_ci_changed": false,
       "tracked_tree_changed": false,
