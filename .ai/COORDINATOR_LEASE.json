@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
-  "state": "active",
-  "holder": "/root/a0_automation_owner_gate_pause",
-  "token": "a0-1790981185691-vvgbhaad2zo",
+  "state": "released",
+  "holder": null,
+  "token": null,
   "generation": 92,
-  "updated_at": "2026-10-02T22:46:25.691Z",
-  "expires_at": "2026-10-02T23:16:25.691Z"
+  "updated_at": "2026-10-02T22:46:50.642Z",
+  "expires_at": null
 }
