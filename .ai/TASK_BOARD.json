@@ -774,7 +774,7 @@
     }
   ],
   "max_concurrent_subagents": 3,
-  "revision": 648,
+  "revision": 649,
   "runs": [
     {
       "head_sha": null,
@@ -4188,7 +4188,7 @@
       }
     }
   ],
-  "updated_at": "2026-10-02T12:42:07Z",
+  "updated_at": "2026-10-02T13:50:54Z",
   "max_concurrent_feature_workers": 2,
   "active_role_model": {
     "effective_at": "2026-09-30T12:58:10.633Z",
@@ -5531,11 +5531,11 @@
       "branch": "agent/a6-packet-writer-contact-scan-v1",
       "head_sha": "d96fd088e3a5093bc0a0ce53d7878007351da16e",
       "base_sha": "7a7911c9e3db56e825e41c411fa57a56428b5bc2",
-      "draft": true,
+      "draft": false,
       "author_tests": "134/134 orchestration PASS; exact production packet writer reproduction PASS",
-      "a5_status": "MISSING",
-      "a0_status": "AUTHOR_LOCAL_PASS_PENDING_INDEPENDENT_REVIEW",
-      "exact_head_ci_status": "PENDING",
+      "a5_status": "PASSED_FRESH_INDEPENDENT",
+      "a0_status": "PASSED_EXACT_HEAD",
+      "exact_head_ci_status": "PASSED",
       "owner_approval_required": true,
       "protected_merge_performed": false,
       "rule": "Any HEAD change invalidates review and CI. No live A6 retry or replacement dispatch before exact PR248 is merged by separate owner approval.",
@@ -5545,7 +5545,10 @@
         "run_id": 36997920566,
         "conclusion": "failure",
         "reason": "double-escaped regression fixture on intermediate connector-published commit"
-      }
+      },
+      "exact_head_ci_run_id": 36998232448,
+      "status": "READY_FOR_OWNER_APPROVAL",
+      "updated_at": "2026-10-02T13:50:54Z"
     }
   },
   "state_integrity_receipts": {
@@ -6445,6 +6448,65 @@
       "provider_call_performed": false,
       "tests_weakened": false,
       "protected_action_performed": false
+    },
+    "candidate_nonmain_merge_dry_run_rev649": {
+      "checked_at": "2026-10-02T13:50:54Z",
+      "lease_generation": 83,
+      "main_sha": "7a7911c9e3db56e825e41c411fa57a56428b5bc2",
+      "bridge_gate": {
+        "pr": 248,
+        "head_sha": "d96fd088e3a5093bc0a0ce53d7878007351da16e",
+        "base_sha": "7a7911c9e3db56e825e41c411fa57a56428b5bc2",
+        "state": "open",
+        "draft": false,
+        "mergeable": true,
+        "owner_approval_observed": false,
+        "status": "READY_FOR_OWNER_APPROVAL"
+      },
+      "core": {
+        "pr": 244,
+        "base_branch": "integration/customs-core-v1",
+        "base_sha": "08e030a6053ac9638957119373797e0fbf2b10c2",
+        "head_branch": "candidate/core-a6-repack-v1",
+        "head_sha": "14e0ee8f034d94ffc5831d87e076f4d693a5a524",
+        "candidate_head_changed": false,
+        "mergeable": true,
+        "github_test_merge_sha": "141c1049e9bef637244cb523d1f14cdad42b970f",
+        "test_merge_message": "Merge 14e0ee8f034d94ffc5831d87e076f4d693a5a524 into 08e030a6053ac9638957119373797e0fbf2b10c2",
+        "test_merge_tree_equivalent_to_candidate": true,
+        "comparison": {
+          "status": "ahead",
+          "ahead_by": 1,
+          "behind_by": 0,
+          "changed_files": 0
+        }
+      },
+      "product": {
+        "pr": 245,
+        "base_branch": "integration/compliance-ai-v1",
+        "base_sha": "08e030a6053ac9638957119373797e0fbf2b10c2",
+        "head_branch": "candidate/product-a6-repack-v1",
+        "head_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
+        "candidate_head_changed": false,
+        "mergeable": true,
+        "github_test_merge_sha": "5b4b5b91e66b67a328ac34ae235a6d817ce3d049",
+        "test_merge_message": "Merge e39e19787bd913baeb6f85577a13e1116458e633 into 08e030a6053ac9638957119373797e0fbf2b10c2",
+        "test_merge_tree_equivalent_to_candidate": true,
+        "comparison": {
+          "status": "ahead",
+          "ahead_by": 1,
+          "behind_by": 0,
+          "changed_files": 0
+        }
+      },
+      "interpretation": "GitHub can construct both current non-main integration merge refs without conflicts, and each synthetic merge is tree-equivalent to its exact candidate HEAD. This is pre-integration evidence only and does not bypass live A6 or A0 gates.",
+      "blocked_by": "Owner-approved merge of exact PR248 HEAD, followed by distinct immutable replacement A6 requests and successful live audits.",
+      "consumed_request_retry": false,
+      "provider_call_performed": false,
+      "product_heads_changed": false,
+      "tests_weakened": false,
+      "protected_action_performed": false,
+      "nonmain_merge_performed": false
     }
   }
 }
