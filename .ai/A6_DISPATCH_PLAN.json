@@ -1,6 +1,6 @@
 {
   "schema_version": 2,
-  "status": "BLOCKED_PENDING_BRIDGE_FIX_PR248",
+  "status": "BLOCKED_AWAITING_OWNER_APPROVAL_PR248",
   "prepared_from_state_revision": 641,
   "prepared_at": "2026-10-02T09:56:33Z",
   "source_receipts": [
@@ -273,7 +273,7 @@
     "sha256": "9ed932aa8ffe47d3bcbe6007d06578c0a9f2ab9d523b7dbf4ea24cf6dd3c231f",
     "canonicalization": "RFC8259 compact JSON with recursively sorted object keys over protected chain, bridge contract, candidates, limits, prior-manifest rebuild, ordered requests, exclusions and dispatch invariants; trailing newline included"
   },
-  "updated_at": "2026-10-02T10:57:04Z",
+  "updated_at": "2026-10-02T11:47:28Z",
   "dispatch_history": [
     {
       "request_id": "core-s1-6415f443120f-g79",
@@ -289,7 +289,21 @@
   ],
   "remaining_unconsumed_request_count": 10,
   "required_replacement_requests": 1,
-  "next_gate": "Fresh independent A5, A0 validation and exact-head CI for PR248; owner approval and merge of exact bridge-fix HEAD; then generate a new non-retry replacement for consumed core slice 1 and resume sequential dispatch.",
+  "next_gate": "Explicit owner approval to merge only exact PR248 HEAD d96fd088e3a5093bc0a0ce53d7878007351da16e into main. No dispatch before the protected merge; then create a new non-retry replacement for consumed core slice 1.",
   "bridge_fix_tree_sha": "2d6c960568ab533c1b3a1021c3bfff65f2cbedb5",
-  "bridge_fix_exact_head_ci": "PENDING"
+  "bridge_fix_exact_head_ci": {
+    "status": "PASSED",
+    "run_id": 36998232448,
+    "head_sha": "d96fd088e3a5093bc0a0ce53d7878007351da16e"
+  },
+  "bridge_fix_fresh_a5": {
+    "status": "PASSED",
+    "reviewer": "/root/a5_pr248_exact",
+    "head_sha": "d96fd088e3a5093bc0a0ce53d7878007351da16e",
+    "findings": []
+  },
+  "bridge_fix_a0_validation": {
+    "status": "PASSED",
+    "head_sha": "d96fd088e3a5093bc0a0ce53d7878007351da16e"
+  }
 }
