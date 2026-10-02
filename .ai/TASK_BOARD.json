@@ -774,7 +774,7 @@
     }
   ],
   "max_concurrent_subagents": 3,
-  "revision": 652,
+  "revision": 653,
   "runs": [
     {
       "head_sha": null,
@@ -4188,7 +4188,7 @@
       }
     }
   ],
-  "updated_at": "2026-10-02T16:44:13Z",
+  "updated_at": "2026-10-02T17:39:38Z",
   "max_concurrent_feature_workers": 2,
   "active_role_model": {
     "effective_at": "2026-09-30T12:58:10.633Z",
@@ -4737,7 +4737,28 @@
       "evidence_invalidation": "Any new HEAD resets A5, A0 validation and exact-head CI.",
       "protected_action_performed": false,
       "ready_for_review": true,
-      "ready_transition_at": "2026-10-02T11:48:10Z"
+      "ready_transition_at": "2026-10-02T11:48:10Z",
+      "state": "open",
+      "merge_dry_run": {
+        "checked_at": "2026-10-02T17:39:38Z",
+        "github_test_merge_sha": "b3fc353851d44a8bd6b91c639a8b71063a0144bd",
+        "expected_message": "Merge d96fd088e3a5093bc0a0ce53d7878007351da16e into 7a7911c9e3db56e825e41c411fa57a56428b5bc2",
+        "observed_message": "Merge d96fd088e3a5093bc0a0ce53d7878007351da16e into 7a7911c9e3db56e825e41c411fa57a56428b5bc2",
+        "message_binding_exact": true,
+        "tree_equivalent_to_exact_head": true,
+        "changed_files_from_head": 0,
+        "current_base_scope": {
+          "ahead_by": 4,
+          "behind_by": 0,
+          "total_commits": 4,
+          "file_count": 2,
+          "files": [
+            "tests/agent_orchestration/test_audit_bridge.py",
+            "tools/tariff_agents/audit_bridge.py"
+          ]
+        }
+      },
+      "owner_approval_observed": false
     }
   },
   "pr_hygiene": {
@@ -6648,6 +6669,39 @@
       "credentials_read": false,
       "request_created": false,
       "consumed_request_retry": false,
+      "product_heads_changed": false,
+      "tests_weakened": false,
+      "protected_action_performed": false
+    },
+    "pr248_protected_merge_dry_run_rev653": {
+      "checked_at": "2026-10-02T17:39:38Z",
+      "lease_generation": 87,
+      "pr": 248,
+      "head_sha": "d96fd088e3a5093bc0a0ce53d7878007351da16e",
+      "base_sha": "7a7911c9e3db56e825e41c411fa57a56428b5bc2",
+      "state": "open",
+      "draft": false,
+      "mergeable": true,
+      "github_test_merge_sha": "b3fc353851d44a8bd6b91c639a8b71063a0144bd",
+      "merge_message": "Merge d96fd088e3a5093bc0a0ce53d7878007351da16e into 7a7911c9e3db56e825e41c411fa57a56428b5bc2",
+      "merge_message_binding_exact": true,
+      "test_merge_tree_equivalent_to_exact_head": true,
+      "test_merge_changed_files_from_head": 0,
+      "current_base_scope": {
+        "status": "ahead",
+        "ahead_by": 4,
+        "behind_by": 0,
+        "total_commits": 4,
+        "file_count": 2,
+        "files": [
+          "tests/agent_orchestration/test_audit_bridge.py",
+          "tools/tariff_agents/audit_bridge.py"
+        ]
+      },
+      "owner_approval_observed": false,
+      "conclusion": "GitHub currently constructs a conflict-free synthetic merge bound to the exact reviewed head and current main; its tree is identical to the exact PR head. This is dry-run evidence only and does not authorize merge.",
+      "provider_call_performed": false,
+      "credentials_read": false,
       "product_heads_changed": false,
       "tests_weakened": false,
       "protected_action_performed": false
