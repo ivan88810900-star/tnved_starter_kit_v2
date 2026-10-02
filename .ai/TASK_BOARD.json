@@ -774,7 +774,7 @@
     }
   ],
   "max_concurrent_subagents": 3,
-  "revision": 636,
+  "revision": 637,
   "runs": [
     {
       "head_sha": null,
@@ -4188,7 +4188,7 @@
       }
     }
   ],
-  "updated_at": "2026-10-02T02:57:00Z",
+  "updated_at": "2026-10-02T03:52:00Z",
   "max_concurrent_feature_workers": 2,
   "active_role_model": {
     "effective_at": "2026-09-30T12:58:10.633Z",
@@ -5306,6 +5306,23 @@
         ],
         "historical_a5_record_changed": false
       },
+      "fresh_backend_static_revalidation_20261002": {
+        "checked_at": "2026-10-02T03:52:00Z",
+        "head_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
+        "tree_sha": "f31e36b3b9c3998f2a63440f58a756270f28d23e",
+        "changed_python_files": 32,
+        "runtime_python_files": 19,
+        "test_python_files": 13,
+        "py_compile": "PASSED",
+        "pytest": "NOT_RUN_MISSING_PYTEST_AND_BACKEND_DEPENDENCIES",
+        "offline_install": "BLOCKED_NO_PYTEST_IN_LOCAL_CACHE",
+        "tracked_tree_changed": false,
+        "pass_scope": "PYTHON_SYNTAX_ONLY",
+        "limitations": [
+          "No fresh backend behavioral-test PASS is claimed from this wake-up.",
+          "The exact-head test command failed before collection because pytest is absent; offline cache resolution also lacked pytest. Historical exact-head A5/CI evidence remains unchanged."
+        ]
+      },
       "integration_pr": 245,
       "integration_pr_draft": true,
       "exact_head_ci_status": "PASSED",
@@ -5910,6 +5927,27 @@
         "vite react-swc esbuild option deprecation warning"
       ],
       "pass_scope": "TYPESCRIPT_AND_PRODUCTION_BUILD_ONLY",
+      "tracked_tree_changed": false,
+      "candidate_head_changed": false,
+      "tests_weakened": false,
+      "protected_action_performed": false
+    },
+    "product_backend_static_revalidation_rev637": {
+      "checked_at": "2026-10-02T03:52:00Z",
+      "pr": 245,
+      "head_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
+      "tree_sha": "f31e36b3b9c3998f2a63440f58a756270f28d23e",
+      "results": {
+        "changed_python_files": 32,
+        "runtime_python_files": 19,
+        "test_python_files": 13,
+        "python_py_compile": "PASSED",
+        "pytest": "NOT_RUN_MISSING_PYTEST_AND_BACKEND_DEPENDENCIES",
+        "offline_uv_resolution": "BLOCKED_PYTEST_NOT_IN_CACHE"
+      },
+      "pass_scope": "PYTHON_SYNTAX_ONLY",
+      "behavioral_pass_claimed": false,
+      "historical_a5_or_ci_changed": false,
       "tracked_tree_changed": false,
       "candidate_head_changed": false,
       "tests_weakened": false,
