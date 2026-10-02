@@ -774,7 +774,7 @@
     }
   ],
   "max_concurrent_subagents": 3,
-  "revision": 641,
+  "revision": 642,
   "runs": [
     {
       "head_sha": null,
@@ -4188,7 +4188,7 @@
       }
     }
   ],
-  "updated_at": "2026-10-02T08:47:30Z",
+  "updated_at": "2026-10-02T09:57:36Z",
   "max_concurrent_feature_workers": 2,
   "active_role_model": {
     "effective_at": "2026-09-30T12:58:10.633Z",
@@ -5207,8 +5207,8 @@
     }
   },
   "a6_candidate_preflight": {
-    "status": "PROTECTED_CHAIN_MERGED_REVALIDATE_BRIDGE_AND_REBUILD_PACKETS_BEFORE_LIVE_A6",
-    "checked_at": "2026-10-02T08:47:30Z",
+    "status": "READY_FOR_SEQUENTIAL_LIVE_A6_DISPATCH",
+    "checked_at": "2026-10-02T09:57:36Z",
     "bridge": {
       "live_verified": true,
       "current_pending_consumed": true,
@@ -5221,19 +5221,22 @@
       ],
       "pr246_merged": true,
       "pr247_merged": true,
-      "subsequent_a6_available": false,
-      "rule": "Protected successor chain is merged. Rebuild/compare immutable request packets and prove the merged bridge satisfies the current contract before any provider dispatch.",
+      "subsequent_a6_available": true,
+      "rule": "Merged bridge satisfies the unchanged current contract offline. Dispatch only the freshly rebuilt immutable requests in A6_DISPATCH_PLAN.json, sequentially with one pending request and an active coordinator lease.",
       "pr246_head_sha": "dc0397c7815e092ad8d3bd41d0d98af197212e1e",
       "pr247_head_sha": "c1f04847c2a40b01a3e1f0759d9e97e309cc2e3b",
       "pr247_restack_required": false,
       "pr247_fresh_gates_pending": false,
       "protected_chain_ready_for_owner_approval": false,
       "owner_permission_consumed": true,
-      "status": "MERGED_BRIDGE_CURRENT_CONTRACT_REVALIDATION_REQUIRED"
+      "status": "MERGED_BRIDGE_CURRENT_CONTRACT_OFFLINE_ADMISSION_PASS"
     },
     "contract": {
-      "ref": "08e030a6053ac9638957119373797e0fbf2b10c2",
-      "blob_sha": "667e622cd38bc7d2a915e6aef40c3f70af889c7a"
+      "ref": "7a7911c9e3db56e825e41c411fa57a56428b5bc2",
+      "blob_sha": "667e622cd38bc7d2a915e6aef40c3f70af889c7a",
+      "previous_ref": "08e030a6053ac9638957119373797e0fbf2b10c2",
+      "previous_blob_sha": "667e622cd38bc7d2a915e6aef40c3f70af889c7a",
+      "content_identical": true
     },
     "limits": {
       "max_files": 64,
@@ -5241,9 +5244,9 @@
       "max_packet_bytes": 600000
     },
     "assignments": [],
-    "rule": "Do not weaken limits, send partial packets, reuse stale A5/CI, force-push, or claim A6 coverage for unaudited ranges. Subsequent live A6 remains unavailable until the fresh successor chain PR246 then PR247 is owner-authorized and merged.",
-    "offline_request_status": "PREPARED_NOT_DISPATCHABLE",
-    "offline_request_receipt": "state_integrity_receipts.a6_request_manifests_rev629",
+    "rule": "Do not weaken limits, send partial packets, reuse consumed requests, claim A6 coverage before provider evidence, force-push, or change candidate heads. Dispatch one fresh current-contract request at a time under the merged bridge.",
+    "offline_request_status": "READY_FOR_SEQUENTIAL_LIVE_DISPATCH",
+    "offline_request_receipt": "state_integrity_receipts.a6_postmerge_packet_rebuild_rev642",
     "scanner_fix_pr": {
       "pr": 246,
       "predecessor_pr": 236,
@@ -5254,30 +5257,26 @@
       "ci_status": "PASSED",
       "a5_status": "PASSED",
       "a0_status": "PASSED",
-      "merged": false
+      "merged": true
     },
     "protected_chain_gate": {
-      "status": "READY_FOR_OWNER_APPROVAL",
+      "status": "MERGED_PERMISSION_CONSUMED",
       "order": [
         {
           "pr": 246,
           "head_sha": "dc0397c7815e092ad8d3bd41d0d98af197212e1e",
-          "a5": "PASSED",
-          "a0": "PASSED",
-          "ci_run_id": 36862783125
+          "merge_sha": "2576d6408c934ddf2ccc0aec87c6098740790630"
         },
         {
           "pr": 247,
           "head_sha": "c1f04847c2a40b01a3e1f0759d9e97e309cc2e3b",
-          "base_head_sha": "dc0397c7815e092ad8d3bd41d0d98af197212e1e",
-          "a5": "PASSED",
-          "a0": "PASSED",
-          "ci_run_id": 36865520378
+          "merge_sha": "7a7911c9e3db56e825e41c411fa57a56428b5bc2"
         }
       ],
-      "permission_required": true,
-      "permission_granted": false,
-      "rule": "Merge neither PR without one new explicit owner approval for this exact ordered chain; any head change invalidates all gates."
+      "permission_required": false,
+      "permission_granted": true,
+      "permission_consumed": true,
+      "rule": "No further protected merge is authorized."
     },
     "product_candidate": {
       "branch": "candidate/product-a6-repack-v1",
@@ -5292,7 +5291,7 @@
       ],
       "non_runtime_a6_coverage": false,
       "broad_status": "NOT_PASS",
-      "next_gate": "live A6 runtime slices plus repair delta only after owner-authorized PR246 -> PR247 protected merge chain; then A0 validation before non-main integration",
+      "next_gate": "sequential live A6 over 5 current-contract runtime slices plus 1 repair delta; independently validate any findings; then A0 validation before non-main integration",
       "a5_status": "PASSED",
       "a5_session": "/root/a5_core_candidate",
       "blocker_id": "A5-PRODUCT-CHILD-NEGATION-001",
@@ -5368,7 +5367,9 @@
         "event": "push",
         "conclusion": "success",
         "candidate_head_unchanged": true
-      }
+      },
+      "a6_runtime_requests": 5,
+      "a6_repair_delta_requests": 1
     },
     "core_candidate": {
       "branch": "candidate/core-a6-repack-v1",
@@ -5388,7 +5389,7 @@
         "PASS",
         "PASS"
       ],
-      "next_gate": "live A6 only after owner-authorized PR246 -> PR247 protected merge chain; then A0 validation before non-main integration",
+      "next_gate": "sequential live A6 over 5 current-contract runtime slices; independently validate any findings; then A0 validation before non-main integration",
       "a5_status": "PASSED",
       "a5_session": "/root/a5_core_candidate",
       "a5_limitations": [
@@ -5457,7 +5458,17 @@
         "event": "push",
         "conclusion": "success",
         "candidate_head_unchanged": true
-      }
+      },
+      "a6_runtime_requests": 5
+    },
+    "dispatch_plan": {
+      "path": ".ai/A6_DISPATCH_PLAN.json",
+      "blob_sha": "6ca6cd545fe6c03643870d7f8995f9120e2cacaf",
+      "commit_sha": "91f48c3be74ea9de66952820cd42af54d2b8b3a3",
+      "aggregate_sha256": "9ed932aa8ffe47d3bcbe6007d06578c0a9f2ab9d523b7dbf4ea24cf6dd3c231f",
+      "request_count": 11,
+      "current_contract_requests": 11,
+      "provider_call_performed": false
     }
   },
   "state_integrity_receipts": {
@@ -6129,6 +6140,58 @@
       "provider_call_performed": false,
       "candidate_heads_changed": false,
       "other_protected_action_performed": false
+    },
+    "a6_postmerge_packet_rebuild_rev642": {
+      "checked_at": "2026-10-02T09:57:36Z",
+      "main_sha": "7a7911c9e3db56e825e41c411fa57a56428b5bc2",
+      "main_tree_sha": "abdb4776f39790875593bda8bff5f47dc042a8bd",
+      "contract": {
+        "current_ref": "7a7911c9e3db56e825e41c411fa57a56428b5bc2",
+        "current_blob_sha": "667e622cd38bc7d2a915e6aef40c3f70af889c7a",
+        "recorded_ref": "08e030a6053ac9638957119373797e0fbf2b10c2",
+        "recorded_blob_sha": "667e622cd38bc7d2a915e6aef40c3f70af889c7a",
+        "content_identical": true
+      },
+      "bridge_validation": {
+        "verifier": "PASSED_128_OF_128",
+        "snapshot": "VALID",
+        "live_provider_call_performed": false
+      },
+      "candidates": {
+        "core": {
+          "pr": 244,
+          "head_sha": "14e0ee8f034d94ffc5831d87e076f4d693a5a524",
+          "unchanged": true,
+          "path_coverage": "34/34",
+          "current_contract_requests": 5
+        },
+        "product": {
+          "pr": 245,
+          "head_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
+          "unchanged": true,
+          "path_coverage": "43/43",
+          "current_contract_requests": 6
+        }
+      },
+      "prior_manifest_rebuild": {
+        "requests": 11,
+        "exact_packet_binding_matches": 11,
+        "exact_canonical_matches": 11,
+        "exact_byte_length_matches": 11,
+        "status": "PASS"
+      },
+      "fresh_dispatch_plan": {
+        "path": ".ai/A6_DISPATCH_PLAN.json",
+        "blob_sha": "6ca6cd545fe6c03643870d7f8995f9120e2cacaf",
+        "aggregate_sha256": "9ed932aa8ffe47d3bcbe6007d06578c0a9f2ab9d523b7dbf4ea24cf6dd3c231f",
+        "requests": 11,
+        "status": "READY_FOR_SEQUENTIAL_LIVE_DISPATCH"
+      },
+      "provider_call_performed": false,
+      "a6_pass_claimed": false,
+      "tests_weakened": false,
+      "protected_action_performed": false,
+      "next_gate": "Publish one pending request and dispatch through the lawful bridge under an active lease; never retry a consumed request."
     }
   }
 }
