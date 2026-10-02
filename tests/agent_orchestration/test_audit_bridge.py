@@ -82,7 +82,7 @@ class AuditBridgeTests(unittest.TestCase):
     def test_prepare_serializes_valid_decorators_without_contact_reclassification(self):
         self.write(
             "src/rates.py",
-            "import pytest\\n\\n@pytest.fixture\\ndef rate():\\n    return 2\\n",
+            "import pytest\n\n@pytest.fixture\ndef rate():\n    return 2\n",
         )
         self.git("commit", "-qam", "decorated head")
         head = self.sha()
