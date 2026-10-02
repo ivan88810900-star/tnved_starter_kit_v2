@@ -9,9 +9,11 @@ public. A0 must choose only reviewed code, contracts and non-secret fixtures.
 No repository-wide content scan, directory upload, remote URL fetch or Claude tool
 is used. Changed paths must all be included; an incomplete diff is never sent.
 
-Official API references checked 2026-09-16:
+Official API references checked 2026-09-28:
 https://platform.claude.com/docs/en/api/messages/create
 https://platform.claude.com/docs/en/build-with-claude/structured-outputs
+https://platform.claude.com/docs/en/build-with-claude/effort
+https://platform.claude.com/docs/en/build-with-claude/context-windows
 https://platform.claude.com/docs/en/models/opus-5/whats-new-opus-5
 """
 
@@ -121,7 +123,37 @@ def _ambient_credential_values(key, value):
     return tuple(dict.fromkeys(credentials))
 
 
-def ensure_safe_text(text, *, environ=None):
+def _contact_scan_views(text):
+    """Yield literal and conservatively JSON-unicode-decoded contact views."""
+    yield text
+    decoded = text
+    for _ in range(2):
+        decoded_next = re.sub(
+            r"\\+u(d[89ab][0-9a-f]{2})\\+u(d[cdef][0-9a-f]{2})",
+            lambda match: chr(
+                0x10000
+                + ((int(match.group(1), 16) - 0xD800) << 10)
+                + int(match.group(2), 16)
+                - 0xDC00
+            ),
+            decoded,
+            flags=re.IGNORECASE,
+        )
+
+        def decode_bmp(match):
+            value = int(match.group(1), 16)
+            return match.group(0) if 0xD800 <= value <= 0xDFFF else chr(value)
+
+        decoded_next = re.sub(
+            r"\\+u([0-9a-f]{4})", decode_bmp, decoded_next, flags=re.IGNORECASE
+        )
+        if decoded_next == decoded:
+            break
+        decoded = decoded_next
+        yield decoded
+
+
+def ensure_safe_text(text, *, environ=None, scan_contacts=True):
     if not isinstance(text, str) or any(ord(c) < 32 and c not in "\n\r\t" for c in text):
         raise AuditBlocked("Binary or invalid audit text")
     env = os.environ if environ is None else environ
@@ -146,9 +178,30 @@ def ensure_safe_text(text, *, environ=None):
     )
     if any(re.search(pattern, text) for pattern in patterns):
         raise AuditBlocked("Suspected secret or private data excluded from audit")
-    for domain in re.findall(r"\b[A-Za-z0-9._%+-]+@([A-Za-z0-9.-]+\.[A-Za-z]{2,})\b", text):
-        if domain.lower() not in {"example.com", "example.org", "example.net", "localhost.test"}:
-            raise AuditBlocked("Personal contact data excluded from audit")
+    if scan_contacts:
+        # Scan complete dot-atom and quoted local-part shapes. SMTPUTF8 local
+        # parts can contain combining marks and symbols (including emoji), so
+        # a Unicode ``\w`` class is not a fail-closed boundary. Admit any
+        # non-ASCII, non-control, non-delimiter code point to the conservative
+        # atom scanner; the quoted scanner intentionally accepts even
+        # punctuation-only and whitespace-only non-empty local parts.
+        domain = r"(?P<domain>[\w.-]+\.[\w-]{2,63})"
+        ascii_atom = r"[A-Za-z0-9!#$%&'*+/=?^_`{|}~-]"
+        utf8_atom = r"[^\x00-\x7f\s()<>\[\]:;@\\,\"]"
+        atom = rf"(?:{ascii_atom}|{utf8_atom})"
+        dot_atom = rf"{atom}+(?:\.{atom}+)*"
+        quoted_local = r'(?:[^"\\\r\n]|\\.){1,64}'
+        contact_patterns = (
+            rf'"{quoted_local}"@{domain}(?![\w-])',
+            rf'\\"{quoted_local}\\"@{domain}(?![\w-])',
+            rf"(?<![\w!#$%&'*+/=?^_`{{|}}~.-]){dot_atom}@{domain}(?![\w-])",
+        )
+        allowed = {"example.com", "example.org", "example.net", "localhost.test"}
+        for view in _contact_scan_views(text):
+            for pattern in contact_patterns:
+                for match in re.finditer(pattern, view):
+                    if match.group("domain").casefold() not in allowed:
+                        raise AuditBlocked("Personal contact data excluded from audit")
     return text
 
 
@@ -235,7 +288,12 @@ def build_packet(repo, base, head, paths, *, contract_ref=None, official_sources
             (external_contract and (CONTRACT_PATH in paths or len(paths) >= MAX_FILES)) or
             (not external_contract and CONTRACT_PATH not in paths)):
         raise AuditBlocked("Explicit unique paths and architecture contract required")
-    paths = sorted(ensure_safe_path(path) for path in paths)
+    safe_paths = []
+    for path in paths:
+        safe_path = ensure_safe_path(path)
+        ensure_safe_text(safe_path, environ=environ)
+        safe_paths.append(safe_path)
+    paths = sorted(safe_paths)
     base_sha, head_sha = _commit(repo, base), _commit(repo, head)
     if external_contract:
         ensure_safe_text(contract_ref, environ=environ)
@@ -273,7 +331,11 @@ def build_packet(repo, base, head, paths, *, contract_ref=None, official_sources
         files.append({"path": path, "base": before, "head": after})
     diff = _git(repo, "diff", "--no-ext-diff", "--no-textconv", "--no-renames",
                 "--no-color", "--unified=3", base_sha, head_sha, "--", *paths).decode("utf-8")
-    ensure_safe_text(diff, environ=environ)
+    # All file/path/contract values were contact-scanned above in their original
+    # form. Diff markers can themselves form valid dot-atoms when a decorator
+    # line is added, so this redundant aggregate view repeats secret checks
+    # without reclassifying diff syntax as personal contact data.
+    ensure_safe_text(diff, environ=environ, scan_contacts=False)
     packet = {"schema_version": 2, "purpose": "A6_ADVISORY_REVIEW",
               "base_sha": base_sha, "head_sha": head_sha, "complete": True,
               "scope": "full_commit_diff_with_explicit_supporting_files",
@@ -282,7 +344,11 @@ def build_packet(repo, base, head, paths, *, contract_ref=None, official_sources
               "diff": diff, "diff_sha256": _sha(diff.encode()),
               "official_sources": _sources(official_sources)}
     raw = _json_bytes(packet)
-    ensure_safe_text(raw.decode("utf-8"), environ=environ)
+    # Every variable packet field is scanned above in its original form. JSON
+    # escaping can only add contact-shaped artifacts such as `\\n@pytest...`,
+    # so the final aggregate rescan repeats secret checks without reclassifying
+    # escape markers as email local-parts.
+    ensure_safe_text(raw.decode("utf-8"), environ=environ, scan_contacts=False)
     if len(raw) > MAX_PACKET_BYTES:
         raise AuditBlocked("Audit packet exceeds byte limit; no truncation allowed")
     return {**packet, "packet_sha256": _sha(raw)}
@@ -457,8 +523,9 @@ def run_audit(repo, packet, *, environ=None):
             "No tools, network, fetching URLs, commands or external data access. Official URLs are "
             "attribution metadata, not proof you have read their contents. Record missing source "
             "content/context in limitations. Findings are hypotheses requiring A0 verification. "
-            "Do not claim readiness, legal approval or a passed audit. Be concise: prioritize "
-            "actionable defects and keep evidence specific. Return the required JSON."),
+            "Do not claim readiness, legal approval or a passed audit. Report every defect you "
+            "identify, including lower-severity defects. Keep evidence concise, specific and "
+            "non-redundant. Return the required JSON."),
         "messages": [{"role": "user", "content": _json_bytes(packet).decode()}],
         "output_config": {"effort": A6_EFFORT,
                           "format": {"type": "json_schema", "schema": FINDINGS_SCHEMA}}}
