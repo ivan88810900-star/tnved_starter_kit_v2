@@ -273,7 +273,7 @@
     "sha256": "9ed932aa8ffe47d3bcbe6007d06578c0a9f2ab9d523b7dbf4ea24cf6dd3c231f",
     "canonicalization": "RFC8259 compact JSON with recursively sorted object keys over protected chain, bridge contract, candidates, limits, prior-manifest rebuild, ordered requests, exclusions and dispatch invariants; trailing newline included"
   },
-  "updated_at": "2026-10-02T15:44:36Z",
+  "updated_at": "2026-10-02T16:43:56Z",
   "dispatch_history": [
     {
       "request_id": "core-s1-6415f443120f-g79",
@@ -472,5 +472,86 @@
     "credentials_read": false,
     "request_created": false,
     "request_consumed": false
+  },
+  "live_path_coverage_validation": {
+    "checked_at": "2026-10-02T16:43:56Z",
+    "status": "PASSED_LIVE_GITHUB_NO_PROVIDER",
+    "core": {
+      "pr": 244,
+      "base_sha": "08e030a6053ac9638957119373797e0fbf2b10c2",
+      "head_sha": "14e0ee8f034d94ffc5831d87e076f4d693a5a524",
+      "candidate_paths": 34,
+      "runtime_manifest_union_paths": 34,
+      "exact_coverage": true,
+      "uncovered_paths": [],
+      "extraneous_paths": []
+    },
+    "product": {
+      "pr": 245,
+      "base_sha": "08e030a6053ac9638957119373797e0fbf2b10c2",
+      "head_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
+      "candidate_paths": 43,
+      "runtime_manifest_union_paths": 25,
+      "excluded_range_path_counts": [
+        4,
+        15
+      ],
+      "assigned_union_paths": 43,
+      "exact_coverage": true,
+      "uncovered_paths": [],
+      "extraneous_paths": []
+    },
+    "excluded_ranges": [
+      {
+        "base": "08e030a6053ac9638957119373797e0fbf2b10c2",
+        "head": "03fe65ebba9a2751cb8e84c54c51aee4d32fce6b",
+        "status": "ahead",
+        "ahead_by": 1,
+        "behind_by": 0,
+        "total_commits": 1,
+        "path_count": 4,
+        "policy": "A5_AND_EXACT_HEAD_CI_ONLY",
+        "paths": [
+          "customs-clear/frontend/package-lock.json",
+          "customs-clear/frontend/package.json",
+          "customs-clear/frontend/src/test/setup.ts",
+          "customs-clear/frontend/vitest.config.ts"
+        ]
+      },
+      {
+        "base": "d217dd8d89107263b904fd1777f0dc17809fd9e5",
+        "head": "233ed6a64b0e75175358f8cdf0e7bcc71191b67b",
+        "status": "ahead",
+        "ahead_by": 1,
+        "behind_by": 0,
+        "total_commits": 1,
+        "path_count": 15,
+        "policy": "A5_AND_EXACT_HEAD_CI_ONLY",
+        "paths": [
+          "customs-clear/backend/tests/test_assistant_copilot.py",
+          "customs-clear/backend/tests/test_assistant_payment_review.py",
+          "customs-clear/backend/tests/test_compliance_permit_parser.py",
+          "customs-clear/backend/tests/test_embedding_service_safety.py",
+          "customs-clear/backend/tests/test_grounded_assistant.py",
+          "customs-clear/backend/tests/test_non_tariff_data_freshness.py",
+          "customs-clear/backend/tests/test_normative_requirements_block.py",
+          "customs-clear/backend/tests/test_ntm_child_product_markers.py",
+          "customs-clear/backend/tests/test_ntm_sgr_bad_token_boundary.py",
+          "customs-clear/backend/tests/test_ntm_trigger_food_contact.py",
+          "customs-clear/backend/tests/test_regulatory_ai_classifier.py",
+          "customs-clear/backend/tests/test_regulatory_keyword_token_boundaries.py",
+          "customs-clear/backend/tests/test_smart_tnved_search.py",
+          "customs-clear/frontend/src/components/nonTariff/NormativeRequirementsBlock.freshness.test.tsx",
+          "customs-clear/frontend/src/components/tnved/PermitDocumentsBlock.test.tsx"
+        ]
+      }
+    ],
+    "interpretation": "Live candidate diffs are fully accounted for: core 34/34 by five runtime manifests; product 43/43 by runtime/repair manifests plus two explicitly excluded A5+CI-only one-commit ranges. No path is unassigned or outside the candidate diff.",
+    "limitations": "Supplementary live coverage evidence only; it does not change the immutable request set or aggregate fingerprint, and it is not an A6 PASS.",
+    "provider_call_performed": false,
+    "credentials_read": false,
+    "request_created": false,
+    "product_heads_changed": false,
+    "tests_weakened": false
   }
 }
