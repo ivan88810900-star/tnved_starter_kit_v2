@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "checked_at": "2026-09-28T11:22:36.817Z",
-  "status": "LIVE_VERIFIED",
+  "checked_at": "2026-10-02T10:41:40Z",
+  "status": "PENDING_CURRENT_CONTRACT_A6",
   "live_verified": true,
   "provider_called": true,
   "secret_values_read": false,
@@ -305,30 +305,22 @@
     "reason": "No product code or ownership was changed by the scoped A6 follow-up. Product work remains independent of A6; the above product HEAD/CI are retained triage evidence, not a new product acceptance."
   },
   "pending_live_smoke": {
-    "request_id": "a6-live-smoke-20260928-pr218-aedb4614-gen37",
-    "prepared_at": "2026-09-28T11:18:52.000Z",
-    "base_sha": "306ebdafcba8106e7ec8243eb95977db1a23ce18",
-    "head_sha": "aedb46149267722218bcbf007e3c1eea3fcc250d",
-    "contract_sha": "08e030a6053ac9638957119373797e0fbf2b10c2",
-    "paths_json": "[\"tests/agent_orchestration/test_audit.py\",\"tools/tariff_agents/audit.py\"]",
+    "request_id": "core-s1-6415f443120f-g79",
+    "prepared_at": "2026-10-02T10:41:40Z",
+    "base_sha": "08e030a6053ac9638957119373797e0fbf2b10c2",
+    "head_sha": "6415f443120fe09d9ca857c475c8e93654b46fe7",
+    "contract_sha": "7a7911c9e3db56e825e41c411fa57a56428b5bc2",
+    "paths_json": "[\"customs-clear/backend/app/services/payment_engine.py\",\"customs-clear/backend/app/services/payment_quote_service.py\",\"customs-clear/backend/tests/test_antidumping_fixed_unit_fail_closed.py\",\"customs-clear/backend/tests/test_automatic_duty_operand_validation.py\",\"customs-clear/backend/tests/test_payment_engine.py\",\"customs-clear/backend/tests/test_payment_quote.py\",\"customs-clear/backend/tests/test_payment_source_admission.py\",\"customs-clear/backend/tests/test_special_duties.py\"]",
     "official_sources_json": "[]",
-    "packet_sha256": "3534553e36a05cb8ee6bf1442b7652da565ff23b74aef2317984172b129f082d",
+    "packet_sha256": "0b453b601410c2bab388c7a9a2a697a948bb14ee8f7227f9c12e50aa71756d5b",
     "packet_validation": "PASSED_OFFLINE_WITHOUT_CREDENTIALS",
-    "dispatched": true,
-    "consumed": true,
+    "dispatched": false,
+    "consumed": false,
     "dispatch_transport": "issue_comment",
     "retry_allowed": false,
-    "dedup_key": "ivan88810900-star/tnved_starter_kit_v2|PR218|aedb46149267722218bcbf007e3c1eea3fcc250d|post-merge-live-a6-gen37",
-    "lease_generation": 37,
-    "lease_holder": "/root/a0_automation_20260928T111657Z",
-    "dispatched_at": "2026-09-28T11:19:08Z",
-    "dispatch_comment_id": 5868816996,
-    "workflow_run_id": 36414936988,
-    "workflow_head_sha": "08e030a6053ac9638957119373797e0fbf2b10c2",
-    "result": "LIVE_VERIFIED",
-    "provider_called": true,
-    "artifact_id": 10966893551,
-    "receipt_sha256": "f1b30d1b686aad66624e56d40920bb37f6302081ac9e8b895153eab23c18858e"
+    "dedup_key": "ivan88810900-star/tnved_starter_kit_v2|core-s1-6415f443120f-g79|0b453b601410c2bab388c7a9a2a697a948bb14ee8f7227f9c12e50aa71756d5b|gen80",
+    "lease_generation": 80,
+    "lease_holder": "/root/a0_automation_20261002T104047Z"
   },
   "communication_policy": {
     "owner_decisions_single_delivery": true,
@@ -345,11 +337,12 @@
     "pr210_merge_authorization_already_received": true
   },
   "current_sequence_diagnosis": {
-    "status": "SEQUENCING_DEFECT_ALREADY_REMEDIED_BY_STATE_BEFORE_DISPATCH",
-    "prior_failure": "The previous command was created before its authoritative prepared_at timestamp; fail-closed dedupe correctly rejected it before credentials.",
-    "current_main": "08e030a6053ac9638957119373797e0fbf2b10c2",
-    "remediation": "Persist and reread the distinct immutable pending request before creating the allowlisted issue comment.",
-    "code_change_required": false
+    "status": "CURRENT_CONTRACT_REQUEST_PREPARED_BEFORE_DISPATCH",
+    "current_main": "7a7911c9e3db56e825e41c411fa57a56428b5bc2",
+    "request_id": "core-s1-6415f443120f-g79",
+    "dispatch_plan_aggregate_sha256": "9ed932aa8ffe47d3bcbe6007d06578c0a9f2ab9d523b7dbf4ea24cf6dd3c231f",
+    "provider_called_for_current_request": false,
+    "remediation": "Persist and reread this immutable pending request before creating the single allowlisted issue comment."
   },
   "a0_finding_validation": {
     "status": "COMPLETED",
