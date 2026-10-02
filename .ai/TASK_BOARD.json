@@ -774,7 +774,7 @@
     }
   ],
   "max_concurrent_subagents": 3,
-  "revision": 647,
+  "revision": 648,
   "runs": [
     {
       "head_sha": null,
@@ -4188,7 +4188,7 @@
       }
     }
   ],
-  "updated_at": "2026-10-02T11:48:10Z",
+  "updated_at": "2026-10-02T12:42:07Z",
   "max_concurrent_feature_workers": 2,
   "active_role_model": {
     "effective_at": "2026-09-30T12:58:10.633Z",
@@ -6412,6 +6412,38 @@
       "mergeable": true,
       "prior_gate_receipt": "state_integrity_receipts.a6_packet_writer_owner_gate_rev646",
       "status": "READY_FOR_OWNER_APPROVAL",
+      "protected_action_performed": false
+    },
+    "candidate_current_bridge_gate_bodies_rev648": {
+      "checked_at": "2026-10-02T12:42:07Z",
+      "pr248": {
+        "head_sha": "d96fd088e3a5093bc0a0ce53d7878007351da16e",
+        "state": "open",
+        "draft": false,
+        "mergeable": true,
+        "owner_approval_observed": false
+      },
+      "core": {
+        "pr": 244,
+        "head_sha": "14e0ee8f034d94ffc5831d87e076f4d693a5a524",
+        "draft": true,
+        "state": "open",
+        "body_current_bridge_gate": true,
+        "candidate_head_changed": false
+      },
+      "product": {
+        "pr": 245,
+        "head_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
+        "draft": true,
+        "state": "open",
+        "body_current_bridge_gate": true,
+        "candidate_head_changed": false
+      },
+      "correction": "PR244/245 descriptions now distinguish the completed #246/#247 chain from the current #248 bridge-fix owner gate; stale protected-chain wording is retained only as historical manifest context.",
+      "dispatch_status": "BLOCKED_PENDING_OWNER_APPROVAL_PR248",
+      "consumed_request_retry": false,
+      "provider_call_performed": false,
+      "tests_weakened": false,
       "protected_action_performed": false
     }
   }
