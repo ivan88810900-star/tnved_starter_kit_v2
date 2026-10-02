@@ -774,7 +774,7 @@
     }
   ],
   "max_concurrent_subagents": 3,
-  "revision": 637,
+  "revision": 638,
   "runs": [
     {
       "head_sha": null,
@@ -4188,7 +4188,7 @@
       }
     }
   ],
-  "updated_at": "2026-10-02T03:52:00Z",
+  "updated_at": "2026-10-02T04:52:00Z",
   "max_concurrent_feature_workers": 2,
   "active_role_model": {
     "effective_at": "2026-09-30T12:58:10.633Z",
@@ -5323,6 +5323,22 @@
           "The exact-head test command failed before collection because pytest is absent; offline cache resolution also lacked pytest. Historical exact-head A5/CI evidence remains unchanged."
         ]
       },
+      "fresh_child_sgr_semantic_revalidation_20261002": {
+        "checked_at": "2026-10-02T04:52:00Z",
+        "head_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
+        "tree_sha": "f31e36b3b9c3998f2a63440f58a756270f28d23e",
+        "assertions": 55,
+        "child_audience_predicate": "PASSED",
+        "curated_literal_marker_gate": "PASSED",
+        "official_seed_3304_definite_gate": "PASSED",
+        "execution_method": "EXACT_TRACKED_MODULES_AND_OFFICIAL_SEED_WITH_UNUSED_DB_IMPORTS_STUBBED",
+        "tracked_tree_changed": false,
+        "pass_scope": "CHILD_AUDIENCE_AND_OFFICIAL_3304_SGR_SEMANTICS",
+        "limitations": [
+          "This is a direct exact-head semantic harness, not a pytest-suite execution.",
+          "Only unused SQLAlchemy/DB model imports were stubbed; the matching modules, HS normalizer, official SGR evaluator and seed payload were loaded from the candidate tree."
+        ]
+      },
       "integration_pr": 245,
       "integration_pr_draft": true,
       "exact_head_ci_status": "PASSED",
@@ -5947,6 +5963,34 @@
       },
       "pass_scope": "PYTHON_SYNTAX_ONLY",
       "behavioral_pass_claimed": false,
+      "historical_a5_or_ci_changed": false,
+      "tracked_tree_changed": false,
+      "candidate_head_changed": false,
+      "tests_weakened": false,
+      "protected_action_performed": false
+    },
+    "product_child_sgr_semantic_revalidation_rev638": {
+      "checked_at": "2026-10-02T04:52:00Z",
+      "pr": 245,
+      "head_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
+      "tree_sha": "f31e36b3b9c3998f2a63440f58a756270f28d23e",
+      "assertion_count": 55,
+      "results": {
+        "child_audience_predicate": "PASSED",
+        "curated_literal_marker_gate": "PASSED",
+        "official_seed_3304_definite_gate": "PASSED"
+      },
+      "cases_include": [
+        "unrelated дет-prefix words",
+        "explicit child audiences",
+        "mixed adult and child audiences",
+        "fused and spaced negations",
+        "non-breaking-space negation",
+        "predicate negation"
+      ],
+      "execution_method": "EXACT_TRACKED_MODULES_AND_OFFICIAL_SEED_WITH_UNUSED_DB_IMPORTS_STUBBED",
+      "pass_scope": "CHILD_AUDIENCE_AND_OFFICIAL_3304_SGR_SEMANTICS",
+      "pytest_suite_pass_claimed": false,
       "historical_a5_or_ci_changed": false,
       "tracked_tree_changed": false,
       "candidate_head_changed": false,
