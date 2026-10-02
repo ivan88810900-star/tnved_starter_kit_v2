@@ -273,7 +273,7 @@
     "sha256": "9ed932aa8ffe47d3bcbe6007d06578c0a9f2ab9d523b7dbf4ea24cf6dd3c231f",
     "canonicalization": "RFC8259 compact JSON with recursively sorted object keys over protected chain, bridge contract, candidates, limits, prior-manifest rebuild, ordered requests, exclusions and dispatch invariants; trailing newline included"
   },
-  "updated_at": "2026-10-02T10:53:31Z",
+  "updated_at": "2026-10-02T10:57:04Z",
   "dispatch_history": [
     {
       "request_id": "core-s1-6415f443120f-g79",
@@ -284,10 +284,12 @@
       "provider_called": false,
       "retry_allowed": false,
       "bridge_fix_pr": 248,
-      "bridge_fix_head_sha": "d0a56d383bd34135ab78e30d625b723bd43c80fe"
+      "bridge_fix_head_sha": "d96fd088e3a5093bc0a0ce53d7878007351da16e"
     }
   ],
   "remaining_unconsumed_request_count": 10,
   "required_replacement_requests": 1,
-  "next_gate": "Fresh independent A5, A0 validation and exact-head CI for PR248; owner approval and merge of exact bridge-fix HEAD; then generate a new non-retry replacement for consumed core slice 1 and resume sequential dispatch."
+  "next_gate": "Fresh independent A5, A0 validation and exact-head CI for PR248; owner approval and merge of exact bridge-fix HEAD; then generate a new non-retry replacement for consumed core slice 1 and resume sequential dispatch.",
+  "bridge_fix_tree_sha": "2d6c960568ab533c1b3a1021c3bfff65f2cbedb5",
+  "bridge_fix_exact_head_ci": "PENDING"
 }
