@@ -774,7 +774,7 @@
     }
   ],
   "max_concurrent_subagents": 3,
-  "revision": 649,
+  "revision": 650,
   "runs": [
     {
       "head_sha": null,
@@ -4188,7 +4188,7 @@
       }
     }
   ],
-  "updated_at": "2026-10-02T13:50:54Z",
+  "updated_at": "2026-10-02T14:46:05Z",
   "max_concurrent_feature_workers": 2,
   "active_role_model": {
     "effective_at": "2026-09-30T12:58:10.633Z",
@@ -5517,14 +5517,18 @@
     },
     "dispatch_plan": {
       "path": ".ai/A6_DISPATCH_PLAN.json",
-      "blob_sha": "fa683944716900bc48a598fc481ae8255c0addbb",
-      "commit_sha": "134348398785eb1a263074edc4aca967338ff545",
+      "blob_sha": "8d0632aceb73ef2176082b782be9a686c6feeead",
+      "commit_sha": "90552801ff39c61d5abaab906606fa5efaeab11a",
       "aggregate_sha256": "9ed932aa8ffe47d3bcbe6007d06578c0a9f2ab9d523b7dbf4ea24cf6dd3c231f",
       "request_count": 11,
       "consumed_blocked_pre_provider": 1,
       "remaining_unconsumed": 10,
       "replacement_requests_required": 1,
-      "provider_call_performed": false
+      "provider_call_performed": false,
+      "status": "BLOCKED_AWAITING_OWNER_APPROVAL_PR248",
+      "replacement_preflight": "RESERVED_NOT_DISPATCHABLE_PENDING_PR248_MERGE",
+      "replacement_key": "core-s1-6415f443120f-r1-pr248",
+      "updated_at": "2026-10-02T14:46:05Z"
     },
     "bridge_fix_gate": {
       "pr": 248,
@@ -6507,6 +6511,41 @@
       "tests_weakened": false,
       "protected_action_performed": false,
       "nonmain_merge_performed": false
+    },
+    "a6_replacement_preflight_rev650": {
+      "checked_at": "2026-10-02T14:46:05Z",
+      "lease_generation": 84,
+      "source_consumed_request_id": "core-s1-6415f443120f-g79",
+      "consumed_request_retry": false,
+      "replacement_key": "core-s1-6415f443120f-r1-pr248",
+      "final_request_created": false,
+      "status": "RESERVED_NOT_DISPATCHABLE_PENDING_PR248_MERGE",
+      "exact_slice": {
+        "base_sha": "08e030a6053ac9638957119373797e0fbf2b10c2",
+        "head_sha": "6415f443120fe09d9ca857c475c8e93654b46fe7",
+        "path_count": 8,
+        "expected_packet_binding_sha256": "0b453b601410c2bab388c7a9a2a697a948bb14ee8f7227f9c12e50aa71756d5b"
+      },
+      "bridge_fix_gate": {
+        "pr": 248,
+        "head_sha": "d96fd088e3a5093bc0a0ce53d7878007351da16e",
+        "state": "open",
+        "draft": false,
+        "mergeable": true,
+        "owner_approval_observed": false,
+        "status": "READY_FOR_OWNER_APPROVAL"
+      },
+      "dispatch_plan": {
+        "path": ".ai/A6_DISPATCH_PLAN.json",
+        "blob_sha": "8d0632aceb73ef2176082b782be9a686c6feeead",
+        "commit_sha": "90552801ff39c61d5abaab906606fa5efaeab11a"
+      },
+      "postmerge_rule": "After exact PR248 is owner-approved and merged, resolve the new main SHA, rebuild the exact packet, verify binding, record fresh canonical hash/bytes, then create one distinct immutable request ID and invoke the checked path once.",
+      "provider_call_performed": false,
+      "credentials_read": false,
+      "product_heads_changed": false,
+      "tests_weakened": false,
+      "protected_action_performed": false
     }
   }
 }
