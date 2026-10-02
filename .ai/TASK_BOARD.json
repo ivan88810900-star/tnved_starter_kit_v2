@@ -774,7 +774,7 @@
     }
   ],
   "max_concurrent_subagents": 3,
-  "revision": 640,
+  "revision": 641,
   "runs": [
     {
       "head_sha": null,
@@ -4188,7 +4188,7 @@
       }
     }
   ],
-  "updated_at": "2026-10-02T06:56:00Z",
+  "updated_at": "2026-10-02T08:47:30Z",
   "max_concurrent_feature_workers": 2,
   "active_role_model": {
     "effective_at": "2026-09-30T12:58:10.633Z",
@@ -4416,7 +4416,7 @@
       "post_merge_note": "The explicit owner permission applied only to PR243 exact HEAD 6ee3843c7a03276132cfca83981d68c4afa9cd81 and is fully consumed."
     },
     "pr246": {
-      "status": "READY_FOR_OWNER_APPROVAL",
+      "status": "MERGED_OWNER_AUTHORIZED_CONSUMED",
       "pr": 246,
       "branch": "agent/a6-findings-post243-v2",
       "base_branch": "main",
@@ -4458,7 +4458,7 @@
         "head_sha": "dc0397c7815e092ad8d3bd41d0d98af197212e1e",
         "evidence": "A0 independently reviewed exact two-file diff and reran 40 focused, 126 required-verifier, 131 broad tests, validate-snapshot and diff check. All three prior A5 findings are closed on the unchanged exact head."
       },
-      "owner_gate": "READY_FOR_OWNER_APPROVAL as first protected merge in exact chain PR246 dc0397c7 then PR247 c1f04847.",
+      "owner_gate": "CONSUMED: authorization applied only to exact HEAD dc0397c7815e092ad8d3bd41d0d98af197212e1e.",
       "evidence_invalidation": "Any new HEAD resets A5, A0 validation and exact-head CI.",
       "prior_head": {
         "head_sha": "72d16b3054870357a1e76637d59ee479b3d2772b",
@@ -4599,14 +4599,18 @@
           "broad": "131/131 PASS",
           "diff_check": "PASS"
         }
-      }
+      },
+      "merged_at": "2026-10-02T07:42:08Z",
+      "merge_commit_sha": "2576d6408c934ddf2ccc0aec87c6098740790630",
+      "owner_permission_consumed": true,
+      "permission_reusable": false
     },
     "pr247": {
-      "status": "READY_FOR_OWNER_APPROVAL",
+      "status": "MERGED_OWNER_AUTHORIZED_CONSUMED",
       "pr": 247,
       "branch": "agent/a6-postverify-post243-v2",
-      "base_branch": "agent/a6-findings-post243-v2",
-      "base_head_sha": "dc0397c7815e092ad8d3bd41d0d98af197212e1e",
+      "base_branch": "main",
+      "base_head_sha": "2576d6408c934ddf2ccc0aec87c6098740790630",
       "head_sha": "c1f04847c2a40b01a3e1f0759d9e97e309cc2e3b",
       "draft": false,
       "ready_for_review": true,
@@ -4629,28 +4633,31 @@
       },
       "ci": {
         "status": "PASSED",
+        "event": "pull_request",
+        "run_id": 36985894223,
         "exact_head": true,
         "head_sha": "c1f04847c2a40b01a3e1f0759d9e97e309cc2e3b",
-        "run_id": 36865520378,
-        "event": "push"
+        "base_sha": "2576d6408c934ddf2ccc0aec87c6098740790630",
+        "conclusion": "success"
       },
       "a5": {
         "status": "PASSED",
-        "reviewer": "/root/a5_pr247_post246_stack",
+        "reviewer": "A5_INDEPENDENT_CURRENT_BASE",
         "head_sha": "c1f04847c2a40b01a3e1f0759d9e97e309cc2e3b",
-        "base_sha": "dc0397c7815e092ad8d3bd41d0d98af197212e1e",
-        "focused": "56/56 PASS",
-        "required_verify": "128/128 PASS",
-        "broad": "133/133 PASS",
-        "snapshot": "5/5 PASS",
+        "base_sha": "2576d6408c934ddf2ccc0aec87c6098740790630",
+        "exact_diff_files": 2,
+        "focused_exact_head": "16/16 PASS",
+        "stale_stacked_evidence_reused": false,
         "findings": []
       },
       "a0_validation": {
         "status": "PASSED",
+        "validated_at": "2026-10-02T08:45:30Z",
         "head_sha": "c1f04847c2a40b01a3e1f0759d9e97e309cc2e3b",
-        "evidence": "A0 independently verified the exact merge tree and two-file base diff, then reran 56 focused, 128 required-verifier, 133 broad tests, validate-snapshot and diff check. Admission remains strict and fail-closed."
+        "base_sha": "2576d6408c934ddf2ccc0aec87c6098740790630",
+        "evidence": "A0 independently reviewed the exact current main..HEAD two-file diff and strict fail-closed admission invariants. live_verified must be a real boolean; pending request remains exact undispatched, unconsumed and offline-validated. Exact-head module suite 16/16 passed."
       },
-      "owner_gate": "READY_FOR_OWNER_APPROVAL as second protected merge after exact PR246 dc0397c7.",
+      "owner_gate": "CONSUMED: authorization applied only to exact HEAD c1f04847c2a40b01a3e1f0759d9e97e309cc2e3b after fresh current-base gates.",
       "evidence_invalidation": "Any new HEAD or changed stack base resets A5, A0 validation and exact-head CI.",
       "restack": {
         "method": "NON_FORCE_MERGE_COMMIT",
@@ -4672,7 +4679,11 @@
             "conclusion": "success"
           }
         ]
-      }
+      },
+      "merged_at": "2026-10-02T08:46:51Z",
+      "merge_commit_sha": "7a7911c9e3db56e825e41c411fa57a56428b5bc2",
+      "owner_permission_consumed": true,
+      "permission_reusable": false
     }
   },
   "pr_hygiene": {
@@ -5055,7 +5066,10 @@
           "draft": true,
           "body_records_exact_head_ci_run_id": 36853205641,
           "body_records_packet_preflight": true,
-          "body_records_current_protected_chain": [246, 247],
+          "body_records_current_protected_chain": [
+            246,
+            247
+          ],
           "limitations_preserved": true
         },
         {
@@ -5065,7 +5079,10 @@
           "draft": true,
           "body_records_exact_head_ci_run_id": 36853210034,
           "body_records_packet_preflight": true,
-          "body_records_current_protected_chain": [246, 247],
+          "body_records_current_protected_chain": [
+            246,
+            247
+          ],
           "limitations_preserved": true
         }
       ],
@@ -5190,27 +5207,29 @@
     }
   },
   "a6_candidate_preflight": {
-    "status": "BOTH_CANDIDATES_A5_PASS_EXACT_HEAD_CI_PASS_PACKET_READY_BLOCKED_SUCCESSOR_CHAIN",
-    "checked_at": "2026-10-01T20:49:00Z",
+    "status": "PROTECTED_CHAIN_MERGED_REVALIDATE_BRIDGE_AND_REBUILD_PACKETS_BEFORE_LIVE_A6",
+    "checked_at": "2026-10-02T08:47:30Z",
     "bridge": {
       "live_verified": true,
       "current_pending_consumed": true,
-      "current_main_sha": "4a7f78e2835d036be3f1137de1786615d31dcedd",
+      "current_main_sha": "7a7911c9e3db56e825e41c411fa57a56428b5bc2",
       "role_model_pr243_merged": true,
       "role_model_owner_permission_consumed": true,
       "successor_chain_required": [
         246,
         247
       ],
-      "pr246_merged": false,
-      "pr247_merged": false,
+      "pr246_merged": true,
+      "pr247_merged": true,
       "subsequent_a6_available": false,
-      "rule": "Do not call or simulate subsequent live A6 until owner-authorized protected merges complete in order PR246 then PR247.",
+      "rule": "Protected successor chain is merged. Rebuild/compare immutable request packets and prove the merged bridge satisfies the current contract before any provider dispatch.",
       "pr246_head_sha": "dc0397c7815e092ad8d3bd41d0d98af197212e1e",
       "pr247_head_sha": "c1f04847c2a40b01a3e1f0759d9e97e309cc2e3b",
       "pr247_restack_required": false,
       "pr247_fresh_gates_pending": false,
-      "protected_chain_ready_for_owner_approval": true
+      "protected_chain_ready_for_owner_approval": false,
+      "owner_permission_consumed": true,
+      "status": "MERGED_BRIDGE_CURRENT_CONTRACT_REVALIDATION_REQUIRED"
     },
     "contract": {
       "ref": "08e030a6053ac9638957119373797e0fbf2b10c2",
@@ -6080,6 +6099,36 @@
       "a6_pass_claimed": false,
       "tests_weakened": false,
       "protected_action_performed": false
+    },
+    "protected_chain_completion_rev641": {
+      "checked_at": "2026-10-02T08:47:30Z",
+      "owner_authorization_scope": "exact PR246 dc0397c7815e092ad8d3bd41d0d98af197212e1e then exact PR247 c1f04847c2a40b01a3e1f0759d9e97e309cc2e3b",
+      "pr246": {
+        "head_sha": "dc0397c7815e092ad8d3bd41d0d98af197212e1e",
+        "merged_at": "2026-10-02T07:42:08Z",
+        "merge_commit_sha": "2576d6408c934ddf2ccc0aec87c6098740790630",
+        "permission_consumed": true
+      },
+      "pr247": {
+        "current_base_sha": "2576d6408c934ddf2ccc0aec87c6098740790630",
+        "head_sha": "c1f04847c2a40b01a3e1f0759d9e97e309cc2e3b",
+        "fresh_a5": "PASSED_16_OF_16_EXACT_HEAD_TESTS",
+        "fresh_a0": "PASSED",
+        "current_base_ci": {
+          "run_id": 36985894223,
+          "event": "pull_request",
+          "conclusion": "success"
+        },
+        "merged_at": "2026-10-02T08:46:51Z",
+        "merge_commit_sha": "7a7911c9e3db56e825e41c411fa57a56428b5bc2",
+        "expected_head_guard_used": true,
+        "permission_consumed": true
+      },
+      "main_sha_after_chain": "7a7911c9e3db56e825e41c411fa57a56428b5bc2",
+      "next_gate": "Revalidate merged bridge against current contract; rebuild and compare immutable A6 packets for unchanged PR244/PR245 before any provider call.",
+      "provider_call_performed": false,
+      "candidate_heads_changed": false,
+      "other_protected_action_performed": false
     }
   }
 }
