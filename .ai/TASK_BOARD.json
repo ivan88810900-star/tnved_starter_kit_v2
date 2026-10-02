@@ -774,7 +774,7 @@
     }
   ],
   "max_concurrent_subagents": 3,
-  "revision": 635,
+  "revision": 636,
   "runs": [
     {
       "head_sha": null,
@@ -4188,7 +4188,7 @@
       }
     }
   ],
-  "updated_at": "2026-10-02T01:53:00Z",
+  "updated_at": "2026-10-02T02:57:00Z",
   "max_concurrent_feature_workers": 2,
   "active_role_model": {
     "effective_at": "2026-09-30T12:58:10.633Z",
@@ -5361,7 +5361,21 @@
           "existing Vite chunk-size warning",
           "stale caniuse-lite advisory"
         ],
-        "historical_a5_record_changed": false
+        "historical_a5_record_changed": false,
+        "fresh_revalidation_20261002": {
+          "validated_at": "2026-10-02T02:56:05Z",
+          "head_sha": "14e0ee8f034d94ffc5831d87e076f4d693a5a524",
+          "typecheck": "PASSED",
+          "production_build": "PASSED",
+          "frontend_test_files_present": false,
+          "vitest_status": "NOT_RUN_NO_TEST_FILES",
+          "npm_ls_all_status": "NOT_PASS_SYMLINKED_OFFLINE_TREE_DEV_METADATA",
+          "npm_ls_depth_zero_exit": 0,
+          "package_json_sha256": "81c8d05d68d29190d7bf69a7c484d66b2988502bd837fde7574e543a7263c56b",
+          "package_lock_sha256": "1bd7a45bc3944e6c8975f2a290c37c9c76581505a921b2ed1b274d87c7d8bacd",
+          "tracked_tree_changed": false,
+          "pass_scope": "TYPESCRIPT_AND_PRODUCTION_BUILD_ONLY"
+        }
       },
       "integration_pr": 244,
       "integration_pr_draft": true,
@@ -5872,6 +5886,32 @@
       "owner_approval_present": false,
       "provider_call_performed": false,
       "a6_pass_claimed": false,
+      "tests_weakened": false,
+      "protected_action_performed": false
+    },
+    "core_frontend_fresh_revalidation_rev636": {
+      "checked_at": "2026-10-02T02:57:00Z",
+      "pr": 244,
+      "head_sha": "14e0ee8f034d94ffc5831d87e076f4d693a5a524",
+      "package_json_sha256": "81c8d05d68d29190d7bf69a7c484d66b2988502bd837fde7574e543a7263c56b",
+      "package_lock_sha256": "1bd7a45bc3944e6c8975f2a290c37c9c76581505a921b2ed1b274d87c7d8bacd",
+      "results": {
+        "npm_run_typecheck": "PASSED",
+        "npm_run_build": "PASSED",
+        "frontend_test_files": 0,
+        "vitest": "NOT_RUN_NO_TEST_FILES",
+        "npm_ls_all": "NOT_PASS_SYMLINKED_OFFLINE_TREE_DEV_METADATA",
+        "npm_ls_depth_zero": "EXIT_0_WITH_EXTRANEOUS_METADATA"
+      },
+      "warnings": [
+        "existing Lightning CSS pseudo-class warning",
+        "existing Vite chunk-size warning",
+        "stale caniuse-lite advisory",
+        "vite react-swc esbuild option deprecation warning"
+      ],
+      "pass_scope": "TYPESCRIPT_AND_PRODUCTION_BUILD_ONLY",
+      "tracked_tree_changed": false,
+      "candidate_head_changed": false,
       "tests_weakened": false,
       "protected_action_performed": false
     }
