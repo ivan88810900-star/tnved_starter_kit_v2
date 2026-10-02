@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
   "state": "active",
-  "holder": "A0",
-  "token": "a0-20261002T1041Z-gen80-a6-core-s1",
+  "holder": "/root/a0_automation_20261002T104047Z",
+  "token": "9368c1c394ae24e2cd87aa5fb55dacf03404fe4b69f60d46088192a153e29e5f",
   "generation": 80,
   "updated_at": "2026-10-02T10:40:47Z",
   "expires_at": "2026-10-02T11:40:47Z"
