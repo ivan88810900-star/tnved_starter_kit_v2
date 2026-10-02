@@ -774,7 +774,7 @@
     }
   ],
   "max_concurrent_subagents": 3,
-  "revision": 644,
+  "revision": 645,
   "runs": [
     {
       "head_sha": null,
@@ -4188,7 +4188,7 @@
       }
     }
   ],
-  "updated_at": "2026-10-02T10:57:26Z",
+  "updated_at": "2026-10-02T11:02:37Z",
   "max_concurrent_feature_workers": 2,
   "active_role_model": {
     "effective_at": "2026-09-30T12:58:10.633Z",
@@ -4686,13 +4686,43 @@
       "permission_reusable": false
     },
     "a6_packet_writer_pr248": {
-      "status": "DEVELOPER_CANDIDATE_AWAITING_A5_AND_CURRENT_HEAD_CI",
+      "status": "AWAITING_FRESH_INDEPENDENT_A5",
       "pr": 248,
       "head_sha": "d96fd088e3a5093bc0a0ce53d7878007351da16e",
       "source_run_id": 36996924714,
       "reason_code": "PACKET_JSON_CONTACT_RECLASSIFICATION",
       "provider_called": false,
-      "tree_sha": "2d6c960568ab533c1b3a1021c3bfff65f2cbedb5"
+      "tree_sha": "2d6c960568ab533c1b3a1021c3bfff65f2cbedb5",
+      "base_branch": "main",
+      "base_sha": "7a7911c9e3db56e825e41c411fa57a56428b5bc2",
+      "draft": true,
+      "mergeable": true,
+      "changed_files": [
+        "tools/tariff_agents/audit_bridge.py",
+        "tests/agent_orchestration/test_audit_bridge.py"
+      ],
+      "ci": {
+        "status": "PASSED",
+        "exact_head": true,
+        "run_id": 36998232448,
+        "job": "offline-safety",
+        "conclusion": "success"
+      },
+      "a0_validation": {
+        "status": "PASSED",
+        "validated_at": "2026-10-02T11:02:37Z",
+        "head_sha": "d96fd088e3a5093bc0a0ce53d7878007351da16e",
+        "tree_sha": "2d6c960568ab533c1b3a1021c3bfff65f2cbedb5",
+        "evidence": "A0 reran the full orchestration suite on the exact current head: 134/134 tests plus 217 subtests passed. Exact production core-s1 packet rebuilt under current contract and serialized with unchanged binding 0b453b601410c2bab388c7a9a2a697a948bb14ee8f7227f9c12e50aa71756d5b (393596 bytes)."
+      },
+      "a5": {
+        "status": "MISSING",
+        "evidence_reusable": false,
+        "required": "Fresh independent review on exact head d96fd088e3a5093bc0a0ce53d7878007351da16e"
+      },
+      "owner_gate": "NOT_READY: fresh independent A5 is mandatory before asking for protected merge approval.",
+      "evidence_invalidation": "Any new HEAD resets A5, A0 validation and exact-head CI.",
+      "protected_action_performed": false
     }
   },
   "pr_hygiene": {
@@ -6293,6 +6323,32 @@
       "provider_call_performed": false,
       "protected_action_performed": false,
       "next_gate": "Fresh independent A5 and exact-head CI on d96fd088e3a5093bc0a0ce53d7878007351da16e."
+    },
+    "a6_packet_writer_current_head_gates_rev645": {
+      "checked_at": "2026-10-02T11:02:37Z",
+      "pr": 248,
+      "base_sha": "7a7911c9e3db56e825e41c411fa57a56428b5bc2",
+      "head_sha": "d96fd088e3a5093bc0a0ce53d7878007351da16e",
+      "tree_sha": "2d6c960568ab533c1b3a1021c3bfff65f2cbedb5",
+      "exact_head_ci": {
+        "status": "PASSED",
+        "run_id": 36998232448,
+        "job": "offline-safety",
+        "conclusion": "success"
+      },
+      "a0_validation": {
+        "status": "PASSED",
+        "full_orchestration": "134/134 tests plus 217 subtests",
+        "exact_packet_writer": "PASSED",
+        "packet_binding_sha256": "0b453b601410c2bab388c7a9a2a697a948bb14ee8f7227f9c12e50aa71756d5b",
+        "serialized_packet_bytes": 393596
+      },
+      "independent_a5": "MISSING",
+      "candidate_heads_changed": false,
+      "tests_weakened": false,
+      "provider_call_performed": false,
+      "protected_action_performed": false,
+      "next_gate": "Fresh independent A5 on exact PR248 HEAD; no live A6 dispatch and no protected merge before that review."
     }
   }
 }
