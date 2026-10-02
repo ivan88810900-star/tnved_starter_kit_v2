@@ -774,7 +774,7 @@
     }
   ],
   "max_concurrent_subagents": 3,
-  "revision": 654,
+  "revision": 655,
   "runs": [
     {
       "head_sha": null,
@@ -4188,7 +4188,7 @@
       }
     }
   ],
-  "updated_at": "2026-10-02T18:44:46Z",
+  "updated_at": "2026-10-02T19:40:10Z",
   "max_concurrent_feature_workers": 2,
   "active_role_model": {
     "effective_at": "2026-09-30T12:58:10.633Z",
@@ -4686,7 +4686,7 @@
       "permission_reusable": false
     },
     "a6_packet_writer_pr248": {
-      "status": "READY_FOR_OWNER_APPROVAL",
+      "status": "READY_FOR_OWNER_APPROVAL_PREMERGE_WORK_COMPLETE",
       "pr": 248,
       "head_sha": "d96fd088e3a5093bc0a0ce53d7878007351da16e",
       "source_run_id": 36996924714,
@@ -4760,7 +4760,10 @@
       },
       "owner_approval_observed": false,
       "body_live_owner_gate_packet": true,
-      "body_live_owner_gate_packet_at": "2026-10-02T18:44:46Z"
+      "body_live_owner_gate_packet_at": "2026-10-02T18:44:46Z",
+      "premerge_readiness_complete": true,
+      "sole_blocker": "Explicit owner approval to merge exact HEAD into main.",
+      "updated_at": "2026-10-02T19:40:10Z"
     }
   },
   "pr_hygiene": {
@@ -5540,23 +5543,24 @@
     },
     "dispatch_plan": {
       "path": ".ai/A6_DISPATCH_PLAN.json",
-      "blob_sha": "5d986f83ceed106993b5a5935c61028995ab65a0",
-      "commit_sha": "bf4777ddedaf117c163d3019e3ca685c1202a4da",
+      "blob_sha": "a01341c56775e888b1c5602f626461eff9283a49",
+      "commit_sha": "f6adc07e3b9115ede0cac20f83c1324dc2091209",
       "aggregate_sha256": "9ed932aa8ffe47d3bcbe6007d06578c0a9f2ab9d523b7dbf4ea24cf6dd3c231f",
       "request_count": 11,
       "consumed_blocked_pre_provider": 1,
       "remaining_unconsumed": 10,
       "replacement_requests_required": 1,
       "provider_call_performed": false,
-      "status": "BLOCKED_AWAITING_OWNER_APPROVAL_PR248",
+      "status": "BLOCKED_OWNER_ACTION_ONLY_PR248",
       "replacement_preflight": "RESERVED_NOT_DISPATCHABLE_PENDING_PR248_MERGE",
       "replacement_key": "core-s1-6415f443120f-r1-pr248",
-      "updated_at": "2026-10-02T16:44:13Z",
+      "updated_at": "2026-10-02T19:40:10Z",
       "source_lineage_validation": "PASSED_LIVE_GITHUB_NO_PROVIDER",
       "source_lineage_request_count": 11,
       "live_path_coverage_validation": "PASSED_LIVE_GITHUB_NO_PROVIDER",
       "core_path_coverage": "34/34",
-      "product_path_coverage": "43/43"
+      "product_path_coverage": "43/43",
+      "premerge_readiness": "COMPLETE"
     },
     "bridge_fix_gate": {
       "pr": 248,
@@ -6732,6 +6736,42 @@
       "owner_approval_observed": false,
       "provider_call_performed": false,
       "credentials_read": false,
+      "product_heads_changed": false,
+      "tests_weakened": false,
+      "protected_action_performed": false
+    },
+    "pr248_premerge_readiness_complete_rev655": {
+      "checked_at": "2026-10-02T19:40:10Z",
+      "lease_generation": 89,
+      "status": "COMPLETE_BLOCKED_OWNER_ACTION_ONLY",
+      "pr": 248,
+      "head_sha": "d96fd088e3a5093bc0a0ce53d7878007351da16e",
+      "base_sha": "7a7911c9e3db56e825e41c411fa57a56428b5bc2",
+      "state": "open",
+      "draft": false,
+      "mergeable": true,
+      "completed_evidence": [
+        "fresh independent A5 PASS",
+        "A0 exact-head PASS",
+        "exact-head CI 36998232448 PASS",
+        "source lineage 11/11",
+        "path coverage core 34/34",
+        "path coverage product 43/43",
+        "tree-equivalent protected merge dry-run",
+        "PR body current",
+        "distinct replacement protocol reserved without request creation"
+      ],
+      "sole_blocker": "Explicit owner approval to merge exact PR248 HEAD into main.",
+      "dispatch_plan": {
+        "path": ".ai/A6_DISPATCH_PLAN.json",
+        "blob_sha": "a01341c56775e888b1c5602f626461eff9283a49",
+        "commit_sha": "f6adc07e3b9115ede0cac20f83c1324dc2091209"
+      },
+      "owner_approval_observed": false,
+      "provider_call_performed": false,
+      "credentials_read": false,
+      "request_created": false,
+      "consumed_request_retry": false,
       "product_heads_changed": false,
       "tests_weakened": false,
       "protected_action_performed": false
