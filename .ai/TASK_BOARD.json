@@ -774,7 +774,7 @@
     }
   ],
   "max_concurrent_subagents": 3,
-  "revision": 634,
+  "revision": 635,
   "runs": [
     {
       "head_sha": null,
@@ -4188,7 +4188,7 @@
       }
     }
   ],
-  "updated_at": "2026-10-02T00:51:00Z",
+  "updated_at": "2026-10-02T01:53:00Z",
   "max_concurrent_feature_workers": 2,
   "active_role_model": {
     "effective_at": "2026-09-30T12:58:10.633Z",
@@ -5844,6 +5844,30 @@
       "aggregate_sha256": "496bb2f2eb9227cfd5e2e219ab877b24aa8c36f8f05d62bf0706ff06c1130ff1",
       "request_count": 11,
       "status": "PREPARED_OFFLINE_NOT_DISPATCHABLE",
+      "candidate_heads_changed": false,
+      "owner_approval_present": false,
+      "provider_call_performed": false,
+      "a6_pass_claimed": false,
+      "tests_weakened": false,
+      "protected_action_performed": false
+    },
+    "candidate_pr_dispatch_plan_links_rev635": {
+      "checked_at": "2026-10-02T01:53:00Z",
+      "plan_path": ".ai/A6_DISPATCH_PLAN.json",
+      "plan_commit_sha": "1d36df5730f5626a27dc262a5b4e77ecf4b6163c",
+      "plan_blob_sha": "7d8211f029a5142920653a0918970b57cc239e9c",
+      "plan_file_sha256": "2237d1982ddf6d965abf41d5e4be584135160f5bd76c0628f0103c0caf5cf889",
+      "aggregate_sha256": "496bb2f2eb9227cfd5e2e219ab877b24aa8c36f8f05d62bf0706ff06c1130ff1",
+      "pr244": {
+        "head_sha": "14e0ee8f034d94ffc5831d87e076f4d693a5a524",
+        "draft": true,
+        "body_status": "CURRENT_PLAN_PERMALINK_AND_HASHES_LINKED"
+      },
+      "pr245": {
+        "head_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
+        "draft": true,
+        "body_status": "CURRENT_PLAN_PERMALINK_AND_HASHES_LINKED"
+      },
       "candidate_heads_changed": false,
       "owner_approval_present": false,
       "provider_call_performed": false,
