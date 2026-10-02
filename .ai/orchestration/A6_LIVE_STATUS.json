@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "checked_at": "2026-10-02T10:53:19Z",
+  "checked_at": "2026-10-02T10:56:56Z",
   "status": "BLOCKED_PACKET_SERIALIZATION_FALSE_POSITIVE",
   "live_verified": true,
   "provider_called": false,
@@ -362,7 +362,7 @@
     "artifact_uploaded": false,
     "reason_code": "PACKET_JSON_CONTACT_RECLASSIFICATION",
     "bridge_fix_pr": 248,
-    "bridge_fix_head_sha": "d0a56d383bd34135ab78e30d625b723bd43c80fe"
+    "bridge_fix_head_sha": "d96fd088e3a5093bc0a0ce53d7878007351da16e"
   },
   "communication_policy": {
     "owner_decisions_single_delivery": true,
@@ -393,9 +393,17 @@
     ],
     "independent_local_reproduction": "CONFIRMED",
     "fix_pr": 248,
-    "fix_head_sha": "d0a56d383bd34135ab78e30d625b723bd43c80fe",
+    "fix_head_sha": "d96fd088e3a5093bc0a0ce53d7878007351da16e",
     "fix_tests": "134/134 orchestration PASS; exact packet write PASS with unchanged packet binding",
-    "retry_rule": "This request generation is consumed and must never be retried. Build a new request only after the exact bridge fix is owner-approved and merged."
+    "retry_rule": "This request generation is consumed and must never be retried. Build a new request only after the exact bridge fix is owner-approved and merged.",
+    "fix_tree_sha": "2d6c960568ab533c1b3a1021c3bfff65f2cbedb5",
+    "superseded_intermediate_head_ci": {
+      "head_sha": "d0a56d383bd34135ab78e30d625b723bd43c80fe",
+      "run_id": 36997920566,
+      "conclusion": "failure",
+      "reason": "regression fixture was double-escaped during connector publication; corrected without changing the tested tree intent"
+    },
+    "current_fix_ci": "PENDING"
   },
   "a0_finding_validation": {
     "status": "COMPLETED",
