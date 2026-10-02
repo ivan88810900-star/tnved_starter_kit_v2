@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "checked_at": "2026-10-02T10:56:56Z",
-  "status": "BLOCKED_PACKET_SERIALIZATION_FALSE_POSITIVE",
+  "checked_at": "2026-10-02T11:47:39Z",
+  "status": "BLOCKED_PENDING_OWNER_APPROVAL_PR248",
   "live_verified": true,
   "provider_called": false,
   "secret_values_read": false,
@@ -379,7 +379,7 @@
     "pr210_merge_authorization_already_received": true
   },
   "current_sequence_diagnosis": {
-    "status": "CONFIRMED_BRIDGE_SERIALIZATION_DEFECT",
+    "status": "FIX_VERIFIED_READY_FOR_OWNER_APPROVAL",
     "workflow_run_id": 36996924714,
     "request_id": "core-s1-6415f443120f-g79",
     "context_gate": "PASSED",
@@ -403,7 +403,23 @@
       "conclusion": "failure",
       "reason": "regression fixture was double-escaped during connector publication; corrected without changing the tested tree intent"
     },
-    "current_fix_ci": "PENDING"
+    "current_fix_ci": {
+      "status": "PASSED",
+      "run_id": 36998232448,
+      "conclusion": "success"
+    },
+    "fresh_independent_a5": {
+      "status": "PASSED",
+      "reviewer": "/root/a5_pr248_exact",
+      "findings": []
+    },
+    "a0_validation": {
+      "status": "PASSED",
+      "full_orchestration": "134/134 tests plus 217 subtests",
+      "packet_binding_preserved": true
+    },
+    "owner_gate": "Explicit approval required to merge only exact PR248 HEAD into main.",
+    "dispatch_block": "No A6 dispatch until exact bridge fix is owner-approved and merged."
   },
   "a0_finding_validation": {
     "status": "COMPLETED",
