@@ -273,7 +273,7 @@
     "sha256": "9ed932aa8ffe47d3bcbe6007d06578c0a9f2ab9d523b7dbf4ea24cf6dd3c231f",
     "canonicalization": "RFC8259 compact JSON with recursively sorted object keys over protected chain, bridge contract, candidates, limits, prior-manifest rebuild, ordered requests, exclusions and dispatch invariants; trailing newline included"
   },
-  "updated_at": "2026-10-02T11:47:28Z",
+  "updated_at": "2026-10-02T14:45:35Z",
   "dispatch_history": [
     {
       "request_id": "core-s1-6415f443120f-g79",
@@ -305,5 +305,45 @@
   "bridge_fix_a0_validation": {
     "status": "PASSED",
     "head_sha": "d96fd088e3a5093bc0a0ce53d7878007351da16e"
+  },
+  "replacement_request_preflight": {
+    "checked_at": "2026-10-02T14:45:35Z",
+    "status": "RESERVED_NOT_DISPATCHABLE_PENDING_PR248_MERGE",
+    "replacement_key": "core-s1-6415f443120f-r1-pr248",
+    "source_consumed_request_id": "core-s1-6415f443120f-g79",
+    "retry_of_consumed_id": false,
+    "distinct_final_request_id_required": true,
+    "exact_slice": {
+      "base_sha": "08e030a6053ac9638957119373797e0fbf2b10c2",
+      "head_sha": "6415f443120fe09d9ca857c475c8e93654b46fe7",
+      "paths_json": "[\"customs-clear/backend/app/services/payment_engine.py\",\"customs-clear/backend/app/services/payment_quote_service.py\",\"customs-clear/backend/tests/test_antidumping_fixed_unit_fail_closed.py\",\"customs-clear/backend/tests/test_automatic_duty_operand_validation.py\",\"customs-clear/backend/tests/test_payment_engine.py\",\"customs-clear/backend/tests/test_payment_quote.py\",\"customs-clear/backend/tests/test_payment_source_admission.py\",\"customs-clear/backend/tests/test_special_duties.py\"]",
+      "official_sources_json": "[]",
+      "expected_packet_binding_sha256": "0b453b601410c2bab388c7a9a2a697a948bb14ee8f7227f9c12e50aa71756d5b",
+      "changed_file_count": 8,
+      "max_file_bytes": 61641
+    },
+    "bridge_fix": {
+      "pr": 248,
+      "exact_head_sha": "d96fd088e3a5093bc0a0ce53d7878007351da16e",
+      "tree_sha": "2d6c960568ab533c1b3a1021c3bfff65f2cbedb5",
+      "a5": "PASSED",
+      "a0": "PASSED",
+      "exact_head_ci_run_id": 36998232448,
+      "merged": false,
+      "owner_approval_observed": false
+    },
+    "postmerge_requirements": [
+      "Resolve the new protected-main merge SHA and bind it as contract_sha.",
+      "Rebuild the exact slice packet with the merged bridge implementation.",
+      "Require packet binding 0b453b601410c2bab388c7a9a2a697a948bb14ee8f7227f9c12e50aa71756d5b and record fresh canonical hash and byte length.",
+      "Create one new immutable request ID; never reuse core-s1-6415f443120f-g79.",
+      "Run context gate and checked adapter once; do not expose credentials before prepare succeeds."
+    ],
+    "request_created": false,
+    "dispatch_performed": false,
+    "provider_called": false,
+    "credentials_read": false,
+    "candidate_head_changed": false,
+    "tests_weakened": false
   }
 }
