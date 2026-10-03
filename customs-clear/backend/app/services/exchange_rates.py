@@ -1,13 +1,14 @@
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import date, datetime, timedelta
+from math import isfinite
 import xml.etree.ElementTree as ET
 
 import httpx
 
 from ..datetime_util import utc_now_naive
 from ..db import SessionLocal
-from ..models.core import ExchangeRate
+from ..models.core import ExchangeRate, SourceStatus
 
 CBR_DAILY_URL = "https://www.cbr.ru/scripts/XML_daily.asp"
 CBRF_SOURCE_CODE = "CBRF"
@@ -194,10 +195,66 @@ async def update_exchange_rates_from_cbrf() -> dict[str, object]:
     return result
 
 
-def get_rates_map() -> dict[str, float]:
+def _cbrf_provenance_covers_rates(
+    source_status: SourceStatus | None,
+    latest_rate_at: datetime | None,
+) -> bool:
+    """Return true only for a live CBRF revision covering the stored rate rows."""
+    if source_status is None or source_status.is_stale:
+        return False
+    revision = (source_status.revision or "").strip().lower()
+    if not revision.startswith("cbrf:"):
+        return False
+    try:
+        rate_date = date.fromisoformat(revision.removeprefix("cbrf:"))
+    except ValueError:
+        return False
+    if rate_date > date.today():
+        return False
+    if source_status.synced_at is None:
+        return False
+    if latest_rate_at is None:
+        return True
+    # Rate upsert and provenance are separate commits in one sync pass. Keep the
+    # same narrow clock-skew allowance used by the coverage diagnostic.
+    return source_status.synced_at >= latest_rate_at - timedelta(seconds=2)
+
+
+def get_rates_map(*, require_cbrf_provenance: bool = False) -> dict[str, float]:
     with SessionLocal() as db:
         rows = db.query(ExchangeRate).all()
-        rates = {r.currency_code: float(r.rate) for r in rows}
+        source_status = None
+        if require_cbrf_provenance:
+            source_status = (
+                db.query(SourceStatus)
+                .filter(SourceStatus.source_code == CBRF_SOURCE_CODE)
+                .first()
+            )
+
+    if require_cbrf_provenance:
+        by_code = {
+            r.currency_code: float(r.rate)
+            for r in rows
+            if r.currency_code in TRACKED
+            and isfinite(float(r.rate))
+            and float(r.rate) > 0
+        }
+        latest_at = max(
+            (r.updated_at for r in rows if r.currency_code in TRACKED and r.updated_at),
+            default=None,
+        )
+        if (
+            len(by_code) != len(TRACKED)
+            or not _cbrf_provenance_covers_rates(source_status, latest_at)
+        ):
+            raise ValueError(
+                "Курсы валют ЦБ РФ не подтверждены актуальной синхронизацией; "
+                "расчёт в иностранной валюте требует проверки."
+            )
+        by_code["RUB"] = 1.0
+        return by_code
+
+    rates = {r.currency_code: float(r.rate) for r in rows}
     for code, value in FALLBACK.items():
         rates.setdefault(code, value)
     rates["RUB"] = 1.0
@@ -232,4 +289,3 @@ def get_rates_payload() -> dict[str, object]:
         "rates": items,
         "map": map_data,
     }
-
