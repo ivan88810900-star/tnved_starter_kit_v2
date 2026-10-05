@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "checked_at": "2026-10-05T22:54:32.824Z",
-  "status": "A6_CORE_SLICE1_GEN99_COMPACT_RETRY_PENDING_DISPATCH",
+  "checked_at": "2026-10-05T23:07:00.000Z",
+  "status": "A6_CORE_SLICE1_FINDINGS_VALIDATION_BLOCKED",
   "live_verified": false,
   "provider_called": true,
   "secret_values_read": true,
@@ -226,6 +226,51 @@
         "no_artifact": true,
         "exact_status_size_reproduced": true
       }
+    },
+    {
+      "request_id": "core-s1-6415f443120f-r6-g99",
+      "workflow_run_id": 37385761433,
+      "workflow_head_sha": "7df838ea2a875b9d86754eb858f98a293c5e5f29",
+      "trigger": "issue_comment",
+      "comment_id": 6004918303,
+      "context_gate": "success",
+      "delivery_dedupe": "success",
+      "packet_prepare": "success",
+      "provider_step": "executed_once",
+      "provider_called": true,
+      "workflow_conclusion": "failure",
+      "bridge_status": "UNAVAILABLE",
+      "audit_status": "UNAVAILABLE",
+      "live_verified": false,
+      "reason_code": "PROVIDER_OR_CONFIG_UNAVAILABLE",
+      "provider_failure_code": "FINDINGS_VALIDATION",
+      "retry_allowed": false,
+      "artifact_id": 11379980163,
+      "artifact_digest": "sha256:7ad575eb397074f6bdba2d4a1910b6a386b9b3197ffe0db79970e9746d2ba5c7",
+      "artifact_receipt_file_sha256": "726d1363be15fbdc551d443e5b064e3fcfa9189f97f69733016480e1c0e73a18",
+      "receipt_sha256": "583364ef21f5031ad8c69df75359d1596c7b116d9ad96a1fd48752174cc0581e",
+      "receipt_evidence": ".ai/orchestration/evidence/a6-core-s1-r6-g99-receipt-37385761433.json",
+      "packet_sha256": "7644f79f9c3811e680b6b099358ef629dcbf85c0c40fe9647d11a561ea8d21ed",
+      "base_sha": "08e030a6053ac9638957119373797e0fbf2b10c2",
+      "head_sha": "6415f443120fe09d9ca857c475c8e93654b46fe7",
+      "contract_sha": "7df838ea2a875b9d86754eb858f98a293c5e5f29",
+      "state_sha": "6135e3067bbb9bd4364f22fd20ff13837966456b",
+      "lease_generation": 99,
+      "lease_holder": "/root/a0_automation_post_actions_recovery_gen99",
+      "provider_message_id": null,
+      "model": null,
+      "findings_persisted": 0,
+      "validated": {
+        "artifact_digest": true,
+        "receipt_hash": true,
+        "request_binding": true,
+        "commit_binding": true,
+        "workflow_binding": true,
+        "packet_hash": true,
+        "lease_binding": true,
+        "provider_called_once": true,
+        "provider_result_not_accepted": true
+      }
     }
   ],
   "history_archive": {
@@ -235,13 +280,13 @@
     "retention": "FULL_PRE_COMPACTION_STATUS"
   },
   "diagnosis": {
-    "status": "STATUS_SIZE_BLOCK_RETIRED_COMPACT_REQUEST_PREPARED",
-    "summary": "Run 37385217270 failed closed because the authoritative live status exceeded its 20000-byte input cap. Credentials and provider were not reached. Full 11-packet evidence was preserved in a separate immutable archive, the live status was compacted below the limit, and a new generation-99 request was prepared.",
-    "provider_called": false,
-    "request_consumed": false,
+    "status": "POST_PR249_FINDINGS_VALIDATION_BLOCKED",
+    "summary": "Run 37385761433 passed context, dedupe, and exact packet preparation, called the provider once, then failed closed because the provider result did not pass local findings validation. No findings were persisted or accepted. The receipt intentionally does not retain raw provider output, so the exact rejected field is not recoverable; a blind retry is forbidden.",
+    "provider_called": true,
+    "request_consumed": true,
     "retry_allowed": false,
     "owner_action_required": false,
-    "next_action": "Dispatch the distinct compact-state request exactly once; never reuse r5-g99."
+    "next_action": "Implement a reviewed infrastructure fix that safely exposes granular findings-validation reason codes and aligns every expressible provider schema constraint with the local validator. Do not reuse r6-g99."
   },
   "product_candidates": {
     "core": {
@@ -279,23 +324,29 @@
     "contract_blob_sha256": "621594cc7e2bc054e80b9cb9a3677e709d4c2c90151c1ce8613e5eaf029bf4de",
     "contract_blob_git_oid": "667e622cd38bc7d2a915e6aef40c3f70af889c7a",
     "binding_delta_reason": "Exact contract ref advanced to owner-authorized PR #249 merge 7df838ea2a875b9d86754eb858f98a293c5e5f29; contract blob, historical slice base/head, path scope, sources, and product candidate HEAD are unchanged.",
-    "dispatched": false,
-    "consumed": false,
+    "dispatched": true,
+    "consumed": true,
     "retry_allowed": false,
     "source_consumed_request_id": "core-s1-6415f443120f-r5-g99",
     "dedup_key": "ivan88810900-star/tnved_starter_kit_v2|core-s1-6415f443120f-r6-g99|7644f79f9c3811e680b6b099358ef629dcbf85c0c40fe9647d11a561ea8d21ed|gen99",
     "lease_generation": 99,
-    "lease_holder": "/root/a0_automation_post_actions_recovery_gen99"
+    "lease_holder": "/root/a0_automation_post_actions_recovery_gen99",
+    "comment_id": 6004918303,
+    "workflow_run_id": 37385761433,
+    "artifact_id": 11379980163,
+    "outcome": "UNAVAILABLE_FINDINGS_VALIDATION",
+    "provider_called": true,
+    "findings_accepted": false
   },
   "communication_policy": {
     "owner_notification": "ONLY_SIGNIFICANT_COMPLETION_CRITICAL_BLOCKER_OR_OWNER_GATE",
     "duplicate_delivery_forbidden": true
   },
   "current_sequence_diagnosis": {
-    "status": "PENDING_LAWFUL_ONE_SHOT_DISPATCH",
+    "status": "TECHNICAL_BLOCKER_FINDINGS_VALIDATION_POST_PR249",
     "request_id": "core-s1-6415f443120f-r6-g99",
-    "retired_transport_request_id": "core-s1-6415f443120f-r5-g99",
-    "retired_workflow_run_id": 37385217270,
+    "consumed_request_id": "core-s1-6415f443120f-r6-g99",
+    "workflow_run_id": 37385761433,
     "contract_sha": "7df838ea2a875b9d86754eb858f98a293c5e5f29",
     "core_packets_ready": 5,
     "product_packets_ready": 6,
@@ -305,7 +356,11 @@
     "packet_binding": "7644f79f9c3811e680b6b099358ef629dcbf85c0c40fe9647d11a561ea8d21ed",
     "packet_validation": "PASS",
     "path_source_binding": "PASS",
-    "provider_called": false,
+    "provider_called": true,
+    "provider_failure_code": "FINDINGS_VALIDATION",
+    "provider_result_accepted": false,
+    "receipt_evidence": ".ai/orchestration/evidence/a6-core-s1-r6-g99-receipt-37385761433.json",
+    "exact_rejected_field_recoverable": false,
     "owner_action_required": false
   },
   "a0_finding_validation": {
