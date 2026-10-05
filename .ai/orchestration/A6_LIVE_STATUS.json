@@ -82,7 +82,7 @@
     "base_sha": "7df838ea2a875b9d86754eb858f98a293c5e5f29",
     "head_sha": "75e3e882f7e0d0828761f25dc98b3e5d9e1418b5",
     "tree_sha": "2a6af2b51d79717687c1f7a5907f326a2956c3b1",
-    "draft": true,
+    "draft": false,
     "changed_paths": [
       "tools/tariff_agents/audit.py",
       "tools/tariff_agents/lease.py",
