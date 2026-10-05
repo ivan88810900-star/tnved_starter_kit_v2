@@ -383,25 +383,43 @@ def validate_packet(repo, packet, *, environ=None):
 
 FINDING_FIELDS = {"id", "severity", "category", "path", "line", "claim", "evidence",
                   "suggested_fix", "official_source_urls"}
-FINDINGS_SCHEMA = {
-    "type": "object", "additionalProperties": False,
-    "required": ["packet_sha256", "head_sha", "findings", "limitations"],
-    "properties": {
-        "packet_sha256": {"type": "string"}, "head_sha": {"type": "string"},
-        "limitations": {"type": "array", "items": {"type": "string"}},
-        "findings": {"type": "array", "items": {
-            "type": "object", "additionalProperties": False,
-            "required": sorted(FINDING_FIELDS),
-            "properties": {
-                **{name: {"type": "string"} for name in
-                   ("id", "category", "path", "claim", "evidence", "suggested_fix")},
-                "severity": {"type": "string", "enum": ["critical", "high", "medium", "low"]},
-                "line": {"type": "integer"},
-                "official_source_urls": {"type": "array", "items": {"type": "string"}},
-            },
-        }},
-    },
-}
+
+
+def _findings_schema(packet):
+    """Constrain output using only the provider's supported JSON Schema subset.
+
+    Bounds unsupported by the raw provider API remain enforced by
+    ``validate_findings`` after decoding.
+    """
+    contract_path = packet["contract"]["path"]
+    paths = sorted(set(packet["paths"]) | {contract_path})
+    official_sources = packet["official_sources"]
+    source_items = ({"type": "string", "enum": official_sources}
+                    if official_sources else {"type": "string"})
+    return {
+        "type": "object", "additionalProperties": False,
+        "required": ["packet_sha256", "head_sha", "findings", "limitations"],
+        "properties": {
+            "packet_sha256": {"type": "string", "const": packet["packet_sha256"]},
+            "head_sha": {"type": "string", "const": packet["head_sha"]},
+            "limitations": {"type": "array", "items": {"type": "string"}},
+            "findings": {"type": "array", "items": {
+                "type": "object", "additionalProperties": False,
+                "required": sorted(FINDING_FIELDS),
+                "properties": {
+                    **{name: {"type": "string"} for name in
+                       ("id", "category", "claim", "evidence", "suggested_fix")},
+                    "path": {"type": "string", "enum": paths},
+                    "severity": {"type": "string",
+                                 "enum": ["critical", "high", "medium", "low"]},
+                    "line": {"type": "integer"},
+                    "official_source_urls": {
+                        "type": "array", "items": source_items,
+                    },
+                },
+            }},
+        },
+    }
 
 
 A6_FAILURE_CODES = frozenset({
@@ -525,10 +543,16 @@ def run_audit(repo, packet, *, environ=None):
             "content/context in limitations. Findings are hypotheses requiring A0 verification. "
             "Do not claim readiness, legal approval or a passed audit. Report every defect you "
             "identify, including lower-severity defects. Keep evidence concise, specific and "
-            "non-redundant. Return the required JSON."),
+            "non-redundant. Echo packet_sha256 and head_sha exactly. Use only declared paths and "
+            "a valid line for that exact file. official_source_urls must be a subset of the "
+            "packet's official_sources and must be [] when that list is empty. Do not emit empty "
+            "finding strings. Return at most 100 findings and 30 limitations; each finding string "
+            "must be at most 6000 characters and each limitation at most 2000. Return the required "
+            "JSON."),
         "messages": [{"role": "user", "content": _json_bytes(packet).decode()}],
         "output_config": {"effort": A6_EFFORT,
-                          "format": {"type": "json_schema", "schema": FINDINGS_SCHEMA}}}
+                          "format": {"type": "json_schema",
+                                     "schema": _findings_schema(packet)}}}
     try:
         response = request_json("https://api.anthropic.com/v1/messages", method="POST",
             headers={"x-api-key": env["ANTHROPIC_API_KEY"], "anthropic-version": "2023-06-01",

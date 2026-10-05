@@ -529,10 +529,35 @@ class AuditTests(unittest.TestCase):
         self.assertEqual(audit.A6_EFFORT, "medium")
         self.assertEqual(payload["output_config"]["effort"], "medium")
         self.assertEqual(payload["output_config"]["format"]["type"], "json_schema")
+        schema = payload["output_config"]["format"]["schema"]
+        properties = schema["properties"]
+        finding_properties = properties["findings"]["items"]["properties"]
+        self.assertEqual(properties["packet_sha256"]["const"], packet["packet_sha256"])
+        self.assertEqual(properties["head_sha"]["const"], packet["head_sha"])
+        self.assertEqual(finding_properties["path"]["enum"],
+                         [audit.CONTRACT_PATH, "src/payments.py", "tests/check.py"])
+        unsupported = {"minimum", "maximum", "minLength", "maxLength", "maxItems",
+                       "uniqueItems"}
+        pending = [schema]
+        while pending:
+            node = pending.pop()
+            if isinstance(node, dict):
+                self.assertTrue(unsupported.isdisjoint(node))
+                pending.extend(node.values())
+            elif isinstance(node, list):
+                pending.extend(node)
         self.assertIn("Report every defect you identify", payload["system"])
         self.assertIn("including lower-severity defects", payload["system"])
         self.assertIn("concise, specific and non-redundant", payload["system"])
+        self.assertIn("Echo packet_sha256 and head_sha exactly", payload["system"])
         self.assertNotIn(self.env["ANTHROPIC_API_KEY"], json.dumps(payload))
+
+    def test_dynamic_findings_schema_scopes_official_sources(self):
+        source = "https://docs.eaeunion.org/documents"
+        packet = self.packet(official_sources=[source])
+        schema = audit._findings_schema(packet)
+        urls = schema["properties"]["findings"]["items"]["properties"]["official_source_urls"]
+        self.assertEqual(urls["items"]["enum"], [source])
 
     @patch.object(audit, "request_json")
     def test_opus5_thinking_prefixes_are_allowed_before_terminal_text(self, request):

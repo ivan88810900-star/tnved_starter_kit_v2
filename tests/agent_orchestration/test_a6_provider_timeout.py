@@ -13,6 +13,13 @@ class A6ProviderTimeoutTests(unittest.TestCase):
             "base_sha": "a" * 40,
             "head_sha": "b" * 40,
             "packet_sha256": "c" * 64,
+            "paths": [audit.CONTRACT_PATH],
+            "files": [{"path": audit.CONTRACT_PATH,
+                       "base": {"text": "A0 validates.\n"},
+                       "head": {"text": "A0 validates.\n"}}],
+            "contract": {"path": audit.CONTRACT_PATH,
+                         "text": "A0 validates.\n"},
+            "official_sources": [],
         }
 
     def environ(self):
