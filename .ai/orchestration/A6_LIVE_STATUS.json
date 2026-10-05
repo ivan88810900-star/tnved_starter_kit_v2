@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "checked_at": "2026-10-05T22:50:57.475Z",
-  "status": "A6_CORE_SLICE1_GEN99_PENDING_DISPATCH",
+  "checked_at": "2026-10-05T22:54:32.824Z",
+  "status": "A6_CORE_SLICE1_GEN99_COMPACT_RETRY_PENDING_DISPATCH",
   "live_verified": false,
   "provider_called": true,
   "secret_values_read": true,
@@ -193,6 +193,39 @@
         "no_artifact": true,
         "official_incident_correlated": true
       }
+    },
+    {
+      "request_id": "core-s1-6415f443120f-r5-g99",
+      "workflow_run_id": 37385217270,
+      "workflow_head_sha": "7df838ea2a875b9d86754eb858f98a293c5e5f29",
+      "trigger": "issue_comment",
+      "comment_id": 6004827527,
+      "context_gate": "blocked_at_resolve_pending",
+      "packet_prepare": "skipped",
+      "provider_step": "skipped",
+      "provider_called": false,
+      "workflow_conclusion": "failure",
+      "bridge_status": "BLOCKED",
+      "audit_status": "NOT_RUN",
+      "live_verified": false,
+      "reason_code": "A6_LIVE_STATUS_TOO_LARGE",
+      "reason": "The authoritative A6 live status was 20358 bytes, above the bridge's fail-closed 20000-byte input limit. The context gate rejected it before dedupe, packet preparation, credentials, or provider access.",
+      "retry_allowed": false,
+      "retired_without_reuse": true,
+      "artifact_uploaded": false,
+      "packet_sha256": "7644f79f9c3811e680b6b099358ef629dcbf85c0c40fe9647d11a561ea8d21ed",
+      "base_sha": "08e030a6053ac9638957119373797e0fbf2b10c2",
+      "head_sha": "6415f443120fe09d9ca857c475c8e93654b46fe7",
+      "contract_sha": "7df838ea2a875b9d86754eb858f98a293c5e5f29",
+      "lease_generation": 99,
+      "lease_holder": "/root/a0_automation_post_actions_recovery_gen99",
+      "validated": {
+        "owner_command": true,
+        "provider_not_called": true,
+        "live_job_skipped": true,
+        "no_artifact": true,
+        "exact_status_size_reproduced": true
+      }
     }
   ],
   "history_archive": {
@@ -202,13 +235,13 @@
     "retention": "FULL_PRE_COMPACTION_STATUS"
   },
   "diagnosis": {
-    "status": "GITHUB_ACTIONS_OPERATIONAL_NEW_IMMUTABLE_REQUEST_PREPARED",
-    "summary": "GitHub reports all systems operational and Actions operating normally. All eleven A-CORE/A-PRODUCT packets remain validated on current contract 7df838ea; a distinct generation-99 request is prepared for A-CORE slice 1 without reusing any retired or consumed ID.",
+    "status": "STATUS_SIZE_BLOCK_RETIRED_COMPACT_REQUEST_PREPARED",
+    "summary": "Run 37385217270 failed closed because the authoritative live status exceeded its 20000-byte input cap. Credentials and provider were not reached. Full 11-packet evidence was preserved in a separate immutable archive, the live status was compacted below the limit, and a new generation-99 request was prepared.",
     "provider_called": false,
     "request_consumed": false,
     "retry_allowed": false,
     "owner_action_required": false,
-    "next_action": "Dispatch exactly once through the trusted issue-comment bridge, then validate the immutable receipt and independently reproduce any findings."
+    "next_action": "Dispatch the distinct compact-state request exactly once; never reuse r5-g99."
   },
   "product_candidates": {
     "core": {
@@ -230,8 +263,8 @@
     }
   },
   "pending_live_smoke": {
-    "request_id": "core-s1-6415f443120f-r5-g99",
-    "prepared_at": "2026-10-05T22:50:57.475Z",
+    "request_id": "core-s1-6415f443120f-r6-g99",
+    "prepared_at": "2026-10-05T22:54:32.824Z",
     "base_sha": "08e030a6053ac9638957119373797e0fbf2b10c2",
     "head_sha": "6415f443120fe09d9ca857c475c8e93654b46fe7",
     "contract_sha": "7df838ea2a875b9d86754eb858f98a293c5e5f29",
@@ -249,8 +282,8 @@
     "dispatched": false,
     "consumed": false,
     "retry_allowed": false,
-    "source_consumed_request_id": "core-s1-6415f443120f-r4-g96",
-    "dedup_key": "ivan88810900-star/tnved_starter_kit_v2|core-s1-6415f443120f-r5-g99|7644f79f9c3811e680b6b099358ef629dcbf85c0c40fe9647d11a561ea8d21ed|gen99",
+    "source_consumed_request_id": "core-s1-6415f443120f-r5-g99",
+    "dedup_key": "ivan88810900-star/tnved_starter_kit_v2|core-s1-6415f443120f-r6-g99|7644f79f9c3811e680b6b099358ef629dcbf85c0c40fe9647d11a561ea8d21ed|gen99",
     "lease_generation": 99,
     "lease_holder": "/root/a0_automation_post_actions_recovery_gen99"
   },
@@ -260,9 +293,9 @@
   },
   "current_sequence_diagnosis": {
     "status": "PENDING_LAWFUL_ONE_SHOT_DISPATCH",
-    "request_id": "core-s1-6415f443120f-r5-g99",
-    "retired_transport_request_id": "core-s1-6415f443120f-r4-g96",
-    "retired_workflow_run_id": 37366523672,
+    "request_id": "core-s1-6415f443120f-r6-g99",
+    "retired_transport_request_id": "core-s1-6415f443120f-r5-g99",
+    "retired_workflow_run_id": 37385217270,
     "contract_sha": "7df838ea2a875b9d86754eb858f98a293c5e5f29",
     "core_packets_ready": 5,
     "product_packets_ready": 6,
@@ -343,134 +376,14 @@
     "merge_commit_sha": "7df838ea2a875b9d86754eb858f98a293c5e5f29",
     "no_further_protected_authorization": true
   },
-  "core_offline_rebuild_current_contract": {
-    "checked_at": "2026-10-05T20:51:12.265Z",
+  "offline_packet_archive": {
+    "path": ".ai/orchestration/evidence/a6-all-packets-current-contract-gen98-20261005.json",
+    "source_status_blob_sha": "fa721fec9140dfcb1c6ff6a2b1b13963c0a242f2",
+    "archive_sha256": "976829e9d52ccc8c416163c5c1180793a67b7ba0652d30e92ff327e4725bdd24",
     "contract_sha": "7df838ea2a875b9d86754eb858f98a293c5e5f29",
-    "contract_blob_sha256": "621594cc7e2bc054e80b9cb9a3677e709d4c2c90151c1ce8613e5eaf029bf4de",
-    "candidate_pr": 244,
-    "candidate_head_sha": "14e0ee8f034d94ffc5831d87e076f4d693a5a524",
-    "slice_count": 5,
-    "path_coverage": "34/34",
-    "provider_called": false,
-    "validation": {
-      "exact_base_head": true,
-      "exact_paths": true,
-      "exact_sources": true,
-      "complete_diff": true,
-      "size_limits": true,
-      "status": "PASS"
-    },
-    "slices": [
-      {
-        "slice": "core-s1",
-        "packet_sha256": "7644f79f9c3811e680b6b099358ef629dcbf85c0c40fe9647d11a561ea8d21ed",
-        "serialized_canonical_sha256": "89248a5e11acf7e0660dc9a6ef0eb4792c0d06cab162d9984846212f824f36e3",
-        "serialized_canonical_bytes": 392515,
-        "file_count": 8
-      },
-      {
-        "slice": "core-s2",
-        "packet_sha256": "a37cb09a3da1f8f1487b3a4b79420c08a98ba25a825ca76306d3b894f930f987",
-        "serialized_canonical_sha256": "58bf18e844ba5a7e4fb60da2163014ee3814e59cd85f4ef33dc6e3ce0a4f3211",
-        "serialized_canonical_bytes": 321527,
-        "file_count": 6
-      },
-      {
-        "slice": "core-s3",
-        "packet_sha256": "83d1ee3f1862baedce94799297f689cf27bb530d563664ca8f171a7505792fac",
-        "serialized_canonical_sha256": "9287e6d2be272a26894eddef1334b1c646082bf29341524793abc794aee03b39",
-        "serialized_canonical_bytes": 303990,
-        "file_count": 10
-      },
-      {
-        "slice": "core-s4",
-        "packet_sha256": "70571c943dfb67b986406f80c8c08fe3c985192619ae62944633ec7b2a89fc96",
-        "serialized_canonical_sha256": "6155286bc52f07ce179e8032d0fec7291f630d2fea39f46f9183ff183e269185",
-        "serialized_canonical_bytes": 65395,
-        "file_count": 5
-      },
-      {
-        "slice": "core-s5",
-        "packet_sha256": "e2ab2b4645a28c81da40bad1561a7ea15d44beb59c8c5017f0586614d42cd80b",
-        "serialized_canonical_sha256": "245289a60e06335725166678dd84dee757730649843da09eb820783fe5e4d4d6",
-        "serialized_canonical_bytes": 297405,
-        "file_count": 5
-      }
-    ]
-  },
-  "product_offline_rebuild_current_contract": {
-    "checked_at": "2026-10-05T21:51:20.812Z",
-    "contract_sha": "7df838ea2a875b9d86754eb858f98a293c5e5f29",
-    "contract_blob_sha256": "621594cc7e2bc054e80b9cb9a3677e709d4c2c90151c1ce8613e5eaf029bf4de",
-    "candidate_pr": 245,
-    "candidate_head_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
-    "runtime_slice_count": 5,
-    "repair_delta_count": 1,
-    "path_coverage": "43/43",
-    "provider_called": false,
-    "validation": {
-      "exact_base_head": true,
-      "exact_paths": true,
-      "exact_sources": true,
-      "complete_diff": true,
-      "size_limits": true,
-      "status": "PASS"
-    },
-    "slices": [
-      {
-        "slice": "product-r1",
-        "packet_sha256": "eccd7d2a20d0b067addd51909d7bb74bf2b685e365bd2354e9021d0f74bd6f70",
-        "serialized_canonical_sha256": "c4df76bad953a2ef3beaae44037a0aef31ac5d3e6930b9a64992dc94baf7579e",
-        "serialized_canonical_bytes": 180723,
-        "file_count": 6
-      },
-      {
-        "slice": "product-r2",
-        "packet_sha256": "9fb1c635bdd442050fea62386dc1177ce8c2386fcb6a95a0f3cb394639cc8501",
-        "serialized_canonical_sha256": "e96a6e9751e64f8993bb942b9ef3dc100d79697d4d5ae52921ca0a0143e2e4db",
-        "serialized_canonical_bytes": 400939,
-        "file_count": 9
-      },
-      {
-        "slice": "product-r3",
-        "packet_sha256": "c6a82521fc7093ff59d637325d74624f6de8e152da3cb94da78f6b1658568452",
-        "serialized_canonical_sha256": "4e28d69c1a5ed613b37d4aee6ba9958fff094bd9938a35dbd1ba1fff30b6f3d6",
-        "serialized_canonical_bytes": 289615,
-        "file_count": 4
-      },
-      {
-        "slice": "product-r4",
-        "packet_sha256": "e23948e7973de4087ca5388d1fe849b826e5b880cbff7fb210806ebbad2fa340",
-        "serialized_canonical_sha256": "11c4cea5c066058c097d5854dc3cf023ae17b5d7795a615bf841ab6d55b45448",
-        "serialized_canonical_bytes": 121189,
-        "file_count": 1
-      },
-      {
-        "slice": "product-r5",
-        "packet_sha256": "e4607667d783394298768da0c286a74255b5a1d52bee79eec9147ca0e48da446",
-        "serialized_canonical_sha256": "b1fa5c03bb2d15e4ffe13713f9a43548f8da9148f95e71d2f2c6f8da9c41513b",
-        "serialized_canonical_bytes": 119489,
-        "file_count": 3
-      },
-      {
-        "slice": "product-repair",
-        "packet_sha256": "cd0e703c3adbfd83fa7f0efefc2eed017e76efbb8b85877fef36e80dbcad4458",
-        "serialized_canonical_sha256": "d23373748d7674da190af7cf300e0cc93451c5d27a844d144a6ba1881d665470",
-        "serialized_canonical_bytes": 120520,
-        "file_count": 4
-      }
-    ]
-  },
-  "all_offline_packets_current_contract": {
-    "checked_at": "2026-10-05T21:51:20.812Z",
-    "contract_sha": "7df838ea2a875b9d86754eb858f98a293c5e5f29",
-    "core_runtime_packets": 5,
-    "product_runtime_packets": 5,
-    "product_repair_packets": 1,
     "total_packets": 11,
     "core_path_coverage": "34/34",
     "product_path_coverage": "43/43",
-    "status": "PASS",
-    "provider_called": false
+    "status": "PASS"
   }
 }
