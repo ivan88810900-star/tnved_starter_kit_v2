@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "checked_at": "2026-10-05T19:55:13.216Z",
-  "status": "A6_CORE_SLICE1_GEN96_RETRY_PENDING_DISPATCH",
+  "checked_at": "2026-10-05T20:11:05.231Z",
+  "status": "A6_WAITING_EXTERNAL_GITHUB_ACTIONS_RECOVERY",
   "live_verified": false,
   "provider_called": true,
   "secret_values_read": true,
@@ -160,6 +160,39 @@
         "no_steps": true,
         "no_artifact": true
       }
+    },
+    {
+      "request_id": "core-s1-6415f443120f-r4-g96",
+      "workflow_run_id": 37366523672,
+      "workflow_head_sha": "7df838ea2a875b9d86754eb858f98a293c5e5f29",
+      "trigger": "issue_comment",
+      "comment_id": 6001906640,
+      "context_gate": "cancelled_before_start",
+      "packet_prepare": "skipped",
+      "provider_step": "skipped",
+      "provider_called": false,
+      "workflow_conclusion": "cancelled",
+      "bridge_status": "NOT_RUN",
+      "audit_status": "NOT_RUN",
+      "live_verified": false,
+      "reason_code": "GITHUB_ACTIONS_HOSTED_RUNNER_INCIDENT",
+      "reason": "Official GitHub status incident 3q1yb5m7ltvb reported delays assigning GitHub-hosted runners; the queued job was cancelled without steps after about 15 minutes.",
+      "retry_allowed": false,
+      "retired_without_reuse": true,
+      "artifact_uploaded": false,
+      "packet_sha256": "7644f79f9c3811e680b6b099358ef629dcbf85c0c40fe9647d11a561ea8d21ed",
+      "base_sha": "08e030a6053ac9638957119373797e0fbf2b10c2",
+      "head_sha": "6415f443120fe09d9ca857c475c8e93654b46fe7",
+      "contract_sha": "7df838ea2a875b9d86754eb858f98a293c5e5f29",
+      "lease_generation": 96,
+      "lease_holder": "/root/a0_automation_post249_a6_gen96",
+      "validated": {
+        "workflow_binding": true,
+        "provider_not_called": true,
+        "no_steps": true,
+        "no_artifact": true,
+        "official_incident_correlated": true
+      }
     }
   ],
   "history_archive": {
@@ -169,14 +202,13 @@
     "retention": "FULL_PRE_COMPACTION_STATUS"
   },
   "diagnosis": {
-    "status": "TRANSPORT_CANCELLATION_RETIRED_NEW_REQUEST_PREPARED",
-    "summary": "GitHub Actions run 37364717830 was cancelled while queued before context-gate; it produced no steps, logs, artifacts, credential access, or provider call. The delivery ID is retired and a distinct immutable request is prepared against the unchanged validated packet.",
-    "workflow_run_id": 37364717830,
+    "status": "EXTERNAL_GITHUB_ACTIONS_INCIDENT",
+    "summary": "Two distinct one-shot deliveries were cancelled while queued before context-gate during GitHub incident 3q1yb5m7ltvb. No workflow step, packet preparation, credential access, provider call, log, or artifact occurred. Both delivery IDs are retired and must not be reused.",
     "provider_called": false,
-    "request_consumed": false,
+    "request_consumed": true,
     "retry_allowed": false,
     "owner_action_required": false,
-    "next_action": "Dispatch the distinct request exactly once; do not reuse r3-g96."
+    "next_action": "After GitHub reports Actions runner assignment recovered, acquire a fresh lease and create a new distinct immutable request from the unchanged validated packet."
   },
   "product_candidates": {
     "core": {
@@ -214,29 +246,36 @@
     "contract_blob_sha256": "621594cc7e2bc054e80b9cb9a3677e709d4c2c90151c1ce8613e5eaf029bf4de",
     "contract_blob_git_oid": "667e622cd38bc7d2a915e6aef40c3f70af889c7a",
     "binding_delta_reason": "Exact contract ref advanced to owner-authorized PR #249 merge 7df838ea2a875b9d86754eb858f98a293c5e5f29; contract blob, historical slice base/head, path scope, sources, and product candidate HEAD are unchanged.",
-    "dispatched": false,
-    "consumed": false,
+    "dispatched": true,
+    "consumed": true,
     "retry_allowed": false,
     "source_consumed_request_id": "core-s1-6415f443120f-r3-g96",
     "dedup_key": "ivan88810900-star/tnved_starter_kit_v2|core-s1-6415f443120f-r4-g96|7644f79f9c3811e680b6b099358ef629dcbf85c0c40fe9647d11a561ea8d21ed|gen96",
     "lease_generation": 96,
-    "lease_holder": "/root/a0_automation_post249_a6_gen96"
+    "lease_holder": "/root/a0_automation_post249_a6_gen96",
+    "dispatch_transport": "issue_comment",
+    "dispatch_comment_id": 6001906640,
+    "workflow_run_id": 37366523672,
+    "outcome": "TRANSPORT_CANCELLED_BEFORE_CONTEXT_GATE",
+    "provider_called": false,
+    "reason_code": "GITHUB_ACTIONS_HOSTED_RUNNER_INCIDENT"
   },
   "communication_policy": {
     "owner_notification": "ONLY_SIGNIFICANT_COMPLETION_CRITICAL_BLOCKER_OR_OWNER_GATE",
     "duplicate_delivery_forbidden": true
   },
   "current_sequence_diagnosis": {
-    "status": "PENDING_LAWFUL_ONE_SHOT_DISPATCH",
+    "status": "WAIT_GITHUB_ACTIONS_RECOVERY",
     "request_id": "core-s1-6415f443120f-r4-g96",
-    "retired_transport_request_id": "core-s1-6415f443120f-r3-g96",
-    "retired_workflow_run_id": 37364717830,
+    "workflow_run_id": 37366523672,
+    "incident_id": "3q1yb5m7ltvb",
     "contract_sha": "7df838ea2a875b9d86754eb858f98a293c5e5f29",
     "packet_binding": "7644f79f9c3811e680b6b099358ef629dcbf85c0c40fe9647d11a561ea8d21ed",
     "packet_validation": "PASS",
     "path_source_binding": "PASS",
     "provider_called": false,
-    "owner_action_required": false
+    "owner_action_required": false,
+    "dispatch_block": "DO_NOT_DISPATCH_WHILE_OFFICIAL_ACTIONS_RUNNER_INCIDENT_IS_UNRESOLVED"
   },
   "a0_finding_validation": {
     "status": "NOT_POSSIBLE_NO_VALIDATED_FINDINGS_PERSISTED",
