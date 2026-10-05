@@ -1,11 +1,11 @@
 {
   "schema_version": 1,
-  "state": "released",
-  "holder": null,
-  "token": null,
-  "generation": 95,
-  "updated_at": "2026-10-05T12:14:05.504Z",
-  "expires_at": null,
+  "state": "active",
+  "holder": "/root/a0_automation_post249_a6_gen96",
+  "token": "54653824b142ea985f3b5a119808c7a2",
+  "generation": 96,
+  "updated_at": "2026-10-05T19:33:05.970Z",
+  "expires_at": "2026-10-05T20:18:05.970Z",
   "lease_repair": {
     "reason": "Invalid non-hex fencing token written during generation-93 acquisition; schema repair by the same verified holder before any credential access.",
     "prior_state_commit": "0496147fb802db79ef96cdd68931f3fa6aa2c515",
@@ -14,5 +14,5 @@
   },
   "released_by": "/root/a0_automation_a6_schema_gen95",
   "release_reason": "PR #249 exact HEAD passed fresh independent A5, A0 validation, and exact-head CI; owner gate recorded without merge.",
-  "acquisition_note": "Fresh lawful generation after releasing repaired generation 93."
+  "acquisition_note": "Fresh lawful generation after owner-authorized exact-head merge of PR #249; preparing a distinct immutable A6 request without reusing consumed IDs."
 }
