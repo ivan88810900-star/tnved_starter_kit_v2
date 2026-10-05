@@ -1,6 +1,6 @@
 {
   "schema_version": 2,
-  "status": "READY_FOR_CORE_S1_GENERATION_94_DISPATCH",
+  "status": "BLOCKED_TECHNICAL_A6_FINDINGS_VALIDATION",
   "prepared_from_state_revision": 641,
   "prepared_at": "2026-10-02T09:56:33Z",
   "source_receipts": [
@@ -273,7 +273,7 @@
     "sha256": "9ed932aa8ffe47d3bcbe6007d06578c0a9f2ab9d523b7dbf4ea24cf6dd3c231f",
     "canonicalization": "RFC8259 compact JSON with recursively sorted object keys over protected chain, bridge contract, candidates, limits, prior-manifest rebuild, ordered requests, exclusions and dispatch invariants; trailing newline included"
   },
-  "updated_at": "2026-10-05T10:55:01.257Z",
+  "updated_at": "2026-10-05T11:03:52.884Z",
   "dispatch_history": [
     {
       "request_id": "core-s1-6415f443120f-g79",
@@ -297,11 +297,24 @@
       "artifact_uploaded": false,
       "retry_allowed": false,
       "retired_without_reuse": true
+    },
+    {
+      "request_id": "core-s1-6415f443120f-r2-g94",
+      "dispatch_comment_id": 5993051603,
+      "workflow_run_id": 37299737783,
+      "outcome": "CONSUMED_UNAVAILABLE_POST_PROVIDER",
+      "reason_code": "FINDINGS_VALIDATION",
+      "provider_called": true,
+      "retry_allowed": false,
+      "artifact_id": 11341471068,
+      "artifact_digest": "sha256:8237baeac75964a84024871ff0371f9375c15961a828d95d1f5a5056bba16d22",
+      "receipt_sha256": "18ae4b72995a0366bb2fb1097dd38c16626fafd65d74e9d5a3793ba04fc3e00b",
+      "receipt_evidence": ".ai/orchestration/evidence/a6-core-s1-r2-g94-receipt-37299737783.json"
     }
   ],
   "remaining_unconsumed_request_count": 11,
   "required_replacement_requests": 1,
-  "next_gate": "Dispatch core-s1-6415f443120f-r2-g94 exactly once through the checked issue-comment bridge, then independently validate the scrubbed receipt.",
+  "next_gate": "Offline diagnosis and reviewed hardening of provider-output schema/validation. Do not retry consumed core-s1-6415f443120f-r2-g94 or advance to another slice before correction.",
   "bridge_fix_tree_sha": "2d6c960568ab533c1b3a1021c3bfff65f2cbedb5",
   "bridge_fix_exact_head_ci": {
     "status": "PASSED",
@@ -320,7 +333,7 @@
   },
   "replacement_request_preflight": {
     "checked_at": "2026-10-05T10:37:49.615Z",
-    "status": "READY_DISTINCT_IMMUTABLE_REQUEST_GENERATION_94",
+    "status": "CONSUMED_UNAVAILABLE_FINDINGS_VALIDATION",
     "replacement_key": "core-s1-6415f443120f-r1-pr248",
     "source_consumed_request_id": "core-s1-6415f443120f-g79",
     "retry_of_consumed_id": false,
@@ -354,9 +367,9 @@
       "Run context gate and checked adapter once; do not expose credentials before prepare succeeds."
     ],
     "request_created": true,
-    "dispatch_performed": false,
-    "provider_called": false,
-    "credentials_read": false,
+    "dispatch_performed": true,
+    "provider_called": true,
+    "credentials_read": true,
     "candidate_head_changed": false,
     "tests_weakened": false,
     "final_request_id": "core-s1-6415f443120f-r2-g94",
@@ -382,7 +395,10 @@
       "live_status_bytes": 8258,
       "offline_resolve_pending": "PASS",
       "state_commit": "f62cc301386aa46fb0f04cdd587810e0fad3cf31"
-    }
+    },
+    "workflow_run_id": 37299737783,
+    "provider_failure_code": "FINDINGS_VALIDATION",
+    "retry_allowed": false
   },
   "source_lineage_validation": {
     "checked_at": "2026-10-02T15:44:36Z",
@@ -662,9 +678,27 @@
       "packet_sha256": "91b17f2a9c287d168fd620eb1bdc97552bab9392f5134bd8f4254fc4df455ab8",
       "serialized_canonical_sha256": "a9a448d69ff4f5e4c4e902d525e32f39b05c4af82361b6b43dc3eaf7fd45983a",
       "serialized_packet_bytes": 393596,
-      "status": "READY_NOT_DISPATCHED",
+      "status": "CONSUMED_UNAVAILABLE",
       "lease_generation": 94,
-      "provider_called": false
+      "provider_called": true,
+      "workflow_run_id": 37299737783,
+      "provider_failure_code": "FINDINGS_VALIDATION",
+      "retry_allowed": false,
+      "receipt_sha256": "18ae4b72995a0366bb2fb1097dd38c16626fafd65d74e9d5a3793ba04fc3e00b"
     }
-  ]
+  ],
+  "technical_blocker": {
+    "id": "A6-FINDINGS-VALIDATION-20261005",
+    "status": "DIAGNOSIS_REQUIRED",
+    "first_observed_run_id": 37299737783,
+    "request_id": "core-s1-6415f443120f-r2-g94",
+    "provider_called": true,
+    "packet_prepare": "PASS",
+    "binding_validation": "PASS",
+    "receipt_validation": "PASS",
+    "provider_failure_code": "FINDINGS_VALIDATION",
+    "raw_provider_content_persisted": false,
+    "owner_action_required": false,
+    "rule": "No blind retry and no next-slice dispatch until correction is reviewed and current-main available."
+  }
 }
