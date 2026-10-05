@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "checked_at": "2026-10-05T10:36:46Z",
+  "checked_at": "2026-10-05T10:47:52.868Z",
   "status": "READY_FOR_LIVE_A6_CORE_S1_REPLACEMENT",
   "live_verified": true,
   "provider_called": false,
@@ -249,6 +249,40 @@
         "provider_not_called": true,
         "live_job_failed_closed": true
       }
+    },
+    {
+      "request_id": "core-s1-6415f443120f-r1-g93",
+      "workflow_run_id": 37297951432,
+      "workflow_head_sha": "bff54135e007c713328453cd0b211bedf96081cd",
+      "trigger": "issue_comment",
+      "comment_id": 5992814269,
+      "context_gate": "blocked_at_resolve_pending",
+      "packet_prepare": "skipped",
+      "provider_step": "skipped",
+      "provider_called": false,
+      "workflow_conclusion": "failure",
+      "bridge_status": "BLOCKED",
+      "audit_status": "NOT_RUN",
+      "live_verified": false,
+      "reason_code": "INVALID_LEASE_FENCING_TOKEN_FORMAT",
+      "reason": "Generation-93 active lease used a non-hex token; audit_bridge correctly rejected it before delivery dedupe, packet preparation, credentials, or provider access.",
+      "retry_allowed": false,
+      "retired_without_reuse": true,
+      "artifact_uploaded": false,
+      "packet_sha256": "91b17f2a9c287d168fd620eb1bdc97552bab9392f5134bd8f4254fc4df455ab8",
+      "base_sha": "08e030a6053ac9638957119373797e0fbf2b10c2",
+      "head_sha": "6415f443120fe09d9ca857c475c8e93654b46fe7",
+      "contract_sha": "bff54135e007c713328453cd0b211bedf96081cd",
+      "state_sha": "0496147fb802db79ef96cdd68931f3fa6aa2c515",
+      "lease_generation": 93,
+      "lease_holder": "/root/a0_automation_post248_a6",
+      "validated": {
+        "trusted_workflow_checkout": true,
+        "owner_command": true,
+        "provider_not_called": true,
+        "live_job_skipped": true,
+        "no_artifact": true
+      }
     }
   ],
   "diagnosis": {
@@ -337,8 +371,8 @@
     "reason": "No product code or ownership was changed by the scoped A6 follow-up. Product work remains independent of A6; the above product HEAD/CI are retained triage evidence, not a new product acceptance."
   },
   "pending_live_smoke": {
-    "request_id": "core-s1-6415f443120f-r1-g93",
-    "prepared_at": "2026-10-05T10:36:46Z",
+    "request_id": "core-s1-6415f443120f-r2-g94",
+    "prepared_at": "2026-10-05T10:47:52.868Z",
     "base_sha": "08e030a6053ac9638957119373797e0fbf2b10c2",
     "head_sha": "6415f443120fe09d9ca857c475c8e93654b46fe7",
     "contract_sha": "bff54135e007c713328453cd0b211bedf96081cd",
@@ -357,10 +391,10 @@
     "dispatch_transport": "issue_comment",
     "retry_allowed": false,
     "source_consumed_request_id": "core-s1-6415f443120f-g79",
-    "retry_of_consumed_id": false,
-    "dedup_key": "ivan88810900-star/tnved_starter_kit_v2|core-s1-6415f443120f-r1-g93|91b17f2a9c287d168fd620eb1bdc97552bab9392f5134bd8f4254fc4df455ab8|gen93",
-    "lease_generation": 93,
-    "lease_holder": "/root/a0_automation_post248_a6"
+    "dedup_key": "ivan88810900-star/tnved_starter_kit_v2|core-s1-6415f443120f-r2-g94|91b17f2a9c287d168fd620eb1bdc97552bab9392f5134bd8f4254fc4df455ab8|gen94",
+    "lease_generation": 94,
+    "lease_holder": "/root/a0_automation_post248_a6",
+    "source_failed_request_id": "core-s1-6415f443120f-r1-g93"
   },
   "communication_policy": {
     "owner_decisions_single_delivery": true,
@@ -377,16 +411,20 @@
     "pr210_merge_authorization_already_received": true
   },
   "current_sequence_diagnosis": {
-    "status": "FIX_MERGED_NEW_DISTINCT_REQUEST_READY",
+    "status": "LEASE_SCHEMA_REPAIRED_NEW_DISTINCT_REQUEST_READY",
     "source_consumed_request_id": "core-s1-6415f443120f-g79",
-    "replacement_request_id": "core-s1-6415f443120f-r1-g93",
+    "failed_request_id": "core-s1-6415f443120f-r1-g93",
+    "replacement_request_id": "core-s1-6415f443120f-r2-g94",
+    "blocked_run_id": 37297951432,
+    "blocked_reason": "INVALID_LEASE_FENCING_TOKEN_FORMAT",
+    "provider_called": false,
+    "lease_repair_commit": "cae3698c2b8a0b110dacfc93ac9814c53b4caeda",
+    "lease_generation": 94,
     "bridge_fix_pr": 248,
-    "bridge_fix_head_sha": "d96fd088e3a5093bc0a0ce53d7878007351da16e",
     "bridge_fix_merge_sha": "bff54135e007c713328453cd0b211bedf96081cd",
     "offline_packet_rebuild": "PASSED",
     "packet_binding": "91b17f2a9c287d168fd620eb1bdc97552bab9392f5134bd8f4254fc4df455ab8",
     "serialized_packet_bytes": 393596,
-    "provider_called": false,
     "dispatch_block": "NONE_FOR_THIS_VALIDATED_GENERATION_UNDER_ACTIVE_LEASE"
   },
   "a0_finding_validation": {
