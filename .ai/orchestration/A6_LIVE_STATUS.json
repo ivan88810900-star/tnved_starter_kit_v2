@@ -1,10 +1,10 @@
 {
   "schema_version": 1,
-  "checked_at": "2026-10-05T10:52:08.584Z",
-  "status": "A6_CORE_S1_GENERATION_94_READY",
+  "checked_at": "2026-10-05T11:03:04.687Z",
+  "status": "A6_CORE_S1_CONSUMED_UNAVAILABLE_FINDINGS_VALIDATION",
   "live_verified": false,
-  "provider_called": false,
-  "secret_values_read": false,
+  "provider_called": true,
+  "secret_values_read": true,
   "environment_assertion": {
     "name": "tariff-a6-trusted",
     "allowed_branch": "main",
@@ -85,6 +85,50 @@
         "live_job_skipped": true,
         "no_artifact": true
       }
+    },
+    {
+      "request_id": "core-s1-6415f443120f-r2-g94",
+      "workflow_run_id": 37299737783,
+      "workflow_head_sha": "bff54135e007c713328453cd0b211bedf96081cd",
+      "trigger": "issue_comment",
+      "comment_id": 5993051603,
+      "context_gate": "success",
+      "delivery_dedupe": "success",
+      "packet_prepare": "success",
+      "provider_step": "executed_once",
+      "provider_called": true,
+      "workflow_conclusion": "failure",
+      "bridge_status": "UNAVAILABLE",
+      "audit_status": "UNAVAILABLE",
+      "live_verified": false,
+      "reason_code": "PROVIDER_OR_CONFIG_UNAVAILABLE",
+      "provider_failure_code": "FINDINGS_VALIDATION",
+      "retry_allowed": false,
+      "artifact_id": 11341471068,
+      "artifact_digest": "sha256:8237baeac75964a84024871ff0371f9375c15961a828d95d1f5a5056bba16d22",
+      "receipt_sha256": "18ae4b72995a0366bb2fb1097dd38c16626fafd65d74e9d5a3793ba04fc3e00b",
+      "receipt_evidence": ".ai/orchestration/evidence/a6-core-s1-r2-g94-receipt-37299737783.json",
+      "packet_sha256": "91b17f2a9c287d168fd620eb1bdc97552bab9392f5134bd8f4254fc4df455ab8",
+      "base_sha": "08e030a6053ac9638957119373797e0fbf2b10c2",
+      "head_sha": "6415f443120fe09d9ca857c475c8e93654b46fe7",
+      "contract_sha": "bff54135e007c713328453cd0b211bedf96081cd",
+      "state_sha": "1e3573e3ab424fd13bdd3d0804b6369ff01b7389",
+      "lease_generation": 94,
+      "lease_holder": "/root/a0_automation_post248_a6",
+      "provider_message_id": null,
+      "model": null,
+      "findings_persisted": 0,
+      "validated": {
+        "artifact_digest": true,
+        "receipt_hash": true,
+        "request_binding": true,
+        "commit_binding": true,
+        "workflow_binding": true,
+        "packet_hash": true,
+        "lease_binding": true,
+        "provider_called_once": true,
+        "provider_result_not_accepted": true
+      }
     }
   ],
   "history_archive": {
@@ -94,15 +138,14 @@
     "retention": "FULL_PRE_COMPACTION_STATUS"
   },
   "diagnosis": {
-    "status": "TECHNICAL_STATE_GUARDS_REPAIRED",
-    "blocked_run_id": 37297951432,
-    "first_fail_closed_reason": "A6_LIVE_STATUS_TOO_LARGE",
-    "secondary_repaired_condition": "INVALID_LEASE_FENCING_TOKEN_FORMAT",
-    "provider_called": false,
-    "credentials_step": "NOT_REACHED",
-    "artifact_uploaded": false,
-    "remediation": "Full history archived; live status compacted below 20000-byte bridge limit; lease released and reacquired as validated generation 94.",
-    "owner_action_required": false
+    "status": "CONSUMED_PROVIDER_RESPONSE_FAILED_FINDINGS_VALIDATION",
+    "summary": "Trusted bridge, exact packet, active lease, dedupe and one provider call all completed. The provider returned parseable structured output that failed the repository's bounded finding/schema/evidence validation; no finding was accepted or persisted.",
+    "workflow_run_id": 37299737783,
+    "provider_called": true,
+    "request_consumed": true,
+    "retry_allowed": false,
+    "owner_action_required": false,
+    "next_action": "Diagnose and harden response schema/validation offline; do not dispatch another slice or retry this request until a reviewed technical correction exists."
   },
   "product_candidates": {
     "core": {
@@ -139,39 +182,43 @@
     "prior_manifest_serialized_canonical_sha256": "1580ea280e799e2eb931a3e94576e0c9acc8361f01032214618d69ced046251e",
     "contract_blob_sha256": "621594cc7e2bc054e80b9cb9a3677e709d4c2c90151c1ce8613e5eaf029bf4de",
     "binding_delta_reason": "Exact contract ref advanced from 7a7911c9e3db56e825e41c411fa57a56428b5bc2 to owner-authorized merge bff54135e007c713328453cd0b211bedf96081cd; contract blob and every candidate file are unchanged.",
-    "dispatched": false,
-    "consumed": false,
+    "dispatched": true,
+    "consumed": true,
     "dispatch_transport": "issue_comment",
     "retry_allowed": false,
     "source_consumed_request_id": "core-s1-6415f443120f-g79",
     "dedup_key": "ivan88810900-star/tnved_starter_kit_v2|core-s1-6415f443120f-r2-g94|91b17f2a9c287d168fd620eb1bdc97552bab9392f5134bd8f4254fc4df455ab8|gen94",
     "lease_generation": 94,
     "lease_holder": "/root/a0_automation_post248_a6",
-    "source_failed_request_id": "core-s1-6415f443120f-r1-g93"
+    "source_failed_request_id": "core-s1-6415f443120f-r1-g93",
+    "dispatch_comment_id": 5993051603,
+    "workflow_run_id": 37299737783,
+    "dispatch_state_sha": "1e3573e3ab424fd13bdd3d0804b6369ff01b7389",
+    "outcome": "UNAVAILABLE",
+    "provider_called": true,
+    "provider_failure_code": "FINDINGS_VALIDATION",
+    "receipt_sha256": "18ae4b72995a0366bb2fb1097dd38c16626fafd65d74e9d5a3793ba04fc3e00b",
+    "artifact_id": 11341471068
   },
   "communication_policy": {
     "owner_notification": "ONLY_SIGNIFICANT_COMPLETION_CRITICAL_BLOCKER_OR_OWNER_GATE",
     "duplicate_delivery_forbidden": true
   },
   "current_sequence_diagnosis": {
-    "status": "LEASE_SCHEMA_REPAIRED_NEW_DISTINCT_REQUEST_READY",
+    "status": "TECHNICAL_BLOCKER_POST_PROVIDER_FINDINGS_VALIDATION",
+    "consumed_request_id": "core-s1-6415f443120f-r2-g94",
     "source_consumed_request_id": "core-s1-6415f443120f-g79",
-    "failed_request_id": "core-s1-6415f443120f-r1-g93",
-    "replacement_request_id": "core-s1-6415f443120f-r2-g94",
-    "blocked_run_id": 37297951432,
-    "blocked_reason": "INVALID_LEASE_FENCING_TOKEN_FORMAT",
-    "provider_called": false,
-    "lease_repair_commit": "cae3698c2b8a0b110dacfc93ac9814c53b4caeda",
-    "lease_generation": 94,
-    "bridge_fix_pr": 248,
-    "bridge_fix_merge_sha": "bff54135e007c713328453cd0b211bedf96081cd",
-    "offline_packet_rebuild": "PASSED",
+    "workflow_run_id": 37299737783,
+    "provider_failure_code": "FINDINGS_VALIDATION",
+    "provider_called": true,
+    "receipt_hash_verified": true,
     "packet_binding": "91b17f2a9c287d168fd620eb1bdc97552bab9392f5134bd8f4254fc4df455ab8",
-    "serialized_packet_bytes": 393596,
-    "dispatch_block": "NONE_FOR_THIS_VALIDATED_GENERATION_UNDER_ACTIVE_LEASE"
+    "findings_available_for_a0_validation": false,
+    "owner_action_required": false,
+    "dispatch_block": "DO_NOT_BLIND_RETRY_OR_ADVANCE_TO_NEXT_SLICE"
   },
   "a0_finding_validation": {
-    "status": "PENDING_CURRENT_CORE_S1_LIVE_A6_EVIDENCE",
+    "status": "NOT_POSSIBLE_NO_VALIDATED_FINDINGS_PERSISTED",
     "automatic_acceptance": false
   }
 }
