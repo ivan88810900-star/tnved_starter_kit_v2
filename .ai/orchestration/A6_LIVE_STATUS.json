@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "checked_at": "2026-10-02T11:47:39Z",
-  "status": "BLOCKED_PENDING_OWNER_APPROVAL_PR248",
+  "checked_at": "2026-10-05T10:36:46Z",
+  "status": "READY_FOR_LIVE_A6_CORE_S1_REPLACEMENT",
   "live_verified": true,
   "provider_called": false,
   "secret_values_read": false,
@@ -15,7 +15,7 @@
   },
   "trusted_workflow": {
     "path": ".github/workflows/tariff-a6-live.yml",
-    "default_branch_head": "08e030a6053ac9638957119373797e0fbf2b10c2",
+    "default_branch_head": "bff54135e007c713328453cd0b211bedf96081cd",
     "trigger": "issue_comment:/tariff-a6-live run-pending",
     "workflow_present_on_default_branch": true
   },
@@ -337,32 +337,30 @@
     "reason": "No product code or ownership was changed by the scoped A6 follow-up. Product work remains independent of A6; the above product HEAD/CI are retained triage evidence, not a new product acceptance."
   },
   "pending_live_smoke": {
-    "request_id": "core-s1-6415f443120f-g79",
-    "prepared_at": "2026-10-02T10:41:40Z",
+    "request_id": "core-s1-6415f443120f-r1-g93",
+    "prepared_at": "2026-10-05T10:36:46Z",
     "base_sha": "08e030a6053ac9638957119373797e0fbf2b10c2",
     "head_sha": "6415f443120fe09d9ca857c475c8e93654b46fe7",
-    "contract_sha": "7a7911c9e3db56e825e41c411fa57a56428b5bc2",
+    "contract_sha": "bff54135e007c713328453cd0b211bedf96081cd",
     "paths_json": "[\"customs-clear/backend/app/services/payment_engine.py\",\"customs-clear/backend/app/services/payment_quote_service.py\",\"customs-clear/backend/tests/test_antidumping_fixed_unit_fail_closed.py\",\"customs-clear/backend/tests/test_automatic_duty_operand_validation.py\",\"customs-clear/backend/tests/test_payment_engine.py\",\"customs-clear/backend/tests/test_payment_quote.py\",\"customs-clear/backend/tests/test_payment_source_admission.py\",\"customs-clear/backend/tests/test_special_duties.py\"]",
     "official_sources_json": "[]",
-    "packet_sha256": "0b453b601410c2bab388c7a9a2a697a948bb14ee8f7227f9c12e50aa71756d5b",
+    "packet_sha256": "91b17f2a9c287d168fd620eb1bdc97552bab9392f5134bd8f4254fc4df455ab8",
+    "serialized_canonical_sha256": "a9a448d69ff4f5e4c4e902d525e32f39b05c4af82361b6b43dc3eaf7fd45983a",
+    "serialized_packet_bytes": 393596,
     "packet_validation": "PASSED_OFFLINE_WITHOUT_CREDENTIALS",
-    "dispatched": true,
-    "consumed": true,
+    "prior_manifest_packet_sha256": "0b453b601410c2bab388c7a9a2a697a948bb14ee8f7227f9c12e50aa71756d5b",
+    "prior_manifest_serialized_canonical_sha256": "1580ea280e799e2eb931a3e94576e0c9acc8361f01032214618d69ced046251e",
+    "contract_blob_sha256": "621594cc7e2bc054e80b9cb9a3677e709d4c2c90151c1ce8613e5eaf029bf4de",
+    "binding_delta_reason": "Exact contract ref advanced from 7a7911c9e3db56e825e41c411fa57a56428b5bc2 to owner-authorized merge bff54135e007c713328453cd0b211bedf96081cd; contract blob and every candidate file are unchanged.",
+    "dispatched": false,
+    "consumed": false,
     "dispatch_transport": "issue_comment",
     "retry_allowed": false,
-    "dedup_key": "ivan88810900-star/tnved_starter_kit_v2|core-s1-6415f443120f-g79|0b453b601410c2bab388c7a9a2a697a948bb14ee8f7227f9c12e50aa71756d5b|gen80",
-    "lease_generation": 80,
-    "lease_holder": "/root/a0_automation_20261002T104047Z",
-    "dispatched_at": "2026-10-02T10:42:09Z",
-    "dispatch_comment_id": 5950611452,
-    "workflow_run_id": 36996924714,
-    "workflow_head_sha": "7a7911c9e3db56e825e41c411fa57a56428b5bc2",
-    "result": "BLOCKED_PACKET_SERIALIZATION_FALSE_POSITIVE",
-    "provider_called": false,
-    "artifact_uploaded": false,
-    "reason_code": "PACKET_JSON_CONTACT_RECLASSIFICATION",
-    "bridge_fix_pr": 248,
-    "bridge_fix_head_sha": "d96fd088e3a5093bc0a0ce53d7878007351da16e"
+    "source_consumed_request_id": "core-s1-6415f443120f-g79",
+    "retry_of_consumed_id": false,
+    "dedup_key": "ivan88810900-star/tnved_starter_kit_v2|core-s1-6415f443120f-r1-g93|91b17f2a9c287d168fd620eb1bdc97552bab9392f5134bd8f4254fc4df455ab8|gen93",
+    "lease_generation": 93,
+    "lease_holder": "/root/a0_automation_post248_a6"
   },
   "communication_policy": {
     "owner_decisions_single_delivery": true,
@@ -379,47 +377,17 @@
     "pr210_merge_authorization_already_received": true
   },
   "current_sequence_diagnosis": {
-    "status": "FIX_VERIFIED_READY_FOR_OWNER_APPROVAL",
-    "workflow_run_id": 36996924714,
-    "request_id": "core-s1-6415f443120f-g79",
-    "context_gate": "PASSED",
-    "packet_build": "BLOCKED_AFTER_REBUILD_DURING_EXCLUSIVE_JSON_WRITE",
-    "provider_step": "SKIPPED",
+    "status": "FIX_MERGED_NEW_DISTINCT_REQUEST_READY",
+    "source_consumed_request_id": "core-s1-6415f443120f-g79",
+    "replacement_request_id": "core-s1-6415f443120f-r1-g93",
+    "bridge_fix_pr": 248,
+    "bridge_fix_head_sha": "d96fd088e3a5093bc0a0ce53d7878007351da16e",
+    "bridge_fix_merge_sha": "bff54135e007c713328453cd0b211bedf96081cd",
+    "offline_packet_rebuild": "PASSED",
+    "packet_binding": "91b17f2a9c287d168fd620eb1bdc97552bab9392f5134bd8f4254fc4df455ab8",
+    "serialized_packet_bytes": 393596,
     "provider_called": false,
-    "reproduced_matches": [
-      "n+@pytest.fixture -> false email classification",
-      "n+@pytest.mark.parametrize -> false email classification",
-      "n@unittest.skipUnless -> false email classification"
-    ],
-    "independent_local_reproduction": "CONFIRMED",
-    "fix_pr": 248,
-    "fix_head_sha": "d96fd088e3a5093bc0a0ce53d7878007351da16e",
-    "fix_tests": "134/134 orchestration PASS; exact packet write PASS with unchanged packet binding",
-    "retry_rule": "This request generation is consumed and must never be retried. Build a new request only after the exact bridge fix is owner-approved and merged.",
-    "fix_tree_sha": "2d6c960568ab533c1b3a1021c3bfff65f2cbedb5",
-    "superseded_intermediate_head_ci": {
-      "head_sha": "d0a56d383bd34135ab78e30d625b723bd43c80fe",
-      "run_id": 36997920566,
-      "conclusion": "failure",
-      "reason": "regression fixture was double-escaped during connector publication; corrected without changing the tested tree intent"
-    },
-    "current_fix_ci": {
-      "status": "PASSED",
-      "run_id": 36998232448,
-      "conclusion": "success"
-    },
-    "fresh_independent_a5": {
-      "status": "PASSED",
-      "reviewer": "/root/a5_pr248_exact",
-      "findings": []
-    },
-    "a0_validation": {
-      "status": "PASSED",
-      "full_orchestration": "134/134 tests plus 217 subtests",
-      "packet_binding_preserved": true
-    },
-    "owner_gate": "Explicit approval required to merge only exact PR248 HEAD into main.",
-    "dispatch_block": "No A6 dispatch until exact bridge fix is owner-approved and merged."
+    "dispatch_block": "NONE_FOR_THIS_VALIDATED_GENERATION_UNDER_ACTIVE_LEASE"
   },
   "a0_finding_validation": {
     "status": "COMPLETED",
