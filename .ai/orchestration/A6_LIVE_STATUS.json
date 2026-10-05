@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "checked_at": "2026-10-05T12:03:20.347Z",
+  "checked_at": "2026-10-05T12:04:29.789Z",
   "status": "A6_RESPONSE_SCHEMA_FIX_PR249_AWAITING_A5_CI",
   "live_verified": false,
   "provider_called": true,
@@ -145,7 +145,7 @@
     "request_consumed": true,
     "retry_allowed": false,
     "owner_action_required": false,
-    "next_action": "Obtain fresh independent A5 and exact-head CI for PR #249. Do not dispatch a new A6 request until the fix is merged to main under a new owner approval."
+    "next_action": "Obtain fresh independent A5 for exact PR #249 HEAD d58a1a061fc5255d2700d8898f578d7af859ac50, then perform A0 validation. Exact-head CI is PASS. Do not dispatch a new A6 request until the fix is merged to main under a new owner approval."
   },
   "product_candidates": {
     "core": {
@@ -244,8 +244,10 @@
     },
     "product_candidate_heads_changed": false,
     "a5": "PENDING",
-    "exact_head_ci": "PENDING",
+    "exact_head_ci": "PASS",
     "a0_validation": "PENDING",
-    "protected_merge": "OWNER_APPROVAL_REQUIRED_AFTER_GATES"
+    "protected_merge": "OWNER_APPROVAL_REQUIRED_AFTER_GATES",
+    "ci_run_id": 37306439751,
+    "ci_workflow": "Tariff agent safety"
   }
 }
