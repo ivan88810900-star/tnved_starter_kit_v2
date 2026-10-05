@@ -774,7 +774,7 @@
     }
   ],
   "max_concurrent_subagents": 3,
-  "revision": 659,
+  "revision": 660,
   "runs": [
     {
       "head_sha": null,
@@ -4188,7 +4188,7 @@
       }
     }
   ],
-  "updated_at": "2026-10-05T10:38:51.565Z",
+  "updated_at": "2026-10-05T10:55:40.150Z",
   "max_concurrent_feature_workers": 2,
   "active_role_model": {
     "effective_at": "2026-09-30T12:58:10.633Z",
@@ -6930,6 +6930,45 @@
       "consumed": false,
       "product_heads_changed": false,
       "tests_weakened": false
+    },
+    "a6_core_s1_gate_repair_gen94_rev660": {
+      "checked_at": "2026-10-05T10:55:40.150Z",
+      "lease_generation": 94,
+      "status": "READY_DISTINCT_IMMUTABLE_REQUEST_NOT_DISPATCHED",
+      "blocked_generation": {
+        "request_id": "core-s1-6415f443120f-r1-g93",
+        "workflow_run_id": 37297951432,
+        "context_gate": "BLOCKED",
+        "reason_code": "A6_LIVE_STATUS_TOO_LARGE",
+        "secondary_condition": "INVALID_LEASE_FENCING_TOKEN_FORMAT",
+        "provider_called": false,
+        "credentials_read": false,
+        "artifact_uploaded": false,
+        "retired_without_reuse": true
+      },
+      "state_repair": {
+        "full_history_archive": ".ai/orchestration/evidence/a6-live-status-archive-through-gen93-20261005.json",
+        "compact_status_bytes": 8258,
+        "compact_status_commit": "f62cc301386aa46fb0f04cdd587810e0fad3cf31",
+        "offline_resolve_pending": "PASS"
+      },
+      "request": {
+        "request_id": "core-s1-6415f443120f-r2-g94",
+        "source_consumed_request_id": "core-s1-6415f443120f-g79",
+        "source_failed_request_id": "core-s1-6415f443120f-r1-g93",
+        "base_sha": "08e030a6053ac9638957119373797e0fbf2b10c2",
+        "head_sha": "6415f443120fe09d9ca857c475c8e93654b46fe7",
+        "contract_sha": "bff54135e007c713328453cd0b211bedf96081cd",
+        "packet_sha256": "91b17f2a9c287d168fd620eb1bdc97552bab9392f5134bd8f4254fc4df455ab8",
+        "serialized_canonical_sha256": "a9a448d69ff4f5e4c4e902d525e32f39b05c4af82361b6b43dc3eaf7fd45983a",
+        "serialized_packet_bytes": 393596,
+        "lease_generation": 94,
+        "dispatched": false,
+        "provider_called": false
+      },
+      "product_heads_changed": false,
+      "tests_weakened": false,
+      "protected_action_performed": false
     }
   }
 }
