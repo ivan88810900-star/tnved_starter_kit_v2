@@ -26,6 +26,11 @@ def utcnow():
     return dt.datetime.now(dt.timezone.utc)
 
 
+def _utc_text(value):
+    """Serialize the canonical UTC form required by the checked A6 bridge."""
+    return value.astimezone(dt.timezone.utc).isoformat().replace('+00:00', 'Z')
+
+
 def _time(value):
     try:
         result = dt.datetime.fromisoformat(value)
@@ -157,8 +162,8 @@ def propose(record, blob_sha, action, holder, *, token=None, now=None, ttl_secon
     else:
         raise LeaseError('Unknown lease action')
     if new['state'] == 'active':
-        new['expires_at'] = (now + dt.timedelta(seconds=ttl_seconds)).isoformat()
-    new['updated_at'] = now.isoformat()
+        new['expires_at'] = _utc_text(now + dt.timedelta(seconds=ttl_seconds))
+    new['updated_at'] = _utc_text(now)
     return {'repository_full_name': REPOSITORY, 'branch': STATE_BRANCH,
             'path': LEASE_PATH, 'sha': blob_sha,
             'message': 'chore(agents): '+action+' coordinator lease',
