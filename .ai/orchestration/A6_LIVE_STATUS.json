@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "checked_at": "2026-10-05T21:51:20.812Z",
-  "status": "A6_WAITING_ACTIONS_RECOVERY_ALL_OFFLINE_PACKETS_READY",
+  "checked_at": "2026-10-05T22:50:57.475Z",
+  "status": "A6_CORE_SLICE1_GEN99_PENDING_DISPATCH",
   "live_verified": false,
   "provider_called": true,
   "secret_values_read": true,
@@ -202,13 +202,13 @@
     "retention": "FULL_PRE_COMPACTION_STATUS"
   },
   "diagnosis": {
-    "status": "EXTERNAL_GITHUB_ACTIONS_INCIDENT_ALL_OFFLINE_PREFLIGHT_COMPLETE",
-    "summary": "GitHub reports mitigations applied and new jobs not delayed, but the Actions incident remains formally investigating. All eleven A-CORE/A-PRODUCT runtime and repair packets have now been rebuilt on current contract 7df838ea and pass exact base/head/path/source, complete-diff, and size checks. No new live delivery was created.",
+    "status": "GITHUB_ACTIONS_OPERATIONAL_NEW_IMMUTABLE_REQUEST_PREPARED",
+    "summary": "GitHub reports all systems operational and Actions operating normally. All eleven A-CORE/A-PRODUCT packets remain validated on current contract 7df838ea; a distinct generation-99 request is prepared for A-CORE slice 1 without reusing any retired or consumed ID.",
     "provider_called": false,
-    "request_consumed": true,
+    "request_consumed": false,
     "retry_allowed": false,
     "owner_action_required": false,
-    "next_action": "Once GitHub marks Actions recovered/resolved, acquire a fresh lease and create a distinct A-CORE slice-1 request from the recorded current-contract hash."
+    "next_action": "Dispatch exactly once through the trusted issue-comment bridge, then validate the immutable receipt and independently reproduce any findings."
   },
   "product_candidates": {
     "core": {
@@ -230,8 +230,8 @@
     }
   },
   "pending_live_smoke": {
-    "request_id": "core-s1-6415f443120f-r4-g96",
-    "prepared_at": "2026-10-05T19:55:13.216Z",
+    "request_id": "core-s1-6415f443120f-r5-g99",
+    "prepared_at": "2026-10-05T22:50:57.475Z",
     "base_sha": "08e030a6053ac9638957119373797e0fbf2b10c2",
     "head_sha": "6415f443120fe09d9ca857c475c8e93654b46fe7",
     "contract_sha": "7df838ea2a875b9d86754eb858f98a293c5e5f29",
@@ -246,36 +246,34 @@
     "contract_blob_sha256": "621594cc7e2bc054e80b9cb9a3677e709d4c2c90151c1ce8613e5eaf029bf4de",
     "contract_blob_git_oid": "667e622cd38bc7d2a915e6aef40c3f70af889c7a",
     "binding_delta_reason": "Exact contract ref advanced to owner-authorized PR #249 merge 7df838ea2a875b9d86754eb858f98a293c5e5f29; contract blob, historical slice base/head, path scope, sources, and product candidate HEAD are unchanged.",
-    "dispatched": true,
-    "consumed": true,
+    "dispatched": false,
+    "consumed": false,
     "retry_allowed": false,
-    "source_consumed_request_id": "core-s1-6415f443120f-r3-g96",
-    "dedup_key": "ivan88810900-star/tnved_starter_kit_v2|core-s1-6415f443120f-r4-g96|7644f79f9c3811e680b6b099358ef629dcbf85c0c40fe9647d11a561ea8d21ed|gen96",
-    "lease_generation": 96,
-    "lease_holder": "/root/a0_automation_post249_a6_gen96",
-    "dispatch_transport": "issue_comment",
-    "dispatch_comment_id": 6001906640,
-    "workflow_run_id": 37366523672,
-    "outcome": "TRANSPORT_CANCELLED_BEFORE_CONTEXT_GATE",
-    "provider_called": false,
-    "reason_code": "GITHUB_ACTIONS_HOSTED_RUNNER_INCIDENT"
+    "source_consumed_request_id": "core-s1-6415f443120f-r4-g96",
+    "dedup_key": "ivan88810900-star/tnved_starter_kit_v2|core-s1-6415f443120f-r5-g99|7644f79f9c3811e680b6b099358ef629dcbf85c0c40fe9647d11a561ea8d21ed|gen99",
+    "lease_generation": 99,
+    "lease_holder": "/root/a0_automation_post_actions_recovery_gen99"
   },
   "communication_policy": {
     "owner_notification": "ONLY_SIGNIFICANT_COMPLETION_CRITICAL_BLOCKER_OR_OWNER_GATE",
     "duplicate_delivery_forbidden": true
   },
   "current_sequence_diagnosis": {
-    "status": "WAIT_FORMAL_GITHUB_ACTIONS_RECOVERY_ALL_PACKETS_READY",
-    "incident_id": "3q1yb5m7ltvb",
+    "status": "PENDING_LAWFUL_ONE_SHOT_DISPATCH",
+    "request_id": "core-s1-6415f443120f-r5-g99",
+    "retired_transport_request_id": "core-s1-6415f443120f-r4-g96",
+    "retired_workflow_run_id": 37366523672,
     "contract_sha": "7df838ea2a875b9d86754eb858f98a293c5e5f29",
     "core_packets_ready": 5,
     "product_packets_ready": 6,
     "total_packets_ready": 11,
     "core_path_coverage": "34/34",
     "product_path_coverage": "43/43",
+    "packet_binding": "7644f79f9c3811e680b6b099358ef629dcbf85c0c40fe9647d11a561ea8d21ed",
+    "packet_validation": "PASS",
+    "path_source_binding": "PASS",
     "provider_called": false,
-    "owner_action_required": false,
-    "dispatch_block": "WAIT_FOR_OFFICIAL_ACTIONS_RECOVERY_BEFORE_NEW_DELIVERY"
+    "owner_action_required": false
   },
   "a0_finding_validation": {
     "status": "NOT_POSSIBLE_NO_VALIDATED_FINDINGS_PERSISTED",
