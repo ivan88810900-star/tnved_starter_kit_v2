@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "checked_at": "2026-10-05T12:04:29.789Z",
-  "status": "A6_RESPONSE_SCHEMA_FIX_PR249_AWAITING_A5_CI",
+  "checked_at": "2026-10-05T12:13:15.037Z",
+  "status": "A6_RESPONSE_SCHEMA_FIX_PR249_READY_FOR_OWNER_APPROVAL",
   "live_verified": false,
   "provider_called": true,
   "secret_values_read": true,
@@ -144,8 +144,8 @@
     "provider_called": true,
     "request_consumed": true,
     "retry_allowed": false,
-    "owner_action_required": false,
-    "next_action": "Obtain fresh independent A5 for exact PR #249 HEAD d58a1a061fc5255d2700d8898f578d7af859ac50, then perform A0 validation. Exact-head CI is PASS. Do not dispatch a new A6 request until the fix is merged to main under a new owner approval."
+    "owner_action_required": true,
+    "next_action": "Owner: approve or reject protected merge of PR #249 exact HEAD d58a1a061fc5255d2700d8898f578d7af859ac50. After an approved expected-head merge, generate a new immutable A6 request ID for core slice 1; never reuse consumed requests."
   },
   "product_candidates": {
     "core": {
@@ -205,7 +205,7 @@
     "duplicate_delivery_forbidden": true
   },
   "current_sequence_diagnosis": {
-    "status": "TECHNICAL_FIX_PR249_PUBLISHED_AWAITING_FRESH_GATES",
+    "status": "PR249_READY_FOR_OWNER_APPROVAL",
     "consumed_request_id": "core-s1-6415f443120f-r2-g94",
     "source_consumed_request_id": "core-s1-6415f443120f-g79",
     "workflow_run_id": 37299737783,
@@ -214,10 +214,10 @@
     "receipt_hash_verified": true,
     "packet_binding": "91b17f2a9c287d168fd620eb1bdc97552bab9392f5134bd8f4254fc4df455ab8",
     "findings_available_for_a0_validation": false,
-    "owner_action_required": false,
+    "owner_action_required": true,
     "fix_pr": 249,
     "fix_head_sha": "d58a1a061fc5255d2700d8898f578d7af859ac50",
-    "dispatch_block": "DO_NOT_DISPATCH_UNTIL_PR249_IS_REVIEWED_AND_MERGED"
+    "dispatch_block": "DO_NOT_DISPATCH_UNTIL_OWNER_APPROVES_AND_PR249_EXACT_HEAD_IS_MERGED"
   },
   "a0_finding_validation": {
     "status": "NOT_POSSIBLE_NO_VALIDATED_FINDINGS_PERSISTED",
@@ -243,11 +243,44 @@
       "diff_check": "PASS"
     },
     "product_candidate_heads_changed": false,
-    "a5": "PENDING",
+    "a5": "PASS",
     "exact_head_ci": "PASS",
-    "a0_validation": "PENDING",
-    "protected_merge": "OWNER_APPROVAL_REQUIRED_AFTER_GATES",
+    "a0_validation": "PASS",
+    "protected_merge": "READY_FOR_OWNER_APPROVAL",
     "ci_run_id": 37306439751,
-    "ci_workflow": "Tariff agent safety"
+    "ci_workflow": "Tariff agent safety",
+    "a5_binding": {
+      "pr": 249,
+      "base_sha": "bff54135e007c713328453cd0b211bedf96081cd",
+      "head_sha": "d58a1a061fc5255d2700d8898f578d7af859ac50",
+      "tree_sha": "5ae66945ddf9f18b72613444bb9a2a60dce451f0",
+      "findings": 0,
+      "orchestration_tests": 135,
+      "required_verifier": 130,
+      "snapshot_tests": 5,
+      "compileall": "PASS",
+      "diff_check": "PASS"
+    },
+    "a0_binding": {
+      "head_sha": "d58a1a061fc5255d2700d8898f578d7af859ac50",
+      "tree_sha": "5ae66945ddf9f18b72613444bb9a2a60dce451f0",
+      "independent_unittest_discovery": 135,
+      "root_cause_fit": "PASS",
+      "provider_schema_compatibility": "PASS",
+      "fail_closed_boundary": "PASS",
+      "candidate_heads_unchanged": true
+    }
+  },
+  "owner_gate": {
+    "action": "PROTECTED_MERGE",
+    "pr": 249,
+    "exact_head_sha": "d58a1a061fc5255d2700d8898f578d7af859ac50",
+    "base_sha": "bff54135e007c713328453cd0b211bedf96081cd",
+    "a5": "PASS",
+    "a0": "PASS",
+    "exact_head_ci": "PASS",
+    "ci_run_id": 37306439751,
+    "authorization": "PENDING",
+    "prior_owner_authorizations_consumed": true
   }
 }
