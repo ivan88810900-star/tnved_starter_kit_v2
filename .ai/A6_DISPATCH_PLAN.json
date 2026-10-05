@@ -1,6 +1,6 @@
 {
   "schema_version": 2,
-  "status": "READY_FOR_CORE_S1_REPLACEMENT_DISPATCH",
+  "status": "READY_FOR_CORE_S1_GENERATION_94_DISPATCH",
   "prepared_from_state_revision": 641,
   "prepared_at": "2026-10-02T09:56:33Z",
   "source_receipts": [
@@ -273,7 +273,7 @@
     "sha256": "9ed932aa8ffe47d3bcbe6007d06578c0a9f2ab9d523b7dbf4ea24cf6dd3c231f",
     "canonicalization": "RFC8259 compact JSON with recursively sorted object keys over protected chain, bridge contract, candidates, limits, prior-manifest rebuild, ordered requests, exclusions and dispatch invariants; trailing newline included"
   },
-  "updated_at": "2026-10-05T10:37:49.615Z",
+  "updated_at": "2026-10-05T10:55:01.257Z",
   "dispatch_history": [
     {
       "request_id": "core-s1-6415f443120f-g79",
@@ -285,11 +285,23 @@
       "retry_allowed": false,
       "bridge_fix_pr": 248,
       "bridge_fix_head_sha": "d96fd088e3a5093bc0a0ce53d7878007351da16e"
+    },
+    {
+      "request_id": "core-s1-6415f443120f-r1-g93",
+      "dispatch_comment_id": 5992814269,
+      "workflow_run_id": 37297951432,
+      "outcome": "RETIRED_BLOCKED_AT_CONTEXT_GATE_PRE_PROVIDER",
+      "reason_code": "A6_LIVE_STATUS_TOO_LARGE_WITH_INVALID_LEASE_TOKEN_SECONDARY",
+      "provider_called": false,
+      "credentials_read": false,
+      "artifact_uploaded": false,
+      "retry_allowed": false,
+      "retired_without_reuse": true
     }
   ],
-  "remaining_unconsumed_request_count": 10,
+  "remaining_unconsumed_request_count": 11,
   "required_replacement_requests": 1,
-  "next_gate": "Dispatch core-s1-6415f443120f-r1-g93 exactly once through checked issue-comment bridge, then validate scrubbed receipt.",
+  "next_gate": "Dispatch core-s1-6415f443120f-r2-g94 exactly once through the checked issue-comment bridge, then independently validate the scrubbed receipt.",
   "bridge_fix_tree_sha": "2d6c960568ab533c1b3a1021c3bfff65f2cbedb5",
   "bridge_fix_exact_head_ci": {
     "status": "PASSED",
@@ -308,7 +320,7 @@
   },
   "replacement_request_preflight": {
     "checked_at": "2026-10-05T10:37:49.615Z",
-    "status": "READY_DISTINCT_IMMUTABLE_REQUEST_CREATED_NOT_DISPATCHED",
+    "status": "READY_DISTINCT_IMMUTABLE_REQUEST_GENERATION_94",
     "replacement_key": "core-s1-6415f443120f-r1-pr248",
     "source_consumed_request_id": "core-s1-6415f443120f-g79",
     "retry_of_consumed_id": false,
@@ -347,7 +359,7 @@
     "credentials_read": false,
     "candidate_head_changed": false,
     "tests_weakened": false,
-    "final_request_id": "core-s1-6415f443120f-r1-g93",
+    "final_request_id": "core-s1-6415f443120f-r2-g94",
     "postmerge_rebuild": {
       "contract_sha": "bff54135e007c713328453cd0b211bedf96081cd",
       "prior_packet_binding_sha256": "0b453b601410c2bab388c7a9a2a697a948bb14ee8f7227f9c12e50aa71756d5b",
@@ -357,6 +369,19 @@
       "contract_blob_sha256": "621594cc7e2bc054e80b9cb9a3677e709d4c2c90151c1ce8613e5eaf029bf4de",
       "comparison": "Candidate/base/files and contract blob unchanged; expected binding and canonical hash changed only because the exact contract ref advanced to the new main merge commit.",
       "offline_validation": "PASSED_OFFLINE_WITHOUT_PROVIDER"
+    },
+    "failed_generation": {
+      "request_id": "core-s1-6415f443120f-r1-g93",
+      "workflow_run_id": 37297951432,
+      "reason_code": "A6_LIVE_STATUS_TOO_LARGE",
+      "provider_called": false,
+      "retired_without_reuse": true
+    },
+    "state_compaction": {
+      "archive_path": ".ai/orchestration/evidence/a6-live-status-archive-through-gen93-20261005.json",
+      "live_status_bytes": 8258,
+      "offline_resolve_pending": "PASS",
+      "state_commit": "f62cc301386aa46fb0f04cdd587810e0fad3cf31"
     }
   },
   "source_lineage_validation": {
@@ -619,8 +644,26 @@
       "packet_sha256": "91b17f2a9c287d168fd620eb1bdc97552bab9392f5134bd8f4254fc4df455ab8",
       "serialized_canonical_sha256": "a9a448d69ff4f5e4c4e902d525e32f39b05c4af82361b6b43dc3eaf7fd45983a",
       "serialized_packet_bytes": 393596,
-      "status": "READY_NOT_DISPATCHED",
+      "status": "RETIRED_BLOCKED_CONTEXT_GATE",
       "lease_generation": 93,
+      "provider_called": false,
+      "workflow_run_id": 37297951432,
+      "reason_code": "A6_LIVE_STATUS_TOO_LARGE"
+    },
+    {
+      "request_id": "core-s1-6415f443120f-r2-g94",
+      "source_consumed_request_id": "core-s1-6415f443120f-g79",
+      "source_failed_request_id": "core-s1-6415f443120f-r1-g93",
+      "retry_of_consumed_id": false,
+      "prepared_at": "2026-10-05T10:55:01.257Z",
+      "base_sha": "08e030a6053ac9638957119373797e0fbf2b10c2",
+      "head_sha": "6415f443120fe09d9ca857c475c8e93654b46fe7",
+      "contract_sha": "bff54135e007c713328453cd0b211bedf96081cd",
+      "packet_sha256": "91b17f2a9c287d168fd620eb1bdc97552bab9392f5134bd8f4254fc4df455ab8",
+      "serialized_canonical_sha256": "a9a448d69ff4f5e4c4e902d525e32f39b05c4af82361b6b43dc3eaf7fd45983a",
+      "serialized_packet_bytes": 393596,
+      "status": "READY_NOT_DISPATCHED",
+      "lease_generation": 94,
       "provider_called": false
     }
   ]
