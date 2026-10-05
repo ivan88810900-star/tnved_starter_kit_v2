@@ -273,10 +273,11 @@ def fetch_commit_objects(repo, commits):
             raise BridgeBlocked("Fetched candidate commit identity mismatch")
 
 
-def _write_exclusive(path, value, *, environ=None):
+def _write_exclusive(path, value, *, environ=None, scan_contacts=True):
     raw = json.dumps(value, ensure_ascii=False, indent=2, sort_keys=True,
                      allow_nan=False) + "\n"
-    audit.ensure_safe_text(raw, environ={} if environ is None else environ)
+    audit.ensure_safe_text(raw, environ={} if environ is None else environ,
+                           scan_contacts=scan_contacts)
     target = Path(path)
     flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL
     if hasattr(os, "O_NOFOLLOW"):
@@ -316,7 +317,12 @@ def prepare(repo, *, request_id, base, head, contract, paths_json,
     if (context.get("trigger") == "issue_comment" and
             packet["packet_sha256"] != context["pending_packet_sha256"]):
         raise BridgeBlocked("Prepared packet differs from the pending request")
-    _write_exclusive(output, packet, environ=env)
+    # ``build_packet`` scans every variable text field in its original form and
+    # then repeats aggregate secret checks without contact matching. Re-enabling
+    # contact matching on JSON here would reinterpret escaped diff markers such
+    # as ``\\n+@pytest.fixture`` as email local-parts. Keep the packet boundary
+    # aligned with that validated serialization while receipts remain strict.
+    _write_exclusive(output, packet, environ=env, scan_contacts=False)
     return {"status": "PACKET_BUILT", "request_id": request_id,
             "base_sha": base, "head_sha": head,
             "packet_sha256": packet["packet_sha256"]}
