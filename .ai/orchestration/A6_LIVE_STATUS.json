@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "checked_at": "2026-10-05T11:03:04.687Z",
-  "status": "A6_CORE_S1_CONSUMED_UNAVAILABLE_FINDINGS_VALIDATION",
+  "checked_at": "2026-10-05T12:03:20.347Z",
+  "status": "A6_RESPONSE_SCHEMA_FIX_PR249_AWAITING_A5_CI",
   "live_verified": false,
   "provider_called": true,
   "secret_values_read": true,
@@ -138,14 +138,14 @@
     "retention": "FULL_PRE_COMPACTION_STATUS"
   },
   "diagnosis": {
-    "status": "CONSUMED_PROVIDER_RESPONSE_FAILED_FINDINGS_VALIDATION",
-    "summary": "Trusted bridge, exact packet, active lease, dedupe and one provider call all completed. The provider returned parseable structured output that failed the repository's bounded finding/schema/evidence validation; no finding was accepted or persisted.",
+    "status": "ROOT_CAUSE_SCHEMA_VALIDATOR_GAP_FIX_PUBLISHED",
+    "summary": "The consumed provider response was parseable JSON but failed local findings validation. The raw response was intentionally not persisted, so the exact rejected field is unknowable; inspection confirmed the provider schema was materially looser than fail-closed validation. Draft PR #249 binds provider output to exact packet/head/path/source evidence using only the raw Claude API supported JSON Schema subset, while retaining all unsupported bounds in local validation and explicit prompt constraints.",
     "workflow_run_id": 37299737783,
     "provider_called": true,
     "request_consumed": true,
     "retry_allowed": false,
     "owner_action_required": false,
-    "next_action": "Diagnose and harden response schema/validation offline; do not dispatch another slice or retry this request until a reviewed technical correction exists."
+    "next_action": "Obtain fresh independent A5 and exact-head CI for PR #249. Do not dispatch a new A6 request until the fix is merged to main under a new owner approval."
   },
   "product_candidates": {
     "core": {
@@ -205,7 +205,7 @@
     "duplicate_delivery_forbidden": true
   },
   "current_sequence_diagnosis": {
-    "status": "TECHNICAL_BLOCKER_POST_PROVIDER_FINDINGS_VALIDATION",
+    "status": "TECHNICAL_FIX_PR249_PUBLISHED_AWAITING_FRESH_GATES",
     "consumed_request_id": "core-s1-6415f443120f-r2-g94",
     "source_consumed_request_id": "core-s1-6415f443120f-g79",
     "workflow_run_id": 37299737783,
@@ -215,10 +215,37 @@
     "packet_binding": "91b17f2a9c287d168fd620eb1bdc97552bab9392f5134bd8f4254fc4df455ab8",
     "findings_available_for_a0_validation": false,
     "owner_action_required": false,
-    "dispatch_block": "DO_NOT_BLIND_RETRY_OR_ADVANCE_TO_NEXT_SLICE"
+    "fix_pr": 249,
+    "fix_head_sha": "d58a1a061fc5255d2700d8898f578d7af859ac50",
+    "dispatch_block": "DO_NOT_DISPATCH_UNTIL_PR249_IS_REVIEWED_AND_MERGED"
   },
   "a0_finding_validation": {
     "status": "NOT_POSSIBLE_NO_VALIDATED_FINDINGS_PERSISTED",
     "automatic_acceptance": false
+  },
+  "infrastructure_fix": {
+    "pr": 249,
+    "branch": "agent/a6-provider-output-schema-v1",
+    "head_sha": "d58a1a061fc5255d2700d8898f578d7af859ac50",
+    "base_sha": "bff54135e007c713328453cd0b211bedf96081cd",
+    "draft": true,
+    "changed_paths": [
+      "tools/tariff_agents/audit.py",
+      "tests/agent_orchestration/test_audit.py",
+      "tests/agent_orchestration/test_a6_provider_timeout.py"
+    ],
+    "diagnosis": "STATIC_PROVIDER_SCHEMA_LOOSER_THAN_LOCAL_FINDINGS_VALIDATOR",
+    "exact_rejected_field_recoverable": false,
+    "provider_schema_contract": "SUPPORTED_RAW_API_SUBSET_ONLY",
+    "local_tests": {
+      "focused_audit": 41,
+      "required_verifier": 130,
+      "diff_check": "PASS"
+    },
+    "product_candidate_heads_changed": false,
+    "a5": "PENDING",
+    "exact_head_ci": "PENDING",
+    "a0_validation": "PENDING",
+    "protected_merge": "OWNER_APPROVAL_REQUIRED_AFTER_GATES"
   }
 }
