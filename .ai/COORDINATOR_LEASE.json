@@ -1,11 +1,11 @@
 {
   "schema_version": 1,
-  "state": "active",
-  "holder": "/root/a0_automation_actions_incident_gen97",
-  "token": "9cbd45f07b0d47138360172187b30771",
+  "state": "released",
+  "holder": null,
+  "token": null,
   "generation": 97,
-  "updated_at": "2026-10-05T20:50:41.161Z",
-  "expires_at": "2026-10-05T21:20:41.161Z",
+  "updated_at": "2026-10-05T20:51:20.475Z",
+  "expires_at": null,
   "lease_repair": {
     "reason": "Invalid non-hex fencing token written during generation-93 acquisition; schema repair by the same verified holder before any credential access.",
     "prior_state_commit": "0496147fb802db79ef96cdd68931f3fa6aa2c515",
