@@ -1,18 +1,18 @@
 {
-  "schema_version": 1,
-  "state": "released",
-  "holder": null,
-  "token": null,
-  "generation": 98,
-  "updated_at": "2026-10-05T21:51:29.312Z",
-  "expires_at": null,
+  "acquisition_note": "Fresh lawful generation after owner-authorized exact-head merge of PR #249; preparing a distinct immutable A6 request without reusing consumed IDs.",
+  "expires_at": "2026-10-05T23:19:51.171785+00:00",
+  "generation": 99,
+  "holder": "/root/a0_automation_post_actions_recovery_gen99",
   "lease_repair": {
-    "reason": "Invalid non-hex fencing token written during generation-93 acquisition; schema repair by the same verified holder before any credential access.",
-    "prior_state_commit": "0496147fb802db79ef96cdd68931f3fa6aa2c515",
     "blocked_run_id": 37297951432,
-    "provider_called": false
+    "prior_state_commit": "0496147fb802db79ef96cdd68931f3fa6aa2c515",
+    "provider_called": false,
+    "reason": "Invalid non-hex fencing token written during generation-93 acquisition; schema repair by the same verified holder before any credential access."
   },
-  "released_by": "/root/a0_automation_a6_schema_gen95",
   "release_reason": "PR #249 exact HEAD passed fresh independent A5, A0 validation, and exact-head CI; owner gate recorded without merge.",
-  "acquisition_note": "Fresh lawful generation after owner-authorized exact-head merge of PR #249; preparing a distinct immutable A6 request without reusing consumed IDs."
+  "released_by": "/root/a0_automation_a6_schema_gen95",
+  "schema_version": 1,
+  "state": "active",
+  "token": "84e55ede57884931a16e508eaacb61bc",
+  "updated_at": "2026-10-05T22:49:51.171785+00:00"
 }
