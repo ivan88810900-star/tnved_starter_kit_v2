@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "checked_at": "2026-10-05T12:13:15.037Z",
-  "status": "A6_RESPONSE_SCHEMA_FIX_PR249_READY_FOR_OWNER_APPROVAL",
+  "checked_at": "2026-10-05T19:38:07.224Z",
+  "status": "A6_CORE_SLICE1_GEN96_PENDING_DISPATCH",
   "live_verified": false,
   "provider_called": true,
   "secret_values_read": true,
@@ -15,7 +15,7 @@
   },
   "trusted_workflow": {
     "path": ".github/workflows/tariff-a6-live.yml",
-    "default_branch_head": "bff54135e007c713328453cd0b211bedf96081cd",
+    "default_branch_head": "7df838ea2a875b9d86754eb858f98a293c5e5f29",
     "trigger": "issue_comment:/tariff-a6-live run-pending",
     "workflow_present_on_default_branch": true
   },
@@ -138,14 +138,13 @@
     "retention": "FULL_PRE_COMPACTION_STATUS"
   },
   "diagnosis": {
-    "status": "ROOT_CAUSE_SCHEMA_VALIDATOR_GAP_FIX_PUBLISHED",
-    "summary": "The consumed provider response was parseable JSON but failed local findings validation. The raw response was intentionally not persisted, so the exact rejected field is unknowable; inspection confirmed the provider schema was materially looser than fail-closed validation. Draft PR #249 binds provider output to exact packet/head/path/source evidence using only the raw Claude API supported JSON Schema subset, while retaining all unsupported bounds in local validation and explicit prompt constraints.",
-    "workflow_run_id": 37299737783,
-    "provider_called": true,
-    "request_consumed": true,
+    "status": "PR249_MERGED_NEW_IMMUTABLE_REQUEST_PREPARED",
+    "summary": "Owner-authorized PR #249 merged at exact reviewed HEAD; the post-merge contract rebuilt core runtime slice 1 offline with exact base/head/path/source binding and a new packet hash. Prior requests remain consumed and are not reusable.",
+    "provider_called": false,
+    "request_consumed": false,
     "retry_allowed": false,
-    "owner_action_required": true,
-    "next_action": "Owner: approve or reject protected merge of PR #249 exact HEAD d58a1a061fc5255d2700d8898f578d7af859ac50. After an approved expected-head merge, generate a new immutable A6 request ID for core slice 1; never reuse consumed requests."
+    "owner_action_required": false,
+    "next_action": "Dispatch exactly once through the trusted owner-command bridge, then validate the immutable receipt and independently reproduce any findings."
   },
   "product_candidates": {
     "core": {
@@ -167,57 +166,44 @@
     }
   },
   "pending_live_smoke": {
-    "request_id": "core-s1-6415f443120f-r2-g94",
-    "prepared_at": "2026-10-05T10:47:52.868Z",
+    "request_id": "core-s1-6415f443120f-r3-g96",
+    "prepared_at": "2026-10-05T19:38:07.224Z",
     "base_sha": "08e030a6053ac9638957119373797e0fbf2b10c2",
     "head_sha": "6415f443120fe09d9ca857c475c8e93654b46fe7",
-    "contract_sha": "bff54135e007c713328453cd0b211bedf96081cd",
+    "contract_sha": "7df838ea2a875b9d86754eb858f98a293c5e5f29",
     "paths_json": "[\"customs-clear/backend/app/services/payment_engine.py\",\"customs-clear/backend/app/services/payment_quote_service.py\",\"customs-clear/backend/tests/test_antidumping_fixed_unit_fail_closed.py\",\"customs-clear/backend/tests/test_automatic_duty_operand_validation.py\",\"customs-clear/backend/tests/test_payment_engine.py\",\"customs-clear/backend/tests/test_payment_quote.py\",\"customs-clear/backend/tests/test_payment_source_admission.py\",\"customs-clear/backend/tests/test_special_duties.py\"]",
     "official_sources_json": "[]",
-    "packet_sha256": "91b17f2a9c287d168fd620eb1bdc97552bab9392f5134bd8f4254fc4df455ab8",
-    "serialized_canonical_sha256": "a9a448d69ff4f5e4c4e902d525e32f39b05c4af82361b6b43dc3eaf7fd45983a",
-    "serialized_packet_bytes": 393596,
+    "packet_sha256": "7644f79f9c3811e680b6b099358ef629dcbf85c0c40fe9647d11a561ea8d21ed",
+    "serialized_canonical_sha256": "89248a5e11acf7e0660dc9a6ef0eb4792c0d06cab162d9984846212f824f36e3",
+    "serialized_packet_bytes": 393595,
     "packet_validation": "PASSED_OFFLINE_WITHOUT_CREDENTIALS",
-    "prior_manifest_packet_sha256": "0b453b601410c2bab388c7a9a2a697a948bb14ee8f7227f9c12e50aa71756d5b",
-    "prior_manifest_serialized_canonical_sha256": "1580ea280e799e2eb931a3e94576e0c9acc8361f01032214618d69ced046251e",
+    "prior_manifest_packet_sha256": "91b17f2a9c287d168fd620eb1bdc97552bab9392f5134bd8f4254fc4df455ab8",
+    "prior_manifest_serialized_canonical_sha256": "a9a448d69ff4f5e4c4e902d525e32f39b05c4af82361b6b43dc3eaf7fd45983a",
     "contract_blob_sha256": "621594cc7e2bc054e80b9cb9a3677e709d4c2c90151c1ce8613e5eaf029bf4de",
-    "binding_delta_reason": "Exact contract ref advanced from 7a7911c9e3db56e825e41c411fa57a56428b5bc2 to owner-authorized merge bff54135e007c713328453cd0b211bedf96081cd; contract blob and every candidate file are unchanged.",
-    "dispatched": true,
-    "consumed": true,
-    "dispatch_transport": "issue_comment",
+    "contract_blob_git_oid": "667e622cd38bc7d2a915e6aef40c3f70af889c7a",
+    "binding_delta_reason": "Exact contract ref advanced to owner-authorized PR #249 merge 7df838ea2a875b9d86754eb858f98a293c5e5f29; contract blob, historical slice base/head, path scope, sources, and product candidate HEAD are unchanged.",
+    "dispatched": false,
+    "consumed": false,
     "retry_allowed": false,
-    "source_consumed_request_id": "core-s1-6415f443120f-g79",
-    "dedup_key": "ivan88810900-star/tnved_starter_kit_v2|core-s1-6415f443120f-r2-g94|91b17f2a9c287d168fd620eb1bdc97552bab9392f5134bd8f4254fc4df455ab8|gen94",
-    "lease_generation": 94,
-    "lease_holder": "/root/a0_automation_post248_a6",
-    "source_failed_request_id": "core-s1-6415f443120f-r1-g93",
-    "dispatch_comment_id": 5993051603,
-    "workflow_run_id": 37299737783,
-    "dispatch_state_sha": "1e3573e3ab424fd13bdd3d0804b6369ff01b7389",
-    "outcome": "UNAVAILABLE",
-    "provider_called": true,
-    "provider_failure_code": "FINDINGS_VALIDATION",
-    "receipt_sha256": "18ae4b72995a0366bb2fb1097dd38c16626fafd65d74e9d5a3793ba04fc3e00b",
-    "artifact_id": 11341471068
+    "source_consumed_request_id": "core-s1-6415f443120f-r2-g94",
+    "dedup_key": "ivan88810900-star/tnved_starter_kit_v2|core-s1-6415f443120f-r3-g96|7644f79f9c3811e680b6b099358ef629dcbf85c0c40fe9647d11a561ea8d21ed|gen96",
+    "lease_generation": 96,
+    "lease_holder": "/root/a0_automation_post249_a6_gen96"
   },
   "communication_policy": {
     "owner_notification": "ONLY_SIGNIFICANT_COMPLETION_CRITICAL_BLOCKER_OR_OWNER_GATE",
     "duplicate_delivery_forbidden": true
   },
   "current_sequence_diagnosis": {
-    "status": "PR249_READY_FOR_OWNER_APPROVAL",
-    "consumed_request_id": "core-s1-6415f443120f-r2-g94",
-    "source_consumed_request_id": "core-s1-6415f443120f-g79",
-    "workflow_run_id": 37299737783,
-    "provider_failure_code": "FINDINGS_VALIDATION",
-    "provider_called": true,
-    "receipt_hash_verified": true,
-    "packet_binding": "91b17f2a9c287d168fd620eb1bdc97552bab9392f5134bd8f4254fc4df455ab8",
-    "findings_available_for_a0_validation": false,
-    "owner_action_required": true,
-    "fix_pr": 249,
-    "fix_head_sha": "d58a1a061fc5255d2700d8898f578d7af859ac50",
-    "dispatch_block": "DO_NOT_DISPATCH_UNTIL_OWNER_APPROVES_AND_PR249_EXACT_HEAD_IS_MERGED"
+    "status": "PENDING_LAWFUL_ONE_SHOT_DISPATCH",
+    "request_id": "core-s1-6415f443120f-r3-g96",
+    "prior_consumed_request_id": "core-s1-6415f443120f-r2-g94",
+    "contract_sha": "7df838ea2a875b9d86754eb858f98a293c5e5f29",
+    "packet_binding": "7644f79f9c3811e680b6b099358ef629dcbf85c0c40fe9647d11a561ea8d21ed",
+    "packet_validation": "PASS",
+    "path_source_binding": "PASS",
+    "provider_called": false,
+    "owner_action_required": false
   },
   "a0_finding_validation": {
     "status": "NOT_POSSIBLE_NO_VALIDATED_FINDINGS_PERSISTED",
@@ -246,7 +232,7 @@
     "a5": "PASS",
     "exact_head_ci": "PASS",
     "a0_validation": "PASS",
-    "protected_merge": "READY_FOR_OWNER_APPROVAL",
+    "protected_merge": "MERGED_OWNER_AUTHORIZATION_CONSUMED",
     "ci_run_id": 37306439751,
     "ci_workflow": "Tariff agent safety",
     "a5_binding": {
@@ -269,7 +255,9 @@
       "provider_schema_compatibility": "PASS",
       "fail_closed_boundary": "PASS",
       "candidate_heads_unchanged": true
-    }
+    },
+    "merge_commit_sha": "7df838ea2a875b9d86754eb858f98a293c5e5f29",
+    "owner_authorization": "CONSUMED_EXACT_HEAD_ONLY"
   },
   "owner_gate": {
     "action": "PROTECTED_MERGE",
@@ -280,7 +268,9 @@
     "a0": "PASS",
     "exact_head_ci": "PASS",
     "ci_run_id": 37306439751,
-    "authorization": "PENDING",
-    "prior_owner_authorizations_consumed": true
+    "authorization": "CONSUMED",
+    "prior_owner_authorizations_consumed": true,
+    "merge_commit_sha": "7df838ea2a875b9d86754eb858f98a293c5e5f29",
+    "no_further_protected_authorization": true
   }
 }
