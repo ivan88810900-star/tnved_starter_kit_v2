@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "checked_at": "2026-10-05T19:38:07.224Z",
-  "status": "A6_CORE_SLICE1_GEN96_PENDING_DISPATCH",
+  "checked_at": "2026-10-05T19:55:13.216Z",
+  "status": "A6_CORE_SLICE1_GEN96_RETRY_PENDING_DISPATCH",
   "live_verified": false,
   "provider_called": true,
   "secret_values_read": true,
@@ -129,6 +129,37 @@
         "provider_called_once": true,
         "provider_result_not_accepted": true
       }
+    },
+    {
+      "request_id": "core-s1-6415f443120f-r3-g96",
+      "workflow_run_id": 37364717830,
+      "workflow_head_sha": "7df838ea2a875b9d86754eb858f98a293c5e5f29",
+      "trigger": "issue_comment",
+      "comment_id": 6001679703,
+      "context_gate": "cancelled_before_start",
+      "packet_prepare": "skipped",
+      "provider_step": "skipped",
+      "provider_called": false,
+      "workflow_conclusion": "cancelled",
+      "bridge_status": "NOT_RUN",
+      "audit_status": "NOT_RUN",
+      "live_verified": false,
+      "reason_code": "GITHUB_ACTIONS_CANCELLED_BEFORE_CONTEXT_GATE",
+      "retry_allowed": false,
+      "retired_without_reuse": true,
+      "artifact_uploaded": false,
+      "packet_sha256": "7644f79f9c3811e680b6b099358ef629dcbf85c0c40fe9647d11a561ea8d21ed",
+      "base_sha": "08e030a6053ac9638957119373797e0fbf2b10c2",
+      "head_sha": "6415f443120fe09d9ca857c475c8e93654b46fe7",
+      "contract_sha": "7df838ea2a875b9d86754eb858f98a293c5e5f29",
+      "lease_generation": 96,
+      "lease_holder": "/root/a0_automation_post249_a6_gen96",
+      "validated": {
+        "workflow_binding": true,
+        "provider_not_called": true,
+        "no_steps": true,
+        "no_artifact": true
+      }
     }
   ],
   "history_archive": {
@@ -138,13 +169,14 @@
     "retention": "FULL_PRE_COMPACTION_STATUS"
   },
   "diagnosis": {
-    "status": "PR249_MERGED_NEW_IMMUTABLE_REQUEST_PREPARED",
-    "summary": "Owner-authorized PR #249 merged at exact reviewed HEAD; the post-merge contract rebuilt core runtime slice 1 offline with exact base/head/path/source binding and a new packet hash. Prior requests remain consumed and are not reusable.",
+    "status": "TRANSPORT_CANCELLATION_RETIRED_NEW_REQUEST_PREPARED",
+    "summary": "GitHub Actions run 37364717830 was cancelled while queued before context-gate; it produced no steps, logs, artifacts, credential access, or provider call. The delivery ID is retired and a distinct immutable request is prepared against the unchanged validated packet.",
+    "workflow_run_id": 37364717830,
     "provider_called": false,
     "request_consumed": false,
     "retry_allowed": false,
     "owner_action_required": false,
-    "next_action": "Dispatch exactly once through the trusted owner-command bridge, then validate the immutable receipt and independently reproduce any findings."
+    "next_action": "Dispatch the distinct request exactly once; do not reuse r3-g96."
   },
   "product_candidates": {
     "core": {
@@ -166,8 +198,8 @@
     }
   },
   "pending_live_smoke": {
-    "request_id": "core-s1-6415f443120f-r3-g96",
-    "prepared_at": "2026-10-05T19:38:07.224Z",
+    "request_id": "core-s1-6415f443120f-r4-g96",
+    "prepared_at": "2026-10-05T19:55:13.216Z",
     "base_sha": "08e030a6053ac9638957119373797e0fbf2b10c2",
     "head_sha": "6415f443120fe09d9ca857c475c8e93654b46fe7",
     "contract_sha": "7df838ea2a875b9d86754eb858f98a293c5e5f29",
@@ -185,8 +217,8 @@
     "dispatched": false,
     "consumed": false,
     "retry_allowed": false,
-    "source_consumed_request_id": "core-s1-6415f443120f-r2-g94",
-    "dedup_key": "ivan88810900-star/tnved_starter_kit_v2|core-s1-6415f443120f-r3-g96|7644f79f9c3811e680b6b099358ef629dcbf85c0c40fe9647d11a561ea8d21ed|gen96",
+    "source_consumed_request_id": "core-s1-6415f443120f-r3-g96",
+    "dedup_key": "ivan88810900-star/tnved_starter_kit_v2|core-s1-6415f443120f-r4-g96|7644f79f9c3811e680b6b099358ef629dcbf85c0c40fe9647d11a561ea8d21ed|gen96",
     "lease_generation": 96,
     "lease_holder": "/root/a0_automation_post249_a6_gen96"
   },
@@ -196,8 +228,9 @@
   },
   "current_sequence_diagnosis": {
     "status": "PENDING_LAWFUL_ONE_SHOT_DISPATCH",
-    "request_id": "core-s1-6415f443120f-r3-g96",
-    "prior_consumed_request_id": "core-s1-6415f443120f-r2-g94",
+    "request_id": "core-s1-6415f443120f-r4-g96",
+    "retired_transport_request_id": "core-s1-6415f443120f-r3-g96",
+    "retired_workflow_run_id": 37364717830,
     "contract_sha": "7df838ea2a875b9d86754eb858f98a293c5e5f29",
     "packet_binding": "7644f79f9c3811e680b6b099358ef629dcbf85c0c40fe9647d11a561ea8d21ed",
     "packet_validation": "PASS",
