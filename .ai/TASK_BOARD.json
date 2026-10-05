@@ -774,7 +774,7 @@
     }
   ],
   "max_concurrent_subagents": 3,
-  "revision": 660,
+  "revision": 661,
   "runs": [
     {
       "head_sha": null,
@@ -4188,7 +4188,7 @@
       }
     }
   ],
-  "updated_at": "2026-10-05T10:55:40.150Z",
+  "updated_at": "2026-10-05T11:04:35.936Z",
   "max_concurrent_feature_workers": 2,
   "active_role_model": {
     "effective_at": "2026-09-30T12:58:10.633Z",
@@ -6966,6 +6966,44 @@
         "dispatched": false,
         "provider_called": false
       },
+      "product_heads_changed": false,
+      "tests_weakened": false,
+      "protected_action_performed": false
+    },
+    "a6_core_s1_gen94_unavailable_rev661": {
+      "checked_at": "2026-10-05T11:04:35.936Z",
+      "lease_generation": 94,
+      "status": "TECHNICAL_BLOCKER_FINDINGS_VALIDATION",
+      "request_id": "core-s1-6415f443120f-r2-g94",
+      "workflow_run_id": 37299737783,
+      "workflow_url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/37299737783",
+      "gates": {
+        "context_gate": "PASS",
+        "delivery_dedupe": "PASS",
+        "packet_prepare": "PASS",
+        "provider_call": "EXECUTED_ONCE",
+        "receipt_upload": "PASS",
+        "result_enforcement": "FAIL_CLOSED"
+      },
+      "binding": {
+        "base_sha": "08e030a6053ac9638957119373797e0fbf2b10c2",
+        "head_sha": "6415f443120fe09d9ca857c475c8e93654b46fe7",
+        "contract_sha": "bff54135e007c713328453cd0b211bedf96081cd",
+        "packet_sha256": "91b17f2a9c287d168fd620eb1bdc97552bab9392f5134bd8f4254fc4df455ab8"
+      },
+      "result": {
+        "bridge_status": "UNAVAILABLE",
+        "provider_failure_code": "FINDINGS_VALIDATION",
+        "provider_called": true,
+        "findings_persisted": 0,
+        "retry_allowed": false,
+        "receipt_sha256": "18ae4b72995a0366bb2fb1097dd38c16626fafd65d74e9d5a3793ba04fc3e00b",
+        "artifact_id": 11341471068,
+        "artifact_digest": "sha256:8237baeac75964a84024871ff0371f9375c15961a828d95d1f5a5056bba16d22",
+        "receipt_evidence": ".ai/orchestration/evidence/a6-core-s1-r2-g94-receipt-37299737783.json"
+      },
+      "interpretation": "Provider returned parseable structured output but repository evidence validation rejected it. No finding is accepted. Do not retry this request or advance slices until offline protocol hardening is reviewed.",
+      "owner_action_required": false,
       "product_heads_changed": false,
       "tests_weakened": false,
       "protected_action_performed": false
