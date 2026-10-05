@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
-  "checked_at": "2026-10-05T10:47:52.868Z",
-  "status": "READY_FOR_LIVE_A6_CORE_S1_REPLACEMENT",
-  "live_verified": true,
+  "checked_at": "2026-10-05T10:52:08.584Z",
+  "status": "A6_CORE_S1_GENERATION_94_READY",
+  "live_verified": false,
   "provider_called": false,
   "secret_values_read": false,
   "environment_assertion": {
@@ -20,204 +20,6 @@
     "workflow_present_on_default_branch": true
   },
   "attempts": [
-    {
-      "request_id": "a6-live-smoke-20260914-1718z",
-      "workflow_run_id": 34954553183,
-      "result": "BLOCKED_PACKET_PREPARE",
-      "provider_called": false,
-      "artifact_uploaded": false
-    },
-    {
-      "request_id": "a6-live-smoke-20260915-minimal-001",
-      "workflow_run_id": 34956230055,
-      "workflow_head_sha": "4b115d418318222d5750a9c34072751c0d0765d7",
-      "context_gate": "success",
-      "packet_prepare": "success",
-      "provider_step": "executed",
-      "provider_called": true,
-      "workflow_conclusion": "failure",
-      "bridge_status": "UNAVAILABLE",
-      "audit_status": "UNAVAILABLE",
-      "artifact_id": 10391232264,
-      "artifact_digest": "sha256:57958c7d3bb7feb1bc9d910270546743d16c9e0443869b971d26f391f9ef2e0c",
-      "receipt_sha256": "f450105a7815151064fa5e2423fa0108dc5ac4a832274e069e6f96c5c61c99e1",
-      "packet_sha256": "56e594ffbec979ce5ee035071ccfd0751179c74b1bb3ae1a7876101a15f254af",
-      "base_sha": "4b115d418318222d5750a9c34072751c0d0765d7",
-      "head_sha": "4b115d418318222d5750a9c34072751c0d0765d7",
-      "contract_sha": "4b115d418318222d5750a9c34072751c0d0765d7",
-      "trusted_workflow_sha": "4b115d418318222d5750a9c34072751c0d0765d7",
-      "provider_message_id": null,
-      "validated": {
-        "receipt_hash": true,
-        "request_binding": true,
-        "commit_binding": true,
-        "workflow_binding": true,
-        "packet_hash_matches_prepare_log": true
-      }
-    },
-    {
-      "request_id": "a6-live-smoke-20260916-094250z-b4faa187",
-      "workflow_run_id": 35081603165,
-      "workflow_head_sha": "fd4fa346beae824661452624709f9252321ca155",
-      "context_gate": "success",
-      "packet_prepare": "blocked",
-      "provider_step": "skipped",
-      "provider_called": false,
-      "workflow_conclusion": "failure",
-      "bridge_status": "BLOCKED",
-      "audit_status": "NOT_RUN",
-      "artifact_uploaded": false,
-      "base_sha": "fd4fa346beae824661452624709f9252321ca155",
-      "head_sha": "fd4fa346beae824661452624709f9252321ca155",
-      "contract_sha": "fd4fa346beae824661452624709f9252321ca155",
-      "trusted_workflow_sha": "fd4fa346beae824661452624709f9252321ca155",
-      "reason_code": "A0_EMPTY_PATH_SCOPE",
-      "reason": "A0 dispatched paths_json=[]; audit.build_packet fail-closed before credentials. No Anthropic request was consumed."
-    },
-    {
-      "request_id": "a6-live-smoke-20260916-095123z-corrected-001",
-      "workflow_run_id": 35082203242,
-      "workflow_head_sha": "fd4fa346beae824661452624709f9252321ca155",
-      "context_gate": "success",
-      "packet_prepare": "success",
-      "provider_step": "executed_once",
-      "provider_called": true,
-      "provider_started_at": "2026-09-16T09:56:33.2505178Z",
-      "provider_returned_at": "2026-09-16T09:58:16.7629082Z",
-      "provider_elapsed_seconds_approx": 103.5,
-      "workflow_conclusion": "failure",
-      "bridge_status": "UNAVAILABLE",
-      "audit_status": "UNAVAILABLE",
-      "live_verified": false,
-      "reason_code": "PROVIDER_OR_CONFIG_UNAVAILABLE",
-      "adapter_reason": "External audit failed or returned invalid evidence",
-      "provider_message_id": null,
-      "model_in_receipt": null,
-      "configured_model_seen_in_scrubbed_job_log": "claude-opus-5",
-      "artifact_id": 10441315204,
-      "artifact_digest": "sha256:e329f527ca2baab0cbd2bca89e73b683684e5d72f40aff37998d0900842f60f7",
-      "receipt_sha256": "b276425597d96c68285cf78287430fff8a62692fe88ffbf8108a4834005b26d6",
-      "packet_sha256": "e506d7a81e3243264201b6dd79d25a03e5869638a5e5b8311dfbe1560bf53ada",
-      "base_sha": "fd4fa346beae824661452624709f9252321ca155",
-      "head_sha": "fd4fa346beae824661452624709f9252321ca155",
-      "contract_sha": "fd4fa346beae824661452624709f9252321ca155",
-      "trusted_workflow_sha": "fd4fa346beae824661452624709f9252321ca155",
-      "validated": {
-        "receipt_hash": true,
-        "artifact_digest": true,
-        "request_binding": true,
-        "commit_binding": true,
-        "workflow_binding": true,
-        "packet_hash_matches_prepare_log": true
-      }
-    },
-    {
-      "request_id": "a6-live-smoke-20260916-1248z-pr210-afe40746",
-      "workflow_run_id": 35972765980,
-      "workflow_head_sha": "306ebdafcba8106e7ec8243eb95977db1a23ce18",
-      "trigger": "issue_comment",
-      "comment_id": 5810228018,
-      "context_gate": "success",
-      "packet_prepare": "success",
-      "provider_step": "executed_once",
-      "provider_called": true,
-      "workflow_conclusion": "failure",
-      "bridge_status": "UNAVAILABLE",
-      "audit_status": "UNAVAILABLE",
-      "live_verified": false,
-      "reason_code": "STOP_MAX_TOKENS",
-      "retry_allowed": false,
-      "artifact_id": 10796449482,
-      "artifact_digest": "sha256:c7d112754ba536e10b7bd71a9162745fecf3e08e1e523af6519ea48725503bc0",
-      "receipt_sha256": "e906a4f9cdf3fbcffceeaa644a51b53366f165557e5b073bcac00073ed6236e8",
-      "packet_sha256": "b73670dee20579416547dd04fccbdc5889ac199428cd79181867a04483cf171d",
-      "base_sha": "afe407461e45381009a1c59ac06b0ac3609365df",
-      "head_sha": "afe407461e45381009a1c59ac06b0ac3609365df",
-      "contract_sha": "afe407461e45381009a1c59ac06b0ac3609365df",
-      "state_sha": "7e01210e4bd4d2eadb7a5068379bed9c2f74b35b",
-      "lease_generation": 25,
-      "lease_holder": "/root/a0_automation_20260924T075940Z",
-      "validated": {
-        "artifact_digest": true,
-        "receipt_hash": true,
-        "request_binding": true,
-        "commit_binding": true,
-        "workflow_binding": true,
-        "packet_hash": true,
-        "lease_binding": true
-      }
-    },
-    {
-      "request_id": "a6-live-smoke-20260926-pr218-aedb4614",
-      "workflow_run_id": 36278286455,
-      "workflow_head_sha": "ac8fce22d6b0f9770d648fe09b48c346822524b2",
-      "trigger": "issue_comment",
-      "comment_id": 5850724715,
-      "context_gate": "blocked_at_delivery_dedupe",
-      "packet_prepare": "skipped",
-      "provider_step": "skipped",
-      "provider_called": false,
-      "workflow_conclusion": "failure",
-      "bridge_status": "BLOCKED",
-      "audit_status": "NOT_RUN",
-      "live_verified": false,
-      "reason_code": "PENDING_PREPARED_AT_FUTURE",
-      "retry_allowed": false,
-      "prepared_at": "2026-09-26T23:08:00Z",
-      "workflow_created_at": "2026-09-26T23:04:23Z",
-      "base_sha": "306ebdafcba8106e7ec8243eb95977db1a23ce18",
-      "head_sha": "aedb46149267722218bcbf007e3c1eea3fcc250d",
-      "contract_sha": "aedb46149267722218bcbf007e3c1eea3fcc250d",
-      "packet_sha256": "590d6a45770e9dc75d6f214d924104b0196d79da416f653a85b739e8caf30aa0",
-      "state_sha": "92e6ee2fe598eacfe9370f944c77543647262e92",
-      "lease_generation": 29,
-      "lease_holder": "/root/a0_automation_20260926T230038Z",
-      "validated": {
-        "workflow_binding": true,
-        "request_binding": true,
-        "commit_binding": true,
-        "packet_hash": true,
-        "provider_not_called": true,
-        "live_job_skipped": true
-      }
-    },
-    {
-      "request_id": "a6-live-smoke-20260928-pr218-aedb4614-gen37",
-      "workflow_run_id": 36414936988,
-      "workflow_head_sha": "08e030a6053ac9638957119373797e0fbf2b10c2",
-      "trigger": "issue_comment",
-      "comment_id": 5868816996,
-      "context_gate": "success",
-      "packet_prepare": "success",
-      "provider_step": "executed_once",
-      "provider_called": true,
-      "workflow_conclusion": "success",
-      "bridge_status": "LIVE_VERIFIED",
-      "audit_status": "NEEDS_A0_VALIDATION",
-      "live_verified": true,
-      "artifact_id": 10966893551,
-      "artifact_digest": "sha256:03e095b2eb0023a3a35c60e436d085d6ad13940bcae799813f4e6736c891c119",
-      "receipt_sha256": "f1b30d1b686aad66624e56d40920bb37f6302081ac9e8b895153eab23c18858e",
-      "packet_sha256": "3534553e36a05cb8ee6bf1442b7652da565ff23b74aef2317984172b129f082d",
-      "base_sha": "306ebdafcba8106e7ec8243eb95977db1a23ce18",
-      "head_sha": "aedb46149267722218bcbf007e3c1eea3fcc250d",
-      "contract_sha": "08e030a6053ac9638957119373797e0fbf2b10c2",
-      "state_sha": "34ccc2a9bff9b0ac01e0d5aa7c665c3ba75d0224",
-      "lease_generation": 37,
-      "lease_holder": "/root/a0_automation_20260928T111657Z",
-      "model": "claude-opus-5",
-      "provider_message_id": "msg_011CfVkHWRFa6roi2wHR1Uaj",
-      "validated": {
-        "artifact_digest": true,
-        "receipt_hash": true,
-        "request_binding": true,
-        "commit_binding": true,
-        "workflow_binding": true,
-        "packet_hash": true,
-        "lease_binding": true,
-        "state_before_dispatch": true
-      }
-    },
     {
       "request_id": "core-s1-6415f443120f-g79",
       "workflow_run_id": 36996924714,
@@ -285,90 +87,41 @@
       }
     }
   ],
-  "diagnosis": {
-    "id": "A0-A6-POST-TIMEOUT-LIVE-001",
-    "status": "CONFIRMED_ADAPTER_DEFECT_FIX_VERIFIED_AWAITING_OWNER_MERGE_AUTHORIZATION",
-    "summary": "The old adapter rejected valid leading thinking/redacted_thinking blocks before final text. PR 210 fixes that compatibility defect and provides safe stage codes. Supplemental A0 review then reproduced non-string JSON discriminator TypeErrors in the first fix; the follow-up now preserves bounded UNAVAILABLE and validated packet binding and allowlists persisted diagnostic codes.",
-    "exact_non_secret_reason": "The consumed live run's exact terminal cause is unrecoverable because the old adapter collapsed HTTP, transport, stop-reason, content-shape, JSON and validation failures. The parser defect is confirmed, but not proven to be the historical run's cause. STOP_MAX_TOKENS remains a hypothesis; null provider_message_id is not proof that no provider response arrived because the old code checked the ID after content validation.",
-    "constraints": [
-      "No automatic or manual retry of consumed requests.",
-      "No provider success may be inferred from provider_called=true or synthetic test responses.",
-      "A6 remains unavailable until the exact reviewed code is merged with owner approval and one distinct authorized live verification returns valid evidence.",
-      "Fresh A5 and CI apply only to exact PR 210 HEAD 08b59755929486ee07dc35df3d01fecb9219a05c; any new HEAD invalidates them."
-    ],
-    "remediation_candidate": {
-      "pr": 210,
-      "branch": "agent/a6-opus5-response-shape-001",
-      "candidate_head_sha": "08b59755929486ee07dc35df3d01fecb9219a05c",
-      "candidate_tree_sha": "76b072a93168d2a387f6ccdd046e02091411ebb6",
-      "base_main_sha": "fd4fa346beae824661452624709f9252321ca155",
-      "followup_parent_sha": "62269d789c57743235ce1d66b22cfee3179152c9",
-      "author_followup_tests": "7/7",
-      "exact_head_ci_run_id": 35086286368,
-      "exact_head_ci_job_id": 104761765023,
-      "exact_head_ci": "success",
-      "mandatory_verifier": "112/112",
-      "snapshot_tests": "4/4",
-      "snapshot_validation": "valid",
-      "pull_request_ci_run_id": 35086290296,
-      "pull_request_ci": "success",
-      "pull_request_ci_checkout": "810200e740b2b46ff629a4143846b37c2932f191",
-      "independent_a5": {
-        "status": "PASSED",
-        "head_sha": "08b59755929486ee07dc35df3d01fecb9219a05c",
-        "base_sha": "fd4fa346beae824661452624709f9252321ca155",
-        "session_id": "/root/a5_pr210_exact_08b59755",
-        "findings": [],
-        "mandatory_verifier": "112/112",
-        "snapshot_tests": "4/4",
-        "adversarial_replay": "9/9 test methods; 86 explicit cases",
-        "compileall": "passed",
-        "diff_check": "clean",
-        "provider_calls": 0
-      },
-      "historical_a5": {
-        "status": "PASSED_ON_SUPERSEDED_HEAD_ONLY",
-        "head_sha": "62269d789c57743235ce1d66b22cfee3179152c9",
-        "session_id": "/root/a5_pr210_exact",
-        "findings": [],
-        "focused_tests": "56/56",
-        "orchestration_tests": "109/109",
-        "adversarial_probes": "13/13",
-        "not_current_approval": true
-      },
-      "scope": "Leading thinking/redacted_thinking plus exactly one terminal text block; fixed safe diagnostics; type guards preserve packet binding; mandatory regression tests. No retry, provider call, workflow, permission or production change.",
-      "evidence_ref": ".ai/orchestration/evidence/pr210-diagnostics-followup-20260916.json",
-      "readiness": "MERGED_TO_MAIN",
-      "merge_ready": true,
-      "merge_authorized": true,
-      "owner_authorization": {
-        "receipt_id": "OWNER-PR210-08b59755-20260916-SINGLE-CHANNEL",
-        "received_at": "2026-09-16T12:40:28Z",
-        "source": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/210#issuecomment-5697575216",
-        "exact_head_sha": "08b59755929486ee07dc35df3d01fecb9219a05c",
-        "reviewed_base_main_sha": "fd4fa346beae824661452624709f9252321ca155",
-        "scope": "Merge PR 210 at the exact authorized head, then execute at most one distinct commit-bound live A6 smoke through tariff-a6-trusted.",
-        "consumed": true,
-        "consumed_by": "merge PR 210 at exact authorized HEAD",
-        "consumed_at": "2026-09-16T12:46:12Z"
-      },
-      "merge_result": {
-        "merged": true,
-        "merge_sha": "afe407461e45381009a1c59ac06b0ac3609365df",
-        "merged_at": "2026-09-16T12:46:12Z",
-        "pr": 210,
-        "expected_head_sha": "08b59755929486ee07dc35df3d01fecb9219a05c"
-      }
-    }
+  "history_archive": {
+    "path": ".ai/orchestration/evidence/a6-live-status-archive-through-gen93-20261005.json",
+    "source_status_blob_sha": "6b40ae59219280d8e959ed3b63142e8879aaf136",
+    "archive_blob_sha": "6b40ae59219280d8e959ed3b63142e8879aaf136",
+    "retention": "FULL_PRE_COMPACTION_STATUS"
   },
-  "product_triage": {
-    "pr": 187,
-    "head_sha": "5d3b0c1dc7dd8e396c4f812db2bf6f1fa6d293f9",
-    "state": "open_draft_mergeable",
-    "exact_head_ci_run_id": 34830630369,
-    "exact_head_ci": "success",
-    "write_action_this_run": false,
-    "reason": "No product code or ownership was changed by the scoped A6 follow-up. Product work remains independent of A6; the above product HEAD/CI are retained triage evidence, not a new product acceptance."
+  "diagnosis": {
+    "status": "TECHNICAL_STATE_GUARDS_REPAIRED",
+    "blocked_run_id": 37297951432,
+    "first_fail_closed_reason": "A6_LIVE_STATUS_TOO_LARGE",
+    "secondary_repaired_condition": "INVALID_LEASE_FENCING_TOKEN_FORMAT",
+    "provider_called": false,
+    "credentials_step": "NOT_REACHED",
+    "artifact_uploaded": false,
+    "remediation": "Full history archived; live status compacted below 20000-byte bridge limit; lease released and reacquired as validated generation 94.",
+    "owner_action_required": false
+  },
+  "product_candidates": {
+    "core": {
+      "pr": 244,
+      "head_sha": "14e0ee8f034d94ffc5831d87e076f4d693a5a524",
+      "target": "integration/customs-core-v1",
+      "a5": "PASS",
+      "ci_run_id": 36853205641,
+      "required_runtime_slices": 5
+    },
+    "product": {
+      "pr": 245,
+      "head_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
+      "target": "integration/compliance-ai-v1",
+      "a5": "PASS",
+      "ci_run_id": 36853210034,
+      "required_runtime_slices": 5,
+      "repair_delta_requests": 1
+    }
   },
   "pending_live_smoke": {
     "request_id": "core-s1-6415f443120f-r2-g94",
@@ -397,18 +150,8 @@
     "source_failed_request_id": "core-s1-6415f443120f-r1-g93"
   },
   "communication_policy": {
-    "owner_decisions_single_delivery": true,
-    "deduplicate_by": [
-      "repository",
-      "pull_request",
-      "head_sha",
-      "action"
-    ],
-    "owner_need_not_copy_between_chats": true,
-    "duplicate_read_only_notifier": "disabled",
-    "create_second_notifier": false,
-    "arbitrary_chat_delivery_api_available": false,
-    "pr210_merge_authorization_already_received": true
+    "owner_notification": "ONLY_SIGNIFICANT_COMPLETION_CRITICAL_BLOCKER_OR_OWNER_GATE",
+    "duplicate_delivery_forbidden": true
   },
   "current_sequence_diagnosis": {
     "status": "LEASE_SCHEMA_REPAIRED_NEW_DISTINCT_REQUEST_READY",
@@ -428,20 +171,7 @@
     "dispatch_block": "NONE_FOR_THIS_VALIDATED_GENERATION_UNDER_ACTIVE_LEASE"
   },
   "a0_finding_validation": {
-    "status": "COMPLETED",
-    "summary": "The live response is structurally valid. Findings were checked against the successful call and current official Anthropic documentation; they are advisory, not automatic blockers.",
-    "findings": {
-      "F1": "PARTIAL_ACCEPT: documentation references in code should be refreshed; live acceptance and current official docs confirm output_config.effort is valid, so high severity is not sustained.",
-      "F2": "REJECT: the exact live provider call accepted output_config.effort and completed successfully; no current outage.",
-      "F3": "PARTIAL_ACCEPT_AS_RESIDUAL: 32768 is valid for the configured Claude Opus 5 and succeeded live; arbitrary future model changes remain a configuration-compatibility risk.",
-      "F4": "REJECT_FOR_CURRENT_CONFIG: non-streaming call completed inside the 300-second timeout; no reproduced failure.",
-      "F5": "ACCEPT_LOW: prompt wording can state that all identified defects must be reported while keeping entries concise.",
-      "F6": "ACCEPT_LOW: tests should bind the effort assertion to the constant and explicitly cover fail-closed HTTP 400 diagnostics."
-    },
-    "authoritative_sources": [
-      "https://docs.anthropic.com/en/docs/build-with-claude/extended-thinking",
-      "https://docs.anthropic.com/en/docs/about-claude/models/overview"
-    ],
-    "followup": "Prepare a scoped non-behavioral hardening PR for documentation, prompt wording, and regression assertions; no provider retry."
+    "status": "PENDING_CURRENT_CORE_S1_LIVE_A6_EVIDENCE",
+    "automatic_acceptance": false
   }
 }
