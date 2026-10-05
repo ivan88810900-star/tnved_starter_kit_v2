@@ -1,6 +1,6 @@
 {
   "acquisition_note": "Fresh lawful generation after owner-authorized exact-head merge of PR #249; preparing a distinct immutable A6 request without reusing consumed IDs.",
-  "expires_at": "2026-10-05T23:27:10.946664Z",
+  "expires_at": "2026-10-05T23:43:27.536492Z",
   "generation": 99,
   "holder": "/root/a0_automation_post_actions_recovery_gen99",
   "lease_repair": {
@@ -12,12 +12,12 @@
   "release_reason": "PR #249 exact HEAD passed fresh independent A5, A0 validation, and exact-head CI; owner gate recorded without merge.",
   "released_by": "/root/a0_automation_a6_schema_gen95",
   "schema_version": 1,
+  "serialization_repair": {
+    "provider_called": false,
+    "reason": "Normalize lease timestamps to the bridge's checked UTC-Z contract before any credential access.",
+    "source": "generation-99 renew proposal"
+  },
   "state": "active",
   "token": "84e55ede57884931a16e508eaacb61bc",
-  "updated_at": "2026-10-05T22:57:10.946664Z",
-  "serialization_repair": {
-    "reason": "Normalize lease timestamps to the bridge's checked UTC-Z contract before any credential access.",
-    "source": "generation-99 renew proposal",
-    "provider_called": false
-  }
+  "updated_at": "2026-10-05T23:13:27.536492Z"
 }
