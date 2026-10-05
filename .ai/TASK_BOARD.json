@@ -774,7 +774,7 @@
     }
   ],
   "max_concurrent_subagents": 3,
-  "revision": 658,
+  "revision": 659,
   "runs": [
     {
       "head_sha": null,
@@ -4188,7 +4188,7 @@
       }
     }
   ],
-  "updated_at": "2026-10-02T22:46:44.431Z",
+  "updated_at": "2026-10-05T10:38:51.565Z",
   "max_concurrent_feature_workers": 2,
   "active_role_model": {
     "effective_at": "2026-09-30T12:58:10.633Z",
@@ -4686,7 +4686,7 @@
       "permission_reusable": false
     },
     "a6_packet_writer_pr248": {
-      "status": "READY_FOR_OWNER_APPROVAL_PREMERGE_WORK_COMPLETE",
+      "status": "MERGED_OWNER_AUTHORIZED_CONSUMED",
       "pr": 248,
       "head_sha": "d96fd088e3a5093bc0a0ce53d7878007351da16e",
       "source_run_id": 36996924714,
@@ -4738,7 +4738,7 @@
       "protected_action_performed": false,
       "ready_for_review": true,
       "ready_transition_at": "2026-10-02T11:48:10Z",
-      "state": "open",
+      "state": "closed",
       "merge_dry_run": {
         "checked_at": "2026-10-02T17:39:38Z",
         "github_test_merge_sha": "b3fc353851d44a8bd6b91c639a8b71063a0144bd",
@@ -4758,13 +4758,19 @@
           ]
         }
       },
-      "owner_approval_observed": false,
+      "owner_approval_observed": true,
       "body_live_owner_gate_packet": true,
       "body_live_owner_gate_packet_at": "2026-10-02T18:44:46Z",
       "premerge_readiness_complete": true,
-      "sole_blocker": "Explicit owner approval to merge exact HEAD into main.",
-      "updated_at": "2026-10-02T19:40:10Z",
-      "last_owner_gate_revalidated_at": "2026-10-02T20:49:53.996Z"
+      "sole_blocker": null,
+      "updated_at": "2026-10-05T10:38:51.565Z",
+      "last_owner_gate_revalidated_at": "2026-10-02T20:49:53.996Z",
+      "merged": true,
+      "merge_commit_sha": "bff54135e007c713328453cd0b211bedf96081cd",
+      "merged_at": "2026-10-05T10:26:16Z",
+      "owner_permission_consumed": true,
+      "permission_reusable": false,
+      "current_main_sha": "bff54135e007c713328453cd0b211bedf96081cd"
     }
   },
   "pr_hygiene": {
@@ -6895,6 +6901,35 @@
       "product_heads_changed": false,
       "tests_weakened": false,
       "protected_action_performed": false
+    },
+    "post_pr248_core_s1_generation_rev659": {
+      "checked_at": "2026-10-05T10:38:51.565Z",
+      "lease_generation": 93,
+      "status": "READY_DISTINCT_IMMUTABLE_REQUEST_NOT_DISPATCHED",
+      "pr248": {
+        "head_sha": "d96fd088e3a5093bc0a0ce53d7878007351da16e",
+        "merge_commit_sha": "bff54135e007c713328453cd0b211bedf96081cd",
+        "owner_permission_consumed": true
+      },
+      "request_id": "core-s1-6415f443120f-r1-g93",
+      "source_consumed_request_id": "core-s1-6415f443120f-g79",
+      "retry_of_consumed_id": false,
+      "base_sha": "08e030a6053ac9638957119373797e0fbf2b10c2",
+      "head_sha": "6415f443120fe09d9ca857c475c8e93654b46fe7",
+      "contract_sha": "bff54135e007c713328453cd0b211bedf96081cd",
+      "packet_sha256": "91b17f2a9c287d168fd620eb1bdc97552bab9392f5134bd8f4254fc4df455ab8",
+      "prior_manifest_packet_sha256": "0b453b601410c2bab388c7a9a2a697a948bb14ee8f7227f9c12e50aa71756d5b",
+      "serialized_canonical_sha256": "a9a448d69ff4f5e4c4e902d525e32f39b05c4af82361b6b43dc3eaf7fd45983a",
+      "serialized_packet_bytes": 393596,
+      "contract_blob_sha256": "621594cc7e2bc054e80b9cb9a3677e709d4c2c90151c1ce8613e5eaf029bf4de",
+      "packet_comparison": "Only exact contract ref and derived packet hash changed after protected-main advance; contract blob and candidate evidence are unchanged.",
+      "offline_validation": "PASSED_WITHOUT_PROVIDER",
+      "provider_called": false,
+      "credentials_read": false,
+      "dispatched": false,
+      "consumed": false,
+      "product_heads_changed": false,
+      "tests_weakened": false
     }
   }
 }
