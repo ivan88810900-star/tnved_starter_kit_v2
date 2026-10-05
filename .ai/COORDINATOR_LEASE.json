@@ -1,23 +1,23 @@
 {
   "acquisition_note": "Fresh lawful generation after owner-authorized exact-head merge of PR #249; preparing a distinct immutable A6 request without reusing consumed IDs.",
-  "expires_at": "2026-10-05T23:43:27.536492Z",
+  "expires_at": null,
   "generation": 99,
-  "holder": "/root/a0_automation_post_actions_recovery_gen99",
+  "holder": null,
   "lease_repair": {
     "blocked_run_id": 37297951432,
     "prior_state_commit": "0496147fb802db79ef96cdd68931f3fa6aa2c515",
     "provider_called": false,
     "reason": "Invalid non-hex fencing token written during generation-93 acquisition; schema repair by the same verified holder before any credential access."
   },
-  "release_reason": "PR #249 exact HEAD passed fresh independent A5, A0 validation, and exact-head CI; owner gate recorded without merge.",
-  "released_by": "/root/a0_automation_a6_schema_gen95",
+  "release_reason": "PR #250 exact HEAD passed fresh independent A5, A0 validation, and exact-head CI; protected owner gate recorded without merge.",
+  "released_by": "/root/a0_automation_post_actions_recovery_gen99",
   "schema_version": 1,
   "serialization_repair": {
     "provider_called": false,
     "reason": "Normalize lease timestamps to the bridge's checked UTC-Z contract before any credential access.",
     "source": "generation-99 renew proposal"
   },
-  "state": "active",
-  "token": "84e55ede57884931a16e508eaacb61bc",
-  "updated_at": "2026-10-05T23:13:27.536492Z"
+  "state": "released",
+  "token": null,
+  "updated_at": "2026-10-05T23:17:10.461296Z"
 }
