@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "checked_at": "2026-10-05T20:11:05.231Z",
-  "status": "A6_WAITING_EXTERNAL_GITHUB_ACTIONS_RECOVERY",
+  "checked_at": "2026-10-05T20:51:12.265Z",
+  "status": "A6_WAITING_EXTERNAL_GITHUB_ACTIONS_RECOVERY_CORE_OFFLINE_READY",
   "live_verified": false,
   "provider_called": true,
   "secret_values_read": true,
@@ -202,13 +202,13 @@
     "retention": "FULL_PRE_COMPACTION_STATUS"
   },
   "diagnosis": {
-    "status": "EXTERNAL_GITHUB_ACTIONS_INCIDENT",
-    "summary": "Two distinct one-shot deliveries were cancelled while queued before context-gate during GitHub incident 3q1yb5m7ltvb. No workflow step, packet preparation, credential access, provider call, log, or artifact occurred. Both delivery IDs are retired and must not be reused.",
+    "status": "EXTERNAL_GITHUB_ACTIONS_INCIDENT_CORE_OFFLINE_PREFLIGHT_COMPLETE",
+    "summary": "The official GitHub Actions hosted-runner incident remains unresolved. Without dispatching, all five A-CORE runtime packets were rebuilt on current contract 7df838ea and passed exact base/head/path/source, complete-diff, and size checks. The previous two cancelled delivery IDs remain retired.",
     "provider_called": false,
     "request_consumed": true,
     "retry_allowed": false,
     "owner_action_required": false,
-    "next_action": "After GitHub reports Actions runner assignment recovered, acquire a fresh lease and create a new distinct immutable request from the unchanged validated packet."
+    "next_action": "After GitHub reports Actions runner assignment recovered, acquire a fresh lease and prepare a distinct slice-1 request using the recorded current-contract packet hash."
   },
   "product_candidates": {
     "core": {
@@ -265,14 +265,11 @@
     "duplicate_delivery_forbidden": true
   },
   "current_sequence_diagnosis": {
-    "status": "WAIT_GITHUB_ACTIONS_RECOVERY",
-    "request_id": "core-s1-6415f443120f-r4-g96",
-    "workflow_run_id": 37366523672,
+    "status": "WAIT_GITHUB_ACTIONS_RECOVERY_CORE_PACKETS_READY",
     "incident_id": "3q1yb5m7ltvb",
     "contract_sha": "7df838ea2a875b9d86754eb858f98a293c5e5f29",
-    "packet_binding": "7644f79f9c3811e680b6b099358ef629dcbf85c0c40fe9647d11a561ea8d21ed",
-    "packet_validation": "PASS",
-    "path_source_binding": "PASS",
+    "core_packets_ready": 5,
+    "core_path_coverage": "34/34",
     "provider_called": false,
     "owner_action_required": false,
     "dispatch_block": "DO_NOT_DISPATCH_WHILE_OFFICIAL_ACTIONS_RUNNER_INCIDENT_IS_UNRESOLVED"
@@ -344,5 +341,60 @@
     "prior_owner_authorizations_consumed": true,
     "merge_commit_sha": "7df838ea2a875b9d86754eb858f98a293c5e5f29",
     "no_further_protected_authorization": true
+  },
+  "core_offline_rebuild_current_contract": {
+    "checked_at": "2026-10-05T20:51:12.265Z",
+    "contract_sha": "7df838ea2a875b9d86754eb858f98a293c5e5f29",
+    "contract_blob_sha256": "621594cc7e2bc054e80b9cb9a3677e709d4c2c90151c1ce8613e5eaf029bf4de",
+    "candidate_pr": 244,
+    "candidate_head_sha": "14e0ee8f034d94ffc5831d87e076f4d693a5a524",
+    "slice_count": 5,
+    "path_coverage": "34/34",
+    "provider_called": false,
+    "validation": {
+      "exact_base_head": true,
+      "exact_paths": true,
+      "exact_sources": true,
+      "complete_diff": true,
+      "size_limits": true,
+      "status": "PASS"
+    },
+    "slices": [
+      {
+        "slice": "core-s1",
+        "packet_sha256": "7644f79f9c3811e680b6b099358ef629dcbf85c0c40fe9647d11a561ea8d21ed",
+        "serialized_canonical_sha256": "89248a5e11acf7e0660dc9a6ef0eb4792c0d06cab162d9984846212f824f36e3",
+        "serialized_canonical_bytes": 392515,
+        "file_count": 8
+      },
+      {
+        "slice": "core-s2",
+        "packet_sha256": "a37cb09a3da1f8f1487b3a4b79420c08a98ba25a825ca76306d3b894f930f987",
+        "serialized_canonical_sha256": "58bf18e844ba5a7e4fb60da2163014ee3814e59cd85f4ef33dc6e3ce0a4f3211",
+        "serialized_canonical_bytes": 321527,
+        "file_count": 6
+      },
+      {
+        "slice": "core-s3",
+        "packet_sha256": "83d1ee3f1862baedce94799297f689cf27bb530d563664ca8f171a7505792fac",
+        "serialized_canonical_sha256": "9287e6d2be272a26894eddef1334b1c646082bf29341524793abc794aee03b39",
+        "serialized_canonical_bytes": 303990,
+        "file_count": 10
+      },
+      {
+        "slice": "core-s4",
+        "packet_sha256": "70571c943dfb67b986406f80c8c08fe3c985192619ae62944633ec7b2a89fc96",
+        "serialized_canonical_sha256": "6155286bc52f07ce179e8032d0fec7291f630d2fea39f46f9183ff183e269185",
+        "serialized_canonical_bytes": 65395,
+        "file_count": 5
+      },
+      {
+        "slice": "core-s5",
+        "packet_sha256": "e2ab2b4645a28c81da40bad1561a7ea15d44beb59c8c5017f0586614d42cd80b",
+        "serialized_canonical_sha256": "245289a60e06335725166678dd84dee757730649843da09eb820783fe5e4d4d6",
+        "serialized_canonical_bytes": 297405,
+        "file_count": 5
+      }
+    ]
   }
 }
