@@ -407,11 +407,20 @@ def _findings_schema(packet):
     source_urls_schema = (
         {"type": "array",
          "items": {"type": "string", "enum": official_sources}}
-        if official_sources else
-        # ``const`` is supported by Anthropic structured outputs and, unlike
-        # unsupported maxItems=0, guarantees the locally required empty list.
-        {"type": "array", "const": []}
+        if official_sources else None
     )
+    finding_fields = (FINDING_FIELDS if official_sources else
+                      FINDING_FIELDS - {"official_source_urls"})
+    finding_properties = {
+        **{name: {"type": "string"} for name in
+           ("id", "category", "claim", "evidence", "suggested_fix")},
+        "path": {"type": "string", "enum": paths},
+        "severity": {"type": "string",
+                     "enum": ["critical", "high", "medium", "low"]},
+        "line": {"type": "integer"},
+    }
+    if source_urls_schema is not None:
+        finding_properties["official_source_urls"] = source_urls_schema
     return {
         "type": "object", "additionalProperties": False,
         "required": ["packet_sha256", "head_sha", "findings", "limitations"],
@@ -421,19 +430,34 @@ def _findings_schema(packet):
             "limitations": {"type": "array", "items": {"type": "string"}},
             "findings": {"type": "array", "items": {
                 "type": "object", "additionalProperties": False,
-                "required": sorted(FINDING_FIELDS),
-                "properties": {
-                    **{name: {"type": "string"} for name in
-                       ("id", "category", "claim", "evidence", "suggested_fix")},
-                    "path": {"type": "string", "enum": paths},
-                    "severity": {"type": "string",
-                                 "enum": ["critical", "high", "medium", "low"]},
-                    "line": {"type": "integer"},
-                    "official_source_urls": source_urls_schema,
-                },
+                "required": sorted(finding_fields),
+                "properties": finding_properties,
             }},
         },
     }
+
+
+def _normalize_source_free_findings(result, packet):
+    """Restore the locally required empty source list outside provider grammar.
+
+    Complex ``const`` values can be rejected by provider schema compilation even
+    when the documented JSON Schema subset names ``const``.  When the packet has
+    no official sources, omit that impossible-to-vary field from the provider
+    schema and add the only lawful value before strict local validation.
+    """
+    if packet["official_sources"] or not isinstance(result, dict):
+        return result
+    findings = result.get("findings")
+    if not isinstance(findings, list):
+        return result
+    normalized = dict(result)
+    normalized_findings = []
+    for item in findings:
+        if not isinstance(item, dict) or "official_source_urls" in item:
+            return result
+        normalized_findings.append({**item, "official_source_urls": []})
+    normalized["findings"] = normalized_findings
+    return normalized
 
 
 FINDINGS_FAILURE_CODES = frozenset({
@@ -613,7 +637,8 @@ def run_audit(repo, packet, *, environ=None):
     except (ValueError, TypeError):
         return _unavailable(binding, "OUTPUT_JSON")
     try:
-        result = validate_findings(decoded, packet, environ=env)
+        result = validate_findings(
+            _normalize_source_free_findings(decoded, packet), packet, environ=env)
     except FindingsValidationBlocked as exc:
         return _unavailable(binding, exc.failure_code)
     except (RuntimeBlocked, ValueError, KeyError, TypeError, AttributeError):
