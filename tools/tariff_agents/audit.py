@@ -36,6 +36,16 @@ class AuditBlocked(RuntimeBlocked):
     pass
 
 
+class FindingsValidationBlocked(AuditBlocked):
+    """Fail closed with only a fixed, non-sensitive validation reason code."""
+
+    def __init__(self, failure_code):
+        if failure_code not in FINDINGS_FAILURE_CODES:
+            failure_code = "FINDINGS_VALIDATION"
+        self.failure_code = failure_code
+        super().__init__(failure_code)
+
+
 MAX_FILES = 64
 MAX_FILE_BYTES = 100_000
 MAX_PACKET_BYTES = 600_000
@@ -394,8 +404,14 @@ def _findings_schema(packet):
     contract_path = packet["contract"]["path"]
     paths = sorted(set(packet["paths"]) | {contract_path})
     official_sources = packet["official_sources"]
-    source_items = ({"type": "string", "enum": official_sources}
-                    if official_sources else {"type": "string"})
+    source_urls_schema = (
+        {"type": "array",
+         "items": {"type": "string", "enum": official_sources}}
+        if official_sources else
+        # ``const`` is supported by Anthropic structured outputs and, unlike
+        # unsupported maxItems=0, guarantees the locally required empty list.
+        {"type": "array", "const": []}
+    )
     return {
         "type": "object", "additionalProperties": False,
         "required": ["packet_sha256", "head_sha", "findings", "limitations"],
@@ -413,21 +429,27 @@ def _findings_schema(packet):
                     "severity": {"type": "string",
                                  "enum": ["critical", "high", "medium", "low"]},
                     "line": {"type": "integer"},
-                    "official_source_urls": {
-                        "type": "array", "items": source_items,
-                    },
+                    "official_source_urls": source_urls_schema,
                 },
             }},
         },
     }
 
 
+FINDINGS_FAILURE_CODES = frozenset({
+    "FINDINGS_VALIDATION", "FINDINGS_BINDING", "FINDINGS_COLLECTION_BOUNDS",
+    "FINDINGS_LIMITATION", "FINDING_SHAPE", "FINDING_STRING",
+    "FINDING_SEVERITY", "FINDING_PATH", "FINDING_LINE",
+    "FINDING_DUPLICATE_ID", "FINDING_SOURCE_SCOPE", "FINDINGS_CONTENT_SAFETY",
+})
+
+
 A6_FAILURE_CODES = frozenset({
     "PROVIDER_TRANSPORT_OR_JSON", "PROVIDER_REDIRECT_REFUSED",
     "PROVIDER_RESPONSE_TOO_LARGE", "PROVIDER_RESPONSE_NOT_OBJECT",
     "PROVIDER_RUNTIME_BLOCKED", "STOP_MAX_TOKENS", "STOP_REFUSAL", "STOP_OTHER",
-    "CONTENT_SHAPE", "OUTPUT_JSON", "FINDINGS_VALIDATION", "INVALID_MESSAGE_ID",
-})
+    "CONTENT_SHAPE", "OUTPUT_JSON", "INVALID_MESSAGE_ID",
+}) | FINDINGS_FAILURE_CODES
 
 
 def is_safe_failure_code(value):
@@ -489,12 +511,13 @@ def validate_findings(result, packet, *, environ=None):
             {"packet_sha256", "head_sha", "findings", "limitations"} or
             result["packet_sha256"] != packet["packet_sha256"] or
             result["head_sha"] != packet["head_sha"]):
-        raise AuditBlocked("Audit response has invalid schema or commit binding")
+        raise FindingsValidationBlocked("FINDINGS_BINDING")
     findings, limitations = result["findings"], result["limitations"]
     if (not isinstance(findings, list) or len(findings) > 100 or
-            not isinstance(limitations, list) or len(limitations) > 30 or
-            any(not isinstance(x, str) or len(x) > 2000 for x in limitations)):
-        raise AuditBlocked("Audit response exceeds schema bounds")
+            not isinstance(limitations, list) or len(limitations) > 30):
+        raise FindingsValidationBlocked("FINDINGS_COLLECTION_BOUNDS")
+    if any(not isinstance(x, str) or len(x) > 2000 for x in limitations):
+        raise FindingsValidationBlocked("FINDINGS_LIMITATION")
     ids = set()
     line_limits = {entry["path"]: max(len((entry[side] or {}).get("text", "").splitlines())
                                     for side in ("base", "head"))
@@ -504,17 +527,29 @@ def validate_findings(result, packet, *, environ=None):
                                      len(packet["contract"]["text"].splitlines()))
     finding_paths = set(packet["paths"]) | {contract_path}
     for item in findings:
-        if (not isinstance(item, dict) or set(item) != FINDING_FIELDS or
-                any(not isinstance(item[k], str) or not item[k] or len(item[k]) > 6000
-                    for k in FINDING_FIELDS - {"line", "official_source_urls"}) or
-                item["severity"] not in {"critical", "high", "medium", "low"} or
-                item["path"] not in finding_paths or type(item["line"]) is not int or
-                item["line"] < 0 or item["line"] > line_limits.get(item["path"], 0) or item["id"] in ids or
-                not isinstance(item["official_source_urls"], list) or
-                any(url not in packet["official_sources"] for url in item["official_source_urls"])):
-            raise AuditBlocked("Audit finding violates schema or allowed evidence scope")
+        if not isinstance(item, dict) or set(item) != FINDING_FIELDS:
+            raise FindingsValidationBlocked("FINDING_SHAPE")
+        if any(not isinstance(item[k], str) or not item[k] or len(item[k]) > 6000
+               for k in FINDING_FIELDS - {"line", "official_source_urls"}):
+            raise FindingsValidationBlocked("FINDING_STRING")
+        if item["severity"] not in {"critical", "high", "medium", "low"}:
+            raise FindingsValidationBlocked("FINDING_SEVERITY")
+        if item["path"] not in finding_paths:
+            raise FindingsValidationBlocked("FINDING_PATH")
+        if (type(item["line"]) is not int or item["line"] < 0 or
+                item["line"] > line_limits.get(item["path"], 0)):
+            raise FindingsValidationBlocked("FINDING_LINE")
+        if item["id"] in ids:
+            raise FindingsValidationBlocked("FINDING_DUPLICATE_ID")
+        if (not isinstance(item["official_source_urls"], list) or
+                any(url not in packet["official_sources"]
+                    for url in item["official_source_urls"])):
+            raise FindingsValidationBlocked("FINDING_SOURCE_SCOPE")
         ids.add(item["id"])
-    ensure_safe_text(_json_bytes(result).decode(), environ=environ)
+    try:
+        ensure_safe_text(_json_bytes(result).decode(), environ=environ)
+    except AuditBlocked:
+        raise FindingsValidationBlocked("FINDINGS_CONTENT_SAFETY") from None
     return result
 
 
@@ -579,6 +614,8 @@ def run_audit(repo, packet, *, environ=None):
         return _unavailable(binding, "OUTPUT_JSON")
     try:
         result = validate_findings(decoded, packet, environ=env)
+    except FindingsValidationBlocked as exc:
+        return _unavailable(binding, exc.failure_code)
     except (RuntimeBlocked, ValueError, KeyError, TypeError, AttributeError):
         return _unavailable(binding, "FINDINGS_VALIDATION")
     request_id = response.get("id")

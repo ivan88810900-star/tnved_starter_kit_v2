@@ -70,6 +70,9 @@ class LeaseTests(unittest.TestCase):
 
     def test_lease_timestamps_are_well_formed_and_mutations_are_monotonic(self):
         record=self.active()
+        self.assertTrue(record['updated_at'].endswith('Z'))
+        self.assertTrue(record['expires_at'].endswith('Z'))
+        self.assertNotIn('+00:00', record['updated_at'])
         renewed_at=self.now+dt.timedelta(seconds=40)
         renewed=json.loads(propose(record,'b'*40,'renew','session-one',token=record['token'],
                                    now=renewed_at,ttl_seconds=60)['content'])

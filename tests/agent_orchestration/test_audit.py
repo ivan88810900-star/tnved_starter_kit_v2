@@ -559,6 +559,12 @@ class AuditTests(unittest.TestCase):
         urls = schema["properties"]["findings"]["items"]["properties"]["official_source_urls"]
         self.assertEqual(urls["items"]["enum"], [source])
 
+    def test_empty_official_source_scope_is_const_empty_array(self):
+        packet = self.packet()
+        schema = audit._findings_schema(packet)
+        urls = schema["properties"]["findings"]["items"]["properties"]["official_source_urls"]
+        self.assertEqual(urls, {"type": "array", "const": []})
+
     @patch.object(audit, "request_json")
     def test_opus5_thinking_prefixes_are_allowed_before_terminal_text(self, request):
         packet = self.packet()
@@ -632,6 +638,38 @@ class AuditTests(unittest.TestCase):
             mutate(findings)
             with self.assertRaises(audit.AuditBlocked):
                 audit.validate_findings(findings, packet, environ={})
+
+    @patch.object(audit, "request_json")
+    def test_findings_validation_returns_only_granular_safe_reason_codes(self, request):
+        packet = self.packet()
+        cases = (
+            ("FINDINGS_BINDING", lambda r: r.update(head_sha="wrong")),
+            ("FINDINGS_COLLECTION_BOUNDS", lambda r: r.update(limitations=["x"] * 31)),
+            ("FINDINGS_LIMITATION", lambda r: r.update(limitations=[1])),
+            ("FINDING_SHAPE", lambda r: r["findings"][0].update(extra="x")),
+            ("FINDING_STRING", lambda r: r["findings"][0].update(claim="")),
+            ("FINDING_SEVERITY", lambda r: r["findings"][0].update(severity="urgent")),
+            ("FINDING_PATH", lambda r: r["findings"][0].update(path="outside.py")),
+            ("FINDING_LINE", lambda r: r["findings"][0].update(line=2)),
+            ("FINDING_DUPLICATE_ID", lambda r: r["findings"].append(
+                copy.deepcopy(r["findings"][0]))),
+            ("FINDING_SOURCE_SCOPE", lambda r: r["findings"][0].update(
+                official_source_urls=["https://attacker.test"])),
+            ("FINDINGS_CONTENT_SAFETY", lambda r: r["findings"][0].update(
+                claim="contact " + "person" + "@" + "private.test")),
+        )
+        for expected, mutate in cases:
+            with self.subTest(expected=expected):
+                findings = copy.deepcopy(self.findings(packet))
+                mutate(findings)
+                request.return_value = {
+                    "id": "msg_mock", "stop_reason": "end_turn",
+                    "content": [{"type": "text", "text": json.dumps(findings)}],
+                }
+                result = audit.run_audit(self.repo, packet, environ=self.env)
+                self.assertEqual(result["status"], "UNAVAILABLE")
+                self.assertEqual(result["failure_code"], expected)
+                self.assertNotIn("private.test", json.dumps(result))
 
     @patch.object(audit, "request_json")
     def test_refusal_tool_output_truncation_and_errors_never_pass(self, request):
