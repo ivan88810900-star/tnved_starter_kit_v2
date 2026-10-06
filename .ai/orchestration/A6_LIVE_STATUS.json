@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "checked_at": "2026-10-06T22:37:00.093Z",
-  "status": "A6_REQUEST_PREPARED_OFFLINE_PENDING_SINGLE_DELIVERY",
+  "checked_at": "2026-10-06T22:38:51.828Z",
+  "status": "A6_REQUEST_PREPARED_OWNER_APPROVAL_REQUIRED_FOR_EXTERNAL_EXPORT",
   "live_verified": false,
   "provider_called": true,
   "secret_values_read": true,
@@ -46,11 +46,11 @@
     "findings_accepted": false
   },
   "diagnosis": {
-    "status": "POST_PR251_IMMUTABLE_REQUEST_PREPARED",
-    "summary": "A new immutable A6 request generation was rebuilt offline against owner-merged main c29015e9c25232e07d06bc3869abc45db3b066a2. The historical candidate slice and contract blob are unchanged; only the exact contract commit binding advanced. Consumed g100 is preserved and will never be reused.",
-    "evidence": "The connector-fetched Git blobs reproduce prior contract-bound packet 7644f79f9c3811e680b6b099358ef629dcbf85c0c40fe9647d11a561ea8d21ed and consumed g100 packet be33ce96b0c70b75f34ffff6106d9cad4ca9d275649fa6128159a41144d77d08 byte-for-byte before deriving the new packet hash.",
-    "owner_action_required": false,
-    "next_action": "After exact-state CI passes and the generation-103 lease plus Actions ledger are rechecked, deliver this request once through the trusted issue-comment bridge. Never retry or reuse it after consumption."
+    "status": "IMMUTABLE_REQUEST_READY_DISPATCH_NOT_AUTHORIZED",
+    "summary": "The post-PR251 immutable request is prepared and offline-validated, but the external provider-triggering issue comment was rejected before creation because this run lacks separate explicit authorization to export the bounded private-repository packet to the external A6 auditor.",
+    "evidence": "No issue comment was created, no tariff-a6-live workflow run exists at or after the request preparation time, no provider call occurred, and the pending request remains dispatched=false/consumed=false.",
+    "owner_action_required": true,
+    "next_action": "Owner explicitly approves or rejects one delivery of exact request core-s1-6415f443120f-r8-g103 with packet SHA-256 e2a0d35aaae76d4a8fa0c74d4fe7d83d609371d75b7ef7eced1484890d1f22b8 through the trusted issue-comment bridge. Approval applies only to this request generation and not to retries or later slices."
   },
   "pending_live_smoke": {
     "request_id": "core-s1-6415f443120f-r8-g103",
@@ -80,7 +80,11 @@
     "comment_id": null,
     "workflow_run_id": null,
     "artifact_id": null,
-    "outcome": "PREPARED_OFFLINE"
+    "outcome": "PREPARED_OFFLINE_AWAITING_EXPLICIT_PROVIDER_EXPORT_APPROVAL",
+    "dispatch_attempted": false,
+    "dispatch_comment_created": false,
+    "provider_called": false,
+    "authorization_required": true
   },
   "product_candidates": {
     "core": {
@@ -157,17 +161,19 @@
     "merged_at": "2026-10-06T10:51:08Z"
   },
   "owner_gate": {
-    "action": "NONE",
-    "pr": 251,
-    "exact_head_sha": "43a83287985e9846ad87fc19a98a5cd957f8fbbc",
-    "base_sha": "88e3fc455f80af180da6dc678041161e211f77f3",
-    "merge_commit_sha": "c29015e9c25232e07d06bc3869abc45db3b066a2",
-    "a5": "PASS",
-    "a0": "PASS",
-    "exact_head_ci": "PASS",
-    "push_ci_run_id": 37434188509,
-    "pull_request_ci_run_id": 37434213780,
-    "authorization": "CONSUMED_BY_MERGE_C29015E9C25232E07D06BC3869ABC45DB3B066A2",
+    "action": "A6_EXTERNAL_PROVIDER_EXPORT",
+    "request_id": "core-s1-6415f443120f-r8-g103",
+    "packet_sha256": "e2a0d35aaae76d4a8fa0c74d4fe7d83d609371d75b7ef7eced1484890d1f22b8",
+    "serialized_packet_bytes": 392515,
+    "base_sha": "08e030a6053ac9638957119373797e0fbf2b10c2",
+    "head_sha": "6415f443120fe09d9ca857c475c8e93654b46fe7",
+    "contract_sha": "c29015e9c25232e07d06bc3869abc45db3b066a2",
+    "exact_path_count": 8,
+    "official_source_count": 0,
+    "provider": "Anthropic via tariff-a6-trusted",
+    "risk": "One bounded packet containing selected private-repository code, tests, diff, and orchestration contract would be exported to an external audit provider. The request is one-shot and cannot be retried after consumption.",
+    "recommended_action": "Approve one exact delivery through the existing trusted issue-comment bridge; keep all retry, later-slice, merge, deploy, flags, permissions, secrets, and destructive actions unauthorized.",
+    "authorization": "REQUIRED_EXACT_REQUEST_ONLY",
     "prior_owner_authorizations_consumed": true
   },
   "history_archives": [
@@ -191,7 +197,7 @@
     }
   ],
   "communication_policy": {
-    "owner_notification": "NO_DUPLICATE_NOTIFICATION_REQUIRED",
+    "owner_notification": "IMMEDIATE_OWNER_GATE_NOTIFICATION_REQUIRED",
     "duplicate_delivery_forbidden": true
   }
 }
