@@ -1,13 +1,13 @@
 {
   "schema_version": 1,
-  "checked_at": "2026-10-06T08:14:06.038Z",
-  "status": "A6_INFRA_FIX_PR251_READY_FOR_OWNER_APPROVAL",
+  "checked_at": "2026-10-06T16:18:47.702Z",
+  "status": "A6_INFRA_FIX_PR251_MERGED_REQUEST_REGENERATION_REQUIRED",
   "live_verified": false,
   "provider_called": true,
   "secret_values_read": true,
   "trusted_workflow": {
     "path": ".github/workflows/tariff-a6-live.yml",
-    "default_branch_head": "88e3fc455f80af180da6dc678041161e211f77f3",
+    "default_branch_head": "c29015e9c25232e07d06bc3869abc45db3b066a2",
     "trigger": "issue_comment:/tariff-a6-live run-pending",
     "workflow_present_on_default_branch": true
   },
@@ -46,11 +46,11 @@
     "findings_accepted": false
   },
   "diagnosis": {
-    "status": "POST_PR250_PROVIDER_HTTP_400",
-    "summary": "Run 37433380123 passed context, dedupe, and exact packet preparation, called the provider once, and failed closed with PROVIDER_HTTP_400. No findings were returned, persisted, or accepted. The request is consumed and must not be retried.",
-    "evidence": "The provider failed in under one second after the only request-shape delta introduced by PR #250: a complex const value ([]). Current provider documentation lists const but does not explicitly guarantee complex const values; the failure is therefore treated as an output-schema compatibility defect pending a tested fix, not as an A6 finding.",
-    "owner_action_required": true,
-    "next_action": "Owner approves or rejects protected merge of PR #251 exact HEAD 43a83287985e9846ad87fc19a98a5cd957f8fbbc. No new A6 dispatch is lawful before an approved merge and a new immutable request generation."
+    "status": "POST_PR251_MERGE_REQUEST_REGENERATION_REQUIRED",
+    "summary": "Owner merged PR #251 exact reviewed HEAD 43a83287985e9846ad87fc19a98a5cd957f8fbbc into main as c29015e9c25232e07d06bc3869abc45db3b066a2. The prior g100 request remains consumed after its single provider call and is not retryable.",
+    "evidence": "GitHub PR #251 reports merged_at 2026-10-06T10:51:08Z and merge_commit_sha c29015e9c25232e07d06bc3869abc45db3b066a2; its changed paths match the reviewed two-file fix. No provider call was made during this reconciliation.",
+    "owner_action_required": false,
+    "next_action": "Prepare and offline-validate a new immutable A6 request generation bound to main c29015e9c25232e07d06bc3869abc45db3b066a2, with a new request_id, packet hash, preparation time and delivery generation; recheck lease and delivery dedupe before any provider call. Never reuse consumed g100."
   },
   "pending_live_smoke": {
     "request_id": "core-s1-6415f443120f-r7-g100",
@@ -153,19 +153,22 @@
       "pull_request_run_id": 37434213780
     },
     "provider_called_for_fix_validation": false,
-    "protected_merge": "READY_FOR_OWNER_APPROVAL"
+    "protected_merge": "MERGED_AUTHORIZATION_CONSUMED",
+    "merge_commit_sha": "c29015e9c25232e07d06bc3869abc45db3b066a2",
+    "merged_at": "2026-10-06T10:51:08Z"
   },
   "owner_gate": {
-    "action": "PROTECTED_MERGE",
+    "action": "NONE",
     "pr": 251,
     "exact_head_sha": "43a83287985e9846ad87fc19a98a5cd957f8fbbc",
     "base_sha": "88e3fc455f80af180da6dc678041161e211f77f3",
+    "merge_commit_sha": "c29015e9c25232e07d06bc3869abc45db3b066a2",
     "a5": "PASS",
     "a0": "PASS",
     "exact_head_ci": "PASS",
     "push_ci_run_id": 37434188509,
     "pull_request_ci_run_id": 37434213780,
-    "authorization": "REQUIRED_EXACT_HEAD_ONLY",
+    "authorization": "CONSUMED_BY_MERGE_C29015E9C25232E07D06BC3869ABC45DB3B066A2",
     "prior_owner_authorizations_consumed": true
   },
   "history_archives": [
@@ -189,7 +192,7 @@
     }
   ],
   "communication_policy": {
-    "owner_notification": "IMMEDIATE_OWNER_GATE_NOTIFICATION_REQUIRED",
+    "owner_notification": "NO_DUPLICATE_NOTIFICATION_REQUIRED",
     "duplicate_delivery_forbidden": true
   }
 }
