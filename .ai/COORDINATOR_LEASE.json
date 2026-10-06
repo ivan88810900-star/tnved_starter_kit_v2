@@ -1,14 +1,14 @@
 {
   "acquisition_note": "Post-PR251 immutable A6 request regeneration and single lawful delivery; consumed g100 remains non-retryable.",
-  "expires_at": "2026-10-06T23:31:22.261Z",
+  "expires_at": null,
   "generation": 103,
-  "holder": "/root/a0_maintenance_20261006T223622259Z",
+  "holder": null,
   "lease_repair": {},
-  "release_reason": "PR #251 merge reconciled into A6 persistent state at commit 06f8822428c410056331077a3daabae2b9ac3654; exact-state workflow run 37494717232 passed. Consumed g100 remains non-retryable; no provider call, main merge, deploy, production flag, permission, secret, migration, or product change.",
-  "released_by": "/root/a0_maintenance_20261006T161419Z",
+  "release_reason": "Post-PR251 immutable request core-s1-6415f443120f-r8-g103 prepared and byte-validated at state commit 8dc834085c3021d790fcc4861b0cc80d601b3862; exact-state workflow 37541919663 passed. External provider dispatch was not authorized: no comment, workflow, credential read, provider call, merge, deploy, flag, permission, secret, migration, product change, or consumed-request reuse.",
+  "released_by": "/root/a0_maintenance_20261006T223622259Z",
   "schema_version": 1,
   "serialization_repair": {},
-  "state": "active",
-  "token": "f9780a9e0e2de9a2f94238d261d7e432",
-  "updated_at": "2026-10-06T22:36:22.259Z"
+  "state": "released",
+  "token": null,
+  "updated_at": "2026-10-06T22:39:36.287Z"
 }
