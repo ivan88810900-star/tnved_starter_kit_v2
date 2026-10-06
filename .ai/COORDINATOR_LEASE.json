@@ -1,23 +1,23 @@
 {
   "acquisition_note": "Post-PR250 exact-main A6 dispatch for unchanged product candidates; no consumed request reuse.",
-  "expires_at": "2026-10-06T08:39:45.275482Z",
+  "expires_at": null,
   "generation": 100,
-  "holder": "/root/a0_automation_post250_a6_gen100",
+  "holder": null,
   "lease_repair": {
     "blocked_run_id": 37297951432,
     "prior_state_commit": "0496147fb802db79ef96cdd68931f3fa6aa2c515",
     "provider_called": false,
     "reason": "Invalid non-hex fencing token written during generation-93 acquisition; schema repair by the same verified holder before any credential access."
   },
-  "release_reason": "PR #250 exact HEAD passed fresh independent A5, A0 validation, and exact-head CI; protected owner gate recorded without merge.",
-  "released_by": "/root/a0_automation_post_actions_recovery_gen99",
+  "release_reason": "PR #251 exact HEAD is ready for owner approval after consumed A6 HTTP 400 diagnosis, independent A5, A0 validation, and exact-head CI; no protected merge performed.",
+  "released_by": "/root/a0_automation_post250_a6_gen100",
   "schema_version": 1,
   "serialization_repair": {
     "provider_called": false,
     "reason": "Normalize lease timestamps to the bridge's checked UTC-Z contract before any credential access.",
     "source": "generation-99 renew proposal"
   },
-  "state": "active",
-  "token": "aead2c860f1243618db7ce8c66cc8061",
-  "updated_at": "2026-10-06T08:09:45.275482Z"
+  "state": "released",
+  "token": null,
+  "updated_at": "2026-10-06T08:15:53.878815+00:00"
 }
