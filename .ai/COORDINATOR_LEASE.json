@@ -1,14 +1,14 @@
 {
-  "acquisition_note": "Post-PR251 source-of-truth reconciliation only; no A6 provider dispatch or consumed request reuse.",
-  "expires_at": null,
-  "generation": 102,
-  "holder": null,
+  "acquisition_note": "Post-PR251 immutable A6 request regeneration and single lawful delivery; consumed g100 remains non-retryable.",
+  "expires_at": "2026-10-06T23:31:22.261Z",
+  "generation": 103,
+  "holder": "/root/a0_maintenance_20261006T223622259Z",
   "lease_repair": {},
   "release_reason": "PR #251 merge reconciled into A6 persistent state at commit 06f8822428c410056331077a3daabae2b9ac3654; exact-state workflow run 37494717232 passed. Consumed g100 remains non-retryable; no provider call, main merge, deploy, production flag, permission, secret, migration, or product change.",
   "released_by": "/root/a0_maintenance_20261006T161419Z",
   "schema_version": 1,
   "serialization_repair": {},
-  "state": "released",
-  "token": null,
-  "updated_at": "2026-10-06T16:19:24.415Z"
+  "state": "active",
+  "token": "f9780a9e0e2de9a2f94238d261d7e432",
+  "updated_at": "2026-10-06T22:36:22.259Z"
 }
