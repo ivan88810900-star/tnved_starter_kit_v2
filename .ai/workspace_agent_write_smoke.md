@@ -1,0 +1,1 @@
+Workspace Agent controlled write smoke test. No product code or runtime state changed.
