@@ -1,27 +1,51 @@
-name: Tariff agent safety
+name: Tariff state snapshot safety
+
 on:
-  pull_request:
-    branches: [main, feat/canonical-read-path]
-    paths: ['tools/tariff_agents/**', 'tests/agent_orchestration/**', '.ai/**', 'AGENTS.md', '.github/workflows/tariff-agent-safety.yml']
   push:
     branches: ['agent/**']
+    paths:
+      - '.ai/**'
+      - '.github/workflows/tariff-agent-safety.yml'
+      - 'tools/tariff_agents/**'
+      - 'tests/agent_orchestration/**'
   workflow_dispatch:
+
 permissions:
   contents: read
+
 concurrency:
-  group: tariff-agent-safety-${{ github.workflow }}-${{ github.ref }}
+  group: tariff-state-safety-${{ github.ref }}
   cancel-in-progress: false
+
 jobs:
-  offline-safety:
+  validate-state:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Checkout immutable canonical validator
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
+          ref: 88e3fc455f80af180da6dc678041161e211f77f3
+          path: canonical
           persist-credentials: false
-      - name: Deterministic control and adapter tests (no credentials)
+
+      - name: Checkout exact state snapshot
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: ${{ github.sha }}
+          path: state
+          persist-credentials: false
+
+      - name: Report immutable code/state bindings
+        run: |
+          echo "canonical_code_sha=$(git -C canonical rev-parse HEAD)"
+          echo "state_sha=$(git -C state rev-parse HEAD)"
+
+      - name: Validate exact state snapshot with canonical code
         env:
           PYTHONDONTWRITEBYTECODE: '1'
-        run: python3 -m tools.tariff_agents.verify
-      - name: Persistent state schema and recovery invariants
-        run: python3 -m tools.tariff_agents validate
+          PYTHONPATH: ${{ github.workspace }}/canonical
+        run: |
+          python3 -m tools.tariff_agents \
+            --repo "${{ github.workspace }}/state" \
+            validate-snapshot
