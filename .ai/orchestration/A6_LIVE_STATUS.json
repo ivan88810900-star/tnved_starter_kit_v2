@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "checked_at": "2026-10-06T08:03:00.000Z",
-  "status": "A6_CORE_SLICE1_R7_CONSUMED_HTTP400_DIAGNOSIS",
+  "checked_at": "2026-10-06T08:14:06.038Z",
+  "status": "A6_INFRA_FIX_PR251_READY_FOR_OWNER_APPROVAL",
   "live_verified": false,
   "provider_called": true,
   "secret_values_read": true,
@@ -49,8 +49,8 @@
     "status": "POST_PR250_PROVIDER_HTTP_400",
     "summary": "Run 37433380123 passed context, dedupe, and exact packet preparation, called the provider once, and failed closed with PROVIDER_HTTP_400. No findings were returned, persisted, or accepted. The request is consumed and must not be retried.",
     "evidence": "The provider failed in under one second after the only request-shape delta introduced by PR #250: a complex const value ([]). Current provider documentation lists const but does not explicitly guarantee complex const values; the failure is therefore treated as an output-schema compatibility defect pending a tested fix, not as an A6 finding.",
-    "owner_action_required": false,
-    "next_action": "Implement a fail-closed schema repair that omits official_source_urls from the provider schema when no sources exist and deterministically restores [] before local validation; add regression tests, independent A5, A0, and exact-head CI."
+    "owner_action_required": true,
+    "next_action": "Owner approves or rejects protected merge of PR #251 exact HEAD 43a83287985e9846ad87fc19a98a5cd957f8fbbc. No new A6 dispatch is lawful before an approved merge and a new immutable request generation."
   },
   "pending_live_smoke": {
     "request_id": "core-s1-6415f443120f-r7-g100",
@@ -105,40 +105,36 @@
     }
   },
   "current_infrastructure_fix": {
-    "pr": 250,
-    "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/250",
-    "branch": "agent/a6-findings-validation-diagnostics-v1",
-    "base_sha": "7df838ea2a875b9d86754eb858f98a293c5e5f29",
-    "head_sha": "75e3e882f7e0d0828761f25dc98b3e5d9e1418b5",
-    "tree_sha": "2a6af2b51d79717687c1f7a5907f326a2956c3b1",
+    "pr": 251,
+    "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/251",
+    "branch": "agent/a6-empty-sources-schema-v1",
+    "base_sha": "88e3fc455f80af180da6dc678041161e211f77f3",
+    "head_sha": "43a83287985e9846ad87fc19a98a5cd957f8fbbc",
+    "tree_sha": "d92d7ef053337a481a00b2a29b624553925e8af6",
     "draft": false,
     "changed_paths": [
       "tools/tariff_agents/audit.py",
-      "tools/tariff_agents/lease.py",
-      "tests/agent_orchestration/test_audit.py",
-      "tests/agent_orchestration/test_lease.py"
+      "tests/agent_orchestration/test_audit.py"
     ],
     "fixes": [
-      "Use provider-supported const: [] for official_source_urls when the packet has no official sources.",
-      "Return only bounded allowlisted granular findings-validation reason codes; never persist raw provider output or exception text.",
-      "Serialize coordinator lease timestamps in canonical UTC-Z form required by the checked bridge."
+      "Omit official_source_urls from the provider grammar when the packet has no official sources, avoiding the complex const value rejected with HTTP 400.",
+      "Deterministically restore the only lawful value [] before unchanged strict local findings validation.",
+      "Preserve the enum-bound provider schema for packets with official sources and reject injected source values fail-closed."
     ],
     "local_tests": {
-      "focused": "54 PASS",
-      "full_orchestration": "137 PASS",
-      "required_verifier": "132 PASS",
-      "snapshot_tests": "5 PASS",
-      "snapshot_validation": "PASS",
+      "focused": "69 PASS",
+      "full_orchestration": "139 PASS",
+      "required_verifier": "134 PASS",
       "compileall": "PASS",
       "diff_check": "PASS"
     },
     "a5": {
       "status": "PASS",
       "findings": 0,
-      "reviewed_head_sha": "75e3e882f7e0d0828761f25dc98b3e5d9e1418b5",
-      "reviewed_tree_sha": "2a6af2b51d79717687c1f7a5907f326a2956c3b1",
-      "focused_tests": "52 PASS",
-      "full_orchestration": "137 PASS",
+      "reviewed_head_sha": "43a83287985e9846ad87fc19a98a5cd957f8fbbc",
+      "reviewed_tree_sha": "d92d7ef053337a481a00b2a29b624553925e8af6",
+      "focused_tests": "45 PASS",
+      "full_orchestration": "139 PASS",
       "diff_check": "PASS"
     },
     "a0_validation": {
@@ -146,30 +142,30 @@
       "exact_remote_tree_matches_tested_tree": true,
       "fail_closed_boundary": "PASS",
       "provider_schema_compatibility": "PASS",
-      "diagnostic_data_minimization": "PASS",
-      "lease_bridge_compatibility": "PASS",
+      "non_empty_source_schema_unchanged": true,
+      "source_free_normalization": "PASS",
+      "injected_source_fail_closed": "PASS",
       "product_candidate_heads_unchanged": true
     },
     "exact_head_ci": {
       "status": "PASS",
-      "push_run_id": 37387124889,
-      "pull_request_run_id": 37387139820
+      "push_run_id": 37434188509,
+      "pull_request_run_id": 37434213780
     },
     "provider_called_for_fix_validation": false,
-    "protected_merge": "MERGED_AUTHORIZATION_CONSUMED",
-    "merge_commit_sha": "88e3fc455f80af180da6dc678041161e211f77f3"
+    "protected_merge": "READY_FOR_OWNER_APPROVAL"
   },
   "owner_gate": {
-    "action": "NONE",
-    "pr": 250,
-    "exact_head_sha": "75e3e882f7e0d0828761f25dc98b3e5d9e1418b5",
-    "base_sha": "7df838ea2a875b9d86754eb858f98a293c5e5f29",
+    "action": "PROTECTED_MERGE",
+    "pr": 251,
+    "exact_head_sha": "43a83287985e9846ad87fc19a98a5cd957f8fbbc",
+    "base_sha": "88e3fc455f80af180da6dc678041161e211f77f3",
     "a5": "PASS",
     "a0": "PASS",
     "exact_head_ci": "PASS",
-    "push_ci_run_id": 37387124889,
-    "pull_request_ci_run_id": 37387139820,
-    "authorization": "CONSUMED_BY_MERGE_88e3fc455f80af180da6dc678041161e211f77f3",
+    "push_ci_run_id": 37434188509,
+    "pull_request_ci_run_id": 37434213780,
+    "authorization": "REQUIRED_EXACT_HEAD_ONLY",
     "prior_owner_authorizations_consumed": true
   },
   "history_archives": [
