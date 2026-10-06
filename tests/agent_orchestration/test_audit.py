@@ -559,11 +559,38 @@ class AuditTests(unittest.TestCase):
         urls = schema["properties"]["findings"]["items"]["properties"]["official_source_urls"]
         self.assertEqual(urls["items"]["enum"], [source])
 
-    def test_empty_official_source_scope_is_const_empty_array(self):
+    def test_empty_official_source_scope_is_omitted_from_provider_schema(self):
         packet = self.packet()
         schema = audit._findings_schema(packet)
-        urls = schema["properties"]["findings"]["items"]["properties"]["official_source_urls"]
-        self.assertEqual(urls, {"type": "array", "const": []})
+        item = schema["properties"]["findings"]["items"]
+        self.assertNotIn("official_source_urls", item["properties"])
+        self.assertNotIn("official_source_urls", item["required"])
+
+    @patch.object(audit, "request_json")
+    def test_empty_source_provider_result_is_normalized_before_local_validation(self, request):
+        packet = self.packet()
+        findings = self.findings(packet)
+        del findings["findings"][0]["official_source_urls"]
+        request.return_value = {
+            "id": "msg_mock", "stop_reason": "end_turn",
+            "content": [{"type": "text", "text": json.dumps(findings)}],
+        }
+        result = audit.run_audit(self.repo, packet, environ=self.env)
+        self.assertEqual(result["status"], "NEEDS_A0_VALIDATION")
+        self.assertEqual(result["findings"][0]["official_source_urls"], [])
+
+    @patch.object(audit, "request_json")
+    def test_empty_source_provider_cannot_supply_undeclared_source_field(self, request):
+        packet = self.packet()
+        findings = self.findings(packet)
+        findings["findings"][0]["official_source_urls"] = ["https://attacker.test"]
+        request.return_value = {
+            "id": "msg_mock", "stop_reason": "end_turn",
+            "content": [{"type": "text", "text": json.dumps(findings)}],
+        }
+        result = audit.run_audit(self.repo, packet, environ=self.env)
+        self.assertEqual(result["status"], "UNAVAILABLE")
+        self.assertEqual(result["failure_code"], "FINDING_SOURCE_SCOPE")
 
     @patch.object(audit, "request_json")
     def test_opus5_thinking_prefixes_are_allowed_before_terminal_text(self, request):
