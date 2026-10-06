@@ -1,14 +1,14 @@
 {
   "acquisition_note": "Post-PR250 exact-main A6 dispatch for unchanged product candidates; no consumed request reuse.",
-  "expires_at": "2026-10-06T11:11:11.081Z",
+  "expires_at": null,
   "generation": 101,
-  "holder": "/root/a0_maintenance_20261006T103342Z",
+  "holder": null,
   "lease_repair": {},
-  "release_reason": "PR #251 exact HEAD is ready for owner approval after consumed A6 HTTP 400 diagnosis, independent A5, A0 validation, and exact-head CI; no protected merge performed.",
-  "released_by": "/root/a0_automation_post250_a6_gen100",
+  "release_reason": "Pinned canonical state validator applied at 865938159e841a2d9c2879b17e450ecf9ae01220; exact-state workflow run 37451462534 passed. No main merge, provider call, deploy, production flag, permission, secret, migration, or product change.",
+  "released_by": "/root/a0_maintenance_20261006T103342Z",
   "schema_version": 1,
   "serialization_repair": {},
-  "state": "active",
-  "token": "25a191b7ceb8e255f355eae1cb1463ae",
-  "updated_at": "2026-10-06T10:41:11.081Z"
+  "state": "released",
+  "token": null,
+  "updated_at": "2026-10-06T10:42:29.606Z"
 }
