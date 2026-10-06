@@ -1,8 +1,8 @@
 {
-  "acquisition_note": "Fresh lawful generation after owner-authorized exact-head merge of PR #249; preparing a distinct immutable A6 request without reusing consumed IDs.",
-  "expires_at": null,
-  "generation": 99,
-  "holder": null,
+  "acquisition_note": "Post-PR250 exact-main A6 dispatch for unchanged product candidates; no consumed request reuse.",
+  "expires_at": "2026-10-06T08:26:13.010735Z",
+  "generation": 100,
+  "holder": "/root/a0_automation_post250_a6_gen100",
   "lease_repair": {
     "blocked_run_id": 37297951432,
     "prior_state_commit": "0496147fb802db79ef96cdd68931f3fa6aa2c515",
@@ -17,7 +17,7 @@
     "reason": "Normalize lease timestamps to the bridge's checked UTC-Z contract before any credential access.",
     "source": "generation-99 renew proposal"
   },
-  "state": "released",
-  "token": null,
-  "updated_at": "2026-10-05T23:17:10.461296Z"
+  "state": "active",
+  "token": "aead2c860f1243618db7ce8c66cc8061",
+  "updated_at": "2026-10-06T07:56:13.010735Z"
 }
