@@ -1,10 +1,10 @@
 {
   "schema_version": 1,
-  "checked_at": "2026-10-07T08:28:33.290Z",
-  "status": "A6_REQUEST_R8_G103_CONTEXT_GATE_BLOCKED_NO_PROVIDER",
+  "checked_at": "2026-10-07T10:34:55.600Z",
+  "status": "A6_REQUEST_R8_G103_RETIRED_OWNER_DECISION_REQUIRED",
   "live_verified": false,
-  "provider_called": true,
-  "secret_values_read": true,
+  "provider_called": false,
+  "secret_values_read": false,
   "trusted_workflow": {
     "path": ".github/workflows/tariff-a6-live.yml",
     "default_branch_head": "c29015e9c25232e07d06bc3869abc45db3b066a2",
@@ -46,11 +46,11 @@
     "findings_accepted": false
   },
   "diagnosis": {
-    "status": "AUTHORIZED_R8_G103_DELIVERY_BLOCKED_BEFORE_CREDENTIALS",
+    "status": "AUTHORIZED_R8_G103_RETIRED_PROCEDURE_REPAIRED_OWNER_DECISION_REQUIRED",
     "summary": "The exact owner-authorized request core-s1-6415f443120f-r8-g103 was triggered once by issue comment 6034069509, but workflow 37593980684 failed closed in context-gate while resolving the pending request. The live-audit job was skipped; credentials were not read and the provider was not called.",
     "evidence": "The acquired generation-104 lease serialized expires_at/updated_at with +00:00 from the stale state-branch lease helper, while the merged trusted bridge requires canonical UTC-Z timestamps. The failed workflow is already in the delivery ledger after the request preparation boundary, so duplicate-delivery protection forbids another trigger for this immutable generation.",
     "owner_action_required": true,
-    "next_action": "Owner decides whether A0 may prepare a new distinct immutable request generation after the lease-timestamp procedure is corrected. Request r8-g103 must not be retried; any new external dispatch requires a new exact-request approval."
+    "next_action": "The lease timestamp procedure is repaired and verified without a provider call. The owner decides whether A0 may prepare a new distinct immutable request generation. Request r8-g103 must not be retried; preparation and external dispatch require their exact approvals."
   },
   "pending_live_smoke": {
     "request_id": "core-s1-6415f443120f-r8-g103",
@@ -200,5 +200,17 @@
   "communication_policy": {
     "owner_notification": "IMMEDIATE_OWNER_GATE_NOTIFICATION_REQUIRED",
     "duplicate_delivery_forbidden": true
+  },
+  "lease_timestamp_repair": {
+    "status": "COMPLETED",
+    "repaired_at": "2026-10-07T10:34:55.600Z",
+    "lease_generation": 105,
+    "state_branch_helper_blob": "19eae6c47d7cb6ee2003a579ebd5f1d4e3f682f5",
+    "canonical_main_helper_blob": "19eae6c47d7cb6ee2003a579ebd5f1d4e3f682f5",
+    "helper_commit": "1039716c30490a93565e96de7e2df02554c31eff",
+    "runbook_commit": "6474484c10e2bd54a254ab855206191bf63db083",
+    "canonical_utc_z_verified": true,
+    "provider_called": false,
+    "credentials_read": false
   }
 }
