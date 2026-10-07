@@ -1,14 +1,14 @@
 {
   "acquisition_note": "Post-PR251 immutable A6 request regeneration and single lawful delivery; consumed g100 remains non-retryable.",
-  "expires_at": null,
-  "generation": 104,
-  "holder": null,
+  "expires_at": "2026-10-07T11:02:05.742Z",
+  "generation": 105,
+  "holder": "/root/a0_maintenance_20261007T1014Z",
   "lease_repair": {},
   "release_reason": "Owner-authorized request core-s1-6415f443120f-r8-g103 was triggered once by comment 6034069509. Workflow 37593980684 failed closed in context-gate because generation-104 lease timestamps were not canonical UTC-Z. live-audit was skipped; credentials were not read; provider was not called. The delivery is retired and must not be retried.",
   "released_by": "/root/a0_automation_a6_g103_dispatch_20261007",
   "schema_version": 1,
   "serialization_repair": {},
-  "state": "released",
-  "token": null,
-  "updated_at": "2026-10-07T08:31:28.642Z"
+  "state": "active",
+  "token": "1a115eb9f6e62f5109e1c4e34993217d",
+  "updated_at": "2026-10-07T10:32:05.742Z"
 }
