@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "checked_at": "2026-10-06T22:38:51.828Z",
-  "status": "A6_REQUEST_PREPARED_OWNER_APPROVAL_REQUIRED_FOR_EXTERNAL_EXPORT",
+  "checked_at": "2026-10-07T08:28:33.290Z",
+  "status": "A6_REQUEST_R8_G103_CONTEXT_GATE_BLOCKED_NO_PROVIDER",
   "live_verified": false,
   "provider_called": true,
   "secret_values_read": true,
@@ -46,11 +46,11 @@
     "findings_accepted": false
   },
   "diagnosis": {
-    "status": "IMMUTABLE_REQUEST_READY_DISPATCH_NOT_AUTHORIZED",
-    "summary": "The post-PR251 immutable request is prepared and offline-validated, but the external provider-triggering issue comment was rejected before creation because this run lacks separate explicit authorization to export the bounded private-repository packet to the external A6 auditor.",
-    "evidence": "No issue comment was created, no tariff-a6-live workflow run exists at or after the request preparation time, no provider call occurred, and the pending request remains dispatched=false/consumed=false.",
+    "status": "AUTHORIZED_R8_G103_DELIVERY_BLOCKED_BEFORE_CREDENTIALS",
+    "summary": "The exact owner-authorized request core-s1-6415f443120f-r8-g103 was triggered once by issue comment 6034069509, but workflow 37593980684 failed closed in context-gate while resolving the pending request. The live-audit job was skipped; credentials were not read and the provider was not called.",
+    "evidence": "The acquired generation-104 lease serialized expires_at/updated_at with +00:00 from the stale state-branch lease helper, while the merged trusted bridge requires canonical UTC-Z timestamps. The failed workflow is already in the delivery ledger after the request preparation boundary, so duplicate-delivery protection forbids another trigger for this immutable generation.",
     "owner_action_required": true,
-    "next_action": "Owner explicitly approves or rejects one delivery of exact request core-s1-6415f443120f-r8-g103 with packet SHA-256 e2a0d35aaae76d4a8fa0c74d4fe7d83d609371d75b7ef7eced1484890d1f22b8 through the trusted issue-comment bridge. Approval applies only to this request generation and not to retries or later slices."
+    "next_action": "Owner decides whether A0 may prepare a new distinct immutable request generation after the lease-timestamp procedure is corrected. Request r8-g103 must not be retried; any new external dispatch requires a new exact-request approval."
   },
   "pending_live_smoke": {
     "request_id": "core-s1-6415f443120f-r8-g103",
@@ -69,22 +69,26 @@
     "contract_blob_sha256": "621594cc7e2bc054e80b9cb9a3677e709d4c2c90151c1ce8613e5eaf029bf4de",
     "contract_blob_git_oid": "667e622cd38bc7d2a915e6aef40c3f70af889c7a",
     "binding_delta_reason": "Exact contract ref advanced to owner-authorized PR #251 merge c29015e9c25232e07d06bc3869abc45db3b066a2; contract blob, historical slice base/head, path scope, sources, and product candidate HEAD are unchanged.",
-    "dispatched": false,
-    "consumed": false,
+    "dispatched": true,
+    "consumed": true,
     "retry_allowed": false,
     "source_consumed_request_id": "core-s1-6415f443120f-r7-g100",
     "retry_of_consumed_id": false,
     "dedup_key": "ivan88810900-star/tnved_starter_kit_v2|core-s1-6415f443120f-r8-g103|e2a0d35aaae76d4a8fa0c74d4fe7d83d609371d75b7ef7eced1484890d1f22b8|gen103",
     "lease_generation": 103,
     "lease_holder": "/root/a0_maintenance_20261006T223622259Z",
-    "comment_id": null,
-    "workflow_run_id": null,
+    "comment_id": 6034069509,
+    "workflow_run_id": 37593980684,
     "artifact_id": null,
-    "outcome": "PREPARED_OFFLINE_AWAITING_EXPLICIT_PROVIDER_EXPORT_APPROVAL",
-    "dispatch_attempted": false,
-    "dispatch_comment_created": false,
+    "outcome": "BLOCKED_CONTEXT_GATE_INVALID_LEASE_TIMESTAMP_NO_PROVIDER_CALL",
+    "dispatch_attempted": true,
+    "dispatch_comment_created": true,
     "provider_called": false,
-    "authorization_required": true
+    "authorization_required": true,
+    "context_gate": "failure",
+    "live_audit_job": "skipped",
+    "credentials_read": false,
+    "retry_forbidden_by_delivery_ledger": true
   },
   "product_candidates": {
     "core": {
@@ -162,18 +166,15 @@
   },
   "owner_gate": {
     "action": "A6_EXTERNAL_PROVIDER_EXPORT",
-    "request_id": "core-s1-6415f443120f-r8-g103",
-    "packet_sha256": "e2a0d35aaae76d4a8fa0c74d4fe7d83d609371d75b7ef7eced1484890d1f22b8",
-    "serialized_packet_bytes": 392515,
-    "base_sha": "08e030a6053ac9638957119373797e0fbf2b10c2",
-    "head_sha": "6415f443120fe09d9ca857c475c8e93654b46fe7",
+    "request_id": null,
+    "packet_sha256": null,
+    "prior_request_id": "core-s1-6415f443120f-r8-g103",
+    "prior_packet_sha256": "e2a0d35aaae76d4a8fa0c74d4fe7d83d609371d75b7ef7eced1484890d1f22b8",
     "contract_sha": "c29015e9c25232e07d06bc3869abc45db3b066a2",
-    "exact_path_count": 8,
-    "official_source_count": 0,
     "provider": "Anthropic via tariff-a6-trusted",
-    "risk": "One bounded packet containing selected private-repository code, tests, diff, and orchestration contract would be exported to an external audit provider. The request is one-shot and cannot be retried after consumption.",
-    "recommended_action": "Approve one exact delivery through the existing trusted issue-comment bridge; keep all retry, later-slice, merge, deploy, flags, permissions, secrets, and destructive actions unauthorized.",
-    "authorization": "REQUIRED_EXACT_REQUEST_ONLY",
+    "risk": "The approved r8-g103 delivery is retired without a provider call. Any retry would violate duplicate-delivery and exact-request authorization boundaries.",
+    "recommended_action": "Authorize or reject preparation of a new distinct immutable request generation; after preparation, any external dispatch still requires a new exact-request approval.",
+    "authorization": "NEW_DISTINCT_REQUEST_AND_NEW_EXACT_APPROVAL_REQUIRED",
     "prior_owner_authorizations_consumed": true
   },
   "history_archives": [
