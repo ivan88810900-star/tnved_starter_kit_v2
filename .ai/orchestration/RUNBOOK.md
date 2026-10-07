@@ -10,8 +10,11 @@ rate or legal decisions. Do not overwrite a dirty worktree or another session.
 
 Cross-host coordinator lease: all scheduled A0 sessions use the same
 `agent/orchestration-state` branch and `.ai/COORDINATOR_LEASE.json`. Fetch the
-current content/blob SHA; `python -m tools.tariff_agents.lease` prepares an exact
-`github_update_file` CAS proposal. Apply with the existing GitHub connector, then
+current content/blob SHA. Lease proposals MUST use `tools/tariff_agents/lease.py`
+from the current trusted `main` commit (or a byte-identical state-branch copy), never
+an older helper from the state branch; canonical timestamps end in `Z`. The helper
+prepares an exact `github_update_file` CAS proposal. Apply with the existing GitHub
+connector, then
 reread and verify holder/token before dispatch or publication. A proposal alone
 is not acquisition. Concurrent CAS losers stop. Renew before expiry; release by
 CAS at completion. Never automatically steal an expired active lease: confirm
