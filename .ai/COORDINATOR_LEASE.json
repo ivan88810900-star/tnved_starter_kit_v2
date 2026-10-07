@@ -1,14 +1,14 @@
 {
   "acquisition_note": "Post-PR251 immutable A6 request regeneration and single lawful delivery; consumed g100 remains non-retryable.",
-  "expires_at": "2026-10-07T08:57:40.018821+00:00",
+  "expires_at": null,
   "generation": 104,
-  "holder": "/root/a0_automation_a6_g103_dispatch_20261007",
+  "holder": null,
   "lease_repair": {},
-  "release_reason": "Post-PR251 immutable request core-s1-6415f443120f-r8-g103 prepared and byte-validated at state commit 8dc834085c3021d790fcc4861b0cc80d601b3862; exact-state workflow 37541919663 passed. External provider dispatch was not authorized: no comment, workflow, credential read, provider call, merge, deploy, flag, permission, secret, migration, product change, or consumed-request reuse.",
-  "released_by": "/root/a0_maintenance_20261006T223622259Z",
+  "release_reason": "Owner-authorized request core-s1-6415f443120f-r8-g103 was triggered once by comment 6034069509. Workflow 37593980684 failed closed in context-gate because generation-104 lease timestamps were not canonical UTC-Z. live-audit was skipped; credentials were not read; provider was not called. The delivery is retired and must not be retried.",
+  "released_by": "/root/a0_automation_a6_g103_dispatch_20261007",
   "schema_version": 1,
   "serialization_repair": {},
-  "state": "active",
-  "token": "371a7f25eaaa4e7f8f3da4cb3eaaf9da",
-  "updated_at": "2026-10-07T08:27:40.018821+00:00"
+  "state": "released",
+  "token": null,
+  "updated_at": "2026-10-07T08:31:28.642Z"
 }
