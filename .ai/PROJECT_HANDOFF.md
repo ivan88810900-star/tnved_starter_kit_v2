@@ -3,6 +3,23 @@
 **Снимок:** 2026-10-08 (UTC). **Единственный репозиторий:** [ivan88810900-star/tnved_starter_kit_v2](https://github.com/ivan88810900-star/tnved_starter_kit_v2).  
 **Авторитетное состояние:** ветка `agent/orchestration-state`, файлы `.ai/TASK_BOARD.json`, `.ai/COORDINATOR_LEASE.json`, `.ai/orchestration/A6_LIVE_STATUS.json`. Этот документ — указатель и контрольная точка, **не** право на запись/merge/A6. Перед действием заново читать текущие HEAD и state. Не полагаться на Business-чат.
 
+## 0j. Самодостаточные payment-fixtures и fail-closed broad-suite
+
+**Текущий checkpoint #255:** [draft PR #255](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/255), `agent/core-payment-regressions-v1` @ `26fac3bf5585284afac77734f7888a2fac64e991`, tree `6c7ce0fcdfe726c8803696f4f0fad428874933bd`, base #244 неизменён `14e0ee8f034d94ffc5831d87e076f4d693a5a524`.
+
+Устранён воспроизведённый fixture-класс broad-suite падений: calculator/leaf/recycling/tariff-preference тесты больше не зависят от заранее наполненной чужой `customs.db`. Добавлен идемпотентный disposable test seed для восьми точных кодов и штатный bootstrap существующих test-справочников. Test-only строки остаются явно недоверенными: автоматические результаты обязаны быть `REVIEW_REQUIRED`, финальные VAT/total withheld, provisional-арифметика сохраняется только для диагностики. Четыре исправленных модуля добавлены в exact-head payment-regression CI.
+
+Проверки exact tree:
+- author disposable workflow-equivalent: `238 passed +23 subtests`, exit 0; изменённые модули `74 passed`, повторный прогон на общей БД `74 passed`, exit 0;
+- orchestration verifier: `120 passed`; snapshot `4 passed`, exit 0;
+- независимый A5 `/root/a5_special_scope`: **PASS**; свежий workflow-equivalent `238 passed +23 subtests`, normal/repeat/reverse-order по `74 passed`; все восемь fixture-кодов сохранили `REVIEW_REQUIRED`, `total_payable=null`, `withheld` и `hs_rate_source_binding_unverified`;
+- exact-head GitHub Actions [run 37836111451](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/37836111451): `offline-safety` **SUCCESS** (job 113513449756), `payment-regression` **SUCCESS** (job 113513450175);
+- `git diff --check`: PASS.
+
+Доступ к коду подтверждён полным checkout точного tree; Git/Python/pytest реально выполнялись. Законная публикация сделана только в существующую draft-ветку под lease generation 120. Checkpoint записывается CAS и будет перечитан. Protected merge, production/DB writes, flags, secrets/permissions, destructive migration и A6 не выполнялись. A6 request `core-s1-6415f443120f-r9-g106` не менялся и не отправлялся.
+
+Остаётся: это bounded fixture-cleanup, а не полный broad-suite или #244 PASS. Другие payment/source fixtures и актуальность шести committed bundles ещё требуют разбор; юридическая/источниковая полнота не подтверждена. Следующий технический шаг — продолжить triage оставшихся broad-suite fixture failures без ослабления fail-closed, затем перейти к #245.
+
 ## 0i. PP908 — типизированный признак для 30 неоднозначных animal-кодов
 
 **Текущий checkpoint #255:** [draft PR #255](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/255), `agent/core-payment-regressions-v1` @ `ba8097d18d3512479df21cd9c15b768f3d835c93`, tree `648865448fa7576163fbc2549a5f34b39627d22d`, base #244 неизменён `14e0ee8f034d94ffc5831d87e076f4d693a5a524`.
