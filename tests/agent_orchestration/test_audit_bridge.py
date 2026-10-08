@@ -21,6 +21,11 @@ class AuditBridgeTests(unittest.TestCase):
         self.temp = tempfile.TemporaryDirectory()
         self.repo = Path(self.temp.name)
         self.git("init", "-q")
+        # Git may detach automatic maintenance after object-writing commands.
+        # Disable it in disposable fixtures so teardown cannot race a background
+        # process that is still creating entries under .git/objects.
+        self.git("config", "maintenance.auto", "false")
+        self.git("config", "gc.auto", "0")
         self.git("config", "user.email", "bridge@example.com")
         self.git("config", "user.name", "Bridge Test")
         self.write(audit.CONTRACT_PATH, "A0 independently validates A6 findings.\n")
@@ -135,6 +140,9 @@ class AuditBridgeTests(unittest.TestCase):
         state = self.repo / ".a6-state"
         state.mkdir()
         subprocess.run(["git", "init", "-q"], cwd=state, check=True)
+        subprocess.run(["git", "config", "maintenance.auto", "false"],
+                       cwd=state, check=True)
+        subprocess.run(["git", "config", "gc.auto", "0"], cwd=state, check=True)
         subprocess.run(["git", "config", "user.email", "state@example.com"],
                        cwd=state, check=True)
         subprocess.run(["git", "config", "user.name", "State Test"],
