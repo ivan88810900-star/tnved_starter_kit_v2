@@ -50,6 +50,49 @@ jobs:
           cache-dependency-path: customs-clear/backend/requirements.txt
       - name: Install backend dependencies
         run: python -m pip install --disable-pip-version-check -r requirements.txt
+      - name: Bootstrap committed payment fixture
+        run: |
+          python - <<'PY'
+          import json
+          import re
+          from pathlib import Path
+
+          import app.models  # noqa: F401
+          from app.db import Base, SessionLocal, engine
+          from app.models.core import HsRate
+
+          Base.metadata.create_all(bind=engine)
+          payload = json.loads(
+              Path("data/raw_normative/eec_ett_vat.json").read_text(encoding="utf-8")
+          )
+          rates_by_code = {}
+          for item in payload.get("rates", []):
+              code = re.sub(r"\D", "", str(item.get("hs_code") or ""))
+              if len(code) == 10:
+                  rates_by_code[code] = item
+          if not rates_by_code:
+              raise SystemExit("committed VAT snapshot has no 10-digit rows")
+
+          rows = []
+          for code, item in rates_by_code.items():
+              raw_rate = item.get("vat_import_rate")
+              rows.append(
+                  HsRate(
+                      hs_code=code,
+                      hs_prefix=code,
+                      duty_rate="0",
+                      vat_import_rate=22.0 if raw_rate is None else float(raw_rate),
+                      vat_rule=str(item.get("vat_rule") or "none"),
+                      vat_rule_basis=str(item.get("vat_rule_basis") or ""),
+                      source_revision="ci-committed-vat-snapshot",
+                  )
+              )
+          with SessionLocal() as db:
+              db.bulk_save_objects(rows)
+              db.commit()
+          print(f"seeded {len(rows)} committed VAT rows")
+          PY
+          python scripts/import_vat_preferences.py data/vat_preferences_pp908_expansion.json
       - name: Run payment regression slice
         run: >-
           python -m pytest -q
