@@ -3,6 +3,24 @@
 **Снимок:** 2026-10-08 (UTC). **Единственный репозиторий:** [ivan88810900-star/tnved_starter_kit_v2](https://github.com/ivan88810900-star/tnved_starter_kit_v2).  
 **Авторитетное состояние:** ветка `agent/orchestration-state`, файлы `.ai/TASK_BOARD.json`, `.ai/COORDINATOR_LEASE.json`, `.ai/orchestration/A6_LIVE_STATUS.json`. Этот документ — указатель и контрольная точка, **не** право на запись/merge/A6. Перед действием заново читать текущие HEAD и state. Не полагаться на Business-чат.
 
+## 0g. PP908 VAT scope — broad over-claim закрыт, animal map остаётся fail-closed
+
+**Текущий checkpoint #255:** [draft PR #255](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/255), `agent/core-payment-regressions-v1` @ `02573a121e3de7ccfab079eb436bce5e85917fc9`, tree `428752c8f8e61c40f239c91e9f6237a818672c3a`, base #244 неизменён `14e0ee8f034d94ffc5831d87e076f4d693a5a524`.
+
+Устранён подтверждённый legal/product over-claim: широкие 10%-преференции `0102`, `0103`, `0104`, `0105` и `8715` удалены из committed seed и отфильтровываются на чтении даже при наличии старых строк в БД. Один и тот же fail-closed guard применяется к payment resolver и catalog UI. AI/reference trigger для колясок сужен до точного `8715001000`; sibling `8715009000` не наследует 10%. Для четырёх животноводческих заголовков точная карта включённых/исключённых десятизначных кодов не выдумывалась: audit сохраняет `MANUAL_REVIEW_REQUIRED: source_mapping_required`.
+
+Проверки exact head/tree:
+- author CI-equivalent disposable SQLite: `154 passed +21 subtests`, exit 0;
+- audit: 114/114 безопасно суженных targets покрыты, но ожидаемый exit 1 из-за четырёх отсутствующих source mappings;
+- первоначальный независимый A5 нашёл два обходных read path (catalog и AI reference); они исправлены до публикации;
+- финальный независимый A5 `/root/a5_special_scope`: **PASS** exact remote HEAD/tree; stale broad rows дают 22%/пустой catalog/нет AI trigger, точный `8715001000` даёт 10%, sibling остаётся 22%;
+- exact-head GitHub Actions [run 37814127865](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/37814127865): `offline-safety` **SUCCESS** (job 113438242529), `payment-regression` **SUCCESS** (job 113438242162);
+- `git diff --check`: PASS.
+
+Среда разработки подтверждена: полный checkout exact parent/HEAD, Git/Python/pytest выполняются, draft branch опубликована законно под lease generation 117. Protected merge, production/DB write, flags, destructive migration, secrets/permissions и A6 не выполнялись. A6 request `core-s1-6415f443120f-r9-g106` не менялся и не отправлялся.
+
+Следующий безопасный шаг: получить retained primary-source mapping для включённых/исключённых десятизначных кодов `0102`–`0105`; до этого не снимать manual review. После этого продолжить source-by-source freshness и #245. Полный #244 и юридическая/источниковая полнота **не PASS**.
+
 ## 0f. PP908 fail-closed audit и payment regression CI
 
 **Текущий checkpoint #255:** [draft PR #255](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/255), `agent/core-payment-regressions-v1` @ `942d0da1520081666ce3620708f1a692b80af0a2`, base #244 неизменён `14e0ee8f034d94ffc5831d87e076f4d693a5a524`.
