@@ -11,6 +11,7 @@ from typing import Any, Dict, List
 from ..db import SessionLocal
 from ..models.tnved import NonTariffMeasure
 from .hs_matching import get_hs_prefixes, match_hs_prefix, normalize_hs_code
+from .non_tariff_fallbacks import FALLBACK_RULES
 
 NEGATIVE_MARKERS = [
     "не требуется",
@@ -149,63 +150,8 @@ SENSITIVE_OVERRIDES = {
     "3604": "ЛЗ",
 }
 
-# In-memory fallback used only when DB is unavailable
-_FALLBACK_RULES: List[Dict[str, Any]] = [
-    {
-        "name": "Бытовая электроника",
-        "hs_prefixes": ["8509", "8516", "8517", "8471", "8472"],
-        "tr_ts": ["004/2011", "020/2011", "037/2016"],
-        "required_permits": ["СС", "ДС"],
-    },
-    {
-        "name": "Косметика и парфюмерия",
-        "hs_prefixes": ["3304", "3305", "3307"],
-        "tr_ts": ["009/2011", "021/2011"],
-        "required_permits": ["ДС"],
-    },
-    {
-        "name": "Одежда 1-й слой",
-        "hs_prefixes": ["6101", "6102", "6201", "6202", "6109", "6209"],
-        "tr_ts": ["017/2011"],
-        "required_permits": ["СС"],
-    },
-    {
-        "name": "Одежда 2–3 слой",
-        "hs_prefixes": ["6103", "6104", "6203", "6204", "6110", "6210"],
-        "tr_ts": ["017/2011"],
-        "required_permits": ["ДС"],
-    },
-    {
-        "name": "Ткани хлопковые",
-        "hs_prefixes": ["5208", "5209", "5210", "5211", "5212"],
-        "tr_ts": ["017/2011"],
-        "required_permits": ["ДС"],
-    },
-    {
-        "name": "Детские товары",
-        "hs_prefixes": ["9503", "9403", "6307", "9619", "6209"],
-        "tr_ts": ["007/2011"],
-        "required_permits": ["СС"],
-    },
-    {
-        "name": "Посуда керамическая",
-        "hs_prefixes": ["6911", "6912", "6913"],
-        "tr_ts": ["021/2011"],
-        "required_permits": ["ДС"],
-    },
-    {
-        "name": "Игрушки",
-        "hs_prefixes": ["9503"],
-        "tr_ts": ["008/2011"],
-        "required_permits": ["СС"],
-    },
-    {
-        "name": "Лекарственные средства",
-        "hs_prefixes": ["3004"],
-        "tr_ts": ["061/2012"],
-        "required_permits": ["РУ"],
-    },
-]
+# Backward-compatible local alias; the canonical fallback data is DB-free.
+_FALLBACK_RULES = FALLBACK_RULES
 
 
 def find_rules_for_code(hs_code: str) -> List[Dict[str, Any]]:
