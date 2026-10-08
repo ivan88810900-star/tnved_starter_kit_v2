@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 import unittest
 import unittest.mock
@@ -96,12 +97,23 @@ def _official_bundle_payload(*, revision: str = "ett:2026-05-01", rates: list[di
 
 
 class _BundleFixture:
-    def __init__(self, payload: dict, rel_path: str = "data/raw_normative/eec_ett_normative_bundle.json"):
+    def __init__(
+        self,
+        payload: dict,
+        rel_path: str = "data/raw_normative/eec_ett_normative_bundle.json",
+        *,
+        with_snapshot_manifest: bool = True,
+        manifest_overrides: dict | None = None,
+        source_snapshot: bytes = b"retained EEC ETT source snapshot",
+    ):
         self.rel_path = rel_path
         self.tmp = Path(unittest.mock.MagicMock())  # placeholder
         self._tmpdir = None
         self._backend_root: Path | None = None
         self.payload = payload
+        self.with_snapshot_manifest = with_snapshot_manifest
+        self.manifest_overrides = manifest_overrides or {}
+        self.source_snapshot = source_snapshot
 
     def __enter__(self) -> tuple[Path, str]:
         import tempfile
@@ -110,13 +122,209 @@ class _BundleFixture:
         root = Path(self._tmpdir.name)
         full = root / self.rel_path
         full.parent.mkdir(parents=True, exist_ok=True)
-        full.write_text(json.dumps(self.payload), encoding="utf-8")
+        bundle_bytes = json.dumps(self.payload).encode("utf-8")
+        full.write_bytes(bundle_bytes)
+        if self.with_snapshot_manifest:
+            source_name = "eec_ett_source_snapshot.html"
+            (full.parent / source_name).write_bytes(self.source_snapshot)
+            rates = self.payload.get("rates")
+            if not isinstance(rates, list):
+                rates = self.payload.get("rows")
+            bundle_source_url = str(
+                self.payload.get("official_ett_url") or self.payload.get("source_url") or ""
+            )
+            if not bundle_source_url and isinstance(rates, list):
+                row_urls = {
+                    str(row.get("source_url") or "").strip()
+                    for row in rates
+                    if isinstance(row, dict) and str(row.get("source_url") or "").strip()
+                }
+                if len(row_urls) == 1:
+                    bundle_source_url = next(iter(row_urls))
+            manifest = {
+                "schema_version": 1,
+                "domain": "import_duty",
+                "revision": str(self.payload.get("revision") or self.payload.get("source_revision") or ""),
+                "source_url": bundle_source_url,
+                "source_snapshot_file": source_name,
+                "source_snapshot_sha256": hashlib.sha256(self.source_snapshot).hexdigest(),
+                "normalized_bundle_file": full.name,
+                "normalized_bundle_sha256": hashlib.sha256(bundle_bytes).hexdigest(),
+                "normalized_record_count": len(rates) if isinstance(rates, list) else 0,
+                "captured_at": "2026-05-01T00:00:00Z",
+                "transform_id": "reviewed-test-transform-v1",
+            }
+            manifest.update(self.manifest_overrides)
+            full.with_name(full.name + ".provenance.json").write_text(json.dumps(manifest), encoding="utf-8")
         self._backend_root = root
         return root, self.rel_path
 
     def __exit__(self, *args: object) -> None:
         if self._tmpdir:
             self._tmpdir.cleanup()
+
+
+class TestImportDutySourceSnapshot(unittest.TestCase):
+    """Normalized ETT rows require immutable retained primary-source evidence."""
+
+    def setUp(self) -> None:
+        self.sm = _memory_sessionmaker()
+        self._patches = _start_patches(self.sm)
+
+    def tearDown(self) -> None:
+        _stop_patches(*self._patches)
+
+    def _apply_fixture(self, fixture: _BundleFixture) -> dict:
+        import app.services.import_duty_ingestion as idi
+
+        with fixture as (root, rel):
+            with unittest.mock.patch.object(idi, "_BACKEND_ROOT", root):
+                return run_import_duty_apply(rel_path=rel)
+
+    def _dry_run_fixture(self, fixture: _BundleFixture) -> dict:
+        import app.services.import_duty_ingestion as idi
+
+        with fixture as (root, rel):
+            with unittest.mock.patch.object(idi, "_BACKEND_ROOT", root):
+                return run_import_duty_dry_run(rel_path=rel)
+
+    def _assert_snapshot_blocked(self, report: dict, reason: str) -> None:
+        self.assertEqual(report["status"], "manual_review_required")
+        self.assertFalse(report["db_mutated"])
+        self.assertIn(reason, report["blockers"][0])
+        self.assertEqual(_table_counts(self.sm)["source_status"], 0)
+        self.assertEqual(_table_counts(self.sm)["sync_log"], 0)
+
+    def test_missing_manifest_blocks_apply_without_mutation(self) -> None:
+        report = self._apply_fixture(
+            _BundleFixture(_official_bundle_payload(), with_snapshot_manifest=False)
+        )
+        self._assert_snapshot_blocked(report, "source_snapshot_manifest_missing")
+
+    def test_missing_manifest_blocks_dry_run_without_mutation(self) -> None:
+        before = _table_counts(self.sm)
+        report = self._dry_run_fixture(
+            _BundleFixture(_official_bundle_payload(), with_snapshot_manifest=False)
+        )
+        self.assertEqual(report["status"], "manual_review_required")
+        self.assertTrue(report["dry_run"])
+        self.assertFalse(report["db_mutated"])
+        self.assertIn("source_snapshot_manifest_missing", report["blockers"][0])
+        self.assertEqual(before, _table_counts(self.sm))
+
+    def test_normalized_bundle_hash_mismatch_blocks_apply(self) -> None:
+        report = self._apply_fixture(
+            _BundleFixture(
+                _official_bundle_payload(),
+                manifest_overrides={"normalized_bundle_sha256": "0" * 64},
+            )
+        )
+        self._assert_snapshot_blocked(report, "source_snapshot_normalized_bundle_sha256_mismatch")
+
+    def test_source_snapshot_hash_mismatch_blocks_apply(self) -> None:
+        report = self._apply_fixture(
+            _BundleFixture(
+                _official_bundle_payload(),
+                manifest_overrides={"source_snapshot_sha256": "0" * 64},
+            )
+        )
+        self._assert_snapshot_blocked(report, "source_snapshot_source_snapshot_sha256_mismatch")
+
+    def test_manifest_revision_mismatch_blocks_apply(self) -> None:
+        report = self._apply_fixture(
+            _BundleFixture(
+                _official_bundle_payload(),
+                manifest_overrides={"revision": "ett:2026-04-01"},
+            )
+        )
+        self._assert_snapshot_blocked(report, "source_snapshot_revision_mismatch")
+
+    def test_non_official_source_url_blocks_apply(self) -> None:
+        payload = _official_bundle_payload()
+        payload["official_ett_url"] = "https://example.invalid/ett"
+        report = self._apply_fixture(_BundleFixture(payload))
+        self._assert_snapshot_blocked(report, "source_snapshot_source_url_not_official_eec")
+
+    def test_source_path_traversal_blocks_apply(self) -> None:
+        report = self._apply_fixture(
+            _BundleFixture(
+                _official_bundle_payload(),
+                manifest_overrides={"source_snapshot_file": "../source.html"},
+            )
+        )
+        self._assert_snapshot_blocked(report, "source_snapshot_source_snapshot_unsafe_file_name")
+
+    def test_future_capture_time_blocks_apply(self) -> None:
+        report = self._apply_fixture(
+            _BundleFixture(
+                _official_bundle_payload(),
+                manifest_overrides={"captured_at": "2099-01-01T00:00:00Z"},
+            )
+        )
+        self._assert_snapshot_blocked(report, "source_snapshot_captured_at_in_future")
+
+    def test_normalized_record_count_mismatch_blocks_apply(self) -> None:
+        report = self._apply_fixture(
+            _BundleFixture(
+                _official_bundle_payload(),
+                manifest_overrides={"normalized_record_count": 999},
+            )
+        )
+        self._assert_snapshot_blocked(report, "source_snapshot_normalized_record_count_mismatch")
+
+    def test_future_revision_blocks_apply_without_mutation(self) -> None:
+        report = self._apply_fixture(
+            _BundleFixture(_official_bundle_payload(revision="ett:2099-01-01"))
+        )
+        self.assertEqual(report["status"], "manual_review_required")
+        self.assertFalse(report["db_mutated"])
+        self.assertEqual(_table_counts(self.sm)["hs_rates"], 0)
+        self.assertEqual(_table_counts(self.sm)["source_status"], 0)
+        self.assertEqual(_table_counts(self.sm)["sync_log"], 0)
+
+    def test_bundle_path_traversal_blocks_apply_without_mutation(self) -> None:
+        import app.services.import_duty_ingestion as idi
+        import tempfile
+
+        payload = _official_bundle_payload()
+        with tempfile.TemporaryDirectory() as tmp:
+            parent = Path(tmp)
+            root = parent / "backend"
+            root.mkdir()
+            outside = parent / "outside.json"
+            outside.write_text(json.dumps(payload), encoding="utf-8")
+            with unittest.mock.patch.object(idi, "_BACKEND_ROOT", root):
+                report = run_import_duty_apply(rel_path="../outside.json")
+        self.assertEqual(report["status"], "manual_review_required")
+        self.assertFalse(report["db_mutated"])
+        self.assertIn("bundle_path_outside_backend_root", report["blockers"][0])
+        self.assertEqual(_table_counts(self.sm)["hs_rates"], 0)
+
+    def test_bundle_symlink_blocks_apply_without_mutation(self) -> None:
+        import app.services.import_duty_ingestion as idi
+        import tempfile
+
+        payload = _official_bundle_payload()
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            target = root / "target.json"
+            target.write_text(json.dumps(payload), encoding="utf-8")
+            link = root / "bundle.json"
+            link.symlink_to(target)
+            with unittest.mock.patch.object(idi, "_BACKEND_ROOT", root):
+                report = run_import_duty_apply(rel_path="bundle.json")
+        self.assertEqual(report["status"], "manual_review_required")
+        self.assertFalse(report["db_mutated"])
+        self.assertIn("bundle_symlink_or_absolute_path", report["blockers"][0])
+        self.assertEqual(_table_counts(self.sm)["hs_rates"], 0)
+
+    def test_valid_manifest_is_exposed_in_parser_result(self) -> None:
+        report = self._apply_fixture(_BundleFixture(_official_bundle_payload()))
+        self.assertEqual(report["status"], "OK")
+        snapshot = report["parser_result"]["snapshot_provenance"]
+        self.assertEqual(snapshot["status"], "verified")
+        self.assertEqual(snapshot["source_snapshot_file"], "eec_ett_source_snapshot.html")
+        self.assertIn("legal completeness is not asserted", snapshot["note"])
 
 
 class TestImportDutyMissingSource(unittest.TestCase):

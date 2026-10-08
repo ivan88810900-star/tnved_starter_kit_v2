@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import re
+from datetime import date
 from typing import Any
 from urllib.parse import urlparse
 
@@ -46,7 +47,15 @@ def is_official_eec_ett_revision(revision: str | None) -> bool:
     rev = (revision or "").strip().lower()
     if not rev:
         return False
-    return bool(_EEC_ETT_REVISION_RE.match(rev))
+    if not _EEC_ETT_REVISION_RE.match(rev):
+        return False
+    try:
+        revision_date = date.fromisoformat(rev.rsplit(":", 1)[-1])
+    except ValueError:
+        return False
+    # A future label cannot prove that retained bytes are the effective official
+    # tariff.  Future-dated sources remain manual review until that date.
+    return revision_date <= date.today()
 
 
 def is_official_vat_ingestion_revision(revision: str | None) -> bool:
