@@ -1,14 +1,14 @@
 {
   "acquisition_note": "Post-PR251 immutable A6 request regeneration and single lawful delivery; consumed g100 remains non-retryable.",
-  "expires_at": null,
-  "generation": 122,
-  "holder": null,
+  "expires_at": "2026-10-08T22:49:14.171Z",
+  "generation": 123,
+  "holder": "/root/a0_maintenance_20261009T0114MSK",
   "lease_repair": {},
   "release_reason": "PR255 typed live-animal VAT input completed; exact tree A5 and exact-head CI passed; checkpoint revision 668 reread.",
   "released_by": "/root/a0_maintenance_20261008T2148MSK",
   "schema_version": 1,
   "serialization_repair": {},
-  "state": "released",
-  "token": null,
-  "updated_at": "2026-10-08T22:10:36.381018Z"
+  "state": "active",
+  "token": "27db562d9d971d50b751092080161a4d",
+  "updated_at": "2026-10-08T22:19:14.171Z"
 }
