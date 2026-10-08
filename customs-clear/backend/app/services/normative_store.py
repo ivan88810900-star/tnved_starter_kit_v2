@@ -694,10 +694,14 @@ def upsert_source_status(
     revision: str,
     is_stale: bool,
     note: str,
+    *,
+    synced_at: datetime | None = None,
 ) -> None:
     with SessionLocal() as db:
         obj = db.query(SourceStatus).filter(SourceStatus.source_code == source_code).first()
-        now = datetime.now(timezone.utc).replace(tzinfo=None)
+        now = synced_at or datetime.now(timezone.utc)
+        if now.tzinfo is not None:
+            now = now.astimezone(timezone.utc).replace(tzinfo=None)
         if not obj:
             db.add(
                 SourceStatus(

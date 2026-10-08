@@ -3,6 +3,7 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass
 from datetime import date
+from math import isfinite
 from typing import Any
 
 from sqlalchemy import or_
@@ -56,17 +57,34 @@ _CONFIDENCE_MAP = {
     0: "none",
 }
 
-_FALLBACK_FX_RATES: dict[str, float] = {
-    "EUR": 100.0,
-    "USD": 92.0,
-    "RUB": 1.0,
-}
-
 SPECIAL_DUTIES_COUNTRY_WARNING = (
     "Антидемпинговые и иные специальные пошлины проверяются только при указании "
     "страны происхождения. Данные по мерам защиты рынка могут быть неполными — "
     "см. remedies.eaeunion.org"
 )
+
+
+def _resolve_fx_rate(currency: str, fx_rates: dict[str, float] | None) -> float:
+    """Resolve a RUB conversion without inventing an unverified market rate."""
+    ccy = (currency or "").upper().strip()
+    if ccy == "RUB":
+        return 1.0
+    supplied = {
+        (str(key) if key is not None else "").upper().strip(): value
+        for key, value in (fx_rates or {}).items()
+    }
+    if not ccy or ccy not in supplied:
+        raise ValueError(f"Нет подтвержденного курса ЦБ РФ для валюты: {ccy or 'EMPTY'}")
+    raw_rate = supplied[ccy]
+    if isinstance(raw_rate, bool):
+        raise ValueError(f"Некорректный курс ЦБ РФ для валюты: {ccy}")
+    try:
+        rate = float(raw_rate)
+    except (TypeError, ValueError) as exc:
+        raise ValueError(f"Некорректный курс ЦБ РФ для валюты: {ccy}") from exc
+    if not isfinite(rate) or rate <= 0:
+        raise ValueError(f"Некорректный курс ЦБ РФ для валюты: {ccy}")
+    return rate
 
 
 def _digits_hs(code: str) -> str:
@@ -195,16 +213,12 @@ def _resolve_special_duties(
             }
         ]
 
-    rates = dict(_FALLBACK_FX_RATES)
-    rates.update({(k or "").upper(): float(v) for k, v in (fx_rates or {}).items()})
     details: list[dict[str, Any]] = []
     total = 0.0
     for r in rows:
         part_ad = customs_value * float(r.rate_percent or 0.0) / 100.0
         ccy = (r.currency_code or "RUB").upper().strip()
-        if ccy not in rates:
-            raise ValueError(f"Неизвестная валюта спецпошлины: {ccy}")
-        fx = float(rates.get(ccy) or 1.0)
+        fx = _resolve_fx_rate(ccy, fx_rates)
         part_spec = float(r.rate_specific or 0.0) * float(quantity or 0.0) * fx
         part = part_ad + part_spec
         total += part
@@ -269,11 +283,7 @@ def _compute_structured_duty(
         if q_used <= 0:
             raise ValueError("Для точного расчета необходимо указать вес/количество")
         specific_qty_used = q_used
-        rates = dict(_FALLBACK_FX_RATES)
-        rates.update({(k or "").upper(): float(v) for k, v in (fx_rates or {}).items()})
-        if ccy not in rates:
-            raise ValueError(f"Неизвестная валюта специфической ставки: {ccy or 'EMPTY'}")
-        fx_rate = _num(rates.get(ccy) or 1.0)
+        fx_rate = _resolve_fx_rate(ccy, fx_rates)
         specific_amount_rub = amount * q_used * float(fx_rate)
 
     # simple ad valorem
