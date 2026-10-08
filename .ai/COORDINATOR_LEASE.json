@@ -1,6 +1,6 @@
 {
   "acquisition_note": "Post-PR251 immutable A6 request regeneration and single lawful delivery; consumed g100 remains non-retryable.",
-  "expires_at": "2026-10-08T14:20:46.405027Z",
+  "expires_at": "2026-10-08T14:25:21.703842Z",
   "generation": 113,
   "holder": "/root/tariff_automation_20261008T1350Z",
   "lease_repair": {},
@@ -10,5 +10,5 @@
   "serialization_repair": {},
   "state": "active",
   "token": "06283e6bed2c404284a91b52fca98dc7",
-  "updated_at": "2026-10-08T13:50:46.405027Z"
+  "updated_at": "2026-10-08T13:55:21.703842Z"
 }
