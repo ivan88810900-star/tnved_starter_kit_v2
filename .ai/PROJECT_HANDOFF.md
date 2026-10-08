@@ -3,6 +3,24 @@
 **Снимок:** 2026-10-08 (UTC). **Единственный репозиторий:** [ivan88810900-star/tnved_starter_kit_v2](https://github.com/ivan88810900-star/tnved_starter_kit_v2).  
 **Авторитетное состояние:** ветка `agent/orchestration-state`, файлы `.ai/TASK_BOARD.json`, `.ai/COORDINATOR_LEASE.json`, `.ai/orchestration/A6_LIVE_STATUS.json`. Этот документ — указатель и контрольная точка, **не** право на запись/merge/A6. Перед действием заново читать текущие HEAD и state. Не полагаться на Business-чат.
 
+## 0c. Продолжение продуктового цикла — source-refresh broad-suite
+
+**Новый текущий checkpoint #255:** [draft PR #255](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/255), `agent/core-payment-regressions-v1` @ `f0e499e5e97ae83a63d9117e043420e52cb99da6`, tree `ec606fc15f76c73ad461f0ee84d8764b83f7644e`, base #244 неизменён `14e0ee8f034d94ffc5831d87e076f4d693a5a524`.
+
+Восстановлен отсутствовавший `.github/workflows/scheduled-data-refresh.yml` на текущих интерфейсах: read-only `contents: read`, actions закреплены полными SHA, checkout credentials не сохраняются, production write/issue creation/secrets отсутствуют. Committed bundle freshness отделена от live CBR: CBR выполняется с `always()`, поэтому stale bundles не скрывают проверку источника валют.
+
+Проверки exact tree:
+- author payment/API/quote/invoice/Copilot/VED: `130 passed +358 subtests`, exit 0;
+- source suite: `306 passed +76 subtests, 1 известный FAIL`, exit 1;
+- workflow profile: `18 passed`, exit 0;
+- независимый A5 `/root/a5_special_scope`: **PASS** на exact tree; чистый venv/pip-check PASS, bundle gate дал валидный JSON и ожидаемый exit 1 при `stale_count=6`, live CBR exit 0 / 54 валюты, safety assertions PASS;
+- `git diff --check`: PASS;
+- exact-head GitHub CI для этого HEAD пока не наблюдался; readiness не заявляется.
+
+Незакрытые подтверждённые риски: все 6 committed payment bundles старше настроенного 90-дневного порога; PP908 audit на чистой инициализированной БД не находит 118 representative codes (`coverage_pct=0`) и не может доказать нормативное покрытие. Failure не skipped/xfail и не замаскирован фиктивным seed. Следующий шаг — источник-за-источником обновить/проверить payment bundles и сделать PP908 audit герметичным на подтверждённом полном TNVED/rates dataset без новой юридической интерпретации. Полный #244, юридическая полнота и exact-head CI **не PASS**.
+
+A6 `core-s1-6415f443120f-r9-g106` не менялся и не отправлялся. Merge/production/secrets/permissions не выполнялись.
+
 ## 0b. Продолжение продуктового цикла — special-duty scope
 
 **Новый текущий checkpoint #255:** [draft PR #255](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/255), `agent/core-payment-regressions-v1` @ `fe7ce2da9cbcf776911f4b27a44ddb40e7e48cc9`, tree `17e1672b5ee98515a1e51e559961d5d7337be0e1`, base #244 неизменён `14e0ee8f034d94ffc5831d87e076f4d693a5a524`.
