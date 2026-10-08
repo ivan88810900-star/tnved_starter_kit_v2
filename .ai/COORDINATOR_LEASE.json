@@ -1,14 +1,14 @@
 {
   "acquisition_note": "Post-PR251 immutable A6 request regeneration and single lawful delivery; consumed g100 remains non-retryable.",
-  "expires_at": "2026-10-08T12:50:54.165665Z",
+  "expires_at": null,
   "generation": 111,
-  "holder": "/root/tariff_schedule_verification_20261008",
+  "holder": null,
   "lease_repair": {},
   "release_reason": "Canonical UTC-Z lease helper synchronized to the state branch, runbook bound to the trusted main helper, and A6 status corrected to retire r8-g103 without provider access. State safety CI passed on all maintenance commits.",
   "released_by": "/root/a0_maintenance_20261007T1014Z",
   "schema_version": 1,
   "serialization_repair": {},
-  "state": "active",
-  "token": "2c4e9791689344d580d8a22170dde93e",
-  "updated_at": "2026-10-08T12:20:54.165665Z"
+  "state": "released",
+  "token": null,
+  "updated_at": "2026-10-08T12:23:11.820835Z"
 }
