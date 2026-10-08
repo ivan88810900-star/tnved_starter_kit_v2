@@ -3,6 +3,24 @@
 **Снимок:** 2026-10-08 (UTC). **Единственный репозиторий:** [ivan88810900-star/tnved_starter_kit_v2](https://github.com/ivan88810900-star/tnved_starter_kit_v2).  
 **Авторитетное состояние:** ветка `agent/orchestration-state`, файлы `.ai/TASK_BOARD.json`, `.ai/COORDINATOR_LEASE.json`, `.ai/orchestration/A6_LIVE_STATUS.json`. Этот документ — указатель и контрольная точка, **не** право на запись/merge/A6. Перед действием заново читать текущие HEAD и state. Не полагаться на Business-чат.
 
+## 0i. PP908 — типизированный признак для 30 неоднозначных animal-кодов
+
+**Текущий checkpoint #255:** [draft PR #255](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/255), `agent/core-payment-regressions-v1` @ `ba8097d18d3512479df21cd9c15b768f3d835c93`, tree `648865448fa7576163fbc2549a5f34b39627d22d`, base #244 неизменён `14e0ee8f034d94ffc5831d87e076f4d693a5a524`.
+
+Для 30 листьев `0102`–`0105`, где код не доказывает племенное назначение, добавлен типизированный вход `breeding | non_breeding | unknown` в Calculator, Payment Quote, Smart Payments UI и compare. `unknown` удерживает НДС и итог для ручной проверки; явно подтверждённое документами `non_breeding` выбирает 10%, `breeding` — 22%. Свободный текст не интерпретируется. Конфликт входа с 5 точными убойными или 10 точными племенными кодами также fail-closed. Отсутствующая/повреждённая карта удерживает результат. Compare теперь передаёт новый признак и ранее объявленные `net_weight_kg`, `extra_quantity`, `apply_reduced_vat` во все сценарии.
+
+Проверки exact tree:
+- author disposable CI-equivalent: `176 passed +23 subtests`, exit 0; focused `79 passed +14 subtests`, exit 0;
+- frontend `npm run typecheck` и `npm run build`: PASS, exit 0;
+- первый независимый A5 обнаружил потерю признака в compare; исправление вошло до публикации;
+- финальный независимый A5 `/root/a5_special_scope`: **PASS** exact tree; все 30 исходов unknown/non-breeding/breeding, 15 конфликтов, 45 mapping-missing симуляций и API quote/compute/compare проверены;
+- exact-head GitHub Actions [run 37829007811](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/37829007811): `offline-safety` **SUCCESS** (job 113489177769), `payment-regression` **SUCCESS** (job 113489178130);
+- `git diff --check`: PASS.
+
+Доступ к коду и командам подтверждён: полный checkout, Git/Python/pytest/Node доступны; публикация выполнена в существующую draft-ветку через connector под lease generation 119. Checkpoint сохраняется в state и должен быть перечитан после CAS. Protected merge, production/DB writes, flags, secrets/permissions, destructive migration и A6 не выполнялись. A6 request `core-s1-6415f443120f-r9-g106` не менялся и не отправлялся.
+
+Остаётся: typed-признак является входным фактом декларанта и требует подтверждающих документов; source freshness и fixture/broad-suite failures не закрыты; полный #244 и юридическая/источниковая полнота **не PASS**. Следующий технический шаг — разобрать fixture/broad-suite failures, затем продолжить #245.
+
 ## 0h. PP908 — retained map живых животных без over-claim
 
 **Текущий checkpoint #255:** [draft PR #255](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/255), `agent/core-payment-regressions-v1` @ `5092e99642387233ebbed6ada2fef8687b629a7a`, tree `392388557d2f7cbe8724de4a12bb45a0a998dd28`, base #244 неизменён `14e0ee8f034d94ffc5831d87e076f4d693a5a524`.
