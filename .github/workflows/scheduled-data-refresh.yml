@@ -33,7 +33,6 @@ jobs:
         run: |
           python -m pip install --disable-pip-version-check \
             SQLAlchemy==2.1.4 \
-            alembic==1.20.0 \
             loguru==0.7.3 \
             python-dotenv==1.2.4 \
             pydantic==2.13.5
@@ -45,15 +44,26 @@ jobs:
           DATABASE_URL: sqlite:////tmp/tariff-data-refresh.sqlite
           SECRET_KEY: ci-data-refresh-check-only
         run: |
-          set -o pipefail
           python - <<'PY'
-          from app.services.normative_store import init_db
+          import json
 
-          init_db()
+          from app.services.data_refresh_service import check_data_freshness
+
+          report = check_data_freshness()
+          domains = report["domains"]
+          bundle_report = {
+              "checked_at": report["checked_at"],
+              "stale_threshold_days": report["stale_threshold_days"],
+              "stale_count": sum(1 for domain in domains if domain["is_stale"]),
+              "domains": domains,
+          }
+          print(json.dumps(bundle_report, ensure_ascii=False, indent=2))
+          if bundle_report["stale_count"]:
+              raise SystemExit(1)
           PY
-          python -m scripts.data_refresh --check-only --json | tee data-freshness.json
 
       - name: Validate live CBR source without writes
+        if: ${{ always() }}
         working-directory: customs-clear/backend
         run: |
           python - <<'PY'
