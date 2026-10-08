@@ -1,3 +1,5 @@
+from typing import Literal
+
 from fastapi import APIRouter, Header, HTTPException, Query
 from fastapi.responses import JSONResponse, PlainTextResponse, Response
 from pydantic import AliasChoices, BaseModel, ConfigDict, Field
@@ -41,6 +43,7 @@ class CompareSharedEconomics(BaseModel):
     net_weight_kg: float | None = Field(default=None, validation_alias=AliasChoices("net_weight_kg", "weight_kg"))
     extra_quantity: float | None = None
     apply_reduced_vat: bool = False
+    live_animal_breeding_status: Literal["breeding", "non_breeding", "unknown"] | None = None
 
 
 class CompareScenarioIn(BaseModel):
@@ -84,6 +87,13 @@ class CalculatorRequest(BaseModel):
     net_weight_kg: float | None = Field(default=None, validation_alias=AliasChoices("net_weight_kg", "weight_kg"))  # вес нетто для специфических ставок /kg
     extra_quantity: float | None = None  # объём/шт для специфических ставок /l, /pcs и т.д.
     apply_reduced_vat: bool = False  # льготный НДС 10%
+    live_animal_breeding_status: Literal["breeding", "non_breeding", "unknown"] | None = Field(
+        default=None,
+        description=(
+            "Подтверждённый племенной статус для неоднозначных кодов 0102–0105; "
+            "без него итог удерживается для ручной проверки."
+        ),
+    )
     vehicle_is_new: bool | None = None  # ТС: новое (True) / б.у. (False) — для утильсбора (8701-8705, 8711)
     engine_volume: int | None = None  # объём двигателя, см³ — выбор ставки утильсбора
     save_history: bool = Field(True, description="Сохранить расчёт в customs_calculation_history")

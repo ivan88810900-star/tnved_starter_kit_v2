@@ -228,6 +228,22 @@ def _build_warnings(line_items: list[PaymentQuoteLineItem], raw: dict[str, Any])
             )
         )
 
+    animal_review_reasons = {
+        "vat_live_animal_characteristic_required",
+        "vat_live_animal_characteristic_invalid",
+        "vat_live_animal_characteristic_conflict",
+        "vat_live_animal_mapping_missing",
+    }
+    if animal_review_reasons.intersection(raw.get("payment_review_reasons") or []):
+        scope = raw.get("live_animal_vat_scope") or {}
+        warnings.append(
+            PaymentQuoteWarning(
+                code="vat_live_animal_characteristic_review",
+                message=str(scope.get("reason") or "Для ставки НДС требуется проверить племенной статус животного."),
+                severity="warning",
+            )
+        )
+
     for item in line_items:
         if item.status == "manual_review_required":
             warnings.append(
@@ -322,6 +338,20 @@ def _build_assumptions(payload: dict[str, Any], raw: dict[str, Any]) -> list[Pay
     if weight is not None:
         assumptions.append(
             PaymentQuoteAssumption(key="net_weight_kg", label="Вес нетто", value=f"{weight} кг")
+        )
+    breeding_status = payload.get("live_animal_breeding_status")
+    if breeding_status:
+        labels = {
+            "breeding": "племенное",
+            "non_breeding": "неплеменное (подтверждено документами)",
+            "unknown": "не подтверждено",
+        }
+        assumptions.append(
+            PaymentQuoteAssumption(
+                key="live_animal_breeding_status",
+                label="Племенной статус",
+                value=labels.get(str(breeding_status), str(breeding_status)),
+            )
         )
     return assumptions
 
@@ -428,7 +458,8 @@ def build_payment_quote(payload: dict[str, Any]) -> PaymentQuoteResponse:
     vat_status: PaymentLineStatus = "manual_review_required" if vat_pending else "applied"
     vat_reason = str(breakdown.get("vat_reason") or "")
     if vat_pending:
-        vat_reason = (
+        animal_scope = raw.get("live_animal_vat_scope") or {}
+        vat_reason = str(animal_scope.get("reason") or "") or (
             "Сумма НДС не окончательна: хотя бы один вход в базу НДС или сама ставка "
             "не имеют подтверждённой применимости и требуют ручной проверки."
         )

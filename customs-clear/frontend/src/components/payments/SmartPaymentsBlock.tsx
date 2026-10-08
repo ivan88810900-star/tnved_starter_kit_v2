@@ -68,9 +68,13 @@ export const SmartPaymentsBlock: React.FC<Props> = ({ hsCode, description, class
   const [currency, setCurrency] = React.useState('RUB');
   const [country, setCountry] = React.useState('');
   const [quantity, setQuantity] = React.useState('');
+  const [liveAnimalBreedingStatus, setLiveAnimalBreedingStatus] = React.useState<
+    'breeding' | 'non_breeding' | 'unknown'
+  >('unknown');
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [quote, setQuote] = React.useState<PaymentQuoteResponse | null>(null);
+  const isLiveAnimalCode = /^010[2-5]\d{6}$/.test(hsCode.replace(/\D/g, ''));
 
   const loadQuote = React.useCallback(async () => {
     const value = parseFloat(customsValue.replace(/\s/g, '').replace(',', '.'));
@@ -88,6 +92,7 @@ export const SmartPaymentsBlock: React.FC<Props> = ({ hsCode, description, class
         country: country.trim().toUpperCase() || null,
         description: description?.trim() || null,
         quantity: quantity.trim() ? parseFloat(quantity.replace(',', '.')) : null,
+        live_animal_breeding_status: isLiveAnimalCode ? liveAnimalBreedingStatus : null,
       };
       const result = await fetchPaymentQuote(payload);
       if (import.meta.env.DEV && result.warnings.length > 0) {
@@ -100,7 +105,7 @@ export const SmartPaymentsBlock: React.FC<Props> = ({ hsCode, description, class
     } finally {
       setLoading(false);
     }
-  }, [hsCode, customsValue, currency, country, quantity, description]);
+  }, [hsCode, customsValue, currency, country, quantity, description, isLiveAnimalCode, liveAnimalBreedingStatus]);
 
   React.useEffect(() => {
     setQuote(null);
@@ -166,6 +171,28 @@ export const SmartPaymentsBlock: React.FC<Props> = ({ hsCode, description, class
             />
           </label>
         </div>
+
+        {isLiveAnimalCode ? (
+          <label className="mt-3 block text-xs">
+            <span className="mb-1 block font-medium text-slate-700">Племенной статус животного</span>
+            <select
+              value={liveAnimalBreedingStatus}
+              onChange={(e) =>
+                setLiveAnimalBreedingStatus(
+                  e.target.value as 'breeding' | 'non_breeding' | 'unknown',
+                )
+              }
+              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm sm:max-w-md"
+            >
+              <option value="unknown">Не подтверждён — требуется проверка</option>
+              <option value="non_breeding">Неплеменное — подтверждено документами</option>
+              <option value="breeding">Племенное — подтверждено документами</option>
+            </select>
+            <span className="mt-1 block text-[11px] text-slate-500">
+              Для неоднозначных кодов 0102–0105 ставка и итог не считаются окончательными без этого факта.
+            </span>
+          </label>
+        ) : null}
 
         <button
           type="button"

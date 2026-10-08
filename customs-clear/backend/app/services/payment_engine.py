@@ -1,10 +1,12 @@
 from __future__ import annotations
 
+import json
 import re
 import unicodedata
 from dataclasses import dataclass
 from datetime import date, datetime, timezone
 from math import isfinite
+from pathlib import Path
 from typing import Any
 
 from ..db import SessionLocal
@@ -30,6 +32,36 @@ from .payment_revision_utils import (
     is_safe_official_countervailing_source_url,
     is_safe_official_special_safeguard_source_url,
 )
+
+
+_LIVE_ANIMAL_VAT_MAPPING_PATH = (
+    Path(__file__).resolve().parents[2] / "data" / "pp908_live_animal_vat_mapping.json"
+)
+try:
+    with _LIVE_ANIMAL_VAT_MAPPING_PATH.open(encoding="utf-8") as _mapping_file:
+        _LIVE_ANIMAL_VAT_MAPPING = json.load(_mapping_file)
+except (OSError, ValueError, TypeError):
+    # Missing/corrupt evidence must never broaden the reduced rate.  Exact
+    # 0102..0105 inputs will be held for review by the resolver below.
+    _LIVE_ANIMAL_VAT_MAPPING = {}
+
+_LIVE_ANIMAL_AUTO_VAT10_CODES = frozenset(
+    str(code) for code in _LIVE_ANIMAL_VAT_MAPPING.get("auto_vat10_codes", [])
+)
+_LIVE_ANIMAL_EXCLUDED_BREEDING_CODES = frozenset(
+    str(code) for code in _LIVE_ANIMAL_VAT_MAPPING.get("excluded_breeding_codes", [])
+)
+_LIVE_ANIMAL_CHARACTERISTIC_REQUIRED_CODES = frozenset(
+    str(code)
+    for code in _LIVE_ANIMAL_VAT_MAPPING.get("product_characteristic_required_codes", [])
+)
+_LIVE_ANIMAL_ALL_MAPPED_CODES = (
+    _LIVE_ANIMAL_AUTO_VAT10_CODES
+    | _LIVE_ANIMAL_EXCLUDED_BREEDING_CODES
+    | _LIVE_ANIMAL_CHARACTERISTIC_REQUIRED_CODES
+)
+_LIVE_ANIMAL_VAT_PREFIXES = ("0102", "0103", "0104", "0105")
+_LIVE_ANIMAL_BREEDING_STATUSES = frozenset({"breeding", "non_breeding", "unknown"})
 
 
 @dataclass
@@ -866,6 +898,110 @@ def _vat_prefix_candidates(hs_code: str) -> list[tuple[str, int]]:
     return out
 
 
+def _resolve_live_animal_vat_scope(
+    hs_code: str,
+    breeding_status: Any | None,
+) -> dict[str, Any]:
+    """Resolve PP908 live-animal applicability from code plus an explicit fact.
+
+    The persisted mapping proves only three things: five leaf codes are named
+    slaughter animals, ten are explicitly breeding codes, and thirty leaves do
+    not encode breeding status.  Free text is deliberately not interpreted.
+    For the thirty ambiguous leaves, a stable typed input is required; otherwise
+    VAT and the final payable remain withheld for review.
+    """
+    hs = _digits_hs(hs_code)
+    if len(hs) != 10 or not hs.startswith(_LIVE_ANIMAL_VAT_PREFIXES):
+        return {"status": "not_applicable", "review_reason": None, "vat_rate": None}
+
+    raw_status = str(breeding_status or "").strip().lower()
+    status = raw_status or "unknown"
+    if status not in _LIVE_ANIMAL_BREEDING_STATUSES:
+        return {
+            "status": "invalid_characteristic",
+            "review_reason": "vat_live_animal_characteristic_invalid",
+            "vat_rate": 22.0,
+            "reason": (
+                "НДС по живому животному не определён: допустим только явный "
+                "племенной статус breeding, non_breeding или unknown."
+            ),
+        }
+
+    if not _LIVE_ANIMAL_ALL_MAPPED_CODES or hs not in _LIVE_ANIMAL_ALL_MAPPED_CODES:
+        return {
+            "status": "mapping_missing",
+            "review_reason": "vat_live_animal_mapping_missing",
+            "vat_rate": 22.0,
+            "reason": (
+                "НДС по живому животному не определён: код отсутствует в сохранённой "
+                "карте листьев 0102–0105."
+            ),
+        }
+
+    if hs in _LIVE_ANIMAL_AUTO_VAT10_CODES:
+        if status == "breeding":
+            return {
+                "status": "code_characteristic_conflict",
+                "review_reason": "vat_live_animal_characteristic_conflict",
+                "vat_rate": 22.0,
+                "reason": (
+                    "Код прямо описан как убойный, но вход отмечен племенным; "
+                    "льгота удержана до проверки кода и документов."
+                ),
+            }
+        return {
+            "status": "automatic_slaughter_code",
+            "review_reason": None,
+            "vat_rate": 10.0,
+            "reason": "Ставка 10%: точный код прямо назван убойным в сохранённой карте ЕТТ ЕАЭС.",
+        }
+
+    if hs in _LIVE_ANIMAL_EXCLUDED_BREEDING_CODES:
+        if status == "non_breeding":
+            return {
+                "status": "code_characteristic_conflict",
+                "review_reason": "vat_live_animal_characteristic_conflict",
+                "vat_rate": 22.0,
+                "reason": (
+                    "Код прямо описан как племенной, но вход отмечен неплеменным; "
+                    "льгота удержана до проверки кода и документов."
+                ),
+            }
+        return {
+            "status": "breeding_code_excluded",
+            "review_reason": None,
+            "vat_rate": 22.0,
+            "reason": "Ставка 22%: точный племенной код исключён из льготного перечня ПП РФ №908.",
+        }
+
+    if status == "non_breeding":
+        return {
+            "status": "non_breeding_confirmed",
+            "review_reason": None,
+            "vat_rate": 10.0,
+            "reason": (
+                "Ставка 10%: для неоднозначного кода явно подтверждён неплеменной статус; "
+                "факт должен быть подтверждён товарными документами."
+            ),
+        }
+    if status == "breeding":
+        return {
+            "status": "breeding_confirmed",
+            "review_reason": None,
+            "vat_rate": 22.0,
+            "reason": "Ставка 22%: явно подтверждён племенной статус, исключённый ПП РФ №908.",
+        }
+    return {
+        "status": "characteristic_required",
+        "review_reason": "vat_live_animal_characteristic_required",
+        "vat_rate": 22.0,
+        "reason": (
+            "НДС по живому животному не определён: этот код не доказывает племенной "
+            "статус. Укажите breeding или non_breeding по товарным документам."
+        ),
+    }
+
+
 def _find_vat_preference(hs_code: str) -> tuple[VatPreference | None, int]:
     with SessionLocal() as db:
         return pick_vat_preference_row(hs_code, db)
@@ -1183,6 +1319,14 @@ def compute_payments(payload: dict[str, Any]) -> dict[str, Any]:
             else "special_duty_manual_review"
         )
 
+    live_animal_vat_scope = _resolve_live_animal_vat_scope(
+        hs_code,
+        payload.get("live_animal_breeding_status"),
+    )
+    live_animal_review_reason = live_animal_vat_scope.get("review_reason")
+    if live_animal_review_reason:
+        payment_review_reasons.append(str(live_animal_review_reason))
+
     # Recycling fee (утильсбор) for vehicles (8701-8705, 8711)
     recycling_fee_amount = 0.0
     recycling_fee_meta: dict[str, Any] = {"applied": False}
@@ -1210,7 +1354,11 @@ def compute_payments(payload: dict[str, Any]) -> dict[str, Any]:
     # НДС при ввозе: база = таможенная стоимость + ввозная пошлина + акциз + антидемпинг/
     # компенсационные/специальные пошлины (без таможенного сбора).
     vat_pref, vat_pref_match_len = _find_vat_preference(hs_code)
-    auto_vat_rate = float(vat_pref.vat_rate) if vat_pref else 22.0
+    live_animal_vat_rate = live_animal_vat_scope.get("vat_rate")
+    if live_animal_vat_rate is not None:
+        auto_vat_rate = float(live_animal_vat_rate)
+    else:
+        auto_vat_rate = float(vat_pref.vat_rate) if vat_pref else 22.0
     vat_decree_info = (vat_pref.decree_info or "") if vat_pref else ""
     vat_pref_comment = (vat_pref.comment or "") if vat_pref else ""
     if manual_vat_rate is not None:
@@ -1218,6 +1366,12 @@ def compute_payments(payload: dict[str, Any]) -> dict[str, Any]:
         vat_reason = f"Указано вручную: {vat_rate}%"
         vat_decree_info = ""
         vat_pref_comment = ""
+    elif live_animal_vat_rate is not None:
+        vat_rate = auto_vat_rate
+        vat_reason = str(live_animal_vat_scope.get("reason") or "")
+        if live_animal_vat_scope.get("status") not in {"automatic_slaughter_code"}:
+            vat_decree_info = "ПП РФ №908; сохранённая карта листьев 0102–0105"
+            vat_pref_comment = "Применимость зависит от явно указанного племенного статуса."
     elif vat_pref is not None:
         vat_rate = auto_vat_rate
         vat_reason = (
@@ -1325,8 +1479,13 @@ def compute_payments(payload: dict[str, Any]) -> dict[str, Any]:
             "duty_rule_match_len": duty_rule_match_len,
             "vat_rate": auto_vat_rate,
             "apply_reduced_vat": apply_reduced_vat,
-            "vat_rule": ("vat_preference" if vat_pref else vat_rule),
+            "vat_rule": (
+                "pp908_live_animal_characteristic"
+                if live_animal_vat_rate is not None
+                else ("vat_preference" if vat_pref else vat_rule)
+            ),
             "vat_pref_match_len": vat_pref_match_len,
+            "live_animal_vat_scope": live_animal_vat_scope,
             "excise_type": excise_type,
             "excise_value": excise_value,
             "antidumping_type": antidumping_type,
@@ -1392,6 +1551,7 @@ def compute_payments(payload: dict[str, Any]) -> dict[str, Any]:
         "special_duties_amount": _round2(special_duties_amount),
         "special_duties_warning": special_duties_warning,
         "payment_review_reasons": payment_review_reasons,
+        "live_animal_vat_scope": live_animal_vat_scope,
         **({"hs_rate_source_candidate": {
             "status": "needs_review",
             "source_kind": "legacy_hs_rates",
@@ -1448,6 +1608,14 @@ def compare_payment_scenarios(payload: dict[str, Any]) -> dict[str, Any]:
         econ["country"] = str(shared["country"]).strip().upper()
     if shared.get("quantity") is not None:
         econ["quantity"] = float(shared["quantity"])
+    if shared.get("net_weight_kg") is not None:
+        econ["net_weight_kg"] = float(shared["net_weight_kg"])
+    if shared.get("extra_quantity") is not None:
+        econ["extra_quantity"] = float(shared["extra_quantity"])
+    if shared.get("apply_reduced_vat") is not None:
+        econ["apply_reduced_vat"] = bool(shared["apply_reduced_vat"])
+    if shared.get("live_animal_breeding_status") is not None:
+        econ["live_animal_breeding_status"] = str(shared["live_animal_breeding_status"])
 
     out_scenarios: list[dict[str, Any]] = []
     first_total: float | None = None

@@ -16,6 +16,9 @@ from app.models.core import HsRate
 from app.models.tnved import HsDutyRule, VatPreference
 from app.services.normative_store import find_rate_for_hs, init_db
 from app.services.payment_engine import (
+    _LIVE_ANIMAL_AUTO_VAT10_CODES,
+    _LIVE_ANIMAL_CHARACTERISTIC_REQUIRED_CODES,
+    _LIVE_ANIMAL_EXCLUDED_BREEDING_CODES,
     _compute_structured_duty,
     _find_duty_rule_for_hs,
     compare_payment_scenarios,
@@ -75,7 +78,7 @@ class PaymentEngineTests(unittest.TestCase):
         try:
             res = self._calc(hs_code="0102292100", customs_value=100_000, freight=0)
             self.assertEqual(res["breakdown"]["vat_rate"], 10.0)
-            self.assertIn("vat_preferences", res["breakdown"]["vat_reason"].lower())
+            self.assertEqual(res["live_animal_vat_scope"]["status"], "automatic_slaughter_code")
             # Для прочего скота и птицы без явного убойного/племенного признака
             # код сам по себе недостаточен: автоматической льготы быть не должно.
             res_generic = self._calc(hs_code="0102291000", customs_value=100_000, freight=0)
@@ -89,6 +92,74 @@ class PaymentEngineTests(unittest.TestCase):
             with SessionLocal() as db:
                 db.query(VatPreference).filter(VatPreference.decree_info == marker).delete()
                 db.commit()
+
+    def test_ambiguous_live_animal_requires_explicit_characteristic(self):
+        """Неоднозначный лист без типизированного факта не даёт финальный НДС."""
+        code = sorted(_LIVE_ANIMAL_CHARACTERISTIC_REQUIRED_CODES)[0]
+        res = self._calc(hs_code=code, customs_value=100_000, freight=0)
+
+        self.assertEqual(res["status"], "REVIEW_REQUIRED")
+        self.assertEqual(res["live_animal_vat_scope"]["status"], "characteristic_required")
+        self.assertIn("vat_live_animal_characteristic_required", res["payment_review_reasons"])
+        self.assertEqual(res["breakdown"]["vat_rate"], 22.0)
+        self.assertIsNone(res["breakdown"]["vat"])
+        self.assertIsNone(res["breakdown"]["total_payable"])
+
+    def test_ambiguous_live_animal_non_breeding_enables_vat10(self):
+        code = sorted(_LIVE_ANIMAL_CHARACTERISTIC_REQUIRED_CODES)[0]
+        res = self._calc(
+            hs_code=code,
+            customs_value=100_000,
+            freight=0,
+            live_animal_breeding_status="non_breeding",
+        )
+
+        self.assertEqual(res["live_animal_vat_scope"]["status"], "non_breeding_confirmed")
+        self.assertEqual(res["breakdown"]["vat_rate"], 10.0)
+        self.assertNotIn("vat_live_animal_characteristic_required", res["payment_review_reasons"])
+
+    def test_ambiguous_live_animal_breeding_stays_at_vat22(self):
+        code = sorted(_LIVE_ANIMAL_CHARACTERISTIC_REQUIRED_CODES)[0]
+        res = self._calc(
+            hs_code=code,
+            customs_value=100_000,
+            freight=0,
+            live_animal_breeding_status="breeding",
+        )
+
+        self.assertEqual(res["live_animal_vat_scope"]["status"], "breeding_confirmed")
+        self.assertEqual(res["breakdown"]["vat_rate"], 22.0)
+        self.assertNotIn("vat_live_animal_characteristic_required", res["payment_review_reasons"])
+
+    def test_live_animal_code_characteristic_conflicts_fail_closed(self):
+        slaughter = sorted(_LIVE_ANIMAL_AUTO_VAT10_CODES)[0]
+        breeding = sorted(_LIVE_ANIMAL_EXCLUDED_BREEDING_CODES)[0]
+
+        for code, status in ((slaughter, "breeding"), (breeding, "non_breeding")):
+            with self.subTest(code=code, status=status):
+                res = self._calc(
+                    hs_code=code,
+                    customs_value=100_000,
+                    freight=0,
+                    live_animal_breeding_status=status,
+                )
+                self.assertEqual(res["live_animal_vat_scope"]["status"], "code_characteristic_conflict")
+                self.assertIn("vat_live_animal_characteristic_conflict", res["payment_review_reasons"])
+                self.assertEqual(res["breakdown"]["vat_rate"], 22.0)
+                self.assertIsNone(res["breakdown"]["vat"])
+
+    def test_invalid_live_animal_characteristic_fails_closed(self):
+        code = sorted(_LIVE_ANIMAL_CHARACTERISTIC_REQUIRED_CODES)[0]
+        res = self._calc(
+            hs_code=code,
+            customs_value=100_000,
+            freight=0,
+            live_animal_breeding_status="free-text guess",
+        )
+
+        self.assertEqual(res["live_animal_vat_scope"]["status"], "invalid_characteristic")
+        self.assertIn("vat_live_animal_characteristic_invalid", res["payment_review_reasons"])
+        self.assertIsNone(res["breakdown"]["total_payable"])
 
     def test_stale_broad_pp908_preference_fails_closed(self):
         """Старая 4-значная льгота не переопределяет ставку для исключённой племенной позиции."""
@@ -588,6 +659,36 @@ class PaymentEngineTests(unittest.TestCase):
                     "shared": {"customs_value": 100_000},
                     "scenarios": [{"hs_code": "8509400000"}],
                 }
+            )
+
+    def test_compare_propagates_live_animal_characteristic(self):
+        """Общий типизированный факт доходит до каждого animal-сценария."""
+        code = sorted(_LIVE_ANIMAL_CHARACTERISTIC_REQUIRED_CODES)[0]
+        out = compare_payment_scenarios(
+            {
+                "shared": {
+                    "customs_value": 100_000,
+                    "country": "CN",
+                    "net_weight_kg": 25,
+                    "extra_quantity": 2,
+                    "apply_reduced_vat": False,
+                    "live_animal_breeding_status": "non_breeding",
+                },
+                "scenarios": [
+                    {"hs_code": code, "label": "A"},
+                    {"hs_code": code, "label": "B"},
+                ],
+            }
+        )
+
+        self.assertEqual(out["shared_economic"]["live_animal_breeding_status"], "non_breeding")
+        self.assertEqual(out["shared_economic"]["net_weight_kg"], 25.0)
+        self.assertEqual(out["shared_economic"]["extra_quantity"], 2.0)
+        for scenario in out["scenarios"]:
+            self.assertEqual(scenario["vat_rate_applied"], 10.0)
+            self.assertNotIn(
+                "vat_live_animal_characteristic_required",
+                scenario["payment_review_reasons"],
             )
 
 

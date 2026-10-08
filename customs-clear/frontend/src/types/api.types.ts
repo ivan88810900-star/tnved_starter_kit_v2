@@ -301,6 +301,7 @@ export interface CalculatorComputeRequest {
   net_weight_kg?: number | null;
   extra_quantity?: number | null;
   apply_reduced_vat?: boolean;
+  live_animal_breeding_status?: 'breeding' | 'non_breeding' | 'unknown' | null;
   vehicle_is_new?: boolean | null;
   engine_volume?: number | null;
   save_history?: boolean;
@@ -491,6 +492,7 @@ export interface CalculatorCompareSharedInput {
   net_weight_kg?: number | null;
   extra_quantity?: number | null;
   apply_reduced_vat?: boolean;
+  live_animal_breeding_status?: 'breeding' | 'non_breeding' | 'unknown' | null;
 }
 
 export interface CalculatorCompareScenarioInput {

@@ -19,6 +19,7 @@ from app.db import SessionLocal
 from app.models.tnved import VatPreference
 from app.services.compliance_resolver import pick_vat_preference_row
 from app.services.normative_store import find_rate_for_hs
+from app.services.payment_engine import _resolve_live_animal_vat_scope
 from app.services.vat_preferential_reference import match_preferential_vat_group
 from app.api.tnved_catalog import _get_vat_preferences_rows
 
@@ -86,6 +87,20 @@ class TestPp908ListsIntegrity:
             | set(mapping["product_characteristic_required_codes"])
         )
         assert committed == partition
+
+    def test_characteristic_required_codes_resolve_only_from_typed_fact(self) -> None:
+        characteristic = audit_mod.PP908_LIVE_ANIMAL_MAPPING["product_characteristic_required_codes"]
+        for code in characteristic:
+            unknown = _resolve_live_animal_vat_scope(code, None)
+            non_breeding = _resolve_live_animal_vat_scope(code, "non_breeding")
+            breeding = _resolve_live_animal_vat_scope(code, "breeding")
+
+            assert unknown["status"] == "characteristic_required"
+            assert unknown["review_reason"] == "vat_live_animal_characteristic_required"
+            assert non_breeding["status"] == "non_breeding_confirmed"
+            assert non_breeding["vat_rate"] == 10.0
+            assert breeding["status"] == "breeding_confirmed"
+            assert breeding["vat_rate"] == 22.0
 
     def test_committed_preferences_have_no_unsafe_whole_heading_vat10(self) -> None:
         unsafe = {"0102", "0103", "0104", "0105", "8715"}
