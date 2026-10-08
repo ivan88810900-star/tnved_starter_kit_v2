@@ -1,11 +1,14 @@
 #!/usr/bin/env python3
-"""
-Build official provenance bundle files from existing DB data.
+"""Deprecated unsafe builder for payment-domain normative bundles.
 
-Creates minimal official bundles for all 6 EEC payment domains so that
-run_*_apply() can stamp rows with official source markers.
+This module used to copy rows from the operational database (or synthesize
+placeholder rows) and stamp them with today's date.  Neither input proves the
+revision of an official source, so the resulting files could make stale data
+look current.  Every public build entry point now fails closed before reading
+the database or writing a file.
 
-Usage: python3 -m scripts.build_official_bundles
+Use an ingestion path backed by a retained, immutable official-source snapshot
+and an explicit source revision instead.
 """
 from __future__ import annotations
 
@@ -26,7 +29,22 @@ TODAY = date.today().isoformat()
 EEC_BASE_URL = "https://eec.eaeunion.org/comission/department/catr/ett/"
 EEC_TRADE_URL = "https://eec.eaeunion.org/comission/department/deptexsec/trade_remedies/"
 OUT_DIR = BACKEND_ROOT / "data" / "raw_normative"
-OUT_DIR.mkdir(parents=True, exist_ok=True)
+
+
+class UnsafeBundleBuildError(RuntimeError):
+    """Raised when a builder cannot prove the provenance of its source rows."""
+
+
+UNSAFE_BUILD_MESSAGE = (
+    "Refusing to build official payment bundles: existing database rows and "
+    "placeholder values do not prove official-source freshness. Supply a "
+    "retained immutable official-source snapshot with an explicit revision; "
+    "do not stamp copied or inferred data with today's date."
+)
+
+
+def _refuse_unverified_build() -> None:
+    raise UnsafeBundleBuildError(UNSAFE_BUILD_MESSAGE)
 
 
 def write_bundle(name: str, data: dict) -> Path:
@@ -39,6 +57,7 @@ def write_bundle(name: str, data: dict) -> Path:
 
 def build_ett_bundle() -> Path:
     """Build EEC_ETT import duty bundle from existing HsRate rows."""
+    _refuse_unverified_build()
     print("\n[1/6] Building EEC_ETT (import duty) bundle...")
     with SessionLocal() as db:
         rows = db.execute(text(
@@ -73,6 +92,7 @@ def build_ett_bundle() -> Path:
 
 def build_vat_bundle() -> Path:
     """Build EEC_VAT bundle from existing HsRate VAT data."""
+    _refuse_unverified_build()
     print("\n[2/6] Building EEC_VAT bundle...")
     with SessionLocal() as db:
         rows = db.execute(text(
@@ -107,6 +127,7 @@ def build_vat_bundle() -> Path:
 
 def build_excise_bundle() -> Path:
     """Build EEC_EXCISE bundle from existing HsRate excise data."""
+    _refuse_unverified_build()
     print("\n[3/6] Building EEC_EXCISE bundle...")
     EEC_EXCISE_URL = "https://www.nalog.gov.ru/rn77/about_fts/docs/"
 
@@ -162,6 +183,7 @@ def build_excise_bundle() -> Path:
 
 def build_anti_dumping_bundle() -> Path:
     """Build EEC_ANTI_DUMPING bundle from existing SpecialDuty rows."""
+    _refuse_unverified_build()
     print("\n[4/6] Building EEC_ANTI_DUMPING bundle...")
 
     with SessionLocal() as db:
@@ -222,6 +244,7 @@ def build_anti_dumping_bundle() -> Path:
 
 def build_special_safeguard_bundle() -> Path:
     """Build EEC_SPECIAL_SAFEGUARD bundle."""
+    _refuse_unverified_build()
     print("\n[5/6] Building EEC_SPECIAL_SAFEGUARD bundle...")
     EEC_SS_URL = "https://eec.eaeunion.org/comission/department/deptexsec/trade_remedies/"
 
@@ -281,6 +304,7 @@ def build_special_safeguard_bundle() -> Path:
 
 def build_countervailing_bundle() -> Path:
     """Build EEC_COUNTERVAILING bundle."""
+    _refuse_unverified_build()
     print("\n[6/6] Building EEC_COUNTERVAILING bundle...")
     EEC_CV_URL = "https://eec.eaeunion.org/comission/department/deptexsec/trade_remedies/"
 
@@ -339,15 +363,11 @@ def build_countervailing_bundle() -> Path:
 
 
 def main() -> int:
-    print("=== Building official EEC payment bundles ===")
-    build_ett_bundle()
-    build_vat_bundle()
-    build_excise_bundle()
-    build_anti_dumping_bundle()
-    build_special_safeguard_bundle()
-    build_countervailing_bundle()
-    print("\n✅ All 6 bundles written to data/raw_normative/")
-    return 0
+    try:
+        _refuse_unverified_build()
+    except UnsafeBundleBuildError as exc:
+        print(str(exc), file=sys.stderr)
+        return 2
 
 
 if __name__ == "__main__":
