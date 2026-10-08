@@ -123,8 +123,13 @@ def audit() -> dict:
 
     total = len(PP908_FOOD_HEADINGS) + len(PP908_CHILD_HEADINGS)
     checked = total - len(no_code)
+    manual_review_reasons: list[str] = []
+    if gaps:
+        manual_review_reasons.append("vat_rate_gap")
+    if no_code:
+        manual_review_reasons.append("sample_code_missing")
     return {
-        "status": "OK",
+        "status": "OK" if not manual_review_reasons else "MANUAL_REVIEW_REQUIRED",
         "summary": {
             "headings_total": total,
             "headings_checked": checked,
@@ -133,6 +138,7 @@ def audit() -> dict:
             "no_sample_code": len(no_code),
             "coverage_pct": round(100.0 * len(covered) / checked, 1) if checked else 0.0,
         },
+        "manual_review_reasons": manual_review_reasons,
         "gaps": gaps,
         "no_sample_code": no_code,
         "mixed_headings_excluded": PP908_MIXED_HEADINGS,
@@ -151,16 +157,20 @@ def main() -> None:
     result = audit()
     if args.json:
         print(json.dumps(result, ensure_ascii=False, indent=2))
-        return
-    s = result["summary"]
-    print(f"ПП908 НДС 10% — покрытие: {s['covered_10pct']}/{s['headings_checked']} ({s['coverage_pct']}%)")
-    if result["gaps"]:
-        print("Пробелы (заголовок → текущая ставка):")
-        for g in result["gaps"]:
-            print(f"  {g['heading']}  code={g['sample_code']}  vat={g['vat_rate']}")
     else:
-        print("Пробелов нет — все целевые заголовки дают 10%.")
-    print(f"Смешанные заголовки (исключены намеренно): {', '.join(result['mixed_headings_excluded'])}")
+        s = result["summary"]
+        print(f"ПП908 НДС 10% — покрытие: {s['covered_10pct']}/{s['headings_checked']} ({s['coverage_pct']}%)")
+        if result["gaps"]:
+            print("Пробелы (заголовок → текущая ставка):")
+            for gap in result["gaps"]:
+                print(f"  {gap['heading']}  code={gap['sample_code']}  vat={gap['vat_rate']}")
+        else:
+            print("Пробелов в проверенных кодах нет.")
+        if result["no_sample_code"]:
+            print(f"Нет выборочного кода: {', '.join(result['no_sample_code'])}")
+        print(f"Смешанные заголовки (исключены намеренно): {', '.join(result['mixed_headings_excluded'])}")
+    if result["status"] != "OK":
+        raise SystemExit(1)
 
 
 if __name__ == "__main__":
