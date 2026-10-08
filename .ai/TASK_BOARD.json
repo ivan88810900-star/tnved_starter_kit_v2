@@ -2179,7 +2179,7 @@
       "unique_source_pr_count": 29
     }
   },
-  "revision": 664,
+  "revision": 665,
   "runs": [
     {
       "head_sha": null,
@@ -7052,40 +7052,42 @@
       "worktree": null
     }
   ],
-  "updated_at": "2026-10-08T13:02:46.511Z",
+  "updated_at": "2026-10-08T15:02:00Z",
   "latest_scheduled_product_checkpoint": {
-    "updated_at": "2026-10-08T14:04:00Z",
+    "updated_at": "2026-10-08T15:02:00Z",
     "pr": 255,
     "branch": "agent/core-payment-regressions-v1",
-    "head_sha": "f0e499e5e97ae83a63d9117e043420e52cb99da6",
-    "tree_sha": "ec606fc15f76c73ad461f0ee84d8764b83f7644e",
+    "head_sha": "fd48ed6d82cf0448e8e90469be8b0105eda1c7ee",
+    "tree_sha": "e66ff8f046461b3115eb1b88a2d58109a74cdd62",
     "base_pr": 244,
     "base_sha": "14e0ee8f034d94ffc5831d87e076f4d693a5a524",
-    "completed_block": "read_only_scheduled_payment_source_freshness_workflow",
+    "completed_block": "fail_closed_unverified_payment_bundle_builders",
     "author_tests": {
-      "payment": "130 passed + 358 subtests; exit 0",
-      "sources": "306 passed + 76 subtests; 1 known PP908 failure; exit 1",
-      "workflow_profile": "18 passed; exit 0",
-      "minimal_runtime": "pip check PASS; bundle JSON valid; stale_count=6; expected exit 1"
+      "builder_guard": "10 passed; exit 0",
+      "cli": "both exit 2; stdout empty; no DB/output writes",
+      "sources": "316 passed + 76 subtests; 1 known PP908 failure; exit 1",
+      "compile_diff_check": "passed"
     },
     "a5": {
       "session": "/root/a5_special_scope",
       "status": "PASSED_EXACT_TREE",
-      "live_cbr": "54 currencies; exit 0"
+      "related_suite": "256 passed + 73 subtests; exit 0",
+      "write_integrity": "DB absent; bundle SHA256 unchanged; no import-time file writes"
     },
     "ci": {
       "status": "NOT_YET_OBSERVED",
-      "head_sha": "f0e499e5e97ae83a63d9117e043420e52cb99da6"
+      "head_sha": "fd48ed6d82cf0448e8e90469be8b0105eda1c7ee"
     },
     "blockers": [
-      "Six committed payment bundles exceed the configured 90-day freshness threshold.",
-      "PP908 audit has no representative TNVED/rates rows in a disposable initialized database: no_sample_code=118, coverage_pct=0."
+      "Six committed payment bundles remain stale; current official sources contain post-revision changes.",
+      "PP908 audit has no representative TNVED/rates rows in a disposable initialized database: no_sample_code=118, coverage_pct=0.",
+      "A safe retained-snapshot importer does not yet exist; legacy restamping paths are intentionally disabled."
     ],
     "a6": {
       "request": "core-s1-6415f443120f-r9-g106",
       "status": "UNCHANGED_NOT_SENT"
     },
     "protected_actions_performed": false,
-    "next_step": "Verify and refresh payment bundles source-by-source, then make PP908 coverage audit hermetic on a confirmed complete TNVED/rates dataset without inventing legal applicability."
+    "next_step": "Implement source-by-source retained-snapshot ingestion with immutable revision evidence, then make PP908 coverage hermetic without inventing applicability."
   }
 }
