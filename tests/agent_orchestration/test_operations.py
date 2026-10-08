@@ -2,7 +2,8 @@ import copy
 from datetime import datetime, timedelta, timezone
 import unittest
 from tools.tariff_agents.operations import (incident_key, observe,
-                                            notification_attempt, needs_notification)
+                                            notification_attempt, needs_notification,
+                                            recovery_status)
 
 
 class OperationsTests(unittest.TestCase):
@@ -28,6 +29,29 @@ class OperationsTests(unittest.TestCase):
             with self.subTest(value=value):
                 gate = {**self.gate, "authorization": value}
                 self.assertFalse(observe({"owner_gate": gate}, {"is_enabled": True}, now=self.now)["owner_action_required"])
+
+    def test_recovery_status_propagates_unresolved_export_gate(self):
+        state = {
+            "owner_gate": self.gate,
+            "pending_live_smoke": {
+                "request_id": "core-s1-r9",
+                "packet_sha256": "a" * 64,
+                "consumed": False,
+                "dispatched": False,
+            },
+        }
+        lease = {
+            "schema_version": 1,
+            "state": "released",
+            "generation": 106,
+            "holder": None,
+            "token": None,
+            "expires_at": None,
+        }
+        result = recovery_status(state, lease, now=self.now)
+        self.assertEqual(result["export_gate_status"], "OWNER_ACTION_REQUIRED")
+        self.assertTrue(result["task_owner_action_required"])
+        self.assertIn("export_gate_event_key", result)
 
     def test_disabled_schedule_is_reported_without_inventing_new_owner_gate(self):
         result = observe({}, {"is_enabled": False}, now=self.now)
