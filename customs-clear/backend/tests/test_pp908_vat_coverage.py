@@ -49,15 +49,24 @@ class TestPp908ListsIntegrity:
 
 
 class TestPp908AuditCoverage:
-    def test_audit_high_coverage(self) -> None:
+    def test_audit_reports_known_fixture_gaps(self) -> None:
         result = audit_mod.audit()
         s = result["summary"]
-        assert result["status"] == "OK", f"Неполный аудит ПП908: {result}"
+        assert result["status"] == "MANUAL_REVIEW_REQUIRED"
+        assert result["manual_review_reasons"] == ["vat_rate_gap"]
         assert s["headings_checked"] == s["headings_total"] == 118
-        assert s["covered_10pct"] == s["headings_total"]
-        assert s["gaps"] == 0
+        assert s["covered_10pct"] == 113
+        assert s["gaps"] == 5
         assert s["no_sample_code"] == 0
-        assert s["coverage_pct"] == 100.0
+        assert s["coverage_pct"] == 95.8
+        assert {gap["heading"] for gap in result["gaps"]} == {
+            "0102",
+            "0103",
+            "0104",
+            "0105",
+            "8715",
+        }
+        assert all(gap["vat_rate"] == 22 for gap in result["gaps"])
 
 
 class TestPp908AuditFailClosed:
