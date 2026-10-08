@@ -3,6 +3,22 @@
 **Снимок:** 2026-10-08 (UTC). **Единственный репозиторий:** [ivan88810900-star/tnved_starter_kit_v2](https://github.com/ivan88810900-star/tnved_starter_kit_v2).  
 **Авторитетное состояние:** ветка `agent/orchestration-state`, файлы `.ai/TASK_BOARD.json`, `.ai/COORDINATOR_LEASE.json`, `.ai/orchestration/A6_LIVE_STATUS.json`. Этот документ — указатель и контрольная точка, **не** право на запись/merge/A6. Перед действием заново читать текущие HEAD и state. Не полагаться на Business-чат.
 
+## 0m. #245 — канонический NTM v2 pipeline: исправлены definite over-claim каталога
+
+**Новый текущий checkpoint:** [draft PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256), `agent/product-ntm-regressions-v1` @ `0650526aed724322fbe0842f1a8e22d91dfb6b90`, tree `dad9ba0b58ab7b1815182a2bfc25a19ca033bb8b`, parent `4fdb291b254c8ebff4b9fa65e52cbd7f1ce13126`, base #245 неизменён `e39e19787bd913baeb6f85577a13e1116458e633`.
+
+На свежей disposable SQLite штатные `init_db()` и `scripts/import_tr_ts_catalog_to_ntm_v2.py` отделили отсутствие fixture от реальных применимостных дефектов. Исправлено: игрушки `9503` больше не получают лишнюю ДС по ТР ТС 008 (только СС); обычная мебель `9401`–`9403` больше не получает ТР ТС 016 о газовых аппаратах; смартфон переведён на текущий код `851713` и definite 020/037 сужен до этого подзаголовка. ТР ТС 004 без подтверждённого напряжения не ставится. Части `851771`/`851779` не попадают в mandatory/document-check; широкий fallback `8517` остаётся только `possible`/manual review. Marking scope не расширен.
+
+Проверки exact head/tree:
+- author: `DATABASE_URL=sqlite:////tmp/... python -m pytest -q` для 15 NTM/backend suites после `init_db` и полного NTM v2 import — **504 passed**, exit 0;
+- независимый A5 `/root/a5_ntm_fallback`: **PASS exact remote HEAD**; свежая БД/import и `267 passed`, затем exact-remote smoke `104 passed`; промежуточные over-claim 004 и широкого 020 были отклонены A5 и не опубликованы;
+- remote tree совпадает с прошедшим A5 tree; локальный `git diff --exit-code` — exit 0;
+- exact-head CI: **PENDING_NO_RUN_OBSERVED** для `0650526aed724322fbe0842f1a8e22d91dfb6b90`; readiness/полный #245 PASS не заявляются.
+
+Код и команды доступны в полной exact-tree копии; публикация выполнена только в существующую draft-ветку под coordinator lease generation 124. Protected merge, production/DB writes, flags, secrets/permissions, destructive migration и A6 не выполнялись. A6 request `core-s1-6415f443120f-r9-g106` не менялся и не отправлялся.
+
+Остаётся: дождаться exact-head CI; затем продолжить #245 по следующим backend/frontend applicability/source failures. Дополнительные аппараты 8517 можно добавлять только на подтверждённой подкатегории/характеристиках; юридическая и источниковая полнота **NOT PASS**.
+
 ## 0l. #245 — TR TS noise classifier сохраняет product fallback без юридического over-claim
 
 **Новый текущий checkpoint:** [draft PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256), `agent/product-ntm-regressions-v1` @ `4fdb291b254c8ebff4b9fa65e52cbd7f1ce13126`, tree `58ea5b5f13c21ec505ed1b4a7f198aa0842dee02`, base #245 неизменён `e39e19787bd913baeb6f85577a13e1116458e633`.
