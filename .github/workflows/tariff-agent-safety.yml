@@ -106,3 +106,7 @@ jobs:
           tests/test_official_bundle_builder_safety.py
           tests/test_payment_engine.py
           tests/test_special_duties.py
+          tests/test_api_integration.py
+          tests/test_hs_leaf_clarification.py
+          tests/test_recycling_fees.py
+          tests/test_tariff_preferences.py
