@@ -13,11 +13,11 @@
 - author #245/backend slice на disposable SQLite: `367 passed +44 subtests`, exit 0;
 - отдельный focused: `115 passed`, compileall и diff-check PASS;
 - независимый A5 `/root/a5_ntm_fallback`: **PASS exact remote HEAD**; `83 passed` и совместно с HS matching `99 passed`, DB/model-blocked import probe PASS, exhaustive `marking` parent/candidate hash identical;
-- exact-head CI: **PENDING / run не наблюдался** после публикации; readiness не заявляется.
+- exact-head CI: **PASS** — [run 37851053652](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/37851053652), job `offline-safety` [113563946657](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/37851053652/job/113563946657), завершён успешно на точном HEAD `4fdb291b254c8ebff4b9fa65e52cbd7f1ce13126`; это инфраструктурная проверка, не полный DB-backed NTM acceptance.
 
 Диагностический широкий NTM прогон на пустой SQLite не является PASS: pipeline требует инициализированных `ntm_applicability_rules_v2`/`ntm_measures_v2` и импортированных datasets. Это fixture/environment gap, который ещё надо закрыть и затем повторить полный backend/frontend блок. Доступ к полной копии, Git/Python/pytest и законная публикация draft-ветки подтверждены. Protected merge, production/DB writes, flags, secrets/permissions, destructive migration и A6 не выполнялись. A6 request `core-s1-6415f443120f-r9-g106` не менялся и не отправлялся.
 
-Следующий шаг: получить/проверить exact-head CI #256; затем инициализировать канонические disposable NTM v2 fixtures и разобрать реальные pipeline/applicability failures отдельно от отсутствующих данных. Полный #245, юридическая и источниковая полнота **NOT PASS**.
+Следующий шаг: инициализировать канонические disposable NTM v2 fixtures и разобрать реальные pipeline/applicability failures отдельно от отсутствующих данных; не расширять legal/applicability semantics и не запускать A6. Полный #245, юридическая и источниковая полнота **NOT PASS**.
 
 ## 0k. Оставшиеся payment-fixtures из широкого среза закрыты и закреплены в CI
 
