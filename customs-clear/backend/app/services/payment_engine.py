@@ -102,9 +102,8 @@ def _validated_automatic_duty_result(value: Any, *, label: str) -> float:
 
 
 _LEGACY_DUTY_NUMBER = r"[0-9]+(?:\.[0-9]+)?"
-_LEGACY_DUTY_UNIT = (
-    r"(?:евро(?:\s*/\s*кг|\s+за(?:\s+кг)?)?|eur(?:\s*/\s*кг)?|€(?:\s*/\s*кг)?)"
-)
+_LEGACY_DUTY_CURRENCY = r"(?:евро|eur|€)"
+_LEGACY_DUTY_UNIT = rf"{_LEGACY_DUTY_CURRENCY}(?:\s*/\s*кг|\s+за\s+(?:1\s+)?кг)?"
 _LEGACY_DUTY_SIMPLE_RE = re.compile(
     rf"(?:{_LEGACY_DUTY_NUMBER}|{_LEGACY_DUTY_NUMBER}\s*%)",
     re.IGNORECASE,
@@ -119,7 +118,7 @@ _LEGACY_DUTY_COMBINED_RE = re.compile(
     rf"{_LEGACY_DUTY_NUMBER}\s*{_LEGACY_DUTY_UNIT}",
     re.IGNORECASE,
 )
-_LEGACY_DUTY_CURRENCY_RE = re.compile(r"(?:евро|eur|€)", re.IGNORECASE)
+_LEGACY_DUTY_CURRENCY_RE = re.compile(_LEGACY_DUTY_CURRENCY, re.IGNORECASE)
 _LEGACY_DUTY_EXPLICIT_KG_RE = re.compile(
     r"(?:евро|eur|€)\s*(?:/\s*кг|за\s*(?:1\s*)?кг)",
     re.IGNORECASE,
