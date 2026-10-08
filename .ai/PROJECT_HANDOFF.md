@@ -3,6 +3,23 @@
 **Снимок:** 2026-10-08 (UTC). **Единственный репозиторий:** [ivan88810900-star/tnved_starter_kit_v2](https://github.com/ivan88810900-star/tnved_starter_kit_v2).  
 **Авторитетное состояние:** ветка `agent/orchestration-state`, файлы `.ai/TASK_BOARD.json`, `.ai/COORDINATOR_LEASE.json`, `.ai/orchestration/A6_LIVE_STATUS.json`. Этот документ — указатель и контрольная точка, **не** право на запись/merge/A6. Перед действием заново читать текущие HEAD и state. Не полагаться на Business-чат.
 
+## 0h. PP908 — retained map живых животных без over-claim
+
+**Текущий checkpoint #255:** [draft PR #255](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/255), `agent/core-payment-regressions-v1` @ `5092e99642387233ebbed6ada2fef8687b629a7a`, tree `392388557d2f7cbe8724de4a12bb45a0a998dd28`, base #244 неизменён `14e0ee8f034d94ffc5831d87e076f4d693a5a524`.
+
+Добавлена сохранённая карта 45 десятизначных листьев `0102`–`0105`, сверенная с официальным PDF группы 01 ЕТТ ЕАЭС (`sha256 7942d2176d8c728dde35f55cc4871ba230fdef721b30d5c191fd444cd55537c9`, 168285 bytes). Автоматические 10% допускаются только для пяти кодов, прямо названных «убойными»; десять племенных кодов исключены; остальные 30 кодов остаются `product_characteristic_required`. Слово «прочие» не используется как доказательство пищевого/неплеменного назначения. Широкие `0102`/`0103`/`0104`/`0105` по-прежнему fail-closed.
+
+Проверки exact tree:
+- author disposable SQLite CI-equivalent slice: `157 passed +21 subtests`, exit 0;
+- read-only audit: 119/119 безопасных targets покрыты, но ожидаемый exit 1 — `MANUAL_REVIEW_REQUIRED: product_characteristic_required`, auto 5 / breeding excluded 10 / characteristic-required 30;
+- независимый A5 `/root/a5_special_scope`: **PASS**; `60 passed +12 subtests`, 45 листьев образуют точное непересекающееся разбиение, stale broad rows не дали ни одной утечки для 40 blocked-кодов;
+- exact-head GitHub Actions [run 37822334976](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/37822334976): `offline-safety` **SUCCESS** (job 113466271370), `payment-regression` **SUCCESS** (job 113466271764);
+- `git diff --check`: PASS.
+
+Полный #244, юридическая полнота и актуальность всех payment sources **не PASS**. A6 request `core-s1-6415f443120f-r9-g106` не менялся и не отправлялся; merge/production/flags/secrets/permissions/destructive действия не выполнялись.
+
+Следующий безопасный шаг: добавить в quote/input проверяемые характеристики товара для 30 неоднозначных animal-кодов, сохраняя withheld totals и manual review при отсутствии/неподтверждённой характеристике; затем продолжить source freshness и #245.
+
 ## 0g. PP908 VAT scope — broad over-claim закрыт, animal map остаётся fail-closed
 
 **Текущий checkpoint #255:** [draft PR #255](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/255), `agent/core-payment-regressions-v1` @ `02573a121e3de7ccfab079eb436bce5e85917fc9`, tree `428752c8f8e61c40f239c91e9f6237a818672c3a`, base #244 неизменён `14e0ee8f034d94ffc5831d87e076f4d693a5a524`.
