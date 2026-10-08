@@ -3,6 +3,22 @@
 **Снимок:** 2026-10-08 (UTC). **Единственный репозиторий:** [ivan88810900-star/tnved_starter_kit_v2](https://github.com/ivan88810900-star/tnved_starter_kit_v2).  
 **Авторитетное состояние:** ветка `agent/orchestration-state`, файлы `.ai/TASK_BOARD.json`, `.ai/COORDINATOR_LEASE.json`, `.ai/orchestration/A6_LIVE_STATUS.json`. Этот документ — указатель и контрольная точка, **не** право на запись/merge/A6. Перед действием заново читать текущие HEAD и state. Не полагаться на Business-чат.
 
+## 0d. Продолжение продуктового цикла — fail-closed provenance builders
+
+**Новый текущий checkpoint #255:** [draft PR #255](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/255), `agent/core-payment-regressions-v1` @ `fd48ed6d82cf0448e8e90469be8b0105eda1c7ee`, tree `e66ff8f046461b3115eb1b88a2d58109a74cdd62`, base #244 неизменён `14e0ee8f034d94ffc5831d87e076f4d693a5a524`.
+
+Обнаружен и закрыт опасный путь source lineage: `build_official_bundles.py` копировал строки operational DB или placeholder-меры и маркировал их текущей датой как официальный revision; `build_vat_excise_official.py` аналогично мог маркировать broad 4-digit PP908 inference и константы акцизов 2025 как текущие. Оба legacy builder теперь fail-closed до DB/file access, import-time mkdir удалён. Для продолжения требуется retained immutable snapshot первичного источника с явным revision; изменение только даты запрещено.
+
+Проверки exact tree:
+- author guard: `python -m pytest -q tests/test_official_bundle_builder_safety.py` — **10 passed**, exit 0;
+- оба CLI — ожидаемый exit 2, stdout пуст, DB/output не изменены;
+- source suite с guard: **316 passed +76 subtests, 1 известный PP908 FAIL**, exit 1; `no_sample_code=118` остаётся видимым;
+- независимый A5 `/root/a5_special_scope`: **PASS** exact tree; related suite **256 passed +73 subtests**, exit 0; AST/static и SHA256 bundle-файлов подтверждают отсутствие обхода/записи;
+- compileall и `git diff --check`: PASS;
+- exact-head GitHub CI: **ещё не наблюдался**.
+
+Все 6 committed payment bundles остаются stale и не обновлялись. Полный #244, юридическая полнота и PP908 coverage **не PASS**. Следующий шаг — построить безопасный source-by-source importer из сохранённых первичных snapshots (сначала ЕТТ/акциз/меры), затем герметичный PP908 fixture. A6 `core-s1-6415f443120f-r9-g106` не менялся и не отправлялся; merge/production/secrets/permissions не выполнялись.
+
 ## 0c. Продолжение продуктового цикла — source-refresh broad-suite
 
 **Новый текущий checkpoint #255:** [draft PR #255](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/255), `agent/core-payment-regressions-v1` @ `f0e499e5e97ae83a63d9117e043420e52cb99da6`, tree `ec606fc15f76c73ad461f0ee84d8764b83f7644e`, base #244 неизменён `14e0ee8f034d94ffc5831d87e076f4d693a5a524`.
