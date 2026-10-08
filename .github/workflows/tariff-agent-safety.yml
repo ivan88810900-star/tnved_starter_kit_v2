@@ -24,6 +24,7 @@ jobs:
           PYTHONDONTWRITEBYTECODE: '1'
         run: |
           python3 -m tools.tariff_agents.verify
+          python3 -m unittest discover -s tests/agent_orchestration -v
           python3 -m unittest -v tests.agent_orchestration.test_cli_snapshot
       - name: Committed persistent state schema
         run: python3 -m tools.tariff_agents validate-snapshot

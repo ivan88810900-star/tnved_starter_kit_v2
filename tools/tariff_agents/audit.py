@@ -215,6 +215,41 @@ def ensure_safe_text(text, *, environ=None, scan_contacts=True):
     return text
 
 
+def ensure_safe_json_value(value, *, environ=None, scan_contacts=True):
+    """Scan original JSON strings before aggregate secret checks.
+
+    JSON escapes are representation, not input contact data: a real newline
+    before a Python decorator must not turn into a fictitious contact address.
+    Actual keys and values still undergo the unchanged contact/secret scanner.
+    The aggregate encoded form retains secret checks, but not contact matching.
+    """
+    try:
+        raw = _json_bytes(value).decode("utf-8")
+    except (ValueError, TypeError, RecursionError):
+        raise AuditBlocked("Invalid structured audit value") from None
+    stack = [value]
+    count = 0
+    while stack:
+        item = stack.pop()
+        count += 1
+        if count > 100_000:
+            raise AuditBlocked("Structured audit value exceeds node limit")
+        if isinstance(item, dict):
+            for key, child in item.items():
+                if not isinstance(key, str):
+                    raise AuditBlocked("Audit object keys must be strings")
+                ensure_safe_text(key, environ=environ, scan_contacts=scan_contacts)
+                stack.append(child)
+        elif isinstance(item, list):
+            stack.extend(item)
+        elif isinstance(item, str):
+            ensure_safe_text(item, environ=environ, scan_contacts=scan_contacts)
+        elif item is not None and type(item) not in (bool, int, float):
+            raise AuditBlocked("Invalid structured audit value")
+    ensure_safe_text(raw, environ=environ, scan_contacts=False)
+    return value
+
+
 def _git(repo, *args):
     # Ambient GIT_DIR/WORK_TREE or replace objects must not redirect evidence.
     env = {k: v for k, v in os.environ.items() if not k.startswith("GIT_")}
@@ -571,7 +606,7 @@ def validate_findings(result, packet, *, environ=None):
             raise FindingsValidationBlocked("FINDING_SOURCE_SCOPE")
         ids.add(item["id"])
     try:
-        ensure_safe_text(_json_bytes(result).decode(), environ=environ)
+        ensure_safe_json_value(result, environ=environ)
     except AuditBlocked:
         raise FindingsValidationBlocked("FINDINGS_CONTENT_SAFETY") from None
     return result

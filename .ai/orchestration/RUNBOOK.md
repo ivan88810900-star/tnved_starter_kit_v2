@@ -10,7 +10,9 @@ rate or legal decisions. Do not overwrite a dirty worktree or another session.
 
 Cross-host coordinator lease: all scheduled A0 sessions use the same
 `agent/orchestration-state` branch and `.ai/COORDINATOR_LEASE.json`. Fetch the
-current content/blob SHA; `python -m tools.tariff_agents.lease` prepares an exact
+current content/blob SHA. Use the lease helper only from the exact current trusted
+`main` commit (or a byte-identical copy); canonical timestamps end in `Z`.
+`python -m tools.tariff_agents.lease` prepares an exact
 `github_update_file` CAS proposal. Apply with the existing GitHub connector, then
 reread and verify holder/token before dispatch or publication. A proposal alone
 is not acquisition. Concurrent CAS losers stop. Renew before expiry; release by
@@ -40,7 +42,10 @@ unavailable and do bounded read-only triage; never claim agents ran.
 
 The board is the canonical machine record; ownership/findings/run history are
 its recoverable projections. Commit the board and generated projections together.
-At session start run `python -m tools.tariff_agents recover`. Verify retained
+With a lawful acquired lease and write authority, run
+`python -m tools.tariff_agents recover`; it can mutate projections and evidence.
+While writes are denied, use the read-only `recovery-status` command documented
+in `ROOT_CAUSE_RECOVERY.md` instead. Verify retained
 worktree directories, branch SHAs, dirty files and active sessions. A stale marker
 is a review signal, not permission to delete branches, clear locks or duplicate
 work. A0 must confirm the old session ended before taking over ownership.
@@ -101,14 +106,22 @@ updates/PR readiness; perform daily regression review using persisted last-run
 markers. Read current GitHub source on every wake-up. Skip duplicate run keys.
 
 GitHub PR webhooks do not signal every CI completion. Hourly CI polling is explicit,
-not represented as instant events. Recover current infrastructure code from agent/orchestration-v1 and authoritative
-runtime state from agent/orchestration-state; never merge automatically to activate scheduling.
+not represented as instant events. Recover orchestration code and its operating
+protocol from the exact current trusted `main` commit. Read persistent runtime
+state as inert data from `agent/orchestration-state`; never execute stale helpers
+from that state checkout. `agent/orchestration-v1` is historical, not code authority.
+Never merge automatically to activate scheduling or start a second coordinator.
 An automation execution with no native subagent/execution capability records a
 capability blocker; scheduler existence is not proof of autonomous coding.
 
 Notify only a complete verified block, a necessary owner decision, a critical
 blocker or a protected action. Format: completed; tests/CI; A5; A6; remaining risks;
-owner decision if any. Suppress repeated identical blockers using saved state.
+owner decision if any. Suppress duplicate notifications only after a confirmed
+user-visible delivery or owner acknowledgement. An internal `notify_parent`
+response of `notified` is not such confirmation. Use `operations.py` to classify
+receipts; persist actual receipts only through an authorized state write. A denied
+write must not be retried via another tool, account, payload or executor. An A6
+export gate does not forbid separately authorized local analysis and tests.
 
 ## Security and Git permissions
 
