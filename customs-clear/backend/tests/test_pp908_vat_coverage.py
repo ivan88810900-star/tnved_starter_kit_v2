@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import sys
 from pathlib import Path
+from unittest import mock
 
 from app.db import SessionLocal
 from app.models.tnved import VatPreference
@@ -47,10 +48,62 @@ class TestPp908ListsIntegrity:
 class TestPp908AuditCoverage:
     def test_audit_high_coverage(self) -> None:
         result = audit_mod.audit()
-        assert result["status"] == "OK"
         s = result["summary"]
+        expected_status = (
+            "OK"
+            if s["gaps"] == 0 and s["no_sample_code"] == 0
+            else "MANUAL_REVIEW_REQUIRED"
+        )
+        assert result["status"] == expected_status
         # hs_rates уже кодирует перечни ПП908 на корректной грануляции.
         assert s["coverage_pct"] >= 95.0, f"Низкое покрытие ПП908: {s}"
+
+
+class TestPp908AuditFailClosed:
+    @staticmethod
+    def _run(
+        *,
+        missing_heading: str | None = None,
+        gap_heading: str | None = None,
+    ) -> dict:
+        session = mock.MagicMock()
+        session.return_value.__enter__.return_value = object()
+
+        def rep_code(_db: object, heading: str) -> str | None:
+            if heading == missing_heading:
+                return None
+            return heading.ljust(10, "0")
+
+        def effective_vat(_db: object, code: str) -> tuple[int, str]:
+            if gap_heading is not None and code.startswith(gap_heading):
+                return 22, "hs_rates"
+            return 10, "hs_rates"
+
+        with (
+            mock.patch.object(audit_mod, "SessionLocal", session),
+            mock.patch.object(audit_mod, "_rep_code", side_effect=rep_code),
+            mock.patch.object(audit_mod, "_effective_vat", side_effect=effective_vat),
+        ):
+            return audit_mod.audit()
+
+    def test_missing_sample_code_requires_manual_review(self) -> None:
+        result = self._run(missing_heading=audit_mod.PP908_FOOD_HEADINGS[0])
+        assert result["status"] == "MANUAL_REVIEW_REQUIRED"
+        assert result["manual_review_reasons"] == ["sample_code_missing"]
+        assert result["summary"]["no_sample_code"] == 1
+
+    def test_non_ten_percent_gap_requires_manual_review(self) -> None:
+        result = self._run(gap_heading=audit_mod.PP908_FOOD_HEADINGS[0])
+        assert result["status"] == "MANUAL_REVIEW_REQUIRED"
+        assert result["manual_review_reasons"] == ["vat_rate_gap"]
+        assert result["summary"]["gaps"] == 1
+
+    def test_complete_fixture_remains_ok(self) -> None:
+        result = self._run()
+        assert result["status"] == "OK"
+        assert result["manual_review_reasons"] == []
+        assert result["summary"]["headings_checked"] == 118
+        assert result["summary"]["covered_10pct"] == 118
 
 
 class TestPp908GrainProductsVat10:
