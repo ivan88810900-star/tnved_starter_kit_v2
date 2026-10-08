@@ -1,0 +1,76 @@
+name: Scheduled data freshness check
+
+on:
+  schedule:
+    - cron: "17 3 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: scheduled-data-refresh-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  cbr_check:
+    name: Read-only payment source checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out repository without credentials
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
+        with:
+          python-version: "3.12"
+
+      - name: Install exact minimal runtime
+        working-directory: customs-clear/backend
+        run: |
+          python -m pip install --disable-pip-version-check \
+            SQLAlchemy==2.1.4 \
+            loguru==0.7.3 \
+            python-dotenv==1.2.4 \
+            pydantic==2.13.5
+          python -m pip check
+
+      - name: Validate committed payment bundles
+        working-directory: customs-clear/backend
+        env:
+          DATABASE_URL: sqlite:////tmp/tariff-data-refresh.sqlite
+          SECRET_KEY: ci-data-refresh-check-only
+        run: |
+          set -o pipefail
+          python - <<'PY'
+          from app.services.normative_store import init_db
+
+          init_db()
+          PY
+          python -m scripts.data_refresh --check-only --json | tee data-freshness.json
+
+      - name: Validate live CBR source without writes
+        working-directory: customs-clear/backend
+        run: |
+          python - <<'PY'
+          import urllib.request
+          import xml.etree.ElementTree as ET
+
+          url = "https://www.cbr.ru/scripts/XML_daily.asp"
+          request = urllib.request.Request(
+              url,
+              headers={"User-Agent": "Tariff/1.0 read-only-source-check"},
+          )
+          with urllib.request.urlopen(request, timeout=30) as response:
+              payload = response.read()
+              if response.status != 200:
+                  raise SystemExit(f"CBR returned HTTP {response.status}")
+          root = ET.fromstring(payload)
+          currencies = root.findall("Valute")
+          if not currencies:
+              raise SystemExit("CBR response contains no currency rows")
+          print(f"CBR source OK: {len(currencies)} currency rows")
+          PY
