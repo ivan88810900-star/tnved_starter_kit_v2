@@ -2179,7 +2179,7 @@
       "unique_source_pr_count": 29
     }
   },
-  "revision": 668,
+  "revision": 669,
   "runs": [
     {
       "head_sha": null,
@@ -6642,7 +6642,40 @@
         "known_failures": "Three scheduled-data-refresh workflow tests fail because .github/workflows/scheduled-data-refresh.yml is absent; reproduced 3/3 on exact base and not introduced by repack."
       },
       "updated_at": "2026-10-08T13:02:46.510Z",
-      "worktree": "/workspace/scratch/07c543e4bc8b/core244"
+      "worktree": "/workspace/scratch/07c543e4bc8b/core244",
+      "fixture_cleanup_checkpoint_20261008": {
+        "corrective_pr": 255,
+        "corrective_head_sha": "26fac3bf5585284afac77734f7888a2fac64e991",
+        "corrective_tree_sha": "6c7ce0fcdfe726c8803696f4f0fad428874933bd",
+        "executor": "/root/a0_maintenance_20261008T2249MSK",
+        "lease_generation": 120,
+        "scope": "self-contained calculator/leaf/recycling/tariff-preference fixtures and fail-closed broad-suite assertions",
+        "state": "PUBLISHED_A5_PASS_CI_PASS",
+        "author_test_command": "python -m pytest -q tests/test_pp908_vat_coverage.py tests/test_import_duty_ingestion.py tests/test_official_bundle_builder_safety.py tests/test_payment_engine.py tests/test_special_duties.py tests/test_api_integration.py tests/test_hs_leaf_clarification.py tests/test_recycling_fees.py tests/test_tariff_preferences.py",
+        "author_test_exit_code": 0,
+        "tests": "238 passed +23 subtests; exit 0",
+        "independent_a5": "/root/a5_special_scope: PASS exact tree; 238 passed +23 subtests; 74 normal/repeat/reverse-order; no blocking findings",
+        "ci_status": "PASSED",
+        "ci_run_id": 37836111451,
+        "ci_jobs": {
+          "offline_safety": 113513449756,
+          "payment_regression": 113513450175
+        },
+        "a6": "unchanged/not sent",
+        "capabilities": {
+          "code_access": "FULL exact candidate tree 6c7ce0fcdfe726c8803696f4f0fad428874933bd",
+          "command_execution": "Git Python pytest available; author and verifier commands exit 0",
+          "lawful_publication": "existing draft branch/PR connector write under lease generation 120; no protected action",
+          "checkpoint": "handoff and board CAS checkpoint; post-write reread required"
+        },
+        "unresolved": [
+          "remaining broad-suite fixture failures outside the enforced slice",
+          "full #244 product acceptance is not PASS",
+          "official-source completeness and legal applicability remain unverified",
+          "six committed payment bundles remain stale",
+          "continue #245 after remaining core fixture triage"
+        ]
+      }
     },
     {
       "a5": {
@@ -7052,75 +7085,76 @@
       "worktree": null
     }
   ],
-  "updated_at": "2026-10-08T19:05:00Z",
+  "updated_at": "2026-10-08T20:01:36Z",
   "latest_scheduled_product_checkpoint": {
-    "updated_at": "2026-10-08T19:05:00Z",
+    "updated_at": "2026-10-08T20:01:36Z",
     "pr": 255,
     "branch": "agent/core-payment-regressions-v1",
-    "head_sha": "ba8097d18d3512479df21cd9c15b768f3d835c93",
-    "tree_sha": "648865448fa7576163fbc2549a5f34b39627d22d",
+    "head_sha": "26fac3bf5585284afac77734f7888a2fac64e991",
+    "tree_sha": "6c7ce0fcdfe726c8803696f4f0fad428874933bd",
     "base_pr": 244,
     "base_sha": "14e0ee8f034d94ffc5831d87e076f4d693a5a524",
-    "completed_block": "pp908_typed_live_animal_characteristic_fail_closed",
+    "completed_block": "payment_fixture_broad_suite_fail_closed",
     "author_tests": {
-      "ci_equivalent_slice": "176 passed + 23 subtests; exit 0",
-      "focused": "79 passed + 14 subtests; exit 0",
-      "frontend": "typecheck and production build passed; exit 0",
-      "compile_diff_check": "passed"
+      "ci_equivalent_slice": "238 passed + 23 subtests; exit 0",
+      "changed_modules": "74 passed; same-DB repeat 74 passed; exit 0",
+      "orchestration": "120 passed + 4 snapshot tests; exit 0",
+      "diff_check": "passed"
     },
     "a5": {
       "session": "/root/a5_special_scope",
-      "status": "PASSED_BYTE_IDENTICAL_EXACT_TREE_AFTER_COMPARE_FIX",
-      "related_suite": "79 passed + 14 subtests; exit 0",
-      "adversarial": "30 typed-status matrices, 15 code/status conflicts and 45 missing-map simulations fail closed as specified; API quote/compute/compare propagation passed"
+      "status": "PASSED_BYTE_IDENTICAL_EXACT_TREE",
+      "related_suite": "238 passed + 23 subtests; exit 0",
+      "adversarial": "changed modules 74 PASS on fresh, repeated and reverse-order databases; all 8 fixture rows remained REVIEW_REQUIRED with final totals withheld"
     },
     "ci": {
       "status": "PASSED_EXACT_HEAD",
-      "head_sha": "ba8097d18d3512479df21cd9c15b768f3d835c93",
-      "run_id": 37829007811,
-      "offline_safety_job": 113489177769,
-      "payment_regression_job": 113489178130
+      "head_sha": "26fac3bf5585284afac77734f7888a2fac64e991",
+      "run_id": 37836111451,
+      "offline_safety_job": 113513449756,
+      "payment_regression_job": 113513450175
     },
     "blockers": [
-      "Typed breeding status is declarant-supplied and requires supporting product documents; free text is not interpreted.",
+      "This is bounded fixture cleanup; the full broad backend suite and full #244 product acceptance remain NOT PASS.",
       "Six committed payment bundles remain stale and require source-by-source refresh from retained snapshots.",
-      "Full #244 product and legal/source completeness remain NOT PASS."
+      "Legal/source completeness remains unverified; test seeds are not source admission evidence."
     ],
     "a6": {
       "request": "core-s1-6415f443120f-r9-g106",
       "status": "UNCHANGED_NOT_SENT"
     },
     "protected_actions_performed": false,
-    "next_step": "Reproduce and resolve fixture/broad-suite failures without weakening fail-closed contracts, then continue #245."
+    "next_step": "Continue triage of remaining broad-suite fixture failures without weakening fail-closed contracts, then continue #245."
   },
   "latest_development_checkpoint": {
-    "checked_at": "2026-10-08T19:05:00Z",
+    "checked_at": "2026-10-08T20:01:36Z",
     "pr": 255,
     "branch": "agent/core-payment-regressions-v1",
-    "head_sha": "ba8097d18d3512479df21cd9c15b768f3d835c93",
-    "tree_sha": "648865448fa7576163fbc2549a5f34b39627d22d",
+    "head_sha": "26fac3bf5585284afac77734f7888a2fac64e991",
+    "tree_sha": "6c7ce0fcdfe726c8803696f4f0fad428874933bd",
     "base_pr": 244,
     "base_sha": "14e0ee8f034d94ffc5831d87e076f4d693a5a524",
-    "block": "pp908_typed_live_animal_characteristic_fail_closed",
+    "block": "payment_fixture_broad_suite_fail_closed",
     "status": "DRAFT_CHECKPOINT_A5_AND_EXACT_HEAD_CI_PASS",
     "author_tests": [
-      "176 passed +23 subtests on disposable committed-snapshot fixture, exit 0",
-      "79 passed +14 subtests focused, exit 0; frontend typecheck/build passed"
+      "238 passed +23 subtests on disposable workflow-equivalent database, exit 0",
+      "74 changed-module tests passed on fresh and repeated shared database, exit 0",
+      "120 orchestration verifier +4 snapshot tests passed, exit 0"
     ],
     "a5": {
       "status": "PASS",
       "session": "/root/a5_special_scope",
-      "tests": "79 passed +14 subtests, exit 0",
-      "adversarial": "30 typed-status matrices, 15 conflicts, 45 missing-map simulations and API quote/compute/compare passed after compare blocker fix"
+      "tests": "238 passed +23 subtests, exit 0",
+      "adversarial": "74 tests each on fresh, repeated and reverse-order DB; double seed invocation produced no duplicates; all 8 rows stayed fail-closed"
     },
     "ci": {
       "status": "PASSED_EXACT_HEAD",
-      "head_sha": "ba8097d18d3512479df21cd9c15b768f3d835c93",
-      "run_id": 37829007811,
-      "jobs": "offline-safety 113489177769 success; payment-regression 113489178130 success"
+      "head_sha": "26fac3bf5585284afac77734f7888a2fac64e991",
+      "run_id": 37836111451,
+      "jobs": "offline-safety 113513449756 success; payment-regression 113513450175 success"
     },
-    "current_data_state": "official group-01 map is retained; 30 ambiguous leaves now consume a typed breeding status and withhold results when unknown or conflicting",
-    "next_step": "Reproduce and resolve fixture/broad-suite failures without weakening fail-closed contracts; then continue #245",
+    "current_data_state": "test-only exact-code fixtures are explicit untrusted seeds; legacy automatic totals remain REVIEW_REQUIRED and withheld",
+    "next_step": "Continue remaining broad-suite fixture triage without weakening fail-closed, then continue #245",
     "full_244_status": "NOT_PASS",
     "a6": "core-s1-6415f443120f-r9-g106 unchanged, not sent",
     "protected_actions_performed": false
