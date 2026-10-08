@@ -3,6 +3,22 @@
 **Снимок:** 2026-10-08 (UTC). **Единственный репозиторий:** [ivan88810900-star/tnved_starter_kit_v2](https://github.com/ivan88810900-star/tnved_starter_kit_v2).  
 **Авторитетное состояние:** ветка `agent/orchestration-state`, файлы `.ai/TASK_BOARD.json`, `.ai/COORDINATOR_LEASE.json`, `.ai/orchestration/A6_LIVE_STATUS.json`. Этот документ — указатель и контрольная точка, **не** право на запись/merge/A6. Перед действием заново читать текущие HEAD и state. Не полагаться на Business-чат.
 
+## 0e. Продолжение продуктового цикла — retained ETT source snapshot
+
+**Новый текущий checkpoint #255:** [draft PR #255](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/255), `agent/core-payment-regressions-v1` @ `2751be626775964130af01874cded669427d452b`, tree `6de62435b74e55e195593248cb19dec491314ed1`, base #244 неизменён `14e0ee8f034d94ffc5831d87e076f4d693a5a524`.
+
+ЕТТ import-duty теперь fail-closed без соседнего provenance manifest и сохранённого первичного snapshot. Manifest криптографически связывает точные bytes bundle и source snapshot, revision, официальный HTTPS EEC URL, число нормализованных строк, время захвата и transform id. Отсутствие/mismatch, traversal, symlink и future revision блокируют dry-run/apply; legal completeness не заявляется. Committed ETT bundle по-прежнему не содержит такого snapshot и теперь явно возвращает `manual_review_required: source_snapshot_manifest_missing`; данные не выдумывались и не обновлялись.
+
+Проверки exact tree:
+- author import-duty: **71 passed**, exit 0;
+- author expanded source suite: **219 passed**, exit 0;
+- independent A5 `/root/a5_special_scope`: **PASS**, **264 passed +73 subtests**, exit 0;
+- independent adversarial traversal / external symlink / `ett:2099-01-01`: все blocked, `db_mutated=false`, HsRate/SourceStatus/SyncLog unchanged;
+- compileall и `git diff --check`: PASS;
+- exact-head GitHub CI: **ещё не наблюдался**.
+
+Полный #244, юридическая полнота и актуальность источников **не PASS**. Следующий шаг — получить и проверить реальный immutable EEC snapshot/manifest для ЕТТ, затем интегрировать тот же контракт source-by-source для остальных payment domains; PP908 fixture и #245 остаются после этого. A6 `core-s1-6415f443120f-r9-g106` не менялся и не отправлялся; merge/production/secrets/permissions не выполнялись.
+
 ## 0d. Продолжение продуктового цикла — fail-closed provenance builders
 
 **Новый текущий checkpoint #255:** [draft PR #255](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/255), `agent/core-payment-regressions-v1` @ `fd48ed6d82cf0448e8e90469be8b0105eda1c7ee`, tree `e66ff8f046461b3115eb1b88a2d58109a74cdd62`, base #244 неизменён `14e0ee8f034d94ffc5831d87e076f4d693a5a524`.
