@@ -49,14 +49,12 @@ class TestPp908AuditCoverage:
     def test_audit_high_coverage(self) -> None:
         result = audit_mod.audit()
         s = result["summary"]
-        expected_status = (
-            "OK"
-            if s["gaps"] == 0 and s["no_sample_code"] == 0
-            else "MANUAL_REVIEW_REQUIRED"
-        )
-        assert result["status"] == expected_status
-        # hs_rates уже кодирует перечни ПП908 на корректной грануляции.
-        assert s["coverage_pct"] >= 95.0, f"Низкое покрытие ПП908: {s}"
+        assert result["status"] == "OK", f"Неполный аудит ПП908: {result}"
+        assert s["headings_checked"] == s["headings_total"] == 118
+        assert s["covered_10pct"] == s["headings_total"]
+        assert s["gaps"] == 0
+        assert s["no_sample_code"] == 0
+        assert s["coverage_pct"] == 100.0
 
 
 class TestPp908AuditFailClosed:
