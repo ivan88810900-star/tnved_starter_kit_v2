@@ -58,14 +58,30 @@ def test_measure_not_duplicated_per_tr_and_permit(memory_sessionmaker: sessionma
         assert len(rows) == 1
 
 
-def test_engine_prefix_8517(memory_sessionmaker: sessionmaker) -> None:
+def test_engine_prefix_851713(memory_sessionmaker: sessionmaker) -> None:
     from app.services.ntm_engine_v2 import evaluate_ntm_v2
 
     import_tr_ts_catalog_to_ntm_v2()
-    out = evaluate_ntm_v2(hs_code="8517620000")
+    out = evaluate_ntm_v2(hs_code="8517130000")
     keys = {(r["permit_type"], r["tr_ts"]) for r in out["requirements"]}
-    assert ("ДС", "004/2011") in keys
-    assert any(r["matched_hs_scope"] == "8517" for r in out["requirements"] if r["tr_ts"] == "004/2011")
+    assert ("ДС", "020/2011") in keys
+    assert ("ДС", "004/2011") not in keys
+    assert any(r["matched_hs_scope"] == "851713" for r in out["requirements"] if r["tr_ts"] == "020/2011")
+
+
+@pytest.mark.parametrize("hs_code", ["8517710000", "8517790000"])
+def test_engine_does_not_enforce_phone_regulations_on_parts(
+    memory_sessionmaker: sessionmaker,
+    hs_code: str,
+) -> None:
+    from app.services.ntm_engine_v2 import evaluate_ntm_v2
+
+    import_tr_ts_catalog_to_ntm_v2()
+    out = evaluate_ntm_v2(hs_code=hs_code)
+    keys = {(r["permit_type"], r["tr_ts"]) for r in out["requirements"]}
+    assert ("ДС", "004/2011") not in keys
+    assert ("ДС", "020/2011") not in keys
+    assert ("ДС", "037/2016") not in keys
 
 
 def test_engine_normalizes_hs_formatting(memory_sessionmaker: sessionmaker) -> None:
@@ -85,23 +101,23 @@ def test_engine_excludes_rule_by_valid_to(memory_sessionmaker: sessionmaker) -> 
         rule = (
             s.query(NtmApplicabilityRuleV2)
             .join(NtmMeasureV2)
-            .filter(NtmMeasureV2.tr_ts_act_code == "004/2011", NtmMeasureV2.permit_type == "ДС")
-            .filter(NtmApplicabilityRuleV2.hs_code == "8517")
+            .filter(NtmMeasureV2.tr_ts_act_code == "020/2011", NtmMeasureV2.permit_type == "ДС")
+            .filter(NtmApplicabilityRuleV2.hs_code == "851713")
             .one()
         )
         rule.valid_to = date.today() - timedelta(days=1)
         s.commit()
 
-    out = evaluate_ntm_v2(hs_code="8517620000")
-    assert all(not (r["tr_ts"] == "004/2011" and r["permit_type"] == "ДС") for r in out["requirements"])
+    out = evaluate_ntm_v2(hs_code="8517130000")
+    assert all(not (r["tr_ts"] == "020/2011" and r["permit_type"] == "ДС") for r in out["requirements"])
 
 
 def test_engine_includes_rule_when_dates_open(memory_sessionmaker: sessionmaker) -> None:
     from app.services.ntm_engine_v2 import evaluate_ntm_v2
 
     import_tr_ts_catalog_to_ntm_v2()
-    out = evaluate_ntm_v2(hs_code="8517620000")
-    assert any(r["tr_ts"] == "004/2011" and r["permit_type"] == "ДС" for r in out["requirements"])
+    out = evaluate_ntm_v2(hs_code="8517130000")
+    assert any(r["tr_ts"] == "020/2011" and r["permit_type"] == "ДС" for r in out["requirements"])
 
 
 def test_shadow_full_overlap(memory_sessionmaker: sessionmaker) -> None:
@@ -123,7 +139,7 @@ def test_shadow_legacy_only(monkeypatch: pytest.MonkeyPatch, memory_sessionmaker
         return [{"permit_type": "ДС", "tr_ts": "999/2099"}]
 
     monkeypatch.setattr(eng, "get_tr_ts_requirements", _fake_legacy)
-    cmp = eng.compare_legacy_tr_ts_catalog_vs_ntm_v2("8517620000")
+    cmp = eng.compare_legacy_tr_ts_catalog_vs_ntm_v2("8517130000")
     assert "ДС|999/2099" in cmp["legacy_only"]
     assert cmp["is_full_match"] is False
 
@@ -133,7 +149,7 @@ def test_shadow_v2_only(monkeypatch: pytest.MonkeyPatch, memory_sessionmaker: se
 
     import_tr_ts_catalog_to_ntm_v2()
     monkeypatch.setattr(eng, "get_tr_ts_requirements", lambda _hs: [])
-    cmp = eng.compare_legacy_tr_ts_catalog_vs_ntm_v2("8517620000")
+    cmp = eng.compare_legacy_tr_ts_catalog_vs_ntm_v2("8517130000")
     assert len(cmp["v2_only"]) > 0
     assert cmp["is_full_match"] is False
 

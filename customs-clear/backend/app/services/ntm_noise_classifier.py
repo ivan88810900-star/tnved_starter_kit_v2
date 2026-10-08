@@ -126,6 +126,12 @@ def is_measure_noise(commodity_code: str, measure_type: str) -> bool:
         return True
 
     if mtype == "marking":
+        # A technical-regulation link is not, by itself, evidence that the
+        # separate mandatory-marking regime applies.  In particular, radio
+        # and telephone equipment under 8517 must not become marking-scoped
+        # merely because its TR TS requirements are present in the catalog.
+        if code.startswith("8517"):
+            return True
         if ch2 in _FOOD_CHAPTERS:
             return False
         if _code_matches_any_prefix(code, _TR_TS_CATALOG_PREFIXES):

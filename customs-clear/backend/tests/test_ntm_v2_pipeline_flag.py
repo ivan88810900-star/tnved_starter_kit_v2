@@ -115,7 +115,7 @@ def test_empty_v2_and_legacy_both_empty(
     monkeypatch.setenv("NTM_V2_TR_TS_ENABLED", "true")
     from app.services.ntm_engine_v2 import get_tr_ts_requirements_v2_legacy_shape
 
-    assert get_tr_ts_requirements_v2_legacy_shape("8517620000", "") == []
+    assert get_tr_ts_requirements_v2_legacy_shape("9999999999", "") == []
 
 
 def test_compare_pipeline_tr_ts_vs_legacy_when_flag_on(
