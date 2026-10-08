@@ -15,6 +15,7 @@ from ..db import SessionLocal
 from ..datetime_util import utc_now_naive
 from ..models import RegulatoryAiExtract, RegulatorySyncEvent, RegulatorySyncState
 from .gemini_genai_configure import configure_google_generativeai, resolved_gemini_model_name
+from .sync_status_diagnostics import build_sync_status_diagnostics
 
 _sync_lock = asyncio.Lock()
 
@@ -650,11 +651,10 @@ def get_sync_status_payload() -> dict[str, Any]:
     """Данные для GET /api/v1/admin/sync/status (без проверки токена — вызывать после require_admin)."""
     from .scheduler import is_scheduler_running, regulatory_job_next_run_iso
 
+    scheduler_running = is_scheduler_running()
+    next_sync_iso = regulatory_job_next_run_iso()
     with SessionLocal() as db:
         st = db.query(RegulatorySyncState).filter(RegulatorySyncState.id == 1).first()
-        last_iso = None
-        if st and st.last_completed_at:
-            last_iso = st.last_completed_at.replace(tzinfo=timezone.utc).isoformat()
         events = (
             db.query(RegulatorySyncEvent)
             .order_by(RegulatorySyncEvent.created_at.desc())
@@ -670,9 +670,12 @@ def get_sync_status_payload() -> dict[str, Any]:
             for e in reversed(events)
         ]
 
-    return {
-        "scheduler_running": is_scheduler_running(),
-        "last_sync_iso": last_iso,
-        "next_sync_iso": regulatory_job_next_run_iso(),
-        "recent_log": log_lines,
-    }
+    payload = build_sync_status_diagnostics(
+        completed_at=st.last_completed_at if st else None,
+        last_trigger=st.last_trigger if st else None,
+        last_error=st.last_error if st else None,
+        scheduler_running=scheduler_running,
+        next_sync_iso=next_sync_iso,
+    )
+    payload["recent_log"] = log_lines
+    return payload
