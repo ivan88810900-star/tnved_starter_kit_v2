@@ -199,7 +199,8 @@ def recovery_status(a6_state, lease_record, *, now, publication_policy="unknown"
         "export_gate_status": observed["status"],
         "notification_delivery": "UNCONFIRMED",
         "notification_sent": False,
-        "task_owner_action_required": publication_policy == "blocked",
+        "task_owner_action_required": (observed["owner_action_required"] or
+                                       publication_policy == "blocked"),
     }
     if "event_key" in observed:
         result["export_gate_event_key"] = observed["event_key"]
