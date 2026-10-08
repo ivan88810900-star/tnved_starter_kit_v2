@@ -70,12 +70,18 @@ class PaymentEngineTests(unittest.TestCase):
         """Точечная льгота ПП №908 применяется без наследования от смешанного заголовка."""
         marker = "ТЕСТ ПП РФ № 908 (vat10 expansion)"
         with SessionLocal() as db:
-            db.add(VatPreference(hs_code_prefix="0102291000", vat_rate=10, decree_info=marker, comment="тест"))
+            db.add(VatPreference(hs_code_prefix="0102292100", vat_rate=10, decree_info=marker, comment="тест"))
             db.commit()
         try:
-            res = self._calc(hs_code="0102291000", customs_value=100_000, freight=0)
+            res = self._calc(hs_code="0102292100", customs_value=100_000, freight=0)
             self.assertEqual(res["breakdown"]["vat_rate"], 10.0)
             self.assertIn("vat_preferences", res["breakdown"]["vat_reason"].lower())
+            # Для прочего скота и птицы без явного убойного/племенного признака
+            # код сам по себе недостаточен: автоматической льготы быть не должно.
+            res_generic = self._calc(hs_code="0102291000", customs_value=100_000, freight=0)
+            self.assertEqual(res_generic["breakdown"]["vat_rate"], 22.0)
+            res_ambiguous = self._calc(hs_code="0105120000", customs_value=100_000, freight=0)
+            self.assertEqual(res_ambiguous["breakdown"]["vat_rate"], 22.0)
             # Электроника не должна попасть под льготу.
             res_el = self._calc(hs_code="8471300000", customs_value=100_000, freight=0)
             self.assertEqual(res_el["breakdown"]["vat_rate"], 22.0)

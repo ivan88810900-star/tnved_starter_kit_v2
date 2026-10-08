@@ -65,9 +65,25 @@ PP908_CHILD_HEADINGS: tuple[str, ...] = (
     "950300",
 )
 
-# Позиции, для которых действующая формулировка ПП908 подтверждает точный код,
-# но не весь четырёхзначный заголовок.
+_LIVE_ANIMAL_MAPPING_PATH = _ROOT / "data" / "pp908_live_animal_vat_mapping.json"
+with _LIVE_ANIMAL_MAPPING_PATH.open(encoding="utf-8") as _mapping_file:
+    PP908_LIVE_ANIMAL_MAPPING = json.load(_mapping_file)
+
+PP908_LIVE_ANIMAL_AUTO_CODES: tuple[str, ...] = tuple(
+    PP908_LIVE_ANIMAL_MAPPING["auto_vat10_codes"]
+)
+PP908_LIVE_ANIMAL_EXCLUDED_CODES: tuple[str, ...] = tuple(
+    PP908_LIVE_ANIMAL_MAPPING["excluded_breeding_codes"]
+)
+PP908_LIVE_ANIMAL_CHARACTERISTIC_REQUIRED: tuple[str, ...] = tuple(
+    PP908_LIVE_ANIMAL_MAPPING["product_characteristic_required_codes"]
+)
+
+# Позиции, для которых действующая формулировка ПП908 и карта листьев ТН ВЭД
+# подтверждают автоматическое применение по одному коду. У птицы без отдельного
+# племенного листа автоматического вывода нет: такие коды остаются manual review.
 PP908_EXACT_CODES: tuple[str, ...] = (
+    *PP908_LIVE_ANIMAL_AUTO_CODES,
     "8715001000",  # из 8715 00 — коляски детские в обычной заводской комплектации
 )
 
@@ -86,15 +102,6 @@ PP908_MIXED_HEADINGS: dict[str, str] = {
     "4820": "Бумажно-беловая продукция: школьные тетради (10%) + офисные регистры (22%).",
     "4817": "Конверты/карточки + детские изделия — смешанный заголовок.",
 }
-
-# Для этих смешанных заголовков в репозитории пока нет проверенной карты
-# разрешённых десятизначных кодов.  Они не должны исчезать из результата аудита:
-# до загрузки такой карты итог остаётся MANUAL_REVIEW_REQUIRED.
-PP908_SOURCE_MAPPING_REQUIRED: dict[str, str] = {
-    heading: PP908_MIXED_HEADINGS[heading]
-    for heading in ("0102", "0103", "0104", "0105")
-}
-
 
 def _rep_code(db, heading: str) -> str | None:
     row = db.execute(
@@ -160,8 +167,8 @@ def audit() -> dict:
         manual_review_reasons.append("vat_rate_gap")
     if no_code:
         manual_review_reasons.append("sample_code_missing")
-    if PP908_SOURCE_MAPPING_REQUIRED:
-        manual_review_reasons.append("source_mapping_required")
+    if PP908_LIVE_ANIMAL_CHARACTERISTIC_REQUIRED:
+        manual_review_reasons.append("product_characteristic_required")
     return {
         "status": "OK" if not manual_review_reasons else "MANUAL_REVIEW_REQUIRED",
         "summary": {
@@ -171,19 +178,21 @@ def audit() -> dict:
             "gaps": len(gaps),
             "no_sample_code": len(no_code),
             "exact_codes_checked": len(PP908_EXACT_CODES),
-            "source_mappings_required": len(PP908_SOURCE_MAPPING_REQUIRED),
+            "animal_mapping_auto_codes": len(PP908_LIVE_ANIMAL_AUTO_CODES),
+            "animal_mapping_excluded_codes": len(PP908_LIVE_ANIMAL_EXCLUDED_CODES),
+            "product_characteristic_required": len(PP908_LIVE_ANIMAL_CHARACTERISTIC_REQUIRED),
             "coverage_pct": round(100.0 * len(covered) / checked, 1) if checked else 0.0,
         },
         "manual_review_reasons": manual_review_reasons,
         "gaps": gaps,
         "no_sample_code": no_code,
         "mixed_headings_excluded": PP908_MIXED_HEADINGS,
-        "source_mapping_required": PP908_SOURCE_MAPPING_REQUIRED,
+        "live_animal_mapping": PP908_LIVE_ANIMAL_MAPPING,
         "notes": [
             "Read-only audit: hs_rates / vat_preferences не мутируются.",
             "hs_rates — первичный источник; vat_preferences — курируемое дополнение.",
             "Смешанные заголовки не покрываются на уровне заголовка во избежание over-claim.",
-            "Неподтверждённые карты субпозиций оставляют результат в MANUAL_REVIEW_REQUIRED.",
+            "Коды птицы без отдельного признака племенного назначения требуют характеристики товара.",
         ],
     }
 
