@@ -28,11 +28,12 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Install exact minimal runtime
+      - name: Install pinned minimal runtime
         working-directory: customs-clear/backend
         run: |
           python -m pip install --disable-pip-version-check \
             SQLAlchemy==2.1.4 \
+            alembic==1.20.0 \
             loguru==0.7.3 \
             python-dotenv==1.2.4 \
             pydantic==2.13.5
