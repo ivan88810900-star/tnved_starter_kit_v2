@@ -119,6 +119,11 @@ _LEGACY_DUTY_COMBINED_RE = re.compile(
     rf"{_LEGACY_DUTY_NUMBER}\s*{_LEGACY_DUTY_UNIT}",
     re.IGNORECASE,
 )
+_LEGACY_DUTY_CURRENCY_RE = re.compile(r"(?:евро|eur|€)", re.IGNORECASE)
+_LEGACY_DUTY_EXPLICIT_KG_RE = re.compile(
+    r"(?:евро|eur|€)\s*(?:/\s*кг|за\s*(?:1\s*)?кг)",
+    re.IGNORECASE,
+)
 
 
 def _contains_forbidden_legacy_sign(raw_text: str) -> bool:
@@ -176,6 +181,11 @@ def _parse_validated_legacy_duty_rate(raw_value: Any) -> dict[str, Any]:
     parsed = _parse_duty_rate(raw_text)
     _validated_automatic_duty_operand(parsed.get("ad_valorem"), label="ставки пошлины в hs_rates")
     _validated_automatic_duty_operand(parsed.get("specific_eur"), label="специфической ставки в hs_rates")
+    if _LEGACY_DUTY_CURRENCY_RE.search(raw_text) and not _LEGACY_DUTY_EXPLICIT_KG_RE.search(raw_text):
+        raise ValueError(
+            "Некорректная автоматическая ставка пошлины в hs_rates: "
+            "для специфической части не указана единица измерения"
+        )
     return parsed
 
 
@@ -290,14 +300,28 @@ def _find_duty_rule_for_hs(hs_code: str) -> tuple[HsDutyRule | _FallbackDutyRule
     if not rate:
         return None, 0
     parsed = _parse_validated_legacy_duty_rate(rate.duty_rate)
-    rule_type = "specific" if (parsed.get("specific_amount") is not None) else "ad_valorem"
+    raw_rate = str(rate.duty_rate).strip()
+    has_specific = _LEGACY_DUTY_EXPLICIT_KG_RE.search(raw_rate) is not None
+    has_ad_valorem = "%" in raw_rate or not has_specific
+    legacy_rule = str(parsed.get("rule") or "STANDARD").upper()
+    if has_specific and has_ad_valorem:
+        if legacy_rule == "MAX":
+            rule_type = "combined_max"
+        elif legacy_rule == "ADD":
+            rule_type = "combined_add"
+        else:
+            raise ValueError("Неоднозначное комбинированное правило пошлины в hs_rates")
+    elif has_specific:
+        rule_type = "specific"
+    else:
+        rule_type = "ad_valorem"
     fallback = _FallbackDutyRule(
         commodity_code=str(rate.hs_code or rate.hs_prefix or _digits_hs(hs_code)),
         type=rule_type,
         ad_valorem_pct=(float(parsed.get("ad_valorem")) if parsed.get("ad_valorem") is not None else None),
-        specific_amount=(float(parsed.get("specific_amount")) if parsed.get("specific_amount") is not None else None),
-        specific_currency=str(parsed.get("specific_currency") or ""),
-        specific_uom=str(parsed.get("specific_uom") or ""),
+        specific_amount=(float(parsed.get("specific_eur")) if has_specific else None),
+        specific_currency="EUR" if has_specific else "",
+        specific_uom="kg" if has_specific else "",
     )
     return fallback, rate_match_len
 
@@ -620,7 +644,7 @@ def _compute_structured_duty(
     quantity: float,
     net_weight_kg: float | None,
     extra_quantity: float | None,
-    duty_rule: HsDutyRule | None,
+    duty_rule: HsDutyRule | _FallbackDutyRule | None,
     manual_duty_rate: float | None,
     auto_duty_rate: float,
     fx_rates: dict[str, float] | None,
@@ -704,6 +728,15 @@ def _compute_structured_duty(
     if rule_type == "specific":
         duty = specific_amount_rub or 0.0
         return duty, 0.0, ad_valorem_amount, specific_amount_rub, "specific", fx_rate, specific_qty_used
+
+    if rule_type == "combined_add":
+        if ad_valorem_amount is None or specific_amount_rub is None:
+            raise ValueError("Для комбинированной пошлины ADD отсутствует обязательная часть ставки")
+        duty = _validated_automatic_duty_result(
+            ad_valorem_amount + specific_amount_rub,
+            label="комбинированной пошлины",
+        )
+        return duty, ad_pct, ad_valorem_amount, specific_amount_rub, "combined_add", fx_rate, specific_qty_used
 
     # combined max/min
     left = ad_valorem_amount

@@ -12,9 +12,15 @@
 import unittest
 
 from app.db import SessionLocal
+from app.models.core import HsRate
 from app.models.tnved import HsDutyRule, VatPreference
 from app.services.normative_store import find_rate_for_hs, init_db
-from app.services.payment_engine import _compute_structured_duty, compare_payment_scenarios, compute_payments
+from app.services.payment_engine import (
+    _compute_structured_duty,
+    _find_duty_rule_for_hs,
+    compare_payment_scenarios,
+    compute_payments,
+)
 
 
 class PaymentEngineTests(unittest.TestCase):
@@ -201,6 +207,93 @@ class PaymentEngineTests(unittest.TestCase):
         self.assertEqual(duty, 7_000.0)
         self.assertEqual(duty_rate, 7.0)
         self.assertEqual(selected_rule, "combined_max:fallback_auto")
+
+    def test_persisted_hs_rate_fallback_preserves_specific_and_combined_parts(self):
+        """Legacy hs_rates text must retain its explicit EUR/kg operand and rule."""
+        cases = (
+            ("9998111111", "2 евро/кг", "specific", 600.0, "specific"),
+            (
+                "9998222222",
+                "5%, но не менее 2 евро/кг",
+                "combined_max",
+                600.0,
+                "combined_max:specific",
+            ),
+            (
+                "9998333333",
+                "5% плюс 2 евро/кг",
+                "combined_add",
+                1100.0,
+                "combined_add",
+            ),
+        )
+        with SessionLocal() as db:
+            db.add_all(
+                HsRate(
+                    hs_code=hs_code,
+                    hs_prefix=hs_code,
+                    duty_rate=raw_rate,
+                    vat_import_rate=22.0,
+                    source_revision="test:legacy-fallback",
+                    source_url="https://example.invalid/test",
+                )
+                for hs_code, raw_rate, *_ in cases
+            )
+            db.commit()
+        try:
+            for hs_code, _, expected_type, expected_duty, expected_selected in cases:
+                with self.subTest(hs_code=hs_code):
+                    rule, match_len = _find_duty_rule_for_hs(hs_code)
+                    self.assertIsNotNone(rule)
+                    self.assertEqual(match_len, 10)
+                    self.assertEqual(rule.type, expected_type)
+                    self.assertEqual(rule.specific_amount, 2.0)
+                    self.assertEqual(rule.specific_currency, "EUR")
+                    self.assertEqual(rule.specific_uom, "kg")
+                    duty, _, _, specific_rub, selected, fx_rate, qty_used = _compute_structured_duty(
+                        customs_value=10_000.0,
+                        quantity=999.0,
+                        net_weight_kg=3.0,
+                        extra_quantity=None,
+                        duty_rule=rule,
+                        manual_duty_rate=None,
+                        auto_duty_rate=5.0,
+                        fx_rates={"EUR": 100.0},
+                    )
+                    self.assertEqual(duty, expected_duty)
+                    self.assertEqual(specific_rub, 600.0)
+                    self.assertEqual(selected, expected_selected)
+                    self.assertEqual(fx_rate, 100.0)
+                    self.assertEqual(qty_used, 3.0)
+        finally:
+            with SessionLocal() as db:
+                db.query(HsRate).filter(HsRate.hs_code.in_([case[0] for case in cases])).delete(
+                    synchronize_session=False
+                )
+                db.commit()
+
+    def test_persisted_specific_fallback_rejects_missing_unit(self):
+        """A stored currency amount without a denominator cannot use invoice quantity."""
+        hs_code = "9998444444"
+        with SessionLocal() as db:
+            db.add(
+                HsRate(
+                    hs_code=hs_code,
+                    hs_prefix=hs_code,
+                    duty_rate="2 евро",
+                    vat_import_rate=22.0,
+                    source_revision="test:legacy-fallback",
+                    source_url="https://example.invalid/test",
+                )
+            )
+            db.commit()
+        try:
+            with self.assertRaisesRegex(ValueError, "единиц"):
+                _find_duty_rule_for_hs(hs_code)
+        finally:
+            with SessionLocal() as db:
+                db.query(HsRate).filter(HsRate.hs_code == hs_code).delete()
+                db.commit()
 
     # ------------------------------------------------------------------ Excise
     def test_excise_percent(self):
