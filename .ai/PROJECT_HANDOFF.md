@@ -3,6 +3,22 @@
 **Снимок:** 2026-10-08 (UTC). **Единственный репозиторий:** [ivan88810900-star/tnved_starter_kit_v2](https://github.com/ivan88810900-star/tnved_starter_kit_v2).  
 **Авторитетное состояние:** ветка `agent/orchestration-state`, файлы `.ai/TASK_BOARD.json`, `.ai/COORDINATOR_LEASE.json`, `.ai/orchestration/A6_LIVE_STATUS.json`. Этот документ — указатель и контрольная точка, **не** право на запись/merge/A6. Перед действием заново читать текущие HEAD и state. Не полагаться на Business-чат.
 
+## 0l. #245 — TR TS noise classifier сохраняет product fallback без юридического over-claim
+
+**Новый текущий checkpoint:** [draft PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256), `agent/product-ntm-regressions-v1` @ `4fdb291b254c8ebff4b9fa65e52cbd7f1ce13126`, tree `58ea5b5f13c21ec505ed1b4a7f198aa0842dee02`, base #245 неизменён `e39e19787bd913baeb6f85577a13e1116458e633`.
+
+Воспроизведён старый продуктовый дефект: `8517120000 + tr_ts` ошибочно удалялся как crawler noise, потому что классификатор читал только неполный legacy-каталог и игнорировал уже используемый product fallback. Общий fallback вынесен в отдельный DB-free модуль и используется для консервативного сохранения generic `tr_ts`; конкретный регламент не назначается. Граница `marking` не расширена. Первый вариант независимый A5 отклонил из-за ORM/DB import dependency; он не публиковался. Исправленный вариант не загружает `app.db`, ORM или SQLAlchemy.
+
+Проверки exact head/tree:
+- author #245/backend slice на disposable SQLite: `367 passed +44 subtests`, exit 0;
+- отдельный focused: `115 passed`, compileall и diff-check PASS;
+- независимый A5 `/root/a5_ntm_fallback`: **PASS exact remote HEAD**; `83 passed` и совместно с HS matching `99 passed`, DB/model-blocked import probe PASS, exhaustive `marking` parent/candidate hash identical;
+- exact-head CI: **PENDING / run не наблюдался** после публикации; readiness не заявляется.
+
+Диагностический широкий NTM прогон на пустой SQLite не является PASS: pipeline требует инициализированных `ntm_applicability_rules_v2`/`ntm_measures_v2` и импортированных datasets. Это fixture/environment gap, который ещё надо закрыть и затем повторить полный backend/frontend блок. Доступ к полной копии, Git/Python/pytest и законная публикация draft-ветки подтверждены. Protected merge, production/DB writes, flags, secrets/permissions, destructive migration и A6 не выполнялись. A6 request `core-s1-6415f443120f-r9-g106` не менялся и не отправлялся.
+
+Следующий шаг: получить/проверить exact-head CI #256; затем инициализировать канонические disposable NTM v2 fixtures и разобрать реальные pipeline/applicability failures отдельно от отсутствующих данных. Полный #245, юридическая и источниковая полнота **NOT PASS**.
+
 ## 0k. Оставшиеся payment-fixtures из широкого среза закрыты и закреплены в CI
 
 **Текущий checkpoint #255:** [draft PR #255](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/255), `agent/core-payment-regressions-v1` @ `6f1f5522cfe304030d1be474e3f074e85a739835`, tree `a7f640b4fb42320bb77f2c0bd70017a40b367075`, base #244 неизменён `14e0ee8f034d94ffc5831d87e076f4d693a5a524`.
