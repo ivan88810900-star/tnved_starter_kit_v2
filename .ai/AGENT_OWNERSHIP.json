@@ -1,40 +1,456 @@
 {
-  "schema_version": 1,
-  "board_revision": 589,
-  "files": {},
-  "active_roles": {
-    "A0": {
-      "status": "active",
-      "holder": "/root/a0_automation_20260929T101754Z",
-      "responsibility": "lead_integrator"
+  "board_revision": 664,
+  "files": {
+    "customs-clear/backend/app/schemas/payment_profile.py": {
+      "branch": "agent/core-payment-regressions-v1",
+      "owner": "A-CORE",
+      "task_id": "CUSTOMS-CORE-V1",
+      "worktree": "/workspace/scratch/07c543e4bc8b/core244"
     },
-    "A-CORE": {
-      "status": "active",
-      "branch": "integration/customs-core-v1",
-      "responsibility": "customs_core_epic"
+    "customs-clear/backend/app/services/assistant_chat.py": {
+      "branch": "agent/product-consolidation-v1",
+      "owner": "A-PRODUCT",
+      "task_id": "COMPLIANCE-AI-V1",
+      "worktree": null
     },
-    "A-PRODUCT": {
-      "status": "active",
-      "branch": "integration/compliance-ai-v1",
-      "responsibility": "compliance_ai_epic"
+    "customs-clear/backend/app/services/assistant_orchestrator.py": {
+      "branch": "agent/product-consolidation-v1",
+      "owner": "A-PRODUCT",
+      "task_id": "COMPLIANCE-AI-V1",
+      "worktree": null
     },
-    "A5": {
-      "status": "ephemeral",
-      "responsibility": "independent_review_only"
+    "customs-clear/backend/app/services/calculation_history_service.py": {
+      "branch": "agent/core-payment-regressions-v1",
+      "owner": "A-CORE",
+      "task_id": "CUSTOMS-CORE-V1",
+      "worktree": "/workspace/scratch/07c543e4bc8b/core244"
     },
-    "A6": {
-      "status": "ephemeral",
-      "responsibility": "external_high_risk_audit_only",
-      "live_verified": true,
-      "post_verify_bridge_pr": 237
+    "customs-clear/backend/app/services/claude_service.py": {
+      "branch": "agent/product-consolidation-v1",
+      "owner": "A-PRODUCT",
+      "task_id": "COMPLIANCE-AI-V1",
+      "worktree": null
+    },
+    "customs-clear/backend/app/services/compliance_resolver.py": {
+      "branch": "agent/product-consolidation-v1",
+      "owner": "A-PRODUCT",
+      "task_id": "COMPLIANCE-AI-V1",
+      "worktree": null
+    },
+    "customs-clear/backend/app/services/data_refresh_service.py": {
+      "branch": "agent/core-payment-regressions-v1",
+      "owner": "A-CORE",
+      "task_id": "CUSTOMS-CORE-V1",
+      "worktree": "/workspace/scratch/07c543e4bc8b/core244"
+    },
+    "customs-clear/backend/app/services/embedding_service.py": {
+      "branch": "agent/product-consolidation-v1",
+      "owner": "A-PRODUCT",
+      "task_id": "COMPLIANCE-AI-V1",
+      "worktree": null
+    },
+    "customs-clear/backend/app/services/exchange_rates.py": {
+      "branch": "agent/core-payment-regressions-v1",
+      "owner": "A-CORE",
+      "task_id": "CUSTOMS-CORE-V1",
+      "worktree": "/workspace/scratch/07c543e4bc8b/core244"
+    },
+    "customs-clear/backend/app/services/export_service.py": {
+      "branch": "agent/core-payment-regressions-v1",
+      "owner": "A-CORE",
+      "task_id": "CUSTOMS-CORE-V1",
+      "worktree": "/workspace/scratch/07c543e4bc8b/core244"
+    },
+    "customs-clear/backend/app/services/grounded_assistant.py": {
+      "branch": "agent/product-consolidation-v1",
+      "owner": "A-PRODUCT",
+      "task_id": "COMPLIANCE-AI-V1",
+      "worktree": null
+    },
+    "customs-clear/backend/app/services/invoice_batch_service.py": {
+      "branch": "agent/core-payment-regressions-v1",
+      "owner": "A-CORE",
+      "task_id": "CUSTOMS-CORE-V1",
+      "worktree": "/workspace/scratch/07c543e4bc8b/core244"
+    },
+    "customs-clear/backend/app/services/non_tariff_service.py": {
+      "branch": "agent/product-consolidation-v1",
+      "owner": "A-PRODUCT",
+      "task_id": "COMPLIANCE-AI-V1",
+      "worktree": null
+    },
+    "customs-clear/backend/app/services/normative_requirements_block.py": {
+      "branch": "agent/product-consolidation-v1",
+      "owner": "A-PRODUCT",
+      "task_id": "COMPLIANCE-AI-V1",
+      "worktree": null
+    },
+    "customs-clear/backend/app/services/normative_store.py": {
+      "branch": "agent/core-payment-regressions-v1",
+      "owner": "A-CORE",
+      "task_id": "CUSTOMS-CORE-V1",
+      "worktree": "/workspace/scratch/07c543e4bc8b/core244"
+    },
+    "customs-clear/backend/app/services/ntm_description_matching.py": {
+      "branch": "agent/product-consolidation-v1",
+      "owner": "A-PRODUCT",
+      "task_id": "COMPLIANCE-AI-V1",
+      "worktree": null
+    },
+    "customs-clear/backend/app/services/ntm_engine_v2.py": {
+      "branch": "agent/product-consolidation-v1",
+      "owner": "A-PRODUCT",
+      "task_id": "COMPLIANCE-AI-V1",
+      "worktree": null
+    },
+    "customs-clear/backend/app/services/ntm_layers.py": {
+      "branch": "agent/product-consolidation-v1",
+      "owner": "A-PRODUCT",
+      "task_id": "COMPLIANCE-AI-V1",
+      "worktree": null
+    },
+    "customs-clear/backend/app/services/ntm_triggers.py": {
+      "branch": "agent/product-consolidation-v1",
+      "owner": "A-PRODUCT",
+      "task_id": "COMPLIANCE-AI-V1",
+      "worktree": null
+    },
+    "customs-clear/backend/app/services/ntm_v2_import.py": {
+      "branch": "agent/product-consolidation-v1",
+      "owner": "A-PRODUCT",
+      "task_id": "COMPLIANCE-AI-V1",
+      "worktree": null
+    },
+    "customs-clear/backend/app/services/ntm_v2_official_sgr_dataset_validation.py": {
+      "branch": "agent/product-consolidation-v1",
+      "owner": "A-PRODUCT",
+      "task_id": "COMPLIANCE-AI-V1",
+      "worktree": null
+    },
+    "customs-clear/backend/app/services/ntm_v2_official_sgr_import.py": {
+      "branch": "agent/product-consolidation-v1",
+      "owner": "A-PRODUCT",
+      "task_id": "COMPLIANCE-AI-V1",
+      "worktree": null
+    },
+    "customs-clear/backend/app/services/payment_engine.py": {
+      "branch": "agent/core-payment-regressions-v1",
+      "owner": "A-CORE",
+      "task_id": "CUSTOMS-CORE-V1",
+      "worktree": "/workspace/scratch/07c543e4bc8b/core244"
+    },
+    "customs-clear/backend/app/services/payment_profile_builder.py": {
+      "branch": "agent/core-payment-regressions-v1",
+      "owner": "A-CORE",
+      "task_id": "CUSTOMS-CORE-V1",
+      "worktree": "/workspace/scratch/07c543e4bc8b/core244"
+    },
+    "customs-clear/backend/app/services/payment_quote_service.py": {
+      "branch": "agent/core-payment-regressions-v1",
+      "owner": "A-CORE",
+      "task_id": "CUSTOMS-CORE-V1",
+      "worktree": "/workspace/scratch/07c543e4bc8b/core244"
+    },
+    "customs-clear/backend/app/services/regulatory_ai_classifier.py": {
+      "branch": "agent/product-consolidation-v1",
+      "owner": "A-PRODUCT",
+      "task_id": "COMPLIANCE-AI-V1",
+      "worktree": null
+    },
+    "customs-clear/backend/app/services/regulatory_source_completeness.py": {
+      "branch": "agent/core-payment-regressions-v1",
+      "owner": "A-CORE",
+      "task_id": "CUSTOMS-CORE-V1",
+      "worktree": "/workspace/scratch/07c543e4bc8b/core244"
+    },
+    "customs-clear/backend/app/services/scenario_compare_service.py": {
+      "branch": "agent/core-payment-regressions-v1",
+      "owner": "A-CORE",
+      "task_id": "CUSTOMS-CORE-V1",
+      "worktree": "/workspace/scratch/07c543e4bc8b/core244"
+    },
+    "customs-clear/backend/app/services/source_sync.py": {
+      "branch": "agent/core-payment-regressions-v1",
+      "owner": "A-CORE",
+      "task_id": "CUSTOMS-CORE-V1",
+      "worktree": "/workspace/scratch/07c543e4bc8b/core244"
+    },
+    "customs-clear/backend/app/services/sync_engine.py": {
+      "branch": "agent/core-payment-regressions-v1",
+      "owner": "A-CORE",
+      "task_id": "CUSTOMS-CORE-V1",
+      "worktree": "/workspace/scratch/07c543e4bc8b/core244"
+    },
+    "customs-clear/backend/app/services/sync_status_diagnostics.py": {
+      "branch": "agent/core-payment-regressions-v1",
+      "owner": "A-CORE",
+      "task_id": "CUSTOMS-CORE-V1",
+      "worktree": "/workspace/scratch/07c543e4bc8b/core244"
+    },
+    "customs-clear/backend/app/services/tnved_code_card.py": {
+      "branch": "agent/product-consolidation-v1",
+      "owner": "A-PRODUCT",
+      "task_id": "COMPLIANCE-AI-V1",
+      "worktree": null
+    },
+    "customs-clear/backend/app/services/tnved_fts.py": {
+      "branch": "agent/product-consolidation-v1",
+      "owner": "A-PRODUCT",
+      "task_id": "COMPLIANCE-AI-V1",
+      "worktree": null
+    },
+    "customs-clear/backend/data/official_sgr_rules.seed.json": {
+      "branch": "agent/product-consolidation-v1",
+      "owner": "A-PRODUCT",
+      "task_id": "COMPLIANCE-AI-V1",
+      "worktree": null
+    },
+    "customs-clear/backend/tests/test_antidumping_fixed_unit_fail_closed.py": {
+      "branch": "agent/core-payment-regressions-v1",
+      "owner": "A-CORE",
+      "task_id": "CUSTOMS-CORE-V1",
+      "worktree": "/workspace/scratch/07c543e4bc8b/core244"
+    },
+    "customs-clear/backend/tests/test_assistant_copilot.py": {
+      "branch": "agent/product-consolidation-v1",
+      "owner": "A-PRODUCT",
+      "task_id": "COMPLIANCE-AI-V1",
+      "worktree": null
+    },
+    "customs-clear/backend/tests/test_assistant_payment_review.py": {
+      "branch": "agent/product-consolidation-v1",
+      "owner": "A-PRODUCT",
+      "task_id": "COMPLIANCE-AI-V1",
+      "worktree": null
+    },
+    "customs-clear/backend/tests/test_automatic_duty_operand_validation.py": {
+      "branch": "agent/core-payment-regressions-v1",
+      "owner": "A-CORE",
+      "task_id": "CUSTOMS-CORE-V1",
+      "worktree": "/workspace/scratch/07c543e4bc8b/core244"
+    },
+    "customs-clear/backend/tests/test_compliance_permit_parser.py": {
+      "branch": "agent/product-consolidation-v1",
+      "owner": "A-PRODUCT",
+      "task_id": "COMPLIANCE-AI-V1",
+      "worktree": null
+    },
+    "customs-clear/backend/tests/test_data_refresh.py": {
+      "branch": "agent/core-payment-regressions-v1",
+      "owner": "A-CORE",
+      "task_id": "CUSTOMS-CORE-V1",
+      "worktree": "/workspace/scratch/07c543e4bc8b/core244"
+    },
+    "customs-clear/backend/tests/test_embedding_service_safety.py": {
+      "branch": "agent/product-consolidation-v1",
+      "owner": "A-PRODUCT",
+      "task_id": "COMPLIANCE-AI-V1",
+      "worktree": null
+    },
+    "customs-clear/backend/tests/test_grounded_assistant.py": {
+      "branch": "agent/product-consolidation-v1",
+      "owner": "A-PRODUCT",
+      "task_id": "COMPLIANCE-AI-V1",
+      "worktree": null
+    },
+    "customs-clear/backend/tests/test_invoice_and_compare.py": {
+      "branch": "agent/core-payment-regressions-v1",
+      "owner": "A-CORE",
+      "task_id": "CUSTOMS-CORE-V1",
+      "worktree": "/workspace/scratch/07c543e4bc8b/core244"
+    },
+    "customs-clear/backend/tests/test_non_tariff_data_freshness.py": {
+      "branch": "agent/product-consolidation-v1",
+      "owner": "A-PRODUCT",
+      "task_id": "COMPLIANCE-AI-V1",
+      "worktree": null
+    },
+    "customs-clear/backend/tests/test_normative_requirements_block.py": {
+      "branch": "agent/product-consolidation-v1",
+      "owner": "A-PRODUCT",
+      "task_id": "COMPLIANCE-AI-V1",
+      "worktree": null
+    },
+    "customs-clear/backend/tests/test_ntm_child_product_markers.py": {
+      "branch": "agent/product-consolidation-v1",
+      "owner": "A-PRODUCT",
+      "task_id": "COMPLIANCE-AI-V1",
+      "worktree": null
+    },
+    "customs-clear/backend/tests/test_ntm_sgr_bad_token_boundary.py": {
+      "branch": "agent/product-consolidation-v1",
+      "owner": "A-PRODUCT",
+      "task_id": "COMPLIANCE-AI-V1",
+      "worktree": null
+    },
+    "customs-clear/backend/tests/test_ntm_trigger_food_contact.py": {
+      "branch": "agent/product-consolidation-v1",
+      "owner": "A-PRODUCT",
+      "task_id": "COMPLIANCE-AI-V1",
+      "worktree": null
+    },
+    "customs-clear/backend/tests/test_payment_engine.py": {
+      "branch": "agent/core-payment-regressions-v1",
+      "owner": "A-CORE",
+      "task_id": "CUSTOMS-CORE-V1",
+      "worktree": "/workspace/scratch/07c543e4bc8b/core244"
+    },
+    "customs-clear/backend/tests/test_payment_fx_provenance_fail_closed.py": {
+      "branch": "agent/core-payment-regressions-v1",
+      "owner": "A-CORE",
+      "task_id": "CUSTOMS-CORE-V1",
+      "worktree": "/workspace/scratch/07c543e4bc8b/core244"
+    },
+    "customs-clear/backend/tests/test_payment_quote.py": {
+      "branch": "agent/core-payment-regressions-v1",
+      "owner": "A-CORE",
+      "task_id": "CUSTOMS-CORE-V1",
+      "worktree": "/workspace/scratch/07c543e4bc8b/core244"
+    },
+    "customs-clear/backend/tests/test_payment_source_admission.py": {
+      "branch": "agent/core-payment-regressions-v1",
+      "owner": "A-CORE",
+      "task_id": "CUSTOMS-CORE-V1",
+      "worktree": "/workspace/scratch/07c543e4bc8b/core244"
+    },
+    "customs-clear/backend/tests/test_regulatory_ai_classifier.py": {
+      "branch": "agent/product-consolidation-v1",
+      "owner": "A-PRODUCT",
+      "task_id": "COMPLIANCE-AI-V1",
+      "worktree": null
+    },
+    "customs-clear/backend/tests/test_regulatory_keyword_token_boundaries.py": {
+      "branch": "agent/product-consolidation-v1",
+      "owner": "A-PRODUCT",
+      "task_id": "COMPLIANCE-AI-V1",
+      "worktree": null
+    },
+    "customs-clear/backend/tests/test_regulatory_source_completeness.py": {
+      "branch": "agent/core-payment-regressions-v1",
+      "owner": "A-CORE",
+      "task_id": "CUSTOMS-CORE-V1",
+      "worktree": "/workspace/scratch/07c543e4bc8b/core244"
+    },
+    "customs-clear/backend/tests/test_smart_tnved_search.py": {
+      "branch": "agent/product-consolidation-v1",
+      "owner": "A-PRODUCT",
+      "task_id": "COMPLIANCE-AI-V1",
+      "worktree": null
+    },
+    "customs-clear/backend/tests/test_source_sync_index_currentness.py": {
+      "branch": "agent/core-payment-regressions-v1",
+      "owner": "A-CORE",
+      "task_id": "CUSTOMS-CORE-V1",
+      "worktree": "/workspace/scratch/07c543e4bc8b/core244"
+    },
+    "customs-clear/backend/tests/test_special_duties.py": {
+      "branch": "agent/core-payment-regressions-v1",
+      "owner": "A-CORE",
+      "task_id": "CUSTOMS-CORE-V1",
+      "worktree": "/workspace/scratch/07c543e4bc8b/core244"
+    },
+    "customs-clear/backend/tests/test_sync_status_diagnostics.py": {
+      "branch": "agent/core-payment-regressions-v1",
+      "owner": "A-CORE",
+      "task_id": "CUSTOMS-CORE-V1",
+      "worktree": "/workspace/scratch/07c543e4bc8b/core244"
+    },
+    "customs-clear/backend/tests/test_unavailable_payment_exports.py": {
+      "branch": "agent/core-payment-regressions-v1",
+      "owner": "A-CORE",
+      "task_id": "CUSTOMS-CORE-V1",
+      "worktree": "/workspace/scratch/07c543e4bc8b/core244"
+    },
+    "customs-clear/frontend/package-lock.json": {
+      "branch": "agent/product-consolidation-v1",
+      "owner": "A-PRODUCT",
+      "task_id": "COMPLIANCE-AI-V1",
+      "worktree": null
+    },
+    "customs-clear/frontend/package.json": {
+      "branch": "agent/product-consolidation-v1",
+      "owner": "A-PRODUCT",
+      "task_id": "COMPLIANCE-AI-V1",
+      "worktree": null
+    },
+    "customs-clear/frontend/src/components/PaymentBreakdownCard.tsx": {
+      "branch": "agent/core-payment-regressions-v1",
+      "owner": "A-CORE",
+      "task_id": "CUSTOMS-CORE-V1",
+      "worktree": "/workspace/scratch/07c543e4bc8b/core244"
+    },
+    "customs-clear/frontend/src/components/calculator/CalculatorScenarioCompareSection.tsx": {
+      "branch": "agent/core-payment-regressions-v1",
+      "owner": "A-CORE",
+      "task_id": "CUSTOMS-CORE-V1",
+      "worktree": "/workspace/scratch/07c543e4bc8b/core244"
+    },
+    "customs-clear/frontend/src/components/nonTariff/NormativeRequirementsBlock.freshness.test.tsx": {
+      "branch": "agent/product-consolidation-v1",
+      "owner": "A-PRODUCT",
+      "task_id": "COMPLIANCE-AI-V1",
+      "worktree": null
+    },
+    "customs-clear/frontend/src/components/nonTariff/NormativeRequirementsBlock.tsx": {
+      "branch": "agent/product-consolidation-v1",
+      "owner": "A-PRODUCT",
+      "task_id": "COMPLIANCE-AI-V1",
+      "worktree": null
+    },
+    "customs-clear/frontend/src/components/nonTariff/normativeBlockHelpers.ts": {
+      "branch": "agent/product-consolidation-v1",
+      "owner": "A-PRODUCT",
+      "task_id": "COMPLIANCE-AI-V1",
+      "worktree": null
+    },
+    "customs-clear/frontend/src/components/tnved/PermitDocumentsBlock.test.tsx": {
+      "branch": "agent/product-consolidation-v1",
+      "owner": "A-PRODUCT",
+      "task_id": "COMPLIANCE-AI-V1",
+      "worktree": null
+    },
+    "customs-clear/frontend/src/components/tnved/PermitDocumentsBlock.tsx": {
+      "branch": "agent/product-consolidation-v1",
+      "owner": "A-PRODUCT",
+      "task_id": "COMPLIANCE-AI-V1",
+      "worktree": null
+    },
+    "customs-clear/frontend/src/pages/Calculator.tsx": {
+      "branch": "agent/core-payment-regressions-v1",
+      "owner": "A-CORE",
+      "task_id": "CUSTOMS-CORE-V1",
+      "worktree": "/workspace/scratch/07c543e4bc8b/core244"
+    },
+    "customs-clear/frontend/src/pages/Invoice.tsx": {
+      "branch": "agent/core-payment-regressions-v1",
+      "owner": "A-CORE",
+      "task_id": "CUSTOMS-CORE-V1",
+      "worktree": "/workspace/scratch/07c543e4bc8b/core244"
+    },
+    "customs-clear/frontend/src/test/setup.ts": {
+      "branch": "agent/product-consolidation-v1",
+      "owner": "A-PRODUCT",
+      "task_id": "COMPLIANCE-AI-V1",
+      "worktree": null
+    },
+    "customs-clear/frontend/src/types/api.types.ts": {
+      "branch": "agent/core-payment-regressions-v1",
+      "owner": "A-CORE",
+      "task_id": "CUSTOMS-CORE-V1",
+      "worktree": "/workspace/scratch/07c543e4bc8b/core244"
+    },
+    "customs-clear/frontend/vitest.config.ts": {
+      "branch": "agent/product-consolidation-v1",
+      "owner": "A-PRODUCT",
+      "task_id": "COMPLIANCE-AI-V1",
+      "worktree": null
+    },
+    "docs/ai-workflow/CUSTOMS_CORE_CONSOLIDATION_V1.md": {
+      "branch": "agent/core-payment-regressions-v1",
+      "owner": "A-CORE",
+      "task_id": "CUSTOMS-CORE-V1",
+      "worktree": "/workspace/scratch/07c543e4bc8b/core244"
     }
   },
-  "legacy_roles": {
-    "A1": "historical",
-    "A2": "historical",
-    "A3": "historical",
-    "A4": "historical"
-  },
-  "history_ref": ".ai/orchestration/evidence/legacy-agent-ownership-archive-20260929-gen42.json",
-  "inventory_ref": ".ai/orchestration/PR_INVENTORY_20260929.json"
+  "schema_version": 1
 }

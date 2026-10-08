@@ -1,5 +1,5 @@
 {
-  "board_revision": 584,
+  "board_revision": 664,
   "findings": [
     {
       "head_sha": "161a9258d174e93266353ae1fd2cb0b3e4657679",
@@ -719,6 +719,57 @@
       "validation": {
         "at": "2026-09-16T16:50:31.791642+00:00",
         "evidence": "A0 accepted independent read-only A2 code/state triage on exact PR207 HEAD 5230d817: EEC_ETT is a tariff source, while NTM completeness/currentness remains unverified. The existing task 003 duplicates the same two-file ownership and was cancelled; fix stays on task 001/PR207.",
+        "validator": "A0"
+      }
+    },
+    {
+      "head_sha": "f1921b63a452a059c1109c658560efc318127aad",
+      "id": "A0-A6-PACKET-LIMIT-PR241-001",
+      "reporter": "A0",
+      "resolution_plan": "A-CORE must rebuild equivalent logic on a fresh branch as smaller complete logical commits; no force-push, audit-limit increase, partial packet or stale A5/CI reuse.",
+      "status": "CONFIRMED",
+      "summary": "PR #241 cannot pass the mandatory complete A6 packet gate at its current commit structure: full packet is about 1,362,140 bytes and two individual commits also exceed the 600,000-byte bound.",
+      "task_id": "CUSTOMS-CORE-V1",
+      "validation": {
+        "at": "2026-09-30T19:58:41.559Z",
+        "evidence": "Live GitHub exact base/head blobs, full diffs and all 34 changed paths were reconstructed against audit.build_packet schema without truncation. Full packet 1,362,140 bytes; fd629f4f range 872,552; e60713e4 range 933,808. No file exceeds 100,000 bytes.",
+        "validator": "A0"
+      }
+    },
+    {
+      "head_sha": "bf27ef2cd243f0e2f9325c48a1cfad40a100b2fe",
+      "id": "A0-A6-PACKET-LIMIT-PR242-001",
+      "reporter": "A0",
+      "resolution_plan": "A-PRODUCT must rebuild on a fresh branch with A6-compatible high-risk commits and either avoid the lockfile delta or isolate it as explicitly non-high-risk dependency/test-infra evidence; no false full-A6 claim, force-push, limit increase or stale gate reuse.",
+      "status": "CONFIRMED",
+      "summary": "PR #242 cannot pass the mandatory complete A6 packet gate at its current commit structure: full packet is about 1,900,073 bytes and package-lock.json exceeds the 100,000-byte per-file bound.",
+      "task_id": "COMPLIANCE-AI-V1",
+      "validation": {
+        "at": "2026-09-30T19:58:41.559Z",
+        "evidence": "Live GitHub exact base/head blobs, full diffs and all 42 changed paths were reconstructed against audit.build_packet schema without truncation. Full packet 1,900,073 bytes; first commit 1,873,507; customs-clear/frontend/package-lock.json is about 237,409 bytes. Later commits are within bounds.",
+        "validator": "A0"
+      }
+    },
+    {
+      "head_sha": "233ed6a64b0e75175358f8cdf0e7bcc71191b67b",
+      "id": "A5-PRODUCT-CHILD-NEGATION-001",
+      "reporter": "A5",
+      "resolution": {
+        "evidence": "Fresh independent A5 reproduced service=False and official_definite=False for negated child phrases, preserved explicit/mixed audiences, reviewed shared matcher use, and passed 122 targeted plus 268 changed-module tests with 44 subtests. Delta packet complete and validated.",
+        "head_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
+        "validator": "A0"
+      },
+      "resolution_candidate": {
+        "evidence": "Shared Unicode/token-aware child-audience predicate now rejects negated child phrases in legacy/service and official SGR paths while preserving explicit/mixed child audiences; fresh A5 required.",
+        "head_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
+        "status": "PASSED_FRESH_A5"
+      },
+      "status": "RESOLVED",
+      "summary": "Negated child-description phrases are promoted to definite official SGR applicability, violating fail-closed false-positive acceptance.",
+      "task_id": "COMPLIANCE-AI-V1",
+      "validation": {
+        "at": "2026-09-30T22:00:20.015Z",
+        "evidence": "Independent A5 reproduced _is_child_product_description=True and has_definite_sgr=True for 'недетский крем' and 'не детский крем' at code 3304990000; result reaches user-visible official advisory as definite. A0 accepts finding and assigned A-PRODUCT repair; no stale PASS reused.",
         "validator": "A0"
       }
     }
