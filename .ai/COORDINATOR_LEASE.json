@@ -1,14 +1,14 @@
 {
   "acquisition_note": "Post-PR251 immutable A6 request regeneration and single lawful delivery; consumed g100 remains non-retryable.",
-  "expires_at": "2026-10-08T17:59:42.912098Z",
+  "expires_at": null,
   "generation": 117,
-  "holder": "/root/a0_maintenance_20261008T1956MSK",
+  "holder": null,
   "lease_repair": {},
-  "release_reason": "PR255 PP908 audit now fails closed; exact-head payment regression CI and independent A5 review passed; five unresolved VAT gaps recorded without legal over-claim.",
-  "released_by": "/root/a0_maintenance_20261008T1914MSK",
+  "release_reason": "PR255 PP908 VAT scope narrowed across payment/catalog/AI; exact remote A5 and CI passed; 0102-0105 remain manual pending retained-source mapping.",
+  "released_by": "/root/a0_maintenance_20261008T1956MSK",
   "schema_version": 1,
   "serialization_repair": {},
-  "state": "active",
-  "token": "88273f895d6f4aed94344203591ae84d",
-  "updated_at": "2026-10-08T16:59:42.912098Z"
+  "state": "released",
+  "token": null,
+  "updated_at": "2026-10-08T17:12:24.764199Z"
 }
