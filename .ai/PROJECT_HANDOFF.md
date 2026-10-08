@@ -3,6 +3,22 @@
 **Снимок:** 2026-10-08 (UTC). **Единственный репозиторий:** [ivan88810900-star/tnved_starter_kit_v2](https://github.com/ivan88810900-star/tnved_starter_kit_v2).  
 **Авторитетное состояние:** ветка `agent/orchestration-state`, файлы `.ai/TASK_BOARD.json`, `.ai/COORDINATOR_LEASE.json`, `.ai/orchestration/A6_LIVE_STATUS.json`. Этот документ — указатель и контрольная точка, **не** право на запись/merge/A6. Перед действием заново читать текущие HEAD и state. Не полагаться на Business-чат.
 
+## 0a. Продолжение продуктового цикла — persisted duty fallback
+
+**Текущий checkpoint заменяет старый HEAD #255 ниже:** [draft PR #255](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/255), `agent/core-payment-regressions-v1` @ `a356f5302a2bb4388504c213b8c767ba1de0a786`, tree `c653cb79db95f82a0b943c1ec445c79038d6a1a8`, base #244 `14e0ee8f034d94ffc5831d87e076f4d693a5a524`.
+
+Исправлено: fallback из persisted `HsRate.duty_rate` теперь сохраняет чистую специфическую часть, MAX и ADD; допускает фактические формы источника `EUR за 1 кг`/`EUR/кг` и русские эквиваленты; строка с валютой без знаменателя, отсутствующие FX/вес и переполнение завершаются fail-closed. Единицы и FX не выдумываются.
+
+Проверки на byte-identical exact tree:
+- author: `116 passed, 355 subtests`, exit 0; команда — семь payment/backend файлов на отдельной disposable SQLite;
+- lineage scan: 1171/1171 persisted EUR/kg строк из `eec_ett_normative_bundle.json` приняты, 0 отклонено, exit 0;
+- независимый A5 `/root/a5_payment_fallback`: **PASS** для опубликованного exact HEAD через совпадающий tree и `git diff --exit-code`; 288 passed +349 subtests, edge harness PASS;
+- GitHub exact-head CI: **PENDING / run не прикреплён**; старый run не переносится.
+
+Доступ к коду: полная копия main `e526dfbdb5a31b01bf6f743da0288b88f916de0c` и candidate worktree доступны. Git/Python/pytest выполняются. Обычная публикация draft-ветки выполнена законно через GitHub connector под lease generation 110; protected merge/production/A6 не выполнялись. A6 request `core-s1-6415f443120f-r9-g106` не отправлялся и не пересоздавался.
+
+Остаётся: дождаться/получить exact-head CI без обхода gate; затем продолжить manufacturer/product applicability и fixture/broad-suite разбор. Полный #244 и юридическая/источниковая полнота **не PASS**.
+
 ## 0. Реальный продуктовый цикл — 2026-10-08, рабочий исполнитель
 
 **Результат сохранён:** [draft PR #255](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/255), ветка `agent/core-payment-regressions-v1`, точный HEAD `7ce87f4eb3550f10a285dd04e38e9c6b60508e79`, tree `bb910341be886b587cff8eabc5cba478e5552bea`. Base — неизменный #244 `14e0ee8f034d94ffc5831d87e076f4d693a5a524`. Один общий исправляющий PR, три файла; merge не выполнен. Контроллер допускает рабочие ветки `agent/*`; исходные #244/#245 сохранены.

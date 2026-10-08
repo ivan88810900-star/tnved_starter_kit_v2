@@ -6378,31 +6378,39 @@
       "dependencies": [],
       "execution_checkpoint_20261008": {
         "base_candidate_sha": "14e0ee8f034d94ffc5831d87e076f4d693a5a524",
-        "ci_run_id": 37771953943,
-        "corrective_head_sha": "7ce87f4eb3550f10a285dd04e38e9c6b60508e79",
+        "ci_run_id": null,
+        "corrective_head_sha": "a356f5302a2bb4388504c213b8c767ba1de0a786",
         "corrective_pr": 255,
-        "corrective_tree_sha": "bb910341be886b587cff8eabc5cba478e5552bea",
-        "executor": "/root",
+        "corrective_tree_sha": "c653cb79db95f82a0b943c1ec445c79038d6a1a8",
+        "executor": "/root/tariff_automation_20261008T1202Z",
         "full_suite": "1402 passed;181 failed;13 errors;2 skipped;+478 subtests;NOT PASS",
-        "independent_a5": "/root/a5_core244_review:65 passed +343 subtests; scoped PASS only",
-        "lease_generation": 108,
+        "independent_a5": "/root/a5_payment_fallback: PASS on exact published tree; 288 passed +349 subtests; 1171/1171 lineage rows; edge harness PASS",
+        "lease_generation": 110,
         "no_other_running_sessions": true,
         "publication": "one consolidated working PR targeting original #244 candidate; original candidate SHA unchanged",
         "read_only_a5_session": "/root/a5_core244_review",
         "scope": [
           "customs-clear/backend/app/services/payment_engine.py",
-          "customs-clear/backend/tests/test_special_duties.py",
-          "customs-clear/frontend/src/types/api.types.ts"
+          "customs-clear/backend/tests/test_payment_engine.py"
         ],
-        "state": "PUBLISHED_SCOPED_FIX",
-        "tests": "114 passed +352 subtests; HTTP 2/2; TypeScript/build passed",
+        "state": "PUBLISHED_A5_PASS_CI_PENDING",
+        "tests": "116 passed +355 subtests; official lineage 1171/1171 accepted; focused regression 1 passed +3 subtests",
         "unresolved": [
-          "legacy specific/combined fallback drops specific_eur",
+          "exact-head GitHub CI has no attached run yet; prior run is stale",
           "manufacturer/product restrictions not matched",
-          "3 old tests conflict with required fail-closed contract",
-          "baseline shared-DB/fixture failures",
+          "canonical fixture-dependent backfill tests remain unresolved",
+          "baseline broad-suite failures remain",
           "official source completeness and A6 remain unverified"
-        ]
+        ],
+        "author_test_command": "python -m pytest tests/test_special_duties.py tests/test_payment_engine.py tests/test_payment_quote.py tests/test_payment_source_admission.py tests/test_automatic_duty_operand_validation.py tests/test_antidumping_fixed_unit_fail_closed.py tests/test_payment_fx_provenance_fail_closed.py -q --tb=short",
+        "author_test_exit_code": 0,
+        "ci_status": "PENDING_NO_EXACT_HEAD_RUN_ATTACHED",
+        "capabilities": {
+          "code_access": "FULL_CLONE main e526dfbdb5a31b01bf6f743da0288b88f916de0c plus candidate worktree",
+          "command_execution": "Git Python pytest available; author suite exit 0",
+          "lawful_publication": "draft branch/PR connector write under lease generation 110; no protected action",
+          "checkpoint": "state branch write required before lease release"
+        }
       },
       "external_audit": {
         "preflight": {
