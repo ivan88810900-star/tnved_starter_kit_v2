@@ -8,7 +8,10 @@
 """
 from __future__ import annotations
 
+import io
+import json
 import sys
+from contextlib import redirect_stdout
 from pathlib import Path
 from unittest import mock
 
@@ -102,6 +105,26 @@ class TestPp908AuditFailClosed:
         assert result["manual_review_reasons"] == []
         assert result["summary"]["headings_checked"] == 118
         assert result["summary"]["covered_10pct"] == 118
+
+    def test_json_cli_exits_nonzero_for_manual_review(self) -> None:
+        result = self._run(missing_heading=audit_mod.PP908_FOOD_HEADINGS[0])
+        stdout = io.StringIO()
+
+        with (
+            mock.patch.object(audit_mod, "audit", return_value=result),
+            mock.patch.object(sys, "argv", ["audit_pp908_vat10_coverage.py", "--json"]),
+            redirect_stdout(stdout),
+        ):
+            try:
+                audit_mod.main()
+            except SystemExit as exc:
+                assert exc.code == 1
+            else:
+                raise AssertionError("CLI must exit non-zero when manual review is required")
+
+        payload = json.loads(stdout.getvalue())
+        assert payload["status"] == "MANUAL_REVIEW_REQUIRED"
+        assert payload["manual_review_reasons"] == ["sample_code_missing"]
 
 
 class TestPp908GrainProductsVat10:
