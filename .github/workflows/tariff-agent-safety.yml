@@ -57,12 +57,11 @@ jobs:
           import re
           from pathlib import Path
 
-          from app.db import SessionLocal, engine
+          from app.db import SessionLocal
           from app.models.core import HsRate
-          from app.models.tnved import VatPreference
+          from app.services.normative_store import init_db
 
-          HsRate.__table__.create(bind=engine, checkfirst=True)
-          VatPreference.__table__.create(bind=engine, checkfirst=True)
+          init_db()
           payload = json.loads(
               Path("data/raw_normative/eec_ett_vat.json").read_text(encoding="utf-8")
           )
@@ -74,8 +73,13 @@ jobs:
           if not rates_by_code:
               raise SystemExit("committed VAT snapshot has no 10-digit rows")
 
+          with SessionLocal() as db:
+              existing_codes = {row[0] for row in db.query(HsRate.hs_code).all()}
+
           rows = []
           for code, item in rates_by_code.items():
+              if code in existing_codes:
+                  continue
               raw_rate = item.get("vat_import_rate")
               rows.append(
                   HsRate(
