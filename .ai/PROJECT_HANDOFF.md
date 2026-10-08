@@ -3,6 +3,23 @@
 **Снимок:** 2026-10-08 (UTC). **Единственный репозиторий:** [ivan88810900-star/tnved_starter_kit_v2](https://github.com/ivan88810900-star/tnved_starter_kit_v2).  
 **Авторитетное состояние:** ветка `agent/orchestration-state`, файлы `.ai/TASK_BOARD.json`, `.ai/COORDINATOR_LEASE.json`, `.ai/orchestration/A6_LIVE_STATUS.json`. Этот документ — указатель и контрольная точка, **не** право на запись/merge/A6. Перед действием заново читать текущие HEAD и state. Не полагаться на Business-чат.
 
+## 0k. Оставшиеся payment-fixtures из широкого среза закрыты и закреплены в CI
+
+**Текущий checkpoint #255:** [draft PR #255](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/255), `agent/core-payment-regressions-v1` @ `6f1f5522cfe304030d1be474e3f074e85a739835`, tree `a7f640b4fb42320bb77f2c0bd70017a40b367075`, base #244 неизменён `14e0ee8f034d94ffc5831d87e076f4d693a5a524`.
+
+Закрыт следующий воспроизведённый класс fixture/broad-suite failures: ROP importer больше не поглощает аргументы pytest; duty backfill сам поднимает pure-specific fixture и явный EUR/RUB test FX; normative bundle и VAT/PP908 проверки используют идемпотентный disposable seed и сохраняют fail-closed `REVIEW_REQUIRED`/withheld totals. Четыре фиктивных ETT-кода из старого snapshot отфильтровываются единым `is_ett_test_hs()` и покрыты двойным вызовом seed. Exact-head payment CI теперь включает `test_duty_rules_backfill.py`, `test_normative_bundle.py`, `test_rop_calculator.py`, `test_vat_preferences_audit161.py`; bootstrap использует тот же проверенный helper, а не собственный небезопасный загрузчик.
+
+Проверки exact tree:
+- author explicit offline-safe payment broad slice: `470 passed +370 subtests`, exit 0;
+- author exact workflow-equivalent после исправления bootstrap: `265 passed +23 subtests`, exit 0; focused forward/reverse-order: по `45 passed`, exit 0;
+- независимый A5 `/root/a5_special_scope`: **PASS** exact tree; `265 passed +23 subtests`, exit 0; четыре запрещённых fake-кода отсутствуют, permissions/actions не ослаблены;
+- exact-head GitHub Actions [run 37844312369](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/37844312369): `offline-safety` **SUCCESS** (job 113541234912), `payment-regression` **SUCCESS** (job 113541235424);
+- `git diff --check`: PASS.
+
+Доступ к коду подтверждён полной exact-tree копией; Git/Python/pytest и команды реально выполнялись. Законная публикация сделана только в существующую draft-ветку через connector под lease generation 121. Неограниченный root `pytest -q` не повторялся после platform security stop на unrelated outbound `api.proxyapi.ru`; поэтому full-suite PASS не заявляется. Checkpoint записывается CAS и должен быть перечитан. Protected merge, production/DB writes, flags, secrets/permissions, destructive migration и A6 не выполнялись. A6 request `core-s1-6415f443120f-r9-g106` не менялся и не отправлялся.
+
+Остаётся: этот ограниченный payment-broad блок PASS, но полный #244 и юридическая/источниковая полнота **NOT PASS**; шесть committed payment bundles stale. Следующий технический шаг — перейти к #245: воспроизвести текущие backend/frontend NTM failures, начиная с применимости требований по коду/характеристикам/источнику и без выдумывания source completeness.
+
 ## 0j. Самодостаточные payment-fixtures и fail-closed broad-suite
 
 **Текущий checkpoint #255:** [draft PR #255](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/255), `agent/core-payment-regressions-v1` @ `26fac3bf5585284afac77734f7888a2fac64e991`, tree `6c7ce0fcdfe726c8803696f4f0fad428874933bd`, base #244 неизменён `14e0ee8f034d94ffc5831d87e076f4d693a5a524`.
