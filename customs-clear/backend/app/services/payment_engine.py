@@ -332,12 +332,11 @@ def _special_duty_prefix_candidates(hs_code: str) -> list[tuple[str, int]]:
     return [(p, m) for p, m in out if not (p in seen or seen.add(p))]
 
 
-def _special_duty_is_effective(
+def _special_duty_date_window(
     effective_from: Any | None,
     effective_to: Any | None,
-    on_date: date,
-) -> bool:
-    """Validate an ISO date window and fail closed on malformed non-empty bounds."""
+) -> tuple[date | None, date | None] | None:
+    """Distinguish an invalid window from a valid but inactive measure."""
     parsed: list[date | None] = []
     for raw in (effective_from, effective_to):
         value = str(raw or "").strip()
@@ -345,13 +344,27 @@ def _special_duty_is_effective(
             parsed.append(None)
             continue
         if re.fullmatch(r"\d{4}-\d{2}-\d{2}", value) is None:
-            return False
+            return None
         try:
             parsed.append(date.fromisoformat(value))
         except ValueError:
-            return False
+            return None
 
     starts, ends = parsed
+    if starts is not None and ends is not None and starts > ends:
+        return None
+    return starts, ends
+
+
+def _special_duty_is_effective(
+    effective_from: Any | None,
+    effective_to: Any | None,
+    on_date: date,
+) -> bool:
+    window = _special_duty_date_window(effective_from, effective_to)
+    if window is None:
+        return False
+    starts, ends = window
     if starts is not None and starts > on_date:
         return False
     if ends is not None and ends < on_date:
@@ -377,6 +390,14 @@ def _trade_remedy_revision_is_not_future(value: Any | None) -> bool:
 
 def _special_duty_admission_failure(row: SpecialDuty) -> str | None:
     """Return a fail-closed reason or admit measure-specific official evidence."""
+    for field in ("rate_percent", "rate_specific"):
+        raw = getattr(row, field, None)
+        try:
+            value = float(raw) if raw is not None and not isinstance(raw, bool) else None
+        except (TypeError, ValueError, OverflowError):
+            value = None
+        if value is None or not isfinite(value) or value < 0:
+            return "special_duty_rate_invalid"
     if bool(getattr(row, "needs_verification", False)):
         return "special_duty_provenance_unverified"
     if not str(getattr(row, "regulatory_act", "") or "").strip():
@@ -479,9 +500,23 @@ def _resolve_special_duties(
         )
         if country_norm:
             query = query.filter(SpecialDuty.origin_country == country_norm)
+        candidates = query.all()
+        invalid_windows = [
+            row for row in candidates
+            if _special_duty_date_window(row.effective_from, row.effective_to) is None
+        ]
+        if invalid_windows:
+            return 0.0, [{
+                "warning": (
+                    "Даты действия специальной пошлины некорректны. "
+                    "Нельзя подтвердить неприменимость меры; требуется проверка."
+                ),
+                "affected_codes": sorted({row.hs_code_prefix for row in invalid_windows}),
+                "review_reason": "special_duty_dates_invalid",
+            }], True
         rows = [
             row
-            for row in query.all()
+            for row in candidates
             if _special_duty_is_effective(
                 row.effective_from,
                 row.effective_to,
@@ -547,10 +582,16 @@ def _resolve_special_duties(
     details: list[dict[str, Any]] = []
     total = 0.0
     for r in rows:
-        part_ad = customs_value * float(r.rate_percent or 0.0) / 100.0
+        part_ad = _validated_payment_result(
+            customs_value * float(r.rate_percent) / 100.0,
+            label="Сумма специальной пошлины",
+        )
         ccy = (r.currency_code or "RUB").upper().strip()
-        fx = _resolve_fx_rate(ccy, fx_rates)
-        part_spec = float(r.rate_specific or 0.0) * float(quantity or 0.0) * fx
+        specific_rate = float(r.rate_specific)
+        # An ad-valorem amount is already in RUB. Stored currency metadata
+        # must not require or invent an exchange rate for a zero fixed part.
+        fx = _resolve_fx_rate(ccy, fx_rates) if specific_rate else None
+        part_spec = specific_rate * float(quantity or 0.0) * fx if fx is not None else 0.0
         part = part_ad + part_spec
         total += part
         details.append(

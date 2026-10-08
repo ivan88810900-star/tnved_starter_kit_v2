@@ -322,7 +322,7 @@ export interface CalculatorSpecialDutyItem {
   rate_percent: number;
   rate_specific: number;
   currency_code: string;
-  fx_rate: number;
+  fx_rate: number | null;
   regulatory_act: string;
   amount: number;
   match_len: number;

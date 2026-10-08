@@ -11,6 +11,7 @@ from app.main import app
 from app.models.tnved import SpecialDuty
 from app.services.normative_store import init_db
 from app.services.payment_engine import compute_payments
+from app.services.payment_quote_service import build_payment_quote
 
 
 class SpecialDutiesTests(unittest.TestCase):
@@ -337,12 +338,83 @@ class SpecialDutiesTests(unittest.TestCase):
             acts = {d.get("regulatory_act") for d in details if not d.get("warning")}
             self.assertTrue(acts.isdisjoint(markers.values()))
             self.assertEqual(res["breakdown"]["special_duties_amount"], 0.0)
+            self.assertIn("special_duty_dates_invalid", res["payment_review_reasons"])
+            quote = build_payment_quote({
+                "hs_code": "9997999999", "country": "ZZ",
+                "customs_value": 100_000, "invoice_currency": "RUB",
+            })
+            special = next(line for line in quote.line_items if line.code == "special_duty")
+            self.assertEqual(special.status, "manual_review_required")
+            self.assertIsNone(special.amount_rub)
+            self.assertIsNone(quote.total_payable_rub)
         finally:
             with SessionLocal() as db:
                 db.query(SpecialDuty).filter(
                     SpecialDuty.regulatory_act.in_(list(markers.values()))
                 ).delete(synchronize_session=False)
                 db.commit()
+
+    def test_inverted_window_requires_review_instead_of_not_applicable(self) -> None:
+        marker = "TEST-INVERTED-SPECIAL-WINDOW"
+        row = self._official_anti_dumping_row(act=marker)
+        row.effective_from = "2099-01-01"
+        row.effective_to = "2020-01-01"
+        with SessionLocal() as db:
+            db.add(row)
+            db.commit()
+        try:
+            result = self._public_calc(hs_code="9996999999", country="ZZ")
+            self.assertIn("special_duty_dates_invalid", result["payment_review_reasons"])
+            self.assertIsNone(result["breakdown"]["total_payable"])
+        finally:
+            with SessionLocal() as db:
+                db.query(SpecialDuty).filter(SpecialDuty.regulatory_act == marker).delete()
+                db.commit()
+
+    def test_percent_only_special_duty_does_not_require_unused_fx(self) -> None:
+        marker = "TEST-PERCENT-ONLY-FOREIGN-CURRENCY"
+        row = self._official_anti_dumping_row(act=marker)
+        row.currency_code = "EUR"
+        with SessionLocal() as db:
+            db.add(row)
+            db.commit()
+        try:
+            result = self._public_calc(hs_code="9996999999", country="ZZ")
+            self.assertEqual(result["breakdown"]["special_duties_amount"], 7000.0)
+            self.assertEqual(result["special_duties"][0]["amount"], 7000.0)
+            # No conversion was needed; never invent an EUR/RUB exchange rate.
+            self.assertIsNone(result["special_duties"][0]["fx_rate"])
+        finally:
+            with SessionLocal() as db:
+                db.query(SpecialDuty).filter(SpecialDuty.regulatory_act == marker).delete()
+                db.commit()
+
+    def test_invalid_special_duty_rates_withhold_quote_line(self) -> None:
+        marker = "TEST-INVALID-SPECIAL-RATE"
+        for field in ("rate_percent", "rate_specific"):
+            for invalid in (-7.0, float("inf")):
+                with self.subTest(field=field, value=invalid):
+                    row = self._official_anti_dumping_row(act=marker)
+                    setattr(row, field, invalid)
+                    with SessionLocal() as db:
+                        db.add(row)
+                        db.commit()
+                    try:
+                        result = self._calc(hs_code="9996999999", country="ZZ")
+                        self.assertEqual(result["breakdown"]["special_duties_amount"], 0.0)
+                        self.assertIn("special_duty_rate_invalid", result["payment_review_reasons"])
+                        quote = build_payment_quote({
+                            "hs_code": "9996999999", "country": "ZZ",
+                            "customs_value": 100_000, "invoice_currency": "RUB",
+                        })
+                        special = next(line for line in quote.line_items if line.code == "special_duty")
+                        self.assertEqual(special.status, "manual_review_required")
+                        self.assertIsNone(special.amount_rub)
+                        self.assertIsNone(quote.total_payable_rub)
+                    finally:
+                        with SessionLocal() as db:
+                            db.query(SpecialDuty).filter(SpecialDuty.regulatory_act == marker).delete()
+                            db.commit()
 
 
 if __name__ == "__main__":
