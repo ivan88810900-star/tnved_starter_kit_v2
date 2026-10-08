@@ -6378,39 +6378,34 @@
       "dependencies": [],
       "execution_checkpoint_20261008": {
         "base_candidate_sha": "14e0ee8f034d94ffc5831d87e076f4d693a5a524",
-        "ci_run_id": null,
-        "corrective_head_sha": "a356f5302a2bb4388504c213b8c767ba1de0a786",
         "corrective_pr": 255,
-        "corrective_tree_sha": "c653cb79db95f82a0b943c1ec445c79038d6a1a8",
-        "executor": "/root/tariff_automation_20261008T1202Z",
-        "full_suite": "1402 passed;181 failed;13 errors;2 skipped;+478 subtests;NOT PASS",
-        "independent_a5": "/root/a5_payment_fallback: PASS on exact published tree; 288 passed +349 subtests; 1171/1171 lineage rows; edge harness PASS",
-        "lease_generation": 110,
-        "no_other_running_sessions": true,
-        "publication": "one consolidated working PR targeting original #244 candidate; original candidate SHA unchanged",
-        "read_only_a5_session": "/root/a5_core244_review",
-        "scope": [
-          "customs-clear/backend/app/services/payment_engine.py",
-          "customs-clear/backend/tests/test_payment_engine.py"
-        ],
-        "state": "PUBLISHED_A5_PASS_CI_PENDING",
-        "tests": "116 passed +355 subtests; official lineage 1171/1171 accepted; focused regression 1 passed +3 subtests",
-        "unresolved": [
-          "exact-head GitHub CI has no attached run yet; prior run is stale",
-          "manufacturer/product restrictions not matched",
-          "canonical fixture-dependent backfill tests remain unresolved",
-          "baseline broad-suite failures remain",
-          "official source completeness and A6 remain unverified"
-        ],
-        "author_test_command": "python -m pytest tests/test_special_duties.py tests/test_payment_engine.py tests/test_payment_quote.py tests/test_payment_source_admission.py tests/test_automatic_duty_operand_validation.py tests/test_antidumping_fixed_unit_fail_closed.py tests/test_payment_fx_provenance_fail_closed.py -q --tb=short",
+        "corrective_head_sha": "fe7ce2da9cbcf776911f4b27a44ddb40e7e48cc9",
+        "corrective_tree_sha": "17e1672b5ee98515a1e51e559961d5d7337be0e1",
+        "executor": "/root/tariff_automation_20261008T1250Z",
+        "lease_generation": 112,
+        "scope": "special-duty manufacturer/product exact scope matching and propagation",
+        "state": "PUBLISHED_A5_PASS_CI_PASS",
+        "tests": "130 passed +358 subtests; exit 0",
+        "author_test_command": "python -m pytest tests/test_special_duties.py tests/test_payment_engine.py tests/test_payment_quote.py tests/test_payment_source_admission.py tests/test_automatic_duty_operand_validation.py tests/test_antidumping_fixed_unit_fail_closed.py tests/test_payment_fx_provenance_fail_closed.py tests/test_invoice_and_compare.py tests/test_assistant_copilot.py tests/test_orchestrator_batch_parallel.py tests/test_ved_intel_api.py -q --tb=short",
         "author_test_exit_code": 0,
-        "ci_status": "PENDING_NO_EXACT_HEAD_RUN_ATTACHED",
+        "independent_a5": "/root/a5_special_scope: PASS exact tree; 65 passed +21 subtests; adversarial 8/8 PASS; no blocking findings",
+        "ci_status": "PASSED",
+        "ci_run_id": 37781116016,
+        "ci_job_id": 113324157002,
+        "a6": "unchanged/not sent",
         "capabilities": {
           "code_access": "FULL_CLONE main e526dfbdb5a31b01bf6f743da0288b88f916de0c plus candidate worktree",
           "command_execution": "Git Python pytest available; author suite exit 0",
-          "lawful_publication": "draft branch/PR connector write under lease generation 110; no protected action",
-          "checkpoint": "state branch write required before lease release"
-        }
+          "lawful_publication": "draft branch/PR connector write under lease generation 112; no protected action",
+          "checkpoint": "state branch CAS commit pending verification"
+        },
+        "unresolved": [
+          "canonical fixture-dependent backfill and broad-suite failures remain",
+          "full #244 product acceptance is not PASS",
+          "official-source completeness and legal applicability remain unverified",
+          "A6 request core-s1-6415f443120f-r9-g106 remains prepared but not authorized or sent",
+          "continue #245 after core fixture/broad-suite triage"
+        ]
       },
       "external_audit": {
         "preflight": {
@@ -6646,7 +6641,7 @@
         "head_sha": "14e0ee8f034d94ffc5831d87e076f4d693a5a524",
         "known_failures": "Three scheduled-data-refresh workflow tests fail because .github/workflows/scheduled-data-refresh.yml is absent; reproduced 3/3 on exact base and not introduced by repack."
       },
-      "updated_at": "2026-10-08T11:46:59.239192+00:00",
+      "updated_at": "2026-10-08T13:02:46.510Z",
       "worktree": "/workspace/scratch/07c543e4bc8b/core244"
     },
     {
@@ -7057,5 +7052,5 @@
       "worktree": null
     }
   ],
-  "updated_at": "2026-10-08T11:48:42.635448+00:00"
+  "updated_at": "2026-10-08T13:02:46.511Z"
 }

@@ -3,6 +3,23 @@
 **Снимок:** 2026-10-08 (UTC). **Единственный репозиторий:** [ivan88810900-star/tnved_starter_kit_v2](https://github.com/ivan88810900-star/tnved_starter_kit_v2).  
 **Авторитетное состояние:** ветка `agent/orchestration-state`, файлы `.ai/TASK_BOARD.json`, `.ai/COORDINATOR_LEASE.json`, `.ai/orchestration/A6_LIVE_STATUS.json`. Этот документ — указатель и контрольная точка, **не** право на запись/merge/A6. Перед действием заново читать текущие HEAD и state. Не полагаться на Business-чат.
 
+## 0b. Продолжение продуктового цикла — special-duty scope
+
+**Новый текущий checkpoint #255:** [draft PR #255](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/255), `agent/core-payment-regressions-v1` @ `fe7ce2da9cbcf776911f4b27a44ddb40e7e48cc9`, tree `17e1672b5ee98515a1e51e559961d5d7337be0e1`, base #244 неизменён `14e0ee8f034d94ffc5831d87e076f4d693a5a524`.
+
+Исправлен воспроизведённый дефект: строки специальных пошлин с ограничением по изготовителю/экспортёру или описанию товара больше не применяются только по коду/стране. Для каждого непустого persisted scope требуется точное совпадение после NFKC, casefold и нормализации пробелов. Отсутствие, несовпадение, пунктуационное отличие или substring-only совпадение дают `special_duty_scope_unresolved`, нулевую сумму меры, `REVIEW_REQUIRED` и withheld totals. Fuzzy matching и новая правовая интерпретация не добавлены. Scope-поля передаются через Calculator, Payment Quote, Compliance, invoice, Copilot single/batch и VED Intel.
+
+Проверки exact tree:
+- author disposable SQLite: `130 passed, 358 subtests`, exit 0;
+- точная команда: `python -m pytest tests/test_special_duties.py tests/test_payment_engine.py tests/test_payment_quote.py tests/test_payment_source_admission.py tests/test_automatic_duty_operand_validation.py tests/test_antidumping_fixed_unit_fail_closed.py tests/test_payment_fx_provenance_fail_closed.py tests/test_invoice_and_compare.py tests/test_assistant_copilot.py tests/test_orchestrator_batch_parallel.py tests/test_ved_intel_api.py -q --tb=short`;
+- независимый A5 `/root/a5_special_scope`: **PASS**, `65 passed +21 subtests`, exit 0; отдельная adversarial matrix `8/8 PASS`, exit 0;
+- exact-head CI: **PASS**, [run 37781116016 / job 113324157002](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/37781116016/job/113324157002), `offline-safety`;
+- `git diff --check` и compileall: PASS.
+
+Возможности среды подтверждены: полный clone main `e526dfbdb5a31b01bf6f743da0288b88f916de0c`, Git/Python/pytest выполняются, draft-ветка опубликована законно через connector под lease generation 112. Этот checkpoint сохранён в state-ветке и будет перечитан после CAS. Protected merge, production, secrets/permissions и A6 не выполнялись. A6 request `core-s1-6415f443120f-r9-g106` не менялся и не отправлялся.
+
+Остаётся: canonical fixture/broad-suite разбор, затем продолжение #245. Полный #244, юридическая применимость и источниковая полнота **не PASS**.
+
 ## 0a. Продолжение продуктового цикла — persisted duty fallback
 
 **Текущий checkpoint заменяет старый HEAD #255 ниже:** [draft PR #255](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/255), `agent/core-payment-regressions-v1` @ `a356f5302a2bb4388504c213b8c767ba1de0a786`, tree `c653cb79db95f82a0b943c1ec445c79038d6a1a8`, base #244 `14e0ee8f034d94ffc5831d87e076f4d693a5a524`.
