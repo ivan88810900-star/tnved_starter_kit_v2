@@ -57,11 +57,12 @@ jobs:
           import re
           from pathlib import Path
 
-          import app.models  # noqa: F401
-          from app.db import Base, SessionLocal, engine
+          from app.db import SessionLocal, engine
           from app.models.core import HsRate
+          from app.models.tnved import VatPreference
 
-          Base.metadata.create_all(bind=engine)
+          HsRate.__table__.create(bind=engine, checkfirst=True)
+          VatPreference.__table__.create(bind=engine, checkfirst=True)
           payload = json.loads(
               Path("data/raw_normative/eec_ett_vat.json").read_text(encoding="utf-8")
           )
