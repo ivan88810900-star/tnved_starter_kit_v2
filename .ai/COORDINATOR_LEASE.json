@@ -1,14 +1,14 @@
 {
   "acquisition_note": "Post-PR251 immutable A6 request regeneration and single lawful delivery; consumed g100 remains non-retryable.",
-  "expires_at": null,
-  "generation": 123,
-  "holder": null,
+  "expires_at": "2026-10-08T23:23:29.930243Z",
+  "generation": 124,
+  "holder": "/root/tariff_automation_20261009T0152MSK",
   "lease_repair": {},
   "release_reason": "PR256 exact-head CI verified and persisted; next disposable NTM v2 fixture step recorded.",
   "released_by": "/root/a0_maintenance_20261009T0114MSK",
   "schema_version": 1,
   "serialization_repair": {},
-  "state": "released",
-  "token": null,
-  "updated_at": "2026-10-08T22:21:34.196Z"
+  "state": "active",
+  "token": "c1218398ad3e40388fcaabb7189ffcf4",
+  "updated_at": "2026-10-08T22:53:29.930243Z"
 }
