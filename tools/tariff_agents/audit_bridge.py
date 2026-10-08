@@ -276,8 +276,10 @@ def fetch_commit_objects(repo, commits):
 def _write_exclusive(path, value, *, environ=None, scan_contacts=True):
     raw = json.dumps(value, ensure_ascii=False, indent=2, sort_keys=True,
                      allow_nan=False) + "\n"
-    audit.ensure_safe_text(raw, environ={} if environ is None else environ,
-                           scan_contacts=scan_contacts)
+    # Scan actual string keys/values before encoding; escaped newlines must not
+    # become fictitious contacts in otherwise valid findings/receipt artifacts.
+    audit.ensure_safe_json_value(value, environ={} if environ is None else environ,
+                                 scan_contacts=scan_contacts)
     target = Path(path)
     flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL
     if hasattr(os, "O_NOFOLLOW"):
