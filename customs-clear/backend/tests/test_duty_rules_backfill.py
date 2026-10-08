@@ -3,18 +3,21 @@
 from __future__ import annotations
 
 import unittest
+from unittest.mock import patch
 
 from app.db import SessionLocal
 from app.models.tnved import HsDutyRule
 from app.services.duty_rules_backfill import backfill_duty_rules_from_hs_rates
 from app.services.normative_store import init_db
 from app.services.payment_engine import _find_duty_rule_for_hs
+from tests.support_legacy_payment_fixture import ensure_specific_duty_fixture
 
 
 class DutyRulesBackfillTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         init_db()
+        ensure_specific_duty_fixture()
 
     def test_backfill_creates_specific_rule_for_6303929000(self) -> None:
         code = "6303929000"
@@ -45,6 +48,7 @@ class SpecificDutyComputeTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         init_db()
+        ensure_specific_duty_fixture()
 
     def test_compute_6303929000_with_net_weight(self) -> None:
         from fastapi.testclient import TestClient
@@ -56,19 +60,23 @@ class SpecificDutyComputeTests(unittest.TestCase):
                 db.commit()
 
         client = TestClient(app)
-        resp = client.post(
-            "/api/calculator/compute",
-            json={
-                "hs_code": "6303929000",
-                "customs_value": 331400.92,
-                "currency": "RUB",
-                "country_of_origin": "CN",
-                "quantity": 1,
-                "net_weight_kg": 1860.84,
-            },
-        )
+        with patch("app.api.calculator.get_rates_map", return_value={"RUB": 1.0, "EUR": 82.8}):
+            resp = client.post(
+                "/api/calculator/compute",
+                json={
+                    "hs_code": "6303929000",
+                    "customs_value": 331400.92,
+                    "currency": "RUB",
+                    "country_of_origin": "CN",
+                    "quantity": 1,
+                    "net_weight_kg": 1860.84,
+                },
+            )
         self.assertEqual(resp.status_code, 200, resp.text)
         data = resp.json()
+        self.assertEqual(data["status"], "REVIEW_REQUIRED")
+        self.assertIsNone(data["breakdown"]["total_payable"])
+        self.assertIn("duty_rule_source_binding_unverified", data["payment_review_reasons"])
         breakdown = data.get("breakdown") or {}
         duty = float(breakdown.get("duty") or 0)
         self.assertGreater(duty, 90000.0)

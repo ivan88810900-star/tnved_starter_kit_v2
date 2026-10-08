@@ -16,12 +16,15 @@ from pathlib import Path
 from unittest import mock
 
 from app.db import SessionLocal
+from app.models.core import HsRate
 from app.models.tnved import VatPreference
 from app.services.compliance_resolver import pick_vat_preference_row
 from app.services.normative_store import find_rate_for_hs
 from app.services.payment_engine import _resolve_live_animal_vat_scope
 from app.services.vat_preferential_reference import match_preferential_vat_group
 from app.api.tnved_catalog import _get_vat_preferences_rows
+from app.services.normative_store import init_db
+from tests.support_legacy_payment_fixture import ensure_committed_vat_fixture
 
 _BACKEND = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(_BACKEND / "scripts"))
@@ -113,6 +116,11 @@ class TestPp908ListsIntegrity:
 
 
 class TestPp908AuditCoverage:
+    @classmethod
+    def setup_class(cls) -> None:
+        init_db()
+        ensure_committed_vat_fixture()
+
     def test_audit_reports_narrowed_scope_and_unresolved_source_map(self) -> None:
         result = audit_mod.audit()
         s = result["summary"]
@@ -128,6 +136,23 @@ class TestPp908AuditCoverage:
         assert s["animal_mapping_excluded_codes"] == 10
         assert s["product_characteristic_required"] == 30
         assert result["gaps"] == []
+
+    def test_fixture_does_not_restore_blocklisted_ett_test_codes(self) -> None:
+        ensure_committed_vat_fixture()
+        ensure_committed_vat_fixture()
+        with SessionLocal() as db:
+            present = {
+                code
+                for (code,) in db.query(HsRate.hs_code)
+                .filter(HsRate.hs_code.in_((
+                    "7777770000",
+                    "7777770001",
+                    "8888880000",
+                    "9999990000",
+                )))
+                .all()
+            }
+        assert present == set()
 
 
 class TestPp908AuditFailClosed:
