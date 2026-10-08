@@ -3,6 +3,20 @@
 **Снимок:** 2026-10-08 (UTC). **Единственный репозиторий:** [ivan88810900-star/tnved_starter_kit_v2](https://github.com/ivan88810900-star/tnved_starter_kit_v2).  
 **Авторитетное состояние:** ветка `agent/orchestration-state`, файлы `.ai/TASK_BOARD.json`, `.ai/COORDINATOR_LEASE.json`, `.ai/orchestration/A6_LIVE_STATUS.json`. Этот документ — указатель и контрольная точка, **не** право на запись/merge/A6. Перед действием заново читать текущие HEAD и state. Не полагаться на Business-чат.
 
+## 0f. PP908 fail-closed audit и payment regression CI
+
+**Текущий checkpoint #255:** [draft PR #255](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/255), `agent/core-payment-regressions-v1` @ `942d0da1520081666ce3620708f1a692b80af0a2`, base #244 неизменён `14e0ee8f034d94ffc5831d87e076f4d693a5a524`.
+
+PP908 audit больше не возвращает ложный `OK`: при VAT gaps или отсутствии representative code он возвращает `MANUAL_REVIEW_REQUIRED`, а CLI завершает работу с code 1. Герметичные тесты покрывают оба fail-closed случая, полный fixture и JSON CLI. Реальный committed fixture проверяется через миграции и committed snapshots; он явно фиксирует 118 проверенных headings, 113 covered и пять 22% gaps: `0102`, `0103`, `0104`, `0105`, `8715`. Это evidence о пробелах, не юридическое решение и не claim полноты.
+
+Проверки exact head:
+- GitHub Actions run [37809890335](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/37809890335): `offline-safety` **SUCCESS**, `payment-regression` **SUCCESS**;
+- payment regression выполняет полный `test_pp908_vat_coverage.py` и import-duty / bundle / payment-engine / special-duty slices;
+- независимый A5 review exact head: **PASS**, предыдущие blockers (circular fixture assertion, отсутствие CLI exit test и DB bootstrap) закрыты;
+- provider/network/A6 не вызывались; immutable request `core-s1-6415f443120f-r9-g106` не менялся.
+
+Следующий безопасный шаг: source-backed разбор пяти PP908 gaps без broad heading over-claim; до этого audit обязан оставаться fail-closed. Merge, production, flags, secrets/permissions и destructive операции не выполнялись.
+
 ## 0e. Продолжение продуктового цикла — retained ETT source snapshot
 
 **Новый текущий checkpoint #255:** [draft PR #255](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/255), `agent/core-payment-regressions-v1` @ `2751be626775964130af01874cded669427d452b`, tree `6de62435b74e55e195593248cb19dec491314ed1`, base #244 неизменён `14e0ee8f034d94ffc5831d87e076f4d693a5a524`.
