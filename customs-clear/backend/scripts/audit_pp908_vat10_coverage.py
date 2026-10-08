@@ -39,7 +39,6 @@ from app.services.normative_store import find_rate_for_hs  # noqa: E402
 
 # Перечень I — продовольственные товары (заголовки ТН ВЭД, целиком 10%).
 PP908_FOOD_HEADINGS: tuple[str, ...] = (
-    "0102", "0103", "0104", "0105",
     "0201", "0202", "0203", "0204", "0205", "0206", "0207", "0208", "0209", "0210",
     "0301", "0302", "0303", "0304", "0305", "0306", "0307", "0308",
     "0401", "0402", "0403", "0404", "0405", "0406", "0407", "0408", "0409", "0410",
@@ -63,19 +62,37 @@ PP908_FOOD_HEADINGS: tuple[str, ...] = (
 PP908_CHILD_HEADINGS: tuple[str, ...] = (
     "6111", "6209",
     "6401", "6402", "6403", "6404", "6405",
-    "8715",
     "950300",
+)
+
+# Позиции, для которых действующая формулировка ПП908 подтверждает точный код,
+# но не весь четырёхзначный заголовок.
+PP908_EXACT_CODES: tuple[str, ...] = (
+    "8715001000",  # из 8715 00 — коляски детские в обычной заводской комплектации
 )
 
 # Смешанные заголовки ПП908: льготны лишь отдельные субпозиции (детские/
 # продовольственные), поэтому на уровне заголовка 10% НЕ применяется
 # (иначе over-claim для «взрослых»/непродовольственных позиций).
 PP908_MIXED_HEADINGS: dict[str, str] = {
+    "0102": "Живой КРС: племенные чистопородные животные исключены из льготного перечня.",
+    "0103": "Живые свиньи: племенные чистопородные животные исключены из льготного перечня.",
+    "0104": "Живые овцы и козы: племенные чистопородные животные исключены из льготного перечня.",
+    "0105": "Живая домашняя птица: племенные категории исключены из льготного перечня.",
+    "8715": "Льготен точный код 8715 00 100 0; прочие детские коляски и их части не наследуют 10%.",
     "1107": "Солод — пивоваренный полупродукт, не относится к 10% продовольствию.",
     "9619": "Гигиенические изделия: детские подгузники (10%) + товары для взрослых (22%).",
     "9404": "Постельные принадлежности: детские (10%) + взрослые матрацы (22%).",
     "4820": "Бумажно-беловая продукция: школьные тетради (10%) + офисные регистры (22%).",
     "4817": "Конверты/карточки + детские изделия — смешанный заголовок.",
+}
+
+# Для этих смешанных заголовков в репозитории пока нет проверенной карты
+# разрешённых десятизначных кодов.  Они не должны исчезать из результата аудита:
+# до загрузки такой карты итог остаётся MANUAL_REVIEW_REQUIRED.
+PP908_SOURCE_MAPPING_REQUIRED: dict[str, str] = {
+    heading: PP908_MIXED_HEADINGS[heading]
+    for heading in ("0102", "0103", "0104", "0105")
 }
 
 
@@ -121,13 +138,30 @@ def audit() -> dict:
             else:
                 gaps.append(entry)
 
-    total = len(PP908_FOOD_HEADINGS) + len(PP908_CHILD_HEADINGS)
+        for code in PP908_EXACT_CODES:
+            eff, source = _effective_vat(db, code)
+            entry = {
+                "heading": code[:4],
+                "target_type": "exact_code",
+                "target": code,
+                "sample_code": code,
+                "vat_rate": eff,
+                "source": source,
+            }
+            if eff == 10:
+                covered.append(entry)
+            else:
+                gaps.append(entry)
+
+    total = len(PP908_FOOD_HEADINGS) + len(PP908_CHILD_HEADINGS) + len(PP908_EXACT_CODES)
     checked = total - len(no_code)
     manual_review_reasons: list[str] = []
     if gaps:
         manual_review_reasons.append("vat_rate_gap")
     if no_code:
         manual_review_reasons.append("sample_code_missing")
+    if PP908_SOURCE_MAPPING_REQUIRED:
+        manual_review_reasons.append("source_mapping_required")
     return {
         "status": "OK" if not manual_review_reasons else "MANUAL_REVIEW_REQUIRED",
         "summary": {
@@ -136,16 +170,20 @@ def audit() -> dict:
             "covered_10pct": len(covered),
             "gaps": len(gaps),
             "no_sample_code": len(no_code),
+            "exact_codes_checked": len(PP908_EXACT_CODES),
+            "source_mappings_required": len(PP908_SOURCE_MAPPING_REQUIRED),
             "coverage_pct": round(100.0 * len(covered) / checked, 1) if checked else 0.0,
         },
         "manual_review_reasons": manual_review_reasons,
         "gaps": gaps,
         "no_sample_code": no_code,
         "mixed_headings_excluded": PP908_MIXED_HEADINGS,
+        "source_mapping_required": PP908_SOURCE_MAPPING_REQUIRED,
         "notes": [
             "Read-only audit: hs_rates / vat_preferences не мутируются.",
             "hs_rates — первичный источник; vat_preferences — курируемое дополнение.",
             "Смешанные заголовки не покрываются на уровне заголовка во избежание over-claim.",
+            "Неподтверждённые карты субпозиций оставляют результат в MANUAL_REVIEW_REQUIRED.",
         ],
     }
 

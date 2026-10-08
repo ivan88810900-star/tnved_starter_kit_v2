@@ -67,10 +67,10 @@ class PaymentEngineTests(unittest.TestCase):
         self.assertEqual(res["breakdown"]["vat_rate"], 10.0)
 
     def test_vat_10_from_vat_preferences_expansion(self):
-        """Льготная позиция из vat_preferences (живой скот по ПП №908) → 10%, без over-claim для электроники."""
+        """Точечная льгота ПП №908 применяется без наследования от смешанного заголовка."""
         marker = "ТЕСТ ПП РФ № 908 (vat10 expansion)"
         with SessionLocal() as db:
-            db.add(VatPreference(hs_code_prefix="0102", vat_rate=10, decree_info=marker, comment="тест"))
+            db.add(VatPreference(hs_code_prefix="0102291000", vat_rate=10, decree_info=marker, comment="тест"))
             db.commit()
         try:
             res = self._calc(hs_code="0102291000", customs_value=100_000, freight=0)
@@ -79,6 +79,20 @@ class PaymentEngineTests(unittest.TestCase):
             # Электроника не должна попасть под льготу.
             res_el = self._calc(hs_code="8471300000", customs_value=100_000, freight=0)
             self.assertEqual(res_el["breakdown"]["vat_rate"], 22.0)
+        finally:
+            with SessionLocal() as db:
+                db.query(VatPreference).filter(VatPreference.decree_info == marker).delete()
+                db.commit()
+
+    def test_stale_broad_pp908_preference_fails_closed(self):
+        """Старая 4-значная льгота не переопределяет ставку для исключённой племенной позиции."""
+        marker = "ТЕСТ ПП РФ № 908 (unsafe broad heading)"
+        with SessionLocal() as db:
+            db.add(VatPreference(hs_code_prefix="0102", vat_rate=10, decree_info=marker, comment="тест"))
+            db.commit()
+        try:
+            res = self._calc(hs_code="0102211000", customs_value=100_000, freight=0)
+            self.assertEqual(res["breakdown"]["vat_rate"], 22.0)
         finally:
             with SessionLocal() as db:
                 db.query(VatPreference).filter(VatPreference.decree_info == marker).delete()

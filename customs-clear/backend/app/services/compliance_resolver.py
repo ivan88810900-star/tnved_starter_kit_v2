@@ -27,6 +27,14 @@ from .registry_matcher import match_document_in_registries
 
 DEFAULT_VAT_RATE = 22.0
 
+# These PP908 entries used to be seeded as whole-heading 10% preferences.  The
+# current list is narrower: 0102..0105 exclude breeding animals/birds, while
+# 8715 covers the exact baby-carriage code 8715 00 100 0.  Reject stale broad
+# rows at read time as well as removing them from committed seed data.  This is
+# deliberately fail-closed: a more-specific, source-backed prefix remains
+# eligible for normal longest-prefix matching.
+_UNSAFE_WHOLE_HEADING_VAT10_PREFIXES = frozenset({"0102", "0103", "0104", "0105", "8715"})
+
 
 @dataclass(frozen=True)
 class ComplianceRequirement:
@@ -54,6 +62,25 @@ def _hs_prefix_chain(hs_code: str, *, min_len: int = 2) -> list[str]:
     for ln in range(len(hs), min_len - 1, -1):
         out.append(hs[:ln])
     return out
+
+
+def is_vat_preference_applicable(row: VatPreference, hs_code: str) -> bool:
+    """Return whether a stored VAT preference may be exposed for this code.
+
+    All read paths must use this guard so historical over-broad PP908 rows cannot
+    leak into payment calculation, catalog UI, or downstream automation.
+    """
+    hs = _norm_hs(hs_code)
+    pref = _norm_hs(row.hs_code_prefix)
+    if not pref or not hs.startswith(pref):
+        return False
+    try:
+        rate = float(row.vat_rate)
+    except Exception:
+        return False
+    if rate == 10.0 and pref in _UNSAFE_WHOLE_HEADING_VAT10_PREFIXES:
+        return False
+    return True
 
 
 # ---------------------------------------------------------------------------
@@ -338,22 +365,12 @@ def resolve_vat_rate_for_hs(hs_code: str, db: Session) -> tuple[float, str]:
     prefixes = _hs_prefix_chain(hs, min_len=2)
     if not prefixes:
         return DEFAULT_VAT_RATE, "НК РФ ст. 164 п. 3 (общая ставка)"
-    best_rate: float | None = None
-    best_basis = ""
-    best_len = -1
-    for r in db.query(VatPreference).filter(VatPreference.hs_code_prefix.in_(prefixes)).all():
-        pref = _norm_hs(r.hs_code_prefix)
-        if not pref or not hs.startswith(pref):
-            continue
-        if len(pref) > best_len:
-            best_len = len(pref)
-            try:
-                best_rate = float(r.vat_rate)
-            except Exception:
-                best_rate = None
-            best_basis = str(r.decree_info or r.comment or "").strip()[:255]
-    if best_rate is not None:
-        return best_rate, best_basis
+    vat_preference, _ = pick_vat_preference_row(hs, db)
+    if vat_preference is not None:
+        return (
+            float(vat_preference.vat_rate),
+            str(vat_preference.decree_info or vat_preference.comment or "").strip()[:255],
+        )
     # fallback по hs_rates (префиксный)
     best_row: HsRate | None = None
     best_len = -1
@@ -390,7 +407,7 @@ def pick_vat_preference_row(hs_code: str, db: Session) -> tuple[VatPreference | 
     best_len = -1
     for row in rows:
         pref = _norm_hs(row.hs_code_prefix)
-        if not pref or not hs.startswith(pref):
+        if not is_vat_preference_applicable(row, hs):
             continue
         lp = len(pref)
         if lp > best_len:

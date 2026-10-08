@@ -1,7 +1,7 @@
 """Тесты покрытия льготной ставки НДС 10% по ПП РФ №908.
 
 Проверяем:
-- аудит покрытия (scripts.audit_pp908_vat10_coverage) даёт высокий процент;
+- аудит покрытия проверяет только целые льготные заголовки и точные коды;
 - смешанные заголовки исключены из целевых перечней (нет over-claim);
 - запись vat_preferences для продуктов переработки зерна (1108/1109) → 10%,
   а смешанные/непродовольственные заголовки (1107/9404/9619) остаются 22%.
@@ -19,6 +19,8 @@ from app.db import SessionLocal
 from app.models.tnved import VatPreference
 from app.services.compliance_resolver import pick_vat_preference_row
 from app.services.normative_store import find_rate_for_hs
+from app.services.vat_preferential_reference import match_preferential_vat_group
+from app.api.tnved_catalog import _get_vat_preferences_rows
 
 _BACKEND = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(_BACKEND / "scripts"))
@@ -47,26 +49,38 @@ class TestPp908ListsIntegrity:
         for heading, reason in audit_mod.PP908_MIXED_HEADINGS.items():
             assert reason.strip(), f"Заголовок {heading} без обоснования исключения"
 
+    def test_exact_codes_do_not_restore_broad_heading_claims(self) -> None:
+        assert audit_mod.PP908_EXACT_CODES == ("8715001000",)
+        assert "8715" in audit_mod.PP908_MIXED_HEADINGS
+        assert "8715" not in audit_mod.PP908_CHILD_HEADINGS
+
+    def test_unresolved_animal_headings_remain_visible(self) -> None:
+        assert set(audit_mod.PP908_SOURCE_MAPPING_REQUIRED) == {"0102", "0103", "0104", "0105"}
+
+    def test_committed_preferences_have_no_unsafe_whole_heading_vat10(self) -> None:
+        unsafe = {"0102", "0103", "0104", "0105", "8715"}
+        prefixes: set[str] = set()
+        for name in ("vat_preferences_164p2_expansion.json", "vat_preferences_pp908_expansion.json"):
+            payload = json.loads((_BACKEND / "data" / name).read_text(encoding="utf-8"))
+            prefixes.update(str(item["hs_code_prefix"]) for item in payload["items"])
+        assert prefixes.isdisjoint(unsafe)
+        assert "8715001000" in prefixes
+
 
 class TestPp908AuditCoverage:
-    def test_audit_reports_known_fixture_gaps(self) -> None:
+    def test_audit_reports_narrowed_scope_and_unresolved_source_map(self) -> None:
         result = audit_mod.audit()
         s = result["summary"]
         assert result["status"] == "MANUAL_REVIEW_REQUIRED"
-        assert result["manual_review_reasons"] == ["vat_rate_gap"]
-        assert s["headings_checked"] == s["headings_total"] == 118
-        assert s["covered_10pct"] == 113
-        assert s["gaps"] == 5
+        assert result["manual_review_reasons"] == ["source_mapping_required"]
+        assert s["headings_checked"] == s["headings_total"] == 114
+        assert s["covered_10pct"] == 114
+        assert s["gaps"] == 0
         assert s["no_sample_code"] == 0
-        assert s["coverage_pct"] == 95.8
-        assert {gap["heading"] for gap in result["gaps"]} == {
-            "0102",
-            "0103",
-            "0104",
-            "0105",
-            "8715",
-        }
-        assert all(gap["vat_rate"] == 22 for gap in result["gaps"])
+        assert s["coverage_pct"] == 100.0
+        assert s["exact_codes_checked"] == 1
+        assert s["source_mappings_required"] == 4
+        assert result["gaps"] == []
 
 
 class TestPp908AuditFailClosed:
@@ -99,21 +113,21 @@ class TestPp908AuditFailClosed:
     def test_missing_sample_code_requires_manual_review(self) -> None:
         result = self._run(missing_heading=audit_mod.PP908_FOOD_HEADINGS[0])
         assert result["status"] == "MANUAL_REVIEW_REQUIRED"
-        assert result["manual_review_reasons"] == ["sample_code_missing"]
+        assert result["manual_review_reasons"] == ["sample_code_missing", "source_mapping_required"]
         assert result["summary"]["no_sample_code"] == 1
 
     def test_non_ten_percent_gap_requires_manual_review(self) -> None:
         result = self._run(gap_heading=audit_mod.PP908_FOOD_HEADINGS[0])
         assert result["status"] == "MANUAL_REVIEW_REQUIRED"
-        assert result["manual_review_reasons"] == ["vat_rate_gap"]
+        assert result["manual_review_reasons"] == ["vat_rate_gap", "source_mapping_required"]
         assert result["summary"]["gaps"] == 1
 
-    def test_complete_fixture_remains_ok(self) -> None:
+    def test_complete_fixture_still_requires_unresolved_source_map(self) -> None:
         result = self._run()
-        assert result["status"] == "OK"
-        assert result["manual_review_reasons"] == []
-        assert result["summary"]["headings_checked"] == 118
-        assert result["summary"]["covered_10pct"] == 118
+        assert result["status"] == "MANUAL_REVIEW_REQUIRED"
+        assert result["manual_review_reasons"] == ["source_mapping_required"]
+        assert result["summary"]["headings_checked"] == 114
+        assert result["summary"]["covered_10pct"] == 114
 
     def test_json_cli_exits_nonzero_for_manual_review(self) -> None:
         result = self._run(missing_heading=audit_mod.PP908_FOOD_HEADINGS[0])
@@ -133,7 +147,7 @@ class TestPp908AuditFailClosed:
 
         payload = json.loads(stdout.getvalue())
         assert payload["status"] == "MANUAL_REVIEW_REQUIRED"
-        assert payload["manual_review_reasons"] == ["sample_code_missing"]
+        assert payload["manual_review_reasons"] == ["sample_code_missing", "source_mapping_required"]
 
 
 class TestPp908GrainProductsVat10:
@@ -160,3 +174,67 @@ class TestPp908GrainProductsVat10:
         for code in ("1107101100", "9404100000", "9619003000"):
             eff = _effective_vat(code)
             assert eff != 10, f"Заголовок code={code} не должен давать 10% (over-claim)"
+
+
+class TestPp908NarrowVatPreferences:
+    def test_stale_broad_preferences_are_rejected_but_exact_code_is_allowed(self) -> None:
+        marker = "ТЕСТ ПП РФ № 908 (narrow scope)"
+        with SessionLocal() as db:
+            db.add_all(
+                [
+                    VatPreference(hs_code_prefix="0102", vat_rate=10, decree_info=marker, comment="unsafe broad"),
+                    VatPreference(hs_code_prefix="8715", vat_rate=10, decree_info=marker, comment="unsafe broad"),
+                    VatPreference(
+                        hs_code_prefix="8715001000",
+                        vat_rate=10,
+                        decree_info=marker,
+                        comment="exact carriage code",
+                    ),
+                ]
+            )
+            db.commit()
+        try:
+            with SessionLocal() as db:
+                breeding, _ = pick_vat_preference_row("0102211000", db)
+                carriage, match_len = pick_vat_preference_row("8715001000", db)
+                carriage_parts, _ = pick_vat_preference_row("8715009000", db)
+            assert breeding is None
+            assert carriage is not None and carriage.vat_rate == 10 and match_len == 10
+            assert carriage_parts is None
+        finally:
+            with SessionLocal() as db:
+                db.query(VatPreference).filter(VatPreference.decree_info == marker).delete()
+                db.commit()
+
+    def test_catalog_and_ai_reference_share_narrow_scope(self) -> None:
+        marker = "ТЕСТ ПП РФ № 908 (alternate read paths)"
+        with SessionLocal() as db:
+            db.add_all(
+                [
+                    VatPreference(hs_code_prefix="0102", vat_rate=10, decree_info=marker, comment="unsafe broad"),
+                    VatPreference(hs_code_prefix="8715", vat_rate=10, decree_info=marker, comment="unsafe broad"),
+                    VatPreference(
+                        hs_code_prefix="8715001000",
+                        vat_rate=10,
+                        decree_info=marker,
+                        comment="exact carriage code",
+                    ),
+                ]
+            )
+            db.commit()
+        try:
+            with SessionLocal() as db:
+                breeding_rows = _get_vat_preferences_rows(db, "0102211000")
+                carriage_rows = _get_vat_preferences_rows(db, "8715001000")
+                sibling_rows = _get_vat_preferences_rows(db, "8715009000")
+            assert breeding_rows == []
+            assert carriage_rows
+            assert {row.hs_code_prefix for row in carriage_rows} == {"8715001000"}
+            assert sibling_rows == []
+            exact_group = match_preferential_vat_group("8715001000")
+            assert exact_group is not None and exact_group["prefix"] == "8715001000"
+            assert match_preferential_vat_group("8715009000") is None
+        finally:
+            with SessionLocal() as db:
+                db.query(VatPreference).filter(VatPreference.decree_info == marker).delete()
+                db.commit()
