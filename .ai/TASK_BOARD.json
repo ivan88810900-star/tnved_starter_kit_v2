@@ -7081,11 +7081,29 @@
           "head_sha": "233ed6a64b0e75175358f8cdf0e7bcc71191b67b"
         }
       },
-      "updated_at": "2026-10-08T11:46:59.239192+00:00",
-      "worktree": null
+      "updated_at": "2026-10-08T22:20:08Z",
+      "worktree": null,
+      "ntm_fallback_checkpoint_20261009": {
+        "corrective_pr": 256,
+        "corrective_head_sha": "4fdb291b254c8ebff4b9fa65e52cbd7f1ce13126",
+        "corrective_tree_sha": "58ea5b5f13c21ec505ed1b4a7f198aa0842dee02",
+        "executor": "/root/a0_maintenance_20261009T0114MSK",
+        "lease_generation": 123,
+        "scope": "preserve DB-free fallback HS scopes without inventing concrete TR TS acts; retain marking boundary",
+        "state": "PUBLISHED_A5_PASS_CI_PASS",
+        "tests": "author 367 passed +44 subtests; independent bounded A5 PASS exact tree",
+        "ci_status": "PASSED",
+        "ci_run_id": 37851053652,
+        "ci_job_id": 113563946657,
+        "a6": "unchanged/not sent",
+        "unresolved": [
+          "full DB-backed NTM pipeline still requires initialized/imported disposable NTM v2 fixtures",
+          "full #245 product acceptance, legal completeness and source completeness are not PASS"
+        ]
+      }
     }
   ],
-  "updated_at": "2026-10-08T22:09:09Z",
+  "updated_at": "2026-10-08T22:20:08Z",
   "latest_scheduled_product_checkpoint": {
     "updated_at": "2026-10-08T22:09:09Z",
     "pr": 256,
