@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+import re
+from datetime import date, datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -39,6 +40,78 @@ _UNVERIFIED_REVISIONS = frozenset(
         "unavailable",
     }
 )
+_UNVERIFIED_REVISION_PREFIXES = (
+    "demo",
+    "example",
+    "fallback",
+    "import",
+    "legacy",
+    "local",
+    "manual",
+    "seed",
+    "test",
+    "unknown",
+    "unavailable",
+)
+_REVISION_DATE_RE = re.compile(r"(?<!\d)(\d{4}-\d{2}-\d{2})(?!\d)")
+
+
+def _parse_revision_date(revision: str) -> date | None:
+    """Extract a real calendar date from a revision marker.
+
+    A merely non-empty marker is not version provenance.  Calendar parsing also
+    rejects impossible dates such as ``2026-02-31``.
+    """
+    match = _REVISION_DATE_RE.search(revision)
+    if not match:
+        return None
+    try:
+        return date.fromisoformat(match.group(1))
+    except ValueError:
+        return None
+
+
+def _is_unverified_revision(revision: str) -> bool:
+    if revision in _UNVERIFIED_REVISIONS:
+        return True
+    return revision.startswith(
+        tuple(
+            f"{prefix}{separator}"
+            for prefix in _UNVERIFIED_REVISION_PREFIXES
+            for separator in ("-", ":", "_")
+        )
+    )
+
+
+def _parse_synced_at(value: Any) -> datetime | None:
+    """Parse an explicit, timezone-aware SourceStatus timestamp.
+
+    Date-only and timezone-naive values are ambiguous provenance and therefore
+    fail closed.  UTC conversion can overflow for otherwise parseable extreme
+    offset timestamps, so conversion failures are treated as invalid input.
+    """
+    if isinstance(value, datetime):
+        parsed = value
+    elif isinstance(value, str) and value.strip():
+        raw = value.strip()
+        if len(raw) <= 10 or raw[10] not in ("T", "t", " "):
+            return None
+        if raw.endswith("Z"):
+            raw = f"{raw[:-1]}+00:00"
+        try:
+            parsed = datetime.fromisoformat(raw)
+        except ValueError:
+            return None
+    else:
+        return None
+    if parsed.tzinfo is None:
+        return None
+    try:
+        if parsed.utcoffset() is None:
+            return None
+        return parsed.astimezone(timezone.utc)
+    except (OverflowError, TypeError, ValueError):
+        return None
 
 
 def _backend_path(rel: str) -> Path:
@@ -259,6 +332,8 @@ def _derive_coverage_status(
 def _derive_edition_tracking_status(
     entry: RegulatorySourceEntry,
     source_status: dict[str, Any] | None,
+    *,
+    now: datetime | None = None,
 ) -> EditionTrackingStatus:
     """Describe revision tracking without claiming legal currentness.
 
@@ -272,10 +347,23 @@ def _derive_edition_tracking_status(
         return "unverified"
     if source_status.get("is_stale") is True:
         return "stale"
-    revision = str(source_status.get("revision") or "").strip().lower()
     if source_status.get("is_stale") is not False:
         return "unverified"
-    if not source_status.get("synced_at") or revision in _UNVERIFIED_REVISIONS:
+    raw_revision = source_status.get("revision")
+    if not isinstance(raw_revision, str):
+        return "unverified"
+    revision = raw_revision.strip().lower()
+    if not revision:
+        return "unverified"
+    synced_at = _parse_synced_at(source_status.get("synced_at"))
+    revision_date = _parse_revision_date(revision)
+    if _is_unverified_revision(revision) or synced_at is None or revision_date is None:
+        return "unverified"
+    current = now or datetime.now(timezone.utc)
+    if current.tzinfo is None:
+        current = current.replace(tzinfo=timezone.utc)
+    current = current.astimezone(timezone.utc)
+    if synced_at > current or revision_date > current.date():
         return "unverified"
     return "tracked"
 
