@@ -175,6 +175,8 @@ def calculate_line_payments(
         "customs_value": customs_value,
         "invoice_currency": "RUB",
         "country": country,
+        "manufacturer": str(line.get("manufacturer") or "").strip() or None,
+        "product_description": str(line.get("description") or "").strip() or None,
         "_fx_rates": rates,
     }
     if net is not None:

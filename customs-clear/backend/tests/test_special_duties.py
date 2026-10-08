@@ -29,16 +29,28 @@ class SpecialDutiesTests(unittest.TestCase):
         defaults.update(kwargs)
         return compute_payments(defaults)
 
-    def _public_calc(self, *, hs_code: str, country: str) -> dict:
+    def _public_calc(
+        self,
+        *,
+        hs_code: str,
+        country: str,
+        manufacturer: str | None = None,
+        product_description: str | None = None,
+    ) -> dict:
+        payload = {
+            "hs_code": hs_code,
+            "customs_value": 100_000.0,
+            "currency": "RUB",
+            "country_of_origin": country,
+            "quantity": 1.0,
+        }
+        if manufacturer is not None:
+            payload["manufacturer"] = manufacturer
+        if product_description is not None:
+            payload["product_description"] = product_description
         response = TestClient(app).post(
             "/api/calculator/compute",
-            json={
-                "hs_code": hs_code,
-                "customs_value": 100_000.0,
-                "currency": "RUB",
-                "country_of_origin": country,
-                "quantity": 1.0,
-            },
+            json=payload,
         )
         self.assertEqual(response.status_code, 200, response.text)
         return response.json()
@@ -199,6 +211,54 @@ class SpecialDutiesTests(unittest.TestCase):
             self.assertEqual(res["breakdown"]["special_duties_amount"], 7_000.0)
             applied = [d for d in res["special_duties"] if not d.get("warning")]
             self.assertEqual(len(applied), 1)
+        finally:
+            with SessionLocal() as db:
+                db.query(SpecialDuty).filter(SpecialDuty.regulatory_act == marker).delete()
+                db.commit()
+
+    def test_scoped_measure_requires_confirmed_manufacturer_and_product(self) -> None:
+        marker = "TEST-SCOPED-SPECIAL-DUTY"
+        row = self._official_anti_dumping_row(act=marker)
+        row.manufacturer_exporter = "Alpha Steel Co"
+        row.product_description = "Прокат горячекатаный"
+        with SessionLocal() as db:
+            db.add(row)
+            db.commit()
+        try:
+            for manufacturer, product_description in (
+                (None, None),
+                ("Beta Steel Co", "Прокат горячекатаный"),
+                ("Alpha Steel Co", "Холоднокатаный прокат"),
+            ):
+                with self.subTest(
+                    manufacturer=manufacturer,
+                    product_description=product_description,
+                ):
+                    result = self._public_calc(
+                        hs_code="9996999999",
+                        country="ZZ",
+                        manufacturer=manufacturer,
+                        product_description=product_description,
+                    )
+                    self.assertEqual(result["status"], "REVIEW_REQUIRED")
+                    self.assertEqual(result["breakdown"]["special_duties_amount"], 0.0)
+                    self.assertIsNone(result["breakdown"]["total_payable"])
+                    self.assertIn(
+                        "special_duty_scope_unresolved",
+                        result["payment_review_reasons"],
+                    )
+
+            matched = self._public_calc(
+                hs_code="9996999999",
+                country="ZZ",
+                manufacturer="  alpha   STEEL co  ",
+                product_description="ПРОКАТ   ГОРЯЧЕКАТАНЫЙ",
+            )
+            self.assertEqual(matched["breakdown"]["special_duties_amount"], 7_000.0)
+            self.assertNotIn(
+                "special_duty_scope_unresolved",
+                matched["payment_review_reasons"],
+            )
         finally:
             with SessionLocal() as db:
                 db.query(SpecialDuty).filter(SpecialDuty.regulatory_act == marker).delete()

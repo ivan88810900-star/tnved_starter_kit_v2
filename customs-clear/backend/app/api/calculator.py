@@ -75,6 +75,11 @@ class CalculatorRequest(BaseModel):
     vat_rate: float | None = None  # ставка НДС (переопределение)
     excise: float | None = None  # акциз в руб. (переопределение)
     country: str | None = Field(default=None, validation_alias=AliasChoices("country", "country_of_origin"))  # страна происхождения (ISO-2)
+    manufacturer: str | None = None  # изготовитель/экспортёр для scope специальных пошлин
+    product_description: str | None = Field(
+        default=None,
+        validation_alias=AliasChoices("product_description", "description"),
+    )
     quantity: float | None = None  # количество/объём для акциза и антидемпинга
     net_weight_kg: float | None = Field(default=None, validation_alias=AliasChoices("net_weight_kg", "weight_kg"))  # вес нетто для специфических ставок /kg
     extra_quantity: float | None = None  # объём/шт для специфических ставок /l, /pcs и т.д.

@@ -503,12 +503,36 @@ def _special_duty_identity(row: SpecialDuty) -> tuple[Any, ...]:
     )
 
 
+def _normalize_special_duty_scope_text(value: Any | None) -> str:
+    """Canonicalize explicit scope text without fuzzy/legal inference."""
+    normalized = unicodedata.normalize("NFKC", str(value or "")).casefold()
+    return re.sub(r"\s+", " ", normalized).strip()
+
+
+def _special_duty_scope_is_confirmed(
+    row: SpecialDuty,
+    *,
+    manufacturer: str | None,
+    product_description: str | None,
+) -> bool:
+    """Require exact normalized evidence for every persisted scope restriction."""
+    required_manufacturer = _normalize_special_duty_scope_text(row.manufacturer_exporter)
+    required_product = _normalize_special_duty_scope_text(row.product_description)
+    if required_manufacturer and required_manufacturer != _normalize_special_duty_scope_text(manufacturer):
+        return False
+    if required_product and required_product != _normalize_special_duty_scope_text(product_description):
+        return False
+    return True
+
+
 def _resolve_special_duties(
     hs_code: str,
     country: str | None,
     customs_value: float,
     quantity: float,
     fx_rates: dict[str, float] | None,
+    manufacturer: str | None = None,
+    product_description: str | None = None,
 ) -> tuple[float, list[dict[str, Any]], bool]:
     cands = _special_duty_prefix_candidates(hs_code)
     if not cands:
@@ -560,6 +584,27 @@ def _resolve_special_duties(
                 "affected_codes": sorted({r.hs_code_prefix for r in rows}),
                 "origin_countries": sorted({r.origin_country for r in rows if r.origin_country}),
                 "review_reason": "special_duty_country_missing",
+            }
+        ], True
+
+    unresolved_scope_rows = [
+        row
+        for row in rows
+        if not _special_duty_scope_is_confirmed(
+            row,
+            manufacturer=manufacturer,
+            product_description=product_description,
+        )
+    ]
+    if unresolved_scope_rows:
+        return 0.0, [
+            {
+                "warning": (
+                    "Специальная пошлина не включена в итог: применимость по изготовителю, "
+                    "экспортёру или описанию товара не подтверждена точным совпадением."
+                ),
+                "affected_codes": sorted({r.hs_code_prefix for r in unresolved_scope_rows}),
+                "review_reason": "special_duty_scope_unresolved",
             }
         ], True
 
@@ -627,6 +672,8 @@ def _resolve_special_duties(
                 "currency_code": ccy,
                 "fx_rate": fx,
                 "regulatory_act": r.regulatory_act or "",
+                "manufacturer_exporter": r.manufacturer_exporter or "",
+                "product_description": r.product_description or "",
                 "effective_from": r.effective_from or "",
                 "effective_to": r.effective_to or "",
                 "needs_verification": bool(getattr(r, "needs_verification", False)),
@@ -1121,6 +1168,10 @@ def compute_payments(payload: dict[str, Any]) -> dict[str, Any]:
         customs_value=customs_value,
         quantity=qty,
         fx_rates=payload.get("_fx_rates") if isinstance(payload.get("_fx_rates"), dict) else None,
+        manufacturer=str(payload.get("manufacturer") or "").strip() or None,
+        product_description=str(
+            payload.get("product_description") or payload.get("description") or ""
+        ).strip() or None,
     )
     special_duties_warning: str | None = None
     if special_duties_details and special_duties_details[0].get("warning"):
