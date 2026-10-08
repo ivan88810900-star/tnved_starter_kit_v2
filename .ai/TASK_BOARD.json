@@ -7052,5 +7052,40 @@
       "worktree": null
     }
   ],
-  "updated_at": "2026-10-08T13:02:46.511Z"
+  "updated_at": "2026-10-08T13:02:46.511Z",
+  "latest_scheduled_product_checkpoint": {
+    "updated_at": "2026-10-08T14:04:00Z",
+    "pr": 255,
+    "branch": "agent/core-payment-regressions-v1",
+    "head_sha": "f0e499e5e97ae83a63d9117e043420e52cb99da6",
+    "tree_sha": "ec606fc15f76c73ad461f0ee84d8764b83f7644e",
+    "base_pr": 244,
+    "base_sha": "14e0ee8f034d94ffc5831d87e076f4d693a5a524",
+    "completed_block": "read_only_scheduled_payment_source_freshness_workflow",
+    "author_tests": {
+      "payment": "130 passed + 358 subtests; exit 0",
+      "sources": "306 passed + 76 subtests; 1 known PP908 failure; exit 1",
+      "workflow_profile": "18 passed; exit 0",
+      "minimal_runtime": "pip check PASS; bundle JSON valid; stale_count=6; expected exit 1"
+    },
+    "a5": {
+      "session": "/root/a5_special_scope",
+      "status": "PASSED_EXACT_TREE",
+      "live_cbr": "54 currencies; exit 0"
+    },
+    "ci": {
+      "status": "NOT_YET_OBSERVED",
+      "head_sha": "f0e499e5e97ae83a63d9117e043420e52cb99da6"
+    },
+    "blockers": [
+      "Six committed payment bundles exceed the configured 90-day freshness threshold.",
+      "PP908 audit has no representative TNVED/rates rows in a disposable initialized database: no_sample_code=118, coverage_pct=0."
+    ],
+    "a6": {
+      "request": "core-s1-6415f443120f-r9-g106",
+      "status": "UNCHANGED_NOT_SENT"
+    },
+    "protected_actions_performed": false,
+    "next_step": "Verify and refresh payment bundles source-by-source, then make PP908 coverage audit hermetic on a confirmed complete TNVED/rates dataset without inventing legal applicability."
+  }
 }
