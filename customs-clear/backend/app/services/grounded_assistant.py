@@ -578,45 +578,69 @@ async def build_chat_grounding_bundle(
         try:
             raw_tnved = get_tnved_context_for_hs(hs_code)
             official_url = _trim(raw_tnved.get("official_ett_url"), 600) or None
-            eec_citation = citations.add(
-                source_id="eec_ett",
-                title="ТН ВЭД ЕАЭС и Единый таможенный тариф — ЕЭК",
-                kind="official",
-                url=official_url,
-                status=_first_nonempty(raw_tnved.get("source_revision"), "reference"),
-                excerpt=_first_nonempty(raw_tnved.get("title"), raw_tnved.get("description")) or None,
-            )
             canonical_anchor = canonical_anchor_for_hs(hs_code)
-            anchor_citation: str | None = None
-            if canonical_anchor:
-                anchor_citation = citations.add(
-                    source_id="canonical_tnved",
-                    title="Canonical TN VED Model",
-                    kind="canonical",
-                    status=_first_nonempty(canonical_anchor.get("snapshot_id"), "resolved"),
-                    excerpt=(
-                        f"stable_id={canonical_anchor.get('stable_id')}; "
-                        f"code={canonical_anchor.get('code')}"
-                    ),
+            title = _trim(raw_tnved.get("title"), 600)
+            description = _trim(raw_tnved.get("description"), 800)
+            breadcrumb = [
+                {
+                    "hs_code": _trim(row.get("hs_code"), 20),
+                    "title": _trim(row.get("title"), 260),
+                }
+                for row in list(raw_tnved.get("breadcrumb") or [])[:10]
+                if isinstance(row, dict)
+                and (_trim(row.get("hs_code"), 20) or _trim(row.get("title"), 260))
+            ]
+            notes = [
+                row
+                for row in _note_rows(raw_tnved.get("notes"))
+                if any(row.values())
+            ]
+            source_revision = _trim(raw_tnved.get("source_revision"), 120)
+            has_catalogue_evidence = bool(
+                title or description or breadcrumb or notes or source_revision
+            )
+            citation_ids: list[str] = []
+            if has_catalogue_evidence:
+                citation_ids.append(
+                    citations.add(
+                        source_id="eec_ett",
+                        title="ТН ВЭД ЕАЭС и Единый таможенный тариф — ЕЭК",
+                        kind="official",
+                        url=official_url,
+                        status=source_revision or "reference",
+                        excerpt=_first_nonempty(title, description) or None,
+                    )
                 )
-            tnved = {
-                "hs_code": hs_code,
-                "hs_source": hs_source,
-                "title": _trim(raw_tnved.get("title"), 600),
-                "description": _trim(raw_tnved.get("description"), 800),
-                "breadcrumb": [
-                    {
-                        "hs_code": _trim(row.get("hs_code"), 20),
-                        "title": _trim(row.get("title"), 260),
-                    }
-                    for row in list(raw_tnved.get("breadcrumb") or [])[:10]
-                    if isinstance(row, dict)
-                ],
-                "notes": _note_rows(raw_tnved.get("notes")),
-                "source_revision": _trim(raw_tnved.get("source_revision"), 120),
-                "citation_ids": [value for value in (eec_citation, anchor_citation) if value],
-            }
-            facts_used.append("tnved")
+            if canonical_anchor:
+                citation_ids.append(
+                    citations.add(
+                        source_id="canonical_tnved",
+                        title="Canonical TN VED Model",
+                        kind="canonical",
+                        status=_first_nonempty(canonical_anchor.get("snapshot_id"), "resolved"),
+                        excerpt=(
+                            f"stable_id={canonical_anchor.get('stable_id')}; "
+                            f"code={canonical_anchor.get('code')}"
+                        ),
+                    )
+                )
+            if citation_ids:
+                tnved = {
+                    "hs_code": hs_code,
+                    "hs_source": hs_source,
+                    "title": title,
+                    "description": description,
+                    "breadcrumb": breadcrumb,
+                    "notes": notes,
+                    "source_revision": source_revision,
+                    "citation_ids": citation_ids,
+                }
+                facts_used.append("tnved")
+            else:
+                limitations.append(
+                    "Карточка ТН ВЭД не содержит локальных подтверждающих данных; "
+                    "код не подтверждён по справочнику."
+                )
         except Exception as exc:  # additive grounding must not break the chat
             logger.warning("assistant grounding: TN VED context failed: {}", exc)
             limitations.append("Карточка ТН ВЭД временно недоступна; код не подтверждён по справочнику.")
@@ -691,8 +715,13 @@ async def build_chat_grounding_bundle(
             logger.warning("assistant grounding: product search failed: {}", exc)
             limitations.append("Не удалось подобрать кандидатов ТН ВЭД по описанию.")
 
-    if hs_code:
+    # A syntactically valid code is context, not evidence.  Do not advertise a
+    # grounded bundle when every local provider failed and no auditable fact or
+    # citation was collected for this turn.
+    if hs_code and facts_used and citations.items:
         coverage = "grounded"
+    elif hs_code:
+        coverage = "partial"
     elif candidates:
         coverage = "partial"
         limitations.append("Кандидаты поиска не являются подтверждённым кодом ТН ВЭД.")
