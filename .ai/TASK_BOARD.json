@@ -2179,7 +2179,7 @@
       "unique_source_pr_count": 29
     }
   },
-  "revision": 672,
+  "revision": 673,
   "runs": [
     {
       "head_sha": null,
@@ -7081,56 +7081,56 @@
           "head_sha": "233ed6a64b0e75175358f8cdf0e7bcc71191b67b"
         }
       },
-      "updated_at": "2026-10-08T23:16:44Z",
+      "updated_at": "2026-10-09T00:05:57Z",
       "worktree": null,
       "ntm_fallback_checkpoint_20261009": {
         "corrective_pr": 256,
-        "corrective_head_sha": "0650526aed724322fbe0842f1a8e22d91dfb6b90",
-        "corrective_tree_sha": "dad9ba0b58ab7b1815182a2bfc25a19ca033bb8b",
-        "executor": "/root/tariff_automation_20261009T0152MSK",
-        "lease_generation": 124,
-        "scope": "canonical disposable NTM v2 pipeline and fail-closed catalog applicability corrections for toys, furniture, smartphone and 8517 parts",
+        "corrective_head_sha": "5a535d00056c5c46c2ca614eaa3194325647fe1b",
+        "corrective_tree_sha": "768e5143cae4f1d168d90acc1361188524543f9c",
+        "executor": "/root/tariff_automation_20261009T0255MSK",
+        "lease_generation": 125,
+        "scope": "preserve fail-closed NTM diagnostics across in-process Alembic startup without changing applicability or enforcement",
         "state": "PUBLISHED_A5_PASS_CI_PENDING",
-        "tests": "author 504 passed; independent A5 267 passed fresh DB plus 104 exact-remote smoke; exact remote HEAD PASS",
+        "tests": "author 819 passed plus 1 skipped and 3 subtests on fresh DB/import; focused 3 passed; independent A5 269 passed plus exact-remote sentinel/focused smoke; exact remote HEAD PASS",
         "ci_status": "PENDING_NO_RUN_OBSERVED",
         "ci_run_id": null,
         "ci_job_id": null,
         "a6": "unchanged/not sent",
         "unresolved": [
-          "exact-head CI has not appeared for 0650526aed724322fbe0842f1a8e22d91dfb6b90",
+          "exact-head CI has not appeared for 5a535d00056c5c46c2ca614eaa3194325647fe1b",
           "additional 8517 apparatus require verified subheading or characteristic-level grounding",
           "full #245 product acceptance, legal completeness and source completeness are not PASS"
         ]
       }
     }
   ],
-  "updated_at": "2026-10-08T23:16:44Z",
+  "updated_at": "2026-10-09T00:05:57Z",
   "latest_scheduled_product_checkpoint": {
-    "updated_at": "2026-10-08T23:16:44Z",
+    "updated_at": "2026-10-09T00:05:57Z",
     "pr": 256,
     "branch": "agent/product-ntm-regressions-v1",
-    "head_sha": "0650526aed724322fbe0842f1a8e22d91dfb6b90",
-    "tree_sha": "dad9ba0b58ab7b1815182a2bfc25a19ca033bb8b",
+    "head_sha": "5a535d00056c5c46c2ca614eaa3194325647fe1b",
+    "tree_sha": "768e5143cae4f1d168d90acc1361188524543f9c",
     "base_pr": 245,
     "base_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
-    "completed_block": "ntm_v2_canonical_pipeline_catalog_applicability",
+    "completed_block": "ntm_v2_startup_diagnostics_preserved",
     "author_tests": {
-      "candidate_backend_slice": "504 passed on fresh disposable SQLite after init_db and complete NTM v2 import; exit 0",
-      "focused": "canonical pipeline reproduction initially 68 passed/5 failed, corrected suite 504 passed; exit 0",
+      "candidate_backend_slice": "819 passed, 1 skipped and 3 subtests on fresh disposable SQLite after init_db and complete NTM v2 import; exit 0",
+      "focused": "schema-upgrade plus NTM warning sequence 3 passed; exit 0",
       "diff_check": "passed"
     },
     "a5": {
       "session": "/root/a5_ntm_fallback",
       "status": "PASSED_EXACT_REMOTE_HEAD",
-      "related_suite": "267 passed on fresh independent DB/import; exact-remote smoke 104 passed; exit 0",
-      "adversarial": "rejected unpublished 004 and heading-wide 020 overclaims; exact head proves no mandatory 004 for smartphone and no 004/020/037 enforcement for 851771/851779 parts"
+      "related_suite": "269 passed on fresh independent DB/import; exact-remote focused 1 passed; exit 0",
+      "adversarial": "parent disabled the NTM logger and lost a warning sentinel; candidate preserved delivery while Alembic stayed enabled at INFO with 59 migration lines"
     },
     "ci": {
       "status": "PENDING_NO_RUN_OBSERVED",
-      "head_sha": "0650526aed724322fbe0842f1a8e22d91dfb6b90"
+      "head_sha": "5a535d00056c5c46c2ca614eaa3194325647fe1b"
     },
     "blockers": [
-      "Exact-head CI has not appeared for 0650526aed724322fbe0842f1a8e22d91dfb6b90; readiness is not claimed.",
+      "Exact-head CI has not appeared for 5a535d00056c5c46c2ca614eaa3194325647fe1b; readiness is not claimed.",
       "Additional 8517 apparatus coverage must be grounded at verified subheading or characteristic granularity.",
       "Full #245 backend/frontend acceptance and legal/source completeness remain NOT PASS."
     ],
@@ -7142,31 +7142,31 @@
     "next_step": "Observe exact-head CI, then continue #245 backend/frontend applicability and source failures without widening definite rules."
   },
   "latest_development_checkpoint": {
-    "checked_at": "2026-10-08T23:16:44Z",
+    "checked_at": "2026-10-09T00:05:57Z",
     "pr": 256,
     "branch": "agent/product-ntm-regressions-v1",
-    "head_sha": "0650526aed724322fbe0842f1a8e22d91dfb6b90",
-    "tree_sha": "dad9ba0b58ab7b1815182a2bfc25a19ca033bb8b",
+    "head_sha": "5a535d00056c5c46c2ca614eaa3194325647fe1b",
+    "tree_sha": "768e5143cae4f1d168d90acc1361188524543f9c",
     "base_pr": 245,
     "base_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
-    "block": "ntm_v2_canonical_pipeline_catalog_applicability",
+    "block": "ntm_v2_startup_diagnostics_preserved",
     "status": "DRAFT_CHECKPOINT_A5_PASS_CI_PENDING",
     "author_tests": [
-      "504 passed on fresh disposable SQLite after init_db and complete NTM v2 import, exit 0",
-      "canonical pipeline reproduction separated five real applicability failures from missing fixture data",
+      "819 passed, 1 skipped and 3 subtests on fresh disposable SQLite after init_db and complete NTM v2 import, exit 0",
+      "focused schema-upgrade plus NTM warning sequence 3 passed, exit 0",
       "diff-check passed"
     ],
     "a5": {
       "status": "PASS",
       "session": "/root/a5_ntm_fallback",
-      "tests": "267 fresh-DB focused and 104 exact-remote smoke, exit 0",
-      "adversarial": "exact remote head/tree/parent verified; 004 and heading-wide 020 overclaims rejected before publication; 851771/851779 mandatory-negative probe passed"
+      "tests": "269 fresh-DB regression plus exact-remote sentinel and focused 1 passed, exit 0",
+      "adversarial": "exact remote head/tree/parent verified; parent silenced NTM logger after init_db, candidate preserves warning delivery and Alembic INFO output"
     },
     "ci": {
       "status": "PENDING_NO_RUN_OBSERVED",
-      "head_sha": "0650526aed724322fbe0842f1a8e22d91dfb6b90"
+      "head_sha": "5a535d00056c5c46c2ca614eaa3194325647fe1b"
     },
-    "current_data_state": "definite smartphone rules are narrow to 851713 for 020/037; 004 is absent without voltage evidence; 851771/851779 parts have no mandatory rule; broad 8517 fallback remains possible/manual review",
+    "current_data_state": "applicability is unchanged; in-process schema startup no longer silences NTM fail-closed warnings; definite smartphone rules remain narrow and broad 8517 fallback remains possible/manual review",
     "next_step": "Observe exact-head CI, then continue #245 backend/frontend applicability and source triage",
     "full_245_status": "NOT_PASS",
     "a6": "core-s1-6415f443120f-r9-g106 unchanged, not sent",

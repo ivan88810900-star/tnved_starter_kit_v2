@@ -3,6 +3,22 @@
 **Снимок:** 2026-10-08 (UTC). **Единственный репозиторий:** [ivan88810900-star/tnved_starter_kit_v2](https://github.com/ivan88810900-star/tnved_starter_kit_v2).  
 **Авторитетное состояние:** ветка `agent/orchestration-state`, файлы `.ai/TASK_BOARD.json`, `.ai/COORDINATOR_LEASE.json`, `.ai/orchestration/A6_LIVE_STATUS.json`. Этот документ — указатель и контрольная точка, **не** право на запись/merge/A6. Перед действием заново читать текущие HEAD и state. Не полагаться на Business-чат.
 
+## 0n. #245 — startup schema-check больше не отключает fail-closed NTM diagnostics
+
+**Новый текущий checkpoint:** [draft PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256), `agent/product-ntm-regressions-v1` @ `5a535d00056c5c46c2ca614eaa3194325647fe1b`, tree `768e5143cae4f1d168d90acc1361188524543f9c`, parent `0650526aed724322fbe0842f1a8e22d91dfb6b90`, base #245 неизменён `e39e19787bd913baeb6f85577a13e1116458e633`.
+
+Расширенный канонический NTM/normative/regulatory прогон воспроизвёл order-dependent observability defect: in-process `init_db()`/Alembic `fileConfig` отключал уже созданные application loggers, поэтому предупреждения `NTM_V2_TR_TS` и `NTM_V2_LAYERS` пропадали после schema-check. `alembic/env.py` теперь вызывает `fileConfig(..., disable_existing_loggers=False)`. Applicability, advisory/enforcement, схема и данные не менялись.
+
+Проверки exact head/tree:
+- author fresh disposable SQLite + `init_db()` + полный NTM v2 import + 40 backend modules: **819 passed, 1 skipped, 3 subtests**, exit 0; focused startup/warning sequence **3 passed**, exit 0;
+- независимый A5 `/root/a5_ntm_fallback`: **PASS exact remote HEAD**; parent доказан как `target_disabled=True/sentinel_captured=False`, candidate как `target_disabled=False/sentinel_captured=True`; Alembic logger остался INFO и выдал 59 migration lines; independent regression **269 passed**, exact-remote focused **1 passed**;
+- remote tree byte-identical прошедшему A5 tree; только `customs-clear/backend/alembic/env.py` и `tests/test_ntm_v2_pipeline_flag.py` изменены;
+- exact-head CI: **PENDING_NO_RUN_OBSERVED** для `5a535d00056c5c46c2ca614eaa3194325647fe1b`; readiness/полный #245 PASS не заявляются.
+
+Код и команды доступны в полной exact-tree копии; публикация выполнена только в существующую draft-ветку под coordinator lease generation 125. Protected merge, production/DB writes, flags, secrets/permissions, destructive migration и A6 не выполнялись. A6 request `core-s1-6415f443120f-r9-g106` не менялся и не отправлялся.
+
+Остаётся: дождаться exact-head CI; затем продолжить #245 backend/frontend applicability/source failures. Дополнительные definite rules без подтверждённой подкатегории/характеристик не добавлять; юридическая и источниковая полнота **NOT PASS**.
+
 ## 0m. #245 — канонический NTM v2 pipeline: исправлены definite over-claim каталога
 
 **Новый текущий checkpoint:** [draft PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256), `agent/product-ntm-regressions-v1` @ `0650526aed724322fbe0842f1a8e22d91dfb6b90`, tree `dad9ba0b58ab7b1815182a2bfc25a19ca033bb8b`, parent `4fdb291b254c8ebff4b9fa65e52cbd7f1ce13126`, base #245 неизменён `e39e19787bd913baeb6f85577a13e1116458e633`.
