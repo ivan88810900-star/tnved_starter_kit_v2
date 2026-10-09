@@ -2179,7 +2179,7 @@
       "unique_source_pr_count": 29
     }
   },
-  "revision": 699,
+  "revision": 700,
   "runs": [
     {
       "head_sha": null,
@@ -7414,38 +7414,41 @@
       }
     }
   ],
-  "updated_at": "2026-10-09T22:25:41.000Z",
+  "updated_at": "2026-10-09T22:55:00.000Z",
   "latest_scheduled_product_checkpoint": {
-    "updated_at": "2026-10-09T22:25:41.000Z",
-    "checked_at": "2026-10-09T22:25:41.000Z",
+    "updated_at": "2026-10-09T22:55:00.000Z",
+    "checked_at": "2026-10-09T22:55:00.000Z",
     "pr": 256,
     "branch": "agent/product-ntm-regressions-v1",
     "head_sha": "f982f48490e5be5fae12e2f49a9d106401e60c37",
+    "tree_sha": "2616d6df4c4e5e611aea55f298d9fbfc56eebbb1",
     "parent_sha": "06a540ad6e9fcbd7003a224cc68a3dd5a779598f",
     "prior_checkpoint_sha": "a556cb073482a957fa5fff09ab59ddd2b9194ba5",
     "base_pr": 245,
     "base_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
     "block": "assistant_chat_citation_url_boundary",
-    "status": "DRAFT_CHECKPOINT_IMPLEMENTED_STATIC_A5_PASS_CI_PASS_FRONTEND_EXECUTION_PENDING",
+    "status": "DRAFT_CHECKPOINT_A5_EXEC_PASS_CI_PASS_CHAT_CITATION_URL_BOUNDARY",
     "behavior": {
       "reproduced": "assistant chat used a weaker local URL parser that admitted credential, normalization and malformed-host citation URLs which the shared TN VED boundary rejects",
       "final": "assistant chat delegates citation anchors to the shared strict credential-free absolute HTTP(S) validator; rejected citations stay visible as non-clickable text",
       "boundaries": "URL transport/syntax boundary only; no source-validity, legal-applicability, source-completeness, DB write or enforcement claim"
     },
     "author_tests": {
-      "direct_helper_probe": "exact shared helper 7/7 normal/adversarial cases; exit 0",
-      "focused_frontend": "NOT_RUN_DEPENDENCY_INSTALL_UNAVAILABLE",
-      "dependency_evidence": "npm ci online failed with npm exit-handler failure; offline failed ENOTCACHED for zwitch-2.0.4; no test PASS claimed"
+      "prior_limitation": "fresh frontend execution was previously unavailable because the isolated dependency install failed",
+      "focused_frontend": "DeclarantChatThread plus externalUrl: 54 passed; exit 0",
+      "full_frontend": "82 passed; typecheck and production build PASS; combined exit 0",
+      "environment": "existing isolated node_modules was available on the exact remote HEAD; worktree remained clean"
     },
     "a5": {
-      "session": "/root/a5_chat_url_review",
-      "status": "PASS_STATIC_EXACT_BLOBS_EXECUTION_UNAVAILABLE",
-      "component_blob": "f9576ea594706ea0f05fbfae6613e23a8f2fe029",
-      "test_blob": "68b98254712654e1d077253bed11558b964c8089",
-      "limitation": "reviewer GitHub connector returned MCP -32602; exact GitHub-fetched blobs were relayed by A0; no tests executed"
+      "session": "/root/a5_chat_url_exec_151",
+      "status": "FINAL_PASS_EXACT_HEAD_TREE_EXECUTABLE",
+      "focused": "54 passed; exit 0",
+      "full_frontend": "82 passed; typecheck/build/diff-check exit 0",
+      "adversarial": "24 unsafe citation URLs rejected and 7 safe HTTP(S) URLs preserved byte-for-byte, including literal C1/bidi and encoded/double/deep controls; exit 0",
+      "remote_binding": "HEAD f982f48490e5be5fae12e2f49a9d106401e60c37 tree 2616d6df4c4e5e611aea55f298d9fbfc56eebbb1 unchanged and worktree clean"
     },
     "ci": {
-      "status": "PASSED_EXACT_HEAD_AGENT_SAFETY_ONLY",
+      "status": "PASSED_EXACT_HEAD",
       "head_sha": "f982f48490e5be5fae12e2f49a9d106401e60c37",
       "runs": [
         {
@@ -7457,7 +7460,7 @@
       ]
     },
     "blockers": [
-      "Fresh focused/full frontend tests and executable independent review remain pending because the isolated dependency environment was unavailable.",
+      "The previous frontend execution and independent executable-review blocker is closed on the unchanged exact HEAD.",
       "NTM full-sync audit still requires a lawful populated synchronized snapshot.",
       "Full #245 product acceptance and legal/source completeness remain NOT PASS."
     ],
@@ -7466,39 +7469,42 @@
       "status": "UNCHANGED_NOT_SENT"
     },
     "protected_actions_performed": false,
-    "next_step": "Re-run focused/full frontend tests and fresh independent executable review on exact HEAD when dependencies are available; otherwise continue only another independently reproducible bounded #245 defect without claiming readiness."
+    "next_step": "Continue the next reproduced bounded #245 search/classification/grounding integration defect; keep NTM full-sync completeness blocked on a lawful populated synchronized snapshot."
   },
   "latest_development_checkpoint": {
-    "updated_at": "2026-10-09T22:25:41.000Z",
-    "checked_at": "2026-10-09T22:25:41.000Z",
+    "updated_at": "2026-10-09T22:55:00.000Z",
+    "checked_at": "2026-10-09T22:55:00.000Z",
     "pr": 256,
     "branch": "agent/product-ntm-regressions-v1",
     "head_sha": "f982f48490e5be5fae12e2f49a9d106401e60c37",
+    "tree_sha": "2616d6df4c4e5e611aea55f298d9fbfc56eebbb1",
     "parent_sha": "06a540ad6e9fcbd7003a224cc68a3dd5a779598f",
     "prior_checkpoint_sha": "a556cb073482a957fa5fff09ab59ddd2b9194ba5",
     "base_pr": 245,
     "base_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
     "block": "assistant_chat_citation_url_boundary",
-    "status": "DRAFT_CHECKPOINT_IMPLEMENTED_STATIC_A5_PASS_CI_PASS_FRONTEND_EXECUTION_PENDING",
+    "status": "DRAFT_CHECKPOINT_A5_EXEC_PASS_CI_PASS_CHAT_CITATION_URL_BOUNDARY",
     "behavior": {
       "reproduced": "assistant chat used a weaker local URL parser that admitted credential, normalization and malformed-host citation URLs which the shared TN VED boundary rejects",
       "final": "assistant chat delegates citation anchors to the shared strict credential-free absolute HTTP(S) validator; rejected citations stay visible as non-clickable text",
       "boundaries": "URL transport/syntax boundary only; no source-validity, legal-applicability, source-completeness, DB write or enforcement claim"
     },
     "author_tests": {
-      "direct_helper_probe": "exact shared helper 7/7 normal/adversarial cases; exit 0",
-      "focused_frontend": "NOT_RUN_DEPENDENCY_INSTALL_UNAVAILABLE",
-      "dependency_evidence": "npm ci online failed with npm exit-handler failure; offline failed ENOTCACHED for zwitch-2.0.4; no test PASS claimed"
+      "prior_limitation": "fresh frontend execution was previously unavailable because the isolated dependency install failed",
+      "focused_frontend": "DeclarantChatThread plus externalUrl: 54 passed; exit 0",
+      "full_frontend": "82 passed; typecheck and production build PASS; combined exit 0",
+      "environment": "existing isolated node_modules was available on the exact remote HEAD; worktree remained clean"
     },
     "a5": {
-      "session": "/root/a5_chat_url_review",
-      "status": "PASS_STATIC_EXACT_BLOBS_EXECUTION_UNAVAILABLE",
-      "component_blob": "f9576ea594706ea0f05fbfae6613e23a8f2fe029",
-      "test_blob": "68b98254712654e1d077253bed11558b964c8089",
-      "limitation": "reviewer GitHub connector returned MCP -32602; exact GitHub-fetched blobs were relayed by A0; no tests executed"
+      "session": "/root/a5_chat_url_exec_151",
+      "status": "FINAL_PASS_EXACT_HEAD_TREE_EXECUTABLE",
+      "focused": "54 passed; exit 0",
+      "full_frontend": "82 passed; typecheck/build/diff-check exit 0",
+      "adversarial": "24 unsafe citation URLs rejected and 7 safe HTTP(S) URLs preserved byte-for-byte, including literal C1/bidi and encoded/double/deep controls; exit 0",
+      "remote_binding": "HEAD f982f48490e5be5fae12e2f49a9d106401e60c37 tree 2616d6df4c4e5e611aea55f298d9fbfc56eebbb1 unchanged and worktree clean"
     },
     "ci": {
-      "status": "PASSED_EXACT_HEAD_AGENT_SAFETY_ONLY",
+      "status": "PASSED_EXACT_HEAD",
       "head_sha": "f982f48490e5be5fae12e2f49a9d106401e60c37",
       "runs": [
         {
@@ -7510,7 +7516,7 @@
       ]
     },
     "blockers": [
-      "Fresh focused/full frontend tests and executable independent review remain pending because the isolated dependency environment was unavailable.",
+      "The previous frontend execution and independent executable-review blocker is closed on the unchanged exact HEAD.",
       "NTM full-sync audit still requires a lawful populated synchronized snapshot.",
       "Full #245 product acceptance and legal/source completeness remain NOT PASS."
     ],
@@ -7519,6 +7525,6 @@
       "status": "UNCHANGED_NOT_SENT"
     },
     "protected_actions_performed": false,
-    "next_step": "Re-run focused/full frontend tests and fresh independent executable review on exact HEAD when dependencies are available; otherwise continue only another independently reproducible bounded #245 defect without claiming readiness."
+    "next_step": "Continue the next reproduced bounded #245 search/classification/grounding integration defect; keep NTM full-sync completeness blocked on a lawful populated synchronized snapshot."
   }
 }

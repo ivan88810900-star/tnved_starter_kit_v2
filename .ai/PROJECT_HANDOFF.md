@@ -3,6 +3,22 @@
 **Снимок:** 2026-10-09 (UTC). **Единственный репозиторий:** [ivan88810900-star/tnved_starter_kit_v2](https://github.com/ivan88810900-star/tnved_starter_kit_v2).
 **Авторитетное состояние:** ветка `agent/orchestration-state`, файлы `.ai/TASK_BOARD.json`, `.ai/COORDINATOR_LEASE.json`, `.ai/orchestration/A6_LIVE_STATUS.json`. Этот документ — указатель и контрольная точка, **не** право на запись/merge/A6. Перед действием заново читать текущие HEAD и state. Не полагаться на Business-чат.
 
+## 0aaaaaaaaaaaaa. #245 — executable gate для строгих URL цитат чата закрыт
+
+**Кодовый checkpoint не изменён:** [draft PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256), `agent/product-ntm-regressions-v1` @ `f982f48490e5be5fae12e2f49a9d106401e60c37`, tree `2616d6df4c4e5e611aea55f298d9fbfc56eebbb1`, parent chain `a556cb073482a957fa5fff09ab59ddd2b9194ba5` → `06a540ad6e9fcbd7003a224cc68a3dd5a779598f`.
+
+Ранее chat citation URL boundary был реализован, но свежий focused/full frontend и исполнимый независимый review оставались неподтверждёнными из-за недоступных зависимостей в той среде. На точном неизменном HEAD эти gates теперь реально выполнены:
+
+- root focused: `DeclarantChatThread.test.tsx` + `externalUrl.test.ts` — **54 passed**, exit 0;
+- root full frontend: **82 passed**, typecheck/build — PASS, общая команда exit 0;
+- свежий независимый A5 `/root/a5_chat_url_exec_151`: **FINAL PASS** exact HEAD/tree; focused **54 passed**, full **82 passed**, typecheck/build/diff-check — exit 0;
+- A5 adversarial probe: **24 unsafe URL rejected**, **7 safe HTTP(S) URL preserved byte-for-byte**, включая literal C1/bidi и encoded/double/deep controls, exit 0;
+- exact-head CI: [run 37998614667](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/37998614667), job `114050947337`, **success**.
+
+Предыдущая `FRONTEND_EXECUTION_PENDING` блокировка закрыта. Полный #245 product/legal/source completeness остаётся **NOT PASS**: lawful populated synchronized NTM snapshot недоступен. Merge, deploy, production write, enforcement/permissions/secrets change, destructive migration и внешний A6 не выполнялись.
+
+Следующий шаг — следующий воспроизводимый bounded #245 search/classification/grounding defect; full-sync audit сохранять заблокированным до законно доступного populated synchronized snapshot.
+
 ## 0aaaaaaaaaaaa. #245 — импортированные source URL теперь fail-closed
 
 **Новый checkpoint:** [draft PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256), `agent/product-ntm-regressions-v1` @ `a556cb073482a957fa5fff09ab59ddd2b9194ba5`, tree `e225b7df42488301bd3f12be6e7841a14ba44f31`, parent `9319a1b925a4c7fe04e45431e2805becc61499be`.
