@@ -3,6 +3,26 @@
 **Снимок:** 2026-10-08 (UTC). **Единственный репозиторий:** [ivan88810900-star/tnved_starter_kit_v2](https://github.com/ivan88810900-star/tnved_starter_kit_v2).  
 **Авторитетное состояние:** ветка `agent/orchestration-state`, файлы `.ai/TASK_BOARD.json`, `.ai/COORDINATOR_LEASE.json`, `.ai/orchestration/A6_LIVE_STATUS.json`. Этот документ — указатель и контрольная точка, **не** право на запись/merge/A6. Перед действием заново читать текущие HEAD и state. Не полагаться на Business-чат.
 
+## 0s. #245 — broad fixtures изолированы, full-sync audit не скрывает partial snapshots
+
+**Новый текущий checkpoint:** [draft PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256), `agent/product-ntm-regressions-v1` @ `4333061a162225f0efbbf0e971585a428ce78f82`, tree `f14b0542d0fb8d730b4312c4db58b70b89e2674e`, parent `f1d3a5d451c8325a6c766bd6dce4f7368a2d790c`, base #245 неизменён `e39e19787bd913baeb6f85577a13e1116458e633`.
+
+Разобраны оставшиеся 12 failures одинакового 20-file product slice. Шесть были зависимостью от произвольно заполненной developer DB: legacy NTM lookup теперь сам создаёт in-memory exact/prefix fixture; tree API сам создаёт и удаляет изолированную иерархию `99xx` и exact HsRate. Ещё девять assertions в `test_ntm_full_sync.py` явно являются аудитом заполненного full-sync snapshot: они пропускаются только при полностью пустой disposable DB, а любой непустой/частичный snapshot обязан исполнять исходные thresholds.
+
+Промежуточный gate `count < 42000` независимый A5 отклонил: он делал порог строк недостижимым и скрывал regression на 41,999 строках. Этот вариант не принят. Финальный exact head использует только `count == 0`.
+
+Проверки exact head/tree:
+- author changed lookup/catalog: **25 passed**, exit 0;
+- author exact 20-file backend/NTM slice: **322 passed, 10 skipped, 3 subtests**, exit 0;
+- author 41,999-row probe: expected total-count failure, exit 1; audit не skipped;
+- независимый A5 `/root/a5_ntm_fallback`: **PASS exact remote HEAD**; empty disposable **25 passed, 9 skipped**; сбалансированные 41,999 строк дали ровно **1 failed + 8 passed**; намеренно неправильные 42,000 строк дали **3 expected structural failures + 6 passed**;
+- `git diff --check`: exit 0;
+- exact-head GitHub Actions: **PENDING_NO_RUN_OBSERVED**; workflow run и commit status для `4333061a162225f0efbbf0e971585a428ce78f82` connector не показывает.
+
+Изменения этого блока только в тестовых contracts/fixtures; legal/applicability/runtime calculation не менялись. Полный #245 product/legal/source-completeness **NOT PASS**. Девять full-sync assertions ещё нужно прогнать на законно доступном заполненном synchronized snapshot. Protected merge, production/DB writes, enforcement flags, secrets/permissions, destructive migration и внешний A6 не выполнялись. A6 `core-s1-6415f443120f-r9-g106` неизменён и не отправлен.
+
+Следующий шаг — получить populated full-sync snapshot для явного dataset audit либо продолжить независимый #245 applicability/source block; не расширять definite rules без подтверждённых характеристик/источника.
+
 ## 0r. #245 — карточка отсутствующего кода требует exact persisted evidence
 
 **Новый текущий checkpoint:** [draft PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256), `agent/product-ntm-regressions-v1` @ `5717db24b7833d15182d1da231222559301b8e6f`, tree `97e493374c18b82f5472417bfad74716ec1cbee7`, parent `04979b50bf2926751dad92468e9beb4e2fa7b539`, base #245 неизменён `e39e19787bd913baeb6f85577a13e1116458e633`.
