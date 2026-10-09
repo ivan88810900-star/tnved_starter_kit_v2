@@ -1,14 +1,14 @@
 {
   "acquisition_note": "Harden assistant chat citation URL boundary and persist the exact-head checkpoint.",
-  "expires_at": null,
-  "generation": 151,
-  "holder": null,
+  "expires_at": "2026-10-09T23:21:54.343281Z",
+  "generation": 152,
+  "holder": "/root/tariff_a0_scheduled_20261009T224831Z",
   "lease_repair": {},
   "release_reason": "PR256 chat citation URL boundary checkpoint recorded at board revision 699; exact-head agent-safety and state snapshot checks passed, with frontend execution limitation preserved.",
   "released_by": "/root/tariff_a0_maintenance_20261010T0114MSK",
   "schema_version": 1,
   "serialization_repair": {},
-  "state": "released",
-  "token": null,
-  "updated_at": "2026-10-09T22:26:47.213197Z"
+  "state": "active",
+  "token": "9fae3441d6cc488b9845dce8579e0cbf",
+  "updated_at": "2026-10-09T22:51:54.343281Z"
 }
