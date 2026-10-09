@@ -225,10 +225,70 @@ class TnvedCatalogApiTests(unittest.TestCase):
         self.assertNotIn("СГР", badges)
 
     def test_commodity_chapter_84_duty_from_hs_rates(self):
-        r = self.client.get("/api/v1/tnved/8401300000")
-        self.assertEqual(r.status_code, 200)
-        duty = r.json().get("import_duty") or ""
-        self.assertIn("15", duty)
+        # The test owns its tariff evidence instead of depending on a global
+        # developer database populated by an unrelated full-catalog import.
+        with SessionLocal() as db:
+            row = HsRate(
+                hs_code="8401300000",
+                hs_prefix="8401300000",
+                duty_rate="15",
+                vat_import_rate=22.0,
+                source_revision="test-exact-rate",
+            )
+            db.add(row)
+            db.commit()
+            rate_id = row.id
+        try:
+            r = self.client.get("/api/v1/tnved/8401300000")
+            self.assertEqual(r.status_code, 200)
+            duty = r.json().get("import_duty") or ""
+            self.assertIn("15", duty)
+        finally:
+            with SessionLocal() as db:
+                db.query(HsRate).filter(HsRate.id == rate_id).delete()
+                db.commit()
+
+    def test_detail_rate_only_requires_exact_rate(self):
+        with SessionLocal() as db:
+            row = HsRate(
+                hs_code="9988123456",
+                hs_prefix="9988123456",
+                duty_rate="7.5",
+                vat_import_rate=22.0,
+                source_revision="test-exact-rate-only",
+            )
+            db.add(row)
+            db.commit()
+            rate_id = row.id
+        try:
+            r = self.client.get("/api/v1/tnved/9988123456")
+            self.assertEqual(r.status_code, 200)
+            self.assertEqual(r.json().get("code"), "9988123456")
+            self.assertIn("7.5", (r.json().get("import_duty") or "").replace(",", "."))
+        finally:
+            with SessionLocal() as db:
+                db.query(HsRate).filter(HsRate.id == rate_id).delete()
+                db.commit()
+
+    def test_detail_rate_only_rejects_prefix_rate(self):
+        with SessionLocal() as db:
+            row = HsRate(
+                hs_code="9988000000",
+                hs_prefix="9988",
+                duty_rate="9",
+                vat_import_rate=22.0,
+                source_revision="test-prefix-rate-only",
+            )
+            db.add(row)
+            db.commit()
+            rate_id = row.id
+        try:
+            r = self.client.get("/api/v1/tnved/9988123456")
+            self.assertEqual(r.status_code, 404)
+        finally:
+            with SessionLocal() as db:
+                db.query(HsRate).filter(HsRate.id == rate_id).delete()
+                db.commit()
 
     def test_children_compat_route(self):
         r = self.client.get("/api/tnved/children/8517?depth=direct")

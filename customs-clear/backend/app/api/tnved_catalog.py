@@ -19,6 +19,7 @@ from sqlalchemy import func, or_
 from sqlalchemy.orm import Session, joinedload, selectinload
 
 from ..db import SessionLocal
+from ..models.core import HsRate
 from ..models.tnved import Chapter, Commodity, IntellectualProperty, NonTariffMeasure, Section, SpecialDuty, VatPreference
 from ..schemas.tnved_catalog import TnvedCommodityDetailsResponse
 from ..services.non_tariff_measures_lookup import (
@@ -1546,6 +1547,17 @@ def get_commodity_by_code(code: str, db: Session = Depends(get_db)) -> dict[str,
             .order_by(Commodity.code.asc())
             .first()
         )
+        exact_rate = (
+            db.query(HsRate)
+            .filter(or_(HsRate.hs_code == out_code, HsRate.hs_prefix == out_code))
+            .order_by(HsRate.id.asc())
+            .first()
+        )
+        # A derived measure or a neighbouring commodity name is not enough to
+        # prove that an arbitrary 10-digit code exists.  Keep the rate-only
+        # fallback for exact persisted tariff evidence, otherwise fail closed.
+        if exact_rate is None:
+            raise HTTPException(status_code=404, detail="Позиция не найдена")
         measures = _measures_for_api(out_code)
         return {
             "status": "OK",
@@ -1555,7 +1567,7 @@ def get_commodity_by_code(code: str, db: Session = Depends(get_db)) -> dict[str,
             "unit": "",
             "supp_unit": "",
             "weight_coeff": 0.0,
-            "import_duty": _resolve_duty_for_display(name_row, out_code) if name_row else "",
+            "import_duty": _format_duty(str(exact_rate.duty_rate or "")),
             "notes": "",
             "notes_combined": "",
             "non_tariff_measures": [],
