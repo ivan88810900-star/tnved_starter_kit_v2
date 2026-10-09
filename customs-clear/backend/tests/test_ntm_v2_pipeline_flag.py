@@ -109,6 +109,18 @@ def test_empty_v2_falls_back_to_legacy_catalog(
     assert any("NTM_V2_TR_TS" in r.message for r in caplog.records)
 
 
+def test_schema_upgrade_keeps_ntm_diagnostic_logger_enabled() -> None:
+    """Alembic runs in-process at startup and must not silence app diagnostics."""
+    target = logging.getLogger("app.services.ntm_engine_v2")
+    target.disabled = False
+
+    from app.services.normative_store import _run_alembic_upgrade_to_head
+
+    _run_alembic_upgrade_to_head()
+
+    assert target.disabled is False
+
+
 def test_empty_v2_and_legacy_both_empty(
     memory_sessionmaker: sessionmaker, monkeypatch: pytest.MonkeyPatch
 ) -> None:
