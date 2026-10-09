@@ -3,6 +3,10 @@
 **Снимок:** 2026-10-08 (UTC). **Единственный репозиторий:** [ivan88810900-star/tnved_starter_kit_v2](https://github.com/ivan88810900-star/tnved_starter_kit_v2).  
 **Авторитетное состояние:** ветка `agent/orchestration-state`, файлы `.ai/TASK_BOARD.json`, `.ai/COORDINATOR_LEASE.json`, `.ai/orchestration/A6_LIVE_STATUS.json`. Этот документ — указатель и контрольная точка, **не** право на запись/merge/A6. Перед действием заново читать текущие HEAD и state. Не полагаться на Business-чат.
 
+## 0t. #256 — exact-head GitHub Actions подтверждён
+
+Для неизменённого HEAD `4333061a162225f0efbbf0e971585a428ce78f82` GitHub Actions run [37881930775](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/37881930775) завершён успешно: job `offline-safety` и все его steps — `success` (completed `2026-10-09T04:01:43Z`). Review threads и submitted reviews отсутствуют. Это закрывает только прежний CI-polling blocker; полный #245 product/legal/source-completeness остаётся **NOT PASS**, а populated full-sync dataset audit всё ещё не выполнен. A6 `core-s1-6415f443120f-r9-g106` не отправлялся и не изменялся.
+
 ## 0s. #245 — broad fixtures изолированы, full-sync audit не скрывает partial snapshots
 
 **Новый текущий checkpoint:** [draft PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256), `agent/product-ntm-regressions-v1` @ `4333061a162225f0efbbf0e971585a428ce78f82`, tree `f14b0542d0fb8d730b4312c4db58b70b89e2674e`, parent `f1d3a5d451c8325a6c766bd6dce4f7368a2d790c`, base #245 неизменён `e39e19787bd913baeb6f85577a13e1116458e633`.
