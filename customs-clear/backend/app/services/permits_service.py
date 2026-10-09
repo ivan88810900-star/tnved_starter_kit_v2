@@ -450,7 +450,8 @@ def _extract_fsa_from_html(html: str, doc_type: str, search_number: str) -> Dict
     text = soup.get_text()
     norm = normalize_number(search_number)
 
-    # Признаки «не найдено» на ФСА
+    # Признаки «не найдено» учитываются только после разбора таблиц: справочный
+    # текст страницы не должен перекрывать точную запись и удалять evidence.
     not_found_phrases = [
         "ничего не найдено",
         "не найдено",
@@ -458,33 +459,210 @@ def _extract_fsa_from_html(html: str, doc_type: str, search_number: str) -> Dict
         "0 записей",
         "результатов не найдено",
     ]
-    if any(p in text.lower() for p in not_found_phrases):
+    not_found_text = any(p in text.lower() for p in not_found_phrases)
+    registry_link = (
+        f"{FSA_CERT_URL if doc_type == 'СС' else FSA_DECL_URL}?q={quote(norm)}"
+    )
+
+    # Ищем все таблицы результатов. Наличие таблицы или строки само по себе не
+    # подтверждает identity/status, а rowspan/colspan делает позиционные колонки
+    # неоднозначными и потому не может участвовать в автоматическом выводе.
+    tables = soup.find_all("table")
+    result_table_count = 0
+    result_row_count = 0
+    recognized_row_count = 0
+    incomplete_rows = 0
+    candidates: list[dict[str, str]] = []
+
+    def _span_is_one(cell: Any, name: str) -> bool:
+        value = str(cell.get(name, "1") or "1").strip()
+        return value == "1"
+
+    def _header_is_number(header: str) -> bool:
+        if any(marker in header for marker in ("запрос", "request", "поиска", "search")):
+            return False
+        return header.strip(" :") in {
+            "регистрационный номер",
+            "регистрационный номер документа",
+            "регистрационный номер сертификата",
+            "регистрационный номер декларации",
+            "номер документа",
+            "номер сертификата",
+            "номер декларации",
+            "registration number",
+            "document registration number",
+            "certificate number",
+            "declaration number",
+        }
+
+    def _header_looks_like_number(header: str) -> bool:
+        if any(
+            marker in header
+            for marker in ("запрос", "request", "поиска", "search", "организац", "organization")
+        ):
+            return False
+        return any(
+            marker in header
+            for marker in (
+                "регистрационный номер",
+                "номер документа",
+                "номер сертификата",
+                "номер декларации",
+                "registration number",
+                "certificate number",
+                "declaration number",
+            )
+        )
+
+    def _header_is_status(header: str) -> bool:
+        if any(marker in header for marker in ("запрос", "request", "поиска", "search")):
+            return False
+        return header in {"статус", "состояние", "status", "статус документа"}
+
+    def _header_is_expiry(header: str) -> bool:
+        return any(
+            marker in header
+            for marker in ("действует до", "срок действия", "expiry", "expiration", "valid to")
+        )
+
+    for table in tables:
+        table_rows = table.find_all("tr")
+        if not table_rows:
+            continue
+        result_row_count += max(0, len(table_rows) - 1)
+        header_cells = table_rows[0].find_all(["th", "td"], recursive=False)
+        headers = [
+            " ".join(cell.get_text(" ", strip=True).lower().split())
+            for cell in header_cells
+        ]
+        looks_like_result = any(_header_looks_like_number(header) for header in headers)
+        if not header_cells or not all(
+            _span_is_one(cell, "rowspan") and _span_is_one(cell, "colspan")
+            for cell in header_cells
+        ):
+            if looks_like_result:
+                data_count = max(0, len(table_rows) - 1)
+                result_table_count += 1
+                recognized_row_count += data_count
+                incomplete_rows += data_count
+            continue
+        number_indexes = [idx for idx, header in enumerate(headers) if _header_is_number(header)]
+        if len(number_indexes) != 1:
+            if looks_like_result:
+                data_count = max(0, len(table_rows) - 1)
+                result_table_count += 1
+                recognized_row_count += data_count
+                incomplete_rows += data_count
+            continue
+        result_table_count += 1
+        number_idx = number_indexes[0]
+        status_indexes = [idx for idx, header in enumerate(headers) if _header_is_status(header)]
+        expiry_indexes = [idx for idx, header in enumerate(headers) if _header_is_expiry(header)]
+        status_idx = status_indexes[0] if len(status_indexes) == 1 else None
+        expiry_idx = expiry_indexes[0] if len(expiry_indexes) == 1 else None
+        indexes_complete = (
+            status_idx is not None
+            and expiry_idx is not None
+            and len({number_idx, status_idx, expiry_idx}) == 3
+        )
+
+        for row in table_rows[1:]:
+            recognized_row_count += 1
+            cells = row.find_all("td", recursive=False)
+            if not cells:
+                incomplete_rows += 1
+                continue
+            flat = len(cells) == len(header_cells) and all(
+                _span_is_one(cell, "rowspan") and _span_is_one(cell, "colspan")
+                for cell in cells
+            )
+            if not flat or not indexes_complete:
+                incomplete_rows += 1
+                continue
+            number = cells[number_idx].get_text(" ", strip=True)
+            status = cells[status_idx].get_text(" ", strip=True)
+            expiry = cells[expiry_idx].get_text(" ", strip=True)
+            if not number:
+                incomplete_rows += 1
+                continue
+            candidates.append({"number": number, "status": status, "expiry": expiry})
+
+    matched = [
+        candidate
+        for candidate in candidates
+        if canonical_cert_number(candidate["number"]) == canonical_cert_number(norm)
+    ]
+    fully_numbered = bool(candidates) and incomplete_rows == 0
+    raw: Dict[str, Any] = {
+        "tables_count": len(tables),
+        "result_tables_count": result_table_count,
+        "rows_count": result_row_count,
+        "recognized_rows_count": recognized_row_count,
+        "incomplete_rows_count": incomplete_rows,
+        "identity_match": True if matched else (False if fully_numbered else None),
+    }
+    if candidates:
+        raw["candidate_numbers"] = [
+            normalize_number(candidate["number"]) for candidate in candidates[:10]
+        ]
+    if matched:
+        statuses = [candidate["status"] for candidate in matched]
+        expiries = [candidate["expiry"] for candidate in matched]
+        verify_statuses = [
+            (
+                _registry_status_to_verify(candidate["status"], candidate["expiry"])
+                if _parse_registry_date(candidate["expiry"])
+                else (
+                    "NOT_FOUND"
+                    if _registry_status_to_verify(candidate["status"], "") == "NOT_FOUND"
+                    else "UNKNOWN"
+                )
+            )
+            for candidate in matched
+        ]
+        if "NOT_FOUND" in verify_statuses:
+            verify_status = "NOT_FOUND"
+        elif (
+            incomplete_rows == 0
+            and verify_statuses
+            and all(status == "VALID" for status in verify_statuses)
+        ):
+            verify_status = "VALID"
+        else:
+            verify_status = "UNKNOWN"
+        raw["matched_count"] = len(matched)
+        raw["registry_status"] = statuses[0] or None
+        raw["registry_valid_to"] = expiries[0] or None
+        if len(matched) > 1:
+            raw["registry_statuses"] = [status or None for status in statuses]
+            raw["registry_valid_to_values"] = [expiry or None for expiry in expiries]
         return {
             "type": doc_type,
-            "status": "NOT_FOUND",
+            "status": verify_status,
+            "number": norm,
+            "holder": None,
+            "valid_from": None,
+            "valid_to": expiries[0] if len(expiries) == 1 and expiries[0] else None,
+            "registry_link": registry_link,
+            "raw": raw,
+        }
+    if result_table_count:
+        if fully_numbered:
+            status = "NOT_FOUND"
+        elif recognized_row_count == 0 and not_found_text:
+            status = "NOT_FOUND"
+        else:
+            status = "UNKNOWN"
+        return {
+            "type": doc_type,
+            "status": status,
             "number": norm,
             "holder": None,
             "valid_from": None,
             "valid_to": None,
-            "registry_link": f"{FSA_CERT_URL if doc_type == 'СС' else FSA_DECL_URL}?q={quote(norm)}",
-            "raw": None,
+            "registry_link": registry_link,
+            "raw": raw,
         }
-
-    # Ищем таблицу с результатами (старый HTML; сейчас чаще отдаётся SPA-оболочка без таблицы)
-    table = soup.find("table")
-    if table:
-        rows = table.find_all("tr")
-        if len(rows) > 1:
-            return {
-                "type": doc_type,
-                "status": "VALID",
-                "number": norm,
-                "holder": None,
-                "valid_from": None,
-                "valid_to": None,
-                "registry_link": f"{FSA_CERT_URL if doc_type == 'СС' else FSA_DECL_URL}?q={quote(norm)}",
-                "raw": {"rows_count": len(rows) - 1},
-            }
 
     # Angular/PrimeNG: данные подгружаются в браузере; API /api/v1/... часто отвечает 403 ботам
     if "data-critters-container" in html or "ng-version" in html:
@@ -506,6 +684,18 @@ def _extract_fsa_from_html(html: str, doc_type: str, search_number: str) -> Dict
             },
         }
 
+    if not_found_text:
+        return {
+            "type": doc_type,
+            "status": "NOT_FOUND",
+            "number": norm,
+            "holder": None,
+            "valid_from": None,
+            "valid_to": None,
+            "registry_link": registry_link,
+            "raw": raw if tables else None,
+        }
+
     return {
         "type": doc_type,
         "status": "UNKNOWN",
@@ -514,7 +704,7 @@ def _extract_fsa_from_html(html: str, doc_type: str, search_number: str) -> Dict
         "valid_from": None,
         "valid_to": None,
         "registry_link": f"{FSA_CERT_URL if doc_type == 'СС' else FSA_DECL_URL}?q={quote(norm)}",
-        "raw": None,
+        "raw": raw if tables else None,
     }
 
 
