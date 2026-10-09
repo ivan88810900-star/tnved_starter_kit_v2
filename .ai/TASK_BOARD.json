@@ -2179,7 +2179,7 @@
       "unique_source_pr_count": 29
     }
   },
-  "revision": 679,
+  "revision": 680,
   "runs": [
     {
       "head_sha": null,
@@ -7081,7 +7081,7 @@
           "head_sha": "233ed6a64b0e75175358f8cdf0e7bcc71191b67b"
         }
       },
-      "updated_at": "2026-10-09T04:20:54Z",
+      "updated_at": "2026-10-09T05:01:40Z",
       "worktree": null,
       "ntm_fallback_checkpoint_20261009": {
         "corrective_pr": 256,
@@ -7136,85 +7136,111 @@
           "Full-sync dataset audit has not been run on a lawful populated synchronized snapshot.",
           "Full #245 product acceptance and legal/source completeness remain NOT PASS."
         ]
+      },
+      "broad_suite_fixture_checkpoint_20261009": {
+        "corrective_pr": 256,
+        "corrective_head_sha": "ec4c3fc67fbb7ca90ec28e2ee89ff232711b2eac",
+        "corrective_tree_sha": "93571a51fdd03806693be76920163312edb24d68",
+        "block_base_sha": "4333061a162225f0efbbf0e971585a428ce78f82",
+        "executor": "/root/tariff_automation_20261009T0750MSK",
+        "lease_generation": 132,
+        "scope": "isolate regulatory mass-seed audit and TNVED measures API fixtures; preserve original non-empty thresholds and pre-existing persisted rows",
+        "state": "PUBLISHED_A5_CI_PASS",
+        "tests": "author broad 897 passed plus 11 skipped and 32 subtests; one-row partial dataset failed threshold as expected; independent A5 relevant slice 111 passed plus 9 skipped and 3 subtests with cleanup lifecycle PASS",
+        "rejected_intermediate": "b4fef2b cleanup by shared source_revision could delete pre-existing rows; superseded by exact inserted-ID cleanup",
+        "ci_status": "PASSED_EXACT_HEAD_RUN_37886387124_JOB_113677226792",
+        "a6": "unchanged/not sent",
+        "unresolved": [
+          "Regulatory mass-seed audit has not been run on a lawful populated mass-seed snapshot.",
+          "NTM full-sync audit has not been run on a lawful populated synchronized snapshot.",
+          "Full #245 product acceptance and legal/source completeness remain NOT PASS."
+        ]
       }
     }
   ],
-  "updated_at": "2026-10-09T04:20:54Z",
+  "updated_at": "2026-10-09T05:01:40Z",
   "latest_scheduled_product_checkpoint": {
-    "updated_at": "2026-10-09T04:20:54Z",
+    "updated_at": "2026-10-09T05:01:40Z",
     "pr": 256,
     "branch": "agent/product-ntm-regressions-v1",
-    "head_sha": "4333061a162225f0efbbf0e971585a428ce78f82",
-    "tree_sha": "f14b0542d0fb8d730b4312c4db58b70b89e2674e",
-    "parent_sha": "f1d3a5d451c8325a6c766bd6dce4f7368a2d790c",
+    "head_sha": "ec4c3fc67fbb7ca90ec28e2ee89ff232711b2eac",
+    "tree_sha": "93571a51fdd03806693be76920163312edb24d68",
+    "parent_sha": "b4fef2b9952a5b58f4bc2545523daf92a3bfd518",
+    "block_base_sha": "4333061a162225f0efbbf0e971585a428ce78f82",
     "base_pr": 245,
     "base_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
-    "completed_block": "isolate_ntm_lookup_tnved_tree_and_full_sync_dataset_contracts",
+    "completed_block": "isolate_regulatory_mass_seed_and_tnved_measures_broad_fixtures",
     "author_tests": {
-      "changed_fixtures": "25 passed; exit 0",
-      "broad_backend_ntm": "322 passed, 10 skipped, 3 subtests; exit 0",
-      "partial_41999_probe": "expected total-count failure; exit 1",
-      "diff_check": "passed"
+      "initial_reproduction": "8 failed, 898 passed, 2 skipped, 32 subtests; exit 1",
+      "broad_final": "897 passed, 11 skipped, 32 subtests; exit 0",
+      "focused": "3 passed, 9 skipped; exit 0",
+      "cleanup_preservation": "2 passed plus pre-existing-row assertion; exit 0",
+      "partial_one_row": "expected total-count failure; exit 1",
+      "diff_check": "passed; exit 0"
     },
     "a5": {
       "session": "/root/a5_ntm_fallback",
-      "status": "PASSED_EXACT_REMOTE_HEAD_AFTER_REJECTED_INTERMEDIATE_GATE",
-      "empty_disposable": "25 passed, 9 skipped; exit 0",
-      "balanced_41999": "1 failed (total threshold), 8 passed; exit 1",
-      "malformed_42000": "3 expected structural failures, 6 passed; exit 1"
+      "status": "PASSED_EXACT_REMOTE_HEAD_AFTER_CLEANUP_FIX",
+      "empty_disposable": "1 passed, 9 skipped; exit 0",
+      "partial_one_row": "threshold ran and failed; exit 1",
+      "cleanup_adversarial": "three pre-existing rows survived; fixture-only inserted rows removed; exit 0",
+      "relevant_slice": "111 passed, 9 skipped, 3 subtests; exit 0"
     },
     "ci": {
       "status": "PASSED_EXACT_HEAD",
-      "head_sha": "4333061a162225f0efbbf0e971585a428ce78f82",
-      "run_id": 37881930775,
+      "head_sha": "ec4c3fc67fbb7ca90ec28e2ee89ff232711b2eac",
+      "run_id": 37886387124,
+      "job_id": 113677226792,
       "job": "offline-safety",
       "conclusion": "success",
-      "completed_at": "2026-10-09T04:01:43Z",
-      "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/37881930775"
+      "completed_at": "2026-10-09T04:59:15Z",
+      "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/37886387124"
     },
     "blockers": [
       "Full #245 backend/frontend acceptance and legal/source completeness remain NOT PASS.",
-      "Nine full-sync dataset audit assertions require a populated synchronized snapshot and are skipped only on an empty disposable database."
+      "Regulatory mass-seed and NTM full-sync dataset audits require lawful populated synchronized snapshots."
     ],
     "a6": {
       "request": "core-s1-6415f443120f-r9-g106",
       "status": "UNCHANGED_NOT_SENT"
     },
     "protected_actions_performed": false,
-    "next_step": "Run the explicit full-sync dataset audit against a lawful populated snapshot, then continue #245 applicability/source triage without widening definite rules."
+    "next_step": "Run regulatory mass-seed and NTM full-sync audits on lawful populated snapshots, or continue the next reproduced #245 source/applicability defect without widening definite rules."
   },
   "latest_development_checkpoint": {
-    "checked_at": "2026-10-09T04:20:54Z",
+    "checked_at": "2026-10-09T05:01:40Z",
     "pr": 256,
     "branch": "agent/product-ntm-regressions-v1",
-    "head_sha": "4333061a162225f0efbbf0e971585a428ce78f82",
-    "tree_sha": "f14b0542d0fb8d730b4312c4db58b70b89e2674e",
+    "head_sha": "ec4c3fc67fbb7ca90ec28e2ee89ff232711b2eac",
+    "tree_sha": "93571a51fdd03806693be76920163312edb24d68",
     "base_pr": 245,
     "base_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
-    "block": "isolate_ntm_lookup_tnved_tree_and_full_sync_dataset_contracts",
+    "block": "isolate_regulatory_mass_seed_and_tnved_measures_broad_fixtures",
     "status": "DRAFT_CHECKPOINT_A5_CI_PASS",
     "author_tests": [
-      "25 changed fixture tests passed; exit 0",
-      "322 broad-slice tests passed plus 10 skipped and 3 subtests; exit 0",
-      "41,999-row threshold probe failed as expected; exit 1",
-      "git diff --check passed"
+      "897 broad-slice tests passed plus 11 skipped and 32 subtests; exit 0",
+      "pre-existing rate-row cleanup probe passed; exit 0",
+      "one-row partial regulatory dataset failed the original 5000 threshold as expected; exit 1",
+      "git diff --check passed; exit 0"
     ],
     "a5": {
       "session": "/root/a5_ntm_fallback",
       "status": "PASSED_EXACT_REMOTE_HEAD",
-      "adversarial": "empty DB skips audit only; balanced 41,999 rows fail exactly count threshold; malformed 42,000 rows execute and fail structural thresholds"
+      "relevant_slice": "111 passed, 9 skipped, 3 subtests; exit 0",
+      "adversarial": "empty dataset skips; non-empty partial dataset fails threshold; three pre-existing rate rows survive teardown"
     },
     "ci": {
       "status": "PASSED_EXACT_HEAD",
-      "head_sha": "4333061a162225f0efbbf0e971585a428ce78f82",
-      "run_id": 37881930775,
+      "head_sha": "ec4c3fc67fbb7ca90ec28e2ee89ff232711b2eac",
+      "run_id": 37886387124,
+      "job_id": 113677226792,
       "job": "offline-safety",
       "conclusion": "success",
-      "completed_at": "2026-10-09T04:01:43Z",
-      "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/37881930775"
+      "completed_at": "2026-10-09T04:59:15Z",
+      "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/37886387124"
     },
-    "current_data_state": "lookup and tree tests own disposable fixtures; full-sync distribution thresholds execute for every non-empty snapshot and cannot be bypassed by falling below 42,000 rows",
-    "next_step": "Run full-sync dataset audit on a populated synchronized snapshot; continue #245 source/applicability work.",
+    "current_data_state": "remaining broad failures are dataset-contract fixtures; empty databases are not misreported as failed imports and partial datasets cannot bypass thresholds",
+    "next_step": "Run regulatory mass-seed and NTM full-sync audits on lawful populated snapshots, or continue the next reproduced #245 source/applicability defect without widening definite rules.",
     "full_245_status": "NOT_PASS",
     "a6": "core-s1-6415f443120f-r9-g106 unchanged, not sent",
     "protected_actions_performed": false
