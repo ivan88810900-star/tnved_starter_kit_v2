@@ -3,6 +3,27 @@
 **Снимок:** 2026-10-09 (UTC). **Единственный репозиторий:** [ivan88810900-star/tnved_starter_kit_v2](https://github.com/ivan88810900-star/tnved_starter_kit_v2).
 **Авторитетное состояние:** ветка `agent/orchestration-state`, файлы `.ai/TASK_BOARD.json`, `.ai/COORDINATOR_LEASE.json`, `.ai/orchestration/A6_LIVE_STATUS.json`. Этот документ — указатель и контрольная точка, **не** право на запись/merge/A6. Перед действием заново читать текущие HEAD и state. Не полагаться на Business-чат.
 
+## 0aaaaaaaaaaa. #245 — semantic search больше не выдаёт непохожие векторы как кандидатов
+
+**Новый checkpoint:** [draft PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256), `agent/product-ntm-regressions-v1` @ `9319a1b925a4c7fe04e45431e2805becc61499be`, tree `daadba714208c413c249599dcbf40a0e83b6d733`, parent `28e226a0b1fd33530e4a46786ce0eb5c3f392085`.
+
+Воспроизведён search/classification defect: ортогональные и противоположные эмбеддинги со score `0.0` и `-1.0` попадали в semantic TN VED results как совпадения. До исправления direct probe напечатал оба результата и завершился exit 1.
+
+Теперь `semantic_search_tnved` исключает cosine score `<= 0`. Это минимальная математическая граница: более сильный доменный или юридический порог без калиброванных данных не вводился, положительные кандидаты сохраняют ранжирование. UI явно помечает результаты как кандидатов векторного поиска, а не подтверждённую классификацию, и требует ручной сверки по описанию, примечаниям и классификационным решениям.
+
+Проверки:
+
+- author focused backend: **10 passed + 15 subtests**, frontend: **1 passed**, typecheck/diff-check — exit 0;
+- независимый A5 `/root/a5_semantic_candidate_boundary`: **PASS** exact tree; backend **10 passed + 15 subtests**, adjacent API **7 passed**, полный frontend **33 passed**, typecheck и adversarial boundary probe — exit 0;
+- root full frontend/typecheck/build: **33 passed**, exit 0;
+- root bounded backend selection: **50 passed + 15 subtests**; ещё **19 fixture-dependent failures** из-за пустых таблиц classification rulings/letters, поэтому полный backend PASS не заявляется;
+- remote commit tree побайтово совпадает с independently reviewed tree;
+- exact-head CI: [run 37991127094](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/37991127094), job `114025259019`, **success**.
+
+Полный #245 product/legal/source completeness остаётся **NOT PASS**. Lawful populated synchronized NTM snapshot недоступен. Protected merge, deploy, production write, enforcement/permissions/secrets change, destructive migration и внешний A6 не выполнялись; `core-s1-6415f443120f-r9-g106` неизменён и не отправлялся.
+
+Следующий шаг — продолжить следующий воспроизводимый bounded #245 search/classification integration defect; отдельно разобрать fixture contour, не подменяя lawful populated snapshot.
+
 ## 0aaaaaaaaaa. #245 — классификатор больше не выдаёт LLM-догадку за web grounding
 
 **Новый checkpoint:** [draft PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256), `agent/product-ntm-regressions-v1` @ `28e226a0b1fd33530e4a46786ce0eb5c3f392085`, tree `197f264af9220cd255d5116ffe25ada449514062`, parent `dd7ac413dc2f7698ffe1ce80375557afcbac2da5`.

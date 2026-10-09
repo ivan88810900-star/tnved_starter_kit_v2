@@ -2179,7 +2179,7 @@
       "unique_source_pr_count": 29
     }
   },
-  "revision": 696,
+  "revision": 697,
   "runs": [
     {
       "head_sha": null,
@@ -7414,55 +7414,55 @@
       }
     }
   ],
-  "updated_at": "2026-10-09T20:08:39.000Z",
+  "updated_at": "2026-10-09T21:05:00.000Z",
   "latest_scheduled_product_checkpoint": {
-    "updated_at": "2026-10-09T20:08:39.000Z",
-    "checked_at": "2026-10-09T20:08:39.000Z",
+    "updated_at": "2026-10-09T21:05:00.000Z",
+    "checked_at": "2026-10-09T21:05:00.000Z",
     "pr": 256,
     "branch": "agent/product-ntm-regressions-v1",
-    "head_sha": "28e226a0b1fd33530e4a46786ce0eb5c3f392085",
-    "tree_sha": "197f264af9220cd255d5116ffe25ada449514062",
-    "parent_sha": "dd7ac413dc2f7698ffe1ce80375557afcbac2da5",
+    "head_sha": "9319a1b925a4c7fe04e45431e2805becc61499be",
+    "tree_sha": "daadba714208c413c249599dcbf40a0e83b6d733",
+    "parent_sha": "28e226a0b1fd33530e4a46786ce0eb5c3f392085",
     "base_pr": 245,
     "base_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
-    "completed_block": "classifier_web_grounding_fail_closed",
-    "block": "classifier_web_grounding_fail_closed",
-    "status": "DRAFT_CHECKPOINT_A5_PASS_CI_PASS_CLASSIFIER_WEB_GROUNDING",
+    "completed_block": "semantic_search_candidate_boundary",
+    "block": "semantic_search_candidate_boundary",
+    "status": "DRAFT_CHECKPOINT_A5_PASS_CI_PASS_SEMANTIC_CANDIDATE_BOUNDARY",
     "behavior": {
-      "reproduced": "when actual web search returned nothing, the smart classifier generated likely specifications with complete_text and exposed them as web_context/web_search_used",
-      "final": "only an actual Anthropic web_search_result with a valid HTTP(S) URL and hostname is admitted; unavailable required search returns MANUAL_REVIEW, omits web_context and forces recommended=false",
-      "boundaries": "UI shows the manual-review boundary and suppresses recommendation; no legal/source completeness claim, DB write, applicability or enforcement change"
+      "reproduced": "orthogonal and opposite embeddings with cosine scores 0.0 and -1.0 were returned as semantic TN VED matches",
+      "final": "semantic search omits cosine scores <= 0; positive candidates remain ranked, and the UI labels every vector hit as a candidate requiring manual classification verification",
+      "boundaries": "minimal mathematical cutoff only; no uncalibrated domain or legal threshold, source-completeness claim, DB write, applicability or enforcement change"
     },
     "author_tests": {
-      "reproduction_before_fix": "expected empty web context but got model-inferred likely specifications; exit 1",
-      "focused": "smart classifier and API: 17 passed plus 7 subtests; exit 0",
-      "bounded_offline_tranche": "backend 33 passed plus 7 subtests; full frontend 32 passed; exit 0",
-      "environment": "isolated Python requirements and npm ci; typecheck and production build exit 0",
-      "diff_compile": "compileall and git diff --check exit 0"
+      "reproduction_before_fix": "direct probe returned scores 0.0 and -1.0 and failed expected-empty assertion; exit 1",
+      "focused": "backend 10 passed plus 15 subtests; frontend 1 passed; exit 0",
+      "bounded_offline_tranche": "root backend selection 50 passed plus 15 subtests with 19 fixture-dependent empty-inventory failures; full frontend 33 passed; no full backend PASS",
+      "environment": "isolated Python requirements and npm dependencies available; typecheck and production build exit 0",
+      "diff_compile": "git diff --check exit 0"
     },
     "a5": {
-      "session": "/root/a5_search_grounding_148",
-      "status": "FINAL_PASS_EXACT_REPAIRED_TREE_REMOTE_BOUND",
-      "first_candidate": "REJECT: type-only and blank-URL web_search_result blocks were accepted as proof",
-      "focused": "backend/API/parser 20 passed plus 7 subtests; full frontend 32 passed; exit 0",
-      "adversarial": "text-only, tool error, missing/blank/non-HTTP/hostless/malformed URLs fail closed; valid HTTP(S) results pass",
-      "remote_binding": "remote commit 28e226a0b1fd33530e4a46786ce0eb5c3f392085 tree equals reviewed tree 197f264af9220cd255d5116ffe25ada449514062",
-      "bounded_offline_tranche": "typecheck and adversarial Python probe exit 0"
+      "session": "/root/a5_semantic_candidate_boundary",
+      "status": "PASS_EXACT_REVIEWED_TREE_REMOTE_BOUND",
+      "focused": "backend 10 passed plus 15 subtests; adjacent API 7 passed; full frontend 33 passed; exit 0",
+      "adversarial": "tiny positive candidate retained; zero and negative candidates omitted; UI warning and manual verification boundary present",
+      "remote_binding": "remote commit 9319a1b925a4c7fe04e45431e2805becc61499be tree equals reviewed tree daadba714208c413c249599dcbf40a0e83b6d733",
+      "bounded_offline_tranche": "typecheck, cached diff check and adversarial Python probe exit 0"
     },
     "ci": {
       "status": "PASSED_EXACT_HEAD",
-      "head_sha": "28e226a0b1fd33530e4a46786ce0eb5c3f392085",
+      "head_sha": "9319a1b925a4c7fe04e45431e2805becc61499be",
       "runs": [
         {
-          "run_id": 37984824462,
-          "job_id": 114004071500,
+          "run_id": 37991127094,
+          "job_id": 114025259019,
           "conclusion": "success",
-          "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/37984824462"
+          "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/37991127094"
         }
       ]
     },
     "blockers": [
-      "This bounded classifier/search block is not a full #245 backend/frontend acceptance result.",
+      "This bounded semantic-search block is not a full #245 backend/frontend acceptance result.",
+      "The root backend selection still has 19 fixture-dependent failures because classification rulings and FTS letters are absent in the current default test database.",
       "NTM full-sync audit still requires a lawful populated synchronized snapshot.",
       "Full #245 product acceptance and legal/source completeness remain NOT PASS."
     ],
@@ -7471,56 +7471,56 @@
       "status": "UNCHANGED_NOT_SENT"
     },
     "protected_actions_performed": false,
-    "next_step": "Continue the next reproduced bounded #245 search/classification integration defect; keep NTM full-sync completeness blocked on a lawful populated synchronized snapshot."
+    "next_step": "Continue the next reproduced bounded #245 search/classification integration defect; separately use the canonical disposable fixture contour and keep NTM full-sync completeness blocked on a lawful populated synchronized snapshot."
   },
   "latest_development_checkpoint": {
-    "updated_at": "2026-10-09T20:08:39.000Z",
-    "checked_at": "2026-10-09T20:08:39.000Z",
+    "updated_at": "2026-10-09T21:05:00.000Z",
+    "checked_at": "2026-10-09T21:05:00.000Z",
     "pr": 256,
     "branch": "agent/product-ntm-regressions-v1",
-    "head_sha": "28e226a0b1fd33530e4a46786ce0eb5c3f392085",
-    "tree_sha": "197f264af9220cd255d5116ffe25ada449514062",
-    "parent_sha": "dd7ac413dc2f7698ffe1ce80375557afcbac2da5",
+    "head_sha": "9319a1b925a4c7fe04e45431e2805becc61499be",
+    "tree_sha": "daadba714208c413c249599dcbf40a0e83b6d733",
+    "parent_sha": "28e226a0b1fd33530e4a46786ce0eb5c3f392085",
     "base_pr": 245,
     "base_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
-    "completed_block": "classifier_web_grounding_fail_closed",
-    "block": "classifier_web_grounding_fail_closed",
-    "status": "DRAFT_CHECKPOINT_A5_PASS_CI_PASS_CLASSIFIER_WEB_GROUNDING",
+    "completed_block": "semantic_search_candidate_boundary",
+    "block": "semantic_search_candidate_boundary",
+    "status": "DRAFT_CHECKPOINT_A5_PASS_CI_PASS_SEMANTIC_CANDIDATE_BOUNDARY",
     "behavior": {
-      "reproduced": "when actual web search returned nothing, the smart classifier generated likely specifications with complete_text and exposed them as web_context/web_search_used",
-      "final": "only an actual Anthropic web_search_result with a valid HTTP(S) URL and hostname is admitted; unavailable required search returns MANUAL_REVIEW, omits web_context and forces recommended=false",
-      "boundaries": "UI shows the manual-review boundary and suppresses recommendation; no legal/source completeness claim, DB write, applicability or enforcement change"
+      "reproduced": "orthogonal and opposite embeddings with cosine scores 0.0 and -1.0 were returned as semantic TN VED matches",
+      "final": "semantic search omits cosine scores <= 0; positive candidates remain ranked, and the UI labels every vector hit as a candidate requiring manual classification verification",
+      "boundaries": "minimal mathematical cutoff only; no uncalibrated domain or legal threshold, source-completeness claim, DB write, applicability or enforcement change"
     },
     "author_tests": {
-      "reproduction_before_fix": "expected empty web context but got model-inferred likely specifications; exit 1",
-      "focused": "smart classifier and API: 17 passed plus 7 subtests; exit 0",
-      "bounded_offline_tranche": "backend 33 passed plus 7 subtests; full frontend 32 passed; exit 0",
-      "environment": "isolated Python requirements and npm ci; typecheck and production build exit 0",
-      "diff_compile": "compileall and git diff --check exit 0"
+      "reproduction_before_fix": "direct probe returned scores 0.0 and -1.0 and failed expected-empty assertion; exit 1",
+      "focused": "backend 10 passed plus 15 subtests; frontend 1 passed; exit 0",
+      "bounded_offline_tranche": "root backend selection 50 passed plus 15 subtests with 19 fixture-dependent empty-inventory failures; full frontend 33 passed; no full backend PASS",
+      "environment": "isolated Python requirements and npm dependencies available; typecheck and production build exit 0",
+      "diff_compile": "git diff --check exit 0"
     },
     "a5": {
-      "session": "/root/a5_search_grounding_148",
-      "status": "FINAL_PASS_EXACT_REPAIRED_TREE_REMOTE_BOUND",
-      "first_candidate": "REJECT: type-only and blank-URL web_search_result blocks were accepted as proof",
-      "focused": "backend/API/parser 20 passed plus 7 subtests; full frontend 32 passed; exit 0",
-      "adversarial": "text-only, tool error, missing/blank/non-HTTP/hostless/malformed URLs fail closed; valid HTTP(S) results pass",
-      "remote_binding": "remote commit 28e226a0b1fd33530e4a46786ce0eb5c3f392085 tree equals reviewed tree 197f264af9220cd255d5116ffe25ada449514062",
-      "bounded_offline_tranche": "typecheck and adversarial Python probe exit 0"
+      "session": "/root/a5_semantic_candidate_boundary",
+      "status": "PASS_EXACT_REVIEWED_TREE_REMOTE_BOUND",
+      "focused": "backend 10 passed plus 15 subtests; adjacent API 7 passed; full frontend 33 passed; exit 0",
+      "adversarial": "tiny positive candidate retained; zero and negative candidates omitted; UI warning and manual verification boundary present",
+      "remote_binding": "remote commit 9319a1b925a4c7fe04e45431e2805becc61499be tree equals reviewed tree daadba714208c413c249599dcbf40a0e83b6d733",
+      "bounded_offline_tranche": "typecheck, cached diff check and adversarial Python probe exit 0"
     },
     "ci": {
       "status": "PASSED_EXACT_HEAD",
-      "head_sha": "28e226a0b1fd33530e4a46786ce0eb5c3f392085",
+      "head_sha": "9319a1b925a4c7fe04e45431e2805becc61499be",
       "runs": [
         {
-          "run_id": 37984824462,
-          "job_id": 114004071500,
+          "run_id": 37991127094,
+          "job_id": 114025259019,
           "conclusion": "success",
-          "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/37984824462"
+          "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/37991127094"
         }
       ]
     },
     "blockers": [
-      "This bounded classifier/search block is not a full #245 backend/frontend acceptance result.",
+      "This bounded semantic-search block is not a full #245 backend/frontend acceptance result.",
+      "The root backend selection still has 19 fixture-dependent failures because classification rulings and FTS letters are absent in the current default test database.",
       "NTM full-sync audit still requires a lawful populated synchronized snapshot.",
       "Full #245 product acceptance and legal/source completeness remain NOT PASS."
     ],
@@ -7529,6 +7529,6 @@
       "status": "UNCHANGED_NOT_SENT"
     },
     "protected_actions_performed": false,
-    "next_step": "Continue the next reproduced bounded #245 search/classification integration defect; keep NTM full-sync completeness blocked on a lawful populated synchronized snapshot."
+    "next_step": "Continue the next reproduced bounded #245 search/classification integration defect; separately use the canonical disposable fixture contour and keep NTM full-sync completeness blocked on a lawful populated synchronized snapshot."
   }
 }
