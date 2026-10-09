@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { api } from '../api/client';
+import { formatUnsafeExternalUrlEvidence, getSafeExternalUrl } from '../utils/externalUrl';
 
 type TnvedHit = { hs_code: string; title: string; level: number; chapter: string };
 type SearchSuggestion = { term: string; hint: string };
@@ -270,24 +271,47 @@ export const TnvedBook: React.FC = () => {
             <div>
               <span className="cc-label">Примечания</span>
               <ul className="mt-2 space-y-2">
-                {detail.notes.map((n) => (
-                  <li key={n.id} className="rounded-lg border border-white/[0.06] bg-black/20 px-3 py-2 text-[11px] text-slate-300">
-                    <span className="font-medium text-slate-200">{n.title}</span>
-                    <span className="ml-2 rounded bg-white/[0.06] px-1.5 py-0.5 text-[9px] uppercase text-slate-500">{n.category}</span>
-                    <p className="mt-1 whitespace-pre-wrap text-slate-400">{n.body}</p>
-                    {n.source_url && (
-                      <a href={n.source_url} target="_blank" rel="noreferrer" className="mt-1 inline-block text-sky-400/80 hover:underline">
-                        Источник
-                      </a>
-                    )}
-                  </li>
-                ))}
+                {detail.notes.map((n) => {
+                  const safeSourceUrl = getSafeExternalUrl(n.source_url);
+                  return (
+                    <li key={n.id} className="rounded-lg border border-white/[0.06] bg-black/20 px-3 py-2 text-[11px] text-slate-300">
+                      <span className="font-medium text-slate-200">{n.title}</span>
+                      <span className="ml-2 rounded bg-white/[0.06] px-1.5 py-0.5 text-[9px] uppercase text-slate-500">{n.category}</span>
+                      <p className="mt-1 whitespace-pre-wrap text-slate-400">{n.body}</p>
+                      {safeSourceUrl ? (
+                        <a href={safeSourceUrl} target="_blank" rel="noopener noreferrer" className="mt-1 inline-block text-sky-400/80 hover:underline">
+                          Источник
+                        </a>
+                      ) : n.source_url ? (
+                        <span className="mt-1 block text-slate-500" data-testid="unsafe-source-url-evidence">
+                          Источник (ссылка недоступна):{' '}
+                          <span className="break-all font-mono">{formatUnsafeExternalUrlEvidence(n.source_url)}</span>
+                        </span>
+                      ) : null}
+                    </li>
+                  );
+                })}
               </ul>
             </div>
           )}
-          <a href={detail.official_ett_url} target="_blank" rel="noreferrer" className="cc-btn-ghost inline-flex">
-            ТН ВЭД и ЕТТ на сайте ЕЭК
-          </a>
+          {getSafeExternalUrl(detail.official_ett_url) ? (
+            <a
+              href={detail.official_ett_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="cc-btn-ghost inline-flex"
+            >
+              ТН ВЭД и ЕТТ на сайте ЕЭК
+            </a>
+          ) : detail.official_ett_url ? (
+            <span
+              className="cc-btn-ghost inline-flex max-w-full cursor-not-allowed flex-wrap text-slate-500"
+              data-testid="unsafe-official-ett-url-evidence"
+            >
+              ТН ВЭД и ЕТТ на сайте ЕЭК (ссылка недоступна):{' '}
+              <span className="break-all font-mono">{formatUnsafeExternalUrlEvidence(detail.official_ett_url)}</span>
+            </span>
+          ) : null}
         </div>
       )}
     </div>
