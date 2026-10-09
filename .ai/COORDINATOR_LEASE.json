@@ -1,14 +1,14 @@
 {
   "acquisition_note": "Post-PR251 immutable A6 request regeneration and single lawful delivery; consumed g100 remains non-retryable.",
-  "expires_at": "2026-10-09T09:20:26.295929Z",
+  "expires_at": null,
   "generation": 136,
-  "holder": "/root/tariff_automation_20261009T1148MSK",
+  "holder": null,
   "lease_repair": {},
   "release_reason": "PR256 legacy NTM synthetic-seed safety published and A5-passed; exact-head CI remains pending/no run observed; checkpoint persisted.",
   "released_by": "/root/tariff_automation_20261009T0555MSK",
   "schema_version": 1,
   "serialization_repair": {},
-  "state": "active",
-  "token": "3d0fef41840448d3a54ca66c99268e5c",
-  "updated_at": "2026-10-09T08:50:26.295929Z"
+  "state": "released",
+  "token": null,
+  "updated_at": "2026-10-09T09:02:39.647330Z"
 }
