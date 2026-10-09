@@ -9,17 +9,13 @@ from typing import Any
 from ..db import SessionLocal
 from ..models.core import ClassificationDecision, CustomsCaseLaw, SgrCertificate
 from ..models.ntm_v2 import NtmApplicabilityRuleV2
-from ..models.regulatory import (
-    REGULATORY_QUALITY_NOISE,
-    REGULATORY_QUALITY_SYNTHETIC_SEED,
-    REGULATORY_STATUS_ACTIVE,
-    RegulatoryDocument,
-)
+from ..models.regulatory import RegulatoryDocument
 from ..models.tnved import NonTariffMeasure
 from .normative_store import list_source_status, list_sync_log
 from .ntm_v2_import import SOURCE_KIND as LEGACY_TR_TS_SOURCE_KIND
 from .ntm_v2_official_sgr_import import OFFICIAL_SGR_SOURCE_KIND
 from .non_tariff_measures_lookup import admitted_legacy_measure_quality_clause
+from .regulatory_layer import admitted_regulatory_document_clause
 from .regulatory_source_registry import (
     AUTHORITY_LEVEL_LABELS,
     REGULATORY_SOURCE_REGISTRY,
@@ -102,21 +98,14 @@ def _count_db_probe(probe: str | None) -> int | None:
         if probe == "regulatory_documents":
             return (
                 db.query(RegulatoryDocument)
-                .filter(RegulatoryDocument.status == REGULATORY_STATUS_ACTIVE)
-                .filter(
-                    (RegulatoryDocument.quality.is_(None))
-                    | (
-                        RegulatoryDocument.quality.notin_(
-                            (REGULATORY_QUALITY_NOISE, REGULATORY_QUALITY_SYNTHETIC_SEED)
-                        )
-                    )
-                )
+                .filter(admitted_regulatory_document_clause())
                 .count()
             )
         if probe == "regulatory_documents_pravo":
             return (
                 db.query(RegulatoryDocument)
                 .filter(RegulatoryDocument.agency == "PRAVO_GOV")
+                .filter(admitted_regulatory_document_clause())
                 .count()
             )
         if probe == "preliminary_decisions_ifcg":

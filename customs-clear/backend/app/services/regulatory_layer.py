@@ -4,8 +4,6 @@ from __future__ import annotations
 from datetime import date
 from typing import Any, Iterable
 
-from sqlalchemy import or_
-
 from ..db import SessionLocal
 from ..models.regulatory import (
     REGULATORY_QUALITY_NOISE,
@@ -15,6 +13,16 @@ from ..models.regulatory import (
     RegulatoryDocument,
 )
 from .hs_matching import get_hs_prefixes, normalize_hs_code, specificity
+
+
+def admitted_regulatory_document_clause():
+    """SQL predicate for regulatory documents admitted as product/source evidence."""
+    return (RegulatoryDocument.status == REGULATORY_STATUS_ACTIVE) & (
+        RegulatoryDocument.quality.is_(None)
+        | RegulatoryDocument.quality.notin_(
+            (REGULATORY_QUALITY_NOISE, REGULATORY_QUALITY_SYNTHETIC_SEED)
+        )
+    )
 
 
 def _regulatory_mapping_precedence(
@@ -120,15 +128,7 @@ def get_regulatory_documents_for_hs(
                 db.query(RegulatoryDocHsMapping, RegulatoryDocument)
                 .join(RegulatoryDocument, RegulatoryDocHsMapping.doc_id == RegulatoryDocument.id)
                 .filter(RegulatoryDocHsMapping.hs_prefix == prefix)
-                .filter(RegulatoryDocument.status == REGULATORY_STATUS_ACTIVE)
-                .filter(
-                    or_(
-                        RegulatoryDocument.quality.is_(None),
-                        RegulatoryDocument.quality.notin_(
-                            (REGULATORY_QUALITY_NOISE, REGULATORY_QUALITY_SYNTHETIC_SEED)
-                        ),
-                    )
-                )
+                .filter(admitted_regulatory_document_clause())
                 .filter(RegulatoryDocHsMapping.confidence >= min_confidence)
             )
 

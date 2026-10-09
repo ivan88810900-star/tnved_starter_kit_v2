@@ -86,3 +86,49 @@ def test_mass_seed_is_reference_only_and_repairs_legacy_labels(monkeypatch) -> N
                 synchronize_session=False
             )
             db.commit()
+
+
+def test_pravo_probe_uses_product_evidence_admission() -> None:
+    docs = (
+        ("active-pravo-source-probe", "active", "normal"),
+        (
+            "synthetic-pravo-source-probe",
+            REGULATORY_STATUS_REFERENCE_ONLY,
+            REGULATORY_QUALITY_SYNTHETIC_SEED,
+        ),
+        ("noise-pravo-source-probe", "active", "noise"),
+        ("reference-pravo-source-probe", REGULATORY_STATUS_REFERENCE_ONLY, "normal"),
+    )
+    doc_ids = [doc_id for doc_id, _, _ in docs]
+    with SessionLocal() as db:
+        db.query(RegulatoryDocument).filter(RegulatoryDocument.id.in_(doc_ids)).delete(
+            synchronize_session=False
+        )
+        db.commit()
+
+    admitted_before = _count_db_probe("regulatory_documents_pravo")
+    with SessionLocal() as db:
+        db.add_all(
+            [
+                RegulatoryDocument(
+                    id=doc_id,
+                    agency="PRAVO_GOV",
+                    doc_type="law",
+                    title=f"Проверка admission официальной публикации: {doc_id}",
+                    source_url=f"https://synthetic.invalid/{doc_id}",
+                    status=status,
+                    quality=quality,
+                )
+                for doc_id, status, quality in docs
+            ]
+        )
+        db.commit()
+
+    try:
+        assert _count_db_probe("regulatory_documents_pravo") == admitted_before + 1
+    finally:
+        with SessionLocal() as db:
+            db.query(RegulatoryDocument).filter(RegulatoryDocument.id.in_(doc_ids)).delete(
+                synchronize_session=False
+            )
+            db.commit()
