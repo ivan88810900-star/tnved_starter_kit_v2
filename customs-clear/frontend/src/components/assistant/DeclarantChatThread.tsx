@@ -8,9 +8,170 @@ import {
   getAssistantCalculationContext,
   subscribeAssistantCalculationContext,
 } from '../../store/calculatorAssistantBridge';
-import type { AssistantChatRequest, AssistantChatResponse } from '../../types/api.types';
+import type {
+  AssistantChatCoverage,
+  AssistantChatGroundingMode,
+  AssistantChatRequest,
+  AssistantChatResponse,
+} from '../../types/api.types';
 
-export type ChatMessage = { role: 'user' | 'assistant'; text: string };
+type GroundingCitationView = {
+  id: string;
+  title: string;
+  url?: string;
+};
+
+type GroundingView = {
+  coverage: AssistantChatCoverage | 'unknown';
+  mode: AssistantChatGroundingMode | 'unknown';
+  citations: GroundingCitationView[];
+  limitations: string[];
+};
+
+export type ChatMessage = {
+  role: 'user' | 'assistant';
+  text: string;
+  grounding?: GroundingView;
+};
+
+function recordOrNull(value: unknown): Record<string, unknown> | null {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+  return value as Record<string, unknown>;
+}
+
+function boundedText(value: unknown, limit: number): string {
+  return typeof value === 'string' ? value.trim().slice(0, limit) : '';
+}
+
+function safeExternalUrl(value: unknown): string | undefined {
+  const candidate = boundedText(value, 1200);
+  if (!candidate) return undefined;
+  try {
+    const parsed = new URL(candidate);
+    return parsed.protocol === 'http:' || parsed.protocol === 'https:' ? parsed.href : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+function normalizeGrounding(value: unknown): GroundingView | undefined {
+  const raw = recordOrNull(value);
+  if (!raw) return undefined;
+
+  const citations = Array.isArray(raw.citations)
+    ? raw.citations.slice(0, 12).flatMap((value): GroundingCitationView[] => {
+        const citation = recordOrNull(value);
+        if (!citation) return [];
+        const id = boundedText(citation.id, 40);
+        const title = boundedText(citation.title, 240);
+        if (!id || !title) return [];
+        return [{ id, title, url: safeExternalUrl(citation.url) }];
+      })
+    : [];
+  const limitations = Array.isArray(raw.limitations)
+    ? raw.limitations
+        .slice(0, 12)
+        .map((item) => boundedText(item, 800))
+        .filter(Boolean)
+    : [];
+  const hasServerEvidence = raw.generated_from_server_facts === true && citations.length > 0;
+  const coverage: GroundingView['coverage'] =
+    raw.coverage === 'partial' || raw.coverage === 'needs_context'
+      ? raw.coverage
+      : raw.coverage === 'grounded' && hasServerEvidence
+        ? 'grounded'
+        : 'unknown';
+  const mode: GroundingView['mode'] =
+    raw.mode === 'deterministic'
+      ? 'deterministic'
+      : raw.mode === 'llm_grounded' && hasServerEvidence
+        ? 'llm_grounded'
+        : 'unknown';
+
+  return { coverage, mode, citations, limitations };
+}
+
+function normalizeAssistantReply(response: AssistantChatResponse): {
+  text: string;
+  grounding?: GroundingView;
+} {
+  if (typeof response.answer === 'string') {
+    return { text: response.answer.trim() || 'Нет ответа.' };
+  }
+  const payload = recordOrNull(response.answer);
+  return {
+    text: boundedText(payload?.answer, 12000) || 'Нет ответа.',
+    grounding: normalizeGrounding(payload?.grounding),
+  };
+}
+
+const coverageLabels: Record<GroundingView['coverage'], string> = {
+  grounded: 'Ответ опирается на доступные серверные данные',
+  partial: 'Данные для ответа неполные',
+  needs_context: 'Для ответа нужен дополнительный контекст',
+  unknown: 'Статус покрытия не подтверждён',
+};
+
+const modeLabels: Record<GroundingView['mode'], string> = {
+  deterministic: 'Серверный ответ',
+  llm_grounded: 'Серверный ответ выбран моделью',
+  unknown: 'Режим ответа не подтверждён',
+};
+
+function GroundingDetails({ grounding }: { grounding: GroundingView }) {
+  return (
+    <div
+      data-testid="assistant-grounding"
+      className="mt-2 space-y-2 border-t border-slate-100 pt-2 text-[10px] leading-relaxed text-slate-600"
+    >
+      <div className="flex flex-wrap gap-1.5">
+        <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5">
+          {coverageLabels[grounding.coverage]}
+        </span>
+        <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5">
+          {modeLabels[grounding.mode]}
+        </span>
+      </div>
+
+      {grounding.citations.length ? (
+        <div>
+          <p className="font-semibold text-slate-700">Источники в ответе</p>
+          <ul className="mt-0.5 space-y-0.5">
+            {grounding.citations.map((citation) => (
+              <li key={`${citation.id}-${citation.title}`}>
+                {citation.url ? (
+                  <a
+                    href={citation.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-blue-700 underline decoration-blue-200 underline-offset-2 hover:text-blue-800"
+                  >
+                    [{citation.id}] {citation.title}
+                  </a>
+                ) : (
+                  <span>[{citation.id}] {citation.title}</span>
+                )}
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+
+      {grounding.limitations.length ? (
+        <div>
+          <p className="font-semibold text-slate-700">Ограничения</p>
+          <ul className="mt-0.5 list-disc space-y-0.5 pl-4">
+            {grounding.limitations.map((limitation) => (
+              <li key={limitation}>{limitation}</li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+
+      <p>Статус покрытия описывает доступные данные и не подтверждает юридическую полноту.</p>
+    </div>
+  );
+}
 
 export type DeclarantChatThreadProps = {
   variant?: 'home' | 'full';
@@ -90,7 +251,7 @@ export const DeclarantChatThread = forwardRef<DeclarantChatThreadHandle, Declara
     onBeforeSend?.();
     setLoading(true);
     setError(null);
-    const history = messages.map((m) => ({
+    const history = messages.slice(-40).map((m) => ({
       role: m.role,
       content: m.text,
     }));
@@ -102,8 +263,12 @@ export const DeclarantChatThread = forwardRef<DeclarantChatThreadHandle, Declara
     };
     try {
       const { data } = await api.post<AssistantChatResponse>('/v1/assistant/chat', body);
-      const answer = (data.answer || 'Нет ответа.').trim();
-      setMessages((prev) => [...prev, { role: 'user', text: msg }, { role: 'assistant', text: answer }]);
+      const answer = normalizeAssistantReply(data);
+      setMessages((prev) => [
+        ...prev,
+        { role: 'user', text: msg },
+        { role: 'assistant', text: answer.text, grounding: answer.grounding },
+      ]);
       setInputValue('');
     } catch (e) {
       setError(getUserFacingApiError(e, 'Не удалось получить ответ. Попробуйте позже.'));
@@ -172,6 +337,7 @@ export const DeclarantChatThread = forwardRef<DeclarantChatThreadHandle, Declara
                     <div className="cc-chat-markdown">
                       <ReactMarkdown remarkPlugins={[remarkGfm]}>{m.text}</ReactMarkdown>
                     </div>
+                    {m.grounding ? <GroundingDetails grounding={m.grounding} /> : null}
                   </div>
                 </div>
               ) : (

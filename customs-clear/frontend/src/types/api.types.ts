@@ -939,9 +939,51 @@ export interface AssistantChatRequest {
   current_context?: AssistantCalculationCurrentContext | null;
 }
 
+export type AssistantChatCoverage = 'grounded' | 'partial' | 'needs_context';
+export type AssistantChatGroundingMode = 'deterministic' | 'llm_grounded';
+
+export interface AssistantChatCitation {
+  id: string;
+  source_id: string;
+  title: string;
+  kind: string;
+  url?: string;
+  status?: string;
+  excerpt?: string;
+}
+
+export interface AssistantChatCanonicalAnchor {
+  stable_id: string;
+  snapshot_id: string;
+  code: string;
+  node_type: string;
+}
+
+export interface AssistantChatGrounding {
+  mode: AssistantChatGroundingMode;
+  coverage: AssistantChatCoverage;
+  llm_configured: boolean;
+  provider: string | null;
+  generated_from_server_facts: boolean;
+  external_model_role: 'server_draft_selection' | null;
+  resolved_hs_code: string | null;
+  hs_source: string;
+  facts_used: string[];
+  citations: AssistantChatCitation[];
+  limitations: string[];
+  canonical_anchor: AssistantChatCanonicalAnchor | null;
+}
+
+export interface AssistantChatAnswerPayload {
+  answer: string;
+  grounding?: AssistantChatGrounding;
+  suggestions?: string[];
+}
+
 export interface AssistantChatResponse {
   status: string;
-  answer: string;
+  /** Current API payload; a string is retained for legacy server compatibility. */
+  answer: AssistantChatAnswerPayload | string;
 }
 
 export interface AssistantCopilotBatchResponse {
