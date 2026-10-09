@@ -2179,7 +2179,7 @@
       "unique_source_pr_count": 29
     }
   },
-  "revision": 697,
+  "revision": 698,
   "runs": [
     {
       "head_sha": null,
@@ -7414,55 +7414,53 @@
       }
     }
   ],
-  "updated_at": "2026-10-09T21:05:00.000Z",
+  "updated_at": "2026-10-09T22:03:00.000Z",
   "latest_scheduled_product_checkpoint": {
-    "updated_at": "2026-10-09T21:05:00.000Z",
-    "checked_at": "2026-10-09T21:05:00.000Z",
+    "updated_at": "2026-10-09T22:03:00.000Z",
+    "checked_at": "2026-10-09T22:03:00.000Z",
     "pr": 256,
     "branch": "agent/product-ntm-regressions-v1",
-    "head_sha": "9319a1b925a4c7fe04e45431e2805becc61499be",
-    "tree_sha": "daadba714208c413c249599dcbf40a0e83b6d733",
-    "parent_sha": "28e226a0b1fd33530e4a46786ce0eb5c3f392085",
+    "head_sha": "a556cb073482a957fa5fff09ab59ddd2b9194ba5",
+    "tree_sha": "e225b7df42488301bd3f12be6e7841a14ba44f31",
+    "parent_sha": "9319a1b925a4c7fe04e45431e2805becc61499be",
     "base_pr": 245,
     "base_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
-    "completed_block": "semantic_search_candidate_boundary",
-    "block": "semantic_search_candidate_boundary",
-    "status": "DRAFT_CHECKPOINT_A5_PASS_CI_PASS_SEMANTIC_CANDIDATE_BOUNDARY",
+    "completed_block": "tnved_external_source_link_boundary",
+    "block": "tnved_external_source_link_boundary",
+    "status": "DRAFT_CHECKPOINT_A5_PASS_CI_PASS_EXTERNAL_SOURCE_LINK_BOUNDARY",
     "behavior": {
-      "reproduced": "orthogonal and opposite embeddings with cosine scores 0.0 and -1.0 were returned as semantic TN VED matches",
-      "final": "semantic search omits cosine scores <= 0; positive candidates remain ranked, and the UI labels every vector hit as a candidate requiring manual classification verification",
-      "boundaries": "minimal mathematical cutoff only; no uncalibrated domain or legal threshold, source-completeness claim, DB write, applicability or enforcement change"
+      "reproduced": "imported TN VED note, official ETT and classification-ruling source_url values were passed directly to href, so javascript/data schemes became clickable",
+      "final": "only absolute credential-free HTTP(S) URLs with syntactically valid hostnames become anchors; malformed, credential-confusion, literal/encoded control, bidi and backslash values remain bounded escaped visible non-clickable evidence",
+      "boundaries": "URL transport/syntax boundary only; no source-validity, legal-applicability, source-completeness, DB write or enforcement claim"
     },
     "author_tests": {
-      "reproduction_before_fix": "direct probe returned scores 0.0 and -1.0 and failed expected-empty assertion; exit 1",
-      "focused": "backend 10 passed plus 15 subtests; frontend 1 passed; exit 0",
-      "bounded_offline_tranche": "root backend selection 50 passed plus 15 subtests with 19 fixture-dependent empty-inventory failures; full frontend 33 passed; no full backend PASS",
-      "environment": "isolated Python requirements and npm dependencies available; typecheck and production build exit 0",
+      "reproduction_before_fix": "focused component tests found javascript/data values rendered as anchors; exit 1",
+      "focused": "frontend 43 passed; exit 0",
+      "full_frontend": "76 passed; typecheck and production build exit 0",
       "diff_compile": "git diff --check exit 0"
     },
     "a5": {
-      "session": "/root/a5_semantic_candidate_boundary",
+      "session": "/root/a5_tnved_source_link_boundary",
       "status": "PASS_EXACT_REVIEWED_TREE_REMOTE_BOUND",
-      "focused": "backend 10 passed plus 15 subtests; adjacent API 7 passed; full frontend 33 passed; exit 0",
-      "adversarial": "tiny positive candidate retained; zero and negative candidates omitted; UI warning and manual verification boundary present",
-      "remote_binding": "remote commit 9319a1b925a4c7fe04e45431e2805becc61499be tree equals reviewed tree daadba714208c413c249599dcbf40a0e83b6d733",
-      "bounded_offline_tranche": "typecheck, cached diff check and adversarial Python probe exit 0"
+      "review_history": "two earlier trees rejected for credential/control/host/evidence gaps and then percent-encoded C1/bidi bypasses",
+      "focused": "frontend 43 passed; full frontend 76 passed; typecheck/build/diff-check exit 0",
+      "adversarial": "32 URL-boundary cases including credential confusion, malformed hosts, encoded/double/deep C1 and bidi controls, malformed escapes, IPv6 and IDN; exit 0",
+      "remote_binding": "remote commit a556cb073482a957fa5fff09ab59ddd2b9194ba5 tree equals reviewed tree e225b7df42488301bd3f12be6e7841a14ba44f31"
     },
     "ci": {
       "status": "PASSED_EXACT_HEAD",
-      "head_sha": "9319a1b925a4c7fe04e45431e2805becc61499be",
+      "head_sha": "a556cb073482a957fa5fff09ab59ddd2b9194ba5",
       "runs": [
         {
-          "run_id": 37991127094,
-          "job_id": 114025259019,
+          "run_id": 37996837003,
+          "job_id": 114044951892,
           "conclusion": "success",
-          "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/37991127094"
+          "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/37996837003"
         }
       ]
     },
     "blockers": [
-      "This bounded semantic-search block is not a full #245 backend/frontend acceptance result.",
-      "The root backend selection still has 19 fixture-dependent failures because classification rulings and FTS letters are absent in the current default test database.",
+      "This bounded source-link block is not a full #245 backend/frontend acceptance result.",
       "NTM full-sync audit still requires a lawful populated synchronized snapshot.",
       "Full #245 product acceptance and legal/source completeness remain NOT PASS."
     ],
@@ -7471,56 +7469,54 @@
       "status": "UNCHANGED_NOT_SENT"
     },
     "protected_actions_performed": false,
-    "next_step": "Continue the next reproduced bounded #245 search/classification integration defect; separately use the canonical disposable fixture contour and keep NTM full-sync completeness blocked on a lawful populated synchronized snapshot."
+    "next_step": "Continue the next reproduced bounded #245 search/classification/grounding integration defect; keep NTM full-sync completeness blocked on a lawful populated synchronized snapshot."
   },
   "latest_development_checkpoint": {
-    "updated_at": "2026-10-09T21:05:00.000Z",
-    "checked_at": "2026-10-09T21:05:00.000Z",
+    "updated_at": "2026-10-09T22:03:00.000Z",
+    "checked_at": "2026-10-09T22:03:00.000Z",
     "pr": 256,
     "branch": "agent/product-ntm-regressions-v1",
-    "head_sha": "9319a1b925a4c7fe04e45431e2805becc61499be",
-    "tree_sha": "daadba714208c413c249599dcbf40a0e83b6d733",
-    "parent_sha": "28e226a0b1fd33530e4a46786ce0eb5c3f392085",
+    "head_sha": "a556cb073482a957fa5fff09ab59ddd2b9194ba5",
+    "tree_sha": "e225b7df42488301bd3f12be6e7841a14ba44f31",
+    "parent_sha": "9319a1b925a4c7fe04e45431e2805becc61499be",
     "base_pr": 245,
     "base_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
-    "completed_block": "semantic_search_candidate_boundary",
-    "block": "semantic_search_candidate_boundary",
-    "status": "DRAFT_CHECKPOINT_A5_PASS_CI_PASS_SEMANTIC_CANDIDATE_BOUNDARY",
+    "completed_block": "tnved_external_source_link_boundary",
+    "block": "tnved_external_source_link_boundary",
+    "status": "DRAFT_CHECKPOINT_A5_PASS_CI_PASS_EXTERNAL_SOURCE_LINK_BOUNDARY",
     "behavior": {
-      "reproduced": "orthogonal and opposite embeddings with cosine scores 0.0 and -1.0 were returned as semantic TN VED matches",
-      "final": "semantic search omits cosine scores <= 0; positive candidates remain ranked, and the UI labels every vector hit as a candidate requiring manual classification verification",
-      "boundaries": "minimal mathematical cutoff only; no uncalibrated domain or legal threshold, source-completeness claim, DB write, applicability or enforcement change"
+      "reproduced": "imported TN VED note, official ETT and classification-ruling source_url values were passed directly to href, so javascript/data schemes became clickable",
+      "final": "only absolute credential-free HTTP(S) URLs with syntactically valid hostnames become anchors; malformed, credential-confusion, literal/encoded control, bidi and backslash values remain bounded escaped visible non-clickable evidence",
+      "boundaries": "URL transport/syntax boundary only; no source-validity, legal-applicability, source-completeness, DB write or enforcement claim"
     },
     "author_tests": {
-      "reproduction_before_fix": "direct probe returned scores 0.0 and -1.0 and failed expected-empty assertion; exit 1",
-      "focused": "backend 10 passed plus 15 subtests; frontend 1 passed; exit 0",
-      "bounded_offline_tranche": "root backend selection 50 passed plus 15 subtests with 19 fixture-dependent empty-inventory failures; full frontend 33 passed; no full backend PASS",
-      "environment": "isolated Python requirements and npm dependencies available; typecheck and production build exit 0",
+      "reproduction_before_fix": "focused component tests found javascript/data values rendered as anchors; exit 1",
+      "focused": "frontend 43 passed; exit 0",
+      "full_frontend": "76 passed; typecheck and production build exit 0",
       "diff_compile": "git diff --check exit 0"
     },
     "a5": {
-      "session": "/root/a5_semantic_candidate_boundary",
+      "session": "/root/a5_tnved_source_link_boundary",
       "status": "PASS_EXACT_REVIEWED_TREE_REMOTE_BOUND",
-      "focused": "backend 10 passed plus 15 subtests; adjacent API 7 passed; full frontend 33 passed; exit 0",
-      "adversarial": "tiny positive candidate retained; zero and negative candidates omitted; UI warning and manual verification boundary present",
-      "remote_binding": "remote commit 9319a1b925a4c7fe04e45431e2805becc61499be tree equals reviewed tree daadba714208c413c249599dcbf40a0e83b6d733",
-      "bounded_offline_tranche": "typecheck, cached diff check and adversarial Python probe exit 0"
+      "review_history": "two earlier trees rejected for credential/control/host/evidence gaps and then percent-encoded C1/bidi bypasses",
+      "focused": "frontend 43 passed; full frontend 76 passed; typecheck/build/diff-check exit 0",
+      "adversarial": "32 URL-boundary cases including credential confusion, malformed hosts, encoded/double/deep C1 and bidi controls, malformed escapes, IPv6 and IDN; exit 0",
+      "remote_binding": "remote commit a556cb073482a957fa5fff09ab59ddd2b9194ba5 tree equals reviewed tree e225b7df42488301bd3f12be6e7841a14ba44f31"
     },
     "ci": {
       "status": "PASSED_EXACT_HEAD",
-      "head_sha": "9319a1b925a4c7fe04e45431e2805becc61499be",
+      "head_sha": "a556cb073482a957fa5fff09ab59ddd2b9194ba5",
       "runs": [
         {
-          "run_id": 37991127094,
-          "job_id": 114025259019,
+          "run_id": 37996837003,
+          "job_id": 114044951892,
           "conclusion": "success",
-          "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/37991127094"
+          "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/37996837003"
         }
       ]
     },
     "blockers": [
-      "This bounded semantic-search block is not a full #245 backend/frontend acceptance result.",
-      "The root backend selection still has 19 fixture-dependent failures because classification rulings and FTS letters are absent in the current default test database.",
+      "This bounded source-link block is not a full #245 backend/frontend acceptance result.",
       "NTM full-sync audit still requires a lawful populated synchronized snapshot.",
       "Full #245 product acceptance and legal/source completeness remain NOT PASS."
     ],
@@ -7529,6 +7525,6 @@
       "status": "UNCHANGED_NOT_SENT"
     },
     "protected_actions_performed": false,
-    "next_step": "Continue the next reproduced bounded #245 search/classification integration defect; separately use the canonical disposable fixture contour and keep NTM full-sync completeness blocked on a lawful populated synchronized snapshot."
+    "next_step": "Continue the next reproduced bounded #245 search/classification/grounding integration defect; keep NTM full-sync completeness blocked on a lawful populated synchronized snapshot."
   }
 }

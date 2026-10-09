@@ -3,6 +3,25 @@
 **Снимок:** 2026-10-09 (UTC). **Единственный репозиторий:** [ivan88810900-star/tnved_starter_kit_v2](https://github.com/ivan88810900-star/tnved_starter_kit_v2).
 **Авторитетное состояние:** ветка `agent/orchestration-state`, файлы `.ai/TASK_BOARD.json`, `.ai/COORDINATOR_LEASE.json`, `.ai/orchestration/A6_LIVE_STATUS.json`. Этот документ — указатель и контрольная точка, **не** право на запись/merge/A6. Перед действием заново читать текущие HEAD и state. Не полагаться на Business-чат.
 
+## 0aaaaaaaaaaaa. #245 — импортированные source URL теперь fail-closed
+
+**Новый checkpoint:** [draft PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256), `agent/product-ntm-regressions-v1` @ `a556cb073482a957fa5fff09ab59ddd2b9194ba5`, tree `e225b7df42488301bd3f12be6e7841a14ba44f31`, parent `9319a1b925a4c7fe04e45431e2805becc61499be`.
+
+Воспроизведён frontend-дефект: импортированные `source_url` в TN VED notes, official ETT и classification rulings напрямую попадали в `href`, поэтому `javascript:`/`data:` значения становились кликабельными. Теперь anchor допускается только для absolute credential-free HTTP(S) URL с синтаксически корректным hostname. Relative/non-HTTP(S), malformed host, credential confusion, literal/encoded control, bidi и backslash fail closed. Отклонённое значение остаётся видимым как ограниченное escaped non-clickable evidence; это не подтверждение валидности источника или юридической полноты.
+
+Проверки:
+
+- pre-fix component reproduction: unsafe `javascript:`/`data:` values были anchors, exit 1;
+- author focused: **43 passed**, полный frontend: **76 passed**, typecheck/build/diff-check — exit 0;
+- независимый A5 дважды отклонил промежуточные trees: credential/control/host/evidence gaps, затем encoded C1/bidi bypass;
+- repaired exact tree: A5 **PASS**, focused **43 passed**, full frontend **76 passed**, adversarial URL matrix **32 cases**, typecheck/build/diff-check — exit 0;
+- remote tree побайтово совпадает с reviewed tree;
+- exact-head CI: [run 37996837003](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/37996837003), job `114044951892`, **success**.
+
+Полный #245 product/legal/source completeness остаётся **NOT PASS**. Lawful populated synchronized NTM snapshot недоступен. Protected merge, deploy, production write, enforcement/permissions/secrets change, destructive migration и внешний A6 не выполнялись; `core-s1-6415f443120f-r9-g106` неизменён и не отправлялся.
+
+Следующий шаг — продолжить следующий воспроизводимый bounded #245 search/classification/grounding defect; full-sync audit сохранять заблокированным до законно доступного populated synchronized snapshot.
+
 ## 0aaaaaaaaaaa. #245 — semantic search больше не выдаёт непохожие векторы как кандидатов
 
 **Новый checkpoint:** [draft PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256), `agent/product-ntm-regressions-v1` @ `9319a1b925a4c7fe04e45431e2805becc61499be`, tree `daadba714208c413c249599dcbf40a0e83b6d733`, parent `28e226a0b1fd33530e4a46786ce0eb5c3f392085`.
