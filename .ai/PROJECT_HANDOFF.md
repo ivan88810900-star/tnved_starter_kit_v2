@@ -3,6 +3,24 @@
 **Снимок:** 2026-10-08 (UTC). **Единственный репозиторий:** [ivan88810900-star/tnved_starter_kit_v2](https://github.com/ivan88810900-star/tnved_starter_kit_v2).  
 **Авторитетное состояние:** ветка `agent/orchestration-state`, файлы `.ai/TASK_BOARD.json`, `.ai/COORDINATOR_LEASE.json`, `.ai/orchestration/A6_LIVE_STATUS.json`. Этот документ — указатель и контрольная точка, **не** право на запись/merge/A6. Перед действием заново читать текущие HEAD и state. Не полагаться на Business-чат.
 
+## 0x. #245 — локальный FSA opendata статус fail-closed
+
+**Новый текущий checkpoint:** [draft PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256), `agent/product-ntm-regressions-v1` @ `af1f6301f871b5156fabe774505aa9184e452217`, tree `fd3d214ce25a01286f3110e2a42849f4ff31f7a6`, parent `758797f56b00ceb5fd78362a0dce80683dc1e96d`; base #245 неизменён `e39e19787bd913baeb6f85577a13e1116458e633`.
+
+Воспроизведён source/applicability defect: любая непустая неизвестная строка статуса локальной FSA opendata записи (например, «Ожидает проверки» или «Архив») ошибочно становилась `VALID`. Исправление fail-closed сохраняет номер, держателя и исходный status как evidence: только явный active/valid считается `VALID`, inactive/revoked/expired — `NOT_FOUND`, неизвестный/архивный/неподтверждённый — `UNKNOWN`. Русские и английские отрицания проверяются раньше положительных слов; `invalid`, `unregistered`, `validated`, `reactivated` не дают substring false positive. Lookup scope, SQL matching, NTM applicability, advisory/enforcement и правовая интерпретация не расширялись.
+
+Первый local candidate `98e92e236ff8f0a49a46fab997506f2a882231e9` независимый A5 отклонил: «Не зарегистрирован», «незарегистрирован» и `not registered` ещё попадали в positive marker. Этот вариант не публиковался. Финальный reviewed local tree опубликован как один remote commit и побайтово совпадает.
+
+Проверки exact final tree:
+- author focused FSA/permits: **34 passed, 1 skipped**, exit 0; explicit negation matrix, `py_compile`, `git diff --check` — exit 0;
+- author broad #245 backend slice: **925 passed, 11 skipped, 32 subtests**, exit 0;
+- независимый A5 `/root/a5_pravo_probe`: **PASS exact remote HEAD**; 23-case adversarial matrix exit 0; focused **20 passed**, related FSA **25 passed**, broader FSA/permits **34 passed, 1 skipped**, exit 0; unknown/archive evidence retained, active valid, inactive/expired fail closed; local reviewed tree и remote tree byte-identical;
+- exact-head GitHub Actions: **PENDING_NO_RUN_OBSERVED** для `af1f6301f871b5156fabe774505aa9184e452217`; workflow runs пусты при повторной проверке.
+
+Tracked `customs-clear/backend/customs.db.backup_before_pdf_import` проверен как возможный snapshot, но в нём отсутствуют таблицы `non_tariff_measures`/NTM v2; он не пригоден для full-sync audit. Полный #245 product/legal/source-completeness **NOT PASS**. Protected merge, production/DB writes, enforcement flags, secrets/permissions, destructive migration и внешний A6 не выполнялись; `core-s1-6415f443120f-r9-g106` неизменён и не отправлен.
+
+Следующий шаг — повторно проверить exact-head CI; затем выполнить NTM full-sync audit на lawful populated synchronized snapshot, если он появится, либо продолжить следующий воспроизводимый #245 source/applicability defect без расширения definite rules.
+
 ## 0w. #245 — статус СГР fail-closed: неподтверждённая запись остаётся evidence, но не считается действующей
 
 **Новый текущий checkpoint:** [draft PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256), `agent/product-ntm-regressions-v1` @ `758797f56b00ceb5fd78362a0dce80683dc1e96d`, tree `b478bbdd8bc1552acda622d5f9c1453f8beb8148`, parent `afab417d008bc6e386091544ac6589884eb758e5`; base #245 неизменён `e39e19787bd913baeb6f85577a13e1116458e633`.
