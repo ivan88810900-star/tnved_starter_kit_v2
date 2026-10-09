@@ -3,6 +3,29 @@
 **Снимок:** 2026-10-08 (UTC). **Единственный репозиторий:** [ivan88810900-star/tnved_starter_kit_v2](https://github.com/ivan88810900-star/tnved_starter_kit_v2).  
 **Авторитетное состояние:** ветка `agent/orchestration-state`, файлы `.ai/TASK_BOARD.json`, `.ai/COORDINATOR_LEASE.json`, `.ai/orchestration/A6_LIVE_STATUS.json`. Этот документ — указатель и контрольная точка, **не** право на запись/merge/A6. Перед действием заново читать текущие HEAD и state. Не полагаться на Business-чат.
 
+## 0aaaaaaa. #245 — assistant grounding больше не считает пустую карточку доказательством
+
+**Новый checkpoint:** [draft PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256), `agent/product-ntm-regressions-v1` @ `43803039d7ce50bf88c3d9c08af2f638462767a2`, tree `efbbfb1764c40392b4ecc988f8f929d59fbb4bf6`, parent `321b4ac72b13ec40a0dc3e2b05f8079f39fb6ee7`.
+
+Воспроизведён fail-open metadata defect: синтаксически корректного HS-кода было достаточно для `coverage="grounded"`, даже когда TNVED и NTM providers завершались ошибкой. Первый candidate A5 отклонил: штатно возвращённая пустая TNVED-карточка с одной generic EEC URL всё ещё создавала факт/цитату и могла допустить configured LLM selector.
+
+Финальное исправление требует usable local evidence: непустые title/description/breadcrumb/notes/source revision или resolver-validated canonical anchor. При provider failure либо пустой карточке coverage становится `partial`, citations/facts остаются пустыми, LLM selector не вызывается. Содержательная карточка и canonical anchor сохраняют `grounded`. Пользовательский deterministic fail-closed ответ сохранён; legal applicability, source-of-truth и enforcement не менялись.
+
+Проверки:
+
+- regression до исправления: expected `partial`, получен `grounded`, exit 1;
+- author focused: **25 passed + 26 subtests**, exit 0;
+- author 12-module assistant/search/grounded/RAG tranche: **87 passed + 29 subtests**, exit 0;
+- независимый A5: первый candidate **REJECT MEDIUM**, repaired tree **PASS без findings**; adversarial empty-card/canonical-only/provider-error/candidates/no-context matrix exit 0;
+- remote commit tree побайтово совпадает с independently reviewed tree;
+- exact-head CI: [run 37963680241](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/37963680241), job `113932566080`, **success**.
+
+Тесты выполнялись на новой disposable classification DB с пустыми provider keys, deny proxies и preview marker вне репозитория. `integrity_check=ok`, foreign key violations 0, source WAL/SHM отсутствуют.
+
+Полный #245 product/legal/source completeness остаётся **NOT PASS**. NTM full-sync по-прежнему требует законно доступный populated synchronized snapshot. Внешний A6 `core-s1-6415f443120f-r9-g106` не отправлялся.
+
+Следующий шаг — следующий bounded #245 assistant/search API и frontend grounding tranche, не расширяя legal/enforcement semantics.
+
 ## 0aaaaaa. #245 — NTM и mass-seed fixtures подтверждены в раздельных disposable-контурах
 
 **Кодовый checkpoint не изменён:** [draft PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256), `agent/product-ntm-regressions-v1` @ `321b4ac72b13ec40a0dc3e2b05f8079f39fb6ee7`, tree `ef6fd5680b6c006be5c836643a0ab1cbceef111a`.
