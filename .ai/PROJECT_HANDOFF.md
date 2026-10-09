@@ -3,6 +3,24 @@
 **Снимок:** 2026-10-08 (UTC). **Единственный репозиторий:** [ivan88810900-star/tnved_starter_kit_v2](https://github.com/ivan88810900-star/tnved_starter_kit_v2).  
 **Авторитетное состояние:** ветка `agent/orchestration-state`, файлы `.ai/TASK_BOARD.json`, `.ai/COORDINATOR_LEASE.json`, `.ai/orchestration/A6_LIVE_STATUS.json`. Этот документ — указатель и контрольная точка, **не** право на запись/merge/A6. Перед действием заново читать текущие HEAD и state. Не полагаться на Business-чат.
 
+## 0aaa. #245 — official SGR NTM v2 scope и runtime admission теперь fail-closed
+
+**Новый текущий checkpoint:** [draft PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256), `agent/product-ntm-regressions-v1` @ `a89904e335aa7cb3ae906b094031c0155254000e`, tree `641a1acf45728729c683bef2728521cff6e26604`, parent `d5dd222f108399eac82a5d8001d7615a00953d08`; base #245 неизменён `e39e19787bd913baeb6f85577a13e1116458e633`.
+
+Воспроизведены четыре product defect: DB runtime расширял `exact` HS scope на потомков, допускал inactive measure и export-only rule в import evaluation, а importer принимал неизвестный `hs_scope_mode`. Первый candidate независимый A5 отклонил из-за более серьёзного fail-open: пустой или exclusion-only `description_only` мог совпасть с любым товаром. Финальное исправление требует positive contains/requires marker в importer и dataset validator, блокирует ранее сохранённые некорректные строки в DB runtime, объединяет seed/DB semantics и сохраняет неподтверждённую применимость вне автоматического вывода. Новая юридическая интерпретация и definite applicability не добавлялись.
+
+Проверки exact final tree:
+- direct reproduction до исправления: seed matcher `False`, DB runtime `True` для descendant exact scope; четыре targeted regression — **4 failed**, exit 1;
+- author disposable-DB NTM v2 runtime/layer slice: **210 passed**, exit 0; focused importer/validator/pipeline после A5 repair: **189 passed**, exit 0; `compileall` и `git diff --check` — exit 0;
+- broader #245 probe: **507 passed, 1 skipped, 26 subtests**, затем 10 fixture-inventory failures из-за отсутствующих в disposable DB FTS letters/classification seeds; это зафиксированный fixture/setup gap, не green broad-suite claim;
+- независимый A5 `/root/a5_ntm_fallback`: первый candidate **REJECT HIGH**, финальный exact reviewed tree **PASS**; fresh-SQLite adversarial matrix `OFFICIAL_SGR_FAIL_CLOSED_MATRIX_OK`, focused **189 passed**, exit 0; вручную сохранённые empty/exclusions-only строки также не допускаются runtime;
+- remote blobs пяти изменённых файлов побайтово совпали с reviewed tree; PR перечитан на exact remote HEAD;
+- exact-head GitHub Actions: **PENDING_NO_RUN_OBSERVED** для `a89904e335aa7cb3ae906b094031c0155254000e`; workflow runs и combined status пусты после повторных проверок. Candidate не считается окончательно принятым.
+
+Полный #245 product/legal/source-completeness **NOT PASS**. Protected merge, production/DB writes, enforcement flags, secrets/permissions, destructive migration и внешний A6 не выполнялись; `core-s1-6415f443120f-r9-g106` неизменён и не отправлен.
+
+Следующий шаг — повторно проверить обязательный exact-head CI, затем подготовить canonical disposable fixture bootstrap для FTS classification inventory и продолжить fixture-backed broad/full-sync #245 проверки.
+
 ## 0aa. #244 — устаревшее или несвязанное evidence спецпошлины больше не попадает в автоматическую сумму
 
 **Новый текущий checkpoint:** [draft PR #255](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/255), `agent/core-payment-regressions-v1` @ `7c12f21787b1d557630d8b0737c769b326ab112d`, tree `9ebd8fb4f9a11d066f1b538fb50d67861e249604`, parent `6f1f5522cfe304030d1be474e3f074e85a739835`; base #244 неизменён `14e0ee8f034d94ffc5831d87e076f4d693a5a524`.
