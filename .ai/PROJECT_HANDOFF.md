@@ -3,6 +3,27 @@
 **Снимок:** 2026-10-08 (UTC). **Единственный репозиторий:** [ivan88810900-star/tnved_starter_kit_v2](https://github.com/ivan88810900-star/tnved_starter_kit_v2).  
 **Авторитетное состояние:** ветка `agent/orchestration-state`, файлы `.ai/TASK_BOARD.json`, `.ai/COORDINATOR_LEASE.json`, `.ai/orchestration/A6_LIVE_STATUS.json`. Этот документ — указатель и контрольная точка, **не** право на запись/merge/A6. Перед действием заново читать текущие HEAD и state. Не полагаться на Business-чат.
 
+## 0aaaaaaaa. #245 — UI чата показывает grounding и fail-closed проверяет metadata
+
+**Новый checkpoint:** [draft PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256), `agent/product-ntm-regressions-v1` @ `e452d967d86436fda4b49cf344b026b639eb7c5c`, tree `e5252a9f45b717215dabf7d5ded1b297480f4435`, parent `43803039d7ce50bf88c3d9c08af2f638462767a2`.
+
+Воспроизведён frontend-дефект контракта: текущий `/v1/assistant/chat` возвращает вложенный объект `answer`, но UI ожидал строку и вызывал `.trim()` на объекте. Одновременно coverage, citations и limitations полностью скрывались от пользователя.
+
+Исправление поддерживает текущий и legacy envelope, показывает ограниченные coverage/mode/limitations/citations и превращает в ссылки только HTTP(S). Утвердительные `grounded` / `llm_grounded` labels допускаются лишь при `generated_from_server_facts=true` и минимум одной runtime-валидной цитате; иначе metadata обозначается неподтверждённой. UI прямо предупреждает, что покрытие данных не подтверждает юридическую полноту. Grounding metadata не попадает в историю; API получает только последние 40 текстовых сообщений, видимая история не обрезается.
+
+Проверки:
+
+- до исправления: **2 failed, 1 passed**, `.trim is not a function`, exit 1;
+- author focused: **7 passed**, полный frontend: **25 passed**, typecheck/build — exit 0;
+- независимый A5 сначала отклонил первый candidate из-за недоказанных affirmative labels; исправленный exact tree — **PASS без findings**;
+- A5 adversarial matrix: **8 passed**, exit 0;
+- root repeat focused/typecheck/build — exit 0;
+- exact-head CI: [run 37971284152](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/37971284152), job `113958262264`, success; [run 37971430723](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/37971430723), job `113958761517`, success.
+
+Изменены только frontend type/component/focused test. API, applicability, enforcement, source admission, БД и feature flags не менялись. Полный #245 product/legal/source completeness остаётся **NOT PASS**; populated synchronized NTM snapshot по-прежнему отсутствует. Внешний A6 `core-s1-6415f443120f-r9-g106` не отправлялся.
+
+Следующий шаг — следующий bounded #245 assistant/search/frontend integration slice с сохранением fail-closed citations и source boundaries.
+
 ## 0aaaaaaa. #245 — assistant grounding больше не считает пустую карточку доказательством
 
 **Новый checkpoint:** [draft PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256), `agent/product-ntm-regressions-v1` @ `43803039d7ce50bf88c3d9c08af2f638462767a2`, tree `efbbfb1764c40392b4ecc988f8f929d59fbb4bf6`, parent `321b4ac72b13ec40a0dc3e2b05f8079f39fb6ee7`.

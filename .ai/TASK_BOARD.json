@@ -2179,7 +2179,7 @@
       "unique_source_pr_count": 29
     }
   },
-  "revision": 693,
+  "revision": 694,
   "runs": [
     {
       "head_sha": null,
@@ -7081,7 +7081,7 @@
           "head_sha": "233ed6a64b0e75175358f8cdf0e7bcc71191b67b"
         }
       },
-      "updated_at": "2026-10-09T14:11:10.606Z",
+      "updated_at": "2026-10-09T18:12:30.000Z",
       "worktree": null,
       "ntm_fallback_checkpoint_20261009": {
         "corrective_pr": 256,
@@ -7227,8 +7227,8 @@
         "next_step": "Run NTM full-sync audit on a lawful populated synchronized snapshot if available, or continue the next reproduced #245 source/applicability defect without widening definite rules."
       },
       "classification_inventory_checkpoint_20261009": {
-    "updated_at": "2026-10-09T15:04:45.219410Z",
-    "checked_at": "2026-10-09T15:04:45.219410Z",
+        "updated_at": "2026-10-09T15:04:45.219410Z",
+        "checked_at": "2026-10-09T15:04:45.219410Z",
         "pr": 256,
         "branch": "agent/product-ntm-regressions-v1",
         "head_sha": "321b4ac72b13ec40a0dc3e2b05f8079f39fb6ee7",
@@ -7238,7 +7238,7 @@
         "base_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
         "completed_block": "canonical_disposable_fts_classification_inventory_bootstrap",
         "block": "canonical_disposable_fts_classification_inventory_bootstrap",
-    "status": "DRAFT_CHECKPOINT_A5_PASS_CI_PASS_BOUNDED_137",
+        "status": "DRAFT_CHECKPOINT_A5_PASS_CI_PASS_BOUNDED_137",
         "behavior": {
           "reproduced": "fresh init_db left 0 FTS letters and 0 classification rulings, causing the broad #245 fixture-inventory assertions to fail",
           "final": "new-target-only bootstrap pins the committed TN VED catalogue hash, opens it immutable/read-only, deterministically deduplicates legacy codes and loads the classification test inventory",
@@ -7268,8 +7268,18 @@
           "alias_branch": "agent/product-ntm-bootstrap-ci-v1",
           "alias_branch_head_sha": "321b4ac72b13ec40a0dc3e2b05f8079f39fb6ee7",
           "runs": [
-            {"run_id": 37941232220, "job_id": 113855829425, "conclusion": "success", "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/37941232220"},
-            {"run_id": 37941931512, "job_id": 113858391699, "conclusion": "success", "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/37941931512"}
+            {
+              "run_id": 37941232220,
+              "job_id": 113855829425,
+              "conclusion": "success",
+              "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/37941232220"
+            },
+            {
+              "run_id": 37941931512,
+              "job_id": 113858391699,
+              "conclusion": "success",
+              "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/37941931512"
+            }
           ]
         },
         "blockers": [
@@ -7283,10 +7293,73 @@
         },
         "protected_actions_performed": false,
         "next_step": "Continue the next bounded offline #245 fixture tranche with the safe disposable bootstrap and redirected preview marker; keep NTM full-sync completeness blocked on a lawful populated synchronized snapshot."
+      },
+      "assistant_chat_grounding_ui_checkpoint_20261009": {
+        "updated_at": "2026-10-09T18:12:30.000Z",
+        "pr": 256,
+        "branch": "agent/product-ntm-regressions-v1",
+        "head_sha": "e452d967d86436fda4b49cf344b026b639eb7c5c",
+        "tree_sha": "e5252a9f45b717215dabf7d5ded1b297480f4435",
+        "parent_sha": "43803039d7ce50bf88c3d9c08af2f638462767a2",
+        "base_pr": 245,
+        "base_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
+        "completed_block": "frontend_chat_grounding_metadata_and_history_contract",
+        "status": "DRAFT_CHECKPOINT_A5_PASS_CI_PASS_GROUNDING_UI",
+        "behavior": {
+          "reproduced": "current nested /v1/assistant/chat answer object reached frontend string trim and grounding metadata was hidden",
+          "final": "current and legacy envelopes render safely; bounded coverage/mode/citations/limitations are visible; affirmative labels require server evidence invariants; newest 40 text history entries are sent",
+          "boundaries": "coverage is explicitly not legal completeness; metadata does not enter history; no applicability, enforcement, source admission, API, DB or feature-flag semantics changed"
+        },
+        "author_tests": {
+          "pre_fix": "2 failed, 1 passed; .trim is not a function; exit 1",
+          "focused": "7 passed; exit 0",
+          "full_frontend": "25 passed; exit 0",
+          "typecheck": "exit 0",
+          "build": "exit 0 with existing Vite/Browserslist/CSS/chunk-size warnings",
+          "root_repeat": "focused 7 passed, typecheck and build; exit 0"
+        },
+        "a5": {
+          "session": "/root/a5_ntm_fallback",
+          "first_candidate": "REJECT MEDIUM: affirmative labels trusted enum strings without generated_from_server_facts and usable citations",
+          "status": "PASSED_EXACT_REPAIRED_TREE",
+          "adversarial": "8 passed; missing-invariant matrix, positive case, conservative states, 44 visible -> 40 outbound, metadata exclusion; exit 0",
+          "focused": "7 passed; exit 0",
+          "full_frontend": "25 passed; exit 0",
+          "typecheck_build": "exit 0",
+          "findings": []
+        },
+        "ci": {
+          "status": "PASSED_EXACT_HEAD",
+          "head_sha": "e452d967d86436fda4b49cf344b026b639eb7c5c",
+          "runs": [
+            {
+              "run_id": 37971284152,
+              "job_id": 113958262264,
+              "conclusion": "success",
+              "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/37971284152"
+            },
+            {
+              "run_id": 37971430723,
+              "job_id": 113958761517,
+              "conclusion": "success",
+              "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/37971430723"
+            }
+          ]
+        },
+        "blockers": [
+          "Full #245 backend/frontend acceptance and legal/source completeness remain NOT PASS.",
+          "NTM full-sync audit still requires a lawful populated synchronized snapshot."
+        ],
+        "a6": {
+          "request": "core-s1-6415f443120f-r9-g106",
+          "status": "UNCHANGED_NOT_SENT"
+        },
+        "protected_actions_performed": false,
+        "next_step": "Continue the next bounded #245 assistant/search/frontend integration slice while preserving fail-closed citations and source boundaries."
       }
     }
   ],
-  "updated_at": "2026-10-09T17:06:27.652266Z",
+  "updated_at": "2026-10-09T18:12:30.000Z",
   "latest_scheduled_product_checkpoint": {
     "updated_at": "2026-10-09T17:06:27.652266Z",
     "checked_at": "2026-10-09T17:06:27.652266Z",
@@ -7327,7 +7400,12 @@
       "alias_branch": "agent/product-ntm-bootstrap-ci-v1",
       "alias_branch_head_sha": "43803039d7ce50bf88c3d9c08af2f638462767a2",
       "runs": [
-        {"run_id": 37963680241, "job_id": 113932566080, "conclusion": "success", "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/37963680241"}
+        {
+          "run_id": 37963680241,
+          "job_id": 113932566080,
+          "conclusion": "success",
+          "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/37963680241"
+        }
       ]
     },
     "blockers": [
@@ -7343,8 +7421,8 @@
     "next_step": "Continue the next bounded #245 assistant/search API and frontend grounding tranche; keep NTM full-sync completeness blocked on a lawful populated synchronized snapshot."
   },
   "latest_development_checkpoint": {
-        "updated_at": "2026-10-09T17:06:27.652266Z",
-        "checked_at": "2026-10-09T17:06:27.652266Z",
+    "updated_at": "2026-10-09T17:06:27.652266Z",
+    "checked_at": "2026-10-09T17:06:27.652266Z",
     "pr": 256,
     "branch": "agent/product-ntm-regressions-v1",
     "head_sha": "43803039d7ce50bf88c3d9c08af2f638462767a2",
@@ -7382,7 +7460,12 @@
       "alias_branch": "agent/product-ntm-bootstrap-ci-v1",
       "alias_branch_head_sha": "43803039d7ce50bf88c3d9c08af2f638462767a2",
       "runs": [
-        {"run_id": 37963680241, "job_id": 113932566080, "conclusion": "success", "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/37963680241"}
+        {
+          "run_id": 37963680241,
+          "job_id": 113932566080,
+          "conclusion": "success",
+          "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/37963680241"
+        }
       ]
     },
     "blockers": [
