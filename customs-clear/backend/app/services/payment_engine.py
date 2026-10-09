@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Any
 
 from ..db import SessionLocal
+from ..models.core import SourceStatus
 from ..models.tnved import Commodity, HsDutyRule, SpecialDuty, VatPreference
 from .customs_fees import calculate_customs_fee
 from .invoice_analyzer import _parse_duty_rate
@@ -31,6 +32,7 @@ from .payment_revision_utils import (
     is_safe_official_anti_dumping_source_url,
     is_safe_official_countervailing_source_url,
     is_safe_official_special_safeguard_source_url,
+    is_payment_revision_fresh,
 )
 
 
@@ -443,7 +445,10 @@ def _trade_remedy_revision_is_not_future(value: Any | None) -> bool:
     return revision_date <= date.today()
 
 
-def _special_duty_admission_failure(row: SpecialDuty) -> str | None:
+def _special_duty_admission_failure(
+    row: SpecialDuty,
+    source_statuses: dict[str, SourceStatus],
+) -> str | None:
     """Return a fail-closed reason or admit measure-specific official evidence."""
     for field in ("rate_percent", "rate_specific"):
         raw = getattr(row, field, None)
@@ -469,6 +474,7 @@ def _special_duty_admission_failure(row: SpecialDuty) -> str | None:
 
     measure_type = str(getattr(row, "measure_type", "") or "anti_dumping").strip().lower()
     if measure_type == "anti_dumping":
+        source_code = getattr(row, "source_code", None)
         revision = getattr(row, "source_revision", None)
         synced_at = getattr(row, "synced_at", None)
         marker_ok = is_official_anti_dumping_row_marker(
@@ -477,6 +483,7 @@ def _special_duty_admission_failure(row: SpecialDuty) -> str | None:
         )
         url_ok = is_safe_official_anti_dumping_source_url(getattr(row, "source_url", None))
     elif measure_type in {"special_safeguard", "special_protective"}:
+        source_code = getattr(row, "safeguard_source_code", None)
         revision = getattr(row, "safeguard_source_revision", None)
         synced_at = getattr(row, "safeguard_synced_at", None)
         marker_ok = is_official_special_safeguard_row_marker(
@@ -487,6 +494,7 @@ def _special_duty_admission_failure(row: SpecialDuty) -> str | None:
             getattr(row, "safeguard_source_url", None)
         )
     elif measure_type == "countervailing":
+        source_code = getattr(row, "countervailing_source_code", None)
         revision = getattr(row, "countervailing_source_revision", None)
         synced_at = getattr(row, "countervailing_synced_at", None)
         marker_ok = is_official_countervailing_row_marker(
@@ -506,6 +514,13 @@ def _special_duty_admission_failure(row: SpecialDuty) -> str | None:
         or not _trade_remedy_timestamp_is_not_future(synced_at)
     ):
         return "special_duty_provenance_future"
+    status = source_statuses.get(str(source_code or "").strip().upper())
+    if status is None or str(status.revision or "").strip() != str(revision or "").strip():
+        return "special_duty_provenance_unverified"
+    if not _trade_remedy_timestamp_is_not_future(status.synced_at):
+        return "special_duty_provenance_future"
+    if status.is_stale or not is_payment_revision_fresh(revision):
+        return "special_duty_provenance_stale"
     return None
 
 
@@ -602,6 +617,26 @@ def _resolve_special_duties(
                 today,
             )
         ]
+        source_codes = {
+            str(code or "").strip().upper()
+            for row in rows
+            for code in (
+                row.source_code,
+                row.safeguard_source_code,
+                row.countervailing_source_code,
+            )
+            if str(code or "").strip()
+        }
+        source_statuses = {
+            str(status.source_code or "").strip().upper(): status
+            for status in (
+                db.query(SourceStatus)
+                .filter(SourceStatus.source_code.in_(source_codes))
+                .all()
+                if source_codes
+                else []
+            )
+        }
 
     if not rows:
         return 0.0, [], False
@@ -643,7 +678,7 @@ def _resolve_special_duties(
     inadmissible_rows = [
         (row, failure)
         for row in rows
-        if (failure := _special_duty_admission_failure(row)) is not None
+        if (failure := _special_duty_admission_failure(row, source_statuses)) is not None
     ]
     if inadmissible_rows:
         failure_reasons = {failure for _, failure in inadmissible_rows}
