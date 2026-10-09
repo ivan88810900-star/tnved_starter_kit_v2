@@ -3,6 +3,26 @@
 **Снимок:** 2026-10-08 (UTC). **Единственный репозиторий:** [ivan88810900-star/tnved_starter_kit_v2](https://github.com/ivan88810900-star/tnved_starter_kit_v2).  
 **Авторитетное состояние:** ветка `agent/orchestration-state`, файлы `.ai/TASK_BOARD.json`, `.ai/COORDINATOR_LEASE.json`, `.ai/orchestration/A6_LIVE_STATUS.json`. Этот документ — указатель и контрольная точка, **не** право на запись/merge/A6. Перед действием заново читать текущие HEAD и state. Не полагаться на Business-чат.
 
+## 0u. #245 — оставшиеся broad-suite fixtures изолированы без ослабления dataset-порогов
+
+**Новый текущий checkpoint:** [draft PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256), `agent/product-ntm-regressions-v1` @ `ec4c3fc67fbb7ca90ec28e2ee89ff232711b2eac`, tree `93571a51fdd03806693be76920163312edb24d68`, parent `b4fef2b9952a5b58f4bc2545523daf92a3bfd518`; полный двухкоммитный блок начинается от `4333061a162225f0efbbf0e971585a428ce78f82`, base #245 неизменён `e39e19787bd913baeb6f85577a13e1116458e633`.
+
+Расширенный офлайн-срез сначала воспроизвёл **8 failures / 898 passed / 2 skipped / 32 subtests**: семь assertions массового regulatory seed ошибочно считали пустую disposable DB провалом импорта, а API measures ожидал существование кодов без собственных persisted fixtures. Теперь `test_regulatory_mass_seed.py` пропускается только при отсутствующем/пустом dataset; любой непустой partial snapshot исполняет исходные пороги. `test_tnved_measures_api.py` создаёт exact HsRate evidence для своих кодов и удаляет только ID, вставленные этим fixture-run.
+
+Промежуточный HEAD `b4fef2b9952a5b58f4bc2545523daf92a3bfd518` не принят как финальный: author/A5 увидели, что cleanup по общему `source_revision` мог удалить чужие строки. Финальный HEAD хранит точные inserted IDs; A5 подтвердил, что case-code с тем же marker, official case-code и unrelated same-marker row сохраняются.
+
+Проверки exact head/tree:
+- author broad #245 backend slice: **897 passed, 11 skipped, 32 subtests**, exit 0;
+- author focused: **3 passed, 9 skipped**, exit 0; отдельный pre-existing-row probe **2 passed**, exit 0;
+- author one-row partial regulatory dataset: ожидаемый **1 failed**, exit 1; threshold 5000 не скрыт;
+- независимый A5 `/root/a5_ntm_fallback`: **PASS exact remote HEAD**; empty DB **1 passed, 9 skipped**; partial dataset threshold exit 1; cleanup adversarial lifecycle PASS; relevant slice **111 passed, 9 skipped, 3 subtests**, exit 0;
+- `git diff --check`: exit 0;
+- exact-head GitHub Actions: **PASS** — [run 37886387124](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/37886387124), job `offline-safety` `113677226792`, completed `2026-10-09T04:59:15Z`, все steps success.
+
+Изменены только два test-файла; runtime/legal/source-admission/applicability/calculation semantics не менялись. Полный #245 product/legal/source-completeness **NOT PASS**. Mass-seed и full-sync coverage всё ещё требуют законно доступных заполненных synchronized snapshots. Protected merge, production/DB writes, enforcement flags, secrets/permissions, destructive migration и внешний A6 не выполнялись; `core-s1-6415f443120f-r9-g106` неизменён и не отправлен.
+
+Следующий шаг — выполнить оба явных dataset-аудита на populated snapshots либо продолжить следующий воспроизводимый #245 source/applicability defect без расширения definite rules.
+
 ## 0t. #256 — exact-head GitHub Actions подтверждён
 
 Для неизменённого HEAD `4333061a162225f0efbbf0e971585a428ce78f82` GitHub Actions run [37881930775](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/37881930775) завершён успешно: job `offline-safety` и все его steps — `success` (completed `2026-10-09T04:01:43Z`). Review threads и submitted reviews отсутствуют. Это закрывает только прежний CI-polling blocker; полный #245 product/legal/source-completeness остаётся **NOT PASS**, а populated full-sync dataset audit всё ещё не выполнен. A6 `core-s1-6415f443120f-r9-g106` не отправлялся и не изменялся.
