@@ -165,21 +165,30 @@ export const TnvedBook: React.FC = () => {
           </div>
           {semErr && <p className="text-[11px] text-amber-200/90">{semErr}</p>}
           {semHits.length > 0 && (
-            <ul className="max-h-52 space-y-1 overflow-auto rounded-lg border border-white/[0.06] bg-black/20 p-2 text-[11px]">
-              {semHits.map((h) => (
-                <li key={`${h.hs_code}-${h.score}`}>
-                  <button
-                    type="button"
-                    className="flex w-full flex-col items-start rounded-md px-2 py-1.5 text-left hover:bg-white/[0.04]"
-                    onClick={() => void loadLookup(h.hs_code)}
-                  >
-                    <span className="cc-mono text-sky-200/90">{h.hs_code}</span>
-                    <span className="text-slate-400">{h.title || '—'}</span>
-                    <span className="text-[10px] text-slate-600">score {h.score}</span>
-                  </button>
-                </li>
-              ))}
-            </ul>
+            <div className="space-y-2">
+              <p
+                className="rounded-lg border border-amber-500/20 bg-amber-950/20 px-3 py-2 text-[11px] leading-relaxed text-amber-100/90"
+                data-testid="semantic-search-candidate-warning"
+              >
+                Результаты — только кандидаты семантического поиска по векторному сходству, а не подтверждённая
+                классификация ТН ВЭД. Код нужно вручную сверить с описанием, примечаниями и классификационными решениями.
+              </p>
+              <ul className="max-h-52 space-y-1 overflow-auto rounded-lg border border-white/[0.06] bg-black/20 p-2 text-[11px]">
+                {semHits.map((h) => (
+                  <li key={`${h.hs_code}-${h.score}`}>
+                    <button
+                      type="button"
+                      className="flex w-full flex-col items-start rounded-md px-2 py-1.5 text-left hover:bg-white/[0.04]"
+                      onClick={() => void loadLookup(h.hs_code)}
+                    >
+                      <span className="cc-mono text-sky-200/90">{h.hs_code}</span>
+                      <span className="text-slate-400">{h.title || '—'}</span>
+                      <span className="text-[10px] text-slate-600">Векторное сходство: {h.score}</span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
           )}
         </div>
       </details>
