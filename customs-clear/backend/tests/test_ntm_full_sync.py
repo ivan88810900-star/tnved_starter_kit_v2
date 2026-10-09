@@ -16,10 +16,10 @@ from app.db import SessionLocal
 def _require_full_sync_dataset() -> None:
     with SessionLocal() as db:
         count = db.execute(text("SELECT COUNT(*) FROM non_tariff_measures")).scalar() or 0
-    if count < 42000:
+    if count == 0:
         pytest.skip(
-            "requires a completed NTM full-sync dataset (>= 42000 rows); "
-            f"current disposable database has {count}"
+            "requires a populated NTM full-sync dataset; "
+            "current disposable database is empty"
         )
 
 
