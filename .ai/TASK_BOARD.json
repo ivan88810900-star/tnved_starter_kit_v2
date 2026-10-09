@@ -2179,7 +2179,7 @@
       "unique_source_pr_count": 29
     }
   },
-  "revision": 698,
+  "revision": 699,
   "runs": [
     {
       "head_sha": null,
@@ -7414,53 +7414,50 @@
       }
     }
   ],
-  "updated_at": "2026-10-09T22:03:00.000Z",
+  "updated_at": "2026-10-09T22:25:41.000Z",
   "latest_scheduled_product_checkpoint": {
-    "updated_at": "2026-10-09T22:03:00.000Z",
-    "checked_at": "2026-10-09T22:03:00.000Z",
+    "updated_at": "2026-10-09T22:25:41.000Z",
+    "checked_at": "2026-10-09T22:25:41.000Z",
     "pr": 256,
     "branch": "agent/product-ntm-regressions-v1",
-    "head_sha": "a556cb073482a957fa5fff09ab59ddd2b9194ba5",
-    "tree_sha": "e225b7df42488301bd3f12be6e7841a14ba44f31",
-    "parent_sha": "9319a1b925a4c7fe04e45431e2805becc61499be",
+    "head_sha": "f982f48490e5be5fae12e2f49a9d106401e60c37",
+    "parent_sha": "06a540ad6e9fcbd7003a224cc68a3dd5a779598f",
+    "prior_checkpoint_sha": "a556cb073482a957fa5fff09ab59ddd2b9194ba5",
     "base_pr": 245,
     "base_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
-    "completed_block": "tnved_external_source_link_boundary",
-    "block": "tnved_external_source_link_boundary",
-    "status": "DRAFT_CHECKPOINT_A5_PASS_CI_PASS_EXTERNAL_SOURCE_LINK_BOUNDARY",
+    "block": "assistant_chat_citation_url_boundary",
+    "status": "DRAFT_CHECKPOINT_IMPLEMENTED_STATIC_A5_PASS_CI_PASS_FRONTEND_EXECUTION_PENDING",
     "behavior": {
-      "reproduced": "imported TN VED note, official ETT and classification-ruling source_url values were passed directly to href, so javascript/data schemes became clickable",
-      "final": "only absolute credential-free HTTP(S) URLs with syntactically valid hostnames become anchors; malformed, credential-confusion, literal/encoded control, bidi and backslash values remain bounded escaped visible non-clickable evidence",
+      "reproduced": "assistant chat used a weaker local URL parser that admitted credential, normalization and malformed-host citation URLs which the shared TN VED boundary rejects",
+      "final": "assistant chat delegates citation anchors to the shared strict credential-free absolute HTTP(S) validator; rejected citations stay visible as non-clickable text",
       "boundaries": "URL transport/syntax boundary only; no source-validity, legal-applicability, source-completeness, DB write or enforcement claim"
     },
     "author_tests": {
-      "reproduction_before_fix": "focused component tests found javascript/data values rendered as anchors; exit 1",
-      "focused": "frontend 43 passed; exit 0",
-      "full_frontend": "76 passed; typecheck and production build exit 0",
-      "diff_compile": "git diff --check exit 0"
+      "direct_helper_probe": "exact shared helper 7/7 normal/adversarial cases; exit 0",
+      "focused_frontend": "NOT_RUN_DEPENDENCY_INSTALL_UNAVAILABLE",
+      "dependency_evidence": "npm ci online failed with npm exit-handler failure; offline failed ENOTCACHED for zwitch-2.0.4; no test PASS claimed"
     },
     "a5": {
-      "session": "/root/a5_tnved_source_link_boundary",
-      "status": "PASS_EXACT_REVIEWED_TREE_REMOTE_BOUND",
-      "review_history": "two earlier trees rejected for credential/control/host/evidence gaps and then percent-encoded C1/bidi bypasses",
-      "focused": "frontend 43 passed; full frontend 76 passed; typecheck/build/diff-check exit 0",
-      "adversarial": "32 URL-boundary cases including credential confusion, malformed hosts, encoded/double/deep C1 and bidi controls, malformed escapes, IPv6 and IDN; exit 0",
-      "remote_binding": "remote commit a556cb073482a957fa5fff09ab59ddd2b9194ba5 tree equals reviewed tree e225b7df42488301bd3f12be6e7841a14ba44f31"
+      "session": "/root/a5_chat_url_review",
+      "status": "PASS_STATIC_EXACT_BLOBS_EXECUTION_UNAVAILABLE",
+      "component_blob": "f9576ea594706ea0f05fbfae6613e23a8f2fe029",
+      "test_blob": "68b98254712654e1d077253bed11558b964c8089",
+      "limitation": "reviewer GitHub connector returned MCP -32602; exact GitHub-fetched blobs were relayed by A0; no tests executed"
     },
     "ci": {
-      "status": "PASSED_EXACT_HEAD",
-      "head_sha": "a556cb073482a957fa5fff09ab59ddd2b9194ba5",
+      "status": "PASSED_EXACT_HEAD_AGENT_SAFETY_ONLY",
+      "head_sha": "f982f48490e5be5fae12e2f49a9d106401e60c37",
       "runs": [
         {
-          "run_id": 37996837003,
-          "job_id": 114044951892,
+          "run_id": 37998614667,
+          "job_id": 114050947337,
           "conclusion": "success",
-          "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/37996837003"
+          "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/37998614667"
         }
       ]
     },
     "blockers": [
-      "This bounded source-link block is not a full #245 backend/frontend acceptance result.",
+      "Fresh focused/full frontend tests and executable independent review remain pending because the isolated dependency environment was unavailable.",
       "NTM full-sync audit still requires a lawful populated synchronized snapshot.",
       "Full #245 product acceptance and legal/source completeness remain NOT PASS."
     ],
@@ -7469,54 +7466,51 @@
       "status": "UNCHANGED_NOT_SENT"
     },
     "protected_actions_performed": false,
-    "next_step": "Continue the next reproduced bounded #245 search/classification/grounding integration defect; keep NTM full-sync completeness blocked on a lawful populated synchronized snapshot."
+    "next_step": "Re-run focused/full frontend tests and fresh independent executable review on exact HEAD when dependencies are available; otherwise continue only another independently reproducible bounded #245 defect without claiming readiness."
   },
   "latest_development_checkpoint": {
-    "updated_at": "2026-10-09T22:03:00.000Z",
-    "checked_at": "2026-10-09T22:03:00.000Z",
+    "updated_at": "2026-10-09T22:25:41.000Z",
+    "checked_at": "2026-10-09T22:25:41.000Z",
     "pr": 256,
     "branch": "agent/product-ntm-regressions-v1",
-    "head_sha": "a556cb073482a957fa5fff09ab59ddd2b9194ba5",
-    "tree_sha": "e225b7df42488301bd3f12be6e7841a14ba44f31",
-    "parent_sha": "9319a1b925a4c7fe04e45431e2805becc61499be",
+    "head_sha": "f982f48490e5be5fae12e2f49a9d106401e60c37",
+    "parent_sha": "06a540ad6e9fcbd7003a224cc68a3dd5a779598f",
+    "prior_checkpoint_sha": "a556cb073482a957fa5fff09ab59ddd2b9194ba5",
     "base_pr": 245,
     "base_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
-    "completed_block": "tnved_external_source_link_boundary",
-    "block": "tnved_external_source_link_boundary",
-    "status": "DRAFT_CHECKPOINT_A5_PASS_CI_PASS_EXTERNAL_SOURCE_LINK_BOUNDARY",
+    "block": "assistant_chat_citation_url_boundary",
+    "status": "DRAFT_CHECKPOINT_IMPLEMENTED_STATIC_A5_PASS_CI_PASS_FRONTEND_EXECUTION_PENDING",
     "behavior": {
-      "reproduced": "imported TN VED note, official ETT and classification-ruling source_url values were passed directly to href, so javascript/data schemes became clickable",
-      "final": "only absolute credential-free HTTP(S) URLs with syntactically valid hostnames become anchors; malformed, credential-confusion, literal/encoded control, bidi and backslash values remain bounded escaped visible non-clickable evidence",
+      "reproduced": "assistant chat used a weaker local URL parser that admitted credential, normalization and malformed-host citation URLs which the shared TN VED boundary rejects",
+      "final": "assistant chat delegates citation anchors to the shared strict credential-free absolute HTTP(S) validator; rejected citations stay visible as non-clickable text",
       "boundaries": "URL transport/syntax boundary only; no source-validity, legal-applicability, source-completeness, DB write or enforcement claim"
     },
     "author_tests": {
-      "reproduction_before_fix": "focused component tests found javascript/data values rendered as anchors; exit 1",
-      "focused": "frontend 43 passed; exit 0",
-      "full_frontend": "76 passed; typecheck and production build exit 0",
-      "diff_compile": "git diff --check exit 0"
+      "direct_helper_probe": "exact shared helper 7/7 normal/adversarial cases; exit 0",
+      "focused_frontend": "NOT_RUN_DEPENDENCY_INSTALL_UNAVAILABLE",
+      "dependency_evidence": "npm ci online failed with npm exit-handler failure; offline failed ENOTCACHED for zwitch-2.0.4; no test PASS claimed"
     },
     "a5": {
-      "session": "/root/a5_tnved_source_link_boundary",
-      "status": "PASS_EXACT_REVIEWED_TREE_REMOTE_BOUND",
-      "review_history": "two earlier trees rejected for credential/control/host/evidence gaps and then percent-encoded C1/bidi bypasses",
-      "focused": "frontend 43 passed; full frontend 76 passed; typecheck/build/diff-check exit 0",
-      "adversarial": "32 URL-boundary cases including credential confusion, malformed hosts, encoded/double/deep C1 and bidi controls, malformed escapes, IPv6 and IDN; exit 0",
-      "remote_binding": "remote commit a556cb073482a957fa5fff09ab59ddd2b9194ba5 tree equals reviewed tree e225b7df42488301bd3f12be6e7841a14ba44f31"
+      "session": "/root/a5_chat_url_review",
+      "status": "PASS_STATIC_EXACT_BLOBS_EXECUTION_UNAVAILABLE",
+      "component_blob": "f9576ea594706ea0f05fbfae6613e23a8f2fe029",
+      "test_blob": "68b98254712654e1d077253bed11558b964c8089",
+      "limitation": "reviewer GitHub connector returned MCP -32602; exact GitHub-fetched blobs were relayed by A0; no tests executed"
     },
     "ci": {
-      "status": "PASSED_EXACT_HEAD",
-      "head_sha": "a556cb073482a957fa5fff09ab59ddd2b9194ba5",
+      "status": "PASSED_EXACT_HEAD_AGENT_SAFETY_ONLY",
+      "head_sha": "f982f48490e5be5fae12e2f49a9d106401e60c37",
       "runs": [
         {
-          "run_id": 37996837003,
-          "job_id": 114044951892,
+          "run_id": 37998614667,
+          "job_id": 114050947337,
           "conclusion": "success",
-          "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/37996837003"
+          "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/37998614667"
         }
       ]
     },
     "blockers": [
-      "This bounded source-link block is not a full #245 backend/frontend acceptance result.",
+      "Fresh focused/full frontend tests and executable independent review remain pending because the isolated dependency environment was unavailable.",
       "NTM full-sync audit still requires a lawful populated synchronized snapshot.",
       "Full #245 product acceptance and legal/source completeness remain NOT PASS."
     ],
@@ -7525,6 +7519,6 @@
       "status": "UNCHANGED_NOT_SENT"
     },
     "protected_actions_performed": false,
-    "next_step": "Continue the next reproduced bounded #245 search/classification/grounding integration defect; keep NTM full-sync completeness blocked on a lawful populated synchronized snapshot."
+    "next_step": "Re-run focused/full frontend tests and fresh independent executable review on exact HEAD when dependencies are available; otherwise continue only another independently reproducible bounded #245 defect without claiming readiness."
   }
 }
