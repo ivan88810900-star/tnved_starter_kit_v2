@@ -50,15 +50,38 @@ def _parse_ru_date(s: str) -> datetime | None:
 
 
 def _registry_status_to_verify(status: str, expiry: str) -> str:
-    st = (status or "").lower()
-    if any(x in st for x in ("недейств", "прекращ", "аннулир", "отозван", "приостанов")):
+    st = " ".join((status or "").strip().lower().split())
+    if any(
+        marker in st
+        for marker in (
+            "недейств",
+            "не действ",
+            "прекращ",
+            "аннулир",
+            "отозван",
+            "приостанов",
+            "revoked",
+            "withdrawn",
+            "suspended",
+            "terminated",
+            "expired",
+            "inactive",
+            "not active",
+            "not valid",
+            "not registered",
+            "не зарегистрирован",
+            "незарегистрирован",
+        )
+    ):
         return "NOT_FOUND"
     exp = _parse_ru_date(expiry)
-    if exp and exp.date() < datetime.utcnow().date():
+    if exp and exp.date() < datetime.now().date():
         return "NOT_FOUND"
-    if any(x in st for x in ("действ", "архив")):
+    if any(marker in st for marker in ("действует", "действующий", "зарегистрирован")):
         return "VALID"
-    return "VALID" if status else "UNKNOWN"
+    if {"active", "valid", "registered"}.intersection(re.findall(r"[a-z]+", st)):
+        return "VALID"
+    return "UNKNOWN"
 
 
 def _find_fsa_certificate_row(db: Any, number: str) -> FsaCertificate | None:
