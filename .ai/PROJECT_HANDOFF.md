@@ -3,6 +3,22 @@
 **Снимок:** 2026-10-08 (UTC). **Единственный репозиторий:** [ivan88810900-star/tnved_starter_kit_v2](https://github.com/ivan88810900-star/tnved_starter_kit_v2).  
 **Авторитетное состояние:** ветка `agent/orchestration-state`, файлы `.ai/TASK_BOARD.json`, `.ai/COORDINATOR_LEASE.json`, `.ai/orchestration/A6_LIVE_STATUS.json`. Этот документ — указатель и контрольная точка, **не** право на запись/merge/A6. Перед действием заново читать текущие HEAD и state. Не полагаться на Business-чат.
 
+## 0w. #245 — статус СГР fail-closed: неподтверждённая запись остаётся evidence, но не считается действующей
+
+**Новый текущий checkpoint:** [draft PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256), `agent/product-ntm-regressions-v1` @ `758797f56b00ceb5fd78362a0dce80683dc1e96d`, tree `b478bbdd8bc1552acda622d5f9c1453f8beb8148`, parent `afab417d008bc6e386091544ac6589884eb758e5`; base #245 неизменён `e39e19787bd913baeb6f85577a13e1116458e633`.
+
+Воспроизведён product defect: fuzzy-match локального реестра СГР мог вернуть строку со статусом `Аннулировано` и одновременно рекомендовать «Найдено действующее СГР». Исправлено fail-closed без удаления evidence: номер и исходный статус сохраняются, но revoked/negated/unknown возвращают «Найдено совпадение, статус требует проверки» и явное требование сверки в официальном реестре. Положительные английские статусы распознаются только как отдельные слова, поэтому `invalid` и `unregistered` не становятся active по подстроке. Действующие exact/fuzzy сценарии сохранены. HS activation, SQL matching, applicability, advisory/enforcement и правовая интерпретация не расширялись.
+
+Проверки exact remote tree:
+- author focused: **19 passed**, exit 0; adversarial status matrix, `git diff --check`, `py_compile` — exit 0;
+- author broad #245 backend slice: **917 passed, 11 skipped, 32 subtests**, exit 0;
+- независимый A5 `/root/a5_pravo_probe`: первые два exact local commits отклонены из-за `Не действует/not active` и `invalid/unregistered`; финальный exact remote HEAD **PASS**. Focused **19 passed**, related fresh disposable SGR/NTM/normative **154 passed**, lookup/status matrices exit 0; remote tree побайтово совпадает с reviewed tree;
+- exact-head GitHub Actions: **PASS** — [run 37897546292](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/37897546292), job `offline-safety` `113712246088`, все steps success.
+
+NTM full-sync audit по-прежнему требует законно доступного populated synchronized snapshot. Полный #245 product/legal/source-completeness **NOT PASS**. Protected merge, production/DB writes, enforcement flags, secrets/permissions, destructive migration и внешний A6 не выполнялись; `core-s1-6415f443120f-r9-g106` неизменён и не отправлен.
+
+Следующий шаг — выполнить NTM full-sync audit на lawful populated synchronized snapshot, если он доступен, либо продолжить следующий воспроизводимый #245 source/applicability defect без расширения definite rules.
+
 ## 0v. #245 — официальный PRAVO probe больше не принимает synthetic/reference-only как покрытие
 
 **Новый текущий checkpoint:** [draft PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256), `agent/product-ntm-regressions-v1` @ `afab417d008bc6e386091544ac6589884eb758e5`, tree `a1c7cc38118d879135e2eba9ed1aa79f4c2e0b1e`, parent `ec4c3fc67fbb7ca90ec28e2ee89ff232711b2eac`; base #245 неизменён `e39e19787bd913baeb6f85577a13e1116458e633`.
