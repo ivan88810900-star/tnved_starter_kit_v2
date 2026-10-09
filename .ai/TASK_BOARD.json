@@ -2179,7 +2179,7 @@
       "unique_source_pr_count": 29
     }
   },
-  "revision": 675,
+  "revision": 676,
   "runs": [
     {
       "head_sha": null,
@@ -7081,7 +7081,7 @@
           "head_sha": "233ed6a64b0e75175358f8cdf0e7bcc71191b67b"
         }
       },
-      "updated_at": "2026-10-09T02:06:00Z",
+      "updated_at": "2026-10-09T03:28:00Z",
       "worktree": null,
       "ntm_fallback_checkpoint_20261009": {
         "corrective_pr": 256,
@@ -7102,79 +7102,97 @@
           "deployed legacy synthetic rows still require an explicit safe remediation or reseed plan; no production write was performed",
           "full #245 product acceptance, legal completeness and source completeness are not PASS"
         ]
+      },
+      "legacy_ntm_seed_checkpoint_20261009": {
+        "corrective_pr": 256,
+        "corrective_head_sha": "04979b50bf2926751dad92468e9beb4e2fa7b539",
+        "corrective_tree_sha": "051d77ca61ef1d70e28beee46d28fa977ef8b75c",
+        "executor": "/root/tariff_automation_20261009T0555MSK",
+        "lease_generation": 128,
+        "scope": "tag full-sync generated legacy NTM as synthetic_seed and withhold it from all product evidence/read/import paths; exact-code repair preserves curated verified rows",
+        "state": "PUBLISHED_A5_PASS_CI_PENDING",
+        "tests": "author focused 25 passed plus 1 skipped and 3 subtests; backend slice 867 passed plus 2 skipped and 32 subtests; frontend 18 plus typecheck/build; independent A5 exact-head PASS with repair and quality adversarial probes; parent/candidate fixture failure sets identical",
+        "ci_status": "PENDING_NO_RUN_OBSERVED",
+        "a6": "unchanged/not sent",
+        "unresolved": [
+          "Required exact-head GitHub Actions run is not observed, so candidate readiness is not claimed.",
+          "Full #245 backend/frontend acceptance and legal/source completeness remain NOT PASS.",
+          "No production remediation/reseed of already deployed legacy rows was performed."
+        ]
       }
     }
   ],
-  "updated_at": "2026-10-09T02:06:00Z",
+  "updated_at": "2026-10-09T03:28:00Z",
   "latest_scheduled_product_checkpoint": {
-    "updated_at": "2026-10-09T02:06:00Z",
+    "updated_at": "2026-10-09T03:28:00Z",
     "pr": 256,
     "branch": "agent/product-ntm-regressions-v1",
-    "head_sha": "9d4ffb38d7479f6f9a6983728612e01e0c28018e",
-    "tree_sha": "824f644beec6a8ef219f737aede05a634fe9297f",
+    "head_sha": "04979b50bf2926751dad92468e9beb4e2fa7b539",
+    "tree_sha": "051d77ca61ef1d70e28beee46d28fa977ef8b75c",
+    "parent_sha": "a1984575e6c58360847a54ee8618944dbfb996b0",
     "base_pr": 245,
     "base_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
-    "completed_block": "permit_job_routes_isolated_from_legacy_verify_catch_all",
+    "completed_block": "synthetic_legacy_ntm_seed_withheld_from_product_evidence",
     "author_tests": {
-      "candidate_backend_slice": "308 passed, 1 skipped on fresh disposable SQLite after init_db and complete NTM v2 import; exit 0",
-      "focused": "permit normalize/API plus ownership 13 passed, 1 skipped; exit 0",
+      "focused": "25 passed, 1 skipped, 3 subtests; exit 0",
+      "candidate_backend_slice": "867 passed, 2 skipped, 32 subtests on fresh disposable SQLite after init_db and complete NTM v2 import; exit 0",
       "frontend": "18 passed; typecheck and build passed; exit 0",
-      "diff_check": "passed"
+      "compile_diff_check": "passed"
     },
     "a5": {
       "session": "/root/a5_ntm_fallback",
       "status": "PASSED_EXACT_REMOTE_HEAD",
-      "related_suite": "focused 20 passed, 1 skipped and extended 222 passed, 1 skipped on exact remote head; exit 0",
-      "adversarial": "owner/non-owner/ownerless/admin and anonymous auth outcomes passed; negative job detail/export made no external permit call; legacy slash path remained functional"
+      "repair_adversarial": "relabeled_synthetic=1; old selected normal row became synthetic_seed; never-selected identical verified row remained verified; exit 0",
+      "quality_matrix": "NULL/verified admitted; noise/synthetic withheld across runtime, rules, RAG, invoice, SGR, catalog/completeness and v2 import; exit 0",
+      "parent_comparison": "candidate and parent both 14 failed, 315 passed, 1 skipped in the same 20-file fixture-bound slice; FAILED-name diff empty"
     },
     "ci": {
-      "status": "SUCCESS_EXACT_HEAD",
-      "head_sha": "9d4ffb38d7479f6f9a6983728612e01e0c28018e",
-      "run_id": 37872398938,
-      "job_id": 113633224151
+      "status": "PENDING_NO_RUN_OBSERVED",
+      "head_sha": "04979b50bf2926751dad92468e9beb4e2fa7b539",
+      "observation": "GitHub connector returned no workflow run; normal local push exited 128 because no GitHub username credential was available; no workaround attempted"
     },
     "blockers": [
-      "Future static /verify routes must remain ahead of the legacy catch-all; live FSA was intentionally not called.",
-      "PostgreSQL, payment/calculator fixtures and deployed legacy synthetic-row remediation are not closed.",
-      "Full #245 backend/frontend acceptance and legal/source completeness remain NOT PASS."
+      "Required exact-head GitHub Actions run is not observed, so candidate readiness is not claimed.",
+      "Full #245 backend/frontend acceptance and legal/source completeness remain NOT PASS.",
+      "No production remediation/reseed of already deployed legacy rows was performed."
     ],
     "a6": {
       "request": "core-s1-6415f443120f-r9-g106",
       "status": "UNCHANGED_NOT_SENT"
     },
     "protected_actions_performed": false,
-    "next_step": "Continue #245 backend/frontend applicability and source failures without widening definite rules; preserve the permit route-order invariant."
+    "next_step": "Obtain and verify exact-head CI through a normally authorized channel, then continue #245 applicability/source failures without widening definite rules."
   },
   "latest_development_checkpoint": {
-    "checked_at": "2026-10-09T02:06:00Z",
+    "checked_at": "2026-10-09T03:28:00Z",
     "pr": 256,
     "branch": "agent/product-ntm-regressions-v1",
-    "head_sha": "9d4ffb38d7479f6f9a6983728612e01e0c28018e",
-    "tree_sha": "824f644beec6a8ef219f737aede05a634fe9297f",
+    "head_sha": "04979b50bf2926751dad92468e9beb4e2fa7b539",
+    "tree_sha": "051d77ca61ef1d70e28beee46d28fa977ef8b75c",
     "base_pr": 245,
     "base_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
-    "block": "permit_job_routes_isolated_from_legacy_verify_catch_all",
-    "status": "DRAFT_CHECKPOINT_A5_PASS_CI_PASS",
+    "block": "synthetic_legacy_ntm_seed_withheld_from_product_evidence",
+    "status": "DRAFT_CHECKPOINT_A5_PASS_CI_PENDING",
     "author_tests": [
-      "308 passed, 1 skipped on fresh disposable SQLite after init_db and complete NTM v2 import, exit 0",
-      "focused permit normalize/API plus ownership 13 passed, 1 skipped, exit 0",
-      "frontend 18 passed; typecheck and build passed, exit 0",
-      "diff-check passed"
+      "25 passed, 1 skipped, 3 subtests; exit 0",
+      "867 passed, 2 skipped, 32 subtests on fresh disposable SQLite after init_db and complete NTM v2 import; exit 0",
+      "18 passed; typecheck and build passed; exit 0",
+      "passed"
     ],
     "a5": {
-      "status": "PASS",
       "session": "/root/a5_ntm_fallback",
-      "tests": "focused 20 passed, 1 skipped and extended 222 passed, 1 skipped on exact remote head, exit 0",
-      "adversarial": "exact remote head/tree/parent verified; ownership isolation, admin access, anonymous auth, no-external-call and legacy slash-path probes passed"
+      "status": "PASSED_EXACT_REMOTE_HEAD",
+      "repair_adversarial": "relabeled_synthetic=1; old selected normal row became synthetic_seed; never-selected identical verified row remained verified; exit 0",
+      "quality_matrix": "NULL/verified admitted; noise/synthetic withheld across runtime, rules, RAG, invoice, SGR, catalog/completeness and v2 import; exit 0",
+      "parent_comparison": "candidate and parent both 14 failed, 315 passed, 1 skipped in the same 20-file fixture-bound slice; FAILED-name diff empty"
     },
     "ci": {
-      "status": "SUCCESS_EXACT_HEAD",
-      "head_sha": "9d4ffb38d7479f6f9a6983728612e01e0c28018e",
-      "run_id": 37872398938,
-      "job_id": 113633224151
+      "status": "PENDING_NO_RUN_OBSERVED",
+      "head_sha": "04979b50bf2926751dad92468e9beb4e2fa7b539",
+      "observation": "GitHub connector returned no workflow run; normal local push exited 128 because no GitHub username credential was available; no workaround attempted"
     },
-    "current_data_state": "static permit job routes now win over the legacy path catch-all; non-owner and ownerless job detail fail closed without external permit calls; live FSA was not invoked",
-    "next_step": "Continue #245 backend/frontend applicability and source triage; preserve route order and do not widen definite rules",
+    "current_data_state": "synthetic legacy NTM seed rows are reference-only and withheld from product evidence; exact old generated rows can be relabeled without touching never-selected or verified curated rows",
+    "next_step": "Obtain and verify exact-head CI through a normally authorized channel, then continue #245 applicability/source failures without widening definite rules.",
     "full_245_status": "NOT_PASS",
     "a6": "core-s1-6415f443120f-r9-g106 unchanged, not sent",
     "protected_actions_performed": false
