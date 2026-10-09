@@ -2179,7 +2179,7 @@
       "unique_source_pr_count": 29
     }
   },
-  "revision": 685,
+  "revision": 686,
   "runs": [
     {
       "head_sha": null,
@@ -7228,9 +7228,9 @@
       }
     }
   ],
-  "updated_at": "2026-10-09T10:05:33Z",
+  "updated_at": "2026-10-09T10:20:23.402Z",
   "latest_scheduled_product_checkpoint": {
-    "updated_at": "2026-10-09T10:05:33Z",
+    "updated_at": "2026-10-09T10:20:23.402Z",
     "pr": 256,
     "branch": "agent/product-ntm-regressions-v1",
     "head_sha": "d5dd222f108399eac82a5d8001d7615a00953d08",
@@ -7264,9 +7264,15 @@
       "remote_binding": "reviewed local tree and connector-created remote tree byte-identical"
     },
     "ci": {
-      "status": "PENDING_NO_RUN_OBSERVED",
+      "status": "completed",
+      "id": 37915368362,
+      "name": "Tariff agent safety",
+      "event": "push",
       "head_sha": "d5dd222f108399eac82a5d8001d7615a00953d08",
-      "workflow_runs": []
+      "conclusion": "success",
+      "created_at": "2026-10-09T10:04:53Z",
+      "updated_at": "2026-10-09T10:05:22Z",
+      "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/37915368362"
     },
     "snapshot_probe": {
       "path": "customs-clear/backend/customs.db.backup_before_pdf_import",
@@ -7283,10 +7289,12 @@
       "status": "UNCHANGED_NOT_SENT"
     },
     "protected_actions_performed": false,
-    "next_step": "Poll exact-head CI, then continue the next reproduced #245 source/applicability defect while keeping unconfirmed results in manual review."
+    "next_step": "Continue the next reproducible PR #245 source/applicability defect; keep unconfirmed results in manual review and do not dispatch the prepared A6 request without exact owner approval.",
+    "checked_at": "2026-10-09T10:20:23.402Z",
+    "status": "DRAFT_CHECKPOINT_A5_AND_EXACT_HEAD_CI_PASS"
   },
   "latest_development_checkpoint": {
-    "checked_at": "2026-10-09T10:05:33Z",
+    "checked_at": "2026-10-09T10:20:23.402Z",
     "pr": 256,
     "branch": "agent/product-ntm-regressions-v1",
     "head_sha": "d5dd222f108399eac82a5d8001d7615a00953d08",
@@ -7294,7 +7302,7 @@
     "base_pr": 245,
     "base_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
     "block": "fail_closed_fsa_html_identity_status_and_expiry",
-    "status": "DRAFT_CHECKPOINT_A5_PASS_CI_PENDING",
+    "status": "DRAFT_CHECKPOINT_A5_AND_EXACT_HEAD_CI_PASS",
     "author_tests": [
       "focused FSA/opendata/permits 75 passed, 1 skipped, 6 subtests; exit 0",
       "broad backend slice 959 passed, 11 skipped, 38 subtests; exit 0",
@@ -7307,13 +7315,21 @@
       "adversarial": "accumulated HTML matrix 28/28 and metadata plus exact-active 3/3; exit 0"
     },
     "ci": {
-      "status": "PENDING_NO_RUN_OBSERVED",
-      "head_sha": "d5dd222f108399eac82a5d8001d7615a00953d08"
+      "status": "completed",
+      "id": 37915368362,
+      "name": "Tariff agent safety",
+      "event": "push",
+      "head_sha": "d5dd222f108399eac82a5d8001d7615a00953d08",
+      "conclusion": "success",
+      "created_at": "2026-10-09T10:04:53Z",
+      "updated_at": "2026-10-09T10:05:22Z",
+      "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/37915368362"
     },
     "current_data_state": "FSA HTML results require exact identity, explicit active status and parseable non-expired date; structural ambiguity stays UNKNOWN",
-    "next_step": "Poll exact-head CI, then continue the next reproducible #245 source/applicability defect with manual review for unconfirmed results.",
+    "next_step": "Continue the next reproducible PR #245 source/applicability defect; keep unconfirmed results in manual review and do not dispatch the prepared A6 request without exact owner approval.",
     "full_245_status": "NOT_PASS",
     "a6": "core-s1-6415f443120f-r9-g106 unchanged, not sent",
-    "protected_actions_performed": false
+    "protected_actions_performed": false,
+    "updated_at": "2026-10-09T10:20:23.402Z"
   }
 }
