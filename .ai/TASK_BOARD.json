@@ -2179,7 +2179,7 @@
       "unique_source_pr_count": 29
     }
   },
-  "revision": 678,
+  "revision": 679,
   "runs": [
     {
       "head_sha": null,
@@ -7081,7 +7081,7 @@
           "head_sha": "233ed6a64b0e75175358f8cdf0e7bcc71191b67b"
         }
       },
-      "updated_at": "2026-10-09T04:02:57Z",
+      "updated_at": "2026-10-09T04:20:54Z",
       "worktree": null,
       "ntm_fallback_checkpoint_20261009": {
         "corrective_pr": 256,
@@ -7127,22 +7127,21 @@
         "executor": "/root/tariff_automation_20261009T0650MSK",
         "lease_generation": 130,
         "scope": "make NTM lookup and TNVED tree tests self-contained; classify full-sync coverage as a populated-dataset audit without hiding partial snapshots",
-        "state": "PUBLISHED_A5_PASS_CI_PENDING",
+        "state": "PUBLISHED_A5_CI_PASS",
         "tests": "author changed fixtures 25 passed; broad 322 passed plus 10 skipped and 3 subtests; independent A5 exact-head PASS; balanced 41,999 rows failed only count threshold; malformed 42,000 rows failed structural thresholds",
         "rejected_intermediate": "count < 42000 skip gate rejected because it hid a 41,999-row regression; final gate is count == 0 only",
-        "ci_status": "PENDING_NO_RUN_OBSERVED",
+        "ci_status": "PASSED_EXACT_HEAD_RUN_37881930775",
         "a6": "unchanged/not sent",
         "unresolved": [
-          "Exact-head GitHub Actions run is not observed.",
           "Full-sync dataset audit has not been run on a lawful populated synchronized snapshot.",
           "Full #245 product acceptance and legal/source completeness remain NOT PASS."
         ]
       }
     }
   ],
-  "updated_at": "2026-10-09T04:02:57Z",
+  "updated_at": "2026-10-09T04:20:54Z",
   "latest_scheduled_product_checkpoint": {
-    "updated_at": "2026-10-09T04:02:57Z",
+    "updated_at": "2026-10-09T04:20:54Z",
     "pr": 256,
     "branch": "agent/product-ntm-regressions-v1",
     "head_sha": "4333061a162225f0efbbf0e971585a428ce78f82",
@@ -7165,12 +7164,15 @@
       "malformed_42000": "3 expected structural failures, 6 passed; exit 1"
     },
     "ci": {
-      "status": "PENDING_NO_RUN_OBSERVED",
+      "status": "PASSED_EXACT_HEAD",
       "head_sha": "4333061a162225f0efbbf0e971585a428ce78f82",
-      "observation": "GitHub connector returned no workflow run or commit status for exact head"
+      "run_id": 37881930775,
+      "job": "offline-safety",
+      "conclusion": "success",
+      "completed_at": "2026-10-09T04:01:43Z",
+      "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/37881930775"
     },
     "blockers": [
-      "Required exact-head GitHub Actions run is not observed, so candidate readiness is not claimed.",
       "Full #245 backend/frontend acceptance and legal/source completeness remain NOT PASS.",
       "Nine full-sync dataset audit assertions require a populated synchronized snapshot and are skipped only on an empty disposable database."
     ],
@@ -7182,7 +7184,7 @@
     "next_step": "Run the explicit full-sync dataset audit against a lawful populated snapshot, then continue #245 applicability/source triage without widening definite rules."
   },
   "latest_development_checkpoint": {
-    "checked_at": "2026-10-09T04:02:57Z",
+    "checked_at": "2026-10-09T04:20:54Z",
     "pr": 256,
     "branch": "agent/product-ntm-regressions-v1",
     "head_sha": "4333061a162225f0efbbf0e971585a428ce78f82",
@@ -7190,7 +7192,7 @@
     "base_pr": 245,
     "base_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
     "block": "isolate_ntm_lookup_tnved_tree_and_full_sync_dataset_contracts",
-    "status": "DRAFT_CHECKPOINT_A5_PASS_CI_PENDING",
+    "status": "DRAFT_CHECKPOINT_A5_CI_PASS",
     "author_tests": [
       "25 changed fixture tests passed; exit 0",
       "322 broad-slice tests passed plus 10 skipped and 3 subtests; exit 0",
@@ -7203,9 +7205,13 @@
       "adversarial": "empty DB skips audit only; balanced 41,999 rows fail exactly count threshold; malformed 42,000 rows execute and fail structural thresholds"
     },
     "ci": {
-      "status": "PENDING_NO_RUN_OBSERVED",
+      "status": "PASSED_EXACT_HEAD",
       "head_sha": "4333061a162225f0efbbf0e971585a428ce78f82",
-      "observation": "GitHub connector returned no workflow run or commit status for exact head"
+      "run_id": 37881930775,
+      "job": "offline-safety",
+      "conclusion": "success",
+      "completed_at": "2026-10-09T04:01:43Z",
+      "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/37881930775"
     },
     "current_data_state": "lookup and tree tests own disposable fixtures; full-sync distribution thresholds execute for every non-empty snapshot and cannot be bypassed by falling below 42,000 rows",
     "next_step": "Run full-sync dataset audit on a populated synchronized snapshot; continue #245 source/applicability work.",
