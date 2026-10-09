@@ -118,6 +118,56 @@ def cert_number_search_variants(raw: str) -> list[str]:
     return list(variants)
 
 
+def _parse_registry_date(value: str) -> datetime | None:
+    raw = (value or "").strip()
+    for fmt in ("%d.%m.%Y", "%Y.%m.%d", "%Y-%m-%d"):
+        try:
+            return datetime.strptime(raw[:10], fmt)
+        except ValueError:
+            continue
+    return None
+
+
+def _registry_status_to_verify(status: str, expiry: str) -> str:
+    """Map only explicit registry state to a verification result.
+
+    An unrecognised or missing status is evidence for manual review, never
+    proof that the document is active.
+    """
+    st = " ".join((status or "").strip().lower().split())
+    if any(
+        marker in st
+        for marker in (
+            "недейств",
+            "не действ",
+            "прекращ",
+            "аннулир",
+            "отозван",
+            "приостанов",
+            "revoked",
+            "withdrawn",
+            "suspended",
+            "terminated",
+            "expired",
+            "inactive",
+            "not active",
+            "not valid",
+            "not registered",
+            "не зарегистрирован",
+            "незарегистрирован",
+        )
+    ):
+        return "NOT_FOUND"
+    exp = _parse_registry_date(expiry)
+    if exp and exp.date() < datetime.now().date():
+        return "NOT_FOUND"
+    if any(marker in st for marker in ("действует", "действующий", "зарегистрирован")):
+        return "VALID"
+    if {"active", "valid", "registered"}.intersection(re.findall(r"[a-z]+", st)):
+        return "VALID"
+    return "UNKNOWN"
+
+
 def _extract_sgr_from_html(html: str, search_number: str) -> Dict[str, Any]:
     """Парсинг страницы fp.crc.ru — поиск по номеру СГР."""
     soup = BeautifulSoup(html, "html.parser")
@@ -223,11 +273,10 @@ def _collect_tnved_from_obj(obj: Any, out: List[str], depth: int = 0) -> None:
             _collect_tnved_from_obj(it, out, depth + 1)
 
 
-def _parse_first_fsa_record(content: list[Any]) -> Dict[str, Any]:
-    """Извлекает поля из первой записи content API ФСА."""
-    if not content or not isinstance(content[0], dict):
+def _parse_fsa_record(row: Any) -> Dict[str, Any]:
+    """Извлекает проверяемые поля из одной записи API ФСА."""
+    if not isinstance(row, dict):
         return {}
-    row = content[0]
     holder = (
         row.get("applicantName")
         or row.get("declarantName")
@@ -244,6 +293,44 @@ def _parse_first_fsa_record(content: list[Any]) -> Dict[str, Any]:
         "valid_to": str(vto)[:32] if vto else None,
         "registry_tnved_codes": list(dict.fromkeys(tnveds))[:50],
     }
+
+
+def _parse_first_fsa_record(content: list[Any]) -> Dict[str, Any]:
+    """Обратная совместимость для callers, читающих первую запись."""
+    return _parse_fsa_record(content[0] if content else None)
+
+
+_FSA_NUMBER_KEYS = (
+    "registryNumber",
+    "certificateNumber",
+    "declarationNumber",
+    "documentNumber",
+    "regNumber",
+)
+
+
+def _fsa_record_number(row: Any) -> str:
+    if not isinstance(row, dict):
+        return ""
+    for key in _FSA_NUMBER_KEYS:
+        value = row.get(key)
+        if isinstance(value, (str, int)) and str(value).strip():
+            return str(value)
+    return ""
+
+
+def _fsa_record_status(row: Any) -> str:
+    if not isinstance(row, dict):
+        return ""
+    value: Any = (
+        row.get("status")
+        or row.get("statusName")
+        or row.get("documentStatus")
+        or row.get("state")
+    )
+    if isinstance(value, dict):
+        value = value.get("name") or value.get("title") or value.get("label") or value.get("value")
+    return str(value).strip() if isinstance(value, (str, int)) else ""
 
 
 def match_item_hs_to_registry(item_hs: str, registry_codes: List[str]) -> Dict[str, Any]:
@@ -266,8 +353,16 @@ def _extract_fsa_from_json(data: Any, doc_type: str, search_number: str) -> Dict
     """Парсинг JSON-ответа API ФСА."""
     norm = normalize_number(search_number)
     if isinstance(data, dict):
-        content = data.get("content") or data.get("data") or data.get("items") or []
-        total = data.get("totalElements") or data.get("total")
+        content = data.get("content")
+        if content is None:
+            content = data.get("data")
+        if content is None:
+            content = data.get("items")
+        if content is None:
+            content = []
+        total = data.get("totalElements")
+        if total is None:
+            total = data.get("total")
         if isinstance(content, list):
             n = len(content)
             if total is None:
@@ -275,18 +370,64 @@ def _extract_fsa_from_json(data: Any, doc_type: str, search_number: str) -> Dict
         else:
             n = 0
         link = f"{FSA_CERT_URL if doc_type == 'СС' else FSA_DECL_URL}?q={quote(norm)}"
-        if (isinstance(total, int) and total > 0) or (isinstance(content, list) and len(content) > 0):
-            extra = _parse_first_fsa_record(content if isinstance(content, list) else [])
-            raw: Dict[str, Any] = {"count": total if isinstance(total, int) else n}
+        rows = [row for row in content if isinstance(row, dict)] if isinstance(content, list) else []
+        requested = canonical_cert_number(norm)
+        numbered_rows = [(row, _fsa_record_number(row)) for row in rows]
+        numbered_rows = [(row, number) for row, number in numbered_rows if number]
+        matched_rows = [
+            row
+            for row, number in numbered_rows
+            if canonical_cert_number(number) == requested
+        ]
+        fully_numbered = bool(rows) and len(numbered_rows) == len(rows) == n
+        raw: Dict[str, Any] = {
+            "count": total if isinstance(total, int) else n,
+            "identity_match": True if matched_rows else (False if fully_numbered else None),
+        }
+        if matched_rows:
+            extra = _parse_fsa_record(matched_rows[0])
+            registry_statuses = [_fsa_record_status(row) for row in matched_rows]
+            verify_statuses = [
+                _registry_status_to_verify(
+                    status, str(_parse_fsa_record(row).get("valid_to") or "")
+                )
+                for row, status in zip(matched_rows, registry_statuses)
+            ]
+            if "NOT_FOUND" in verify_statuses:
+                verify_status = "NOT_FOUND"
+            elif verify_statuses and all(status == "VALID" for status in verify_statuses):
+                verify_status = "VALID"
+            else:
+                verify_status = "UNKNOWN"
+            raw["matched_number"] = normalize_number(_fsa_record_number(matched_rows[0]))
+            raw["matched_count"] = len(matched_rows)
+            raw["registry_status"] = registry_statuses[0] or None
+            if len(matched_rows) > 1:
+                raw["registry_statuses"] = [status or None for status in registry_statuses]
             if extra.get("registry_tnved_codes"):
                 raw["registry_tnved_codes"] = extra["registry_tnved_codes"]
             return {
                 "type": doc_type,
-                "status": "VALID",
+                "status": verify_status,
                 "number": norm,
                 "holder": extra.get("holder"),
                 "valid_from": extra.get("valid_from"),
                 "valid_to": extra.get("valid_to"),
+                "registry_link": link,
+                "raw": raw,
+            }
+        if rows or (isinstance(total, int) and total > 0):
+            if numbered_rows:
+                raw["candidate_numbers"] = [
+                    normalize_number(number) for _, number in numbered_rows[:10]
+                ]
+            return {
+                "type": doc_type,
+                "status": "NOT_FOUND" if fully_numbered else "UNKNOWN",
+                "number": norm,
+                "holder": None,
+                "valid_from": None,
+                "valid_to": None,
                 "registry_link": link,
                 "raw": raw,
             }

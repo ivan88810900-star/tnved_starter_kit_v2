@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import re
-from datetime import datetime
 from typing import Any
 
 from ..db import SessionLocal
@@ -13,6 +12,7 @@ from .permits_service import (
     canonical_cert_number,
     cert_number_search_variants,
     normalize_number,
+    _registry_status_to_verify,
 )
 
 OPENDATA_FSA_SOURCE = "открытые данные Росаккредитации (fsa.gov.ru/opendata)"
@@ -37,51 +37,6 @@ def get_sync_freshness(source_key: str) -> dict[str, Any] | None:
         "synced_at": row.synced_at,
         "row_count": row.row_count,
     }
-
-
-def _parse_ru_date(s: str) -> datetime | None:
-    s = (s or "").strip()
-    for fmt in ("%d.%m.%Y", "%Y.%m.%d", "%Y-%m-%d"):
-        try:
-            return datetime.strptime(s[:10], fmt)
-        except ValueError:
-            continue
-    return None
-
-
-def _registry_status_to_verify(status: str, expiry: str) -> str:
-    st = " ".join((status or "").strip().lower().split())
-    if any(
-        marker in st
-        for marker in (
-            "недейств",
-            "не действ",
-            "прекращ",
-            "аннулир",
-            "отозван",
-            "приостанов",
-            "revoked",
-            "withdrawn",
-            "suspended",
-            "terminated",
-            "expired",
-            "inactive",
-            "not active",
-            "not valid",
-            "not registered",
-            "не зарегистрирован",
-            "незарегистрирован",
-        )
-    ):
-        return "NOT_FOUND"
-    exp = _parse_ru_date(expiry)
-    if exp and exp.date() < datetime.now().date():
-        return "NOT_FOUND"
-    if any(marker in st for marker in ("действует", "действующий", "зарегистрирован")):
-        return "VALID"
-    if {"active", "valid", "registered"}.intersection(re.findall(r"[a-z]+", st)):
-        return "VALID"
-    return "UNKNOWN"
 
 
 def _find_fsa_certificate_row(db: Any, number: str) -> FsaCertificate | None:
