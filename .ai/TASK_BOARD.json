@@ -2179,7 +2179,7 @@
       "unique_source_pr_count": 29
     }
   },
-  "revision": 692,
+  "revision": 693,
   "runs": [
     {
       "head_sha": null,
@@ -7286,55 +7286,48 @@
       }
     }
   ],
-  "updated_at": "2026-10-09T16:06:41.675562Z",
+  "updated_at": "2026-10-09T17:06:27.652266Z",
   "latest_scheduled_product_checkpoint": {
-    "updated_at": "2026-10-09T16:06:41.675562Z",
-    "checked_at": "2026-10-09T16:06:41.675562Z",
+    "updated_at": "2026-10-09T17:06:27.652266Z",
+    "checked_at": "2026-10-09T17:06:27.652266Z",
     "pr": 256,
     "branch": "agent/product-ntm-regressions-v1",
-    "head_sha": "321b4ac72b13ec40a0dc3e2b05f8079f39fb6ee7",
-    "tree_sha": "ef6fd5680b6c006be5c836643a0ab1cbceef111a",
-    "parent_sha": "a89904e335aa7cb3ae906b094031c0155254000e",
+    "head_sha": "43803039d7ce50bf88c3d9c08af2f638462767a2",
+    "tree_sha": "efbbfb1764c40392b4ecc988f8f929d59fbb4bf6",
+    "parent_sha": "321b4ac72b13ec40a0dc3e2b05f8079f39fb6ee7",
     "base_pr": 245,
     "base_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
-    "completed_block": "split_disposable_ntm_and_regulatory_mass_fixture_tranches",
-    "block": "split_disposable_ntm_and_regulatory_mass_fixture_tranches",
-    "status": "DRAFT_CHECKPOINT_A5_PASS_CI_PASS_SPLIT_814",
+    "completed_block": "fail_closed_grounding_coverage_requires_usable_evidence",
+    "block": "fail_closed_grounding_coverage_requires_usable_evidence",
+    "status": "DRAFT_CHECKPOINT_A5_PASS_CI_PASS_GROUNDING_87",
     "behavior": {
-      "reproduced": "fresh init_db left 0 FTS letters and 0 classification rulings, causing the broad #245 fixture-inventory assertions to fail",
-      "final": "new-target-only bootstrap pins the committed TN VED catalogue hash, opens it immutable/read-only, deterministically deduplicates legacy codes and loads the classification test inventory",
-      "boundaries": "output is disposable test evidence only; it is not a synchronized legal/production snapshot and does not claim source completeness"
+      "reproduced": "a syntactically valid HS code produced coverage=grounded even when local TNVED and NTM providers failed; first repair still admitted an empty TNVED card with only a generic EEC URL",
+      "final": "grounded now requires usable local facts plus citations; provider failures and empty cards are partial with no citations and cannot activate the configured LLM selector",
+      "boundaries": "usable TNVED cards and resolver-validated canonical anchors remain grounded; no legal applicability, source truth, enforcement, network or provider configuration changed"
     },
     "author_tests": {
-      "reproduction_before_fix": "focused disposable DB probe failed immediately at 0 FTS letters; exit 1",
-      "bootstrap_safety": "5 passed; exit 0",
-      "generated_inventory": "13,979 unique TN VED codes; 206 letters; 205 decisions; 50 formal and 520 reference rulings; integrity ok",
-      "focused_combined": "32 passed; exit 0",
-      "bounded_offline_tranche": "12-module TN VED/classification/normative slice on disposable bootstrap DB: 137 passed, 1 non-blocking StarletteDeprecationWarning; exit 0",
-      "diff_compile": "git diff --check and py_compile; exit 0",
-      "broad_probe": "runtime security policy stopped the broader suite when an unrelated test attempted api.proxyapi.ru; no bypass and no full-suite PASS",
-      "mixed_fixture_reproduction": "single classification-bootstrap DB produced 8 failures: 7 mass-seed volume assertions and 1 mass-seed-safety assumption; the failures were fixture-contour conflicts, not product-runtime regressions",
-      "classification_ntm_contour": "33 modules selected from ntm/non_tariff/regulatory/compliance/permits, excluding full-sync and two mass-seed-only modules: 790 passed, 2 skipped, 1 warning, 3 subtests; exit 0",
-      "regulatory_mass_contour": "separate freshly seeded DB: 5,057 documents and 5,481 mappings; mass-seed, safety and source-completeness modules: 24 passed, 1 warning, 3 subtests; exit 0",
-      "combined": "814 passed, 2 skipped, 6 subtests across two isolated disposable fixture contours; both commands exit 0"
+      "reproduction_before_fix": "new regression expected partial but received grounded when all local evidence providers failed; exit 1",
+      "focused": "test_grounded_assistant.py: 25 passed and 26 subtests; exit 0",
+      "bounded_offline_tranche": "12 assistant/search/grounded/RAG modules on fresh disposable classification DB: 87 passed and 29 subtests; exit 0",
+      "environment": "empty provider keys, deny proxies, preview marker outside repository; DB integrity ok and no catalogue WAL/SHM",
+      "diff_compile": "git diff --check and py_compile; exit 0"
     },
     "a5": {
       "session": "/root/a5_ntm_fallback",
-      "status": "PASSED_EXACT_REVIEWED_TREE_REMOTE_BOUND_AFTER_HIGH_REPAIR",
-      "first_candidate": "REJECT HIGH/MEDIUM: cached app.db could receive writes; read-only WAL source created sidecars",
-      "focused": "5 bootstrap tests and 17 generated-DB classification tests passed; exit 0",
-      "adversarial": "pre-bound DB remained unchanged and target absent; source SHA unchanged with no WAL/SHM; all 39 duplicate-code groups retained MIN(id), 0 mismatches",
-      "remote_binding": "remote tree equals reviewed tree ef6fd5680b6c006be5c836643a0ab1cbceef111a",
-      "bounded_offline_tranche": "independent clean detached rerun at exact unchanged head: classification/NTM contour 790 passed, 2 skipped, 3 subtests (exit 0); separate mass-seed contour 24 passed, 3 subtests (exit 0); clean status, both DB integrity checks ok, no catalogue WAL/SHM, synthetic admitted documents 0"
+      "status": "PASSED_REPAIRED_TREE_REMOTE_BOUND",
+      "first_candidate": "REJECT MEDIUM: an empty successful TNVED card still emitted a generic EEC citation and could enable the LLM selector",
+      "focused": "25 passed and 26 subtests; exit 0",
+      "adversarial": "empty card partial/no citations/no LLM; usable card and canonical-only anchor grounded; provider errors partial; candidates partial; no context needs_context",
+      "remote_binding": "remote commit 43803039d7ce50bf88c3d9c08af2f638462767a2 tree equals independently reviewed tree efbbfb1764c40392b4ecc988f8f929d59fbb4bf6",
+      "bounded_offline_tranche": "independent fresh detached run: 87 passed and 29 subtests; exit 0; clean status, DB integrity and foreign keys ok, no catalogue WAL/SHM"
     },
     "ci": {
       "status": "PASSED_EXACT_HEAD",
-      "head_sha": "321b4ac72b13ec40a0dc3e2b05f8079f39fb6ee7",
+      "head_sha": "43803039d7ce50bf88c3d9c08af2f638462767a2",
       "alias_branch": "agent/product-ntm-bootstrap-ci-v1",
-      "alias_branch_head_sha": "321b4ac72b13ec40a0dc3e2b05f8079f39fb6ee7",
+      "alias_branch_head_sha": "43803039d7ce50bf88c3d9c08af2f638462767a2",
       "runs": [
-        {"run_id": 37941232220, "job_id": 113855829425, "conclusion": "success", "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/37941232220"},
-        {"run_id": 37941931512, "job_id": 113858391699, "conclusion": "success", "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/37941931512"}
+        {"run_id": 37963680241, "job_id": 113932566080, "conclusion": "success", "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/37963680241"}
       ]
     },
     "blockers": [
@@ -7347,56 +7340,49 @@
       "status": "UNCHANGED_NOT_SENT"
     },
     "protected_actions_performed": false,
-    "next_step": "Continue the next bounded offline #245 assistant/search/grounded tranche while preserving isolated fixture contours and excluding tests that require unapproved external network; keep NTM full-sync completeness blocked on a lawful populated synchronized snapshot."
+    "next_step": "Continue the next bounded #245 assistant/search API and frontend grounding tranche; keep NTM full-sync completeness blocked on a lawful populated synchronized snapshot."
   },
   "latest_development_checkpoint": {
-        "updated_at": "2026-10-09T16:06:41.675562Z",
-        "checked_at": "2026-10-09T16:06:41.675562Z",
+        "updated_at": "2026-10-09T17:06:27.652266Z",
+        "checked_at": "2026-10-09T17:06:27.652266Z",
     "pr": 256,
     "branch": "agent/product-ntm-regressions-v1",
-    "head_sha": "321b4ac72b13ec40a0dc3e2b05f8079f39fb6ee7",
-    "tree_sha": "ef6fd5680b6c006be5c836643a0ab1cbceef111a",
-    "parent_sha": "a89904e335aa7cb3ae906b094031c0155254000e",
+    "head_sha": "43803039d7ce50bf88c3d9c08af2f638462767a2",
+    "tree_sha": "efbbfb1764c40392b4ecc988f8f929d59fbb4bf6",
+    "parent_sha": "321b4ac72b13ec40a0dc3e2b05f8079f39fb6ee7",
     "base_pr": 245,
     "base_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
-    "completed_block": "split_disposable_ntm_and_regulatory_mass_fixture_tranches",
-    "block": "split_disposable_ntm_and_regulatory_mass_fixture_tranches",
-    "status": "DRAFT_CHECKPOINT_A5_PASS_CI_PASS_SPLIT_814",
+    "completed_block": "fail_closed_grounding_coverage_requires_usable_evidence",
+    "block": "fail_closed_grounding_coverage_requires_usable_evidence",
+    "status": "DRAFT_CHECKPOINT_A5_PASS_CI_PASS_GROUNDING_87",
     "behavior": {
-      "reproduced": "fresh init_db left 0 FTS letters and 0 classification rulings, causing the broad #245 fixture-inventory assertions to fail",
-      "final": "new-target-only bootstrap pins the committed TN VED catalogue hash, opens it immutable/read-only, deterministically deduplicates legacy codes and loads the classification test inventory",
-      "boundaries": "output is disposable test evidence only; it is not a synchronized legal/production snapshot and does not claim source completeness"
+      "reproduced": "a syntactically valid HS code produced coverage=grounded even when local TNVED and NTM providers failed; first repair still admitted an empty TNVED card with only a generic EEC URL",
+      "final": "grounded now requires usable local facts plus citations; provider failures and empty cards are partial with no citations and cannot activate the configured LLM selector",
+      "boundaries": "usable TNVED cards and resolver-validated canonical anchors remain grounded; no legal applicability, source truth, enforcement, network or provider configuration changed"
     },
     "author_tests": {
-      "reproduction_before_fix": "focused disposable DB probe failed immediately at 0 FTS letters; exit 1",
-      "bootstrap_safety": "5 passed; exit 0",
-      "generated_inventory": "13,979 unique TN VED codes; 206 letters; 205 decisions; 50 formal and 520 reference rulings; integrity ok",
-      "focused_combined": "32 passed; exit 0",
-      "bounded_offline_tranche": "12-module TN VED/classification/normative slice on disposable bootstrap DB: 137 passed, 1 non-blocking StarletteDeprecationWarning; exit 0",
-      "diff_compile": "git diff --check and py_compile; exit 0",
-      "broad_probe": "runtime security policy stopped the broader suite when an unrelated test attempted api.proxyapi.ru; no bypass and no full-suite PASS",
-      "mixed_fixture_reproduction": "single classification-bootstrap DB produced 8 failures: 7 mass-seed volume assertions and 1 mass-seed-safety assumption; the failures were fixture-contour conflicts, not product-runtime regressions",
-      "classification_ntm_contour": "33 modules selected from ntm/non_tariff/regulatory/compliance/permits, excluding full-sync and two mass-seed-only modules: 790 passed, 2 skipped, 1 warning, 3 subtests; exit 0",
-      "regulatory_mass_contour": "separate freshly seeded DB: 5,057 documents and 5,481 mappings; mass-seed, safety and source-completeness modules: 24 passed, 1 warning, 3 subtests; exit 0",
-      "combined": "814 passed, 2 skipped, 6 subtests across two isolated disposable fixture contours; both commands exit 0"
+      "reproduction_before_fix": "new regression expected partial but received grounded when all local evidence providers failed; exit 1",
+      "focused": "test_grounded_assistant.py: 25 passed and 26 subtests; exit 0",
+      "bounded_offline_tranche": "12 assistant/search/grounded/RAG modules on fresh disposable classification DB: 87 passed and 29 subtests; exit 0",
+      "environment": "empty provider keys, deny proxies, preview marker outside repository; DB integrity ok and no catalogue WAL/SHM",
+      "diff_compile": "git diff --check and py_compile; exit 0"
     },
     "a5": {
       "session": "/root/a5_ntm_fallback",
-      "status": "PASSED_EXACT_REVIEWED_TREE_REMOTE_BOUND_AFTER_HIGH_REPAIR",
-      "first_candidate": "REJECT HIGH/MEDIUM: cached app.db could receive writes; read-only WAL source created sidecars",
-      "focused": "5 bootstrap tests and 17 generated-DB classification tests passed; exit 0",
-      "adversarial": "pre-bound DB remained unchanged and target absent; source SHA unchanged with no WAL/SHM; all 39 duplicate-code groups retained MIN(id), 0 mismatches",
-      "remote_binding": "remote tree equals reviewed tree ef6fd5680b6c006be5c836643a0ab1cbceef111a",
-      "bounded_offline_tranche": "independent clean detached rerun at exact unchanged head: classification/NTM contour 790 passed, 2 skipped, 3 subtests (exit 0); separate mass-seed contour 24 passed, 3 subtests (exit 0); clean status, both DB integrity checks ok, no catalogue WAL/SHM, synthetic admitted documents 0"
+      "status": "PASSED_REPAIRED_TREE_REMOTE_BOUND",
+      "first_candidate": "REJECT MEDIUM: an empty successful TNVED card still emitted a generic EEC citation and could enable the LLM selector",
+      "focused": "25 passed and 26 subtests; exit 0",
+      "adversarial": "empty card partial/no citations/no LLM; usable card and canonical-only anchor grounded; provider errors partial; candidates partial; no context needs_context",
+      "remote_binding": "remote commit 43803039d7ce50bf88c3d9c08af2f638462767a2 tree equals independently reviewed tree efbbfb1764c40392b4ecc988f8f929d59fbb4bf6",
+      "bounded_offline_tranche": "independent fresh detached run: 87 passed and 29 subtests; exit 0; clean status, DB integrity and foreign keys ok, no catalogue WAL/SHM"
     },
     "ci": {
       "status": "PASSED_EXACT_HEAD",
-      "head_sha": "321b4ac72b13ec40a0dc3e2b05f8079f39fb6ee7",
+      "head_sha": "43803039d7ce50bf88c3d9c08af2f638462767a2",
       "alias_branch": "agent/product-ntm-bootstrap-ci-v1",
-      "alias_branch_head_sha": "321b4ac72b13ec40a0dc3e2b05f8079f39fb6ee7",
+      "alias_branch_head_sha": "43803039d7ce50bf88c3d9c08af2f638462767a2",
       "runs": [
-        {"run_id": 37941232220, "job_id": 113855829425, "conclusion": "success", "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/37941232220"},
-        {"run_id": 37941931512, "job_id": 113858391699, "conclusion": "success", "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/37941931512"}
+        {"run_id": 37963680241, "job_id": 113932566080, "conclusion": "success", "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/37963680241"}
       ]
     },
     "blockers": [
@@ -7409,6 +7395,6 @@
       "status": "UNCHANGED_NOT_SENT"
     },
     "protected_actions_performed": false,
-    "next_step": "Continue the next bounded offline #245 assistant/search/grounded tranche while preserving isolated fixture contours and excluding tests that require unapproved external network; keep NTM full-sync completeness blocked on a lawful populated synchronized snapshot."
+    "next_step": "Continue the next bounded #245 assistant/search API and frontend grounding tranche; keep NTM full-sync completeness blocked on a lawful populated synchronized snapshot."
   }
 }
