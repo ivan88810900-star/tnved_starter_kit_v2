@@ -3,6 +3,28 @@
 **Снимок:** 2026-10-08 (UTC). **Единственный репозиторий:** [ivan88810900-star/tnved_starter_kit_v2](https://github.com/ivan88810900-star/tnved_starter_kit_v2).  
 **Авторитетное состояние:** ветка `agent/orchestration-state`, файлы `.ai/TASK_BOARD.json`, `.ai/COORDINATOR_LEASE.json`, `.ai/orchestration/A6_LIVE_STATUS.json`. Этот документ — указатель и контрольная точка, **не** право на запись/merge/A6. Перед действием заново читать текущие HEAD и state. Не полагаться на Business-чат.
 
+## 0v. #245 — официальный PRAVO probe больше не принимает synthetic/reference-only как покрытие
+
+**Новый текущий checkpoint:** [draft PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256), `agent/product-ntm-regressions-v1` @ `afab417d008bc6e386091544ac6589884eb758e5`, tree `a1c7cc38118d879135e2eba9ed1aa79f4c2e0b1e`, parent `ec4c3fc67fbb7ca90ec28e2ee89ff232711b2eac`; base #245 неизменён `e39e19787bd913baeb6f85577a13e1116458e633`.
+
+Воспроизведён source-completeness дефект: одна `PRAVO_GOV` строка со статусом `reference_only` и quality `synthetic_seed` давала общий regulatory probe `0`, но отдельный `regulatory_documents_pravo` probe ошибочно возвращал `1`. Из-за этого synthetic/reference-only данные могли скрыть реальный gap официального правового источника.
+
+Исправление: product retrieval, общий regulatory probe и PRAVO probe используют один fail-closed admission predicate. Допускаются active normal/NULL/verified; исключаются noise, synthetic_seed, reference_only и inactive. Applicability, advisory/enforcement, source status и правовая интерпретация не расширялись.
+
+Проверки exact remote tree:
+- author direct reproduction: общий probe `0`, PRAVO probe `1`, exit 0;
+- author focused source/regulatory: **22 passed +3 subtests**, exit 0;
+- author fixture-isolation с заранее существующей unrelated PRAVO строкой: **1 passed**, exit 0;
+- author populated synthetic mass-seed: **5 057 документов / 5 481 mapping**, аудит **24 passed +3 subtests**, seed/tests exit 0;
+- author broad #245 backend slice: **898 passed, 11 skipped, 32 subtests**, exit 0;
+- независимый A5 `/root/a5_pravo_probe`: первый review отклонил абсолютный fixture-count; финальный exact remote HEAD **PASS** после baseline+delta. Focused **22 passed +3 subtests**, admission matrix exit 0, broader source/advisory/enforcement **80 passed +3 subtests**, exit 0; unrelated row сохранена;
+- `git diff --check` и `py_compile`: exit 0;
+- exact-head GitHub Actions: **PASS** — [run 37892321961](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/37892321961), job `offline-safety` `113695775268`, все steps success.
+
+Synthetic mass-seed dataset-аудит теперь выполнен на disposable БД; это не доказательство официальной полноты. NTM full-sync audit по-прежнему требует законно доступного populated synchronized snapshot. Полный #245 product/legal/source-completeness **NOT PASS**. Protected merge, production/DB writes, enforcement flags, secrets/permissions, destructive migration и внешний A6 не выполнялись; `core-s1-6415f443120f-r9-g106` неизменён и не отправлен.
+
+Следующий шаг — выполнить NTM full-sync audit на lawful populated synchronized snapshot, если он доступен, либо продолжить следующий воспроизводимый #245 source/applicability defect без расширения definite rules.
+
 ## 0u. #245 — оставшиеся broad-suite fixtures изолированы без ослабления dataset-порогов
 
 **Новый текущий checkpoint:** [draft PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256), `agent/product-ntm-regressions-v1` @ `ec4c3fc67fbb7ca90ec28e2ee89ff232711b2eac`, tree `93571a51fdd03806693be76920163312edb24d68`, parent `b4fef2b9952a5b58f4bc2545523daf92a3bfd518`; полный двухкоммитный блок начинается от `4333061a162225f0efbbf0e971585a428ce78f82`, base #245 неизменён `e39e19787bd913baeb6f85577a13e1116458e633`.
