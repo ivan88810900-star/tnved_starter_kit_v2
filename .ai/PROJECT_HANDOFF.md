@@ -3,6 +3,24 @@
 **Снимок:** 2026-10-08 (UTC). **Единственный репозиторий:** [ivan88810900-star/tnved_starter_kit_v2](https://github.com/ivan88810900-star/tnved_starter_kit_v2).  
 **Авторитетное состояние:** ветка `agent/orchestration-state`, файлы `.ai/TASK_BOARD.json`, `.ai/COORDINATOR_LEASE.json`, `.ai/orchestration/A6_LIVE_STATUS.json`. Этот документ — указатель и контрольная точка, **не** право на запись/merge/A6. Перед действием заново читать текущие HEAD и state. Не полагаться на Business-чат.
 
+## 0p. #245 — permit job detail больше не перехватывается legacy verify route
+
+**Новый текущий checkpoint:** [draft PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256), `agent/product-ntm-regressions-v1` @ `9d4ffb38d7479f6f9a6983728612e01e0c28018e`, tree `824f644beec6a8ef219f737aede05a634fe9297f`, parent `9a8493e196202fdb752abc79302c02f6b1303b79`, base #245 неизменён `e39e19787bd913baeb6f85577a13e1116458e633`.
+
+Воспроизведён product/API defect: ранний legacy catch-all `GET /api/permits/verify/{number:path}` перехватывал `GET /api/permits/verify/jobs/{job_id}`. Вместо job detail и ownership policy API возвращал permit-verification payload `200`, передавал `jobs/{id}` во внешний permit check и не закрывался для non-owner/ownerless jobs. Catch-all перемещён после всех статических `/verify/*` маршрутов; production-style auth добавлен в устаревшие API-тесты; негативные ownership тесты теперь требуют `404` и отсутствие вызова `check_permits`.
+
+Проверки exact head/tree:
+- author focused на свежей disposable SQLite: `python -m pytest -q -p no:cacheprovider tests/test_permits_normalize_and_api.py tests/test_permits_verify_jobs_ownership.py --tb=short` — **13 passed, 1 skipped**, exit 0;
+- author широкий permit/auth/API/NTM срез после `init_db()` и полного NTM v2 import: **308 passed, 1 skipped**, exit 0; frontend: **18 passed**, typecheck/build PASS, exit 0; compileall и `git diff --check` PASS;
+- независимый A5 `/root/a5_ntm_fallback`: **PASS exact remote HEAD**; focused **20 passed, 1 skipped**, extended **222 passed, 1 skipped**, exit 0; owner `200`, non-owner/ownerless `404`, admin foreign/ownerless `200`, anonymous protected endpoints `401`, негативные job detail/export без внешнего permit check, legacy path со slash сохранён;
+- exact-head CI: **PASS** — [run 37872398938](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/37872398938), job `offline-safety` `113633224151`, success на точном HEAD `9d4ffb38d7479f6f9a6983728612e01e0c28018e`.
+
+Полный `test_api_integration.py` остаётся диагностически **NOT PASS**: 8 calculator failures / 246 passed / 1 skipped; независимый A5 воспроизвёл те же 8 failures на parent, поэтому это не регрессия текущего diff. Live FSA намеренно не вызывался. Порядок регистрации остаётся важным инвариантом: будущие статические `/verify/*` маршруты должны быть выше legacy catch-all.
+
+Доступны полная exact-tree копия, Git, Python, Node и реальное выполнение команд. Публикация выполнена только в существующую draft-ветку под coordinator lease generation 127. Protected merge, production/DB writes, flags, secrets/permissions, destructive migration и A6 не выполнялись. A6 request `core-s1-6415f443120f-r9-g106` не менялся и не отправлялся.
+
+Остаётся: full #245 product/legal/source-completeness **NOT PASS**; PostgreSQL, payment/calculator fixtures и безопасный remediation уже развёрнутых synthetic rows не закрыты. Следующий шаг — продолжить #245 backend/frontend applicability и source failures без расширения definite rules.
+
 ## 0o. #245 — synthetic regulatory seed больше не считается официальным evidence
 
 **Новый текущий checkpoint:** [draft PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256), `agent/product-ntm-regressions-v1` @ `9a8493e196202fdb752abc79302c02f6b1303b79`, tree `19d2f245e7b851b98347fb20a5852fd6b03b5c6f`, parent `5a535d00056c5c46c2ca614eaa3194325647fe1b`, base #245 неизменён `e39e19787bd913baeb6f85577a13e1116458e633`.
