@@ -9,7 +9,12 @@ from typing import Any
 from ..db import SessionLocal
 from ..models.core import ClassificationDecision, CustomsCaseLaw, SgrCertificate
 from ..models.ntm_v2 import NtmApplicabilityRuleV2
-from ..models.regulatory import RegulatoryDocument
+from ..models.regulatory import (
+    REGULATORY_QUALITY_NOISE,
+    REGULATORY_QUALITY_SYNTHETIC_SEED,
+    REGULATORY_STATUS_ACTIVE,
+    RegulatoryDocument,
+)
 from ..models.tnved import NonTariffMeasure
 from .normative_store import list_source_status, list_sync_log
 from .ntm_v2_import import SOURCE_KIND as LEGACY_TR_TS_SOURCE_KIND
@@ -94,7 +99,19 @@ def _count_db_probe(probe: str | None) -> int | None:
                 .count()
             )
         if probe == "regulatory_documents":
-            return db.query(RegulatoryDocument).count()
+            return (
+                db.query(RegulatoryDocument)
+                .filter(RegulatoryDocument.status == REGULATORY_STATUS_ACTIVE)
+                .filter(
+                    (RegulatoryDocument.quality.is_(None))
+                    | (
+                        RegulatoryDocument.quality.notin_(
+                            (REGULATORY_QUALITY_NOISE, REGULATORY_QUALITY_SYNTHETIC_SEED)
+                        )
+                    )
+                )
+                .count()
+            )
         if probe == "regulatory_documents_pravo":
             return (
                 db.query(RegulatoryDocument)

@@ -7,7 +7,13 @@ from typing import Any, Iterable
 from sqlalchemy import or_
 
 from ..db import SessionLocal
-from ..models.regulatory import RegulatoryDocHsMapping, RegulatoryDocument
+from ..models.regulatory import (
+    REGULATORY_QUALITY_NOISE,
+    REGULATORY_QUALITY_SYNTHETIC_SEED,
+    REGULATORY_STATUS_ACTIVE,
+    RegulatoryDocHsMapping,
+    RegulatoryDocument,
+)
 from .hs_matching import get_hs_prefixes, normalize_hs_code, specificity
 
 
@@ -114,8 +120,15 @@ def get_regulatory_documents_for_hs(
                 db.query(RegulatoryDocHsMapping, RegulatoryDocument)
                 .join(RegulatoryDocument, RegulatoryDocHsMapping.doc_id == RegulatoryDocument.id)
                 .filter(RegulatoryDocHsMapping.hs_prefix == prefix)
-                .filter(RegulatoryDocument.status == "active")
-                .filter(or_(RegulatoryDocument.quality.is_(None), RegulatoryDocument.quality != "noise"))
+                .filter(RegulatoryDocument.status == REGULATORY_STATUS_ACTIVE)
+                .filter(
+                    or_(
+                        RegulatoryDocument.quality.is_(None),
+                        RegulatoryDocument.quality.notin_(
+                            (REGULATORY_QUALITY_NOISE, REGULATORY_QUALITY_SYNTHETIC_SEED)
+                        ),
+                    )
+                )
                 .filter(RegulatoryDocHsMapping.confidence >= min_confidence)
             )
 
