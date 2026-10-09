@@ -3,6 +3,26 @@
 **Снимок:** 2026-10-09 (UTC). **Единственный репозиторий:** [ivan88810900-star/tnved_starter_kit_v2](https://github.com/ivan88810900-star/tnved_starter_kit_v2).
 **Авторитетное состояние:** ветка `agent/orchestration-state`, файлы `.ai/TASK_BOARD.json`, `.ai/COORDINATOR_LEASE.json`, `.ai/orchestration/A6_LIVE_STATUS.json`. Этот документ — указатель и контрольная точка, **не** право на запись/merge/A6. Перед действием заново читать текущие HEAD и state. Не полагаться на Business-чат.
 
+## 0aaaaaaaaaa. #245 — классификатор больше не выдаёт LLM-догадку за web grounding
+
+**Новый checkpoint:** [draft PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256), `agent/product-ntm-regressions-v1` @ `28e226a0b1fd33530e4a46786ce0eb5c3f392085`, tree `197f264af9220cd255d5116ffe25ada449514062`, parent `dd7ac413dc2f7698ffe1ce80375557afcbac2da5`.
+
+Воспроизведён fail-open дефект: если реальный web-search не возвращал результат, `SmartClassifier` просил LLM восстановить «наиболее вероятные» характеристики и затем публиковал догадку как `web_context` с `web_search_used=true`. До исправления проверка ожидала пустой контекст, получила модельное предположение и завершилась exit 1.
+
+Теперь web evidence допускается только при фактическом `web_search_result` с непустым корректным HTTP(S) URL и hostname. Text-only, tool error, отсутствующий/пустой URL, `ftp:`, `javascript:`, hostless и malformed URL fail closed. Если поиск был нужен, но подтверждённых данных нет, direct/grouped paths возвращают `MANUAL_REVIEW`, `manual_review_required=true`, `web_search_status=unavailable`, не отдают `web_context` и принудительно снимают `recommended`. UI показывает границу ручной проверки и скрывает «Рекомендуется».
+
+Проверки:
+
+- author backend: **33 passed + 7 subtests**, полный frontend: **32 passed**, typecheck/build/compileall/diff-check — exit 0;
+- независимый A5 сначала отклонил candidate из-за type-only/blank-URL proof; repaired exact tree — **PASS**;
+- A5 backend/API/parser: **20 passed + 7 subtests**, frontend: **32 passed**, typecheck и adversarial URL matrix — exit 0;
+- remote tree побайтово совпадает с reviewed tree;
+- exact-head CI: [run 37984824462](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/37984824462), job `114004071500`, **success**.
+
+Это не полный #245 product/legal/source completeness PASS. Lawful populated synchronized NTM snapshot по-прежнему недоступен. Protected merge, deploy, production write, enforcement/permissions/secrets change, destructive migration и внешний A6 не выполнялись; `core-s1-6415f443120f-r9-g106` неизменён и не отправлялся.
+
+Следующий шаг — следующий воспроизводимый bounded #245 search/classification integration defect; full-sync запускать только при законно доступном populated synchronized snapshot.
+
 ## 0aaaaaaaaa. #245 — Copilot/Batch показывает server grounding и fail-closed provenance
 
 **Новый checkpoint:** [draft PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256), `agent/product-ntm-regressions-v1` @ `dd7ac413dc2f7698ffe1ce80375557afcbac2da5`, tree `48c43f8e00a4091c56425975cb28c63fcc235ab5`, parent `e452d967d86436fda4b49cf344b026b639eb7c5c`.

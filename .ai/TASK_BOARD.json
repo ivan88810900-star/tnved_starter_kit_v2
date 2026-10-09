@@ -2179,7 +2179,7 @@
       "unique_source_pr_count": 29
     }
   },
-  "revision": 695,
+  "revision": 696,
   "runs": [
     {
       "head_sha": null,
@@ -7414,57 +7414,55 @@
       }
     }
   ],
-  "updated_at": "2026-10-09T19:10:00.000Z",
+  "updated_at": "2026-10-09T20:08:39.000Z",
   "latest_scheduled_product_checkpoint": {
-    "updated_at": "2026-10-09T19:10:00.000Z",
-    "checked_at": "2026-10-09T19:10:00.000Z",
+    "updated_at": "2026-10-09T20:08:39.000Z",
+    "checked_at": "2026-10-09T20:08:39.000Z",
     "pr": 256,
     "branch": "agent/product-ntm-regressions-v1",
-    "head_sha": "dd7ac413dc2f7698ffe1ce80375557afcbac2da5",
-    "tree_sha": "48c43f8e00a4091c56425975cb28c63fcc235ab5",
-    "parent_sha": "e452d967d86436fda4b49cf344b026b639eb7c5c",
+    "head_sha": "28e226a0b1fd33530e4a46786ce0eb5c3f392085",
+    "tree_sha": "197f264af9220cd255d5116ffe25ada449514062",
+    "parent_sha": "dd7ac413dc2f7698ffe1ce80375557afcbac2da5",
     "base_pr": 245,
     "base_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
-    "completed_block": "frontend_copilot_grounding_metadata_contract",
-    "block": "frontend_copilot_grounding_metadata_contract",
-    "status": "DRAFT_CHECKPOINT_A5_PASS_CI_PASS_COPILOT_GROUNDING_UI",
+    "completed_block": "classifier_web_grounding_fail_closed",
+    "block": "classifier_web_grounding_fail_closed",
+    "status": "DRAFT_CHECKPOINT_A5_PASS_CI_PASS_CLASSIFIER_WEB_GROUNDING",
     "behavior": {
-      "reproduced": "copilot and batch responses carried ai.grounding and ai.citations, but frontend types and rendering omitted both",
-      "final": "fail-closed coverage, mode, allowlisted facts, limitations and fully identified citations are visible in the shared copilot view",
-      "boundaries": "no legal completeness claim; unsafe URLs are not links; backend, DB, applicability, source admission and feature flags unchanged"
+      "reproduced": "when actual web search returned nothing, the smart classifier generated likely specifications with complete_text and exposed them as web_context/web_search_used",
+      "final": "only an actual Anthropic web_search_result with a valid HTTP(S) URL and hostname is admitted; unavailable required search returns MANUAL_REVIEW, omits web_context and forces recommended=false",
+      "boundaries": "UI shows the manual-review boundary and suppresses recommendation; no legal/source completeness claim, DB write, applicability or enforcement change"
     },
     "author_tests": {
-      "reproduction_before_fix": "existing frontend suite had no copilot grounding UI assertion; backend contract showed omitted fields",
-      "focused": "Assistant.grounding.test.tsx: 6 passed; exit 0",
-      "bounded_offline_tranche": "full frontend: 31 passed; exit 0",
-      "environment": "npm ci isolated dependency install; typecheck and production build exit 0",
-      "diff_compile": "git diff --check exit 0"
+      "reproduction_before_fix": "expected empty web context but got model-inferred likely specifications; exit 1",
+      "focused": "smart classifier and API: 17 passed plus 7 subtests; exit 0",
+      "bounded_offline_tranche": "backend 33 passed plus 7 subtests; full frontend 32 passed; exit 0",
+      "environment": "isolated Python requirements and npm ci; typecheck and production build exit 0",
+      "diff_compile": "compileall and git diff --check exit 0"
     },
     "a5": {
-      "session": "/root/a5_copilot_grounding_ui",
+      "session": "/root/a5_search_grounding_148",
       "status": "FINAL_PASS_EXACT_REPAIRED_TREE_REMOTE_BOUND",
-      "first_candidate": "two rejected intermediates: incomplete citation/arbitrary fact injection; missing facts with affirmative badges",
-      "focused": "15 focused/adversarial passed; exit 0",
-      "adversarial": "missing facts downgrade, full citation identity, fact allowlist and javascript URL text-only behavior",
-      "remote_binding": "remote commit dd7ac413dc2f7698ffe1ce80375557afcbac2da5 tree equals reviewed tree 48c43f8e00a4091c56425975cb28c63fcc235ab5",
-      "bounded_offline_tranche": "full frontend 31 passed; typecheck/build/diff-check exit 0"
+      "first_candidate": "REJECT: type-only and blank-URL web_search_result blocks were accepted as proof",
+      "focused": "backend/API/parser 20 passed plus 7 subtests; full frontend 32 passed; exit 0",
+      "adversarial": "text-only, tool error, missing/blank/non-HTTP/hostless/malformed URLs fail closed; valid HTTP(S) results pass",
+      "remote_binding": "remote commit 28e226a0b1fd33530e4a46786ce0eb5c3f392085 tree equals reviewed tree 197f264af9220cd255d5116ffe25ada449514062",
+      "bounded_offline_tranche": "typecheck and adversarial Python probe exit 0"
     },
     "ci": {
       "status": "PASSED_EXACT_HEAD",
-      "head_sha": "dd7ac413dc2f7698ffe1ce80375557afcbac2da5",
-      "alias_branch": "agent/product-ntm-copilot-grounding-ci-v1",
-      "alias_branch_head_sha": "dd7ac413dc2f7698ffe1ce80375557afcbac2da5",
+      "head_sha": "28e226a0b1fd33530e4a46786ce0eb5c3f392085",
       "runs": [
         {
-          "run_id": 37978226897,
-          "job_id": 113981820756,
+          "run_id": 37984824462,
+          "job_id": 114004071500,
           "conclusion": "success",
-          "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/37978226897"
+          "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/37984824462"
         }
       ]
     },
     "blockers": [
-      "This bounded frontend block is not a full #245 backend/frontend acceptance result.",
+      "This bounded classifier/search block is not a full #245 backend/frontend acceptance result.",
       "NTM full-sync audit still requires a lawful populated synchronized snapshot.",
       "Full #245 product acceptance and legal/source completeness remain NOT PASS."
     ],
@@ -7473,58 +7471,56 @@
       "status": "UNCHANGED_NOT_SENT"
     },
     "protected_actions_performed": false,
-    "next_step": "Continue the next bounded #245 assistant/search integration defect; keep NTM full-sync completeness blocked on a lawful populated synchronized snapshot."
+    "next_step": "Continue the next reproduced bounded #245 search/classification integration defect; keep NTM full-sync completeness blocked on a lawful populated synchronized snapshot."
   },
   "latest_development_checkpoint": {
-    "updated_at": "2026-10-09T19:10:00.000Z",
-    "checked_at": "2026-10-09T19:10:00.000Z",
+    "updated_at": "2026-10-09T20:08:39.000Z",
+    "checked_at": "2026-10-09T20:08:39.000Z",
     "pr": 256,
     "branch": "agent/product-ntm-regressions-v1",
-    "head_sha": "dd7ac413dc2f7698ffe1ce80375557afcbac2da5",
-    "tree_sha": "48c43f8e00a4091c56425975cb28c63fcc235ab5",
-    "parent_sha": "e452d967d86436fda4b49cf344b026b639eb7c5c",
+    "head_sha": "28e226a0b1fd33530e4a46786ce0eb5c3f392085",
+    "tree_sha": "197f264af9220cd255d5116ffe25ada449514062",
+    "parent_sha": "dd7ac413dc2f7698ffe1ce80375557afcbac2da5",
     "base_pr": 245,
     "base_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
-    "completed_block": "frontend_copilot_grounding_metadata_contract",
-    "block": "frontend_copilot_grounding_metadata_contract",
-    "status": "DRAFT_CHECKPOINT_A5_PASS_CI_PASS_COPILOT_GROUNDING_UI",
+    "completed_block": "classifier_web_grounding_fail_closed",
+    "block": "classifier_web_grounding_fail_closed",
+    "status": "DRAFT_CHECKPOINT_A5_PASS_CI_PASS_CLASSIFIER_WEB_GROUNDING",
     "behavior": {
-      "reproduced": "copilot and batch responses carried ai.grounding and ai.citations, but frontend types and rendering omitted both",
-      "final": "fail-closed coverage, mode, allowlisted facts, limitations and fully identified citations are visible in the shared copilot view",
-      "boundaries": "no legal completeness claim; unsafe URLs are not links; backend, DB, applicability, source admission and feature flags unchanged"
+      "reproduced": "when actual web search returned nothing, the smart classifier generated likely specifications with complete_text and exposed them as web_context/web_search_used",
+      "final": "only an actual Anthropic web_search_result with a valid HTTP(S) URL and hostname is admitted; unavailable required search returns MANUAL_REVIEW, omits web_context and forces recommended=false",
+      "boundaries": "UI shows the manual-review boundary and suppresses recommendation; no legal/source completeness claim, DB write, applicability or enforcement change"
     },
     "author_tests": {
-      "reproduction_before_fix": "existing frontend suite had no copilot grounding UI assertion; backend contract showed omitted fields",
-      "focused": "Assistant.grounding.test.tsx: 6 passed; exit 0",
-      "bounded_offline_tranche": "full frontend: 31 passed; exit 0",
-      "environment": "npm ci isolated dependency install; typecheck and production build exit 0",
-      "diff_compile": "git diff --check exit 0"
+      "reproduction_before_fix": "expected empty web context but got model-inferred likely specifications; exit 1",
+      "focused": "smart classifier and API: 17 passed plus 7 subtests; exit 0",
+      "bounded_offline_tranche": "backend 33 passed plus 7 subtests; full frontend 32 passed; exit 0",
+      "environment": "isolated Python requirements and npm ci; typecheck and production build exit 0",
+      "diff_compile": "compileall and git diff --check exit 0"
     },
     "a5": {
-      "session": "/root/a5_copilot_grounding_ui",
+      "session": "/root/a5_search_grounding_148",
       "status": "FINAL_PASS_EXACT_REPAIRED_TREE_REMOTE_BOUND",
-      "first_candidate": "two rejected intermediates: incomplete citation/arbitrary fact injection; missing facts with affirmative badges",
-      "focused": "15 focused/adversarial passed; exit 0",
-      "adversarial": "missing facts downgrade, full citation identity, fact allowlist and javascript URL text-only behavior",
-      "remote_binding": "remote commit dd7ac413dc2f7698ffe1ce80375557afcbac2da5 tree equals reviewed tree 48c43f8e00a4091c56425975cb28c63fcc235ab5",
-      "bounded_offline_tranche": "full frontend 31 passed; typecheck/build/diff-check exit 0"
+      "first_candidate": "REJECT: type-only and blank-URL web_search_result blocks were accepted as proof",
+      "focused": "backend/API/parser 20 passed plus 7 subtests; full frontend 32 passed; exit 0",
+      "adversarial": "text-only, tool error, missing/blank/non-HTTP/hostless/malformed URLs fail closed; valid HTTP(S) results pass",
+      "remote_binding": "remote commit 28e226a0b1fd33530e4a46786ce0eb5c3f392085 tree equals reviewed tree 197f264af9220cd255d5116ffe25ada449514062",
+      "bounded_offline_tranche": "typecheck and adversarial Python probe exit 0"
     },
     "ci": {
       "status": "PASSED_EXACT_HEAD",
-      "head_sha": "dd7ac413dc2f7698ffe1ce80375557afcbac2da5",
-      "alias_branch": "agent/product-ntm-copilot-grounding-ci-v1",
-      "alias_branch_head_sha": "dd7ac413dc2f7698ffe1ce80375557afcbac2da5",
+      "head_sha": "28e226a0b1fd33530e4a46786ce0eb5c3f392085",
       "runs": [
         {
-          "run_id": 37978226897,
-          "job_id": 113981820756,
+          "run_id": 37984824462,
+          "job_id": 114004071500,
           "conclusion": "success",
-          "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/37978226897"
+          "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/37984824462"
         }
       ]
     },
     "blockers": [
-      "This bounded frontend block is not a full #245 backend/frontend acceptance result.",
+      "This bounded classifier/search block is not a full #245 backend/frontend acceptance result.",
       "NTM full-sync audit still requires a lawful populated synchronized snapshot.",
       "Full #245 product acceptance and legal/source completeness remain NOT PASS."
     ],
@@ -7533,6 +7529,6 @@
       "status": "UNCHANGED_NOT_SENT"
     },
     "protected_actions_performed": false,
-    "next_step": "Continue the next bounded #245 assistant/search integration defect; keep NTM full-sync completeness blocked on a lawful populated synchronized snapshot."
+    "next_step": "Continue the next reproduced bounded #245 search/classification integration defect; keep NTM full-sync completeness blocked on a lawful populated synchronized snapshot."
   }
 }
