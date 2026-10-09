@@ -45,7 +45,12 @@ def seeded_sessionmaker(monkeypatch: pytest.MonkeyPatch):
         chapter = Chapter(section_id=section.id, code="09", title="")
         db.add(chapter)
         db.flush()
-        db.add(Commodity(chapter_id=chapter.id, code="0901000000", description="test"))
+        db.add_all([
+            Commodity(chapter_id=chapter.id, code="0901000000", description="test 1"),
+            Commodity(chapter_id=chapter.id, code="0902000000", description="test 2"),
+            Commodity(chapter_id=chapter.id, code="0903000000", description="test 3"),
+            Commodity(chapter_id=chapter.id, code="0904000000", description="test 4"),
+        ])
         db.commit()
     return sm
 
@@ -85,11 +90,11 @@ def test_rerun_repairs_old_generated_rows_but_preserves_verified(
             quality="normal",
         ))
         db.add(NonTariffMeasure(
-            commodity_code="0901000000",
-            measure_type="certificate",
-            regulatory_act="CURATED-SOURCE",
-            description="Проверенная курируемая строка",
-            document_required="Документ",
+            commodity_code="0903000000",
+            measure_type=measure_type,
+            regulatory_act=regulatory_act,
+            description=description,
+            document_required=regulatory_act,
             quality="verified",
         ))
         db.commit()
@@ -98,11 +103,18 @@ def test_rerun_repairs_old_generated_rows_but_preserves_verified(
     assert report["relabeled_synthetic"] == 1
 
     with seeded_sessionmaker() as db:
-        admitted = get_measures_for_code("0901000000", db)
+        admitted = get_measures_for_code("0903000000", db)
         assert len(admitted) == 1
-        assert admitted[0].regulatory_act == "CURATED-SOURCE"
+        assert admitted[0].quality == "verified"
         repaired = db.query(NonTariffMeasure).filter_by(
+            commodity_code="0901000000",
             regulatory_act=regulatory_act,
             description=description,
         ).one()
         assert repaired.quality == "synthetic_seed"
+        curated = db.query(NonTariffMeasure).filter_by(
+            commodity_code="0903000000",
+            regulatory_act=regulatory_act,
+            description=description,
+        ).one()
+        assert curated.quality == "verified"

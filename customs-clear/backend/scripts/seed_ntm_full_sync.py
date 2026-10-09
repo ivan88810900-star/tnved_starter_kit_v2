@@ -442,31 +442,17 @@ def seed() -> dict[str, int]:
         if normalized:
             print(f"Normalized {normalized} 'licence' → 'license' entries")
 
-        # Step 2: Repair rows created by older versions of this synthetic seed.
-        # The exact generated tuple is deterministic; do not relabel unrelated rows
-        # that merely share the same legal act or measure type.
+        # Step 2: Get all valid commodity codes.
         all_ntm_defs = {**CHAPTER_NTMS, **MEDIUM_BOOST_CHAPTERS}
-        for ntm_list in all_ntm_defs.values():
-            for measure_type, regulatory_act, description in ntm_list:
-                repaired = db.execute(text(
-                    "UPDATE non_tariff_measures SET quality = :quality "
-                    "WHERE measure_type = :mt AND regulatory_act = :ra "
-                    "AND description = :desc "
-                    "AND (quality IS NULL OR quality != :quality)"
-                ), {
-                    "quality": SYNTHETIC_SEED_QUALITY,
-                    "mt": measure_type,
-                    "ra": regulatory_act,
-                    "desc": description,
-                }).rowcount
-                stats["relabeled_synthetic"] += repaired
-
-        # Step 3: Get all valid commodity codes
         all_codes = {
             r[0] for r in db.execute(text("SELECT code FROM tnved_commodities")).fetchall()
         }
 
-        # Step 4: Insert reference-only synthetic rows for thin chapters.
+        # Step 3: Repair exact rows created by the older version, then insert
+        # reference-only synthetic rows for thin chapters. The old seed always
+        # wrote quality=normal and document_required=regulatory_act. Include the
+        # deterministic representative code and full payload so a curated row
+        # with similar text or verified provenance is never relabeled.
         for chapter, ntm_list in sorted(all_ntm_defs.items()):
             if chapter == "77":
                 continue
@@ -486,6 +472,21 @@ def seed() -> dict[str, int]:
                     selected = [chapter_codes[0], chapter_codes[step], chapter_codes[-1]]
 
                 for code in selected:
+                    repaired = db.execute(text(
+                        "UPDATE non_tariff_measures SET quality = :quality "
+                        "WHERE commodity_code = :code AND measure_type = :mt "
+                        "AND regulatory_act = :ra AND description = :desc "
+                        "AND document_required = :doc AND quality = 'normal'"
+                    ), {
+                        "quality": SYNTHETIC_SEED_QUALITY,
+                        "code": code,
+                        "mt": measure_type,
+                        "ra": regulatory_act,
+                        "desc": description,
+                        "doc": regulatory_act,
+                    }).rowcount
+                    stats["relabeled_synthetic"] += repaired
+
                     exists = db.execute(text(
                         "SELECT 1 FROM non_tariff_measures "
                         "WHERE commodity_code = :code AND measure_type = :mt "
