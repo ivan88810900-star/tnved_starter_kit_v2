@@ -887,6 +887,28 @@ export interface AssistantCopilotAi {
   note?: string;
   conclusion?: string;
   raw?: string;
+  citations?: AssistantCopilotCitation[];
+  grounding?: AssistantCopilotGrounding;
+}
+
+export interface AssistantCopilotCitation {
+  id: string;
+  source_id: string;
+  title: string;
+  kind: string;
+  url?: string;
+  status?: string;
+  excerpt?: string;
+}
+
+export interface AssistantCopilotGrounding {
+  mode: 'deterministic' | 'llm_grounded';
+  coverage: 'grounded' | 'partial' | 'needs_context';
+  facts_used: string[];
+  generated_from_server_facts: boolean;
+  provider?: string | null;
+  external_model_role?: 'server_draft_selection' | null;
+  limitations?: string[];
 }
 
 export interface AssistantCopilotResponse {
