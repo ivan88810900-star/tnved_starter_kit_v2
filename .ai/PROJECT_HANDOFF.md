@@ -3,6 +3,25 @@
 **Снимок:** 2026-10-08 (UTC). **Единственный репозиторий:** [ivan88810900-star/tnved_starter_kit_v2](https://github.com/ivan88810900-star/tnved_starter_kit_v2).  
 **Авторитетное состояние:** ветка `agent/orchestration-state`, файлы `.ai/TASK_BOARD.json`, `.ai/COORDINATOR_LEASE.json`, `.ai/orchestration/A6_LIVE_STATUS.json`. Этот документ — указатель и контрольная точка, **не** право на запись/merge/A6. Перед действием заново читать текущие HEAD и state. Не полагаться на Business-чат.
 
+## 0z. #245 — HTML fallback ФСА больше не принимает неоднозначную таблицу за действующую запись
+
+**Новый текущий checkpoint:** [draft PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256), `agent/product-ntm-regressions-v1` @ `d5dd222f108399eac82a5d8001d7615a00953d08`, tree `9a81a7381d327061050a4616aba3f7988e0bc210`, parent `ad111df595f323b25e9cef1e7e250a6df1a0bad9`; base #245 неизменён `e39e19787bd913baeb6f85577a13e1116458e633`.
+
+Воспроизведён source/identity defect HTML fallback ФСА: таблица с любой строкой могла стать `VALID` без сопоставления номера, статуса и срока действия. Теперь разбираются все result tables; `VALID` требует точного canonical identity, явного active status и разбираемой непросроченной даты. Пропущенные колонки/ячейки, rowspan/colspan, неоднозначные заголовки, пустые номера, неизвестные даты и конфликтующие дубликаты остаются `UNKNOWN`/manual review; revoked/expired evidence остаётся `NOT_FOUND`. Query/search/organization metadata не считается реестровой записью, но неоднозначная registry-looking таблица блокирует положительный вывод. Справочная фраза «не найдено» не перекрывает точную полную запись и не удаляет evidence. Applicability/advisory/enforcement и правовая интерпретация не расширялись.
+
+Три промежуточных candidate независимый A5 отклонил: из-за missing expiry/rowspan/multiple-table false `VALID`, затем из-за ambiguous header/organization/unparseable expiry, затем из-за ошибочного downgrade корректной active записи служебной metadata-таблицей. Они не публиковались.
+
+Проверки exact final tree:
+- author focused FSA/opendata/permits: **75 passed, 1 skipped, 6 subtests**, exit 0; `compileall` и `git diff --check` — exit 0;
+- author broad #245 backend slice: **959 passed, 11 skipped, 38 subtests**, exit 0;
+- независимый A5 `/root/a5_pravo_probe`: **PASS exact reviewed tree**; adversarial HTML matrix **28/28**, metadata + exact-active **3/3**, focused **20 passed +6 subtests**, related disposable-DB **71 passed, 1 skipped +6 subtests**, все exit 0; import-order probes и diff-check exit 0;
+- connector remote tree побайтово совпадает с reviewed local tree; PR перечитан на exact remote HEAD;
+- exact-head GitHub Actions: **PENDING_NO_RUN_OBSERVED** для `d5dd222f108399eac82a5d8001d7615a00953d08`.
+
+Полный #245 product/legal/source-completeness **NOT PASS**. NTM full-sync audit всё ещё требует законно доступного populated synchronized snapshot. Protected merge, production/DB writes, enforcement flags, secrets/permissions, destructive migration и внешний A6 не выполнялись; `core-s1-6415f443120f-r9-g106` неизменён и не отправлен.
+
+Следующий шаг — повторно проверить exact-head CI, затем продолжить следующий воспроизводимый #245 source/applicability defect, сохраняя неподтверждённые результаты в manual review.
+
 ## 0y. #245 — FSA JSON API больше не принимает чужую или неподтверждённую запись за действующую
 
 **Новый текущий checkpoint:** [draft PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256), `agent/product-ntm-regressions-v1` @ `ad111df595f323b25e9cef1e7e250a6df1a0bad9`, tree `961b8d8c1995900284d54f5143f7ae1db7633b47`, parent `af1f6301f871b5156fabe774505aa9184e452217`; base #245 неизменён `e39e19787bd913baeb6f85577a13e1116458e633`.
