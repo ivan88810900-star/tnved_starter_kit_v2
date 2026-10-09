@@ -2179,7 +2179,7 @@
       "unique_source_pr_count": 29
     }
   },
-  "revision": 690,
+  "revision": 691,
   "runs": [
     {
       "head_sha": null,
@@ -7227,8 +7227,8 @@
         "next_step": "Run NTM full-sync audit on a lawful populated synchronized snapshot if available, or continue the next reproduced #245 source/applicability defect without widening definite rules."
       },
       "classification_inventory_checkpoint_20261009": {
-        "updated_at": "2026-10-09T14:11:10.606Z",
-        "checked_at": "2026-10-09T14:11:10.606Z",
+    "updated_at": "2026-10-09T15:04:45.219410Z",
+    "checked_at": "2026-10-09T15:04:45.219410Z",
         "pr": 256,
         "branch": "agent/product-ntm-regressions-v1",
         "head_sha": "321b4ac72b13ec40a0dc3e2b05f8079f39fb6ee7",
@@ -7238,7 +7238,7 @@
         "base_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
         "completed_block": "canonical_disposable_fts_classification_inventory_bootstrap",
         "block": "canonical_disposable_fts_classification_inventory_bootstrap",
-        "status": "DRAFT_CHECKPOINT_A5_PASS_CI_PENDING_NO_RUN",
+    "status": "DRAFT_CHECKPOINT_A5_PASS_CI_PASS_BOUNDED_137",
         "behavior": {
           "reproduced": "fresh init_db left 0 FTS letters and 0 classification rulings, causing the broad #245 fixture-inventory assertions to fail",
           "final": "new-target-only bootstrap pins the committed TN VED catalogue hash, opens it immutable/read-only, deterministically deduplicates legacy codes and loads the classification test inventory",
@@ -7249,6 +7249,7 @@
           "bootstrap_safety": "5 passed; exit 0",
           "generated_inventory": "13,979 unique TN VED codes; 206 letters; 205 decisions; 50 formal and 520 reference rulings; integrity ok",
           "focused_combined": "32 passed; exit 0",
+          "bounded_offline_tranche": "12-module TN VED/classification/normative slice on disposable bootstrap DB: 137 passed, 1 non-blocking StarletteDeprecationWarning; exit 0",
           "diff_compile": "git diff --check and py_compile; exit 0",
           "broad_probe": "runtime security policy stopped the broader suite when an unrelated test attempted api.proxyapi.ru; no bypass and no full-suite PASS"
         },
@@ -7258,18 +7259,20 @@
           "first_candidate": "REJECT HIGH/MEDIUM: cached app.db could receive writes; read-only WAL source created sidecars",
           "focused": "5 bootstrap tests and 17 generated-DB classification tests passed; exit 0",
           "adversarial": "pre-bound DB remained unchanged and target absent; source SHA unchanged with no WAL/SHM; all 39 duplicate-code groups retained MIN(id), 0 mismatches",
-          "remote_binding": "remote tree equals reviewed tree ef6fd5680b6c006be5c836643a0ab1cbceef111a"
+          "remote_binding": "remote tree equals reviewed tree ef6fd5680b6c006be5c836643a0ab1cbceef111a",
+          "bounded_offline_tranche": "independent clean detached run with outbound network denied and preview revision marker redirected: 137 passed, 1 warning in 39.11s; exit 0; no tracked/untracked mutation or source WAL/SHM"
         },
         "ci": {
-          "status": "PENDING_NO_RUN_OBSERVED",
+          "status": "PASSED_EXACT_HEAD",
           "head_sha": "321b4ac72b13ec40a0dc3e2b05f8079f39fb6ee7",
-          "primary_branch_runs": [],
           "alias_branch": "agent/product-ntm-bootstrap-ci-v1",
-          "alias_branch_runs": [],
-          "combined_statuses": []
+          "alias_branch_head_sha": "321b4ac72b13ec40a0dc3e2b05f8079f39fb6ee7",
+          "runs": [
+            {"run_id": 37941232220, "job_id": 113855829425, "conclusion": "success", "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/37941232220"},
+            {"run_id": 37941931512, "job_id": 113858391699, "conclusion": "success", "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/37941931512"}
+          ]
         },
         "blockers": [
-          "Mandatory exact-head GitHub Actions run has not appeared; candidate is not finally accepted.",
           "The broad backend run cannot be completed in this runtime because an unrelated test attempts an unapproved external api.proxyapi.ru call; no bypass was attempted.",
           "NTM full-sync audit still requires a lawful populated synchronized snapshot.",
           "Full #245 product acceptance and legal/source completeness remain NOT PASS."
@@ -7279,14 +7282,14 @@
           "status": "UNCHANGED_NOT_SENT"
         },
         "protected_actions_performed": false,
-        "next_step": "Recheck exact-head CI; then use the disposable classification bootstrap for the next bounded offline #245 fixture tranche while keeping NTM full-sync completeness blocked on a lawful populated synchronized snapshot."
+        "next_step": "Continue the next bounded offline #245 fixture tranche with the safe disposable bootstrap and redirected preview marker; keep NTM full-sync completeness blocked on a lawful populated synchronized snapshot."
       }
     }
   ],
-  "updated_at": "2026-10-09T14:11:10.606Z",
+  "updated_at": "2026-10-09T15:04:45.219410Z",
   "latest_scheduled_product_checkpoint": {
-    "updated_at": "2026-10-09T14:11:10.606Z",
-    "checked_at": "2026-10-09T14:11:10.606Z",
+    "updated_at": "2026-10-09T15:04:45.219410Z",
+    "checked_at": "2026-10-09T15:04:45.219410Z",
     "pr": 256,
     "branch": "agent/product-ntm-regressions-v1",
     "head_sha": "321b4ac72b13ec40a0dc3e2b05f8079f39fb6ee7",
@@ -7296,7 +7299,7 @@
     "base_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
     "completed_block": "canonical_disposable_fts_classification_inventory_bootstrap",
     "block": "canonical_disposable_fts_classification_inventory_bootstrap",
-    "status": "DRAFT_CHECKPOINT_A5_PASS_CI_PENDING_NO_RUN",
+    "status": "DRAFT_CHECKPOINT_A5_PASS_CI_PASS_BOUNDED_137",
     "behavior": {
       "reproduced": "fresh init_db left 0 FTS letters and 0 classification rulings, causing the broad #245 fixture-inventory assertions to fail",
       "final": "new-target-only bootstrap pins the committed TN VED catalogue hash, opens it immutable/read-only, deterministically deduplicates legacy codes and loads the classification test inventory",
@@ -7307,6 +7310,7 @@
       "bootstrap_safety": "5 passed; exit 0",
       "generated_inventory": "13,979 unique TN VED codes; 206 letters; 205 decisions; 50 formal and 520 reference rulings; integrity ok",
       "focused_combined": "32 passed; exit 0",
+      "bounded_offline_tranche": "12-module TN VED/classification/normative slice on disposable bootstrap DB: 137 passed, 1 non-blocking StarletteDeprecationWarning; exit 0",
       "diff_compile": "git diff --check and py_compile; exit 0",
       "broad_probe": "runtime security policy stopped the broader suite when an unrelated test attempted api.proxyapi.ru; no bypass and no full-suite PASS"
     },
@@ -7316,18 +7320,20 @@
       "first_candidate": "REJECT HIGH/MEDIUM: cached app.db could receive writes; read-only WAL source created sidecars",
       "focused": "5 bootstrap tests and 17 generated-DB classification tests passed; exit 0",
       "adversarial": "pre-bound DB remained unchanged and target absent; source SHA unchanged with no WAL/SHM; all 39 duplicate-code groups retained MIN(id), 0 mismatches",
-      "remote_binding": "remote tree equals reviewed tree ef6fd5680b6c006be5c836643a0ab1cbceef111a"
+      "remote_binding": "remote tree equals reviewed tree ef6fd5680b6c006be5c836643a0ab1cbceef111a",
+      "bounded_offline_tranche": "independent clean detached run with outbound network denied and preview revision marker redirected: 137 passed, 1 warning in 39.11s; exit 0; no tracked/untracked mutation or source WAL/SHM"
     },
     "ci": {
-      "status": "PENDING_NO_RUN_OBSERVED",
+      "status": "PASSED_EXACT_HEAD",
       "head_sha": "321b4ac72b13ec40a0dc3e2b05f8079f39fb6ee7",
-      "primary_branch_runs": [],
       "alias_branch": "agent/product-ntm-bootstrap-ci-v1",
-      "alias_branch_runs": [],
-      "combined_statuses": []
+      "alias_branch_head_sha": "321b4ac72b13ec40a0dc3e2b05f8079f39fb6ee7",
+      "runs": [
+        {"run_id": 37941232220, "job_id": 113855829425, "conclusion": "success", "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/37941232220"},
+        {"run_id": 37941931512, "job_id": 113858391699, "conclusion": "success", "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/37941931512"}
+      ]
     },
     "blockers": [
-      "Mandatory exact-head GitHub Actions run has not appeared; candidate is not finally accepted.",
       "The broad backend run cannot be completed in this runtime because an unrelated test attempts an unapproved external api.proxyapi.ru call; no bypass was attempted.",
       "NTM full-sync audit still requires a lawful populated synchronized snapshot.",
       "Full #245 product acceptance and legal/source completeness remain NOT PASS."
@@ -7337,11 +7343,11 @@
       "status": "UNCHANGED_NOT_SENT"
     },
     "protected_actions_performed": false,
-    "next_step": "Recheck exact-head CI; then use the disposable classification bootstrap for the next bounded offline #245 fixture tranche while keeping NTM full-sync completeness blocked on a lawful populated synchronized snapshot."
+    "next_step": "Continue the next bounded offline #245 fixture tranche with the safe disposable bootstrap and redirected preview marker; keep NTM full-sync completeness blocked on a lawful populated synchronized snapshot."
   },
   "latest_development_checkpoint": {
-    "updated_at": "2026-10-09T14:11:10.606Z",
-    "checked_at": "2026-10-09T14:11:10.606Z",
+        "updated_at": "2026-10-09T15:04:45.219410Z",
+        "checked_at": "2026-10-09T15:04:45.219410Z",
     "pr": 256,
     "branch": "agent/product-ntm-regressions-v1",
     "head_sha": "321b4ac72b13ec40a0dc3e2b05f8079f39fb6ee7",
@@ -7351,7 +7357,7 @@
     "base_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
     "completed_block": "canonical_disposable_fts_classification_inventory_bootstrap",
     "block": "canonical_disposable_fts_classification_inventory_bootstrap",
-    "status": "DRAFT_CHECKPOINT_A5_PASS_CI_PENDING_NO_RUN",
+        "status": "DRAFT_CHECKPOINT_A5_PASS_CI_PASS_BOUNDED_137",
     "behavior": {
       "reproduced": "fresh init_db left 0 FTS letters and 0 classification rulings, causing the broad #245 fixture-inventory assertions to fail",
       "final": "new-target-only bootstrap pins the committed TN VED catalogue hash, opens it immutable/read-only, deterministically deduplicates legacy codes and loads the classification test inventory",
@@ -7362,6 +7368,7 @@
       "bootstrap_safety": "5 passed; exit 0",
       "generated_inventory": "13,979 unique TN VED codes; 206 letters; 205 decisions; 50 formal and 520 reference rulings; integrity ok",
       "focused_combined": "32 passed; exit 0",
+      "bounded_offline_tranche": "12-module TN VED/classification/normative slice on disposable bootstrap DB: 137 passed, 1 non-blocking StarletteDeprecationWarning; exit 0",
       "diff_compile": "git diff --check and py_compile; exit 0",
       "broad_probe": "runtime security policy stopped the broader suite when an unrelated test attempted api.proxyapi.ru; no bypass and no full-suite PASS"
     },
@@ -7371,18 +7378,20 @@
       "first_candidate": "REJECT HIGH/MEDIUM: cached app.db could receive writes; read-only WAL source created sidecars",
       "focused": "5 bootstrap tests and 17 generated-DB classification tests passed; exit 0",
       "adversarial": "pre-bound DB remained unchanged and target absent; source SHA unchanged with no WAL/SHM; all 39 duplicate-code groups retained MIN(id), 0 mismatches",
-      "remote_binding": "remote tree equals reviewed tree ef6fd5680b6c006be5c836643a0ab1cbceef111a"
+      "remote_binding": "remote tree equals reviewed tree ef6fd5680b6c006be5c836643a0ab1cbceef111a",
+      "bounded_offline_tranche": "independent clean detached run with outbound network denied and preview revision marker redirected: 137 passed, 1 warning in 39.11s; exit 0; no tracked/untracked mutation or source WAL/SHM"
     },
     "ci": {
-      "status": "PENDING_NO_RUN_OBSERVED",
+      "status": "PASSED_EXACT_HEAD",
       "head_sha": "321b4ac72b13ec40a0dc3e2b05f8079f39fb6ee7",
-      "primary_branch_runs": [],
       "alias_branch": "agent/product-ntm-bootstrap-ci-v1",
-      "alias_branch_runs": [],
-      "combined_statuses": []
+      "alias_branch_head_sha": "321b4ac72b13ec40a0dc3e2b05f8079f39fb6ee7",
+      "runs": [
+        {"run_id": 37941232220, "job_id": 113855829425, "conclusion": "success", "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/37941232220"},
+        {"run_id": 37941931512, "job_id": 113858391699, "conclusion": "success", "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/37941931512"}
+      ]
     },
     "blockers": [
-      "Mandatory exact-head GitHub Actions run has not appeared; candidate is not finally accepted.",
       "The broad backend run cannot be completed in this runtime because an unrelated test attempts an unapproved external api.proxyapi.ru call; no bypass was attempted.",
       "NTM full-sync audit still requires a lawful populated synchronized snapshot.",
       "Full #245 product acceptance and legal/source completeness remain NOT PASS."
@@ -7392,6 +7401,6 @@
       "status": "UNCHANGED_NOT_SENT"
     },
     "protected_actions_performed": false,
-    "next_step": "Recheck exact-head CI; then use the disposable classification bootstrap for the next bounded offline #245 fixture tranche while keeping NTM full-sync completeness blocked on a lawful populated synchronized snapshot."
+    "next_step": "Continue the next bounded offline #245 fixture tranche with the safe disposable bootstrap and redirected preview marker; keep NTM full-sync completeness blocked on a lawful populated synchronized snapshot."
   }
 }
