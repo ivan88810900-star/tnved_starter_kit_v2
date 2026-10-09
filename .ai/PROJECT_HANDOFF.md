@@ -3,6 +3,18 @@
 **Снимок:** 2026-10-08 (UTC). **Единственный репозиторий:** [ivan88810900-star/tnved_starter_kit_v2](https://github.com/ivan88810900-star/tnved_starter_kit_v2).  
 **Авторитетное состояние:** ветка `agent/orchestration-state`, файлы `.ai/TASK_BOARD.json`, `.ai/COORDINATOR_LEASE.json`, `.ai/orchestration/A6_LIVE_STATUS.json`. Этот документ — указатель и контрольная точка, **не** право на запись/merge/A6. Перед действием заново читать текущие HEAD и state. Не полагаться на Business-чат.
 
+## 0aaaaa. #245 — bootstrap подтверждён расширенным offline-срезом и exact-head CI
+
+**Текущий кодовый checkpoint не изменён:** [draft PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256), `agent/product-ntm-regressions-v1` @ `321b4ac72b13ec40a0dc3e2b05f8079f39fb6ee7`, tree `ef6fd5680b6c006be5c836643a0ab1cbceef111a`.
+
+На новой disposable DB выполнен следующий bounded offline #245 tranche: bootstrap плюс 12 модулей TN VED/classification/normative/API — **137 passed**, exit 0. Независимый A5 `/root/a5_ntm_fallback` повторил exact clean detached запуск с запретом исходящей сети и вынесенным `TNVED_PREVIEW_CACHE_REVISION_FILE`: **137 passed, 1 warning**, exit 0; tracked/untracked mutation и source WAL/SHM отсутствуют. Existing `test_tnved_catalog_api.py` без перенаправления marker обновляет tracked preview-revision файл, поэтому дальнейшие disposable прогоны обязаны выносить marker из репозитория.
+
+Exact-head Actions подтверждены на alias ref, который свежим `ls-remote` связан с тем же SHA: [run 37941232220](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/37941232220), job `113855829425`, success; [run 37941931512](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/37941931512), job `113858391699`, success. Старый статус CI pending снят.
+
+Полный broad/full-suite PASS не заявляется: ранее unrelated тест попытался обратиться к `api.proxyapi.ru`, и обход запрета не выполнялся. Lawful populated synchronized NTM snapshot по-прежнему отсутствует, поэтому NTM full-sync и legal/source completeness остаются **NOT PASS**. Внешний A6 `core-s1-6415f443120f-r9-g106` не отправлялся.
+
+Следующий шаг — продолжить следующий ограниченный offline #245 fixture tranche на этом bootstrap с вынесенным preview marker; full-sync ждать только законно доступный populated synchronized snapshot.
+
 ## 0aaaa. #245 — канонический disposable bootstrap закрыл FTS classification fixture gap
 
 **Новый текущий checkpoint:** [draft PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256), `agent/product-ntm-regressions-v1` @ `321b4ac72b13ec40a0dc3e2b05f8079f39fb6ee7`, tree `ef6fd5680b6c006be5c836643a0ab1cbceef111a`, parent `a89904e335aa7cb3ae906b094031c0155254000e`; base #245 неизменён `e39e19787bd913baeb6f85577a13e1116458e633`.
