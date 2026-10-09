@@ -33,6 +33,53 @@ SGR_RECOMMENDATION_FUZZY = (
     "Проверьте возможность применения (внесения артикула) или оформления письма-доверенности от заявителя."
 )
 
+_SGR_INACTIVE_STATUS_MARKERS = (
+    "аннулир",
+    "недейств",
+    "не действ",
+    "неактив",
+    "не актив",
+    "не зарегистрирован",
+    "прекращ",
+    "приостанов",
+    "отозван",
+    "revoked",
+    "withdrawn",
+    "suspended",
+    "terminated",
+    "expired",
+    "inactive",
+    "not active",
+    "not valid",
+    "not registered",
+)
+_SGR_ACTIVE_STATUS_MARKERS_RU = (
+    "действ",
+    "зарегистрирован",
+)
+_SGR_ACTIVE_STATUS_WORDS_EN = frozenset({"active", "valid", "registered"})
+
+
+def classify_sgr_registry_status(status: str) -> str:
+    """Classify registry text without treating an unknown status as current."""
+    value = _norm(status)
+    if any(marker in value for marker in _SGR_INACTIVE_STATUS_MARKERS):
+        return "inactive"
+    if any(marker in value for marker in _SGR_ACTIVE_STATUS_MARKERS_RU):
+        return "active"
+    if _SGR_ACTIVE_STATUS_WORDS_EN.intersection(re.findall(r"[a-z]+", value)):
+        return "active"
+    return "unverified"
+
+
+def _sgr_status_review_recommendation(status: str) -> str:
+    value = (status or "").strip() or "не указан"
+    return (
+        f"Найдена запись СГР, но её статус «{value}» не подтверждает действие документа. "
+        "Не используйте совпадение как подтверждение применимости; проверьте актуальный статус "
+        "и сведения о продукции в официальном реестре."
+    )
+
 
 def _norm(s: str) -> str:
     return re.sub(r"\s+", " ", (s or "").strip().lower())
@@ -335,7 +382,11 @@ def lookup_sgr_registry(
     if not best:
         return _sgr_not_found_block()
 
-    if kind == "Найдено точное совпадение":
+    status_class = classify_sgr_registry_status(best.status or "")
+    if status_class != "active":
+        kind = "Найдено совпадение, статус требует проверки"
+        rec = _sgr_status_review_recommendation(best.status or "")
+    elif kind == "Найдено точное совпадение":
         rec = (
             "Совпадение по бренду и описанию/артикулу; сверьте полный состав и наименование в реестре СГР перед применением."
         )
