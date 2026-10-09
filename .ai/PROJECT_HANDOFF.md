@@ -3,6 +3,25 @@
 **Снимок:** 2026-10-08 (UTC). **Единственный репозиторий:** [ivan88810900-star/tnved_starter_kit_v2](https://github.com/ivan88810900-star/tnved_starter_kit_v2).  
 **Авторитетное состояние:** ветка `agent/orchestration-state`, файлы `.ai/TASK_BOARD.json`, `.ai/COORDINATOR_LEASE.json`, `.ai/orchestration/A6_LIVE_STATUS.json`. Этот документ — указатель и контрольная точка, **не** право на запись/merge/A6. Перед действием заново читать текущие HEAD и state. Не полагаться на Business-чат.
 
+## 0q. #245 — synthetic legacy NTM seed исключён из product evidence
+
+**Новый текущий checkpoint:** [draft PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256), `agent/product-ntm-regressions-v1` @ `04979b50bf2926751dad92468e9beb4e2fa7b539`, tree `051d77ca61ef1d70e28beee46d28fa977ef8b75c`, parent `a1984575e6c58360847a54ee8618944dbfb996b0`, base #245 неизменён `e39e19787bd913baeb6f85577a13e1116458e633`.
+
+Воспроизведён source-safety defect: `seed_ntm_full_sync.py` создавал шаблонные legacy NTM строки как `quality=normal`; runtime, RAG, invoice enrichment, SGR trigger, catalog/completeness и legacy-to-v2 import могли признать их product evidence. Новые строки теперь `synthetic_seed` и fail-closed исключаются всеми этими read paths. Ремонт старых строк ограничен deterministic representative commodity code, полным generated payload и только прежним `quality=normal`.
+
+Первый repair-вариант независимый A5 отклонил: text-only match мог relabel курируемую строку на never-selected code. Этот вариант не принят; финальный exact head сохраняет такую `verified` строку и меняет только точную старую generated запись.
+
+Проверки exact head/tree:
+- author focused: `25 passed, 1 skipped, 3 subtests`, exit 0; compileall и `git diff --check` PASS;
+- author fresh disposable SQLite + init/migrations + полный NTM v2 import + безопасный backend/NTM срез: `867 passed, 2 skipped, 32 subtests`, exit 0;
+- frontend: `18 passed`, typecheck и build PASS, exit 0;
+- независимый A5 `/root/a5_ntm_fallback`: **PASS exact remote HEAD**; exact repair/adversarial quality matrix exit 0; focused `25 passed, 1 skipped, 3 subtests`; 20-file candidate/parent comparison одинаков: `14 failed, 315 passed, 1 skipped`, failure-name diff пустой, failures fixture-bound;
+- exact-head GitHub Actions: **PENDING_NO_RUN_OBSERVED** для `04979b50bf2926751dad92468e9beb4e2fa7b539`. Connector не показывает run; обычный local push завершился exit 128 (`could not read Username`). Credentials/UI workaround не предпринимался, CI PASS не заявляется.
+
+Доступны полная exact-tree копия, Git, Python, Node и реальное выполнение команд. Публикация выполнена только в существующую draft-ветку под coordinator lease generation 128. Protected merge, production/DB writes, flags, secrets/permissions, destructive migration и A6 не выполнялись. A6 request `core-s1-6415f443120f-r9-g106` не менялся и не отправлялся.
+
+Остаётся: exact-head CI не подтверждён; полный #245 product/legal/source-completeness **NOT PASS**; production remediation уже развёрнутых legacy rows не выполнялся. Следующий шаг — получить/проверить exact-head CI штатным авторизованным каналом, затем продолжить #245 applicability/source failures без расширения definite rules.
+
 ## 0p. #245 — permit job detail больше не перехватывается legacy verify route
 
 **Новый текущий checkpoint:** [draft PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256), `agent/product-ntm-regressions-v1` @ `9d4ffb38d7479f6f9a6983728612e01e0c28018e`, tree `824f644beec6a8ef219f737aede05a634fe9297f`, parent `9a8493e196202fdb752abc79302c02f6b1303b79`, base #245 неизменён `e39e19787bd913baeb6f85577a13e1116458e633`.
