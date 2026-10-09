@@ -1,14 +1,14 @@
 {
   "acquisition_note": "Reconcile PR256 exact-head CI and persist verified maintenance checkpoint.",
-  "expires_at": "2026-10-09T21:28:57.148395Z",
+  "expires_at": null,
   "generation": 149,
-  "holder": "/root/tariff_a0_scheduled_20261009T205649Z",
+  "holder": null,
   "lease_repair": {},
   "release_reason": "PR256 exact-head CI success reconciled into state revision 687; projections validated by run 37917111388.",
   "released_by": "/root/tariff_a0_maintenance_20261009T1314MSK",
   "schema_version": 1,
   "serialization_repair": {},
-  "state": "active",
-  "token": "3384d2fffc9c45458713956f30411fd2",
-  "updated_at": "2026-10-09T20:58:57.148395Z"
+  "state": "released",
+  "token": null,
+  "updated_at": "2026-10-09T21:08:55.785777Z"
 }
