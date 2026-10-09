@@ -39,7 +39,7 @@ def _exact_rate_evidence_for_measure_cases() -> None:
             .filter(HsRate.hs_code.in_(MEASURES_CASES))
             .all()
         }
-        db.add_all(
+        inserted = [
             HsRate(
                 hs_code=code,
                 hs_prefix=code,
@@ -48,16 +48,20 @@ def _exact_rate_evidence_for_measure_cases() -> None:
             )
             for code in MEASURES_CASES
             if code not in existing
-        )
+        ]
+        db.add_all(inserted)
+        db.flush()
+        inserted_ids = [row.id for row in inserted]
         db.commit()
     try:
         yield
     finally:
-        with SessionLocal() as db:
-            db.query(HsRate).filter(HsRate.source_revision == revision).delete(
-                synchronize_session=False
-            )
-            db.commit()
+        if inserted_ids:
+            with SessionLocal() as db:
+                db.query(HsRate).filter(HsRate.id.in_(inserted_ids)).delete(
+                    synchronize_session=False
+                )
+                db.commit()
 
 
 def test_commodity_measures_regression() -> None:
