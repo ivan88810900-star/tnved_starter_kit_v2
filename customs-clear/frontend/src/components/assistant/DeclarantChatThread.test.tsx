@@ -155,6 +155,36 @@ describe('DeclarantChatThread grounding metadata', () => {
     expect(screen.queryByRole('link', { name: /Непроверенная ссылка/ })).not.toBeInTheDocument();
   });
 
+  it.each([
+    ['credentials', 'https://user:secret@example.com/source'],
+    ['leading whitespace', ' https://example.com/source'],
+    ['encoded control', 'https://example.com/%250Ahidden'],
+    ['bidi control', 'https://example.com/path\\u202Ehidden'],
+    ['backslash confusion', 'https://example.com\\\\@evil.test/source'],
+    ['malformed host', 'https://-bad.example/source'],
+  ])('keeps a %s citation visible but non-clickable', async (_label, url) => {
+    postMock.mockResolvedValue({
+      data: {
+        status: 'OK',
+        answer: {
+          answer: 'Проверенный серверный ответ.',
+          grounding: {
+            coverage: 'grounded',
+            mode: 'llm_grounded',
+            generated_from_server_facts: true,
+            citations: [{ id: 'S1', title: 'Непроверенная ссылка', url }],
+            limitations: [],
+          },
+        },
+      },
+    });
+
+    await sendQuestion();
+
+    expect(screen.getByText('[S1] Непроверенная ссылка')).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /Непроверенная ссылка/ })).not.toBeInTheDocument();
+  });
+
   it('does not trust affirmative labels without server evidence invariants', async () => {
     postMock.mockResolvedValue({
       data: {
