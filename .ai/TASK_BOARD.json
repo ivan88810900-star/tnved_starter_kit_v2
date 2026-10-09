@@ -2179,7 +2179,7 @@
       "unique_source_pr_count": 29
     }
   },
-  "revision": 680,
+  "revision": 681,
   "runs": [
     {
       "head_sha": null,
@@ -7081,7 +7081,7 @@
           "head_sha": "233ed6a64b0e75175358f8cdf0e7bcc71191b67b"
         }
       },
-      "updated_at": "2026-10-09T05:01:40Z",
+      "updated_at": "2026-10-09T06:15:08Z",
       "worktree": null,
       "ntm_fallback_checkpoint_20261009": {
         "corrective_pr": 256,
@@ -7155,92 +7155,110 @@
           "NTM full-sync audit has not been run on a lawful populated synchronized snapshot.",
           "Full #245 product acceptance and legal/source completeness remain NOT PASS."
         ]
+      },
+      "pravo_source_admission_checkpoint_20261009": {
+        "corrective_pr": 256,
+        "corrective_head_sha": "afab417d008bc6e386091544ac6589884eb758e5",
+        "corrective_tree_sha": "a1c7cc38118d879135e2eba9ed1aa79f4c2e0b1e",
+        "parent_sha": "ec4c3fc67fbb7ca90ec28e2ee89ff232711b2eac",
+        "executor": "/root/tariff_automation_20261009T0855MSK",
+        "lease_generation": 133,
+        "scope": "share fail-closed regulatory-document admission between product retrieval and source completeness so PRAVO official coverage excludes synthetic/reference-only/noise/inactive rows",
+        "state": "PUBLISHED_A5_CI_PASS",
+        "tests": "author focused 22 passed plus 3 subtests; populated synthetic mass-seed audit 24 passed plus 3 subtests after 5057 documents/5481 mappings; broad 898 passed plus 11 skipped and 32 subtests; independent A5 exact remote PASS with 80 passed plus 3 subtests and admission matrix",
+        "rejected_intermediate": "initial test asserted an absolute PRAVO count and was rejected by A5 as populated-snapshot brittle; final test uses baseline plus delta and preserves unrelated rows",
+        "ci_status": "PASSED_EXACT_HEAD_RUN_37892321961_JOB_113695775268",
+        "a6": "unchanged/not sent",
+        "unresolved": [
+          "NTM full-sync audit has not been run on a lawful populated synchronized snapshot.",
+          "Full #245 product acceptance and legal/source completeness remain NOT PASS."
+        ]
       }
     }
   ],
-  "updated_at": "2026-10-09T05:01:40Z",
+  "updated_at": "2026-10-09T06:15:08Z",
   "latest_scheduled_product_checkpoint": {
-    "updated_at": "2026-10-09T05:01:40Z",
+    "updated_at": "2026-10-09T06:15:08Z",
     "pr": 256,
     "branch": "agent/product-ntm-regressions-v1",
-    "head_sha": "ec4c3fc67fbb7ca90ec28e2ee89ff232711b2eac",
-    "tree_sha": "93571a51fdd03806693be76920163312edb24d68",
-    "parent_sha": "b4fef2b9952a5b58f4bc2545523daf92a3bfd518",
-    "block_base_sha": "4333061a162225f0efbbf0e971585a428ce78f82",
+    "head_sha": "afab417d008bc6e386091544ac6589884eb758e5",
+    "tree_sha": "a1c7cc38118d879135e2eba9ed1aa79f4c2e0b1e",
+    "parent_sha": "ec4c3fc67fbb7ca90ec28e2ee89ff232711b2eac",
     "base_pr": 245,
     "base_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
-    "completed_block": "isolate_regulatory_mass_seed_and_tnved_measures_broad_fixtures",
+    "completed_block": "exclude_synthetic_reference_only_pravo_rows_from_official_source_coverage",
     "author_tests": {
-      "initial_reproduction": "8 failed, 898 passed, 2 skipped, 32 subtests; exit 1",
-      "broad_final": "897 passed, 11 skipped, 32 subtests; exit 0",
-      "focused": "3 passed, 9 skipped; exit 0",
-      "cleanup_preservation": "2 passed plus pre-existing-row assertion; exit 0",
-      "partial_one_row": "expected total-count failure; exit 1",
-      "diff_check": "passed; exit 0"
+      "direct_reproduction": "general regulatory probe 0; PRAVO probe 1 for one synthetic/reference-only row; exit 0",
+      "focused": "22 passed, 3 subtests; exit 0",
+      "preexisting_row_isolation": "1 passed; exit 0",
+      "populated_mass_seed": "5057 documents, 5481 mappings; 24 passed, 3 subtests; seed/tests exit 0",
+      "broad_final": "898 passed, 11 skipped, 32 subtests; exit 0",
+      "diff_compile": "git diff --check and py_compile passed; exit 0"
     },
     "a5": {
-      "session": "/root/a5_ntm_fallback",
-      "status": "PASSED_EXACT_REMOTE_HEAD_AFTER_CLEANUP_FIX",
-      "empty_disposable": "1 passed, 9 skipped; exit 0",
-      "partial_one_row": "threshold ran and failed; exit 1",
-      "cleanup_adversarial": "three pre-existing rows survived; fixture-only inserted rows removed; exit 0",
-      "relevant_slice": "111 passed, 9 skipped, 3 subtests; exit 0"
+      "session": "/root/a5_pravo_probe",
+      "status": "PASSED_EXACT_REMOTE_HEAD_AFTER_FIXTURE_BASELINE_FIX",
+      "initial_finding": "absolute PRAVO count was brittle on populated snapshots; fixed to baseline plus delta",
+      "focused": "22 passed, 3 subtests; exit 0",
+      "admission_matrix": "active normal/null/verified admitted; noise/synthetic/reference-only/inactive excluded; exit 0",
+      "broader": "80 passed, 3 subtests; exit 0",
+      "remote_binding": "connector remote tree byte-identical to reviewed local tree"
     },
     "ci": {
       "status": "PASSED_EXACT_HEAD",
-      "head_sha": "ec4c3fc67fbb7ca90ec28e2ee89ff232711b2eac",
-      "run_id": 37886387124,
-      "job_id": 113677226792,
+      "head_sha": "afab417d008bc6e386091544ac6589884eb758e5",
+      "run_id": 37892321961,
+      "job_id": 113695775268,
       "job": "offline-safety",
       "conclusion": "success",
-      "completed_at": "2026-10-09T04:59:15Z",
-      "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/37886387124"
+      "completed_at": "2026-10-09T06:12:57Z",
+      "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/37892321961"
     },
     "blockers": [
       "Full #245 backend/frontend acceptance and legal/source completeness remain NOT PASS.",
-      "Regulatory mass-seed and NTM full-sync dataset audits require lawful populated synchronized snapshots."
+      "NTM full-sync audit requires a lawful populated synchronized snapshot."
     ],
     "a6": {
       "request": "core-s1-6415f443120f-r9-g106",
       "status": "UNCHANGED_NOT_SENT"
     },
     "protected_actions_performed": false,
-    "next_step": "Run regulatory mass-seed and NTM full-sync audits on lawful populated snapshots, or continue the next reproduced #245 source/applicability defect without widening definite rules."
+    "next_step": "Run NTM full-sync audit on a lawful populated synchronized snapshot if available, or continue the next reproduced #245 source/applicability defect without widening definite rules."
   },
   "latest_development_checkpoint": {
-    "checked_at": "2026-10-09T05:01:40Z",
+    "checked_at": "2026-10-09T06:15:08Z",
     "pr": 256,
     "branch": "agent/product-ntm-regressions-v1",
-    "head_sha": "ec4c3fc67fbb7ca90ec28e2ee89ff232711b2eac",
-    "tree_sha": "93571a51fdd03806693be76920163312edb24d68",
+    "head_sha": "afab417d008bc6e386091544ac6589884eb758e5",
+    "tree_sha": "a1c7cc38118d879135e2eba9ed1aa79f4c2e0b1e",
     "base_pr": 245,
     "base_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
-    "block": "isolate_regulatory_mass_seed_and_tnved_measures_broad_fixtures",
+    "block": "exclude_synthetic_reference_only_pravo_rows_from_official_source_coverage",
     "status": "DRAFT_CHECKPOINT_A5_CI_PASS",
     "author_tests": [
-      "897 broad-slice tests passed plus 11 skipped and 32 subtests; exit 0",
-      "pre-existing rate-row cleanup probe passed; exit 0",
-      "one-row partial regulatory dataset failed the original 5000 threshold as expected; exit 1",
-      "git diff --check passed; exit 0"
+      "focused source/regulatory 22 passed plus 3 subtests; exit 0",
+      "populated synthetic mass-seed audit 24 passed plus 3 subtests after 5057 documents/5481 mappings; seed/tests exit 0",
+      "broad backend slice 898 passed, 11 skipped plus 32 subtests; exit 0",
+      "git diff --check and py_compile passed; exit 0"
     ],
     "a5": {
-      "session": "/root/a5_ntm_fallback",
+      "session": "/root/a5_pravo_probe",
       "status": "PASSED_EXACT_REMOTE_HEAD",
-      "relevant_slice": "111 passed, 9 skipped, 3 subtests; exit 0",
-      "adversarial": "empty dataset skips; non-empty partial dataset fails threshold; three pre-existing rate rows survive teardown"
+      "relevant_slice": "80 passed plus 3 subtests; exit 0",
+      "adversarial": "pre-existing admitted PRAVO row survives; shared admission matrix preserves active normal/null/verified and excludes synthetic/noise/reference-only/inactive"
     },
     "ci": {
       "status": "PASSED_EXACT_HEAD",
-      "head_sha": "ec4c3fc67fbb7ca90ec28e2ee89ff232711b2eac",
-      "run_id": 37886387124,
-      "job_id": 113677226792,
+      "head_sha": "afab417d008bc6e386091544ac6589884eb758e5",
+      "run_id": 37892321961,
+      "job_id": 113695775268,
       "job": "offline-safety",
       "conclusion": "success",
-      "completed_at": "2026-10-09T04:59:15Z",
-      "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/37886387124"
+      "completed_at": "2026-10-09T06:12:57Z",
+      "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/37892321961"
     },
-    "current_data_state": "remaining broad failures are dataset-contract fixtures; empty databases are not misreported as failed imports and partial datasets cannot bypass thresholds",
-    "next_step": "Run regulatory mass-seed and NTM full-sync audits on lawful populated snapshots, or continue the next reproduced #245 source/applicability defect without widening definite rules.",
+    "current_data_state": "synthetic/reference-only PRAVO rows no longer satisfy official source coverage; populated synthetic mass-seed audit passes but does not establish legal/source completeness",
+    "next_step": "Run NTM full-sync audit on a lawful populated synchronized snapshot if available, or continue the next reproduced #245 source/applicability defect without widening definite rules.",
     "full_245_status": "NOT_PASS",
     "a6": "core-s1-6415f443120f-r9-g106 unchanged, not sent",
     "protected_actions_performed": false
