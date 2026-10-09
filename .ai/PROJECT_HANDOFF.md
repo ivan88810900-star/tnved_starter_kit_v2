@@ -3,6 +3,25 @@
 **Снимок:** 2026-10-08 (UTC). **Единственный репозиторий:** [ivan88810900-star/tnved_starter_kit_v2](https://github.com/ivan88810900-star/tnved_starter_kit_v2).  
 **Авторитетное состояние:** ветка `agent/orchestration-state`, файлы `.ai/TASK_BOARD.json`, `.ai/COORDINATOR_LEASE.json`, `.ai/orchestration/A6_LIVE_STATUS.json`. Этот документ — указатель и контрольная точка, **не** право на запись/merge/A6. Перед действием заново читать текущие HEAD и state. Не полагаться на Business-чат.
 
+## 0aaaa. #245 — канонический disposable bootstrap закрыл FTS classification fixture gap
+
+**Новый текущий checkpoint:** [draft PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256), `agent/product-ntm-regressions-v1` @ `321b4ac72b13ec40a0dc3e2b05f8079f39fb6ee7`, tree `ef6fd5680b6c006be5c836643a0ab1cbceef111a`, parent `a89904e335aa7cb3ae906b094031c0155254000e`; base #245 неизменён `e39e19787bd913baeb6f85577a13e1116458e633`.
+
+Воспроизведён fixture gap: свежий `init_db()` оставлял 0 писем ФТС и 0 classification rulings, поэтому broad #245 останавливался на inventory assertions. Добавлен отдельный bootstrap, который создаёт только новую SQLite БД, проверяет SHA-256 committed TN VED каталога, открывает источник immutable/read-only, детерминированно оставляет `MIN(id)` для 39 legacy duplicate-code групп и загружает тестовый classification inventory. Существующий target отклоняется; запуск после уже загруженного `app.db` fail-closed, чтобы cached `engine`/`SessionLocal` не записал в ранее привязанную БД. Результат явно помечен как disposable test inventory, не legal/source-completeness snapshot.
+
+Проверки exact final tree:
+- reproduction до исправления: 0 FTS letters, первые 3 inventory assertions failed, exit 1;
+- author safety tests: **5 passed**, exit 0; bootstrap + исходные FTS/classification suites: **32 passed**, exit 0;
+- создано 13 979 уникальных кодов, 206 писем, 205 classification decisions, 50 formal и 520 reference rulings; `integrity_check=ok`;
+- независимый A5 `/root/a5_ntm_fallback`: первый candidate **REJECT HIGH/MEDIUM** из-за cached-DB mutation и WAL sidecars; исправленный exact tree **PASS**. Pre-bound DB осталась 0/0/0/0, новый target не создан; hash источника неизменён, WAL/SHM отсутствуют, для всех 39 duplicate groups 0 расхождений с `MIN(id)`;
+- remote tree побайтово совпадает с reviewed tree;
+- полный backend run остановлен runtime security policy при попытке unrelated теста обратиться к `api.proxyapi.ru`; обход не выполнялся, full-suite PASS не заявляется;
+- exact-head GitHub Actions: **PENDING_NO_RUN_OBSERVED**. После push основной ветки и fast-forward CI alias `agent/product-ntm-bootstrap-ci-v1` workflow runs и combined statuses остаются пустыми. Candidate не считается окончательно принятым.
+
+Полный #245 product/legal/source-completeness **NOT PASS**. Lawful populated synchronized NTM snapshot всё ещё недоступен; этот bootstrap его не заменяет. Protected merge, production/DB writes, enforcement flags, secrets/permissions, destructive migration и внешний A6 не выполнялись; `core-s1-6415f443120f-r9-g106` неизменён и не отправлен.
+
+Следующий шаг — повторно проверить mandatory exact-head CI, затем использовать bootstrap для следующего bounded offline fixture tranche #245. NTM full-sync completeness остаётся заблокированной до законно доступного populated synchronized snapshot.
+
 ## 0aaa. #245 — official SGR NTM v2 scope и runtime admission теперь fail-closed
 
 **Новый текущий checkpoint:** [draft PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256), `agent/product-ntm-regressions-v1` @ `a89904e335aa7cb3ae906b094031c0155254000e`, tree `641a1acf45728729c683bef2728521cff6e26604`, parent `d5dd222f108399eac82a5d8001d7615a00953d08`; base #245 неизменён `e39e19787bd913baeb6f85577a13e1116458e633`.
