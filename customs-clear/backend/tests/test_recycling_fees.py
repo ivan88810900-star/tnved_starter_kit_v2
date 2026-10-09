@@ -9,6 +9,15 @@ from app.services.normative_store import get_recycling_fee
 from app.services.payment_engine import compute_payments
 
 
+@pytest.fixture(scope="module", autouse=True)
+def _recycling_fee_fixture() -> None:
+    from app.services.normative_store import init_db
+    from scripts.seed_recycling_fees import seed
+
+    init_db()
+    seed()
+
+
 class TestRecyclingFeesData:
     @pytest.fixture(autouse=True)
     def _db(self):
@@ -94,22 +103,24 @@ class TestRecyclingFeeInPaymentEngine:
             "vehicle_is_new": True,
             "engine_volume": 1500,
         })
-        assert result["status"] == "OK"
+        assert result["status"] == "REVIEW_REQUIRED"
         rf = result.get("recycling_fee", {})
         assert rf.get("applied") is True
         assert rf["fee_amount"] == 84000.0
         assert result["breakdown"]["recycling_fee"] == 84000.0
-        assert result["breakdown"]["total_payable"] > result["breakdown"]["duty"] + result["breakdown"]["vat"]
+        assert result["breakdown"]["total_payable"] is None
+        assert result["breakdown"]["total_payable_provisional"] > result["breakdown"]["duty"]
 
     def test_non_vehicle_no_recycling_fee(self) -> None:
         result = compute_payments({
             "hs_code": "8517120000",
             "customs_value": 100000,
         })
-        assert result["status"] == "OK"
+        assert result["status"] == "REVIEW_REQUIRED"
         rf = result.get("recycling_fee", {})
         assert rf.get("applied") is False
         assert result["breakdown"]["recycling_fee"] == 0.0
+        assert result["breakdown"]["total_payable"] is None
 
     def test_embargo_response_has_recycling_fee_field(self) -> None:
         result = compute_payments({

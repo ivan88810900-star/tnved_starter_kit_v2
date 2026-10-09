@@ -8,6 +8,15 @@ from app.db import SessionLocal
 from app.services.normative_store import get_tariff_preference
 
 
+@pytest.fixture(scope="module", autouse=True)
+def _tariff_preference_fixture() -> None:
+    from app.services.normative_store import init_db
+    from scripts.seed_tariff_preferences import seed
+
+    init_db()
+    seed()
+
+
 class TestCountryTariffPreferencesData:
     @pytest.fixture(autouse=True)
     def _db(self):

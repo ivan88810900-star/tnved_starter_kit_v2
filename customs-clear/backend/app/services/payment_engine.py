@@ -1,13 +1,16 @@
 from __future__ import annotations
 
+import json
 import re
 import unicodedata
 from dataclasses import dataclass
 from datetime import date, datetime, timezone
 from math import isfinite
+from pathlib import Path
 from typing import Any
 
 from ..db import SessionLocal
+from ..models.core import SourceStatus
 from ..models.tnved import Commodity, HsDutyRule, SpecialDuty, VatPreference
 from .customs_fees import calculate_customs_fee
 from .invoice_analyzer import _parse_duty_rate
@@ -29,7 +32,38 @@ from .payment_revision_utils import (
     is_safe_official_anti_dumping_source_url,
     is_safe_official_countervailing_source_url,
     is_safe_official_special_safeguard_source_url,
+    is_payment_revision_fresh,
 )
+
+
+_LIVE_ANIMAL_VAT_MAPPING_PATH = (
+    Path(__file__).resolve().parents[2] / "data" / "pp908_live_animal_vat_mapping.json"
+)
+try:
+    with _LIVE_ANIMAL_VAT_MAPPING_PATH.open(encoding="utf-8") as _mapping_file:
+        _LIVE_ANIMAL_VAT_MAPPING = json.load(_mapping_file)
+except (OSError, ValueError, TypeError):
+    # Missing/corrupt evidence must never broaden the reduced rate.  Exact
+    # 0102..0105 inputs will be held for review by the resolver below.
+    _LIVE_ANIMAL_VAT_MAPPING = {}
+
+_LIVE_ANIMAL_AUTO_VAT10_CODES = frozenset(
+    str(code) for code in _LIVE_ANIMAL_VAT_MAPPING.get("auto_vat10_codes", [])
+)
+_LIVE_ANIMAL_EXCLUDED_BREEDING_CODES = frozenset(
+    str(code) for code in _LIVE_ANIMAL_VAT_MAPPING.get("excluded_breeding_codes", [])
+)
+_LIVE_ANIMAL_CHARACTERISTIC_REQUIRED_CODES = frozenset(
+    str(code)
+    for code in _LIVE_ANIMAL_VAT_MAPPING.get("product_characteristic_required_codes", [])
+)
+_LIVE_ANIMAL_ALL_MAPPED_CODES = (
+    _LIVE_ANIMAL_AUTO_VAT10_CODES
+    | _LIVE_ANIMAL_EXCLUDED_BREEDING_CODES
+    | _LIVE_ANIMAL_CHARACTERISTIC_REQUIRED_CODES
+)
+_LIVE_ANIMAL_VAT_PREFIXES = ("0102", "0103", "0104", "0105")
+_LIVE_ANIMAL_BREEDING_STATUSES = frozenset({"breeding", "non_breeding", "unknown"})
 
 
 @dataclass
@@ -102,9 +136,8 @@ def _validated_automatic_duty_result(value: Any, *, label: str) -> float:
 
 
 _LEGACY_DUTY_NUMBER = r"[0-9]+(?:\.[0-9]+)?"
-_LEGACY_DUTY_UNIT = (
-    r"(?:евро(?:\s*/\s*кг|\s+за(?:\s+кг)?)?|eur(?:\s*/\s*кг)?|€(?:\s*/\s*кг)?)"
-)
+_LEGACY_DUTY_CURRENCY = r"(?:евро|eur|€)"
+_LEGACY_DUTY_UNIT = rf"{_LEGACY_DUTY_CURRENCY}(?:\s*/\s*кг|\s+за\s+(?:1\s+)?кг)?"
 _LEGACY_DUTY_SIMPLE_RE = re.compile(
     rf"(?:{_LEGACY_DUTY_NUMBER}|{_LEGACY_DUTY_NUMBER}\s*%)",
     re.IGNORECASE,
@@ -117,6 +150,11 @@ _LEGACY_DUTY_COMBINED_RE = re.compile(
     rf"{_LEGACY_DUTY_NUMBER}\s*%\s*(?:,\s*)?"
     rf"(?:(?:но\s+)?(?:не\s+менее|не\s+меньше)|плюс)\s*"
     rf"{_LEGACY_DUTY_NUMBER}\s*{_LEGACY_DUTY_UNIT}",
+    re.IGNORECASE,
+)
+_LEGACY_DUTY_CURRENCY_RE = re.compile(_LEGACY_DUTY_CURRENCY, re.IGNORECASE)
+_LEGACY_DUTY_EXPLICIT_KG_RE = re.compile(
+    r"(?:евро|eur|€)\s*(?:/\s*кг|за\s*(?:1\s*)?кг)",
     re.IGNORECASE,
 )
 
@@ -176,6 +214,11 @@ def _parse_validated_legacy_duty_rate(raw_value: Any) -> dict[str, Any]:
     parsed = _parse_duty_rate(raw_text)
     _validated_automatic_duty_operand(parsed.get("ad_valorem"), label="ставки пошлины в hs_rates")
     _validated_automatic_duty_operand(parsed.get("specific_eur"), label="специфической ставки в hs_rates")
+    if _LEGACY_DUTY_CURRENCY_RE.search(raw_text) and not _LEGACY_DUTY_EXPLICIT_KG_RE.search(raw_text):
+        raise ValueError(
+            "Некорректная автоматическая ставка пошлины в hs_rates: "
+            "для специфической части не указана единица измерения"
+        )
     return parsed
 
 
@@ -290,14 +333,28 @@ def _find_duty_rule_for_hs(hs_code: str) -> tuple[HsDutyRule | _FallbackDutyRule
     if not rate:
         return None, 0
     parsed = _parse_validated_legacy_duty_rate(rate.duty_rate)
-    rule_type = "specific" if (parsed.get("specific_amount") is not None) else "ad_valorem"
+    raw_rate = str(rate.duty_rate).strip()
+    has_specific = _LEGACY_DUTY_EXPLICIT_KG_RE.search(raw_rate) is not None
+    has_ad_valorem = "%" in raw_rate or not has_specific
+    legacy_rule = str(parsed.get("rule") or "STANDARD").upper()
+    if has_specific and has_ad_valorem:
+        if legacy_rule == "MAX":
+            rule_type = "combined_max"
+        elif legacy_rule == "ADD":
+            rule_type = "combined_add"
+        else:
+            raise ValueError("Неоднозначное комбинированное правило пошлины в hs_rates")
+    elif has_specific:
+        rule_type = "specific"
+    else:
+        rule_type = "ad_valorem"
     fallback = _FallbackDutyRule(
         commodity_code=str(rate.hs_code or rate.hs_prefix or _digits_hs(hs_code)),
         type=rule_type,
         ad_valorem_pct=(float(parsed.get("ad_valorem")) if parsed.get("ad_valorem") is not None else None),
-        specific_amount=(float(parsed.get("specific_amount")) if parsed.get("specific_amount") is not None else None),
-        specific_currency=str(parsed.get("specific_currency") or ""),
-        specific_uom=str(parsed.get("specific_uom") or ""),
+        specific_amount=(float(parsed.get("specific_eur")) if has_specific else None),
+        specific_currency="EUR" if has_specific else "",
+        specific_uom="kg" if has_specific else "",
     )
     return fallback, rate_match_len
 
@@ -332,12 +389,11 @@ def _special_duty_prefix_candidates(hs_code: str) -> list[tuple[str, int]]:
     return [(p, m) for p, m in out if not (p in seen or seen.add(p))]
 
 
-def _special_duty_is_effective(
+def _special_duty_date_window(
     effective_from: Any | None,
     effective_to: Any | None,
-    on_date: date,
-) -> bool:
-    """Validate an ISO date window and fail closed on malformed non-empty bounds."""
+) -> tuple[date | None, date | None] | None:
+    """Distinguish an invalid window from a valid but inactive measure."""
     parsed: list[date | None] = []
     for raw in (effective_from, effective_to):
         value = str(raw or "").strip()
@@ -345,13 +401,27 @@ def _special_duty_is_effective(
             parsed.append(None)
             continue
         if re.fullmatch(r"\d{4}-\d{2}-\d{2}", value) is None:
-            return False
+            return None
         try:
             parsed.append(date.fromisoformat(value))
         except ValueError:
-            return False
+            return None
 
     starts, ends = parsed
+    if starts is not None and ends is not None and starts > ends:
+        return None
+    return starts, ends
+
+
+def _special_duty_is_effective(
+    effective_from: Any | None,
+    effective_to: Any | None,
+    on_date: date,
+) -> bool:
+    window = _special_duty_date_window(effective_from, effective_to)
+    if window is None:
+        return False
+    starts, ends = window
     if starts is not None and starts > on_date:
         return False
     if ends is not None and ends < on_date:
@@ -375,8 +445,19 @@ def _trade_remedy_revision_is_not_future(value: Any | None) -> bool:
     return revision_date <= date.today()
 
 
-def _special_duty_admission_failure(row: SpecialDuty) -> str | None:
+def _special_duty_admission_failure(
+    row: SpecialDuty,
+    source_statuses: dict[str, SourceStatus],
+) -> str | None:
     """Return a fail-closed reason or admit measure-specific official evidence."""
+    for field in ("rate_percent", "rate_specific"):
+        raw = getattr(row, field, None)
+        try:
+            value = float(raw) if raw is not None and not isinstance(raw, bool) else None
+        except (TypeError, ValueError, OverflowError):
+            value = None
+        if value is None or not isfinite(value) or value < 0:
+            return "special_duty_rate_invalid"
     if bool(getattr(row, "needs_verification", False)):
         return "special_duty_provenance_unverified"
     if not str(getattr(row, "regulatory_act", "") or "").strip():
@@ -393,6 +474,7 @@ def _special_duty_admission_failure(row: SpecialDuty) -> str | None:
 
     measure_type = str(getattr(row, "measure_type", "") or "anti_dumping").strip().lower()
     if measure_type == "anti_dumping":
+        source_code = getattr(row, "source_code", None)
         revision = getattr(row, "source_revision", None)
         synced_at = getattr(row, "synced_at", None)
         marker_ok = is_official_anti_dumping_row_marker(
@@ -401,6 +483,7 @@ def _special_duty_admission_failure(row: SpecialDuty) -> str | None:
         )
         url_ok = is_safe_official_anti_dumping_source_url(getattr(row, "source_url", None))
     elif measure_type in {"special_safeguard", "special_protective"}:
+        source_code = getattr(row, "safeguard_source_code", None)
         revision = getattr(row, "safeguard_source_revision", None)
         synced_at = getattr(row, "safeguard_synced_at", None)
         marker_ok = is_official_special_safeguard_row_marker(
@@ -411,6 +494,7 @@ def _special_duty_admission_failure(row: SpecialDuty) -> str | None:
             getattr(row, "safeguard_source_url", None)
         )
     elif measure_type == "countervailing":
+        source_code = getattr(row, "countervailing_source_code", None)
         revision = getattr(row, "countervailing_source_revision", None)
         synced_at = getattr(row, "countervailing_synced_at", None)
         marker_ok = is_official_countervailing_row_marker(
@@ -430,6 +514,13 @@ def _special_duty_admission_failure(row: SpecialDuty) -> str | None:
         or not _trade_remedy_timestamp_is_not_future(synced_at)
     ):
         return "special_duty_provenance_future"
+    status = source_statuses.get(str(source_code or "").strip().upper())
+    if status is None or str(status.revision or "").strip() != str(revision or "").strip():
+        return "special_duty_provenance_unverified"
+    if not _trade_remedy_timestamp_is_not_future(status.synced_at):
+        return "special_duty_provenance_future"
+    if status.is_stale or not is_payment_revision_fresh(revision):
+        return "special_duty_provenance_stale"
     return None
 
 
@@ -459,12 +550,36 @@ def _special_duty_identity(row: SpecialDuty) -> tuple[Any, ...]:
     )
 
 
+def _normalize_special_duty_scope_text(value: Any | None) -> str:
+    """Canonicalize explicit scope text without fuzzy/legal inference."""
+    normalized = unicodedata.normalize("NFKC", str(value or "")).casefold()
+    return re.sub(r"\s+", " ", normalized).strip()
+
+
+def _special_duty_scope_is_confirmed(
+    row: SpecialDuty,
+    *,
+    manufacturer: str | None,
+    product_description: str | None,
+) -> bool:
+    """Require exact normalized evidence for every persisted scope restriction."""
+    required_manufacturer = _normalize_special_duty_scope_text(row.manufacturer_exporter)
+    required_product = _normalize_special_duty_scope_text(row.product_description)
+    if required_manufacturer and required_manufacturer != _normalize_special_duty_scope_text(manufacturer):
+        return False
+    if required_product and required_product != _normalize_special_duty_scope_text(product_description):
+        return False
+    return True
+
+
 def _resolve_special_duties(
     hs_code: str,
     country: str | None,
     customs_value: float,
     quantity: float,
     fx_rates: dict[str, float] | None,
+    manufacturer: str | None = None,
+    product_description: str | None = None,
 ) -> tuple[float, list[dict[str, Any]], bool]:
     cands = _special_duty_prefix_candidates(hs_code)
     if not cands:
@@ -479,15 +594,49 @@ def _resolve_special_duties(
         )
         if country_norm:
             query = query.filter(SpecialDuty.origin_country == country_norm)
+        candidates = query.all()
+        invalid_windows = [
+            row for row in candidates
+            if _special_duty_date_window(row.effective_from, row.effective_to) is None
+        ]
+        if invalid_windows:
+            return 0.0, [{
+                "warning": (
+                    "Даты действия специальной пошлины некорректны. "
+                    "Нельзя подтвердить неприменимость меры; требуется проверка."
+                ),
+                "affected_codes": sorted({row.hs_code_prefix for row in invalid_windows}),
+                "review_reason": "special_duty_dates_invalid",
+            }], True
         rows = [
             row
-            for row in query.all()
+            for row in candidates
             if _special_duty_is_effective(
                 row.effective_from,
                 row.effective_to,
                 today,
             )
         ]
+        source_codes = {
+            str(code or "").strip().upper()
+            for row in rows
+            for code in (
+                row.source_code,
+                row.safeguard_source_code,
+                row.countervailing_source_code,
+            )
+            if str(code or "").strip()
+        }
+        source_statuses = {
+            str(status.source_code or "").strip().upper(): status
+            for status in (
+                db.query(SourceStatus)
+                .filter(SourceStatus.source_code.in_(source_codes))
+                .all()
+                if source_codes
+                else []
+            )
+        }
 
     if not rows:
         return 0.0, [], False
@@ -505,10 +654,31 @@ def _resolve_special_duties(
             }
         ], True
 
+    unresolved_scope_rows = [
+        row
+        for row in rows
+        if not _special_duty_scope_is_confirmed(
+            row,
+            manufacturer=manufacturer,
+            product_description=product_description,
+        )
+    ]
+    if unresolved_scope_rows:
+        return 0.0, [
+            {
+                "warning": (
+                    "Специальная пошлина не включена в итог: применимость по изготовителю, "
+                    "экспортёру или описанию товара не подтверждена точным совпадением."
+                ),
+                "affected_codes": sorted({r.hs_code_prefix for r in unresolved_scope_rows}),
+                "review_reason": "special_duty_scope_unresolved",
+            }
+        ], True
+
     inadmissible_rows = [
         (row, failure)
         for row in rows
-        if (failure := _special_duty_admission_failure(row)) is not None
+        if (failure := _special_duty_admission_failure(row, source_statuses)) is not None
     ]
     if inadmissible_rows:
         failure_reasons = {failure for _, failure in inadmissible_rows}
@@ -547,10 +717,16 @@ def _resolve_special_duties(
     details: list[dict[str, Any]] = []
     total = 0.0
     for r in rows:
-        part_ad = customs_value * float(r.rate_percent or 0.0) / 100.0
+        part_ad = _validated_payment_result(
+            customs_value * float(r.rate_percent) / 100.0,
+            label="Сумма специальной пошлины",
+        )
         ccy = (r.currency_code or "RUB").upper().strip()
-        fx = _resolve_fx_rate(ccy, fx_rates)
-        part_spec = float(r.rate_specific or 0.0) * float(quantity or 0.0) * fx
+        specific_rate = float(r.rate_specific)
+        # An ad-valorem amount is already in RUB. Stored currency metadata
+        # must not require or invent an exchange rate for a zero fixed part.
+        fx = _resolve_fx_rate(ccy, fx_rates) if specific_rate else None
+        part_spec = specific_rate * float(quantity or 0.0) * fx if fx is not None else 0.0
         part = part_ad + part_spec
         total += part
         details.append(
@@ -563,6 +739,8 @@ def _resolve_special_duties(
                 "currency_code": ccy,
                 "fx_rate": fx,
                 "regulatory_act": r.regulatory_act or "",
+                "manufacturer_exporter": r.manufacturer_exporter or "",
+                "product_description": r.product_description or "",
                 "effective_from": r.effective_from or "",
                 "effective_to": r.effective_to or "",
                 "needs_verification": bool(getattr(r, "needs_verification", False)),
@@ -579,7 +757,7 @@ def _compute_structured_duty(
     quantity: float,
     net_weight_kg: float | None,
     extra_quantity: float | None,
-    duty_rule: HsDutyRule | None,
+    duty_rule: HsDutyRule | _FallbackDutyRule | None,
     manual_duty_rate: float | None,
     auto_duty_rate: float,
     fx_rates: dict[str, float] | None,
@@ -664,6 +842,15 @@ def _compute_structured_duty(
         duty = specific_amount_rub or 0.0
         return duty, 0.0, ad_valorem_amount, specific_amount_rub, "specific", fx_rate, specific_qty_used
 
+    if rule_type == "combined_add":
+        if ad_valorem_amount is None or specific_amount_rub is None:
+            raise ValueError("Для комбинированной пошлины ADD отсутствует обязательная часть ставки")
+        duty = _validated_automatic_duty_result(
+            ad_valorem_amount + specific_amount_rub,
+            label="комбинированной пошлины",
+        )
+        return duty, ad_pct, ad_valorem_amount, specific_amount_rub, "combined_add", fx_rate, specific_qty_used
+
     # combined max/min
     left = ad_valorem_amount
     right = specific_amount_rub
@@ -744,6 +931,110 @@ def _vat_prefix_candidates(hs_code: str) -> list[tuple[str, int]]:
         if len(d) >= length:
             out.append((d[:length], length))
     return out
+
+
+def _resolve_live_animal_vat_scope(
+    hs_code: str,
+    breeding_status: Any | None,
+) -> dict[str, Any]:
+    """Resolve PP908 live-animal applicability from code plus an explicit fact.
+
+    The persisted mapping proves only three things: five leaf codes are named
+    slaughter animals, ten are explicitly breeding codes, and thirty leaves do
+    not encode breeding status.  Free text is deliberately not interpreted.
+    For the thirty ambiguous leaves, a stable typed input is required; otherwise
+    VAT and the final payable remain withheld for review.
+    """
+    hs = _digits_hs(hs_code)
+    if len(hs) != 10 or not hs.startswith(_LIVE_ANIMAL_VAT_PREFIXES):
+        return {"status": "not_applicable", "review_reason": None, "vat_rate": None}
+
+    raw_status = str(breeding_status or "").strip().lower()
+    status = raw_status or "unknown"
+    if status not in _LIVE_ANIMAL_BREEDING_STATUSES:
+        return {
+            "status": "invalid_characteristic",
+            "review_reason": "vat_live_animal_characteristic_invalid",
+            "vat_rate": 22.0,
+            "reason": (
+                "НДС по живому животному не определён: допустим только явный "
+                "племенной статус breeding, non_breeding или unknown."
+            ),
+        }
+
+    if not _LIVE_ANIMAL_ALL_MAPPED_CODES or hs not in _LIVE_ANIMAL_ALL_MAPPED_CODES:
+        return {
+            "status": "mapping_missing",
+            "review_reason": "vat_live_animal_mapping_missing",
+            "vat_rate": 22.0,
+            "reason": (
+                "НДС по живому животному не определён: код отсутствует в сохранённой "
+                "карте листьев 0102–0105."
+            ),
+        }
+
+    if hs in _LIVE_ANIMAL_AUTO_VAT10_CODES:
+        if status == "breeding":
+            return {
+                "status": "code_characteristic_conflict",
+                "review_reason": "vat_live_animal_characteristic_conflict",
+                "vat_rate": 22.0,
+                "reason": (
+                    "Код прямо описан как убойный, но вход отмечен племенным; "
+                    "льгота удержана до проверки кода и документов."
+                ),
+            }
+        return {
+            "status": "automatic_slaughter_code",
+            "review_reason": None,
+            "vat_rate": 10.0,
+            "reason": "Ставка 10%: точный код прямо назван убойным в сохранённой карте ЕТТ ЕАЭС.",
+        }
+
+    if hs in _LIVE_ANIMAL_EXCLUDED_BREEDING_CODES:
+        if status == "non_breeding":
+            return {
+                "status": "code_characteristic_conflict",
+                "review_reason": "vat_live_animal_characteristic_conflict",
+                "vat_rate": 22.0,
+                "reason": (
+                    "Код прямо описан как племенной, но вход отмечен неплеменным; "
+                    "льгота удержана до проверки кода и документов."
+                ),
+            }
+        return {
+            "status": "breeding_code_excluded",
+            "review_reason": None,
+            "vat_rate": 22.0,
+            "reason": "Ставка 22%: точный племенной код исключён из льготного перечня ПП РФ №908.",
+        }
+
+    if status == "non_breeding":
+        return {
+            "status": "non_breeding_confirmed",
+            "review_reason": None,
+            "vat_rate": 10.0,
+            "reason": (
+                "Ставка 10%: для неоднозначного кода явно подтверждён неплеменной статус; "
+                "факт должен быть подтверждён товарными документами."
+            ),
+        }
+    if status == "breeding":
+        return {
+            "status": "breeding_confirmed",
+            "review_reason": None,
+            "vat_rate": 22.0,
+            "reason": "Ставка 22%: явно подтверждён племенной статус, исключённый ПП РФ №908.",
+        }
+    return {
+        "status": "characteristic_required",
+        "review_reason": "vat_live_animal_characteristic_required",
+        "vat_rate": 22.0,
+        "reason": (
+            "НДС по живому животному не определён: этот код не доказывает племенной "
+            "статус. Укажите breeding или non_breeding по товарным документам."
+        ),
+    }
 
 
 def _find_vat_preference(hs_code: str) -> tuple[VatPreference | None, int]:
@@ -1048,6 +1339,10 @@ def compute_payments(payload: dict[str, Any]) -> dict[str, Any]:
         customs_value=customs_value,
         quantity=qty,
         fx_rates=payload.get("_fx_rates") if isinstance(payload.get("_fx_rates"), dict) else None,
+        manufacturer=str(payload.get("manufacturer") or "").strip() or None,
+        product_description=str(
+            payload.get("product_description") or payload.get("description") or ""
+        ).strip() or None,
     )
     special_duties_warning: str | None = None
     if special_duties_details and special_duties_details[0].get("warning"):
@@ -1058,6 +1353,14 @@ def compute_payments(payload: dict[str, Any]) -> dict[str, Any]:
             if special_duties_details
             else "special_duty_manual_review"
         )
+
+    live_animal_vat_scope = _resolve_live_animal_vat_scope(
+        hs_code,
+        payload.get("live_animal_breeding_status"),
+    )
+    live_animal_review_reason = live_animal_vat_scope.get("review_reason")
+    if live_animal_review_reason:
+        payment_review_reasons.append(str(live_animal_review_reason))
 
     # Recycling fee (утильсбор) for vehicles (8701-8705, 8711)
     recycling_fee_amount = 0.0
@@ -1086,7 +1389,11 @@ def compute_payments(payload: dict[str, Any]) -> dict[str, Any]:
     # НДС при ввозе: база = таможенная стоимость + ввозная пошлина + акциз + антидемпинг/
     # компенсационные/специальные пошлины (без таможенного сбора).
     vat_pref, vat_pref_match_len = _find_vat_preference(hs_code)
-    auto_vat_rate = float(vat_pref.vat_rate) if vat_pref else 22.0
+    live_animal_vat_rate = live_animal_vat_scope.get("vat_rate")
+    if live_animal_vat_rate is not None:
+        auto_vat_rate = float(live_animal_vat_rate)
+    else:
+        auto_vat_rate = float(vat_pref.vat_rate) if vat_pref else 22.0
     vat_decree_info = (vat_pref.decree_info or "") if vat_pref else ""
     vat_pref_comment = (vat_pref.comment or "") if vat_pref else ""
     if manual_vat_rate is not None:
@@ -1094,6 +1401,12 @@ def compute_payments(payload: dict[str, Any]) -> dict[str, Any]:
         vat_reason = f"Указано вручную: {vat_rate}%"
         vat_decree_info = ""
         vat_pref_comment = ""
+    elif live_animal_vat_rate is not None:
+        vat_rate = auto_vat_rate
+        vat_reason = str(live_animal_vat_scope.get("reason") or "")
+        if live_animal_vat_scope.get("status") not in {"automatic_slaughter_code"}:
+            vat_decree_info = "ПП РФ №908; сохранённая карта листьев 0102–0105"
+            vat_pref_comment = "Применимость зависит от явно указанного племенного статуса."
     elif vat_pref is not None:
         vat_rate = auto_vat_rate
         vat_reason = (
@@ -1201,8 +1514,13 @@ def compute_payments(payload: dict[str, Any]) -> dict[str, Any]:
             "duty_rule_match_len": duty_rule_match_len,
             "vat_rate": auto_vat_rate,
             "apply_reduced_vat": apply_reduced_vat,
-            "vat_rule": ("vat_preference" if vat_pref else vat_rule),
+            "vat_rule": (
+                "pp908_live_animal_characteristic"
+                if live_animal_vat_rate is not None
+                else ("vat_preference" if vat_pref else vat_rule)
+            ),
             "vat_pref_match_len": vat_pref_match_len,
+            "live_animal_vat_scope": live_animal_vat_scope,
             "excise_type": excise_type,
             "excise_value": excise_value,
             "antidumping_type": antidumping_type,
@@ -1268,6 +1586,7 @@ def compute_payments(payload: dict[str, Any]) -> dict[str, Any]:
         "special_duties_amount": _round2(special_duties_amount),
         "special_duties_warning": special_duties_warning,
         "payment_review_reasons": payment_review_reasons,
+        "live_animal_vat_scope": live_animal_vat_scope,
         **({"hs_rate_source_candidate": {
             "status": "needs_review",
             "source_kind": "legacy_hs_rates",
@@ -1324,6 +1643,14 @@ def compare_payment_scenarios(payload: dict[str, Any]) -> dict[str, Any]:
         econ["country"] = str(shared["country"]).strip().upper()
     if shared.get("quantity") is not None:
         econ["quantity"] = float(shared["quantity"])
+    if shared.get("net_weight_kg") is not None:
+        econ["net_weight_kg"] = float(shared["net_weight_kg"])
+    if shared.get("extra_quantity") is not None:
+        econ["extra_quantity"] = float(shared["extra_quantity"])
+    if shared.get("apply_reduced_vat") is not None:
+        econ["apply_reduced_vat"] = bool(shared["apply_reduced_vat"])
+    if shared.get("live_animal_breeding_status") is not None:
+        econ["live_animal_breeding_status"] = str(shared["live_animal_breeding_status"])
 
     out_scenarios: list[dict[str, Any]] = []
     first_total: float | None = None

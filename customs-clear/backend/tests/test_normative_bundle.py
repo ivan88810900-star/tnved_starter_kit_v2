@@ -8,12 +8,14 @@ from app.main import app
 from app.services.normative_bundle import import_normative_bundle_dict, is_ett_test_hs
 from app.services.normative_store import find_tnved_entry, init_db
 from app.services.payment_engine import compute_payments
+from tests.support_legacy_payment_fixture import ensure_legacy_payment_fixture
 
 
 class NormativeBundleTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         init_db()
+        ensure_legacy_payment_fixture()
 
     def test_import_bundle_dict(self):
         res = import_normative_bundle_dict(
@@ -58,7 +60,9 @@ class NormativeBundleTests(unittest.TestCase):
 
     def test_compute_includes_tnved_context(self):
         out = compute_payments({"hs_code": "8509400000", "customs_value": 100000})
-        self.assertEqual(out["status"], "OK")
+        self.assertEqual(out["status"], "REVIEW_REQUIRED")
+        self.assertIsNone(out["breakdown"]["total_payable"])
+        self.assertIn("hs_rate_source_binding_unverified", out["payment_review_reasons"])
         self.assertIn("tnved_context", out)
         self.assertIn("notes", out["tnved_context"])
 

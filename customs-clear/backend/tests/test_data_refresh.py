@@ -15,6 +15,10 @@ from app.services.data_refresh_service import (
     _bundle_revision_date,
     check_data_freshness,
 )
+from app.services.payment_revision_utils import (
+    PAYMENT_SOURCE_STALE_THRESHOLD_DAYS,
+    is_payment_revision_fresh,
+)
 
 
 BACKEND_ROOT = Path(__file__).resolve().parent.parent
@@ -74,7 +78,15 @@ class TestFreshnessCheck:
 
     def test_stale_threshold_configured(self) -> None:
         assert STALE_THRESHOLD_DAYS == 90
+        assert STALE_THRESHOLD_DAYS == PAYMENT_SOURCE_STALE_THRESHOLD_DAYS
         assert CURRENCY_STALE_HOURS == 48
+
+    def test_runtime_revision_freshness_uses_same_boundary(self) -> None:
+        reference = datetime(2026, 10, 9, tzinfo=timezone.utc).date()
+        assert is_payment_revision_fresh("anti-dumping:2026-07-11", on_date=reference)
+        assert not is_payment_revision_fresh("anti-dumping:2026-07-10", on_date=reference)
+        assert not is_payment_revision_fresh("anti-dumping:2099-01-01", on_date=reference)
+        assert not is_payment_revision_fresh("anti-dumping:unknown", on_date=reference)
 
     def test_future_revision_date_fails_closed(self, tmp_path: Path) -> None:
         bundle = tmp_path / "future.json"

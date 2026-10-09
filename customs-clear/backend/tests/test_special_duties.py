@@ -8,15 +8,68 @@ from fastapi.testclient import TestClient
 
 from app.db import SessionLocal
 from app.main import app
+from app.models.core import SourceStatus
 from app.models.tnved import SpecialDuty
 from app.services.normative_store import init_db
 from app.services.payment_engine import compute_payments
+from app.services.payment_quote_service import build_payment_quote
 
 
 class SpecialDutiesTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         init_db()
+
+    def setUp(self) -> None:
+        self._previous_anti_dumping_status: dict[str, object] | None = None
+        revision = f"anti-dumping:{date.today().isoformat()}"
+        with SessionLocal() as db:
+            status = (
+                db.query(SourceStatus)
+                .filter(SourceStatus.source_code == "EEC_ANTI_DUMPING")
+                .first()
+            )
+            if status is None:
+                status = SourceStatus(
+                    source_code="EEC_ANTI_DUMPING",
+                    source_name="TEST anti-dumping status",
+                    source_url="https://eec.eaeunion.org/comission/department/trade/trade-remedies/",
+                    revision=revision,
+                    synced_at=datetime.now(timezone.utc).replace(tzinfo=None),
+                    is_stale=False,
+                    note="test current contour",
+                )
+                db.add(status)
+            else:
+                self._previous_anti_dumping_status = {
+                    "source_name": status.source_name,
+                    "source_url": status.source_url,
+                    "revision": status.revision,
+                    "synced_at": status.synced_at,
+                    "is_stale": status.is_stale,
+                    "note": status.note,
+                }
+                status.source_url = "https://eec.eaeunion.org/comission/department/trade/trade-remedies/"
+                status.revision = revision
+                status.synced_at = datetime.now(timezone.utc).replace(tzinfo=None)
+                status.is_stale = False
+                status.note = "test current contour"
+            db.commit()
+
+    def tearDown(self) -> None:
+        with SessionLocal() as db:
+            status = (
+                db.query(SourceStatus)
+                .filter(SourceStatus.source_code == "EEC_ANTI_DUMPING")
+                .first()
+            )
+            if self._previous_anti_dumping_status is None:
+                if status is not None:
+                    db.delete(status)
+            elif status is not None:
+                for field, value in self._previous_anti_dumping_status.items():
+                    setattr(status, field, value)
+            db.commit()
 
     def _calc(self, **kwargs: object) -> dict:
         defaults: dict = {
@@ -28,16 +81,28 @@ class SpecialDutiesTests(unittest.TestCase):
         defaults.update(kwargs)
         return compute_payments(defaults)
 
-    def _public_calc(self, *, hs_code: str, country: str) -> dict:
+    def _public_calc(
+        self,
+        *,
+        hs_code: str,
+        country: str,
+        manufacturer: str | None = None,
+        product_description: str | None = None,
+    ) -> dict:
+        payload = {
+            "hs_code": hs_code,
+            "customs_value": 100_000.0,
+            "currency": "RUB",
+            "country_of_origin": country,
+            "quantity": 1.0,
+        }
+        if manufacturer is not None:
+            payload["manufacturer"] = manufacturer
+        if product_description is not None:
+            payload["product_description"] = product_description
         response = TestClient(app).post(
             "/api/calculator/compute",
-            json={
-                "hs_code": hs_code,
-                "customs_value": 100_000.0,
-                "currency": "RUB",
-                "country_of_origin": country,
-                "quantity": 1.0,
-            },
+            json=payload,
         )
         self.assertEqual(response.status_code, 200, response.text)
         return response.json()
@@ -179,7 +244,7 @@ class SpecialDutiesTests(unittest.TestCase):
             effective_from=(today - timedelta(days=1)).isoformat(),
             effective_to=(today + timedelta(days=365)).isoformat(),
             source_code="EEC_ANTI_DUMPING",
-            source_revision="anti-dumping:2026-09-29",
+            source_revision=f"anti-dumping:{today.isoformat()}",
             source_url="https://eec.eaeunion.org/comission/department/trade/trade-remedies/",
             synced_at=datetime.now(timezone.utc).replace(tzinfo=None),
             needs_verification=False,
@@ -198,6 +263,54 @@ class SpecialDutiesTests(unittest.TestCase):
             self.assertEqual(res["breakdown"]["special_duties_amount"], 7_000.0)
             applied = [d for d in res["special_duties"] if not d.get("warning")]
             self.assertEqual(len(applied), 1)
+        finally:
+            with SessionLocal() as db:
+                db.query(SpecialDuty).filter(SpecialDuty.regulatory_act == marker).delete()
+                db.commit()
+
+    def test_scoped_measure_requires_confirmed_manufacturer_and_product(self) -> None:
+        marker = "TEST-SCOPED-SPECIAL-DUTY"
+        row = self._official_anti_dumping_row(act=marker)
+        row.manufacturer_exporter = "Alpha Steel Co"
+        row.product_description = "Прокат горячекатаный"
+        with SessionLocal() as db:
+            db.add(row)
+            db.commit()
+        try:
+            for manufacturer, product_description in (
+                (None, None),
+                ("Beta Steel Co", "Прокат горячекатаный"),
+                ("Alpha Steel Co", "Холоднокатаный прокат"),
+            ):
+                with self.subTest(
+                    manufacturer=manufacturer,
+                    product_description=product_description,
+                ):
+                    result = self._public_calc(
+                        hs_code="9996999999",
+                        country="ZZ",
+                        manufacturer=manufacturer,
+                        product_description=product_description,
+                    )
+                    self.assertEqual(result["status"], "REVIEW_REQUIRED")
+                    self.assertEqual(result["breakdown"]["special_duties_amount"], 0.0)
+                    self.assertIsNone(result["breakdown"]["total_payable"])
+                    self.assertIn(
+                        "special_duty_scope_unresolved",
+                        result["payment_review_reasons"],
+                    )
+
+            matched = self._public_calc(
+                hs_code="9996999999",
+                country="ZZ",
+                manufacturer="  alpha   STEEL co  ",
+                product_description="ПРОКАТ   ГОРЯЧЕКАТАНЫЙ",
+            )
+            self.assertEqual(matched["breakdown"]["special_duties_amount"], 7_000.0)
+            self.assertNotIn(
+                "special_duty_scope_unresolved",
+                matched["payment_review_reasons"],
+            )
         finally:
             with SessionLocal() as db:
                 db.query(SpecialDuty).filter(SpecialDuty.regulatory_act == marker).delete()
@@ -277,6 +390,69 @@ class SpecialDutiesTests(unittest.TestCase):
                 )
                 db.commit()
 
+    def test_public_path_rejects_stale_trade_remedy_source_status(self) -> None:
+        marker = "TEST-STALE-SOURCE-STATUS-SPECIAL-DUTY"
+        row = self._official_anti_dumping_row(act=marker)
+        row.hs_code_prefix = "9992"
+        row.source_revision = f"anti-dumping:{date.today().isoformat()}"
+        with SessionLocal() as db:
+            status = (
+                db.query(SourceStatus)
+                .filter(SourceStatus.source_code == "EEC_ANTI_DUMPING")
+                .one()
+            )
+            status.revision = row.source_revision
+            status.synced_at = datetime.now(timezone.utc).replace(tzinfo=None)
+            status.is_stale = True
+            status.note = "test stale contour"
+            db.add(row)
+            db.commit()
+        try:
+            result = self._public_calc(hs_code="9992999999", country="ZZ")
+            self.assertEqual(result["status"], "REVIEW_REQUIRED")
+            self.assertEqual(result["breakdown"]["special_duties_amount"], 0.0)
+            self.assertIsNone(result["breakdown"]["total_payable"])
+            self.assertIn(
+                "special_duty_provenance_stale",
+                result["payment_review_reasons"],
+            )
+        finally:
+            with SessionLocal() as db:
+                db.query(SpecialDuty).filter(SpecialDuty.regulatory_act == marker).delete()
+                db.commit()
+
+    def test_public_path_rejects_aged_trade_remedy_revision(self) -> None:
+        marker = "TEST-AGED-REVISION-SPECIAL-DUTY"
+        old_date = date.today() - timedelta(days=91)
+        old_revision = f"anti-dumping:{old_date.isoformat()}"
+        row = self._official_anti_dumping_row(act=marker)
+        row.hs_code_prefix = "9991"
+        row.source_revision = old_revision
+        with SessionLocal() as db:
+            status = (
+                db.query(SourceStatus)
+                .filter(SourceStatus.source_code == "EEC_ANTI_DUMPING")
+                .one()
+            )
+            status.revision = old_revision
+            status.synced_at = datetime.now(timezone.utc).replace(tzinfo=None)
+            status.is_stale = False
+            db.add(row)
+            db.commit()
+        try:
+            result = self._public_calc(hs_code="9991999999", country="ZZ")
+            self.assertEqual(result["status"], "REVIEW_REQUIRED")
+            self.assertEqual(result["breakdown"]["special_duties_amount"], 0.0)
+            self.assertIsNone(result["breakdown"]["total_payable"])
+            self.assertIn(
+                "special_duty_provenance_stale",
+                result["payment_review_reasons"],
+            )
+        finally:
+            with SessionLocal() as db:
+                db.query(SpecialDuty).filter(SpecialDuty.regulatory_act == marker).delete()
+                db.commit()
+
     def test_public_path_rejects_specific_trade_remedy_without_typed_unit(self) -> None:
         marker = "TEST-UNITLESS-SPECIFIC-SPECIAL-DUTY"
         row = self._official_anti_dumping_row(act=marker, rate=0.0)
@@ -337,12 +513,83 @@ class SpecialDutiesTests(unittest.TestCase):
             acts = {d.get("regulatory_act") for d in details if not d.get("warning")}
             self.assertTrue(acts.isdisjoint(markers.values()))
             self.assertEqual(res["breakdown"]["special_duties_amount"], 0.0)
+            self.assertIn("special_duty_dates_invalid", res["payment_review_reasons"])
+            quote = build_payment_quote({
+                "hs_code": "9997999999", "country": "ZZ",
+                "customs_value": 100_000, "invoice_currency": "RUB",
+            })
+            special = next(line for line in quote.line_items if line.code == "special_duty")
+            self.assertEqual(special.status, "manual_review_required")
+            self.assertIsNone(special.amount_rub)
+            self.assertIsNone(quote.total_payable_rub)
         finally:
             with SessionLocal() as db:
                 db.query(SpecialDuty).filter(
                     SpecialDuty.regulatory_act.in_(list(markers.values()))
                 ).delete(synchronize_session=False)
                 db.commit()
+
+    def test_inverted_window_requires_review_instead_of_not_applicable(self) -> None:
+        marker = "TEST-INVERTED-SPECIAL-WINDOW"
+        row = self._official_anti_dumping_row(act=marker)
+        row.effective_from = "2099-01-01"
+        row.effective_to = "2020-01-01"
+        with SessionLocal() as db:
+            db.add(row)
+            db.commit()
+        try:
+            result = self._public_calc(hs_code="9996999999", country="ZZ")
+            self.assertIn("special_duty_dates_invalid", result["payment_review_reasons"])
+            self.assertIsNone(result["breakdown"]["total_payable"])
+        finally:
+            with SessionLocal() as db:
+                db.query(SpecialDuty).filter(SpecialDuty.regulatory_act == marker).delete()
+                db.commit()
+
+    def test_percent_only_special_duty_does_not_require_unused_fx(self) -> None:
+        marker = "TEST-PERCENT-ONLY-FOREIGN-CURRENCY"
+        row = self._official_anti_dumping_row(act=marker)
+        row.currency_code = "EUR"
+        with SessionLocal() as db:
+            db.add(row)
+            db.commit()
+        try:
+            result = self._public_calc(hs_code="9996999999", country="ZZ")
+            self.assertEqual(result["breakdown"]["special_duties_amount"], 7000.0)
+            self.assertEqual(result["special_duties"][0]["amount"], 7000.0)
+            # No conversion was needed; never invent an EUR/RUB exchange rate.
+            self.assertIsNone(result["special_duties"][0]["fx_rate"])
+        finally:
+            with SessionLocal() as db:
+                db.query(SpecialDuty).filter(SpecialDuty.regulatory_act == marker).delete()
+                db.commit()
+
+    def test_invalid_special_duty_rates_withhold_quote_line(self) -> None:
+        marker = "TEST-INVALID-SPECIAL-RATE"
+        for field in ("rate_percent", "rate_specific"):
+            for invalid in (-7.0, float("inf")):
+                with self.subTest(field=field, value=invalid):
+                    row = self._official_anti_dumping_row(act=marker)
+                    setattr(row, field, invalid)
+                    with SessionLocal() as db:
+                        db.add(row)
+                        db.commit()
+                    try:
+                        result = self._calc(hs_code="9996999999", country="ZZ")
+                        self.assertEqual(result["breakdown"]["special_duties_amount"], 0.0)
+                        self.assertIn("special_duty_rate_invalid", result["payment_review_reasons"])
+                        quote = build_payment_quote({
+                            "hs_code": "9996999999", "country": "ZZ",
+                            "customs_value": 100_000, "invoice_currency": "RUB",
+                        })
+                        special = next(line for line in quote.line_items if line.code == "special_duty")
+                        self.assertEqual(special.status, "manual_review_required")
+                        self.assertIsNone(special.amount_rub)
+                        self.assertIsNone(quote.total_payable_rub)
+                    finally:
+                        with SessionLocal() as db:
+                            db.query(SpecialDuty).filter(SpecialDuty.regulatory_act == marker).delete()
+                            db.commit()
 
 
 if __name__ == "__main__":

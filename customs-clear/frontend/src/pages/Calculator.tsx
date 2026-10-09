@@ -130,6 +130,11 @@ function isVehicleHs(hs: string): boolean {
   return VEHICLE_PREFIXES.some((p) => d.startsWith(p));
 }
 
+function isLiveAnimalHs(hs: string): boolean {
+  const d = normHsCode(hs);
+  return d.length === 10 && ['0102', '0103', '0104', '0105'].some((prefix) => d.startsWith(prefix));
+}
+
 function preferenceLabel(pref?: CalculatorTariffPreference | null): string | null {
   if (!pref || !pref.applied) return null;
   const map: Record<string, string> = {
@@ -246,6 +251,9 @@ export const Calculator: React.FC = () => {
   const [dutyRate, setDutyRate] = useState('');
   const [country, setCountry] = useState('');
   const [applyReducedVat, setApplyReducedVat] = useState(false);
+  const [liveAnimalBreedingStatus, setLiveAnimalBreedingStatus] = useState<
+    'breeding' | 'non_breeding' | 'unknown'
+  >('unknown');
   const [vehicleIsNew, setVehicleIsNew] = useState(true);
   const [engineVolume, setEngineVolume] = useState('');
   const [excise, setExcise] = useState('');
@@ -317,6 +325,7 @@ export const Calculator: React.FC = () => {
     return delta > 0.3;
   }, [expectedWeightKg, netWeightKg]);
   const isVehicle = useMemo(() => isVehicleHs(hsCode), [hsCode]);
+  const isLiveAnimal = useMemo(() => isLiveAnimalHs(hsCode), [hsCode]);
 
   const loadTnvedTree = async () => {
     setTreeLoading(true);
@@ -570,6 +579,9 @@ export const Calculator: React.FC = () => {
         freight: parseFloat(freight || '0'),
         apply_reduced_vat: applyReducedVat,
       };
+      if (isLiveAnimalHs(codeToUse)) {
+        payload.live_animal_breeding_status = liveAnimalBreedingStatus;
+      }
       if (insurance) payload.insurance = parseFloat(insurance);
       if (dutyRate) payload.duty_rate = parseFloat(dutyRate);
       if (excise) payload.excise = parseFloat(excise);
@@ -654,6 +666,9 @@ export const Calculator: React.FC = () => {
           apply_reduced_vat: applyReducedVat,
           country: cty,
         };
+        if (isLiveAnimalHs(hs)) {
+          payload.live_animal_breeding_status = liveAnimalBreedingStatus;
+        }
         if (insurance) payload.insurance = parseFloat(insurance);
         if (dutyRate) payload.duty_rate = parseFloat(dutyRate);
         if (excise) payload.excise = parseFloat(excise);
@@ -712,6 +727,7 @@ export const Calculator: React.FC = () => {
       extraQuantity,
       country,
       applyReducedVat,
+      liveAnimalBreedingStatus,
       vehicleIsNew,
       engineVolume,
       saveHistory,
@@ -767,6 +783,9 @@ export const Calculator: React.FC = () => {
         freight: parseFloat(freight || '0'),
         apply_reduced_vat: applyReducedVat,
       };
+      if (isLiveAnimalHs(cmpHsA) || isLiveAnimalHs(cmpHsB)) {
+        shared.live_animal_breeding_status = liveAnimalBreedingStatus;
+      }
       if (country.trim()) shared.country = country.trim().toUpperCase();
       if (quantity) shared.quantity = parseFloat(quantity);
       if (netWeightKg) shared.net_weight_kg = parseFloat(netWeightKg);
@@ -1306,6 +1325,7 @@ export const Calculator: React.FC = () => {
             setInsurance('');
             setDutyRate('');
             setApplyReducedVat(false);
+            setLiveAnimalBreedingStatus('unknown');
             setVehicleIsNew(true);
             setEngineVolume('');
             setExcise('');
@@ -1380,6 +1400,29 @@ export const Calculator: React.FC = () => {
         />
         <span>Товар входит в перечень ПП РФ №908/41/1042 (Льготный НДС 10%)</span>
       </label>
+
+      {isLiveAnimal && (
+        <div className="cc-card-soft space-y-2 border-l-2 border-amber-400/60 p-4">
+          <label className="space-y-1">
+            <span className="cc-label">Назначение живого животного</span>
+            <select
+              value={liveAnimalBreedingStatus}
+              onChange={(e) => setLiveAnimalBreedingStatus(
+                e.target.value as 'breeding' | 'non_breeding' | 'unknown',
+              )}
+              className="cc-input"
+            >
+              <option value="unknown">Не подтверждено</option>
+              <option value="non_breeding">Неплеменное — подтверждено документами</option>
+              <option value="breeding">Племенное — подтверждено документами</option>
+            </select>
+          </label>
+          <p className="text-[11px] text-slate-500">
+            Для неоднозначных кодов 0102–0105 ставка 10% применяется только после явного
+            подтверждения неплеменного назначения. Свободное описание товара не используется.
+          </p>
+        </div>
+      )}
 
       {isVehicle && (
         <div className="cc-card-soft space-y-3 border-l-2 border-amber-400/60 p-4">

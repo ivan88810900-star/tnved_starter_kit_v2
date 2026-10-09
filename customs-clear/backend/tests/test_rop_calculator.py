@@ -37,7 +37,7 @@ def _ensure_schema_and_data() -> None:
     finally:
         session.close()
     if count == 0:
-        import_main()
+        import_main([])
 
 
 @unittest.skipIf(not _AVAILABLE, f"ROP tests require deps: {_IMPORT_ERROR}")
