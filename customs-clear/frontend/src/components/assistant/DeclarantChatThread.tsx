@@ -4,6 +4,7 @@ import remarkGfm from 'remark-gfm';
 import { Bot, Sparkles, Trash2 } from 'lucide-react';
 import { api } from '../../api/client';
 import { getUserFacingApiError } from '../../api/error';
+import { getSafeExternalUrl } from '../../utils/externalUrl';
 import {
   getAssistantCalculationContext,
   subscribeAssistantCalculationContext,
@@ -43,17 +44,6 @@ function boundedText(value: unknown, limit: number): string {
   return typeof value === 'string' ? value.trim().slice(0, limit) : '';
 }
 
-function safeExternalUrl(value: unknown): string | undefined {
-  const candidate = boundedText(value, 1200);
-  if (!candidate) return undefined;
-  try {
-    const parsed = new URL(candidate);
-    return parsed.protocol === 'http:' || parsed.protocol === 'https:' ? parsed.href : undefined;
-  } catch {
-    return undefined;
-  }
-}
-
 function normalizeGrounding(value: unknown): GroundingView | undefined {
   const raw = recordOrNull(value);
   if (!raw) return undefined;
@@ -65,7 +55,7 @@ function normalizeGrounding(value: unknown): GroundingView | undefined {
         const id = boundedText(citation.id, 40);
         const title = boundedText(citation.title, 240);
         if (!id || !title) return [];
-        return [{ id, title, url: safeExternalUrl(citation.url) }];
+        return [{ id, title, url: getSafeExternalUrl(citation.url) ?? undefined }];
       })
     : [];
   const limitations = Array.isArray(raw.limitations)
