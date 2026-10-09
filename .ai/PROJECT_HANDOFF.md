@@ -3,6 +3,24 @@
 **Снимок:** 2026-10-08 (UTC). **Единственный репозиторий:** [ivan88810900-star/tnved_starter_kit_v2](https://github.com/ivan88810900-star/tnved_starter_kit_v2).  
 **Авторитетное состояние:** ветка `agent/orchestration-state`, файлы `.ai/TASK_BOARD.json`, `.ai/COORDINATOR_LEASE.json`, `.ai/orchestration/A6_LIVE_STATUS.json`. Этот документ — указатель и контрольная точка, **не** право на запись/merge/A6. Перед действием заново читать текущие HEAD и state. Не полагаться на Business-чат.
 
+## 0aaaaaa. #245 — NTM и mass-seed fixtures подтверждены в раздельных disposable-контурах
+
+**Кодовый checkpoint не изменён:** [draft PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256), `agent/product-ntm-regressions-v1` @ `321b4ac72b13ec40a0dc3e2b05f8079f39fb6ee7`, tree `ef6fd5680b6c006be5c836643a0ab1cbceef111a`.
+
+Расширенный выборочный запуск 35 NTM/non-tariff/regulatory/compliance/permits модулей сначала воспроизвёл **8 failures**: семь mass-seed assertions ожидали более 5 000 документов, а mass-seed-safety ошибочно выполнялся на classification inventory. Это конфликт двух fixture-контуров, а не runtime-дефект продукта. Контуры разделены без изменения кода и порогов:
+
+- classification/NTM contour на каноническом bootstrap: 33 модуля, **790 passed, 2 skipped, 3 subtests**, exit 0;
+- отдельный regulatory mass-seed contour: **5 057 документов / 5 481 mapping**, три audit-модуля, **24 passed, 3 subtests**, exit 0;
+- суммарно: **814 passed, 2 skipped, 6 subtests**, обе команды exit 0.
+
+Независимый A5 `/root/a5_ntm_fallback` повторил exact unchanged HEAD в свежем detached worktree: **790 passed, 2 skipped, 3 subtests** и **24 passed, 3 subtests**, обе команды exit 0. Worktree чистый, обе SQLite БД дают `integrity_check=ok`, catalogue WAL/SHM отсутствуют, synthetic admitted documents = 0. Новых findings нет.
+
+Exact-head CI остаётся действующим для того же SHA: [run 37941232220](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/37941232220) и [run 37941931512](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/37941931512), оба `success`. Новый кодовый commit и новый CI run не требуются, потому что проверенный HEAD не изменился.
+
+Полный broad/full-suite PASS и юридическая/source completeness не заявляются. `test_ntm_full_sync.py` всё ещё требует законно доступный populated synchronized NTM snapshot; существующий disposable classification bootstrap его не заменяет. Внешний A6 `core-s1-6415f443120f-r9-g106` не отправлялся.
+
+Следующий шаг — следующий bounded offline #245 assistant/search/grounded tranche с сохранением раздельных fixture-контуров и без тестов, требующих неразрешённую внешнюю сеть.
+
 ## 0aaaaa. #245 — bootstrap подтверждён расширенным offline-срезом и exact-head CI
 
 **Текущий кодовый checkpoint не изменён:** [draft PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256), `agent/product-ntm-regressions-v1` @ `321b4ac72b13ec40a0dc3e2b05f8079f39fb6ee7`, tree `ef6fd5680b6c006be5c836643a0ab1cbceef111a`.
