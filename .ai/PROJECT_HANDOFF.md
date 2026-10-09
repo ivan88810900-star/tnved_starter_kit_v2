@@ -3,6 +3,23 @@
 **Снимок:** 2026-10-08 (UTC). **Единственный репозиторий:** [ivan88810900-star/tnved_starter_kit_v2](https://github.com/ivan88810900-star/tnved_starter_kit_v2).  
 **Авторитетное состояние:** ветка `agent/orchestration-state`, файлы `.ai/TASK_BOARD.json`, `.ai/COORDINATOR_LEASE.json`, `.ai/orchestration/A6_LIVE_STATUS.json`. Этот документ — указатель и контрольная точка, **не** право на запись/merge/A6. Перед действием заново читать текущие HEAD и state. Не полагаться на Business-чат.
 
+## 0r. #245 — карточка отсутствующего кода требует exact persisted evidence
+
+**Новый текущий checkpoint:** [draft PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256), `agent/product-ntm-regressions-v1` @ `5717db24b7833d15182d1da231222559301b8e6f`, tree `97e493374c18b82f5472417bfad74716ec1cbee7`, parent `04979b50bf2926751dad92468e9beb4e2fa7b539`, base #245 неизменён `e39e19787bd913baeb6f85577a13e1116458e633`.
+
+Воспроизведён product/API defect: произвольный отсутствующий 10-значный код получал успешную карточку только из-за соседнего названия или вычисляемых NTM. Теперь fallback закрыт по умолчанию: код подтверждает только точная сохранённая строка `HsRate.hs_code` или `HsRate.hs_prefix`; широкая prefix-ставка, derived NTM и соседний `Commodity` сами по себе код не легитимизируют. Exact rate-only карточка берёт пошлину из этой строки; обычный exact `Commodity` path не менялся. Тест 8401300000 теперь сам создаёт rate fixture и не зависит от общей developer DB.
+
+Проверки exact head/tree:
+- author targeted fallback: **4 passed**, exit 0; related code-card/preliminary tests: **13 passed**, exit 0; compileall и `git diff --check` PASS;
+- полный `test_tnved_catalog_api.py` на fresh SQLite: **18 passed, 5 failed**, exit 1; остались только прежние tree/full-catalog fixture ожидания;
+- frontend: **18 passed**, typecheck и build PASS, exit 0;
+- независимый A5 `/root/a5_ntm_fallback`: **PASS exact remote HEAD**; targeted **6 passed**, adversarial matrix PASS; одинаковый 20-file slice улучшился с parent **14 failed, 315 passed, 1 skipped** до candidate **12 failed, 319 passed, 1 skipped**, новых failures нет;
+- exact-head GitHub Actions: **PENDING_NO_RUN_OBSERVED** для `5717db24b7833d15182d1da231222559301b8e6f`; workflow run и commit status connector не показывает.
+
+Доступны полная exact-tree копия, Git, Python, Node и реальное выполнение команд. Публикация выполнена только в существующую draft-ветку под coordinator lease generation 129. Protected merge, production/DB writes, flags, secrets/permissions, destructive migration и A6 не выполнялись. A6 request `core-s1-6415f443120f-r9-g106` не менялся и не отправлялся.
+
+Остаётся: 12 broad-slice failures зависят от полного каталога/seed fixtures; full #245 product/legal/source-completeness **NOT PASS**; exact-head CI не подтверждён. Следующий шаг — сделать канонический disposable full-catalog fixture для tree/lookup tests либо изолировать эти dataset contracts, не расширяя legal/applicability semantics.
+
 ## 0q. #245 — synthetic legacy NTM seed исключён из product evidence
 
 **Новый текущий checkpoint:** [draft PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256), `agent/product-ntm-regressions-v1` @ `04979b50bf2926751dad92468e9beb4e2fa7b539`, tree `051d77ca61ef1d70e28beee46d28fa977ef8b75c`, parent `a1984575e6c58360847a54ee8618944dbfb996b0`, base #245 неизменён `e39e19787bd913baeb6f85577a13e1116458e633`.
