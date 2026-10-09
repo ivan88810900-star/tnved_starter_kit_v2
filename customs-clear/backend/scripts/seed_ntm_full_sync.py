@@ -21,6 +21,7 @@ from sqlalchemy import text
 from app.db import SessionLocal
 
 DRY_RUN = "--dry-run" in sys.argv
+SYNTHETIC_SEED_QUALITY = "synthetic_seed"
 
 # ═══════════════════════════════════════════════════════════════════
 # Chapter-specific NTM rules: what controls apply to each category
@@ -429,7 +430,7 @@ MEDIUM_BOOST_CHAPTERS: dict[str, list[tuple[str, str, str]]] = {
 
 
 def seed() -> dict[str, int]:
-    stats = {"inserted": 0, "normalized": 0, "chapters_filled": 0}
+    stats = {"inserted": 0, "normalized": 0, "relabeled_synthetic": 0, "chapters_filled": 0}
 
     with SessionLocal() as db:
         # Step 1: Normalize stale measure_type values
@@ -441,13 +442,31 @@ def seed() -> dict[str, int]:
         if normalized:
             print(f"Normalized {normalized} 'licence' → 'license' entries")
 
-        # Step 2: Get all valid commodity codes
+        # Step 2: Repair rows created by older versions of this synthetic seed.
+        # The exact generated tuple is deterministic; do not relabel unrelated rows
+        # that merely share the same legal act or measure type.
+        all_ntm_defs = {**CHAPTER_NTMS, **MEDIUM_BOOST_CHAPTERS}
+        for ntm_list in all_ntm_defs.values():
+            for measure_type, regulatory_act, description in ntm_list:
+                repaired = db.execute(text(
+                    "UPDATE non_tariff_measures SET quality = :quality "
+                    "WHERE measure_type = :mt AND regulatory_act = :ra "
+                    "AND description = :desc "
+                    "AND (quality IS NULL OR quality != :quality)"
+                ), {
+                    "quality": SYNTHETIC_SEED_QUALITY,
+                    "mt": measure_type,
+                    "ra": regulatory_act,
+                    "desc": description,
+                }).rowcount
+                stats["relabeled_synthetic"] += repaired
+
+        # Step 3: Get all valid commodity codes
         all_codes = {
             r[0] for r in db.execute(text("SELECT code FROM tnved_commodities")).fetchall()
         }
 
-        # Step 3: Insert NTMs for thin chapters
-        all_ntm_defs = {**CHAPTER_NTMS, **MEDIUM_BOOST_CHAPTERS}
+        # Step 4: Insert reference-only synthetic rows for thin chapters.
         for chapter, ntm_list in sorted(all_ntm_defs.items()):
             if chapter == "77":
                 continue
@@ -479,13 +498,14 @@ def seed() -> dict[str, int]:
                         "INSERT INTO non_tariff_measures "
                         "(commodity_code, measure_type, regulatory_act, description, "
                         "document_required, quality) "
-                        "VALUES (:code, :mt, :ra, :desc, :doc, 'normal')"
+                        "VALUES (:code, :mt, :ra, :desc, :doc, :quality)"
                     ), {
                         "code": code,
                         "mt": measure_type,
                         "ra": regulatory_act,
                         "desc": description,
                         "doc": regulatory_act,
+                        "quality": SYNTHETIC_SEED_QUALITY,
                     })
                     chapter_inserted += 1
 

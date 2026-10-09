@@ -47,6 +47,7 @@ from .normative_store import find_classification_precedents_for_invoice_item
 from .vat_preferential_reference import match_preferential_vat_group
 from .state_registry_match import format_registry_check_excel, lookup_state_registries
 from .compliance_resolver import apply_compliance_resolution_to_enrichment, resolve_vat_rate_for_hs
+from .non_tariff_measures_lookup import admitted_legacy_measure_quality_clause
 
 _IMG_PATH_UNSET = object()
 
@@ -4559,6 +4560,7 @@ def enrich_with_customs_data(
         measures = (
             db.query(NonTariffMeasure)
             .filter(NonTariffMeasure.commodity_code == p)
+            .filter(admitted_legacy_measure_quality_clause())
             .order_by(NonTariffMeasure.id)
             .limit(50)
             .all()

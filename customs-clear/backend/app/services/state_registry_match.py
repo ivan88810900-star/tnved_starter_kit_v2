@@ -19,6 +19,7 @@ from sqlalchemy.orm import Session
 
 from ..models.core import FssNotification, ReoRegistryEntry, SgrCertificate
 from ..models.tnved import NonTariffMeasure
+from .non_tariff_measures_lookup import admitted_legacy_measure_quality_clause
 
 _SKIP_BRAND = frozenset(
     {"", "отсутствует", "неизвестен", "—", "отсутствует.", "нет", "n/a", "na"}
@@ -187,6 +188,7 @@ def _nt_requires_sgr(session: Session, commodity_code: str) -> bool:
     rows = (
         session.query(NonTariffMeasure)
         .filter(NonTariffMeasure.commodity_code == commodity_code)
+        .filter(admitted_legacy_measure_quality_clause())
         .limit(40)
         .all()
     )

@@ -12,6 +12,7 @@ from ..db import SessionLocal
 from ..models.tnved import NonTariffMeasure
 from .hs_matching import get_hs_prefixes, match_hs_prefix, normalize_hs_code
 from .non_tariff_fallbacks import FALLBACK_RULES
+from .non_tariff_measures_lookup import admitted_legacy_measure_quality_clause
 
 NEGATIVE_MARKERS = [
     "не требуется",
@@ -408,9 +409,7 @@ def _find_measures_cumulative_all_levels(hs_code: str, direction: str = "import"
                 NonTariffMeasure.commodity_code.like(f"{pref}%"),
             )
             if hasattr(NonTariffMeasure, "quality"):
-                query = query.filter(
-                    (NonTariffMeasure.quality.is_(None)) | (NonTariffMeasure.quality != "noise")
-                )
+                query = query.filter(admitted_legacy_measure_quality_clause())
             if direction_exists:
                 query = query.filter(NonTariffMeasure.direction == direction_norm)
             rows = query.order_by(NonTariffMeasure.commodity_code.asc()).all()

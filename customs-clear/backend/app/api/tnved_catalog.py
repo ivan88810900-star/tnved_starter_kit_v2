@@ -21,7 +21,10 @@ from sqlalchemy.orm import Session, joinedload, selectinload
 from ..db import SessionLocal
 from ..models.tnved import Chapter, Commodity, IntellectualProperty, NonTariffMeasure, Section, SpecialDuty, VatPreference
 from ..schemas.tnved_catalog import TnvedCommodityDetailsResponse
-from ..services.non_tariff_measures_lookup import get_measures_for_code
+from ..services.non_tariff_measures_lookup import (
+    admitted_legacy_measure_quality_clause,
+    get_measures_for_code,
+)
 from ..services.normative_store import find_rate_for_hs
 from ..services.tnved_code_card import find_preliminary_decisions_for_hs
 from ..services.preview_cache_revision import (
@@ -558,7 +561,11 @@ def list_sections(db: Session = Depends(get_db)) -> JSONResponse:
             func.count(NonTariffMeasure.id).label("non_tariff_measures_count"),
         )
         .outerjoin(Commodity, Commodity.chapter_id == Chapter.id)
-        .outerjoin(NonTariffMeasure, NonTariffMeasure.commodity_code == Commodity.code)
+        .outerjoin(
+            NonTariffMeasure,
+            (NonTariffMeasure.commodity_code == Commodity.code)
+            & admitted_legacy_measure_quality_clause(),
+        )
         .group_by(Chapter.section_id)
         .all()
     )
@@ -1020,7 +1027,13 @@ def _compute_catalog_revision_token() -> str:
     try:
         with SessionLocal() as db:
             nc = db.query(func.count()).select_from(Commodity).scalar() or 0
-            nn = db.query(func.count()).select_from(NonTariffMeasure).scalar() or 0
+            nn = (
+                db.query(func.count())
+                .select_from(NonTariffMeasure)
+                .filter(admitted_legacy_measure_quality_clause())
+                .scalar()
+                or 0
+            )
             ni = db.query(func.count()).select_from(IntellectualProperty).scalar() or 0
             nsd = db.query(func.count()).select_from(SpecialDuty).scalar() or 0
             mxc = db.query(func.max(Commodity.id)).scalar() or 0

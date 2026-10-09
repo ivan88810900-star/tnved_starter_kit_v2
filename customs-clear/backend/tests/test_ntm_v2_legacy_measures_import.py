@@ -122,6 +122,13 @@ def test_import_skips_noise(memory_sessionmaker: sessionmaker) -> None:
     assert r["measures_created"] == 0
 
 
+def test_import_skips_synthetic_seed(memory_sessionmaker: sessionmaker) -> None:
+    _add_measure(memory_sessionmaker, quality="synthetic_seed")
+    r = import_legacy_non_tariff_measures_to_ntm_v2()
+    assert r["skipped_synthetic"] == 1
+    assert r["measures_created"] == 0
+
+
 def test_import_different_measure_types(memory_sessionmaker: sessionmaker) -> None:
     _add_measure(memory_sessionmaker, measure_type="license", description="Лицензия Минпромторга")
     _add_measure(
