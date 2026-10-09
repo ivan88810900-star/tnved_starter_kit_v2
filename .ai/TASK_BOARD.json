@@ -2179,7 +2179,7 @@
       "unique_source_pr_count": 29
     }
   },
-  "revision": 694,
+  "revision": 695,
   "runs": [
     {
       "head_sha": null,
@@ -7356,60 +7356,115 @@
         },
         "protected_actions_performed": false,
         "next_step": "Continue the next bounded #245 assistant/search/frontend integration slice while preserving fail-closed citations and source boundaries."
+      },
+      "assistant_copilot_grounding_ui_checkpoint_20261009": {
+        "updated_at": "2026-10-09T19:10:00.000Z",
+        "pr": 256,
+        "branch": "agent/product-ntm-regressions-v1",
+        "head_sha": "dd7ac413dc2f7698ffe1ce80375557afcbac2da5",
+        "tree_sha": "48c43f8e00a4091c56425975cb28c63fcc235ab5",
+        "parent_sha": "e452d967d86436fda4b49cf344b026b639eb7c5c",
+        "base_pr": 245,
+        "base_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
+        "completed_block": "frontend_copilot_grounding_metadata_contract",
+        "status": "DRAFT_CHECKPOINT_A5_PASS_CI_PASS_COPILOT_GROUNDING_UI",
+        "behavior": {
+          "reproduced": "copilot and batch responses carried server-owned ai.grounding and ai.citations, but frontend types and rendering omitted both",
+          "final": "shared copilot view renders fail-closed coverage/mode/facts/limitations and structurally validated citations; affirmative grounded/llm labels require generated server facts, a full citation identity and a nonempty wholly allowlisted facts list",
+          "boundaries": "unsafe URLs are text only; missing, incomplete or mixed metadata is unconfirmed; UI states this is not legal verification or complete NTM coverage; backend, DB, applicability, source admission and feature flags unchanged"
+        },
+        "author_tests": {
+          "focused": "6 passed; exit 0",
+          "full_frontend": "31 passed; exit 0",
+          "typecheck": "exit 0",
+          "build": "exit 0 with existing advisory warnings",
+          "root_repeat": "full frontend 31 passed, typecheck and build; exit 0"
+        },
+        "a5": {
+          "session": "/root/a5_copilot_grounding_ui",
+          "rejected_candidates": [
+            "incomplete citation and arbitrary facts could still promote affirmative labels",
+            "valid citation without facts_used could still promote grounded/llm labels"
+          ],
+          "status": "FINAL_PASS_EXACT_REPAIRED_TREE",
+          "adversarial": "15 passed; missing facts downgrade, full citation contract, fact allowlist and javascript URL text-only behavior; exit 0",
+          "full_frontend": "31 passed; exit 0",
+          "typecheck_build": "exit 0",
+          "findings": []
+        },
+        "ci": {
+          "status": "PASSED_EXACT_HEAD",
+          "head_sha": "dd7ac413dc2f7698ffe1ce80375557afcbac2da5",
+          "alias_branch": "agent/product-ntm-copilot-grounding-ci-v1",
+          "run_id": 37978226897,
+          "job_id": 113981820756,
+          "conclusion": "success",
+          "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/37978226897"
+        },
+        "blockers": [
+          "Full #245 backend/frontend acceptance and legal/source completeness remain NOT PASS.",
+          "NTM full-sync audit still requires a lawful populated synchronized snapshot."
+        ],
+        "a6": {
+          "request": "core-s1-6415f443120f-r9-g106",
+          "status": "UNCHANGED_NOT_SENT"
+        },
+        "protected_actions_performed": false,
+        "next_step": "Continue the next bounded #245 assistant/search integration defect while preserving fail-closed provenance; run NTM full-sync only if a lawful populated synchronized snapshot becomes available."
       }
     }
   ],
-  "updated_at": "2026-10-09T18:12:30.000Z",
+  "updated_at": "2026-10-09T19:10:00.000Z",
   "latest_scheduled_product_checkpoint": {
-    "updated_at": "2026-10-09T17:06:27.652266Z",
-    "checked_at": "2026-10-09T17:06:27.652266Z",
+    "updated_at": "2026-10-09T19:10:00.000Z",
+    "checked_at": "2026-10-09T19:10:00.000Z",
     "pr": 256,
     "branch": "agent/product-ntm-regressions-v1",
-    "head_sha": "43803039d7ce50bf88c3d9c08af2f638462767a2",
-    "tree_sha": "efbbfb1764c40392b4ecc988f8f929d59fbb4bf6",
-    "parent_sha": "321b4ac72b13ec40a0dc3e2b05f8079f39fb6ee7",
+    "head_sha": "dd7ac413dc2f7698ffe1ce80375557afcbac2da5",
+    "tree_sha": "48c43f8e00a4091c56425975cb28c63fcc235ab5",
+    "parent_sha": "e452d967d86436fda4b49cf344b026b639eb7c5c",
     "base_pr": 245,
     "base_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
-    "completed_block": "fail_closed_grounding_coverage_requires_usable_evidence",
-    "block": "fail_closed_grounding_coverage_requires_usable_evidence",
-    "status": "DRAFT_CHECKPOINT_A5_PASS_CI_PASS_GROUNDING_87",
+    "completed_block": "frontend_copilot_grounding_metadata_contract",
+    "block": "frontend_copilot_grounding_metadata_contract",
+    "status": "DRAFT_CHECKPOINT_A5_PASS_CI_PASS_COPILOT_GROUNDING_UI",
     "behavior": {
-      "reproduced": "a syntactically valid HS code produced coverage=grounded even when local TNVED and NTM providers failed; first repair still admitted an empty TNVED card with only a generic EEC URL",
-      "final": "grounded now requires usable local facts plus citations; provider failures and empty cards are partial with no citations and cannot activate the configured LLM selector",
-      "boundaries": "usable TNVED cards and resolver-validated canonical anchors remain grounded; no legal applicability, source truth, enforcement, network or provider configuration changed"
+      "reproduced": "copilot and batch responses carried ai.grounding and ai.citations, but frontend types and rendering omitted both",
+      "final": "fail-closed coverage, mode, allowlisted facts, limitations and fully identified citations are visible in the shared copilot view",
+      "boundaries": "no legal completeness claim; unsafe URLs are not links; backend, DB, applicability, source admission and feature flags unchanged"
     },
     "author_tests": {
-      "reproduction_before_fix": "new regression expected partial but received grounded when all local evidence providers failed; exit 1",
-      "focused": "test_grounded_assistant.py: 25 passed and 26 subtests; exit 0",
-      "bounded_offline_tranche": "12 assistant/search/grounded/RAG modules on fresh disposable classification DB: 87 passed and 29 subtests; exit 0",
-      "environment": "empty provider keys, deny proxies, preview marker outside repository; DB integrity ok and no catalogue WAL/SHM",
-      "diff_compile": "git diff --check and py_compile; exit 0"
+      "reproduction_before_fix": "existing frontend suite had no copilot grounding UI assertion; backend contract showed omitted fields",
+      "focused": "Assistant.grounding.test.tsx: 6 passed; exit 0",
+      "bounded_offline_tranche": "full frontend: 31 passed; exit 0",
+      "environment": "npm ci isolated dependency install; typecheck and production build exit 0",
+      "diff_compile": "git diff --check exit 0"
     },
     "a5": {
-      "session": "/root/a5_ntm_fallback",
-      "status": "PASSED_REPAIRED_TREE_REMOTE_BOUND",
-      "first_candidate": "REJECT MEDIUM: an empty successful TNVED card still emitted a generic EEC citation and could enable the LLM selector",
-      "focused": "25 passed and 26 subtests; exit 0",
-      "adversarial": "empty card partial/no citations/no LLM; usable card and canonical-only anchor grounded; provider errors partial; candidates partial; no context needs_context",
-      "remote_binding": "remote commit 43803039d7ce50bf88c3d9c08af2f638462767a2 tree equals independently reviewed tree efbbfb1764c40392b4ecc988f8f929d59fbb4bf6",
-      "bounded_offline_tranche": "independent fresh detached run: 87 passed and 29 subtests; exit 0; clean status, DB integrity and foreign keys ok, no catalogue WAL/SHM"
+      "session": "/root/a5_copilot_grounding_ui",
+      "status": "FINAL_PASS_EXACT_REPAIRED_TREE_REMOTE_BOUND",
+      "first_candidate": "two rejected intermediates: incomplete citation/arbitrary fact injection; missing facts with affirmative badges",
+      "focused": "15 focused/adversarial passed; exit 0",
+      "adversarial": "missing facts downgrade, full citation identity, fact allowlist and javascript URL text-only behavior",
+      "remote_binding": "remote commit dd7ac413dc2f7698ffe1ce80375557afcbac2da5 tree equals reviewed tree 48c43f8e00a4091c56425975cb28c63fcc235ab5",
+      "bounded_offline_tranche": "full frontend 31 passed; typecheck/build/diff-check exit 0"
     },
     "ci": {
       "status": "PASSED_EXACT_HEAD",
-      "head_sha": "43803039d7ce50bf88c3d9c08af2f638462767a2",
-      "alias_branch": "agent/product-ntm-bootstrap-ci-v1",
-      "alias_branch_head_sha": "43803039d7ce50bf88c3d9c08af2f638462767a2",
+      "head_sha": "dd7ac413dc2f7698ffe1ce80375557afcbac2da5",
+      "alias_branch": "agent/product-ntm-copilot-grounding-ci-v1",
+      "alias_branch_head_sha": "dd7ac413dc2f7698ffe1ce80375557afcbac2da5",
       "runs": [
         {
-          "run_id": 37963680241,
-          "job_id": 113932566080,
+          "run_id": 37978226897,
+          "job_id": 113981820756,
           "conclusion": "success",
-          "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/37963680241"
+          "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/37978226897"
         }
       ]
     },
     "blockers": [
-      "The broad backend run cannot be completed in this runtime because an unrelated test attempts an unapproved external api.proxyapi.ru call; no bypass was attempted.",
+      "This bounded frontend block is not a full #245 backend/frontend acceptance result.",
       "NTM full-sync audit still requires a lawful populated synchronized snapshot.",
       "Full #245 product acceptance and legal/source completeness remain NOT PASS."
     ],
@@ -7418,58 +7473,58 @@
       "status": "UNCHANGED_NOT_SENT"
     },
     "protected_actions_performed": false,
-    "next_step": "Continue the next bounded #245 assistant/search API and frontend grounding tranche; keep NTM full-sync completeness blocked on a lawful populated synchronized snapshot."
+    "next_step": "Continue the next bounded #245 assistant/search integration defect; keep NTM full-sync completeness blocked on a lawful populated synchronized snapshot."
   },
   "latest_development_checkpoint": {
-    "updated_at": "2026-10-09T17:06:27.652266Z",
-    "checked_at": "2026-10-09T17:06:27.652266Z",
+    "updated_at": "2026-10-09T19:10:00.000Z",
+    "checked_at": "2026-10-09T19:10:00.000Z",
     "pr": 256,
     "branch": "agent/product-ntm-regressions-v1",
-    "head_sha": "43803039d7ce50bf88c3d9c08af2f638462767a2",
-    "tree_sha": "efbbfb1764c40392b4ecc988f8f929d59fbb4bf6",
-    "parent_sha": "321b4ac72b13ec40a0dc3e2b05f8079f39fb6ee7",
+    "head_sha": "dd7ac413dc2f7698ffe1ce80375557afcbac2da5",
+    "tree_sha": "48c43f8e00a4091c56425975cb28c63fcc235ab5",
+    "parent_sha": "e452d967d86436fda4b49cf344b026b639eb7c5c",
     "base_pr": 245,
     "base_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
-    "completed_block": "fail_closed_grounding_coverage_requires_usable_evidence",
-    "block": "fail_closed_grounding_coverage_requires_usable_evidence",
-    "status": "DRAFT_CHECKPOINT_A5_PASS_CI_PASS_GROUNDING_87",
+    "completed_block": "frontend_copilot_grounding_metadata_contract",
+    "block": "frontend_copilot_grounding_metadata_contract",
+    "status": "DRAFT_CHECKPOINT_A5_PASS_CI_PASS_COPILOT_GROUNDING_UI",
     "behavior": {
-      "reproduced": "a syntactically valid HS code produced coverage=grounded even when local TNVED and NTM providers failed; first repair still admitted an empty TNVED card with only a generic EEC URL",
-      "final": "grounded now requires usable local facts plus citations; provider failures and empty cards are partial with no citations and cannot activate the configured LLM selector",
-      "boundaries": "usable TNVED cards and resolver-validated canonical anchors remain grounded; no legal applicability, source truth, enforcement, network or provider configuration changed"
+      "reproduced": "copilot and batch responses carried ai.grounding and ai.citations, but frontend types and rendering omitted both",
+      "final": "fail-closed coverage, mode, allowlisted facts, limitations and fully identified citations are visible in the shared copilot view",
+      "boundaries": "no legal completeness claim; unsafe URLs are not links; backend, DB, applicability, source admission and feature flags unchanged"
     },
     "author_tests": {
-      "reproduction_before_fix": "new regression expected partial but received grounded when all local evidence providers failed; exit 1",
-      "focused": "test_grounded_assistant.py: 25 passed and 26 subtests; exit 0",
-      "bounded_offline_tranche": "12 assistant/search/grounded/RAG modules on fresh disposable classification DB: 87 passed and 29 subtests; exit 0",
-      "environment": "empty provider keys, deny proxies, preview marker outside repository; DB integrity ok and no catalogue WAL/SHM",
-      "diff_compile": "git diff --check and py_compile; exit 0"
+      "reproduction_before_fix": "existing frontend suite had no copilot grounding UI assertion; backend contract showed omitted fields",
+      "focused": "Assistant.grounding.test.tsx: 6 passed; exit 0",
+      "bounded_offline_tranche": "full frontend: 31 passed; exit 0",
+      "environment": "npm ci isolated dependency install; typecheck and production build exit 0",
+      "diff_compile": "git diff --check exit 0"
     },
     "a5": {
-      "session": "/root/a5_ntm_fallback",
-      "status": "PASSED_REPAIRED_TREE_REMOTE_BOUND",
-      "first_candidate": "REJECT MEDIUM: an empty successful TNVED card still emitted a generic EEC citation and could enable the LLM selector",
-      "focused": "25 passed and 26 subtests; exit 0",
-      "adversarial": "empty card partial/no citations/no LLM; usable card and canonical-only anchor grounded; provider errors partial; candidates partial; no context needs_context",
-      "remote_binding": "remote commit 43803039d7ce50bf88c3d9c08af2f638462767a2 tree equals independently reviewed tree efbbfb1764c40392b4ecc988f8f929d59fbb4bf6",
-      "bounded_offline_tranche": "independent fresh detached run: 87 passed and 29 subtests; exit 0; clean status, DB integrity and foreign keys ok, no catalogue WAL/SHM"
+      "session": "/root/a5_copilot_grounding_ui",
+      "status": "FINAL_PASS_EXACT_REPAIRED_TREE_REMOTE_BOUND",
+      "first_candidate": "two rejected intermediates: incomplete citation/arbitrary fact injection; missing facts with affirmative badges",
+      "focused": "15 focused/adversarial passed; exit 0",
+      "adversarial": "missing facts downgrade, full citation identity, fact allowlist and javascript URL text-only behavior",
+      "remote_binding": "remote commit dd7ac413dc2f7698ffe1ce80375557afcbac2da5 tree equals reviewed tree 48c43f8e00a4091c56425975cb28c63fcc235ab5",
+      "bounded_offline_tranche": "full frontend 31 passed; typecheck/build/diff-check exit 0"
     },
     "ci": {
       "status": "PASSED_EXACT_HEAD",
-      "head_sha": "43803039d7ce50bf88c3d9c08af2f638462767a2",
-      "alias_branch": "agent/product-ntm-bootstrap-ci-v1",
-      "alias_branch_head_sha": "43803039d7ce50bf88c3d9c08af2f638462767a2",
+      "head_sha": "dd7ac413dc2f7698ffe1ce80375557afcbac2da5",
+      "alias_branch": "agent/product-ntm-copilot-grounding-ci-v1",
+      "alias_branch_head_sha": "dd7ac413dc2f7698ffe1ce80375557afcbac2da5",
       "runs": [
         {
-          "run_id": 37963680241,
-          "job_id": 113932566080,
+          "run_id": 37978226897,
+          "job_id": 113981820756,
           "conclusion": "success",
-          "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/37963680241"
+          "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/37978226897"
         }
       ]
     },
     "blockers": [
-      "The broad backend run cannot be completed in this runtime because an unrelated test attempts an unapproved external api.proxyapi.ru call; no bypass was attempted.",
+      "This bounded frontend block is not a full #245 backend/frontend acceptance result.",
       "NTM full-sync audit still requires a lawful populated synchronized snapshot.",
       "Full #245 product acceptance and legal/source completeness remain NOT PASS."
     ],
@@ -7478,6 +7533,6 @@
       "status": "UNCHANGED_NOT_SENT"
     },
     "protected_actions_performed": false,
-    "next_step": "Continue the next bounded #245 assistant/search API and frontend grounding tranche; keep NTM full-sync completeness blocked on a lawful populated synchronized snapshot."
+    "next_step": "Continue the next bounded #245 assistant/search integration defect; keep NTM full-sync completeness blocked on a lawful populated synchronized snapshot."
   }
 }

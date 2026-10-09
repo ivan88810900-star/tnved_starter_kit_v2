@@ -1,7 +1,26 @@
 # Tariff / A0 — единая точка передачи проекта
 
-**Снимок:** 2026-10-08 (UTC). **Единственный репозиторий:** [ivan88810900-star/tnved_starter_kit_v2](https://github.com/ivan88810900-star/tnved_starter_kit_v2).  
+**Снимок:** 2026-10-09 (UTC). **Единственный репозиторий:** [ivan88810900-star/tnved_starter_kit_v2](https://github.com/ivan88810900-star/tnved_starter_kit_v2).
 **Авторитетное состояние:** ветка `agent/orchestration-state`, файлы `.ai/TASK_BOARD.json`, `.ai/COORDINATOR_LEASE.json`, `.ai/orchestration/A6_LIVE_STATUS.json`. Этот документ — указатель и контрольная точка, **не** право на запись/merge/A6. Перед действием заново читать текущие HEAD и state. Не полагаться на Business-чат.
+
+## 0aaaaaaaaa. #245 — Copilot/Batch показывает server grounding и fail-closed provenance
+
+**Новый checkpoint:** [draft PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256), `agent/product-ntm-regressions-v1` @ `dd7ac413dc2f7698ffe1ce80375557afcbac2da5`, tree `48c43f8e00a4091c56425975cb28c63fcc235ab5`, parent `e452d967d86436fda4b49cf344b026b639eb7c5c`.
+
+Воспроизведён frontend-дефект: `/assistant/copilot` и `/assistant/copilot/batch` уже возвращали server-owned `ai.grounding` и `ai.citations`, но типы и общий экран сводки полностью их отбрасывали. Пользователь видел «экспертную сводку» без режима, покрытия и источников.
+
+Исправление показывает coverage, mode, использованные fact-блоки, limitations и citations в single/batch представлении. Положительные `grounded` / `llm_grounded` допускаются только при `generated_from_server_facts=true`, полной citation identity (`id/source_id/title/kind`) и непустом полностью allowlisted `facts_used`. Missing, incomplete и mixed metadata обозначается неподтверждённой; `javascript:` и другие небезопасные URL не становятся ссылками. UI прямо сообщает, что статус не является юридической проверкой и не подтверждает полноту НТМ.
+
+Проверки:
+
+- author focused: **6 passed**, полный frontend: **31 passed**, typecheck/build/diff-check — exit 0;
+- независимый A5 дважды отклонил промежуточные trees: неполная citation + произвольный fact; затем valid citation без `facts_used` с положительным badge;
+- финальный A5: **PASS без findings**, focused/adversarial **15 passed**, полный frontend **31 passed**, typecheck/build/diff-check — exit 0;
+- exact-head CI: [run 37978226897](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/37978226897), job `113981820756`, **success**.
+
+Изменены только frontend type/view/focused test. Backend, БД, applicability, source admission, enforcement и feature flags не менялись. Полный #245 product/legal/source completeness остаётся **NOT PASS**; lawful populated synchronized NTM snapshot всё ещё недоступен. A6 `core-s1-6415f443120f-r9-g106` неизменён и не отправлялся.
+
+Следующий шаг — следующий воспроизводимый bounded #245 assistant/search integration defect с теми же fail-closed source boundaries; full-sync audit запускать только при законно доступном populated synchronized snapshot.
 
 ## 0aaaaaaaa. #245 — UI чата показывает grounding и fail-closed проверяет metadata
 
