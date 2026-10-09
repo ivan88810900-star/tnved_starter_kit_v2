@@ -3,6 +3,23 @@
 **Снимок:** 2026-10-08 (UTC). **Единственный репозиторий:** [ivan88810900-star/tnved_starter_kit_v2](https://github.com/ivan88810900-star/tnved_starter_kit_v2).  
 **Авторитетное состояние:** ветка `agent/orchestration-state`, файлы `.ai/TASK_BOARD.json`, `.ai/COORDINATOR_LEASE.json`, `.ai/orchestration/A6_LIVE_STATUS.json`. Этот документ — указатель и контрольная точка, **не** право на запись/merge/A6. Перед действием заново читать текущие HEAD и state. Не полагаться на Business-чат.
 
+## 0o. #245 — synthetic regulatory seed больше не считается официальным evidence
+
+**Новый текущий checkpoint:** [draft PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256), `agent/product-ntm-regressions-v1` @ `9a8493e196202fdb752abc79302c02f6b1303b79`, tree `19d2f245e7b851b98347fb20a5852fd6b03b5c6f`, parent `5a535d00056c5c46c2ca614eaa3194325647fe1b`, base #245 неизменён `e39e19787bd913baeb6f85577a13e1116458e633`.
+
+Воспроизведён source-safety defect: `seed_regulatory_mass` создавал 5,057 шаблонных документов с построенными URL как `active/verified`, после чего они выдавались пользователю и считались в official-source completeness. Исправлено fail-closed: synthetic rows теперь `reference_only/synthetic_seed`, их mappings — `reference`, confidence 0, unapproved; runtime evidence и completeness принимают только active non-noise/non-synthetic документы. Повторный явный запуск seed ремонтирует ранее созданные небезопасные labels. Реальные `active/verified` и `active/quality=NULL` документы продолжают выдаваться и учитываться.
+
+Проверки exact head/tree:
+- author targeted regulatory safety: **21 passed +3 subtests**, exit 0; свежий полный mass seed: **5,057 documents / 5,481 mappings**, **10 passed**, surfaced 0, admitted completeness 0, exit 0;
+- author fresh disposable SQLite + `init_db()` + полный NTM v2 import + широкий канонический NTM/regulatory срез: **808 passed, 1 skipped, 3 subtests**, exit 0; frontend: **18 passed**, typecheck/build PASS, exit 0;
+- независимый A5 `/root/a5_ntm_fallback`: **PASS exact remote HEAD**; targeted **258 passed +3 subtests**, mass-seed **9 passed**, fresh-seed, forced legacy repair и adversarial real-document preservation PASS, exit 0;
+- exact-head CI: **PASS** — [run 37867410107](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/37867410107), job `offline-safety` `113617338713`, success на точном HEAD `9a8493e196202fdb752abc79302c02f6b1303b79`;
+- `git diff --check` и compile checks PASS; remote tree совпадает с проверенным tree.
+
+Доступны полная exact-tree копия, Git, Python, Node и реальное выполнение команд. Публикация выполнена только в существующую draft-ветку под coordinator lease generation 126. Protected merge, production/DB writes, flags, secrets/permissions, destructive migration и A6 не выполнялись. A6 request `core-s1-6415f443120f-r9-g106` не менялся и не отправлялся.
+
+Остаётся: full #245 product/legal/source-completeness **NOT PASS**. Уже развёрнутые legacy synthetic rows требуют отдельного безопасного remediation/reseed плана; production backfill не выполнялся. PostgreSQL и оставшиеся dataset-dependent legacy tests не закрыты. Следующий шаг — продолжить #245 applicability/source triage без расширения definite rules и без признания synthetic данных нормативным источником.
+
 ## 0n. #245 — startup schema-check больше не отключает fail-closed NTM diagnostics
 
 **Новый текущий checkpoint:** [draft PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256), `agent/product-ntm-regressions-v1` @ `5a535d00056c5c46c2ca614eaa3194325647fe1b`, tree `768e5143cae4f1d168d90acc1361188524543f9c`, parent `0650526aed724322fbe0842f1a8e22d91dfb6b90`, base #245 неизменён `e39e19787bd913baeb6f85577a13e1116458e633`.
