@@ -292,6 +292,153 @@ def test_engine_official_sgr_exclude_only_rule(
     assert EXCLUDE_ONLY_ENGINE_KEY not in keys_ex
 
 
+def test_engine_official_sgr_exact_scope_does_not_expand_to_descendants(
+    memory_sessionmaker: sessionmaker,
+) -> None:
+    from app.services.ntm_v2_official_sgr_import import (
+        evaluate_official_sgr_for_position,
+        import_official_sgr_rules_to_ntm_v2,
+        official_sgr_seed_rule_matches_position,
+    )
+
+    row = {
+        "rule_id": "test-exact-3304",
+        "hs_scope": "3304",
+        "hs_scope_mode": "exact",
+        "permit_type": "СГР",
+        "applicability": "possible",
+        "title": "Exact test scope",
+        "evidence": "test-only scope contract",
+    }
+    import_official_sgr_rules_to_ntm_v2({"source_document": "test", "rules": [row]})
+
+    assert official_sgr_seed_rule_matches_position(row, "3304990000", "") is False
+    assert evaluate_official_sgr_for_position("3304990000", "")["matched_rules"] == []
+    assert evaluate_official_sgr_for_position("3304", "")["matched_rules"]
+
+
+def test_engine_official_sgr_inactive_measure_is_not_admitted(
+    memory_sessionmaker: sessionmaker,
+) -> None:
+    from app.services.ntm_v2_official_sgr_import import (
+        evaluate_official_sgr_for_position,
+        import_official_sgr_rules_to_ntm_v2,
+    )
+
+    import_official_sgr_rules_to_ntm_v2(
+        {
+            "source_document": "test",
+            "rules": [
+                {
+                    "rule_id": "test-inactive-measure",
+                    "hs_scope": "3808",
+                    "hs_scope_mode": "prefix",
+                    "permit_type": "СГР",
+                    "applicability": "possible",
+                    "title": "Inactive measure test",
+                    "evidence": "test-only status contract",
+                }
+            ],
+        }
+    )
+    with memory_sessionmaker() as session:
+        measure = session.query(NtmMeasureV2).filter_by(source_kind="official_sgr_registry").one()
+        measure.status = "inactive"
+        session.commit()
+
+    assert evaluate_official_sgr_for_position("3808990000", "")["matched_rules"] == []
+
+
+def test_engine_official_sgr_export_rule_is_not_admitted_for_import(
+    memory_sessionmaker: sessionmaker,
+) -> None:
+    from app.services.ntm_v2_official_sgr_import import (
+        evaluate_official_sgr_for_position,
+        import_official_sgr_rules_to_ntm_v2,
+    )
+
+    import_official_sgr_rules_to_ntm_v2(
+        {
+            "source_document": "test",
+            "rules": [
+                {
+                    "rule_id": "test-export-direction",
+                    "hs_scope": "3808",
+                    "hs_scope_mode": "prefix",
+                    "permit_type": "СГР",
+                    "applicability": "possible",
+                    "title": "Export direction test",
+                    "evidence": "test-only direction contract",
+                }
+            ],
+        }
+    )
+    with memory_sessionmaker() as session:
+        rule = session.query(NtmApplicabilityRuleV2).filter_by(
+            rule_import_key="official_sgr_registry|rule:test-export-direction"
+        ).one()
+        rule.direction = "export"
+        session.commit()
+
+    assert evaluate_official_sgr_for_position("3808990000", "")["matched_rules"] == []
+
+
+def test_official_sgr_import_rejects_unknown_hs_scope_mode(
+    memory_sessionmaker: sessionmaker,
+) -> None:
+    from app.services.ntm_v2_official_sgr_import import import_official_sgr_rules_to_ntm_v2
+
+    report = import_official_sgr_rules_to_ntm_v2(
+        {
+            "source_document": "test",
+            "rules": [
+                {
+                    "rule_id": "test-unknown-mode",
+                    "hs_scope": "3808",
+                    "hs_scope_mode": "wildcard",
+                    "permit_type": "СГР",
+                    "applicability": "possible",
+                    "title": "Unknown mode test",
+                    "evidence": "test-only mode contract",
+                }
+            ],
+        }
+    )
+
+    assert report["rules_invalid"] == 1
+    assert report["rules_created"] == 0
+    with memory_sessionmaker() as session:
+        assert session.query(NtmApplicabilityRuleV2).count() == 0
+
+
+@pytest.mark.parametrize(
+    "description_fields",
+    [{}, {"exclude_if_contains_any": ["industrial"]}],
+)
+def test_official_sgr_import_rejects_description_only_without_positive_gate(
+    memory_sessionmaker: sessionmaker,
+    description_fields: dict,
+) -> None:
+    from app.services.ntm_v2_official_sgr_import import import_official_sgr_rules_to_ntm_v2
+
+    row = {
+        "rule_id": "test-empty-description-only",
+        "hs_scope": "",
+        "hs_scope_mode": "description_only",
+        "permit_type": "СГР",
+        "applicability": "definite",
+        "title": "Empty description-only test",
+        "evidence": "test-only positive gate contract",
+        **description_fields,
+    }
+    report = import_official_sgr_rules_to_ntm_v2({"source_document": "test", "rules": [row]})
+
+    assert report["rules_invalid"] == 1
+    assert report["rules_created"] == 0
+    with memory_sessionmaker() as session:
+        assert session.query(NtmApplicabilityRuleV2).count() == 0
+
+
 def test_rule_description_matches_official_sgr_and_mode(
     memory_sessionmaker: sessionmaker,
     official_sgr_engine_imported: None,
