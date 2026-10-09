@@ -3,6 +3,24 @@
 **Снимок:** 2026-10-08 (UTC). **Единственный репозиторий:** [ivan88810900-star/tnved_starter_kit_v2](https://github.com/ivan88810900-star/tnved_starter_kit_v2).  
 **Авторитетное состояние:** ветка `agent/orchestration-state`, файлы `.ai/TASK_BOARD.json`, `.ai/COORDINATOR_LEASE.json`, `.ai/orchestration/A6_LIVE_STATUS.json`. Этот документ — указатель и контрольная точка, **не** право на запись/merge/A6. Перед действием заново читать текущие HEAD и state. Не полагаться на Business-чат.
 
+## 0aa. #244 — устаревшее или несвязанное evidence спецпошлины больше не попадает в автоматическую сумму
+
+**Новый текущий checkpoint:** [draft PR #255](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/255), `agent/core-payment-regressions-v1` @ `7c12f21787b1d557630d8b0737c769b326ab112d`, tree `9ebd8fb4f9a11d066f1b538fb50d67861e249604`, parent `6f1f5522cfe304030d1be474e3f074e85a739835`; base #244 неизменён `14e0ee8f034d94ffc5831d87e076f4d693a5a524`.
+
+Воспроизведён product defect: строка trade remedy с `SourceStatus.is_stale=true` всё ещё добавляла 7 000 RUB к публичному расчёту. Исправление связывает каждую anti-dumping, safeguard и countervailing строку с exact current `SourceStatus.revision` и единым 90-дневным budget свежести. Отсутствующий, stale, mismatched или future status, а также revision старше 90 дней, оставляет evidence и переводит расчёт в manual review: special-duty amount и итог удерживаются. Exact 90-day boundary остаётся допустимым. Новая юридическая применимость не выводилась и нормативные источники не переинтерпретировались.
+
+Проверки exact final tree:
+- direct reproduction до исправления: `test_public_path_rejects_stale_trade_remedy_source_status` — **FAIL**, получено 7 000 вместо 0, exit 1;
+- author focused `tests/test_special_duties.py`: **18 passed + 9 subtests**, exit 0;
+- author workflow-equivalent payment slice на disposable SQLite: **274 passed + 23 subtests**, exit 0;
+- author broad source/ingestion slice: **254 passed + 63 subtests**, exit 0; `compileall` и `git diff --check` — exit 0;
+- независимый A5 `/root/a5_special_scope`: **PASS exact reviewed tree**; focused **37 passed + 9 subtests**, broad **182 passed + 68 subtests**, public-API adversarial matrix **15/15** и future-row matrix **6/6**, все exit 0;
+- exact-head GitHub Actions: **PASS** — [run 37921716308](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/37921716308), [offline-safety job 113790958532](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/37921716308/job/113790958532), [payment-regression job 113790958895](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/37921716308/job/113790958895), все steps success.
+
+Все шесть committed payment bundles остаются старше допустимого порога и требуют source-by-source refresh из удержанных первичных snapshots; это исправление делает trade-remedy расчёт fail-closed, но не обновляет и не переутверждает источники. Полный #244 product/legal/source-completeness **NOT PASS**; полный #245 также **NOT PASS**. Protected merge, production/DB writes, enforcement flags, secrets/permissions, destructive migration и внешний A6 не выполнялись; `core-s1-6415f443120f-r9-g106` неизменён и не отправлен.
+
+Следующий шаг — продолжить текущий #245 source/applicability block и подготовить canonical disposable NTM v2 fixtures для воспроизводимых broad/full-sync проверок; неподтверждённую применимость сохранять как manual review.
+
 ## 0z. #245 — HTML fallback ФСА больше не принимает неоднозначную таблицу за действующую запись
 
 **Новый текущий checkpoint:** [draft PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256), `agent/product-ntm-regressions-v1` @ `d5dd222f108399eac82a5d8001d7615a00953d08`, tree `9a81a7381d327061050a4616aba3f7988e0bc210`, parent `ad111df595f323b25e9cef1e7e250a6df1a0bad9`; base #245 неизменён `e39e19787bd913baeb6f85577a13e1116458e633`.

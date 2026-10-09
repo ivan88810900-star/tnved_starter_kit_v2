@@ -2179,7 +2179,7 @@
       "unique_source_pr_count": 29
     }
   },
-  "revision": 687,
+  "revision": 688,
   "runs": [
     {
       "head_sha": null,
@@ -7228,110 +7228,107 @@
       }
     }
   ],
-  "updated_at": "2026-10-09T10:21:16.223Z",
+  "updated_at": "2026-10-09T11:11:00.000Z",
   "latest_scheduled_product_checkpoint": {
-    "updated_at": "2026-10-09T10:21:16.223Z",
-    "pr": 256,
-    "branch": "agent/product-ntm-regressions-v1",
-    "head_sha": "d5dd222f108399eac82a5d8001d7615a00953d08",
-    "tree_sha": "9a81a7381d327061050a4616aba3f7988e0bc210",
-    "parent_sha": "ad111df595f323b25e9cef1e7e250a6df1a0bad9",
-    "base_pr": 245,
-    "base_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
-    "completed_block": "fail_closed_fsa_html_identity_status_and_expiry",
+    "updated_at": "2026-10-09T11:11:00.000Z",
+    "pr": 255,
+    "branch": "agent/core-payment-regressions-v1",
+    "head_sha": "7c12f21787b1d557630d8b0737c769b326ab112d",
+    "tree_sha": "9ebd8fb4f9a11d066f1b538fb50d67861e249604",
+    "parent_sha": "6f1f5522cfe304030d1be474e3f074e85a739835",
+    "base_pr": 244,
+    "base_sha": "14e0ee8f034d94ffc5831d87e076f4d693a5a524",
+    "completed_block": "fail_closed_trade_remedy_freshness_and_source_status_binding",
     "behavior": {
-      "reproduced": "any non-empty FSA HTML table was upgraded to VALID without exact identity, status or expiry proof",
-      "final": "all result tables are checked; exact identity, explicit active status and parseable non-expired date are required; structural ambiguity and incomplete rows fail closed",
-      "boundaries": "evidence retained; NTM applicability, advisory/enforcement and legal interpretation unchanged"
+      "reproduced": "a stale SourceStatus still admitted a trade-remedy row and added 7000 RUB to the public calculation",
+      "final": "each anti-dumping, safeguard and countervailing row requires an exact current SourceStatus revision inside the shared 90-day freshness budget; missing, stale, mismatched or future evidence withholds the amount and total",
+      "boundaries": "evidence retained; exact 90-day boundary remains admitted; no new legal applicability or source refresh was claimed"
     },
     "author_tests": {
-      "focused": "75 passed, 1 skipped, 6 subtests; exit 0",
-      "adversarial_matrix": "identity/status/expiry, duplicates, missing cells, rowspan/colspan, multiple tables, metadata and not-found help; exit 0",
-      "broad_final": "959 passed, 11 skipped, 38 subtests; exit 0",
+      "reproduction_before_fix": "stale SourceStatus case failed with 7000 instead of 0; exit 1",
+      "focused": "18 passed, 9 subtests; exit 0",
+      "workflow_equivalent": "274 passed, 23 subtests; exit 0",
+      "broad_source_ingestion": "254 passed, 63 subtests; exit 0",
       "diff_compile": "git diff --check and compileall; exit 0"
     },
     "a5": {
-      "session": "/root/a5_pravo_probe",
+      "session": "/root/a5_special_scope",
       "status": "PASSED_EXACT_REVIEWED_TREE_REMOTE_BOUND",
-      "rejected_intermediate_findings": [
-        "missing expiry and row spans still allowed false VALID",
-        "ambiguous headers, organization metadata and unparseable expiry still allowed incorrect conclusions",
-        "query/search metadata incorrectly downgraded a complete exact-active record"
-      ],
-      "focused": "20 passed, 6 subtests; exit 0",
-      "related": "71 passed, 1 skipped, 6 subtests; exit 0",
-      "adversarial": "accumulated HTML matrix 28/28 and metadata plus exact-active matrix 3/3; exit 0",
+      "focused": "37 passed, 9 subtests; exit 0",
+      "related": "182 passed, 68 subtests; exit 0",
+      "adversarial": "public API matrix 15/15 across all three remedy kinds plus future-row matrix 6/6; exact 90-day boundary admitted",
       "remote_binding": "reviewed local tree and connector-created remote tree byte-identical"
     },
     "ci": {
       "status": "PASSED_EXACT_HEAD",
       "workflow_status": "completed",
       "conclusion": "success",
-      "run_id": 37915368362,
+      "run_id": 37921716308,
       "name": "Tariff agent safety",
       "event": "push",
-      "head_sha": "d5dd222f108399eac82a5d8001d7615a00953d08",
-      "created_at": "2026-10-09T10:04:53Z",
-      "updated_at": "2026-10-09T10:05:22Z",
-      "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/37915368362"
-    },
-    "snapshot_probe": {
-      "path": "customs-clear/backend/customs.db.backup_before_pdf_import",
-      "result": "NOT_NTM_FULL_SYNC_SNAPSHOT",
-      "reason": "non_tariff_measures and NTM v2 tables absent"
+      "head_sha": "7c12f21787b1d557630d8b0737c769b326ab112d",
+      "jobs": {
+        "offline_safety": 113790958532,
+        "payment_regression": 113790958895
+      },
+      "created_at": "2026-10-09T11:06:42Z",
+      "updated_at": "2026-10-09T11:07:38Z",
+      "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/37921716308"
     },
     "blockers": [
-      "Full #245 backend/frontend acceptance and legal/source completeness remain NOT PASS.",
-      "NTM full-sync audit requires a lawful populated synchronized snapshot.",
-      "Exact-head CI run has not appeared for the current candidate."
+      "Full #244 product acceptance and legal/source completeness remain NOT PASS.",
+      "All six committed payment bundles remain stale and require source-by-source refresh from retained primary-source snapshots.",
+      "Full #245 backend/frontend acceptance and legal/source completeness remain NOT PASS."
     ],
     "a6": {
       "request": "core-s1-6415f443120f-r9-g106",
       "status": "UNCHANGED_NOT_SENT"
     },
     "protected_actions_performed": false,
-    "next_step": "Continue the next reproducible PR #245 source/applicability defect; keep unconfirmed results in manual review and do not dispatch the prepared A6 request without exact owner approval.",
-    "checked_at": "2026-10-09T10:21:16.223Z",
+    "next_step": "Continue the current PR #245 source/applicability block and canonical disposable NTM v2 fixtures; keep unconfirmed results in manual review and do not dispatch the prepared A6 request without exact owner approval.",
+    "checked_at": "2026-10-09T11:11:00.000Z",
     "status": "DRAFT_CHECKPOINT_A5_AND_EXACT_HEAD_CI_PASS"
   },
   "latest_development_checkpoint": {
-    "checked_at": "2026-10-09T10:21:16.223Z",
-    "pr": 256,
-    "branch": "agent/product-ntm-regressions-v1",
-    "head_sha": "d5dd222f108399eac82a5d8001d7615a00953d08",
-    "tree_sha": "9a81a7381d327061050a4616aba3f7988e0bc210",
-    "base_pr": 245,
-    "base_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
-    "block": "fail_closed_fsa_html_identity_status_and_expiry",
+    "checked_at": "2026-10-09T11:11:00.000Z",
+    "pr": 255,
+    "branch": "agent/core-payment-regressions-v1",
+    "head_sha": "7c12f21787b1d557630d8b0737c769b326ab112d",
+    "tree_sha": "9ebd8fb4f9a11d066f1b538fb50d67861e249604",
+    "base_pr": 244,
+    "base_sha": "14e0ee8f034d94ffc5831d87e076f4d693a5a524",
+    "block": "fail_closed_trade_remedy_freshness_and_source_status_binding",
     "status": "DRAFT_CHECKPOINT_A5_AND_EXACT_HEAD_CI_PASS",
     "author_tests": [
-      "focused FSA/opendata/permits 75 passed, 1 skipped, 6 subtests; exit 0",
-      "broad backend slice 959 passed, 11 skipped, 38 subtests; exit 0",
-      "HTML identity/status/expiry adversarial matrices, git diff --check and compileall; exit 0"
+      "direct stale SourceStatus reproduction failed with 7000 instead of 0 before fix; exit 1",
+      "workflow-equivalent payment slice 274 passed, 23 subtests; exit 0",
+      "broad source/ingestion slice 254 passed, 63 subtests; exit 0",
+      "git diff --check and compileall; exit 0"
     ],
     "a5": {
-      "session": "/root/a5_pravo_probe",
+      "session": "/root/a5_special_scope",
       "status": "PASSED_EXACT_REVIEWED_TREE_REMOTE_BOUND",
-      "relevant_slice": "20 passed, 6 subtests; broader 71 passed, 1 skipped, 6 subtests; exit 0",
-      "adversarial": "accumulated HTML matrix 28/28 and metadata plus exact-active 3/3; exit 0"
+      "relevant_slice": "37 passed, 9 subtests; broader 182 passed, 68 subtests; exit 0",
+      "adversarial": "public API matrix 15/15 and future-row matrix 6/6; exit 0"
     },
     "ci": {
       "status": "PASSED_EXACT_HEAD",
       "workflow_status": "completed",
       "conclusion": "success",
-      "run_id": 37915368362,
+      "run_id": 37921716308,
       "name": "Tariff agent safety",
       "event": "push",
-      "head_sha": "d5dd222f108399eac82a5d8001d7615a00953d08",
-      "created_at": "2026-10-09T10:04:53Z",
-      "updated_at": "2026-10-09T10:05:22Z",
-      "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/37915368362"
+      "head_sha": "7c12f21787b1d557630d8b0737c769b326ab112d",
+      "created_at": "2026-10-09T11:06:42Z",
+      "updated_at": "2026-10-09T11:07:38Z",
+      "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/37921716308"
     },
-    "current_data_state": "FSA HTML results require exact identity, explicit active status and parseable non-expired date; structural ambiguity stays UNKNOWN",
-    "next_step": "Continue the next reproducible PR #245 source/applicability defect; keep unconfirmed results in manual review and do not dispatch the prepared A6 request without exact owner approval.",
+    "current_data_state": "trade-remedy rows require exact current SourceStatus evidence inside the 90-day budget; all committed payment bundles still require lawful refresh",
+    "next_step": "Continue the current PR #245 source/applicability block and canonical disposable NTM v2 fixtures; keep unconfirmed results in manual review.",
+    "full_244_status": "NOT_PASS",
     "full_245_status": "NOT_PASS",
     "a6": "core-s1-6415f443120f-r9-g106 unchanged, not sent",
     "protected_actions_performed": false,
-    "updated_at": "2026-10-09T10:21:16.223Z"
+    "updated_at": "2026-10-09T11:11:00.000Z"
   }
 }
