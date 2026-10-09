@@ -3,6 +3,25 @@
 **Снимок:** 2026-10-08 (UTC). **Единственный репозиторий:** [ivan88810900-star/tnved_starter_kit_v2](https://github.com/ivan88810900-star/tnved_starter_kit_v2).  
 **Авторитетное состояние:** ветка `agent/orchestration-state`, файлы `.ai/TASK_BOARD.json`, `.ai/COORDINATOR_LEASE.json`, `.ai/orchestration/A6_LIVE_STATUS.json`. Этот документ — указатель и контрольная точка, **не** право на запись/merge/A6. Перед действием заново читать текущие HEAD и state. Не полагаться на Business-чат.
 
+## 0y. #245 — FSA JSON API больше не принимает чужую или неподтверждённую запись за действующую
+
+**Новый текущий checkpoint:** [draft PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256), `agent/product-ntm-regressions-v1` @ `ad111df595f323b25e9cef1e7e250a6df1a0bad9`, tree `961b8d8c1995900284d54f5143f7ae1db7633b47`, parent `af1f6301f871b5156fabe774505aa9184e452217`; base #245 неизменён `e39e19787bd913baeb6f85577a13e1116458e633`.
+
+Воспроизведён source/identity defect: любой непустой JSON-ответ API ФСА становился `VALID`, даже если API вернул другой номер, аннулированную/неизвестную запись либо только положительный счётчик без строки. Теперь `VALID` требует точного canonical match по специальному полю номера сертификата/декларации и явного active status. Generic `number` не считается доказательством личности записи, потому что может быть внутренним ID API. Все точные дубликаты агрегируются независимо от порядка: revoked/expired не позволяют `VALID`, active+unknown остаётся `UNKNOWN`. `NOT_FOUND` для несовпадения допустим только когда каждая строка имеет доверенное поле номера; смешанные/ненумерованные ответы и positive count без строк остаются `UNKNOWN` для manual review. Evidence номера, статуса, count и ТН ВЭД сохраняется; applicability/advisory/enforcement и правовая интерпретация не расширялись.
+
+Два промежуточных local candidate независимый A5 отклонил: первый был order-dependent на duplicate active/revoked и ошибочно считал mixed numbered/unnumbered ответ доказанным отсутствием; второй ещё доверял generic string `number` как номеру сертификата. Эти варианты не публиковались.
+
+Проверки exact final tree:
+- author focused FSA/opendata/permits: **58 passed, 1 skipped**, exit 0; `compileall` и `git diff --check` — exit 0;
+- author broad #245 backend slice: **942 passed, 11 skipped, 32 subtests**, exit 0;
+- независимый A5 `/root/a5_pravo_probe`: **PASS exact candidate**; adversarial identity/status matrix exit 0; focused **17 passed**; related FSA/opendata/permits **51 passed, 1 skipped**, exit 0; оба порядка imports exit 0, circular import отсутствует; false `VALID` не найден;
+- connector создал remote tree, побайтово совпадающий с reviewed local tree; PR после публикации перечитан и показывает exact remote HEAD;
+- exact-head GitHub Actions: **PENDING_NO_RUN_OBSERVED** для `ad111df595f323b25e9cef1e7e250a6df1a0bad9`; workflow runs пусты при проверке.
+
+Полный #245 product/legal/source-completeness **NOT PASS**. NTM full-sync audit всё ещё требует законно доступного populated synchronized snapshot. Protected merge, production/DB writes, enforcement flags, secrets/permissions, destructive migration и внешний A6 не выполнялись; `core-s1-6415f443120f-r9-g106` неизменён и не отправлен.
+
+Следующий шаг — повторно проверить exact-head CI, затем исследовать HTML-table fallback ФСА и следующий #245 source/applicability defect; неподтверждённые результаты оставлять `UNKNOWN`, не расширять definite rules.
+
 ## 0x. #245 — локальный FSA opendata статус fail-closed
 
 **Новый текущий checkpoint:** [draft PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256), `agent/product-ntm-regressions-v1` @ `af1f6301f871b5156fabe774505aa9184e452217`, tree `fd3d214ce25a01286f3110e2a42849f4ff31f7a6`, parent `758797f56b00ceb5fd78362a0dce80683dc1e96d`; base #245 неизменён `e39e19787bd913baeb6f85577a13e1116458e633`.
