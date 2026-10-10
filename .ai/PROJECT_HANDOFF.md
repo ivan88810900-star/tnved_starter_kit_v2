@@ -3,6 +3,23 @@
 **Снимок:** 2026-10-09 (UTC). **Единственный репозиторий:** [ivan88810900-star/tnved_starter_kit_v2](https://github.com/ivan88810900-star/tnved_starter_kit_v2).
 **Авторитетное состояние:** ветка `agent/orchestration-state`, файлы `.ai/TASK_BOARD.json`, `.ai/COORDINATOR_LEASE.json`, `.ai/orchestration/A6_LIVE_STATUS.json`. Этот документ — указатель и контрольная точка, **не** право на запись/merge/A6. Перед действием заново читать текущие HEAD и state. Не полагаться на Business-чат.
 
+## 0aaaaaaaaaaaaaaaa. #245 — оставшиеся registry/source URL в UI теперь fail-closed
+
+**Новый checkpoint:** [draft PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256), `agent/product-ntm-regressions-v1` @ `8ca94203a04c131f2f7181a3e66b5ab71fdf59a6`, tree `26ff4dbb3e56440ea5ffa48a6c037720a828478a`, parent `d9d0be7da22904689aa4e5af1f62d7ca58072a8f`.
+
+Закрыт связный frontend-блок из семи оставшихся API-derived внешних ссылок на пяти поверхностях: Calculator, PermitPicker, NonTariff, DocumentCheck и PermitDocumentsBlock. Все они теперь используют общий строгий `getSafeExternalUrl`: допустимый absolute HTTP(S) сохраняется byte-for-byte; credentials, non-HTTP, control/bidi, backslash и malformed host не становятся anchor, но остаются ограниченным экранированным plain-text evidence. Небезопасный `manual_check_url` больше не скрывает безопасный fallback `registry_link`; отклонённое evidence при этом сохраняется.
+
+Проверки:
+
+- A4 author `/root/a4_remaining_external_urls_155`: focused **16 passed**, полный frontend **108 passed**, typecheck/build/diff-check — exit 0;
+- root: focused **57 passed**, полный frontend **108 passed**, typecheck/build — exit 0;
+- независимый A5 `/root/a5_remaining_external_urls_155`: **PASS без findings**; focused **53 passed**, full frontend **108 passed**, typecheck/diff-check — exit 0;
+- exact-head CI: [run 38015394005](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38015394005), offline-safety job `114104399311`, **success**.
+
+Это только URL transport/rendering boundary, не подтверждение официальности, legal applicability или source completeness. Полный #245 product/legal/source completeness остаётся **NOT PASS**: lawful populated synchronized NTM snapshot недоступен. Merge, deploy, production write, enforcement/permissions/secrets change, destructive migration и внешний A6 не выполнялись; `core-s1-6415f443120f-r9-g106` неизменён и не отправлялся.
+
+Следующий шаг — воспроизвести следующий bounded #245 search/classification/grounding defect либо разобрать fixture contour; NTM full-sync сохранять заблокированным до законно доступного populated synchronized snapshot.
+
 ## 0aaaaaaaaaaaaaaa. #245 — официальный URL в Copilot bundle теперь fail-closed
 
 **Новый checkpoint:** [draft PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256), `agent/product-ntm-regressions-v1` @ `d9d0be7da22904689aa4e5af1f62d7ca58072a8f`, tree `74e8517315d6977a3c2170783c619cd56ce604c8`, parent `7ab810dbae2a7caf9f3caebc03014c6f7dbc8cb6`.
