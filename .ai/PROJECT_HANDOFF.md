@@ -1,6 +1,6 @@
 # Tariff / A0 — единая точка передачи проекта
 
-**Снимок:** 2026-10-09 (UTC). **Единственный репозиторий:** [ivan88810900-star/tnved_starter_kit_v2](https://github.com/ivan88810900-star/tnved_starter_kit_v2).
+**Снимок:** 2026-10-10 (UTC). **Единственный репозиторий:** [ivan88810900-star/tnved_starter_kit_v2](https://github.com/ivan88810900-star/tnved_starter_kit_v2).
 **Авторитетное состояние:** ветка `agent/orchestration-state`, файлы `.ai/TASK_BOARD.json`, `.ai/COORDINATOR_LEASE.json`, `.ai/orchestration/A6_LIVE_STATUS.json`. Этот документ — указатель и контрольная точка, **не** право на запись/merge/A6. Перед действием заново читать текущие HEAD и state. Не полагаться на Business-чат.
 
 ## 0aaaaaaaaaaaaaaaaaa. #245 — Tree Model v2 использует изолированный каталог
@@ -867,7 +867,7 @@ CI #255: [offline-safety PASS, run 37771953943](https://github.com/ivan88810900-
 
 ## 4. Следующие технические шаги
 
-1. Продолжить платёжный блок от опубликованного #255 `a356f5302a2bb4388504c213b8c767ba1de0a786`: legacy specific/combined fallback исправлен; следующая задача — ограничения производителя/товара, затем fixture/broad-suite разбор. Не запускать/не пересобирать A6.
+1. Продолжить платёжный блок от live draft [#255](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/255) `7c12f21787b1d557630d8b0737c769b326ab112d`: legacy specific/combined fallback и fail-closed manufacturer/product scope уже исправлены; exact-head [CI 37921716308](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/37921716308) успешен. Следующая задача — source-by-source refresh шести stale payment bundles из retained primary-source snapshots, immutable ETT binding и оставшаяся broad-fixture/source-completeness evidence. Не фабриковать snapshots, не запускать/не пересобирать A6.
 2. Main уже обновлён merge #254. Перед следующей удалённой записью приобрести coordinator lease через **current trusted main** `tools/tariff_agents/lease.py` и GitHub CAS; перечитать holder/token/TTL. На реальных непроизводственных сценариях проверять: recovery state/board, создание -> allocation -> implementation -> independent QA -> CI, зависание и освобождение, корректную диагностику и доказанную видимость уведомления. Не имитировать child session IDs, A5/A6, delivery receipts. Нет доступа к native Work executor — пометить unavailable.
 3. #244: воспроизвести полный backend/CI по ставкам, FX, НДС, акцизам, спецпошлинам и преференциям с реальными source versions/effective dates, unknown/fail-closed, сформировать и протестировать payment quote end-to-end без production writes; независимый A5 текущего SHA.
 4. #245: проверка применимости ТР, СС/ДС/СГР, лицензий, нотификаций, маркировки и исключений по кодам и свойствам, source/provenance и confidence; самостоятельная полнота нормативного набора и full backend+frontend; independent A5. Не включать SGR enforcement без отдельного решения.
