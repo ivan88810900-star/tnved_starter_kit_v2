@@ -56,6 +56,45 @@ class ClassifyApiSecurityTests(unittest.TestCase):
         _args, kwargs = mock_cf.call_args
         self.assertNotIn("api_key", kwargs)
 
+    @patch("app.api.classify.get_smart_classifier")
+    def test_smart_classifier_manual_review_is_preserved_by_api(self, mock_get_classifier) -> None:
+        from app.services.smart_classifier import ClassifyResult
+
+        classifier = mock_get_classifier.return_value
+        classifier.classify = AsyncMock(
+            return_value=ClassifyResult(
+                results=[{"hs_code": "8501529000", "confidence": 0.7, "recommended": False}],
+                web_search_used=False,
+                status="MANUAL_REVIEW",
+                note="Поиск технических характеристик не дал подтверждённых данных.",
+                extra={
+                    "manual_review_required": True,
+                    "web_search_attempted": True,
+                    "web_search_status": "unavailable",
+                },
+            )
+        )
+        login_declarant(self.client)
+
+        response = self.client.post(
+            "/api/classify",
+            json={
+                "description": "двигатель",
+                "article": "YL-90L-4",
+                "manufacturer": "Dongfa",
+                "use_smart_classifier": True,
+            },
+        )
+
+        self.assertEqual(response.status_code, 200, response.text)
+        body = response.json()
+        self.assertEqual(body["status"], "MANUAL_REVIEW")
+        self.assertTrue(body["manual_review_required"])
+        self.assertEqual(body["web_search_status"], "unavailable")
+        self.assertFalse(body["web_search_used"])
+        self.assertFalse(body["results"][0]["recommended"])
+        self.assertNotIn("web_context", body)
+
 
 if __name__ == "__main__":
     unittest.main()

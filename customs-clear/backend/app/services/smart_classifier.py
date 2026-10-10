@@ -8,6 +8,7 @@ import json
 import re
 from dataclasses import dataclass, field
 from typing import Any
+from urllib.parse import urlsplit
 
 import httpx
 from loguru import logger
@@ -50,6 +51,11 @@ _vision_cache: dict[tuple[str, str], str] = {}
 _classify_group_cache: dict[tuple[str, str], "ClassifyResult"] = {}
 _cache_lock = asyncio.Lock()
 _BATCH_TRANSLATE_CHUNK = 45
+
+_WEB_SEARCH_MANUAL_REVIEW_NOTE = (
+    "Поиск технических характеристик не дал подтверждённых данных. "
+    "Варианты кода являются предварительными и требуют ручной проверки по документации товара."
+)
 
 _CLASSIFY_WITH_CONTEXT_PROMPT = """Ты эксперт по классификации товаров по ТН ВЭД ЕАЭС.
 
@@ -144,18 +150,24 @@ class SmartClassifier:
 
         web_context: str | None = None
         web_used = False
-        if self._needs_web_search(translated, visual_context, article_s, manufacturer_s):
+        web_search_needed = self._needs_web_search(translated, visual_context, article_s, manufacturer_s)
+        if web_search_needed:
             web_context = await self._search_web(translated, article_s, manufacturer_s)
             web_used = bool(web_context)
 
         try:
-            return await self._classify_with_context(
+            result = await self._classify_with_context(
                 description=translated,
                 visual_context=visual_context,
                 web_context=web_context,
                 article=article_s,
                 manufacturer=manufacturer_s,
                 web_search_used=web_used,
+            )
+            return self._with_web_search_status(
+                result,
+                attempted=web_search_needed,
+                confirmed=web_used,
             )
         except Exception as exc:
             logger.exception("SmartClassifier final classify failed")
@@ -167,7 +179,10 @@ class SmartClassifier:
                 web_context=web_context,
                 status="ERROR",
                 note=safe_ai_error_note(exc),
-                extra={"error_code": "llm_unavailable"},
+                extra={
+                    "error_code": "llm_unavailable",
+                    **self._web_search_metadata(attempted=web_search_needed, confirmed=web_used),
+                },
             )
 
     def _needs_web_search(
@@ -336,7 +351,8 @@ class SmartClassifier:
         article_s = (article or "").strip()
         web_context: str | None = None
         web_used = False
-        if self._needs_web_search(translated, visual_context, article_s, ""):
+        web_search_needed = self._needs_web_search(translated, visual_context, article_s, "")
+        if web_search_needed:
             web_context = await self._search_web(translated, article_s, None)
             web_used = bool(web_context)
 
@@ -349,6 +365,11 @@ class SmartClassifier:
                 manufacturer="",
                 web_search_used=web_used,
             )
+            result = self._with_web_search_status(
+                result,
+                attempted=web_search_needed,
+                confirmed=web_used,
+            )
         except Exception as exc:
             logger.exception("SmartClassifier group classify failed")
             result = ClassifyResult(
@@ -359,7 +380,10 @@ class SmartClassifier:
                 web_context=web_context,
                 status="ERROR",
                 note=safe_ai_error_note(exc),
-                extra={"error_code": "llm_unavailable"},
+                extra={
+                    "error_code": "llm_unavailable",
+                    **self._web_search_metadata(attempted=web_search_needed, confirmed=web_used),
+                },
             )
 
         _classify_group_cache[group_key] = result
@@ -471,22 +495,7 @@ class SmartClassifier:
         if results:
             return "\n".join(results)
 
-        # Fallback: LLM inference по артикулу/производителю
-        if article or manufacturer:
-            fallback_prompt = (
-                "По артикулу и производителю восстанови типичные технические характеристики товара "
-                "для таможенной классификации (мощность, тип, материал, назначение). "
-                "Если данных недостаточно — укажи наиболее вероятные параметры.\n"
-                f"Производитель: {manufacturer or 'не указан'}\n"
-                f"Артикул: {article or 'не указан'}\n"
-                f"Описание: {description or 'не указано'}"
-            )
-            try:
-                inferred = await complete_text(fallback_prompt, max_tokens=400)
-                if inferred:
-                    return inferred
-            except Exception:
-                pass
+        # Fail closed: модельная реконструкция без результата web tool не является web context.
         return ""
 
     async def _claude_web_search(self, query: str) -> str:
@@ -515,9 +524,39 @@ class SmartClassifier:
                 return ""
             raise
 
+        if not _has_web_search_result(data):
+            return ""
+
         from .claude_service import _extract_anthropic_text
 
         return _extract_anthropic_text(data)
+
+    @staticmethod
+    def _web_search_metadata(*, attempted: bool, confirmed: bool) -> dict[str, Any]:
+        if not attempted:
+            return {"web_search_attempted": False, "web_search_status": "not_needed"}
+        return {
+            "web_search_attempted": True,
+            "web_search_status": "confirmed" if confirmed else "unavailable",
+        }
+
+    @classmethod
+    def _with_web_search_status(
+        cls,
+        result: ClassifyResult,
+        *,
+        attempted: bool,
+        confirmed: bool,
+    ) -> ClassifyResult:
+        result.extra.update(cls._web_search_metadata(attempted=attempted, confirmed=confirmed))
+        if not attempted or confirmed:
+            return result
+
+        result.status = "MANUAL_REVIEW"
+        result.note = _WEB_SEARCH_MANUAL_REVIEW_NOTE
+        result.extra["manual_review_required"] = True
+        result.results = [{**item, "recommended": False} for item in result.results]
+        return result
 
     async def _classify_with_context(
         self,
@@ -569,6 +608,39 @@ def _normalize_image_base64(image_b64: str) -> tuple[str, str]:
         if m:
             media_type = m.group(1).strip()
     return raw, media_type
+
+
+def _has_web_search_result(data: dict[str, Any]) -> bool:
+    """Return true only when Anthropic reports at least one actual web result."""
+    content = data.get("content")
+    if not isinstance(content, list):
+        return False
+    for block in content:
+        if not isinstance(block, dict) or block.get("type") != "web_search_tool_result":
+            continue
+        result_content = block.get("content")
+        if not isinstance(result_content, list):
+            continue
+        if any(_is_valid_web_search_result(item) for item in result_content):
+            return True
+    return False
+
+
+def _is_valid_web_search_result(item: Any) -> bool:
+    if not isinstance(item, dict) or item.get("type") != "web_search_result":
+        return False
+    url = item.get("url")
+    if not isinstance(url, str):
+        return False
+    url = url.strip()
+    if not url or any(char.isspace() for char in url):
+        return False
+    try:
+        parsed = urlsplit(url)
+        hostname = parsed.hostname
+    except ValueError:
+        return False
+    return parsed.scheme.lower() in {"http", "https"} and bool(hostname)
 
 
 async def _fetch_image_as_base64(url: str) -> tuple[str, str]:

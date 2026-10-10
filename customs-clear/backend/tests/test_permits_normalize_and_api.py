@@ -109,9 +109,11 @@ class PermitsVerifyEndpointTests(unittest.TestCase):
         from app.main import app
         from app.services.normative_store import init_db
         from fastapi.testclient import TestClient
+        from tests.support_auth import login_declarant
 
         init_db()
         cls.client = TestClient(app)
+        login_declarant(cls.client)
 
     @patch("app.api.permits.check_permits", new_callable=AsyncMock)
     def test_post_verify_user_declaration(self, mock_check):

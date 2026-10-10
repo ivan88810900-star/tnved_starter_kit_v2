@@ -40,24 +40,51 @@ class TnvedCatalogApiTests(unittest.TestCase):
             )
             db.add(ch)
             db.flush()
-            db.add(
+            db.add_all([
                 Commodity(
                     chapter_id=ch.id,
                     code="9901210000",
                     description="Тестовый товар 10 знаков",
                     unit="кг",
                     import_duty="10 %",
-                )
-            )
-            db.add(
+                ),
+                Commodity(
+                    chapter_id=ch.id,
+                    code="9901610000",
+                    description="Второй прямой потомок позиции",
+                    unit="шт",
+                    import_duty="Пошлина: 5% | НДС: 20%",
+                ),
+                Commodity(
+                    chapter_id=ch.id,
+                    code="9902110000",
+                    description="Групповой подзаголовок",
+                ),
+                Commodity(
+                    chapter_id=ch.id,
+                    code="9902111000",
+                    description="Первый потомок группового подзаголовка",
+                ),
+                Commodity(
+                    chapter_id=ch.id,
+                    code="9902119000",
+                    description="Второй потомок группового подзаголовка",
+                ),
                 Commodity(
                     chapter_id=ch.id,
                     code="9901",
                     description="Позиция на 4 знака",
                     unit="—",
                     import_duty="5 %",
-                )
-            )
+                ),
+            ])
+            db.add(HsRate(
+                hs_code="9901610000",
+                hs_prefix="9901610000",
+                duty_rate="5",
+                vat_import_rate=22.0,
+                source_revision="test-tree-leaf",
+            ))
             db.add(
                 ClassificationDecision(
                     hs_code="9901210000",
@@ -94,6 +121,7 @@ class TnvedCatalogApiTests(unittest.TestCase):
             db.query(PreliminaryDecision).filter(
                 PreliminaryDecision.description == "Предварительное решение IFCG для теста"
             ).delete()
+            db.query(HsRate).filter(HsRate.source_revision == "test-tree-leaf").delete()
             db.query(Chapter).filter(Chapter.section_id == sid).delete()
             db.query(Section).filter(Section.id == sid).delete()
             db.commit()
@@ -176,34 +204,34 @@ class TnvedCatalogApiTests(unittest.TestCase):
         self.assertIn("15", _format_duty("15, но не менее 0,07 евро за 1 л 563С)"))
         self.assertNotIn("563С)", _format_duty("15, но не менее 0,07 евро за 1 л 563С)"))
 
-    def test_children_direct_8517(self):
-        r = self.client.get("/api/v1/tnved/children/8517?depth=direct")
+    def test_children_direct_heading(self):
+        r = self.client.get("/api/v1/tnved/children/9901?depth=direct")
         self.assertEqual(r.status_code, 200)
         body = r.json()
         self.assertEqual(body.get("depth"), "direct")
         items = body.get("items") or []
         codes = [x.get("code") for x in items]
-        self.assertIn("8517110000", codes)
-        self.assertIn("8517610000", codes)
-        leaf = next(x for x in items if x.get("code") == "8517110000")
+        self.assertIn("9901210000", codes)
+        self.assertIn("9901610000", codes)
+        leaf = next(x for x in items if x.get("code") == "9901610000")
         self.assertTrue(leaf.get("is_leaf"))
         self.assertNotIn("Пошлина:", (leaf.get("duty_rate") or ""))
 
     def test_children_codeless_has_children(self):
-        r = self.client.get("/api/v1/tnved/children/2701110000?depth=direct")
+        r = self.client.get("/api/v1/tnved/children/9902110000?depth=direct")
         self.assertEqual(r.status_code, 200)
         items = r.json().get("items") or []
         self.assertEqual(len(items), 2)
         codes = {x.get("code") for x in items}
-        self.assertIn("2701111000", codes)
-        self.assertIn("2701119000", codes)
+        self.assertIn("9902111000", codes)
+        self.assertIn("9902119000", codes)
 
     def test_format_duty_strips_garbage_and_parses_composite(self):
         self.assertEqual(_format_duty("Пошлина: Пошлина: | НДС: НДС:"), "")
         self.assertEqual(_format_duty("Пошлина: 5% | НДС: 20%"), "5%")
 
-    def test_children_group_01_returns_headings(self):
-        r = self.client.get("/api/tnved/children/01?depth=direct")
+    def test_children_group_returns_headings(self):
+        r = self.client.get("/api/tnved/children/99?depth=direct")
         self.assertEqual(r.status_code, 200)
         items = r.json().get("items") or []
         self.assertGreaterEqual(len(items), 1)
@@ -211,7 +239,7 @@ class TnvedCatalogApiTests(unittest.TestCase):
         self.assertTrue(all(not item.get("is_leaf") for item in items))
 
     def test_children_leaf_returns_empty(self):
-        r = self.client.get("/api/tnved/children/0101210000?depth=direct")
+        r = self.client.get("/api/tnved/children/9901210000?depth=direct")
         self.assertEqual(r.status_code, 200)
         self.assertEqual(r.json().get("items") or [], [])
 
@@ -225,13 +253,73 @@ class TnvedCatalogApiTests(unittest.TestCase):
         self.assertNotIn("СГР", badges)
 
     def test_commodity_chapter_84_duty_from_hs_rates(self):
-        r = self.client.get("/api/v1/tnved/8401300000")
-        self.assertEqual(r.status_code, 200)
-        duty = r.json().get("import_duty") or ""
-        self.assertIn("15", duty)
+        # The test owns its tariff evidence instead of depending on a global
+        # developer database populated by an unrelated full-catalog import.
+        with SessionLocal() as db:
+            row = HsRate(
+                hs_code="8401300000",
+                hs_prefix="8401300000",
+                duty_rate="15",
+                vat_import_rate=22.0,
+                source_revision="test-exact-rate",
+            )
+            db.add(row)
+            db.commit()
+            rate_id = row.id
+        try:
+            r = self.client.get("/api/v1/tnved/8401300000")
+            self.assertEqual(r.status_code, 200)
+            duty = r.json().get("import_duty") or ""
+            self.assertIn("15", duty)
+        finally:
+            with SessionLocal() as db:
+                db.query(HsRate).filter(HsRate.id == rate_id).delete()
+                db.commit()
+
+    def test_detail_rate_only_requires_exact_rate(self):
+        with SessionLocal() as db:
+            row = HsRate(
+                hs_code="9988123456",
+                hs_prefix="9988123456",
+                duty_rate="7.5",
+                vat_import_rate=22.0,
+                source_revision="test-exact-rate-only",
+            )
+            db.add(row)
+            db.commit()
+            rate_id = row.id
+        try:
+            r = self.client.get("/api/v1/tnved/9988123456")
+            self.assertEqual(r.status_code, 200)
+            self.assertEqual(r.json().get("code"), "9988123456")
+            self.assertIn("7.5", (r.json().get("import_duty") or "").replace(",", "."))
+        finally:
+            with SessionLocal() as db:
+                db.query(HsRate).filter(HsRate.id == rate_id).delete()
+                db.commit()
+
+    def test_detail_rate_only_rejects_prefix_rate(self):
+        with SessionLocal() as db:
+            row = HsRate(
+                hs_code="9988000000",
+                hs_prefix="9988",
+                duty_rate="9",
+                vat_import_rate=22.0,
+                source_revision="test-prefix-rate-only",
+            )
+            db.add(row)
+            db.commit()
+            rate_id = row.id
+        try:
+            r = self.client.get("/api/v1/tnved/9988123456")
+            self.assertEqual(r.status_code, 404)
+        finally:
+            with SessionLocal() as db:
+                db.query(HsRate).filter(HsRate.id == rate_id).delete()
+                db.commit()
 
     def test_children_compat_route(self):
-        r = self.client.get("/api/tnved/children/8517?depth=direct")
+        r = self.client.get("/api/tnved/children/9901?depth=direct")
         self.assertEqual(r.status_code, 200)
         self.assertGreaterEqual(len(r.json().get("items") or []), 1)
 

@@ -4,7 +4,7 @@ from __future__ import annotations
 import importlib.util
 import os
 import unittest
-from unittest.mock import patch
+from unittest.mock import AsyncMock, patch
 from uuid import uuid4
 
 from app.datetime_util import utc_now_naive
@@ -79,8 +79,12 @@ class PermitsVerifyJobsOwnershipTests(unittest.TestCase):
         self.assertIn(jid_view, ids_b)
         self.assertNotIn(jid_decl, ids_b)
 
-        self.assertEqual(self.client_decl.get(f"/api/permits/verify/jobs/{jid_view}").status_code, 404)
-        self.assertEqual(self.client_view.get(f"/api/permits/verify/jobs/{jid_decl}").status_code, 404)
+        # Regression: the legacy /verify/{number:path} catch-all must not
+        # intercept jobs/detail and trigger an external registry lookup.
+        with patch("app.api.permits.check_permits", new_callable=AsyncMock) as registry_lookup:
+            self.assertEqual(self.client_decl.get(f"/api/permits/verify/jobs/{jid_view}").status_code, 404)
+            self.assertEqual(self.client_view.get(f"/api/permits/verify/jobs/{jid_decl}").status_code, 404)
+            registry_lookup.assert_not_awaited()
 
         ok_a = self.client_decl.get(f"/api/permits/verify/jobs/{jid_decl}")
         self.assertEqual(ok_a.status_code, 200, ok_a.text)
@@ -106,7 +110,9 @@ class PermitsVerifyJobsOwnershipTests(unittest.TestCase):
         self._cleanup_ids.append(jid)
         _insert_done_job(job_id=jid, owner=None)
 
-        self.assertEqual(self.client_decl.get(f"/api/permits/verify/jobs/{jid}").status_code, 404)
+        with patch("app.api.permits.check_permits", new_callable=AsyncMock) as registry_lookup:
+            self.assertEqual(self.client_decl.get(f"/api/permits/verify/jobs/{jid}").status_code, 404)
+            registry_lookup.assert_not_awaited()
         self.assertEqual(self.client_adm.get(f"/api/permits/verify/jobs/{jid}").status_code, 200)
 
     def test_export_with_admin_token_unaffected(self) -> None:

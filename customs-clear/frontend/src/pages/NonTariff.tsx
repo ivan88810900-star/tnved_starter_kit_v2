@@ -5,7 +5,26 @@ import { CC_NORMATIVE_PREFILL_KEY } from '../constants/homeNav';
 import { NonTariffBlock } from '../components/nonTariff/NonTariffBlock';
 import { SanctionsRiskBlock } from '../components/nonTariff/SanctionsRiskBlock';
 import { sanitizeNonTariffLine } from '../utils/nonTariffUiFilter';
+import { formatUnsafeExternalUrlEvidence, getSafeExternalUrl } from '../utils/externalUrl';
 import type { AdvisoryRequirement, NormativeRequirementsBlockData, SanctionsRiskBlockData } from '../types/api.types';
+
+export function NonTariffRegistryLink({ value }: { value: unknown }) {
+  const safeUrl = getSafeExternalUrl(value);
+  if (safeUrl) {
+    return (
+      <a href={safeUrl} target="_blank" rel="noopener noreferrer" className="inline-block text-[10px] text-indigo-600 hover:underline">
+        Открыть в реестре
+      </a>
+    );
+  }
+
+  const evidence = formatUnsafeExternalUrlEvidence(value);
+  return evidence ? (
+    <span data-testid="unsafe-non-tariff-registry-url-evidence" className="block text-[10px] text-slate-500">
+      Открыть в реестре (ссылка недоступна): <span className="break-all font-mono">{evidence}</span>
+    </span>
+  ) : null;
+}
 
 /**
  * Сырые служебные «Мера (тип): <сырой текст TKS>» дублируют структурированный
@@ -510,11 +529,7 @@ export const NonTariff: React.FC = () => {
                         ТН ВЭД: {p.hs_code_check.detail}
                       </div>
                     )}
-                    {p.registry_link && (
-                      <a href={p.registry_link} target="_blank" rel="noreferrer" className="inline-block text-[10px] text-indigo-600 hover:underline">
-                        Открыть в реестре
-                      </a>
-                    )}
+                    {p.registry_link && <NonTariffRegistryLink value={p.registry_link} />}
                   </div>
                 ))}
 

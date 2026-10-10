@@ -103,6 +103,118 @@ def _chat_bundle() -> dict:
 
 
 class GroundingBundleTests(unittest.IsolatedAsyncioTestCase):
+    async def test_valid_hs_without_usable_local_evidence_is_not_grounded(self) -> None:
+        with (
+            patch(
+                "app.services.grounded_assistant.get_tnved_context_for_hs",
+                side_effect=RuntimeError("catalogue unavailable"),
+            ),
+            patch(
+                "app.services.grounded_assistant.check_position_non_tariff",
+                new=AsyncMock(side_effect=RuntimeError("ntm unavailable")),
+            ),
+        ):
+            bundle = await build_chat_grounding_bundle(
+                message="Какие документы по коду 8516108008?",
+                history=[],
+                current_context=None,
+            )
+
+        self.assertEqual(bundle["resolved_hs_code"], "8516108008")
+        self.assertEqual(bundle["coverage"], "partial")
+        self.assertEqual(bundle["facts_used"], [])
+        self.assertEqual(bundle["citations"], [])
+        answer, _ = render_chat_grounded_answer(bundle)
+        self.assertIn("не подтверждаю соответствие товара коду", answer)
+        self.assertIn("Нетарифный контур не удалось проверить", answer)
+
+    async def test_empty_tnved_card_and_generic_url_do_not_enable_llm(self) -> None:
+        with (
+            patch(
+                "app.services.grounded_assistant.get_tnved_context_for_hs",
+                return_value={
+                    "title": "",
+                    "description": "",
+                    "breadcrumb": [],
+                    "notes": [],
+                    "official_ett_url": "https://eec.example/ett",
+                    "source_revision": "",
+                },
+            ),
+            patch(
+                "app.services.grounded_assistant.canonical_anchor_for_hs",
+                return_value=None,
+            ),
+            patch(
+                "app.services.grounded_assistant.check_position_non_tariff",
+                new=AsyncMock(side_effect=RuntimeError("ntm unavailable")),
+            ),
+        ):
+            bundle = await build_chat_grounding_bundle(
+                message="Какие документы по коду 9999999999?",
+                history=[],
+                current_context=None,
+            )
+
+        self.assertEqual(bundle["resolved_hs_code"], "9999999999")
+        self.assertEqual(bundle["coverage"], "partial")
+        self.assertEqual(bundle["facts_used"], [])
+        self.assertEqual(bundle["citations"], [])
+
+        selector = AsyncMock(return_value={"provider": "anthropic", "text": "{}"})
+        with (
+            patch(
+                "app.services.assistant_chat.build_chat_grounding_bundle",
+                new=AsyncMock(return_value=bundle),
+            ),
+            patch(
+                "app.services.assistant_chat.llm_provider_chain",
+                return_value=[("anthropic", "test")],
+            ),
+            patch("app.services.assistant_chat._ask_llm", new=selector),
+        ):
+            result = await run_assistant_chat(
+                message="Какие документы по коду 9999999999?",
+                history=[],
+                current_context=None,
+            )
+
+        selector.assert_not_awaited()
+        self.assertEqual(result["grounding"]["mode"], "deterministic")
+        self.assertNotEqual(result["grounding"]["mode"], "llm_grounded")
+
+    async def test_nonempty_tnved_card_alone_is_usable_grounding(self) -> None:
+        with (
+            patch(
+                "app.services.grounded_assistant.get_tnved_context_for_hs",
+                return_value={
+                    "title": "Электрические водонагреватели",
+                    "description": "",
+                    "breadcrumb": [],
+                    "notes": [],
+                    "official_ett_url": "https://eec.example/ett",
+                    "source_revision": "official-test",
+                },
+            ),
+            patch(
+                "app.services.grounded_assistant.canonical_anchor_for_hs",
+                return_value=None,
+            ),
+            patch(
+                "app.services.grounded_assistant.check_position_non_tariff",
+                new=AsyncMock(side_effect=RuntimeError("ntm unavailable")),
+            ),
+        ):
+            bundle = await build_chat_grounding_bundle(
+                message="Какие документы по коду 8516108008?",
+                history=[],
+                current_context=None,
+            )
+
+        self.assertEqual(bundle["coverage"], "grounded")
+        self.assertEqual(bundle["facts_used"], ["tnved"])
+        self.assertEqual(len(bundle["citations"]), 1)
+
     async def test_bundle_reuses_server_facts_and_separates_advisory(self) -> None:
         nt_result = {
             "status": "WARNING",

@@ -22,6 +22,7 @@ import type {
 } from '../types/api.types';
 import { formatCode } from '../api/tnvedCatalog';
 import { formatTnvedCommodityName, TNVED_COMMODITY_NAME_CLASS } from '../utils/tnvedDisplayText';
+import { formatUnsafeExternalUrlEvidence, getSafeExternalUrl } from '../utils/externalUrl';
 import type { AssistantNavigationJob } from '../store/calculatorAssistantBridge';
 import {
   getAssistantCalculationContext,
@@ -237,8 +238,10 @@ const RecentDecisionsTable: React.FC<{ items: AssistantDecisionRecord[] }> = ({ 
   </div>
 );
 
-const CopilotBundleView: React.FC<{ bundle: AssistantCopilotBundle; title: string }> = ({ bundle, title }) => {
+export const CopilotBundleView: React.FC<{ bundle: AssistantCopilotBundle; title: string }> = ({ bundle, title }) => {
   const classificationNote = bundle.classification?.note;
+  const officialEttUrlEvidence = bundle.tnved_context?.official_ett_url;
+  const safeOfficialEttUrl = getSafeExternalUrl(officialEttUrlEvidence);
   return (
   <div className="cc-card-soft space-y-4 p-4">
     <div className="flex flex-wrap items-baseline justify-between gap-2">
@@ -263,7 +266,11 @@ const CopilotBundleView: React.FC<{ bundle: AssistantCopilotBundle; title: strin
         {String(classificationNote)}
       </div>
     )}
-    {bundle.tnved_context && (bundle.tnved_context.title || (bundle.tnved_context.notes?.length ?? 0) > 0) && (
+    {bundle.tnved_context && (
+      bundle.tnved_context.title ||
+      (bundle.tnved_context.notes?.length ?? 0) > 0 ||
+      officialEttUrlEvidence
+    ) && (
       <div className="space-y-2 border-t border-emerald-500/15 pt-3">
         <span className="cc-label">Справочник ТН ВЭД (БД)</span>
         {bundle.tnved_context.title && (
@@ -286,15 +293,25 @@ const CopilotBundleView: React.FC<{ bundle: AssistantCopilotBundle; title: strin
             ))}
           </ul>
         )}
-        {bundle.tnved_context.official_ett_url && (
-          <a
-            href={bundle.tnved_context.official_ett_url}
-            target="_blank"
-            rel="noreferrer"
-            className="text-[11px] text-indigo-600 hover:underline"
-          >
-            ТН ВЭД и ЕТТ на сайте ЕЭК
-          </a>
+        {officialEttUrlEvidence && (
+          safeOfficialEttUrl ? (
+            <a
+              href={safeOfficialEttUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="text-[11px] text-indigo-600 hover:underline"
+            >
+              ТН ВЭД и ЕТТ на сайте ЕЭК
+            </a>
+          ) : (
+            <p
+              className="break-all text-[11px] text-amber-700"
+              data-testid="copilot-bundle-unsafe-official-url"
+            >
+              Адрес источника не прошёл проверку ссылки:{' '}
+              <span className="cc-mono">{formatUnsafeExternalUrlEvidence(officialEttUrlEvidence)}</span>
+            </p>
+          )
         )}
       </div>
     )}
@@ -333,7 +350,95 @@ const CopilotBundleView: React.FC<{ bundle: AssistantCopilotBundle; title: strin
   );
 };
 
-const CopilotAiView: React.FC<{ ai: AssistantCopilotAi }> = ({ ai }) => (
+type CopilotCitationView = { id: string; title: string; url?: string };
+type CopilotGroundingView = {
+  coverage: 'grounded' | 'partial' | 'needs_context' | 'unknown';
+  mode: 'deterministic' | 'llm_grounded' | 'unknown';
+  facts: string[];
+  citations: CopilotCitationView[];
+  limitations: string[];
+};
+
+function assistantRecord(value: unknown): Record<string, unknown> | null {
+  return value && typeof value === 'object' && !Array.isArray(value)
+    ? value as Record<string, unknown>
+    : null;
+}
+
+function assistantBoundedText(value: unknown, limit: number): string {
+  return typeof value === 'string' ? value.trim().slice(0, limit) : '';
+}
+
+function normalizeCopilotGrounding(ai: AssistantCopilotAi): CopilotGroundingView {
+  const rawAi = assistantRecord(ai) ?? {};
+  const rawGrounding = assistantRecord(rawAi.grounding);
+  const generatedFromServerFacts = rawGrounding?.generated_from_server_facts === true;
+  const parsedCitations = Array.isArray(rawAi.citations)
+    ? rawAi.citations.slice(0, 12).flatMap((value): CopilotCitationView[] => {
+        const citation = assistantRecord(value);
+        if (!citation) return [];
+        const id = assistantBoundedText(citation.id, 40);
+        const sourceId = assistantBoundedText(citation.source_id, 120);
+        const title = assistantBoundedText(citation.title, 240);
+        const kind = assistantBoundedText(citation.kind, 80);
+        if (!id || !sourceId || !title || !kind) return [];
+        return [{ id, title, url: getSafeExternalUrl(citation.url) ?? undefined }];
+      })
+    : [];
+  const knownFacts = new Set(['tnved', 'payments', 'requirements', 'risk']);
+  const rawFacts = rawGrounding?.facts_used;
+  const hasValidFactsMetadata = Array.isArray(rawFacts)
+    && rawFacts.length > 0
+    && rawFacts.length <= 16
+    && rawFacts.every((value) => typeof value === 'string' && knownFacts.has(value));
+  const parsedFacts = hasValidFactsMetadata ? [...new Set(rawFacts)] : [];
+  const citations = generatedFromServerFacts ? parsedCitations : [];
+  const facts = generatedFromServerFacts ? parsedFacts : [];
+  const limitations = Array.isArray(rawGrounding?.limitations)
+    ? rawGrounding.limitations
+        .slice(0, 12)
+        .map((value) => assistantBoundedText(value, 800))
+        .filter(Boolean)
+    : [];
+  const hasServerEvidence = generatedFromServerFacts && citations.length > 0 && facts.length > 0;
+  const coverage: CopilotGroundingView['coverage'] =
+    rawGrounding?.coverage === 'partial' || rawGrounding?.coverage === 'needs_context'
+      ? rawGrounding.coverage
+      : rawGrounding?.coverage === 'grounded' && hasServerEvidence
+        ? 'grounded'
+        : 'unknown';
+  const mode: CopilotGroundingView['mode'] =
+    rawGrounding?.mode === 'deterministic' && generatedFromServerFacts
+      ? 'deterministic'
+      : rawGrounding?.mode === 'llm_grounded' && hasServerEvidence
+        ? 'llm_grounded'
+        : 'unknown';
+  return { coverage, mode, facts, citations, limitations };
+}
+
+const copilotCoverageLabels: Record<CopilotGroundingView['coverage'], string> = {
+  grounded: 'Сводка опирается на доступные серверные данные',
+  partial: 'Данные для сводки неполные',
+  needs_context: 'Для сводки нужен дополнительный контекст',
+  unknown: 'Покрытие сводки не подтверждено',
+};
+
+const copilotModeLabels: Record<CopilotGroundingView['mode'], string> = {
+  deterministic: 'Сводка сформирована сервером',
+  llm_grounded: 'Серверная сводка выбрана моделью',
+  unknown: 'Режим формирования не подтверждён',
+};
+
+const copilotFactLabels: Record<string, string> = {
+  tnved: 'ТН ВЭД',
+  payments: 'Платежи',
+  requirements: 'Документы и требования',
+  risk: 'Риск-контур',
+};
+
+export const CopilotAiView: React.FC<{ ai: AssistantCopilotAi }> = ({ ai }) => {
+  const grounding = normalizeCopilotGrounding(ai);
+  return (
   <div className="space-y-3 text-[13px] leading-relaxed">
     {ai.summary && (
       <div className="rounded-xl border border-indigo-200 bg-indigo-50 p-4 text-slate-800">
@@ -344,6 +449,66 @@ const CopilotAiView: React.FC<{ ai: AssistantCopilotAi }> = ({ ai }) => (
     {ai.note && (
       <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-[12px] text-amber-800">{ai.note}</div>
     )}
+    <div
+      data-testid="copilot-grounding"
+      className="space-y-2 rounded-xl border border-slate-200 bg-slate-50 p-3 text-[11px] text-slate-600"
+    >
+      <div className="flex flex-wrap gap-1.5">
+        <span className="rounded-full border border-slate-200 bg-white px-2 py-0.5">
+          {copilotCoverageLabels[grounding.coverage]}
+        </span>
+        <span className="rounded-full border border-slate-200 bg-white px-2 py-0.5">
+          {copilotModeLabels[grounding.mode]}
+        </span>
+      </div>
+      <div>
+        <span className="font-semibold text-slate-700">Использованные блоки: </span>
+        {grounding.facts.length
+          ? grounding.facts.map((fact) => copilotFactLabels[fact] || fact).join(', ')
+          : 'не подтверждены'}
+      </div>
+      {grounding.citations.length ? (
+        <div>
+          <p className="font-semibold text-slate-700">Источники сводки</p>
+          <ul className="mt-0.5 space-y-0.5">
+            {grounding.citations.map((citation) => (
+              <li key={`${citation.id}-${citation.title}`}>
+                {citation.url ? (
+                  <a
+                    href={citation.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-indigo-700 underline decoration-indigo-200 underline-offset-2 hover:text-indigo-800"
+                  >
+                    [{citation.id}] {citation.title}
+                  </a>
+                ) : (
+                  <span>[{citation.id}] {citation.title}</span>
+                )}
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : (
+        <p>Цитаты источников не подтверждены.</p>
+      )}
+      {grounding.limitations.length ? (
+        <div>
+          <p className="font-semibold text-slate-700">Ограничения данных</p>
+          <ul className="mt-0.5 list-disc space-y-0.5 pl-4">
+            {grounding.limitations.map((limitation) => (
+              <li key={limitation}>{limitation}</li>
+            ))}
+          </ul>
+        </div>
+      ) : (
+        <p>Отдельные ограничения покрытия сервером не переданы.</p>
+      )}
+      <p>
+        Статус данных не является юридической проверкой и не подтверждает полноту покрытия
+        нетарифных мер.
+      </p>
+    </div>
     {(ai.classification_advice || ai.payment_comment || ai.non_tariff_comment || ai.documents_comment) && (
       <div className="grid gap-2 sm:grid-cols-2">
         {ai.classification_advice && (
@@ -402,7 +567,8 @@ const CopilotAiView: React.FC<{ ai: AssistantCopilotAi }> = ({ ai }) => (
       </details>
     )}
   </div>
-);
+  );
+};
 
 type AssistantPageProps = {
   assistantOpenJob?: AssistantNavigationJob | null;

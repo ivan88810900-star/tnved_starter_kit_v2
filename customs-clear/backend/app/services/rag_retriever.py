@@ -25,6 +25,7 @@ from ..models.core import (
 )
 from ..models.tnved import NonTariffMeasure
 from .gemini_embedding_service import embed_texts_gemini
+from .non_tariff_measures_lookup import admitted_legacy_measure_quality_clause
 
 try:
     import numpy as np
@@ -945,6 +946,7 @@ def build_rag_context(db_session: Session, hs_code_prefix: str, product_text: st
             raw = (
                 db_session.query(NonTariffMeasure)
                 .filter(NonTariffMeasure.commodity_code.like(f"{prefix}%"))
+                .filter(admitted_legacy_measure_quality_clause())
                 .order_by(NonTariffMeasure.id.asc())
                 .limit(50)
                 .all()

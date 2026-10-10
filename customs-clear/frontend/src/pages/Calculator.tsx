@@ -45,6 +45,7 @@ import {
 import { CalculatorInvoiceAnalyzeSection } from '../components/calculator/CalculatorInvoiceAnalyzeSection';
 import { CalculatorScenarioCompareSection } from '../components/calculator/CalculatorScenarioCompareSection';
 import { formatTnvedCommodityName, TNVED_COMMODITY_NAME_CLASS } from '../utils/tnvedDisplayText';
+import { formatUnsafeExternalUrlEvidence, getSafeExternalUrl } from '../utils/externalUrl';
 import { TradeRemediesDisclaimer } from '../components/payments/TradeRemediesDisclaimer';
 import { AnimatedNumber } from '../components/AnimatedNumber';
 import { PaymentBreakdownCard } from '../components/PaymentBreakdownCard';
@@ -118,6 +119,25 @@ const HISTORY_KIND_LABELS: Record<string, string> = {
 
 const PAYMENT_COLORS = ['#1d4ed8', '#0ea5e9', '#cbd5e1', '#94a3b8', '#f59e0b'];
 const COUNTRY_OPTIONS = ['CN', 'MY', 'VN', 'TR', 'IN', 'RU', 'KZ', 'BY', 'DE', 'IT', 'US', 'KR', 'JP'];
+
+export function CalculatorOfficialEttLink({ value }: { value: unknown }) {
+  const safeUrl = getSafeExternalUrl(value);
+  if (safeUrl) {
+    return (
+      <a href={safeUrl} target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:underline">
+        Официальный перечень ТН ВЭД и ЕТТ (ЕЭК)
+      </a>
+    );
+  }
+
+  const evidence = formatUnsafeExternalUrlEvidence(value);
+  return evidence ? (
+    <span data-testid="unsafe-calculator-official-ett-url-evidence" className="text-slate-500">
+      Официальный перечень ТН ВЭД и ЕТТ (ссылка недоступна):{' '}
+      <span className="break-all font-mono">{evidence}</span>
+    </span>
+  ) : null;
+}
 
 const VEHICLE_PREFIXES = ['8701', '8702', '8703', '8704', '8705', '8711'];
 
@@ -1629,14 +1649,7 @@ export const Calculator: React.FC = () => {
                     <p className="mt-0.5 text-slate-600">{n.body}</p>
                   </div>
                 ))}
-                <a
-                  href={result.tnved_context.official_ett_url}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="text-indigo-600 hover:underline"
-                >
-                  Официальный перечень ТН ВЭД и ЕТТ (ЕЭК)
-                </a>
+                <CalculatorOfficialEttLink value={result.tnved_context.official_ett_url} />
               </div>
             </details>
           )}
