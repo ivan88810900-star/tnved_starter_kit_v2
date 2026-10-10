@@ -112,9 +112,10 @@ def classification_inventory_session_local(
     classification_inventory_session_factory: sessionmaker,
     monkeypatch: pytest.MonkeyPatch,
 ) -> sessionmaker:
-    """Bind both application SessionLocal references to the disposable DB."""
+    """Bind application DB consumers to the disposable classification DB."""
     from app import db as app_db
     from app.services import normative_store
+    from app.services.tree_engine import builder as tree_engine_builder
     from scripts import expand_classification_rulings
 
     disposable_engine = classification_inventory_session_factory.kw["bind"]
@@ -123,6 +124,11 @@ def classification_inventory_session_local(
     monkeypatch.setattr(normative_store, "engine", disposable_engine)
     monkeypatch.setattr(
         normative_store,
+        "SessionLocal",
+        classification_inventory_session_factory,
+    )
+    monkeypatch.setattr(
+        tree_engine_builder,
         "SessionLocal",
         classification_inventory_session_factory,
     )
