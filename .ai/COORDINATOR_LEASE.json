@@ -1,14 +1,14 @@
 {
   "acquisition_note": "Harden assistant chat citation URL boundary and persist the exact-head checkpoint.",
-  "expires_at": null,
-  "generation": 153,
-  "holder": null,
+  "expires_at": "2026-10-10T01:23:04.513630Z",
+  "generation": 154,
+  "holder": "/root/tariff_a0_scheduled_20261010T005148Z",
   "lease_repair": {},
   "release_reason": "PR256 Copilot citation URL boundary checkpoint recorded at board revision 701; bounded A5 and exact-head CI passed.",
   "released_by": "/root/tariff_a0_scheduled_20261009T235702Z",
   "schema_version": 1,
   "serialization_repair": {},
-  "state": "released",
-  "token": null,
-  "updated_at": "2026-10-10T00:04:44.915970Z"
+  "state": "active",
+  "token": "c41d46c7e9124b67b2d613e83f81983d",
+  "updated_at": "2026-10-10T00:53:04.513630Z"
 }
