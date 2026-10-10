@@ -22,6 +22,7 @@ import type {
 } from '../types/api.types';
 import { formatCode } from '../api/tnvedCatalog';
 import { formatTnvedCommodityName, TNVED_COMMODITY_NAME_CLASS } from '../utils/tnvedDisplayText';
+import { getSafeExternalUrl } from '../utils/externalUrl';
 import type { AssistantNavigationJob } from '../store/calculatorAssistantBridge';
 import {
   getAssistantCalculationContext,
@@ -352,17 +353,6 @@ function assistantBoundedText(value: unknown, limit: number): string {
   return typeof value === 'string' ? value.trim().slice(0, limit) : '';
 }
 
-function assistantSafeUrl(value: unknown): string | undefined {
-  const candidate = assistantBoundedText(value, 1200);
-  if (!candidate) return undefined;
-  try {
-    const parsed = new URL(candidate);
-    return parsed.protocol === 'http:' || parsed.protocol === 'https:' ? parsed.href : undefined;
-  } catch {
-    return undefined;
-  }
-}
-
 function normalizeCopilotGrounding(ai: AssistantCopilotAi): CopilotGroundingView {
   const rawAi = assistantRecord(ai) ?? {};
   const rawGrounding = assistantRecord(rawAi.grounding);
@@ -376,7 +366,7 @@ function normalizeCopilotGrounding(ai: AssistantCopilotAi): CopilotGroundingView
         const title = assistantBoundedText(citation.title, 240);
         const kind = assistantBoundedText(citation.kind, 80);
         if (!id || !sourceId || !title || !kind) return [];
-        return [{ id, title, url: assistantSafeUrl(citation.url) }];
+        return [{ id, title, url: getSafeExternalUrl(citation.url) ?? undefined }];
       })
     : [];
   const knownFacts = new Set(['tnved', 'payments', 'requirements', 'risk']);

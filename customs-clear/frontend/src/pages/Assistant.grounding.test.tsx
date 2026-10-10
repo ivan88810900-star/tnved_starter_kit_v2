@@ -5,6 +5,12 @@ import { describe, expect, it } from 'vitest';
 import type { AssistantCopilotAi } from '../types/api.types';
 import { CopilotAiView } from './Assistant';
 
+const encodeRepeatedly = (value: string, rounds: number): string => {
+  let encoded = value;
+  for (let round = 0; round < rounds; round += 1) encoded = encodeURIComponent(encoded);
+  return encoded;
+};
+
 describe('CopilotAiView grounding metadata', () => {
   it('shows grounded server metadata, facts, limitations and a safe citation', () => {
     const ai: AssistantCopilotAi = {
@@ -40,6 +46,72 @@ describe('CopilotAiView grounding metadata', () => {
     const citation = screen.getByRole('link', { name: /Единый таможенный тариф ЕАЭС/ });
     expect(citation).toHaveAttribute('href', 'https://eec.example/ett');
     expect(citation).toHaveAttribute('rel', 'noreferrer');
+  });
+
+  it('preserves a valid citation URL byte-for-byte', () => {
+    const originalUrl = 'https://EEC.example:443/path/%41?document=%2fsource#Part';
+    const ai: AssistantCopilotAi = {
+      summary: 'Сводка с допустимой ссылкой.',
+      citations: [
+        {
+          id: 'S-valid',
+          source_id: 'eec_ett',
+          title: 'Допустимый источник',
+          kind: 'official',
+          url: originalUrl,
+        },
+      ],
+      grounding: {
+        mode: 'llm_grounded',
+        coverage: 'grounded',
+        facts_used: ['tnved'],
+        generated_from_server_facts: true,
+      },
+    };
+
+    render(<CopilotAiView ai={ai} />);
+
+    expect(screen.getByRole('link', { name: /Допустимый источник/ })).toHaveAttribute('href', originalUrl);
+  });
+
+  it('keeps rejected citation titles visible but non-clickable', () => {
+    const unsafeUrls = [
+      'https://trusted.example@evil.example/source',
+      ' https://example.test/source',
+      `https://example.test/source${String.fromCharCode(0x85)}`,
+      `https://example.test/${String.fromCharCode(0x202e)}evil`,
+      'https://example.test/source%0d%0AInjected',
+      'https://example.test/source%250dInjected',
+      `https://example.test/${encodeRepeatedly('\r', 6)}Injected`,
+      'https://example.test\\@evil.example/source',
+      'https://./source',
+      'https://bad..example/source',
+      'https://bad_host.example/source',
+    ];
+    const ai: AssistantCopilotAi = {
+      summary: 'Сводка с отклонёнными ссылками.',
+      citations: unsafeUrls.map((url, index) => ({
+        id: `S${index + 1}`,
+        source_id: `source_${index + 1}`,
+        title: `Отклонённый источник ${index + 1}`,
+        kind: 'official',
+        url,
+      })),
+      grounding: {
+        mode: 'llm_grounded',
+        coverage: 'grounded',
+        facts_used: ['tnved'],
+        generated_from_server_facts: true,
+      },
+    };
+
+    render(<CopilotAiView ai={ai} />);
+
+    unsafeUrls.forEach((_, index) => {
+      const title = `Отклонённый источник ${index + 1}`;
+      expect(screen.getByText(new RegExp(`${title}$`))).toBeInTheDocument();
+      expect(screen.queryByRole('link', { name: new RegExp(`${title}$`) })).not.toBeInTheDocument();
+    });
   });
 
   it('shows unconfirmed status instead of hiding missing metadata', () => {
