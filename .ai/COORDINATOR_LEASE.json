@@ -1,14 +1,14 @@
 {
-  "acquisition_note": "Isolate classification inventory regressions on a disposable bootstrapped database and persist the exact-head checkpoint.",
-  "expires_at": "2026-10-10T04:50:27.590012Z",
+  "acquisition_note": "Reconcile the single project handoff with live PR255 and record the verified pointer under CAS.",
+  "expires_at": null,
   "generation": 158,
-  "holder": "/root/tariff_a0_scheduled_20261010T071418MSK",
+  "holder": null,
   "lease_repair": {},
-  "release_reason": "PR256 tree fixture checkpoint recorded at board revision 705; bounded A5 and exact-head CI passed.",
-  "released_by": "/root/tariff_a0_scheduled_20261010T035538Z",
+  "release_reason": "PROJECT_HANDOFF payment pointer reconciled with live draft PR255; board revision 706 records exact-head CI and remaining source-refresh limits.",
+  "released_by": "/root/tariff_a0_scheduled_20261010T071418MSK",
   "schema_version": 1,
   "serialization_repair": {},
-  "state": "active",
-  "token": "a1a2d32f23ef4a62af2240631710c644",
-  "updated_at": "2026-10-10T04:20:27.590012Z"
+  "state": "released",
+  "token": null,
+  "updated_at": "2026-10-10T04:23:03.371678Z"
 }
