@@ -1,14 +1,14 @@
 {
-  "acquisition_note": "Reconcile the single project handoff with live PR255 and record the verified pointer under CAS.",
-  "expires_at": null,
-  "generation": 158,
-  "holder": null,
+  "acquisition_note": "Reproduce and isolate the remaining canonical TN VED full-catalog regression on the existing disposable pinned inventory.",
+  "expires_at": "2026-10-10T05:24:00.291398Z",
+  "generation": 159,
+  "holder": "/root/tariff_a0_scheduled_20261010T045353Z",
   "lease_repair": {},
   "release_reason": "PROJECT_HANDOFF payment pointer reconciled with live draft PR255; board revision 706 records exact-head CI and remaining source-refresh limits.",
   "released_by": "/root/tariff_a0_scheduled_20261010T071418MSK",
   "schema_version": 1,
   "serialization_repair": {},
-  "state": "released",
-  "token": null,
-  "updated_at": "2026-10-10T04:23:03.371678Z"
+  "state": "active",
+  "token": "46f899e16a7e489385fb8d3fb0c2bafc",
+  "updated_at": "2026-10-10T04:54:00.291398Z"
 }
