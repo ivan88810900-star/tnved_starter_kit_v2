@@ -3,6 +3,25 @@
 **Снимок:** 2026-10-09 (UTC). **Единственный репозиторий:** [ivan88810900-star/tnved_starter_kit_v2](https://github.com/ivan88810900-star/tnved_starter_kit_v2).
 **Авторитетное состояние:** ветка `agent/orchestration-state`, файлы `.ai/TASK_BOARD.json`, `.ai/COORDINATOR_LEASE.json`, `.ai/orchestration/A6_LIVE_STATUS.json`. Этот документ — указатель и контрольная точка, **не** право на запись/merge/A6. Перед действием заново читать текущие HEAD и state. Не полагаться на Business-чат.
 
+## 0aaaaaaaaaaaaaaa. #245 — официальный URL в Copilot bundle теперь fail-closed
+
+**Новый checkpoint:** [draft PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256), `agent/product-ntm-regressions-v1` @ `d9d0be7da22904689aa4e5af1f62d7ca58072a8f`, tree `74e8517315d6977a3c2170783c619cd56ce604c8`, parent `7ab810dbae2a7caf9f3caebc03014c6f7dbc8cb6`.
+
+Воспроизведён frontend-дефект: `bundle.tnved_context.official_ett_url` в Copilot/Batch напрямую попадал в `href`. Все 11 adversarial значений — credentials, leading whitespace, literal C1/bidi, encoded/double/deep controls, backslash authority confusion и malformed host — становились кликабельными.
+
+Теперь URL проходит общий `getSafeExternalUrl`. Допустимый absolute HTTP(S) сохраняется byte-for-byte; отклонённый адрес остаётся ограниченным экранированным некликабельным evidence. Это только transport/rendering boundary, не подтверждение официальности или юридической полноты.
+
+Проверки:
+
+- pre-fix reproduction: 11 опасных ссылок, exit 1;
+- root focused: **61 passed**, полный frontend: **96 passed**, typecheck/build — PASS, общая команда exit 0;
+- bounded A5 `/root/a5_bundle_source_url_154`: **PASS без findings** exact staged tree; focused **61 passed**, full frontend **96 passed**, typecheck/build/diff-check — exit 0;
+- exact-head CI: [run 38011169587](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38011169587), offline-safety job `114091271018`, **success**.
+
+Полный #245 product/legal/source completeness остаётся **NOT PASS**: lawful populated synchronized NTM snapshot недоступен. Merge, deploy, production write, enforcement/permissions/secrets change, destructive migration и внешний A6 не выполнялись; `core-s1-6415f443120f-r9-g106` неизменён и не отправлялся.
+
+Следующий шаг — следующий воспроизводимый bounded #245 URL/source или search/classification defect; NTM full-sync сохранять заблокированным до законно доступного populated synchronized snapshot.
+
 ## 0aaaaaaaaaaaaaa. #245 — URL цитат Copilot теперь используют общий fail-closed boundary
 
 **Новый checkpoint:** [draft PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256), `agent/product-ntm-regressions-v1` @ `7ab810dbae2a7caf9f3caebc03014c6f7dbc8cb6`, tree `a483ba9bfaeaa855fbc3280473c884bc7bf84c2b`, parent `f982f48490e5be5fae12e2f49a9d106401e60c37`.

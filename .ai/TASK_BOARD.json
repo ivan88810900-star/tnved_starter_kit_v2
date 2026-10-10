@@ -2179,7 +2179,7 @@
       "unique_source_pr_count": 29
     }
   },
-  "revision": 701,
+  "revision": 702,
   "runs": [
     {
       "head_sha": null,
@@ -7414,48 +7414,48 @@
       }
     }
   ],
-  "updated_at": "2026-10-10T00:02:26.000Z",
+  "updated_at": "2026-10-10T00:57:36.000Z",
   "latest_scheduled_product_checkpoint": {
-    "updated_at": "2026-10-10T00:02:26.000Z",
-    "checked_at": "2026-10-10T00:02:26.000Z",
+    "updated_at": "2026-10-10T00:57:36.000Z",
+    "checked_at": "2026-10-10T00:57:36.000Z",
     "pr": 256,
     "branch": "agent/product-ntm-regressions-v1",
-    "head_sha": "7ab810dbae2a7caf9f3caebc03014c6f7dbc8cb6",
-    "tree_sha": "a483ba9bfaeaa855fbc3280473c884bc7bf84c2b",
-    "parent_sha": "f982f48490e5be5fae12e2f49a9d106401e60c37",
-    "prior_checkpoint_sha": "f982f48490e5be5fae12e2f49a9d106401e60c37",
+    "head_sha": "d9d0be7da22904689aa4e5af1f62d7ca58072a8f",
+    "tree_sha": "74e8517315d6977a3c2170783c619cd56ce604c8",
+    "parent_sha": "7ab810dbae2a7caf9f3caebc03014c6f7dbc8cb6",
+    "prior_checkpoint_sha": "7ab810dbae2a7caf9f3caebc03014c6f7dbc8cb6",
     "base_pr": 245,
     "base_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
-    "block": "assistant_copilot_citation_url_boundary",
-    "status": "DRAFT_CHECKPOINT_A5_PASS_CI_PASS_COPILOT_CITATION_URL_BOUNDARY",
+    "block": "assistant_bundle_official_source_url_boundary",
+    "status": "DRAFT_CHECKPOINT_A5_PASS_CI_PASS_BUNDLE_SOURCE_URL_BOUNDARY",
     "behavior": {
-      "reproduced": "Copilot citations used a weaker local URL parser that normalized valid URLs and admitted credential, control and malformed-host forms rejected by the shared boundary",
-      "final": "Copilot and batch citations delegate anchor admission to the shared strict credential-free absolute HTTP(S) validator; valid URLs remain byte-for-byte and rejected titles remain visible non-clickable text",
-      "boundaries": "URL transport/syntax boundary only; no source-validity, legal-applicability, source-completeness, DB write or enforcement claim"
+      "reproduced": "Copilot bundle rendered tnved_context.official_ett_url directly as an anchor; 11 credential, whitespace, control, encoded, backslash and malformed-host inputs remained clickable",
+      "final": "Copilot and batch bundle official source links use the shared strict credential-free absolute HTTP(S) validator; safe URLs remain byte-for-byte while rejected URLs render as bounded escaped non-clickable evidence",
+      "boundaries": "URL transport/rendering boundary only; no source-validity, legal-applicability, source-completeness, DB write or enforcement claim"
     },
     "author_tests": {
-      "prefix_reproduction": "Assistant grounding test before fix: 6 passed and 2 failed; exit 1",
-      "focused_frontend": "Assistant.grounding plus externalUrl: 49 passed; exit 0",
-      "full_frontend": "84 passed; typecheck and production build PASS; combined exit 0",
+      "prefix_reproduction": "11 adversarial official_ett_url values rendered as anchors before fix; exit 1",
+      "focused_frontend": "Assistant.grounding plus externalUrl: 61 passed; exit 0",
+      "full_frontend": "96 passed; typecheck and production build PASS; combined exit 0",
       "diff": "exactly Assistant.tsx and Assistant.grounding.test.tsx; diff-check exit 0"
     },
     "a5": {
-      "session": "/root/a5_copilot_url_exec_153",
-      "status": "PASS_EXACT_STAGED_TREE",
-      "focused": "49 passed; exit 0",
-      "full_frontend": "84 passed; typecheck/build/diff-check exit 0",
-      "adversarial": "credentials, leading whitespace, literal U+0085/U+202E, encoded/double/6-deep controls, backslash and malformed hosts rejected; safe URL preserved byte-for-byte",
-      "remote_binding": "HEAD 7ab810dbae2a7caf9f3caebc03014c6f7dbc8cb6 tree a483ba9bfaeaa855fbc3280473c884bc7bf84c2b matches reviewed staged tree"
+      "session": "/root/a5_bundle_source_url_154",
+      "status": "PASS_EXACT_STAGED_TREE_NO_FINDINGS",
+      "focused": "61 passed; exit 0",
+      "full_frontend": "96 passed; typecheck/build/diff-check exit 0",
+      "adversarial": "credentials, leading whitespace, literal C1/bidi, encoded/double/deep controls, backslash authority and malformed hosts rejected; evidence bounded and invisible controls escaped",
+      "remote_binding": "HEAD d9d0be7da22904689aa4e5af1f62d7ca58072a8f tree 74e8517315d6977a3c2170783c619cd56ce604c8 matches reviewed staged tree"
     },
     "ci": {
       "status": "PASSED_EXACT_HEAD",
-      "head_sha": "7ab810dbae2a7caf9f3caebc03014c6f7dbc8cb6",
+      "head_sha": "d9d0be7da22904689aa4e5af1f62d7ca58072a8f",
       "runs": [
         {
-          "run_id": 38007178245,
-          "job_id": 114078535987,
+          "run_id": 38011169587,
+          "job_id": 114091271018,
           "conclusion": "success",
-          "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38007178245"
+          "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38011169587"
         }
       ]
     },
@@ -7468,49 +7468,49 @@
       "status": "UNCHANGED_NOT_SENT"
     },
     "protected_actions_performed": false,
-    "next_step": "Continue the next reproduced bounded #245 search/classification/grounding integration defect; keep NTM full-sync completeness blocked on a lawful populated synchronized snapshot."
+    "next_step": "Continue the next reproduced bounded #245 URL/source or search/classification integration defect; keep NTM full-sync completeness blocked on a lawful populated synchronized snapshot."
   },
   "latest_development_checkpoint": {
-    "updated_at": "2026-10-10T00:02:26.000Z",
-    "checked_at": "2026-10-10T00:02:26.000Z",
+    "updated_at": "2026-10-10T00:57:36.000Z",
+    "checked_at": "2026-10-10T00:57:36.000Z",
     "pr": 256,
     "branch": "agent/product-ntm-regressions-v1",
-    "head_sha": "7ab810dbae2a7caf9f3caebc03014c6f7dbc8cb6",
-    "tree_sha": "a483ba9bfaeaa855fbc3280473c884bc7bf84c2b",
-    "parent_sha": "f982f48490e5be5fae12e2f49a9d106401e60c37",
-    "prior_checkpoint_sha": "f982f48490e5be5fae12e2f49a9d106401e60c37",
+    "head_sha": "d9d0be7da22904689aa4e5af1f62d7ca58072a8f",
+    "tree_sha": "74e8517315d6977a3c2170783c619cd56ce604c8",
+    "parent_sha": "7ab810dbae2a7caf9f3caebc03014c6f7dbc8cb6",
+    "prior_checkpoint_sha": "7ab810dbae2a7caf9f3caebc03014c6f7dbc8cb6",
     "base_pr": 245,
     "base_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
-    "block": "assistant_copilot_citation_url_boundary",
-    "status": "DRAFT_CHECKPOINT_A5_PASS_CI_PASS_COPILOT_CITATION_URL_BOUNDARY",
+    "block": "assistant_bundle_official_source_url_boundary",
+    "status": "DRAFT_CHECKPOINT_A5_PASS_CI_PASS_BUNDLE_SOURCE_URL_BOUNDARY",
     "behavior": {
-      "reproduced": "Copilot citations used a weaker local URL parser that normalized valid URLs and admitted credential, control and malformed-host forms rejected by the shared boundary",
-      "final": "Copilot and batch citations delegate anchor admission to the shared strict credential-free absolute HTTP(S) validator; valid URLs remain byte-for-byte and rejected titles remain visible non-clickable text",
-      "boundaries": "URL transport/syntax boundary only; no source-validity, legal-applicability, source-completeness, DB write or enforcement claim"
+      "reproduced": "Copilot bundle rendered tnved_context.official_ett_url directly as an anchor; 11 credential, whitespace, control, encoded, backslash and malformed-host inputs remained clickable",
+      "final": "Copilot and batch bundle official source links use the shared strict credential-free absolute HTTP(S) validator; safe URLs remain byte-for-byte while rejected URLs render as bounded escaped non-clickable evidence",
+      "boundaries": "URL transport/rendering boundary only; no source-validity, legal-applicability, source-completeness, DB write or enforcement claim"
     },
     "author_tests": {
-      "prefix_reproduction": "Assistant grounding test before fix: 6 passed and 2 failed; exit 1",
-      "focused_frontend": "Assistant.grounding plus externalUrl: 49 passed; exit 0",
-      "full_frontend": "84 passed; typecheck and production build PASS; combined exit 0",
+      "prefix_reproduction": "11 adversarial official_ett_url values rendered as anchors before fix; exit 1",
+      "focused_frontend": "Assistant.grounding plus externalUrl: 61 passed; exit 0",
+      "full_frontend": "96 passed; typecheck and production build PASS; combined exit 0",
       "diff": "exactly Assistant.tsx and Assistant.grounding.test.tsx; diff-check exit 0"
     },
     "a5": {
-      "session": "/root/a5_copilot_url_exec_153",
-      "status": "PASS_EXACT_STAGED_TREE",
-      "focused": "49 passed; exit 0",
-      "full_frontend": "84 passed; typecheck/build/diff-check exit 0",
-      "adversarial": "credentials, leading whitespace, literal U+0085/U+202E, encoded/double/6-deep controls, backslash and malformed hosts rejected; safe URL preserved byte-for-byte",
-      "remote_binding": "HEAD 7ab810dbae2a7caf9f3caebc03014c6f7dbc8cb6 tree a483ba9bfaeaa855fbc3280473c884bc7bf84c2b matches reviewed staged tree"
+      "session": "/root/a5_bundle_source_url_154",
+      "status": "PASS_EXACT_STAGED_TREE_NO_FINDINGS",
+      "focused": "61 passed; exit 0",
+      "full_frontend": "96 passed; typecheck/build/diff-check exit 0",
+      "adversarial": "credentials, leading whitespace, literal C1/bidi, encoded/double/deep controls, backslash authority and malformed hosts rejected; evidence bounded and invisible controls escaped",
+      "remote_binding": "HEAD d9d0be7da22904689aa4e5af1f62d7ca58072a8f tree 74e8517315d6977a3c2170783c619cd56ce604c8 matches reviewed staged tree"
     },
     "ci": {
       "status": "PASSED_EXACT_HEAD",
-      "head_sha": "7ab810dbae2a7caf9f3caebc03014c6f7dbc8cb6",
+      "head_sha": "d9d0be7da22904689aa4e5af1f62d7ca58072a8f",
       "runs": [
         {
-          "run_id": 38007178245,
-          "job_id": 114078535987,
+          "run_id": 38011169587,
+          "job_id": 114091271018,
           "conclusion": "success",
-          "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38007178245"
+          "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38011169587"
         }
       ]
     },
@@ -7523,6 +7523,6 @@
       "status": "UNCHANGED_NOT_SENT"
     },
     "protected_actions_performed": false,
-    "next_step": "Continue the next reproduced bounded #245 search/classification/grounding integration defect; keep NTM full-sync completeness blocked on a lawful populated synchronized snapshot."
+    "next_step": "Continue the next reproduced bounded #245 URL/source or search/classification integration defect; keep NTM full-sync completeness blocked on a lawful populated synchronized snapshot."
   }
 }
