@@ -1,14 +1,14 @@
 {
   "acquisition_note": "Harden remaining compliance registry and official-source external links and persist the exact-head checkpoint.",
-  "expires_at": "2026-10-10T02:25:47.686902Z",
+  "expires_at": null,
   "generation": 155,
-  "holder": "/root/tariff_a0_scheduled_20261010T015520Z",
+  "holder": null,
   "lease_repair": {},
-  "release_reason": "PR256 Copilot bundle official-source URL checkpoint recorded at board revision 702; bounded A5 and exact-head CI passed.",
+  "release_reason": "PR256 remaining registry/source URL checkpoint recorded at board revision 703; bounded A5 and exact-head CI passed.",
   "released_by": "/root/tariff_a0_scheduled_20261010T005148Z",
   "schema_version": 1,
   "serialization_repair": {},
-  "state": "active",
-  "token": "7e161a618b8f4f5980fb37cdcac8d3ba",
-  "updated_at": "2026-10-10T01:55:47.686902Z"
+  "state": "released",
+  "token": null,
+  "updated_at": "2026-10-10T02:06:25.498707Z"
 }
