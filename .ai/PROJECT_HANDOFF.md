@@ -3,6 +3,23 @@
 **Снимок:** 2026-10-09 (UTC). **Единственный репозиторий:** [ivan88810900-star/tnved_starter_kit_v2](https://github.com/ivan88810900-star/tnved_starter_kit_v2).
 **Авторитетное состояние:** ветка `agent/orchestration-state`, файлы `.ai/TASK_BOARD.json`, `.ai/COORDINATOR_LEASE.json`, `.ai/orchestration/A6_LIVE_STATUS.json`. Этот документ — указатель и контрольная точка, **не** право на запись/merge/A6. Перед действием заново читать текущие HEAD и state. Не полагаться на Business-чат.
 
+## 0aaaaaaaaaaaaaa. #245 — URL цитат Copilot теперь используют общий fail-closed boundary
+
+**Новый checkpoint:** [draft PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256), `agent/product-ntm-regressions-v1` @ `7ab810dbae2a7caf9f3caebc03014c6f7dbc8cb6`, tree `a483ba9bfaeaa855fbc3280473c884bc7bf84c2b`, parent `f982f48490e5be5fae12e2f49a9d106401e60c37`.
+
+Воспроизведён frontend-дефект: Copilot/Batch использовал локальный `new URL` boundary, который нормализовал допустимые ссылки и пропускал credential, управляющие и malformed-host формы, уже отклоняемые общим валидатором. Теперь цитаты Copilot используют `getSafeExternalUrl`: корректный absolute HTTP(S) URL сохраняется byte-for-byte, а credentials, leading whitespace, literal C1/bidi, encoded/double/6-deep controls, backslash confusion и malformed hostname остаются видимым, но некликабельным текстом.
+
+Проверки:
+
+- до исправления focused reproduction: **6 passed / 2 failed**, exit 1;
+- root focused: **49 passed**, полный frontend: **84 passed**, typecheck/build — PASS, общая команда exit 0;
+- bounded A5 `/root/a5_copilot_url_exec_153`: **PASS** exact staged tree; focused **49 passed**, full frontend **84 passed**, typecheck/build/diff-check — exit 0;
+- exact-head CI: [run 38007178245](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38007178245), offline-safety job `114078535987`, **success**.
+
+Полный #245 product/legal/source completeness остаётся **NOT PASS**: lawful populated synchronized NTM snapshot недоступен. Merge, deploy, production write, enforcement/permissions/secrets change, destructive migration и внешний A6 не выполнялись; `core-s1-6415f443120f-r9-g106` неизменён и не отправлялся.
+
+Следующий шаг — следующий воспроизводимый bounded #245 search/classification/grounding defect; NTM full-sync сохранять заблокированным до законно доступного populated synchronized snapshot.
+
 ## 0aaaaaaaaaaaaa. #245 — executable gate для строгих URL цитат чата закрыт
 
 **Кодовый checkpoint не изменён:** [draft PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256), `agent/product-ntm-regressions-v1` @ `f982f48490e5be5fae12e2f49a9d106401e60c37`, tree `2616d6df4c4e5e611aea55f298d9fbfc56eebbb1`, parent chain `a556cb073482a957fa5fff09ab59ddd2b9194ba5` → `06a540ad6e9fcbd7003a224cc68a3dd5a779598f`.

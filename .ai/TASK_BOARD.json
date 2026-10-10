@@ -2179,7 +2179,7 @@
       "unique_source_pr_count": 29
     }
   },
-  "revision": 700,
+  "revision": 701,
   "runs": [
     {
       "head_sha": null,
@@ -7414,53 +7414,52 @@
       }
     }
   ],
-  "updated_at": "2026-10-09T22:55:00.000Z",
+  "updated_at": "2026-10-10T00:02:26.000Z",
   "latest_scheduled_product_checkpoint": {
-    "updated_at": "2026-10-09T22:55:00.000Z",
-    "checked_at": "2026-10-09T22:55:00.000Z",
+    "updated_at": "2026-10-10T00:02:26.000Z",
+    "checked_at": "2026-10-10T00:02:26.000Z",
     "pr": 256,
     "branch": "agent/product-ntm-regressions-v1",
-    "head_sha": "f982f48490e5be5fae12e2f49a9d106401e60c37",
-    "tree_sha": "2616d6df4c4e5e611aea55f298d9fbfc56eebbb1",
-    "parent_sha": "06a540ad6e9fcbd7003a224cc68a3dd5a779598f",
-    "prior_checkpoint_sha": "a556cb073482a957fa5fff09ab59ddd2b9194ba5",
+    "head_sha": "7ab810dbae2a7caf9f3caebc03014c6f7dbc8cb6",
+    "tree_sha": "a483ba9bfaeaa855fbc3280473c884bc7bf84c2b",
+    "parent_sha": "f982f48490e5be5fae12e2f49a9d106401e60c37",
+    "prior_checkpoint_sha": "f982f48490e5be5fae12e2f49a9d106401e60c37",
     "base_pr": 245,
     "base_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
-    "block": "assistant_chat_citation_url_boundary",
-    "status": "DRAFT_CHECKPOINT_A5_EXEC_PASS_CI_PASS_CHAT_CITATION_URL_BOUNDARY",
+    "block": "assistant_copilot_citation_url_boundary",
+    "status": "DRAFT_CHECKPOINT_A5_PASS_CI_PASS_COPILOT_CITATION_URL_BOUNDARY",
     "behavior": {
-      "reproduced": "assistant chat used a weaker local URL parser that admitted credential, normalization and malformed-host citation URLs which the shared TN VED boundary rejects",
-      "final": "assistant chat delegates citation anchors to the shared strict credential-free absolute HTTP(S) validator; rejected citations stay visible as non-clickable text",
+      "reproduced": "Copilot citations used a weaker local URL parser that normalized valid URLs and admitted credential, control and malformed-host forms rejected by the shared boundary",
+      "final": "Copilot and batch citations delegate anchor admission to the shared strict credential-free absolute HTTP(S) validator; valid URLs remain byte-for-byte and rejected titles remain visible non-clickable text",
       "boundaries": "URL transport/syntax boundary only; no source-validity, legal-applicability, source-completeness, DB write or enforcement claim"
     },
     "author_tests": {
-      "prior_limitation": "fresh frontend execution was previously unavailable because the isolated dependency install failed",
-      "focused_frontend": "DeclarantChatThread plus externalUrl: 54 passed; exit 0",
-      "full_frontend": "82 passed; typecheck and production build PASS; combined exit 0",
-      "environment": "existing isolated node_modules was available on the exact remote HEAD; worktree remained clean"
+      "prefix_reproduction": "Assistant grounding test before fix: 6 passed and 2 failed; exit 1",
+      "focused_frontend": "Assistant.grounding plus externalUrl: 49 passed; exit 0",
+      "full_frontend": "84 passed; typecheck and production build PASS; combined exit 0",
+      "diff": "exactly Assistant.tsx and Assistant.grounding.test.tsx; diff-check exit 0"
     },
     "a5": {
-      "session": "/root/a5_chat_url_exec_151",
-      "status": "FINAL_PASS_EXACT_HEAD_TREE_EXECUTABLE",
-      "focused": "54 passed; exit 0",
-      "full_frontend": "82 passed; typecheck/build/diff-check exit 0",
-      "adversarial": "24 unsafe citation URLs rejected and 7 safe HTTP(S) URLs preserved byte-for-byte, including literal C1/bidi and encoded/double/deep controls; exit 0",
-      "remote_binding": "HEAD f982f48490e5be5fae12e2f49a9d106401e60c37 tree 2616d6df4c4e5e611aea55f298d9fbfc56eebbb1 unchanged and worktree clean"
+      "session": "/root/a5_copilot_url_exec_153",
+      "status": "PASS_EXACT_STAGED_TREE",
+      "focused": "49 passed; exit 0",
+      "full_frontend": "84 passed; typecheck/build/diff-check exit 0",
+      "adversarial": "credentials, leading whitespace, literal U+0085/U+202E, encoded/double/6-deep controls, backslash and malformed hosts rejected; safe URL preserved byte-for-byte",
+      "remote_binding": "HEAD 7ab810dbae2a7caf9f3caebc03014c6f7dbc8cb6 tree a483ba9bfaeaa855fbc3280473c884bc7bf84c2b matches reviewed staged tree"
     },
     "ci": {
       "status": "PASSED_EXACT_HEAD",
-      "head_sha": "f982f48490e5be5fae12e2f49a9d106401e60c37",
+      "head_sha": "7ab810dbae2a7caf9f3caebc03014c6f7dbc8cb6",
       "runs": [
         {
-          "run_id": 37998614667,
-          "job_id": 114050947337,
+          "run_id": 38007178245,
+          "job_id": 114078535987,
           "conclusion": "success",
-          "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/37998614667"
+          "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38007178245"
         }
       ]
     },
     "blockers": [
-      "The previous frontend execution and independent executable-review blocker is closed on the unchanged exact HEAD.",
       "NTM full-sync audit still requires a lawful populated synchronized snapshot.",
       "Full #245 product acceptance and legal/source completeness remain NOT PASS."
     ],
@@ -7472,51 +7471,50 @@
     "next_step": "Continue the next reproduced bounded #245 search/classification/grounding integration defect; keep NTM full-sync completeness blocked on a lawful populated synchronized snapshot."
   },
   "latest_development_checkpoint": {
-    "updated_at": "2026-10-09T22:55:00.000Z",
-    "checked_at": "2026-10-09T22:55:00.000Z",
+    "updated_at": "2026-10-10T00:02:26.000Z",
+    "checked_at": "2026-10-10T00:02:26.000Z",
     "pr": 256,
     "branch": "agent/product-ntm-regressions-v1",
-    "head_sha": "f982f48490e5be5fae12e2f49a9d106401e60c37",
-    "tree_sha": "2616d6df4c4e5e611aea55f298d9fbfc56eebbb1",
-    "parent_sha": "06a540ad6e9fcbd7003a224cc68a3dd5a779598f",
-    "prior_checkpoint_sha": "a556cb073482a957fa5fff09ab59ddd2b9194ba5",
+    "head_sha": "7ab810dbae2a7caf9f3caebc03014c6f7dbc8cb6",
+    "tree_sha": "a483ba9bfaeaa855fbc3280473c884bc7bf84c2b",
+    "parent_sha": "f982f48490e5be5fae12e2f49a9d106401e60c37",
+    "prior_checkpoint_sha": "f982f48490e5be5fae12e2f49a9d106401e60c37",
     "base_pr": 245,
     "base_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
-    "block": "assistant_chat_citation_url_boundary",
-    "status": "DRAFT_CHECKPOINT_A5_EXEC_PASS_CI_PASS_CHAT_CITATION_URL_BOUNDARY",
+    "block": "assistant_copilot_citation_url_boundary",
+    "status": "DRAFT_CHECKPOINT_A5_PASS_CI_PASS_COPILOT_CITATION_URL_BOUNDARY",
     "behavior": {
-      "reproduced": "assistant chat used a weaker local URL parser that admitted credential, normalization and malformed-host citation URLs which the shared TN VED boundary rejects",
-      "final": "assistant chat delegates citation anchors to the shared strict credential-free absolute HTTP(S) validator; rejected citations stay visible as non-clickable text",
+      "reproduced": "Copilot citations used a weaker local URL parser that normalized valid URLs and admitted credential, control and malformed-host forms rejected by the shared boundary",
+      "final": "Copilot and batch citations delegate anchor admission to the shared strict credential-free absolute HTTP(S) validator; valid URLs remain byte-for-byte and rejected titles remain visible non-clickable text",
       "boundaries": "URL transport/syntax boundary only; no source-validity, legal-applicability, source-completeness, DB write or enforcement claim"
     },
     "author_tests": {
-      "prior_limitation": "fresh frontend execution was previously unavailable because the isolated dependency install failed",
-      "focused_frontend": "DeclarantChatThread plus externalUrl: 54 passed; exit 0",
-      "full_frontend": "82 passed; typecheck and production build PASS; combined exit 0",
-      "environment": "existing isolated node_modules was available on the exact remote HEAD; worktree remained clean"
+      "prefix_reproduction": "Assistant grounding test before fix: 6 passed and 2 failed; exit 1",
+      "focused_frontend": "Assistant.grounding plus externalUrl: 49 passed; exit 0",
+      "full_frontend": "84 passed; typecheck and production build PASS; combined exit 0",
+      "diff": "exactly Assistant.tsx and Assistant.grounding.test.tsx; diff-check exit 0"
     },
     "a5": {
-      "session": "/root/a5_chat_url_exec_151",
-      "status": "FINAL_PASS_EXACT_HEAD_TREE_EXECUTABLE",
-      "focused": "54 passed; exit 0",
-      "full_frontend": "82 passed; typecheck/build/diff-check exit 0",
-      "adversarial": "24 unsafe citation URLs rejected and 7 safe HTTP(S) URLs preserved byte-for-byte, including literal C1/bidi and encoded/double/deep controls; exit 0",
-      "remote_binding": "HEAD f982f48490e5be5fae12e2f49a9d106401e60c37 tree 2616d6df4c4e5e611aea55f298d9fbfc56eebbb1 unchanged and worktree clean"
+      "session": "/root/a5_copilot_url_exec_153",
+      "status": "PASS_EXACT_STAGED_TREE",
+      "focused": "49 passed; exit 0",
+      "full_frontend": "84 passed; typecheck/build/diff-check exit 0",
+      "adversarial": "credentials, leading whitespace, literal U+0085/U+202E, encoded/double/6-deep controls, backslash and malformed hosts rejected; safe URL preserved byte-for-byte",
+      "remote_binding": "HEAD 7ab810dbae2a7caf9f3caebc03014c6f7dbc8cb6 tree a483ba9bfaeaa855fbc3280473c884bc7bf84c2b matches reviewed staged tree"
     },
     "ci": {
       "status": "PASSED_EXACT_HEAD",
-      "head_sha": "f982f48490e5be5fae12e2f49a9d106401e60c37",
+      "head_sha": "7ab810dbae2a7caf9f3caebc03014c6f7dbc8cb6",
       "runs": [
         {
-          "run_id": 37998614667,
-          "job_id": 114050947337,
+          "run_id": 38007178245,
+          "job_id": 114078535987,
           "conclusion": "success",
-          "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/37998614667"
+          "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38007178245"
         }
       ]
     },
     "blockers": [
-      "The previous frontend execution and independent executable-review blocker is closed on the unchanged exact HEAD.",
       "NTM full-sync audit still requires a lawful populated synchronized snapshot.",
       "Full #245 product acceptance and legal/source completeness remain NOT PASS."
     ],
