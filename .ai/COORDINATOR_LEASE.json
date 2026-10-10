@@ -1,14 +1,14 @@
 {
-  "acquisition_note": "Harden remaining compliance registry and official-source external links and persist the exact-head checkpoint.",
-  "expires_at": null,
-  "generation": 155,
-  "holder": null,
+  "acquisition_note": "Isolate classification inventory regressions on a disposable bootstrapped database and persist the exact-head checkpoint.",
+  "expires_at": "2026-10-10T03:28:12.569017Z",
+  "generation": 156,
+  "holder": "/root/tariff_a0_scheduled_20261010T025749Z",
   "lease_repair": {},
   "release_reason": "PR256 remaining registry/source URL checkpoint recorded at board revision 703; bounded A5 and exact-head CI passed.",
   "released_by": "/root/tariff_a0_scheduled_20261010T005148Z",
   "schema_version": 1,
   "serialization_repair": {},
-  "state": "released",
-  "token": null,
-  "updated_at": "2026-10-10T02:06:25.498707Z"
+  "state": "active",
+  "token": "de34b59f47ba4f9ca2d3360c0010815f",
+  "updated_at": "2026-10-10T02:58:12.569017Z"
 }
