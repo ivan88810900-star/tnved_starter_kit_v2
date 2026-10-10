@@ -2179,7 +2179,7 @@
       "unique_source_pr_count": 29
     }
   },
-  "revision": 705,
+  "revision": 706,
   "runs": [
     {
       "head_sha": null,
@@ -3254,6 +3254,26 @@
   ],
   "schema_version": 1,
   "state_integrity_receipts": {
+    "project_handoff_payment_pointer_rev706": {
+      "checked_at": "2026-10-10T04:23:30.000Z",
+      "handoff_blob_sha": "ad88c028b9f447999706570f9b32a4de19a004a5",
+      "main_sha": "e526dfbdb5a31b01bf6f743da0288b88f916de0c",
+      "next_step": "Refresh six stale payment bundles source by source from retained primary-source snapshots; preserve immutable ETT binding and explicit source-completeness limits.",
+      "pr": 255,
+      "pr_draft": true,
+      "pr_head_sha": "7c12f21787b1d557630d8b0737c769b326ab112d",
+      "pr_state": "open",
+      "status": "PROJECT_HANDOFF_RECONCILED",
+      "exact_head_ci": {
+        "conclusion": "success",
+        "run_id": 37921716308,
+        "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/37921716308"
+      },
+      "limits": [
+        "No retained primary-source snapshots were fabricated or refreshed.",
+        "No A6/provider request, merge, deploy, production write, permissions/secrets change or destructive migration was performed."
+      ]
+    },
     "a6_core_s1_gate_repair_gen94_rev660": {
       "blocked_generation": {
         "artifact_uploaded": false,
@@ -7414,7 +7434,7 @@
       }
     }
   ],
-  "updated_at": "2026-10-10T04:05:05.000Z",
+  "updated_at": "2026-10-10T04:23:30.000Z",
   "latest_scheduled_product_checkpoint": {
     "updated_at": "2026-10-10T04:05:05.000Z",
     "checked_at": "2026-10-10T04:05:05.000Z",
