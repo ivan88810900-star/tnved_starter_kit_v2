@@ -2,14 +2,29 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 
-import type { AssistantCopilotAi } from '../types/api.types';
-import { CopilotAiView } from './Assistant';
+import type { AssistantCopilotAi, AssistantCopilotBundle } from '../types/api.types';
+import { CopilotAiView, CopilotBundleView } from './Assistant';
 
 const encodeRepeatedly = (value: string, rounds: number): string => {
   let encoded = value;
   for (let round = 0; round < rounds; round += 1) encoded = encodeURIComponent(encoded);
   return encoded;
 };
+
+const bundleWithOfficialUrl = (officialUrl: string): AssistantCopilotBundle => ({
+  effective_hs_code: '0101210000',
+  description: 'Тестовый товар',
+  pipeline: [],
+  tnved_context: {
+    hs_code: '0101210000',
+    title: 'Лошади чистопородные племенные',
+    description: '',
+    breadcrumb: [],
+    notes: [],
+    official_ett_url: officialUrl,
+    source_revision: 'test',
+  },
+});
 
 describe('CopilotAiView grounding metadata', () => {
   it('shows grounded server metadata, facts, limitations and a safe citation', () => {
@@ -242,5 +257,40 @@ describe('CopilotAiView grounding metadata', () => {
     expect(grounding).toHaveTextContent('Использованные блоки: не подтверждены');
     expect(grounding).not.toHaveTextContent('Полное покрытие НТМ подтверждено');
     expect(grounding).not.toHaveTextContent('ТН ВЭД');
+  });
+});
+
+describe('CopilotBundleView official ETT source URL', () => {
+  it('preserves an admitted HTTP(S) source URL byte-for-byte', () => {
+    const originalUrl = 'https://EEC.example:443/path/%41?document=%2fsource#Part';
+
+    render(<CopilotBundleView bundle={bundleWithOfficialUrl(originalUrl)} title="Ход обработки" />);
+
+    expect(screen.getByRole('link', { name: 'ТН ВЭД и ЕТТ на сайте ЕЭК' })).toHaveAttribute(
+      'href',
+      originalUrl,
+    );
+  });
+
+  it.each([
+    ['credentials', 'https://trusted.example@evil.example/source'],
+    ['leading whitespace', ' https://example.test/source'],
+    ['literal C1 control', `https://example.test/source${String.fromCharCode(0x85)}`],
+    ['literal bidi control', `https://example.test/${String.fromCharCode(0x202e)}evil`],
+    ['encoded control', 'https://example.test/source%0d%0AInjected'],
+    ['double-encoded control', 'https://example.test/source%250dInjected'],
+    ['deeply encoded control', `https://example.test/${encodeRepeatedly('\r', 6)}Injected`],
+    ['backslash authority confusion', 'https://example.test\\@evil.example/source'],
+    ['empty hostname label', 'https://./source'],
+    ['repeated hostname dot', 'https://bad..example/source'],
+    ['invalid hostname character', 'https://bad_host.example/source'],
+  ])('renders rejected %s evidence as bounded plain text, not an anchor', (_case, unsafeUrl) => {
+    render(<CopilotBundleView bundle={bundleWithOfficialUrl(unsafeUrl)} title="Ход обработки" />);
+
+    expect(screen.queryByRole('link', { name: 'ТН ВЭД и ЕТТ на сайте ЕЭК' })).not.toBeInTheDocument();
+    const evidence = screen.getByTestId('copilot-bundle-unsafe-official-url');
+    expect(evidence).toBeInTheDocument();
+    expect(evidence.textContent?.length).toBeLessThanOrEqual(170);
+    expect(evidence.textContent).not.toMatch(/[\u0000-\u001f\u007f-\u009f\u061c\u200e\u200f\u202a-\u202e\u2066-\u2069]/u);
   });
 });

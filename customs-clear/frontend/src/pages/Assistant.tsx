@@ -22,7 +22,7 @@ import type {
 } from '../types/api.types';
 import { formatCode } from '../api/tnvedCatalog';
 import { formatTnvedCommodityName, TNVED_COMMODITY_NAME_CLASS } from '../utils/tnvedDisplayText';
-import { getSafeExternalUrl } from '../utils/externalUrl';
+import { formatUnsafeExternalUrlEvidence, getSafeExternalUrl } from '../utils/externalUrl';
 import type { AssistantNavigationJob } from '../store/calculatorAssistantBridge';
 import {
   getAssistantCalculationContext,
@@ -238,8 +238,10 @@ const RecentDecisionsTable: React.FC<{ items: AssistantDecisionRecord[] }> = ({ 
   </div>
 );
 
-const CopilotBundleView: React.FC<{ bundle: AssistantCopilotBundle; title: string }> = ({ bundle, title }) => {
+export const CopilotBundleView: React.FC<{ bundle: AssistantCopilotBundle; title: string }> = ({ bundle, title }) => {
   const classificationNote = bundle.classification?.note;
+  const officialEttUrlEvidence = bundle.tnved_context?.official_ett_url;
+  const safeOfficialEttUrl = getSafeExternalUrl(officialEttUrlEvidence);
   return (
   <div className="cc-card-soft space-y-4 p-4">
     <div className="flex flex-wrap items-baseline justify-between gap-2">
@@ -264,7 +266,11 @@ const CopilotBundleView: React.FC<{ bundle: AssistantCopilotBundle; title: strin
         {String(classificationNote)}
       </div>
     )}
-    {bundle.tnved_context && (bundle.tnved_context.title || (bundle.tnved_context.notes?.length ?? 0) > 0) && (
+    {bundle.tnved_context && (
+      bundle.tnved_context.title ||
+      (bundle.tnved_context.notes?.length ?? 0) > 0 ||
+      officialEttUrlEvidence
+    ) && (
       <div className="space-y-2 border-t border-emerald-500/15 pt-3">
         <span className="cc-label">Справочник ТН ВЭД (БД)</span>
         {bundle.tnved_context.title && (
@@ -287,15 +293,25 @@ const CopilotBundleView: React.FC<{ bundle: AssistantCopilotBundle; title: strin
             ))}
           </ul>
         )}
-        {bundle.tnved_context.official_ett_url && (
-          <a
-            href={bundle.tnved_context.official_ett_url}
-            target="_blank"
-            rel="noreferrer"
-            className="text-[11px] text-indigo-600 hover:underline"
-          >
-            ТН ВЭД и ЕТТ на сайте ЕЭК
-          </a>
+        {officialEttUrlEvidence && (
+          safeOfficialEttUrl ? (
+            <a
+              href={safeOfficialEttUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="text-[11px] text-indigo-600 hover:underline"
+            >
+              ТН ВЭД и ЕТТ на сайте ЕЭК
+            </a>
+          ) : (
+            <p
+              className="break-all text-[11px] text-amber-700"
+              data-testid="copilot-bundle-unsafe-official-url"
+            >
+              Адрес источника не прошёл проверку ссылки:{' '}
+              <span className="cc-mono">{formatUnsafeExternalUrlEvidence(officialEttUrlEvidence)}</span>
+            </p>
+          )
         )}
       </div>
     )}
