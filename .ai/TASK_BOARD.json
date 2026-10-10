@@ -3255,7 +3255,7 @@
   "schema_version": 1,
   "state_integrity_receipts": {
     "project_handoff_payment_pointer_rev706": {
-      "checked_at": "2026-10-10T04:23:30.000Z",
+      "checked_at": "2026-10-10T04:22:20.000Z",
       "handoff_blob_sha": "ad88c028b9f447999706570f9b32a4de19a004a5",
       "main_sha": "e526dfbdb5a31b01bf6f743da0288b88f916de0c",
       "next_step": "Refresh six stale payment bundles source by source from retained primary-source snapshots; preserve immutable ETT binding and explicit source-completeness limits.",
@@ -7434,7 +7434,7 @@
       }
     }
   ],
-  "updated_at": "2026-10-10T04:23:30.000Z",
+  "updated_at": "2026-10-10T04:22:20.000Z",
   "latest_scheduled_product_checkpoint": {
     "updated_at": "2026-10-10T04:05:05.000Z",
     "checked_at": "2026-10-10T04:05:05.000Z",
