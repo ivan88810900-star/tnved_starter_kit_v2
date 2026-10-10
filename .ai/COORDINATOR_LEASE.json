@@ -1,14 +1,14 @@
 {
   "acquisition_note": "Isolate classification inventory regressions on a disposable bootstrapped database and persist the exact-head checkpoint.",
-  "expires_at": null,
-  "generation": 156,
-  "holder": null,
+  "expires_at": "2026-10-10T04:25:45.219004Z",
+  "generation": 157,
+  "holder": "/root/tariff_a0_scheduled_20261010T035538Z",
   "lease_repair": {},
   "release_reason": "PR256 classification fixture checkpoint recorded at board revision 704; bounded A5 and exact-head CI passed.",
   "released_by": "/root/tariff_a0_scheduled_20261010T005148Z",
   "schema_version": 1,
   "serialization_repair": {},
-  "state": "released",
-  "token": null,
-  "updated_at": "2026-10-10T03:10:03.212053Z"
+  "state": "active",
+  "token": "e2788752066744a5ae9ce75e7fa27925",
+  "updated_at": "2026-10-10T03:55:45.219004Z"
 }
