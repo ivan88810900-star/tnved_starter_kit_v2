@@ -2179,7 +2179,7 @@
       "unique_source_pr_count": 29
     }
   },
-  "revision": 703,
+  "revision": 704,
   "runs": [
     {
       "head_sha": null,
@@ -7414,48 +7414,48 @@
       }
     }
   ],
-  "updated_at": "2026-10-10T02:03:04.000Z",
+  "updated_at": "2026-10-10T03:08:50.000Z",
   "latest_scheduled_product_checkpoint": {
-    "updated_at": "2026-10-10T02:03:04.000Z",
-    "checked_at": "2026-10-10T02:03:04.000Z",
+    "updated_at": "2026-10-10T03:08:50.000Z",
+    "checked_at": "2026-10-10T03:08:50.000Z",
     "pr": 256,
     "branch": "agent/product-ntm-regressions-v1",
-    "head_sha": "8ca94203a04c131f2f7181a3e66b5ab71fdf59a6",
-    "tree_sha": "26ff4dbb3e56440ea5ffa48a6c037720a828478a",
-    "parent_sha": "d9d0be7da22904689aa4e5af1f62d7ca58072a8f",
-    "prior_checkpoint_sha": "d9d0be7da22904689aa4e5af1f62d7ca58072a8f",
+    "head_sha": "6cba001e44812391be363a3e2bdd5ecdf86b11a9",
+    "tree_sha": "0e5a147fcdd3a2eb93ab3057f65c41500035f19f",
+    "parent_sha": "8ca94203a04c131f2f7181a3e66b5ab71fdf59a6",
+    "prior_checkpoint_sha": "8ca94203a04c131f2f7181a3e66b5ab71fdf59a6",
     "base_pr": 245,
     "base_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
-    "block": "remaining_registry_source_url_boundary",
-    "status": "DRAFT_CHECKPOINT_A5_PASS_CI_PASS_REMAINING_REGISTRY_URL_BOUNDARY",
+    "block": "classification_disposable_inventory_fixture",
+    "status": "DRAFT_CHECKPOINT_A5_PASS_CI_PASS_CLASSIFICATION_FIXTURE",
     "behavior": {
-      "reproduced": "Seven remaining API-derived registry and official-source values across five frontend surfaces were passed directly into external anchor hrefs",
-      "final": "All seven links use the shared strict credential-free absolute HTTP(S) validator; safe URLs remain byte-for-byte, rejected values render as bounded escaped plain-text evidence, and a safe registry fallback survives an unsafe primary manual-check URL",
-      "boundaries": "URL transport/rendering boundary only; no source-validity, legal-applicability, source-completeness, API, DB or enforcement claim"
+      "reproduced": "Classification rulings and FTS letters produced 19 failures with 8 passes, and adjacent semantic navigation produced 9 failures, because dataset-contract tests read the empty default database",
+      "final": "Three dataset/search test modules share one session-scoped disposable database built by the existing pinned bootstrap; all thresholds and assertions remain unchanged, and temporary SQLite files are removed",
+      "boundaries": "Test-fixture isolation only; six parser-boundary descriptions are temp-DB-only on existing catalogue codes and are not legal, synchronized-snapshot or source-completeness evidence"
     },
     "author_tests": {
-      "focused_frontend": "ExternalRegistryLinks.surface plus PermitDocumentsBlock: 16 passed; exit 0",
-      "full_frontend": "108 passed; typecheck, production build and diff-check PASS; exit 0",
-      "root_control": "Focused 57 passed; full frontend 108 passed; typecheck and production build PASS; exit 0",
-      "diff": "exactly five scoped UI files plus ExternalRegistryLinks.surface.test.tsx"
+      "baseline": "Classification/letters 19 failed and 8 passed; semantic navigation 9 failed; exit 1",
+      "exact_six_module": "54 passed plus 15 subtests; exit 0",
+      "isolation": "default DB and pinned catalogue SHA-256 unchanged; no temporary inventory.db/WAL/SHM remains",
+      "diff": "exactly one new test fixture helper plus three existing test modules; no production/data changes"
     },
     "a5": {
-      "session": "/root/a5_remaining_external_urls_155",
+      "session": "/root/a5_classification_fixture_156",
       "status": "PASS_EXACT_STAGED_TREE_NO_FINDINGS",
-      "focused": "53 passed; exit 0",
-      "full_frontend": "108 passed; typecheck and diff-check exit 0",
-      "adversarial": "credential, non-HTTP, literal control, backslash and malformed-host values rejected; valid HTTP(S) byte-preserved; unsafe-primary/safe-fallback behavior verified",
-      "remote_binding": "HEAD 8ca94203a04c131f2f7181a3e66b5ab71fdf59a6 tree 26ff4dbb3e56440ea5ffa48a6c037720a828478a matches independently reviewed local tree"
+      "exact_six_module": "54 passed plus 15 subtests; exit 0",
+      "isolated_modules": "classification rulings 17 passed; FTS letters 10 passed; semantic navigation 9 passed",
+      "adversarial": "hostile pre-existing DATABASE_URL/TNVED_SOURCE_DB remained unchanged; nonexistent path remained absent; teardown removed temp DB and sidecars",
+      "remote_binding": "HEAD 6cba001e44812391be363a3e2bdd5ecdf86b11a9 tree 0e5a147fcdd3a2eb93ab3057f65c41500035f19f matches independently reviewed local tree"
     },
     "ci": {
       "status": "PASSED_EXACT_HEAD",
-      "head_sha": "8ca94203a04c131f2f7181a3e66b5ab71fdf59a6",
+      "head_sha": "6cba001e44812391be363a3e2bdd5ecdf86b11a9",
       "runs": [
         {
-          "run_id": 38015394005,
-          "job_id": 114104399311,
+          "run_id": 38019455741,
+          "job_id": 114116972462,
           "conclusion": "success",
-          "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38015394005"
+          "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38019455741"
         }
       ]
     },
@@ -7468,49 +7468,49 @@
       "status": "UNCHANGED_NOT_SENT"
     },
     "protected_actions_performed": false,
-    "next_step": "Continue the next reproduced bounded #245 search/classification/grounding defect or fixture-contour analysis; keep NTM full-sync completeness blocked on a lawful populated synchronized snapshot."
+    "next_step": "Continue remaining full-catalog fixture failures or the next reproduced bounded #245 search/classification defect; do not treat disposable inventory as legal or source completeness."
   },
   "latest_development_checkpoint": {
-    "updated_at": "2026-10-10T02:03:04.000Z",
-    "checked_at": "2026-10-10T02:03:04.000Z",
+    "updated_at": "2026-10-10T03:08:50.000Z",
+    "checked_at": "2026-10-10T03:08:50.000Z",
     "pr": 256,
     "branch": "agent/product-ntm-regressions-v1",
-    "head_sha": "8ca94203a04c131f2f7181a3e66b5ab71fdf59a6",
-    "tree_sha": "26ff4dbb3e56440ea5ffa48a6c037720a828478a",
-    "parent_sha": "d9d0be7da22904689aa4e5af1f62d7ca58072a8f",
-    "prior_checkpoint_sha": "d9d0be7da22904689aa4e5af1f62d7ca58072a8f",
+    "head_sha": "6cba001e44812391be363a3e2bdd5ecdf86b11a9",
+    "tree_sha": "0e5a147fcdd3a2eb93ab3057f65c41500035f19f",
+    "parent_sha": "8ca94203a04c131f2f7181a3e66b5ab71fdf59a6",
+    "prior_checkpoint_sha": "8ca94203a04c131f2f7181a3e66b5ab71fdf59a6",
     "base_pr": 245,
     "base_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
-    "block": "remaining_registry_source_url_boundary",
-    "status": "DRAFT_CHECKPOINT_A5_PASS_CI_PASS_REMAINING_REGISTRY_URL_BOUNDARY",
+    "block": "classification_disposable_inventory_fixture",
+    "status": "DRAFT_CHECKPOINT_A5_PASS_CI_PASS_CLASSIFICATION_FIXTURE",
     "behavior": {
-      "reproduced": "Seven remaining API-derived registry and official-source values across five frontend surfaces were passed directly into external anchor hrefs",
-      "final": "All seven links use the shared strict credential-free absolute HTTP(S) validator; safe URLs remain byte-for-byte, rejected values render as bounded escaped plain-text evidence, and a safe registry fallback survives an unsafe primary manual-check URL",
-      "boundaries": "URL transport/rendering boundary only; no source-validity, legal-applicability, source-completeness, API, DB or enforcement claim"
+      "reproduced": "Classification rulings and FTS letters produced 19 failures with 8 passes, and adjacent semantic navigation produced 9 failures, because dataset-contract tests read the empty default database",
+      "final": "Three dataset/search test modules share one session-scoped disposable database built by the existing pinned bootstrap; all thresholds and assertions remain unchanged, and temporary SQLite files are removed",
+      "boundaries": "Test-fixture isolation only; six parser-boundary descriptions are temp-DB-only on existing catalogue codes and are not legal, synchronized-snapshot or source-completeness evidence"
     },
     "author_tests": {
-      "focused_frontend": "ExternalRegistryLinks.surface plus PermitDocumentsBlock: 16 passed; exit 0",
-      "full_frontend": "108 passed; typecheck, production build and diff-check PASS; exit 0",
-      "root_control": "Focused 57 passed; full frontend 108 passed; typecheck and production build PASS; exit 0",
-      "diff": "exactly five scoped UI files plus ExternalRegistryLinks.surface.test.tsx"
+      "baseline": "Classification/letters 19 failed and 8 passed; semantic navigation 9 failed; exit 1",
+      "exact_six_module": "54 passed plus 15 subtests; exit 0",
+      "isolation": "default DB and pinned catalogue SHA-256 unchanged; no temporary inventory.db/WAL/SHM remains",
+      "diff": "exactly one new test fixture helper plus three existing test modules; no production/data changes"
     },
     "a5": {
-      "session": "/root/a5_remaining_external_urls_155",
+      "session": "/root/a5_classification_fixture_156",
       "status": "PASS_EXACT_STAGED_TREE_NO_FINDINGS",
-      "focused": "53 passed; exit 0",
-      "full_frontend": "108 passed; typecheck and diff-check exit 0",
-      "adversarial": "credential, non-HTTP, literal control, backslash and malformed-host values rejected; valid HTTP(S) byte-preserved; unsafe-primary/safe-fallback behavior verified",
-      "remote_binding": "HEAD 8ca94203a04c131f2f7181a3e66b5ab71fdf59a6 tree 26ff4dbb3e56440ea5ffa48a6c037720a828478a matches independently reviewed local tree"
+      "exact_six_module": "54 passed plus 15 subtests; exit 0",
+      "isolated_modules": "classification rulings 17 passed; FTS letters 10 passed; semantic navigation 9 passed",
+      "adversarial": "hostile pre-existing DATABASE_URL/TNVED_SOURCE_DB remained unchanged; nonexistent path remained absent; teardown removed temp DB and sidecars",
+      "remote_binding": "HEAD 6cba001e44812391be363a3e2bdd5ecdf86b11a9 tree 0e5a147fcdd3a2eb93ab3057f65c41500035f19f matches independently reviewed local tree"
     },
     "ci": {
       "status": "PASSED_EXACT_HEAD",
-      "head_sha": "8ca94203a04c131f2f7181a3e66b5ab71fdf59a6",
+      "head_sha": "6cba001e44812391be363a3e2bdd5ecdf86b11a9",
       "runs": [
         {
-          "run_id": 38015394005,
-          "job_id": 114104399311,
+          "run_id": 38019455741,
+          "job_id": 114116972462,
           "conclusion": "success",
-          "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38015394005"
+          "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38019455741"
         }
       ]
     },
@@ -7523,6 +7523,6 @@
       "status": "UNCHANGED_NOT_SENT"
     },
     "protected_actions_performed": false,
-    "next_step": "Continue the next reproduced bounded #245 search/classification/grounding defect or fixture-contour analysis; keep NTM full-sync completeness blocked on a lawful populated synchronized snapshot."
+    "next_step": "Continue remaining full-catalog fixture failures or the next reproduced bounded #245 search/classification defect; do not treat disposable inventory as legal or source completeness."
   }
 }

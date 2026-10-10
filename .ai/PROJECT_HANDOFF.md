@@ -3,6 +3,25 @@
 **Снимок:** 2026-10-09 (UTC). **Единственный репозиторий:** [ivan88810900-star/tnved_starter_kit_v2](https://github.com/ivan88810900-star/tnved_starter_kit_v2).
 **Авторитетное состояние:** ветка `agent/orchestration-state`, файлы `.ai/TASK_BOARD.json`, `.ai/COORDINATOR_LEASE.json`, `.ai/orchestration/A6_LIVE_STATUS.json`. Этот документ — указатель и контрольная точка, **не** право на запись/merge/A6. Перед действием заново читать текущие HEAD и state. Не полагаться на Business-чат.
 
+## 0aaaaaaaaaaaaaaaaa. #245 — classification fixture больше не зависит от пустой default DB
+
+**Новый checkpoint:** [draft PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256), `agent/product-ntm-regressions-v1` @ `6cba001e44812391be363a3e2bdd5ecdf86b11a9`, tree `0e5a147fcdd3a2eb93ab3057f65c41500035f19f`, parent `8ca94203a04c131f2f7181a3e66b5ab71fdf59a6`.
+
+Закрыт воспроизводимый fixture-контур classification/search. До исправления classification rulings + FTS letters давали **19 failed / 8 passed**, а соседний semantic navigation — ещё **9 failed**, потому что тесты читали пустую default DB. Теперь все три набора используют одну session-scoped disposable DB, создаваемую существующим pinned bootstrap. Пороговые и содержательные assertions не менялись; skip/xfail не добавлялись.
+
+Default `customs.db`, pinned catalogue и заранее заданный hostile `DATABASE_URL` остаются побайтово неизменными. Временная DB и WAL/SHM удаляются после teardown. Шесть parser-boundary описаний добавляются только во временную DB на существующие точные коды каталога и не являются правовым или source-completeness evidence.
+
+Проверки:
+
+- A4 author `/root/a4_classification_fixture_156`: exact six-module **54 passed + 15 subtests**, exit 0; DB hashes и cleanup подтверждены;
+- root: exact six-module **54 passed + 15 subtests**, exit 0; SHA-256 default/source DB неизменны, sidecars отсутствуют;
+- независимый A5 `/root/a5_classification_fixture_156`: **PASS без findings**; exact six-module **54 passed + 15 subtests**, отдельные модули и hostile-environment проверки — PASS;
+- exact-head CI: [run 38019455741](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38019455741), offline-safety job `114116972462`, **success**.
+
+Изменены только test fixture и три test-модуля; production code/data, API, расчёты, applicability и enforcement не менялись. Полный #245 product/legal/source completeness остаётся **NOT PASS**: lawful populated synchronized NTM snapshot недоступен.
+
+Следующий шаг — продолжить оставшиеся full-catalog fixture failures или следующий воспроизводимый bounded #245 search/classification defect, не подменяя test inventory нормативной полнотой.
+
 ## 0aaaaaaaaaaaaaaaa. #245 — оставшиеся registry/source URL в UI теперь fail-closed
 
 **Новый checkpoint:** [draft PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256), `agent/product-ntm-regressions-v1` @ `8ca94203a04c131f2f7181a3e66b5ab71fdf59a6`, tree `26ff4dbb3e56440ea5ffa48a6c037720a828478a`, parent `d9d0be7da22904689aa4e5af1f62d7ca58072a8f`.
