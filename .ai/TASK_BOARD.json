@@ -2179,7 +2179,7 @@
       "unique_source_pr_count": 29
     }
   },
-  "revision": 704,
+  "revision": 705,
   "runs": [
     {
       "head_sha": null,
@@ -7414,48 +7414,48 @@
       }
     }
   ],
-  "updated_at": "2026-10-10T03:08:50.000Z",
+  "updated_at": "2026-10-10T04:05:05.000Z",
   "latest_scheduled_product_checkpoint": {
-    "updated_at": "2026-10-10T03:08:50.000Z",
-    "checked_at": "2026-10-10T03:08:50.000Z",
+    "updated_at": "2026-10-10T04:05:05.000Z",
+    "checked_at": "2026-10-10T04:05:05.000Z",
     "pr": 256,
     "branch": "agent/product-ntm-regressions-v1",
-    "head_sha": "6cba001e44812391be363a3e2bdd5ecdf86b11a9",
-    "tree_sha": "0e5a147fcdd3a2eb93ab3057f65c41500035f19f",
-    "parent_sha": "8ca94203a04c131f2f7181a3e66b5ab71fdf59a6",
-    "prior_checkpoint_sha": "8ca94203a04c131f2f7181a3e66b5ab71fdf59a6",
+    "head_sha": "b65516018df18646a3a1b2f1bcaa88fa66d0aeec",
+    "tree_sha": "9b60048309b8ce4dcb74a7a3775fbfa8f207f182",
+    "parent_sha": "6cba001e44812391be363a3e2bdd5ecdf86b11a9",
+    "prior_checkpoint_sha": "6cba001e44812391be363a3e2bdd5ecdf86b11a9",
     "base_pr": 245,
     "base_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
-    "block": "classification_disposable_inventory_fixture",
-    "status": "DRAFT_CHECKPOINT_A5_PASS_CI_PASS_CLASSIFICATION_FIXTURE",
+    "block": "tree_engine_disposable_catalog_fixture",
+    "status": "DRAFT_CHECKPOINT_A5_PASS_CI_PASS_TREE_FIXTURE",
     "behavior": {
-      "reproduced": "Classification rulings and FTS letters produced 19 failures with 8 passes, and adjacent semantic navigation produced 9 failures, because dataset-contract tests read the empty default database",
-      "final": "Three dataset/search test modules share one session-scoped disposable database built by the existing pinned bootstrap; all thresholds and assertions remain unchanged, and temporary SQLite files are removed",
-      "boundaries": "Test-fixture isolation only; six parser-boundary descriptions are temp-DB-only on existing catalogue codes and are not legal, synchronized-snapshot or source-completeness evidence"
+      "reproduced": "TN VED catalogue API plus Tree Model v2 produced 2 failures with 25 passes because tree tests read an empty default database and could not address pinned headings such as 0101",
+      "final": "All four Tree Model v2 tests consume the existing session-scoped disposable pinned catalogue, including the module-level builder SessionLocal used for leaf computation",
+      "boundaries": "Test-fixture isolation only; assertions are unchanged and no production code, product data, legal applicability or source completeness changed"
     },
     "author_tests": {
-      "baseline": "Classification/letters 19 failed and 8 passed; semantic navigation 9 failed; exit 1",
-      "exact_six_module": "54 passed plus 15 subtests; exit 0",
-      "isolation": "default DB and pinned catalogue SHA-256 unchanged; no temporary inventory.db/WAL/SHM remains",
-      "diff": "exactly one new test fixture helper plus three existing test modules; no production/data changes"
+      "baseline": "catalogue API plus tree engine 2 failed and 25 passed; exit 1",
+      "exact_six_module": "five-module classification regression 63 passed; exit 0",
+      "isolation": "hostile inherited DATABASE_URL tree run 4 passed; default DB and pinned catalogue SHA-256 unchanged",
+      "diff": "exactly two existing test-only files; no production/data changes"
     },
     "a5": {
-      "session": "/root/a5_classification_fixture_156",
-      "status": "PASS_EXACT_STAGED_TREE_NO_FINDINGS",
-      "exact_six_module": "54 passed plus 15 subtests; exit 0",
-      "isolated_modules": "classification rulings 17 passed; FTS letters 10 passed; semantic navigation 9 passed",
-      "adversarial": "hostile pre-existing DATABASE_URL/TNVED_SOURCE_DB remained unchanged; nonexistent path remained absent; teardown removed temp DB and sidecars",
-      "remote_binding": "HEAD 6cba001e44812391be363a3e2bdd5ecdf86b11a9 tree 0e5a147fcdd3a2eb93ab3057f65c41500035f19f matches independently reviewed local tree"
+      "session": "/root/a5_tree_fixture_157",
+      "status": "PASS_EXACT_REPAIRED_TREE_NO_FINDINGS",
+      "exact_six_module": "five-module classification regression 63 passed; exit 0",
+      "isolated_modules": "tree engine 4 passed under hostile DATABASE_URL; reversed order 4 passed",
+      "adversarial": "first candidate rejected because builder SessionLocal escaped to hostile DB; repaired candidate patches the exact consumer and preserves source hashes",
+      "remote_binding": "HEAD b65516018df18646a3a1b2f1bcaa88fa66d0aeec tree 9b60048309b8ce4dcb74a7a3775fbfa8f207f182 matches independently reviewed local tree"
     },
     "ci": {
       "status": "PASSED_EXACT_HEAD",
-      "head_sha": "6cba001e44812391be363a3e2bdd5ecdf86b11a9",
+      "head_sha": "b65516018df18646a3a1b2f1bcaa88fa66d0aeec",
       "runs": [
         {
-          "run_id": 38019455741,
-          "job_id": 114116972462,
+          "run_id": 38022682658,
+          "job_id": 114126853141,
           "conclusion": "success",
-          "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38019455741"
+          "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38022682658"
         }
       ]
     },
@@ -7468,49 +7468,49 @@
       "status": "UNCHANGED_NOT_SENT"
     },
     "protected_actions_performed": false,
-    "next_step": "Continue remaining full-catalog fixture failures or the next reproduced bounded #245 search/classification defect; do not treat disposable inventory as legal or source completeness."
+    "next_step": "Reproduce the next remaining full-catalog fixture failure or bounded #245 search/classification defect; do not treat disposable inventory as legal or source completeness."
   },
   "latest_development_checkpoint": {
-    "updated_at": "2026-10-10T03:08:50.000Z",
-    "checked_at": "2026-10-10T03:08:50.000Z",
+    "updated_at": "2026-10-10T04:05:05.000Z",
+    "checked_at": "2026-10-10T04:05:05.000Z",
     "pr": 256,
     "branch": "agent/product-ntm-regressions-v1",
-    "head_sha": "6cba001e44812391be363a3e2bdd5ecdf86b11a9",
-    "tree_sha": "0e5a147fcdd3a2eb93ab3057f65c41500035f19f",
-    "parent_sha": "8ca94203a04c131f2f7181a3e66b5ab71fdf59a6",
-    "prior_checkpoint_sha": "8ca94203a04c131f2f7181a3e66b5ab71fdf59a6",
+    "head_sha": "b65516018df18646a3a1b2f1bcaa88fa66d0aeec",
+    "tree_sha": "9b60048309b8ce4dcb74a7a3775fbfa8f207f182",
+    "parent_sha": "6cba001e44812391be363a3e2bdd5ecdf86b11a9",
+    "prior_checkpoint_sha": "6cba001e44812391be363a3e2bdd5ecdf86b11a9",
     "base_pr": 245,
     "base_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
-    "block": "classification_disposable_inventory_fixture",
-    "status": "DRAFT_CHECKPOINT_A5_PASS_CI_PASS_CLASSIFICATION_FIXTURE",
+    "block": "tree_engine_disposable_catalog_fixture",
+    "status": "DRAFT_CHECKPOINT_A5_PASS_CI_PASS_TREE_FIXTURE",
     "behavior": {
-      "reproduced": "Classification rulings and FTS letters produced 19 failures with 8 passes, and adjacent semantic navigation produced 9 failures, because dataset-contract tests read the empty default database",
-      "final": "Three dataset/search test modules share one session-scoped disposable database built by the existing pinned bootstrap; all thresholds and assertions remain unchanged, and temporary SQLite files are removed",
-      "boundaries": "Test-fixture isolation only; six parser-boundary descriptions are temp-DB-only on existing catalogue codes and are not legal, synchronized-snapshot or source-completeness evidence"
+      "reproduced": "TN VED catalogue API plus Tree Model v2 produced 2 failures with 25 passes because tree tests read an empty default database and could not address pinned headings such as 0101",
+      "final": "All four Tree Model v2 tests consume the existing session-scoped disposable pinned catalogue, including the module-level builder SessionLocal used for leaf computation",
+      "boundaries": "Test-fixture isolation only; assertions are unchanged and no production code, product data, legal applicability or source completeness changed"
     },
     "author_tests": {
-      "baseline": "Classification/letters 19 failed and 8 passed; semantic navigation 9 failed; exit 1",
-      "exact_six_module": "54 passed plus 15 subtests; exit 0",
-      "isolation": "default DB and pinned catalogue SHA-256 unchanged; no temporary inventory.db/WAL/SHM remains",
-      "diff": "exactly one new test fixture helper plus three existing test modules; no production/data changes"
+      "baseline": "catalogue API plus tree engine 2 failed and 25 passed; exit 1",
+      "exact_six_module": "five-module classification regression 63 passed; exit 0",
+      "isolation": "hostile inherited DATABASE_URL tree run 4 passed; default DB and pinned catalogue SHA-256 unchanged",
+      "diff": "exactly two existing test-only files; no production/data changes"
     },
     "a5": {
-      "session": "/root/a5_classification_fixture_156",
-      "status": "PASS_EXACT_STAGED_TREE_NO_FINDINGS",
-      "exact_six_module": "54 passed plus 15 subtests; exit 0",
-      "isolated_modules": "classification rulings 17 passed; FTS letters 10 passed; semantic navigation 9 passed",
-      "adversarial": "hostile pre-existing DATABASE_URL/TNVED_SOURCE_DB remained unchanged; nonexistent path remained absent; teardown removed temp DB and sidecars",
-      "remote_binding": "HEAD 6cba001e44812391be363a3e2bdd5ecdf86b11a9 tree 0e5a147fcdd3a2eb93ab3057f65c41500035f19f matches independently reviewed local tree"
+      "session": "/root/a5_tree_fixture_157",
+      "status": "PASS_EXACT_REPAIRED_TREE_NO_FINDINGS",
+      "exact_six_module": "five-module classification regression 63 passed; exit 0",
+      "isolated_modules": "tree engine 4 passed under hostile DATABASE_URL; reversed order 4 passed",
+      "adversarial": "first candidate rejected because builder SessionLocal escaped to hostile DB; repaired candidate patches the exact consumer and preserves source hashes",
+      "remote_binding": "HEAD b65516018df18646a3a1b2f1bcaa88fa66d0aeec tree 9b60048309b8ce4dcb74a7a3775fbfa8f207f182 matches independently reviewed local tree"
     },
     "ci": {
       "status": "PASSED_EXACT_HEAD",
-      "head_sha": "6cba001e44812391be363a3e2bdd5ecdf86b11a9",
+      "head_sha": "b65516018df18646a3a1b2f1bcaa88fa66d0aeec",
       "runs": [
         {
-          "run_id": 38019455741,
-          "job_id": 114116972462,
+          "run_id": 38022682658,
+          "job_id": 114126853141,
           "conclusion": "success",
-          "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38019455741"
+          "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38022682658"
         }
       ]
     },
@@ -7523,6 +7523,6 @@
       "status": "UNCHANGED_NOT_SENT"
     },
     "protected_actions_performed": false,
-    "next_step": "Continue remaining full-catalog fixture failures or the next reproduced bounded #245 search/classification defect; do not treat disposable inventory as legal or source completeness."
+    "next_step": "Reproduce the next remaining full-catalog fixture failure or bounded #245 search/classification defect; do not treat disposable inventory as legal or source completeness."
   }
 }

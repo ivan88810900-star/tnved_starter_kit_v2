@@ -3,6 +3,20 @@
 **Снимок:** 2026-10-09 (UTC). **Единственный репозиторий:** [ivan88810900-star/tnved_starter_kit_v2](https://github.com/ivan88810900-star/tnved_starter_kit_v2).
 **Авторитетное состояние:** ветка `agent/orchestration-state`, файлы `.ai/TASK_BOARD.json`, `.ai/COORDINATOR_LEASE.json`, `.ai/orchestration/A6_LIVE_STATUS.json`. Этот документ — указатель и контрольная точка, **не** право на запись/merge/A6. Перед действием заново читать текущие HEAD и state. Не полагаться на Business-чат.
 
+## 0aaaaaaaaaaaaaaaaaa. #245 — Tree Model v2 использует изолированный каталог
+
+**Новый checkpoint:** [draft PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256), `agent/product-ntm-regressions-v1` @ `b65516018df18646a3a1b2f1bcaa88fa66d0aeec`, tree `9b60048309b8ce4dcb74a7a3775fbfa8f207f182`, parent `6cba001e44812391be363a3e2bdd5ecdf86b11a9`.
+
+Закрыт следующий full-catalog fixture-контур. До исправления совместный запуск TN VED catalog API и Tree Model v2 давал **2 failed / 25 passed**: оба tree-теста не находили реальные heading-коды вроде `0101`, потому что читали пустую default DB. Tree Model v2 теперь использует существующую session-scoped disposable DB из pinned bootstrap. Общий fixture дополнительно подменяет захваченный на уровне модуля `tree_engine.builder.SessionLocal`, поэтому внутренний расчёт leaf flags не уходит в унаследованный `DATABASE_URL`.
+
+Первый candidate независимый A5 отклонил: hostile `DATABASE_URL` выявил этот скрытый обход fixture. После исправления свежий A5 `/root/a5_tree_fixture_157` — **PASS без findings** на точном дереве: hostile run **4 passed**, обратный порядок **4 passed**, совместный пяти-модульный regression **63 passed**. Root повторил hostile **4 passed** и общий **63 passed**; exit 0. Assertions, skip/xfail, production code и product data не менялись; SHA-256 default и pinned DB сохранились.
+
+Exact-head CI: [run 38022682658](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38022682658), offline-safety job `114126853141`, **success**.
+
+Полный #245 product/legal/source completeness остаётся **NOT PASS**. Lawful populated synchronized NTM snapshot недоступен. Merge, deploy, production write, enforcement/permissions/secrets change, destructive migration и внешний A6 не выполнялись; `core-s1-6415f443120f-r9-g106` не отправлялся.
+
+Следующий шаг — воспроизвести следующий remaining full-catalog/fixture failure либо bounded #245 search/classification defect; disposable inventory не считать нормативной полнотой.
+
 ## 0aaaaaaaaaaaaaaaaa. #245 — classification fixture больше не зависит от пустой default DB
 
 **Новый checkpoint:** [draft PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256), `agent/product-ntm-regressions-v1` @ `6cba001e44812391be363a3e2bdd5ecdf86b11a9`, tree `0e5a147fcdd3a2eb93ab3057f65c41500035f19f`, parent `8ca94203a04c131f2f7181a3e66b5ab71fdf59a6`.
