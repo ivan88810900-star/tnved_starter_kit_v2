@@ -2179,7 +2179,7 @@
       "unique_source_pr_count": 29
     }
   },
-  "revision": 714,
+  "revision": 715,
   "runs": [
     {
       "head_sha": null,
@@ -7434,49 +7434,49 @@
       }
     }
   ],
-  "updated_at": "2026-10-11T12:03:20.000Z",
+  "updated_at": "2026-10-11T12:59:47.000Z",
   "latest_scheduled_product_checkpoint": {
-    "updated_at": "2026-10-11T12:03:20.000Z",
-    "checked_at": "2026-10-11T12:03:20.000Z",
+    "updated_at": "2026-10-11T12:59:47.000Z",
+    "checked_at": "2026-10-11T12:59:47.000Z",
     "pr": 256,
     "branch": "agent/product-ntm-regressions-v1",
-    "head_sha": "70beb6d124a4062b4f4cc57ff8f20e10f4171062",
-    "tree_sha": "8f8ddebc4adaa77ade8b44449aaa44bffde5a04a",
-    "parent_sha": "6b449c7ba981e45c43c01f30bc75f80071d1202e",
-    "prior_checkpoint_sha": "6b449c7ba981e45c43c01f30bc75f80071d1202e",
+    "head_sha": "720f882b8aa379c8daeb2baafc26ab4caa74a549",
+    "tree_sha": "b1eaab03b291592aa720f119a13482ef203944aa",
+    "parent_sha": "70beb6d124a4062b4f4cc57ff8f20e10f4171062",
+    "prior_checkpoint_sha": "70beb6d124a4062b4f4cc57ff8f20e10f4171062",
     "base_pr": 245,
     "base_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
-    "block": "recycling_fees_hermetic_seed_fixture",
-    "status": "DRAFT_CHECKPOINT_A5_PASS_CI_PASS_RECYCLING_FEES_FIXTURE",
+    "block": "commodity_group_docs_hermetic_seed_fixture",
+    "status": "DRAFT_CHECKPOINT_A5_PASS_CI_PASS_COMMODITY_GROUP_DOCS_FIXTURE",
     "behavior": {
-      "reproduced": "Recycling fee tests produced 13 failures and 1 pass on an empty inherited SQLite database because recycling_fees and dependent payment tables were absent",
-      "final": "The module uses a disposable SQLite database built by the existing pinned classification bootstrap and populated by the existing recycling-fees seed with captured test, application, normative-store, payment-engine, rate-display and seed DB consumers rebound to one temporary engine",
-      "boundaries": "One test file only; all 14 original test methods and 25 original assertions are unchanged; production code, rates, seed data and legal interpretation are unchanged"
+      "reproduced": "Commodity-group document tests produced 8 failures on an empty inherited SQLite database because regulatory_documents was absent",
+      "final": "The module uses a disposable SQLite database built by the existing pinned classification bootstrap and populated twice by the existing commodity-group document seed with captured test, seed and application DB consumers rebound to one temporary engine",
+      "boundaries": "One test file only; all 8 original test methods and assertions are AST-identical; production code, seed data, product configuration and legal interpretation are unchanged"
     },
     "author_tests": {
-      "baseline": "focused recycling fees module 13 failed and 1 passed; exit 1",
-      "focused": "A4 and A0 hostile focused 14 passed; exit 0",
-      "adjacent": "disposable classification, recycling fees, declaration documents, import restrictions, Honest Mark and customs procedures in both orders 72 passed; seed idempotence 40 to 40 with second insert 0",
+      "baseline": "focused commodity-group document module 8 failed; exit 1",
+      "focused": "A4 and A0 hostile focused 8 passed; exit 0",
+      "adjacent": "commodity-group documents, recycling fees, declaration documents, import restrictions, Honest Mark, customs procedures and disposable classification inventory in both orders 80 passed; seed idempotence 115 documents and 284 mappings to 0 and 0 with totals stable at 321 and 489",
       "control": "A0 local agent-safety 120 plus 4 passed and snapshot valid; exit 0"
     },
     "a5": {
-      "session": "/root/a5_recycling_fees_fixture_167",
+      "session": "/root/a5_commodity_docs_168",
       "status": "FINAL_PASS_EXACT_TREE_NO_FINDINGS",
-      "focused": "14 passed; exit 0",
-      "adjacent": "72 passed in each forward and reverse adjacent order; exit 0",
-      "adversarial": "hostile DATABASE_URL and TNVED_SOURCE_DB sentinels unchanged; all original tests/assertions AST-identical; optional customs.db and pinned catalogue unchanged; no temporary DB/WAL/SHM remained",
-      "remote_binding": "remote HEAD 70beb6d124a4062b4f4cc57ff8f20e10f4171062 has independently reviewed tree 8f8ddebc4adaa77ade8b44449aaa44bffde5a04a"
+      "focused": "8 passed; exit 0",
+      "adjacent": "80 passed in each forward and reverse adjacent order; exit 0",
+      "adversarial": "hostile DATABASE_URL and TNVED_SOURCE_DB sentinels absent; all original tests/assertions AST-identical; optional customs.db absent and pinned catalogue unchanged; no temporary DB/WAL/SHM remained",
+      "remote_binding": "remote HEAD 720f882b8aa379c8daeb2baafc26ab4caa74a549 has independently reviewed tree b1eaab03b291592aa720f119a13482ef203944aa"
     },
     "ci": {
       "status": "PASSED_EXACT_HEAD",
-      "head_sha": "70beb6d124a4062b4f4cc57ff8f20e10f4171062",
+      "head_sha": "720f882b8aa379c8daeb2baafc26ab4caa74a549",
       "runs": [
         {
-          "run_id": 38137757823,
-          "job_id": 114465033700,
+          "run_id": 38141335175,
+          "job_id": 114475658546,
           "attempt": 1,
           "conclusion": "success",
-          "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38137757823"
+          "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38141335175"
         }
       ]
     },
@@ -7492,47 +7492,47 @@
     "next_step": "Isolate the next seed-backed broad-suite fixture/data cluster on disposable data without weakening assertions; do not treat test inventory as legal or source completeness."
   },
   "latest_development_checkpoint": {
-    "updated_at": "2026-10-11T12:03:20.000Z",
-    "checked_at": "2026-10-11T12:03:20.000Z",
+    "updated_at": "2026-10-11T12:59:47.000Z",
+    "checked_at": "2026-10-11T12:59:47.000Z",
     "pr": 256,
     "branch": "agent/product-ntm-regressions-v1",
-    "head_sha": "70beb6d124a4062b4f4cc57ff8f20e10f4171062",
-    "tree_sha": "8f8ddebc4adaa77ade8b44449aaa44bffde5a04a",
-    "parent_sha": "6b449c7ba981e45c43c01f30bc75f80071d1202e",
-    "prior_checkpoint_sha": "6b449c7ba981e45c43c01f30bc75f80071d1202e",
+    "head_sha": "720f882b8aa379c8daeb2baafc26ab4caa74a549",
+    "tree_sha": "b1eaab03b291592aa720f119a13482ef203944aa",
+    "parent_sha": "70beb6d124a4062b4f4cc57ff8f20e10f4171062",
+    "prior_checkpoint_sha": "70beb6d124a4062b4f4cc57ff8f20e10f4171062",
     "base_pr": 245,
     "base_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
-    "block": "recycling_fees_hermetic_seed_fixture",
-    "status": "DRAFT_CHECKPOINT_A5_PASS_CI_PASS_RECYCLING_FEES_FIXTURE",
+    "block": "commodity_group_docs_hermetic_seed_fixture",
+    "status": "DRAFT_CHECKPOINT_A5_PASS_CI_PASS_COMMODITY_GROUP_DOCS_FIXTURE",
     "behavior": {
-      "reproduced": "Recycling fee tests produced 13 failures and 1 pass on an empty inherited SQLite database because recycling_fees and dependent payment tables were absent",
-      "final": "The module uses a disposable SQLite database built by the existing pinned classification bootstrap and populated by the existing recycling-fees seed with captured test, application, normative-store, payment-engine, rate-display and seed DB consumers rebound to one temporary engine",
-      "boundaries": "One test file only; all 14 original test methods and 25 original assertions are unchanged; production code, rates, seed data and legal interpretation are unchanged"
+      "reproduced": "Commodity-group document tests produced 8 failures on an empty inherited SQLite database because regulatory_documents was absent",
+      "final": "The module uses a disposable SQLite database built by the existing pinned classification bootstrap and populated twice by the existing commodity-group document seed with captured test, seed and application DB consumers rebound to one temporary engine",
+      "boundaries": "One test file only; all 8 original test methods and assertions are AST-identical; production code, seed data, product configuration and legal interpretation are unchanged"
     },
     "author_tests": {
-      "baseline": "focused recycling fees module 13 failed and 1 passed; exit 1",
-      "focused": "A4 and A0 hostile focused 14 passed; exit 0",
-      "adjacent": "disposable classification, recycling fees, declaration documents, import restrictions, Honest Mark and customs procedures in both orders 72 passed; seed idempotence 40 to 40 with second insert 0",
+      "baseline": "focused commodity-group document module 8 failed; exit 1",
+      "focused": "A4 and A0 hostile focused 8 passed; exit 0",
+      "adjacent": "commodity-group documents, recycling fees, declaration documents, import restrictions, Honest Mark, customs procedures and disposable classification inventory in both orders 80 passed; seed idempotence 115 documents and 284 mappings to 0 and 0 with totals stable at 321 and 489",
       "control": "A0 local agent-safety 120 plus 4 passed and snapshot valid; exit 0"
     },
     "a5": {
-      "session": "/root/a5_recycling_fees_fixture_167",
+      "session": "/root/a5_commodity_docs_168",
       "status": "FINAL_PASS_EXACT_TREE_NO_FINDINGS",
-      "focused": "14 passed; exit 0",
-      "adjacent": "72 passed in each forward and reverse adjacent order; exit 0",
-      "adversarial": "hostile DATABASE_URL and TNVED_SOURCE_DB sentinels unchanged; all original tests/assertions AST-identical; optional customs.db and pinned catalogue unchanged; no temporary DB/WAL/SHM remained",
-      "remote_binding": "remote HEAD 70beb6d124a4062b4f4cc57ff8f20e10f4171062 has independently reviewed tree 8f8ddebc4adaa77ade8b44449aaa44bffde5a04a"
+      "focused": "8 passed; exit 0",
+      "adjacent": "80 passed in each forward and reverse adjacent order; exit 0",
+      "adversarial": "hostile DATABASE_URL and TNVED_SOURCE_DB sentinels absent; all original tests/assertions AST-identical; optional customs.db absent and pinned catalogue unchanged; no temporary DB/WAL/SHM remained",
+      "remote_binding": "remote HEAD 720f882b8aa379c8daeb2baafc26ab4caa74a549 has independently reviewed tree b1eaab03b291592aa720f119a13482ef203944aa"
     },
     "ci": {
       "status": "PASSED_EXACT_HEAD",
-      "head_sha": "70beb6d124a4062b4f4cc57ff8f20e10f4171062",
+      "head_sha": "720f882b8aa379c8daeb2baafc26ab4caa74a549",
       "runs": [
         {
-          "run_id": 38137757823,
-          "job_id": 114465033700,
+          "run_id": 38141335175,
+          "job_id": 114475658546,
           "attempt": 1,
           "conclusion": "success",
-          "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38137757823"
+          "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38141335175"
         }
       ]
     },

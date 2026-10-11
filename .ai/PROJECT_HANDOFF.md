@@ -3,6 +3,23 @@
 **Снимок:** 2026-10-11 (UTC). **Единственный репозиторий:** [ivan88810900-star/tnved_starter_kit_v2](https://github.com/ivan88810900-star/tnved_starter_kit_v2).
 **Авторитетное состояние:** ветка `agent/orchestration-state`, файлы `.ai/TASK_BOARD.json`, `.ai/COORDINATOR_LEASE.json`, `.ai/orchestration/A6_LIVE_STATUS.json`. Этот документ — указатель и контрольная точка, **не** право на запись/merge/A6. Перед действием заново читать текущие HEAD и state. Не полагаться на Business-чат.
 
+## 0aaaaaaaaaaaaaaaaaaaaaaaaaaa. #245 — commodity-group documents используют hermetic seed fixture
+
+**Новый checkpoint:** [draft PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256), `agent/product-ntm-regressions-v1` @ `720f882b8aa379c8daeb2baafc26ab4caa74a549`, tree `b1eaab03b291592aa720f119a13482ef203944aa`, parent `70beb6d124a4062b4f4cc57ff8f20e10f4171062`.
+
+Воспроизведён следующий broad-suite fixture defect: `test_commodity_group_docs.py` на пустой/hostile SQLite давал **8 failed** из-за отсутствующей `regulatory_documents`. Модуль теперь создаёт отдельную временную SQLite через существующий pinned classification bootstrap, перепривязывает захваченные test/seed/application DB consumers к одному временному engine и дважды загружает существующий `seed_commodity_group_docs` для явной проверки идемпотентности. Все 8 исходных test methods и assertions сохранены AST-identical; production code, seed-данные, конфигурация продукта и правовая интерпретация не менялись.
+
+Проверки:
+
+- A4 `/root/a4_commodity_docs_168`: hostile focused **8 passed**; смежный семимодульный набор в обоих порядках **80 passed**; seed idempotence **115 документов / 284 mappings → 0 / 0**, totals **321 / 489**; hashes/cleanup/diff-check exit 0;
+- root control: hostile focused **8 passed**; оба смежных порядка **80 passed**; local agent-safety **120 + 4 passed**, snapshot valid, exit 0;
+- независимый A5 `/root/a5_commodity_docs_168`: **FINAL PASS без findings**; исходные тесты/assertions AST-identical, hostile DB/source sentinels отсутствуют, pinned catalogue неизменён, временные DB/WAL/SHM удалены;
+- exact-head CI: [run 38141335175](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38141335175), offline-safety job `114475658546`, **success**.
+
+Seeded commodity-group inventory является только test evidence, не доказательством актуальной нормативной или source completeness. Lawful populated synchronized NTM snapshot недоступен. Полный #245 product/legal/source completeness остаётся **NOT PASS**. Merge, deploy, production write, enforcement/permissions/secrets change, destructive migration и внешний A6 не выполнялись; `core-s1-6415f443120f-r9-g106` не отправлялся.
+
+Следующий шаг — изолировать следующий seed-backed broad-suite fixture/data cluster на disposable данных без ослабления assertions; не выдавать тестовый inventory за актуальный нормативный источник.
+
 ## 0aaaaaaaaaaaaaaaaaaaaaaaaaa. #245 — recycling fees используют hermetic seed fixture
 
 **Новый checkpoint:** [draft PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256), `agent/product-ntm-regressions-v1` @ `70beb6d124a4062b4f4cc57ff8f20e10f4171062`, tree `8f8ddebc4adaa77ade8b44449aaa44bffde5a04a`, parent `6b449c7ba981e45c43c01f30bc75f80071d1202e`.
