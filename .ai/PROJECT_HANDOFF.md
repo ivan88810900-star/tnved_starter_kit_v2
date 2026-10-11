@@ -3,6 +3,23 @@
 **Снимок:** 2026-10-11 (UTC). **Единственный репозиторий:** [ivan88810900-star/tnved_starter_kit_v2](https://github.com/ivan88810900-star/tnved_starter_kit_v2).
 **Авторитетное состояние:** ветка `agent/orchestration-state`, файлы `.ai/TASK_BOARD.json`, `.ai/COORDINATOR_LEASE.json`, `.ai/orchestration/A6_LIVE_STATUS.json`. Этот документ — указатель и контрольная точка, **не** право на запись/merge/A6. Перед действием заново читать текущие HEAD и state. Не полагаться на Business-чат.
 
+## 0aaaaaaaaaaaaaaaaaaaaaa. #245 — customs procedures используют hermetic seed fixture
+
+**Новый checkpoint:** [draft PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256), `agent/product-ntm-regressions-v1` @ `d1240389b62f13ba38c442ce64a011e99e8a3d8c`, tree `751c1d516314107082b38d5a18685b2fab4b6389`, parent `ec00c3dad4be46ae9c8efb47103fff4650df4761`.
+
+Воспроизведён следующий broad-suite fixture defect: `test_customs_procedures.py` захватывал default `SessionLocal` и на пустой/hostile SQLite давал **12 failed** из-за отсутствующей таблицы `customs_procedures`. Модуль теперь создаёт отдельную временную SQLite для каждого теста, перепривязывает захваченный session factory вместе с application/seed consumers и загружает существующий `scripts.seed_customs_procedures` inventory. Все 12 исходных assertions сохранены; production code, данные продукта, ставки и правовая интерпретация не менялись.
+
+Проверки:
+
+- A4 `/root/a4_customs_procedures_fixture_163`: hostile focused **12 passed**, обратный порядок **12 passed**, compile/diff-check exit 0;
+- root control: hostile focused **12 passed**; local agent-safety **120 + 4 passed**, exit 0;
+- независимый A5 `/root/a5_customs_procedures_fixture_163`: **FINAL PASS без findings**; hostile sentinel **12 passed**, обратный порядок **12 passed**, sentinel hash неизменён; dry-run/real/idempotent seed audit PASS;
+- exact-head CI: [run 38123022463](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38123022463), offline-safety job `114421482867`, **success**.
+
+Disposable procedure inventory является только test evidence, не доказательством нормативной или source completeness. Lawful populated synchronized NTM snapshot недоступен. Полный #245 product/legal/source completeness остаётся **NOT PASS**. Merge, deploy, production write, enforcement/permissions/secrets change, destructive migration и внешний A6 не выполнялись; `core-s1-6415f443120f-r9-g106` не отправлялся.
+
+Следующий шаг — изолировать следующий seed-backed broad-suite fixture/data cluster на disposable данных без ослабления assertions; не выдавать тестовый inventory за актуальный нормативный источник.
+
 ## 0aaaaaaaaaaaaaaaaaaaaa. #245 — HS leaf clarification использует hermetic fixture
 
 **Новый checkpoint:** [draft PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256), `agent/product-ntm-regressions-v1` @ `ec00c3dad4be46ae9c8efb47103fff4650df4761`, tree `0db14cfa88af89469108e92e230f7dfeac8ae0ad`, parent `20459b52510efbbea7785b914dcd0d27fb0f59a9`.
