@@ -1,5 +1,23 @@
 # Tariff / A0 — единая точка передачи проекта
 
+## 0aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa. #245 — FCS preliminary sync изолирован от configured DB
+
+**Новый checkpoint:** [draft PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256), `agent/product-ntm-regressions-v1` @ `cebf36cdff378deb18aa0d7730d4c0e4fcff73d7`, tree `24f4e077c4e766c3f4c56f474ca44ecf584e43c8`, parent `02215630f69b81ec300490e0da3b3b88a2b1fccf`. Локальный author commit `12a053e8b947d30cf01428403b68300b18a9035c` имеет тот же exact tree.
+
+Воспроизведён fixture defect: `test_fcs_preliminary_sync.py` проходил **10 tests**, но создавал configured SQLite размером 1 036 288 байт. Модуль теперь создаёт disposable classification DB, очищает только её FCS decision/sync/status rows для fresh-DB семантики, перепривязывает захваченные application/normative-store/FCS-sync/completeness DB aliases и удаляет временную DB вместе с sidecars. Все 10 исходных test methods, 24 `unittest` assertions и 2 Python assertions AST-identical; production code, нормативные данные, source claims, flags, skips/xfails и правовая интерпретация не менялись.
+
+Проверки:
+
+- A2 `/root/a2_fcs_preliminary_177` и root: focused **10 passed**; absent configured и `TNVED_SOURCE_DB` paths не создаются, валидные SQLite-sentinels и marker rows byte-identical;
+- adjacent с regulatory-source completeness в обоих порядках: **23 passed + 3 subtests**, hostile DB/WAL/SHM residue отсутствует;
+- независимый A5 `/root/a5_fcs_preliminary_177`: **FINAL PASS без findings**; instrumented реальные sync/count/completeness/code-card calls и disposable FCS rows подтверждены;
+- root local agent-safety: **120 + 4 passed**, snapshot valid; все exit 0;
+- exact-head CI: [run 38174846284](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38174846284), offline-safety job `114574963218`, attempt 1, **success**.
+
+Это test-isolation evidence, не подтверждение полноты источников или юридической применимости. Lawful populated synchronized NTM snapshot недоступен; полный #245 остаётся **NOT PASS**. Merge, deploy, production write, enforcement/permissions/secrets change, destructive migration и внешний A6 не выполнялись; `core-s1-6415f443120f-r9-g106` не отправлялся.
+
+Следующий отдельный блок — независимо воспроизвести и изолировать ранее обнаруженную configured-DB mutation в `test_ntm_v2_source_isolation.py`.
+
 ## 0aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa. #245 — regulatory source completeness изолирован от configured DB
 
 **Новый checkpoint:** [draft PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256), `agent/product-ntm-regressions-v1` @ `02215630f69b81ec300490e0da3b3b88a2b1fccf`, tree `f750f4f1b8e9df55bd7043254e1607b5522a276d`, parent `1f4d1f0631ed09dfdc5395cb88dfab8a5070b0b1`. Локальный author commit `d15cc084d3ddf887d30ea09f12c87bcee43ce989` имеет тот же exact tree.
