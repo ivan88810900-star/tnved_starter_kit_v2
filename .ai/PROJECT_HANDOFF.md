@@ -1,5 +1,22 @@
 # Tariff / A0 — единая точка передачи проекта
 
+## 0aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa. #245 — NTM broker matrix изолирован от configured DB
+
+**Новый checkpoint:** [draft PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256), `agent/product-ntm-regressions-v1` @ `3cc66695d26ce807718afa9494a799dc76a3bb9e`, tree `705ce207eab76df149f38dd9a41183590ee6fbb2`, parent `e6f501be22e844b12d4e48e8046c8c9aaf98ef8d`. Локальный author commit `e6d89b340ee59cd3790c94d70e3df1b56625d39b` имеет тот же exact tree.
+
+Неполный checkpoint `e6f501be…` воспроизведён как реальный fixture defect: при включённых NTM v2 source switches все **73** broker-matrix сценария падали на пустой configured SQLite с `no such table: ntm_applicability_rules_v2`, создавая файл БД. Test-only autouse fixture теперь фиксирует только v2 TR TS/layers switches на legacy in-process paths. Production `check_position_non_tariff`, canonical TR TS catalog, `ntm_layers` и реальные description triggers продолжают выполняться. Оба исходных test functions и 4 assertions сохранены AST-identical; production code, нормативные данные, продуктовые flags, skips/xfails и правовая интерпретация не менялись.
+
+Проверки:
+
+- A2 `/root/a2_ntm_pipeline_fix_173`: focused **73 passed**, absent DB не создана; valid sentinel **73 passed**, byte-identical; adjacent NTM **271 passed**; compile/diff-check exit 0;
+- root control: focused **73 + 73 passed**, absent DB не создана, sentinel byte-identical; local agent-safety **120 + 4 passed**, snapshot valid; все exit 0;
+- независимый A5 `/root/a5_ntm_pipeline_173`: **FINAL PASS без findings**; focused **73 + 73 passed**, нулевой DB/WAL/SHM residue, instrumented production/catalog/layers/triggers calls подтверждены; bounded adjacent **36 passed**;
+- exact-head CI: [run 38158116384](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38158116384), offline-safety job `114525186732`, attempt 1, **success**.
+
+Это доказательство тестовой изоляции, не актуальности или юридической полноты NTM. Lawful populated synchronized NTM snapshot недоступен. Полный #245 product/legal/source completeness остаётся **NOT PASS**. Merge, deploy, production write, enforcement/permissions/secrets change, destructive migration и внешний A6 не выполнялись; `core-s1-6415f443120f-r9-g106` не отправлялся.
+
+Следующий отдельный блок — следующий воспроизводимый source-diagnostics/empty-DB fixture cluster на disposable данных без ослабления assertions и без подмены legal/source completeness тестовым inventory.
+
 **Снимок:** 2026-10-11 (UTC). **Единственный репозиторий:** [ivan88810900-star/tnved_starter_kit_v2](https://github.com/ivan88810900-star/tnved_starter_kit_v2).
 **Авторитетное состояние:** ветка `agent/orchestration-state`, файлы `.ai/TASK_BOARD.json`, `.ai/COORDINATOR_LEASE.json`, `.ai/orchestration/A6_LIVE_STATUS.json`. Этот документ — указатель и контрольная точка, **не** право на запись/merge/A6. Перед действием заново читать текущие HEAD и state. Не полагаться на Business-чат.
 
