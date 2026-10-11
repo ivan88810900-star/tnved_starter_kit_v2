@@ -2179,7 +2179,7 @@
       "unique_source_pr_count": 29
     }
   },
-  "revision": 708,
+  "revision": 709,
   "runs": [
     {
       "head_sha": null,
@@ -7434,50 +7434,52 @@
       }
     }
   ],
-  "updated_at": "2026-10-11T06:03:00.000Z",
+  "updated_at": "2026-10-11T07:07:13.000Z",
   "latest_scheduled_product_checkpoint": {
-    "updated_at": "2026-10-11T06:03:00.000Z",
-    "checked_at": "2026-10-11T06:03:00.000Z",
+    "updated_at": "2026-10-11T07:07:13.000Z",
+    "checked_at": "2026-10-11T07:07:13.000Z",
     "pr": 256,
     "branch": "agent/product-ntm-regressions-v1",
-    "head_sha": "20459b52510efbbea7785b914dcd0d27fb0f59a9",
-    "tree_sha": "e1546df9dbc5e1d576cc2601a2a254ed3a7fbba0",
-    "parent_sha": "6f3a832244c7f9c48cca4c97ffb8a681867c3f52",
-    "prior_checkpoint_sha": "6f3a832244c7f9c48cca4c97ffb8a681867c3f52",
+    "head_sha": "ec00c3dad4be46ae9c8efb47103fff4650df4761",
+    "tree_sha": "0db14cfa88af89469108e92e230f7dfeac8ae0ad",
+    "parent_sha": "20459b52510efbbea7785b914dcd0d27fb0f59a9",
+    "prior_checkpoint_sha": "20459b52510efbbea7785b914dcd0d27fb0f59a9",
     "base_pr": 245,
     "base_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
-    "block": "rop_importer_argv_isolation",
-    "status": "DRAFT_CHECKPOINT_A5_PASS_CI_PASS_ROP_ARGV_ISOLATION",
+    "block": "hs_leaf_clarification_hermetic_fixture",
+    "status": "DRAFT_CHECKPOINT_A5_PASS_CI_PASS_HS_LEAF_FIXTURE",
     "behavior": {
-      "reproduced": "Programmatic ROP import parsed pytest runner arguments and aborted setup with SystemExit, producing 13 errors before calculator assertions ran",
-      "final": "The importer accepts explicit argv while preserving omitted-argv CLI behavior; test setup passes an empty argv and hostile outer process arguments cannot leak into programmatic dry-run",
-      "boundaries": "Two files only; formulas, rate JSON, legal interpretation and production data are unchanged"
+      "reproduced": "HS leaf clarification tests read an empty inherited SQLite database and produced 8 failures plus 1 pass because hs_rates was absent",
+      "final": "The module uses the existing disposable pinned classification inventory, installs three explicit test-only rate rows and rebinds captured calculator SessionLocal consumers to the same disposable factory",
+      "boundaries": "Two test files only; production code, normative data, rates and legal interpretation are unchanged; optional local customs.db remains byte-identical when present and absent when initially absent"
     },
     "author_tests": {
-      "baseline": "focused ROP module 13 setup errors; exit 1",
-      "exact_six_module": "focused ROP 14 passed; A0 adjacent ROP and child-marker selection 53 passed; exit 0",
-      "isolation": "disposable SQLite databases; hostile outer sys.argv ignored for explicit programmatic argv; CLI help and dry-run exit 0",
-      "diff": "one importer and one existing test file; no rate/data changes"
+      "baseline": "focused HS leaf module 8 failed and 1 passed; exit 1",
+      "focused": "A4 and A0 focused 9 passed; exit 0",
+      "adjacent": "A4 seven-module hermetic classification suite 86 passed; exit 0",
+      "control": "A0 local agent-safety 120 plus 4 passed; exit 0"
     },
     "a5": {
-      "session": "/root/a5_rop_importer_argv_161",
+      "session": "/root/a5_hs_leaf_fixture_162",
       "status": "FINAL_PASS_EXACT_TREE_NO_FINDINGS",
-      "exact_six_module": "focused 14 passed and adjacent 18 passed; exit 0",
-      "isolated_modules": "direct CLI help and dry-run exit 0",
-      "adversarial": "hostile outer argv did not leak and dry-run database SHA-256 remained unchanged",
-      "remote_binding": "HEAD 20459b52510efbbea7785b914dcd0d27fb0f59a9 tree e1546df9dbc5e1d576cc2601a2a254ed3a7fbba0 matches independently reviewed local tree"
+      "focused": "9 passed; exit 0",
+      "adjacent": "77 passed; exit 0",
+      "adversarial": "customs.db present and absent states preserved; original SHA-256 unchanged when present",
+      "remote_binding": "HEAD ec00c3dad4be46ae9c8efb47103fff4650df4761 tree 0db14cfa88af89469108e92e230f7dfeac8ae0ad matches independently reviewed local tree"
     },
     "ci": {
       "status": "PASSED_EXACT_HEAD",
-      "head_sha": "20459b52510efbbea7785b914dcd0d27fb0f59a9",
+      "head_sha": "ec00c3dad4be46ae9c8efb47103fff4650df4761",
       "runs": [
         {
-          "run_id": 38116681245,
-          "job_id": 114402828401,
+          "run_id": 38120143563,
+          "job_id": 114413135616,
+          "attempt": 2,
           "conclusion": "success",
-          "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38116681245"
+          "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38120143563"
         }
-      ]
+      ],
+      "transient_attempt": "Attempt 1 failed only in Python 3.12 TemporaryDirectory cleanup with Directory not empty: pack; exact-tree local safety passed and attempt 2 succeeded"
     },
     "blockers": [
       "NTM full-sync audit still requires a lawful populated synchronized snapshot.",
@@ -7491,48 +7493,50 @@
     "next_step": "Isolate the next broad-suite fixture/data failure cluster on disposable data without weakening assertions; do not treat test inventory as legal or source completeness."
   },
   "latest_development_checkpoint": {
-    "updated_at": "2026-10-11T06:03:00.000Z",
-    "checked_at": "2026-10-11T06:03:00.000Z",
+    "updated_at": "2026-10-11T07:07:13.000Z",
+    "checked_at": "2026-10-11T07:07:13.000Z",
     "pr": 256,
     "branch": "agent/product-ntm-regressions-v1",
-    "head_sha": "20459b52510efbbea7785b914dcd0d27fb0f59a9",
-    "tree_sha": "e1546df9dbc5e1d576cc2601a2a254ed3a7fbba0",
-    "parent_sha": "6f3a832244c7f9c48cca4c97ffb8a681867c3f52",
-    "prior_checkpoint_sha": "6f3a832244c7f9c48cca4c97ffb8a681867c3f52",
+    "head_sha": "ec00c3dad4be46ae9c8efb47103fff4650df4761",
+    "tree_sha": "0db14cfa88af89469108e92e230f7dfeac8ae0ad",
+    "parent_sha": "20459b52510efbbea7785b914dcd0d27fb0f59a9",
+    "prior_checkpoint_sha": "20459b52510efbbea7785b914dcd0d27fb0f59a9",
     "base_pr": 245,
     "base_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
-    "block": "rop_importer_argv_isolation",
-    "status": "DRAFT_CHECKPOINT_A5_PASS_CI_PASS_ROP_ARGV_ISOLATION",
+    "block": "hs_leaf_clarification_hermetic_fixture",
+    "status": "DRAFT_CHECKPOINT_A5_PASS_CI_PASS_HS_LEAF_FIXTURE",
     "behavior": {
-      "reproduced": "Programmatic ROP import parsed pytest runner arguments and aborted setup with SystemExit, producing 13 errors before calculator assertions ran",
-      "final": "The importer accepts explicit argv while preserving omitted-argv CLI behavior; test setup passes an empty argv and hostile outer process arguments cannot leak into programmatic dry-run",
-      "boundaries": "Two files only; formulas, rate JSON, legal interpretation and production data are unchanged"
+      "reproduced": "HS leaf clarification tests read an empty inherited SQLite database and produced 8 failures plus 1 pass because hs_rates was absent",
+      "final": "The module uses the existing disposable pinned classification inventory, installs three explicit test-only rate rows and rebinds captured calculator SessionLocal consumers to the same disposable factory",
+      "boundaries": "Two test files only; production code, normative data, rates and legal interpretation are unchanged; optional local customs.db remains byte-identical when present and absent when initially absent"
     },
     "author_tests": {
-      "baseline": "focused ROP module 13 setup errors; exit 1",
-      "exact_six_module": "focused ROP 14 passed; A0 adjacent ROP and child-marker selection 53 passed; exit 0",
-      "isolation": "disposable SQLite databases; hostile outer sys.argv ignored for explicit programmatic argv; CLI help and dry-run exit 0",
-      "diff": "one importer and one existing test file; no rate/data changes"
+      "baseline": "focused HS leaf module 8 failed and 1 passed; exit 1",
+      "focused": "A4 and A0 focused 9 passed; exit 0",
+      "adjacent": "A4 seven-module hermetic classification suite 86 passed; exit 0",
+      "control": "A0 local agent-safety 120 plus 4 passed; exit 0"
     },
     "a5": {
-      "session": "/root/a5_rop_importer_argv_161",
+      "session": "/root/a5_hs_leaf_fixture_162",
       "status": "FINAL_PASS_EXACT_TREE_NO_FINDINGS",
-      "exact_six_module": "focused 14 passed and adjacent 18 passed; exit 0",
-      "isolated_modules": "direct CLI help and dry-run exit 0",
-      "adversarial": "hostile outer argv did not leak and dry-run database SHA-256 remained unchanged",
-      "remote_binding": "HEAD 20459b52510efbbea7785b914dcd0d27fb0f59a9 tree e1546df9dbc5e1d576cc2601a2a254ed3a7fbba0 matches independently reviewed local tree"
+      "focused": "9 passed; exit 0",
+      "adjacent": "77 passed; exit 0",
+      "adversarial": "customs.db present and absent states preserved; original SHA-256 unchanged when present",
+      "remote_binding": "HEAD ec00c3dad4be46ae9c8efb47103fff4650df4761 tree 0db14cfa88af89469108e92e230f7dfeac8ae0ad matches independently reviewed local tree"
     },
     "ci": {
       "status": "PASSED_EXACT_HEAD",
-      "head_sha": "20459b52510efbbea7785b914dcd0d27fb0f59a9",
+      "head_sha": "ec00c3dad4be46ae9c8efb47103fff4650df4761",
       "runs": [
         {
-          "run_id": 38116681245,
-          "job_id": 114402828401,
+          "run_id": 38120143563,
+          "job_id": 114413135616,
+          "attempt": 2,
           "conclusion": "success",
-          "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38116681245"
+          "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38120143563"
         }
-      ]
+      ],
+      "transient_attempt": "Attempt 1 failed only in Python 3.12 TemporaryDirectory cleanup with Directory not empty: pack; exact-tree local safety passed and attempt 2 succeeded"
     },
     "blockers": [
       "NTM full-sync audit still requires a lawful populated synchronized snapshot.",

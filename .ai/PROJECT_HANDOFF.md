@@ -3,6 +3,23 @@
 **Снимок:** 2026-10-11 (UTC). **Единственный репозиторий:** [ivan88810900-star/tnved_starter_kit_v2](https://github.com/ivan88810900-star/tnved_starter_kit_v2).
 **Авторитетное состояние:** ветка `agent/orchestration-state`, файлы `.ai/TASK_BOARD.json`, `.ai/COORDINATOR_LEASE.json`, `.ai/orchestration/A6_LIVE_STATUS.json`. Этот документ — указатель и контрольная точка, **не** право на запись/merge/A6. Перед действием заново читать текущие HEAD и state. Не полагаться на Business-чат.
 
+## 0aaaaaaaaaaaaaaaaaaaaa. #245 — HS leaf clarification использует hermetic fixture
+
+**Новый checkpoint:** [draft PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256), `agent/product-ntm-regressions-v1` @ `ec00c3dad4be46ae9c8efb47103fff4650df4761`, tree `0db14cfa88af89469108e92e230f7dfeac8ae0ad`, parent `20459b52510efbbea7785b914dcd0d27fb0f59a9`.
+
+Воспроизведён следующий broad-suite fixture defect: `test_hs_leaf_clarification.py` читал пустую унаследованную SQLite и давал **8 failed / 1 passed** из-за отсутствующей `hs_rates`. Модуль теперь использует существующий disposable pinned classification inventory и добавляет только во временную БД три явные test-only ставки. Захваченные `SessionLocal` для calculator path подменены той же фабрикой. Общий fixture сохраняет оба допустимых состояния optional `customs.db`: файл остаётся побайтово неизменным, если существовал, и отсутствующим, если его не было.
+
+Проверки:
+
+- A4 `/root/a4_hs_leaf_fixture_162`: focused **9 passed**; семимодульный hermetic classification suite **86 passed**, exit 0;
+- root control: focused **9 passed**; local agent-safety **120 + 4 passed**, exit 0;
+- независимый A5 `/root/a5_hs_leaf_fixture_162`: **FINAL PASS без findings**; focused **9 passed**, adjacent **77 passed**; present/absent `customs.db` preservation подтверждён;
+- exact-head CI: [run 38120143563](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38120143563), offline-safety job `114413135616`, **success** на attempt 2. Первый attempt упал только на гонке cleanup временного Git pack; локальный exact-tree safety и повтор CI прошли.
+
+Изменены только два test-файла; production code, нормативные данные, ставки и legal interpretation не менялись. Disposable inventory не является правовым или source-completeness evidence. Lawful populated synchronized NTM snapshot недоступен. Полный #245 product/legal/source completeness остаётся **NOT PASS**. Merge, deploy, production write, enforcement/permissions/secrets change, destructive migration и внешний A6 не выполнялись; `core-s1-6415f443120f-r9-g106` не отправлялся.
+
+Следующий шаг — изолировать следующий кластер broad-suite fixture/data failures на disposable данных, не ослабляя assertions и не выдавая test inventory за нормативную полноту.
+
 ## 0aaaaaaaaaaaaaaaaaaaa. #245 — ROP importer изолирован от argv тестового раннера
 
 **Новый checkpoint:** [draft PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256), `agent/product-ntm-regressions-v1` @ `20459b52510efbbea7785b914dcd0d27fb0f59a9`, tree `e1546df9dbc5e1d576cc2601a2a254ed3a7fbba0`, parent `6f3a832244c7f9c48cca4c97ffb8a681867c3f52`.
