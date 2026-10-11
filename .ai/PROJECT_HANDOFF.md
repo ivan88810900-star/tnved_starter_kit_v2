@@ -3,6 +3,23 @@
 **Снимок:** 2026-10-11 (UTC). **Единственный репозиторий:** [ivan88810900-star/tnved_starter_kit_v2](https://github.com/ivan88810900-star/tnved_starter_kit_v2).
 **Авторитетное состояние:** ветка `agent/orchestration-state`, файлы `.ai/TASK_BOARD.json`, `.ai/COORDINATOR_LEASE.json`, `.ai/orchestration/A6_LIVE_STATUS.json`. Этот документ — указатель и контрольная точка, **не** право на запись/merge/A6. Перед действием заново читать текущие HEAD и state. Не полагаться на Business-чат.
 
+## 0aaaaaaaaaaaaaaaaaaaaaaaaaaaaa. #245 — normative bundle/requirements tests используют hermetic databases
+
+**Новый checkpoint:** [draft PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256), `agent/product-ntm-regressions-v1` @ `171a393eb907ec663a8b4a9d95b740abf275458a`, tree `648f07e4ff24ccacd5d5b269eabd0243d5cf73a3`, parent `c58878f5064ec49419c39944f5da70b35944652e`.
+
+Воспроизведён следующий broad-suite fixture defect: `test_normative_bundle.py` и `test_normative_requirements_block.py` проходили **18 tests**, но создавали или изменяли сконфигурированный hostile SQLite. При absent DB создавался файл 1 036 288 байт; валидный pre-existing sentinel изменял SHA и вырастал до 1 040 384 байт. Bundle/API tests теперь используют отдельную временную SQLite через существующий pinned classification bootstrap и перепривязывают test/application/normative-store/payment/FTS consumers; requirements-block fixture направляет sanctions lookup в существующую in-memory session. Все 13 test methods и 53 assertion nodes сохранены AST-identical; production code, нормативные данные, конфигурация продукта и правовая интерпретация не менялись.
+
+Проверки:
+
+- A2 `/root/a2_normative_db_isolation_170`: focused **7 + 11 passed**, оба совместных порядка **18 passed**; absent hostile/source paths не создаются, pre-existing hashes byte-identical; bounded adjacent **52 passed**, diff-check exit 0;
+- root control: focused + adjacent **46 passed**; local agent-safety **120 + 4 passed**, snapshot valid, exit 0;
+- независимый A5 `/root/a5_normative_db_isolation_170`: **FINAL PASS без findings**; 13 methods/53 assertions AST-identical, оба порядка **18 passed**, bounded adjacent NTM **33 passed**, pinned catalogue неизменён, временные DB/WAL/SHM удалены;
+- exact-head CI: [run 38149897850](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38149897850), offline-safety job `114500978594`, **success**.
+
+Это доказательство тестовой изоляции, а не свежести/юридической действительности NTM. Lawful populated synchronized NTM snapshot недоступен. Полный #245 product/legal/source completeness остаётся **NOT PASS**. Merge, deploy, production write, enforcement/permissions/secrets change, destructive migration и внешний A6 не выполнялись; `core-s1-6415f443120f-r9-g106` не отправлялся.
+
+Следующий воспроизводимый fixture-дефект: `test_ntm_effective_requirements.py` на пустой configured DB даёт **6 passed, 1 failed** и создаёт 4 KiB SQLite; разбирать отдельным блоком, не смешивая с этим checkpoint.
+
 ## 0aaaaaaaaaaaaaaaaaaaaaaaaaaaa. #245 — FSA registry tests используют hermetic databases
 
 **Новый checkpoint:** [draft PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256), `agent/product-ntm-regressions-v1` @ `c58878f5064ec49419c39944f5da70b35944652e`, tree `a4cf25fbf7a8cfc5ced58fc91e603fd93e7d085b`, parent `720f882b8aa379c8daeb2baafc26ab4caa74a549`.

@@ -2179,7 +2179,7 @@
       "unique_source_pr_count": 29
     }
   },
-  "revision": 716,
+  "revision": 717,
   "runs": [
     {
       "head_sha": null,
@@ -7434,49 +7434,49 @@
       }
     }
   ],
-  "updated_at": "2026-10-11T14:04:22.000Z",
+  "updated_at": "2026-10-11T15:08:00.000Z",
   "latest_scheduled_product_checkpoint": {
-    "updated_at": "2026-10-11T14:04:22.000Z",
-    "checked_at": "2026-10-11T14:04:22.000Z",
+    "updated_at": "2026-10-11T15:08:00.000Z",
+    "checked_at": "2026-10-11T15:08:00.000Z",
     "pr": 256,
     "branch": "agent/product-ntm-regressions-v1",
-    "head_sha": "c58878f5064ec49419c39944f5da70b35944652e",
-    "tree_sha": "a4cf25fbf7a8cfc5ced58fc91e603fd93e7d085b",
-    "parent_sha": "720f882b8aa379c8daeb2baafc26ab4caa74a549",
-    "prior_checkpoint_sha": "720f882b8aa379c8daeb2baafc26ab4caa74a549",
+    "head_sha": "171a393eb907ec663a8b4a9d95b740abf275458a",
+    "tree_sha": "648f07e4ff24ccacd5d5b269eabd0243d5cf73a3",
+    "parent_sha": "c58878f5064ec49419c39944f5da70b35944652e",
+    "prior_checkpoint_sha": "c58878f5064ec49419c39944f5da70b35944652e",
     "base_pr": 245,
     "base_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
-    "block": "fsa_registry_hermetic_test_databases",
-    "status": "DRAFT_CHECKPOINT_A5_PASS_CI_PASS_FSA_TEST_ISOLATION",
+    "block": "normative_bundle_requirements_hermetic_databases",
+    "status": "DRAFT_CHECKPOINT_A5_PASS_CI_PASS_NORMATIVE_DB_ISOLATION",
     "behavior": {
-      "reproduced": "Five FSA opendata/upsert and certificate-normalization tests passed but created and modified the configured hostile SQLite file at 1036288 bytes",
-      "final": "Both modules use disposable SQLite databases built by the existing pinned classification bootstrap with captured test, application, normative-store, FSA-import and registry-lookup database consumers rebound to temporary engines",
-      "boundaries": "Two test files only; all 5 original test methods and 19 assertions are AST-identical; production code, registry data, product configuration and legal interpretation are unchanged"
+      "reproduced": "The normative bundle and requirements modules passed 18 tests but created or modified configured hostile SQLite; an absent file became 1036288 bytes and a valid sentinel changed SHA and grew to 1040384 bytes",
+      "final": "Bundle/API tests use a disposable bootstrapped SQLite with application, normative-store, payment, FTS and startup consumers isolated; requirements tests route sanctions lookup through their existing in-memory session",
+      "boundaries": "Two test files only; all 13 original test methods and 53 assertion nodes are AST-identical; production code, normative data, product configuration and legal interpretation are unchanged"
     },
     "author_tests": {
-      "baseline": "focused 5 passed but hostile configured SQLite was created and modified at 1036288 bytes",
-      "focused": "A4 and A0 focused 5 passed in both orders; pre-existing hostile and source hashes unchanged; absent sentinels remained absent",
-      "adjacent": "FSA upsert, FSA normalization, registry-status, permits API, permit suggestions and permit ownership in both orders 44 passed and 1 existing optional live-smoke skipped",
+      "baseline": "focused 18 passed but configured hostile SQLite was created or mutated; pre-existing sentinel hash changed",
+      "focused": "A2 and A0 bundle 7 plus requirements 11 passed; both combined orders 18 passed; absent paths remained absent and pre-existing hashes remained byte-identical",
+      "adjacent": "A2 bounded NTM subset 52 passed; A0 focused plus regulatory documents, SGR status and NTM lookup 46 passed",
       "control": "A0 local agent-safety 120 plus 4 passed and snapshot valid; exit 0"
     },
     "a5": {
-      "session": "/root/a5_fsa_test_isolation_169",
+      "session": "/root/a5_normative_db_isolation_170",
       "status": "FINAL_PASS_EXACT_TREE_NO_FINDINGS",
-      "focused": "5 passed in all hostile-present and hostile-absent orderings; exit 0",
-      "adjacent": "44 passed and 1 existing optional live-smoke skipped in each forward and reverse order; exit 0",
-      "adversarial": "all 5 methods and 19 assertions AST-identical; hostile and source sentinels preserved; optional customs.db absent and pinned catalogue unchanged; FSA rows remained disposable; no DB/WAL/SHM residue",
-      "remote_binding": "remote HEAD c58878f5064ec49419c39944f5da70b35944652e has independently reviewed tree a4cf25fbf7a8cfc5ced58fc91e603fd93e7d085b"
+      "focused": "18 passed in each hostile-present and hostile-absent ordering; exit 0",
+      "adjacent": "bounded adjacent NTM regression 33 passed; exit 0",
+      "adversarial": "all 13 methods and 53 assertion nodes AST-identical; hostile and source sentinels preserved; default customs.db absent and pinned catalogue unchanged; no disposable DB/WAL/SHM residue",
+      "remote_binding": "remote HEAD 171a393eb907ec663a8b4a9d95b740abf275458a has independently reviewed tree 648f07e4ff24ccacd5d5b269eabd0243d5cf73a3"
     },
     "ci": {
       "status": "PASSED_EXACT_HEAD",
-      "head_sha": "c58878f5064ec49419c39944f5da70b35944652e",
+      "head_sha": "171a393eb907ec663a8b4a9d95b740abf275458a",
       "runs": [
         {
-          "run_id": 38145633639,
-          "job_id": 114488252775,
+          "run_id": 38149897850,
+          "job_id": 114500978594,
           "attempt": 1,
           "conclusion": "success",
-          "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38145633639"
+          "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38149897850"
         }
       ]
     },
@@ -7489,50 +7489,50 @@
       "status": "UNCHANGED_NOT_SENT"
     },
     "protected_actions_performed": false,
-    "next_step": "Isolate the next reproducible broad-suite data/DB side effect or fixture defect on disposable data without weakening assertions; do not treat test inventory as legal or source completeness."
+    "next_step": "Isolate the independently reproduced test_ntm_effective_requirements empty-DB fixture defect without weakening its assertions; keep test inventory separate from legal/source completeness."
   },
   "latest_development_checkpoint": {
-    "updated_at": "2026-10-11T14:04:22.000Z",
-    "checked_at": "2026-10-11T14:04:22.000Z",
+    "updated_at": "2026-10-11T15:08:00.000Z",
+    "checked_at": "2026-10-11T15:08:00.000Z",
     "pr": 256,
     "branch": "agent/product-ntm-regressions-v1",
-    "head_sha": "c58878f5064ec49419c39944f5da70b35944652e",
-    "tree_sha": "a4cf25fbf7a8cfc5ced58fc91e603fd93e7d085b",
-    "parent_sha": "720f882b8aa379c8daeb2baafc26ab4caa74a549",
-    "prior_checkpoint_sha": "720f882b8aa379c8daeb2baafc26ab4caa74a549",
+    "head_sha": "171a393eb907ec663a8b4a9d95b740abf275458a",
+    "tree_sha": "648f07e4ff24ccacd5d5b269eabd0243d5cf73a3",
+    "parent_sha": "c58878f5064ec49419c39944f5da70b35944652e",
+    "prior_checkpoint_sha": "c58878f5064ec49419c39944f5da70b35944652e",
     "base_pr": 245,
     "base_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
-    "block": "fsa_registry_hermetic_test_databases",
-    "status": "DRAFT_CHECKPOINT_A5_PASS_CI_PASS_FSA_TEST_ISOLATION",
+    "block": "normative_bundle_requirements_hermetic_databases",
+    "status": "DRAFT_CHECKPOINT_A5_PASS_CI_PASS_NORMATIVE_DB_ISOLATION",
     "behavior": {
-      "reproduced": "Five FSA opendata/upsert and certificate-normalization tests passed but created and modified the configured hostile SQLite file at 1036288 bytes",
-      "final": "Both modules use disposable SQLite databases built by the existing pinned classification bootstrap with captured test, application, normative-store, FSA-import and registry-lookup database consumers rebound to temporary engines",
-      "boundaries": "Two test files only; all 5 original test methods and 19 assertions are AST-identical; production code, registry data, product configuration and legal interpretation are unchanged"
+      "reproduced": "The normative bundle and requirements modules passed 18 tests but created or modified configured hostile SQLite; an absent file became 1036288 bytes and a valid sentinel changed SHA and grew to 1040384 bytes",
+      "final": "Bundle/API tests use a disposable bootstrapped SQLite with application, normative-store, payment, FTS and startup consumers isolated; requirements tests route sanctions lookup through their existing in-memory session",
+      "boundaries": "Two test files only; all 13 original test methods and 53 assertion nodes are AST-identical; production code, normative data, product configuration and legal interpretation are unchanged"
     },
     "author_tests": {
-      "baseline": "focused 5 passed but hostile configured SQLite was created and modified at 1036288 bytes",
-      "focused": "A4 and A0 focused 5 passed in both orders; pre-existing hostile and source hashes unchanged; absent sentinels remained absent",
-      "adjacent": "FSA upsert, FSA normalization, registry-status, permits API, permit suggestions and permit ownership in both orders 44 passed and 1 existing optional live-smoke skipped",
+      "baseline": "focused 18 passed but configured hostile SQLite was created or mutated; pre-existing sentinel hash changed",
+      "focused": "A2 and A0 bundle 7 plus requirements 11 passed; both combined orders 18 passed; absent paths remained absent and pre-existing hashes remained byte-identical",
+      "adjacent": "A2 bounded NTM subset 52 passed; A0 focused plus regulatory documents, SGR status and NTM lookup 46 passed",
       "control": "A0 local agent-safety 120 plus 4 passed and snapshot valid; exit 0"
     },
     "a5": {
-      "session": "/root/a5_fsa_test_isolation_169",
+      "session": "/root/a5_normative_db_isolation_170",
       "status": "FINAL_PASS_EXACT_TREE_NO_FINDINGS",
-      "focused": "5 passed in all hostile-present and hostile-absent orderings; exit 0",
-      "adjacent": "44 passed and 1 existing optional live-smoke skipped in each forward and reverse order; exit 0",
-      "adversarial": "all 5 methods and 19 assertions AST-identical; hostile and source sentinels preserved; optional customs.db absent and pinned catalogue unchanged; FSA rows remained disposable; no DB/WAL/SHM residue",
-      "remote_binding": "remote HEAD c58878f5064ec49419c39944f5da70b35944652e has independently reviewed tree a4cf25fbf7a8cfc5ced58fc91e603fd93e7d085b"
+      "focused": "18 passed in each hostile-present and hostile-absent ordering; exit 0",
+      "adjacent": "bounded adjacent NTM regression 33 passed; exit 0",
+      "adversarial": "all 13 methods and 53 assertion nodes AST-identical; hostile and source sentinels preserved; default customs.db absent and pinned catalogue unchanged; no disposable DB/WAL/SHM residue",
+      "remote_binding": "remote HEAD 171a393eb907ec663a8b4a9d95b740abf275458a has independently reviewed tree 648f07e4ff24ccacd5d5b269eabd0243d5cf73a3"
     },
     "ci": {
       "status": "PASSED_EXACT_HEAD",
-      "head_sha": "c58878f5064ec49419c39944f5da70b35944652e",
+      "head_sha": "171a393eb907ec663a8b4a9d95b740abf275458a",
       "runs": [
         {
-          "run_id": 38145633639,
-          "job_id": 114488252775,
+          "run_id": 38149897850,
+          "job_id": 114500978594,
           "attempt": 1,
           "conclusion": "success",
-          "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38145633639"
+          "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38149897850"
         }
       ]
     },
@@ -7545,6 +7545,6 @@
       "status": "UNCHANGED_NOT_SENT"
     },
     "protected_actions_performed": false,
-    "next_step": "Isolate the next reproducible broad-suite data/DB side effect or fixture defect on disposable data without weakening assertions; do not treat test inventory as legal or source completeness."
+    "next_step": "Isolate the independently reproduced test_ntm_effective_requirements empty-DB fixture defect without weakening its assertions; keep test inventory separate from legal/source completeness."
   }
 }
