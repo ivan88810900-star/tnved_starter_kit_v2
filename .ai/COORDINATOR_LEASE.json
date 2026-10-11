@@ -1,14 +1,14 @@
 {
   "acquisition_note": "Reproduce and isolate the remaining canonical TN VED full-catalog regression on the existing disposable pinned inventory.",
-  "expires_at": null,
-  "generation": 169,
-  "holder": null,
+  "expires_at": "2026-10-11T15:21:11.152373Z",
+  "generation": 170,
+  "holder": "/root/a0_tariff_scheduled_20261011T144845Z",
   "lease_repair": {},
   "release_reason": "PROJECT_HANDOFF payment pointer reconciled with live draft PR255; board revision 706 records exact-head CI and remaining source-refresh limits.",
   "released_by": "/root/tariff_a0_scheduled_20261010T071418MSK",
   "schema_version": 1,
   "serialization_repair": {},
-  "state": "released",
-  "token": null,
-  "updated_at": "2026-10-11T14:07:41.053295Z"
+  "state": "active",
+  "token": "95144db5be3b4380a179dd53aac8f3ea",
+  "updated_at": "2026-10-11T14:51:11.152373Z"
 }
