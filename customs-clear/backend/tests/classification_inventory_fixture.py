@@ -47,6 +47,14 @@ def _sha256(path: Path) -> str:
     return digest.hexdigest()
 
 
+def _protected_fingerprints() -> dict[Path, str | None]:
+    """Capture both file content and the absence of an optional local database."""
+    return {
+        path: _sha256(path) if path.is_file() else None
+        for path in (DEFAULT_DATABASE, PINNED_CATALOGUE)
+    }
+
+
 def _install_semantic_navigation_cases(database: Path) -> None:
     """Complete the semantic merged-header cases in the disposable copy only."""
     with sqlite3.connect(database) as connection:
@@ -66,10 +74,7 @@ def classification_inventory_session_factory(
     """Bootstrap one isolated inventory and remove it after the test session."""
     temp_dir = tmp_path_factory.mktemp("classification-inventory")
     database = temp_dir / "inventory.db"
-    protected_hashes = {
-        path: _sha256(path)
-        for path in (DEFAULT_DATABASE, PINNED_CATALOGUE)
-    }
+    protected_hashes = _protected_fingerprints()
     env = os.environ.copy()
     env.pop("DATABASE_URL", None)
     env.pop("TNVED_SOURCE_DB", None)
@@ -83,10 +88,7 @@ def classification_inventory_session_factory(
     )
     assert result.returncode == 0, result.stdout + result.stderr
     _install_semantic_navigation_cases(database)
-    assert {
-        path: _sha256(path)
-        for path in (DEFAULT_DATABASE, PINNED_CATALOGUE)
-    } == protected_hashes
+    assert _protected_fingerprints() == protected_hashes
 
     engine = create_engine(
         f"sqlite:///{database}",
@@ -101,10 +103,7 @@ def classification_inventory_session_factory(
             candidate = Path(f"{database}{suffix}")
             if candidate.exists():
                 candidate.unlink()
-        assert {
-            path: _sha256(path)
-            for path in (DEFAULT_DATABASE, PINNED_CATALOGUE)
-        } == protected_hashes
+        assert _protected_fingerprints() == protected_hashes
 
 
 @pytest.fixture
