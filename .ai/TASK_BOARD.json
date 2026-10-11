@@ -2179,7 +2179,7 @@
       "unique_source_pr_count": 29
     }
   },
-  "revision": 719,
+  "revision": 720,
   "runs": [
     {
       "head_sha": null,
@@ -7434,48 +7434,48 @@
       }
     }
   ],
-  "updated_at": "2026-10-11T17:06:09.543Z",
+  "updated_at": "2026-10-11T18:04:51.196Z",
   "latest_scheduled_product_checkpoint": {
-    "updated_at": "2026-10-11T17:06:09.543Z",
-    "checked_at": "2026-10-11T17:06:09.543Z",
+    "updated_at": "2026-10-11T18:04:51.196Z",
+    "checked_at": "2026-10-11T18:04:51.196Z",
     "pr": 256,
     "branch": "agent/product-ntm-regressions-v1",
-    "head_sha": "3cc66695d26ce807718afa9494a799dc76a3bb9e",
-    "tree_sha": "705ce207eab76df149f38dd9a41183590ee6fbb2",
-    "parent_sha": "e6f501be22e844b12d4e48e8046c8c9aaf98ef8d",
-    "prior_checkpoint_sha": "477074fb554c865cc55ebb740cc68eb0c371977b",
+    "head_sha": "648b0e06141192d339e10a65142dd4e863574d05",
+    "tree_sha": "3f5a4202520a7bd94aabbcd98677856f08ea70c0",
+    "parent_sha": "3cc66695d26ce807718afa9494a799dc76a3bb9e",
+    "prior_checkpoint_sha": "3cc66695d26ce807718afa9494a799dc76a3bb9e",
     "base_pr": 245,
     "base_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
-    "block": "ntm_pipeline_broker_matrix_source_isolation",
-    "status": "DRAFT_CHECKPOINT_A5_PASS_CI_PASS_PIPELINE_ISOLATION",
+    "block": "ntm_source_diagnostics_configured_db_isolation",
+    "status": "DRAFT_CHECKPOINT_A5_PASS_CI_PASS_SOURCE_DIAGNOSTICS_ISOLATION",
     "behavior": {
-      "reproduced": "The incomplete checkpoint failed all 73 scenarios against an empty configured SQLite and created the database because enabled v2 TR TS evaluation queried missing ntm_applicability_rules_v2",
-      "final": "The existing autouse fixture fixes the v2 TR TS and layer source switches to the canonical in-process catalog and ntm_layers paths while retaining production check_position_non_tariff and real description triggers",
-      "boundaries": "One test file only; both original test functions and all 4 assertion nodes are AST-identical; no production code, normative data, product flags, skips/xfails or legal interpretation changed"
+      "reproduced": "Focused source diagnostics had 3 failures and 3 passes against an empty configured SQLite, queried missing v2/legacy tables and created a 4096-byte database",
+      "final": "The test fixture supplies empty configured-DB rule/measure inputs and composes full broker rows from the module's live canonical TR TS and ntm_layers functions while retaining comparison, matrix and broker dedupe logic",
+      "boundaries": "One test file only; all 6 original test functions and 12 assertion nodes are AST-identical; no production code, normative data, flags, skips/xfails or legal interpretation changed"
     },
     "author_tests": {
-      "baseline": "focused 73 failed, exit 1; empty configured DB was created",
-      "focused": "A2 and A0 each 73 passed with absent configured DB preserved; valid pre-existing sentinel passed 73 and stayed byte-identical",
-      "adjacent": "A2 bounded NTM 271 passed; A5 bounded flags/triggers 36 passed",
+      "baseline": "focused 3 failed and 3 passed, exit 1; empty configured DB created",
+      "focused": "A2 and A0 each 6 passed with absent DB preserved; valid pre-existing sentinel passed 6 and remained byte-identical",
+      "adjacent": "A2 direct and reverse source-diagnostics/source-isolation/legacy-measures set passed 17 in both orders; A0 17 passed",
       "control": "A0 local agent-safety 120 plus 4 passed and snapshot valid; all exit 0"
     },
     "a5": {
-      "session": "/root/a5_ntm_pipeline_173",
+      "session": "/root/a5_ntm_source_diag_174",
       "status": "FINAL_PASS_EXACT_TREE_NO_FINDINGS",
-      "focused": "73 passed with absent DB and 73 passed with valid pre-existing sentinel; no DB/WAL/SHM residue",
-      "adversarial": "2 test functions and 4 asserts AST-identical; instrumented production callable, canonical TR TS catalog, ntm_layers and description triggers all executed",
-      "remote_binding": "remote HEAD 3cc66695d26ce807718afa9494a799dc76a3bb9e has independently reviewed tree 705ce207eab76df149f38dd9a41183590ee6fbb2"
+      "focused": "6 passed with absent DB and 6 passed with valid pre-existing sentinel; no DB/WAL/SHM residue",
+      "adversarial": "6 test functions and 12 asserts AST-identical; instrumented comparison, matrix, canonical TR TS, ntm_layers and broker dedupe calls confirmed",
+      "remote_binding": "remote HEAD 648b0e06141192d339e10a65142dd4e863574d05 has independently reviewed tree 3f5a4202520a7bd94aabbcd98677856f08ea70c0"
     },
     "ci": {
       "status": "PASSED_EXACT_HEAD",
-      "head_sha": "3cc66695d26ce807718afa9494a799dc76a3bb9e",
+      "head_sha": "648b0e06141192d339e10a65142dd4e863574d05",
       "runs": [
         {
-          "run_id": 38158116384,
-          "job_id": 114525186732,
+          "run_id": 38162233357,
+          "job_id": 114537380203,
           "attempt": 1,
           "conclusion": "success",
-          "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38158116384"
+          "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38162233357"
         }
       ]
     },
@@ -7488,49 +7488,49 @@
       "status": "UNCHANGED_NOT_SENT"
     },
     "protected_actions_performed": false,
-    "next_step": "Continue with the next reproducible source-diagnostics or empty-DB fixture cluster on disposable data without weakening assertions or treating test inventory as legal/source completeness."
+    "next_step": "Continue with the next reproducible empty-DB or source-backed fixture cluster, keeping disposable test evidence distinct from legal/source completeness."
   },
   "latest_development_checkpoint": {
-    "updated_at": "2026-10-11T17:06:09.543Z",
-    "checked_at": "2026-10-11T17:06:09.543Z",
+    "updated_at": "2026-10-11T18:04:51.196Z",
+    "checked_at": "2026-10-11T18:04:51.196Z",
     "pr": 256,
     "branch": "agent/product-ntm-regressions-v1",
-    "head_sha": "3cc66695d26ce807718afa9494a799dc76a3bb9e",
-    "tree_sha": "705ce207eab76df149f38dd9a41183590ee6fbb2",
-    "parent_sha": "e6f501be22e844b12d4e48e8046c8c9aaf98ef8d",
-    "prior_checkpoint_sha": "477074fb554c865cc55ebb740cc68eb0c371977b",
+    "head_sha": "648b0e06141192d339e10a65142dd4e863574d05",
+    "tree_sha": "3f5a4202520a7bd94aabbcd98677856f08ea70c0",
+    "parent_sha": "3cc66695d26ce807718afa9494a799dc76a3bb9e",
+    "prior_checkpoint_sha": "3cc66695d26ce807718afa9494a799dc76a3bb9e",
     "base_pr": 245,
     "base_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
-    "block": "ntm_pipeline_broker_matrix_source_isolation",
-    "status": "DRAFT_CHECKPOINT_A5_PASS_CI_PASS_PIPELINE_ISOLATION",
+    "block": "ntm_source_diagnostics_configured_db_isolation",
+    "status": "DRAFT_CHECKPOINT_A5_PASS_CI_PASS_SOURCE_DIAGNOSTICS_ISOLATION",
     "behavior": {
-      "reproduced": "The incomplete checkpoint failed all 73 scenarios against an empty configured SQLite and created the database because enabled v2 TR TS evaluation queried missing ntm_applicability_rules_v2",
-      "final": "The existing autouse fixture fixes the v2 TR TS and layer source switches to the canonical in-process catalog and ntm_layers paths while retaining production check_position_non_tariff and real description triggers",
-      "boundaries": "One test file only; both original test functions and all 4 assertion nodes are AST-identical; no production code, normative data, product flags, skips/xfails or legal interpretation changed"
+      "reproduced": "Focused source diagnostics had 3 failures and 3 passes against an empty configured SQLite, queried missing v2/legacy tables and created a 4096-byte database",
+      "final": "The test fixture supplies empty configured-DB rule/measure inputs and composes full broker rows from the module's live canonical TR TS and ntm_layers functions while retaining comparison, matrix and broker dedupe logic",
+      "boundaries": "One test file only; all 6 original test functions and 12 assertion nodes are AST-identical; no production code, normative data, flags, skips/xfails or legal interpretation changed"
     },
     "author_tests": {
-      "baseline": "focused 73 failed, exit 1; empty configured DB was created",
-      "focused": "A2 and A0 each 73 passed with absent configured DB preserved; valid pre-existing sentinel passed 73 and stayed byte-identical",
-      "adjacent": "A2 bounded NTM 271 passed; A5 bounded flags/triggers 36 passed",
+      "baseline": "focused 3 failed and 3 passed, exit 1; empty configured DB created",
+      "focused": "A2 and A0 each 6 passed with absent DB preserved; valid pre-existing sentinel passed 6 and remained byte-identical",
+      "adjacent": "A2 direct and reverse source-diagnostics/source-isolation/legacy-measures set passed 17 in both orders; A0 17 passed",
       "control": "A0 local agent-safety 120 plus 4 passed and snapshot valid; all exit 0"
     },
     "a5": {
-      "session": "/root/a5_ntm_pipeline_173",
+      "session": "/root/a5_ntm_source_diag_174",
       "status": "FINAL_PASS_EXACT_TREE_NO_FINDINGS",
-      "focused": "73 passed with absent DB and 73 passed with valid pre-existing sentinel; no DB/WAL/SHM residue",
-      "adversarial": "2 test functions and 4 asserts AST-identical; instrumented production callable, canonical TR TS catalog, ntm_layers and description triggers all executed",
-      "remote_binding": "remote HEAD 3cc66695d26ce807718afa9494a799dc76a3bb9e has independently reviewed tree 705ce207eab76df149f38dd9a41183590ee6fbb2"
+      "focused": "6 passed with absent DB and 6 passed with valid pre-existing sentinel; no DB/WAL/SHM residue",
+      "adversarial": "6 test functions and 12 asserts AST-identical; instrumented comparison, matrix, canonical TR TS, ntm_layers and broker dedupe calls confirmed",
+      "remote_binding": "remote HEAD 648b0e06141192d339e10a65142dd4e863574d05 has independently reviewed tree 3f5a4202520a7bd94aabbcd98677856f08ea70c0"
     },
     "ci": {
       "status": "PASSED_EXACT_HEAD",
-      "head_sha": "3cc66695d26ce807718afa9494a799dc76a3bb9e",
+      "head_sha": "648b0e06141192d339e10a65142dd4e863574d05",
       "runs": [
         {
-          "run_id": 38158116384,
-          "job_id": 114525186732,
+          "run_id": 38162233357,
+          "job_id": 114537380203,
           "attempt": 1,
           "conclusion": "success",
-          "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38158116384"
+          "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38162233357"
         }
       ]
     },
@@ -7543,6 +7543,6 @@
       "status": "UNCHANGED_NOT_SENT"
     },
     "protected_actions_performed": false,
-    "next_step": "Continue with the next reproducible source-diagnostics or empty-DB fixture cluster on disposable data without weakening assertions or treating test inventory as legal/source completeness."
+    "next_step": "Continue with the next reproducible empty-DB or source-backed fixture cluster, keeping disposable test evidence distinct from legal/source completeness."
   }
 }

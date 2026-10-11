@@ -1,5 +1,22 @@
 # Tariff / A0 — единая точка передачи проекта
 
+## 0aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa. #245 — NTM source diagnostics изолированы от configured DB
+
+**Новый checkpoint:** [draft PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256), `agent/product-ntm-regressions-v1` @ `648b0e06141192d339e10a65142dd4e863574d05`, tree `3f5a4202520a7bd94aabbcd98677856f08ea70c0`, parent `3cc66695d26ce807718afa9494a799dc76a3bb9e`. Локальный author commit `3389f7a8a11f2466ba2d58746763e8465c3e7e8a` имеет тот же exact tree.
+
+Воспроизведён fixture defect: `test_ntm_source_diagnostics.py` на пустой configured SQLite давал **3 failed / 3 passed**, читал отсутствующие v2/legacy таблицы и создавал 4 KiB DB. Test-only fixture теперь подставляет пустые configured-DB rule/measure inputs и собирает полный broker source set из реальных canonical TR TS и `ntm_layers` функций модуля. Сравнение источников, matrix aggregation и `_build_broker_required_permits` dedupe продолжают выполняться. Все 6 исходных тестов и 12 assertions AST-identical; production code, нормативные данные, flags, skips/xfails и правовая интерпретация не менялись.
+
+Проверки:
+
+- A2 `/root/a2_ntm_source_diag_174`: focused **6 + 6 passed**, absent DB не создана, sentinel byte-identical; adjacent оба порядка **17 passed**; compile/diff-check exit 0;
+- root control: focused **6 + 6 passed**, adjacent **17 passed**, DB invariance подтверждена; local agent-safety **120 + 4 passed**, snapshot valid; все exit 0;
+- независимый A5 `/root/a5_ntm_source_diag_174`: **FINAL PASS без findings**; reverse adjacent PASS, DB/WAL/SHM residue отсутствует, instrumented canonical catalog/layers/comparison/matrix/broker calls подтверждены;
+- exact-head CI: [run 38162233357](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38162233357), offline-safety job `114537380203`, attempt 1, **success**.
+
+Это test-isolation evidence, не подтверждение полноты источников или юридической применимости. Lawful populated synchronized NTM snapshot недоступен; полный #245 остаётся **NOT PASS**. Merge, deploy, production write, enforcement/permissions/secrets change, destructive migration и внешний A6 не выполнялись; `core-s1-6415f443120f-r9-g106` не отправлялся.
+
+Следующий отдельный блок — следующий воспроизводимый empty-DB/source-backed fixture cluster на disposable данных, без подмены legal/source completeness тестовым evidence.
+
 ## 0aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa. #245 — NTM broker matrix изолирован от configured DB
 
 **Новый checkpoint:** [draft PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256), `agent/product-ntm-regressions-v1` @ `3cc66695d26ce807718afa9494a799dc76a3bb9e`, tree `705ce207eab76df149f38dd9a41183590ee6fbb2`, parent `e6f501be22e844b12d4e48e8046c8c9aaf98ef8d`. Локальный author commit `e6d89b340ee59cd3790c94d70e3df1b56625d39b` имеет тот же exact tree.
