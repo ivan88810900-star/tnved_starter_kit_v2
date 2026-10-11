@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 import json
+import sys
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 try:
     from sqlalchemy import text
@@ -37,7 +39,7 @@ def _ensure_schema_and_data() -> None:
     finally:
         session.close()
     if count == 0:
-        import_main()
+        import_main([])
 
 
 @unittest.skipIf(not _AVAILABLE, f"ROP tests require deps: {_IMPORT_ERROR}")
@@ -131,6 +133,10 @@ class RopCalculatorTests(unittest.TestCase):
         self.assertIn("1041", doc["legal_ref"])
         self.assertEqual(len(doc["goods"]), 16)
         self.assertEqual(len(doc["packaging_groups"]), 36)
+
+    def test_programmatic_import_ignores_outer_argv(self) -> None:
+        with patch.object(sys, "argv", ["pytest", "--unexpected-outer-arg"]):
+            self.assertEqual(import_main(["--dry-run"]), 0)
 
 
 if __name__ == "__main__":
