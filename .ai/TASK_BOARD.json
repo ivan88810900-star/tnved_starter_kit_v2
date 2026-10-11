@@ -2179,7 +2179,7 @@
       "unique_source_pr_count": 29
     }
   },
-  "revision": 706,
+  "revision": 707,
   "runs": [
     {
       "head_sha": null,
@@ -7434,48 +7434,48 @@
       }
     }
   ],
-  "updated_at": "2026-10-10T04:22:20.000Z",
+  "updated_at": "2026-10-11T05:01:00.000Z",
   "latest_scheduled_product_checkpoint": {
-    "updated_at": "2026-10-10T04:05:05.000Z",
-    "checked_at": "2026-10-10T04:05:05.000Z",
+    "updated_at": "2026-10-11T05:01:00.000Z",
+    "checked_at": "2026-10-11T05:01:00.000Z",
     "pr": 256,
     "branch": "agent/product-ntm-regressions-v1",
-    "head_sha": "b65516018df18646a3a1b2f1bcaa88fa66d0aeec",
-    "tree_sha": "9b60048309b8ce4dcb74a7a3775fbfa8f207f182",
-    "parent_sha": "6cba001e44812391be363a3e2bdd5ecdf86b11a9",
-    "prior_checkpoint_sha": "6cba001e44812391be363a3e2bdd5ecdf86b11a9",
+    "head_sha": "6f3a832244c7f9c48cca4c97ffb8a681867c3f52",
+    "tree_sha": "f23cd21eed59d9df588eb2075526ae555472726d",
+    "parent_sha": "b65516018df18646a3a1b2f1bcaa88fa66d0aeec",
+    "prior_checkpoint_sha": "b65516018df18646a3a1b2f1bcaa88fa66d0aeec",
     "base_pr": 245,
     "base_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
-    "block": "tree_engine_disposable_catalog_fixture",
-    "status": "DRAFT_CHECKPOINT_A5_PASS_CI_PASS_TREE_FIXTURE",
+    "block": "canonical_tnved_disposable_catalog_fixture",
+    "status": "DRAFT_CHECKPOINT_A5_PASS_CI_PASS_CANONICAL_FIXTURE",
     "behavior": {
-      "reproduced": "TN VED catalogue API plus Tree Model v2 produced 2 failures with 25 passes because tree tests read an empty default database and could not address pinned headings such as 0101",
-      "final": "All four Tree Model v2 tests consume the existing session-scoped disposable pinned catalogue, including the module-level builder SessionLocal used for leaf computation",
-      "boundaries": "Test-fixture isolation only; assertions are unchanged and no production code, product data, legal applicability or source completeness changed"
+      "reproduced": "The exact 17-module classification/search regression produced 10 failures with 137 passes and 7 subtests because canonical model tests initialized and read an empty default database instead of the pinned catalogue",
+      "final": "Canonical model tests consume the existing session-scoped disposable pinned catalogue through patchable app_db.SessionLocal, including all direct parity reads",
+      "boundaries": "One existing test file only; assertions and skip/xfail are unchanged and no production code, product data, legal applicability or source completeness changed"
     },
     "author_tests": {
-      "baseline": "catalogue API plus tree engine 2 failed and 25 passed; exit 1",
-      "exact_six_module": "five-module classification regression 63 passed; exit 0",
-      "isolation": "hostile inherited DATABASE_URL tree run 4 passed; default DB and pinned catalogue SHA-256 unchanged",
-      "diff": "exactly two existing test-only files; no production/data changes"
+      "baseline": "exact 17-module classification/search regression 10 failed, 137 passed and 7 subtests; exit 1",
+      "exact_six_module": "exact 17-module classification/search regression 147 passed and 7 subtests; exit 0",
+      "isolation": "canonical module 32 passed normally and 32 passed under hostile inherited DATABASE_URL",
+      "diff": "exactly one existing test-only file; no production/data changes"
     },
     "a5": {
-      "session": "/root/a5_tree_fixture_157",
-      "status": "PASS_EXACT_REPAIRED_TREE_NO_FINDINGS",
-      "exact_six_module": "five-module classification regression 63 passed; exit 0",
-      "isolated_modules": "tree engine 4 passed under hostile DATABASE_URL; reversed order 4 passed",
-      "adversarial": "first candidate rejected because builder SessionLocal escaped to hostile DB; repaired candidate patches the exact consumer and preserves source hashes",
-      "remote_binding": "HEAD b65516018df18646a3a1b2f1bcaa88fa66d0aeec tree 9b60048309b8ce4dcb74a7a3775fbfa8f207f182 matches independently reviewed local tree"
+      "session": "/root/a5_canonical_fixture_160",
+      "status": "FINAL_PASS_EXACT_TREE_NO_FINDINGS",
+      "exact_six_module": "exact 17-module classification/search regression 147 passed and 7 subtests; exit 0",
+      "isolated_modules": "canonical module 32 passed normally and 32 passed under hostile DATABASE_URL",
+      "adversarial": "fixture lifecycle and module-level DB binding reviewed; assertions and skip/xfail were not weakened",
+      "remote_binding": "HEAD 6f3a832244c7f9c48cca4c97ffb8a681867c3f52 tree f23cd21eed59d9df588eb2075526ae555472726d matches independently reviewed local tree"
     },
     "ci": {
       "status": "PASSED_EXACT_HEAD",
-      "head_sha": "b65516018df18646a3a1b2f1bcaa88fa66d0aeec",
+      "head_sha": "6f3a832244c7f9c48cca4c97ffb8a681867c3f52",
       "runs": [
         {
-          "run_id": 38022682658,
-          "job_id": 114126853141,
+          "run_id": 38113322643,
+          "job_id": 114393202247,
           "conclusion": "success",
-          "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38022682658"
+          "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38113322643"
         }
       ]
     },
@@ -7491,46 +7491,46 @@
     "next_step": "Reproduce the next remaining full-catalog fixture failure or bounded #245 search/classification defect; do not treat disposable inventory as legal or source completeness."
   },
   "latest_development_checkpoint": {
-    "updated_at": "2026-10-10T04:05:05.000Z",
-    "checked_at": "2026-10-10T04:05:05.000Z",
+    "updated_at": "2026-10-11T05:01:00.000Z",
+    "checked_at": "2026-10-11T05:01:00.000Z",
     "pr": 256,
     "branch": "agent/product-ntm-regressions-v1",
-    "head_sha": "b65516018df18646a3a1b2f1bcaa88fa66d0aeec",
-    "tree_sha": "9b60048309b8ce4dcb74a7a3775fbfa8f207f182",
-    "parent_sha": "6cba001e44812391be363a3e2bdd5ecdf86b11a9",
-    "prior_checkpoint_sha": "6cba001e44812391be363a3e2bdd5ecdf86b11a9",
+    "head_sha": "6f3a832244c7f9c48cca4c97ffb8a681867c3f52",
+    "tree_sha": "f23cd21eed59d9df588eb2075526ae555472726d",
+    "parent_sha": "b65516018df18646a3a1b2f1bcaa88fa66d0aeec",
+    "prior_checkpoint_sha": "b65516018df18646a3a1b2f1bcaa88fa66d0aeec",
     "base_pr": 245,
     "base_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
-    "block": "tree_engine_disposable_catalog_fixture",
-    "status": "DRAFT_CHECKPOINT_A5_PASS_CI_PASS_TREE_FIXTURE",
+    "block": "canonical_tnved_disposable_catalog_fixture",
+    "status": "DRAFT_CHECKPOINT_A5_PASS_CI_PASS_CANONICAL_FIXTURE",
     "behavior": {
-      "reproduced": "TN VED catalogue API plus Tree Model v2 produced 2 failures with 25 passes because tree tests read an empty default database and could not address pinned headings such as 0101",
-      "final": "All four Tree Model v2 tests consume the existing session-scoped disposable pinned catalogue, including the module-level builder SessionLocal used for leaf computation",
-      "boundaries": "Test-fixture isolation only; assertions are unchanged and no production code, product data, legal applicability or source completeness changed"
+      "reproduced": "The exact 17-module classification/search regression produced 10 failures with 137 passes and 7 subtests because canonical model tests initialized and read an empty default database instead of the pinned catalogue",
+      "final": "Canonical model tests consume the existing session-scoped disposable pinned catalogue through patchable app_db.SessionLocal, including all direct parity reads",
+      "boundaries": "One existing test file only; assertions and skip/xfail are unchanged and no production code, product data, legal applicability or source completeness changed"
     },
     "author_tests": {
-      "baseline": "catalogue API plus tree engine 2 failed and 25 passed; exit 1",
-      "exact_six_module": "five-module classification regression 63 passed; exit 0",
-      "isolation": "hostile inherited DATABASE_URL tree run 4 passed; default DB and pinned catalogue SHA-256 unchanged",
-      "diff": "exactly two existing test-only files; no production/data changes"
+      "baseline": "exact 17-module classification/search regression 10 failed, 137 passed and 7 subtests; exit 1",
+      "exact_six_module": "exact 17-module classification/search regression 147 passed and 7 subtests; exit 0",
+      "isolation": "canonical module 32 passed normally and 32 passed under hostile inherited DATABASE_URL",
+      "diff": "exactly one existing test-only file; no production/data changes"
     },
     "a5": {
-      "session": "/root/a5_tree_fixture_157",
-      "status": "PASS_EXACT_REPAIRED_TREE_NO_FINDINGS",
-      "exact_six_module": "five-module classification regression 63 passed; exit 0",
-      "isolated_modules": "tree engine 4 passed under hostile DATABASE_URL; reversed order 4 passed",
-      "adversarial": "first candidate rejected because builder SessionLocal escaped to hostile DB; repaired candidate patches the exact consumer and preserves source hashes",
-      "remote_binding": "HEAD b65516018df18646a3a1b2f1bcaa88fa66d0aeec tree 9b60048309b8ce4dcb74a7a3775fbfa8f207f182 matches independently reviewed local tree"
+      "session": "/root/a5_canonical_fixture_160",
+      "status": "FINAL_PASS_EXACT_TREE_NO_FINDINGS",
+      "exact_six_module": "exact 17-module classification/search regression 147 passed and 7 subtests; exit 0",
+      "isolated_modules": "canonical module 32 passed normally and 32 passed under hostile DATABASE_URL",
+      "adversarial": "fixture lifecycle and module-level DB binding reviewed; assertions and skip/xfail were not weakened",
+      "remote_binding": "HEAD 6f3a832244c7f9c48cca4c97ffb8a681867c3f52 tree f23cd21eed59d9df588eb2075526ae555472726d matches independently reviewed local tree"
     },
     "ci": {
       "status": "PASSED_EXACT_HEAD",
-      "head_sha": "b65516018df18646a3a1b2f1bcaa88fa66d0aeec",
+      "head_sha": "6f3a832244c7f9c48cca4c97ffb8a681867c3f52",
       "runs": [
         {
-          "run_id": 38022682658,
-          "job_id": 114126853141,
+          "run_id": 38113322643,
+          "job_id": 114393202247,
           "conclusion": "success",
-          "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38022682658"
+          "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38113322643"
         }
       ]
     },

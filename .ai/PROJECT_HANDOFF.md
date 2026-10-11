@@ -1,7 +1,23 @@
 # Tariff / A0 — единая точка передачи проекта
 
-**Снимок:** 2026-10-10 (UTC). **Единственный репозиторий:** [ivan88810900-star/tnved_starter_kit_v2](https://github.com/ivan88810900-star/tnved_starter_kit_v2).
+**Снимок:** 2026-10-11 (UTC). **Единственный репозиторий:** [ivan88810900-star/tnved_starter_kit_v2](https://github.com/ivan88810900-star/tnved_starter_kit_v2).
 **Авторитетное состояние:** ветка `agent/orchestration-state`, файлы `.ai/TASK_BOARD.json`, `.ai/COORDINATOR_LEASE.json`, `.ai/orchestration/A6_LIVE_STATUS.json`. Этот документ — указатель и контрольная точка, **не** право на запись/merge/A6. Перед действием заново читать текущие HEAD и state. Не полагаться на Business-чат.
+
+## 0aaaaaaaaaaaaaaaaaaa. #245 — canonical model использует disposable full-catalog fixture
+
+**Новый checkpoint:** [draft PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256), `agent/product-ntm-regressions-v1` @ `6f3a832244c7f9c48cca4c97ffb8a681867c3f52`, tree `f23cd21eed59d9df588eb2075526ae555472726d`, parent `b65516018df18646a3a1b2f1bcaa88fa66d0aeec`.
+
+Закрыт следующий full-catalog fixture-контур. До исправления 17-модульный classification/search regression давал **10 failed / 137 passed + 7 subtests**: `test_canonical_tnved_model.py` создавал и читал пустую default DB, поэтому не находил реальные headings `0101`, `0302` и другие. Теперь canonical model использует существующую session-scoped disposable DB из pinned bootstrap; прямые DB-сеансы также проходят через patchable `app_db.SessionLocal`. Assertions, skip/xfail, production code и product data не менялись.
+
+Проверки:
+
+- root: canonical **32 passed**, hostile `DATABASE_URL` **32 passed**, exact 17-module regression **147 passed + 7 subtests**, exit 0;
+- независимый A5 `/root/a5_canonical_fixture_160`: **FINAL PASS без findings**; normal **32 passed**, hostile **32 passed**, exact 17-module regression **147 passed + 7 subtests**, exit 0;
+- exact-head CI: [run 38113322643](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38113322643), offline-safety job `114393202247`, **success**.
+
+Полный #245 product/legal/source completeness остаётся **NOT PASS**. Lawful populated synchronized NTM snapshot недоступен. Merge, deploy, production write, enforcement/permissions/secrets change, destructive migration и внешний A6 не выполнялись; `core-s1-6415f443120f-r9-g106` не отправлялся.
+
+Следующий шаг — воспроизвести следующий remaining full-catalog fixture failure либо bounded #245 search/classification defect; disposable inventory не считать нормативной полнотой.
 
 ## 0aaaaaaaaaaaaaaaaaa. #245 — Tree Model v2 использует изолированный каталог
 
