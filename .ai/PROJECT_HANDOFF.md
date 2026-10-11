@@ -3,6 +3,23 @@
 **Снимок:** 2026-10-11 (UTC). **Единственный репозиторий:** [ivan88810900-star/tnved_starter_kit_v2](https://github.com/ivan88810900-star/tnved_starter_kit_v2).
 **Авторитетное состояние:** ветка `agent/orchestration-state`, файлы `.ai/TASK_BOARD.json`, `.ai/COORDINATOR_LEASE.json`, `.ai/orchestration/A6_LIVE_STATUS.json`. Этот документ — указатель и контрольная точка, **не** право на запись/merge/A6. Перед действием заново читать текущие HEAD и state. Не полагаться на Business-чат.
 
+## 0aaaaaaaaaaaaaaaaaaaaaaaaaaaa. #245 — FSA registry tests используют hermetic databases
+
+**Новый checkpoint:** [draft PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256), `agent/product-ntm-regressions-v1` @ `c58878f5064ec49419c39944f5da70b35944652e`, tree `a4cf25fbf7a8cfc5ced58fc91e603fd93e7d085b`, parent `720f882b8aa379c8daeb2baafc26ab4caa74a549`.
+
+Воспроизведён следующий broad-suite fixture defect: пять FSA opendata/upsert и certificate-normalization тестов проходили, но создавали и изменяли сконфигурированный hostile SQLite-файл размером 1 036 288 байт. Оба модуля теперь создают отдельные временные SQLite через существующий pinned classification bootstrap и перепривязывают захваченные test/application/normative-store/FSA-import/registry-lookup DB consumers к временному engine. Все 5 исходных test methods и 19 assertions сохранены AST-identical; production code, registry data, product configuration и правовая интерпретация не менялись.
+
+Проверки:
+
+- A4 `/root/a4_fsa_test_isolation_169`: focused **5 passed** в обоих порядках; hostile/source hashes неизменны, absent sentinels не создаются; смежный шестимодульный набор в обоих порядках **44 passed, 1 skipped**; cleanup/diff-check exit 0;
+- root control: те же focused и adjacent результаты; local agent-safety **120 + 4 passed**, snapshot valid, exit 0;
+- независимый A5 `/root/a5_fsa_test_isolation_169`: **FINAL PASS без findings**; все 5 методов и 19 assertions AST-identical, FSA test rows не выходят за disposable storage, pinned catalogue неизменён, временные DB/WAL/SHM удалены;
+- exact-head CI: [run 38145633639](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38145633639), offline-safety job `114488252775`, **success**.
+
+Это доказательство тестовой изоляции, а не свежести/юридической действительности реестра. Lawful populated synchronized NTM snapshot недоступен. Полный #245 product/legal/source completeness остаётся **NOT PASS**. Merge, deploy, production write, enforcement/permissions/secrets change, destructive migration и внешний A6 не выполнялись; `core-s1-6415f443120f-r9-g106` не отправлялся.
+
+Следующий шаг — изолировать следующий реальный broad-suite data/DB side-effect или fixture defect на disposable данных, не превращая тестовый inventory в нормативное доказательство.
+
 ## 0aaaaaaaaaaaaaaaaaaaaaaaaaaa. #245 — commodity-group documents используют hermetic seed fixture
 
 **Новый checkpoint:** [draft PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256), `agent/product-ntm-regressions-v1` @ `720f882b8aa379c8daeb2baafc26ab4caa74a549`, tree `b1eaab03b291592aa720f119a13482ef203944aa`, parent `70beb6d124a4062b4f4cc57ff8f20e10f4171062`.
