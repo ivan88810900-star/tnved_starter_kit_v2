@@ -3,6 +3,23 @@
 **Снимок:** 2026-10-11 (UTC). **Единственный репозиторий:** [ivan88810900-star/tnved_starter_kit_v2](https://github.com/ivan88810900-star/tnved_starter_kit_v2).
 **Авторитетное состояние:** ветка `agent/orchestration-state`, файлы `.ai/TASK_BOARD.json`, `.ai/COORDINATOR_LEASE.json`, `.ai/orchestration/A6_LIVE_STATUS.json`. Этот документ — указатель и контрольная точка, **не** право на запись/merge/A6. Перед действием заново читать текущие HEAD и state. Не полагаться на Business-чат.
 
+## 0aaaaaaaaaaaaaaaaaaaaaaa. #245 — Honest Mark использует hermetic seed fixture
+
+**Новый checkpoint:** [draft PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256), `agent/product-ntm-regressions-v1` @ `6d95f61986f71e89a390b77256dfed55c2c80f39`, tree `983e705370281ea2367db721ee22b40d7256c07c`, parent `d1240389b62f13ba38c442ce64a011e99e8a3d8c`.
+
+Воспроизведён следующий broad-suite fixture defect: `test_honest_mark.py` захватывал default `SessionLocal` и на пустой/hostile SQLite давал **13 failed** из-за отсутствующей `non_tariff_measures`. Модуль теперь создаёт отдельную временную SQLite из существующего pinned classification bootstrap, перепривязывает захваченные test/application/seed session factories к одному временному engine и загружает существующий Honest Mark inventory. Все 13 исходных assertions сохранены; production code, данные продукта, ставки и правовая интерпретация не менялись.
+
+Проверки:
+
+- A4 `/root/a4_honest_mark_fixture_164`: hostile focused **13 passed**; bootstrap safety в обоих порядках **18 passed**; seed idempotence **644 → 644**; hashes/cleanup/compile/diff-check exit 0;
+- root control: hostile focused **13 passed**; оба порядка bootstrap safety **18 passed**; local agent-safety **120 + 4 passed**, snapshot valid, exit 0;
+- независимый A5 `/root/a5_honest_mark_fixture_164`: **FINAL PASS без findings**; hostile focused **13 passed**, adjacent customs-procedure suites в обоих порядках **25 passed**; все 13 исходных test methods/assertions AST-equivalent, sentinel/pinned files неизменны, временные DB/WAL/SHM удалены;
+- exact-head CI: [run 38126432552](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38126432552), offline-safety job `114431647861`, **success**.
+
+Disposable Honest Mark inventory является только test evidence, не доказательством нормативной или source completeness. Lawful populated synchronized NTM snapshot недоступен. Полный #245 product/legal/source completeness остаётся **NOT PASS**. Merge, deploy, production write, enforcement/permissions/secrets change, destructive migration и внешний A6 не выполнялись; `core-s1-6415f443120f-r9-g106` не отправлялся.
+
+Следующий шаг — изолировать следующий seed-backed broad-suite fixture/data cluster на disposable данных без ослабления assertions; не выдавать тестовый inventory за актуальный нормативный источник.
+
 ## 0aaaaaaaaaaaaaaaaaaaaaa. #245 — customs procedures используют hermetic seed fixture
 
 **Новый checkpoint:** [draft PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256), `agent/product-ntm-regressions-v1` @ `d1240389b62f13ba38c442ce64a011e99e8a3d8c`, tree `751c1d516314107082b38d5a18685b2fab4b6389`, parent `ec00c3dad4be46ae9c8efb47103fff4650df4761`.
