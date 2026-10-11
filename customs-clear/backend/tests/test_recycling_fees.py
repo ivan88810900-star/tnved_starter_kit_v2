@@ -1,20 +1,133 @@
 """Tests for recycling fees (утильсбор) — Issue #85."""
 from __future__ import annotations
 
-import pytest
-from sqlalchemy import text
+import hashlib
+import os
+import subprocess
+import sys
+from collections.abc import Iterator
+from pathlib import Path
 
+import pytest
+from sqlalchemy import create_engine, text
+from sqlalchemy.engine import make_url
+from sqlalchemy.orm import sessionmaker
+
+from app import db as app_db
 from app.db import SessionLocal
+from app.services import normative_store, payment_engine, rate_display
 from app.services.normative_store import get_recycling_fee
 from app.services.payment_engine import compute_payments
+from scripts import seed_recycling_fees
+
+
+BACKEND_ROOT = Path(__file__).resolve().parents[1]
+BOOTSTRAP_SCRIPT = BACKEND_ROOT / "scripts" / "bootstrap_disposable_classification_inventory.py"
+DEFAULT_DATABASE = BACKEND_ROOT / "customs.db"
+PINNED_CATALOGUE = BACKEND_ROOT / "customs.db.backup_before_pdf_import"
+
+
+def _sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as file_handle:
+        for chunk in iter(lambda: file_handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def _protected_paths() -> set[Path]:
+    paths = {DEFAULT_DATABASE.resolve(), PINNED_CATALOGUE.resolve()}
+    configured_url = make_url(app_db.DATABASE_URL)
+    if configured_url.drivername.startswith("sqlite") and configured_url.database:
+        paths.add(Path(configured_url.database).resolve())
+
+    source_database = os.environ.get("TNVED_SOURCE_DB", "").strip()
+    if source_database:
+        if source_database.startswith("sqlite:"):
+            source_url = make_url(source_database)
+            if source_url.database:
+                paths.add(Path(source_url.database).resolve())
+        elif "://" not in source_database:
+            paths.add(Path(source_database).resolve())
+    return paths
+
+
+def _protected_fingerprints() -> dict[Path, str | None]:
+    return {
+        path: _sha256(path) if path.is_file() else None
+        for path in _protected_paths()
+    }
+
+
+@pytest.fixture(scope="module")
+def recycling_fees_session_factory(
+    tmp_path_factory: pytest.TempPathFactory,
+) -> Iterator[sessionmaker]:
+    """Build and seed an isolated catalogue without using configured databases."""
+    temp_dir = tmp_path_factory.mktemp("recycling-fees")
+    database = temp_dir / "recycling-fees.db"
+    protected_hashes = _protected_fingerprints()
+    env = os.environ.copy()
+    env.pop("DATABASE_URL", None)
+    env.pop("TNVED_SOURCE_DB", None)
+    result = subprocess.run(
+        [sys.executable, str(BOOTSTRAP_SCRIPT), str(database)],
+        cwd=BACKEND_ROOT,
+        env=env,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert _protected_fingerprints() == protected_hashes
+
+    engine = create_engine(
+        f"sqlite:///{database}",
+        connect_args={"check_same_thread": False},
+    )
+    factory = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    patches = pytest.MonkeyPatch()
+    patches.setattr(sys.modules[__name__], "SessionLocal", factory)
+    patches.setattr(app_db, "engine", engine)
+    patches.setattr(app_db, "SessionLocal", factory)
+    patches.setattr(normative_store, "SessionLocal", factory)
+    patches.setattr(payment_engine, "SessionLocal", factory)
+    patches.setattr(rate_display, "SessionLocal", factory)
+    patches.setattr(seed_recycling_fees, "engine", engine)
+    patches.setattr(seed_recycling_fees, "SessionLocal", factory)
+    patches.setattr(seed_recycling_fees, "DRY_RUN", False)
+
+    try:
+        initial = seed_recycling_fees.seed()
+        repeated = seed_recycling_fees.seed()
+        assert initial == {"inserted": 40, "total": 40}
+        assert repeated == {"inserted": 0, "total": 40}
+        yield factory
+    finally:
+        patches.undo()
+        engine.dispose()
+        for suffix in ("", "-shm", "-wal"):
+            candidate = Path(f"{database}{suffix}")
+            if candidate.exists():
+                candidate.unlink()
+        assert _protected_fingerprints() == protected_hashes
+
+
+@pytest.fixture(autouse=True)
+def _recycling_fees_database(
+    recycling_fees_session_factory: sessionmaker,
+) -> None:
+    """Ensure lookup and payment tests share the isolated seeded database."""
 
 
 class TestRecyclingFeesData:
     @pytest.fixture(autouse=True)
-    def _db(self):
-        self.db = SessionLocal()
-        yield
-        self.db.close()
+    def _db(self, recycling_fees_session_factory: sessionmaker):
+        self.db = recycling_fees_session_factory()
+        try:
+            yield
+        finally:
+            self.db.close()
 
     def test_total_entries_is_40(self) -> None:
         total = self.db.execute(text("SELECT COUNT(*) FROM recycling_fees")).scalar()
