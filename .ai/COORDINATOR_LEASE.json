@@ -1,14 +1,14 @@
 {
   "acquisition_note": "Isolate the next reproducible test_ntm_pipeline or source-diagnostics empty-DB fixture cluster on disposable data.",
-  "expires_at": "2026-10-11T17:18:17.259Z",
+  "expires_at": null,
   "generation": 172,
-  "holder": "/root/tariff_a0_scheduled_20261011T191417MSK",
+  "holder": null,
   "lease_repair": {},
-  "release_reason": "PROJECT_HANDOFF payment pointer reconciled with live draft PR255; board revision 706 records exact-head CI and remaining source-refresh limits.",
-  "released_by": "/root/tariff_a0_scheduled_20261010T071418MSK",
+  "release_reason": "PR256 broker matrix source-isolation fixture committed at e6f501be22e844b12d4e48e8046c8c9aaf98ef8d; exact-head safety CI passed, focused hostile-DB run and independent A5 remain pending.",
+  "released_by": "/root/tariff_a0_scheduled_20261011T191417MSK",
   "schema_version": 1,
   "serialization_repair": {},
-  "state": "active",
-  "token": "b9e30664c76f1edf25b57c88fadcaaf9",
-  "updated_at": "2026-10-11T16:18:17.259Z"
+  "state": "released",
+  "token": null,
+  "updated_at": "2026-10-11T16:23:29.197Z"
 }
