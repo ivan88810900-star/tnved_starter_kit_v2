@@ -11,6 +11,7 @@ from sqlalchemy.orm import sessionmaker
 from app.db import Base
 from app.models.ntm_v2 import NtmApplicabilityRuleV2, NtmMeasureV2
 from app.models.tnved import Chapter, Commodity, NonTariffMeasure, Section
+from app.services import sanctions_risk_block
 from app.services.ntm_engine_v2 import (
     get_layer_requirements_v2_legacy_shape,
     get_tr_ts_requirements_v2_legacy_shape,
@@ -40,6 +41,7 @@ def memory_sessionmaker(monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setattr("app.db.SessionLocal", sm)
     monkeypatch.setattr("app.services.normative_store.SessionLocal", sm)
     monkeypatch.setattr("app.services.non_tariff_rules.SessionLocal", sm)
+    monkeypatch.setattr(sanctions_risk_block, "SessionLocal", sm)
     return sm
 
 
@@ -142,6 +144,7 @@ def test_replacement_catalog_no_extra_after_full_import(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """После импорта rules+measures replacement (v2 TR+layers) не добавляет типов на 8517."""
+    assert sanctions_risk_block.SessionLocal is memory_sessionmaker
     monkeypatch.setattr(
         "app.services.non_tariff_service.get_full_ntm_requirements",
         lambda hs, d="": [],
