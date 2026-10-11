@@ -1,14 +1,14 @@
 {
   "acquisition_note": "Isolate the next reproducible test_ntm_pipeline or source-diagnostics empty-DB fixture cluster on disposable data.",
-  "expires_at": "2026-10-11T22:23:04.185810Z",
+  "expires_at": null,
   "generation": 178,
-  "holder": "/root",
+  "holder": null,
   "lease_repair": {},
   "release_reason": "PR256 broker matrix source-isolation fixture committed at e6f501be22e844b12d4e48e8046c8c9aaf98ef8d; exact-head safety CI passed, focused hostile-DB run and independent A5 remain pending.",
   "released_by": "/root/tariff_a0_scheduled_20261011T191417MSK",
   "schema_version": 1,
   "serialization_repair": {},
-  "state": "active",
-  "token": "390d2d8fbffe4370b814cc3a65997003",
-  "updated_at": "2026-10-11T21:53:04.185810Z"
+  "state": "released",
+  "token": null,
+  "updated_at": "2026-10-11T22:05:27.978164Z"
 }
