@@ -3,9 +3,73 @@
 from __future__ import annotations
 
 import asyncio
+from types import SimpleNamespace
+
+import pytest
 
 from app.services.ntm_effective_requirements import build_effective_requirements
 from app.services.non_tariff_service import check_position_non_tariff
+
+
+@pytest.fixture(autouse=True)
+def isolated_debug_invariance_sources(
+    monkeypatch: pytest.MonkeyPatch,
+    request: pytest.FixtureRequest,
+) -> None:
+    """Keep the debug-invariance check deterministic and independent of configured DBs."""
+
+    if request.node.name != "test_check_position_debug_does_not_change_business_fields":
+        return
+
+    async def _no_enrichment(**_kwargs: object) -> list[dict]:
+        return []
+
+    monkeypatch.setattr(
+        "app.services.non_tariff_service.get_full_ntm_requirements",
+        lambda _hs, _description="": [
+            {
+                "permit_type": "ДС",
+                "tr_ts": "004/2011",
+                "matched_prefix": "8471",
+                "legal_ref": "",
+                "description": "",
+                "trigger": None,
+            }
+        ],
+    )
+    empty_sources = (
+        "app.services.non_tariff_service.find_rules_for_code",
+        "app.services.non_tariff_service.find_measures_for_code",
+        "app.services.non_tariff_service.find_measures_by_description",
+        "app.services.non_tariff_service.find_normative_notes_for_hs",
+        "app.services.non_tariff_service.lookup_tr_ts_acts_by_codes",
+        "app.services.non_tariff_service.get_regulatory_documents_for_hs",
+        "app.services.ntm_v2_legacy_rules_import.get_advisory_legacy_rule_requirements_v2",
+        "app.services.ntm_v2_legacy_rules_import.get_legacy_rule_requirements_for_enforcement",
+        "app.services.ntm_v2_legacy_rules_import.get_legacy_rule_requirements_v2_legacy_shape",
+        "app.services.ntm_v2_official_sgr_import.get_advisory_official_sgr_requirements_v2",
+    )
+    for target in empty_sources:
+        monkeypatch.setattr(target, lambda *_args, **_kwargs: [])
+    monkeypatch.setattr(
+        "app.services.non_tariff_service.enrich_measures_by_description",
+        _no_enrichment,
+    )
+    for target in (
+        "app.services.non_tariff_service.get_default_cert_form",
+        "app.services.non_tariff_service.get_sensitive_override",
+    ):
+        monkeypatch.setattr(target, lambda *_args, **_kwargs: None)
+    monkeypatch.setattr(
+        "app.services.non_tariff_service.build_sanctions_risk_block",
+        lambda **_kwargs: SimpleNamespace(model_dump=lambda: {}),
+    )
+    for target in (
+        "app.services.ntm_v2_legacy_rules_import.should_apply_v2_rules_enforcement",
+        "app.services.ntm_v2_official_sgr_import.should_apply_official_sgr_advisory",
+        "app.services.ntm_v2_legacy_measures_enforcement.should_apply_v2_measures_enforcement",
+    ):
+        monkeypatch.setattr(target, lambda *_args, **_kwargs: False)
 
 
 def test_build_broker_only_used_for_missing() -> None:
