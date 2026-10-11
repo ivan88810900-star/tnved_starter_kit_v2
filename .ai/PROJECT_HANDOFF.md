@@ -1,6 +1,3 @@
-Warning: truncated output (original token count: 54228)
-Total output lines: 1208
-
 # Tariff / A0 — единая точка передачи проекта
 
 ## 0aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa. #245 — legacy smoke не создаёт configured SQLite
@@ -611,7 +608,93 @@ Exact-head Actions подтверждены на alias ref, который св�
 - direct reproduction до исправления: seed matcher `False`, DB runtime `True` для descendant exact scope; четыре targeted regression — **4 failed**, exit 1;
 - author disposable-DB NTM v2 runtime/layer slice: **210 passed**, exit 0; focused importer/validator/pipeline после A5 repair: **189 passed**, exit 0; `compileall` и `git diff --check` — exit 0;
 - broader #245 probe: **507 passed, 1 skipped, 26 subtests**, затем 10 fixture-inventory failures из-за отсутствующих в disposable DB FTS letters/classification seeds; это зафиксированный fixture/setup gap, не green broad-suite claim;
-- независимый A5 `/root/a5_ntm_fallback`: первый candidate **REJECT HIGH**, финальный exact reviewed tree **PASS**; fresh-SQLite adversarial matrix `OFFICIAL_…4228 tokens truncated…ГР мог вернуть строку со статусом `Аннулировано` и одновременно рекомендовать «Найдено действующее СГР». Исправлено fail-closed без удаления evidence: номер и исходный статус сохраняются, но revoked/negated/unknown возвращают «Найдено совпадение, статус требует проверки» и явное требование сверки в официальном реестре. Положительные английские статусы распознаются только как отдельные слова, поэтому `invalid` и `unregistered` не становятся active по подстроке. Действующие exact/fuzzy сценарии сохранены. HS activation, SQL matching, applicability, advisory/enforcement и правовая интерпретация не расширялись.
+- независимый A5 `/root/a5_ntm_fallback`: первый candidate **REJECT HIGH**, финальный exact reviewed tree **PASS**; fresh-SQLite adversarial matrix `OFFICIAL_SGR_FAIL_CLOSED_MATRIX_OK`, focused **189 passed**, exit 0; вручную сохранённые empty/exclusions-only строки также не допускаются runtime;
+- remote blobs пяти изменённых файлов побайтово совпали с reviewed tree; PR перечитан на exact remote HEAD;
+- exact-head GitHub Actions: **PENDING_NO_RUN_OBSERVED** для `a89904e335aa7cb3ae906b094031c0155254000e`; workflow runs и combined status пусты после повторных проверок. Candidate не считается окончательно принятым.
+
+Полный #245 product/legal/source-completeness **NOT PASS**. Protected merge, production/DB writes, enforcement flags, secrets/permissions, destructive migration и внешний A6 не выполнялись; `core-s1-6415f443120f-r9-g106` неизменён и не отправлен.
+
+Следующий шаг — повторно проверить обязательный exact-head CI, затем подготовить canonical disposable fixture bootstrap для FTS classification inventory и продолжить fixture-backed broad/full-sync #245 проверки.
+
+## 0aa. #244 — устаревшее или несвязанное evidence спецпошлины больше не попадает в автоматическую сумму
+
+**Новый текущий checkpoint:** [draft PR #255](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/255), `agent/core-payment-regressions-v1` @ `7c12f21787b1d557630d8b0737c769b326ab112d`, tree `9ebd8fb4f9a11d066f1b538fb50d67861e249604`, parent `6f1f5522cfe304030d1be474e3f074e85a739835`; base #244 неизменён `14e0ee8f034d94ffc5831d87e076f4d693a5a524`.
+
+Воспроизведён product defect: строка trade remedy с `SourceStatus.is_stale=true` всё ещё добавляла 7 000 RUB к публичному расчёту. Исправление связывает каждую anti-dumping, safeguard и countervailing строку с exact current `SourceStatus.revision` и единым 90-дневным budget свежести. Отсутствующий, stale, mismatched или future status, а также revision старше 90 дней, оставляет evidence и переводит расчёт в manual review: special-duty amount и итог удерживаются. Exact 90-day boundary остаётся допустимым. Новая юридическая применимость не выводилась и нормативные источники не переинтерпретировались.
+
+Проверки exact final tree:
+- direct reproduction до исправления: `test_public_path_rejects_stale_trade_remedy_source_status` — **FAIL**, получено 7 000 вместо 0, exit 1;
+- author focused `tests/test_special_duties.py`: **18 passed + 9 subtests**, exit 0;
+- author workflow-equivalent payment slice на disposable SQLite: **274 passed + 23 subtests**, exit 0;
+- author broad source/ingestion slice: **254 passed + 63 subtests**, exit 0; `compileall` и `git diff --check` — exit 0;
+- независимый A5 `/root/a5_special_scope`: **PASS exact reviewed tree**; focused **37 passed + 9 subtests**, broad **182 passed + 68 subtests**, public-API adversarial matrix **15/15** и future-row matrix **6/6**, все exit 0;
+- exact-head GitHub Actions: **PASS** — [run 37921716308](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/37921716308), [offline-safety job 113790958532](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/37921716308/job/113790958532), [payment-regression job 113790958895](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/37921716308/job/113790958895), все steps success.
+
+Все шесть committed payment bundles остаются старше допустимого порога и требуют source-by-source refresh из удержанных первичных snapshots; это исправление делает trade-remedy расчёт fail-closed, но не обновляет и не переутверждает источники. Полный #244 product/legal/source-completeness **NOT PASS**; полный #245 также **NOT PASS**. Protected merge, production/DB writes, enforcement flags, secrets/permissions, destructive migration и внешний A6 не выполнялись; `core-s1-6415f443120f-r9-g106` неизменён и не отправлен.
+
+Следующий шаг — продолжить текущий #245 source/applicability block и подготовить canonical disposable NTM v2 fixtures для воспроизводимых broad/full-sync проверок; неподтверждённую применимость сохранять как manual review.
+
+## 0z. #245 — HTML fallback ФСА больше не принимает неоднозначную таблицу за действующую запись
+
+**Новый текущий checkpoint:** [draft PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256), `agent/product-ntm-regressions-v1` @ `d5dd222f108399eac82a5d8001d7615a00953d08`, tree `9a81a7381d327061050a4616aba3f7988e0bc210`, parent `ad111df595f323b25e9cef1e7e250a6df1a0bad9`; base #245 неизменён `e39e19787bd913baeb6f85577a13e1116458e633`.
+
+Воспроизведён source/identity defect HTML fallback ФСА: таблица с любой строкой могла стать `VALID` без сопоставления номера, статуса и срока действия. Теперь разбираются все result tables; `VALID` требует точного canonical identity, явного active status и разбираемой непросроченной даты. Пропущенные колонки/ячейки, rowspan/colspan, неоднозначные заголовки, пустые номера, неизвестные даты и конфликтующие дубликаты остаются `UNKNOWN`/manual review; revoked/expired evidence остаётся `NOT_FOUND`. Query/search/organization metadata не считается реестровой записью, но неоднозначная registry-looking таблица блокирует положительный вывод. Справочная фраза «не найдено» не перекрывает точную полную запись и не удаляет evidence. Applicability/advisory/enforcement и правовая интерпретация не расширялись.
+
+Три промежуточных candidate независимый A5 отклонил: из-за missing expiry/rowspan/multiple-table false `VALID`, затем из-за ambiguous header/organization/unparseable expiry, затем из-за ошибочного downgrade корректной active записи служебной metadata-таблицей. Они не публиковались.
+
+Проверки exact final tree:
+- author focused FSA/opendata/permits: **75 passed, 1 skipped, 6 subtests**, exit 0; `compileall` и `git diff --check` — exit 0;
+- author broad #245 backend slice: **959 passed, 11 skipped, 38 subtests**, exit 0;
+- независимый A5 `/root/a5_pravo_probe`: **PASS exact reviewed tree**; adversarial HTML matrix **28/28**, metadata + exact-active **3/3**, focused **20 passed +6 subtests**, related disposable-DB **71 passed, 1 skipped +6 subtests**, все exit 0; import-order probes и diff-check exit 0;
+- connector remote tree побайтово совпадает с reviewed local tree; PR перечитан на exact remote HEAD;
+- exact-head GitHub Actions: **PENDING_NO_RUN_OBSERVED** для `d5dd222f108399eac82a5d8001d7615a00953d08`.
+
+Полный #245 product/legal/source-completeness **NOT PASS**. NTM full-sync audit всё ещё требует законно доступного populated synchronized snapshot. Protected merge, production/DB writes, enforcement flags, secrets/permissions, destructive migration и внешний A6 не выполнялись; `core-s1-6415f443120f-r9-g106` неизменён и не отправлен.
+
+Следующий шаг — повторно проверить exact-head CI, затем продолжить следующий воспроизводимый #245 source/applicability defect, сохраняя неподтверждённые результаты в manual review.
+
+## 0y. #245 — FSA JSON API больше не принимает чужую или неподтверждённую запись за действующую
+
+**Новый текущий checkpoint:** [draft PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256), `agent/product-ntm-regressions-v1` @ `ad111df595f323b25e9cef1e7e250a6df1a0bad9`, tree `961b8d8c1995900284d54f5143f7ae1db7633b47`, parent `af1f6301f871b5156fabe774505aa9184e452217`; base #245 неизменён `e39e19787bd913baeb6f85577a13e1116458e633`.
+
+Воспроизведён source/identity defect: любой непустой JSON-ответ API ФСА становился `VALID`, даже если API вернул другой номер, аннулированную/неизвестную запись либо только положительный счётчик без строки. Теперь `VALID` требует точного canonical match по специальному полю номера сертификата/декларации и явного active status. Generic `number` не считается доказательством личности записи, потому что может быть внутренним ID API. Все точные дубликаты агрегируются независимо от порядка: revoked/expired не позволяют `VALID`, active+unknown остаётся `UNKNOWN`. `NOT_FOUND` для несовпадения допустим только когда каждая строка имеет доверенное поле номера; смешанные/ненумерованные ответы и positive count без строк остаются `UNKNOWN` для manual review. Evidence номера, статуса, count и ТН ВЭД сохраняется; applicability/advisory/enforcement и правовая интерпретация не расширялись.
+
+Два промежуточных local candidate независимый A5 отклонил: первый был order-dependent на duplicate active/revoked и ошибочно считал mixed numbered/unnumbered ответ доказанным отсутствием; второй ещё доверял generic string `number` как номеру сертификата. Эти варианты не публиковались.
+
+Проверки exact final tree:
+- author focused FSA/opendata/permits: **58 passed, 1 skipped**, exit 0; `compileall` и `git diff --check` — exit 0;
+- author broad #245 backend slice: **942 passed, 11 skipped, 32 subtests**, exit 0;
+- независимый A5 `/root/a5_pravo_probe`: **PASS exact candidate**; adversarial identity/status matrix exit 0; focused **17 passed**; related FSA/opendata/permits **51 passed, 1 skipped**, exit 0; оба порядка imports exit 0, circular import отсутствует; false `VALID` не найден;
+- connector создал remote tree, побайтово совпадающий с reviewed local tree; PR после публикации перечитан и показывает exact remote HEAD;
+- exact-head GitHub Actions: **PENDING_NO_RUN_OBSERVED** для `ad111df595f323b25e9cef1e7e250a6df1a0bad9`; workflow runs пусты при проверке.
+
+Полный #245 product/legal/source-completeness **NOT PASS**. NTM full-sync audit всё ещё требует законно доступного populated synchronized snapshot. Protected merge, production/DB writes, enforcement flags, secrets/permissions, destructive migration и внешний A6 не выполнялись; `core-s1-6415f443120f-r9-g106` неизменён и не отправлен.
+
+Следующий шаг — повторно проверить exact-head CI, затем исследовать HTML-table fallback ФСА и следующий #245 source/applicability defect; неподтверждённые результаты оставлять `UNKNOWN`, не расширять definite rules.
+
+## 0x. #245 — локальный FSA opendata статус fail-closed
+
+**Новый текущий checkpoint:** [draft PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256), `agent/product-ntm-regressions-v1` @ `af1f6301f871b5156fabe774505aa9184e452217`, tree `fd3d214ce25a01286f3110e2a42849f4ff31f7a6`, parent `758797f56b00ceb5fd78362a0dce80683dc1e96d`; base #245 неизменён `e39e19787bd913baeb6f85577a13e1116458e633`.
+
+Воспроизведён source/applicability defect: любая непустая неизвестная строка статуса локальной FSA opendata записи (например, «Ожидает проверки» или «Архив») ошибочно становилась `VALID`. Исправление fail-closed сохраняет номер, держателя и исходный status как evidence: только явный active/valid считается `VALID`, inactive/revoked/expired — `NOT_FOUND`, неизвестный/архивный/неподтверждённый — `UNKNOWN`. Русские и английские отрицания проверяются раньше положительных слов; `invalid`, `unregistered`, `validated`, `reactivated` не дают substring false positive. Lookup scope, SQL matching, NTM applicability, advisory/enforcement и правовая интерпретация не расширялись.
+
+Первый local candidate `98e92e236ff8f0a49a46fab997506f2a882231e9` независимый A5 отклонил: «Не зарегистрирован», «незарегистрирован» и `not registered` ещё попадали в positive marker. Этот вариант не публиковался. Финальный reviewed local tree опубликован как один remote commit и побайтово совпадает.
+
+Проверки exact final tree:
+- author focused FSA/permits: **34 passed, 1 skipped**, exit 0; explicit negation matrix, `py_compile`, `git diff --check` — exit 0;
+- author broad #245 backend slice: **925 passed, 11 skipped, 32 subtests**, exit 0;
+- независимый A5 `/root/a5_pravo_probe`: **PASS exact remote HEAD**; 23-case adversarial matrix exit 0; focused **20 passed**, related FSA **25 passed**, broader FSA/permits **34 passed, 1 skipped**, exit 0; unknown/archive evidence retained, active valid, inactive/expired fail closed; local reviewed tree и remote tree byte-identical;
+- exact-head GitHub Actions: **PENDING_NO_RUN_OBSERVED** для `af1f6301f871b5156fabe774505aa9184e452217`; workflow runs пусты при повторной проверке.
+
+Tracked `customs-clear/backend/customs.db.backup_before_pdf_import` проверен как возможный snapshot, но в нём отсутствуют таблицы `non_tariff_measures`/NTM v2; он не пригоден для full-sync audit. Полный #245 product/legal/source-completeness **NOT PASS**. Protected merge, production/DB writes, enforcement flags, secrets/permissions, destructive migration и внешний A6 не выполнялись; `core-s1-6415f443120f-r9-g106` неизменён и не отправлен.
+
+Следующий шаг — повторно проверить exact-head CI; затем выполнить NTM full-sync audit на lawful populated synchronized snapshot, если он появится, либо продолжить следующий воспроизводимый #245 source/applicability defect без расширения definite rules.
+
+## 0w. #245 — статус СГР fail-closed: неподтверждённая запись остаётся evidence, но не считается действующей
+
+**Новый текущий checkpoint:** [draft PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256), `agent/product-ntm-regressions-v1` @ `758797f56b00ceb5fd78362a0dce80683dc1e96d`, tree `b478bbdd8bc1552acda622d5f9c1453f8beb8148`, parent `afab417d008bc6e386091544ac6589884eb758e5`; base #245 неизменён `e39e19787bd913baeb6f85577a13e1116458e633`.
+
+Воспроизведён product defect: fuzzy-match локального реестра СГР мог вернуть строку со статусом `Аннулировано` и одновременно рекомендовать «Найдено действующее СГР». Исправлено fail-closed без удаления evidence: номер и исходный статус сохраняются, но revoked/negated/unknown возвращают «Найдено совпадение, статус требует проверки» и явное требование сверки в официальном реестре. Положительные английские статусы распознаются только как отдельные слова, поэтому `invalid` и `unregistered` не становятся active по подстроке. Действующие exact/fuzzy сценарии сохранены. HS activation, SQL matching, applicability, advisory/enforcement и правовая интерпретация не расширялись.
 
 Проверки exact remote tree:
 - author focused: **19 passed**, exit 0; adversarial status matrix, `git diff --check`, `py_compile` — exit 0;
