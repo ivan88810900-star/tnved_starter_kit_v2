@@ -2179,7 +2179,7 @@
       "unique_source_pr_count": 29
     }
   },
-  "revision": 712,
+  "revision": 713,
   "runs": [
     {
       "head_sha": null,
@@ -7434,49 +7434,49 @@
       }
     }
   ],
-  "updated_at": "2026-10-11T07:57:13.000Z",
+  "updated_at": "2026-10-11T11:01:17.000Z",
   "latest_scheduled_product_checkpoint": {
-    "updated_at": "2026-10-11T09:56:00.000Z",
-    "checked_at": "2026-10-11T09:56:00.000Z",
+    "updated_at": "2026-10-11T11:01:17.000Z",
+    "checked_at": "2026-10-11T11:01:17.000Z",
     "pr": 256,
     "branch": "agent/product-ntm-regressions-v1",
-    "head_sha": "776e5bdb67c8ac1b6c630196b6e00691d3fa5ec1",
-    "tree_sha": "3906bb199996c590bb77eaa9e79777c5b08614a9",
-    "parent_sha": "6d95f61986f71e89a390b77256dfed55c2c80f39",
-    "prior_checkpoint_sha": "6d95f61986f71e89a390b77256dfed55c2c80f39",
+    "head_sha": "6b449c7ba981e45c43c01f30bc75f80071d1202e",
+    "tree_sha": "917b418ee5a69c3b75188cb08129a0e79de15e0f",
+    "parent_sha": "776e5bdb67c8ac1b6c630196b6e00691d3fa5ec1",
+    "prior_checkpoint_sha": "776e5bdb67c8ac1b6c630196b6e00691d3fa5ec1",
     "base_pr": 245,
     "base_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
-    "block": "import_restrictions_hermetic_seed_fixture",
-    "status": "DRAFT_CHECKPOINT_A5_PASS_CI_PASS_IMPORT_RESTRICTIONS_FIXTURE",
+    "block": "declaration_documents_hermetic_seed_fixture",
+    "status": "DRAFT_CHECKPOINT_A5_PASS_CI_PASS_DECLARATION_DOCUMENTS_FIXTURE",
     "behavior": {
-      "reproduced": "Import restriction tests captured the default SessionLocal and produced 15 failures on an empty inherited SQLite database because import_restrictions was absent",
-      "final": "The module uses a disposable SQLite database built by the existing pinned classification bootstrap and populated by the existing import-restrictions seed with captured test, application, normative-store and seed DB consumers rebound to one temporary engine",
-      "boundaries": "One test file only; all 15 original test methods and 19 assertions are unchanged; production code, seed data, rates and legal interpretation are unchanged"
+      "reproduced": "Declaration document tests captured the default SessionLocal and produced 13 failures on an empty inherited SQLite database because declaration_documents was absent",
+      "final": "The module uses a disposable SQLite database built by the existing pinned classification bootstrap and populated by the existing declaration-documents seed with captured test, application, normative-store and seed DB consumers rebound to one temporary engine",
+      "boundaries": "One test file only; all 13 original test methods and 16 original assertions are unchanged; production code, seed data, rates and legal interpretation are unchanged"
     },
     "author_tests": {
-      "baseline": "focused import restrictions module 15 failed; exit 1",
-      "focused": "A4 and A0 hostile focused 15 passed; exit 0",
-      "adjacent": "bootstrap safety, import restrictions, Honest Mark and customs procedures in both orders 45 passed; seed idempotence 76 to 76 with second insert 0",
+      "baseline": "focused declaration documents module 13 failed; exit 1",
+      "focused": "A4 and A0 hostile focused 13 passed; exit 0",
+      "adjacent": "disposable classification, declaration documents, import restrictions, Honest Mark and customs procedures in both orders 58 passed; seed idempotence 87 to 87 with second insert 0",
       "control": "A0 local agent-safety 120 plus 4 passed and snapshot valid; exit 0"
     },
     "a5": {
-      "session": "/root/a5_import_restrictions_fixture_165",
+      "session": "/root/a5_declaration_documents_fixture_166",
       "status": "FINAL_PASS_EXACT_TREE_NO_FINDINGS",
-      "focused": "15 passed; exit 0",
-      "adjacent": "45 passed in each forward and reverse adjacent order; exit 0",
+      "focused": "13 passed; exit 0",
+      "adjacent": "58 passed in each forward and reverse adjacent order; exit 0",
       "adversarial": "hostile DATABASE_URL and TNVED_SOURCE_DB sentinels unchanged; all original tests/assertions AST-equivalent; optional customs.db and pinned catalogue unchanged; no temporary DB/WAL/SHM remained",
-      "remote_binding": "remote HEAD 776e5bdb67c8ac1b6c630196b6e00691d3fa5ec1 has independently reviewed tree 3906bb199996c590bb77eaa9e79777c5b08614a9"
+      "remote_binding": "remote HEAD 6b449c7ba981e45c43c01f30bc75f80071d1202e has independently reviewed tree 917b418ee5a69c3b75188cb08129a0e79de15e0f"
     },
     "ci": {
       "status": "PASSED_EXACT_HEAD",
-      "head_sha": "776e5bdb67c8ac1b6c630196b6e00691d3fa5ec1",
+      "head_sha": "6b449c7ba981e45c43c01f30bc75f80071d1202e",
       "runs": [
         {
-          "run_id": 38130084244,
-          "job_id": 114442413336,
+          "run_id": 38133961473,
+          "job_id": 114453881715,
           "attempt": 1,
           "conclusion": "success",
-          "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38130084244"
+          "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38133961473"
         }
       ]
     },
@@ -7492,47 +7492,47 @@
     "next_step": "Isolate the next seed-backed broad-suite fixture/data cluster on disposable data without weakening assertions; do not treat test inventory as legal or source completeness."
   },
   "latest_development_checkpoint": {
-    "updated_at": "2026-10-11T09:56:00.000Z",
-    "checked_at": "2026-10-11T09:56:00.000Z",
+    "updated_at": "2026-10-11T11:01:17.000Z",
+    "checked_at": "2026-10-11T11:01:17.000Z",
     "pr": 256,
     "branch": "agent/product-ntm-regressions-v1",
-    "head_sha": "776e5bdb67c8ac1b6c630196b6e00691d3fa5ec1",
-    "tree_sha": "3906bb199996c590bb77eaa9e79777c5b08614a9",
-    "parent_sha": "6d95f61986f71e89a390b77256dfed55c2c80f39",
-    "prior_checkpoint_sha": "6d95f61986f71e89a390b77256dfed55c2c80f39",
+    "head_sha": "6b449c7ba981e45c43c01f30bc75f80071d1202e",
+    "tree_sha": "917b418ee5a69c3b75188cb08129a0e79de15e0f",
+    "parent_sha": "776e5bdb67c8ac1b6c630196b6e00691d3fa5ec1",
+    "prior_checkpoint_sha": "776e5bdb67c8ac1b6c630196b6e00691d3fa5ec1",
     "base_pr": 245,
     "base_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
-    "block": "import_restrictions_hermetic_seed_fixture",
-    "status": "DRAFT_CHECKPOINT_A5_PASS_CI_PASS_IMPORT_RESTRICTIONS_FIXTURE",
+    "block": "declaration_documents_hermetic_seed_fixture",
+    "status": "DRAFT_CHECKPOINT_A5_PASS_CI_PASS_DECLARATION_DOCUMENTS_FIXTURE",
     "behavior": {
-      "reproduced": "Import restriction tests captured the default SessionLocal and produced 15 failures on an empty inherited SQLite database because import_restrictions was absent",
-      "final": "The module uses a disposable SQLite database built by the existing pinned classification bootstrap and populated by the existing import-restrictions seed with captured test, application, normative-store and seed DB consumers rebound to one temporary engine",
-      "boundaries": "One test file only; all 15 original test methods and 19 assertions are unchanged; production code, seed data, rates and legal interpretation are unchanged"
+      "reproduced": "Declaration document tests captured the default SessionLocal and produced 13 failures on an empty inherited SQLite database because declaration_documents was absent",
+      "final": "The module uses a disposable SQLite database built by the existing pinned classification bootstrap and populated by the existing declaration-documents seed with captured test, application, normative-store and seed DB consumers rebound to one temporary engine",
+      "boundaries": "One test file only; all 13 original test methods and 16 original assertions are unchanged; production code, seed data, rates and legal interpretation are unchanged"
     },
     "author_tests": {
-      "baseline": "focused import restrictions module 15 failed; exit 1",
-      "focused": "A4 and A0 hostile focused 15 passed; exit 0",
-      "adjacent": "bootstrap safety, import restrictions, Honest Mark and customs procedures in both orders 45 passed; seed idempotence 76 to 76 with second insert 0",
+      "baseline": "focused declaration documents module 13 failed; exit 1",
+      "focused": "A4 and A0 hostile focused 13 passed; exit 0",
+      "adjacent": "disposable classification, declaration documents, import restrictions, Honest Mark and customs procedures in both orders 58 passed; seed idempotence 87 to 87 with second insert 0",
       "control": "A0 local agent-safety 120 plus 4 passed and snapshot valid; exit 0"
     },
     "a5": {
-      "session": "/root/a5_import_restrictions_fixture_165",
+      "session": "/root/a5_declaration_documents_fixture_166",
       "status": "FINAL_PASS_EXACT_TREE_NO_FINDINGS",
-      "focused": "15 passed; exit 0",
-      "adjacent": "45 passed in each forward and reverse adjacent order; exit 0",
+      "focused": "13 passed; exit 0",
+      "adjacent": "58 passed in each forward and reverse adjacent order; exit 0",
       "adversarial": "hostile DATABASE_URL and TNVED_SOURCE_DB sentinels unchanged; all original tests/assertions AST-equivalent; optional customs.db and pinned catalogue unchanged; no temporary DB/WAL/SHM remained",
-      "remote_binding": "remote HEAD 776e5bdb67c8ac1b6c630196b6e00691d3fa5ec1 has independently reviewed tree 3906bb199996c590bb77eaa9e79777c5b08614a9"
+      "remote_binding": "remote HEAD 6b449c7ba981e45c43c01f30bc75f80071d1202e has independently reviewed tree 917b418ee5a69c3b75188cb08129a0e79de15e0f"
     },
     "ci": {
       "status": "PASSED_EXACT_HEAD",
-      "head_sha": "776e5bdb67c8ac1b6c630196b6e00691d3fa5ec1",
+      "head_sha": "6b449c7ba981e45c43c01f30bc75f80071d1202e",
       "runs": [
         {
-          "run_id": 38130084244,
-          "job_id": 114442413336,
+          "run_id": 38133961473,
+          "job_id": 114453881715,
           "attempt": 1,
           "conclusion": "success",
-          "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38130084244"
+          "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38133961473"
         }
       ]
     },
