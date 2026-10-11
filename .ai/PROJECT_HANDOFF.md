@@ -1,5 +1,22 @@
 # Tariff / A0 — единая точка передачи проекта
 
+## 0aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa. #245 — legacy/combined diagnostics изолированы от configured DB
+
+**Новый checkpoint:** [draft PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256), `agent/product-ntm-regressions-v1` @ `1f4d1f0631ed09dfdc5395cb88dfab8a5070b0b1`, tree `810fce451087981b2ab369e27352b43f05cb69f5`, parent `648b0e06141192d339e10a65142dd4e863574d05`. Локальный author tip `0526717bc3d748719570a8d5a373f8dd5e4a7719` имеет тот же exact tree.
+
+Воспроизведён order-dependent fixture defect: `test_ntm_v2_legacy_measures_diagnostics.py` проходил **7 tests**, но создавал 4 KiB configured SQLite; совместная collection с combined-runtime модулем делала оба порядка тестов зависимыми от configured DB. Обе in-memory fixtures теперь явно перепривязывают захваченный `app.services.sanctions_risk_block.SessionLocal`. Изменено ровно по одной fixture-строке в двух test files; 11 test functions и 27 assertions AST-identical. Production code, нормативные данные, flags, skips/xfails и правовая интерпретация не менялись.
+
+Проверки:
+
+- A2 `/root/a2_ntm_legacy_measures_175` и root: focused **7 + 4 passed**, оба порядка **11 passed**, со source diagnostics **17 passed**; absent configured DB не создаётся;
+- root local agent-safety: **120 + 4 passed**, snapshot valid; все exit 0;
+- независимый A5 `/root/a5_ntm_legacy_measures_175`: **FINAL PASS без findings**; оба порядка и adjacent оба порядка PASS, pre-existing sentinel SHA/row сохранены, AST parity подтверждён;
+- exact-head CI: [run 38166485840](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38166485840), offline-safety job `114550000909`, attempt 1, **success**.
+
+Это test-isolation evidence, не подтверждение полноты источников или юридической применимости. Lawful populated synchronized NTM snapshot недоступен; полный #245 остаётся **NOT PASS**. Merge, deploy, production write, enforcement/permissions/secrets change, destructive migration и внешний A6 не выполнялись; `core-s1-6415f443120f-r9-g106` не отправлялся.
+
+Следующий отдельный блок — следующий воспроизводимый empty-DB/source-backed fixture cluster на disposable данных, без подмены legal/source completeness тестовым evidence.
+
 ## 0aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa. #245 — NTM source diagnostics изолированы от configured DB
 
 **Новый checkpoint:** [draft PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256), `agent/product-ntm-regressions-v1` @ `648b0e06141192d339e10a65142dd4e863574d05`, tree `3f5a4202520a7bd94aabbcd98677856f08ea70c0`, parent `3cc66695d26ce807718afa9494a799dc76a3bb9e`. Локальный author commit `3389f7a8a11f2466ba2d58746763e8465c3e7e8a` имеет тот же exact tree.

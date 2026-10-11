@@ -2179,7 +2179,7 @@
       "unique_source_pr_count": 29
     }
   },
-  "revision": 720,
+  "revision": 721,
   "runs": [
     {
       "head_sha": null,
@@ -7434,8 +7434,8 @@
       }
     }
   ],
-  "updated_at": "2026-10-11T18:04:51.196Z",
-  "latest_scheduled_product_checkpoint": {
+  "updated_at": "2026-10-11T19:05:37.000Z",
+  "previous_scheduled_product_checkpoint_174": {
     "updated_at": "2026-10-11T18:04:51.196Z",
     "checked_at": "2026-10-11T18:04:51.196Z",
     "pr": 256,
@@ -7490,7 +7490,7 @@
     "protected_actions_performed": false,
     "next_step": "Continue with the next reproducible empty-DB or source-backed fixture cluster, keeping disposable test evidence distinct from legal/source completeness."
   },
-  "latest_development_checkpoint": {
+  "previous_development_checkpoint_174": {
     "updated_at": "2026-10-11T18:04:51.196Z",
     "checked_at": "2026-10-11T18:04:51.196Z",
     "pr": 256,
@@ -7531,6 +7531,116 @@
           "attempt": 1,
           "conclusion": "success",
           "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38162233357"
+        }
+      ]
+    },
+    "blockers": [
+      "NTM full-sync audit still requires a lawful populated synchronized snapshot.",
+      "Full #245 product acceptance and legal/rate/source completeness remain NOT PASS."
+    ],
+    "a6": {
+      "request": "core-s1-6415f443120f-r9-g106",
+      "status": "UNCHANGED_NOT_SENT"
+    },
+    "protected_actions_performed": false,
+    "next_step": "Continue with the next reproducible empty-DB or source-backed fixture cluster, keeping disposable test evidence distinct from legal/source completeness."
+  },
+  "latest_scheduled_product_checkpoint": {
+    "updated_at": "2026-10-11T19:05:37.000Z",
+    "checked_at": "2026-10-11T19:05:37.000Z",
+    "pr": 256,
+    "branch": "agent/product-ntm-regressions-v1",
+    "head_sha": "1f4d1f0631ed09dfdc5395cb88dfab8a5070b0b1",
+    "tree_sha": "810fce451087981b2ab369e27352b43f05cb69f5",
+    "parent_sha": "648b0e06141192d339e10a65142dd4e863574d05",
+    "prior_checkpoint_sha": "648b0e06141192d339e10a65142dd4e863574d05",
+    "base_pr": 245,
+    "base_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
+    "block": "ntm_legacy_and_combined_diagnostics_configured_db_isolation",
+    "status": "DRAFT_CHECKPOINT_A5_PASS_CI_PASS_LEGACY_DIAGNOSTICS_ISOLATION",
+    "behavior": {
+      "reproduced": "Legacy measures diagnostics passed 7 tests but created a 4096-byte configured SQLite; collecting the combined runtime module made both file orders mutate the configured path",
+      "final": "Both in-memory fixtures explicitly bind the sanctions-risk module's captured SessionLocal alias, eliminating the collection-order-dependent configured-DB write",
+      "boundaries": "Exactly one fixture-only insertion in each of two test files; all 11 test functions and 27 assertion nodes are AST-identical; no production code, normative data, flags, skips/xfails or legal interpretation changed"
+    },
+    "author_tests": {
+      "baseline": "legacy focused 7 passed, exit 0, but created a 4096-byte hostile DB; adjacent both orders also created it",
+      "focused": "A2 and A0: legacy 7 passed and combined 4 passed, absent DB preserved",
+      "adjacent": "both module orders 11 passed; with source diagnostics 17 passed; absent configured DB preserved",
+      "control": "A0 local agent-safety 120 plus 4 passed and snapshot valid; all exit 0"
+    },
+    "a5": {
+      "session": "/root/a5_ntm_legacy_measures_175",
+      "status": "FINAL_PASS_EXACT_TREE_NO_FINDINGS",
+      "focused": "legacy 7 passed, combined 4 passed, both orders 11 passed; no configured DB created",
+      "adversarial": "pre-existing sentinel SHA and row preserved; adjacent source diagnostics both orders 17 passed; 11 test functions and 27 assertions AST-identical",
+      "remote_binding": "remote HEAD 1f4d1f0631ed09dfdc5395cb88dfab8a5070b0b1 has independently reviewed tree 810fce451087981b2ab369e27352b43f05cb69f5"
+    },
+    "ci": {
+      "status": "PASSED_EXACT_HEAD",
+      "head_sha": "1f4d1f0631ed09dfdc5395cb88dfab8a5070b0b1",
+      "runs": [
+        {
+          "run_id": 38166485840,
+          "job_id": 114550000909,
+          "attempt": 1,
+          "conclusion": "success",
+          "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38166485840"
+        }
+      ]
+    },
+    "blockers": [
+      "NTM full-sync audit still requires a lawful populated synchronized snapshot.",
+      "Full #245 product acceptance and legal/rate/source completeness remain NOT PASS."
+    ],
+    "a6": {
+      "request": "core-s1-6415f443120f-r9-g106",
+      "status": "UNCHANGED_NOT_SENT"
+    },
+    "protected_actions_performed": false,
+    "next_step": "Continue with the next reproducible empty-DB or source-backed fixture cluster, keeping disposable test evidence distinct from legal/source completeness."
+  },
+  "latest_development_checkpoint": {
+    "updated_at": "2026-10-11T19:05:37.000Z",
+    "checked_at": "2026-10-11T19:05:37.000Z",
+    "pr": 256,
+    "branch": "agent/product-ntm-regressions-v1",
+    "head_sha": "1f4d1f0631ed09dfdc5395cb88dfab8a5070b0b1",
+    "tree_sha": "810fce451087981b2ab369e27352b43f05cb69f5",
+    "parent_sha": "648b0e06141192d339e10a65142dd4e863574d05",
+    "prior_checkpoint_sha": "648b0e06141192d339e10a65142dd4e863574d05",
+    "base_pr": 245,
+    "base_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
+    "block": "ntm_legacy_and_combined_diagnostics_configured_db_isolation",
+    "status": "DRAFT_CHECKPOINT_A5_PASS_CI_PASS_LEGACY_DIAGNOSTICS_ISOLATION",
+    "behavior": {
+      "reproduced": "Legacy measures diagnostics passed 7 tests but created a 4096-byte configured SQLite; collecting the combined runtime module made both file orders mutate the configured path",
+      "final": "Both in-memory fixtures explicitly bind the sanctions-risk module's captured SessionLocal alias, eliminating the collection-order-dependent configured-DB write",
+      "boundaries": "Exactly one fixture-only insertion in each of two test files; all 11 test functions and 27 assertion nodes are AST-identical; no production code, normative data, flags, skips/xfails or legal interpretation changed"
+    },
+    "author_tests": {
+      "baseline": "legacy focused 7 passed, exit 0, but created a 4096-byte hostile DB; adjacent both orders also created it",
+      "focused": "A2 and A0: legacy 7 passed and combined 4 passed, absent DB preserved",
+      "adjacent": "both module orders 11 passed; with source diagnostics 17 passed; absent configured DB preserved",
+      "control": "A0 local agent-safety 120 plus 4 passed and snapshot valid; all exit 0"
+    },
+    "a5": {
+      "session": "/root/a5_ntm_legacy_measures_175",
+      "status": "FINAL_PASS_EXACT_TREE_NO_FINDINGS",
+      "focused": "legacy 7 passed, combined 4 passed, both orders 11 passed; no configured DB created",
+      "adversarial": "pre-existing sentinel SHA and row preserved; adjacent source diagnostics both orders 17 passed; 11 test functions and 27 assertions AST-identical",
+      "remote_binding": "remote HEAD 1f4d1f0631ed09dfdc5395cb88dfab8a5070b0b1 has independently reviewed tree 810fce451087981b2ab369e27352b43f05cb69f5"
+    },
+    "ci": {
+      "status": "PASSED_EXACT_HEAD",
+      "head_sha": "1f4d1f0631ed09dfdc5395cb88dfab8a5070b0b1",
+      "runs": [
+        {
+          "run_id": 38166485840,
+          "job_id": 114550000909,
+          "attempt": 1,
+          "conclusion": "success",
+          "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38166485840"
         }
       ]
     },
