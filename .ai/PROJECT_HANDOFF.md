@@ -3,6 +3,24 @@
 **Снимок:** 2026-10-11 (UTC). **Единственный репозиторий:** [ivan88810900-star/tnved_starter_kit_v2](https://github.com/ivan88810900-star/tnved_starter_kit_v2).
 **Авторитетное состояние:** ветка `agent/orchestration-state`, файлы `.ai/TASK_BOARD.json`, `.ai/COORDINATOR_LEASE.json`, `.ai/orchestration/A6_LIVE_STATUS.json`. Этот документ — указатель и контрольная точка, **не** право на запись/merge/A6. Перед действием заново читать текущие HEAD и state. Не полагаться на Business-чат.
 
+## 0aaaaaaaaaaaaaaaaaaaa. #245 — ROP importer изолирован от argv тестового раннера
+
+**Новый checkpoint:** [draft PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256), `agent/product-ntm-regressions-v1` @ `20459b52510efbbea7785b914dcd0d27fb0f59a9`, tree `e1546df9dbc5e1d576cc2601a2a254ed3a7fbba0`, parent `6f3a832244c7f9c48cca4c97ffb8a681867c3f52`.
+
+Широкий backend-прогон воспроизвёл отдельный broad-suite defect: программный вызов ROP importer разбирал аргументы самого pytest, поэтому `-q tests/test_rop_calculator.py` завершал setup через `SystemExit` и блокировал все 13 расчётных проверок. Importer теперь принимает явную последовательность `argv`, сохраняя обычную CLI-семантику при её отсутствии; тестовый setup передаёт пустой список. Добавлен regression с hostile outer `sys.argv`.
+
+Проверки:
+
+- до исправления: focused ROP **13 setup errors**, exit 1;
+- A4 `/root/a4_rop_importer_argv_161`: **14 passed**, CLI `--help`/dry-run exit 0;
+- root control на disposable SQLite: focused + adjacent ROP/child-marker **53 passed**, compileall/diff-check exit 0;
+- независимый A5 `/root/a5_rop_importer_argv_161`: **FINAL PASS без findings**; focused **14 passed**, adjacent **18 passed**, hostile outer argv изолирован, hash dry-run DB неизменён;
+- exact-head CI: [run 38116681245](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38116681245), offline-safety job `114402828401`, **success**.
+
+Формулы, ставки, нормативные данные и production DB не менялись. Широкий baseline остаётся красным по другим fixture/data-контрам и не является полным product PASS. Lawful populated synchronized NTM snapshot недоступен. Merge, deploy, production write, enforcement/permissions/secrets change, destructive migration и внешний A6 не выполнялись; `core-s1-6415f443120f-r9-g106` не отправлялся.
+
+Следующий шаг — изолировать следующий кластер broad-suite failures на disposable данных, начиная с актуального product/data fixture contour, не скрывая failures и не выдавая тестовый inventory за нормативную полноту.
+
 ## 0aaaaaaaaaaaaaaaaaaa. #245 — canonical model использует disposable full-catalog fixture
 
 **Новый checkpoint:** [draft PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256), `agent/product-ntm-regressions-v1` @ `6f3a832244c7f9c48cca4c97ffb8a681867c3f52`, tree `f23cd21eed59d9df588eb2075526ae555472726d`, parent `b65516018df18646a3a1b2f1bcaa88fa66d0aeec`.
