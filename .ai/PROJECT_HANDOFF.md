@@ -3,6 +3,23 @@
 **Снимок:** 2026-10-11 (UTC). **Единственный репозиторий:** [ivan88810900-star/tnved_starter_kit_v2](https://github.com/ivan88810900-star/tnved_starter_kit_v2).
 **Авторитетное состояние:** ветка `agent/orchestration-state`, файлы `.ai/TASK_BOARD.json`, `.ai/COORDINATOR_LEASE.json`, `.ai/orchestration/A6_LIVE_STATUS.json`. Этот документ — указатель и контрольная точка, **не** право на запись/merge/A6. Перед действием заново читать текущие HEAD и state. Не полагаться на Business-чат.
 
+## 0aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa. #245 — effective-requirements debug test изолирован от configured DB
+
+**Новый checkpoint:** [draft PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256), `agent/product-ntm-regressions-v1` @ `477074fb554c865cc55ebb740cc68eb0c371977b`, tree `621a5894d12b87a9a4275bb69927f755195e3c2a`, parent `171a393eb907ec663a8b4a9d95b740abf275458a`.
+
+Воспроизведён следующий fixture defect: `test_ntm_effective_requirements.py` на пустой configured SQLite давал **6 passed, 1 failed** (`ntm_applicability_rules_v2` отсутствует) и создавал 4 KiB файл; валидный pre-existing sentinel также менял SHA. Debug-invariance test теперь получает детерминированные test-only source results с реальной broker-shaped строкой `ДС / 004/2011 / 8471`, продолжая вызывать production `check_position_non_tariff` и реальную сборку effective requirements. Все 7 исходных test methods и 19 assertion nodes сохранены AST-identical; production code, нормативные данные, конфигурация продукта и правовая интерпретация не менялись.
+
+Проверки:
+
+- A2 `/root/a2_ntm_effective_171`: focused **7 passed**; совместный normative run в обоих порядках **18 passed**; absent hostile DB не создаётся, pre-existing sentinel byte-identical; compile/diff-check exit 0;
+- root control: focused + bounded adjacent **53 passed**; hostile present/absent preservation PASS; local agent-safety **120 + 4 passed**, snapshot valid, exit 0;
+- независимый A5 `/root/a5_ntm_effective_171`: **FINAL PASS без findings**; focused **7 passed**, оба adjacent order **9 passed**, production-call invariance и meaningful broker row подтверждены, DB/WAL/SHM residue отсутствует;
+- exact-head CI: [run 38153464780](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38153464780), offline-safety job `114511728747`, **success** на attempt 2. Attempt 1 встретил только временную Python 3.12 cleanup-гонку Git pack directory; неизменный HEAD прошёл повтор.
+
+Это доказательство тестовой изоляции, а не свежести или юридической действительности NTM. Lawful populated synchronized NTM snapshot недоступен. Полный #245 product/legal/source completeness остаётся **NOT PASS**. Merge, deploy, production write, enforcement/permissions/secrets change, destructive migration и внешний A6 не выполнялись; `core-s1-6415f443120f-r9-g106` не отправлялся.
+
+Следующий отдельный блок — изолировать следующий воспроизводимый `test_ntm_pipeline` / source-diagnostics empty-DB fixture cluster на disposable данных, не ослабляя assertions и не выдавая test inventory за нормативный источник.
+
 ## 0aaaaaaaaaaaaaaaaaaaaaaaaaaaaa. #245 — normative bundle/requirements tests используют hermetic databases
 
 **Новый checkpoint:** [draft PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256), `agent/product-ntm-regressions-v1` @ `171a393eb907ec663a8b4a9d95b740abf275458a`, tree `648f07e4ff24ccacd5d5b269eabd0243d5cf73a3`, parent `c58878f5064ec49419c39944f5da70b35944652e`.

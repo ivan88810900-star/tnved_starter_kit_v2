@@ -2179,7 +2179,7 @@
       "unique_source_pr_count": 29
     }
   },
-  "revision": 717,
+  "revision": 718,
   "runs": [
     {
       "head_sha": null,
@@ -7434,49 +7434,50 @@
       }
     }
   ],
-  "updated_at": "2026-10-11T15:08:00.000Z",
+  "updated_at": "2026-10-11T16:00:20.000Z",
   "latest_scheduled_product_checkpoint": {
-    "updated_at": "2026-10-11T15:08:00.000Z",
-    "checked_at": "2026-10-11T15:08:00.000Z",
+    "updated_at": "2026-10-11T16:00:20.000Z",
+    "checked_at": "2026-10-11T16:00:20.000Z",
     "pr": 256,
     "branch": "agent/product-ntm-regressions-v1",
-    "head_sha": "171a393eb907ec663a8b4a9d95b740abf275458a",
-    "tree_sha": "648f07e4ff24ccacd5d5b269eabd0243d5cf73a3",
-    "parent_sha": "c58878f5064ec49419c39944f5da70b35944652e",
-    "prior_checkpoint_sha": "c58878f5064ec49419c39944f5da70b35944652e",
+    "head_sha": "477074fb554c865cc55ebb740cc68eb0c371977b",
+    "tree_sha": "621a5894d12b87a9a4275bb69927f755195e3c2a",
+    "parent_sha": "171a393eb907ec663a8b4a9d95b740abf275458a",
+    "prior_checkpoint_sha": "171a393eb907ec663a8b4a9d95b740abf275458a",
     "base_pr": 245,
     "base_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
-    "block": "normative_bundle_requirements_hermetic_databases",
-    "status": "DRAFT_CHECKPOINT_A5_PASS_CI_PASS_NORMATIVE_DB_ISOLATION",
+    "block": "ntm_effective_requirements_debug_source_isolation",
+    "status": "DRAFT_CHECKPOINT_A5_PASS_CI_PASS_EFFECTIVE_REQUIREMENTS_ISOLATION",
     "behavior": {
-      "reproduced": "The normative bundle and requirements modules passed 18 tests but created or modified configured hostile SQLite; an absent file became 1036288 bytes and a valid sentinel changed SHA and grew to 1040384 bytes",
-      "final": "Bundle/API tests use a disposable bootstrapped SQLite with application, normative-store, payment, FTS and startup consumers isolated; requirements tests route sanctions lookup through their existing in-memory session",
-      "boundaries": "Two test files only; all 13 original test methods and 53 assertion nodes are AST-identical; production code, normative data, product configuration and legal interpretation are unchanged"
+      "reproduced": "Focused test had 1 failure and 6 passes on an empty configured SQLite, created a 4096-byte database, and changed the SHA of a valid pre-existing sentinel",
+      "final": "The debug-invariance test supplies deterministic test-only source results with a broker-shaped DS/004-2011/8471 requirement while retaining production check_position_non_tariff and effective-requirements construction",
+      "boundaries": "One test file only; all 7 original test methods and 19 assertion nodes are AST-identical; production code, normative data, product configuration and legal interpretation are unchanged"
     },
     "author_tests": {
-      "baseline": "focused 18 passed but configured hostile SQLite was created or mutated; pre-existing sentinel hash changed",
-      "focused": "A2 and A0 bundle 7 plus requirements 11 passed; both combined orders 18 passed; absent paths remained absent and pre-existing hashes remained byte-identical",
-      "adjacent": "A2 bounded NTM subset 52 passed; A0 focused plus regulatory documents, SGR status and NTM lookup 46 passed",
+      "baseline": "focused 1 failed and 6 passed; absent configured DB became 4096 bytes and a valid pre-existing sentinel changed SHA",
+      "focused": "A2 and A0 7 passed; absent configured path remained absent and pre-existing sentinel stayed byte-identical",
+      "adjacent": "A2 normative pair 18 passed in both orders; A0 bounded effective/normative/regulatory/SGR/lookup selection 53 passed",
       "control": "A0 local agent-safety 120 plus 4 passed and snapshot valid; exit 0"
     },
     "a5": {
-      "session": "/root/a5_normative_db_isolation_170",
+      "session": "/root/a5_ntm_effective_171",
       "status": "FINAL_PASS_EXACT_TREE_NO_FINDINGS",
-      "focused": "18 passed in each hostile-present and hostile-absent ordering; exit 0",
-      "adjacent": "bounded adjacent NTM regression 33 passed; exit 0",
-      "adversarial": "all 13 methods and 53 assertion nodes AST-identical; hostile and source sentinels preserved; default customs.db absent and pinned catalogue unchanged; no disposable DB/WAL/SHM residue",
-      "remote_binding": "remote HEAD 171a393eb907ec663a8b4a9d95b740abf275458a has independently reviewed tree 648f07e4ff24ccacd5d5b269eabd0243d5cf73a3"
+      "focused": "7 passed with hostile DB absent and 7 passed with a valid pre-existing sentinel; exit 0",
+      "adjacent": "effective requirements plus non-tariff lookup passed 9 tests in both orders; exit 0",
+      "adversarial": "all 7 methods and 19 assertion nodes AST-identical; no skips or xfails; production callable and meaningful broker result verified; no DB/WAL/SHM residue",
+      "remote_binding": "remote HEAD 477074fb554c865cc55ebb740cc68eb0c371977b has independently reviewed tree 621a5894d12b87a9a4275bb69927f755195e3c2a"
     },
     "ci": {
       "status": "PASSED_EXACT_HEAD",
-      "head_sha": "171a393eb907ec663a8b4a9d95b740abf275458a",
+      "head_sha": "477074fb554c865cc55ebb740cc68eb0c371977b",
       "runs": [
         {
-          "run_id": 38149897850,
-          "job_id": 114500978594,
-          "attempt": 1,
+          "run_id": 38153464780,
+          "job_id": 114511728747,
+          "attempt": 2,
           "conclusion": "success",
-          "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38149897850"
+          "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38153464780",
+          "attempt_1_note": "Unrelated Python 3.12 temporary Git pack-directory cleanup race; unchanged exact head passed on rerun."
         }
       ]
     },
@@ -7489,50 +7490,51 @@
       "status": "UNCHANGED_NOT_SENT"
     },
     "protected_actions_performed": false,
-    "next_step": "Isolate the independently reproduced test_ntm_effective_requirements empty-DB fixture defect without weakening its assertions; keep test inventory separate from legal/source completeness."
+    "next_step": "Isolate the next reproducible test_ntm_pipeline or source-diagnostics empty-DB fixture cluster on disposable data without weakening assertions; keep test inventory separate from legal/source completeness."
   },
   "latest_development_checkpoint": {
-    "updated_at": "2026-10-11T15:08:00.000Z",
-    "checked_at": "2026-10-11T15:08:00.000Z",
+    "updated_at": "2026-10-11T16:00:20.000Z",
+    "checked_at": "2026-10-11T16:00:20.000Z",
     "pr": 256,
     "branch": "agent/product-ntm-regressions-v1",
-    "head_sha": "171a393eb907ec663a8b4a9d95b740abf275458a",
-    "tree_sha": "648f07e4ff24ccacd5d5b269eabd0243d5cf73a3",
-    "parent_sha": "c58878f5064ec49419c39944f5da70b35944652e",
-    "prior_checkpoint_sha": "c58878f5064ec49419c39944f5da70b35944652e",
+    "head_sha": "477074fb554c865cc55ebb740cc68eb0c371977b",
+    "tree_sha": "621a5894d12b87a9a4275bb69927f755195e3c2a",
+    "parent_sha": "171a393eb907ec663a8b4a9d95b740abf275458a",
+    "prior_checkpoint_sha": "171a393eb907ec663a8b4a9d95b740abf275458a",
     "base_pr": 245,
     "base_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
-    "block": "normative_bundle_requirements_hermetic_databases",
-    "status": "DRAFT_CHECKPOINT_A5_PASS_CI_PASS_NORMATIVE_DB_ISOLATION",
+    "block": "ntm_effective_requirements_debug_source_isolation",
+    "status": "DRAFT_CHECKPOINT_A5_PASS_CI_PASS_EFFECTIVE_REQUIREMENTS_ISOLATION",
     "behavior": {
-      "reproduced": "The normative bundle and requirements modules passed 18 tests but created or modified configured hostile SQLite; an absent file became 1036288 bytes and a valid sentinel changed SHA and grew to 1040384 bytes",
-      "final": "Bundle/API tests use a disposable bootstrapped SQLite with application, normative-store, payment, FTS and startup consumers isolated; requirements tests route sanctions lookup through their existing in-memory session",
-      "boundaries": "Two test files only; all 13 original test methods and 53 assertion nodes are AST-identical; production code, normative data, product configuration and legal interpretation are unchanged"
+      "reproduced": "Focused test had 1 failure and 6 passes on an empty configured SQLite, created a 4096-byte database, and changed the SHA of a valid pre-existing sentinel",
+      "final": "The debug-invariance test supplies deterministic test-only source results with a broker-shaped DS/004-2011/8471 requirement while retaining production check_position_non_tariff and effective-requirements construction",
+      "boundaries": "One test file only; all 7 original test methods and 19 assertion nodes are AST-identical; production code, normative data, product configuration and legal interpretation are unchanged"
     },
     "author_tests": {
-      "baseline": "focused 18 passed but configured hostile SQLite was created or mutated; pre-existing sentinel hash changed",
-      "focused": "A2 and A0 bundle 7 plus requirements 11 passed; both combined orders 18 passed; absent paths remained absent and pre-existing hashes remained byte-identical",
-      "adjacent": "A2 bounded NTM subset 52 passed; A0 focused plus regulatory documents, SGR status and NTM lookup 46 passed",
+      "baseline": "focused 1 failed and 6 passed; absent configured DB became 4096 bytes and a valid pre-existing sentinel changed SHA",
+      "focused": "A2 and A0 7 passed; absent configured path remained absent and pre-existing sentinel stayed byte-identical",
+      "adjacent": "A2 normative pair 18 passed in both orders; A0 bounded effective/normative/regulatory/SGR/lookup selection 53 passed",
       "control": "A0 local agent-safety 120 plus 4 passed and snapshot valid; exit 0"
     },
     "a5": {
-      "session": "/root/a5_normative_db_isolation_170",
+      "session": "/root/a5_ntm_effective_171",
       "status": "FINAL_PASS_EXACT_TREE_NO_FINDINGS",
-      "focused": "18 passed in each hostile-present and hostile-absent ordering; exit 0",
-      "adjacent": "bounded adjacent NTM regression 33 passed; exit 0",
-      "adversarial": "all 13 methods and 53 assertion nodes AST-identical; hostile and source sentinels preserved; default customs.db absent and pinned catalogue unchanged; no disposable DB/WAL/SHM residue",
-      "remote_binding": "remote HEAD 171a393eb907ec663a8b4a9d95b740abf275458a has independently reviewed tree 648f07e4ff24ccacd5d5b269eabd0243d5cf73a3"
+      "focused": "7 passed with hostile DB absent and 7 passed with a valid pre-existing sentinel; exit 0",
+      "adjacent": "effective requirements plus non-tariff lookup passed 9 tests in both orders; exit 0",
+      "adversarial": "all 7 methods and 19 assertion nodes AST-identical; no skips or xfails; production callable and meaningful broker result verified; no DB/WAL/SHM residue",
+      "remote_binding": "remote HEAD 477074fb554c865cc55ebb740cc68eb0c371977b has independently reviewed tree 621a5894d12b87a9a4275bb69927f755195e3c2a"
     },
     "ci": {
       "status": "PASSED_EXACT_HEAD",
-      "head_sha": "171a393eb907ec663a8b4a9d95b740abf275458a",
+      "head_sha": "477074fb554c865cc55ebb740cc68eb0c371977b",
       "runs": [
         {
-          "run_id": 38149897850,
-          "job_id": 114500978594,
-          "attempt": 1,
+          "run_id": 38153464780,
+          "job_id": 114511728747,
+          "attempt": 2,
           "conclusion": "success",
-          "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38149897850"
+          "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38153464780",
+          "attempt_1_note": "Unrelated Python 3.12 temporary Git pack-directory cleanup race; unchanged exact head passed on rerun."
         }
       ]
     },
@@ -7545,6 +7547,6 @@
       "status": "UNCHANGED_NOT_SENT"
     },
     "protected_actions_performed": false,
-    "next_step": "Isolate the independently reproduced test_ntm_effective_requirements empty-DB fixture defect without weakening its assertions; keep test inventory separate from legal/source completeness."
+    "next_step": "Isolate the next reproducible test_ntm_pipeline or source-diagnostics empty-DB fixture cluster on disposable data without weakening assertions; keep test inventory separate from legal/source completeness."
   }
 }
