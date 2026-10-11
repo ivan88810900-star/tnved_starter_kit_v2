@@ -190,6 +190,12 @@ def isolated_pipeline_sources(monkeypatch: pytest.MonkeyPatch) -> None:
     async def _no_enrichment(**_kwargs: object) -> list[dict]:
         return []
 
+    # The runtime source switches are intentionally enabled in some environments.
+    # Keep this catalog/trigger regression on the canonical in-process catalog and
+    # layer inputs it asserts, instead of allowing the v2 adapters to consult DB.
+    monkeypatch.setattr("app.services.ntm_engine_v2.is_ntm_v2_tr_ts_enabled", lambda: False)
+    monkeypatch.setattr("app.services.ntm_engine_v2.is_ntm_v2_layers_enabled", lambda: False)
+
     for target in (
         "app.services.non_tariff_service.find_rules_for_code",
         "app.services.non_tariff_service.find_measures_for_code",
