@@ -12,6 +12,7 @@ from sqlalchemy.orm import sessionmaker
 from app.db import Base
 from app.models.core import NonTariffRule
 from app.models.ntm_v2 import NtmApplicabilityRuleV2, NtmMeasureV2
+from app.services import sanctions_risk_block
 from app.services.normative_requirements_block import (
     build_normative_requirements_block,
     source_label_for,
@@ -39,6 +40,7 @@ def memory_sessionmaker(monkeypatch: pytest.MonkeyPatch):
     sm = sessionmaker(autocommit=False, autoflush=False, bind=engine)
     monkeypatch.setattr("app.db.SessionLocal", sm)
     monkeypatch.setattr("app.services.normative_store.SessionLocal", sm)
+    monkeypatch.setattr(sanctions_risk_block, "SessionLocal", sm)
     return sm
 
 
