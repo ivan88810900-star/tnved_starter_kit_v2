@@ -2179,7 +2179,7 @@
       "unique_source_pr_count": 29
     }
   },
-  "revision": 723,
+  "revision": 724,
   "runs": [
     {
       "head_sha": null,
@@ -7765,7 +7765,7 @@
     "protected_actions_performed": false,
     "next_step": "Isolate the independently reproduced configured-DB mutation in test_fcs_preliminary_sync.py on disposable data, without treating test inventory as legal/source completeness."
   },
-  "latest_scheduled_product_checkpoint": {
+  "previous_scheduled_product_checkpoint_177": {
     "updated_at": "2026-10-11T21:05:59.000Z",
     "checked_at": "2026-10-11T21:05:59.000Z",
     "pr": 256,
@@ -7820,7 +7820,7 @@
     "protected_actions_performed": false,
     "next_step": "Independently reproduce and isolate the pre-existing configured-DB mutation in test_ntm_v2_source_isolation.py on disposable data, without treating test inventory as legal/source completeness."
   },
-  "latest_development_checkpoint": {
+  "previous_development_checkpoint_177": {
     "updated_at": "2026-10-11T21:05:59.000Z",
     "checked_at": "2026-10-11T21:05:59.000Z",
     "pr": 256,
@@ -7874,5 +7874,115 @@
     },
     "protected_actions_performed": false,
     "next_step": "Independently reproduce and isolate the pre-existing configured-DB mutation in test_ntm_v2_source_isolation.py on disposable data, without treating test inventory as legal/source completeness."
+  },
+  "latest_scheduled_product_checkpoint": {
+    "updated_at": "2026-10-11T22:03:23.000Z",
+    "checked_at": "2026-10-11T22:03:23.000Z",
+    "pr": 256,
+    "branch": "agent/product-ntm-regressions-v1",
+    "head_sha": "24a670d1e2629f4c6cf1bc1f8e14a39c4f3ab297",
+    "tree_sha": "5d51da4d66f31f2fc962fb57139c5a7e8a8e2792",
+    "parent_sha": "cebf36cdff378deb18aa0d7730d4c0e4fcff73d7",
+    "prior_checkpoint_sha": "cebf36cdff378deb18aa0d7730d4c0e4fcff73d7",
+    "base_pr": 245,
+    "base_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
+    "block": "ntm_v2_source_isolation_configured_db_binding",
+    "status": "DRAFT_CHECKPOINT_A5_PASS_CI_PASS_NTM_V2_SOURCE_ISOLATION",
+    "behavior": {
+      "reproduced": "Target alone passed 4 tests without residue, but either collection order with regulatory-source completeness passed 17 tests plus 3 subtests while creating an empty 4096-byte configured SQLite",
+      "final": "The in-memory fixture binds the sanctions-risk module's captured SessionLocal alias to the disposable sessionmaker and asserts that binding before combined runtime comparison",
+      "boundaries": "One test file with 3 test-only insertions; no production code, normative data, source claims, flags, skips/xfails or legal interpretation changed"
+    },
+    "author_tests": {
+      "baseline": "parent target alone 4 passed with no residue; either adjacent order 17 passed plus 3 subtests but created a 4096-byte configured SQLite",
+      "focused": "candidate focused 4 passed; both adjacent orders 17 passed plus 3 subtests; configured and TNVED_SOURCE_DB sentinels remained byte-identical",
+      "adjacent": "source-isolation, combined-runtime diagnostics, sanctions-risk and regulatory-source completeness passed 29 plus 3 subtests with both sentinel SHA values unchanged",
+      "control": "git diff --check exit 0; all test commands exit 0"
+    },
+    "a5": {
+      "session": "/root/a5_ntm_source_isolation_178",
+      "status": "FINAL_PASS_EXACT_TREE_NO_FINDINGS",
+      "focused": "parent defect reproduced in both adjacent orders; candidate absent paths stayed absent in both orders",
+      "adversarial": "populated configured and TNVED_SOURCE_DB sentinels retained exact SHA, sole marker table and exact marker row in both orders",
+      "remote_binding": "remote HEAD 24a670d1e2629f4c6cf1bc1f8e14a39c4f3ab297 has independently reviewed tree 5d51da4d66f31f2fc962fb57139c5a7e8a8e2792"
+    },
+    "ci": {
+      "status": "PASSED_EXACT_HEAD",
+      "head_sha": "24a670d1e2629f4c6cf1bc1f8e14a39c4f3ab297",
+      "runs": [
+        {
+          "run_id": 38178722631,
+          "job_id": 114586522253,
+          "attempt": 1,
+          "conclusion": "success",
+          "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38178722631"
+        }
+      ]
+    },
+    "blockers": [
+      "NTM full-sync audit still requires a lawful populated synchronized snapshot.",
+      "Full #245 product acceptance and legal/rate/source completeness remain NOT PASS."
+    ],
+    "a6": {
+      "request": "core-s1-6415f443120f-r9-g106",
+      "status": "UNCHANGED_NOT_SENT"
+    },
+    "protected_actions_performed": false,
+    "next_step": "On the fresh PR256 HEAD, reproduce and isolate the next empty-DB or source-backed fixture cluster, keeping disposable test evidence distinct from legal/source completeness."
+  },
+  "latest_development_checkpoint": {
+    "updated_at": "2026-10-11T22:03:23.000Z",
+    "checked_at": "2026-10-11T22:03:23.000Z",
+    "pr": 256,
+    "branch": "agent/product-ntm-regressions-v1",
+    "head_sha": "24a670d1e2629f4c6cf1bc1f8e14a39c4f3ab297",
+    "tree_sha": "5d51da4d66f31f2fc962fb57139c5a7e8a8e2792",
+    "parent_sha": "cebf36cdff378deb18aa0d7730d4c0e4fcff73d7",
+    "prior_checkpoint_sha": "cebf36cdff378deb18aa0d7730d4c0e4fcff73d7",
+    "base_pr": 245,
+    "base_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
+    "block": "ntm_v2_source_isolation_configured_db_binding",
+    "status": "DRAFT_CHECKPOINT_A5_PASS_CI_PASS_NTM_V2_SOURCE_ISOLATION",
+    "behavior": {
+      "reproduced": "Target alone passed 4 tests without residue, but either collection order with regulatory-source completeness passed 17 tests plus 3 subtests while creating an empty 4096-byte configured SQLite",
+      "final": "The in-memory fixture binds the sanctions-risk module's captured SessionLocal alias to the disposable sessionmaker and asserts that binding before combined runtime comparison",
+      "boundaries": "One test file with 3 test-only insertions; no production code, normative data, source claims, flags, skips/xfails or legal interpretation changed"
+    },
+    "author_tests": {
+      "baseline": "parent target alone 4 passed with no residue; either adjacent order 17 passed plus 3 subtests but created a 4096-byte configured SQLite",
+      "focused": "candidate focused 4 passed; both adjacent orders 17 passed plus 3 subtests; configured and TNVED_SOURCE_DB sentinels remained byte-identical",
+      "adjacent": "source-isolation, combined-runtime diagnostics, sanctions-risk and regulatory-source completeness passed 29 plus 3 subtests with both sentinel SHA values unchanged",
+      "control": "git diff --check exit 0; all test commands exit 0"
+    },
+    "a5": {
+      "session": "/root/a5_ntm_source_isolation_178",
+      "status": "FINAL_PASS_EXACT_TREE_NO_FINDINGS",
+      "focused": "parent defect reproduced in both adjacent orders; candidate absent paths stayed absent in both orders",
+      "adversarial": "populated configured and TNVED_SOURCE_DB sentinels retained exact SHA, sole marker table and exact marker row in both orders",
+      "remote_binding": "remote HEAD 24a670d1e2629f4c6cf1bc1f8e14a39c4f3ab297 has independently reviewed tree 5d51da4d66f31f2fc962fb57139c5a7e8a8e2792"
+    },
+    "ci": {
+      "status": "PASSED_EXACT_HEAD",
+      "head_sha": "24a670d1e2629f4c6cf1bc1f8e14a39c4f3ab297",
+      "runs": [
+        {
+          "run_id": 38178722631,
+          "job_id": 114586522253,
+          "attempt": 1,
+          "conclusion": "success",
+          "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38178722631"
+        }
+      ]
+    },
+    "blockers": [
+      "NTM full-sync audit still requires a lawful populated synchronized snapshot.",
+      "Full #245 product acceptance and legal/rate/source completeness remain NOT PASS."
+    ],
+    "a6": {
+      "request": "core-s1-6415f443120f-r9-g106",
+      "status": "UNCHANGED_NOT_SENT"
+    },
+    "protected_actions_performed": false,
+    "next_step": "On the fresh PR256 HEAD, reproduce and isolate the next empty-DB or source-backed fixture cluster, keeping disposable test evidence distinct from legal/source completeness."
   }
 }

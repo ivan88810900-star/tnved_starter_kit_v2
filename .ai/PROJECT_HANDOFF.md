@@ -1,5 +1,21 @@
 # Tariff / A0 — единая точка передачи проекта
 
+## 0aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa. #245 — NTM v2 source isolation не пишет в configured DB
+
+**Новый checkpoint:** [draft PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256), `agent/product-ntm-regressions-v1` @ `24a670d1e2629f4c6cf1bc1f8e14a39c4f3ab297`, tree `5d51da4d66f31f2fc962fb57139c5a7e8a8e2792`, parent `cebf36cdff378deb18aa0d7730d4c0e4fcff73d7`. Локальный author commit `a33c376331437acb9eaf4c2899e050d89a29c383` имеет тот же exact tree.
+
+Воспроизведён collection-order fixture defect: `test_ntm_v2_source_isolation.py` отдельно проходил **4 tests** без residue, но совместная collection с regulatory-source completeness в любом порядке проходила **17 tests + 3 subtests** и создавала пустую configured SQLite размером 4 KiB. Причина — ранний импорт `sanctions_risk_block` сохранял исходный `SessionLocal`, который четыре раза использовался combined runtime comparison. Fixture теперь явно перепривязывает этот alias к in-memory database и проверяет binding. Production code, нормативные данные, source claims, flags, skips/xfails и правовая интерпретация не менялись.
+
+Проверки:
+
+- root: focused **4 passed**; оба порядка с regulatory completeness — **17 passed + 3 subtests**; расширенный source/combined/sanctions/regulatory tranche — **29 passed + 3 subtests**; populated configured и `TNVED_SOURCE_DB` sentinel hashes byte-identical, все exit 0;
+- независимый A5 `/root/a5_ntm_source_isolation_178`: **FINAL PASS без findings**; на parent дефект воспроизведён в обоих порядках, на candidate absent paths не создаются и populated sentinels сохраняют SHA/rows;
+- exact-head CI: [run 38178722631](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38178722631), offline-safety job `114586522253`, attempt 1, **success**.
+
+Это test-isolation evidence, не подтверждение полноты источников или юридической применимости. Lawful populated synchronized NTM snapshot недоступен; полный #245 остаётся **NOT PASS**. Merge, deploy, production write, enforcement/permissions/secrets change, destructive migration и внешний A6 не выполнялись; `core-s1-6415f443120f-r9-g106` не отправлялся.
+
+Следующий отдельный блок — на свежем HEAD найти и изолировать следующий воспроизводимый empty-DB/source-backed fixture cluster, сохраняя test evidence отдельно от legal/source completeness.
+
 ## 0aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa. #245 — FCS preliminary sync изолирован от configured DB
 
 **Новый checkpoint:** [draft PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256), `agent/product-ntm-regressions-v1` @ `cebf36cdff378deb18aa0d7730d4c0e4fcff73d7`, tree `24f4e077c4e766c3f4c56f474ca44ecf584e43c8`, parent `02215630f69b81ec300490e0da3b3b88a2b1fccf`. Локальный author commit `12a053e8b947d30cf01428403b68300b18a9035c` имеет тот же exact tree.
