@@ -4,12 +4,35 @@ from __future__ import annotations
 
 from unittest.mock import patch
 
+import pytest
+
+from app.services import ntm_source_diagnostics as source_diagnostics
 from app.services.ntm_source_diagnostics import (
     compare_ntm_requirement_sources,
     run_ntm_source_matrix,
     _rules_to_keys,
     _rows_to_keys,
 )
+
+
+@pytest.fixture(autouse=True)
+def isolated_diagnostic_sources(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Exercise source comparison without consulting the configured database."""
+
+    monkeypatch.setattr(source_diagnostics, "find_rules_for_code", lambda _hs_code: [])
+    monkeypatch.setattr(
+        source_diagnostics,
+        "find_measures_for_code",
+        lambda _hs_code, **_kwargs: [],
+    )
+    monkeypatch.setattr(
+        source_diagnostics,
+        "get_full_ntm_requirements",
+        lambda hs_code, description="": [
+            *source_diagnostics.get_tr_ts_requirements(hs_code),
+            *source_diagnostics.get_all_layer_requirements(hs_code, description),
+        ],
+    )
 
 
 def test_rules_to_keys_cartesian() -> None:
