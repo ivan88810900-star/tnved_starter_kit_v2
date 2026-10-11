@@ -1,6 +1,6 @@
 {
   "acquisition_note": "Reproduce and isolate the remaining canonical TN VED full-catalog regression on the existing disposable pinned inventory.",
-  "expires_at": "2026-10-11T16:19:31.733729Z",
+  "expires_at": "2026-10-11T16:28:59.737445Z",
   "generation": 171,
   "holder": "/root/a0_tariff_scheduled_20261011T154921Z",
   "lease_repair": {},
@@ -10,5 +10,5 @@
   "serialization_repair": {},
   "state": "active",
   "token": "d3ef6bd74c1e476fa48e53cbf73fc241",
-  "updated_at": "2026-10-11T15:49:31.733729Z"
+  "updated_at": "2026-10-11T15:58:59.737445Z"
 }
