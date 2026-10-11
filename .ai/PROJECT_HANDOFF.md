@@ -1,5 +1,21 @@
 # Tariff / A0 — единая точка передачи проекта
 
+## 0aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa. #245 — regulatory source completeness изолирован от configured DB
+
+**Новый checkpoint:** [draft PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256), `agent/product-ntm-regressions-v1` @ `02215630f69b81ec300490e0da3b3b88a2b1fccf`, tree `f750f4f1b8e9df55bd7043254e1607b5522a276d`, parent `1f4d1f0631ed09dfdc5395cb88dfab8a5070b0b1`. Локальный author commit `d15cc084d3ddf887d30ea09f12c87bcee43ce989` имеет тот же exact tree.
+
+Воспроизведён fixture defect: `test_regulatory_source_completeness.py` проходил **13 tests + 3 subtests**, но создавал configured SQLite размером 1 036 288 байт и записывал тестовую строку ALTA mirror. Модуль теперь создаёт disposable classification DB, перепривязывает захваченные `SessionLocal` aliases и удаляет временную DB вместе с SQLite sidecars. Все 13 исходных test methods и 33 `unittest` assertion calls AST-identical; production code, нормативные данные, source claims, flags, skips/xfails и правовая интерпретация не менялись.
+
+Проверки:
+
+- A2 `/root/a2_regulatory_source_176` и root: focused **13 passed + 3 subtests**; absent configured и `TNVED_SOURCE_DB` paths не создаются, pre-existing sentinels byte-identical;
+- clean adjacent source-diagnostics/probe tranche: **28 passed + 3 subtests**, configured DB не создана;
+- root local agent-safety: **120 + 4 passed**, snapshot valid; все exit 0;
+- независимый A5 `/root/a5_regulatory_source_176`: **FINAL PASS без findings**; AST parity, absent/sentinel invariance и clean adjacent orders подтверждены;
+- exact-head CI: [run 38170562392](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38170562392), offline-safety job `114562103876`, attempt 1, **success**.
+
+Отдельный существовавший ранее configured-DB mutation воспроизведён в `test_fcs_preliminary_sync.py`; это следующий изолированный блок. Lawful populated synchronized NTM snapshot недоступен; полный #245 остаётся **NOT PASS**. Merge, deploy, production write, enforcement/permissions/secrets change, destructive migration и внешний A6 не выполнялись; `core-s1-6415f443120f-r9-g106` не отправлялся.
+
 ## 0aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa. #245 — legacy/combined diagnostics изолированы от configured DB
 
 **Новый checkpoint:** [draft PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256), `agent/product-ntm-regressions-v1` @ `1f4d1f0631ed09dfdc5395cb88dfab8a5070b0b1`, tree `810fce451087981b2ab369e27352b43f05cb69f5`, parent `648b0e06141192d339e10a65142dd4e863574d05`. Локальный author tip `0526717bc3d748719570a8d5a373f8dd5e4a7719` имеет тот же exact tree.
