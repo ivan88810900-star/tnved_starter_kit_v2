@@ -2179,7 +2179,7 @@
       "unique_source_pr_count": 29
     }
   },
-  "revision": 725,
+  "revision": 726,
   "runs": [
     {
       "head_sha": null,
@@ -7434,7 +7434,7 @@
       }
     }
   ],
-  "updated_at": "2026-10-11T22:57:26.000Z",
+  "updated_at": "2026-10-12T00:14:00.000Z",
   "previous_scheduled_product_checkpoint_174": {
     "updated_at": "2026-10-11T18:04:51.196Z",
     "checked_at": "2026-10-11T18:04:51.196Z",
@@ -7985,7 +7985,7 @@
     "protected_actions_performed": false,
     "next_step": "On the fresh PR256 HEAD, reproduce and isolate the next empty-DB or source-backed fixture cluster, keeping disposable test evidence distinct from legal/source completeness."
   },
-  "latest_scheduled_product_checkpoint": {
+  "previous_scheduled_product_checkpoint_179": {
     "updated_at": "2026-10-11T22:57:26.000Z",
     "checked_at": "2026-10-11T22:57:26.000Z",
     "pr": 256,
@@ -8040,7 +8040,7 @@
     "protected_actions_performed": false,
     "next_step": "On the fresh PR256 HEAD, isolate the next reproducible empty-DB or source-backed fixture cluster; do not convert the expected full-sync snapshot blocker into test evidence."
   },
-  "latest_development_checkpoint": {
+  "previous_development_checkpoint_179": {
     "updated_at": "2026-10-11T22:57:26.000Z",
     "checked_at": "2026-10-11T22:57:26.000Z",
     "pr": 256,
@@ -8094,5 +8094,93 @@
     },
     "protected_actions_performed": false,
     "next_step": "On the fresh PR256 HEAD, isolate the next reproducible empty-DB or source-backed fixture cluster; do not convert the expected full-sync snapshot blocker into test evidence."
+  },
+  "latest_scheduled_product_checkpoint": {
+    "updated_at": "2026-10-12T00:14:00.000Z",
+    "checked_at": "2026-10-12T00:14:00.000Z",
+    "pr": 256,
+    "branch": "agent/product-ntm-regressions-v1",
+    "head_sha": "7d96291c6bd43e77d0a80b7513c375004b2dc847",
+    "tree_sha": "b5b345144e26d365c1dafe5f20672f444c39d7dc",
+    "parent_sha": "cdf28f1287394391c94375fce20c97116f112ae2",
+    "prior_checkpoint_sha": "cdf28f1287394391c94375fce20c97116f112ae2",
+    "base_pr": 245,
+    "base_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
+    "block": "ntm_v2_pipeline_flag_configured_db_isolation",
+    "status": "DRAFT_CHECKPOINT_A5_PASS_CI_PASS_PIPELINE_FLAG_DB_ISOLATION",
+    "behavior": {
+      "reproduced": "The logger test passed but migrated configured SQLite; the 72-case matrix then silently relied on that mutation and failed without it",
+      "final": "Real Alembic runs against disposable SQLite while unrelated configured-DB sources are fixture-isolated; the real NTM v2 adapter/import/catalog/layers/triggers remain under test",
+      "boundaries": "One test file with 46 insertions and 2 deletions; no product code, normative data, source claims, flags, skips/xfails or legal interpretation changed"
+    },
+    "author_tests": {
+      "baseline": "parent full module passed 85 but created a 1019904-byte configured SQLite; sentinel was migrated to 64 tables and its SHA changed",
+      "focused": "candidate full module passed 85 for absent and sentinel variants; absent DB stayed absent and sentinel SHA/marker/table count stayed unchanged",
+      "adjacent": "four modules passed 172 with 1 skipped in forward and reverse orders; configured DB stayed absent",
+      "control": "git diff --check, py_compile, local 120 plus 4 safety tests and committed snapshot validation all exit 0"
+    },
+    "a5": {
+      "session": "/root/a5_ntm_pipeline_isolation_180",
+      "status": "FINAL_PASS_EXACT_TREE_NO_FINDINGS",
+      "focused": "independently verified 85-pass absent/sentinel runs and both 172-pass adjacent orders",
+      "adversarial": "single logger test created a real 63-table disposable Alembic schema while configured sentinel SHA stayed unchanged",
+      "remote_binding": "remote HEAD 7d96291c6bd43e77d0a80b7513c375004b2dc847 has independently reviewed tree b5b345144e26d365c1dafe5f20672f444c39d7dc"
+    },
+    "ci": {
+      "status": "PASSED_EXACT_HEAD",
+      "head_sha": "7d96291c6bd43e77d0a80b7513c375004b2dc847",
+      "runs": [{"run_id": 38187004142, "job_id": 114611375970, "attempt": 1, "conclusion": "success", "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38187004142"}]
+    },
+    "blockers": [
+      "NTM full-sync audit still requires a lawful populated synchronized snapshot.",
+      "Full #245 product acceptance and legal/rate/source completeness remain NOT PASS."
+    ],
+    "a6": {"request": "core-s1-6415f443120f-r9-g106", "status": "UNCHANGED_NOT_SENT"},
+    "protected_actions_performed": false,
+    "next_step": "On fresh PR256 HEAD, reproduce and isolate the next configured-DB or source-backed fixture while keeping full-sync snapshot evidence separate."
+  },
+  "latest_development_checkpoint": {
+    "updated_at": "2026-10-12T00:14:00.000Z",
+    "checked_at": "2026-10-12T00:14:00.000Z",
+    "pr": 256,
+    "branch": "agent/product-ntm-regressions-v1",
+    "head_sha": "7d96291c6bd43e77d0a80b7513c375004b2dc847",
+    "tree_sha": "b5b345144e26d365c1dafe5f20672f444c39d7dc",
+    "parent_sha": "cdf28f1287394391c94375fce20c97116f112ae2",
+    "prior_checkpoint_sha": "cdf28f1287394391c94375fce20c97116f112ae2",
+    "base_pr": 245,
+    "base_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
+    "block": "ntm_v2_pipeline_flag_configured_db_isolation",
+    "status": "DRAFT_CHECKPOINT_A5_PASS_CI_PASS_PIPELINE_FLAG_DB_ISOLATION",
+    "behavior": {
+      "reproduced": "The logger test passed but migrated configured SQLite; the 72-case matrix then silently relied on that mutation and failed without it",
+      "final": "Real Alembic runs against disposable SQLite while unrelated configured-DB sources are fixture-isolated; the real NTM v2 adapter/import/catalog/layers/triggers remain under test",
+      "boundaries": "One test file with 46 insertions and 2 deletions; no product code, normative data, source claims, flags, skips/xfails or legal interpretation changed"
+    },
+    "author_tests": {
+      "baseline": "parent full module passed 85 but created a 1019904-byte configured SQLite; sentinel was migrated to 64 tables and its SHA changed",
+      "focused": "candidate full module passed 85 for absent and sentinel variants; absent DB stayed absent and sentinel SHA/marker/table count stayed unchanged",
+      "adjacent": "four modules passed 172 with 1 skipped in forward and reverse orders; configured DB stayed absent",
+      "control": "git diff --check, py_compile, local 120 plus 4 safety tests and committed snapshot validation all exit 0"
+    },
+    "a5": {
+      "session": "/root/a5_ntm_pipeline_isolation_180",
+      "status": "FINAL_PASS_EXACT_TREE_NO_FINDINGS",
+      "focused": "independently verified 85-pass absent/sentinel runs and both 172-pass adjacent orders",
+      "adversarial": "single logger test created a real 63-table disposable Alembic schema while configured sentinel SHA stayed unchanged",
+      "remote_binding": "remote HEAD 7d96291c6bd43e77d0a80b7513c375004b2dc847 has independently reviewed tree b5b345144e26d365c1dafe5f20672f444c39d7dc"
+    },
+    "ci": {
+      "status": "PASSED_EXACT_HEAD",
+      "head_sha": "7d96291c6bd43e77d0a80b7513c375004b2dc847",
+      "runs": [{"run_id": 38187004142, "job_id": 114611375970, "attempt": 1, "conclusion": "success", "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38187004142"}]
+    },
+    "blockers": [
+      "NTM full-sync audit still requires a lawful populated synchronized snapshot.",
+      "Full #245 product acceptance and legal/rate/source completeness remain NOT PASS."
+    ],
+    "a6": {"request": "core-s1-6415f443120f-r9-g106", "status": "UNCHANGED_NOT_SENT"},
+    "protected_actions_performed": false,
+    "next_step": "On fresh PR256 HEAD, reproduce and isolate the next configured-DB or source-backed fixture while keeping full-sync snapshot evidence separate."
   }
 }

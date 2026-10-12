@@ -1,5 +1,23 @@
 # Tariff / A0 — единая точка передачи проекта
 
+## 0aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa. #245 — pipeline flag tests изолированы от configured DB
+
+**Новый checkpoint:** [draft PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256), `agent/product-ntm-regressions-v1` @ `7d96291c6bd43e77d0a80b7513c375004b2dc847`, tree `b5b345144e26d365c1dafe5f20672f444c39d7dc`, parent `cdf28f1287394391c94375fce20c97116f112ae2`. Локальный author commit `ae3e085659c6f8f286a25b8e03a00fda3c9bfd09` имеет тот же exact tree.
+
+Воспроизведены два связанных test-fixture дефекта в `test_ntm_v2_pipeline_flag.py`: отдельный logger-тест выполнял Alembic против configured SQLite и менял её, а 72-case matrix скрыто зависела от этой миграции и порядка тестов. Logger-тест теперь выполняет реальный Alembic на disposable SQLite, включая перенаправление captured seed engine/session. Fixture matrix явно изолирует нерелевантные DB/source ветви, сохраняя реальный NTM v2 adapter/import, canonical TR TS catalog, layers и description triggers. Production code, нормативные данные, source claims, flags, skips/xfails и правовая интерпретация не менялись.
+
+Проверки:
+
+- root: полный модуль **85 passed** с отсутствующим и существующим sentinel configured DB; отсутствующий файл не создан, sentinel SHA/marker/table-count byte-identical; четыре смежных модуля в прямом и обратном порядке — по **172 passed, 1 skipped**, все exit 0;
+- отдельный logger-тест сохранил исходную проверку logger и создал disposable Alembic schema из 63 таблиц с актуальной version, NTM v2 и declaration documents;
+- root local agent-safety: **120 + 4 passed**, committed snapshot valid, exit 0;
+- независимый A5 `/root/a5_ntm_pipeline_isolation_180`: **FINAL PASS без findings** на exact commit/tree, повторены focused/sentinel/оба порядка и подтверждены реальные adapter/import/catalog/triggers;
+- exact-head CI: [run 38187004142](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38187004142), offline-safety job `114611375970`, attempt 1, **success**.
+
+Это test-isolation evidence, не подтверждение полноты источников или юридической применимости. Lawful populated synchronized NTM snapshot недоступен; полный #245 остаётся **NOT PASS**. Merge, deploy, production write, enforcement/permissions/secrets change, destructive migration и внешний A6 не выполнялись; `core-s1-6415f443120f-r9-g106` не отправлялся.
+
+Следующий отдельный блок — на свежем HEAD найти следующий воспроизводимый configured-DB/source fixture, не подменяя ожидаемый blocker полного sync test тестовыми данными.
+
 ## 0aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa. #245 — legacy smoke не создаёт configured SQLite
 
 **Новый checkpoint:** [draft PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256), `agent/product-ntm-regressions-v1` @ `cdf28f1287394391c94375fce20c97116f112ae2`, tree `be55d5c157d2f228e2d411d76480b61fae672d37`, parent `24a670d1e2629f4c6cf1bc1f8e14a39c4f3ab297`. Локальный author commit `b50508b1cf9e991286f919d743f9b1129b723bc4` имеет тот же exact tree.
