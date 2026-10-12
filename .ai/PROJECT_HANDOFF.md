@@ -1,5 +1,22 @@
 # Tariff / A0 — единая точка передачи проекта
 
+## 0aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa. #245 — smart TN VED search executable audit on unchanged HEAD
+
+**Checkpoint:** [draft PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256), `agent/product-ntm-regressions-v1` @ `e7f141a145e1475e8d1c51f25c51789a084b4541`, tree `def0f10bc2dc35376dcdff6f453ee91f390f0607` (unchanged).
+
+No defect was reproduced in `test_smart_tnved_search.py`; therefore no product or test commit was created. The executable audit retained exact-code ranking, typo correction only after an empty initial query, safe handling of special FTS syntax, explicit unavailable-FTS caching/rebuild semantics and restoration of `tnved_fts.engine` / `_fts_ready`.
+
+Evidence bound to the exact unchanged candidate:
+
+- root focused absent-input and populated-sentinel controls: **6 passed** each, exit 0;
+- root adjacent smart-search/FTS/semantic controls: **21 passed** in both absent-input orders; with catalogue API and populated sentinels: **44 passed** in both orders, all exit 0;
+- configured/source databases and preview marker stayed absent or byte-identical; no WAL/SHM/default `customs.db`; pinned catalogue SHA-256 unchanged;
+- independent executable A5 `/root/a5_smart_search_190`: **FINAL PASS, no findings**; repeated **6 + 6** focused and **44 + 44** adjacent tests, then verified exact-code ranking, typo timing, special syntax, unavailable-FTS caching and globals restoration;
+- local safety: `verify` **120 passed**, CLI snapshot **4 passed**, committed snapshot valid;
+- exact-head CI: [run 38216078694](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38216078694), offline-safety job `114701012450`, **success**.
+
+This is executable verification, not full #245 product/legal/source acceptance. A lawful populated synchronized NTM snapshot remains unavailable. A6 `core-s1-6415f443120f-r9-g106` remains prepared but not authorized or sent. No merge, deploy, production write, enforcement/permissions/secrets change, destructive migration, force push or branch deletion occurred. Next safe block is fresh-HEAD execution of `test_tnved_code_card.py` with classification inventory and configured/source/marker absent and sentinel controls plus adjacent API ordering; reproduce a concrete defect before any edit.
+
 ## 0aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa. #245 — HS leaf calculator fixture isolated from configured DB
 
 **Checkpoint:** [draft PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256), `agent/product-ntm-regressions-v1` @ `e7f141a145e1475e8d1c51f25c51789a084b4541`, tree `def0f10bc2dc35376dcdff6f453ee91f390f0607`, parent `7462f2959735f7aad51f53047ef6d9ddeefd04a3`.

@@ -2179,7 +2179,7 @@
       "unique_source_pr_count": 29
     }
   },
-  "revision": 734,
+  "revision": 735,
   "runs": [
     {
       "head_sha": null,
@@ -8254,32 +8254,31 @@
     "next_step": "On fresh PR256 HEAD, reproduce and isolate the next configured-DB or source-backed fixture while keeping full-sync snapshot evidence separate."
   },
   "latest_scheduled_product_checkpoint": {
-    "updated_at": "2026-10-12T07:13:35.061Z",
-    "checked_at": "2026-10-12T07:13:35.061Z",
+    "updated_at": "2026-10-12T08:10:32.184Z",
+    "checked_at": "2026-10-12T08:10:32.184Z",
     "pr": 256,
     "branch": "agent/product-ntm-regressions-v1",
     "head_sha": "e7f141a145e1475e8d1c51f25c51789a084b4541",
     "tree_sha": "def0f10bc2dc35376dcdff6f453ee91f390f0607",
     "parent_sha": "7462f2959735f7aad51f53047ef6d9ddeefd04a3",
-    "prior_checkpoint_sha": "7462f2959735f7aad51f53047ef6d9ddeefd04a3",
-    "local_author_commit_sha": "8aa260e47833f7e8b00e055464782ecc539f6c14",
+    "prior_checkpoint_sha": "e7f141a145e1475e8d1c51f25c51789a084b4541",
     "base_pr": 245,
     "base_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
-    "block": "hs_leaf_calculator_rate_display_fixture_isolation",
-    "status": "PUBLISHED_FIX_A5_PASS_CI_PASS_EXACT_HEAD",
+    "block": "smart_tnved_search_engine_cache_execution",
+    "status": "UNCHANGED_HEAD_EXECUTABLE_A5_PASS_CI_PASS_SMART_SEARCH",
     "behavior": {
-      "reproduced": "On parent 7462f295, adjacent collection produced 3 failed / 30 passed: calculator leaf requests returned 500 because the already-imported rate_display.SessionLocal queried a missing hs_rates table and created a 4096-byte configured SQLite.",
-      "final": "The fixture now binds rate_display.SessionLocal to the same disposable classification inventory as payment and rate services. Focused calculator/API and adjacent catalogue/measures orders pass on absent and populated-sentinel inputs.",
-      "boundaries": "One fixture-only alias binding; all 9 original test methods and 23 assertions remain AST-identical. No product code, normative data, source claim, legal interpretation, flag, skip or xfail changed."
+      "reproduced": "No new defect reproduced: test_smart_tnved_search.py passed 6 tests on absent and populated-sentinel inputs while preserving external files and module globals.",
+      "final": "The unchanged exact candidate preserves code-prefix ranking, typo fallback only after an empty initial search, safe special FTS syntax and explicit caching/rebuild behavior when FTS is unavailable.",
+      "boundaries": "Executable verification only on unchanged product head; no production or test code, normative data, source claim, legal interpretation, flag, skip or xfail changed."
     },
     "verification": {
-      "author_focused": "test_hs_leaf_clarification.py: 9 passed on hostile absent and populated-sentinel inputs; exit 0.",
-      "adjacent_orders": "Forward and reverse test_hs_leaf_clarification.py + test_tnved_catalog_api.py + test_tnved_measures_api.py: 33 passed each on absent inputs and 33 passed each on populated sentinels; all exits 0.",
-      "control": "Configured/source/marker stayed absent or byte-identical; no WAL/SHM/default customs.db; pinned catalogue SHA-256 unchanged. Local verify passed 120, CLI snapshot passed 4, committed snapshot valid.",
+      "author_focused": "test_smart_tnved_search.py passed 6 tests on absent inputs and 6 tests on populated SQLite sentinels; both exits 0.",
+      "adjacent_orders": "Smart search, TN VED FTS and semantic navigation passed 21 tests in both absent-input orders; adding catalogue API passed 44 tests in both populated-sentinel orders; all exits 0.",
+      "control": "Configured/source databases and preview marker stayed absent or byte-identical; no WAL/SHM/default customs.db; pinned catalogue SHA-256 unchanged. Local verify passed 120, CLI snapshot passed 4, committed snapshot valid.",
       "a5": {
-        "session": "/root/a5_hs_leaf_isolation_189",
+        "session": "/root/a5_smart_search_190",
         "status": "FINAL_PASS_EXACT_TREE_NO_FINDINGS",
-        "scope": "independent parent reproduction plus focused/adjacent absent and populated-sentinel controls; AST parity and DB/marker/hash invariance"
+        "scope": "independent focused absent/sentinel and 44-test forward/reverse execution plus runtime probes for code ranking, typo timing, special syntax, FTS-unavailable caching and globals restoration"
       },
       "ci": {
         "status": "PASSED_EXACT_HEAD_OFFLINE_SAFETY_ONLY",
@@ -8287,7 +8286,7 @@
         "job_id": 114701012450,
         "head_sha": "e7f141a145e1475e8d1c51f25c51789a084b4541",
         "conclusion": "success",
-        "limitation": "Workflow is offline-safety only; calculator/API execution is separately proven by A0 and independent executable A5."
+        "limitation": "Workflow is offline-safety only; smart-search execution is separately proven by A0 and independent executable A5."
       }
     },
     "blockers": [
@@ -8299,35 +8298,34 @@
       "status": "UNCHANGED_NOT_SENT"
     },
     "protected_actions_performed": false,
-    "next_step": "On fresh PR256 HEAD, execute test_smart_tnved_search.py with engine/cache ordering and configured/source/marker absent plus sentinel controls; reproduce a concrete defect before any edit."
+    "next_step": "On fresh PR256 HEAD, execute test_tnved_code_card.py with classification inventory and configured/source/marker absent plus sentinel controls and adjacent API ordering; reproduce a concrete defect before any edit."
   },
   "latest_development_checkpoint": {
-    "updated_at": "2026-10-12T07:13:35.061Z",
-    "checked_at": "2026-10-12T07:13:35.061Z",
+    "updated_at": "2026-10-12T08:10:32.184Z",
+    "checked_at": "2026-10-12T08:10:32.184Z",
     "pr": 256,
     "branch": "agent/product-ntm-regressions-v1",
     "head_sha": "e7f141a145e1475e8d1c51f25c51789a084b4541",
     "tree_sha": "def0f10bc2dc35376dcdff6f453ee91f390f0607",
     "parent_sha": "7462f2959735f7aad51f53047ef6d9ddeefd04a3",
-    "prior_checkpoint_sha": "7462f2959735f7aad51f53047ef6d9ddeefd04a3",
-    "local_author_commit_sha": "8aa260e47833f7e8b00e055464782ecc539f6c14",
+    "prior_checkpoint_sha": "e7f141a145e1475e8d1c51f25c51789a084b4541",
     "base_pr": 245,
     "base_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
-    "block": "hs_leaf_calculator_rate_display_fixture_isolation",
-    "status": "PUBLISHED_FIX_A5_PASS_CI_PASS_EXACT_HEAD",
+    "block": "smart_tnved_search_engine_cache_execution",
+    "status": "UNCHANGED_HEAD_EXECUTABLE_A5_PASS_CI_PASS_SMART_SEARCH",
     "behavior": {
-      "reproduced": "On parent 7462f295, adjacent collection produced 3 failed / 30 passed: calculator leaf requests returned 500 because the already-imported rate_display.SessionLocal queried a missing hs_rates table and created a 4096-byte configured SQLite.",
-      "final": "The fixture now binds rate_display.SessionLocal to the same disposable classification inventory as payment and rate services. Focused calculator/API and adjacent catalogue/measures orders pass on absent and populated-sentinel inputs.",
-      "boundaries": "One fixture-only alias binding; all 9 original test methods and 23 assertions remain AST-identical. No product code, normative data, source claim, legal interpretation, flag, skip or xfail changed."
+      "reproduced": "No new defect reproduced: test_smart_tnved_search.py passed 6 tests on absent and populated-sentinel inputs while preserving external files and module globals.",
+      "final": "The unchanged exact candidate preserves code-prefix ranking, typo fallback only after an empty initial search, safe special FTS syntax and explicit caching/rebuild behavior when FTS is unavailable.",
+      "boundaries": "Executable verification only on unchanged product head; no production or test code, normative data, source claim, legal interpretation, flag, skip or xfail changed."
     },
     "verification": {
-      "author_focused": "test_hs_leaf_clarification.py: 9 passed on hostile absent and populated-sentinel inputs; exit 0.",
-      "adjacent_orders": "Forward and reverse test_hs_leaf_clarification.py + test_tnved_catalog_api.py + test_tnved_measures_api.py: 33 passed each on absent inputs and 33 passed each on populated sentinels; all exits 0.",
-      "control": "Configured/source/marker stayed absent or byte-identical; no WAL/SHM/default customs.db; pinned catalogue SHA-256 unchanged. Local verify passed 120, CLI snapshot passed 4, committed snapshot valid.",
+      "author_focused": "test_smart_tnved_search.py passed 6 tests on absent inputs and 6 tests on populated SQLite sentinels; both exits 0.",
+      "adjacent_orders": "Smart search, TN VED FTS and semantic navigation passed 21 tests in both absent-input orders; adding catalogue API passed 44 tests in both populated-sentinel orders; all exits 0.",
+      "control": "Configured/source databases and preview marker stayed absent or byte-identical; no WAL/SHM/default customs.db; pinned catalogue SHA-256 unchanged. Local verify passed 120, CLI snapshot passed 4, committed snapshot valid.",
       "a5": {
-        "session": "/root/a5_hs_leaf_isolation_189",
+        "session": "/root/a5_smart_search_190",
         "status": "FINAL_PASS_EXACT_TREE_NO_FINDINGS",
-        "scope": "independent parent reproduction plus focused/adjacent absent and populated-sentinel controls; AST parity and DB/marker/hash invariance"
+        "scope": "independent focused absent/sentinel and 44-test forward/reverse execution plus runtime probes for code ranking, typo timing, special syntax, FTS-unavailable caching and globals restoration"
       },
       "ci": {
         "status": "PASSED_EXACT_HEAD_OFFLINE_SAFETY_ONLY",
@@ -8335,7 +8333,7 @@
         "job_id": 114701012450,
         "head_sha": "e7f141a145e1475e8d1c51f25c51789a084b4541",
         "conclusion": "success",
-        "limitation": "Workflow is offline-safety only; calculator/API execution is separately proven by A0 and independent executable A5."
+        "limitation": "Workflow is offline-safety only; smart-search execution is separately proven by A0 and independent executable A5."
       }
     },
     "blockers": [
@@ -8347,7 +8345,7 @@
       "status": "UNCHANGED_NOT_SENT"
     },
     "protected_actions_performed": false,
-    "next_step": "On fresh PR256 HEAD, execute test_smart_tnved_search.py with engine/cache ordering and configured/source/marker absent plus sentinel controls; reproduce a concrete defect before any edit."
+    "next_step": "On fresh PR256 HEAD, execute test_tnved_code_card.py with classification inventory and configured/source/marker absent plus sentinel controls and adjacent API ordering; reproduce a concrete defect before any edit."
   },
   "previous_scheduled_product_checkpoint_188": {
     "updated_at": "2026-10-12T06:11:25.000Z",
@@ -8442,5 +8440,101 @@
     },
     "protected_actions_performed": false,
     "next_step": "On fresh PR256 HEAD, execute test_hs_leaf_clarification.py with calculator API and configured/source/marker absent plus sentinel controls; reproduce a concrete defect before any edit."
+  },
+  "previous_scheduled_product_checkpoint_189": {
+    "updated_at": "2026-10-12T07:13:35.061Z",
+    "checked_at": "2026-10-12T07:13:35.061Z",
+    "pr": 256,
+    "branch": "agent/product-ntm-regressions-v1",
+    "head_sha": "e7f141a145e1475e8d1c51f25c51789a084b4541",
+    "tree_sha": "def0f10bc2dc35376dcdff6f453ee91f390f0607",
+    "parent_sha": "7462f2959735f7aad51f53047ef6d9ddeefd04a3",
+    "prior_checkpoint_sha": "7462f2959735f7aad51f53047ef6d9ddeefd04a3",
+    "local_author_commit_sha": "8aa260e47833f7e8b00e055464782ecc539f6c14",
+    "base_pr": 245,
+    "base_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
+    "block": "hs_leaf_calculator_rate_display_fixture_isolation",
+    "status": "PUBLISHED_FIX_A5_PASS_CI_PASS_EXACT_HEAD",
+    "behavior": {
+      "reproduced": "On parent 7462f295, adjacent collection produced 3 failed / 30 passed: calculator leaf requests returned 500 because the already-imported rate_display.SessionLocal queried a missing hs_rates table and created a 4096-byte configured SQLite.",
+      "final": "The fixture now binds rate_display.SessionLocal to the same disposable classification inventory as payment and rate services. Focused calculator/API and adjacent catalogue/measures orders pass on absent and populated-sentinel inputs.",
+      "boundaries": "One fixture-only alias binding; all 9 original test methods and 23 assertions remain AST-identical. No product code, normative data, source claim, legal interpretation, flag, skip or xfail changed."
+    },
+    "verification": {
+      "author_focused": "test_hs_leaf_clarification.py: 9 passed on hostile absent and populated-sentinel inputs; exit 0.",
+      "adjacent_orders": "Forward and reverse test_hs_leaf_clarification.py + test_tnved_catalog_api.py + test_tnved_measures_api.py: 33 passed each on absent inputs and 33 passed each on populated sentinels; all exits 0.",
+      "control": "Configured/source/marker stayed absent or byte-identical; no WAL/SHM/default customs.db; pinned catalogue SHA-256 unchanged. Local verify passed 120, CLI snapshot passed 4, committed snapshot valid.",
+      "a5": {
+        "session": "/root/a5_hs_leaf_isolation_189",
+        "status": "FINAL_PASS_EXACT_TREE_NO_FINDINGS",
+        "scope": "independent parent reproduction plus focused/adjacent absent and populated-sentinel controls; AST parity and DB/marker/hash invariance"
+      },
+      "ci": {
+        "status": "PASSED_EXACT_HEAD_OFFLINE_SAFETY_ONLY",
+        "run_id": 38216078694,
+        "job_id": 114701012450,
+        "head_sha": "e7f141a145e1475e8d1c51f25c51789a084b4541",
+        "conclusion": "success",
+        "limitation": "Workflow is offline-safety only; calculator/API execution is separately proven by A0 and independent executable A5."
+      }
+    },
+    "blockers": [
+      "NTM full-sync audit still requires a lawful populated synchronized snapshot.",
+      "Full #245 product acceptance and legal/rate/source completeness remain NOT PASS."
+    ],
+    "a6": {
+      "request": "core-s1-6415f443120f-r9-g106",
+      "status": "UNCHANGED_NOT_SENT"
+    },
+    "protected_actions_performed": false,
+    "next_step": "On fresh PR256 HEAD, execute test_smart_tnved_search.py with engine/cache ordering and configured/source/marker absent plus sentinel controls; reproduce a concrete defect before any edit."
+  },
+  "previous_development_checkpoint_189": {
+    "updated_at": "2026-10-12T07:13:35.061Z",
+    "checked_at": "2026-10-12T07:13:35.061Z",
+    "pr": 256,
+    "branch": "agent/product-ntm-regressions-v1",
+    "head_sha": "e7f141a145e1475e8d1c51f25c51789a084b4541",
+    "tree_sha": "def0f10bc2dc35376dcdff6f453ee91f390f0607",
+    "parent_sha": "7462f2959735f7aad51f53047ef6d9ddeefd04a3",
+    "prior_checkpoint_sha": "7462f2959735f7aad51f53047ef6d9ddeefd04a3",
+    "local_author_commit_sha": "8aa260e47833f7e8b00e055464782ecc539f6c14",
+    "base_pr": 245,
+    "base_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
+    "block": "hs_leaf_calculator_rate_display_fixture_isolation",
+    "status": "PUBLISHED_FIX_A5_PASS_CI_PASS_EXACT_HEAD",
+    "behavior": {
+      "reproduced": "On parent 7462f295, adjacent collection produced 3 failed / 30 passed: calculator leaf requests returned 500 because the already-imported rate_display.SessionLocal queried a missing hs_rates table and created a 4096-byte configured SQLite.",
+      "final": "The fixture now binds rate_display.SessionLocal to the same disposable classification inventory as payment and rate services. Focused calculator/API and adjacent catalogue/measures orders pass on absent and populated-sentinel inputs.",
+      "boundaries": "One fixture-only alias binding; all 9 original test methods and 23 assertions remain AST-identical. No product code, normative data, source claim, legal interpretation, flag, skip or xfail changed."
+    },
+    "verification": {
+      "author_focused": "test_hs_leaf_clarification.py: 9 passed on hostile absent and populated-sentinel inputs; exit 0.",
+      "adjacent_orders": "Forward and reverse test_hs_leaf_clarification.py + test_tnved_catalog_api.py + test_tnved_measures_api.py: 33 passed each on absent inputs and 33 passed each on populated sentinels; all exits 0.",
+      "control": "Configured/source/marker stayed absent or byte-identical; no WAL/SHM/default customs.db; pinned catalogue SHA-256 unchanged. Local verify passed 120, CLI snapshot passed 4, committed snapshot valid.",
+      "a5": {
+        "session": "/root/a5_hs_leaf_isolation_189",
+        "status": "FINAL_PASS_EXACT_TREE_NO_FINDINGS",
+        "scope": "independent parent reproduction plus focused/adjacent absent and populated-sentinel controls; AST parity and DB/marker/hash invariance"
+      },
+      "ci": {
+        "status": "PASSED_EXACT_HEAD_OFFLINE_SAFETY_ONLY",
+        "run_id": 38216078694,
+        "job_id": 114701012450,
+        "head_sha": "e7f141a145e1475e8d1c51f25c51789a084b4541",
+        "conclusion": "success",
+        "limitation": "Workflow is offline-safety only; calculator/API execution is separately proven by A0 and independent executable A5."
+      }
+    },
+    "blockers": [
+      "NTM full-sync audit still requires a lawful populated synchronized snapshot.",
+      "Full #245 product acceptance and legal/rate/source completeness remain NOT PASS."
+    ],
+    "a6": {
+      "request": "core-s1-6415f443120f-r9-g106",
+      "status": "UNCHANGED_NOT_SENT"
+    },
+    "protected_actions_performed": false,
+    "next_step": "On fresh PR256 HEAD, execute test_smart_tnved_search.py with engine/cache ordering and configured/source/marker absent plus sentinel controls; reproduce a concrete defect before any edit."
   }
 }
