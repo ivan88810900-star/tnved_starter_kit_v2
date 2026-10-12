@@ -1,14 +1,14 @@
 {
-  "acquisition_note": "Isolate the next reproducible configured-DB/source fixture on PR256 exact head; regulatory mass-seed safety selected.",
-  "expires_at": "2026-10-12T03:20:50.926265Z",
+  "acquisition_note": "Isolate the reproduced TN VED measures API configured/source database write on PR256 exact head.",
+  "expires_at": null,
   "generation": 184,
-  "holder": "/root",
+  "holder": null,
   "lease_repair": {},
-  "release_reason": "PR256 regulatory mass-seed safety DB isolation published at dcb32489bf5f4526a6ee6b761e171d3114909f2d; author tests, independent A5, and exact-head CI run 38194012583 succeeded; state checkpoint b1a85d11aa782038910cb0285ddc09efe942b8df restored and verified.",
+  "release_reason": "PR256 TN VED measures API DB isolation published at 42ac7665990111d45d9038be807f8ba61c354e11; author tests, independent A5, and exact-head CI run 38197947110 succeeded; state checkpoint e0e574d3966d9f0882a747d5fb2b411cb5a31c09 restored and verified.",
   "released_by": "/root",
   "schema_version": 1,
   "serialization_repair": {},
-  "state": "active",
-  "token": "8887f7dd5dca4d85aae789b8514a5bbc",
-  "updated_at": "2026-10-12T02:50:50.926265Z"
+  "state": "released",
+  "token": null,
+  "updated_at": "2026-10-12T03:02:58.696823Z"
 }
