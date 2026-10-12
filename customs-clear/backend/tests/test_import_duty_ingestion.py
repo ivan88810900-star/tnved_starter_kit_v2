@@ -17,7 +17,6 @@ from app.main import app
 from app.models.core import ExchangeRate, GeoSpecialDuty, HsRate, SourceStatus, SyncLog, TnvedEntry
 from app.models.tnved import Chapter, Commodity, HsDutyRule, Section, SpecialDuty, VatPreference
 from app.services.import_duty_ingestion import run_import_duty_apply, run_import_duty_dry_run
-from app.services.normative_store import init_db
 from app.services.payment_data_coverage import diagnose_duty_rates, run_payment_data_coverage_report
 from app.services.payment_data_normalization import run_payment_data_normalization_report
 
@@ -1151,8 +1150,13 @@ class TestImportDutyVatRevisionRejected(unittest.TestCase):
 class TestImportDutyApi(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
-        init_db()
+        cls.sm = _memory_sessionmaker()
+        cls._patches = _start_patches(cls.sm)
         cls.client = TestClient(app)
+
+    @classmethod
+    def tearDownClass(cls) -> None:
+        _stop_patches(*cls._patches)
 
     def test_dry_run_endpoint(self) -> None:
         r = self.client.post("/api/sources/payment-ingestion/import-duty/dry-run")
