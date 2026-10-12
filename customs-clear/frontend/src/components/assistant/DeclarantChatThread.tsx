@@ -20,6 +20,10 @@ type GroundingCitationView = {
   id: string;
   title: string;
   url?: string;
+  status?: string;
+  excerpt?: string;
+  authorityLevel?: string;
+  legalRef?: string;
 };
 
 type GroundingView = {
@@ -55,7 +59,15 @@ function normalizeGrounding(value: unknown): GroundingView | undefined {
         const id = boundedText(citation.id, 40);
         const title = boundedText(citation.title, 240);
         if (!id || !title) return [];
-        return [{ id, title, url: getSafeExternalUrl(citation.url) ?? undefined }];
+        return [{
+          id,
+          title,
+          url: getSafeExternalUrl(citation.url) ?? undefined,
+          status: boundedText(citation.status, 100) || undefined,
+          excerpt: boundedText(citation.excerpt, 420) || undefined,
+          authorityLevel: boundedText(citation.authority_level, 160) || undefined,
+          legalRef: boundedText(citation.legal_ref, 300) || undefined,
+        }];
       })
     : [];
   const limitations = Array.isArray(raw.limitations)
@@ -128,7 +140,7 @@ function GroundingDetails({ grounding }: { grounding: GroundingView }) {
           <p className="font-semibold text-slate-700">Источники в ответе</p>
           <ul className="mt-0.5 space-y-0.5">
             {grounding.citations.map((citation) => (
-              <li key={`${citation.id}-${citation.title}`}>
+              <li key={`${citation.id}-${citation.title}`} className="space-y-0.5">
                 {citation.url ? (
                   <a
                     href={citation.url}
@@ -141,6 +153,18 @@ function GroundingDetails({ grounding }: { grounding: GroundingView }) {
                 ) : (
                   <span>[{citation.id}] {citation.title}</span>
                 )}
+                {(citation.authorityLevel || citation.legalRef || citation.status) ? (
+                  <p className="text-slate-500">
+                    {[
+                      citation.authorityLevel && `Уровень источника: ${citation.authorityLevel}`,
+                      citation.legalRef && `Правовое основание: ${citation.legalRef}`,
+                      citation.status && `Статус источника: ${citation.status}`,
+                    ].filter(Boolean).join(' · ')}
+                  </p>
+                ) : null}
+                {citation.excerpt ? (
+                  <p className="text-slate-500">{citation.excerpt}</p>
+                ) : null}
               </li>
             ))}
           </ul>

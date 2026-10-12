@@ -223,6 +223,11 @@ class GroundingBundleTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(signal["source_label"], "Геополитические меры")
         self.assertEqual(signal["authority_level"], "Официальный источник")
         self.assertEqual(signal["legal_ref"], "Решение ЕЭК test")
+        citation = next(
+            item for item in bundle["citations"] if item["id"] == signal["citation_id"]
+        )
+        self.assertEqual(citation["authority_level"], "Официальный источник")
+        self.assertEqual(citation["legal_ref"], "Решение ЕЭК test")
 
     async def test_valid_hs_without_usable_local_evidence_is_not_grounded(self) -> None:
         with (
@@ -870,6 +875,17 @@ class CopilotGroundingTests(unittest.IsolatedAsyncioTestCase):
             "risk_summary": {
                 "overall_severity": "manual_review_required",
                 "coverage_complete": False,
+                "signals": [
+                    {
+                        "category": "embargo",
+                        "severity": "medium",
+                        "source": "geo_special_duties",
+                        "source_label": "Геополитические меры",
+                        "authority_level": "Официальный источник",
+                        "explanation": "Требуется дополнительная проверка.",
+                        "legal_ref": "Решение ЕЭК test",
+                    }
+                ],
             },
         }
 
@@ -882,6 +898,11 @@ class CopilotGroundingTests(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(result["next_steps"])
         self.assertIn("Полнота и юридическая актуальность", result["non_tariff_comment"])
         self.assertNotIn("Ключ ИИ", result.get("note", ""))
+        risk_citation = next(
+            item for item in result["citations"] if item["source_id"] == "geo_special_duties"
+        )
+        self.assertEqual(risk_citation["authority_level"], "Официальный источник")
+        self.assertEqual(risk_citation["legal_ref"], "Решение ЕЭК test")
 
     async def test_copilot_freshness_matrix_never_claims_complete_ntm_coverage(self) -> None:
         cases = (

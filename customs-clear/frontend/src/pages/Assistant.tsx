@@ -350,7 +350,15 @@ export const CopilotBundleView: React.FC<{ bundle: AssistantCopilotBundle; title
   );
 };
 
-type CopilotCitationView = { id: string; title: string; url?: string };
+type CopilotCitationView = {
+  id: string;
+  title: string;
+  url?: string;
+  status?: string;
+  excerpt?: string;
+  authorityLevel?: string;
+  legalRef?: string;
+};
 type CopilotGroundingView = {
   coverage: 'grounded' | 'partial' | 'needs_context' | 'unknown';
   mode: 'deterministic' | 'llm_grounded' | 'unknown';
@@ -382,7 +390,15 @@ function normalizeCopilotGrounding(ai: AssistantCopilotAi): CopilotGroundingView
         const title = assistantBoundedText(citation.title, 240);
         const kind = assistantBoundedText(citation.kind, 80);
         if (!id || !sourceId || !title || !kind) return [];
-        return [{ id, title, url: getSafeExternalUrl(citation.url) ?? undefined }];
+        return [{
+          id,
+          title,
+          url: getSafeExternalUrl(citation.url) ?? undefined,
+          status: assistantBoundedText(citation.status, 100) || undefined,
+          excerpt: assistantBoundedText(citation.excerpt, 420) || undefined,
+          authorityLevel: assistantBoundedText(citation.authority_level, 160) || undefined,
+          legalRef: assistantBoundedText(citation.legal_ref, 300) || undefined,
+        }];
       })
     : [];
   const knownFacts = new Set(['tnved', 'payments', 'requirements', 'risk']);
@@ -472,7 +488,7 @@ export const CopilotAiView: React.FC<{ ai: AssistantCopilotAi }> = ({ ai }) => {
           <p className="font-semibold text-slate-700">Источники сводки</p>
           <ul className="mt-0.5 space-y-0.5">
             {grounding.citations.map((citation) => (
-              <li key={`${citation.id}-${citation.title}`}>
+              <li key={`${citation.id}-${citation.title}`} className="space-y-0.5">
                 {citation.url ? (
                   <a
                     href={citation.url}
@@ -485,6 +501,18 @@ export const CopilotAiView: React.FC<{ ai: AssistantCopilotAi }> = ({ ai }) => {
                 ) : (
                   <span>[{citation.id}] {citation.title}</span>
                 )}
+                {(citation.authorityLevel || citation.legalRef || citation.status) ? (
+                  <p className="text-slate-500">
+                    {[
+                      citation.authorityLevel && `Уровень источника: ${citation.authorityLevel}`,
+                      citation.legalRef && `Правовое основание: ${citation.legalRef}`,
+                      citation.status && `Статус источника: ${citation.status}`,
+                    ].filter(Boolean).join(' · ')}
+                  </p>
+                ) : null}
+                {citation.excerpt ? (
+                  <p className="text-slate-500">{citation.excerpt}</p>
+                ) : null}
               </li>
             ))}
           </ul>

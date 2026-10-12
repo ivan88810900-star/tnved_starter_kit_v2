@@ -899,6 +899,8 @@ export interface AssistantCopilotCitation {
   url?: string;
   status?: string;
   excerpt?: string;
+  authority_level?: string;
+  legal_ref?: string;
 }
 
 export interface AssistantCopilotGrounding {
@@ -930,6 +932,8 @@ export interface AssistantCalculationCurrentContext {
   hs_code?: string;
   product_name?: string;
   origin_country?: string | null;
+  destination_country?: string | null;
+  counterparty_name?: string | null;
   total_payable?: number;
   non_tariff_measures?: AssistantChatNonTariffMeasureContext[];
   /** Снимок ключевых сумм из breakdown (не выдумывать ставки вне этого блока) */
@@ -972,6 +976,8 @@ export interface AssistantChatCitation {
   url?: string;
   status?: string;
   excerpt?: string;
+  authority_level?: string;
+  legal_ref?: string;
 }
 
 export interface AssistantChatCanonicalAnchor {

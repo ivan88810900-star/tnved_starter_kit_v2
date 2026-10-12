@@ -53,6 +53,10 @@ describe('DeclarantChatThread grounding metadata', () => {
                 title: 'Единый таможенный тариф ЕАЭС',
                 url: 'https://eec.example/ett',
                 kind: 'official',
+                status: 'medium',
+                authority_level: 'Официальный источник',
+                legal_ref: 'Решение ЕЭК № 123',
+                excerpt: 'Требуется дополнительная проверка страны назначения.',
               },
             ],
             limitations: [],
@@ -76,6 +80,15 @@ describe('DeclarantChatThread grounding metadata', () => {
     const citation = screen.getByRole('link', { name: /Единый таможенный тариф ЕАЭС/ });
     expect(citation).toHaveAttribute('href', 'https://eec.example/ett');
     expect(citation).toHaveAttribute('rel', 'noreferrer');
+    expect(screen.getByTestId('assistant-grounding')).toHaveTextContent(
+      'Официальный источник',
+    );
+    expect(screen.getByTestId('assistant-grounding')).toHaveTextContent(
+      'Решение ЕЭК № 123',
+    );
+    expect(screen.getByTestId('assistant-grounding')).toHaveTextContent(
+      'Требуется дополнительная проверка страны назначения.',
+    );
   });
 
   it('shows partial coverage and limitations without inventing a citation', async () => {

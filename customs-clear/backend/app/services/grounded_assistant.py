@@ -207,6 +207,8 @@ class _CitationCollector:
         url: str | None = None,
         status: str | None = None,
         excerpt: str | None = None,
+        authority_level: str | None = None,
+        legal_ref: str | None = None,
     ) -> str:
         clean_source = _trim(source_id, 120) or "internal"
         clean_title = _trim(title, 220) or clean_source
@@ -214,6 +216,12 @@ class _CitationCollector:
         key = (clean_source, clean_title, clean_url or "")
         existing = self._by_key.get(key)
         if existing:
+            item = next((row for row in self.items if row["id"] == existing), None)
+            if item is not None:
+                if authority_level and not item.get("authority_level"):
+                    item["authority_level"] = _trim(authority_level, 160)
+                if legal_ref and not item.get("legal_ref"):
+                    item["legal_ref"] = _trim(legal_ref, 300)
             return existing
         citation_id = f"S{len(self.items) + 1}"
         item: dict[str, Any] = {
@@ -228,6 +236,10 @@ class _CitationCollector:
             item["status"] = _trim(status, 100)
         if excerpt:
             item["excerpt"] = _trim(excerpt, 420)
+        if authority_level:
+            item["authority_level"] = _trim(authority_level, 160)
+        if legal_ref:
+            item["legal_ref"] = _trim(legal_ref, 300)
         self.items.append(item)
         self._by_key[key] = citation_id
         return citation_id
@@ -481,6 +493,8 @@ def _risk_summary(raw: dict[str, Any], citations: _CitationCollector) -> dict[st
             url=_trim(row.get("source_url"), 600) or None,
             status=_first_nonempty(row.get("severity"), "signal"),
             excerpt=_trim(row.get("explanation"), 420) or None,
+            authority_level=_trim(row.get("authority_level"), 160) or None,
+            legal_ref=_trim(row.get("legal_ref"), 300) or None,
         )
         signals.append(
             {
@@ -1150,6 +1164,8 @@ def build_copilot_deterministic_summary(context: dict[str, Any]) -> dict[str, An
                     url=_trim(signal.get("source_url"), 600) or None,
                     status=_first_nonempty(signal.get("severity"), "signal"),
                     excerpt=_trim(signal.get("explanation"), 420) or None,
+                    authority_level=_trim(signal.get("authority_level"), 160) or None,
+                    legal_ref=_trim(signal.get("legal_ref"), 300) or None,
                 )
                 risk_citation_ids.append(signal_id)
                 risks.append(

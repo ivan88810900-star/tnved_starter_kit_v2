@@ -37,6 +37,10 @@ describe('CopilotAiView grounding metadata', () => {
           title: 'Единый таможенный тариф ЕАЭС',
           kind: 'official',
           url: 'https://eec.example/ett',
+          status: 'medium',
+          authority_level: 'Официальный источник',
+          legal_ref: 'Решение ЕЭК № 123',
+          excerpt: 'Требуется дополнительная проверка страны назначения.',
         },
       ],
       grounding: {
@@ -61,6 +65,9 @@ describe('CopilotAiView grounding metadata', () => {
     const citation = screen.getByRole('link', { name: /Единый таможенный тариф ЕАЭС/ });
     expect(citation).toHaveAttribute('href', 'https://eec.example/ett');
     expect(citation).toHaveAttribute('rel', 'noreferrer');
+    expect(grounding).toHaveTextContent('Официальный источник');
+    expect(grounding).toHaveTextContent('Решение ЕЭК № 123');
+    expect(grounding).toHaveTextContent('Требуется дополнительная проверка страны назначения.');
   });
 
   it('preserves a valid citation URL byte-for-byte', () => {
