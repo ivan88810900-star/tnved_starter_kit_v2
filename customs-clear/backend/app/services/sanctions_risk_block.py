@@ -281,7 +281,6 @@ def build_sanctions_risk_block(
     item_data: dict[str, Any] = {}
     if counterparty:
         item_data["counterparty"] = counterparty
-        item_data["manufacturer"] = counterparty
 
     warnings: list[str] = []
     try:
