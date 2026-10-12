@@ -2179,7 +2179,7 @@
       "unique_source_pr_count": 29
     }
   },
-  "revision": 744,
+  "revision": 745,
   "runs": [
     {
       "head_sha": null,
@@ -7549,7 +7549,7 @@
       }
     }
   ],
-  "updated_at": "2026-10-12T17:09:09.430Z",
+  "updated_at": "2026-10-12T17:55:27.526Z",
   "previous_scheduled_product_checkpoint_174": {
     "updated_at": "2026-10-11T18:04:51.196Z",
     "checked_at": "2026-10-11T18:04:51.196Z",
@@ -8321,47 +8321,41 @@
     "next_step": "On fresh PR256 HEAD, reproduce and isolate the next configured-DB or source-backed fixture while keeping full-sync snapshot evidence separate."
   },
   "latest_scheduled_product_checkpoint": {
-    "updated_at": "2026-10-12T17:09:09.430Z",
-    "checked_at": "2026-10-12T17:09:09.430Z",
+    "updated_at": "2026-10-12T17:55:27.526Z",
+    "checked_at": "2026-10-12T17:55:27.526Z",
     "pr": 256,
     "branch": "agent/product-ntm-regressions-v1",
-    "head_sha": "86f09f07477553c07dd5c9860e3a83f533a8a44e",
-    "tree_sha": "2b5d544ecaf158931b2f827ac41f8ae199e0fc03",
-    "parent_sha": "4bbfc75adcaa2b1d3ee4bea78707c66498f6ee48",
-    "prior_checkpoint_sha": "d7db16b51d5d09c115d7fb0f9fff7e3ad9f27d4e",
-    "local_author_exact_tree_commit": "d4aae4bdb8332383501a97dbc1dc25d99568315d",
+    "head_sha": "6aa3e9943558b2037d1dd9e551fb8a331e7fe9ea",
+    "tree_sha": "3d33d8c8291f27e48fc0aa71b9b730d1901a5515",
+    "parent_sha": "86f09f07477553c07dd5c9860e3a83f533a8a44e",
+    "prior_checkpoint_sha": "86f09f07477553c07dd5c9860e3a83f533a8a44e",
+    "local_author_exact_tree_commit": "288ea22547a0f51265c163328134cf0474029333",
     "base_pr": 245,
     "base_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
-    "block": "remaining_payment_database_isolation",
-    "status": "IMPLEMENTED_A5_PASS_CI_PASS_NO_AMBIENT_DATABASE",
+    "block": "compliance_payment_database_isolation",
+    "status": "IMPLEMENTED_A5_PASS_CI_PASS_COMPLIANCE_DB_ISOLATION",
     "behavior": {
-      "reproduced": "Intermediate exact HEAD 4bbfc75 created ambient customs.db and failed 29 payment-engine tests in a clean checkout because rate_display.SessionLocal was not bound to the disposable session.",
-      "final": "Five backend test modules now bind all captured database session aliases to disposable in-memory databases; broad payment tests run without DATABASE_URL and create no ambient SQLite files.",
-      "classification": "A missing test-fixture alias was reproduced and fixed; no payment algorithm or legal applicability change was made.",
-      "boundaries": "Only five backend test files changed. Original 181 test method bodies and HTTP assertions remain unchanged; no product, normative/source, production, protected-branch or external-provider action."
+      "reproduced": "Parent exact HEAD passed 4 compliance tests but created a 1,036,288-byte ambient customs.db in a clean checkout.",
+      "final": "test_compliance.py now uses an in-memory StaticPool database, minimum test-only payment rows, and explicit bindings for captured payment, normative-store and rate-display database aliases.",
+      "classification": "A test isolation defect was reproduced and fixed; no payment algorithm or legal applicability change was made.",
+      "boundaries": "Only customs-clear/backend/tests/test_compliance.py changed. All four original test method bodies are AST-identical; no product, normative/source, production, protected-branch or external-provider action."
     },
     "verification": {
-      "author_focused": "Clean checkout focused forward and reverse commands each passed 181 tests, exit 0, without DATABASE_URL.",
-      "author_broad": "13-module broad payment command passed 302 tests plus 10 subtests, exit 0; customs.db/WAL/SHM remained absent and the pinned catalogue remained byte-identical.",
+      "author_focused": "python -m pytest -q tests/test_compliance.py passed 4 tests, exit 0; payment-engine adjacency in both orders passed 41 tests each, exit 0.",
+      "author_broad": "14-module broad payment/compliance command without DATABASE_URL passed 306 tests plus 10 subtests, exit 0; ambient SQLite remained absent and the pinned catalogue stayed byte-identical.",
       "control": "Tariff-agent safety passed 124 tests, exit 0; git diff --check passed.",
-      "a5_prior": {
-        "session": "/root/a5_payment_db_isolation_200",
-        "head_sha": "4bbfc75adcaa2b1d3ee4bea78707c66498f6ee48",
-        "status": "FAIL_FINDING_FIXED",
-        "finding": "app.services.rate_display.SessionLocal still reached the ambient default database, causing 29 failures and creating SQLite files."
-      },
       "a5": {
-        "session": "/root/a5_payment_db_isolation_200",
+        "session": "/root/a5_compliance_db_isolation_201",
         "status": "FINAL_PASS_EXACT_HEAD_NO_FINDINGS",
-        "execution": "Fresh clean exact checkout focused and reverse 181 each; broad 302 plus 10 subtests; in-process cleanup 181 with PATCH_LEAKS=[] and AMBIENT_ARTIFACTS=[]; safety 124; diff-check clean.",
+        "execution": "Fresh detached exact checkout reproduced parent mutation, then passed focused 4, forward/reverse 41 each, broad 306 plus 10 subtests, PATCH_LEAKS=[], safety 124, AST parity and one-file scope.",
         "findings": []
       },
       "ci": {
         "status": "PASSED_EXACT_HEAD_OFFLINE_SAFETY_ONLY",
-        "run_id": 38281892073,
-        "job_id": 114920887081,
-        "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38281892073/job/114920887081",
-        "head_sha": "86f09f07477553c07dd5c9860e3a83f533a8a44e",
+        "run_id": 38287007632,
+        "job_id": 114937679417,
+        "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38287007632/job/114937679417",
+        "head_sha": "6aa3e9943558b2037d1dd9e551fb8a331e7fe9ea",
         "conclusion": "success",
         "limitation": "Workflow is offline-safety only; author and independent executable A5 provide product-test evidence."
       }
@@ -8378,53 +8372,47 @@
     "capabilities": {
       "code_access": "Full exact candidate tree available in isolated author and A5 worktrees.",
       "command_execution": "Git, Python and pytest execution available; author focused, broad and safety commands exited 0.",
-      "lawful_publication": "Draft branch and PR updated through the authorized GitHub connector under lease generation 200.",
+      "lawful_publication": "Draft branch, PR and state updated through the authorized GitHub connector under lease generation 201.",
       "checkpoint": "This state CAS commit is the durable checkpoint; lease release follows separately."
     },
-    "next_step": "Return to #245 with a fresh-head bounded NTM/classification fixture inventory and reproduce the first concrete remaining defect; do not replace populated/full-sync expectations with synthetic completeness."
+    "next_step": "Continue the fresh-head bounded inventory of integrated compliance/API tests, starting with test_api_integration.py; reproduce any database mutation before editing and preserve its HTTP assertions."
   },
   "latest_development_checkpoint": {
-    "updated_at": "2026-10-12T17:09:09.430Z",
-    "checked_at": "2026-10-12T17:09:09.430Z",
+    "updated_at": "2026-10-12T17:55:27.526Z",
+    "checked_at": "2026-10-12T17:55:27.526Z",
     "pr": 256,
     "branch": "agent/product-ntm-regressions-v1",
-    "head_sha": "86f09f07477553c07dd5c9860e3a83f533a8a44e",
-    "tree_sha": "2b5d544ecaf158931b2f827ac41f8ae199e0fc03",
-    "parent_sha": "4bbfc75adcaa2b1d3ee4bea78707c66498f6ee48",
-    "prior_checkpoint_sha": "d7db16b51d5d09c115d7fb0f9fff7e3ad9f27d4e",
-    "local_author_exact_tree_commit": "d4aae4bdb8332383501a97dbc1dc25d99568315d",
+    "head_sha": "6aa3e9943558b2037d1dd9e551fb8a331e7fe9ea",
+    "tree_sha": "3d33d8c8291f27e48fc0aa71b9b730d1901a5515",
+    "parent_sha": "86f09f07477553c07dd5c9860e3a83f533a8a44e",
+    "prior_checkpoint_sha": "86f09f07477553c07dd5c9860e3a83f533a8a44e",
+    "local_author_exact_tree_commit": "288ea22547a0f51265c163328134cf0474029333",
     "base_pr": 245,
     "base_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
-    "block": "remaining_payment_database_isolation",
-    "status": "IMPLEMENTED_A5_PASS_CI_PASS_NO_AMBIENT_DATABASE",
+    "block": "compliance_payment_database_isolation",
+    "status": "IMPLEMENTED_A5_PASS_CI_PASS_COMPLIANCE_DB_ISOLATION",
     "behavior": {
-      "reproduced": "Intermediate exact HEAD 4bbfc75 created ambient customs.db and failed 29 payment-engine tests in a clean checkout because rate_display.SessionLocal was not bound to the disposable session.",
-      "final": "Five backend test modules now bind all captured database session aliases to disposable in-memory databases; broad payment tests run without DATABASE_URL and create no ambient SQLite files.",
-      "classification": "A missing test-fixture alias was reproduced and fixed; no payment algorithm or legal applicability change was made.",
-      "boundaries": "Only five backend test files changed. Original 181 test method bodies and HTTP assertions remain unchanged; no product, normative/source, production, protected-branch or external-provider action."
+      "reproduced": "Parent exact HEAD passed 4 compliance tests but created a 1,036,288-byte ambient customs.db in a clean checkout.",
+      "final": "test_compliance.py now uses an in-memory StaticPool database, minimum test-only payment rows, and explicit bindings for captured payment, normative-store and rate-display database aliases.",
+      "classification": "A test isolation defect was reproduced and fixed; no payment algorithm or legal applicability change was made.",
+      "boundaries": "Only customs-clear/backend/tests/test_compliance.py changed. All four original test method bodies are AST-identical; no product, normative/source, production, protected-branch or external-provider action."
     },
     "verification": {
-      "author_focused": "Clean checkout focused forward and reverse commands each passed 181 tests, exit 0, without DATABASE_URL.",
-      "author_broad": "13-module broad payment command passed 302 tests plus 10 subtests, exit 0; customs.db/WAL/SHM remained absent and the pinned catalogue remained byte-identical.",
+      "author_focused": "python -m pytest -q tests/test_compliance.py passed 4 tests, exit 0; payment-engine adjacency in both orders passed 41 tests each, exit 0.",
+      "author_broad": "14-module broad payment/compliance command without DATABASE_URL passed 306 tests plus 10 subtests, exit 0; ambient SQLite remained absent and the pinned catalogue stayed byte-identical.",
       "control": "Tariff-agent safety passed 124 tests, exit 0; git diff --check passed.",
-      "a5_prior": {
-        "session": "/root/a5_payment_db_isolation_200",
-        "head_sha": "4bbfc75adcaa2b1d3ee4bea78707c66498f6ee48",
-        "status": "FAIL_FINDING_FIXED",
-        "finding": "app.services.rate_display.SessionLocal still reached the ambient default database, causing 29 failures and creating SQLite files."
-      },
       "a5": {
-        "session": "/root/a5_payment_db_isolation_200",
+        "session": "/root/a5_compliance_db_isolation_201",
         "status": "FINAL_PASS_EXACT_HEAD_NO_FINDINGS",
-        "execution": "Fresh clean exact checkout focused and reverse 181 each; broad 302 plus 10 subtests; in-process cleanup 181 with PATCH_LEAKS=[] and AMBIENT_ARTIFACTS=[]; safety 124; diff-check clean.",
+        "execution": "Fresh detached exact checkout reproduced parent mutation, then passed focused 4, forward/reverse 41 each, broad 306 plus 10 subtests, PATCH_LEAKS=[], safety 124, AST parity and one-file scope.",
         "findings": []
       },
       "ci": {
         "status": "PASSED_EXACT_HEAD_OFFLINE_SAFETY_ONLY",
-        "run_id": 38281892073,
-        "job_id": 114920887081,
-        "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38281892073/job/114920887081",
-        "head_sha": "86f09f07477553c07dd5c9860e3a83f533a8a44e",
+        "run_id": 38287007632,
+        "job_id": 114937679417,
+        "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38287007632/job/114937679417",
+        "head_sha": "6aa3e9943558b2037d1dd9e551fb8a331e7fe9ea",
         "conclusion": "success",
         "limitation": "Workflow is offline-safety only; author and independent executable A5 provide product-test evidence."
       }
@@ -8441,10 +8429,10 @@
     "capabilities": {
       "code_access": "Full exact candidate tree available in isolated author and A5 worktrees.",
       "command_execution": "Git, Python and pytest execution available; author focused, broad and safety commands exited 0.",
-      "lawful_publication": "Draft branch and PR updated through the authorized GitHub connector under lease generation 200.",
+      "lawful_publication": "Draft branch, PR and state updated through the authorized GitHub connector under lease generation 201.",
       "checkpoint": "This state CAS commit is the durable checkpoint; lease release follows separately."
     },
-    "next_step": "Return to #245 with a fresh-head bounded NTM/classification fixture inventory and reproduce the first concrete remaining defect; do not replace populated/full-sync expectations with synthetic completeness."
+    "next_step": "Continue the fresh-head bounded inventory of integrated compliance/API tests, starting with test_api_integration.py; reproduce any database mutation before editing and preserve its HTTP assertions."
   },
   "previous_scheduled_product_checkpoint_188": {
     "updated_at": "2026-10-12T06:11:25.000Z",
@@ -9661,5 +9649,131 @@
       "checkpoint": "This state CAS commit is the durable checkpoint; lease release follows separately."
     },
     "next_step": "Isolate the remaining ambient-default database users in test_payment_engine.py and API classes in payment coverage, normalization, source-ingestion and import-duty tests; until then run broad controls with an explicit disposable DATABASE_URL."
+  },
+  "previous_scheduled_product_checkpoint_200": {
+    "updated_at": "2026-10-12T17:09:09.430Z",
+    "checked_at": "2026-10-12T17:09:09.430Z",
+    "pr": 256,
+    "branch": "agent/product-ntm-regressions-v1",
+    "head_sha": "86f09f07477553c07dd5c9860e3a83f533a8a44e",
+    "tree_sha": "2b5d544ecaf158931b2f827ac41f8ae199e0fc03",
+    "parent_sha": "4bbfc75adcaa2b1d3ee4bea78707c66498f6ee48",
+    "prior_checkpoint_sha": "d7db16b51d5d09c115d7fb0f9fff7e3ad9f27d4e",
+    "local_author_exact_tree_commit": "d4aae4bdb8332383501a97dbc1dc25d99568315d",
+    "base_pr": 245,
+    "base_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
+    "block": "remaining_payment_database_isolation",
+    "status": "IMPLEMENTED_A5_PASS_CI_PASS_NO_AMBIENT_DATABASE",
+    "behavior": {
+      "reproduced": "Intermediate exact HEAD 4bbfc75 created ambient customs.db and failed 29 payment-engine tests in a clean checkout because rate_display.SessionLocal was not bound to the disposable session.",
+      "final": "Five backend test modules now bind all captured database session aliases to disposable in-memory databases; broad payment tests run without DATABASE_URL and create no ambient SQLite files.",
+      "classification": "A missing test-fixture alias was reproduced and fixed; no payment algorithm or legal applicability change was made.",
+      "boundaries": "Only five backend test files changed. Original 181 test method bodies and HTTP assertions remain unchanged; no product, normative/source, production, protected-branch or external-provider action."
+    },
+    "verification": {
+      "author_focused": "Clean checkout focused forward and reverse commands each passed 181 tests, exit 0, without DATABASE_URL.",
+      "author_broad": "13-module broad payment command passed 302 tests plus 10 subtests, exit 0; customs.db/WAL/SHM remained absent and the pinned catalogue remained byte-identical.",
+      "control": "Tariff-agent safety passed 124 tests, exit 0; git diff --check passed.",
+      "a5_prior": {
+        "session": "/root/a5_payment_db_isolation_200",
+        "head_sha": "4bbfc75adcaa2b1d3ee4bea78707c66498f6ee48",
+        "status": "FAIL_FINDING_FIXED",
+        "finding": "app.services.rate_display.SessionLocal still reached the ambient default database, causing 29 failures and creating SQLite files."
+      },
+      "a5": {
+        "session": "/root/a5_payment_db_isolation_200",
+        "status": "FINAL_PASS_EXACT_HEAD_NO_FINDINGS",
+        "execution": "Fresh clean exact checkout focused and reverse 181 each; broad 302 plus 10 subtests; in-process cleanup 181 with PATCH_LEAKS=[] and AMBIENT_ARTIFACTS=[]; safety 124; diff-check clean.",
+        "findings": []
+      },
+      "ci": {
+        "status": "PASSED_EXACT_HEAD_OFFLINE_SAFETY_ONLY",
+        "run_id": 38281892073,
+        "job_id": 114920887081,
+        "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38281892073/job/114920887081",
+        "head_sha": "86f09f07477553c07dd5c9860e3a83f533a8a44e",
+        "conclusion": "success",
+        "limitation": "Workflow is offline-safety only; author and independent executable A5 provide product-test evidence."
+      }
+    },
+    "blockers": [
+      "Full #245 product acceptance and legal/source completeness remain NOT PASS.",
+      "The NTM full-sync audit still requires a lawful populated synchronized snapshot."
+    ],
+    "a6": {
+      "request": "core-s1-6415f443120f-r9-g106",
+      "status": "UNCHANGED_NOT_SENT"
+    },
+    "protected_actions_performed": false,
+    "capabilities": {
+      "code_access": "Full exact candidate tree available in isolated author and A5 worktrees.",
+      "command_execution": "Git, Python and pytest execution available; author focused, broad and safety commands exited 0.",
+      "lawful_publication": "Draft branch and PR updated through the authorized GitHub connector under lease generation 200.",
+      "checkpoint": "This state CAS commit is the durable checkpoint; lease release follows separately."
+    },
+    "next_step": "Return to #245 with a fresh-head bounded NTM/classification fixture inventory and reproduce the first concrete remaining defect; do not replace populated/full-sync expectations with synthetic completeness."
+  },
+  "previous_development_checkpoint_200": {
+    "updated_at": "2026-10-12T17:09:09.430Z",
+    "checked_at": "2026-10-12T17:09:09.430Z",
+    "pr": 256,
+    "branch": "agent/product-ntm-regressions-v1",
+    "head_sha": "86f09f07477553c07dd5c9860e3a83f533a8a44e",
+    "tree_sha": "2b5d544ecaf158931b2f827ac41f8ae199e0fc03",
+    "parent_sha": "4bbfc75adcaa2b1d3ee4bea78707c66498f6ee48",
+    "prior_checkpoint_sha": "d7db16b51d5d09c115d7fb0f9fff7e3ad9f27d4e",
+    "local_author_exact_tree_commit": "d4aae4bdb8332383501a97dbc1dc25d99568315d",
+    "base_pr": 245,
+    "base_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
+    "block": "remaining_payment_database_isolation",
+    "status": "IMPLEMENTED_A5_PASS_CI_PASS_NO_AMBIENT_DATABASE",
+    "behavior": {
+      "reproduced": "Intermediate exact HEAD 4bbfc75 created ambient customs.db and failed 29 payment-engine tests in a clean checkout because rate_display.SessionLocal was not bound to the disposable session.",
+      "final": "Five backend test modules now bind all captured database session aliases to disposable in-memory databases; broad payment tests run without DATABASE_URL and create no ambient SQLite files.",
+      "classification": "A missing test-fixture alias was reproduced and fixed; no payment algorithm or legal applicability change was made.",
+      "boundaries": "Only five backend test files changed. Original 181 test method bodies and HTTP assertions remain unchanged; no product, normative/source, production, protected-branch or external-provider action."
+    },
+    "verification": {
+      "author_focused": "Clean checkout focused forward and reverse commands each passed 181 tests, exit 0, without DATABASE_URL.",
+      "author_broad": "13-module broad payment command passed 302 tests plus 10 subtests, exit 0; customs.db/WAL/SHM remained absent and the pinned catalogue remained byte-identical.",
+      "control": "Tariff-agent safety passed 124 tests, exit 0; git diff --check passed.",
+      "a5_prior": {
+        "session": "/root/a5_payment_db_isolation_200",
+        "head_sha": "4bbfc75adcaa2b1d3ee4bea78707c66498f6ee48",
+        "status": "FAIL_FINDING_FIXED",
+        "finding": "app.services.rate_display.SessionLocal still reached the ambient default database, causing 29 failures and creating SQLite files."
+      },
+      "a5": {
+        "session": "/root/a5_payment_db_isolation_200",
+        "status": "FINAL_PASS_EXACT_HEAD_NO_FINDINGS",
+        "execution": "Fresh clean exact checkout focused and reverse 181 each; broad 302 plus 10 subtests; in-process cleanup 181 with PATCH_LEAKS=[] and AMBIENT_ARTIFACTS=[]; safety 124; diff-check clean.",
+        "findings": []
+      },
+      "ci": {
+        "status": "PASSED_EXACT_HEAD_OFFLINE_SAFETY_ONLY",
+        "run_id": 38281892073,
+        "job_id": 114920887081,
+        "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38281892073/job/114920887081",
+        "head_sha": "86f09f07477553c07dd5c9860e3a83f533a8a44e",
+        "conclusion": "success",
+        "limitation": "Workflow is offline-safety only; author and independent executable A5 provide product-test evidence."
+      }
+    },
+    "blockers": [
+      "Full #245 product acceptance and legal/source completeness remain NOT PASS.",
+      "The NTM full-sync audit still requires a lawful populated synchronized snapshot."
+    ],
+    "a6": {
+      "request": "core-s1-6415f443120f-r9-g106",
+      "status": "UNCHANGED_NOT_SENT"
+    },
+    "protected_actions_performed": false,
+    "capabilities": {
+      "code_access": "Full exact candidate tree available in isolated author and A5 worktrees.",
+      "command_execution": "Git, Python and pytest execution available; author focused, broad and safety commands exited 0.",
+      "lawful_publication": "Draft branch and PR updated through the authorized GitHub connector under lease generation 200.",
+      "checkpoint": "This state CAS commit is the durable checkpoint; lease release follows separately."
+    },
+    "next_step": "Return to #245 with a fresh-head bounded NTM/classification fixture inventory and reproduce the first concrete remaining defect; do not replace populated/full-sync expectations with synthetic completeness."
   }
 }
