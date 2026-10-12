@@ -141,7 +141,8 @@ def test_positive_counterparty_ofac_match(memory_sessionmaker: sessionmaker) -> 
             counterparty_name="FIXTURE SANCTIONED ENTITY LLC",
             db=db,
         )
-    assert any(s.category == "counterparty_ofac" for s in block.signals)
+    ofac_signals = [s for s in block.signals if s.category == "counterparty_ofac"]
+    assert len(ofac_signals) == 1
     assert block.overall_severity == "high"
 
 
