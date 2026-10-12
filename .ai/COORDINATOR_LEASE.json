@@ -1,14 +1,14 @@
 {
-  "acquisition_note": "Execute and independently verify test_tnved_code_card.py with classification inventory and configured/source/marker absent plus sentinel controls and adjacent API ordering on fresh PR256 exact head e7f141a; reproduce a concrete defect before any edit.",
-  "expires_at": null,
-  "generation": 191,
-  "holder": null,
+  "acquisition_note": "Audit and independently verify the frontend PreliminaryDecisionsBlock/API contract, empty state and source rendering on fresh PR256 exact head e7f141a; reproduce a concrete defect before any edit.",
+  "expires_at": "2026-10-12T10:20:24.540847Z",
+  "generation": 192,
+  "holder": "/root",
   "lease_repair": {},
   "release_reason": "TN VED code-card executable audit completed on unchanged PR256 head e7f141a145e1475e8d1c51f25c51789a084b4541: A0 focused 3 plus 3 and four adjacent 36-test runs passed; independent A5 final pass without blocking findings; exact-head offline-safety run 38216078694 success; board revision 736 and handoff saved in state checkpoint 69e74722c7aed5964e90c34227a22072747bdaff.",
   "released_by": "/root",
   "schema_version": 1,
   "serialization_repair": {},
-  "state": "released",
-  "token": null,
-  "updated_at": "2026-10-12T09:04:05.668443Z"
+  "state": "active",
+  "token": "5ed911261dbb40fe92dd350bdcd4a07f",
+  "updated_at": "2026-10-12T09:50:24.540847Z"
 }
