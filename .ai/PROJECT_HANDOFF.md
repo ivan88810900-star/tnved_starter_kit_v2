@@ -1,23 +1,21 @@
 # Tariff / A0 — единая точка передачи проекта
 
-## 0aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa. #245 — canonical TN VED fixture inventory verified on unchanged HEAD
+## 0aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa. #245 — HS leaf calculator fixture isolated from configured DB
 
-**Checkpoint:** [draft PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256), `agent/product-ntm-regressions-v1` @ `7462f2959735f7aad51f53047ef6d9ddeefd04a3`, tree `32e56e479aa3d5a21f7218723f82d5c09b914322`, parent `5bb7dbf69e61c0999e3b0971fc79f86198296560`.
+**Checkpoint:** [draft PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256), `agent/product-ntm-regressions-v1` @ `e7f141a145e1475e8d1c51f25c51789a084b4541`, tree `def0f10bc2dc35376dcdff6f453ee91f390f0607`, parent `7462f2959735f7aad51f53047ef6d9ddeefd04a3`.
 
-The remaining canonical TN VED fixture contour was executed without changing code. It covers canonical model materialization, tree engine, semantic navigation, FTS letters, classification rulings and the real TN VED FTS index. The shared bootstrap uses only a disposable inventory; configured/source SQLite databases, preview marker, pinned catalogue and default database boundary remained unchanged.
+A collection-order defect was reproduced before editing: the parent adjacent contour returned **3 failed, 30 passed**, and the already-imported `rate_display.SessionLocal` queried a missing `hs_rates` table through configured SQLite, creating a 4096-byte file. The test fixture now binds that captured alias to the same disposable classification inventory used by the calculator/payment fixtures. All 9 original test methods and 23 assertions remain AST-identical; product code and normative data were not changed.
 
-Evidence bound to this exact unchanged HEAD:
+Evidence bound to the exact candidate:
 
-- root focused `test_canonical_tnved_model.py`: **32 passed**, exit 0, absent configured/source/marker inputs remained absent;
-- six-module canonical contour in forward populated-sentinel and reverse absent-input orders: **78 passed** each, exit 0;
-- independent executable A5 `/root/a5_canonical_inventory_188`: **FINAL PASS, no findings**; absent, populated-sentinel and reverse runs each **78 passed**;
-- independent bootstrap control: `integrity_check=ok`, 13,979 TN VED codes, 206 FTS letters, 50 official rulings and 520 explicitly labelled reference rulings;
-- configured/source/marker sentinels remained byte-identical; no WAL/SHM/default `customs.db`; pinned catalogue SHA-256 remained `53847cb00ebc53f6315042325bc416d13d65cf020a10530a4ce7dde848ed1ff2`;
-- local safety: `verify` **120 passed**, CLI snapshot **4 passed**, committed snapshot valid, `diff --check` exit 0;
-- exact-head CI: [run 38203390890](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38203390890), offline-safety job `114661471007`, **success**;
-- CI remains offline-safety only; the executable contour is separately proven by A0 and independent A5.
+- root focused hostile-absent and populated-sentinel runs: **9 passed** each, exit 0;
+- root adjacent catalogue/measures/calculator forward and reverse runs: **33 passed** each on absent inputs and **33 passed** each on populated sentinels, all exit 0;
+- configured/source/marker stayed absent or byte-identical; no WAL/SHM/default `customs.db`; pinned catalogue hash unchanged;
+- independent executable A5 `/root/a5_hs_leaf_isolation_189`: **FINAL PASS, no findings**; parent defect independently reproduced and candidate invariance repeated;
+- local safety: `verify` **120 passed**, CLI snapshot **4 passed**, committed snapshot valid;
+- exact-head CI: [run 38216078694](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38216078694), offline-safety job `114701012450`, **success**.
 
-This closes the bounded canonical-fixture execution inventory only. Lawful populated synchronized NTM data remains unavailable and full #245 remains **NOT PASS**. No A6/provider request, merge, deploy, production write, enforcement/permissions/secrets change, destructive migration, force push or branch deletion occurred. Next safe block is a fresh-HEAD executable review of the product-facing `test_hs_leaf_clarification.py` path with calculator API and configured/source sentinel controls; reproduce a concrete defect before any edit.
+This is a bounded fixture-isolation fix only. Lawful populated synchronized NTM data remains unavailable and full #245 remains **NOT PASS**. A6 `core-s1-6415f443120f-r9-g106` remains prepared but not authorized or sent. No merge, deploy, production write, enforcement/permissions/secrets change, destructive migration, force push or branch deletion occurred. Next safe block is fresh-HEAD execution of `test_smart_tnved_search.py` with engine/cache ordering and external DB/marker invariance controls.
 
 ## 0aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa. #245 — TN VED catalog API изолирован от configured/source DB и preview marker
 
