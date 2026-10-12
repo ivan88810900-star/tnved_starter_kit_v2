@@ -1,14 +1,14 @@
 {
   "acquisition_note": "Reread issue 257, fresh live heads and state revision 739, then execute a bounded end-to-end sanctions and risk-management product audit from current focus; reproduce a concrete defect before any edit.",
-  "expires_at": "2026-10-12T15:44:40.296119Z",
+  "expires_at": null,
   "generation": 197,
-  "holder": "/root",
+  "holder": null,
   "lease_repair": {},
   "release_reason": "Destination-country sanctions/risk defect fixed and published on PR256 head d0fce3527c92026a4dc687ba3bb79854d16af75f tree 4c81fe078de7230493a454b88b4d27a8a356f608; author 38 plus 26 and safety 124 passed; first A5 blocker fixed, independent A5 /root/a5_sanctions_destination_195 final pass; exact-head CI run 38253458871 success; board revision 740 and handoff saved and reread at state checkpoint 647648391e3fb863fffe6c780ef5db9c9c6e5f83.",
   "released_by": null,
   "schema_version": 1,
   "serialization_repair": {},
-  "state": "active",
-  "token": "0e8ccc3ba0a94c35807cdadeacaa73a6",
-  "updated_at": "2026-10-12T15:14:40.296119Z"
+  "state": "released",
+  "token": null,
+  "updated_at": "2026-10-12T15:18:17.656583Z"
 }
