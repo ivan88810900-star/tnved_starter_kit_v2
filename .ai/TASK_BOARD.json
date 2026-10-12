@@ -2179,7 +2179,7 @@
       "unique_source_pr_count": 29
     }
   },
-  "revision": 738,
+  "revision": 739,
   "runs": [
     {
       "head_sha": null,
@@ -6695,6 +6695,73 @@
           "six committed payment bundles remain stale",
           "continue #245 NTM applicability by code, product characteristics and source"
         ]
+      },
+      "smart_payment_explanation_checkpoint_20261012": {
+        "updated_at": "2026-10-12T12:15:37.380Z",
+        "checked_at": "2026-10-12T12:15:37.380Z",
+        "pr": 255,
+        "branch": "agent/core-payment-regressions-v1",
+        "head_sha": "9659b6509d82f6077dfe0f6917af0dc532f6277e",
+        "tree_sha": "73e5c9abb08e3cb1c9d4110661412e41ae4333e8",
+        "parent_sha": "7c12f21787b1d557630d8b0737c769b326ab112d",
+        "prior_checkpoint_sha": "7c12f21787b1d557630d8b0737c769b326ab112d",
+        "base_pr": 244,
+        "base_sha": "14e0ee8f034d94ffc5831d87e076f4d693a5a524",
+        "block": "smart_payment_explanation_ui",
+        "status": "IMPLEMENTED_A5_PASS_CI_PASS_SMART_PAYMENT_EXPLANATIONS",
+        "behavior": {
+          "reproduced": "The payment quote API returned line-item reasons and sources plus warnings, assumptions and legal_basis, but SmartPaymentsBlock rendered only labels, statuses, rates, amounts and totals; the disposable UI audit failed before editing.",
+          "final": "Smart Payments now renders the server-returned explanation fields as plain React text while retaining manual_review_required line amounts as an em dash, the final total as not determined and only the partial sum as informational.",
+          "boundaries": "Presentation-only change in SmartPaymentsBlock. No calculation, applicability, source admission, normative data, legal interpretation, enforcement, API/DB contract or feature flag changed."
+        },
+        "verification": {
+          "author_probe": "Disposable Vitest explanation audit failed 1 before the fix and passed 1 after; probe and temporary config removed.",
+          "author_frontend": "npm run typecheck and npm run build passed, exit 0.",
+          "author_backend": "Focused quote/payment slice passed 78 tests plus 14 subtests on disposable inputs, exit 0.",
+          "control": "Tariff-agent verify passed 120; CLI snapshot passed 4; committed snapshot valid; git diff --check passed; exact candidate tree clean.",
+          "a5": {
+            "session": "/root/a5_smart_payment_explanations_194",
+            "status": "FINAL_PASS_EXACT_TREE_NO_BLOCKING_FINDINGS",
+            "scope": "independent explanation rendering, fail-closed totals, hostile text safety, type/build and disposable quote/payment execution",
+            "execution": "Disposable hostile-text UI probe passed 2; typecheck/build passed; backend slice passed 78 plus 14 subtests; disposable DB integrity ok and removed.",
+            "findings": []
+          },
+          "ci": {
+            "status": "PASSED_EXACT_HEAD_OFFLINE_SAFETY_AND_PAYMENT_REGRESSION",
+            "run_id": 38247429977,
+            "jobs": [
+              {
+                "job_id": 114804735216,
+                "name": "offline-safety",
+                "conclusion": "success"
+              },
+              {
+                "job_id": 114804735533,
+                "name": "payment-regression",
+                "conclusion": "success"
+              }
+            ],
+            "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38247429977",
+            "head_sha": "9659b6509d82f6077dfe0f6917af0dc532f6277e",
+            "conclusion": "success"
+          }
+        },
+        "blockers": [
+          "Full #244 product acceptance and official-source/legal applicability remain NOT PASS.",
+          "Full #245 remains NOT PASS and its NTM full-sync audit still requires a lawful populated synchronized snapshot."
+        ],
+        "a6": {
+          "request": "core-s1-6415f443120f-r9-g106",
+          "status": "UNCHANGED_NOT_SENT"
+        },
+        "protected_actions_performed": false,
+        "capabilities": {
+          "code_access": "Full exact candidate tree available in an isolated worktree.",
+          "command_execution": "Git, Python, pytest, Node, TypeScript and build execution available.",
+          "lawful_publication": "Draft branch and PR updated through the authorized GitHub connector under lease generation 194.",
+          "checkpoint": "This state CAS commit is the durable checkpoint; lease release follows separately."
+        },
+        "next_step": "Reread fresh live heads and active product focus, then audit the next bounded sanctions/risk-management product slice end-to-end; reproduce a concrete defect before editing and preserve fail-closed source boundaries."
       }
     },
     {
@@ -7482,7 +7549,7 @@
       }
     }
   ],
-  "updated_at": "2026-10-12T10:55:58.957Z",
+  "updated_at": "2026-10-12T12:15:37.380Z",
   "previous_scheduled_product_checkpoint_174": {
     "updated_at": "2026-10-11T18:04:51.196Z",
     "checked_at": "2026-10-11T18:04:51.196Z",
@@ -8254,104 +8321,138 @@
     "next_step": "On fresh PR256 HEAD, reproduce and isolate the next configured-DB or source-backed fixture while keeping full-sync snapshot evidence separate."
   },
   "latest_scheduled_product_checkpoint": {
-    "updated_at": "2026-10-12T10:55:58.957Z",
-    "checked_at": "2026-10-12T10:55:58.957Z",
-    "pr": 256,
-    "branch": "agent/product-ntm-regressions-v1",
-    "head_sha": "e7f141a145e1475e8d1c51f25c51789a084b4541",
-    "tree_sha": "def0f10bc2dc35376dcdff6f453ee91f390f0607",
-    "parent_sha": "7462f2959735f7aad51f53047ef6d9ddeefd04a3",
-    "prior_checkpoint_sha": "e7f141a145e1475e8d1c51f25c51789a084b4541",
-    "base_pr": 245,
-    "base_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
-    "block": "product_details_decisions_tab_integration_execution",
-    "status": "UNCHANGED_HEAD_EXECUTABLE_A5_PASS_CI_PASS_PRODUCT_DETAILS_DECISIONS",
+    "updated_at": "2026-10-12T12:15:37.380Z",
+    "checked_at": "2026-10-12T12:15:37.380Z",
+    "pr": 255,
+    "branch": "agent/core-payment-regressions-v1",
+    "head_sha": "9659b6509d82f6077dfe0f6917af0dc532f6277e",
+    "tree_sha": "73e5c9abb08e3cb1c9d4110661412e41ae4333e8",
+    "parent_sha": "7c12f21787b1d557630d8b0737c769b326ab112d",
+    "prior_checkpoint_sha": "7c12f21787b1d557630d8b0737c769b326ab112d",
+    "base_pr": 244,
+    "base_sha": "14e0ee8f034d94ffc5831d87e076f4d693a5a524",
+    "block": "smart_payment_explanation_ui",
+    "status": "IMPLEMENTED_A5_PASS_CI_PASS_SMART_PAYMENT_EXPLANATIONS",
     "behavior": {
-      "reproduced": "No product defect reproduced. ProductDetails passed loading, backend-error, confirmed-empty, omitted/unavailable, populated badge/navigation, both embedded decision kinds, stale total_count and selectedCode cancellation scenarios.",
-      "final": "The unchanged exact candidate renders the preliminary-decisions and separately loaded classification-rulings blocks in the decisions tab, keeps rows visible under stale count metadata, and prevents stale requests from overwriting a newer selected code.",
-      "boundaries": "Executable frontend integration verification only on unchanged product head. Disposable tests were removed; no product/test code, normative data, source claim, legal interpretation, flag, skip or xfail changed."
+      "reproduced": "The payment quote API returned line-item reasons and sources plus warnings, assumptions and legal_basis, but SmartPaymentsBlock rendered only labels, statuses, rates, amounts and totals; the disposable UI audit failed before editing.",
+      "final": "Smart Payments now renders the server-returned explanation fields as plain React text while retaining manual_review_required line amounts as an em dash, the final total as not determined and only the partial sum as informational.",
+      "boundaries": "Presentation-only change in SmartPaymentsBlock. No calculation, applicability, source admission, normative data, legal interpretation, enforcement, API/DB contract or feature flag changed."
     },
     "verification": {
-      "author_probe": "Disposable ProductDetails integration audit passed 4 tests, exit 0.",
-      "author_frontend": "Full frontend with probe passed 112 tests; typecheck and production build exited 0. After probe deletion the baseline suite passed 108 tests and worktree was clean.",
-      "control": "Exact HEAD/tree stayed e7f141a145e1475e8d1c51f25c51789a084b4541/def0f10bc2dc35376dcdff6f453ee91f390f0607. Local tariff-agent verify passed 120, CLI snapshot passed 4, committed snapshot valid, git diff --check clean.",
+      "author_probe": "Disposable Vitest explanation audit failed 1 before the fix and passed 1 after; probe and temporary config removed.",
+      "author_frontend": "npm run typecheck and npm run build passed, exit 0.",
+      "author_backend": "Focused quote/payment slice passed 78 tests plus 14 subtests on disposable inputs, exit 0.",
+      "control": "Tariff-agent verify passed 120; CLI snapshot passed 4; committed snapshot valid; git diff --check passed; exact candidate tree clean.",
       "a5": {
-        "session": "/root/a5_product_details_193",
+        "session": "/root/a5_smart_payment_explanations_194",
         "status": "FINAL_PASS_EXACT_TREE_NO_BLOCKING_FINDINGS",
-        "scope": "independent ProductDetails disposable audit for badge/navigation, both embedded decision kinds, classification-rulings API integration, loading/error/empty/unavailable states, stale count, selectedCode change/cancellation and API/type contracts",
-        "execution": "Corrected disposable audit passed 5 tests; full frontend with probe passed 113; typecheck/build passed; baseline after deletion passed 108.",
-        "note": "The first disposable-test draft had two assertion-harness mismatches, not product failures. Low-severity defensive UX observation: badge trusts embedded total_count and does not aggregate the separately loaded rulings endpoint; current backend preserves total_count invariants."
+        "scope": "independent explanation rendering, fail-closed totals, hostile text safety, type/build and disposable quote/payment execution",
+        "execution": "Disposable hostile-text UI probe passed 2; typecheck/build passed; backend slice passed 78 plus 14 subtests; disposable DB integrity ok and removed.",
+        "findings": []
       },
       "ci": {
-        "status": "PASSED_EXACT_HEAD_OFFLINE_SAFETY_ONLY",
-        "run_id": 38216078694,
-        "job_id": 114701012450,
-        "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38216078694/job/114701012450",
-        "head_sha": "e7f141a145e1475e8d1c51f25c51789a084b4541",
-        "conclusion": "success",
-        "limitation": "Workflow is offline-safety only; ProductDetails frontend integration is separately proven by A0 and independent executable A5."
+        "status": "PASSED_EXACT_HEAD_OFFLINE_SAFETY_AND_PAYMENT_REGRESSION",
+        "run_id": 38247429977,
+        "jobs": [
+          {
+            "job_id": 114804735216,
+            "name": "offline-safety",
+            "conclusion": "success"
+          },
+          {
+            "job_id": 114804735533,
+            "name": "payment-regression",
+            "conclusion": "success"
+          }
+        ],
+        "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38247429977",
+        "head_sha": "9659b6509d82f6077dfe0f6917af0dc532f6277e",
+        "conclusion": "success"
       }
     },
     "blockers": [
-      "NTM full-sync audit still requires a lawful populated synchronized snapshot.",
-      "Full #245 product acceptance and legal/rate/source completeness remain NOT PASS."
+      "Full #244 product acceptance and official-source/legal applicability remain NOT PASS.",
+      "Full #245 remains NOT PASS and its NTM full-sync audit still requires a lawful populated synchronized snapshot."
     ],
     "a6": {
       "request": "core-s1-6415f443120f-r9-g106",
       "status": "UNCHANGED_NOT_SENT"
     },
     "protected_actions_performed": false,
-    "next_step": "Per active product focus, reread fresh PR255 exact HEAD and audit the smart-payment explanation slice end-to-end across calculator/quote/API/UI with disposable inputs; reproduce a concrete defect before any edit."
+    "capabilities": {
+      "code_access": "Full exact candidate tree available in an isolated worktree.",
+      "command_execution": "Git, Python, pytest, Node, TypeScript and build execution available.",
+      "lawful_publication": "Draft branch and PR updated through the authorized GitHub connector under lease generation 194.",
+      "checkpoint": "This state CAS commit is the durable checkpoint; lease release follows separately."
+    },
+    "next_step": "Reread fresh live heads and active product focus, then audit the next bounded sanctions/risk-management product slice end-to-end; reproduce a concrete defect before editing and preserve fail-closed source boundaries."
   },
   "latest_development_checkpoint": {
-    "updated_at": "2026-10-12T10:55:58.957Z",
-    "checked_at": "2026-10-12T10:55:58.957Z",
-    "pr": 256,
-    "branch": "agent/product-ntm-regressions-v1",
-    "head_sha": "e7f141a145e1475e8d1c51f25c51789a084b4541",
-    "tree_sha": "def0f10bc2dc35376dcdff6f453ee91f390f0607",
-    "parent_sha": "7462f2959735f7aad51f53047ef6d9ddeefd04a3",
-    "prior_checkpoint_sha": "e7f141a145e1475e8d1c51f25c51789a084b4541",
-    "base_pr": 245,
-    "base_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
-    "block": "product_details_decisions_tab_integration_execution",
-    "status": "UNCHANGED_HEAD_EXECUTABLE_A5_PASS_CI_PASS_PRODUCT_DETAILS_DECISIONS",
+    "updated_at": "2026-10-12T12:15:37.380Z",
+    "checked_at": "2026-10-12T12:15:37.380Z",
+    "pr": 255,
+    "branch": "agent/core-payment-regressions-v1",
+    "head_sha": "9659b6509d82f6077dfe0f6917af0dc532f6277e",
+    "tree_sha": "73e5c9abb08e3cb1c9d4110661412e41ae4333e8",
+    "parent_sha": "7c12f21787b1d557630d8b0737c769b326ab112d",
+    "prior_checkpoint_sha": "7c12f21787b1d557630d8b0737c769b326ab112d",
+    "base_pr": 244,
+    "base_sha": "14e0ee8f034d94ffc5831d87e076f4d693a5a524",
+    "block": "smart_payment_explanation_ui",
+    "status": "IMPLEMENTED_A5_PASS_CI_PASS_SMART_PAYMENT_EXPLANATIONS",
     "behavior": {
-      "reproduced": "No product defect reproduced. ProductDetails passed loading, backend-error, confirmed-empty, omitted/unavailable, populated badge/navigation, both embedded decision kinds, stale total_count and selectedCode cancellation scenarios.",
-      "final": "The unchanged exact candidate renders the preliminary-decisions and separately loaded classification-rulings blocks in the decisions tab, keeps rows visible under stale count metadata, and prevents stale requests from overwriting a newer selected code.",
-      "boundaries": "Executable frontend integration verification only on unchanged product head. Disposable tests were removed; no product/test code, normative data, source claim, legal interpretation, flag, skip or xfail changed."
+      "reproduced": "The payment quote API returned line-item reasons and sources plus warnings, assumptions and legal_basis, but SmartPaymentsBlock rendered only labels, statuses, rates, amounts and totals; the disposable UI audit failed before editing.",
+      "final": "Smart Payments now renders the server-returned explanation fields as plain React text while retaining manual_review_required line amounts as an em dash, the final total as not determined and only the partial sum as informational.",
+      "boundaries": "Presentation-only change in SmartPaymentsBlock. No calculation, applicability, source admission, normative data, legal interpretation, enforcement, API/DB contract or feature flag changed."
     },
     "verification": {
-      "author_probe": "Disposable ProductDetails integration audit passed 4 tests, exit 0.",
-      "author_frontend": "Full frontend with probe passed 112 tests; typecheck and production build exited 0. After probe deletion the baseline suite passed 108 tests and worktree was clean.",
-      "control": "Exact HEAD/tree stayed e7f141a145e1475e8d1c51f25c51789a084b4541/def0f10bc2dc35376dcdff6f453ee91f390f0607. Local tariff-agent verify passed 120, CLI snapshot passed 4, committed snapshot valid, git diff --check clean.",
+      "author_probe": "Disposable Vitest explanation audit failed 1 before the fix and passed 1 after; probe and temporary config removed.",
+      "author_frontend": "npm run typecheck and npm run build passed, exit 0.",
+      "author_backend": "Focused quote/payment slice passed 78 tests plus 14 subtests on disposable inputs, exit 0.",
+      "control": "Tariff-agent verify passed 120; CLI snapshot passed 4; committed snapshot valid; git diff --check passed; exact candidate tree clean.",
       "a5": {
-        "session": "/root/a5_product_details_193",
+        "session": "/root/a5_smart_payment_explanations_194",
         "status": "FINAL_PASS_EXACT_TREE_NO_BLOCKING_FINDINGS",
-        "scope": "independent ProductDetails disposable audit for badge/navigation, both embedded decision kinds, classification-rulings API integration, loading/error/empty/unavailable states, stale count, selectedCode change/cancellation and API/type contracts",
-        "execution": "Corrected disposable audit passed 5 tests; full frontend with probe passed 113; typecheck/build passed; baseline after deletion passed 108.",
-        "note": "The first disposable-test draft had two assertion-harness mismatches, not product failures. Low-severity defensive UX observation: badge trusts embedded total_count and does not aggregate the separately loaded rulings endpoint; current backend preserves total_count invariants."
+        "scope": "independent explanation rendering, fail-closed totals, hostile text safety, type/build and disposable quote/payment execution",
+        "execution": "Disposable hostile-text UI probe passed 2; typecheck/build passed; backend slice passed 78 plus 14 subtests; disposable DB integrity ok and removed.",
+        "findings": []
       },
       "ci": {
-        "status": "PASSED_EXACT_HEAD_OFFLINE_SAFETY_ONLY",
-        "run_id": 38216078694,
-        "job_id": 114701012450,
-        "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38216078694/job/114701012450",
-        "head_sha": "e7f141a145e1475e8d1c51f25c51789a084b4541",
-        "conclusion": "success",
-        "limitation": "Workflow is offline-safety only; ProductDetails frontend integration is separately proven by A0 and independent executable A5."
+        "status": "PASSED_EXACT_HEAD_OFFLINE_SAFETY_AND_PAYMENT_REGRESSION",
+        "run_id": 38247429977,
+        "jobs": [
+          {
+            "job_id": 114804735216,
+            "name": "offline-safety",
+            "conclusion": "success"
+          },
+          {
+            "job_id": 114804735533,
+            "name": "payment-regression",
+            "conclusion": "success"
+          }
+        ],
+        "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38247429977",
+        "head_sha": "9659b6509d82f6077dfe0f6917af0dc532f6277e",
+        "conclusion": "success"
       }
     },
     "blockers": [
-      "NTM full-sync audit still requires a lawful populated synchronized snapshot.",
-      "Full #245 product acceptance and legal/rate/source completeness remain NOT PASS."
+      "Full #244 product acceptance and official-source/legal applicability remain NOT PASS.",
+      "Full #245 remains NOT PASS and its NTM full-sync audit still requires a lawful populated synchronized snapshot."
     ],
     "a6": {
       "request": "core-s1-6415f443120f-r9-g106",
       "status": "UNCHANGED_NOT_SENT"
     },
     "protected_actions_performed": false,
-    "next_step": "Per active product focus, reread fresh PR255 exact HEAD and audit the smart-payment explanation slice end-to-end across calculator/quote/API/UI with disposable inputs; reproduce a concrete defect before any edit."
+    "capabilities": {
+      "code_access": "Full exact candidate tree available in an isolated worktree.",
+      "command_execution": "Git, Python, pytest, Node, TypeScript and build execution available.",
+      "lawful_publication": "Draft branch and PR updated through the authorized GitHub connector under lease generation 194.",
+      "checkpoint": "This state CAS commit is the durable checkpoint; lease release follows separately."
+    },
+    "next_step": "Reread fresh live heads and active product focus, then audit the next bounded sanctions/risk-management product slice end-to-end; reproduce a concrete defect before editing and preserve fail-closed source boundaries."
   },
   "previous_scheduled_product_checkpoint_188": {
     "updated_at": "2026-10-12T06:11:25.000Z",
@@ -8832,5 +8933,105 @@
     },
     "protected_actions_performed": false,
     "next_step": "On fresh PR256 HEAD, execute a ProductDetails decisions-tab integration audit with embedded preliminary decisions, tab badge, navigation, loading and empty/error states; reproduce a concrete defect before any edit."
+  },
+  "previous_scheduled_product_checkpoint_193": {
+    "updated_at": "2026-10-12T10:55:58.957Z",
+    "checked_at": "2026-10-12T10:55:58.957Z",
+    "pr": 256,
+    "branch": "agent/product-ntm-regressions-v1",
+    "head_sha": "e7f141a145e1475e8d1c51f25c51789a084b4541",
+    "tree_sha": "def0f10bc2dc35376dcdff6f453ee91f390f0607",
+    "parent_sha": "7462f2959735f7aad51f53047ef6d9ddeefd04a3",
+    "prior_checkpoint_sha": "e7f141a145e1475e8d1c51f25c51789a084b4541",
+    "base_pr": 245,
+    "base_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
+    "block": "product_details_decisions_tab_integration_execution",
+    "status": "UNCHANGED_HEAD_EXECUTABLE_A5_PASS_CI_PASS_PRODUCT_DETAILS_DECISIONS",
+    "behavior": {
+      "reproduced": "No product defect reproduced. ProductDetails passed loading, backend-error, confirmed-empty, omitted/unavailable, populated badge/navigation, both embedded decision kinds, stale total_count and selectedCode cancellation scenarios.",
+      "final": "The unchanged exact candidate renders the preliminary-decisions and separately loaded classification-rulings blocks in the decisions tab, keeps rows visible under stale count metadata, and prevents stale requests from overwriting a newer selected code.",
+      "boundaries": "Executable frontend integration verification only on unchanged product head. Disposable tests were removed; no product/test code, normative data, source claim, legal interpretation, flag, skip or xfail changed."
+    },
+    "verification": {
+      "author_probe": "Disposable ProductDetails integration audit passed 4 tests, exit 0.",
+      "author_frontend": "Full frontend with probe passed 112 tests; typecheck and production build exited 0. After probe deletion the baseline suite passed 108 tests and worktree was clean.",
+      "control": "Exact HEAD/tree stayed e7f141a145e1475e8d1c51f25c51789a084b4541/def0f10bc2dc35376dcdff6f453ee91f390f0607. Local tariff-agent verify passed 120, CLI snapshot passed 4, committed snapshot valid, git diff --check clean.",
+      "a5": {
+        "session": "/root/a5_product_details_193",
+        "status": "FINAL_PASS_EXACT_TREE_NO_BLOCKING_FINDINGS",
+        "scope": "independent ProductDetails disposable audit for badge/navigation, both embedded decision kinds, classification-rulings API integration, loading/error/empty/unavailable states, stale count, selectedCode change/cancellation and API/type contracts",
+        "execution": "Corrected disposable audit passed 5 tests; full frontend with probe passed 113; typecheck/build passed; baseline after deletion passed 108.",
+        "note": "The first disposable-test draft had two assertion-harness mismatches, not product failures. Low-severity defensive UX observation: badge trusts embedded total_count and does not aggregate the separately loaded rulings endpoint; current backend preserves total_count invariants."
+      },
+      "ci": {
+        "status": "PASSED_EXACT_HEAD_OFFLINE_SAFETY_ONLY",
+        "run_id": 38216078694,
+        "job_id": 114701012450,
+        "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38216078694/job/114701012450",
+        "head_sha": "e7f141a145e1475e8d1c51f25c51789a084b4541",
+        "conclusion": "success",
+        "limitation": "Workflow is offline-safety only; ProductDetails frontend integration is separately proven by A0 and independent executable A5."
+      }
+    },
+    "blockers": [
+      "NTM full-sync audit still requires a lawful populated synchronized snapshot.",
+      "Full #245 product acceptance and legal/rate/source completeness remain NOT PASS."
+    ],
+    "a6": {
+      "request": "core-s1-6415f443120f-r9-g106",
+      "status": "UNCHANGED_NOT_SENT"
+    },
+    "protected_actions_performed": false,
+    "next_step": "Per active product focus, reread fresh PR255 exact HEAD and audit the smart-payment explanation slice end-to-end across calculator/quote/API/UI with disposable inputs; reproduce a concrete defect before any edit."
+  },
+  "previous_development_checkpoint_193": {
+    "updated_at": "2026-10-12T10:55:58.957Z",
+    "checked_at": "2026-10-12T10:55:58.957Z",
+    "pr": 256,
+    "branch": "agent/product-ntm-regressions-v1",
+    "head_sha": "e7f141a145e1475e8d1c51f25c51789a084b4541",
+    "tree_sha": "def0f10bc2dc35376dcdff6f453ee91f390f0607",
+    "parent_sha": "7462f2959735f7aad51f53047ef6d9ddeefd04a3",
+    "prior_checkpoint_sha": "e7f141a145e1475e8d1c51f25c51789a084b4541",
+    "base_pr": 245,
+    "base_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
+    "block": "product_details_decisions_tab_integration_execution",
+    "status": "UNCHANGED_HEAD_EXECUTABLE_A5_PASS_CI_PASS_PRODUCT_DETAILS_DECISIONS",
+    "behavior": {
+      "reproduced": "No product defect reproduced. ProductDetails passed loading, backend-error, confirmed-empty, omitted/unavailable, populated badge/navigation, both embedded decision kinds, stale total_count and selectedCode cancellation scenarios.",
+      "final": "The unchanged exact candidate renders the preliminary-decisions and separately loaded classification-rulings blocks in the decisions tab, keeps rows visible under stale count metadata, and prevents stale requests from overwriting a newer selected code.",
+      "boundaries": "Executable frontend integration verification only on unchanged product head. Disposable tests were removed; no product/test code, normative data, source claim, legal interpretation, flag, skip or xfail changed."
+    },
+    "verification": {
+      "author_probe": "Disposable ProductDetails integration audit passed 4 tests, exit 0.",
+      "author_frontend": "Full frontend with probe passed 112 tests; typecheck and production build exited 0. After probe deletion the baseline suite passed 108 tests and worktree was clean.",
+      "control": "Exact HEAD/tree stayed e7f141a145e1475e8d1c51f25c51789a084b4541/def0f10bc2dc35376dcdff6f453ee91f390f0607. Local tariff-agent verify passed 120, CLI snapshot passed 4, committed snapshot valid, git diff --check clean.",
+      "a5": {
+        "session": "/root/a5_product_details_193",
+        "status": "FINAL_PASS_EXACT_TREE_NO_BLOCKING_FINDINGS",
+        "scope": "independent ProductDetails disposable audit for badge/navigation, both embedded decision kinds, classification-rulings API integration, loading/error/empty/unavailable states, stale count, selectedCode change/cancellation and API/type contracts",
+        "execution": "Corrected disposable audit passed 5 tests; full frontend with probe passed 113; typecheck/build passed; baseline after deletion passed 108.",
+        "note": "The first disposable-test draft had two assertion-harness mismatches, not product failures. Low-severity defensive UX observation: badge trusts embedded total_count and does not aggregate the separately loaded rulings endpoint; current backend preserves total_count invariants."
+      },
+      "ci": {
+        "status": "PASSED_EXACT_HEAD_OFFLINE_SAFETY_ONLY",
+        "run_id": 38216078694,
+        "job_id": 114701012450,
+        "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38216078694/job/114701012450",
+        "head_sha": "e7f141a145e1475e8d1c51f25c51789a084b4541",
+        "conclusion": "success",
+        "limitation": "Workflow is offline-safety only; ProductDetails frontend integration is separately proven by A0 and independent executable A5."
+      }
+    },
+    "blockers": [
+      "NTM full-sync audit still requires a lawful populated synchronized snapshot.",
+      "Full #245 product acceptance and legal/rate/source completeness remain NOT PASS."
+    ],
+    "a6": {
+      "request": "core-s1-6415f443120f-r9-g106",
+      "status": "UNCHANGED_NOT_SENT"
+    },
+    "protected_actions_performed": false,
+    "next_step": "Per active product focus, reread fresh PR255 exact HEAD and audit the smart-payment explanation slice end-to-end across calculator/quote/API/UI with disposable inputs; reproduce a concrete defect before any edit."
   }
 }

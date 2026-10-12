@@ -1,3 +1,14 @@
+## 2026-10-12 — Smart-payment explanations published on PR #255
+
+- Exact candidate: `9659b6509d82f6077dfe0f6917af0dc532f6277e`, tree `73e5c9abb08e3cb1c9d4110661412e41ae4333e8`, parent `7c12f21787b1d557630d8b0737c769b326ab112d`.
+- Reproduced with an executable disposable UI audit: the quote API supplied line reasons/sources, warnings, assumptions and legal bases, but Smart Payments hid them (**1 failed**, exit 1).
+- The UI now displays those server-returned explanations as plain React text. Calculation and applicability are unchanged; manual-review amounts stay `—`, the final total stays “не определено”, and only the partial sum is informational.
+- Author: disposable UI **1 passed** after the fix; frontend typecheck/build exit 0; focused backend quote/payment slice **78 passed + 14 subtests**, exit 0; safety **120 + 4 passed**, snapshot valid.
+- Independent A5 `/root/a5_smart_payment_explanations_194`: **FINAL PASS**, hostile-text UI probe **2 passed**, typecheck/build passed, disposable backend **78 + 14 passed**, no findings; worktree clean.
+- Exact-head CI [run 38247429977](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38247429977): offline-safety job `114804735216` and payment-regression job `114804735533` both succeeded.
+- Draft PR only. No merge, deploy, production write, source/legal-completeness claim or external A6 call. Full #244 remains NOT PASS; full #245 still requires a lawful populated synchronized NTM snapshot.
+- Next: fresh-head bounded audit of the sanctions/risk-management product slice; reproduce a concrete defect before editing.
+
 ## 2026-10-12 — ProductDetails decisions-tab integration audited on unchanged PR #256 HEAD
 
 - Exact candidate: `e7f141a145e1475e8d1c51f25c51789a084b4541`, tree `def0f10bc2dc35376dcdff6f453ee91f390f0607` (unchanged).
