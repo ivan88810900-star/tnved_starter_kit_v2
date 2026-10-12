@@ -1,5 +1,19 @@
 # Tariff / A0 — единая точка передачи проекта
 
+## 0aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa. #245 — TN VED FTS writes isolated, focused execution pending
+
+**Checkpoint:** [draft PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256), `agent/product-ntm-regressions-v1` @ `7462f2959735f7aad51f53047ef6d9ddeefd04a3`, tree `32e56e479aa3d5a21f7218723f82d5c09b914322`, parent `5bb7dbf69e61c0999e3b0971fc79f86198296560`.
+
+`test_tnved_fts.py` now opts into the canonical disposable classification inventory, rebinds the FTS service engine, clears its engine-dependent availability cache, seeds the two original test codes idempotently, and rebuilds only the disposable FTS index. The six original test methods and assertions are byte-identical. Production code, normative data, source claims, flags, skips/xfails and legal interpretation did not change.
+
+Evidence is deliberately bounded:
+
+- independent A5 `/root/a5_fts_isolation_186`: **STATIC PASS, no concrete findings** for fixture ordering, disposable engine/cache binding, protected DB boundary, idempotence and unchanged test bodies;
+- exact-head CI: [run 38203390890](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38203390890), offline-safety job `114661471007`, **success**;
+- focused `test_tnved_fts.py` execution is **NOT RUN**: the available workflow does not execute it and the connector-only executor has no checkout/dependencies. This is implemented with an explicit execution gap, not a focused QA PASS.
+
+Lawful populated synchronized NTM data remains unavailable and full #245 remains **NOT PASS**. No A6/provider request, merge, deploy, production write, enforcement/permissions/secrets change, destructive migration, force push or branch deletion occurred. Next safe step is executable focused and hostile-sentinel verification on exact HEAD `7462f295` when a lawful test executor is available; do not widen the claim or move to another fixture before that gate.
+
 ## 0aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa. #245 — TN VED catalog API изолирован от configured/source DB и preview marker
 
 **Новый checkpoint:** [draft PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256), `agent/product-ntm-regressions-v1` @ `5bb7dbf69e61c0999e3b0971fc79f86198296560`, tree `bb9120b69a980fdc0d4e401e0f67f89fb4d60e29`, parent `42ac7665990111d45d9038be807f8ba61c354e11`. Локальный author commit `277cd9d1a85b8c0e690e9eb5e4d7747c41c691b5` имеет тот же exact tree.
