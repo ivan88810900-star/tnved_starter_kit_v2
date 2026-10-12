@@ -1,14 +1,14 @@
 {
   "acquisition_note": "Fresh GitHub recovery at main e526dfbdb5a31b01bf6f743da0288b88f916de0c, PR256 d7db16b51d5d09c115d7fb0f9fff7e3ad9f27d4e and state revision 743; continue the recorded bounded hermetic payment-regression next step without product, normative, A6, protected-branch or production changes.",
-  "expires_at": null,
-  "generation": 202,
-  "holder": null,
+  "expires_at": "2026-10-12T20:27:33.744729Z",
+  "generation": 203,
+  "holder": "/root",
   "lease_repair": {},
   "release_reason": "Fresh GitHub recovery and bounded read-only triage completed. The recorded next defect is narrowed to remaining ambient-database test users, including TestImportDutyApi.init_db and test_payment_engine. No code edit was made because this invocation has no repository checkout/executable product test environment, so exact candidate tests and independent A5 could not be produced safely.",
   "released_by": null,
   "schema_version": 1,
   "serialization_repair": {},
-  "state": "released",
-  "token": null,
-  "updated_at": "2026-10-12T19:15:44.231857Z"
+  "state": "active",
+  "token": "df176bc98ce142c9bd3e1eabf37c183a",
+  "updated_at": "2026-10-12T19:57:33.744729Z"
 }
