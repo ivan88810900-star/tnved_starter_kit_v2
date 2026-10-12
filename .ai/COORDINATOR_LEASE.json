@@ -1,14 +1,14 @@
 {
   "acquisition_note": "Metadata-only correction after verified PR256 NTM v2 layers DB-isolation checkpoint; no product mutation.",
-  "expires_at": null,
-  "generation": 182,
-  "holder": null,
+  "expires_at": "2026-10-12T02:22:07.451687Z",
+  "generation": 183,
+  "holder": "/root",
   "lease_repair": {},
   "release_reason": "PR256 NTM v2 layers DB-isolation checkpoint published at 075df086af14458d0c856ef817e3456160b2e514; author tests, independent A5, and exact-head CI run 38190299249 succeeded; state checkpoint 3828040e3592781391be482cc4e9f6a7cff73912 restored and verified.",
   "released_by": "/root",
   "schema_version": 1,
   "serialization_repair": {},
-  "state": "released",
-  "token": null,
-  "updated_at": "2026-10-12T01:06:35.047896Z"
+  "state": "active",
+  "token": "7b4c5f24834e46f48e6d69e6e455da71",
+  "updated_at": "2026-10-12T01:52:07.451687Z"
 }
