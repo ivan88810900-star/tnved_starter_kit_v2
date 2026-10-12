@@ -52,13 +52,15 @@ function normalizeGrounding(value: unknown): GroundingView | undefined {
   const raw = recordOrNull(value);
   if (!raw) return undefined;
 
-  const citations = Array.isArray(raw.citations)
+  const parsedCitations = Array.isArray(raw.citations)
     ? raw.citations.slice(0, 12).flatMap((value): GroundingCitationView[] => {
         const citation = recordOrNull(value);
         if (!citation) return [];
         const id = boundedText(citation.id, 40);
+        const sourceId = boundedText(citation.source_id, 120);
         const title = boundedText(citation.title, 240);
-        if (!id || !title) return [];
+        const kind = boundedText(citation.kind, 80);
+        if (!id || !sourceId || !title || !kind) return [];
         return [{
           id,
           title,
@@ -70,13 +72,15 @@ function normalizeGrounding(value: unknown): GroundingView | undefined {
         }];
       })
     : [];
+  const generatedFromServerFacts = raw.generated_from_server_facts === true;
+  const citations = generatedFromServerFacts ? parsedCitations : [];
   const limitations = Array.isArray(raw.limitations)
     ? raw.limitations
         .slice(0, 12)
         .map((item) => boundedText(item, 800))
         .filter(Boolean)
     : [];
-  const hasServerEvidence = raw.generated_from_server_facts === true && citations.length > 0;
+  const hasServerEvidence = generatedFromServerFacts && citations.length > 0;
   const coverage: GroundingView['coverage'] =
     raw.coverage === 'partial' || raw.coverage === 'needs_context'
       ? raw.coverage

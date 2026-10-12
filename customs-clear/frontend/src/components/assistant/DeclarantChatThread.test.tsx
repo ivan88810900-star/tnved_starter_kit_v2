@@ -142,10 +142,13 @@ describe('DeclarantChatThread grounding metadata', () => {
           grounding: {
             coverage: 'complete',
             mode: 'official_ai',
+            generated_from_server_facts: true,
             citations: [
               {
                 id: 'S1',
+                source_id: 'unverified',
                 title: 'Непроверенная ссылка',
+                kind: 'local_registry',
                 url: 'javascript:alert(1)',
               },
             ],
@@ -185,7 +188,13 @@ describe('DeclarantChatThread grounding metadata', () => {
             coverage: 'grounded',
             mode: 'llm_grounded',
             generated_from_server_facts: true,
-            citations: [{ id: 'S1', title: 'Непроверенная ссылка', url }],
+            citations: [{
+              id: 'S1',
+              source_id: 'unverified',
+              title: 'Непроверенная ссылка',
+              kind: 'local_registry',
+              url,
+            }],
             limitations: [],
           },
         },
@@ -208,7 +217,15 @@ describe('DeclarantChatThread grounding metadata', () => {
             coverage: 'grounded',
             mode: 'llm_grounded',
             generated_from_server_facts: false,
-            citations: [{ id: '', title: '', url: 'https://eec.example/ett' }],
+            citations: [{
+              id: 'S1',
+              source_id: 'forged',
+              title: 'Неподтверждённый источник',
+              kind: 'official',
+              authority_level: 'Официальный источник',
+              legal_ref: 'Выдуманный акт',
+              url: 'https://eec.example/ett',
+            }],
             limitations: [],
           },
         },
@@ -223,6 +240,40 @@ describe('DeclarantChatThread grounding metadata', () => {
     expect(grounding).not.toHaveTextContent('Ответ опирается на доступные серверные данные');
     expect(grounding).not.toHaveTextContent('Серверный ответ выбран моделью');
     expect(screen.queryByText('Источники в ответе')).not.toBeInTheDocument();
+    expect(grounding).not.toHaveTextContent('Официальный источник');
+    expect(grounding).not.toHaveTextContent('Выдуманный акт');
+  });
+
+  it('does not mark a citation without source identity as grounded', async () => {
+    postMock.mockResolvedValue({
+      data: {
+        status: 'OK',
+        answer: {
+          answer: 'Проверенный серверный ответ.',
+          grounding: {
+            coverage: 'grounded',
+            mode: 'llm_grounded',
+            generated_from_server_facts: true,
+            citations: [{
+              id: 'S1',
+              title: 'Источник без идентификатора и типа',
+              authority_level: 'Официальный источник',
+              legal_ref: 'Непроверенный акт',
+            }],
+            limitations: [],
+          },
+        },
+      },
+    });
+
+    await sendQuestion();
+
+    const grounding = screen.getByTestId('assistant-grounding');
+    expect(grounding).toHaveTextContent('Статус покрытия не подтверждён');
+    expect(grounding).toHaveTextContent('Режим ответа не подтверждён');
+    expect(screen.queryByText('Источники в ответе')).not.toBeInTheDocument();
+    expect(grounding).not.toHaveTextContent('Официальный источник');
+    expect(grounding).not.toHaveTextContent('Непроверенный акт');
   });
 
   it('sends only the newest 40 history items without removing visible messages', async () => {

@@ -524,6 +524,7 @@ def _risk_summary(raw: dict[str, Any], citations: _CitationCollector) -> dict[st
             status=_first_nonempty(row.get("coverage_status"), "unknown"),
             excerpt="; ".join(_trim(gap, 180) for gap in list(row.get("known_gaps") or [])[:3] if _trim(gap, 180))
             or None,
+            authority_level=_trim(row.get("authority_level"), 160) or None,
         )
         coverage.append(
             {
@@ -531,6 +532,7 @@ def _risk_summary(raw: dict[str, Any], citations: _CitationCollector) -> dict[st
                 "title": _trim(row.get("title"), 220),
                 "coverage_status": _first_nonempty(row.get("coverage_status"), "unknown"),
                 "manual_review_required": bool(row.get("manual_review_required")),
+                "authority_level": _trim(row.get("authority_level"), 160) or None,
                 "citation_id": citation_id,
             }
         )
@@ -1153,6 +1155,7 @@ def build_copilot_deterministic_summary(context: dict[str, Any]) -> dict[str, An
                         title=_first_nonempty(source.get("title"), source.get("source_id"), "Источник риск-скрининга"),
                         url=_trim(source.get("source_url"), 600) or None,
                         status=_first_nonempty(source.get("coverage_status"), "unknown"),
+                        authority_level=_trim(source.get("authority_level"), 160) or None,
                     )
                 )
             for signal in list(risk.get("signals") or [])[:10]:

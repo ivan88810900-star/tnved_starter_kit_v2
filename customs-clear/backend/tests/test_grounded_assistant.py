@@ -9,6 +9,7 @@ from datetime import datetime, timedelta, timezone
 from unittest.mock import AsyncMock, patch
 
 from app.services.assistant_chat import run_assistant_chat
+from app.services.assistant_orchestrator import bundle_for_llm
 from app.services.claude_service import analyze_copilot_bundle
 from app.services.grounded_assistant import (
     _normalize_normative_freshness,
@@ -170,7 +171,15 @@ class GroundingBundleTests(unittest.IsolatedAsyncioTestCase):
                     "destination_country": "BY",
                     "counterparty_name": "Acme Trading",
                     "coverage_complete": False,
-                    "source_coverage": [],
+                    "source_coverage": [
+                        {
+                            "source_id": "ofac_sdn_list",
+                            "title": "OFAC SDN",
+                            "coverage_status": "partial",
+                            "manual_review_required": True,
+                            "authority_level": "Официальный источник",
+                        }
+                    ],
                     "screening_scope": [],
                     "signals": [
                         {
@@ -228,6 +237,12 @@ class GroundingBundleTests(unittest.IsolatedAsyncioTestCase):
         )
         self.assertEqual(citation["authority_level"], "Официальный источник")
         self.assertEqual(citation["legal_ref"], "Решение ЕЭК test")
+        coverage = risk["source_coverage"][0]
+        self.assertEqual(coverage["authority_level"], "Официальный источник")
+        coverage_citation = next(
+            item for item in bundle["citations"] if item["id"] == coverage["citation_id"]
+        )
+        self.assertEqual(coverage_citation["authority_level"], "Официальный источник")
 
     async def test_valid_hs_without_usable_local_evidence_is_not_grounded(self) -> None:
         with (
@@ -886,6 +901,14 @@ class CopilotGroundingTests(unittest.IsolatedAsyncioTestCase):
                         "legal_ref": "Решение ЕЭК test",
                     }
                 ],
+                "source_coverage": [
+                    {
+                        "source_id": "ofac_sdn_list",
+                        "title": "OFAC SDN",
+                        "coverage_status": "partial",
+                        "authority_level": "Официальный источник",
+                    }
+                ],
             },
         }
 
@@ -903,6 +926,49 @@ class CopilotGroundingTests(unittest.IsolatedAsyncioTestCase):
         )
         self.assertEqual(risk_citation["authority_level"], "Официальный источник")
         self.assertEqual(risk_citation["legal_ref"], "Решение ЕЭК test")
+        coverage_citation = next(
+            item for item in result["citations"] if item["source_id"] == "ofac_sdn_list"
+        )
+        self.assertEqual(coverage_citation["authority_level"], "Официальный источник")
+
+    def test_copilot_runtime_projection_preserves_risk_provenance(self) -> None:
+        context = bundle_for_llm(
+            {
+                "effective_hs_code": "8516108008",
+                "description": "Электрический чайник",
+                "pipeline": [],
+                "non_tariff": {
+                    "risk_block": {
+                        "signals": [
+                            {
+                                "category": "embargo",
+                                "severity": "medium",
+                                "source": "geo_special_duties",
+                                "source_label": "Геополитические меры",
+                                "authority_level": "Официальный источник",
+                                "explanation": "Требуется дополнительная проверка.",
+                                "legal_ref": "Решение ЕЭК test",
+                            }
+                        ],
+                        "source_coverage": [
+                            {
+                                "source_id": "ofac_sdn_list",
+                                "title": "OFAC SDN",
+                                "coverage_status": "partial",
+                                "authority_level": "Официальный источник",
+                            }
+                        ],
+                    }
+                },
+            }
+        )
+        risk = context["risk_summary"]
+        self.assertEqual(risk["signals"][0]["authority_level"], "Официальный источник")
+        self.assertEqual(risk["signals"][0]["legal_ref"], "Решение ЕЭК test")
+        self.assertEqual(
+            risk["source_coverage"][0]["authority_level"],
+            "Официальный источник",
+        )
 
     async def test_copilot_freshness_matrix_never_claims_complete_ntm_coverage(self) -> None:
         cases = (
