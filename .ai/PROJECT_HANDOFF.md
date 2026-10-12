@@ -1,3 +1,14 @@
+## 2026-10-12 — Journal statistics database isolation published on PR #256
+
+- Exact candidate: `a02575f05d697525274110f5dd8f99c059623019`, tree `f79ea6706f4d530a2a72859b66f3c8603ee8a03a`; parent checkpoint `b91a90a859546ce61e5b9ebdd236dc3e6b7824b7`; local author exact-tree commit `f459fbd11549c1d4f0b3eaa4fc17238a58ef23a4`.
+- Parent reproduction: `python -m pytest -q tests/test_journal_stats.py` exited 0 with **3 passed** but created a 1,036,288-byte ambient `customs.db`.
+- `test_journal_stats.py` now bootstraps a disposable SQLite database, binds already-loaded application database aliases, restores all aliases and environment values, removes the temporary database and sidecars, and verifies protected file fingerprints. All three original test methods are AST-identical.
+- Author exact-remote focused: **3 passed**. Journal/analytics/API/payment-engine/compliance in both orders: **80 passed** each. Broad 17-module command: **345 passed + 10 subtests**. Safety: **124 tests OK**. All exits 0; diff-check clean; no ambient DB/WAL/SHM; pinned catalogue SHA-256 unchanged.
+- Independent A5 `/root/a5_cycle204`: **FINAL PASS without findings** on exact HEAD; parent mutation reproduced, candidate focused/adjacent/broad controls passed, preloaded-app probe restored **44/44** database aliases plus environment sentinels, AST parity and one-file scope verified.
+- Exact-head CI [run 38308177875 / job 115007176323](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38308177875/job/115007176323): **success**.
+- Draft PR only. No product code, normative/source data, merge, deploy, production write, legal applicability/enforcement/permissions/secrets change or external A6 call. Full #245 remains NOT PASS; lawful populated synchronized NTM snapshot remains unavailable.
+- Next: on fresh PR #256 HEAD reproduce the remaining ambient-database behavior of `test_assistant_decisions.py` before editing and preserve its decision-history assertions.
+
 ## 2026-10-12 — Analytics overview database isolation published on PR #256
 
 - Exact candidate: `b91a90a859546ce61e5b9ebdd236dc3e6b7824b7`, tree `5f80a650e65e6a5056889c6476346af6a0f1a23b`; parent checkpoint `641343937d9263aa3e5dfbf4481eda938c3551ed`; local author exact-tree commit `763ed6d8067c45c39d743b93aad72c50bc30b8db`.
@@ -1473,13 +1484,3 @@ CI #255: [offline-safety PASS, run 37771953943](https://github.com/ivan88810900-
 - Во время перепроверки внешний сеанс внёс 2 коммита в PR #254 с исправлением P2; A0 здесь **не отправлял дублирующий патч**. При новом внешнем движении branch немедленно reconcile HEAD и избежать пересекающихся записей. Все дополнительные findings проверять самостоятельно, не признавать review автоматически.
 - Никогда без Ivan: merge защищённых веток, production deploy/DB/migrations, enforcement flags, изменение credentials/permissions/secrets, удаление/force push, A6 export. Никакой доставки в основной пользовательский чат не подтверждено.
 - Статус блоков честно разделять: **сделано / сейчас / осталось / что нужно от владельца**. Прогресс доказан конкретным SHA, CI job, A5 и diff, не «агент запущен».
-## 2026-10-12 — Journal statistics database isolation published on PR #256
-
-- Exact candidate: `a02575f05d697525274110f5dd8f99c059623019`, tree `f79ea6706f4d530a2a72859b66f3c8603ee8a03a`; parent checkpoint `b91a90a859546ce61e5b9ebdd236dc3e6b7824b7`; local author exact-tree commit `f459fbd11549c1d4f0b3eaa4fc17238a58ef23a4`.
-- Parent reproduction: `python -m pytest -q tests/test_journal_stats.py` exited 0 with **3 passed** but created a 1,036,288-byte ambient `customs.db`.
-- `test_journal_stats.py` now bootstraps a disposable SQLite database, binds already-loaded application database aliases, restores all aliases and environment values, removes the temporary database and sidecars, and verifies protected file fingerprints. All three original test methods are AST-identical.
-- Author exact-remote focused: **3 passed**. Journal/analytics/API/payment-engine/compliance in both orders: **80 passed** each. Broad 17-module command: **345 passed + 10 subtests**. Safety: **124 tests OK**. All exits 0; diff-check clean; no ambient DB/WAL/SHM; pinned catalogue SHA-256 unchanged.
-- Independent A5 `/root/a5_cycle204`: **FINAL PASS without findings** on exact HEAD; parent mutation reproduced, candidate focused/adjacent/broad controls passed, preloaded-app probe restored **44/44** database aliases plus environment sentinels, AST parity and one-file scope verified.
-- Exact-head CI [run 38308177875 / job 115007176323](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38308177875/job/115007176323): **success**.
-- Draft PR only. No product code, normative/source data, merge, deploy, production write, legal applicability/enforcement/permissions/secrets change or external A6 call. Full #245 remains NOT PASS; lawful populated synchronized NTM snapshot remains unavailable.
-- Next: on fresh PR #256 HEAD reproduce the remaining ambient-database behavior of `test_assistant_decisions.py` before editing and preserve its decision-history assertions.
