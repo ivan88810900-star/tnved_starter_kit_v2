@@ -1,14 +1,14 @@
 {
   "acquisition_note": "Execute and independently verify the test_hs_leaf_clarification.py calculator/API path on fresh PR256 exact head 7462f295; reproduce any configured/source/marker side effect before edits, then preserve an exact-head checkpoint.",
-  "expires_at": "2026-10-12T07:34:01.020326Z",
+  "expires_at": null,
   "generation": 189,
-  "holder": "/root",
+  "holder": null,
   "lease_repair": {},
-  "release_reason": "Canonical TN VED six-module fixture inventory completed on unchanged PR256 head 7462f2959735f7aad51f53047ef6d9ddeefd04a3; A0 and independent A5 each passed 78-test absent/sentinel contours; exact-head offline-safety run 38203390890 success; board revision 733 and handoff saved in state checkpoint 5ca09e2bc7fa4dec147c73c1c276b2f40930a813.",
+  "release_reason": "HS leaf calculator fixture isolation published at PR256 exact head e7f141a145e1475e8d1c51f25c51789a084b4541; A0 and independent A5 passed focused/adjacent absent and sentinel contours; exact-head offline-safety run 38216078694 success; board revision 734 and handoff saved in state checkpoint be9e16652a25fbdb2d06c6f97b1621b282b62d02.",
   "released_by": "/root",
   "schema_version": 1,
   "serialization_repair": {},
-  "state": "active",
-  "token": "a20d9a05c0f54ed7a73c69d8308b59a4",
-  "updated_at": "2026-10-12T07:04:01.020326Z"
+  "state": "released",
+  "token": null,
+  "updated_at": "2026-10-12T07:14:08.709971Z"
 }
