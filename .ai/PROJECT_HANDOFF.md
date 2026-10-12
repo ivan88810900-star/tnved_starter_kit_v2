@@ -1,5 +1,23 @@
 # Tariff / A0 — единая точка передачи проекта
 
+## 0aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa. #245 — TN VED catalog API изолирован от configured/source DB и preview marker
+
+**Новый checkpoint:** [draft PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256), `agent/product-ntm-regressions-v1` @ `5bb7dbf69e61c0999e3b0971fc79f86198296560`, tree `bb9120b69a980fdc0d4e401e0f67f89fb4d60e29`, parent `42ac7665990111d45d9038be807f8ba61c354e11`. Локальный author commit `277cd9d1a85b8c0e690e9eb5e4d7747c41c691b5` имеет тот же exact tree.
+
+Воспроизведён fixture defect в `test_tnved_catalog_api.py`: все **23 tests** проходили, но отсутствующая configured SQLite создавалась размером 1 036 288 bytes; существующая 8192-byte sentinel DB разрасталась до 1 040 384 bytes и меняла SHA, а внешний preview revision marker перезаписывался. Module-autouse fixture теперь создаёт disposable classification inventory через существующий bootstrap, направляет test/application/normative-store/catalog/payment/rate-display DB aliases в него и выносит preview revision в disposable marker. Configured/source/repository DB, исходный marker и SQLite sidecars остаются неизменными. Все 23 test methods и исходные assertions AST-identical; production code, нормативные данные, source claims, flags, skips/xfails и правовая интерпретация не менялись.
+
+Проверки:
+
+- root: focused **23 passed** на absent и populated sentinel inputs; configured/source DB и внешний marker не созданы либо byte-identical;
+- вместе с TN VED measures API, regulatory mass-seed safety, regulatory-source completeness и FCS preliminary sync в прямом и обратном порядке — по **49 passed + 3 subtests**, все exit 0, DB/marker/WAL/SHM drift отсутствует;
+- root local agent-safety: **120 + 4 passed**, committed snapshot valid, exit 0;
+- независимый A5 `/root/a5_tnved_catalog_api_185`: **FINAL PASS без findings**; parent DB/marker mutation независимо воспроизведена, candidate aliases, cleanup, focused/adjacent invariants и AST parity подтверждены;
+- exact-head CI: [run 38202590035](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38202590035), offline-safety job `114659007873`, attempt 1, **success**.
+
+Это test-isolation evidence, не подтверждение полноты источников или юридической применимости. Lawful populated synchronized NTM snapshot недоступен; полный #245 остаётся **NOT PASS**. Merge, deploy, production write, enforcement/permissions/secrets change, destructive migration, force push, branch deletion и внешний A6 не выполнялись; `core-s1-6415f443120f-r9-g106` не отправлялся.
+
+Следующий отдельный блок — на свежем HEAD выполнить bounded inventory оставшихся TN VED/source-backed fixtures, начиная с `test_tnved_fts.py` и `test_semantic_navigation_v1.py`; populated/full-sync ожидания не подменять синтетическими данными.
+
 ## 0aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa. #245 — TN VED measures API изолирован от configured DB
 
 **Новый checkpoint:** [draft PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256), `agent/product-ntm-regressions-v1` @ `42ac7665990111d45d9038be807f8ba61c354e11`, tree `8743cc676c19edb030d858c4698271acbec7ac20`, parent `dcb32489bf5f4526a6ee6b761e171d3114909f2d`. Локальный author commit `d9a3f1446077a79cd548080a4abc220dc3294111` имеет тот же exact tree.
