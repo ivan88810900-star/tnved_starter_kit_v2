@@ -1,3 +1,14 @@
+## 2026-10-12 — ProductDetails decisions-tab integration audited on unchanged PR #256 HEAD
+
+- Exact candidate: `e7f141a145e1475e8d1c51f25c51789a084b4541`, tree `def0f10bc2dc35376dcdff6f453ee91f390f0607` (unchanged).
+- A0 disposable integration audit passed **4 tests**. Full frontend with probe passed **112**, typecheck/build passed; after removal baseline passed **108** and worktree was clean.
+- Verified loading/error, unavailable and confirmed-empty data, badge/navigation, both embedded decision kinds, separate classification-rulings block, stale count fail-safe rendering, and selected-code request cancellation.
+- Independent A5 `/root/a5_product_details_193`: **FINAL PASS**, corrected disposable audit **5 passed**, full frontend with probe **113 passed**, typecheck/build passed, baseline **108 passed** after deletion.
+- The first A5 disposable draft had assertion-harness mismatches only; no product failure. Low-severity defensive note remains: the badge trusts embedded `total_count` and does not aggregate the separate rulings endpoint, while current backend preserves its count invariant.
+- Safety **120 + 4 passed**, snapshot valid. Exact-head CI [run 38216078694 / job 114701012450](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38216078694/job/114701012450) succeeded.
+- No product/test code, data, merge, deploy, production write or external A6 call changed. Full #245 and lawful populated NTM snapshot remain blocked/not accepted.
+- Next per active focus: reread fresh PR #255 and audit the smart-payment explanation slice end-to-end before any edit.
+
 ## 2026-10-12 — #245 preliminary-decisions frontend audited on unchanged HEAD
 
 - Exact candidate: PR #256 `e7f141a145e1475e8d1c51f25c51789a084b4541`, tree `def0f10bc2dc35376dcdff6f453ee91f390f0607` (unchanged).
