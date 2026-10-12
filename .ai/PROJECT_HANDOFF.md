@@ -1,3 +1,14 @@
+## 2026-10-12 — AI sanctions/risk grounding and provenance published on PR #256
+
+- Exact candidate: `bcb594ac8953d1c3be12c5b705ca1ba7e04340a6`, tree `4cd6220223d80b3137fe849168a37a7c53bbfa63`; previous HEAD `d0fce3527c92026a4dc687ba3bb79854d16af75f`.
+- Reproduced: chat context accepted destination/counterparty fields but grounding forwarded only origin country; focused regression failed **1**, exit 1.
+- Fixed: origin/destination/counterparty now flow through chat → NTM → sanctions risk; grounded risk facts retain source label, authority and legal reference; missing scope is not inferred and incomplete coverage remains fail-closed.
+- Author: assistant/NTM/sanctions/API **145 passed + 29 subtests**; agent safety **124 passed**; all exits 0.
+- Independent A5 `/root/a5_assistant_risk_grounding_196`: **FINAL PASS**; focused **39 + 26 subtests**, expanded **65 + 26 subtests**, independent edge probe and safety **124/124** passed; no findings.
+- Exact-head CI [run 38260763805 / job 114850353328](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38260763805/job/114850353328): **success**.
+- Draft PR only. No merge, deploy, production/source data write, legal applicability change, enforcement/permissions/secrets change or external A6 call. Full #245 remains NOT PASS; lawful populated synchronized NTM snapshot remains unavailable.
+- Next: audit the frontend/client assistant risk-scope and citation-provenance contract end-to-end; reproduce before editing.
+
 ## 2026-10-12 — Destination-country sanctions/risk fix published on PR #256
 
 - Exact candidate: `d0fce3527c92026a4dc687ba3bb79854d16af75f`, tree `4c81fe078de7230493a454b88b4d27a8a356f608`; previous HEAD `e7f141a145e1475e8d1c51f25c51789a084b4541`.
