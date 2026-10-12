@@ -1,14 +1,14 @@
 {
-  "acquisition_note": "Isolate the reproduced TN VED catalog API configured/source database and preview-marker writes on PR256 exact head.",
-  "expires_at": null,
-  "generation": 185,
-  "holder": null,
+  "acquisition_note": "Isolate the reproduced test_tnved_fts configured-database writes on PR256 exact head; test-only fixture binding, exact-head CI, and persistent-state checkpoint.",
+  "expires_at": "2026-10-12T05:19:49.073Z",
+  "generation": 186,
+  "holder": "/root/a0-maintenance-20261012T041418Z",
   "lease_repair": {},
   "release_reason": "PR256 TN VED catalog API isolation published at 5bb7dbf69e61c0999e3b0971fc79f86198296560; author tests, independent A5, and exact-head CI run 38202590035 succeeded; state checkpoint c839f208e259322b4c0d7da76e3b722635c231bd restored and verified.",
   "released_by": "/root",
   "schema_version": 1,
   "serialization_repair": {},
-  "state": "released",
-  "token": null,
-  "updated_at": "2026-10-12T04:13:53.809892Z"
+  "state": "active",
+  "token": "557ea8dc3918c13be919f39f686ecdf9",
+  "updated_at": "2026-10-12T04:19:49.073Z"
 }
