@@ -1,3 +1,14 @@
+## 2026-10-13 — Assistant batch API database isolation published on PR #256
+
+- Exact candidate: `8e181c074fcb271a9e51db36cb574117e1cfa016`, tree `4d1b1027fad0acf6612f7d003c41848d302dd5ff`; parent checkpoint `40df46bbfd29027c64439b6c0c3819d823650b19`; local author exact-tree commit `417e5192034240944b8a3d0e56e170a059ad983d`.
+- Parent reproduction: `python -m pytest -q tests/test_assistant_batch.py` exited 0 with **1 passed** but created a 1,036,288-byte ambient `customs.db` plus SQLite sidecars.
+- `test_assistant_batch.py` now installs a disposable SQLite database before importing the authenticated application surface, binds already-loaded aliases, restores initially loaded and dynamically imported aliases, removes the temporary database and sidecars, and verifies protected fingerprints. Its original batch API test method is AST-identical.
+- Author exact-remote focused: **1 passed**. Batch/decisions/journal/analytics/API/payment-engine/compliance in both orders: **86 passed** each. Broad 19-module command: **351 passed + 10 subtests**. Safety: **124 tests OK**. All final exits 0; diff-check clean; no ambient DB/WAL/SHM; pinned catalogue SHA-256 unchanged.
+- Independent A5 `/root/a5_cycle206`: **FINAL PASS without findings** on exact HEAD; parent mutation reproduced, candidate focused/adjacent/broad controls passed, late-import restoration verified with **40 session + 6 engine aliases**, environment sentinels restored, AST parity and one-file scope verified.
+- Exact-head CI [run 38320613262 / job 115047545846](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38320613262/job/115047545846): **success**.
+- Draft PR only. No product code, normative/source data, merge, deploy, production write, legal applicability/enforcement/permissions/secrets change or external A6 call. Full #245 remains NOT PASS; lawful populated synchronized NTM snapshot remains unavailable.
+- Next: on fresh PR #256 HEAD reproduce the ambient-database behavior of `test_assistant_copilot.py` before editing and preserve its orchestration and API assertions.
+
 ## 2026-10-13 — Assistant decisions API database isolation published on PR #256
 
 - Exact candidate: `40df46bbfd29027c64439b6c0c3819d823650b19`, tree `cf1334ecc2078f0890f5f30eff78bea555171a4a`; parent checkpoint `a02575f05d697525274110f5dd8f99c059623019`; local author exact-tree commit `282b4721dc45f9dbd9e0fd36e447540c42d8f5cd`.
