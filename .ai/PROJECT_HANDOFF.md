@@ -1,18 +1,23 @@
 # Tariff / A0 — единая точка передачи проекта
 
-## 0aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa. #245 — TN VED FTS writes isolated, focused execution pending
+## 0aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa. #245 — TN VED FTS isolation executable verification complete
 
 **Checkpoint:** [draft PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256), `agent/product-ntm-regressions-v1` @ `7462f2959735f7aad51f53047ef6d9ddeefd04a3`, tree `32e56e479aa3d5a21f7218723f82d5c09b914322`, parent `5bb7dbf69e61c0999e3b0971fc79f86198296560`.
 
-`test_tnved_fts.py` now opts into the canonical disposable classification inventory, rebinds the FTS service engine, clears its engine-dependent availability cache, seeds the two original test codes idempotently, and rebuilds only the disposable FTS index. The six original test methods and assertions are byte-identical. Production code, normative data, source claims, flags, skips/xfails and legal interpretation did not change.
+`test_tnved_fts.py` opts into the canonical disposable classification inventory, rebinds the FTS service engine, clears its engine-dependent availability cache, seeds the two original test codes idempotently, and rebuilds only the disposable FTS index. The six original test methods and seven assertion calls are AST-identical. Production code, normative data, source claims, flags, skips/xfails and legal interpretation did not change.
 
-Evidence is deliberately bounded:
+Executable evidence on exact HEAD is deliberately bounded:
 
-- independent A5 `/root/a5_fts_isolation_186`: **STATIC PASS, no concrete findings** for fixture ordering, disposable engine/cache binding, protected DB boundary, idempotence and unchanged test bodies;
+- parent `5bb7dbf`: focused execution **failed with 6 setup errors** and created the absent configured SQLite (286720 bytes), reproducing the fixture defect;
+- candidate: focused execution on absent configured/source/marker inputs **6 passed**; populated SQLite sentinels and marker remained byte-identical, with no SQLite sidecars;
+- adjacent order controls with semantic navigation and catalog API passed in both directions: **38 passed** each;
+- instrumented control confirmed the disposable real FTS table/triggers, successful `ensure_fts_index(rebuild=True)` and search of a seeded code while external inputs remained unchanged;
+- independent executable A5 `/root/a5_fts_execution_187`: **FINAL PASS, no findings** on exact HEAD/tree; it independently reproduced the parent failure/mutation and candidate absent/sentinel/adjacent/real-FTS invariants;
+- local safety: `verify` **120 passed**, CLI snapshot **4 passed**, committed snapshot valid, `diff --check` and `py_compile` exit 0;
 - exact-head CI: [run 38203390890](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38203390890), offline-safety job `114661471007`, **success**;
-- focused `test_tnved_fts.py` execution is **NOT RUN**: the available workflow does not execute it and the connector-only executor has no checkout/dependencies. This is implemented with an explicit execution gap, not a focused QA PASS.
+- CI remains offline-safety only; the focused gate is closed by the separately recorded A0 and independent executable A5 runs, not by widening the CI claim.
 
-Lawful populated synchronized NTM data remains unavailable and full #245 remains **NOT PASS**. No A6/provider request, merge, deploy, production write, enforcement/permissions/secrets change, destructive migration, force push or branch deletion occurred. Next safe step is executable focused and hostile-sentinel verification on exact HEAD `7462f295` when a lawful test executor is available; do not widen the claim or move to another fixture before that gate.
+Lawful populated synchronized NTM data remains unavailable and full #245 remains **NOT PASS**. No A6/provider request, merge, deploy, production write, enforcement/permissions/secrets change, destructive migration, force push or branch deletion occurred. Next safe block is a fresh-HEAD bounded inventory of the next remaining TN VED/source-backed fixture, beginning with `test_canonical_tnved_model.py`; reproduce a concrete defect before any edit and do not substitute synthetic data for populated/full-sync contracts.
 
 ## 0aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa. #245 — TN VED catalog API изолирован от configured/source DB и preview marker
 

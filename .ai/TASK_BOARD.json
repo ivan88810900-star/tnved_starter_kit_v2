@@ -2179,7 +2179,7 @@
       "unique_source_pr_count": 29
     }
   },
-  "revision": 731,
+  "revision": 732,
   "runs": [
     {
       "head_sha": null,
@@ -7482,7 +7482,7 @@
       }
     }
   ],
-  "updated_at": "2026-10-12T04:22:28.000Z",
+  "updated_at": "2026-10-12T05:02:29.000Z",
   "previous_scheduled_product_checkpoint_174": {
     "updated_at": "2026-10-11T18:04:51.196Z",
     "checked_at": "2026-10-11T18:04:51.196Z",
@@ -8254,8 +8254,8 @@
     "next_step": "On fresh PR256 HEAD, reproduce and isolate the next configured-DB or source-backed fixture while keeping full-sync snapshot evidence separate."
   },
   "latest_scheduled_product_checkpoint": {
-    "updated_at": "2026-10-12T04:22:28.000Z",
-    "checked_at": "2026-10-12T04:22:28.000Z",
+    "updated_at": "2026-10-12T05:02:29.000Z",
+    "checked_at": "2026-10-12T05:02:29.000Z",
     "pr": 256,
     "branch": "agent/product-ntm-regressions-v1",
     "head_sha": "7462f2959735f7aad51f53047ef6d9ddeefd04a3",
@@ -8265,20 +8265,20 @@
     "base_pr": 245,
     "base_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
     "block": "tnved_fts_configured_database_isolation",
-    "status": "IMPLEMENTED_STATIC_A5_PASS_CI_PASS_FOCUSED_EXECUTION_PENDING",
+    "status": "DRAFT_CHECKPOINT_EXECUTABLE_A5_PASS_CI_PASS_TNVED_FTS_ISOLATION",
     "behavior": {
-      "reproduced": "The historical unittest setup binds imported engine and SessionLocal to the configured application SQLite, creates schema/FTS objects and inserts synthetic FTS rows there.",
+      "reproduced": "Parent focused execution failed with six setup errors and created the absent configured SQLite at 286720 bytes while constructing duplicated schema/index objects.",
       "final": "A pytest autouse fixture first binds the canonical disposable classification inventory, then points the tnved_fts module engine and availability cache at that disposable database, seeds the original codes idempotently, and rebuilds only its FTS index.",
-      "boundaries": "One test file only; all six original test methods and assertions are byte-identical; no production code, normative data, source claims, flags, skips/xfails or legal interpretation changed."
+      "boundaries": "One test file only; all six original test methods and seven assertion calls are AST-identical; no production code, normative data, source claims, flags, skips/xfails or legal interpretation changed."
     },
     "verification": {
-      "author_static": "Exact one-file commit/diff reviewed; module-global engine/cache call paths and fixture dependency ordering confirmed.",
-      "focused_execution": "NOT_RUN_NO_CHECKOUT_OR_EXECUTABLE_WORKFLOW",
+      "author_focused": "Exact-head focused absent-input and populated-sentinel runs each passed 6 tests; configured/source DB and marker stayed absent or byte-identical with no sidecars.",
+      "adjacent_orders": "test_tnved_fts.py, semantic navigation and catalog API passed in both forward and reverse order: 38 passed each.",
+      "control": "Instrumented run created the real disposable FTS table and triggers, ensure_fts_index(rebuild=True) returned true, seeded search succeeded, local verify passed 120 and CLI snapshot passed 4.",
       "a5": {
-        "session": "/root/a5_fts_isolation_186",
-        "status": "STATIC_PASS_NO_FINDINGS",
-        "scope": "fixture ordering, disposable engine/cache binding, protected DB boundary, idempotent seed/rebuild, unchanged test bodies",
-        "limitation": "No executable focused test in the connector-only review environment."
+        "session": "/root/a5_fts_execution_187",
+        "status": "FINAL_PASS_EXACT_TREE_NO_FINDINGS",
+        "scope": "independent parent mutation reproduction; candidate absent/sentinel and forward/reverse adjacent execution; real FTS path; test-method/assertion AST parity"
       },
       "ci": {
         "status": "PASSED_EXACT_HEAD_OFFLINE_SAFETY_ONLY",
@@ -8286,11 +8286,10 @@
         "job_id": 114661471007,
         "head_sha": "7462f2959735f7aad51f53047ef6d9ddeefd04a3",
         "conclusion": "success",
-        "limitation": "Workflow does not execute test_tnved_fts.py."
+        "limitation": "Workflow is offline-safety only; focused FTS execution is separately proven by A0 and independent executable A5."
       }
     },
     "blockers": [
-      "Focused test_tnved_fts.py and hostile configured/source sentinel execution is still required on exact HEAD.",
       "NTM full-sync audit still requires a lawful populated synchronized snapshot.",
       "Full #245 product acceptance and legal/rate/source completeness remain NOT PASS."
     ],
@@ -8299,11 +8298,11 @@
       "status": "UNCHANGED_NOT_SENT"
     },
     "protected_actions_performed": false,
-    "next_step": "Run focused test_tnved_fts.py plus absent/populated configured/source DB fingerprint controls on exact HEAD 7462f295 when a lawful executable test environment is available; do not claim focused QA or continue fixture inventory before this gate."
+    "next_step": "On fresh PR256 HEAD, run a bounded inventory of the next remaining TN VED/source-backed fixture beginning with test_canonical_tnved_model.py; reproduce a concrete defect before any edit and do not substitute synthetic data for populated/full-sync contracts."
   },
   "latest_development_checkpoint": {
-    "updated_at": "2026-10-12T04:22:28.000Z",
-    "checked_at": "2026-10-12T04:22:28.000Z",
+    "updated_at": "2026-10-12T05:02:29.000Z",
+    "checked_at": "2026-10-12T05:02:29.000Z",
     "pr": 256,
     "branch": "agent/product-ntm-regressions-v1",
     "head_sha": "7462f2959735f7aad51f53047ef6d9ddeefd04a3",
@@ -8313,20 +8312,20 @@
     "base_pr": 245,
     "base_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
     "block": "tnved_fts_configured_database_isolation",
-    "status": "IMPLEMENTED_STATIC_A5_PASS_CI_PASS_FOCUSED_EXECUTION_PENDING",
+    "status": "DRAFT_CHECKPOINT_EXECUTABLE_A5_PASS_CI_PASS_TNVED_FTS_ISOLATION",
     "behavior": {
-      "reproduced": "The historical unittest setup binds imported engine and SessionLocal to the configured application SQLite, creates schema/FTS objects and inserts synthetic FTS rows there.",
+      "reproduced": "Parent focused execution failed with six setup errors and created the absent configured SQLite at 286720 bytes while constructing duplicated schema/index objects.",
       "final": "A pytest autouse fixture first binds the canonical disposable classification inventory, then points the tnved_fts module engine and availability cache at that disposable database, seeds the original codes idempotently, and rebuilds only its FTS index.",
-      "boundaries": "One test file only; all six original test methods and assertions are byte-identical; no production code, normative data, source claims, flags, skips/xfails or legal interpretation changed."
+      "boundaries": "One test file only; all six original test methods and seven assertion calls are AST-identical; no production code, normative data, source claims, flags, skips/xfails or legal interpretation changed."
     },
     "verification": {
-      "author_static": "Exact one-file commit/diff reviewed; module-global engine/cache call paths and fixture dependency ordering confirmed.",
-      "focused_execution": "NOT_RUN_NO_CHECKOUT_OR_EXECUTABLE_WORKFLOW",
+      "author_focused": "Exact-head focused absent-input and populated-sentinel runs each passed 6 tests; configured/source DB and marker stayed absent or byte-identical with no sidecars.",
+      "adjacent_orders": "test_tnved_fts.py, semantic navigation and catalog API passed in both forward and reverse order: 38 passed each.",
+      "control": "Instrumented run created the real disposable FTS table and triggers, ensure_fts_index(rebuild=True) returned true, seeded search succeeded, local verify passed 120 and CLI snapshot passed 4.",
       "a5": {
-        "session": "/root/a5_fts_isolation_186",
-        "status": "STATIC_PASS_NO_FINDINGS",
-        "scope": "fixture ordering, disposable engine/cache binding, protected DB boundary, idempotent seed/rebuild, unchanged test bodies",
-        "limitation": "No executable focused test in the connector-only review environment."
+        "session": "/root/a5_fts_execution_187",
+        "status": "FINAL_PASS_EXACT_TREE_NO_FINDINGS",
+        "scope": "independent parent mutation reproduction; candidate absent/sentinel and forward/reverse adjacent execution; real FTS path; test-method/assertion AST parity"
       },
       "ci": {
         "status": "PASSED_EXACT_HEAD_OFFLINE_SAFETY_ONLY",
@@ -8334,11 +8333,10 @@
         "job_id": 114661471007,
         "head_sha": "7462f2959735f7aad51f53047ef6d9ddeefd04a3",
         "conclusion": "success",
-        "limitation": "Workflow does not execute test_tnved_fts.py."
+        "limitation": "Workflow is offline-safety only; focused FTS execution is separately proven by A0 and independent executable A5."
       }
     },
     "blockers": [
-      "Focused test_tnved_fts.py and hostile configured/source sentinel execution is still required on exact HEAD.",
       "NTM full-sync audit still requires a lawful populated synchronized snapshot.",
       "Full #245 product acceptance and legal/rate/source completeness remain NOT PASS."
     ],
@@ -8347,6 +8345,6 @@
       "status": "UNCHANGED_NOT_SENT"
     },
     "protected_actions_performed": false,
-    "next_step": "Run focused test_tnved_fts.py plus absent/populated configured/source DB fingerprint controls on exact HEAD 7462f295 when a lawful executable test environment is available; do not claim focused QA or continue fixture inventory before this gate."
+    "next_step": "On fresh PR256 HEAD, run a bounded inventory of the next remaining TN VED/source-backed fixture beginning with test_canonical_tnved_model.py; reproduce a concrete defect before any edit and do not substitute synthetic data for populated/full-sync contracts."
   }
 }
