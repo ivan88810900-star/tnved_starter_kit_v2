@@ -103,6 +103,127 @@ def _chat_bundle() -> dict:
 
 
 class GroundingBundleTests(unittest.IsolatedAsyncioTestCase):
+    async def test_chat_forwards_destination_and_counterparty_to_risk_grounding(self) -> None:
+        non_tariff = AsyncMock(
+            return_value={
+                "status": "OK",
+                "normative_block": {},
+                "risk_block": {
+                    "status": "MANUAL_REVIEW",
+                    "overall_severity": "manual_review_required",
+                    "coverage_complete": False,
+                    "signals": [],
+                    "source_coverage": [],
+                    "screening_scope": [],
+                    "country": "CN",
+                    "destination_country": "BY",
+                    "counterparty_name": "Acme Trading",
+                },
+            }
+        )
+        with (
+            patch(
+                "app.services.grounded_assistant.get_tnved_context_for_hs",
+                return_value={
+                    "title": "Тестовый товар",
+                    "description": "",
+                    "breadcrumb": [],
+                    "notes": [],
+                    "official_ett_url": "https://eec.example/ett",
+                    "source_revision": "official-test",
+                },
+            ),
+            patch(
+                "app.services.grounded_assistant.canonical_anchor_for_hs",
+                return_value=None,
+            ),
+            patch(
+                "app.services.grounded_assistant.check_position_non_tariff",
+                new=non_tariff,
+            ),
+        ):
+            await build_chat_grounding_bundle(
+                message="Проверь санкционные риски",
+                history=[],
+                current_context={
+                    "hs_code": "8517130000",
+                    "origin_country": "CN",
+                    "destination_country": "BY",
+                    "counterparty_name": "Acme Trading",
+                },
+            )
+
+        _, _, origin_country, _ = non_tariff.await_args.args
+        self.assertEqual(origin_country, "CN")
+        self.assertEqual(non_tariff.await_args.kwargs["destination_country"], "BY")
+        self.assertEqual(non_tariff.await_args.kwargs["counterparty_name"], "Acme Trading")
+
+    async def test_risk_grounding_preserves_signal_provenance(self) -> None:
+        non_tariff = AsyncMock(
+            return_value={
+                "status": "WARNING",
+                "normative_block": {},
+                "risk_block": {
+                    "status": "WARNING",
+                    "overall_severity": "medium",
+                    "country": "CN",
+                    "destination_country": "BY",
+                    "counterparty_name": "Acme Trading",
+                    "coverage_complete": False,
+                    "source_coverage": [],
+                    "screening_scope": [],
+                    "signals": [
+                        {
+                            "category": "embargo",
+                            "severity": "medium",
+                            "source": "geo_special_duties",
+                            "source_label": "Геополитические меры",
+                            "authority_level": "Официальный источник",
+                            "explanation": "Страна назначения BY: требуется проверка.",
+                            "legal_ref": "Решение ЕЭК test",
+                            "matched_country": "BY",
+                        }
+                    ],
+                },
+            }
+        )
+        with (
+            patch(
+                "app.services.grounded_assistant.get_tnved_context_for_hs",
+                return_value={
+                    "title": "Тестовый товар",
+                    "source_revision": "official-test",
+                },
+            ),
+            patch(
+                "app.services.grounded_assistant.canonical_anchor_for_hs",
+                return_value=None,
+            ),
+            patch(
+                "app.services.grounded_assistant.check_position_non_tariff",
+                new=non_tariff,
+            ),
+        ):
+            bundle = await build_chat_grounding_bundle(
+                message="Проверь санкционные риски",
+                history=[],
+                current_context={
+                    "hs_code": "8517130000",
+                    "origin_country": "CN",
+                    "destination_country": "BY",
+                    "counterparty_name": "Acme Trading",
+                },
+            )
+
+        risk = bundle["risk"]
+        self.assertEqual(risk["destination_country"], "BY")
+        self.assertEqual(risk["counterparty_name"], "Acme Trading")
+        signal = risk["signals"][0]
+        self.assertEqual(signal["source"], "geo_special_duties")
+        self.assertEqual(signal["source_label"], "Геополитические меры")
+        self.assertEqual(signal["authority_level"], "Официальный источник")
+        self.assertEqual(signal["legal_ref"], "Решение ЕЭК test")
+
     async def test_valid_hs_without_usable_local_evidence_is_not_grounded(self) -> None:
         with (
             patch(

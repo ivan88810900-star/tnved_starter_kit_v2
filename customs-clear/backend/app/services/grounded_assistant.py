@@ -486,7 +486,11 @@ def _risk_summary(raw: dict[str, Any], citations: _CitationCollector) -> dict[st
             {
                 "category": _trim(row.get("category"), 100),
                 "severity": _first_nonempty(row.get("severity"), "unknown"),
+                "source": _trim(row.get("source"), 120),
+                "source_label": _trim(row.get("source_label"), 220),
+                "authority_level": _trim(row.get("authority_level"), 160) or None,
                 "explanation": _trim(row.get("explanation"), 600),
+                "legal_ref": _trim(row.get("legal_ref"), 300) or None,
                 "match_method": _trim(row.get("match_method"), 160) or None,
                 "matched_hs_prefix": _trim(row.get("matched_hs_prefix"), 20) or None,
                 "matched_country": _trim(row.get("matched_country"), 20) or None,
@@ -531,6 +535,9 @@ def _risk_summary(raw: dict[str, Any], citations: _CitationCollector) -> dict[st
     return {
         "status": _first_nonempty(block.get("status"), "MANUAL_REVIEW"),
         "overall_severity": _first_nonempty(block.get("overall_severity"), "unknown"),
+        "country": _trim(block.get("country"), 20) or None,
+        "destination_country": _trim(block.get("destination_country"), 20) or None,
+        "counterparty_name": _trim(block.get("counterparty_name"), 220) or None,
         "coverage_complete": bool(block.get("coverage_complete")),
         "signals": signals,
         "source_coverage": coverage,
@@ -557,6 +564,8 @@ async def build_chat_grounding_bundle(
     hs_code, hs_source = _resolve_hs_code(message, history, context)
     product_name = _first_nonempty(context.get("product_name"))
     country = _first_nonempty(context.get("origin_country"), context.get("country")).upper() or None
+    destination_country = _first_nonempty(context.get("destination_country")).upper() or None
+    counterparty_name = _first_nonempty(context.get("counterparty_name")) or None
 
     payment = _payment_snapshot(context, citations)
     if payment:
@@ -652,6 +661,8 @@ async def build_chat_grounding_bundle(
                 nt_description,
                 country,
                 [],
+                destination_country=destination_country,
+                counterparty_name=counterparty_name,
                 skip_registry_verify=True,
             )
             normative = _normative_summary(raw_non_tariff, citations)
