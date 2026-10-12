@@ -1,3 +1,14 @@
+## 2026-10-12 — Destination-country sanctions/risk fix published on PR #256
+
+- Exact candidate: `d0fce3527c92026a4dc687ba3bb79854d16af75f`, tree `4c81fe078de7230493a454b88b4d27a8a356f608`; previous HEAD `e7f141a145e1475e8d1c51f25c51789a084b4541`.
+- Reproduced: `destination_country` was present in the public contract but discarded by the product service; disposable test failed **1**, exit 1.
+- Fixed: destination country/embargo signals are evaluated separately without repeating HS/entity scopes; wording identifies destination scope; duplicate OFAC signals from one counterparty were removed.
+- Author: sanctions/compliance/grounded **38 passed + 26 subtests**; agent safety **124 passed**; all exits 0.
+- First A5 rejected the intermediate tree for duplicate OFAC signals. Corrected independent A5 `/root/a5_sanctions_destination_195`: **FINAL PASS**; focused sanctions **9 passed**; related normative/NTM/regulatory/grounded **122 passed + 29 subtests**; independent fail-closed/dedup/scope probe passed.
+- Exact-head CI [run 38253458871 / job 114825377967](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38253458871/job/114825377967): **success**.
+- Draft PR only. No merge, deploy, production/source data write, legal applicability change, enforcement/permissions/secrets change or external A6 call. Full #245 remains NOT PASS; lawful populated synchronized NTM snapshot remains unavailable.
+- Next: bounded audit of AI-assistant sanctions/risk grounding and provenance; reproduce before editing.
+
 ## 2026-10-12 — Smart-payment explanations published on PR #255
 
 - Exact candidate: `9659b6509d82f6077dfe0f6917af0dc532f6277e`, tree `73e5c9abb08e3cb1c9d4110661412e41ae4333e8`, parent `7c12f21787b1d557630d8b0737c769b326ab112d`.
