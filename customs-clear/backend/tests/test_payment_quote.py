@@ -3,8 +3,16 @@
 from __future__ import annotations
 
 import unittest
+import unittest.mock
 
-from app.services.normative_store import init_db
+import pytest
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy.pool import StaticPool
+
+from app.db import Base
+from app.models.core import HsRate
+from app.models.tnved import Commodity, HsDutyRule, SpecialDuty, VatPreference
 from app.services.payment_quote_service import build_payment_quote
 
 try:
@@ -17,11 +25,95 @@ except ImportError:
     _API_OK = False
 
 
-class PaymentQuoteServiceTests(unittest.TestCase):
-    @classmethod
-    def setUpClass(cls):
-        init_db()
+@pytest.fixture(scope="module", autouse=True)
+def isolated_payment_quote_db():
+    engine = create_engine(
+        "sqlite:///:memory:",
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+    )
+    Base.metadata.create_all(
+        bind=engine,
+        tables=[
+            Commodity.__table__,
+            HsDutyRule.__table__,
+            HsRate.__table__,
+            SpecialDuty.__table__,
+            VatPreference.__table__,
+        ],
+    )
+    factory = sessionmaker(bind=engine, autocommit=False, autoflush=False)
+    patchers = [
+        unittest.mock.patch("app.services.payment_quote_service.SessionLocal", factory),
+        unittest.mock.patch("app.services.payment_engine.SessionLocal", factory),
+        unittest.mock.patch("app.services.normative_store.SessionLocal", factory),
+        unittest.mock.patch("app.services.rate_display.SessionLocal", factory),
+        unittest.mock.patch(
+            "app.services.payment_quote_service.get_rates_map",
+            return_value={"EUR": 82.75, "RUB": 1.0},
+        ),
+        unittest.mock.patch("app.services.payment_engine.get_country_risk_by_iso", return_value=None),
+        unittest.mock.patch("app.services.payment_engine.find_geo_embargo_match", return_value=None),
+        unittest.mock.patch("app.services.payment_engine.find_geo_duty_override_row", return_value=None),
+        unittest.mock.patch("app.services.payment_engine.get_tariff_preference", return_value=None),
+        unittest.mock.patch("app.services.payment_engine.get_recycling_fee", return_value=[]),
+        unittest.mock.patch(
+            "app.services.payment_engine.get_integrated_data_stats",
+            return_value={"hs_rates_count": 4},
+        ),
+        unittest.mock.patch("app.services.payment_engine.get_tnved_context_for_hs", return_value={}),
+    ]
+    for patcher in patchers:
+        patcher.start()
 
+    with factory() as db:
+        db.add_all(
+            [
+                HsRate(
+                    hs_code="8509",
+                    hs_prefix="8509",
+                    duty_rate="8",
+                    vat_import_rate=22.0,
+                    excise_type="none",
+                ),
+                HsRate(
+                    hs_code="8517",
+                    hs_prefix="8517",
+                    duty_rate="0",
+                    vat_import_rate=22.0,
+                    excise_type="none",
+                ),
+                HsRate(
+                    hs_code="2203",
+                    hs_prefix="2203",
+                    duty_rate="5",
+                    vat_import_rate=22.0,
+                    excise_type="percent",
+                    excise_value=5.0,
+                ),
+                HsRate(
+                    hs_code="7214",
+                    hs_prefix="7214",
+                    duty_rate="10",
+                    vat_import_rate=22.0,
+                    excise_type="none",
+                    has_antidumping=True,
+                    antidumping_type="percent",
+                    antidumping_value=18.0,
+                    antidumping_countries="CN,UA",
+                ),
+            ]
+        )
+        db.commit()
+    try:
+        yield
+    finally:
+        for patcher in reversed(patchers):
+            patcher.stop()
+        engine.dispose()
+
+
+class PaymentQuoteServiceTests(unittest.TestCase):
     def _quote(self, **kwargs):
         defaults = {
             "hs_code": "8509400000",
@@ -114,7 +206,6 @@ class PaymentQuoteServiceTests(unittest.TestCase):
 class PaymentQuoteApiTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        init_db()
         cls.client = TestClient(app)
 
     def test_api_quote_endpoint(self):
