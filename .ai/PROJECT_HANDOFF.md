@@ -1,3 +1,14 @@
+## 2026-10-12 — Compliance database isolation published on PR #256
+
+- Exact candidate: `6aa3e9943558b2037d1dd9e551fb8a331e7fe9ea`, tree `3d33d8c8291f27e48fc0aa71b9b730d1901a5515`; previous accepted checkpoint `86f09f07477553c07dd5c9860e3a83f533a8a44e`; local author exact-tree commit `288ea22547a0f51265c163328134cf0474029333`.
+- Parent reproduction: `python -m pytest -q tests/test_compliance.py` exited 0 with **4 passed** but created an ambient 1,036,288-byte `customs.db`.
+- `test_compliance.py` now uses an in-memory StaticPool database, minimum test-only payment rows, and explicit bindings for all captured payment, normative-store and rate-display database aliases. The four original test method bodies are AST-identical.
+- Author focused: **4 passed**. Payment-engine adjacency in both orders: **41 passed** each. Broad 14-module payment/compliance command without `DATABASE_URL`: **306 passed + 10 subtests**. Safety: **124 tests OK**. All exits 0; diff-check clean; no ambient DB/WAL/SHM; pinned catalogue SHA-256 unchanged.
+- Independent A5 `/root/a5_compliance_db_isolation_201`: **FINAL PASS without findings** on exact HEAD; parent mutation reproduced, candidate cleanup `PATCH_LEAKS=[]`, AST parity and one-file scope verified.
+- Exact-head CI [run 38287007632 / job 114937679417](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38287007632/job/114937679417): **success**.
+- Draft PR only. No product code, normative/source data, merge, deploy, production write, legal applicability/enforcement/permissions/secrets change or external A6 call. Full #245 remains NOT PASS; lawful populated synchronized NTM snapshot remains unavailable.
+- Next: continue the fresh-head bounded inventory of integrated compliance/API tests, starting with `test_api_integration.py`; reproduce any database mutation before editing and preserve its HTTP assertions.
+
 ## 2026-10-12 — Remaining payment DB users isolated on PR #256
 
 - Exact candidate: `86f09f07477553c07dd5c9860e3a83f533a8a44e`, tree `2b5d544ecaf158931b2f827ac41f8ae199e0fc03`; previous accepted checkpoint `d7db16b51d5d09c115d7fb0f9fff7e3ad9f27d4e`; local author exact-tree commit `d4aae4bdb8332383501a97dbc1dc25d99568315d`.
