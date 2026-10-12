@@ -1,3 +1,15 @@
+## 2026-10-12 — Hermetic broad payment regressions published on PR #256
+
+- Exact candidate: `d7db16b51d5d09c115d7fb0f9fff7e3ad9f27d4e`, tree `18f80c48514220d2b627ff4799dc64acd4af63a8`; previous checkpoint `613cfe9a12aa1dbbc5582e7031217dd3d713c7f4`; local author exact-tree commit `b1be97f7ce8a5357b535c9470de47fef8272e4db`.
+- Reproduced broad payment command: **18 failed, 284 passed + 10 subtests**, exit 1. Failures were classified as missing/stale shared-database fixture assumptions; no payment-algorithm defect was reproduced.
+- Fixed four test modules with explicit disposable databases and minimum test-only rows. The calculator test retains HTTP `POST /api/calculator/compute` coverage; payment quote remains fail-closed with `total_payable_rub=None` when special duties are not configured.
+- Author focused and reverse: **34 passed** each. Broad 13-file command with explicit disposable `DATABASE_URL`: **302 passed + 10 subtests**, exit 0. Configured `customs.db` remained byte-identical. Safety **124/124** and diff-check passed.
+- Independent A5 `/root/a5_payment_fixture_isolation_198` correctly rejected two intermediate trees: direct-engine substitution for the HTTP calculator test, then ambient default-DB creation by the quote fixture. Both findings were reproduced and fixed.
+- Final A5: **PASS without findings** on exact HEAD; focused/reverse **34/34**, broad **302 + 10 subtests**, cleanup `PATCH_LEAKS=[]`, safety **124/124**.
+- Exact-head CI [run 38275697200 / job 114900495084](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38275697200/job/114900495084): **success**.
+- Draft PR only. No product code, normative/source data, merge, deploy, production write, legal applicability/enforcement/permissions/secrets change or external A6 call. Full #245 remains NOT PASS; lawful populated synchronized NTM snapshot remains unavailable.
+- Next: isolate remaining ambient-default DB users in unchanged `test_payment_engine.py` and API classes in payment coverage, normalization, source-ingestion and import-duty tests. Until then, run broad controls with an explicit disposable `DATABASE_URL`.
+
 ## 2026-10-12 — Assistant citation provenance published on PR #256
 
 - Exact candidate: `613cfe9a12aa1dbbc5582e7031217dd3d713c7f4`, tree `2c863dd6f414a099d81ae7e3d1c553d9d9fd3aab`; previous checkpoint `bcb594ac8953d1c3be12c5b705ca1ba7e04340a6`.
