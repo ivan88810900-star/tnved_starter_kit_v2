@@ -321,11 +321,16 @@ def build_sanctions_risk_block(
             # The second call is only for destination-scoped country/embargo
             # checks. HS and entity checks were already evaluated above and
             # must not be duplicated in the product response.
-            sanction_docs.extend(
-                doc
-                for doc in destination_docs
-                if doc.get("source") in {"country_risks", "geo_special_duties"}
-            )
+            for doc in destination_docs:
+                if doc.get("source") not in {"country_risks", "geo_special_duties"}:
+                    continue
+                destination_doc = dict(doc)
+                detail = str(destination_doc.get("detail") or "").replace(
+                    "Для поставок из данной страны",
+                    "Для операции с указанной страной назначения",
+                )
+                destination_doc["detail"] = f"Страна назначения {destination}. {detail}".strip()
+                sanction_docs.append(destination_doc)
         signals = [_doc_to_signal(d) for d in sanction_docs]
 
         manual_review_present = [
