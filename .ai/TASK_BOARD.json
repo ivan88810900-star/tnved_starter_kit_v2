@@ -2179,7 +2179,7 @@
       "unique_source_pr_count": 29
     }
   },
-  "revision": 743,
+  "revision": 744,
   "runs": [
     {
       "head_sha": null,
@@ -7549,7 +7549,7 @@
       }
     }
   ],
-  "updated_at": "2026-10-12T16:16:09.619Z",
+  "updated_at": "2026-10-12T17:09:09.430Z",
   "previous_scheduled_product_checkpoint_174": {
     "updated_at": "2026-10-11T18:04:51.196Z",
     "checked_at": "2026-10-11T18:04:51.196Z",
@@ -8321,64 +8321,54 @@
     "next_step": "On fresh PR256 HEAD, reproduce and isolate the next configured-DB or source-backed fixture while keeping full-sync snapshot evidence separate."
   },
   "latest_scheduled_product_checkpoint": {
-    "updated_at": "2026-10-12T16:16:09.619Z",
-    "checked_at": "2026-10-12T16:16:09.619Z",
+    "updated_at": "2026-10-12T17:09:09.430Z",
+    "checked_at": "2026-10-12T17:09:09.430Z",
     "pr": 256,
     "branch": "agent/product-ntm-regressions-v1",
-    "head_sha": "d7db16b51d5d09c115d7fb0f9fff7e3ad9f27d4e",
-    "tree_sha": "18f80c48514220d2b627ff4799dc64acd4af63a8",
-    "parent_sha": "c42eb9680dfa6fe50513153235d141d9026b1028",
-    "prior_checkpoint_sha": "613cfe9a12aa1dbbc5582e7031217dd3d713c7f4",
-    "local_author_exact_tree_commit": "b1be97f7ce8a5357b535c9470de47fef8272e4db",
+    "head_sha": "86f09f07477553c07dd5c9860e3a83f533a8a44e",
+    "tree_sha": "2b5d544ecaf158931b2f827ac41f8ae199e0fc03",
+    "parent_sha": "4bbfc75adcaa2b1d3ee4bea78707c66498f6ee48",
+    "prior_checkpoint_sha": "d7db16b51d5d09c115d7fb0f9fff7e3ad9f27d4e",
+    "local_author_exact_tree_commit": "d4aae4bdb8332383501a97dbc1dc25d99568315d",
     "base_pr": 245,
     "base_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
-    "block": "hermetic_broad_payment_regressions",
-    "status": "IMPLEMENTED_A5_PASS_CI_PASS_HERMETIC_PAYMENT_FIXTURES",
+    "block": "remaining_payment_database_isolation",
+    "status": "IMPLEMENTED_A5_PASS_CI_PASS_NO_AMBIENT_DATABASE",
     "behavior": {
-      "reproduced": "The inherited 13-file payment regression failed 18 tests with 284 passed plus 10 subtests because several modules relied on absent shared database fixtures.",
-      "final": "Four payment test modules now bind explicit disposable databases and minimum test-only rows. Calculator HTTP endpoint coverage is retained and quotes remain fail-closed when special duties are not configured.",
-      "classification": "Missing or stale fixture assumptions were reproduced; no payment-algorithm defect was reproduced.",
-      "boundaries": "Only four backend test files changed. No product code, normative/source dataset, legal applicability, production data, feature flag, protected branch or external provider changed."
+      "reproduced": "Intermediate exact HEAD 4bbfc75 created ambient customs.db and failed 29 payment-engine tests in a clean checkout because rate_display.SessionLocal was not bound to the disposable session.",
+      "final": "Five backend test modules now bind all captured database session aliases to disposable in-memory databases; broad payment tests run without DATABASE_URL and create no ambient SQLite files.",
+      "classification": "A missing test-fixture alias was reproduced and fixed; no payment algorithm or legal applicability change was made.",
+      "boundaries": "Only five backend test files changed. Original 181 test method bodies and HTTP assertions remain unchanged; no product, normative/source, production, protected-branch or external-provider action."
     },
     "verification": {
-      "author_reproduction": "13-file broad command failed 18 with 284 passed plus 10 subtests, exit 1.",
-      "author_focused": "Focused and reverse-order four-file runs each passed 34 tests, exit 0.",
-      "author_broad": "13-file broad run with explicit disposable DATABASE_URL passed 302 tests plus 10 subtests, exit 0; configured customs.db remained byte-identical.",
+      "author_focused": "Clean checkout focused forward and reverse commands each passed 181 tests, exit 0, without DATABASE_URL.",
+      "author_broad": "13-module broad payment command passed 302 tests plus 10 subtests, exit 0; customs.db/WAL/SHM remained absent and the pinned catalogue remained byte-identical.",
       "control": "Tariff-agent safety passed 124 tests, exit 0; git diff --check passed.",
-      "a5_prior": [
-        {
-          "session": "/root/a5_payment_fixture_isolation_198",
-          "head_sha": "9c7f1cb147aecb8cec773b2a7542f20fd2aa918e",
-          "status": "FAIL_FINDING_FIXED",
-          "finding": "Calculator API integration had been weakened to a direct engine call."
-        },
-        {
-          "session": "/root/a5_payment_fixture_isolation_198",
-          "head_sha": "c42eb9680dfa6fe50513153235d141d9026b1028",
-          "status": "FAIL_FINDING_FIXED",
-          "finding": "Payment quote fixture still created the ambient default database."
-        }
-      ],
+      "a5_prior": {
+        "session": "/root/a5_payment_db_isolation_200",
+        "head_sha": "4bbfc75adcaa2b1d3ee4bea78707c66498f6ee48",
+        "status": "FAIL_FINDING_FIXED",
+        "finding": "app.services.rate_display.SessionLocal still reached the ambient default database, causing 29 failures and creating SQLite files."
+      },
       "a5": {
-        "session": "/root/a5_payment_fixture_isolation_198",
+        "session": "/root/a5_payment_db_isolation_200",
         "status": "FINAL_PASS_EXACT_HEAD_NO_FINDINGS",
-        "execution": "Clean exact archive focused 34; reverse 34; broad 302 plus 10 subtests; in-process cleanup 34 with PATCH_LEAKS=[]; safety 124; diff-check clean.",
+        "execution": "Fresh clean exact checkout focused and reverse 181 each; broad 302 plus 10 subtests; in-process cleanup 181 with PATCH_LEAKS=[] and AMBIENT_ARTIFACTS=[]; safety 124; diff-check clean.",
         "findings": []
       },
       "ci": {
         "status": "PASSED_EXACT_HEAD_OFFLINE_SAFETY_ONLY",
-        "run_id": 38275697200,
-        "job_id": 114900495084,
-        "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38275697200/job/114900495084",
-        "head_sha": "d7db16b51d5d09c115d7fb0f9fff7e3ad9f27d4e",
+        "run_id": 38281892073,
+        "job_id": 114920887081,
+        "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38281892073/job/114920887081",
+        "head_sha": "86f09f07477553c07dd5c9860e3a83f533a8a44e",
         "conclusion": "success",
         "limitation": "Workflow is offline-safety only; author and independent executable A5 provide product-test evidence."
       }
     },
     "blockers": [
       "Full #245 product acceptance and legal/source completeness remain NOT PASS.",
-      "The NTM full-sync audit still requires a lawful populated synchronized snapshot.",
-      "Several unchanged legacy broad payment modules still use the ambient database unless DATABASE_URL is explicitly redirected."
+      "The NTM full-sync audit still requires a lawful populated synchronized snapshot."
     ],
     "a6": {
       "request": "core-s1-6415f443120f-r9-g106",
@@ -8387,71 +8377,61 @@
     "protected_actions_performed": false,
     "capabilities": {
       "code_access": "Full exact candidate tree available in isolated author and A5 worktrees.",
-      "command_execution": "Git, Python and pytest execution available; author broad command exited 0.",
-      "lawful_publication": "Draft branch and PR updated through the authorized GitHub connector under lease generation 198.",
+      "command_execution": "Git, Python and pytest execution available; author focused, broad and safety commands exited 0.",
+      "lawful_publication": "Draft branch and PR updated through the authorized GitHub connector under lease generation 200.",
       "checkpoint": "This state CAS commit is the durable checkpoint; lease release follows separately."
     },
-    "next_step": "Isolate the remaining ambient-default database users in test_payment_engine.py and API classes in payment coverage, normalization, source-ingestion and import-duty tests; until then run broad controls with an explicit disposable DATABASE_URL."
+    "next_step": "Return to #245 with a fresh-head bounded NTM/classification fixture inventory and reproduce the first concrete remaining defect; do not replace populated/full-sync expectations with synthetic completeness."
   },
   "latest_development_checkpoint": {
-    "updated_at": "2026-10-12T16:16:09.619Z",
-    "checked_at": "2026-10-12T16:16:09.619Z",
+    "updated_at": "2026-10-12T17:09:09.430Z",
+    "checked_at": "2026-10-12T17:09:09.430Z",
     "pr": 256,
     "branch": "agent/product-ntm-regressions-v1",
-    "head_sha": "d7db16b51d5d09c115d7fb0f9fff7e3ad9f27d4e",
-    "tree_sha": "18f80c48514220d2b627ff4799dc64acd4af63a8",
-    "parent_sha": "c42eb9680dfa6fe50513153235d141d9026b1028",
-    "prior_checkpoint_sha": "613cfe9a12aa1dbbc5582e7031217dd3d713c7f4",
-    "local_author_exact_tree_commit": "b1be97f7ce8a5357b535c9470de47fef8272e4db",
+    "head_sha": "86f09f07477553c07dd5c9860e3a83f533a8a44e",
+    "tree_sha": "2b5d544ecaf158931b2f827ac41f8ae199e0fc03",
+    "parent_sha": "4bbfc75adcaa2b1d3ee4bea78707c66498f6ee48",
+    "prior_checkpoint_sha": "d7db16b51d5d09c115d7fb0f9fff7e3ad9f27d4e",
+    "local_author_exact_tree_commit": "d4aae4bdb8332383501a97dbc1dc25d99568315d",
     "base_pr": 245,
     "base_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
-    "block": "hermetic_broad_payment_regressions",
-    "status": "IMPLEMENTED_A5_PASS_CI_PASS_HERMETIC_PAYMENT_FIXTURES",
+    "block": "remaining_payment_database_isolation",
+    "status": "IMPLEMENTED_A5_PASS_CI_PASS_NO_AMBIENT_DATABASE",
     "behavior": {
-      "reproduced": "The inherited 13-file payment regression failed 18 tests with 284 passed plus 10 subtests because several modules relied on absent shared database fixtures.",
-      "final": "Four payment test modules now bind explicit disposable databases and minimum test-only rows. Calculator HTTP endpoint coverage is retained and quotes remain fail-closed when special duties are not configured.",
-      "classification": "Missing or stale fixture assumptions were reproduced; no payment-algorithm defect was reproduced.",
-      "boundaries": "Only four backend test files changed. No product code, normative/source dataset, legal applicability, production data, feature flag, protected branch or external provider changed."
+      "reproduced": "Intermediate exact HEAD 4bbfc75 created ambient customs.db and failed 29 payment-engine tests in a clean checkout because rate_display.SessionLocal was not bound to the disposable session.",
+      "final": "Five backend test modules now bind all captured database session aliases to disposable in-memory databases; broad payment tests run without DATABASE_URL and create no ambient SQLite files.",
+      "classification": "A missing test-fixture alias was reproduced and fixed; no payment algorithm or legal applicability change was made.",
+      "boundaries": "Only five backend test files changed. Original 181 test method bodies and HTTP assertions remain unchanged; no product, normative/source, production, protected-branch or external-provider action."
     },
     "verification": {
-      "author_reproduction": "13-file broad command failed 18 with 284 passed plus 10 subtests, exit 1.",
-      "author_focused": "Focused and reverse-order four-file runs each passed 34 tests, exit 0.",
-      "author_broad": "13-file broad run with explicit disposable DATABASE_URL passed 302 tests plus 10 subtests, exit 0; configured customs.db remained byte-identical.",
+      "author_focused": "Clean checkout focused forward and reverse commands each passed 181 tests, exit 0, without DATABASE_URL.",
+      "author_broad": "13-module broad payment command passed 302 tests plus 10 subtests, exit 0; customs.db/WAL/SHM remained absent and the pinned catalogue remained byte-identical.",
       "control": "Tariff-agent safety passed 124 tests, exit 0; git diff --check passed.",
-      "a5_prior": [
-        {
-          "session": "/root/a5_payment_fixture_isolation_198",
-          "head_sha": "9c7f1cb147aecb8cec773b2a7542f20fd2aa918e",
-          "status": "FAIL_FINDING_FIXED",
-          "finding": "Calculator API integration had been weakened to a direct engine call."
-        },
-        {
-          "session": "/root/a5_payment_fixture_isolation_198",
-          "head_sha": "c42eb9680dfa6fe50513153235d141d9026b1028",
-          "status": "FAIL_FINDING_FIXED",
-          "finding": "Payment quote fixture still created the ambient default database."
-        }
-      ],
+      "a5_prior": {
+        "session": "/root/a5_payment_db_isolation_200",
+        "head_sha": "4bbfc75adcaa2b1d3ee4bea78707c66498f6ee48",
+        "status": "FAIL_FINDING_FIXED",
+        "finding": "app.services.rate_display.SessionLocal still reached the ambient default database, causing 29 failures and creating SQLite files."
+      },
       "a5": {
-        "session": "/root/a5_payment_fixture_isolation_198",
+        "session": "/root/a5_payment_db_isolation_200",
         "status": "FINAL_PASS_EXACT_HEAD_NO_FINDINGS",
-        "execution": "Clean exact archive focused 34; reverse 34; broad 302 plus 10 subtests; in-process cleanup 34 with PATCH_LEAKS=[]; safety 124; diff-check clean.",
+        "execution": "Fresh clean exact checkout focused and reverse 181 each; broad 302 plus 10 subtests; in-process cleanup 181 with PATCH_LEAKS=[] and AMBIENT_ARTIFACTS=[]; safety 124; diff-check clean.",
         "findings": []
       },
       "ci": {
         "status": "PASSED_EXACT_HEAD_OFFLINE_SAFETY_ONLY",
-        "run_id": 38275697200,
-        "job_id": 114900495084,
-        "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38275697200/job/114900495084",
-        "head_sha": "d7db16b51d5d09c115d7fb0f9fff7e3ad9f27d4e",
+        "run_id": 38281892073,
+        "job_id": 114920887081,
+        "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38281892073/job/114920887081",
+        "head_sha": "86f09f07477553c07dd5c9860e3a83f533a8a44e",
         "conclusion": "success",
         "limitation": "Workflow is offline-safety only; author and independent executable A5 provide product-test evidence."
       }
     },
     "blockers": [
       "Full #245 product acceptance and legal/source completeness remain NOT PASS.",
-      "The NTM full-sync audit still requires a lawful populated synchronized snapshot.",
-      "Several unchanged legacy broad payment modules still use the ambient database unless DATABASE_URL is explicitly redirected."
+      "The NTM full-sync audit still requires a lawful populated synchronized snapshot."
     ],
     "a6": {
       "request": "core-s1-6415f443120f-r9-g106",
@@ -8460,11 +8440,11 @@
     "protected_actions_performed": false,
     "capabilities": {
       "code_access": "Full exact candidate tree available in isolated author and A5 worktrees.",
-      "command_execution": "Git, Python and pytest execution available; author broad command exited 0.",
-      "lawful_publication": "Draft branch and PR updated through the authorized GitHub connector under lease generation 198.",
+      "command_execution": "Git, Python and pytest execution available; author focused, broad and safety commands exited 0.",
+      "lawful_publication": "Draft branch and PR updated through the authorized GitHub connector under lease generation 200.",
       "checkpoint": "This state CAS commit is the durable checkpoint; lease release follows separately."
     },
-    "next_step": "Isolate the remaining ambient-default database users in test_payment_engine.py and API classes in payment coverage, normalization, source-ingestion and import-duty tests; until then run broad controls with an explicit disposable DATABASE_URL."
+    "next_step": "Return to #245 with a fresh-head bounded NTM/classification fixture inventory and reproduce the first concrete remaining defect; do not replace populated/full-sync expectations with synthetic completeness."
   },
   "previous_scheduled_product_checkpoint_188": {
     "updated_at": "2026-10-12T06:11:25.000Z",
@@ -9535,5 +9515,151 @@
       "checkpoint": "This state CAS commit is the durable checkpoint; lease release follows separately."
     },
     "next_step": "Reread fresh heads, then reproduce the inherited broad calculator/special-duty fixture failures on current PR #256 and classify the first concrete product defect versus stale/missing fixture assumptions before editing."
+  },
+  "previous_scheduled_product_checkpoint_198": {
+    "updated_at": "2026-10-12T16:16:09.619Z",
+    "checked_at": "2026-10-12T16:16:09.619Z",
+    "pr": 256,
+    "branch": "agent/product-ntm-regressions-v1",
+    "head_sha": "d7db16b51d5d09c115d7fb0f9fff7e3ad9f27d4e",
+    "tree_sha": "18f80c48514220d2b627ff4799dc64acd4af63a8",
+    "parent_sha": "c42eb9680dfa6fe50513153235d141d9026b1028",
+    "prior_checkpoint_sha": "613cfe9a12aa1dbbc5582e7031217dd3d713c7f4",
+    "local_author_exact_tree_commit": "b1be97f7ce8a5357b535c9470de47fef8272e4db",
+    "base_pr": 245,
+    "base_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
+    "block": "hermetic_broad_payment_regressions",
+    "status": "IMPLEMENTED_A5_PASS_CI_PASS_HERMETIC_PAYMENT_FIXTURES",
+    "behavior": {
+      "reproduced": "The inherited 13-file payment regression failed 18 tests with 284 passed plus 10 subtests because several modules relied on absent shared database fixtures.",
+      "final": "Four payment test modules now bind explicit disposable databases and minimum test-only rows. Calculator HTTP endpoint coverage is retained and quotes remain fail-closed when special duties are not configured.",
+      "classification": "Missing or stale fixture assumptions were reproduced; no payment-algorithm defect was reproduced.",
+      "boundaries": "Only four backend test files changed. No product code, normative/source dataset, legal applicability, production data, feature flag, protected branch or external provider changed."
+    },
+    "verification": {
+      "author_reproduction": "13-file broad command failed 18 with 284 passed plus 10 subtests, exit 1.",
+      "author_focused": "Focused and reverse-order four-file runs each passed 34 tests, exit 0.",
+      "author_broad": "13-file broad run with explicit disposable DATABASE_URL passed 302 tests plus 10 subtests, exit 0; configured customs.db remained byte-identical.",
+      "control": "Tariff-agent safety passed 124 tests, exit 0; git diff --check passed.",
+      "a5_prior": [
+        {
+          "session": "/root/a5_payment_fixture_isolation_198",
+          "head_sha": "9c7f1cb147aecb8cec773b2a7542f20fd2aa918e",
+          "status": "FAIL_FINDING_FIXED",
+          "finding": "Calculator API integration had been weakened to a direct engine call."
+        },
+        {
+          "session": "/root/a5_payment_fixture_isolation_198",
+          "head_sha": "c42eb9680dfa6fe50513153235d141d9026b1028",
+          "status": "FAIL_FINDING_FIXED",
+          "finding": "Payment quote fixture still created the ambient default database."
+        }
+      ],
+      "a5": {
+        "session": "/root/a5_payment_fixture_isolation_198",
+        "status": "FINAL_PASS_EXACT_HEAD_NO_FINDINGS",
+        "execution": "Clean exact archive focused 34; reverse 34; broad 302 plus 10 subtests; in-process cleanup 34 with PATCH_LEAKS=[]; safety 124; diff-check clean.",
+        "findings": []
+      },
+      "ci": {
+        "status": "PASSED_EXACT_HEAD_OFFLINE_SAFETY_ONLY",
+        "run_id": 38275697200,
+        "job_id": 114900495084,
+        "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38275697200/job/114900495084",
+        "head_sha": "d7db16b51d5d09c115d7fb0f9fff7e3ad9f27d4e",
+        "conclusion": "success",
+        "limitation": "Workflow is offline-safety only; author and independent executable A5 provide product-test evidence."
+      }
+    },
+    "blockers": [
+      "Full #245 product acceptance and legal/source completeness remain NOT PASS.",
+      "The NTM full-sync audit still requires a lawful populated synchronized snapshot.",
+      "Several unchanged legacy broad payment modules still use the ambient database unless DATABASE_URL is explicitly redirected."
+    ],
+    "a6": {
+      "request": "core-s1-6415f443120f-r9-g106",
+      "status": "UNCHANGED_NOT_SENT"
+    },
+    "protected_actions_performed": false,
+    "capabilities": {
+      "code_access": "Full exact candidate tree available in isolated author and A5 worktrees.",
+      "command_execution": "Git, Python and pytest execution available; author broad command exited 0.",
+      "lawful_publication": "Draft branch and PR updated through the authorized GitHub connector under lease generation 198.",
+      "checkpoint": "This state CAS commit is the durable checkpoint; lease release follows separately."
+    },
+    "next_step": "Isolate the remaining ambient-default database users in test_payment_engine.py and API classes in payment coverage, normalization, source-ingestion and import-duty tests; until then run broad controls with an explicit disposable DATABASE_URL."
+  },
+  "previous_development_checkpoint_198": {
+    "updated_at": "2026-10-12T16:16:09.619Z",
+    "checked_at": "2026-10-12T16:16:09.619Z",
+    "pr": 256,
+    "branch": "agent/product-ntm-regressions-v1",
+    "head_sha": "d7db16b51d5d09c115d7fb0f9fff7e3ad9f27d4e",
+    "tree_sha": "18f80c48514220d2b627ff4799dc64acd4af63a8",
+    "parent_sha": "c42eb9680dfa6fe50513153235d141d9026b1028",
+    "prior_checkpoint_sha": "613cfe9a12aa1dbbc5582e7031217dd3d713c7f4",
+    "local_author_exact_tree_commit": "b1be97f7ce8a5357b535c9470de47fef8272e4db",
+    "base_pr": 245,
+    "base_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
+    "block": "hermetic_broad_payment_regressions",
+    "status": "IMPLEMENTED_A5_PASS_CI_PASS_HERMETIC_PAYMENT_FIXTURES",
+    "behavior": {
+      "reproduced": "The inherited 13-file payment regression failed 18 tests with 284 passed plus 10 subtests because several modules relied on absent shared database fixtures.",
+      "final": "Four payment test modules now bind explicit disposable databases and minimum test-only rows. Calculator HTTP endpoint coverage is retained and quotes remain fail-closed when special duties are not configured.",
+      "classification": "Missing or stale fixture assumptions were reproduced; no payment-algorithm defect was reproduced.",
+      "boundaries": "Only four backend test files changed. No product code, normative/source dataset, legal applicability, production data, feature flag, protected branch or external provider changed."
+    },
+    "verification": {
+      "author_reproduction": "13-file broad command failed 18 with 284 passed plus 10 subtests, exit 1.",
+      "author_focused": "Focused and reverse-order four-file runs each passed 34 tests, exit 0.",
+      "author_broad": "13-file broad run with explicit disposable DATABASE_URL passed 302 tests plus 10 subtests, exit 0; configured customs.db remained byte-identical.",
+      "control": "Tariff-agent safety passed 124 tests, exit 0; git diff --check passed.",
+      "a5_prior": [
+        {
+          "session": "/root/a5_payment_fixture_isolation_198",
+          "head_sha": "9c7f1cb147aecb8cec773b2a7542f20fd2aa918e",
+          "status": "FAIL_FINDING_FIXED",
+          "finding": "Calculator API integration had been weakened to a direct engine call."
+        },
+        {
+          "session": "/root/a5_payment_fixture_isolation_198",
+          "head_sha": "c42eb9680dfa6fe50513153235d141d9026b1028",
+          "status": "FAIL_FINDING_FIXED",
+          "finding": "Payment quote fixture still created the ambient default database."
+        }
+      ],
+      "a5": {
+        "session": "/root/a5_payment_fixture_isolation_198",
+        "status": "FINAL_PASS_EXACT_HEAD_NO_FINDINGS",
+        "execution": "Clean exact archive focused 34; reverse 34; broad 302 plus 10 subtests; in-process cleanup 34 with PATCH_LEAKS=[]; safety 124; diff-check clean.",
+        "findings": []
+      },
+      "ci": {
+        "status": "PASSED_EXACT_HEAD_OFFLINE_SAFETY_ONLY",
+        "run_id": 38275697200,
+        "job_id": 114900495084,
+        "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38275697200/job/114900495084",
+        "head_sha": "d7db16b51d5d09c115d7fb0f9fff7e3ad9f27d4e",
+        "conclusion": "success",
+        "limitation": "Workflow is offline-safety only; author and independent executable A5 provide product-test evidence."
+      }
+    },
+    "blockers": [
+      "Full #245 product acceptance and legal/source completeness remain NOT PASS.",
+      "The NTM full-sync audit still requires a lawful populated synchronized snapshot.",
+      "Several unchanged legacy broad payment modules still use the ambient database unless DATABASE_URL is explicitly redirected."
+    ],
+    "a6": {
+      "request": "core-s1-6415f443120f-r9-g106",
+      "status": "UNCHANGED_NOT_SENT"
+    },
+    "protected_actions_performed": false,
+    "capabilities": {
+      "code_access": "Full exact candidate tree available in isolated author and A5 worktrees.",
+      "command_execution": "Git, Python and pytest execution available; author broad command exited 0.",
+      "lawful_publication": "Draft branch and PR updated through the authorized GitHub connector under lease generation 198.",
+      "checkpoint": "This state CAS commit is the durable checkpoint; lease release follows separately."
+    },
+    "next_step": "Isolate the remaining ambient-default database users in test_payment_engine.py and API classes in payment coverage, normalization, source-ingestion and import-duty tests; until then run broad controls with an explicit disposable DATABASE_URL."
   }
 }
