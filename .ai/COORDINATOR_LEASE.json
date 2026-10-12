@@ -1,14 +1,14 @@
 {
-  "acquisition_note": "Execute and independently verify the ProductDetails decisions-tab integration on fresh PR256 exact head e7f141a, covering embedded preliminary decisions, badge, navigation, loading and empty/error states; reproduce a concrete defect before any edit.",
-  "expires_at": null,
-  "generation": 193,
-  "holder": null,
+  "acquisition_note": "Reread fresh PR255 exact head 7c12f217 and execute an end-to-end smart-payment explanation audit across calculator, quote, API and UI on disposable inputs; reproduce a concrete defect before any edit.",
+  "expires_at": "2026-10-12T12:26:16.604099+00:00",
+  "generation": 194,
+  "holder": "/root",
   "lease_repair": {},
   "release_reason": "ProductDetails decisions-tab integration audit completed on unchanged PR256 head e7f141a145e1475e8d1c51f25c51789a084b4541: A0 disposable 4, full frontend 112 with probe and baseline 108 passed; independent A5 /root/a5_product_details_193 final pass with disposable 5, full 113 and baseline 108; exact-head offline-safety run 38216078694 success; board revision 738 and handoff saved in state checkpoint fc695fe8903c01902f7308a699fea9b4ea934b0d.",
   "released_by": null,
   "schema_version": 1,
   "serialization_repair": {},
-  "state": "released",
-  "token": null,
-  "updated_at": "2026-10-12T10:56:25.128887+00:00"
+  "state": "active",
+  "token": "26e95c95b04340dd80902cd94aa6acf4",
+  "updated_at": "2026-10-12T11:56:16.604099+00:00"
 }
