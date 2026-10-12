@@ -2179,7 +2179,7 @@
       "unique_source_pr_count": 29
     }
   },
-  "revision": 748,
+  "revision": 749,
   "runs": [
     {
       "head_sha": null,
@@ -8321,41 +8321,41 @@
     "next_step": "On fresh PR256 HEAD, reproduce and isolate the next configured-DB or source-backed fixture while keeping full-sync snapshot evidence separate."
   },
   "latest_scheduled_product_checkpoint": {
-    "updated_at": "2026-10-12T21:10:00Z",
-    "checked_at": "2026-10-12T21:10:00Z",
+    "updated_at": "2026-10-12T22:04:17Z",
+    "checked_at": "2026-10-12T22:04:17Z",
     "pr": 256,
     "branch": "agent/product-ntm-regressions-v1",
-    "head_sha": "a02575f05d697525274110f5dd8f99c059623019",
-    "tree_sha": "f79ea6706f4d530a2a72859b66f3c8603ee8a03a",
-    "parent_sha": "b91a90a859546ce61e5b9ebdd236dc3e6b7824b7",
-    "prior_checkpoint_sha": "b91a90a859546ce61e5b9ebdd236dc3e6b7824b7",
-    "local_author_exact_tree_commit": "f459fbd11549c1d4f0b3eaa4fc17238a58ef23a4",
+    "head_sha": "40df46bbfd29027c64439b6c0c3819d823650b19",
+    "tree_sha": "cf1334ecc2078f0890f5f30eff78bea555171a4a",
+    "parent_sha": "a02575f05d697525274110f5dd8f99c059623019",
+    "prior_checkpoint_sha": "a02575f05d697525274110f5dd8f99c059623019",
+    "local_author_exact_tree_commit": "282b4721dc45f9dbd9e0fd36e447540c42d8f5cd",
     "base_pr": 245,
     "base_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
-    "block": "journal_stats_database_isolation",
-    "status": "IMPLEMENTED_A5_PASS_CI_PASS_JOURNAL_STATS_DB_ISOLATION",
+    "block": "assistant_decisions_database_isolation",
+    "status": "IMPLEMENTED_A5_PASS_CI_PASS_ASSISTANT_DECISIONS_DB_ISOLATION",
     "behavior": {
-      "reproduced": "Parent exact HEAD passed all 3 journal statistics tests but created a 1,036,288-byte ambient customs.db in a clean checkout.",
-      "final": "test_journal_stats.py now bootstraps a disposable SQLite database, binds all already-loaded application database aliases equal to the original engine and SessionLocal, restores aliases and environment values, removes the temporary database and sidecars, and rechecks protected fingerprints.",
-      "classification": "A test database-isolation defect was reproduced and fixed; no product algorithm, normative source or legal applicability change was made.",
-      "boundaries": "Only customs-clear/backend/tests/test_journal_stats.py changed. All three original test methods and their assertions are AST-identical."
+      "reproduced": "Parent exact HEAD passed all 5 assistant decisions API tests but created a 1,036,288-byte ambient customs.db in a clean checkout.",
+      "final": "test_assistant_decisions.py now installs a disposable SQLite database before importing the authenticated application surface, binds already-loaded application database aliases, restores aliases and environment values, removes the temporary database and sidecars, and rechecks protected fingerprints.",
+      "classification": "A test import-order and database-isolation defect was reproduced and fixed; no product algorithm, normative source or legal applicability change was made.",
+      "boundaries": "Only customs-clear/backend/tests/test_assistant_decisions.py changed. All five original API test methods and their assertions are AST-identical."
     },
     "verification": {
-      "author_focused": "Exact remote focused command passed 3 tests, exit 0; journal/analytics/API/payment-engine/compliance forward and reverse controls passed 80 tests each, exit 0.",
-      "author_broad": "The 17-module broad payment/compliance/API command passed 345 tests plus 10 subtests, exit 0; no ambient SQLite was created and the pinned catalogue stayed byte-identical.",
+      "author_focused": "Exact remote focused command passed 5 tests, exit 0; assistant-decisions/journal/analytics/API/payment-engine/compliance forward and reverse controls passed 85 tests each, exit 0.",
+      "author_broad": "The 18-module broad payment/compliance/API command passed 350 tests plus 10 subtests, exit 0; no ambient SQLite was created and the pinned catalogue stayed byte-identical.",
       "control": "Tariff-agent safety passed 124 tests, exit 0; git diff --check passed; pinned catalogue SHA-256 53847cb00ebc53f6315042325bc416d13d65cf020a10530a4ce7dde848ed1ff2.",
       "a5": {
-        "session": "/root/a5_cycle204",
+        "session": "/root/a5_cycle205",
         "status": "FINAL_PASS_EXACT_HEAD_NO_FINDINGS",
-        "execution": "Fresh detached exact review reproduced the parent ambient DB creation, then passed focused 3, forward/reverse 80 each, broad 345 plus 10 subtests, verified all three methods AST-identical, restored 44/44 preloaded database aliases plus environment sentinels, and confirmed temporary database and sidecar cleanup.",
+        "execution": "Fresh detached exact review reproduced the parent ambient DB creation, then passed focused 5, forward/reverse 85 each, broad 350 plus 10 subtests, verified all five methods AST-identical, restored 44/44 preloaded database aliases plus environment sentinels, and confirmed temporary database and sidecar cleanup.",
         "findings": []
       },
       "ci": {
         "status": "PASSED_EXACT_HEAD_OFFLINE_SAFETY_ONLY",
-        "run_id": 38308177875,
-        "job_id": 115007176323,
-        "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38308177875/job/115007176323",
-        "head_sha": "a02575f05d697525274110f5dd8f99c059623019",
+        "run_id": 38313997462,
+        "job_id": 115026180711,
+        "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38313997462/job/115026180711",
+        "head_sha": "40df46bbfd29027c64439b6c0c3819d823650b19",
         "conclusion": "success",
         "limitation": "Workflow is offline-safety only; author and independent executable A5 provide product-test evidence."
       }
@@ -8370,49 +8370,49 @@
     },
     "protected_actions_performed": false,
     "capabilities": {
-      "code_access": "Full exact candidate tree available in isolated author and independent A5 worktrees.",
+      "code_access": "Full exact candidate tree available in isolated author, exact-remote and independent A5 worktrees.",
       "command_execution": "Git, Python and pytest execution available; author, exact-remote and A5 commands exited 0.",
-      "lawful_publication": "Draft branch and PR updated through the authorized GitHub connector under lease generation 204.",
+      "lawful_publication": "Draft branch and PR updated through the authorized GitHub connector under lease generation 205.",
       "checkpoint": "This state CAS commit is the durable checkpoint; lease release follows separately."
     },
-    "next_step": "On fresh PR256 HEAD, reproduce the remaining ambient-database behavior of test_assistant_decisions.py before editing and preserve its decision-history assertions."
+    "next_step": "On fresh PR256 HEAD, reproduce the remaining ambient-database behavior of test_assistant_batch.py before editing and preserve its batch API assertion."
   },
   "latest_development_checkpoint": {
-    "updated_at": "2026-10-12T21:10:00Z",
-    "checked_at": "2026-10-12T21:10:00Z",
+    "updated_at": "2026-10-12T22:04:17Z",
+    "checked_at": "2026-10-12T22:04:17Z",
     "pr": 256,
     "branch": "agent/product-ntm-regressions-v1",
-    "head_sha": "a02575f05d697525274110f5dd8f99c059623019",
-    "tree_sha": "f79ea6706f4d530a2a72859b66f3c8603ee8a03a",
-    "parent_sha": "b91a90a859546ce61e5b9ebdd236dc3e6b7824b7",
-    "prior_checkpoint_sha": "b91a90a859546ce61e5b9ebdd236dc3e6b7824b7",
-    "local_author_exact_tree_commit": "f459fbd11549c1d4f0b3eaa4fc17238a58ef23a4",
+    "head_sha": "40df46bbfd29027c64439b6c0c3819d823650b19",
+    "tree_sha": "cf1334ecc2078f0890f5f30eff78bea555171a4a",
+    "parent_sha": "a02575f05d697525274110f5dd8f99c059623019",
+    "prior_checkpoint_sha": "a02575f05d697525274110f5dd8f99c059623019",
+    "local_author_exact_tree_commit": "282b4721dc45f9dbd9e0fd36e447540c42d8f5cd",
     "base_pr": 245,
     "base_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
-    "block": "journal_stats_database_isolation",
-    "status": "IMPLEMENTED_A5_PASS_CI_PASS_JOURNAL_STATS_DB_ISOLATION",
+    "block": "assistant_decisions_database_isolation",
+    "status": "IMPLEMENTED_A5_PASS_CI_PASS_ASSISTANT_DECISIONS_DB_ISOLATION",
     "behavior": {
-      "reproduced": "Parent exact HEAD passed all 3 journal statistics tests but created a 1,036,288-byte ambient customs.db in a clean checkout.",
-      "final": "test_journal_stats.py now bootstraps a disposable SQLite database, binds all already-loaded application database aliases equal to the original engine and SessionLocal, restores aliases and environment values, removes the temporary database and sidecars, and rechecks protected fingerprints.",
-      "classification": "A test database-isolation defect was reproduced and fixed; no product algorithm, normative source or legal applicability change was made.",
-      "boundaries": "Only customs-clear/backend/tests/test_journal_stats.py changed. All three original test methods and their assertions are AST-identical."
+      "reproduced": "Parent exact HEAD passed all 5 assistant decisions API tests but created a 1,036,288-byte ambient customs.db in a clean checkout.",
+      "final": "test_assistant_decisions.py now installs a disposable SQLite database before importing the authenticated application surface, binds already-loaded application database aliases, restores aliases and environment values, removes the temporary database and sidecars, and rechecks protected fingerprints.",
+      "classification": "A test import-order and database-isolation defect was reproduced and fixed; no product algorithm, normative source or legal applicability change was made.",
+      "boundaries": "Only customs-clear/backend/tests/test_assistant_decisions.py changed. All five original API test methods and their assertions are AST-identical."
     },
     "verification": {
-      "author_focused": "Exact remote focused command passed 3 tests, exit 0; journal/analytics/API/payment-engine/compliance forward and reverse controls passed 80 tests each, exit 0.",
-      "author_broad": "The 17-module broad payment/compliance/API command passed 345 tests plus 10 subtests, exit 0; no ambient SQLite was created and the pinned catalogue stayed byte-identical.",
+      "author_focused": "Exact remote focused command passed 5 tests, exit 0; assistant-decisions/journal/analytics/API/payment-engine/compliance forward and reverse controls passed 85 tests each, exit 0.",
+      "author_broad": "The 18-module broad payment/compliance/API command passed 350 tests plus 10 subtests, exit 0; no ambient SQLite was created and the pinned catalogue stayed byte-identical.",
       "control": "Tariff-agent safety passed 124 tests, exit 0; git diff --check passed; pinned catalogue SHA-256 53847cb00ebc53f6315042325bc416d13d65cf020a10530a4ce7dde848ed1ff2.",
       "a5": {
-        "session": "/root/a5_cycle204",
+        "session": "/root/a5_cycle205",
         "status": "FINAL_PASS_EXACT_HEAD_NO_FINDINGS",
-        "execution": "Fresh detached exact review reproduced the parent ambient DB creation, then passed focused 3, forward/reverse 80 each, broad 345 plus 10 subtests, verified all three methods AST-identical, restored 44/44 preloaded database aliases plus environment sentinels, and confirmed temporary database and sidecar cleanup.",
+        "execution": "Fresh detached exact review reproduced the parent ambient DB creation, then passed focused 5, forward/reverse 85 each, broad 350 plus 10 subtests, verified all five methods AST-identical, restored 44/44 preloaded database aliases plus environment sentinels, and confirmed temporary database and sidecar cleanup.",
         "findings": []
       },
       "ci": {
         "status": "PASSED_EXACT_HEAD_OFFLINE_SAFETY_ONLY",
-        "run_id": 38308177875,
-        "job_id": 115007176323,
-        "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38308177875/job/115007176323",
-        "head_sha": "a02575f05d697525274110f5dd8f99c059623019",
+        "run_id": 38313997462,
+        "job_id": 115026180711,
+        "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38313997462/job/115026180711",
+        "head_sha": "40df46bbfd29027c64439b6c0c3819d823650b19",
         "conclusion": "success",
         "limitation": "Workflow is offline-safety only; author and independent executable A5 provide product-test evidence."
       }
@@ -8427,12 +8427,12 @@
     },
     "protected_actions_performed": false,
     "capabilities": {
-      "code_access": "Full exact candidate tree available in isolated author and independent A5 worktrees.",
+      "code_access": "Full exact candidate tree available in isolated author, exact-remote and independent A5 worktrees.",
       "command_execution": "Git, Python and pytest execution available; author, exact-remote and A5 commands exited 0.",
-      "lawful_publication": "Draft branch and PR updated through the authorized GitHub connector under lease generation 204.",
+      "lawful_publication": "Draft branch and PR updated through the authorized GitHub connector under lease generation 205.",
       "checkpoint": "This state CAS commit is the durable checkpoint; lease release follows separately."
     },
-    "next_step": "On fresh PR256 HEAD, reproduce the remaining ambient-database behavior of test_assistant_decisions.py before editing and preserve its decision-history assertions."
+    "next_step": "On fresh PR256 HEAD, reproduce the remaining ambient-database behavior of test_assistant_batch.py before editing and preserve its batch API assertion."
   },
   "previous_scheduled_product_checkpoint_188": {
     "updated_at": "2026-10-12T06:11:25.000Z",
@@ -10117,5 +10117,119 @@
       "checkpoint": "This state CAS commit is the durable checkpoint; lease release follows separately."
     },
     "next_step": "On fresh PR256 HEAD, reproduce the ambient-database behavior of test_journal_stats.py before editing and preserve its statistics assertions."
+  },
+  "previous_scheduled_product_checkpoint_204": {
+    "updated_at": "2026-10-12T21:10:00Z",
+    "checked_at": "2026-10-12T21:10:00Z",
+    "pr": 256,
+    "branch": "agent/product-ntm-regressions-v1",
+    "head_sha": "a02575f05d697525274110f5dd8f99c059623019",
+    "tree_sha": "f79ea6706f4d530a2a72859b66f3c8603ee8a03a",
+    "parent_sha": "b91a90a859546ce61e5b9ebdd236dc3e6b7824b7",
+    "prior_checkpoint_sha": "b91a90a859546ce61e5b9ebdd236dc3e6b7824b7",
+    "local_author_exact_tree_commit": "f459fbd11549c1d4f0b3eaa4fc17238a58ef23a4",
+    "base_pr": 245,
+    "base_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
+    "block": "journal_stats_database_isolation",
+    "status": "IMPLEMENTED_A5_PASS_CI_PASS_JOURNAL_STATS_DB_ISOLATION",
+    "behavior": {
+      "reproduced": "Parent exact HEAD passed all 3 journal statistics tests but created a 1,036,288-byte ambient customs.db in a clean checkout.",
+      "final": "test_journal_stats.py now bootstraps a disposable SQLite database, binds all already-loaded application database aliases equal to the original engine and SessionLocal, restores aliases and environment values, removes the temporary database and sidecars, and rechecks protected fingerprints.",
+      "classification": "A test database-isolation defect was reproduced and fixed; no product algorithm, normative source or legal applicability change was made.",
+      "boundaries": "Only customs-clear/backend/tests/test_journal_stats.py changed. All three original test methods and their assertions are AST-identical."
+    },
+    "verification": {
+      "author_focused": "Exact remote focused command passed 3 tests, exit 0; journal/analytics/API/payment-engine/compliance forward and reverse controls passed 80 tests each, exit 0.",
+      "author_broad": "The 17-module broad payment/compliance/API command passed 345 tests plus 10 subtests, exit 0; no ambient SQLite was created and the pinned catalogue stayed byte-identical.",
+      "control": "Tariff-agent safety passed 124 tests, exit 0; git diff --check passed; pinned catalogue SHA-256 53847cb00ebc53f6315042325bc416d13d65cf020a10530a4ce7dde848ed1ff2.",
+      "a5": {
+        "session": "/root/a5_cycle204",
+        "status": "FINAL_PASS_EXACT_HEAD_NO_FINDINGS",
+        "execution": "Fresh detached exact review reproduced the parent ambient DB creation, then passed focused 3, forward/reverse 80 each, broad 345 plus 10 subtests, verified all three methods AST-identical, restored 44/44 preloaded database aliases plus environment sentinels, and confirmed temporary database and sidecar cleanup.",
+        "findings": []
+      },
+      "ci": {
+        "status": "PASSED_EXACT_HEAD_OFFLINE_SAFETY_ONLY",
+        "run_id": 38308177875,
+        "job_id": 115007176323,
+        "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38308177875/job/115007176323",
+        "head_sha": "a02575f05d697525274110f5dd8f99c059623019",
+        "conclusion": "success",
+        "limitation": "Workflow is offline-safety only; author and independent executable A5 provide product-test evidence."
+      }
+    },
+    "blockers": [
+      "Full #245 product acceptance and legal/source completeness remain NOT PASS.",
+      "The NTM full-sync audit still requires a lawful populated synchronized snapshot."
+    ],
+    "a6": {
+      "request": "core-s1-6415f443120f-r9-g106",
+      "status": "UNCHANGED_NOT_SENT"
+    },
+    "protected_actions_performed": false,
+    "capabilities": {
+      "code_access": "Full exact candidate tree available in isolated author and independent A5 worktrees.",
+      "command_execution": "Git, Python and pytest execution available; author, exact-remote and A5 commands exited 0.",
+      "lawful_publication": "Draft branch and PR updated through the authorized GitHub connector under lease generation 204.",
+      "checkpoint": "This state CAS commit is the durable checkpoint; lease release follows separately."
+    },
+    "next_step": "On fresh PR256 HEAD, reproduce the remaining ambient-database behavior of test_assistant_decisions.py before editing and preserve its decision-history assertions."
+  },
+  "previous_development_checkpoint_204": {
+    "updated_at": "2026-10-12T21:10:00Z",
+    "checked_at": "2026-10-12T21:10:00Z",
+    "pr": 256,
+    "branch": "agent/product-ntm-regressions-v1",
+    "head_sha": "a02575f05d697525274110f5dd8f99c059623019",
+    "tree_sha": "f79ea6706f4d530a2a72859b66f3c8603ee8a03a",
+    "parent_sha": "b91a90a859546ce61e5b9ebdd236dc3e6b7824b7",
+    "prior_checkpoint_sha": "b91a90a859546ce61e5b9ebdd236dc3e6b7824b7",
+    "local_author_exact_tree_commit": "f459fbd11549c1d4f0b3eaa4fc17238a58ef23a4",
+    "base_pr": 245,
+    "base_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
+    "block": "journal_stats_database_isolation",
+    "status": "IMPLEMENTED_A5_PASS_CI_PASS_JOURNAL_STATS_DB_ISOLATION",
+    "behavior": {
+      "reproduced": "Parent exact HEAD passed all 3 journal statistics tests but created a 1,036,288-byte ambient customs.db in a clean checkout.",
+      "final": "test_journal_stats.py now bootstraps a disposable SQLite database, binds all already-loaded application database aliases equal to the original engine and SessionLocal, restores aliases and environment values, removes the temporary database and sidecars, and rechecks protected fingerprints.",
+      "classification": "A test database-isolation defect was reproduced and fixed; no product algorithm, normative source or legal applicability change was made.",
+      "boundaries": "Only customs-clear/backend/tests/test_journal_stats.py changed. All three original test methods and their assertions are AST-identical."
+    },
+    "verification": {
+      "author_focused": "Exact remote focused command passed 3 tests, exit 0; journal/analytics/API/payment-engine/compliance forward and reverse controls passed 80 tests each, exit 0.",
+      "author_broad": "The 17-module broad payment/compliance/API command passed 345 tests plus 10 subtests, exit 0; no ambient SQLite was created and the pinned catalogue stayed byte-identical.",
+      "control": "Tariff-agent safety passed 124 tests, exit 0; git diff --check passed; pinned catalogue SHA-256 53847cb00ebc53f6315042325bc416d13d65cf020a10530a4ce7dde848ed1ff2.",
+      "a5": {
+        "session": "/root/a5_cycle204",
+        "status": "FINAL_PASS_EXACT_HEAD_NO_FINDINGS",
+        "execution": "Fresh detached exact review reproduced the parent ambient DB creation, then passed focused 3, forward/reverse 80 each, broad 345 plus 10 subtests, verified all three methods AST-identical, restored 44/44 preloaded database aliases plus environment sentinels, and confirmed temporary database and sidecar cleanup.",
+        "findings": []
+      },
+      "ci": {
+        "status": "PASSED_EXACT_HEAD_OFFLINE_SAFETY_ONLY",
+        "run_id": 38308177875,
+        "job_id": 115007176323,
+        "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38308177875/job/115007176323",
+        "head_sha": "a02575f05d697525274110f5dd8f99c059623019",
+        "conclusion": "success",
+        "limitation": "Workflow is offline-safety only; author and independent executable A5 provide product-test evidence."
+      }
+    },
+    "blockers": [
+      "Full #245 product acceptance and legal/source completeness remain NOT PASS.",
+      "The NTM full-sync audit still requires a lawful populated synchronized snapshot."
+    ],
+    "a6": {
+      "request": "core-s1-6415f443120f-r9-g106",
+      "status": "UNCHANGED_NOT_SENT"
+    },
+    "protected_actions_performed": false,
+    "capabilities": {
+      "code_access": "Full exact candidate tree available in isolated author and independent A5 worktrees.",
+      "command_execution": "Git, Python and pytest execution available; author, exact-remote and A5 commands exited 0.",
+      "lawful_publication": "Draft branch and PR updated through the authorized GitHub connector under lease generation 204.",
+      "checkpoint": "This state CAS commit is the durable checkpoint; lease release follows separately."
+    },
+    "next_step": "On fresh PR256 HEAD, reproduce the remaining ambient-database behavior of test_assistant_decisions.py before editing and preserve its decision-history assertions."
   }
 }

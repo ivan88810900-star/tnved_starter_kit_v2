@@ -1,3 +1,14 @@
+## 2026-10-13 — Assistant decisions API database isolation published on PR #256
+
+- Exact candidate: `40df46bbfd29027c64439b6c0c3819d823650b19`, tree `cf1334ecc2078f0890f5f30eff78bea555171a4a`; parent checkpoint `a02575f05d697525274110f5dd8f99c059623019`; local author exact-tree commit `282b4721dc45f9dbd9e0fd36e447540c42d8f5cd`.
+- Parent reproduction: `python -m pytest -q tests/test_assistant_decisions.py` exited 0 with **5 passed** but created a 1,036,288-byte ambient `customs.db`.
+- `test_assistant_decisions.py` now installs a disposable SQLite database before importing the authenticated application surface, binds already-loaded application database aliases, restores all aliases and environment values, removes the temporary database and sidecars, and verifies protected file fingerprints. All five original API test methods are AST-identical.
+- Author exact-remote focused: **5 passed**. Assistant-decisions/journal/analytics/API/payment-engine/compliance in both orders: **85 passed** each. Broad 18-module command: **350 passed + 10 subtests**. Safety: **124 tests OK**. All exits 0; diff-check clean; no ambient DB/WAL/SHM; pinned catalogue SHA-256 unchanged.
+- Independent A5 `/root/a5_cycle205`: **FINAL PASS without findings** on exact HEAD; parent mutation reproduced, candidate focused/adjacent/broad controls passed, preloaded-app probe restored **44/44** database aliases plus environment sentinels, AST parity and one-file scope verified.
+- Exact-head CI [run 38313997462 / job 115026180711](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38313997462/job/115026180711): **success**.
+- Draft PR only. No product code, normative/source data, merge, deploy, production write, legal applicability/enforcement/permissions/secrets change or external A6 call. Full #245 remains NOT PASS; lawful populated synchronized NTM snapshot remains unavailable.
+- Next: on fresh PR #256 HEAD reproduce the remaining ambient-database behavior of `test_assistant_batch.py` before editing and preserve its batch API assertion.
+
 ## 2026-10-12 — Journal statistics database isolation published on PR #256
 
 - Exact candidate: `a02575f05d697525274110f5dd8f99c059623019`, tree `f79ea6706f4d530a2a72859b66f3c8603ee8a03a`; parent checkpoint `b91a90a859546ce61e5b9ebdd236dc3e6b7824b7`; local author exact-tree commit `f459fbd11549c1d4f0b3eaa4fc17238a58ef23a4`.
