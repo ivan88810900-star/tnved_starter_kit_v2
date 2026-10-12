@@ -276,6 +276,8 @@ def build_sanctions_risk_block(
     session = db or SessionLocal()
     hs = _norm_hs(hs_code)
     counterparty = (counterparty_name or "").strip() or None
+    origin_country = (country or "").strip().upper() or None
+    destination = (destination_country or "").strip().upper() or None
     item_data: dict[str, Any] = {}
     if counterparty:
         item_data["counterparty"] = counterparty
@@ -286,7 +288,7 @@ def build_sanctions_risk_block(
         coverage_rows, status_by_id = diagnose_sanctions_source_coverage(session)
         coverage_complete = _scope_coverage_complete(
             status_by_id=status_by_id,
-            country=country,
+            country=origin_country or destination,
             counterparty=counterparty,
         )
 
@@ -304,7 +306,27 @@ def build_sanctions_risk_block(
                 + ", ".join(r.title for r in partial_sources[:5])
             )
 
-        sanction_docs, _blocking = _check_sanction_risks(hs, country, item_data or None, session)
+        sanction_docs, _blocking = _check_sanction_risks(
+            hs,
+            origin_country,
+            item_data or None,
+            session,
+        )
+        if destination and destination != origin_country:
+            destination_docs, _destination_blocking = _check_sanction_risks(
+                hs,
+                destination,
+                None,
+                session,
+            )
+            # The second call is only for destination-scoped country/embargo
+            # checks. HS and entity checks were already evaluated above and
+            # must not be duplicated in the product response.
+            sanction_docs.extend(
+                doc
+                for doc in destination_docs
+                if doc.get("source") in {"country_risks", "geo_special_duties"}
+            )
         signals = [_doc_to_signal(d) for d in sanction_docs]
 
         manual_review_present = [
@@ -336,8 +358,8 @@ def build_sanctions_risk_block(
             overall_severity=overall,
             hs_code=hs,
             description=(description or "").strip(),
-            country=(country or "").strip().upper() or None,
-            destination_country=(destination_country or "").strip().upper() or None,
+            country=origin_country,
+            destination_country=destination,
             counterparty_name=counterparty,
             signals=signals,
             warnings=warnings,
