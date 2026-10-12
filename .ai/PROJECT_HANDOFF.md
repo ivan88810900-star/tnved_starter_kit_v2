@@ -1,3 +1,15 @@
+## 2026-10-12 — Assistant citation provenance published on PR #256
+
+- Exact candidate: `613cfe9a12aa1dbbc5582e7031217dd3d713c7f4`, tree `2c863dd6f414a099d81ae7e3d1c553d9d9fd3aab`; previous checkpoint `bcb594ac8953d1c3be12c5b705ca1ba7e04340a6`.
+- Reproduced: backend citations lost risk authority/legal provenance and frontend discarded it; backend and frontend focused regressions each failed **1**, exit 1.
+- Fixed: signal and source-coverage provenance survives chat/copilot runtime projection; bounded authority/legal/status/excerpt is shown only for complete server-fact citations; unsafe URLs stay non-clickable. Optional destination/counterparty fields are present in the TypeScript chat contract.
+- Author: backend **61 passed + 26 subtests**; frontend **109 passed**; typecheck, production build, safety **124/124** and diff-check passed; all exits 0.
+- First A5 `/root/a5_assistant_citation_provenance_197` correctly failed intermediate HEAD `5089011937f51b826e1638266a16b3898a165dd2` on coverage provenance and chat trust gating; both findings were reproduced and fixed.
+- Final A5 `/root/a5_assistant_citation_provenance_197_r2`: **PASS** on exact HEAD; backend expanded **64 + 29 subtests**, frontend **109**, edge probe, typecheck/build and safety **124/124** passed; no findings.
+- Exact-head CI [run 38268374091 / job 114876230022](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38268374091/job/114876230022): **success**.
+- Draft PR only. No merge, deploy, production/source data write, legal applicability change, enforcement/permissions/secrets change or external A6 call. Full #245 remains NOT PASS; lawful populated synchronized NTM snapshot remains unavailable.
+- Next: reproduce inherited broad calculator/special-duty fixture failures on current PR #256 and classify the first concrete defect versus stale/missing fixture assumptions before editing.
+
 ## 2026-10-12 — AI sanctions/risk grounding and provenance published on PR #256
 
 - Exact candidate: `bcb594ac8953d1c3be12c5b705ca1ba7e04340a6`, tree `4cd6220223d80b3137fe849168a37a7c53bbfa63`; previous HEAD `d0fce3527c92026a4dc687ba3bb79854d16af75f`.
