@@ -1,14 +1,14 @@
 {
   "acquisition_note": "Audit and independently verify the frontend PreliminaryDecisionsBlock/API contract, empty state and source rendering on fresh PR256 exact head e7f141a; reproduce a concrete defect before any edit.",
-  "expires_at": "2026-10-12T10:20:24.540847Z",
+  "expires_at": null,
   "generation": 192,
-  "holder": "/root",
+  "holder": null,
   "lease_repair": {},
-  "release_reason": "TN VED code-card executable audit completed on unchanged PR256 head e7f141a145e1475e8d1c51f25c51789a084b4541: A0 focused 3 plus 3 and four adjacent 36-test runs passed; independent A5 final pass without blocking findings; exact-head offline-safety run 38216078694 success; board revision 736 and handoff saved in state checkpoint 69e74722c7aed5964e90c34227a22072747bdaff.",
-  "released_by": "/root",
+  "release_reason": "PreliminaryDecisionsBlock frontend executable audit completed on unchanged PR256 head e7f141a145e1475e8d1c51f25c51789a084b4541: A0 full 108-test suite, typecheck, build and disposable 3-test audit passed; independent A5 /root/a5_preliminary_ui_192 final pass with full 108 plus disposable 2; exact-head offline-safety run 38216078694 success; board revision 737 and handoff saved in state checkpoint 3024fc10dff22d2530635a3f160692ce8f06e8a3.",
+  "released_by": null,
   "schema_version": 1,
   "serialization_repair": {},
-  "state": "active",
-  "token": "5ed911261dbb40fe92dd350bdcd4a07f",
-  "updated_at": "2026-10-12T09:50:24.540847Z"
+  "state": "released",
+  "token": null,
+  "updated_at": "2026-10-12T10:01:14.892101+00:00"
 }
