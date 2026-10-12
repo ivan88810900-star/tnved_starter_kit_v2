@@ -1,14 +1,14 @@
 {
   "acquisition_note": "Isolate the reproduced TN VED measures API configured/source database write on PR256 exact head.",
-  "expires_at": null,
-  "generation": 184,
-  "holder": null,
+  "expires_at": "2026-10-12T04:27:39.891695Z",
+  "generation": 185,
+  "holder": "/root",
   "lease_repair": {},
   "release_reason": "PR256 TN VED measures API DB isolation published at 42ac7665990111d45d9038be807f8ba61c354e11; author tests, independent A5, and exact-head CI run 38197947110 succeeded; state checkpoint e0e574d3966d9f0882a747d5fb2b411cb5a31c09 restored and verified.",
   "released_by": "/root",
   "schema_version": 1,
   "serialization_repair": {},
-  "state": "released",
-  "token": null,
-  "updated_at": "2026-10-12T03:02:58.696823Z"
+  "state": "active",
+  "token": "b279a525723f43a7b0986d4d19f21a18",
+  "updated_at": "2026-10-12T03:57:39.891695Z"
 }
