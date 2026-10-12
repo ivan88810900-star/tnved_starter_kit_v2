@@ -1,14 +1,14 @@
 {
   "acquisition_note": "Reread fresh PR255 exact head 7c12f217 and execute an end-to-end smart-payment explanation audit across calculator, quote, API and UI on disposable inputs; reproduce a concrete defect before any edit.",
-  "expires_at": "2026-10-12T12:26:16.604099+00:00",
+  "expires_at": null,
   "generation": 194,
-  "holder": "/root",
+  "holder": null,
   "lease_repair": {},
-  "release_reason": "ProductDetails decisions-tab integration audit completed on unchanged PR256 head e7f141a145e1475e8d1c51f25c51789a084b4541: A0 disposable 4, full frontend 112 with probe and baseline 108 passed; independent A5 /root/a5_product_details_193 final pass with disposable 5, full 113 and baseline 108; exact-head offline-safety run 38216078694 success; board revision 738 and handoff saved in state checkpoint fc695fe8903c01902f7308a699fea9b4ea934b0d.",
+  "release_reason": "Smart-payment explanation defect fixed and published on PR255 head 9659b6509d82f6077dfe0f6917af0dc532f6277e tree 73e5c9abb08e3cb1c9d4110661412e41ae4333e8; author UI before/after, frontend typecheck/build, backend 78 plus 14, safety 120 plus 4 passed; independent A5 /root/a5_smart_payment_explanations_194 final pass; exact-head CI run 38247429977 both jobs success; board revision 739 and handoff saved in state checkpoint 9cb251aeb4bdd59f795ce07c2f547dacf1f02c59.",
   "released_by": null,
   "schema_version": 1,
   "serialization_repair": {},
-  "state": "active",
-  "token": "26e95c95b04340dd80902cd94aa6acf4",
-  "updated_at": "2026-10-12T11:56:16.604099+00:00"
+  "state": "released",
+  "token": null,
+  "updated_at": "2026-10-12T12:16:44.645086+00:00"
 }
