@@ -15,7 +15,7 @@ from app.db import SessionLocal
 from app.models.core import HsRate
 from app.models.tnved import Commodity, HsDutyRule, SpecialDuty, VatPreference
 from app.services.duty_rules_backfill import backfill_duty_rules_from_hs_rates
-from app.services.payment_engine import _find_duty_rule_for_hs, compute_payments
+from app.services.payment_engine import _find_duty_rule_for_hs
 
 
 @pytest.fixture(scope="module", autouse=True)
@@ -51,6 +51,11 @@ def isolated_duty_rule_db():
             return_value={"hs_rates_count": 1},
         ),
         unittest.mock.patch("app.services.payment_engine.get_tnved_context_for_hs", return_value={}),
+        unittest.mock.patch("app.api.calculator.is_leaf_hs_code", return_value=True),
+        unittest.mock.patch(
+            "app.api.calculator.get_rates_map",
+            return_value={"EUR": 82.75, "RUB": 1.0},
+        ),
     ]
     for patcher in patchers:
         patcher.start()
@@ -101,21 +106,29 @@ class DutyRulesBackfillTests(unittest.TestCase):
 
 class SpecificDutyComputeTests(unittest.TestCase):
     def test_compute_6303929000_with_net_weight(self) -> None:
+        from fastapi.testclient import TestClient
+        from app.main import app
+
         with SessionLocal() as db:
             if db.query(HsDutyRule).filter(HsDutyRule.commodity_code == "6303929000").one_or_none() is None:
                 backfill_duty_rules_from_hs_rates(db, only_missing=True)
                 db.commit()
 
-        data = compute_payments(
-            {
+        client = TestClient(app)
+        resp = client.post(
+            "/api/calculator/compute",
+            json={
                 "hs_code": "6303929000",
                 "customs_value": 331400.92,
-                "country": "CN",
+                "currency": "RUB",
+                "country_of_origin": "CN",
                 "quantity": 1,
                 "net_weight_kg": 1860.84,
-                "_fx_rates": {"EUR": 82.75, "RUB": 1.0},
-            }
+                "save_history": False,
+            },
         )
+        self.assertEqual(resp.status_code, 200, resp.text)
+        data = resp.json()
         breakdown = data.get("breakdown") or {}
         duty = float(breakdown.get("duty") or 0)
         self.assertGreater(duty, 90000.0)
