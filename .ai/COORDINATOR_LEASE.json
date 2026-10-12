@@ -1,14 +1,14 @@
 {
-  "acquisition_note": "Isolate the reproduced TN VED measures API configured/source database write on PR256 exact head.",
-  "expires_at": "2026-10-12T04:35:29.025593Z",
+  "acquisition_note": "Isolate the reproduced TN VED catalog API configured/source database and preview-marker writes on PR256 exact head.",
+  "expires_at": null,
   "generation": 185,
-  "holder": "/root",
+  "holder": null,
   "lease_repair": {},
-  "release_reason": "PR256 TN VED measures API DB isolation published at 42ac7665990111d45d9038be807f8ba61c354e11; author tests, independent A5, and exact-head CI run 38197947110 succeeded; state checkpoint e0e574d3966d9f0882a747d5fb2b411cb5a31c09 restored and verified.",
+  "release_reason": "PR256 TN VED catalog API isolation published at 5bb7dbf69e61c0999e3b0971fc79f86198296560; author tests, independent A5, and exact-head CI run 38202590035 succeeded; state checkpoint c839f208e259322b4c0d7da76e3b722635c231bd restored and verified.",
   "released_by": "/root",
   "schema_version": 1,
   "serialization_repair": {},
-  "state": "active",
-  "token": "b279a525723f43a7b0986d4d19f21a18",
-  "updated_at": "2026-10-12T04:05:29.025593Z"
+  "state": "released",
+  "token": null,
+  "updated_at": "2026-10-12T04:13:53.809892Z"
 }
