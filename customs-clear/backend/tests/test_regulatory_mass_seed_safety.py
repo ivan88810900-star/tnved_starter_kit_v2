@@ -2,13 +2,18 @@
 
 from __future__ import annotations
 
-from app.db import SessionLocal
+import pytest
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+
+from app.db import Base, SessionLocal
 from app.models.regulatory import (
     REGULATORY_QUALITY_SYNTHETIC_SEED,
     REGULATORY_STATUS_REFERENCE_ONLY,
     RegulatoryDocHsMapping,
     RegulatoryDocument,
 )
+from app.services import regulatory_layer, regulatory_source_completeness
 from app.services.regulatory_layer import get_regulatory_documents_for_hs
 from app.services.regulatory_source_completeness import _count_db_probe
 from scripts import seed_regulatory_mass
@@ -24,6 +29,24 @@ _DOC = {
     "confidence": 1.0,
     "relevance": "direct",
 }
+
+
+@pytest.fixture(autouse=True)
+def disposable_regulatory_db(tmp_path, monkeypatch):
+    engine = create_engine(f"sqlite:///{tmp_path / 'regulatory-mass-seed.db'}")
+    Base.metadata.create_all(
+        bind=engine,
+        tables=[RegulatoryDocument.__table__, RegulatoryDocHsMapping.__table__],
+    )
+    factory = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    monkeypatch.setattr("tests.test_regulatory_mass_seed_safety.SessionLocal", factory)
+    monkeypatch.setattr(seed_regulatory_mass, "SessionLocal", factory)
+    monkeypatch.setattr(regulatory_layer, "SessionLocal", factory)
+    monkeypatch.setattr(regulatory_source_completeness, "SessionLocal", factory)
+    try:
+        yield
+    finally:
+        engine.dispose()
 
 
 def test_mass_seed_is_reference_only_and_repairs_legacy_labels(monkeypatch) -> None:
