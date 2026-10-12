@@ -123,10 +123,14 @@ def test_destination_country_is_checked_for_country_risk(memory_sessionmaker: se
             db=db,
         )
     assert block.destination_country == "IR"
-    assert any(
-        signal.category == "country_restrictions" and signal.legal_ref == "CountryRisk/IR"
+    destination_signals = [
+        signal
         for signal in block.signals
-    )
+        if signal.category == "country_restrictions" and signal.legal_ref == "CountryRisk/IR"
+    ]
+    assert len(destination_signals) == 1
+    assert "страна назначения ir" in destination_signals[0].explanation.lower()
+    assert "из данной страны" not in destination_signals[0].explanation.lower()
     assert block.overall_severity == "high"
     assert block.status == "CRITICAL"
 
