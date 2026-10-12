@@ -1,3 +1,14 @@
+## 2026-10-12 — Remaining payment DB users isolated on PR #256
+
+- Exact candidate: `86f09f07477553c07dd5c9860e3a83f533a8a44e`, tree `2b5d544ecaf158931b2f827ac41f8ae199e0fc03`; previous accepted checkpoint `d7db16b51d5d09c115d7fb0f9fff7e3ad9f27d4e`; local author exact-tree commit `d4aae4bdb8332383501a97dbc1dc25d99568315d`.
+- Five backend test modules now bind all captured DB session aliases to disposable in-memory databases. All 181 original test method bodies and HTTP assertions remain unchanged.
+- Author clean-checkout focused forward/reverse: **181 passed** each. Broad 13-module payment command without `DATABASE_URL`: **302 passed + 10 subtests**, exit 0. No `customs.db`, WAL or SHM was created; pinned catalogue stayed byte-identical.
+- Independent A5 `/root/a5_payment_db_isolation_200` correctly rejected intermediate HEAD `4bbfc75adcaa2b1d3ee4bea78707c66498f6ee48` because `rate_display.SessionLocal` still reached ambient SQLite. Finding reproduced and fixed.
+- Final A5: **PASS without findings** on exact HEAD; focused/reverse **181/181**, broad **302 + 10 subtests**, cleanup `PATCH_LEAKS=[]` and `AMBIENT_ARTIFACTS=[]`, safety **124/124**.
+- Exact-head CI [run 38281892073 / job 114920887081](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38281892073/job/114920887081): **success**.
+- Draft PR only. No product code, normative/source data, merge, deploy, production write, legal applicability/enforcement/permissions/secrets change or external A6 call. Full #245 remains NOT PASS; lawful populated synchronized NTM snapshot remains unavailable.
+- Next: return to #245 with a fresh-head bounded NTM/classification fixture inventory and reproduce the first concrete remaining defect; do not substitute synthetic completeness for populated/full-sync evidence.
+
 ## 2026-10-12 — Hermetic broad payment regressions published on PR #256
 
 - Exact candidate: `d7db16b51d5d09c115d7fb0f9fff7e3ad9f27d4e`, tree `18f80c48514220d2b627ff4799dc64acd4af63a8`; previous checkpoint `613cfe9a12aa1dbbc5582e7031217dd3d713c7f4`; local author exact-tree commit `b1be97f7ce8a5357b535c9470de47fef8272e4db`.
