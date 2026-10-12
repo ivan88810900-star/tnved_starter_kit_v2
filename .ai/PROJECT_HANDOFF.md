@@ -1,5 +1,25 @@
 # Tariff / A0 — единая точка передачи проекта
 
+## 0aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa. #245 — TN VED code-card executable audit on unchanged HEAD
+
+**Checkpoint:** [draft PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256), `agent/product-ntm-regressions-v1` @ `e7f141a145e1475e8d1c51f25c51789a084b4541`, tree `def0f10bc2dc35376dcdff6f453ee91f390f0607` (unchanged).
+
+No defect was reproduced in `test_tnved_code_card.py`; therefore no product or test commit was created. The executable audit retained exact/6/4-prefix priority, duplicate suppression, bounded limits, empty states, trimmed fields and source serialization while exercising the real catalogue API and FCS preliminary-sync paths in both collection orders.
+
+Evidence bound to the exact unchanged candidate:
+
+- root focused absent-input and populated-sentinel controls: **3 passed** each, exit 0;
+- root adjacent code-card/catalogue API/FCS sync controls: **36 passed** in forward and reverse order for both absent and populated sentinels, all exit 0;
+- disposable edge probe passed prefix order/dedupe, limit clamps, short/empty boundaries and blank-source fallback;
+- configured/source databases and preview marker stayed absent or byte-identical; no WAL/SHM/default `customs.db`; pinned catalogue SHA-256 unchanged;
+- independent executable A5 `/root/a5_tnved_code_card_191`: **FINAL PASS without blocking findings**; repeated **3 + 3** focused and four **36-pass** adjacent runs plus edge probes;
+- local safety: `verify` **120 passed**, CLI snapshot **4 passed**, committed snapshot valid;
+- exact-head CI: [run 38216078694](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38216078694), offline-safety job `114701012450`, **success**.
+
+A5 recorded an informational low-level resolver wording ambiguity for 6/8/longer inputs. The public API remains strict at 4 or 10 digits, so no current product regression was reproduced and no semantic change was made.
+
+This is executable verification, not full #245 product/legal/source acceptance. A lawful populated synchronized NTM snapshot remains unavailable. A6 `core-s1-6415f443120f-r9-g106` remains prepared but not authorized or sent. No merge, deploy, production write, enforcement/permissions/secrets change, destructive migration, force push or branch deletion occurred. Next safe block is fresh-HEAD frontend audit of `PreliminaryDecisionsBlock`, its API contract, empty state and source rendering; reproduce a concrete defect before any edit.
+
 ## 0aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa. #245 — smart TN VED search executable audit on unchanged HEAD
 
 **Checkpoint:** [draft PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256), `agent/product-ntm-regressions-v1` @ `e7f141a145e1475e8d1c51f25c51789a084b4541`, tree `def0f10bc2dc35376dcdff6f453ee91f390f0607` (unchanged).
