@@ -51,6 +51,7 @@ class PaymentEngineTests(unittest.TestCase):
             unittest.mock.patch(f"{__name__}.SessionLocal", cls.SessionLocal),
             unittest.mock.patch("app.services.payment_engine.SessionLocal", cls.SessionLocal),
             unittest.mock.patch("app.services.normative_store.SessionLocal", cls.SessionLocal),
+            unittest.mock.patch("app.services.rate_display.SessionLocal", cls.SessionLocal),
             unittest.mock.patch(
                 "app.services.payment_engine.get_country_risk_by_iso",
                 return_value=None,
