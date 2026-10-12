@@ -1,14 +1,14 @@
 {
-  "acquisition_note": "Isolate the reproduced test_tnved_fts configured-database writes on PR256 exact head; test-only fixture binding, exact-head CI, and persistent-state checkpoint.",
-  "expires_at": null,
-  "generation": 186,
-  "holder": null,
+  "acquisition_note": "Execute and independently verify focused TN VED FTS isolation on PR256 exact head 7462f295; close the explicit focused-execution gate without product changes.",
+  "expires_at": "2026-10-12T05:27:17.797125Z",
+  "generation": 187,
+  "holder": "/root",
   "lease_repair": {},
   "release_reason": "PR256 TN VED FTS isolation published at 7462f2959735f7aad51f53047ef6d9ddeefd04a3; static A5 PASS and exact-head offline-safety run 38203390890 succeeded; focused test execution remains explicitly pending; state board revision 731 and handoff checkpoints passed snapshot CI.",
   "released_by": "/root",
   "schema_version": 1,
   "serialization_repair": {},
-  "state": "released",
-  "token": null,
-  "updated_at": "2026-10-12T04:24:11.403Z"
+  "state": "active",
+  "token": "fe6d81f22cb14c50b25737c87491b601",
+  "updated_at": "2026-10-12T04:57:17.797125Z"
 }
