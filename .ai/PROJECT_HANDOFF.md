@@ -1,3 +1,14 @@
+## 2026-10-12 — Analytics overview database isolation published on PR #256
+
+- Exact candidate: `b91a90a859546ce61e5b9ebdd236dc3e6b7824b7`, tree `5f80a650e65e6a5056889c6476346af6a0f1a23b`; parent checkpoint `641343937d9263aa3e5dfbf4481eda938c3551ed`; local author exact-tree commit `763ed6d8067c45c39d743b93aad72c50bc30b8db`.
+- Parent reproduction: `python -m pytest -q tests/test_analytics_api.py` exited 1 because the overview request returned HTTP 401 without a test admin token and created a 1,036,288-byte ambient `customs.db`.
+- `test_analytics_api.py` now bootstraps a disposable SQLite database, binds already-loaded application DB aliases, supplies a test-only admin token, restores all aliases and environment values, and removes the temporary database and sidecars. The existing overview test method is AST-identical; two real negative HTTP cases assert missing and invalid admin tokens return 401.
+- Author exact-remote focused: **3 passed**. Analytics/API/payment-engine/compliance in both orders: **77 passed** each. Broad 16-module command: **342 passed + 10 subtests**. Safety: **124 tests OK**. All exits 0; diff-check clean; no ambient DB/WAL/SHM; pinned catalogue SHA-256 unchanged.
+- Independent A5 `/root/a5_cycle203`: **FINAL PASS without findings** on exact HEAD; parent failure/mutation reproduced, candidate focused/adjacent/broad controls passed, 44 captured database aliases, both `init_db` bindings and the pre-existing admin-token value restored, AST parity and one-file scope verified.
+- Exact-head CI [run 38301440084 / job 114985047144](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38301440084/job/114985047144): **success**.
+- Draft PR only. No product code, normative/source data, merge, deploy, production write, legal applicability/enforcement/permissions/secrets change or external A6 call. Full #245 remains NOT PASS; lawful populated synchronized NTM snapshot remains unavailable.
+- Next: on fresh PR #256 HEAD reproduce the ambient-database behavior of `test_journal_stats.py` before editing and preserve its statistics assertions.
+
 ## 2026-10-12 — API integration database isolation published on PR #256
 
 - Exact candidate: `641343937d9263aa3e5dfbf4481eda938c3551ed`, tree `b68c5edafacce38b51b34cb3d02f26021b04682e`; parent checkpoint `6aa3e9943558b2037d1dd9e551fb8a331e7fe9ea`; local author exact-tree commit `70648d7de6bbe12c17637882c1eb6ada3fd3ccf7`.
