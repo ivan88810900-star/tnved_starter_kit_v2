@@ -1,6 +1,6 @@
 {
   "acquisition_note": "Reread issue 257, fresh live heads and state revision 739, then execute a bounded end-to-end sanctions and risk-management product audit from current focus; reproduce a concrete defect before any edit.",
-  "expires_at": "2026-10-12T15:28:31.874748Z",
+  "expires_at": "2026-10-12T15:44:40.296119Z",
   "generation": 197,
   "holder": "/root",
   "lease_repair": {},
@@ -10,5 +10,5 @@
   "serialization_repair": {},
   "state": "active",
   "token": "0e8ccc3ba0a94c35807cdadeacaa73a6",
-  "updated_at": "2026-10-12T14:58:31.874748Z"
+  "updated_at": "2026-10-12T15:14:40.296119Z"
 }
