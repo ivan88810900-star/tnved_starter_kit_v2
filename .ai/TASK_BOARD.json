@@ -2179,7 +2179,7 @@
       "unique_source_pr_count": 29
     }
   },
-  "revision": 736,
+  "revision": 737,
   "runs": [
     {
       "head_sha": null,
@@ -7482,7 +7482,7 @@
       }
     }
   ],
-  "updated_at": "2026-10-12T07:13:35.061Z",
+  "updated_at": "2026-10-12T10:00:10.602Z",
   "previous_scheduled_product_checkpoint_174": {
     "updated_at": "2026-10-11T18:04:51.196Z",
     "checked_at": "2026-10-11T18:04:51.196Z",
@@ -8254,8 +8254,8 @@
     "next_step": "On fresh PR256 HEAD, reproduce and isolate the next configured-DB or source-backed fixture while keeping full-sync snapshot evidence separate."
   },
   "latest_scheduled_product_checkpoint": {
-    "updated_at": "2026-10-12T09:03:21.000Z",
-    "checked_at": "2026-10-12T09:03:21.000Z",
+    "updated_at": "2026-10-12T10:00:10.602Z",
+    "checked_at": "2026-10-12T10:00:10.602Z",
     "pr": 256,
     "branch": "agent/product-ntm-regressions-v1",
     "head_sha": "e7f141a145e1475e8d1c51f25c51789a084b4541",
@@ -8264,31 +8264,31 @@
     "prior_checkpoint_sha": "e7f141a145e1475e8d1c51f25c51789a084b4541",
     "base_pr": 245,
     "base_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
-    "block": "tnved_code_card_preliminary_decisions_execution",
-    "status": "UNCHANGED_HEAD_EXECUTABLE_A5_PASS_CI_PASS_CODE_CARD",
+    "block": "tnved_preliminary_decisions_frontend_execution",
+    "status": "UNCHANGED_HEAD_EXECUTABLE_A5_PASS_CI_PASS_PRELIMINARY_UI",
     "behavior": {
-      "reproduced": "No new defect reproduced: test_tnved_code_card.py passed 3 tests on absent and populated-sentinel inputs; the catalogue API and FCS preliminary-sync paths remained order-independent.",
-      "final": "The unchanged exact candidate preserves exact/6/4-prefix decision priority, deduplication, bounded 1..30 limits, empty-state behavior, field trimming and classification/preliminary source serialization.",
-      "boundaries": "Executable verification only on unchanged product head; no production or test code, normative data, source claim, legal interpretation, flag, skip or xfail changed."
+      "reproduced": "No product defect reproduced. PreliminaryDecisionsBlock passed loading, null, custom-empty, populated classification/preliminary, stale total_count, code formatting, 280-character truncation, hostile-source escaping and fixed-link checks.",
+      "final": "The unchanged exact candidate renders both decision kinds, explicit loading and empty states, bounded descriptions, escaped source text and exactly one fixed FTS link; ProductDetails, frontend API/TypeScript and backend Pydantic contracts agree.",
+      "boundaries": "Executable frontend verification only on unchanged product head. The disposable audit test was removed; no product/test code, normative data, source claim, legal interpretation, flag, skip or xfail changed."
     },
     "verification": {
-      "author_focused": "test_tnved_code_card.py passed 3 tests on absent inputs and 3 tests on populated SQLite sentinels; both exits 0.",
-      "adjacent_orders": "Code card, TN VED catalogue API and FCS preliminary sync passed 36 tests in forward and reverse order for both absent and populated-sentinel inputs; all exits 0.",
-      "edge_probe": "Disposable in-memory probe passed exact/6/4 prefix order, duplicate suppression, limit clamps, short/empty boundary and blank-source fallback.",
-      "control": "Configured/source databases and preview marker stayed absent or byte-identical; no WAL/SHM/default customs.db; pinned catalogue SHA-256 unchanged. Local verify passed 120, CLI snapshot passed 4, committed snapshot valid.",
+      "author_frontend": "npm test -- --run passed 108 tests; npm run typecheck and npm run build exited 0.",
+      "author_disposable_probe": "Temporary PreliminaryDecisionsBlock audit passed 3 tests, then was deleted; worktree returned clean.",
+      "control": "Exact HEAD/tree stayed e7f141a145e1475e8d1c51f25c51789a084b4541/def0f10bc2dc35376dcdff6f453ee91f390f0607. Local tariff-agent verify passed 120, CLI snapshot passed 4, committed snapshot valid, git diff --check clean.",
       "a5": {
-        "session": "/root/a5_tnved_code_card_191",
+        "session": "/root/a5_preliminary_ui_192",
         "status": "FINAL_PASS_EXACT_TREE_NO_BLOCKING_FINDINGS",
-        "scope": "independent focused absent/sentinel, four 36-test forward/reverse runs, code-card edge probes and DB/marker/hash/worktree invariance",
-        "note": "Informational low-level resolver wording ambiguity for 6/8/longer inputs; public API remains strict at 4 or 10 digits and no product regression was reproduced."
+        "scope": "independent npm ci, full 108-test frontend suite, typecheck, build, disposable two-test UI edge audit and ProductDetails/API/TypeScript/Pydantic contract review",
+        "note": "Low-severity nonblocking observation: ProductDetails tab badge trusts total_count, so a future inconsistent producer with rows and total_count=0 could omit the badge; the current backend derives total_count from the arrays."
       },
       "ci": {
         "status": "PASSED_EXACT_HEAD_OFFLINE_SAFETY_ONLY",
         "run_id": 38216078694,
         "job_id": 114701012450,
+        "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38216078694/job/114701012450",
         "head_sha": "e7f141a145e1475e8d1c51f25c51789a084b4541",
         "conclusion": "success",
-        "limitation": "Workflow is offline-safety only; code-card/API execution is separately proven by A0 and independent executable A5."
+        "limitation": "Workflow is offline-safety only; frontend execution is separately proven by A0 and independent executable A5."
       }
     },
     "blockers": [
@@ -8300,11 +8300,11 @@
       "status": "UNCHANGED_NOT_SENT"
     },
     "protected_actions_performed": false,
-    "next_step": "On fresh PR256 HEAD, audit the frontend PreliminaryDecisionsBlock/API contract, empty-state and source rendering with executable tests; reproduce a concrete defect before any edit."
+    "next_step": "On fresh PR256 HEAD, execute a ProductDetails decisions-tab integration audit with embedded preliminary decisions, tab badge, navigation, loading and empty/error states; reproduce a concrete defect before any edit."
   },
   "latest_development_checkpoint": {
-    "updated_at": "2026-10-12T09:03:21.000Z",
-    "checked_at": "2026-10-12T09:03:21.000Z",
+    "updated_at": "2026-10-12T10:00:10.602Z",
+    "checked_at": "2026-10-12T10:00:10.602Z",
     "pr": 256,
     "branch": "agent/product-ntm-regressions-v1",
     "head_sha": "e7f141a145e1475e8d1c51f25c51789a084b4541",
@@ -8313,31 +8313,31 @@
     "prior_checkpoint_sha": "e7f141a145e1475e8d1c51f25c51789a084b4541",
     "base_pr": 245,
     "base_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
-    "block": "tnved_code_card_preliminary_decisions_execution",
-    "status": "UNCHANGED_HEAD_EXECUTABLE_A5_PASS_CI_PASS_CODE_CARD",
+    "block": "tnved_preliminary_decisions_frontend_execution",
+    "status": "UNCHANGED_HEAD_EXECUTABLE_A5_PASS_CI_PASS_PRELIMINARY_UI",
     "behavior": {
-      "reproduced": "No new defect reproduced: test_tnved_code_card.py passed 3 tests on absent and populated-sentinel inputs; the catalogue API and FCS preliminary-sync paths remained order-independent.",
-      "final": "The unchanged exact candidate preserves exact/6/4-prefix decision priority, deduplication, bounded 1..30 limits, empty-state behavior, field trimming and classification/preliminary source serialization.",
-      "boundaries": "Executable verification only on unchanged product head; no production or test code, normative data, source claim, legal interpretation, flag, skip or xfail changed."
+      "reproduced": "No product defect reproduced. PreliminaryDecisionsBlock passed loading, null, custom-empty, populated classification/preliminary, stale total_count, code formatting, 280-character truncation, hostile-source escaping and fixed-link checks.",
+      "final": "The unchanged exact candidate renders both decision kinds, explicit loading and empty states, bounded descriptions, escaped source text and exactly one fixed FTS link; ProductDetails, frontend API/TypeScript and backend Pydantic contracts agree.",
+      "boundaries": "Executable frontend verification only on unchanged product head. The disposable audit test was removed; no product/test code, normative data, source claim, legal interpretation, flag, skip or xfail changed."
     },
     "verification": {
-      "author_focused": "test_tnved_code_card.py passed 3 tests on absent inputs and 3 tests on populated SQLite sentinels; both exits 0.",
-      "adjacent_orders": "Code card, TN VED catalogue API and FCS preliminary sync passed 36 tests in forward and reverse order for both absent and populated-sentinel inputs; all exits 0.",
-      "edge_probe": "Disposable in-memory probe passed exact/6/4 prefix order, duplicate suppression, limit clamps, short/empty boundary and blank-source fallback.",
-      "control": "Configured/source databases and preview marker stayed absent or byte-identical; no WAL/SHM/default customs.db; pinned catalogue SHA-256 unchanged. Local verify passed 120, CLI snapshot passed 4, committed snapshot valid.",
+      "author_frontend": "npm test -- --run passed 108 tests; npm run typecheck and npm run build exited 0.",
+      "author_disposable_probe": "Temporary PreliminaryDecisionsBlock audit passed 3 tests, then was deleted; worktree returned clean.",
+      "control": "Exact HEAD/tree stayed e7f141a145e1475e8d1c51f25c51789a084b4541/def0f10bc2dc35376dcdff6f453ee91f390f0607. Local tariff-agent verify passed 120, CLI snapshot passed 4, committed snapshot valid, git diff --check clean.",
       "a5": {
-        "session": "/root/a5_tnved_code_card_191",
+        "session": "/root/a5_preliminary_ui_192",
         "status": "FINAL_PASS_EXACT_TREE_NO_BLOCKING_FINDINGS",
-        "scope": "independent focused absent/sentinel, four 36-test forward/reverse runs, code-card edge probes and DB/marker/hash/worktree invariance",
-        "note": "Informational low-level resolver wording ambiguity for 6/8/longer inputs; public API remains strict at 4 or 10 digits and no product regression was reproduced."
+        "scope": "independent npm ci, full 108-test frontend suite, typecheck, build, disposable two-test UI edge audit and ProductDetails/API/TypeScript/Pydantic contract review",
+        "note": "Low-severity nonblocking observation: ProductDetails tab badge trusts total_count, so a future inconsistent producer with rows and total_count=0 could omit the badge; the current backend derives total_count from the arrays."
       },
       "ci": {
         "status": "PASSED_EXACT_HEAD_OFFLINE_SAFETY_ONLY",
         "run_id": 38216078694,
         "job_id": 114701012450,
+        "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38216078694/job/114701012450",
         "head_sha": "e7f141a145e1475e8d1c51f25c51789a084b4541",
         "conclusion": "success",
-        "limitation": "Workflow is offline-safety only; code-card/API execution is separately proven by A0 and independent executable A5."
+        "limitation": "Workflow is offline-safety only; frontend execution is separately proven by A0 and independent executable A5."
       }
     },
     "blockers": [
@@ -8349,7 +8349,7 @@
       "status": "UNCHANGED_NOT_SENT"
     },
     "protected_actions_performed": false,
-    "next_step": "On fresh PR256 HEAD, audit the frontend PreliminaryDecisionsBlock/API contract, empty-state and source rendering with executable tests; reproduce a concrete defect before any edit."
+    "next_step": "On fresh PR256 HEAD, execute a ProductDetails decisions-tab integration audit with embedded preliminary decisions, tab badge, navigation, loading and empty/error states; reproduce a concrete defect before any edit."
   },
   "previous_scheduled_product_checkpoint_188": {
     "updated_at": "2026-10-12T06:11:25.000Z",
@@ -8634,5 +8634,103 @@
     },
     "protected_actions_performed": false,
     "next_step": "On fresh PR256 HEAD, execute test_tnved_code_card.py with classification inventory and configured/source/marker absent plus sentinel controls and adjacent API ordering; reproduce a concrete defect before any edit."
+  },
+  "previous_scheduled_product_checkpoint_191": {
+    "updated_at": "2026-10-12T09:03:21.000Z",
+    "checked_at": "2026-10-12T09:03:21.000Z",
+    "pr": 256,
+    "branch": "agent/product-ntm-regressions-v1",
+    "head_sha": "e7f141a145e1475e8d1c51f25c51789a084b4541",
+    "tree_sha": "def0f10bc2dc35376dcdff6f453ee91f390f0607",
+    "parent_sha": "7462f2959735f7aad51f53047ef6d9ddeefd04a3",
+    "prior_checkpoint_sha": "e7f141a145e1475e8d1c51f25c51789a084b4541",
+    "base_pr": 245,
+    "base_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
+    "block": "tnved_code_card_preliminary_decisions_execution",
+    "status": "UNCHANGED_HEAD_EXECUTABLE_A5_PASS_CI_PASS_CODE_CARD",
+    "behavior": {
+      "reproduced": "No new defect reproduced: test_tnved_code_card.py passed 3 tests on absent and populated-sentinel inputs; the catalogue API and FCS preliminary-sync paths remained order-independent.",
+      "final": "The unchanged exact candidate preserves exact/6/4-prefix decision priority, deduplication, bounded 1..30 limits, empty-state behavior, field trimming and classification/preliminary source serialization.",
+      "boundaries": "Executable verification only on unchanged product head; no production or test code, normative data, source claim, legal interpretation, flag, skip or xfail changed."
+    },
+    "verification": {
+      "author_focused": "test_tnved_code_card.py passed 3 tests on absent inputs and 3 tests on populated SQLite sentinels; both exits 0.",
+      "adjacent_orders": "Code card, TN VED catalogue API and FCS preliminary sync passed 36 tests in forward and reverse order for both absent and populated-sentinel inputs; all exits 0.",
+      "edge_probe": "Disposable in-memory probe passed exact/6/4 prefix order, duplicate suppression, limit clamps, short/empty boundary and blank-source fallback.",
+      "control": "Configured/source databases and preview marker stayed absent or byte-identical; no WAL/SHM/default customs.db; pinned catalogue SHA-256 unchanged. Local verify passed 120, CLI snapshot passed 4, committed snapshot valid.",
+      "a5": {
+        "session": "/root/a5_tnved_code_card_191",
+        "status": "FINAL_PASS_EXACT_TREE_NO_BLOCKING_FINDINGS",
+        "scope": "independent focused absent/sentinel, four 36-test forward/reverse runs, code-card edge probes and DB/marker/hash/worktree invariance",
+        "note": "Informational low-level resolver wording ambiguity for 6/8/longer inputs; public API remains strict at 4 or 10 digits and no product regression was reproduced."
+      },
+      "ci": {
+        "status": "PASSED_EXACT_HEAD_OFFLINE_SAFETY_ONLY",
+        "run_id": 38216078694,
+        "job_id": 114701012450,
+        "head_sha": "e7f141a145e1475e8d1c51f25c51789a084b4541",
+        "conclusion": "success",
+        "limitation": "Workflow is offline-safety only; code-card/API execution is separately proven by A0 and independent executable A5."
+      }
+    },
+    "blockers": [
+      "NTM full-sync audit still requires a lawful populated synchronized snapshot.",
+      "Full #245 product acceptance and legal/rate/source completeness remain NOT PASS."
+    ],
+    "a6": {
+      "request": "core-s1-6415f443120f-r9-g106",
+      "status": "UNCHANGED_NOT_SENT"
+    },
+    "protected_actions_performed": false,
+    "next_step": "On fresh PR256 HEAD, audit the frontend PreliminaryDecisionsBlock/API contract, empty-state and source rendering with executable tests; reproduce a concrete defect before any edit."
+  },
+  "previous_development_checkpoint_191": {
+    "updated_at": "2026-10-12T09:03:21.000Z",
+    "checked_at": "2026-10-12T09:03:21.000Z",
+    "pr": 256,
+    "branch": "agent/product-ntm-regressions-v1",
+    "head_sha": "e7f141a145e1475e8d1c51f25c51789a084b4541",
+    "tree_sha": "def0f10bc2dc35376dcdff6f453ee91f390f0607",
+    "parent_sha": "7462f2959735f7aad51f53047ef6d9ddeefd04a3",
+    "prior_checkpoint_sha": "e7f141a145e1475e8d1c51f25c51789a084b4541",
+    "base_pr": 245,
+    "base_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
+    "block": "tnved_code_card_preliminary_decisions_execution",
+    "status": "UNCHANGED_HEAD_EXECUTABLE_A5_PASS_CI_PASS_CODE_CARD",
+    "behavior": {
+      "reproduced": "No new defect reproduced: test_tnved_code_card.py passed 3 tests on absent and populated-sentinel inputs; the catalogue API and FCS preliminary-sync paths remained order-independent.",
+      "final": "The unchanged exact candidate preserves exact/6/4-prefix decision priority, deduplication, bounded 1..30 limits, empty-state behavior, field trimming and classification/preliminary source serialization.",
+      "boundaries": "Executable verification only on unchanged product head; no production or test code, normative data, source claim, legal interpretation, flag, skip or xfail changed."
+    },
+    "verification": {
+      "author_focused": "test_tnved_code_card.py passed 3 tests on absent inputs and 3 tests on populated SQLite sentinels; both exits 0.",
+      "adjacent_orders": "Code card, TN VED catalogue API and FCS preliminary sync passed 36 tests in forward and reverse order for both absent and populated-sentinel inputs; all exits 0.",
+      "edge_probe": "Disposable in-memory probe passed exact/6/4 prefix order, duplicate suppression, limit clamps, short/empty boundary and blank-source fallback.",
+      "control": "Configured/source databases and preview marker stayed absent or byte-identical; no WAL/SHM/default customs.db; pinned catalogue SHA-256 unchanged. Local verify passed 120, CLI snapshot passed 4, committed snapshot valid.",
+      "a5": {
+        "session": "/root/a5_tnved_code_card_191",
+        "status": "FINAL_PASS_EXACT_TREE_NO_BLOCKING_FINDINGS",
+        "scope": "independent focused absent/sentinel, four 36-test forward/reverse runs, code-card edge probes and DB/marker/hash/worktree invariance",
+        "note": "Informational low-level resolver wording ambiguity for 6/8/longer inputs; public API remains strict at 4 or 10 digits and no product regression was reproduced."
+      },
+      "ci": {
+        "status": "PASSED_EXACT_HEAD_OFFLINE_SAFETY_ONLY",
+        "run_id": 38216078694,
+        "job_id": 114701012450,
+        "head_sha": "e7f141a145e1475e8d1c51f25c51789a084b4541",
+        "conclusion": "success",
+        "limitation": "Workflow is offline-safety only; code-card/API execution is separately proven by A0 and independent executable A5."
+      }
+    },
+    "blockers": [
+      "NTM full-sync audit still requires a lawful populated synchronized snapshot.",
+      "Full #245 product acceptance and legal/rate/source completeness remain NOT PASS."
+    ],
+    "a6": {
+      "request": "core-s1-6415f443120f-r9-g106",
+      "status": "UNCHANGED_NOT_SENT"
+    },
+    "protected_actions_performed": false,
+    "next_step": "On fresh PR256 HEAD, audit the frontend PreliminaryDecisionsBlock/API contract, empty-state and source rendering with executable tests; reproduce a concrete defect before any edit."
   }
 }

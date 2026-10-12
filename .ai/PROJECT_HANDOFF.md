@@ -1,3 +1,14 @@
+## 2026-10-12 — #245 preliminary-decisions frontend audited on unchanged HEAD
+
+- Exact candidate: PR #256 `e7f141a145e1475e8d1c51f25c51789a084b4541`, tree `def0f10bc2dc35376dcdff6f453ee91f390f0607` (unchanged).
+- A0 executable frontend: `npm test -- --run` passed 108 tests; `npm run typecheck` and `npm run build` exited 0. A disposable UI audit passed 3 tests and was removed.
+- Verified loading/null/custom-empty and populated classification/preliminary rendering, stale `total_count`, code formatting, 280-character truncation, hostile source escaping, and exactly one fixed FTS link.
+- Independent A5 `/root/a5_preliminary_ui_192`: FINAL PASS; full 108-test suite, typecheck/build, and disposable 2-test edge audit all passed.
+- Nonblocking observation: the ProductDetails tab badge trusts `total_count`; current backend derives it from arrays, so no present defect was reproduced.
+- Safety: tariff-agent verify 120 passed; CLI snapshot 4 passed; committed snapshot valid; exact-head CI [run 38216078694 / job 114701012450](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38216078694/job/114701012450) succeeded.
+- No product/test code, normative data, sources, flags, merges, deploys or external A6 calls changed. Full #245 and lawful populated NTM snapshot remain blocked/not accepted.
+- Next: audit ProductDetails decisions-tab integration (embedded block, badge, navigation, loading and empty/error states) before any edit.
+
 # Tariff / A0 — единая точка передачи проекта
 
 ## 0aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa. #245 — TN VED code-card executable audit on unchanged HEAD
