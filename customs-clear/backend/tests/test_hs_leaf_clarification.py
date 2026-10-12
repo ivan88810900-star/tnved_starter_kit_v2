@@ -22,12 +22,18 @@ def hs_leaf_catalog(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Install the small legacy rate sample in the disposable catalogue only."""
-    from app.services import calculation_history_service, exchange_rates, payment_engine
+    from app.services import (
+        calculation_history_service,
+        exchange_rates,
+        payment_engine,
+        rate_display,
+    )
 
     factory = classification_inventory_session_local
     monkeypatch.setattr(exchange_rates, "SessionLocal", factory)
     monkeypatch.setattr(payment_engine, "SessionLocal", factory)
     monkeypatch.setattr(calculation_history_service, "SessionLocal", factory)
+    monkeypatch.setattr(rate_display, "SessionLocal", factory)
 
     sample = {
         "8703231100": "15",
