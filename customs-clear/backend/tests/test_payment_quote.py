@@ -104,6 +104,33 @@ class PaymentQuoteServiceTests(unittest.TestCase):
         self.assertTrue(any(a.key == "country" for a in quote.assumptions))
         self.assertIsInstance(quote.sources, list)
 
+    def test_ambiguous_live_animal_quote_requires_characteristic(self):
+        quote = self._quote(hs_code="0102291000", customs_value=100_000)
+        vat = self._line(quote, "vat")
+
+        self.assertEqual(quote.status, "REVIEW_REQUIRED")
+        self.assertEqual(vat.status, "manual_review_required")
+        self.assertIsNone(vat.amount_rub)
+        self.assertTrue(
+            any(w.code == "vat_live_animal_characteristic_review" for w in quote.warnings)
+        )
+
+    def test_confirmed_non_breeding_live_animal_quote_uses_vat10(self):
+        quote = self._quote(
+            hs_code="0102291000",
+            customs_value=100_000,
+            live_animal_breeding_status="non_breeding",
+        )
+        vat = self._line(quote, "vat")
+
+        self.assertEqual(vat.rate_label, "10.0%")
+        self.assertTrue(
+            any(
+                a.key == "live_animal_breeding_status" and "неплеменное" in a.value
+                for a in quote.assumptions
+            )
+        )
+
 
 @unittest.skipUnless(_API_OK, "payment quote API tests need FastAPI app")
 class PaymentQuoteApiTests(unittest.TestCase):
@@ -147,3 +174,14 @@ class PaymentQuoteApiTests(unittest.TestCase):
         self.assertEqual(ad["status"], "manual_review_required")
         self.assertIsNone(ad["amount_rub"])
         self.assertIsNone(body["total_payable_rub"])
+
+    def test_api_rejects_untyped_live_animal_characteristic(self):
+        r = self.client.post(
+            "/api/payments/quote",
+            json={
+                "hs_code": "0102291000",
+                "customs_value": 100_000,
+                "live_animal_breeding_status": "probably-not-breeding",
+            },
+        )
+        self.assertEqual(r.status_code, 422)

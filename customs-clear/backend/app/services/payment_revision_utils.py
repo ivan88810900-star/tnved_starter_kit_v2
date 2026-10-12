@@ -3,8 +3,37 @@
 from __future__ import annotations
 
 import re
+from datetime import date
 from typing import Any
 from urllib.parse import urlparse
+
+# Shared payment-source freshness budget.  Runtime admission and the refresh
+# report must use the same threshold so a contour cannot be diagnostic-stale
+# while its rows still contribute to automatic payment totals.
+PAYMENT_SOURCE_STALE_THRESHOLD_DAYS = 90
+
+
+def payment_revision_date(revision: str | None) -> date | None:
+    """Extract the trailing ISO date from a typed payment revision."""
+    raw = (revision or "").strip()
+    try:
+        return date.fromisoformat(raw.rsplit(":", 1)[-1])
+    except ValueError:
+        return None
+
+
+def is_payment_revision_fresh(
+    revision: str | None,
+    *,
+    on_date: date | None = None,
+) -> bool:
+    """Return whether a typed revision is current enough for auto-admission."""
+    revision_date = payment_revision_date(revision)
+    if revision_date is None:
+        return False
+    reference_date = on_date or date.today()
+    age_days = (reference_date - revision_date).days
+    return 0 <= age_days <= PAYMENT_SOURCE_STALE_THRESHOLD_DAYS
 
 # Для официального EEC/ETT import-duty контура принимаем только явные versioned ревизии.
 # Допустимые формы: ett:YYYY-MM-DD | eec-ett:YYYY-MM-DD | eec:ett:YYYY-MM-DD
@@ -46,7 +75,15 @@ def is_official_eec_ett_revision(revision: str | None) -> bool:
     rev = (revision or "").strip().lower()
     if not rev:
         return False
-    return bool(_EEC_ETT_REVISION_RE.match(rev))
+    if not _EEC_ETT_REVISION_RE.match(rev):
+        return False
+    try:
+        revision_date = date.fromisoformat(rev.rsplit(":", 1)[-1])
+    except ValueError:
+        return False
+    # A future label cannot prove that retained bytes are the effective official
+    # tariff.  Future-dated sources remain manual review until that date.
+    return revision_date <= date.today()
 
 
 def is_official_vat_ingestion_revision(revision: str | None) -> bool:

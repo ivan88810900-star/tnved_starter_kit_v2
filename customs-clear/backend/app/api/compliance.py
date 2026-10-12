@@ -24,6 +24,7 @@ class PermitIn(BaseModel):
 class ComplianceItemIn(BaseModel):
     hs_code: str
     description: str
+    manufacturer: str | None = None
     country: str | None = None
     permits: List[PermitIn] = []
     customs_value: float

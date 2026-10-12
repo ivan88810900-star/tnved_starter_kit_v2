@@ -15,6 +15,7 @@ from loguru import logger
 
 from ..db import SessionLocal
 from ..models.core import ExchangeRate, SourceStatus
+from .payment_revision_utils import PAYMENT_SOURCE_STALE_THRESHOLD_DAYS
 
 _BACKEND_ROOT = Path(__file__).resolve().parent.parent.parent
 
@@ -27,7 +28,7 @@ _BUNDLE_DOMAINS: dict[str, str] = {
     "EEC_COUNTERVAILING": "data/raw_normative/eec_countervailing.json",
 }
 
-STALE_THRESHOLD_DAYS = 90
+STALE_THRESHOLD_DAYS = PAYMENT_SOURCE_STALE_THRESHOLD_DAYS
 CURRENCY_STALE_HOURS = 48
 
 

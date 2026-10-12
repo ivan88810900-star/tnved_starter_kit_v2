@@ -62,6 +62,7 @@ class CopilotRequest(BaseModel):
     model_config = ConfigDict(extra="ignore")
 
     description: str = ""
+    manufacturer: str | None = None
     hs_code: str = ""
     country: str | None = None
     customs_value: float | None = None
@@ -81,6 +82,7 @@ class CopilotLineIn(BaseModel):
     """Одна позиция в мульти-декларации."""
 
     description: str = ""
+    manufacturer: str | None = None
     hs_code: str = ""
     country: str | None = None
     customs_value: float | None = None
@@ -311,6 +313,7 @@ async def assistant_copilot(req: CopilotRequest, request: Request) -> JSONRespon
         )
     bundle = await run_copilot_pipeline(
         description=(req.description or "").strip(),
+        manufacturer=(req.manufacturer or "").strip() or None,
         hs_code=(req.hs_code or "").strip(),
         country=req.country,
         customs_value=req.customs_value,

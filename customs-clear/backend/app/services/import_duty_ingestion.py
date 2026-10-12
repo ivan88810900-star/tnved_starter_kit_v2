@@ -30,6 +30,7 @@ from .payment_revision_utils import is_wrong_domain_countervailing_revision_in_d
 from .payment_revision_utils import is_wrong_domain_special_safeguard_revision_in_duty_bundle
 from .payment_revision_utils import raw_rate_rows
 from .payment_source_registry import get_payment_source_entry
+from .payment_source_snapshot import verify_payment_source_snapshot
 
 _BACKEND_ROOT = Path(__file__).resolve().parent.parent.parent
 _EEC_SOURCE_CODE = "EEC_ETT"
@@ -391,6 +392,19 @@ def _blocked_response(
 def _validate_bundle_for_ingest(
     rel_path: str,
 ) -> tuple[dict[str, Any] | None, dict[str, Any], str, list[dict[str, Any]], list[str]]:
+    bundle_path = _BACKEND_ROOT / rel_path
+    try:
+        root_resolved = _BACKEND_ROOT.resolve(strict=True)
+        bundle_resolved = bundle_path.resolve(strict=True)
+        bundle_resolved.relative_to(root_resolved)
+    except (OSError, ValueError):
+        return None, {"status": "manual_review_required", "reason": "bundle_path_outside_backend_root"}, "", [], [
+            "manual_review_required: bundle_path_outside_backend_root"
+        ]
+    if Path(rel_path).is_absolute() or bundle_path.is_symlink():
+        return None, {"status": "manual_review_required", "reason": "bundle_symlink_or_absolute_path"}, "", [], [
+            "manual_review_required: bundle_symlink_or_absolute_path"
+        ]
     if is_vat_only_bundle_path(rel_path):
         return None, {"status": "manual_review_required", "reason": "vat_only_bundle"}, "", [], [
             "manual_review_required: vat_only_bundle_not_import_duty"
@@ -436,6 +450,17 @@ def _validate_bundle_for_ingest(
     rows_in, container_err = _raw_rates_list(payload)
     if container_err is not None:
         return payload, parser_result, "", [], [f"parser_failed: {container_err}"]
+
+    snapshot_result = verify_payment_source_snapshot(
+        bundle_path=_BACKEND_ROOT / rel_path,
+        payload=payload,
+        domain="import_duty",
+        normalized_record_count=len(rows_in),
+    )
+    parser_result["snapshot_provenance"] = snapshot_result
+    if snapshot_result.get("status") != "verified":
+        reason = snapshot_result.get("reason") or "unverified"
+        return payload, parser_result, "", [], [f"manual_review_required: source_snapshot_{reason}"]
 
     revision, rows, row_blockers = _extract_duty_rows(payload, rows_in)
     blockers: list[str] = []

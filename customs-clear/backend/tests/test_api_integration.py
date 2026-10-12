@@ -26,6 +26,13 @@ class ApiIntegrationTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         init_db()
+        from scripts.seed_recycling_fees import seed as seed_recycling_fees
+        from scripts.seed_tariff_preferences import seed as seed_tariff_preferences
+        from tests.support_legacy_payment_fixture import ensure_legacy_payment_fixture
+
+        ensure_legacy_payment_fixture()
+        seed_recycling_fees()
+        seed_tariff_preferences()
         cls.client = TestClient(app)
         from tests.support_auth import login_declarant
 
@@ -98,11 +105,13 @@ class ApiIntegrationTests(unittest.TestCase):
         })
         self.assertEqual(r.status_code, 200)
         body = r.json()
-        self.assertEqual(body["status"], "OK")
+        self.assertEqual(body["status"], "REVIEW_REQUIRED")
         self.assertIn("breakdown", body)
         self.assertIn("data_quality", body)
         self.assertTrue("sources" in body or "documents" in body)
-        self.assertGreater(body["breakdown"]["total_payable"], 0)
+        self.assertIsNone(body["breakdown"]["total_payable"])
+        self.assertGreater(body["breakdown"]["total_payable_provisional"], 0)
+        self.assertIn("hs_rate_source_binding_unverified", body["payment_review_reasons"])
 
     def test_calculator_returns_rich_contract(self):
         """Эндпоинт /compute отдаёт развёрнутый профиль (поля, которые потребляет UI)."""
@@ -165,7 +174,8 @@ class ApiIntegrationTests(unittest.TestCase):
         self.assertEqual(r.status_code, 200)
         body = r.json()
         bd = body.get("breakdown") or {}
-        self.assertGreater(bd.get("total_payable", 0), 0)
+        self.assertIsNone(bd.get("total_payable"))
+        self.assertGreater(bd.get("total_payable_provisional", 0), 0)
         if "vat_rate" in bd:
             self.assertEqual(bd["vat_rate"], 10.0)
         if "vat_reason" in bd:
@@ -194,8 +204,11 @@ class ApiIntegrationTests(unittest.TestCase):
         )
         self.assertEqual(r.status_code, 200)
         body = r.json()
-        self.assertEqual(body["status"], "OK")
+        self.assertEqual(body["status"], "REVIEW_REQUIRED")
         self.assertEqual(len(body["scenarios"]), 2)
+        self.assertTrue(
+            all(item["profile"]["status"] == "REVIEW_REQUIRED" for item in body["scenarios"])
+        )
 
     def test_calculator_invalid_value(self):
         r = self.client.post("/api/calculator/compute", json={

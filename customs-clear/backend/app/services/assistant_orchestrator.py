@@ -45,6 +45,7 @@ def pick_hs_from_classification(parsed: Dict[str, Any]) -> str:
 async def run_copilot_pipeline(
     *,
     description: str,
+    manufacturer: Optional[str] = None,
     hs_code: str = "",
     country: Optional[str] = None,
     customs_value: Optional[float] = None,
@@ -116,6 +117,9 @@ async def run_copilot_pipeline(
             "hs_code": effective_hs,
             "customs_value": float(customs_value),
             "freight": float(freight),
+            "country": country,
+            "manufacturer": (manufacturer or "").strip() or None,
+            "product_description": (description or "").strip() or None,
         }
         if insurance is not None:
             pay_in["insurance"] = insurance
@@ -235,6 +239,7 @@ async def run_copilot_batch(
         async with sem:
             b = await run_copilot_pipeline(
                 description=str(it.get("description") or ""),
+                manufacturer=str(it.get("manufacturer") or "").strip() or None,
                 hs_code=str(it.get("hs_code") or ""),
                 country=it.get("country"),
                 customs_value=it.get("customs_value"),

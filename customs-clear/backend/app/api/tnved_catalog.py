@@ -22,6 +22,7 @@ from ..db import SessionLocal
 from ..models.tnved import Chapter, Commodity, IntellectualProperty, NonTariffMeasure, Section, SpecialDuty, VatPreference
 from ..schemas.tnved_catalog import TnvedCommodityDetailsResponse
 from ..services.non_tariff_measures_lookup import get_measures_for_code
+from ..services.compliance_resolver import is_vat_preference_applicable
 from ..services.normative_store import find_rate_for_hs
 from ..services.tnved_code_card import find_preliminary_decisions_for_hs
 from ..services.preview_cache_revision import (
@@ -482,7 +483,11 @@ def _get_vat_preferences_rows(db: Session, code: str) -> list[VatPreference]:
         if len(d) >= ln:
             prefixes.append(d[:ln])
     prefixes = list(dict.fromkeys(prefixes))
-    rows = db.query(VatPreference).filter(VatPreference.hs_code_prefix.in_(prefixes)).all()
+    rows = [
+        row
+        for row in db.query(VatPreference).filter(VatPreference.hs_code_prefix.in_(prefixes)).all()
+        if is_vat_preference_applicable(row, d)
+    ]
     by_prefix = {p: i for i, p in enumerate(prefixes)}
     rows.sort(key=lambda r: by_prefix.get(r.hs_code_prefix, 99))
     return rows

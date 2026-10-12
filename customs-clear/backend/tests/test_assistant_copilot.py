@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import importlib.util
 import unittest
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, Mock, patch
 
 from app.services.normative_store import init_db
 from app.services.assistant_orchestrator import run_copilot_pipeline, pick_hs_from_classification, bundle_for_llm
@@ -94,6 +94,27 @@ class CopilotPipelineTests(unittest.IsolatedAsyncioTestCase):
         self.assertIn("non_tariff", b)
         slim = bundle_for_llm(b)
         self.assertIn("payment_summary", slim)
+
+    async def test_payment_receives_special_duty_scope_inputs(self):
+        payment = {"breakdown": {"total_payable": None}}
+        with patch(
+            "app.services.assistant_orchestrator.compute_payments",
+            new=Mock(return_value=payment),
+        ) as mocked:
+            await run_copilot_pipeline(
+                description="Прокат горячекатаный",
+                manufacturer="Alpha Steel Co",
+                hs_code="7208100000",
+                country="CN",
+                customs_value=50_000,
+                permits=[],
+                run_payment=True,
+            )
+
+        payload = mocked.call_args.args[0]
+        self.assertEqual(payload["country"], "CN")
+        self.assertEqual(payload["manufacturer"], "Alpha Steel Co")
+        self.assertEqual(payload["product_description"], "Прокат горячекатаный")
 
 
 if __name__ == "__main__":

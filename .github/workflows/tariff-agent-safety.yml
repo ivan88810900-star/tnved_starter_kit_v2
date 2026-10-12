@@ -27,3 +27,51 @@ jobs:
           python3 -m unittest -v tests.agent_orchestration.test_cli_snapshot
       - name: Committed persistent state schema
         run: python3 -m tools.tariff_agents validate-snapshot
+  payment-regression:
+    if: ${{ startsWith(github.ref, 'refs/heads/agent/core-') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: customs-clear/backend
+    env:
+      DATABASE_URL: sqlite:////tmp/customs-clear-payment-ci.db
+      SECRET_KEY: ci-payment-regression-only
+      SCHEDULER_ENABLED: '0'
+      PYTHONDONTWRITEBYTECODE: '1'
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: customs-clear/backend/requirements.txt
+      - name: Install backend dependencies
+        run: python -m pip install --disable-pip-version-check -r requirements.txt
+      - name: Bootstrap committed payment fixture
+        run: |
+          python - <<'PY'
+          from app.services.normative_store import init_db
+          from tests.support_legacy_payment_fixture import ensure_committed_vat_fixture
+
+          init_db()
+          ensure_committed_vat_fixture()
+          PY
+      - name: Run payment regression slice
+        run: >-
+          python -m pytest -q
+          tests/test_pp908_vat_coverage.py
+          tests/test_import_duty_ingestion.py
+          tests/test_official_bundle_builder_safety.py
+          tests/test_payment_engine.py
+          tests/test_special_duties.py
+          tests/test_api_integration.py
+          tests/test_hs_leaf_clarification.py
+          tests/test_recycling_fees.py
+          tests/test_tariff_preferences.py
+          tests/test_duty_rules_backfill.py
+          tests/test_normative_bundle.py
+          tests/test_rop_calculator.py
+          tests/test_vat_preferences_audit161.py

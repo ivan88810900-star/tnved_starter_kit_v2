@@ -41,6 +41,7 @@ export type PaymentQuoteRequest = {
   quantity?: number | null;
   net_weight_kg?: number | null;
   apply_reduced_vat?: boolean;
+  live_animal_breeding_status?: 'breeding' | 'non_breeding' | 'unknown' | null;
   description?: string | null;
 };
 
