@@ -2179,7 +2179,7 @@
       "unique_source_pr_count": 29
     }
   },
-  "revision": 727,
+  "revision": 728,
   "runs": [
     {
       "head_sha": null,
@@ -8184,40 +8184,40 @@
     "next_step": "On fresh PR256 HEAD, reproduce and isolate the next configured-DB or source-backed fixture while keeping full-sync snapshot evidence separate."
   },
   "latest_scheduled_product_checkpoint": {
-    "updated_at": "2026-10-12T01:04:00.000Z",
-    "checked_at": "2026-10-12T01:04:00.000Z",
+    "updated_at": "2026-10-12T02:00:19.307Z",
+    "checked_at": "2026-10-12T02:00:19.307Z",
     "pr": 256,
     "branch": "agent/product-ntm-regressions-v1",
-    "head_sha": "075df086af14458d0c856ef817e3456160b2e514",
-    "tree_sha": "e9d1a7ccb0bd3b9629954f73038342ae64c07e41",
-    "parent_sha": "7d96291c6bd43e77d0a80b7513c375004b2dc847",
-    "prior_checkpoint_sha": "7d96291c6bd43e77d0a80b7513c375004b2dc847",
+    "head_sha": "dcb32489bf5f4526a6ee6b761e171d3114909f2d",
+    "tree_sha": "157ee2556971c8db25ce98669c1f7fb059430257",
+    "parent_sha": "075df086af14458d0c856ef817e3456160b2e514",
+    "prior_checkpoint_sha": "075df086af14458d0c856ef817e3456160b2e514",
     "base_pr": 245,
     "base_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
-    "block": "ntm_v2_layers_configured_db_isolation",
-    "status": "DRAFT_CHECKPOINT_A5_PASS_CI_PASS_NTM_V2_LAYERS_DB_ISOLATION",
+    "block": "regulatory_mass_seed_safety_configured_db_isolation",
+    "status": "DRAFT_CHECKPOINT_A5_PASS_CI_PASS_REGULATORY_MASS_SEED_SAFETY_DB_ISOLATION",
     "behavior": {
-      "reproduced": "The 72-case layers matrix failed on missing persistent tables and created a 4096-byte configured SQLite; a sentinel SHA changed",
-      "final": "Unrelated persistent sources are fixture-isolated while real v2 layer/TR-TS imports, engine, canonical catalogs and description triggers remain under test",
-      "boundaries": "One test file with 30 fixture-only insertions; 15 test functions and 26 assertions AST-identical; no product code, normative data, source claims, flags, skips/xfails or legal interpretation changed"
+      "reproduced": "Both synthetic mass-seed safety tests failed on absent regulatory tables, created a 4096-byte configured SQLite, and changed a sentinel SHA",
+      "final": "A disposable two-table regulatory database isolates writes while real seed, broker query, and source-completeness count callables remain under test",
+      "boundaries": "One test file with 24 fixture-only insertions and one import replacement; 2 test functions and 15 assertions AST-identical; no product code, normative data, source claims, flags, skips/xfails or legal interpretation changed"
     },
     "author_tests": {
-      "baseline": "parent full module 72 failed and 18 passed, exit 1, absent configured DB became 4096 bytes; sentinel SHA changed",
-      "focused": "candidate full module passed 90 for absent and sentinel variants; absent DB stayed absent and sentinel SHA/marker/table count stayed unchanged",
-      "adjacent": "five modules passed 262 with 1 skipped in forward and reverse orders; external DB stayed absent",
+      "baseline": "parent focused module failed 2 tests, exit 1, absent configured DB became 4096 bytes and a valid sentinel SHA changed",
+      "focused": "candidate focused module passed 2 for absent and sentinel variants; absent configured/source DB stayed absent and both sentinels stayed byte-identical",
+      "adjacent": "mass-seed safety, regulatory-source completeness, and FCS preliminary sync passed 25 plus 3 subtests in forward and reverse orders; external DB stayed absent",
       "control": "git diff --check, py_compile, local 120 plus 4 safety tests and committed snapshot validation all exit 0"
     },
     "a5": {
-      "session": "/root/a5_ntm_layers_isolation_181",
+      "session": "/root/a5_reg_mass_seed_isolation_183",
       "status": "FINAL_PASS_EXACT_TREE_NO_FINDINGS",
-      "focused": "independently reproduced parent failure/mutation and verified candidate 90-pass absent/sentinel runs",
-      "adversarial": "both 262-pass adjacent orders kept external DB absent; real imports/engine/catalog/layers/triggers and AST parity confirmed",
-      "remote_binding": "remote HEAD 075df086af14458d0c856ef817e3456160b2e514 has independently reviewed tree e9d1a7ccb0bd3b9629954f73038342ae64c07e41"
+      "focused": "independently reproduced parent 2-failure/4096-byte creation and sentinel mutation, then verified candidate 2-pass absent/sentinel invariants",
+      "adversarial": "both 25-pass plus 3-subtest adjacent orders preserved absent and sentinel DBs; real seed/query/count callables and AST parity confirmed",
+      "remote_binding": "remote HEAD dcb32489bf5f4526a6ee6b761e171d3114909f2d has independently reviewed tree 157ee2556971c8db25ce98669c1f7fb059430257"
     },
     "ci": {
       "status": "PASSED_EXACT_HEAD",
-      "head_sha": "075df086af14458d0c856ef817e3456160b2e514",
-      "runs": [{"run_id": 38190299249, "job_id": 114621413278, "attempt": 1, "conclusion": "success", "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38190299249"}]
+      "head_sha": "dcb32489bf5f4526a6ee6b761e171d3114909f2d",
+      "runs": [{"run_id": 38194012583, "job_id": 114632627303, "attempt": 1, "conclusion": "success", "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38194012583"}]
     },
     "blockers": [
       "NTM full-sync audit still requires a lawful populated synchronized snapshot.",
@@ -8225,43 +8225,43 @@
     ],
     "a6": {"request": "core-s1-6415f443120f-r9-g106", "status": "UNCHANGED_NOT_SENT"},
     "protected_actions_performed": false,
-    "next_step": "On fresh PR256 HEAD, continue bounded configured-DB/source fixture isolation without substituting test data for full-sync evidence."
+    "next_step": "On fresh PR256 HEAD, reproduce and isolate the already observed 1044480-byte configured SQLite creation in test_tnved_measures_api.py; do not substitute synthetic data for populated-snapshot tests."
   },
   "latest_development_checkpoint": {
-    "updated_at": "2026-10-12T01:04:00.000Z",
-    "checked_at": "2026-10-12T01:04:00.000Z",
+    "updated_at": "2026-10-12T02:00:19.307Z",
+    "checked_at": "2026-10-12T02:00:19.307Z",
     "pr": 256,
     "branch": "agent/product-ntm-regressions-v1",
-    "head_sha": "075df086af14458d0c856ef817e3456160b2e514",
-    "tree_sha": "e9d1a7ccb0bd3b9629954f73038342ae64c07e41",
-    "parent_sha": "7d96291c6bd43e77d0a80b7513c375004b2dc847",
-    "prior_checkpoint_sha": "7d96291c6bd43e77d0a80b7513c375004b2dc847",
+    "head_sha": "dcb32489bf5f4526a6ee6b761e171d3114909f2d",
+    "tree_sha": "157ee2556971c8db25ce98669c1f7fb059430257",
+    "parent_sha": "075df086af14458d0c856ef817e3456160b2e514",
+    "prior_checkpoint_sha": "075df086af14458d0c856ef817e3456160b2e514",
     "base_pr": 245,
     "base_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
-    "block": "ntm_v2_layers_configured_db_isolation",
-    "status": "DRAFT_CHECKPOINT_A5_PASS_CI_PASS_NTM_V2_LAYERS_DB_ISOLATION",
+    "block": "regulatory_mass_seed_safety_configured_db_isolation",
+    "status": "DRAFT_CHECKPOINT_A5_PASS_CI_PASS_REGULATORY_MASS_SEED_SAFETY_DB_ISOLATION",
     "behavior": {
-      "reproduced": "The 72-case layers matrix failed on missing persistent tables and created a 4096-byte configured SQLite; a sentinel SHA changed",
-      "final": "Unrelated persistent sources are fixture-isolated while real v2 layer/TR-TS imports, engine, canonical catalogs and description triggers remain under test",
-      "boundaries": "One test file with 30 fixture-only insertions; 15 test functions and 26 assertions AST-identical; no product code, normative data, source claims, flags, skips/xfails or legal interpretation changed"
+      "reproduced": "Both synthetic mass-seed safety tests failed on absent regulatory tables, created a 4096-byte configured SQLite, and changed a sentinel SHA",
+      "final": "A disposable two-table regulatory database isolates writes while real seed, broker query, and source-completeness count callables remain under test",
+      "boundaries": "One test file with 24 fixture-only insertions and one import replacement; 2 test functions and 15 assertions AST-identical; no product code, normative data, source claims, flags, skips/xfails or legal interpretation changed"
     },
     "author_tests": {
-      "baseline": "parent full module 72 failed and 18 passed, exit 1, absent configured DB became 4096 bytes; sentinel SHA changed",
-      "focused": "candidate full module passed 90 for absent and sentinel variants; absent DB stayed absent and sentinel SHA/marker/table count stayed unchanged",
-      "adjacent": "five modules passed 262 with 1 skipped in forward and reverse orders; external DB stayed absent",
+      "baseline": "parent focused module failed 2 tests, exit 1, absent configured DB became 4096 bytes and a valid sentinel SHA changed",
+      "focused": "candidate focused module passed 2 for absent and sentinel variants; absent configured/source DB stayed absent and both sentinels stayed byte-identical",
+      "adjacent": "mass-seed safety, regulatory-source completeness, and FCS preliminary sync passed 25 plus 3 subtests in forward and reverse orders; external DB stayed absent",
       "control": "git diff --check, py_compile, local 120 plus 4 safety tests and committed snapshot validation all exit 0"
     },
     "a5": {
-      "session": "/root/a5_ntm_layers_isolation_181",
+      "session": "/root/a5_reg_mass_seed_isolation_183",
       "status": "FINAL_PASS_EXACT_TREE_NO_FINDINGS",
-      "focused": "independently reproduced parent failure/mutation and verified candidate 90-pass absent/sentinel runs",
-      "adversarial": "both 262-pass adjacent orders kept external DB absent; real imports/engine/catalog/layers/triggers and AST parity confirmed",
-      "remote_binding": "remote HEAD 075df086af14458d0c856ef817e3456160b2e514 has independently reviewed tree e9d1a7ccb0bd3b9629954f73038342ae64c07e41"
+      "focused": "independently reproduced parent 2-failure/4096-byte creation and sentinel mutation, then verified candidate 2-pass absent/sentinel invariants",
+      "adversarial": "both 25-pass plus 3-subtest adjacent orders preserved absent and sentinel DBs; real seed/query/count callables and AST parity confirmed",
+      "remote_binding": "remote HEAD dcb32489bf5f4526a6ee6b761e171d3114909f2d has independently reviewed tree 157ee2556971c8db25ce98669c1f7fb059430257"
     },
     "ci": {
       "status": "PASSED_EXACT_HEAD",
-      "head_sha": "075df086af14458d0c856ef817e3456160b2e514",
-      "runs": [{"run_id": 38190299249, "job_id": 114621413278, "attempt": 1, "conclusion": "success", "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38190299249"}]
+      "head_sha": "dcb32489bf5f4526a6ee6b761e171d3114909f2d",
+      "runs": [{"run_id": 38194012583, "job_id": 114632627303, "attempt": 1, "conclusion": "success", "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38194012583"}]
     },
     "blockers": [
       "NTM full-sync audit still requires a lawful populated synchronized snapshot.",
@@ -8269,6 +8269,6 @@
     ],
     "a6": {"request": "core-s1-6415f443120f-r9-g106", "status": "UNCHANGED_NOT_SENT"},
     "protected_actions_performed": false,
-    "next_step": "On fresh PR256 HEAD, continue bounded configured-DB/source fixture isolation without substituting test data for full-sync evidence."
+    "next_step": "On fresh PR256 HEAD, reproduce and isolate the already observed 1044480-byte configured SQLite creation in test_tnved_measures_api.py; do not substitute synthetic data for populated-snapshot tests."
   }
 }

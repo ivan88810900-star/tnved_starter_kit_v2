@@ -1,5 +1,23 @@
 # Tariff / A0 — единая точка передачи проекта
 
+## 0aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa. #245 — synthetic regulatory mass-seed safety изолирован от configured DB
+
+**Новый checkpoint:** [draft PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256), `agent/product-ntm-regressions-v1` @ `dcb32489bf5f4526a6ee6b761e171d3114909f2d`, tree `157ee2556971c8db25ce98669c1f7fb059430257`, parent `075df086af14458d0c856ef817e3456160b2e514`. Локальный author commit `f8396cff7f85ad41056343eec13158029ba08156` имеет тот же exact tree.
+
+Воспроизведён fixture defect в `test_regulatory_mass_seed_safety.py`: на отсутствующей configured SQLite оба synthetic-safety теста падали с missing-table errors, создавая 4096-byte DB; существующая sentinel DB менялась по SHA из-за раннего connection pragma. Autouse fixture теперь создаёт disposable SQLite только с реальными `RegulatoryDocument` и `RegulatoryDocHsMapping` таблицами и перепривязывает четыре захваченных `SessionLocal`. Реальные `seed_regulatory_mass.run`, `get_regulatory_documents_for_hs` и `_count_db_probe` продолжают выполняться. Два test functions и 15 assertions AST-identical; production code, нормативные данные, source claims, flags, skips/xfails и правовая интерпретация не менялись.
+
+Проверки:
+
+- root: focused **2 passed** на absent и sentinel DB; отсутствующие configured/source DB не созданы, обе sentinel DB и marker rows byte-identical;
+- вместе с regulatory-source completeness и FCS preliminary sync в прямом и обратном порядке — по **25 passed + 3 subtests**, external DB отсутствует, все exit 0;
+- root local agent-safety: **120 + 4 passed**, committed snapshot valid, exit 0;
+- независимый A5 `/root/a5_reg_mass_seed_isolation_183`: **FINAL PASS без findings**; parent failure/4096-byte creation и sentinel mutation воспроизведены, candidate invariants, реальные callable и AST parity подтверждены;
+- exact-head CI: [run 38194012583](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38194012583), offline-safety job `114632627303`, attempt 1, **success**.
+
+Это test-isolation evidence, не подтверждение полноты источников или юридической применимости. Lawful populated synchronized NTM snapshot недоступен; полный #245 остаётся **NOT PASS**. Merge, deploy, production write, enforcement/permissions/secrets change, destructive migration и внешний A6 не выполнялись; `core-s1-6415f443120f-r9-g106` не отправлялся.
+
+Следующий отдельный блок — на свежем HEAD воспроизвести и изолировать уже обнаруженное создание configured SQLite размером 1 044 480 bytes в `test_tnved_measures_api.py`; populated-snapshot `test_ntm_full_sync.py` и `test_regulatory_mass_seed.py` не подменять синтетическими данными.
+
 ## 0aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa. #245 — NTM v2 layers matrix изолирована от configured DB
 
 **Новый checkpoint:** [draft PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256), `agent/product-ntm-regressions-v1` @ `075df086af14458d0c856ef817e3456160b2e514`, tree `e9d1a7ccb0bd3b9629954f73038342ae64c07e41`, parent `7d96291c6bd43e77d0a80b7513c375004b2dc847`. Локальный author commit `b41f782fdf8b0731547eb4e0084a548ee95aa92a` имеет тот же exact tree.
