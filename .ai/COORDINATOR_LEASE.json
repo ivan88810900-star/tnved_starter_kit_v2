@@ -1,14 +1,14 @@
 {
-  "acquisition_note": "Execute and independently verify test_smart_tnved_search.py engine/cache ordering and configured/source/marker invariance on fresh PR256 exact head e7f141a; reproduce a concrete defect before any edit and preserve an exact-head checkpoint.",
-  "expires_at": null,
-  "generation": 190,
-  "holder": null,
+  "acquisition_note": "Execute and independently verify test_tnved_code_card.py with classification inventory and configured/source/marker absent plus sentinel controls and adjacent API ordering on fresh PR256 exact head e7f141a; reproduce a concrete defect before any edit.",
+  "expires_at": "2026-10-12T09:28:02.966100Z",
+  "generation": 191,
+  "holder": "/root",
   "lease_repair": {},
   "release_reason": "Smart TN VED search executable audit completed on unchanged PR256 head e7f141a145e1475e8d1c51f25c51789a084b4541: A0 focused 6 plus 6 and adjacent 21/44 both orders passed; independent A5 final pass; exact-head offline-safety run 38216078694 success; board revision 735 and handoff saved in state checkpoint acab3b9bcf19a588fab94a6f816a4dd5a529f4cb.",
   "released_by": "/root",
   "schema_version": 1,
   "serialization_repair": {},
-  "state": "released",
-  "token": null,
-  "updated_at": "2026-10-12T08:13:39.418155Z"
+  "state": "active",
+  "token": "54bd8b87514a4c48af86724a0b41b30a",
+  "updated_at": "2026-10-12T08:58:02.966100Z"
 }
