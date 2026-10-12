@@ -1,5 +1,23 @@
 # Tariff / A0 — единая точка передачи проекта
 
+## 0aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa. #245 — NTM v2 layers matrix изолирована от configured DB
+
+**Новый checkpoint:** [draft PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256), `agent/product-ntm-regressions-v1` @ `075df086af14458d0c856ef817e3456160b2e514`, tree `e9d1a7ccb0bd3b9629954f73038342ae64c07e41`, parent `7d96291c6bd43e77d0a80b7513c375004b2dc847`. Локальный author commit `b41f782fdf8b0731547eb4e0084a548ee95aa92a` имеет тот же exact tree.
+
+Воспроизведён отдельный fixture defect в `test_ntm_v2_layers.py`: 72-case layers/TR-TS matrix обращалась к нерелевантным persistent sources, давала **72 failed / 18 passed** на отсутствующей configured SQLite и создавала 4096-byte DB. Fixture теперь изолирует только DB/legacy advisory/official SGR/risk/enrichment sources и enforcement gates. Реальные `import_ntm_layers_to_ntm_v2`, `import_tr_ts_catalog_to_ntm_v2`, `ntm_engine_v2`, canonical layers/TR-TS catalog и description triggers продолжают выполняться. 15 test functions и 26 assertions AST-identical; production code, нормативные данные, source claims, flags, skips/xfails и правовая интерпретация не менялись.
+
+Проверки:
+
+- root: полный модуль **90 passed** на absent и sentinel DB; отсутствующий файл не создан, sentinel SHA/marker/table count byte-identical;
+- пять смежных модулей в прямом и обратном порядке — по **262 passed, 1 skipped**, external DB отсутствует, все exit 0;
+- root local agent-safety: **120 + 4 passed**, committed snapshot valid, exit 0;
+- независимый A5 `/root/a5_ntm_layers_isolation_181`: **FINAL PASS без findings**; parent failure/4096-byte mutation воспроизведены, test bodies/assertions и реальные v2/catalog/layer/trigger paths подтверждены;
+- exact-head CI: [run 38190299249](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38190299249), offline-safety job `114621413278`, attempt 1, **success**.
+
+Это test-isolation evidence, не подтверждение полноты источников или юридической применимости. Lawful populated synchronized NTM snapshot недоступен; полный #245 остаётся **NOT PASS**. Merge, deploy, production write, enforcement/permissions/secrets change, destructive migration и внешний A6 не выполнялись; `core-s1-6415f443120f-r9-g106` не отправлялся.
+
+Следующий отдельный блок — на свежем HEAD продолжить bounded поиск следующего воспроизводимого configured-DB/source fixture; ожидаемый blocker полного sync test не подменять тестовыми данными.
+
 ## 0aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa. #245 — pipeline flag tests изолированы от configured DB
 
 **Новый checkpoint:** [draft PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256), `agent/product-ntm-regressions-v1` @ `7d96291c6bd43e77d0a80b7513c375004b2dc847`, tree `b5b345144e26d365c1dafe5f20672f444c39d7dc`, parent `cdf28f1287394391c94375fce20c97116f112ae2`. Локальный author commit `ae3e085659c6f8f286a25b8e03a00fda3c9bfd09` имеет тот же exact tree.
