@@ -102,6 +102,35 @@ def test_positive_embargo_match(memory_sessionmaker: sessionmaker) -> None:
     assert block.status == "CRITICAL"
 
 
+def test_destination_country_is_checked_for_country_risk(memory_sessionmaker: sessionmaker) -> None:
+    """Страна назначения из публичного API не должна теряться в risk engine."""
+    with memory_sessionmaker() as db:
+        db.add(
+            CountryRisk(
+                iso_code="IR",
+                name_ru="Тестовая риск-юрисдикция",
+                is_unfriendly=True,
+                has_preference=False,
+                required_cert="",
+            )
+        )
+        db.commit()
+        block = build_sanctions_risk_block(
+            hs_code="8509400000",
+            description="Пылесос",
+            country="CN",
+            destination_country="IR",
+            db=db,
+        )
+    assert block.destination_country == "IR"
+    assert any(
+        signal.category == "country_restrictions" and signal.legal_ref == "CountryRisk/IR"
+        for signal in block.signals
+    )
+    assert block.overall_severity == "high"
+    assert block.status == "CRITICAL"
+
+
 def test_positive_counterparty_ofac_match(memory_sessionmaker: sessionmaker) -> None:
     with memory_sessionmaker() as db:
         load_sanctions_risk_fixture(db)
