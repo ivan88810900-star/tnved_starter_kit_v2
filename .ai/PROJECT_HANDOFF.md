@@ -1,3 +1,14 @@
+## 2026-10-13 — Excise-ingestion database isolation published on PR #256
+
+- Exact candidate: `d309f36fd74af2015e689b87b360a874e754d733`, tree `e57cd2e9567ec7ad519381e878d75f2a9128a4f6`; parent `bb1951dbdf3b5b5136083d60b1896fdb620f05ab`; local author exact-tree commit `c1e22d9de3b424310cc6d692a644fcbe8ca1b154`.
+- Parent reproduction: `python -m pytest -q tests/test_excise_ingestion.py` exited 0 with **25 passed + 9 subtests** but created a 1,036,288-byte ambient `customs.db`; the probe artifact was removed.
+- The unchanged excise-ingestion/API scenarios now use disposable SQLite and restore preloaded and dynamically imported `app.*` / `scripts.*` engine and session aliases, including setup-failure cleanup. No product algorithm, normative source or legal applicability changed.
+- Author/A0: focused **25 passed + 9 subtests**; excise/import-duty both orders **83 passed + 9 subtests**; excise/VAT both orders **62 passed + 19 subtests** under a process-scoped disposable database; orchestration safety **124 passed + 175 subtests**; exact-remote focused **25 passed + 9 subtests**. All final commands exited 0; pinned catalogue/revision fingerprints stayed unchanged; no final ambient SQLite.
+- The first independent A5 `/root/a5_cycle229` correctly rejected the initial tree because a dynamically imported seed-module engine alias remained bound to the deleted temporary database. The repaired exact tree received fresh independent A5 `/root/a5_cycle229b` **PASS without findings**: focused, both execution orders, forced-init cleanup, AST parity, real endpoint assertions, protected fingerprints and clean worktree verified.
+- Exact-head CI [run 38468419439 / job 115540961759](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38468419439/job/115540961759): **success**.
+- Next reproduced target: on this exact HEAD, `test_vat_ingestion.py` exits 0 with **37 passed + 10 subtests** but creates a 1,036,288-byte ambient `customs.db`; the artifact was removed.
+- The issue #257 bounded probe was not repeated because its receipt already exists. Full #245 acceptance and legal/source completeness remain NOT PASS; a lawful populated synchronized NTM snapshot is unavailable. A6 `core-s1-6415f443120f-r9-g106` remains unchanged and undispatched. No merge, deploy or production write was performed.
+
 ## 2026-10-13 — Normative source-import database isolation published on PR #256
 
 - Exact candidate: `bb1951dbdf3b5b5136083d60b1896fdb620f05ab`, tree `c86766faa404a689b53fdadb0fc0b4cd901b10d8`; parent `3bee53f0ba15de9e860b5d6d926183b169862847`; local author exact-tree commit `9160168bf8c7ef5cc0fd524f06131dbfe5a4a674`.
