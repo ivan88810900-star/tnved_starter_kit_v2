@@ -2179,7 +2179,7 @@
       "unique_source_pr_count": 29
     }
   },
-  "revision": 755,
+  "revision": 756,
   "runs": [
     {
       "head_sha": null,
@@ -8663,6 +8663,63 @@
     "next_step": "On fresh PR256 HEAD, reproduce the ambient-database behavior of test_sensitive_endpoints_auth.py before editing and preserve its authentication and authorization assertions."
   },
   "latest_scheduled_product_checkpoint": {
+    "updated_at": "2026-10-13T04:56:37Z",
+    "checked_at": "2026-10-13T04:56:37Z",
+    "pr": 256,
+    "branch": "agent/product-ntm-regressions-v1",
+    "head_sha": "75c1f5f426a5d26094b9701fe29c00a75a2248ff",
+    "tree_sha": "eb28a03be3944f09556ed4e4daab9c0ad6fb75cf",
+    "parent_sha": "0a830546181d2bb18f5805b202fe28a42a5f207c",
+    "prior_checkpoint_sha": "0a830546181d2bb18f5805b202fe28a42a5f207c",
+    "local_author_exact_tree_commit": "ddc50837c0c357cae8b8783564f134faf29e7947",
+    "base_pr": 245,
+    "base_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
+    "block": "permits_verify_jobs_ownership_database_isolation",
+    "status": "IMPLEMENTED_A5_PASS_CI_PASS_PERMITS_VERIFY_JOBS_DB_ISOLATION",
+    "behavior": {
+      "reproduced": "Parent exact HEAD passed four permits verify-job ownership tests but created a 1,036,288-byte ambient customs.db in a clean checkout.",
+      "final": "test_permits_verify_jobs_ownership.py now bootstraps a disposable SQLite database before importing the application surface, binds loaded database aliases, restores preloaded and late-import module state, removes the temporary database and sidecars, and rechecks protected fingerprints.",
+      "classification": "A test import-order and database-isolation defect was reproduced and fixed; real FastAPI requests and declarant/viewer/admin ownership, route-order and admin-token authorization remain exercised. No product algorithm, normative source or legal applicability change was made.",
+      "boundaries": "Only customs-clear/backend/tests/test_permits_verify_jobs_ownership.py changed. Its four original test methods and assertions are AST-identical."
+    },
+    "verification": {
+      "author_focused": "Exact remote focused command passed 4 tests, exit 0; permits/sensitive/operational/documents/classify/assistant/API/payment controls in forward and reverse order passed 114 tests plus 3 subtests each, exit 0.",
+      "author_broad": "The 25-module broad payment/compliance/API command passed 379 tests plus 13 subtests, exit 0; no ambient SQLite was created and the pinned catalogue stayed byte-identical.",
+      "control": "Tariff-agent safety passed 124 tests, exit 0; git diff --check passed; pinned catalogue SHA-256 53847cb00ebc53f6315042325bc416d13d65cf020a10530a4ce7dde848ed1ff2.",
+      "a5": {
+        "session": "/root/a5_cycle212",
+        "status": "FINAL_PASS_EXACT_HEAD_NO_FINDINGS",
+        "execution": "Independent exact-head review passed focused 4 and a separately chosen five-module ordering regression with 22 tests; verified four AST-identical methods, environment and alias restoration, late-import cleanup, temporary database/sidecar cleanup and protected fingerprints.",
+        "findings": []
+      },
+      "ci": {
+        "status": "PASSED_EXACT_HEAD_OFFLINE_SAFETY_ONLY",
+        "run_id": 38348649766,
+        "job_id": 115135780137,
+        "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38348649766/job/115135780137",
+        "head_sha": "75c1f5f426a5d26094b9701fe29c00a75a2248ff",
+        "conclusion": "success",
+        "limitation": "Workflow is offline-safety only; author and independent executable A5 provide product-test evidence."
+      }
+    },
+    "blockers": [
+      "Full #245 product acceptance and legal/source completeness remain NOT PASS.",
+      "The NTM full-sync audit still requires a lawful populated synchronized snapshot."
+    ],
+    "a6": {
+      "request": "core-s1-6415f443120f-r9-g106",
+      "status": "UNCHANGED_NOT_SENT"
+    },
+    "protected_actions_performed": false,
+    "capabilities": {
+      "code_access": "Full exact candidate tree available in isolated author, exact-remote and independent A5 worktrees.",
+      "command_execution": "Git, Python and pytest execution available; author, exact-remote and A5 commands exited 0.",
+      "lawful_publication": "Draft branch and PR updated through the authorized GitHub connector under lease generation 212.",
+      "checkpoint": "This state CAS commit is the durable checkpoint; lease release follows separately."
+    },
+    "next_step": "On fresh PR256 HEAD, reproduce the ambient-database behavior of test_fsa_registry_status_fail_closed.py before editing and preserve its fail-closed registry status and lookup assertions."
+  },
+  "previous_scheduled_product_checkpoint_211": {
     "updated_at": "2026-10-13T04:04:53Z",
     "checked_at": "2026-10-13T04:04:53Z",
     "pr": 256,
@@ -8720,6 +8777,63 @@
     "next_step": "On fresh PR256 HEAD, reproduce the ambient-database behavior of test_permits_verify_jobs_ownership.py before editing and preserve its owner/admin authorization assertions."
   },
   "latest_development_checkpoint": {
+    "updated_at": "2026-10-13T04:56:37Z",
+    "checked_at": "2026-10-13T04:56:37Z",
+    "pr": 256,
+    "branch": "agent/product-ntm-regressions-v1",
+    "head_sha": "75c1f5f426a5d26094b9701fe29c00a75a2248ff",
+    "tree_sha": "eb28a03be3944f09556ed4e4daab9c0ad6fb75cf",
+    "parent_sha": "0a830546181d2bb18f5805b202fe28a42a5f207c",
+    "prior_checkpoint_sha": "0a830546181d2bb18f5805b202fe28a42a5f207c",
+    "local_author_exact_tree_commit": "ddc50837c0c357cae8b8783564f134faf29e7947",
+    "base_pr": 245,
+    "base_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
+    "block": "permits_verify_jobs_ownership_database_isolation",
+    "status": "IMPLEMENTED_A5_PASS_CI_PASS_PERMITS_VERIFY_JOBS_DB_ISOLATION",
+    "behavior": {
+      "reproduced": "Parent exact HEAD passed four permits verify-job ownership tests but created a 1,036,288-byte ambient customs.db in a clean checkout.",
+      "final": "test_permits_verify_jobs_ownership.py now bootstraps a disposable SQLite database before importing the application surface, binds loaded database aliases, restores preloaded and late-import module state, removes the temporary database and sidecars, and rechecks protected fingerprints.",
+      "classification": "A test import-order and database-isolation defect was reproduced and fixed; real FastAPI requests and declarant/viewer/admin ownership, route-order and admin-token authorization remain exercised. No product algorithm, normative source or legal applicability change was made.",
+      "boundaries": "Only customs-clear/backend/tests/test_permits_verify_jobs_ownership.py changed. Its four original test methods and assertions are AST-identical."
+    },
+    "verification": {
+      "author_focused": "Exact remote focused command passed 4 tests, exit 0; permits/sensitive/operational/documents/classify/assistant/API/payment controls in forward and reverse order passed 114 tests plus 3 subtests each, exit 0.",
+      "author_broad": "The 25-module broad payment/compliance/API command passed 379 tests plus 13 subtests, exit 0; no ambient SQLite was created and the pinned catalogue stayed byte-identical.",
+      "control": "Tariff-agent safety passed 124 tests, exit 0; git diff --check passed; pinned catalogue SHA-256 53847cb00ebc53f6315042325bc416d13d65cf020a10530a4ce7dde848ed1ff2.",
+      "a5": {
+        "session": "/root/a5_cycle212",
+        "status": "FINAL_PASS_EXACT_HEAD_NO_FINDINGS",
+        "execution": "Independent exact-head review passed focused 4 and a separately chosen five-module ordering regression with 22 tests; verified four AST-identical methods, environment and alias restoration, late-import cleanup, temporary database/sidecar cleanup and protected fingerprints.",
+        "findings": []
+      },
+      "ci": {
+        "status": "PASSED_EXACT_HEAD_OFFLINE_SAFETY_ONLY",
+        "run_id": 38348649766,
+        "job_id": 115135780137,
+        "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38348649766/job/115135780137",
+        "head_sha": "75c1f5f426a5d26094b9701fe29c00a75a2248ff",
+        "conclusion": "success",
+        "limitation": "Workflow is offline-safety only; author and independent executable A5 provide product-test evidence."
+      }
+    },
+    "blockers": [
+      "Full #245 product acceptance and legal/source completeness remain NOT PASS.",
+      "The NTM full-sync audit still requires a lawful populated synchronized snapshot."
+    ],
+    "a6": {
+      "request": "core-s1-6415f443120f-r9-g106",
+      "status": "UNCHANGED_NOT_SENT"
+    },
+    "protected_actions_performed": false,
+    "capabilities": {
+      "code_access": "Full exact candidate tree available in isolated author, exact-remote and independent A5 worktrees.",
+      "command_execution": "Git, Python and pytest execution available; author, exact-remote and A5 commands exited 0.",
+      "lawful_publication": "Draft branch and PR updated through the authorized GitHub connector under lease generation 212.",
+      "checkpoint": "This state CAS commit is the durable checkpoint; lease release follows separately."
+    },
+    "next_step": "On fresh PR256 HEAD, reproduce the ambient-database behavior of test_fsa_registry_status_fail_closed.py before editing and preserve its fail-closed registry status and lookup assertions."
+  },
+  "previous_development_checkpoint_211": {
     "updated_at": "2026-10-13T04:04:53Z",
     "checked_at": "2026-10-13T04:04:53Z",
     "pr": 256,
