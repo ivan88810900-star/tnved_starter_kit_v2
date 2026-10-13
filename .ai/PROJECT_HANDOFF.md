@@ -1,3 +1,14 @@
+## 2026-10-13 — Normative source-import database isolation published on PR #256
+
+- Exact candidate: `bb1951dbdf3b5b5136083d60b1896fdb620f05ab`, tree `c86766faa404a689b53fdadb0fc0b4cd901b10d8`; parent `3bee53f0ba15de9e860b5d6d926183b169862847`; local author exact-tree commit `9160168bf8c7ef5cc0fd524f06131dbfe5a4a674`.
+- Parent reproduction: `python -m pytest -q tests/test_source_import.py` exited 0 with **3 passed** but created a 1,036,288-byte ambient `customs.db`; the probe artifact was removed.
+- The unchanged source-import scenarios now use class-scoped disposable SQLite and restore all patched database/FTS state, including setup-failure cleanup. No product algorithm, normative source or legal applicability changed.
+- Author/A0: focused **3 passed**; forward/reverse controls **7 passed** each; orchestration safety **124 passed + 175 subtests**; exact-remote focused **3 passed**. All final commands exited 0; pinned catalogue SHA-256 `53847cb00ebc53f6315042325bc416d13d65cf020a10530a4ce7dde848ed1ff2` stayed unchanged; no final ambient SQLite.
+- Independent A5 `/root/a5_cycle228`: **PASS without findings**; focused **3 passed**, independent forward/reverse controls **61 passed** each, original three test-method ASTs, setup-failure cleanup, protected fingerprints and one-file scope verified.
+- Exact-head CI [run 38460456175 / job 115513957704](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38460456175/job/115513957704): **success**.
+- Next reproduced target: on this exact HEAD, `test_excise_ingestion.py` exits 0 with **25 passed + 9 subtests** but creates a 1,036,288-byte ambient `customs.db`; the artifact was removed. `test_payment_source_ingestion.py`, `test_import_restrictions.py`, `test_probe_fcs_sources.py`, and `test_normative_bundle.py` were rechecked clean.
+- The issue #257 bounded probe was not repeated because its receipt already exists. Full #245 acceptance and legal/source completeness remain NOT PASS; a lawful populated synchronized NTM snapshot is unavailable. A6 `core-s1-6415f443120f-r9-g106` remains unchanged and undispatched. No merge, deploy or production write was performed.
+
 ## 2026-10-13 — VED-report PDF database isolation published on PR #256
 
 - Exact candidate: `3bee53f0ba15de9e860b5d6d926183b169862847`, tree `b34b3ed7349d41dd095c6baa93983a661876304c`; parent `4d23c17e7971794737c41b03f47fa757c897013e`; local author exact-tree commit `312931e1c34dee6c3fc9ec5fa396c324096979fe`.
