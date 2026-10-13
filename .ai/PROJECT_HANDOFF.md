@@ -1,3 +1,14 @@
+## 2026-10-13 — VAT-ingestion database isolation published on PR #256
+
+- Exact candidate: `3c24676a69b1d78d320bd5764fb04f5ac3f3430d`, tree `a4e3cd52d0133698e5da905f0e48c52a087316b3`; parent `d309f36fd74af2015e689b87b360a874e754d733`; local author exact-tree commit `f23edbc2716823db4a647840fca7f902a435b5da`.
+- Parent reproduction: `python -m pytest -q tests/test_vat_ingestion.py` exited 0 with **37 passed + 10 subtests** but created a 1,036,288-byte ambient `customs.db`; the DB/WAL/SHM probe artifacts were removed.
+- The unchanged VAT-ingestion/API scenarios now use disposable SQLite and restore preloaded and dynamically imported `app.*` / `scripts.*` engine and session aliases. Cleanup is safe when either `create_engine` or `init_db` fails. No product algorithm, normative source or legal applicability changed.
+- Author/A0: focused **37 passed + 10 subtests**; VAT/excise both orders **62 passed + 19 subtests**; VAT/import-duty both orders **95 passed + 10 subtests**; orchestration safety **124 passed + 175 subtests**; exact-remote focused **37 passed + 10 subtests**. All final commands exited 0; all 37 original test methods are AST-identical; protected fingerprints stayed unchanged; no final ambient SQLite.
+- The first independent A5 `/root/a5_cycle230` rejected the initial tree because early `create_engine` failure caused a secondary cleanup `AttributeError`. The repaired exact tree received fresh independent A5 `/root/a5_cycle230b` **PASS without findings**, including both early-failure paths, alias restoration, execution-order controls, AST parity and cleanup.
+- Exact-head CI [run 38476052793 / job 115566887191](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38476052793/job/115566887191): **success**.
+- Next triage: eleven remaining API/payment/assistant/risk consumers were rechecked on the exact head and passed without creating ambient SQLite. The next bounded step is a clean broader backend fixture tranche to identify and reproduce the next real failure before any patch.
+- The issue #257 bounded probe was not repeated because its receipt already exists. Full #245 acceptance and legal/source completeness remain NOT PASS; a lawful populated synchronized NTM snapshot is unavailable. A6 `core-s1-6415f443120f-r9-g106` remains unchanged and undispatched. No merge, deploy or production write was performed.
+
 ## 2026-10-13 — Excise-ingestion database isolation published on PR #256
 
 - Exact candidate: `d309f36fd74af2015e689b87b360a874e754d733`, tree `e57cd2e9567ec7ad519381e878d75f2a9128a4f6`; parent `bb1951dbdf3b5b5136083d60b1896fdb620f05ab`; local author exact-tree commit `c1e22d9de3b424310cc6d692a644fcbe8ca1b154`.
