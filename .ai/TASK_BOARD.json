@@ -2179,7 +2179,7 @@
       "unique_source_pr_count": 29
     }
   },
-  "revision": 763,
+  "revision": 764,
   "runs": [
     {
       "head_sha": null,
@@ -7549,7 +7549,7 @@
       }
     }
   ],
-  "updated_at": "2026-10-13T12:00:49Z",
+  "updated_at": "2026-10-13T13:08:13.017Z",
   "previous_scheduled_product_checkpoint_174": {
     "updated_at": "2026-10-11T18:04:51.196Z",
     "checked_at": "2026-10-11T18:04:51.196Z",
@@ -11265,41 +11265,41 @@
     "next_step": "First recheck exact-head CI for 09bd88e3085921733708578cce6e21a70430c0fd and accept only a verified successful run. Then isolate tests/test_rop_coverage_audit.py: on clean exact HEAD it exits 1 with 4 failed because rop_goods_rates is absent and creates a 4,096-byte ambient customs.db; preserve its 97-chapter, subject/not-subject and summary assertions without changing product or normative data."
   },
   "latest_scheduled_product_checkpoint": {
-    "updated_at": "2026-10-13T12:00:49Z",
-    "checked_at": "2026-10-13T12:00:49Z",
+    "updated_at": "2026-10-13T13:08:13.017Z",
+    "checked_at": "2026-10-13T13:08:13.017Z",
     "pr": 256,
     "branch": "agent/product-ntm-regressions-v1",
-    "head_sha": "8557b12485295b02ef87aaa51bdb938a20a5ab7b",
-    "tree_sha": "64b96d301f73edabcabf6471b10998611449ab3e",
-    "parent_sha": "6c1f3db6dc1da31683163fe9d5fb2966c77135e4",
-    "prior_checkpoint_sha": "6c1f3db6dc1da31683163fe9d5fb2966c77135e4",
-    "local_author_exact_tree_commit": "b53cf41a3a5871a92d01d924c515218e2f3ece1b",
+    "head_sha": "0ee5c48f8965995e2340d7ccd00bbf46e562bf8b",
+    "tree_sha": "31b5cf01d51bce39e207292e922ba9d171eb76f7",
+    "parent_sha": "8557b12485295b02ef87aaa51bdb938a20a5ab7b",
+    "prior_checkpoint_sha": "8557b12485295b02ef87aaa51bdb938a20a5ab7b",
+    "local_author_exact_tree_commit": "1e26418fba810d74a598419282fb8ff8be0c5d5d",
     "base_pr": 245,
     "base_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
-    "block": "permits_normalize_api_database_isolation",
-    "status": "IMPLEMENTED_A5_PASS_CI_PASS_PERMITS_NORMALIZE_API_DB_ISOLATION",
+    "block": "permit_suggest_database_isolation",
+    "status": "IMPLEMENTED_A5_PASS_CI_PASS_PERMIT_SUGGEST_DB_ISOLATION",
     "behavior": {
-      "reproduced": "Parent exact HEAD passed 9 tests with 1 preserved conditional skip in test_permits_normalize_and_api.py but created a 1,036,288-byte ambient customs.db.",
-      "final": "test_permits_normalize_and_api.py now bootstraps disposable SQLite before app.main, redirects loaded SessionLocal and engine aliases, restores environment and modules, disposes the engine, removes DB sidecars and verifies protected fingerprints.",
-      "classification": "A test-fixture and database-isolation defect was reproduced and fixed. Real permit normalization, extraction, synchronous/asynchronous HTTP verification and job export behavior remain exercised; no product algorithm, normative source or legal applicability changed.",
-      "boundaries": "Only customs-clear/backend/tests/test_permits_normalize_and_api.py changed. Its 10 original test methods and assertions are AST-identical."
+      "reproduced": "Parent exact HEAD passed 6 tests in test_permit_suggest.py but created a 4,096-byte ambient customs.db.",
+      "final": "test_permit_suggest.py now binds TROIS registry loading to disposable SQLite, restores patched aliases/state, removes DB sidecars and verifies protected fingerprints.",
+      "classification": "A test-fixture/database-isolation defect was reproduced and fixed. Real permit suggestion and TROIS conflict behavior remain exercised; no product algorithm, normative source or legal applicability changed.",
+      "boundaries": "Only customs-clear/backend/tests/test_permit_suggest.py changed. Its six original test methods and assertions are AST-identical."
     },
     "verification": {
-      "author_focused": "Focused command passed 9 tests with 1 preserved conditional skip, exit 0. Forward and reverse five-module permits/FSA/payment controls each passed 55 tests with 1 skip, exit 0.",
-      "author_broad": "A bounded 20-module backend control passed 188 tests plus 3 subtests with 1 skip, exit 0; exact-remote focused rerun passed 9 tests with 1 skip, exit 0.",
-      "control": "Tariff-agent safety passed 124 tests, exit 0; py_compile and git diff --check exited 0; pinned catalogue SHA-256 53847cb00ebc53f6315042325bc416d13d65cf020a10530a4ce7dde848ed1ff2 remained unchanged; final focused and control runs created no ambient SQLite.",
+      "author_focused": "Focused command passed 6 tests, exit 0. Forward and reverse five-module controls each passed 27 tests with 1 skip, exit 0.",
+      "author_broad": "A bounded 21-module backend control passed 181 tests plus 3 subtests with 1 skip, exit 0; exact-remote focused rerun passed 6 tests, exit 0.",
+      "control": "Tariff-agent safety passed 124 tests, exit 0; py_compile and git diff --check exited 0; pinned catalogue SHA-256 53847cb00ebc53f6315042325bc416d13d65cf020a10530a4ce7dde848ed1ff2 remained unchanged; no final ambient SQLite.",
       "a5": {
-        "session": "/root/a5_cycle220",
+        "session": "/root/a5_cycle221",
         "status": "FINAL_PASS_EXACT_TREE_NO_FINDINGS",
-        "execution": "Independent exact-tree review passed focused 9 plus 1 skip and independently selected forward/reverse four-module controls with 24 tests plus 1 skip each; verified 10 AST-identical methods, one-file scope, bootstrap-before-app.main, alias/env/module restoration, cleanup, fingerprints and absence of ambient SQLite.",
+        "execution": "Independent focused 6 passed; forward/reverse controls each 15 passed with 1 skip; adversarial ambient DATABASE_URL/TNVED_SOURCE_DB run passed 6 and created no DB; AST parity, cleanup and hashes verified.",
         "findings": []
       },
       "ci": {
         "status": "PASSED_EXACT_HEAD_OFFLINE_SAFETY_ONLY",
-        "run_id": 38394014237,
-        "job_id": 115284558655,
-        "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38394014237/job/115284558655",
-        "head_sha": "8557b12485295b02ef87aaa51bdb938a20a5ab7b",
+        "run_id": 38402241504,
+        "job_id": 115312530656,
+        "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38402241504/job/115312530656",
+        "head_sha": "0ee5c48f8965995e2340d7ccd00bbf46e562bf8b",
         "conclusion": "success",
         "limitation": "Workflow is offline-safety only; author, A0 and independent executable A5 provide product-test evidence."
       }
@@ -11316,47 +11316,47 @@
     "capabilities": {
       "code_access": "Full exact candidate tree available in isolated author, exact-remote and independent A5 worktrees.",
       "command_execution": "Git, Python and pytest execution available; author, A0, exact-remote and independent A5 commands exited 0.",
-      "lawful_publication": "Draft branch and PR updated through the authorized GitHub connector under lease generation 220.",
+      "lawful_publication": "Draft branch and PR updated through the authorized GitHub connector under lease generation 221.",
       "checkpoint": "This state CAS commit is the durable checkpoint; lease release follows separately."
     },
-    "next_step": "On exact PR256 HEAD, isolate tests/test_permit_suggest.py: the clean exact-head command passes 6 tests, exit 0, but creates a 4,096-byte ambient customs.db; preserve all permit-suggestion assertions while eliminating the ambient write."
+    "next_step": "On exact PR256 HEAD, isolate tests/test_preview_permit_badges.py: a clean run fails 1/1 with missing tnved_commodities, creates a 4,096-byte ambient customs.db and mutates the tracked preview revision marker; preserve the permit-badge assertions and redirect both database and marker to disposable paths."
   },
   "latest_development_checkpoint": {
-    "updated_at": "2026-10-13T12:00:49Z",
-    "checked_at": "2026-10-13T12:00:49Z",
+    "updated_at": "2026-10-13T13:08:13.017Z",
+    "checked_at": "2026-10-13T13:08:13.017Z",
     "pr": 256,
     "branch": "agent/product-ntm-regressions-v1",
-    "head_sha": "8557b12485295b02ef87aaa51bdb938a20a5ab7b",
-    "tree_sha": "64b96d301f73edabcabf6471b10998611449ab3e",
-    "parent_sha": "6c1f3db6dc1da31683163fe9d5fb2966c77135e4",
-    "prior_checkpoint_sha": "6c1f3db6dc1da31683163fe9d5fb2966c77135e4",
-    "local_author_exact_tree_commit": "b53cf41a3a5871a92d01d924c515218e2f3ece1b",
+    "head_sha": "0ee5c48f8965995e2340d7ccd00bbf46e562bf8b",
+    "tree_sha": "31b5cf01d51bce39e207292e922ba9d171eb76f7",
+    "parent_sha": "8557b12485295b02ef87aaa51bdb938a20a5ab7b",
+    "prior_checkpoint_sha": "8557b12485295b02ef87aaa51bdb938a20a5ab7b",
+    "local_author_exact_tree_commit": "1e26418fba810d74a598419282fb8ff8be0c5d5d",
     "base_pr": 245,
     "base_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
-    "block": "permits_normalize_api_database_isolation",
-    "status": "IMPLEMENTED_A5_PASS_CI_PASS_PERMITS_NORMALIZE_API_DB_ISOLATION",
+    "block": "permit_suggest_database_isolation",
+    "status": "IMPLEMENTED_A5_PASS_CI_PASS_PERMIT_SUGGEST_DB_ISOLATION",
     "behavior": {
-      "reproduced": "Parent exact HEAD passed 9 tests with 1 preserved conditional skip in test_permits_normalize_and_api.py but created a 1,036,288-byte ambient customs.db.",
-      "final": "test_permits_normalize_and_api.py now bootstraps disposable SQLite before app.main, redirects loaded SessionLocal and engine aliases, restores environment and modules, disposes the engine, removes DB sidecars and verifies protected fingerprints.",
-      "classification": "A test-fixture and database-isolation defect was reproduced and fixed. Real permit normalization, extraction, synchronous/asynchronous HTTP verification and job export behavior remain exercised; no product algorithm, normative source or legal applicability changed.",
-      "boundaries": "Only customs-clear/backend/tests/test_permits_normalize_and_api.py changed. Its 10 original test methods and assertions are AST-identical."
+      "reproduced": "Parent exact HEAD passed 6 tests in test_permit_suggest.py but created a 4,096-byte ambient customs.db.",
+      "final": "test_permit_suggest.py now binds TROIS registry loading to disposable SQLite, restores patched aliases/state, removes DB sidecars and verifies protected fingerprints.",
+      "classification": "A test-fixture/database-isolation defect was reproduced and fixed. Real permit suggestion and TROIS conflict behavior remain exercised; no product algorithm, normative source or legal applicability changed.",
+      "boundaries": "Only customs-clear/backend/tests/test_permit_suggest.py changed. Its six original test methods and assertions are AST-identical."
     },
     "verification": {
-      "author_focused": "Focused command passed 9 tests with 1 preserved conditional skip, exit 0. Forward and reverse five-module permits/FSA/payment controls each passed 55 tests with 1 skip, exit 0.",
-      "author_broad": "A bounded 20-module backend control passed 188 tests plus 3 subtests with 1 skip, exit 0; exact-remote focused rerun passed 9 tests with 1 skip, exit 0.",
-      "control": "Tariff-agent safety passed 124 tests, exit 0; py_compile and git diff --check exited 0; pinned catalogue SHA-256 53847cb00ebc53f6315042325bc416d13d65cf020a10530a4ce7dde848ed1ff2 remained unchanged; final focused and control runs created no ambient SQLite.",
+      "author_focused": "Focused command passed 6 tests, exit 0. Forward and reverse five-module controls each passed 27 tests with 1 skip, exit 0.",
+      "author_broad": "A bounded 21-module backend control passed 181 tests plus 3 subtests with 1 skip, exit 0; exact-remote focused rerun passed 6 tests, exit 0.",
+      "control": "Tariff-agent safety passed 124 tests, exit 0; py_compile and git diff --check exited 0; pinned catalogue SHA-256 53847cb00ebc53f6315042325bc416d13d65cf020a10530a4ce7dde848ed1ff2 remained unchanged; no final ambient SQLite.",
       "a5": {
-        "session": "/root/a5_cycle220",
+        "session": "/root/a5_cycle221",
         "status": "FINAL_PASS_EXACT_TREE_NO_FINDINGS",
-        "execution": "Independent exact-tree review passed focused 9 plus 1 skip and independently selected forward/reverse four-module controls with 24 tests plus 1 skip each; verified 10 AST-identical methods, one-file scope, bootstrap-before-app.main, alias/env/module restoration, cleanup, fingerprints and absence of ambient SQLite.",
+        "execution": "Independent focused 6 passed; forward/reverse controls each 15 passed with 1 skip; adversarial ambient DATABASE_URL/TNVED_SOURCE_DB run passed 6 and created no DB; AST parity, cleanup and hashes verified.",
         "findings": []
       },
       "ci": {
         "status": "PASSED_EXACT_HEAD_OFFLINE_SAFETY_ONLY",
-        "run_id": 38394014237,
-        "job_id": 115284558655,
-        "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38394014237/job/115284558655",
-        "head_sha": "8557b12485295b02ef87aaa51bdb938a20a5ab7b",
+        "run_id": 38402241504,
+        "job_id": 115312530656,
+        "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38402241504/job/115312530656",
+        "head_sha": "0ee5c48f8965995e2340d7ccd00bbf46e562bf8b",
         "conclusion": "success",
         "limitation": "Workflow is offline-safety only; author, A0 and independent executable A5 provide product-test evidence."
       }
@@ -11373,10 +11373,10 @@
     "capabilities": {
       "code_access": "Full exact candidate tree available in isolated author, exact-remote and independent A5 worktrees.",
       "command_execution": "Git, Python and pytest execution available; author, A0, exact-remote and independent A5 commands exited 0.",
-      "lawful_publication": "Draft branch and PR updated through the authorized GitHub connector under lease generation 220.",
+      "lawful_publication": "Draft branch and PR updated through the authorized GitHub connector under lease generation 221.",
       "checkpoint": "This state CAS commit is the durable checkpoint; lease release follows separately."
     },
-    "next_step": "On exact PR256 HEAD, isolate tests/test_permit_suggest.py: the clean exact-head command passes 6 tests, exit 0, but creates a 4,096-byte ambient customs.db; preserve all permit-suggestion assertions while eliminating the ambient write."
+    "next_step": "On exact PR256 HEAD, isolate tests/test_preview_permit_badges.py: a clean run fails 1/1 with missing tnved_commodities, creates a 4,096-byte ambient customs.db and mutates the tracked preview revision marker; preserve the permit-badge assertions and redirect both database and marker to disposable paths."
   },
   "previous_development_checkpoint_219": {
     "updated_at": "2026-10-13T10:06:25Z",
@@ -11631,5 +11631,119 @@
       "checkpoint": "This state CAS commit is the durable checkpoint; lease release follows separately."
     },
     "next_step": "Continue fresh exact-head read-only scanning of remaining DB consumers. test_recycling_fees.py (14), test_payment_engine.py (37), test_payment_quote.py (9), and test_import_duty_ingestion.py (58) all pass and create no ambient database, so none is a reproduced isolation defect."
+  },
+  "previous_development_checkpoint_221": {
+    "updated_at": "2026-10-13T12:00:49Z",
+    "checked_at": "2026-10-13T12:00:49Z",
+    "pr": 256,
+    "branch": "agent/product-ntm-regressions-v1",
+    "head_sha": "8557b12485295b02ef87aaa51bdb938a20a5ab7b",
+    "tree_sha": "64b96d301f73edabcabf6471b10998611449ab3e",
+    "parent_sha": "6c1f3db6dc1da31683163fe9d5fb2966c77135e4",
+    "prior_checkpoint_sha": "6c1f3db6dc1da31683163fe9d5fb2966c77135e4",
+    "local_author_exact_tree_commit": "b53cf41a3a5871a92d01d924c515218e2f3ece1b",
+    "base_pr": 245,
+    "base_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
+    "block": "permits_normalize_api_database_isolation",
+    "status": "IMPLEMENTED_A5_PASS_CI_PASS_PERMITS_NORMALIZE_API_DB_ISOLATION",
+    "behavior": {
+      "reproduced": "Parent exact HEAD passed 9 tests with 1 preserved conditional skip in test_permits_normalize_and_api.py but created a 1,036,288-byte ambient customs.db.",
+      "final": "test_permits_normalize_and_api.py now bootstraps disposable SQLite before app.main, redirects loaded SessionLocal and engine aliases, restores environment and modules, disposes the engine, removes DB sidecars and verifies protected fingerprints.",
+      "classification": "A test-fixture and database-isolation defect was reproduced and fixed. Real permit normalization, extraction, synchronous/asynchronous HTTP verification and job export behavior remain exercised; no product algorithm, normative source or legal applicability changed.",
+      "boundaries": "Only customs-clear/backend/tests/test_permits_normalize_and_api.py changed. Its 10 original test methods and assertions are AST-identical."
+    },
+    "verification": {
+      "author_focused": "Focused command passed 9 tests with 1 preserved conditional skip, exit 0. Forward and reverse five-module permits/FSA/payment controls each passed 55 tests with 1 skip, exit 0.",
+      "author_broad": "A bounded 20-module backend control passed 188 tests plus 3 subtests with 1 skip, exit 0; exact-remote focused rerun passed 9 tests with 1 skip, exit 0.",
+      "control": "Tariff-agent safety passed 124 tests, exit 0; py_compile and git diff --check exited 0; pinned catalogue SHA-256 53847cb00ebc53f6315042325bc416d13d65cf020a10530a4ce7dde848ed1ff2 remained unchanged; final focused and control runs created no ambient SQLite.",
+      "a5": {
+        "session": "/root/a5_cycle220",
+        "status": "FINAL_PASS_EXACT_TREE_NO_FINDINGS",
+        "execution": "Independent exact-tree review passed focused 9 plus 1 skip and independently selected forward/reverse four-module controls with 24 tests plus 1 skip each; verified 10 AST-identical methods, one-file scope, bootstrap-before-app.main, alias/env/module restoration, cleanup, fingerprints and absence of ambient SQLite.",
+        "findings": []
+      },
+      "ci": {
+        "status": "PASSED_EXACT_HEAD_OFFLINE_SAFETY_ONLY",
+        "run_id": 38394014237,
+        "job_id": 115284558655,
+        "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38394014237/job/115284558655",
+        "head_sha": "8557b12485295b02ef87aaa51bdb938a20a5ab7b",
+        "conclusion": "success",
+        "limitation": "Workflow is offline-safety only; author, A0 and independent executable A5 provide product-test evidence."
+      }
+    },
+    "blockers": [
+      "Full #245 product acceptance and legal/source completeness remain NOT PASS.",
+      "The NTM full-sync audit still requires a lawful populated synchronized snapshot."
+    ],
+    "a6": {
+      "request": "core-s1-6415f443120f-r9-g106",
+      "status": "UNCHANGED_NOT_SENT"
+    },
+    "protected_actions_performed": false,
+    "capabilities": {
+      "code_access": "Full exact candidate tree available in isolated author, exact-remote and independent A5 worktrees.",
+      "command_execution": "Git, Python and pytest execution available; author, A0, exact-remote and independent A5 commands exited 0.",
+      "lawful_publication": "Draft branch and PR updated through the authorized GitHub connector under lease generation 220.",
+      "checkpoint": "This state CAS commit is the durable checkpoint; lease release follows separately."
+    },
+    "next_step": "On exact PR256 HEAD, isolate tests/test_permit_suggest.py: the clean exact-head command passes 6 tests, exit 0, but creates a 4,096-byte ambient customs.db; preserve all permit-suggestion assertions while eliminating the ambient write."
+  },
+  "previous_scheduled_product_checkpoint_221": {
+    "updated_at": "2026-10-13T12:00:49Z",
+    "checked_at": "2026-10-13T12:00:49Z",
+    "pr": 256,
+    "branch": "agent/product-ntm-regressions-v1",
+    "head_sha": "8557b12485295b02ef87aaa51bdb938a20a5ab7b",
+    "tree_sha": "64b96d301f73edabcabf6471b10998611449ab3e",
+    "parent_sha": "6c1f3db6dc1da31683163fe9d5fb2966c77135e4",
+    "prior_checkpoint_sha": "6c1f3db6dc1da31683163fe9d5fb2966c77135e4",
+    "local_author_exact_tree_commit": "b53cf41a3a5871a92d01d924c515218e2f3ece1b",
+    "base_pr": 245,
+    "base_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
+    "block": "permits_normalize_api_database_isolation",
+    "status": "IMPLEMENTED_A5_PASS_CI_PASS_PERMITS_NORMALIZE_API_DB_ISOLATION",
+    "behavior": {
+      "reproduced": "Parent exact HEAD passed 9 tests with 1 preserved conditional skip in test_permits_normalize_and_api.py but created a 1,036,288-byte ambient customs.db.",
+      "final": "test_permits_normalize_and_api.py now bootstraps disposable SQLite before app.main, redirects loaded SessionLocal and engine aliases, restores environment and modules, disposes the engine, removes DB sidecars and verifies protected fingerprints.",
+      "classification": "A test-fixture and database-isolation defect was reproduced and fixed. Real permit normalization, extraction, synchronous/asynchronous HTTP verification and job export behavior remain exercised; no product algorithm, normative source or legal applicability changed.",
+      "boundaries": "Only customs-clear/backend/tests/test_permits_normalize_and_api.py changed. Its 10 original test methods and assertions are AST-identical."
+    },
+    "verification": {
+      "author_focused": "Focused command passed 9 tests with 1 preserved conditional skip, exit 0. Forward and reverse five-module permits/FSA/payment controls each passed 55 tests with 1 skip, exit 0.",
+      "author_broad": "A bounded 20-module backend control passed 188 tests plus 3 subtests with 1 skip, exit 0; exact-remote focused rerun passed 9 tests with 1 skip, exit 0.",
+      "control": "Tariff-agent safety passed 124 tests, exit 0; py_compile and git diff --check exited 0; pinned catalogue SHA-256 53847cb00ebc53f6315042325bc416d13d65cf020a10530a4ce7dde848ed1ff2 remained unchanged; final focused and control runs created no ambient SQLite.",
+      "a5": {
+        "session": "/root/a5_cycle220",
+        "status": "FINAL_PASS_EXACT_TREE_NO_FINDINGS",
+        "execution": "Independent exact-tree review passed focused 9 plus 1 skip and independently selected forward/reverse four-module controls with 24 tests plus 1 skip each; verified 10 AST-identical methods, one-file scope, bootstrap-before-app.main, alias/env/module restoration, cleanup, fingerprints and absence of ambient SQLite.",
+        "findings": []
+      },
+      "ci": {
+        "status": "PASSED_EXACT_HEAD_OFFLINE_SAFETY_ONLY",
+        "run_id": 38394014237,
+        "job_id": 115284558655,
+        "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38394014237/job/115284558655",
+        "head_sha": "8557b12485295b02ef87aaa51bdb938a20a5ab7b",
+        "conclusion": "success",
+        "limitation": "Workflow is offline-safety only; author, A0 and independent executable A5 provide product-test evidence."
+      }
+    },
+    "blockers": [
+      "Full #245 product acceptance and legal/source completeness remain NOT PASS.",
+      "The NTM full-sync audit still requires a lawful populated synchronized snapshot."
+    ],
+    "a6": {
+      "request": "core-s1-6415f443120f-r9-g106",
+      "status": "UNCHANGED_NOT_SENT"
+    },
+    "protected_actions_performed": false,
+    "capabilities": {
+      "code_access": "Full exact candidate tree available in isolated author, exact-remote and independent A5 worktrees.",
+      "command_execution": "Git, Python and pytest execution available; author, A0, exact-remote and independent A5 commands exited 0.",
+      "lawful_publication": "Draft branch and PR updated through the authorized GitHub connector under lease generation 220.",
+      "checkpoint": "This state CAS commit is the durable checkpoint; lease release follows separately."
+    },
+    "next_step": "On exact PR256 HEAD, isolate tests/test_permit_suggest.py: the clean exact-head command passes 6 tests, exit 0, but creates a 4,096-byte ambient customs.db; preserve all permit-suggestion assertions while eliminating the ambient write."
   }
 }

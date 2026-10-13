@@ -1,3 +1,14 @@
+## 2026-10-13 — Permit-suggest database isolation published on PR #256
+
+- Exact candidate: `0ee5c48f8965995e2340d7ccd00bbf46e562bf8b`, tree `31b5cf01d51bce39e207292e922ba9d171eb76f7`; parent `8557b12485295b02ef87aaa51bdb938a20a5ab7b`; local author exact-tree commit `1e26418fba810d74a598419282fb8ff8be0c5d5d`.
+- Parent reproduction: `python -m pytest -q tests/test_permit_suggest.py` exited 0 with **6 passed** but created a 4,096-byte ambient `customs.db`.
+- The unchanged six test methods now bind TROIS registry loading to disposable SQLite, restore patched aliases/state, remove sidecars and protect ambient/pinned fingerprints. No product algorithm, normative source or legal applicability changed.
+- Author/A0: focused **6 passed**; forward/reverse controls **27 passed, 1 skipped** each; bounded broad **181 passed + 3 subtests, 1 skipped**; orchestration safety **124 tests OK**; exact-remote focused **6 passed**. All commands exited 0; no final ambient SQLite.
+- Independent A5 `/root/a5_cycle221`: **PASS without findings**; focused **6 passed**, independent forward/reverse **15 passed, 1 skipped** each, adversarial ambient DB-variable run **6 passed** with no DB creation.
+- Exact-head CI [run 38402241504 / job 115312530656](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38402241504/job/115312530656): **success**.
+- Next reproduced target: `test_preview_permit_badges.py` fails **1/1** with missing `tnved_commodities`, creates a 4,096-byte ambient DB and mutates the tracked preview revision marker; those probe artifacts were removed/restored.
+- Full #245 acceptance and legal/source completeness remain NOT PASS; a lawful populated synchronized NTM snapshot is unavailable. A6 `core-s1-6415f443120f-r9-g106` remains unchanged and undispatched.
+
 ## 2026-10-13 — Permits normalize/API database isolation published on PR #256
 
 - Exact candidate: `8557b12485295b02ef87aaa51bdb938a20a5ab7b`, tree `64b96d301f73edabcabf6471b10998611449ab3e`; parent `6c1f3db6dc1da31683163fe9d5fb2966c77135e4`; local author exact-tree commit `b53cf41a3a5871a92d01d924c515218e2f3ece1b`.
