@@ -1,0 +1,71 @@
+{
+  "schema_version": 1,
+  "cycle": 232,
+  "checked_at": "2026-10-13T23:08:29Z",
+  "repository": "ivan88810900-star/tnved_starter_kit_v2",
+  "lease_generation": 232,
+  "base_pr": 256,
+  "base_head_sha": "3c24676a69b1d78d320bd5764fb04f5ac3f3430d",
+  "corrective_pr": 258,
+  "branch": "agent/nsi-sgr-pagination-v1",
+  "published_head_sha": "60e097646aa1249b776df3ed018ad42d5986550d",
+  "tree_sha": "6d562e11956fa5c76ba8f84776cc45919d98d38c",
+  "local_author_commit": "5ea800e7d56c23b7f62067fc4ce6d9ea1c9c7522",
+  "block": "nsi_sgr_pagination_fail_closed",
+  "finding_id": "A0-NSI-SGR-PAGINATION-001",
+  "status": "PUBLISHED_DRAFT_A5_PASS_CI_PASS",
+  "reproduction": {
+    "command": "PYTHONPATH=. .venv/bin/python inline exact-logic probe against parent scripts.sync_sgr_registry._nsi_sgr_rows",
+    "exit_code": 0,
+    "official_total": 2998,
+    "page_sizes": [1000, 998, 1000],
+    "observed_rows": 1998,
+    "observed_offsets": [0, 1000]
+  },
+  "behavior": {
+    "short_page": "Continue from the actual row count until the official target is fetched.",
+    "request_cap": 1500,
+    "incomplete_or_malformed": "Raise before the first upsert.",
+    "explicit_max_rows": "Return and persist an explicit partial status.",
+    "confirmed_zero_total": "Return and persist nsi_ok.",
+    "nsi_sgr_code": "1995"
+  },
+  "author_and_a0_tests": {
+    "command": "PYTHONPATH=. python -m pytest -q tests/test_sync_sgr_registry_nsi_pagination.py tests/test_ntm_v2_official_sgr_import.py tests/test_ntm_v2_official_sgr_dataset_validation.py tests/test_ntm_v2_official_sgr_advisory.py tests/test_ntm_sgr_bad_token_boundary.py tests/test_state_registry_match_sgr_status.py",
+    "result": "157 passed",
+    "exit_code": 0,
+    "compile_and_diff_check_exit_code": 0
+  },
+  "a5": {
+    "session": "/root/a5_cycle232",
+    "initial_candidate": "46abadd553a35aa9644d7cb03640572efdb3a75f",
+    "initial_result": "CHANGES_REQUESTED",
+    "initial_findings": [
+      "Explicit max_rows partial was logged ok and complete zero total was logged partial.",
+      "Request batch could exceed the official 1500-row maximum.",
+      "A malformed fetched row could be skipped after an earlier partial upsert."
+    ],
+    "final_candidate": "5ea800e7d56c23b7f62067fc4ce6d9ea1c9c7522",
+    "final_tree": "6d562e11956fa5c76ba8f84776cc45919d98d38c",
+    "final_result": "PASS_NO_FINDINGS",
+    "independent_tests": "157 passed",
+    "exit_code": 0
+  },
+  "exact_head_ci": {
+    "run_id": 38482169829,
+    "job_id": 115587083420,
+    "job": "offline-safety",
+    "conclusion": "success",
+    "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38482169829/job/115587083420"
+  },
+  "blockers": [
+    "A lawful populated synchronized NTM snapshot remains unavailable.",
+    "Full PR #245 product acceptance and legal/source completeness remain NOT PASS."
+  ],
+  "a6": {
+    "request": "core-s1-6415f443120f-r9-g106",
+    "status": "UNCHANGED_NOT_SENT"
+  },
+  "protected_actions_performed": false,
+  "next_step": "Reconcile live PR #258/#256 heads, then continue the next bounded issue-257 or broad backend fixture defect; do not claim full-sync completeness without a lawful populated synchronized snapshot."
+}

@@ -1,3 +1,13 @@
+## 2026-10-13 — NSI SGR pagination fail-closed fix published as draft PR #258
+
+- Confirmed parent defect on PR #256 head `3c24676a69b1d78d320bd5764fb04f5ac3f3430d`: official total 2998 with page sizes 1000/998/1000 returned only 1998 rows and stopped after offsets 0/1000; reproduction exit 0.
+- Draft [PR #258](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/258) publishes exact head `60e097646aa1249b776df3ed018ad42d5986550d`, tree `6d562e11956fa5c76ba8f84776cc45919d98d38c`; local author exact-tree commit `5ea800e7d56c23b7f62067fc4ce6d9ea1c9c7522`.
+- Short non-empty pages now continue to the official target; requests are capped at 1500 rows; malformed totals/pages, premature exhaustion and malformed rows fail before the first upsert. Explicit `max_rows` truncation is logged `partial`; a confirmed complete zero-row registry remains `ok`. `NSI_SGR_CODE=1995` and normative data are unchanged.
+- Author/A0 focused and adjacent offline command: **157 passed**, exit 0; `py_compile` and `git diff --check` exit 0. Protected DB/cache fingerprints remained unchanged and no network was used.
+- Initial independent A5 `/root/a5_cycle232` rejected the first candidate for incorrect SyncLog status, the missing 1500-row cap and row validation after a partial upsert. Fresh review of the repaired exact tree: **PASS, no findings**, independent **157 passed** plus adversarial probes, exit 0.
+- Exact-head CI [run 38482169829 / job 115587083420](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38482169829/job/115587083420): **success** (`offline-safety`).
+- Next: reconcile live PR #258/#256 heads, then continue the next bounded issue-257 or broad backend fixture defect. A lawful populated synchronized NTM snapshot is still unavailable; full #245 acceptance and legal/source completeness remain NOT PASS. A6 `core-s1-6415f443120f-r9-g106` is unchanged and undispatched. No merge, deploy, production write, flag or permission change was performed.
+
 ## 2026-10-13 — VAT-ingestion database isolation published on PR #256
 
 - Exact candidate: `3c24676a69b1d78d320bd5764fb04f5ac3f3430d`, tree `a4e3cd52d0133698e5da905f0e48c52a087316b3`; parent `d309f36fd74af2015e689b87b360a874e754d733`; local author exact-tree commit `f23edbc2716823db4a647840fca7f902a435b5da`.
