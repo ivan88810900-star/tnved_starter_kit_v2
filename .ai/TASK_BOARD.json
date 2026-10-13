@@ -2179,7 +2179,7 @@
       "unique_source_pr_count": 29
     }
   },
-  "revision": 767,
+  "revision": 768,
   "runs": [
     {
       "head_sha": null,
@@ -7549,7 +7549,7 @@
       }
     }
   ],
-  "updated_at": "2026-10-13T16:08:20Z",
+  "updated_at": "2026-10-13T17:03:14Z",
   "previous_scheduled_product_checkpoint_174": {
     "updated_at": "2026-10-11T18:04:51.196Z",
     "checked_at": "2026-10-11T18:04:51.196Z",
@@ -11265,41 +11265,41 @@
     "next_step": "First recheck exact-head CI for 09bd88e3085921733708578cce6e21a70430c0fd and accept only a verified successful run. Then isolate tests/test_rop_coverage_audit.py: on clean exact HEAD it exits 1 with 4 failed because rop_goods_rates is absent and creates a 4,096-byte ambient customs.db; preserve its 97-chapter, subject/not-subject and summary assertions without changing product or normative data."
   },
   "latest_scheduled_product_checkpoint": {
-    "updated_at": "2026-10-13T16:08:20Z",
-    "checked_at": "2026-10-13T16:08:20Z",
+    "updated_at": "2026-10-13T17:03:14Z",
+    "checked_at": "2026-10-13T17:03:14Z",
     "pr": 256,
     "branch": "agent/product-ntm-regressions-v1",
-    "head_sha": "293f2a2a156ae68bbaa5bb4a858a19eaa9d1ba6b",
-    "tree_sha": "be4a016338cd3ad7d98225c8fb66ce85751744a8",
-    "parent_sha": "ed799f2d7c37dda719bfaef93a266c7ea495e63b",
-    "prior_checkpoint_sha": "ed799f2d7c37dda719bfaef93a266c7ea495e63b",
-    "local_author_exact_tree_commit": "d04485717545d1a8a163aa6b645b396dea855631",
+    "head_sha": "470d4122cda57c29eb0f83dabe7d381668d84e32",
+    "tree_sha": "4f24207eb68bf7c04341978142da0d38feb4fc4b",
+    "parent_sha": "293f2a2a156ae68bbaa5bb4a858a19eaa9d1ba6b",
+    "prior_checkpoint_sha": "293f2a2a156ae68bbaa5bb4a858a19eaa9d1ba6b",
+    "local_author_exact_tree_commit": "7da2bc8211eda5eb4602ec2de867154b69939e6b",
     "base_pr": 245,
     "base_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
-    "block": "ved_intel_api_database_isolation",
-    "status": "IMPLEMENTED_A5_PASS_CI_PASS_VED_INTEL_API_DB_ISOLATION",
+    "block": "ved_intel_async_api_database_isolation",
+    "status": "IMPLEMENTED_A5_PASS_CI_PASS_VED_INTEL_ASYNC_API_DB_ISOLATION",
     "behavior": {
-      "reproduced": "Parent exact HEAD passed 1 test in test_ved_intel_api.py but created a 1,036,288-byte ambient customs.db.",
-      "final": "The VED-intel API regression now bootstraps disposable SQLite, redirects the preview revision marker, rebinds loaded database aliases, restores environment/modules and removes temporary DB sidecars.",
-      "classification": "A test-fixture/database-isolation defect was reproduced and fixed. The real authenticated VED intelligence endpoint behavior remains exercised; no product algorithm, normative source or legal applicability changed.",
-      "boundaries": "Only customs-clear/backend/tests/test_ved_intel_api.py changed. Its original test method is AST-identical."
+      "reproduced": "Parent exact HEAD passed 2 tests in test_ved_intel_async_api.py but created a 1,036,288-byte ambient customs.db.",
+      "final": "The async VED-intel API regression now bootstraps disposable SQLite, redirects the preview revision marker, rebinds loaded database aliases, restores environment/modules and removes temporary DB sidecars.",
+      "classification": "A test-fixture/database-isolation defect was reproduced and fixed. The real accepted-job, polling result and not-found behavior remain exercised; no product algorithm, normative source or legal applicability changed.",
+      "boundaries": "Only customs-clear/backend/tests/test_ved_intel_async_api.py changed. Its two original test methods are AST-identical."
     },
     "verification": {
-      "author_focused": "Focused command passed 1 test, exit 0. Forward and reverse adjacent controls each passed 11 tests, exit 0.",
-      "author_broad": "Exact-remote focused rerun passed 1 test, exit 0.",
-      "control": "Tariff-agent safety passed 225 tests plus 266 subtests, exit 0; git diff --check exited 0; pinned catalogue SHA-256 53847cb00ebc53f6315042325bc416d13d65cf020a10530a4ce7dde848ed1ff2 and preview revision SHA-256 b02a3a11778f89dc4c48fef8f344768fac3923c6ffea76ed13d8df9b15f40d16 remained unchanged; no final ambient SQLite.",
+      "author_focused": "Focused command passed 2 tests, exit 0. Forward and reverse adjacent controls each passed 9 tests, exit 0.",
+      "author_broad": "Exact-remote focused rerun passed 2 tests, exit 0.",
+      "control": "Tariff-agent safety passed 124 tests plus 175 subtests, exit 0; git diff --check exited 0; pinned catalogue SHA-256 53847cb00ebc53f6315042325bc416d13d65cf020a10530a4ce7dde848ed1ff2 and preview revision SHA-256 b02a3a11778f89dc4c48fef8f344768fac3923c6ffea76ed13d8df9b15f40d16 remained unchanged; no final ambient SQLite.",
       "a5": {
-        "session": "/root/a5_cycle224",
+        "session": "/root/a5_cycle225",
         "status": "FINAL_PASS_EXACT_TREE_NO_FINDINGS",
-        "execution": "Independent focused 1 passed; independent forward/reverse controls each passed 11 tests; original test-method AST parity, protected fingerprints and cleanup were verified.",
+        "execution": "Independent focused 2 passed; independent forward/reverse controls each passed 9 tests; both original test-method ASTs, protected fingerprints and cleanup were verified.",
         "findings": []
       },
       "ci": {
         "status": "PASSED_EXACT_HEAD_OFFLINE_SAFETY_ONLY",
-        "run_id": 38427806072,
-        "job_id": 115401701528,
-        "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38427806072/job/115401701528",
-        "head_sha": "293f2a2a156ae68bbaa5bb4a858a19eaa9d1ba6b",
+        "run_id": 38435329754,
+        "job_id": 115427691046,
+        "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38435329754/job/115427691046",
+        "head_sha": "470d4122cda57c29eb0f83dabe7d381668d84e32",
         "conclusion": "success",
         "limitation": "Workflow is offline-safety only; author, A0 and independent executable A5 provide product-test evidence."
       }
@@ -11317,47 +11317,47 @@
     "capabilities": {
       "code_access": "Full exact candidate tree available in isolated author, exact-remote and independent A5 worktrees.",
       "command_execution": "Git, Python and pytest execution available; author, A0, exact-remote and independent A5 commands exited 0.",
-      "lawful_publication": "Draft branch and PR updated through the authorized GitHub connector under lease generation 224.",
+      "lawful_publication": "Draft branch and PR updated through the authorized GitHub connector under lease generation 225.",
       "checkpoint": "This state CAS commit is the durable checkpoint; lease release follows separately."
     },
-    "next_step": "On exact PR256 HEAD, isolate tests/test_ved_intel_async_api.py: a clean run passes 2 tests, exit 0, but creates a 1,036,288-byte ambient customs.db; preserve async job acceptance, polling/result and not-found assertions while eliminating the ambient write."
+    "next_step": "On exact PR256 HEAD, isolate tests/test_ved_intel_sse.py: a clean run passes 1 test, exit 0, but creates a 1,036,288-byte ambient customs.db; preserve the unknown-job SSE 404 assertion while eliminating the ambient write."
   },
   "latest_development_checkpoint": {
-    "updated_at": "2026-10-13T16:08:20Z",
-    "checked_at": "2026-10-13T16:08:20Z",
+    "updated_at": "2026-10-13T17:03:14Z",
+    "checked_at": "2026-10-13T17:03:14Z",
     "pr": 256,
     "branch": "agent/product-ntm-regressions-v1",
-    "head_sha": "293f2a2a156ae68bbaa5bb4a858a19eaa9d1ba6b",
-    "tree_sha": "be4a016338cd3ad7d98225c8fb66ce85751744a8",
-    "parent_sha": "ed799f2d7c37dda719bfaef93a266c7ea495e63b",
-    "prior_checkpoint_sha": "ed799f2d7c37dda719bfaef93a266c7ea495e63b",
-    "local_author_exact_tree_commit": "d04485717545d1a8a163aa6b645b396dea855631",
+    "head_sha": "470d4122cda57c29eb0f83dabe7d381668d84e32",
+    "tree_sha": "4f24207eb68bf7c04341978142da0d38feb4fc4b",
+    "parent_sha": "293f2a2a156ae68bbaa5bb4a858a19eaa9d1ba6b",
+    "prior_checkpoint_sha": "293f2a2a156ae68bbaa5bb4a858a19eaa9d1ba6b",
+    "local_author_exact_tree_commit": "7da2bc8211eda5eb4602ec2de867154b69939e6b",
     "base_pr": 245,
     "base_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
-    "block": "ved_intel_api_database_isolation",
-    "status": "IMPLEMENTED_A5_PASS_CI_PASS_VED_INTEL_API_DB_ISOLATION",
+    "block": "ved_intel_async_api_database_isolation",
+    "status": "IMPLEMENTED_A5_PASS_CI_PASS_VED_INTEL_ASYNC_API_DB_ISOLATION",
     "behavior": {
-      "reproduced": "Parent exact HEAD passed 1 test in test_ved_intel_api.py but created a 1,036,288-byte ambient customs.db.",
-      "final": "The VED-intel API regression now bootstraps disposable SQLite, redirects the preview revision marker, rebinds loaded database aliases, restores environment/modules and removes temporary DB sidecars.",
-      "classification": "A test-fixture/database-isolation defect was reproduced and fixed. The real authenticated VED intelligence endpoint behavior remains exercised; no product algorithm, normative source or legal applicability changed.",
-      "boundaries": "Only customs-clear/backend/tests/test_ved_intel_api.py changed. Its original test method is AST-identical."
+      "reproduced": "Parent exact HEAD passed 2 tests in test_ved_intel_async_api.py but created a 1,036,288-byte ambient customs.db.",
+      "final": "The async VED-intel API regression now bootstraps disposable SQLite, redirects the preview revision marker, rebinds loaded database aliases, restores environment/modules and removes temporary DB sidecars.",
+      "classification": "A test-fixture/database-isolation defect was reproduced and fixed. The real accepted-job, polling result and not-found behavior remain exercised; no product algorithm, normative source or legal applicability changed.",
+      "boundaries": "Only customs-clear/backend/tests/test_ved_intel_async_api.py changed. Its two original test methods are AST-identical."
     },
     "verification": {
-      "author_focused": "Focused command passed 1 test, exit 0. Forward and reverse adjacent controls each passed 11 tests, exit 0.",
-      "author_broad": "Exact-remote focused rerun passed 1 test, exit 0.",
-      "control": "Tariff-agent safety passed 225 tests plus 266 subtests, exit 0; git diff --check exited 0; pinned catalogue SHA-256 53847cb00ebc53f6315042325bc416d13d65cf020a10530a4ce7dde848ed1ff2 and preview revision SHA-256 b02a3a11778f89dc4c48fef8f344768fac3923c6ffea76ed13d8df9b15f40d16 remained unchanged; no final ambient SQLite.",
+      "author_focused": "Focused command passed 2 tests, exit 0. Forward and reverse adjacent controls each passed 9 tests, exit 0.",
+      "author_broad": "Exact-remote focused rerun passed 2 tests, exit 0.",
+      "control": "Tariff-agent safety passed 124 tests plus 175 subtests, exit 0; git diff --check exited 0; pinned catalogue SHA-256 53847cb00ebc53f6315042325bc416d13d65cf020a10530a4ce7dde848ed1ff2 and preview revision SHA-256 b02a3a11778f89dc4c48fef8f344768fac3923c6ffea76ed13d8df9b15f40d16 remained unchanged; no final ambient SQLite.",
       "a5": {
-        "session": "/root/a5_cycle224",
+        "session": "/root/a5_cycle225",
         "status": "FINAL_PASS_EXACT_TREE_NO_FINDINGS",
-        "execution": "Independent focused 1 passed; independent forward/reverse controls each passed 11 tests; original test-method AST parity, protected fingerprints and cleanup were verified.",
+        "execution": "Independent focused 2 passed; independent forward/reverse controls each passed 9 tests; both original test-method ASTs, protected fingerprints and cleanup were verified.",
         "findings": []
       },
       "ci": {
         "status": "PASSED_EXACT_HEAD_OFFLINE_SAFETY_ONLY",
-        "run_id": 38427806072,
-        "job_id": 115401701528,
-        "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38427806072/job/115401701528",
-        "head_sha": "293f2a2a156ae68bbaa5bb4a858a19eaa9d1ba6b",
+        "run_id": 38435329754,
+        "job_id": 115427691046,
+        "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38435329754/job/115427691046",
+        "head_sha": "470d4122cda57c29eb0f83dabe7d381668d84e32",
         "conclusion": "success",
         "limitation": "Workflow is offline-safety only; author, A0 and independent executable A5 provide product-test evidence."
       }
@@ -11375,10 +11375,10 @@
     "capabilities": {
       "code_access": "Full exact candidate tree available in isolated author, exact-remote and independent A5 worktrees.",
       "command_execution": "Git, Python and pytest execution available; author, A0, exact-remote and independent A5 commands exited 0.",
-      "lawful_publication": "Draft branch and PR updated through the authorized GitHub connector under lease generation 224.",
+      "lawful_publication": "Draft branch and PR updated through the authorized GitHub connector under lease generation 225.",
       "checkpoint": "This state CAS commit is the durable checkpoint; lease release follows separately."
     },
-    "next_step": "On exact PR256 HEAD, isolate tests/test_ved_intel_async_api.py: a clean run passes 2 tests, exit 0, but creates a 1,036,288-byte ambient customs.db; preserve async job acceptance, polling/result and not-found assertions while eliminating the ambient write."
+    "next_step": "On exact PR256 HEAD, isolate tests/test_ved_intel_sse.py: a clean run passes 1 test, exit 0, but creates a 1,036,288-byte ambient customs.db; preserve the unknown-job SSE 404 assertion while eliminating the ambient write."
   },
   "previous_scheduled_product_checkpoint_222": {
     "updated_at": "2026-10-13T13:08:13.017Z",
@@ -12091,5 +12091,121 @@
       "checkpoint": "This state CAS commit is the durable checkpoint; lease release follows separately."
     },
     "next_step": "On exact PR256 HEAD, isolate tests/test_ved_intel_api.py: a clean run passes 1 test, exit 0, but creates a 1,036,288-byte ambient customs.db; preserve the VED intelligence API assertion while eliminating the ambient write. test_safe_http_errors.py and test_upload_packing_list_api.py were rechecked clean."
+  },
+  "previous_scheduled_product_checkpoint_225": {
+    "updated_at": "2026-10-13T16:08:20Z",
+    "checked_at": "2026-10-13T16:08:20Z",
+    "pr": 256,
+    "branch": "agent/product-ntm-regressions-v1",
+    "head_sha": "293f2a2a156ae68bbaa5bb4a858a19eaa9d1ba6b",
+    "tree_sha": "be4a016338cd3ad7d98225c8fb66ce85751744a8",
+    "parent_sha": "ed799f2d7c37dda719bfaef93a266c7ea495e63b",
+    "prior_checkpoint_sha": "ed799f2d7c37dda719bfaef93a266c7ea495e63b",
+    "local_author_exact_tree_commit": "d04485717545d1a8a163aa6b645b396dea855631",
+    "base_pr": 245,
+    "base_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
+    "block": "ved_intel_api_database_isolation",
+    "status": "IMPLEMENTED_A5_PASS_CI_PASS_VED_INTEL_API_DB_ISOLATION",
+    "behavior": {
+      "reproduced": "Parent exact HEAD passed 1 test in test_ved_intel_api.py but created a 1,036,288-byte ambient customs.db.",
+      "final": "The VED-intel API regression now bootstraps disposable SQLite, redirects the preview revision marker, rebinds loaded database aliases, restores environment/modules and removes temporary DB sidecars.",
+      "classification": "A test-fixture/database-isolation defect was reproduced and fixed. The real authenticated VED intelligence endpoint behavior remains exercised; no product algorithm, normative source or legal applicability changed.",
+      "boundaries": "Only customs-clear/backend/tests/test_ved_intel_api.py changed. Its original test method is AST-identical."
+    },
+    "verification": {
+      "author_focused": "Focused command passed 1 test, exit 0. Forward and reverse adjacent controls each passed 11 tests, exit 0.",
+      "author_broad": "Exact-remote focused rerun passed 1 test, exit 0.",
+      "control": "Tariff-agent safety passed 225 tests plus 266 subtests, exit 0; git diff --check exited 0; pinned catalogue SHA-256 53847cb00ebc53f6315042325bc416d13d65cf020a10530a4ce7dde848ed1ff2 and preview revision SHA-256 b02a3a11778f89dc4c48fef8f344768fac3923c6ffea76ed13d8df9b15f40d16 remained unchanged; no final ambient SQLite.",
+      "a5": {
+        "session": "/root/a5_cycle224",
+        "status": "FINAL_PASS_EXACT_TREE_NO_FINDINGS",
+        "execution": "Independent focused 1 passed; independent forward/reverse controls each passed 11 tests; original test-method AST parity, protected fingerprints and cleanup were verified.",
+        "findings": []
+      },
+      "ci": {
+        "status": "PASSED_EXACT_HEAD_OFFLINE_SAFETY_ONLY",
+        "run_id": 38427806072,
+        "job_id": 115401701528,
+        "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38427806072/job/115401701528",
+        "head_sha": "293f2a2a156ae68bbaa5bb4a858a19eaa9d1ba6b",
+        "conclusion": "success",
+        "limitation": "Workflow is offline-safety only; author, A0 and independent executable A5 provide product-test evidence."
+      }
+    },
+    "blockers": [
+      "Full #245 product acceptance and legal/source completeness remain NOT PASS.",
+      "The NTM full-sync audit still requires a lawful populated synchronized snapshot."
+    ],
+    "a6": {
+      "request": "core-s1-6415f443120f-r9-g106",
+      "status": "UNCHANGED_NOT_SENT"
+    },
+    "coordination_queue": "Issue #257 bounded-probe receipt already exists and was not repeated. DOT-PILOT-SIX-TASKS-20261013 remains queued for authoritative-board triage and does not itself change authority, merge/deploy rights or A6 status.",
+    "protected_actions_performed": false,
+    "capabilities": {
+      "code_access": "Full exact candidate tree available in isolated author, exact-remote and independent A5 worktrees.",
+      "command_execution": "Git, Python and pytest execution available; author, A0, exact-remote and independent A5 commands exited 0.",
+      "lawful_publication": "Draft branch and PR updated through the authorized GitHub connector under lease generation 224.",
+      "checkpoint": "This state CAS commit is the durable checkpoint; lease release follows separately."
+    },
+    "next_step": "On exact PR256 HEAD, isolate tests/test_ved_intel_async_api.py: a clean run passes 2 tests, exit 0, but creates a 1,036,288-byte ambient customs.db; preserve async job acceptance, polling/result and not-found assertions while eliminating the ambient write."
+  },
+  "previous_development_checkpoint_225": {
+    "updated_at": "2026-10-13T16:08:20Z",
+    "checked_at": "2026-10-13T16:08:20Z",
+    "pr": 256,
+    "branch": "agent/product-ntm-regressions-v1",
+    "head_sha": "293f2a2a156ae68bbaa5bb4a858a19eaa9d1ba6b",
+    "tree_sha": "be4a016338cd3ad7d98225c8fb66ce85751744a8",
+    "parent_sha": "ed799f2d7c37dda719bfaef93a266c7ea495e63b",
+    "prior_checkpoint_sha": "ed799f2d7c37dda719bfaef93a266c7ea495e63b",
+    "local_author_exact_tree_commit": "d04485717545d1a8a163aa6b645b396dea855631",
+    "base_pr": 245,
+    "base_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
+    "block": "ved_intel_api_database_isolation",
+    "status": "IMPLEMENTED_A5_PASS_CI_PASS_VED_INTEL_API_DB_ISOLATION",
+    "behavior": {
+      "reproduced": "Parent exact HEAD passed 1 test in test_ved_intel_api.py but created a 1,036,288-byte ambient customs.db.",
+      "final": "The VED-intel API regression now bootstraps disposable SQLite, redirects the preview revision marker, rebinds loaded database aliases, restores environment/modules and removes temporary DB sidecars.",
+      "classification": "A test-fixture/database-isolation defect was reproduced and fixed. The real authenticated VED intelligence endpoint behavior remains exercised; no product algorithm, normative source or legal applicability changed.",
+      "boundaries": "Only customs-clear/backend/tests/test_ved_intel_api.py changed. Its original test method is AST-identical."
+    },
+    "verification": {
+      "author_focused": "Focused command passed 1 test, exit 0. Forward and reverse adjacent controls each passed 11 tests, exit 0.",
+      "author_broad": "Exact-remote focused rerun passed 1 test, exit 0.",
+      "control": "Tariff-agent safety passed 225 tests plus 266 subtests, exit 0; git diff --check exited 0; pinned catalogue SHA-256 53847cb00ebc53f6315042325bc416d13d65cf020a10530a4ce7dde848ed1ff2 and preview revision SHA-256 b02a3a11778f89dc4c48fef8f344768fac3923c6ffea76ed13d8df9b15f40d16 remained unchanged; no final ambient SQLite.",
+      "a5": {
+        "session": "/root/a5_cycle224",
+        "status": "FINAL_PASS_EXACT_TREE_NO_FINDINGS",
+        "execution": "Independent focused 1 passed; independent forward/reverse controls each passed 11 tests; original test-method AST parity, protected fingerprints and cleanup were verified.",
+        "findings": []
+      },
+      "ci": {
+        "status": "PASSED_EXACT_HEAD_OFFLINE_SAFETY_ONLY",
+        "run_id": 38427806072,
+        "job_id": 115401701528,
+        "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38427806072/job/115401701528",
+        "head_sha": "293f2a2a156ae68bbaa5bb4a858a19eaa9d1ba6b",
+        "conclusion": "success",
+        "limitation": "Workflow is offline-safety only; author, A0 and independent executable A5 provide product-test evidence."
+      }
+    },
+    "blockers": [
+      "Full #245 product acceptance and legal/source completeness remain NOT PASS.",
+      "The NTM full-sync audit still requires a lawful populated synchronized snapshot."
+    ],
+    "a6": {
+      "request": "core-s1-6415f443120f-r9-g106",
+      "status": "UNCHANGED_NOT_SENT"
+    },
+    "coordination_queue": "Issue #257 bounded-probe receipt already exists and was not repeated. DOT-PILOT-SIX-TASKS-20261013 remains queued for authoritative-board triage and does not itself change authority, merge/deploy rights or A6 status.",
+    "protected_actions_performed": false,
+    "capabilities": {
+      "code_access": "Full exact candidate tree available in isolated author, exact-remote and independent A5 worktrees.",
+      "command_execution": "Git, Python and pytest execution available; author, A0, exact-remote and independent A5 commands exited 0.",
+      "lawful_publication": "Draft branch and PR updated through the authorized GitHub connector under lease generation 224.",
+      "checkpoint": "This state CAS commit is the durable checkpoint; lease release follows separately."
+    },
+    "next_step": "On exact PR256 HEAD, isolate tests/test_ved_intel_async_api.py: a clean run passes 2 tests, exit 0, but creates a 1,036,288-byte ambient customs.db; preserve async job acceptance, polling/result and not-found assertions while eliminating the ambient write."
   }
 }

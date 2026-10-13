@@ -1,3 +1,14 @@
+## 2026-10-13 — Async VED-intel API database isolation published on PR #256
+
+- Exact candidate: `470d4122cda57c29eb0f83dabe7d381668d84e32`, tree `4f24207eb68bf7c04341978142da0d38feb4fc4b`; parent `293f2a2a156ae68bbaa5bb4a858a19eaa9d1ba6b`; local author exact-tree commit `7da2bc8211eda5eb4602ec2de867154b69939e6b`.
+- Parent reproduction: `python -m pytest -q tests/test_ved_intel_async_api.py` exited 0 with **2 passed** but created a 1,036,288-byte ambient `customs.db`; the probe artifact was removed.
+- The unchanged async job acceptance/polling and not-found scenarios now bootstrap disposable SQLite, redirect the preview-revision marker, rebind loaded session/engine aliases, restore environment/modules and remove temporary DB sidecars. No product algorithm, normative source or legal applicability changed.
+- Author/A0: focused **2 passed**; forward/reverse adjacent controls **9 passed** each; orchestration safety **124 passed + 175 subtests**; exact-remote focused **2 passed**. All final commands exited 0; pinned catalogue/revision hashes stayed unchanged; no final ambient SQLite.
+- Independent A5 `/root/a5_cycle225`: **PASS without findings**; focused **2 passed**, independent forward/reverse controls **9 passed** each, both original test-method ASTs, protected fingerprints and cleanup verified.
+- Exact-head CI [run 38435329754 / job 115427691046](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38435329754/job/115427691046): **success**.
+- Next reproduced target: on this exact HEAD, `test_ved_intel_sse.py` exits 0 with **1 passed** but creates a 1,036,288-byte ambient `customs.db`; the probe artifact was removed.
+- The issue #257 bounded probe was not repeated because its receipt already exists; the later Dot comment remains a coordination queue, not an authority change. Full #245 acceptance and legal/source completeness remain NOT PASS; a lawful populated synchronized NTM snapshot is unavailable. A6 `core-s1-6415f443120f-r9-g106` remains unchanged and undispatched. No merge, deploy or production write was performed.
+
 ## 2026-10-13 — VED-intel API database isolation published on PR #256
 
 - Exact candidate: `293f2a2a156ae68bbaa5bb4a858a19eaa9d1ba6b`, tree `be4a016338cd3ad7d98225c8fb66ce85751744a8`; parent `ed799f2d7c37dda719bfaef93a266c7ea495e63b`; local author exact-tree commit `d04485717545d1a8a163aa6b645b396dea855631`.
