@@ -1,14 +1,14 @@
 {
   "acquisition_note": "Fresh GitHub recovery at main e526dfbdb5a31b01bf6f743da0288b88f916de0c, PR256 75b2a8e1fa9395bba1c88fac9f3a8255f347904f and state revision 761; isolate test_rop_calculator.py from ambient SQLite without product, normative, A6, protected-branch or production changes.",
-  "expires_at": null,
-  "generation": 225,
-  "holder": null,
+  "expires_at": "2026-10-13T18:21:30.170717Z",
+  "generation": 226,
+  "holder": "/root",
   "lease_repair": {},
   "release_reason": "Fresh GitHub recovery completed at main e526dfbdb5a31b01bf6f743da0288b88f916de0c, state d7a5e365e1afb6b536c6151081e9670caee0a60b before lease acquisition, PR256 75b2a8e1fa9395bba1c88fac9f3a8255f347904f and exact-head CI 38380603791 success. The recorded test_rop_calculator.py ambient-SQLite defect and a minimal in-memory fixture design were verified from source, but no candidate was published because this execution environment has no repository checkout and cannot install SQLAlchemy/pytest; executable author tests and independent A5 therefore cannot be produced safely. A6 request core-s1-6415f443120f-r9-g106 remains unchanged and undispatched.",
   "released_by": "/root/a0_maintenance_20261013T1014Z",
   "schema_version": 1,
   "serialization_repair": {},
-  "state": "released",
-  "token": null,
-  "updated_at": "2026-10-13T17:04:42.621604Z"
+  "state": "active",
+  "token": "0b66398136af4e82bd7f3ff47fefe01e",
+  "updated_at": "2026-10-13T17:51:30.170717Z"
 }
