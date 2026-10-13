@@ -1,0 +1,72 @@
+{
+  "schema_version": 1,
+  "cycle": 231,
+  "checked_at": "2026-10-13T22:20:54.191Z",
+  "repository": "ivan88810900-star/tnved_starter_kit_v2",
+  "main_sha": "e526dfbdb5a31b01bf6f743da0288b88f916de0c",
+  "state_base_sha": "22ac6f92b712ced82d66a3b784b06a361c337043",
+  "lease_generation": 231,
+  "pr": 256,
+  "branch": "agent/product-ntm-regressions-v1",
+  "head_sha": "3c24676a69b1d78d320bd5764fb04f5ac3f3430d",
+  "exact_head_ci": {
+    "run_id": 38476052793,
+    "job_id": 115566887191,
+    "conclusion": "success",
+    "scope": "offline-safety only"
+  },
+  "block": "nsi_sgr_pagination_fail_closed_triage",
+  "status": "CONFIRMED_UNIMPLEMENTED_CAPABILITY_BLOCKED",
+  "finding": {
+    "id": "A0-NSI-SGR-PAGINATION-001",
+    "path": "customs-clear/backend/scripts/sync_sgr_registry.py",
+    "source_blob_sha": "f7359c139fdb26388f551bc3885906d0d36f7ce4",
+    "summary": "The NSI SGR fetch loop stops when a nonempty page is shorter than the requested limit even while the official total is still unmet, so later rows can be silently omitted and sync_from_nsi still returns nsi_ok.",
+    "reproduction": {
+      "shape": "official total 2998; page sizes 1000, 998, 1000; batch_size 1000",
+      "observed": "current exact logic returned 1998 rows, issued offsets 0 and 1000 only, and never requested offset 1998",
+      "harness_exit_code": 0,
+      "limitation": "Pure exact-logic reproduction from the fetched function body; not an imported repository pytest run."
+    },
+    "related_fail_closed_gaps": [
+      "A premature empty page returns the partial rows without completeness metadata.",
+      "A caller-supplied max_rows below the official total is still labelled nsi_ok.",
+      "An unsupported or malformed total response is collapsed to zero rather than distinguished from a confirmed empty registry."
+    ],
+    "official_evidence": [
+      {
+        "url": "https://nsi.eaeunion.org/portal/info/api",
+        "observation": "The official API documentation specifies limit/offset pagination and a maximum of 1500 records per request."
+      },
+      {
+        "url": "https://nsi.eaeunion.org/portal/1995",
+        "observation": "Official NSI code 1995 is the SGR registry used by the script default."
+      },
+      {
+        "url": "https://nsi.eaeunion.org/portal/1994",
+        "observation": "Official NSI code 1994 is the cryptographic-notification registry, so the issue-257 pilot wording that assigns SGR to 1994 must not be copied into code."
+      }
+    ],
+    "decision": "Do not change normative data or swap the configured SGR dictionary code. Repair pagination and completeness signalling only, with synthetic short-page/empty-page/max_rows/invalid-total tests.",
+    "status": "CONFIRMED"
+  },
+  "verification": {
+    "pr_review_threads": "none",
+    "pr_reviews": "none",
+    "pr_comments": "none",
+    "pr_mergeable_state": "clean",
+    "lease_cas": "Lease generation 231 acquired from released generation 230 after rereading exact state head and blob SHA.",
+    "source_access": "GitHub connector only",
+    "executable_backend_tests": "UNAVAILABLE_NO_REPOSITORY_CHECKOUT"
+  },
+  "a6": {
+    "request": "core-s1-6415f443120f-r9-g106",
+    "status": "UNCHANGED_NOT_SENT"
+  },
+  "protected_actions_performed": false,
+  "blockers": [
+    "This execution environment exposes the repository only through the GitHub connector and has no checkout or installed backend dependency tree, so an executable repository test/A5 review cannot be produced safely.",
+    "The lawful populated synchronized NTM snapshot remains unavailable; no full-sync acceptance is claimed."
+  ],
+  "next_step": "On an execution-capable cycle, create a fresh agent branch from exact PR256 HEAD; add focused synthetic pagination/completeness tests; make short pages continue until the official target, fail closed on premature exhaustion or invalid totals, and label explicit max_rows truncation partial; run focused/adjacent tests, independent A5, publish a draft stacked PR, then verify exact-head CI. Do not change NSI_SGR_CODE=1995."
+}
