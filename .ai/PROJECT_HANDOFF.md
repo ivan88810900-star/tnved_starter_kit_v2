@@ -1,3 +1,14 @@
+## 2026-10-13 — Permits normalize/API database isolation published on PR #256
+
+- Exact candidate: `8557b12485295b02ef87aaa51bdb938a20a5ab7b`, tree `64b96d301f73edabcabf6471b10998611449ab3e`; parent `6c1f3db6dc1da31683163fe9d5fb2966c77135e4`; local author exact-tree commit `b53cf41a3a5871a92d01d924c515218e2f3ece1b`.
+- Parent reproduction: `python -m pytest -q tests/test_permits_normalize_and_api.py` exited 0 with **9 passed, 1 skipped** but created a 1,036,288-byte ambient `customs.db`.
+- The unchanged 10 test methods now bootstrap disposable SQLite before `app.main`, redirect and restore loaded session/engine aliases and environment/modules, clean DB sidecars and protect ambient/pinned fingerprints. No product algorithm, normative source or legal applicability changed.
+- Author/A0: focused **9 passed, 1 skipped**; forward/reverse five-module controls **55 passed, 1 skipped** each; bounded broad **188 passed + 3 subtests, 1 skipped**; orchestration safety **124 tests OK**; exact-remote focused **9 passed, 1 skipped**. All commands exited 0; no final ambient SQLite.
+- Independent A5 `/root/a5_cycle220`: **PASS without findings**; focused **9 passed, 1 skipped**, independent forward/reverse controls **24 passed, 1 skipped** each, AST parity, bootstrap timing, restoration, cleanup and hashes verified.
+- Exact-head CI [run 38394014237 / job 115284558655](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38394014237/job/115284558655): **success**.
+- Next reproduced target: on exact HEAD, `test_permit_suggest.py` exits 0 with **6 passed** but creates a 4,096-byte ambient `customs.db`.
+- Draft only. No merge, deploy, production write, enforcement/permissions/secrets change or external A6 call. Full #245 and legal/source completeness remain NOT PASS; lawful populated synchronized NTM snapshot remains unavailable.
+
 ## 2026-10-13 — ROP calculator database isolation published on PR #256
 
 - Exact candidate: `6c1f3db6dc1da31683163fe9d5fb2966c77135e4`, tree `b3ca4b992f7d3d85a978778d2be97cc371629844`; parent `75b2a8e1fa9395bba1c88fac9f3a8255f347904f`; local author exact-tree commit `74ad6527f6f6f625af90812a3dbc2f959c3f6d12`.

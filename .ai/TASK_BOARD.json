@@ -2179,7 +2179,7 @@
       "unique_source_pr_count": 29
     }
   },
-  "revision": 762,
+  "revision": 763,
   "runs": [
     {
       "head_sha": null,
@@ -7549,7 +7549,7 @@
       }
     }
   ],
-  "updated_at": "2026-10-13T11:11:58Z",
+  "updated_at": "2026-10-13T12:00:49Z",
   "previous_scheduled_product_checkpoint_174": {
     "updated_at": "2026-10-11T18:04:51.196Z",
     "checked_at": "2026-10-11T18:04:51.196Z",
@@ -11265,48 +11265,43 @@
     "next_step": "First recheck exact-head CI for 09bd88e3085921733708578cce6e21a70430c0fd and accept only a verified successful run. Then isolate tests/test_rop_coverage_audit.py: on clean exact HEAD it exits 1 with 4 failed because rop_goods_rates is absent and creates a 4,096-byte ambient customs.db; preserve its 97-chapter, subject/not-subject and summary assertions without changing product or normative data."
   },
   "latest_scheduled_product_checkpoint": {
-    "updated_at": "2026-10-13T11:11:58Z",
-    "checked_at": "2026-10-13T11:11:58Z",
+    "updated_at": "2026-10-13T12:00:49Z",
+    "checked_at": "2026-10-13T12:00:49Z",
     "pr": 256,
     "branch": "agent/product-ntm-regressions-v1",
-    "head_sha": "6c1f3db6dc1da31683163fe9d5fb2966c77135e4",
-    "tree_sha": "b3ca4b992f7d3d85a978778d2be97cc371629844",
-    "parent_sha": "75b2a8e1fa9395bba1c88fac9f3a8255f347904f",
-    "prior_checkpoint_sha": "75b2a8e1fa9395bba1c88fac9f3a8255f347904f",
-    "local_author_exact_tree_commit": "74ad6527f6f6f625af90812a3dbc2f959c3f6d12",
+    "head_sha": "8557b12485295b02ef87aaa51bdb938a20a5ab7b",
+    "tree_sha": "64b96d301f73edabcabf6471b10998611449ab3e",
+    "parent_sha": "6c1f3db6dc1da31683163fe9d5fb2966c77135e4",
+    "prior_checkpoint_sha": "6c1f3db6dc1da31683163fe9d5fb2966c77135e4",
+    "local_author_exact_tree_commit": "b53cf41a3a5871a92d01d924c515218e2f3ece1b",
     "base_pr": 245,
     "base_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
-    "block": "rop_calculator_database_isolation",
-    "status": "IMPLEMENTED_A5_PASS_CI_PASS_ROP_CALCULATOR_DB_ISOLATION",
+    "block": "permits_normalize_api_database_isolation",
+    "status": "IMPLEMENTED_A5_PASS_CI_PASS_PERMITS_NORMALIZE_API_DB_ISOLATION",
     "behavior": {
-      "reproduced": "Parent exact HEAD passed all 14 ROP calculator tests but created a 1,089,536-byte ambient customs.db in a clean checkout.",
-      "final": "test_rop_calculator.py now loads tracked ROP goods and packaging bundles through the real importer into an in-memory SQLite StaticPool database, restores the importer session alias, disposes the engine and verifies protected fingerprints.",
-      "classification": "A test-fixture and database-isolation defect was reproduced and fixed. Real importer and calculator behavior remain exercised; no product algorithm, normative source or legal applicability changed.",
-      "boundaries": "Only customs-clear/backend/tests/test_rop_calculator.py changed. Its 14 original test methods and assertions are AST-identical."
+      "reproduced": "Parent exact HEAD passed 9 tests with 1 preserved conditional skip in test_permits_normalize_and_api.py but created a 1,036,288-byte ambient customs.db.",
+      "final": "test_permits_normalize_and_api.py now bootstraps disposable SQLite before app.main, redirects loaded SessionLocal and engine aliases, restores environment and modules, disposes the engine, removes DB sidecars and verifies protected fingerprints.",
+      "classification": "A test-fixture and database-isolation defect was reproduced and fixed. Real permit normalization, extraction, synchronous/asynchronous HTTP verification and job export behavior remain exercised; no product algorithm, normative source or legal applicability changed.",
+      "boundaries": "Only customs-clear/backend/tests/test_permits_normalize_and_api.py changed. Its 10 original test methods and assertions are AST-identical."
     },
     "verification": {
-      "author_focused": "Focused command passed 14 tests, exit 0. Forward and reverse seven-module ROP/payment adjacency commands each passed 117 tests, exit 0.",
-      "author_broad": "A bounded 28-module backend control passed 383 tests plus 47 subtests, exit 0; exact-remote focused rerun passed 14 tests, exit 0.",
-      "control": "Tariff-agent safety passed 124 tests, exit 0; py_compile and git diff --check exited 0; tracked ROP goods and packaging bundles and pinned catalogue remained byte-identical; focused runs created no ambient SQLite.",
-      "source_hashes": {
-        "rop_rates_2024_json": "b5ca408d5ee1fb7f6f4fc373f70662d2ee56b1dc2adb0d1411db4c7bac8976de",
-        "rop_packaging_defaults_json": "ffced29a7b2dc8d5f25c9da1084367cc575343304d849ff4afac028938a1e1e7",
-        "pinned_catalogue": "53847cb00ebc53f6315042325bc416d13d65cf020a10530a4ce7dde848ed1ff2"
-      },
+      "author_focused": "Focused command passed 9 tests with 1 preserved conditional skip, exit 0. Forward and reverse five-module permits/FSA/payment controls each passed 55 tests with 1 skip, exit 0.",
+      "author_broad": "A bounded 20-module backend control passed 188 tests plus 3 subtests with 1 skip, exit 0; exact-remote focused rerun passed 9 tests with 1 skip, exit 0.",
+      "control": "Tariff-agent safety passed 124 tests, exit 0; py_compile and git diff --check exited 0; pinned catalogue SHA-256 53847cb00ebc53f6315042325bc416d13d65cf020a10530a4ce7dde848ed1ff2 remained unchanged; final focused and control runs created no ambient SQLite.",
       "a5": {
-        "session": "/root/a5_cycle219",
+        "session": "/root/a5_cycle220",
         "status": "FINAL_PASS_EXACT_TREE_NO_FINDINGS",
-        "execution": "Independent exact-tree review passed focused 14 and independently selected forward/reverse four-module controls with 37 tests each; verified 14 AST-identical methods, one-file scope, real importer population from tracked bundles, hashes, alias restoration and absence of ambient SQLite.",
+        "execution": "Independent exact-tree review passed focused 9 plus 1 skip and independently selected forward/reverse four-module controls with 24 tests plus 1 skip each; verified 10 AST-identical methods, one-file scope, bootstrap-before-app.main, alias/env/module restoration, cleanup, fingerprints and absence of ambient SQLite.",
         "findings": []
       },
       "ci": {
         "status": "PASSED_EXACT_HEAD_OFFLINE_SAFETY_ONLY",
-        "run_id": 38387574926,
-        "job_id": 115263031228,
-        "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38387574926/job/115263031228",
-        "head_sha": "6c1f3db6dc1da31683163fe9d5fb2966c77135e4",
+        "run_id": 38394014237,
+        "job_id": 115284558655,
+        "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38394014237/job/115284558655",
+        "head_sha": "8557b12485295b02ef87aaa51bdb938a20a5ab7b",
         "conclusion": "success",
-        "limitation": "Workflow is offline-safety only; author and independent executable A5 provide product-test evidence."
+        "limitation": "Workflow is offline-safety only; author, A0 and independent executable A5 provide product-test evidence."
       }
     },
     "blockers": [
@@ -11320,55 +11315,50 @@
     "protected_actions_performed": false,
     "capabilities": {
       "code_access": "Full exact candidate tree available in isolated author, exact-remote and independent A5 worktrees.",
-      "command_execution": "Git, Python and pytest execution available; author, exact-remote and independent A5 commands exited 0.",
-      "lawful_publication": "Draft branch and PR updated through the authorized GitHub connector under lease generation 219.",
+      "command_execution": "Git, Python and pytest execution available; author, A0, exact-remote and independent A5 commands exited 0.",
+      "lawful_publication": "Draft branch and PR updated through the authorized GitHub connector under lease generation 220.",
       "checkpoint": "This state CAS commit is the durable checkpoint; lease release follows separately."
     },
-    "next_step": "Continue fresh exact-head read-only scanning of remaining DB consumers. test_recycling_fees.py (14), test_payment_engine.py (37), test_payment_quote.py (9), and test_import_duty_ingestion.py (58) all pass and create no ambient database, so none is a reproduced isolation defect."
+    "next_step": "On exact PR256 HEAD, isolate tests/test_permit_suggest.py: the clean exact-head command passes 6 tests, exit 0, but creates a 4,096-byte ambient customs.db; preserve all permit-suggestion assertions while eliminating the ambient write."
   },
   "latest_development_checkpoint": {
-    "updated_at": "2026-10-13T11:11:58Z",
-    "checked_at": "2026-10-13T11:11:58Z",
+    "updated_at": "2026-10-13T12:00:49Z",
+    "checked_at": "2026-10-13T12:00:49Z",
     "pr": 256,
     "branch": "agent/product-ntm-regressions-v1",
-    "head_sha": "6c1f3db6dc1da31683163fe9d5fb2966c77135e4",
-    "tree_sha": "b3ca4b992f7d3d85a978778d2be97cc371629844",
-    "parent_sha": "75b2a8e1fa9395bba1c88fac9f3a8255f347904f",
-    "prior_checkpoint_sha": "75b2a8e1fa9395bba1c88fac9f3a8255f347904f",
-    "local_author_exact_tree_commit": "74ad6527f6f6f625af90812a3dbc2f959c3f6d12",
+    "head_sha": "8557b12485295b02ef87aaa51bdb938a20a5ab7b",
+    "tree_sha": "64b96d301f73edabcabf6471b10998611449ab3e",
+    "parent_sha": "6c1f3db6dc1da31683163fe9d5fb2966c77135e4",
+    "prior_checkpoint_sha": "6c1f3db6dc1da31683163fe9d5fb2966c77135e4",
+    "local_author_exact_tree_commit": "b53cf41a3a5871a92d01d924c515218e2f3ece1b",
     "base_pr": 245,
     "base_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
-    "block": "rop_calculator_database_isolation",
-    "status": "IMPLEMENTED_A5_PASS_CI_PASS_ROP_CALCULATOR_DB_ISOLATION",
+    "block": "permits_normalize_api_database_isolation",
+    "status": "IMPLEMENTED_A5_PASS_CI_PASS_PERMITS_NORMALIZE_API_DB_ISOLATION",
     "behavior": {
-      "reproduced": "Parent exact HEAD passed all 14 ROP calculator tests but created a 1,089,536-byte ambient customs.db in a clean checkout.",
-      "final": "test_rop_calculator.py now loads tracked ROP goods and packaging bundles through the real importer into an in-memory SQLite StaticPool database, restores the importer session alias, disposes the engine and verifies protected fingerprints.",
-      "classification": "A test-fixture and database-isolation defect was reproduced and fixed. Real importer and calculator behavior remain exercised; no product algorithm, normative source or legal applicability changed.",
-      "boundaries": "Only customs-clear/backend/tests/test_rop_calculator.py changed. Its 14 original test methods and assertions are AST-identical."
+      "reproduced": "Parent exact HEAD passed 9 tests with 1 preserved conditional skip in test_permits_normalize_and_api.py but created a 1,036,288-byte ambient customs.db.",
+      "final": "test_permits_normalize_and_api.py now bootstraps disposable SQLite before app.main, redirects loaded SessionLocal and engine aliases, restores environment and modules, disposes the engine, removes DB sidecars and verifies protected fingerprints.",
+      "classification": "A test-fixture and database-isolation defect was reproduced and fixed. Real permit normalization, extraction, synchronous/asynchronous HTTP verification and job export behavior remain exercised; no product algorithm, normative source or legal applicability changed.",
+      "boundaries": "Only customs-clear/backend/tests/test_permits_normalize_and_api.py changed. Its 10 original test methods and assertions are AST-identical."
     },
     "verification": {
-      "author_focused": "Focused command passed 14 tests, exit 0. Forward and reverse seven-module ROP/payment adjacency commands each passed 117 tests, exit 0.",
-      "author_broad": "A bounded 28-module backend control passed 383 tests plus 47 subtests, exit 0; exact-remote focused rerun passed 14 tests, exit 0.",
-      "control": "Tariff-agent safety passed 124 tests, exit 0; py_compile and git diff --check exited 0; tracked ROP goods and packaging bundles and pinned catalogue remained byte-identical; focused runs created no ambient SQLite.",
-      "source_hashes": {
-        "rop_rates_2024_json": "b5ca408d5ee1fb7f6f4fc373f70662d2ee56b1dc2adb0d1411db4c7bac8976de",
-        "rop_packaging_defaults_json": "ffced29a7b2dc8d5f25c9da1084367cc575343304d849ff4afac028938a1e1e7",
-        "pinned_catalogue": "53847cb00ebc53f6315042325bc416d13d65cf020a10530a4ce7dde848ed1ff2"
-      },
+      "author_focused": "Focused command passed 9 tests with 1 preserved conditional skip, exit 0. Forward and reverse five-module permits/FSA/payment controls each passed 55 tests with 1 skip, exit 0.",
+      "author_broad": "A bounded 20-module backend control passed 188 tests plus 3 subtests with 1 skip, exit 0; exact-remote focused rerun passed 9 tests with 1 skip, exit 0.",
+      "control": "Tariff-agent safety passed 124 tests, exit 0; py_compile and git diff --check exited 0; pinned catalogue SHA-256 53847cb00ebc53f6315042325bc416d13d65cf020a10530a4ce7dde848ed1ff2 remained unchanged; final focused and control runs created no ambient SQLite.",
       "a5": {
-        "session": "/root/a5_cycle219",
+        "session": "/root/a5_cycle220",
         "status": "FINAL_PASS_EXACT_TREE_NO_FINDINGS",
-        "execution": "Independent exact-tree review passed focused 14 and independently selected forward/reverse four-module controls with 37 tests each; verified 14 AST-identical methods, one-file scope, real importer population from tracked bundles, hashes, alias restoration and absence of ambient SQLite.",
+        "execution": "Independent exact-tree review passed focused 9 plus 1 skip and independently selected forward/reverse four-module controls with 24 tests plus 1 skip each; verified 10 AST-identical methods, one-file scope, bootstrap-before-app.main, alias/env/module restoration, cleanup, fingerprints and absence of ambient SQLite.",
         "findings": []
       },
       "ci": {
         "status": "PASSED_EXACT_HEAD_OFFLINE_SAFETY_ONLY",
-        "run_id": 38387574926,
-        "job_id": 115263031228,
-        "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38387574926/job/115263031228",
-        "head_sha": "6c1f3db6dc1da31683163fe9d5fb2966c77135e4",
+        "run_id": 38394014237,
+        "job_id": 115284558655,
+        "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38394014237/job/115284558655",
+        "head_sha": "8557b12485295b02ef87aaa51bdb938a20a5ab7b",
         "conclusion": "success",
-        "limitation": "Workflow is offline-safety only; author and independent executable A5 provide product-test evidence."
+        "limitation": "Workflow is offline-safety only; author, A0 and independent executable A5 provide product-test evidence."
       }
     },
     "blockers": [
@@ -11382,11 +11372,11 @@
     "protected_actions_performed": false,
     "capabilities": {
       "code_access": "Full exact candidate tree available in isolated author, exact-remote and independent A5 worktrees.",
-      "command_execution": "Git, Python and pytest execution available; author, exact-remote and independent A5 commands exited 0.",
-      "lawful_publication": "Draft branch and PR updated through the authorized GitHub connector under lease generation 219.",
+      "command_execution": "Git, Python and pytest execution available; author, A0, exact-remote and independent A5 commands exited 0.",
+      "lawful_publication": "Draft branch and PR updated through the authorized GitHub connector under lease generation 220.",
       "checkpoint": "This state CAS commit is the durable checkpoint; lease release follows separately."
     },
-    "next_step": "Continue fresh exact-head read-only scanning of remaining DB consumers. test_recycling_fees.py (14), test_payment_engine.py (37), test_payment_quote.py (9), and test_import_duty_ingestion.py (58) all pass and create no ambient database, so none is a reproduced isolation defect."
+    "next_step": "On exact PR256 HEAD, isolate tests/test_permit_suggest.py: the clean exact-head command passes 6 tests, exit 0, but creates a 4,096-byte ambient customs.db; preserve all permit-suggestion assertions while eliminating the ambient write."
   },
   "previous_development_checkpoint_219": {
     "updated_at": "2026-10-13T10:06:25Z",
@@ -11517,5 +11507,129 @@
       "checkpoint": "This state CAS commit is the durable checkpoint; lease release follows separately."
     },
     "next_step": "On fresh PR256 HEAD, isolate tests/test_rop_calculator.py: the clean exact-head command passes 14 tests, exit 0, but creates a 1,089,536-byte ambient customs.db; preserve all calculator assertions while eliminating the ambient write on disposable fixture data."
+  },
+  "previous_development_checkpoint_220": {
+    "updated_at": "2026-10-13T11:11:58Z",
+    "checked_at": "2026-10-13T11:11:58Z",
+    "pr": 256,
+    "branch": "agent/product-ntm-regressions-v1",
+    "head_sha": "6c1f3db6dc1da31683163fe9d5fb2966c77135e4",
+    "tree_sha": "b3ca4b992f7d3d85a978778d2be97cc371629844",
+    "parent_sha": "75b2a8e1fa9395bba1c88fac9f3a8255f347904f",
+    "prior_checkpoint_sha": "75b2a8e1fa9395bba1c88fac9f3a8255f347904f",
+    "local_author_exact_tree_commit": "74ad6527f6f6f625af90812a3dbc2f959c3f6d12",
+    "base_pr": 245,
+    "base_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
+    "block": "rop_calculator_database_isolation",
+    "status": "IMPLEMENTED_A5_PASS_CI_PASS_ROP_CALCULATOR_DB_ISOLATION",
+    "behavior": {
+      "reproduced": "Parent exact HEAD passed all 14 ROP calculator tests but created a 1,089,536-byte ambient customs.db in a clean checkout.",
+      "final": "test_rop_calculator.py now loads tracked ROP goods and packaging bundles through the real importer into an in-memory SQLite StaticPool database, restores the importer session alias, disposes the engine and verifies protected fingerprints.",
+      "classification": "A test-fixture and database-isolation defect was reproduced and fixed. Real importer and calculator behavior remain exercised; no product algorithm, normative source or legal applicability changed.",
+      "boundaries": "Only customs-clear/backend/tests/test_rop_calculator.py changed. Its 14 original test methods and assertions are AST-identical."
+    },
+    "verification": {
+      "author_focused": "Focused command passed 14 tests, exit 0. Forward and reverse seven-module ROP/payment adjacency commands each passed 117 tests, exit 0.",
+      "author_broad": "A bounded 28-module backend control passed 383 tests plus 47 subtests, exit 0; exact-remote focused rerun passed 14 tests, exit 0.",
+      "control": "Tariff-agent safety passed 124 tests, exit 0; py_compile and git diff --check exited 0; tracked ROP goods and packaging bundles and pinned catalogue remained byte-identical; focused runs created no ambient SQLite.",
+      "source_hashes": {
+        "rop_rates_2024_json": "b5ca408d5ee1fb7f6f4fc373f70662d2ee56b1dc2adb0d1411db4c7bac8976de",
+        "rop_packaging_defaults_json": "ffced29a7b2dc8d5f25c9da1084367cc575343304d849ff4afac028938a1e1e7",
+        "pinned_catalogue": "53847cb00ebc53f6315042325bc416d13d65cf020a10530a4ce7dde848ed1ff2"
+      },
+      "a5": {
+        "session": "/root/a5_cycle219",
+        "status": "FINAL_PASS_EXACT_TREE_NO_FINDINGS",
+        "execution": "Independent exact-tree review passed focused 14 and independently selected forward/reverse four-module controls with 37 tests each; verified 14 AST-identical methods, one-file scope, real importer population from tracked bundles, hashes, alias restoration and absence of ambient SQLite.",
+        "findings": []
+      },
+      "ci": {
+        "status": "PASSED_EXACT_HEAD_OFFLINE_SAFETY_ONLY",
+        "run_id": 38387574926,
+        "job_id": 115263031228,
+        "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38387574926/job/115263031228",
+        "head_sha": "6c1f3db6dc1da31683163fe9d5fb2966c77135e4",
+        "conclusion": "success",
+        "limitation": "Workflow is offline-safety only; author and independent executable A5 provide product-test evidence."
+      }
+    },
+    "blockers": [
+      "Full #245 product acceptance and legal/source completeness remain NOT PASS.",
+      "The NTM full-sync audit still requires a lawful populated synchronized snapshot."
+    ],
+    "a6": {
+      "request": "core-s1-6415f443120f-r9-g106",
+      "status": "UNCHANGED_NOT_SENT"
+    },
+    "protected_actions_performed": false,
+    "capabilities": {
+      "code_access": "Full exact candidate tree available in isolated author, exact-remote and independent A5 worktrees.",
+      "command_execution": "Git, Python and pytest execution available; author, exact-remote and independent A5 commands exited 0.",
+      "lawful_publication": "Draft branch and PR updated through the authorized GitHub connector under lease generation 219.",
+      "checkpoint": "This state CAS commit is the durable checkpoint; lease release follows separately."
+    },
+    "next_step": "Continue fresh exact-head read-only scanning of remaining DB consumers. test_recycling_fees.py (14), test_payment_engine.py (37), test_payment_quote.py (9), and test_import_duty_ingestion.py (58) all pass and create no ambient database, so none is a reproduced isolation defect."
+  },
+  "previous_scheduled_product_checkpoint_220": {
+    "updated_at": "2026-10-13T11:11:58Z",
+    "checked_at": "2026-10-13T11:11:58Z",
+    "pr": 256,
+    "branch": "agent/product-ntm-regressions-v1",
+    "head_sha": "6c1f3db6dc1da31683163fe9d5fb2966c77135e4",
+    "tree_sha": "b3ca4b992f7d3d85a978778d2be97cc371629844",
+    "parent_sha": "75b2a8e1fa9395bba1c88fac9f3a8255f347904f",
+    "prior_checkpoint_sha": "75b2a8e1fa9395bba1c88fac9f3a8255f347904f",
+    "local_author_exact_tree_commit": "74ad6527f6f6f625af90812a3dbc2f959c3f6d12",
+    "base_pr": 245,
+    "base_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
+    "block": "rop_calculator_database_isolation",
+    "status": "IMPLEMENTED_A5_PASS_CI_PASS_ROP_CALCULATOR_DB_ISOLATION",
+    "behavior": {
+      "reproduced": "Parent exact HEAD passed all 14 ROP calculator tests but created a 1,089,536-byte ambient customs.db in a clean checkout.",
+      "final": "test_rop_calculator.py now loads tracked ROP goods and packaging bundles through the real importer into an in-memory SQLite StaticPool database, restores the importer session alias, disposes the engine and verifies protected fingerprints.",
+      "classification": "A test-fixture and database-isolation defect was reproduced and fixed. Real importer and calculator behavior remain exercised; no product algorithm, normative source or legal applicability changed.",
+      "boundaries": "Only customs-clear/backend/tests/test_rop_calculator.py changed. Its 14 original test methods and assertions are AST-identical."
+    },
+    "verification": {
+      "author_focused": "Focused command passed 14 tests, exit 0. Forward and reverse seven-module ROP/payment adjacency commands each passed 117 tests, exit 0.",
+      "author_broad": "A bounded 28-module backend control passed 383 tests plus 47 subtests, exit 0; exact-remote focused rerun passed 14 tests, exit 0.",
+      "control": "Tariff-agent safety passed 124 tests, exit 0; py_compile and git diff --check exited 0; tracked ROP goods and packaging bundles and pinned catalogue remained byte-identical; focused runs created no ambient SQLite.",
+      "source_hashes": {
+        "rop_rates_2024_json": "b5ca408d5ee1fb7f6f4fc373f70662d2ee56b1dc2adb0d1411db4c7bac8976de",
+        "rop_packaging_defaults_json": "ffced29a7b2dc8d5f25c9da1084367cc575343304d849ff4afac028938a1e1e7",
+        "pinned_catalogue": "53847cb00ebc53f6315042325bc416d13d65cf020a10530a4ce7dde848ed1ff2"
+      },
+      "a5": {
+        "session": "/root/a5_cycle219",
+        "status": "FINAL_PASS_EXACT_TREE_NO_FINDINGS",
+        "execution": "Independent exact-tree review passed focused 14 and independently selected forward/reverse four-module controls with 37 tests each; verified 14 AST-identical methods, one-file scope, real importer population from tracked bundles, hashes, alias restoration and absence of ambient SQLite.",
+        "findings": []
+      },
+      "ci": {
+        "status": "PASSED_EXACT_HEAD_OFFLINE_SAFETY_ONLY",
+        "run_id": 38387574926,
+        "job_id": 115263031228,
+        "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38387574926/job/115263031228",
+        "head_sha": "6c1f3db6dc1da31683163fe9d5fb2966c77135e4",
+        "conclusion": "success",
+        "limitation": "Workflow is offline-safety only; author and independent executable A5 provide product-test evidence."
+      }
+    },
+    "blockers": [
+      "Full #245 product acceptance and legal/source completeness remain NOT PASS.",
+      "The NTM full-sync audit still requires a lawful populated synchronized snapshot."
+    ],
+    "a6": {
+      "request": "core-s1-6415f443120f-r9-g106",
+      "status": "UNCHANGED_NOT_SENT"
+    },
+    "protected_actions_performed": false,
+    "capabilities": {
+      "code_access": "Full exact candidate tree available in isolated author, exact-remote and independent A5 worktrees.",
+      "command_execution": "Git, Python and pytest execution available; author, exact-remote and independent A5 commands exited 0.",
+      "lawful_publication": "Draft branch and PR updated through the authorized GitHub connector under lease generation 219.",
+      "checkpoint": "This state CAS commit is the durable checkpoint; lease release follows separately."
+    },
+    "next_step": "Continue fresh exact-head read-only scanning of remaining DB consumers. test_recycling_fees.py (14), test_payment_engine.py (37), test_payment_quote.py (9), and test_import_duty_ingestion.py (58) all pass and create no ambient database, so none is a reproduced isolation defect."
   }
 }
