@@ -1,3 +1,14 @@
+## 2026-10-13 — VED-intel API database isolation published on PR #256
+
+- Exact candidate: `293f2a2a156ae68bbaa5bb4a858a19eaa9d1ba6b`, tree `be4a016338cd3ad7d98225c8fb66ce85751744a8`; parent `ed799f2d7c37dda719bfaef93a266c7ea495e63b`; local author exact-tree commit `d04485717545d1a8a163aa6b645b396dea855631`.
+- Parent reproduction: `python -m pytest -q tests/test_ved_intel_api.py` exited 0 with **1 passed** but created a 1,036,288-byte ambient `customs.db`; the probe artifact was removed.
+- The unchanged VED-intel endpoint scenario now bootstraps disposable SQLite, redirects the preview-revision marker, rebinds loaded session/engine aliases, restores environment/modules and removes temporary DB sidecars. No product algorithm, normative source or legal applicability changed.
+- Author/A0: focused **1 passed**; forward/reverse adjacent controls **11 passed** each; orchestration safety **225 passed + 266 subtests**; exact-remote focused **1 passed**. All final commands exited 0; pinned catalogue/revision hashes stayed unchanged; no final ambient SQLite.
+- Independent A5 `/root/a5_cycle224`: **PASS without findings**; focused **1 passed**, independent forward/reverse controls **11 passed** each, original test-method AST, protected fingerprints and cleanup verified.
+- Exact-head CI [run 38427806072 / job 115401701528](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38427806072/job/115401701528): **success**.
+- Next reproduced target: on this exact HEAD, `test_ved_intel_async_api.py` exits 0 with **2 passed** but creates a 1,036,288-byte ambient `customs.db`; the probe artifact was removed.
+- The issue #257 bounded probe was not repeated because its receipt already exists; the later Dot comment remains a coordination queue, not an authority change. Full #245 acceptance and legal/source completeness remain NOT PASS; a lawful populated synchronized NTM snapshot is unavailable. A6 `core-s1-6415f443120f-r9-g106` remains unchanged and undispatched. No merge, deploy or production write was performed.
+
 ## 2026-10-13 — Decision-suggest database isolation published on PR #256
 
 - Exact candidate: `ed799f2d7c37dda719bfaef93a266c7ea495e63b`, tree `a1cb51c669e4201a293cbc1cdefa1bbbceb79ab9`; parent `d41cf8dc270c448e7be4fdf1b3d29f2842807312`; local author exact-tree commit `efa7731a4f91ee2eac58be0e1466a1be50442511`.
