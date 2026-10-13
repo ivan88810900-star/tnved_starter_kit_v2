@@ -1,6 +1,6 @@
 {
   "acquisition_note": "Fresh GitHub recovery at main e526dfbdb5a31b01bf6f743da0288b88f916de0c, PR256 75b2a8e1fa9395bba1c88fac9f3a8255f347904f and state revision 761; isolate test_rop_calculator.py from ambient SQLite without product, normative, A6, protected-branch or production changes.",
-  "expires_at": "2026-10-13T14:25:14.255283Z",
+  "expires_at": "2026-10-13T14:32:02.923654Z",
   "generation": 222,
   "holder": "/root",
   "lease_repair": {},
@@ -10,5 +10,5 @@
   "serialization_repair": {},
   "state": "active",
   "token": "07f3655bdad547939c904a6e0d21360a",
-  "updated_at": "2026-10-13T13:55:14.255283Z"
+  "updated_at": "2026-10-13T14:02:02.923654Z"
 }
