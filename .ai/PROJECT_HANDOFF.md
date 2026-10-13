@@ -1,3 +1,14 @@
+## 2026-10-13 — Preview permit-badges database/revision isolation published on PR #256
+
+- Exact candidate: `d41cf8dc270c448e7be4fdf1b3d29f2842807312`, tree `7d28cd861c8e742feb3f3475abdc82fa5a2f05fe`; parent `0ee5c48f8965995e2340d7ccd00bbf46e562bf8b`; local author exact-tree commit `19f14b5fdd3e96d79d250d41217f504838f0e427`.
+- Parent reproduction: `python -m pytest -q tests/test_preview_permit_badges.py` exited 1 with **1 failed**, reported missing `tnved_commodities`, created a 4,096-byte ambient `customs.db`, and mutated the tracked preview revision marker.
+- The unchanged 10-case endpoint regression now bootstraps a disposable classification inventory, redirects the preview marker, rebinds loaded database aliases, removes temporary files/sidecars and verifies protected fingerprints. No product algorithm, normative source or legal applicability changed.
+- Author/A0: focused **1 passed**; forward/reverse controls **30 passed** each; bounded broad **182 passed + 3 subtests, 1 skipped**; orchestration safety **225 tests OK**; exact-remote focused **1 passed**. All commands exited 0; protected catalogue/marker hashes stayed unchanged; no final ambient SQLite.
+- Independent A5 `/root/a5_cycle222`: **PASS without findings**; focused and three adversarial environment runs each passed **1**, forward/reverse controls each passed **30**, AST parity, sentinel fingerprints and teardown cleanup verified.
+- Exact-head CI [run 38410104672 / job 115339853313](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38410104672/job/115339853313): **success**.
+- Next reproduced target: on this exact HEAD, `test_decision_suggest_hs.py` exits 0 with **4 passed** but creates a 1,036,288-byte ambient `customs.db`; probe artifacts were removed.
+- Full #245 acceptance and legal/source completeness remain NOT PASS; a lawful populated synchronized NTM snapshot is unavailable. A6 `core-s1-6415f443120f-r9-g106` remains unchanged and undispatched. No merge, deploy or production write was performed.
+
 ## 2026-10-13 — Permit-suggest database isolation published on PR #256
 
 - Exact candidate: `0ee5c48f8965995e2340d7ccd00bbf46e562bf8b`, tree `31b5cf01d51bce39e207292e922ba9d171eb76f7`; parent `8557b12485295b02ef87aaa51bdb938a20a5ab7b`; local author exact-tree commit `1e26418fba810d74a598419282fb8ff8be0c5d5d`.
