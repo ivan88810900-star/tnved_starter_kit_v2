@@ -2179,7 +2179,7 @@
       "unique_source_pr_count": 29
     }
   },
-  "revision": 753,
+  "revision": 754,
   "runs": [
     {
       "head_sha": null,
@@ -7549,7 +7549,7 @@
       }
     }
   ],
-  "updated_at": "2026-10-13T02:08:20Z",
+  "updated_at": "2026-10-13T02:58:04Z",
   "previous_scheduled_product_checkpoint_174": {
     "updated_at": "2026-10-11T18:04:51.196Z",
     "checked_at": "2026-10-11T18:04:51.196Z",
@@ -8434,7 +8434,7 @@
     },
     "next_step": "On fresh PR256 HEAD, reproduce the ambient-database behavior of test_documents_v1_analyze_security.py before editing and preserve its authorization assertions."
   },
-  "latest_scheduled_product_checkpoint": {
+  "previous_scheduled_product_checkpoint_209": {
     "updated_at": "2026-10-13T02:08:20Z",
     "checked_at": "2026-10-13T02:08:20Z",
     "pr": 256,
@@ -8491,7 +8491,7 @@
     },
     "next_step": "On fresh PR256 HEAD, reproduce the ambient-database behavior of test_operational_admin_surface_auth.py before editing and preserve its admin-token and authenticated-session assertions."
   },
-  "latest_development_checkpoint": {
+  "previous_development_checkpoint_209": {
     "updated_at": "2026-10-13T02:08:20Z",
     "checked_at": "2026-10-13T02:08:20Z",
     "pr": 256,
@@ -8547,6 +8547,120 @@
       "checkpoint": "This state CAS commit is the durable checkpoint; lease release follows separately."
     },
     "next_step": "On fresh PR256 HEAD, reproduce the ambient-database behavior of test_operational_admin_surface_auth.py before editing and preserve its admin-token and authenticated-session assertions."
+  },
+  "latest_scheduled_product_checkpoint": {
+    "updated_at": "2026-10-13T02:58:04Z",
+    "checked_at": "2026-10-13T02:58:04Z",
+    "pr": 256,
+    "branch": "agent/product-ntm-regressions-v1",
+    "head_sha": "b9ea7c465448cf65fda328fa55370f1e9f1c5e6b",
+    "tree_sha": "5ff5abef82690e32bf10a9a052f7188a0bf0f088",
+    "parent_sha": "4c19b1848297e9b01264a08f5e411ecad9c98bc2",
+    "prior_checkpoint_sha": "4c19b1848297e9b01264a08f5e411ecad9c98bc2",
+    "local_author_exact_tree_commit": "bd24b4c764d44527486e6810bb27cac1b2fda411",
+    "base_pr": 245,
+    "base_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
+    "block": "operational_admin_surface_auth_database_isolation",
+    "status": "IMPLEMENTED_A5_PASS_CI_PASS_OPERATIONAL_ADMIN_AUTH_DB_ISOLATION",
+    "behavior": {
+      "reproduced": "Parent exact HEAD passed seven operational admin/auth tests but created a 1,036,288-byte ambient customs.db in a clean checkout.",
+      "final": "test_operational_admin_surface_auth.py now bootstraps a disposable SQLite database before importing the application surface, binds loaded database aliases, restores preloaded and late-import module state, removes the temporary database and sidecars, and rechecks protected fingerprints.",
+      "classification": "A test import-order and database-isolation defect was reproduced and fixed; real FastAPI requests, login, JWT sessions and admin-token authorization boundaries remain exercised. No product algorithm, normative source or legal applicability change was made.",
+      "boundaries": "Only customs-clear/backend/tests/test_operational_admin_surface_auth.py changed. Its seven original test methods and assertions are AST-identical."
+    },
+    "verification": {
+      "author_focused": "Exact remote focused command passed 7 tests, exit 0; operational/documents/classify/assistant/API/payment controls in forward and reverse order passed 104 tests plus 3 subtests each, exit 0.",
+      "author_broad": "The 23-module broad payment/compliance/API command passed 369 tests plus 13 subtests, exit 0; no ambient SQLite was created and the pinned catalogue stayed byte-identical.",
+      "control": "Tariff-agent safety passed 124 tests, exit 0; git diff --check passed; pinned catalogue SHA-256 53847cb00ebc53f6315042325bc416d13d65cf020a10530a4ce7dde848ed1ff2.",
+      "a5": {
+        "session": "/root/a5_cycle210",
+        "status": "FINAL_PASS_EXACT_HEAD_NO_FINDINGS",
+        "execution": "Fresh detached exact review reproduced the parent ambient DB creation, then passed focused 7, forward/reverse 104 plus 3 subtests each, broad 369 plus 13 subtests and safety 124; verified seven AST-identical methods, real HTTP/login/JWT/admin-token paths, adversarial preload and alias/environment/init_db restoration, late-import cleanup and temporary database/sidecar cleanup.",
+        "findings": []
+      },
+      "ci": {
+        "status": "PASSED_EXACT_HEAD_OFFLINE_SAFETY_ONLY",
+        "run_id": 38338909715,
+        "job_id": 115105248694,
+        "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38338909715/job/115105248694",
+        "head_sha": "b9ea7c465448cf65fda328fa55370f1e9f1c5e6b",
+        "conclusion": "success",
+        "limitation": "Workflow is offline-safety only; author and independent executable A5 provide product-test evidence."
+      }
+    },
+    "blockers": [
+      "Full #245 product acceptance and legal/source completeness remain NOT PASS.",
+      "The NTM full-sync audit still requires a lawful populated synchronized snapshot."
+    ],
+    "a6": {
+      "request": "core-s1-6415f443120f-r9-g106",
+      "status": "UNCHANGED_NOT_SENT"
+    },
+    "protected_actions_performed": false,
+    "capabilities": {
+      "code_access": "Full exact candidate tree available in isolated author, exact-remote and independent A5 worktrees.",
+      "command_execution": "Git, Python and pytest execution available; author, exact-remote and A5 commands exited 0.",
+      "lawful_publication": "Draft branch and PR updated through the authorized GitHub connector under lease generation 210.",
+      "checkpoint": "This state CAS commit is the durable checkpoint; lease release follows separately."
+    },
+    "next_step": "On fresh PR256 HEAD, reproduce the ambient-database behavior of test_sensitive_endpoints_auth.py before editing and preserve its authentication and authorization assertions."
+  },
+  "latest_development_checkpoint": {
+    "updated_at": "2026-10-13T02:58:04Z",
+    "checked_at": "2026-10-13T02:58:04Z",
+    "pr": 256,
+    "branch": "agent/product-ntm-regressions-v1",
+    "head_sha": "b9ea7c465448cf65fda328fa55370f1e9f1c5e6b",
+    "tree_sha": "5ff5abef82690e32bf10a9a052f7188a0bf0f088",
+    "parent_sha": "4c19b1848297e9b01264a08f5e411ecad9c98bc2",
+    "prior_checkpoint_sha": "4c19b1848297e9b01264a08f5e411ecad9c98bc2",
+    "local_author_exact_tree_commit": "bd24b4c764d44527486e6810bb27cac1b2fda411",
+    "base_pr": 245,
+    "base_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
+    "block": "operational_admin_surface_auth_database_isolation",
+    "status": "IMPLEMENTED_A5_PASS_CI_PASS_OPERATIONAL_ADMIN_AUTH_DB_ISOLATION",
+    "behavior": {
+      "reproduced": "Parent exact HEAD passed seven operational admin/auth tests but created a 1,036,288-byte ambient customs.db in a clean checkout.",
+      "final": "test_operational_admin_surface_auth.py now bootstraps a disposable SQLite database before importing the application surface, binds loaded database aliases, restores preloaded and late-import module state, removes the temporary database and sidecars, and rechecks protected fingerprints.",
+      "classification": "A test import-order and database-isolation defect was reproduced and fixed; real FastAPI requests, login, JWT sessions and admin-token authorization boundaries remain exercised. No product algorithm, normative source or legal applicability change was made.",
+      "boundaries": "Only customs-clear/backend/tests/test_operational_admin_surface_auth.py changed. Its seven original test methods and assertions are AST-identical."
+    },
+    "verification": {
+      "author_focused": "Exact remote focused command passed 7 tests, exit 0; operational/documents/classify/assistant/API/payment controls in forward and reverse order passed 104 tests plus 3 subtests each, exit 0.",
+      "author_broad": "The 23-module broad payment/compliance/API command passed 369 tests plus 13 subtests, exit 0; no ambient SQLite was created and the pinned catalogue stayed byte-identical.",
+      "control": "Tariff-agent safety passed 124 tests, exit 0; git diff --check passed; pinned catalogue SHA-256 53847cb00ebc53f6315042325bc416d13d65cf020a10530a4ce7dde848ed1ff2.",
+      "a5": {
+        "session": "/root/a5_cycle210",
+        "status": "FINAL_PASS_EXACT_HEAD_NO_FINDINGS",
+        "execution": "Fresh detached exact review reproduced the parent ambient DB creation, then passed focused 7, forward/reverse 104 plus 3 subtests each, broad 369 plus 13 subtests and safety 124; verified seven AST-identical methods, real HTTP/login/JWT/admin-token paths, adversarial preload and alias/environment/init_db restoration, late-import cleanup and temporary database/sidecar cleanup.",
+        "findings": []
+      },
+      "ci": {
+        "status": "PASSED_EXACT_HEAD_OFFLINE_SAFETY_ONLY",
+        "run_id": 38338909715,
+        "job_id": 115105248694,
+        "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38338909715/job/115105248694",
+        "head_sha": "b9ea7c465448cf65fda328fa55370f1e9f1c5e6b",
+        "conclusion": "success",
+        "limitation": "Workflow is offline-safety only; author and independent executable A5 provide product-test evidence."
+      }
+    },
+    "blockers": [
+      "Full #245 product acceptance and legal/source completeness remain NOT PASS.",
+      "The NTM full-sync audit still requires a lawful populated synchronized snapshot."
+    ],
+    "a6": {
+      "request": "core-s1-6415f443120f-r9-g106",
+      "status": "UNCHANGED_NOT_SENT"
+    },
+    "protected_actions_performed": false,
+    "capabilities": {
+      "code_access": "Full exact candidate tree available in isolated author, exact-remote and independent A5 worktrees.",
+      "command_execution": "Git, Python and pytest execution available; author, exact-remote and A5 commands exited 0.",
+      "lawful_publication": "Draft branch and PR updated through the authorized GitHub connector under lease generation 210.",
+      "checkpoint": "This state CAS commit is the durable checkpoint; lease release follows separately."
+    },
+    "next_step": "On fresh PR256 HEAD, reproduce the ambient-database behavior of test_sensitive_endpoints_auth.py before editing and preserve its authentication and authorization assertions."
   },
   "previous_scheduled_product_checkpoint_188": {
     "updated_at": "2026-10-12T06:11:25.000Z",
