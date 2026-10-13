@@ -54,6 +54,7 @@ UA = {"User-Agent": "customs-clear-sgr-sync/1.0"}
 DEFAULT_SGR_ODATA_LIST_TITLE = "Единый реестр свидетельств о государственной регистрации"
 NSI_BASE_API = "https://nsi.eaeunion.org/portal/api"
 NSI_SGR_CODE = "1995"
+NSI_SGR_MAX_BATCH_SIZE = 1500
 
 
 def _parse_dt(val: str | None) -> datetime | None:
@@ -247,14 +248,24 @@ def _nsi_sgr_total(*, code: str, date_iso: str, proxy: str = "") -> int:
     url = f"{NSI_BASE_API}/dictionaries/{code}/get-list-data-total"
     payload = {"date": date_iso, "filter": [{"code": "searchText", "value": "", "conditionType": "like"}]}
     data = _http_post_json(url, payload, proxy=proxy)
-    if isinstance(data, dict):
-        for k in ("byFilterCount", "totalCount", "count"):
-            if k in data:
-                try:
-                    return max(0, int(data.get(k) or 0))
-                except Exception:
-                    continue
-    return 0
+    if not isinstance(data, dict):
+        raise RuntimeError("NSI SGR total response has unsupported shape")
+    for k in ("byFilterCount", "totalCount", "count"):
+        if k not in data:
+            continue
+        raw = data.get(k)
+        try:
+            if isinstance(raw, bool):
+                raise ValueError("boolean is not a row count")
+            total = int(raw)
+            if isinstance(raw, float) and not raw.is_integer():
+                raise ValueError("fractional row count")
+        except (TypeError, ValueError) as exc:
+            raise RuntimeError(f"NSI SGR total field {k!r} is malformed") from exc
+        if total < 0:
+            raise RuntimeError(f"NSI SGR total field {k!r} is negative")
+        return total
+    raise RuntimeError("NSI SGR total response has no supported count field")
 
 
 def _nsi_sgr_rows(
@@ -264,15 +275,17 @@ def _nsi_sgr_rows(
     proxy: str = "",
     max_rows: int = 0,
     batch_size: int = 500,
-) -> list[dict[str, Any]]:
+) -> tuple[list[dict[str, Any]], int, bool]:
     total = _nsi_sgr_total(code=code, date_iso=date_iso, proxy=proxy)
-    if total <= 0:
-        return []
-    target = min(total, int(max_rows)) if int(max_rows) > 0 else total
+    requested_max = int(max_rows)
+    target = min(total, requested_max) if requested_max > 0 else total
+    is_partial = requested_max > 0 and requested_max < total
+    if target == 0:
+        return [], total, is_partial
     url = f"{NSI_BASE_API}/dictionaries/{code}/get-list-data"
     out: list[dict[str, Any]] = []
     offset = 0
-    step = max(1, min(2000, int(batch_size)))
+    step = max(1, min(NSI_SGR_MAX_BATCH_SIZE, int(batch_size)))
     while offset < target:
         payload = {
             "date": date_iso,
@@ -285,18 +298,32 @@ def _nsi_sgr_rows(
         if isinstance(data, list):
             rows = data
         elif isinstance(data, dict):
-            rows = data.get("records") or data.get("content") or data.get("result") or data.get("data") or []
+            supported_keys = ("records", "content", "result", "data")
+            page_key = next((key for key in supported_keys if key in data), None)
+            if page_key is None:
+                raise RuntimeError(f"NSI SGR page at offset {offset} has unsupported shape")
+            rows = data.get(page_key)
         else:
-            rows = []
-        if not isinstance(rows, list) or not rows:
-            break
-        for r in rows:
-            if isinstance(r, dict):
-                out.append(r)
+            raise RuntimeError(f"NSI SGR page at offset {offset} has unsupported shape")
+        if not isinstance(rows, list):
+            raise RuntimeError(f"NSI SGR page at offset {offset} is not a list")
+        if not rows:
+            raise RuntimeError(
+                f"NSI SGR pagination exhausted at offset {offset} before target {target}"
+            )
+        if len(rows) > payload["limit"]:
+            raise RuntimeError(
+                f"NSI SGR page at offset {offset} exceeds requested limit {payload['limit']}"
+            )
+        if not all(isinstance(row, dict) for row in rows):
+            raise RuntimeError(f"NSI SGR page at offset {offset} contains a non-object row")
+        out.extend(rows)
         offset += len(rows)
-        if len(rows) < payload["limit"]:
-            break
-    return out
+        # A short page is not proof of exhaustion: the NSI endpoint can return
+        # uneven page sizes. Continue from the actual row count until target.
+    if len(out) != target:
+        raise RuntimeError(f"NSI SGR fetched {len(out)} rows, expected {target}")
+    return out, total, is_partial
 
 
 def _row_from_nsi_dict(item: dict[str, Any]) -> dict[str, Any] | None:
@@ -331,14 +358,25 @@ def sync_from_nsi(
     proxy: str = "",
     max_rows: int = 0,
 ) -> tuple[int, str]:
-    rows = _nsi_sgr_rows(code=code, date_iso=date_iso, proxy=proxy, max_rows=max_rows)
-    n = 0
-    for item in rows:
+    rows, official_total, is_partial = _nsi_sgr_rows(
+        code=code,
+        date_iso=date_iso,
+        proxy=proxy,
+        max_rows=max_rows,
+    )
+    parsed_rows: list[dict[str, Any]] = []
+    for index, item in enumerate(rows):
         row = _row_from_nsi_dict(item)
         if not row:
-            continue
+            raise RuntimeError(f"NSI SGR row {index} is malformed or has no NUMB_DOC")
+        parsed_rows.append(row)
+
+    n = 0
+    for row in parsed_rows:
         upsert_sgr(db, row)
         n += 1
+    if is_partial:
+        return n, f"nsi_partial:max_rows={len(rows)};official_total={official_total}"
     return n, "nsi_ok"
 
 
@@ -450,6 +488,23 @@ def demo_seed(db: Session) -> int:
     for row in rows:
         upsert_sgr(db, row)
     return len(rows)
+
+
+def _sgr_sync_log_status(
+    *,
+    total: int,
+    note_parts: list[str],
+    http_failed: bool,
+    demo_seed_enabled: bool,
+) -> str:
+    if http_failed:
+        return "error"
+    nsi_messages = [part.removeprefix("auto_nsi:") for part in note_parts]
+    if any(message.startswith("nsi_partial:") for message in nsi_messages):
+        return "partial"
+    if total or demo_seed_enabled or "nsi_ok" in nsi_messages:
+        return "ok"
+    return "partial"
 
 
 def main() -> int:
@@ -579,7 +634,12 @@ def main() -> int:
         _save_checkpoint(cp)
 
     note = "; ".join(note_parts) or "ok"
-    log_status = "error" if http_failed else ("ok" if total or args.demo_seed else "partial")
+    log_status = _sgr_sync_log_status(
+        total=total,
+        note_parts=note_parts,
+        http_failed=http_failed,
+        demo_seed_enabled=args.demo_seed,
+    )
     append_sync_log(
         "sgr_registry",
         log_status,
