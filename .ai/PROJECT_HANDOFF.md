@@ -1,3 +1,15 @@
+## 2026-10-13 — FSA registry-status database isolation published on PR #256
+
+- Exact candidate: `a8e5a9ce2f874d646859605bf48b67a38c5c7ddd`, tree `cc589acea18a63680ebdce32eee4f6ced08b5155`; parent checkpoint `75c1f5f426a5d26094b9701fe29c00a75a2248ff`; local author exact-tree commit `6713f354d35334769749d01355a007631ff2cc6a`.
+- Parent reproduction: `python -m pytest -q tests/test_fsa_registry_status_fail_closed.py` exited 0 with **20 passed** but created a 1,036,288-byte ambient `customs.db`.
+- `test_fsa_registry_status_fail_closed.py` now bootstraps a disposable SQLite database, binds loaded database aliases, restores environment/module state, removes temporary SQLite files and verifies protected fingerprints. All three original test functions are AST-identical; the 18-case status matrix, expired-row rejection and UNKNOWN/manual-review lookup evidence are unchanged.
+- Author exact-remote focused: **20 passed**. FSA/permits/auth/API/payment controls in both orders: **134 passed + 3 subtests** each. Broad 26-module command: **399 passed + 13 subtests**. Safety: **124 tests OK**. All exits 0; diff-check clean; no ambient DB/WAL/SHM; pinned catalogue SHA-256 unchanged.
+- Independent A5 `/root/a5_cycle213`: **FINAL PASS without findings**; focused **20 passed**, independent forward/reverse FSA/permits controls **44 passed** each, fail-closed semantics, AST parity and cleanup verified.
+- Exact-head CI [run 38354671784 / job 115154661235](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38354671784/job/115154661235): **success**.
+- Draft PR only. No product code, normative/source data, merge, deploy, production write, legal applicability/enforcement/permissions/secrets change or external A6 call. Full #245 remains NOT PASS; lawful populated synchronized NTM snapshot remains unavailable.
+- Next: on fresh PR #256 HEAD reproduce the ambient-database behavior of `test_vat_preferences_audit161.py` before editing and preserve its payment-preference audit assertions.
+
+
 ## 2026-10-13 — Permits verify-job ownership database isolation published on PR #256
 
 - Exact candidate: `75c1f5f426a5d26094b9701fe29c00a75a2248ff`, tree `eb28a03be3944f09556ed4e4daab9c0ad6fb75cf`; parent checkpoint `0a830546181d2bb18f5805b202fe28a42a5f207c`; local author exact-tree commit `ddc50837c0c357cae8b8783564f134faf29e7947`.
