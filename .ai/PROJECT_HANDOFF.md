@@ -1,3 +1,14 @@
+## 2026-10-13 — Sensitive endpoints auth database isolation published on PR #256
+
+- Exact candidate: `0a830546181d2bb18f5805b202fe28a42a5f207c`, tree `0741c481b6dcf0482890605bed79b8b26fc60f85`; parent checkpoint `b9ea7c465448cf65fda328fa55370f1e9f1c5e6b`; local author exact-tree commit `808aeab8976a9e1691a09838d33b2170cebdd4e6`.
+- Parent reproduction: `python -m pytest -q tests/test_sensitive_endpoints_auth.py` exited 0 with **6 passed** but created a 1,036,288-byte ambient `customs.db`.
+- `test_sensitive_endpoints_auth.py` now bootstraps a disposable SQLite database before importing the application surface, binds loaded database aliases, restores preloaded and late-import module state, removes the temporary database and sidecars, and verifies protected fingerprints. All seven original class methods, including `setUpClass`, are AST-identical and still exercise real FastAPI requests, declarant JWT login, anonymous/authenticated boundaries and missing/wrong/correct admin-token handling.
+- Author exact-remote focused: **6 passed**. Sensitive/operational/documents/classify/assistant/API/payment controls in both orders: **110 passed + 3 subtests** each. Broad 24-module command: **375 passed + 13 subtests**. Safety: **124 tests OK**. All final exits 0; diff-check clean; no ambient DB/WAL/SHM; pinned catalogue SHA-256 unchanged.
+- Independent A5 `/root/a5_cycle211`: **FINAL PASS without findings**; parent mutation reproduced, all candidate controls passed, real login/JWT/admin-token paths and AST parity verified, 38 SessionLocal + 6 engine aliases and environment/init_db restored, late imports and temporary SQLite cleaned up.
+- Exact-head CI [run 38344097237 / job 115121400569](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38344097237/job/115121400569): **success**.
+- Draft PR only. No product code, normative/source data, merge, deploy, production write, legal applicability/enforcement/permissions/secrets change or external A6 call. Full #245 remains NOT PASS; lawful populated synchronized NTM snapshot remains unavailable.
+- Next: on fresh PR #256 HEAD reproduce the ambient-database behavior of `test_permits_verify_jobs_ownership.py` before editing and preserve its owner/admin authorization assertions.
+
 ## 2026-10-13 — Operational admin/auth database isolation published on PR #256
 
 - Exact candidate: `b9ea7c465448cf65fda328fa55370f1e9f1c5e6b`, tree `5ff5abef82690e32bf10a9a052f7188a0bf0f088`; parent checkpoint `4c19b1848297e9b01264a08f5e411ecad9c98bc2`; local author exact-tree commit `bd24b4c764d44527486e6810bb27cac1b2fda411`.
