@@ -1,3 +1,14 @@
+## 2026-10-13 — ROP calculator database isolation published on PR #256
+
+- Exact candidate: `6c1f3db6dc1da31683163fe9d5fb2966c77135e4`, tree `b3ca4b992f7d3d85a978778d2be97cc371629844`; parent `75b2a8e1fa9395bba1c88fac9f3a8255f347904f`; local author exact-tree commit `74ad6527f6f6f625af90812a3dbc2f959c3f6d12`.
+- Parent reproduction: `python -m pytest -q tests/test_rop_calculator.py` exited 0 with **14 passed** but created a 1,089,536-byte ambient `customs.db`.
+- The unchanged 14 calculator tests now load the tracked ROP goods and packaging bundles through the real importer into in-memory SQLite `StaticPool`; the importer session alias is restored and source/DB-sidecar fingerprints are protected. No product algorithm, normative source or legal applicability changed.
+- Author: focused **14 passed**; forward/reverse seven-module controls **117 passed** each; bounded broad **383 passed + 47 subtests**; orchestration safety **124 tests OK**; exact-remote focused **14 passed**. All final commands exited 0; protected hashes stayed unchanged; no ambient SQLite.
+- Independent A5 `/root/a5_cycle219`: **PASS without findings**; focused **14 passed**, independent forward/reverse controls **37 passed** each, one-file scope, AST parity, real importer population, hashes and cleanup verified.
+- Exact-head CI [run 38387574926 / job 115263031228](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38387574926/job/115263031228): **success**.
+- Fresh next-target triage: `test_recycling_fees.py` (14), `test_payment_engine.py` (37), `test_payment_quote.py` (9), and `test_import_duty_ingestion.py` (58) all pass on this exact HEAD and create no ambient database. Continue the read-only scan of remaining DB consumers before selecting another isolation edit.
+- Draft only. No merge, deploy, production write, enforcement/permissions/secrets change or external A6 call. Full #245 and legal/source completeness remain NOT PASS; lawful populated synchronized NTM snapshot remains unavailable.
+
 ## 2026-10-13 — ROP coverage audit database isolation published on PR #256
 
 - Exact candidate: `75b2a8e1fa9395bba1c88fac9f3a8255f347904f`, tree `517c2dc6d9fb1422b2b4f0242534b769dc70f320`; parent `09bd88e3085921733708578cce6e21a70430c0fd`; local author exact-tree commit `a63f22019632830ad6b8ffa645bb73f64c64a073`.
