@@ -1,3 +1,14 @@
+## 2026-10-13 — Assistant copilot database isolation published on PR #256
+
+- Exact candidate: `b0066faca700a469ff7e4b917d45bf1336168239`, tree `2b42db6cdf6ffb49da4faace67773a1649eb3925`; parent checkpoint `8e181c074fcb271a9e51db36cb574117e1cfa016`; local author exact-tree commit `1c0653239df32500d5ef46905c46cff324736544`.
+- Parent reproduction: `python -m pytest -q tests/test_assistant_copilot.py` exited 0 with **6 passed + 3 subtests** but created a 1,036,288-byte ambient `customs.db`.
+- `test_assistant_copilot.py` now bootstraps a disposable SQLite database before importing the application surface, binds loaded database aliases, restores preloaded and late-import module state, removes the temporary database and sidecars, and verifies protected fingerprints. All six original test methods are AST-identical.
+- Author exact-remote focused: **6 passed + 3 subtests**. Copilot/batch/decisions/journal/analytics/API/payment-engine/compliance in both orders: **92 passed + 3 subtests** each. Broad 20-module command: **357 passed + 13 subtests**. Safety: **124 tests OK**. All final exits 0; diff-check clean; no ambient DB/WAL/SHM; pinned catalogue SHA-256 unchanged.
+- Independent A5 `/root/a5_cycle207`: **FINAL PASS without findings** on exact HEAD; parent mutation reproduced, candidate focused/adjacent/broad/safety controls passed, preloaded aliases and environment restored, late-import modules cleaned up, AST parity and one-file scope verified.
+- Exact-head CI [run 38324992684 / job 115061487589](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38324992684/job/115061487589): **success**.
+- Draft PR only. No product code, normative/source data, merge, deploy, production write, legal applicability/enforcement/permissions/secrets change or external A6 call. Full #245 remains NOT PASS; lawful populated synchronized NTM snapshot remains unavailable.
+- Next: on fresh PR #256 HEAD reproduce the ambient-database behavior of `test_classify_api_security.py` before editing and preserve its authorization assertions.
+
 ## 2026-10-13 — Assistant batch API database isolation published on PR #256
 
 - Exact candidate: `8e181c074fcb271a9e51db36cb574117e1cfa016`, tree `4d1b1027fad0acf6612f7d003c41848d302dd5ff`; parent checkpoint `40df46bbfd29027c64439b6c0c3819d823650b19`; local author exact-tree commit `417e5192034240944b8a3d0e56e170a059ad983d`.
