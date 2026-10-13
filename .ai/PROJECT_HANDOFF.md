@@ -1,3 +1,14 @@
+## 2026-10-13 — VED-report PDF database isolation published on PR #256
+
+- Exact candidate: `3bee53f0ba15de9e860b5d6d926183b169862847`, tree `b34b3ed7349d41dd095c6baa93983a661876304c`; parent `4d23c17e7971794737c41b03f47fa757c897013e`; local author exact-tree commit `312931e1c34dee6c3fc9ec5fa396c324096979fe`.
+- Parent reproduction: `python -m pytest -q tests/test_ved_report_pdf_api.py` exited 0 with **1 passed** but created a 1,036,288-byte ambient `customs.db`; the probe artifact was removed.
+- The unchanged VED-report PDF endpoint scenario now bootstraps disposable SQLite, redirects the preview-revision marker, rebinds loaded session/engine aliases, restores environment/modules and removes temporary DB sidecars. No product algorithm, normative source or legal applicability changed.
+- Author/A0: focused **1 passed**; forward/reverse adjacent controls **4 passed** each; orchestration safety **124 passed + 175 subtests**; exact-remote focused **1 passed**. All final commands exited 0; pinned catalogue/revision hashes stayed unchanged; no final ambient SQLite.
+- Independent A5 `/root/a5_cycle227`: **PASS without findings**; focused **1 passed**, independent forward/reverse controls **4 passed** each, original test-method AST, real endpoint/PDF assertions, protected fingerprints and cleanup verified.
+- Exact-head CI [run 38450516833 / job 115479905765](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38450516833/job/115479905765): **success**.
+- Next reproduced target: on this exact HEAD, `test_source_import.py` exits 0 with **3 passed** but creates a 1,036,288-byte ambient `customs.db`; the probe artifact was removed. Seven other scanned DB consumers passed cleanly.
+- The issue #257 bounded probe was not repeated because its receipt already exists; the later Dot comment remains a coordination queue, not an authority change. Full #245 acceptance and legal/source completeness remain NOT PASS; a lawful populated synchronized NTM snapshot is unavailable. A6 `core-s1-6415f443120f-r9-g106` remains unchanged and undispatched. No merge, deploy or production write was performed.
+
 ## 2026-10-13 — VED-intel SSE database isolation published on PR #256
 
 - Exact candidate: `4d23c17e7971794737c41b03f47fa757c897013e`, tree `0f1ef0af4d505ff50c26fd7fbe1e572e3b9ada6b`; parent `470d4122cda57c29eb0f83dabe7d381668d84e32`; local author exact-tree commit `a0caafae59965f24f5c0e9d68b4d74d496077845`.
