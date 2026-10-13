@@ -1,3 +1,14 @@
+## 2026-10-13 — Documents analyze security database isolation published on PR #256
+
+- Exact candidate: `4c19b1848297e9b01264a08f5e411ecad9c98bc2`, tree `929a073e30da0ba2c85d6df9066671286f51b836`; parent checkpoint `03208ff9099236a5b1050a0df63c3f036f937e15`; local author exact-tree commit `0ea9e1a2d13ebecfb9053ff17aaf57084a18047a`.
+- Parent reproduction: `python -m pytest -q tests/test_documents_v1_analyze_security.py` exited 0 with **2 passed** but created a 1,036,288-byte ambient `customs.db`.
+- `test_documents_v1_analyze_security.py` now bootstraps a disposable SQLite database before importing the application surface, binds loaded database aliases, restores preloaded and late-import module state, removes the temporary database and sidecars, and verifies protected fingerprints. Both original security tests are AST-identical and still exercise real FastAPI requests, declarant login, HTTP 503/error-code handling and rejection of client-supplied API-key authority.
+- Author exact-remote focused: **2 passed**. Documents/classify/assistant/API/payment controls in both orders: **97 passed + 3 subtests** each. Broad 22-module command: **362 passed + 13 subtests**. Safety: **124 tests OK**. All final exits 0; diff-check clean; no ambient DB/WAL/SHM; pinned catalogue SHA-256 unchanged.
+- Independent A5 `/root/a5_cycle209`: **FINAL PASS without findings**; parent mutation reproduced, all candidate controls passed, real HTTP/auth paths and AST parity verified, adversarial preload and alias/environment/init_db restoration confirmed, late imports and temporary SQLite cleaned up.
+- Exact-head CI [run 38335028326 / job 115093059027](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38335028326/job/115093059027): **success**.
+- Draft PR only. No product code, normative/source data, merge, deploy, production write, legal applicability/enforcement/permissions/secrets change or external A6 call. Full #245 remains NOT PASS; lawful populated synchronized NTM snapshot remains unavailable.
+- Next: on fresh PR #256 HEAD reproduce the ambient-database behavior of `test_operational_admin_surface_auth.py` before editing and preserve its admin-token and authenticated-session assertions.
+
 ## 2026-10-13 — Classify security API database isolation published on PR #256
 
 - Exact candidate: `03208ff9099236a5b1050a0df63c3f036f937e15`, tree `87d4a434bce19c8d5df86ba4da648105eb0fd00b`; parent checkpoint `b0066faca700a469ff7e4b917d45bf1336168239`; local author exact-tree commit `d367c6c85b8e3afe9d12cad46d6c22cccfd0ff98`.
