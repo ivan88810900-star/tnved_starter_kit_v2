@@ -1,3 +1,14 @@
+## 2026-10-13 — PP908 VAT-coverage database isolation published on PR #256
+
+- Exact candidate: `024a4a631905e0081d1083fbf7c7bf6160942bd7`, tree `634fe846c69ee758155868253e9ccdfd81e0c922`; parent checkpoint `b5c8f6938c4b20a06c6259ffa6eb1ae868a52a3c`; local author exact-tree commit `3fb9db9ebf75f9e02af0a27fbe959245992428b1`.
+- Parent reproduction: `python -m pytest -q tests/test_pp908_vat_coverage.py` exited 1 with **3 failed, 2 passed** because the ambient database lacked `hs_rates` and `vat_preferences`, and created a 4,096-byte `customs.db`.
+- `test_pp908_vat_coverage.py` now uses an in-memory SQLite fixture populated from 13,323 tracked VAT-rate rows and 10 tracked preference rows, patches the test/payment-engine/normative-store session aliases, restores them, and verifies protected fingerprints. All five original test methods are AST-identical and still exercise real PP908 coverage and no-overclaim assertions.
+- Author exact-remote focused: **5 passed**. VAT/payment controls in both orders: **224 passed** each. Bounded 22-module control excluding the separately failing trade-remedies fixture: **455 passed + 73 subtests**. Safety: **124 tests OK**. All listed commands exited 0; diff-check clean; source hashes unchanged.
+- Independent A5 `/root/a5_cycle215`: **FINAL PASS without findings**; focused **5 passed**, independent forward/reverse PP908/VAT/payment controls **46 passed** each, original-method AST parity, real 98.3% audit coverage (116/118), tracked rows, hashes, alias restoration and focused no-ambient-DB behavior verified.
+- Exact-head CI [run 38366975672 / job 115194321234](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38366975672/job/115194321234): **success**.
+- Draft PR only. No product code, normative/source data, merge, deploy, production write, legal applicability/enforcement/permissions/secrets change or external A6 call. Full #245 remains NOT PASS; lawful populated synchronized NTM snapshot remains unavailable.
+- Next reproduced target: on the clean exact HEAD, `test_trade_remedies_audit.py` exits 1 with **5 failed** because `special_duties` is absent and creates a 4,096-byte ambient `customs.db`; isolate it next while preserving count, legacy-row, measure-type, official-source and `needs_verification` assertions.
+
 ## 2026-10-13 — VAT-preference audit database isolation published on PR #256
 
 - Exact candidate: `b5c8f6938c4b20a06c6259ffa6eb1ae868a52a3c`, tree `41d49ab60d283a78deed100ff5b8e75fb9ebea75`; parent checkpoint `a8e5a9ce2f874d646859605bf48b67a38c5c7ddd`; local author exact-tree commit `634edd27377717a353ce1496fcf044b60ce9fd11`.
