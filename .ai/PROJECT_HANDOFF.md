@@ -1,3 +1,14 @@
+## 2026-10-13 — Trade-remedies audit database isolation published on PR #256; exact-head CI pending
+
+- Exact candidate: `09bd88e3085921733708578cce6e21a70430c0fd`, tree `5417a06e4a75ae4c7cba107be298a535f7df5b0e`; parent `024a4a631905e0081d1083fbf7c7bf6160942bd7`; local author exact-tree commit `85ff46a8cf406d664efa322314f4df9c4f3d4c7a`.
+- Parent reproduction: `python -m pytest -q tests/test_trade_remedies_audit.py` exited 1 with **5 failed**, reported missing `special_duties`, and created a 4,096-byte ambient `customs.db`.
+- The test now reconstructs the historical Issue #170 audit boundary in in-memory SQLite from the tracked 26 anti-dumping, 3 safeguard and 2 countervailing rows plus two explicitly labelled `EEC_AUDIT_RETAINED_TEST_ONLY` markers for the historical DB-only aggregate gap. These markers preserve only the historical count boundary and are not product/normative evidence.
+- All five original test methods are AST-identical. Author: focused **5 passed**; forward/reverse adjacency **254 passed + 44 subtests** each; bounded broad **351 passed + 47 subtests**; orchestration safety **124 tests OK**; exact-remote focused **5 passed**. All listed final commands exited 0; protected source hashes stayed unchanged; no focused ambient SQLite.
+- Independent A5 `/root/a5_cycle216`: **PASS, no blocking findings**; focused **5 passed**, independent adjacency **113 passed + 44 subtests**, one-file scope, AST parity, historical aggregate rationale, cleanup and hashes verified.
+- Exact-head CI is **not yet registered/observable**: the authorized Actions lookup returned no run for the new SHA and, in the same check, no run for the previously known passing parent. No CI PASS or candidate acceptance is claimed.
+- Draft only. No product/normative data, merge, deploy, production write, enforcement/permissions/secrets change or external A6 call. Full #245 and legal/source completeness remain NOT PASS; lawful populated synchronized NTM snapshot remains unavailable.
+- Next: first verify successful exact-head CI for `09bd88e3085921733708578cce6e21a70430c0fd`. Then isolate `test_rop_coverage_audit.py`: clean exact-head reproduction exits 1 with **4 failed** because `rop_goods_rates` is absent and creates a 4,096-byte ambient `customs.db`.
+
 ## 2026-10-13 — PP908 VAT-coverage database isolation published on PR #256
 
 - Exact candidate: `024a4a631905e0081d1083fbf7c7bf6160942bd7`, tree `634fe846c69ee758155868253e9ccdfd81e0c922`; parent checkpoint `b5c8f6938c4b20a06c6259ffa6eb1ae868a52a3c`; local author exact-tree commit `3fb9db9ebf75f9e02af0a27fbe959245992428b1`.

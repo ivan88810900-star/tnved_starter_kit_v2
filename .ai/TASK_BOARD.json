@@ -2179,7 +2179,7 @@
       "unique_source_pr_count": 29
     }
   },
-  "revision": 759,
+  "revision": 760,
   "runs": [
     {
       "head_sha": null,
@@ -8663,46 +8663,49 @@
     "next_step": "On fresh PR256 HEAD, reproduce the ambient-database behavior of test_sensitive_endpoints_auth.py before editing and preserve its authentication and authorization assertions."
   },
   "latest_scheduled_product_checkpoint": {
-    "updated_at": "2026-10-13T08:14:01Z",
-    "checked_at": "2026-10-13T08:14:01Z",
+    "updated_at": "2026-10-13T09:20:20Z",
+    "checked_at": "2026-10-13T09:20:20Z",
     "pr": 256,
     "branch": "agent/product-ntm-regressions-v1",
-    "head_sha": "024a4a631905e0081d1083fbf7c7bf6160942bd7",
-    "tree_sha": "634fe846c69ee758155868253e9ccdfd81e0c922",
-    "parent_sha": "b5c8f6938c4b20a06c6259ffa6eb1ae868a52a3c",
-    "prior_checkpoint_sha": "b5c8f6938c4b20a06c6259ffa6eb1ae868a52a3c",
-    "local_author_exact_tree_commit": "3fb9db9ebf75f9e02af0a27fbe959245992428b1",
+    "head_sha": "09bd88e3085921733708578cce6e21a70430c0fd",
+    "tree_sha": "5417a06e4a75ae4c7cba107be298a535f7df5b0e",
+    "parent_sha": "024a4a631905e0081d1083fbf7c7bf6160942bd7",
+    "prior_checkpoint_sha": "024a4a631905e0081d1083fbf7c7bf6160942bd7",
+    "local_author_exact_tree_commit": "85ff46a8cf406d664efa322314f4df9c4f3d4c7a",
     "base_pr": 245,
     "base_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
-    "block": "pp908_vat_coverage_database_isolation",
-    "status": "IMPLEMENTED_A5_PASS_CI_PASS_PP908_VAT_COVERAGE_DB_ISOLATION",
+    "block": "trade_remedies_audit_database_isolation",
+    "status": "IMPLEMENTED_A5_PASS_CI_NOT_REGISTERED_TRADE_REMEDIES_AUDIT_DB_ISOLATION",
     "behavior": {
-      "reproduced": "Parent exact HEAD failed three of five PP908 VAT-coverage tests because hs_rates and vat_preferences were absent, and created a 4,096-byte ambient customs.db in a clean checkout.",
-      "final": "test_pp908_vat_coverage.py now uses a disposable in-memory SQLite StaticPool database populated from 13,323 tracked VAT-rate rows and 10 tracked preference rows, patches the test, payment-engine and normative-store session aliases, restores them after the module and rechecks protected fingerprints.",
-      "classification": "A test fixture and database-isolation defect was reproduced and fixed; real PP908 VAT lookup, coverage and no-overclaim semantics remain exercised. No product algorithm, normative source or legal applicability change was made.",
-      "boundaries": "Only customs-clear/backend/tests/test_pp908_vat_coverage.py changed. Its five original test methods and assertions are AST-identical."
+      "reproduced": "Parent exact HEAD failed all five trade-remedies audit tests because special_duties was absent and created a 4,096-byte ambient customs.db in a clean checkout.",
+      "final": "test_trade_remedies_audit.py now reconstructs the historical Issue #170 audit boundary in an in-memory SQLite StaticPool database from the tracked 26 anti-dumping, 3 safeguard and 2 countervailing bundle rows plus two explicit EEC_AUDIT_RETAINED_TEST_ONLY markers for the historical DB-only aggregate gap. It restores the patched test-local SessionLocal, disposes the engine and rechecks protected fingerprints.",
+      "classification": "A historical audit fixture/database-isolation defect was reproduced and fixed. The two test-only retained markers preserve only the historical count boundary and are not product or normative evidence; no legal applicability or product algorithm changed.",
+      "boundaries": "Only customs-clear/backend/tests/test_trade_remedies_audit.py changed. All five original test methods and assertions are AST-identical. The test-only retained markers do not assert the identity of the two unavailable historical DB-only rows."
     },
     "verification": {
-      "author_focused": "Exact remote focused command passed 5 tests, exit 0; 11-module VAT/payment adjacency controls in forward and reverse order passed 224 tests each, exit 0.",
-      "author_broad": "A bounded 22-module control excluding the already-failing trade-remedies fixture passed 455 tests plus 73 subtests, exit 0. Including test_trade_remedies_audit.py produced 3 fixture-dependent failures with 457 passed plus 73 subtests and an ambient database; this is not attributed to the PP908 target.",
-      "control": "Tariff-agent safety passed 124 tests, exit 0; git diff --check passed; pinned catalogue SHA-256 53847cb00ebc53f6315042325bc416d13d65cf020a10530a4ce7dde848ed1ff2, VAT bundle 57b4accf227274eb72e52f81e6fcc1000e69628a6b0d056bfe3e614db5839ee7 and preference bundle 65b287a8ee0b8bbfeedbf876814b89d589aa1f59740cf116b780633dab72573c.",
+      "author_focused": "Author focused command passed 5 tests, exit 0. Forward and reverse 12-module trade-remedy/payment adjacency commands each passed 254 tests plus 44 subtests, exit 0.",
+      "author_broad": "A bounded 25-module backend control passed 351 tests plus 47 subtests, exit 0; exact-remote focused rerun passed 5 tests, exit 0.",
+      "control": "Tariff-agent safety passed 124 tests, exit 0; py_compile and git diff --check exited 0; anti-dumping, safeguard, countervailing and pinned-catalogue SHA-256 values remained unchanged; focused runs created no ambient SQLite.",
       "a5": {
-        "session": "/root/a5_cycle215",
-        "status": "FINAL_PASS_EXACT_TREE_NO_FINDINGS",
-        "execution": "Independent exact-tree review passed focused 5 and separately chosen forward/reverse PP908/VAT-preference/payment controls with 46 tests each; verified five AST-identical methods, real 98.3% audit coverage (116/118), real lookup, 13,323 rate rows, 10 preference rows, source hashes, alias restoration and absence of ambient SQLite in focused controls.",
-        "findings": []
+        "session": "/root/a5_cycle216",
+        "status": "FINAL_PASS_EXACT_TREE_NO_BLOCKING_FINDINGS",
+        "execution": "Independent detached exact-tree review passed focused 5 and independently selected adjacency 113 tests plus 44 subtests; verified five AST-identical methods, one-file scope, historical #170 aggregate rationale, hashes, cleanup and absence of ambient SQLite.",
+        "findings": [
+          "Non-blocking boundary: two explicit test-only retained markers verify only the historical aggregate count, not unavailable row identity."
+        ]
       },
       "ci": {
-        "status": "PASSED_EXACT_HEAD_OFFLINE_SAFETY_ONLY",
-        "run_id": 38366975672,
-        "job_id": 115194321234,
-        "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38366975672/job/115194321234",
-        "head_sha": "024a4a631905e0081d1083fbf7c7bf6160942bd7",
-        "conclusion": "success",
-        "limitation": "Workflow is offline-safety only; author and independent executable A5 provide product-test evidence."
+        "status": "NOT_REGISTERED_AFTER_EXACT_HEAD_PUBLICATION",
+        "run_id": null,
+        "job_id": null,
+        "url": null,
+        "head_sha": "09bd88e3085921733708578cce6e21a70430c0fd",
+        "conclusion": null,
+        "limitation": "The authorized Actions lookup returned no workflow runs for the new exact SHA and also returned none for the previously known passing parent SHA; no CI PASS is claimed. Recheck this transient observability/registration condition before accepting the candidate."
       }
     },
     "blockers": [
+      "Exact-head CI is not yet registered/observable; candidate is not accepted until a successful run is verified.",
       "Full #245 product acceptance and legal/source completeness remain NOT PASS.",
       "The NTM full-sync audit still requires a lawful populated synchronized snapshot."
     ],
@@ -8713,11 +8716,11 @@
     "protected_actions_performed": false,
     "capabilities": {
       "code_access": "Full exact candidate tree available in isolated author, exact-remote and independent A5 worktrees.",
-      "command_execution": "Git, Python and pytest execution available; author, exact-remote and A5 commands exited 0.",
-      "lawful_publication": "Draft branch and PR updated through the authorized GitHub connector under lease generation 215.",
-      "checkpoint": "This state CAS commit is the durable checkpoint; lease release follows separately."
+      "command_execution": "Git, Python and pytest execution available; author, exact-remote and independent A5 commands completed with recorded exits.",
+      "lawful_publication": "Draft branch and PR head updated through the authorized GitHub connector under lease generation 216.",
+      "checkpoint": "This state CAS commit records the candidate and unresolved exact-head CI condition; lease release follows separately."
     },
-    "next_step": "On fresh PR256 HEAD, isolate tests/test_trade_remedies_audit.py: a clean exact-head run exits 1 with 5 failed because special_duties is absent and creates a 4,096-byte ambient customs.db; preserve its count, legacy-row, measure-type, official-source and needs-verification assertions without changing product or normative data."
+    "next_step": "First recheck exact-head CI for 09bd88e3085921733708578cce6e21a70430c0fd and accept only a verified successful run. Then isolate tests/test_rop_coverage_audit.py: on clean exact HEAD it exits 1 with 4 failed because rop_goods_rates is absent and creates a 4,096-byte ambient customs.db; preserve its 97-chapter, subject/not-subject and summary assertions without changing product or normative data."
   },
   "previous_scheduled_product_checkpoint_212": {
     "updated_at": "2026-10-13T04:56:37Z",
@@ -8834,46 +8837,49 @@
     "next_step": "On fresh PR256 HEAD, reproduce the ambient-database behavior of test_permits_verify_jobs_ownership.py before editing and preserve its owner/admin authorization assertions."
   },
   "latest_development_checkpoint": {
-    "updated_at": "2026-10-13T08:14:01Z",
-    "checked_at": "2026-10-13T08:14:01Z",
+    "updated_at": "2026-10-13T09:20:20Z",
+    "checked_at": "2026-10-13T09:20:20Z",
     "pr": 256,
     "branch": "agent/product-ntm-regressions-v1",
-    "head_sha": "024a4a631905e0081d1083fbf7c7bf6160942bd7",
-    "tree_sha": "634fe846c69ee758155868253e9ccdfd81e0c922",
-    "parent_sha": "b5c8f6938c4b20a06c6259ffa6eb1ae868a52a3c",
-    "prior_checkpoint_sha": "b5c8f6938c4b20a06c6259ffa6eb1ae868a52a3c",
-    "local_author_exact_tree_commit": "3fb9db9ebf75f9e02af0a27fbe959245992428b1",
+    "head_sha": "09bd88e3085921733708578cce6e21a70430c0fd",
+    "tree_sha": "5417a06e4a75ae4c7cba107be298a535f7df5b0e",
+    "parent_sha": "024a4a631905e0081d1083fbf7c7bf6160942bd7",
+    "prior_checkpoint_sha": "024a4a631905e0081d1083fbf7c7bf6160942bd7",
+    "local_author_exact_tree_commit": "85ff46a8cf406d664efa322314f4df9c4f3d4c7a",
     "base_pr": 245,
     "base_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
-    "block": "pp908_vat_coverage_database_isolation",
-    "status": "IMPLEMENTED_A5_PASS_CI_PASS_PP908_VAT_COVERAGE_DB_ISOLATION",
+    "block": "trade_remedies_audit_database_isolation",
+    "status": "IMPLEMENTED_A5_PASS_CI_NOT_REGISTERED_TRADE_REMEDIES_AUDIT_DB_ISOLATION",
     "behavior": {
-      "reproduced": "Parent exact HEAD failed three of five PP908 VAT-coverage tests because hs_rates and vat_preferences were absent, and created a 4,096-byte ambient customs.db in a clean checkout.",
-      "final": "test_pp908_vat_coverage.py now uses a disposable in-memory SQLite StaticPool database populated from 13,323 tracked VAT-rate rows and 10 tracked preference rows, patches the test, payment-engine and normative-store session aliases, restores them after the module and rechecks protected fingerprints.",
-      "classification": "A test fixture and database-isolation defect was reproduced and fixed; real PP908 VAT lookup, coverage and no-overclaim semantics remain exercised. No product algorithm, normative source or legal applicability change was made.",
-      "boundaries": "Only customs-clear/backend/tests/test_pp908_vat_coverage.py changed. Its five original test methods and assertions are AST-identical."
+      "reproduced": "Parent exact HEAD failed all five trade-remedies audit tests because special_duties was absent and created a 4,096-byte ambient customs.db in a clean checkout.",
+      "final": "test_trade_remedies_audit.py now reconstructs the historical Issue #170 audit boundary in an in-memory SQLite StaticPool database from the tracked 26 anti-dumping, 3 safeguard and 2 countervailing bundle rows plus two explicit EEC_AUDIT_RETAINED_TEST_ONLY markers for the historical DB-only aggregate gap. It restores the patched test-local SessionLocal, disposes the engine and rechecks protected fingerprints.",
+      "classification": "A historical audit fixture/database-isolation defect was reproduced and fixed. The two test-only retained markers preserve only the historical count boundary and are not product or normative evidence; no legal applicability or product algorithm changed.",
+      "boundaries": "Only customs-clear/backend/tests/test_trade_remedies_audit.py changed. All five original test methods and assertions are AST-identical. The test-only retained markers do not assert the identity of the two unavailable historical DB-only rows."
     },
     "verification": {
-      "author_focused": "Exact remote focused command passed 5 tests, exit 0; 11-module VAT/payment adjacency controls in forward and reverse order passed 224 tests each, exit 0.",
-      "author_broad": "A bounded 22-module control excluding the already-failing trade-remedies fixture passed 455 tests plus 73 subtests, exit 0. Including test_trade_remedies_audit.py produced 3 fixture-dependent failures with 457 passed plus 73 subtests and an ambient database; this is not attributed to the PP908 target.",
-      "control": "Tariff-agent safety passed 124 tests, exit 0; git diff --check passed; pinned catalogue SHA-256 53847cb00ebc53f6315042325bc416d13d65cf020a10530a4ce7dde848ed1ff2, VAT bundle 57b4accf227274eb72e52f81e6fcc1000e69628a6b0d056bfe3e614db5839ee7 and preference bundle 65b287a8ee0b8bbfeedbf876814b89d589aa1f59740cf116b780633dab72573c.",
+      "author_focused": "Author focused command passed 5 tests, exit 0. Forward and reverse 12-module trade-remedy/payment adjacency commands each passed 254 tests plus 44 subtests, exit 0.",
+      "author_broad": "A bounded 25-module backend control passed 351 tests plus 47 subtests, exit 0; exact-remote focused rerun passed 5 tests, exit 0.",
+      "control": "Tariff-agent safety passed 124 tests, exit 0; py_compile and git diff --check exited 0; anti-dumping, safeguard, countervailing and pinned-catalogue SHA-256 values remained unchanged; focused runs created no ambient SQLite.",
       "a5": {
-        "session": "/root/a5_cycle215",
-        "status": "FINAL_PASS_EXACT_TREE_NO_FINDINGS",
-        "execution": "Independent exact-tree review passed focused 5 and separately chosen forward/reverse PP908/VAT-preference/payment controls with 46 tests each; verified five AST-identical methods, real 98.3% audit coverage (116/118), real lookup, 13,323 rate rows, 10 preference rows, source hashes, alias restoration and absence of ambient SQLite in focused controls.",
-        "findings": []
+        "session": "/root/a5_cycle216",
+        "status": "FINAL_PASS_EXACT_TREE_NO_BLOCKING_FINDINGS",
+        "execution": "Independent detached exact-tree review passed focused 5 and independently selected adjacency 113 tests plus 44 subtests; verified five AST-identical methods, one-file scope, historical #170 aggregate rationale, hashes, cleanup and absence of ambient SQLite.",
+        "findings": [
+          "Non-blocking boundary: two explicit test-only retained markers verify only the historical aggregate count, not unavailable row identity."
+        ]
       },
       "ci": {
-        "status": "PASSED_EXACT_HEAD_OFFLINE_SAFETY_ONLY",
-        "run_id": 38366975672,
-        "job_id": 115194321234,
-        "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38366975672/job/115194321234",
-        "head_sha": "024a4a631905e0081d1083fbf7c7bf6160942bd7",
-        "conclusion": "success",
-        "limitation": "Workflow is offline-safety only; author and independent executable A5 provide product-test evidence."
+        "status": "NOT_REGISTERED_AFTER_EXACT_HEAD_PUBLICATION",
+        "run_id": null,
+        "job_id": null,
+        "url": null,
+        "head_sha": "09bd88e3085921733708578cce6e21a70430c0fd",
+        "conclusion": null,
+        "limitation": "The authorized Actions lookup returned no workflow runs for the new exact SHA and also returned none for the previously known passing parent SHA; no CI PASS is claimed. Recheck this transient observability/registration condition before accepting the candidate."
       }
     },
     "blockers": [
+      "Exact-head CI is not yet registered/observable; candidate is not accepted until a successful run is verified.",
       "Full #245 product acceptance and legal/source completeness remain NOT PASS.",
       "The NTM full-sync audit still requires a lawful populated synchronized snapshot."
     ],
@@ -8884,11 +8890,11 @@
     "protected_actions_performed": false,
     "capabilities": {
       "code_access": "Full exact candidate tree available in isolated author, exact-remote and independent A5 worktrees.",
-      "command_execution": "Git, Python and pytest execution available; author, exact-remote and A5 commands exited 0.",
-      "lawful_publication": "Draft branch and PR updated through the authorized GitHub connector under lease generation 215.",
-      "checkpoint": "This state CAS commit is the durable checkpoint; lease release follows separately."
+      "command_execution": "Git, Python and pytest execution available; author, exact-remote and independent A5 commands completed with recorded exits.",
+      "lawful_publication": "Draft branch and PR head updated through the authorized GitHub connector under lease generation 216.",
+      "checkpoint": "This state CAS commit records the candidate and unresolved exact-head CI condition; lease release follows separately."
     },
-    "next_step": "On fresh PR256 HEAD, isolate tests/test_trade_remedies_audit.py: a clean exact-head run exits 1 with 5 failed because special_duties is absent and creates a 4,096-byte ambient customs.db; preserve its count, legacy-row, measure-type, official-source and needs-verification assertions without changing product or normative data."
+    "next_step": "First recheck exact-head CI for 09bd88e3085921733708578cce6e21a70430c0fd and accept only a verified successful run. Then isolate tests/test_rop_coverage_audit.py: on clean exact HEAD it exits 1 with 4 failed because rop_goods_rates is absent and creates a 4,096-byte ambient customs.db; preserve its 97-chapter, subject/not-subject and summary assertions without changing product or normative data."
   },
   "previous_development_checkpoint_212": {
     "updated_at": "2026-10-13T04:56:37Z",
@@ -11143,5 +11149,119 @@
       "checkpoint": "This state CAS commit is the durable checkpoint; lease release follows separately."
     },
     "next_step": "On fresh PR256 HEAD, isolate test_pp908_vat_coverage.py: the clean exact-head reproduction exits 1 with 3 failed and 2 passed, reports missing hs_rates/vat_preferences tables and creates a 4,096-byte ambient customs.db; preserve its PP908 coverage and no-overclaim assertions."
+  },
+  "previous_development_checkpoint_215": {
+    "updated_at": "2026-10-13T08:14:01Z",
+    "checked_at": "2026-10-13T08:14:01Z",
+    "pr": 256,
+    "branch": "agent/product-ntm-regressions-v1",
+    "head_sha": "024a4a631905e0081d1083fbf7c7bf6160942bd7",
+    "tree_sha": "634fe846c69ee758155868253e9ccdfd81e0c922",
+    "parent_sha": "b5c8f6938c4b20a06c6259ffa6eb1ae868a52a3c",
+    "prior_checkpoint_sha": "b5c8f6938c4b20a06c6259ffa6eb1ae868a52a3c",
+    "local_author_exact_tree_commit": "3fb9db9ebf75f9e02af0a27fbe959245992428b1",
+    "base_pr": 245,
+    "base_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
+    "block": "pp908_vat_coverage_database_isolation",
+    "status": "IMPLEMENTED_A5_PASS_CI_PASS_PP908_VAT_COVERAGE_DB_ISOLATION",
+    "behavior": {
+      "reproduced": "Parent exact HEAD failed three of five PP908 VAT-coverage tests because hs_rates and vat_preferences were absent, and created a 4,096-byte ambient customs.db in a clean checkout.",
+      "final": "test_pp908_vat_coverage.py now uses a disposable in-memory SQLite StaticPool database populated from 13,323 tracked VAT-rate rows and 10 tracked preference rows, patches the test, payment-engine and normative-store session aliases, restores them after the module and rechecks protected fingerprints.",
+      "classification": "A test fixture and database-isolation defect was reproduced and fixed; real PP908 VAT lookup, coverage and no-overclaim semantics remain exercised. No product algorithm, normative source or legal applicability change was made.",
+      "boundaries": "Only customs-clear/backend/tests/test_pp908_vat_coverage.py changed. Its five original test methods and assertions are AST-identical."
+    },
+    "verification": {
+      "author_focused": "Exact remote focused command passed 5 tests, exit 0; 11-module VAT/payment adjacency controls in forward and reverse order passed 224 tests each, exit 0.",
+      "author_broad": "A bounded 22-module control excluding the already-failing trade-remedies fixture passed 455 tests plus 73 subtests, exit 0. Including test_trade_remedies_audit.py produced 3 fixture-dependent failures with 457 passed plus 73 subtests and an ambient database; this is not attributed to the PP908 target.",
+      "control": "Tariff-agent safety passed 124 tests, exit 0; git diff --check passed; pinned catalogue SHA-256 53847cb00ebc53f6315042325bc416d13d65cf020a10530a4ce7dde848ed1ff2, VAT bundle 57b4accf227274eb72e52f81e6fcc1000e69628a6b0d056bfe3e614db5839ee7 and preference bundle 65b287a8ee0b8bbfeedbf876814b89d589aa1f59740cf116b780633dab72573c.",
+      "a5": {
+        "session": "/root/a5_cycle215",
+        "status": "FINAL_PASS_EXACT_TREE_NO_FINDINGS",
+        "execution": "Independent exact-tree review passed focused 5 and separately chosen forward/reverse PP908/VAT-preference/payment controls with 46 tests each; verified five AST-identical methods, real 98.3% audit coverage (116/118), real lookup, 13,323 rate rows, 10 preference rows, source hashes, alias restoration and absence of ambient SQLite in focused controls.",
+        "findings": []
+      },
+      "ci": {
+        "status": "PASSED_EXACT_HEAD_OFFLINE_SAFETY_ONLY",
+        "run_id": 38366975672,
+        "job_id": 115194321234,
+        "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38366975672/job/115194321234",
+        "head_sha": "024a4a631905e0081d1083fbf7c7bf6160942bd7",
+        "conclusion": "success",
+        "limitation": "Workflow is offline-safety only; author and independent executable A5 provide product-test evidence."
+      }
+    },
+    "blockers": [
+      "Full #245 product acceptance and legal/source completeness remain NOT PASS.",
+      "The NTM full-sync audit still requires a lawful populated synchronized snapshot."
+    ],
+    "a6": {
+      "request": "core-s1-6415f443120f-r9-g106",
+      "status": "UNCHANGED_NOT_SENT"
+    },
+    "protected_actions_performed": false,
+    "capabilities": {
+      "code_access": "Full exact candidate tree available in isolated author, exact-remote and independent A5 worktrees.",
+      "command_execution": "Git, Python and pytest execution available; author, exact-remote and A5 commands exited 0.",
+      "lawful_publication": "Draft branch and PR updated through the authorized GitHub connector under lease generation 215.",
+      "checkpoint": "This state CAS commit is the durable checkpoint; lease release follows separately."
+    },
+    "next_step": "On fresh PR256 HEAD, isolate tests/test_trade_remedies_audit.py: a clean exact-head run exits 1 with 5 failed because special_duties is absent and creates a 4,096-byte ambient customs.db; preserve its count, legacy-row, measure-type, official-source and needs-verification assertions without changing product or normative data."
+  },
+  "previous_scheduled_product_checkpoint_215": {
+    "updated_at": "2026-10-13T08:14:01Z",
+    "checked_at": "2026-10-13T08:14:01Z",
+    "pr": 256,
+    "branch": "agent/product-ntm-regressions-v1",
+    "head_sha": "024a4a631905e0081d1083fbf7c7bf6160942bd7",
+    "tree_sha": "634fe846c69ee758155868253e9ccdfd81e0c922",
+    "parent_sha": "b5c8f6938c4b20a06c6259ffa6eb1ae868a52a3c",
+    "prior_checkpoint_sha": "b5c8f6938c4b20a06c6259ffa6eb1ae868a52a3c",
+    "local_author_exact_tree_commit": "3fb9db9ebf75f9e02af0a27fbe959245992428b1",
+    "base_pr": 245,
+    "base_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
+    "block": "pp908_vat_coverage_database_isolation",
+    "status": "IMPLEMENTED_A5_PASS_CI_PASS_PP908_VAT_COVERAGE_DB_ISOLATION",
+    "behavior": {
+      "reproduced": "Parent exact HEAD failed three of five PP908 VAT-coverage tests because hs_rates and vat_preferences were absent, and created a 4,096-byte ambient customs.db in a clean checkout.",
+      "final": "test_pp908_vat_coverage.py now uses a disposable in-memory SQLite StaticPool database populated from 13,323 tracked VAT-rate rows and 10 tracked preference rows, patches the test, payment-engine and normative-store session aliases, restores them after the module and rechecks protected fingerprints.",
+      "classification": "A test fixture and database-isolation defect was reproduced and fixed; real PP908 VAT lookup, coverage and no-overclaim semantics remain exercised. No product algorithm, normative source or legal applicability change was made.",
+      "boundaries": "Only customs-clear/backend/tests/test_pp908_vat_coverage.py changed. Its five original test methods and assertions are AST-identical."
+    },
+    "verification": {
+      "author_focused": "Exact remote focused command passed 5 tests, exit 0; 11-module VAT/payment adjacency controls in forward and reverse order passed 224 tests each, exit 0.",
+      "author_broad": "A bounded 22-module control excluding the already-failing trade-remedies fixture passed 455 tests plus 73 subtests, exit 0. Including test_trade_remedies_audit.py produced 3 fixture-dependent failures with 457 passed plus 73 subtests and an ambient database; this is not attributed to the PP908 target.",
+      "control": "Tariff-agent safety passed 124 tests, exit 0; git diff --check passed; pinned catalogue SHA-256 53847cb00ebc53f6315042325bc416d13d65cf020a10530a4ce7dde848ed1ff2, VAT bundle 57b4accf227274eb72e52f81e6fcc1000e69628a6b0d056bfe3e614db5839ee7 and preference bundle 65b287a8ee0b8bbfeedbf876814b89d589aa1f59740cf116b780633dab72573c.",
+      "a5": {
+        "session": "/root/a5_cycle215",
+        "status": "FINAL_PASS_EXACT_TREE_NO_FINDINGS",
+        "execution": "Independent exact-tree review passed focused 5 and separately chosen forward/reverse PP908/VAT-preference/payment controls with 46 tests each; verified five AST-identical methods, real 98.3% audit coverage (116/118), real lookup, 13,323 rate rows, 10 preference rows, source hashes, alias restoration and absence of ambient SQLite in focused controls.",
+        "findings": []
+      },
+      "ci": {
+        "status": "PASSED_EXACT_HEAD_OFFLINE_SAFETY_ONLY",
+        "run_id": 38366975672,
+        "job_id": 115194321234,
+        "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38366975672/job/115194321234",
+        "head_sha": "024a4a631905e0081d1083fbf7c7bf6160942bd7",
+        "conclusion": "success",
+        "limitation": "Workflow is offline-safety only; author and independent executable A5 provide product-test evidence."
+      }
+    },
+    "blockers": [
+      "Full #245 product acceptance and legal/source completeness remain NOT PASS.",
+      "The NTM full-sync audit still requires a lawful populated synchronized snapshot."
+    ],
+    "a6": {
+      "request": "core-s1-6415f443120f-r9-g106",
+      "status": "UNCHANGED_NOT_SENT"
+    },
+    "protected_actions_performed": false,
+    "capabilities": {
+      "code_access": "Full exact candidate tree available in isolated author, exact-remote and independent A5 worktrees.",
+      "command_execution": "Git, Python and pytest execution available; author, exact-remote and A5 commands exited 0.",
+      "lawful_publication": "Draft branch and PR updated through the authorized GitHub connector under lease generation 215.",
+      "checkpoint": "This state CAS commit is the durable checkpoint; lease release follows separately."
+    },
+    "next_step": "On fresh PR256 HEAD, isolate tests/test_trade_remedies_audit.py: a clean exact-head run exits 1 with 5 failed because special_duties is absent and creates a 4,096-byte ambient customs.db; preserve its count, legacy-row, measure-type, official-source and needs-verification assertions without changing product or normative data."
   }
 }
