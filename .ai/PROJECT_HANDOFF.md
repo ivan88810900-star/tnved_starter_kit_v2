@@ -1,3 +1,15 @@
+## 2026-10-13 — VAT-preference audit database isolation published on PR #256
+
+- Exact candidate: `b5c8f6938c4b20a06c6259ffa6eb1ae868a52a3c`, tree `41d49ab60d283a78deed100ff5b8e75fb9ebea75`; parent checkpoint `a8e5a9ce2f874d646859605bf48b67a38c5c7ddd`; local author exact-tree commit `634edd27377717a353ce1496fcf044b60ce9fd11`.
+- Parent reproduction: `python -m pytest -q tests/test_vat_preferences_audit161.py` exited 1 with **4 failed** because the ambient database lacked `hs_rates` and `vat_preferences`, and created a 4,096-byte `customs.db`.
+- `test_vat_preferences_audit161.py` now uses an in-memory SQLite fixture populated from tracked VAT-rate and preference bundles, patches the test/payment-engine/normative-store session aliases, restores them, and verifies all protected fingerprints. All four original test methods are AST-identical and still exercise the real engine lookup and audit assertions.
+- Author exact-remote focused: **4 passed**. VAT-audit/payment/compliance controls in both orders: **223 passed** each. Broad 23-module command: **316 passed + 3 subtests**. Safety: **124 tests OK**. All final exits 0; diff-check clean; no ambient SQLite; pinned catalogue and both source bundles byte-identical.
+- Independent A5 `/root/a5_cycle213`: **FINAL PASS without findings**; focused **4 passed**, independent forward/reverse VAT-audit/payment controls **50 passed** each, AST parity, real lookup, source hashes, restoration and no ambient DB verified.
+- Exact-head CI [run 38359883714 / job 115171312790](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38359883714/job/115171312790): **success**.
+- Draft PR only. No product code, normative/source data, merge, deploy, production write, legal applicability/enforcement/permissions/secrets change or external A6 call. Full #245 remains NOT PASS; lawful populated synchronized NTM snapshot remains unavailable.
+- Next reproduced target: `test_pp908_vat_coverage.py` exits 1 with **3 failed, 2 passed**, reports missing `hs_rates`/`vat_preferences` and creates a 4,096-byte ambient `customs.db`; isolate it next while preserving PP908 coverage and no-overclaim assertions.
+
+
 ## 2026-10-13 — FSA registry-status database isolation published on PR #256
 
 - Exact candidate: `a8e5a9ce2f874d646859605bf48b67a38c5c7ddd`, tree `cc589acea18a63680ebdce32eee4f6ced08b5155`; parent checkpoint `75c1f5f426a5d26094b9701fe29c00a75a2248ff`; local author exact-tree commit `6713f354d35334769749d01355a007631ff2cc6a`.

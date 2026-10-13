@@ -2179,7 +2179,7 @@
       "unique_source_pr_count": 29
     }
   },
-  "revision": 757,
+  "revision": 758,
   "runs": [
     {
       "head_sha": null,
@@ -8663,41 +8663,41 @@
     "next_step": "On fresh PR256 HEAD, reproduce the ambient-database behavior of test_sensitive_endpoints_auth.py before editing and preserve its authentication and authorization assertions."
   },
   "latest_scheduled_product_checkpoint": {
-    "updated_at": "2026-10-13T06:07:39Z",
-    "checked_at": "2026-10-13T06:07:39Z",
+    "updated_at": "2026-10-13T07:04:00Z",
+    "checked_at": "2026-10-13T07:04:00Z",
     "pr": 256,
     "branch": "agent/product-ntm-regressions-v1",
-    "head_sha": "a8e5a9ce2f874d646859605bf48b67a38c5c7ddd",
-    "tree_sha": "cc589acea18a63680ebdce32eee4f6ced08b5155",
-    "parent_sha": "75c1f5f426a5d26094b9701fe29c00a75a2248ff",
-    "prior_checkpoint_sha": "75c1f5f426a5d26094b9701fe29c00a75a2248ff",
-    "local_author_exact_tree_commit": "6713f354d35334769749d01355a007631ff2cc6a",
+    "head_sha": "b5c8f6938c4b20a06c6259ffa6eb1ae868a52a3c",
+    "tree_sha": "41d49ab60d283a78deed100ff5b8e75fb9ebea75",
+    "parent_sha": "a8e5a9ce2f874d646859605bf48b67a38c5c7ddd",
+    "prior_checkpoint_sha": "a8e5a9ce2f874d646859605bf48b67a38c5c7ddd",
+    "local_author_exact_tree_commit": "634edd27377717a353ce1496fcf044b60ce9fd11",
     "base_pr": 245,
     "base_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
-    "block": "fsa_registry_status_fail_closed_database_isolation",
-    "status": "IMPLEMENTED_A5_PASS_CI_PASS_FSA_REGISTRY_STATUS_DB_ISOLATION",
+    "block": "vat_preferences_audit161_database_isolation",
+    "status": "IMPLEMENTED_A5_PASS_CI_PASS_VAT_PREFERENCES_AUDIT_DB_ISOLATION",
     "behavior": {
-      "reproduced": "Parent exact HEAD passed twenty FSA registry-status tests but created a 1,036,288-byte ambient customs.db in a clean checkout.",
-      "final": "test_fsa_registry_status_fail_closed.py now bootstraps a disposable SQLite database, binds loaded database aliases, restores environment and module state, removes temporary database sidecars and rechecks protected fingerprints.",
-      "classification": "A test import-order and database-isolation defect was reproduced and fixed; the fail-closed status matrix, expired-row rejection and UNKNOWN manual-review lookup evidence remain exercised. No product algorithm, normative source or legal applicability change was made.",
-      "boundaries": "Only customs-clear/backend/tests/test_fsa_registry_status_fail_closed.py changed. Its three original test functions and assertions are AST-identical."
+      "reproduced": "Parent exact HEAD failed all four VAT-preference audit tests because hs_rates and vat_preferences were absent, and created a 4,096-byte ambient customs.db in a clean checkout.",
+      "final": "test_vat_preferences_audit161.py now uses a disposable in-memory SQLite database populated from the tracked VAT-rate and preference bundles, patches all relevant session aliases, restores them after the module and rechecks protected fingerprints.",
+      "classification": "A test fixture and database-isolation defect was reproduced and fixed; real payment-engine VAT lookup and preference-audit semantics remain exercised. No product algorithm, normative source or legal applicability change was made.",
+      "boundaries": "Only customs-clear/backend/tests/test_vat_preferences_audit161.py changed. Its four original test methods and assertions are AST-identical."
     },
     "verification": {
-      "author_focused": "Exact remote focused command passed 20 tests, exit 0; FSA/permits/auth/API/payment controls in forward and reverse order passed 134 tests plus 3 subtests each, exit 0.",
-      "author_broad": "The 26-module broad payment/compliance/API command passed 399 tests plus 13 subtests, exit 0; no ambient SQLite was created and the pinned catalogue stayed byte-identical.",
-      "control": "Tariff-agent safety passed 124 tests, exit 0; git diff --check passed; pinned catalogue SHA-256 53847cb00ebc53f6315042325bc416d13d65cf020a10530a4ce7dde848ed1ff2.",
+      "author_focused": "Exact remote focused command passed 4 tests, exit 0; VAT-audit/payment/compliance controls in forward and reverse order passed 223 tests each, exit 0.",
+      "author_broad": "The 23-module broad payment/compliance command passed 316 tests plus 3 subtests, exit 0; no ambient SQLite was created and tracked source files stayed byte-identical.",
+      "control": "Tariff-agent safety passed 124 tests, exit 0; git diff --check passed; pinned catalogue SHA-256 53847cb00ebc53f6315042325bc416d13d65cf020a10530a4ce7dde848ed1ff2, VAT bundle 57b4accf227274eb72e52f81e6fcc1000e69628a6b0d056bfe3e614db5839ee7 and preference bundle 65b287a8ee0b8bbfeedbf876814b89d589aa1f59740cf116b780633dab72573c.",
       "a5": {
         "session": "/root/a5_cycle213",
         "status": "FINAL_PASS_EXACT_HEAD_NO_FINDINGS",
-        "execution": "Independent exact-head review passed focused 20 and separately chosen forward/reverse FSA/permits ordering controls with 44 tests each; verified three AST-identical test functions, fail-closed semantics, alias and environment restoration, late-module cleanup and temporary-file cleanup.",
+        "execution": "Independent exact-tree review passed focused 4 and separately chosen forward/reverse VAT-audit/payment controls with 50 tests each; verified four AST-identical methods, real engine lookup, source hashes, alias restoration and absence of ambient SQLite.",
         "findings": []
       },
       "ci": {
         "status": "PASSED_EXACT_HEAD_OFFLINE_SAFETY_ONLY",
-        "run_id": 38354671784,
-        "job_id": 115154661235,
-        "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38354671784/job/115154661235",
-        "head_sha": "a8e5a9ce2f874d646859605bf48b67a38c5c7ddd",
+        "run_id": 38359883714,
+        "job_id": 115171312790,
+        "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38359883714/job/115171312790",
+        "head_sha": "b5c8f6938c4b20a06c6259ffa6eb1ae868a52a3c",
         "conclusion": "success",
         "limitation": "Workflow is offline-safety only; author and independent executable A5 provide product-test evidence."
       }
@@ -8714,10 +8714,10 @@
     "capabilities": {
       "code_access": "Full exact candidate tree available in isolated author, exact-remote and independent A5 worktrees.",
       "command_execution": "Git, Python and pytest execution available; author, exact-remote and A5 commands exited 0.",
-      "lawful_publication": "Draft branch and PR updated through the authorized GitHub connector under lease generation 213.",
+      "lawful_publication": "Draft branch and PR updated through the authorized GitHub connector under lease generation 214.",
       "checkpoint": "This state CAS commit is the durable checkpoint; lease release follows separately."
     },
-    "next_step": "On fresh PR256 HEAD, reproduce the ambient-database behavior of test_vat_preferences_audit161.py before editing and preserve its payment preference audit assertions."
+    "next_step": "On fresh PR256 HEAD, isolate test_pp908_vat_coverage.py: the clean exact-head reproduction exits 1 with 3 failed and 2 passed, reports missing hs_rates/vat_preferences tables and creates a 4,096-byte ambient customs.db; preserve its PP908 coverage and no-overclaim assertions."
   },
   "previous_scheduled_product_checkpoint_212": {
     "updated_at": "2026-10-13T04:56:37Z",
@@ -8834,41 +8834,41 @@
     "next_step": "On fresh PR256 HEAD, reproduce the ambient-database behavior of test_permits_verify_jobs_ownership.py before editing and preserve its owner/admin authorization assertions."
   },
   "latest_development_checkpoint": {
-    "updated_at": "2026-10-13T06:07:39Z",
-    "checked_at": "2026-10-13T06:07:39Z",
+    "updated_at": "2026-10-13T07:04:00Z",
+    "checked_at": "2026-10-13T07:04:00Z",
     "pr": 256,
     "branch": "agent/product-ntm-regressions-v1",
-    "head_sha": "a8e5a9ce2f874d646859605bf48b67a38c5c7ddd",
-    "tree_sha": "cc589acea18a63680ebdce32eee4f6ced08b5155",
-    "parent_sha": "75c1f5f426a5d26094b9701fe29c00a75a2248ff",
-    "prior_checkpoint_sha": "75c1f5f426a5d26094b9701fe29c00a75a2248ff",
-    "local_author_exact_tree_commit": "6713f354d35334769749d01355a007631ff2cc6a",
+    "head_sha": "b5c8f6938c4b20a06c6259ffa6eb1ae868a52a3c",
+    "tree_sha": "41d49ab60d283a78deed100ff5b8e75fb9ebea75",
+    "parent_sha": "a8e5a9ce2f874d646859605bf48b67a38c5c7ddd",
+    "prior_checkpoint_sha": "a8e5a9ce2f874d646859605bf48b67a38c5c7ddd",
+    "local_author_exact_tree_commit": "634edd27377717a353ce1496fcf044b60ce9fd11",
     "base_pr": 245,
     "base_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
-    "block": "fsa_registry_status_fail_closed_database_isolation",
-    "status": "IMPLEMENTED_A5_PASS_CI_PASS_FSA_REGISTRY_STATUS_DB_ISOLATION",
+    "block": "vat_preferences_audit161_database_isolation",
+    "status": "IMPLEMENTED_A5_PASS_CI_PASS_VAT_PREFERENCES_AUDIT_DB_ISOLATION",
     "behavior": {
-      "reproduced": "Parent exact HEAD passed twenty FSA registry-status tests but created a 1,036,288-byte ambient customs.db in a clean checkout.",
-      "final": "test_fsa_registry_status_fail_closed.py now bootstraps a disposable SQLite database, binds loaded database aliases, restores environment and module state, removes temporary database sidecars and rechecks protected fingerprints.",
-      "classification": "A test import-order and database-isolation defect was reproduced and fixed; the fail-closed status matrix, expired-row rejection and UNKNOWN manual-review lookup evidence remain exercised. No product algorithm, normative source or legal applicability change was made.",
-      "boundaries": "Only customs-clear/backend/tests/test_fsa_registry_status_fail_closed.py changed. Its three original test functions and assertions are AST-identical."
+      "reproduced": "Parent exact HEAD failed all four VAT-preference audit tests because hs_rates and vat_preferences were absent, and created a 4,096-byte ambient customs.db in a clean checkout.",
+      "final": "test_vat_preferences_audit161.py now uses a disposable in-memory SQLite database populated from the tracked VAT-rate and preference bundles, patches all relevant session aliases, restores them after the module and rechecks protected fingerprints.",
+      "classification": "A test fixture and database-isolation defect was reproduced and fixed; real payment-engine VAT lookup and preference-audit semantics remain exercised. No product algorithm, normative source or legal applicability change was made.",
+      "boundaries": "Only customs-clear/backend/tests/test_vat_preferences_audit161.py changed. Its four original test methods and assertions are AST-identical."
     },
     "verification": {
-      "author_focused": "Exact remote focused command passed 20 tests, exit 0; FSA/permits/auth/API/payment controls in forward and reverse order passed 134 tests plus 3 subtests each, exit 0.",
-      "author_broad": "The 26-module broad payment/compliance/API command passed 399 tests plus 13 subtests, exit 0; no ambient SQLite was created and the pinned catalogue stayed byte-identical.",
-      "control": "Tariff-agent safety passed 124 tests, exit 0; git diff --check passed; pinned catalogue SHA-256 53847cb00ebc53f6315042325bc416d13d65cf020a10530a4ce7dde848ed1ff2.",
+      "author_focused": "Exact remote focused command passed 4 tests, exit 0; VAT-audit/payment/compliance controls in forward and reverse order passed 223 tests each, exit 0.",
+      "author_broad": "The 23-module broad payment/compliance command passed 316 tests plus 3 subtests, exit 0; no ambient SQLite was created and tracked source files stayed byte-identical.",
+      "control": "Tariff-agent safety passed 124 tests, exit 0; git diff --check passed; pinned catalogue SHA-256 53847cb00ebc53f6315042325bc416d13d65cf020a10530a4ce7dde848ed1ff2, VAT bundle 57b4accf227274eb72e52f81e6fcc1000e69628a6b0d056bfe3e614db5839ee7 and preference bundle 65b287a8ee0b8bbfeedbf876814b89d589aa1f59740cf116b780633dab72573c.",
       "a5": {
         "session": "/root/a5_cycle213",
         "status": "FINAL_PASS_EXACT_HEAD_NO_FINDINGS",
-        "execution": "Independent exact-head review passed focused 20 and separately chosen forward/reverse FSA/permits ordering controls with 44 tests each; verified three AST-identical test functions, fail-closed semantics, alias and environment restoration, late-module cleanup and temporary-file cleanup.",
+        "execution": "Independent exact-tree review passed focused 4 and separately chosen forward/reverse VAT-audit/payment controls with 50 tests each; verified four AST-identical methods, real engine lookup, source hashes, alias restoration and absence of ambient SQLite.",
         "findings": []
       },
       "ci": {
         "status": "PASSED_EXACT_HEAD_OFFLINE_SAFETY_ONLY",
-        "run_id": 38354671784,
-        "job_id": 115154661235,
-        "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38354671784/job/115154661235",
-        "head_sha": "a8e5a9ce2f874d646859605bf48b67a38c5c7ddd",
+        "run_id": 38359883714,
+        "job_id": 115171312790,
+        "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38359883714/job/115171312790",
+        "head_sha": "b5c8f6938c4b20a06c6259ffa6eb1ae868a52a3c",
         "conclusion": "success",
         "limitation": "Workflow is offline-safety only; author and independent executable A5 provide product-test evidence."
       }
@@ -8885,10 +8885,10 @@
     "capabilities": {
       "code_access": "Full exact candidate tree available in isolated author, exact-remote and independent A5 worktrees.",
       "command_execution": "Git, Python and pytest execution available; author, exact-remote and A5 commands exited 0.",
-      "lawful_publication": "Draft branch and PR updated through the authorized GitHub connector under lease generation 213.",
+      "lawful_publication": "Draft branch and PR updated through the authorized GitHub connector under lease generation 214.",
       "checkpoint": "This state CAS commit is the durable checkpoint; lease release follows separately."
     },
-    "next_step": "On fresh PR256 HEAD, reproduce the ambient-database behavior of test_vat_preferences_audit161.py before editing and preserve its payment preference audit assertions."
+    "next_step": "On fresh PR256 HEAD, isolate test_pp908_vat_coverage.py: the clean exact-head reproduction exits 1 with 3 failed and 2 passed, reports missing hs_rates/vat_preferences tables and creates a 4,096-byte ambient customs.db; preserve its PP908 coverage and no-overclaim assertions."
   },
   "previous_development_checkpoint_212": {
     "updated_at": "2026-10-13T04:56:37Z",
