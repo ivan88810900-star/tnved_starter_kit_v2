@@ -1,3 +1,14 @@
+## 2026-10-13 — Decision-suggest database isolation published on PR #256
+
+- Exact candidate: `ed799f2d7c37dda719bfaef93a266c7ea495e63b`, tree `a1cb51c669e4201a293cbc1cdefa1bbbceb79ab9`; parent `d41cf8dc270c448e7be4fdf1b3d29f2842807312`; local author exact-tree commit `efa7731a4f91ee2eac58be0e1466a1be50442511`.
+- Parent reproduction: `python -m pytest -q tests/test_decision_suggest_hs.py` exited 0 with **4 passed** but created a 1,036,288-byte ambient `customs.db`.
+- The unchanged four decision-history/hints scenarios now bootstrap disposable SQLite, redirect the preview-revision marker, rebind loaded session/engine aliases, restore environment/modules and remove temporary DB sidecars. No product algorithm, normative source or legal applicability changed.
+- Author/A0: focused **4 passed**; forward/reverse adjacent controls **15 passed** each; orchestration safety **124 passed + 175 subtests**; exact-remote focused **4 passed**. All final commands exited 0; pinned catalogue/revision hashes stayed unchanged; no final ambient SQLite.
+- Independent A5 `/root/a5_cycle223`: **PASS without findings**; focused **4 passed**, independent forward/reverse controls **9 passed** and **10 passed**, four test-method ASTs, import-order isolation, protected fingerprints and cleanup verified.
+- Exact-head CI [run 38417501640 / job 115365736671](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38417501640/job/115365736671): **success**.
+- Next reproduced target: on this exact HEAD, `test_ved_intel_api.py` exits 0 with **1 passed** but creates a 1,036,288-byte ambient `customs.db`; the probe artifact was removed. `test_safe_http_errors.py` and `test_upload_packing_list_api.py` were rechecked clean.
+- The issue #257 comment `DOT-PILOT-SIX-TASKS-20261013` was read and remains a coordination/triage queue, not an authority change. Full #245 acceptance and legal/source completeness remain NOT PASS; a lawful populated synchronized NTM snapshot is unavailable. A6 `core-s1-6415f443120f-r9-g106` remains unchanged and undispatched. No merge, deploy or production write was performed.
+
 ## 2026-10-13 — Preview permit-badges database/revision isolation published on PR #256
 
 - Exact candidate: `d41cf8dc270c448e7be4fdf1b3d29f2842807312`, tree `7d28cd861c8e742feb3f3475abdc82fa5a2f05fe`; parent `0ee5c48f8965995e2340d7ccd00bbf46e562bf8b`; local author exact-tree commit `19f14b5fdd3e96d79d250d41217f504838f0e427`.
