@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 import sys
 import unittest
@@ -9,12 +10,16 @@ from pathlib import Path
 from unittest.mock import patch
 
 try:
-    from sqlalchemy import text
+    from sqlalchemy import create_engine
+    from sqlalchemy.orm import sessionmaker
+    from sqlalchemy.pool import StaticPool
 
-    from app.db import SessionLocal, engine
+    from app.db import Base
     from app.models.rop import RopGoodsRate, RopPackagingDefault, RopPackagingRate
     from app.services.rop_calculator import calculate_rop, detect_packaging_type, get_goods_rate
-    from scripts.import_rop_rates import main as import_main
+    from scripts import import_rop_rates
+
+    import_main = import_rop_rates.main
 
     _AVAILABLE = True
     _IMPORT_ERROR = ""
@@ -23,35 +28,80 @@ except ImportError as exc:
     _IMPORT_ERROR = str(exc)
 
 
-def _ensure_schema_and_data() -> None:
-    """Apply migration head + import JSON if tables empty."""
-    from alembic import command
-    from alembic.config import Config
+BACKEND_ROOT = Path(__file__).resolve().parents[1]
+DEFAULT_DATABASE = BACKEND_ROOT / "customs.db"
+PINNED_CATALOGUE = BACKEND_ROOT / "customs.db.backup_before_pdf_import"
+ROP_RATES = BACKEND_ROOT / "data" / "rop_rates_2024.json"
+ROP_DEFAULTS = BACKEND_ROOT / "data" / "rop_packaging_defaults.json"
 
-    backend = Path(__file__).resolve().parents[1]
-    cfg = Config(str(backend / "alembic.ini"))
-    cfg.set_main_option("script_location", str(backend / "alembic"))
-    command.upgrade(cfg, "head")
 
-    session = SessionLocal()
-    try:
-        count = session.query(RopGoodsRate).count()
-    finally:
-        session.close()
-    if count == 0:
-        import_main([])
+def _sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as file_handle:
+        for chunk in iter(lambda: file_handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def _protected_fingerprints() -> dict[Path, str | None]:
+    paths = {
+        ROP_RATES,
+        ROP_DEFAULTS,
+        *(
+            candidate
+            for path in (DEFAULT_DATABASE, PINNED_CATALOGUE)
+            for candidate in (path, Path(f"{path}-wal"), Path(f"{path}-shm"))
+        ),
+    }
+    return {
+        path: _sha256(path) if path.is_file() else None
+        for path in paths
+    }
 
 
 @unittest.skipIf(not _AVAILABLE, f"ROP tests require deps: {_IMPORT_ERROR}")
 class RopCalculatorTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
-        _ensure_schema_and_data()
-        cls.db = SessionLocal()
+        cls._protected_hashes = _protected_fingerprints()
+        cls._engine = create_engine(
+            "sqlite:///:memory:",
+            connect_args={"check_same_thread": False},
+            poolclass=StaticPool,
+        )
+        Base.metadata.create_all(
+            bind=cls._engine,
+            tables=[
+                RopGoodsRate.__table__,
+                RopPackagingRate.__table__,
+                RopPackagingDefault.__table__,
+            ],
+        )
+        cls._session_factory = sessionmaker(
+            bind=cls._engine,
+            autocommit=False,
+            autoflush=False,
+        )
+        cls._import_session_patch = patch.object(
+            import_rop_rates,
+            "SessionLocal",
+            cls._session_factory,
+        )
+        cls._import_session_patch.start()
+        try:
+            import_main([])
+            cls.db = cls._session_factory()
+        except BaseException:
+            cls._import_session_patch.stop()
+            cls._engine.dispose()
+            raise
 
     @classmethod
     def tearDownClass(cls) -> None:
         cls.db.close()
+        cls._import_session_patch.stop()
+        cls._engine.dispose()
+        assert _protected_fingerprints() == cls._protected_hashes
 
     def test_goods_rates_loaded(self) -> None:
         count = self.db.query(RopGoodsRate).filter(RopGoodsRate.calendar_year == 2026).count()
