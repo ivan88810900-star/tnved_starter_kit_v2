@@ -1,0 +1,54 @@
+{
+  "schema_version": 1,
+  "cycle": 238,
+  "checked_at": "2026-10-14T04:22:04.788Z",
+  "repository": "ivan88810900-star/tnved_starter_kit_v2",
+  "lease_generation": 238,
+  "base_pr": 259,
+  "base_head_sha": "860b2098726a420af069492bdd32f8b23b619c19",
+  "branch": "agent/backend-broad-regressions-v1",
+  "published_head_sha": "1ebfaa4ae2baf60e6cf4a00c45d0afe8b6a2928f",
+  "tree_sha": "1196d269c74b9866398ee07c2e347724e7174311",
+  "block": "rate_display_database_isolation",
+  "finding_id": "A0-RATE-DISPLAY-DATABASE-ISOLATION-001",
+  "status": "PUBLISHED_DRAFT_CI_PASS_A5_PENDING",
+  "reproduction": {
+    "source": "broad regression checkpoint from cycle 237",
+    "observed_failure": "tests/test_rate_display.py required ambient hs_rates table",
+    "mechanism": "The module called normative_store.find_rate_for_hs and rate_display.SessionLocal without an isolated test database."
+  },
+  "change": {
+    "files": [
+      "customs-clear/backend/tests/test_rate_display.py"
+    ],
+    "behavior": "Added a module-scoped in-memory HsRate fixture and patched both database lookup boundaries.",
+    "preserved_assertions": 3,
+    "product_code_changed": false
+  },
+  "verification": {
+    "static_scope": "one test file; +40/-0; original three test functions and assertions preserved",
+    "author_tests": "UNAVAILABLE in connector-only runtime without repository checkout/dependency tree",
+    "exact_head_ci": {
+      "run_id": 38510877875,
+      "job_id": 115678849503,
+      "job": "offline-safety",
+      "conclusion": "success",
+      "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38510877875/job/115678849503"
+    },
+    "a5": {
+      "status": "PENDING_UNAVAILABLE_IN_THIS_RUNTIME",
+      "reason": "No native independent child execution was available; do not promote readiness."
+    }
+  },
+  "blockers": [
+    "Fresh executable focused/bidirectional backend tests and independent A5 remain required.",
+    "A lawful populated synchronized NTM snapshot remains unavailable.",
+    "Full PR #245 product acceptance and legal/source completeness remain NOT PASS."
+  ],
+  "a6": {
+    "request": "core-s1-6415f443120f-r9-g106",
+    "status": "UNCHANGED_NOT_SENT"
+  },
+  "protected_actions_performed": false,
+  "next_step": "Run focused test_rate_display plus adjacent payment tests in both orders and independent A5 on exact PR259 head; only then continue broad regression discovery. Do not dispatch A6 or alter workflow/config."
+}
