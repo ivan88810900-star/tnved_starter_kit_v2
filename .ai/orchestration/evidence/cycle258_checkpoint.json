@@ -1,0 +1,61 @@
+{
+  "schema_version": 1,
+  "cycle": 258,
+  "started_at": "2026-10-14T21:55:27Z",
+  "completed_at": "2026-10-14T22:08:25Z",
+  "executor": "/root/scheduled-cycle258-20261014T215527Z",
+  "lease": {
+    "generation": 258,
+    "token": "14a2d07758c84cd796c0da85ef969de6",
+    "acquisition_commit": "b1345c4415199f8c975f119f42f384ec156e53f6"
+  },
+  "candidate": {
+    "pr": 256,
+    "branch": "agent/product-ntm-regressions-v1",
+    "parent_sha": "3e54a6abe467138071e775b6820f58a381e06060",
+    "head_sha": "8a1ff90112f5fb6f7b766bbd55510dfd8af105c4",
+    "tree_sha": "e3bf55bdc4b015ed90152e337ab700ed658f8a8a",
+    "local_author_commit": "639feb1893a50066d9665b38e646bafb1ab1fb92",
+    "block": "smart_classifier_vision_singleflight",
+    "files": [
+      "customs-clear/backend/app/services/smart_classifier.py",
+      "customs-clear/backend/tests/test_smart_classifier.py"
+    ]
+  },
+  "reproduction": {
+    "status": "REPRODUCED_ON_EXACT_PARENT",
+    "result": "Two simultaneous identical cold group-image requests made two vision-provider calls."
+  },
+  "verification": {
+    "a0": {
+      "command": "PYTHONPATH=. /workspace/scratch/bb84ae3e224a/analysis251/customs-clear/backend/.venv/bin/python -m pytest -q tests/test_smart_classifier.py tests/test_classify_api_security.py tests/test_custom_classifier_chain.py tests/test_upload_packing_list_api.py tests/test_safe_http_errors.py",
+      "exit_code": 0,
+      "result": "92 passed plus 71 subtests"
+    },
+    "a5": {
+      "session": "/root/a5_cycle258",
+      "status": "PASS_EXACT_TREE_NO_FINDINGS",
+      "adjacent_result": "92 passed plus 71 subtests, exit 0",
+      "adversarial_result": "First candidate rejected for late changed-image overwrite/erase. Final exact tree passed identical singleflight, cancellation, retry, clear fence, late success/failure, invalid-newer, A/B/A, fail-closed recovery and cross-loop isolation."
+    },
+    "ci": {
+      "workflow": "Tariff agent safety",
+      "job": "offline-safety",
+      "run_id": 38645370088,
+      "job_id": 116130776149,
+      "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38645370088/job/116130776149",
+      "conclusion": "success"
+    },
+    "github_receipt": {
+      "pr": 256,
+      "comment_id": 6179555513
+    }
+  },
+  "limits": {
+    "full_pr245_acceptance": "NOT_PASS",
+    "legal_source_completeness": "NOT_PASS",
+    "lawful_populated_synchronized_ntm_snapshot": "UNAVAILABLE",
+    "a6": "core-s1-6415f443120f-r9-g106 unchanged and not sent",
+    "protected_actions_performed": false
+  }
+}
