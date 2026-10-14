@@ -9,12 +9,16 @@ import ipaddress
 import json
 import re
 import socket
+import warnings
+import zlib
 from dataclasses import dataclass, field
+from io import BytesIO
 from typing import Any
 from urllib.parse import urljoin, urlsplit, urlunsplit
 
 import httpx
 from loguru import logger
+from PIL import Image
 
 from .classify_response_parser import parse_classify_response
 from .claude_service import (
@@ -56,6 +60,7 @@ _classify_group_cache: dict[tuple[str, str], "ClassifyResult"] = {}
 _cache_lock = asyncio.Lock()
 _BATCH_TRANSLATE_CHUNK = 45
 _MAX_IMAGE_BYTES = 10 * 1024 * 1024
+_MAX_IMAGE_FRAMES = 1000
 _SUPPORTED_IMAGE_MEDIA_TYPES = frozenset(
     {"image/jpeg", "image/png", "image/gif", "image/webp"}
 )
@@ -755,6 +760,140 @@ def _detect_raster_media_type(decoded: bytes) -> str | None:
     return None
 
 
+def _jpeg_container_end(image_bytes: bytes) -> int | None:
+    """Return the first structural JPEG EOI boundary, skipping marker payloads."""
+    position = 2
+    in_scan = False
+    while position < len(image_bytes):
+        if in_scan:
+            marker_start = image_bytes.find(b"\xff", position)
+            if marker_start < 0 or marker_start + 1 >= len(image_bytes):
+                return None
+            marker_position = marker_start + 1
+            while marker_position < len(image_bytes) and image_bytes[marker_position] == 0xFF:
+                marker_position += 1
+            if marker_position >= len(image_bytes):
+                return None
+            marker = image_bytes[marker_position]
+            if marker == 0x00 or 0xD0 <= marker <= 0xD7:
+                position = marker_position + 1
+                continue
+            if marker == 0xD9:
+                return marker_position + 1
+            position = marker_start
+            in_scan = False
+            continue
+
+        if image_bytes[position] != 0xFF:
+            return None
+        while position < len(image_bytes) and image_bytes[position] == 0xFF:
+            position += 1
+        if position >= len(image_bytes):
+            return None
+        marker = image_bytes[position]
+        position += 1
+        if marker == 0xD9:
+            return position
+        if marker in {0x01, 0xD8} or 0xD0 <= marker <= 0xD7:
+            continue
+        if marker == 0x00 or position + 2 > len(image_bytes):
+            return None
+        segment_length = int.from_bytes(image_bytes[position : position + 2], "big")
+        if segment_length < 2 or position + segment_length > len(image_bytes):
+            return None
+        position += segment_length
+        if marker == 0xDA:
+            in_scan = True
+    return None
+
+
+def _png_container_end(image_bytes: bytes) -> int | None:
+    position = 8
+    while position < len(image_bytes):
+        if position + 12 > len(image_bytes):
+            return None
+        chunk_length = int.from_bytes(image_bytes[position : position + 4], "big")
+        chunk_type = image_bytes[position + 4 : position + 8]
+        chunk_end = position + 12 + chunk_length
+        if chunk_end > len(image_bytes):
+            return None
+        chunk_data_end = position + 8 + chunk_length
+        expected_crc = int.from_bytes(image_bytes[chunk_data_end:chunk_end], "big")
+        actual_crc = zlib.crc32(chunk_type)
+        actual_crc = zlib.crc32(image_bytes[position + 8 : chunk_data_end], actual_crc)
+        if actual_crc & 0xFFFFFFFF != expected_crc:
+            return None
+        if chunk_type == b"IEND":
+            return chunk_end if chunk_length == 0 else None
+        position = chunk_end
+    return None
+
+
+def _gif_container_end(image_bytes: bytes) -> int | None:
+    if len(image_bytes) < 13:
+        return None
+    position = 13
+    packed_fields = image_bytes[10]
+    if packed_fields & 0x80:
+        position += 3 * (2 ** ((packed_fields & 0x07) + 1))
+
+    def skip_sub_blocks(offset: int) -> int | None:
+        while offset < len(image_bytes):
+            block_size = image_bytes[offset]
+            offset += 1
+            if block_size == 0:
+                return offset
+            if offset + block_size > len(image_bytes):
+                return None
+            offset += block_size
+        return None
+
+    while position < len(image_bytes):
+        introducer = image_bytes[position]
+        position += 1
+        if introducer == 0x3B:
+            return position
+        if introducer == 0x21:
+            if position >= len(image_bytes):
+                return None
+            position += 1  # extension label
+            next_position = skip_sub_blocks(position)
+            if next_position is None:
+                return None
+            position = next_position
+            continue
+        if introducer != 0x2C or position + 9 > len(image_bytes):
+            return None
+        descriptor_packed_fields = image_bytes[position + 8]
+        position += 9
+        if descriptor_packed_fields & 0x80:
+            position += 3 * (2 ** ((descriptor_packed_fields & 0x07) + 1))
+        if position >= len(image_bytes):
+            return None
+        position += 1  # LZW minimum code size
+        next_position = skip_sub_blocks(position)
+        if next_position is None:
+            return None
+        position = next_position
+    return None
+
+
+def _has_exact_raster_container_end(image_bytes: bytes, media_type: str) -> bool:
+    if media_type == "image/jpeg":
+        container_end = _jpeg_container_end(image_bytes)
+    elif media_type == "image/png":
+        container_end = _png_container_end(image_bytes)
+    elif media_type == "image/gif":
+        container_end = _gif_container_end(image_bytes)
+    else:
+        container_end = (
+            int.from_bytes(image_bytes[4:8], "little") + 8
+            if len(image_bytes) >= 12
+            else None
+        )
+    return container_end == len(image_bytes)
+
+
 def _validate_raster_image_bytes(
     image_bytes: bytes,
     declared_media_type: str | None,
@@ -768,6 +907,50 @@ def _validate_raster_image_bytes(
             raise ValueError("unsupported image media type")
         if detected_media_type != normalized_media_type:
             raise ValueError("image media type does not match its bytes")
+
+    # Signatures alone are not evidence that bytes form an image.  Reject
+    # truncated containers and payloads appended after the format's canonical
+    # end before asking Pillow to decode the raster.  This also keeps
+    # image-plus-HTML/script polyglots away from external providers.
+    if not _has_exact_raster_container_end(image_bytes, detected_media_type):
+        raise ValueError("image payload is not a complete raster image")
+
+    pillow_media_types = {
+        "JPEG": "image/jpeg",
+        "PNG": "image/png",
+        "GIF": "image/gif",
+        "WEBP": "image/webp",
+    }
+    try:
+        with warnings.catch_warnings():
+            warnings.simplefilter("error", Image.DecompressionBombWarning)
+            with Image.open(BytesIO(image_bytes)) as image:
+                decoded_media_type = pillow_media_types.get(image.format or "")
+                image.verify()
+            # verify() deliberately does not decode pixels.  Reopen and load
+            # every reported frame so malformed compressed data in a later
+            # GIF/WebP/APNG frame is rejected as well.
+            with Image.open(BytesIO(image_bytes)) as image:
+                frame_count = getattr(image, "n_frames", 1)
+                if not isinstance(frame_count, int) or frame_count < 1:
+                    raise ValueError("image reports an invalid frame count")
+                if frame_count > _MAX_IMAGE_FRAMES:
+                    raise ValueError("image exceeds maximum allowed frame count")
+                for frame_index in range(frame_count):
+                    image.seek(frame_index)
+                    image.load()
+    except (
+        OSError,
+        EOFError,
+        SyntaxError,
+        ValueError,
+        Image.DecompressionBombError,
+        Image.DecompressionBombWarning,
+    ) as exc:
+        raise ValueError("image payload is not a decodable raster image") from exc
+
+    if decoded_media_type != detected_media_type:
+        raise ValueError("decoded image format does not match its bytes")
     return detected_media_type
 
 

@@ -2,11 +2,14 @@
 from __future__ import annotations
 
 import base64
+from io import BytesIO
 import socket
 import unittest
 from unittest.mock import AsyncMock, MagicMock, patch
+import zlib
 
 import httpx
+from PIL import Image
 
 from app.services.smart_classifier import (
     ClassifyResult,
@@ -16,11 +19,63 @@ from app.services.smart_classifier import (
     _validate_public_image_url,
 )
 
+
+def _make_test_image_bytes(image_format: str) -> bytes:
+    output = BytesIO()
+    Image.new("RGB", (2, 2), color=(20, 40, 60)).save(output, format=image_format)
+    return output.getvalue()
+
+
+def _make_test_animated_image_bytes(image_format: str) -> bytes:
+    output = BytesIO()
+    frames = [
+        Image.new("RGB", (3, 3), color=color)
+        for color in ((255, 0, 0), (0, 255, 0), (0, 0, 255))
+    ]
+    frames[0].save(
+        output,
+        format=image_format,
+        save_all=True,
+        append_images=frames[1:],
+        duration=20,
+        loop=0,
+    )
+    return output.getvalue()
+
+
+def _corrupt_later_apng_frame(image_bytes: bytes) -> bytes:
+    output = bytearray(image_bytes[:8])
+    position = 8
+    corrupted = False
+    while position < len(image_bytes):
+        chunk_length = int.from_bytes(image_bytes[position : position + 4], "big")
+        chunk_type = image_bytes[position + 4 : position + 8]
+        chunk_data = image_bytes[position + 8 : position + 8 + chunk_length]
+        chunk_end = position + 12 + chunk_length
+        if chunk_type == b"fdAT" and not corrupted:
+            # Keep the APNG sequence number and a valid CRC, but replace the
+            # later frame's compressed stream with invalid data.
+            chunk_data = chunk_data[:4] + b"\x00"
+            checksum = zlib.crc32(chunk_type)
+            checksum = zlib.crc32(chunk_data, checksum) & 0xFFFFFFFF
+            output.extend(len(chunk_data).to_bytes(4, "big"))
+            output.extend(chunk_type)
+            output.extend(chunk_data)
+            output.extend(checksum.to_bytes(4, "big"))
+            corrupted = True
+        else:
+            output.extend(image_bytes[position:chunk_end])
+        position = chunk_end
+    if not corrupted:
+        raise AssertionError("generated APNG has no later fdAT frame")
+    return bytes(output)
+
+
 _TEST_IMAGE_BYTES = {
-    "image/jpeg": b"\xff\xd8\xff",
-    "image/png": b"\x89PNG\r\n\x1a\n",
-    "image/gif": b"GIF89a",
-    "image/webp": b"RIFF\x00\x00\x00\x00WEBP",
+    "image/jpeg": _make_test_image_bytes("JPEG"),
+    "image/png": _make_test_image_bytes("PNG"),
+    "image/gif": _make_test_image_bytes("GIF"),
+    "image/webp": _make_test_image_bytes("WEBP"),
 }
 _TEST_IMAGE_B64 = {
     media_type: base64.standard_b64encode(data).decode("ascii")
@@ -428,7 +483,7 @@ class SmartClassifierImageUrlSafetyTests(unittest.IsolatedAsyncioTestCase):
         response = httpx.Response(
             200,
             headers={"content-type": "image/png"},
-            content=b"<html></html>",
+            content=b"\x89PNG\r\n\x1a\nnot-a-decodable-png",
             request=httpx.Request("GET", url),
         )
         clf = SmartClassifier()
@@ -449,6 +504,48 @@ class SmartClassifierImageUrlSafetyTests(unittest.IsolatedAsyncioTestCase):
                 await clf._analyze_image(None, url, "товар")
 
         provider.assert_not_awaited()
+        stream_context.__aexit__.assert_awaited_once()
+
+    async def test_remote_corrupt_raster_with_text_remains_fail_closed(self) -> None:
+        url = "https://images.example.test/photo.png"
+        response = httpx.Response(
+            200,
+            headers={"content-type": "image/png"},
+            content=_TEST_IMAGE_BYTES["image/png"][:-12],
+            request=httpx.Request("GET", url),
+        )
+        clf = SmartClassifier()
+        model = AsyncMock(
+            return_value={
+                "text": '{"results":[{"hs_code":"3926909709","recommended":true}]}',
+                "provider": "test",
+            }
+        )
+        with (
+            patch("app.services.smart_classifier.is_llm_configured", return_value=True),
+            patch(
+                "app.services.smart_classifier.socket.getaddrinfo",
+                return_value=[self._dns_answer("93.184.216.34")],
+            ),
+            patch("app.services.smart_classifier.httpx.AsyncClient") as client_cls,
+            patch(
+                "app.services.smart_classifier.anthropic_messages_request",
+                new_callable=AsyncMock,
+            ) as provider,
+            patch("app.services.smart_classifier._ask_llm", model),
+        ):
+            _client, stream_context = self._install_stream_response(client_cls, response)
+            result = await clf.classify(
+                description="пластиковая запасная часть",
+                image_url=url,
+            )
+
+        self.assertEqual(result.status, "MANUAL_REVIEW")
+        self.assertTrue(result.extra["manual_review_required"])
+        self.assertEqual(result.extra["image_analysis_status"], "unavailable")
+        self.assertFalse(result.results[0]["recommended"])
+        provider.assert_not_awaited()
+        model.assert_awaited_once()
         stream_context.__aexit__.assert_awaited_once()
 
     async def test_non_image_content_type_is_rejected_and_stream_is_closed(self) -> None:
@@ -825,6 +922,147 @@ class SmartClassifierBase64SafetyTests(unittest.IsolatedAsyncioTestCase):
         for value in values:
             with self.subTest(value=value), self.assertRaises(ValueError):
                 _normalize_image_base64(value)
+
+    def test_signature_only_truncated_and_polyglot_rasters_are_rejected(self) -> None:
+        signature_only = {
+            "image/jpeg": b"\xff\xd8\xffarbitrary-garbage",
+            "image/png": b"\x89PNG\r\n\x1a\narbitrary-garbage",
+            "image/gif": b"GIF89aarbitrary-garbage",
+            "image/webp": b"RIFF\x04\x00\x00\x00WEBParbitrary-garbage",
+        }
+        trim_bytes = {
+            "image/jpeg": 2,
+            "image/png": 12,
+            "image/gif": 1,
+            "image/webp": 1,
+        }
+        for media_type, valid_bytes in _TEST_IMAGE_BYTES.items():
+            cases = {
+                "signature_only": signature_only[media_type],
+                "truncated": valid_bytes[: -trim_bytes[media_type]],
+                "polyglot": valid_bytes + b"<script>alert(1)</script>",
+            }
+            for case_name, invalid_bytes in cases.items():
+                encoded = base64.standard_b64encode(invalid_bytes).decode("ascii")
+                with (
+                    self.subTest(media_type=media_type, case=case_name),
+                    self.assertRaises(ValueError),
+                ):
+                    _normalize_image_base64(f"data:{media_type};base64,{encoded}")
+
+    def test_duplicate_end_marker_does_not_hide_appended_payload(self) -> None:
+        cases = {
+            "image/jpeg": _TEST_IMAGE_BYTES["image/jpeg"] + b"<script>x</script>\xff\xd9",
+            "image/png": (
+                _TEST_IMAGE_BYTES["image/png"]
+                + b"<script>x</script>"
+                + b"\x00\x00\x00\x00IEND\xaeB`\x82"
+            ),
+            "image/gif": _TEST_IMAGE_BYTES["image/gif"] + b"<script>x</script>;",
+        }
+        for media_type, invalid_bytes in cases.items():
+            encoded = base64.standard_b64encode(invalid_bytes).decode("ascii")
+            with self.subTest(media_type=media_type), self.assertRaises(ValueError):
+                _normalize_image_base64(f"data:{media_type};base64,{encoded}")
+
+    def test_corrupt_png_iend_crc_is_rejected(self) -> None:
+        corrupt_png = bytearray(_TEST_IMAGE_BYTES["image/png"])
+        corrupt_png[-1] ^= 0x01
+        encoded = base64.standard_b64encode(corrupt_png).decode("ascii")
+        with self.assertRaises(ValueError):
+            _normalize_image_base64(f"data:image/png;base64,{encoded}")
+
+    def test_valid_animated_rasters_validate_every_reported_frame(self) -> None:
+        formats = {
+            "GIF": "image/gif",
+            "PNG": "image/png",
+            "WEBP": "image/webp",
+        }
+        for image_format, media_type in formats.items():
+            image_bytes = _make_test_animated_image_bytes(image_format)
+            encoded = base64.standard_b64encode(image_bytes).decode("ascii")
+            with self.subTest(image_format=image_format):
+                normalized, normalized_type = _normalize_image_base64(encoded)
+                self.assertEqual(normalized, encoded)
+                self.assertEqual(normalized_type, media_type)
+                with Image.open(BytesIO(base64.b64decode(normalized))) as image:
+                    self.assertGreater(image.n_frames, 1)
+
+    def test_animated_frame_limit_is_enforced(self) -> None:
+        animated_gif = _make_test_animated_image_bytes("GIF")
+        encoded = base64.standard_b64encode(animated_gif).decode("ascii")
+        with patch("app.services.smart_classifier._MAX_IMAGE_FRAMES", 2):
+            with self.assertRaisesRegex(ValueError, "decodable raster"):
+                _normalize_image_base64(encoded)
+
+    async def test_corrupt_later_gif_frame_never_reaches_provider(self) -> None:
+        clf = SmartClassifier()
+        valid_gif = _make_test_animated_image_bytes("GIF")
+        # Preserve the GIF signature, dimensions, first frame, and trailer,
+        # while truncating data needed by a later frame.
+        corrupt_gif = valid_gif[:-6] + b";"
+        invalid_payload = base64.standard_b64encode(corrupt_gif).decode("ascii")
+        with Image.open(BytesIO(corrupt_gif)) as image:
+            image.seek(0)
+            image.load()
+            with self.assertRaises((EOFError, OSError)):
+                for frame_index in range(1, image.n_frames):
+                    image.seek(frame_index)
+                    image.load()
+
+        with (
+            patch("app.services.smart_classifier.is_llm_configured", return_value=True),
+            patch(
+                "app.services.smart_classifier.anthropic_messages_request",
+                new_callable=AsyncMock,
+            ) as provider,
+            patch("app.services.smart_classifier._ask_llm", new_callable=AsyncMock) as model,
+        ):
+            result = await clf.classify(
+                description=None,
+                image_base64=f"data:image/gif;base64,{invalid_payload}",
+            )
+
+        self.assertEqual(result.status, "ERROR")
+        self.assertEqual(result.extra["error_code"], "image_unavailable")
+        self.assertTrue(result.extra["manual_review_required"])
+        provider.assert_not_awaited()
+        model.assert_not_awaited()
+
+    def test_corrupt_later_apng_frame_is_rejected(self) -> None:
+        valid_apng = _make_test_animated_image_bytes("PNG")
+        corrupt_apng = _corrupt_later_apng_frame(valid_apng)
+        with Image.open(BytesIO(corrupt_apng)) as image:
+            image.seek(0)
+            image.load()
+            self.assertGreater(image.n_frames, 1)
+
+        invalid_payload = base64.standard_b64encode(corrupt_apng).decode("ascii")
+        with self.assertRaises(ValueError):
+            _normalize_image_base64(f"data:image/png;base64,{invalid_payload}")
+
+    async def test_structurally_invalid_local_image_never_reaches_provider(self) -> None:
+        clf = SmartClassifier()
+        invalid_bytes = b"\xff\xd8\xffarbitrary-garbage"
+        invalid_payload = base64.standard_b64encode(invalid_bytes).decode("ascii")
+        with (
+            patch("app.services.smart_classifier.is_llm_configured", return_value=True),
+            patch(
+                "app.services.smart_classifier.anthropic_messages_request",
+                new_callable=AsyncMock,
+            ) as provider,
+            patch("app.services.smart_classifier._ask_llm", new_callable=AsyncMock) as model,
+        ):
+            result = await clf.classify(
+                description=None,
+                image_base64=f"data:image/jpeg;base64,{invalid_payload}",
+            )
+
+        self.assertEqual(result.status, "ERROR")
+        self.assertEqual(result.extra["error_code"], "image_unavailable")
+        self.assertTrue(result.extra["manual_review_required"])
+        provider.assert_not_awaited()
+        model.assert_not_awaited()
 
     async def test_invalid_image_only_base64_fails_before_any_provider_or_model(self) -> None:
         clf = SmartClassifier()
