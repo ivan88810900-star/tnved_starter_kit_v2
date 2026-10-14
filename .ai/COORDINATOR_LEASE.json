@@ -1,6 +1,6 @@
 {
   "acquisition_note": "Fresh GitHub recovery at main e526dfbdb5a31b01bf6f743da0288b88f916de0c, PR259 146c7efe9c8a7832da9a60e6d834d05fff35a54a and state ba59b668f6e27eade4ace70f758e5c4bc9ac7b35; reproduce and repair the bounded regulatory-mass-seed ambient database writer without product, normative, A6, protected-branch or production changes.",
-  "expires_at": "2026-10-14T15:29:12.468938Z",
+  "expires_at": "2026-10-14T15:41:21.578167Z",
   "generation": 251,
   "holder": "/root/scheduled-cycle251-20261014T145702Z",
   "lease_repair": {},
@@ -10,5 +10,5 @@
   "serialization_repair": {},
   "state": "active",
   "token": "e7408088eebd481bb728a0c6ca72553b",
-  "updated_at": "2026-10-14T14:59:12.468938Z"
+  "updated_at": "2026-10-14T15:11:21.578167Z"
 }
