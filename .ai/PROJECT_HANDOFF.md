@@ -1868,3 +1868,13 @@ CI #255: [offline-safety PASS, run 37771953943](https://github.com/ivan88810900-
 - Exact-head CI [run 38538222812 / job 115766255270](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38538222812/job/115766255270): **success** (`offline-safety`).
 - The guarded broad run advanced to 62% and reproduced the next independent leak at `tests/test_ntm_v2_rules_enforcement.py::test_enforcement_off_unchanged_baseline`; ambient DB/WAL/SHM were moved recoverably to `/tmp`. This is the next bounded repair.
 - NTM full-sync remains blocked without a lawful populated synchronized snapshot; full #245 acceptance and legal/source completeness remain NOT PASS. A6 `core-s1-6415f443120f-r9-g106` is unchanged and undispatched. No protected action was performed.
+
+## 2026-10-14 — NTM v2 rules-enforcement database isolation completed on draft PR #259
+
+- Exact parent `29ea26fda41e241da495435bba03c74a1dd57c80` passed the pipeline-flag→rules-enforcement order (**86 passed**) but created a 4,096-byte ambient `customs.db`; the rules fixture did not rebind the copied `sanctions_risk_block.SessionLocal` alias.
+- Draft [PR #259](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/259) now publishes exact head `146c7efe9c8a7832da9a60e6d834d05fff35a54a`, tree `263388053892c31ffd5dff8e631e78bf8c7a5e91`; local author commit `8a099fe85164ceea3f918b0ca31330db22acf839` has the exact same tree. Only `customs-clear/backend/tests/test_ntm_v2_rules_enforcement.py` changed.
+- The fixture now binds the pre-imported sanctions alias to the in-memory sessionmaker, asserts alias identity and disposes its engine in `finally`. Author: focused **14 passed**, isolated baseline **1 passed**, predecessor-first **86 passed**, all exit 0, with no DB/WAL/SHM.
+- Fresh independent A5 `/root/a5_244`: **PASS, no findings**; exact tree, one-file scope, diff check, alias/teardown review, the same **14/1/86** executions and absent DB/WAL/SHM verified.
+- Exact-head CI [run 38546658998 / job 115794263031](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38546658998/job/115794263031): **success** (`offline-safety`).
+- The guarded broad run advanced to 81% and reproduced the next independent writer at `tests/test_regulatory_mass_seed.py::TestMassRegulatoryDocuments::test_total_documents_exceeds_5000`; exact ambient DB/WAL/SHM were moved recoverably to `/tmp`. This is the next bounded repair.
+- NTM full-sync remains blocked without a lawful populated synchronized snapshot; full #245 acceptance and legal/source completeness remain NOT PASS. A6 `core-s1-6415f443120f-r9-g106` is unchanged and undispatched. No merge, deploy, production write, enforcement/flag, secret/permission or destructive action was performed.

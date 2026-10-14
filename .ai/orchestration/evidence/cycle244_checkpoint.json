@@ -1,0 +1,71 @@
+{
+  "schema_version": 1,
+  "cycle": 244,
+  "checked_at": "2026-10-14T10:03:20Z",
+  "lease_generation": 244,
+  "repository": "ivan88810900-star/tnved_starter_kit_v2",
+  "pr": 259,
+  "branch": "agent/backend-broad-regressions-v1",
+  "parent_sha": "29ea26fda41e241da495435bba03c74a1dd57c80",
+  "published_head_sha": "146c7efe9c8a7832da9a60e6d834d05fff35a54a",
+  "tree_sha": "263388053892c31ffd5dff8e631e78bf8c7a5e91",
+  "local_author_commit": "8a099fe85164ceea3f918b0ca31330db22acf839",
+  "changed_files": [
+    "customs-clear/backend/tests/test_ntm_v2_rules_enforcement.py"
+  ],
+  "reproduction": {
+    "command": "PYTHONPATH=. /workspace/scratch/bb84ae3e224a/author242/customs-clear/backend/.venv/bin/python -m pytest -q tests/test_ntm_v2_pipeline_flag.py tests/test_ntm_v2_rules_enforcement.py::test_enforcement_off_unchanged_baseline",
+    "exit_code": 0,
+    "result": "86 passed; ambient customs.db created with size 4096 bytes",
+    "classification": "test fixture isolation defect"
+  },
+  "fix": "Rebind the pre-imported sanctions_risk_block.SessionLocal alias to the fixture's in-memory sessionmaker, assert alias identity and dispose the engine in finally.",
+  "author": {
+    "status": "PASS",
+    "commands": [
+      "python -m pytest -q tests/test_ntm_v2_rules_enforcement.py",
+      "python -m pytest -q tests/test_ntm_v2_rules_enforcement.py::test_enforcement_off_unchanged_baseline",
+      "python -m pytest -q tests/test_ntm_v2_pipeline_flag.py tests/test_ntm_v2_rules_enforcement.py::test_enforcement_off_unchanged_baseline",
+      "git diff --check HEAD^..HEAD"
+    ],
+    "results": [
+      "14 passed, exit 0",
+      "1 passed, exit 0",
+      "86 passed, exit 0",
+      "exit 0"
+    ],
+    "ambient_database_after_each": false
+  },
+  "a5": {
+    "session": "/root/a5_244",
+    "status": "PASS_EXACT_TREE_NO_FINDINGS",
+    "commit_sha": "8a099fe85164ceea3f918b0ca31330db22acf839",
+    "tree_sha": "263388053892c31ffd5dff8e631e78bf8c7a5e91",
+    "results": "14 passed; isolated 1 passed; predecessor-first 86 passed; all exit 0; diff check and absence of DB/WAL/SHM verified independently"
+  },
+  "broad_probe": {
+    "command": "PYTHONPATH=/workspace/scratch/bb84ae3e224a /workspace/scratch/bb84ae3e224a/author242/customs-clear/backend/.venv/bin/python -m pytest -q -p ambient_guard_author244 tests --ignore=tests/test_ntm_full_sync.py --deselect=tests/test_data_refresh.py::TestGitHubWorkflow",
+    "exit_code": 1,
+    "progress": "advanced to 81%",
+    "next_writer": "tests/test_regulatory_mass_seed.py::TestMassRegulatoryDocuments::test_total_documents_exceeds_5000",
+    "artifact_handling": "customs.db, WAL and SHM moved recoverably to /tmp/tariff-cycle244/broad"
+  },
+  "ci": {
+    "workflow": "Tariff agent safety",
+    "run_id": 38546658998,
+    "job_id": 115794263031,
+    "job": "offline-safety",
+    "conclusion": "success",
+    "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38546658998/job/115794263031"
+  },
+  "limits": {
+    "product_behavior_changed": false,
+    "normative_data_changed": false,
+    "full_pr245_acceptance": "NOT_PASS",
+    "lawful_populated_synchronized_ntm_snapshot": "UNAVAILABLE",
+    "a6_request": "core-s1-6415f443120f-r9-g106",
+    "a6_status": "UNCHANGED_NOT_SENT",
+    "protected_actions_performed": false
+  },
+  "next_step": "Repair the regulatory-mass-seed ambient database writer as the next bounded fixture block."
+}
