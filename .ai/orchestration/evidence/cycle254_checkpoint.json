@@ -1,0 +1,61 @@
+{
+  "schema_version": 1,
+  "cycle": 254,
+  "started_at": "2026-10-14T17:51:14Z",
+  "completed_at": "2026-10-14T18:00:35Z",
+  "executor": "/root/scheduled-cycle254-20261014T175114Z",
+  "lease": {
+    "generation": 254,
+    "token": "4483d580e8c940dda7a4392d1f1dab45",
+    "acquisition_commit": "2fdb9e0a1d9e99df253d25d85e37a03701f08474"
+  },
+  "candidate": {
+    "pr": 256,
+    "branch": "agent/product-ntm-regressions-v1",
+    "parent_sha": "7cab94dd9481888a8946a2177132b8e1927a3670",
+    "head_sha": "797cd548b1b83f5b15fa26bbcf23ae9352a15b0b",
+    "tree_sha": "805eceeae02bf903e54435a0b012934949d2ccd4",
+    "local_author_commit": "898eb448a7046a74d9df22f93241937d50c538e3",
+    "block": "smart_classifier_cached_result_snapshot_isolation",
+    "files": [
+      "customs-clear/backend/app/services/smart_classifier.py",
+      "customs-clear/backend/tests/test_smart_classifier.py"
+    ]
+  },
+  "reproduction": {
+    "status": "REPRODUCED_ON_EXACT_PARENT",
+    "result": "The first successful result was cached by reference; caller mutation of hs_code, rationale and nested metadata was returned by a later identical request while provider_calls remained 1."
+  },
+  "verification": {
+    "a0": {
+      "command": "PYTHONPATH=/workspace/scratch/bb84ae3e224a/author254/customs-clear/backend /workspace/scratch/bb84ae3e224a/analysis251/customs-clear/backend/.venv/bin/python -m pytest -q customs-clear/backend/tests/test_smart_classifier.py customs-clear/backend/tests/test_classify_api_security.py customs-clear/backend/tests/test_custom_classifier_chain.py customs-clear/backend/tests/test_upload_packing_list_api.py customs-clear/backend/tests/test_safe_http_errors.py",
+      "exit_code": 0,
+      "result": "72 passed plus 71 subtests"
+    },
+    "a5": {
+      "session": "/root/a5_cycle254",
+      "status": "PASS_EXACT_TREE_NO_FINDINGS",
+      "adjacent_result": "72 passed plus 71 subtests, exit 0",
+      "adversarial_result": "All checks passed: first-return and cached-hit mutation isolation; nested results/extra/web_context isolation; provider await_count=1; ERROR retry; image fingerprint and failed-image manual review."
+    },
+    "ci": {
+      "workflow": "Tariff agent safety",
+      "job": "offline-safety",
+      "run_id": 38611383191,
+      "job_id": 116015341403,
+      "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38611383191/job/116015341403",
+      "conclusion": "success"
+    },
+    "github_receipt": {
+      "pr": 256,
+      "comment_id": 6174899050
+    }
+  },
+  "limits": {
+    "full_pr245_acceptance": "NOT_PASS",
+    "legal_source_completeness": "NOT_PASS",
+    "lawful_populated_synchronized_ntm_snapshot": "UNAVAILABLE",
+    "a6": "core-s1-6415f443120f-r9-g106 unchanged and not sent",
+    "protected_actions_performed": false
+  }
+}
