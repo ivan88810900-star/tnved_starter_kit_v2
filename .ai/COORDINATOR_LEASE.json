@@ -1,14 +1,14 @@
 {
   "acquisition_note": "Fresh GitHub recovery at main e526dfbdb5a31b01bf6f743da0288b88f916de0c, PR259 146c7efe9c8a7832da9a60e6d834d05fff35a54a and state ba59b668f6e27eade4ace70f758e5c4bc9ac7b35; reproduce and repair the bounded regulatory-mass-seed ambient database writer without product, normative, A6, protected-branch or production changes.",
-  "expires_at": "2026-10-14T10:49:50.973098Z",
+  "expires_at": null,
   "generation": 245,
-  "holder": "/root/scheduled-20261014T101417Z",
+  "holder": null,
   "lease_repair": {},
-  "release_reason": "Cycle 231 recovered live GitHub state, confirmed A0-NSI-SGR-PAGINATION-001 on exact PR256 HEAD 3c24676a69b1d78d320bd5764fb04f5ac3f3430d, preserved NSI_SGR_CODE=1995 after official-source verification, and persisted checkpoint cf167f77d1747847eead50f2b487864d1cd6b4f5. State snapshot CI run 38477186970 succeeded. No code candidate was published because this connector-only execution has no repository checkout or backend dependency tree for executable author tests and independent A5. A6 request core-s1-6415f443120f-r9-g106 remains unchanged and undispatched.",
-  "released_by": "/root",
+  "release_reason": "Cycle 245 recovered GitHub state, reproduced the regulatory-mass-seed ambient database writer from cycle 244 evidence, published bounded candidate 8b1f5be35756a5eac7e2bc953727b7d8b16e5e8f on draft PR259, and observed exact-head offline-safety CI run 38549024897 succeed. Evidence checkpoint ac27a9e15e211529bf513589aca2b0d7d5310e40 records that executable backend tests and independent A5 remain unavailable in this connector-only runtime, so the block is not complete. TASK_BOARD CAS update was denied and was not retried. A6 request core-s1-6415f443120f-r9-g106 remains unchanged and undispatched.",
+  "released_by": "/root/scheduled-20261014T101417Z",
   "schema_version": 1,
   "serialization_repair": {},
-  "state": "active",
-  "token": "3926057fede647ff8a12ef5490d247cc",
-  "updated_at": "2026-10-14T10:19:50.973098Z"
+  "state": "released",
+  "token": null,
+  "updated_at": "2026-10-14T10:24:05.754364Z"
 }
