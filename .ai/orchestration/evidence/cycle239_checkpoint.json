@@ -1,0 +1,61 @@
+{
+  "schema_version": 1,
+  "cycle": 239,
+  "checked_at": "2026-10-14T05:02:05Z",
+  "repository": "ivan88810900-star/tnved_starter_kit_v2",
+  "lease_generation": 239,
+  "base_pr": 259,
+  "parent_head_sha": "1ebfaa4ae2baf60e6cf4a00c45d0afe8b6a2928f",
+  "branch": "agent/backend-broad-regressions-v1",
+  "published_head_sha": "17636c0a78936d6d06cb19b97cc684b6c39ffdc9",
+  "tree_sha": "7c182ff9bcac2ba453be16b4b39e3c3877e50296",
+  "local_author_commit": "f3125852e0fa9b68108b70fe3ef39841fa71774d",
+  "block": "rate_display_database_isolation_cleanup_hardening",
+  "finding_id": "A0-RATE-DISPLAY-DATABASE-ISOLATION-001",
+  "status": "PUBLISHED_DRAFT_AUTHOR_PASS_A5_PASS_CI_PASS",
+  "change": {
+    "files": [
+      "customs-clear/backend/tests/test_rate_display.py"
+    ],
+    "behavior": "The module fixture now guarantees cleanup for table-create and seed failures, attempts every cleanup step, restores both SessionLocal bindings even when monkeypatch undo fails, and preserves the primary test/setup exception when cleanup also fails.",
+    "preserved_assertions": 3,
+    "product_code_changed": false
+  },
+  "verification": {
+    "author_tests": {
+      "focused": "3 passed, exit 0",
+      "adjacent_forward": "56 passed, exit 0",
+      "adjacent_reverse": "56 passed, exit 0",
+      "command": "python -m pytest -q tests/test_rate_display.py tests/test_payment_engine.py tests/test_payment_quote.py tests/test_normative_bundle.py"
+    },
+    "a5": {
+      "initial_session": "/root/a5_cycle239",
+      "initial_status": "CHANGES_REQUESTED_SETUP_ENGINE_LEAK_AND_PRIMARY_EXCEPTION_MASKING",
+      "session": "/root/a5_cycle239b",
+      "status": "FINAL_PASS_EXACT_TREE_NO_FINDINGS",
+      "execution": "Focused 3 passed; adjacent suite in both orders 56 passed each; table-create, seed-commit, body, both patch-undo, db.close and engine.dispose fault injections passed; primary errors remained primary; all cleanup was attempted; original three test functions were AST-identical; no ambient DB/WAL/SHM."
+    },
+    "exact_head_ci": {
+      "run_id": 38514368199,
+      "job_id": 115689724755,
+      "job": "offline-safety",
+      "conclusion": "success",
+      "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38514368199/job/115689724755"
+    }
+  },
+  "broad_regression": {
+    "command": "python -m pytest -q tests --ignore=tests/test_ntm_full_sync.py --deselect=tests/test_data_refresh.py::TestGitHubWorkflow::test_workflow_file_exists --deselect=tests/test_data_refresh.py::TestGitHubWorkflow::test_workflow_has_schedule --deselect=tests/test_data_refresh.py::TestGitHubWorkflow::test_workflow_runs_refresh",
+    "result": "1884 passed, 11 skipped, 3 deselected, 133 subtests; exit 1 on teardown after tests/test_vision_integration.py::test_xlsx_conflict_text_vs_photo_prioritizes_visual because ambient customs.db appeared.",
+    "next_defect": "Trace and isolate the ambient database writer reached in the classification-inventory/vision tranche; preserve the teardown guard and do not weaken exclusions."
+  },
+  "blockers": [
+    "A lawful populated synchronized NTM snapshot remains unavailable.",
+    "Full PR #245 product acceptance and legal/source completeness remain NOT PASS."
+  ],
+  "a6": {
+    "request": "core-s1-6415f443120f-r9-g106",
+    "status": "UNCHANGED_NOT_SENT"
+  },
+  "protected_actions_performed": false,
+  "next_step": "On exact PR259 head, reproduce the first ambient customs.db writer in the classification-inventory/vision broad tranche, then repair one bounded fixture block with author tests, fresh independent A5 and exact-head CI."
+}

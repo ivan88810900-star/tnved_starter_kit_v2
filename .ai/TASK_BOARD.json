@@ -2179,7 +2179,7 @@
       "unique_source_pr_count": 29
     }
   },
-  "revision": 780,
+  "revision": 781,
   "runs": [
     {
       "head_sha": null,
@@ -7781,7 +7781,7 @@
       }
     }
   ],
-  "updated_at": "2026-10-14T04:22:35.451Z",
+  "updated_at": "2026-10-14T05:02:05Z",
   "previous_scheduled_product_checkpoint_174": {
     "updated_at": "2026-10-11T18:04:51.196Z",
     "checked_at": "2026-10-11T18:04:51.196Z",
@@ -13027,5 +13027,63 @@
       "checkpoint": "This state CAS commit is the durable checkpoint; lease release follows separately."
     },
     "next_step": "On exact PR256 HEAD, isolate tests/test_vat_ingestion.py: a clean run passes 37 tests plus 10 subtests, exit 0, but creates a 1,036,288-byte ambient customs.db; preserve all VAT-ingestion assertions while eliminating the ambient write."
+  },
+  "previous_scheduled_product_checkpoint_239": {
+    "updated_at": "2026-10-14T05:02:05Z",
+    "checked_at": "2026-10-14T05:02:05Z",
+    "pr": 259,
+    "branch": "agent/backend-broad-regressions-v1",
+    "head_sha": "17636c0a78936d6d06cb19b97cc684b6c39ffdc9",
+    "tree_sha": "7c182ff9bcac2ba453be16b4b39e3c3877e50296",
+    "parent_sha": "1ebfaa4ae2baf60e6cf4a00c45d0afe8b6a2928f",
+    "local_author_exact_tree_commit": "f3125852e0fa9b68108b70fe3ef39841fa71774d",
+    "base_pr": 245,
+    "base_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
+    "block": "rate_display_database_isolation_cleanup_hardening",
+    "status": "IMPLEMENTED_A5_PASS_CI_PASS_RATE_DISPLAY_DB_ISOLATION",
+    "behavior": {
+      "reproduced": "Cycle 238 published database isolation but had no executable author/A5 evidence. Fresh A5 on that head found engine leaks during table-create/seed failures and primary exception masking when cleanup failed.",
+      "final": "The module fixture now guarantees cleanup across setup/body/teardown failures, restores both SessionLocal bindings and preserves the primary exception while recording cleanup failures.",
+      "classification": "A test-fixture/database-isolation cleanup defect was reproduced and fixed. No product algorithm, normative source or legal applicability changed.",
+      "boundaries": "Only customs-clear/backend/tests/test_rate_display.py changed; the original three test functions are AST-identical."
+    },
+    "verification": {
+      "author_focused": "Focused command passed 3 tests, exit 0. Adjacent rate/payment/normative suite passed 56 tests in both orders, exit 0.",
+      "control": "Fault injection covered table create, seed commit, test body, both monkeypatch undo calls, db.close and engine.dispose; all cleanup attempts and primary-error preservation passed; no ambient DB/WAL/SHM; git diff --check exit 0.",
+      "a5": {
+        "initial_session": "/root/a5_cycle239",
+        "initial_status": "REJECTED_SETUP_ENGINE_LEAK_AND_PRIMARY_EXCEPTION_MASKING",
+        "session": "/root/a5_cycle239b",
+        "status": "FINAL_PASS_EXACT_TREE_NO_FINDINGS",
+        "execution": "Fresh independent focused 3 passed and adjacent both-order controls 56 passed each; AST parity and all adversarial cleanup probes passed.",
+        "findings": []
+      },
+      "ci": {
+        "status": "PASSED_EXACT_HEAD_OFFLINE_SAFETY_ONLY",
+        "run_id": 38514368199,
+        "job_id": 115689724755,
+        "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38514368199/job/115689724755",
+        "head_sha": "17636c0a78936d6d06cb19b97cc684b6c39ffdc9",
+        "conclusion": "success",
+        "limitation": "Workflow is offline-safety only; author, A0 and fresh independent executable A5 provide product-test evidence."
+      }
+    },
+    "blockers": [
+      "Full #245 product acceptance and legal/source completeness remain NOT PASS.",
+      "The NTM full-sync audit still requires a lawful populated synchronized snapshot."
+    ],
+    "a6": {
+      "request": "core-s1-6415f443120f-r9-g106",
+      "status": "UNCHANGED_NOT_SENT"
+    },
+    "coordination_queue": "Issue #257 bounded-probe receipt already exists and was not repeated. The Dot queue does not change authority, merge/deploy rights or A6 status.",
+    "protected_actions_performed": false,
+    "capabilities": {
+      "code_access": "Full exact candidate tree available in isolated author and independent A5 worktrees.",
+      "command_execution": "Git, Python and pytest execution available; author, A0 and fresh independent A5 commands exited 0.",
+      "lawful_publication": "Draft PR branch updated through the authorized GitHub connector under lease generation 239.",
+      "checkpoint": "Evidence is stored in .ai/orchestration/evidence/cycle239_checkpoint.json; this state CAS commit is the durable checkpoint and lease release follows separately."
+    },
+    "next_step": "On exact PR259 head, reproduce the first ambient customs.db writer in the classification-inventory/vision broad tranche after 1884 passed, then repair one bounded fixture block without weakening the inventory guard."
   }
 }
