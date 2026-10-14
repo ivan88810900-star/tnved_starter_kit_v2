@@ -67,7 +67,12 @@ _translation_batch_inflight: dict[
 ] = {}
 _vision_cache: dict[tuple[str, str], str] = {}
 _vision_image_fingerprints: dict[tuple[str, str], str] = {}
+_vision_requested_fingerprints: dict[tuple[str, str], str | None] = {}
 _vision_unavailable_cache: set[tuple[str, str]] = set()
+_vision_inflight: dict[
+    tuple[asyncio.AbstractEventLoop, tuple[str, str], str, str],
+    asyncio.Task["_VisionAnalysis"],
+] = {}
 _classify_group_cache: dict[tuple[tuple[str, str], str], "ClassifyResult"] = {}
 _classify_group_inflight: dict[
     tuple[
@@ -599,6 +604,10 @@ class SmartClassifier:
                 normalized_image, media_type = _normalize_image_base64(image_base64)
             except ValueError as exc:
                 logger.warning(f"Vision input validation failed: {exc}")
+                # Supersede any older producer for this product.  Its result
+                # may still be returned to its own caller, but must not erase
+                # this newer fail-closed state when it completes late.
+                _vision_requested_fingerprints[group_key] = None
                 _set_request_image_analysis_failed(group_key, True)
                 _vision_unavailable_cache.add(group_key)
                 _vision_cache.pop(group_key, None)
@@ -609,6 +618,10 @@ class SmartClassifier:
             digest.update(b"\0")
             digest.update(normalized_image.encode("ascii"))
             image_fingerprint = digest.hexdigest()
+            # The group identifies a product, while this value identifies its
+            # newest validated image request.  Older different-image producers
+            # are fenced from overwriting or clearing the newer cache state.
+            _vision_requested_fingerprints[group_key] = image_fingerprint
 
         if group_key in _vision_cache:
             cached_fingerprint = _vision_image_fingerprints.get(group_key)
@@ -626,29 +639,93 @@ class SmartClassifier:
         if image_base64 is None:
             _set_request_image_analysis_failed(group_key, False)
             return None
+        assert image_fingerprint is not None
+        loop = asyncio.get_running_loop()
+        inflight_key = (loop, group_key, image_fingerprint, description)
+        task = _vision_inflight.get(inflight_key)
+        if task is not None and task.done():
+            # A failed provider call is retryable.  A successful producer has
+            # already populated the cache unless a cache clear detached it.
+            if _vision_inflight.get(inflight_key) is task:
+                _vision_inflight.pop(inflight_key, None)
+            cached = _vision_cache.get(group_key)
+            if (
+                cached is not None
+                and _vision_image_fingerprints.get(group_key) == image_fingerprint
+            ):
+                _set_request_image_analysis_failed(group_key, False)
+                return cached
+            task = None
+
+        if task is None:
+            cache_generation = _packing_cache_generation
+            task = loop.create_task(
+                self._analyze_group_image_uncached(
+                    group_key=group_key,
+                    image_base64=image_base64,
+                    image_fingerprint=image_fingerprint,
+                    description=description,
+                    cache_generation=cache_generation,
+                )
+            )
+            _vision_inflight[inflight_key] = task
+
+            def remove_completed(
+                completed: asyncio.Task[_VisionAnalysis],
+                *,
+                key: tuple[
+                    asyncio.AbstractEventLoop,
+                    tuple[str, str],
+                    str,
+                    str,
+                ] = inflight_key,
+            ) -> None:
+                if _vision_inflight.get(key) is completed:
+                    _vision_inflight.pop(key, None)
+
+            task.add_done_callback(remove_completed)
+
+        # A row cancellation must not cancel the shared provider request for
+        # other rows that carry the same validated image.
+        visual = await asyncio.shield(task)
+        failed = visual.analysis_failed
+        _set_request_image_analysis_failed(group_key, failed)
+        return visual
+
+    async def _analyze_group_image_uncached(
+        self,
+        *,
+        group_key: tuple[str, str],
+        image_base64: str,
+        image_fingerprint: str,
+        description: str,
+        cache_generation: int,
+    ) -> _VisionAnalysis:
         try:
             visual = await self._analyze_image(image_base64, None, description)
         except Exception as exc:
             logger.warning(f"Vision analysis failed: {exc}")
-            _set_request_image_analysis_failed(group_key, True)
-            _vision_unavailable_cache.add(group_key)
-            _vision_cache.pop(group_key, None)
-            _vision_image_fingerprints.pop(group_key, None)
-            return _UNAVAILABLE_VISION_ANALYSIS
+            visual = ""
+
         if not visual.strip():
-            _set_request_image_analysis_failed(group_key, True)
-            _vision_unavailable_cache.add(group_key)
-            _vision_cache.pop(group_key, None)
-            _vision_image_fingerprints.pop(group_key, None)
+            if (
+                cache_generation == _packing_cache_generation
+                and _vision_requested_fingerprints.get(group_key) == image_fingerprint
+            ):
+                _vision_unavailable_cache.add(group_key)
+                _vision_cache.pop(group_key, None)
+                _vision_image_fingerprints.pop(group_key, None)
             return _UNAVAILABLE_VISION_ANALYSIS
-        if group_key in _vision_unavailable_cache:
+
+        analysis = _VisionAnalysis(visual, image_fingerprint)
+        if (
+            cache_generation == _packing_cache_generation
+            and _vision_requested_fingerprints.get(group_key) == image_fingerprint
+        ):
             _vision_unavailable_cache.discard(group_key)
-        _set_request_image_analysis_failed(group_key, False)
-        if image_fingerprint is not None:
-            visual = _VisionAnalysis(visual, image_fingerprint)
             _vision_image_fingerprints[group_key] = image_fingerprint
-        _vision_cache[group_key] = visual
-        return visual
+            _vision_cache[group_key] = analysis
+        return analysis
 
     async def get_or_classify_group(
         self,
@@ -838,7 +915,11 @@ class SmartClassifier:
         _translation_batch_inflight.clear()
         _vision_cache.clear()
         _vision_image_fingerprints.clear()
+        _vision_requested_fingerprints.clear()
         _vision_unavailable_cache.clear()
+        # Detach old producers without cancelling tasks owned by active
+        # callers.  Their generation fence prevents late cache repopulation.
+        _vision_inflight.clear()
         _classify_group_cache.clear()
         # Do not cancel tasks owned by another running loop.  Clearing the
         # registry detaches them, while the generation fence above prevents a

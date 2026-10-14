@@ -2327,6 +2327,318 @@ class SmartClassifierBase64SafetyTests(unittest.IsolatedAsyncioTestCase):
         finally:
             SmartClassifier.clear_packing_caches()
 
+    async def test_concurrent_identical_group_image_shares_one_vision_analysis(self) -> None:
+        SmartClassifier.clear_packing_caches()
+        clf = SmartClassifier()
+        group_key = ("пластиковая запасная часть", "A-vision-singleflight")
+        started = asyncio.Event()
+        release = asyncio.Event()
+        calls = 0
+
+        async def analyze(
+            _image_base64: str | None,
+            _image_url: str | None,
+            _description: str,
+        ) -> str:
+            nonlocal calls
+            calls += 1
+            started.set()
+            await release.wait()
+            return "общее фото детали"
+
+        try:
+            with patch.object(clf, "_analyze_image", side_effect=analyze):
+                first = asyncio.create_task(
+                    clf.get_or_analyze_vision(
+                        group_key,
+                        image_base64=_TEST_IMAGE_B64["image/png"],
+                        description=group_key[0],
+                    )
+                )
+                second = asyncio.create_task(
+                    clf.get_or_analyze_vision(
+                        group_key,
+                        image_base64=_TEST_IMAGE_B64["image/png"],
+                        description=group_key[0],
+                    )
+                )
+                await started.wait()
+                await asyncio.sleep(0)
+                release.set()
+                first_result, second_result = await asyncio.gather(first, second)
+
+            self.assertEqual(first_result, "общее фото детали")
+            self.assertEqual(second_result, "общее фото детали")
+            self.assertEqual(
+                getattr(first_result, "image_fingerprint", None),
+                getattr(second_result, "image_fingerprint", None),
+            )
+            self.assertEqual(calls, 1)
+        finally:
+            release.set()
+            SmartClassifier.clear_packing_caches()
+
+    async def test_cancelled_vision_waiter_does_not_cancel_shared_analysis(self) -> None:
+        SmartClassifier.clear_packing_caches()
+        clf = SmartClassifier()
+        group_key = ("пластиковая запасная часть", "A-vision-cancel")
+        started = asyncio.Event()
+        release = asyncio.Event()
+        calls = 0
+
+        async def analyze(*_args: object) -> str:
+            nonlocal calls
+            calls += 1
+            started.set()
+            await release.wait()
+            return "фото после отмены"
+
+        try:
+            with patch.object(clf, "_analyze_image", side_effect=analyze):
+                cancelled = asyncio.create_task(
+                    clf.get_or_analyze_vision(
+                        group_key,
+                        image_base64=_TEST_IMAGE_B64["image/png"],
+                        description=group_key[0],
+                    )
+                )
+                survivor = asyncio.create_task(
+                    clf.get_or_analyze_vision(
+                        group_key,
+                        image_base64=_TEST_IMAGE_B64["image/png"],
+                        description=group_key[0],
+                    )
+                )
+                await started.wait()
+                cancelled.cancel()
+                with self.assertRaises(asyncio.CancelledError):
+                    await cancelled
+                release.set()
+                result = await survivor
+                cached = await clf.get_or_analyze_vision(
+                    group_key,
+                    image_base64=_TEST_IMAGE_B64["image/png"],
+                    description=group_key[0],
+                )
+
+            self.assertEqual(result, "фото после отмены")
+            self.assertEqual(cached, "фото после отмены")
+            self.assertEqual(calls, 1)
+        finally:
+            release.set()
+            SmartClassifier.clear_packing_caches()
+
+    async def test_shared_vision_failure_is_retryable(self) -> None:
+        SmartClassifier.clear_packing_caches()
+        clf = SmartClassifier()
+        group_key = ("пластиковая запасная часть", "A-vision-retry")
+        started = asyncio.Event()
+        release_failure = asyncio.Event()
+        calls = 0
+
+        async def analyze(*_args: object) -> str:
+            nonlocal calls
+            calls += 1
+            if calls == 1:
+                started.set()
+                await release_failure.wait()
+                raise RuntimeError("temporary vision outage")
+            return "восстановленное фото"
+
+        try:
+            with patch.object(clf, "_analyze_image", side_effect=analyze):
+                first = asyncio.create_task(
+                    clf.get_or_analyze_vision(
+                        group_key,
+                        image_base64=_TEST_IMAGE_B64["image/png"],
+                        description=group_key[0],
+                    )
+                )
+                second = asyncio.create_task(
+                    clf.get_or_analyze_vision(
+                        group_key,
+                        image_base64=_TEST_IMAGE_B64["image/png"],
+                        description=group_key[0],
+                    )
+                )
+                await started.wait()
+                await asyncio.sleep(0)
+                release_failure.set()
+                failed_first, failed_second = await asyncio.gather(first, second)
+                recovered = await clf.get_or_analyze_vision(
+                    group_key,
+                    image_base64=_TEST_IMAGE_B64["image/png"],
+                    description=group_key[0],
+                )
+                cached = await clf.get_or_analyze_vision(
+                    group_key,
+                    image_base64=_TEST_IMAGE_B64["image/png"],
+                    description=group_key[0],
+                )
+
+            self.assertTrue(getattr(failed_first, "analysis_failed", False))
+            self.assertTrue(getattr(failed_second, "analysis_failed", False))
+            self.assertEqual(recovered, "восстановленное фото")
+            self.assertEqual(cached, "восстановленное фото")
+            self.assertEqual(calls, 2)
+        finally:
+            release_failure.set()
+            SmartClassifier.clear_packing_caches()
+
+    async def test_cache_clear_detaches_old_vision_producer(self) -> None:
+        SmartClassifier.clear_packing_caches()
+        clf = SmartClassifier()
+        group_key = ("пластиковая запасная часть", "A-vision-clear")
+        old_started = asyncio.Event()
+        release_old = asyncio.Event()
+        calls = 0
+
+        async def analyze(*_args: object) -> str:
+            nonlocal calls
+            calls += 1
+            if calls == 1:
+                old_started.set()
+                await release_old.wait()
+                return "старое фото"
+            return "новое фото"
+
+        try:
+            with patch.object(clf, "_analyze_image", side_effect=analyze):
+                old = asyncio.create_task(
+                    clf.get_or_analyze_vision(
+                        group_key,
+                        image_base64=_TEST_IMAGE_B64["image/png"],
+                        description=group_key[0],
+                    )
+                )
+                await old_started.wait()
+                SmartClassifier.clear_packing_caches()
+                fresh = await clf.get_or_analyze_vision(
+                    group_key,
+                    image_base64=_TEST_IMAGE_B64["image/png"],
+                    description=group_key[0],
+                )
+                release_old.set()
+                old_result = await old
+                cached = await clf.get_or_analyze_vision(
+                    group_key,
+                    image_base64=_TEST_IMAGE_B64["image/png"],
+                    description=group_key[0],
+                )
+
+            self.assertEqual(old_result, "старое фото")
+            self.assertEqual(fresh, "новое фото")
+            self.assertEqual(cached, "новое фото")
+            self.assertEqual(calls, 2)
+        finally:
+            release_old.set()
+            SmartClassifier.clear_packing_caches()
+
+    async def test_late_old_vision_success_cannot_replace_newer_image(self) -> None:
+        SmartClassifier.clear_packing_caches()
+        clf = SmartClassifier()
+        group_key = ("пластиковая запасная часть", "A-vision-order-success")
+        old_started = asyncio.Event()
+        release_old = asyncio.Event()
+        calls = 0
+
+        async def analyze(image: str | None, *_args: object) -> str:
+            nonlocal calls
+            calls += 1
+            if image == _TEST_IMAGE_B64["image/png"]:
+                old_started.set()
+                await release_old.wait()
+                return "старое фото A"
+            if image == _TEST_IMAGE_B64["image/jpeg"]:
+                return "новое фото B"
+            raise AssertionError("unexpected image")
+
+        try:
+            with patch.object(clf, "_analyze_image", side_effect=analyze):
+                old = asyncio.create_task(
+                    clf.get_or_analyze_vision(
+                        group_key,
+                        image_base64=_TEST_IMAGE_B64["image/png"],
+                        description=group_key[0],
+                    )
+                )
+                await old_started.wait()
+                fresh = await clf.get_or_analyze_vision(
+                    group_key,
+                    image_base64=_TEST_IMAGE_B64["image/jpeg"],
+                    description=group_key[0],
+                )
+                release_old.set()
+                old_result = await old
+                inherited = await clf.get_or_analyze_vision(
+                    group_key,
+                    image_base64=None,
+                    description=group_key[0],
+                )
+
+            self.assertEqual(old_result, "старое фото A")
+            self.assertEqual(fresh, "новое фото B")
+            self.assertEqual(inherited, "новое фото B")
+            self.assertEqual(
+                getattr(inherited, "image_fingerprint", None),
+                getattr(fresh, "image_fingerprint", None),
+            )
+            self.assertEqual(calls, 2)
+        finally:
+            release_old.set()
+            SmartClassifier.clear_packing_caches()
+
+    async def test_late_old_vision_failure_cannot_erase_newer_image(self) -> None:
+        SmartClassifier.clear_packing_caches()
+        clf = SmartClassifier()
+        group_key = ("пластиковая запасная часть", "A-vision-order-failure")
+        old_started = asyncio.Event()
+        release_old = asyncio.Event()
+        calls = 0
+
+        async def analyze(image: str | None, *_args: object) -> str:
+            nonlocal calls
+            calls += 1
+            if image == _TEST_IMAGE_B64["image/png"]:
+                old_started.set()
+                await release_old.wait()
+                raise RuntimeError("late old failure")
+            if image == _TEST_IMAGE_B64["image/jpeg"]:
+                return "новое фото B"
+            raise AssertionError("unexpected image")
+
+        try:
+            with patch.object(clf, "_analyze_image", side_effect=analyze):
+                old = asyncio.create_task(
+                    clf.get_or_analyze_vision(
+                        group_key,
+                        image_base64=_TEST_IMAGE_B64["image/png"],
+                        description=group_key[0],
+                    )
+                )
+                await old_started.wait()
+                fresh = await clf.get_or_analyze_vision(
+                    group_key,
+                    image_base64=_TEST_IMAGE_B64["image/jpeg"],
+                    description=group_key[0],
+                )
+                release_old.set()
+                old_result = await old
+                inherited = await clf.get_or_analyze_vision(
+                    group_key,
+                    image_base64=None,
+                    description=group_key[0],
+                )
+
+            self.assertTrue(getattr(old_result, "analysis_failed", False))
+            self.assertEqual(fresh, "новое фото B")
+            self.assertEqual(inherited, "новое фото B")
+            self.assertFalse(getattr(inherited, "analysis_failed", False))
+            self.assertEqual(calls, 2)
+        finally:
+            release_old.set()
+            SmartClassifier.clear_packing_caches()
+
 
 if __name__ == "__main__":
     unittest.main()
