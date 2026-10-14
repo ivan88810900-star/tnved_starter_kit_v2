@@ -2179,7 +2179,7 @@
       "unique_source_pr_count": 29
     }
   },
-  "revision": 790,
+  "revision": 791,
   "runs": [
     {
       "head_sha": null,
@@ -7781,7 +7781,7 @@
       }
     }
   ],
-  "updated_at": "2026-10-14T13:21:13Z",
+  "updated_at": "2026-10-14T14:14:06Z",
   "previous_scheduled_product_checkpoint_174": {
     "updated_at": "2026-10-11T18:04:51.196Z",
     "checked_at": "2026-10-11T18:04:51.196Z",
@@ -13585,6 +13585,59 @@
       "command_execution": "Git, Python and pytest execution available; final A0 and A5 commands exited 0.",
       "lawful_publication": "Draft PR256 branch updated through GitHub CAS under active lease generation 249.",
       "checkpoint": "Evidence is stored in .ai/orchestration/evidence/cycle249_checkpoint.json; this state CAS commit is the durable checkpoint and lease release follows separately."
+    },
+    "next_step": "Continue the next bounded PR256/#245 search, classification or assistant integration defect while preserving fail-closed provenance and manual review."
+  },
+  "previous_scheduled_product_checkpoint_250": {
+    "updated_at": "2026-10-14T14:14:06Z",
+    "checked_at": "2026-10-14T14:14:06Z",
+    "pr": 256,
+    "branch": "agent/product-ntm-regressions-v1",
+    "head_sha": "d68b1f848ef7c1de24c208f4ad5e5f96ee9a0083",
+    "tree_sha": "20a12b23180cd19d8c0e4ffa2988ffb2f0b749ae",
+    "parent_sha": "b30a81f6ea878b8cabfc78639b7c9bcf203ea2f9",
+    "local_author_exact_tree_commit": "517df5e6ad1a3ee3348f2ae84fa6583a0d5b6b9f",
+    "base_pr": 245,
+    "base_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
+    "block": "smart_classifier_image_byte_validation",
+    "status": "IMPLEMENTED_A5_PASS_CI_PASS",
+    "behavior": {
+      "reproduced": "Local non-image/invalid base64 and remote non-raster bytes could reach the vision boundary; grouped packing could lose the failure signal and return OK.",
+      "final": "Local and remote images now require matching JPEG/PNG/GIF/WebP byte signatures, strict base64 and size bounds. Invalid evidence never reaches the provider and grouped fresh/cached results remain fail-closed manual review.",
+      "boundaries": "Only smart_classifier.py and test_smart_classifier.py changed; no normative, legal, data or production configuration changed."
+    },
+    "verification": {
+      "a0": "Exact command passed 55 tests plus 53 subtests, exit 0; adversarial local/group check, compileall and diff-check exited 0.",
+      "a5": {
+        "session": "/root/a5_cycle249",
+        "status": "PASS_EXACT_TREE_NO_FINDINGS",
+        "execution": "After rejecting two earlier candidates, independent A5 passed focused 47 plus 53 subtests, adjacent 55 plus 53 subtests, parser/packing and local/remote adversarial matrices; all exit 0.",
+        "findings": []
+      },
+      "ci": {
+        "status": "PASSED_EXACT_HEAD_OFFLINE_SAFETY_ONLY",
+        "run_id": 38578532619,
+        "job_id": 115901949956,
+        "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38578532619/job/115901949956",
+        "head_sha": "d68b1f848ef7c1de24c208f4ad5e5f96ee9a0083",
+        "conclusion": "success"
+      }
+    },
+    "blockers": [
+      "Full PR245 product acceptance and legal/source completeness remain NOT PASS.",
+      "NTM full-sync remains blocked until a lawful populated synchronized snapshot is available."
+    ],
+    "a6": {
+      "request": "core-s1-6415f443120f-r9-g106",
+      "status": "UNCHANGED_NOT_SENT"
+    },
+    "coordination_queue": "Issue #257 bounded-probe receipt already exists and was not repeated.",
+    "protected_actions_performed": false,
+    "capabilities": {
+      "code_access": "Full exact PR256 candidate available in isolated author and independent A5 worktrees.",
+      "command_execution": "Git, Python and pytest execution available; final A0 and A5 commands exited 0.",
+      "lawful_publication": "Draft PR256 branch updated through GitHub CAS under active lease generation 250.",
+      "checkpoint": "Evidence is stored in .ai/orchestration/evidence/cycle250_checkpoint.json; this state CAS commit is the durable checkpoint and lease release follows separately."
     },
     "next_step": "Continue the next bounded PR256/#245 search, classification or assistant integration defect while preserving fail-closed provenance and manual review."
   }
