@@ -1,0 +1,68 @@
+{
+  "cycle": 252,
+  "checked_at": "2026-10-14T16:18:11Z",
+  "lease_generation": 252,
+  "lease_holder": "/root/scheduled-cycle252-20261014T155317Z",
+  "pr": 256,
+  "branch": "agent/product-ntm-regressions-v1",
+  "head_sha": "af5dc3c09294aa4223205ee01aebc008fa0a396f",
+  "tree_sha": "946dc680d0cc35d04a26bb2d684bcda65a5f6366",
+  "parent_sha": "4a53e88108a03b5002aa28887154bbc10a2b3d8e",
+  "local_author_exact_tree_commit": "18927166a2a841046e8e4f26c77313ff77f96f81",
+  "base_pr": 245,
+  "base_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
+  "block": "smart_classifier_image_evidence_cache_integrity",
+  "status": "IMPLEMENTED_A5_PASS_CI_PASS",
+  "behavior": {
+    "reproduced": "On the exact parent, two distinct valid images with the same packing-group key returned the first image analysis twice and invoked the vision provider only once.",
+    "final": "Vision and classification cache entries include canonical image and complete classification-input fingerprints. Failed-image identity is carried through delayed and concurrent calls; invalid evidence stays manual-review and cannot inherit a sibling request's successful status.",
+    "boundaries": "Only customs-clear/backend/app/services/smart_classifier.py and customs-clear/backend/tests/test_smart_classifier.py changed. SSRF, raster container validation, normative data, legal applicability, feature flags and production state are unchanged."
+  },
+  "verification": {
+    "a0": {
+      "command": "PYTHONPATH=/workspace/scratch/bb84ae3e224a/a5d-252/customs-clear/backend /workspace/scratch/bb84ae3e224a/analysis251/customs-clear/backend/.venv/bin/python -m pytest -q tests/test_smart_classifier.py tests/test_classify_api_security.py tests/test_custom_classifier_chain.py tests/test_upload_packing_list_api.py tests/test_safe_http_errors.py",
+      "result": "70 passed plus 71 subtests",
+      "exit_code": 0,
+      "additional": "py_compile, git diff --check and exact two-file scope checks exited 0."
+    },
+    "a5": {
+      "session": "/root/a5_cycle252",
+      "status": "PASS_EXACT_TREE_NO_FINDINGS",
+      "rejected_candidates": [
+        "e928c3a00ab0d2a37b2347de92ec5db25b464fc0: text-only cache and concurrent A/B classification could remain stale",
+        "bbcc893506781c052f0ed799f7c19c37bded1533: invalid-to-valid sibling interleaving could clear fail-closed state",
+        "91ec14b05ea8bf72c52f11e64d338d9cbc3041ea: same-task deferred invalid evidence could be overwritten by a later valid analysis"
+      ],
+      "execution": "Fresh final adjacent suite passed 70 plus 71 subtests; independent 11-check adversarial matrix and four packing-list adjacent controls passed; py_compile, diff, scope and clean-worktree checks exited 0.",
+      "findings": []
+    },
+    "ci": {
+      "status": "PASSED_EXACT_HEAD_OFFLINE_SAFETY_ONLY",
+      "run_id": 38596656746,
+      "job_id": 115965012426,
+      "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38596656746/job/115965012426",
+      "head_sha": "af5dc3c09294aa4223205ee01aebc008fa0a396f",
+      "conclusion": "success"
+    },
+    "github_receipt": {
+      "pr_comment_id": 6172924322
+    }
+  },
+  "blockers": [
+    "Full PR245 product acceptance and legal/source completeness remain NOT PASS.",
+    "NTM full-sync remains blocked until a lawful populated synchronized snapshot is available."
+  ],
+  "a6": {
+    "request": "core-s1-6415f443120f-r9-g106",
+    "status": "UNCHANGED_NOT_SENT"
+  },
+  "coordination_queue": "Issue #257 bounded-probe receipt already exists and was not repeated.",
+  "protected_actions_performed": false,
+  "capabilities": {
+    "code_access": "Fresh full clone and exact author/A5 worktrees were available.",
+    "command_execution": "Git, Python, Pillow and pytest execution were available; final A0 and A5 commands exited 0.",
+    "lawful_publication": "Draft PR256 was advanced by expected-head GitHub CAS under active lease generation 252.",
+    "checkpoint": "This file and matching handoff/TASK_BOARD entry are the durable cycle252 checkpoint; lease release follows separately."
+  },
+  "next_step": "Continue the next bounded PR256/#245 search, classification or assistant integration defect while preserving fail-closed provenance and manual review."
+}
