@@ -2,6 +2,8 @@
 from __future__ import annotations
 
 import json
+import os
+import sys
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
 from unittest.mock import patch, AsyncMock
@@ -82,11 +84,15 @@ class TestDataRefreshScript:
         script = BACKEND_ROOT / "scripts" / "data_refresh.py"
         assert script.is_file()
 
-    def test_script_check_only_mode(self) -> None:
+    def test_script_check_only_mode(self, tmp_path: Path) -> None:
         import subprocess
+        database = tmp_path / "missing-refresh.db"
+        env = os.environ.copy()
+        env["DATABASE_URL"] = f"sqlite:///{database}"
         result = subprocess.run(
-            ["python3", "-m", "scripts.data_refresh", "--check-only", "--json"],
+            [sys.executable, "-m", "scripts.data_refresh", "--check-only", "--json"],
             cwd=str(BACKEND_ROOT),
+            env=env,
             capture_output=True,
             text=True,
             timeout=30,
@@ -95,6 +101,8 @@ class TestDataRefreshScript:
         assert "domains" in data
         assert "currency" in data
         assert "all_fresh" in data
+        assert data["currency"]["reason"] == "db_missing"
+        assert not database.exists()
 
 
 class TestAutoUpdaterIntegration:

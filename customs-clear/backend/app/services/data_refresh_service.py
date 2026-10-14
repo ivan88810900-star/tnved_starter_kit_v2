@@ -13,7 +13,7 @@ from typing import Any
 
 from loguru import logger
 
-from ..db import SessionLocal
+from ..db import SessionLocal, engine
 from ..models.core import ExchangeRate, SourceStatus
 
 _BACKEND_ROOT = Path(__file__).resolve().parent.parent.parent
@@ -91,6 +91,13 @@ def check_data_freshness() -> dict[str, Any]:
 
 def _check_currency_freshness(now: datetime) -> dict[str, Any]:
     """Check if exchange rates are fresh."""
+    if engine.url.get_backend_name() == "sqlite":
+        database = engine.url.database
+        if database and database != ":memory:" and not Path(database).is_file():
+            # A freshness probe is read-only.  Opening a missing SQLite target
+            # would create an empty database (and WAL files) merely to report
+            # that no rates exist.
+            return {"is_stale": True, "reason": "db_missing", "currencies": 0}
     try:
         with SessionLocal() as db:
             rows = db.query(ExchangeRate).all()
