@@ -2179,7 +2179,7 @@
       "unique_source_pr_count": 29
     }
   },
-  "revision": 774,
+  "revision": 775,
   "runs": [
     {
       "head_sha": null,
@@ -7624,10 +7624,59 @@
         },
         "protected_actions_performed": false,
         "next_step": "Reconcile live PR #258/#256 heads, then continue the next bounded issue-257 or broad backend fixture defect; do not claim full-sync completeness without a lawful populated synchronized snapshot."
+      },
+      "nsi_sgr_provenance_checkpoint_20261014": {
+        "schema_version": 1,
+        "cycle": 233,
+        "checked_at": "2026-10-14T00:12:43Z",
+        "repository": "ivan88810900-star/tnved_starter_kit_v2",
+        "lease_generation": 233,
+        "corrective_pr": 258,
+        "branch": "agent/nsi-sgr-pagination-v1",
+        "parent_sha": "60e097646aa1249b776df3ed018ad42d5986550d",
+        "published_head_sha": "7f7f4938d6145979d45fddd5b04cdede83ca6e49",
+        "tree_sha": "91124ff54a054772168a84725845dd78659adcce",
+        "local_author_commit": "5cdecd7b8041a8744f828418d04514166cf4dfed",
+        "block": "nsi_1995_immutable_raw_provenance",
+        "status": "PUBLISHED_DRAFT_A5_PASS_CI_PENDING",
+        "behavior": {
+          "raw_history": "Canonical sorted compact UTF-8 JSON plus SHA-256; previous revisions retained and identical raw imports are idempotent.",
+          "source_metadata": "Persist id, optional versionId, dateTimeFrom/dateTimeTo, updateDateTime and dateTimeUpdated without fabricating absent values.",
+          "normalized_fields": "Persist DOC_NORM and DOC_USEAREA on the current SGR certificate and link it to the exact raw SHA.",
+          "official_sample": "Read-only live NSI-1995 element verified; versionId was absent in the observed response and remains optional."
+        },
+        "a0_tests": {
+          "command": "python -m pytest -q tests/test_sync_sgr_registry_nsi_provenance.py tests/test_sync_sgr_registry_nsi_pagination.py tests/test_state_registry_match_sgr_status.py",
+          "result": "40 passed",
+          "exit_code": 0
+        },
+        "a5": {
+          "session": "/root/a5_cycle233",
+          "result": "PASS_NO_FINDINGS",
+          "independent_tests": "160 passed",
+          "live_read_only_round_trip": "PASS",
+          "sqlite_migration_fk": "PASS",
+          "postgresql_sql_compile": "PASS",
+          "exit_code": 0
+        },
+        "exact_head_ci": {
+          "head_sha": "7f7f4938d6145979d45fddd5b04cdede83ca6e49",
+          "status": "PENDING_DISCOVERY"
+        },
+        "blockers": [
+          "A lawful populated synchronized NTM snapshot remains unavailable; NTM-3/full-sync is not run.",
+          "Full PR #245 product acceptance and legal/source completeness remain NOT PASS."
+        ],
+        "a6": {
+          "request": "core-s1-6415f443120f-r9-g106",
+          "status": "UNCHANGED_NOT_SENT"
+        },
+        "protected_actions_performed": false,
+        "next_step": "Wait for and verify exact-head CI, then continue NTM-3 only if a lawful populated synchronized snapshot becomes available; otherwise select the next bounded issue-257 or broad backend defect."
       }
     }
   ],
-  "updated_at": "2026-10-13T23:08:29Z",
+  "updated_at": "2026-10-14T00:12:43Z",
   "previous_scheduled_product_checkpoint_174": {
     "updated_at": "2026-10-11T18:04:51.196Z",
     "checked_at": "2026-10-11T18:04:51.196Z",

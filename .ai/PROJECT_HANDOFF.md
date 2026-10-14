@@ -1,3 +1,12 @@
+## 2026-10-14 — NSI-1995 immutable provenance published on draft PR #258
+
+- Official read-only NSI API documentation and a live code-1995 element were checked before design. The element exposed `id`, `dateTimeFrom`, `dateTimeTo`, `dateTimeUpdated`, `DOC_NORM` and `DOC_USEAREA`; it did not expose `versionId`, so the implementation preserves that field as optional instead of inventing it.
+- Draft [PR #258](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/258) now publishes exact head `7f7f4938d6145979d45fddd5b04cdede83ca6e49`, tree `91124ff54a054772168a84725845dd78659adcce`; local author exact-tree commit `5cdecd7b8041a8744f828418d04514166cf4dfed`. Parent was the verified NTM-1 head `60e097646aa1249b776df3ed018ad42d5986550d`.
+- Each official NSI-1995 element is stored losslessly as deterministic canonical UTF-8 JSON plus SHA-256. Source id, optional version id and validity/update timestamps are retained; `DOC_NORM` and `DOC_USEAREA` are normalized onto the current SGR record, which links to the raw SHA. Re-import is idempotent and a changed raw element retains the previous revision.
+- A0 focused provenance/pagination/status command: **40 passed**, exit 0. Author migration upgrade/downgrade and compile checks exited 0. Independent A5 `/root/a5_cycle233`: **PASS, no findings**, **160 passed**, live read-only NSI-1995 round-trip PASS, SQLite FK/migration and PostgreSQL SQL compilation PASS.
+- Exact-head CI is pending for the new head and must be checked before this candidate is called CI-complete. NTM-3/full-sync remains blocked by the absence of a lawful populated synchronized snapshot; full #245 acceptance and legal/source completeness remain NOT PASS.
+- A6 `core-s1-6415f443120f-r9-g106` is unchanged and undispatched. No merge, deploy, production DB write, enforcement/flag, secret/permission or destructive action was performed.
+
 ## 2026-10-13 — NSI SGR pagination fail-closed fix published as draft PR #258
 
 - Confirmed parent defect on PR #256 head `3c24676a69b1d78d320bd5764fb04f5ac3f3430d`: official total 2998 with page sizes 1000/998/1000 returned only 1998 rows and stopped after offsets 0/1000; reproduction exit 0.
