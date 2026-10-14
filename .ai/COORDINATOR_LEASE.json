@@ -1,6 +1,6 @@
 {
   "acquisition_note": "Fresh GitHub recovery at main e526dfbdb5a31b01bf6f743da0288b88f916de0c, PR256 3c24676a69b1d78d320bd5764fb04f5ac3f3430d and state 22ac6f92b712ced82d66a3b784b06a361c337043; triage the next bounded backend/NTM defect without product, normative, A6, protected-branch or production changes.",
-  "expires_at": "2026-10-14T07:24:17.675897Z",
+  "expires_at": "2026-10-14T07:35:03.915580Z",
   "generation": 241,
   "holder": "/root",
   "lease_repair": {},
@@ -10,5 +10,5 @@
   "serialization_repair": {},
   "state": "active",
   "token": "2fd71a92c1f74c63a0a0bcfa6cc6ae41",
-  "updated_at": "2026-10-14T06:54:17.675897Z"
+  "updated_at": "2026-10-14T07:05:03.915580Z"
 }
