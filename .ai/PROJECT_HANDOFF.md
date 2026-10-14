@@ -1879,6 +1879,16 @@ CI #255: [offline-safety PASS, run 37771953943](https://github.com/ivan88810900-
 - The guarded broad run advanced to 81% and reproduced the next independent writer at `tests/test_regulatory_mass_seed.py::TestMassRegulatoryDocuments::test_total_documents_exceeds_5000`; exact ambient DB/WAL/SHM were moved recoverably to `/tmp`. This is the next bounded repair.
 - NTM full-sync remains blocked without a lawful populated synchronized snapshot; full #245 acceptance and legal/source completeness remain NOT PASS. A6 `core-s1-6415f443120f-r9-g106` is unchanged and undispatched. No merge, deploy, production write, enforcement/flag, secret/permission or destructive action was performed.
 
+## 2026-10-14 — Source-import callable isolation completed on draft PR #259
+
+- The guarded full backend order on parent `8b1f5be35756a5eac7e2bc953727b7d8b16e5e8f` reached `SourceImportTests.test_import_xlsx_with_headers` at 88%; assertions passed, but teardown found ambient `customs.db`/WAL/SHM and the guard exited 1. Standalone execution hid the collection-order defect.
+- Root cause: earlier API fixtures can unload and re-import application modules while pytest retains collection-time source-import callables. Patching named modules therefore missed the database globals of copied functions.
+- Draft [PR #259](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/259) now publishes exact head `45222b38c334f4cb08b5b666206897d950552f03`, tree `edbaf0ee7b6410bbddaee468a994e780d81d3065`; local author commit `4a526da2776d907feec6bf5a438b331f1211e249` has the exact same tree. Only `customs-clear/backend/tests/test_source_import.py` changed; all three original test methods are AST-equivalent.
+- The fixture patches the exact collected callables' `SessionLocal`/`engine` globals and creates only `HsRate`/`SourceStatus` tables required by the unchanged scenarios instead of invoking broad `init_db`.
+- Author: focused **3 passed**, exit 0; exact guarded backend **1,889 passed, 11 skipped, 3 deselected + 133 subtests**, exit 0, without ambient DB/WAL/SHM. Fresh independent A5 `/root/a5_cycle247`: **PASS, no findings**; stale/re-import identity, setup-failure cleanup, AST parity and no-ambient controls passed.
+- Exact-head CI [run 38562659003 / job 115847344018](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38562659003/job/115847344018): **success** (`offline-safety`).
+- The ambient-database guarded contour now completes. Next: recover current PR #256/#245 exact head and resume bounded backend/frontend NTM applicability and grounded AI/UI acceptance. NTM full-sync remains blocked without a lawful populated synchronized snapshot; full #245 and legal/source completeness remain NOT PASS. A6 is unchanged and undispatched; no protected action was performed.
+
 ## 2026-10-14 — Regulatory mass-seed absent-database isolation completed on draft PR #259
 
 - Cycle245 had already published a bounded 12-addition candidate but explicitly lacked executable backend and independent A5 evidence. Cycle246 recovered and validated that unchanged exact candidate rather than duplicating or replacing it.

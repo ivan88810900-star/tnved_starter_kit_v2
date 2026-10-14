@@ -1,0 +1,64 @@
+{
+  "updated_at": "2026-10-14T12:19:17Z",
+  "checked_at": "2026-10-14T12:19:17Z",
+  "pr": 259,
+  "branch": "agent/backend-broad-regressions-v1",
+  "head_sha": "45222b38c334f4cb08b5b666206897d950552f03",
+  "tree_sha": "edbaf0ee7b6410bbddaee468a994e780d81d3065",
+  "parent_sha": "8b1f5be35756a5eac7e2bc953727b7d8b16e5e8f",
+  "local_author_exact_tree_commit": "4a526da2776d907feec6bf5a438b331f1211e249",
+  "base_pr": 245,
+  "base_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
+  "block": "source_import_callable_binding_database_isolation",
+  "status": "IMPLEMENTED_A5_PASS_CI_PASS_SOURCE_IMPORT_CALLABLE_ISOLATION_BROAD_GUARD_PASS",
+  "behavior": {
+    "reproduced": "The guarded full backend order reached SourceImportTests.test_import_xlsx_with_headers at 88%; its assertions passed but teardown found ambient customs.db/WAL/SHM and the guard exited 1.",
+    "final": "The source-import fixture patches SessionLocal and engine in the exact collected callables' global namespaces, independent of stale versus re-imported module identity. It creates only HsRate and SourceStatus tables required by its unchanged scenarios, avoiding init_db's dynamic module import path.",
+    "classification": "A collection-order-dependent test-fixture isolation defect was fixed without changing product logic, normative data or legal applicability.",
+    "boundaries": "Only customs-clear/backend/tests/test_source_import.py changed with 38 insertions and 5 deletions; all three original test method ASTs are unchanged."
+  },
+  "verification": {
+    "author_focused": {
+      "command": "PYTHONPATH=/workspace/scratch/bb84ae3e224a /workspace/scratch/bb84ae3e224a/author242/customs-clear/backend/.venv/bin/python -m pytest -q -p ambient_guard_author247 tests/test_source_import.py",
+      "result": "3 passed in 0.56s",
+      "exit_code": 0
+    },
+    "author_broad": {
+      "command": "PYTHONPATH=/workspace/scratch/bb84ae3e224a /workspace/scratch/bb84ae3e224a/author242/customs-clear/backend/.venv/bin/python -m pytest -q -p ambient_guard_author247 tests --ignore=tests/test_ntm_full_sync.py --deselect=tests/test_data_refresh.py::TestGitHubWorkflow",
+      "result": "1889 passed, 11 skipped, 3 deselected, 3 warnings and 133 subtests passed in 139.13s; no customs.db/WAL/SHM",
+      "exit_code": 0
+    },
+    "a5": {
+      "session": "/root/a5_cycle247",
+      "status": "PASS_EXACT_TREE_NO_FINDINGS",
+      "execution": "Focused 3 passed; stale/canonical module re-import control 3/3 OK; injected HsRate table-create failure confirmed patch/env/temp cleanup; original test-method ASTs unchanged; no ambient DB/WAL/SHM.",
+      "findings": []
+    },
+    "ci": {
+      "status": "PASSED_EXACT_HEAD_OFFLINE_SAFETY_ONLY",
+      "run_id": 38562659003,
+      "job_id": 115847344018,
+      "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38562659003/job/115847344018",
+      "head_sha": "45222b38c334f4cb08b5b666206897d950552f03",
+      "conclusion": "success",
+      "limitation": "Workflow is offline-safety only; executable author and fresh independent A5 provide backend-test evidence."
+    }
+  },
+  "blockers": [
+    "Full #245 product acceptance and legal/source completeness remain NOT PASS.",
+    "The NTM full-sync audit still requires a lawful populated synchronized snapshot."
+  ],
+  "a6": {
+    "request": "core-s1-6415f443120f-r9-g106",
+    "status": "UNCHANGED_NOT_SENT"
+  },
+  "coordination_queue": "Issue #257 bounded-probe receipt already exists and was not repeated. The Dot queue does not change authority, merge/deploy rights or A6 status.",
+  "protected_actions_performed": false,
+  "capabilities": {
+    "code_access": "Full exact candidate tree available in isolated author and independent A5 worktrees.",
+    "command_execution": "Git, Python and pytest execution available; focused, adversarial and full guarded commands exited 0 on the final tree.",
+    "lawful_publication": "Draft PR259 branch updated through GitHub CAS under active lease generation 247.",
+    "checkpoint": "This state CAS commit is the durable checkpoint; lease release follows separately."
+  },
+  "next_step": "The ambient-database guarded backend contour now completes. Recover current PR256/#245 exact head and resume bounded backend/frontend NTM applicability and grounded AI/UI acceptance; keep full-sync blocked until a lawful populated synchronized snapshot exists."
+}
