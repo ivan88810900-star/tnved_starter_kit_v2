@@ -1,0 +1,61 @@
+{
+  "schema_version": 1,
+  "cycle": 256,
+  "started_at": "2026-10-14T19:50:16Z",
+  "completed_at": "2026-10-14T19:57:20Z",
+  "executor": "/root/scheduled-cycle256-20261014T195016Z",
+  "lease": {
+    "generation": 256,
+    "token": "ce12f9f022294c018cb787d7dc370c35",
+    "acquisition_commit": "a49e038289c37b60c13118380371843c4185c500"
+  },
+  "candidate": {
+    "pr": 256,
+    "branch": "agent/product-ntm-regressions-v1",
+    "parent_sha": "e5e75915ec1957f172b30284dd1633cf0c4c1915",
+    "head_sha": "162cd8c03d0365fbc57b3172201fb3981b40c89a",
+    "tree_sha": "f87d4ec51bd053ff7e688b9dc51ad96863e2077e",
+    "local_author_commit": "eb5d14b36920b0334ad143a9ad89f5716f2826e4",
+    "block": "smart_classifier_translation_fallback_cache_recovery",
+    "files": [
+      "customs-clear/backend/app/services/smart_classifier.py",
+      "customs-clear/backend/tests/test_smart_classifier.py"
+    ]
+  },
+  "reproduction": {
+    "status": "REPRODUCED_ON_EXACT_PARENT",
+    "result": "A transient translation-provider exception returned and cached the original foreign text; an identical request did not retry after provider recovery."
+  },
+  "verification": {
+    "a0": {
+      "command": "PYTHONPATH=/workspace/scratch/bb84ae3e224a/author256/customs-clear/backend /workspace/scratch/bb84ae3e224a/analysis251/customs-clear/backend/.venv/bin/python -m pytest -q customs-clear/backend/tests/test_smart_classifier.py customs-clear/backend/tests/test_classify_api_security.py customs-clear/backend/tests/test_custom_classifier_chain.py customs-clear/backend/tests/test_upload_packing_list_api.py customs-clear/backend/tests/test_safe_http_errors.py",
+      "exit_code": 0,
+      "result": "81 passed plus 71 subtests"
+    },
+    "a5": {
+      "session": "/root/a5_cycle256",
+      "status": "PASS_EXACT_TREE_NO_FINDINGS",
+      "adjacent_result": "81 passed plus 71 subtests, exit 0",
+      "adversarial_result": "Exception/empty retry, partial and malformed batch recovery, successful/Russian caching, concurrent deduplication, cancellation shielding, clear generation fence and independent keys/event loops passed."
+    },
+    "ci": {
+      "workflow": "Tariff agent safety",
+      "job": "offline-safety",
+      "run_id": 38627869101,
+      "job_id": 116071549278,
+      "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38627869101/job/116071549278",
+      "conclusion": "success"
+    },
+    "github_receipt": {
+      "pr": 256,
+      "comment_id": 6177113723
+    }
+  },
+  "limits": {
+    "full_pr245_acceptance": "NOT_PASS",
+    "legal_source_completeness": "NOT_PASS",
+    "lawful_populated_synchronized_ntm_snapshot": "UNAVAILABLE",
+    "a6": "core-s1-6415f443120f-r9-g106 unchanged and not sent",
+    "protected_actions_performed": false
+  }
+}
