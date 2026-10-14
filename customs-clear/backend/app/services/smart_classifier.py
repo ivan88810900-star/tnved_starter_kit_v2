@@ -595,7 +595,11 @@ class SmartClassifier:
                 failed=image_analysis_failed,
             )
 
-        _classify_group_cache[cache_key] = result
+        # Provider/network failures are transient.  Returning the fail-closed
+        # ERROR is correct for this request, but caching it would prevent an
+        # identical later request from retrying after the provider recovers.
+        if result.status != "ERROR":
+            _classify_group_cache[cache_key] = result
         return result
 
     @staticmethod

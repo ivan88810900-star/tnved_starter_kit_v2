@@ -220,6 +220,54 @@ class SmartClassifierClassifyTests(unittest.IsolatedAsyncioTestCase):
         finally:
             SmartClassifier.clear_packing_caches()
 
+    async def test_transient_group_classification_error_retries_then_caches_success(self) -> None:
+        SmartClassifier.clear_packing_caches()
+        clf = SmartClassifier()
+        group_key = ("пластиковая запасная часть 20 мм", "RECOVERY-1")
+        model = AsyncMock(
+            side_effect=[
+                RuntimeError("temporary provider outage"),
+                {
+                    "text": '{"results":[{"hs_code":"3926909709","recommended":true}]}',
+                    "provider": "test",
+                },
+            ]
+        )
+        try:
+            with patch("app.services.smart_classifier._ask_llm", model):
+                failed = await clf.get_or_classify_group(
+                    group_key,
+                    description=group_key[0],
+                    translated=group_key[0],
+                    visual_context=None,
+                    article=group_key[1],
+                )
+                recovered = await clf.get_or_classify_group(
+                    group_key,
+                    description=group_key[0],
+                    translated=group_key[0],
+                    visual_context=None,
+                    article=group_key[1],
+                )
+                cached = await clf.get_or_classify_group(
+                    group_key,
+                    description=group_key[0],
+                    translated=group_key[0],
+                    visual_context=None,
+                    article=group_key[1],
+                )
+
+            self.assertEqual(failed.status, "ERROR")
+            self.assertEqual(failed.extra["error_code"], "llm_unavailable")
+            self.assertEqual(failed.results, [])
+            self.assertEqual(recovered.status, "OK")
+            self.assertEqual(recovered.results[0]["hs_code"], "3926909709")
+            self.assertEqual(cached.status, "OK")
+            self.assertEqual(cached.results, recovered.results)
+            self.assertEqual(model.await_count, 2)
+        finally:
+            SmartClassifier.clear_packing_caches()
+
 
 class SmartClassifierWebSearchTests(unittest.IsolatedAsyncioTestCase):
     async def test_empty_web_search_does_not_call_text_completion_fallback(self) -> None:
