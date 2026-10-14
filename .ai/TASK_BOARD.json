@@ -7638,7 +7638,7 @@
         "tree_sha": "91124ff54a054772168a84725845dd78659adcce",
         "local_author_commit": "5cdecd7b8041a8744f828418d04514166cf4dfed",
         "block": "nsi_1995_immutable_raw_provenance",
-        "status": "PUBLISHED_DRAFT_A5_PASS_CI_PENDING",
+        "status": "PUBLISHED_DRAFT_A5_PASS_CI_PASS",
         "behavior": {
           "raw_history": "Canonical sorted compact UTF-8 JSON plus SHA-256; previous revisions retained and identical raw imports are idempotent.",
           "source_metadata": "Persist id, optional versionId, dateTimeFrom/dateTimeTo, updateDateTime and dateTimeUpdated without fabricating absent values.",
@@ -7661,7 +7661,12 @@
         },
         "exact_head_ci": {
           "head_sha": "7f7f4938d6145979d45fddd5b04cdede83ca6e49",
-          "status": "PENDING_DISCOVERY"
+          "status": "PASSED_EXACT_HEAD_OFFLINE_SAFETY_ONLY",
+          "run_id": 38488698821,
+          "job_id": 115608493434,
+          "job": "offline-safety",
+          "conclusion": "success",
+          "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38488698821/job/115608493434"
         },
         "blockers": [
           "A lawful populated synchronized NTM snapshot remains unavailable; NTM-3/full-sync is not run.",
@@ -7672,7 +7677,7 @@
           "status": "UNCHANGED_NOT_SENT"
         },
         "protected_actions_performed": false,
-        "next_step": "Wait for and verify exact-head CI, then continue NTM-3 only if a lawful populated synchronized snapshot becomes available; otherwise select the next bounded issue-257 or broad backend defect."
+        "next_step": "Continue NTM-3 only if a lawful populated synchronized snapshot becomes available; otherwise select the next bounded issue-257 or broad backend defect."
       }
     }
   ],
