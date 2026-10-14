@@ -57,6 +57,10 @@ _EQUIPMENT_KEYWORDS = (
 
 # Кэши для пакетной обработки пакинг-листов (перевод / vision / классификация по группе).
 _translation_cache: dict[str, str] = {}
+_translation_inflight: dict[
+    tuple[asyncio.AbstractEventLoop, str],
+    asyncio.Task[str],
+] = {}
 _vision_cache: dict[tuple[str, str], str] = {}
 _vision_image_fingerprints: dict[tuple[str, str], str] = {}
 _vision_unavailable_cache: set[tuple[str, str]] = set()
@@ -374,9 +378,46 @@ class SmartClassifier:
         key = text.strip()
         if key in _translation_cache:
             return _translation_cache[key]
-        translated = await self._do_translate(key)
-        _translation_cache[key] = translated
-        return translated
+        if not self._text_needs_translation(key):
+            _translation_cache[key] = key
+            return key
+
+        loop = asyncio.get_running_loop()
+        inflight_key = (loop, key)
+        task = _translation_inflight.get(inflight_key)
+        if task is not None and task.done():
+            # The callback is scheduled for the next loop turn.  A failed or
+            # empty translation is deliberately not cached, so an immediate
+            # sequential call must start a fresh provider attempt.
+            if _translation_inflight.get(inflight_key) is task:
+                _translation_inflight.pop(inflight_key, None)
+            cached = _translation_cache.get(key)
+            if cached is not None:
+                return cached
+            task = None
+
+        if task is None:
+            cache_generation = _packing_cache_generation
+            task = loop.create_task(
+                self._translate_uncached(
+                    key,
+                    cache_generation=cache_generation,
+                )
+            )
+            _translation_inflight[inflight_key] = task
+
+            def remove_completed(
+                completed: asyncio.Task[str],
+                *,
+                registry_key: tuple[asyncio.AbstractEventLoop, str] = inflight_key,
+            ) -> None:
+                if _translation_inflight.get(registry_key) is completed:
+                    _translation_inflight.pop(registry_key, None)
+
+            task.add_done_callback(remove_completed)
+
+        # One cancelled packing row must not cancel the shared provider call.
+        return await asyncio.shield(task)
 
     async def translate_cached(self, text: str | None) -> str:
         """Перевод с кэшем (после prepare_translations)."""
@@ -394,8 +435,13 @@ class SmartClassifier:
         return bool(has_chinese or (not has_cyrillic and len(text.strip()) > 5))
 
     async def _do_translate(self, text: str) -> str:
+        translated, _cacheable = await self._translate_attempt(text)
+        return translated
+
+    async def _translate_attempt(self, text: str) -> tuple[str, bool]:
+        """Return a fallback value and whether it is safe to cache globally."""
         if not self._text_needs_translation(text):
-            return text.strip()
+            return text.strip(), True
         prompt = (
             "Переведи на русский язык описание товара для таможенного декларирования.\n"
             "Сохрани технические характеристики точно.\n"
@@ -403,10 +449,25 @@ class SmartClassifier:
             "Ответь только переводом, без пояснений."
         )
         try:
-            return (await complete_text(prompt, max_tokens=512)).strip() or text
+            translated = (await complete_text(prompt, max_tokens=512)).strip()
+            if not translated:
+                logger.warning("Translation returned empty text, using original")
+                return text, False
+            return translated, True
         except Exception as exc:
             logger.warning(f"Translation failed, using original: {exc}")
-            return text
+            return text, False
+
+    async def _translate_uncached(
+        self,
+        text: str,
+        *,
+        cache_generation: int,
+    ) -> str:
+        translated, cacheable = await self._translate_attempt(text)
+        if cacheable and cache_generation == _packing_cache_generation:
+            _translation_cache[text] = translated
+        return translated
 
     async def prepare_translations(self, texts: list[str]) -> dict[str, str]:
         """Батч-перевод уникальных строк (один LLM-запрос на чанк)."""
@@ -432,9 +493,11 @@ class SmartClassifier:
             return
         if len(texts) == 1:
             t = texts[0]
-            _translation_cache[t] = await self._do_translate(t)
+            await self._translate_if_needed(t)
             return
 
+        cache_generation = _packing_cache_generation
+        requested = set(texts)
         lines = "\n".join(f"- {t}" for t in texts)
         prompt = (
             "Переведи на русский язык названия товаров для таможенного декларирования.\n"
@@ -455,15 +518,19 @@ class SmartClassifier:
                 if isinstance(mapping, dict):
                     for src, dst in mapping.items():
                         src_s = str(src).strip()
-                        dst_s = str(dst).strip()
-                        if src_s:
-                            _translation_cache[src_s] = dst_s or src_s
+                        dst_s = str(dst).strip() if dst is not None else ""
+                        if (
+                            src_s in requested
+                            and dst_s
+                            and cache_generation == _packing_cache_generation
+                        ):
+                            _translation_cache[src_s] = dst_s
         except Exception as exc:
             logger.warning(f"Batch translation parse failed: {exc}")
 
         for t in texts:
             if t not in _translation_cache:
-                _translation_cache[t] = await self._do_translate(t)
+                await self._translate_if_needed(t)
 
     async def get_or_analyze_vision(
         self,
@@ -711,6 +778,9 @@ class SmartClassifier:
 
         _packing_cache_generation += 1
         _translation_cache.clear()
+        # Do not cancel tasks owned by another running loop.  The generation
+        # fence prevents their late completion from repopulating this cache.
+        _translation_inflight.clear()
         _vision_cache.clear()
         _vision_image_fingerprints.clear()
         _vision_unavailable_cache.clear()

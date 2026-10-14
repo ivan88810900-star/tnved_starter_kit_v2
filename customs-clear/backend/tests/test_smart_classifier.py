@@ -4,6 +4,7 @@ from __future__ import annotations
 import asyncio
 import base64
 from io import BytesIO
+import json
 import socket
 import unittest
 from unittest.mock import AsyncMock, MagicMock, patch
@@ -102,6 +103,12 @@ class SmartClassifierNeedsWebSearchTests(unittest.TestCase):
 
 
 class SmartClassifierTranslateTests(unittest.IsolatedAsyncioTestCase):
+    def setUp(self) -> None:
+        SmartClassifier.clear_packing_caches()
+
+    def tearDown(self) -> None:
+        SmartClassifier.clear_packing_caches()
+
     async def test_chinese_triggers_translation(self) -> None:
         clf = SmartClassifier()
         with patch("app.services.smart_classifier.complete_text", new_callable=AsyncMock) as mock_ct:
@@ -116,6 +123,165 @@ class SmartClassifierTranslateTests(unittest.IsolatedAsyncioTestCase):
             out = await clf._translate_if_needed("насос центробежный 380V")
         self.assertEqual(out, "насос центробежный 380V")
         mock_ct.assert_not_awaited()
+
+    async def test_transient_translation_failure_is_not_cached(self) -> None:
+        clf = SmartClassifier()
+        original = "三相异步电动机"
+        with patch(
+            "app.services.smart_classifier.complete_text",
+            new_callable=AsyncMock,
+            side_effect=[RuntimeError("temporary outage"), "Трёхфазный электродвигатель"],
+        ) as mock_ct:
+            first = await clf.translate_cached(original)
+            recovered = await clf.translate_cached(original)
+            cached = await clf.translate_cached(original)
+
+        self.assertEqual(first, original)
+        self.assertEqual(recovered, "Трёхфазный электродвигатель")
+        self.assertEqual(cached, recovered)
+        self.assertEqual(mock_ct.await_count, 2)
+
+    async def test_empty_translation_is_not_cached(self) -> None:
+        clf = SmartClassifier()
+        original = "工业离心泵"
+        with patch(
+            "app.services.smart_classifier.complete_text",
+            new_callable=AsyncMock,
+            side_effect=["   ", "Промышленный центробежный насос"],
+        ) as mock_ct:
+            first = await clf.translate_cached(original)
+            recovered = await clf.translate_cached(original)
+
+        self.assertEqual(first, original)
+        self.assertEqual(recovered, "Промышленный центробежный насос")
+        self.assertEqual(mock_ct.await_count, 2)
+
+    async def test_batch_fallback_failure_does_not_poison_retry(self) -> None:
+        clf = SmartClassifier()
+        first_text = "工业离心泵"
+        second_text = "三相异步电动机"
+        recovered_batch = json.dumps(
+            {
+                "translations": {
+                    first_text: "Промышленный центробежный насос",
+                    second_text: "Трёхфазный асинхронный электродвигатель",
+                }
+            },
+            ensure_ascii=False,
+        )
+        with patch(
+            "app.services.smart_classifier.complete_text",
+            new_callable=AsyncMock,
+            side_effect=[
+                RuntimeError("batch outage"),
+                RuntimeError("single outage 1"),
+                RuntimeError("single outage 2"),
+                recovered_batch,
+            ],
+        ) as mock_ct:
+            first = await clf.prepare_translations([first_text, second_text])
+            recovered = await clf.prepare_translations([first_text, second_text])
+            cached = await clf.translate_cached(first_text)
+
+        self.assertNotIn(first_text, first)
+        self.assertNotIn(second_text, first)
+        self.assertEqual(recovered[first_text], "Промышленный центробежный насос")
+        self.assertEqual(
+            recovered[second_text],
+            "Трёхфазный асинхронный электродвигатель",
+        )
+        self.assertEqual(cached, recovered[first_text])
+        self.assertEqual(mock_ct.await_count, 4)
+
+    async def test_concurrent_identical_translation_uses_one_provider_call(self) -> None:
+        clf = SmartClassifier()
+        started = asyncio.Event()
+        release = asyncio.Event()
+
+        async def translate(*_args: object, **_kwargs: object) -> str:
+            started.set()
+            await release.wait()
+            return "Промышленный центробежный насос"
+
+        with patch(
+            "app.services.smart_classifier.complete_text",
+            new_callable=AsyncMock,
+            side_effect=translate,
+        ) as mock_ct:
+            first = asyncio.create_task(clf.translate_cached("工业离心泵"))
+            await asyncio.wait_for(started.wait(), timeout=1)
+            second = asyncio.create_task(clf.translate_cached("工业离心泵"))
+            await asyncio.sleep(0)
+            release.set()
+            first_result, second_result = await asyncio.gather(first, second)
+            cached = await clf.translate_cached("工业离心泵")
+
+        self.assertEqual(first_result, "Промышленный центробежный насос")
+        self.assertEqual(second_result, first_result)
+        self.assertEqual(cached, first_result)
+        self.assertEqual(mock_ct.await_count, 1)
+
+    async def test_cancelled_waiter_does_not_cancel_shared_translation(self) -> None:
+        clf = SmartClassifier()
+        started = asyncio.Event()
+        release = asyncio.Event()
+
+        async def translate(*_args: object, **_kwargs: object) -> str:
+            started.set()
+            await release.wait()
+            return "Промышленный центробежный насос"
+
+        with patch(
+            "app.services.smart_classifier.complete_text",
+            new_callable=AsyncMock,
+            side_effect=translate,
+        ) as mock_ct:
+            cancelled = asyncio.create_task(clf.translate_cached("工业离心泵"))
+            await asyncio.wait_for(started.wait(), timeout=1)
+            surviving = asyncio.create_task(clf.translate_cached("工业离心泵"))
+            await asyncio.sleep(0)
+            cancelled.cancel()
+            with self.assertRaises(asyncio.CancelledError):
+                await cancelled
+            release.set()
+            result = await surviving
+            cached = await clf.translate_cached("工业离心泵")
+
+        self.assertEqual(result, "Промышленный центробежный насос")
+        self.assertEqual(cached, result)
+        self.assertEqual(mock_ct.await_count, 1)
+
+    async def test_clear_fences_late_translation_from_repopulating_cache(self) -> None:
+        clf = SmartClassifier()
+        started = asyncio.Event()
+        release = asyncio.Event()
+        calls = 0
+
+        async def translate(*_args: object, **_kwargs: object) -> str:
+            nonlocal calls
+            calls += 1
+            if calls == 1:
+                started.set()
+                await release.wait()
+                return "Устаревший перевод"
+            return "Новый перевод"
+
+        with patch(
+            "app.services.smart_classifier.complete_text",
+            new_callable=AsyncMock,
+            side_effect=translate,
+        ) as mock_ct:
+            old_request = asyncio.create_task(clf.translate_cached("工业离心泵"))
+            await asyncio.wait_for(started.wait(), timeout=1)
+            SmartClassifier.clear_packing_caches()
+            release.set()
+            self.assertEqual(await old_request, "Устаревший перевод")
+            fresh = await clf.translate_cached("工业离心泵")
+            cached = await clf.translate_cached("工业离心泵")
+
+        self.assertEqual(fresh, "Новый перевод")
+        self.assertEqual(cached, fresh)
+        self.assertEqual(mock_ct.await_count, 2)
 
 
 class SmartClassifierClassifyTests(unittest.IsolatedAsyncioTestCase):
