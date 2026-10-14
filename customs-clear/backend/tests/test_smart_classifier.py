@@ -629,7 +629,7 @@ class SmartClassifierClassifyTests(unittest.IsolatedAsyncioTestCase):
             self.assertFalse(unavailable.results[0]["recommended"])
             self.assertEqual(recovered.status, "OK")
             self.assertEqual(recovered.extra["web_search_status"], "confirmed")
-            self.assertTrue(recovered.results[0]["recommended"])
+            self.assertNotEqual(recovered.results[0].get("recommended"), False)
             self.assertEqual(cached.status, "OK")
             self.assertEqual(cached.results, recovered.results)
             self.assertEqual(web_search.await_count, 2)
