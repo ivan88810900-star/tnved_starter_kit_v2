@@ -1,0 +1,73 @@
+{
+  "schema_version": 1,
+  "cycle": 261,
+  "started_at": "2026-10-14T23:47:27Z",
+  "completed_at": "2026-10-14T23:56:48Z",
+  "executor": "/root/scheduled-cycle261-20261014T234727Z",
+  "lease": {
+    "generation": 261,
+    "token": "930e8146d0a147ff9cb061502fb2bf68",
+    "acquisition_commit": "dc5d5b7b2afa3239fa97917996791bc100ae537e"
+  },
+  "candidate": {
+    "pr": 256,
+    "branch": "agent/product-ntm-regressions-v1",
+    "parent_sha": "a5e952f1ea847500b65bdc76b18514ddfd97f01d",
+    "head_sha": "863011a250c4713d0a867b03f0ca1d8c79197274",
+    "tree_sha": "a3be986ffffd53f220a8fe1df0e05816f47c4cf8",
+    "local_exact_tree_commit": "777fb6d5922bcc8fd0ed95df93e2d37f587bc840",
+    "block": "read_only_missing_sqlite_freshness_check",
+    "files": [
+      "customs-clear/backend/app/services/data_refresh_service.py",
+      "customs-clear/backend/tests/test_data_refresh.py"
+    ]
+  },
+  "reproduction": {
+    "status": "REPRODUCED_ON_EXACT_PARENT",
+    "result": "Check-only opened a missing SQLite database and created customs.db; literal python3 also escaped the active venv in the regression.",
+    "command": "SECRET_KEY=test-only-cycle261-key PYTHONPATH=. /workspace/scratch/bb84ae3e224a/analysis251/customs-clear/backend/.venv/bin/python -m pytest -q tests --maxfail=1",
+    "exit_code": 1,
+    "output": "1 failed, 254 passed, 47 subtests; focused follow-up confirmed the unexpected customs.db side effect"
+  },
+  "repair": {
+    "behavior": "Detect a missing file-backed SQLite path before opening the engine, report db_missing, and use the current isolated interpreter plus a temporary DATABASE_URL in the regression.",
+    "scope": "two files, 18 insertions and 3 deletions"
+  },
+  "verification": {
+    "a0": {
+      "command": "SECRET_KEY=test-only-cycle261-key PYTHONPATH=. /workspace/scratch/bb84ae3e224a/analysis251/customs-clear/backend/.venv/bin/python -m pytest -q tests/test_data_refresh.py -k 'not TestGitHubWorkflow' tests/test_smart_classifier.py tests/test_classify_api_security.py tests/test_custom_classifier_chain.py tests/test_upload_packing_list_api.py tests/test_safe_http_errors.py && test ! -e customs.db && /workspace/scratch/bb84ae3e224a/analysis251/customs-clear/backend/.venv/bin/python -m py_compile app/services/data_refresh_service.py tests/test_data_refresh.py && git diff --check",
+      "exit_code": 0,
+      "output": "106 passed, 3 deselected, 71 subtests passed, one StarletteDeprecationWarning"
+    },
+    "a5": {
+      "session": "/root/a5_cycle261",
+      "status": "PASS_EXACT_TREE_NO_FINDINGS",
+      "commands": [
+        "focused: 13 passed, 3 deselected, exit 0",
+        "adjacent: 102 passed + 31 subtests, 3 deselected, exit 0",
+        "independent SQLite/non-SQLite harness: 23 assertions, exit 0",
+        "git diff --check and exact-scope verification: exit 0"
+      ],
+      "findings": []
+    },
+    "ci": {
+      "workflow": "Tariff agent safety",
+      "scope": "agent orchestration offline-safety only; product evidence is the executable A0 and A5 profiles",
+      "run_id": 38656935852,
+      "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38656935852",
+      "conclusion": "success"
+    },
+    "github_receipt": {
+      "pr_comment_id": 6181119818
+    }
+  },
+  "limits": {
+    "workflow_presence_tests": "3 deselected; scheduled-data-refresh.yml absent on exact base; NOT_PASS",
+    "full_pr245_acceptance": "NOT_PASS",
+    "legal_source_completeness": "NOT_PASS",
+    "lawful_populated_synchronized_ntm_snapshot": "UNAVAILABLE",
+    "a6": "core-s1-6415f443120f-r9-g106 unchanged and not sent",
+    "protected_actions_performed": false
+  },
+  "next_step": "Resolve or formally scope the scheduled-data-refresh workflow-presence gap, then continue the next bounded PR256/#245 product defect under a fresh lease."
+}
