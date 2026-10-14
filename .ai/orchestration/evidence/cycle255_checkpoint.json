@@ -1,0 +1,62 @@
+{
+  "schema_version": 1,
+  "cycle": 255,
+  "started_at": "2026-10-14T18:54:22Z",
+  "completed_at": "2026-10-14T19:02:50Z",
+  "executor": "/root/scheduled-cycle255-20261014T185505Z",
+  "lease": {
+    "generation": 255,
+    "token": "967bcec038fb4bfa9d134d1791e888bb",
+    "acquisition_commit": "22918d14e201acda67106c060d1a9bca2b4159b1"
+  },
+  "candidate": {
+    "pr": 256,
+    "branch": "agent/product-ntm-regressions-v1",
+    "parent_sha": "797cd548b1b83f5b15fa26bbcf23ae9352a15b0b",
+    "head_sha": "e5e75915ec1957f172b30284dd1633cf0c4c1915",
+    "tree_sha": "76d8c0717b88342b11be28a18d20202e2f5a13de",
+    "local_author_commit": "75d61bf74fb46548ae86945ceab1eca08d51f060",
+    "block": "smart_classifier_concurrent_group_singleflight",
+    "files": [
+      "customs-clear/backend/app/services/smart_classifier.py",
+      "customs-clear/backend/tests/test_smart_classifier.py"
+    ]
+  },
+  "reproduction": {
+    "status": "REPRODUCED_ON_EXACT_PARENT",
+    "result": "Three identical concurrent cold-cache requests started three provider classifications before release."
+  },
+  "verification": {
+    "a0": {
+      "command": "PYTHONPATH=/workspace/scratch/bb84ae3e224a/author255/customs-clear/backend /workspace/scratch/bb84ae3e224a/analysis251/customs-clear/backend/.venv/bin/python -m pytest -q customs-clear/backend/tests/test_smart_classifier.py customs-clear/backend/tests/test_classify_api_security.py customs-clear/backend/tests/test_custom_classifier_chain.py customs-clear/backend/tests/test_upload_packing_list_api.py customs-clear/backend/tests/test_safe_http_errors.py",
+      "exit_code": 0,
+      "result": "75 passed plus 71 subtests"
+    },
+    "a5": {
+      "session": "/root/a5_cycle255",
+      "status": "PASS_EXACT_TREE_NO_CODE_FINDINGS",
+      "adjacent_result": "75 passed plus 71 subtests, exit 0",
+      "adversarial_result": "46 assertions passed: exact-key singleflight, deep snapshot isolation, fail-closed uncached ERROR and retry, waiter cancellation, generation fence, fingerprint separation and independent event loops.",
+      "environment_limitation": "Direct pytest for one async packing-list test lacked pytest-asyncio; its coroutine passed via asyncio.run."
+    },
+    "ci": {
+      "workflow": "Tariff agent safety",
+      "job": "offline-safety",
+      "run_id": 38620208681,
+      "job_id": 116045462121,
+      "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38620208681/job/116045462121",
+      "conclusion": "success"
+    },
+    "github_receipt": {
+      "pr": 256,
+      "comment_id": 6176072359
+    }
+  },
+  "limits": {
+    "full_pr245_acceptance": "NOT_PASS",
+    "legal_source_completeness": "NOT_PASS",
+    "lawful_populated_synchronized_ntm_snapshot": "UNAVAILABLE",
+    "a6": "core-s1-6415f443120f-r9-g106 unchanged and not sent",
+    "protected_actions_performed": false
+  }
+}

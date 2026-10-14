@@ -2179,7 +2179,7 @@
       "unique_source_pr_count": 29
     }
   },
-  "revision": 795,
+  "revision": 796,
   "runs": [
     {
       "head_sha": null,
@@ -7781,7 +7781,7 @@
       }
     }
   ],
-  "updated_at": "2026-10-14T18:00:35Z",
+  "updated_at": "2026-10-14T19:02:50Z",
   "previous_scheduled_product_checkpoint_174": {
     "updated_at": "2026-10-11T18:04:51.196Z",
     "checked_at": "2026-10-11T18:04:51.196Z",
@@ -13862,6 +13862,63 @@
       "command_execution": "Git, Python and pytest execution were available; final commands exited 0.",
       "lawful_publication": "Draft PR256 was advanced by expected-head GitHub CAS under active lease generation 254.",
       "checkpoint": "Evidence is stored in .ai/orchestration/evidence/cycle254_checkpoint.json; this state CAS commit is durable and lease release follows separately."
+    },
+    "next_step": "Continue the next bounded PR256/#245 search, classification or assistant integration defect while preserving fail-closed provenance and manual review."
+  },
+  "previous_scheduled_product_checkpoint_255": {
+    "updated_at": "2026-10-14T19:02:50Z",
+    "checked_at": "2026-10-14T19:02:50Z",
+    "pr": 256,
+    "branch": "agent/product-ntm-regressions-v1",
+    "head_sha": "e5e75915ec1957f172b30284dd1633cf0c4c1915",
+    "tree_sha": "76d8c0717b88342b11be28a18d20202e2f5a13de",
+    "parent_sha": "797cd548b1b83f5b15fa26bbcf23ae9352a15b0b",
+    "local_author_exact_tree_commit": "75d61bf74fb46548ae86945ceab1eca08d51f060",
+    "base_pr": 245,
+    "base_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
+    "block": "smart_classifier_concurrent_group_singleflight",
+    "status": "IMPLEMENTED_A5_PASS_CI_PASS",
+    "behavior": {
+      "reproduced": "Three concurrent identical cold-cache group requests all missed and started three provider classifications before any result was released.",
+      "final": "Exact-key concurrent calls share one loop-local producer; each waiter and later cache hit receives an independent deep snapshot. Cancellation does not cancel the producer, ERROR stays fail-closed and uncached, and cache clear fences late producers.",
+      "boundaries": "Only smart_classifier.py and test_smart_classifier.py changed; different classification fingerprints remain independent and image/manual-review behavior is preserved."
+    },
+    "verification": {
+      "a0": "Exact adjacent command passed 75 tests plus 71 subtests, exit 0; py_compile, diff-check, exact two-file scope, tree and clean-worktree checks exited 0.",
+      "a5": {
+        "session": "/root/a5_cycle255",
+        "status": "PASS_EXACT_TREE_NO_CODE_FINDINGS",
+        "execution": "Independent adjacent execution passed 75 plus 71 subtests; 46-assertion adversarial matrix passed cold-cache singleflight, deep isolation, ERROR retry, cancellation, generation fence, fingerprint separation and separate event loops.",
+        "limitations": ["The supplied venv lacked pytest-asyncio for one direct packing-list pytest invocation; the same coroutine was imported and passed via asyncio.run."],
+        "findings": []
+      },
+      "ci": {
+        "status": "PASSED_EXACT_HEAD_OFFLINE_SAFETY_ONLY",
+        "run_id": 38620208681,
+        "job_id": 116045462121,
+        "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38620208681/job/116045462121",
+        "head_sha": "e5e75915ec1957f172b30284dd1633cf0c4c1915",
+        "conclusion": "success"
+      },
+      "github_receipt": {
+        "pr_comment_id": 6176072359
+      }
+    },
+    "blockers": [
+      "Full PR245 product acceptance and legal/source completeness remain NOT PASS.",
+      "NTM full-sync remains blocked until a lawful populated synchronized snapshot is available."
+    ],
+    "a6": {
+      "request": "core-s1-6415f443120f-r9-g106",
+      "status": "UNCHANGED_NOT_SENT"
+    },
+    "coordination_queue": "Issue #257 bounded-probe receipt already exists and was not repeated.",
+    "protected_actions_performed": false,
+    "capabilities": {
+      "code_access": "Fresh exact PR256 author and independent A5 worktrees were available.",
+      "command_execution": "Git, Python and pytest execution were available; final commands exited 0.",
+      "lawful_publication": "Draft PR256 was advanced by expected-head GitHub CAS under active lease generation 255.",
+      "checkpoint": "Evidence is stored in .ai/orchestration/evidence/cycle255_checkpoint.json; this state CAS commit is durable and lease release follows separately."
     },
     "next_step": "Continue the next bounded PR256/#245 search, classification or assistant integration defect while preserving fail-closed provenance and manual review."
   }
