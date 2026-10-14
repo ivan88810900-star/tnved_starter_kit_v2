@@ -876,10 +876,16 @@ class SmartClassifier:
                 failed=image_analysis_failed,
             )
 
-        # Provider/network failures are transient.  Returning the fail-closed
-        # ERROR is correct for this request, but caching it would prevent an
-        # identical later request from retrying after the provider recovers.
-        if result.status != "ERROR" and cache_generation == _packing_cache_generation:
+        # Provider/network and grounding failures are transient.  Returning
+        # fail-closed ERROR/MANUAL_REVIEW is correct for this request, but
+        # caching either failure would prevent an identical later request from
+        # retrying after the provider or web evidence recovers.
+        transient_grounding_gap = web_search_needed and not web_used
+        if (
+            result.status != "ERROR"
+            and not transient_grounding_gap
+            and cache_generation == _packing_cache_generation
+        ):
             # The caller owns the object returned below.  Keep a private deep
             # snapshot so later mutations cannot poison subsequent rows, and
             # clone that snapshot again for every cache hit above.
