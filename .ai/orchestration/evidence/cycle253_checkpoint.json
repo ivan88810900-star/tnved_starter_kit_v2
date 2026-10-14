@@ -1,0 +1,63 @@
+{
+  "cycle": 253,
+  "checked_at": "2026-10-14T16:55:49Z",
+  "lease_generation": 253,
+  "lease_holder": "/root/scheduled-cycle253-20261014T164853Z",
+  "pr": 256,
+  "branch": "agent/product-ntm-regressions-v1",
+  "head_sha": "7cab94dd9481888a8946a2177132b8e1927a3670",
+  "tree_sha": "edd6f5907c3185e7e175bfc75cb5cb9c5ab3f92a",
+  "parent_sha": "af5dc3c09294aa4223205ee01aebc008fa0a396f",
+  "local_author_exact_tree_commit": "e1979c51c3f21676762d965650bb62baad9d5ca7",
+  "base_pr": 245,
+  "base_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
+  "block": "smart_classifier_transient_error_cache_recovery",
+  "status": "IMPLEMENTED_A5_PASS_CI_PASS",
+  "behavior": {
+    "reproduced": "On the exact parent, a transient provider exception produced ERROR and the identical later group request returned that cached ERROR without invoking the recovered provider.",
+    "final": "The current failure remains fail-closed ERROR. ERROR results are not inserted into the group cache, so identical later requests retry and recovered OK results resume normal caching.",
+    "boundaries": "Only customs-clear/backend/app/services/smart_classifier.py and customs-clear/backend/tests/test_smart_classifier.py changed. Image fingerprint isolation, unavailable-image manual review, normative data, legal applicability, flags and production state are unchanged."
+  },
+  "verification": {
+    "a0": {
+      "command": "PYTHONPATH=/workspace/scratch/bb84ae3e224a/author253/customs-clear/backend /workspace/scratch/bb84ae3e224a/analysis251/customs-clear/backend/.venv/bin/python -m pytest -q customs-clear/backend/tests/test_smart_classifier.py customs-clear/backend/tests/test_classify_api_security.py customs-clear/backend/tests/test_custom_classifier_chain.py customs-clear/backend/tests/test_upload_packing_list_api.py customs-clear/backend/tests/test_safe_http_errors.py",
+      "result": "71 passed plus 71 subtests",
+      "exit_code": 0,
+      "additional": "py_compile, git diff --check and exact two-file scope checks exited 0."
+    },
+    "a5": {
+      "session": "/root/a5_cycle253",
+      "status": "PASS_EXACT_TREE_NO_FINDINGS",
+      "execution": "Fresh adjacent suite passed 71 plus 71 subtests; independent five-check adversarial matrix covered transient recovery, sustained fail-closed retries, direct ERROR, stable-success caching and invalid-image fingerprint isolation; py_compile, diff, scope, tree and clean-worktree checks exited 0.",
+      "findings": []
+    },
+    "ci": {
+      "status": "PASSED_EXACT_HEAD_OFFLINE_SAFETY_ONLY",
+      "run_id": 38602133386,
+      "job_id": 115983741821,
+      "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38602133386/job/115983741821",
+      "head_sha": "7cab94dd9481888a8946a2177132b8e1927a3670",
+      "conclusion": "success"
+    },
+    "github_receipt": {
+      "pr_comment_id": 6173662185
+    }
+  },
+  "blockers": [
+    "Full PR245 product acceptance and legal/source completeness remain NOT PASS.",
+    "NTM full-sync remains blocked until a lawful populated synchronized snapshot is available."
+  ],
+  "a6": {
+    "request": "core-s1-6415f443120f-r9-g106",
+    "status": "UNCHANGED_NOT_SENT"
+  },
+  "coordination_queue": "Issue #257 bounded-probe receipt already exists and was not repeated.",
+  "protected_actions_performed": false,
+  "capabilities": {
+    "code_access": "Fresh full clone and exact author/A5 worktrees were available.",
+    "command_execution": "Git, Python and pytest execution were available; final A0 and A5 commands exited 0.",
+    "lawful_publication": "Draft PR256 was advanced by expected-head GitHub CAS under active lease generation 253.",
+    "checkpoint": "This file and matching handoff/TASK_BOARD entry are the durable cycle253 checkpoint; lease release follows separately."
+  },
+  "next_step": "Continue the next bounded PR256/#245 search, classification or assistant integration defect while preserving fail-closed provenance and manual review."
+}

@@ -1948,3 +1948,13 @@ CI #255: [offline-safety PASS, run 37771953943](https://github.com/ivan88810900-
 - Fresh independent A5 `/root/a5_cycle252` rejected three intermediate candidates after reproducing separate stale-cache/fail-open races, then returned **PASS, no findings** on the final tree. Final adjacent execution passed **70 + 71 subtests**; independent adversarial matrix passed **11/11** and packing-list controls passed **4/4**, all exit 0.
 - Exact-head CI [run 38596656746 / job 115965012426](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38596656746/job/115965012426): **success** (`offline-safety`). PR receipt comment id `6172924322` records the candidate and checks.
 - Full PR #245 product/legal/source acceptance remains NOT PASS. NTM full-sync remains blocked without a lawful populated synchronized snapshot. A6 `core-s1-6415f443120f-r9-g106` remains unchanged and undispatched; no protected action was performed.
+
+## 2026-10-14 — Smart-classifier transient error cache recovery completed on draft PR #256
+
+- Exact parent `af5dc3c09294aa4223205ee01aebc008fa0a396f` cached a transient group-classification provider failure as a permanent `ERROR`; an identical later request never retried after provider recovery.
+- Draft [PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256) now publishes exact head `7cab94dd9481888a8946a2177132b8e1927a3670`, tree `edd6f5907c3185e7e175bfc75cb5cb9c5ab3f92a`; local author commit `e1979c51c3f21676762d965650bb62baad9d5ca7` has the exact same tree. Only `smart_classifier.py` and `test_smart_classifier.py` changed.
+- The failing request still returns fail-closed `ERROR`, but error responses no longer poison the group cache. An identical later request retries; a recovered `OK` is cached normally. Image-fingerprint isolation and unavailable-image `MANUAL_REVIEW` / `recommended=false` behavior are preserved.
+- A0 exact adjacent command passed **71 tests + 71 subtests**, exit 0; py_compile, diff-check and exact scope exited 0.
+- Fresh independent A5 `/root/a5_cycle253`: **PASS, no findings**. Its adjacent suite passed **71 + 71 subtests** and independent cache/fail-closed adversarial matrix passed **5/5**, all exit 0.
+- Exact-head CI [run 38602133386 / job 115983741821](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38602133386/job/115983741821): **success** (`offline-safety`). PR receipt comment id `6173662185` records the candidate and checks.
+- Full PR #245 product/legal/source acceptance remains NOT PASS. NTM full-sync remains blocked without a lawful populated synchronized snapshot. A6 `core-s1-6415f443120f-r9-g106` remains unchanged and undispatched; no protected action was performed.
