@@ -1,6 +1,8 @@
 """Tests for mass regulatory document seed — validates coverage and integrity."""
 from __future__ import annotations
 
+from pathlib import Path
+
 import pytest
 from sqlalchemy import inspect, text
 
@@ -16,6 +18,16 @@ def _require_mass_seed_dataset() -> None:
     partial import still reaches the assertions below and fails their original
     thresholds.
     """
+    database_path = engine.url.database
+    if (
+        engine.url.get_backend_name() == "sqlite"
+        and database_path not in {None, "", ":memory:"}
+        and not Path(database_path).is_file()
+    ):
+        pytest.skip(
+            "requires a populated regulatory mass-seed dataset; "
+            "configured SQLite database does not exist"
+        )
     if not inspect(engine).has_table("regulatory_documents"):
         pytest.skip(
             "requires a populated regulatory mass-seed dataset; "
