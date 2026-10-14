@@ -1,0 +1,45 @@
+{
+  "schema_version": 1,
+  "cycle": 245,
+  "checked_at": "2026-10-14T10:23:12Z",
+  "lease_generation": 245,
+  "repository": "ivan88810900-star/tnved_starter_kit_v2",
+  "pr": 259,
+  "branch": "agent/backend-broad-regressions-v1",
+  "parent_sha": "146c7efe9c8a7832da9a60e6d834d05fff35a54a",
+  "published_head_sha": "8b1f5be35756a5eac7e2bc953727b7d8b16e5e8f",
+  "tree_sha": "3603d4f521068effd448744962a3ebda8dd86c26",
+  "changed_files": [
+    "customs-clear/backend/tests/test_regulatory_mass_seed.py"
+  ],
+  "reproduction": {
+    "source": "cycle244 exact-head guarded broad probe",
+    "result": "At 81%, entering test_total_documents_exceeds_5000 created customs.db/WAL/SHM through inspect(engine).has_table on the absent default SQLite path.",
+    "classification": "test fixture database-isolation defect"
+  },
+  "fix": "Before SQLAlchemy inspection, skip the dataset-only module when its configured file-backed SQLite database does not exist; populated SQLite, in-memory SQLite and non-SQLite paths retain the existing table/count validation.",
+  "verification": {
+    "github_diff": "one file, 12 additions, no product or assertion changes",
+    "exact_head_ci": {
+      "workflow": "Tariff agent safety",
+      "run_id": 38549024897,
+      "job_id": 115802136715,
+      "job": "offline-safety",
+      "conclusion": "success",
+      "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38549024897/job/115802136715"
+    },
+    "executable_author": "UNAVAILABLE_IN_CONNECTOR_ONLY_RUNTIME",
+    "independent_a5": "NOT_RUN_NO_NATIVE_SUBAGENT_OR_CHECKOUT_CAPABILITY",
+    "status": "IMPLEMENTED_PENDING_EXECUTABLE_QA"
+  },
+  "limits": {
+    "product_behavior_changed": false,
+    "normative_data_changed": false,
+    "full_pr245_acceptance": "NOT_PASS",
+    "lawful_populated_synchronized_ntm_snapshot": "UNAVAILABLE",
+    "a6_request": "core-s1-6415f443120f-r9-g106",
+    "a6_status": "UNCHANGED_NOT_SENT",
+    "protected_actions_performed": false
+  },
+  "next_step": "On exact HEAD, run the focused module against an absent default database, verify no DB/WAL/SHM, run the relevant predecessor order and fresh independent A5, then resume the guarded broad run before calling the block complete."
+}
