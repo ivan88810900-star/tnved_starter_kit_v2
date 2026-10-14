@@ -1,0 +1,61 @@
+{
+  "schema_version": 1,
+  "cycle": 243,
+  "checked_at": "2026-10-14T08:53:14Z",
+  "repository": "ivan88810900-star/tnved_starter_kit_v2",
+  "lease_generation": 243,
+  "base_pr": 259,
+  "parent_head_sha": "09b883d78ad3e269587e35c1d95dfef7f4cd6c7c",
+  "branch": "agent/backend-broad-regressions-v1",
+  "published_head_sha": "29ea26fda41e241da495435bba03c74a1dd57c80",
+  "tree_sha": "fa00d093ef709a06113f65bde84691970c436b52",
+  "local_author_commit": "1cf4bb5a6eb5631db685df57309a2ba895f2ab35",
+  "block": "ntm_v2_official_sgr_import_database_isolation",
+  "finding_id": "A0-NTM-V2-OFFICIAL-SGR-IMPORT-DATABASE-ISOLATION-001",
+  "status": "PUBLISHED_DRAFT_AUTHOR_PASS_A5_PASS_CI_PASS",
+  "change": {
+    "files": [
+      "customs-clear/backend/tests/test_ntm_v2_official_sgr_import.py"
+    ],
+    "behavior": "The in-memory official-SGR import fixture now rebinds the pre-imported sanctions_risk_block.SessionLocal alias and disposes its engine in finally, eliminating the order-dependent ambient customs.db write.",
+    "product_code_changed": false,
+    "normative_or_legal_interpretation_changed": false
+  },
+  "verification": {
+    "reproduction": "The exact parent passed 38 adjacent-module tests but created a 4,096-byte customs.db, confirming a hidden fixture leak rather than a product assertion failure.",
+    "author_tests": {
+      "focused": "25 passed, exit 0",
+      "ordered_tranche": "both adjacent module orders: 39 passed each, exit 0; DB/WAL/SHM absent",
+      "diff_check": "git diff --check, exit 0"
+    },
+    "a5": {
+      "session": "/root/a5_243",
+      "status": "PASS_EXACT_TREE_NO_FINDINGS",
+      "execution": "Focused 25 passed and both adjacent module orders passed 39 each, all exit 0; exact tree, one-file scope, alias identity, teardown disposal and absence of ambient DB/WAL/SHM verified."
+    },
+    "broad_follow_up": {
+      "status": "NEXT_DISTINCT_DEFECT_REPRODUCED",
+      "result": "The repaired broad run advanced to tests/test_ntm_v2_rules_enforcement.py::test_enforcement_off_unchanged_baseline and detected customs.db plus WAL/SHM; the ambient files were moved recoverably to /tmp.",
+      "exit_code": 1
+    },
+    "exact_head_ci": {
+      "run_id": 38538222812,
+      "job_id": 115766255270,
+      "job": "offline-safety",
+      "head_sha": "29ea26fda41e241da495435bba03c74a1dd57c80",
+      "conclusion": "success",
+      "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38538222812/job/115766255270"
+    }
+  },
+  "blockers": [
+    "The next broad-suite defect is the reproduced NTM v2 rules-enforcement fixture leak and remains unfixed in this checkpoint.",
+    "A lawful populated synchronized NTM snapshot remains unavailable.",
+    "Full PR #245 product acceptance and legal/source completeness remain NOT PASS."
+  ],
+  "a6": {
+    "request": "core-s1-6415f443120f-r9-g106",
+    "status": "UNCHANGED_NOT_SENT"
+  },
+  "protected_actions_performed": false,
+  "next_step": "Repair the reproduced test_ntm_v2_rules_enforcement.py ambient database leak, then resume the guarded broad backend run; keep NTM full-sync blocked until a lawful populated synchronized snapshot exists."
+}
