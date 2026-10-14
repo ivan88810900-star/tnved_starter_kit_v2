@@ -25,6 +25,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import hashlib
 import io
 import json
 import os
@@ -40,11 +41,12 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
 from loguru import logger
+from sqlalchemy.dialects.postgresql import insert as postgresql_insert
 from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 from sqlalchemy.orm import Session
 
 from app.db import SessionLocal
-from app.models.core import SgrCertificate
+from app.models.core import SgrCertificate, SgrRegistryRawRevision
 from app.services.normative_store import append_sync_log, init_db
 from app.services.preview_cache_revision import bump_preview_cache_revision
 from app.services.registry_sync_http import registry_http_get, registry_http_get_text
@@ -130,6 +132,59 @@ def _is_sqlite(db: Session) -> bool:
     return db.bind.dialect.name == "sqlite"
 
 
+def _canonical_json(value: Any) -> str:
+    return json.dumps(
+        value,
+        ensure_ascii=False,
+        sort_keys=True,
+        separators=(",", ":"),
+        allow_nan=False,
+    )
+
+
+def _source_value_text(value: Any) -> str:
+    if value is None:
+        return ""
+    if isinstance(value, str):
+        return value
+    if isinstance(value, (dict, list)):
+        return _canonical_json(value)
+    return str(value)
+
+
+def _insert_nsi_raw_revision(db: Session, row: dict[str, Any]) -> None:
+    raw_sha256 = str(row.get("_nsi_raw_sha256") or "")
+    if not raw_sha256:
+        return
+    payload = {
+        "sgr_number": row["sgr_number"],
+        "source_record_id": row.get("_nsi_source_record_id") or "",
+        "source_version_id": row.get("_nsi_source_version_id"),
+        "date_time_from": row.get("_nsi_date_time_from") or "",
+        "date_time_to": row.get("_nsi_date_time_to") or "",
+        "update_datetime": row.get("_nsi_update_datetime") or "",
+        "date_time_updated": row.get("_nsi_date_time_updated") or "",
+        "raw_json": row["_nsi_raw_json"],
+        "raw_sha256": raw_sha256,
+    }
+    if _is_sqlite(db):
+        stmt = sqlite_insert(SgrRegistryRawRevision.__table__).values(**payload)
+        db.execute(stmt.on_conflict_do_nothing(index_elements=["raw_sha256"]))
+        return
+    if db.bind.dialect.name == "postgresql":
+        stmt = postgresql_insert(SgrRegistryRawRevision.__table__).values(**payload)
+        db.execute(stmt.on_conflict_do_nothing(index_elements=["raw_sha256"]))
+        return
+    exists = (
+        db.query(SgrRegistryRawRevision.id)
+        .filter(SgrRegistryRawRevision.raw_sha256 == raw_sha256)
+        .first()
+    )
+    if not exists:
+        db.add(SgrRegistryRawRevision(**payload))
+        db.flush()
+
+
 def upsert_sgr(db: Session, row: dict[str, Any]) -> None:
     num = row["sgr_number"]
     payload = {
@@ -141,6 +196,15 @@ def upsert_sgr(db: Session, row: dict[str, Any]) -> None:
         "status": row.get("status") or "",
         "issue_date": row.get("issue_date"),
     }
+    provenance_update: dict[str, Any] = {}
+    if row.get("_nsi_raw_sha256"):
+        _insert_nsi_raw_revision(db, row)
+        provenance_update = {
+            "doc_norm": row.get("doc_norm") or "",
+            "doc_usearea": row.get("doc_usearea") or "",
+            "source_raw_sha256": row["_nsi_raw_sha256"],
+        }
+        payload.update(provenance_update)
     if _is_sqlite(db):
         stmt = sqlite_insert(SgrCertificate.__table__).values(**payload)
         stmt = stmt.on_conflict_do_update(
@@ -152,6 +216,7 @@ def upsert_sgr(db: Session, row: dict[str, Any]) -> None:
                 "recipient": stmt.excluded.recipient,
                 "status": stmt.excluded.status,
                 "issue_date": stmt.excluded.issue_date,
+                **{key: getattr(stmt.excluded, key) for key in provenance_update},
             },
         )
         db.execute(stmt)
@@ -165,6 +230,10 @@ def upsert_sgr(db: Session, row: dict[str, Any]) -> None:
         obj.status = row.get("status") or obj.status
         if row.get("issue_date") is not None:
             obj.issue_date = row["issue_date"]
+        if provenance_update:
+            obj.doc_norm = provenance_update["doc_norm"]
+            obj.doc_usearea = provenance_update["doc_usearea"]
+            obj.source_raw_sha256 = provenance_update["source_raw_sha256"]
     else:
         db.add(SgrCertificate(**payload))
 
@@ -339,6 +408,9 @@ def _row_from_nsi_dict(item: dict[str, Any]) -> dict[str, Any] | None:
         if isinstance(status_raw, dict)
         else str(status_raw or "").strip()
     )
+    raw_json = _canonical_json(item)
+    raw_sha256 = hashlib.sha256(raw_json.encode("utf-8")).hexdigest()
+    version_id = item.get("versionId")
     return {
         "sgr_number": num[:128],
         "product_name": str(data.get("NAME_PROD") or "")[:16000],
@@ -347,6 +419,18 @@ def _row_from_nsi_dict(item: dict[str, Any]) -> dict[str, Any] | None:
         "recipient": str(data.get("FIRMGET_NAME") or "")[:512],
         "status": status[:128],
         "issue_date": _parse_dt(str(data.get("DATE_DOC") or "")),
+        "doc_norm": _source_value_text(data.get("DOC_NORM")),
+        "doc_usearea": _source_value_text(data.get("DOC_USEAREA")),
+        "_nsi_source_record_id": _source_value_text(item.get("id"))[:128],
+        "_nsi_source_version_id": (
+            _source_value_text(version_id)[:128] if version_id is not None else None
+        ),
+        "_nsi_date_time_from": _source_value_text(item.get("dateTimeFrom"))[:64],
+        "_nsi_date_time_to": _source_value_text(item.get("dateTimeTo"))[:64],
+        "_nsi_update_datetime": _source_value_text(item.get("updateDateTime"))[:64],
+        "_nsi_date_time_updated": _source_value_text(item.get("dateTimeUpdated"))[:64],
+        "_nsi_raw_json": raw_json,
+        "_nsi_raw_sha256": raw_sha256,
     }
 
 
