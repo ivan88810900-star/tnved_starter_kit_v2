@@ -2179,7 +2179,7 @@
       "unique_source_pr_count": 29
     }
   },
-  "revision": 775,
+  "revision": 776,
   "runs": [
     {
       "head_sha": null,
@@ -7121,7 +7121,25 @@
           239,
           187
         ],
-        "tree_equivalent_to_source": false
+        "tree_equivalent_to_source": false,
+        "backend_broad_regressions_cycle234": {
+          "task_id": "A3-DATA-REFRESH-SUBPROCESS-ISOLATION-001",
+          "base_sha": "7f7f4938d6145979d45fddd5b04cdede83ca6e49",
+          "branch": "agent/backend-broad-regressions-v1",
+          "pr": 259,
+          "pr_url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/259",
+          "head_sha": "8dd0e5f1432acdc3a1443ecaf0e3a82139afb79d",
+          "tree_sha": "1b5e40de4afb8847018eef5cd43e03506f5ff52e",
+          "local_author_sha": "b7364510a5046c7da8f8aa600048e13aad6661e4",
+          "a5_session": "/root/a5_cycle234",
+          "a5_status": "PASSED_NO_FINDINGS",
+          "exact_head_ci_run_id": 38494033356,
+          "exact_head_ci_job_id": 115625652725,
+          "exact_head_ci_status": "success",
+          "author_tests": "15 passed, 3 deselected; forward/reverse 27 passed, 3 deselected",
+          "broad_checkpoint": "257 passed + 47 subtests before pre-existing missing-workflow failure",
+          "next_action": "Keep workflow/config changes out of this block; continue a fresh bounded backend fixture/product defect or lawful NTM work. NTM-3 remains blocked without a populated synchronized snapshot."
+        }
       },
       "required_checks": [
         "Backend NTM/classification/assistant regression",
@@ -7681,7 +7699,7 @@
       }
     }
   ],
-  "updated_at": "2026-10-14T00:12:43Z",
+  "updated_at": "2026-10-14T01:09:59Z",
   "previous_scheduled_product_checkpoint_174": {
     "updated_at": "2026-10-11T18:04:51.196Z",
     "checked_at": "2026-10-11T18:04:51.196Z",

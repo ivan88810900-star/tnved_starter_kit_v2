@@ -1,3 +1,13 @@
+## 2026-10-14 — Data-refresh subprocess isolation published on draft PR #259
+
+- Broad backend reproduction on exact PR #258 head `7f7f4938d6145979d45fddd5b04cdede83ca6e49` stopped after **254 passed + 47 subtests**: `test_script_check_only_mode` launched ambient `python3`, returned empty stdout after `ModuleNotFoundError: loguru`, created a 4,096-byte ambient `customs.db`, and caused the classification-inventory teardown guard to fail.
+- Stacked draft [PR #259](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/259) publishes exact remote head `8dd0e5f1432acdc3a1443ecaf0e3a82139afb79d`, tree `1b5e40de4afb8847018eef5cd43e03506f5ff52e`; local author head `b7364510a5046c7da8f8aa600048e13aad6661e4` has the exact same tree. Only `customs-clear/backend/tests/test_data_refresh.py` changed.
+- Direct freshness checks and the script subprocess now use disposable SQLite, the subprocess uses the exact pytest interpreter, valid freshness exit codes `0/1` remain bound to `all_fresh`, and empty/non-JSON output fails with captured exit/stdout/stderr diagnostics. Product code, source data and legal semantics are unchanged.
+- A0 non-workflow module command: **15 passed, 3 deselected**, exit 0. Independent A5 `/root/a5_cycle234`: **PASS, no findings**; focused/adversarial, forward/reverse (**27 passed, 3 deselected** each), teardown/env restoration, AST preservation and no-ambient-DB checks passed.
+- Exact-head CI [run 38494033356 / job 115625652725](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38494033356/job/115625652725): **success** (`offline-safety`).
+- The broad command now advances to the distinct pre-existing missing `.github/workflows/scheduled-data-refresh.yml` assertion after **257 passed + 47 subtests**. No workflow/config change was made. NTM-3/full-sync remains blocked by the absence of a lawful populated synchronized snapshot; full #245 acceptance remains NOT PASS.
+- A6 `core-s1-6415f443120f-r9-g106` is unchanged and undispatched. No merge, deploy, production write, enforcement/flag, secret/permission or destructive action was performed.
+
 ## 2026-10-14 — NSI-1995 immutable provenance published on draft PR #258
 
 - Official read-only NSI API documentation and a live code-1995 element were checked before design. The element exposed `id`, `dateTimeFrom`, `dateTimeTo`, `dateTimeUpdated`, `DOC_NORM` and `DOC_USEAREA`; it did not expose `versionId`, so the implementation preserves that field as optional instead of inventing it.
