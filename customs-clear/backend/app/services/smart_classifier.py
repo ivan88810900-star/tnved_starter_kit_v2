@@ -13,6 +13,7 @@ import socket
 import warnings
 import zlib
 from contextvars import ContextVar
+from copy import deepcopy
 from dataclasses import dataclass, field
 from io import BytesIO
 from typing import Any
@@ -204,6 +205,25 @@ class ClassifyResult:
             out["note"] = self.note
         out.update(self.extra)
         return out
+
+
+def _clone_classify_result(source: ClassifyResult) -> ClassifyResult:
+    """Copy mutable classification payloads across the group-cache boundary."""
+    return ClassifyResult(
+        results=deepcopy(source.results),
+        translation_used=source.translation_used,
+        # Vision analysis is string-compatible and carries an immutable image
+        # identity, so preserve it rather than asking deepcopy to reconstruct
+        # the custom str subclass.
+        visual_analysis=source.visual_analysis,
+        web_search_used=source.web_search_used,
+        web_context=deepcopy(source.web_context),
+        status=source.status,
+        classifier_source=source.classifier_source,
+        provider=source.provider,
+        note=source.note,
+        extra=deepcopy(source.extra),
+    )
 
 
 class SmartClassifier:
@@ -533,18 +553,9 @@ class SmartClassifier:
         cache_key = (group_key, classification_fingerprint)
         if cache_key in _classify_group_cache:
             cached = _classify_group_cache[cache_key]
-            result = ClassifyResult(
-                results=list(cached.results),
-                translation_used=translated,
-                visual_analysis=visual_context or cached.visual_analysis,
-                web_search_used=cached.web_search_used,
-                web_context=cached.web_context,
-                status=cached.status,
-                classifier_source=cached.classifier_source,
-                provider=cached.provider,
-                note=cached.note,
-                extra=dict(cached.extra),
-            )
+            result = _clone_classify_result(cached)
+            result.translation_used = translated
+            result.visual_analysis = visual_context or cached.visual_analysis
             return self._with_image_analysis_status(
                 result,
                 failed=image_analysis_failed,
@@ -599,7 +610,10 @@ class SmartClassifier:
         # ERROR is correct for this request, but caching it would prevent an
         # identical later request from retrying after the provider recovers.
         if result.status != "ERROR":
-            _classify_group_cache[cache_key] = result
+            # The caller owns the object returned below.  Keep a private deep
+            # snapshot so later mutations cannot poison subsequent rows, and
+            # clone that snapshot again for every cache hit above.
+            _classify_group_cache[cache_key] = _clone_classify_result(result)
         return result
 
     @staticmethod

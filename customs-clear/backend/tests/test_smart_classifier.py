@@ -268,6 +268,83 @@ class SmartClassifierClassifyTests(unittest.IsolatedAsyncioTestCase):
         finally:
             SmartClassifier.clear_packing_caches()
 
+    async def test_group_cache_returns_independent_deep_snapshots(self) -> None:
+        SmartClassifier.clear_packing_caches()
+        clf = SmartClassifier()
+        group_key = ("пластиковая запасная часть 20 мм", "COPY-1")
+        provider_result = ClassifyResult(
+            results=[
+                {
+                    "hs_code": "3926909709",
+                    "rationale": {"steps": ["исходное обоснование"]},
+                }
+            ],
+            web_context={"sources": [{"url": "https://example.test/original"}]},
+            extra={"nested": {"labels": ["original"]}},
+        )
+        classify = AsyncMock(return_value=provider_result)
+        try:
+            with patch.object(clf, "_classify_with_context", classify):
+                first = await clf.get_or_classify_group(
+                    group_key,
+                    description=group_key[0],
+                    translated=group_key[0],
+                    visual_context=None,
+                    article=group_key[1],
+                )
+                first.results[0]["hs_code"] = "0000000000"
+                first.results[0]["rationale"]["steps"].append("caller mutation")
+                first.extra["nested"]["labels"][0] = "mutated-first"
+                first.web_context["sources"][0]["url"] = "https://example.test/mutated-first"
+
+                second = await clf.get_or_classify_group(
+                    group_key,
+                    description=group_key[0],
+                    translated=group_key[0],
+                    visual_context=None,
+                    article=group_key[1],
+                )
+
+                self.assertEqual(second.results[0]["hs_code"], "3926909709")
+                self.assertEqual(
+                    second.results[0]["rationale"]["steps"],
+                    ["исходное обоснование"],
+                )
+                self.assertEqual(second.extra["nested"]["labels"], ["original"])
+                self.assertEqual(
+                    second.web_context["sources"][0]["url"],
+                    "https://example.test/original",
+                )
+
+                second.results[0]["rationale"]["steps"].append("second mutation")
+                second.extra["nested"]["labels"].append("second mutation")
+                second.web_context["sources"].append({"url": "https://example.test/second"})
+                third = await clf.get_or_classify_group(
+                    group_key,
+                    description=group_key[0],
+                    translated=group_key[0],
+                    visual_context=None,
+                    article=group_key[1],
+                )
+
+            self.assertEqual(
+                third.results[0]["rationale"]["steps"],
+                ["исходное обоснование"],
+            )
+            self.assertEqual(third.extra["nested"]["labels"], ["original"])
+            self.assertEqual(
+                third.web_context["sources"],
+                [{"url": "https://example.test/original"}],
+            )
+            self.assertIsNot(first, second)
+            self.assertIsNot(second, third)
+            self.assertIsNot(second.results, third.results)
+            self.assertIsNot(second.extra, third.extra)
+            self.assertIsNot(second.web_context, third.web_context)
+            self.assertEqual(classify.await_count, 1)
+        finally:
+            SmartClassifier.clear_packing_caches()
+
 
 class SmartClassifierWebSearchTests(unittest.IsolatedAsyncioTestCase):
     async def test_empty_web_search_does_not_call_text_completion_fallback(self) -> None:
