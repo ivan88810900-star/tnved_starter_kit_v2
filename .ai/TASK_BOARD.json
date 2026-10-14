@@ -2179,7 +2179,7 @@
       "unique_source_pr_count": 29
     }
   },
-  "revision": 778,
+  "revision": 779,
   "runs": [
     {
       "head_sha": null,
@@ -7181,6 +7181,27 @@
           "broad_checkpoint": "659 passed + 103 subtests before test_ntm_full_sync.py required the unavailable populated synchronized NTM snapshot",
           "scope": "Only customs-clear/backend/tests/test_normative_bundle.py changed; all seven original test methods and assertions are AST-identical.",
           "next_action": "Do not weaken or fabricate test_ntm_full_sync.py: NTM-3 remains blocked until a lawful populated synchronized snapshot is available. Continue only an independent task selected from live board/state while the snapshot is absent; keep the three absent scheduled-data-refresh workflow assertions deselected and make no workflow/config change in this tranche."
+        },
+        "backend_broad_regressions_cycle237": {
+          "task_id": "A2-PACKING-ASYNC-STDLIB-RUNNER-001",
+          "base_sha": "092ce778585ef4adb48c987d844b9024877b43cd",
+          "branch": "agent/backend-broad-regressions-v1",
+          "pr": 259,
+          "pr_url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/259",
+          "head_sha": "860b2098726a420af069492bdd32f8b23b619c19",
+          "tree_sha": "2f8488f510648786c73fcc4e3b91e5f1ea00ea90",
+          "local_author_sha": "ce490de24c66ded8f1b44e49839bb5f9760127a4",
+          "author_session": "/root/author_cycle237",
+          "a5_session": "/root/a5_cycle237",
+          "a5_status": "PASSED_NO_FINDINGS",
+          "exact_head_ci_run_id": 38509036982,
+          "exact_head_ci_job_id": 115673056581,
+          "exact_head_ci_status": "success",
+          "author_tests": "4 passed focused; reverse order 4 passed; adjacent packing tranche 10 passed; py_compile and diff-check exit 0",
+          "a5_tests": "4 passed without skip/xpass; adjacent packing tranche both orders 10 passed; 18 assertions and test names preserved; same-loop and exception-propagation probes PASS",
+          "broad_checkpoint": "1486 passed, 2 skipped, 3 deselected + 103 subtests before the next distinct test_rate_display.py missing-hs_rates/ambient-database isolation failure; test_ntm_full_sync.py and three known workflow assertions remained explicitly outside this diagnostic command",
+          "scope": "Only customs-clear/backend/tests/test_packing_list_classify.py and customs-clear/backend/tests/test_packing_list_tasks.py changed. Three async cases now execute through stdlib asyncio.run because the repository does not pin pytest-asyncio; no product, dependency, data or workflow change.",
+          "next_action": "Reproduce and isolate tests/test_rate_display.py on exact PR259 head without changing payment/legal behavior. Keep NTM-3 and the three absent scheduled-data-refresh workflow assertions explicit and unresolved; do not weaken or fabricate their inputs."
         }
       },
       "required_checks": [
@@ -7741,7 +7762,7 @@
       }
     }
   ],
-  "updated_at": "2026-10-14T02:59:05Z",
+  "updated_at": "2026-10-14T04:00:30Z",
   "previous_scheduled_product_checkpoint_174": {
     "updated_at": "2026-10-11T18:04:51.196Z",
     "checked_at": "2026-10-11T18:04:51.196Z",
