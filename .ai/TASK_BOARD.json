@@ -2179,7 +2179,7 @@
       "unique_source_pr_count": 29
     }
   },
-  "revision": 777,
+  "revision": 778,
   "runs": [
     {
       "head_sha": null,
@@ -7159,6 +7159,28 @@
           "broad_checkpoint": "599 passed + 103 subtests before the next distinct test_normative_bundle.py ambient-database isolation failure",
           "scope": "Only customs-clear/backend/tests/test_invoice_and_compare.py changed; deterministic disposable SQLite preserves real FX, duty, preference and ROP coverage.",
           "next_action": "On exact PR259 head, isolate tests/test_normative_bundle.py without weakening its payment/TNVED assertions. Keep the three absent scheduled-data-refresh workflow assertions deselected and make no workflow/config change in this tranche. NTM-3 remains blocked without a lawful populated synchronized snapshot."
+        },
+        "backend_broad_regressions_cycle236": {
+          "task_id": "A3-NORMATIVE-BUNDLE-DATABASE-ISOLATION-001",
+          "base_sha": "b889a16caa14d88f4fcbc427fc6c664c2f17ca6d",
+          "branch": "agent/backend-broad-regressions-v1",
+          "pr": 259,
+          "pr_url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/259",
+          "head_sha": "092ce778585ef4adb48c987d844b9024877b43cd",
+          "tree_sha": "a2929499e8bd63e0a4bfd7e50a892f54ea73f54a",
+          "local_author_sha": "5d11bf69c0b99f9a0eab8a522038fdda5b268bf6",
+          "initial_a5_session": "/root/a5_cycle236",
+          "initial_a5_status": "REJECTED_DISPOSE_FAILURE_CLEANUP_GAP",
+          "a5_session": "/root/a5_cycle236b",
+          "a5_status": "PASSED_NO_FINDINGS",
+          "exact_head_ci_run_id": 38503849272,
+          "exact_head_ci_job_id": 115656706829,
+          "exact_head_ci_status": "success",
+          "author_tests": "7 passed; invoice/normative both orders 9 passed; payment/NTM adjacency both orders 69 passed",
+          "a5_tests": "7 passed; invoice/normative both orders 9 passed; payment/NTM/normative both orders 89 passed; setup/test/dispose fault injection PASS",
+          "broad_checkpoint": "659 passed + 103 subtests before test_ntm_full_sync.py required the unavailable populated synchronized NTM snapshot",
+          "scope": "Only customs-clear/backend/tests/test_normative_bundle.py changed; all seven original test methods and assertions are AST-identical.",
+          "next_action": "Do not weaken or fabricate test_ntm_full_sync.py: NTM-3 remains blocked until a lawful populated synchronized snapshot is available. Continue only an independent task selected from live board/state while the snapshot is absent; keep the three absent scheduled-data-refresh workflow assertions deselected and make no workflow/config change in this tranche."
         }
       },
       "required_checks": [
@@ -7719,7 +7741,7 @@
       }
     }
   ],
-  "updated_at": "2026-10-14T02:02:27Z",
+  "updated_at": "2026-10-14T02:59:05Z",
   "previous_scheduled_product_checkpoint_174": {
     "updated_at": "2026-10-11T18:04:51.196Z",
     "checked_at": "2026-10-11T18:04:51.196Z",
