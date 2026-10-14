@@ -1,14 +1,14 @@
 {
   "acquisition_note": "Fresh GitHub recovery at main e526dfbdb5a31b01bf6f743da0288b88f916de0c, PR256 3c24676a69b1d78d320bd5764fb04f5ac3f3430d and state 22ac6f92b712ced82d66a3b784b06a361c337043; triage the next bounded backend/NTM defect without product, normative, A6, protected-branch or production changes.",
-  "expires_at": "2026-10-14T07:35:03.915580Z",
+  "expires_at": null,
   "generation": 241,
-  "holder": "/root",
+  "holder": null,
   "lease_repair": {},
   "release_reason": "Cycle 231 recovered live GitHub state, confirmed A0-NSI-SGR-PAGINATION-001 on exact PR256 HEAD 3c24676a69b1d78d320bd5764fb04f5ac3f3430d, preserved NSI_SGR_CODE=1995 after official-source verification, and persisted checkpoint cf167f77d1747847eead50f2b487864d1cd6b4f5. State snapshot CI run 38477186970 succeeded. No code candidate was published because this connector-only execution has no repository checkout or backend dependency tree for executable author tests and independent A5. A6 request core-s1-6415f443120f-r9-g106 remains unchanged and undispatched.",
   "released_by": "/root",
   "schema_version": 1,
   "serialization_repair": {},
-  "state": "active",
-  "token": "2fd71a92c1f74c63a0a0bcfa6cc6ae41",
-  "updated_at": "2026-10-14T07:05:03.915580Z"
+  "state": "released",
+  "token": null,
+  "updated_at": "2026-10-14T07:13:23.919895Z"
 }
