@@ -586,6 +586,57 @@ class SmartClassifierClassifyTests(unittest.IsolatedAsyncioTestCase):
         finally:
             SmartClassifier.clear_packing_caches()
 
+    async def test_transient_group_web_search_gap_retries_then_caches_success(self) -> None:
+        SmartClassifier.clear_packing_caches()
+        clf = SmartClassifier()
+        group_key = ("двигатель", "YL-90L-4")
+        web_search = AsyncMock(side_effect=["", "7,5 кВт; 380 В"])
+        model = AsyncMock(
+            return_value={
+                "text": '{"results":[{"hs_code":"8501529000","recommended":true}]}',
+                "provider": "test",
+            }
+        )
+        try:
+            with (
+                patch.object(clf, "_search_web", web_search),
+                patch("app.services.smart_classifier._ask_llm", model),
+            ):
+                unavailable = await clf.get_or_classify_group(
+                    group_key,
+                    description=group_key[0],
+                    translated=group_key[0],
+                    visual_context=None,
+                    article=group_key[1],
+                )
+                recovered = await clf.get_or_classify_group(
+                    group_key,
+                    description=group_key[0],
+                    translated=group_key[0],
+                    visual_context=None,
+                    article=group_key[1],
+                )
+                cached = await clf.get_or_classify_group(
+                    group_key,
+                    description=group_key[0],
+                    translated=group_key[0],
+                    visual_context=None,
+                    article=group_key[1],
+                )
+
+            self.assertEqual(unavailable.status, "MANUAL_REVIEW")
+            self.assertEqual(unavailable.extra["web_search_status"], "unavailable")
+            self.assertFalse(unavailable.results[0]["recommended"])
+            self.assertEqual(recovered.status, "OK")
+            self.assertEqual(recovered.extra["web_search_status"], "confirmed")
+            self.assertTrue(recovered.results[0]["recommended"])
+            self.assertEqual(cached.status, "OK")
+            self.assertEqual(cached.results, recovered.results)
+            self.assertEqual(web_search.await_count, 2)
+            self.assertEqual(model.await_count, 2)
+        finally:
+            SmartClassifier.clear_packing_caches()
+
     async def test_transient_group_classification_error_retries_then_caches_success(self) -> None:
         SmartClassifier.clear_packing_caches()
         clf = SmartClassifier()
