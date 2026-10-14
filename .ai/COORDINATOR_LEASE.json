@@ -1,14 +1,14 @@
 {
-  "acquisition_note": "Fresh GitHub recovery at main e526dfbdb5a31b01bf6f743da0288b88f916de0c, PR256 8a1ff90112f5fb6f7b766bbd55510dfd8af105c4 and state 277890f68666c971b9ec12a618089f69f46fe635; reproduce and repair bounded transient group web-search cache poisoning without product, normative, A6, protected-branch or production changes.",
-  "expires_at": null,
-  "generation": 259,
-  "holder": null,
+  "acquisition_note": "Fresh GitHub recovery at main e526dfbdb5a31b01bf6f743da0288b88f916de0c, PR256 f05df522155b3fadaeddd1da6f9a830d31f152cc and state ac6c36a5fb5ac3e8202790af5ed289f834d01b8d; complete focused backend execution and independent A5 on the exact transient group web-search recovery candidate without normative, A6, protected-branch or production changes.",
+  "expires_at": "2026-10-14T23:28:12.954751Z",
+  "generation": 260,
+  "holder": "/root/scheduled-cycle260-20261014T225552Z",
   "lease_repair": {},
-  "release_reason": "Cycle 259 reproduced transient group web-search cache poisoning on the exact prior source, published bounded repair f05df522155b3fadaeddd1da6f9a830d31f152cc on draft PR256, observed exact-head agent offline-safety CI 38646896334 succeed, and recorded checkpoint 8b0ce35adbe7221686905a12857098b61d75aa7c plus PR receipt 6179814987. Exact-source harness and syntax checks passed; focused adjacent backend execution and independent A5 remain pending and are not claimed. A6 core-s1-6415f443120f-r9-g106 remains unchanged and undispatched.",
+  "release_reason": "Cycle 259 reproduced transient group web-search cache poisoning, published bounded repair f05df522155b3fadaeddd1da6f9a830d31f152cc on PR256, exact-head agent offline-safety CI 38646896334 success, checkpoint 8b0ce35adbe7221686905a12857098b61d75aa7c, PR receipt 6179814987; exact-source harness and syntax passed; focused adjacent backend execution and independent A5 remain pending/not claimed. A6 unchanged.",
   "released_by": "/root/scheduled-cycle259-20261014T221418Z",
   "schema_version": 1,
   "serialization_repair": {},
-  "state": "released",
-  "token": null,
-  "updated_at": "2026-10-14T22:22:32.567Z"
+  "state": "active",
+  "token": "b84ee46e4bc84a76833853db08eb3691",
+  "updated_at": "2026-10-14T22:58:12.954751Z"
 }
