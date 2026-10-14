@@ -2179,7 +2179,7 @@
       "unique_source_pr_count": 29
     }
   },
-  "revision": 779,
+  "revision": 780,
   "runs": [
     {
       "head_sha": null,
@@ -7202,6 +7202,25 @@
           "broad_checkpoint": "1486 passed, 2 skipped, 3 deselected + 103 subtests before the next distinct test_rate_display.py missing-hs_rates/ambient-database isolation failure; test_ntm_full_sync.py and three known workflow assertions remained explicitly outside this diagnostic command",
           "scope": "Only customs-clear/backend/tests/test_packing_list_classify.py and customs-clear/backend/tests/test_packing_list_tasks.py changed. Three async cases now execute through stdlib asyncio.run because the repository does not pin pytest-asyncio; no product, dependency, data or workflow change.",
           "next_action": "Reproduce and isolate tests/test_rate_display.py on exact PR259 head without changing payment/legal behavior. Keep NTM-3 and the three absent scheduled-data-refresh workflow assertions explicit and unresolved; do not weaken or fabricate their inputs."
+        },
+        "backend_broad_regressions_cycle238": {
+          "task_id": "A1-RATE-DISPLAY-DATABASE-ISOLATION-001",
+          "base_sha": "860b2098726a420af069492bdd32f8b23b619c19",
+          "branch": "agent/backend-broad-regressions-v1",
+          "pr": 259,
+          "pr_url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/259",
+          "head_sha": "1ebfaa4ae2baf60e6cf4a00c45d0afe8b6a2928f",
+          "tree_sha": "1196d269c74b9866398ee07c2e347724e7174311",
+          "finding_id": "A0-RATE-DISPLAY-DATABASE-ISOLATION-001",
+          "status": "PUBLISHED_DRAFT_CI_PASS_A5_PENDING",
+          "exact_head_ci_run_id": 38510877875,
+          "exact_head_ci_job_id": 115678849503,
+          "exact_head_ci_status": "success",
+          "scope": "Only customs-clear/backend/tests/test_rate_display.py changed; a module-scoped in-memory HsRate fixture patches both database lookup boundaries and preserves all three original test functions/assertions.",
+          "author_tests": "UNAVAILABLE in this connector-only runtime; not claimed",
+          "a5_status": "PENDING_UNAVAILABLE_IN_THIS_RUNTIME",
+          "evidence_path": ".ai/orchestration/evidence/cycle238_checkpoint.json",
+          "next_action": "Run focused test_rate_display plus adjacent payment tests in both orders and fresh independent A5 on exact PR259 head. Do not promote readiness before executable evidence."
         }
       },
       "required_checks": [
@@ -7249,7 +7268,7 @@
           "head_sha": "233ed6a64b0e75175358f8cdf0e7bcc71191b67b"
         }
       },
-      "updated_at": "2026-10-13T23:08:29Z",
+      "updated_at": "2026-10-14T04:22:35.451Z",
       "worktree": null,
       "ntm_fallback_checkpoint_20261009": {
         "corrective_pr": 256,
@@ -7762,7 +7781,7 @@
       }
     }
   ],
-  "updated_at": "2026-10-14T04:00:30Z",
+  "updated_at": "2026-10-14T04:22:35.451Z",
   "previous_scheduled_product_checkpoint_174": {
     "updated_at": "2026-10-11T18:04:51.196Z",
     "checked_at": "2026-10-11T18:04:51.196Z",
