@@ -2179,7 +2179,7 @@
       "unique_source_pr_count": 29
     }
   },
-  "revision": 776,
+  "revision": 777,
   "runs": [
     {
       "head_sha": null,
@@ -7139,6 +7139,26 @@
           "author_tests": "15 passed, 3 deselected; forward/reverse 27 passed, 3 deselected",
           "broad_checkpoint": "257 passed + 47 subtests before pre-existing missing-workflow failure",
           "next_action": "Keep workflow/config changes out of this block; continue a fresh bounded backend fixture/product defect or lawful NTM work. NTM-3 remains blocked without a populated synchronized snapshot."
+        },
+        "backend_broad_regressions_cycle235": {
+          "task_id": "A3-INVOICE-COMPARE-DATABASE-ISOLATION-001",
+          "base_sha": "8dd0e5f1432acdc3a1443ecaf0e3a82139afb79d",
+          "branch": "agent/backend-broad-regressions-v1",
+          "pr": 259,
+          "pr_url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/259",
+          "head_sha": "b889a16caa14d88f4fcbc427fc6c664c2f17ca6d",
+          "tree_sha": "7f4608749948d819a6ce7babac4f75dcb1ba77f0",
+          "local_author_sha": "4f224e50b4dc2826e5cc5db82555d99b51f5bb1c",
+          "a5_session": "/root/a5_cycle235",
+          "a5_status": "PASSED_NO_FINDINGS",
+          "exact_head_ci_run_id": 38498877608,
+          "exact_head_ci_job_id": 115640826008,
+          "exact_head_ci_status": "success",
+          "author_tests": "2 passed; forward/reverse adjacent tranches 20 passed",
+          "a5_tests": "2 passed; forward/reverse payment/ROP/preference tranches 71 passed; adversarial cleanup PASS",
+          "broad_checkpoint": "599 passed + 103 subtests before the next distinct test_normative_bundle.py ambient-database isolation failure",
+          "scope": "Only customs-clear/backend/tests/test_invoice_and_compare.py changed; deterministic disposable SQLite preserves real FX, duty, preference and ROP coverage.",
+          "next_action": "On exact PR259 head, isolate tests/test_normative_bundle.py without weakening its payment/TNVED assertions. Keep the three absent scheduled-data-refresh workflow assertions deselected and make no workflow/config change in this tranche. NTM-3 remains blocked without a lawful populated synchronized snapshot."
         }
       },
       "required_checks": [
@@ -7699,7 +7719,7 @@
       }
     }
   ],
-  "updated_at": "2026-10-14T01:09:59Z",
+  "updated_at": "2026-10-14T02:02:27Z",
   "previous_scheduled_product_checkpoint_174": {
     "updated_at": "2026-10-11T18:04:51.196Z",
     "checked_at": "2026-10-11T18:04:51.196Z",
