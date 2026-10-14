@@ -1,0 +1,65 @@
+{
+  "cycle": 249,
+  "checked_at": "2026-10-14T13:21:13Z",
+  "lease_generation": 249,
+  "lease_holder": "/root/scheduled-cycle249-20261014T125530Z",
+  "pr": 256,
+  "branch": "agent/product-ntm-regressions-v1",
+  "head_sha": "b30a81f6ea878b8cabfc78639b7c9bcf203ea2f9",
+  "tree_sha": "917cbeece299b5b7058056d90d66026bf94f60d4",
+  "parent_sha": "3c24676a69b1d78d320bd5764fb04f5ac3f3430d",
+  "local_author_exact_tree_commit": "0e482110c2d2bf50afb927038bd449e2e2e8f3f4",
+  "base_pr": 245,
+  "base_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
+  "block": "smart_classifier_remote_image_ssrf_fail_closed",
+  "status": "IMPLEMENTED_A5_PASS_CI_PASS",
+  "behavior": {
+    "reproduced": "On the exact parent, a private loopback image URL reached the HTTP client and raw failed image URLs could be forwarded into the model prompt.",
+    "final": "Remote image fetching is fail-closed: only public http(s) destinations are accepted; every DNS answer and redirect destination is validated; the validated address is pinned for the connection while preserving Host and SNI; redirects are bounded; responses are streamed with a 10 MiB cap and image content type is required. Failed or blank image-only input returns deterministic ERROR, while text plus unavailable image requires manual review and withholds recommendations. Raw image URLs never reach the model prompt and text-only models are not allowed to invent visual analysis.",
+    "boundaries": "Only customs-clear/backend/app/services/smart_classifier.py and customs-clear/backend/tests/test_smart_classifier.py changed. No normative source, NTM dataset, legal applicability, production data or configuration changed."
+  },
+  "verification": {
+    "a0": {
+      "command": "PYTHONPATH=/workspace/scratch/bb84ae3e224a/author249/customs-clear/backend /workspace/scratch/bb84ae3e224a/author242/customs-clear/backend/.venv/bin/python -m pytest -q tests/test_smart_classifier.py tests/test_classify_api_security.py tests/test_custom_classifier_chain.py tests/test_upload_packing_list_api.py tests/test_safe_http_errors.py",
+      "result": "41 passed plus 23 subtests",
+      "exit_code": 0,
+      "additional": "compileall and git diff --check exited 0. Two failures in a wider mixed collection were reproduced unchanged on the parent and are not candidate regressions."
+    },
+    "a5": {
+      "session": "/root/a5_cycle249",
+      "status": "PASS_EXACT_TREE_NO_FINDINGS",
+      "execution": "Independent focused 33 passed plus 23 subtests; adjacent security/API tranche 41 passed plus 23 subtests; packing invocation 3 passed; parser/chain tranche 11 passed; 22-check no-network adversarial harness passed; all exit 0. Exact tree, clean scope, Host/SNI behavior and absent ambient DB/WAL/SHM were verified.",
+      "findings": []
+    },
+    "ci": {
+      "status": "PASSED_EXACT_HEAD_OFFLINE_SAFETY_ONLY",
+      "run_id": 38570657548,
+      "job_id": 115874683335,
+      "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38570657548/job/115874683335",
+      "head_sha": "b30a81f6ea878b8cabfc78639b7c9bcf203ea2f9",
+      "conclusion": "success",
+      "limitation": "The workflow is offline-safety only; executable A0 and fresh independent A5 provide the product-test evidence."
+    },
+    "github_receipt": {
+      "pr_comment_id": 6169318937
+    }
+  },
+  "blockers": [
+    "Full PR245 product acceptance and legal/source completeness remain NOT PASS.",
+    "NTM full-sync remains blocked until a lawful populated synchronized snapshot is available.",
+    "A parent-existing order/import mock failure remains separate from this bounded candidate."
+  ],
+  "a6": {
+    "request": "core-s1-6415f443120f-r9-g106",
+    "status": "UNCHANGED_NOT_SENT"
+  },
+  "coordination_queue": "Issue #257 bounded-probe receipt already exists and was not repeated.",
+  "protected_actions_performed": false,
+  "capabilities": {
+    "code_access": "Full exact PR256 candidate available in isolated author and independent A5 worktrees.",
+    "command_execution": "Git, Python and pytest execution available; final A0 and A5 commands exited 0.",
+    "lawful_publication": "Draft PR256 branch was updated through authorized GitHub CAS under active lease generation 249.",
+    "checkpoint": "This file and the matching handoff/TASK_BOARD entry are the durable cycle249 checkpoint; lease release follows in a separate CAS commit."
+  },
+  "next_step": "Continue the next bounded PR256/#245 search, classification or assistant integration defect while preserving fail-closed provenance and manual review; keep NTM full-sync blocked until a lawful populated synchronized snapshot exists."
+}
