@@ -4,11 +4,13 @@ from __future__ import annotations
 
 import asyncio
 import base64
+import ipaddress
 import json
 import re
+import socket
 from dataclasses import dataclass, field
 from typing import Any
-from urllib.parse import urlsplit
+from urllib.parse import urljoin, urlsplit, urlunsplit
 
 import httpx
 from loguru import logger
@@ -51,10 +53,16 @@ _vision_cache: dict[tuple[str, str], str] = {}
 _classify_group_cache: dict[tuple[str, str], "ClassifyResult"] = {}
 _cache_lock = asyncio.Lock()
 _BATCH_TRANSLATE_CHUNK = 45
+_MAX_IMAGE_BYTES = 10 * 1024 * 1024
 
 _WEB_SEARCH_MANUAL_REVIEW_NOTE = (
     "Поиск технических характеристик не дал подтверждённых данных. "
     "Варианты кода являются предварительными и требуют ручной проверки по документации товара."
+)
+
+_IMAGE_ANALYSIS_MANUAL_REVIEW_NOTE = (
+    "Изображение не удалось безопасно получить или проанализировать. "
+    "Результат по текстовым данным требует ручной проверки."
 )
 
 _CLASSIFY_WITH_CONTEXT_PROMPT = """Ты эксперт по классификации товаров по ТН ВЭД ЕАЭС.
@@ -139,14 +147,42 @@ class SmartClassifier:
         translated = await self._translate_if_needed(description)
         article_s = (article or "").strip()
         manufacturer_s = (manufacturer or "").strip()
+        normalized_image_base64 = (image_base64 or "").strip() or None
+        normalized_image_url = (image_url or "").strip() or None
+        image_field_supplied = image_base64 is not None or image_url is not None
+        blank_image_field_supplied = any(
+            value is not None and not value.strip()
+            for value in (image_base64, image_url)
+        )
 
         visual_context: str | None = None
-        if image_base64 or image_url:
+        image_requested = bool(normalized_image_base64 or normalized_image_url)
+        image_analysis_failed = image_field_supplied and (blank_image_field_supplied or not image_requested)
+        if image_requested:
             try:
-                visual_context = await self._analyze_image(image_base64, image_url, translated)
+                visual_context = await self._analyze_image(
+                    normalized_image_base64,
+                    normalized_image_url,
+                    translated,
+                )
             except Exception as exc:
                 logger.warning(f"Vision analysis failed: {exc}")
                 visual_context = None
+                image_analysis_failed = True
+            else:
+                image_analysis_failed = image_analysis_failed or not bool(visual_context.strip())
+
+        if image_analysis_failed and not (translated or article_s or manufacturer_s):
+            return ClassifyResult(
+                results=[],
+                status="ERROR",
+                note=_IMAGE_ANALYSIS_MANUAL_REVIEW_NOTE,
+                extra={
+                    "error_code": "image_unavailable",
+                    "manual_review_required": True,
+                    "image_analysis_status": "unavailable",
+                },
+            )
 
         web_context: str | None = None
         web_used = False
@@ -164,14 +200,18 @@ class SmartClassifier:
                 manufacturer=manufacturer_s,
                 web_search_used=web_used,
             )
-            return self._with_web_search_status(
+            result = self._with_web_search_status(
                 result,
                 attempted=web_search_needed,
                 confirmed=web_used,
             )
+            return self._with_image_analysis_status(
+                result,
+                failed=image_analysis_failed,
+            )
         except Exception as exc:
             logger.exception("SmartClassifier final classify failed")
-            return ClassifyResult(
+            result = ClassifyResult(
                 results=[],
                 translation_used=translated,
                 visual_analysis=visual_context,
@@ -183,6 +223,10 @@ class SmartClassifier:
                     "error_code": "llm_unavailable",
                     **self._web_search_metadata(attempted=web_search_needed, confirmed=web_used),
                 },
+            )
+            return self._with_image_analysis_status(
+                result,
+                failed=image_analysis_failed,
             )
 
     def _needs_web_search(
@@ -421,8 +465,11 @@ class SmartClassifier:
                         "source": {"type": "base64", "media_type": media_type, "data": b64},
                     }
                 )
-            except Exception:
-                content.append({"type": "image", "source": {"type": "url", "url": url}})
+            except Exception as exc:
+                # Never pass a URL which failed our network boundary to an AI
+                # provider: provider-side URL fetching would bypass the SSRF
+                # checks performed by this service.
+                raise ValueError("image URL could not be fetched safely") from exc
 
         content.append(
             {
@@ -462,12 +509,10 @@ class SmartClassifier:
                         continue
                     raise
 
-        # Fallback: Gemini multimodal через текстовый промпт без фото
-        llm_resp = await _ask_llm(
-            "Опиши типичный товар по краткому описанию для таможенной классификации.",
-            f"Описание: {description}. URL фото: {image_url or '(base64)'}",
-        )
-        return (llm_resp.get("text") or "").strip()
+        # Text-only completion cannot analyze the image bytes.  Treat missing
+        # vision capability as unavailable instead of manufacturing visual
+        # context from the product description.
+        raise ValueError("vision-capable provider is not configured")
 
     async def _search_web(
         self,
@@ -558,6 +603,23 @@ class SmartClassifier:
         result.results = [{**item, "recommended": False} for item in result.results]
         return result
 
+    @staticmethod
+    def _with_image_analysis_status(
+        result: ClassifyResult,
+        *,
+        failed: bool,
+    ) -> ClassifyResult:
+        if not failed:
+            return result
+
+        result.extra["manual_review_required"] = True
+        result.extra["image_analysis_status"] = "unavailable"
+        if result.status != "ERROR":
+            result.status = "MANUAL_REVIEW"
+            result.note = _IMAGE_ANALYSIS_MANUAL_REVIEW_NOTE
+        result.results = [{**item, "recommended": False} for item in result.results]
+        return result
+
     async def _classify_with_context(
         self,
         *,
@@ -645,13 +707,167 @@ def _is_valid_web_search_result(item: Any) -> bool:
 
 async def _fetch_image_as_base64(url: str) -> tuple[str, str]:
     headers = {"User-Agent": "CustomsClear/1.0 (VED classification; +https://github.com/)"}
-    async with httpx.AsyncClient(timeout=30.0, follow_redirects=True, headers=headers) as client:
-        resp = await client.get(url)
-        resp.raise_for_status()
-        content_type = (resp.headers.get("content-type") or "image/jpeg").split(";")[0].strip()
-        if not content_type.startswith("image/"):
-            content_type = "image/jpeg"
-        return base64.standard_b64encode(resp.content).decode("ascii"), content_type
+    current_url = url
+    for redirect_count in range(6):
+        destination = await _validate_public_image_url(current_url)
+        # Connect to the address that was actually validated.  Resolving the
+        # hostname again inside the HTTP client would leave a DNS-rebinding
+        # window between validation and connection.  Host and SNI preserve
+        # normal virtual-host and TLS certificate behavior.
+        async with httpx.AsyncClient(
+            timeout=30.0,
+            follow_redirects=False,
+            headers=headers,
+            trust_env=False,
+        ) as client:
+            async with client.stream(
+                "GET",
+                destination.request_url,
+                headers={"Host": destination.host_header},
+                extensions={"sni_hostname": destination.sni_hostname},
+            ) as resp:
+                if resp.status_code in {301, 302, 303, 307, 308}:
+                    if redirect_count == 5:
+                        raise ValueError("too many image URL redirects")
+                    location = resp.headers.get("location")
+                    if not location:
+                        raise ValueError("image redirect has no destination")
+                    current_url = urljoin(current_url, location)
+                    # The next loop validates the resolved redirect destination
+                    # before issuing another request.
+                    continue
+
+                resp.raise_for_status()
+                content_type = (resp.headers.get("content-type") or "").split(";")[0].strip().lower()
+                if not content_type.startswith("image/"):
+                    raise ValueError("image URL did not return an image content type")
+
+                declared_length = resp.headers.get("content-length")
+                if declared_length is not None:
+                    try:
+                        declared_bytes = int(declared_length)
+                    except ValueError as exc:
+                        raise ValueError("invalid image content length") from exc
+                    if declared_bytes < 0 or declared_bytes > _MAX_IMAGE_BYTES:
+                        raise ValueError("image exceeds maximum allowed size")
+
+                chunks: list[bytes] = []
+                received_bytes = 0
+                async for chunk in resp.aiter_bytes():
+                    received_bytes += len(chunk)
+                    if received_bytes > _MAX_IMAGE_BYTES:
+                        raise ValueError("image exceeds maximum allowed size")
+                    chunks.append(chunk)
+                image_bytes = b"".join(chunks)
+                return base64.standard_b64encode(image_bytes).decode("ascii"), content_type
+
+    raise ValueError("image URL could not be fetched")
+
+
+@dataclass(frozen=True)
+class _ValidatedImageDestination:
+    request_url: str
+    host_header: str
+    sni_hostname: str
+
+
+async def _validate_public_image_url(url: str) -> _ValidatedImageDestination:
+    """Reject image URLs that could reach a local or non-public destination."""
+    if not url or url != url.strip() or any(char.isspace() for char in url):
+        raise ValueError("invalid image URL")
+    if "\\" in url or any(ord(char) < 0x20 or ord(char) == 0x7F for char in url):
+        raise ValueError("invalid image URL")
+
+    try:
+        parsed = urlsplit(url)
+        hostname = parsed.hostname
+        port = parsed.port
+    except (TypeError, ValueError) as exc:
+        raise ValueError("invalid image URL") from exc
+
+    if parsed.scheme.lower() not in {"http", "https"} or not parsed.netloc or not hostname:
+        raise ValueError("image URL must use http or https")
+    if parsed.username is not None or parsed.password is not None:
+        raise ValueError("image URL credentials are not allowed")
+    if "%" in hostname:
+        # Reject percent-encoded numeric hosts and IPv6 zone identifiers.  They
+        # are interpreted inconsistently across URL parsers and HTTP clients.
+        raise ValueError("encoded image URL host is not allowed")
+
+    normalized_host = hostname.rstrip(".").lower()
+    if not normalized_host or normalized_host == "localhost" or normalized_host.endswith(".localhost"):
+        raise ValueError("local image URL host is not allowed")
+
+    addresses: list[ipaddress.IPv4Address | ipaddress.IPv6Address] = []
+    is_literal = False
+    try:
+        literal = ipaddress.ip_address(normalized_host)
+    except ValueError:
+        try:
+            lookup_host = normalized_host.encode("idna").decode("ascii")
+        except UnicodeError as exc:
+            raise ValueError("invalid image URL host") from exc
+    else:
+        _require_public_ip(literal)
+        addresses.append(literal)
+        lookup_host = normalized_host
+        is_literal = True
+
+    if not addresses:
+        lookup_port = port or (443 if parsed.scheme.lower() == "https" else 80)
+        try:
+            answers = await asyncio.to_thread(
+                socket.getaddrinfo,
+                lookup_host,
+                lookup_port,
+                type=socket.SOCK_STREAM,
+            )
+        except OSError as exc:
+            raise ValueError("image URL host could not be resolved") from exc
+        if not answers:
+            raise ValueError("image URL host could not be resolved")
+
+        addresses = []
+        for answer in answers:
+            try:
+                resolved = ipaddress.ip_address(answer[4][0])
+            except (IndexError, TypeError, ValueError) as exc:
+                raise ValueError("invalid image URL DNS answer") from exc
+            _require_public_ip(resolved)
+            if resolved not in addresses:
+                addresses.append(resolved)
+
+    selected = addresses[0]
+    pinned_host = f"[{selected}]" if isinstance(selected, ipaddress.IPv6Address) else str(selected)
+    pinned_netloc = f"{pinned_host}:{port}" if port is not None else pinned_host
+    host_name = f"[{lookup_host}]" if is_literal and isinstance(selected, ipaddress.IPv6Address) else lookup_host
+    host_header = f"{host_name}:{port}" if port is not None else host_name
+    return _ValidatedImageDestination(
+        request_url=urlunsplit(
+            (
+                parsed.scheme.lower(),
+                pinned_netloc,
+                parsed.path or "/",
+                parsed.query,
+                "",
+            )
+        ),
+        host_header=host_header,
+        sni_hostname=lookup_host,
+    )
+
+
+def _require_public_ip(address: ipaddress.IPv4Address | ipaddress.IPv6Address) -> None:
+    if (
+        not address.is_global
+        or address.is_private
+        or address.is_loopback
+        or address.is_link_local
+        or address.is_reserved
+        or address.is_unspecified
+        or address.is_multicast
+    ):
+        raise ValueError("image URL resolved to a non-public address")
 
 
 _default_classifier: SmartClassifier | None = None
