@@ -1,6 +1,7 @@
 """Unit-тесты SmartClassifier (без реальных вызовов LLM/Vision)."""
 from __future__ import annotations
 
+import asyncio
 import base64
 from io import BytesIO
 import socket
@@ -1132,7 +1133,8 @@ class SmartClassifierBase64SafetyTests(unittest.IsolatedAsyncioTestCase):
                     description=group_key[0],
                 )
 
-            self.assertIsNone(visual)
+            self.assertFalse(visual)
+            self.assertTrue(getattr(visual, "analysis_failed", False))
             provider.assert_not_awaited()
 
             with patch(
@@ -1189,8 +1191,396 @@ class SmartClassifierBase64SafetyTests(unittest.IsolatedAsyncioTestCase):
                 )
 
             self.assertEqual(valid, "vision")
-            self.assertIsNone(invalid)
+            self.assertFalse(invalid)
+            self.assertTrue(getattr(invalid, "analysis_failed", False))
             provider.assert_awaited_once()
+        finally:
+            SmartClassifier.clear_packing_caches()
+
+    async def test_changed_valid_group_image_refreshes_vision_and_classification(self) -> None:
+        SmartClassifier.clear_packing_caches()
+        clf = SmartClassifier()
+        group_key = ("пластиковая запасная часть", "A-5")
+
+        def image_payload(color: tuple[int, int, int]) -> str:
+            output = BytesIO()
+            Image.new("RGB", (2, 2), color=color).save(output, format="PNG")
+            return base64.standard_b64encode(output.getvalue()).decode("ascii")
+
+        provider = AsyncMock(
+            side_effect=[
+                {"content": [{"type": "text", "text": "красная деталь"}]},
+                {"content": [{"type": "text", "text": "синяя деталь"}]},
+            ]
+        )
+        model = AsyncMock(
+            side_effect=[
+                {"text": '{"results":[{"hs_code":"3926909701"}]}', "provider": "test"},
+                {"text": '{"results":[{"hs_code":"3926909702"}]}', "provider": "test"},
+            ]
+        )
+        try:
+            with (
+                patch("app.services.smart_classifier._anthropic_key_env", return_value="test-key"),
+                patch("app.services.smart_classifier.anthropic_messages_request", provider),
+                patch("app.services.smart_classifier._ask_llm", model),
+            ):
+                first_visual = await clf.get_or_analyze_vision(
+                    group_key,
+                    image_base64=image_payload((255, 0, 0)),
+                    description=group_key[0],
+                )
+                first_result = await clf.get_or_classify_group(
+                    group_key,
+                    description=group_key[0],
+                    translated=group_key[0],
+                    visual_context=first_visual,
+                    article=group_key[1],
+                )
+                second_visual = await clf.get_or_analyze_vision(
+                    group_key,
+                    image_base64=image_payload((0, 0, 255)),
+                    description=group_key[0],
+                )
+                second_result = await clf.get_or_classify_group(
+                    group_key,
+                    description=group_key[0],
+                    translated=group_key[0],
+                    visual_context=second_visual,
+                    article=group_key[1],
+                )
+
+            self.assertEqual(first_visual, "красная деталь")
+            self.assertEqual(second_visual, "синяя деталь")
+            self.assertEqual(first_result.results[0]["hs_code"], "3926909701")
+            self.assertEqual(second_result.results[0]["hs_code"], "3926909702")
+            self.assertEqual(provider.await_count, 2)
+            self.assertEqual(model.await_count, 2)
+        finally:
+            SmartClassifier.clear_packing_caches()
+
+    async def test_first_valid_image_does_not_reuse_no_image_classification(self) -> None:
+        SmartClassifier.clear_packing_caches()
+        clf = SmartClassifier()
+        group_key = ("пластиковая запасная часть", "A-6")
+        model = AsyncMock(
+            side_effect=[
+                {"text": '{"results":[{"hs_code":"3926909701"}]}', "provider": "test"},
+                {"text": '{"results":[{"hs_code":"3926909702"}]}', "provider": "test"},
+            ]
+        )
+        try:
+            with (
+                patch("app.services.smart_classifier._anthropic_key_env", return_value="test-key"),
+                patch(
+                    "app.services.smart_classifier.anthropic_messages_request",
+                    new_callable=AsyncMock,
+                    return_value={"content": [{"type": "text", "text": "фото детали"}]},
+                ) as provider,
+                patch("app.services.smart_classifier._ask_llm", model),
+            ):
+                without_image = await clf.get_or_classify_group(
+                    group_key,
+                    description=group_key[0],
+                    translated=group_key[0],
+                    visual_context=None,
+                    article=group_key[1],
+                )
+                visual = await clf.get_or_analyze_vision(
+                    group_key,
+                    image_base64=_TEST_IMAGE_B64["image/png"],
+                    description=group_key[0],
+                )
+                with_image = await clf.get_or_classify_group(
+                    group_key,
+                    description=group_key[0],
+                    translated=group_key[0],
+                    visual_context=visual,
+                    article=group_key[1],
+                )
+
+            self.assertEqual(without_image.results[0]["hs_code"], "3926909701")
+            self.assertEqual(with_image.results[0]["hs_code"], "3926909702")
+            self.assertEqual(with_image.visual_analysis, "фото детали")
+            provider.assert_awaited_once()
+            self.assertEqual(model.await_count, 2)
+        finally:
+            SmartClassifier.clear_packing_caches()
+
+    async def test_concurrent_images_cannot_cross_contaminate_classification_cache(self) -> None:
+        SmartClassifier.clear_packing_caches()
+        clf = SmartClassifier()
+        group_key = ("пластиковая запасная часть", "A-7")
+        a_started = asyncio.Event()
+        release_a = asyncio.Event()
+
+        async def classify_by_visual(_system: str, prompt: str) -> dict[str, str]:
+            if "Анализ фото: фото A" in prompt:
+                a_started.set()
+                await release_a.wait()
+                return {"text": '{"results":[{"hs_code":"3926909701"}]}', "provider": "test"}
+            if "Анализ фото: фото B" in prompt:
+                return {"text": '{"results":[{"hs_code":"3926909702"}]}', "provider": "test"}
+            raise AssertionError(f"unexpected classification prompt: {prompt}")
+
+        provider = AsyncMock(
+            side_effect=[
+                {"content": [{"type": "text", "text": "фото A"}]},
+                {"content": [{"type": "text", "text": "фото B"}]},
+            ]
+        )
+        model = AsyncMock(side_effect=classify_by_visual)
+        try:
+            with (
+                patch("app.services.smart_classifier._anthropic_key_env", return_value="test-key"),
+                patch("app.services.smart_classifier.anthropic_messages_request", provider),
+                patch("app.services.smart_classifier._ask_llm", model),
+            ):
+                visual_a = await clf.get_or_analyze_vision(
+                    group_key,
+                    image_base64=_TEST_IMAGE_B64["image/png"],
+                    description=group_key[0],
+                )
+                visual_b = await clf.get_or_analyze_vision(
+                    group_key,
+                    image_base64=_TEST_IMAGE_B64["image/jpeg"],
+                    description=group_key[0],
+                )
+                task_a = asyncio.create_task(
+                    clf.get_or_classify_group(
+                        group_key,
+                        description=group_key[0],
+                        translated=group_key[0],
+                        visual_context=visual_a,
+                        article=group_key[1],
+                    )
+                )
+                await a_started.wait()
+                result_b = await clf.get_or_classify_group(
+                    group_key,
+                    description=group_key[0],
+                    translated=group_key[0],
+                    visual_context=visual_b,
+                    article=group_key[1],
+                )
+                release_a.set()
+                result_a = await task_a
+                cached_b = await clf.get_or_classify_group(
+                    group_key,
+                    description=group_key[0],
+                    translated=group_key[0],
+                    visual_context=visual_b,
+                    article=group_key[1],
+                )
+
+            self.assertEqual(result_a.results[0]["hs_code"], "3926909701")
+            self.assertEqual(result_b.results[0]["hs_code"], "3926909702")
+            self.assertEqual(cached_b.results[0]["hs_code"], "3926909702")
+            self.assertEqual(cached_b.visual_analysis, "фото B")
+            self.assertEqual(provider.await_count, 2)
+            self.assertEqual(model.await_count, 2)
+        finally:
+            release_a.set()
+            SmartClassifier.clear_packing_caches()
+
+    async def test_concurrent_invalid_image_keeps_its_fail_closed_status(self) -> None:
+        SmartClassifier.clear_packing_caches()
+        clf = SmartClassifier()
+        group_key = ("пластиковая запасная часть", "A-8")
+        invalid_ready = asyncio.Event()
+        valid_done = asyncio.Event()
+        model = AsyncMock(
+            return_value={
+                "text": '{"results":[{"hs_code":"3926909709","recommended":true}]}',
+                "provider": "test",
+            }
+        )
+
+        async def invalid_flow() -> ClassifyResult:
+            visual = await clf.get_or_analyze_vision(
+                group_key,
+                image_base64="data:image/png;base64,%%%",
+                description=group_key[0],
+            )
+            invalid_ready.set()
+            await valid_done.wait()
+            return await clf.get_or_classify_group(
+                group_key,
+                description=group_key[0],
+                translated=group_key[0],
+                visual_context=visual,
+                article=group_key[1],
+            )
+
+        async def valid_flow() -> ClassifyResult:
+            await invalid_ready.wait()
+            try:
+                visual = await clf.get_or_analyze_vision(
+                    group_key,
+                    image_base64=_TEST_IMAGE_B64["image/png"],
+                    description=group_key[0],
+                )
+                return await clf.get_or_classify_group(
+                    group_key,
+                    description=group_key[0],
+                    translated=group_key[0],
+                    visual_context=visual,
+                    article=group_key[1],
+                )
+            finally:
+                valid_done.set()
+
+        try:
+            with (
+                patch("app.services.smart_classifier._anthropic_key_env", return_value="test-key"),
+                patch(
+                    "app.services.smart_classifier.anthropic_messages_request",
+                    new_callable=AsyncMock,
+                    return_value={"content": [{"type": "text", "text": "валидное фото"}]},
+                ) as provider,
+                patch("app.services.smart_classifier._ask_llm", model),
+            ):
+                invalid_result, valid_result = await asyncio.gather(
+                    invalid_flow(),
+                    valid_flow(),
+                )
+
+            self.assertEqual(invalid_result.status, "MANUAL_REVIEW")
+            self.assertTrue(invalid_result.extra["manual_review_required"])
+            self.assertEqual(invalid_result.extra["image_analysis_status"], "unavailable")
+            self.assertFalse(invalid_result.results[0]["recommended"])
+            self.assertEqual(valid_result.status, "OK")
+            self.assertNotIn("image_analysis_status", valid_result.extra)
+            provider.assert_awaited_once()
+            self.assertEqual(model.await_count, 2)
+        finally:
+            valid_done.set()
+            SmartClassifier.clear_packing_caches()
+
+    async def test_same_task_failure_token_survives_later_valid_analysis(self) -> None:
+        SmartClassifier.clear_packing_caches()
+        clf = SmartClassifier()
+        group_key = ("пластиковая запасная часть", "A-8-same-task")
+        model = AsyncMock(
+            return_value={
+                "text": '{"results":[{"hs_code":"3926909709","recommended":true}]}',
+                "provider": "test",
+            }
+        )
+        try:
+            with (
+                patch("app.services.smart_classifier._anthropic_key_env", return_value="test-key"),
+                patch(
+                    "app.services.smart_classifier.anthropic_messages_request",
+                    new_callable=AsyncMock,
+                    return_value={"content": [{"type": "text", "text": "валидное фото"}]},
+                ) as provider,
+                patch("app.services.smart_classifier._ask_llm", model),
+            ):
+                failed_visual = await clf.get_or_analyze_vision(
+                    group_key,
+                    image_base64="data:image/png;base64,%%%",
+                    description=group_key[0],
+                )
+                valid_visual = await clf.get_or_analyze_vision(
+                    group_key,
+                    image_base64=_TEST_IMAGE_B64["image/png"],
+                    description=group_key[0],
+                )
+                failed_result = await clf.get_or_classify_group(
+                    group_key,
+                    description=group_key[0],
+                    translated=group_key[0],
+                    visual_context=failed_visual,
+                    article=group_key[1],
+                )
+                valid_result = await clf.get_or_classify_group(
+                    group_key,
+                    description=group_key[0],
+                    translated=group_key[0],
+                    visual_context=valid_visual,
+                    article=group_key[1],
+                )
+
+            self.assertFalse(failed_visual)
+            self.assertTrue(getattr(failed_visual, "analysis_failed", False))
+            self.assertEqual(failed_result.status, "MANUAL_REVIEW")
+            self.assertIsNone(failed_result.visual_analysis)
+            self.assertTrue(failed_result.extra["manual_review_required"])
+            self.assertEqual(failed_result.extra["image_analysis_status"], "unavailable")
+            self.assertFalse(failed_result.results[0]["recommended"])
+            self.assertEqual(valid_result.status, "OK")
+            self.assertEqual(valid_result.visual_analysis, "валидное фото")
+            self.assertNotEqual(valid_result.results[0].get("recommended"), False)
+            provider.assert_awaited_once()
+            self.assertEqual(model.await_count, 2)
+        finally:
+            SmartClassifier.clear_packing_caches()
+
+    async def test_valid_invalid_valid_sequence_recovers_fail_closed_state(self) -> None:
+        SmartClassifier.clear_packing_caches()
+        clf = SmartClassifier()
+        group_key = ("пластиковая запасная часть", "A-9")
+        model = AsyncMock(
+            return_value={
+                "text": '{"results":[{"hs_code":"3926909709","recommended":true}]}',
+                "provider": "test",
+            }
+        )
+        try:
+            with (
+                patch("app.services.smart_classifier._anthropic_key_env", return_value="test-key"),
+                patch(
+                    "app.services.smart_classifier.anthropic_messages_request",
+                    new_callable=AsyncMock,
+                    return_value={"content": [{"type": "text", "text": "валидное фото"}]},
+                ) as provider,
+                patch("app.services.smart_classifier._ask_llm", model),
+            ):
+                valid_visual = await clf.get_or_analyze_vision(
+                    group_key,
+                    image_base64=_TEST_IMAGE_B64["image/png"],
+                    description=group_key[0],
+                )
+                first_valid = await clf.get_or_classify_group(
+                    group_key,
+                    description=group_key[0],
+                    translated=group_key[0],
+                    visual_context=valid_visual,
+                    article=group_key[1],
+                )
+                invalid_visual = await clf.get_or_analyze_vision(
+                    group_key,
+                    image_base64="data:image/png;base64,%%%",
+                    description=group_key[0],
+                )
+                invalid = await clf.get_or_classify_group(
+                    group_key,
+                    description=group_key[0],
+                    translated=group_key[0],
+                    visual_context=invalid_visual,
+                    article=group_key[1],
+                )
+                recovered_visual = await clf.get_or_analyze_vision(
+                    group_key,
+                    image_base64=_TEST_IMAGE_B64["image/png"],
+                    description=group_key[0],
+                )
+                recovered = await clf.get_or_classify_group(
+                    group_key,
+                    description=group_key[0],
+                    translated=group_key[0],
+                    visual_context=recovered_visual,
+                    article=group_key[1],
+                )
+
+            self.assertEqual(first_valid.status, "OK")
+            self.assertEqual(invalid.status, "MANUAL_REVIEW")
+            self.assertFalse(invalid.results[0]["recommended"])
+            self.assertEqual(recovered.status, "OK")
+            self.assertNotIn("manual_review_required", recovered.extra)
+            self.assertNotEqual(recovered.results[0].get("recommended"), False)
+            self.assertEqual(provider.await_count, 2)
         finally:
             SmartClassifier.clear_packing_caches()
 
@@ -1216,12 +1606,18 @@ class SmartClassifierBase64SafetyTests(unittest.IsolatedAsyncioTestCase):
                 )
                 second = await clf.get_or_analyze_vision(
                     valid_key,
-                    image_base64=_TEST_IMAGE_B64["image/gif"],
+                    image_base64=f"data:image/gif;base64,{_TEST_IMAGE_B64['image/gif']}",
+                    description=valid_key[0],
+                )
+                without_image = await clf.get_or_analyze_vision(
+                    valid_key,
+                    image_base64=None,
                     description=valid_key[0],
                 )
 
             self.assertEqual(first, "vision")
             self.assertEqual(second, "vision")
+            self.assertEqual(without_image, "vision")
             provider.assert_awaited_once()
 
             with patch(

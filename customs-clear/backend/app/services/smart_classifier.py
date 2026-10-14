@@ -5,12 +5,14 @@ from __future__ import annotations
 import asyncio
 import base64
 import binascii
+import hashlib
 import ipaddress
 import json
 import re
 import socket
 import warnings
 import zlib
+from contextvars import ContextVar
 from dataclasses import dataclass, field
 from io import BytesIO
 from typing import Any
@@ -55,8 +57,13 @@ _EQUIPMENT_KEYWORDS = (
 # Кэши для пакетной обработки пакинг-листов (перевод / vision / классификация по группе).
 _translation_cache: dict[str, str] = {}
 _vision_cache: dict[tuple[str, str], str] = {}
+_vision_image_fingerprints: dict[tuple[str, str], str] = {}
 _vision_unavailable_cache: set[tuple[str, str]] = set()
-_classify_group_cache: dict[tuple[str, str], "ClassifyResult"] = {}
+_classify_group_cache: dict[tuple[tuple[str, str], str], "ClassifyResult"] = {}
+_vision_request_failures: ContextVar[dict[tuple[str, str], bool] | None] = ContextVar(
+    "smart_classifier_vision_request_failures",
+    default=None,
+)
 _cache_lock = asyncio.Lock()
 _BATCH_TRANSLATE_CHUNK = 45
 _MAX_IMAGE_BYTES = 10 * 1024 * 1024
@@ -74,6 +81,78 @@ _IMAGE_ANALYSIS_MANUAL_REVIEW_NOTE = (
     "Изображение не удалось безопасно получить или проанализировать. "
     "Результат по текстовым данным требует ручной проверки."
 )
+
+
+class _VisionAnalysis(str):
+    """String-compatible vision result carrying its validated image identity."""
+
+    image_fingerprint: str | None
+    analysis_failed: bool
+
+    def __new__(
+        cls,
+        value: str,
+        image_fingerprint: str | None,
+        *,
+        analysis_failed: bool = False,
+    ) -> "_VisionAnalysis":
+        instance = super().__new__(cls, value)
+        instance.image_fingerprint = image_fingerprint
+        instance.analysis_failed = analysis_failed
+        return instance
+
+
+_UNAVAILABLE_VISION_ANALYSIS = _VisionAnalysis(
+    "",
+    None,
+    analysis_failed=True,
+)
+
+
+def _group_classification_fingerprint(
+    group_key: tuple[str, str],
+    *,
+    description: str,
+    translated: str,
+    visual_context: str | None,
+    article: str,
+    image_analysis_failed: bool,
+) -> str:
+    """Identify every input that can change a cached group classification."""
+    payload = json.dumps(
+        {
+            "group_key": group_key,
+            "description": description,
+            "translated": translated,
+            "visual_context": visual_context,
+            "image_fingerprint": getattr(visual_context, "image_fingerprint", None),
+            "article": article,
+            "image_analysis_failed": image_analysis_failed,
+        },
+        ensure_ascii=False,
+        sort_keys=True,
+        separators=(",", ":"),
+    )
+    return hashlib.sha256(payload.encode("utf-8")).hexdigest()
+
+
+def _set_request_image_analysis_failed(
+    group_key: tuple[str, str],
+    failed: bool,
+) -> None:
+    # Context variables are copied into child tasks.  Copy the mapping before
+    # every write so sibling tasks never mutate the same inherited object.
+    states = dict(_vision_request_failures.get() or {})
+    states[group_key] = failed
+    _vision_request_failures.set(states)
+
+
+def _get_request_image_analysis_failed(group_key: tuple[str, str]) -> bool | None:
+    states = _vision_request_failures.get()
+    if states is None or group_key not in states:
+        return None
+    return states[group_key]
+
 
 _CLASSIFY_WITH_CONTEXT_PROMPT = """Ты эксперт по классификации товаров по ТН ВЭД ЕАЭС.
 
@@ -366,39 +445,60 @@ class SmartClassifier:
         image_base64: str | None,
         description: str,
     ) -> str | None:
+        image_fingerprint: str | None = None
         if image_base64 is not None:
             try:
-                _normalize_image_base64(image_base64)
+                normalized_image, media_type = _normalize_image_base64(image_base64)
             except ValueError as exc:
                 logger.warning(f"Vision input validation failed: {exc}")
+                _set_request_image_analysis_failed(group_key, True)
                 _vision_unavailable_cache.add(group_key)
                 _vision_cache.pop(group_key, None)
-                _classify_group_cache.pop(group_key, None)
-                return None
+                _vision_image_fingerprints.pop(group_key, None)
+                return _UNAVAILABLE_VISION_ANALYSIS
+            digest = hashlib.sha256()
+            digest.update(media_type.encode("ascii"))
+            digest.update(b"\0")
+            digest.update(normalized_image.encode("ascii"))
+            image_fingerprint = digest.hexdigest()
 
         if group_key in _vision_cache:
-            if group_key in _vision_unavailable_cache:
-                _vision_unavailable_cache.discard(group_key)
-                _classify_group_cache.pop(group_key, None)
-            return _vision_cache[group_key]
+            cached_fingerprint = _vision_image_fingerprints.get(group_key)
+            if image_fingerprint is None or image_fingerprint == cached_fingerprint:
+                _set_request_image_analysis_failed(group_key, False)
+                if group_key in _vision_unavailable_cache:
+                    _vision_unavailable_cache.discard(group_key)
+                return _vision_cache[group_key]
+
+            # A group key describes the product, not the image.  A later row
+            # may carry different valid evidence for that same product; never
+            # reuse either its old visual analysis or derived classification.
+            _vision_cache.pop(group_key, None)
+            _vision_image_fingerprints.pop(group_key, None)
         if image_base64 is None:
+            _set_request_image_analysis_failed(group_key, False)
             return None
         try:
             visual = await self._analyze_image(image_base64, None, description)
         except Exception as exc:
             logger.warning(f"Vision analysis failed: {exc}")
+            _set_request_image_analysis_failed(group_key, True)
             _vision_unavailable_cache.add(group_key)
             _vision_cache.pop(group_key, None)
-            _classify_group_cache.pop(group_key, None)
-            return None
+            _vision_image_fingerprints.pop(group_key, None)
+            return _UNAVAILABLE_VISION_ANALYSIS
         if not visual.strip():
+            _set_request_image_analysis_failed(group_key, True)
             _vision_unavailable_cache.add(group_key)
             _vision_cache.pop(group_key, None)
-            _classify_group_cache.pop(group_key, None)
-            return None
+            _vision_image_fingerprints.pop(group_key, None)
+            return _UNAVAILABLE_VISION_ANALYSIS
         if group_key in _vision_unavailable_cache:
             _vision_unavailable_cache.discard(group_key)
-            _classify_group_cache.pop(group_key, None)
+        _set_request_image_analysis_failed(group_key, False)
+        if image_fingerprint is not None:
+            visual = _VisionAnalysis(visual, image_fingerprint)
+            _vision_image_fingerprints[group_key] = image_fingerprint
         _vision_cache[group_key] = visual
         return visual
 
@@ -411,9 +511,28 @@ class SmartClassifier:
         visual_context: str | None,
         article: str | None,
     ) -> ClassifyResult:
-        image_analysis_failed = group_key in _vision_unavailable_cache
-        if group_key in _classify_group_cache:
-            cached = _classify_group_cache[group_key]
+        analysis_token_failure = getattr(visual_context, "analysis_failed", None)
+        if analysis_token_failure is not None:
+            image_analysis_failed = analysis_token_failure
+        else:
+            request_failure = _get_request_image_analysis_failed(group_key)
+            image_analysis_failed = (
+                group_key in _vision_unavailable_cache
+                if request_failure is None
+                else request_failure
+            )
+        article_s = (article or "").strip()
+        classification_fingerprint = _group_classification_fingerprint(
+            group_key,
+            description=description,
+            translated=translated,
+            visual_context=visual_context,
+            article=article_s,
+            image_analysis_failed=image_analysis_failed,
+        )
+        cache_key = (group_key, classification_fingerprint)
+        if cache_key in _classify_group_cache:
+            cached = _classify_group_cache[cache_key]
             result = ClassifyResult(
                 results=list(cached.results),
                 translation_used=translated,
@@ -431,7 +550,6 @@ class SmartClassifier:
                 failed=image_analysis_failed,
             )
 
-        article_s = (article or "").strip()
         web_context: str | None = None
         web_used = False
         web_search_needed = self._needs_web_search(translated, visual_context, article_s, "")
@@ -462,7 +580,7 @@ class SmartClassifier:
             result = ClassifyResult(
                 results=[],
                 translation_used=translated,
-                visual_analysis=visual_context,
+                visual_analysis=visual_context or None,
                 web_search_used=web_used,
                 web_context=web_context,
                 status="ERROR",
@@ -477,15 +595,17 @@ class SmartClassifier:
                 failed=image_analysis_failed,
             )
 
-        _classify_group_cache[group_key] = result
+        _classify_group_cache[cache_key] = result
         return result
 
     @staticmethod
     def clear_packing_caches() -> None:
         _translation_cache.clear()
         _vision_cache.clear()
+        _vision_image_fingerprints.clear()
         _vision_unavailable_cache.clear()
         _classify_group_cache.clear()
+        _vision_request_failures.set(None)
 
     async def _analyze_image(
         self,
@@ -700,7 +820,7 @@ class SmartClassifier:
         return ClassifyResult(
             results=results,
             translation_used=description,
-            visual_analysis=visual_context,
+            visual_analysis=visual_context or None,
             web_search_used=web_search_used,
             web_context=web_context,
             provider=llm_resp.get("provider"),
