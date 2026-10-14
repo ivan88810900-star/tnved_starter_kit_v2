@@ -61,11 +61,18 @@ _vision_cache: dict[tuple[str, str], str] = {}
 _vision_image_fingerprints: dict[tuple[str, str], str] = {}
 _vision_unavailable_cache: set[tuple[str, str]] = set()
 _classify_group_cache: dict[tuple[tuple[str, str], str], "ClassifyResult"] = {}
+_classify_group_inflight: dict[
+    tuple[
+        asyncio.AbstractEventLoop,
+        tuple[tuple[str, str], str],
+    ],
+    asyncio.Task["ClassifyResult"],
+] = {}
+_packing_cache_generation = 0
 _vision_request_failures: ContextVar[dict[tuple[str, str], bool] | None] = ContextVar(
     "smart_classifier_vision_request_failures",
     default=None,
 )
-_cache_lock = asyncio.Lock()
 _BATCH_TRANSLATE_CHUNK = 45
 _MAX_IMAGE_BYTES = 10 * 1024 * 1024
 _MAX_IMAGE_FRAMES = 1000
@@ -553,19 +560,84 @@ class SmartClassifier:
         cache_key = (group_key, classification_fingerprint)
         if cache_key in _classify_group_cache:
             cached = _classify_group_cache[cache_key]
-            result = _clone_classify_result(cached)
-            result.translation_used = translated
-            result.visual_analysis = visual_context or cached.visual_analysis
-            return self._with_image_analysis_status(
-                result,
-                failed=image_analysis_failed,
+            return self._group_result_snapshot(
+                cached,
+                translated=translated,
+                visual_context=visual_context,
+                image_analysis_failed=image_analysis_failed,
             )
 
+        loop = asyncio.get_running_loop()
+        inflight_key = (loop, cache_key)
+        task = _classify_group_inflight.get(inflight_key)
+        if task is not None and task.done():
+            # A done callback runs on the next loop turn.  Do not let that
+            # scheduling detail retain a transient ERROR/exception for an
+            # immediate sequential retry.
+            if _classify_group_inflight.get(inflight_key) is task:
+                _classify_group_inflight.pop(inflight_key, None)
+            cached = _classify_group_cache.get(cache_key)
+            if cached is not None:
+                return self._group_result_snapshot(
+                    cached,
+                    translated=translated,
+                    visual_context=visual_context,
+                    image_analysis_failed=image_analysis_failed,
+                )
+            task = None
+
+        if task is None:
+            cache_generation = _packing_cache_generation
+            task = loop.create_task(
+                self._classify_group_uncached(
+                    cache_key=cache_key,
+                    cache_generation=cache_generation,
+                    translated=translated,
+                    visual_context=visual_context,
+                    article=article_s,
+                    image_analysis_failed=image_analysis_failed,
+                )
+            )
+            _classify_group_inflight[inflight_key] = task
+
+            def remove_completed(
+                completed: asyncio.Task[ClassifyResult],
+                *,
+                key: tuple[
+                    asyncio.AbstractEventLoop,
+                    tuple[tuple[str, str], str],
+                ] = inflight_key,
+            ) -> None:
+                if _classify_group_inflight.get(key) is completed:
+                    _classify_group_inflight.pop(key, None)
+
+            task.add_done_callback(remove_completed)
+
+        # Shield the shared producer from cancellation by any one row/caller.
+        # Every waiter receives its own deep snapshot below.
+        result = await asyncio.shield(task)
+        return self._group_result_snapshot(
+            result,
+            translated=translated,
+            visual_context=visual_context,
+            image_analysis_failed=image_analysis_failed,
+        )
+
+    async def _classify_group_uncached(
+        self,
+        *,
+        cache_key: tuple[tuple[str, str], str],
+        cache_generation: int,
+        translated: str,
+        visual_context: str | None,
+        article: str,
+        image_analysis_failed: bool,
+    ) -> ClassifyResult:
         web_context: str | None = None
         web_used = False
-        web_search_needed = self._needs_web_search(translated, visual_context, article_s, "")
+        web_search_needed = self._needs_web_search(translated, visual_context, article, "")
         if web_search_needed:
-            web_context = await self._search_web(translated, article_s, None)
+            web_context = await self._search_web(translated, article, None)
             web_used = bool(web_context)
 
         try:
@@ -573,7 +645,7 @@ class SmartClassifier:
                 description=translated,
                 visual_context=visual_context,
                 web_context=web_context,
-                article=article_s,
+                article=article,
                 manufacturer="",
                 web_search_used=web_used,
             )
@@ -609,20 +681,44 @@ class SmartClassifier:
         # Provider/network failures are transient.  Returning the fail-closed
         # ERROR is correct for this request, but caching it would prevent an
         # identical later request from retrying after the provider recovers.
-        if result.status != "ERROR":
+        if result.status != "ERROR" and cache_generation == _packing_cache_generation:
             # The caller owns the object returned below.  Keep a private deep
             # snapshot so later mutations cannot poison subsequent rows, and
             # clone that snapshot again for every cache hit above.
             _classify_group_cache[cache_key] = _clone_classify_result(result)
         return result
 
+    @classmethod
+    def _group_result_snapshot(
+        cls,
+        source: ClassifyResult,
+        *,
+        translated: str,
+        visual_context: str | None,
+        image_analysis_failed: bool,
+    ) -> ClassifyResult:
+        result = _clone_classify_result(source)
+        result.translation_used = translated
+        result.visual_analysis = visual_context or source.visual_analysis
+        return cls._with_image_analysis_status(
+            result,
+            failed=image_analysis_failed,
+        )
+
     @staticmethod
     def clear_packing_caches() -> None:
+        global _packing_cache_generation
+
+        _packing_cache_generation += 1
         _translation_cache.clear()
         _vision_cache.clear()
         _vision_image_fingerprints.clear()
         _vision_unavailable_cache.clear()
         _classify_group_cache.clear()
+        # Do not cancel tasks owned by another running loop.  Clearing the
+        # registry detaches them, while the generation fence above prevents a
+        # late completion from repopulating the freshly cleared cache.
+        _classify_group_inflight.clear()
         _vision_request_failures.set(None)
 
     async def _analyze_image(

@@ -345,6 +345,181 @@ class SmartClassifierClassifyTests(unittest.IsolatedAsyncioTestCase):
         finally:
             SmartClassifier.clear_packing_caches()
 
+    async def test_concurrent_group_cache_miss_uses_single_independent_snapshot(self) -> None:
+        SmartClassifier.clear_packing_caches()
+        clf = SmartClassifier()
+        group_key = ("пластиковая запасная часть 20 мм", "SINGLEFLIGHT-1")
+        started = asyncio.Event()
+        release = asyncio.Event()
+        provider_result = ClassifyResult(
+            results=[
+                {
+                    "hs_code": "3926909709",
+                    "rationale": {"steps": ["исходное обоснование"]},
+                }
+            ],
+            web_context={"sources": [{"url": "https://example.test/original"}]},
+            extra={"nested": {"labels": ["original"]}},
+        )
+
+        async def classify_once(**_kwargs: object) -> ClassifyResult:
+            started.set()
+            await release.wait()
+            return provider_result
+
+        classify = AsyncMock(side_effect=classify_once)
+
+        async def classify_group() -> ClassifyResult:
+            return await clf.get_or_classify_group(
+                group_key,
+                description=group_key[0],
+                translated=group_key[0],
+                visual_context=None,
+                article=group_key[1],
+            )
+
+        try:
+            with patch.object(clf, "_classify_with_context", classify):
+                calls = [asyncio.create_task(classify_group()) for _ in range(3)]
+                await asyncio.wait_for(started.wait(), timeout=1)
+                await asyncio.sleep(0)
+                self.assertEqual(classify.await_count, 1)
+                release.set()
+                first, second, third = await asyncio.gather(*calls)
+
+                first.results[0]["hs_code"] = "0000000000"
+                first.results[0]["rationale"]["steps"].append("caller mutation")
+                first.extra["nested"]["labels"].append("caller mutation")
+                first.web_context["sources"].append(
+                    {"url": "https://example.test/mutated"}
+                )
+                cached = await classify_group()
+
+            self.assertEqual(classify.await_count, 1)
+            for result in (second, third, cached):
+                self.assertEqual(result.results[0]["hs_code"], "3926909709")
+                self.assertEqual(
+                    result.results[0]["rationale"]["steps"],
+                    ["исходное обоснование"],
+                )
+                self.assertEqual(result.extra["nested"]["labels"], ["original"])
+                self.assertEqual(
+                    result.web_context["sources"],
+                    [{"url": "https://example.test/original"}],
+                )
+            self.assertIsNot(first, second)
+            self.assertIsNot(second, third)
+            self.assertIsNot(second.results, third.results)
+            self.assertIsNot(second.extra, third.extra)
+            self.assertIsNot(second.web_context, third.web_context)
+        finally:
+            release.set()
+            SmartClassifier.clear_packing_caches()
+
+    async def test_concurrent_group_error_is_fail_closed_and_later_request_retries(self) -> None:
+        SmartClassifier.clear_packing_caches()
+        clf = SmartClassifier()
+        group_key = ("пластиковая запасная часть 20 мм", "SINGLEFLIGHT-2")
+        first_started = asyncio.Event()
+        release_first = asyncio.Event()
+        provider_calls = 0
+
+        async def provider(_system: str, _prompt: str) -> dict[str, str]:
+            nonlocal provider_calls
+            provider_calls += 1
+            if provider_calls == 1:
+                first_started.set()
+                await release_first.wait()
+                raise RuntimeError("temporary provider outage")
+            return {
+                "text": '{"results":[{"hs_code":"3926909709","recommended":true}]}',
+                "provider": "test",
+            }
+
+        async def classify_group() -> ClassifyResult:
+            return await clf.get_or_classify_group(
+                group_key,
+                description=group_key[0],
+                translated=group_key[0],
+                visual_context=None,
+                article=group_key[1],
+            )
+
+        try:
+            with patch("app.services.smart_classifier._ask_llm", AsyncMock(side_effect=provider)):
+                first = asyncio.create_task(classify_group())
+                await asyncio.wait_for(first_started.wait(), timeout=1)
+                second = asyncio.create_task(classify_group())
+                await asyncio.sleep(0)
+                self.assertEqual(provider_calls, 1)
+                release_first.set()
+                failed_first, failed_second = await asyncio.gather(first, second)
+
+                self.assertEqual(provider_calls, 1)
+                for failed in (failed_first, failed_second):
+                    self.assertEqual(failed.status, "ERROR")
+                    self.assertEqual(failed.extra["error_code"], "llm_unavailable")
+                    self.assertEqual(failed.results, [])
+
+                recovered = await classify_group()
+                cached = await classify_group()
+
+            self.assertEqual(provider_calls, 2)
+            self.assertEqual(recovered.status, "OK")
+            self.assertEqual(recovered.results[0]["hs_code"], "3926909709")
+            self.assertEqual(cached.status, "OK")
+            self.assertEqual(cached.results, recovered.results)
+            self.assertIsNot(cached.results, recovered.results)
+        finally:
+            release_first.set()
+            SmartClassifier.clear_packing_caches()
+
+    async def test_cancelled_group_waiter_does_not_cancel_shared_classification(self) -> None:
+        SmartClassifier.clear_packing_caches()
+        clf = SmartClassifier()
+        group_key = ("пластиковая запасная часть 20 мм", "SINGLEFLIGHT-3")
+        started = asyncio.Event()
+        release = asyncio.Event()
+
+        async def classify_once(**_kwargs: object) -> ClassifyResult:
+            started.set()
+            await release.wait()
+            return ClassifyResult(results=[{"hs_code": "3926909709"}])
+
+        classify = AsyncMock(side_effect=classify_once)
+
+        async def classify_group() -> ClassifyResult:
+            return await clf.get_or_classify_group(
+                group_key,
+                description=group_key[0],
+                translated=group_key[0],
+                visual_context=None,
+                article=group_key[1],
+            )
+
+        try:
+            with patch.object(clf, "_classify_with_context", classify):
+                cancelled_waiter = asyncio.create_task(classify_group())
+                await asyncio.wait_for(started.wait(), timeout=1)
+                surviving_waiter = asyncio.create_task(classify_group())
+                await asyncio.sleep(0)
+                cancelled_waiter.cancel()
+                with self.assertRaises(asyncio.CancelledError):
+                    await cancelled_waiter
+                self.assertEqual(classify.await_count, 1)
+
+                release.set()
+                result = await surviving_waiter
+                cached = await classify_group()
+
+            self.assertEqual(result.results[0]["hs_code"], "3926909709")
+            self.assertEqual(cached.results[0]["hs_code"], "3926909709")
+            self.assertIsNot(result, cached)
+            self.assertEqual(classify.await_count, 1)
+        finally:
+            release.set()
+            SmartClassifier.clear_packing_caches()
+
 
 class SmartClassifierWebSearchTests(unittest.IsolatedAsyncioTestCase):
     async def test_empty_web_search_does_not_call_text_completion_fallback(self) -> None:
