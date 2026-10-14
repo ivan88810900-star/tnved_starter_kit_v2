@@ -1,0 +1,61 @@
+{
+  "schema_version": 1,
+  "cycle": 257,
+  "started_at": "2026-10-14T20:47:25Z",
+  "completed_at": "2026-10-14T20:57:14Z",
+  "executor": "/root/scheduled-cycle257-20261014T204725Z",
+  "lease": {
+    "generation": 257,
+    "token": "2e838278ba274d3cada5d209560d9593",
+    "acquisition_commit": "882b8d21ec1757db958ca7142ebe907fc4878d49"
+  },
+  "candidate": {
+    "pr": 256,
+    "branch": "agent/product-ntm-regressions-v1",
+    "parent_sha": "162cd8c03d0365fbc57b3172201fb3981b40c89a",
+    "head_sha": "3e54a6abe467138071e775b6820f58a381e06060",
+    "tree_sha": "1e32538978ac23faa5df700db227ffb07269bb02",
+    "local_author_commit": "8d1dcc85ccfa1c1f9878a0d624dfd54e30c36359",
+    "block": "smart_classifier_translation_batch_singleflight",
+    "files": [
+      "customs-clear/backend/app/services/smart_classifier.py",
+      "customs-clear/backend/tests/test_smart_classifier.py"
+    ]
+  },
+  "reproduction": {
+    "status": "REPRODUCED_ON_EXACT_PARENT",
+    "result": "Two simultaneous identical cold translation batches made two provider calls; equivalent 90-row sets in reverse order produced four calls because chunk boundaries depended on row order."
+  },
+  "verification": {
+    "a0": {
+      "command": "PYTHONPATH=/workspace/scratch/bb84ae3e224a/author257/customs-clear/backend /workspace/scratch/bb84ae3e224a/analysis251/customs-clear/backend/.venv/bin/python -m pytest -q customs-clear/backend/tests/test_smart_classifier.py customs-clear/backend/tests/test_classify_api_security.py customs-clear/backend/tests/test_custom_classifier_chain.py customs-clear/backend/tests/test_upload_packing_list_api.py customs-clear/backend/tests/test_safe_http_errors.py",
+      "exit_code": 0,
+      "result": "86 passed plus 71 subtests"
+    },
+    "a5": {
+      "session": "/root/a5_cycle257",
+      "status": "PASS_EXACT_TREE_NO_FINDINGS",
+      "adjacent_result": "86 passed plus 71 subtests, exit 0",
+      "adversarial_result": "45 assertions passed after A5 rejected two intermediate candidates: canonical 46/90/91/136-row chunking, distinct sets/loops, cancellation shielding, failure retry, stable cache, pre-loop clear and clear during first awaited fallback."
+    },
+    "ci": {
+      "workflow": "Tariff agent safety",
+      "job": "offline-safety",
+      "run_id": 38636236869,
+      "job_id": 116100003588,
+      "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38636236869/job/116100003588",
+      "conclusion": "success"
+    },
+    "github_receipt": {
+      "pr": 256,
+      "comment_id": 6178312499
+    }
+  },
+  "limits": {
+    "full_pr245_acceptance": "NOT_PASS",
+    "legal_source_completeness": "NOT_PASS",
+    "lawful_populated_synchronized_ntm_snapshot": "UNAVAILABLE",
+    "a6": "core-s1-6415f443120f-r9-g106 unchanged and not sent",
+    "protected_actions_performed": false
+  }
+}
