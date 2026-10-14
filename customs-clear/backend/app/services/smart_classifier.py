@@ -61,6 +61,10 @@ _translation_inflight: dict[
     tuple[asyncio.AbstractEventLoop, str],
     asyncio.Task[str],
 ] = {}
+_translation_batch_inflight: dict[
+    tuple[asyncio.AbstractEventLoop, tuple[str, ...]],
+    asyncio.Task[None],
+] = {}
 _vision_cache: dict[tuple[str, str], str] = {}
 _vision_image_fingerprints: dict[tuple[str, str], str] = {}
 _vision_unavailable_cache: set[tuple[str, str]] = set()
@@ -482,6 +486,9 @@ class SmartClassifier:
             if t not in pending:
                 pending.append(t)
 
+        # Canonical order keeps chunk boundaries stable when concurrent
+        # uploads contain the same logical set in a different row order.
+        pending.sort()
         for i in range(0, len(pending), _BATCH_TRANSLATE_CHUNK):
             chunk = pending[i : i + _BATCH_TRANSLATE_CHUNK]
             await self._translate_batch_chunk(chunk)
@@ -495,6 +502,42 @@ class SmartClassifier:
             t = texts[0]
             await self._translate_if_needed(t)
             return
+
+        # Two packing uploads can prepare the same cold batch concurrently.
+        # Share one provider request for the same set of source strings while
+        # keeping distinct batches independent.  prepare_translations uses a
+        # canonical order so chunk boundaries are stable above the chunk cap.
+        loop = asyncio.get_running_loop()
+        inflight_key = (loop, tuple(sorted(texts)))
+        task = _translation_batch_inflight.get(inflight_key)
+        if task is not None and task.done():
+            if _translation_batch_inflight.get(inflight_key) is task:
+                _translation_batch_inflight.pop(inflight_key, None)
+            task = None
+
+        if task is None:
+            task = loop.create_task(self._translate_batch_chunk_uncached(texts))
+            _translation_batch_inflight[inflight_key] = task
+
+            def remove_completed(
+                completed: asyncio.Task[None],
+                *,
+                registry_key: tuple[
+                    asyncio.AbstractEventLoop,
+                    tuple[str, ...],
+                ] = inflight_key,
+            ) -> None:
+                if _translation_batch_inflight.get(registry_key) is completed:
+                    _translation_batch_inflight.pop(registry_key, None)
+
+            task.add_done_callback(remove_completed)
+
+        # Cancelling one upload must not cancel the translation shared by
+        # another concurrent upload.
+        await asyncio.shield(task)
+
+    async def _translate_batch_chunk_uncached(self, texts: list[str]) -> None:
+        """Populate translations for one provider batch without dedup setup."""
 
         cache_generation = _packing_cache_generation
         requested = set(texts)
@@ -528,7 +571,18 @@ class SmartClassifier:
         except Exception as exc:
             logger.warning(f"Batch translation parse failed: {exc}")
 
+        # A cache clear detaches this old batch.  Do not let its fallback path
+        # start fresh-generation single-item tasks and repopulate the new cache.
+        if cache_generation != _packing_cache_generation:
+            return
+
         for t in texts:
+            # clear_packing_caches can run while an earlier single-item
+            # fallback is awaiting the provider.  Recheck before every later
+            # fallback so the detached old batch cannot start work in the new
+            # generation.
+            if cache_generation != _packing_cache_generation:
+                return
             if t not in _translation_cache:
                 await self._translate_if_needed(t)
 
@@ -781,6 +835,7 @@ class SmartClassifier:
         # Do not cancel tasks owned by another running loop.  The generation
         # fence prevents their late completion from repopulating this cache.
         _translation_inflight.clear()
+        _translation_batch_inflight.clear()
         _vision_cache.clear()
         _vision_image_fingerprints.clear()
         _vision_unavailable_cache.clear()

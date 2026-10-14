@@ -283,6 +283,206 @@ class SmartClassifierTranslateTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(cached, fresh)
         self.assertEqual(mock_ct.await_count, 2)
 
+    async def test_concurrent_identical_batches_use_one_provider_call(self) -> None:
+        clf = SmartClassifier()
+        first_text = "Industrial pump model X100"
+        second_text = "Control valve model Y200"
+        started = asyncio.Event()
+        release = asyncio.Event()
+        response = json.dumps(
+            {
+                "translations": {
+                    first_text: "Промышленный насос X100",
+                    second_text: "Регулирующий клапан Y200",
+                }
+            },
+            ensure_ascii=False,
+        )
+
+        async def translate(*_args: object, **_kwargs: object) -> str:
+            started.set()
+            await release.wait()
+            return response
+
+        with patch(
+            "app.services.smart_classifier.complete_text",
+            new_callable=AsyncMock,
+            side_effect=translate,
+        ) as mock_ct:
+            first = asyncio.create_task(
+                clf.prepare_translations([first_text, second_text])
+            )
+            await asyncio.wait_for(started.wait(), timeout=1)
+            second = asyncio.create_task(
+                clf.prepare_translations([second_text, first_text])
+            )
+            await asyncio.sleep(0)
+            release.set()
+            first_result, second_result = await asyncio.gather(first, second)
+
+        self.assertEqual(first_result[first_text], "Промышленный насос X100")
+        self.assertEqual(second_result, first_result)
+        self.assertEqual(mock_ct.await_count, 1)
+
+    async def test_reordered_multi_chunk_batches_share_each_provider_call(self) -> None:
+        clf = SmartClassifier()
+        texts = [f"Industrial component model X{index:03d}" for index in range(90)]
+        release = asyncio.Event()
+        first_started = asyncio.Event()
+
+        async def translate(prompt: str, **_kwargs: object) -> str:
+            first_started.set()
+            await release.wait()
+            requested = [
+                line[2:]
+                for line in prompt.split("Товары:\n", 1)[1].splitlines()
+                if line.startswith("- ")
+            ]
+            return json.dumps(
+                {"translations": {text: f"Перевод {text}" for text in requested}},
+                ensure_ascii=False,
+            )
+
+        with patch(
+            "app.services.smart_classifier.complete_text",
+            new_callable=AsyncMock,
+            side_effect=translate,
+        ) as mock_ct:
+            first = asyncio.create_task(clf.prepare_translations(texts))
+            await asyncio.wait_for(first_started.wait(), timeout=1)
+            second = asyncio.create_task(clf.prepare_translations(list(reversed(texts))))
+            await asyncio.sleep(0)
+            release.set()
+            first_result, second_result = await asyncio.gather(first, second)
+
+        self.assertEqual(first_result, second_result)
+        self.assertEqual(len(first_result), 90)
+        self.assertEqual(mock_ct.await_count, 2)
+
+    async def test_cancelled_batch_waiter_does_not_cancel_shared_provider(self) -> None:
+        clf = SmartClassifier()
+        texts = ["Industrial pump model X100", "Control valve model Y200"]
+        started = asyncio.Event()
+        release = asyncio.Event()
+        response = json.dumps(
+            {"translations": {texts[0]: "Насос X100", texts[1]: "Клапан Y200"}},
+            ensure_ascii=False,
+        )
+
+        async def translate(*_args: object, **_kwargs: object) -> str:
+            started.set()
+            await release.wait()
+            return response
+
+        with patch(
+            "app.services.smart_classifier.complete_text",
+            new_callable=AsyncMock,
+            side_effect=translate,
+        ) as mock_ct:
+            cancelled = asyncio.create_task(clf.prepare_translations(texts))
+            await asyncio.wait_for(started.wait(), timeout=1)
+            surviving = asyncio.create_task(
+                clf.prepare_translations(list(reversed(texts)))
+            )
+            await asyncio.sleep(0)
+            cancelled.cancel()
+            with self.assertRaises(asyncio.CancelledError):
+                await cancelled
+            release.set()
+            result = await surviving
+
+        self.assertEqual(result[texts[0]], "Насос X100")
+        self.assertEqual(result[texts[1]], "Клапан Y200")
+        self.assertEqual(mock_ct.await_count, 1)
+
+    async def test_clear_fences_late_batch_and_its_fallbacks(self) -> None:
+        clf = SmartClassifier()
+        texts = ["Industrial pump model X100", "Control valve model Y200"]
+        started = asyncio.Event()
+        release = asyncio.Event()
+        calls = 0
+
+        async def translate(*_args: object, **_kwargs: object) -> str:
+            nonlocal calls
+            calls += 1
+            if calls == 1:
+                started.set()
+                await release.wait()
+                return "not valid batch json"
+            return json.dumps(
+                {
+                    "translations": {
+                        texts[0]: "Насос X100",
+                        texts[1]: "Клапан Y200",
+                    }
+                },
+                ensure_ascii=False,
+            )
+
+        with patch(
+            "app.services.smart_classifier.complete_text",
+            new_callable=AsyncMock,
+            side_effect=translate,
+        ) as mock_ct:
+            old_request = asyncio.create_task(clf.prepare_translations(texts))
+            await asyncio.wait_for(started.wait(), timeout=1)
+            SmartClassifier.clear_packing_caches()
+            release.set()
+            old_result = await old_request
+            fresh_result = await clf.prepare_translations(texts)
+
+        self.assertNotIn(texts[0], old_result)
+        self.assertNotIn(texts[1], old_result)
+        self.assertEqual(fresh_result[texts[0]], "Насос X100")
+        self.assertEqual(fresh_result[texts[1]], "Клапан Y200")
+        self.assertEqual(mock_ct.await_count, 2)
+
+    async def test_clear_during_first_batch_fallback_stops_later_fallbacks(self) -> None:
+        clf = SmartClassifier()
+        texts = ["Industrial pump model X100", "Control valve model Y200"]
+        fallback_started = asyncio.Event()
+        release_fallback = asyncio.Event()
+        calls = 0
+
+        async def translate(*_args: object, **_kwargs: object) -> str:
+            nonlocal calls
+            calls += 1
+            if calls == 1:
+                return "not valid batch json"
+            if calls == 2:
+                fallback_started.set()
+                await release_fallback.wait()
+                return "Устаревший одиночный перевод"
+            return json.dumps(
+                {
+                    "translations": {
+                        texts[0]: "Насос X100",
+                        texts[1]: "Клапан Y200",
+                    }
+                },
+                ensure_ascii=False,
+            )
+
+        with patch(
+            "app.services.smart_classifier.complete_text",
+            new_callable=AsyncMock,
+            side_effect=translate,
+        ) as mock_ct:
+            old_request = asyncio.create_task(clf.prepare_translations(texts))
+            await asyncio.wait_for(fallback_started.wait(), timeout=1)
+            SmartClassifier.clear_packing_caches()
+            release_fallback.set()
+            old_result = await old_request
+            calls_after_old_request = mock_ct.await_count
+            fresh_result = await clf.prepare_translations(texts)
+
+        self.assertNotIn(texts[0], old_result)
+        self.assertNotIn(texts[1], old_result)
+        self.assertEqual(calls_after_old_request, 2)
+        self.assertEqual(fresh_result[texts[0]], "Насос X100")
+        self.assertEqual(fresh_result[texts[1]], "Клапан Y200")
+        self.assertEqual(mock_ct.await_count, 3)
+
 
 class SmartClassifierClassifyTests(unittest.IsolatedAsyncioTestCase):
     async def test_classify_returns_parsed_results(self) -> None:
