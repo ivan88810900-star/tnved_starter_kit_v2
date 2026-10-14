@@ -1,0 +1,70 @@
+{
+  "schema_version": 1,
+  "cycle": 246,
+  "checked_at": "2026-10-14T10:56:15Z",
+  "lease_generation": 246,
+  "repository": "ivan88810900-star/tnved_starter_kit_v2",
+  "pr": 259,
+  "branch": "agent/backend-broad-regressions-v1",
+  "parent_sha": "146c7efe9c8a7832da9a60e6d834d05fff35a54a",
+  "published_head_sha": "8b1f5be35756a5eac7e2bc953727b7d8b16e5e8f",
+  "tree_sha": "3603d4f521068effd448744962a3ebda8dd86c26",
+  "changed_files": [
+    "customs-clear/backend/tests/test_regulatory_mass_seed.py"
+  ],
+  "provenance": {
+    "implementation_cycle": 245,
+    "implementation_status_then": "IMPLEMENTED_PENDING_EXECUTABLE_QA",
+    "completion_cycle": 246,
+    "completion_reason": "Native executable author validation and fresh independent A5 became available on the unchanged exact candidate."
+  },
+  "fix": "Skip before SQLAlchemy inspection only when the configured file-backed SQLite database is absent, preventing creation of an ambient empty database while preserving validation of existing empty, partial and populated datasets.",
+  "author": {
+    "session": "/root/author246",
+    "status": "PASS_UNCHANGED_EXACT_HEAD",
+    "commands": [
+      "python -m pytest -q tests/test_regulatory_mass_seed.py",
+      "python -m pytest -q tests/test_ntm_v2_rules_enforcement.py tests/test_regulatory_mass_seed.py",
+      "DATABASE_URL controls for nonexistent absolute/relative, existing empty and partial SQLite datasets",
+      "git diff --check 146c7efe9c8a7832da9a60e6d834d05fff35a54a..8b1f5be35756a5eac7e2bc953727b7d8b16e5e8f"
+    ],
+    "results": [
+      "9 skipped, exit 0; no ambient DB/WAL/SHM",
+      "14 passed and 9 skipped, exit 0; no ambient DB/WAL/SHM",
+      "nonexistent files not created; empty database skipped; partial schema produced expected 7 failed and 2 passed, exit 1",
+      "exit 0"
+    ]
+  },
+  "a5": {
+    "session": "/root/a5_246",
+    "status": "PASS_EXACT_TREE_NO_FINDINGS",
+    "commit_sha": "8b1f5be35756a5eac7e2bc953727b7d8b16e5e8f",
+    "tree_sha": "3603d4f521068effd448744962a3ebda8dd86c26",
+    "results": "One-file scope and diff check passed; absent absolute/relative SQLite was not created; existing empty SQLite skipped; partial schema executed the original coverage assertions and failed 7 of 9 as expected; no test weakening found."
+  },
+  "broad_probe": {
+    "command": "PYTHONPATH=/workspace/scratch/bb84ae3e224a /workspace/scratch/bb84ae3e224a/author242/customs-clear/backend/.venv/bin/python -m pytest -q -p ambient_guard_author246 tests --ignore=tests/test_ntm_full_sync.py --deselect=tests/test_data_refresh.py::TestGitHubWorkflow",
+    "exit_code": 1,
+    "progress": "advanced to 88%",
+    "next_writer": "tests/test_source_import.py::SourceImportTests::test_import_xlsx_with_headers",
+    "artifact_handling": "customs.db, WAL and SHM moved recoverably to /tmp/tariff-cycle246/broad"
+  },
+  "ci": {
+    "workflow": "Tariff agent safety",
+    "run_id": 38549024897,
+    "job_id": 115802136715,
+    "job": "offline-safety",
+    "conclusion": "success",
+    "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38549024897/job/115802136715"
+  },
+  "limits": {
+    "product_behavior_changed": false,
+    "normative_data_changed": false,
+    "full_pr245_acceptance": "NOT_PASS",
+    "lawful_populated_synchronized_ntm_snapshot": "UNAVAILABLE",
+    "a6_request": "core-s1-6415f443120f-r9-g106",
+    "a6_status": "UNCHANGED_NOT_SENT",
+    "protected_actions_performed": false
+  },
+  "next_step": "Repair the source-import ambient database writer as the next bounded fixture block."
+}

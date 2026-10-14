@@ -2179,7 +2179,7 @@
       "unique_source_pr_count": 29
     }
   },
-  "revision": 786,
+  "revision": 787,
   "runs": [
     {
       "head_sha": null,
@@ -7781,7 +7781,7 @@
       }
     }
   ],
-  "updated_at": "2026-10-14T10:03:20Z",
+  "updated_at": "2026-10-14T10:56:15Z",
   "previous_scheduled_product_checkpoint_174": {
     "updated_at": "2026-10-11T18:04:51.196Z",
     "checked_at": "2026-10-11T18:04:51.196Z",
@@ -13085,6 +13085,62 @@
       "checkpoint": "Evidence is stored in .ai/orchestration/evidence/cycle239_checkpoint.json; this state CAS commit is the durable checkpoint and lease release follows separately."
     },
     "next_step": "On exact PR259 head, reproduce the first ambient customs.db writer in the classification-inventory/vision broad tranche after 1884 passed, then repair one bounded fixture block without weakening the inventory guard."
+  },
+  "previous_scheduled_product_checkpoint_246": {
+    "updated_at": "2026-10-14T10:56:15Z",
+    "checked_at": "2026-10-14T10:56:15Z",
+    "pr": 259,
+    "branch": "agent/backend-broad-regressions-v1",
+    "head_sha": "8b1f5be35756a5eac7e2bc953727b7d8b16e5e8f",
+    "tree_sha": "3603d4f521068effd448744962a3ebda8dd86c26",
+    "parent_sha": "146c7efe9c8a7832da9a60e6d834d05fff35a54a",
+    "base_pr": 245,
+    "base_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
+    "block": "regulatory_mass_seed_absent_database_isolation",
+    "status": "IMPLEMENTED_AUTHOR_VALIDATED_A5_PASS_CI_PASS_REGULATORY_MASS_SEED_DB_ISOLATION",
+    "behavior": {
+      "reproduced": "Cycle244 guarded broad execution showed inspect(engine).has_table creating ambient customs.db/WAL/SHM when the configured default SQLite file did not exist.",
+      "final": "The module now skips before SQLAlchemy inspection only for an absent file-backed SQLite database; existing empty, partial and populated datasets retain the original inspection and coverage assertions.",
+      "classification": "A test-fixture/database-isolation defect was fixed without changing product behavior, normative data or the coverage thresholds.",
+      "boundaries": "Only customs-clear/backend/tests/test_regulatory_mass_seed.py changed with 12 additions and no deletions."
+    },
+    "verification": {
+      "author": "Focused absent-default run: 9 skipped, exit 0; rules-enforcement predecessor order: 14 passed and 9 skipped, exit 0; no ambient DB/WAL/SHM. Nonexistent absolute and relative SQLite files were not created; a partial schema ran the original thresholds and produced expected 7 failed, 2 passed.",
+      "author_broad": "The guarded broad run advanced to 88% and found the next separate ambient writer at tests/test_source_import.py::SourceImportTests::test_import_xlsx_with_headers; guard exit 1 and exact ambient files moved recoverably to /tmp.",
+      "a5": {
+        "session": "/root/a5_246",
+        "status": "PASS_EXACT_TREE_NO_FINDINGS",
+        "execution": "Independently confirmed one-file scope, diff check, 9 skipped absent-default, 14 passed plus 9 skipped predecessor-first, absent absolute/relative file non-creation, empty-database skip and partial-schema threshold failures.",
+        "findings": []
+      },
+      "ci": {
+        "status": "PASSED_EXACT_HEAD_OFFLINE_SAFETY_ONLY",
+        "run_id": 38549024897,
+        "job_id": 115802136715,
+        "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38549024897/job/115802136715",
+        "head_sha": "8b1f5be35756a5eac7e2bc953727b7d8b16e5e8f",
+        "conclusion": "success",
+        "limitation": "Workflow is offline-safety only; executable author, A0 and fresh independent A5 provide backend-test evidence."
+      }
+    },
+    "blockers": [
+      "The next broad-suite defect is the reproduced source-import ambient database writer.",
+      "Full #245 product acceptance and legal/source completeness remain NOT PASS.",
+      "The NTM full-sync audit still requires a lawful populated synchronized snapshot."
+    ],
+    "a6": {
+      "request": "core-s1-6415f443120f-r9-g106",
+      "status": "UNCHANGED_NOT_SENT"
+    },
+    "coordination_queue": "Issue #257 bounded-probe receipt already exists and was not repeated. The Dot queue does not change authority, merge/deploy rights or A6 status.",
+    "protected_actions_performed": false,
+    "capabilities": {
+      "code_access": "Full exact candidate tree available in isolated author and independent A5 worktrees.",
+      "command_execution": "Git, Python and pytest execution available; author, A0 and fresh independent A5 commands produced recorded exit codes.",
+      "lawful_publication": "Candidate was already published by the immediately preceding connector-only cycle under lease generation 245; cycle246 did not republish or change the exact head.",
+      "checkpoint": "Evidence is stored in .ai/orchestration/evidence/cycle246_checkpoint.json; this state CAS commit is the durable executable-QA completion checkpoint and lease release follows separately."
+    },
+    "next_step": "Reproduce and repair tests/test_source_import.py::SourceImportTests::test_import_xlsx_with_headers's ambient database writer, then resume the guarded broad run; keep NTM full-sync blocked until a lawful populated synchronized snapshot exists."
   },
   "previous_scheduled_product_checkpoint_244": {
     "updated_at": "2026-10-14T10:03:20Z",
