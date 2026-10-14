@@ -1,0 +1,57 @@
+{
+  "schema_version": 1,
+  "cycle": 248,
+  "checked_at": "2026-10-14T12:31:45Z",
+  "repository": "ivan88810900-star/tnved_starter_kit_v2",
+  "lease_generation": 248,
+  "pr": 256,
+  "branch": "agent/product-ntm-regressions-v1",
+  "head_sha": "3c24676a69b1d78d320bd5764fb04f5ac3f3430d",
+  "tree_sha": "a4e3cd52d0133698e5da905f0e48c52a087316b3",
+  "base_pr": 245,
+  "base_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
+  "block": "grounded_assistant_search_ntm_ui_acceptance",
+  "status": "TECHNICAL_BOUNDED_ACCEPTANCE_A5_PASS_EXISTING_EXACT_HEAD_CI_PASS",
+  "changes": "No tracked product or test changes; exact PR256 HEAD remained unchanged and clean.",
+  "verification": {
+    "a0_backend": {
+      "command": "PYTHONPATH=/workspace/scratch/bb84ae3e224a/author248/customs-clear/backend /workspace/scratch/bb84ae3e224a/author242/customs-clear/backend/.venv/bin/python -m pytest -q --tb=short tests/test_assistant_copilot.py tests/test_assistant_batch.py tests/test_assistant_decisions.py tests/test_embedding_service_safety.py tests/test_grounded_assistant.py tests/test_normative_requirements_block.py tests/test_permit_suggest.py tests/test_regulatory_ai_classifier.py tests/test_semantic_navigation_v1.py tests/test_smart_classifier.py tests/test_tnved_catalog_api.py tests/test_tnved_fts.py tests/test_ntm_effective_requirements.py tests/test_ntm_v2_engine.py tests/test_state_registry_match_sgr_status.py",
+      "result": "220 passed plus 51 subtests",
+      "exit_code": 0
+    },
+    "a0_frontend": {
+      "command": "npm test && npm run typecheck && npm run build",
+      "result": "10 files / 109 tests passed; typecheck passed; production build passed with 3067 modules",
+      "exit_code": 0
+    },
+    "a5": {
+      "session": "/root/a5_cycle248",
+      "status": "PASS_EXACT_TREE_NO_FINDINGS",
+      "backend": "276 passed plus 44 subtests; exit 0",
+      "frontend": "109 tests, typecheck and production build; all exit 0",
+      "coverage": "Grounding and citation fallback, manual-review/advisory boundaries, source freshness, safe source links and user-visible grounded badges.",
+      "findings": []
+    },
+    "ci": {
+      "status": "PASSED_EXISTING_EXACT_HEAD_OFFLINE_SAFETY_ONLY",
+      "run_id": 38476052793,
+      "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38476052793",
+      "head_sha": "3c24676a69b1d78d320bd5764fb04f5ac3f3430d",
+      "conclusion": "success",
+      "limitation": "The workflow is offline-safety only; executable A0 and fresh independent A5 provide product-test evidence."
+    }
+  },
+  "warnings": [
+    "Frontend build reported non-blocking Browserslist age, bundle-size and legacy print selector warnings."
+  ],
+  "blockers": [
+    "Full PR245 product acceptance and legal/source completeness remain NOT PASS.",
+    "NTM full-sync remains blocked until a lawful populated synchronized snapshot is available."
+  ],
+  "a6": {
+    "request": "core-s1-6415f443120f-r9-g106",
+    "status": "UNCHANGED_NOT_SENT"
+  },
+  "protected_actions_performed": false,
+  "next_step": "Continue the next bounded PR256/#245 product acceptance slice; prioritize a real search/classification or assistant integration defect and preserve fail-closed provenance."
+}
