@@ -2,11 +2,15 @@
 from __future__ import annotations
 
 import json
+import os
+import sys
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
 from unittest.mock import patch, AsyncMock
 
 import pytest
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
 
 from app.services.data_refresh_service import (
     STALE_THRESHOLD_DAYS,
@@ -18,6 +22,20 @@ from app.services.data_refresh_service import (
 
 
 BACKEND_ROOT = Path(__file__).resolve().parent.parent
+
+
+@pytest.fixture(scope="module", autouse=True)
+def _isolated_data_refresh_database(tmp_path_factory: pytest.TempPathFactory):
+    database = tmp_path_factory.mktemp("data-refresh") / "data-refresh.db"
+    database_url = f"sqlite:///{database}"
+    engine = create_engine(database_url, connect_args={"check_same_thread": False})
+    session_local = sessionmaker(bind=engine, autocommit=False, autoflush=False)
+    with (
+        patch.dict(os.environ, {"DATABASE_URL": database_url}),
+        patch("app.services.data_refresh_service.SessionLocal", session_local),
+    ):
+        yield
+    engine.dispose()
 
 
 class TestBundleFreshness:
@@ -82,19 +100,70 @@ class TestDataRefreshScript:
         script = BACKEND_ROOT / "scripts" / "data_refresh.py"
         assert script.is_file()
 
-    def test_script_check_only_mode(self) -> None:
+    def test_script_check_only_mode(self, tmp_path: Path) -> None:
         import subprocess
+
+        database = tmp_path / "data-refresh.db"
         result = subprocess.run(
-            ["python3", "-m", "scripts.data_refresh", "--check-only", "--json"],
+            [sys.executable, "-m", "scripts.data_refresh", "--check-only", "--json"],
             cwd=str(BACKEND_ROOT),
             capture_output=True,
             text=True,
             timeout=30,
+            env={**os.environ, "DATABASE_URL": f"sqlite:///{database}"},
         )
-        data = json.loads(result.stdout)
+        diagnostics = (
+            f"exit code: {result.returncode}\n"
+            f"stdout:\n{result.stdout}\n"
+            f"stderr:\n{result.stderr}"
+        )
+        assert result.returncode in {0, 1}, (
+            f"data refresh check failed\n{diagnostics}"
+        )
+        if not result.stdout.strip():
+            pytest.fail(f"data refresh check produced empty stdout\n{diagnostics}", pytrace=False)
+        try:
+            data = json.loads(result.stdout)
+        except json.JSONDecodeError as exc:
+            pytest.fail(f"data refresh check produced invalid JSON: {exc}\n{diagnostics}", pytrace=False)
+        assert result.returncode == (0 if data["all_fresh"] else 1)
         assert "domains" in data
         assert "currency" in data
         assert "all_fresh" in data
+
+    @pytest.mark.parametrize(
+        ("stdout", "stderr", "expected"),
+        [
+            ("", "ModuleNotFoundError: loguru", "empty stdout"),
+            ("not-json", "unexpected output", "invalid JSON"),
+        ],
+    )
+    def test_script_invalid_output_reports_diagnostics(
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+        stdout: str,
+        stderr: str,
+        expected: str,
+    ) -> None:
+        import subprocess
+
+        completed = subprocess.CompletedProcess(
+            args=[sys.executable, "-m", "scripts.data_refresh"],
+            returncode=1,
+            stdout=stdout,
+            stderr=stderr,
+        )
+        monkeypatch.setattr(subprocess, "run", lambda *args, **kwargs: completed)
+
+        with pytest.raises(pytest.fail.Exception) as exc_info:
+            self.test_script_check_only_mode(tmp_path)
+
+        message = str(exc_info.value)
+        assert expected in message
+        assert "exit code: 1" in message
+        assert f"stdout:\n{stdout}" in message
+        assert f"stderr:\n{stderr}" in message
 
 
 class TestAutoUpdaterIntegration:
