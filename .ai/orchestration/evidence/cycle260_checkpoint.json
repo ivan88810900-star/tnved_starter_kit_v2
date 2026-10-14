@@ -1,0 +1,73 @@
+{
+  "schema_version": 1,
+  "cycle": 260,
+  "started_at": "2026-10-14T22:55:52Z",
+  "completed_at": "2026-10-14T23:06:24Z",
+  "executor": "/root/scheduled-cycle260-20261014T225552Z",
+  "lease": {
+    "generation": 260,
+    "token": "b84ee46e4bc84a76833853db08eb3691",
+    "acquisition_commit": "e872df721d4f1a36ae162ba28053ca4a17114c60"
+  },
+  "candidate": {
+    "pr": 256,
+    "branch": "agent/product-ntm-regressions-v1",
+    "parent_sha": "f05df522155b3fadaeddd1da6f9a830d31f152cc",
+    "head_sha": "a5e952f1ea847500b65bdc76b18514ddfd97f01d",
+    "tree_sha": "f1b269e40ee3b5fa72770a8d75ec6ed2d80ce9d5",
+    "local_exact_tree_commit": "369b12e4ce84c18dd1c8197d4d370bf33284b465",
+    "block": "transient_group_web_search_cache_recovery_validation",
+    "files": [
+      "customs-clear/backend/app/services/smart_classifier.py",
+      "customs-clear/backend/tests/test_smart_classifier.py"
+    ]
+  },
+  "reproduction": {
+    "status": "REPRODUCED_ON_EXACT_CYCLE259_TREE",
+    "result": "The executable adjacent profile exposed an incorrect new-test assumption: successful normalized output omits recommended=true, whereas fail-closed output explicitly sets recommended=false.",
+    "command": "PYTHONPATH=. /workspace/scratch/bb84ae3e224a/analysis251/customs-clear/backend/.venv/bin/python -m pytest -q tests/test_smart_classifier.py tests/test_classify_api_security.py tests/test_custom_classifier_chain.py tests/test_upload_packing_list_api.py tests/test_safe_http_errors.py",
+    "exit_code": 1,
+    "output": "1 failed, 92 passed, 71 subtests passed"
+  },
+  "repair": {
+    "behavior": "The regression asserts recovered recommended is not forced false, matching existing normalization semantics. The production cache repair is unchanged.",
+    "scope": "one test assertion"
+  },
+  "verification": {
+    "a0": {
+      "command": "PYTHONPATH=. /workspace/scratch/bb84ae3e224a/analysis251/customs-clear/backend/.venv/bin/python -m pytest -q tests/test_smart_classifier.py tests/test_classify_api_security.py tests/test_custom_classifier_chain.py tests/test_upload_packing_list_api.py tests/test_safe_http_errors.py",
+      "exit_code": 0,
+      "output": "93 passed, 71 subtests passed, one StarletteDeprecationWarning"
+    },
+    "a5": {
+      "session": "/root/a5_cycle260",
+      "status": "PASS_EXACT_TREE_NO_FINDINGS",
+      "commands": [
+        "test_smart_classifier.py: 85 passed + 71 subtests, exit 0",
+        "adjacent profile: 93 passed + 71 subtests, exit 0",
+        "test_classify_response_parser.py: 3 passed, exit 0",
+        "py_compile and independent concurrent retry plus generation-fence probes: exit 0"
+      ],
+      "findings": []
+    },
+    "ci": {
+      "workflow": "Tariff agent safety",
+      "scope": "agent orchestration offline-safety only; product evidence is the executable A0 and A5 profiles",
+      "run_id": 38651533970,
+      "job_id": 116151241312,
+      "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38651533970/job/116151241312",
+      "conclusion": "success"
+    },
+    "github_receipt": {
+      "pr_comment_id": 6180447989
+    }
+  },
+  "limits": {
+    "full_pr245_acceptance": "NOT_PASS",
+    "legal_source_completeness": "NOT_PASS",
+    "lawful_populated_synchronized_ntm_snapshot": "UNAVAILABLE",
+    "a6": "core-s1-6415f443120f-r9-g106 unchanged and not sent",
+    "protected_actions_performed": false
+  },
+  "next_step": "Continue the next bounded PR256/#245 grounded search, classification or assistant defect only after fresh exact-head recovery."
+}
