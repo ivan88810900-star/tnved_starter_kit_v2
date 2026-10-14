@@ -12,8 +12,20 @@ from app.services.smart_classifier import (
     ClassifyResult,
     SmartClassifier,
     _fetch_image_as_base64,
+    _normalize_image_base64,
     _validate_public_image_url,
 )
+
+_TEST_IMAGE_BYTES = {
+    "image/jpeg": b"\xff\xd8\xff",
+    "image/png": b"\x89PNG\r\n\x1a\n",
+    "image/gif": b"GIF89a",
+    "image/webp": b"RIFF\x00\x00\x00\x00WEBP",
+}
+_TEST_IMAGE_B64 = {
+    media_type: base64.standard_b64encode(data).decode("ascii")
+    for media_type, data in _TEST_IMAGE_BYTES.items()
+}
 
 
 class SmartClassifierNeedsWebSearchTests(unittest.TestCase):
@@ -332,10 +344,11 @@ class SmartClassifierImageUrlSafetyTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_safe_public_image_is_fetched_and_encoded(self) -> None:
         url = "https://images.example.test/photo.jpg"
+        image_bytes = _TEST_IMAGE_BYTES["image/png"]
         response = httpx.Response(
             200,
             headers={"content-type": "image/png; charset=binary"},
-            content=b"safe-image-bytes",
+            content=image_bytes,
             request=httpx.Request("GET", url),
         )
         with (
@@ -348,7 +361,7 @@ class SmartClassifierImageUrlSafetyTests(unittest.IsolatedAsyncioTestCase):
             client, stream_context = self._install_stream_response(client_cls, response)
             encoded, media_type = await _fetch_image_as_base64(url)
 
-        self.assertEqual(encoded, base64.standard_b64encode(b"safe-image-bytes").decode("ascii"))
+        self.assertEqual(encoded, base64.standard_b64encode(image_bytes).decode("ascii"))
         self.assertEqual(media_type, "image/png")
         client.stream.assert_called_once_with(
             "GET",
@@ -356,6 +369,86 @@ class SmartClassifierImageUrlSafetyTests(unittest.IsolatedAsyncioTestCase):
             headers={"Host": "images.example.test"},
             extensions={"sni_hostname": "images.example.test"},
         )
+        stream_context.__aexit__.assert_awaited_once()
+
+    async def test_remote_supported_raster_types_preserve_type_and_data(self) -> None:
+        url = "https://images.example.test/photo"
+        for media_type, image_bytes in _TEST_IMAGE_BYTES.items():
+            response = httpx.Response(
+                200,
+                headers={"content-type": f"{media_type.upper()}; charset=binary"},
+                content=image_bytes,
+                request=httpx.Request("GET", url),
+            )
+            with self.subTest(media_type=media_type):
+                with (
+                    patch(
+                        "app.services.smart_classifier.socket.getaddrinfo",
+                        return_value=[self._dns_answer("93.184.216.34")],
+                    ),
+                    patch("app.services.smart_classifier.httpx.AsyncClient") as client_cls,
+                ):
+                    _client, stream_context = self._install_stream_response(client_cls, response)
+                    encoded, normalized_type = await _fetch_image_as_base64(url)
+
+                self.assertEqual(encoded, base64.standard_b64encode(image_bytes).decode("ascii"))
+                self.assertEqual(normalized_type, media_type)
+                stream_context.__aexit__.assert_awaited_once()
+
+    async def test_remote_non_raster_unsupported_and_mismatched_bytes_are_rejected(self) -> None:
+        url = "https://images.example.test/photo"
+        cases = (
+            ("image/png", b"<html></html>"),
+            ("image/svg+xml", b"<svg></svg>"),
+            ("image/png", _TEST_IMAGE_BYTES["image/jpeg"]),
+        )
+        for content_type, image_bytes in cases:
+            response = httpx.Response(
+                200,
+                headers={"content-type": content_type},
+                content=image_bytes,
+                request=httpx.Request("GET", url),
+            )
+            with self.subTest(content_type=content_type, image_bytes=image_bytes):
+                with (
+                    patch(
+                        "app.services.smart_classifier.socket.getaddrinfo",
+                        return_value=[self._dns_answer("93.184.216.34")],
+                    ),
+                    patch("app.services.smart_classifier.httpx.AsyncClient") as client_cls,
+                ):
+                    _client, stream_context = self._install_stream_response(client_cls, response)
+                    with self.assertRaises(ValueError):
+                        await _fetch_image_as_base64(url)
+
+                stream_context.__aexit__.assert_awaited_once()
+
+    async def test_remote_invalid_image_bytes_never_reach_provider(self) -> None:
+        url = "https://images.example.test/photo.png"
+        response = httpx.Response(
+            200,
+            headers={"content-type": "image/png"},
+            content=b"<html></html>",
+            request=httpx.Request("GET", url),
+        )
+        clf = SmartClassifier()
+        with (
+            patch(
+                "app.services.smart_classifier.socket.getaddrinfo",
+                return_value=[self._dns_answer("93.184.216.34")],
+            ),
+            patch("app.services.smart_classifier.httpx.AsyncClient") as client_cls,
+            patch("app.services.smart_classifier._anthropic_key_env", return_value="test-key"),
+            patch(
+                "app.services.smart_classifier.anthropic_messages_request",
+                new_callable=AsyncMock,
+            ) as provider,
+        ):
+            _client, stream_context = self._install_stream_response(client_cls, response)
+            with self.assertRaisesRegex(ValueError, "fetched safely"):
+                await clf._analyze_image(None, url, "товар")
+
+        provider.assert_not_awaited()
         stream_context.__aexit__.assert_awaited_once()
 
     async def test_non_image_content_type_is_rejected_and_stream_is_closed(self) -> None:
@@ -575,12 +668,23 @@ class SmartClassifierImageUrlSafetyTests(unittest.IsolatedAsyncioTestCase):
                 return_value={"content": [{"type": "text", "text": "изображение товара"}]},
             ) as provider,
         ):
-            result = await clf._analyze_image("data:image/png;base64,YWJj", None, "товар")
+            result = await clf._analyze_image(
+                f"data:image/png;base64,{_TEST_IMAGE_B64['image/png']}",
+                None,
+                "товар",
+            )
 
         self.assertEqual(result, "изображение товара")
         payload = provider.await_args.args[0]
         source = payload["messages"][0]["content"][0]["source"]
-        self.assertEqual(source, {"type": "base64", "media_type": "image/png", "data": "YWJj"})
+        self.assertEqual(
+            source,
+            {
+                "type": "base64",
+                "media_type": "image/png",
+                "data": _TEST_IMAGE_B64["image/png"],
+            },
+        )
 
     async def test_base64_takes_precedence_without_forwarding_secondary_url(self) -> None:
         clf = SmartClassifier()
@@ -595,7 +699,11 @@ class SmartClassifierImageUrlSafetyTests(unittest.IsolatedAsyncioTestCase):
             ) as provider,
             patch("app.services.smart_classifier._ask_llm", new_callable=AsyncMock) as text_only,
         ):
-            result = await clf._analyze_image("data:image/png;base64,YWJj", secondary_url, "товар")
+            result = await clf._analyze_image(
+                f"data:image/png;base64,{_TEST_IMAGE_B64['image/png']}",
+                secondary_url,
+                "товар",
+            )
 
         self.assertEqual(result, "изображение товара")
         fetch.assert_not_awaited()
@@ -611,7 +719,7 @@ class SmartClassifierImageUrlSafetyTests(unittest.IsolatedAsyncioTestCase):
             patch(
                 "app.services.smart_classifier._fetch_image_as_base64",
                 new_callable=AsyncMock,
-                return_value=("YWJj", "image/png"),
+                return_value=(_TEST_IMAGE_B64["image/png"], "image/png"),
             ) as fetch,
             patch(
                 "app.services.smart_classifier.anthropic_messages_request",
@@ -627,7 +735,14 @@ class SmartClassifierImageUrlSafetyTests(unittest.IsolatedAsyncioTestCase):
         provider.assert_awaited_once()
         self.assertNotIn(image_url, repr(provider.await_args))
         source = provider.await_args.args[0]["messages"][0]["content"][0]["source"]
-        self.assertEqual(source, {"type": "base64", "media_type": "image/png", "data": "YWJj"})
+        self.assertEqual(
+            source,
+            {
+                "type": "base64",
+                "media_type": "image/png",
+                "data": _TEST_IMAGE_B64["image/png"],
+            },
+        )
         text_only.assert_not_awaited()
 
     async def test_gemini_only_image_request_does_not_invent_visual_context(self) -> None:
@@ -637,13 +752,280 @@ class SmartClassifierImageUrlSafetyTests(unittest.IsolatedAsyncioTestCase):
             patch("app.services.smart_classifier._anthropic_key_env", return_value=None),
             patch("app.services.smart_classifier._ask_llm", new_callable=AsyncMock) as text_only,
         ):
-            result = await clf.classify(description=None, image_base64="data:image/png;base64,YWJj")
+            result = await clf.classify(
+                description=None,
+                image_base64=f"data:image/png;base64,{_TEST_IMAGE_B64['image/png']}",
+            )
 
         self.assertEqual(result.status, "ERROR")
         self.assertEqual(result.results, [])
         self.assertEqual(result.extra["error_code"], "image_unavailable")
         self.assertEqual(result.extra["image_analysis_status"], "unavailable")
         text_only.assert_not_awaited()
+
+
+class SmartClassifierBase64SafetyTests(unittest.IsolatedAsyncioTestCase):
+    def test_supported_data_uri_raster_types_are_normalized(self) -> None:
+        for media_type in ("image/jpeg", "image/png", "image/gif", "image/webp"):
+            with self.subTest(media_type=media_type):
+                encoded = _TEST_IMAGE_B64[media_type]
+                payload, normalized_type = _normalize_image_base64(
+                    f"data:{media_type};base64,{encoded}"
+                )
+                self.assertEqual(payload, encoded)
+                self.assertEqual(normalized_type, media_type)
+
+    def test_bare_base64_infers_supported_raster_type(self) -> None:
+        for media_type in ("image/jpeg", "image/png", "image/gif", "image/webp"):
+            with self.subTest(media_type=media_type):
+                encoded = _TEST_IMAGE_B64[media_type]
+                self.assertEqual(_normalize_image_base64(encoded), (encoded, media_type))
+
+    def test_active_or_unsupported_media_types_are_rejected(self) -> None:
+        values = (
+            "data:text/html;base64,PGh0bWw+PC9odG1sPg==",
+            "data:image/svg+xml;base64,PHN2Zz48L3N2Zz4=",
+            "data:application/octet-stream;base64,YWJj",
+        )
+        for value in values:
+            with self.subTest(value=value), self.assertRaisesRegex(ValueError, "unsupported"):
+                _normalize_image_base64(value)
+
+    def test_malformed_data_uri_and_invalid_base64_are_rejected(self) -> None:
+        values = (
+            "data:image/png,YWJj",
+            "data:image/png;charset=utf-8;base64,YWJj",
+            "data:image/png;base64,",
+            "data:image/png;base64,%%%",
+            "data:image/png;base64,YW Jj",
+            "data:image/png;base64,YQ=",
+            "%%%",
+            "",
+        )
+        for value in values:
+            with self.subTest(value=value), self.assertRaises(ValueError):
+                _normalize_image_base64(value)
+
+    def test_decoded_size_limit_is_enforced(self) -> None:
+        encoded = _TEST_IMAGE_B64["image/jpeg"]
+        with patch("app.services.smart_classifier._MAX_IMAGE_BYTES", 2):
+            with self.assertRaisesRegex(ValueError, "maximum allowed size"):
+                _normalize_image_base64(encoded)
+
+    def test_non_image_and_mismatched_declared_media_are_rejected(self) -> None:
+        html_as_bare_jpeg = base64.standard_b64encode(b"<html></html>").decode("ascii")
+        svg_as_png = base64.standard_b64encode(b"<svg></svg>").decode("ascii")
+        jpeg_as_png = _TEST_IMAGE_B64["image/jpeg"]
+        values = (
+            html_as_bare_jpeg,
+            f"data:image/png;base64,{html_as_bare_jpeg}",
+            f"data:image/png;base64,{svg_as_png}",
+            f"data:image/png;base64,{jpeg_as_png}",
+        )
+        for value in values:
+            with self.subTest(value=value), self.assertRaises(ValueError):
+                _normalize_image_base64(value)
+
+    async def test_invalid_image_only_base64_fails_before_any_provider_or_model(self) -> None:
+        clf = SmartClassifier()
+        with (
+            patch("app.services.smart_classifier.is_llm_configured", return_value=True),
+            patch(
+                "app.services.smart_classifier.anthropic_messages_request",
+                new_callable=AsyncMock,
+            ) as provider,
+            patch("app.services.smart_classifier._ask_llm", new_callable=AsyncMock) as model,
+        ):
+            result = await clf.classify(
+                description=None,
+                image_base64="data:text/html;base64,PGh0bWw+PC9odG1sPg==",
+            )
+
+        self.assertEqual(result.status, "ERROR")
+        self.assertEqual(result.results, [])
+        self.assertEqual(result.extra["error_code"], "image_unavailable")
+        self.assertEqual(result.extra["image_analysis_status"], "unavailable")
+        provider.assert_not_awaited()
+        model.assert_not_awaited()
+
+    async def test_invalid_base64_with_text_is_manual_review_and_never_reaches_vision(self) -> None:
+        clf = SmartClassifier()
+        invalid_payload = "data:image/png;base64,%%%"
+        model = AsyncMock(
+            return_value={
+                "text": '{"results":[{"hs_code":"3926909709","recommended":true}]}',
+                "provider": "test",
+            }
+        )
+        with (
+            patch("app.services.smart_classifier.is_llm_configured", return_value=True),
+            patch(
+                "app.services.smart_classifier.anthropic_messages_request",
+                new_callable=AsyncMock,
+            ) as provider,
+            patch("app.services.smart_classifier._ask_llm", model),
+        ):
+            result = await clf.classify(
+                description="пластиковая запасная часть",
+                image_base64=invalid_payload,
+            )
+
+        self.assertEqual(result.status, "MANUAL_REVIEW")
+        self.assertEqual(result.extra["image_analysis_status"], "unavailable")
+        self.assertTrue(result.extra["manual_review_required"])
+        self.assertFalse(result.results[0]["recommended"])
+        provider.assert_not_awaited()
+        for call in model.await_args_list:
+            self.assertNotIn(invalid_payload, repr(call))
+
+    async def test_invalid_group_image_marks_fresh_and_cached_classification_unavailable(self) -> None:
+        SmartClassifier.clear_packing_caches()
+        clf = SmartClassifier()
+        group_key = ("пластиковая запасная часть", "A-1")
+        raw_json = '{"results":[{"hs_code":"3926909709","recommended":true}]}'
+        try:
+            with patch(
+                "app.services.smart_classifier.anthropic_messages_request",
+                new_callable=AsyncMock,
+            ) as provider:
+                visual = await clf.get_or_analyze_vision(
+                    group_key,
+                    image_base64="data:image/png;base64,%%%",
+                    description=group_key[0],
+                )
+
+            self.assertIsNone(visual)
+            provider.assert_not_awaited()
+
+            with patch(
+                "app.services.smart_classifier._ask_llm",
+                new_callable=AsyncMock,
+                return_value={"text": raw_json, "provider": "test"},
+            ) as model:
+                fresh = await clf.get_or_classify_group(
+                    group_key,
+                    description=group_key[0],
+                    translated=group_key[0],
+                    visual_context=visual,
+                    article=group_key[1],
+                )
+                cached = await clf.get_or_classify_group(
+                    group_key,
+                    description=group_key[0],
+                    translated=group_key[0],
+                    visual_context=visual,
+                    article=group_key[1],
+                )
+
+            model.assert_awaited_once()
+            for result in (fresh, cached):
+                self.assertEqual(result.status, "MANUAL_REVIEW")
+                self.assertTrue(result.extra["manual_review_required"])
+                self.assertEqual(result.extra["image_analysis_status"], "unavailable")
+                self.assertFalse(result.results[0]["recommended"])
+        finally:
+            SmartClassifier.clear_packing_caches()
+
+    async def test_group_image_is_validated_before_vision_cache_hit(self) -> None:
+        SmartClassifier.clear_packing_caches()
+        clf = SmartClassifier()
+        group_key = ("пластиковая запасная часть", "A-2")
+        try:
+            with (
+                patch("app.services.smart_classifier._anthropic_key_env", return_value="test-key"),
+                patch(
+                    "app.services.smart_classifier.anthropic_messages_request",
+                    new_callable=AsyncMock,
+                    return_value={"content": [{"type": "text", "text": "vision"}]},
+                ) as provider,
+            ):
+                valid = await clf.get_or_analyze_vision(
+                    group_key,
+                    image_base64=_TEST_IMAGE_B64["image/png"],
+                    description=group_key[0],
+                )
+                invalid = await clf.get_or_analyze_vision(
+                    group_key,
+                    image_base64="data:image/png;base64,%%%",
+                    description=group_key[0],
+                )
+
+            self.assertEqual(valid, "vision")
+            self.assertIsNone(invalid)
+            provider.assert_awaited_once()
+        finally:
+            SmartClassifier.clear_packing_caches()
+
+    async def test_valid_cached_group_image_stays_normal_and_clear_drops_failure_marker(self) -> None:
+        SmartClassifier.clear_packing_caches()
+        clf = SmartClassifier()
+        valid_key = ("пластиковая запасная часть", "A-3")
+        failed_key = ("пластиковая запасная часть", "A-4")
+        raw_json = '{"results":[{"hs_code":"3926909709","recommended":true}]}'
+        try:
+            with (
+                patch("app.services.smart_classifier._anthropic_key_env", return_value="test-key"),
+                patch(
+                    "app.services.smart_classifier.anthropic_messages_request",
+                    new_callable=AsyncMock,
+                    return_value={"content": [{"type": "text", "text": "vision"}]},
+                ) as provider,
+            ):
+                first = await clf.get_or_analyze_vision(
+                    valid_key,
+                    image_base64=_TEST_IMAGE_B64["image/gif"],
+                    description=valid_key[0],
+                )
+                second = await clf.get_or_analyze_vision(
+                    valid_key,
+                    image_base64=_TEST_IMAGE_B64["image/gif"],
+                    description=valid_key[0],
+                )
+
+            self.assertEqual(first, "vision")
+            self.assertEqual(second, "vision")
+            provider.assert_awaited_once()
+
+            with patch(
+                "app.services.smart_classifier._ask_llm",
+                new_callable=AsyncMock,
+                return_value={"text": raw_json, "provider": "test"},
+            ):
+                valid_result = await clf.get_or_classify_group(
+                    valid_key,
+                    description=valid_key[0],
+                    translated=valid_key[0],
+                    visual_context=second,
+                    article=valid_key[1],
+                )
+            self.assertEqual(valid_result.status, "OK")
+            self.assertNotEqual(valid_result.results[0].get("recommended"), False)
+            self.assertNotIn("image_analysis_status", valid_result.extra)
+
+            await clf.get_or_analyze_vision(
+                failed_key,
+                image_base64="data:image/png;base64,%%%",
+                description=failed_key[0],
+            )
+            SmartClassifier.clear_packing_caches()
+
+            with patch(
+                "app.services.smart_classifier._ask_llm",
+                new_callable=AsyncMock,
+                return_value={"text": raw_json, "provider": "test"},
+            ):
+                after_clear = await clf.get_or_classify_group(
+                    failed_key,
+                    description=failed_key[0],
+                    translated=failed_key[0],
+                    visual_context=None,
+                    article=failed_key[1],
+                )
+            self.assertEqual(after_clear.status, "OK")
+            self.assertNotEqual(after_clear.results[0].get("recommended"), False)
+            self.assertNotIn("image_analysis_status", after_clear.extra)
+        finally:
+            SmartClassifier.clear_packing_caches()
 
 
 if __name__ == "__main__":

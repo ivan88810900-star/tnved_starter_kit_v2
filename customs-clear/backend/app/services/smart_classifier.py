@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import base64
+import binascii
 import ipaddress
 import json
 import re
@@ -50,10 +51,14 @@ _EQUIPMENT_KEYWORDS = (
 # Кэши для пакетной обработки пакинг-листов (перевод / vision / классификация по группе).
 _translation_cache: dict[str, str] = {}
 _vision_cache: dict[tuple[str, str], str] = {}
+_vision_unavailable_cache: set[tuple[str, str]] = set()
 _classify_group_cache: dict[tuple[str, str], "ClassifyResult"] = {}
 _cache_lock = asyncio.Lock()
 _BATCH_TRANSLATE_CHUNK = 45
 _MAX_IMAGE_BYTES = 10 * 1024 * 1024
+_SUPPORTED_IMAGE_MEDIA_TYPES = frozenset(
+    {"image/jpeg", "image/png", "image/gif", "image/webp"}
+)
 
 _WEB_SEARCH_MANUAL_REVIEW_NOTE = (
     "Поиск технических характеристик не дал подтверждённых данных. "
@@ -356,15 +361,39 @@ class SmartClassifier:
         image_base64: str | None,
         description: str,
     ) -> str | None:
+        if image_base64 is not None:
+            try:
+                _normalize_image_base64(image_base64)
+            except ValueError as exc:
+                logger.warning(f"Vision input validation failed: {exc}")
+                _vision_unavailable_cache.add(group_key)
+                _vision_cache.pop(group_key, None)
+                _classify_group_cache.pop(group_key, None)
+                return None
+
         if group_key in _vision_cache:
+            if group_key in _vision_unavailable_cache:
+                _vision_unavailable_cache.discard(group_key)
+                _classify_group_cache.pop(group_key, None)
             return _vision_cache[group_key]
-        if not image_base64:
+        if image_base64 is None:
             return None
         try:
             visual = await self._analyze_image(image_base64, None, description)
         except Exception as exc:
             logger.warning(f"Vision analysis failed: {exc}")
+            _vision_unavailable_cache.add(group_key)
+            _vision_cache.pop(group_key, None)
+            _classify_group_cache.pop(group_key, None)
             return None
+        if not visual.strip():
+            _vision_unavailable_cache.add(group_key)
+            _vision_cache.pop(group_key, None)
+            _classify_group_cache.pop(group_key, None)
+            return None
+        if group_key in _vision_unavailable_cache:
+            _vision_unavailable_cache.discard(group_key)
+            _classify_group_cache.pop(group_key, None)
         _vision_cache[group_key] = visual
         return visual
 
@@ -377,9 +406,10 @@ class SmartClassifier:
         visual_context: str | None,
         article: str | None,
     ) -> ClassifyResult:
+        image_analysis_failed = group_key in _vision_unavailable_cache
         if group_key in _classify_group_cache:
             cached = _classify_group_cache[group_key]
-            return ClassifyResult(
+            result = ClassifyResult(
                 results=list(cached.results),
                 translation_used=translated,
                 visual_analysis=visual_context or cached.visual_analysis,
@@ -390,6 +420,10 @@ class SmartClassifier:
                 provider=cached.provider,
                 note=cached.note,
                 extra=dict(cached.extra),
+            )
+            return self._with_image_analysis_status(
+                result,
+                failed=image_analysis_failed,
             )
 
         article_s = (article or "").strip()
@@ -414,6 +448,10 @@ class SmartClassifier:
                 attempted=web_search_needed,
                 confirmed=web_used,
             )
+            result = self._with_image_analysis_status(
+                result,
+                failed=image_analysis_failed,
+            )
         except Exception as exc:
             logger.exception("SmartClassifier group classify failed")
             result = ClassifyResult(
@@ -429,6 +467,10 @@ class SmartClassifier:
                     **self._web_search_metadata(attempted=web_search_needed, confirmed=web_used),
                 },
             )
+            result = self._with_image_analysis_status(
+                result,
+                failed=image_analysis_failed,
+            )
 
         _classify_group_cache[group_key] = result
         return result
@@ -437,6 +479,7 @@ class SmartClassifier:
     def clear_packing_caches() -> None:
         _translation_cache.clear()
         _vision_cache.clear()
+        _vision_unavailable_cache.clear()
         _classify_group_cache.clear()
 
     async def _analyze_image(
@@ -662,14 +705,70 @@ class SmartClassifier:
 
 def _normalize_image_base64(image_b64: str) -> tuple[str, str]:
     raw = image_b64.strip()
-    media_type = "image/jpeg"
-    if raw.startswith("data:"):
-        header, _, payload = raw.partition(",")
-        raw = payload
-        m = re.search(r"data:([^;]+)", header)
-        if m:
-            media_type = m.group(1).strip()
-    return raw, media_type
+    media_type: str | None = None
+    payload = raw
+    if raw[:5].lower() == "data:":
+        match = re.fullmatch(
+            r"data:([^;,]+);base64,(.*)",
+            raw,
+            flags=re.IGNORECASE | re.DOTALL,
+        )
+        if not match:
+            raise ValueError("invalid base64 image data URI")
+        declared_media_type = match.group(1)
+        if declared_media_type != declared_media_type.strip():
+            raise ValueError("invalid base64 image media type")
+        media_type = declared_media_type.lower()
+        payload = match.group(2)
+
+    if media_type is not None and media_type not in _SUPPORTED_IMAGE_MEDIA_TYPES:
+        raise ValueError("unsupported base64 image media type")
+    if not payload:
+        raise ValueError("base64 image payload is empty")
+
+    max_encoded_bytes = 4 * ((_MAX_IMAGE_BYTES + 2) // 3)
+    if len(payload) > max_encoded_bytes:
+        raise ValueError("base64 image exceeds maximum allowed size")
+    try:
+        decoded = base64.b64decode(payload, validate=True)
+    except (binascii.Error, ValueError) as exc:
+        raise ValueError("invalid base64 image payload") from exc
+    if not decoded:
+        raise ValueError("base64 image payload is empty")
+    if len(decoded) > _MAX_IMAGE_BYTES:
+        raise ValueError("base64 image exceeds maximum allowed size")
+    media_type = _validate_raster_image_bytes(decoded, media_type)
+
+    normalized = base64.standard_b64encode(decoded).decode("ascii")
+    return normalized, media_type
+
+
+def _detect_raster_media_type(decoded: bytes) -> str | None:
+    if decoded.startswith(b"\xff\xd8\xff"):
+        return "image/jpeg"
+    if decoded.startswith(b"\x89PNG\r\n\x1a\n"):
+        return "image/png"
+    if decoded.startswith((b"GIF87a", b"GIF89a")):
+        return "image/gif"
+    if len(decoded) >= 12 and decoded.startswith(b"RIFF") and decoded[8:12] == b"WEBP":
+        return "image/webp"
+    return None
+
+
+def _validate_raster_image_bytes(
+    image_bytes: bytes,
+    declared_media_type: str | None,
+) -> str:
+    detected_media_type = _detect_raster_media_type(image_bytes)
+    if detected_media_type is None:
+        raise ValueError("image payload is not a supported raster image")
+    if declared_media_type is not None:
+        normalized_media_type = declared_media_type.strip().lower()
+        if normalized_media_type not in _SUPPORTED_IMAGE_MEDIA_TYPES:
+            raise ValueError("unsupported image media type")
+        if detected_media_type != normalized_media_type:
+            raise ValueError("image media type does not match its bytes")
+    return detected_media_type
 
 
 def _has_web_search_result(data: dict[str, Any]) -> bool:
@@ -739,8 +838,8 @@ async def _fetch_image_as_base64(url: str) -> tuple[str, str]:
 
                 resp.raise_for_status()
                 content_type = (resp.headers.get("content-type") or "").split(";")[0].strip().lower()
-                if not content_type.startswith("image/"):
-                    raise ValueError("image URL did not return an image content type")
+                if content_type not in _SUPPORTED_IMAGE_MEDIA_TYPES:
+                    raise ValueError("image URL did not return a supported image content type")
 
                 declared_length = resp.headers.get("content-length")
                 if declared_length is not None:
@@ -759,7 +858,8 @@ async def _fetch_image_as_base64(url: str) -> tuple[str, str]:
                         raise ValueError("image exceeds maximum allowed size")
                     chunks.append(chunk)
                 image_bytes = b"".join(chunks)
-                return base64.standard_b64encode(image_bytes).decode("ascii"), content_type
+                media_type = _validate_raster_image_bytes(image_bytes, content_type)
+                return base64.standard_b64encode(image_bytes).decode("ascii"), media_type
 
     raise ValueError("image URL could not be fetched")
 
