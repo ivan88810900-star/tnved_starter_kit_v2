@@ -11,8 +11,8 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 from app import db as app_db
-from app.services import normative_store, tnved_fts
-from app.services.normative_store import find_rate_for_hs, init_db, upsert_hs_rate
+from app.services import normative_store
+from app.services.normative_store import find_rate_for_hs, upsert_hs_rate
 from app.services.source_import import import_normative_file
 
 
@@ -33,21 +33,54 @@ class SourceImportTests(unittest.TestCase):
             autocommit=False,
             autoflush=False,
         )
+        # Some API fixtures unload and re-import app modules.  Patching a module
+        # name is therefore insufficient: source_import can retain functions from
+        # the earlier normative_store object.  Patch the namespaces of the exact
+        # collected callables exercised below, independently of sys.modules.
+        import_namespace = import_normative_file.__globals__
+        callables = (
+            find_rate_for_hs,
+            upsert_hs_rate,
+            import_namespace["upsert_hs_rate"],
+            import_namespace["upsert_source_status"],
+        )
+        namespaces = []
+        seen_namespaces = set()
+        for function in callables:
+            namespace = function.__globals__
+            if id(namespace) not in seen_namespaces:
+                seen_namespaces.add(id(namespace))
+                namespaces.append(namespace)
+
         cls._patchers = [
             unittest.mock.patch.dict(os.environ, {"DATABASE_URL": database_url}),
             unittest.mock.patch.object(app_db, "engine", cls.engine),
             unittest.mock.patch.object(app_db, "SessionLocal", cls.SessionLocal),
             unittest.mock.patch.object(normative_store, "engine", cls.engine),
             unittest.mock.patch.object(normative_store, "SessionLocal", cls.SessionLocal),
-            unittest.mock.patch.object(tnved_fts, "engine", cls.engine),
-            unittest.mock.patch.object(tnved_fts, "_fts_ready", None),
         ]
+        for namespace in namespaces:
+            if "engine" in namespace:
+                cls._patchers.append(
+                    unittest.mock.patch.dict(namespace, {"engine": cls.engine})
+                )
+            if "SessionLocal" in namespace:
+                cls._patchers.append(
+                    unittest.mock.patch.dict(
+                        namespace,
+                        {"SessionLocal": cls.SessionLocal},
+                    )
+                )
         cls._started_patchers = []
         cls.addClassCleanup(cls._cleanup_database)
         for patcher in cls._patchers:
             patcher.start()
             cls._started_patchers.append(patcher)
-        init_db()
+        for model in (
+            upsert_hs_rate.__globals__["HsRate"],
+            import_namespace["upsert_source_status"].__globals__["SourceStatus"],
+        ):
+            model.__table__.create(cls.engine, checkfirst=True)
 
     @classmethod
     def _cleanup_database(cls) -> None:
