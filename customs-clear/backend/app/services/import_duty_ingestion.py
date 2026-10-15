@@ -407,6 +407,11 @@ def _row_needs_update(existing: HsRate, row: dict[str, Any]) -> bool:
         row.get("source_url") or ""
     ).strip():
         return True
+    for field in ("valid_from", "valid_to"):
+        incoming = str(row.get(field) or "").strip()
+        current = str(getattr(existing, field, None) or "").strip()
+        if incoming != current:
+            return True
     # P1: stale broad hs_prefix (например 8471) должен обновляться на exact full code,
     # даже если остальные поля не изменились — иначе sibling leakage / false coverage.
     desired_prefix = _desired_hs_prefix(row)
