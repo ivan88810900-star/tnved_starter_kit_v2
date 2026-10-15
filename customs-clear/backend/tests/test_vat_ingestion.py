@@ -219,6 +219,20 @@ class TestVatBlockedBundles(unittest.TestCase):
             with unittest.mock.patch.object(vi, "_BACKEND_ROOT", root):
                 return run_vat_apply(rel_path=rel)
 
+    def test_rejected_wrong_effective_period_revision_no_mutation(self) -> None:
+        before = _table_counts(self.sm)
+        report = self._run_blocked(
+            _official_vat_bundle_payload(revision="vat:2026-06-18")
+        )
+        after = _table_counts(self.sm)
+        self.assertEqual(report["status"], "manual_review_required")
+        self.assertEqual(
+            report["reason"],
+            "source_verification_rejected_wrong_effective_period",
+        )
+        self.assertFalse(report["db_mutated"])
+        self.assertEqual(before, after)
+
     def test_seed_bundle_revision_blocks_import(self) -> None:
         report = self._run_blocked(_official_vat_bundle_payload(revision="seed-2026-03"))
         self.assertEqual(report["status"], "manual_review_required")
