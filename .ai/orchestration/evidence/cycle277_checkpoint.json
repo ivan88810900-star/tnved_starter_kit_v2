@@ -1,0 +1,75 @@
+{
+  "schema_version": 1,
+  "cycle": 277,
+  "checked_at": "2026-10-15T22:27:00Z",
+  "lease_generation": 277,
+  "main_sha": "e526dfbdb5a31b01bf6f743da0288b88f916de0c",
+  "state_base_sha": "8f9d6842d8c357b4e6ec33fab4bc967ccf2387cf",
+  "pr": 256,
+  "branch": "agent/product-ntm-regressions-v1",
+  "parent_sha": "fd357f35cffea5941553d90b9fa5fa1e1c303ac1",
+  "head_sha": "44c50df61747f09e4f876c0f751d7c23cbf56b30",
+  "tree_sha": "43902a009e5949e4e37d2534411022a9c133530c",
+  "block": "pay5_vat_effective_period_quarantine",
+  "status": "IMPLEMENTED_EXACT_HEAD_SAFETY_CI_PASS_PRODUCT_QA_PENDING",
+  "source_findings": [
+    {
+      "url": "https://www.nalog.gov.ru/new2026/",
+      "result": "FNS states that the standard VAT rate changed from 20% to 22% from 2026-01-01 under Federal Law No. 425-FZ."
+    },
+    {
+      "url": "https://www.nalog.gov.ru/rn77/about_fts/about_nalog/16594097/",
+      "result": "FNS transition guidance binds the 22% rate to supplies from 2026-01-01."
+    }
+  ],
+  "defect": {
+    "revision": "vat:2026-06-18",
+    "observed": "The committed bundle declares effective_from 2025-01-01, contains 10,552 standard 22% rows and has no row validity windows.",
+    "risk": "The revision can present the 22% 2026 standard rate as effective during 2025 and can auto-calculate VAT from persisted rows."
+  },
+  "behavior": {
+    "ingestion": "The exact rejected revision fails closed before DB mutation.",
+    "persisted_rows": "Automatic VAT and final totals are withheld for exact rejected VAT provenance; known partial totals and evidence remain visible.",
+    "boundedness": "Manual VAT overrides and later versioned VAT revisions remain eligible."
+  },
+  "changes": {
+    "file_count": 9,
+    "commits": [
+      "70545d896f5de6f0abb3bf932f5e687357797ce1",
+      "7ba39e86373d16181e10b93e28b185f0e462df84",
+      "201c45282ec081c1cc9e0abe95072e5da0e6e1af",
+      "df419f770a4056a1538d6db581e52e55ce4e0643",
+      "891b5b3ff13383e12196fce5d6439ab3a7e906d5",
+      "41eb552767949e68dafd6ed1e63e5ec7ec53ddbb",
+      "453b132a93ee4173fb187da5f0beec98659990d0",
+      "8c7348ff4d3cd899a0193887161bb053dccbf544",
+      "44c50df61747f09e4f876c0f751d7c23cbf56b30"
+    ]
+  },
+  "verification": {
+    "python_ast": "All nine changed Python files parsed successfully from exact GitHub blobs.",
+    "exact_head_ci": {
+      "run_id": 38816928278,
+      "job_id": 116703956398,
+      "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38816928278/job/116703956398",
+      "conclusion": "success",
+      "scope": "offline-safety",
+      "results": "120 required safety tests plus 4 snapshot tests; all recorded steps passed."
+    },
+    "active_stack_review_threads": "No inline review threads on PRs 244, 245, 255, 256, 258 or 259.",
+    "product_pytest": "NOT_EXECUTED_CONNECTOR_ONLY_RUNTIME",
+    "a5": "PENDING"
+  },
+  "pr_comment_id": 6203575372,
+  "blockers": [
+    "Focused payment pytest and independent A5 are pending; do not promote readiness.",
+    "Full PR245/PR256 product acceptance and legal/source completeness remain NOT PASS.",
+    "Lawful populated synchronized NTM snapshot remains unavailable."
+  ],
+  "a6": {
+    "request": "core-s1-6415f443120f-r9-g106",
+    "status": "UNCHANGED_NOT_SENT"
+  },
+  "protected_actions_performed": false,
+  "next_step": "Execute focused VAT ingestion, payment engine, quote and profile tests on exact head; obtain fresh independent A5 review; correct findings before recording product QA or readiness."
+}
