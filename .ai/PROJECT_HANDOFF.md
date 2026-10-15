@@ -1,3 +1,13 @@
+## 2026-10-15 — Invalid special-safeguard sources quarantined on draft PR #256
+
+- Primary-source review rejected all three committed rows in `eec_special_safeguard.json`: the cited official [EEC Decision No. 30](https://docs.eaeunion.org/documents/247/5029/) concerns PPE standards, and exact official-portal filters found no matching No. 65/14.04.2020 or No. 149/29.10.2019 records. The bundle is now explicitly `rejected_source_mismatch`; it is not accepted legal data.
+- Draft [PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256) publishes exact remote head `61c82ae2fc6ed1c608cca19f83cba9e719eceb42`, tree `026a63587c9ab6c06186eca7ad87009466f9bfa5`; local author exact-tree commit `0dbbf30ee1b21564978bb229a9964960e1f6aec6` has the same tree.
+- Non-verified bundles are blocked before DB mutation. Existing rows from exact rejected revision `special-safeguard:2026-06-18` remain visible as manual review, but their amounts and quote totals are withheld. Legacy blank origin is retained only for this rejected special-safeguard revision and is not a wildcard for validated revisions or other measure types.
+- Author: focused **74 passed + 10 subtests**; expanded payment/ingestion profile **219 passed + 54 subtests**; tariff-agent safety **124 passed + 175 subtests**; JSON, compile and diff checks exit 0. Independent A5 `/root/a5_cycle270`: **PASS, no findings**; focused **4 passed**, expanded **185 passed + 32 subtests**, negative boundary probes and diff check exit 0.
+- Exact-head CI [run 38711160679 / job 116342583563](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38711160679/job/116342583563): **success** (`offline-safety`). PR receipt: [comment 6188651441](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256#issuecomment-6188651441).
+- Broad backend diagnostic reached **1,955 passed, 11 skipped + 197 subtests** and reported ten known environment/data errors: nine require the unavailable populated synchronized NTM snapshot; one is an ambient SQLite teardown. It is not a full backend PASS; disposable artifacts were removed.
+- Next: reconcile the next stale payment bundle against primary acts while keeping rejected/unverified rows fail-closed. Full #245/#256 acceptance and legal/source completeness remain NOT PASS; the lawful populated synchronized NTM snapshot remains unavailable. A6 `core-s1-6415f443120f-r9-g106` is unchanged and undispatched. No merge, deploy, production write, flag, secret or permission change was performed.
+
 ## 2026-10-14 — Packing-list async tests made dependency-independent on draft PR #259
 
 - On exact PR #259 parent `092ce778585ef4adb48c987d844b9024877b43cd`, the clean tracked environment had no `pytest-asyncio`; `tests/test_packing_list_classify.py` therefore failed with `async def functions are not natively supported` instead of executing its scenario.
@@ -1008,7 +1018,7 @@ Default `customs.db`, pinned catalogue и заранее заданный hostil
 
 Следующий шаг — следующий воспроизводимый bounded #245 URL/source или search/classification defect; NTM full-sync сохранять заблокированным до законно доступного populated synchronized snapshot.
 
-## 0aaaaaaaaaaaaaa. #245 — URL цитат Copilot теперь используют общий fail-closed boundary
+## 0aaaaaaaaaaaaaa. #245 — URL цитат Copilot теперь ис��ользуют общий fail-closed boundary
 
 **Новый checkpoint:** [draft PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256), `agent/product-ntm-regressions-v1` @ `7ab810dbae2a7caf9f3caebc03014c6f7dbc8cb6`, tree `a483ba9bfaeaa855fbc3280473c884bc7bf84c2b`, parent `f982f48490e5be5fae12e2f49a9d106401e60c37`.
 

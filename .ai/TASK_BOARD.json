@@ -2179,7 +2179,7 @@
       "unique_source_pr_count": 29
     }
   },
-  "revision": 809,
+  "revision": 810,
   "runs": [
     {
       "head_sha": null,
@@ -7781,7 +7781,7 @@
       }
     }
   ],
-  "updated_at": "2026-10-15T08:34:22Z",
+  "updated_at": "2026-10-15T09:13:43Z",
   "previous_scheduled_product_checkpoint_174": {
     "updated_at": "2026-10-11T18:04:51.196Z",
     "checked_at": "2026-10-11T18:04:51.196Z",
@@ -14689,5 +14689,82 @@
       "checkpoint": "Evidence is stored in .ai/orchestration/evidence/cycle269_checkpoint.json; state CAS and lease release follow."
     },
     "next_step": "Reconcile the next stale payment bundle against primary acts while preserving partial/stale status and fail-closed totals until each scope and effective window is verified."
+  },
+  "previous_scheduled_product_checkpoint_270": {
+    "updated_at": "2026-10-15T09:13:43Z",
+    "checked_at": "2026-10-15T09:13:43Z",
+    "pr": 256,
+    "branch": "agent/product-ntm-regressions-v1",
+    "head_sha": "61c82ae2fc6ed1c608cca19f83cba9e719eceb42",
+    "tree_sha": "026a63587c9ab6c06186eca7ad87009466f9bfa5",
+    "parent_sha": "ecc8dbf6c46bd57f5e93d04d56a7486030949a35",
+    "local_author_exact_tree_commit": "0dbbf30ee1b21564978bb229a9964960e1f6aec6",
+    "base_pr": 245,
+    "base_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
+    "block": "pay1_special_safeguard_source_quarantine",
+    "status": "IMPLEMENTED_A5_PASS_EXACT_HEAD_CI_PASS_SOURCE_REJECTED",
+    "behavior": {
+      "source_finding": "All three committed special-safeguard rows are unsupported by their cited official acts: Decision No. 30 is PPE standards, while exact official portal filters found no matching No. 65/14.04.2020 or No. 149/29.10.2019 records.",
+      "ingestion": "The bundle is marked rejected_source_mismatch and any top-level non-verified bundle is blocked before DB mutation.",
+      "persisted_rows": "Rows from exact rejected revision special-safeguard:2026-06-18 remain visible but require manual review; amounts and quote totals are withheld.",
+      "compatibility_boundary": "Legacy blank-origin rows are retained only for the exact rejected special-safeguard revision. Blank origin remains non-matching for validated revisions and other measure types."
+    },
+    "sources": [
+      {
+        "act": "EEC Decision No. 30",
+        "url": "https://docs.eaeunion.org/documents/247/5029/",
+        "verified": "2026-10-15",
+        "result": "PPE standards; unrelated to the claimed safeguard measure"
+      },
+      {
+        "act": "EAEU legal portal exact filters",
+        "url": "https://docs.eaeunion.org/",
+        "verified": "2026-10-15",
+        "result": "No exact matches for No. 65/14.04.2020 or No. 149/29.10.2019"
+      }
+    ],
+    "verification": {
+      "author": "Focused payment/ingestion command passed 74 tests plus 10 subtests; expanded payment/ingestion profile passed 219 tests plus 54 subtests; tariff-agent safety passed 124 tests plus 175 subtests; JSON, py_compile and diff checks exited 0.",
+      "final_exact_command": "/workspace/scratch/bb84ae3e224a/.venv266/bin/pytest -q tests/test_payment_engine.py tests/test_special_duties.py tests/test_special_safeguard_ingestion.py tests/test_payment_quote.py tests/test_payment_data_normalization.py tests/test_official_payment_coverage_audit.py tests/test_trade_remedies_audit.py tests/test_pay1_special_safeguard_source_quarantine.py tests/test_pay1_titanium_dioxide.py tests/test_anti_dumping_ingestion.py tests/test_countervailing_ingestion.py",
+      "final_exact_command_result": "219 passed plus 54 subtests, exit 0",
+      "broad_diagnostic": "1955 passed, 11 skipped and 197 subtests, then 10 known environment/data errors: nine need the unavailable populated synchronized NTM snapshot and one ambient SQLite teardown. Not a full backend PASS; temporary DB sidecars were removed.",
+      "a5": {
+        "session": "/root/a5_cycle270",
+        "status": "PASS_EXACT_TREE_NO_FINDINGS",
+        "execution": "Independent focused 4 passed; expanded 185 passed plus 32 subtests; negative blank-origin and revision-boundary probes plus diff check exited 0.",
+        "findings": []
+      },
+      "ci": {
+        "status": "PASSED_EXACT_HEAD_OFFLINE_SAFETY_ONLY",
+        "run_id": 38711160679,
+        "job_id": 116342583563,
+        "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38711160679/job/116342583563",
+        "head_sha": "61c82ae2fc6ed1c608cca19f83cba9e719eceb42",
+        "conclusion": "success"
+      },
+      "github_receipt": {
+        "pr_comment_id": 6188651441,
+        "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256#issuecomment-6188651441"
+      }
+    },
+    "blockers": [
+      "The rejected special-safeguard bundle is not an accepted legal source and must not calculate duties.",
+      "A verified replacement special-safeguard bundle is not yet available.",
+      "Full PR245/PR256 product acceptance and legal/source completeness remain NOT PASS.",
+      "Lawful populated synchronized NTM snapshot remains unavailable."
+    ],
+    "a6": {
+      "request": "core-s1-6415f443120f-r9-g106",
+      "status": "UNCHANGED_NOT_SENT"
+    },
+    "coordination_queue": "Issue #257 bounded-probe receipt already exists and was not repeated.",
+    "protected_actions_performed": false,
+    "capabilities": {
+      "code_access": "Full exact candidate tree was available in isolated author and independent A5 worktrees.",
+      "command_execution": "Git, Python and pytest executed; author, control and independent A5 final commands exited 0.",
+      "lawful_publication": "Draft PR256 branch was updated through GitHub Git Data CAS under lease generation 270.",
+      "checkpoint": "Evidence is stored in .ai/orchestration/evidence/cycle270_checkpoint.json; state CAS and lease release follow."
+    },
+    "next_step": "Reconcile the next stale payment bundle against primary acts. Keep rejected or unverified source rows visible only for manual review with all affected amounts and totals withheld."
   }
 }

@@ -1,0 +1,71 @@
+{
+  "schema_version": 1,
+  "cycle": 270,
+  "started_at": "2026-10-15T08:48:13Z",
+  "completed_at": "2026-10-15T09:13:43Z",
+  "executor": "/root/scheduled-cycle270-20261015T084813Z",
+  "lease": {
+    "generation": 270,
+    "token": "31215e9279a64f21b42ba14b97fabb06",
+    "checkpoint_parent": "da721a628d15974bd9bb89926e03c2e4458794ac"
+  },
+  "candidate": {
+    "pr": 256,
+    "branch": "agent/product-ntm-regressions-v1",
+    "parent_sha": "ecc8dbf6c46bd57f5e93d04d56a7486030949a35",
+    "head_sha": "61c82ae2fc6ed1c608cca19f83cba9e719eceb42",
+    "tree_sha": "026a63587c9ab6c06186eca7ad87009466f9bfa5",
+    "local_author_exact_tree_commit": "0dbbf30ee1b21564978bb229a9964960e1f6aec6"
+  },
+  "sources": [
+    {
+      "act": "EEC Decision No. 30",
+      "url": "https://docs.eaeunion.org/documents/247/5029/",
+      "verified": "2026-10-15",
+      "result": "PPE standards; unrelated to the claimed safeguard measure"
+    },
+    {
+      "act": "EAEU legal portal exact filters",
+      "url": "https://docs.eaeunion.org/",
+      "verified": "2026-10-15",
+      "result": "No exact matches for No. 65/14.04.2020 or No. 149/29.10.2019"
+    }
+  ],
+  "behavior": {
+    "ingestion": "Bundle rejected before DB mutation unless top-level verification_status is verified.",
+    "persisted_rows": "Exact rejected revision remains visible for manual review with amounts and totals withheld.",
+    "compatibility_boundary": "Blank origin is retained only for exact rejected special-safeguard revision, never as a general wildcard."
+  },
+  "verification": {
+    "author": "Focused 74 passed plus 10 subtests; expanded 219 passed plus 54 subtests; tariff-agent safety 124 passed plus 175 subtests; JSON, py_compile and diff checks exit 0.",
+    "broad_diagnostic": "1955 passed, 11 skipped plus 197 subtests; ten known snapshot/ambient-data errors, so not a full backend PASS.",
+    "a5": {
+      "session": "/root/a5_cycle270",
+      "status": "PASS_EXACT_TREE_NO_FINDINGS",
+      "execution": "Focused 4 passed; expanded 185 passed plus 32 subtests; negative boundary probes and diff check exit 0.",
+      "findings": []
+    },
+    "ci": {
+      "status": "PASSED_EXACT_HEAD_OFFLINE_SAFETY_ONLY",
+      "run_id": 38711160679,
+      "job_id": 116342583563,
+      "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38711160679/job/116342583563",
+      "head_sha": "61c82ae2fc6ed1c608cca19f83cba9e719eceb42",
+      "conclusion": "success"
+    },
+    "github_receipt": {
+      "pr_comment_id": 6188651441,
+      "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256#issuecomment-6188651441"
+    }
+  },
+  "limits": {
+    "special_safeguard_bundle": "REJECTED_SOURCE_MISMATCH_NO_CALCULATION",
+    "verified_replacement": "UNAVAILABLE",
+    "full_pr245_pr256_acceptance": "NOT_PASS",
+    "legal_source_completeness": "NOT_PASS",
+    "lawful_populated_synchronized_ntm_snapshot": "UNAVAILABLE",
+    "a6": "core-s1-6415f443120f-r9-g106 unchanged and not sent",
+    "protected_actions_performed": false
+  },
+  "next_step": "Reconcile the next stale payment bundle against primary acts while keeping rejected and unverified data fail-closed."
+}
