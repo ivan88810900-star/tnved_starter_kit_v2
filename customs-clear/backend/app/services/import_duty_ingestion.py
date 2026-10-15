@@ -53,15 +53,16 @@ _PRINTING_INK_CODES = frozenset(
     }
 )
 _PRINTING_INK_EXPECTED_RATES = {
-    "3215110000": ("5%", "2026-01-01", "2026-06-30"),
-    "3215190000": ("0%", "2026-01-01", "2026-06-30"),
-    "3215110001": ("5%", "2026-07-01", None),
-    "3215110002": ("5%", "2026-07-01", None),
-    "3215110009": ("5%", "2026-07-01", None),
-    "3215190001": ("0%", "2026-07-01", None),
-    "3215190002": ("0%", "2026-07-01", None),
-    "3215190009": ("0%", "2026-07-01", None),
+    "3215110000": ("5%", "ett:2026-06-18", "2026-01-01", "2026-06-30"),
+    "3215190000": ("0%", "ett:2026-06-18", "2026-01-01", "2026-06-30"),
+    "3215110001": ("5%", "ett:2026-07-01", "2026-07-01", None),
+    "3215110002": ("5%", "ett:2026-07-01", "2026-07-01", None),
+    "3215110009": ("5%", "ett:2026-07-01", "2026-07-01", None),
+    "3215190001": ("0%", "ett:2026-07-01", "2026-07-01", None),
+    "3215190002": ("0%", "ett:2026-07-01", "2026-07-01", None),
+    "3215190009": ("0%", "ett:2026-07-01", "2026-07-01", None),
 }
+_PRINTING_INK_REGULATORY_ACT = "Решение Коллегии ЕЭК от 07.04.2026 № 43"
 _PRINTING_INK_ACT_URL = "https://old.adilet.zan.kz/rus/docs/H26EK000043"
 _PRINTING_INK_CHAPTER_URL = (
     "https://eec.eaeunion.org/comission/department/catr/ett/"
@@ -339,6 +340,7 @@ def _merge_printing_ink_amendment(
         payload.get("schema_version") != 1
         or payload.get("revision") != "ett:2026-07-01"
         or payload.get("effective_from") != "2026-07-01"
+        or payload.get("regulatory_act") != _PRINTING_INK_REGULATORY_ACT
         or payload.get("source_act_url") != _PRINTING_INK_ACT_URL
         or payload.get("source_chapter_url") != _PRINTING_INK_CHAPTER_URL
     ):
@@ -350,20 +352,21 @@ def _merge_printing_ink_amendment(
     if not raw_rows or any(not isinstance(row, dict) for row in raw_rows):
         return rows, None, ["printing_ink_amendment_malformed_rows"]
 
-    observed: dict[str, tuple[str, str | None, str | None]] = {}
+    observed: dict[str, tuple[str, str, str | None, str | None]] = {}
     for raw in raw_rows:
         code = re.sub(r"\D", "", str(raw.get("hs_code") or ""))[:10]
         rate = str(raw.get("duty_rate") or "").strip()
+        source_revision = str(raw.get("source_revision") or "").strip()
         valid_from = str(raw.get("valid_from") or "").strip() or None
         valid_to = str(raw.get("valid_to") or "").strip() or None
         if code in observed:
             return rows, None, [f"printing_ink_amendment_duplicate_code: {code}"]
-        observed[code] = (rate, valid_from, valid_to)
+        observed[code] = (rate, source_revision, valid_from, valid_to)
         expected_url = _PRINTING_INK_ACT_URL if code.endswith("0000") else _PRINTING_INK_CHAPTER_URL
         if raw.get("source_url") != expected_url:
             return rows, None, [f"printing_ink_amendment_source_url_mismatch: {code}"]
     if observed != _PRINTING_INK_EXPECTED_RATES:
-        return rows, None, ["printing_ink_amendment_scope_or_rate_mismatch"]
+        return rows, None, ["printing_ink_amendment_scope_rate_or_revision_mismatch"]
 
     _revision, amendment_rows, blockers = _extract_duty_rows(payload, raw_rows)
     if blockers or len(amendment_rows) != len(_PRINTING_INK_EXPECTED_RATES):

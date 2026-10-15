@@ -146,8 +146,18 @@ def test_apply_expires_old_codes_and_inserts_six_current_leaves(
     engine.dispose()
 
 
+@pytest.mark.parametrize(
+    ("field", "value"),
+    [
+        ("duty_rate", "4%"),
+        ("source_revision", "ett:2099-12-31"),
+    ],
+)
 def test_tampered_amendment_fails_closed(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    field: str,
+    value: str,
 ) -> None:
     import app.services.import_duty_ingestion as ingestion
 
@@ -176,7 +186,7 @@ def test_tampered_amendment_fails_closed(
         encoding="utf-8",
     )
     amendment = json.loads(AMENDMENT_PATH.read_text(encoding="utf-8"))
-    amendment["rates"][2]["duty_rate"] = "4%"
+    amendment["rates"][2][field] = value
     amendment_path.write_text(json.dumps(amendment), encoding="utf-8")
     monkeypatch.setattr(ingestion, "_BACKEND_ROOT", tmp_path)
 
@@ -185,4 +195,4 @@ def test_tampered_amendment_fails_closed(
     )
     assert parser_result["status"] == "parsed"
     assert rows
-    assert blockers == ["printing_ink_amendment_scope_or_rate_mismatch"]
+    assert blockers == ["printing_ink_amendment_scope_rate_or_revision_mismatch"]
