@@ -2179,7 +2179,7 @@
       "unique_source_pr_count": 29
     }
   },
-  "revision": 804,
+  "revision": 805,
   "runs": [
     {
       "head_sha": null,
@@ -7781,7 +7781,7 @@
       }
     }
   ],
-  "updated_at": "2026-10-15T02:58:52Z",
+  "updated_at": "2026-10-15T03:55:16Z",
   "previous_scheduled_product_checkpoint_174": {
     "updated_at": "2026-10-11T18:04:51.196Z",
     "checked_at": "2026-10-11T18:04:51.196Z",
@@ -14373,5 +14373,62 @@
       "checkpoint": "Evidence is stored in .ai/orchestration/evidence/cycle264_checkpoint.json; state CAS and lease release follow."
     },
     "next_step": "Repair the separate parent-existing test_rate_display missing hs_rates fixture failure without changing production rate semantics, then continue stale-source reconciliation."
+  },
+  "previous_scheduled_product_checkpoint_265": {
+    "updated_at": "2026-10-15T03:55:16Z",
+    "checked_at": "2026-10-15T03:55:16Z",
+    "pr": 256,
+    "branch": "agent/product-ntm-regressions-v1",
+    "head_sha": "0e9b39b4580de33ed6c02a976cdafc6837cc6e6e",
+    "tree_sha": "eac1723f88bbbaefc0a10cd7f945437957020fc8",
+    "parent_sha": "f2788ce1967320134d2896050623fbc37d405f5d",
+    "local_author_exact_tree_commit": "2e2e88dd89a53f6766151a79c7f95cfe0679d9ec",
+    "base_pr": 245,
+    "base_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
+    "block": "rate_display_disposable_database_isolation",
+    "status": "IMPLEMENTED_A5_PASS_CI_PASS",
+    "behavior": {
+      "reproduced": "All three test_rate_display.py cases failed on the exact parent because hs_rates was absent.",
+      "final": "The unchanged rate-display assertions now use a per-test disposable hs_rates schema and the minimal parent-rate row already required by the existing 45 RUB/l expectation.",
+      "boundaries": "Only the test fixture changed. Production missing-table behavior remains fail-closed and no product calculation, normative source or legal applicability changed."
+    },
+    "verification": {
+      "a0": "Parent focused exit 1 with 3 failed; repaired focused 3 passed; bounded adjacent profile 116 passed plus 71 subtests, exit 0; py_compile, diff-check and no-repository-SQLite checks exited 0.",
+      "a5": {
+        "session": "/root/a5_cycle265",
+        "status": "PASS_EXACT_TREE_NO_FINDINGS",
+        "execution": "Focused 3 passed and adjacent 116 passed plus 71 subtests; one-file scope, teardown and empty-schema fail-closed OperationalError were independently verified.",
+        "findings": []
+      },
+      "ci": {
+        "status": "PASSED_EXACT_HEAD_OFFLINE_SAFETY_ONLY",
+        "run_id": 38678637960,
+        "job_id": 116237878852,
+        "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38678637960/job/116237878852",
+        "head_sha": "0e9b39b4580de33ed6c02a976cdafc6837cc6e6e",
+        "conclusion": "success"
+      },
+      "github_receipt": {
+        "pr_comment_id": 6184021384
+      }
+    },
+    "blockers": [
+      "All six committed normative bundles remain stale and require lawful primary-source reconciliation.",
+      "Full PR245 product acceptance and legal/source completeness remain NOT PASS.",
+      "NTM full-sync remains blocked until a lawful populated synchronized snapshot is available."
+    ],
+    "a6": {
+      "request": "core-s1-6415f443120f-r9-g106",
+      "status": "UNCHANGED_NOT_SENT"
+    },
+    "coordination_queue": "Issue #257 bounded-probe receipt already exists and was not repeated.",
+    "protected_actions_performed": false,
+    "capabilities": {
+      "code_access": "Fresh exact PR256 author and independent A5 worktrees were available.",
+      "command_execution": "Git, Python and pytest were available; final A0 and A5 commands exited 0.",
+      "lawful_publication": "Draft PR256 was advanced by expected-head GitHub CAS under active lease generation 265.",
+      "checkpoint": "Evidence is stored in .ai/orchestration/evidence/cycle265_checkpoint.json; state CAS and lease release follow."
+    },
+    "next_step": "Run the next clean bounded backend fixture tranche on exact PR256 HEAD to identify a concrete remaining product/test defect, while keeping stale-source and populated-snapshot blockers explicit."
   }
 }

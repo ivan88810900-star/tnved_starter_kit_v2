@@ -1,0 +1,70 @@
+{
+  "schema_version": 1,
+  "cycle": 265,
+  "started_at": "2026-10-15T03:49:12Z",
+  "completed_at": "2026-10-15T03:55:16Z",
+  "executor": "/root/scheduled-cycle265-20261015T034912Z",
+  "lease": {
+    "generation": 265,
+    "token": "cda4e5aee0ad44438028782b27c55c13",
+    "acquisition_commit": "6a9396275690a111b45b2c49d97eb7eb6b1839cc"
+  },
+  "candidate": {
+    "pr": 256,
+    "branch": "agent/product-ntm-regressions-v1",
+    "parent_sha": "f2788ce1967320134d2896050623fbc37d405f5d",
+    "head_sha": "0e9b39b4580de33ed6c02a976cdafc6837cc6e6e",
+    "tree_sha": "eac1723f88bbbaefc0a10cd7f945437957020fc8",
+    "local_exact_tree_commit": "2e2e88dd89a53f6766151a79c7f95cfe0679d9ec",
+    "block": "rate_display_disposable_database_isolation",
+    "files": [
+      "customs-clear/backend/tests/test_rate_display.py"
+    ]
+  },
+  "reproduction": {
+    "status": "REPRODUCED_ON_EXACT_PARENT",
+    "command": "SECRET_KEY=test-only-cycle265-key DATABASE_URL=sqlite:////tmp/tariff-cycle265-repro.sqlite PYTHONPATH=. python -m pytest -q --tb=short tests/test_rate_display.py",
+    "exit_code": 1,
+    "output": "3 failed; sqlalchemy.exc.OperationalError: no such table: hs_rates"
+  },
+  "repair": {
+    "behavior": "Create a per-test disposable hs_rates schema, rebind the two service-local session factories and seed only the existing parent-rate expectation.",
+    "scope": "one test file; production and normative semantics unchanged; missing production table still propagates"
+  },
+  "verification": {
+    "a0": {
+      "command": "SECRET_KEY=test-only-cycle265-key DATABASE_URL=sqlite:////tmp/tariff-cycle265-author.sqlite PYTHONPATH=. python -m pytest -q --tb=short tests/test_invoice_and_compare.py tests/test_exchange_rates_fallback.py tests/test_data_refresh.py tests/test_smart_classifier.py tests/test_classify_api_security.py tests/test_custom_classifier_chain.py tests/test_upload_packing_list_api.py tests/test_safe_http_errors.py tests/test_rate_display.py",
+      "exit_code": 0,
+      "output": "116 passed, 71 subtests passed, three warnings; no repository SQLite artifact"
+    },
+    "a5": {
+      "session": "/root/a5_cycle265",
+      "status": "PASS_EXACT_TREE_NO_FINDINGS",
+      "commands": [
+        "focused: 3 passed, exit 0",
+        "adjacent bounded profile: 116 passed plus 71 subtests, exit 0",
+        "production empty-schema probe: expected hs_rates OperationalError propagated, exit 0",
+        "git diff --check and artifact checks: exit 0"
+      ],
+      "findings": []
+    },
+    "ci": {
+      "workflow": "Tariff agent safety",
+      "run_id": 38678637960,
+      "job_id": 116237878852,
+      "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38678637960/job/116237878852",
+      "conclusion": "success"
+    },
+    "github_receipt": {
+      "pr_comment_id": 6184021384
+    }
+  },
+  "limits": {
+    "full_pr245_acceptance": "NOT_PASS",
+    "legal_source_completeness": "NOT_PASS",
+    "lawful_populated_synchronized_ntm_snapshot": "UNAVAILABLE",
+    "a6": "core-s1-6415f443120f-r9-g106 unchanged and not sent",
+    "protected_actions_performed": false
+  },
+  "next_step": "Run the next clean bounded backend fixture tranche on exact PR256 HEAD to identify a concrete remaining product/test defect, while keeping stale-source and populated-snapshot blockers explicit."
+}

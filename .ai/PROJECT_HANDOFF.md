@@ -2058,3 +2058,14 @@ CI #255: [offline-safety PASS, run 37771953943](https://github.com/ivan88810900-
 - Fresh independent A5 `/root/a5_cycle264`: **PASS, no findings**. Its poison-ambient-DB focused run passed **1**, adjacent payment/ROP/risk profile passed **73**, and a production empty-schema probe confirmed that the missing-table error still propagates.
 - Exact-head CI [run 38673744569](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38673744569): **success**. PR receipt comment id `6183378494` records the candidate and checks.
 - Separate parent-existing fixture debt remains: three `test_rate_display.py` cases fail when `hs_rates` is absent. Full #245 product/legal/source acceptance remains NOT PASS; all six committed normative bundles remain stale; the lawful populated synchronized NTM snapshot remains unavailable. A6 is unchanged and undispatched; no protected action was performed.
+
+## 2026-10-15 — Rate-display database isolation completed on draft PR #256
+
+- Exact parent `f2788ce1967320134d2896050623fbc37d405f5d` failed all three `test_rate_display.py` cases because the disposable environment had no `hs_rates` table.
+- Draft [PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256) now publishes exact head `0e9b39b4580de33ed6c02a976cdafc6837cc6e6e`, tree `eac1723f88bbbaefc0a10cd7f945437957020fc8`; local author commit `2e2e88dd89a53f6766151a79c7f95cfe0679d9ec` has the exact same tree.
+- `test_rate_display.py` now creates a per-test disposable `hs_rates` schema, patches both bound readers and seeds only the parent rate already required by the unchanged 45 ₽/l expectation. Production missing-table behavior remains fail-closed; no product calculation, normative source or legal applicability changed.
+- A0 focused execution passed **3 tests**; the bounded adjacent profile passed **116 tests + 71 subtests**, exit 0. `py_compile`, diff-check and repository-artifact checks also exited 0.
+- Fresh independent A5 `/root/a5_cycle265`: **PASS, no findings**. It independently repeated focused **3 passed** and adjacent **116 + 71 subtests**, verified teardown and one-file scope, and confirmed an empty production-like schema still raises `OperationalError` for missing `hs_rates`.
+- Exact-head CI [run 38678637960 / job 116237878852](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38678637960/job/116237878852): **success**. PR receipt comment id `6184021384` records the candidate and checks.
+- Full PR #245 product/legal/source acceptance remains NOT PASS. All six committed normative bundles remain stale and the lawful populated synchronized NTM snapshot remains unavailable. A6 `core-s1-6415f443120f-r9-g106` is unchanged and undispatched; no protected action was performed.
+- Next: run the next clean bounded backend fixture tranche on this exact head and repair only a concretely reproduced defect while keeping source/snapshot blockers explicit.
