@@ -464,3 +464,18 @@ legacy (сверх structural). Контур по-прежнему **не под
 - Persistent A1/A2/A3/A4 ownership is historical. Exact legacy ownership is archived at `.ai/orchestration/evidence/legacy-agent-ownership-archive-20260929-gen42.json`.
 - Open PR classification and consolidation routing are authoritative in `.ai/orchestration/PR_INVENTORY_20260929.json`.
 - Current main baseline: `08e030a6053ac9638957119373797e0fbf2b10c2`. No protected merge, deploy, production write, flag, permission, secret, destructive migration, force push, or branch deletion was performed during normalization.
+
+## Cycle 277 checkpoint — PAY-5 VAT effective-period quarantine (2026-10-15)
+
+- Main remains `e526dfbdb5a31b01bf6f743da0288b88f916de0c`; no protected action was performed.
+- Draft PR #256 exact head `44c50df61747f09e4f876c0f751d7c23cbf56b30`, tree `43902a009e5949e4e37d2534411022a9c133530c`.
+- Confirmed defect: `vat:2026-06-18` applies 22% from 2025-01-01 with no row validity windows, while FNS binds the 20% to 22% transition to 2026-01-01.
+- The exact revision now fails closed at ingestion; persisted rows with this provenance withhold automatic VAT and final totals while keeping partial evidence. Manual VAT and later verified revisions remain eligible.
+- Exact-head offline-safety CI run 38816928278 / job 116703956398 passed (120 required safety tests and 4 snapshot tests). All nine changed Python blobs parse.
+- Product pytest and fresh independent A5 remain pending in this connector-only run. Status is IMPLEMENTED / SAFETY CI PASS / PRODUCT QA PENDING, not READY.
+- No inline review threads exist on the active #244/#245/#255/#256/#258/#259 stack.
+- Full #245/#256 acceptance and legal/source completeness remain NOT PASS; the lawful populated synchronized NTM snapshot remains unavailable.
+- A6 request `core-s1-6415f443120f-r9-g106` is unchanged and not sent.
+- Evidence: `.ai/orchestration/evidence/cycle277_checkpoint.json`; PR receipt: #256 comment 6203575372.
+- Next safe step: execute focused VAT ingestion/payment engine/quote/profile tests on exact head, obtain fresh independent A5, and correct any findings before readiness.
+
