@@ -20,7 +20,10 @@ from .normative_store import (
     get_tnved_context_for_hs,
 )
 from .compliance_resolver import pick_vat_preference_row
-from .payment_revision_utils import is_rejected_special_safeguard_revision
+from .payment_revision_utils import (
+    is_rejected_countervailing_revision,
+    is_rejected_special_safeguard_revision,
+)
 
 
 @dataclass
@@ -175,6 +178,15 @@ def _special_duty_window_status(row: SpecialDuty, on_date: date) -> tuple[bool, 
     return True, None
 
 
+def _is_rejected_trade_remedy_source(row: SpecialDuty) -> bool:
+    measure_type = (row.measure_type or "").strip().lower()
+    if measure_type == "special_safeguard":
+        return is_rejected_special_safeguard_revision(row.safeguard_source_revision)
+    if measure_type == "countervailing":
+        return is_rejected_countervailing_revision(row.countervailing_source_revision)
+    return False
+
+
 def _resolve_special_duties(
     hs_code: str,
     country: str | None,
@@ -249,15 +261,11 @@ def _resolve_special_duties(
         return 0.0, []
 
     if not country_norm:
-        rejected_source = any(
-            (r.measure_type or "").strip().lower() == "special_safeguard"
-            and is_rejected_special_safeguard_revision(r.safeguard_source_revision)
-            for r, _warning in active_rows
-        )
+        rejected_source = any(_is_rejected_trade_remedy_source(r) for r, _warning in active_rows)
         return 0.0, [
             {
                 "warning": (
-                    "Источник специальной защитной меры отозван; требуется ручная проверка."
+                    "Источник специальной/компенсационной меры отозван; требуется ручная проверка."
                     if rejected_source
                     else "Страна происхождения не указана. "
                     "Возможно применение антидемпинговых и иных специальных пошлин."
@@ -276,14 +284,11 @@ def _resolve_special_duties(
     details: list[dict[str, Any]] = []
     total = 0.0
     for r, date_warning in active_rows:
-        rejected_source = (
-            (r.measure_type or "").strip().lower() == "special_safeguard"
-            and is_rejected_special_safeguard_revision(r.safeguard_source_revision)
-        )
+        rejected_source = _is_rejected_trade_remedy_source(r)
         source_warning = None
         if rejected_source:
             source_warning = (
-                "Источник специальной защитной меры отозван: реквизиты актов не совпадают "
+                "Источник специальной/компенсационной меры отозван: реквизиты актов не совпадают "
                 "с официальным правовым порталом ЕАЭС; сумма не включена в итог."
             )
         needs_verification = bool(getattr(r, "needs_verification", False)) or rejected_source

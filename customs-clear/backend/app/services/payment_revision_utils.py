@@ -29,6 +29,10 @@ _REJECTED_SPECIAL_SAFEGUARD_REVISIONS = frozenset({"special-safeguard:2026-06-18
 _EEC_COUNTERVAILING_REVISION_RE = re.compile(
     r"^(?:countervailing|eec-countervailing|eec:countervailing):\d{4}-\d{2}-\d{2}$"
 )
+# This exact revision cites two acts that the EAEU legal portal does not
+# return for the claimed numbers and dates.  Keep the revocation bounded so a
+# later independently verified bundle can become eligible.
+_REJECTED_COUNTERVAILING_REVISIONS = frozenset({"countervailing:2026-06-18"})
 
 _UNSAFE_OFFICIAL_URL_EXACT = frozenset({"", "manual", "local-copy"})
 _UNSAFE_OFFICIAL_URL_SUBSTRINGS = (
@@ -444,7 +448,14 @@ def is_official_countervailing_ingestion_revision(revision: str | None) -> bool:
     rev = (revision or "").strip().lower()
     if not rev:
         return False
+    if rev in _REJECTED_COUNTERVAILING_REVISIONS:
+        return False
     return bool(_EEC_COUNTERVAILING_REVISION_RE.match(rev))
+
+
+def is_rejected_countervailing_revision(revision: str | None) -> bool:
+    """Return True only for explicitly revoked countervailing snapshots."""
+    return (revision or "").strip().lower() in _REJECTED_COUNTERVAILING_REVISIONS
 
 
 def is_official_countervailing_revision(revision: str | None) -> bool:
