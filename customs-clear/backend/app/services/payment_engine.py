@@ -20,6 +20,7 @@ from .normative_store import (
     get_tnved_context_for_hs,
 )
 from .compliance_resolver import pick_vat_preference_row
+from .payment_revision_utils import is_rejected_special_safeguard_revision
 
 
 @dataclass
@@ -192,9 +193,19 @@ def _resolve_special_duties(
         query = db.query(SpecialDuty).filter(
             SpecialDuty.hs_code_prefix.in_(list(by_prefix.keys())),
         )
-        if country_norm:
-            query = query.filter(SpecialDuty.origin_country == country_norm)
         rows = query.all()
+
+    if country_norm:
+        rows = [
+            row
+            for row in rows
+            if (row.origin_country or "").strip().upper() == country_norm
+            or (
+                not (row.origin_country or "").strip()
+                and (row.measure_type or "").strip().lower() == "special_safeguard"
+                and is_rejected_special_safeguard_revision(row.safeguard_source_revision)
+            )
+        ]
 
     active_rows: list[tuple[SpecialDuty, str | None]] = []
     for row in rows:
@@ -206,12 +217,21 @@ def _resolve_special_duties(
         return 0.0, []
 
     if not country_norm:
+        rejected_source = any(
+            (r.measure_type or "").strip().lower() == "special_safeguard"
+            and is_rejected_special_safeguard_revision(r.safeguard_source_revision)
+            for r, _warning in active_rows
+        )
         return 0.0, [
             {
                 "warning": (
-                    "Страна происхождения не указана. "
+                    "Источник специальной защитной меры отозван; требуется ручная проверка."
+                    if rejected_source
+                    else "Страна происхождения не указана. "
                     "Возможно применение антидемпинговых и иных специальных пошлин."
                 ),
+                "needs_verification": rejected_source,
+                "manual_review_required": rejected_source,
                 "affected_codes": sorted({r.hs_code_prefix for r, _warning in active_rows}),
                 "origin_countries": sorted(
                     {r.origin_country for r, _warning in active_rows if r.origin_country}
@@ -224,9 +244,19 @@ def _resolve_special_duties(
     details: list[dict[str, Any]] = []
     total = 0.0
     for r, date_warning in active_rows:
-        needs_verification = bool(getattr(r, "needs_verification", False))
+        rejected_source = (
+            (r.measure_type or "").strip().lower() == "special_safeguard"
+            and is_rejected_special_safeguard_revision(r.safeguard_source_revision)
+        )
+        source_warning = None
+        if rejected_source:
+            source_warning = (
+                "Источник специальной защитной меры отозван: реквизиты актов не совпадают "
+                "с официальным правовым порталом ЕАЭС; сумма не включена в итог."
+            )
+        needs_verification = bool(getattr(r, "needs_verification", False)) or rejected_source
         if date_warning or needs_verification:
-            warning = date_warning or (
+            warning = date_warning or source_warning or (
                 "Требуется ручная проверка товарного scope, исключений и производителя; "
                 "сумма специальной пошлины не включена в итог."
             )

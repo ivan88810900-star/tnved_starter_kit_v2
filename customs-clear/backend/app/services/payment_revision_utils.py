@@ -21,6 +21,10 @@ _EEC_ANTI_DUMPING_REVISION_RE = re.compile(
 _EEC_SPECIAL_SAFEGUARD_REVISION_RE = re.compile(
     r"^(?:special-safeguard|special_safeguard|eec-special-safeguard|eec:special-safeguard):\d{4}-\d{2}-\d{2}$"
 )
+# This exact revision was built from three rows whose cited acts do not match
+# the EAEU legal portal.  Keep the revocation bounded: later verified bundle
+# revisions remain eligible without weakening the domain/version checks.
+_REJECTED_SPECIAL_SAFEGUARD_REVISIONS = frozenset({"special-safeguard:2026-06-18"})
 # Countervailing contour: countervailing:YYYY-MM-DD | eec-countervailing:YYYY-MM-DD | eec:countervailing:YYYY-MM-DD
 _EEC_COUNTERVAILING_REVISION_RE = re.compile(
     r"^(?:countervailing|eec-countervailing|eec:countervailing):\d{4}-\d{2}-\d{2}$"
@@ -365,7 +369,14 @@ def is_official_special_safeguard_ingestion_revision(revision: str | None) -> bo
     rev = (revision or "").strip().lower()
     if not rev:
         return False
+    if rev in _REJECTED_SPECIAL_SAFEGUARD_REVISIONS:
+        return False
     return bool(_EEC_SPECIAL_SAFEGUARD_REVISION_RE.match(rev))
+
+
+def is_rejected_special_safeguard_revision(revision: str | None) -> bool:
+    """Return True only for explicitly revoked special-safeguard snapshots."""
+    return (revision or "").strip().lower() in _REJECTED_SPECIAL_SAFEGUARD_REVISIONS
 
 
 def is_official_special_safeguard_revision(revision: str | None) -> bool:
