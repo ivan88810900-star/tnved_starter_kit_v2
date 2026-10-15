@@ -294,6 +294,14 @@ def _build_assumptions(payload: dict[str, Any], raw: dict[str, Any]) -> list[Pay
             value=f"{customs_value:,.2f} RUB".replace(",", " "),
         )
     )
+    destination = (payload.get("destination_country") or "").strip().upper()
+    assumptions.append(
+        PaymentQuoteAssumption(
+            key="destination_country",
+            label="Страна назначения",
+            value=destination or "не указана",
+        )
+    )
     if invoice_currency != "RUB":
         assumptions.append(
             PaymentQuoteAssumption(
@@ -354,6 +362,10 @@ def build_payment_quote(payload: dict[str, Any]) -> PaymentQuoteResponse:
     raw = compute_payments(calc_payload)
     breakdown = raw.get("breakdown") or {}
     country = raw.get("country") or (str(payload.get("country") or "").upper().strip() or None)
+    destination_country = (
+        raw.get("destination_country")
+        or (str(payload.get("destination_country") or "").upper().strip() or None)
+    )
     dq = raw.get("data_quality") or {}
 
     if raw.get("status") == "EMBARGO":
@@ -389,6 +401,7 @@ def build_payment_quote(payload: dict[str, Any]) -> PaymentQuoteResponse:
             status="EMBARGO",
             hs_code=hs_code,
             country=country,
+            destination_country=destination_country,
             description=description,
             customs_value_rub=float(raw.get("customs_value") or 0.0),
             invoice_currency=invoice_currency,
@@ -469,6 +482,7 @@ def build_payment_quote(payload: dict[str, Any]) -> PaymentQuoteResponse:
         status=str(raw.get("status") or "OK"),
         hs_code=hs_code,
         country=country,
+        destination_country=destination_country,
         description=description,
         customs_value_rub=float(raw.get("customs_value") or 0.0),
         invoice_currency=invoice_currency,

@@ -310,6 +310,7 @@ def _normalize_measure_row(raw: dict[str, Any]) -> dict[str, Any] | None:
     row: dict[str, Any] = {
         "hs_code_prefix": prefix,
         "origin_country": origin,
+        "destination_country": str(raw.get("destination_country") or "").strip().upper(),
         "measure_type": "anti_dumping",
         "rate_type": rate_type,
         "rate_percent": float(rate_value or 0.0) if rate_type == "percent" else 0.0,
@@ -405,6 +406,7 @@ def _special_duty_identity(obj: Any) -> tuple[str, ...]:
         "anti_dumping",
         str(get("hs_code_prefix") or "").strip(),
         str(get("origin_country") or "").strip(),
+        str(get("destination_country") or "").strip(),
         _norm_identity_text(get("regulatory_act")),
         _norm_identity_text(get("manufacturer_exporter")),
         _norm_identity_text(get("product_description")),
@@ -436,6 +438,10 @@ def _row_needs_update(existing: SpecialDuty, row: dict[str, Any]) -> bool:
     if float(existing.rate_specific or 0) != float(row.get("rate_specific") or 0):
         return True
     if (existing.currency_code or "") != str(row.get("currency_code") or ""):
+        return True
+    if (existing.destination_country or "").strip() != str(
+        row.get("destination_country") or ""
+    ).strip():
         return True
     if (existing.manufacturer_exporter or "").strip() != str(row.get("manufacturer_exporter") or "").strip():
         return True
@@ -708,6 +714,7 @@ def _stamp_row_provenance(existing: SpecialDuty, *, row: dict[str, Any], synced_
 def _apply_row_fields(existing: SpecialDuty, row: dict[str, Any]) -> None:
     existing.hs_code_prefix = row["hs_code_prefix"]
     existing.origin_country = row["origin_country"]
+    existing.destination_country = str(row.get("destination_country") or "")
     existing.rate_percent = float(row.get("rate_percent") or 0.0)
     existing.rate_specific = float(row.get("rate_specific") or 0.0)
     existing.currency_code = str(row.get("currency_code") or "")
@@ -742,6 +749,7 @@ def _apply_anti_dumping_rows(
                     entity = SpecialDuty(
                         hs_code_prefix=row["hs_code_prefix"],
                         origin_country=row["origin_country"],
+                        destination_country=str(row.get("destination_country") or ""),
                         rate_percent=float(row.get("rate_percent") or 0.0),
                         rate_specific=float(row.get("rate_specific") or 0.0),
                         currency_code=str(row.get("currency_code") or ""),

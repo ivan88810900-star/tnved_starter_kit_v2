@@ -181,6 +181,7 @@ def _resolve_special_duties(
     customs_value: float,
     quantity: float,
     fx_rates: dict[str, float] | None,
+    destination_country: str | None = None,
 ) -> tuple[float, list[dict[str, Any]]]:
     cands = _special_duty_prefix_candidates(hs_code)
     if not cands:
@@ -188,6 +189,7 @@ def _resolve_special_duties(
     by_prefix = {p: m for p, m in cands}
     today = date.today()
     country_norm = (country or "").strip().upper() or None
+    destination_norm = (destination_country or "").strip().upper() or None
 
     with SessionLocal() as db:
         query = db.query(SpecialDuty).filter(
@@ -205,6 +207,36 @@ def _resolve_special_duties(
                 and (row.measure_type or "").strip().lower() == "special_safeguard"
                 and is_rejected_special_safeguard_revision(row.safeguard_source_revision)
             )
+        ]
+
+    destination_scoped = [
+        row for row in rows if (getattr(row, "destination_country", "") or "").strip()
+    ]
+    if destination_scoped and not destination_norm:
+        return 0.0, [
+            {
+                "warning": (
+                    "Страна назначения не указана. Для меры действуют национальные "
+                    "исключения/квоты; требуется ручная проверка."
+                ),
+                "needs_verification": True,
+                "manual_review_required": True,
+                "affected_codes": sorted({r.hs_code_prefix for r in destination_scoped}),
+                "destination_countries": sorted(
+                    {
+                        (getattr(r, "destination_country", "") or "").strip()
+                        for r in destination_scoped
+                    }
+                ),
+            }
+        ]
+    if destination_norm:
+        rows = [
+            row
+            for row in rows
+            if not (getattr(row, "destination_country", "") or "").strip()
+            or (getattr(row, "destination_country", "") or "").strip().upper()
+            == destination_norm
         ]
 
     active_rows: list[tuple[SpecialDuty, str | None]] = []
@@ -264,6 +296,7 @@ def _resolve_special_duties(
                 {
                     "hs_code_prefix": r.hs_code_prefix,
                     "origin_country": r.origin_country,
+                    "destination_country": getattr(r, "destination_country", "") or "",
                     "measure_type": r.measure_type or "anti_dumping",
                     "rate_percent": float(r.rate_percent or 0.0),
                     "rate_specific": float(r.rate_specific or 0.0),
@@ -291,6 +324,7 @@ def _resolve_special_duties(
             {
                 "hs_code_prefix": r.hs_code_prefix,
                 "origin_country": r.origin_country,
+                "destination_country": getattr(r, "destination_country", "") or "",
                 "measure_type": r.measure_type or "anti_dumping",
                 "rate_percent": float(r.rate_percent or 0.0),
                 "rate_specific": float(r.rate_specific or 0.0),
@@ -516,6 +550,9 @@ def compute_payments(payload: dict[str, Any]) -> dict[str, Any]:
     customs_value = float(payload.get("customs_value") or 0.0)
     freight = float(payload.get("freight") or 0.0)
     country = str(payload.get("country") or "").upper().strip() or None
+    destination_country = (
+        str(payload.get("destination_country") or "").upper().strip() or None
+    )
 
     if customs_value <= 0:
         raise ValueError("Таможенная стоимость должна быть > 0")
@@ -538,6 +575,7 @@ def compute_payments(payload: dict[str, Any]) -> dict[str, Any]:
                 "status": "EMBARGO",
                 "hs_code": hs_code,
                 "country": country,
+                "destination_country": destination_country,
                 "geo": {
                     "embargo": True,
                     "document_basis": basis[:512],
@@ -681,6 +719,7 @@ def compute_payments(payload: dict[str, Any]) -> dict[str, Any]:
         customs_value=customs_value,
         quantity=qty,
         fx_rates=payload.get("_fx_rates") if isinstance(payload.get("_fx_rates"), dict) else None,
+        destination_country=payload.get("destination_country"),
     )
     special_duties_warning: str | None = None
     first_special_warning = next(
@@ -798,6 +837,7 @@ def compute_payments(payload: dict[str, Any]) -> dict[str, Any]:
         "status": "OK",
         "hs_code": hs_code,
         "country": country,
+        "destination_country": destination_country,
         "customs_value": _round2(customs_value),
         "freight": _round2(freight),
         "insurance": _round2(insurance),
@@ -897,6 +937,8 @@ def compare_payment_scenarios(payload: dict[str, Any]) -> dict[str, Any]:
         econ["insurance"] = float(shared["insurance"])
     if (shared.get("country") or "").strip():
         econ["country"] = str(shared["country"]).strip().upper()
+    if (shared.get("destination_country") or "").strip():
+        econ["destination_country"] = str(shared["destination_country"]).strip().upper()
     if shared.get("quantity") is not None:
         econ["quantity"] = float(shared["quantity"])
 
@@ -914,6 +956,9 @@ def compare_payment_scenarios(payload: dict[str, Any]) -> dict[str, Any]:
         scenario_country = str(sc.get("country") or "").strip().upper()
         if scenario_country:
             merged["country"] = scenario_country
+        scenario_destination = str(sc.get("destination_country") or "").strip().upper()
+        if scenario_destination:
+            merged["destination_country"] = scenario_destination
         for opt in ("duty_rate", "vat_rate", "excise"):
             if sc.get(opt) is not None:
                 merged[opt] = sc[opt]
@@ -928,6 +973,7 @@ def compare_payment_scenarios(payload: dict[str, Any]) -> dict[str, Any]:
                 "label": label,
                 "hs_code": hs,
                 "country": (merged.get("country") or None),
+                "destination_country": (merged.get("destination_country") or None),
                 "delta_total_vs_first_rub": delta,
                 "total_payable": _round2(total),
                 "duty": res["breakdown"]["duty"],
