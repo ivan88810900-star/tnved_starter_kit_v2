@@ -1,0 +1,59 @@
+{
+  "schema_version": 1,
+  "cycle": 274,
+  "checked_at": "2026-10-15T11:11:03Z",
+  "lease_generation": 274,
+  "main_sha": "e526dfbdb5a31b01bf6f743da0288b88f916de0c",
+  "state_base_sha": "39e1f5fbd4557ff6d459512e376a89088c483ab4",
+  "pr": 256,
+  "branch": "agent/product-ntm-regressions-v1",
+  "parent_sha": "20cc589beebc9003a4427d146de8ce7692fa055b",
+  "head_sha": "3905ac6b73753953189e391e934d2a44d35666fa",
+  "tree_sha": "10f45b8e5f6e8cb0736096d5a98f6e467b617d6c",
+  "block": "pay3_printing_ink_ett_amendment",
+  "status": "IMPLEMENTED_A5_PASS_EXACT_HEAD_CI_PASS_SOURCE_BOUND",
+  "sources": [
+    {
+      "url": "https://adilet.zan.kz/rus/docs/H26EK000043",
+      "result": "Decision No. 43 removes 3215110000/3215190000, introduces six replacement leaves, and takes effect 30 days after official publication but not before 2026-07-01."
+    },
+    {
+      "url": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.32_2022_01.07.2026.pdf",
+      "result": "Official chapter 32 lists three 321511 leaves at 5 percent and three 321519 leaves at 0 percent."
+    }
+  ],
+  "behavior": {
+    "contour": "Only the two retired broad codes and six replacement leaves are replaced in the 13,319-row normative merge; non-target rows and 3215900001/3215900009 remain unchanged.",
+    "effective_dates": "The two retired rows end on 2026-06-30; six new leaves start on 2026-07-01.",
+    "source_binding": "Exact code, rate, source revision, validity, source URL and regulatory-act metadata are allowlisted; mismatch fails closed before apply.",
+    "idempotence": "Independent probe observed 8 inserts on first apply and 8 skips on the second apply."
+  },
+  "verification": {
+    "a0_product": "322 passed plus 22 subtests, exit 0",
+    "a0_control": "124 passed plus 175 subtests, exit 0",
+    "a5": {
+      "session": "/root/a5_cycle274",
+      "initial_finding": "P2 forged row-level source_revision was accepted on ca0332f841164a70c07ad9b072f27e4744f13b38.",
+      "final_status": "PASS_EXACT_TREE_NO_FINDINGS",
+      "execution": "265 passed plus 22 subtests, exit 0; forged revision and regulatory-act tamper probes blocked; deterministic merge and idempotence passed."
+    },
+    "exact_head_ci": {
+      "run_id": 38724995176,
+      "job_id": 116388518836,
+      "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38724995176/job/116388518836",
+      "conclusion": "success",
+      "scope": "offline-safety"
+    },
+    "pr_comment_id": 6190671870
+  },
+  "blockers": [
+    "Full PR245/PR256 product acceptance and legal/source completeness remain NOT PASS.",
+    "Lawful populated synchronized NTM snapshot remains unavailable."
+  ],
+  "a6": {
+    "request": "core-s1-6415f443120f-r9-g106",
+    "status": "UNCHANGED_NOT_SENT"
+  },
+  "protected_actions_performed": false,
+  "next_step": "Reconcile the next unresolved stale payment bundle against primary acts while preserving fail-closed source, applicability and total-withholding gates."
+}
