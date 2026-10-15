@@ -1,0 +1,73 @@
+{
+  "schema_version": 1,
+  "cycle": 264,
+  "started_at": "2026-10-15T02:49:48Z",
+  "completed_at": "2026-10-15T02:58:52Z",
+  "executor": "/root/scheduled-cycle264-20261015T024948Z",
+  "lease": {
+    "generation": 264,
+    "token": "7f7c5ebcc57e435e9f950a38c6401023",
+    "acquisition_commit": "e9907c5e4a90ff0f612142611fcd9ec403826eb5"
+  },
+  "candidate": {
+    "pr": 256,
+    "branch": "agent/product-ntm-regressions-v1",
+    "parent_sha": "8eda154558e486a3136d4ecfe31460793f89ec79",
+    "head_sha": "f2788ce1967320134d2896050623fbc37d405f5d",
+    "tree_sha": "f3d62421237e8eb4ba941199b4470a1f6750d68a",
+    "local_exact_tree_commit": "b08f8f4b5025d8bd466a0b9890754d366cb82eab",
+    "block": "scenario_comparison_disposable_database_isolation",
+    "files": [
+      "customs-clear/backend/tests/test_invoice_and_compare.py"
+    ]
+  },
+  "reproduction": {
+    "status": "REPRODUCED_ON_EXACT_PARENT",
+    "command": "SECRET_KEY=test-only-cycle264-key DATABASE_URL=sqlite:////tmp/tariff-cycle264-repro-20261015T0301Z.sqlite PYTHONPATH=. python -m pytest -q tests/test_invoice_and_compare.py::ScenarioCompareTests::test_compare_two_countries",
+    "exit_code": 1,
+    "output": "sqlalchemy.exc.OperationalError: no such table: country_risks"
+  },
+  "repair": {
+    "behavior": "Create an explicit disposable schema and rebind every service-local session factory used by the scenario-comparison E2E test.",
+    "scope": "one test file; production and normative semantics unchanged; missing production tables still propagate"
+  },
+  "verification": {
+    "a0": {
+      "command": "SECRET_KEY=test-only-cycle264-key DATABASE_URL=sqlite:////tmp/tariff-cycle264-author-20261015T0310Z.sqlite PYTHONPATH=. python -m pytest -q tests/test_invoice_and_compare.py tests/test_exchange_rates_fallback.py tests/test_data_refresh.py tests/test_smart_classifier.py tests/test_classify_api_security.py tests/test_custom_classifier_chain.py tests/test_upload_packing_list_api.py tests/test_safe_http_errors.py",
+      "exit_code": 0,
+      "output": "113 passed, 71 subtests passed, three warnings; no local DB/WAL/SHM remained"
+    },
+    "a5": {
+      "session": "/root/a5_cycle264",
+      "status": "PASS_EXACT_TREE_NO_FINDINGS",
+      "commands": [
+        "focused with poison ambient DB: 1 passed, exit 0",
+        "adjacent payment/quote/ROP/risk/exchange profile: 73 passed, exit 0",
+        "production empty-schema probe: expected country_risks OperationalError propagated, exit 0",
+        "git diff --check and artifact checks: exit 0"
+      ],
+      "findings": []
+    },
+    "ci": {
+      "workflow": "Tariff agent safety",
+      "run_id": 38673744569,
+      "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38673744569",
+      "conclusion": "success"
+    },
+    "github_receipt": {
+      "pr_comment_id": 6183378494
+    }
+  },
+  "next_reproduction": {
+    "status": "REPRODUCED_PARENT_EXISTING_FIXTURE_DEFECT",
+    "output": "Three test_rate_display.py cases fail on both parent and candidate because hs_rates is absent."
+  },
+  "limits": {
+    "full_pr245_acceptance": "NOT_PASS",
+    "legal_source_completeness": "NOT_PASS",
+    "lawful_populated_synchronized_ntm_snapshot": "UNAVAILABLE",
+    "a6": "core-s1-6415f443120f-r9-g106 unchanged and not sent",
+    "protected_actions_performed": false
+  },
+  "next_step": "Repair the separate test_rate_display missing hs_rates fixture failure without changing production rate semantics."
+}
