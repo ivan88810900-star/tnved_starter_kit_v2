@@ -7781,7 +7781,7 @@
       }
     }
   ],
-  "updated_at": "2026-10-15T09:13:43Z",
+  "updated_at": "2026-10-15T09:48:40Z",
   "previous_scheduled_product_checkpoint_174": {
     "updated_at": "2026-10-11T18:04:51.196Z",
     "checked_at": "2026-10-11T18:04:51.196Z",
@@ -14766,5 +14766,75 @@
       "checkpoint": "Evidence is stored in .ai/orchestration/evidence/cycle270_checkpoint.json; state CAS and lease release follow."
     },
     "next_step": "Reconcile the next stale payment bundle against primary acts. Keep rejected or unverified source rows visible only for manual review with all affected amounts and totals withheld."
+  },
+  "previous_scheduled_product_checkpoint_271": {
+    "updated_at": "2026-10-15T09:48:40Z",
+    "checked_at": "2026-10-15T09:48:40Z",
+    "pr": 256,
+    "branch": "agent/product-ntm-regressions-v1",
+    "head_sha": "e63d139be8a7de41fa4f72333cda35f0e75977c9",
+    "tree_sha": "adc0a9cdf409184924c8cabf5f12c4ac358f3812",
+    "parent_sha": "8aeade368ce6df34fe2d1eb8de6d4d05f2bcee7a",
+    "local_author_exact_tree_commit": "373561bac43474400c552c1a27432b389ea73611",
+    "base_pr": 245,
+    "base_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
+    "block": "pay2_eec_decision_46_spark_plug_destination_scope",
+    "status": "IMPLEMENTED_A5_PASS_EXACT_HEAD_CI_PASS_BOUNDED_REMEDY",
+    "behavior": {
+      "official_scope": "EEC Decision No. 46 applies to CN-origin spark plugs, exact TN VED 8511100001 and 8511100009, at 17.23 percent.",
+      "effective_window": "2026-05-10 through 2031-05-09 inclusive.",
+      "destination_scope": "RU calculates normally. AM, BY, KZ and KG national exceptions require manual review; missing destination also fails closed.",
+      "totals": "Blocking exceptional or unknown destination withholds the final total and special-duty amount while retaining a partial total. Generic missing-origin advisory remains non-blocking.",
+      "ingestion": "Ten destination-aware rows import idempotently: first apply 10 inserts, second apply 10 skips, with 10 unique identities."
+    },
+    "sources": [
+      {
+        "act": "EEC Decision No. 46",
+        "url": "https://docs.eaeunion.org/documents/463/10611/",
+        "verified": "2026-10-15",
+        "result": "Official act verified for scope, rate, dates and national exceptions"
+      }
+    ],
+    "verification": {
+      "author": "Exact-head 14-file profile passed 249 tests plus 22 subtests, exit 0; disposable full migration upgrade and destination-column assertion exited 0; git diff --check exited 0.",
+      "final_exact_command": "/workspace/scratch/bb84ae3e224a/.venv266/bin/python -m pytest -q tests/test_pay2_spark_plugs.py tests/test_pay1_titanium_dioxide.py tests/test_pay1_special_safeguard_source_quarantine.py tests/test_special_duties.py tests/test_payment_quote.py tests/test_payment_engine.py tests/test_invoice_and_compare.py tests/test_anti_dumping_ingestion.py tests/test_payment_data_coverage.py tests/test_official_payment_coverage_audit.py tests/test_api_integration.py tests/test_hs_leaf_clarification.py tests/test_compliance.py tests/test_assistant_payment_review.py",
+      "final_exact_command_result": "249 passed plus 22 subtests, exit 0",
+      "a5": {
+        "session": "/root/a5_cycle271",
+        "status": "PASS_EXACT_TREE_NO_FINDINGS",
+        "execution": "Independent 14-file suite passed 298 tests plus 54 subtests, exit 0; behavioral probe confirmed RU numeric calculation, KZ/missing-destination fail-closed totals, nonblocking missing-origin advisory, compare propagation, migration upgrade/downgrade and ingestion idempotence.",
+        "findings": []
+      },
+      "ci": {
+        "status": "PASSED_EXACT_HEAD_OFFLINE_SAFETY_ONLY",
+        "run_id": 38715082805,
+        "job_id": 116355701450,
+        "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38715082805/job/116355701450",
+        "head_sha": "e63d139be8a7de41fa4f72333cda35f0e75977c9",
+        "conclusion": "success"
+      },
+      "github_receipt": {
+        "pr_comment_id": 6189257942,
+        "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256#issuecomment-6189257942"
+      }
+    },
+    "blockers": [
+      "Other stale or rejected payment bundles remain unresolved.",
+      "Full PR245/PR256 product acceptance and legal-source completeness remain NOT PASS.",
+      "Lawful populated synchronized NTM snapshot remains unavailable."
+    ],
+    "a6": {
+      "request": "core-s1-6415f443120f-r9-g106",
+      "status": "UNCHANGED_NOT_SENT"
+    },
+    "coordination_queue": "Issue #257 bounded-probe receipt already exists and was not repeated.",
+    "protected_actions_performed": false,
+    "capabilities": {
+      "code_access": "Full exact candidate tree was available in isolated author, exact-remote and independent A5 worktrees.",
+      "command_execution": "Git, Python, Alembic and pytest executed; final A0 and A5 commands exited 0.",
+      "lawful_publication": "Draft PR256 branch and receipt were updated through GitHub CAS/connector under active lease generation 271.",
+      "checkpoint": "Evidence is stored in .ai/orchestration/evidence/cycle271_checkpoint.json; state CAS and lease release follow."
+    },
+    "next_step": "Reconcile the next unresolved stale payment bundle against primary acts while preserving fail-closed destination, source and snapshot gates."
   }
 }
