@@ -1,14 +1,14 @@
 {
-  "acquisition_note": "Fresh cycle-270 recovery at main e526dfbdb5a31b01bf6f743da0288b88f916de0c, PR256 ecc8dbf6c46bd57f5e93d04d56a7486030949a35 and state b1f543d43b48ec54b0dded1fa068b3f70f9d01ee; reconcile the next stale payment bundle against primary acts without protected or production actions.",
-  "expires_at": null,
-  "generation": 270,
-  "holder": null,
+  "acquisition_note": "Fresh cycle-271 recovery at main e526dfbdb5a31b01bf6f743da0288b88f916de0c, PR256 61c82ae2fc6ed1c608cca19f83cba9e719eceb42 and state f67dba91498cb9f747d88f9f536b3269db0c8211; reconcile the next stale payment bundle against primary acts without protected or production actions.",
+  "expires_at": "2026-10-15T09:52:00.623872Z",
+  "generation": 271,
+  "holder": "/root/scheduled-cycle271-20261015T092056Z",
   "lease_repair": {},
   "release_reason": "Cycle 270 quarantined invalid special-safeguard sources on PR256 exact head 61c82ae2fc6ed1c608cca19f83cba9e719eceb42, tree 026a63587c9ab6c06186eca7ad87009466f9bfa5. Author payment/ingestion profile passed 219 tests plus 54 subtests; tariff-agent safety passed 124 tests plus 175 subtests; independent A5 /root/a5_cycle270 passed exact tree with no findings; exact-head CI 38711160679 succeeded and PR receipt 6188651441 was published. State checkpoint 047fe0563f18cdbba9910643684ba93acc55ceda passed state CI 38711744384. Rejected bundle and missing verified replacement/populated synchronized NTM snapshot remain blocked; full PR245/PR256 acceptance NOT PASS; A6 unchanged/not sent.",
   "released_by": "/root/scheduled-cycle270-20261015T084813Z",
   "schema_version": 1,
   "serialization_repair": {},
-  "state": "released",
-  "token": null,
-  "updated_at": "2026-10-15T09:18:03.195925Z"
+  "state": "active",
+  "token": "3fadbfa1c56844eabf7998be485df8f9",
+  "updated_at": "2026-10-15T09:22:00.623872Z"
 }
