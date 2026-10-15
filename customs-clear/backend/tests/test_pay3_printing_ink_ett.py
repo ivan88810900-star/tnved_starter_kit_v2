@@ -113,14 +113,14 @@ def test_apply_expires_old_codes_and_inserts_six_current_leaves(
                     hs_prefix="3215110000",
                     duty_rate="5%",
                     source_revision="ett:2026-06-18",
-                    source_url="https://eec.eaeunion.org/comission/department/catr/ett/",
+                    source_url=_PRINTING_INK_ACT_URL,
                 ),
                 HsRate(
                     hs_code="3215190000",
                     hs_prefix="3215190000",
                     duty_rate="0%",
                     source_revision="ett:2026-06-18",
-                    source_url="https://eec.eaeunion.org/comission/department/catr/ett/",
+                    source_url=_PRINTING_INK_ACT_URL,
                 ),
             ]
         )
