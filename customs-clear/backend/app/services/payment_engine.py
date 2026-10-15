@@ -800,7 +800,6 @@ def compute_payments(payload: dict[str, Any]) -> dict[str, Any]:
     unresolved_special_duty = any(
         detail.get("manual_review_required")
         or detail.get("needs_verification")
-        or detail.get("warning")
         for detail in special_duties_details
     )
 
@@ -988,7 +987,6 @@ def compare_payment_scenarios(payload: dict[str, Any]) -> dict[str, Any]:
         unresolved_special = any(
             detail.get("manual_review_required")
             or detail.get("needs_verification")
-            or detail.get("warning")
             for detail in special_details
         )
         anti_dumping_total = (

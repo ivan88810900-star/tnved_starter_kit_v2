@@ -26,7 +26,6 @@ def _map_raw_to_profile(
     unresolved_special = any(
         detail.get("manual_review_required")
         or detail.get("needs_verification")
-        or detail.get("warning")
         for detail in special_details
     )
     total_raw = breakdown.get("total_payable")
