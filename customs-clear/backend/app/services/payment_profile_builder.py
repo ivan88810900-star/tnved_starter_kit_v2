@@ -29,6 +29,8 @@ def _map_raw_to_profile(
         for detail in special_details
     )
     total_raw = breakdown.get("total_payable")
+    vat_raw = breakdown.get("vat")
+    payment_unresolved = bool((raw_result.get("data_quality") or {}).get("manual_review_required"))
     anti_dumping = (
         None
         if unresolved_special
@@ -67,14 +69,14 @@ def _map_raw_to_profile(
         ),
         breakdown=MoneyBreakdown(
             base_duty=float(breakdown.get("duty") or 0.0),
-            vat=float(breakdown.get("vat") or 0.0),
+            vat=float(vat_raw) if vat_raw is not None else None,
             excise=float(breakdown.get("excise") or 0.0),
             anti_dumping=anti_dumping,
             customs_fee=float(breakdown.get("customs_fee") or 0.0),
             total_payable=float(total_raw) if total_raw is not None else None,
         ),
         documents=documents,
-        blocking_issue=blocking_issue or unresolved_special,
+        blocking_issue=blocking_issue or unresolved_special or payment_unresolved,
         geo=raw_result.get("geo"),
         data_quality=raw_result.get("data_quality"),
     )
