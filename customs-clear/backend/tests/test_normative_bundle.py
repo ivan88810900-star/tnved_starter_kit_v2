@@ -44,26 +44,32 @@ def _sha256(path: Path) -> str:
 
 
 def _protected_paths() -> set[Path]:
-    paths = {DEFAULT_DATABASE.resolve(), PINNED_CATALOGUE.resolve()}
+    base_paths = {DEFAULT_DATABASE.resolve(), PINNED_CATALOGUE.resolve()}
     configured_url = make_url(app_db.DATABASE_URL)
     if configured_url.drivername.startswith("sqlite") and configured_url.database:
-        paths.add(Path(configured_url.database).resolve())
+        base_paths.add(Path(configured_url.database).resolve())
 
     source_database = os.environ.get("TNVED_SOURCE_DB", "").strip()
     if source_database:
         if source_database.startswith("sqlite:"):
             source_url = make_url(source_database)
             if source_url.database:
-                paths.add(Path(source_url.database).resolve())
+                base_paths.add(Path(source_url.database).resolve())
         elif "://" not in source_database:
-            paths.add(Path(source_database).resolve())
-    return paths
+            base_paths.add(Path(source_database).resolve())
+    return {
+        candidate
+        for path in base_paths
+        for candidate in (path, Path(f"{path}-wal"), Path(f"{path}-shm"))
+    }
 
 
-def _protected_fingerprints() -> dict[Path, str | None]:
+def _protected_fingerprints(
+    paths: set[Path] | None = None,
+) -> dict[Path, str | None]:
     return {
         path: _sha256(path) if path.is_file() else None
-        for path in _protected_paths()
+        for path in (paths if paths is not None else _protected_paths())
     }
 
 
@@ -74,54 +80,113 @@ def _normative_bundle_database(
     """Import test bundles only into a disposable bootstrapped catalogue."""
     temp_dir = tmp_path_factory.mktemp("normative-bundle")
     database = temp_dir / "normative-bundle.db"
-    protected_hashes = _protected_fingerprints()
-    env = os.environ.copy()
-    env.pop("DATABASE_URL", None)
-    env.pop("TNVED_SOURCE_DB", None)
-    result = subprocess.run(
-        [sys.executable, str(BOOTSTRAP_SCRIPT), str(database)],
-        cwd=BACKEND_ROOT,
-        env=env,
-        text=True,
-        capture_output=True,
-        check=False,
-    )
-    assert result.returncode == 0, result.stdout + result.stderr
-    assert _protected_fingerprints() == protected_hashes
-
-    engine = create_engine(
-        f"sqlite:///{database}",
-        connect_args={"check_same_thread": False},
-    )
-    factory = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    protected_paths = _protected_paths()
+    protected_hashes = _protected_fingerprints(protected_paths)
+    original_engine = app_db.engine
+    original_session = app_db.SessionLocal
+    preloaded_app_modules = {
+        module_name
+        for module_name in sys.modules
+        if module_name == "app" or module_name.startswith("app.")
+    }
+    engine = None
+    factory = None
     patches = pytest.MonkeyPatch()
-    patches.setattr(sys.modules[__name__], "init_db", lambda: None)
-    patches.setattr(app_main, "init_db", lambda: None)
-    patches.setattr(app_db, "engine", engine)
-    patches.setattr(app_db, "SessionLocal", factory)
-    patches.setattr(normative_store, "engine", engine)
-    patches.setattr(normative_store, "SessionLocal", factory)
-    patches.setattr(payment_engine, "SessionLocal", factory)
-    patches.setattr(tnved_fts, "engine", engine)
-    patches.setattr(tnved_fts, "_fts_ready", None)
-    patches.setattr(permits_jobs, "mark_interrupted_jobs_on_startup", lambda: None)
-    patches.setattr(ved_intel_jobs, "mark_interrupted_ved_intel_jobs_on_startup", lambda: None)
-
-    async def _skip_exchange_rate_update() -> None:
-        return None
-
-    patches.setattr(app_main, "update_exchange_rates_from_cbrf", _skip_exchange_rate_update)
 
     try:
+        database_url = f"sqlite:///{database}"
+        patches.setenv("DATABASE_URL", database_url)
+        patches.delenv("TNVED_SOURCE_DB", raising=False)
+        result = subprocess.run(
+            [sys.executable, str(BOOTSTRAP_SCRIPT), str(database)],
+            cwd=BACKEND_ROOT,
+            env=os.environ.copy(),
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+        assert result.returncode == 0, result.stdout + result.stderr
+        assert _protected_fingerprints(protected_paths) == protected_hashes
+
+        engine = create_engine(
+            database_url,
+            connect_args={"check_same_thread": False},
+        )
+        factory = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+        # Rebind every preloaded alias by identity.  A fixed module list misses
+        # aliases imported by an earlier test module (for example rate_display).
+        for module_name, module in tuple(sys.modules.items()):
+            if module is None or not (
+                module_name == "app" or module_name.startswith("app.")
+            ):
+                continue
+            if getattr(module, "SessionLocal", None) is original_session:
+                patches.setattr(module, "SessionLocal", factory)
+            if getattr(module, "engine", None) is original_engine:
+                patches.setattr(module, "engine", engine)
+
+        patches.setattr(sys.modules[__name__], "init_db", lambda: None)
+        patches.setattr(app_main, "init_db", lambda: None)
+        patches.setattr(normative_store, "engine", engine)
+        patches.setattr(normative_store, "SessionLocal", factory)
+        patches.setattr(payment_engine, "SessionLocal", factory)
+        patches.setattr(tnved_fts, "engine", engine)
+        patches.setattr(tnved_fts, "_fts_ready", None)
+        patches.setattr(permits_jobs, "mark_interrupted_jobs_on_startup", lambda: None)
+        patches.setattr(
+            ved_intel_jobs,
+            "mark_interrupted_ved_intel_jobs_on_startup",
+            lambda: None,
+        )
+
+        async def _skip_exchange_rate_update() -> None:
+            return None
+
+        patches.setattr(
+            app_main,
+            "update_exchange_rates_from_cbrf",
+            _skip_exchange_rate_update,
+        )
+
         yield factory
     finally:
-        patches.undo()
-        engine.dispose()
-        for suffix in ("", "-shm", "-wal"):
-            candidate = Path(f"{database}{suffix}")
-            if candidate.exists():
-                candidate.unlink()
-        assert _protected_fingerprints() == protected_hashes
+        try:
+            patches.undo()
+        finally:
+            try:
+                if factory is not None and engine is not None:
+                    # Modules imported after the initial scan copy the
+                    # disposable aliases from app.db; restore those aliases
+                    # before discarding them.
+                    for module_name, module in tuple(sys.modules.items()):
+                        if module is None or not (
+                            module_name == "app" or module_name.startswith("app.")
+                        ):
+                            continue
+                        if getattr(module, "SessionLocal", None) is factory:
+                            setattr(module, "SessionLocal", original_session)
+                        if getattr(module, "engine", None) is engine:
+                            setattr(module, "engine", original_engine)
+                    for module_name in tuple(sys.modules):
+                        if (
+                            module_name not in preloaded_app_modules
+                            and (
+                                module_name == "app"
+                                or module_name.startswith("app.")
+                            )
+                        ):
+                            sys.modules.pop(module_name, None)
+            finally:
+                try:
+                    if engine is not None:
+                        engine.dispose()
+                finally:
+                    for suffix in ("", "-shm", "-wal"):
+                        candidate = Path(f"{database}{suffix}")
+                        if candidate.exists():
+                            candidate.unlink()
+                    assert _protected_fingerprints(protected_paths) == protected_hashes
 
 
 class NormativeBundleTests(unittest.TestCase):
