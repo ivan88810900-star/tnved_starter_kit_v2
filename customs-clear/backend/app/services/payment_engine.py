@@ -5,8 +5,6 @@ from dataclasses import dataclass
 from datetime import date
 from typing import Any
 
-from sqlalchemy import or_
-
 from ..db import SessionLocal
 from ..models.tnved import Commodity, HsDutyRule, SpecialDuty, VatPreference
 from .customs_fees import calculate_customs_fee
@@ -153,6 +151,29 @@ def _special_duty_prefix_candidates(hs_code: str) -> list[tuple[str, int]]:
     return [(p, m) for p, m in out if not (p in seen or seen.add(p))]
 
 
+def _special_duty_window_status(row: SpecialDuty, on_date: date) -> tuple[bool, str | None]:
+    """Return active flag and a fail-closed warning for malformed legal dates."""
+    boundaries: list[tuple[str, str]] = [
+        ("effective_from", str(row.effective_from or "").strip()),
+        ("effective_to", str(row.effective_to or "").strip()),
+    ]
+    parsed: dict[str, date | None] = {}
+    for field, raw in boundaries:
+        if not raw:
+            parsed[field] = None
+            continue
+        try:
+            parsed[field] = date.fromisoformat(raw)
+        except ValueError:
+            return True, f"Требуется ручная проверка: некорректная дата {field}={raw!r}."
+
+    if parsed["effective_from"] is not None and on_date < parsed["effective_from"]:
+        return False, None
+    if parsed["effective_to"] is not None and on_date > parsed["effective_to"]:
+        return False, None
+    return True, None
+
+
 def _resolve_special_duties(
     hs_code: str,
     country: str | None,
@@ -164,23 +185,24 @@ def _resolve_special_duties(
     if not cands:
         return 0.0, []
     by_prefix = {p: m for p, m in cands}
-    today = date.today().isoformat()
+    today = date.today()
     country_norm = (country or "").strip().upper() or None
 
     with SessionLocal() as db:
         query = db.query(SpecialDuty).filter(
             SpecialDuty.hs_code_prefix.in_(list(by_prefix.keys())),
-            or_(
-                SpecialDuty.effective_to.is_(None),
-                SpecialDuty.effective_to == "",
-                SpecialDuty.effective_to >= today,
-            ),
         )
         if country_norm:
             query = query.filter(SpecialDuty.origin_country == country_norm)
         rows = query.all()
 
-    if not rows:
+    active_rows: list[tuple[SpecialDuty, str | None]] = []
+    for row in rows:
+        active, date_warning = _special_duty_window_status(row, today)
+        if active:
+            active_rows.append((row, date_warning))
+
+    if not active_rows:
         return 0.0, []
 
     if not country_norm:
@@ -190,8 +212,10 @@ def _resolve_special_duties(
                     "Страна происхождения не указана. "
                     "Возможно применение антидемпинговых и иных специальных пошлин."
                 ),
-                "affected_codes": sorted({r.hs_code_prefix for r in rows}),
-                "origin_countries": sorted({r.origin_country for r in rows if r.origin_country}),
+                "affected_codes": sorted({r.hs_code_prefix for r, _warning in active_rows}),
+                "origin_countries": sorted(
+                    {r.origin_country for r, _warning in active_rows if r.origin_country}
+                ),
             }
         ]
 
@@ -199,7 +223,32 @@ def _resolve_special_duties(
     rates.update({(k or "").upper(): float(v) for k, v in (fx_rates or {}).items()})
     details: list[dict[str, Any]] = []
     total = 0.0
-    for r in rows:
+    for r, date_warning in active_rows:
+        needs_verification = bool(getattr(r, "needs_verification", False))
+        if date_warning or needs_verification:
+            warning = date_warning or (
+                "Требуется ручная проверка товарного scope, исключений и производителя; "
+                "сумма специальной пошлины не включена в итог."
+            )
+            details.append(
+                {
+                    "hs_code_prefix": r.hs_code_prefix,
+                    "origin_country": r.origin_country,
+                    "measure_type": r.measure_type or "anti_dumping",
+                    "rate_percent": float(r.rate_percent or 0.0),
+                    "rate_specific": float(r.rate_specific or 0.0),
+                    "currency_code": (r.currency_code or "RUB").upper().strip(),
+                    "regulatory_act": r.regulatory_act or "",
+                    "manufacturer_exporter": r.manufacturer_exporter or "",
+                    "product_description": r.product_description or "",
+                    "needs_verification": True,
+                    "manual_review_required": True,
+                    "warning": warning,
+                    "amount": None,
+                    "match_len": by_prefix.get(r.hs_code_prefix, 0),
+                }
+            )
+            continue
         part_ad = customs_value * float(r.rate_percent or 0.0) / 100.0
         ccy = (r.currency_code or "RUB").upper().strip()
         if ccy not in rates:
@@ -218,7 +267,9 @@ def _resolve_special_duties(
                 "currency_code": ccy,
                 "fx_rate": fx,
                 "regulatory_act": r.regulatory_act or "",
-                "needs_verification": bool(getattr(r, "needs_verification", False)),
+                "manufacturer_exporter": r.manufacturer_exporter or "",
+                "product_description": r.product_description or "",
+                "needs_verification": False,
                 "amount": _round2(part),
                 "match_len": by_prefix.get(r.hs_code_prefix, 0),
             }
@@ -602,8 +653,12 @@ def compute_payments(payload: dict[str, Any]) -> dict[str, Any]:
         fx_rates=payload.get("_fx_rates") if isinstance(payload.get("_fx_rates"), dict) else None,
     )
     special_duties_warning: str | None = None
-    if special_duties_details and special_duties_details[0].get("warning"):
-        special_duties_warning = str(special_duties_details[0]["warning"])
+    first_special_warning = next(
+        (detail.get("warning") for detail in special_duties_details if detail.get("warning")),
+        None,
+    )
+    if first_special_warning:
+        special_duties_warning = str(first_special_warning)
 
     # Recycling fee (утильсбор) for vehicles (8701-8705, 8711)
     recycling_fee_amount = 0.0

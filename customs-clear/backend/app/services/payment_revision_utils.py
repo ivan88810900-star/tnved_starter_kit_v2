@@ -259,8 +259,10 @@ def is_unsafe_official_source_url(url: str | None) -> bool:
     return any(token in u for token in _UNSAFE_OFFICIAL_URL_SUBSTRINGS)
 
 
-# Официальный домен торговых мер ЕАЭС (anti-dumping контур).
-_EEC_OFFICIAL_NETLOC = "eec.eaeunion.org"
+# Официальные домены ЕАЭС для торговых мер и опубликованных актов.
+_EEC_OFFICIAL_NETLOCS = frozenset(
+    {"eec.eaeunion.org", "docs.eaeunion.org", "remedies.eaeunion.org"}
+)
 
 
 def is_safe_official_anti_dumping_source_url(
@@ -268,8 +270,9 @@ def is_safe_official_anti_dumping_source_url(
 ) -> bool:
     """Строгий allowlist для official anti-dumping URL.
 
-    Принимает только https:// на eec.eaeunion.org (и поддоменах) и/или домене из
-    registry official_url. Отклоняет non-HTTPS, произвольные внешние домены и
+    Принимает только https:// на известных официальных доменах ЕАЭС (и
+    поддоменах) и/или домене из registry official_url. Отклоняет non-HTTPS,
+    произвольные внешние домены и
     placeholders (example.com / localhost / 127.0.0.1 / seed:// / file:// / manual / local-copy / empty).
     """
     raw = (url or "").strip()
@@ -287,7 +290,7 @@ def is_safe_official_anti_dumping_source_url(
     netloc = _url_netloc(raw)
     if not netloc:
         return False
-    allowed_netlocs = {_EEC_OFFICIAL_NETLOC}
+    allowed_netlocs = set(_EEC_OFFICIAL_NETLOCS)
     if registry_official_url:
         reg_netloc = _url_netloc(registry_official_url)
         if reg_netloc:

@@ -40,7 +40,7 @@ def _registry_official_anti_dumping_url() -> str | None:
 
 
 def _is_unsafe_anti_dumping_url(url: str) -> bool:
-    """Строгий allowlist: только eec.eaeunion.org / registry domain через HTTPS."""
+    """Строгий allowlist: официальные домены ЕАЭС / registry через HTTPS."""
     return not is_safe_official_anti_dumping_source_url(
         url, registry_official_url=_registry_official_anti_dumping_url()
     )
@@ -322,6 +322,7 @@ def _normalize_measure_row(raw: dict[str, Any]) -> dict[str, Any] | None:
         "effective_to": str(raw.get("effective_to") or raw.get("valid_to") or "").strip(),
         "source_revision": str(raw.get("source_revision") or "").strip(),
         "source_url": str(raw.get("source_url") or "").strip(),
+        "needs_verification": bool(raw.get("needs_verification", False)),
     }
     return row
 
@@ -454,12 +455,76 @@ def _row_needs_update(existing: SpecialDuty, row: dict[str, Any]) -> bool:
         return True
     if (existing.source_url or "").strip() != str(row.get("source_url") or "").strip():
         return True
+    if bool(existing.needs_verification) != bool(row.get("needs_verification")):
+        return True
     return False
+
+
+def _has_titanium_dioxide_scope_replacement(rows: list[dict[str, Any]]) -> bool:
+    """Require both official active windows before retiring the superseded broad row."""
+    windows = {
+        (
+            str(row.get("effective_from") or ""),
+            str(row.get("effective_to") or ""),
+        )
+        for row in rows
+        if row.get("hs_code_prefix") == "3206110000"
+        and row.get("origin_country") == "CN"
+        and "№ 96" in str(row.get("regulatory_act") or "")
+        and is_official_anti_dumping_ingestion_revision(
+            str(row.get("source_revision") or "")
+        )
+    }
+    return {
+        ("2025-11-16", "2026-10-02"),
+        ("2027-08-11", "2030-11-15"),
+    }.issubset(windows)
+
+
+def _legacy_titanium_dioxide_row(candidate: SpecialDuty) -> bool:
+    """Match only the exact official row superseded by Decisions No. 96/124."""
+    return (
+        candidate.measure_type == "anti_dumping"
+        and candidate.hs_code_prefix == "3206"
+        and candidate.origin_country == "CN"
+        and float(candidate.rate_percent or 0) == 16.25
+        and float(candidate.rate_specific or 0) == 0.0
+        and (candidate.currency_code or "") == "USD"
+        and (candidate.regulatory_act or "")
+        == "Решение Коллегии ЕЭК № 96 от 14.10.2025"
+        and (candidate.manufacturer_exporter or "") == ""
+        and (candidate.product_description or "")
+        == "Диоксид титана / пигменты TiO2 (до 16,25% по изготовителю, ЕЭК №96)"
+        and (candidate.effective_from or "") == "2025-11-16"
+        and (candidate.effective_to or "") == "2030-10-14"
+        and (candidate.source_code or "") == _ANTI_DUMPING_SOURCE_CODE
+        and (candidate.source_revision or "") == "anti-dumping:2026-06-23"
+        and (candidate.source_url or "").strip()
+        == "https://remedies.eaeunion.org/dimd/ru"
+    )
+
+
+def _superseded_official_rows(db, rows: list[dict[str, Any]]) -> list[SpecialDuty]:
+    """Return the bounded set of official rows explicitly superseded by this bundle."""
+    if not _has_titanium_dioxide_scope_replacement(rows):
+        return []
+    candidates = (
+        db.query(SpecialDuty)
+        .filter(
+            SpecialDuty.hs_code_prefix == "3206",
+            SpecialDuty.origin_country == "CN",
+            SpecialDuty.measure_type == "anti_dumping",
+            SpecialDuty.source_code == _ANTI_DUMPING_SOURCE_CODE,
+        )
+        .all()
+    )
+    return [candidate for candidate in candidates if _legacy_titanium_dioxide_row(candidate)]
 
 
 def _plan_anti_dumping_rows(rows: list[dict[str, Any]]) -> AntiDumpingRowCounts:
     counts = AntiDumpingRowCounts(total_in_source=len(rows))
     with SessionLocal() as db:
+        counts.retire = len(_superseded_official_rows(db, rows))
         for row in rows:
             existing = _lookup_special_duty(db, row)
             if existing is None:
@@ -665,6 +730,9 @@ def _apply_anti_dumping_rows(
     counts = AntiDumpingRowCounts(total_in_source=len(rows))
     with SessionLocal() as db:
         try:
+            for superseded in _superseded_official_rows(db, rows):
+                db.delete(superseded)
+                counts.retire += 1
             for row in rows:
                 if not row.get("hs_code_prefix") or not row.get("regulatory_act"):
                     db.rollback()
@@ -753,10 +821,19 @@ def run_anti_dumping_apply(*, rel_path: str | None = None) -> dict[str, Any]:
         )
     row_counts = applied
 
+    row_revisions = {
+        str(row.get("source_revision") or "").strip().lower()
+        for row in rows
+        if str(row.get("source_revision") or "").strip()
+    }
+    partial_refresh = any(row_revision != revision.lower() for row_revision in row_revisions)
+
     entry = get_payment_source_entry(_REGISTRY_SOURCE_CODE)
     note_txt = (
         f"anti-dumping apply {bundle_path}: revision={revision}; "
-        f"insert={row_counts.insert}, update={row_counts.update}, skip={row_counts.skip}; "
+        f"insert={row_counts.insert}, update={row_counts.update}, "
+        f"retire={row_counts.retire}, skip={row_counts.skip}; "
+        f"partial_refresh={str(partial_refresh).lower()}; "
         f"checksum={provenance.checksum_sha256 or 'n/a'}"
     )
     upsert_source_status(
@@ -764,14 +841,14 @@ def run_anti_dumping_apply(*, rel_path: str | None = None) -> dict[str, Any]:
         source_name=entry.name if entry else provenance.source_name,
         source_url=provenance.official_url or bundle_path,
         revision=revision,
-        is_stale=False,
+        is_stale=partial_refresh,
         note=note_txt,
     )
     append_sync_log(
         source_code=_ANTI_DUMPING_SOURCE_CODE,
-        status="OK",
+        status="PARTIAL" if partial_refresh else "OK",
         revision=revision,
-        rows_affected=row_counts.insert + row_counts.update,
+        rows_affected=row_counts.insert + row_counts.update + row_counts.retire,
         note=note_txt,
     )
 
@@ -780,7 +857,7 @@ def run_anti_dumping_apply(*, rel_path: str | None = None) -> dict[str, Any]:
         status="OK",
         mode="apply",
         dry_run=False,
-        db_mutated=(row_counts.insert + row_counts.update) > 0,
+        db_mutated=(row_counts.insert + row_counts.update + row_counts.retire) > 0,
         provenance=provenance,
         row_counts=row_counts,
         blockers=[],
@@ -792,6 +869,11 @@ def run_anti_dumping_apply(*, rel_path: str | None = None) -> dict[str, Any]:
         notes=[
             "Anti-dumping slice: обновляет только special_duties с measure-level provenance.",
             "Import-duty/VAT/excise поля hs_rates не изменяются.",
+            (
+                "Partial refresh: SourceStatus сохранён stale до полной перепроверки bundle."
+                if partial_refresh
+                else "SourceStatus подтверждает полный revision bundle."
+            ),
         ],
     )
     return response.model_dump(mode="json")

@@ -331,19 +331,34 @@
       "source_url": "https://remedies.eaeunion.org/dimd/ru"
     },
     {
-      "hs_code": "3206",
+      "hs_code": "3206110000",
       "origin_country": "CN",
       "rate_percent": 16.25,
-      "regulatory_act": "Решение Коллегии ЕЭК № 96 от 14.10.2025",
-      "product_description": "Диоксид титана / пигменты TiO2 (до 16,25% по изготовителю, ЕЭК №96)",
+      "regulatory_act": "Решение Коллегии ЕЭК № 96 от 14.10.2025; временное неприменение по Решению Коллегии ЕЭК № 124 от 21.09.2026",
+      "product_description": "Диоксид титана с содержанием TiO2 не менее 80% в пересчете на сухое вещество; исключения перечислены в приложении № 2 к Решению № 96",
       "effective_from": "2025-11-16",
-      "effective_to": "2030-10-14",
+      "effective_to": "2026-10-02",
       "rate_specific": 0.0,
       "currency_code": "USD",
-      "manufacturer_exporter": "",
-      "needs_verification": false,
-      "source_revision": "anti-dumping:2026-06-23",
-      "source_url": "https://remedies.eaeunion.org/dimd/ru"
+      "manufacturer_exporter": "прочие производители (индивидуальные ставки перечислены в Решении № 96)",
+      "needs_verification": true,
+      "source_revision": "anti-dumping:2026-10-15",
+      "source_url": "https://docs.eaeunion.org/documents/446/10233/"
+    },
+    {
+      "hs_code": "3206110000",
+      "origin_country": "CN",
+      "rate_percent": 16.25,
+      "regulatory_act": "Решение Коллегии ЕЭК № 96 от 14.10.2025; временное неприменение по Решению Коллегии ЕЭК № 124 от 21.09.2026",
+      "product_description": "Диоксид титана с содержанием TiO2 не менее 80% в пересчете на сухое вещество; исключения перечислены в приложении № 2 к Решению № 96",
+      "effective_from": "2027-08-11",
+      "effective_to": "2030-11-15",
+      "rate_specific": 0.0,
+      "currency_code": "USD",
+      "manufacturer_exporter": "прочие производители (индивидуальные ставки перечислены в Решении № 96)",
+      "needs_verification": true,
+      "source_revision": "anti-dumping:2026-10-15",
+      "source_url": "https://docs.eaeunion.org/documents/463/10925/"
     },
     {
       "hs_code": "7607",

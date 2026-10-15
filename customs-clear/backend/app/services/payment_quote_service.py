@@ -152,6 +152,25 @@ def _resolve_special_duty_line(
     details = list(raw.get("special_duties") or [])
     configured = _special_duties_configured_for_hs(hs_code)
 
+    uncertain = [
+        detail
+        for detail in details
+        if detail.get("manual_review_required")
+        or detail.get("needs_verification")
+        or detail.get("warning")
+    ]
+    if uncertain:
+        reasons = [str(detail.get("warning") or "").strip() for detail in uncertain]
+        reason = "; ".join(dict.fromkeys(item for item in reasons if item))
+        return PaymentQuoteLineItem(
+            code="special_duty",
+            label="Специальные / защитные / компенсационные пошлины",
+            amount_rub=None,
+            status="manual_review_required",
+            reason=reason or "Применимость специальной пошлины требует ручной проверки.",
+            source="special_duties",
+        )
+
     if amount > 0 and details:
         acts = ", ".join({str(d.get("regulatory_act") or "").strip() for d in details if d.get("regulatory_act")})
         return PaymentQuoteLineItem(

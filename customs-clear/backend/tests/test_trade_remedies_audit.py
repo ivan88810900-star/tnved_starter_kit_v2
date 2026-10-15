@@ -98,7 +98,7 @@ def _isolated_trade_remedies_database():
     anti_dumping = _bundle_rows(TRADE_REMEDY_BUNDLES["anti_dumping"])
     safeguards = _bundle_rows(TRADE_REMEDY_BUNDLES["special_safeguard"])
     countervailing = _bundle_rows(TRADE_REMEDY_BUNDLES["countervailing"])
-    assert (len(anti_dumping), len(safeguards), len(countervailing)) == (26, 3, 2)
+    assert (len(anti_dumping), len(safeguards), len(countervailing)) == (27, 3, 2)
 
     rows = [
         _special_duty_row(
@@ -138,7 +138,7 @@ def _isolated_trade_remedies_database():
         )
         for index, raw in enumerate(countervailing)
     )
-    assert len(rows) == 33
+    assert len(rows) == 34
 
     with factory() as db:
         db.bulk_insert_mappings(SpecialDuty, rows)
@@ -168,7 +168,7 @@ class TestTradeRemediesAudit:
 
     def test_total_special_duties_count(self) -> None:
         total = self.db.execute(text("SELECT COUNT(*) FROM special_duties")).scalar()
-        assert total == 33
+        assert total == 34
 
     def test_new_measures_present(self) -> None:
         foil = self.db.execute(
@@ -186,14 +186,21 @@ class TestTradeRemediesAudit:
         tio2 = self.db.execute(
             text(
                 """
-                SELECT rate_percent FROM special_duties
-                WHERE hs_code_prefix = '3206' AND origin_country = 'CN'
+                SELECT rate_percent, effective_from, effective_to, needs_verification
+                FROM special_duties
+                WHERE hs_code_prefix = '3206110000' AND origin_country = 'CN'
                   AND regulatory_act LIKE '%№ 96%'
+                ORDER BY effective_from
                 """
             )
-        ).fetchone()
-        assert tio2 is not None
-        assert float(tio2[0]) == pytest.approx(16.25)
+        ).fetchall()
+        assert len(tio2) == 2
+        assert [float(row[0]) for row in tio2] == pytest.approx([16.25, 16.25])
+        assert [(row[1], row[2]) for row in tio2] == [
+            ("2025-11-16", "2026-10-02"),
+            ("2027-08-11", "2030-11-15"),
+        ]
+        assert all(row[3] in (1, True) for row in tio2)
 
         tape_az = self.db.execute(
             text(
@@ -231,8 +238,8 @@ class TestTradeRemediesAudit:
             )
         ).fetchall()
         by_type = {r[0]: (r[1], r[2]) for r in rows}
-        assert by_type["anti_dumping"][0] == 28
-        assert by_type["anti_dumping"][1] == 28
+        assert by_type["anti_dumping"][0] == 29
+        assert by_type["anti_dumping"][1] == 29
         assert by_type["special_safeguard"][0] == 3
         assert by_type["countervailing"][0] == 2
 
