@@ -2179,7 +2179,7 @@
       "unique_source_pr_count": 29
     }
   },
-  "revision": 801,
+  "revision": 802,
   "runs": [
     {
       "head_sha": null,
@@ -7781,7 +7781,7 @@
       }
     }
   ],
-  "updated_at": "2026-10-14T23:56:48Z",
+  "updated_at": "2026-10-15T00:59:20Z",
   "previous_scheduled_product_checkpoint_174": {
     "updated_at": "2026-10-11T18:04:51.196Z",
     "checked_at": "2026-10-11T18:04:51.196Z",
@@ -14201,5 +14201,63 @@
       "checkpoint": "Evidence is stored in .ai/orchestration/evidence/cycle261_checkpoint.json; state CAS and lease release follow."
     },
     "next_step": "Resolve or formally scope the parent-existing scheduled-data-refresh workflow-presence gap, then continue the next bounded PR256/#245 product defect under a fresh lease."
+  },
+  "previous_scheduled_product_checkpoint_262": {
+    "updated_at": "2026-10-15T00:59:20Z",
+    "checked_at": "2026-10-15T00:59:20Z",
+    "pr": 256,
+    "branch": "agent/product-ntm-regressions-v1",
+    "head_sha": "b2f47ba1661ad5e983b3df7d809e04484fc78590",
+    "tree_sha": "1c358d8a6bc86167eb772ca37279a8a000c4bbe1",
+    "parent_sha": "863011a250c4713d0a867b03f0ca1d8c79197274",
+    "local_author_exact_tree_commit": "6790fc8aff47da7a5104fe1bdf6690ec3ea06a1c",
+    "base_pr": 245,
+    "base_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
+    "block": "scheduled_read_only_source_freshness_workflow_restoration",
+    "status": "IMPLEMENTED_A5_PASS_CI_PASS",
+    "behavior": {
+      "reproduced": "The exact PR256 tree lacked .github/workflows/scheduled-data-refresh.yml, causing all three workflow-presence regressions to fail.",
+      "final": "The read-only daily/manual freshness workflow is restored byte-for-byte from the already-tested PR255 lineage. It uses contents: read, pinned actions and runtime versions, an isolated temporary SQLite target, and no repository or production writes.",
+      "source_signal": "The workflow check executes and currently flags all six committed normative bundles stale by 114-119 days; this is the intended enforcement signal and the next source-lineage work item."
+    },
+    "verification": {
+      "a0": "Focused/adjacent profile passed 109 tests plus 71 subtests, exit 0. Full backend diagnostic passed 562 tests plus 103 subtests before a separate empty-fixture failure because exchange_rates was absent.",
+      "a5": {
+        "session": "/root/a5_cycle262",
+        "status": "PASS_EXACT_TREE_NO_FINDINGS",
+        "execution": "Focused test_data_refresh passed 16; adjacent payment-source/excise/anti-dumping profile passed 105 plus 31 subtests; exact blob lineage, YAML structure, security and read-only behavior passed.",
+        "findings": []
+      },
+      "ci": {
+        "status": "PASSED_EXACT_HEAD_AFTER_TRANSIENT_RERUN",
+        "run_id": 38662810786,
+        "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38662810786",
+        "head_sha": "b2f47ba1661ad5e983b3df7d809e04484fc78590",
+        "attempt_1": "failure: two tempfile Git-directory cleanup races after 118/120 tests passed",
+        "attempt_2": "success",
+        "conclusion": "success"
+      },
+      "github_receipt": {
+        "pr_comment_id": 6181916495
+      }
+    },
+    "blockers": [
+      "All six committed normative bundles are stale by 114-119 days and require lawful primary-source refresh or reconciliation.",
+      "Full PR245 product acceptance and legal/source completeness remain NOT PASS.",
+      "NTM full-sync remains blocked until a lawful populated synchronized snapshot is available."
+    ],
+    "a6": {
+      "request": "core-s1-6415f443120f-r9-g106",
+      "status": "UNCHANGED_NOT_SENT"
+    },
+    "coordination_queue": "Issue #257 bounded-probe receipt already exists and was not repeated.",
+    "protected_actions_performed": false,
+    "capabilities": {
+      "code_access": "Fresh exact PR256 author and independent A5 worktrees were available.",
+      "command_execution": "Git, Python and pytest were available; final bounded A0 and A5 commands exited 0.",
+      "lawful_publication": "Draft PR256 was advanced by expected-head GitHub CAS under active lease generation 262.",
+      "checkpoint": "Evidence is stored in .ai/orchestration/evidence/cycle262_checkpoint.json; state CAS and lease release follow."
+    },
+    "next_step": "Reconcile the six stale normative bundles against current primary sources without treating private documents as legal authority, then continue the next bounded PR256/#245 fixture/product defect."
   }
 }
