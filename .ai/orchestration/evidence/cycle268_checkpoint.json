@@ -1,0 +1,73 @@
+{
+  "schema_version": 1,
+  "cycle": 268,
+  "started_at": "2026-10-15T06:47:08Z",
+  "completed_at": "2026-10-15T07:01:22Z",
+  "executor": "/root/scheduled-cycle268-20261015T064708Z",
+  "lease": {
+    "generation": 268,
+    "token": "eddba2e70d8949bda53703cee95fe83f",
+    "acquisition_commit": "9265063922df955a9d71de74f0164e628105d320"
+  },
+  "candidate": {
+    "pr": 256,
+    "branch": "agent/product-ntm-regressions-v1",
+    "head_sha": "848647fbde88cdb600f81ff56757a8756ab499db",
+    "tree_sha": "173f1d4f01a3c7a7e1f465e3216de906cd3a5b99",
+    "repository_changes": false
+  },
+  "runner": {
+    "path": "/workspace/scratch/bb84ae3e224a/cycle268_offline_guard.py",
+    "sha256": "89e8ec0d1b0f0819d0d59e7fd711c31bf5b8c02997dca24cd473e9704d7d8a33",
+    "guard": "Scrub provider API-key environment values and fail closed on Python socket connect/connect_ex/create_connection/getaddrinfo.",
+    "marker_free_modules": 114,
+    "marker_free_hash": "7363b582f451cf368fed3042f2cd73d79d8d6587d348dc7daad7946b5d30571b",
+    "marker_bearing_modules": 32,
+    "marker_bearing_hash": "4c45c1920c893cf0881748d08ba23ade0eb330e4e000ea1e50ccea5b7f6aaa72",
+    "omitted_modules": [
+      "tests/test_ntm_full_sync.py"
+    ]
+  },
+  "verification": {
+    "a0": {
+      "marker_free_command": "SECRET_KEY=tariff-cycle268-test-secret DATABASE_URL=sqlite:////tmp/tariff-cycle268-network-free.db PYTHONPATH=. python /workspace/scratch/bb84ae3e224a/cycle268_offline_guard.py",
+      "marker_free_exit_code": 0,
+      "marker_free_output": "1309 passed, 10 skipped and 9 subtests passed.",
+      "marker_bearing_command": "CYCLE268_SET=excluded SECRET_KEY=tariff-cycle268-test-secret DATABASE_URL=sqlite:////tmp/tariff-cycle268-network-marked.db PYTHONPATH=. python /workspace/scratch/bb84ae3e224a/cycle268_offline_guard.py",
+      "marker_bearing_exit_code": 0,
+      "marker_bearing_output": "628 passed, 1 skipped and 188 subtests passed.",
+      "combined": "1937 passed, 11 skipped and 197 subtests; both commands exit 0."
+    },
+    "a5": {
+      "session": "/root/a5_cycle268",
+      "status": "PASS_EXACT_INVOCATIONS_WITH_SCOPE_CAVEATS",
+      "execution": "Independently reproduced 1309/10/9 and 628/1/188 results, verified split hashes, guard blocking, key scrubbing, clean worktree and no DB artifacts.",
+      "findings": [],
+      "caveats": [
+        "cwd-sensitive runner must execute from customs-clear/backend",
+        "Python monkeypatch is not an OS-level sandbox for arbitrary child processes"
+      ]
+    },
+    "ci": {
+      "workflow": "Tariff agent safety",
+      "run_id": 38689939882,
+      "job_id": 116273266494,
+      "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38689939882/job/116273266494",
+      "conclusion": "success",
+      "head_unchanged": true
+    },
+    "github_receipt": {
+      "pr_comment_id": 6186444364
+    }
+  },
+  "limits": {
+    "full_backend_pass": "NOT_CLAIMED",
+    "full_pr245_acceptance": "NOT_PASS",
+    "legal_source_completeness": "NOT_PASS",
+    "lawful_populated_synchronized_ntm_snapshot": "UNAVAILABLE",
+    "committed_payment_bundles": "SIX_STALE",
+    "a6": "core-s1-6415f443120f-r9-g106 unchanged and not sent",
+    "protected_actions_performed": false
+  },
+  "next_step": "Return to primary-source-backed stale payment-bundle triage; do not modify normative data before verifying exact scope and effective dates."
+}

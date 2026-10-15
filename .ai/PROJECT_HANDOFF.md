@@ -2090,3 +2090,15 @@ CI #255: [offline-safety PASS, run 37771953943](https://github.com/ivan88810900-
 - Exact-head CI [run 38689939882 / job 116273266494](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38689939882/job/116273266494): **success**. PR receipt comment id `6185608825` records the candidate and checks.
 - The unfiltered full backend command was rejected before launch because it could make an unapproved request to `api.proxyapi.ru`; no bypass or external request occurred, so no whole-backend PASS is claimed. Full PR #245 product/legal/source acceptance remains NOT PASS, all six committed payment bundles remain stale, the lawful populated synchronized NTM snapshot remains unavailable, and A6 `core-s1-6415f443120f-r9-g106` remains unchanged and undispatched.
 - Next: build an explicitly audited network-free broad module allowlist on this exact head and continue from the next reproduced fixture/product failure without weakening source or snapshot gates.
+
+## 2026-10-15 — Guarded network-free backend diagnostic completed on unchanged PR #256
+
+- Exact PR head stayed `848647fbde88cdb600f81ff56757a8756ab499db`, tree `173f1d4f01a3c7a7e1f465e3216de906cd3a5b99`; no repository code or tests changed.
+- A temporary runner (SHA-256 `89e8ec0d1b0f0819d0d59e7fd711c31bf5b8c02997dca24cd473e9704d7d8a33`) scrubbed provider API-key variables and blocked Python-process socket connect/connect_ex/create_connection and DNS getaddrinfo.
+- Deterministic split: 114 marker-free modules, hash `7363b582f451cf368fed3042f2cd73d79d8d6587d348dc7daad7946b5d30571b`; 32 marker-bearing modules, hash `4c45c1920c893cf0881748d08ba23ade0eb330e4e000ea1e50ccea5b7f6aaa72`.
+- A0 marker-free set: **1309 passed, 10 skipped + 9 subtests**, exit 0. Marker-bearing set: **628 passed, 1 skipped + 188 subtests**, exit 0. Combined: **1937 passed, 11 skipped + 197 subtests**.
+- Independent A5 `/root/a5_cycle268`: **PASS for the exact intended invocations**. It reproduced both results, verified split hashes and guard behavior, and found no worktree or DB artifacts.
+- Scope caveats are explicit: the runner must be invoked from `customs-clear/backend`, and its Python monkeypatch is not an OS-level child-process sandbox. `tests/test_ntm_full_sync.py` remains omitted because a lawful populated synchronized snapshot is unavailable; no full-backend, full-PR #245, legal-source or NTM full-sync PASS is claimed.
+- Existing exact-head CI [run 38689939882 / job 116273266494](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38689939882/job/116273266494) remains **success**. PR receipt comment id `6186444364` records the diagnostic.
+- All six committed payment bundles remain stale. A6 `core-s1-6415f443120f-r9-g106` is unchanged and undispatched; no protected action occurred.
+- Next: return to primary-source-backed stale payment-bundle triage on this clean regression baseline and do not change normative data until exact scope and effective dates are verified.
