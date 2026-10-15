@@ -92,6 +92,17 @@ def isolated_payment_quote_db():
                     excise_value=5.0,
                 ),
                 HsRate(
+                    hs_code="9900000001",
+                    hs_prefix="9900000001",
+                    duty_rate="5",
+                    vat_import_rate=22.0,
+                    vat_rule="standard",
+                    vat_source_code="EEC_VAT",
+                    vat_source_revision="vat:2026-06-18",
+                    vat_source_url="https://www.nalog.gov.ru/rn77/taxation/taxes/nds/",
+                    excise_type="none",
+                ),
+                HsRate(
                     hs_code="7214",
                     hs_prefix="7214",
                     duty_rate="10",
@@ -150,6 +161,15 @@ class PaymentQuoteServiceTests(unittest.TestCase):
         else:
             self.assertIsNotNone(quote.total_payable_rub)
             self.assertGreater(quote.total_payable_rub or 0, 0)
+
+    def test_rejected_vat_source_is_manual_review(self):
+        quote = self._quote(hs_code="9900000001", customs_value=100_000)
+        vat = self._line(quote, "vat")
+        self.assertEqual(quote.status, "MANUAL_REVIEW_REQUIRED")
+        self.assertEqual(vat.status, "manual_review_required")
+        self.assertIsNone(vat.amount_rub)
+        self.assertIsNone(quote.total_payable_rub)
+        self.assertTrue(any(w.code.startswith("vat_") for w in quote.warnings))
 
     def test_excise_applied_for_beer(self):
         quote = self._quote(hs_code="2203009900", customs_value=200_000)
