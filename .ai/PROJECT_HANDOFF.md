@@ -1037,3 +1037,15 @@ CI #255: [offline-safety PASS, run 37771953943](https://github.com/ivan88810900-
 - Exact-head CI [run 38724995176 / job 116388518836](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38724995176/job/116388518836): **success**. PR receipt comment id `6190671870` records the exact candidate and checks.
 - This is one bounded PAY-3 block, not full #245/#256 product or legal-source acceptance. The lawful populated synchronized NTM snapshot remains unavailable. A6 `core-s1-6415f443120f-r9-g106` is unchanged and not sent; no protected action was performed.
 - Next: reconcile the next unresolved stale payment bundle against primary acts while preserving fail-closed source, applicability and total-withholding gates.
+
+## 2026-10-15 — Obsolete 2025 excise schedule quarantined; exact-head CI pending on draft PR #256
+
+- [FNS](https://www.nalog.gov.ru/rn27/news/tax_doc_news/16590707/) confirms that Federal Law No. 425-FZ amended Tax Code Article 193 from `2026-01-01` and the alcohol excise rate is 824 RUB/litre. The tracked `excise:2026-06-18` bundle instead retained the superseded 643 RUB/litre 2025 schedule with no end date.
+- Draft [PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256) publishes exact head `fd357f35cffea5941553d90b9fa5fa1e1c303ac1`, tree `bab265f51c8a996f0782cf0fe4a41a06f4f9b9f2`; code commit `b3bbc04503211f66b1f6f73d4467c04b93ea0e4d`. The final two commits are metadata-only, have no changed files, and preserve the reviewed tree while requesting CI.
+- The exact rejected revision now fails closed before ingestion. Persisted rejected rows remain visible for manual review, while excise, dependent VAT and final totals are withheld; known partial totals remain. Manual overrides, future verified revisions and no-signal cases remain valid.
+- A5 rejected the initial candidate because prefix fallback checked the leaf rather than selected-row provenance. The final resolver carries the chosen exact/prefix row revision while preserving the legacy API.
+- A0 payment/ingestion profile: **455 passed + 73 subtests**, exit 0. Tariff-agent safety: **124 tests OK**, exit 0. `py_compile`, JSON, diff and artifact checks exited 0.
+- Independent A5 `/root/a5_cycle275`: final **PASS, no findings**; **351 passed + 41 subtests**, behavioral/static probes passed, and exact SHA `fd357f35...` was verified as the same reviewed tree with no file diff.
+- Exact-head CI remains **PENDING**: the connector published the exact head and two no-diff trigger commits, but Actions returned no run; native authenticated git push and workflow-dispatch are unavailable in this runtime. The block is therefore not declared complete and no PR completion receipt was posted.
+- Full #245/#256 acceptance remains NOT PASS; the lawful populated synchronized NTM snapshot remains unavailable. A6 `core-s1-6415f443120f-r9-g106` is unchanged and not sent; no merge/deploy/production/protected action occurred.
+- Next: obtain the existing offline-safety workflow on exact head `fd357f35...`, then post the PR receipt and close the checkpoint without changing the reviewed tree.
