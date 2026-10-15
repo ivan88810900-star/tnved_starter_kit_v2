@@ -423,6 +423,7 @@ def build_payment_quote(payload: dict[str, Any]) -> PaymentQuoteResponse:
         duty_reason = duty_reason or "Ставка пошлины не найдена в локальной базе; применена ставка 0% для расчёта."
 
     excise_status, excise_amount, excise_reason = _resolve_excise_status(raw=raw, user_excise=user_excise)
+    vat_source_rejected = bool(dq.get("vat_source_rejected"))
 
     line_items: list[PaymentQuoteLineItem] = [
         PaymentQuoteLineItem(
@@ -437,8 +438,8 @@ def build_payment_quote(payload: dict[str, Any]) -> PaymentQuoteResponse:
         PaymentQuoteLineItem(
             code="vat",
             label="НДС",
-            amount_rub=float(breakdown.get("vat") or 0.0),
-            status="applied",
+            amount_rub=(None if vat_source_rejected else float(breakdown.get("vat") or 0.0)),
+            status=("manual_review_required" if vat_source_rejected else "applied"),
             reason=str(breakdown.get("vat_reason") or ""),
             source="hs_rates / vat_preferences (НК РФ)",
             rate_label=f"{breakdown.get('vat_rate')}%",
@@ -467,7 +468,7 @@ def build_payment_quote(payload: dict[str, Any]) -> PaymentQuoteResponse:
     assumptions = _build_assumptions(payload, raw)
 
     uncertain_statuses = {"manual_review_required", "unknown", "not_configured", "embargo"}
-    blocking_codes = {"excise", "antidumping", "special_duty"}
+    blocking_codes = {"vat", "excise", "antidumping", "special_duty"}
     has_uncertain = any(
         item.status in uncertain_statuses and item.code in blocking_codes for item in line_items
     )
