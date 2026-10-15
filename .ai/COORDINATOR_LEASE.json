@@ -1,14 +1,14 @@
 {
   "acquisition_note": "Fresh GitHub recovery at main e526dfbdb5a31b01bf6f743da0288b88f916de0c, PR256 0e9b39b4580de33ed6c02a976cdafc6837cc6e6e and state 9cdf83e724fbe2e757a4f38e604ec687d8e17483; execute the next clean bounded backend fixture tranche without normative, A6, protected-branch or production changes.",
-  "expires_at": null,
-  "generation": 268,
-  "holder": null,
+  "expires_at": "2026-10-15T08:29:31.775948Z",
+  "generation": 269,
+  "holder": "/root/scheduled-cycle269-20261015T075451Z",
   "lease_repair": {},
   "release_reason": "Cycle 268 completed a guarded network-free backend diagnostic on unchanged PR256 exact head 848647fbde88cdb600f81ff56757a8756ab499db: A0 and independent A5 /root/a5_cycle268 each passed 1937 tests plus 197 subtests with 11 skips across 146 modules. test_ntm_full_sync.py remained deliberately omitted because a lawful populated synchronized snapshot is unavailable; no full-backend PASS is claimed. Existing exact-head CI 38689939882 remained success and PR receipt 6186444364 was published. State checkpoint d1a712cb8840a594c02f144bd389952803849f9a passed state CI 38696179112. Full PR245 and legal/source completeness remain NOT PASS, all six payment bundles stale, and A6 unchanged/not sent.",
   "released_by": "/root/scheduled-cycle268-20261015T064708Z",
   "schema_version": 1,
   "serialization_repair": {},
-  "state": "released",
-  "token": null,
-  "updated_at": "2026-10-15T07:03:31.191058Z"
+  "state": "active",
+  "token": "41afb1899aea4309b99e0e8e8f5bbe4d",
+  "updated_at": "2026-10-15T07:59:31.775948Z"
 }
