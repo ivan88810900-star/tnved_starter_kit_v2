@@ -1,0 +1,70 @@
+{
+  "schema_version": 1,
+  "cycle": 272,
+  "started_at": "2026-10-15T09:55:14Z",
+  "completed_at": "2026-10-15T10:10:41Z",
+  "executor": "/root/scheduled-cycle272-20261015T095514Z",
+  "lease": {
+    "generation": 272,
+    "token": "b33dc57a713d441e87cf72efd0a34d7a",
+    "checkpoint_parent": "a905524e25ad6e299a07741391809f53531472d7"
+  },
+  "candidate": {
+    "pr": 256,
+    "branch": "agent/product-ntm-regressions-v1",
+    "parent_sha": "e63d139be8a7de41fa4f72333cda35f0e75977c9",
+    "head_sha": "20cc589beebc9003a4427d146de8ce7692fa055b",
+    "tree_sha": "5f27cf69f6d909c136b96f5b468e3b6fa1d089b5",
+    "local_author_exact_tree_commit": "32255019376aca7bcb15b0cf28a997d1ea1d32ba"
+  },
+  "sources": [
+    {
+      "claim": "Council Decision No. 95 dated 10.07.2018",
+      "url": "https://docs.eaeunion.org/documents/search/",
+      "verified": "2026-10-15",
+      "result": "Official 2018 Council Decision No. 95 is dated 05.12.2018; exact claim mismatch."
+    },
+    {
+      "claim": "Collegium Decision No. 164 dated 17.12.2019",
+      "url": "https://docs.eaeunion.org/documents/335/4676/",
+      "verified": "2026-10-15",
+      "result": "Official 2019 Collegium Decision No. 164 is dated 17.09.2019; exact claim mismatch."
+    }
+  ],
+  "behavior": {
+    "ingestion": "Rejected bundle stops before DB mutation.",
+    "revision_boundary": "Only countervailing:2026-06-18 is rejected.",
+    "persisted_rows": "Matching CN rejected rows remain visible with amount and final total withheld; other origins do not match.",
+    "regression_boundary": "Future verified countervailing revisions and valid safeguard rows remain calculable."
+  },
+  "verification": {
+    "author": "Exact-head 427 passed plus 73 subtests; safety 124 passed plus 175 subtests; JSON, py_compile, diff and clean-tree checks exit 0.",
+    "a5": {
+      "session": "/root/a5_cycle271",
+      "status": "PASS_EXACT_TREE_NO_FINDINGS",
+      "execution": "319 passed plus 54 subtests; official-source, no-mutation, bounded-revision, origin-isolation and valid-row probes exit 0.",
+      "findings": []
+    },
+    "ci": {
+      "status": "PASSED_EXACT_HEAD_OFFLINE_SAFETY_ONLY",
+      "run_id": 38717322144,
+      "job_id": 116363066674,
+      "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38717322144/job/116363066674",
+      "head_sha": "20cc589beebc9003a4427d146de8ce7692fa055b",
+      "conclusion": "success"
+    },
+    "github_receipt": {
+      "pr_comment_id": 6189630625,
+      "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256#issuecomment-6189630625"
+    }
+  },
+  "limits": {
+    "other_payment_bundles": "STALE_OR_REJECTED",
+    "full_pr245_pr256_acceptance": "NOT_PASS",
+    "legal_source_completeness": "NOT_PASS",
+    "lawful_populated_synchronized_ntm_snapshot": "UNAVAILABLE",
+    "a6": "core-s1-6415f443120f-r9-g106 unchanged and not sent",
+    "protected_actions_performed": false
+  },
+  "next_step": "Reconcile the next unresolved stale payment bundle against primary acts while preserving fail-closed source, applicability and total-withholding gates."
+}
