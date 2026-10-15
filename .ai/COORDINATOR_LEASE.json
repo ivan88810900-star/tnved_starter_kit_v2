@@ -1,14 +1,14 @@
 {
   "acquisition_note": "Fresh GitHub recovery at main e526dfbdb5a31b01bf6f743da0288b88f916de0c, PR256 a5e952f1ea847500b65bdc76b18514ddfd97f01d and state f04f8c7aed48d09f7b336ae9d05c390860cbe9ba; execute a clean broader backend tranche to identify and repair the next bounded PR245/PR256 product defect without normative, A6, protected-branch or production changes.",
-  "expires_at": null,
-  "generation": 265,
-  "holder": null,
+  "expires_at": "2026-10-15T05:24:18.158292Z",
+  "generation": 266,
+  "holder": "/root/scheduled-cycle266-20261015T045142Z",
   "lease_repair": {},
   "release_reason": "Cycle 265 repaired the separate rate-display fixture failure on PR256 exact head 0e9b39b4580de33ed6c02a976cdafc6837cc6e6e: A0 116 passed plus 71 subtests, independent A5 /root/a5_cycle265 PASS with no findings, exact-head CI 38678637960 success and PR receipt 6184021384. State checkpoint ab891a4c527d5f8703ed6a016e917b407c3ee9b3 passed state CI 38678935026. Full PR245 and legal/source completeness remain NOT PASS, populated synchronized NTM snapshot unavailable, all six committed normative bundles stale, and A6 unchanged/not sent.",
   "released_by": "/root/scheduled-cycle265-20261015T034912Z",
   "schema_version": 1,
   "serialization_repair": {},
-  "state": "released",
-  "token": null,
-  "updated_at": "2026-10-15T03:58:32.951432Z"
+  "state": "active",
+  "token": "5f036430e7e7452998bba6f64e736c61",
+  "updated_at": "2026-10-15T04:54:18.158292Z"
 }
