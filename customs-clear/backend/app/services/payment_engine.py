@@ -797,6 +797,12 @@ def compute_payments(payload: dict[str, Any]) -> dict[str, Any]:
     vat = _num(vat_base) * _num(vat_rate) / 100.0
 
     total = _sum_amounts(customs_fee_amount, duty_amount, excise_amount, antidumping_amount, special_duties_total, vat, recycling_fee_total)
+    unresolved_special_duty = any(
+        detail.get("manual_review_required")
+        or detail.get("needs_verification")
+        or detail.get("warning")
+        for detail in special_duties_details
+    )
 
     # Sources: интегрированные данные в приложении (без внешних ссылок)
     stats = get_integrated_data_stats()
@@ -834,7 +840,7 @@ def compute_payments(payload: dict[str, Any]) -> dict[str, Any]:
     tnved_context = get_tnved_context_for_hs(hs_code)
 
     return {
-        "status": "OK",
+        "status": "MANUAL_REVIEW_REQUIRED" if unresolved_special_duty else "OK",
         "hs_code": hs_code,
         "country": country,
         "destination_country": destination_country,
@@ -882,7 +888,8 @@ def compute_payments(payload: dict[str, Any]) -> dict[str, Any]:
             "vat_base": _round2(vat_base),
             "vat": _round2(vat),
             "recycling_fee": _round2(recycling_fee_total),
-            "total_payable": _round2(total),
+            "total_payable": None if unresolved_special_duty else _round2(total),
+            "total_partial": _round2(total),
         },
         "legal_basis": {
             "vat": vat_reason,
@@ -944,6 +951,8 @@ def compare_payment_scenarios(payload: dict[str, Any]) -> dict[str, Any]:
 
     out_scenarios: list[dict[str, Any]] = []
     first_total: float | None = None
+    first_total_set = False
+    has_unresolved = False
 
     for i, sc in enumerate(scenarios):
         if not isinstance(sc, dict):
@@ -963,10 +972,33 @@ def compare_payment_scenarios(payload: dict[str, Any]) -> dict[str, Any]:
             if sc.get(opt) is not None:
                 merged[opt] = sc[opt]
         res = compute_payments(merged)
-        total = _num((res.get("breakdown") or {}).get("total_payable"))
-        delta = None if first_total is None else _round2(total - first_total)
-        if first_total is None:
+        total_raw = (res.get("breakdown") or {}).get("total_payable")
+        total = float(total_raw) if total_raw is not None else None
+        delta = (
+            _round2(total - first_total)
+            if total is not None and first_total_set and first_total is not None
+            else None
+        )
+        if not first_total_set:
             first_total = total
+            first_total_set = True
+        if total is None:
+            has_unresolved = True
+        special_details = list(res.get("special_duties") or [])
+        unresolved_special = any(
+            detail.get("manual_review_required")
+            or detail.get("needs_verification")
+            or detail.get("warning")
+            for detail in special_details
+        )
+        anti_dumping_total = (
+            None
+            if unresolved_special
+            else _round2(
+                _num(res["breakdown"].get("antidumping"))
+                + _num(res["breakdown"].get("special_duties_amount"))
+            )
+        )
         tv = res.get("tnved_context") or {}
         out_scenarios.append(
             {
@@ -975,11 +1007,11 @@ def compare_payment_scenarios(payload: dict[str, Any]) -> dict[str, Any]:
                 "country": (merged.get("country") or None),
                 "destination_country": (merged.get("destination_country") or None),
                 "delta_total_vs_first_rub": delta,
-                "total_payable": _round2(total),
+                "total_payable": _round2(total) if total is not None else None,
                 "duty": res["breakdown"]["duty"],
                 "vat": res["breakdown"]["vat"],
                 "excise": res["breakdown"]["excise"],
-                "antidumping": res["breakdown"]["antidumping"],
+                "antidumping": anti_dumping_total,
                 "duty_rate_applied": res["breakdown"]["duty_rate"],
                 "vat_rate_applied": res["breakdown"]["vat_rate"],
                 "data_quality": res.get("data_quality"),
@@ -988,7 +1020,7 @@ def compare_payment_scenarios(payload: dict[str, Any]) -> dict[str, Any]:
         )
 
     return {
-        "status": "OK",
+        "status": "MANUAL_REVIEW_REQUIRED" if has_unresolved else "OK",
         "shared_economic": econ,
         "scenarios": out_scenarios,
     }

@@ -22,6 +22,20 @@ def _map_raw_to_profile(
     item_data: dict[str, Any] | None = None,
 ) -> PaymentProfileResponse:
     breakdown = raw_result.get("breakdown") or {}
+    special_details = list(raw_result.get("special_duties") or [])
+    unresolved_special = any(
+        detail.get("manual_review_required")
+        or detail.get("needs_verification")
+        or detail.get("warning")
+        for detail in special_details
+    )
+    total_raw = breakdown.get("total_payable")
+    anti_dumping = (
+        None
+        if unresolved_special
+        else float(breakdown.get("antidumping") or 0.0)
+        + float(breakdown.get("special_duties_amount") or 0.0)
+    )
     with SessionLocal() as db:
         compliance_bundle = build_compliance_document_items(
             hs_code=hs_code,
@@ -49,16 +63,19 @@ def _map_raw_to_profile(
         status=str(raw_result.get("status") or "OK"),
         hs_code=hs_code,
         country=country,
+        destination_country=(
+            str(raw_result.get("destination_country") or "").strip().upper() or None
+        ),
         breakdown=MoneyBreakdown(
             base_duty=float(breakdown.get("duty") or 0.0),
             vat=float(breakdown.get("vat") or 0.0),
             excise=float(breakdown.get("excise") or 0.0),
-            anti_dumping=float(breakdown.get("antidumping") or 0.0),
+            anti_dumping=anti_dumping,
             customs_fee=float(breakdown.get("customs_fee") or 0.0),
-            total_payable=float(breakdown.get("total_payable") or 0.0),
+            total_payable=float(total_raw) if total_raw is not None else None,
         ),
         documents=documents,
-        blocking_issue=blocking_issue,
+        blocking_issue=blocking_issue or unresolved_special,
         geo=raw_result.get("geo"),
         data_quality=raw_result.get("data_quality"),
     )
@@ -97,8 +114,16 @@ def build_compare_payment_profiles(
     for row in scenarios_raw:
         hs_code = str(row.get("hs_code") or "").strip()
         scenario_country = str(row.get("country") or shared.get("country") or "").strip().upper() or None
+        scenario_destination = str(
+            row.get("destination_country") or shared.get("destination_country") or ""
+        ).strip().upper() or None
         profile = build_full_payment_profile(
-            payload={**shared, "hs_code": hs_code, "country": scenario_country},
+            payload={
+                **shared,
+                "hs_code": hs_code,
+                "country": scenario_country,
+                "destination_country": scenario_destination,
+            },
             hs_code=hs_code,
             country=scenario_country,
         )

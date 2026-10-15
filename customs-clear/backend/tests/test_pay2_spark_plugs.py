@@ -20,6 +20,7 @@ from app.services.anti_dumping_ingestion import (
     _validate_bundle_for_ingest,
 )
 from app.services.payment_engine import compute_payments
+from app.services.payment_profile_builder import build_compare_payment_profiles
 from app.services.payment_quote_service import build_payment_quote
 
 
@@ -61,6 +62,7 @@ def payment_db(monkeypatch: pytest.MonkeyPatch):
     factory = sessionmaker(bind=engine, autocommit=False, autoflush=False)
     monkeypatch.setattr("app.services.payment_engine.SessionLocal", factory)
     monkeypatch.setattr("app.services.payment_quote_service.SessionLocal", factory)
+    monkeypatch.setattr("app.services.payment_profile_builder.SessionLocal", factory)
     monkeypatch.setattr("app.services.anti_dumping_ingestion.SessionLocal", factory)
     monkeypatch.setattr("app.services.normative_store.SessionLocal", factory)
     monkeypatch.setattr("app.services.rate_display.SessionLocal", factory)
@@ -73,6 +75,10 @@ def payment_db(monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setattr("app.services.payment_engine.get_integrated_data_stats", lambda: {"hs_rates_count": 0})
     monkeypatch.setattr("app.services.payment_engine.get_tnved_context_for_hs", lambda _hs: {})
     monkeypatch.setattr("app.services.payment_quote_service.get_rates_map", lambda: {"RUB": 1.0})
+    monkeypatch.setattr(
+        "app.services.payment_profile_builder.build_compliance_document_items",
+        lambda **_kwargs: {"documents": [], "blocking_issue": False},
+    )
 
     normalized = [_normalize_measure_row(raw) for raw in _spark_plug_rows()]
     assert all(row is not None for row in normalized)
@@ -165,6 +171,9 @@ def test_neighboring_code_and_other_origin_do_not_match(hs_code: str, origin: st
 @pytest.mark.parametrize("destination", ["AM", "BY", "KZ", "KG"])
 def test_national_exceptions_are_withheld_pending_transaction_facts(destination: str) -> None:
     result = _compute(date(2026, 10, 15), destination=destination)
+    assert result["status"] == "MANUAL_REVIEW_REQUIRED"
+    assert result["breakdown"]["total_payable"] is None
+    assert result["breakdown"]["total_partial"] > 0
     assert result["breakdown"]["special_duties_amount"] == 0.0
     assert len(result["special_duties"]) == 1
     detail = result["special_duties"][0]
@@ -176,6 +185,8 @@ def test_national_exceptions_are_withheld_pending_transaction_facts(destination:
 @pytest.mark.usefixtures("payment_db")
 def test_missing_destination_fails_closed() -> None:
     result = _compute(date(2026, 10, 15), destination=None)
+    assert result["status"] == "MANUAL_REVIEW_REQUIRED"
+    assert result["breakdown"]["total_payable"] is None
     assert result["breakdown"]["special_duties_amount"] == 0.0
     assert len(result["special_duties"]) == 1
     assert result["special_duties"][0]["manual_review_required"] is True
@@ -203,3 +214,32 @@ def test_product_quote_applies_ru_and_withholds_kz() -> None:
     assert kz_special.status == "manual_review_required"
     assert kz_special.amount_rub is None
     assert kz.total_payable_rub is None
+
+
+@pytest.mark.usefixtures("payment_db")
+def test_compare_preserves_scenario_destination_and_withholds_unresolved_total() -> None:
+    _Clock.current = date(2026, 10, 15)
+    result = build_compare_payment_profiles(
+        payload={
+            "shared": {
+                "customs_value": 100_000.0,
+                "country": "CN",
+                "quantity": 1.0,
+                "_fx_rates": {"RUB": 1.0},
+            },
+            "scenarios": [
+                {"label": "RU", "hs_code": "8511100001", "destination_country": "RU"},
+                {"label": "KZ", "hs_code": "8511100001", "destination_country": "KZ"},
+            ],
+        }
+    )
+    assert result.status == "MANUAL_REVIEW_REQUIRED"
+    ru, kz = result.scenarios
+    assert ru.profile.destination_country == "RU"
+    assert ru.profile.breakdown.anti_dumping == 17_230.0
+    assert ru.profile.breakdown.total_payable is not None
+    assert ru.profile.blocking_issue is False
+    assert kz.profile.destination_country == "KZ"
+    assert kz.profile.breakdown.anti_dumping is None
+    assert kz.profile.breakdown.total_payable is None
+    assert kz.profile.blocking_issue is True
