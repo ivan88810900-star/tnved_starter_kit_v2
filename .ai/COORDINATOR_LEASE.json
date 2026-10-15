@@ -1,14 +1,14 @@
 {
   "acquisition_note": "Fresh GitHub recovery at main e526dfbdb5a31b01bf6f743da0288b88f916de0c, PR256 a5e952f1ea847500b65bdc76b18514ddfd97f01d and state f04f8c7aed48d09f7b336ae9d05c390860cbe9ba; execute a clean broader backend tranche to identify and repair the next bounded PR245/PR256 product defect without normative, A6, protected-branch or production changes.",
-  "expires_at": "2026-10-15T04:20:35.970749Z",
+  "expires_at": null,
   "generation": 265,
-  "holder": "/root/scheduled-cycle265-20261015T034912Z",
+  "holder": null,
   "lease_repair": {},
-  "release_reason": "Cycle 263 repaired absent exchange_rates-table fallback on PR256 exact head 8eda154558e486a3136d4ecfe31460793f89ec79: A0 111 passed plus 71 subtests, independent A5 /root/a5_cycle263 PASS with no findings, exact-head CI 38668497328 success and PR receipt 6182677315. State checkpoint 54826a25b60af8b98177f11909d3e92d2609a5ad passed state CI 38669024262. The next distinct empty-schema failure is missing country_risks; full PR245 and legal/source completeness remain NOT PASS, populated synchronized NTM snapshot unavailable, and A6 unchanged/not sent.",
-  "released_by": "/root/scheduled-cycle263-20261015T015153Z",
+  "release_reason": "Cycle 265 repaired the separate rate-display fixture failure on PR256 exact head 0e9b39b4580de33ed6c02a976cdafc6837cc6e6e: A0 116 passed plus 71 subtests, independent A5 /root/a5_cycle265 PASS with no findings, exact-head CI 38678637960 success and PR receipt 6184021384. State checkpoint ab891a4c527d5f8703ed6a016e917b407c3ee9b3 passed state CI 38678935026. Full PR245 and legal/source completeness remain NOT PASS, populated synchronized NTM snapshot unavailable, all six committed normative bundles stale, and A6 unchanged/not sent.",
+  "released_by": "/root/scheduled-cycle265-20261015T034912Z",
   "schema_version": 1,
   "serialization_repair": {},
-  "state": "active",
-  "token": "cda4e5aee0ad44438028782b27c55c13",
-  "updated_at": "2026-10-15T03:50:35.970749Z"
+  "state": "released",
+  "token": null,
+  "updated_at": "2026-10-15T03:58:32.951432Z"
 }
