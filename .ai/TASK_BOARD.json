@@ -2179,7 +2179,7 @@
       "unique_source_pr_count": 29
     }
   },
-  "revision": 812,
+  "revision": 813,
   "runs": [
     {
       "head_sha": null,
@@ -7781,7 +7781,7 @@
       }
     }
   ],
-  "updated_at": "2026-10-15T12:19:23Z",
+  "updated_at": "2026-10-15T23:01:47Z",
   "previous_scheduled_product_checkpoint_174": {
     "updated_at": "2026-10-11T18:04:51.196Z",
     "checked_at": "2026-10-11T18:04:51.196Z",
@@ -15030,5 +15030,55 @@
       "checkpoint": "Evidence is stored in .ai/orchestration/evidence/cycle275_checkpoint.json; state CAS and lease release follow."
     },
     "next_step": "Obtain offline-safety on exact head fd357f35, then post the PR receipt and close the checkpoint without changing the reviewed tree."
+  },
+  "previous_scheduled_product_checkpoint_278": {
+    "updated_at": "2026-10-15T23:01:47Z",
+    "checked_at": "2026-10-15T23:01:47Z",
+    "pr": 256,
+    "branch": "agent/product-ntm-regressions-v1",
+    "parent_sha": "44c50df61747f09e4f876c0f751d7c23cbf56b30",
+    "head_sha": "486d407ec2628564a616302a96f52adb91149241",
+    "tree_sha": "a7d4c3bd4a3b3b8573fa17c5353b336a737ddd20",
+    "local_author_exact_tree_commit": "55e9fd948e5a8cc58ba6b7eda9a22495cc6156e2",
+    "block": "pay5_vat_rejection_reason_contract_repair",
+    "status": "QA_PASSED_EXACT_HEAD_CI_PENDING",
+    "reproduction": "Exact parent focused pytest exited 1: one failed, 85 passed and 10 subtests; rejected VAT ingestion response raised KeyError for missing top-level reason.",
+    "repair": "VatIngestionResponse now has an additive optional reason populated from parser_result.reason; fail-closed/no-mutation behavior is unchanged.",
+    "verification": {
+      "author": "Expanded payment/VAT/coverage command passed 232 tests plus 10 subtests, exit 0; py_compile and git diff --check exited 0; no DB/WAL/SHM artifacts remained.",
+      "a5": {
+        "session": "/root/a5_cycle278",
+        "status": "PASS_EXACT_TREE_NO_FINDINGS",
+        "execution": "Focused 86 passed plus 10 subtests; adjacent 65 passed; independent seeded-SQLite dry-run/apply no-mutation probe exited 0.",
+        "findings": []
+      },
+      "ci": {
+        "status": "PENDING_NO_EXACT_HEAD_RUN",
+        "head_sha": "486d407ec2628564a616302a96f52adb91149241",
+        "limitation": "No workflow run appeared after connector CAS publication; exact-head CI remains required."
+      },
+      "github_receipt": {
+        "pr_comment_id": 6204053630,
+        "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256#issuecomment-6204053630"
+      }
+    },
+    "blockers": [
+      "Required exact-head CI has not started, so PAY-5 is not READY.",
+      "Full PR245/PR256 product acceptance and legal/source completeness remain NOT PASS.",
+      "Lawful populated synchronized NTM snapshot remains unavailable."
+    ],
+    "a6": {
+      "request": "core-s1-6415f443120f-r9-g106",
+      "status": "UNCHANGED_NOT_SENT"
+    },
+    "coordination_queue": "Issue #257 bounded-probe receipt already exists and was not repeated.",
+    "protected_actions_performed": false,
+    "capabilities": {
+      "code_access": "Full exact candidate tree was available in isolated A0 and independent A5 worktrees.",
+      "command_execution": "Git, Python and pytest executed; final A0 and A5 commands exited 0.",
+      "lawful_publication": "Draft PR256 branch and receipt were updated through GitHub CAS/connector under lease generation 278.",
+      "checkpoint": "This board and PROJECT_HANDOFF update is the durable cycle278 checkpoint; lease release follows separately."
+    },
+    "next_step": "Obtain offline-safety on exact head 486d407e, verify success, then close PAY-5 without changing the reviewed tree."
   }
 }

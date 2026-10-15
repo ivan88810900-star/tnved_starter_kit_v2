@@ -1,6 +1,15 @@
 Warning: truncated output (original token count: 98596)
 Total output lines: 2147
 
+## 2026-10-15 — PAY-5 product QA defect repaired; exact-head CI pending on draft PR #256
+
+- Exact PAY-5 parent `44c50df61747f09e4f876c0f751d7c23cbf56b30` reproduced a new candidate-owned failure: focused payment/VAT pytest exited 1 with **1 failed, 85 passed + 10 subtests** because the rejected VAT ingestion response omitted the parser's mandatory `reason`.
+- Draft [PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256) now publishes exact remote head `486d407ec2628564a616302a96f52adb91149241`, tree `a7d4c3bd4a3b3b8573fa17c5353b336a737ddd20`; local author commit `55e9fd948e5a8cc58ba6b7eda9a22495cc6156e2` has the same tree. The two-line repair adds an optional top-level ingestion `reason` and faithfully exposes `parser_result.reason`.
+- A0 expanded payment/VAT/coverage command: **232 passed + 10 subtests**, exit 0. Independent A5 `/root/a5_cycle278`: **PASS, no findings**; focused **86 passed + 10 subtests**, adjacent **65 passed**, seeded-SQLite negative probe exit 0 and confirmed dry-run/apply no mutation of `hs_rates`, `SourceStatus` or `SyncLog`.
+- PR receipt: [comment 6204053630](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256#issuecomment-6204053630). Required exact-head CI has not appeared for `486d407e`, so status is **QA_PASSED / CI_PENDING**, not READY.
+- Full #245/#256 acceptance and legal/source completeness remain NOT PASS. The lawful populated synchronized NTM snapshot remains unavailable. A6 `core-s1-6415f443120f-r9-g106` is unchanged and not sent. No merge, deploy, production write, enforcement/flag, secret/permission or destructive action occurred.
+- Next: obtain the existing offline-safety workflow on exact head `486d407e`, verify its conclusion, then close the PAY-5 checkpoint without changing the reviewed tree.
+
 ## 2026-10-15 — Invalid special-safeguard sources quarantined on draft PR #256
 
 - Primary-source review rejected all three committed rows in `eec_special_safeguard.json`: the cited official [EEC Decision No. 30](https://docs.eaeunion.org/documents/247/5029/) concerns PPE standards, and exact official-portal filters found no matching No. 65/14.04.2020 or No. 149/29.10.2019 records. The bundle is now explicitly `rejected_source_mismatch`; it is not accepted legal data.
