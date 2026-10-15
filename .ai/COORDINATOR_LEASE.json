@@ -1,6 +1,6 @@
 {
   "acquisition_note": "Fresh cycle-271 recovery at main e526dfbdb5a31b01bf6f743da0288b88f916de0c, PR256 61c82ae2fc6ed1c608cca19f83cba9e719eceb42 and state f67dba91498cb9f747d88f9f536b3269db0c8211; reconcile the next stale payment bundle against primary acts without protected or production actions.",
-  "expires_at": "2026-10-15T10:10:16.372861+00:00",
+  "expires_at": "2026-10-15T10:18:18.773233Z",
   "generation": 271,
   "holder": "/root/scheduled-cycle271-20261015T092056Z",
   "lease_repair": {},
@@ -10,5 +10,5 @@
   "serialization_repair": {},
   "state": "active",
   "token": "3fadbfa1c56844eabf7998be485df8f9",
-  "updated_at": "2026-10-15T09:40:16.372861+00:00"
+  "updated_at": "2026-10-15T09:48:18.773233Z"
 }
