@@ -1,14 +1,14 @@
 {
   "acquisition_note": "Fresh cycle-271 recovery at main e526dfbdb5a31b01bf6f743da0288b88f916de0c, PR256 61c82ae2fc6ed1c608cca19f83cba9e719eceb42 and state f67dba91498cb9f747d88f9f536b3269db0c8211; reconcile the next stale payment bundle against primary acts without protected or production actions.",
-  "expires_at": "2026-10-15T10:26:02.227077Z",
+  "expires_at": null,
   "generation": 272,
-  "holder": "/root/scheduled-cycle272-20261015T095514Z",
+  "holder": null,
   "lease_repair": {},
   "release_reason": "Cycle 272 quarantined countervailing:2026-06-18 on PR256 exact head 20cc589beebc9003a4427d146de8ce7692fa055b, tree 5f27cf69f6d909c136b96f5b468e3b6fa1d089b5 after both claimed act number/date citations conflicted with the official EAEU portal. Exact-head A0 passed 427 tests plus 73 subtests; safety passed 124 tests plus 175 subtests; independent A5 /root/a5_cycle271 passed 319 tests plus 54 subtests with no findings; exact-head CI 38717322144 succeeded and PR receipt 6189630625 was published. Other stale/rejected bundles and missing populated synchronized NTM snapshot remain blocked; full PR245/PR256 acceptance NOT PASS; A6 unchanged/not sent.",
   "released_by": "/root/scheduled-cycle272-20261015T095514Z",
   "schema_version": 1,
   "serialization_repair": {},
-  "state": "active",
-  "token": "b33dc57a713d441e87cf72efd0a34d7a",
-  "updated_at": "2026-10-15T09:56:02.227077Z"
+  "state": "released",
+  "token": null,
+  "updated_at": "2026-10-15T10:12:16.846090+00:00"
 }
