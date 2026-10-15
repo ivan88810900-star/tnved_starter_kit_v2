@@ -1,14 +1,14 @@
 {
   "acquisition_note": "Fresh GitHub recovery at main e526dfbdb5a31b01bf6f743da0288b88f916de0c, PR256 a5e952f1ea847500b65bdc76b18514ddfd97f01d and state f04f8c7aed48d09f7b336ae9d05c390860cbe9ba; execute a clean broader backend tranche to identify and repair the next bounded PR245/PR256 product defect without normative, A6, protected-branch or production changes.",
-  "expires_at": "2026-10-15T01:19:12.597745Z",
+  "expires_at": null,
   "generation": 262,
-  "holder": "/root/scheduled-cycle262-20261015T004744Z",
+  "holder": null,
   "lease_repair": {},
-  "release_reason": "Cycle 261 removed check-only SQLite filesystem mutation on PR256 exact head 863011a250c4713d0a867b03f0ca1d8c79197274: A0 106 passed plus 71 subtests with 3 known workflow-presence tests deselected, independent A5 /root/a5_cycle261 PASS with no findings, exact-head CI 38656935852 success, PR receipt 6181119818. State checkpoint ae8aff280c5371d678b40683b1a2c85db20195a8 is published; full PR245 and legal/source completeness remain NOT PASS, populated synchronized NTM snapshot unavailable, and A6 unchanged/not sent.",
-  "released_by": "/root/scheduled-cycle261-20261014T234727Z",
+  "release_reason": "Cycle 262 restored the scheduled read-only source freshness workflow on PR256 exact head b2f47ba1661ad5e983b3df7d809e04484fc78590: A0 109 passed plus 71 subtests, independent A5 /root/a5_cycle262 PASS with no findings, exact-head CI 38662810786 attempt 2 success after an unrelated tempfile cleanup flake, PR receipt 6181916495. State checkpoint 889cbdfe1aea25523d3f81bdfed37a8fd0eb12fc passed state CI 38663228223. The monitor now exposes six normative bundles stale by 114-119 days; full PR245 and legal/source completeness remain NOT PASS, populated synchronized NTM snapshot unavailable, and A6 unchanged/not sent.",
+  "released_by": "/root/scheduled-cycle262-20261015T004744Z",
   "schema_version": 1,
   "serialization_repair": {},
-  "state": "active",
-  "token": "7cf2cfd7f3614789a67cf28bdaf41abb",
-  "updated_at": "2026-10-15T00:49:12.597745Z"
+  "state": "released",
+  "token": null,
+  "updated_at": "2026-10-15T01:01:15.521896Z"
 }
