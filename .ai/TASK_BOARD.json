@@ -2179,7 +2179,7 @@
       "unique_source_pr_count": 29
     }
   },
-  "revision": 805,
+  "revision": 806,
   "runs": [
     {
       "head_sha": null,
@@ -14430,5 +14430,63 @@
       "checkpoint": "Evidence is stored in .ai/orchestration/evidence/cycle265_checkpoint.json; state CAS and lease release follow."
     },
     "next_step": "Run the next clean bounded backend fixture tranche on exact PR256 HEAD to identify a concrete remaining product/test defect, while keeping stale-source and populated-snapshot blockers explicit."
+  },
+  "previous_scheduled_product_checkpoint_266": {
+    "updated_at": "2026-10-15T05:08:36Z",
+    "checked_at": "2026-10-15T05:08:36Z",
+    "pr": 256,
+    "branch": "agent/product-ntm-regressions-v1",
+    "head_sha": "7364f190226c2f53968f9acbb76acc483a01fc91",
+    "tree_sha": "683c522674b03ff2f562af65c3c8151c1589be3b",
+    "parent_sha": "0e9b39b4580de33ed6c02a976cdafc6837cc6e6e",
+    "local_author_exact_tree_commit": "358ab9829f99e4e7f7b1e1767c2f09765455775e",
+    "base_pr": 245,
+    "base_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
+    "block": "normative_bundle_order_dependent_database_isolation",
+    "status": "IMPLEMENTED_A5_PASS_CI_PASS",
+    "behavior": {
+      "reproduced": "The parent passed test_normative_bundle.py alone, but invoice_and_compare followed by normative_bundle exited 1 with 1 failed, 8 passed and 1 teardown error because a copied rate_display SessionLocal alias opened the configured empty SQLite file.",
+      "final": "The fixture redirects the environment before bootstrap, rebinds preloaded app DB aliases by identity, restores late imports, and fingerprints the originally captured configured/source DB paths plus WAL/SHM.",
+      "boundaries": "Only one test fixture changed; product/runtime calculation, normative data and legal applicability are unchanged."
+    },
+    "verification": {
+      "a0": "Both module orders passed 9 tests; final adjacent profile passed 123 tests plus 71 subtests, exit 0; configured/source DB artifacts were absent and the pinned source SHA was unchanged.",
+      "a5": {
+        "session": "/root/a5_cycle266",
+        "status": "PASS_EXACT_TREE_NO_FINDINGS",
+        "execution": "A5 rejected the first candidate for a TNVED_SOURCE_DB path-set regression; after repair both orders, missing/existing source adversarial cases and the 123 plus 71 adjacent profile passed.",
+        "findings": []
+      },
+      "ci": {
+        "status": "PASSED_EXACT_HEAD_OFFLINE_SAFETY_ONLY",
+        "run_id": 38685076935,
+        "job_id": 116257955908,
+        "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38685076935/job/116257955908",
+        "head_sha": "7364f190226c2f53968f9acbb76acc483a01fc91",
+        "conclusion": "success"
+      },
+      "github_receipt": {
+        "pr_comment_id": 6184889391
+      }
+    },
+    "blockers": [
+      "Three packing-list async tests still require pytest-asyncio on PR256; dependency-independent versions exist on separate draft PR259 and need bounded consolidation/revalidation rather than a false full-suite PASS.",
+      "All six committed normative bundles remain stale and require lawful primary-source reconciliation.",
+      "Full PR245 product acceptance and legal/source completeness remain NOT PASS.",
+      "NTM full-sync remains blocked until a lawful populated synchronized snapshot is available."
+    ],
+    "a6": {
+      "request": "core-s1-6415f443120f-r9-g106",
+      "status": "UNCHANGED_NOT_SENT"
+    },
+    "coordination_queue": "Issue #257 bounded-probe receipt already exists and was not repeated.",
+    "protected_actions_performed": false,
+    "capabilities": {
+      "code_access": "A fresh full clone and exact PR256/state worktrees were available.",
+      "command_execution": "Git, Python and pytest executed successfully; final A0/A5 commands exited 0.",
+      "lawful_publication": "Draft PR256 advanced by expected-head GitHub CAS under active lease generation 266.",
+      "checkpoint": "Evidence is stored in .ai/orchestration/evidence/cycle266_checkpoint.json; state CAS and lease release follow."
+    },
+    "next_step": "Consolidate and independently revalidate the three dependency-sensitive packing-list async tests on exact PR256 HEAD without adding a new runtime dependency, then rerun the broader offline backend diagnostic."
   }
 }

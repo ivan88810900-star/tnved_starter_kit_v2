@@ -1,0 +1,71 @@
+{
+  "schema_version": 1,
+  "cycle": 266,
+  "started_at": "2026-10-15T04:51:42Z",
+  "completed_at": "2026-10-15T05:08:36Z",
+  "executor": "/root/scheduled-cycle266-20261015T045142Z",
+  "lease": {
+    "generation": 266,
+    "token": "5f036430e7e7452998bba6f64e736c61",
+    "acquisition_commit": "3c0ffe8ef56685c75dbdd02f9fef2767d61b21f3"
+  },
+  "candidate": {
+    "pr": 256,
+    "branch": "agent/product-ntm-regressions-v1",
+    "parent_sha": "0e9b39b4580de33ed6c02a976cdafc6837cc6e6e",
+    "head_sha": "7364f190226c2f53968f9acbb76acc483a01fc91",
+    "tree_sha": "683c522674b03ff2f562af65c3c8151c1589be3b",
+    "local_exact_tree_commit": "358ab9829f99e4e7f7b1e1767c2f09765455775e",
+    "block": "normative_bundle_order_dependent_database_isolation",
+    "files": [
+      "customs-clear/backend/tests/test_normative_bundle.py"
+    ]
+  },
+  "diagnostic": {
+    "command": "SECRET_KEY=test-only-cycle266-key DATABASE_URL=sqlite:////tmp/tariff-cycle266-broad-0457.sqlite PYTHONPATH=. python -m pytest -q --tb=short tests --ignore=tests/test_ntm_full_sync.py",
+    "exit_code": 1,
+    "output": "4 failed, 1933 passed, 11 skipped, 1 error and 197 subtests passed; the normative fixture failure was selected as the first independent bounded defect, while three async packing failures remain separate."
+  },
+  "reproduction": {
+    "status": "REPRODUCED_ON_EXACT_PARENT_ORDER",
+    "command": "SECRET_KEY=test-only-cycle266-key DATABASE_URL=sqlite:////tmp/tariff-cycle266-order-repro.sqlite PYTHONPATH=. python -m pytest -q --tb=short tests/test_invoice_and_compare.py tests/test_normative_bundle.py",
+    "exit_code": 1,
+    "output": "1 failed, 8 passed, 1 teardown error; missing hs_rates through stale rate_display SessionLocal and configured SQLite mutation."
+  },
+  "repair": {
+    "behavior": "Redirect environment before bootstrap, rebind preloaded app database aliases by identity, restore aliases/modules imported during the fixture, and compare a fixed captured set of configured/source DB/WAL/SHM fingerprints.",
+    "scope": "one test file; product, normative and legal semantics unchanged"
+  },
+  "verification": {
+    "a0": {
+      "command": "SECRET_KEY=test-only-cycle266-key DATABASE_URL=sqlite:////tmp/tariff-cycle266-author-final.sqlite PYTHONPATH=. python -m pytest -q --tb=short tests/test_invoice_and_compare.py tests/test_exchange_rates_fallback.py tests/test_data_refresh.py tests/test_smart_classifier.py tests/test_classify_api_security.py tests/test_custom_classifier_chain.py tests/test_upload_packing_list_api.py tests/test_safe_http_errors.py tests/test_rate_display.py tests/test_normative_bundle.py",
+      "exit_code": 0,
+      "output": "123 passed plus 71 subtests; both two-module orders 9 passed; configured/source DB/WAL/SHM absent; py_compile and diff-check exit 0."
+    },
+    "a5": {
+      "session": "/root/a5_cycle266",
+      "status": "PASS_EXACT_TREE_NO_FINDINGS",
+      "execution": "Rejected initial candidate for TNVED_SOURCE_DB path-set regression; after repair both orders 9 passed, adjacent 123 plus 71 subtests, missing/existing source probes and pinned SHA preservation passed.",
+      "findings": []
+    },
+    "ci": {
+      "workflow": "Tariff agent safety",
+      "run_id": 38685076935,
+      "job_id": 116257955908,
+      "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38685076935/job/116257955908",
+      "conclusion": "success"
+    },
+    "github_receipt": {
+      "pr_comment_id": 6184889391
+    }
+  },
+  "limits": {
+    "full_pr245_acceptance": "NOT_PASS",
+    "legal_source_completeness": "NOT_PASS",
+    "lawful_populated_synchronized_ntm_snapshot": "UNAVAILABLE",
+    "committed_payment_bundles": "SIX_STALE",
+    "a6": "core-s1-6415f443120f-r9-g106 unchanged and not sent",
+    "protected_actions_performed": false
+  },
+  "next_step": "Consolidate and independently revalidate the dependency-sensitive packing-list async tests on exact PR256 HEAD, then rerun the broader offline backend diagnostic."
+}
