@@ -1,0 +1,64 @@
+{
+  "schema_version": 1,
+  "cycle": 271,
+  "started_at": "2026-10-15T09:20:56Z",
+  "completed_at": "2026-10-15T09:48:40Z",
+  "executor": "/root/scheduled-cycle271-20261015T092056Z",
+  "lease": {
+    "generation": 271,
+    "token": "3fadbfa1c56844eabf7998be485df8f9",
+    "checkpoint_parent": "dae699c315e6a5d444cec67cb257e3f1db0c2428"
+  },
+  "candidate": {
+    "pr": 256,
+    "branch": "agent/product-ntm-regressions-v1",
+    "parent_sha": "8aeade368ce6df34fe2d1eb8de6d4d05f2bcee7a",
+    "head_sha": "e63d139be8a7de41fa4f72333cda35f0e75977c9",
+    "tree_sha": "adc0a9cdf409184924c8cabf5f12c4ac358f3812",
+    "local_author_exact_tree_commit": "373561bac43474400c552c1a27432b389ea73611"
+  },
+  "sources": [
+    {
+      "act": "EEC Decision No. 46",
+      "url": "https://docs.eaeunion.org/documents/463/10611/",
+      "verified": "2026-10-15",
+      "result": "CN-origin spark plugs, exact codes 8511100001 and 8511100009, 17.23 percent, 2026-05-10 through 2031-05-09, with AM/BY/KZ/KG national exceptions"
+    }
+  ],
+  "behavior": {
+    "destination_scope": "RU numeric; national exceptions or absent destination require manual review.",
+    "totals": "Final total and affected special-duty amount are withheld for unresolved destination scope; partial total remains available.",
+    "nonblocking_advisory": "Generic missing-origin advisory remains status OK and retains numeric total.",
+    "ingestion": "10 inserts then 10 skips; 10 unique destination-aware identities."
+  },
+  "verification": {
+    "author": "Exact-head 249 passed plus 22 subtests, exit 0; full disposable migration upgrade and destination-column assertion exit 0; git diff --check exit 0.",
+    "a5": {
+      "session": "/root/a5_cycle271",
+      "status": "PASS_EXACT_TREE_NO_FINDINGS",
+      "execution": "298 passed plus 54 subtests, exit 0; behavioral, migration upgrade/downgrade and idempotence probes exit 0.",
+      "findings": []
+    },
+    "ci": {
+      "status": "PASSED_EXACT_HEAD_OFFLINE_SAFETY_ONLY",
+      "run_id": 38715082805,
+      "job_id": 116355701450,
+      "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38715082805/job/116355701450",
+      "head_sha": "e63d139be8a7de41fa4f72333cda35f0e75977c9",
+      "conclusion": "success"
+    },
+    "github_receipt": {
+      "pr_comment_id": 6189257942,
+      "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256#issuecomment-6189257942"
+    }
+  },
+  "limits": {
+    "other_payment_bundles": "STALE_OR_REJECTED",
+    "full_pr245_pr256_acceptance": "NOT_PASS",
+    "legal_source_completeness": "NOT_PASS",
+    "lawful_populated_synchronized_ntm_snapshot": "UNAVAILABLE",
+    "a6": "core-s1-6415f443120f-r9-g106 unchanged and not sent",
+    "protected_actions_performed": false
+  },
+  "next_step": "Reconcile the next unresolved stale payment bundle against primary acts while preserving fail-closed gates."
+}
