@@ -1,0 +1,54 @@
+{
+  "schema_version": 1,
+  "cycle": 273,
+  "checked_at": "2026-10-15T10:28:00Z",
+  "lease_generation": 273,
+  "main_sha": "e526dfbdb5a31b01bf6f743da0288b88f916de0c",
+  "state_base_sha": "a7b2d751bbfa921a0b0c0b7adb2fec37e45591da",
+  "pr": 256,
+  "branch": "agent/product-ntm-regressions-v1",
+  "parent_sha": "20cc589beebc9003a4427d146de8ce7692fa055b",
+  "head_sha": "b0762f5e2bfc9ccac2a7c2ab60dd1b62f7965285",
+  "block": "pay3_printing_ink_ett_amendment",
+  "status": "IMPLEMENTED_EXACT_HEAD_SAFETY_CI_PASS_PRODUCT_QA_PENDING",
+  "sources": [
+    {
+      "url": "https://old.adilet.zan.kz/rus/docs/H26EK000043",
+      "result": "Decision No. 43 removes 3215110000/3215190000, introduces six replacement leaves, effective no earlier than 2026-07-01."
+    },
+    {
+      "url": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.32_2022_01.07.2026.pdf",
+      "result": "Official chapter 32 lists three black-ink leaves at 5% and three other-printing-ink leaves at 0%."
+    }
+  ],
+  "changed_files": [
+    "customs-clear/backend/app/services/import_duty_ingestion.py",
+    "customs-clear/backend/data/raw_normative/eec_ett_printing_ink_amendment_2026.json",
+    "customs-clear/backend/tests/test_pay3_printing_ink_ett.py"
+  ],
+  "verification": {
+    "syntax_compile": "PASS",
+    "amendment_json": "PASS",
+    "deterministic_merge": "PASS: base 13319; replaced 8; merged 13319; affected codes unique 8",
+    "exact_head_ci": {
+      "run_id": 38720367843,
+      "job_id": 116373078806,
+      "conclusion": "success",
+      "scope": "offline-safety"
+    },
+    "focused_pytest": "NOT_RUN_CONNECTOR_ONLY_RUNTIME",
+    "independent_a5": "NOT_RUN_CONNECTOR_ONLY_RUNTIME",
+    "pr_comment_id": 6189959169
+  },
+  "blockers": [
+    "Focused product pytest and independent A5 remain required before readiness.",
+    "Full PR245/PR256 product acceptance and legal-source completeness remain NOT PASS.",
+    "Lawful populated synchronized NTM snapshot remains unavailable."
+  ],
+  "a6": {
+    "request": "core-s1-6415f443120f-r9-g106",
+    "status": "UNCHANGED_NOT_SENT"
+  },
+  "protected_actions_performed": false,
+  "next_step": "Execute the new PAY-3 focused module and adjacent import-duty/payment regressions on exact head b0762f5, then run independent A5; repair only reproduced defects before any readiness claim."
+}
