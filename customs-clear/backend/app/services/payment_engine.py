@@ -633,9 +633,15 @@ def compute_payments(payload: dict[str, Any]) -> dict[str, Any]:
     excise_type = (rate.excise_type if rate else "none") or "none"
     excise_value = float(rate.excise_value) if rate else 0.0
     excise_basis = (rate.excise_basis if rate else "") or ""
-    from .rate_display import resolve_excise_for_hs
+    from .rate_display import resolve_excise_with_source_for_hs
 
-    resolved_type, resolved_value, resolved_basis = resolve_excise_for_hs(hs_code)
+    (
+        resolved_type,
+        resolved_value,
+        resolved_basis,
+        resolved_excise_revision,
+        _resolved_excise_url,
+    ) = resolve_excise_with_source_for_hs(hs_code)
     if excise_type in ("", "none") and resolved_type not in ("", "none"):
         excise_type = resolved_type
         excise_value = resolved_value
@@ -692,9 +698,8 @@ def compute_payments(payload: dict[str, Any]) -> dict[str, Any]:
     user_excise = payload.get("excise")
     rejected_excise_source = bool(
         user_excise is None
-        and rate is not None
         and excise_type not in ("", "none")
-        and is_rejected_excise_revision(rate.excise_source_revision)
+        and is_rejected_excise_revision(resolved_excise_revision)
     )
     unresolved_excise = False
     if user_excise is not None:

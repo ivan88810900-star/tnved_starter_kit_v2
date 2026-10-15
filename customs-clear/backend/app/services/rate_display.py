@@ -34,10 +34,17 @@ def _format_duty_simple(raw: str) -> str:
         return t
 
 
-def resolve_excise_for_hs(hs_code: str) -> tuple[str, float, str]:
+def resolve_excise_with_source_for_hs(hs_code: str) -> tuple[str, float, str, str, str]:
+    """Resolve excise display values together with the selected row provenance."""
     rate, _ = find_rate_for_hs(hs_code)
     if rate and (rate.excise_type or "none") not in ("", "none"):
-        return str(rate.excise_type), float(rate.excise_value or 0.0), (rate.excise_basis or "")
+        return (
+            str(rate.excise_type),
+            float(rate.excise_value or 0.0),
+            rate.excise_basis or "",
+            rate.excise_source_revision or "",
+            rate.excise_source_url or "",
+        )
 
     d = _digits(hs_code)
     with SessionLocal() as db:
@@ -47,11 +54,25 @@ def resolve_excise_for_hs(hs_code: str) -> tuple[str, float, str]:
             pref10 = d[:length].ljust(10, "0")
             row = db.query(HsRate).filter(HsRate.hs_code == pref10).first()
             if row and (row.excise_type or "none") not in ("", "none"):
-                return str(row.excise_type), float(row.excise_value or 0.0), (row.excise_basis or "")
+                return (
+                    str(row.excise_type),
+                    float(row.excise_value or 0.0),
+                    row.excise_basis or "",
+                    row.excise_source_revision or "",
+                    row.excise_source_url or "",
+                )
 
     if len(d) >= 2 and d[:2] in EXCISE_LIKELY_CHAPTERS:
-        return "needs_review", 0.0, ""
-    return "none", 0.0, ""
+        return "needs_review", 0.0, "", "", ""
+    return "none", 0.0, "", "", ""
+
+
+def resolve_excise_for_hs(hs_code: str) -> tuple[str, float, str]:
+    """Backward-compatible display resolver without provenance fields."""
+    excise_type, excise_value, excise_basis, _revision, _url = resolve_excise_with_source_for_hs(
+        hs_code
+    )
+    return excise_type, excise_value, excise_basis
 
 
 def format_excise_display(excise_type: str, excise_value: float, excise_basis: str = "") -> str:

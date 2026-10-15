@@ -94,6 +94,23 @@ def _seed_excise(factory, *, revision: str = REJECTED_REVISION, value: float = 6
         db.commit()
 
 
+def _seed_exact_leaf_without_excise(factory) -> None:
+    with factory() as db:
+        db.add(
+            HsRate(
+                hs_code="2207101234",
+                hs_prefix="2207101234",
+                duty_rate="5%",
+                vat_import_rate=22.0,
+                excise_type="none",
+                excise_value=0.0,
+                source_revision="ett:2026-06-18",
+                source_url="https://eec.eaeunion.org/",
+            )
+        )
+        db.commit()
+
+
 def test_tracked_bundle_is_quarantined_before_any_apply(isolated_session) -> None:
     payload, parser = _load_bundle_payload(BUNDLE_REL)
     assert payload is not None
@@ -142,6 +159,20 @@ def test_persisted_rejected_excise_withholds_affected_amounts(isolated_session) 
     assert result["data_quality"]["excise_source_rejected"] is True
     assert result["data_quality"]["manual_review_required"] is True
     assert "отозванной revision" in result["breakdown"]["excise_reason"]
+
+
+def test_rejected_prefix_fallback_keeps_its_provenance(isolated_session) -> None:
+    _seed_excise(isolated_session)
+    _seed_exact_leaf_without_excise(isolated_session)
+    result = compute_payments(
+        {"hs_code": "2207101234", "customs_value": 100_000.0, "quantity": 2.0}
+    )
+
+    assert result["status"] == "MANUAL_REVIEW_REQUIRED"
+    assert result["breakdown"]["excise"] is None
+    assert result["breakdown"]["vat"] is None
+    assert result["breakdown"]["total_payable"] is None
+    assert result["data_quality"]["excise_source_rejected"] is True
 
 
 def test_manual_amount_and_later_verified_revision_are_not_blocked(isolated_session) -> None:
