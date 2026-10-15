@@ -11,6 +11,11 @@ from urllib.parse import urlparse
 _EEC_ETT_REVISION_RE = re.compile(r"^(?:ett|eec-ett|eec:ett):\d{4}-\d{2}-\d{2}$")
 # VAT contour: vat:YYYY-MM-DD | eec-vat:YYYY-MM-DD | eec:vat:YYYY-MM-DD (+ shared ETT forms).
 _EEC_VAT_REVISION_RE = re.compile(r"^(?:vat|eec-vat|eec:vat):\d{4}-\d{2}-\d{2}$")
+# This exact snapshot applies the 22% standard rate from 2025-01-01, although
+# Federal Law No. 425-FZ changed the standard rate from 20% to 22% only from
+# 2026-01-01. Keep the rejection revision-bounded so a corrected VAT snapshot
+# with explicit legal validity windows can be admitted later.
+_REJECTED_VAT_REVISIONS = frozenset({"vat:2026-06-18"})
 # Excise contour: excise:YYYY-MM-DD | eec-excise:YYYY-MM-DD | eec:excise:YYYY-MM-DD.
 _EEC_EXCISE_REVISION_RE = re.compile(r"^(?:excise|eec-excise|eec:excise):\d{4}-\d{2}-\d{2}$")
 # This exact snapshot contains the 2025 excise schedule (for example, 643 RUB
@@ -72,7 +77,12 @@ def is_official_vat_ingestion_revision(revision: str | None) -> bool:
     rev = (revision or "").strip().lower()
     if not rev:
         return False
-    return bool(_EEC_VAT_REVISION_RE.match(rev))
+    return bool(_EEC_VAT_REVISION_RE.match(rev)) and rev not in _REJECTED_VAT_REVISIONS
+
+
+def is_rejected_vat_revision(revision: str | None) -> bool:
+    """True only for an explicitly revoked VAT snapshot."""
+    return (revision or "").strip().lower() in _REJECTED_VAT_REVISIONS
 
 
 def is_official_vat_revision(revision: str | None) -> bool:
@@ -85,7 +95,7 @@ def is_official_vat_revision(revision: str | None) -> bool:
     if not rev:
         return False
     if _EEC_VAT_REVISION_RE.match(rev):
-        return True
+        return rev not in _REJECTED_VAT_REVISIONS
     return bool(_EEC_ETT_REVISION_RE.match(rev))
 
 
