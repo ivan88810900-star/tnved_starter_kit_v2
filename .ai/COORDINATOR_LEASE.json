@@ -1,14 +1,14 @@
 {
-  "acquisition_note": "Fresh cycle-271 recovery at main e526dfbdb5a31b01bf6f743da0288b88f916de0c, PR256 61c82ae2fc9ccac2a7c2ab60dd1b62f7965285 and state 29a39ad4dcb2d224f88e6bcb41d1583d885f05ff; close PAY-3 exact-head product QA and independent review before any readiness claim.",
-  "expires_at": null,
-  "generation": 275,
-  "holder": null,
+  "acquisition_note": "Cycle 276 recovered main e526dfbdb5a31b01bf6f743da0288b88f916de0c, PR256 fd357f35cffea5941553d90b9fa5fa1e1c303ac1 and state board revision 812; close PAY-4 exact-head CI evidence and receipt without changing the reviewed tree.",
+  "expires_at": "2026-10-15T16:48:42Z",
+  "generation": 276,
+  "holder": "/root/scheduled-cycle276-20261015T161838Z",
   "lease_repair": {},
-  "release_reason": "Cycle 273 published PAY-3 amendment on PR256 head b0762f5e2bfc9ccac2a7c2ab60dd1b62f7965285; exact-head safety CI 38720367843 passed, syntax/JSON/deterministic 13319-row merge checks passed. Focused product pytest and independent A5 remain pending because no repository checkout was available. Evidence checkpoint was saved; TASK_BOARD CAS was denied and not retried. A6 unchanged/not sent.",
-  "released_by": "/root/scheduled-cycle273-20261015T101417Z",
+  "release_reason": null,
+  "released_by": null,
   "schema_version": 1,
   "serialization_repair": {},
-  "state": "released",
-  "token": null,
-  "updated_at": "2026-10-15T12:22:45.516296Z"
+  "state": "active",
+  "token": "b14a985764d844751b37b5d9424afd2b",
+  "updated_at": "2026-10-15T16:18:42Z"
 }
