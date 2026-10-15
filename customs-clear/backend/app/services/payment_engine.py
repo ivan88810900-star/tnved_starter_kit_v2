@@ -22,6 +22,7 @@ from .normative_store import (
 from .compliance_resolver import pick_vat_preference_row
 from .payment_revision_utils import (
     is_rejected_countervailing_revision,
+    is_rejected_excise_revision,
     is_rejected_special_safeguard_revision,
 )
 
@@ -689,9 +690,24 @@ def compute_payments(payload: dict[str, Any]) -> dict[str, Any]:
 
     # Excise
     user_excise = payload.get("excise")
+    rejected_excise_source = bool(
+        user_excise is None
+        and rate is not None
+        and excise_type not in ("", "none")
+        and is_rejected_excise_revision(rate.excise_source_revision)
+    )
+    unresolved_excise = False
     if user_excise is not None:
         excise = float(user_excise)
         excise_reason = "Указано вручную"
+    elif rejected_excise_source:
+        unresolved_excise = True
+        excise = 0.0
+        excise_reason = (
+            "Требуется ручная проверка: сохранённая ставка акциза относится к "
+            "отозванной revision excise:2026-06-18 со ставками 2025 года; "
+            "сумма акциза, зависимый НДС и итог удержаны до загрузки проверенной ставки 2026 года"
+        )
     elif excise_type == "percent":
         excise = customs_value * excise_value / 100.0
         basis_str = excise_basis or f"НК РФ ст. 193: {excise_value}% от таможенной стоимости"
@@ -807,6 +823,14 @@ def compute_payments(payload: dict[str, Any]) -> dict[str, Any]:
         or detail.get("needs_verification")
         for detail in special_duties_details
     )
+    unresolved_payment = unresolved_special_duty or unresolved_excise
+    partial_without_excise_and_vat = _sum_amounts(
+        customs_fee_amount,
+        duty_amount,
+        antidumping_amount,
+        special_duties_total,
+        recycling_fee_total,
+    )
 
     # Sources: интегрированные данные в приложении (без внешних ссылок)
     stats = get_integrated_data_stats()
@@ -839,12 +863,14 @@ def compute_payments(payload: dict[str, Any]) -> dict[str, Any]:
         "match_length": match_len,
         "source_code": "EEC_ETT" if rate else None,
         "antidumping_status": antidumping_status,
+        "excise_source_rejected": rejected_excise_source,
+        "manual_review_required": unresolved_payment,
     }
 
     tnved_context = get_tnved_context_for_hs(hs_code)
 
     return {
-        "status": "MANUAL_REVIEW_REQUIRED" if unresolved_special_duty else "OK",
+        "status": "MANUAL_REVIEW_REQUIRED" if unresolved_payment else "OK",
         "hs_code": hs_code,
         "country": country,
         "destination_country": destination_country,
@@ -878,7 +904,7 @@ def compute_payments(payload: dict[str, Any]) -> dict[str, Any]:
             "fx_currency": (duty_rule.specific_currency if duty_rule else ""),
             "specific_qty_used": _round2(specific_qty_used) if specific_qty_used is not None else None,
             "specific_uom": ((duty_rule.specific_uom or "") if duty_rule else ""),
-            "excise": _round2(excise_amount),
+            "excise": None if unresolved_excise else _round2(excise_amount),
             "excise_reason": excise_reason,
             "antidumping": _round2(antidumping_amount),
             "antidumping_reason": antidumping_reason,
@@ -889,11 +915,15 @@ def compute_payments(payload: dict[str, Any]) -> dict[str, Any]:
             "vat_reason": vat_reason,
             "vat_decree_info": vat_decree_info,
             "vat_pref_comment": vat_pref_comment,
-            "vat_base": _round2(vat_base),
-            "vat": _round2(vat),
+            "vat_base": None if unresolved_excise else _round2(vat_base),
+            "vat": None if unresolved_excise else _round2(vat),
             "recycling_fee": _round2(recycling_fee_total),
-            "total_payable": None if unresolved_special_duty else _round2(total),
-            "total_partial": _round2(total),
+            "total_payable": None if unresolved_payment else _round2(total),
+            "total_partial": (
+                _round2(partial_without_excise_and_vat)
+                if unresolved_excise
+                else _round2(total)
+            ),
         },
         "legal_basis": {
             "vat": vat_reason,

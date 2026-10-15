@@ -13,6 +13,12 @@ _EEC_ETT_REVISION_RE = re.compile(r"^(?:ett|eec-ett|eec:ett):\d{4}-\d{2}-\d{2}$"
 _EEC_VAT_REVISION_RE = re.compile(r"^(?:vat|eec-vat|eec:vat):\d{4}-\d{2}-\d{2}$")
 # Excise contour: excise:YYYY-MM-DD | eec-excise:YYYY-MM-DD | eec:excise:YYYY-MM-DD.
 _EEC_EXCISE_REVISION_RE = re.compile(r"^(?:excise|eec-excise|eec:excise):\d{4}-\d{2}-\d{2}$")
+# This exact snapshot contains the 2025 excise schedule (for example, 643 RUB
+# per litre of anhydrous ethyl alcohol) but has no end date and was presented as
+# current in June 2026.  Federal Law No. 425-FZ amended Article 193 from
+# 2026-01-01 (the corresponding alcohol rate is 824 RUB).  Keep the rejection
+# bounded so a subsequently verified 2026 revision can be ingested.
+_REJECTED_EXCISE_REVISIONS = frozenset({"excise:2026-06-18"})
 # Anti-dumping contour: anti-dumping:YYYY-MM-DD | eec-anti-dumping:YYYY-MM-DD | eec:anti-dumping:YYYY-MM-DD
 _EEC_ANTI_DUMPING_REVISION_RE = re.compile(
     r"^(?:anti-dumping|antidumping|eec-anti-dumping|eec:anti-dumping):\d{4}-\d{2}-\d{2}$"
@@ -96,7 +102,12 @@ def is_official_excise_ingestion_revision(revision: str | None) -> bool:
     rev = (revision or "").strip().lower()
     if not rev:
         return False
-    return bool(_EEC_EXCISE_REVISION_RE.match(rev))
+    return bool(_EEC_EXCISE_REVISION_RE.match(rev)) and rev not in _REJECTED_EXCISE_REVISIONS
+
+
+def is_rejected_excise_revision(revision: str | None) -> bool:
+    """True only for an explicitly revoked excise snapshot."""
+    return (revision or "").strip().lower() in _REJECTED_EXCISE_REVISIONS
 
 
 def is_official_excise_revision(revision: str | None) -> bool:
