@@ -165,6 +165,46 @@ class PaymentEngineTests(unittest.TestCase):
         self.assertEqual(res["breakdown"]["vat_rate"], 10.0)
         self.assertIn("вручную", res["breakdown"]["vat_reason"])
 
+    def test_rejected_vat_source_withholds_vat_and_final_total(self):
+        code = "9900000001"
+        with SessionLocal() as db:
+            db.add(
+                HsRate(
+                    hs_code=code,
+                    hs_prefix=code,
+                    duty_rate="5",
+                    vat_import_rate=22.0,
+                    vat_rule="standard",
+                    vat_source_code="EEC_VAT",
+                    vat_source_revision="vat:2026-06-18",
+                    vat_source_url="https://www.nalog.gov.ru/rn77/taxation/taxes/nds/",
+                )
+            )
+            db.commit()
+        try:
+            res = self._calc(hs_code=code, customs_value=100_000, freight=0)
+            self.assertEqual(res["status"], "MANUAL_REVIEW_REQUIRED")
+            self.assertTrue(res["data_quality"]["vat_source_rejected"])
+            self.assertIsNone(res["breakdown"]["vat"])
+            self.assertIsNone(res["breakdown"]["total_payable"])
+            self.assertGreater(res["breakdown"]["total_partial"], 0)
+            self.assertIn("ручная проверка", res["breakdown"]["vat_reason"].lower())
+
+            manual = self._calc(
+                hs_code=code,
+                customs_value=100_000,
+                freight=0,
+                vat_rate=10.0,
+            )
+            self.assertEqual(manual["status"], "OK")
+            self.assertFalse(manual["data_quality"]["vat_source_rejected"])
+            self.assertIsNotNone(manual["breakdown"]["vat"])
+            self.assertIsNotNone(manual["breakdown"]["total_payable"])
+        finally:
+            with SessionLocal() as db:
+                db.query(HsRate).filter(HsRate.hs_code == code).delete()
+                db.commit()
+
     # ------------------------------------------------------------------ Duty
     def test_duty_auto_from_db(self):
         """Пошлина автоматически из БД (ставка из локальной базы / ЕТТ)."""
