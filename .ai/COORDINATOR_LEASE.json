@@ -1,14 +1,14 @@
 {
   "acquisition_note": "Fresh GitHub recovery at main e526dfbdb5a31b01bf6f743da0288b88f916de0c, PR256 0e9b39b4580de33ed6c02a976cdafc6837cc6e6e and state 9cdf83e724fbe2e757a4f38e604ec687d8e17483; execute the next clean bounded backend fixture tranche without normative, A6, protected-branch or production changes.",
-  "expires_at": null,
-  "generation": 267,
-  "holder": null,
+  "expires_at": "2026-10-15T07:18:09.356264Z",
+  "generation": 268,
+  "holder": "/root/scheduled-cycle268-20261015T064708Z",
   "lease_repair": {},
   "release_reason": "Cycle 267 removed the pytest-asyncio dependency from three packing-list tests on PR256 exact head 848647fbde88cdb600f81ff56757a8756ab499db: A0 focused/reverse 4 passed, adjacent 95 plus 71 subtests and expanded safe offline 131 plus 71 subtests; independent A5 /root/a5_cycle267 PASS; exact-head CI 38689939882 success and PR receipt 6185608825. State checkpoint ef10362352179a4d5b189d5404f2c80364e1d9ce passed state CI 38690200858. Unfiltered broad execution was rejected before launch for possible unapproved api.proxyapi.ru egress; no bypass or full-backend PASS. Full PR245 and legal/source completeness remain NOT PASS, populated synchronized NTM snapshot unavailable, all six committed normative bundles stale, and A6 unchanged/not sent.",
   "released_by": "/root/scheduled-cycle267-20261015T055420Z",
   "schema_version": 1,
   "serialization_repair": {},
-  "state": "released",
-  "token": null,
-  "updated_at": "2026-10-15T06:04:24.180990Z"
+  "state": "active",
+  "token": "eddba2e70d8949bda53703cee95fe83f",
+  "updated_at": "2026-10-15T06:48:09.356264Z"
 }
