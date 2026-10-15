@@ -1,14 +1,14 @@
 {
   "acquisition_note": "Fresh GitHub recovery at main e526dfbdb5a31b01bf6f743da0288b88f916de0c, PR256 a5e952f1ea847500b65bdc76b18514ddfd97f01d and state f04f8c7aed48d09f7b336ae9d05c390860cbe9ba; execute a clean broader backend tranche to identify and repair the next bounded PR245/PR256 product defect without normative, A6, protected-branch or production changes.",
-  "expires_at": null,
-  "generation": 263,
-  "holder": null,
+  "expires_at": "2026-10-15T03:21:21.481752Z",
+  "generation": 264,
+  "holder": "/root/scheduled-cycle264-20261015T024948Z",
   "lease_repair": {},
   "release_reason": "Cycle 263 repaired absent exchange_rates-table fallback on PR256 exact head 8eda154558e486a3136d4ecfe31460793f89ec79: A0 111 passed plus 71 subtests, independent A5 /root/a5_cycle263 PASS with no findings, exact-head CI 38668497328 success and PR receipt 6182677315. State checkpoint 54826a25b60af8b98177f11909d3e92d2609a5ad passed state CI 38669024262. The next distinct empty-schema failure is missing country_risks; full PR245 and legal/source completeness remain NOT PASS, populated synchronized NTM snapshot unavailable, and A6 unchanged/not sent.",
   "released_by": "/root/scheduled-cycle263-20261015T015153Z",
   "schema_version": 1,
   "serialization_repair": {},
-  "state": "released",
-  "token": null,
-  "updated_at": "2026-10-15T02:04:58.081603Z"
+  "state": "active",
+  "token": "7f7c5ebcc57e435e9f950a38c6401023",
+  "updated_at": "2026-10-15T02:51:21.481752Z"
 }
