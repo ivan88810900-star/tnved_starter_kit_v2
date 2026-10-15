@@ -18,6 +18,7 @@ from .payment_data_coverage import run_payment_data_coverage_report
 from .payment_revision_utils import (
     is_import_duty_bundle_path,
     is_official_vat_ingestion_revision,
+    is_rejected_vat_revision,
     is_vat_only_bundle_path,
     is_anti_dumping_only_bundle_path,
     is_countervailing_only_bundle_path,
@@ -133,6 +134,17 @@ def _validate_official_vat_bundle_payload(
 
     raw_tnved = payload.get("tnved")
     tnved = raw_tnved if isinstance(raw_tnved, list) else []
+
+    if is_rejected_vat_revision(revision):
+        return {
+            "status": "manual_review_required",
+            "reason": "source_verification_rejected_wrong_effective_period",
+            "revision": revision,
+            "format": fmt,
+            "record_count": len(rates) + len(tnved),
+            "rates_count": len(rates),
+            "checksum_sha256": checksum,
+        }
 
     if _is_non_official_vat_revision_token(revision):
         return {
