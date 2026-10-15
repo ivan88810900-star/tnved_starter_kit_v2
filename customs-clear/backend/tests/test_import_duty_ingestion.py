@@ -774,6 +774,7 @@ class TestImportDutyStalePrefixUpdate(unittest.TestCase):
                     vat_import_rate=22.0,
                     source_revision="ett:2026-05-01",
                     source_url="https://eec.eaeunion.org/comission/department/catr/ett/",
+                    # The bundle inherits this date, so a true no-op fixture must match it.
                     valid_from="2026-01-01",
                 )
             )
