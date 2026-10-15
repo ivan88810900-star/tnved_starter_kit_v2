@@ -39,6 +39,34 @@ _LOCAL_BUNDLE_CANDIDATES: tuple[str, ...] = (
     "data/raw_normative/eec_ett_normative_bundle.json",
     "data/raw_normative/eec_ett_import_duty.json",
 )
+_PRINTING_INK_AMENDMENT_PATH = "data/raw_normative/eec_ett_printing_ink_amendment_2026.json"
+_PRINTING_INK_CODES = frozenset(
+    {
+        "3215110000",
+        "3215190000",
+        "3215110001",
+        "3215110002",
+        "3215110009",
+        "3215190001",
+        "3215190002",
+        "3215190009",
+    }
+)
+_PRINTING_INK_EXPECTED_RATES = {
+    "3215110000": ("5%", "2026-01-01", "2026-06-30"),
+    "3215190000": ("0%", "2026-01-01", "2026-06-30"),
+    "3215110001": ("5%", "2026-07-01", None),
+    "3215110002": ("5%", "2026-07-01", None),
+    "3215110009": ("5%", "2026-07-01", None),
+    "3215190001": ("0%", "2026-07-01", None),
+    "3215190002": ("0%", "2026-07-01", None),
+    "3215190009": ("0%", "2026-07-01", None),
+}
+_PRINTING_INK_ACT_URL = "https://old.adilet.zan.kz/rus/docs/H26EK000043"
+_PRINTING_INK_CHAPTER_URL = (
+    "https://eec.eaeunion.org/comission/department/catr/ett/"
+    "ru.2022/ru.32_2022_01.07.2026.pdf"
+)
 
 
 def _utc_now_iso() -> str:
@@ -293,6 +321,69 @@ def _extract_duty_rows(
     return revision, rows, blockers
 
 
+def _merge_printing_ink_amendment(
+    rows: list[dict[str, Any]],
+) -> tuple[list[dict[str, Any]], dict[str, Any] | None, list[str]]:
+    """Replace only the superseded printing-ink contour with the dated official amendment."""
+    path = _BACKEND_ROOT / _PRINTING_INK_AMENDMENT_PATH
+    if not path.is_file():
+        return rows, None, []
+    checksum = _file_sha256_at(path)
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError) as exc:
+        return rows, None, [f"printing_ink_amendment_parser_failed: {exc}"]
+    if not isinstance(payload, dict):
+        return rows, None, ["printing_ink_amendment_parser_failed: bundle must be JSON object"]
+    if (
+        payload.get("schema_version") != 1
+        or payload.get("revision") != "ett:2026-07-01"
+        or payload.get("effective_from") != "2026-07-01"
+        or payload.get("source_act_url") != _PRINTING_INK_ACT_URL
+        or payload.get("source_chapter_url") != _PRINTING_INK_CHAPTER_URL
+    ):
+        return rows, None, ["printing_ink_amendment_metadata_mismatch"]
+
+    raw_rows, container_err = _raw_rates_list(payload)
+    if container_err is not None:
+        return rows, None, [f"printing_ink_amendment_{container_err}"]
+    if not raw_rows or any(not isinstance(row, dict) for row in raw_rows):
+        return rows, None, ["printing_ink_amendment_malformed_rows"]
+
+    observed: dict[str, tuple[str, str | None, str | None]] = {}
+    for raw in raw_rows:
+        code = re.sub(r"\D", "", str(raw.get("hs_code") or ""))[:10]
+        rate = str(raw.get("duty_rate") or "").strip()
+        valid_from = str(raw.get("valid_from") or "").strip() or None
+        valid_to = str(raw.get("valid_to") or "").strip() or None
+        if code in observed:
+            return rows, None, [f"printing_ink_amendment_duplicate_code: {code}"]
+        observed[code] = (rate, valid_from, valid_to)
+        expected_url = _PRINTING_INK_ACT_URL if code.endswith("0000") else _PRINTING_INK_CHAPTER_URL
+        if raw.get("source_url") != expected_url:
+            return rows, None, [f"printing_ink_amendment_source_url_mismatch: {code}"]
+    if observed != _PRINTING_INK_EXPECTED_RATES:
+        return rows, None, ["printing_ink_amendment_scope_or_rate_mismatch"]
+
+    _revision, amendment_rows, blockers = _extract_duty_rows(payload, raw_rows)
+    if blockers or len(amendment_rows) != len(_PRINTING_INK_EXPECTED_RATES):
+        return rows, None, blockers or ["printing_ink_amendment_normalization_failed"]
+    filtered = [
+        row for row in rows
+        if str(row.get("hs_code") or "").replace(" ", "") not in _PRINTING_INK_CODES
+    ]
+    metadata = {
+        "path": _PRINTING_INK_AMENDMENT_PATH,
+        "revision": payload["revision"],
+        "effective_from": payload["effective_from"],
+        "record_count": len(amendment_rows),
+        "checksum_sha256": checksum,
+        "source_act_url": _PRINTING_INK_ACT_URL,
+        "source_chapter_url": _PRINTING_INK_CHAPTER_URL,
+    }
+    return filtered + amendment_rows, metadata, []
+
+
 def _existing_hs_rate(db, hs_code: str) -> HsRate | None:
     lookup = str(hs_code or "").strip().replace(" ", "")
     if not lookup:
@@ -438,11 +529,18 @@ def _validate_bundle_for_ingest(
         return payload, parser_result, "", [], [f"parser_failed: {container_err}"]
 
     revision, rows, row_blockers = _extract_duty_rows(payload, rows_in)
+    rows, amendment_metadata, amendment_blockers = _merge_printing_ink_amendment(rows)
+    if amendment_metadata is not None:
+        parser_result["amendments"] = [amendment_metadata]
+        parser_result["record_count"] = len(rows)
+        parser_result["rates_count"] = len(rows)
     blockers: list[str] = []
     if not _is_official_eec_ett_revision(revision):
         blockers.append(f"non_official_bundle_revision: {revision or '<empty>'}")
     if row_blockers:
         blockers.extend(row_blockers)
+    if amendment_blockers:
+        blockers.extend(amendment_blockers)
     if not rows:
         blockers.append("no_importable_duty_rows")
     return payload, parser_result, revision, rows, blockers
