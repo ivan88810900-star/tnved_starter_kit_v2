@@ -13,7 +13,7 @@
   "code_commit_sha": "b3bbc04503211f66b1f6f73d4467c04b93ea0e4d",
   "local_author_exact_tree_commit": "d4181ef64d0cff47e59278f549b5bdd4a4050942",
   "block": "pay4_obsolete_excise_schedule_quarantine",
-  "status": "IMPLEMENTED_A5_PASS_EXACT_HEAD_CI_PENDING",
+  "status": "IMPLEMENTED_A5_PASS_EXACT_HEAD_CI_PASS_SOURCE_REJECTED",
   "sources": [
     {
       "url": "https://www.nalog.gov.ru/rn27/news/tax_doc_news/16590707/",
@@ -37,13 +37,18 @@
       "execution": "351 passed plus 41 subtests, independent behavior probes and static checks; exact metadata-only head fd357f35 preserves reviewed tree bab265f5 with no changed files."
     },
     "exact_head_ci": {
-      "status": "PENDING_CAPABILITY_BLOCKED_NO_RUN_CREATED",
+      "status": "PASSED_EXACT_HEAD_OFFLINE_SAFETY_ONLY",
+      "run_id": 38733622296,
+      "job_id": 116417259203,
+      "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38733622296/job/116417259203",
       "head_sha": "fd357f35cffea5941553d90b9fa5fa1e1c303ac1",
-      "reason": "The GitHub connector published the exact head, including two no-diff CI trigger commits, but Actions returned no run for the exact SHA. Native git push authentication and workflow-dispatch capability are unavailable in this runtime."
-    }
+      "conclusion": "success",
+      "scope": "offline-safety",
+      "steps": "all recorded steps completed successfully"
+    },
+    "pr_comment_id": 6196835088
   },
   "blockers": [
-    "Required exact-head CI has not started; this block is not declared complete.",
     "Full PR245/PR256 product acceptance and legal/source completeness remain NOT PASS.",
     "Lawful populated synchronized NTM snapshot remains unavailable."
   ],
@@ -52,5 +57,7 @@
     "status": "UNCHANGED_NOT_SENT"
   },
   "protected_actions_performed": false,
-  "next_step": "Obtain the existing offline-safety workflow on exact head fd357f35, then publish the PR receipt and close the state checkpoint without changing the reviewed tree."
+  "next_step": "Reconcile the next unresolved stale payment bundle against primary acts while preserving fail-closed source, applicability and total-withholding gates.",
+  "closed_at": "2026-10-15T16:18:47Z",
+  "closed_by_lease_generation": 276
 }
