@@ -1,0 +1,70 @@
+{
+  "schema_version": 1,
+  "cycle": 269,
+  "started_at": "2026-10-15T07:54:51Z",
+  "completed_at": "2026-10-15T08:34:22Z",
+  "executor": "/root/scheduled-cycle269-20261015T075451Z",
+  "lease": {
+    "generation": 269,
+    "token": "41afb1899aea4309b99e0e8e8f5bbe4d",
+    "checkpoint_parent": "301a221b1b1792df87ddf93130d62b48e1805967"
+  },
+  "candidate": {
+    "pr": 256,
+    "branch": "agent/product-ntm-regressions-v1",
+    "parent_sha": "848647fbde88cdb600f81ff56757a8756ab499db",
+    "head_sha": "ecc8dbf6c46bd57f5e93d04d56a7486030949a35",
+    "tree_sha": "fff5ca21affc64a11da86f36d2cfec28f892088a",
+    "local_author_exact_tree_commit": "410c3a188cd84a94b451dcfe4cba81051e2124be"
+  },
+  "sources": [
+    {
+      "act": "EEC Decision No. 96",
+      "url": "https://docs.eaeunion.org/documents/446/10233/",
+      "verified": "2026-10-15"
+    },
+    {
+      "act": "EEC Decision No. 124",
+      "url": "https://docs.eaeunion.org/documents/463/10925/",
+      "verified": "2026-10-15"
+    }
+  ],
+  "behavior": {
+    "official_scope": "Decision No. 96 limited to exact TN VED 3206110000, titanium dioxide at least 80 percent dry basis, with Appendix 2 exclusions.",
+    "effective_windows": "Active 2025-11-16..2026-10-02 and 2027-08-11..2030-11-15; Decision No. 124 non-application 2026-10-03..2027-08-10 inclusive.",
+    "fail_closed": "Unknown manufacturer/product scope requires manual review; special-duty amount and final quote total are withheld.",
+    "ingestion": "Exact superseded official 3206 row is retired only when both replacement windows apply; near matches remain. Mixed-revision apply remains SourceStatus stale and SyncLog PARTIAL."
+  },
+  "verification": {
+    "author": "Payment/ingestion profile 407 passed plus 73 subtests, exit 0; tariff-agent safety 124 tests, exit 0; JSON, py_compile and diff checks exit 0; no DB/WAL/SHM.",
+    "final_exact_command": "PYTHONPATH=. /workspace/scratch/bb84ae3e224a/.venv266/bin/pytest -q tests/test_pay1_titanium_dioxide.py",
+    "final_exact_command_result": "13 passed in 4.13s, exit 0",
+    "a5": {
+      "session": "/root/a5_cycle269c",
+      "status": "PASS_EXACT_TREE_NO_FINDINGS",
+      "execution": "Independent 407 passed plus 73 subtests and verified primary acts, retirement near-matches, URL allowlist/lookalikes, boundaries, malformed-date fail-closed behavior, partial/stale status and retire-only receipts.",
+      "findings": []
+    },
+    "ci": {
+      "status": "PASSED_EXACT_HEAD_OFFLINE_SAFETY_ONLY",
+      "run_id": 38705953005,
+      "job_id": 116325302401,
+      "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38705953005/job/116325302401",
+      "head_sha": "ecc8dbf6c46bd57f5e93d04d56a7486030949a35",
+      "conclusion": "success"
+    },
+    "github_receipt": {
+      "pr_comment_id": 6187908946,
+      "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256#issuecomment-6187908946"
+    }
+  },
+  "limits": {
+    "full_pr245_acceptance": "NOT_PASS",
+    "legal_source_completeness": "NOT_PASS",
+    "lawful_populated_synchronized_ntm_snapshot": "UNAVAILABLE",
+    "payment_bundles": "ANTI_DUMPING_PARTIAL_STALE_PLUS_FIVE_STALE",
+    "a6": "core-s1-6415f443120f-r9-g106 unchanged and not sent",
+    "protected_actions_performed": false
+  },
+  "next_step": "Reconcile the next stale payment bundle against primary acts while preserving partial/stale status and fail-closed totals until each scope and effective window is verified."
+}
