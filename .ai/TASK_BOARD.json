@@ -2179,7 +2179,7 @@
       "unique_source_pr_count": 29
     }
   },
-  "revision": 806,
+  "revision": 807,
   "runs": [
     {
       "head_sha": null,
@@ -7781,7 +7781,7 @@
       }
     }
   ],
-  "updated_at": "2026-10-15T03:55:16Z",
+  "updated_at": "2026-10-15T06:01:54Z",
   "previous_scheduled_product_checkpoint_174": {
     "updated_at": "2026-10-11T18:04:51.196Z",
     "checked_at": "2026-10-11T18:04:51.196Z",
@@ -14488,5 +14488,64 @@
       "checkpoint": "Evidence is stored in .ai/orchestration/evidence/cycle266_checkpoint.json; state CAS and lease release follow."
     },
     "next_step": "Consolidate and independently revalidate the three dependency-sensitive packing-list async tests on exact PR256 HEAD without adding a new runtime dependency, then rerun the broader offline backend diagnostic."
+  },
+  "previous_scheduled_product_checkpoint_267": {
+    "updated_at": "2026-10-15T06:01:54Z",
+    "checked_at": "2026-10-15T06:01:54Z",
+    "pr": 256,
+    "branch": "agent/product-ntm-regressions-v1",
+    "head_sha": "848647fbde88cdb600f81ff56757a8756ab499db",
+    "tree_sha": "173f1d4f01a3c7a7e1f465e3216de906cd3a5b99",
+    "parent_sha": "7364f190226c2f53968f9acbb76acc483a01fc91",
+    "local_author_exact_tree_commit": "b2b73098e4dd449f8bd547dec0295f9ff0c5a3eb",
+    "base_pr": 245,
+    "base_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
+    "block": "packing_list_async_test_dependency_independence",
+    "status": "IMPLEMENTED_A5_PASS_CI_PASS",
+    "behavior": {
+      "reproduced": "The exact parent exited 1 with three failed async tests and one passed because the isolated environment has no pytest-asyncio.",
+      "final": "The unchanged async scenarios execute through stdlib asyncio.run; the background-task scenario remains one coroutine so patch lifetime and await order are preserved.",
+      "boundaries": "Only two test files changed. No runtime dependency, product behavior, normative data or legal applicability changed."
+    },
+    "verification": {
+      "a0": "Focused and reverse order each passed 4 tests; adjacent packing/smart profile passed 95 plus 71 subtests; expanded safe offline profile passed 131 plus 71 subtests, exit 0; py_compile, exact-file parity and diff-check exited 0.",
+      "a5": {
+        "session": "/root/a5_cycle267",
+        "status": "PASS_EXACT_TREE_NO_FINDINGS",
+        "execution": "Both file orders passed 4 tests, adjacent profile passed 95 plus 71 subtests, all assertion expressions were unchanged, pytest-asyncio was confirmed absent and no DB artifacts remained.",
+        "findings": []
+      },
+      "ci": {
+        "status": "PASSED_EXACT_HEAD_OFFLINE_SAFETY_ONLY",
+        "run_id": 38689939882,
+        "job_id": 116273266494,
+        "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38689939882/job/116273266494",
+        "head_sha": "848647fbde88cdb600f81ff56757a8756ab499db",
+        "conclusion": "success"
+      },
+      "github_receipt": {
+        "pr_comment_id": 6185608825
+      }
+    },
+    "diagnostic_boundary": "The unfiltered full backend command was rejected before execution because it could contact untrusted api.proxyapi.ru; no bypass or external request was attempted and no full-backend PASS is claimed.",
+    "blockers": [
+      "A future broad diagnostic must use an explicitly audited network-free module allowlist; the unfiltered suite is not authorized in this environment.",
+      "All six committed normative bundles remain stale and require lawful primary-source reconciliation.",
+      "Full PR245 product acceptance and legal/source completeness remain NOT PASS.",
+      "NTM full-sync remains blocked until a lawful populated synchronized snapshot is available."
+    ],
+    "a6": {
+      "request": "core-s1-6415f443120f-r9-g106",
+      "status": "UNCHANGED_NOT_SENT"
+    },
+    "coordination_queue": "Issue #257 bounded-probe receipt already exists and was not repeated.",
+    "protected_actions_performed": false,
+    "capabilities": {
+      "code_access": "Fresh exact PR256 author and independent A5 worktrees were available.",
+      "command_execution": "Git, Python and targeted offline pytest executed successfully; final A0/A5 commands exited 0.",
+      "lawful_publication": "Draft PR256 advanced by expected-head GitHub CAS under active lease generation 267.",
+      "checkpoint": "Evidence is stored in .ai/orchestration/evidence/cycle267_checkpoint.json; state CAS and lease release follow."
+    },
+    "next_step": "Audit a strictly network-free broad backend module allowlist and rerun the offline diagnostic on exact PR256 HEAD; select the next concrete fixture/product failure without weakening source or snapshot gates."
   }
 }

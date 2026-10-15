@@ -1,0 +1,72 @@
+{
+  "schema_version": 1,
+  "cycle": 267,
+  "started_at": "2026-10-15T05:54:20Z",
+  "completed_at": "2026-10-15T06:01:54Z",
+  "executor": "/root/scheduled-cycle267-20261015T055420Z",
+  "lease": {
+    "generation": 267,
+    "token": "e32321ecb71e4245934acb5151e7e2b4",
+    "acquisition_commit": "b4503881d12d563e2183bcd83561bf7c3d7e0d74"
+  },
+  "candidate": {
+    "pr": 256,
+    "branch": "agent/product-ntm-regressions-v1",
+    "parent_sha": "7364f190226c2f53968f9acbb76acc483a01fc91",
+    "head_sha": "848647fbde88cdb600f81ff56757a8756ab499db",
+    "tree_sha": "173f1d4f01a3c7a7e1f465e3216de906cd3a5b99",
+    "local_exact_tree_commit": "b2b73098e4dd449f8bd547dec0295f9ff0c5a3eb",
+    "block": "packing_list_async_test_dependency_independence",
+    "files": [
+      "customs-clear/backend/tests/test_packing_list_classify.py",
+      "customs-clear/backend/tests/test_packing_list_tasks.py"
+    ]
+  },
+  "reproduction": {
+    "command": "SECRET_KEY=tariff-cycle267-test-secret DATABASE_URL=sqlite:////tmp/tariff-cycle267-parent.db PYTHONPATH=. python -m pytest -q --tb=short tests/test_packing_list_classify.py tests/test_packing_list_tasks.py",
+    "exit_code": 1,
+    "output": "3 failed and 1 passed because async tests are unsupported without pytest-asyncio."
+  },
+  "repair": {
+    "behavior": "Execute the three existing async scenarios through stdlib asyncio.run while preserving one coroutine for the background-task flow.",
+    "scope": "two test files; runtime, dependencies, normative and legal semantics unchanged"
+  },
+  "verification": {
+    "a0": {
+      "command": "SECRET_KEY=tariff-cycle267-test-secret DATABASE_URL=sqlite:////tmp/tariff-cycle267-final.db PYTHONPATH=. python -m pytest -q --tb=short tests/test_invoice_and_compare.py tests/test_exchange_rates_fallback.py tests/test_data_refresh.py tests/test_smart_classifier.py tests/test_classify_api_security.py tests/test_custom_classifier_chain.py tests/test_upload_packing_list_api.py tests/test_safe_http_errors.py tests/test_rate_display.py tests/test_normative_bundle.py tests/test_packing_list_classify.py tests/test_packing_list_parser.py tests/test_packing_list_tasks.py",
+      "exit_code": 0,
+      "output": "131 passed plus 71 subtests; focused and reverse order each 4 passed; adjacent packing/smart profile 95 passed plus 71 subtests; py_compile, exact-file parity and diff-check exit 0."
+    },
+    "a5": {
+      "session": "/root/a5_cycle267",
+      "status": "PASS_EXACT_TREE_NO_FINDINGS",
+      "execution": "Both orders 4 passed; adjacent profile 95 passed plus 71 subtests; unchanged assertion expressions, absent pytest-asyncio, clean worktree and no DB artifacts verified.",
+      "findings": []
+    },
+    "ci": {
+      "workflow": "Tariff agent safety",
+      "run_id": 38689939882,
+      "job_id": 116273266494,
+      "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38689939882/job/116273266494",
+      "conclusion": "success"
+    },
+    "github_receipt": {
+      "pr_comment_id": 6185608825
+    }
+  },
+  "diagnostic_boundary": {
+    "requested_command": "python -m pytest -q --tb=short",
+    "executed": false,
+    "reason": "Execution boundary rejected possible unapproved api.proxyapi.ru egress before launch; no bypass or external request attempted.",
+    "full_backend_pass_claimed": false
+  },
+  "limits": {
+    "full_pr245_acceptance": "NOT_PASS",
+    "legal_source_completeness": "NOT_PASS",
+    "lawful_populated_synchronized_ntm_snapshot": "UNAVAILABLE",
+    "committed_payment_bundles": "SIX_STALE",
+    "a6": "core-s1-6415f443120f-r9-g106 unchanged and not sent",
+    "protected_actions_performed": false
+  },
+  "next_step": "Audit a strictly network-free broad backend module allowlist and rerun the offline diagnostic on exact PR256 HEAD."
+}
