@@ -24,6 +24,7 @@ from .payment_revision_utils import (
     is_rejected_countervailing_revision,
     is_rejected_excise_revision,
     is_rejected_special_safeguard_revision,
+    is_rejected_vat_revision,
 )
 
 
@@ -630,6 +631,7 @@ def compute_payments(payload: dict[str, Any]) -> dict[str, Any]:
     vat_rule = (rate.vat_rule if rate else "none") or "none"
     vat_rule_basis = (rate.vat_rule_basis if rate else "") or ""
     raw_vat_rate = float(rate.vat_import_rate) if rate else 22.0
+    vat_source_revision = (rate.vat_source_revision if rate else "") or ""
     excise_type = (rate.excise_type if rate else "none") or "none"
     excise_value = float(rate.excise_value) if rate else 0.0
     excise_basis = (rate.excise_basis if rate else "") or ""
@@ -785,11 +787,25 @@ def compute_payments(payload: dict[str, Any]) -> dict[str, Any]:
     auto_vat_rate = float(vat_pref.vat_rate) if vat_pref else 22.0
     vat_decree_info = (vat_pref.decree_info or "") if vat_pref else ""
     vat_pref_comment = (vat_pref.comment or "") if vat_pref else ""
+    rejected_vat_source = bool(
+        payload.get("vat_rate") is None
+        and vat_pref is None
+        and rate is not None
+        and is_rejected_vat_revision(vat_source_revision)
+    )
+    unresolved_vat = rejected_vat_source
     if payload.get("vat_rate") is not None:
         vat_rate = float(payload.get("vat_rate"))
         vat_reason = f"Указано вручную: {vat_rate}%"
         vat_decree_info = ""
         vat_pref_comment = ""
+    elif rejected_vat_source:
+        vat_rate = raw_vat_rate
+        vat_reason = (
+            "Требуется ручная проверка: сохранённая ставка НДС относится к "
+            "отозванной revision vat:2026-06-18, которая применяла 22% с 2025-01-01; "
+            "сумма НДС и итог удержаны до загрузки проверенной ставки с корректным окном действия"
+        )
     elif vat_pref is not None:
         vat_rate = auto_vat_rate
         vat_reason = (
@@ -828,10 +844,18 @@ def compute_payments(payload: dict[str, Any]) -> dict[str, Any]:
         or detail.get("needs_verification")
         for detail in special_duties_details
     )
-    unresolved_payment = unresolved_special_duty or unresolved_excise
+    unresolved_payment = unresolved_special_duty or unresolved_excise or unresolved_vat
     partial_without_excise_and_vat = _sum_amounts(
         customs_fee_amount,
         duty_amount,
+        antidumping_amount,
+        special_duties_total,
+        recycling_fee_total,
+    )
+    partial_without_vat = _sum_amounts(
+        customs_fee_amount,
+        duty_amount,
+        excise_amount,
         antidumping_amount,
         special_duties_total,
         recycling_fee_total,
@@ -869,6 +893,7 @@ def compute_payments(payload: dict[str, Any]) -> dict[str, Any]:
         "source_code": "EEC_ETT" if rate else None,
         "antidumping_status": antidumping_status,
         "excise_source_rejected": rejected_excise_source,
+        "vat_source_rejected": rejected_vat_source,
         "manual_review_required": unresolved_payment,
     }
 
@@ -921,12 +946,14 @@ def compute_payments(payload: dict[str, Any]) -> dict[str, Any]:
             "vat_decree_info": vat_decree_info,
             "vat_pref_comment": vat_pref_comment,
             "vat_base": None if unresolved_excise else _round2(vat_base),
-            "vat": None if unresolved_excise else _round2(vat),
+            "vat": None if unresolved_excise or unresolved_vat else _round2(vat),
             "recycling_fee": _round2(recycling_fee_total),
             "total_payable": None if unresolved_payment else _round2(total),
             "total_partial": (
                 _round2(partial_without_excise_and_vat)
                 if unresolved_excise
+                else _round2(partial_without_vat)
+                if unresolved_vat
                 else _round2(total)
             ),
         },
