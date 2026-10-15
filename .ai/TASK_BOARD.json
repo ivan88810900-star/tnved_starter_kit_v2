@@ -2179,7 +2179,7 @@
       "unique_source_pr_count": 29
     }
   },
-  "revision": 802,
+  "revision": 803,
   "runs": [
     {
       "head_sha": null,
@@ -14259,5 +14259,62 @@
       "checkpoint": "Evidence is stored in .ai/orchestration/evidence/cycle262_checkpoint.json; state CAS and lease release follow."
     },
     "next_step": "Reconcile the six stale normative bundles against current primary sources without treating private documents as legal authority, then continue the next bounded PR256/#245 fixture/product defect."
+  },
+  "previous_scheduled_product_checkpoint_263": {
+    "updated_at": "2026-10-15T02:01:30Z",
+    "checked_at": "2026-10-15T02:01:30Z",
+    "pr": 256,
+    "branch": "agent/product-ntm-regressions-v1",
+    "head_sha": "8eda154558e486a3136d4ecfe31460793f89ec79",
+    "tree_sha": "33e07fde1443bfc297b54de7434d9118035d6a86",
+    "parent_sha": "b2f47ba1661ad5e983b3df7d809e04484fc78590",
+    "local_author_exact_tree_commit": "f0fb0be13a39e43946d2dd42e3871c648eb71602",
+    "base_pr": 245,
+    "base_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
+    "block": "missing_exchange_rates_table_local_fallback",
+    "status": "IMPLEMENTED_A5_PASS_CI_PASS",
+    "behavior": {
+      "reproduced": "An empty disposable SQLite database raised no such table: exchange_rates in get_rates_map instead of using the existing local FX constants.",
+      "final": "Both exchange-rate readers use the existing fallback constants only when the table is absent. Persisted rows retain their existing override behavior.",
+      "boundaries": "SQLAlchemy connection, introspection and persisted-query failures still propagate; no normative rates, legal applicability or production data changed."
+    },
+    "verification": {
+      "a0": "Focused and adjacent profile passed 111 tests plus 71 subtests, exit 0; no disposable DB/WAL/SHM remained.",
+      "a5": {
+        "session": "/root/a5_cycle263",
+        "status": "PASS_EXACT_TREE_NO_FINDINGS",
+        "execution": "Focused plus payment-data coverage passed 36 tests; four independent injected failure checks proved introspection and malformed persisted-table errors still propagate; diff check passed.",
+        "findings": []
+      },
+      "ci": {
+        "status": "PASSED_EXACT_HEAD_OFFLINE_SAFETY_ONLY",
+        "run_id": 38668497328,
+        "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38668497328",
+        "head_sha": "8eda154558e486a3136d4ecfe31460793f89ec79",
+        "conclusion": "success"
+      },
+      "github_receipt": {
+        "pr_comment_id": 6182677315
+      }
+    },
+    "blockers": [
+      "The same empty-schema comparison now advances past exchange rates and fails separately because country_risks is absent.",
+      "All six committed normative bundles remain stale and require lawful primary-source reconciliation.",
+      "Full PR245 product acceptance and legal/source completeness remain NOT PASS.",
+      "NTM full-sync remains blocked until a lawful populated synchronized snapshot is available."
+    ],
+    "a6": {
+      "request": "core-s1-6415f443120f-r9-g106",
+      "status": "UNCHANGED_NOT_SENT"
+    },
+    "coordination_queue": "Issue #257 bounded-probe receipt already exists and was not repeated.",
+    "protected_actions_performed": false,
+    "capabilities": {
+      "code_access": "Fresh exact PR256 author and independent A5 worktrees were available.",
+      "command_execution": "Git, Python and pytest were available; final A0 and A5 commands exited 0.",
+      "lawful_publication": "Draft PR256 was advanced by expected-head GitHub CAS under active lease generation 263.",
+      "checkpoint": "Evidence is stored in .ai/orchestration/evidence/cycle263_checkpoint.json; state CAS and lease release follow."
+    },
+    "next_step": "Reproduce and safely scope the missing country_risks behavior in empty disposable scenario comparison without inventing legal applicability; then continue stale-source reconciliation."
   }
 }
