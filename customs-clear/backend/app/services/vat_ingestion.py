@@ -442,6 +442,7 @@ def _blocked_response(
 ) -> dict[str, Any]:
     response = VatIngestionResponse(
         status=status,  # type: ignore[arg-type]
+        reason=(parser_result or {}).get("reason"),
         mode=mode,  # type: ignore[arg-type]
         dry_run=dry_run,
         db_mutated=False,
