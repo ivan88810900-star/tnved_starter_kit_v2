@@ -1,14 +1,14 @@
 {
   "acquisition_note": "Cycle 292 recovered main e526dfbdb5a31b01bf6f743da0288b88f916de0c, PR258 exact head c59af35da7dde2140d911e2003a4a52fb0611507, released generation 291, and stale CI status. GitHub now exposes exact-head run 38920906239/job 117040259865 as success.",
-  "expires_at": "2026-10-16T18:23:29.308554+00:00",
+  "expires_at": null,
   "generation": 294,
-  "holder": "/root/scheduled-cycle294-20261016T175329Z",
+  "holder": null,
   "lease_repair": {},
-  "release_reason": "Cycle 293 advanced the fresh drift-safe NSI-1995 epoch from offset 200 to 300 on unchanged PR258 head c59af35da7dde2140d911e2003a4a52fb0611507/tree 2fee4bb388d1b2db69b2e49ed41d9f4dacea08d9. Two immutable objects read back exactly; epoch staging is 300/300 DB/source tuples, all COLLECTED_UNVERIFIED, replay idempotent. Author 31 targeted and 191 expanded PASS; independent A5 PASS/no findings with adjacent 190 PASS. Exact-head CI run 38920906239/job 117040259865 success. State checkpoint ef8fc3e2c545ace411c8aa6d1ee80919cf1ea374; PR receipt 6220611588; issue257 receipt 6220613885. Snapshot remains unavailable; A6 unchanged/not sent.",
-  "released_by": "/root/scheduled-cycle293-20261016T165301Z",
+  "release_reason": "Cycle 294 advanced the fresh drift-safe NSI-1995 epoch from offset 300 to 400 on unchanged PR258 head c59af35da7dde2140d911e2003a4a52fb0611507/tree 2fee4bb388d1b2db69b2e49ed41d9f4dacea08d9. Two immutable objects read back exactly; epoch staging is 400/400 DB/source tuples, all COLLECTED_UNVERIFIED, replay idempotent. Author 31 targeted and 191 expanded PASS; independent A5 PASS/no findings with adjacent 190 PASS. Exact-head CI run 38920906239/job 117040259865 success. State checkpoint 3379a3908b69d52cc9298a29536df719bfa8358a; PR receipt 6221691328; issue257 receipt 6221693679. Snapshot remains unavailable; A6 unchanged/not sent.",
+  "released_by": "/root/scheduled-cycle294-20261016T175329Z",
   "schema_version": 1,
   "serialization_repair": {},
-  "state": "active",
-  "token": "dce775124a1344718f75286de80419f4",
-  "updated_at": "2026-10-16T17:53:29.308554+00:00"
+  "state": "released",
+  "token": null,
+  "updated_at": "2026-10-16T18:05:18.613870+00:00"
 }
