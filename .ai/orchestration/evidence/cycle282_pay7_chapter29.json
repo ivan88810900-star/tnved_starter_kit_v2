@@ -1,0 +1,60 @@
+{
+  "schema_version": 1,
+  "cycle": 282,
+  "checked_at": "2026-10-16T08:10:48Z",
+  "main_sha": "e526dfbdb5a31b01bf6f743da0288b88f916de0c",
+  "state_parent_sha": "633c64e32ec8ccf2314910879d7f0f0667f21eee",
+  "lease_generation": 282,
+  "pr": 256,
+  "branch": "agent/product-ntm-regressions-v1",
+  "parent_sha": "cd41a21109a99aa23457f6d6a0ba7edddb536c08",
+  "rejected_intermediate_sha": "d6972bb2eb2b18e76c8c2d5320cdb84fcc6dc888",
+  "head_sha": "69cbffcb4a9040d56e66ecc6fe039bf0aa3a6a7b",
+  "tree_sha": "275c7314add4f19e81de62f1e0cf6a91736263a4",
+  "local_author_commit": "83fab8912ffb241b06b9be973473f3491b9d8911",
+  "block": "pay7_verified_ett_chapter29_contour",
+  "status": "QA_PASSED_EXACT_HEAD_CI_PASS_PAY7_CLOSED",
+  "official_sources": [
+    "https://eec.eaeunion.org/comission/department/catr/ett/",
+    "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.29_2022_11.07.2026.pdf"
+  ],
+  "verified_rates": {
+    "2901100001": "3%",
+    "2902200000": "3%",
+    "2902300000": "3%",
+    "2902410000": "3%",
+    "2921410000": "5%"
+  },
+  "verification": {
+    "author": "Targeted 70 passed; expanded import-duty/payment profile 211 passed; JSON, py_compile and git diff --check exited 0.",
+    "a5": {
+      "session": "/root/a5_cycle282",
+      "status": "PASS_EXACT_TREE_NO_FINDINGS",
+      "targeted": "70 passed",
+      "adjacent": "55 passed",
+      "controls": "Future revision and altered base provenance/scope remain unchanged and fail closed."
+    },
+    "ci": {
+      "run_id": 38871664388,
+      "job_id": 116876936362,
+      "name": "Tariff agent safety / offline-safety",
+      "event": "push",
+      "head_sha": "69cbffcb4a9040d56e66ecc6fe039bf0aa3a6a7b",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38871664388/job/116876936362"
+    },
+    "github_receipt": {
+      "pr_comment_id": 6211068815,
+      "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256#issuecomment-6211068815"
+    }
+  },
+  "boundaries": [
+    "Sixteen exact-HS duplicate ETT contours remain quarantined before admission.",
+    "Full PR245/PR256 product acceptance and legal/source completeness remain NOT PASS.",
+    "A lawful populated synchronized NTM snapshot remains unavailable.",
+    "A6 request core-s1-6415f443120f-r9-g106 is unchanged and not sent."
+  ],
+  "protected_actions_performed": false,
+  "next_step": "Reconcile the next remaining duplicate ETT contour against the current official chapter source while retaining exact-base binding and fail-closed admission."
+}

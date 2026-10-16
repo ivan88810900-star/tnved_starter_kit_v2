@@ -2179,7 +2179,7 @@
       "unique_source_pr_count": 29
     }
   },
-  "revision": 815,
+  "revision": 816,
   "runs": [
     {
       "head_sha": null,
@@ -7781,7 +7781,7 @@
       }
     }
   ],
-  "updated_at": "2026-10-16T06:52:36Z",
+  "updated_at": "2026-10-16T08:10:48Z",
   "previous_scheduled_product_checkpoint_174": {
     "updated_at": "2026-10-11T18:04:51.196Z",
     "checked_at": "2026-10-11T18:04:51.196Z",
@@ -15146,5 +15146,43 @@
     },
     "protected_actions_performed": false,
     "next_step": "Reconcile the 21 duplicate ETT codes against immutable official sources and effective dates; keep ambiguous rows quarantined."
+  },
+  "previous_scheduled_product_checkpoint_282": {
+    "updated_at": "2026-10-16T08:10:48Z",
+    "checked_at": "2026-10-16T08:10:48Z",
+    "pr": 256,
+    "branch": "agent/product-ntm-regressions-v1",
+    "parent_sha": "cd41a21109a99aa23457f6d6a0ba7edddb536c08",
+    "rejected_intermediate_sha": "d6972bb2eb2b18e76c8c2d5320cdb84fcc6dc888",
+    "head_sha": "69cbffcb4a9040d56e66ecc6fe039bf0aa3a6a7b",
+    "tree_sha": "275c7314add4f19e81de62f1e0cf6a91736263a4",
+    "local_author_exact_tree_commit": "83fab8912ffb241b06b9be973473f3491b9d8911",
+    "block": "pay7_verified_ett_chapter29_contour",
+    "status": "QA_PASSED_EXACT_HEAD_CI_PASS_PAY7_CLOSED",
+    "repair": "A strict correction overlay reconciles five chapter-29 duplicate contours to official 3/3/3/3/5 percent rates and is bound to exact base revision, URL, expected two-row rates and temporal envelope. Future or altered bases fail closed without overlay application.",
+    "verification": {
+      "author": "Targeted 70 passed and expanded import-duty/payment profile 211 passed; JSON, py_compile and diff checks exited 0.",
+      "a5": "Independent /root/a5_cycle282 PASS with no findings on exact tree; targeted 70 passed, adjacent PAY 55 passed, and future-revision/provenance probes remained unchanged and fail closed.",
+      "ci": {
+        "run_id": 38871664388,
+        "job_id": 116876936362,
+        "event": "push",
+        "head_sha": "69cbffcb4a9040d56e66ecc6fe039bf0aa3a6a7b",
+        "conclusion": "success",
+        "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38871664388/job/116876936362"
+      },
+      "github_receipt": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256#issuecomment-6211068815"
+    },
+    "blockers": [
+      "Sixteen exact-HS duplicate ETT contours remain quarantined before admission.",
+      "Full PR245/PR256 product acceptance and legal/source completeness remain NOT PASS.",
+      "Lawful populated synchronized NTM snapshot remains unavailable."
+    ],
+    "a6": {
+      "request": "core-s1-6415f443120f-r9-g106",
+      "status": "UNCHANGED_NOT_SENT"
+    },
+    "protected_actions_performed": false,
+    "next_step": "Reconcile the next remaining duplicate ETT contour against the current official chapter source while retaining exact-base binding and fail-closed admission."
   }
 }

@@ -1090,3 +1090,15 @@ CI #255: [offline-safety PASS, run 37771953943](https://github.com/ivan88810900-
 - A6 `core-s1-6415f443120f-r9-g106` is unchanged and not sent. No merge, deploy, production write, enforcement change, destructive migration, force push, branch deletion, permission/secret change or other protected action occurred.
 - Durable evidence is `.ai/orchestration/evidence/cycle281_pay6_ci_closure.json`. Next: reconcile the 21 duplicate ETT codes against immutable official sources and effective dates; keep ambiguous rows quarantined.
 
+## 2026-10-16 — PAY-7 verified ETT chapter 29 contour closed on exact-head CI
+
+- Draft [PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256) publishes exact head `69cbffcb4a9040d56e66ecc6fe039bf0aa3a6a7b`, tree `275c7314add4f19e81de62f1e0cf6a91736263a4`; local author commit `83fab8912ffb241b06b9be973473f3491b9d8911` has the same tree. The A5-rejected intermediate `d6972bb2...` is superseded.
+- The current official EEC ETT index and group-29 PDF dated 11.07.2026 confirm `2901100001=3%`, `2902200000=3%`, `2902300000=3%`, `2902410000=3%`, and `2921410000=5%`.
+- A small correction overlay replaces only those five ambiguous duplicate contours. It is bound to base revision `ett:2026-06-18`, the official base URL, exact two-row rate sets, and `valid_from=2026-01-01` / open end. Future revisions or altered provenance/scope remain unchanged and fail closed.
+- A0 verification: targeted **70 passed** and expanded import-duty/payment profile **211 passed**, exit 0; JSON, `py_compile`, and `git diff --check` exited 0.
+- Fresh independent A5 `/root/a5_cycle282`: **PASS, no findings** on the exact tree; targeted **70 passed**, adjacent PAY **55 passed**, plus future-revision and tampered-provenance no-apply controls.
+- Exact-head CI [run 38871664388 / job 116876936362](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38871664388/job/116876936362): **success**. Receipt: [comment 6211068815](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256#issuecomment-6211068815).
+- This is a bounded reconciliation, not full import acceptance: **16** exact-HS duplicate contours remain quarantined, so ingest still returns manual review before any rate write. Full #245/#256 acceptance and legal/source completeness remain NOT PASS; a lawful populated synchronized NTM snapshot remains unavailable.
+- A6 `core-s1-6415f443120f-r9-g106` is unchanged and not sent. No merge, deploy, production write/flag, destructive migration, force push, branch deletion, permission/secret change or other protected action occurred.
+- Durable evidence is `.ai/orchestration/evidence/cycle282_pay7_chapter29.json`. Next: reconcile the next remaining duplicate ETT contour against the current official chapter source while retaining exact-base binding and fail-closed admission.
+
