@@ -2179,7 +2179,7 @@
       "unique_source_pr_count": 29
     }
   },
-  "revision": 816,
+  "revision": 817,
   "runs": [
     {
       "head_sha": null,
@@ -4686,6 +4686,13 @@
         246,
         247
       ]
+    },
+    "cycle283_pay8": {
+      "evidence": ".ai/orchestration/evidence/cycle283_pay8_chapter27_quarantine.json",
+      "head_sha": "af40f10f1e286adcde6914af67ef92b90d743c11",
+      "tree_sha": "a867b3d5b6021fed775375ce74a05a352419b7a7",
+      "receipt": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256#issuecomment-6212133879",
+      "lease_generation": 283
     }
   },
   "tasks": [
@@ -7781,7 +7788,7 @@
       }
     }
   ],
-  "updated_at": "2026-10-16T08:10:48Z",
+  "updated_at": "2026-10-16T09:12:32.706Z",
   "previous_scheduled_product_checkpoint_174": {
     "updated_at": "2026-10-11T18:04:51.196Z",
     "checked_at": "2026-10-11T18:04:51.196Z",
@@ -11497,124 +11504,100 @@
     "next_step": "First recheck exact-head CI for 09bd88e3085921733708578cce6e21a70430c0fd and accept only a verified successful run. Then isolate tests/test_rop_coverage_audit.py: on clean exact HEAD it exits 1 with 4 failed because rop_goods_rates is absent and creates a 4,096-byte ambient customs.db; preserve its 97-chapter, subject/not-subject and summary assertions without changing product or normative data."
   },
   "latest_scheduled_product_checkpoint": {
-    "updated_at": "2026-10-13T22:14:56Z",
-    "checked_at": "2026-10-13T22:14:56Z",
+    "updated_at": "2026-10-16T09:12:32.706Z",
+    "checked_at": "2026-10-16T09:12:32.706Z",
     "pr": 256,
     "branch": "agent/product-ntm-regressions-v1",
-    "head_sha": "3c24676a69b1d78d320bd5764fb04f5ac3f3430d",
-    "tree_sha": "a4e3cd52d0133698e5da905f0e48c52a087316b3",
-    "parent_sha": "d309f36fd74af2015e689b87b360a874e754d733",
-    "prior_checkpoint_sha": "d309f36fd74af2015e689b87b360a874e754d733",
-    "local_author_exact_tree_commit": "f23edbc2716823db4a647840fca7f902a435b5da",
-    "base_pr": 245,
-    "base_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
-    "block": "vat_ingestion_database_isolation",
-    "status": "IMPLEMENTED_A5_PASS_CI_PASS_VAT_INGESTION_DB_ISOLATION",
-    "behavior": {
-      "reproduced": "Parent exact HEAD passed 37 tests plus 10 subtests in test_vat_ingestion.py but created a 1,036,288-byte ambient customs.db.",
-      "final": "The unchanged VAT-ingestion/API scenarios use disposable SQLite, restore preloaded and dynamically imported app/scripts engine/session aliases, and clean up safely when create_engine or init_db fails.",
-      "classification": "A test-fixture/database-isolation defect was reproduced and fixed. No product algorithm, normative source or legal applicability changed.",
-      "boundaries": "Only customs-clear/backend/tests/test_vat_ingestion.py changed. Its original 37 test methods are AST-identical."
-    },
+    "parent_sha": "69cbffcb4a9040d56e66ecc6fe039bf0aa3a6a7b",
+    "superseded_intermediate_heads": [
+      "f7735f635691eecc2bc67b65050a78a75d4d9a72",
+      "b7a11aa9f01d3b7d8f996d20f5f8a22c85844c5d"
+    ],
+    "head_sha": "af40f10f1e286adcde6914af67ef92b90d743c11",
+    "tree_sha": "a867b3d5b6021fed775375ce74a05a352419b7a7",
+    "local_author_exact_tree_commit": "2738ad02eb728c1233a3b3bad43dda261dd921da",
+    "block": "pay8_chapter27_current_snapshot_and_applicability_quarantine",
+    "status": "QA_PASSED_EXACT_HEAD_CI_PASS_FAIL_CLOSED_APPLICABILITY_QUARANTINE",
+    "repair": "Reconciles 15 chapter-27 duplicate contours to the current official EEC ETT snapshot but explicitly refuses to treat the snapshot date as a legal effective date. Both chapter27 and chapter29 overlays carry mandatory applicability_status and remain hard-blocked; chapter29 blocker records the unmodeled Decision 6 aniline 0% interval.",
     "verification": {
-      "author_focused": "Focused command passed 37 tests plus 10 subtests. VAT/excise both orders passed 62 tests plus 19 subtests; VAT/import-duty both orders passed 95 tests plus 10 subtests. All exited 0.",
-      "author_broad": "Exact-remote focused rerun passed 37 tests plus 10 subtests, exit 0, with DB/WAL/SHM absent. Eleven additional API/payment/assistant/risk consumers were scanned cleanly on the exact head.",
-      "control": "Tariff-agent safety passed 124 tests plus 175 subtests, exit 0; forced create_engine and init_db failure probes passed; git diff --check exited 0; pinned catalogue SHA-256 53847cb00ebc53f6315042325bc416d13d65cf020a10530a4ce7dde848ed1ff2 and preview revision SHA-256 b02a3a11778f89dc4c48fef8f344768fac3923c6ffea76ed13d8df9b15f40d16 remained unchanged; no final ambient SQLite.",
-      "a5": {
-        "initial_session": "/root/a5_cycle230",
-        "initial_status": "REJECTED_EARLY_CREATE_ENGINE_CLEANUP_ATTRIBUTE_ERROR",
-        "session": "/root/a5_cycle230b",
-        "status": "FINAL_PASS_EXACT_TREE_NO_FINDINGS",
-        "execution": "Fresh independent focused and both-order controls passed; create_engine/init_db early-failure cleanup, dynamic alias restoration, 37 original test-method ASTs, endpoint assertions, protected fingerprints and one-file scope were verified.",
-        "findings": []
-      },
+      "author": "Expanded import-duty/payment profile 212 passed, exit 0; JSON, py_compile and diff checks exited 0.",
+      "a5": "Independent /root/a5_cycle283 PASS with no findings on exact remote tree; targeted 78 passed, expanded 279 passed, and disposable apply/no-write plus applicability-isolation probes passed.",
       "ci": {
-        "status": "PASSED_EXACT_HEAD_OFFLINE_SAFETY_ONLY",
-        "run_id": 38476052793,
-        "job_id": 115566887191,
-        "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38476052793/job/115566887191",
-        "head_sha": "3c24676a69b1d78d320bd5764fb04f5ac3f3430d",
+        "run_id": 38878463031,
+        "job_id": 116899123337,
+        "event": "push",
+        "head_sha": "af40f10f1e286adcde6914af67ef92b90d743c11",
         "conclusion": "success",
-        "limitation": "Workflow is offline-safety only; author, A0 and fresh independent executable A5 provide product-test evidence."
-      }
+        "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38878463031/job/116899123337"
+      },
+      "github_receipt": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256#issuecomment-6212133879"
+    },
+    "sources": {
+      "chapter27": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.27_2022_11.07.2026.pdf",
+      "decision6": "https://docs.eaeunion.org/documents/461/10469/"
     },
     "blockers": [
-      "Full #245 product acceptance and legal/source completeness remain NOT PASS.",
-      "The NTM full-sync audit still requires a lawful populated synchronized snapshot."
+      "Chapter29 Decision 6 aniline 0% interval 2026-02-07 through 2027-12-31 is not modeled.",
+      "Chapter27 current snapshot has no verified historical intervals.",
+      "Exact duplicate 8511100001 remains quarantined.",
+      "Full PR245/PR256 product acceptance and legal/source completeness remain NOT PASS.",
+      "Lawful populated synchronized NTM snapshot remains unavailable."
     ],
     "a6": {
       "request": "core-s1-6415f443120f-r9-g106",
       "status": "UNCHANGED_NOT_SENT"
     },
-    "coordination_queue": "Issue #257 bounded-probe receipt already exists and was not repeated. The Dot queue does not change authority, merge/deploy rights or A6 status.",
     "protected_actions_performed": false,
-    "capabilities": {
-      "code_access": "Full exact candidate tree available in isolated author, exact-remote and fresh independent A5 worktrees.",
-      "command_execution": "Git, Python and pytest execution available; author, A0, exact-remote and fresh independent A5 final commands exited 0.",
-      "lawful_publication": "Draft branch and PR updated through the authorized GitHub connector under lease generation 230.",
-      "checkpoint": "This state CAS commit is the durable checkpoint; lease release follows separately."
-    },
-    "next_step": "Run a clean broader backend fixture tranche on exact PR256 HEAD, identify and reproduce the next real fixture/product failure, and patch only after a concrete failing boundary exists; eleven remaining focused consumers already passed cleanly without ambient SQLite."
+    "evidence": ".ai/orchestration/evidence/cycle283_pay8_chapter27_quarantine.json",
+    "next_step": "Before any persistent staging or import, perform the queued read-only inventory of the existing Neon project/branch/schema and prove a non-production staging boundary with sentinel/no-mutation controls; separately implement date-aware tariff applicability for Decision 6 and verify chapter27 historical intervals from primary acts."
   },
   "latest_development_checkpoint": {
-    "updated_at": "2026-10-13T22:14:56Z",
-    "checked_at": "2026-10-13T22:14:56Z",
+    "updated_at": "2026-10-16T09:12:32.706Z",
+    "checked_at": "2026-10-16T09:12:32.706Z",
     "pr": 256,
     "branch": "agent/product-ntm-regressions-v1",
-    "head_sha": "3c24676a69b1d78d320bd5764fb04f5ac3f3430d",
-    "tree_sha": "a4e3cd52d0133698e5da905f0e48c52a087316b3",
-    "parent_sha": "d309f36fd74af2015e689b87b360a874e754d733",
-    "prior_checkpoint_sha": "d309f36fd74af2015e689b87b360a874e754d733",
-    "local_author_exact_tree_commit": "f23edbc2716823db4a647840fca7f902a435b5da",
-    "base_pr": 245,
-    "base_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
-    "block": "vat_ingestion_database_isolation",
-    "status": "IMPLEMENTED_A5_PASS_CI_PASS_VAT_INGESTION_DB_ISOLATION",
-    "behavior": {
-      "reproduced": "Parent exact HEAD passed 37 tests plus 10 subtests in test_vat_ingestion.py but created a 1,036,288-byte ambient customs.db.",
-      "final": "The unchanged VAT-ingestion/API scenarios use disposable SQLite, restore preloaded and dynamically imported app/scripts engine/session aliases, and clean up safely when create_engine or init_db fails.",
-      "classification": "A test-fixture/database-isolation defect was reproduced and fixed. No product algorithm, normative source or legal applicability changed.",
-      "boundaries": "Only customs-clear/backend/tests/test_vat_ingestion.py changed. Its original 37 test methods are AST-identical."
-    },
+    "parent_sha": "69cbffcb4a9040d56e66ecc6fe039bf0aa3a6a7b",
+    "superseded_intermediate_heads": [
+      "f7735f635691eecc2bc67b65050a78a75d4d9a72",
+      "b7a11aa9f01d3b7d8f996d20f5f8a22c85844c5d"
+    ],
+    "head_sha": "af40f10f1e286adcde6914af67ef92b90d743c11",
+    "tree_sha": "a867b3d5b6021fed775375ce74a05a352419b7a7",
+    "local_author_exact_tree_commit": "2738ad02eb728c1233a3b3bad43dda261dd921da",
+    "block": "pay8_chapter27_current_snapshot_and_applicability_quarantine",
+    "status": "QA_PASSED_EXACT_HEAD_CI_PASS_FAIL_CLOSED_APPLICABILITY_QUARANTINE",
+    "repair": "Reconciles 15 chapter-27 duplicate contours to the current official EEC ETT snapshot but explicitly refuses to treat the snapshot date as a legal effective date. Both chapter27 and chapter29 overlays carry mandatory applicability_status and remain hard-blocked; chapter29 blocker records the unmodeled Decision 6 aniline 0% interval.",
     "verification": {
-      "author_focused": "Focused command passed 37 tests plus 10 subtests. VAT/excise both orders passed 62 tests plus 19 subtests; VAT/import-duty both orders passed 95 tests plus 10 subtests. All exited 0.",
-      "author_broad": "Exact-remote focused rerun passed 37 tests plus 10 subtests, exit 0, with DB/WAL/SHM absent. Eleven additional API/payment/assistant/risk consumers were scanned cleanly on the exact head.",
-      "control": "Tariff-agent safety passed 124 tests plus 175 subtests, exit 0; forced create_engine and init_db failure probes passed; git diff --check exited 0; pinned catalogue SHA-256 53847cb00ebc53f6315042325bc416d13d65cf020a10530a4ce7dde848ed1ff2 and preview revision SHA-256 b02a3a11778f89dc4c48fef8f344768fac3923c6ffea76ed13d8df9b15f40d16 remained unchanged; no final ambient SQLite.",
-      "a5": {
-        "initial_session": "/root/a5_cycle230",
-        "initial_status": "REJECTED_EARLY_CREATE_ENGINE_CLEANUP_ATTRIBUTE_ERROR",
-        "session": "/root/a5_cycle230b",
-        "status": "FINAL_PASS_EXACT_TREE_NO_FINDINGS",
-        "execution": "Fresh independent focused and both-order controls passed; create_engine/init_db early-failure cleanup, dynamic alias restoration, 37 original test-method ASTs, endpoint assertions, protected fingerprints and one-file scope were verified.",
-        "findings": []
-      },
+      "author": "Expanded import-duty/payment profile 212 passed, exit 0; JSON, py_compile and diff checks exited 0.",
+      "a5": "Independent /root/a5_cycle283 PASS with no findings on exact remote tree; targeted 78 passed, expanded 279 passed, and disposable apply/no-write plus applicability-isolation probes passed.",
       "ci": {
-        "status": "PASSED_EXACT_HEAD_OFFLINE_SAFETY_ONLY",
-        "run_id": 38476052793,
-        "job_id": 115566887191,
-        "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38476052793/job/115566887191",
-        "head_sha": "3c24676a69b1d78d320bd5764fb04f5ac3f3430d",
+        "run_id": 38878463031,
+        "job_id": 116899123337,
+        "event": "push",
+        "head_sha": "af40f10f1e286adcde6914af67ef92b90d743c11",
         "conclusion": "success",
-        "limitation": "Workflow is offline-safety only; author, A0 and fresh independent executable A5 provide product-test evidence."
-      }
+        "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38878463031/job/116899123337"
+      },
+      "github_receipt": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256#issuecomment-6212133879"
+    },
+    "sources": {
+      "chapter27": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.27_2022_11.07.2026.pdf",
+      "decision6": "https://docs.eaeunion.org/documents/461/10469/"
     },
     "blockers": [
-      "Full #245 product acceptance and legal/source completeness remain NOT PASS.",
-      "The NTM full-sync audit still requires a lawful populated synchronized snapshot."
+      "Chapter29 Decision 6 aniline 0% interval 2026-02-07 through 2027-12-31 is not modeled.",
+      "Chapter27 current snapshot has no verified historical intervals.",
+      "Exact duplicate 8511100001 remains quarantined.",
+      "Full PR245/PR256 product acceptance and legal/source completeness remain NOT PASS.",
+      "Lawful populated synchronized NTM snapshot remains unavailable."
     ],
     "a6": {
       "request": "core-s1-6415f443120f-r9-g106",
       "status": "UNCHANGED_NOT_SENT"
     },
-    "coordination_queue": "Issue #257 bounded-probe receipt already exists and was not repeated. The Dot queue does not change authority, merge/deploy rights or A6 status.",
     "protected_actions_performed": false,
-    "capabilities": {
-      "code_access": "Full exact candidate tree available in isolated author, exact-remote and fresh independent A5 worktrees.",
-      "command_execution": "Git, Python and pytest execution available; author, A0, exact-remote and fresh independent A5 final commands exited 0.",
-      "lawful_publication": "Draft branch and PR updated through the authorized GitHub connector under lease generation 230.",
-      "checkpoint": "This state CAS commit is the durable checkpoint; lease release follows separately."
-    },
-    "next_step": "Run a clean broader backend fixture tranche on exact PR256 HEAD, identify and reproduce the next real fixture/product failure, and patch only after a concrete failing boundary exists; eleven remaining focused consumers already passed cleanly without ambient SQLite."
+    "evidence": ".ai/orchestration/evidence/cycle283_pay8_chapter27_quarantine.json",
+    "next_step": "Before any persistent staging or import, perform the queued read-only inventory of the existing Neon project/branch/schema and prove a non-production staging boundary with sentinel/no-mutation controls; separately implement date-aware tariff applicability for Decision 6 and verify chapter27 historical intervals from primary acts."
   },
   "previous_scheduled_product_checkpoint_222": {
     "updated_at": "2026-10-13T13:08:13.017Z",
@@ -15184,5 +15167,101 @@
     },
     "protected_actions_performed": false,
     "next_step": "Reconcile the next remaining duplicate ETT contour against the current official chapter source while retaining exact-base binding and fail-closed admission."
+  },
+  "previous_scheduled_product_checkpoint_283": {
+    "updated_at": "2026-10-16T09:12:32.706Z",
+    "checked_at": "2026-10-16T09:12:32.706Z",
+    "pr": 256,
+    "branch": "agent/product-ntm-regressions-v1",
+    "parent_sha": "69cbffcb4a9040d56e66ecc6fe039bf0aa3a6a7b",
+    "superseded_intermediate_heads": [
+      "f7735f635691eecc2bc67b65050a78a75d4d9a72",
+      "b7a11aa9f01d3b7d8f996d20f5f8a22c85844c5d"
+    ],
+    "head_sha": "af40f10f1e286adcde6914af67ef92b90d743c11",
+    "tree_sha": "a867b3d5b6021fed775375ce74a05a352419b7a7",
+    "local_author_exact_tree_commit": "2738ad02eb728c1233a3b3bad43dda261dd921da",
+    "block": "pay8_chapter27_current_snapshot_and_applicability_quarantine",
+    "status": "QA_PASSED_EXACT_HEAD_CI_PASS_FAIL_CLOSED_APPLICABILITY_QUARANTINE",
+    "repair": "Reconciles 15 chapter-27 duplicate contours to the current official EEC ETT snapshot but explicitly refuses to treat the snapshot date as a legal effective date. Both chapter27 and chapter29 overlays carry mandatory applicability_status and remain hard-blocked; chapter29 blocker records the unmodeled Decision 6 aniline 0% interval.",
+    "verification": {
+      "author": "Expanded import-duty/payment profile 212 passed, exit 0; JSON, py_compile and diff checks exited 0.",
+      "a5": "Independent /root/a5_cycle283 PASS with no findings on exact remote tree; targeted 78 passed, expanded 279 passed, and disposable apply/no-write plus applicability-isolation probes passed.",
+      "ci": {
+        "run_id": 38878463031,
+        "job_id": 116899123337,
+        "event": "push",
+        "head_sha": "af40f10f1e286adcde6914af67ef92b90d743c11",
+        "conclusion": "success",
+        "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38878463031/job/116899123337"
+      },
+      "github_receipt": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256#issuecomment-6212133879"
+    },
+    "sources": {
+      "chapter27": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.27_2022_11.07.2026.pdf",
+      "decision6": "https://docs.eaeunion.org/documents/461/10469/"
+    },
+    "blockers": [
+      "Chapter29 Decision 6 aniline 0% interval 2026-02-07 through 2027-12-31 is not modeled.",
+      "Chapter27 current snapshot has no verified historical intervals.",
+      "Exact duplicate 8511100001 remains quarantined.",
+      "Full PR245/PR256 product acceptance and legal/source completeness remain NOT PASS.",
+      "Lawful populated synchronized NTM snapshot remains unavailable."
+    ],
+    "a6": {
+      "request": "core-s1-6415f443120f-r9-g106",
+      "status": "UNCHANGED_NOT_SENT"
+    },
+    "protected_actions_performed": false,
+    "evidence": ".ai/orchestration/evidence/cycle283_pay8_chapter27_quarantine.json",
+    "next_step": "Before any persistent staging or import, perform the queued read-only inventory of the existing Neon project/branch/schema and prove a non-production staging boundary with sentinel/no-mutation controls; separately implement date-aware tariff applicability for Decision 6 and verify chapter27 historical intervals from primary acts."
+  },
+  "previous_development_checkpoint_283": {
+    "updated_at": "2026-10-16T09:12:32.706Z",
+    "checked_at": "2026-10-16T09:12:32.706Z",
+    "pr": 256,
+    "branch": "agent/product-ntm-regressions-v1",
+    "parent_sha": "69cbffcb4a9040d56e66ecc6fe039bf0aa3a6a7b",
+    "superseded_intermediate_heads": [
+      "f7735f635691eecc2bc67b65050a78a75d4d9a72",
+      "b7a11aa9f01d3b7d8f996d20f5f8a22c85844c5d"
+    ],
+    "head_sha": "af40f10f1e286adcde6914af67ef92b90d743c11",
+    "tree_sha": "a867b3d5b6021fed775375ce74a05a352419b7a7",
+    "local_author_exact_tree_commit": "2738ad02eb728c1233a3b3bad43dda261dd921da",
+    "block": "pay8_chapter27_current_snapshot_and_applicability_quarantine",
+    "status": "QA_PASSED_EXACT_HEAD_CI_PASS_FAIL_CLOSED_APPLICABILITY_QUARANTINE",
+    "repair": "Reconciles 15 chapter-27 duplicate contours to the current official EEC ETT snapshot but explicitly refuses to treat the snapshot date as a legal effective date. Both chapter27 and chapter29 overlays carry mandatory applicability_status and remain hard-blocked; chapter29 blocker records the unmodeled Decision 6 aniline 0% interval.",
+    "verification": {
+      "author": "Expanded import-duty/payment profile 212 passed, exit 0; JSON, py_compile and diff checks exited 0.",
+      "a5": "Independent /root/a5_cycle283 PASS with no findings on exact remote tree; targeted 78 passed, expanded 279 passed, and disposable apply/no-write plus applicability-isolation probes passed.",
+      "ci": {
+        "run_id": 38878463031,
+        "job_id": 116899123337,
+        "event": "push",
+        "head_sha": "af40f10f1e286adcde6914af67ef92b90d743c11",
+        "conclusion": "success",
+        "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38878463031/job/116899123337"
+      },
+      "github_receipt": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256#issuecomment-6212133879"
+    },
+    "sources": {
+      "chapter27": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.27_2022_11.07.2026.pdf",
+      "decision6": "https://docs.eaeunion.org/documents/461/10469/"
+    },
+    "blockers": [
+      "Chapter29 Decision 6 aniline 0% interval 2026-02-07 through 2027-12-31 is not modeled.",
+      "Chapter27 current snapshot has no verified historical intervals.",
+      "Exact duplicate 8511100001 remains quarantined.",
+      "Full PR245/PR256 product acceptance and legal/source completeness remain NOT PASS.",
+      "Lawful populated synchronized NTM snapshot remains unavailable."
+    ],
+    "a6": {
+      "request": "core-s1-6415f443120f-r9-g106",
+      "status": "UNCHANGED_NOT_SENT"
+    },
+    "protected_actions_performed": false,
+    "evidence": ".ai/orchestration/evidence/cycle283_pay8_chapter27_quarantine.json",
+    "next_step": "Before any persistent staging or import, perform the queued read-only inventory of the existing Neon project/branch/schema and prove a non-production staging boundary with sentinel/no-mutation controls; separately implement date-aware tariff applicability for Decision 6 and verify chapter27 historical intervals from primary acts."
   }
 }
