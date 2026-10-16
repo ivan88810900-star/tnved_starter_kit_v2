@@ -83,6 +83,11 @@ _CHAPTER29_EXPECTED_RATES = {
 _CHAPTER29_CODES = frozenset(_CHAPTER29_EXPECTED_RATES)
 _CHAPTER29_BASE_REVISION = "ett:2026-06-18"
 _CHAPTER29_BASE_URL = "https://eec.eaeunion.org/comission/department/catr/ett/"
+_CHAPTER29_APPLICABILITY_STATUS = "current_snapshot_only_historical_intervals_unverified"
+_CHAPTER29_APPLICABILITY_BLOCKER = (
+    "chapter29_correction_applicability_unverified: current snapshot does not model "
+    "Decision 6 aniline 0% interval 2026-02-07..2027-12-31"
+)
 _CHAPTER29_EXPECTED_BASE_RATES = {
     "2901100001": frozenset({"3%", "4.6"}),
     "2902200000": frozenset({"3%", "0.0"}),
@@ -115,6 +120,11 @@ _CHAPTER27_EXPECTED_RATES = {
 _CHAPTER27_CODES = frozenset(_CHAPTER27_EXPECTED_RATES)
 _CHAPTER27_BASE_REVISION = "ett:2026-06-18"
 _CHAPTER27_BASE_URL = "https://eec.eaeunion.org/comission/department/catr/ett/"
+_CHAPTER27_APPLICABILITY_STATUS = "current_snapshot_only_historical_intervals_unverified"
+_CHAPTER27_APPLICABILITY_BLOCKER = (
+    "chapter27_correction_applicability_unverified: current snapshot has no verified "
+    "historical intervals"
+)
 _CHAPTER27_EXPECTED_BASE_RATES = {
     code: frozenset({rate, "0.0"})
     for code, rate in _CHAPTER27_EXPECTED_RATES.items()
@@ -461,6 +471,7 @@ def _merge_chapter29_correction(
         or payload.get("revision") != "ett:2026-07-11"
         or payload.get("snapshot_date") != "2026-07-11"
         or payload.get("applies_to_base_revision") != _CHAPTER29_BASE_REVISION
+        or payload.get("applicability_status") != _CHAPTER29_APPLICABILITY_STATUS
         or payload.get("source_chapter_url") != _CHAPTER29_CHAPTER_URL
     ):
         return rows, None, ["chapter29_correction_metadata_mismatch"]
@@ -535,11 +546,12 @@ def _merge_chapter29_correction(
         "path": _CHAPTER29_CORRECTION_PATH,
         "revision": payload["revision"],
         "snapshot_date": payload["snapshot_date"],
+        "applicability_status": payload["applicability_status"],
         "record_count": len(corrected_rows),
         "checksum_sha256": checksum,
         "source_chapter_url": _CHAPTER29_CHAPTER_URL,
     }
-    return filtered + corrected_rows, metadata, []
+    return filtered + corrected_rows, metadata, [_CHAPTER29_APPLICABILITY_BLOCKER]
 
 
 def _merge_chapter27_correction(
@@ -563,6 +575,7 @@ def _merge_chapter27_correction(
         or payload.get("revision") != "ett:2026-07-11"
         or payload.get("snapshot_date") != "2026-07-11"
         or payload.get("applies_to_base_revision") != _CHAPTER27_BASE_REVISION
+        or payload.get("applicability_status") != _CHAPTER27_APPLICABILITY_STATUS
         or payload.get("source_chapter_url") != _CHAPTER27_CHAPTER_URL
     ):
         return rows, None, ["chapter27_correction_metadata_mismatch"]
@@ -633,11 +646,12 @@ def _merge_chapter27_correction(
         "path": _CHAPTER27_CORRECTION_PATH,
         "revision": payload["revision"],
         "snapshot_date": payload["snapshot_date"],
+        "applicability_status": payload["applicability_status"],
         "record_count": len(corrected_rows),
         "checksum_sha256": checksum,
         "source_chapter_url": _CHAPTER27_CHAPTER_URL,
     }
-    return filtered + corrected_rows, metadata, []
+    return filtered + corrected_rows, metadata, [_CHAPTER27_APPLICABILITY_BLOCKER]
 
 
 def _duplicate_hs_codes(rows: list[dict[str, Any]]) -> list[str]:

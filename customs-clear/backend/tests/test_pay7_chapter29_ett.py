@@ -18,6 +18,11 @@ CHAPTER_29_URL = (
     "https://eec.eaeunion.org/comission/department/catr/ett/"
     "ru.2022/ru.29_2022_11.07.2026.pdf"
 )
+APPLICABILITY_STATUS = "current_snapshot_only_historical_intervals_unverified"
+APPLICABILITY_BLOCKER = (
+    "chapter29_correction_applicability_unverified: current snapshot does not model "
+    "Decision 6 aniline 0% interval 2026-02-07..2027-12-31"
+)
 EXPECTED_RATES = {
     "2901100001": "3%",
     "2902200000": "3%",
@@ -65,6 +70,7 @@ def test_chapter29_verified_contour_is_unique_and_exact() -> None:
     assert payload["revision"] == "ett:2026-07-11"
     assert payload["snapshot_date"] == "2026-07-11"
     assert payload["applies_to_base_revision"] == "ett:2026-06-18"
+    assert payload["applicability_status"] == APPLICABILITY_STATUS
     assert payload["source_chapter_url"] == CHAPTER_29_URL
     assert len(rows) == len(EXPECTED_RATES)
     assert {row["hs_code"]: row["duty_rate"] for row in rows} == EXPECTED_RATES
@@ -80,8 +86,12 @@ def test_chapter29_correction_reduces_quarantine_without_opening_ingest() -> Non
     assert parser_result["status"] == "parsed"
     assert parser_result["duplicate_hs_code_count"] == 1
     assert not (set(EXPECTED_RATES) & set(parser_result["duplicate_hs_codes"]))
-    assert len(blockers) == 1
-    assert blockers[0] == "duplicate_hs_code_rows: 1 code(s); first=8511100001"
+    assert blockers == [
+        APPLICABILITY_BLOCKER,
+        "chapter27_correction_applicability_unverified: current snapshot has no verified "
+        "historical intervals",
+        "duplicate_hs_code_rows: 1 code(s); first=8511100001",
+    ]
     observed = {
         row["hs_code"]: row["duty_rate"]
         for row in rows
@@ -94,6 +104,7 @@ def test_chapter29_correction_reduces_quarantine_without_opening_ingest() -> Non
     assert len(correction) == 2
     assert correction[0]["revision"] == "ett:2026-07-11"
     assert correction[0]["record_count"] == 5
+    assert correction[0]["applicability_status"] == APPLICABILITY_STATUS
     assert correction[0]["source_chapter_url"] == CHAPTER_29_URL
     assert len(correction[0]["checksum_sha256"]) == 64
 
@@ -187,3 +198,24 @@ def test_chapter29_correction_requires_exact_base_scope(
         "duplicate_hs_code_rows: 4 code(s); "
         "first=2901100001,2902200000,2902300000,2902410000",
     ]
+
+
+def test_chapter29_correction_requires_explicit_applicability_quarantine(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import app.services.import_duty_ingestion as ingestion
+
+    base_rel = "data/raw_normative/eec_ett_normative_bundle.json"
+    correction_rel = "data/raw_normative/eec_ett_chapter29_correction_2026.json"
+    base_path = tmp_path / base_rel
+    correction_path = tmp_path / correction_rel
+    base_path.parent.mkdir(parents=True)
+    base_path.write_text(json.dumps(_base_payload()), encoding="utf-8")
+    correction = json.loads(CORRECTION_PATH.read_text(encoding="utf-8"))
+    correction.pop("applicability_status")
+    correction_path.write_text(json.dumps(correction), encoding="utf-8")
+    monkeypatch.setattr(ingestion, "_BACKEND_ROOT", tmp_path)
+
+    _payload, _parser_result, _revision, _rows, blockers = _validate_bundle_for_ingest(base_rel)
+    assert blockers[0] == "chapter29_correction_metadata_mismatch"

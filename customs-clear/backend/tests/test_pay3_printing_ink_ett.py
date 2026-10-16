@@ -37,8 +37,10 @@ def _printing_ink_rows() -> tuple[list[dict], dict]:
     # exact HS codes remain duplicated.  The independently verified printing-
     # ink amendment can still be inspected here without claiming that the
     # complete base bundle is ingestible.
-    assert len(blockers) == 1
-    assert blockers[0].startswith("duplicate_hs_code_rows:")
+    assert len(blockers) == 3
+    assert blockers[0].startswith("chapter29_correction_applicability_unverified:")
+    assert blockers[1].startswith("chapter27_correction_applicability_unverified:")
+    assert blockers[2].startswith("duplicate_hs_code_rows:")
     assert parser_result["duplicate_hs_code_count"] == 1
     return (
         [

@@ -18,6 +18,15 @@ CHAPTER_27_URL = (
     "https://eec.eaeunion.org/comission/department/catr/ett/"
     "ru.2022/ru.27_2022_11.07.2026.pdf"
 )
+APPLICABILITY_STATUS = "current_snapshot_only_historical_intervals_unverified"
+CHAPTER29_APPLICABILITY_BLOCKER = (
+    "chapter29_correction_applicability_unverified: current snapshot does not model "
+    "Decision 6 aniline 0% interval 2026-02-07..2027-12-31"
+)
+CHAPTER27_APPLICABILITY_BLOCKER = (
+    "chapter27_correction_applicability_unverified: current snapshot has no verified "
+    "historical intervals"
+)
 EXPECTED_RATES = {
     "2707501000": "5%",
     "2707991100": "5%",
@@ -71,6 +80,7 @@ def test_chapter27_verified_contour_is_unique_and_exact() -> None:
     assert payload["revision"] == "ett:2026-07-11"
     assert payload["snapshot_date"] == "2026-07-11"
     assert payload["applies_to_base_revision"] == "ett:2026-06-18"
+    assert payload["applicability_status"] == APPLICABILITY_STATUS
     assert payload["source_chapter_url"] == CHAPTER_27_URL
     assert len(rows) == len(EXPECTED_RATES)
     assert {row["hs_code"]: row["duty_rate"] for row in rows} == EXPECTED_RATES
@@ -86,7 +96,11 @@ def test_chapter27_correction_leaves_only_non_ett_duplicate_quarantined() -> Non
     assert parser_result["status"] == "parsed"
     assert parser_result["duplicate_hs_code_count"] == 1
     assert parser_result["duplicate_hs_codes"] == ["8511100001"]
-    assert blockers == ["duplicate_hs_code_rows: 1 code(s); first=8511100001"]
+    assert blockers == [
+        CHAPTER29_APPLICABILITY_BLOCKER,
+        CHAPTER27_APPLICABILITY_BLOCKER,
+        "duplicate_hs_code_rows: 1 code(s); first=8511100001",
+    ]
     observed = {
         row["hs_code"]: row["duty_rate"]
         for row in rows
@@ -100,6 +114,7 @@ def test_chapter27_correction_leaves_only_non_ett_duplicate_quarantined() -> Non
     corrections = parser_result["corrections"]
     assert [correction["record_count"] for correction in corrections] == [5, 15]
     assert corrections[1]["revision"] == "ett:2026-07-11"
+    assert corrections[1]["applicability_status"] == APPLICABILITY_STATUS
     assert corrections[1]["source_chapter_url"] == CHAPTER_27_URL
     assert len(corrections[1]["checksum_sha256"]) == 64
 

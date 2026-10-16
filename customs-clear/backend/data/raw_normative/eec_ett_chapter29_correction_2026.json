@@ -4,8 +4,10 @@
   "revision": "ett:2026-07-11",
   "snapshot_date": "2026-07-11",
   "applies_to_base_revision": "ett:2026-06-18",
+  "applicability_status": "current_snapshot_only_historical_intervals_unverified",
   "source_chapter_url": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.29_2022_11.07.2026.pdf",
-  "description": "Проверенный точечный контур группы 29; дата снимка не является датой вступления ставки в силу.",
+  "source_applicability_act_url": "https://docs.eaeunion.org/documents/461/10469/",
+  "description": "Проверенный текущий срез группы 29; исторические интервалы не подтверждены, а временная ставка 0% для 2921410000 по Решению Совета ЕЭК № 6 не смоделирована.",
   "rates": [
     {
       "hs_code": "2901100001",
