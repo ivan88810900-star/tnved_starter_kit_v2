@@ -191,7 +191,25 @@ async def run_full_data_refresh(*, dry_run: bool = True) -> dict[str, Any]:
     """
     results: list[dict[str, Any]] = []
 
-    currency = await refresh_currency_rates()
+    # The currency updater persists both fetched CBR rates and FALLBACK values.
+    # A failed network request therefore mutates the database too, so it must
+    # never be used as a "probe" in dry-run mode.  Read freshness first and
+    # report the pending action without fetching or opening a write path.
+    freshness = check_data_freshness()
+    if dry_run:
+        currency_freshness = freshness["currency"]
+        currency = {
+            "domain": "CBRF",
+            "status": "ok",
+            "source": "read_only_freshness",
+            "updated": 0,
+            "needs_apply": bool(currency_freshness.get("is_stale", True)),
+        }
+        for key in ("reason", "last_update", "age_hours", "currencies"):
+            if key in currency_freshness:
+                currency[key] = currency_freshness[key]
+    else:
+        currency = await refresh_currency_rates()
     results.append(currency)
 
     excise = refresh_excise_rates()
@@ -200,7 +218,8 @@ async def run_full_data_refresh(*, dry_run: bool = True) -> dict[str, Any]:
     anti_dumping = refresh_anti_dumping()
     results.append(anti_dumping)
 
-    freshness = check_data_freshness()
+    if not dry_run:
+        freshness = check_data_freshness()
 
     errors = [r for r in results if r.get("status") == "error"]
     needs_apply = [r for r in results if r.get("needs_apply")]
