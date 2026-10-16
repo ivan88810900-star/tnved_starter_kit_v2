@@ -1,14 +1,14 @@
 {
-  "acquisition_note": "Cycle 289 recovered main e526dfbdb5a31b01bf6f743da0288b88f916de0c, PR258 exact head 7f7f4938d6145979d45fddd5b04cdede83ca6e49 and released generation 288; acquire one immutable current primary-source NSI dictionary 1995 page into isolated staging without normalization or legal admission.",
-  "expires_at": null,
-  "generation": 289,
-  "holder": null,
+  "acquisition_note": "Cycle 290 recovered main e526dfbdb5a31b01bf6f743da0288b88f916de0c, PR258 exact head 7f7f4938d6145979d45fddd5b04cdede83ca6e49, state revision 822 and released generation 289; implement and verify drift-safe NSI dictionary 1995 page acquisition before continuing beyond offset 100.",
+  "expires_at": "2026-10-16T15:26:06.443291Z",
+  "generation": 290,
+  "holder": "/root/scheduled-cycle290-20261016T145543Z",
   "lease_repair": {},
   "release_reason": "Cycle 289 completed one bounded EEC NSI dictionary 1995 current-page staging acquisition at unchanged PR258 head 7f7f4938d6145979d45fddd5b04cdede83ca6e49: immutable object 436141 bytes with SHA-256 c2dea342fb16b49c0f5f96ccf6e3a9e247f406ba49af93cf6c55d6e8d81bd307, 100/100 unique COLLECTED_UNVERIFIED rows, idempotent replay, independent A5 PASS, exact-head CI run 38488698821/job 115608493434 SUCCESS, state checkpoint 1c72a83df2b3bc36ebbf6d0ecbafb4c3199193d1, PR receipt 6217255728 and issue257 receipt 6217256156. Live total drifted from 778350 to 778404 during review, so this is not a populated synchronized/legal snapshot; A6 unchanged/not sent.",
   "released_by": "/root/scheduled-cycle289-20261016T135148Z",
   "schema_version": 1,
   "serialization_repair": {},
-  "state": "released",
-  "token": null,
-  "updated_at": "2026-10-16T14:07:42.819888Z"
+  "state": "active",
+  "token": "3147e5d96b754382b47e001d91c39c23",
+  "updated_at": "2026-10-16T14:56:06.443291Z"
 }
