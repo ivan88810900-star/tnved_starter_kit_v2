@@ -1,0 +1,57 @@
+{
+  "schema_version": 1,
+  "task_id": "PAY-8",
+  "cycle": 283,
+  "checked_at": "2026-10-16T09:12:12.170Z",
+  "main_sha": "e526dfbdb5a31b01bf6f743da0288b88f916de0c",
+  "pr": 256,
+  "branch": "agent/product-ntm-regressions-v1",
+  "head_sha": "af40f10f1e286adcde6914af67ef92b90d743c11",
+  "tree_sha": "a867b3d5b6021fed775375ce74a05a352419b7a7",
+  "local_exact_tree_commit": "2738ad02eb728c1233a3b3bad43dda261dd921da",
+  "block": "pay8_chapter27_current_snapshot_and_applicability_quarantine",
+  "result": {
+    "current_snapshot_reconciliation": "15 chapter-27 duplicate contours reconciled to current official EEC ETT PDF; only exact duplicate 8511100001 remains",
+    "chapter27_applicability": "blocked_current_snapshot_only_historical_intervals_unverified",
+    "chapter29_applicability": "blocked_Decision_6_aniline_0_percent_interval_2026-02-07_through_2027-12-31_not_modeled",
+    "admission": "manual_review_required",
+    "db_mutated": false
+  },
+  "primary_sources": [
+    "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.27_2022_11.07.2026.pdf",
+    "https://docs.eaeunion.org/documents/461/10469/",
+    "https://docs.eaeunion.org/upload/iblock/6a0/jftqrrc7fevp86lmhmmwlkz8rt4vp09l/Reshenie-Soveta-_-6-ot-28-yanvarya-2026-goda.pdf"
+  ],
+  "author": {
+    "command": "PYTHONPATH=. /tmp/tariff-pay7-venv/bin/python -m pytest -q tests/test_import_duty_ingestion.py tests/test_pay3_printing_ink_ett.py tests/test_pay7_chapter29_ett.py tests/test_pay8_chapter27_ett.py tests/test_payment_data_coverage.py tests/test_payment_data_normalization.py tests/test_payment_engine.py tests/test_payment_quote.py tests/test_payment_source_ingestion.py",
+    "exit_code": 0,
+    "result": "212 passed"
+  },
+  "independent_a5": {
+    "session": "/root/a5_cycle283",
+    "status": "PASS_NO_FINDINGS",
+    "targeted": "78 passed",
+    "expanded": "279 passed",
+    "no_write_probe": "manual_review_required; db_mutated=false; HsRate/SourceStatus/SyncLog=0/0/0",
+    "isolation_probe": "removing remaining 8511100001 duplicate still leaves both applicability blockers and zero DB writes"
+  },
+  "exact_head_ci": {
+    "run_id": 38878463031,
+    "job_id": 116899123337,
+    "conclusion": "success",
+    "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38878463031/job/116899123337"
+  },
+  "github_receipt": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256#issuecomment-6212133879",
+  "blockers": [
+    "chapter29 Decision 6 date-aware 0% aniline interval is not modeled",
+    "chapter27 current snapshot has no verified historical intervals",
+    "duplicate_hs_code_rows: 8511100001",
+    "full PR245/PR256 product acceptance and legal/source completeness remain NOT PASS",
+    "lawful populated synchronized NTM snapshot remains unavailable"
+  ],
+  "a6": {
+    "request": "core-s1-6415f443120f-r9-g106",
+    "status": "UNCHANGED_NOT_SENT"
+  },
+  "protected_actions_performed": false
+}
