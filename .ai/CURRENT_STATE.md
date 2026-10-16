@@ -1,3 +1,14 @@
+# Cycle 284 checkpoint — staging dry-run safety and storage capability (2026-10-16 10:02 UTC)
+
+- Draft PR #256 exact head `38a475d20f44e9624435ea0089def0b16b9e1bd5`, tree `a5ec80034901d5a6d4a12f4e978e495e72721b4c`.
+- `run_full_data_refresh(dry_run=True)` is now read-only: no CBR updater/network fallback, no rate/provenance writes; database inspection failures return `partial_error`. Non-dry mode remains mutating by explicit call.
+- Author: 56 passed, exit 0. Fresh independent A5 `/root/a5_cycle284`: PASS; 19 focused / 107 adjacent +31 subtests, including byte/logical sentinel no-mutation. Exact-head CI run 38884269859 / job 116918116968: success.
+- Receipts: https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256#issuecomment-6213048689 and https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/257#issuecomment-6213054948
+- Persistent staging is CAPABILITY_BLOCKED: no configured DB/object store, no durable volume, writable filesystem is transient overlay with `fsync=volatile`; already-checked connected Neon inventory is empty. Minimum: authorized non-production Postgres or durable-volume SQLite plus durable originals storage.
+- Status: QA_PASSED / CI_PASSED / CAPABILITY_BLOCKED_PERSISTENT_STAGING. Full #245/#256 acceptance and legal/source completeness remain NOT PASS. A6 unchanged/not sent.
+- Durable evidence: `.ai/orchestration/evidence/cycle284_staging_dry_run_safety.json`; TASK_BOARD revision 818.
+- Next: connect durable non-production DB + originals storage, then bounded raw-first ingest; continue independent product work meanwhile.
+
 # Cycle 283 checkpoint — PAY-8 fail-closed applicability quarantine (2026-10-16 09:15 UTC)
 
 - Draft PR #256 exact head `af40f10f1e286adcde6914af67ef92b90d743c11`, tree `a867b3d5b6021fed775375ce74a05a352419b7a7`.

@@ -1116,3 +1116,15 @@ CI #255: [offline-safety PASS, run 37771953943](https://github.com/ivan88810900-
 - Durable evidence: `.ai/orchestration/evidence/cycle283_pay8_chapter27_quarantine.json`; TASK_BOARD revision 817.
 - Next safe boundary: first perform a read-only inventory of the existing Neon project/branch/schema and prove a non-production persistent-staging boundary with sentinel/no-mutation controls. Separately implement date-aware tariff applicability and verify historical intervals only from primary acts.
 
+## 2026-10-16 — Staging refresh dry-run made zero-write; durable storage unavailable
+
+- Draft [PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256) publishes exact head `38a475d20f44e9624435ea0089def0b16b9e1bd5`, tree `a5ec80034901d5a6d4a12f4e978e495e72721b4c`; local author commit `ef32b8501414a055d190b1e401d2e29589d3ae6d` has the same tree.
+- Reproduced and fixed the staging prerequisite defect: `run_full_data_refresh(dry_run=True)` no longer calls the mutating CBR updater or its fallback/provenance writes. Stale/missing rates are reported as pending apply; a database-read failure is now `partial_error`. Non-dry mode still invokes the updater.
+- Author focused/adjacent command: **56 passed**, exit 0. Fresh independent A5 `/root/a5_cycle284`: **PASS, no findings**; focused **19 passed**, adjacent **107 passed + 31 subtests**. Actual failing-session, missing/empty/sentinel SQLite, byte/logical no-mutation, no-network and non-dry controls passed.
+- Exact-head CI [run 38884269859 / job 116918116968](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38884269859/job/116918116968): **success**. PR receipt: [comment 6213048689](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256#issuecomment-6213048689). Coordination receipt: [comment 6213054948](https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/257#issuecomment-6213054948).
+- Persistent staging load remains **CAPABILITY_BLOCKED**: no database/object-storage configuration is present, no durable mount exists, the writable overlay reports `fsync=volatile`, and the already-recorded connected Neon inventory is empty. Temporary SQLite is not durability.
+- Minimum missing capability: an existing authorized non-production Postgres namespace or SQLite on a proven durable volume, plus durable immutable-original storage. No new resource, secret or permission was created.
+- Full #245/#256 acceptance and legal/source completeness remain NOT PASS. A6 `core-s1-6415f443120f-r9-g106` is unchanged and not sent. No protected action occurred.
+- Durable evidence: `.ai/orchestration/evidence/cycle284_staging_dry_run_safety.json`; TASK_BOARD revision 818.
+- Next: once durable storage is connected, run one bounded raw-first staging load with source IDs, hashes and row counts. Continue independent product work meanwhile; do not wait on staging infrastructure.
+
