@@ -1166,3 +1166,14 @@ CI #255: [offline-safety PASS, run 37771953943](https://github.com/ivan88810900-
 - During A5 the same live registry total had already grown to **778,404** and current page bytes changed. Therefore this result is explicitly one timestamped raw page, not a complete synchronized snapshot. Scaling requires drift-safe page manifests, overlap/dedupe and terminal total reconciliation; no row may enter normalization, legal admission or enforcement before those separate gates pass.
 - Durable evidence: `.ai/orchestration/evidence/cycle289_sgr_nsi1995_first_raw_page.json`. Full #245/#258 acceptance and a populated synchronized NTM snapshot remain NOT PASS. A6 is unchanged/not sent; no protected action occurred.
 
+# 2026-10-16 — NSI-1995 resumed pagination now fails closed on live drift
+
+- Draft [PR #258](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/258) publishes exact head `c59af35da7dde2140d911e2003a4a52fb0611507`, tree `2fee4bb388d1b2db69b2e49ed41d9f4dacea08d9`; local equivalent commit `3a5b93db4ef6616fc42530fccd8d93c2a4cca1f2` has the same tree.
+- Resumed NSI-1995 page acquisition now binds a trailing overlap digest, records immutable canonical page-manifest fields, deduplicates exact identities while advancing by source positions, records total drift and requires exact terminal-total reconciliation. Stable-total overshoot and premature empty pages fail closed.
+- Author verification: focused **31 passed**, expanded **246 passed + 6 subtests**, `py_compile` and `git diff --check` exit 0.
+- Independent A5 first found a real stable-total overshoot defect. The exact tree was repaired; A5 re-review is **PASS, no findings**, with focused **31 passed** and adjacent **113 passed**.
+- A live read-only continuation probe at logical offset 100 used 20 stored trailing rows and overlap SHA-256 `cf53968e85eb2b4966928ff4370cdf9808a70a73c74abc9dee47c6ebaa31608c`. The current official page did not match: the command exited 1 with `NSI SGR overlap mismatch`, accepted zero rows and performed zero DB writes. The old cursor is unsafe and must not be resumed.
+- Exact-head CI is not yet evidence: no run appeared after the connector ref update, native git authentication is absent, and this executor has no workflow-dispatch capability. The candidate remains incomplete until CI exists and succeeds.
+- No populated synchronized NTM snapshot is available. All prior rows remain `COLLECTED_UNVERIFIED`; no normalization/legal admission/enforcement occurred. A6 is unchanged/not sent; no protected action occurred.
+- Durable evidence: `.ai/orchestration/evidence/cycle290_sgr_nsi1995_drift_guard.json`; TASK_BOARD revision 823. Next: start a new offset-0 acquisition epoch using the guard, or obtain an immutable source-side snapshot/stable-order contract; do not resume the old offset-100 cursor.
+

@@ -1,0 +1,67 @@
+{
+  "schema_version": 1,
+  "task_id": "TARIFF-STAGING-SGR-NSI1995-DRIFT-GUARD-20261016",
+  "started_at": "2026-10-16T14:55:43Z",
+  "completed_at": "2026-10-16T15:06:43Z",
+  "executor": "/root/scheduled-cycle290-20261016T145543Z",
+  "lease_generation": 290,
+  "candidate": {
+    "pr": 258,
+    "branch": "agent/nsi-sgr-pagination-v1",
+    "published_head_sha": "c59af35da7dde2140d911e2003a4a52fb0611507",
+    "tree_sha": "2fee4bb388d1b2db69b2e49ed41d9f4dacea08d9",
+    "local_equivalent_commit": "3a5b93db4ef6616fc42530fccd8d93c2a4cca1f2",
+    "parent_sha": "7f7f4938d6145979d45fddd5b04cdede83ca6e49"
+  },
+  "change": {
+    "summary": "Added fail-closed overlap verification, canonical page manifests, exact duplicate suppression, source-position cursor advancement, total-drift recording and exact terminal-total reconciliation for resumed NSI-1995 pages.",
+    "files": [
+      "customs-clear/backend/scripts/sync_sgr_registry.py",
+      "customs-clear/backend/tests/test_sync_sgr_registry_nsi_pagination.py"
+    ],
+    "wired_to_database_sync": false
+  },
+  "author_validation": {
+    "focused_command": "PYTHONPATH=customs-clear/backend /tmp/tariff-pay7-venv/bin/python -m pytest -q customs-clear/backend/tests/test_sync_sgr_registry_nsi_pagination.py customs-clear/backend/tests/test_sync_sgr_registry_nsi_provenance.py",
+    "focused_exit_code": 0,
+    "focused_result": "31 passed in 0.53s",
+    "expanded_exit_code": 0,
+    "expanded_result": "246 passed plus 6 subtests in 7.28s",
+    "py_compile_exit_code": 0,
+    "diff_check_exit_code": 0
+  },
+  "live_probe": {
+    "source": "EEC NSI dictionary 1995",
+    "date": "2026-10-16",
+    "logical_offset": 100,
+    "request_overlap": 20,
+    "stored_trailing_overlap_sha256": "cf53968e85eb2b4966928ff4370cdf9808a70a73c74abc9dee47c6ebaa31608c",
+    "exit_code": 1,
+    "result": "RuntimeError: NSI SGR overlap mismatch: source ordering or row content drifted",
+    "accepted_new_rows": 0,
+    "database_writes": 0,
+    "interpretation": "The previous offset-100 continuation is unsafe; acquisition stopped before accepting or persisting rows."
+  },
+  "independent_a5": {
+    "session": "/root/a5_cycle289",
+    "initial_verdict": "CHANGES_REQUESTED",
+    "confirmed_finding": "A stable-total overshoot could be marked terminal-reconciled.",
+    "resolution": "Stable-total overshoot now raises before manifest return; terminal reconciliation requires exact equality.",
+    "final_verdict": "PASS_NO_FINDINGS",
+    "focused_result": "31 passed in 0.67s",
+    "adjacent_result": "113 passed in 3.59s",
+    "repro_exit_code": 0
+  },
+  "exact_head_ci": {
+    "status": "NOT_OBSERVED",
+    "checked_at": "2026-10-16T15:06:43Z",
+    "blocker": "The GitHub connector ref update published the exact head but emitted no workflow run; native git authentication and a workflow-dispatch capability are unavailable in this executor."
+  },
+  "snapshot_status": "POPULATED_SYNCHRONIZED_NTM_NOT_AVAILABLE_OFFSET_CONTINUATION_FAIL_CLOSED",
+  "a6": {
+    "request": "core-s1-6415f443120f-r9-g106",
+    "status": "UNCHANGED_NOT_SENT"
+  },
+  "protected_actions_performed": false,
+  "next_step": "Start a new offset-0 acquisition epoch with immutable manifests and verified overlaps, or obtain a source-side immutable snapshot/stable ordering contract; do not resume the old offset-100 cursor. Obtain exact-head CI before treating the candidate as complete."
+}

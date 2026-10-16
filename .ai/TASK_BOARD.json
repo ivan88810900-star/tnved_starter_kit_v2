@@ -2179,7 +2179,7 @@
       "unique_source_pr_count": 29
     }
   },
-  "revision": 822,
+  "revision": 823,
   "runs": [
     {
       "head_sha": null,
@@ -15638,5 +15638,56 @@
     "protected_actions_performed": false,
     "evidence": ".ai/orchestration/evidence/cycle289_sgr_nsi1995_first_raw_page.json",
     "next_step": "Implement drift-safe resumable NSI-1995 acquisition with immutable page manifests, overlap/dedupe and terminal total reconciliation before scaling beyond offset 100; keep every row COLLECTED_UNVERIFIED."
+  },
+  "previous_scheduled_product_checkpoint_290": {
+    "schema_version": 1,
+    "task_id": "TARIFF-STAGING-SGR-NSI1995-DRIFT-GUARD-20261016",
+    "started_at": "2026-10-16T14:55:43Z",
+    "completed_at": "2026-10-16T15:06:43Z",
+    "executor": "/root/scheduled-cycle290-20261016T145543Z",
+    "lease_generation": 290,
+    "pr": 258,
+    "branch": "agent/nsi-sgr-pagination-v1",
+    "head_sha": "c59af35da7dde2140d911e2003a4a52fb0611507",
+    "tree_sha": "2fee4bb388d1b2db69b2e49ed41d9f4dacea08d9",
+    "local_equivalent_commit": "3a5b93db4ef6616fc42530fccd8d93c2a4cca1f2",
+    "block": "nsi1995_drift_safe_page_manifests_and_overlap_guard",
+    "status": "IMPLEMENTED_A5_PASS_LIVE_OVERLAP_BLOCKED_CI_NOT_OBSERVED",
+    "product_changed": true,
+    "author_tests": {
+      "focused": "31 passed, exit 0",
+      "expanded": "246 passed plus 6 subtests, exit 0",
+      "py_compile": "exit 0",
+      "diff_check": "exit 0"
+    },
+    "live_probe": {
+      "logical_offset": 100,
+      "overlap_rows": 20,
+      "stored_overlap_sha256": "cf53968e85eb2b4966928ff4370cdf9808a70a73c74abc9dee47c6ebaa31608c",
+      "result": "FAIL_CLOSED_OVERLAP_MISMATCH",
+      "exit_code": 1,
+      "accepted_new_rows": 0,
+      "database_writes": 0
+    },
+    "independent_a5": {
+      "session": "/root/a5_cycle289",
+      "initial": "CHANGES_REQUESTED_STABLE_TOTAL_OVERSHOOT",
+      "final": "PASS_NO_FINDINGS",
+      "focused": "31 passed, exit 0",
+      "adjacent": "113 passed, exit 0"
+    },
+    "exact_head_ci": {
+      "status": "NOT_OBSERVED",
+      "checked_at": "2026-10-16T15:06:43Z",
+      "blocker": "Connector ref update emitted no run; native git authentication and workflow dispatch are unavailable."
+    },
+    "snapshot_status": "POPULATED_SYNCHRONIZED_NTM_NOT_AVAILABLE_OFFSET_CONTINUATION_FAIL_CLOSED",
+    "a6": {
+      "request": "core-s1-6415f443120f-r9-g106",
+      "status": "UNCHANGED_NOT_SENT"
+    },
+    "protected_actions_performed": false,
+    "evidence": ".ai/orchestration/evidence/cycle290_sgr_nsi1995_drift_guard.json",
+    "next_step": "Start a new offset-0 acquisition epoch with immutable manifests and verified overlaps, or obtain a source-side immutable snapshot/stable ordering contract; do not resume the old offset-100 cursor. Obtain exact-head CI before treating the candidate as complete."
   }
 }
