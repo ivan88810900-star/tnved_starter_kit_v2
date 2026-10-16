@@ -191,6 +191,38 @@ class TestFullRefreshDryRunSafety:
         assert result["dry_run"] is False
         assert result["results"][0]["updated"] == 5
 
+    def test_dry_run_surfaces_database_probe_error(self) -> None:
+        freshness = {
+            "currency": {
+                "is_stale": True,
+                "reason": "db_error: sentinel read failure",
+                "currencies": 0,
+            },
+            "domains": [],
+            "stale_count": 1,
+            "all_fresh": False,
+        }
+        updater = AsyncMock()
+        with (
+            patch("app.services.data_refresh_service.refresh_currency_rates", updater),
+            patch("app.services.data_refresh_service.check_data_freshness", return_value=freshness),
+            patch(
+                "app.services.data_refresh_service.refresh_excise_rates",
+                return_value={"domain": "EEC_EXCISE", "status": "ok"},
+            ),
+            patch(
+                "app.services.data_refresh_service.refresh_anti_dumping",
+                return_value={"domain": "EEC_ANTI_DUMPING", "status": "ok"},
+            ),
+        ):
+            result = asyncio.run(run_full_data_refresh(dry_run=True))
+
+        updater.assert_not_awaited()
+        assert result["status"] == "partial_error"
+        assert result["errors_count"] == 1
+        assert result["results"][0]["status"] == "error"
+        assert result["results"][0]["reason"] == "db_error: sentinel read failure"
+
 
 class TestAutoUpdaterIntegration:
     def test_auto_updater_has_freshness_job(self) -> None:

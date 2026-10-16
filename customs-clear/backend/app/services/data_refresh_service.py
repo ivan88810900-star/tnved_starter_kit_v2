@@ -198,9 +198,10 @@ async def run_full_data_refresh(*, dry_run: bool = True) -> dict[str, Any]:
     freshness = check_data_freshness()
     if dry_run:
         currency_freshness = freshness["currency"]
+        currency_reason = str(currency_freshness.get("reason", ""))
         currency = {
             "domain": "CBRF",
-            "status": "ok",
+            "status": "error" if currency_reason.startswith("db_error:") else "ok",
             "source": "read_only_freshness",
             "updated": 0,
             "needs_apply": bool(currency_freshness.get("is_stale", True)),
