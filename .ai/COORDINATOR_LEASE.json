@@ -1,14 +1,14 @@
 {
-  "acquisition_note": "Cycle 290 recovered main e526dfbdb5a31b01bf6f743da0288b88f916de0c, PR258 exact head 7f7f4938d6145979d45fddd5b04cdede83ca6e49, state revision 822 and released generation 289; implement and verify drift-safe NSI dictionary 1995 page acquisition before continuing beyond offset 100.",
-  "expires_at": null,
-  "generation": 290,
-  "holder": null,
+  "acquisition_note": "Cycle 291 recovered main e526dfbdb5a31b01bf6f743da0288b88f916de0c, PR258 exact head c59af35da7dde2140d911e2003a4a52fb0611507, state revision 823 and released generation 290. Exact-head CI is still absent; start a fresh offset-0 NSI-1995 acquisition epoch under drift-safe manifests and verified overlap, never resume the unsafe old offset-100 cursor.",
+  "expires_at": "2026-10-16T16:22:47.261172+00:00",
+  "generation": 291,
+  "holder": "/root/scheduled-cycle291-20261016T155238Z",
   "lease_repair": {},
   "release_reason": "Cycle 290 published drift-safe NSI-1995 resumed-page validation on PR258 head c59af35da7dde2140d911e2003a4a52fb0611507/tree 2fee4bb388d1b2db69b2e49ed41d9f4dacea08d9. Author 31 focused and 246 plus 6 subtests expanded PASS; A5 first found stable-total overshoot, repaired exact tree then PASS/no findings. Live offset-100 overlap probe failed closed with zero accepted rows/writes, proving the old cursor unsafe. Exact-head CI remains not observed because connector ref publication emitted no run and native git/workflow-dispatch capability is unavailable. State checkpoint ad007f5ab595a9cbcac6af5d3cfec46aff5212d2; PR receipt 6218456058; issue257 receipt 6218456371. Snapshot remains unavailable; A6 unchanged/not sent.",
   "released_by": "/root/scheduled-cycle290-20261016T145543Z",
   "schema_version": 1,
   "serialization_repair": {},
-  "state": "released",
-  "token": null,
-  "updated_at": "2026-10-16T15:09:25.526382Z"
+  "state": "active",
+  "token": "61c5f63ae92a4b49a2085ff2ae26404d",
+  "updated_at": "2026-10-16T15:52:47.261172+00:00"
 }
