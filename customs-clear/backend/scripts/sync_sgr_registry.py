@@ -472,11 +472,16 @@ def fetch_nsi_sgr_drift_safe_page(
     page_sha256 = hashlib.sha256(_canonical_json(page).encode("utf-8")).hexdigest()
     source_advance = max(0, len(page) - requested_overlap)
     next_offset = logical_offset + source_advance
+    if total_before == total_after and request_offset + len(page) > total_after:
+        raise RuntimeError(
+            "NSI SGR page exceeds the stable official total: "
+            f"offset {request_offset} + returned {len(page)} > total {total_after}"
+        )
     terminal_candidate = next_offset >= total_after
     terminal_total_reconciled = (
         terminal_candidate
         and total_before == total_after
-        and request_offset + len(page) >= total_after
+        and request_offset + len(page) == total_after
     )
     manifest = {
         "schema_version": NSI_SGR_PAGE_MANIFEST_SCHEMA_VERSION,

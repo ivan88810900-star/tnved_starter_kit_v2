@@ -198,6 +198,25 @@ def test_drift_safe_nonterminal_empty_page_fails_closed(
         )
 
 
+def test_drift_safe_page_exceeding_stable_total_fails_closed(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(sync, "_nsi_sgr_total", lambda **_kwargs: 5)
+    monkeypatch.setattr(
+        sync,
+        "_http_post_json",
+        lambda *_args, **_kwargs: [_nsi_item(index) for index in range(6)],
+    )
+
+    with pytest.raises(RuntimeError, match="exceeds the stable official total"):
+        sync.fetch_nsi_sgr_drift_safe_page(
+            code=sync.NSI_SGR_CODE,
+            date_iso="2026-10-16",
+            offset=0,
+            limit=10,
+        )
+
+
 @pytest.mark.parametrize(
     "kwargs, message",
     [
