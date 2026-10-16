@@ -2179,7 +2179,7 @@
       "unique_source_pr_count": 29
     }
   },
-  "revision": 824,
+  "revision": 825,
   "runs": [
     {
       "head_sha": null,
@@ -15732,5 +15732,50 @@
     "protected_actions_performed": false,
     "evidence": ".ai/orchestration/evidence/cycle291_sgr_nsi1995_fresh_epoch.json",
     "next_step": "Resume only cycle291 fresh epoch at offset 200 with trailing overlap digest ff8bb4e2aa841dad6296ba01fd970c8e7a27532981b65ec0df92a184f9e81a82; fail closed on mismatch or drift; obtain exact-head CI."
+  },
+  "previous_scheduled_product_checkpoint_293": {
+    "schema_version": 1,
+    "task_id": "TARIFF-STAGING-SGR-NSI1995-OFFSET300-20261016",
+    "started_at": "2026-10-16T16:55:07Z",
+    "completed_at": "2026-10-16T17:01:55Z",
+    "executor": "/root/scheduled-cycle293-20261016T165301Z",
+    "lease_generation": 293,
+    "pr": 258,
+    "head_sha": "c59af35da7dde2140d911e2003a4a52fb0611507",
+    "tree_sha": "2fee4bb388d1b2db69b2e49ed41d9f4dacea08d9",
+    "status": "FRESH_EPOCH_300_ROWS_A5_PASS_CI_PASS",
+    "product_changed": false,
+    "capture": {
+      "logical_offset": 200,
+      "official_total": 778404,
+      "drift": false,
+      "new_rows": 100,
+      "epoch_rows": 300,
+      "cursor_next_offset": 300,
+      "verified_overlap_rows": 20,
+      "verified_overlap_sha256": "ff8bb4e2aa841dad6296ba01fd970c8e7a27532981b65ec0df92a184f9e81a82",
+      "next_trailing_overlap_sha256": "81521de0960f94d01a101569b987a2e39f89317c9fc65ab7aac21c0752bcb2eb"
+    },
+    "staging": {
+      "new_immutable_objects": 2,
+      "epoch_source_objects": 6,
+      "epoch_ingest_runs": 3,
+      "epoch_rows": 300,
+      "unique_source_ids": 300,
+      "unique_row_hashes": 300,
+      "ordered_row_hash_digest": "940565c876ca8009afa2f1d4f626c3610613ec83f1e3e9fe4fa4f871d63a04ca",
+      "status": "COLLECTED_UNVERIFIED",
+      "normalized_count": 0,
+      "rejected_count": 0,
+      "idempotent_replay_count_unchanged": true
+    },
+    "author_tests": "31 targeted and 191 expanded passed, exit 0",
+    "independent_a5": "PASS_NO_FINDINGS; targeted 31 and adjacent 190 passed; DB/source 300/300",
+    "exact_head_ci": "run 38920906239 / job 117040259865 success",
+    "snapshot_status": "BOUNDED_FRESH_EPOCH_300_ROWS_POPULATED_SYNCHRONIZED_NTM_NOT_AVAILABLE",
+    "a6": "UNCHANGED_NOT_SENT",
+    "protected_actions_performed": false,
+    "evidence": ".ai/orchestration/evidence/cycle293_sgr_nsi1995_offset300.json",
+    "next_step": "Resume only cycle291 fresh epoch at offset 300 with trailing overlap digest 81521de0960f94d01a101569b987a2e39f89317c9fc65ab7aac21c0752bcb2eb; fail closed on mismatch or drift."
   }
 }
