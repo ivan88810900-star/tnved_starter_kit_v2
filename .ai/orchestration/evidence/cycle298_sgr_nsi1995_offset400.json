@@ -1,0 +1,81 @@
+{
+  "schema_version": 1,
+  "task_id": "TARIFF-STAGING-SGR-NSI1995-NEW-EPOCH-OFFSET400-20261016",
+  "started_at": "2026-10-16T21:54:18Z",
+  "completed_at": "2026-10-16T22:02:44Z",
+  "executor": "/root/scheduled-cycle298-20261016T215418Z",
+  "lease_generation": 298,
+  "candidate": {
+    "pr": 258,
+    "head_sha": "c59af35da7dde2140d911e2003a4a52fb0611507",
+    "tree_sha": "2fee4bb388d1b2db69b2e49ed41d9f4dacea08d9",
+    "product_changed": false
+  },
+  "capture": {
+    "command": "/tmp/tariff-pay7-venv/bin/python cycle298_capture.py",
+    "exit_code": 0,
+    "epoch": 296,
+    "logical_offset": 300,
+    "request_offset": 280,
+    "request_limit": 120,
+    "overlap_rows": 20,
+    "overlap_sha256": "483005c91215f03976ba85335194f9e69ed06d7b06c5c46fdc4bbae80f5afade",
+    "new_rows": 100,
+    "next_offset": 400,
+    "next_trailing_overlap_sha256": "5cbf0cbb2d70ed1951d97eb924ee0ea5ee47b0c2973c27b740644be892fbc927",
+    "total_before": 778429,
+    "total_after": 778429,
+    "drift_detected": false,
+    "raw_page_bytes": 265376,
+    "raw_page_sha256": "acf6b8e8ff843a68550005b862eac6e59c7ee1a275812937fdc4077f59cf6fcd",
+    "manifest_bytes": 764,
+    "manifest_sha256": "a4ed6571c0beb0abbfa941a2ba329d19a39a35b923b119ea66be2aacfccef4ec"
+  },
+  "durability": {
+    "project": "red-meadow-53765518",
+    "branch": "br-weathered-frost-ba9jri3c",
+    "database": "tariff_staging",
+    "schema": "tariff_ingest",
+    "bucket": "official-originals",
+    "new_immutable_objects": 2,
+    "readback_sha_matches": 2,
+    "epoch_source_objects": 8,
+    "epoch_ingest_runs": 4,
+    "epoch_rows": 400,
+    "unique_source_ids": 400,
+    "unique_row_hashes": 400,
+    "ordinals": "1..400",
+    "ordered_row_hash_digest": "e0e96d16ad67ede14c37d610b9e04f31f00afa62fab0b891f58cd29d2fab7bef",
+    "tuple_digest": "8865e8443c8a6b402f10df1dcef2b93103e9e483c583504237fd54845c31e795",
+    "status": "COLLECTED_UNVERIFIED",
+    "normalized_count": 0,
+    "rejected_count": 0,
+    "legal_admission": false,
+    "idempotent_replay_count_unchanged": true,
+    "frozen_epoch291_rows_unchanged": 400,
+    "frozen_epoch291_source_objects_unchanged": 8
+  },
+  "verification": {
+    "author_targeted": "31 passed, exit 0",
+    "author_expanded": "191 passed, exit 0",
+    "independent_a5": {
+      "session": "/root/a5_cycle291",
+      "status": "PASS_NO_FINDINGS",
+      "targeted": "31 passed, exit 0",
+      "adjacent": "190 passed, exit 0",
+      "fresh_object_gets": "2/2 byte-exact",
+      "db_source_tuple_matches": "400/400; mismatch 0",
+      "old_epoch291": "400 rows unchanged"
+    },
+    "exact_head_ci": {
+      "run_id": 38920906239,
+      "job_id": 117040259865,
+      "conclusion": "success",
+      "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38920906239/job/117040259865"
+    }
+  },
+  "snapshot_status": "BOUNDED_NEW_EPOCH_400_ROWS_POPULATED_SYNCHRONIZED_NTM_NOT_AVAILABLE",
+  "a6": "core-s1-6415f443120f-r9-g106 UNCHANGED_NOT_SENT",
+  "protected_actions_performed": false,
+  "next_step": "Resume only epoch cycle296 at logical offset 400 with 20-row overlap digest 5cbf0cbb2d70ed1951d97eb924ee0ea5ee47b0c2973c27b740644be892fbc927; fail closed on mismatch or total drift."
+}
