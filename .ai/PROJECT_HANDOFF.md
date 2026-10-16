@@ -1177,3 +1177,14 @@ CI #255: [offline-safety PASS, run 37771953943](https://github.com/ivan88810900-
 - No populated synchronized NTM snapshot is available. All prior rows remain `COLLECTED_UNVERIFIED`; no normalization/legal admission/enforcement occurred. A6 is unchanged/not sent; no protected action occurred.
 - Durable evidence: `.ai/orchestration/evidence/cycle290_sgr_nsi1995_drift_guard.json`; TASK_BOARD revision 823. Next: start a new offset-0 acquisition epoch using the guard, or obtain an immutable source-side snapshot/stable-order contract; do not resume the old offset-100 cursor.
 
+# 2026-10-16 — Fresh drift-safe NSI-1995 epoch persisted through offset 200
+
+- Draft PR #258 remains unchanged at exact head `c59af35da7dde2140d911e2003a4a52fb0611507`, tree `2fee4bb388d1b2db69b2e49ed41d9f4dacea08d9`; this cycle changed no product file.
+- A new offset-0 epoch captured two logical 100-row pages. Page two used a 20-row overlap: all 20 rows matched exactly, overlap SHA-256 is `ecc6ac7790bca6a737b2d62d4396579bf925106c4dc12d700cb4d5409ee0132b`. Both manifests observed official total `778404` before and after; drift was false. Cursor is now `next_offset=200`.
+- Four immutable objects (two raw pages and two manifests) were stored in the existing private non-production `official-originals` bucket and each was read back byte-for-byte. The existing isolated `tariff_ingest` schema atomically received four source objects, two runs, and 200 rows. Replay did not grow counts.
+- Reread: 200 rows, 200 unique source IDs, 200 unique row hashes, ordinals 1–200, ordered digest `c39643f99479da5a77bdeb77a09b2891aa5c0e42e3d372a6dafddf43207a92fd`. Every row is `COLLECTED_UNVERIFIED`; normalization, rejection and legal admission remain zero/false.
+- Author targeted command passed **31 tests**, exit 0. Fresh independent A5 `/root/a5_cycle291`: **PASS, no findings**; object/DB tuples matched 200/200, and the adjacent SGR suite passed **190 tests**, exit 0.
+- Exact-head CI is still not observed: the connector ref update emitted no run, while native git authentication and workflow dispatch are unavailable. The candidate is not complete until exact-head CI exists and succeeds.
+- This is a bounded fresh raw epoch, not a populated synchronized NTM snapshot or legal/product acceptance. A6 `core-s1-6415f443120f-r9-g106` is unchanged and not sent; no protected action occurred.
+- Durable evidence: `.ai/orchestration/evidence/cycle291_sgr_nsi1995_fresh_epoch.json`; TASK_BOARD revision 824. Resume only this epoch at offset 200 with trailing overlap SHA-256 `ff8bb4e2aa841dad6296ba01fd970c8e7a27532981b65ec0df92a184f9e81a82`; fail closed on mismatch or total drift.
+

@@ -2179,7 +2179,7 @@
       "unique_source_pr_count": 29
     }
   },
-  "revision": 823,
+  "revision": 824,
   "runs": [
     {
       "head_sha": null,
@@ -15689,5 +15689,48 @@
     "protected_actions_performed": false,
     "evidence": ".ai/orchestration/evidence/cycle290_sgr_nsi1995_drift_guard.json",
     "next_step": "Start a new offset-0 acquisition epoch with immutable manifests and verified overlaps, or obtain a source-side immutable snapshot/stable ordering contract; do not resume the old offset-100 cursor. Obtain exact-head CI before treating the candidate as complete."
+  },
+  "previous_scheduled_product_checkpoint_291": {
+    "schema_version": 1,
+    "task_id": "TARIFF-STAGING-SGR-NSI1995-FRESH-EPOCH-20261016",
+    "started_at": "2026-10-16T15:53:00Z",
+    "completed_at": "2026-10-16T16:10:00Z",
+    "executor": "/root/scheduled-cycle291-20261016T155238Z",
+    "lease_generation": 291,
+    "pr": 258,
+    "head_sha": "c59af35da7dde2140d911e2003a4a52fb0611507",
+    "tree_sha": "2fee4bb388d1b2db69b2e49ed41d9f4dacea08d9",
+    "status": "FRESH_EPOCH_200_ROWS_A5_PASS_CI_NOT_OBSERVED",
+    "product_changed": false,
+    "capture": {
+      "official_total": 778404,
+      "drift": false,
+      "rows": 200,
+      "cursor_next_offset": 200,
+      "verified_overlap_rows": 20,
+      "verified_overlap_sha256": "ecc6ac7790bca6a737b2d62d4396579bf925106c4dc12d700cb4d5409ee0132b",
+      "next_trailing_overlap_sha256": "ff8bb4e2aa841dad6296ba01fd970c8e7a27532981b65ec0df92a184f9e81a82"
+    },
+    "staging": {
+      "immutable_objects": 4,
+      "source_objects": 4,
+      "ingest_runs": 2,
+      "rows": 200,
+      "unique_source_ids": 200,
+      "unique_row_hashes": 200,
+      "ordered_row_hash_digest": "c39643f99479da5a77bdeb77a09b2891aa5c0e42e3d372a6dafddf43207a92fd",
+      "status": "COLLECTED_UNVERIFIED",
+      "normalized_count": 0,
+      "rejected_count": 0,
+      "idempotent_replay_count_unchanged": true
+    },
+    "author_tests": "31 passed, exit 0",
+    "independent_a5": "PASS_NO_FINDINGS; adjacent 190 passed, exit 0; DB/source tuple 200/200",
+    "exact_head_ci": "NOT_OBSERVED: connector ref update emitted no run; native git authentication and workflow dispatch unavailable",
+    "snapshot_status": "BOUNDED_FRESH_EPOCH_200_ROWS_POPULATED_SYNCHRONIZED_NTM_NOT_AVAILABLE",
+    "a6": "UNCHANGED_NOT_SENT",
+    "protected_actions_performed": false,
+    "evidence": ".ai/orchestration/evidence/cycle291_sgr_nsi1995_fresh_epoch.json",
+    "next_step": "Resume only cycle291 fresh epoch at offset 200 with trailing overlap digest ff8bb4e2aa841dad6296ba01fd970c8e7a27532981b65ec0df92a184f9e81a82; fail closed on mismatch or drift; obtain exact-head CI."
   }
 }
