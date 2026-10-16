@@ -1,14 +1,14 @@
 {
   "acquisition_note": "Cycle 292 recovered main e526dfbdb5a31b01bf6f743da0288b88f916de0c, PR258 exact head c59af35da7dde2140d911e2003a4a52fb0611507, released generation 291, and stale CI status. GitHub now exposes exact-head run 38920906239/job 117040259865 as success.",
-  "expires_at": "2026-10-16T22:25:56.958023Z",
+  "expires_at": null,
   "generation": 298,
-  "holder": "/root/scheduled-cycle298-20261016T215418Z",
+  "holder": null,
   "lease_repair": {},
-  "release_reason": "Cycle 297 advanced guarded NSI-1995 epoch cycle296 from offset 200 to 300 on unchanged PR258 head c59af35da7dde2140d911e2003a4a52fb0611507/tree 2fee4bb388d1b2db69b2e49ed41d9f4dacea08d9. Stable total 778429; overlap a6bb8b1a... exact; 100 new rows. Two immutable objects read back 2/2; staging is 6 objects/3 runs/300 rows/300 IDs/hashes, all COLLECTED_UNVERIFIED, replay unchanged; frozen epoch291 remains 400. Author 31+191 PASS; independent A5 PASS/no findings with 31+190 PASS and DB/source 300/300. Exact-head CI run 38920906239/job 117040259865 success. State checkpoint 8f58a6f92844bccf61210898b1271f297777c540; PR receipt 6224559418; issue257 receipt 6224559639. Snapshot incomplete; A6 unchanged/not sent.",
-  "released_by": "/root/scheduled-cycle297-20261016T204801Z",
+  "release_reason": "Cycle 298 advanced guarded NSI-1995 epoch cycle296 from offset 300 to 400 on unchanged PR258 head c59af35da7dde2140d911e2003a4a52fb0611507/tree 2fee4bb388d1b2db69b2e49ed41d9f4dacea08d9. Stable total 778429; overlap 483005c9... exact; 100 new rows. Two immutable objects read back 2/2; staging is 8 objects/4 runs/400 rows/400 IDs/hashes, all COLLECTED_UNVERIFIED, replay unchanged; frozen epoch291 remains 400. Author 31+191 PASS; independent A5 PASS/no findings with 31+190 PASS and DB/source 400/400. Exact-head CI run 38920906239/job 117040259865 success. State checkpoint 98d7ea3d0714ae404c142a81b5085f55a76a67ba; PR receipt 6225575480; issue257 receipt 6225575702. Snapshot incomplete; A6 unchanged/not sent.",
+  "released_by": "/root/scheduled-cycle298-20261016T215418Z",
   "schema_version": 1,
   "serialization_repair": {},
-  "state": "active",
-  "token": "2532325f25944c4c8fb9774c3ec0ade0",
-  "updated_at": "2026-10-16T21:55:56.958023Z"
+  "state": "released",
+  "token": null,
+  "updated_at": "2026-10-16T22:04:25.702866Z"
 }
