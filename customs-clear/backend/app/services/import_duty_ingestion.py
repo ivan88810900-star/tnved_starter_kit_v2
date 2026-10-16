@@ -81,6 +81,15 @@ _CHAPTER29_EXPECTED_RATES = {
     "2921410000": "5%",
 }
 _CHAPTER29_CODES = frozenset(_CHAPTER29_EXPECTED_RATES)
+_CHAPTER29_BASE_REVISION = "ett:2026-06-18"
+_CHAPTER29_BASE_URL = "https://eec.eaeunion.org/comission/department/catr/ett/"
+_CHAPTER29_EXPECTED_BASE_RATES = {
+    "2901100001": frozenset({"3%", "4.6"}),
+    "2902200000": frozenset({"3%", "0.0"}),
+    "2902300000": frozenset({"3%", "0.0"}),
+    "2902410000": frozenset({"3%", "0.0"}),
+    "2921410000": frozenset({"0", "0.0"}),
+}
 
 
 def _utc_now_iso() -> str:
@@ -402,6 +411,8 @@ def _merge_printing_ink_amendment(
 
 def _merge_chapter29_correction(
     rows: list[dict[str, Any]],
+    *,
+    base_revision: str,
 ) -> tuple[list[dict[str, Any]], dict[str, Any] | None, list[str]]:
     """Replace five ambiguous base rows with one exact current chapter-29 contour."""
     path = _BACKEND_ROOT / _CHAPTER29_CORRECTION_PATH
@@ -418,9 +429,40 @@ def _merge_chapter29_correction(
         payload.get("schema_version") != 1
         or payload.get("revision") != "ett:2026-07-11"
         or payload.get("snapshot_date") != "2026-07-11"
+        or payload.get("applies_to_base_revision") != _CHAPTER29_BASE_REVISION
         or payload.get("source_chapter_url") != _CHAPTER29_CHAPTER_URL
     ):
         return rows, None, ["chapter29_correction_metadata_mismatch"]
+    if base_revision != _CHAPTER29_BASE_REVISION:
+        return rows, None, [
+            "chapter29_correction_base_revision_mismatch: "
+            f"expected={_CHAPTER29_BASE_REVISION}; observed={base_revision or '<empty>'}"
+        ]
+
+    base_dates: dict[str, tuple[str | None, str | None]] = {}
+    for code, expected_rates in _CHAPTER29_EXPECTED_BASE_RATES.items():
+        matching = [
+            row
+            for row in rows
+            if str(row.get("hs_code") or "").replace(" ", "") == code
+        ]
+        observed_rates = frozenset(str(row.get("duty_rate") or "").strip() for row in matching)
+        observed_revisions = {
+            str(row.get("source_revision") or "").strip() for row in matching
+        }
+        observed_urls = {str(row.get("source_url") or "").strip() for row in matching}
+        valid_from = {str(row.get("valid_from") or "").strip() or None for row in matching}
+        valid_to = {str(row.get("valid_to") or "").strip() or None for row in matching}
+        if (
+            len(matching) != 2
+            or observed_rates != expected_rates
+            or observed_revisions != {_CHAPTER29_BASE_REVISION}
+            or observed_urls != {_CHAPTER29_BASE_URL}
+            or valid_from != {"2026-01-01"}
+            or valid_to != {None}
+        ):
+            return rows, None, [f"chapter29_correction_base_scope_mismatch: {code}"]
+        base_dates[code] = (next(iter(valid_from)), next(iter(valid_to)))
 
     raw_rows, container_err = _raw_rates_list(payload)
     if container_err is not None:
@@ -449,13 +491,6 @@ def _merge_chapter29_correction(
     # A source snapshot date is not a legal effective-from date.  Preserve the
     # temporal envelope already declared by the base bundle instead of
     # inventing a new effective date for the corrected rate.
-    base_dates: dict[str, tuple[str | None, str | None]] = {}
-    for code in _CHAPTER29_CODES:
-        matching = [row for row in rows if str(row.get("hs_code") or "").replace(" ", "") == code]
-        valid_from = {str(row.get("valid_from") or "").strip() or None for row in matching}
-        valid_to = {str(row.get("valid_to") or "").strip() or None for row in matching}
-        if len(valid_from) == 1 and len(valid_to) == 1:
-            base_dates[code] = (next(iter(valid_from)), next(iter(valid_to)))
     for row in corrected_rows:
         code = str(row.get("hs_code") or "").replace(" ", "")
         if code in base_dates:
@@ -648,7 +683,10 @@ def _validate_bundle_for_ingest(
 
     revision, rows, row_blockers = _extract_duty_rows(payload, rows_in)
     rows, amendment_metadata, amendment_blockers = _merge_printing_ink_amendment(rows)
-    rows, correction_metadata, correction_blockers = _merge_chapter29_correction(rows)
+    rows, correction_metadata, correction_blockers = _merge_chapter29_correction(
+        rows,
+        base_revision=revision,
+    )
     if amendment_metadata is not None:
         parser_result["amendments"] = [amendment_metadata]
         parser_result["record_count"] = len(rows)

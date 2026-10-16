@@ -3,6 +3,7 @@
   "format": "eec_ett_verified_correction_v1",
   "revision": "ett:2026-07-11",
   "snapshot_date": "2026-07-11",
+  "applies_to_base_revision": "ett:2026-06-18",
   "source_chapter_url": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.29_2022_11.07.2026.pdf",
   "description": "Проверенный точечный контур группы 29; дата снимка не является датой вступления ставки в силу.",
   "rates": [
