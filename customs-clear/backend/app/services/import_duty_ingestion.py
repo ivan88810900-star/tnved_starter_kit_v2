@@ -460,7 +460,7 @@ def _merge_chapter29_correction(
         payload.get("schema_version") != 1
         or payload.get("revision") != "ett:2026-07-11"
         or payload.get("snapshot_date") != "2026-07-11"
-        or payload.get("applies_to_base_revision") != _CHAPTER27_BASE_REVISION
+        or payload.get("applies_to_base_revision") != _CHAPTER29_BASE_REVISION
         or payload.get("source_chapter_url") != _CHAPTER29_CHAPTER_URL
     ):
         return rows, None, ["chapter29_correction_metadata_mismatch"]
@@ -562,7 +562,7 @@ def _merge_chapter27_correction(
         payload.get("schema_version") != 1
         or payload.get("revision") != "ett:2026-07-11"
         or payload.get("snapshot_date") != "2026-07-11"
-        or payload.get("applies_to_base_revision") != _CHAPTER29_BASE_REVISION
+        or payload.get("applies_to_base_revision") != _CHAPTER27_BASE_REVISION
         or payload.get("source_chapter_url") != _CHAPTER27_CHAPTER_URL
     ):
         return rows, None, ["chapter27_correction_metadata_mismatch"]

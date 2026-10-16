@@ -185,3 +185,23 @@ def test_chapter27_correction_requires_exact_base_scope(
     _payload, _parser_result, _revision, _rows, blockers = _validate_bundle_for_ingest(base_rel)
     assert blockers[0] == "chapter27_correction_base_scope_mismatch: 2715000000"
     assert blockers[1].startswith("duplicate_hs_code_rows: 14 code(s)")
+
+
+def test_chapter27_metadata_uses_its_own_base_revision_constant(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import app.services.import_duty_ingestion as ingestion
+
+    base_rel = "data/raw_normative/eec_ett_normative_bundle.json"
+    correction_rel = "data/raw_normative/eec_ett_chapter27_correction_2026.json"
+    base_path = tmp_path / base_rel
+    correction_path = tmp_path / correction_rel
+    base_path.parent.mkdir(parents=True)
+    base_path.write_text(json.dumps(_base_payload()), encoding="utf-8")
+    correction_path.write_text(CORRECTION_PATH.read_text(encoding="utf-8"), encoding="utf-8")
+    monkeypatch.setattr(ingestion, "_BACKEND_ROOT", tmp_path)
+    monkeypatch.setattr(ingestion, "_CHAPTER27_BASE_REVISION", "ett:2026-06-19")
+
+    _payload, _parser_result, _revision, _rows, blockers = _validate_bundle_for_ingest(base_rel)
+    assert blockers[0] == "chapter27_correction_metadata_mismatch"
