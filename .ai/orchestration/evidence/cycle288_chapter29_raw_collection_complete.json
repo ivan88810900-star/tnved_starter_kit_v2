@@ -1,0 +1,102 @@
+{
+  "schema_version": 1,
+  "task_id": "TARIFF-STAGING-CH29-RAW-COLLECTION-COMPLETE-20261016",
+  "started_at": "2026-10-16T13:04:05Z",
+  "completed_at": "2026-10-16T13:16:23Z",
+  "executor": "/root/scheduled-cycle288-20261016T130835Z",
+  "lease_generation": 288,
+  "product": {
+    "pr": 256,
+    "branch": "agent/product-ntm-regressions-v1",
+    "head_sha": "0320a7d268b33413c48dffc963cde6b0ec051ab1",
+    "tree_sha": "f5fc479d8ef6696880dcc28614c8a3e3da35e648",
+    "changed": false,
+    "exact_head_ci": {
+      "run_id": 38898431622,
+      "job_id": 116964443470,
+      "conclusion": "success",
+      "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38898431622/job/116964443470"
+    }
+  },
+  "author_verification": {
+    "unit_command": "PYTHONPATH=customs-clear/backend python -m unittest customs-clear/backend/tests/test_staging_raw_ingest.py -v",
+    "unit_exit_code": 0,
+    "unit_result": "11 tests OK",
+    "batch_command": "python customs-clear/backend/scripts/prepare_ett_staging_batch.py --pdf data/raw/tariff_cet/2025-01-01/ru.29_2022_24.05.2024.pdf --start-ordinal 221 --batch-size 313 --output /tmp/cycle288_batch_221_533.json",
+    "batch_exit_code": 0,
+    "batch_file_sha256": "2e3e78902d60b8d67236d4ad3847c226bc66384893a48ff0e10e48dd2fd6e4f2",
+    "batch_file_bytes": 155196,
+    "source_raw_count": 533,
+    "source_unique_count": 533,
+    "batch_raw_count": 313,
+    "batch_unique_count": 313,
+    "ascii_hs_codes": "313/313",
+    "raw_line_sha_matches": "313/313"
+  },
+  "source": {
+    "authority": "Eurasian Economic Commission",
+    "classification": "HISTORICAL_COLLECTED_UNVERIFIED",
+    "object_sha256": "418666f5fc61db171a9d0bbcf068753504cd29ff04f0f4ac62d4e1147980b51a",
+    "source_text_sha256": "8555367965aabc91d0d9a7c288b8a89c24ea4771ab118ef6d4f5bd46421e0a5d",
+    "first_loaded_hs_code": "2916320009",
+    "last_loaded_hs_code": "2942000000"
+  },
+  "staging": {
+    "project_id": "red-meadow-53765518",
+    "branch_id": "br-weathered-frost-ba9jri3c",
+    "database": "tariff_staging",
+    "schema": "tariff_ingest",
+    "production": false,
+    "run_id": "cycle288-eec-ett-ch29-ordinal221-533",
+    "before": {
+      "sources": 1,
+      "runs": 2,
+      "rows": 220,
+      "unique_hs": 220,
+      "pending_range_rows": 0,
+      "next_ordinal": 221
+    },
+    "after": {
+      "sources": 1,
+      "runs": 3,
+      "rows": 533,
+      "unique_hs": 533,
+      "collected_unverified": 533,
+      "batch_rows": 313,
+      "utf8_hash_matches": 533,
+      "duplicate_hs_groups": 0,
+      "duplicate_hash_groups": 0,
+      "mojibake_markers": 0,
+      "normalized_count": 0,
+      "rejected_count": 0,
+      "relation_bytes_after_replay": 630784
+    },
+    "resume_cursor": {
+      "last_ordinal": 533,
+      "last_hs_code": "2942000000",
+      "next_ordinal": 534,
+      "complete": true
+    },
+    "idempotent_replay_count_unchanged": true
+  },
+  "independent_a5": {
+    "session": "/root/a5_cycle288",
+    "result": "PASS_NO_FINDINGS",
+    "unit_tests": "11/11 OK, exit 0",
+    "regenerated_batch": "533 total; ordinal 221..533 = 313; ASCII 313/313; hashes 313/313; next 534 complete",
+    "neon_read_only": "1 source, 3 runs, 533 rows/unique/unverified, 533 hashes, 0 duplicate groups, 0 mojibake, normalized/rejected 0/0",
+    "full_db_local_digest": "6e54f56528b176c02325c29fda6c8629e7cc685f830a5caa649a07bc4ff2f92b"
+  },
+  "limits": [
+    "This completes collection of one retained historical chapter-29 PDF only.",
+    "All 533 rows remain COLLECTED_UNVERIFIED and are not normalized, legally admitted, current, or usable for product totals.",
+    "This is not a populated synchronized NTM snapshot and not full PR #245/#256 acceptance.",
+    "No product code changed in this cycle; the exact-head CI remains valid because the PR head is unchanged.",
+    "No main merge, deploy, production write, enforcement flag, secret/permission change, destructive migration, force push, branch deletion or A6 request occurred."
+  ],
+  "a6": {
+    "request": "core-s1-6415f443120f-r9-g106",
+    "status": "UNCHANGED_NOT_SENT"
+  },
+  "next_step": "Start bounded current-primary-source SGR/NTM acquisition and raw provenance in the same isolated staging; do not promote this historical ETT evidence."
+}

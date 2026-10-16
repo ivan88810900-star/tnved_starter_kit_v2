@@ -1,3 +1,12 @@
+# Cycle 288 checkpoint — historical chapter-29 raw collection complete (2026-10-16 13:16 UTC)
+
+- Draft PR #256 is unchanged at exact head `0320a7d268b33413c48dffc963cde6b0ec051ab1`, tree `f5fc479d8ef6696880dcc28614c8a3e3da35e648`; exact-head CI run 38898431622 / job 116964443470 remains `success`.
+- Author verification: reusable loader unit command 11/11 OK, exit 0; real-PDF batch ordinal 221–533 contains 313 unique ASCII codes with 313/313 exact raw-line SHA matches.
+- Neon staging atomically advanced from 220 to 533 rows. Identical replay kept 533 rows / 533 unique; server SHA matches 533/533, duplicate HS/hash groups 0/0, mojibake 0, normalization/rejection 0/0. Cursor is ordinal 533 / code 2942000000 / next 534 / complete.
+- Fresh independent A5 `/root/a5_cycle288`: PASS, no findings. Full DB-to-local canonical digest over all 533 `(ordinal, hs_code, row_sha256, raw_line)` rows matched at `6e54f56528b176c02325c29fda6c8629e7cc685f830a5caa649a07bc4ff2f92b`.
+- This closes raw collection of one retained historical PDF only. All rows remain `COLLECTED_UNVERIFIED`; no current/legal admission, normalization, NTM completeness or full PR acceptance is claimed.
+- Evidence: `.ai/orchestration/evidence/cycle288_chapter29_raw_collection_complete.json`; TASK_BOARD revision 821. Next: bounded current-primary-source SGR/NTM acquisition and raw provenance.
+
 # Cycle 286 checkpoint — reusable loader and staging rows 21–220 (2026-10-16 12:10 UTC)
 
 - Draft PR #256 exact head `0320a7d268b33413c48dffc963cde6b0ec051ab1`, tree `f5fc479d8ef6696880dcc28614c8a3e3da35e648`.

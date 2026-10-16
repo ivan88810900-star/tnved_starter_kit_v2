@@ -1,6 +1,15 @@
 Warning: truncated output (original token count: 98596)
 Total output lines: 2147
 
+## 2026-10-16 — Historical chapter-29 raw collection completed in isolated staging
+
+- Draft PR [#256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256) remains unchanged at exact head `0320a7d268b33413c48dffc963cde6b0ec051ab1`, tree `f5fc479d8ef6696880dcc28614c8a3e3da35e648`. Exact-head CI [run 38898431622 / job 116964443470](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38898431622/job/116964443470) is `success`.
+- Author command `PYTHONPATH=customs-clear/backend python -m unittest customs-clear/backend/tests/test_staging_raw_ingest.py -v` passed 11/11, exit 0. The real PDF command resumed at ordinal 221 with batch size 313 and produced the complete 221–533 range, 313 unique ASCII-only HS codes and 313/313 exact raw-line hashes.
+- Under lease generation 288, the non-production Neon transaction grew the retained source from 220 to 533 rows. Identical replay preserved 533 rows / 533 unique / 533 `COLLECTED_UNVERIFIED`; server hashes 533/533, duplicate HS/hash groups 0/0, mojibake 0, normalization/rejection 0/0. Final cursor: ordinal 533, code `2942000000`, next ordinal 534, `complete=true`.
+- Fresh independent A5 `/root/a5_cycle288`: PASS, no findings; tests 11/11, independent PDF regeneration and Neon reread passed. Its length-prefixed canonical digest over every DB/local `(ordinal, hs_code, row_sha256, raw_line)` row matched at `6e54f56528b176c02325c29fda6c8629e7cc685f830a5caa649a07bc4ff2f92b`.
+- Boundary: this is complete raw collection for one historical 2024 chapter-29 PDF, not a current or legally admitted tariff source. It is not the populated synchronized NTM snapshot and not full #245/#256 acceptance. A6 was not sent and no protected action occurred.
+- Durable evidence: `.ai/orchestration/evidence/cycle288_chapter29_raw_collection_complete.json`. Next independent block: acquire current primary-source SGR/NTM bytes into the same raw-first provenance boundary without promoting historical evidence.
+
 ## 2026-10-16 — PAY-6 duplicate ETT rows fail closed; exact-head CI pending
 
 - The tracked `ett:2026-06-18` base bundle has 13,319 rows but 13,292 unique exact HS codes. After the separately verified printing-ink amendment replaces two duplicate legacy contours, 21 duplicate HS codes remain. The prior ingestion accepted them even though `HsRate` permits multiple rows per code, making effective duty selection depend on DB row order.
