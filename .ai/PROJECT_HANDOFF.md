@@ -1102,3 +1102,17 @@ CI #255: [offline-safety PASS, run 37771953943](https://github.com/ivan88810900-
 - A6 `core-s1-6415f443120f-r9-g106` is unchanged and not sent. No merge, deploy, production write/flag, destructive migration, force push, branch deletion, permission/secret change or other protected action occurred.
 - Durable evidence is `.ai/orchestration/evidence/cycle282_pay7_chapter29.json`. Next: reconcile the next remaining duplicate ETT contour against the current official chapter source while retaining exact-base binding and fail-closed admission.
 
+## 2026-10-16 — PAY-8 current ETT snapshot quarantined by legal applicability
+
+- Draft [PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256) publishes exact head `af40f10f1e286adcde6914af67ef92b90d743c11`, tree `a867b3d5b6021fed775375ce74a05a352419b7a7`; local author commit `2738ad02eb728c1233a3b3bad43dda261dd921da` has the same tree.
+- The official current EEC chapter-27 PDF confirms the 15 reconciled current-snapshot rates. This does **not** establish their historical effective intervals.
+- Fresh primary-act verification also corrected PAY-7's legal boundary: Council Decision No. 6 dated 28.01.2026 took effect 07.02.2026 and sets aniline code 2921410000 to 0% through 31.12.2027. The prior chapter-29 snapshot overlay did not model that interval.
+- The chapter-27 and chapter-29 correction bundles now require explicit `current_snapshot_only_historical_intervals_unverified` metadata and always emit independent applicability blockers after a successful reconciliation. Removing the remaining `8511100001` duplicate still cannot open apply.
+- Author verification: expanded import-duty/payment profile **212 passed**, exit 0; JSON, `py_compile`, and `git diff --check` exited 0.
+- Fresh independent A5 `/root/a5_cycle283`: **PASS, no findings** on the exact remote tree; targeted **78 passed**, expanded **279 passed**. Disposable apply and an isolation probe both returned manual review with zero `HsRate/SourceStatus/SyncLog` writes.
+- Exact-head CI [run 38878463031 / job 116899123337](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38878463031/job/116899123337): **success**. Receipt: [comment 6212133879](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256#issuecomment-6212133879).
+- This closes a bounded fail-closed safety block, not import acceptance. Remaining blockers: date-aware Decision 6 modeling; primary-act historical intervals for chapter 27; duplicate `8511100001`; full #245/#256 acceptance; lawful populated synchronized NTM snapshot.
+- A6 `core-s1-6415f443120f-r9-g106` is unchanged and not sent. No merge, deploy, production write/flag, destructive migration, force push, branch deletion, permission/secret change or other protected action occurred.
+- Durable evidence: `.ai/orchestration/evidence/cycle283_pay8_chapter27_quarantine.json`; TASK_BOARD revision 817.
+- Next safe boundary: first perform a read-only inventory of the existing Neon project/branch/schema and prove a non-production persistent-staging boundary with sentinel/no-mutation controls. Separately implement date-aware tariff applicability and verify historical intervals only from primary acts.
+
