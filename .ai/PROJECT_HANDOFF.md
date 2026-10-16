@@ -1220,3 +1220,14 @@ CI #255: [offline-safety PASS, run 37771953943](https://github.com/ivan88810900-
 - This is a verified fail-closed source blocker, not a synchronized snapshot or legal/product acceptance. A6 `core-s1-6415f443120f-r9-g106` is unchanged and not sent; no protected action occurred.
 - Evidence: `.ai/orchestration/evidence/cycle295_sgr_nsi1995_offset400_drift.json`; TASK_BOARD revision 827. Do not resume the frozen epoch; start a new offset-0 epoch under the existing guard or obtain an immutable source-side snapshot/stable-order contract.
 
+# 2026-10-16 — New NSI-1995 epoch restarted and advanced to offset 200
+
+- Draft PR #258 remains unchanged at exact head `c59af35da7dde2140d911e2003a4a52fb0611507`, tree `2fee4bb388d1b2db69b2e49ed41d9f4dacea08d9`; exact-head CI run 38920906239 / job 117040259865 remains `success`.
+- A new offset-0 epoch replaced unsafe continuation of the frozen 400-row epoch. Two logical 100-row pages observed official total `778429` before and after; drift was false. Page two verified all 20 retained rows with overlap SHA-256 `c179aeb069a32fd875774710646d6057a0d2d361c84e5ba020b50c4b54f743b9`.
+- Four immutable objects were stored in the existing private non-production bucket and read back byte-for-byte: page hashes `b7b6b40ad147499f07671e6a967d47403cc40c5c5b0b11d66e3fb2d927a10b54` / `4eaf63d5a4b1dbc413c7d6627aa8d75256a9c1c3e513a2760227499fa0c66987`, manifest hashes `662718957324a37e32b4a77afa5c3ab4e04baa565cf013810bc1ee0a3bfef4ad` / `7b5c8244d3a56ef406827f953179735c58309e79f8397af349fb70c8f78287ef`.
+- The isolated `tariff_ingest` schema atomically received four source objects, two runs and 200 rows. Reread and replay: 200 unique source IDs and row hashes, ordinals 1–200, ordered digest `8996a5a9480c3f832bcb386ab767dc216b49914b87ad92c64c565361e95ce7d9`; counts stayed 4/2/200. The frozen prior epoch remains exactly 400 rows/eight objects.
+- Every new row remains `COLLECTED_UNVERIFIED`; normalization/rejection are 0/0 and legal admission is false.
+- Author tests: 31 targeted and 191 expanded passed, exit 0. Independent A5 `/root/a5_cycle291`: PASS/no findings; 31 targeted and 190 adjacent passed, fresh object GETs 4/4 exact, DB/source tuples 200/200, old epoch unchanged.
+- This is bounded raw collection, not a populated synchronized NTM snapshot or full legal/product acceptance. A6 `core-s1-6415f443120f-r9-g106` is unchanged and not sent; no protected action occurred.
+- Evidence: `.ai/orchestration/evidence/cycle296_sgr_nsi1995_new_epoch.json`; TASK_BOARD revision 828. Resume only epoch cycle296 at offset 200 with trailing overlap SHA-256 `a6bb8b1a5eaddb3ff5205bded5e8621d3e58995b2a802ba2b6e13ea1386ef799`; fail closed on mismatch or total drift.
+
