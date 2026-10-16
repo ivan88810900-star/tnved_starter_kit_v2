@@ -1080,3 +1080,13 @@ CI #255: [offline-safety PASS, run 37771953943](https://github.com/ivan88810900-
 - Durable evidence is `.ai/orchestration/evidence/cycle279_pay5_ci_closure.json`. TASK_BOARD remained at revision 813 because its CAS write was rejected at the connector approval boundary and was not retried.
 - Next: reconcile the next unresolved stale payment bundle against primary sources while preserving fail-closed admission, applicability, provenance and final-total withholding.
 
+## 2026-10-16 — PAY-6 duplicate ETT admission gate closed on exact-head CI
+
+- Draft [PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256) remains at exact head `cd41a21109a99aa23457f6d6a0ba7edddb536c08`, tree `2bc81fac43d83a3fea4ba41d1c03faac2cf26e1b`; this closure cycle changed no product file.
+- The cycle 280 repair rejects the tracked bundle before planning or DB mutation when exact HS duty rows are duplicated. It preserves duplicate evidence and does not guess or silently select a rate.
+- Author evidence remains **265 passed**, exit 0. Independent A5 `/root/a5_cycle280` remains bound to the unchanged exact tree: **PASS**, no findings; seeded dry-run/apply no-mutation probe passed.
+- Exact-head CI [run 38858876457 / job 116836388534](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38858876457/job/116836388534) completed **success** (push event, 34s). Closure receipt: [comment 6209860846](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256#issuecomment-6209860846).
+- PAY-6 is closed as a bounded verified block, not full #245/#256 acceptance or legal/source completeness. The 21 duplicate codes still require immutable official-source reconciliation before admission; a lawful populated synchronized NTM snapshot remains unavailable.
+- A6 `core-s1-6415f443120f-r9-g106` is unchanged and not sent. No merge, deploy, production write, enforcement change, destructive migration, force push, branch deletion, permission/secret change or other protected action occurred.
+- Durable evidence is `.ai/orchestration/evidence/cycle281_pay6_ci_closure.json`. Next: reconcile the 21 duplicate ETT codes against immutable official sources and effective dates; keep ambiguous rows quarantined.
+
