@@ -387,6 +387,27 @@ def _merge_printing_ink_amendment(
     return filtered + amendment_rows, metadata, []
 
 
+def _duplicate_hs_codes(rows: list[dict[str, Any]]) -> list[str]:
+    """Return exact HS codes that occur more than once in one duty snapshot.
+
+    HsRate currently permits more than one database row per hs_code.  Silently
+    accepting duplicate source rows would therefore make lookup order decide
+    which duty is used.  Even byte-for-byte-equivalent duplicates are blocked:
+    they would still create ambiguous persisted state on an empty database.
+    """
+    seen: set[str] = set()
+    duplicates: set[str] = set()
+    for row in rows:
+        code = re.sub(r"\D", "", str(row.get("hs_code") or ""))[:10]
+        if not code:
+            continue
+        if code in seen:
+            duplicates.add(code)
+        else:
+            seen.add(code)
+    return sorted(duplicates)
+
+
 def _existing_hs_rate(db, hs_code: str) -> HsRate | None:
     lookup = str(hs_code or "").strip().replace(" ", "")
     if not lookup:
@@ -549,6 +570,14 @@ def _validate_bundle_for_ingest(
         blockers.extend(row_blockers)
     if amendment_blockers:
         blockers.extend(amendment_blockers)
+    duplicate_codes = _duplicate_hs_codes(rows)
+    if duplicate_codes:
+        parser_result["duplicate_hs_code_count"] = len(duplicate_codes)
+        parser_result["duplicate_hs_codes"] = duplicate_codes
+        preview = ",".join(duplicate_codes[:10])
+        blockers.append(
+            f"duplicate_hs_code_rows: {len(duplicate_codes)} code(s); first={preview}"
+        )
     if not rows:
         blockers.append("no_importable_duty_rows")
     return payload, parser_result, revision, rows, blockers

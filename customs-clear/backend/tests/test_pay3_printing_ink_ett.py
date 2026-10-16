@@ -33,7 +33,13 @@ def _printing_ink_rows() -> tuple[list[dict], dict]:
         "data/raw_normative/eec_ett_normative_bundle.json"
     )
     assert parser_result["status"] == "parsed"
-    assert blockers == []
+    # PAY-6: the tracked base snapshot is now fail-closed because unrelated
+    # exact HS codes remain duplicated.  The independently verified printing-
+    # ink amendment can still be inspected here without claiming that the
+    # complete base bundle is ingestible.
+    assert len(blockers) == 1
+    assert blockers[0].startswith("duplicate_hs_code_rows:")
+    assert parser_result["duplicate_hs_code_count"] == 21
     return (
         [
             row

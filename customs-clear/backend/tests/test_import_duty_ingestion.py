@@ -220,6 +220,30 @@ class TestImportDutyBlockedBundles(unittest.TestCase):
         self.assertEqual(report["status"], "manual_review_required")
         self.assertFalse(report["db_mutated"])
 
+    def test_duplicate_hs_code_rows_fail_closed_without_db_mutation(self) -> None:
+        import app.services.import_duty_ingestion as idi
+
+        payload = _official_bundle_payload(
+            rates=[
+                {"hs_code": "2707501000", "duty_rate": "5%"},
+                {"hs_code": "2707501000", "duty_rate": "0%"},
+            ]
+        )
+        before = _table_counts(self.sm)
+        with _BundleFixture(payload) as (root, rel):
+            with unittest.mock.patch.object(idi, "_BACKEND_ROOT", root):
+                dry = run_import_duty_dry_run(rel_path=rel)
+                applied = run_import_duty_apply(rel_path=rel)
+        after = _table_counts(self.sm)
+
+        self.assertEqual(before, after)
+        for report in (dry, applied):
+            self.assertEqual(report["status"], "manual_review_required")
+            self.assertFalse(report["db_mutated"])
+            self.assertEqual(report["parser_result"]["duplicate_hs_code_count"], 1)
+            self.assertEqual(report["parser_result"]["duplicate_hs_codes"], ["2707501000"])
+            self.assertTrue(any(b.startswith("duplicate_hs_code_rows:") for b in report["blockers"]))
+
 
 class TestImportDutyApplyOfficial(unittest.TestCase):
     def setUp(self) -> None:
