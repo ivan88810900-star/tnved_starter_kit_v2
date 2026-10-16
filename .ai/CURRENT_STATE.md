@@ -479,3 +479,16 @@ legacy (сверх structural). Контур по-прежнему **не под
 - Evidence: `.ai/orchestration/evidence/cycle277_checkpoint.json`; PR receipt: #256 comment 6203575372.
 - Next safe step: execute focused VAT ingestion/payment engine/quote/profile tests on exact head, obtain fresh independent A5, and correct any findings before readiness.
 
+
+## Cycle 279 checkpoint — PAY-5 exact-head CI closure (2026-10-16)
+
+- Main remains `e526dfbdb5a31b01bf6f743da0288b88f916de0c`; no protected action was performed.
+- Draft PR #256 exact head remains `486d407ec2628564a616302a96f52adb91149241`, tree `a7d4c3bd4a3b3b8573fa17c5353b336a737ddd20`; the reviewed product tree did not change.
+- Cycle 278 author evidence remains **232 passed + 10 subtests**. Fresh independent A5 `/root/a5_cycle278` remains **PASS, no findings** on this exact tree.
+- Exact-head offline-safety CI run 38820783123 / job 116716584278 completed successfully; every recorded step passed.
+- PAY-5 is closed as a bounded verified repair. Full #245/#256 product acceptance and legal/source completeness remain NOT PASS; the lawful populated synchronized NTM snapshot remains unavailable.
+- A6 request `core-s1-6415f443120f-r9-g106` is unchanged and not sent.
+- Evidence: `.ai/orchestration/evidence/cycle279_pay5_ci_closure.json`; PR receipt: #256 comment 6207980737.
+- TASK_BOARD revision 813 was not changed because its CAS write was rejected at the connector approval boundary; the write was not retried.
+- Next safe step: reconcile the next unresolved stale payment bundle against primary sources while preserving fail-closed admission, applicability, provenance and final-total withholding.
+
