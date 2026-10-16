@@ -1,3 +1,13 @@
+# Cycle 283 checkpoint — PAY-8 fail-closed applicability quarantine (2026-10-16 09:15 UTC)
+
+- Draft PR #256 exact head `af40f10f1e286adcde6914af67ef92b90d743c11`, tree `a867b3d5b6021fed775375ce74a05a352419b7a7`.
+- Fifteen chapter-27 duplicate contours are reconciled only as a current official EEC snapshot. Mandatory chapter27/chapter29 applicability blockers prevent apply even after the remaining `8511100001` duplicate is removed.
+- Primary Decision No. 6 verification established the unmodeled aniline 0% interval from 2026-02-07 through 2027-12-31.
+- Author: 212 passed. Fresh independent A5: PASS, 78 targeted / 279 expanded, zero disposable DB writes. Exact-head CI run 38878463031 / job 116899123337: success.
+- Receipt: https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256#issuecomment-6212133879
+- Status: QA_PASSED / CI_PASSED / APPLICABILITY_QUARANTINED. Full #245/#256 acceptance, legal/source completeness and lawful populated synchronized NTM snapshot remain NOT PASS. A6 unchanged/not sent.
+- Next: read-only inventory of the existing Neon boundary before any persistent staging; separately implement date-aware Decision 6 handling and verify chapter-27 history from primary acts.
+
 # Cycle 281 CI closure checkpoint — 2026-10-16 06:52 UTC
 
 - Draft PR #256 remains at exact head `cd41a21109a99aa23457f6d6a0ba7edddb536c08`, tree `2bc81fac43d83a3fea4ba41d1c03faac2cf26e1b`; no product file changed in this cycle.
