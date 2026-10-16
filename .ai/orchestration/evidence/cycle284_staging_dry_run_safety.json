@@ -1,0 +1,73 @@
+{
+  "schema_version": 1,
+  "cycle": 284,
+  "task_id": "TARIFF-STAGING-INGEST-20261016",
+  "checked_at": "2026-10-16T10:02:35Z",
+  "executor": "/root/scheduled-cycle284-20261016T095500Z",
+  "pr": 256,
+  "branch": "agent/product-ntm-regressions-v1",
+  "parent_sha": "619437948d0459cb1cfb75f582e5bc19bc6a84e4",
+  "head_sha": "38a475d20f44e9624435ea0089def0b16b9e1bd5",
+  "tree_sha": "a5ec80034901d5a6d4a12f4e978e495e72721b4c",
+  "local_exact_tree_commit": "ef32b8501414a055d190b1e401d2e29589d3ae6d",
+  "scope": "staging_data_refresh_dry_run_zero_write",
+  "result": "QA_PASSED_EXACT_HEAD_CI_PASS_CAPABILITY_BLOCKED_PERSISTENT_STAGING",
+  "author_tests": [
+    {
+      "command": "/tmp/tariff-pay7-venv/bin/python -m pytest customs-clear/backend/tests/test_data_refresh.py -q",
+      "exit_code": 0,
+      "result": "19 passed"
+    },
+    {
+      "command": "DATABASE_URL=sqlite:////tmp/tariff-cycle284-author2.db TNVED_PREVIEW_CACHE_REVISION_FILE=/tmp/tariff-cycle284-preview2.rev /tmp/tariff-pay7-venv/bin/python -m pytest customs-clear/backend/tests/test_data_refresh.py customs-clear/backend/tests/test_payment_data_coverage.py customs-clear/backend/tests/test_source_import.py -q",
+      "exit_code": 0,
+      "result": "56 passed"
+    }
+  ],
+  "a5": {
+    "identity": "/root/a5_cycle284",
+    "conclusion": "PASS",
+    "focused": "19 passed",
+    "adjacent": "107 passed + 31 subtests",
+    "assertions": [
+      "actual failing SessionLocal -> CBR error/top partial_error/errors_count=1",
+      "updater and network not awaited in dry run",
+      "missing/empty/sentinel SQLite not created or byte-identical",
+      "sentinel logical row unchanged",
+      "dry_run=False updater awaited once"
+    ]
+  },
+  "ci": {
+    "run_id": 38884269859,
+    "job_id": 116918116968,
+    "event": "push",
+    "conclusion": "success",
+    "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38884269859/job/116918116968"
+  },
+  "receipts": {
+    "pr": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256#issuecomment-6213048689",
+    "coordination": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/257#issuecomment-6213054948"
+  },
+  "capability": {
+    "code_access": true,
+    "command_execution": true,
+    "git": true,
+    "python": true,
+    "publication": true,
+    "checkpoint_pending": true,
+    "durable_storage": false,
+    "checks": [
+      "no DB/Postgres/Neon/S3/object-storage environment variable names",
+      "no durable mount",
+      "workspace and /tmp on transient overlay with fsync=volatile",
+      "connected Neon inventory already recorded empty at issuecomment-6212354980"
+    ],
+    "blocker": "No authorized persistent non-production database and durable originals store.",
+    "minimum_needed": "Existing non-production Postgres namespace or SQLite on proven durable volume, plus durable immutable-original storage."
+  },
+  "protected_actions_performed": false,
+  "a6": {
+    "request": "core-s1-6415f443120f-r9-g106",
+    "status": "UNCHANGED_NOT_SENT"
+  }
+}
