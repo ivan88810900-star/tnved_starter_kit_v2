@@ -1,0 +1,45 @@
+{
+  "schema_version": 1,
+  "task_id": "TARIFF-PR258-EXACT-HEAD-CI-CLOSURE-20261016",
+  "checked_at": "2026-10-16T16:20:00Z",
+  "executor": "/root/scheduled-cycle292-20261016T161417Z",
+  "lease_generation": 292,
+  "main_sha": "e526dfbdb5a31b01bf6f743da0288b88f916de0c",
+  "candidate": {
+    "pr": 258,
+    "branch": "agent/nsi-sgr-pagination-v1",
+    "head_sha": "c59af35da7dde2140d911e2003a4a52fb0611507",
+    "tree_sha": "2fee4bb388d1b2db69b2e49ed41d9f4dacea08d9",
+    "product_changed": false
+  },
+  "exact_head_ci": {
+    "run_id": 38920906239,
+    "job_id": 117040259865,
+    "workflow": "Tariff agent safety",
+    "job": "offline-safety",
+    "event": "push",
+    "head_branch": "agent/nsi-sgr-pagination-v1",
+    "head_sha": "c59af35da7dde2140d911e2003a4a52fb0611507",
+    "status": "completed",
+    "conclusion": "success",
+    "created_at": "2026-10-16T15:04:12Z",
+    "completed_at": "2026-10-16T15:04:39Z",
+    "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38920906239/job/117040259865",
+    "required_steps": [
+      "Deterministic control and adapter tests (no credentials): success",
+      "Committed persistent state schema: success"
+    ]
+  },
+  "prior_checkpoint": {
+    "evidence": ".ai/orchestration/evidence/cycle291_sgr_nsi1995_fresh_epoch.json",
+    "author_tests": "31 passed, exit 0",
+    "independent_a5": "PASS_NO_FINDINGS; adjacent 190 passed; DB/source tuples 200/200",
+    "staging_rows": 200,
+    "classification": "COLLECTED_UNVERIFIED"
+  },
+  "result": "PR258_EXACT_HEAD_CI_CONFIRMED_CYCLE291_CI_GAP_CLOSED",
+  "snapshot_status": "BOUNDED_FRESH_EPOCH_200_ROWS_POPULATED_SYNCHRONIZED_NTM_NOT_AVAILABLE",
+  "a6": "core-s1-6415f443120f-r9-g106 UNCHANGED_NOT_SENT",
+  "protected_actions_performed": false,
+  "next_step": "Resume only cycle291 fresh epoch at logical offset 200 with 20-row overlap digest ff8bb4e2aa841dad6296ba01fd970c8e7a27532981b65ec0df92a184f9e81a82; fail closed on any mismatch or total drift."
+}
