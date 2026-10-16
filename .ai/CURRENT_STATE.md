@@ -1,3 +1,14 @@
+# Cycle 285 checkpoint — first persistent raw-first staging ingest (2026-10-16 11:17 UTC)
+
+- Owner-provided isolated Neon staging is live: project `red-meadow-53765518`, branch `br-weathered-frost-ba9jri3c`, database `tariff_staging`, private bucket `official-originals`; this is not production.
+- Uploaded and read back the retained official EEC ETT chapter-29 PDF: 957,135 bytes, 49 pages, SHA-256 `418666f5fc61db171a9d0bbcf068753504cd29ff04f0f4ac62d4e1147980b51a`. The immutable object key is source/date/SHA-addressed.
+- Created isolated `tariff_ingest` tables and atomically stored a bounded first 20 exact 10-digit rows as `COLLECTED_UNVERIFIED`. Reread: 1 source, 20 rows, 20 unique HS codes, 20 unverified, 0 normalized, 0 rejected; cursor `2902700000` / ordinal 20. An identical replay kept the counts unchanged.
+- Independent A5 caught an initial UTF-8 serialization defect before checkpoint. It was corrected in-place with explicit UTF-8 extraction; reread proves 20/20 row-SHA matches and zero mojibake markers. Final independent reread is recorded in the cycle evidence.
+- Draft PR #256 remains unchanged at `38a475d20f44e9624435ea0089def0b16b9e1bd5`, tree `a5ec80034901d5a6d4a12f4e978e495e72721b4c`; exact-head CI run 38884269859 / job 116918116968 remains successful.
+- Status: `PERSISTENT_STAGING_INGESTED / COLLECTED_UNVERIFIED`. This is not legal/source admission, not a synchronized populated NTM snapshot, and not full #245/#256 acceptance. A6 unchanged/not sent; no protected action occurred.
+- Durable evidence: `.ai/orchestration/evidence/cycle285_first_persistent_staging_ingest.json`; TASK_BOARD revision 819.
+- Next: add explicit UTF-8 regression coverage to the reusable raw-first loader and continue resumable bounded collection; keep normalization and legal admission separate and fail closed.
+
 # Cycle 284 checkpoint — staging dry-run safety and storage capability (2026-10-16 10:02 UTC)
 
 - Draft PR #256 exact head `38a475d20f44e9624435ea0089def0b16b9e1bd5`, tree `a5ec80034901d5a6d4a12f4e978e495e72721b4c`.

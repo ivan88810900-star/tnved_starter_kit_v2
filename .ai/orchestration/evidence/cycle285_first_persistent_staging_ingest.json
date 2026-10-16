@@ -1,0 +1,63 @@
+{
+  "schema_version": 1,
+  "task_id": "TARIFF-STAGING-FIRST-PERSISTENT-INGEST-20261016",
+  "started_at": "2026-10-16T10:54:43Z",
+  "completed_at": "2026-10-16T11:19:05Z",
+  "executor": "/root/scheduled-cycle285-20261016T105443Z",
+  "lease_generation": 285,
+  "product": {
+    "pr": 256,
+    "head_sha": "38a475d20f44e9624435ea0089def0b16b9e1bd5",
+    "tree_sha": "a5ec80034901d5a6d4a12f4e978e495e72721b4c",
+    "changed": false,
+    "exact_head_ci": {
+      "run_id": 38884269859,
+      "job_id": 116918116968,
+      "conclusion": "success",
+      "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38884269859/job/116918116968"
+    }
+  },
+  "staging": {
+    "project_id": "red-meadow-53765518",
+    "branch_id": "br-weathered-frost-ba9jri3c",
+    "database": "tariff_staging",
+    "schema": "tariff_ingest",
+    "bucket": "official-originals",
+    "production": false
+  },
+  "source": {
+    "authority": "Eurasian Economic Commission",
+    "url": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.29_2022_24.05.2024.pdf",
+    "object_key": "ett/2025-01-01/sha256/418666f5fc61db171a9d0bbcf068753504cd29ff04f0f4ac62d4e1147980b51a/ru.29_2022_24.05.2024.pdf",
+    "sha256": "418666f5fc61db171a9d0bbcf068753504cd29ff04f0f4ac62d4e1147980b51a",
+    "size_bytes": 957135,
+    "page_count": 49,
+    "download_reread_sha256_match": true
+  },
+  "ingest": {
+    "run_id": "cycle285-eec-ett-ch29-first20",
+    "classification": "COLLECTED_UNVERIFIED",
+    "raw_count": 20,
+    "unique_hs_count": 20,
+    "collected_unverified_count": 20,
+    "normalized_count": 0,
+    "rejected_count": 0,
+    "resume_cursor": {"last_ordinal": 20, "last_hs_code": "2902700000"},
+    "idempotent_replay_count_unchanged": true,
+    "utf8_hash_matches": 20,
+    "mojibake_markers": 0
+  },
+  "verification": {
+    "object_download": "curl GET exit 0; 957135 bytes; SHA-256 exact match",
+    "extraction": "pdftotext -layout exit 0; bounded first 20 exact 10-digit chapter-29 rows",
+    "transactions": "initial write and repeat transaction succeeded; counts remained 20/20",
+    "encoding_repair": "Independent A5 detected an initial UTF-8 serialization defect before checkpoint. Rows were corrected in-place by explicit UTF-8 extraction; repeated upsert and reread proved 20/20 SHA matches and zero mojibake markers.",
+    "independent_a5": "PASS after correction; byte-identical object, 20/20 UTF-8 row-hash matches, zero duplicate groups, zero mojibake markers, ordered PDF/DB digests match"
+  },
+  "limits": [
+    "Collected rows are not normalized, legally admitted, or usable for product totals.",
+    "This is a bounded staging ingestion, not a populated synchronized NTM snapshot.",
+    "No product code, production database, deployment, enforcement flag, secret, permission, merge, or A6 request changed."
+  ],
+  "next_step": "Extend the raw-first staging loader with explicit UTF-8 regression coverage and continue a resumable bounded collection; legal/source admission remains a separate fail-closed gate."
+}

@@ -1128,3 +1128,13 @@ CI #255: [offline-safety PASS, run 37771953943](https://github.com/ivan88810900-
 - Durable evidence: `.ai/orchestration/evidence/cycle284_staging_dry_run_safety.json`; TASK_BOARD revision 818.
 - Next: once durable storage is connected, run one bounded raw-first staging load with source IDs, hashes and row counts. Continue independent product work meanwhile; do not wait on staging infrastructure.
 
+# 2026-10-16 — First persistent raw-first staging ingest completed
+
+- The owner-provided free Neon staging boundary was re-read before writing: project `red-meadow-53765518`, branch `br-weathered-frost-ba9jri3c`, database `tariff_staging`, private bucket `official-originals`. No production resource, secret, permission, or paid resource was created or changed.
+- The retained official EEC ETT chapter-29 PDF was uploaded under immutable source/date/SHA addressing and read back byte-for-byte: 957,135 bytes, 49 pages, SHA-256 `418666f5fc61db171a9d0bbcf068753504cd29ff04f0f4ac62d4e1147980b51a`.
+- A new isolated `tariff_ingest` schema stores source manifests, ingest runs, and raw collected rows. The first bounded run saved 20 exact 10-digit chapter-29 rows as `COLLECTED_UNVERIFIED`; reread is 20 total / 20 unique / 20 unverified / 0 normalized / 0 rejected, cursor `2902700000` at ordinal 20. Replaying the same transaction did not increase counts.
+- Independent A5 correctly rejected the first serialization because the Cyrillic fields were mojibake. A0 repaired the same staging rows using explicit UTF-8 extraction without deleting data; a repeated upsert and database hash reread show 20/20 `sha256(raw_line)` matches and zero mojibake markers. The final A5 disposition is bound in `.ai/orchestration/evidence/cycle285_first_persistent_staging_ingest.json`.
+- Product code did not change. Draft PR #256 remains at `38a475d20f44e9624435ea0089def0b16b9e1bd5`, tree `a5ec80034901d5a6d4a12f4e978e495e72721b4c`, with successful exact-head CI run 38884269859 / job 116918116968.
+- This proves durable raw collection only. The rows are not normalized, legally admitted, or usable for tariff totals; a populated synchronized NTM snapshot and full #245/#256 acceptance remain NOT PASS. A6 `core-s1-6415f443120f-r9-g106` is unchanged and not sent.
+- Next: turn this bounded path into the reusable loader with explicit UTF-8 regression coverage, then resume raw collection in small atomic chunks while preserving separate fail-closed normalization/applicability gates.
+
