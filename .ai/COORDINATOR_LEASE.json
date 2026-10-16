@@ -1,14 +1,14 @@
 {
   "acquisition_note": "Cycle 279 recovered main e526dfbdb5a31b01bf6f743da0288b88f916de0c, PR256 exact head 486d407ec2628564a616302a96f52adb91149241, state revision 813, and released generation 278; close PAY-5 exact-head CI evidence without changing the reviewed tree.",
-  "expires_at": null,
-  "generation": 279,
-  "holder": null,
+  "expires_at": "2026-10-16T06:22:57.108434+00:00",
+  "generation": 280,
+  "holder": "/root/scheduled-cycle280-20261016T055247Z",
   "lease_repair": {},
   "release_reason": "Cycle 279 verified PR256 exact-head offline-safety CI run 38820783123/job 116716584278, posted closure receipt 6207980737, and persisted evidence plus CURRENT_STATE/PROJECT_HANDOFF. TASK_BOARD revision 813 CAS was rejected at the connector approval boundary and was not retried. A6 unchanged/not sent.",
   "released_by": "/root/scheduled-cycle279-20261016T041417Z",
   "schema_version": 1,
   "serialization_repair": {},
-  "state": "released",
-  "token": null,
-  "updated_at": "2026-10-16T04:20:27.853Z"
+  "state": "active",
+  "token": "54a5345403a64b1abd930a238f3a76ff",
+  "updated_at": "2026-10-16T05:52:57.108434+00:00"
 }
