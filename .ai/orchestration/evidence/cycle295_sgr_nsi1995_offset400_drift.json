@@ -1,0 +1,76 @@
+{
+  "schema_version": 1,
+  "task_id": "TARIFF-STAGING-SGR-NSI1995-OFFSET400-DRIFT-20261016",
+  "started_at": "2026-10-16T18:52:52Z",
+  "completed_at": "2026-10-16T18:56:41Z",
+  "executor": "/root/scheduled-cycle295-20261016T185252Z",
+  "lease_generation": 295,
+  "candidate": {
+    "pr": 258,
+    "head_sha": "c59af35da7dde2140d911e2003a4a52fb0611507",
+    "tree_sha": "2fee4bb388d1b2db69b2e49ed41d9f4dacea08d9",
+    "product_changed": false
+  },
+  "guarded_capture": {
+    "command": "/tmp/tariff-pay7-venv/bin/python cycle295_capture.py",
+    "exit_code": 1,
+    "error": "NSI SGR overlap mismatch: source ordering or row content drifted",
+    "logical_offset": 400,
+    "request_offset": 380,
+    "request_limit": 120,
+    "expected_overlap_sha256": "5201d5cefe7907df7759195b2013cd905efc99d8c4990c799932fce49bb19f13",
+    "accepted_new_rows": 0,
+    "artifacts_created": 0,
+    "database_writes": 0,
+    "object_storage_writes": 0
+  },
+  "read_only_reproduction": {
+    "exit_code": 0,
+    "returned_rows": 120,
+    "total_before": 778429,
+    "total_after": 778429,
+    "retained_epoch_total": 778404,
+    "total_drift": 25,
+    "actual_overlap_sha256": "5cbf0cbb2d70ed1951d97eb924ee0ea5ee47b0c2973c27b740644be892fbc927",
+    "page_sha256": "2d65fba6a188d252a71e4d2237c5d101a837566ab42f5bff7e393ace25aad5f7"
+  },
+  "staging_reread": {
+    "project": "red-meadow-53765518",
+    "branch": "br-weathered-frost-ba9jri3c",
+    "database": "tariff_staging",
+    "schema": "tariff_ingest",
+    "epoch_source_objects": 8,
+    "epoch_ingest_runs": 4,
+    "cycle295_source_objects": 0,
+    "cycle295_ingest_runs": 0,
+    "epoch_rows": 400,
+    "unique_source_ids": 400,
+    "unique_row_hashes": 400,
+    "ordinals": "1..400",
+    "status": "COLLECTED_UNVERIFIED",
+    "normalized_count": 0,
+    "rejected_count": 0,
+    "legal_admission": false
+  },
+  "verification": {
+    "author_targeted": "31 passed, exit 0",
+    "independent_a5": {
+      "session": "/root/a5_cycle291",
+      "status": "PASS_NO_FINDINGS",
+      "guarded_capture": "exit 1 before artifacts",
+      "targeted": "31 passed, exit 0",
+      "adjacent": "190 passed, exit 0",
+      "staging": "unchanged 400/400"
+    },
+    "exact_head_ci": {
+      "run_id": 38920906239,
+      "job_id": 117040259865,
+      "conclusion": "success",
+      "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38920906239/job/117040259865"
+    }
+  },
+  "snapshot_status": "SOURCE_DRIFT_BLOCKED_OLD_EPOCH_FROZEN_AT_400_POPULATED_SYNCHRONIZED_NTM_NOT_AVAILABLE",
+  "a6": "core-s1-6415f443120f-r9-g106 UNCHANGED_NOT_SENT",
+  "protected_actions_performed": false,
+  "next_step": "Do not resume the frozen 400-row epoch. Start a new offset-0 epoch under the existing guard, or obtain an immutable source-side snapshot/stable-order contract."
+}

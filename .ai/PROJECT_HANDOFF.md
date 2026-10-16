@@ -1210,3 +1210,13 @@ CI #255: [offline-safety PASS, run 37771953943](https://github.com/ivan88810900-
 - This is bounded raw collection, not a populated synchronized NTM snapshot or full legal/product acceptance. A6 `core-s1-6415f443120f-r9-g106` is unchanged and not sent; no protected action occurred.
 - Evidence: `.ai/orchestration/evidence/cycle294_sgr_nsi1995_offset400.json`; TASK_BOARD revision 826. Resume only this epoch at offset 400 with trailing overlap SHA-256 `5201d5cefe7907df7759195b2013cd905efc99d8c4990c799932fce49bb19f13`; fail closed on mismatch or drift.
 
+# 2026-10-16 — Offset 400 continuation frozen on verified source drift
+
+- Draft PR #258 remains unchanged at exact head `c59af35da7dde2140d911e2003a4a52fb0611507`, tree `2fee4bb388d1b2db69b2e49ed41d9f4dacea08d9`; exact-head CI run 38920906239 / job 117040259865 remains `success`.
+- The guarded offset-400 capture exited 1 before returning rows or creating artifacts: `NSI SGR overlap mismatch`. Expected overlap SHA-256 was `5201d5cefe7907df7759195b2013cd905efc99d8c4990c799932fce49bb19f13`; a separate read-only fetch computed actual `5cbf0cbb2d70ed1951d97eb924ee0ea5ee47b0c2973c27b740644be892fbc927`.
+- The official total is now 778429, up 25 from the frozen epoch total 778404. The old epoch cannot safely resume and remains frozen at 400 rows.
+- No object or database write occurred. Staging reread remains eight epoch source objects, four runs, 400 rows / 400 source IDs / 400 row hashes, all `COLLECTED_UNVERIFIED`; normalization/rejection 0/0 and legal admission false.
+- Author focused tests: 31 passed, exit 0. Independent A5 `/root/a5_cycle291`: PASS/no findings; guarded execution independently exited 1 before artifacts, current drift was reproduced, adjacent SGR suite 190 passed, and staging remained 400/400.
+- This is a verified fail-closed source blocker, not a synchronized snapshot or legal/product acceptance. A6 `core-s1-6415f443120f-r9-g106` is unchanged and not sent; no protected action occurred.
+- Evidence: `.ai/orchestration/evidence/cycle295_sgr_nsi1995_offset400_drift.json`; TASK_BOARD revision 827. Do not resume the frozen epoch; start a new offset-0 epoch under the existing guard or obtain an immutable source-side snapshot/stable-order contract.
+
