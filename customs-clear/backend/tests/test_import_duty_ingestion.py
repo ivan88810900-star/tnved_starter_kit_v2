@@ -17,7 +17,6 @@ from app.main import app
 from app.models.core import ExchangeRate, GeoSpecialDuty, HsRate, SourceStatus, SyncLog, TnvedEntry
 from app.models.tnved import Chapter, Commodity, HsDutyRule, Section, SpecialDuty, VatPreference
 from app.services.import_duty_ingestion import run_import_duty_apply, run_import_duty_dry_run
-from app.services.normative_store import init_db
 from app.services.payment_data_coverage import diagnose_duty_rates, run_payment_data_coverage_report
 from app.services.payment_data_normalization import run_payment_data_normalization_report
 
@@ -220,6 +219,30 @@ class TestImportDutyBlockedBundles(unittest.TestCase):
         report = self._run_blocked(payload)
         self.assertEqual(report["status"], "manual_review_required")
         self.assertFalse(report["db_mutated"])
+
+    def test_duplicate_hs_code_rows_fail_closed_without_db_mutation(self) -> None:
+        import app.services.import_duty_ingestion as idi
+
+        payload = _official_bundle_payload(
+            rates=[
+                {"hs_code": "2707501000", "duty_rate": "5%"},
+                {"hs_code": "2707501000", "duty_rate": "0%"},
+            ]
+        )
+        before = _table_counts(self.sm)
+        with _BundleFixture(payload) as (root, rel):
+            with unittest.mock.patch.object(idi, "_BACKEND_ROOT", root):
+                dry = run_import_duty_dry_run(rel_path=rel)
+                applied = run_import_duty_apply(rel_path=rel)
+        after = _table_counts(self.sm)
+
+        self.assertEqual(before, after)
+        for report in (dry, applied):
+            self.assertEqual(report["status"], "manual_review_required")
+            self.assertFalse(report["db_mutated"])
+            self.assertEqual(report["parser_result"]["duplicate_hs_code_count"], 1)
+            self.assertEqual(report["parser_result"]["duplicate_hs_codes"], ["2707501000"])
+            self.assertTrue(any(b.startswith("duplicate_hs_code_rows:") for b in report["blockers"]))
 
 
 class TestImportDutyApplyOfficial(unittest.TestCase):
@@ -775,6 +798,8 @@ class TestImportDutyStalePrefixUpdate(unittest.TestCase):
                     vat_import_rate=22.0,
                     source_revision="ett:2026-05-01",
                     source_url="https://eec.eaeunion.org/comission/department/catr/ett/",
+                    # The bundle inherits this date, so a true no-op fixture must match it.
+                    valid_from="2026-01-01",
                 )
             )
             db.commit()
@@ -1151,8 +1176,13 @@ class TestImportDutyVatRevisionRejected(unittest.TestCase):
 class TestImportDutyApi(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
-        init_db()
+        cls.sm = _memory_sessionmaker()
+        cls._patches = _start_patches(cls.sm)
         cls.client = TestClient(app)
+
+    @classmethod
+    def tearDownClass(cls) -> None:
+        _stop_patches(*cls._patches)
 
     def test_dry_run_endpoint(self) -> None:
         r = self.client.post("/api/sources/payment-ingestion/import-duty/dry-run")

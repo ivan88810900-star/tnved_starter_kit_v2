@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
-"""Mass seed regulatory_documents: >5000 documents with HS bindings.
+"""Synthetic reference seed for regulatory_documents coverage tests and demos.
+
+The generated titles, document numbers and URLs are templates, not fetched or
+verified acts.  They must remain reference-only and must never be admitted as
+official product evidence or source-completeness proof.
 
 Covers all 6 agencies across all 97 HS chapters:
 - FTS (Federal Customs Service) — classification letters, orders, instructions
@@ -27,7 +31,12 @@ from sqlalchemy import text
 from sqlalchemy.exc import IntegrityError
 
 from app.db import SessionLocal
-from app.models.regulatory import RegulatoryDocHsMapping, RegulatoryDocument
+from app.models.regulatory import (
+    REGULATORY_QUALITY_SYNTHETIC_SEED,
+    REGULATORY_STATUS_REFERENCE_ONLY,
+    RegulatoryDocHsMapping,
+    RegulatoryDocument,
+)
 
 DRY_RUN = "--dry-run" in sys.argv
 
@@ -693,12 +702,19 @@ def run():
             url = _url(d["agency"], d["num"])
             doc_id = _doc_id(url)
 
-            existing = session.execute(
-                text("SELECT id FROM regulatory_documents WHERE id = :id"),
-                {"id": doc_id},
-            ).fetchone()
+            existing = session.get(RegulatoryDocument, doc_id)
 
             if existing:
+                # Repair rows produced by older revisions that incorrectly
+                # labelled generated placeholders as active/verified.
+                existing.status = REGULATORY_STATUS_REFERENCE_ONLY
+                existing.quality = REGULATORY_QUALITY_SYNTHETIC_SEED
+                for mapping in existing.mappings:
+                    mapping.relevance = "reference"
+                    mapping.confidence = 0.0
+                    mapping.source = "synthetic_seed"
+                    mapping.note = f"Synthetic mass seed: {d['title'][:100]}"
+                    mapping.approved = False
                 docs_skipped += 1
                 continue
 
@@ -723,8 +739,8 @@ def run():
                 title=d["title"],
                 body=d.get("body", d["title"]),
                 source_url=url,
-                status="active",
-                quality="verified",
+                status=REGULATORY_STATUS_REFERENCE_ONLY,
+                quality=REGULATORY_QUALITY_SYNTHETIC_SEED,
             )
             session.add(doc)
 
@@ -733,10 +749,11 @@ def run():
                     doc_id=doc_id,
                     hs_prefix=str(hs_prefix),
                     scope="import",
-                    relevance=d.get("relevance", "direct"),
-                    confidence=d.get("confidence", 1.0),
-                    source="seed",
-                    note=f"Mass seed: {d['title'][:100]}",
+                    relevance="reference",
+                    confidence=0.0,
+                    source="synthetic_seed",
+                    note=f"Synthetic mass seed: {d['title'][:100]}",
+                    approved=False,
                 )
                 session.add(mapping)
                 mappings_added += 1

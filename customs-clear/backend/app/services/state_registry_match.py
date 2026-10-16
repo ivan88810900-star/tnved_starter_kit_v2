@@ -19,6 +19,7 @@ from sqlalchemy.orm import Session
 
 from ..models.core import FssNotification, ReoRegistryEntry, SgrCertificate
 from ..models.tnved import NonTariffMeasure
+from .non_tariff_measures_lookup import admitted_legacy_measure_quality_clause
 
 _SKIP_BRAND = frozenset(
     {"", "отсутствует", "неизвестен", "—", "отсутствует.", "нет", "n/a", "na"}
@@ -31,6 +32,53 @@ SGR_RECOMMENDATION_FUZZY = (
     "Найдено действующее СГР на продукцию данного изготовителя со схожим описанием. "
     "Проверьте возможность применения (внесения артикула) или оформления письма-доверенности от заявителя."
 )
+
+_SGR_INACTIVE_STATUS_MARKERS = (
+    "аннулир",
+    "недейств",
+    "не действ",
+    "неактив",
+    "не актив",
+    "не зарегистрирован",
+    "прекращ",
+    "приостанов",
+    "отозван",
+    "revoked",
+    "withdrawn",
+    "suspended",
+    "terminated",
+    "expired",
+    "inactive",
+    "not active",
+    "not valid",
+    "not registered",
+)
+_SGR_ACTIVE_STATUS_MARKERS_RU = (
+    "действ",
+    "зарегистрирован",
+)
+_SGR_ACTIVE_STATUS_WORDS_EN = frozenset({"active", "valid", "registered"})
+
+
+def classify_sgr_registry_status(status: str) -> str:
+    """Classify registry text without treating an unknown status as current."""
+    value = _norm(status)
+    if any(marker in value for marker in _SGR_INACTIVE_STATUS_MARKERS):
+        return "inactive"
+    if any(marker in value for marker in _SGR_ACTIVE_STATUS_MARKERS_RU):
+        return "active"
+    if _SGR_ACTIVE_STATUS_WORDS_EN.intersection(re.findall(r"[a-z]+", value)):
+        return "active"
+    return "unverified"
+
+
+def _sgr_status_review_recommendation(status: str) -> str:
+    value = (status or "").strip() or "не указан"
+    return (
+        f"Найдена запись СГР, но её статус «{value}» не подтверждает действие документа. "
+        "Не используйте совпадение как подтверждение применимости; проверьте актуальный статус "
+        "и сведения о продукции в официальном реестре."
+    )
 
 
 def _norm(s: str) -> str:
@@ -187,6 +235,7 @@ def _nt_requires_sgr(session: Session, commodity_code: str) -> bool:
     rows = (
         session.query(NonTariffMeasure)
         .filter(NonTariffMeasure.commodity_code == commodity_code)
+        .filter(admitted_legacy_measure_quality_clause())
         .limit(40)
         .all()
     )
@@ -333,7 +382,11 @@ def lookup_sgr_registry(
     if not best:
         return _sgr_not_found_block()
 
-    if kind == "Найдено точное совпадение":
+    status_class = classify_sgr_registry_status(best.status or "")
+    if status_class != "active":
+        kind = "Найдено совпадение, статус требует проверки"
+        rec = _sgr_status_review_recommendation(best.status or "")
+    elif kind == "Найдено точное совпадение":
         rec = (
             "Совпадение по бренду и описанию/артикулу; сверьте полный состав и наименование в реестре СГР перед применением."
         )

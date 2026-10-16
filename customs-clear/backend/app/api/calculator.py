@@ -37,6 +37,7 @@ class CompareSharedEconomics(BaseModel):
     freight: float = 0.0
     insurance: float | None = None
     country: str | None = None
+    destination_country: str | None = None
     quantity: float | None = None
     net_weight_kg: float | None = Field(default=None, validation_alias=AliasChoices("net_weight_kg", "weight_kg"))
     extra_quantity: float | None = None
@@ -47,6 +48,7 @@ class CompareScenarioIn(BaseModel):
     hs_code: str
     label: str | None = None
     country: str | None = None
+    destination_country: str | None = None
     duty_rate: float | None = None
     vat_rate: float | None = None
     excise: float | None = None
@@ -75,6 +77,7 @@ class CalculatorRequest(BaseModel):
     vat_rate: float | None = None  # ставка НДС (переопределение)
     excise: float | None = None  # акциз в руб. (переопределение)
     country: str | None = Field(default=None, validation_alias=AliasChoices("country", "country_of_origin"))  # страна происхождения (ISO-2)
+    destination_country: str | None = Field(default=None, description="Страна назначения (ISO-2)")
     quantity: float | None = None  # количество/объём для акциза и антидемпинга
     net_weight_kg: float | None = Field(default=None, validation_alias=AliasChoices("net_weight_kg", "weight_kg"))  # вес нетто для специфических ставок /kg
     extra_quantity: float | None = None  # объём/шт для специфических ставок /l, /pcs и т.д.

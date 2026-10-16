@@ -9,6 +9,7 @@ from datetime import datetime, timedelta, timezone
 from unittest.mock import AsyncMock, patch
 
 from app.services.assistant_chat import run_assistant_chat
+from app.services.assistant_orchestrator import bundle_for_llm
 from app.services.claude_service import analyze_copilot_bundle
 from app.services.grounded_assistant import (
     _normalize_normative_freshness,
@@ -103,6 +104,258 @@ def _chat_bundle() -> dict:
 
 
 class GroundingBundleTests(unittest.IsolatedAsyncioTestCase):
+    async def test_chat_forwards_destination_and_counterparty_to_risk_grounding(self) -> None:
+        non_tariff = AsyncMock(
+            return_value={
+                "status": "OK",
+                "normative_block": {},
+                "risk_block": {
+                    "status": "MANUAL_REVIEW",
+                    "overall_severity": "manual_review_required",
+                    "coverage_complete": False,
+                    "signals": [],
+                    "source_coverage": [],
+                    "screening_scope": [],
+                    "country": "CN",
+                    "destination_country": "BY",
+                    "counterparty_name": "Acme Trading",
+                },
+            }
+        )
+        with (
+            patch(
+                "app.services.grounded_assistant.get_tnved_context_for_hs",
+                return_value={
+                    "title": "Тестовый товар",
+                    "description": "",
+                    "breadcrumb": [],
+                    "notes": [],
+                    "official_ett_url": "https://eec.example/ett",
+                    "source_revision": "official-test",
+                },
+            ),
+            patch(
+                "app.services.grounded_assistant.canonical_anchor_for_hs",
+                return_value=None,
+            ),
+            patch(
+                "app.services.grounded_assistant.check_position_non_tariff",
+                new=non_tariff,
+            ),
+        ):
+            await build_chat_grounding_bundle(
+                message="Проверь санкционные риски",
+                history=[],
+                current_context={
+                    "hs_code": "8517130000",
+                    "origin_country": "CN",
+                    "destination_country": "BY",
+                    "counterparty_name": "Acme Trading",
+                },
+            )
+
+        _, _, origin_country, _ = non_tariff.await_args.args
+        self.assertEqual(origin_country, "CN")
+        self.assertEqual(non_tariff.await_args.kwargs["destination_country"], "BY")
+        self.assertEqual(non_tariff.await_args.kwargs["counterparty_name"], "Acme Trading")
+
+    async def test_risk_grounding_preserves_signal_provenance(self) -> None:
+        non_tariff = AsyncMock(
+            return_value={
+                "status": "WARNING",
+                "normative_block": {},
+                "risk_block": {
+                    "status": "WARNING",
+                    "overall_severity": "medium",
+                    "country": "CN",
+                    "destination_country": "BY",
+                    "counterparty_name": "Acme Trading",
+                    "coverage_complete": False,
+                    "source_coverage": [
+                        {
+                            "source_id": "ofac_sdn_list",
+                            "title": "OFAC SDN",
+                            "coverage_status": "partial",
+                            "manual_review_required": True,
+                            "authority_level": "Официальный источник",
+                        }
+                    ],
+                    "screening_scope": [],
+                    "signals": [
+                        {
+                            "category": "embargo",
+                            "severity": "medium",
+                            "source": "geo_special_duties",
+                            "source_label": "Геополитические меры",
+                            "authority_level": "Официальный источник",
+                            "explanation": "Страна назначения BY: требуется проверка.",
+                            "legal_ref": "Решение ЕЭК test",
+                            "matched_country": "BY",
+                        }
+                    ],
+                },
+            }
+        )
+        with (
+            patch(
+                "app.services.grounded_assistant.get_tnved_context_for_hs",
+                return_value={
+                    "title": "Тестовый товар",
+                    "source_revision": "official-test",
+                },
+            ),
+            patch(
+                "app.services.grounded_assistant.canonical_anchor_for_hs",
+                return_value=None,
+            ),
+            patch(
+                "app.services.grounded_assistant.check_position_non_tariff",
+                new=non_tariff,
+            ),
+        ):
+            bundle = await build_chat_grounding_bundle(
+                message="Проверь санкционные риски",
+                history=[],
+                current_context={
+                    "hs_code": "8517130000",
+                    "origin_country": "CN",
+                    "destination_country": "BY",
+                    "counterparty_name": "Acme Trading",
+                },
+            )
+
+        risk = bundle["risk"]
+        self.assertEqual(risk["destination_country"], "BY")
+        self.assertEqual(risk["counterparty_name"], "Acme Trading")
+        signal = risk["signals"][0]
+        self.assertEqual(signal["source"], "geo_special_duties")
+        self.assertEqual(signal["source_label"], "Геополитические меры")
+        self.assertEqual(signal["authority_level"], "Официальный источник")
+        self.assertEqual(signal["legal_ref"], "Решение ЕЭК test")
+        citation = next(
+            item for item in bundle["citations"] if item["id"] == signal["citation_id"]
+        )
+        self.assertEqual(citation["authority_level"], "Официальный источник")
+        self.assertEqual(citation["legal_ref"], "Решение ЕЭК test")
+        coverage = risk["source_coverage"][0]
+        self.assertEqual(coverage["authority_level"], "Официальный источник")
+        coverage_citation = next(
+            item for item in bundle["citations"] if item["id"] == coverage["citation_id"]
+        )
+        self.assertEqual(coverage_citation["authority_level"], "Официальный источник")
+
+    async def test_valid_hs_without_usable_local_evidence_is_not_grounded(self) -> None:
+        with (
+            patch(
+                "app.services.grounded_assistant.get_tnved_context_for_hs",
+                side_effect=RuntimeError("catalogue unavailable"),
+            ),
+            patch(
+                "app.services.grounded_assistant.check_position_non_tariff",
+                new=AsyncMock(side_effect=RuntimeError("ntm unavailable")),
+            ),
+        ):
+            bundle = await build_chat_grounding_bundle(
+                message="Какие документы по коду 8516108008?",
+                history=[],
+                current_context=None,
+            )
+
+        self.assertEqual(bundle["resolved_hs_code"], "8516108008")
+        self.assertEqual(bundle["coverage"], "partial")
+        self.assertEqual(bundle["facts_used"], [])
+        self.assertEqual(bundle["citations"], [])
+        answer, _ = render_chat_grounded_answer(bundle)
+        self.assertIn("не подтверждаю соответствие товара коду", answer)
+        self.assertIn("Нетарифный контур не удалось проверить", answer)
+
+    async def test_empty_tnved_card_and_generic_url_do_not_enable_llm(self) -> None:
+        with (
+            patch(
+                "app.services.grounded_assistant.get_tnved_context_for_hs",
+                return_value={
+                    "title": "",
+                    "description": "",
+                    "breadcrumb": [],
+                    "notes": [],
+                    "official_ett_url": "https://eec.example/ett",
+                    "source_revision": "",
+                },
+            ),
+            patch(
+                "app.services.grounded_assistant.canonical_anchor_for_hs",
+                return_value=None,
+            ),
+            patch(
+                "app.services.grounded_assistant.check_position_non_tariff",
+                new=AsyncMock(side_effect=RuntimeError("ntm unavailable")),
+            ),
+        ):
+            bundle = await build_chat_grounding_bundle(
+                message="Какие документы по коду 9999999999?",
+                history=[],
+                current_context=None,
+            )
+
+        self.assertEqual(bundle["resolved_hs_code"], "9999999999")
+        self.assertEqual(bundle["coverage"], "partial")
+        self.assertEqual(bundle["facts_used"], [])
+        self.assertEqual(bundle["citations"], [])
+
+        selector = AsyncMock(return_value={"provider": "anthropic", "text": "{}"})
+        with (
+            patch(
+                "app.services.assistant_chat.build_chat_grounding_bundle",
+                new=AsyncMock(return_value=bundle),
+            ),
+            patch(
+                "app.services.assistant_chat.llm_provider_chain",
+                return_value=[("anthropic", "test")],
+            ),
+            patch("app.services.assistant_chat._ask_llm", new=selector),
+        ):
+            result = await run_assistant_chat(
+                message="Какие документы по коду 9999999999?",
+                history=[],
+                current_context=None,
+            )
+
+        selector.assert_not_awaited()
+        self.assertEqual(result["grounding"]["mode"], "deterministic")
+        self.assertNotEqual(result["grounding"]["mode"], "llm_grounded")
+
+    async def test_nonempty_tnved_card_alone_is_usable_grounding(self) -> None:
+        with (
+            patch(
+                "app.services.grounded_assistant.get_tnved_context_for_hs",
+                return_value={
+                    "title": "Электрические водонагреватели",
+                    "description": "",
+                    "breadcrumb": [],
+                    "notes": [],
+                    "official_ett_url": "https://eec.example/ett",
+                    "source_revision": "official-test",
+                },
+            ),
+            patch(
+                "app.services.grounded_assistant.canonical_anchor_for_hs",
+                return_value=None,
+            ),
+            patch(
+                "app.services.grounded_assistant.check_position_non_tariff",
+                new=AsyncMock(side_effect=RuntimeError("ntm unavailable")),
+            ),
+        ):
+            bundle = await build_chat_grounding_bundle(
+                message="Какие документы по коду 8516108008?",
+                history=[],
+                current_context=None,
+            )
+
+        self.assertEqual(bundle["coverage"], "grounded")
+        self.assertEqual(bundle["facts_used"], ["tnved"])
+        self.assertEqual(len(bundle["citations"]), 1)
+
     async def test_bundle_reuses_server_facts_and_separates_advisory(self) -> None:
         nt_result = {
             "status": "WARNING",
@@ -637,6 +890,25 @@ class CopilotGroundingTests(unittest.IsolatedAsyncioTestCase):
             "risk_summary": {
                 "overall_severity": "manual_review_required",
                 "coverage_complete": False,
+                "signals": [
+                    {
+                        "category": "embargo",
+                        "severity": "medium",
+                        "source": "geo_special_duties",
+                        "source_label": "Геополитические меры",
+                        "authority_level": "Официальный источник",
+                        "explanation": "Требуется дополнительная проверка.",
+                        "legal_ref": "Решение ЕЭК test",
+                    }
+                ],
+                "source_coverage": [
+                    {
+                        "source_id": "ofac_sdn_list",
+                        "title": "OFAC SDN",
+                        "coverage_status": "partial",
+                        "authority_level": "Официальный источник",
+                    }
+                ],
             },
         }
 
@@ -649,6 +921,54 @@ class CopilotGroundingTests(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(result["next_steps"])
         self.assertIn("Полнота и юридическая актуальность", result["non_tariff_comment"])
         self.assertNotIn("Ключ ИИ", result.get("note", ""))
+        risk_citation = next(
+            item for item in result["citations"] if item["source_id"] == "geo_special_duties"
+        )
+        self.assertEqual(risk_citation["authority_level"], "Официальный источник")
+        self.assertEqual(risk_citation["legal_ref"], "Решение ЕЭК test")
+        coverage_citation = next(
+            item for item in result["citations"] if item["source_id"] == "ofac_sdn_list"
+        )
+        self.assertEqual(coverage_citation["authority_level"], "Официальный источник")
+
+    def test_copilot_runtime_projection_preserves_risk_provenance(self) -> None:
+        context = bundle_for_llm(
+            {
+                "effective_hs_code": "8516108008",
+                "description": "Электрический чайник",
+                "pipeline": [],
+                "non_tariff": {
+                    "risk_block": {
+                        "signals": [
+                            {
+                                "category": "embargo",
+                                "severity": "medium",
+                                "source": "geo_special_duties",
+                                "source_label": "Геополитические меры",
+                                "authority_level": "Официальный источник",
+                                "explanation": "Требуется дополнительная проверка.",
+                                "legal_ref": "Решение ЕЭК test",
+                            }
+                        ],
+                        "source_coverage": [
+                            {
+                                "source_id": "ofac_sdn_list",
+                                "title": "OFAC SDN",
+                                "coverage_status": "partial",
+                                "authority_level": "Официальный источник",
+                            }
+                        ],
+                    }
+                },
+            }
+        )
+        risk = context["risk_summary"]
+        self.assertEqual(risk["signals"][0]["authority_level"], "Официальный источник")
+        self.assertEqual(risk["signals"][0]["legal_ref"], "Решение ЕЭК test")
+        self.assertEqual(
+            risk["source_coverage"][0]["authority_level"],
+            "Официальный источник",
+        )
 
     async def test_copilot_freshness_matrix_never_claims_complete_ntm_coverage(self) -> None:
         cases = (

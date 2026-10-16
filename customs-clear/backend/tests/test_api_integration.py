@@ -6,19 +6,177 @@
 
 Требует: loguru (pip install loguru).
 """
+import hashlib
 import os
+import subprocess
+import sys
 import unittest
+from pathlib import Path
 from unittest.mock import patch
+
+import pytest
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
 
 try:
     from fastapi.testclient import TestClient
+    from app import db as app_db, main as app_main
     from app.main import app
+    from app.models.core import HsRate
+    from app.models.tnved import CountryTariffPreference, RecyclingFee
+    from app.services import normative_store
     from app.services.normative_store import init_db
     _INTEGRATION_AVAILABLE = True
     _IMPORT_ERROR = ""
 except ImportError as e:
     _INTEGRATION_AVAILABLE = False
     _IMPORT_ERROR = str(e)
+
+
+BACKEND_ROOT = Path(__file__).resolve().parents[1]
+DEFAULT_DATABASE = BACKEND_ROOT / "customs.db"
+PINNED_CATALOGUE = BACKEND_ROOT / "customs.db.backup_before_pdf_import"
+
+
+def _sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as file_handle:
+        for chunk in iter(lambda: file_handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def _protected_fingerprints() -> dict[Path, str | None]:
+    paths = {
+        candidate
+        for path in (DEFAULT_DATABASE, PINNED_CATALOGUE)
+        for candidate in (path, Path(f"{path}-wal"), Path(f"{path}-shm"))
+    }
+    return {
+        path: _sha256(path) if path.is_file() else None
+        for path in paths
+    }
+
+
+@pytest.fixture(scope="module", autouse=True)
+def _isolated_api_integration_database(tmp_path_factory: pytest.TempPathFactory):
+    """Run the integrated API slice without reading or creating ambient SQLite."""
+    if not _INTEGRATION_AVAILABLE:
+        yield
+        return
+
+    protected_hashes = _protected_fingerprints()
+    original_session = app_db.SessionLocal
+    original_engine = app_db.engine
+    temp_dir = tmp_path_factory.mktemp("api-integration")
+    database = temp_dir / "api-integration.db"
+    env = os.environ.copy()
+    env["DATABASE_URL"] = f"sqlite:///{database}"
+    env.pop("TNVED_SOURCE_DB", None)
+    bootstrap = subprocess.run(
+        [
+            sys.executable,
+            "-c",
+            "from app.services.normative_store import init_db; init_db()",
+        ],
+        cwd=BACKEND_ROOT,
+        env=env,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    assert bootstrap.returncode == 0, bootstrap.stdout + bootstrap.stderr
+    assert _protected_fingerprints() == protected_hashes
+
+    engine = create_engine(
+        f"sqlite:///{database}",
+        connect_args={"check_same_thread": False},
+    )
+    factory = sessionmaker(bind=engine, autocommit=False, autoflush=False)
+    patches = pytest.MonkeyPatch()
+
+    for module_name, module in tuple(sys.modules.items()):
+        if module is None or not (module_name == "app" or module_name.startswith("app.")):
+            continue
+        if getattr(module, "SessionLocal", None) is original_session:
+            patches.setattr(module, "SessionLocal", factory)
+        if getattr(module, "engine", None) is original_engine:
+            patches.setattr(module, "engine", engine)
+
+    patches.setattr(sys.modules[__name__], "init_db", lambda: None)
+    patches.setattr(app_main, "init_db", lambda: None)
+
+    rate_codes = {
+        "8509": "8509400000",
+        "8516": "8516108008",
+        "0201": "0201300000",
+        "7214": "7214990000",
+    }
+    with factory() as db:
+        for row in normative_store.SEED_RATES:
+            exact_code = rate_codes.get(row["hs_prefix"])
+            if exact_code:
+                db.add(HsRate(hs_code=exact_code, **row))
+        db.add(
+            HsRate(
+                hs_code="8703231910",
+                hs_prefix="8703",
+                duty_rate="15",
+                vat_import_rate=22.0,
+                excise_type="none",
+                source_revision="test-api-integration",
+            )
+        )
+        db.add(
+            CountryTariffPreference(
+                country_code="BY",
+                preference_type="eaeu",
+                duty_coefficient=0.0,
+                legal_ref="Test fixture: EAEU",
+                effective_from="2026-01-01",
+            )
+        )
+        db.add_all(
+            [
+                RecyclingFee(
+                    hs_prefix="8703",
+                    vehicle_type="passenger",
+                    is_new=True,
+                    base_rate=20000.0,
+                    coefficient=1.0,
+                    engine_volume_from=2000,
+                    engine_volume_to=3000,
+                    description="Test new passenger vehicle",
+                    legal_ref="Test fixture",
+                ),
+                RecyclingFee(
+                    hs_prefix="8703",
+                    vehicle_type="passenger",
+                    is_new=False,
+                    base_rate=20000.0,
+                    coefficient=2.0,
+                    engine_volume_from=2000,
+                    engine_volume_to=3000,
+                    description="Test used passenger vehicle",
+                    legal_ref="Test fixture",
+                ),
+            ]
+        )
+        db.commit()
+
+    try:
+        yield
+    finally:
+        patches.undo()
+        engine.dispose()
+        for path in (
+            database,
+            Path(f"{database}-wal"),
+            Path(f"{database}-shm"),
+        ):
+            if path.exists():
+                path.unlink()
+        assert _protected_fingerprints() == protected_hashes
 
 
 @unittest.skipIf(not _INTEGRATION_AVAILABLE, f"Integration tests require full deps: {_IMPORT_ERROR}")

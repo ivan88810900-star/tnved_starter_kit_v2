@@ -4,6 +4,7 @@ from datetime import datetime
 import xml.etree.ElementTree as ET
 
 import httpx
+from sqlalchemy import inspect
 
 from ..datetime_util import utc_now_naive
 from ..db import SessionLocal
@@ -196,7 +197,11 @@ async def update_exchange_rates_from_cbrf() -> dict[str, object]:
 
 def get_rates_map() -> dict[str, float]:
     with SessionLocal() as db:
-        rows = db.query(ExchangeRate).all()
+        rows = (
+            db.query(ExchangeRate).all()
+            if inspect(db.get_bind()).has_table(ExchangeRate.__tablename__)
+            else []
+        )
         rates = {r.currency_code: float(r.rate) for r in rows}
     for code, value in FALLBACK.items():
         rates.setdefault(code, value)
@@ -206,7 +211,11 @@ def get_rates_map() -> dict[str, float]:
 
 def get_rates_payload() -> dict[str, object]:
     with SessionLocal() as db:
-        rows = db.query(ExchangeRate).order_by(ExchangeRate.currency_code.asc()).all()
+        rows = (
+            db.query(ExchangeRate).order_by(ExchangeRate.currency_code.asc()).all()
+            if inspect(db.get_bind()).has_table(ExchangeRate.__tablename__)
+            else []
+        )
         items = [
             {
                 "currency_code": r.currency_code,

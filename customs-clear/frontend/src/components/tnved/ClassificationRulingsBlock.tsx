@@ -3,6 +3,7 @@ import { ExternalLink, Scale } from 'lucide-react';
 import { api } from '../../api/client';
 import { formatCode } from '../../api/tnvedCatalog';
 import { getUserFacingApiError } from '../../api/error';
+import { formatUnsafeExternalUrlEvidence, getSafeExternalUrl } from '../../utils/externalUrl';
 
 export type ClassificationRulingItem = {
   ruling_number: string;
@@ -30,6 +31,7 @@ type Props = {
 };
 
 function RulingCard({ item }: { item: ClassificationRulingItem }) {
+  const safeSourceUrl = getSafeExternalUrl(item.source_url);
   return (
     <article className="rounded-xl border border-slate-200 bg-white px-4 py-3">
       <div className="flex flex-wrap items-start justify-between gap-2">
@@ -52,9 +54,9 @@ function RulingCard({ item }: { item: ClassificationRulingItem }) {
       {item.rationale ? (
         <p className="mt-2 text-xs leading-relaxed text-gray-700">{item.rationale}</p>
       ) : null}
-      {item.source_url ? (
+      {safeSourceUrl ? (
         <a
-          href={item.source_url}
+          href={safeSourceUrl}
           target="_blank"
           rel="noopener noreferrer"
           className="mt-2 inline-flex items-center gap-1 text-[11px] text-blue-700 hover:underline"
@@ -62,6 +64,14 @@ function RulingCard({ item }: { item: ClassificationRulingItem }) {
           Источник
           <ExternalLink className="h-3 w-3" aria-hidden />
         </a>
+      ) : item.source_url ? (
+        <span
+          className="mt-2 flex max-w-full flex-wrap text-[11px] text-gray-500"
+          data-testid="unsafe-ruling-source-url-evidence"
+        >
+          Источник (ссылка недоступна):{' '}
+          <span className="break-all font-mono">{formatUnsafeExternalUrlEvidence(item.source_url)}</span>
+        </span>
       ) : null}
     </article>
   );

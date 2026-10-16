@@ -17,7 +17,11 @@ from app.models import Base  # noqa: E402  — needs sys.path patch above
 config = context.config
 
 if config.config_file_name is not None:
-    fileConfig(config.config_file_name)
+    # ``init_db()`` runs Alembic in-process during application startup.  The
+    # logging.config default disables every logger that is not declared in
+    # alembic.ini, which used to silence NTM fail-closed diagnostics for the
+    # rest of the process after the schema check completed.
+    fileConfig(config.config_file_name, disable_existing_loggers=False)
 
 target_metadata = Base.metadata
 

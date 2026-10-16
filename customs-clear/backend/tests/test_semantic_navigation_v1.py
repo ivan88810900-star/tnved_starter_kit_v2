@@ -4,10 +4,15 @@ from __future__ import annotations
 
 import unittest
 
+import pytest
+
+
+pytest_plugins = ("tests.classification_inventory_fixture",)
+pytestmark = pytest.mark.usefixtures("classification_inventory_session_local")
+
 try:
-    from app.db import SessionLocal
+    from app import db as app_db
     from app.models.tnved import Commodity
-    from app.services.normative_store import init_db
     from app.services.semantic_navigation import (
         GROUP_NODE_TYPES,
         SemanticNavigationBuilder,
@@ -46,12 +51,11 @@ def _db_codes(db, heading4: str) -> set[str]:
 class SemanticNavigationV1Tests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
-        init_db()
         cls.builder = SemanticNavigationBuilder()
         cls.validator = SemanticNavigationValidator()
 
     def test_0302_builds_without_error(self) -> None:
-        with SessionLocal() as db:
+        with app_db.SessionLocal() as db:
             tree = self.builder.build_heading(db, "0302")
         self.assertEqual(tree.heading, "0302")
         self.assertEqual(tree.root.node_type, SemanticNodeType.HEADING)
@@ -59,7 +63,7 @@ class SemanticNavigationV1Tests(unittest.TestCase):
         self.assertTrue(tree.root.children, "heading 0302 должен иметь потомков")
 
     def test_0302_real_codes_preserved(self) -> None:
-        with SessionLocal() as db:
+        with app_db.SessionLocal() as db:
             tree = self.builder.build_heading(db, "0302")
             db_codes = _db_codes(db, "0302")
         present = set(tree.real_codes_in_tree())
@@ -70,7 +74,7 @@ class SemanticNavigationV1Tests(unittest.TestCase):
         self.assertTrue(present.issubset(db_codes), "в дереве есть код вне БД")
 
     def test_no_fake_codes(self) -> None:
-        with SessionLocal() as db:
+        with app_db.SessionLocal() as db:
             tree = self.builder.build_heading(db, "0302")
             db_codes = _db_codes(db, "0302")
         for node in tree.all_nodes():
@@ -78,7 +82,7 @@ class SemanticNavigationV1Tests(unittest.TestCase):
                 self.assertIn(node.code, db_codes, f"fake-код в дереве: {node.code}")
 
     def test_group_nodes_have_no_commodity_code(self) -> None:
-        with SessionLocal() as db:
+        with app_db.SessionLocal() as db:
             tree = self.builder.build_heading(db, "0302")
         groups = [n for n in tree.all_nodes() if n.node_type in GROUP_NODE_TYPES]
         self.assertTrue(groups, "для 0302 ожидаются semantic-группы")
@@ -86,7 +90,7 @@ class SemanticNavigationV1Tests(unittest.TestCase):
             self.assertIsNone(g.code, f"group-узел не должен иметь код: {g.title}")
 
     def test_validator_no_critical_issues(self) -> None:
-        with SessionLocal() as db:
+        with app_db.SessionLocal() as db:
             tree = self.builder.build_heading(db, "0302")
             db_codes = _db_codes(db, "0302")
             result = self.validator.validate(tree, db_codes=frozenset(db_codes))
@@ -96,7 +100,7 @@ class SemanticNavigationV1Tests(unittest.TestCase):
         )
 
     def _group_titles(self, heading: str) -> set[str]:
-        with SessionLocal() as db:
+        with app_db.SessionLocal() as db:
             tree = self.builder.build_heading(db, heading)
         return {
             n.title.lower()
@@ -110,7 +114,7 @@ class SemanticNavigationV1Tests(unittest.TestCase):
             self.assertIn(expected, titles, f"0302 должен содержать группу {expected!r}")
 
     def test_0303_tunets_not_a_single_75_code_group(self) -> None:
-        with SessionLocal() as db:
+        with app_db.SessionLocal() as db:
             tree = self.builder.build_heading(db, "0303")
         tunets = [
             n
@@ -130,7 +134,7 @@ class SemanticNavigationV1Tests(unittest.TestCase):
         )
 
     def test_8517_rejects_technical_param_headers(self) -> None:
-        with SessionLocal() as db:
+        with app_db.SessionLocal() as db:
             tree = self.builder.build_heading(db, "8517")
         titles = {
             n.title.strip().lower()
@@ -145,7 +149,7 @@ class SemanticNavigationV1Tests(unittest.TestCase):
 
     def test_real_codes_reachable_and_no_fakes_all_headings(self) -> None:
         for heading in ("0302", "0303", "5208", "8517"):
-            with SessionLocal() as db:
+            with app_db.SessionLocal() as db:
                 tree = self.builder.build_heading(db, heading)
                 db_codes = _db_codes(db, heading)
                 result = self.validator.validate(tree, db_codes=frozenset(db_codes))

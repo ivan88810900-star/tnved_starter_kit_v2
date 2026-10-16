@@ -38,6 +38,7 @@ class VatProvenance(BaseModel):
 
 class VatIngestionResponse(BaseModel):
     status: VatIngestionStatus
+    reason: str | None = None
     mode: Literal["dry_run", "apply"] = "dry_run"
     dry_run: bool = True
     db_mutated: bool = False

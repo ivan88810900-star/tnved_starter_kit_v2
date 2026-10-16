@@ -6,6 +6,21 @@
   "effective_from": "2026-01-01",
   "description": "Компенсационные пошлины ЕЭК",
   "data_source": "Решения Коллегии/Совета ЕЭК (официальные документы)",
+  "verification_status": "rejected_source_mismatch",
+  "verification_checked_at": "2026-10-15",
+  "verification_note": "Карантин: обе строки не подтверждены указанными реквизитами в официальном правовом портале ЕАЭС. Пакет нельзя применять; до синхронизации подтверждённого перечня сохраняется manual review.",
+  "verification_evidence": [
+    {
+      "claimed_act": "Решение Совета ЕЭК № 95 от 10.07.2018",
+      "official_url": "https://docs.eaeunion.org/documents/search/",
+      "finding": "По точным фильтрам номера и даты официальный портал не возвращает такой акт."
+    },
+    {
+      "claimed_act": "Решение Коллегии ЕЭК № 164 от 17.12.2019",
+      "official_url": "https://docs.eaeunion.org/documents/search/",
+      "finding": "По точным фильтрам номера и даты официальный портал не возвращает такой акт."
+    }
+  ],
   "measures": [
     {
       "hs_code": "4810",
@@ -18,7 +33,8 @@
       "currency_code": "USD",
       "effective_to": "",
       "source_revision": "countervailing:2026-06-18",
-      "source_url": "https://eec.eaeunion.org/comission/department/catr/trade-protect/"
+      "source_url": "https://eec.eaeunion.org/comission/department/catr/trade-protect/",
+      "needs_verification": true
     },
     {
       "hs_code": "3904",
@@ -31,7 +47,8 @@
       "currency_code": "USD",
       "effective_to": "",
       "source_revision": "countervailing:2026-06-18",
-      "source_url": "https://eec.eaeunion.org/comission/department/catr/trade-protect/"
+      "source_url": "https://eec.eaeunion.org/comission/department/catr/trade-protect/",
+      "needs_verification": true
     }
   ]
 }

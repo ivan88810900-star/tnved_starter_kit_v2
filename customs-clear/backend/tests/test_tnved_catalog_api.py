@@ -2,21 +2,157 @@
 
 from __future__ import annotations
 
+import hashlib
+import os
+import subprocess
+import sys
 import unittest
+from collections.abc import Iterator
+from pathlib import Path
+
+import pytest
 
 try:
     from fastapi.testclient import TestClient
+    from sqlalchemy import create_engine
+    from sqlalchemy.engine import make_url
+    from sqlalchemy.orm import sessionmaker
 
+    from app import db as app_db, main as app_main
+    from app.api import tnved_catalog
     from app.db import SessionLocal
     from app.api.tnved_catalog import _format_duty, clear_preview_cache
     from app.main import app
     from app.models.core import ClassificationDecision, HsRate, PreliminaryDecision
     from app.models.tnved import Chapter, Commodity, Section
+    from app.services import normative_store, payment_engine, rate_display
     from app.services.normative_store import init_db
 
     _OK = True
 except ImportError:
     _OK = False
+
+
+BACKEND_ROOT = Path(__file__).resolve().parents[1]
+BOOTSTRAP_SCRIPT = (
+    BACKEND_ROOT / "scripts" / "bootstrap_disposable_classification_inventory.py"
+)
+DEFAULT_DATABASE = BACKEND_ROOT / "customs.db"
+PINNED_CATALOGUE = BACKEND_ROOT / "customs.db.backup_before_pdf_import"
+DEFAULT_PREVIEW_REVISION = BACKEND_ROOT / "data" / "tnved_preview_cache_revision.txt"
+
+
+def _sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as file_handle:
+        for chunk in iter(lambda: file_handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def _protected_paths() -> set[Path]:
+    paths = {
+        DEFAULT_DATABASE.resolve(),
+        PINNED_CATALOGUE.resolve(),
+        DEFAULT_PREVIEW_REVISION.resolve(),
+    }
+    configured_url = make_url(app_db.DATABASE_URL)
+    if configured_url.drivername.startswith("sqlite") and configured_url.database:
+        paths.add(Path(configured_url.database).resolve())
+
+    source_database = os.environ.get("TNVED_SOURCE_DB", "").strip()
+    if source_database:
+        if source_database.startswith("sqlite:"):
+            source_url = make_url(source_database)
+            if source_url.database:
+                paths.add(Path(source_url.database).resolve())
+        elif "://" not in source_database:
+            paths.add(Path(source_database).resolve())
+
+    configured_revision = os.environ.get(
+        "TNVED_PREVIEW_CACHE_REVISION_FILE", ""
+    ).strip()
+    if configured_revision:
+        paths.add(Path(configured_revision).expanduser().resolve())
+    return paths
+
+
+def _protected_fingerprints() -> dict[Path, str | None]:
+    paths = {
+        candidate
+        for path in _protected_paths()
+        for candidate in (path, Path(f"{path}-wal"), Path(f"{path}-shm"))
+    }
+    return {
+        path: _sha256(path) if path.is_file() else None
+        for path in paths
+    }
+
+
+@pytest.fixture(scope="module", autouse=True)
+def _disposable_tnved_catalog_database(
+    tmp_path_factory: pytest.TempPathFactory,
+) -> Iterator[None]:
+    """Run the real catalogue endpoints against a disposable bootstrapped DB."""
+    if not _OK:
+        yield
+        return
+
+    temp_dir = tmp_path_factory.mktemp("tnved-catalog-api")
+    database = temp_dir / "tnved-catalog-api.db"
+    preview_revision = temp_dir / "tnved-preview-cache-revision.txt"
+    protected_hashes = _protected_fingerprints()
+    env = os.environ.copy()
+    env.pop("DATABASE_URL", None)
+    env.pop("TNVED_SOURCE_DB", None)
+    env.pop("TNVED_PREVIEW_CACHE_REVISION_FILE", None)
+    result = subprocess.run(
+        [sys.executable, str(BOOTSTRAP_SCRIPT), str(database)],
+        cwd=BACKEND_ROOT,
+        env=env,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert _protected_fingerprints() == protected_hashes
+
+    engine = create_engine(
+        f"sqlite:///{database}",
+        connect_args={"check_same_thread": False},
+    )
+    factory = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    patches = pytest.MonkeyPatch()
+    patches.setenv("TNVED_PREVIEW_CACHE_REVISION_FILE", str(preview_revision))
+    patches.setattr(sys.modules[__name__], "init_db", lambda: None)
+    patches.setattr(sys.modules[__name__], "SessionLocal", factory)
+    patches.setattr(app_main, "init_db", lambda: None)
+    patches.setattr(app_main, "engine", engine)
+    patches.setattr(app_db, "engine", engine)
+    patches.setattr(app_db, "SessionLocal", factory)
+    patches.setattr(normative_store, "engine", engine)
+    patches.setattr(normative_store, "SessionLocal", factory)
+    patches.setattr(tnved_catalog, "SessionLocal", factory)
+    patches.setattr(payment_engine, "SessionLocal", factory)
+    patches.setattr(rate_display, "SessionLocal", factory)
+
+    try:
+        yield
+    finally:
+        try:
+            tnved_catalog.clear_preview_cache()
+        finally:
+            patches.undo()
+            engine.dispose()
+            for path in (
+                database,
+                Path(f"{database}-shm"),
+                Path(f"{database}-wal"),
+                preview_revision,
+            ):
+                if path.exists():
+                    path.unlink()
+            assert _protected_fingerprints() == protected_hashes
 
 
 @unittest.skipUnless(_OK, "tnved catalog tests need FastAPI app")
@@ -40,24 +176,51 @@ class TnvedCatalogApiTests(unittest.TestCase):
             )
             db.add(ch)
             db.flush()
-            db.add(
+            db.add_all([
                 Commodity(
                     chapter_id=ch.id,
                     code="9901210000",
                     description="Тестовый товар 10 знаков",
                     unit="кг",
                     import_duty="10 %",
-                )
-            )
-            db.add(
+                ),
+                Commodity(
+                    chapter_id=ch.id,
+                    code="9901610000",
+                    description="Второй прямой потомок позиции",
+                    unit="шт",
+                    import_duty="Пошлина: 5% | НДС: 20%",
+                ),
+                Commodity(
+                    chapter_id=ch.id,
+                    code="9902110000",
+                    description="Групповой подзаголовок",
+                ),
+                Commodity(
+                    chapter_id=ch.id,
+                    code="9902111000",
+                    description="Первый потомок группового подзаголовка",
+                ),
+                Commodity(
+                    chapter_id=ch.id,
+                    code="9902119000",
+                    description="Второй потомок группового подзаголовка",
+                ),
                 Commodity(
                     chapter_id=ch.id,
                     code="9901",
                     description="Позиция на 4 знака",
                     unit="—",
                     import_duty="5 %",
-                )
-            )
+                ),
+            ])
+            db.add(HsRate(
+                hs_code="9901610000",
+                hs_prefix="9901610000",
+                duty_rate="5",
+                vat_import_rate=22.0,
+                source_revision="test-tree-leaf",
+            ))
             db.add(
                 ClassificationDecision(
                     hs_code="9901210000",
@@ -94,6 +257,7 @@ class TnvedCatalogApiTests(unittest.TestCase):
             db.query(PreliminaryDecision).filter(
                 PreliminaryDecision.description == "Предварительное решение IFCG для теста"
             ).delete()
+            db.query(HsRate).filter(HsRate.source_revision == "test-tree-leaf").delete()
             db.query(Chapter).filter(Chapter.section_id == sid).delete()
             db.query(Section).filter(Section.id == sid).delete()
             db.commit()
@@ -176,34 +340,34 @@ class TnvedCatalogApiTests(unittest.TestCase):
         self.assertIn("15", _format_duty("15, но не менее 0,07 евро за 1 л 563С)"))
         self.assertNotIn("563С)", _format_duty("15, но не менее 0,07 евро за 1 л 563С)"))
 
-    def test_children_direct_8517(self):
-        r = self.client.get("/api/v1/tnved/children/8517?depth=direct")
+    def test_children_direct_heading(self):
+        r = self.client.get("/api/v1/tnved/children/9901?depth=direct")
         self.assertEqual(r.status_code, 200)
         body = r.json()
         self.assertEqual(body.get("depth"), "direct")
         items = body.get("items") or []
         codes = [x.get("code") for x in items]
-        self.assertIn("8517110000", codes)
-        self.assertIn("8517610000", codes)
-        leaf = next(x for x in items if x.get("code") == "8517110000")
+        self.assertIn("9901210000", codes)
+        self.assertIn("9901610000", codes)
+        leaf = next(x for x in items if x.get("code") == "9901610000")
         self.assertTrue(leaf.get("is_leaf"))
         self.assertNotIn("Пошлина:", (leaf.get("duty_rate") or ""))
 
     def test_children_codeless_has_children(self):
-        r = self.client.get("/api/v1/tnved/children/2701110000?depth=direct")
+        r = self.client.get("/api/v1/tnved/children/9902110000?depth=direct")
         self.assertEqual(r.status_code, 200)
         items = r.json().get("items") or []
         self.assertEqual(len(items), 2)
         codes = {x.get("code") for x in items}
-        self.assertIn("2701111000", codes)
-        self.assertIn("2701119000", codes)
+        self.assertIn("9902111000", codes)
+        self.assertIn("9902119000", codes)
 
     def test_format_duty_strips_garbage_and_parses_composite(self):
         self.assertEqual(_format_duty("Пошлина: Пошлина: | НДС: НДС:"), "")
         self.assertEqual(_format_duty("Пошлина: 5% | НДС: 20%"), "5%")
 
-    def test_children_group_01_returns_headings(self):
-        r = self.client.get("/api/tnved/children/01?depth=direct")
+    def test_children_group_returns_headings(self):
+        r = self.client.get("/api/tnved/children/99?depth=direct")
         self.assertEqual(r.status_code, 200)
         items = r.json().get("items") or []
         self.assertGreaterEqual(len(items), 1)
@@ -211,7 +375,7 @@ class TnvedCatalogApiTests(unittest.TestCase):
         self.assertTrue(all(not item.get("is_leaf") for item in items))
 
     def test_children_leaf_returns_empty(self):
-        r = self.client.get("/api/tnved/children/0101210000?depth=direct")
+        r = self.client.get("/api/tnved/children/9901210000?depth=direct")
         self.assertEqual(r.status_code, 200)
         self.assertEqual(r.json().get("items") or [], [])
 
@@ -225,13 +389,73 @@ class TnvedCatalogApiTests(unittest.TestCase):
         self.assertNotIn("СГР", badges)
 
     def test_commodity_chapter_84_duty_from_hs_rates(self):
-        r = self.client.get("/api/v1/tnved/8401300000")
-        self.assertEqual(r.status_code, 200)
-        duty = r.json().get("import_duty") or ""
-        self.assertIn("15", duty)
+        # The test owns its tariff evidence instead of depending on a global
+        # developer database populated by an unrelated full-catalog import.
+        with SessionLocal() as db:
+            row = HsRate(
+                hs_code="8401300000",
+                hs_prefix="8401300000",
+                duty_rate="15",
+                vat_import_rate=22.0,
+                source_revision="test-exact-rate",
+            )
+            db.add(row)
+            db.commit()
+            rate_id = row.id
+        try:
+            r = self.client.get("/api/v1/tnved/8401300000")
+            self.assertEqual(r.status_code, 200)
+            duty = r.json().get("import_duty") or ""
+            self.assertIn("15", duty)
+        finally:
+            with SessionLocal() as db:
+                db.query(HsRate).filter(HsRate.id == rate_id).delete()
+                db.commit()
+
+    def test_detail_rate_only_requires_exact_rate(self):
+        with SessionLocal() as db:
+            row = HsRate(
+                hs_code="9988123456",
+                hs_prefix="9988123456",
+                duty_rate="7.5",
+                vat_import_rate=22.0,
+                source_revision="test-exact-rate-only",
+            )
+            db.add(row)
+            db.commit()
+            rate_id = row.id
+        try:
+            r = self.client.get("/api/v1/tnved/9988123456")
+            self.assertEqual(r.status_code, 200)
+            self.assertEqual(r.json().get("code"), "9988123456")
+            self.assertIn("7.5", (r.json().get("import_duty") or "").replace(",", "."))
+        finally:
+            with SessionLocal() as db:
+                db.query(HsRate).filter(HsRate.id == rate_id).delete()
+                db.commit()
+
+    def test_detail_rate_only_rejects_prefix_rate(self):
+        with SessionLocal() as db:
+            row = HsRate(
+                hs_code="9988000000",
+                hs_prefix="9988",
+                duty_rate="9",
+                vat_import_rate=22.0,
+                source_revision="test-prefix-rate-only",
+            )
+            db.add(row)
+            db.commit()
+            rate_id = row.id
+        try:
+            r = self.client.get("/api/v1/tnved/9988123456")
+            self.assertEqual(r.status_code, 404)
+        finally:
+            with SessionLocal() as db:
+                db.query(HsRate).filter(HsRate.id == rate_id).delete()
+                db.commit()
 
     def test_children_compat_route(self):
-        r = self.client.get("/api/tnved/children/8517?depth=direct")
+        r = self.client.get("/api/tnved/children/9901?depth=direct")
         self.assertEqual(r.status_code, 200)
         self.assertGreaterEqual(len(r.json().get("items") or []), 1)
 

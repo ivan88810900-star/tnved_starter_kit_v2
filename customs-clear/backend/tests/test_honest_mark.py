@@ -1,18 +1,98 @@
 """Tests for Honest Mark marking requirements."""
 from __future__ import annotations
 
-import pytest
-from sqlalchemy import text
+import hashlib
+import os
+import subprocess
+import sys
+from collections.abc import Iterator
+from pathlib import Path
 
+import pytest
+from sqlalchemy import create_engine, text
+from sqlalchemy.orm import sessionmaker
+
+from app import db as app_db
 from app.db import SessionLocal
+from scripts import seed_honest_mark_requirements
+
+
+BACKEND_ROOT = Path(__file__).resolve().parents[1]
+BOOTSTRAP_SCRIPT = BACKEND_ROOT / "scripts" / "bootstrap_disposable_classification_inventory.py"
+DEFAULT_DATABASE = BACKEND_ROOT / "customs.db"
+PINNED_CATALOGUE = BACKEND_ROOT / "customs.db.backup_before_pdf_import"
+
+
+def _sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as file_handle:
+        for chunk in iter(lambda: file_handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def _protected_fingerprints() -> dict[Path, str | None]:
+    return {
+        path: _sha256(path) if path.is_file() else None
+        for path in (DEFAULT_DATABASE, PINNED_CATALOGUE)
+    }
+
+
+@pytest.fixture(scope="module")
+def honest_mark_session_factory(
+    tmp_path_factory: pytest.TempPathFactory,
+) -> Iterator[sessionmaker]:
+    """Build and seed an isolated catalogue without using the configured DB."""
+    temp_dir = tmp_path_factory.mktemp("honest-mark")
+    database = temp_dir / "honest-mark.db"
+    protected_hashes = _protected_fingerprints()
+    env = os.environ.copy()
+    env.pop("DATABASE_URL", None)
+    env.pop("TNVED_SOURCE_DB", None)
+    result = subprocess.run(
+        [sys.executable, str(BOOTSTRAP_SCRIPT), str(database)],
+        cwd=BACKEND_ROOT,
+        env=env,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert _protected_fingerprints() == protected_hashes
+
+    engine = create_engine(
+        f"sqlite:///{database}",
+        connect_args={"check_same_thread": False},
+    )
+    factory = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    patches = pytest.MonkeyPatch()
+    patches.setattr(sys.modules[__name__], "SessionLocal", factory)
+    patches.setattr(app_db, "engine", engine)
+    patches.setattr(app_db, "SessionLocal", factory)
+    patches.setattr(seed_honest_mark_requirements, "SessionLocal", factory)
+    patches.setattr(seed_honest_mark_requirements, "DRY_RUN", False)
+
+    try:
+        seed_honest_mark_requirements.run()
+        yield factory
+    finally:
+        patches.undo()
+        engine.dispose()
+        for suffix in ("", "-shm", "-wal"):
+            candidate = Path(f"{database}{suffix}")
+            if candidate.exists():
+                candidate.unlink()
+        assert _protected_fingerprints() == protected_hashes
 
 
 class TestHonestMarkRequirements:
     @pytest.fixture(autouse=True)
-    def _db(self):
-        self.db = SessionLocal()
-        yield
-        self.db.close()
+    def _db(self, honest_mark_session_factory: sessionmaker):
+        self.db = honest_mark_session_factory()
+        try:
+            yield
+        finally:
+            self.db.close()
 
     def _marking_count(self, prefix: str) -> int:
         return self.db.execute(text(

@@ -11,8 +11,19 @@ from urllib.parse import urlparse
 _EEC_ETT_REVISION_RE = re.compile(r"^(?:ett|eec-ett|eec:ett):\d{4}-\d{2}-\d{2}$")
 # VAT contour: vat:YYYY-MM-DD | eec-vat:YYYY-MM-DD | eec:vat:YYYY-MM-DD (+ shared ETT forms).
 _EEC_VAT_REVISION_RE = re.compile(r"^(?:vat|eec-vat|eec:vat):\d{4}-\d{2}-\d{2}$")
+# This exact snapshot applies the 22% standard rate from 2025-01-01, although
+# Federal Law No. 425-FZ changed the standard rate from 20% to 22% only from
+# 2026-01-01. Keep the rejection revision-bounded so a corrected VAT snapshot
+# with explicit legal validity windows can be admitted later.
+_REJECTED_VAT_REVISIONS = frozenset({"vat:2026-06-18"})
 # Excise contour: excise:YYYY-MM-DD | eec-excise:YYYY-MM-DD | eec:excise:YYYY-MM-DD.
 _EEC_EXCISE_REVISION_RE = re.compile(r"^(?:excise|eec-excise|eec:excise):\d{4}-\d{2}-\d{2}$")
+# This exact snapshot contains the 2025 excise schedule (for example, 643 RUB
+# per litre of anhydrous ethyl alcohol) but has no end date and was presented as
+# current in June 2026.  Federal Law No. 425-FZ amended Article 193 from
+# 2026-01-01 (the corresponding alcohol rate is 824 RUB).  Keep the rejection
+# bounded so a subsequently verified 2026 revision can be ingested.
+_REJECTED_EXCISE_REVISIONS = frozenset({"excise:2026-06-18"})
 # Anti-dumping contour: anti-dumping:YYYY-MM-DD | eec-anti-dumping:YYYY-MM-DD | eec:anti-dumping:YYYY-MM-DD
 _EEC_ANTI_DUMPING_REVISION_RE = re.compile(
     r"^(?:anti-dumping|antidumping|eec-anti-dumping|eec:anti-dumping):\d{4}-\d{2}-\d{2}$"
@@ -21,10 +32,18 @@ _EEC_ANTI_DUMPING_REVISION_RE = re.compile(
 _EEC_SPECIAL_SAFEGUARD_REVISION_RE = re.compile(
     r"^(?:special-safeguard|special_safeguard|eec-special-safeguard|eec:special-safeguard):\d{4}-\d{2}-\d{2}$"
 )
+# This exact revision was built from three rows whose cited acts do not match
+# the EAEU legal portal.  Keep the revocation bounded: later verified bundle
+# revisions remain eligible without weakening the domain/version checks.
+_REJECTED_SPECIAL_SAFEGUARD_REVISIONS = frozenset({"special-safeguard:2026-06-18"})
 # Countervailing contour: countervailing:YYYY-MM-DD | eec-countervailing:YYYY-MM-DD | eec:countervailing:YYYY-MM-DD
 _EEC_COUNTERVAILING_REVISION_RE = re.compile(
     r"^(?:countervailing|eec-countervailing|eec:countervailing):\d{4}-\d{2}-\d{2}$"
 )
+# This exact revision cites two acts that the EAEU legal portal does not
+# return for the claimed numbers and dates.  Keep the revocation bounded so a
+# later independently verified bundle can become eligible.
+_REJECTED_COUNTERVAILING_REVISIONS = frozenset({"countervailing:2026-06-18"})
 
 _UNSAFE_OFFICIAL_URL_EXACT = frozenset({"", "manual", "local-copy"})
 _UNSAFE_OFFICIAL_URL_SUBSTRINGS = (
@@ -58,7 +77,12 @@ def is_official_vat_ingestion_revision(revision: str | None) -> bool:
     rev = (revision or "").strip().lower()
     if not rev:
         return False
-    return bool(_EEC_VAT_REVISION_RE.match(rev))
+    return bool(_EEC_VAT_REVISION_RE.match(rev)) and rev not in _REJECTED_VAT_REVISIONS
+
+
+def is_rejected_vat_revision(revision: str | None) -> bool:
+    """True only for an explicitly revoked VAT snapshot."""
+    return (revision or "").strip().lower() in _REJECTED_VAT_REVISIONS
 
 
 def is_official_vat_revision(revision: str | None) -> bool:
@@ -71,7 +95,7 @@ def is_official_vat_revision(revision: str | None) -> bool:
     if not rev:
         return False
     if _EEC_VAT_REVISION_RE.match(rev):
-        return True
+        return rev not in _REJECTED_VAT_REVISIONS
     return bool(_EEC_ETT_REVISION_RE.match(rev))
 
 
@@ -88,7 +112,12 @@ def is_official_excise_ingestion_revision(revision: str | None) -> bool:
     rev = (revision or "").strip().lower()
     if not rev:
         return False
-    return bool(_EEC_EXCISE_REVISION_RE.match(rev))
+    return bool(_EEC_EXCISE_REVISION_RE.match(rev)) and rev not in _REJECTED_EXCISE_REVISIONS
+
+
+def is_rejected_excise_revision(revision: str | None) -> bool:
+    """True only for an explicitly revoked excise snapshot."""
+    return (revision or "").strip().lower() in _REJECTED_EXCISE_REVISIONS
 
 
 def is_official_excise_revision(revision: str | None) -> bool:
@@ -259,8 +288,10 @@ def is_unsafe_official_source_url(url: str | None) -> bool:
     return any(token in u for token in _UNSAFE_OFFICIAL_URL_SUBSTRINGS)
 
 
-# Официальный домен торговых мер ЕАЭС (anti-dumping контур).
-_EEC_OFFICIAL_NETLOC = "eec.eaeunion.org"
+# Официальные домены ЕАЭС для торговых мер и опубликованных актов.
+_EEC_OFFICIAL_NETLOCS = frozenset(
+    {"eec.eaeunion.org", "docs.eaeunion.org", "remedies.eaeunion.org"}
+)
 
 
 def is_safe_official_anti_dumping_source_url(
@@ -268,8 +299,9 @@ def is_safe_official_anti_dumping_source_url(
 ) -> bool:
     """Строгий allowlist для official anti-dumping URL.
 
-    Принимает только https:// на eec.eaeunion.org (и поддоменах) и/или домене из
-    registry official_url. Отклоняет non-HTTPS, произвольные внешние домены и
+    Принимает только https:// на известных официальных доменах ЕАЭС (и
+    поддоменах) и/или домене из registry official_url. Отклоняет non-HTTPS,
+    произвольные внешние домены и
     placeholders (example.com / localhost / 127.0.0.1 / seed:// / file:// / manual / local-copy / empty).
     """
     raw = (url or "").strip()
@@ -287,7 +319,7 @@ def is_safe_official_anti_dumping_source_url(
     netloc = _url_netloc(raw)
     if not netloc:
         return False
-    allowed_netlocs = {_EEC_OFFICIAL_NETLOC}
+    allowed_netlocs = set(_EEC_OFFICIAL_NETLOCS)
     if registry_official_url:
         reg_netloc = _url_netloc(registry_official_url)
         if reg_netloc:
@@ -362,7 +394,14 @@ def is_official_special_safeguard_ingestion_revision(revision: str | None) -> bo
     rev = (revision or "").strip().lower()
     if not rev:
         return False
+    if rev in _REJECTED_SPECIAL_SAFEGUARD_REVISIONS:
+        return False
     return bool(_EEC_SPECIAL_SAFEGUARD_REVISION_RE.match(rev))
+
+
+def is_rejected_special_safeguard_revision(revision: str | None) -> bool:
+    """Return True only for explicitly revoked special-safeguard snapshots."""
+    return (revision or "").strip().lower() in _REJECTED_SPECIAL_SAFEGUARD_REVISIONS
 
 
 def is_official_special_safeguard_revision(revision: str | None) -> bool:
@@ -430,7 +469,14 @@ def is_official_countervailing_ingestion_revision(revision: str | None) -> bool:
     rev = (revision or "").strip().lower()
     if not rev:
         return False
+    if rev in _REJECTED_COUNTERVAILING_REVISIONS:
+        return False
     return bool(_EEC_COUNTERVAILING_REVISION_RE.match(rev))
+
+
+def is_rejected_countervailing_revision(revision: str | None) -> bool:
+    """Return True only for explicitly revoked countervailing snapshots."""
+    return (revision or "").strip().lower() in _REJECTED_COUNTERVAILING_REVISIONS
 
 
 def is_official_countervailing_revision(revision: str | None) -> bool:

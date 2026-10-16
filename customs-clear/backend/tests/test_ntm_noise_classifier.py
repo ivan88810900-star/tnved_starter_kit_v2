@@ -1,8 +1,13 @@
 """Tests for ntm_noise_classifier — principle-based noise detection."""
 from __future__ import annotations
 
+import os
+import subprocess
+import sys
+
 import pytest
 
+from app.services.non_tariff_fallbacks import TR_TS_FALLBACK_PREFIXES
 from app.services.ntm_noise_classifier import is_measure_noise
 
 
@@ -91,3 +96,42 @@ def test_control_code_noise(hs_code: str, desc: str, keep_types: set[str], noise
         assert not is_measure_noise(hs_code, mt), f"{hs_code} ({desc}): {mt} should be kept, got noise"
     for mt in noise_types:
         assert is_measure_noise(hs_code, mt), f"{hs_code} ({desc}): {mt} should be noise, got kept"
+
+
+@pytest.mark.parametrize("hs_prefix", sorted(TR_TS_FALLBACK_PREFIXES))
+def test_tr_ts_noise_classifier_keeps_product_fallback_scopes(hs_prefix: str) -> None:
+    """A fallback product rule must not be discarded as crawler noise."""
+    hs_code = hs_prefix.ljust(10, "0")
+    assert not is_measure_noise(hs_code, "tr_ts")
+
+
+def test_product_fallback_does_not_expand_marking_scope() -> None:
+    assert is_measure_noise("8517120000", "marking")
+
+
+def test_noise_classifier_import_is_database_free() -> None:
+    script = """
+import importlib.abc
+import sys
+
+class BlockDatabaseModules(importlib.abc.MetaPathFinder):
+    def find_spec(self, fullname, path=None, target=None):
+        if fullname == "app.db" or fullname.startswith("app.models"):
+            raise ModuleNotFoundError(fullname)
+        return None
+
+sys.meta_path.insert(0, BlockDatabaseModules())
+from app.services.ntm_noise_classifier import is_measure_noise
+assert not is_measure_noise("8517120000", "tr_ts")
+assert "app.db" not in sys.modules
+"""
+    env = dict(os.environ)
+    env["PYTHONPATH"] = os.getcwd()
+    completed = subprocess.run(
+        [sys.executable, "-c", script],
+        env=env,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    assert completed.returncode == 0, completed.stderr

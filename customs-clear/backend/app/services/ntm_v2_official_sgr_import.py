@@ -16,6 +16,7 @@ from ..datetime_util import utc_now_naive
 from ..models.ntm_v2 import NtmApplicabilityRuleV2, NtmMeasureV2
 from .hs_matching import normalize_hs_code
 from .ntm_description_matching import is_child_audience_marker, is_child_product_description
+from .ntm_v2_official_sgr_dataset_validation import VALID_HS_SCOPE_MODES
 from .ntm_v2_legacy_rules_import import ADVISORY_APPLICABILITIES, advisory_reason_for_applicability
 
 OFFICIAL_SGR_SOURCE_KIND = "official_sgr_registry"
@@ -209,7 +210,20 @@ def import_official_sgr_rules_to_ntm_v2(
 
             hs_scope = normalize_hs_code(str(row.get("hs_scope") or ""))
             hs_mode = str(row.get("hs_scope_mode") or "prefix").strip() or "prefix"
+            if hs_mode not in VALID_HS_SCOPE_MODES:
+                rules_invalid += 1
+                continue
+            has_positive_desc_gate = bool(
+                _normalize_desc_markers(row.get("description_contains_any"))
+                or _normalize_desc_markers(row.get("description_requires_any"))
+            )
             desc_json = _desc_match_json(row)
+            if hs_mode == "description_only" and hs_scope:
+                rules_invalid += 1
+                continue
+            if not hs_scope and not has_positive_desc_gate:
+                rules_invalid += 1
+                continue
             rk = _rule_import_key(rule_id)
             existing = session.scalar(
                 select(NtmApplicabilityRuleV2).where(NtmApplicabilityRuleV2.rule_import_key == rk)
@@ -287,9 +301,12 @@ def official_sgr_seed_rule_matches_position(
     contains = row.get("description_contains_any")
     requires = row.get("description_requires_any")
     excludes = row.get("exclude_if_contains_any")
-    has_desc_gate = bool(_normalize_desc_markers(contains) or _normalize_desc_markers(requires) or _normalize_desc_markers(excludes))
+    positive_desc_gate = bool(_normalize_desc_markers(contains) or _normalize_desc_markers(requires))
+    has_desc_gate = bool(positive_desc_gate or _normalize_desc_markers(excludes))
 
     if hs_mode == "description_only":
+        if hs_scope or not positive_desc_gate:
+            return False
         return official_sgr_description_matches(
             description,
             description_contains_any=contains if isinstance(contains, list) else None,
@@ -354,39 +371,21 @@ def official_sgr_rule_matches_position(
     as_of: date | None = None,
 ) -> bool:
     """Runtime-матчинг official SGR rule (без записи в broker)."""
-    from .ntm_engine_v2 import _rule_and_measure_active, _rule_hs_matches
+    from .ntm_engine_v2 import _rule_matches_runtime
 
     ref = as_of or date.today()
     if rule.source_kind != OFFICIAL_SGR_SOURCE_KIND:
         return False
-    if not _rule_and_measure_active(rule, ref):
-        return False
     norm = normalize_hs_code(hs_code)
     if not norm:
         return False
-    if not _rule_hs_matches(norm, rule):
-        return False
-
-    dm = rule.description_match_json if isinstance(rule.description_match_json, dict) else {}
-    contains = dm.get("description_contains_any") or dm.get("substrings")
-    requires = dm.get("description_requires_any")
-    excludes = dm.get("exclude_if_contains_any")
-    has_desc_gate = bool(
-        _normalize_desc_markers(contains)
-        or _normalize_desc_markers(requires)
-        or _normalize_desc_markers(excludes)
+    return _rule_matches_runtime(
+        rule,
+        norm_hs=norm,
+        description=description,
+        country=None,
+        as_of=ref,
     )
-    hp = normalize_hs_code(rule.hs_code)
-    if has_desc_gate:
-        return official_sgr_description_matches(
-            description,
-            description_contains_any=contains if isinstance(contains, list) else None,
-            description_requires_any=requires if isinstance(requires, list) else None,
-            exclude_if_contains_any=excludes if isinstance(excludes, list) else None,
-        )
-    if hp:
-        return True
-    return False
 
 
 def get_advisory_official_sgr_requirements_v2(

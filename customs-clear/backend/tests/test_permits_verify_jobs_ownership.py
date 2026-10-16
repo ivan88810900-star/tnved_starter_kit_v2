@@ -2,16 +2,128 @@
 from __future__ import annotations
 
 import importlib.util
+import hashlib
 import os
+import subprocess
+import sys
 import unittest
-from unittest.mock import patch
+from pathlib import Path
+from unittest.mock import AsyncMock, patch
 from uuid import uuid4
 
-from app.datetime_util import utc_now_naive
-from app.db import SessionLocal
-from app.models import PermitsVerifyJob
-from app.services.normative_store import init_db
+import pytest
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+
 from tests.support_auth import login_admin, login_declarant, login_viewer
+
+BACKEND_ROOT = Path(__file__).resolve().parents[1]
+DEFAULT_DATABASE = BACKEND_ROOT / "customs.db"
+PINNED_CATALOGUE = BACKEND_ROOT / "customs.db.backup_before_pdf_import"
+
+
+def _sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as file_handle:
+        for chunk in iter(lambda: file_handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def _protected_fingerprints() -> dict[Path, str | None]:
+    paths = {
+        candidate
+        for path in (DEFAULT_DATABASE, PINNED_CATALOGUE)
+        for candidate in (path, Path(f"{path}-wal"), Path(f"{path}-shm"))
+    }
+    return {
+        path: _sha256(path) if path.is_file() else None
+        for path in paths
+    }
+
+
+@pytest.fixture(scope="module", autouse=True)
+def _isolated_permits_verify_jobs_database(tmp_path_factory: pytest.TempPathFactory):
+    """Exercise permits job ownership without reading or creating ambient SQLite."""
+    protected_hashes = _protected_fingerprints()
+    temp_dir = tmp_path_factory.mktemp("permits-verify-jobs-ownership")
+    database = temp_dir / "permits-verify-jobs-ownership.db"
+    patches = pytest.MonkeyPatch()
+    preloaded_app_modules = {
+        module_name
+        for module_name in sys.modules
+        if module_name == "app" or module_name.startswith("app.")
+    }
+    patches.setenv("DATABASE_URL", f"sqlite:///{database}")
+    patches.delenv("TNVED_SOURCE_DB", raising=False)
+    bootstrap = subprocess.run(
+        [
+            sys.executable,
+            "-c",
+            "from app.services.normative_store import init_db; init_db()",
+        ],
+        cwd=BACKEND_ROOT,
+        env=os.environ.copy(),
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    assert bootstrap.returncode == 0, bootstrap.stdout + bootstrap.stderr
+    assert _protected_fingerprints() == protected_hashes
+
+    from app import db as app_db, main as app_main
+    from app.datetime_util import utc_now_naive as isolated_utc_now_naive
+    from app.models import PermitsVerifyJob as IsolatedPermitsVerifyJob
+
+    original_session = app_db.SessionLocal
+    original_engine = app_db.engine
+    engine = create_engine(
+        f"sqlite:///{database}",
+        connect_args={"check_same_thread": False},
+    )
+    factory = sessionmaker(bind=engine, autocommit=False, autoflush=False)
+
+    for module_name, module in tuple(sys.modules.items()):
+        if module is None or not (module_name == "app" or module_name.startswith("app.")):
+            continue
+        if getattr(module, "SessionLocal", None) is original_session:
+            patches.setattr(module, "SessionLocal", factory)
+        if getattr(module, "engine", None) is original_engine:
+            patches.setattr(module, "engine", engine)
+
+    test_module = sys.modules[__name__]
+    patches.setattr(test_module, "SessionLocal", factory, raising=False)
+    patches.setattr(test_module, "PermitsVerifyJob", IsolatedPermitsVerifyJob, raising=False)
+    patches.setattr(test_module, "utc_now_naive", isolated_utc_now_naive, raising=False)
+    patches.setattr(test_module, "init_db", lambda: None, raising=False)
+    patches.setattr(app_main, "init_db", lambda: None)
+
+    try:
+        yield
+    finally:
+        patches.undo()
+        for module_name, module in tuple(sys.modules.items()):
+            if module is None or not (module_name == "app" or module_name.startswith("app.")):
+                continue
+            if getattr(module, "SessionLocal", None) is factory:
+                setattr(module, "SessionLocal", original_session)
+            if getattr(module, "engine", None) is engine:
+                setattr(module, "engine", original_engine)
+        for module_name in tuple(sys.modules):
+            if (
+                module_name not in preloaded_app_modules
+                and (module_name == "app" or module_name.startswith("app."))
+            ):
+                sys.modules.pop(module_name, None)
+        engine.dispose()
+        for path in (
+            database,
+            Path(f"{database}-wal"),
+            Path(f"{database}-shm"),
+        ):
+            if path.exists():
+                path.unlink()
+        assert _protected_fingerprints() == protected_hashes
 
 
 def _insert_done_job(*, job_id: str, owner: str | None) -> None:
@@ -79,8 +191,12 @@ class PermitsVerifyJobsOwnershipTests(unittest.TestCase):
         self.assertIn(jid_view, ids_b)
         self.assertNotIn(jid_decl, ids_b)
 
-        self.assertEqual(self.client_decl.get(f"/api/permits/verify/jobs/{jid_view}").status_code, 404)
-        self.assertEqual(self.client_view.get(f"/api/permits/verify/jobs/{jid_decl}").status_code, 404)
+        # Regression: the legacy /verify/{number:path} catch-all must not
+        # intercept jobs/detail and trigger an external registry lookup.
+        with patch("app.api.permits.check_permits", new_callable=AsyncMock) as registry_lookup:
+            self.assertEqual(self.client_decl.get(f"/api/permits/verify/jobs/{jid_view}").status_code, 404)
+            self.assertEqual(self.client_view.get(f"/api/permits/verify/jobs/{jid_decl}").status_code, 404)
+            registry_lookup.assert_not_awaited()
 
         ok_a = self.client_decl.get(f"/api/permits/verify/jobs/{jid_decl}")
         self.assertEqual(ok_a.status_code, 200, ok_a.text)
@@ -106,7 +222,9 @@ class PermitsVerifyJobsOwnershipTests(unittest.TestCase):
         self._cleanup_ids.append(jid)
         _insert_done_job(job_id=jid, owner=None)
 
-        self.assertEqual(self.client_decl.get(f"/api/permits/verify/jobs/{jid}").status_code, 404)
+        with patch("app.api.permits.check_permits", new_callable=AsyncMock) as registry_lookup:
+            self.assertEqual(self.client_decl.get(f"/api/permits/verify/jobs/{jid}").status_code, 404)
+            registry_lookup.assert_not_awaited()
         self.assertEqual(self.client_adm.get(f"/api/permits/verify/jobs/{jid}").status_code, 200)
 
     def test_export_with_admin_token_unaffected(self) -> None:

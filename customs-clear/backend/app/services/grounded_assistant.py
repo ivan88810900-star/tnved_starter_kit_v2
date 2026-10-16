@@ -207,6 +207,8 @@ class _CitationCollector:
         url: str | None = None,
         status: str | None = None,
         excerpt: str | None = None,
+        authority_level: str | None = None,
+        legal_ref: str | None = None,
     ) -> str:
         clean_source = _trim(source_id, 120) or "internal"
         clean_title = _trim(title, 220) or clean_source
@@ -214,6 +216,12 @@ class _CitationCollector:
         key = (clean_source, clean_title, clean_url or "")
         existing = self._by_key.get(key)
         if existing:
+            item = next((row for row in self.items if row["id"] == existing), None)
+            if item is not None:
+                if authority_level and not item.get("authority_level"):
+                    item["authority_level"] = _trim(authority_level, 160)
+                if legal_ref and not item.get("legal_ref"):
+                    item["legal_ref"] = _trim(legal_ref, 300)
             return existing
         citation_id = f"S{len(self.items) + 1}"
         item: dict[str, Any] = {
@@ -228,6 +236,10 @@ class _CitationCollector:
             item["status"] = _trim(status, 100)
         if excerpt:
             item["excerpt"] = _trim(excerpt, 420)
+        if authority_level:
+            item["authority_level"] = _trim(authority_level, 160)
+        if legal_ref:
+            item["legal_ref"] = _trim(legal_ref, 300)
         self.items.append(item)
         self._by_key[key] = citation_id
         return citation_id
@@ -481,12 +493,18 @@ def _risk_summary(raw: dict[str, Any], citations: _CitationCollector) -> dict[st
             url=_trim(row.get("source_url"), 600) or None,
             status=_first_nonempty(row.get("severity"), "signal"),
             excerpt=_trim(row.get("explanation"), 420) or None,
+            authority_level=_trim(row.get("authority_level"), 160) or None,
+            legal_ref=_trim(row.get("legal_ref"), 300) or None,
         )
         signals.append(
             {
                 "category": _trim(row.get("category"), 100),
                 "severity": _first_nonempty(row.get("severity"), "unknown"),
+                "source": _trim(row.get("source"), 120),
+                "source_label": _trim(row.get("source_label"), 220),
+                "authority_level": _trim(row.get("authority_level"), 160) or None,
                 "explanation": _trim(row.get("explanation"), 600),
+                "legal_ref": _trim(row.get("legal_ref"), 300) or None,
                 "match_method": _trim(row.get("match_method"), 160) or None,
                 "matched_hs_prefix": _trim(row.get("matched_hs_prefix"), 20) or None,
                 "matched_country": _trim(row.get("matched_country"), 20) or None,
@@ -506,6 +524,7 @@ def _risk_summary(raw: dict[str, Any], citations: _CitationCollector) -> dict[st
             status=_first_nonempty(row.get("coverage_status"), "unknown"),
             excerpt="; ".join(_trim(gap, 180) for gap in list(row.get("known_gaps") or [])[:3] if _trim(gap, 180))
             or None,
+            authority_level=_trim(row.get("authority_level"), 160) or None,
         )
         coverage.append(
             {
@@ -513,6 +532,7 @@ def _risk_summary(raw: dict[str, Any], citations: _CitationCollector) -> dict[st
                 "title": _trim(row.get("title"), 220),
                 "coverage_status": _first_nonempty(row.get("coverage_status"), "unknown"),
                 "manual_review_required": bool(row.get("manual_review_required")),
+                "authority_level": _trim(row.get("authority_level"), 160) or None,
                 "citation_id": citation_id,
             }
         )
@@ -531,6 +551,9 @@ def _risk_summary(raw: dict[str, Any], citations: _CitationCollector) -> dict[st
     return {
         "status": _first_nonempty(block.get("status"), "MANUAL_REVIEW"),
         "overall_severity": _first_nonempty(block.get("overall_severity"), "unknown"),
+        "country": _trim(block.get("country"), 20) or None,
+        "destination_country": _trim(block.get("destination_country"), 20) or None,
+        "counterparty_name": _trim(block.get("counterparty_name"), 220) or None,
         "coverage_complete": bool(block.get("coverage_complete")),
         "signals": signals,
         "source_coverage": coverage,
@@ -557,6 +580,8 @@ async def build_chat_grounding_bundle(
     hs_code, hs_source = _resolve_hs_code(message, history, context)
     product_name = _first_nonempty(context.get("product_name"))
     country = _first_nonempty(context.get("origin_country"), context.get("country")).upper() or None
+    destination_country = _first_nonempty(context.get("destination_country")).upper() or None
+    counterparty_name = _first_nonempty(context.get("counterparty_name")) or None
 
     payment = _payment_snapshot(context, citations)
     if payment:
@@ -578,45 +603,69 @@ async def build_chat_grounding_bundle(
         try:
             raw_tnved = get_tnved_context_for_hs(hs_code)
             official_url = _trim(raw_tnved.get("official_ett_url"), 600) or None
-            eec_citation = citations.add(
-                source_id="eec_ett",
-                title="ТН ВЭД ЕАЭС и Единый таможенный тариф — ЕЭК",
-                kind="official",
-                url=official_url,
-                status=_first_nonempty(raw_tnved.get("source_revision"), "reference"),
-                excerpt=_first_nonempty(raw_tnved.get("title"), raw_tnved.get("description")) or None,
-            )
             canonical_anchor = canonical_anchor_for_hs(hs_code)
-            anchor_citation: str | None = None
-            if canonical_anchor:
-                anchor_citation = citations.add(
-                    source_id="canonical_tnved",
-                    title="Canonical TN VED Model",
-                    kind="canonical",
-                    status=_first_nonempty(canonical_anchor.get("snapshot_id"), "resolved"),
-                    excerpt=(
-                        f"stable_id={canonical_anchor.get('stable_id')}; "
-                        f"code={canonical_anchor.get('code')}"
-                    ),
+            title = _trim(raw_tnved.get("title"), 600)
+            description = _trim(raw_tnved.get("description"), 800)
+            breadcrumb = [
+                {
+                    "hs_code": _trim(row.get("hs_code"), 20),
+                    "title": _trim(row.get("title"), 260),
+                }
+                for row in list(raw_tnved.get("breadcrumb") or [])[:10]
+                if isinstance(row, dict)
+                and (_trim(row.get("hs_code"), 20) or _trim(row.get("title"), 260))
+            ]
+            notes = [
+                row
+                for row in _note_rows(raw_tnved.get("notes"))
+                if any(row.values())
+            ]
+            source_revision = _trim(raw_tnved.get("source_revision"), 120)
+            has_catalogue_evidence = bool(
+                title or description or breadcrumb or notes or source_revision
+            )
+            citation_ids: list[str] = []
+            if has_catalogue_evidence:
+                citation_ids.append(
+                    citations.add(
+                        source_id="eec_ett",
+                        title="ТН ВЭД ЕАЭС и Единый таможенный тариф — ЕЭК",
+                        kind="official",
+                        url=official_url,
+                        status=source_revision or "reference",
+                        excerpt=_first_nonempty(title, description) or None,
+                    )
                 )
-            tnved = {
-                "hs_code": hs_code,
-                "hs_source": hs_source,
-                "title": _trim(raw_tnved.get("title"), 600),
-                "description": _trim(raw_tnved.get("description"), 800),
-                "breadcrumb": [
-                    {
-                        "hs_code": _trim(row.get("hs_code"), 20),
-                        "title": _trim(row.get("title"), 260),
-                    }
-                    for row in list(raw_tnved.get("breadcrumb") or [])[:10]
-                    if isinstance(row, dict)
-                ],
-                "notes": _note_rows(raw_tnved.get("notes")),
-                "source_revision": _trim(raw_tnved.get("source_revision"), 120),
-                "citation_ids": [value for value in (eec_citation, anchor_citation) if value],
-            }
-            facts_used.append("tnved")
+            if canonical_anchor:
+                citation_ids.append(
+                    citations.add(
+                        source_id="canonical_tnved",
+                        title="Canonical TN VED Model",
+                        kind="canonical",
+                        status=_first_nonempty(canonical_anchor.get("snapshot_id"), "resolved"),
+                        excerpt=(
+                            f"stable_id={canonical_anchor.get('stable_id')}; "
+                            f"code={canonical_anchor.get('code')}"
+                        ),
+                    )
+                )
+            if citation_ids:
+                tnved = {
+                    "hs_code": hs_code,
+                    "hs_source": hs_source,
+                    "title": title,
+                    "description": description,
+                    "breadcrumb": breadcrumb,
+                    "notes": notes,
+                    "source_revision": source_revision,
+                    "citation_ids": citation_ids,
+                }
+                facts_used.append("tnved")
+            else:
+                limitations.append(
+                    "Карточка ТН ВЭД не содержит локальных подтверждающих данных; "
+                    "код не подтверждён по справочнику."
+                )
         except Exception as exc:  # additive grounding must not break the chat
             logger.warning("assistant grounding: TN VED context failed: {}", exc)
             limitations.append("Карточка ТН ВЭД временно недоступна; код не подтверждён по справочнику.")
@@ -628,6 +677,8 @@ async def build_chat_grounding_bundle(
                 nt_description,
                 country,
                 [],
+                destination_country=destination_country,
+                counterparty_name=counterparty_name,
                 skip_registry_verify=True,
             )
             normative = _normative_summary(raw_non_tariff, citations)
@@ -691,8 +742,13 @@ async def build_chat_grounding_bundle(
             logger.warning("assistant grounding: product search failed: {}", exc)
             limitations.append("Не удалось подобрать кандидатов ТН ВЭД по описанию.")
 
-    if hs_code:
+    # A syntactically valid code is context, not evidence.  Do not advertise a
+    # grounded bundle when every local provider failed and no auditable fact or
+    # citation was collected for this turn.
+    if hs_code and facts_used and citations.items:
         coverage = "grounded"
+    elif hs_code:
+        coverage = "partial"
     elif candidates:
         coverage = "partial"
         limitations.append("Кандидаты поиска не являются подтверждённым кодом ТН ВЭД.")
@@ -1099,6 +1155,7 @@ def build_copilot_deterministic_summary(context: dict[str, Any]) -> dict[str, An
                         title=_first_nonempty(source.get("title"), source.get("source_id"), "Источник риск-скрининга"),
                         url=_trim(source.get("source_url"), 600) or None,
                         status=_first_nonempty(source.get("coverage_status"), "unknown"),
+                        authority_level=_trim(source.get("authority_level"), 160) or None,
                     )
                 )
             for signal in list(risk.get("signals") or [])[:10]:
@@ -1110,6 +1167,8 @@ def build_copilot_deterministic_summary(context: dict[str, Any]) -> dict[str, An
                     url=_trim(signal.get("source_url"), 600) or None,
                     status=_first_nonempty(signal.get("severity"), "signal"),
                     excerpt=_trim(signal.get("explanation"), 420) or None,
+                    authority_level=_trim(signal.get("authority_level"), 160) or None,
+                    legal_ref=_trim(signal.get("legal_ref"), 300) or None,
                 )
                 risk_citation_ids.append(signal_id)
                 risks.append(

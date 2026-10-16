@@ -5,8 +5,6 @@ from dataclasses import dataclass
 from datetime import date
 from typing import Any
 
-from sqlalchemy import or_
-
 from ..db import SessionLocal
 from ..models.tnved import Commodity, HsDutyRule, SpecialDuty, VatPreference
 from .customs_fees import calculate_customs_fee
@@ -22,6 +20,12 @@ from .normative_store import (
     get_tnved_context_for_hs,
 )
 from .compliance_resolver import pick_vat_preference_row
+from .payment_revision_utils import (
+    is_rejected_countervailing_revision,
+    is_rejected_excise_revision,
+    is_rejected_special_safeguard_revision,
+    is_rejected_vat_revision,
+)
 
 
 @dataclass
@@ -153,45 +157,127 @@ def _special_duty_prefix_candidates(hs_code: str) -> list[tuple[str, int]]:
     return [(p, m) for p, m in out if not (p in seen or seen.add(p))]
 
 
+def _special_duty_window_status(row: SpecialDuty, on_date: date) -> tuple[bool, str | None]:
+    """Return active flag and a fail-closed warning for malformed legal dates."""
+    boundaries: list[tuple[str, str]] = [
+        ("effective_from", str(row.effective_from or "").strip()),
+        ("effective_to", str(row.effective_to or "").strip()),
+    ]
+    parsed: dict[str, date | None] = {}
+    for field, raw in boundaries:
+        if not raw:
+            parsed[field] = None
+            continue
+        try:
+            parsed[field] = date.fromisoformat(raw)
+        except ValueError:
+            return True, f"Требуется ручная проверка: некорректная дата {field}={raw!r}."
+
+    if parsed["effective_from"] is not None and on_date < parsed["effective_from"]:
+        return False, None
+    if parsed["effective_to"] is not None and on_date > parsed["effective_to"]:
+        return False, None
+    return True, None
+
+
+def _is_rejected_trade_remedy_source(row: SpecialDuty) -> bool:
+    measure_type = (row.measure_type or "").strip().lower()
+    if measure_type == "special_safeguard":
+        return is_rejected_special_safeguard_revision(row.safeguard_source_revision)
+    if measure_type == "countervailing":
+        return is_rejected_countervailing_revision(row.countervailing_source_revision)
+    return False
+
+
 def _resolve_special_duties(
     hs_code: str,
     country: str | None,
     customs_value: float,
     quantity: float,
     fx_rates: dict[str, float] | None,
+    destination_country: str | None = None,
 ) -> tuple[float, list[dict[str, Any]]]:
     cands = _special_duty_prefix_candidates(hs_code)
     if not cands:
         return 0.0, []
     by_prefix = {p: m for p, m in cands}
-    today = date.today().isoformat()
+    today = date.today()
     country_norm = (country or "").strip().upper() or None
+    destination_norm = (destination_country or "").strip().upper() or None
 
     with SessionLocal() as db:
         query = db.query(SpecialDuty).filter(
             SpecialDuty.hs_code_prefix.in_(list(by_prefix.keys())),
-            or_(
-                SpecialDuty.effective_to.is_(None),
-                SpecialDuty.effective_to == "",
-                SpecialDuty.effective_to >= today,
-            ),
         )
-        if country_norm:
-            query = query.filter(SpecialDuty.origin_country == country_norm)
         rows = query.all()
 
-    if not rows:
-        return 0.0, []
+    if country_norm:
+        rows = [
+            row
+            for row in rows
+            if (row.origin_country or "").strip().upper() == country_norm
+            or (
+                not (row.origin_country or "").strip()
+                and (row.measure_type or "").strip().lower() == "special_safeguard"
+                and is_rejected_special_safeguard_revision(row.safeguard_source_revision)
+            )
+        ]
 
-    if not country_norm:
+    destination_scoped = [
+        row for row in rows if (getattr(row, "destination_country", "") or "").strip()
+    ]
+    if destination_scoped and not destination_norm:
         return 0.0, [
             {
                 "warning": (
-                    "Страна происхождения не указана. "
+                    "Страна назначения не указана. Для меры действуют национальные "
+                    "исключения/квоты; требуется ручная проверка."
+                ),
+                "needs_verification": True,
+                "manual_review_required": True,
+                "affected_codes": sorted({r.hs_code_prefix for r in destination_scoped}),
+                "destination_countries": sorted(
+                    {
+                        (getattr(r, "destination_country", "") or "").strip()
+                        for r in destination_scoped
+                    }
+                ),
+            }
+        ]
+    if destination_norm:
+        rows = [
+            row
+            for row in rows
+            if not (getattr(row, "destination_country", "") or "").strip()
+            or (getattr(row, "destination_country", "") or "").strip().upper()
+            == destination_norm
+        ]
+
+    active_rows: list[tuple[SpecialDuty, str | None]] = []
+    for row in rows:
+        active, date_warning = _special_duty_window_status(row, today)
+        if active:
+            active_rows.append((row, date_warning))
+
+    if not active_rows:
+        return 0.0, []
+
+    if not country_norm:
+        rejected_source = any(_is_rejected_trade_remedy_source(r) for r, _warning in active_rows)
+        return 0.0, [
+            {
+                "warning": (
+                    "Источник специальной/компенсационной меры отозван; требуется ручная проверка."
+                    if rejected_source
+                    else "Страна происхождения не указана. "
                     "Возможно применение антидемпинговых и иных специальных пошлин."
                 ),
-                "affected_codes": sorted({r.hs_code_prefix for r in rows}),
-                "origin_countries": sorted({r.origin_country for r in rows if r.origin_country}),
+                "needs_verification": rejected_source,
+                "manual_review_required": rejected_source,
+                "affected_codes": sorted({r.hs_code_prefix for r, _warning in active_rows}),
+                "origin_countries": sorted(
+                    {r.origin_country for r, _warning in active_rows if r.origin_country}
+                ),
             }
         ]
 
@@ -199,7 +285,40 @@ def _resolve_special_duties(
     rates.update({(k or "").upper(): float(v) for k, v in (fx_rates or {}).items()})
     details: list[dict[str, Any]] = []
     total = 0.0
-    for r in rows:
+    for r, date_warning in active_rows:
+        rejected_source = _is_rejected_trade_remedy_source(r)
+        source_warning = None
+        if rejected_source:
+            source_warning = (
+                "Источник специальной/компенсационной меры отозван: реквизиты актов не совпадают "
+                "с официальным правовым порталом ЕАЭС; сумма не включена в итог."
+            )
+        needs_verification = bool(getattr(r, "needs_verification", False)) or rejected_source
+        if date_warning or needs_verification:
+            warning = date_warning or source_warning or (
+                "Требуется ручная проверка товарного scope, исключений и производителя; "
+                "сумма специальной пошлины не включена в итог."
+            )
+            details.append(
+                {
+                    "hs_code_prefix": r.hs_code_prefix,
+                    "origin_country": r.origin_country,
+                    "destination_country": getattr(r, "destination_country", "") or "",
+                    "measure_type": r.measure_type or "anti_dumping",
+                    "rate_percent": float(r.rate_percent or 0.0),
+                    "rate_specific": float(r.rate_specific or 0.0),
+                    "currency_code": (r.currency_code or "RUB").upper().strip(),
+                    "regulatory_act": r.regulatory_act or "",
+                    "manufacturer_exporter": r.manufacturer_exporter or "",
+                    "product_description": r.product_description or "",
+                    "needs_verification": True,
+                    "manual_review_required": True,
+                    "warning": warning,
+                    "amount": None,
+                    "match_len": by_prefix.get(r.hs_code_prefix, 0),
+                }
+            )
+            continue
         part_ad = customs_value * float(r.rate_percent or 0.0) / 100.0
         ccy = (r.currency_code or "RUB").upper().strip()
         if ccy not in rates:
@@ -212,13 +331,16 @@ def _resolve_special_duties(
             {
                 "hs_code_prefix": r.hs_code_prefix,
                 "origin_country": r.origin_country,
+                "destination_country": getattr(r, "destination_country", "") or "",
                 "measure_type": r.measure_type or "anti_dumping",
                 "rate_percent": float(r.rate_percent or 0.0),
                 "rate_specific": float(r.rate_specific or 0.0),
                 "currency_code": ccy,
                 "fx_rate": fx,
                 "regulatory_act": r.regulatory_act or "",
-                "needs_verification": bool(getattr(r, "needs_verification", False)),
+                "manufacturer_exporter": r.manufacturer_exporter or "",
+                "product_description": r.product_description or "",
+                "needs_verification": False,
                 "amount": _round2(part),
                 "match_len": by_prefix.get(r.hs_code_prefix, 0),
             }
@@ -435,6 +557,9 @@ def compute_payments(payload: dict[str, Any]) -> dict[str, Any]:
     customs_value = float(payload.get("customs_value") or 0.0)
     freight = float(payload.get("freight") or 0.0)
     country = str(payload.get("country") or "").upper().strip() or None
+    destination_country = (
+        str(payload.get("destination_country") or "").upper().strip() or None
+    )
 
     if customs_value <= 0:
         raise ValueError("Таможенная стоимость должна быть > 0")
@@ -457,6 +582,7 @@ def compute_payments(payload: dict[str, Any]) -> dict[str, Any]:
                 "status": "EMBARGO",
                 "hs_code": hs_code,
                 "country": country,
+                "destination_country": destination_country,
                 "geo": {
                     "embargo": True,
                     "document_basis": basis[:512],
@@ -505,12 +631,19 @@ def compute_payments(payload: dict[str, Any]) -> dict[str, Any]:
     vat_rule = (rate.vat_rule if rate else "none") or "none"
     vat_rule_basis = (rate.vat_rule_basis if rate else "") or ""
     raw_vat_rate = float(rate.vat_import_rate) if rate else 22.0
+    vat_source_revision = (rate.vat_source_revision if rate else "") or ""
     excise_type = (rate.excise_type if rate else "none") or "none"
     excise_value = float(rate.excise_value) if rate else 0.0
     excise_basis = (rate.excise_basis if rate else "") or ""
-    from .rate_display import resolve_excise_for_hs
+    from .rate_display import resolve_excise_with_source_for_hs
 
-    resolved_type, resolved_value, resolved_basis = resolve_excise_for_hs(hs_code)
+    (
+        resolved_type,
+        resolved_value,
+        resolved_basis,
+        resolved_excise_revision,
+        _resolved_excise_url,
+    ) = resolve_excise_with_source_for_hs(hs_code)
     if excise_type in ("", "none") and resolved_type not in ("", "none"):
         excise_type = resolved_type
         excise_value = resolved_value
@@ -565,9 +698,23 @@ def compute_payments(payload: dict[str, Any]) -> dict[str, Any]:
 
     # Excise
     user_excise = payload.get("excise")
+    rejected_excise_source = bool(
+        user_excise is None
+        and excise_type not in ("", "none")
+        and is_rejected_excise_revision(resolved_excise_revision)
+    )
+    unresolved_excise = False
     if user_excise is not None:
         excise = float(user_excise)
         excise_reason = "Указано вручную"
+    elif rejected_excise_source:
+        unresolved_excise = True
+        excise = 0.0
+        excise_reason = (
+            "Требуется ручная проверка: сохранённая ставка акциза относится к "
+            "отозванной revision excise:2026-06-18 со ставками 2025 года; "
+            "сумма акциза, зависимый НДС и итог удержаны до загрузки проверенной ставки 2026 года"
+        )
     elif excise_type == "percent":
         excise = customs_value * excise_value / 100.0
         basis_str = excise_basis or f"НК РФ ст. 193: {excise_value}% от таможенной стоимости"
@@ -600,10 +747,15 @@ def compute_payments(payload: dict[str, Any]) -> dict[str, Any]:
         customs_value=customs_value,
         quantity=qty,
         fx_rates=payload.get("_fx_rates") if isinstance(payload.get("_fx_rates"), dict) else None,
+        destination_country=payload.get("destination_country"),
     )
     special_duties_warning: str | None = None
-    if special_duties_details and special_duties_details[0].get("warning"):
-        special_duties_warning = str(special_duties_details[0]["warning"])
+    first_special_warning = next(
+        (detail.get("warning") for detail in special_duties_details if detail.get("warning")),
+        None,
+    )
+    if first_special_warning:
+        special_duties_warning = str(first_special_warning)
 
     # Recycling fee (утильсбор) for vehicles (8701-8705, 8711)
     recycling_fee_amount = 0.0
@@ -635,11 +787,25 @@ def compute_payments(payload: dict[str, Any]) -> dict[str, Any]:
     auto_vat_rate = float(vat_pref.vat_rate) if vat_pref else 22.0
     vat_decree_info = (vat_pref.decree_info or "") if vat_pref else ""
     vat_pref_comment = (vat_pref.comment or "") if vat_pref else ""
+    rejected_vat_source = bool(
+        payload.get("vat_rate") is None
+        and vat_pref is None
+        and rate is not None
+        and is_rejected_vat_revision(vat_source_revision)
+    )
+    unresolved_vat = rejected_vat_source
     if payload.get("vat_rate") is not None:
         vat_rate = float(payload.get("vat_rate"))
         vat_reason = f"Указано вручную: {vat_rate}%"
         vat_decree_info = ""
         vat_pref_comment = ""
+    elif rejected_vat_source:
+        vat_rate = raw_vat_rate
+        vat_reason = (
+            "Требуется ручная проверка: сохранённая ставка НДС относится к "
+            "отозванной revision vat:2026-06-18, которая применяла 22% с 2025-01-01; "
+            "сумма НДС и итог удержаны до загрузки проверенной ставки с корректным окном действия"
+        )
     elif vat_pref is not None:
         vat_rate = auto_vat_rate
         vat_reason = (
@@ -673,6 +839,27 @@ def compute_payments(payload: dict[str, Any]) -> dict[str, Any]:
     vat = _num(vat_base) * _num(vat_rate) / 100.0
 
     total = _sum_amounts(customs_fee_amount, duty_amount, excise_amount, antidumping_amount, special_duties_total, vat, recycling_fee_total)
+    unresolved_special_duty = any(
+        detail.get("manual_review_required")
+        or detail.get("needs_verification")
+        for detail in special_duties_details
+    )
+    unresolved_payment = unresolved_special_duty or unresolved_excise or unresolved_vat
+    partial_without_excise_and_vat = _sum_amounts(
+        customs_fee_amount,
+        duty_amount,
+        antidumping_amount,
+        special_duties_total,
+        recycling_fee_total,
+    )
+    partial_without_vat = _sum_amounts(
+        customs_fee_amount,
+        duty_amount,
+        excise_amount,
+        antidumping_amount,
+        special_duties_total,
+        recycling_fee_total,
+    )
 
     # Sources: интегрированные данные в приложении (без внешних ссылок)
     stats = get_integrated_data_stats()
@@ -705,14 +892,18 @@ def compute_payments(payload: dict[str, Any]) -> dict[str, Any]:
         "match_length": match_len,
         "source_code": "EEC_ETT" if rate else None,
         "antidumping_status": antidumping_status,
+        "excise_source_rejected": rejected_excise_source,
+        "vat_source_rejected": rejected_vat_source,
+        "manual_review_required": unresolved_payment,
     }
 
     tnved_context = get_tnved_context_for_hs(hs_code)
 
     return {
-        "status": "OK",
+        "status": "MANUAL_REVIEW_REQUIRED" if unresolved_payment else "OK",
         "hs_code": hs_code,
         "country": country,
+        "destination_country": destination_country,
         "customs_value": _round2(customs_value),
         "freight": _round2(freight),
         "insurance": _round2(insurance),
@@ -743,7 +934,7 @@ def compute_payments(payload: dict[str, Any]) -> dict[str, Any]:
             "fx_currency": (duty_rule.specific_currency if duty_rule else ""),
             "specific_qty_used": _round2(specific_qty_used) if specific_qty_used is not None else None,
             "specific_uom": ((duty_rule.specific_uom or "") if duty_rule else ""),
-            "excise": _round2(excise_amount),
+            "excise": None if unresolved_excise else _round2(excise_amount),
             "excise_reason": excise_reason,
             "antidumping": _round2(antidumping_amount),
             "antidumping_reason": antidumping_reason,
@@ -754,10 +945,17 @@ def compute_payments(payload: dict[str, Any]) -> dict[str, Any]:
             "vat_reason": vat_reason,
             "vat_decree_info": vat_decree_info,
             "vat_pref_comment": vat_pref_comment,
-            "vat_base": _round2(vat_base),
-            "vat": _round2(vat),
+            "vat_base": None if unresolved_excise else _round2(vat_base),
+            "vat": None if unresolved_excise or unresolved_vat else _round2(vat),
             "recycling_fee": _round2(recycling_fee_total),
-            "total_payable": _round2(total),
+            "total_payable": None if unresolved_payment else _round2(total),
+            "total_partial": (
+                _round2(partial_without_excise_and_vat)
+                if unresolved_excise
+                else _round2(partial_without_vat)
+                if unresolved_vat
+                else _round2(total)
+            ),
         },
         "legal_basis": {
             "vat": vat_reason,
@@ -812,11 +1010,15 @@ def compare_payment_scenarios(payload: dict[str, Any]) -> dict[str, Any]:
         econ["insurance"] = float(shared["insurance"])
     if (shared.get("country") or "").strip():
         econ["country"] = str(shared["country"]).strip().upper()
+    if (shared.get("destination_country") or "").strip():
+        econ["destination_country"] = str(shared["destination_country"]).strip().upper()
     if shared.get("quantity") is not None:
         econ["quantity"] = float(shared["quantity"])
 
     out_scenarios: list[dict[str, Any]] = []
     first_total: float | None = None
+    first_total_set = False
+    has_unresolved = False
 
     for i, sc in enumerate(scenarios):
         if not isinstance(sc, dict):
@@ -829,26 +1031,52 @@ def compare_payment_scenarios(payload: dict[str, Any]) -> dict[str, Any]:
         scenario_country = str(sc.get("country") or "").strip().upper()
         if scenario_country:
             merged["country"] = scenario_country
+        scenario_destination = str(sc.get("destination_country") or "").strip().upper()
+        if scenario_destination:
+            merged["destination_country"] = scenario_destination
         for opt in ("duty_rate", "vat_rate", "excise"):
             if sc.get(opt) is not None:
                 merged[opt] = sc[opt]
         res = compute_payments(merged)
-        total = _num((res.get("breakdown") or {}).get("total_payable"))
-        delta = None if first_total is None else _round2(total - first_total)
-        if first_total is None:
+        total_raw = (res.get("breakdown") or {}).get("total_payable")
+        total = float(total_raw) if total_raw is not None else None
+        delta = (
+            _round2(total - first_total)
+            if total is not None and first_total_set and first_total is not None
+            else None
+        )
+        if not first_total_set:
             first_total = total
+            first_total_set = True
+        if total is None:
+            has_unresolved = True
+        special_details = list(res.get("special_duties") or [])
+        unresolved_special = any(
+            detail.get("manual_review_required")
+            or detail.get("needs_verification")
+            for detail in special_details
+        )
+        anti_dumping_total = (
+            None
+            if unresolved_special
+            else _round2(
+                _num(res["breakdown"].get("antidumping"))
+                + _num(res["breakdown"].get("special_duties_amount"))
+            )
+        )
         tv = res.get("tnved_context") or {}
         out_scenarios.append(
             {
                 "label": label,
                 "hs_code": hs,
                 "country": (merged.get("country") or None),
+                "destination_country": (merged.get("destination_country") or None),
                 "delta_total_vs_first_rub": delta,
-                "total_payable": _round2(total),
+                "total_payable": _round2(total) if total is not None else None,
                 "duty": res["breakdown"]["duty"],
                 "vat": res["breakdown"]["vat"],
                 "excise": res["breakdown"]["excise"],
-                "antidumping": res["breakdown"]["antidumping"],
+                "antidumping": anti_dumping_total,
                 "duty_rate_applied": res["breakdown"]["duty_rate"],
                 "vat_rate_applied": res["breakdown"]["vat_rate"],
                 "data_quality": res.get("data_quality"),
@@ -857,7 +1085,7 @@ def compare_payment_scenarios(payload: dict[str, Any]) -> dict[str, Any]:
         )
 
     return {
-        "status": "OK",
+        "status": "MANUAL_REVIEW_REQUIRED" if has_unresolved else "OK",
         "shared_economic": econ,
         "scenarios": out_scenarios,
     }

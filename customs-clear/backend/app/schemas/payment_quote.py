@@ -52,6 +52,10 @@ class PaymentQuoteRequest(BaseModel):
     vat_rate: float | None = None
     excise: float | None = None
     country: str | None = Field(default=None, validation_alias=AliasChoices("country", "country_of_origin"))
+    destination_country: str | None = Field(
+        default=None,
+        description="Страна назначения (ISO-2); обязательна для мер с национальными исключениями ЕАЭС.",
+    )
     quantity: float | None = None
     net_weight_kg: float | None = Field(default=None, validation_alias=AliasChoices("net_weight_kg", "weight_kg"))
     extra_quantity: float | None = None
@@ -63,6 +67,7 @@ class PaymentQuoteResponse(BaseModel):
     status: str
     hs_code: str
     country: str | None = None
+    destination_country: str | None = None
     description: str | None = None
     customs_value_rub: float
     invoice_currency: str

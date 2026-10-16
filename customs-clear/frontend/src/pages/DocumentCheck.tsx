@@ -4,6 +4,25 @@ import { useDropzone } from 'react-dropzone';
 import { CloudUpload, FileText, Files } from 'lucide-react';
 import { api } from '../api/client';
 import { getUserFacingApiError, userFacingMessage } from '../api/error';
+import { formatUnsafeExternalUrlEvidence, getSafeExternalUrl } from '../utils/externalUrl';
+
+export function DocumentCheckRegistryLink({ value }: { value: unknown }) {
+  const safeUrl = getSafeExternalUrl(value);
+  if (safeUrl) {
+    return (
+      <a href={safeUrl} target="_blank" rel="noopener noreferrer" className="inline-block text-sky-400 hover:underline">
+        Открыть в реестре
+      </a>
+    );
+  }
+
+  const evidence = formatUnsafeExternalUrlEvidence(value);
+  return evidence ? (
+    <span data-testid="unsafe-document-check-registry-url-evidence" className="inline-block text-slate-500">
+      Открыть в реестре (ссылка недоступна): <span className="break-all font-mono">{evidence}</span>
+    </span>
+  ) : null;
+}
 
 const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
 
@@ -1184,16 +1203,7 @@ export const DocumentCheck: React.FC = () => {
                   {row.registry_source && (
                     <div className="text-[10px] text-slate-600">{row.registry_source}</div>
                   )}
-                  {row.registry_link && (
-                    <a
-                      href={row.registry_link}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-block text-sky-400 hover:underline"
-                    >
-                      Открыть в реестре
-                    </a>
-                  )}
+                  {row.registry_link && <DocumentCheckRegistryLink value={row.registry_link} />}
                   {row.error && <div className="text-red-300">{row.error}</div>}
                 </div>
               );

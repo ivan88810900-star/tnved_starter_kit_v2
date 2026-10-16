@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 from datetime import datetime, timedelta, timezone
+from types import SimpleNamespace
 
 import pytest
 from sqlalchemy import create_engine
@@ -12,6 +13,7 @@ from sqlalchemy.orm import sessionmaker
 from app.db import Base
 from app.models.core import NonTariffRule
 from app.models.ntm_v2 import NtmApplicabilityRuleV2, NtmMeasureV2
+from app.services import sanctions_risk_block
 from app.services.normative_requirements_block import (
     build_normative_requirements_block,
     source_label_for,
@@ -39,6 +41,7 @@ def memory_sessionmaker(monkeypatch: pytest.MonkeyPatch):
     sm = sessionmaker(autocommit=False, autoflush=False, bind=engine)
     monkeypatch.setattr("app.db.SessionLocal", sm)
     monkeypatch.setattr("app.services.normative_store.SessionLocal", sm)
+    monkeypatch.setattr(sanctions_risk_block, "SessionLocal", sm)
     return sm
 
 
@@ -96,6 +99,38 @@ def _import_seed_rules(sm: sessionmaker) -> None:
             s.add(NonTariffRule(**row))
         s.commit()
     import_legacy_non_tariff_rules_to_ntm_v2()
+
+
+def test_non_tariff_forwards_full_risk_scope(
+    memory_sessionmaker: sessionmaker,
+    minimal_ntm_patches: None,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    captured: dict[str, object] = {}
+
+    def fake_risk_block(**kwargs):
+        captured.update(kwargs)
+        return SimpleNamespace(model_dump=lambda: {"status": "MANUAL_REVIEW"})
+
+    monkeypatch.setattr(
+        "app.services.non_tariff_service.build_sanctions_risk_block",
+        fake_risk_block,
+    )
+    asyncio.run(
+        check_position_non_tariff(
+            hs_code="8517130000",
+            description="",
+            country="CN",
+            destination_country="BY",
+            counterparty_name="Acme Trading",
+            permits=[],
+            skip_registry_verify=True,
+        )
+    )
+
+    assert captured["country"] == "CN"
+    assert captured["destination_country"] == "BY"
+    assert captured["counterparty_name"] == "Acme Trading"
 
 
 def test_build_block_from_broker_rows() -> None:

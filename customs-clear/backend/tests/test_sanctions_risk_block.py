@@ -102,6 +102,39 @@ def test_positive_embargo_match(memory_sessionmaker: sessionmaker) -> None:
     assert block.status == "CRITICAL"
 
 
+def test_destination_country_is_checked_for_country_risk(memory_sessionmaker: sessionmaker) -> None:
+    """Страна назначения из публичного API не должна теряться в risk engine."""
+    with memory_sessionmaker() as db:
+        db.add(
+            CountryRisk(
+                iso_code="IR",
+                name_ru="Тестовая риск-юрисдикция",
+                is_unfriendly=True,
+                has_preference=False,
+                required_cert="",
+            )
+        )
+        db.commit()
+        block = build_sanctions_risk_block(
+            hs_code="8509400000",
+            description="Пылесос",
+            country="CN",
+            destination_country="IR",
+            db=db,
+        )
+    assert block.destination_country == "IR"
+    destination_signals = [
+        signal
+        for signal in block.signals
+        if signal.category == "country_restrictions" and signal.legal_ref == "CountryRisk/IR"
+    ]
+    assert len(destination_signals) == 1
+    assert "страна назначения ir" in destination_signals[0].explanation.lower()
+    assert "из данной страны" not in destination_signals[0].explanation.lower()
+    assert block.overall_severity == "high"
+    assert block.status == "CRITICAL"
+
+
 def test_positive_counterparty_ofac_match(memory_sessionmaker: sessionmaker) -> None:
     with memory_sessionmaker() as db:
         load_sanctions_risk_fixture(db)
@@ -112,7 +145,8 @@ def test_positive_counterparty_ofac_match(memory_sessionmaker: sessionmaker) -> 
             counterparty_name="FIXTURE SANCTIONED ENTITY LLC",
             db=db,
         )
-    assert any(s.category == "counterparty_ofac" for s in block.signals)
+    ofac_signals = [s for s in block.signals if s.category == "counterparty_ofac"]
+    assert len(ofac_signals) == 1
     assert block.overall_severity == "high"
 
 

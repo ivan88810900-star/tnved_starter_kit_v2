@@ -19,6 +19,12 @@ from sqlalchemy.orm import relationship
 from ..db import Base
 
 
+REGULATORY_STATUS_ACTIVE = "active"
+REGULATORY_STATUS_REFERENCE_ONLY = "reference_only"
+REGULATORY_QUALITY_NOISE = "noise"
+REGULATORY_QUALITY_SYNTHETIC_SEED = "synthetic_seed"
+
+
 class RegulatoryDocument(Base):
     __tablename__ = "regulatory_documents"
 
@@ -34,7 +40,7 @@ class RegulatoryDocument(Base):
     source_html_path = Column(String(1024))
     source_pdf_path = Column(String(1024))
     language = Column(String(16), default="ru")
-    status = Column(String(32), default="active", index=True)
+    status = Column(String(32), default=REGULATORY_STATUS_ACTIVE, index=True)
     supersedes_doc_id = Column(String(64))
     effective_from = Column(Date)
     effective_to = Column(Date)
