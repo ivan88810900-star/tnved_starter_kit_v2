@@ -1,0 +1,48 @@
+{
+  "schema_version": 1,
+  "cycle": 281,
+  "checked_at": "2026-10-16T06:52:36Z",
+  "main_sha": "e526dfbdb5a31b01bf6f743da0288b88f916de0c",
+  "state_parent_sha": "66367de66243cb1c50d6da41dcb5287b8362f466",
+  "lease_generation": 281,
+  "pr": 256,
+  "branch": "agent/product-ntm-regressions-v1",
+  "head_sha": "cd41a21109a99aa23457f6d6a0ba7edddb536c08",
+  "tree_sha": "2bc81fac43d83a3fea4ba41d1c03faac2cf26e1b",
+  "block": "pay6_duplicate_ett_rows_fail_closed",
+  "status": "QA_PASSED_EXACT_HEAD_CI_PASS_PAY6_CLOSED",
+  "verification": {
+    "author": "Cycle 280 expanded payment/ingestion command: 265 passed; compile, diff and artifact checks passed.",
+    "a5": {
+      "session": "/root/a5_cycle280",
+      "status": "PASS_EXACT_TREE_NO_FINDINGS",
+      "focused": "64 passed",
+      "pay_ingestion": "132 passed plus 54 subtests",
+      "adjacent": "139 passed",
+      "seeded_sqlite_probe": "dry-run/apply no mutation"
+    },
+    "ci": {
+      "run_id": 38858876457,
+      "job_id": 116836388534,
+      "name": "Tariff agent safety / offline-safety",
+      "event": "push",
+      "head_sha": "cd41a21109a99aa23457f6d6a0ba7edddb536c08",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38858876457/job/116836388534",
+      "duration": "34s total"
+    },
+    "github_receipt": {
+      "pr_comment_id": 6209860846,
+      "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256#issuecomment-6209860846"
+    }
+  },
+  "boundaries": [
+    "The 21 duplicate ETT codes require immutable official-source and effective-date reconciliation before admission.",
+    "Full PR245/PR256 product acceptance and legal/source completeness remain NOT PASS.",
+    "A lawful populated synchronized NTM snapshot remains unavailable.",
+    "A6 request core-s1-6415f443120f-r9-g106 is unchanged and not sent."
+  ],
+  "protected_actions_performed": false,
+  "next_step": "Reconcile the 21 duplicate ETT codes against immutable official sources and effective dates; keep ambiguous rows quarantined."
+}
