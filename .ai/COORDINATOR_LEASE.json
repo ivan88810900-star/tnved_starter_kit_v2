@@ -1,14 +1,14 @@
 {
   "acquisition_note": "Cycle 288 recovered main e526dfbdb5a31b01bf6f743da0288b88f916de0c, PR256 exact head 0320a7d268b33413c48dffc963cde6b0ec051ab1, state revision 820 and released generation 287; complete historical chapter-29 raw collection from ordinal 221 through 533 without normalization or legal admission.",
-  "expires_at": null,
-  "generation": 288,
-  "holder": null,
+  "expires_at": "2026-10-16T14:21:52.721524Z",
+  "generation": 289,
+  "holder": "/root/scheduled-cycle289-20261016T135148Z",
   "lease_repair": {},
   "release_reason": "Cycle 288 completed historical chapter-29 raw collection at unchanged PR256 head 0320a7d268b33413c48dffc963cde6b0ec051ab1: author 11 PASS, exact-head CI run 38898431622/job 116964443470 SUCCESS, staging 533/533 unique COLLECTED_UNVERIFIED with 533 SHA matches, 0 duplicate groups/mojibake, idempotent replay, independent A5 PASS, state checkpoint e50405e, PR receipt 6216363275 and issue257 receipt 6216363667. Populated synchronized NTM snapshot remains unavailable; A6 unchanged/not sent.",
   "released_by": "/root/scheduled-cycle288-20261016T130835Z",
   "schema_version": 1,
   "serialization_repair": {},
-  "state": "released",
-  "token": null,
-  "updated_at": "2026-10-16T13:18:20.844141Z"
+  "state": "active",
+  "token": "7b35db13b6534a35a36cf45a1afef2a7",
+  "updated_at": "2026-10-16T13:51:52.721524Z"
 }
