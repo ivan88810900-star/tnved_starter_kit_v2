@@ -1,14 +1,14 @@
 {
   "acquisition_note": "Cycle 279 recovered main e526dfbdb5a31b01bf6f743da0288b88f916de0c, PR256 exact head 486d407ec2628564a616302a96f52adb91149241, state revision 813, and released generation 278; close PAY-5 exact-head CI evidence without changing the reviewed tree.",
-  "expires_at": null,
-  "generation": 285,
-  "holder": null,
+  "expires_at": "2026-10-16T12:23:00.183562+00:00",
+  "generation": 286,
+  "holder": "/root/scheduled-cycle286-20261016T115259Z",
   "lease_repair": {},
   "release_reason": "Cycle 284 published staging dry-run zero-write safety at PR256 head 38a475d20f44e9624435ea0089def0b16b9e1bd5, author 56 PASS, independent A5 PASS, exact-head CI run 38884269859/job 116918116968 SUCCESS, PR receipt 6213048689, issue257 receipt 6213054948, evidence and board revision 818. Persistent staging remains capability-blocked by missing authorized durable DB/originals storage. A6 unchanged/not sent.",
   "released_by": "/root/scheduled-cycle284-20261016T095500Z",
   "schema_version": 1,
   "serialization_repair": {},
-  "state": "released",
-  "token": null,
-  "updated_at": "2026-10-16T11:22:57.373358+00:00"
+  "state": "active",
+  "token": "9e9b00702ce14d78855ebf848e0309d3",
+  "updated_at": "2026-10-16T11:53:00.183562+00:00"
 }
