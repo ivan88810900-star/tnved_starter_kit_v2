@@ -1,3 +1,12 @@
+# Cycle 292 checkpoint — PR #258 exact-head CI gap closed (2026-10-16 16:20 UTC)
+
+- Draft PR #258 is unchanged at exact head `c59af35da7dde2140d911e2003a4a52fb0611507`, tree `2fee4bb388d1b2db69b2e49ed41d9f4dacea08d9`.
+- GitHub Actions run 38920906239 / job 117040259865 is verified `success` for the exact candidate head. The deterministic control/adapter and committed persistent-state schema steps passed.
+- This closes cycle 291's CI evidence gap. Bound evidence remains: author 31 passed; independent A5 PASS/no findings, adjacent 190 passed, DB/source tuples 200/200.
+- Persistent staging remains a bounded fresh epoch with 200 `COLLECTED_UNVERIFIED` rows. This is not legal admission, a populated synchronized NTM snapshot, full PR acceptance, merge, deploy, or A6 dispatch.
+- Evidence: `.ai/orchestration/evidence/cycle292_pr258_exact_head_ci_closure.json`.
+- Next: resume only the fresh epoch at logical offset 200 with the stored 20-row overlap digest; fail closed on any mismatch or total drift.
+
 # Cycle 288 checkpoint — historical chapter-29 raw collection complete (2026-10-16 13:16 UTC)
 
 - Draft PR #256 is unchanged at exact head `0320a7d268b33413c48dffc963cde6b0ec051ab1`, tree `f5fc479d8ef6696880dcc28614c8a3e3da35e648`; exact-head CI run 38898431622 / job 116964443470 remains `success`.
