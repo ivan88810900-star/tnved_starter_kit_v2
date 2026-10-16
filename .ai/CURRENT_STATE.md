@@ -1,3 +1,12 @@
+# Cycle 286 checkpoint — reusable loader and staging rows 21–220 (2026-10-16 12:10 UTC)
+
+- Draft PR #256 exact head `0320a7d268b33413c48dffc963cde6b0ec051ab1`, tree `f5fc479d8ef6696880dcc28614c8a3e3da35e648`.
+- Reusable raw-first loader: strict UTF-8, ASCII 10-digit codes, exact `raw_line` SHA-256, duplicate evidence and cursor. Author: 11 tests, exit 0; real PDF: 533/533, selected ordinal 21–220, exit 0.
+- Staging reread after initial write and identical replay: 1 source, 2 runs, 220 rows, 220 unique, 220 `COLLECTED_UNVERIFIED`, hashes 220/220, duplicate groups 0, mojibake 0, normalization/rejection 0/0, next ordinal 221.
+- Independent A5 initially rejected Unicode-digit admission; repaired exact head received fresh PASS with no findings. Exact-head CI run 38898431622 / job 116964443470: success.
+- Historical source remains unverified for current/legal use. Status: `RESUMABLE_STAGING_INGESTED / COLLECTED_UNVERIFIED / A5_PASS / CI_PASS`. Full #245/#256 and populated synchronized NTM snapshot remain NOT PASS. A6 unchanged/not sent.
+- Evidence: `.ai/orchestration/evidence/cycle286_resumable_staging_ingest.json`; TASK_BOARD revision 820. Next: ordinal 221 onward plus current primary-source SGR/NTM population.
+
 # Cycle 285 checkpoint — first persistent raw-first staging ingest (2026-10-16 11:17 UTC)
 
 - Owner-provided isolated Neon staging is live: project `red-meadow-53765518`, branch `br-weathered-frost-ba9jri3c`, database `tariff_staging`, private bucket `official-originals`; this is not production.

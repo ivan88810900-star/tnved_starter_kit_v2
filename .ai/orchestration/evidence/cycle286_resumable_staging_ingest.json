@@ -1,0 +1,69 @@
+{
+  "schema_version": 1,
+  "task_id": "TARIFF-STAGING-RESUMABLE-INGEST-20261016",
+  "started_at": "2026-10-16T11:52:59Z",
+  "completed_at": "2026-10-16T12:10:14Z",
+  "executor": "/root/scheduled-cycle286-20261016T115259Z",
+  "lease_generation": 286,
+  "product": {
+    "pr": 256,
+    "branch": "agent/product-ntm-regressions-v1",
+    "head_sha": "0320a7d268b33413c48dffc963cde6b0ec051ab1",
+    "tree_sha": "f5fc479d8ef6696880dcc28614c8a3e3da35e648",
+    "local_author_head": "935f08efda5033acc1c6fdbdba02e3f41a027589",
+    "changed_files": 3,
+    "exact_head_ci": {
+      "run_id": 38898431622,
+      "job_id": 116964443470,
+      "conclusion": "success",
+      "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38898431622/job/116964443470"
+    }
+  },
+  "implementation": {
+    "parser_version": "ett-pdftotext-layout-raw-v1",
+    "behavior": "Strict UTF-8 raw-first ETT preparation, exact ASCII 10-digit codes, deterministic raw_line SHA-256, duplicate evidence and bounded resume cursor; no normalization or legal admission.",
+    "author_command": "PYTHONPATH=customs-clear/backend python -m unittest customs-clear/backend/tests/test_staging_raw_ingest.py -v",
+    "author_exit_code": 0,
+    "author_result": "11 tests OK",
+    "real_pdf_command": "python customs-clear/backend/scripts/prepare_ett_staging_batch.py --pdf data/raw/tariff_cet/2025-01-01/ru.29_2022_24.05.2024.pdf --start-ordinal 21 --batch-size 200 --output /tmp/cycle286_batch_repaired.json",
+    "real_pdf_exit_code": 0,
+    "real_pdf_result": "533 raw / 533 unique; batch 21..220 = 200; 2902900000..2916320001; next ordinal 221"
+  },
+  "staging": {
+    "project_id": "red-meadow-53765518",
+    "branch_id": "br-weathered-frost-ba9jri3c",
+    "database": "tariff_staging",
+    "schema": "tariff_ingest",
+    "production": false,
+    "run_id": "cycle286-eec-ett-ch29-ordinal21-220",
+    "classification": "COLLECTED_UNVERIFIED",
+    "before": {"sources": 1, "runs": 1, "rows": 20, "unique_hs": 20},
+    "after": {"sources": 1, "runs": 2, "rows": 220, "unique_hs": 220, "collected_unverified": 220},
+    "batch": {"start_ordinal": 21, "end_ordinal": 220, "raw_count": 200, "unique_count": 200},
+    "resume_cursor": {"last_ordinal": 220, "last_hs_code": "2916320001", "next_ordinal": 221},
+    "normalized_count": 0,
+    "rejected_count": 0,
+    "idempotent_replay_count_unchanged": true,
+    "utf8_hash_matches": 220,
+    "duplicate_hs_groups": 0,
+    "duplicate_hash_groups": 0,
+    "mojibake_markers": 0,
+    "relation_bytes": 278528
+  },
+  "independent_a5": {
+    "session": "/root/a5_cycle286",
+    "initial_result": "REJECT",
+    "initial_finding": "Unicode \\d accepted non-ASCII digits as an HS code.",
+    "repair": "All code groups now use ASCII [0-9], with Arabic-Indic regression coverage.",
+    "final_result": "PASS_NO_FINDINGS",
+    "tests": "11/11 PASS; Arabic-Indic and fullwidth digits rejected; real PDF batch and fresh Neon terminal state independently reread; 220/220 client SHA matches"
+  },
+  "limits": [
+    "The retained 2024 PDF and all 220 rows remain historical COLLECTED_UNVERIFIED evidence, not a current or legally admitted tariff source.",
+    "No row is normalized or usable for payable totals.",
+    "This is not a populated synchronized NTM snapshot and not full PR #245/#256 acceptance.",
+    "No main merge, deploy, production write, enforcement flag, secret/permission change, destructive migration, force push, branch deletion or A6 request occurred."
+  ],
+  "a6": {"request": "core-s1-6415f443120f-r9-g106", "status": "UNCHANGED_NOT_SENT"},
+  "next_step": "Resume from ordinal 221 with the same loader and atomic idempotent transaction, then independently reread counts/hashes; separately prioritize current primary-source SGR/NTM population without reclassifying historical evidence."
+}
