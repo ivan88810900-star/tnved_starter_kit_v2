@@ -1,14 +1,15 @@
 {
   "acquisition_note": "Cycle 292 recovered main e526dfbdb5a31b01bf6f743da0288b88f916de0c, PR258 exact head c59af35da7dde2140d911e2003a4a52fb0611507, released generation 291, and stale CI status. GitHub now exposes exact-head run 38920906239/job 117040259865 as success.",
-  "expires_at": null,
-  "generation": 295,
-  "holder": null,
+  "expires_at": "2026-10-16T20:22:06.921935+00:00",
+  "generation": 296,
+  "holder": "/root/scheduled-cycle296-20261016T195003Z",
   "lease_repair": {},
   "release_reason": "Cycle 295 fail-closed at NSI-1995 offset 400 on unchanged PR258 head c59af35da7dde2140d911e2003a4a52fb0611507/tree 2fee4bb388d1b2db69b2e49ed41d9f4dacea08d9. Expected overlap 5201d5ce... did not match live 5cbf0cbb...; official total drifted 778404 to 778429. Zero artifacts/object/DB writes; staging remains 400/400 COLLECTED_UNVERIFIED. Author 31 PASS; independent A5 PASS/no findings with adjacent 190 PASS. Exact-head CI run 38920906239/job 117040259865 success. State checkpoint 793924a1f9ecc0d4c41664252f4cd22c8177c47a; PR receipt 6222609934; issue257 receipt 6222612527. Old epoch frozen; snapshot unavailable; A6 unchanged/not sent.",
   "released_by": "/root/scheduled-cycle295-20261016T185252Z",
   "schema_version": 1,
   "serialization_repair": {},
-  "state": "released",
-  "token": null,
-  "updated_at": "2026-10-16T19:01:44.344756+00:00"
+  "state": "active",
+  "token": "30d39416deb34852b965218bd07ba478",
+  "updated_at": "2026-10-16T19:52:06.921935+00:00"
 }
+
