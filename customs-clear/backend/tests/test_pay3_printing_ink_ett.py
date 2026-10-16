@@ -39,7 +39,7 @@ def _printing_ink_rows() -> tuple[list[dict], dict]:
     # complete base bundle is ingestible.
     assert len(blockers) == 1
     assert blockers[0].startswith("duplicate_hs_code_rows:")
-    assert parser_result["duplicate_hs_code_count"] == 16
+    assert parser_result["duplicate_hs_code_count"] == 1
     return (
         [
             row

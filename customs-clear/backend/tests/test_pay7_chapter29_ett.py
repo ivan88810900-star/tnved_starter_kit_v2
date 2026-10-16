@@ -78,10 +78,10 @@ def test_chapter29_correction_reduces_quarantine_without_opening_ingest() -> Non
     )
 
     assert parser_result["status"] == "parsed"
-    assert parser_result["duplicate_hs_code_count"] == 16
+    assert parser_result["duplicate_hs_code_count"] == 1
     assert not (set(EXPECTED_RATES) & set(parser_result["duplicate_hs_codes"]))
     assert len(blockers) == 1
-    assert blockers[0].startswith("duplicate_hs_code_rows: 16 code(s)")
+    assert blockers[0] == "duplicate_hs_code_rows: 1 code(s); first=8511100001"
     observed = {
         row["hs_code"]: row["duty_rate"]
         for row in rows
@@ -91,7 +91,7 @@ def test_chapter29_correction_reduces_quarantine_without_opening_ingest() -> Non
     assert all(row.get("valid_from") == "2026-01-01" for row in rows if row["hs_code"] in EXPECTED_RATES)
 
     correction = parser_result["corrections"]
-    assert len(correction) == 1
+    assert len(correction) == 2
     assert correction[0]["revision"] == "ett:2026-07-11"
     assert correction[0]["record_count"] == 5
     assert correction[0]["source_chapter_url"] == CHAPTER_29_URL

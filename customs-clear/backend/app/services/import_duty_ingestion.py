@@ -90,6 +90,37 @@ _CHAPTER29_EXPECTED_BASE_RATES = {
     "2902410000": frozenset({"3%", "0.0"}),
     "2921410000": frozenset({"0", "0.0"}),
 }
+_CHAPTER27_CORRECTION_PATH = "data/raw_normative/eec_ett_chapter27_correction_2026.json"
+_CHAPTER27_CHAPTER_URL = (
+    "https://eec.eaeunion.org/comission/department/catr/ett/"
+    "ru.2022/ru.27_2022_11.07.2026.pdf"
+)
+_CHAPTER27_EXPECTED_RATES = {
+    "2707501000": "5%",
+    "2707991100": "5%",
+    "2707999100": "5%",
+    "2710123100": "5%",
+    "2710124110": "5%",
+    "2710129001": "5%",
+    "2710194210": "5%",
+    "2710195101": "5%",
+    "2710197100": "5%",
+    "2710910000": "5%",
+    "2712901100": "5%",
+    "2712901900": "5%",
+    "2713110000": "3%",
+    "2713200000": "5%",
+    "2715000000": "5%",
+}
+_CHAPTER27_CODES = frozenset(_CHAPTER27_EXPECTED_RATES)
+_CHAPTER27_BASE_REVISION = "ett:2026-06-18"
+_CHAPTER27_BASE_URL = "https://eec.eaeunion.org/comission/department/catr/ett/"
+_CHAPTER27_EXPECTED_BASE_RATES = {
+    code: frozenset({rate, "0.0"})
+    for code, rate in _CHAPTER27_EXPECTED_RATES.items()
+}
+_CHAPTER27_EXPECTED_BASE_RATES["2710124110"] = frozenset({"0", "0.0"})
+_CHAPTER27_EXPECTED_BASE_RATES["2710194210"] = frozenset({"0", "0.0"})
 
 
 def _utc_now_iso() -> str:
@@ -429,7 +460,7 @@ def _merge_chapter29_correction(
         payload.get("schema_version") != 1
         or payload.get("revision") != "ett:2026-07-11"
         or payload.get("snapshot_date") != "2026-07-11"
-        or payload.get("applies_to_base_revision") != _CHAPTER29_BASE_REVISION
+        or payload.get("applies_to_base_revision") != _CHAPTER27_BASE_REVISION
         or payload.get("source_chapter_url") != _CHAPTER29_CHAPTER_URL
     ):
         return rows, None, ["chapter29_correction_metadata_mismatch"]
@@ -507,6 +538,104 @@ def _merge_chapter29_correction(
         "record_count": len(corrected_rows),
         "checksum_sha256": checksum,
         "source_chapter_url": _CHAPTER29_CHAPTER_URL,
+    }
+    return filtered + corrected_rows, metadata, []
+
+
+def _merge_chapter27_correction(
+    rows: list[dict[str, Any]],
+    *,
+    base_revision: str,
+) -> tuple[list[dict[str, Any]], dict[str, Any] | None, list[str]]:
+    """Replace the exact duplicated chapter-27 contour with the current EEC snapshot."""
+    path = _BACKEND_ROOT / _CHAPTER27_CORRECTION_PATH
+    if not path.is_file():
+        return rows, None, []
+    checksum = _file_sha256_at(path)
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError) as exc:
+        return rows, None, [f"chapter27_correction_parser_failed: {exc}"]
+    if not isinstance(payload, dict):
+        return rows, None, ["chapter27_correction_parser_failed: bundle must be JSON object"]
+    if (
+        payload.get("schema_version") != 1
+        or payload.get("revision") != "ett:2026-07-11"
+        or payload.get("snapshot_date") != "2026-07-11"
+        or payload.get("applies_to_base_revision") != _CHAPTER29_BASE_REVISION
+        or payload.get("source_chapter_url") != _CHAPTER27_CHAPTER_URL
+    ):
+        return rows, None, ["chapter27_correction_metadata_mismatch"]
+    if base_revision != _CHAPTER27_BASE_REVISION:
+        return rows, None, [
+            "chapter27_correction_base_revision_mismatch: "
+            f"expected={_CHAPTER27_BASE_REVISION}; observed={base_revision or '<empty>'}"
+        ]
+
+    base_dates: dict[str, tuple[str | None, str | None]] = {}
+    for code, expected_rates in _CHAPTER27_EXPECTED_BASE_RATES.items():
+        matching = [
+            row
+            for row in rows
+            if str(row.get("hs_code") or "").replace(" ", "") == code
+        ]
+        observed_rates = frozenset(str(row.get("duty_rate") or "").strip() for row in matching)
+        observed_revisions = {
+            str(row.get("source_revision") or "").strip() for row in matching
+        }
+        observed_urls = {str(row.get("source_url") or "").strip() for row in matching}
+        valid_from = {str(row.get("valid_from") or "").strip() or None for row in matching}
+        valid_to = {str(row.get("valid_to") or "").strip() or None for row in matching}
+        if (
+            len(matching) != 2
+            or observed_rates != expected_rates
+            or observed_revisions != {_CHAPTER27_BASE_REVISION}
+            or observed_urls != {_CHAPTER27_BASE_URL}
+            or valid_from != {"2026-01-01"}
+            or valid_to != {None}
+        ):
+            return rows, None, [f"chapter27_correction_base_scope_mismatch: {code}"]
+        base_dates[code] = (next(iter(valid_from)), next(iter(valid_to)))
+
+    raw_rows, container_err = _raw_rates_list(payload)
+    if container_err is not None:
+        return rows, None, [f"chapter27_correction_{container_err}"]
+    if not raw_rows or any(not isinstance(row, dict) for row in raw_rows):
+        return rows, None, ["chapter27_correction_malformed_rows"]
+
+    observed: dict[str, str] = {}
+    for raw in raw_rows:
+        code = re.sub(r"\D", "", str(raw.get("hs_code") or ""))[:10]
+        if code in observed:
+            return rows, None, [f"chapter27_correction_duplicate_code: {code}"]
+        if (
+            raw.get("source_revision") != "ett:2026-07-11"
+            or raw.get("source_url") != _CHAPTER27_CHAPTER_URL
+        ):
+            return rows, None, [f"chapter27_correction_provenance_mismatch: {code}"]
+        observed[code] = str(raw.get("duty_rate") or "").strip()
+    if observed != _CHAPTER27_EXPECTED_RATES:
+        return rows, None, ["chapter27_correction_scope_or_rate_mismatch"]
+
+    _revision, corrected_rows, blockers = _extract_duty_rows(payload, raw_rows)
+    if blockers or len(corrected_rows) != len(_CHAPTER27_EXPECTED_RATES):
+        return rows, None, blockers or ["chapter27_correction_normalization_failed"]
+    for row in corrected_rows:
+        code = str(row.get("hs_code") or "").replace(" ", "")
+        if code in base_dates:
+            row["valid_from"], row["valid_to"] = base_dates[code]
+
+    filtered = [
+        row for row in rows
+        if str(row.get("hs_code") or "").replace(" ", "") not in _CHAPTER27_CODES
+    ]
+    metadata = {
+        "path": _CHAPTER27_CORRECTION_PATH,
+        "revision": payload["revision"],
+        "snapshot_date": payload["snapshot_date"],
+        "record_count": len(corrected_rows),
+        "checksum_sha256": checksum,
+        "source_chapter_url": _CHAPTER27_CHAPTER_URL,
     }
     return filtered + corrected_rows, metadata, []
 
@@ -687,12 +816,21 @@ def _validate_bundle_for_ingest(
         rows,
         base_revision=revision,
     )
+    rows, chapter27_metadata, chapter27_blockers = _merge_chapter27_correction(
+        rows,
+        base_revision=revision,
+    )
     if amendment_metadata is not None:
         parser_result["amendments"] = [amendment_metadata]
         parser_result["record_count"] = len(rows)
         parser_result["rates_count"] = len(rows)
-    if correction_metadata is not None:
-        parser_result["corrections"] = [correction_metadata]
+    corrections = [
+        metadata
+        for metadata in (correction_metadata, chapter27_metadata)
+        if metadata is not None
+    ]
+    if corrections:
+        parser_result["corrections"] = corrections
         parser_result["record_count"] = len(rows)
         parser_result["rates_count"] = len(rows)
     blockers: list[str] = []
@@ -704,6 +842,8 @@ def _validate_bundle_for_ingest(
         blockers.extend(amendment_blockers)
     if correction_blockers:
         blockers.extend(correction_blockers)
+    if chapter27_blockers:
+        blockers.extend(chapter27_blockers)
     duplicate_codes = _duplicate_hs_codes(rows)
     if duplicate_codes:
         parser_result["duplicate_hs_code_count"] = len(duplicate_codes)

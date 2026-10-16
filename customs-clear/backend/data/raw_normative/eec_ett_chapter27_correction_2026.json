@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "format": "eec_ett_verified_correction_v1",
+  "revision": "ett:2026-07-11",
+  "snapshot_date": "2026-07-11",
+  "applies_to_base_revision": "ett:2026-06-18",
+  "source_chapter_url": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.27_2022_11.07.2026.pdf",
+  "description": "Проверенный точечный контур группы 27; дата снимка не является датой вступления ставки в силу.",
+  "rates": [
+    {"hs_code": "2707501000", "duty_rate": "5%", "source_revision": "ett:2026-07-11", "source_url": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.27_2022_11.07.2026.pdf"},
+    {"hs_code": "2707991100", "duty_rate": "5%", "source_revision": "ett:2026-07-11", "source_url": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.27_2022_11.07.2026.pdf"},
+    {"hs_code": "2707999100", "duty_rate": "5%", "source_revision": "ett:2026-07-11", "source_url": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.27_2022_11.07.2026.pdf"},
+    {"hs_code": "2710123100", "duty_rate": "5%", "source_revision": "ett:2026-07-11", "source_url": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.27_2022_11.07.2026.pdf"},
+    {"hs_code": "2710124110", "duty_rate": "5%", "source_revision": "ett:2026-07-11", "source_url": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.27_2022_11.07.2026.pdf"},
+    {"hs_code": "2710129001", "duty_rate": "5%", "source_revision": "ett:2026-07-11", "source_url": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.27_2022_11.07.2026.pdf"},
+    {"hs_code": "2710194210", "duty_rate": "5%", "source_revision": "ett:2026-07-11", "source_url": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.27_2022_11.07.2026.pdf"},
+    {"hs_code": "2710195101", "duty_rate": "5%", "source_revision": "ett:2026-07-11", "source_url": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.27_2022_11.07.2026.pdf"},
+    {"hs_code": "2710197100", "duty_rate": "5%", "source_revision": "ett:2026-07-11", "source_url": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.27_2022_11.07.2026.pdf"},
+    {"hs_code": "2710910000", "duty_rate": "5%", "source_revision": "ett:2026-07-11", "source_url": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.27_2022_11.07.2026.pdf"},
+    {"hs_code": "2712901100", "duty_rate": "5%", "source_revision": "ett:2026-07-11", "source_url": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.27_2022_11.07.2026.pdf"},
+    {"hs_code": "2712901900", "duty_rate": "5%", "source_revision": "ett:2026-07-11", "source_url": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.27_2022_11.07.2026.pdf"},
+    {"hs_code": "2713110000", "duty_rate": "3%", "source_revision": "ett:2026-07-11", "source_url": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.27_2022_11.07.2026.pdf"},
+    {"hs_code": "2713200000", "duty_rate": "5%", "source_revision": "ett:2026-07-11", "source_url": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.27_2022_11.07.2026.pdf"},
+    {"hs_code": "2715000000", "duty_rate": "5%", "source_revision": "ett:2026-07-11", "source_url": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.27_2022_11.07.2026.pdf"}
+  ]
+}
