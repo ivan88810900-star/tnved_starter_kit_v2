@@ -2179,7 +2179,7 @@
       "unique_source_pr_count": 29
     }
   },
-  "revision": 814,
+  "revision": 815,
   "runs": [
     {
       "head_sha": null,
@@ -7781,7 +7781,7 @@
       }
     }
   ],
-  "updated_at": "2026-10-16T06:03:08Z",
+  "updated_at": "2026-10-16T06:52:36Z",
   "previous_scheduled_product_checkpoint_174": {
     "updated_at": "2026-10-11T18:04:51.196Z",
     "checked_at": "2026-10-11T18:04:51.196Z",
@@ -15112,5 +15112,39 @@
     },
     "protected_actions_performed": false,
     "next_step": "Verify exact-head CI for cd41a211, then reconcile the 21 duplicate ETT codes against immutable official sources before admission."
+  },
+  "previous_scheduled_product_checkpoint_281": {
+    "updated_at": "2026-10-16T06:52:36Z",
+    "checked_at": "2026-10-16T06:52:36Z",
+    "pr": 256,
+    "branch": "agent/product-ntm-regressions-v1",
+    "head_sha": "cd41a21109a99aa23457f6d6a0ba7edddb536c08",
+    "tree_sha": "2bc81fac43d83a3fea4ba41d1c03faac2cf26e1b",
+    "block": "pay6_duplicate_ett_rows_fail_closed",
+    "status": "QA_PASSED_EXACT_HEAD_CI_PASS_PAY6_CLOSED",
+    "verification": {
+      "author": "265 passed; exit 0.",
+      "a5": "Independent /root/a5_cycle280 PASS on exact tree with no findings; seeded dry-run/apply no-mutation probe passed.",
+      "ci": {
+        "run_id": 38858876457,
+        "job_id": 116836388534,
+        "event": "push",
+        "head_sha": "cd41a21109a99aa23457f6d6a0ba7edddb536c08",
+        "conclusion": "success",
+        "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38858876457/job/116836388534"
+      },
+      "github_receipt": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256#issuecomment-6209860846"
+    },
+    "blockers": [
+      "The 21 duplicate ETT codes require immutable official-source and effective-date reconciliation before admission.",
+      "Full PR245/PR256 product acceptance and legal/source completeness remain NOT PASS.",
+      "Lawful populated synchronized NTM snapshot remains unavailable."
+    ],
+    "a6": {
+      "request": "core-s1-6415f443120f-r9-g106",
+      "status": "UNCHANGED_NOT_SENT"
+    },
+    "protected_actions_performed": false,
+    "next_step": "Reconcile the 21 duplicate ETT codes against immutable official sources and effective dates; keep ambiguous rows quarantined."
   }
 }
