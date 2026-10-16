@@ -1,0 +1,40 @@
+{
+  "schema_version": 1,
+  "format": "eec_ett_verified_correction_v1",
+  "revision": "ett:2026-07-11",
+  "snapshot_date": "2026-07-11",
+  "source_chapter_url": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.29_2022_11.07.2026.pdf",
+  "description": "Проверенный точечный контур группы 29; дата снимка не является датой вступления ставки в силу.",
+  "rates": [
+    {
+      "hs_code": "2901100001",
+      "duty_rate": "3%",
+      "source_revision": "ett:2026-07-11",
+      "source_url": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.29_2022_11.07.2026.pdf"
+    },
+    {
+      "hs_code": "2902200000",
+      "duty_rate": "3%",
+      "source_revision": "ett:2026-07-11",
+      "source_url": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.29_2022_11.07.2026.pdf"
+    },
+    {
+      "hs_code": "2902300000",
+      "duty_rate": "3%",
+      "source_revision": "ett:2026-07-11",
+      "source_url": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.29_2022_11.07.2026.pdf"
+    },
+    {
+      "hs_code": "2902410000",
+      "duty_rate": "3%",
+      "source_revision": "ett:2026-07-11",
+      "source_url": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.29_2022_11.07.2026.pdf"
+    },
+    {
+      "hs_code": "2921410000",
+      "duty_rate": "5%",
+      "source_revision": "ett:2026-07-11",
+      "source_url": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.29_2022_11.07.2026.pdf"
+    }
+  ]
+}

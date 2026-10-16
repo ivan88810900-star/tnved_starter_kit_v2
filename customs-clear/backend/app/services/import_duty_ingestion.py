@@ -68,6 +68,19 @@ _PRINTING_INK_CHAPTER_URL = (
     "https://eec.eaeunion.org/comission/department/catr/ett/"
     "ru.2022/ru.32_2022_01.07.2026.pdf"
 )
+_CHAPTER29_CORRECTION_PATH = "data/raw_normative/eec_ett_chapter29_correction_2026.json"
+_CHAPTER29_CHAPTER_URL = (
+    "https://eec.eaeunion.org/comission/department/catr/ett/"
+    "ru.2022/ru.29_2022_11.07.2026.pdf"
+)
+_CHAPTER29_EXPECTED_RATES = {
+    "2901100001": "3%",
+    "2902200000": "3%",
+    "2902300000": "3%",
+    "2902410000": "3%",
+    "2921410000": "5%",
+}
+_CHAPTER29_CODES = frozenset(_CHAPTER29_EXPECTED_RATES)
 
 
 def _utc_now_iso() -> str:
@@ -387,6 +400,82 @@ def _merge_printing_ink_amendment(
     return filtered + amendment_rows, metadata, []
 
 
+def _merge_chapter29_correction(
+    rows: list[dict[str, Any]],
+) -> tuple[list[dict[str, Any]], dict[str, Any] | None, list[str]]:
+    """Replace five ambiguous base rows with one exact current chapter-29 contour."""
+    path = _BACKEND_ROOT / _CHAPTER29_CORRECTION_PATH
+    if not path.is_file():
+        return rows, None, []
+    checksum = _file_sha256_at(path)
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError) as exc:
+        return rows, None, [f"chapter29_correction_parser_failed: {exc}"]
+    if not isinstance(payload, dict):
+        return rows, None, ["chapter29_correction_parser_failed: bundle must be JSON object"]
+    if (
+        payload.get("schema_version") != 1
+        or payload.get("revision") != "ett:2026-07-11"
+        or payload.get("snapshot_date") != "2026-07-11"
+        or payload.get("source_chapter_url") != _CHAPTER29_CHAPTER_URL
+    ):
+        return rows, None, ["chapter29_correction_metadata_mismatch"]
+
+    raw_rows, container_err = _raw_rates_list(payload)
+    if container_err is not None:
+        return rows, None, [f"chapter29_correction_{container_err}"]
+    if not raw_rows or any(not isinstance(row, dict) for row in raw_rows):
+        return rows, None, ["chapter29_correction_malformed_rows"]
+
+    observed: dict[str, str] = {}
+    for raw in raw_rows:
+        code = re.sub(r"\D", "", str(raw.get("hs_code") or ""))[:10]
+        if code in observed:
+            return rows, None, [f"chapter29_correction_duplicate_code: {code}"]
+        if (
+            raw.get("source_revision") != "ett:2026-07-11"
+            or raw.get("source_url") != _CHAPTER29_CHAPTER_URL
+        ):
+            return rows, None, [f"chapter29_correction_provenance_mismatch: {code}"]
+        observed[code] = str(raw.get("duty_rate") or "").strip()
+    if observed != _CHAPTER29_EXPECTED_RATES:
+        return rows, None, ["chapter29_correction_scope_or_rate_mismatch"]
+
+    _revision, corrected_rows, blockers = _extract_duty_rows(payload, raw_rows)
+    if blockers or len(corrected_rows) != len(_CHAPTER29_EXPECTED_RATES):
+        return rows, None, blockers or ["chapter29_correction_normalization_failed"]
+
+    # A source snapshot date is not a legal effective-from date.  Preserve the
+    # temporal envelope already declared by the base bundle instead of
+    # inventing a new effective date for the corrected rate.
+    base_dates: dict[str, tuple[str | None, str | None]] = {}
+    for code in _CHAPTER29_CODES:
+        matching = [row for row in rows if str(row.get("hs_code") or "").replace(" ", "") == code]
+        valid_from = {str(row.get("valid_from") or "").strip() or None for row in matching}
+        valid_to = {str(row.get("valid_to") or "").strip() or None for row in matching}
+        if len(valid_from) == 1 and len(valid_to) == 1:
+            base_dates[code] = (next(iter(valid_from)), next(iter(valid_to)))
+    for row in corrected_rows:
+        code = str(row.get("hs_code") or "").replace(" ", "")
+        if code in base_dates:
+            row["valid_from"], row["valid_to"] = base_dates[code]
+
+    filtered = [
+        row for row in rows
+        if str(row.get("hs_code") or "").replace(" ", "") not in _CHAPTER29_CODES
+    ]
+    metadata = {
+        "path": _CHAPTER29_CORRECTION_PATH,
+        "revision": payload["revision"],
+        "snapshot_date": payload["snapshot_date"],
+        "record_count": len(corrected_rows),
+        "checksum_sha256": checksum,
+        "source_chapter_url": _CHAPTER29_CHAPTER_URL,
+    }
+    return filtered + corrected_rows, metadata, []
+
+
 def _duplicate_hs_codes(rows: list[dict[str, Any]]) -> list[str]:
     """Return exact HS codes that occur more than once in one duty snapshot.
 
@@ -559,8 +648,13 @@ def _validate_bundle_for_ingest(
 
     revision, rows, row_blockers = _extract_duty_rows(payload, rows_in)
     rows, amendment_metadata, amendment_blockers = _merge_printing_ink_amendment(rows)
+    rows, correction_metadata, correction_blockers = _merge_chapter29_correction(rows)
     if amendment_metadata is not None:
         parser_result["amendments"] = [amendment_metadata]
+        parser_result["record_count"] = len(rows)
+        parser_result["rates_count"] = len(rows)
+    if correction_metadata is not None:
+        parser_result["corrections"] = [correction_metadata]
         parser_result["record_count"] = len(rows)
         parser_result["rates_count"] = len(rows)
     blockers: list[str] = []
@@ -570,6 +664,8 @@ def _validate_bundle_for_ingest(
         blockers.extend(row_blockers)
     if amendment_blockers:
         blockers.extend(amendment_blockers)
+    if correction_blockers:
+        blockers.extend(correction_blockers)
     duplicate_codes = _duplicate_hs_codes(rows)
     if duplicate_codes:
         parser_result["duplicate_hs_code_count"] = len(duplicate_codes)
