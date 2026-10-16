@@ -57,6 +57,11 @@ class StagingRawIngestTests(unittest.TestCase):
         with self.assertRaisesRegex(InvalidUtf8SourceError, "replacement character"):
             prepare_ett_staging_batch(source)
 
+    def test_non_ascii_digits_are_never_accepted_as_an_hs_code(self) -> None:
+        source = "٢٩٠١ ١٠ ٠٠٠ ١   – – этан            –            3\n".encode("utf-8")
+        with self.assertRaisesRegex(StagingRawIngestError, "no exact 10-digit"):
+            prepare_ett_staging_batch(source)
+
     def test_resume_at_ordinal_21_is_one_based_and_bounded(self) -> None:
         payload = prepare_ett_staging_batch(_source(30), start_ordinal=21, batch_size=4)
 

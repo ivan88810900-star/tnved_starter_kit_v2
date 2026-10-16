@@ -34,8 +34,8 @@ class AmbiguousEttRowError(StagingRawIngestError):
 
 
 _CODE_SHAPED_RE = re.compile(
-    r"^[ \t]*(?P<g1>\d{4})[ \t]+(?P<g2>\d{2})[ \t]+"
-    r"(?P<g3>\d{3})[ \t]+(?P<g4>\d)(?P<tail>.*)$"
+    r"^[ \t]*(?P<g1>[0-9]{4})[ \t]+(?P<g2>[0-9]{2})[ \t]+"
+    r"(?P<g3>[0-9]{3})[ \t]+(?P<g4>[0-9])(?P<tail>.*)$"
 )
 _COLUMN_SEPARATOR_RE = re.compile(r"[ \t]{2,}")
 
