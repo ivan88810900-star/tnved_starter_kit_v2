@@ -78,6 +78,147 @@ def test_nsi_pagination_fails_on_premature_empty_page(monkeypatch: pytest.Monkey
         sync._nsi_sgr_rows(code=sync.NSI_SGR_CODE, date_iso="2026-10-13", batch_size=3)
 
 
+def test_drift_safe_resume_requires_matching_overlap_and_dedupes_replay(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    prior_tail = [_nsi_item(80 + i) for i in range(20)]
+    next_rows = [_nsi_item(100 + i) for i in range(100)]
+    expected_overlap = sync._nsi_overlap_sha256(prior_tail)
+    totals = iter([778350, 778404])
+    monkeypatch.setattr(sync, "_nsi_sgr_total", lambda **_kwargs: next(totals))
+
+    def fake_page(_url: str, payload: dict[str, Any], **_kwargs: Any) -> list[dict[str, Any]]:
+        assert payload["offset"] == 80
+        assert payload["limit"] == 120
+        return prior_tail + next_rows
+
+    monkeypatch.setattr(sync, "_http_post_json", fake_page)
+
+    rows, manifest = sync.fetch_nsi_sgr_drift_safe_page(
+        code=sync.NSI_SGR_CODE,
+        date_iso="2026-10-16",
+        offset=100,
+        limit=100,
+        overlap_rows=20,
+        expected_overlap_sha256=expected_overlap,
+    )
+
+    assert rows == next_rows
+    assert manifest["overlap_sha256"] == expected_overlap
+    assert manifest["new_count"] == 100
+    assert manifest["next_offset"] == 200
+    assert manifest["total_before"] == 778350
+    assert manifest["total_after"] == 778404
+    assert manifest["total_drift"] == 54
+    assert manifest["drift_detected"] is True
+    assert manifest["terminal_total_reconciled"] is False
+
+
+def test_drift_safe_resume_fails_closed_on_overlap_mismatch(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(sync, "_nsi_sgr_total", lambda **_kwargs: 200)
+    monkeypatch.setattr(
+        sync,
+        "_http_post_json",
+        lambda *_args, **_kwargs: [_nsi_item(81 + i) for i in range(120)],
+    )
+
+    with pytest.raises(RuntimeError, match="overlap mismatch"):
+        sync.fetch_nsi_sgr_drift_safe_page(
+            code=sync.NSI_SGR_CODE,
+            date_iso="2026-10-16",
+            offset=100,
+            limit=100,
+            overlap_rows=20,
+            expected_overlap_sha256=sync._nsi_overlap_sha256(
+                [_nsi_item(80 + i) for i in range(20)]
+            ),
+        )
+
+
+def test_drift_safe_terminal_reconciliation_requires_stable_total(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    page = [_nsi_item(i) for i in range(5)]
+    monkeypatch.setattr(sync, "_nsi_sgr_total", lambda **_kwargs: 5)
+    monkeypatch.setattr(sync, "_http_post_json", lambda *_args, **_kwargs: page)
+
+    rows, manifest = sync.fetch_nsi_sgr_drift_safe_page(
+        code=sync.NSI_SGR_CODE,
+        date_iso="2026-10-16",
+        offset=0,
+        limit=10,
+    )
+
+    assert rows == page
+    assert manifest["page_sha256"] == sync.hashlib.sha256(
+        sync._canonical_json(page).encode("utf-8")
+    ).hexdigest()
+    assert manifest["terminal_candidate"] is True
+    assert manifest["terminal_total_reconciled"] is True
+
+
+def test_drift_safe_cursor_advances_by_source_rows_after_dedupe(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    overlap = [_nsi_item(8), _nsi_item(9)]
+    duplicate = _nsi_item(10)
+    page = overlap + [duplicate, duplicate, _nsi_item(11)]
+    monkeypatch.setattr(sync, "_nsi_sgr_total", lambda **_kwargs: 20)
+    monkeypatch.setattr(sync, "_http_post_json", lambda *_args, **_kwargs: page)
+
+    rows, manifest = sync.fetch_nsi_sgr_drift_safe_page(
+        code=sync.NSI_SGR_CODE,
+        date_iso="2026-10-16",
+        offset=10,
+        limit=3,
+        overlap_rows=2,
+        expected_overlap_sha256=sync._nsi_overlap_sha256(overlap),
+    )
+
+    assert rows == [duplicate, _nsi_item(11)]
+    assert manifest["new_count"] == 2
+    assert manifest["source_advance"] == 3
+    assert manifest["next_offset"] == 13
+
+
+def test_drift_safe_nonterminal_empty_page_fails_closed(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(sync, "_nsi_sgr_total", lambda **_kwargs: 3)
+    monkeypatch.setattr(sync, "_http_post_json", lambda *_args, **_kwargs: [])
+
+    with pytest.raises(RuntimeError, match="exhausted at offset 0 before observed total 3"):
+        sync.fetch_nsi_sgr_drift_safe_page(
+            code=sync.NSI_SGR_CODE,
+            date_iso="2026-10-16",
+            offset=0,
+            limit=3,
+        )
+
+
+@pytest.mark.parametrize(
+    "kwargs, message",
+    [
+        ({"offset": 100, "limit": 100}, "positive overlap"),
+        ({"offset": 100, "limit": 100, "overlap_rows": 20}, "expected overlap"),
+        ({"offset": -1, "limit": 100}, "non-negative"),
+        ({"offset": 0, "limit": 0}, "must be positive"),
+    ],
+)
+def test_drift_safe_page_rejects_unsafe_resume(
+    kwargs: dict[str, int],
+    message: str,
+) -> None:
+    with pytest.raises(ValueError, match=message):
+        sync.fetch_nsi_sgr_drift_safe_page(
+            code=sync.NSI_SGR_CODE,
+            date_iso="2026-10-16",
+            **kwargs,
+        )
+
+
 @pytest.mark.parametrize(
     "response",
     [
