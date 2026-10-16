@@ -1,3 +1,12 @@
+# Cycle 280 product checkpoint — 2026-10-16 06:03 UTC
+
+- Draft PR #256 exact head `cd41a21109a99aa23457f6d6a0ba7edddb536c08`, tree `2bc81fac43d83a3fea4ba41d1c03faac2cf26e1b`.
+- PAY-6 duplicate ETT admission fix: 21 exact HS duplicates remaining after the verified printing-ink amendment now block dry-run/apply before any DB mutation.
+- Author: 265 passed, exit 0. Independent A5 `/root/a5_cycle280`: PASS, no findings; seeded no-mutation probe PASS.
+- Status: QA_PASSED / CI_PENDING. Exact-head workflow runs observed: 0.
+- PR receipt: https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256#issuecomment-6209180192
+- Full #245/#256 acceptance, legal/source completeness and lawful populated synchronized NTM snapshot remain NOT PASS. A6 unchanged/not sent.
+
 # Autonomous orchestration status — 2026-09-12
 
 Infrastructure: PR #190, `agent/orchestration-v1` -> `main`.

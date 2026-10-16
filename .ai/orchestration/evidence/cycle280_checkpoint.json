@@ -1,0 +1,64 @@
+{
+  "schema_version": 1,
+  "cycle": 280,
+  "checked_at": "2026-10-16T06:03:08Z",
+  "repository": "ivan88810900-star/tnved_starter_kit_v2",
+  "lease_generation": 280,
+  "pr": 256,
+  "branch": "agent/product-ntm-regressions-v1",
+  "parent_sha": "486d407ec2628564a616302a96f52adb91149241",
+  "published_head_sha": "cd41a21109a99aa23457f6d6a0ba7edddb536c08",
+  "tree_sha": "2bc81fac43d83a3fea4ba41d1c03faac2cf26e1b",
+  "local_author_commit": "5012416faa431bae6dadad074cc307147900447f",
+  "block": "pay6_duplicate_ett_rows_fail_closed",
+  "status": "PUBLISHED_DRAFT_A5_PASS_CI_PENDING",
+  "reproduction": {
+    "bundle_revision": "ett:2026-06-18",
+    "source_rows": 13319,
+    "unique_exact_hs_codes": 13292,
+    "duplicates_before_verified_amendment_merge": 23,
+    "duplicates_after_verified_amendment_merge": 21,
+    "risk": "HsRate permits multiple rows per hs_code, so accepted duplicate rows leave duty selection dependent on database row order."
+  },
+  "repair": "Exact HS duplicates are detected after normalization and printing-ink amendment merge. Conflicting and equivalent duplicates block dry-run/apply with manual_review_required before planning or upsert, and exact duplicate evidence is returned in parser_result.",
+  "author_tests": {
+    "focused_command": "PYTHONPATH=../.venv277/lib/python3.12/site-packages:customs-clear/backend python3 -m pytest -q customs-clear/backend/tests/test_import_duty_ingestion.py customs-clear/backend/tests/test_pay3_printing_ink_ett.py",
+    "focused_result": "64 passed",
+    "focused_exit_code": 0,
+    "expanded_command": "PYTHONPATH=../.venv277/lib/python3.12/site-packages:customs-clear/backend python3 -m pytest -q customs-clear/backend/tests/test_import_duty_ingestion.py customs-clear/backend/tests/test_pay1_titanium_dioxide.py customs-clear/backend/tests/test_pay1_special_safeguard_source_quarantine.py customs-clear/backend/tests/test_pay2_spark_plugs.py customs-clear/backend/tests/test_pay2_countervailing_source_quarantine.py customs-clear/backend/tests/test_pay3_printing_ink_ett.py customs-clear/backend/tests/test_official_payment_coverage_audit.py customs-clear/backend/tests/test_payment_data_coverage.py customs-clear/backend/tests/test_payment_source_ingestion.py customs-clear/backend/tests/test_payment_engine.py customs-clear/backend/tests/test_payment_quote.py --tb=short",
+    "expanded_result": "265 passed",
+    "expanded_exit_code": 0,
+    "corrected_setup_note": "One preceding command named a nonexistent test_payment_source_admission.py and exited 4 without collecting tests; the corrected exact command above passed.",
+    "compile_diff_artifact_exit_code": 0
+  },
+  "a5": {
+    "session": "/root/a5_cycle280",
+    "status": "PASS_EXACT_TREE_NO_FINDINGS",
+    "focused": "64 passed",
+    "pay_ingestion": "132 passed plus 54 subtests",
+    "adjacent": "139 passed",
+    "negative_probe": "Tracked-bundle dry-run/apply returned manual_review_required and preserved seeded HsRate with SourceStatus=0 and SyncLog=0.",
+    "findings": []
+  },
+  "ci": {
+    "status": "PENDING_NO_EXACT_HEAD_RUN",
+    "head_sha": "cd41a21109a99aa23457f6d6a0ba7edddb536c08",
+    "workflow_runs_observed": 0
+  },
+  "github_receipt": {
+    "pr_comment_id": 6209180192,
+    "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256#issuecomment-6209180192"
+  },
+  "blockers": [
+    "Required exact-head CI has not appeared for cd41a211.",
+    "The 21 duplicate ETT rows require authoritative source reconciliation; no rate was selected automatically.",
+    "Full PR245/PR256 product acceptance and legal/source completeness remain NOT PASS.",
+    "A lawful populated synchronized NTM snapshot remains unavailable."
+  ],
+  "a6": {
+    "request": "core-s1-6415f443120f-r9-g106",
+    "status": "UNCHANGED_NOT_SENT"
+  },
+  "protected_actions_performed": false,
+  "next_step": "Obtain and verify exact-head offline-safety CI for cd41a211. Then reconcile the 21 duplicate ETT codes against immutable official source documents before any admission; do not guess or silently choose a row."
+}

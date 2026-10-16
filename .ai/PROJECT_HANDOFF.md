@@ -1,6 +1,16 @@
 Warning: truncated output (original token count: 98596)
 Total output lines: 2147
 
+## 2026-10-16 — PAY-6 duplicate ETT rows fail closed; exact-head CI pending
+
+- The tracked `ett:2026-06-18` base bundle has 13,319 rows but 13,292 unique exact HS codes. After the separately verified printing-ink amendment replaces two duplicate legacy contours, 21 duplicate HS codes remain. The prior ingestion accepted them even though `HsRate` permits multiple rows per code, making effective duty selection depend on DB row order.
+- Draft [PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256) publishes exact head `cd41a21109a99aa23457f6d6a0ba7edddb536c08`, tree `2bc81fac43d83a3fea4ba41d1c03faac2cf26e1b`; local author commit `5012416faa431bae6dadad074cc307147900447f` has the same tree.
+- Duplicate exact HS rows now fail closed after normalization and amendment merge. Conflicting and equivalent duplicates both return `manual_review_required` before planning/upsert, with exact duplicate evidence in `parser_result`; no rate was guessed or silently selected.
+- Author focused command: **64 passed**, exit 0. Expanded PAY-1/2/3, import-duty, payment engine/quote/coverage/source-ingestion command: **265 passed**, exit 0. Independent A5 `/root/a5_cycle280`: **PASS, no findings**; focused **64 passed**, PAY/ingestion **132 passed + 54 subtests**, adjacent payment **139 passed**, tracked-bundle no-mutation probe PASS.
+- PR receipt: [comment 6209180192](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256#issuecomment-6209180192). No exact-head workflow run has appeared for `cd41a211`, so status is **QA_PASSED / CI_PENDING**, not READY.
+- Full #245/#256 acceptance and legal/source completeness remain NOT PASS. The lawful populated synchronized NTM snapshot remains unavailable. A6 `core-s1-6415f443120f-r9-g106` is unchanged and not sent. No protected action occurred.
+- Next: verify exact-head CI, then reconcile the 21 duplicate ETT codes against immutable official source documents before any admission.
+
 ## 2026-10-15 — PAY-5 product QA defect repaired; exact-head CI pending on draft PR #256
 
 - Exact PAY-5 parent `44c50df61747f09e4f876c0f751d7c23cbf56b30` reproduced a new candidate-owned failure: focused payment/VAT pytest exited 1 with **1 failed, 85 passed + 10 subtests** because the rejected VAT ingestion response omitted the parser's mandatory `reason`.

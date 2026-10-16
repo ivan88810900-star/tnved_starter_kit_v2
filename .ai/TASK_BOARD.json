@@ -2179,7 +2179,7 @@
       "unique_source_pr_count": 29
     }
   },
-  "revision": 813,
+  "revision": 814,
   "runs": [
     {
       "head_sha": null,
@@ -7781,7 +7781,7 @@
       }
     }
   ],
-  "updated_at": "2026-10-15T23:01:47Z",
+  "updated_at": "2026-10-16T06:03:08Z",
   "previous_scheduled_product_checkpoint_174": {
     "updated_at": "2026-10-11T18:04:51.196Z",
     "checked_at": "2026-10-11T18:04:51.196Z",
@@ -15080,5 +15080,37 @@
       "checkpoint": "This board and PROJECT_HANDOFF update is the durable cycle278 checkpoint; lease release follows separately."
     },
     "next_step": "Obtain offline-safety on exact head 486d407e, verify success, then close PAY-5 without changing the reviewed tree."
+  },
+  "previous_scheduled_product_checkpoint_280": {
+    "updated_at": "2026-10-16T06:03:08Z",
+    "checked_at": "2026-10-16T06:03:08Z",
+    "pr": 256,
+    "branch": "agent/product-ntm-regressions-v1",
+    "parent_sha": "486d407ec2628564a616302a96f52adb91149241",
+    "head_sha": "cd41a21109a99aa23457f6d6a0ba7edddb536c08",
+    "tree_sha": "2bc81fac43d83a3fea4ba41d1c03faac2cf26e1b",
+    "local_author_exact_tree_commit": "5012416faa431bae6dadad074cc307147900447f",
+    "block": "pay6_duplicate_ett_rows_fail_closed",
+    "status": "QA_PASSED_EXACT_HEAD_CI_PENDING",
+    "reproduction": "Tracked ETT bundle has 13,319 rows and 13,292 unique codes; 21 exact HS duplicates remain after verified printing-ink amendment merge and were previously admitted into a table that permits duplicate hs_code rows.",
+    "repair": "Duplicate exact HS rows now return manual_review_required before planning/upsert; exact duplicate evidence is retained and no duty row is guessed or silently chosen.",
+    "verification": {
+      "author": "Focused 64 passed and expanded payment/ingestion 265 passed; compile, diff and artifact checks exited 0.",
+      "a5": "Independent /root/a5_cycle280 PASS with no findings; 64 focused, 132 plus 54 subtests PAY/ingestion, 139 adjacent, and seeded no-mutation probe passed.",
+      "ci": "PENDING_NO_EXACT_HEAD_RUN",
+      "github_receipt": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256#issuecomment-6209180192"
+    },
+    "blockers": [
+      "Required exact-head CI has not appeared for cd41a211.",
+      "The 21 duplicate ETT codes require authoritative source reconciliation.",
+      "Full PR245/PR256 product acceptance and legal/source completeness remain NOT PASS.",
+      "Lawful populated synchronized NTM snapshot remains unavailable."
+    ],
+    "a6": {
+      "request": "core-s1-6415f443120f-r9-g106",
+      "status": "UNCHANGED_NOT_SENT"
+    },
+    "protected_actions_performed": false,
+    "next_step": "Verify exact-head CI for cd41a211, then reconcile the 21 duplicate ETT codes against immutable official sources before admission."
   }
 }
