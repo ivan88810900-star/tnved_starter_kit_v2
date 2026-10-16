@@ -1,14 +1,14 @@
 {
   "acquisition_note": "Cycle 292 recovered main e526dfbdb5a31b01bf6f743da0288b88f916de0c, PR258 exact head c59af35da7dde2140d911e2003a4a52fb0611507, released generation 291, and stale CI status. GitHub now exposes exact-head run 38920906239/job 117040259865 as success.",
-  "expires_at": null,
-  "generation": 292,
-  "holder": null,
+  "expires_at": "2026-10-16T17:25:12.820507+00:00",
+  "generation": 293,
+  "holder": "/root/scheduled-cycle293-20261016T165301Z",
   "lease_repair": {},
   "release_reason": "Cycle 292 verified exact-head CI success for unchanged PR258 head c59af35da7dde2140d911e2003a4a52fb0611507/tree 2fee4bb388d1b2db69b2e49ed41d9f4dacea08d9, closing cycle291's CI evidence gap without changing product code. Existing author 31 PASS, independent A5 PASS/no findings, adjacent 190 PASS, and 200/200 DB/source tuple evidence remain bound. Persistent evidence cycle292_pr258_exact_head_ci_closure.json and CURRENT_STATE commit 01bbe1ca82e9250983a5aca8399371f001286509 were verified; PR258 receipt 6219858043 and issue257 receipt 6219861971 were published. The 200 rows remain COLLECTED_UNVERIFIED; synchronized NTM snapshot remains unavailable; A6 unchanged/not sent.",
   "released_by": "/root/scheduled-cycle292-20261016T161417Z",
   "schema_version": 1,
   "serialization_repair": {},
-  "state": "released",
-  "token": null,
-  "updated_at": "2026-10-16T16:22:28.625714Z"
+  "state": "active",
+  "token": "753048bc178c4db2afe3873e33159550",
+  "updated_at": "2026-10-16T16:55:12.820507+00:00"
 }
