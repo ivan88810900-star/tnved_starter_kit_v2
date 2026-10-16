@@ -1058,3 +1058,15 @@ CI #255: [offline-safety PASS, run 37771953943](https://github.com/ivan88810900-
 - Exact-head CI remains **PENDING**: the connector published the exact head and two no-diff trigger commits, but Actions returned no run; native authenticated git push and workflow-dispatch are unavailable in this runtime. The block is therefore not declared complete and no PR completion receipt was posted.
 - Full #245/#256 acceptance remains NOT PASS; the lawful populated synchronized NTM snapshot remains unavailable. A6 `core-s1-6415f443120f-r9-g106` is unchanged and not sent; no merge/deploy/production/protected action occurred.
 - Next: obtain the existing offline-safety workflow on exact head `fd357f35...`, then post the PR receipt and close the checkpoint without changing the reviewed tree.
+
+
+## 2026-10-16 — PAY-5 exact-head CI closure on draft PR #256
+
+- Draft [PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256) remains at exact head `486d407ec2628564a616302a96f52adb91149241`, tree `a7d4c3bd4a3b3b8573fa17c5353b336a737ddd20`; no product file changed in this cycle.
+- The cycle 278 repair exposes the fail-closed parser reason through additive optional `VatIngestionResponse.reason`. Author evidence was **232 passed + 10 subtests**; fresh independent A5 `/root/a5_cycle278` passed the exact tree with no findings.
+- Exact-head CI [run 38820783123 / job 116716584278](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38820783123/job/116716584278) completed **success**; all recorded steps passed. Closure receipt: [comment 6207980737](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256#issuecomment-6207980737).
+- PAY-5 is closed as a bounded verified block, not full #245/#256 product acceptance or legal/source completeness. A lawful populated synchronized NTM snapshot remains unavailable.
+- A6 `core-s1-6415f443120f-r9-g106` is unchanged and undispatched. No merge, deploy, production/enforcement flag, destructive migration, force push, branch deletion, permission/secret change or other protected action occurred.
+- Durable evidence is `.ai/orchestration/evidence/cycle279_pay5_ci_closure.json`. TASK_BOARD remained at revision 813 because its CAS write was rejected at the connector approval boundary and was not retried.
+- Next: reconcile the next unresolved stale payment bundle against primary sources while preserving fail-closed admission, applicability, provenance and final-total withholding.
+
