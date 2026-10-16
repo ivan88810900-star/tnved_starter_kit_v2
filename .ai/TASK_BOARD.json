@@ -2179,7 +2179,7 @@
       "unique_source_pr_count": 29
     }
   },
-  "revision": 821,
+  "revision": 822,
   "runs": [
     {
       "head_sha": null,
@@ -7797,7 +7797,7 @@
       }
     }
   ],
-  "updated_at": "2026-10-16T13:16:23Z",
+  "updated_at": "2026-10-16T14:02:23Z",
   "previous_scheduled_product_checkpoint_174": {
     "updated_at": "2026-10-11T18:04:51.196Z",
     "checked_at": "2026-10-11T18:04:51.196Z",
@@ -15567,5 +15567,76 @@
     "protected_actions_performed": false,
     "evidence": ".ai/orchestration/evidence/cycle288_chapter29_raw_collection_complete.json",
     "next_step": "Acquire current primary-source SGR/NTM raw data with immutable provenance; keep historical ETT rows COLLECTED_UNVERIFIED."
+  },
+  "previous_scheduled_product_checkpoint_289": {
+    "schema_version": 1,
+    "task_id": "TARIFF-STAGING-SGR-NSI1995-FIRST-RAW-20261016",
+    "started_at": "2026-10-16T13:48:00Z",
+    "completed_at": "2026-10-16T14:02:23Z",
+    "executor": "/root/scheduled-cycle289-20261016T135148Z",
+    "lease_generation": 289,
+    "pr": 258,
+    "branch": "agent/nsi-sgr-pagination-v1",
+    "head_sha": "7f7f4938d6145979d45fddd5b04cdede83ca6e49",
+    "tree_sha": "91124ff54a054772168a84725845dd78659adcce",
+    "block": "first_current_nsi1995_sgr_raw_page_offset_0_100",
+    "status": "BOUNDED_CURRENT_RAW_PAGE_COLLECTED_UNVERIFIED_A5_PASS_CI_PASS",
+    "product_changed": false,
+    "author_validation": {
+      "command": "node in-memory official NSI POST -> SHA-256 -> presigned private object PUT/GET -> JSON/count validation; Neon atomic manifest/raw/run transaction and idempotent replay",
+      "exit_code": 0,
+      "result": "436141-byte object and 100 raw rows persisted; replay left source/run/row counts 1/1/100"
+    },
+    "source": {
+      "authority": "Eurasian Economic Commission",
+      "dictionary_code": "1995",
+      "requested_date": "2026-10-16",
+      "official_total_at_capture": 778350,
+      "official_total_at_a5": 778404,
+      "live_drift": 54
+    },
+    "staging": {
+      "project_id": "red-meadow-53765518",
+      "branch_id": "br-weathered-frost-ba9jri3c",
+      "database": "tariff_staging",
+      "schema": "tariff_ingest",
+      "production": false,
+      "source_id": "eec-nsi-sgr-1995-2026-10-16-offset0-limit100-c2dea342fb16b49c",
+      "run_id": "cycle289-eec-nsi-sgr1995-offset0-limit100",
+      "object_sha256": "c2dea342fb16b49c0f5f96ccf6e3a9e247f406ba49af93cf6c55d6e8d81bd307",
+      "object_bytes": 436141,
+      "rows": 100,
+      "unique_sgr": 100,
+      "unique_source_ids": 100,
+      "unique_hashes": 100,
+      "collected_unverified": 100,
+      "normalized_count": 0,
+      "rejected_count": 0,
+      "next_offset": 100,
+      "complete": false,
+      "legal_admission": false,
+      "idempotent_replay_count_unchanged": true,
+      "ordered_row_hash_digest": "aa338ee1ed738037482e39d850293b65b06b6ef25db6fe3f868406f27f1a9605"
+    },
+    "independent_a5": {
+      "session": "/root/a5_cycle289",
+      "status": "PASS_NO_FINDINGS",
+      "tuple_digest": "78575eefa74a3f7de0f63bcfe6e0bf5981bce51e357defeb123d40f2840298f8",
+      "live_source_drift_confirmed": true
+    },
+    "exact_head_ci": {
+      "run_id": 38488698821,
+      "job_id": 115608493434,
+      "conclusion": "success",
+      "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38488698821/job/115608493434"
+    },
+    "snapshot_status": "BOUNDED_LIVE_RAW_PAGE_ONLY_POPULATED_SYNCHRONIZED_NTM_NOT_AVAILABLE",
+    "a6": {
+      "request": "core-s1-6415f443120f-r9-g106",
+      "status": "UNCHANGED_NOT_SENT"
+    },
+    "protected_actions_performed": false,
+    "evidence": ".ai/orchestration/evidence/cycle289_sgr_nsi1995_first_raw_page.json",
+    "next_step": "Implement drift-safe resumable NSI-1995 acquisition with immutable page manifests, overlap/dedupe and terminal total reconciliation before scaling beyond offset 100; keep every row COLLECTED_UNVERIFIED."
   }
 }

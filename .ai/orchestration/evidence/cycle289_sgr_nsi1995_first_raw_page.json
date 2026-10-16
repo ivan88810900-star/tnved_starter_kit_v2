@@ -1,0 +1,93 @@
+{
+  "schema_version": 1,
+  "task_id": "TARIFF-STAGING-SGR-NSI1995-FIRST-RAW-20261016",
+  "started_at": "2026-10-16T13:48:00Z",
+  "completed_at": "2026-10-16T14:02:23Z",
+  "executor": "/root/scheduled-cycle289-20261016T135148Z",
+  "lease_generation": 289,
+  "product_changed": false,
+  "source": {
+    "authority": "Eurasian Economic Commission",
+    "registry_url": "https://nsi.eaeunion.org/portal/1995",
+    "api_url": "https://nsi.eaeunion.org/portal/api/dictionaries/1995/get-list-data",
+    "dictionary_code": "1995",
+    "requested_date": "2026-10-16",
+    "offset": 0,
+    "limit": 100,
+    "official_total_at_capture": 778350,
+    "live_total_at_independent_review": 778404,
+    "live_total_drift": 54
+  },
+  "candidate": {
+    "pr": 258,
+    "branch": "agent/nsi-sgr-pagination-v1",
+    "head_sha": "7f7f4938d6145979d45fddd5b04cdede83ca6e49",
+    "tree_sha": "91124ff54a054772168a84725845dd78659adcce",
+    "status": "OPEN_DRAFT_UNCHANGED"
+  },
+  "author_validation": {
+    "command": "node in-memory official NSI POST -> SHA-256 -> presigned private object PUT/GET -> JSON/count validation; Neon atomic manifest/raw/run transaction and idempotent replay",
+    "exit_code": 0,
+    "result": "HTTP 200/200/200; 436141 bytes; 100 rows; object readback SHA matched; replay left 1 source / 1 run / 100 rows"
+  },
+  "object_storage": {
+    "project_id": "red-meadow-53765518",
+    "branch_id": "br-weathered-frost-ba9jri3c",
+    "bucket": "official-originals",
+    "key": "sgr/2026-10-16/nsi-1995/offset-0-limit-100/sha256/c2dea342fb16b49c0f5f96ccf6e3a9e247f406ba49af93cf6c55d6e8d81bd307.json",
+    "size_bytes": 436141,
+    "sha256": "c2dea342fb16b49c0f5f96ccf6e3a9e247f406ba49af93cf6c55d6e8d81bd307",
+    "readback_verified": true
+  },
+  "staging": {
+    "database": "tariff_staging",
+    "schema": "tariff_ingest",
+    "production": false,
+    "source_id": "eec-nsi-sgr-1995-2026-10-16-offset0-limit100-c2dea342fb16b49c",
+    "run_id": "cycle289-eec-nsi-sgr1995-offset0-limit100",
+    "rows": 100,
+    "unique_sgr": 100,
+    "unique_source_record_ids": 100,
+    "unique_row_hashes": 100,
+    "collected_unverified": 100,
+    "normalized_count": 0,
+    "rejected_count": 0,
+    "min_ordinal": 1,
+    "max_ordinal": 100,
+    "next_offset": 100,
+    "complete": false,
+    "legal_admission": false,
+    "idempotent_replay_count_unchanged": true,
+    "ordered_row_hash_digest": "aa338ee1ed738037482e39d850293b65b06b6ef25db6fe3f868406f27f1a9605",
+    "tuple_digest": "78575eefa74a3f7de0f63bcfe6e0bf5981bce51e357defeb123d40f2840298f8",
+    "relation_bytes": 327680
+  },
+  "metadata_correction": {
+    "initial_miscalculated_digest": "9e4cddb1ab4ed07565a757fde1189c3e61c8322d756b743cbb32844c426cfed9",
+    "corrected_digest": "aa338ee1ed738037482e39d850293b65b06b6ef25db6fe3f868406f27f1a9605",
+    "preserved_in_run_scope": true,
+    "reason": "Initial shell argv transport did not preserve the intended aggregate byte sequence; object-store reread and DB-ordered row hashes independently established the corrected value before checkpoint."
+  },
+  "independent_a5": {
+    "session": "/root/a5_cycle289",
+    "status": "PASS_NO_FINDINGS",
+    "object_http_status": 200,
+    "object_command_exit_code": 0,
+    "raw_json_hash_mismatches": 0,
+    "ordinal_gaps": 0,
+    "isolation": "Candidate rows exist only in sgr_collected_rows; zero candidate rows in ett_collected_rows; no normalization/admission tables."
+  },
+  "exact_head_ci": {
+    "run_id": 38488698821,
+    "job_id": 115608493434,
+    "conclusion": "success",
+    "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38488698821/job/115608493434"
+  },
+  "boundary": "This is one immutable 100-row raw page from a live changing registry, not a complete synchronized snapshot, normalization, legal admission, enforcement input, or full PR #245/#258 acceptance.",
+  "a6": {
+    "request": "core-s1-6415f443120f-r9-g106",
+    "status": "UNCHANGED_NOT_SENT"
+  },
+  "protected_actions_performed": false,
+  "next_step": "Design and verify drift-safe resumable acquisition for NSI-1995 (page manifests, overlap/dedupe and terminal total reconciliation) before scaling beyond offset 100; keep all rows COLLECTED_UNVERIFIED."
+}
