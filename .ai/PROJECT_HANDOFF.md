@@ -1,6 +1,3 @@
-Warning: truncated output (original token count: 98596)
-Total output lines: 2147
-
 ## 2026-10-16 — Historical chapter-29 raw collection completed in isolated staging
 
 - Draft PR [#256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256) remains unchanged at exact head `0320a7d268b33413c48dffc963cde6b0ec051ab1`, tree `f5fc479d8ef6696880dcc28614c8a3e3da35e648`. Exact-head CI [run 38898431622 / job 116964443470](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38898431622/job/116964443470) is `success`.
