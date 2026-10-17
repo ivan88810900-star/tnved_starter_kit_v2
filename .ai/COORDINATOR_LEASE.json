@@ -1,14 +1,14 @@
 {
   "acquisition_note": "Cycle 292 recovered main e526dfbdb5a31b01bf6f743da0288b88f916de0c, PR258 exact head c59af35da7dde2140d911e2003a4a52fb0611507, released generation 291, and stale CI status. GitHub now exposes exact-head run 38920906239/job 117040259865 as success.",
-  "expires_at": "2026-10-17T11:32:30.804991+00:00",
+  "expires_at": null,
   "generation": 311,
-  "holder": "/root/scheduled-cycle311-20261017T105333Z",
+  "holder": null,
   "lease_repair": {},
-  "release_reason": "Cycle 310 advanced guarded NSI-1995 epoch cycle296 from offset 1500 to 1600 on unchanged PR258 head c59af35da7dde2140d911e2003a4a52fb0611507/tree 2fee4bb388d1b2db69b2e49ed41d9f4dacea08d9. Stable total 778429; overlap exact; 100 new rows. Two immutable objects read back 2/2; staging is 32 objects/16 runs/1600 rows/1600 IDs/hashes, all COLLECTED_UNVERIFIED; replay unchanged; frozen epoch291 remains 400. Author 31+190 PASS; independent A5 PASS/no findings with repeat tests and fresh object/DB/digest verification. Exact-head CI run38920906239/job117040259865 success. State checkpoint 641e7219cfd1cab6876d26ca666607c0fd59a6a2; PR receipt 6232649155; issue257 receipt 6232650186. Snapshot incomplete; A6 unchanged/not sent.",
-  "released_by": "/root/scheduled-cycle310-20261017T094751Z",
+  "release_reason": "Cycle 311 advanced guarded NSI-1995 epoch cycle296 from offset 1600 to 1700 on unchanged PR258 head c59af35da7dde2140d911e2003a4a52fb0611507/tree 2fee4bb388d1b2db69b2e49ed41d9f4dacea08d9. Stable total 778429; overlap exact; 100 new rows. Two immutable objects read back 2/2; staging is 34 objects/17 runs/1700 rows/1700 IDs/hashes, all COLLECTED_UNVERIFIED; replay unchanged; frozen epoch291 remains 400. Author 31+190 PASS; independent A5 PASS/no findings with repeat tests, four fail-closed negatives and fresh object/DB/digest verification. Exact-head CI run38920906239/job117040259865 success. State checkpoint 4f78988e41ebbddca93efbfd117ad8c765745397; PR receipt 6233172799; issue257 receipt 6233173669. Snapshot incomplete; A6 unchanged/not sent.",
+  "released_by": "/root/scheduled-cycle311-20261017T105333Z",
   "schema_version": 1,
   "serialization_repair": {},
-  "state": "active",
-  "token": "c6992297e6474bfaa8765639446f8772",
-  "updated_at": "2026-10-17T11:02:30.804991+00:00"
+  "state": "released",
+  "token": null,
+  "updated_at": "2026-10-17T11:07:55.563627+00:00"
 }
