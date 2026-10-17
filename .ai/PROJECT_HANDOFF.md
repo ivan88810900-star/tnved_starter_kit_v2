@@ -1264,3 +1264,14 @@ CI #255: [offline-safety PASS, run 37771953943](https://github.com/ivan88810900-
 - This is bounded raw collection, not a populated synchronized NTM snapshot or full legal/product acceptance. A6 `core-s1-6415f443120f-r9-g106` is unchanged and not sent; no protected action occurred.
 - Evidence: `.ai/orchestration/evidence/cycle299_sgr_nsi1995_offset500.json`; TASK_BOARD revision 831. Resume only epoch cycle296 at offset 500 with trailing overlap SHA-256 `36ae7ea1f7fc9f5375fb0cf00831b586b996861865a17cdec6eadf0004fd072e`; fail closed on mismatch or total drift.
 
+# 2026-10-16 — New NSI-1995 epoch advanced to offset 600
+
+- Draft PR #258 remains unchanged at exact head `c59af35da7dde2140d911e2003a4a52fb0611507`, tree `2fee4bb388d1b2db69b2e49ed41d9f4dacea08d9`; exact-head CI run 38920906239 / job 117040259865 remains `success`.
+- Epoch cycle296 resumed at logical offset 500 with 20 retained rows. Overlap SHA-256 `36ae7ea1f7fc9f5375fb0cf00831b586b996861865a17cdec6eadf0004fd072e` matched exactly. The source returned 100 new rows; total stayed `778429` before/after, drift false, cursor `next_offset=600`.
+- Raw page and manifest were stored as two immutable objects and read back byte-for-byte: page 262,622 bytes / `a9853fb1d8f0d0fcd79af49457a6566b84c81fb1a9d4aadba1f3f2c851b0e018`; manifest 764 bytes / `a83ab37b77c1ddc001b3464ae01a1b382d30015e4c7dea4ab3ce7f7d1d2ee044`.
+- Staging now has twelve epoch source objects, six runs and 600 rows. Reread: 600 unique source IDs and row hashes, ordinals 1–600, exact DB/source tuples 600/600, ordered digest `a61bca12b16fd0a4a9c3e5f2f8cc310d661b3d12319667e704ef65e72ea331d0`, tuple digest `6f9862c26088481d8c796e399275444724ffe4482f66046ad343d1bfb3a12f45`. Exact replay did not grow counts; frozen epoch291 remains 400 rows/eight objects.
+- Every new row remains `COLLECTED_UNVERIFIED`; normalized/rejected counts are 0/0 and legal admission is false.
+- Author tests: 31 targeted and 191 expanded passed, exit 0. Independent A5 `/root/a5_cycle300`: PASS/no findings; 31 targeted and 191 adjacent passed, fresh object GETs 2/2 exact, DB/source tuples 600/600, frozen epoch291 unchanged.
+- This is bounded raw collection, not a populated synchronized NTM snapshot or full legal/product acceptance. A6 `core-s1-6415f443120f-r9-g106` is unchanged and not sent; no protected action occurred.
+- Evidence: `.ai/orchestration/evidence/cycle300_sgr_nsi1995_offset600.json`; TASK_BOARD revision 832. Resume only epoch cycle296 at offset 600 with trailing overlap SHA-256 `096beef2d01d094f2275ae7d7a6791bb23428f1f5293744e4c7e10011c69b565`; fail closed on mismatch or total drift.
+
