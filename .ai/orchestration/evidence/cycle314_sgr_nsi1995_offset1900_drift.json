@@ -1,0 +1,91 @@
+{
+  "schema_version": 1,
+  "task_id": "TARIFF-STAGING-SGR-NSI1995-OFFSET1900-DRIFT-20261017",
+  "started_at": "2026-10-17T13:52:13Z",
+  "completed_at": "2026-10-17T13:59:54Z",
+  "executor": "/root/scheduled-cycle314-20261017T135213Z",
+  "lease_generation": 314,
+  "candidate": {
+    "pr": 258,
+    "head_sha": "c59af35da7dde2140d911e2003a4a52fb0611507",
+    "tree_sha": "2fee4bb388d1b2db69b2e49ed41d9f4dacea08d9",
+    "product_changed": false
+  },
+  "guarded_capture": {
+    "command": "PYTHONPATH=repo/customs-clear/backend /tmp/tariff-cycle310-venv/bin/python cycle314_capture.py",
+    "exit_code": 1,
+    "error": "NSI SGR overlap mismatch: source ordering or row content drifted",
+    "logical_offset": 1900,
+    "request_offset": 1880,
+    "request_limit": 120,
+    "expected_overlap_sha256": "9802310b563399dadb18f4ab2bd7135bf62f1755f649aec673cef6d9da0ef7d6",
+    "accepted_new_rows": 0,
+    "local_capture_artifacts_created": 0,
+    "database_writes": 0,
+    "object_storage_writes": 0
+  },
+  "read_only_reproduction": {
+    "command": "PYTHONPATH=repo/customs-clear/backend /tmp/tariff-cycle310-venv/bin/python cycle314_diagnose_drift.py",
+    "exit_code": 0,
+    "returned_rows": 120,
+    "total_before": 778429,
+    "total_after": 778429,
+    "retained_epoch_overlap_sha256": "9802310b563399dadb18f4ab2bd7135bf62f1755f649aec673cef6d9da0ef7d6",
+    "first_observed_current_overlap_sha256": "4e82d9db6013de8af83e7299a8352b8670cc673917ce5c40ca1eab5a0ad7b4d9",
+    "later_current_overlap_sha256": "eff9c865985508898b69f419927c0b72df43fa5c5fa60889d8b82c95bb8d01a3",
+    "later_overlap_confirmed_by_independent_a5_twice": true,
+    "common_identities_with_retained_overlap": 0,
+    "interpretation": "The source ordering/content advanced again during this cycle while the total stayed stable. The first observed digest is historical evidence, not the current digest."
+  },
+  "staging_reread": {
+    "project": "red-meadow-53765518",
+    "branch": "br-weathered-frost-ba9jri3c",
+    "database": "tariff_staging",
+    "schema": "tariff_ingest",
+    "epoch296_source_objects": 38,
+    "epoch296_ingest_runs": 19,
+    "epoch296_rows": 1900,
+    "unique_source_ids": 1900,
+    "unique_row_hashes": 1900,
+    "ordinals": "1..1900",
+    "status": "COLLECTED_UNVERIFIED",
+    "normalized_count": 0,
+    "rejected_count": 0,
+    "legal_admission": false,
+    "cycle314_source_objects": 0,
+    "cycle314_ingest_runs": 0,
+    "cycle314_rows": 0,
+    "frozen_epoch291_source_objects": 8,
+    "frozen_epoch291_ingest_runs": 4,
+    "frozen_epoch291_rows": 400
+  },
+  "verification": {
+    "author_targeted": "31 passed, exit 0",
+    "author_expanded": "190 passed, exit 0",
+    "independent_a5": {
+      "session": "/root/a5_cycle314",
+      "status": "FINDING_SOURCE_DRIFT_ADVANCED",
+      "finding_disposition": "CONFIRMED_AND_RECORDED",
+      "guarded_capture": "exit 1 before local artifacts or remote writes",
+      "current_overlap_sha256": "eff9c865985508898b69f419927c0b72df43fa5c5fa60889d8b82c95bb8d01a3",
+      "repeat_reads": 2,
+      "common_identities_with_retained_overlap": 0,
+      "targeted": "31 passed, exit 0",
+      "adjacent": "190 passed, exit 0",
+      "staging": "epoch296 unchanged 38 objects / 19 runs / 1900 rows; cycle314 0/0/0",
+      "old_epoch291": "8 objects / 4 runs / 400 rows unchanged"
+    },
+    "exact_head_ci": {
+      "run_id": 38920906239,
+      "job_id": 117040259865,
+      "head_sha": "c59af35da7dde2140d911e2003a4a52fb0611507",
+      "tree_sha": "2fee4bb388d1b2db69b2e49ed41d9f4dacea08d9",
+      "conclusion": "success",
+      "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38920906239/job/117040259865"
+    }
+  },
+  "snapshot_status": "SOURCE_DRIFT_BLOCKED_EPOCH296_FROZEN_AT_1900_POPULATED_SYNCHRONIZED_NTM_NOT_AVAILABLE",
+  "a6": "core-s1-6415f443120f-r9-g106 UNCHANGED_NOT_SENT",
+  "protected_actions_performed": false,
+  "next_step": "Do not resume frozen epoch296. After the live source stops changing, start a new offset-0 epoch with repeated stable total/page observations under the existing guard, or use an immutable source-side snapshot/stable-order contract."
+}

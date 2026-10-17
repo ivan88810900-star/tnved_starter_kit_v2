@@ -1417,3 +1417,13 @@ CI #255: [offline-safety PASS, run 37771953943](https://github.com/ivan88810900-
 - This is bounded raw collection, not a populated synchronized NTM snapshot or full legal/product acceptance. A6 `core-s1-6415f443120f-r9-g106` is unchanged and not sent; no protected action occurred.
 - Evidence: `.ai/orchestration/evidence/cycle313_sgr_nsi1995_offset1900.json`; TASK_BOARD revision 845. Resume only epoch cycle296 at offset 1900 with trailing overlap SHA-256 `9802310b563399dadb18f4ab2bd7135bf62f1755f649aec673cef6d9da0ef7d6`; fail closed on mismatch or total drift.
 
+# 2026-10-17 — NSI-1995 epoch296 frozen at offset 1900 on live source drift
+
+- Draft PR #258 remains unchanged at exact head `c59af35da7dde2140d911e2003a4a52fb0611507`, tree `2fee4bb388d1b2db69b2e49ed41d9f4dacea08d9`; exact-head CI run 38920906239 / job 117040259865 remains `success`.
+- The guarded offset-1900 capture exited 1 before creating local capture artifacts or performing Object Storage/DB writes: retained overlap `9802310b563399dadb18f4ab2bd7135bf62f1755f649aec673cef6d9da0ef7d6` did not match the live source.
+- Read-only diagnosis returned 120 rows and stable total `778429`, but zero of the retained 20 identities. The live overlap changed again during this cycle: first observed `4e82d9db6013de8af83e7299a8352b8670cc673917ce5c40ca1eab5a0ad7b4d9`, later `eff9c865985508898b69f419927c0b72df43fa5c5fa60889d8b82c95bb8d01a3`. The earlier digest is historical evidence, not current state.
+- Staging reread remained exactly 38 epoch296 objects / 19 runs / 1900 rows, 1900 unique IDs and hashes, ordinals 1–1900, all `COLLECTED_UNVERIFIED`; explicit cycle314 objects/runs/rows are 0/0/0. Frozen epoch291 remains 8 objects / 4 runs / 400 rows.
+- Author tests: 31 targeted and 190 expanded passed, exit 0. Independent A5 `/root/a5_cycle314` returned `FINDING_SOURCE_DRIFT_ADVANCED`; the finding was confirmed and recorded. A5 repeated the current `eff9c865…` overlap twice, verified zero common retained identities, repeated both suites, and confirmed staging was untouched.
+- This is a verified fail-closed source-drift checkpoint, not a populated synchronized NTM snapshot or legal/product acceptance. A6 `core-s1-6415f443120f-r9-g106` is unchanged and not sent; no protected action occurred.
+- Evidence: `.ai/orchestration/evidence/cycle314_sgr_nsi1995_offset1900_drift.json`; TASK_BOARD revision 846. Do not resume frozen epoch296. After the live source stops changing, start a new offset-0 epoch with repeated stable total/page observations under the existing guard, or use an immutable source-side snapshot/stable-order contract.
+
