@@ -4,11 +4,11 @@
   "generation": 317,
   "holder": "/root/scheduled-cycle317-20261017T215151Z",
   "lease_repair": {},
-  "release_reason": "Cycle316 advanced epoch315 from logical offset120 to220 after exact 20-row overlap match; stored/read back 2 immutable objects and staged 100 new COLLECTED_UNVERIFIED rows for totals 4 objects/2 runs/220 rows. Replay idempotent; epochs296 and291 remained frozen 38/19/1900 and8/4/400. Author 50+170 PASS; independent A5 PASS_NO_FINDINGS; exact-head CI run38920906239/job117040259865 success. State checkpoint d426ab6db30ba65ad4372765ae6fc942d64227b8; PR receipt 6240935366; issue257 receipt 6240936508. Snapshot incomplete; A6 unchanged/not sent.",
+  "release_reason": "Cycle317 advanced epoch315 from logical offset220 to320 after exact 20-row overlap match; stored/read back 2 immutable objects and staged 100 new COLLECTED_UNVERIFIED rows for totals 6 objects/3 runs/320 rows. Replay idempotent; epochs296 and291 remained frozen 38/19/1900 and8/4/400. Author 50+170 PASS; independent A5 PASS_NO_FINDINGS; exact-head CI run38920906239/job117040259865 success. State checkpoint 861971be3a31f4916b3a82340c48db631f75dc89; PR receipt 6241907958; issue257 receipt 6241909251. Snapshot incomplete; A6 unchanged/not sent.",
   "released_by": "/root/scheduled-cycle316-20261017T155254Z",
   "schema_version": 1,
   "serialization_repair": {},
   "state": "active",
   "token": "f5ddace1ac9b4a3f83469e1ca9e7556a",
-  "updated_at": "2026-10-17T21:53:07.282009Z"
+  "updated_at": "2026-10-17T22:05:30Z"
 }
