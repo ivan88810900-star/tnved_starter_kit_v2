@@ -1,14 +1,14 @@
 {
   "acquisition_note": "Cycle 292 recovered main e526dfbdb5a31b01bf6f743da0288b88f916de0c, PR258 exact head c59af35da7dde2140d911e2003a4a52fb0611507, released generation 291, and stale CI status. GitHub now exposes exact-head run 38920906239/job 117040259865 as success.",
-  "expires_at": "2026-10-17T07:20:29.268341Z",
+  "expires_at": null,
   "generation": 307,
-  "holder": "/root/scheduled-cycle307-20261017T065019Z",
+  "holder": null,
   "lease_repair": {},
-  "release_reason": "Cycle 306 advanced guarded NSI-1995 epoch cycle296 from offset 1100 to 1200 on unchanged PR258 head c59af35da7dde2140d911e2003a4a52fb0611507/tree 2fee4bb388d1b2db69b2e49ed41d9f4dacea08d9. Stable total 778429; overlap exact; 100 new rows. Two immutable objects read back 2/2; staging is 24 objects/12 runs/1200 rows/1200 IDs/hashes, all COLLECTED_UNVERIFIED; replay unchanged; frozen epoch291 remains 400. Author 31+191 PASS; independent A5 PASS/no findings with repeat tests and DB/local 1200/1200. Exact-head CI run38920906239/job117040259865 success. State checkpoint 37956d9ff4c09b0f4806871f0a48f8d06cd1628e; PR receipt 6230428561; issue257 receipt 6230429663. Snapshot incomplete; A6 unchanged/not sent.",
-  "released_by": "/root/scheduled-cycle306-20261017T054835Z",
+  "release_reason": "Cycle 307 advanced guarded NSI-1995 epoch cycle296 from offset 1200 to 1300 on unchanged PR258 head c59af35da7dde2140d911e2003a4a52fb0611507/tree 2fee4bb388d1b2db69b2e49ed41d9f4dacea08d9. Stable total 778429; overlap exact; 100 new rows. Two immutable objects read back 2/2; staging is 26 objects/13 runs/1300 rows/1300 IDs/hashes, all COLLECTED_UNVERIFIED; replay unchanged; frozen epoch291 remains 400. Author 31+191 PASS; independent A5 PASS/no findings with repeat tests and DB/local 1300/1300. Exact-head CI run38920906239/job117040259865 success. State checkpoint 792287fcb99926b3bcb2c89e9c1ac109cd8a39ff; PR receipt 6230984177; issue257 receipt 6230984051. Snapshot incomplete; A6 unchanged/not sent.",
+  "released_by": "/root/scheduled-cycle307-20261017T065019Z",
   "schema_version": 1,
   "serialization_repair": {},
-  "state": "active",
-  "token": "a478a3d34a704e70a419942c4e6d6e84",
-  "updated_at": "2026-10-17T06:50:29.268341Z"
+  "state": "released",
+  "token": null,
+  "updated_at": "2026-10-17T07:02:45.115304Z"
 }
