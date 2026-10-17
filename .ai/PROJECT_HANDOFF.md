@@ -1309,3 +1309,15 @@ CI #255: [offline-safety PASS, run 37771953943](https://github.com/ivan88810900-
 - This is bounded raw collection, not a populated synchronized NTM snapshot or full legal/product acceptance. A6 `core-s1-6415f443120f-r9-g106` is unchanged and not sent; no protected action occurred.
 - Evidence: `.ai/orchestration/evidence/cycle303_sgr_nsi1995_offset900.json`; TASK_BOARD revision 835. Resume only epoch cycle296 at offset 900 with trailing overlap SHA-256 `3d6bb504249e781666eb8526f0220af7e9f9f57617fcf421a756bae43457343e`; fail closed on mismatch or total drift.
 
+# 2026-10-17 — New NSI-1995 epoch advanced to offset 1000
+
+- Draft PR #258 remains unchanged at exact head `c59af35da7dde2140d911e2003a4a52fb0611507`, tree `2fee4bb388d1b2db69b2e49ed41d9f4dacea08d9`; exact-head CI run 38920906239 / job 117040259865 remains `success`.
+- Epoch cycle296 resumed at logical offset 900 with 20 retained rows. Overlap SHA-256 `3d6bb504249e781666eb8526f0220af7e9f9f57617fcf421a756bae43457343e` matched exactly. The source returned 100 new rows; total stayed `778429` before/after, drift false, cursor `next_offset=1000`.
+- Raw page and manifest were stored as two immutable objects and independently read back byte-for-byte: page 271,944 bytes / `5387acb89335cc409e575db2090438c71b13b23ac8b09dbcbb81b4d9fc8b4752`; manifest 765 bytes / `cc7e4f6142f568100b4193b95cca332b15f9b1edb8c0b7a5fa6ce89e792fa552`.
+- Staging now has twenty epoch source objects, ten runs and 1000 rows. Reread: 1000 unique source IDs and row hashes, ordinals 1–1000, ordered digest `9e06f02c5b05db7c016a5b825e68cbcda0a3a10de6edddda249c20d7e68d4f8d`. Exact replay did not grow counts; frozen epoch291 remains 400 rows/four runs/eight objects.
+- The new run's initially mistyped epoch-prefixed ID was corrected immediately to `cycle304-eec-nsi-sgr1995-offset900-limit100-overlap20` before publication. Object and row bytes/hashes did not change. Independent A5 confirmed the final identifier and all source-based counts. A scratch-only verifier reports two runs because its diagnostic filter is `run_id LIKE cycle296`; that field is excluded from evidence in favour of the authoritative epoch296 `source_id` count of ten.
+- Every new row remains `COLLECTED_UNVERIFIED`; normalized/rejected counts are 0/0 and legal admission is false.
+- Author tests: 31 targeted and 191 expanded passed, exit 0. Independent A5 `/root/a5_cycle304`: PASS/no findings; 31 targeted and 191 adjacent passed, fresh object GETs 2/2 exact, DB/source 1000/1000 and ordered digest exact, frozen epoch291 unchanged.
+- This is bounded raw collection, not a populated synchronized NTM snapshot or full legal/product acceptance. A6 `core-s1-6415f443120f-r9-g106` is unchanged and not sent; no protected action occurred.
+- Evidence: `.ai/orchestration/evidence/cycle304_sgr_nsi1995_offset1000.json`; TASK_BOARD revision 836. Resume only epoch cycle296 at offset 1000 with trailing overlap SHA-256 `3f5bda5c56d07033bb7616b5849237b960d1706509173b5ce9feb04048b07a36`; fail closed on mismatch or total drift.
+
