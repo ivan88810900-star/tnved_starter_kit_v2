@@ -2179,7 +2179,7 @@
       "unique_source_pr_count": 29
     }
   },
-  "revision": 841,
+  "revision": 842,
   "runs": [
     {
       "head_sha": null,
@@ -7797,7 +7797,7 @@
       }
     }
   ],
-  "updated_at": "2026-10-17T09:05:49Z",
+  "updated_at": "2026-10-17T10:07:06Z",
   "previous_scheduled_product_checkpoint_174": {
     "updated_at": "2026-10-11T18:04:51.196Z",
     "checked_at": "2026-10-11T18:04:51.196Z",
@@ -16518,5 +16518,50 @@
     "protected_actions_performed": false,
     "evidence": ".ai/orchestration/evidence/cycle309_sgr_nsi1995_offset1500.json",
     "next_step": "Resume only epoch cycle296 at logical offset 1500 with 20-row overlap digest b89a6260bb88616cd679c51863243770128b70117b57cc12b74388c12ac96672; fail closed on mismatch or total drift."
+  },
+  "previous_scheduled_product_checkpoint_310": {
+    "schema_version": 1,
+    "task_id": "TARIFF-STAGING-SGR-NSI1995-NEW-EPOCH-OFFSET1600-20261017",
+    "started_at": "2026-10-17T09:47:51Z",
+    "completed_at": "2026-10-17T10:07:06Z",
+    "executor": "/root/scheduled-cycle310-20261017T094751Z",
+    "lease_generation": 310,
+    "pr": 258,
+    "head_sha": "c59af35da7dde2140d911e2003a4a52fb0611507",
+    "tree_sha": "2fee4bb388d1b2db69b2e49ed41d9f4dacea08d9",
+    "status": "NEW_EPOCH_1600_ROWS_A5_PASS_CI_PASS",
+    "product_changed": false,
+    "capture": {
+      "official_total": 778429,
+      "total_stable": true,
+      "new_rows": 100,
+      "cursor_next_offset": 1600,
+      "verified_overlap_rows": 20,
+      "verified_overlap_sha256": "b89a6260bb88616cd679c51863243770128b70117b57cc12b74388c12ac96672",
+      "next_trailing_overlap_sha256": "bc7484095845589c15daade1a64e01087d85ce4005044a6b0c7dae1b20a54916"
+    },
+    "staging": {
+      "new_immutable_objects": 2,
+      "epoch_source_objects": 32,
+      "epoch_ingest_runs": 16,
+      "epoch_rows": 1600,
+      "unique_source_ids": 1600,
+      "unique_row_hashes": 1600,
+      "ordered_row_hash_digest": "59ff4d1a997be113686edcf612b947195ffafcebdbe57b40bba04904e79fc87c",
+      "status": "COLLECTED_UNVERIFIED",
+      "normalized_count": 0,
+      "rejected_count": 0,
+      "legal_admission": false,
+      "idempotent_replay_count_unchanged": true,
+      "frozen_epoch291_rows": 400
+    },
+    "author_tests": "31 targeted and 190 expanded passed, exit 0",
+    "independent_a5": "PASS_NO_FINDINGS; targeted 31 and adjacent 190 passed; fresh object GET 2/2 exact; DB/source 1600/1600 and all digests exact; new-slice identity/hash digest 864c757ff47758f81be53c987f99d7fddfcf23a35c024a14fb43a1cf6bb7f8f6; frozen epoch291 400 unchanged",
+    "exact_head_ci": "run 38920906239 / job 117040259865 success",
+    "snapshot_status": "BOUNDED_NEW_EPOCH_1600_ROWS_POPULATED_SYNCHRONIZED_NTM_NOT_AVAILABLE",
+    "a6": "UNCHANGED_NOT_SENT",
+    "protected_actions_performed": false,
+    "evidence": ".ai/orchestration/evidence/cycle310_sgr_nsi1995_offset1600.json",
+    "next_step": "Resume only epoch cycle296 at logical offset 1600 with 20-row overlap digest bc7484095845589c15daade1a64e01087d85ce4005044a6b0c7dae1b20a54916; fail closed on mismatch or total drift."
   }
 }
