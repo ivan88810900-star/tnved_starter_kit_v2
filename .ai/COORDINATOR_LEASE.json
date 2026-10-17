@@ -1,14 +1,14 @@
 {
   "acquisition_note": "Cycle 292 recovered main e526dfbdb5a31b01bf6f743da0288b88f916de0c, PR258 exact head c59af35da7dde2140d911e2003a4a52fb0611507, released generation 291, and stale CI status. GitHub now exposes exact-head run 38920906239/job 117040259865 as success.",
-  "expires_at": null,
-  "generation": 302,
-  "holder": null,
+  "expires_at": "2026-10-17T03:21:56.287910Z",
+  "generation": 303,
+  "holder": "/root/scheduled-cycle303-20261017T024904Z",
   "lease_repair": {},
   "release_reason": "Cycle 302 advanced guarded NSI-1995 epoch cycle296 from offset 700 to 800 on unchanged PR258 head c59af35da7dde2140d911e2003a4a52fb0611507/tree 2fee4bb388d1b2db69b2e49ed41d9f4dacea08d9. Stable total 778429; overlap 3c3e985c... exact; 100 new rows. Two immutable objects read back 2/2; staging is 16 objects/8 runs/800 rows/800 IDs/hashes, all COLLECTED_UNVERIFIED, replay unchanged; frozen epoch291 remains 400. Author 31+191 PASS; independent A5 PASS/no findings with 31+191 PASS and DB/local 800/800. Exact-head CI run 38920906239/job 117040259865 success. State checkpoint eac97c87803a53f469cce6a1c6ac8a395e2ad30c; PR receipt 6228252823; issue257 receipt 6228252983. Snapshot incomplete; A6 unchanged/not sent.",
   "released_by": "/root/scheduled-cycle302-20261017T014749Z",
   "schema_version": 1,
   "serialization_repair": {},
-  "state": "released",
-  "token": null,
-  "updated_at": "2026-10-17T02:01:45.147610Z"
+  "state": "active",
+  "token": "5007b6212d9c4b5099ef15b8a5bb80c0",
+  "updated_at": "2026-10-17T02:51:56.287910Z"
 }
