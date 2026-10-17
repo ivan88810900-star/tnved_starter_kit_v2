@@ -2179,7 +2179,7 @@
       "unique_source_pr_count": 29
     }
   },
-  "revision": 837,
+  "revision": 838,
   "runs": [
     {
       "head_sha": null,
@@ -16338,5 +16338,50 @@
     "protected_actions_performed": false,
     "evidence": ".ai/orchestration/evidence/cycle305_sgr_nsi1995_offset1100.json",
     "next_step": "Resume only epoch cycle296 at logical offset 1100 with 20-row overlap digest 3ff84145d4647348b5619ba1dca31615b656a297e1fbb09def79011a321b5353; fail closed on mismatch or total drift."
+  },
+  "previous_scheduled_product_checkpoint_306": {
+    "schema_version": 1,
+    "task_id": "TARIFF-STAGING-SGR-NSI1995-NEW-EPOCH-OFFSET1200-20261017",
+    "started_at": "2026-10-17T05:48:35Z",
+    "completed_at": "2026-10-17T05:56:40Z",
+    "executor": "/root/scheduled-cycle306-20261017T054835Z",
+    "lease_generation": 306,
+    "pr": 258,
+    "head_sha": "c59af35da7dde2140d911e2003a4a52fb0611507",
+    "tree_sha": "2fee4bb388d1b2db69b2e49ed41d9f4dacea08d9",
+    "status": "NEW_EPOCH_1200_ROWS_A5_PASS_CI_PASS",
+    "product_changed": false,
+    "capture": {
+      "official_total": 778429,
+      "total_stable": true,
+      "new_rows": 100,
+      "cursor_next_offset": 1200,
+      "verified_overlap_rows": 20,
+      "verified_overlap_sha256": "3ff84145d4647348b5619ba1dca31615b656a297e1fbb09def79011a321b5353",
+      "next_trailing_overlap_sha256": "475eeb4493f5f6d5bb98b48ecba406d5aa367f6d2a031b57226ab8ecf47a594b"
+    },
+    "staging": {
+      "new_immutable_objects": 2,
+      "epoch_source_objects": 24,
+      "epoch_ingest_runs": 12,
+      "epoch_rows": 1200,
+      "unique_source_ids": 1200,
+      "unique_row_hashes": 1200,
+      "ordered_row_hash_digest": "b912ad2d636beb4b91c797b37d56bdaa1302c6713a34af885a1d82d64dfc98ab",
+      "status": "COLLECTED_UNVERIFIED",
+      "normalized_count": 0,
+      "rejected_count": 0,
+      "legal_admission": false,
+      "idempotent_replay_count_unchanged": true,
+      "frozen_epoch291_rows": 400
+    },
+    "author_tests": "31 targeted and 191 expanded passed, exit 0",
+    "independent_a5": "PASS_NO_FINDINGS; targeted 31 and adjacent 191 passed; fresh object GET 2/2 exact; DB/source 1200/1200 and ordered digest exact; frozen epoch291 400 unchanged",
+    "exact_head_ci": "run 38920906239 / job 117040259865 success",
+    "snapshot_status": "BOUNDED_NEW_EPOCH_1200_ROWS_POPULATED_SYNCHRONIZED_NTM_NOT_AVAILABLE",
+    "a6": "UNCHANGED_NOT_SENT",
+    "protected_actions_performed": false,
+    "evidence": ".ai/orchestration/evidence/cycle306_sgr_nsi1995_offset1200.json",
+    "next_step": "Resume only epoch cycle296 at logical offset 1200 with 20-row overlap digest 475eeb4493f5f6d5bb98b48ecba406d5aa367f6d2a031b57226ab8ecf47a594b; fail closed on mismatch or total drift."
   }
 }
