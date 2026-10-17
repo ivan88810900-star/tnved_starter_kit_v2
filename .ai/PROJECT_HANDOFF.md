@@ -1460,3 +1460,14 @@ CI #255: [offline-safety PASS, run 37771953943](https://github.com/ivan88810900-
 - Author tests: 50 targeted and 170 expanded passed, exit 0. Independent A5 `/root/a5_cycle317`: `PASS_NO_FINDINGS`; it repeated a fresh official source read, both test suites, object GETs, exact payload/digests, two staging reads and frozen-epoch checks.
 - This is bounded raw collection, not a populated synchronized NTM snapshot or full legal/product acceptance. A6 `core-s1-6415f443120f-r9-g106` is unchanged and not sent; no protected action occurred.
 - Evidence: `.ai/orchestration/evidence/cycle317_sgr_nsi1995_epoch315_offset320.json`; TASK_BOARD revision 849. Resume only epoch315 at offset 320 with trailing overlap SHA-256 `be53f06069677e32868539b6335c697bfb15e76ecb73a556fabf2d7fad623e3d`; fail closed on mismatch or total drift, and never resume frozen epoch296.
+
+# 2026-10-17 — NSI-1995 epoch315 advanced to offset 420
+
+- Draft PR #258 remains unchanged at exact head `c59af35da7dde2140d911e2003a4a52fb0611507`, tree `2fee4bb388d1b2db69b2e49ed41d9f4dacea08d9`; exact-head CI run 38920906239 / job 117040259865 remains `success`.
+- Epoch315 resumed at logical offset 320 with 20 retained rows. Overlap SHA-256 `be53f06069677e32868539b6335c697bfb15e76ecb73a556fabf2d7fad623e3d` matched exactly. The source returned 100 new rows; total stayed `778429`, drift false, cursor `next_offset=420`.
+- Raw page and manifest were stored as two immutable objects and independently read back byte-for-byte: page 263,152 bytes / `285b1de9c7421c02d37f30b31635a352bdb342d67ef09677f5f177e1f6643fbc`; manifest 764 bytes / `efce294b9d305dca4c4238cd768567236701db7265dd63618dfdf1412470e2f2`.
+- Staging now has eight epoch315 source objects, four runs and 420 rows. Reread: 420 unique source IDs and row hashes, ordinals 1–420. Exact replay did not grow counts. Frozen epoch296 remains 38/19/1900 and epoch291 remains 8/4/400.
+- Every row remains `COLLECTED_UNVERIFIED`; normalized/rejected counts are 0/0, normalization is false and legal admission is false.
+- Author tests: 50 targeted and 170 expanded passed, exit 0. Independent A5 `/root/a5_cycle318`: `PASS_NO_FINDINGS`; it repeated a fresh official source read, both test suites, object GETs, exact payload/digests, two staging reads and frozen-epoch checks.
+- This is bounded raw collection, not a populated synchronized NTM snapshot or full legal/product acceptance. A6 `core-s1-6415f443120f-r9-g106` is unchanged and not sent; no protected action occurred.
+- Evidence: `.ai/orchestration/evidence/cycle318_sgr_nsi1995_epoch315_offset420.json`; TASK_BOARD revision 850. Resume only epoch315 at offset 420 with trailing overlap SHA-256 `da962feee516bed960fdcea474115dcbe48b09ccdca731a623f63b9adaabbc58`; fail closed on mismatch or total drift, and never resume frozen epoch296.
