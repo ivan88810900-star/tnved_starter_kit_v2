@@ -1,14 +1,14 @@
 {
   "acquisition_note": "Cycle 292 recovered main e526dfbdb5a31b01bf6f743da0288b88f916de0c, PR258 exact head c59af35da7dde2140d911e2003a4a52fb0611507, released generation 291, and stale CI status. GitHub now exposes exact-head run 38920906239/job 117040259865 as success.",
-  "expires_at": "2026-10-17T04:29:38.853962Z",
+  "expires_at": null,
   "generation": 304,
-  "holder": "/root/scheduled-cycle304-20261017T034724Z",
+  "holder": null,
   "lease_repair": {},
-  "release_reason": "Cycle 303 repaired the complete TASK_BOARD after detecting cycle302 truncation (repair dde61d97ea59901393538b800fd3a426326467c7, independently verified), then advanced guarded NSI-1995 epoch cycle296 from offset 800 to 900 on unchanged PR258 head c59af35da7dde2140d911e2003a4a52fb0611507/tree 2fee4bb388d1b2db69b2e49ed41d9f4dacea08d9. Stable total 778429; overlap exact; 100 new rows. Two immutable objects read back 2/2; staging is 18 objects/9 runs/900 rows/900 IDs/hashes, all COLLECTED_UNVERIFIED; replay unchanged; frozen epoch291 remains 400. Author 31+191 PASS; independent A5 PASS/no findings with repeat tests and DB/local 900/900. Exact-head CI run38920906239/job117040259865 success. State checkpoint 4572a2df2ce2d530a80ecf4dc464eb49a0d5b690; PR receipt 6228831087; issue257 receipt 6228831286. Snapshot incomplete; A6 unchanged/not sent.",
-  "released_by": "/root/scheduled-cycle303-20261017T024904Z",
+  "release_reason": "Cycle 304 advanced guarded NSI-1995 epoch cycle296 from offset 900 to 1000 on unchanged PR258 head c59af35da7dde2140d911e2003a4a52fb0611507/tree 2fee4bb388d1b2db69b2e49ed41d9f4dacea08d9. Stable total 778429; overlap exact; 100 new rows. Two immutable objects read back 2/2; staging is 20 objects/10 runs/1000 rows/1000 IDs/hashes, all COLLECTED_UNVERIFIED; replay unchanged; frozen epoch291 remains 400. Author 31+191 PASS; independent A5 PASS/no findings with repeat tests and DB/local 1000/1000. Exact-head CI run38920906239/job117040259865 success. State checkpoint 2d5601b4a990bf33534f88e56ba93e31a3a37040; PR receipt 6229432787; issue257 receipt 6229432947. Snapshot incomplete; A6 unchanged/not sent.",
+  "released_by": "/root/scheduled-cycle304-20261017T034724Z",
   "schema_version": 1,
   "serialization_repair": {},
-  "state": "active",
-  "token": "7b16cd07d7ab481b8192aa37d51fdc47",
-  "updated_at": "2026-10-17T03:59:38.853962Z"
+  "state": "released",
+  "token": null,
+  "updated_at": "2026-10-17T04:06:12.048946Z"
 }
