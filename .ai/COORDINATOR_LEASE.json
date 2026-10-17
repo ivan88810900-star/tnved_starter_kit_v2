@@ -1,14 +1,14 @@
 {
   "acquisition_note": "Cycle 292 recovered main e526dfbdb5a31b01bf6f743da0288b88f916de0c, PR258 exact head c59af35da7dde2140d911e2003a4a52fb0611507, released generation 291, and stale CI status. GitHub now exposes exact-head run 38920906239/job 117040259865 as success.",
-  "expires_at": "2026-10-17T15:46:11.524348Z",
+  "expires_at": null,
   "generation": 315,
-  "holder": "/root/scheduled-cycle315-20261017T145625Z",
+  "holder": null,
   "lease_repair": {},
   "release_reason": "Cycle315 observed 3 identical NSI-1995 offset0/limit120 pages, started separate epoch315, stored/read back 2 immutable objects and staged 1 run/120 COLLECTED_UNVERIFIED rows. Replay idempotent; epoch296 remains frozen 38/19/1900 and epoch291 remains 8/4/400. Author 50+170 PASS; independent A5 PASS_NO_FINDINGS; exact-head CI run38920906239/job117040259865 success. State checkpoint 3206b855921125e11399f30d7b67bf22a785f1e0; PR receipt 6235639524; issue257 receipt 6235641204. Snapshot incomplete; A6 unchanged/not sent.",
   "released_by": "/root/scheduled-cycle315-20261017T145625Z",
   "schema_version": 1,
   "serialization_repair": {},
-  "state": "active",
-  "token": "5f2bb19f581447ecb07a83e10c9aeaa1",
-  "updated_at": "2026-10-17T15:16:11.524348Z"
+  "state": "released",
+  "token": null,
+  "updated_at": "2026-10-17T15:20:40.115665Z"
 }
