@@ -2179,7 +2179,7 @@
       "unique_source_pr_count": 29
     }
   },
-  "revision": 843,
+  "revision": 844,
   "runs": [
     {
       "head_sha": null,
@@ -7797,7 +7797,7 @@
       }
     }
   ],
-  "updated_at": "2026-10-17T11:05:02Z",
+  "updated_at": "2026-10-17T12:04:53Z",
   "previous_scheduled_product_checkpoint_174": {
     "updated_at": "2026-10-11T18:04:51.196Z",
     "checked_at": "2026-10-11T18:04:51.196Z",
@@ -11513,67 +11513,49 @@
     "next_step": "First recheck exact-head CI for 09bd88e3085921733708578cce6e21a70430c0fd and accept only a verified successful run. Then isolate tests/test_rop_coverage_audit.py: on clean exact HEAD it exits 1 with 4 failed because rop_goods_rates is absent and creates a 4,096-byte ambient customs.db; preserve its 97-chapter, subject/not-subject and summary assertions without changing product or normative data."
   },
   "latest_scheduled_product_checkpoint": {
-    "updated_at": "2026-10-16T11:19:05Z",
-    "checked_at": "2026-10-16T11:19:05Z",
-    "task_id": "TARIFF-STAGING-FIRST-PERSISTENT-INGEST-20261016",
-    "pr": 256,
-    "branch": "agent/product-ntm-regressions-v1",
-    "head_sha": "38a475d20f44e9624435ea0089def0b16b9e1bd5",
-    "tree_sha": "a5ec80034901d5a6d4a12f4e978e495e72721b4c",
-    "block": "first_persistent_raw_first_staging_ingest",
-    "status": "PERSISTENT_STAGING_INGESTED_COLLECTED_UNVERIFIED_A5_PASS",
+    "schema_version": 1,
+    "task_id": "TARIFF-STAGING-SGR-NSI1995-NEW-EPOCH-OFFSET1800-20261017",
+    "started_at": "2026-10-17T11:55:23Z",
+    "completed_at": "2026-10-17T12:04:53Z",
+    "executor": "/root/scheduled-cycle312-20261017T115523Z",
+    "lease_generation": 312,
+    "pr": 258,
+    "head_sha": "c59af35da7dde2140d911e2003a4a52fb0611507",
+    "tree_sha": "2fee4bb388d1b2db69b2e49ed41d9f4dacea08d9",
+    "status": "NEW_EPOCH_1800_ROWS_A5_PASS_CI_PASS",
+    "product_changed": false,
+    "capture": {
+      "official_total": 778429,
+      "total_stable": true,
+      "new_rows": 100,
+      "cursor_next_offset": 1800,
+      "verified_overlap_rows": 20,
+      "verified_overlap_sha256": "bada32a6c993662ef1abeda63f2396398d541f44736547aabda7938a05ab24fe",
+      "next_trailing_overlap_sha256": "b3675d046407cf027f498cd42df4e29fa4fc6bd02ef8c3c165f065e99164853c"
+    },
     "staging": {
-      "project_id": "red-meadow-53765518",
-      "branch_id": "br-weathered-frost-ba9jri3c",
-      "database": "tariff_staging",
-      "schema": "tariff_ingest",
-      "bucket": "official-originals",
-      "production": false
-    },
-    "source": {
-      "authority": "Eurasian Economic Commission",
-      "url": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.29_2022_24.05.2024.pdf",
-      "object_key": "ett/2025-01-01/sha256/418666f5fc61db171a9d0bbcf068753504cd29ff04f0f4ac62d4e1147980b51a/ru.29_2022_24.05.2024.pdf",
-      "sha256": "418666f5fc61db171a9d0bbcf068753504cd29ff04f0f4ac62d4e1147980b51a",
-      "size_bytes": 957135,
-      "page_count": 49,
-      "download_reread_sha256_match": true
-    },
-    "ingest": {
-      "run_id": "cycle285-eec-ett-ch29-first20",
-      "classification": "COLLECTED_UNVERIFIED",
-      "raw_count": 20,
-      "unique_hs_count": 20,
-      "collected_unverified_count": 20,
+      "new_immutable_objects": 2,
+      "epoch_source_objects": 36,
+      "epoch_ingest_runs": 18,
+      "epoch_rows": 1800,
+      "unique_source_ids": 1800,
+      "unique_row_hashes": 1800,
+      "ordered_row_hash_digest": "d5683d073bdacbc733bb4c131fa4b4e3c46b093ef26c9d83d03f2d5a1adce194",
+      "status": "COLLECTED_UNVERIFIED",
       "normalized_count": 0,
       "rejected_count": 0,
-      "resume_cursor": {
-        "last_ordinal": 20,
-        "last_hs_code": "2902700000"
-      },
+      "legal_admission": false,
       "idempotent_replay_count_unchanged": true,
-      "utf8_hash_matches": 20,
-      "mojibake_markers": 0
+      "frozen_epoch291_rows": 400
     },
-    "verification": {
-      "object_download": "curl GET exit 0; 957135 bytes; SHA-256 exact match",
-      "extraction": "pdftotext -layout exit 0; bounded first 20 exact 10-digit chapter-29 rows",
-      "transactions": "initial write and repeat transaction succeeded; counts remained 20/20",
-      "encoding_repair": "Independent A5 detected an initial UTF-8 serialization defect before checkpoint. Rows were corrected in-place by explicit UTF-8 extraction; repeated upsert and reread proved 20/20 SHA matches and zero mojibake markers.",
-      "independent_a5": "PASS after correction; byte-identical object, 20/20 UTF-8 row-hash matches, zero duplicate groups, zero mojibake markers, ordered PDF/DB digests match"
-    },
-    "limits": [
-      "Collected rows are not normalized, legally admitted, or usable for product totals.",
-      "This is a bounded staging ingestion, not a populated synchronized NTM snapshot.",
-      "No product code, production database, deployment, enforcement flag, secret, permission, merge, or A6 request changed."
-    ],
-    "a6": {
-      "request": "core-s1-6415f443120f-r9-g106",
-      "status": "UNCHANGED_NOT_SENT"
-    },
+    "author_tests": "31 targeted and 190 expanded passed, exit 0",
+    "independent_a5": "PASS_NO_FINDINGS; targeted 31, adjacent 190 and fail-closed negatives 4 passed; fresh object GET 2/2 exact; DB/source 1800/1800 and all digests exact; new-slice identity/hash digests 846bef07f2cf7c6c9492a0ff6154ff9e4ed6a088c7b95dd1f758b1315c497e69/367f657f6a2cd913efa86a321f01e776a08bb1bc870f3b68e76424d5564ebd1b; frozen epoch291 400 unchanged",
+    "exact_head_ci": "run 38920906239 / job 117040259865 success",
+    "snapshot_status": "BOUNDED_NEW_EPOCH_1800_ROWS_POPULATED_SYNCHRONIZED_NTM_NOT_AVAILABLE",
+    "a6": "UNCHANGED_NOT_SENT",
     "protected_actions_performed": false,
-    "evidence": ".ai/orchestration/evidence/cycle285_first_persistent_staging_ingest.json",
-    "next_step": "Extend the raw-first staging loader with explicit UTF-8 regression coverage and continue a resumable bounded collection; legal/source admission remains a separate fail-closed gate."
+    "evidence": ".ai/orchestration/evidence/cycle312_sgr_nsi1995_offset1800.json",
+    "next_step": "Resume only epoch cycle296 at logical offset 1800 with 20-row overlap digest b3675d046407cf027f498cd42df4e29fa4fc6bd02ef8c3c165f065e99164853c; fail closed on mismatch or total drift."
   },
   "latest_development_checkpoint": {
     "updated_at": "2026-10-16T09:12:32.706Z",
@@ -16608,5 +16590,50 @@
     "protected_actions_performed": false,
     "evidence": ".ai/orchestration/evidence/cycle311_sgr_nsi1995_offset1700.json",
     "next_step": "Resume only epoch cycle296 at logical offset 1700 with 20-row overlap digest bada32a6c993662ef1abeda63f2396398d541f44736547aabda7938a05ab24fe; fail closed on mismatch or total drift."
+  },
+  "previous_scheduled_product_checkpoint_312": {
+    "schema_version": 1,
+    "task_id": "TARIFF-STAGING-SGR-NSI1995-NEW-EPOCH-OFFSET1800-20261017",
+    "started_at": "2026-10-17T11:55:23Z",
+    "completed_at": "2026-10-17T12:04:53Z",
+    "executor": "/root/scheduled-cycle312-20261017T115523Z",
+    "lease_generation": 312,
+    "pr": 258,
+    "head_sha": "c59af35da7dde2140d911e2003a4a52fb0611507",
+    "tree_sha": "2fee4bb388d1b2db69b2e49ed41d9f4dacea08d9",
+    "status": "NEW_EPOCH_1800_ROWS_A5_PASS_CI_PASS",
+    "product_changed": false,
+    "capture": {
+      "official_total": 778429,
+      "total_stable": true,
+      "new_rows": 100,
+      "cursor_next_offset": 1800,
+      "verified_overlap_rows": 20,
+      "verified_overlap_sha256": "bada32a6c993662ef1abeda63f2396398d541f44736547aabda7938a05ab24fe",
+      "next_trailing_overlap_sha256": "b3675d046407cf027f498cd42df4e29fa4fc6bd02ef8c3c165f065e99164853c"
+    },
+    "staging": {
+      "new_immutable_objects": 2,
+      "epoch_source_objects": 36,
+      "epoch_ingest_runs": 18,
+      "epoch_rows": 1800,
+      "unique_source_ids": 1800,
+      "unique_row_hashes": 1800,
+      "ordered_row_hash_digest": "d5683d073bdacbc733bb4c131fa4b4e3c46b093ef26c9d83d03f2d5a1adce194",
+      "status": "COLLECTED_UNVERIFIED",
+      "normalized_count": 0,
+      "rejected_count": 0,
+      "legal_admission": false,
+      "idempotent_replay_count_unchanged": true,
+      "frozen_epoch291_rows": 400
+    },
+    "author_tests": "31 targeted and 190 expanded passed, exit 0",
+    "independent_a5": "PASS_NO_FINDINGS; targeted 31, adjacent 190 and fail-closed negatives 4 passed; fresh object GET 2/2 exact; DB/source 1800/1800 and all digests exact; new-slice identity/hash digests 846bef07f2cf7c6c9492a0ff6154ff9e4ed6a088c7b95dd1f758b1315c497e69/367f657f6a2cd913efa86a321f01e776a08bb1bc870f3b68e76424d5564ebd1b; frozen epoch291 400 unchanged",
+    "exact_head_ci": "run 38920906239 / job 117040259865 success",
+    "snapshot_status": "BOUNDED_NEW_EPOCH_1800_ROWS_POPULATED_SYNCHRONIZED_NTM_NOT_AVAILABLE",
+    "a6": "UNCHANGED_NOT_SENT",
+    "protected_actions_performed": false,
+    "evidence": ".ai/orchestration/evidence/cycle312_sgr_nsi1995_offset1800.json",
+    "next_step": "Resume only epoch cycle296 at logical offset 1800 with 20-row overlap digest b3675d046407cf027f498cd42df4e29fa4fc6bd02ef8c3c165f065e99164853c; fail closed on mismatch or total drift."
   }
 }
