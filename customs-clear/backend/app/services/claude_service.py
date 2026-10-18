@@ -168,17 +168,30 @@ async def _ask_llm(system_prompt: str, user_text: str) -> dict[str, Any]:
         return {"provider": "none", "text": "", "raw": {}}
 
     last_exc: Exception | None = None
+    last_empty_response: dict[str, Any] | None = None
     for provider, key in chain:
         logger.info(f"Запрос к LLM провайдеру: {provider}")
         try:
             if provider == "gemini":
-                return await _call_gemini(system_prompt, user_text, key)
-            return await _call_anthropic(system_prompt, user_text, key)
+                response = await _call_gemini(system_prompt, user_text, key)
+            else:
+                response = await _call_anthropic(system_prompt, user_text, key)
+            if not isinstance(response, dict) or not str(response.get("text") or "").strip():
+                logger.warning("LLM провайдер {} вернул пустой ответ", provider)
+                last_empty_response = (
+                    response
+                    if isinstance(response, dict)
+                    else {"provider": provider, "text": "", "raw": {}}
+                )
+                continue
+            return response
         except (httpx.HTTPError, OSError, TimeoutError) as exc:
             logger.warning(f"LLM провайдер {provider} недоступен: {exc}")
             last_exc = exc
             continue
 
+    if last_empty_response is not None:
+        return last_empty_response
     if last_exc is not None:
         raise last_exc
     return {"provider": "none", "text": "", "raw": {}}

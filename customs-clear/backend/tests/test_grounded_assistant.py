@@ -8,6 +8,7 @@ from copy import deepcopy
 from datetime import datetime, timedelta, timezone
 from unittest.mock import AsyncMock, patch
 
+from app.services import claude_service
 from app.services.assistant_chat import run_assistant_chat
 from app.services.assistant_orchestrator import bundle_for_llm
 from app.services.claude_service import analyze_copilot_bundle
@@ -622,6 +623,47 @@ class AssistantChatGuardrailTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(result["answer"], deterministic_answer)
         self.assertIn("Если код не соответствует фактическим характеристикам", result["answer"])
 
+    async def test_empty_primary_response_uses_secondary_provider(self) -> None:
+        bundle = deepcopy(_chat_bundle())
+        bundle["requirements"]["data_freshness"]["ntm_coverage_verified"] = True
+        deterministic_answer, _ = render_chat_grounded_answer(bundle)
+        response = json.dumps(
+            {
+                "use_server_draft": True,
+                "citation_ids": ["S1", "S2", "S3", "S4"],
+            },
+            ensure_ascii=False,
+        )
+        chain = [("anthropic", "anthropic-test"), ("gemini", "gemini-test")]
+        anthropic = AsyncMock(
+            return_value={"provider": "anthropic", "text": "", "raw": {}}
+        )
+        gemini = AsyncMock(
+            return_value={"provider": "gemini", "text": response, "raw": {}}
+        )
+        with (
+            patch(
+                "app.services.assistant_chat.build_chat_grounding_bundle",
+                new=AsyncMock(return_value=bundle),
+            ),
+            patch("app.services.assistant_chat.llm_provider_chain", return_value=chain),
+            patch.object(claude_service, "llm_provider_chain", return_value=chain),
+            patch.object(claude_service, "_call_anthropic", new=anthropic),
+            patch.object(claude_service, "_call_gemini", new=gemini),
+        ):
+            result = await run_assistant_chat(
+                message="Сколько платить?",
+                history=[],
+                current_context={"hs_code": "8516108008"},
+            )
+
+        anthropic.assert_awaited_once()
+        gemini.assert_awaited_once()
+        self.assertEqual(result["grounding"]["mode"], "llm_grounded")
+        self.assertEqual(result["grounding"]["provider"], "gemini")
+        self.assertEqual(result["answer"], deterministic_answer)
+        self.assertNotIn(response, json.dumps(result, ensure_ascii=False))
+
     async def test_valid_but_unrelated_citation_cannot_inject_material_claims(self) -> None:
         bundle = deepcopy(_chat_bundle())
         bundle["requirements"]["data_freshness"]["ntm_coverage_verified"] = True
@@ -1067,6 +1109,55 @@ class CopilotGroundingTests(unittest.IsolatedAsyncioTestCase):
         ):
             self.assertEqual(result[key], deterministic[key])
         self.assertIn("требует проверки характеристик по ОПИ", result["classification_advice"])
+
+    async def test_copilot_empty_primary_response_uses_secondary_provider(self) -> None:
+        context = self._context()
+        context["normative_requirements"]["data_freshness"][
+            "ntm_coverage_verified"
+        ] = True
+        with patch("app.services.claude_service._choose_provider", return_value=("none", None)):
+            deterministic = await analyze_copilot_bundle(context)
+        response = json.dumps(
+            {
+                "use_server_draft": True,
+                "citation_ids": [row["id"] for row in deterministic["citations"]],
+            },
+            ensure_ascii=False,
+        )
+        chain = [("anthropic", "anthropic-test"), ("gemini", "gemini-test")]
+        anthropic = AsyncMock(
+            return_value={"provider": "anthropic", "text": "", "raw": {}}
+        )
+        gemini = AsyncMock(
+            return_value={"provider": "gemini", "text": response, "raw": {}}
+        )
+        with (
+            patch(
+                "app.services.claude_service._choose_provider",
+                return_value=("anthropic", "anthropic-test"),
+            ),
+            patch.object(claude_service, "llm_provider_chain", return_value=chain),
+            patch.object(claude_service, "_call_anthropic", new=anthropic),
+            patch.object(claude_service, "_call_gemini", new=gemini),
+        ):
+            result = await analyze_copilot_bundle(context)
+
+        anthropic.assert_awaited_once()
+        gemini.assert_awaited_once()
+        self.assertEqual(result["grounding"]["mode"], "llm_grounded")
+        self.assertEqual(result["grounding"]["provider"], "gemini")
+        for key in (
+            "summary",
+            "classification_advice",
+            "payment_comment",
+            "non_tariff_comment",
+            "documents_comment",
+            "risks",
+            "next_steps",
+            "disclaimer",
+        ):
+            self.assertEqual(result[key], deterministic[key])
+        self.assertNotIn(response, json.dumps(result, ensure_ascii=False))
 
     async def test_valid_but_unrelated_citation_cannot_inject_copilot_material_claims(self) -> None:
         context = self._context()
