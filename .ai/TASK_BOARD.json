@@ -11536,7 +11536,10 @@
     "a0_validation": "Exact remote head a8ead187c3622b4713af59d083b969918c9c592c passed 55 tests +26 subtests, exit 0; remote tree equals tested tree",
     "exact_head_ci": "run 39170591705 / job 117802618517 success",
     "preexisting_order_isolation": "On both previous head 130a5ec6e69a837bc7dfd36d30ee2e7dbd813fc8 and candidate, the single-process security/grounded/payment/batch/copilot/provider matrix reaches ambient SQLite without hs_duty_rules: previous head 3 failed +1 teardown error after 70 passed +32 subtests; candidate 3 failed +1 teardown error after 82 passed +32 subtests. This is not attributed to this two-file candidate.",
-    "receipts": {},
+    "receipts": {
+      "pr256": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256#issuecomment-6255756000",
+      "issue257": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/257#issuecomment-6255756219"
+    },
     "snapshot_status": "BOUNDED_EPOCH315_1020_ROWS_POPULATED_SYNCHRONIZED_NTM_NOT_AVAILABLE",
     "staging_blocker": "cycle325 offset1120 transfer remains policy-refused after the owner-authorized attempt; no retry or workaround",
     "a6": "UNCHANGED_NOT_SENT",

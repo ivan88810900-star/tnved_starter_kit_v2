@@ -51,7 +51,16 @@
     "classification": "pre-existing and not caused by this candidate",
     "next_step": "isolate the security-test to assistant ambient-SQLite order leak as a separate bounded block"
   },
-  "receipts": {},
+  "receipts": {
+    "pr256": {
+      "id": 6255756000,
+      "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256#issuecomment-6255756000"
+    },
+    "issue257": {
+      "id": 6255756219,
+      "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/257#issuecomment-6255756219"
+    }
+  },
   "snapshot_status": "BOUNDED_EPOCH315_1020_ROWS_POPULATED_SYNCHRONIZED_NTM_NOT_AVAILABLE",
   "staging_blocker": "cycle325 offset1120 transfer remains policy-refused after the owner-authorized attempt; no retry or workaround",
   "a6": "UNCHANGED_NOT_SENT",
