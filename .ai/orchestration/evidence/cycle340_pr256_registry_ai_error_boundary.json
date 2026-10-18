@@ -44,8 +44,14 @@
     "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/39161290814/job/117774976590"
   },
   "receipts": {
-    "pr256": null,
-    "issue257": null
+    "pr256": {
+      "id": 6254504034,
+      "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256#issuecomment-6254504034"
+    },
+    "issue257": {
+      "id": 6254504198,
+      "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/257#issuecomment-6254504198"
+    }
   },
   "snapshot_status": "BOUNDED_EPOCH315_1020_ROWS_POPULATED_SYNCHRONIZED_NTM_NOT_AVAILABLE",
   "staging_blocker": "cycle325 offset1120 transfer remains policy-refused after the owner-authorized attempt; no retry or workaround",
