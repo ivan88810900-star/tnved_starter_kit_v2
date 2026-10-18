@@ -1,0 +1,68 @@
+{
+  "schema_version": 1,
+  "task_id": "TARIFF-PR256-PAYMENT-QUOTE-E2E-REVALIDATION-20261018",
+  "started_at": "2026-10-18T06:54:47Z",
+  "completed_at": "2026-10-18T07:02:35Z",
+  "executor": "/root/scheduled-cycle326-20261018T065447Z",
+  "lease_generation": 326,
+  "repository": "ivan88810900-star/tnved_starter_kit_v2",
+  "pr": 256,
+  "branch": "agent/product-ntm-regressions-v1",
+  "head_sha": "0320a7d268b33413c48dffc963cde6b0ec051ab1",
+  "tree_sha": "f5fc479d8ef6696880dcc28614c8a3e3da35e648",
+  "product_changed": false,
+  "status": "UNCHANGED_HEAD_PAYMENT_QUOTE_E2E_A5_PASS_CI_PASS",
+  "scope": {
+    "included": [
+      "payment quote service and API",
+      "duty, VAT, excise, antidumping and special-duty totals",
+      "manufacturer/product-scope fail-closed behavior",
+      "destination-country exceptions",
+      "effective-date boundaries and neighboring-code/origin negative cases"
+    ],
+    "excluded": [
+      "product or fixture modification",
+      "Neon staging write or retry of the refused offset1120 transfer",
+      "legal completeness claim",
+      "A6 dispatch, merge, deploy, production write or protected flag change"
+    ]
+  },
+  "author_verification": {
+    "command": "run_dir=$(mktemp -d /workspace/scratch/fbec4e55bd91/cycle326-test-XXXXXX); DATABASE_URL=sqlite:///$run_dir/product.sqlite PYTHONPATH=. /workspace/scratch/fbec4e55bd91/.venv326/bin/python -m pytest -q tests/test_payment_quote.py tests/test_payment_engine.py tests/test_special_duties.py tests/test_pay1_titanium_dioxide.py tests/test_pay2_spark_plugs.py",
+    "exit_code": 0,
+    "result": "83 passed, 1 StarletteDeprecationWarning, 2.20s",
+    "log_sha256": "52a04ee504c22adc8f6be867e2b4835b201af0ed7a90353ed19b288100f9be92",
+    "tracked_tree_clean": true
+  },
+  "independent_a5": {
+    "session": "/root/a5_cycle326",
+    "command": "REVIEW_DB_DIR=$(mktemp -d /tmp/tariff-a5-cycle326-XXXXXX); DATABASE_URL=sqlite:///$REVIEW_DB_DIR/a5.sqlite3 PYTHONDONTWRITEBYTECODE=1 /workspace/scratch/fbec4e55bd91/.venv326/bin/python -m pytest -q -p no:cacheprovider tests/test_pay1_titanium_dioxide.py tests/test_pay2_spark_plugs.py tests/test_payment_quote.py tests/test_payment_engine.py tests/test_special_duties.py",
+    "exit_code": 0,
+    "result": "83 passed, 1 StarletteDeprecationWarning, 2.00s",
+    "status": "PASS_NO_FINDINGS",
+    "tracked_tree_clean": true,
+    "finding": "Unverified manufacturer/product scope, missing or exception destination facts, rejected VAT provenance and other unresolved payment inputs preserve null affected amounts, manual review and withheld final totals."
+  },
+  "exact_head_ci": {
+    "run_id": 38898431622,
+    "job_id": 116964443470,
+    "job": "offline-safety",
+    "conclusion": "success",
+    "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38898431622/job/116964443470"
+  },
+  "capabilities": {
+    "code_access": "FULL_CLONE exact PR256 head and tree",
+    "command_execution": "Git, Python and isolated pytest environment available",
+    "lawful_publication": "State and issue/PR checkpoint writes only under lease generation 326 and CAS; no protected action",
+    "checkpoint": "pending CAS publication and reread"
+  },
+  "snapshot_status": "BOUNDED_EPOCH315_1020_ROWS_POPULATED_SYNCHRONIZED_NTM_NOT_AVAILABLE",
+  "existing_staging_blocker": "The offset1120 Neon raw-record transaction remains policy-refused and must not be retried or worked around without explicit informed owner approval or normal platform verification that the destination is trusted.",
+  "a6": "UNCHANGED_NOT_SENT",
+  "protected_actions_performed": false,
+  "limitations": [
+    "This is bounded executable product verification on an unchanged candidate, not full PR245/PR256 acceptance.",
+    "No new legal applicability or source-completeness conclusion was made."
+  ],
+  "next_step": "Continue the next bounded PR256/PR245 NTM/search/assistant product slice without retrying the prohibited Neon transfer; preserve fail-closed provenance and totals."
+}
