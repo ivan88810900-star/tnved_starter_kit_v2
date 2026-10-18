@@ -104,23 +104,25 @@ async def anthropic_messages_request(payload: dict[str, Any], *, key: str | None
 
 
 async def complete_text(user_text: str, *, system_prompt: str | None = None, max_tokens: int = 1024) -> str:
-    """Короткий текстовый ответ Claude (перевод, вспомогательные промпты)."""
-    key = _anthropic_key_env()
-    if not key:
-        llm_resp = await _ask_llm(system_prompt or "Отвечай кратко.", user_text)
-        return (llm_resp.get("text") or "").strip()
-    payload: dict[str, Any] = {
-        "model": ANTHROPIC_MODEL_NAME,
-        "max_tokens": max_tokens,
-        "messages": [{"role": "user", "content": user_text}],
-    }
-    if system_prompt:
-        payload["system"] = system_prompt
-    data = await anthropic_messages_request(payload, key=key)
-    return _extract_anthropic_text(data)
+    """Короткий текстовый ответ настроенного LLM (перевод, вспомогательные промпты)."""
+    try:
+        llm_resp = await _ask_llm(
+            system_prompt or "Отвечай кратко.",
+            user_text,
+            max_tokens=max_tokens,
+        )
+    except (httpx.HTTPError, OSError, TimeoutError, json.JSONDecodeError) as exc:
+        raise RuntimeError(safe_ai_error_note(exc)) from None
+    return (llm_resp.get("text") or "").strip()
 
 
-async def _call_anthropic(system_prompt: str, user_text: str, key: str) -> dict[str, Any]:
+async def _call_anthropic(
+    system_prompt: str,
+    user_text: str,
+    key: str,
+    *,
+    max_tokens: int = 1024,
+) -> dict[str, Any]:
     headers = {
         "x-api-key": key,
         "anthropic-version": "2023-06-01",
@@ -128,7 +130,7 @@ async def _call_anthropic(system_prompt: str, user_text: str, key: str) -> dict[
     }
     payload = {
         "model": ANTHROPIC_MODEL_NAME,
-        "max_tokens": 1024,
+        "max_tokens": max_tokens,
         "system": system_prompt,
         "messages": [{"role": "user", "content": user_text}],
     }
@@ -140,11 +142,17 @@ async def _call_anthropic(system_prompt: str, user_text: str, key: str) -> dict[
     return {"provider": "anthropic", "text": text, "raw": data}
 
 
-async def _call_gemini(system_prompt: str, user_text: str, key: str) -> dict[str, Any]:
+async def _call_gemini(
+    system_prompt: str,
+    user_text: str,
+    key: str,
+    *,
+    max_tokens: int = 1200,
+) -> dict[str, Any]:
     payload = {
         "systemInstruction": {"parts": [{"text": system_prompt}]},
         "contents": [{"role": "user", "parts": [{"text": user_text}]}],
-        "generationConfig": {"temperature": 0.2, "maxOutputTokens": 1200},
+        "generationConfig": {"temperature": 0.2, "maxOutputTokens": max_tokens},
     }
     url = gemini_generate_content_rest_url(resolved_gemini_model_name())
     async with httpx.AsyncClient(timeout=60.0) as client:
@@ -162,7 +170,12 @@ async def _call_gemini(system_prompt: str, user_text: str, key: str) -> dict[str
     return {"provider": "gemini", "text": text.strip(), "raw": data}
 
 
-async def _ask_llm(system_prompt: str, user_text: str) -> dict[str, Any]:
+async def _ask_llm(
+    system_prompt: str,
+    user_text: str,
+    *,
+    max_tokens: int | None = None,
+) -> dict[str, Any]:
     chain = llm_provider_chain()
     if not chain:
         return {"provider": "none", "text": "", "raw": {}}
@@ -173,9 +186,25 @@ async def _ask_llm(system_prompt: str, user_text: str) -> dict[str, Any]:
         logger.info(f"Запрос к LLM провайдеру: {provider}")
         try:
             if provider == "gemini":
-                response = await _call_gemini(system_prompt, user_text, key)
+                if max_tokens is None:
+                    response = await _call_gemini(system_prompt, user_text, key)
+                else:
+                    response = await _call_gemini(
+                        system_prompt,
+                        user_text,
+                        key,
+                        max_tokens=max_tokens,
+                    )
             else:
-                response = await _call_anthropic(system_prompt, user_text, key)
+                if max_tokens is None:
+                    response = await _call_anthropic(system_prompt, user_text, key)
+                else:
+                    response = await _call_anthropic(
+                        system_prompt,
+                        user_text,
+                        key,
+                        max_tokens=max_tokens,
+                    )
             if not isinstance(response, dict) or not str(response.get("text") or "").strip():
                 logger.warning("LLM провайдер {} вернул пустой ответ", provider)
                 last_empty_response = (
@@ -186,7 +215,12 @@ async def _ask_llm(system_prompt: str, user_text: str) -> dict[str, Any]:
                 continue
             return response
         except (httpx.HTTPError, OSError, TimeoutError, json.JSONDecodeError) as exc:
-            logger.warning(f"LLM провайдер {provider} недоступен: {exc}")
+            logger.warning(
+                "LLM провайдер {} недоступен ({}): {}",
+                provider,
+                type(exc).__name__,
+                safe_ai_error_note(exc),
+            )
             last_exc = exc
             continue
 
