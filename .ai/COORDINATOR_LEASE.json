@@ -1,14 +1,14 @@
 {
   "acquisition_note": "Cycle 292 recovered main e526dfbdb5a31b01bf6f743da0288b88f916de0c, PR258 exact head c59af35da7dde2140d911e2003a4a52fb0611507, released generation 291, and stale CI status. GitHub now exposes exact-head run 38920906239/job 117040259865 as success.",
-  "expires_at": "2026-10-18T05:20:53.188957Z",
+  "expires_at": null,
   "generation": 324,
-  "holder": "/root/scheduled-cycle324-20261018T044933Z",
+  "holder": null,
   "lease_repair": {},
-  "release_reason": "Cycle323 advanced epoch315 from logical offset820 to920 after exact 20-row overlap match; stored/read back 2 immutable objects and staged 100 new COLLECTED_UNVERIFIED rows for totals 18 objects/9 runs/920 rows. Replay idempotent; epochs296 and291 remained frozen 38/19/1900 and8/4/400. Author 50+170 PASS; independent A5 PASS_NO_FINDINGS; exact-head CI run38920906239/job117040259865 success. State checkpoint f2aa78074d0f4f09f7cc14915668583313a94f1b; PR receipt 6245530843; issue257 receipt 6245532035. Snapshot incomplete; A6 unchanged/not sent.",
-  "released_by": "/root/scheduled-cycle323-20261018T035437Z",
+  "release_reason": "Cycle324 advanced epoch315 from logical offset920 to1020 after exact 20-row overlap match; stored/read back 2 immutable objects and staged 100 new COLLECTED_UNVERIFIED rows for totals 20 objects/10 runs/1020 rows. Replay idempotent; epochs296 and291 remained frozen 38/19/1900 and8/4/400. Author 50+170 PASS; independent A5 PASS_NO_FINDINGS; exact-head CI run38920906239/job117040259865 success. State checkpoint 116b7d693987adb89166397257bad14b877a5c1f; PR receipt 6245948966; issue257 receipt 6245949787. Snapshot incomplete; A6 unchanged/not sent.",
+  "released_by": "/root/scheduled-cycle324-20261018T044933Z",
   "schema_version": 1,
   "serialization_repair": {},
-  "state": "active",
-  "token": "6fa12173b11f4619b026f289c657053d",
-  "updated_at": "2026-10-18T04:50:53.188957Z"
+  "state": "released",
+  "token": null,
+  "updated_at": "2026-10-18T05:08:12.990704Z"
 }
