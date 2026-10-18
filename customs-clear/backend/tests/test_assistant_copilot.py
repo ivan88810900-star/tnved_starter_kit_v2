@@ -237,6 +237,28 @@ class CopilotPipelineTests(unittest.IsolatedAsyncioTestCase):
         slim = bundle_for_llm(b)
         self.assertIn("payment_summary", slim)
 
+    async def test_registry_request_without_hs_reports_blocked_not_disabled(self):
+        bundle = await run_copilot_pipeline(
+            description="товар без подтверждённого кода",
+            hs_code="",
+            country="CN",
+            customs_value=None,
+            freight=0,
+            permits=[{"type": "ДС", "number": "ЕАЭС N RU TEST"}],
+            run_ai_classification=False,
+            run_payment=False,
+            run_registry_verify=True,
+        )
+
+        registry_step = next(
+            step for step in bundle["pipeline"] if step["step"] == "registry"
+        )
+        self.assertTrue(registry_step["skipped"])
+        self.assertIn("нет кода ТН ВЭД", registry_step["detail"])
+        self.assertNotIn("выключено", registry_step["detail"])
+        self.assertEqual(bundle["non_tariff"]["status"], "UNKNOWN")
+        self.assertIsNone(bundle["permits_verification"])
+
 
 class CopilotNormativeFreshnessIntegrationTests(unittest.IsolatedAsyncioTestCase):
     @staticmethod
