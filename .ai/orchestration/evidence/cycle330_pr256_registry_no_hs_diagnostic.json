@@ -1,0 +1,62 @@
+{
+  "schema_version": 1,
+  "task_id": "TARIFF-PR256-REGISTRY-NO-HS-DIAGNOSTIC-20261018",
+  "executor": "/root/scheduled-cycle330-20261018T101417Z",
+  "lease_generation": 330,
+  "completed_at": "2026-10-18T10:23:36.557Z",
+  "repository": "ivan88810900-star/tnved_starter_kit_v2",
+  "pr": 256,
+  "branch": "agent/product-ntm-regressions-v1",
+  "previous_head_sha": "6dce1cbd57066f27bd00464d07af52706fa4ac58",
+  "head_sha": "e8c162ef7850d6a449b4ff87fe2d1bd610ff06ac",
+  "tree_sha": "600474b2d4ec0d1cee1d1c1a17f7b647b1c0dd46",
+  "commits": [
+    "10f165245b76188f50111ff479ab4325a2774870",
+    "e8c162ef7850d6a449b4ff87fe2d1bd610ff06ac"
+  ],
+  "finding": "When registry verification was requested with a permit number but no effective HS code, the registry pipeline step fell through to the disabled branch and falsely reported that verification was turned off.",
+  "fix": "Add a distinct fail-closed skipped state explaining that no HS code was available, while preserving UNKNOWN non-tariff status and no permit-verification result.",
+  "changed_files": [
+    "customs-clear/backend/app/services/assistant_orchestrator.py",
+    "customs-clear/backend/tests/test_assistant_copilot.py"
+  ],
+  "verification": {
+    "executable_harness": {
+      "status": "PASS",
+      "detail": "Exact GitHub source compiled and executed with dependency stubs; registry request without HS remained skipped, reported the missing-code blocker, never called payment/non-tariff services, preserved UNKNOWN and permits_verification=None."
+    },
+    "exact_head_ci": {
+      "run_id": 39118893508,
+      "job_id": 117650274420,
+      "status": "success",
+      "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/39118893508"
+    },
+    "compare": {
+      "base": "6dce1cbd57066f27bd00464d07af52706fa4ac58",
+      "head": "e8c162ef7850d6a449b4ff87fe2d1bd610ff06ac",
+      "ahead_by": 2,
+      "behind_by": 0,
+      "files": 2,
+      "additions": 30,
+      "deletions": 0
+    }
+  },
+  "independent_a5": {
+    "status": "PENDING",
+    "reason": "No independent subagent review was run in this scheduled execution; readiness is not claimed."
+  },
+  "boundaries": {
+    "product_logic_changed": false,
+    "diagnostic_behavior_changed": true,
+    "legal_or_normative_data_changed": false,
+    "merge": false,
+    "deploy": false,
+    "production_write": false,
+    "enforcement_flag": false,
+    "a6_provider_call": false
+  },
+  "persistent_snapshot": "BOUNDED_EPOCH315_1020_ROWS_POPULATED_SYNCHRONIZED_NTM_NOT_AVAILABLE",
+  "staging_blocker": "Offset1120 Neon raw-record transaction remains policy-refused; no retry or workaround.",
+  "a6": "UNCHANGED_NOT_SENT",
+  "next_step": "Run fresh independent A5 on exact head e8c162ef7850d6a449b4ff87fe2d1bd610ff06ac, then continue the next optional-LLM fallback/registry-verification slice without claiming full PR acceptance."
+}
