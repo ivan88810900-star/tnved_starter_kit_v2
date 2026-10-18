@@ -11516,7 +11516,7 @@
     "schema_version": 1,
     "task_id": "TARIFF-PR256-GROUNDED-LLM-ERROR-BOUNDARY-20261018",
     "started_at": "2026-10-18T17:52:26Z",
-    "completed_at": "2026-10-18T18:01:38Z",
+    "completed_at": "2026-10-18T18:04:38Z",
     "executor": "/root/scheduled-cycle338-20261018T175226Z",
     "lease_generation": 338,
     "pr": 256,
@@ -11535,6 +11535,10 @@
     "independent_a5": "/root/a5_cycle338 PASS_NO_FINDINGS; focused 37 +26, adjacent 158 +103, route/compliance 6, and 16/16 independent no-network fallback/error/leakage scenarios passed",
     "a0_validation": "Exact remote head passed 152 tests +103 subtests, exit 0; six focused boundary regressions, compile, diff and exact-tree checks passed",
     "exact_head_ci": "run 39152016929 / job 117747438170 success",
+    "receipts": {
+      "pr256": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256#issuecomment-6253280678",
+      "issue257": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/257#issuecomment-6253280847"
+    },
     "snapshot_status": "BOUNDED_EPOCH315_1020_ROWS_POPULATED_SYNCHRONIZED_NTM_NOT_AVAILABLE",
     "staging_blocker": "cycle325 offset1120 transfer remains policy-refused after the owner-authorized attempt; no retry or workaround",
     "a6": "UNCHANGED_NOT_SENT",

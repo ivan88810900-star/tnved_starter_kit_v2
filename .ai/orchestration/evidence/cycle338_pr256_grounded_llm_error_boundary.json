@@ -2,7 +2,7 @@
   "schema_version": 1,
   "task_id": "TARIFF-PR256-GROUNDED-LLM-ERROR-BOUNDARY-20261018",
   "started_at": "2026-10-18T17:52:26Z",
-  "completed_at": "2026-10-18T18:01:38Z",
+  "completed_at": "2026-10-18T18:04:38Z",
   "executor": "/root/scheduled-cycle338-20261018T175226Z",
   "lease_generation": 338,
   "base_sha": "64f2d2ef26690b910edfd2c8db3d2fe614268ed4",
@@ -51,6 +51,16 @@
     "name": "offline-safety",
     "conclusion": "success",
     "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/39152016929/job/117747438170"
+  },
+  "receipts": {
+    "pr256": {
+      "id": 6253280678,
+      "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256#issuecomment-6253280678"
+    },
+    "issue257": {
+      "id": 6253280847,
+      "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/257#issuecomment-6253280847"
+    }
   },
   "snapshot_status": "BOUNDED_EPOCH315_1020_ROWS_POPULATED_SYNCHRONIZED_NTM_NOT_AVAILABLE",
   "staging_blocker": "cycle325 offset1120 transfer remains policy-refused after the owner-authorized attempt; no retry or workaround",
