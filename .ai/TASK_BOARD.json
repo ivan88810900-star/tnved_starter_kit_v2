@@ -11516,7 +11516,7 @@
     "schema_version": 1,
     "task_id": "TARIFF-PR256-COMPLETE-TEXT-PROVIDER-CHAIN-20261018",
     "started_at": "2026-10-18T15:53:57Z",
-    "completed_at": "2026-10-18T16:07:42Z",
+    "completed_at": "2026-10-18T16:10:34Z",
     "executor": "/root/scheduled-cycle336-20261018T155357Z",
     "lease_generation": 336,
     "pr": 256,
@@ -11535,6 +11535,10 @@
     "independent_a5": "/root/a5_cycle336 PASS_NO_FINDINGS after two findings were repaired; focused and adjacent 136 passed +97 subtests, 19 independent no-network adversarial checks passed, compile/diff/clean checks passed",
     "a0_validation": "Final exact tree passed 124 tests +97 subtests plus the actual SmartClassifier all-provider-failure leakage probe; all commands exited 0",
     "exact_head_ci": "run 39143503316 / job 117722535748 success",
+    "receipts": {
+      "pr256": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256#issuecomment-6252107865",
+      "issue257": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/257#issuecomment-6252109292"
+    },
     "snapshot_status": "BOUNDED_EPOCH315_1020_ROWS_POPULATED_SYNCHRONIZED_NTM_NOT_AVAILABLE",
     "staging_blocker": "cycle325 offset1120 transfer remains policy-refused after the owner-authorized attempt; no retry or workaround",
     "a6": "UNCHANGED_NOT_SENT",
