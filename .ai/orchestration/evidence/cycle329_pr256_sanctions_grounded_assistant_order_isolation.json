@@ -1,0 +1,64 @@
+{
+  "schema_version": 1,
+  "task_id": "TARIFF-PR256-SANCTIONS-GROUNDED-ASSISTANT-ORDER-ISOLATION-20261018",
+  "started_at": "2026-10-18T09:50:53Z",
+  "completed_at": "2026-10-18T10:00:21Z",
+  "executor": "/root/scheduled-cycle329-20261018T095053Z",
+  "lease_generation": 329,
+  "pr": 256,
+  "branch": "agent/product-ntm-regressions-v1",
+  "previous_head_sha": "0320a7d268b33413c48dffc963cde6b0ec051ab1",
+  "head_sha": "6dce1cbd57066f27bd00464d07af52706fa4ac58",
+  "tree_sha": "502b07a36ba97f7c890fe56540293686b89aa45b",
+  "local_author_commit": "db84b9552f58a9d0686a4d2baa4da6a264ae009d",
+  "local_author_tree_sha": "502b07a36ba97f7c890fe56540293686b89aa45b",
+  "finding": "The sanctions test fixture patched app.db.SessionLocal and could import additional app modules while the patch was active. Those modules retained the disposable five-table SessionLocal alias after fixture teardown, making a later admin sync-status test fail with missing regulatory_sync_state/non_tariff_measures when the sanctions file ran first.",
+  "fix": "The fixture now restores every loaded app.* module whose SessionLocal is the disposable alias in a finally block, restores app.db.SessionLocal, and disposes the temporary engine.",
+  "changed_files": [
+    "customs-clear/backend/tests/test_sanctions_risk_block.py"
+  ],
+  "product_code_changed": false,
+  "test_fixture_changed": true,
+  "baseline": {
+    "forward_matrix": "exit 1; 76 passed, 29 subtests, 1 failed (admin sync status missing regulatory_sync_state)",
+    "focused_without_sensitive": "exit 0; 71 passed, 29 subtests",
+    "reverse_matrix": "exit 0; 77 passed, 29 subtests",
+    "schema_probe": "exit 0; regulatory_sync_state present; 68 tables"
+  },
+  "author_validation": {
+    "forward_matrix": "exit 0; 77 passed, 29 subtests",
+    "reverse_matrix": "exit 0; 77 passed, 29 subtests",
+    "exact_remote_head_matrix": "exit 0; 77 passed, 29 subtests",
+    "frontend": "exit 0; 3 files, 75 tests",
+    "typecheck": "exit 0",
+    "production_build": "exit 0; existing advisory warnings only",
+    "diff_check": "exit 0"
+  },
+  "independent_a5": {
+    "executor": "/root/a5_cycle329",
+    "verdict": "PASS_NO_FINDINGS",
+    "reviewed_head_sha": "6dce1cbd57066f27bd00464d07af52706fa4ac58",
+    "reviewed_tree_sha": "502b07a36ba97f7c890fe56540293686b89aa45b",
+    "forward_matrix": "exit 0; 72 passed, 29 subtests",
+    "reverse_matrix": "exit 0; 72 passed, 29 subtests",
+    "focused_sanctions_grounded": "exit 0; 37 passed, 26 subtests",
+    "frontend": "exit 0; 34 tests",
+    "typecheck": "exit 0"
+  },
+  "exact_head_ci": {
+    "workflow": "Tariff agent safety",
+    "run_id": 39117286807,
+    "run_number": 1779,
+    "run_url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/39117286807",
+    "job_id": 117645532413,
+    "job_name": "offline-safety",
+    "conclusion": "success",
+    "head_sha": "6dce1cbd57066f27bd00464d07af52706fa4ac58"
+  },
+  "snapshot_status": "BOUNDED_EPOCH315_1020_ROWS_POPULATED_SYNCHRONIZED_NTM_NOT_AVAILABLE",
+  "staging_blocker": "The offset1120 Neon raw-record transaction remains policy-refused; it was not retried or worked around.",
+  "a6": "core-s1-6415f443120f-r9-g106 unchanged and not sent",
+  "protected_actions_performed": false,
+  "limitations": "Bounded fixture/order-isolation fix and executable sanctions/grounded-assistant verification only; not full PR acceptance, legal/source completeness, populated synchronized NTM snapshot, merge, deploy, production write, or A6.",
+  "next_step": "Continue the next grounded-assistant optional-LLM fallback and registry-verification slice on PR256/PR245 while preserving deterministic fallback, provenance and explicit incompleteness."
+}
