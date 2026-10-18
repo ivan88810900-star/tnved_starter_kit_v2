@@ -13,6 +13,8 @@ import re
 from datetime import datetime
 from typing import Any
 
+import httpx
+import requests
 from loguru import logger
 from sqlalchemy import func, or_
 from sqlalchemy.orm import Session
@@ -58,6 +60,13 @@ _SGR_ACTIVE_STATUS_MARKERS_RU = (
     "зарегистрирован",
 )
 _SGR_ACTIVE_STATUS_WORDS_EN = frozenset({"active", "valid", "registered"})
+
+_REGISTRY_AI_UNAVAILABLE_RUNTIME_MESSAGES = frozenset(
+    {
+        "Не задан GEMINI_API_KEY или GOOGLE_API_KEY",
+        "Нужен пакет google-generativeai",
+    }
+)
 
 
 def classify_sgr_registry_status(status: str) -> str:
@@ -195,6 +204,25 @@ def _format_sgr_issue_status(issue: datetime | None, status: str) -> str:
     return f"Выдано {d}, статус: {st}"
 
 
+def _is_registry_ai_unavailable_error(exc: BaseException) -> bool:
+    """Recognize bounded optional-provider failures without masking code defects."""
+    if isinstance(
+        exc,
+        (httpx.HTTPError, requests.RequestException, OSError, TimeoutError),
+    ):
+        return True
+    if (
+        isinstance(exc, RuntimeError)
+        and str(exc) in _REGISTRY_AI_UNAVAILABLE_RUNTIME_MESSAGES
+    ):
+        return True
+    try:
+        from google.api_core.exceptions import GoogleAPICallError, RetryError
+    except ImportError:
+        return False
+    return isinstance(exc, (GoogleAPICallError, RetryError))
+
+
 def _ai_disambiguate_fss(
     candidates: list[FssNotification],
     *,
@@ -204,8 +232,11 @@ def _ai_disambiguate_fss(
         return candidates[0] if candidates else None
     try:
         from .invoice_analyzer import _gemini_generate
-    except Exception as e:
-        logger.debug("registry AI pick: skip import: {}", e)
+    except ImportError as exc:
+        logger.debug(
+            "registry AI pick: optional provider import unavailable ({})",
+            type(exc).__name__,
+        )
         return candidates[0]
     lines = []
     for i, r in enumerate(candidates[:8]):
@@ -218,15 +249,40 @@ def _ai_disambiguate_fss(
     )
     try:
         raw = _gemini_generate(prompt, max_output_tokens=128, temperature=0.0)
-        m = re.search(r"\{[^}]+\}", raw)
-        if not m:
-            return candidates[0]
+    except Exception as exc:
+        if not _is_registry_ai_unavailable_error(exc):
+            raise
+        logger.warning(
+            "registry AI disambiguate FSS: optional provider unavailable ({})",
+            type(exc).__name__,
+        )
+        return candidates[0]
+
+    if not isinstance(raw, str):
+        return candidates[0]
+    m = re.search(r"\{[^}]+\}", raw)
+    if not m:
+        return candidates[0]
+    try:
         obj = json.loads(m.group(0))
+    except json.JSONDecodeError as exc:
+        logger.warning(
+            "registry AI disambiguate FSS: malformed provider output ({})",
+            type(exc).__name__,
+        )
+        return candidates[0]
+    if not isinstance(obj, dict):
+        return candidates[0]
+    try:
         idx = int(obj.get("best_index", 0))
-        if 0 <= idx < len(candidates):
-            return candidates[idx]
-    except Exception as e:
-        logger.warning("registry AI disambiguate FSS: {}", e)
+    except (TypeError, ValueError) as exc:
+        logger.warning(
+            "registry AI disambiguate FSS: malformed provider output ({})",
+            type(exc).__name__,
+        )
+        return candidates[0]
+    if 0 <= idx < len(candidates):
+        return candidates[idx]
     return candidates[0]
 
 
