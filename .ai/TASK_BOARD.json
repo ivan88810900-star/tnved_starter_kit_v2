@@ -2179,7 +2179,7 @@
       "unique_source_pr_count": 29
     }
   },
-  "revision": 868,
+  "revision": 869,
   "runs": [
     {
       "head_sha": null,
@@ -11513,6 +11513,36 @@
     "next_step": "First recheck exact-head CI for 09bd88e3085921733708578cce6e21a70430c0fd and accept only a verified successful run. Then isolate tests/test_rop_coverage_audit.py: on clean exact HEAD it exits 1 with 4 failed because rop_goods_rates is absent and creates a 4,096-byte ambient customs.db; preserve its 97-chapter, subject/not-subject and summary assertions without changing product or normative data."
   },
   "latest_scheduled_product_checkpoint": {
+    "schema_version": 1,
+    "task_id": "TARIFF-PR256-GROUNDED-LLM-ERROR-BOUNDARY-20261018",
+    "started_at": "2026-10-18T17:52:26Z",
+    "completed_at": "2026-10-18T18:01:38Z",
+    "executor": "/root/scheduled-cycle338-20261018T175226Z",
+    "lease_generation": 338,
+    "pr": 256,
+    "branch": "agent/product-ntm-regressions-v1",
+    "previous_head_sha": "64f2d2ef26690b910edfd2c8db3d2fe614268ed4",
+    "head_sha": "754f467b8dbf5b449d7c0bd0358ff19a9d2ad87f",
+    "tree_sha": "ab9f28959f5959eae8d58474bf8d943326d45eed",
+    "local_author_commit": "be226e77af74bb86790fe89f724a3a9de188b149",
+    "status": "IMPLEMENTED_A5_PASS_CI_PASS_GROUNDED_LLM_ERROR_BOUNDARY",
+    "product_changed": true,
+    "product_code_changed": true,
+    "scope": "optional grounded chat and copilot wording-layer error boundaries, deterministic fallback and credential-safe logging",
+    "finding": "run_assistant_chat and analyze_copilot_bundle caught every Exception from the optional LLM layer, so unrelated programming errors were silently converted to deterministic fallback and raw exception text, including provider URLs or query keys, could reach warnings.",
+    "fix": "Limit deterministic fallback to httpx transport, OSError, TimeoutError and JSONDecodeError; log only exception class plus safe_ai_error_note; preserve citation, freshness and payment-review gates while TypeError, ValueError, AttributeError and unrelated RuntimeError remain fail-loud.",
+    "author_tests": "baseline focused regressions exited 1 with 4 failures; repaired focused/payment 49 passed +26 subtests and adjacent 152 passed +103 subtests; compile and diff checks passed",
+    "independent_a5": "/root/a5_cycle338 PASS_NO_FINDINGS; focused 37 +26, adjacent 158 +103, route/compliance 6, and 16/16 independent no-network fallback/error/leakage scenarios passed",
+    "a0_validation": "Exact remote head passed 152 tests +103 subtests, exit 0; six focused boundary regressions, compile, diff and exact-tree checks passed",
+    "exact_head_ci": "run 39152016929 / job 117747438170 success",
+    "snapshot_status": "BOUNDED_EPOCH315_1020_ROWS_POPULATED_SYNCHRONIZED_NTM_NOT_AVAILABLE",
+    "staging_blocker": "cycle325 offset1120 transfer remains policy-refused after the owner-authorized attempt; no retry or workaround",
+    "a6": "UNCHANGED_NOT_SENT",
+    "protected_actions_performed": false,
+    "evidence": ".ai/orchestration/evidence/cycle338_pr256_grounded_llm_error_boundary.json",
+    "next_step": "Continue the next bounded PR #256/#245 assistant or registry slice; preserve deterministic server-owned content, narrow error boundaries, sanitized logs, provenance and explicit incompleteness, and do not retry the refused SGR transfer."
+  },
+  "previous_scheduled_product_checkpoint_337": {
     "schema_version": 1,
     "task_id": "TARIFF-PR256-CLASSIFY-INVALID-JSON-FAILCLOSED-20261018",
     "started_at": "2026-10-18T16:50:33Z",

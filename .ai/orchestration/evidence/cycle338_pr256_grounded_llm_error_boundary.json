@@ -1,0 +1,59 @@
+{
+  "schema_version": 1,
+  "task_id": "TARIFF-PR256-GROUNDED-LLM-ERROR-BOUNDARY-20261018",
+  "started_at": "2026-10-18T17:52:26Z",
+  "completed_at": "2026-10-18T18:01:38Z",
+  "executor": "/root/scheduled-cycle338-20261018T175226Z",
+  "lease_generation": 338,
+  "base_sha": "64f2d2ef26690b910edfd2c8db3d2fe614268ed4",
+  "head_sha": "754f467b8dbf5b449d7c0bd0358ff19a9d2ad87f",
+  "tree_sha": "ab9f28959f5959eae8d58474bf8d943326d45eed",
+  "local_author_commit": "be226e77af74bb86790fe89f724a3a9de188b149",
+  "changed_files": [
+    "customs-clear/backend/app/services/claude_service.py",
+    "customs-clear/backend/app/services/assistant_chat.py",
+    "customs-clear/backend/tests/test_grounded_assistant.py"
+  ],
+  "baseline_reproduction": {
+    "a0_chat_probe": "raw TypeError text reached the warning and the error was swallowed into deterministic fallback; exit 1",
+    "a0_copilot_probe": "raw TypeError text reached the warning and the error was swallowed into deterministic fallback; exit 1",
+    "author_command": "pytest -q tests/test_grounded_assistant.py -k provider_transport_failure_falls_back_without_sensitive_log_data-or-programming-error-boundaries",
+    "author_exit_code": 1,
+    "observed": "4 failed: chat and copilot swallowed programming errors and logged raw exception text"
+  },
+  "implementation": "Both grounded optional-LLM wording layers now use deterministic fallback only for httpx.HTTPError, OSError, TimeoutError and json.JSONDecodeError. Warnings contain only the exception class and safe_ai_error_note; unrelated programming errors propagate.",
+  "author": {
+    "focused": "49 passed +26 subtests, exit 0",
+    "adjacent": "152 passed +103 subtests, exit 0",
+    "compile": "exit 0",
+    "diff_check": "exit 0"
+  },
+  "a5": {
+    "reviewer": "/root/a5_cycle338",
+    "status": "PASS_NO_FINDINGS",
+    "focused": "37 passed +26 subtests, exit 0",
+    "adjacent": "158 passed +103 subtests, exit 0",
+    "route_compliance": "6 passed, exit 0",
+    "adversarial": "16/16 no-network bounded-failure, programming-error and leakage scenarios passed",
+    "boundaries": "transport, OSError, Timeout and JSON failures retain deterministic content; TypeError, ValueError, AttributeError and unrelated RuntimeError propagate; URLs, hosts, query keys, secrets, response bodies, JSON fragments and raw exception text are absent",
+    "findings_open": []
+  },
+  "a0_validation": {
+    "exact_remote_tests": "152 passed +103 subtests, exit 0",
+    "focused_boundary_tests": "6 passed, exit 0",
+    "compile": "exit 0",
+    "diff_check": "exit 0",
+    "tree_check": "remote tree equals ab9f28959f5959eae8d58474bf8d943326d45eed"
+  },
+  "ci": {
+    "run_id": 39152016929,
+    "job_id": 117747438170,
+    "name": "offline-safety",
+    "conclusion": "success",
+    "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/39152016929/job/117747438170"
+  },
+  "snapshot_status": "BOUNDED_EPOCH315_1020_ROWS_POPULATED_SYNCHRONIZED_NTM_NOT_AVAILABLE",
+  "staging_blocker": "cycle325 offset1120 transfer remains policy-refused after the owner-authorized attempt; no retry or workaround",
+  "a6": "UNCHANGED_NOT_SENT",
+  "protected_actions_performed": false
+}
