@@ -2179,7 +2179,7 @@
       "unique_source_pr_count": 29
     }
   },
-  "revision": 872,
+  "revision": 873,
   "runs": [
     {
       "head_sha": null,
@@ -7797,7 +7797,7 @@
       }
     }
   ],
-  "updated_at": "2026-10-18T20:59:33Z",
+  "updated_at": "2026-10-18T22:06:10Z",
   "previous_scheduled_product_checkpoint_174": {
     "updated_at": "2026-10-11T18:04:51.196Z",
     "checked_at": "2026-10-11T18:04:51.196Z",
@@ -11513,6 +11513,38 @@
     "next_step": "First recheck exact-head CI for 09bd88e3085921733708578cce6e21a70430c0fd and accept only a verified successful run. Then isolate tests/test_rop_coverage_audit.py: on clean exact HEAD it exits 1 with 4 failed because rop_goods_rates is absent and creates a 4,096-byte ambient customs.db; preserve its 97-chapter, subject/not-subject and summary assertions without changing product or normative data."
   },
   "latest_scheduled_product_checkpoint": {
+    "schema_version": 1,
+    "task_id": "TARIFF-PR256-AI-ASSISTANT-ERROR-BOUNDARY-20261018",
+    "started_at": "2026-10-18T21:55:40Z",
+    "completed_at": "2026-10-18T22:06:10Z",
+    "executor": "/root/scheduled-cycle342-20261018T215540Z",
+    "lease_generation": 342,
+    "pr": 256,
+    "branch": "agent/product-ntm-regressions-v1",
+    "previous_head_sha": "130a5ec6e69a837bc7dfd36d30ee2e7dbd813fc8",
+    "head_sha": "a8ead187c3622b4713af59d083b969918c9c592c",
+    "tree_sha": "d29936e7b620a6eac3cf65bdc569f9e0aaa4578d",
+    "local_author_commit": "33a554a28d03ec7cfbc9211db5f8c8142f47ceb8",
+    "status": "IMPLEMENTED_A5_PASS_CI_PASS_AI_ASSISTANT_ERROR_BOUNDARY",
+    "product_changed": true,
+    "product_code_changed": true,
+    "scope": "legacy TN VED notes assistant Gemini failure boundary with stable provider warnings and fail-loud programming/data-contract errors",
+    "finding": "ask_ai_assistant caught every Exception from Gemini, so a programming TypeError was converted into the normal temporary-unavailable warning.",
+    "fix": "Degrade only typed Google/Gemini operational errors and TimeoutError; select the permission/region warning only after provider-error recognition; propagate TypeError, ValueError, AttributeError, AssertionError, KeyError and unrelated RuntimeError without leaking provider details.",
+    "author_tests": "baseline no-network probe exit 1; focused and exact-remote matrix 55 passed +26 subtests, exit 0; compile and diff checks passed",
+    "independent_a5": "/root/a5_cycle342 PASS_NO_FINDINGS; focused 12, relevant matrix 55 +26 subtests, prompt/API no-network semantics probe and diff check all exit 0",
+    "a0_validation": "Exact remote head a8ead187c3622b4713af59d083b969918c9c592c passed 55 tests +26 subtests, exit 0; remote tree equals tested tree",
+    "exact_head_ci": "run 39170591705 / job 117802618517 success",
+    "preexisting_order_isolation": "On both previous head 130a5ec6e69a837bc7dfd36d30ee2e7dbd813fc8 and candidate, the single-process security/grounded/payment/batch/copilot/provider matrix reaches ambient SQLite without hs_duty_rules: previous head 3 failed +1 teardown error after 70 passed +32 subtests; candidate 3 failed +1 teardown error after 82 passed +32 subtests. This is not attributed to this two-file candidate.",
+    "receipts": {},
+    "snapshot_status": "BOUNDED_EPOCH315_1020_ROWS_POPULATED_SYNCHRONIZED_NTM_NOT_AVAILABLE",
+    "staging_blocker": "cycle325 offset1120 transfer remains policy-refused after the owner-authorized attempt; no retry or workaround",
+    "a6": "UNCHANGED_NOT_SENT",
+    "protected_actions_performed": false,
+    "evidence": ".ai/orchestration/evidence/cycle342_pr256_ai_assistant_error_boundary.json",
+    "next_step": "Isolate the pre-existing security-test to assistant ambient-SQLite order leak reproduced on the previous head, then continue PR #256/#245; do not retry the refused SGR transfer."
+  },
+  "previous_scheduled_product_checkpoint_341": {
     "schema_version": 1,
     "task_id": "TARIFF-PR256-GROUNDING-SERVICE-ERROR-BOUNDARY-20261018",
     "started_at": "2026-10-18T20:49:17Z",

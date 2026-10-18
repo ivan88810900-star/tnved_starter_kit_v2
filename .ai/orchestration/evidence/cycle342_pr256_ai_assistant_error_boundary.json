@@ -1,0 +1,59 @@
+{
+  "schema_version": 1,
+  "task_id": "TARIFF-PR256-AI-ASSISTANT-ERROR-BOUNDARY-20261018",
+  "started_at": "2026-10-18T21:55:40Z",
+  "completed_at": "2026-10-18T22:06:10Z",
+  "executor": "/root/scheduled-cycle342-20261018T215540Z",
+  "lease_generation": 342,
+  "base_sha": "130a5ec6e69a837bc7dfd36d30ee2e7dbd813fc8",
+  "head_sha": "a8ead187c3622b4713af59d083b969918c9c592c",
+  "tree_sha": "d29936e7b620a6eac3cf65bdc569f9e0aaa4578d",
+  "local_author_commit": "33a554a28d03ec7cfbc9211db5f8c8142f47ceb8",
+  "changed_files": [
+    "customs-clear/backend/app/services/ai_assistant.py",
+    "customs-clear/backend/tests/test_ai_assistant_error_boundary.py"
+  ],
+  "baseline_reproduction": {
+    "command": "no-network patched Gemini TypeError probe against ask_ai_assistant on prior PR #256 head",
+    "exit_code": 1,
+    "observed": "programming TypeError was swallowed into the ordinary temporary-unavailable warning"
+  },
+  "implementation": "Only typed Google/Gemini operational failures and TimeoutError retain stable generic or permission/region warnings. Programming and data-contract exceptions propagate; provider details are not logged or returned.",
+  "author": {
+    "focused_and_adjacent": "55 passed +26 subtests, exit 0",
+    "compile": "exit 0",
+    "diff_check": "exit 0"
+  },
+  "a5": {
+    "reviewer": "/root/a5_cycle342",
+    "status": "PASS_NO_FINDINGS",
+    "focused": "12 passed, exit 0",
+    "relevant_matrix": "55 passed +26 subtests, exit 0",
+    "adversarial": "recognized provider failures degrade; six programming/data-contract cases propagate; unrelated RuntimeError containing 403 propagates; no raw exception text leaks",
+    "prompt_api_semantics": "PASS, exit 0",
+    "findings_open": []
+  },
+  "a0_validation": {
+    "exact_remote_tests": "55 passed +26 subtests, exit 0",
+    "head_check": "a8ead187c3622b4713af59d083b969918c9c592c",
+    "tree_check": "remote tree equals d29936e7b620a6eac3cf65bdc569f9e0aaa4578d"
+  },
+  "ci": {
+    "run_id": 39170591705,
+    "job_id": 117802618517,
+    "name": "offline-safety",
+    "conclusion": "success",
+    "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/39170591705/job/117802618517"
+  },
+  "preexisting_order_isolation": {
+    "candidate": "3 failed +1 teardown error after 82 passed +32 subtests; ambient SQLite missing hs_duty_rules",
+    "previous_head_control": "3 failed +1 teardown error after 70 passed +32 subtests; same ambient SQLite missing hs_duty_rules",
+    "classification": "pre-existing and not caused by this candidate",
+    "next_step": "isolate the security-test to assistant ambient-SQLite order leak as a separate bounded block"
+  },
+  "receipts": {},
+  "snapshot_status": "BOUNDED_EPOCH315_1020_ROWS_POPULATED_SYNCHRONIZED_NTM_NOT_AVAILABLE",
+  "staging_blocker": "cycle325 offset1120 transfer remains policy-refused after the owner-authorized attempt; no retry or workaround",
+  "a6": "UNCHANGED_NOT_SENT",
+  "protected_actions_performed": false
+}
