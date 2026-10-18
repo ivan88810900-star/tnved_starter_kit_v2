@@ -1556,3 +1556,13 @@ CI #255: [offline-safety PASS, run 37771953943](https://github.com/ivan88810900-
 - This is bounded executable product verification, not a product change, full PR #245/#256 acceptance, legal/source completeness, or A6. No production write, merge, deploy, enforcement flag, secret/permission change, or external A6 call occurred.
 - The staging state and blocker are unchanged: epoch315 has 20 objects / 10 runs / 1,020 rows and remains `COLLECTED_UNVERIFIED`; a populated synchronized NTM snapshot is unavailable. The policy-refused offset1120 Neon transfer was not retried or worked around.
 - Evidence: `.ai/orchestration/evidence/cycle326_pr256_payment_quote_e2e.json`; TASK_BOARD revision 858. Continue the next bounded PR #256/#245 NTM/search/assistant product slice without retrying the prohibited Neon transfer, preserving fail-closed provenance and totals.
+
+# 2026-10-18 — PR #256 normative requirements E2E revalidated on unchanged head
+
+- Draft PR #256 remains unchanged at exact head `0320a7d268b33413c48dffc963cde6b0ec051ab1`, tree `f5fc479d8ef6696880dcc28614c8a3e3da35e648`; exact-head offline-safety CI run 38898431622 / job 116964443470 is `success`.
+- The disposable-SQLite backend normative matrix passed 410 tests, exit 0. It covered required/missing/advisory separation, applicability boundaries, official/legacy source-kind isolation, source evidence/freshness, child-product, negation, neighboring-token, food-contact and default-off flag behavior.
+- The full frontend suite passed 10 files / 109 tests; TypeScript typecheck and production build exited 0. Only existing advisory build warnings remained.
+- Independent native A5 `/root/a5_cycle327` returned `PASS_NO_FINDINGS`: primary backend 347 passed + 3 subtests, adjacent API/import 156 passed with one existing-dev-DB-only skip, frontend 5 files / 32 tests, and typecheck/default-off probes all exited 0. It confirmed uncertain applicability and official SGR stay advisory, never missing-check; unsafe source URLs stay non-clickable while evidence is preserved.
+- This is bounded executable product verification, not a product change, full PR #245/#256 acceptance, legal/source completeness, or A6. No external registry/network check or protected action occurred.
+- The staging state and blocker are unchanged: epoch315 remains 20 objects / 10 runs / 1,020 rows `COLLECTED_UNVERIFIED`; a populated synchronized NTM snapshot is unavailable. The policy-refused offset1120 Neon transfer was not retried or worked around.
+- Evidence: `.ai/orchestration/evidence/cycle327_pr256_normative_e2e.json`; TASK_BOARD revision 859. Continue the active-focus TN VED search/code-card and related preliminary-decisions slice, preserving source evidence and fail-closed behavior.
