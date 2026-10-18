@@ -1,0 +1,56 @@
+{
+  "schema_version": 1,
+  "task_id": "TARIFF-PR256-COMPLETE-TEXT-PROVIDER-CHAIN-20261018",
+  "started_at": "2026-10-18T15:53:57Z",
+  "completed_at": "2026-10-18T16:07:42Z",
+  "executor": "/root/scheduled-cycle336-20261018T155357Z",
+  "lease_generation": 336,
+  "base_sha": "950c820f290ed6af78206a7268f383f807df4718",
+  "head_sha": "5932f4c88cd20ffaf570c46cf2779501f7991165",
+  "tree_sha": "0acb97e70fab3e745d7af07c646db31230b0e7aa",
+  "local_author_commit": "b388040e5f72281a1b991345b1342a512f6aaed8",
+  "changed_files": [
+    "customs-clear/backend/app/services/claude_service.py",
+    "customs-clear/backend/tests/test_llm_provider.py"
+  ],
+  "baseline_reproduction": {
+    "command": "PYTHONPATH=customs-clear/backend /tmp/tariff-cycle320-venv/bin/python inline complete_text LLM_PROVIDER=gemini probe",
+    "exit_code": 1,
+    "observed": "returned anthropic, anthropic_calls=1, gemini_calls=0"
+  },
+  "implementation": "complete_text now honors llm_provider_chain, preserves max_tokens for both providers, keeps unrelated programming exceptions fail-loud, sanitizes bounded provider warnings, and converts exhausted bounded failures to a safe RuntimeError before downstream logs.",
+  "author": {
+    "focused": "8 passed, exit 0",
+    "adjacent": "116 passed +97 subtests, exit 0",
+    "compile": "exit 0",
+    "diff_check": "exit 0"
+  },
+  "a5": {
+    "reviewer": "/root/a5_cycle336",
+    "status": "PASS_NO_FINDINGS",
+    "history": [
+      "Raw provider exception in _ask_llm warning could expose a Gemini query key; repaired.",
+      "Exhausted provider chain re-raised a raw exception that downstream SmartClassifier logs; repaired."
+    ],
+    "final_tests": "136 passed +97 subtests, exit 0",
+    "adversarial": "19 no-network checks passed, exit 0",
+    "findings_open": []
+  },
+  "a0_validation": {
+    "tests": "124 passed +97 subtests, exit 0",
+    "caller_probe": "actual SmartClassifier all-provider-failure path emitted only the safe message; keys, hosts, response body and query string absent",
+    "compile": "exit 0",
+    "diff_check": "exit 0"
+  },
+  "ci": {
+    "run_id": 39143503316,
+    "job_id": 117722535748,
+    "name": "offline-safety",
+    "conclusion": "success",
+    "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/39143503316/job/117722535748"
+  },
+  "snapshot_status": "BOUNDED_EPOCH315_1020_ROWS_POPULATED_SYNCHRONIZED_NTM_NOT_AVAILABLE",
+  "staging_blocker": "cycle325 offset1120 transfer remains policy-refused after the owner-authorized attempt; no retry or workaround",
+  "a6": "UNCHANGED_NOT_SENT",
+  "protected_actions_performed": false
+}

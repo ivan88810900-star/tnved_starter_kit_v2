@@ -2179,7 +2179,7 @@
       "unique_source_pr_count": 29
     }
   },
-  "revision": 866,
+  "revision": 867,
   "runs": [
     {
       "head_sha": null,
@@ -11513,6 +11513,36 @@
     "next_step": "First recheck exact-head CI for 09bd88e3085921733708578cce6e21a70430c0fd and accept only a verified successful run. Then isolate tests/test_rop_coverage_audit.py: on clean exact HEAD it exits 1 with 4 failed because rop_goods_rates is absent and creates a 4,096-byte ambient customs.db; preserve its 97-chapter, subject/not-subject and summary assertions without changing product or normative data."
   },
   "latest_scheduled_product_checkpoint": {
+    "schema_version": 1,
+    "task_id": "TARIFF-PR256-COMPLETE-TEXT-PROVIDER-CHAIN-20261018",
+    "started_at": "2026-10-18T15:53:57Z",
+    "completed_at": "2026-10-18T16:07:42Z",
+    "executor": "/root/scheduled-cycle336-20261018T155357Z",
+    "lease_generation": 336,
+    "pr": 256,
+    "branch": "agent/product-ntm-regressions-v1",
+    "previous_head_sha": "950c820f290ed6af78206a7268f383f807df4718",
+    "head_sha": "5932f4c88cd20ffaf570c46cf2779501f7991165",
+    "tree_sha": "0acb97e70fab3e745d7af07c646db31230b0e7aa",
+    "local_author_commit": "b388040e5f72281a1b991345b1342a512f6aaed8",
+    "status": "IMPLEMENTED_A5_PASS_CI_PASS_COMPLETE_TEXT_PROVIDER_CHAIN_SANITIZED",
+    "product_changed": true,
+    "product_code_changed": true,
+    "scope": "complete_text provider selection, bounded fallback, max-token preservation and credential-safe error propagation",
+    "finding": "complete_text bypassed llm_provider_chain whenever an Anthropic key existed, ignored LLM_PROVIDER=gemini and did not apply the shared fallback policy. Independent review also found raw provider URLs and query keys could reach warnings or downstream exception logs.",
+    "fix": "Route complete_text through the configured provider chain, pass caller max_tokens to both providers, keep programming exceptions fail-loud, and sanitize bounded provider warnings plus exhausted-chain errors before downstream logging.",
+    "author_tests": "baseline defect reproduced exit 1; focused 8 passed; grounded-assistant and smart-classifier adjacency 116 passed +97 subtests; compile and diff checks passed",
+    "independent_a5": "/root/a5_cycle336 PASS_NO_FINDINGS after two findings were repaired; focused and adjacent 136 passed +97 subtests, 19 independent no-network adversarial checks passed, compile/diff/clean checks passed",
+    "a0_validation": "Final exact tree passed 124 tests +97 subtests plus the actual SmartClassifier all-provider-failure leakage probe; all commands exited 0",
+    "exact_head_ci": "run 39143503316 / job 117722535748 success",
+    "snapshot_status": "BOUNDED_EPOCH315_1020_ROWS_POPULATED_SYNCHRONIZED_NTM_NOT_AVAILABLE",
+    "staging_blocker": "cycle325 offset1120 transfer remains policy-refused after the owner-authorized attempt; no retry or workaround",
+    "a6": "UNCHANGED_NOT_SENT",
+    "protected_actions_performed": false,
+    "evidence": ".ai/orchestration/evidence/cycle336_pr256_complete_text_provider_chain.json",
+    "next_step": "Continue the next bounded PR #256/#245 assistant or registry slice; preserve deterministic fallback, sanitized provider boundaries, provenance and explicit incompleteness, and do not retry the refused SGR transfer."
+  },
+  "previous_scheduled_product_checkpoint_335": {
     "schema_version": 1,
     "task_id": "TARIFF-PR256-LLM-INVALID-JSON-FAILOVER-20261018",
     "started_at": "2026-10-18T14:54:15Z",
