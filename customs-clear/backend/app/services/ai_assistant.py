@@ -4,6 +4,18 @@ import asyncio
 import os
 
 import google.generativeai as genai
+from google.api_core.exceptions import (
+    Forbidden,
+    GoogleAPICallError,
+    PermissionDenied,
+    RetryError,
+)
+from google.generativeai.types import (
+    BlockedPromptException,
+    BrokenResponseError,
+    IncompleteIterationError,
+    StopCandidateException,
+)
 
 from .gemini_genai_configure import configure_google_generativeai, resolved_gemini_model_name
 
@@ -27,6 +39,36 @@ _WARN_REGION = (
 _WARN_GENERIC = (
     "⚠️ ИИ-ассистент временно недоступен. Повторите запрос позже или проверьте доступ к Google Gemini API."
 )
+
+_PROVIDER_OPERATIONAL_ERRORS = (
+    GoogleAPICallError,
+    RetryError,
+    BlockedPromptException,
+    BrokenResponseError,
+    IncompleteIterationError,
+    StopCandidateException,
+    TimeoutError,
+)
+_REGION_OR_PERMISSION_MARKERS = (
+    "user location is not supported",
+    "regional",
+    "api_key_http_referrer_blocked",
+    "forbidden",
+    "403",
+    "proxy",
+)
+
+
+def _is_provider_operational_error(exc: BaseException) -> bool:
+    """Recognize Gemini failures without swallowing application defects."""
+    return isinstance(exc, _PROVIDER_OPERATIONAL_ERRORS)
+
+
+def _is_provider_permission_or_region_error(exc: BaseException) -> bool:
+    if isinstance(exc, (PermissionDenied, Forbidden)):
+        return True
+    message = str(exc).casefold()
+    return any(marker in message for marker in _REGION_OR_PERMISSION_MARKERS)
 
 
 def _limit_notes(raw_notes: str) -> str:
@@ -62,15 +104,9 @@ async def ask_ai_assistant(question: str, code: str, notes: str) -> str:
         text = await asyncio.to_thread(_generate)
         return text or "В примечаниях к данной группе эта информация отсутствует"
     except Exception as exc:
-        msg = str(exc).lower()
-        if (
-            "user location is not supported" in msg
-            or "regional" in msg
-            or "api_key_http_referrer_blocked" in msg
-            or "forbidden" in msg
-            or "403" in msg
-            or "proxy" in msg
-        ):
+        if not _is_provider_operational_error(exc):
+            raise
+        if _is_provider_permission_or_region_error(exc):
             return _WARN_REGION
         return _WARN_GENERIC
 
