@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "task_id": "TARIFF-PR256-LLM-INVALID-JSON-FAILOVER-20261018",
+  "started_at": "2026-10-18T14:54:15Z",
+  "completed_at": "2026-10-18T15:04:57Z",
+  "executor": "/root/scheduled-cycle335-20261018T145415Z",
+  "lease": {
+    "generation": 335,
+    "holder": "/root/scheduled-cycle335-20261018T145415Z",
+    "acquisition_commit": "e52dc87fef6c3325aa8f9466d5628ef57fc93573"
+  },
+  "candidate": {
+    "pr": 256,
+    "branch": "agent/product-ntm-regressions-v1",
+    "previous_head_sha": "16112d6472bf40060a05b0066c2f42172a58fbbb",
+    "head_sha": "950c820f290ed6af78206a7268f383f807df4718",
+    "tree_sha": "2e7a5f78c54e97e7eca9b5d4faa256903aa4d234",
+    "local_author_commit": "a58a66619cc6973adb01627ba3c4ecf585f449c4",
+    "changed_files": [
+      "customs-clear/backend/app/services/claude_service.py",
+      "customs-clear/backend/tests/test_grounded_assistant.py"
+    ]
+  },
+  "finding": "A JSONDecodeError from the primary Anthropic transport escaped the provider loop and prevented the configured Gemini secondary from being attempted.",
+  "fix": "Catch json.JSONDecodeError as a bounded provider failure and continue the configured provider chain without swallowing unrelated programming exceptions.",
+  "validation": {
+    "baseline_reproduction": "exit 1; primary JSONDecodeError escaped and Gemini await count remained 0",
+    "author": [
+      "focused 3 passed, exit 0",
+      "grounded assistant 31 passed +26 subtests, exit 0",
+      "adjacent assistant suites 23 passed +3 subtests, exit 0",
+      "py_compile and diff-check passed"
+    ],
+    "independent_a5": "/root/a5_cycle335 PASS_NO_FINDINGS; baseline reproduced; focused 1, grounded 31 +26, adjacent 59 +29 and four independent provider/error/leakage probes passed",
+    "a0": [
+      "focused 5 passed, exit 0",
+      "assistant adjacent matrix 51 passed +29 subtests, exit 0",
+      "py_compile, diff-check and exact-tree checks passed"
+    ],
+    "ci": {
+      "run_id": 39138627553,
+      "job_id": 117708226319,
+      "name": "offline-safety",
+      "conclusion": "success",
+      "head_sha": "950c820f290ed6af78206a7268f383f807df4718",
+      "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/39138627553/job/117708226319"
+    }
+  },
+  "state_integrity_repair": {
+    "finding": "The revision-865 TASK_BOARD blob published in the prior cycle was invalid UTF-8.",
+    "repair": "Rebuild revision 866 from the exact valid local revision-865 checkpoint, apply only the cycle335 checkpoint, validate JSON and republish atomically.",
+    "product_impact": false,
+    "staging_impact": false
+  },
+  "limitations": [
+    "No live external-provider call was required.",
+    "Structurally valid but semantically invalid nonempty selector output remains downstream-rejected to deterministic fallback and does not trigger a secondary provider.",
+    "This is not full PR #245/#256 acceptance or legal/source completeness.",
+    "A lawful populated synchronized NTM snapshot remains unavailable."
+  ],
+  "snapshot_status": "BOUNDED_EPOCH315_1020_ROWS_POPULATED_SYNCHRONIZED_NTM_NOT_AVAILABLE",
+  "staging_blocker": "The cycle325 offset1120 transfer remains policy-refused after the owner-authorized attempt; it was not retried or worked around.",
+  "a6": "UNCHANGED_NOT_SENT",
+  "protected_actions_performed": false
+}
