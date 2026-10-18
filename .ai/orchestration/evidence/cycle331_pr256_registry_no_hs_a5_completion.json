@@ -1,0 +1,58 @@
+{
+  "schema_version": 1,
+  "task_id": "TARIFF-PR256-REGISTRY-NO-HS-A5-COMPLETION-20261018",
+  "started_at": "2026-10-18T10:47:20Z",
+  "completed_at": "2026-10-18T10:56:17Z",
+  "executor": "/root/scheduled-cycle331-20261018T104720Z",
+  "lease_generation": 331,
+  "pr": 256,
+  "branch": "agent/product-ntm-regressions-v1",
+  "base_sha": "6dce1cbd57066f27bd00464d07af52706fa4ac58",
+  "head_sha": "e8c162ef7850d6a449b4ff87fe2d1bd610ff06ac",
+  "tree_sha": "600474b2d4ec0d1cee1d1c1a17f7b647b1c0dd46",
+  "implementation_commits": [
+    "10f165245b76188f50111ff479ab4325a2774870",
+    "e8c162ef7850d6a449b4ff87fe2d1bd610ff06ac"
+  ],
+  "status": "IMPLEMENTED_A5_PASS_CI_PASS_REGISTRY_NO_HS_DIAGNOSTIC",
+  "scope": "assistant registry verification requested with permit identifiers but no effective TN VED code",
+  "finding": "The assistant reported that registry verification was disabled even when it was enabled but could not run because no effective TN VED code was available.",
+  "fix": "Return an explicit missing-TN-VED diagnostic, keep non-tariff status UNKNOWN, leave permits_verification unset, and do not call registry or payment services until applicability inputs are available.",
+  "candidate_diff": {
+    "files": 2,
+    "insertions": 30,
+    "product_file": "customs-clear/backend/app/services/assistant_orchestrator.py",
+    "test_file": "customs-clear/backend/tests/test_assistant_copilot.py",
+    "diff_check": "clean"
+  },
+  "author_validation": {
+    "focused_copilot": "7 passed + 3 subtests, exit 0",
+    "focused_batch": "1 passed, exit 0",
+    "copilot_plus_batch": "8 passed + 3 subtests, exit 0",
+    "branch_probe": "4 registry branches plus UNKNOWN/no-HS and valid-HS service boundary, exit 0",
+    "broad_matrix": "head: 77 passed + 29 subtests and 1 failure, exit 1; base: 76 passed + 29 subtests and the same 1 failure, exit 1"
+  },
+  "independent_a5": {
+    "executor": "/root/a5_cycle331",
+    "verdict": "PASS_NO_FINDINGS",
+    "focused_copilot": "7 passed + 3 subtests, exit 0",
+    "adjacent_isolated": "89 passed + 26 subtests + 1 expected skip, aggregate exit 0",
+    "branch_probe": "5 scenarios, exit 0",
+    "ai_classification_no_hs_probe": "exit 0",
+    "py_compile_diff_status_head_tree": "exit 0"
+  },
+  "broad_suite_limitation": "A combined single-process adjacent assistant matrix has a pre-existing SQLite fixture/order-isolation failure. The same missing hs_duty_rules failure reproduces on base and head, while every file passes in a fresh isolated process; this is not a finding against this candidate.",
+  "exact_head_ci": {
+    "run_id": 39118893508,
+    "job_id": 117650274420,
+    "name": "Tariff agent safety / offline-safety",
+    "status": "completed",
+    "conclusion": "success",
+    "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/39118893508"
+  },
+  "snapshot_status": "BOUNDED_EPOCH315_1020_ROWS_POPULATED_SYNCHRONIZED_NTM_NOT_AVAILABLE",
+  "staging_blocker": "The offset1120 Neon raw-record transaction remains policy-refused and was not retried or worked around.",
+  "a6": "core-s1-6415f443120f-r9-g106 unchanged, not authorized, not sent",
+  "protected_actions_performed": false,
+  "next_step": "Isolate the pre-existing assistant broad-suite SQLite fixture/order failure, then continue the optional-LLM fallback slice without weakening deterministic fallback, provenance or explicit incompleteness."
+}
