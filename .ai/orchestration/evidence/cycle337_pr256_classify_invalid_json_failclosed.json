@@ -2,7 +2,7 @@
   "schema_version": 1,
   "task_id": "TARIFF-PR256-CLASSIFY-INVALID-JSON-FAILCLOSED-20261018",
   "started_at": "2026-10-18T16:50:33Z",
-  "completed_at": "2026-10-18T17:00:00Z",
+  "completed_at": "2026-10-18T17:02:28Z",
   "executor": "/root/scheduled-cycle337-20261018T165033Z",
   "lease_generation": 337,
   "base_sha": "5932f4c88cd20ffaf570c46cf2779501f7991165",
@@ -46,6 +46,12 @@
     "name": "offline-safety",
     "conclusion": "success",
     "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/39147374130/job/117733849888"
+  },
+  "receipts": {
+    "pr256_comment_id": 6252642701,
+    "pr256_url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256#issuecomment-6252642701",
+    "issue257_comment_id": 6252642902,
+    "issue257_url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/257#issuecomment-6252642902"
   },
   "snapshot_status": "BOUNDED_EPOCH315_1020_ROWS_POPULATED_SYNCHRONIZED_NTM_NOT_AVAILABLE",
   "staging_blocker": "cycle325 offset1120 transfer remains policy-refused after the owner-authorized attempt; no retry or workaround",

@@ -11516,7 +11516,7 @@
     "schema_version": 1,
     "task_id": "TARIFF-PR256-CLASSIFY-INVALID-JSON-FAILCLOSED-20261018",
     "started_at": "2026-10-18T16:50:33Z",
-    "completed_at": "2026-10-18T17:00:00Z",
+    "completed_at": "2026-10-18T17:02:28Z",
     "executor": "/root/scheduled-cycle337-20261018T165033Z",
     "lease_generation": 337,
     "pr": 256,
@@ -11535,6 +11535,10 @@
     "independent_a5": "/root/a5_cycle337 PASS_NO_FINDINGS; focused 10 +3, adjacent 105 +74, ten independent no-network provider/error/leakage scenarios and a direct route probe passed",
     "a0_validation": "Exact remote head passed 126 tests +100 subtests, exit 0; compile, diff and exact-tree checks passed",
     "exact_head_ci": "run 39147374130 / job 117733849888 success",
+    "receipts": {
+      "pr256": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256#issuecomment-6252642701",
+      "issue257": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/257#issuecomment-6252642902"
+    },
     "snapshot_status": "BOUNDED_EPOCH315_1020_ROWS_POPULATED_SYNCHRONIZED_NTM_NOT_AVAILABLE",
     "staging_blocker": "cycle325 offset1120 transfer remains policy-refused after the owner-authorized attempt; no retry or workaround",
     "a6": "UNCHANGED_NOT_SENT",
