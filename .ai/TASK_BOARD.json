@@ -2179,7 +2179,7 @@
       "unique_source_pr_count": 29
     }
   },
-  "revision": 860,
+  "revision": 861,
   "runs": [
     {
       "head_sha": null,
@@ -7797,7 +7797,7 @@
       }
     }
   ],
-  "updated_at": "2026-10-18T08:58:14Z",
+  "updated_at": "2026-10-18T10:00:21Z",
   "previous_scheduled_product_checkpoint_174": {
     "updated_at": "2026-10-11T18:04:51.196Z",
     "checked_at": "2026-10-11T18:04:51.196Z",
@@ -11514,27 +11514,33 @@
   },
   "latest_scheduled_product_checkpoint": {
     "schema_version": 1,
-    "task_id": "TARIFF-PR256-TNVED-SEARCH-CODE-CARD-E2E-20261018",
-    "started_at": "2026-10-18T08:52:53Z",
-    "completed_at": "2026-10-18T08:58:14Z",
-    "executor": "/root/scheduled-cycle328-20261018T085253Z",
-    "lease_generation": 328,
+    "task_id": "TARIFF-PR256-SANCTIONS-GROUNDED-ASSISTANT-ORDER-ISOLATION-20261018",
+    "started_at": "2026-10-18T09:50:53Z",
+    "completed_at": "2026-10-18T10:00:21Z",
+    "executor": "/root/scheduled-cycle329-20261018T095053Z",
+    "lease_generation": 329,
     "pr": 256,
     "branch": "agent/product-ntm-regressions-v1",
-    "head_sha": "0320a7d268b33413c48dffc963cde6b0ec051ab1",
-    "tree_sha": "f5fc479d8ef6696880dcc28614c8a3e3da35e648",
-    "status": "UNCHANGED_HEAD_TNVED_SEARCH_CODE_CARD_A5_PASS_CI_PASS",
-    "product_changed": false,
-    "scope": "TN VED hybrid/semantic/FTS search, code card, preliminary decisions, classification rulings and safe source-link rendering",
-    "author_tests": "backend 110 and 11 passed; frontend 3 files/3 tests; typecheck and production build passed; all final exits 0",
-    "independent_a5": "/root/a5_cycle328 PASS_NO_FINDINGS; backend 96 passed; frontend 6 files/68 tests; typecheck passed; exact clean tree",
-    "exact_head_ci": "run 38898431622 / job 116964443470 success",
+    "previous_head_sha": "0320a7d268b33413c48dffc963cde6b0ec051ab1",
+    "head_sha": "6dce1cbd57066f27bd00464d07af52706fa4ac58",
+    "tree_sha": "502b07a36ba97f7c890fe56540293686b89aa45b",
+    "local_author_commit": "db84b9552f58a9d0686a4d2baa4da6a264ae009d",
+    "status": "IMPLEMENTED_A5_PASS_CI_PASS_SANCTIONS_FIXTURE_ORDER_ISOLATION",
+    "product_changed": true,
+    "product_code_changed": false,
+    "test_fixture_changed": true,
+    "scope": "sanctions/risk plus grounded-assistant order isolation, deterministic fallback, citations, auth and fail-closed/manual-review behavior",
+    "finding": "The sanctions fixture could leave app modules bound to its disposable five-table SessionLocal alias when those modules were first imported during the patch, making later admin sync-status coverage order-dependent.",
+    "fix": "Restore every loaded app.* module that captured the disposable SessionLocal alias in finally, restore app.db.SessionLocal, and dispose the temporary engine.",
+    "author_tests": "baseline forward exit 1 with 76 passed +29 subtests/1 failure; focused 71+29 and reverse 77+29 passed; fixed forward, reverse and exact-remote matrices each 77+29; frontend 3 files/75 tests; typecheck/build/diff-check all exit 0",
+    "independent_a5": "/root/a5_cycle329 PASS_NO_FINDINGS; forward/reverse 72+29, focused 37+26, frontend 34 and typecheck all exit 0 on exact remote tree",
+    "exact_head_ci": "run 39117286807 / job 117645532413 success",
     "snapshot_status": "BOUNDED_EPOCH315_1020_ROWS_POPULATED_SYNCHRONIZED_NTM_NOT_AVAILABLE",
     "staging_blocker": "offset1120 Neon raw-record transaction remains policy-refused; no retry or workaround",
     "a6": "UNCHANGED_NOT_SENT",
     "protected_actions_performed": false,
-    "evidence": ".ai/orchestration/evidence/cycle328_pr256_tnved_search_code_card_e2e.json",
-    "next_step": "Continue the next active-focus sanctions/risk and grounded-assistant slice on PR256/PR245, preserving provenance, default-off behavior and explicit incompleteness."
+    "evidence": ".ai/orchestration/evidence/cycle329_pr256_sanctions_grounded_assistant_order_isolation.json",
+    "next_step": "Continue the next grounded-assistant optional-LLM fallback and registry-verification slice on PR256/PR245, preserving deterministic fallback, provenance and explicit incompleteness."
   },
   "latest_development_checkpoint": {
     "updated_at": "2026-10-16T09:12:32.706Z",
@@ -17402,5 +17408,29 @@
     "protected_actions_performed": false,
     "evidence": ".ai/orchestration/evidence/cycle327_pr256_normative_e2e.json",
     "next_step": "Continue the active-focus TN VED search/code-card and related preliminary-decisions slice on PR256/PR245; preserve source evidence and fail-closed behavior."
+  },
+  "previous_scheduled_product_checkpoint_329": {
+    "schema_version": 1,
+    "task_id": "TARIFF-PR256-TNVED-SEARCH-CODE-CARD-E2E-20261018",
+    "started_at": "2026-10-18T08:52:53Z",
+    "completed_at": "2026-10-18T08:58:14Z",
+    "executor": "/root/scheduled-cycle328-20261018T085253Z",
+    "lease_generation": 328,
+    "pr": 256,
+    "branch": "agent/product-ntm-regressions-v1",
+    "head_sha": "0320a7d268b33413c48dffc963cde6b0ec051ab1",
+    "tree_sha": "f5fc479d8ef6696880dcc28614c8a3e3da35e648",
+    "status": "UNCHANGED_HEAD_TNVED_SEARCH_CODE_CARD_A5_PASS_CI_PASS",
+    "product_changed": false,
+    "scope": "TN VED hybrid/semantic/FTS search, code card, preliminary decisions, classification rulings and safe source-link rendering",
+    "author_tests": "backend 110 and 11 passed; frontend 3 files/3 tests; typecheck and production build passed; all final exits 0",
+    "independent_a5": "/root/a5_cycle328 PASS_NO_FINDINGS; backend 96 passed; frontend 6 files/68 tests; typecheck passed; exact clean tree",
+    "exact_head_ci": "run 38898431622 / job 116964443470 success",
+    "snapshot_status": "BOUNDED_EPOCH315_1020_ROWS_POPULATED_SYNCHRONIZED_NTM_NOT_AVAILABLE",
+    "staging_blocker": "offset1120 Neon raw-record transaction remains policy-refused; no retry or workaround",
+    "a6": "UNCHANGED_NOT_SENT",
+    "protected_actions_performed": false,
+    "evidence": ".ai/orchestration/evidence/cycle328_pr256_tnved_search_code_card_e2e.json",
+    "next_step": "Continue the next active-focus sanctions/risk and grounded-assistant slice on PR256/PR245, preserving provenance, default-off behavior and explicit incompleteness."
   }
 }
