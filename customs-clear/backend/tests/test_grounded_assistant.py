@@ -664,6 +664,48 @@ class AssistantChatGuardrailTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(result["answer"], deterministic_answer)
         self.assertNotIn(response, json.dumps(result, ensure_ascii=False))
 
+    async def test_invalid_json_from_primary_uses_secondary_provider(self) -> None:
+        bundle = deepcopy(_chat_bundle())
+        bundle["requirements"]["data_freshness"]["ntm_coverage_verified"] = True
+        deterministic_answer, _ = render_chat_grounded_answer(bundle)
+        response = json.dumps(
+            {
+                "use_server_draft": True,
+                "citation_ids": ["S1", "S2", "S3", "S4"],
+            },
+            ensure_ascii=False,
+        )
+        chain = [("anthropic", "anthropic-test"), ("gemini", "gemini-test")]
+        anthropic = AsyncMock(
+            side_effect=json.JSONDecodeError("invalid provider JSON", "not-json", 0)
+        )
+        gemini = AsyncMock(
+            return_value={"provider": "gemini", "text": response, "raw": {}}
+        )
+        with (
+            patch(
+                "app.services.assistant_chat.build_chat_grounding_bundle",
+                new=AsyncMock(return_value=bundle),
+            ),
+            patch("app.services.assistant_chat.llm_provider_chain", return_value=chain),
+            patch.object(claude_service, "llm_provider_chain", return_value=chain),
+            patch.object(claude_service, "_call_anthropic", new=anthropic),
+            patch.object(claude_service, "_call_gemini", new=gemini),
+        ):
+            result = await run_assistant_chat(
+                message="Сколько платить?",
+                history=[],
+                current_context={"hs_code": "8516108008"},
+            )
+
+        anthropic.assert_awaited_once()
+        gemini.assert_awaited_once()
+        self.assertEqual(result["grounding"]["mode"], "llm_grounded")
+        self.assertEqual(result["grounding"]["provider"], "gemini")
+        self.assertEqual(result["answer"], deterministic_answer)
+        self.assertNotIn(response, json.dumps(result, ensure_ascii=False))
+        self.assertNotIn("not-json", json.dumps(result, ensure_ascii=False))
+
     async def test_valid_but_unrelated_citation_cannot_inject_material_claims(self) -> None:
         bundle = deepcopy(_chat_bundle())
         bundle["requirements"]["data_freshness"]["ntm_coverage_verified"] = True

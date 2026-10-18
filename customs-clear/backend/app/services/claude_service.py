@@ -185,7 +185,7 @@ async def _ask_llm(system_prompt: str, user_text: str) -> dict[str, Any]:
                 )
                 continue
             return response
-        except (httpx.HTTPError, OSError, TimeoutError) as exc:
+        except (httpx.HTTPError, OSError, TimeoutError, json.JSONDecodeError) as exc:
             logger.warning(f"LLM провайдер {provider} недоступен: {exc}")
             last_exc = exc
             continue
