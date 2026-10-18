@@ -1,0 +1,59 @@
+{
+  "schema_version": 1,
+  "task_id": "TARIFF-PR256-OPTIONAL-LLM-EMPTY-PRIMARY-FALLBACK-20261018",
+  "started_at": "2026-10-18T13:47:30Z",
+  "completed_at": "2026-10-18T14:00:31Z",
+  "executor": "/root/scheduled-cycle334-20261018T134730Z",
+  "lease": {
+    "generation": 334,
+    "holder": "/root/scheduled-cycle334-20261018T134730Z",
+    "acquisition_commit": "77f562986a98d592cb7fc69c1db54da720d028c9"
+  },
+  "candidate": {
+    "pr": 256,
+    "branch": "agent/product-ntm-regressions-v1",
+    "previous_head_sha": "44e3d8b40e5a52a199f0106ed32bc476480561e1",
+    "head_sha": "16112d6472bf40060a05b0066c2f42172a58fbbb",
+    "tree_sha": "43e5c6e8269914ce763cb8d5945b23a27663c1ad",
+    "local_author_commit": "c53c271a470d5c980e4a7451d5226acfe3af528a",
+    "changed_files": [
+      "customs-clear/backend/app/services/claude_service.py",
+      "customs-clear/backend/tests/test_grounded_assistant.py"
+    ]
+  },
+  "finding": "An empty primary Anthropic response was treated as success and skipped the configured Gemini secondary provider.",
+  "fix": "The provider loop now treats non-dict, empty and whitespace responses as unusable and continues to the next configured provider. All-empty chains retain caller-level deterministic fallback.",
+  "validation": {
+    "baseline_reproduction": "exit 1: expected Gemini secondary, actual Anthropic with empty text",
+    "author": [
+      "focused 2 passed, exit 0",
+      "grounded assistant 30 passed +26 subtests, exit 0",
+      "broader matrix 73 passed +29 subtests, exit 0",
+      "py_compile, diff-check and clean-tree checks passed"
+    ],
+    "independent_a5": "/root/a5_cycle334 PASS_NO_FINDINGS; baseline reproduced; focused 2, grounded 30 +26, adjacent 31 +3, provider-edge matrix 4 and malformed-output E2E all passed",
+    "a0": [
+      "focused 4 passed, exit 0",
+      "assistant adjacent matrix 50 passed +29 subtests, exit 0",
+      "py_compile, diff-check and exact-tree checks passed"
+    ],
+    "ci": {
+      "run_id": 39133896029,
+      "job_id": 117694406711,
+      "name": "offline-safety",
+      "conclusion": "success",
+      "head_sha": "16112d6472bf40060a05b0066c2f42172a58fbbb",
+      "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/39133896029/job/117694406711"
+    }
+  },
+  "limitations": [
+    "This is not full PR #245/#256 product acceptance or legal/source completeness.",
+    "Malformed nonempty provider output is rejected by the caller to deterministic fallback and does not advance to a secondary provider.",
+    "No live external-provider call was required for this bounded deterministic test scope.",
+    "A lawful populated synchronized NTM snapshot remains unavailable."
+  ],
+  "snapshot_status": "BOUNDED_EPOCH315_1020_ROWS_POPULATED_SYNCHRONIZED_NTM_NOT_AVAILABLE",
+  "staging_blocker": "The cycle325 offset1120 transfer remains policy-refused after the owner-authorized attempt; it was not retried or worked around.",
+  "a6": "UNCHANGED_NOT_SENT",
+  "protected_actions_performed": false
+}
