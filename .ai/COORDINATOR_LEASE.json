@@ -1,14 +1,14 @@
 {
   "acquisition_note": "Cycle 292 recovered main e526dfbdb5a31b01bf6f743da0288b88f916de0c, PR258 exact head c59af35da7dde2140d911e2003a4a52fb0611507, released generation 291, and stale CI status. GitHub now exposes exact-head run 38920906239/job 117040259865 as success.",
-  "expires_at": null,
-  "generation": 330,
-  "holder": null,
+  "expires_at": "2026-10-18T11:20:13.030627Z",
+  "generation": 331,
+  "holder": "/root/scheduled-cycle331-20261018T104720Z",
   "lease_repair": {},
   "release_reason": "Cycle330 fixed PR256 registry-without-HS diagnostic at e8c162ef7850d6a449b4ff87fe2d1bd610ff06ac; exact-source executable harness PASS and CI run39118893508/job117650274420 success. Independent A5 remains pending, so readiness is not claimed. Evidence commit 020b362672f1db97a76b422a4abe722c602774e2. TASK_BOARD checkpoint write was denied by the MCP approval layer and was not retried through another route. A6 unchanged/not sent; no protected action.",
   "released_by": "/root/scheduled-cycle330-20261018T101417Z",
   "schema_version": 1,
   "serialization_repair": {},
-  "state": "released",
-  "token": null,
-  "updated_at": "2026-10-18T10:24:34.474Z"
+  "state": "active",
+  "token": "7c060da98e5a4ffe8b5a7bbbe2c4991c",
+  "updated_at": "2026-10-18T10:50:13.030627Z"
 }
