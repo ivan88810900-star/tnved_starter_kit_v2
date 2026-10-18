@@ -2179,7 +2179,7 @@
       "unique_source_pr_count": 29
     }
   },
-  "revision": 871,
+  "revision": 872,
   "runs": [
     {
       "head_sha": null,
@@ -7797,7 +7797,7 @@
       }
     }
   ],
-  "updated_at": "2026-10-18T20:01:26Z",
+  "updated_at": "2026-10-18T20:59:33Z",
   "previous_scheduled_product_checkpoint_174": {
     "updated_at": "2026-10-11T18:04:51.196Z",
     "checked_at": "2026-10-11T18:04:51.196Z",
@@ -11513,6 +11513,40 @@
     "next_step": "First recheck exact-head CI for 09bd88e3085921733708578cce6e21a70430c0fd and accept only a verified successful run. Then isolate tests/test_rop_coverage_audit.py: on clean exact HEAD it exits 1 with 4 failed because rop_goods_rates is absent and creates a 4,096-byte ambient customs.db; preserve its 97-chapter, subject/not-subject and summary assertions without changing product or normative data."
   },
   "latest_scheduled_product_checkpoint": {
+    "schema_version": 1,
+    "task_id": "TARIFF-PR256-GROUNDING-SERVICE-ERROR-BOUNDARY-20261018",
+    "started_at": "2026-10-18T20:49:17Z",
+    "completed_at": "2026-10-18T20:59:33Z",
+    "executor": "/root/scheduled-cycle341-20261018T204917Z",
+    "lease_generation": 341,
+    "pr": 256,
+    "branch": "agent/product-ntm-regressions-v1",
+    "previous_head_sha": "62622ae0755083ecaa172ebc0461078c184ad9a1",
+    "head_sha": "130a5ec6e69a837bc7dfd36d30ee2e7dbd813fc8",
+    "tree_sha": "49c1690a836399d2fb489257dbfb34ac88d8469d",
+    "local_author_commit": "eccc08e39d828650ff005515b9ef5528936771de",
+    "status": "IMPLEMENTED_A5_PASS_CI_PASS_GROUNDING_SERVICE_ERROR_BOUNDARY",
+    "product_changed": true,
+    "product_code_changed": true,
+    "scope": "grounded assistant TN VED, NTM/risk and product-search dependency failure boundaries with conservative fallback and credential-safe logs",
+    "finding": "build_chat_grounding_bundle caught all Exceptions from three evidence providers, converted programming TypeError into ordinary needs-context output and logged raw provider URL/query-key text.",
+    "fix": "Fallback only for operational/connectivity/timeout and exact compatibility sentinel failures; class-only logs; SQL/ORM and other programming/data-contract errors propagate.",
+    "author_tests": "baseline probe exited 1 after reproducing swallowed TypeError plus raw URL/key warning; corrected focused 73 passed +26 subtests; expanded 132 passed +41 subtests; compile and diff checks passed",
+    "independent_a5": "/root/a5_cycle341 initially rejected broad sqlite3.Error/SQLAlchemyError handling; corrected candidate PASS_NO_FINDINGS with focused 73 +26, adjacent 181 +38, operational fallback 2/2 and DB/ORM programming propagation 4/4",
+    "a0_validation": "Exact remote head passed 132 tests +41 subtests, exit 0; remote tree equals tested tree",
+    "exact_head_ci": "run 39165740248 / job 117788188516 success",
+    "receipts": {
+      "pr256": null,
+      "issue257": null
+    },
+    "snapshot_status": "BOUNDED_EPOCH315_1020_ROWS_POPULATED_SYNCHRONIZED_NTM_NOT_AVAILABLE",
+    "staging_blocker": "cycle325 offset1120 transfer remains policy-refused after the owner-authorized attempt; no retry or workaround",
+    "a6": "UNCHANGED_NOT_SENT",
+    "protected_actions_performed": false,
+    "evidence": ".ai/orchestration/evidence/cycle341_pr256_grounding_service_error_boundary.json",
+    "next_step": "Continue the next bounded PR #256/#245 assistant/registry slice; keep fallback limited to recognized operational failures, preserve provenance and explicit incompleteness, and do not retry the refused SGR transfer."
+  },
+  "previous_scheduled_product_checkpoint_340": {
     "schema_version": 1,
     "task_id": "TARIFF-PR256-REGISTRY-AI-ERROR-BOUNDARY-20261018",
     "started_at": "2026-10-18T19:51:50Z",

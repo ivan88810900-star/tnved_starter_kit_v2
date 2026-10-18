@@ -1,0 +1,56 @@
+{
+  "schema_version": 1,
+  "task_id": "TARIFF-PR256-GROUNDING-SERVICE-ERROR-BOUNDARY-20261018",
+  "started_at": "2026-10-18T20:49:17Z",
+  "completed_at": "2026-10-18T20:59:33Z",
+  "executor": "/root/scheduled-cycle341-20261018T204917Z",
+  "lease_generation": 341,
+  "base_sha": "62622ae0755083ecaa172ebc0461078c184ad9a1",
+  "head_sha": "130a5ec6e69a837bc7dfd36d30ee2e7dbd813fc8",
+  "tree_sha": "49c1690a836399d2fb489257dbfb34ac88d8469d",
+  "local_author_commit": "eccc08e39d828650ff005515b9ef5528936771de",
+  "changed_files": [
+    "customs-clear/backend/app/services/grounded_assistant.py",
+    "customs-clear/backend/tests/test_grounding_service_error_boundary.py"
+  ],
+  "baseline_reproduction": {
+    "command": "direct no-network TypeError probe against grounded product search on prior PR #256 head",
+    "exit_code": 1,
+    "observed": "programming TypeError was converted to ordinary needs-context response and raw URL/query-key text reached warning log"
+  },
+  "implementation": "Three evidence stages retain conservative fallback for recognized operational/connectivity/timeout failures and exact compatibility sentinels; logs contain exception class only; programming and data-contract defects propagate.",
+  "author": {
+    "corrected_focused": "73 passed +26 subtests, exit 0",
+    "expanded": "132 passed +41 subtests, exit 0",
+    "compile": "exit 0",
+    "diff_check": "exit 0"
+  },
+  "a5": {
+    "reviewer": "/root/a5_cycle341",
+    "initial_status": "FAIL_CHANGES_REQUIRED: broad sqlite3.Error and SQLAlchemyError swallowed four DB/ORM programming defects",
+    "corrected_status": "PASS_NO_FINDINGS",
+    "focused": "73 passed +26 subtests, exit 0",
+    "adjacent": "181 passed +38 subtests, exit 0",
+    "adversarial": "operational fallback 2/2; sqlite3/SQLAlchemy programming and state errors propagate 4/4; class-only logs contain no URL/key leakage",
+    "findings_open": []
+  },
+  "a0_validation": {
+    "exact_remote_tests": "132 passed +41 subtests, exit 0",
+    "tree_check": "remote tree equals 49c1690a836399d2fb489257dbfb34ac88d8469d"
+  },
+  "ci": {
+    "run_id": 39165740248,
+    "job_id": 117788188516,
+    "name": "offline-safety",
+    "conclusion": "success",
+    "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/39165740248/job/117788188516"
+  },
+  "receipts": {
+    "pr256": null,
+    "issue257": null
+  },
+  "snapshot_status": "BOUNDED_EPOCH315_1020_ROWS_POPULATED_SYNCHRONIZED_NTM_NOT_AVAILABLE",
+  "staging_blocker": "cycle325 offset1120 transfer remains policy-refused after the owner-authorized attempt; no retry or workaround",
+  "a6": "UNCHANGED_NOT_SENT",
+  "protected_actions_performed": false
+}
