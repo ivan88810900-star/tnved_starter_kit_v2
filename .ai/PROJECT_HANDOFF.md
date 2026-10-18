@@ -106,7 +106,7 @@
 - Next triage: eleven remaining API/payment/assistant/risk consumers were rechecked on the exact head and passed without creating ambient SQLite. The next bounded step is a clean broader backend fixture tranche to identify and reproduce the next real failure before any patch.
 - The issue #257 bounded probe was not repeated because its receipt already exists. Full #245 acceptance and legal/source completeness remain NOT PASS; a lawful populated synchronized NTM snapshot is unavailable. A6 `core-s1-6415f443120f-r9-g106` remains unchanged and undispatched. No merge, deploy or production write was performed.
 
-## 2026-10-13 — Excise-ingestion database isolation published on PR #256
+## 2026-10-13 �� Excise-ingestion database isolation published on PR #256
 
 - Exact candidate: `d309f36fd74af2015e689b87b360a874e754d733`, tree `e57cd2e9567ec7ad519381e878d75f2a9128a4f6`; parent `bb1951dbdf3b5b5136083d60b1896fdb620f05ab`; local author exact-tree commit `c1e22d9de3b424310cc6d692a644fcbe8ca1b154`.
 - Parent reproduction: `python -m pytest -q tests/test_excise_ingestion.py` exited 0 with **25 passed + 9 subtests** but created a 1,036,288-byte ambient `customs.db`; the probe artifact was removed.
@@ -1566,3 +1566,12 @@ CI #255: [offline-safety PASS, run 37771953943](https://github.com/ivan88810900-
 - This is bounded executable product verification, not a product change, full PR #245/#256 acceptance, legal/source completeness, or A6. No external registry/network check or protected action occurred.
 - The staging state and blocker are unchanged: epoch315 remains 20 objects / 10 runs / 1,020 rows `COLLECTED_UNVERIFIED`; a populated synchronized NTM snapshot is unavailable. The policy-refused offset1120 Neon transfer was not retried or worked around.
 - Evidence: `.ai/orchestration/evidence/cycle327_pr256_normative_e2e.json`; TASK_BOARD revision 859. Continue the active-focus TN VED search/code-card and related preliminary-decisions slice, preserving source evidence and fail-closed behavior.
+
+# 2026-10-18 — PR #256 TN VED search/code-card E2E revalidated on unchanged head
+
+- Draft PR #256 remains unchanged at exact head `0320a7d268b33413c48dffc963cde6b0ec051ab1`, tree `f5fc479d8ef6696880dcc28614c8a3e3da35e648`; exact-head offline-safety CI run 38898431622 / job 116964443470 is `success`.
+- The disposable-SQLite author backend matrices passed 110 and 11 tests. The focused frontend matrix passed 3 files / 3 tests; TypeScript typecheck and production build exited 0. The additional root-backend test initially lacked its declared `openai` dependency; after installing it from `backend/requirements.txt`, the unchanged test passed 11/11.
+- Independent native A5 `/root/a5_cycle328` returned `PASS_NO_FINDINGS`: backend 96 passed, frontend 6 files / 68 tests passed, and typecheck exited 0 on the exact clean tree. It found no fail-open FTS/search behavior, unsafe source-link admission, official/reference mixing, or false completeness claim in the bounded scope.
+- This is bounded executable product verification, not a product change, full PR #245/#256 acceptance, legal/source completeness, or A6. No production write, merge, deploy, enforcement flag, secret/permission change, or external A6 call occurred.
+- The staging state and blocker are unchanged: epoch315 remains 20 objects / 10 runs / 1,020 rows `COLLECTED_UNVERIFIED`; a populated synchronized NTM snapshot is unavailable. The policy-refused offset1120 Neon transfer was not retried or worked around.
+- Evidence: `.ai/orchestration/evidence/cycle328_pr256_tnved_search_code_card_e2e.json`; TASK_BOARD revision 860. Continue the next active-focus sanctions/risk and grounded-assistant slice, preserving provenance, default-off behavior and explicit incompleteness.
