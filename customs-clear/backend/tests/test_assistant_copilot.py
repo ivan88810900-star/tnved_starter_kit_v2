@@ -70,6 +70,7 @@ def _isolated_assistant_copilot_database(tmp_path_factory: pytest.TempPathFactor
     assert _protected_fingerprints() == protected_hashes
 
     from app import db as app_db, main as app_main
+    from app.services import payment_engine_compat
     from app.services.assistant_orchestrator import (
         bundle_for_llm as actual_bundle_for_llm,
         pick_hs_from_classification as actual_pick_hs_from_classification,
@@ -82,6 +83,12 @@ def _isolated_assistant_copilot_database(tmp_path_factory: pytest.TempPathFactor
     assert _protected_fingerprints() == protected_hashes
     original_session = app_db.SessionLocal
     original_engine = app_db.engine
+    original_payment_engine_cache = (
+        payment_engine_compat._compare,
+        payment_engine_compat._compute,
+        payment_engine_compat._get_rule,
+        payment_engine_compat._get_meta,
+    )
     engine = create_engine(
         f"sqlite:///{database}",
         connect_args={"check_same_thread": False},
@@ -130,12 +137,22 @@ def _isolated_assistant_copilot_database(tmp_path_factory: pytest.TempPathFactor
                 setattr(module, "SessionLocal", original_session)
             if getattr(module, "engine", None) is engine:
                 setattr(module, "engine", original_engine)
+        (
+            payment_engine_compat._compare,
+            payment_engine_compat._compute,
+            payment_engine_compat._get_rule,
+            payment_engine_compat._get_meta,
+        ) = original_payment_engine_cache
         for module_name in tuple(sys.modules):
             if (
                 module_name not in preloaded_app_modules
                 and (module_name == "app" or module_name.startswith("app."))
             ):
-                sys.modules.pop(module_name, None)
+                module = sys.modules.pop(module_name, None)
+                parent_name, _, child_name = module_name.rpartition(".")
+                parent = sys.modules.get(parent_name)
+                if parent is not None and getattr(parent, child_name, None) is module:
+                    delattr(parent, child_name)
         engine.dispose()
         for path in (
             database,
