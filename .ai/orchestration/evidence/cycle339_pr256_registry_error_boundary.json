@@ -2,7 +2,7 @@
   "schema_version": 1,
   "task_id": "TARIFF-PR256-REGISTRY-ERROR-BOUNDARY-20261018",
   "started_at": "2026-10-18T18:53:17Z",
-  "completed_at": "2026-10-18T19:01:39Z",
+  "completed_at": "2026-10-18T19:03:34Z",
   "executor": "/root/scheduled-cycle339-20261018T185317Z",
   "lease_generation": 339,
   "base_sha": "754f467b8dbf5b449d7c0bd0358ff19a9d2ad87f",
@@ -47,6 +47,16 @@
     "name": "offline-safety",
     "conclusion": "success",
     "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/39156709974/job/117761330698"
+  },
+  "receipts": {
+    "pr256": {
+      "id": 6253889737,
+      "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256#issuecomment-6253889737"
+    },
+    "issue257": {
+      "id": 6253889887,
+      "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/257#issuecomment-6253889887"
+    }
   },
   "snapshot_status": "BOUNDED_EPOCH315_1020_ROWS_POPULATED_SYNCHRONIZED_NTM_NOT_AVAILABLE",
   "staging_blocker": "cycle325 offset1120 transfer remains policy-refused after the owner-authorized attempt; no retry or workaround",
