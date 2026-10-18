@@ -1,0 +1,74 @@
+{
+  "schema_version": 1,
+  "task_id": "TARIFF-STAGING-SGR-CYCLE325-OWNER-AUTHORIZED-TRANSFER-BLOCKED-20261018",
+  "started_at": "2026-10-18T12:51:55Z",
+  "completed_at": "2026-10-18T12:54:30Z",
+  "executor": "/root/scheduled-cycle333-20261018T125155Z",
+  "lease_generation": 333,
+  "owner_authorization": {
+    "scope": "exactly the 100 official SGR records prepared in cycle325, including original names and registry contact details",
+    "destination_project": "red-meadow-53765518",
+    "destination_branch": "br-weathered-frost-ba9jri3c",
+    "destination_database": "tariff_staging",
+    "public_disclosure_forbidden": true,
+    "stop_on_new_platform_refusal": true
+  },
+  "destination_verification": {
+    "project_id": "red-meadow-53765518",
+    "branch_id": "br-weathered-frost-ba9jri3c",
+    "branch_name": "staging",
+    "branch_state": "ready",
+    "branch_default": true,
+    "branch_protected": false,
+    "database": "tariff_staging",
+    "tables": [
+      "tariff_ingest.source_objects",
+      "tariff_ingest.ingest_runs",
+      "tariff_ingest.sgr_collected_rows"
+    ],
+    "matches_cycle325_refused_destination": true
+  },
+  "prepared_batch_verification": {
+    "page_object_key": "sgr/1995/2026-10-16/epoch-cycle315/page-offset1000-limit120-87a543ba350e8ac1.json",
+    "page_size_bytes": 259052,
+    "page_expected_sha256": "87a543ba350e8ac15cdccad10a7558c3e45ed5dcfa6190eca7775f82dca75598",
+    "manifest_object_key": "sgr/1995/2026-10-16/epoch-cycle315/manifest-logical-offset1020-5bea5f47a367ca33.json",
+    "manifest_size_bytes": 767,
+    "manifest_expected_sha256": "5bea5f47a367ca3312180aec5978c63af2e6f68d2cc4381c9a34b44230b073d2",
+    "objects_present": "2/2",
+    "metadata_unchanged": true,
+    "fresh_payload_sha256_recomputation": "NOT_PERFORMED_PLATFORM_REFUSED_DOWNLOAD",
+    "prepared_rows": 100,
+    "logical_offset": 1020,
+    "prepared_next_offset": 1120,
+    "expected_new_slice_row_digest": "dc9b98fd696df7c15c3324138345f0f2fe66f3cb03d37aea7dd41f3e4d44947e",
+    "expected_new_slice_identity_digest": "a19b08efe6a7b226e0455eb8e5aaff766b095e5469dc3873c1a97fed000b1626"
+  },
+  "platform_refusal": {
+    "operation": "neon.presign_storage_object download",
+    "result": "REJECTED_UNACCEPTABLE_RISK",
+    "reason": "Creating a presigned download URL for the private storage object could export its contents outside the controlled database workflow.",
+    "retry_attempted": false,
+    "workaround_attempted": false,
+    "transfer_transaction_attempted": false
+  },
+  "post_refusal_staging_read": {
+    "epoch315_source_objects": 20,
+    "epoch315_ingest_runs": 10,
+    "epoch315_rows": 1020,
+    "unique_source_record_ids": 1020,
+    "unique_row_hashes": 1020,
+    "max_ordinal": 1020,
+    "candidate_source_objects_persisted": 0,
+    "candidate_rows_persisted": 0,
+    "status": "COLLECTED_UNVERIFIED",
+    "normalization": false,
+    "legal_admission": false
+  },
+  "result": "CAPABILITY_BLOCKED_NO_PARTIAL_WRITE",
+  "product_changed": false,
+  "database_write_performed": false,
+  "a6": "UNCHANGED_NOT_SENT",
+  "protected_actions_performed": false,
+  "next_step": "Do not retry or work around the refusal. Continue unrelated safe product work. This exact transfer remains blocked unless the normal platform path can move the existing private object directly to the already verified destination without creating an exportable download URL."
+}

@@ -2179,7 +2179,7 @@
       "unique_source_pr_count": 29
     }
   },
-  "revision": 863,
+  "revision": 864,
   "runs": [
     {
       "head_sha": null,
@@ -7797,7 +7797,7 @@
       }
     }
   ],
-  "updated_at": "2026-10-18T12:07:15Z",
+  "updated_at": "2026-10-18T12:54:30Z",
   "previous_scheduled_product_checkpoint_174": {
     "updated_at": "2026-10-11T18:04:51.196Z",
     "checked_at": "2026-10-11T18:04:51.196Z",
@@ -11513,6 +11513,35 @@
     "next_step": "First recheck exact-head CI for 09bd88e3085921733708578cce6e21a70430c0fd and accept only a verified successful run. Then isolate tests/test_rop_coverage_audit.py: on clean exact HEAD it exits 1 with 4 failed because rop_goods_rates is absent and creates a 4,096-byte ambient customs.db; preserve its 97-chapter, subject/not-subject and summary assertions without changing product or normative data."
   },
   "latest_scheduled_product_checkpoint": {
+    "schema_version": 1,
+    "task_id": "TARIFF-STAGING-SGR-CYCLE325-OWNER-AUTHORIZED-TRANSFER-BLOCKED-20261018",
+    "started_at": "2026-10-18T12:51:55Z",
+    "completed_at": "2026-10-18T12:54:30Z",
+    "executor": "/root/scheduled-cycle333-20261018T125155Z",
+    "lease_generation": 333,
+    "pr": 258,
+    "branch": "agent/staging-ingest-bootstrap-v1",
+    "head_sha": "c59af35da7dde2140d911e2003a4a52fb0611507",
+    "tree_sha": "2fee4bb388d1b2db69b2e49ed41d9f4dacea08d9",
+    "status": "CAPABILITY_BLOCKED_NO_PARTIAL_WRITE_OWNER_AUTHORIZED_SGR_TRANSFER",
+    "product_changed": false,
+    "product_code_changed": false,
+    "database_write_performed": false,
+    "scope": "owner-authorized transfer of exactly the 100 official SGR records prepared in cycle325 to the verified Neon tariff_staging destination",
+    "destination": "red-meadow-53765518 / br-weathered-frost-ba9jri3c / tariff_staging verified exact",
+    "prepared_objects": "2/2 present with unchanged keys/sizes; page 259052 bytes, manifest 767 bytes",
+    "expected_checksums": "page 87a543ba350e8ac15cdccad10a7558c3e45ed5dcfa6190eca7775f82dca75598; manifest 5bea5f47a367ca3312180aec5978c63af2e6f68d2cc4381c9a34b44230b073d2",
+    "blocker": "Neon rejected presigned private-object download as unacceptable risk because it could export payload outside the controlled database workflow; owner required stop on any new refusal",
+    "retry_or_workaround": false,
+    "post_refusal_read": "epoch315 20 source objects / 10 ingest runs / 1020 rows; 1020 unique IDs and hashes; max ordinal 1020; candidate objects/rows 0/0",
+    "snapshot_status": "BOUNDED_EPOCH315_1020_ROWS_POPULATED_SYNCHRONIZED_NTM_NOT_AVAILABLE",
+    "staging_blocker": "cycle325 offset1120 transfer remains blocked after a new platform refusal; no retry or workaround",
+    "a6": "UNCHANGED_NOT_SENT",
+    "protected_actions_performed": false,
+    "evidence": ".ai/orchestration/evidence/cycle333_sgr_cycle325_owner_authorized_transfer_blocked.json",
+    "next_step": "Continue unrelated safe product work. Do not retry this transfer unless the normal platform path can move the existing private object directly to the verified destination without creating an exportable download URL."
+  },
+  "previous_scheduled_product_checkpoint_332": {
     "schema_version": 1,
     "task_id": "TARIFF-PR256-ASSISTANT-SQLITE-ORDER-ISOLATION-20261018",
     "started_at": "2026-10-18T11:53:47Z",
