@@ -1,0 +1,54 @@
+{
+  "schema_version": 1,
+  "task_id": "TARIFF-PR256-REGISTRY-AI-ERROR-BOUNDARY-20261018",
+  "started_at": "2026-10-18T19:51:50Z",
+  "completed_at": "2026-10-18T20:01:26Z",
+  "executor": "/root/scheduled-cycle340-20261018T195150Z",
+  "lease_generation": 340,
+  "base_sha": "6b80cac06b37847e4fbac39dc7cd5baadb2987ca",
+  "head_sha": "62622ae0755083ecaa172ebc0461078c184ad9a1",
+  "tree_sha": "82cf40c268b72f771c50120d41b4e29f059480f3",
+  "local_author_commit": "43b39a5c5449e70e78d88aae7bd6e2bddeb8b201",
+  "changed_files": [
+    "customs-clear/backend/app/services/state_registry_match.py",
+    "customs-clear/backend/tests/test_state_registry_ai_error_boundary.py"
+  ],
+  "baseline_reproduction": {
+    "command": "direct no-network TypeError probe against _ai_disambiguate_fss on prior PR #256 head",
+    "exit_code": 1,
+    "observed": "programming TypeError was converted to first-ranked candidate fallback and raw provider URL/query-key text reached a warning"
+  },
+  "implementation": "Recognized optional import, provider/transport/config failures and malformed output retain deterministic first-ranked fallback with exception-class-only logs. Unrelated programming errors propagate.",
+  "author": {
+    "focused_and_adjacent": "31 passed +9 subtests, exit 0",
+    "compile": "exit 0",
+    "diff_check": "exit 0"
+  },
+  "a5": {
+    "reviewer": "/root/a5_cycle340",
+    "status": "PASS_NO_FINDINGS",
+    "focused": "6 passed +9 subtests, exit 0",
+    "existing_registry": "43 passed, exit 0",
+    "adversarial": "requests.ConnectionError bounded fallback; AssertionError, KeyError and unrecognized RuntimeError propagate; non-ImportError import failures propagate; no URL/key leakage",
+    "findings_open": []
+  },
+  "a0_validation": {
+    "exact_remote_tests": "106 passed +41 subtests, exit 0",
+    "tree_check": "remote tree equals 82cf40c268b72f771c50120d41b4e29f059480f3"
+  },
+  "ci": {
+    "run_id": 39161290814,
+    "job_id": 117774976590,
+    "name": "offline-safety",
+    "conclusion": "success",
+    "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/39161290814/job/117774976590"
+  },
+  "receipts": {
+    "pr256": null,
+    "issue257": null
+  },
+  "snapshot_status": "BOUNDED_EPOCH315_1020_ROWS_POPULATED_SYNCHRONIZED_NTM_NOT_AVAILABLE",
+  "staging_blocker": "cycle325 offset1120 transfer remains policy-refused after the owner-authorized attempt; no retry or workaround",
+  "a6": "UNCHANGED_NOT_SENT",
+  "protected_actions_performed": false
+}

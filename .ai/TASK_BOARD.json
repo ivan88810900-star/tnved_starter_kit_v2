@@ -2179,7 +2179,7 @@
       "unique_source_pr_count": 29
     }
   },
-  "revision": 870,
+  "revision": 871,
   "runs": [
     {
       "head_sha": null,
@@ -7797,7 +7797,7 @@
       }
     }
   ],
-  "updated_at": "2026-10-18T15:08:27Z",
+  "updated_at": "2026-10-18T20:01:26Z",
   "previous_scheduled_product_checkpoint_174": {
     "updated_at": "2026-10-11T18:04:51.196Z",
     "checked_at": "2026-10-11T18:04:51.196Z",
@@ -11513,6 +11513,40 @@
     "next_step": "First recheck exact-head CI for 09bd88e3085921733708578cce6e21a70430c0fd and accept only a verified successful run. Then isolate tests/test_rop_coverage_audit.py: on clean exact HEAD it exits 1 with 4 failed because rop_goods_rates is absent and creates a 4,096-byte ambient customs.db; preserve its 97-chapter, subject/not-subject and summary assertions without changing product or normative data."
   },
   "latest_scheduled_product_checkpoint": {
+    "schema_version": 1,
+    "task_id": "TARIFF-PR256-REGISTRY-AI-ERROR-BOUNDARY-20261018",
+    "started_at": "2026-10-18T19:51:50Z",
+    "completed_at": "2026-10-18T20:01:26Z",
+    "executor": "/root/scheduled-cycle340-20261018T195150Z",
+    "lease_generation": 340,
+    "pr": 256,
+    "branch": "agent/product-ntm-regressions-v1",
+    "previous_head_sha": "6b80cac06b37847e4fbac39dc7cd5baadb2987ca",
+    "head_sha": "62622ae0755083ecaa172ebc0461078c184ad9a1",
+    "tree_sha": "82cf40c268b72f771c50120d41b4e29f059480f3",
+    "local_author_commit": "43b39a5c5449e70e78d88aae7bd6e2bddeb8b201",
+    "status": "IMPLEMENTED_A5_PASS_CI_PASS_REGISTRY_AI_ERROR_BOUNDARY",
+    "product_changed": true,
+    "product_code_changed": true,
+    "scope": "optional FSS registry AI disambiguation failure boundary, deterministic bounded fallback, and credential-safe logging",
+    "finding": "_ai_disambiguate_fss caught every provider Exception, logged raw exception text, and returned the first-ranked registry row; a programming TypeError was therefore hidden and its URL/query-key text reached warnings.",
+    "fix": "Keep deterministic first-ranked fallback only for optional import, recognized provider/transport/config failures and malformed provider output; log exception class only; let unrelated programming errors propagate.",
+    "author_tests": "baseline probe exited 1 after reproducing swallowed TypeError plus raw URL/key warning; focused/adjacent 31 passed +9 subtests; compile and diff checks passed",
+    "independent_a5": "/root/a5_cycle340 PASS_NO_FINDINGS; focused 6 passed +9 subtests, existing registry 43 passed, adversarial requests/import/programming-error matrix and compile/diff/clean-tree checks passed",
+    "a0_validation": "Exact remote head passed 106 tests +41 subtests, exit 0; remote tree equals tested tree; compile and diff checks passed",
+    "exact_head_ci": "run 39161290814 / job 117774976590 success",
+    "receipts": {
+      "pr256": null,
+      "issue257": null
+    },
+    "snapshot_status": "BOUNDED_EPOCH315_1020_ROWS_POPULATED_SYNCHRONIZED_NTM_NOT_AVAILABLE",
+    "staging_blocker": "cycle325 offset1120 transfer remains policy-refused after the owner-authorized attempt; no retry or workaround",
+    "a6": "UNCHANGED_NOT_SENT",
+    "protected_actions_performed": false,
+    "evidence": ".ai/orchestration/evidence/cycle340_pr256_registry_ai_error_boundary.json",
+    "next_step": "Continue the next bounded PR #256/#245 registry or assistant slice; preserve deterministic server-owned fallback only for recognized optional-provider failures, sanitized logs, provenance and explicit incompleteness, and do not retry the refused SGR transfer."
+  },
+  "previous_scheduled_product_checkpoint_339": {
     "schema_version": 1,
     "task_id": "TARIFF-PR256-REGISTRY-ERROR-BOUNDARY-20261018",
     "started_at": "2026-10-18T18:53:17Z",
