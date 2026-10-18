@@ -1,14 +1,14 @@
 {
   "acquisition_note": "Cycle 292 recovered main e526dfbdb5a31b01bf6f743da0288b88f916de0c, PR258 exact head c59af35da7dde2140d911e2003a4a52fb0611507, released generation 291, and stale CI status. GitHub now exposes exact-head run 38920906239/job 117040259865 as success.",
-  "expires_at": null,
-  "generation": 319,
-  "holder": null,
+  "expires_at": "2026-10-18T01:25:56.230381Z",
+  "generation": 320,
+  "holder": "/root/scheduled-cycle320-20261018T005407Z",
   "lease_repair": {},
   "release_reason": "Cycle319 advanced epoch315 from logical offset420 to520 after exact 20-row overlap match; stored/read back 2 immutable objects and staged 100 new COLLECTED_UNVERIFIED rows for totals 10 objects/5 runs/520 rows. Replay idempotent; epochs296 and291 remained frozen 38/19/1900 and8/4/400. Author 50+170 PASS; independent A5 PASS_NO_FINDINGS; exact-head CI run38920906239/job117040259865 success. State checkpoint dea633090b96c5bda565d6813136806ef126269e; PR receipt 6243525018; issue257 receipt 6243527110. Snapshot incomplete; A6 unchanged/not sent.",
   "released_by": "/root/scheduled-cycle319-20261017T235108Z",
   "schema_version": 1,
   "serialization_repair": {},
-  "state": "released",
-  "token": null,
-  "updated_at": "2026-10-18T00:06:36.977732Z"
+  "state": "active",
+  "token": "ce10b15e22f946d2924bdc739e1490dc",
+  "updated_at": "2026-10-18T00:55:56.230381Z"
 }
