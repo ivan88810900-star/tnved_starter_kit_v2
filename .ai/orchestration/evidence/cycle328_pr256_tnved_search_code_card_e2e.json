@@ -1,0 +1,43 @@
+{
+  "schema_version": 1,
+  "task_id": "TARIFF-PR256-TNVED-SEARCH-CODE-CARD-E2E-20261018",
+  "started_at": "2026-10-18T08:52:53Z",
+  "completed_at": "2026-10-18T08:58:14Z",
+  "executor": "/root/scheduled-cycle328-20261018T085253Z",
+  "lease_generation": 328,
+  "pr": 256,
+  "branch": "agent/product-ntm-regressions-v1",
+  "head_sha": "0320a7d268b33413c48dffc963cde6b0ec051ab1",
+  "tree_sha": "f5fc479d8ef6696880dcc28614c8a3e3da35e648",
+  "status": "UNCHANGED_HEAD_TNVED_SEARCH_CODE_CARD_A5_PASS_CI_PASS",
+  "product_changed": false,
+  "scope": "TN VED hybrid/semantic/FTS search, code card, preliminary decisions, classification rulings and safe source-link rendering",
+  "author_tests": {
+    "backend_primary": "110 passed, exit 0, disposable SQLite",
+    "backend_codes_search": "11 passed, exit 0, disposable SQLite",
+    "frontend": "3 files / 3 tests passed, exit 0",
+    "typecheck": "exit 0",
+    "production_build": "exit 0",
+    "dependency_note": "The additional root-backend test initially exited 4 because the isolated environment lacked its declared openai dependency; openai>=1.0.0 was installed from backend/requirements.txt and the unchanged test then passed 11/11."
+  },
+  "independent_a5": {
+    "session": "/root/a5_cycle328",
+    "verdict": "PASS_NO_FINDINGS",
+    "backend": "96 passed, exit 0, independent disposable SQLite",
+    "frontend": "6 files / 68 tests passed, exit 0",
+    "typecheck": "exit 0",
+    "inspection": "No fail-open FTS/search behavior, unsafe source-link admission, official/reference mixing, or false completeness claim found in the bounded scope."
+  },
+  "exact_head_ci": {
+    "run_id": 38898431622,
+    "job_id": 116964443470,
+    "conclusion": "success",
+    "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38898431622/job/116964443470"
+  },
+  "snapshot_status": "BOUNDED_EPOCH315_1020_ROWS_POPULATED_SYNCHRONIZED_NTM_NOT_AVAILABLE",
+  "staging_blocker": "offset1120 Neon raw-record transaction remains policy-refused; no retry or workaround",
+  "a6": "UNCHANGED_NOT_SENT",
+  "protected_actions_performed": false,
+  "full_product_or_legal_acceptance": false,
+  "next_step": "Continue the next active-focus sanctions/risk and grounded-assistant slice on PR256/PR245, preserving provenance, default-off behavior and explicit incompleteness."
+}
