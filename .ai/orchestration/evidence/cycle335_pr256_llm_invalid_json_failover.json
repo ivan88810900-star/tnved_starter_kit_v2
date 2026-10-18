@@ -2,7 +2,7 @@
   "schema_version": 1,
   "task_id": "TARIFF-PR256-LLM-INVALID-JSON-FAILOVER-20261018",
   "started_at": "2026-10-18T14:54:15Z",
-  "completed_at": "2026-10-18T15:04:57Z",
+  "completed_at": "2026-10-18T15:08:27Z",
   "executor": "/root/scheduled-cycle335-20261018T145415Z",
   "lease": {
     "generation": 335,
