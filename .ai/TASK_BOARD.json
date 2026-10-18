@@ -2179,7 +2179,7 @@
       "unique_source_pr_count": 29
     }
   },
-  "revision": 869,
+  "revision": 870,
   "runs": [
     {
       "head_sha": null,
@@ -11513,6 +11513,36 @@
     "next_step": "First recheck exact-head CI for 09bd88e3085921733708578cce6e21a70430c0fd and accept only a verified successful run. Then isolate tests/test_rop_coverage_audit.py: on clean exact HEAD it exits 1 with 4 failed because rop_goods_rates is absent and creates a 4,096-byte ambient customs.db; preserve its 97-chapter, subject/not-subject and summary assertions without changing product or normative data."
   },
   "latest_scheduled_product_checkpoint": {
+    "schema_version": 1,
+    "task_id": "TARIFF-PR256-REGISTRY-ERROR-BOUNDARY-20261018",
+    "started_at": "2026-10-18T18:53:17Z",
+    "completed_at": "2026-10-18T19:01:39Z",
+    "executor": "/root/scheduled-cycle339-20261018T185317Z",
+    "lease_generation": 339,
+    "pr": 256,
+    "branch": "agent/product-ntm-regressions-v1",
+    "previous_head_sha": "754f467b8dbf5b449d7c0bd0358ff19a9d2ad87f",
+    "head_sha": "6b80cac06b37847e4fbac39dc7cd5baadb2987ca",
+    "tree_sha": "83485ebce22d47cbf7c32c46a4557a3c126158e8",
+    "local_author_commit": "393c07d162b52d6768b0f78504c3246b5ef0b8f9",
+    "status": "IMPLEMENTED_A5_PASS_CI_PASS_REGISTRY_ERROR_BOUNDARY",
+    "product_changed": true,
+    "product_code_changed": true,
+    "scope": "invoice registry lookup error boundary, explicit unavailable result for bounded DB/file failures, and credential-safe logging",
+    "finding": "_compute_registry_check_payload caught every unexpected exception, logged raw exception text, and returned the normal empty registry payload; a programming TypeError therefore became a false 'Не найдено' result and provider URL/query-key text reached warnings.",
+    "fix": "Keep explicit unavailable payload only for SQLAlchemy/SQLite/OSError DB/file failures, log only the exception class, and let TypeError, ValueError, AttributeError and unrelated RuntimeError propagate instead of presenting a false negative.",
+    "author_tests": "baseline probe exited 1 after reproducing false not-found plus raw URL/key warning; focused 4 passed; adjacent registry/invoice/assistant matrix 90 passed +29 subtests; compile and diff checks passed",
+    "independent_a5": "/root/a5_cycle339 PASS_NO_FINDINGS; focused 4, adjacent 103 passed +29 subtests, all five bounded DB/file failures, four programming-error classes, success behavior and owned/provided session lifecycle verified",
+    "a0_validation": "Exact remote head passed 103 tests +29 subtests, exit 0; independent 3/3 success-known-unexpected boundary probe, compile, diff and exact-tree checks passed",
+    "exact_head_ci": "run 39156709974 / job 117761330698 success",
+    "snapshot_status": "BOUNDED_EPOCH315_1020_ROWS_POPULATED_SYNCHRONIZED_NTM_NOT_AVAILABLE",
+    "staging_blocker": "cycle325 offset1120 transfer remains policy-refused after the owner-authorized attempt; no retry or workaround",
+    "a6": "UNCHANGED_NOT_SENT",
+    "protected_actions_performed": false,
+    "evidence": ".ai/orchestration/evidence/cycle339_pr256_registry_error_boundary.json",
+    "next_step": "Continue the next bounded PR #256/#245 registry or assistant slice; preserve explicit unavailable/manual-review semantics, narrow error boundaries, sanitized logs, provenance and explicit incompleteness, and do not retry the refused SGR transfer."
+  },
+  "previous_scheduled_product_checkpoint_338": {
     "schema_version": 1,
     "task_id": "TARIFF-PR256-GROUNDED-LLM-ERROR-BOUNDARY-20261018",
     "started_at": "2026-10-18T17:52:26Z",

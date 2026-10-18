@@ -1,0 +1,55 @@
+{
+  "schema_version": 1,
+  "task_id": "TARIFF-PR256-REGISTRY-ERROR-BOUNDARY-20261018",
+  "started_at": "2026-10-18T18:53:17Z",
+  "completed_at": "2026-10-18T19:01:39Z",
+  "executor": "/root/scheduled-cycle339-20261018T185317Z",
+  "lease_generation": 339,
+  "base_sha": "754f467b8dbf5b449d7c0bd0358ff19a9d2ad87f",
+  "head_sha": "6b80cac06b37847e4fbac39dc7cd5baadb2987ca",
+  "tree_sha": "83485ebce22d47cbf7c32c46a4557a3c126158e8",
+  "local_author_commit": "393c07d162b52d6768b0f78504c3246b5ef0b8f9",
+  "changed_files": [
+    "customs-clear/backend/app/services/invoice_analyzer.py",
+    "customs-clear/backend/tests/test_invoice_registry_error_boundary.py"
+  ],
+  "baseline_reproduction": {
+    "command": "direct no-network TypeError probe against _compute_registry_check_payload on prior PR #256 head",
+    "exit_code": 1,
+    "observed": "programming TypeError was converted to normal 'Не найдено' registry payload and raw provider URL/query-key text reached a warning"
+  },
+  "implementation": "Known SQLAlchemy, SQLite and OSError DB/file failures retain the explicit registry-unavailable payload and log only the exception class. Unexpected programming errors propagate without warning instead of becoming a false registry negative.",
+  "author": {
+    "focused": "4 passed, exit 0",
+    "adjacent": "90 passed +29 subtests, exit 0",
+    "compile": "exit 0",
+    "diff_check": "exit 0"
+  },
+  "a5": {
+    "reviewer": "/root/a5_cycle339",
+    "status": "PASS_NO_FINDINGS",
+    "focused": "4 passed, exit 0",
+    "adjacent": "103 passed +29 subtests, exit 0",
+    "adversarial": "five bounded DB/file exception classes, four programming-error classes, ordinary success identity and owned/provided session lifecycle passed",
+    "boundaries": "bounded failures return explicit unavailable for top-level, recommendation and SGR; never normal not-found; warnings contain exception class only; TypeError, ValueError, AttributeError and RuntimeError propagate by identity with zero warning logs",
+    "findings_open": []
+  },
+  "a0_validation": {
+    "exact_remote_tests": "103 passed +29 subtests, exit 0",
+    "independent_boundary_probe": "3/3 success, known OSError and unexpected AttributeError scenarios passed",
+    "compile": "exit 0",
+    "diff_check": "exit 0",
+    "tree_check": "remote tree equals 83485ebce22d47cbf7c32c46a4557a3c126158e8"
+  },
+  "ci": {
+    "run_id": 39156709974,
+    "job_id": 117761330698,
+    "name": "offline-safety",
+    "conclusion": "success",
+    "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/39156709974/job/117761330698"
+  },
+  "snapshot_status": "BOUNDED_EPOCH315_1020_ROWS_POPULATED_SYNCHRONIZED_NTM_NOT_AVAILABLE",
+  "staging_blocker": "cycle325 offset1120 transfer remains policy-refused after the owner-authorized attempt; no retry or workaround",
+  "a6": "UNCHANGED_NOT_SENT",
+  "protected_actions_performed": false
+}
