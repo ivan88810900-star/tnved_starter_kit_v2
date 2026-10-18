@@ -1,14 +1,14 @@
 {
   "acquisition_note": "Cycle 292 recovered main e526dfbdb5a31b01bf6f743da0288b88f916de0c, PR258 exact head c59af35da7dde2140d911e2003a4a52fb0611507, released generation 291, and stale CI status. GitHub now exposes exact-head run 38920906239/job 117040259865 as success.",
-  "expires_at": "2026-10-18T13:24:00.961508Z",
+  "expires_at": null,
   "generation": 333,
-  "holder": "/root/scheduled-cycle333-20261018T125155Z",
+  "holder": null,
   "lease_repair": {},
-  "release_reason": "Cycle332 fixed the reproduced PR256 assistant SQLite/order fixture leak at 44e3d8b40e5a52a199f0106ed32bc476480561e1: author forward/reverse/exact-head matrices 78+29 passed, /root/a5_cycle332 PASS_NO_FINDINGS, exact-head CI run39125517982/job117669705795 success, state checkpoint f7f830b168ab42f8e3868889a2905e07182ab2fc and PR256/issue257 receipts reread. Product code unchanged; snapshot blocker and A6 unchanged/not sent; no protected action.",
-  "released_by": "/root/scheduled-cycle332-20261018T115347Z",
+  "release_reason": "Cycle333 honored the exact owner authorization for the 100-record cycle325 SGR transfer, verified red-meadow-53765518/br-weathered-frost-ba9jri3c/tariff_staging and both prepared objects, then stopped on a new Neon presigned-download policy refusal without retry or workaround. Post-refusal read proved no partial write (epoch315 20/10/1020, candidate 0/0). Checkpoint c98981ef0ac0b59cc98b9a8b6b3e73f598fdb29f and issue257/PR258 receipts were reread; A6 unchanged/not sent.",
+  "released_by": "/root/scheduled-cycle333-20261018T125155Z",
   "schema_version": 1,
   "serialization_repair": {},
-  "state": "active",
-  "token": "b8ec60b7604145f0a776f0ddc67abeed",
-  "updated_at": "2026-10-18T12:54:00.961508Z"
+  "state": "released",
+  "token": null,
+  "updated_at": "2026-10-18T12:56:33.916869Z"
 }
