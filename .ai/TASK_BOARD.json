@@ -11536,8 +11536,8 @@
     "a0_validation": "Exact remote head passed 132 tests +41 subtests, exit 0; remote tree equals tested tree",
     "exact_head_ci": "run 39165740248 / job 117788188516 success",
     "receipts": {
-      "pr256": null,
-      "issue257": null
+      "pr256": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256#issuecomment-6255094368",
+      "issue257": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/257#issuecomment-6255094526"
     },
     "snapshot_status": "BOUNDED_EPOCH315_1020_ROWS_POPULATED_SYNCHRONIZED_NTM_NOT_AVAILABLE",
     "staging_blocker": "cycle325 offset1120 transfer remains policy-refused after the owner-authorized attempt; no retry or workaround",
