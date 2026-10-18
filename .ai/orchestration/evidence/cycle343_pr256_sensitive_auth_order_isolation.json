@@ -1,0 +1,56 @@
+{
+  "schema_version": 1,
+  "task_id": "TARIFF-PR256-SENSITIVE-AUTH-ORDER-ISOLATION-20261018",
+  "started_at": "2026-10-18T22:53:28Z",
+  "completed_at": "2026-10-18T23:01:54Z",
+  "executor": "/root/scheduled-cycle343-20261018T225328Z",
+  "lease_generation": 343,
+  "base_sha": "a8ead187c3622b4713af59d083b969918c9c592c",
+  "head_sha": "a164023eab4884fbf33f875d342902ada13fd9e2",
+  "tree_sha": "c2b87da821a2fdf95ff6fd577239b87f0756a9bf",
+  "local_author_commit": "f7d89d77be97adeee4d88855def0aa78df8346d6",
+  "changed_files": [
+    "customs-clear/backend/tests/test_sensitive_endpoints_auth.py"
+  ],
+  "baseline_reproduction": {
+    "command": "pytest sensitive_endpoints_auth, grounded_assistant, assistant_payment_review, assistant_batch, assistant_copilot, llm_provider in one process",
+    "exit_code": 1,
+    "result": "3 failed +1 teardown error after 70 passed +32 subtests",
+    "observed": "detached cached payment_engine queried ambient SQLite without hs_duty_rules"
+  },
+  "implementation": "The fixture now captures and restores four payment_engine_compat lazy-cache slots and removes a package-parent child attribute only when it is the identical module popped from sys.modules. Original test methods and assertions are unchanged.",
+  "author": {
+    "focused": "6 passed, exit 0",
+    "forward": "73 passed +32 subtests, exit 0",
+    "reverse": "73 passed +32 subtests, exit 0",
+    "diff_check": "exit 0",
+    "ambient_db": "customs.db, customs.db-wal and customs.db-shm absent after runs"
+  },
+  "a5": {
+    "reviewer": "/root/a5_cycle343",
+    "status": "PASS_NO_FINDINGS",
+    "forward": "73 passed +32 subtests, exit 0",
+    "reverse": "73 passed +32 subtests, exit 0",
+    "teardown_audit": "6 passed; cache identities restored 4/4, app module set restored 3/3, preloaded parent attrs preserved, protected DB fingerprints unchanged 6/6, ambient DB artifacts absent 3/3",
+    "original_tests": "six methods/assertions byte-identical; class SHA256 a030cd545378b0800daaa4a1294d940bae8988922732244a447c0d212b97d771",
+    "findings_open": []
+  },
+  "a0_validation": {
+    "exact_remote_forward": "73 passed +32 subtests, exit 0",
+    "exact_remote_reverse": "73 passed +32 subtests, exit 0",
+    "head_check": "a164023eab4884fbf33f875d342902ada13fd9e2",
+    "tree_check": "remote tree equals c2b87da821a2fdf95ff6fd577239b87f0756a9bf"
+  },
+  "ci": {
+    "run_id": 39174639445,
+    "job_id": 117814697241,
+    "name": "offline-safety",
+    "conclusion": "success",
+    "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/39174639445/job/117814697241"
+  },
+  "receipts": {},
+  "snapshot_status": "BOUNDED_EPOCH315_1020_ROWS_POPULATED_SYNCHRONIZED_NTM_NOT_AVAILABLE",
+  "staging_blocker": "cycle325 offset1120 transfer remains policy-refused after the owner-authorized attempt; no retry or workaround",
+  "a6": "UNCHANGED_NOT_SENT",
+  "protected_actions_performed": false
+}

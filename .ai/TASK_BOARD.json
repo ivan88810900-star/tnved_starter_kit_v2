@@ -2179,7 +2179,7 @@
       "unique_source_pr_count": 29
     }
   },
-  "revision": 873,
+  "revision": 874,
   "runs": [
     {
       "head_sha": null,
@@ -7797,7 +7797,7 @@
       }
     }
   ],
-  "updated_at": "2026-10-18T22:06:10Z",
+  "updated_at": "2026-10-18T23:01:54Z",
   "previous_scheduled_product_checkpoint_174": {
     "updated_at": "2026-10-11T18:04:51.196Z",
     "checked_at": "2026-10-11T18:04:51.196Z",
@@ -11513,6 +11513,39 @@
     "next_step": "First recheck exact-head CI for 09bd88e3085921733708578cce6e21a70430c0fd and accept only a verified successful run. Then isolate tests/test_rop_coverage_audit.py: on clean exact HEAD it exits 1 with 4 failed because rop_goods_rates is absent and creates a 4,096-byte ambient customs.db; preserve its 97-chapter, subject/not-subject and summary assertions without changing product or normative data."
   },
   "latest_scheduled_product_checkpoint": {
+    "schema_version": 1,
+    "task_id": "TARIFF-PR256-SENSITIVE-AUTH-ORDER-ISOLATION-20261018",
+    "started_at": "2026-10-18T22:53:28Z",
+    "completed_at": "2026-10-18T23:01:54Z",
+    "executor": "/root/scheduled-cycle343-20261018T225328Z",
+    "lease_generation": 343,
+    "pr": 256,
+    "branch": "agent/product-ntm-regressions-v1",
+    "previous_head_sha": "a8ead187c3622b4713af59d083b969918c9c592c",
+    "head_sha": "a164023eab4884fbf33f875d342902ada13fd9e2",
+    "tree_sha": "c2b87da821a2fdf95ff6fd577239b87f0756a9bf",
+    "local_author_commit": "f7d89d77be97adeee4d88855def0aa78df8346d6",
+    "status": "IMPLEMENTED_A5_PASS_CI_PASS_SENSITIVE_AUTH_ORDER_ISOLATION",
+    "product_changed": false,
+    "product_code_changed": false,
+    "test_fixture_changed": true,
+    "scope": "sensitive-endpoint auth fixture isolation before grounded/payment/batch/copilot/provider tests in one pytest process",
+    "finding": "The sensitive-endpoints fixture unloaded newly imported app modules but retained payment_engine_compat lazy callables and package-parent child attributes. Later assistant tests therefore reused a detached payment engine against ambient SQLite and failed because hs_duty_rules was absent.",
+    "fix": "Capture and restore all four payment_engine_compat cache slots, and remove a package-parent child attribute only when it is the identical module being removed from sys.modules.",
+    "baseline_reproduction": "exact prior head forward matrix exit 1: 3 failed +1 teardown error after 70 passed +32 subtests; ambient SQLite missing hs_duty_rules",
+    "author_tests": "focused 6 passed; forward and reverse six-file matrices each 73 passed +32 subtests; exact-remote forward and reverse repeated the same counts; all exits 0",
+    "independent_a5": "/root/a5_cycle343 PASS_NO_FINDINGS; forward/reverse each 73 +32 subtests; same-process teardown audit 6 passed; cache identities 4/4, app-module restoration 3/3, DB fingerprints 6/6 and no ambient SQLite artifacts",
+    "a0_validation": "Exact remote head a164023eab4884fbf33f875d342902ada13fd9e2 passed forward and reverse matrices, each 73 tests +32 subtests, exit 0; remote tree equals tested tree",
+    "exact_head_ci": "run 39174639445 / job 117814697241 success",
+    "receipts": {},
+    "snapshot_status": "BOUNDED_EPOCH315_1020_ROWS_POPULATED_SYNCHRONIZED_NTM_NOT_AVAILABLE",
+    "staging_blocker": "cycle325 offset1120 transfer remains policy-refused after the owner-authorized attempt; no retry or workaround",
+    "a6": "UNCHANGED_NOT_SENT",
+    "protected_actions_performed": false,
+    "evidence": ".ai/orchestration/evidence/cycle343_pr256_sensitive_auth_order_isolation.json",
+    "next_step": "Continue the next bounded PR #256/#245 product or broad-suite defect with exact-head reproduction; preserve disposable DB isolation and do not retry the refused SGR transfer."
+  },
+  "previous_scheduled_product_checkpoint_342": {
     "schema_version": 1,
     "task_id": "TARIFF-PR256-AI-ASSISTANT-ERROR-BOUNDARY-20261018",
     "started_at": "2026-10-18T21:55:40Z",
