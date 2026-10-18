@@ -11537,7 +11537,10 @@
     "independent_a5": "/root/a5_cycle343 PASS_NO_FINDINGS; forward/reverse each 73 +32 subtests; same-process teardown audit 6 passed; cache identities 4/4, app-module restoration 3/3, DB fingerprints 6/6 and no ambient SQLite artifacts",
     "a0_validation": "Exact remote head a164023eab4884fbf33f875d342902ada13fd9e2 passed forward and reverse matrices, each 73 tests +32 subtests, exit 0; remote tree equals tested tree",
     "exact_head_ci": "run 39174639445 / job 117814697241 success",
-    "receipts": {},
+    "receipts": {
+      "pr256": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256#issuecomment-6256267455",
+      "issue257": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/257#issuecomment-6256267638"
+    },
     "snapshot_status": "BOUNDED_EPOCH315_1020_ROWS_POPULATED_SYNCHRONIZED_NTM_NOT_AVAILABLE",
     "staging_blocker": "cycle325 offset1120 transfer remains policy-refused after the owner-authorized attempt; no retry or workaround",
     "a6": "UNCHANGED_NOT_SENT",
