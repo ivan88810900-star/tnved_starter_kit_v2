@@ -2179,7 +2179,7 @@
       "unique_source_pr_count": 29
     }
   },
-  "revision": 858,
+  "revision": 859,
   "runs": [
     {
       "head_sha": null,
@@ -7797,7 +7797,7 @@
       }
     }
   ],
-  "updated_at": "2026-10-18T07:02:35Z",
+  "updated_at": "2026-10-18T08:02:48Z",
   "previous_scheduled_product_checkpoint_174": {
     "updated_at": "2026-10-11T18:04:51.196Z",
     "checked_at": "2026-10-11T18:04:51.196Z",
@@ -11514,27 +11514,27 @@
   },
   "latest_scheduled_product_checkpoint": {
     "schema_version": 1,
-    "task_id": "TARIFF-PR256-PAYMENT-QUOTE-E2E-REVALIDATION-20261018",
-    "started_at": "2026-10-18T06:54:47Z",
-    "completed_at": "2026-10-18T07:02:35Z",
-    "executor": "/root/scheduled-cycle326-20261018T065447Z",
-    "lease_generation": 326,
+    "task_id": "TARIFF-PR256-NORMATIVE-E2E-REVALIDATION-20261018",
+    "started_at": "2026-10-18T07:56:55Z",
+    "completed_at": "2026-10-18T08:02:48Z",
+    "executor": "/root/scheduled-cycle327-20261018T075655Z",
+    "lease_generation": 327,
     "pr": 256,
     "branch": "agent/product-ntm-regressions-v1",
     "head_sha": "0320a7d268b33413c48dffc963cde6b0ec051ab1",
     "tree_sha": "f5fc479d8ef6696880dcc28614c8a3e3da35e648",
-    "status": "UNCHANGED_HEAD_PAYMENT_QUOTE_E2E_A5_PASS_CI_PASS",
+    "status": "UNCHANGED_HEAD_NORMATIVE_E2E_A5_PASS_CI_PASS",
     "product_changed": false,
-    "scope": "payment quote/API plus duty, VAT, excise, antidumping, special duties, manufacturer/product and destination fail-closed boundaries",
-    "author_tests": "83 passed, exit 0, disposable SQLite, clean tracked tree",
-    "independent_a5": "/root/a5_cycle326 PASS_NO_FINDINGS; 83 passed, exit 0, independent disposable SQLite, clean tracked tree",
+    "scope": "normative required/missing/advisory, source-kind isolation, evidence/freshness, default-off flags and frontend rendering",
+    "author_tests": "backend 410 passed; frontend 10 files/109 tests; typecheck and production build passed; all exit 0",
+    "independent_a5": "/root/a5_cycle327 PASS_NO_FINDINGS; backend 347+3 subtests and 156 pass/1 skip; frontend 5 files/32 tests; typecheck/default-off probes pass",
     "exact_head_ci": "run 38898431622 / job 116964443470 success",
     "snapshot_status": "BOUNDED_EPOCH315_1020_ROWS_POPULATED_SYNCHRONIZED_NTM_NOT_AVAILABLE",
     "staging_blocker": "offset1120 Neon raw-record transaction remains policy-refused; no retry or workaround",
     "a6": "UNCHANGED_NOT_SENT",
     "protected_actions_performed": false,
-    "evidence": ".ai/orchestration/evidence/cycle326_pr256_payment_quote_e2e.json",
-    "next_step": "Continue the next bounded PR256/PR245 NTM/search/assistant product slice without retrying the prohibited Neon transfer; preserve fail-closed provenance and totals."
+    "evidence": ".ai/orchestration/evidence/cycle327_pr256_normative_e2e.json",
+    "next_step": "Continue the active-focus TN VED search/code-card and related preliminary-decisions slice on PR256/PR245; preserve source evidence and fail-closed behavior."
   },
   "latest_development_checkpoint": {
     "updated_at": "2026-10-16T09:12:32.706Z",
@@ -17354,5 +17354,29 @@
     "protected_actions_performed": false,
     "evidence": ".ai/orchestration/evidence/cycle325_sgr_nsi1995_epoch315_offset1120_blocked.json",
     "next_step": "Do not retry or work around the refused Neon transfer. Continue unrelated safe product work; stage these prepared objects only after explicit informed owner approval or normal platform verification that the destination is trusted."
+  },
+  "previous_scheduled_product_checkpoint_327": {
+    "schema_version": 1,
+    "task_id": "TARIFF-PR256-PAYMENT-QUOTE-E2E-REVALIDATION-20261018",
+    "started_at": "2026-10-18T06:54:47Z",
+    "completed_at": "2026-10-18T07:02:35Z",
+    "executor": "/root/scheduled-cycle326-20261018T065447Z",
+    "lease_generation": 326,
+    "pr": 256,
+    "branch": "agent/product-ntm-regressions-v1",
+    "head_sha": "0320a7d268b33413c48dffc963cde6b0ec051ab1",
+    "tree_sha": "f5fc479d8ef6696880dcc28614c8a3e3da35e648",
+    "status": "UNCHANGED_HEAD_PAYMENT_QUOTE_E2E_A5_PASS_CI_PASS",
+    "product_changed": false,
+    "scope": "payment quote/API plus duty, VAT, excise, antidumping, special duties, manufacturer/product and destination fail-closed boundaries",
+    "author_tests": "83 passed, exit 0, disposable SQLite, clean tracked tree",
+    "independent_a5": "/root/a5_cycle326 PASS_NO_FINDINGS; 83 passed, exit 0, independent disposable SQLite, clean tracked tree",
+    "exact_head_ci": "run 38898431622 / job 116964443470 success",
+    "snapshot_status": "BOUNDED_EPOCH315_1020_ROWS_POPULATED_SYNCHRONIZED_NTM_NOT_AVAILABLE",
+    "staging_blocker": "offset1120 Neon raw-record transaction remains policy-refused; no retry or workaround",
+    "a6": "UNCHANGED_NOT_SENT",
+    "protected_actions_performed": false,
+    "evidence": ".ai/orchestration/evidence/cycle326_pr256_payment_quote_e2e.json",
+    "next_step": "Continue the next bounded PR256/PR245 NTM/search/assistant product slice without retrying the prohibited Neon transfer; preserve fail-closed provenance and totals."
   }
 }
