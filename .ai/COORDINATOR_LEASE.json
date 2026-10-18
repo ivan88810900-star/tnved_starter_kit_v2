@@ -1,14 +1,14 @@
 {
   "acquisition_note": "Cycle 292 recovered main e526dfbdb5a31b01bf6f743da0288b88f916de0c, PR258 exact head c59af35da7dde2140d911e2003a4a52fb0611507, released generation 291, and stale CI status. GitHub now exposes exact-head run 38920906239/job 117040259865 as success.",
-  "expires_at": null,
-  "generation": 329,
-  "holder": null,
+  "expires_at": "2026-10-18T11:20:02.886Z",
+  "generation": 330,
+  "holder": "/root/scheduled-cycle330-20261018T101417Z",
   "lease_repair": {},
   "release_reason": "Cycle329 fixed the reproduced PR256 sanctions fixture SessionLocal order leak and advanced exact head to 6dce1cbd57066f27bd00464d07af52706fa4ac58/tree 502b07a36ba97f7c890fe56540293686b89aa45b. Author fixed forward/reverse/exact-remote matrices 77+29 PASS, frontend 75 PASS, typecheck/build exit0. Independent A5 /root/a5_cycle329 PASS_NO_FINDINGS. Exact-head CI run39117286807/job117645532413 success. State checkpoint 235e8840d3ad818b26f9c45b3638c861c1f5ec9d, TASK_BOARD rev861, PR256 receipt 6248553217, issue257 receipt 6248554711. Product code unchanged; policy-refused offset1120 Neon transfer not retried; snapshot incomplete; A6 unchanged/not sent.",
   "released_by": "/root/scheduled-cycle329-20261018T095053Z",
   "schema_version": 1,
   "serialization_repair": {},
-  "state": "released",
-  "token": null,
-  "updated_at": "2026-10-18T10:04:59.672567Z"
+  "state": "active",
+  "token": "5b2d78358cb536763965d8515e4cd726",
+  "updated_at": "2026-10-18T10:20:02.886Z"
 }
