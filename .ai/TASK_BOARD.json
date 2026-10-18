@@ -2179,7 +2179,7 @@
       "unique_source_pr_count": 29
     }
   },
-  "revision": 862,
+  "revision": 863,
   "runs": [
     {
       "head_sha": null,
@@ -7797,7 +7797,7 @@
       }
     }
   ],
-  "updated_at": "2026-10-18T10:00:21Z",
+  "updated_at": "2026-10-18T12:07:15Z",
   "previous_scheduled_product_checkpoint_174": {
     "updated_at": "2026-10-11T18:04:51.196Z",
     "checked_at": "2026-10-11T18:04:51.196Z",
@@ -11513,6 +11513,37 @@
     "next_step": "First recheck exact-head CI for 09bd88e3085921733708578cce6e21a70430c0fd and accept only a verified successful run. Then isolate tests/test_rop_coverage_audit.py: on clean exact HEAD it exits 1 with 4 failed because rop_goods_rates is absent and creates a 4,096-byte ambient customs.db; preserve its 97-chapter, subject/not-subject and summary assertions without changing product or normative data."
   },
   "latest_scheduled_product_checkpoint": {
+    "schema_version": 1,
+    "task_id": "TARIFF-PR256-ASSISTANT-SQLITE-ORDER-ISOLATION-20261018",
+    "started_at": "2026-10-18T11:53:47Z",
+    "completed_at": "2026-10-18T12:07:15Z",
+    "executor": "/root/scheduled-cycle332-20261018T115347Z",
+    "lease_generation": 332,
+    "pr": 256,
+    "branch": "agent/product-ntm-regressions-v1",
+    "previous_head_sha": "e8c162ef7850d6a449b4ff87fe2d1bd610ff06ac",
+    "head_sha": "44e3d8b40e5a52a199f0106ed32bc476480561e1",
+    "tree_sha": "fc21c502c7630d1f476ec6cfd7de49512ee8e016",
+    "local_author_commit": "ea9fb87428a5e566766d1d6626931aca4e1997ba",
+    "status": "IMPLEMENTED_A5_PASS_CI_PASS_ASSISTANT_SQLITE_ORDER_ISOLATION",
+    "product_changed": false,
+    "product_code_changed": false,
+    "test_fixture_changed": true,
+    "scope": "assistant copilot, grounded and batch single-process SQLite fixture/order isolation",
+    "finding": "payment_engine_compat retained lazy cached functions from a removed payment_engine module, and package parents could retain child attributes for removed app modules; later fixtures therefore could not repatch the SessionLocal used through those stale references.",
+    "fix": "Capture and restore payment_engine_compat cache slots _compare/_compute/_get_rule/_get_meta, and remove matching package-parent child attributes when unloading newly imported app modules.",
+    "baseline_reproduction": "copilot-grounded-batch exit 1: 35 passed +29 subtests, 1 failed with missing hs_duty_rules",
+    "author_tests": "eight-file assistant/payment/security matrix forward, reverse and exact remote head each 78 passed +29 subtests; compile/diff/status checks exit 0",
+    "independent_a5": "/root/a5_cycle332 PASS_NO_FINDINGS; reproduced base failure, minimal forward/reverse 36+29 each, expanded forward/reverse 78+29 each, teardown/cache probe and protected DB fingerprints clean",
+    "exact_head_ci": "run 39125517982 / job 117669705795 success",
+    "snapshot_status": "BOUNDED_EPOCH315_1020_ROWS_POPULATED_SYNCHRONIZED_NTM_NOT_AVAILABLE",
+    "staging_blocker": "offset1120 Neon raw-record transaction remains policy-refused; no retry or workaround",
+    "a6": "UNCHANGED_NOT_SENT",
+    "protected_actions_performed": false,
+    "evidence": ".ai/orchestration/evidence/cycle332_pr256_assistant_sqlite_order_isolation.json",
+    "next_step": "Continue the grounded-assistant optional-LLM fallback slice while preserving deterministic fallback, provenance and explicit incompleteness."
+  },
+  "previous_scheduled_product_checkpoint_331": {
     "schema_version": 1,
     "task_id": "TARIFF-PR256-REGISTRY-NO-HS-A5-COMPLETION-20261018",
     "started_at": "2026-10-18T10:47:20Z",

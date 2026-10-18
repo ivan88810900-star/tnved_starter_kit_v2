@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "task_id": "TARIFF-PR256-ASSISTANT-SQLITE-ORDER-ISOLATION-20261018",
+  "started_at": "2026-10-18T11:53:47Z",
+  "completed_at": "2026-10-18T12:07:15Z",
+  "executor": "/root/scheduled-cycle332-20261018T115347Z",
+  "lease_generation": 332,
+  "pr": 256,
+  "branch": "agent/product-ntm-regressions-v1",
+  "previous_head_sha": "e8c162ef7850d6a449b4ff87fe2d1bd610ff06ac",
+  "previous_tree_sha": "600474b2d4ec0d1cee1d1c1a17f7b647b1c0dd46",
+  "head_sha": "44e3d8b40e5a52a199f0106ed32bc476480561e1",
+  "tree_sha": "fc21c502c7630d1f476ec6cfd7de49512ee8e016",
+  "local_author_commit": "ea9fb87428a5e566766d1d6626931aca4e1997ba",
+  "status": "IMPLEMENTED_A5_PASS_CI_PASS_ASSISTANT_SQLITE_ORDER_ISOLATION",
+  "product_changed": false,
+  "product_code_changed": false,
+  "test_fixture_changed": true,
+  "files_changed": [
+    "customs-clear/backend/tests/test_assistant_copilot.py"
+  ],
+  "diff_summary": "1 test fixture file, 18 insertions, 1 deletion",
+  "baseline_reproduction": {
+    "command": "DATABASE_URL=sqlite:////workspace/scratch/fbec4e55bd91/cycle332_baseline.sqlite TNVED_PREVIEW_CACHE_REVISION_FILE=/workspace/scratch/fbec4e55bd91/cycle332_preview_revision.json PYTHONPATH=. /workspace/scratch/fbec4e55bd91/.venv331/bin/python -m pytest -q tests/test_assistant_copilot.py tests/test_grounded_assistant.py tests/test_assistant_batch.py",
+    "exit_code": 1,
+    "result": "35 passed, 29 subtests, 1 failed: test_assistant_batch.py::test_batch_two_positions, sqlite3.OperationalError: no such table: hs_duty_rules"
+  },
+  "root_cause": "The copilot fixture unloaded payment_engine from sys.modules, but payment_engine_compat retained lazy cached function references to the orphaned payment_engine module. Package parents could also retain child attributes for removed app modules. Later fixtures therefore could not repatch the SessionLocal used through those stale references.",
+  "fix": "Capture and restore payment_engine_compat lazy cache slots (_compare, _compute, _get_rule, _get_meta), and remove matching package-parent child attributes when unloading newly imported app modules.",
+  "author_validation": {
+    "command": "DATABASE_URL=<disposable-sqlite> TNVED_PREVIEW_CACHE_REVISION_FILE=<disposable-json> PYTHONPATH=. /workspace/scratch/fbec4e55bd91/.venv331/bin/python -m pytest -q tests/test_assistant_copilot.py tests/test_assistant_batch.py tests/test_decisions.py tests/test_payment_review.py tests/test_request_models_security.py tests/test_grounded_assistant.py tests/test_llm_provider.py tests/test_fsa_registry_status_fail_closed.py",
+    "forward_exit_code": 0,
+    "forward_result": "78 passed, 29 subtests",
+    "reverse_exit_code": 0,
+    "reverse_result": "78 passed, 29 subtests",
+    "exact_remote_head_exit_code": 0,
+    "exact_remote_head_result": "78 passed, 29 subtests",
+    "compile_and_diff_check": "exit 0",
+    "worktree": "clean"
+  },
+  "independent_a5": {
+    "executor": "/root/a5_cycle332",
+    "verdict": "PASS_NO_FINDINGS",
+    "base_reproduction": "exit 1; 35 passed, 29 subtests, 1 failed with missing hs_duty_rules",
+    "candidate_minimal_forward": "36 passed, 29 subtests, exit 0",
+    "candidate_minimal_reverse": "36 passed, 29 subtests, exit 0",
+    "candidate_expanded_forward": "78 passed, 29 subtests, exit 0",
+    "candidate_expanded_reverse": "78 passed, 29 subtests, exit 0",
+    "teardown_probe": "compat cache tuple restored to (None,None,None,None); payment_engine absent from sys.modules and from its package parent",
+    "protected_db_fingerprints": "unchanged"
+  },
+  "exact_head_ci": {
+    "run_id": 39125517982,
+    "job_id": 117669705795,
+    "name": "Tariff agent safety / offline-safety",
+    "head_sha": "44e3d8b40e5a52a199f0106ed32bc476480561e1",
+    "conclusion": "success",
+    "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/39125517982"
+  },
+  "snapshot_status": "BOUNDED_EPOCH315_1020_ROWS_POPULATED_SYNCHRONIZED_NTM_NOT_AVAILABLE",
+  "staging_blocker": "offset1120 Neon raw-record transaction remains policy-refused; no retry or workaround",
+  "a6": "UNCHANGED_NOT_SENT",
+  "protected_actions_performed": false,
+  "next_step": "Continue the grounded-assistant optional-LLM fallback slice on PR256/PR245 while preserving deterministic fallback, provenance and explicit incompleteness."
+}
