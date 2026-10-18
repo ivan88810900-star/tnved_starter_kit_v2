@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import os
 import unittest
 from unittest.mock import AsyncMock, patch
@@ -9,7 +10,12 @@ from unittest.mock import AsyncMock, patch
 import httpx
 from loguru import logger
 
-from app.services.claude_service import _choose_provider, complete_text, llm_provider_chain
+from app.services.claude_service import (
+    _choose_provider,
+    classify_hs_code,
+    complete_text,
+    llm_provider_chain,
+)
 
 
 class LlmProviderChainTests(unittest.TestCase):
@@ -221,6 +227,95 @@ class CompleteTextProviderChainTests(unittest.IsolatedAsyncioTestCase):
                 await complete_text("prompt")
 
         anthropic.assert_not_awaited()
+
+
+class ClassifyProviderFailureTests(unittest.IsolatedAsyncioTestCase):
+    async def test_exhausted_invalid_json_is_fail_closed_without_sensitive_leakage(
+        self,
+    ) -> None:
+        anthropic_secret = "anthropic-classify-secret"
+        gemini_secret = "gemini-classify-secret"
+        anthropic_fragment = "anthropic-raw-fragment"
+        gemini_fragment = "gemini-raw-fragment"
+        anthropic = AsyncMock(
+            side_effect=json.JSONDecodeError(
+                "invalid provider JSON",
+                anthropic_fragment,
+                0,
+            )
+        )
+        gemini = AsyncMock(
+            side_effect=json.JSONDecodeError(
+                "invalid provider JSON",
+                gemini_fragment,
+                0,
+            )
+        )
+        messages: list[str] = []
+        sink_id = logger.add(lambda message: messages.append(str(message)), format="{message}")
+
+        try:
+            with (
+                patch(
+                    "app.services.claude_service.llm_provider_chain",
+                    return_value=[
+                        ("anthropic", anthropic_secret),
+                        ("gemini", gemini_secret),
+                    ],
+                ),
+                patch("app.services.claude_service._call_anthropic", anthropic),
+                patch("app.services.claude_service._call_gemini", gemini),
+            ):
+                result = await classify_hs_code("насос", use_journal_hints=False)
+        finally:
+            logger.remove(sink_id)
+
+        logged = "".join(messages)
+        serialized = json.dumps(result, ensure_ascii=False)
+        self.assertEqual(
+            result,
+            {
+                "status": "ERROR",
+                "error_code": "llm_unavailable",
+                "query": "насос",
+                "results": [],
+                "note": "AI сервис временно недоступен",
+            },
+        )
+        self.assertIn("JSONDecodeError", logged)
+        self.assertIn("AI сервис временно недоступен", logged)
+        for sensitive_value in (
+            anthropic_secret,
+            gemini_secret,
+            anthropic_fragment,
+            gemini_fragment,
+            "?key=",
+        ):
+            self.assertNotIn(sensitive_value, logged)
+            self.assertNotIn(sensitive_value, serialized)
+        anthropic.assert_awaited_once()
+        gemini.assert_awaited_once()
+
+    async def test_classify_does_not_swallow_programming_errors(self) -> None:
+        for error in (
+            TypeError("type programming defect"),
+            ValueError("value programming defect"),
+            AttributeError("attribute programming defect"),
+        ):
+            with self.subTest(error_type=type(error).__name__):
+                call = AsyncMock(side_effect=error)
+                with (
+                    patch(
+                        "app.services.claude_service._choose_provider",
+                        return_value=("anthropic", "ant-key"),
+                    ),
+                    patch("app.services.claude_service._ask_llm", call),
+                ):
+                    with self.assertRaises(type(error)) as caught:
+                        await classify_hs_code("насос", use_journal_hints=False)
+
+                self.assertEqual(str(caught.exception), str(error))
+                call.assert_awaited_once()
 
 
 if __name__ == "__main__":

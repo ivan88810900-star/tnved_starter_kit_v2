@@ -305,8 +305,12 @@ async def classify_hs_code(
     user_text = f"{prefix}{description}" if prefix else description
     try:
         llm_resp = await _ask_llm(SYSTEM_PROMPT, user_text)
-    except (httpx.HTTPError, OSError, TimeoutError) as exc:
-        logger.exception("LLM classify request failed")
+    except (httpx.HTTPError, OSError, TimeoutError, json.JSONDecodeError) as exc:
+        logger.warning(
+            "LLM classify request failed ({}): {}",
+            type(exc).__name__,
+            safe_ai_error_note(exc),
+        )
         return {
             "status": "ERROR",
             "error_code": "llm_unavailable",
