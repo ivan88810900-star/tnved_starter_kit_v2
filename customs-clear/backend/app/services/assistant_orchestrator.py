@@ -143,6 +143,14 @@ async def run_copilot_pipeline(
         )
     elif run_registry_verify and not permit_list:
         pipeline.append({"step": "registry", "skipped": True, "detail": "нет номеров документов"})
+    elif run_registry_verify:
+        pipeline.append(
+            {
+                "step": "registry",
+                "skipped": True,
+                "detail": "нет кода ТН ВЭД — документы не проверялись в ФСА",
+            }
+        )
     else:
         pipeline.append({"step": "registry", "skipped": True, "detail": "выключено — документы не проверялись в ФСА"})
 
