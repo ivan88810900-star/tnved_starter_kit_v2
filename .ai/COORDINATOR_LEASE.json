@@ -1,14 +1,14 @@
 {
   "acquisition_note": "Cycle 292 recovered main e526dfbdb5a31b01bf6f743da0288b88f916de0c, PR258 exact head c59af35da7dde2140d911e2003a4a52fb0611507, released generation 291, and stale CI status. GitHub now exposes exact-head run 38920906239/job 117040259865 as success.",
-  "expires_at": "2026-10-18T10:22:42.870745Z",
+  "expires_at": null,
   "generation": 329,
-  "holder": "/root/scheduled-cycle329-20261018T095053Z",
+  "holder": null,
   "lease_repair": {},
-  "release_reason": "Cycle328 revalidated PR256 exact unchanged head 0320a7d268b33413c48dffc963cde6b0ec051ab1/tree f5fc479d8ef6696880dcc28614c8a3e3da35e648 TN VED search/code-card/preliminary-decisions E2E. Author backend 110+11 PASS, frontend 3 PASS plus typecheck/build exit0. Independent A5 /root/a5_cycle328 PASS_NO_FINDINGS: backend 96 PASS, frontend 68 PASS, typecheck PASS. Exact-head CI run38898431622/job116964443470 success. State checkpoint 7c52e707cdbaa315f8ce45225ed6b0aefe5bb773, TASK_BOARD rev860, PR256 receipt 6247977446, issue257 receipt 6247977616. Product unchanged; policy-refused offset1120 Neon transfer not retried; snapshot incomplete; A6 unchanged/not sent.",
-  "released_by": "/root/scheduled-cycle328-20261018T085253Z",
+  "release_reason": "Cycle329 fixed the reproduced PR256 sanctions fixture SessionLocal order leak and advanced exact head to 6dce1cbd57066f27bd00464d07af52706fa4ac58/tree 502b07a36ba97f7c890fe56540293686b89aa45b. Author fixed forward/reverse/exact-remote matrices 77+29 PASS, frontend 75 PASS, typecheck/build exit0. Independent A5 /root/a5_cycle329 PASS_NO_FINDINGS. Exact-head CI run39117286807/job117645532413 success. State checkpoint 235e8840d3ad818b26f9c45b3638c861c1f5ec9d, TASK_BOARD rev861, PR256 receipt 6248553217, issue257 receipt 6248554711. Product code unchanged; policy-refused offset1120 Neon transfer not retried; snapshot incomplete; A6 unchanged/not sent.",
+  "released_by": "/root/scheduled-cycle329-20261018T095053Z",
   "schema_version": 1,
   "serialization_repair": {},
-  "state": "active",
-  "token": "f4246785dd4e450fa29ef92a3e03d350",
-  "updated_at": "2026-10-18T09:52:42.870745Z"
+  "state": "released",
+  "token": null,
+  "updated_at": "2026-10-18T10:04:59.672567Z"
 }
