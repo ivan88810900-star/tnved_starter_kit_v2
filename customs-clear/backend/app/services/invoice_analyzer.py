@@ -108,11 +108,12 @@ def _compute_registry_check_payload(
         sqlite3.OperationalError,
         OSError,
     ) as e:
-        logger.warning("_compute_registry_check_payload: сбой БД/файла БД (сверка реестров): {}", e)
+        logger.warning(
+            "_compute_registry_check_payload: сбой БД/файла БД (сверка реестров), тип={}; "
+            "проверка помечена недоступной",
+            type(e).__name__,
+        )
         return _registry_check_db_unavailable_payload()
-    except Exception as e:
-        logger.warning("_compute_registry_check_payload: {}", e)
-        return copy.deepcopy(_REGISTRY_CHECK_EMPTY)
 
 # Базовая ставка НДС при импорте для этого проекта (отчёты, расчёты без льготы).
 DEFAULT_VAT_RATE: int = 22
