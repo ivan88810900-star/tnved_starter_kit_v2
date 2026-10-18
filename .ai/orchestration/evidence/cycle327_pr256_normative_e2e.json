@@ -1,0 +1,85 @@
+{
+  "schema_version": 1,
+  "task_id": "TARIFF-PR256-NORMATIVE-E2E-REVALIDATION-20261018",
+  "started_at": "2026-10-18T07:56:55Z",
+  "completed_at": "2026-10-18T08:02:48Z",
+  "executor": "/root/scheduled-cycle327-20261018T075655Z",
+  "lease_generation": 327,
+  "repository": "ivan88810900-star/tnved_starter_kit_v2",
+  "pr": 256,
+  "branch": "agent/product-ntm-regressions-v1",
+  "head_sha": "0320a7d268b33413c48dffc963cde6b0ec051ab1",
+  "tree_sha": "f5fc479d8ef6696880dcc28614c8a3e3da35e648",
+  "product_changed": false,
+  "status": "UNCHANGED_HEAD_NORMATIVE_E2E_A5_PASS_CI_PASS",
+  "scope": {
+    "included": [
+      "required, missing and advisory normative requirements",
+      "applicability definite versus possible/needs_clarification",
+      "official versus legacy source_kind isolation",
+      "source labels, evidence and freshness boundaries",
+      "child-product, negation, neighboring-token and food-contact cases",
+      "frontend normative, permit and source-link rendering",
+      "default-off enforcement and official-SGR advisory flags"
+    ],
+    "excluded": [
+      "legal or normative-corpus completeness",
+      "external registry or network validation",
+      "product or fixture modification",
+      "Neon staging write or retry of the refused offset1120 transfer",
+      "A6 dispatch, merge, deploy, production write or protected flag change"
+    ]
+  },
+  "author_verification": {
+    "backend_command": "DATABASE_URL=sqlite:///$run_dir/ntm.sqlite PYTHONPATH=. /workspace/scratch/fbec4e55bd91/.venv326/bin/python -m pytest -q tests/test_ntm_effective_requirements.py tests/test_ntm_pipeline.py tests/test_ntm_v2_engine.py tests/test_ntm_v2_layers.py tests/test_ntm_v2_advisory_requirements.py tests/test_ntm_v2_source_isolation.py tests/test_ntm_v2_combined_runtime_diagnostics.py tests/test_ntm_v2_measures_enforcement.py tests/test_ntm_v2_rules_enforcement.py tests/test_ntm_v2_pipeline_flag.py tests/test_non_tariff_measures_lookup.py tests/test_non_tariff_rule_validity.py tests/test_ntm_child_product_markers.py tests/test_ntm_trigger_food_contact.py tests/test_ntm_source_diagnostics.py",
+    "backend_exit_code": 0,
+    "backend_result": "410 passed in 25.25s",
+    "frontend_commands": [
+      "npm test",
+      "npm run typecheck",
+      "npm run build"
+    ],
+    "frontend_exit_codes": [0, 0, 0],
+    "frontend_result": "10 files / 109 tests passed; typecheck passed; production build passed with existing advisory warnings",
+    "tracked_tree_clean": true,
+    "log_sha256": {
+      "backend": "ceb4a5ccbf18f799dacac694fde4d9f786e629a5edfcccc96f4c1dc5f8d51f70",
+      "frontend_tests": "21621af24159d82c1043beafd1471dbf194d96baa0e930c9c6c4828b4652b528",
+      "frontend_typecheck": "d3931ff87f632bd891535cffacc96de2828093841c5d09ee33650bb8923f84f5",
+      "frontend_build": "2fcabbdc1eec616b6ccafe2916ff1f4633d94c8013c83457401c623bd119a825"
+    }
+  },
+  "independent_a5": {
+    "session": "/root/a5_cycle327",
+    "status": "PASS_NO_FINDINGS",
+    "backend_primary": "347 passed + 3 subtests, exit 0",
+    "backend_adjacent": "156 passed, 1 skipped, exit 0; skip requires an existing dev DB and is outside disposable-DB scope",
+    "frontend": "5 files / 32 tests passed, exit 0; typecheck exit 0",
+    "default_off_probe": "rules enforcement=false, measures enforcement=false, official SGR advisory=false, exit 0",
+    "tracked_tree_clean": true,
+    "finding": "Required/missing remain limited to definite broker rows; possible, needs_clarification and official SGR remain advisory. Source-kind isolation and unsafe-link rendering preserve fail-closed evidence boundaries."
+  },
+  "exact_head_ci": {
+    "run_id": 38898431622,
+    "job_id": 116964443470,
+    "job": "offline-safety",
+    "conclusion": "success",
+    "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38898431622/job/116964443470"
+  },
+  "capabilities": {
+    "code_access": "FULL_CLONE exact PR256 head and tree",
+    "command_execution": "Git, Python, Node, pytest, Vitest, TypeScript and Vite available",
+    "lawful_publication": "State and issue/PR checkpoint writes only under lease generation 327 and CAS; no protected action",
+    "checkpoint": "pending CAS publication and reread"
+  },
+  "snapshot_status": "BOUNDED_EPOCH315_1020_ROWS_POPULATED_SYNCHRONIZED_NTM_NOT_AVAILABLE",
+  "existing_staging_blocker": "The offset1120 Neon raw-record transaction remains policy-refused and was not retried or worked around.",
+  "a6": "UNCHANGED_NOT_SENT",
+  "protected_actions_performed": false,
+  "limitations": [
+    "This is bounded executable product verification on an unchanged candidate, not full PR245/PR256 acceptance.",
+    "No new legal applicability, source-completeness or current-law conclusion was made.",
+    "One independent adjacent test intentionally skipped because it requires an existing development database."
+  ],
+  "next_step": "Continue the active-focus TN VED search/code-card and related preliminary-decisions slice on PR256/PR245; preserve source evidence and fail-closed behavior."
+}
