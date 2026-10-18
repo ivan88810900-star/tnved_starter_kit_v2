@@ -8,6 +8,9 @@ from copy import deepcopy
 from datetime import datetime, timedelta, timezone
 from unittest.mock import AsyncMock, patch
 
+import httpx
+from loguru import logger
+
 from app.services import claude_service
 from app.services.assistant_chat import run_assistant_chat
 from app.services.assistant_orchestrator import bundle_for_llm
@@ -664,6 +667,122 @@ class AssistantChatGuardrailTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(result["answer"], deterministic_answer)
         self.assertNotIn(response, json.dumps(result, ensure_ascii=False))
 
+    async def test_provider_transport_failure_falls_back_without_sensitive_log_data(self) -> None:
+        bundle = deepcopy(_chat_bundle())
+        bundle["requirements"]["data_freshness"]["ntm_coverage_verified"] = True
+        secret = "assistant-chat-super-secret"
+        request_url = f"https://provider.example.test/messages?key={secret}"
+        request = httpx.Request("POST", request_url)
+        response = httpx.Response(503, request=request)
+        messages: list[str] = []
+        sink_id = logger.add(lambda message: messages.append(str(message)), format="{message}")
+        try:
+            with (
+                patch(
+                    "app.services.assistant_chat.build_chat_grounding_bundle",
+                    new=AsyncMock(return_value=bundle),
+                ),
+                patch(
+                    "app.services.assistant_chat.llm_provider_chain",
+                    return_value=[("anthropic", secret)],
+                ),
+                patch(
+                    "app.services.assistant_chat._ask_llm",
+                    new=AsyncMock(
+                        side_effect=httpx.HTTPStatusError(
+                            "provider unavailable",
+                            request=request,
+                            response=response,
+                        )
+                    ),
+                ),
+            ):
+                result = await run_assistant_chat(
+                    message="Сколько платить?",
+                    history=[],
+                    current_context={"hs_code": "8516108008"},
+                )
+        finally:
+            logger.remove(sink_id)
+
+        logged = "".join(messages)
+        self.assertEqual(result["grounding"]["mode"], "deterministic")
+        self.assertTrue(
+            any(
+                "Внешняя модель временно недоступна" in item
+                for item in result["grounding"]["limitations"]
+            )
+        )
+        self.assertIn("HTTPStatusError", logged)
+        self.assertIn("AI сервис временно недоступен", logged)
+        self.assertNotIn(secret, logged)
+        self.assertNotIn(request_url, logged)
+        self.assertNotIn("?key=", logged)
+
+    async def test_programming_error_in_chat_wording_layer_is_not_swallowed(self) -> None:
+        bundle = deepcopy(_chat_bundle())
+        bundle["requirements"]["data_freshness"]["ntm_coverage_verified"] = True
+        with (
+            patch(
+                "app.services.assistant_chat.build_chat_grounding_bundle",
+                new=AsyncMock(return_value=bundle),
+            ),
+            patch(
+                "app.services.assistant_chat.llm_provider_chain",
+                return_value=[("anthropic", "test")],
+            ),
+            patch(
+                "app.services.assistant_chat._ask_llm",
+                new=AsyncMock(side_effect=TypeError("programming defect")),
+            ),
+        ):
+            with self.assertRaisesRegex(TypeError, "programming defect"):
+                await run_assistant_chat(
+                    message="Сколько платить?",
+                    history=[],
+                    current_context={"hs_code": "8516108008"},
+                )
+
+    async def test_exhausted_invalid_json_uses_deterministic_chat_fallback(self) -> None:
+        bundle = deepcopy(_chat_bundle())
+        bundle["requirements"]["data_freshness"]["ntm_coverage_verified"] = True
+        raw_secret = "malformed-provider-body-secret"
+        messages: list[str] = []
+        sink_id = logger.add(lambda message: messages.append(str(message)), format="{message}")
+        try:
+            with (
+                patch(
+                    "app.services.assistant_chat.build_chat_grounding_bundle",
+                    new=AsyncMock(return_value=bundle),
+                ),
+                patch(
+                    "app.services.assistant_chat.llm_provider_chain",
+                    return_value=[("anthropic", "test")],
+                ),
+                patch(
+                    "app.services.assistant_chat._ask_llm",
+                    new=AsyncMock(
+                        side_effect=json.JSONDecodeError(
+                            "invalid provider JSON",
+                            raw_secret,
+                            0,
+                        )
+                    ),
+                ),
+            ):
+                result = await run_assistant_chat(
+                    message="Сколько платить?",
+                    history=[],
+                    current_context={"hs_code": "8516108008"},
+                )
+        finally:
+            logger.remove(sink_id)
+
+        logged = "".join(messages)
+        self.assertEqual(result["grounding"]["mode"], "deterministic")
+        self.assertIn("JSONDecodeError", logged)
+        self.assertNotIn(raw_secret, logged)
+
     async def test_invalid_json_from_primary_uses_secondary_provider(self) -> None:
         bundle = deepcopy(_chat_bundle())
         bundle["requirements"]["data_freshness"]["ntm_coverage_verified"] = True
@@ -1200,6 +1319,102 @@ class CopilotGroundingTests(unittest.IsolatedAsyncioTestCase):
         ):
             self.assertEqual(result[key], deterministic[key])
         self.assertNotIn(response, json.dumps(result, ensure_ascii=False))
+
+    async def test_copilot_transport_failure_falls_back_without_sensitive_log_data(self) -> None:
+        context = self._context()
+        context["normative_requirements"]["data_freshness"][
+            "ntm_coverage_verified"
+        ] = True
+        secret = "copilot-super-secret"
+        request_url = f"https://provider.example.test/messages?key={secret}"
+        request = httpx.Request("POST", request_url)
+        response = httpx.Response(503, request=request)
+        messages: list[str] = []
+        sink_id = logger.add(lambda message: messages.append(str(message)), format="{message}")
+        try:
+            with (
+                patch(
+                    "app.services.claude_service._choose_provider",
+                    return_value=("anthropic", secret),
+                ),
+                patch(
+                    "app.services.claude_service._ask_llm",
+                    new=AsyncMock(
+                        side_effect=httpx.HTTPStatusError(
+                            "provider unavailable",
+                            request=request,
+                            response=response,
+                        )
+                    ),
+                ),
+            ):
+                result = await analyze_copilot_bundle(context)
+        finally:
+            logger.remove(sink_id)
+
+        logged = "".join(messages)
+        self.assertEqual(result["grounding"]["mode"], "deterministic")
+        self.assertEqual(
+            result["note"],
+            "Внешняя модель временно недоступна; показана серверная сводка.",
+        )
+        self.assertIn("HTTPStatusError", logged)
+        self.assertIn("AI сервис временно недоступен", logged)
+        self.assertNotIn(secret, logged)
+        self.assertNotIn(request_url, logged)
+        self.assertNotIn("?key=", logged)
+
+    async def test_programming_error_in_copilot_wording_layer_is_not_swallowed(self) -> None:
+        context = self._context()
+        context["normative_requirements"]["data_freshness"][
+            "ntm_coverage_verified"
+        ] = True
+        with (
+            patch(
+                "app.services.claude_service._choose_provider",
+                return_value=("anthropic", "test"),
+            ),
+            patch(
+                "app.services.claude_service._ask_llm",
+                new=AsyncMock(side_effect=TypeError("programming defect")),
+            ),
+        ):
+            with self.assertRaisesRegex(TypeError, "programming defect"):
+                await analyze_copilot_bundle(context)
+
+    async def test_exhausted_invalid_json_uses_deterministic_copilot_fallback(self) -> None:
+        context = self._context()
+        context["normative_requirements"]["data_freshness"][
+            "ntm_coverage_verified"
+        ] = True
+        raw_secret = "malformed-provider-body-secret"
+        messages: list[str] = []
+        sink_id = logger.add(lambda message: messages.append(str(message)), format="{message}")
+        try:
+            with (
+                patch(
+                    "app.services.claude_service._choose_provider",
+                    return_value=("anthropic", "test"),
+                ),
+                patch(
+                    "app.services.claude_service._ask_llm",
+                    new=AsyncMock(
+                        side_effect=json.JSONDecodeError(
+                            "invalid provider JSON",
+                            raw_secret,
+                            0,
+                        )
+                    ),
+                ),
+            ):
+                result = await analyze_copilot_bundle(context)
+        finally:
+            logger.remove(sink_id)
+
+        logged = "".join(messages)
+        self.assertEqual(result["grounding"]["mode"], "deterministic")
+        self.assertIn("JSONDecodeError", logged)
+        self.assertNotIn(raw_secret, logged)
 
     async def test_valid_but_unrelated_citation_cannot_inject_copilot_material_claims(self) -> None:
         context = self._context()

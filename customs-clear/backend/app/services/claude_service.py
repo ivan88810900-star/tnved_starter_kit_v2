@@ -493,8 +493,12 @@ async def analyze_copilot_bundle(
             return rewritten
         fallback["note"] = "Ответ внешней модели не прошёл проверку формата/цитат; показана серверная сводка."
         return fallback
-    except Exception as exc:
-        logger.warning("Copilot external wording layer failed: {}", exc)
+    except (httpx.HTTPError, OSError, TimeoutError, json.JSONDecodeError) as exc:
+        logger.warning(
+            "Copilot external wording layer failed ({}): {}",
+            type(exc).__name__,
+            safe_ai_error_note(exc),
+        )
         fallback["note"] = "Внешняя модель временно недоступна; показана серверная сводка."
         return fallback
 

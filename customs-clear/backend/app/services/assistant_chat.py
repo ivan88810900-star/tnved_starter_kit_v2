@@ -6,6 +6,7 @@ import json
 import re
 from typing import Any
 
+import httpx
 from loguru import logger
 
 from .claude_service import _ask_llm, llm_provider_chain
@@ -15,6 +16,7 @@ from .grounded_assistant import (
     payment_requires_review,
     render_chat_grounded_answer,
 )
+from .safe_http_errors import safe_ai_error_note
 
 _CHAT_SYSTEM_PROMPT = (
     "Ты — селектор уже сформированного сервером ответа Tariff.\n"
@@ -155,8 +157,12 @@ async def run_assistant_chat(
                 limitations.append(
                     "Ответ внешней модели не прошёл проверку формата/цитат; показан серверный ответ."
                 )
-        except Exception as exc:  # deterministic answer is the product fallback
-            logger.warning("assistant_chat external wording layer failed: {}", exc)
+        except (httpx.HTTPError, OSError, TimeoutError, json.JSONDecodeError) as exc:
+            logger.warning(
+                "assistant_chat external wording layer failed ({}): {}",
+                type(exc).__name__,
+                safe_ai_error_note(exc),
+            )
             limitations.append("Внешняя модель временно недоступна; показан серверный ответ.")
 
     grounding: dict[str, Any] = {
