@@ -9,11 +9,20 @@ must not become the source of tariff, payment, NTM, or sanctions facts.
 from __future__ import annotations
 
 import re
+import sqlite3
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Any
 
+import httpx
+import requests
 from loguru import logger
+from sqlalchemy.exc import (
+    DisconnectionError,
+    InterfaceError,
+    OperationalError,
+    TimeoutError as SQLAlchemyTimeoutError,
+)
 
 from .non_tariff_service import check_position_non_tariff
 from .normative_store import get_tnved_context_for_hs
@@ -113,6 +122,42 @@ _ASSISTANT_SEARCH_STOP_WORDS = frozenset(
         "что",
     }
 )
+
+_GROUNDING_UNAVAILABLE_RUNTIME_MESSAGES = frozenset(
+    {
+        # Stable adapter sentinels retained for compatibility.  Other
+        # RuntimeError instances are treated as code defects and propagate.
+        "catalogue unavailable",
+        "ntm unavailable",
+    }
+)
+
+
+def _is_grounding_dependency_error(exc: BaseException) -> bool:
+    """Return whether an optional evidence dependency failed operationally.
+
+    Grounding is additive, so infrastructure failures keep a conservative
+    partial response.  Code and data-contract defects must still fail loudly.
+    """
+    if isinstance(
+        exc,
+        (
+            sqlite3.OperationalError,
+            OperationalError,
+            InterfaceError,
+            DisconnectionError,
+            SQLAlchemyTimeoutError,
+            httpx.HTTPError,
+            requests.RequestException,
+            OSError,
+            TimeoutError,
+        ),
+    ):
+        return True
+    return (
+        isinstance(exc, RuntimeError)
+        and str(exc) in _GROUNDING_UNAVAILABLE_RUNTIME_MESSAGES
+    )
 
 
 def _digits(value: Any) -> str:
@@ -666,8 +711,13 @@ async def build_chat_grounding_bundle(
                     "Карточка ТН ВЭД не содержит локальных подтверждающих данных; "
                     "код не подтверждён по справочнику."
                 )
-        except Exception as exc:  # additive grounding must not break the chat
-            logger.warning("assistant grounding: TN VED context failed: {}", exc)
+        except Exception as exc:
+            if not _is_grounding_dependency_error(exc):
+                raise
+            logger.warning(
+                "assistant grounding: TN VED context unavailable ({})",
+                type(exc).__name__,
+            )
             limitations.append("Карточка ТН ВЭД временно недоступна; код не подтверждён по справочнику.")
 
         try:
@@ -693,8 +743,13 @@ async def build_chat_grounding_bundle(
                 limitations.append(
                     "Санкционный скрининг имеет неполное покрытие; отсутствие совпадений не означает отсутствие риска."
                 )
-        except Exception as exc:  # no 500 when optional evidence services degrade
-            logger.warning("assistant grounding: NTM/risk context failed: {}", exc)
+        except Exception as exc:
+            if not _is_grounding_dependency_error(exc):
+                raise
+            logger.warning(
+                "assistant grounding: NTM/risk context unavailable ({})",
+                type(exc).__name__,
+            )
             limitations.append("Нетарифные требования и риск-контур временно не удалось проверить.")
 
     candidates: list[dict[str, Any]] = []
@@ -739,7 +794,12 @@ async def build_chat_grounding_bundle(
                 "corrected_query": search_outcome.get("corrected_query"),
             }
         except Exception as exc:
-            logger.warning("assistant grounding: product search failed: {}", exc)
+            if not _is_grounding_dependency_error(exc):
+                raise
+            logger.warning(
+                "assistant grounding: product search unavailable ({})",
+                type(exc).__name__,
+            )
             limitations.append("Не удалось подобрать кандидатов ТН ВЭД по описанию.")
 
     # A syntactically valid code is context, not evidence.  Do not advertise a
