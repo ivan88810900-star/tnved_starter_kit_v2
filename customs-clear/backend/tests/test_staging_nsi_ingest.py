@@ -287,6 +287,36 @@ def test_load_checkpoint_rejects_corrupted_prior_manifest_source_binding(db) -> 
             )
 
 
+def test_load_checkpoint_rejects_extra_run_for_empty_source(db) -> None:
+    page = _page(0, [], overlap=0, total=0)
+    run_bounded_worker(
+        session_factory=db,
+        page_reader=lambda _checkpoint, _budget: page,
+        epoch_id="epoch-empty-extra-run",
+        dataset="NSI-1995",
+        schema=None,
+        limits=WorkerLimits(1, 1, 100_000, 10),
+    )
+
+    tables = staging_tables(MetaData(), schema=None)
+    with db() as session:
+        with session.begin():
+            stored_run = dict(
+                session.execute(select(tables["ingest_runs"])).mappings().one()
+            )
+            stored_run["run_id"] = "extra-corrupt-run"
+            session.execute(tables["ingest_runs"].insert().values(**stored_run))
+
+    with db() as session:
+        with pytest.raises(StagingIngestError, match="stored checkpoint history"):
+            load_checkpoint(
+                session,
+                epoch_id="epoch-empty-extra-run",
+                dataset="NSI-1995",
+                schema=None,
+            )
+
+
 def test_replay_requires_the_exact_manifest_cursor_and_source_object(db) -> None:
     original = _page(0, [_row(0)], overlap=0, total=1)
     with db() as session:

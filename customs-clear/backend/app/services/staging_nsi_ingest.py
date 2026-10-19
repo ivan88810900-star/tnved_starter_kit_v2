@@ -1035,6 +1035,28 @@ def load_checkpoint(
                 )
         if not first_capture_pairs.issubset(proven_first_captures):
             raise StagingIngestError("stored checkpoint physical capture is inconsistent")
+    elif _validate_history:
+        empty_history_rows = session.execute(
+            select(
+                tables["ingest_runs"].c.run_id,
+                tables["ingest_runs"].c.scope,
+            )
+        ).mappings().all()
+        empty_history = [
+            candidate
+            for candidate in empty_history_rows
+            if isinstance(candidate["scope"], dict)
+            and candidate["scope"].get("epoch_id") == canonical_epoch
+            and candidate["scope"].get("dataset") == canonical_dataset
+        ]
+        if (
+            generation != 1
+            or next_offset != 0
+            or source_total != 0
+            or len(empty_history) != 1
+            or empty_history[0]["run_id"] != run_id
+        ):
+            raise StagingIngestError("stored checkpoint history is inconsistent")
     return Checkpoint(
         generation=generation,
         next_offset=next_offset,
