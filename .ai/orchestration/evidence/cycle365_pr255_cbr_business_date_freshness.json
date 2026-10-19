@@ -1,0 +1,81 @@
+{
+  "schema_version": 1,
+  "task_id": "TARIFF-PR255-CBR-BUSINESS-DATE-FRESHNESS-20261019",
+  "started_at": "2026-10-19T20:56:47Z",
+  "completed_at": "2026-10-19T21:08:45Z",
+  "executor": "/root/scheduled-cycle365-20261019T205647Z",
+  "lease_generation": 365,
+  "repository": "ivan88810900-star/tnved_starter_kit_v2",
+  "pull_request": 255,
+  "branch": "agent/core-payment-regressions-v1",
+  "parent_sha": "fb6fe113290c77a9a551035bc90cfb3d5b23c3f9",
+  "local_author_commit": "856fab41e9a3284fea0e1857866ffc556f221483",
+  "published_head_sha": "44e9c1ded7c2949d18f2cd4105aa49d2cd35f745",
+  "tree_sha": "68be7575d0a76ea744f36a748e25776ccf689b8e",
+  "changed_files": [
+    "customs-clear/backend/app/services/exchange_rates.py",
+    "customs-clear/backend/tests/test_payment_fx_provenance_fail_closed.py"
+  ],
+  "reproduction": {
+    "parent_result": "An eight-day-old cbrf business date returned EUR 101.25 when synced_at and updated_at were recent.",
+    "classification": "Payment FX provenance/freshness defect; no new legal interpretation."
+  },
+  "repair": {
+    "policy": "The CBR business date must be non-future and at most seven days old; day 7 inclusive.",
+    "fail_closed": "Foreign rates are hidden when the verified CBR status is stale or future; RUB remains available.",
+    "unchanged": "Rate values, official source URLs, arithmetic, legal applicability, DB schema, migrations and normative/test data."
+  },
+  "verification": {
+    "focused_command": "python -m pytest -q tests/test_payment_fx_provenance_fail_closed.py",
+    "focused_result": "19 passed, 12 subtests",
+    "focused_exit_code": 0,
+    "broad_command": "python -m pytest -q tests/test_automatic_duty_operand_validation.py tests/test_duty_parser.py tests/test_duty_rules_backfill.py tests/test_excise_ingestion.py tests/test_import_duty_ingestion.py tests/test_invoice_and_compare.py tests/test_official_payment_coverage_audit.py tests/test_payment_data_coverage.py tests/test_payment_data_normalization.py tests/test_payment_engine.py tests/test_payment_fx_provenance_fail_closed.py tests/test_payment_quote.py tests/test_payment_source_admission.py tests/test_payment_source_ingestion.py tests/test_pp908_vat_coverage.py tests/test_recycling_fees.py tests/test_tariff_preferences.py tests/test_unavailable_payment_exports.py tests/test_vat_ingestion.py tests/test_vat_preferences_audit161.py tests/test_special_duties.py tests/test_api_integration.py",
+    "broad_environment": "Freshly migrated disposable SQLite with committed VAT and legacy payment fixtures.",
+    "broad_result": "488 passed, 379 subtests, 4 warnings",
+    "broad_exit_code": 0,
+    "py_compile_exit_code": 0,
+    "diff_check_exit_code": 0,
+    "diagnostic_limitation": "An initial unrestricted clean mixed slice had 1 known champagne parent-fixture isolation failure in test_rate_display.py; no full-suite PASS is claimed."
+  },
+  "independent_a5": {
+    "reviewer": "/root/a1_cycle364",
+    "status": "PASS_NO_FINDINGS",
+    "focused": "19 passed plus 12 subtests, exit 0",
+    "adjacent": "109 passed plus 35 subtests, exit 0",
+    "matrix": "7-day accepted; 8-day hidden; Fri-to-Mon accepted; future source date and future synced_at hidden; stale/invalid rates hidden; exact timestamp binding preserved."
+  },
+  "exact_head_ci": {
+    "run_id": 39324739182,
+    "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/39324739182",
+    "status": "completed",
+    "conclusion": "success",
+    "jobs": [
+      {
+        "name": "offline-safety",
+        "job_id": 118307513239,
+        "conclusion": "success",
+        "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/39324739182/job/118307513239"
+      },
+      {
+        "name": "payment-regression",
+        "job_id": 118307513535,
+        "conclusion": "success",
+        "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/39324739182/job/118307513535"
+      }
+    ]
+  },
+  "receipts": {
+    "pr255": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/255#issuecomment-6277355413",
+    "issue257": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/257#issuecomment-6277359888"
+  },
+  "limitations": [
+    "No full-suite PASS is claimed.",
+    "Full PR #244 acceptance and official-source/legal completeness remain NOT PASS.",
+    "A lawful populated synchronized NTM snapshot remains unavailable; full PR #245 acceptance remains blocked."
+  ],
+  "protected_actions_performed": false,
+  "merge_or_deploy_performed": false,
+  "staging_or_production_write_performed": false,
+  "normative_or_test_data_changed": false,
+  "a6": "UNCHANGED_NOT_SENT"
+}
