@@ -60,8 +60,8 @@
   },
   "protected_actions_performed": false,
   "receipts": {
-    "pr256": null,
-    "issue257": null
+    "pr256": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256#issuecomment-6262821993",
+    "issue257": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/257#issuecomment-6262821729"
   },
   "status": "IMPLEMENTED_A5_PASS_CI_PASS",
   "next_step": "Reproduce and isolate the order-dependent source-import SQLite writer while preserving the existing source-import endpoint assertions and disposable database boundary."
