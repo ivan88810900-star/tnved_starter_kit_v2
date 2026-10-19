@@ -1,0 +1,46 @@
+{
+  "schema_version": 1,
+  "task_id": "TARIFF-PR256-RULES-ENFORCEMENT-SESSION-ISOLATION-20261019",
+  "started_at": "2026-10-19T04:14:17Z",
+  "completed_at": "2026-10-19T04:22:47.375Z",
+  "executor": "/root/scheduled-cycle349-20261019T041417Z",
+  "lease_generation": 349,
+  "pr": 256,
+  "previous_head_sha": "e523142e88fe739ac1cfd931de435ae04c456c6a",
+  "head_sha": "d425a855efeb429b6b8a17dc948b8a3a0e12351c",
+  "tree_sha": "d787f5992033801576aa5b51bafb36a1b944c7bd",
+  "product_changed": false,
+  "product_code_changed": false,
+  "test_fixture_changed": true,
+  "changed_file": "customs-clear/backend/tests/test_ntm_v2_rules_enforcement.py",
+  "baseline": {
+    "source": "cycle348 guarded broad-run evidence",
+    "result": "test_enforcement_off_unchanged_baseline passed but created ambient customs.db/WAL/SHM after 59%",
+    "evidence": ".ai/orchestration/evidence/cycle348_pr256_official_sgr_import_session_isolation.json"
+  },
+  "repair": "The disposable fixture now rebinds the pre-imported sanctions_risk_block.SessionLocal alias, exposes an identity regression assertion, yields under try/finally, and always disposes its engine.",
+  "verification": {
+    "diff_scope": "one test file; +23/-12; exact one-commit linear child of the prior PR head",
+    "behavior_preserved": "All existing enforcement assertions and production code are unchanged.",
+    "exact_head_ci": {
+      "run_id": 39199020863,
+      "job_id": 117887898101,
+      "conclusion": "success",
+      "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/39199020863/job/117887898101",
+      "limit": "The offline-safety workflow validates orchestration/state contracts and does not execute this backend test."
+    },
+    "runtime_qa": {
+      "status": "PENDING_CAPABILITY",
+      "reason": "This connector-only scheduled run has no repository checkout or native independent QA session; no focused pytest result is claimed."
+    }
+  },
+  "status": "IMPLEMENTED_EXACT_HEAD_CI_PASS_RUNTIME_QA_PENDING",
+  "snapshot_status": "BOUNDED_EPOCH315_1020_ROWS_POPULATED_SYNCHRONIZED_NTM_NOT_AVAILABLE",
+  "staging_blocker": "cycle325 offset1120 transfer remains policy-refused; no retry or workaround",
+  "a6": {
+    "request": "core-s1-6415f443120f-r9-g106",
+    "status": "UNCHANGED_NOT_SENT"
+  },
+  "protected_actions_performed": false,
+  "next_step": "Run focused rules-enforcement plus adjacent sanctions/advisory/measures modules in both orders with ambient SQLite watcher and injected setup/body teardown checks on exact head d425a855; only then publish a completion receipt."
+}
