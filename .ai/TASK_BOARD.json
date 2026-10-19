@@ -11538,8 +11538,8 @@
     "a0_validation": "Exact remote head fe367f14d9281b25c9f32fbb0328cdb7cd153a9f passed official-SGR+measures 26 tests, exit 0 with no ambient SQLite. Broad guarded run passed the repaired writer, then after excluding nine snapshot-only tests identified test_ntm_v2_official_sgr_import.py::test_official_not_in_production_broker as the next distinct ambient writer.",
     "exact_head_ci": "run 39192742678 / job 117868875905 success",
     "receipts": {
-      "pr256": null,
-      "issue257": null
+      "pr256": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256#issuecomment-6258819787",
+      "issue257": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/257#issuecomment-6258819598"
     },
     "snapshot_status": "BOUNDED_EPOCH315_1020_ROWS_POPULATED_SYNCHRONIZED_NTM_NOT_AVAILABLE",
     "staging_blocker": "cycle325 offset1120 transfer remains policy-refused after the owner-authorized attempt; no retry or workaround",

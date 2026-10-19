@@ -42,7 +42,10 @@
     "conclusion": "success",
     "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/39192742678/job/117868875905"
   },
-  "receipts": {"pr256": null, "issue257": null},
+  "receipts": {
+    "pr256": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256#issuecomment-6258819787",
+    "issue257": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/257#issuecomment-6258819598"
+  },
   "snapshot": {"epoch": 315, "objects": 20, "runs": 10, "rows": 1020, "unique_ids": 1020, "unique_hashes": 1020, "max_ordinal": 1020, "status": "COLLECTED_UNVERIFIED", "populated_synchronized_available": false},
   "staging_blocker": "The cycle325 offset1120 transfer remains policy-refused; it was not retried or worked around.",
   "a6": {"request": "core-s1-6415f443120f-r9-g106", "status": "UNCHANGED_NOT_SENT"},
