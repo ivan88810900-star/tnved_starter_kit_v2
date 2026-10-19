@@ -1,6 +1,6 @@
 {
   "acquisition_note": "Cycle 292 recovered main e526dfb5a31b01bf6f743da0288b88f916de0c, PR258 exact head c59af35da7dde2140d911e2003a4a52fb0611507, released generation 291, and stale CI status. GitHub now exposes exact-head run 38920906239/job 117040259865 as success.",
-  "expires_at": "2026-10-19T11:29:45.157391+00:00",
+  "expires_at": "2026-10-19T11:39:07.580005+00:00",
   "generation": 354,
   "holder": "/root/scheduled-cycle354-20261019T105432Z",
   "lease_repair": {},
@@ -10,5 +10,5 @@
   "serialization_repair": {},
   "state": "active",
   "token": "e77be86970564de49cf38b8dce1aef1a",
-  "updated_at": "2026-10-19T10:59:45.157391+00:00"
+  "updated_at": "2026-10-19T11:09:07.580005+00:00"
 }
