@@ -52,6 +52,10 @@
     "conclusion": "success",
     "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/39184363860/job/117843550619"
   },
+  "receipts": {
+    "pr256": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256#issuecomment-6257585051",
+    "issue257": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/257#issuecomment-6257585274"
+  },
   "snapshot": {
     "epoch": 315,
     "objects": 20,

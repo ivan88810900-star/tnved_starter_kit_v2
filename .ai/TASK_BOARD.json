@@ -11538,8 +11538,8 @@
     "a0_validation": "Exact remote head 564afdb9005eafc90d85b2dcf9063400feabe77c passed advisory+sanctions 20 tests, exit 0; guarded broad instrumentation passed the repaired 42% writer and identified the next distinct writer at test_ntm_v2_measures_enforcement.py::test_enforcement_adds_vs at 53%",
     "exact_head_ci": "run 39184363860 / job 117843550619 success",
     "receipts": {
-      "pr256": null,
-      "issue257": null
+      "pr256": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256#issuecomment-6257585051",
+      "issue257": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/257#issuecomment-6257585274"
     },
     "snapshot_status": "BOUNDED_EPOCH315_1020_ROWS_POPULATED_SYNCHRONIZED_NTM_NOT_AVAILABLE",
     "staging_blocker": "cycle325 offset1120 transfer remains policy-refused after the owner-authorized attempt; no retry or workaround",
