@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import math
 import re
 import time
 from dataclasses import dataclass
@@ -111,8 +112,8 @@ class WorkerLimits:
             raise ValueError("max_rows must be positive")
         if self.max_source_bytes <= 0:
             raise ValueError("max_source_bytes must be positive")
-        if self.max_seconds <= 0:
-            raise ValueError("max_seconds must be positive")
+        if not math.isfinite(self.max_seconds) or self.max_seconds <= 0:
+            raise ValueError("max_seconds must be finite and positive")
 
 
 @dataclass(frozen=True)
@@ -786,6 +787,8 @@ def run_bounded_worker(
         if byte_budget <= 0:
             break
         page = page_reader(checkpoint, byte_budget)
+        if clock() - started >= limits.max_seconds:
+            break
         candidate_bytes = len(page.page_bytes) + len(page.manifest_bytes)
         if source_bytes + candidate_bytes > limits.max_source_bytes:
             break
@@ -804,6 +807,8 @@ def run_bounded_worker(
                 )
                 if rows_committed + result.physical_rows > limits.max_rows:
                     raise StagingIngestError("page would exceed max_rows")
+                if clock() - started >= limits.max_seconds:
+                    raise StagingIngestError("page processing exceeded max_seconds")
         if result.replayed and result.next_checkpoint == checkpoint:
             raise StagingIngestError("page_reader replayed a page without advancing")
         checkpoint = result.next_checkpoint

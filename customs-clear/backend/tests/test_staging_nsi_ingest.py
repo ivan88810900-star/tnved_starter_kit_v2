@@ -411,6 +411,82 @@ def test_resource_limit_rolls_back_whole_page(db) -> None:
         assert session.scalar(select(func.count()).select_from(tables["run_rows"])) == 0
 
 
+@pytest.mark.parametrize("max_seconds", [float("nan"), float("inf")])
+def test_non_finite_max_seconds_is_rejected_before_source_read(
+    db,
+    max_seconds: float,
+) -> None:
+    source_read = False
+
+    def forbidden_reader(_checkpoint: Checkpoint, _budget: int) -> ImmutablePage:
+        nonlocal source_read
+        source_read = True
+        raise AssertionError("invalid limits must fail before source access")
+
+    with pytest.raises(ValueError, match="finite and positive"):
+        run_bounded_worker(
+            session_factory=db,
+            page_reader=forbidden_reader,
+            epoch_id="epoch-non-finite-limit",
+            dataset="NSI-1995",
+            schema=None,
+            limits=WorkerLimits(1, 1, 100_000, max_seconds),
+        )
+    assert source_read is False
+
+
+def test_elapsed_source_read_does_not_commit_after_max_seconds(db) -> None:
+    page = _page(0, [_row(0)], overlap=0, total=1)
+    ticks = iter([0.0, 0.0, 11.0])
+
+    result = run_bounded_worker(
+        session_factory=db,
+        page_reader=lambda _checkpoint, _budget: page,
+        epoch_id="epoch-time-read",
+        dataset="NSI-1995",
+        schema=None,
+        limits=WorkerLimits(1, 1, 100_000, 10),
+        clock=lambda: next(ticks),
+    )
+
+    assert result.pages_committed == 0
+    assert result.physical_rows == 0
+    assert result.checkpoint == Checkpoint()
+    tables = staging_tables(MetaData(), schema=None)
+    with db() as session:
+        assert session.scalar(select(func.count()).select_from(tables["source_objects"])) == 0
+        assert session.scalar(select(func.count()).select_from(tables["ingest_runs"])) == 0
+        assert session.scalar(select(func.count()).select_from(tables["run_rows"])) == 0
+
+
+def test_elapsed_ingest_rolls_back_page_before_commit(db) -> None:
+    page = _page(0, [_row(0)], overlap=0, total=1)
+    ticks = iter([0.0, 0.0, 0.0, 11.0])
+
+    with pytest.raises(StagingIngestError, match="max_seconds"):
+        run_bounded_worker(
+            session_factory=db,
+            page_reader=lambda _checkpoint, _budget: page,
+            epoch_id="epoch-time-ingest",
+            dataset="NSI-1995",
+            schema=None,
+            limits=WorkerLimits(1, 1, 100_000, 10),
+            clock=lambda: next(ticks),
+        )
+
+    tables = staging_tables(MetaData(), schema=None)
+    with db() as session:
+        assert session.scalar(select(func.count()).select_from(tables["source_objects"])) == 0
+        assert session.scalar(select(func.count()).select_from(tables["ingest_runs"])) == 0
+        assert session.scalar(select(func.count()).select_from(tables["run_rows"])) == 0
+        assert load_checkpoint(
+            session,
+            epoch_id="epoch-time-ingest",
+            dataset="NSI-1995",
+            schema=None,
+        ) == Checkpoint()
+
+
 def test_physical_captures_are_distinct_while_global_revision_id_is_stable(db) -> None:
     first = _page(0, [_row(0)], overlap=0, total=1)
     for epoch, page in (("epoch-1", first), ("epoch-2", first)):
