@@ -469,13 +469,25 @@ def load_checkpoint(
         "logical_offset",
         "request_offset",
         "page_source_id",
+        "page_source_sha256",
+        "page_source_size_bytes",
         "manifest_source_id",
+        "manifest_source_sha256",
+        "manifest_source_size_bytes",
         "ordering_proof",
     }
     logical_offset = scope.get("logical_offset") if isinstance(scope, dict) else None
     request_offset = scope.get("request_offset") if isinstance(scope, dict) else None
     page_source_id = scope.get("page_source_id") if isinstance(scope, dict) else None
+    page_source_sha256 = scope.get("page_source_sha256") if isinstance(scope, dict) else None
+    page_source_size_bytes = scope.get("page_source_size_bytes") if isinstance(scope, dict) else None
     manifest_source_id = scope.get("manifest_source_id") if isinstance(scope, dict) else None
+    manifest_source_sha256 = (
+        scope.get("manifest_source_sha256") if isinstance(scope, dict) else None
+    )
+    manifest_source_size_bytes = (
+        scope.get("manifest_source_size_bytes") if isinstance(scope, dict) else None
+    )
     ordering_proof = scope.get("ordering_proof") if isinstance(scope, dict) else None
     raw_count = run["raw_count"] if run is not None else None
     unique_count = run["unique_count"] if run is not None else None
@@ -517,10 +529,22 @@ def load_checkpoint(
         or not isinstance(page_source_id, str)
         or not page_source_id.strip()
         or page_source_id != page_source_id.strip()
+        or not isinstance(page_source_sha256, str)
+        or len(page_source_sha256) != 64
+        or any(ch not in "0123456789abcdef" for ch in page_source_sha256)
+        or isinstance(page_source_size_bytes, bool)
+        or not isinstance(page_source_size_bytes, int)
+        or page_source_size_bytes < 0
         or not isinstance(manifest_source_id, str)
         or not manifest_source_id.strip()
         or manifest_source_id != manifest_source_id.strip()
         or manifest_source_id == page_source_id
+        or not isinstance(manifest_source_sha256, str)
+        or len(manifest_source_sha256) != 64
+        or any(ch not in "0123456789abcdef" for ch in manifest_source_sha256)
+        or isinstance(manifest_source_size_bytes, bool)
+        or not isinstance(manifest_source_size_bytes, int)
+        or manifest_source_size_bytes < 0
         or run["source_id"] != page_source_id
         or isinstance(raw_count, bool)
         or not isinstance(raw_count, int)
@@ -554,6 +578,12 @@ def load_checkpoint(
         or page_source["object_bucket"] != manifest_source["object_bucket"]
         or page_source["status"] != COLLECTED_UNVERIFIED
         or manifest_source["status"] != COLLECTED_UNVERIFIED
+        or page_source["sha256"] != page_source_sha256
+        or page_source["size_bytes"] != page_source_size_bytes
+        or manifest_source["sha256"] != manifest_source_sha256
+        or manifest_source["size_bytes"] != manifest_source_size_bytes
+        or run_id
+        != f"{canonical_epoch}:{logical_offset}:{page_source['sha256'][:16]}"
     ):
         raise StagingIngestError("stored checkpoint source lineage is inconsistent")
 
@@ -729,7 +759,11 @@ def load_checkpoint(
                 logical = scope.get("logical_offset")
                 request = scope.get("request_offset")
                 capture_page_source = scope.get("page_source_id")
+                capture_page_sha256 = scope.get("page_source_sha256")
+                capture_page_size_bytes = scope.get("page_source_size_bytes")
                 capture_manifest_source = scope.get("manifest_source_id")
+                capture_manifest_sha256 = scope.get("manifest_source_sha256")
+                capture_manifest_size_bytes = scope.get("manifest_source_size_bytes")
                 proof = scope.get("ordering_proof")
                 capture_raw_count = capture["capture_raw_count"]
                 next_cursor = cursor.get("next_offset")
@@ -791,10 +825,22 @@ def load_checkpoint(
                     and isinstance(capture_page_source, str)
                     and bool(capture_page_source.strip())
                     and capture_page_source == capture_page_source.strip()
+                    and isinstance(capture_page_sha256, str)
+                    and len(capture_page_sha256) == 64
+                    and all(ch in "0123456789abcdef" for ch in capture_page_sha256)
+                    and isinstance(capture_page_size_bytes, int)
+                    and not isinstance(capture_page_size_bytes, bool)
+                    and capture_page_size_bytes >= 0
                     and isinstance(capture_manifest_source, str)
                     and bool(capture_manifest_source.strip())
                     and capture_manifest_source == capture_manifest_source.strip()
                     and capture_manifest_source != capture_page_source
+                    and isinstance(capture_manifest_sha256, str)
+                    and len(capture_manifest_sha256) == 64
+                    and all(ch in "0123456789abcdef" for ch in capture_manifest_sha256)
+                    and isinstance(capture_manifest_size_bytes, int)
+                    and not isinstance(capture_manifest_size_bytes, bool)
+                    and capture_manifest_size_bytes >= 0
                     and capture["capture_parser_version"] == PARSER_VERSION
                     and capture["capture_run_status"] == COLLECTED_UNVERIFIED
                     and capture["capture_run_source_id"] == capture_page_source
@@ -856,6 +902,10 @@ def load_checkpoint(
                         and capture_manifest["dataset"] == canonical_dataset
                         and capture_page["source_revision"] == cursor_snapshot
                         and capture_manifest["source_revision"] == cursor_snapshot
+                        and capture_page["sha256"] == capture_page_sha256
+                        and capture_page["size_bytes"] == capture_page_size_bytes
+                        and capture_manifest["sha256"] == capture_manifest_sha256
+                        and capture_manifest["size_bytes"] == capture_manifest_size_bytes
                         and capture_run_id
                         == f"{scope['epoch_id']}:{logical}:{capture_page['sha256'][:16]}"
                         and capture_page["authority"] == capture_manifest["authority"]
@@ -1127,7 +1177,11 @@ def ingest_page(
         "logical_offset": logical_offset,
         "request_offset": request_offset,
         "page_source_id": page.page_source.source_id,
+        "page_source_sha256": page.page_source.sha256,
+        "page_source_size_bytes": page.page_source.size_bytes,
         "manifest_source_id": page.manifest_source.source_id,
+        "manifest_source_sha256": page.manifest_source.sha256,
+        "manifest_source_size_bytes": page.manifest_source.size_bytes,
         "ordering_proof": manifest["ordering_proof"],
     }
     run_id = f"{epoch_id}:{logical_offset}:{page.page_source.sha256[:16]}"

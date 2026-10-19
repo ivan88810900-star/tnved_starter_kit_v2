@@ -218,6 +218,75 @@ def test_load_checkpoint_rejects_corrupted_prior_committed_page(db, mutation: st
             )
 
 
+def test_load_checkpoint_rejects_corrupted_empty_page_source_binding(db) -> None:
+    page = _page(0, [], overlap=0, total=0)
+    run_bounded_worker(
+        session_factory=db,
+        page_reader=lambda _checkpoint, _budget: page,
+        epoch_id="epoch-empty-history",
+        dataset="NSI-1995",
+        schema=None,
+        limits=WorkerLimits(1, 1, 100_000, 10),
+    )
+
+    tables = staging_tables(MetaData(), schema=None)
+    with db() as session:
+        with session.begin():
+            session.execute(
+                tables["source_objects"].update()
+                .where(tables["source_objects"].c.source_id == page.page_source.source_id)
+                .values(sha256="f" * 64, size_bytes=999)
+            )
+
+    with db() as session:
+        with pytest.raises(StagingIngestError, match="source lineage"):
+            load_checkpoint(
+                session,
+                epoch_id="epoch-empty-history",
+                dataset="NSI-1995",
+                schema=None,
+            )
+
+
+def test_load_checkpoint_rejects_corrupted_prior_manifest_source_binding(db) -> None:
+    first = _page(0, [_row(0), _row(1), _row(2)], overlap=0)
+    second = _page(
+        3,
+        [_row(0), _row(1), _row(2), _row(3), _row(4)],
+        overlap=3,
+    )
+    pages = {0: first, 3: second}
+    run_bounded_worker(
+        session_factory=db,
+        page_reader=lambda checkpoint, _budget: pages[checkpoint.next_offset],
+        epoch_id="epoch-manifest-history",
+        dataset="NSI-1995",
+        schema=None,
+        limits=WorkerLimits(4, 10, 100_000, 10),
+    )
+
+    tables = staging_tables(MetaData(), schema=None)
+    with db() as session:
+        with session.begin():
+            session.execute(
+                tables["source_objects"].update()
+                .where(
+                    tables["source_objects"].c.source_id
+                    == first.manifest_source.source_id
+                )
+                .values(sha256="0" * 64, size_bytes=999)
+            )
+
+    with db() as session:
+        with pytest.raises(StagingIngestError, match="stored checkpoint history"):
+            load_checkpoint(
+                session,
+                epoch_id="epoch-manifest-history",
+                dataset="NSI-1995",
+                schema=None,
+            )
+
+
 def test_replay_requires_the_exact_manifest_cursor_and_source_object(db) -> None:
     original = _page(0, [_row(0)], overlap=0, total=1)
     with db() as session:
