@@ -9,6 +9,8 @@ from scripts import sync_sgr_registry as sync
 
 def _nsi_item(index: int) -> dict[str, Any]:
     return {
+        "id": f"record-{index:09d}",
+        "versionId": "snapshot-v1",
         "data": {
             "NUMB_DOC": f"RU.00.00.00.000.E.{index:06d}.00.00",
             "NAME_PROD": f"Product {index}",
@@ -90,6 +92,7 @@ def test_drift_safe_resume_requires_matching_overlap_and_dedupes_replay(
     def fake_page(_url: str, payload: dict[str, Any], **_kwargs: Any) -> list[dict[str, Any]]:
         assert payload["offset"] == 80
         assert payload["limit"] == 120
+        assert payload["sort"] == sync.NSI_SGR_STABLE_SORT
         return prior_tail + next_rows
 
     monkeypatch.setattr(sync, "_http_post_json", fake_page)
@@ -101,9 +104,10 @@ def test_drift_safe_resume_requires_matching_overlap_and_dedupes_replay(
         limit=100,
         overlap_rows=20,
         expected_overlap_sha256=expected_overlap,
+        source_snapshot_id="snapshot-v1",
     )
 
-    assert rows == next_rows
+    assert rows == prior_tail + next_rows
     assert manifest["overlap_sha256"] == expected_overlap
     assert manifest["new_count"] == 100
     assert manifest["next_offset"] == 200
@@ -112,6 +116,12 @@ def test_drift_safe_resume_requires_matching_overlap_and_dedupes_replay(
     assert manifest["total_drift"] == 54
     assert manifest["drift_detected"] is True
     assert manifest["terminal_total_reconciled"] is False
+    assert manifest["ordering_proof"] == {
+        "kind": "stable_cursor",
+        "snapshot_id": "snapshot-v1",
+        "sort": sync.NSI_SGR_STABLE_SORT,
+        "cursor_contract": sync.NSI_SGR_STABLE_CURSOR_CONTRACT,
+    }
 
 
 def test_drift_safe_resume_fails_closed_on_overlap_mismatch(
@@ -134,6 +144,7 @@ def test_drift_safe_resume_fails_closed_on_overlap_mismatch(
             expected_overlap_sha256=sync._nsi_overlap_sha256(
                 [_nsi_item(80 + i) for i in range(20)]
             ),
+            source_snapshot_id="snapshot-v1",
         )
 
 
@@ -149,6 +160,7 @@ def test_drift_safe_terminal_reconciliation_requires_stable_total(
         date_iso="2026-10-16",
         offset=0,
         limit=10,
+        source_snapshot_id="snapshot-v1",
     )
 
     assert rows == page
@@ -159,7 +171,7 @@ def test_drift_safe_terminal_reconciliation_requires_stable_total(
     assert manifest["terminal_total_reconciled"] is True
 
 
-def test_drift_safe_cursor_advances_by_source_rows_after_dedupe(
+def test_drift_safe_cursor_rejects_duplicate_stable_keys(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     overlap = [_nsi_item(8), _nsi_item(9)]
@@ -168,19 +180,16 @@ def test_drift_safe_cursor_advances_by_source_rows_after_dedupe(
     monkeypatch.setattr(sync, "_nsi_sgr_total", lambda **_kwargs: 20)
     monkeypatch.setattr(sync, "_http_post_json", lambda *_args, **_kwargs: page)
 
-    rows, manifest = sync.fetch_nsi_sgr_drift_safe_page(
-        code=sync.NSI_SGR_CODE,
-        date_iso="2026-10-16",
-        offset=10,
-        limit=3,
-        overlap_rows=2,
-        expected_overlap_sha256=sync._nsi_overlap_sha256(overlap),
-    )
-
-    assert rows == [duplicate, _nsi_item(11)]
-    assert manifest["new_count"] == 2
-    assert manifest["source_advance"] == 3
-    assert manifest["next_offset"] == 13
+    with pytest.raises(RuntimeError, match="not strictly ordered"):
+        sync.fetch_nsi_sgr_drift_safe_page(
+            code=sync.NSI_SGR_CODE,
+            date_iso="2026-10-16",
+            offset=10,
+            limit=3,
+            overlap_rows=2,
+            expected_overlap_sha256=sync._nsi_overlap_sha256(overlap),
+            source_snapshot_id="snapshot-v1",
+        )
 
 
 def test_drift_safe_nonterminal_empty_page_fails_closed(
@@ -195,6 +204,7 @@ def test_drift_safe_nonterminal_empty_page_fails_closed(
             date_iso="2026-10-16",
             offset=0,
             limit=3,
+            source_snapshot_id="snapshot-v1",
         )
 
 
@@ -214,6 +224,7 @@ def test_drift_safe_page_exceeding_stable_total_fails_closed(
             date_iso="2026-10-16",
             offset=0,
             limit=10,
+            source_snapshot_id="snapshot-v1",
         )
 
 
@@ -234,6 +245,7 @@ def test_drift_safe_page_rejects_unsafe_resume(
         sync.fetch_nsi_sgr_drift_safe_page(
             code=sync.NSI_SGR_CODE,
             date_iso="2026-10-16",
+            source_snapshot_id="snapshot-v1",
             **kwargs,
         )
 

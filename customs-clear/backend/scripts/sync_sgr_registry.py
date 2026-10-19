@@ -58,6 +58,11 @@ NSI_BASE_API = "https://nsi.eaeunion.org/portal/api"
 NSI_SGR_CODE = "1995"
 NSI_SGR_MAX_BATCH_SIZE = 1500
 NSI_SGR_PAGE_MANIFEST_SCHEMA_VERSION = 1
+NSI_SGR_STABLE_CURSOR_CONTRACT = "nsi-1995-id-version-offset-overlap-v1"
+NSI_SGR_STABLE_SORT = [
+    {"field": "id", "direction": "asc"},
+    {"field": "versionId", "direction": "asc"},
+]
 
 
 def _parse_dt(val: str | None) -> datetime | None:
@@ -381,6 +386,7 @@ def fetch_nsi_sgr_drift_safe_page(
     date_iso: str,
     offset: int,
     limit: int,
+    source_snapshot_id: str,
     overlap_rows: int = 0,
     expected_overlap_sha256: str | None = None,
     proxy: str = "",
@@ -407,6 +413,9 @@ def fetch_nsi_sgr_drift_safe_page(
         raise ValueError("NSI SGR resumed page requires a positive overlap")
     if requested_overlap and not expected_overlap_sha256:
         raise ValueError("NSI SGR resumed page requires expected overlap SHA-256")
+    snapshot_id = str(source_snapshot_id or "").strip()
+    if not snapshot_id:
+        raise ValueError("NSI SGR stable cursor requires a source snapshot id")
 
     request_offset = logical_offset - requested_overlap
     request_limit = min(
@@ -423,7 +432,7 @@ def fetch_nsi_sgr_drift_safe_page(
         "offset": request_offset,
         "limit": request_limit,
         "filter": [{"code": "searchText", "value": "", "conditionType": "like"}],
-        "sort": [],
+        "sort": NSI_SGR_STABLE_SORT,
     }
     page = _nsi_page_rows(
         _http_post_json(url, payload, proxy=proxy),
@@ -440,6 +449,15 @@ def fetch_nsi_sgr_drift_safe_page(
             f"NSI SGR page at offset {request_offset} returned fewer than "
             f"the required {requested_overlap} overlap rows"
         )
+
+    stable_keys: list[tuple[str, str]] = []
+    for item in page:
+        source_id = _source_value_text(item.get("id")).strip()
+        if not source_id:
+            raise RuntimeError("NSI SGR stable cursor row has no source id")
+        stable_keys.append((source_id, _source_value_text(item.get("versionId")).strip()))
+    if any(left >= right for left, right in zip(stable_keys, stable_keys[1:])):
+        raise RuntimeError("NSI SGR stable cursor response is not strictly ordered")
 
     overlap = page[:requested_overlap]
     overlap_sha256 = _nsi_overlap_sha256(overlap)
@@ -507,8 +525,17 @@ def fetch_nsi_sgr_drift_safe_page(
         "drift_detected": total_before != total_after,
         "terminal_candidate": terminal_candidate,
         "terminal_total_reconciled": terminal_total_reconciled,
+        "ordering_proof": {
+            "kind": "stable_cursor",
+            "snapshot_id": snapshot_id,
+            "sort": NSI_SGR_STABLE_SORT,
+            "cursor_contract": NSI_SGR_STABLE_CURSOR_CONTRACT,
+        },
     }
-    return new_rows, manifest
+    # Return the exact raw page, including the resume overlap.  The staging
+    # loader verifies and removes that overlap atomically; returning only the
+    # deduplicated application rows would make the manifest unverifiable.
+    return page, manifest
 
 
 def _nsi_sgr_rows(
