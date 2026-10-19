@@ -1,6 +1,3 @@
-Warning: truncated output (original token count: 95831)
-Total output lines: 1953
-
 ## 2026-10-16 — Historical chapter-29 raw collection completed in isolated staging
 
 - Draft PR [#256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256) remains unchanged at exact head `0320a7d268b33413c48dffc963cde6b0ec051ab1`, tree `f5fc479d8ef6696880dcc28614c8a3e3da35e648`. Exact-head CI [run 38898431622 / job 116964443470](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38898431622/job/116964443470) is `success`.
@@ -543,7 +540,930 @@ Evidence bound to the exact unchanged candidate:
 - root focused absent-input and populated-sentinel controls: **6 passed** each, exit 0;
 - root adjacent smart-search/FTS/semantic controls: **21 passed** in both absent-input orders; with catalogue API and populated sentinels: **44 passed** in both orders, all exit 0;
 - configured/source databases and preview marker stayed absent or byte-identical; no WAL/SHM/default `customs.db`; pinned catalogue SHA-256 unchanged;
-- independent executable A5 `/root/a5_smart_search_190`: **FINAL PASS, no findings**; repeated **6 + 6** focused and **44 + 44** adjacent tests, then verified exact-code ranking, typo timing, special syntax, unavailable-FTS caching and globals r…45831 tokens truncated… `2fee4bb388d1b2db69b2e49ed41d9f4dacea08d9`; exact-head CI run 38920906239 / job 117040259865 remains `success`.
+- independent executable A5 `/root/a5_smart_search_190`: **FINAL PASS, no findings**; repeated **6 + 6** focused and **44 + 44** adjacent tests, then verified exact-code ranking, typo timing, special syntax, unavailable-FTS caching and globals restoration;
+- local safety: `verify` **120 passed**, CLI snapshot **4 passed**, committed snapshot valid;
+- exact-head CI: [run 38216078694](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38216078694), offline-safety job `114701012450`, **success**.
+
+This is executable verification, not full #245 product/legal/source acceptance. A lawful populated synchronized NTM snapshot remains unavailable. A6 `core-s1-6415f443120f-r9-g106` remains prepared but not authorized or sent. No merge, deploy, production write, enforcement/permissions/secrets change, destructive migration, force push or branch deletion occurred. Next safe block is fresh-HEAD execution of `test_tnved_code_card.py` with classification inventory and configured/source/marker absent and sentinel controls plus adjacent API ordering; reproduce a concrete defect before any edit.
+
+## 0aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa. #245 — HS leaf calculator fixture isolated from configured DB
+
+**Checkpoint:** [draft PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256), `agent/product-ntm-regressions-v1` @ `e7f141a145e1475e8d1c51f25c51789a084b4541`, tree `def0f10bc2dc35376dcdff6f453ee91f390f0607`, parent `7462f2959735f7aad51f53047ef6d9ddeefd04a3`.
+
+A collection-order defect was reproduced before editing: the parent adjacent contour returned **3 failed, 30 passed**, and the already-imported `rate_display.SessionLocal` queried a missing `hs_rates` table through configured SQLite, creating a 4096-byte file. The test fixture now binds that captured alias to the same disposable classification inventory used by the calculator/payment fixtures. All 9 original test methods and 23 assertions remain AST-identical; product code and normative data were not changed.
+
+Evidence bound to the exact candidate:
+
+- root focused hostile-absent and populated-sentinel runs: **9 passed** each, exit 0;
+- root adjacent catalogue/measures/calculator forward and reverse runs: **33 passed** each on absent inputs and **33 passed** each on populated sentinels, all exit 0;
+- configured/source/marker stayed absent or byte-identical; no WAL/SHM/default `customs.db`; pinned catalogue hash unchanged;
+- independent executable A5 `/root/a5_hs_leaf_isolation_189`: **FINAL PASS, no findings**; parent defect independently reproduced and candidate invariance repeated;
+- local safety: `verify` **120 passed**, CLI snapshot **4 passed**, committed snapshot valid;
+- exact-head CI: [run 38216078694](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38216078694), offline-safety job `114701012450`, **success**.
+
+This is a bounded fixture-isolation fix only. Lawful populated synchronized NTM data remains unavailable and full #245 remains **NOT PASS**. A6 `core-s1-6415f443120f-r9-g106` remains prepared but not authorized or sent. No merge, deploy, production write, enforcement/permissions/secrets change, destructive migration, force push or branch deletion occurred. Next safe block is fresh-HEAD execution of `test_smart_tnved_search.py` with engine/cache ordering and external DB/marker invariance controls.
+
+## 0aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa. #245 — TN VED catalog API изолирован от configured/source DB и preview marker
+
+**Новый checkpoint:** [draft PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256), `agent/product-ntm-regressions-v1` @ `5bb7dbf69e61c0999e3b0971fc79f86198296560`, tree `bb9120b69a980fdc0d4e401e0f67f89fb4d60e29`, parent `42ac7665990111d45d9038be807f8ba61c354e11`. Локальный author commit `277cd9d1a85b8c0e690e9eb5e4d7747c41c691b5` имеет тот же exact tree.
+
+Воспроизведён fixture defect в `test_tnved_catalog_api.py`: все **23 tests** проходили, но отсутствующая configured SQLite создавалась размером 1 036 288 bytes; существующая 8192-byte sentinel DB разрасталась до 1 040 384 bytes и меняла SHA, а внешний preview revision marker перезаписывался. Module-autouse fixture теперь создаёт disposable classification inventory через существующий bootstrap, направляет test/application/normative-store/catalog/payment/rate-display DB aliases в него и выносит preview revision в disposable marker. Configured/source/repository DB, исходный marker и SQLite sidecars остаются неизменными. Все 23 test methods и исходные assertions AST-identical; production code, нормативные данные, source claims, flags, skips/xfails и правовая интерпретация не менялись.
+
+Проверки:
+
+- root: focused **23 passed** на absent и populated sentinel inputs; configured/source DB и внешний marker не созданы либо byte-identical;
+- вместе с TN VED measures API, regulatory mass-seed safety, regulatory-source completeness и FCS preliminary sync в прямом и обратном порядке — по **49 passed + 3 subtests**, все exit 0, DB/marker/WAL/SHM drift отсутствует;
+- root local agent-safety: **120 + 4 passed**, committed snapshot valid, exit 0;
+- независимый A5 `/root/a5_tnved_catalog_api_185`: **FINAL PASS без findings**; parent DB/marker mutation независимо воспроизведена, candidate aliases, cleanup, focused/adjacent invariants и AST parity подтверждены;
+- exact-head CI: [run 38202590035](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38202590035), offline-safety job `114659007873`, attempt 1, **success**.
+
+Это test-isolation evidence, не …48596 tokens truncated…withheld totals. Fuzzy matching и новая правовая интерпретация не добавлены. Scope-поля передаются через Calculator, Payment Quote, Compliance, invoice, Copilot single/batch и VED Intel.
+
+Проверки exact tree:
+- author disposable SQLite: `130 passed, 358 subtests`, exit 0;
+- точная команда: `python -m pytest tests/test_special_duties.py tests/test_payment_engine.py tests/test_payment_quote.py tests/test_payment_source_admission.py tests/test_automatic_duty_operand_validation.py tests/test_antidumping_fixed_unit_fail_closed.py tests/test_payment_fx_provenance_fail_closed.py tests/test_invoice_and_compare.py tests/test_assistant_copilot.py tests/test_orchestrator_batch_parallel.py tests/test_ved_intel_api.py -q --tb=short`;
+- независимый A5 `/root/a5_special_scope`: **PASS**, `65 passed +21 subtests`, exit 0; отдельная adversarial matrix `8/8 PASS`, exit 0;
+- exact-head CI: **PASS**, [run 37781116016 / job 113324157002](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/37781116016/job/113324157002), `offline-safety`;
+- `git diff --check` и compileall: PASS.
+
+Возможности среды подтверждены: полный clone main `e526dfbdb5a31b01bf6f743da0288b88f916de0c`, Git/Python/pytest выполняются, draft-ветка опубликована законно через connector под lease generation 112. Этот checkpoint сохранён в state-ветке и будет перечитан после CAS. Protected merge, production, secrets/permissions и A6 не выполнялись. A6 request `core-s1-6415f443120f-r9-g106` не менялся и не отправлялся.
+
+Остаётся: canonical fixture/broad-suite разбор, затем продолжение #245. Полный #244, юридическая применимость и источниковая полнота **не PASS**.
+
+## 0a. Продолжение продуктового цикла — persisted duty fallback
+
+**Текущий checkpoint заменяет старый HEAD #255 ниже:** [draft PR #255](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/255), `agent/core-payment-regressions-v1` @ `a356f5302a2bb4388504c213b8c767ba1de0a786`, tree `c653cb79db95f82a0b943c1ec445c79038d6a1a8`, base #244 `14e0ee8f034d94ffc5831d87e076f4d693a5a524`.
+
+Исправлено: fallback из persisted `HsRate.duty_rate` теперь сохраняет чистую специфическую часть, MAX и ADD; допускает фактические формы источника `EUR за 1 кг`/`EUR/кг` и русские эквиваленты; строка с валютой без знаменателя, отсутствующие FX/вес и переполнение завершаются fail-closed. Единицы и FX не выдумываются.
+
+Проверки на byte-identical exact tree:
+- author: `116 passed, 355 subtests`, exit 0; команда — семь payment/backend файлов на отдельной disposable SQLite;
+- lineage scan: 1171/1171 persisted EUR/kg строк из `eec_ett_normative_bundle.json` приняты, 0 отклонено, exit 0;
+- независимый A5 `/root/a5_payment_fallback`: **PASS** для опубликованного exact HEAD через совпадающий tree и `git diff --exit-code`; 288 passed +349 subtests, edge harness PASS;
+- GitHub exact-head CI: **PASS**, [run 37774959207 / job 113303383038](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/37774959207/job/113303383038), `offline-safety` на точном `a356f5302a2bb4388504c213b8c767ba1de0a786`. Это инфраструктурная проверка, не полный product CI.
+- Контрольное воспроизведение опубликованного SHA в рабочем чате: `116 passed, 355 subtests`, exit 0 за 4.71s на отдельной новой SQLite; повторены семь payment-модулей через `offline_pytest.py`, JUnit `replay-a356.xml`. Это проверка исполнителя, не новый независимый A5. Worktree после запуска clean.
+
+Доступ к коду: полная копия main `e526dfbdb5a31b01bf6f743da0288b88f916de0c` и candidate worktree доступны. Git/Python/pytest выполняются. Обычная публикация draft-ветки выполнена законно через GitHub connector под lease generation 110; protected merge/production/A6 не выполнялись. A6 request `core-s1-6415f443120f-r9-g106` не отправлялся и не пересоздавался.
+
+Остаётся: продолжить manufacturer/product applicability и fixture/broad-suite разбор; exact-head CI этого исправления подтверждён. Полный #244 и юридическая/источниковая полнота **не PASS**.
+
+### Плановый исполнитель — фактически проверен, 2026-10-08
+
+После завершённого входа в интерфейсе прочитан фактический результат асинхронного пробного запуска задачи «Tariff — разработка» `6ac775d0feac8191abc1e60865ce1461`. Результат сверён с live GitHub: новый commit `a356f5302a2bb4388504c213b8c767ba1de0a786`, checkpoint `7926a5cba641dc74f049c73f570e24c04f456711`, release generation110. API фиксирует `last_run_time=2026-10-08T12:16:33.532805Z`. Исполнитель реально располагал полной копией, Git/Python, выполнил продуктовый тест и опубликовал исправление; ранее неизвестный исход trial установлен. Публикация, локальный повтор тестов и exact-head CI проверены отдельно.
+
+**Существующее часовое расписание возобновлено 12:21:34Z:** `is_enabled=true`, `RRULE:FREQ=HOURLY;INTERVAL=1`, прежняя cadence с DTSTART 10:52Z, timezone Europe/Moscow. Новых расписаний нет. Старый «Tariff — фоновая разработка» и остальные дублирующие developer-задачи выключены; включённый «контроль остановок» остаётся read-only. Prompt обновлён: fallback уже завершён, следующая работа — ограничения производителя/товара и далее broad-suite/#245. Сохраняются единый live lease, запрет защищённых действий/A6 и явная остановка при недоступности полноценного исполнения.
+
+Проверен **один асинхронный запуск того же расписания через run_now**, не обещана безусловная успешность всех будущих часовых запусков. API `next_run_time=null` не интерпретируется как доказанный будущий старт. Итог запуска виден в разговоре самой задачи; доставка в прежний управляющий чат не подтверждена. Для фиксации проверки использован штатный lease generation111; после checkpoint он освобождается.
+
+## 0. Реальный продуктовый цикл — 2026-10-08, рабочий исполнитель
+
+**Результат сохранён:** [draft PR #255](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/255), ветка `agent/core-payment-regressions-v1`, точный HEAD `7ce87f4eb3550f10a285dd04e38e9c6b60508e79`, tree `bb910341be886b587cff8eabc5cba478e5552bea`. Base — неизменный #244 `14e0ee8f034d94ffc5831d87e076f4d693a5a524`. Один общий исправляющий PR, три файла; merge не выполнен. Контроллер допускает рабочие ветки `agent/*`; исходные #244/#245 сохранены.
+
+Исправлено и покрыто регрессиями:
+- Некорректные/перевёрнутые даты специальной пошлины больше не превращают её в `not_applicable`: требуется ручная проверка, сумма строки/итог отсутствуют.
+- Чисто процентная спецпошлина не требует курс валюты для нулевой фиксированной части; `fx_rate=null`, frontend тип приведён к `number | null`.
+- Отрицательные, неконечные и иные недопустимые ставки специальных пошлин не попадают в предварительную арифметику.
+
+### Среда и воспроизводимость
+
+Полный Git checkout, 1590 tracked paths в исходном #244, история не shallow, missing objects не обнаружены. Отдельные полные worktrees для main, state, #244, его базы `08e030a6053ac9638957119373797e0fbf2b10c2` и #245. Python 3.12.14 / Git 2.51.1 / Node 24.19.0. Изолированный venv: `pip install -r customs-clear/backend/requirements.txt pytest-subtests pytest-asyncio`; `pip check` PASS. Frontend: штатный `npm ci --no-audit --no-fund` по lockfile каждой ветки. `PATH` должен начинаться с venv/bin — один тест запускает `python3` в subprocess.
+
+Команды запускаются из `customs-clear/backend`, `PYTHONPATH=.`; **каждый прогон использует отдельный временный файл SQLite через абсолютный `DATABASE_URL=sqlite:////.../run.sqlite`**. Production DB не использовалась. Штатный `init_db()` выполнял Alembic/seed только на этой временной БД. Tests могут менять tracked `data/tnved_preview_cache_revision.txt`; побочный timestamp восстановлен, в PR не включён.
+
+| Проверка | Фактический результат |
+|---|---|
+| Исходный #244: payment_engine, payment_quote, source_admission, automatic operands, antidumping fixed unit, FX provenance, special duties, tariff preferences, duty parser, normalization, invoice/compare, unavailable exports | 142 passed +348 subtests; 12 failures — отсутствует seed стран |
+| Те же 18 тестов `test_tariff_preferences.py` после штатного `python -m scripts.seed_tariff_preferences` в тестовой БД | 18 passed; все 12 исходных failures воспроизведены и на базе #244. Seed не является доказательством актуальности правовых данных |
+| #244 источники: ingestion/payment coverage/import duty/VAT/excise/PP908/regulatory completeness/source sync/sync diagnostics/data refresh | После исправления окружения: 303 passed +76 subtests, 4 failures. Не хватает полной TNVED fixture для PP908 coverage; 3 проверки отсутствующего scheduled-data-refresh.yml. Эти failures воспроизведены на базе |
+| Полный #244: `python offline_pytest.py tests -q --tb=short --junitxml=full.xml` | 1402 passed, 181 failed, 13 errors, 2 skipped, +478 subtests; **NOT PASS** |
+| Полная база #244, та же среда и отдельная новая БД | 1169 passed, 158 failed, 166 errors, 2 skipped, +73 subtests; **NOT PASS** |
+| Сравнение full suite | 191 общий failing/error test ID. 3 дополнительных у #244: calculator_compare/recycling non_vehicle ждут старый `OK`; quantity_affects_excise ждёт расчёт unitless fixed excise. Требуется обновить контрактные проверки с сохранением строгих утверждений, а не ослаблять их. Общие сбои включают fixtures/shared DB/data dependencies; это не 191 доказанный дефект кандидата |
+| Новые регрессии до fix | 7 failures, 12 passed, 2 subtests passed |
+| Исправленный **опубликованный SHA #255**: 7 платёжных модулей | 114 passed +352 subtests, exit 0 |
+| Независимый native A5 `/root/a5_core244_review`, опубликованный SHA #255 | 65 passed +343 subtests; scoped PASS. На идентичном backend дополнительно 23 boundary assertions: даты включительно/истёкшие/будущие, страны, missing bounds, FX и invalid operands |
+| HTTP smoke исправления | uvicorn на loopback, lifespan off, одноразовые локальные auth values; реальные curl POST compute и payments/quote: 2/2 PASS, unknown code удерживает итог. Первоначальный код 8509400000 на минимальной БД возвращал CLARIFICATION_NEEDED — корректная проверка leaf, не дефект расчёта |
+| Frontend #244 и исправление #255 | TypeScript/build PASS. У исходного #244 нет Vitest набора; frontend unit PASS для него не заявляется |
+| #245 `e39e19787bd913baeb6f85577a13e1116458e633`: все 13 изменённых backend test-модулей | 268 passed +44 subtests |
+| #245 frontend | 18 tests passed; TypeScript/build PASS |
+| Полный #245 | 1537 passed, 181 failed, 13 errors, 2 skipped, +120 subtests; **NOT PASS** |
+
+Точная команда повторной проверки исправления #255:
+```sh
+python -m pytest tests/test_special_duties.py tests/test_payment_engine.py tests/test_payment_quote.py tests/test_payment_source_admission.py tests/test_automatic_duty_operand_validation.py tests/test_antidumping_fixed_unit_fail_closed.py tests/test_payment_fx_provenance_fail_closed.py -q --tb=short --junitxml=published.xml
+```
+
+Дополнительные точные команды завершённых прогонов (те же disposable SQLite / venv / PYTHONPATH):
+```sh
+# #244 sources, exit 1: 303 passed +76 subtests, 4 failures
+python -m pytest tests/test_data_refresh.py tests/test_excise_ingestion.py tests/test_import_duty_ingestion.py tests/test_official_payment_coverage_audit.py tests/test_payment_data_coverage.py tests/test_payment_source_ingestion.py tests/test_pp908_vat_coverage.py tests/test_regulatory_source_completeness.py tests/test_source_sync_index_currentness.py tests/test_sync_status_diagnostics.py tests/test_vat_ingestion.py -q --tb=short
+# #245 focused backend, exit 0: 268 passed +44 subtests
+python -m pytest tests/test_assistant_copilot.py tests/test_assistant_payment_review.py tests/test_compliance_permit_parser.py tests/test_embedding_service_safety.py tests/test_grounded_assistant.py tests/test_non_tariff_data_freshness.py tests/test_normative_requirements_block.py tests/test_ntm_child_product_markers.py tests/test_ntm_sgr_bad_token_boundary.py tests/test_ntm_trigger_food_contact.py tests/test_regulatory_ai_classifier.py tests/test_regulatory_keyword_token_boundaries.py tests/test_smart_tnved_search.py -q --tb=short
+# Из customs-clear/frontend каждой ветки; exit 0
+npm ci --no-audit --no-fund
+npm run typecheck
+npm run build
+# Только #245, где существует штатный Vitest script; exit 0, 18 passed
+npm test
+```
+
+Полный диагностический runner `offline_pytest.py` не менял тесты: удалял из окружения ANTHROPIC_API_KEY/OPENAI_API_KEY/GEMINI_API_KEY/GOOGLE_API_KEY, ставил Python audit hook на `socket.connect` (разрешал только localhost/127.0.0.1/::1, иначе RuntimeError OFFLINE_TEST_GUARD) и вызывал `pytest.main(sys.argv[1:])`. Ограничение времени 240 секунд; все три full-прогона завершились самостоятельно за 73–104 секунды. Это локальная диагностика; сетевые/живые провайдерные проверки не подтверждены.
+
+CI #255: [offline-safety PASS, run 37771953943](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/37771953943), job 113293439909. Это инфраструктурный CI и **не** замена продуктовым тестам выше. Full product CI на GitHub пока отсутствует.
+
+### Незакрытые выводы / следующий конкретный шаг
+
+1. Исправить подтверждённый **унаследованный** legacy fallback: `_parse_duty_rate` отдаёт `specific_eur`/`rule`, а `_find_duty_rule_for_hs` читает `specific_amount`/currency/uom. Для `2 евро/кг` возвращается 0; MAX/ADD теряют специфическую часть. Нужны persisted-row регрессии с подтверждёнными FX/единицами; не выводить единицы из предположений.
+2. Производитель/описание товара в строках спецмер не сопоставляются со входом. Пока нет подтверждения совпадения, нельзя выдавать автоматическую применимость. Сначала воспроизводитель и существующий источник/контракт, без новой юридической интерпретации.
+3. Разобрать isolated fixtures/full-suite failures и три устаревших контрактных теста; сохранить исходные выводы, не скрывать failures через skip/deselect.
+4. Проверки #245 подтверждают технические ограничения AI/UI и тестовый набор, **не** полноту нетарифки или юридическую применимость.
+5. Существующий A6 request `core-s1-6415f443120f-r9-g106` не пересоздан, не отправлен и не повторён. Его прежние результаты не переносятся на #255.
+
+Удалённый Git transport не имеет write credentials (`could not read Username`), это **не security refusal**. Публикация выполнена существующим GitHub connector: 3 blobs -> tree с проверкой полного совпадения -> commit -> agent branch -> draft PR. Ни ключей, ни токенов у владельца не запрашивалось.
+
+Состояние сохранялось под штатно приобретённым CAS lease generation 108, holder `/root/tariff_product_cycle_20261008`; перед продолжением перечитать live lease. Основной чат владельца не менялся; канал доставки туда не установлен.
+
+### Проверка расписания — история до подтверждённого результата выше
+
+На 2026-10-08T11:54Z обнаружено существующее часовое расписание разработчика `6ac775d0feac8191abc1e60865ce1461` («Tariff — разработка»), **disabled**, last_run 10:55:48Z. Точный результат того запуска через доступное чтение не получен. Существующий включённый «Tariff — контроль остановок» `6ac775fd994c8191aea0165bc66b38b1` — read-only наблюдатель, не исполнитель и не координатор; он не заменяет разработку. Дублирующие задачи не созданы.
+
+**Фактическая проверка:** после release generation108 в 11:55:59Z существующая задача была возобновлена с обязательным capability gate; единственный `automations.run_now` принят в 11:56Z. К 12:00Z новый результат не получен: `last_run_time` остался 10:55:48Z, `next_run_time=null`, нового checkpoint/lease исполнителя нет. Это **UNKNOWN / не подтверждённый запуск**, не доказанный CAPABILITY_BLOCKED и не успешная автономная разработка. API Automations не предоставляет чтение журнала запуска; Personal Context не нашёл этот разговор. Прямое открытие возвращённого conversation_id в ChatGPT показало sign-in wall. Требуется безопасный вход для чтения результата, без передачи паролей/токенов в чат.
+
+В 12:00:12Z **повторения явно приостановлены** (`is_enabled=false`) до проверки результата; пользователю причина сообщена. Это не доказательство отмены уже принятого асинхронного запуска. Задача контроля остановок не менялась; новых задач/мониторов не создано. Дальнейшее включение допускается только после подтверждения полноценной среды исполнения и фактического тестового checkpoint. Обычная интерактивная разработка в текущей среде работоспособна и этой проверкой не заблокирована.
+
+Продуктовый checkpoint сохранён commit `3a118f2bc37862673858f6285f6fb600ce861893`, затем дополнен записью о расписании; release108 commit `76fb75fed24c86cbd962ed99e6c3e01d009a59c9`, [state safety PASS run37773352840](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/37773352840). Для сохранения результата проверки расписания штатно получен lease generation109, который освобождается сразу после записи. Перед продолжением читать live lease.
+
+## 1. Восстановление инфраструктуры — PR #254
+
+- [PR #254](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/254) — `fix(agents): verified recovery and preflight`; **MERGED 2026-10-08T10:45:47Z**; рабочая ветка `review/tariff-recovery-20261008`.
+- Проверенный final candidate HEAD: `957702311efd8d29c0ff18c58bcd3b523b7fcd77`, base `main` `c29015e9c25232e07d06bc3869abc45db3b066a2`. Текущий live `main`: `e526dfbdb5a31b01bf6f743da0288b88f916de0c` — подтверждённый merge #254. Старые записи draft/ожидания разрешения ниже относятся только к истории.
+- 14 инфраструктурных файлов: восстановление preflight, A6 structured-safety/receipts, recovery-status, CLI, required verifier, CI, runbook и тесты. В `test_audit_bridge.py` в двух disposable Git-fixtures отключены `maintenance.auto` и `gc.auto` — устранён race `tearDown` на Git 2.55; строгая очистка не подавлена.
+- Независимый **whole-PR** Codex review на прежнем SHA `6031c4a8...` подтвердил P2: default `publication_policy=unknown` скрывал существующий A6 owner gate в `task_owner_action_required`. См. [finding](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/254#discussion_r4217405436).
+- На текущем SHA `957702311e...` `recovery_status` теперь учитывает `observed["owner_action_required"]`; отдельный регрессионный тест внесён в `test_operations.py`. Новый [независимый Codex re-review](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/254#issuecomment-6057912061) завершён **без major issues** именно на `957702311e...`. Исторический P2 review thread закрыт после независимой воспроизводимости и проверки исправления. Не представлять это как формальное GitHub `APPROVED` от человека: Codex оставил advisory review.
+- [Exact-head GitHub CI PASS, run 37763266913](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/37763266913), job `113264825797`: `offline-safety`, проверка тестов и committed snapshot PASS. Независимый локальный replay A0 восстановил Git blobs текущих `operations.py`, `test_operations.py`, `test_audit_bridge.py` и запустил required verifier **225/225 PASS** и полный orchestration **225/225 PASS** с socket guard, **0 network attempts**; Python 3.13 / Git 2.47 локально, Git 2.55 на Actions. Это не product-suite и не запуск A6.
+- Merge #254 уже выполнен владельцем; не повторять разработку, merge или запрос разрешения. В этой сессии защищённых действий не было.
+
+## 2. Product candidates — НЕ приняты окончательно
+
+| Приоритет | PR, candidate SHA | Зафиксированные доказательства и открытые ограничения |
+|---|---|---|
+| Ставки, преференции, специальные пошлины, расчёт и источники | [#244](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/244), `14e0ee8f034d94ffc5831d87e076f4d693a5a524` | draft; base `integration/customs-core-v1` `08e030a...`, 34 файла. Ранее заявлен A5 PASS; расчётный semantic harness 47/47. Exact-head [run 36853205641](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/36853205641) PASS, но это **Tariff agent safety**, не полный product/backend CI. Полная backend регрессия, обязательные официальные данные и юридическая применимость не доказаны; A6 LIVE PASS отсутствует. |
+| NTM, документы, код ТН ВЭД, поиск, AI | [#245](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/245), `e39e19787bd913baeb6f85577a13e1116458e633` | draft; base `integration/compliance-ai-v1` `08e030a...`, 43 файла. Ранее заявлен A5 PASS после child-negation fix; focused backend 268 + 44 subtests, frontend 18/18 и build (см. тело PR). Exact-head [run 36853210034](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/36853210034) PASS, но workflow тоже только **Tariff agent safety**. Полная broad backend и end-to-end нормативная/юридическая приёмка не подтверждены; A6 LIVE PASS отсутствует. |
+
+До работы над #244/#245: сверить HEAD/base/состав файлов/required checks, внимательно прочитать их текущие PR body и source-task lineage; не наследовать review/CI после изменения SHA. Проверить реальные сценарии, API/DB схемы, даты действия и версии нормативных источников. Эвристики и AI-подсказки — advisory, не юридический факт.
+
+## 3. A6 — отдельный запрещённый пока внешний шаг
+
+- Авторитетный файл: `.ai/orchestration/A6_LIVE_STATUS.json` **только** на `agent/orchestration-state`.
+- Уже подготовлен, **не отправлен/не израсходован** immutable request `core-s1-6415f443120f-r9-g106`; packet SHA256 `e2a0d35aaae76d4a8fa0c74d4fe7d83d609371d75b7ef7eced1484890d1f22b8`; canonical serialization SHA256 `349339f5393176b83d02fea8965783b6237b0259110d835fff5bd55ec1886f89`; 8 tracked paths, 392515 bytes, 0 official URLs; lease generation **106** binds its request identity. Не пересоздавать и не делать retry.
+- Для внешней передачи приватного кода Anthropic/A6 требуется **отдельное точное согласие владельца** на этот request/packet через предусмотренный trusted bridge. Разрешение merge PR #254 **не** разрешает A6. Даже live ответ A6 не заменяет проверку A0.
+
+## 4. Следующие технические шаги
+
+1. Продолжить платёжный блок от live draft [#255](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/255) `7c12f21787b1d557630d8b0737c769b326ab112d`: legacy specific/combined fallback и fail-closed manufacturer/product scope уже исправлены; exact-head [CI 37921716308](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/37921716308) успешен. Следующая задача — source-by-source refresh шести stale payment bundles из retained primary-source snapshots, immutable ETT binding и оставшаяся broad-fixture/source-completeness evidence. Не фабриковать snapshots, не запускать/не пересобирать A6.
+2. Main уже обновлён merge #254. Перед следующей удалённой записью приобрести coordinator lease через **current trusted main** `tools/tariff_agents/lease.py` и GitHub CAS; перечитать holder/token/TTL. На реальных непроизводственных сценариях проверять: recovery state/board, создание -> allocation -> implementation -> independent QA -> CI, зависание и освобождение, корректную диагностику и доказанную видимость уведомления. Не имитировать child session IDs, A5/A6, delivery receipts. Нет доступа к native Work executor — пометить unavailable.
+3. #244: воспроизвести полный backend/CI по ставкам, FX, НДС, акцизам, спецпошлинам и преференциям с реальными source versions/effective dates, unknown/fail-closed, сформировать и протестировать payment quote end-to-end без production writes; независимый A5 текущего SHA.
+4. #245: проверка применимости ТР, СС/ДС/СГР, лицензий, нотификаций, маркировки и исключений по кодам и свойствам, source/provenance и confidence; самостоятельная полнота нормативного набора и full backend+frontend; independent A5. Не включать SGR enforcement без отдельного решения.
+5. Далее A3: реестр **официальных** документов, версии, даты вступления, полнота и обновления; A4: классификация/семантика/AI grounded-only; интеграция пользовательского сценария описание -> код -> ставки/платежи -> документы/доказательства.
+6. По каждому готовому блоку: commit-bound A5 -> обязательные CI -> A6 **только когда разрешено и требуется** -> owner decision. Любой новый HEAD обнуляет прежнее «готово» для этого exact SHA.
+
+## 5. Сроки / риски
+
+Предыдущие ориентиры: **9 октября** — платёжный кандидат; **23 октября** — NTM; **30 октября** — официальные источники; **10 ноября** — RC1; **17 ноября** — целевая v1.0. На 8 октября платёжный draft уже существует, но **его окончательная приёмка к 9 октября под риском**: нет полного подтверждённого product backend/источников/A6-gate. Отсутствует подтверждение для обещания v1.0 по нормативной полноте. Перепланировать только по новой фактической evidence и явно отмечать gate.
+
+## 6. Authority, безопасность, продолжение из другого чата
+
+- A0 — один координатор; не порождать второй A0, не дублировать executor/automations. Рабочее состояние в GitHub, не в чате. Подтверждён один реальный асинхронный цикл разработчика; существующее часовое расписание возобновлено. Включённый read-only контроль остановок не является вторым координатором. См. точные доказательства и ограничения проверки расписания выше.
+- **Перед любы���� remote write:** `main` `AGENTS.md`, `.ai/orchestration/CONTRACT.md`; state `.ai/orchestration/RUNBOOK.md`, `.ai/TASK_PROTOCOL.md`, `.ai/TASK_BOARD.json`, `.ai/COORDINATOR_LEASE.json`, `.ai/orchestration/A6_LIVE_STATUS.json`. Запрашивать lease актуальным helper; CAS на текущем blob SHA; reread holder/token; каждый существенный write проверять. Не обходить платформенный security refusal. Отдельно в журнале: предыдущая блокировка записи lease была устранена **только для штатного CAS acquisition generation 107 2026-10-08**; это не доказывает общий доступ без ограничений. При потере lease прекратить write.
+- Во время перепроверки внешний сеанс внёс 2 коммита в PR #254 с исправлением P2; A0 здесь **не отправлял дублирующий патч**. При новом внешнем движении branch немедленно reconcile HEAD и избежать пересекающихся записей. Все дополнительные findings проверять самостоятельно, не признавать review автоматически.
+- Никогда без Ivan: merge защищённых веток, production deploy/DB/migrations, enforcement flags, изменение credentials/permissions/secrets, удаление/force push, A6 export. Никакой доставки в основной пользовательский чат не подтверждено.
+- Статус блоков честно разделять: **сделано / сейчас / осталось / что нужно от владельца**. Прогресс доказан конкретным SHA, CI job, A5 и diff, не «агент запущен».
+## 2026-10-14 — Rate-display database isolation completed on draft PR #259
+
+- Cycle 238 published an initial isolated `test_rate_display.py` fixture but lacked executable author/A5 evidence. Fresh independent A5 `/root/a5_cycle239` rejected that exact head because table-create/seed failures leaked the engine and a cleanup failure could mask the primary test error.
+- Draft [PR #259](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/259) now publishes exact head `17636c0a78936d6d06cb19b97cc684b6c39ffdc9`, tree `7c182ff9bcac2ba453be16b4b39e3c3877e50296`; local author commit `f3125852e0fa9b68108b70fe3ef39841fa71774d` has the exact same tree. Only `customs-clear/backend/tests/test_rate_display.py` changed; its three original test functions are AST-identical.
+- The fixture now guarantees cleanup during table creation, seed, body and teardown failures, attempts every cleanup step, restores both `SessionLocal` bindings even when patch undo fails, and preserves the original primary exception while annotating cleanup failures.
+- Author/A0: focused **3 passed**, adjacent rate/payment/normative suite **56 passed** in both orders, all exit 0. Fresh A5 `/root/a5_cycle239b`: **PASS, no findings**; all setup/body/undo/close/dispose fault injections, AST parity and no-ambient-DB checks passed.
+- Exact-head CI [run 38514368199 / job 115689724755](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38514368199/job/115689724755): **success** (`offline-safety`).
+- A diagnostic broad command excluding only the lawful-snapshot NTM test and three absent-workflow assertions advanced to **1,884 passed, 11 skipped, 3 deselected + 133 subtests**. It then found the next independent ambient-DB defect at teardown after `tests/test_vision_integration.py::test_xlsx_conflict_text_vs_photo_prioritizes_visual`; the DB/WAL/SHM artifacts were moved recoverably to `/tmp`.
+- NTM-3/full-sync remains blocked by the unavailable lawful populated synchronized snapshot; full #245 acceptance and legal/source completeness remain NOT PASS. A6 `core-s1-6415f443120f-r9-g106` remains unchanged and undispatched. No merge, deploy, production write, enforcement/flag, secret/permission or destructive action was performed.
+
+## 2026-10-14 — NTM v2 advisory database isolation completed on draft PR #259
+
+- Fresh broad instrumentation showed that the prior teardown observation after `test_vision_integration.py` was not the writer. The first exact writer was `tests/test_ntm_v2_advisory_requirements.py::test_advisory_present_for_matrix_cases[8517120000-…]` after 309 preceding assertions passed.
+- Root cause was import-order dependent: `sanctions_risk_block` copies `SessionLocal` at module import. The advisory fixture patched `app.db.SessionLocal` but not that already imported alias, so the test opened ambient `customs.db`; a standalone run hid the defect because the module imported after the in-memory patch.
+- Draft [PR #259](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/259) now publishes exact head `363fc1b14e1ee4e98092360be8c2772173e21b9b`, tree `9a3d58959114dc261812581661b43d594f5cee80`; local author commit `71cba6052b0d03c8e1e082b11676509a67fa948a` has the exact same tree. Only `customs-clear/backend/tests/test_ntm_v2_advisory_requirements.py` changed; product and normative data did not.
+- The fixture binds `sanctions_risk_block.SessionLocal` to the same in-memory factory, asserts the alias identity, and disposes the engine in `finally`.
+- Author/A0: focused **11 passed**, ordered predecessor/advisory tranche **319 passed**, all exit 0; `customs.db`, WAL and SHM were absent before and after. Fresh independent A5 `/root/a5_240`: **PASS, no findings**; focused **11 passed** and preimport-order control **23 passed**, exit 0.
+- Exact-head CI [run 38520191329 / job 115707884776](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38520191329/job/115707884776): **success** (`offline-safety`).
+- Next: rerun the broader backend diagnostic on this exact head and separate the three earlier dependency-sensitive failures from the next actual ambient writer. NTM full-sync remains blocked without a lawful populated synchronized snapshot; full #245 and legal/source completeness remain NOT PASS. A6 is unchanged and undispatched; no protected action was performed.
+## 2026-10-14 — NTM v2 measures-enforcement database isolation completed on draft PR #259
+
+- The guarded broad run on exact PR #259 parent `363fc1b14e1ee4e98092360be8c2772173e21b9b` reached `tests/test_ntm_v2_measures_enforcement.py::test_enforcement_adds_vs` at 55% and found a 4,096-byte ambient `customs.db` plus WAL/SHM. Fresh A5 confirmed the parent order could pass **22 tests** yet still create the database: `sanctions_risk_block.SessionLocal` retained the default copied alias.
+- Draft [PR #259](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/259) now publishes exact head `0a234073ca8d46f48a0889df6e9ee0721c77c431`, tree `e07d4d733c7a794366d2dedd25f9aa6db87f403c`; local author commit `4c2e79d67c3ef065759d606746921a8cac2069c2` has the exact same tree. Only `customs-clear/backend/tests/test_ntm_v2_measures_enforcement.py` changed; product code and normative data did not.
+- The fixture now rebinds the pre-imported sanctions alias to the in-memory sessionmaker, disposes the engine in `finally`, and includes an explicit alias regression assertion. Author: focused **12 passed** and advisory→enforcement **23 passed**, exit 0. Independent A5 `/root/a5_241`: **PASS, no findings**; focused **12 passed**, both module orders **23 passed** each, parent reproduction and absent DB/WAL/SHM verified.
+- Exact-head CI [run 38526371444 / job 115727571845](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38526371444/job/115727571845): **success** (`offline-safety`).
+- The repaired guarded broad run advanced past measures enforcement and reproduced the next distinct leak at `tests/test_ntm_v2_official_sgr_advisory.py::test_official_advisory_flag_off_no_official_source`; the ambient files were moved recoverably to `/tmp`. This remains the next bounded repair.
+- NTM-3/full-sync remains blocked by the unavailable lawful populated synchronized snapshot. Full #245 acceptance and legal/source completeness remain NOT PASS. A6 `core-s1-6415f443120f-r9-g106` is unchanged and undispatched. No merge, deploy, production write, enforcement/flag, secret/permission or destructive action was performed.
+
+## 2026-10-14 — Official SGR advisory database isolation completed on draft PR #259
+
+- Exact parent `0a234073ca8d46f48a0889df6e9ee0721c77c431` passed the two adjacent modules (**24 passed**) but created a 4,096-byte ambient `customs.db`; the copied `sanctions_risk_block.SessionLocal` alias was not rebound by the in-memory fixture.
+- Draft [PR #259](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/259) now publishes exact head `09b883d78ad3e269587e35c1d95dfef7f4cd6c7c`, tree `f328588388cf48416af9e5cbd5b056ff304e3ee8`; local author commit `b5a9e730532cd192211333f75f154490ece85291` has the exact same tree. Only `customs-clear/backend/tests/test_ntm_v2_official_sgr_advisory.py` changed; product code and normative data did not.
+- The fixture now binds the pre-imported sanctions alias to the in-memory sessionmaker, asserts that identity and disposes its engine in `finally`. Author: focused **14 passed** and both adjacent module orders **25 passed** each, all exit 0, with no DB/WAL/SHM.
+- Fresh independent A5 `/root/a5_242`: **PASS, no findings**; exact tree, one-file scope, diff check, focused **14 passed**, both orders **25 passed** and absent DB/WAL/SHM verified.
+- Exact-head CI [run 38532176582 / job 115746378297](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38532176582/job/115746378297): **success** (`offline-safety`).
+- The guarded broad run advanced to 59% and reproduced the next independent leak at `tests/test_ntm_v2_official_sgr_import.py::test_official_not_in_production_broker`; ambient DB/WAL/SHM were moved recoverably to `/tmp`. This is the next bounded repair.
+- NTM full-sync remains blocked without a lawful populated synchronized snapshot; full #245 acceptance and legal/source completeness remain NOT PASS. A6 `core-s1-6415f443120f-r9-g106` is unchanged and undispatched. No protected action was performed.
+
+## 2026-10-14 — Official SGR import database isolation completed on draft PR #259
+
+- Exact parent `09b883d78ad3e269587e35c1d95dfef7f4cd6c7c` passed the advisory→import order (**38 passed**) but created a 4,096-byte ambient `customs.db`; the import fixture did not rebind the copied `sanctions_risk_block.SessionLocal` alias.
+- Draft [PR #259](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/259) now publishes exact head `29ea26fda41e241da495435bba03c74a1dd57c80`, tree `fa00d093ef709a06113f65bde84691970c436b52`; local author commit `1cf4bb5a6eb5631db685df57309a2ba895f2ab35` has the exact same tree. Only `customs-clear/backend/tests/test_ntm_v2_official_sgr_import.py` changed.
+- The fixture now binds the pre-imported sanctions alias to the in-memory sessionmaker, asserts alias identity and disposes its engine in `finally`. Author: focused **25 passed** and both adjacent module orders **39 passed** each, all exit 0, with no DB/WAL/SHM.
+- Fresh independent A5 `/root/a5_243`: **PASS, no findings**; exact tree, one-file scope, diff check, alias/teardown review, focused **25 passed**, both orders **39 passed** and absent DB/WAL/SHM verified.
+- Exact-head CI [run 38538222812 / job 115766255270](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38538222812/job/115766255270): **success** (`offline-safety`).
+- The guarded broad run advanced to 62% and reproduced the next independent leak at `tests/test_ntm_v2_rules_enforcement.py::test_enforcement_off_unchanged_baseline`; ambient DB/WAL/SHM were moved recoverably to `/tmp`. This is the next bounded repair.
+- NTM full-sync remains blocked without a lawful populated synchronized snapshot; full #245 acceptance and legal/source completeness remain NOT PASS. A6 `core-s1-6415f443120f-r9-g106` is unchanged and undispatched. No protected action was performed.
+
+## 2026-10-14 — NTM v2 rules-enforcement database isolation completed on draft PR #259
+
+- Exact parent `29ea26fda41e241da495435bba03c74a1dd57c80` passed the pipeline-flag→rules-enforcement order (**86 passed**) but created a 4,096-byte ambient `customs.db`; the rules fixture did not rebind the copied `sanctions_risk_block.SessionLocal` alias.
+- Draft [PR #259](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/259) now publishes exact head `146c7efe9c8a7832da9a60e6d834d05fff35a54a`, tree `263388053892c31ffd5dff8e631e78bf8c7a5e91`; local author commit `8a099fe85164ceea3f918b0ca31330db22acf839` has the exact same tree. Only `customs-clear/backend/tests/test_ntm_v2_rules_enforcement.py` changed.
+- The fixture now binds the pre-imported sanctions alias to the in-memory sessionmaker, asserts alias identity and disposes its engine in `finally`. Author: focused **14 passed**, isolated baseline **1 passed**, predecessor-first **86 passed**, all exit 0, with no DB/WAL/SHM.
+- Fresh independent A5 `/root/a5_244`: **PASS, no findings**; exact tree, one-file scope, diff check, alias/teardown review, the same **14/1/86** executions and absent DB/WAL/SHM verified.
+- Exact-head CI [run 38546658998 / job 115794263031](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38546658998/job/115794263031): **success** (`offline-safety`).
+- The guarded broad run advanced to 81% and reproduced the next independent writer at `tests/test_regulatory_mass_seed.py::TestMassRegulatoryDocuments::test_total_documents_exceeds_5000`; exact ambient DB/WAL/SHM were moved recoverably to `/tmp`. This is the next bounded repair.
+- NTM full-sync remains blocked without a lawful populated synchronized snapshot; full #245 acceptance and legal/source completeness remain NOT PASS. A6 `core-s1-6415f443120f-r9-g106` is unchanged and undispatched. No merge, deploy, production write, enforcement/flag, secret/permission or destructive action was performed.
+
+## 2026-10-14 — Source-import callable isolation completed on draft PR #259
+
+- The guarded full backend order on parent `8b1f5be35756a5eac7e2bc953727b7d8b16e5e8f` reached `SourceImportTests.test_import_xlsx_with_headers` at 88%; assertions passed, but teardown found ambient `customs.db`/WAL/SHM and the guard exited 1. Standalone execution hid the collection-order defect.
+- Root cause: earlier API fixtures can unload and re-import application modules while pytest retains collection-time source-import callables. Patching named modules therefore missed the database globals of copied functions.
+- Draft [PR #259](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/259) now publishes exact head `45222b38c334f4cb08b5b666206897d950552f03`, tree `edbaf0ee7b6410bbddaee468a994e780d81d3065`; local author commit `4a526da2776d907feec6bf5a438b331f1211e249` has the exact same tree. Only `customs-clear/backend/tests/test_source_import.py` changed; all three original test methods are AST-equivalent.
+- The fixture patches the exact collected callables' `SessionLocal`/`engine` globals and creates only `HsRate`/`SourceStatus` tables required by the unchanged scenarios instead of invoking broad `init_db`.
+- Author: focused **3 passed**, exit 0; exact guarded backend **1,889 passed, 11 skipped, 3 deselected + 133 subtests**, exit 0, without ambient DB/WAL/SHM. Fresh independent A5 `/root/a5_cycle247`: **PASS, no findings**; stale/re-import identity, setup-failure cleanup, AST parity and no-ambient controls passed.
+- Exact-head CI [run 38562659003 / job 115847344018](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38562659003/job/115847344018): **success** (`offline-safety`).
+- The ambient-database guarded contour now completes. Next: recover current PR #256/#245 exact head and resume bounded backend/frontend NTM applicability and grounded AI/UI acceptance. NTM full-sync remains blocked without a lawful populated synchronized snapshot; full #245 and legal/source completeness remain NOT PASS. A6 is unchanged and undispatched; no protected action was performed.
+
+## 2026-10-14 — Regulatory mass-seed absent-database isolation completed on draft PR #259
+
+- Cycle245 had already published a bounded 12-addition candidate but explicitly lacked executable backend and independent A5 evidence. Cycle246 recovered and validated that unchanged exact candidate rather than duplicating or replacing it.
+- Draft [PR #259](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/259) remains at exact head `8b1f5be35756a5eac7e2bc953727b7d8b16e5e8f`, tree `3603d4f521068effd448744962a3ebda8dd86c26`. Only `customs-clear/backend/tests/test_regulatory_mass_seed.py` changed.
+- The module now skips before SQLAlchemy inspection only when the configured file-backed SQLite path is absent. This prevents creating ambient `customs.db`; existing empty, partial and populated databases still reach the original table/count/coverage checks.
+- Native author validation `/root/author246`: focused absent-default **9 skipped**, predecessor-first **14 passed + 9 skipped**, all exit 0, no DB/WAL/SHM. Nonexistent absolute and relative SQLite files were not created. A partial schema produced expected **7 failed + 2 passed**, exit 1, proving the coverage thresholds were not hidden.
+- Fresh independent A5 `/root/a5_246`: **PASS, no findings** on exact tree, including the same absent/empty/partial path controls and no-test-weakening review.
+- Exact-head CI [run 38549024897 / job 115802136715](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38549024897/job/115802136715): **success** (`offline-safety`).
+- The guarded broad run advanced to 88% and reproduced the next independent writer at `tests/test_source_import.py::SourceImportTests::test_import_xlsx_with_headers`; exact ambient DB/WAL/SHM were moved recoverably to `/tmp`. This is the next bounded repair.
+- NTM full-sync remains blocked without a lawful populated synchronized snapshot; full #245 acceptance and legal/source completeness remain NOT PASS. A6 `core-s1-6415f443120f-r9-g106` is unchanged and undispatched. No merge, deploy, production write, enforcement/flag, secret/permission or destructive action was performed.
+
+## 2026-10-14 — PR #256 grounded assistant, search and NTM UI bounded acceptance
+
+- Recovered current draft [PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256) at unchanged exact head `3c24676a69b1d78d320bd5764fb04f5ac3f3430d`, tree `a4e3cd52d0133698e5da905f0e48c52a087316b3`. The worktree remained clean; no product or test files changed.
+- A0 backend acceptance command covered grounded assistant, assistant API flows, NTM applicability, normative requirements, TN VED search/catalog/FTS and SGR status: **220 passed + 51 subtests**, exit 0.
+- A0 frontend full suite: `npm test && npm run typecheck && npm run build` — **109 passed**, typecheck PASS and production build PASS, exit 0. Non-blocking build warnings remain for Browserslist age, a large bundle and a legacy print selector.
+- Fresh independent A5 `/root/a5_cycle248`: **PASS, no findings**. Independent backend selection passed **276 + 44 subtests**; frontend again passed **109**, typecheck and build. It confirmed executable coverage for citation allowlisting/fallback, no-grounding without usable evidence, manual-review/advisory boundaries, freshness and safe source-link surfaces.
+- Existing exact-head CI [run 38476052793](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38476052793) is **success** for this unchanged HEAD (`offline-safety` only). Executable A0/A5 runs provide the product-test evidence.
+- This closes only the bounded technical acceptance slice. Full #245 acceptance and legal/source completeness remain NOT PASS. NTM full-sync is still blocked without a lawful populated synchronized snapshot. A6 `core-s1-6415f443120f-r9-g106` remains unchanged and undispatched; no protected action was performed.
+- Next: select the next real PR256/#245 search/classification or assistant integration defect from executable behavior, preserving fail-closed provenance and manual review for unsupported applicability.
+
+## 2026-10-14 — Smart-classifier remote-image boundary hardened on draft PR #256
+
+- On exact parent `3c24676a69b1d78d320bd5764fb04f5ac3f3430d`, a private loopback image URL reached the HTTP client; failed raw image URLs could also enter the model prompt. This was a reproducible SSRF/provenance boundary defect, not a legal interpretation.
+- Draft [PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256) now publishes exact head `b30a81f6ea878b8cabfc78639b7c9bcf203ea2f9`, tree `917cbeece299b5b7058056d90d66026bf94f60d4`; local author commit `0e482110c2d2bf50afb927038bd449e2e2e8f3f4` has the same tree. Only `smart_classifier.py` and `test_smart_classifier.py` changed.
+- Remote image fetching now accepts only public http(s) destinations, validates every DNS answer and redirect, pins the validated address while preserving Host/SNI, limits redirects and streamed bytes to 10 MiB, requires image content, keeps raw URLs out of prompts and never substitutes text-only model guesses for visual evidence. Unavailable image-only input returns deterministic `ERROR`; text plus unavailable image requires manual review and withholds recommendations.
+- A0 exact command passed **41 tests + 23 subtests**, exit 0; compileall and diff check also exited 0. Fresh independent A5 `/root/a5_cycle249`: **PASS, no findings** after focused, adjacent, packing, parser/chain and 22-check no-network adversarial executions, all exit 0.
+- Exact-head CI [run 38570657548 / job 115874683335](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38570657548/job/115874683335): **success** (`offline-safety`). PR receipt comment id `6169318937` records the candidate and checks.
+- Full PR #245 product acceptance and legal/source completeness remain NOT PASS. NTM full-sync remains blocked without a lawful populated synchronized snapshot. A parent-existing mixed collection/import mock failure remains separate. A6 `core-s1-6415f443120f-r9-g106` is unchanged and undispatched; no protected action was performed.
+
+## 2026-10-14 — Smart-classifier image-byte validation completed on draft PR #256
+
+- Exact parent `b30a81f6ea878b8cabfc78639b7c9bcf203ea2f9` accepted local HTML/SVG/invalid base64 as image evidence, allowed grouped packing to lose the failed-image signal, and forwarded remote HTML bytes declared as `image/png` to the vision provider.
+- Draft [PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256) now publishes exact head `d68b1f848ef7c1de24c208f4ad5e5f96ee9a0083`, tree `20a12b23180cd19d8c0e4ffa2988ffb2f0b749ae`; local author commit `517df5e6ad1a3ee3348f2ae84fa6583a0d5b6b9f` has the same tree. Only `smart_classifier.py` and `test_smart_classifier.py` changed.
+- Local and remote images now require decoded JPEG/PNG/GIF/WebP byte signatures. Bare base64 type is detected from bytes; declared MIME must match. Malformed, empty, non-raster, mismatched and oversized images fail before provider use. Grouped packing keeps fresh/cached results at manual review with `recommended=false` when image evidence is unavailable.
+- A0 exact adjacent command passed **55 tests + 53 subtests**, exit 0; adversarial local/group control, compileall and diff-check also exited 0.
+- Fresh independent A5 `/root/a5_cycle249` rejected two earlier candidates, then returned **PASS, no findings** on the final tree. Focused **47 + 53 subtests**, adjacent **55 + 53 subtests**, parser/direct packing and local/remote adversarial matrices all exited 0.
+- Exact-head CI [run 38578532619 / job 115901949956](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38578532619/job/115901949956): **success** (`offline-safety`). PR receipt comment id `6170414985` records the candidate and checks.
+- Full PR #245 product/legal/source acceptance remains NOT PASS. NTM full-sync remains blocked without a lawful populated synchronized snapshot. A6 `core-s1-6415f443120f-r9-g106` is unchanged and undispatched; no protected action was performed.
+
+## 2026-10-14 — Smart-classifier complete raster integrity enforced on draft PR #256
+
+- Exact parent `d68b1f848ef7c1de24c208f4ad5e5f96ee9a0083` accepted signature-only JPEG, PNG, GIF and WebP garbage as image evidence.
+- Draft [PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256) now publishes exact head `4a53e88108a03b5002aa28887154bbc10a2b3d8e`, tree `1be6787e834e4ca17f08e947f49f42eab8a40304`; local author commit `1cad369d88206b132b09f250687eb74d6da5978b` has the exact same tree. Only `smart_classifier.py` and `test_smart_classifier.py` changed.
+- Local and remote images now require canonical JPEG/PNG/GIF/WebP boundaries, matching decoded format, valid PNG/APNG chunk CRCs, Pillow structural verification and decoding of every reported frame. Truncation, duplicate-terminator polyglots, corrupted later frames, decompression bombs and excessive frame counts fail before provider use. Manual-review, `recommended=false` and SSRF behavior remain fail closed.
+- A0 exact adjacent command passed **64 tests + 71 subtests**, exit 0; progressive/EXIF/static compatibility and appended-payload probe passed 10 checks; compileall and diff-check exited 0.
+- Fresh independent A5 `/root/a5_cycle251` rejected two earlier candidates (`fd9241b`, `d8c1326`) for confirmed integrity gaps, then returned **PASS, no findings** on the final tree. Fresh adjacent execution passed **64 + 71 subtests**; independent adversarial matrix passed **35 checks**; scope, tree and clean worktree were verified.
+- Exact-head CI [run 38587572055 / job 115933542721](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38587572055/job/115933542721): **success** (`offline-safety`). PR receipt comment id `6171665986` records the candidate and checks.
+- Full PR #245 product/legal/source acceptance remains NOT PASS. NTM full-sync remains blocked without a lawful populated synchronized snapshot. A6 `core-s1-6415f443120f-r9-g106` remains unchanged and undispatched; no protected action was performed.
+
+## 2026-10-14 — Smart-classifier image-evidence cache integrity completed on draft PR #256
+
+- Exact parent `4a53e88108a03b5002aa28887154bbc10a2b3d8e` reused the first image's visual analysis and derived classification when a later valid but different image had the same packing-group key.
+- Draft [PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256) now publishes exact head `af5dc3c09294aa4223205ee01aebc008fa0a396f`, tree `946dc680d0cc35d04a26bb2d684bcda65a5f6366`; local author commit `18927166a2a841046e8e4f26c77313ff77f96f81` has the exact same tree. Only `smart_classifier.py` and `test_smart_classifier.py` changed.
+- Vision and classification caches are now bound to canonical validated image evidence and all classification inputs. Failed-image identity survives delayed, concurrent and same-task interleavings, so invalid evidence remains `MANUAL_REVIEW` with `recommended=false` even if a sibling valid request succeeds.
+- A0 exact adjacent command passed **70 tests + 71 subtests**, exit 0; py_compile, diff-check and exact scope exited 0.
+- Fresh independent A5 `/root/a5_cycle252` rejected three intermediate candidates after reproducing separate stale-cache/fail-open races, then returned **PASS, no findings** on the final tree. Final adjacent execution passed **70 + 71 subtests**; independent adversarial matrix passed **11/11** and packing-list controls passed **4/4**, all exit 0.
+- Exact-head CI [run 38596656746 / job 115965012426](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38596656746/job/115965012426): **success** (`offline-safety`). PR receipt comment id `6172924322` records the candidate and checks.
+- Full PR #245 product/legal/source acceptance remains NOT PASS. NTM full-sync remains blocked without a lawful populated synchronized snapshot. A6 `core-s1-6415f443120f-r9-g106` remains unchanged and undispatched; no protected action was performed.
+
+## 2026-10-14 — Smart-classifier transient error cache recovery completed on draft PR #256
+
+- Exact parent `af5dc3c09294aa4223205ee01aebc008fa0a396f` cached a transient group-classification provider failure as a permanent `ERROR`; an identical later request never retried after provider recovery.
+- Draft [PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256) now publishes exact head `7cab94dd9481888a8946a2177132b8e1927a3670`, tree `edd6f5907c3185e7e175bfc75cb5cb9c5ab3f92a`; local author commit `e1979c51c3f21676762d965650bb62baad9d5ca7` has the exact same tree. Only `smart_classifier.py` and `test_smart_classifier.py` changed.
+- The failing request still returns fail-closed `ERROR`, but error responses no longer poison the group cache. An identical later request retries; a recovered `OK` is cached normally. Image-fingerprint isolation and unavailable-image `MANUAL_REVIEW` / `recommended=false` behavior are preserved.
+- A0 exact adjacent command passed **71 tests + 71 subtests**, exit 0; py_compile, diff-check and exact scope exited 0.
+- Fresh independent A5 `/root/a5_cycle253`: **PASS, no findings**. Its adjacent suite passed **71 + 71 subtests** and independent cache/fail-closed adversarial matrix passed **5/5**, all exit 0.
+- Exact-head CI [run 38602133386 / job 115983741821](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38602133386/job/115983741821): **success** (`offline-safety`). PR receipt comment id `6173662185` records the candidate and checks.
+- Full PR #245 product/legal/source acceptance remains NOT PASS. NTM full-sync remains blocked without a lawful populated synchronized snapshot. A6 `core-s1-6415f443120f-r9-g106` remains unchanged and undispatched; no protected action was performed.
+
+## 2026-10-14 — Smart-classifier cached-result snapshot isolation completed on draft PR #256
+
+- Exact parent `7cab94dd9481888a8946a2177132b8e1927a3670` cached a successful mutable `ClassifyResult` by reference. A caller could mutate `hs_code`, rationale or nested metadata, and the next identical request received that corrupted state without another provider call.
+- Draft [PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256) now publishes exact head `797cd548b1b83f5b15fa26bbcf23ae9352a15b0b`, tree `805eceeae02bf903e54435a0b012934949d2ccd4`; local author commit `898eb448a7046a74d9df22f93241937d50c538e3` has the exact same tree. Only `smart_classifier.py` and `test_smart_classifier.py` changed.
+- The cache now retains a private deep snapshot and every cache hit returns a fresh deep snapshot. Nested `results`, `extra` and `web_context` are isolated, while the string-compatible vision-analysis wrapper, transient ERROR retry, image fingerprint isolation and failed-image manual review behavior remain intact.
+- A0 exact adjacent command passed **72 tests + 71 subtests**, exit 0; `py_compile`, diff-check, exact two-file scope, tree and clean-worktree checks exited 0.
+- Fresh independent A5 `/root/a5_cycle254`: **PASS, no findings**. Its adjacent run passed **72 + 71 subtests**; its adversarial matrix passed first-return isolation, cached-hit isolation, nested deep isolation, provider call count=1, transient ERROR retry, image fingerprint isolation and failed-image manual review.
+- Exact-head CI [run 38611383191 / job 116015341403](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38611383191/job/116015341403): **success** (`offline-safety`). PR receipt comment id `6174899050` records the candidate and checks.
+- Full PR #245 product/legal/source acceptance remains NOT PASS. NTM full-sync remains blocked without a lawful populated synchronized snapshot. A6 `core-s1-6415f443120f-r9-g106` is unchanged and undispatched; no merge, deploy, production write, enforcement/flag, secret/permission, destructive migration, force-push or external A6 action was performed.
+
+## 2026-10-14 — Smart-classifier concurrent group singleflight completed on draft PR #256
+
+- Exact parent `797cd548b1b83f5b15fa26bbcf23ae9352a15b0b` started three provider classifications for three simultaneous identical cold-cache requests before any result was released.
+- Draft [PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256) now publishes exact head `e5e75915ec1957f172b30284dd1633cf0c4c1915`, tree `76d8c0717b88342b11be28a18d20202e2f5a13de`; local author commit `75d61bf74fb46548ae86945ceab1eca08d51f060` has the exact same tree. Only `smart_classifier.py` and `test_smart_classifier.py` changed.
+- Exact-key concurrent calls now share one event-loop-local producer task; every waiter and cache hit receives an independent deep snapshot. Cancelling a waiter cannot cancel the producer. Concurrent ERROR remains fail-closed and uncached so a later request retries; a generation fence prevents a late producer from repopulating a cleared cache.
+- A0 exact adjacent command passed **75 tests + 71 subtests**, exit 0; `py_compile`, diff-check, exact two-file scope, tree and clean-worktree checks exited 0.
+- Fresh independent A5 `/root/a5_cycle255`: **PASS, 0 code findings**. Its adjacent run passed **75 + 71 subtests**; independent adversarial matrix passed **46 assertions** covering singleflight, deep isolation, ERROR retry, cancellation, generation fence, distinct fingerprints and separate event loops. One direct async pytest invocation lacked `pytest-asyncio`; the same coroutine passed via `asyncio.run`.
+- Exact-head CI [run 38620208681 / job 116045462121](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38620208681/job/116045462121): **success** (`offline-safety`). PR receipt comment id `6176072359` records the candidate and checks.
+- Full PR #245 product/legal/source acceptance remains NOT PASS. NTM full-sync remains blocked without a lawful populated synchronized snapshot. A6 `core-s1-6415f443120f-r9-g106` is unchanged and undispatched; no merge, deploy, production write, enforcement/flag, secret/permission, destructive migration, force-push or external A6 action was performed.
+
+## 2026-10-14 — Smart-classifier translation fallback cache recovery completed on draft PR #256
+
+- Exact parent `e5e75915ec1957f172b30284dd1633cf0c4c1915` cached the original foreign text after a transient translation-provider exception or empty answer, so an identical later request did not retry after provider recovery.
+- Draft [PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256) now publishes exact head `162cd8c03d0365fbc57b3172201fb3981b40c89a`, tree `f87d4ec51bd053ff7e688b9dc51ad96863e2077e`; local author commit `eb5d14b36920b0334ad143a9ad89f5716f2826e4` has the exact same tree. Only `smart_classifier.py` and `test_smart_classifier.py` changed.
+- Failed or empty translation fallbacks are returned only to the current caller and are not cached. Successful translations and the Russian fast path remain cached; batch results retain only requested nonempty mappings. Concurrent identical cold translations share one loop-local provider task, waiter cancellation is shielded, and cache clear fences late completion.
+- A0 exact adjacent command passed **81 tests + 71 subtests**, exit 0; `py_compile`, diff-check, exact two-file scope, tree and clean-worktree checks exited 0.
+- Fresh independent A5 `/root/a5_cycle256`: **PASS, no findings**. Its adjacent run passed **81 + 71 subtests**; independent probes covered exception/empty retry, partial/malformed batch recovery, successful/Russian caching, concurrent deduplication, cancellation shielding, clear generation fence, distinct keys and separate event loops.
+- Exact-head CI [run 38627869101 / job 116071549278](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38627869101/job/116071549278): **success** (`offline-safety`). PR receipt comment id `6177113723` records the candidate and checks.
+- Full PR #245 product/legal/source acceptance remains NOT PASS. NTM full-sync remains blocked without a lawful populated synchronized snapshot. A6 `core-s1-6415f443120f-r9-g106` is unchanged and undispatched; no merge, deploy, production write, enforcement/flag, secret/permission, destructive migration, force-push or external A6 action was performed.
+
+## 2026-10-14 — Smart-classifier concurrent translation-batch singleflight completed on draft PR #256
+
+- Exact parent `162cd8c03d0365fbc57b3172201fb3981b40c89a` made two provider calls for two simultaneous identical cold translation batches. Equivalent 90-row sets in reverse order produced four calls because chunk boundaries depended on input order.
+- Draft [PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256) now publishes exact head `3e54a6abe467138071e775b6820f58a381e06060`, tree `1e32538978ac23faa5df700db227ffb07269bb02`; local author commit `8d1dcc85ccfa1c1f9878a0d624dfd54e30c36359` has the exact same tree. Only `smart_classifier.py` and `test_smart_classifier.py` changed.
+- Pending translations are canonically ordered before chunking. Identical loop-local chunks share one shielded producer; cancelling one waiter does not cancel it. Cache clear detaches old batches, and generation checks before every fallback prevent late old work from repopulating the new cache.
+- A0 exact adjacent command passed **86 tests + 71 subtests**, exit 0; `py_compile`, diff-check, exact two-file scope, tree and clean-worktree checks exited 0.
+- Independent A5 `/root/a5_cycle257` rejected two intermediate candidates for order-dependent chunking above 45 rows and a clear-during-fallback race. Fresh final review: **PASS, no findings**; focused **19 passed**, adjacent **86 + 71 subtests**, independent adversarial matrix **45 assertions PASS**.
+- Exact-head CI [run 38636236869 / job 116100003588](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38636236869/job/116100003588): **success** (`offline-safety`). PR receipt comment id `6178312499` records the candidate and checks.
+- Full PR #245 product/legal/source acceptance remains NOT PASS. NTM full-sync remains blocked without a lawful populated synchronized snapshot. A6 `core-s1-6415f443120f-r9-g106` is unchanged and undispatched; no merge, deploy, production write, enforcement/flag, secret/permission, destructive migration, force-push or external A6 action was performed.
+
+## 2026-10-14 — Smart-classifier concurrent vision singleflight completed on draft PR #256
+
+- Exact parent `3e54a6abe467138071e775b6820f58a381e06060` made two vision-provider calls for two simultaneous identical cold group-image requests.
+- Draft [PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256) now publishes exact head `8a1ff90112f5fb6f7b766bbd55510dfd8af105c4`, tree `e3bf55bdc4b015ed90152e337ab700ed658f8a8a`; local author commit `639feb1893a50066d9665b38e646bafb1ab1fb92` has the exact same tree. Only `smart_classifier.py` and `test_smart_classifier.py` changed.
+- Identical loop-local validated images share one shielded producer. Failures remain retryable; cache clear detaches old producers; a newest-image fingerprint fence prevents late old success or failure from replacing or erasing newer evidence. Manual review and fail-closed image-unavailable behavior are preserved.
+- A0 exact adjacent command passed **92 tests + 71 subtests**, exit 0; focused race suite passed **6**; `py_compile` and diff-check exited 0.
+- Independent A5 `/root/a5_cycle258` rejected the first candidate for a reproduced late changed-image cache race, then returned **PASS, no findings** on the repaired exact tree. Fresh probes covered late success/failure, invalid-newer, A/B/A, cancellation, retry, fail-closed recovery and separate event loops.
+- Exact-head CI [run 38645370088 / job 116130776149](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38645370088/job/116130776149): **success** (`offline-safety`). PR receipt comment id `6179555513` records the candidate and checks.
+- Full PR #245 product/legal/source acceptance remains NOT PASS. NTM full-sync remains blocked without a lawful populated synchronized snapshot. A6 `core-s1-6415f443120f-r9-g106` is unchanged and undispatched; no merge, deploy, production write, enforcement/flag, secret/permission, destructive migration, force-push or external A6 action was performed.
+
+## 2026-10-14 — Smart-classifier transient web-search recovery validated on draft PR #256
+
+- Cycle 259 published the production repair at `f05df522155b3fadaeddd1da6f9a830d31f152cc` but explicitly left focused backend execution and independent A5 pending. Exact execution reproduced a defect in the new test: successful normalized results intentionally omit `recommended=true`, while fail-closed results explicitly carry `recommended=false`.
+- Draft [PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256) now publishes exact head `a5e952f1ea847500b65bdc76b18514ddfd97f01d`, tree `f1b269e40ee3b5fa72770a8d75ec6ed2d80ce9d5`; local exact-tree commit `369b12e4ce84c18dd1c8197d4d370bf33284b465`. Cycle 260 changed only the assertion; the production repair remains unchanged.
+- A required-but-unavailable web search remains fail-closed `MANUAL_REVIEW` and uncached. The next identical request retries, and only confirmed recovery is cached.
+- A0 exact adjacent command first exited 1 with **1 failed, 92 passed + 71 subtests**, then after the assertion repair exited 0 with **93 passed + 71 subtests**.
+- Independent A5 `/root/a5_cycle260`: **PASS, no findings**. It repeated focused/adjacent/parser suites, compilation and independent concurrent-retry plus cache-generation-fence probes.
+- Exact-head CI [run 38651533970 / job 116151241312](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38651533970/job/116151241312): **success**. PR receipt comment id `6180447989` records the exact candidate and checks.
+- Full PR #245 product/legal/source acceptance remains NOT PASS. NTM full-sync remains blocked without a lawful populated synchronized snapshot. A6 `core-s1-6415f443120f-r9-g106` is unchanged and undispatched; no merge, deploy, production write, enforcement/flag, secret/permission, destructive migration, force-push or external A6 action was performed.
+
+## 2026-10-14 — Data-refresh check-only filesystem mutation removed on draft PR #256
+
+- Exact parent `a5e952f1ea847500b65bdc76b18514ddfd97f01d` opened a missing file-backed SQLite database during `--check-only`, creating `customs.db`; the subprocess regression also used literal `python3` rather than the active isolated interpreter.
+- Draft [PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256) now publishes exact head `863011a250c4713d0a867b03f0ca1d8c79197274`, tree `a3be986ffffd53f220a8fe1df0e05816f47c4cf8`; local author commit `777fb6d5922bcc8fd0ed95df93e2d37f587bc840` has the same tree. Only `data_refresh_service.py` and `test_data_refresh.py` changed.
+- Missing SQLite now returns stale reason `db_missing` before opening a connection and leaves DB/WAL/SHM absent. Existing, in-memory and non-SQLite behavior is preserved; the test uses `sys.executable` and an isolated temporary `DATABASE_URL`.
+- A0 final bounded command passed **106 tests + 71 subtests**, with 3 parent-existing workflow-presence tests deselected, exit 0; no database artifact was created; `py_compile` and diff-check exited 0.
+- Independent A5 `/root/a5_cycle261`: **PASS, no findings**. Its adjacent profile passed **102 + 31 subtests**; 23 independent SQLite/non-SQLite assertions passed; exact scope, tree and clean worktree were verified.
+- Exact-head CI [run 38656935852](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38656935852): **success** (`offline-safety`). PR receipt comment id `6181119818` records the candidate and checks.
+- Known limitation: the three `TestGitHubWorkflow` presence tests are not PASS because `.github/workflows/scheduled-data-refresh.yml` is absent on the exact base. Full PR #245 product/legal/source acceptance remains NOT PASS; NTM full-sync remains blocked without a lawful populated synchronized snapshot. A6 `core-s1-6415f443120f-r9-g106` remains unchanged and undispatched; no protected action was performed.
+
+## 2026-10-15 — Scheduled read-only source freshness monitor restored on draft PR #256
+
+- Exact parent `863011a250c4713d0a867b03f0ca1d8c79197274` lacked `.github/workflows/scheduled-data-refresh.yml`, so all three workflow-presence regressions failed.
+- Draft [PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256) now publishes exact head `b2f47ba1661ad5e983b3df7d809e04484fc78590`, tree `1c358d8a6bc86167eb772ca37279a8a000c4bbe1`; local author commit `6790fc8aff47da7a5104fe1bdf6690ec3ea06a1c` has the same tree. The only added file is the scheduled workflow; blob `1693b3403d4d403b86b49b30d4e6018af89864bd` is byte-identical to the already-tested PR255 lineage.
+- The workflow runs daily at 03:17 UTC or manually, has `contents: read`, pinned actions and dependencies, no persisted checkout credentials, and only read-only bundle/CBR checks with an isolated `/tmp` SQLite target.
+- A0 focused/adjacent execution passed **109 tests + 71 subtests**, exit 0. A broader backend diagnostic passed **562 + 103 subtests** before a separate empty-fixture failure (`exchange_rates` table absent).
+- Independent A5 `/root/a5_cycle262`: **PASS, no findings**. It passed **16 focused** and **105 + 31 subtests** adjacent, checked exact lineage, YAML/security boundaries and verified no SQLite artifacts.
+- Executing the workflow bundle step now correctly reports all six committed normative bundles stale by **114-119 days** (revisions 2026-06-18/23) and exits 1 as the intended freshness enforcement signal.
+- Exact-head CI [run 38662810786](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38662810786): attempt 1 hit two unrelated tempfile Git-directory cleanup races after 118/120 tests; the unchanged exact-head failed-job rerun attempt 2 succeeded. PR receipt comment id `6181916495` records the candidate and checks.
+- Full PR #245 product/legal/source acceptance remains NOT PASS. NTM full-sync remains blocked without a lawful populated synchronized snapshot. A6 `core-s1-6415f443120f-r9-g106` remains unchanged and undispatched; no protected action was performed.
+
+## 2026-10-15 — Exchange-rate fallback restored for absent disposable schema on draft PR #256
+
+- Exact parent `b2f47ba1661ad5e983b3df7d809e04484fc78590` raised `no such table: exchange_rates` while comparing scenarios against an empty disposable SQLite database, despite the existing local FX constants.
+- Draft [PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256) now publishes exact head `8eda154558e486a3136d4ecfe31460793f89ec79`, tree `33e07fde1443bfc297b54de7434d9118035d6a86`; local author commit `f0fb0be13a39e43946d2dd42e3871c648eb71602` has the exact same tree.
+- Both exchange-rate readers now detect only an absent table and use the existing constants. Stored rows keep their prior override behavior; connection, introspection and malformed persisted-table failures still propagate.
+- A0 final bounded command passed **111 tests + 71 subtests**, exit 0, with no disposable DB/WAL/SHM left behind. Fresh independent A5 `/root/a5_cycle263`: **PASS, no findings**; focused plus payment coverage passed **36 tests**, and four injected failure checks confirmed errors are not broadly swallowed.
+- Exact-head CI [run 38668497328](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38668497328): **success**. PR receipt comment id `6182677315` records the candidate and checks.
+- The same empty-schema scenario now advances beyond FX and reproduces a separate missing `country_risks` failure; that is the next bounded defect, not part of this repair. Full #245 product/legal/source acceptance remains NOT PASS; the lawful populated synchronized NTM snapshot remains unavailable. A6 is unchanged and undispatched; no protected action was performed.
+
+## 2026-10-15 — Scenario-comparison database isolation completed on draft PR #256
+
+- Exact parent `8eda154558e486a3136d4ecfe31460793f89ec79` raised `no such table: country_risks` when the scenario E2E ran on an empty disposable SQLite database.
+- Draft [PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256) now publishes exact head `f2788ce1967320134d2896050623fbc37d405f5d`, tree `f3d62421237e8eb4ba941199b4470a1f6750d68a`; local author commit `b08f8f4b5025d8bd466a0b9890754d366cb82eab` has the exact same tree.
+- `test_invoice_and_compare.py` now creates the explicit disposable schema needed by the scenario-calculation path and rebinds its service-local session factories. Production code and normative semantics are unchanged; an adversarial production call still raises when `country_risks` is truly absent instead of treating the country as neutral.
+- A0 focused module passed **2 tests**; final bounded profile passed **113 tests + 71 subtests**, exit 0; `py_compile`, diff-check and no-local-DB checks exited 0.
+- Fresh independent A5 `/root/a5_cycle264`: **PASS, no findings**. Its poison-ambient-DB focused run passed **1**, adjacent payment/ROP/risk profile passed **73**, and a production empty-schema probe confirmed that the missing-table error still propagates.
+- Exact-head CI [run 38673744569](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38673744569): **success**. PR receipt comment id `6183378494` records the candidate and checks.
+- Separate parent-existing fixture debt remains: three `test_rate_display.py` cases fail when `hs_rates` is absent. Full #245 product/legal/source acceptance remains NOT PASS; all six committed normative bundles remain stale; the lawful populated synchronized NTM snapshot remains unavailable. A6 is unchanged and undispatched; no protected action was performed.
+
+## 2026-10-15 — Rate-display database isolation completed on draft PR #256
+
+- Exact parent `f2788ce1967320134d2896050623fbc37d405f5d` failed all three `test_rate_display.py` cases because the disposable environment had no `hs_rates` table.
+- Draft [PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256) now publishes exact head `0e9b39b4580de33ed6c02a976cdafc6837cc6e6e`, tree `eac1723f88bbbaefc0a10cd7f945437957020fc8`; local author commit `2e2e88dd89a53f6766151a79c7f95cfe0679d9ec` has the exact same tree.
+- `test_rate_display.py` now creates a per-test disposable `hs_rates` schema, patches both bound readers and seeds only the parent rate already required by the unchanged 45 ₽/l expectation. Production missing-table behavior remains fail-closed; no product calculation, normative source or legal applicability changed.
+- A0 focused execution passed **3 tests**; the bounded adjacent profile passed **116 tests + 71 subtests**, exit 0. `py_compile`, diff-check and repository-artifact checks also exited 0.
+- Fresh independent A5 `/root/a5_cycle265`: **PASS, no findings**. It independently repeated focused **3 passed** and adjacent **116 + 71 subtests**, verified teardown and one-file scope, and confirmed an empty production-like schema still raises `OperationalError` for missing `hs_rates`.
+- Exact-head CI [run 38678637960 / job 116237878852](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38678637960/job/116237878852): **success**. PR receipt comment id `6184021384` records the candidate and checks.
+- Full PR #245 product/legal/source acceptance remains NOT PASS. All six committed normative bundles remain stale and the lawful populated synchronized NTM snapshot remains unavailable. A6 `core-s1-6415f443120f-r9-g106` is unchanged and undispatched; no protected action was performed.
+- Next: run the next clean bounded backend fixture tranche on this exact head and repair only a concretely reproduced defect while keeping source/snapshot blockers explicit.
+
+## 2026-10-15 — Normative-bundle order isolation completed on draft PR #256
+
+- A clean broad backend diagnostic on exact parent `0e9b39b4580de33ed6c02a976cdafc6837cc6e6e` reached **1,933 passed + 197 subtests** and reproduced an independent order-dependent normative fixture failure. The bounded reproduction `test_invoice_and_compare.py → test_normative_bundle.py` exited 1 with **1 failed, 8 passed, 1 teardown error**; standalone/reverse order hid the stale copied `rate_display.SessionLocal` alias and configured SQLite mutation.
+- Draft [PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256) now publishes exact head `7364f190226c2f53968f9acbb76acc483a01fc91`, tree `683c522674b03ff2f562af65c3c8151c1589be3b`; local exact-tree commit `358ab9829f99e4e7f7b1e1767c2f09765455775e`. Only `customs-clear/backend/tests/test_normative_bundle.py` changed.
+- The fixture redirects the environment before bootstrap, rebinds all preloaded app database aliases by identity, restores late imports, disposes/removes only disposable state, and compares the originally captured configured/source DB paths plus WAL/SHM. A5 rejected the first candidate because environment mutation changed the fingerprint path set; the repaired candidate captures that set before mutation.
+- A0: both module orders **9 passed**; final adjacent profile **123 passed + 71 subtests**, exit 0; configured/source artifacts absent, pinned source SHA unchanged, `py_compile` and diff-check exit 0. Fresh independent A5 `/root/a5_cycle266`: **PASS, no findings** after both orders, missing/existing source probes and the same adjacent profile.
+- Exact-head CI [run 38685076935 / job 116257955908](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38685076935/job/116257955908): **success**. PR receipt comment id `6184889391` records the exact candidate and checks.
+- Scope is one test fixture; product/runtime calculation, normative data and legal applicability did not change. Three dependency-sensitive packing-list async tests remain a separate current-PR failure; full PR #245 product/legal/source acceptance remains **NOT PASS**, all six committed payment bundles remain stale, and the lawful populated synchronized NTM snapshot remains unavailable. A6 `core-s1-6415f443120f-r9-g106` is unchanged and undispatched; no protected action was performed.
+- Next: consolidate and independently revalidate the dependency-independent packing-list async tests on exact PR #256, then rerun the broader offline backend diagnostic.
+
+## 2026-10-15 — Packing-list async dependency removed from tests on draft PR #256
+
+- Exact parent `7364f190226c2f53968f9acbb76acc483a01fc91` exited 1 with **3 failed, 1 passed** for the focused packing-list files because the isolated environment has no `pytest-asyncio`.
+- Draft [PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256) now publishes exact head `848647fbde88cdb600f81ff56757a8756ab499db`, tree `173f1d4f01a3c7a7e1f465e3216de906cd3a5b99`; local exact-tree commit `b2b73098e4dd449f8bd547dec0295f9ff0c5a3eb`. Only `test_packing_list_classify.py` and `test_packing_list_tasks.py` changed.
+- The three existing async scenarios now use stdlib `asyncio.run`; the background-task case keeps one coroutine, original patch lifetime, await order and every assertion. No dependency, runtime code, normative data or legal applicability changed.
+- A0: focused and reverse order each **4 passed**; adjacent packing/smart profile **95 passed + 71 subtests**; expanded safe offline profile **131 passed + 71 subtests**, exit 0. `py_compile`, exact-file parity and diff-check exited 0.
+- Fresh independent A5 `/root/a5_cycle267`: **PASS, no findings**. It repeated both orders and adjacent coverage, verified all assertion expressions unchanged, confirmed `pytest-asyncio` absent and found no DB artifacts.
+- Exact-head CI [run 38689939882 / job 116273266494](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38689939882/job/116273266494): **success**. PR receipt comment id `6185608825` records the candidate and checks.
+- The unfiltered full backend command was rejected before launch because it could make an unapproved request to `api.proxyapi.ru`; no bypass or external request occurred, so no whole-backend PASS is claimed. Full PR #245 product/legal/source acceptance remains NOT PASS, all six committed payment bundles remain stale, the lawful populated synchronized NTM snapshot remains unavailable, and A6 `core-s1-6415f443120f-r9-g106` remains unchanged and undispatched.
+- Next: build an explicitly audited network-free broad module allowlist on this exact head and continue from the next reproduced fixture/product failure without weakening source or snapshot gates.
+
+## 2026-10-15 — Guarded network-free backend diagnostic completed on unchanged PR #256
+
+- Exact PR head stayed `848647fbde88cdb600f81ff56757a8756ab499db`, tree `173f1d4f01a3c7a7e1f465e3216de906cd3a5b99`; no repository code or tests changed.
+- A temporary runner (SHA-256 `89e8ec0d1b0f0819d0d59e7fd711c31bf5b8c02997dca24cd473e9704d7d8a33`) scrubbed provider API-key variables and blocked Python-process socket connect/connect_ex/create_connection and DNS getaddrinfo.
+- Deterministic split: 114 marker-free modules, hash `7363b582f451cf368fed3042f2cd73d79d8d6587d348dc7daad7946b5d30571b`; 32 marker-bearing modules, hash `4c45c1920c893cf0881748d08ba23ade0eb330e4e000ea1e50ccea5b7f6aaa72`.
+- A0 marker-free set: **1309 passed, 10 skipped + 9 subtests**, exit 0. Marker-bearing set: **628 passed, 1 skipped + 188 subtests**, exit 0. Combined: **1937 passed, 11 skipped + 197 subtests**.
+- Independent A5 `/root/a5_cycle268`: **PASS for the exact intended invocations**. It reproduced both results, verified split hashes and guard behavior, and found no worktree or DB artifacts.
+- Scope caveats are explicit: the runner must be invoked from `customs-clear/backend`, and its Python monkeypatch is not an OS-level child-process sandbox. `tests/test_ntm_full_sync.py` remains omitted because a lawful populated synchronized snapshot is unavailable; no full-backend, full-PR #245, legal-source or NTM full-sync PASS is claimed.
+- Existing exact-head CI [run 38689939882 / job 116273266494](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38689939882/job/116273266494) remains **success**. PR receipt comment id `6186444364` records the diagnostic.
+- All six committed payment bundles remain stale. A6 `core-s1-6415f443120f-r9-g106` is unchanged and undispatched; no protected action occurred.
+- Next: return to primary-source-backed stale payment-bundle triage on this clean regression baseline and do not change normative data until exact scope and effective dates are verified.
+
+## 2026-10-15 — PAY-1 titanium-dioxide remedy scope and suspension corrected on draft PR #256
+
+- Draft [PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256) now publishes exact head `ecc8dbf6c46bd57f5e93d04d56a7486030949a35`, tree `fff5ca21affc64a11da86f36d2cfec28f892088a`; local exact-tree author commit `410c3a188cd84a94b451dcfe4cba81051e2124be`, parent `848647fbde88cdb600f81ff56757a8756ab499db`.
+- Primary acts were rechecked: [Decision No. 96](https://docs.eaeunion.org/documents/446/10233/) is represented only for TN VED `3206110000`, TiO₂ at least 80% dry basis, with Appendix 2 exclusions; active windows are `2025-11-16..2026-10-02` and `2027-08-11..2030-11-15`. [Decision No. 124](https://docs.eaeunion.org/documents/463/10925/) suspends application through `2027-08-10` inclusive.
+- Unknown manufacturer/product scope remains fail-closed: `manual_review_required`; special-duty amount and final quote total are withheld. The exact superseded official `3206` row is retired only for the complete replacement, near matches remain, and mixed-revision apply records `PARTIAL` while keeping the source stale.
+- Author payment/ingestion profile: **407 passed + 73 subtests**, exit 0; tariff-agent safety **124 tests**, exit 0; JSON, py_compile and diff checks exit 0; no DB/WAL/SHM. Final exact command `PYTHONPATH=. /workspace/scratch/bb84ae3e224a/.venv266/bin/pytest -q tests/test_pay1_titanium_dioxide.py`: **13 passed**, exit 0.
+- Fresh independent A5 `/root/a5_cycle269c`: **PASS, no findings**; it repeated **407 passed + 73 subtests** and verified the acts, boundaries, retirement predicate, safe URL handling and partial/stale receipts.
+- Exact-head CI [run 38705953005 / job 116325302401](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38705953005/job/116325302401): **success**. PR receipt [comment 6187908946](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256#issuecomment-6187908946).
+- Residual boundary: manufacturer/product matching is intentionally not automated; the rest of the anti-dumping bundle was not reverified and remains partial/stale, with five other payment bundles stale. Full PR #245 product/legal/source acceptance and the lawful populated synchronized NTM snapshot remain NOT PASS. A6 `core-s1-6415f443120f-r9-g106` is unchanged and not sent; no protected action occurred.
+- Next: reconcile the next stale payment bundle against primary acts without weakening stale/manual-review/withheld-total gates.
+
+## 2026-10-15 — EEC Decision No. 46 spark-plug anti-dumping scope published on draft PR #256
+
+- Official [EEC Decision No. 46](https://docs.eaeunion.org/documents/463/10611/) was verified for CN-origin spark plugs, exact TN VED codes `8511100001` and `8511100009`, rate 17.23%, effective `2026-05-10..2031-05-09`.
+- Draft [PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256) publishes exact remote head `e63d139be8a7de41fa4f72333cda35f0e75977c9`, tree `adc0a9cdf409184924c8cabf5f12c4ac358f3812`; local author exact-tree commit `373561bac43474400c552c1a27432b389ea73611` has the same tree.
+- Destination-aware rows preserve the Decision's national exceptions for AM/BY/KZ/KG. RU calculates normally; exceptional or missing destination remains `MANUAL_REVIEW_REQUIRED`, with final total withheld and partial total retained. Generic missing-origin advisories remain non-blocking.
+- Migration head `i4j5k6l7m8n9` adds destination scope. Disposable full upgrade and column assertion exited 0; ingestion was idempotent with 10 inserts then 10 skips and 10 unique identities.
+- Exact-head A0 profile: **249 passed + 22 subtests**, exit 0. Independent A5 `/root/a5_cycle271`: **PASS, no findings**; **298 passed + 54 subtests**, plus behavioral, migration and idempotence probes, exit 0.
+- Exact-head CI [run 38715082805 / job 116355701450](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38715082805/job/116355701450): **success** (`offline-safety`). PR receipt: [comment 6189257942](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256#issuecomment-6189257942).
+- Next: reconcile the next unresolved stale payment bundle against primary acts. This is one verified remedy block, not full #245/#256 product or legal-source acceptance. The lawful populated synchronized NTM snapshot remains unavailable; A6 `core-s1-6415f443120f-r9-g106` is unchanged and undispatched. No protected action was performed.
+
+## 2026-10-15 — Unverified countervailing snapshot quarantined on draft PR #256
+
+- The official [EAEU legal portal](https://docs.eaeunion.org/documents/search/) disproves both exact citations in `countervailing:2026-06-18`: Council Decision No. 95 in 2018 is dated 05.12.2018 rather than 10.07.2018; Collegium Decision No. 164 in 2019 is dated 17.09.2019 rather than 17.12.2019 ([official act](https://docs.eaeunion.org/documents/335/4676/)).
+- Draft [PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256) publishes exact remote head `20cc589beebc9003a4427d146de8ce7692fa055b`, tree `5f27cf69f6d909c136b96f5b468e3b6fa1d089b5`; local author exact-tree commit `32255019376aca7bcb15b0cf28a997d1ea1d32ba` has the same tree.
+- The tracked bundle now fails closed before DB mutation with `source_verification_rejected_source_mismatch`. Rejection is bounded to this exact revision; future verified revision tokens remain eligible.
+- Already persisted rejected CN rows remain visible for manual review, but their affected amounts and final totals are withheld. Other origins do not match; valid future countervailing and valid safeguard rows remain calculable.
+- Exact-head A0 payment/ingestion profile: **427 passed + 73 subtests**, exit 0. Tariff-agent safety: **124 passed + 175 subtests**, exit 0. JSON, py_compile, diff and clean-tree checks exited 0.
+- Independent A5 `/root/a5_cycle271`: **PASS, no findings**; **319 passed + 54 subtests**, plus official-source, no-mutation, bounded-revision, origin-isolation and valid-row calculation probes.
+- Exact-head CI [run 38717322144 / job 116363066674](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38717322144/job/116363066674): **success**. PR receipt: [comment 6189630625](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256#issuecomment-6189630625).
+- This is a bounded source-safety block, not full #245/#256 product or legal-source acceptance. Other stale/rejected payment bundles remain unresolved; the lawful populated synchronized NTM snapshot remains unavailable. A6 `core-s1-6415f443120f-r9-g106` is unchanged and undispatched. No protected action was performed.
+- Next: reconcile the next unresolved stale payment bundle against primary acts while preserving fail-closed source, applicability and total-withholding gates.
+
+## 2026-10-15 — PAY-3 printing-ink ETT amendment verified and provenance-bound on draft PR #256
+
+- Primary Decision No. 43 was rechecked at [Adilet](https://adilet.zan.kz/rus/docs/H26EK000043): it retires `3215110000`/`3215190000`, adds six replacement leaves and applies 30 days after publication but not before `2026-07-01`. The official [EEC chapter 32 effective 01.07.2026](https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.32_2022_01.07.2026.pdf) confirms the three black-ink leaves at 5% and three other-ink leaves at 0%.
+- Draft [PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256) now publishes exact head `3905ac6b73753953189e391e934d2a44d35666fa`, tree `10f45b8e5f6e8cb0736096d5a98f6e467b617d6c`, parent before PAY-3 `20cc589beebc9003a4427d146de8ce7692fa055b`.
+- The two retired rows end on `2026-06-30`; six exact leaves start on `2026-07-01`. The merge replaces only this eight-row contour. Exact code, rate, row revision, dates, URL and regulatory-act metadata are bound; mismatches fail closed.
+- A0 exact-head payment/ingestion profile: **322 passed + 22 subtests**, exit 0. Tariff-agent safety: **124 passed + 175 subtests**, exit 0.
+- Independent A5 `/root/a5_cycle274` initially rejected an intermediate head because a forged row-level `source_revision` was accepted. Final exact-head review: **PASS, no findings**; **265 passed + 22 subtests**, forged-revision and regulatory-act tamper probes blocked, deterministic `13,319 → 13,319` merge and `8 insert → 8 skip` idempotence passed.
+- Exact-head CI [run 38724995176 / job 116388518836](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38724995176/job/116388518836): **success**. PR receipt comment id `6190671870` records the exact candidate and checks.
+- This is one bounded PAY-3 block, not full #245/#256 product or legal-source acceptance. The lawful populated synchronized NTM snapshot remains unavailable. A6 `core-s1-6415f443120f-r9-g106` is unchanged and not sent; no protected action was performed.
+- Next: reconcile the next unresolved stale payment bundle against primary acts while preserving fail-closed source, applicability and total-withholding gates.
+
+## 2026-10-15 — Obsolete 2025 excise schedule quarantined; exact-head CI pending on draft PR #256
+
+- [FNS](https://www.nalog.gov.ru/rn27/news/tax_doc_news/16590707/) confirms that Federal Law No. 425-FZ amended Tax Code Article 193 from `2026-01-01` and the alcohol excise rate is 824 RUB/litre. The tracked `excise:2026-06-18` bundle instead retained the superseded 643 RUB/litre 2025 schedule with no end date.
+- Draft [PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256) publishes exact head `fd357f35cffea5941553d90b9fa5fa1e1c303ac1`, tree `bab265f51c8a996f0782cf0fe4a41a06f4f9b9f2`; code commit `b3bbc04503211f66b1f6f73d4467c04b93ea0e4d`. The final two commits are metadata-only, have no changed files, and preserve the reviewed tree while requesting CI.
+- The exact rejected revision now fails closed before ingestion. Persisted rejected rows remain visible for manual review, while excise, dependent VAT and final totals are withheld; known partial totals remain. Manual overrides, future verified revisions and no-signal cases remain valid.
+- A5 rejected the initial candidate because prefix fallback checked the leaf rather than selected-row provenance. The final resolver carries the chosen exact/prefix row revision while preserving the legacy API.
+- A0 payment/ingestion profile: **455 passed + 73 subtests**, exit 0. Tariff-agent safety: **124 tests OK**, exit 0. `py_compile`, JSON, diff and artifact checks exited 0.
+- Independent A5 `/root/a5_cycle275`: final **PASS, no findings**; **351 passed + 41 subtests**, behavioral/static probes passed, and exact SHA `fd357f35...` was verified as the same reviewed tree with no file diff.
+- Exact-head CI remains **PENDING**: the connector published the exact head and two no-diff trigger commits, but Actions returned no run; native authenticated git push and workflow-dispatch are unavailable in this runtime. The block is therefore not declared complete and no PR completion receipt was posted.
+- Full #245/#256 acceptance remains NOT PASS; the lawful populated synchronized NTM snapshot remains unavailable. A6 `core-s1-6415f443120f-r9-g106` is unchanged and not sent; no merge/deploy/production/protected action occurred.
+- Next: obtain the existing offline-safety workflow on exact head `fd357f35...`, then post the PR receipt and close the checkpoint without changing the reviewed tree.
+
+
+## 2026-10-16 — PAY-5 exact-head CI closure on draft PR #256
+
+- Draft [PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256) remains at exact head `486d407ec2628564a616302a96f52adb91149241`, tree `a7d4c3bd4a3b3b8573fa17c5353b336a737ddd20`; no product file changed in this cycle.
+- The cycle 278 repair exposes the fail-closed parser reason through additive optional `VatIngestionResponse.reason`. Author evidence was **232 passed + 10 subtests**; fresh independent A5 `/root/a5_cycle278` passed the exact tree with no findings.
+- Exact-head CI [run 38820783123 / job 116716584278](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38820783123/job/116716584278) completed **success**; all recorded steps passed. Closure receipt: [comment 6207980737](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256#issuecomment-6207980737).
+- PAY-5 is closed as a bounded verified block, not full #245/#256 product acceptance or legal/source completeness. A lawful populated synchronized NTM snapshot remains unavailable.
+- A6 `core-s1-6415f443120f-r9-g106` is unchanged and undispatched. No merge, deploy, production/enforcement flag, destructive migration, force push, branch deletion, permission/secret change or other protected action occurred.
+- Durable evidence is `.ai/orchestration/evidence/cycle279_pay5_ci_closure.json`. TASK_BOARD remained at revision 813 because its CAS write was rejected at the connector approval boundary and was not retried.
+- Next: reconcile the next unresolved stale payment bundle against primary sources while preserving fail-closed admission, applicability, provenance and final-total withholding.
+
+## 2026-10-16 — PAY-6 duplicate ETT admission gate closed on exact-head CI
+
+- Draft [PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256) remains at exact head `cd41a21109a99aa23457f6d6a0ba7edddb536c08`, tree `2bc81fac43d83a3fea4ba41d1c03faac2cf26e1b`; this closure cycle changed no product file.
+- The cycle 280 repair rejects the tracked bundle before planning or DB mutation when exact HS duty rows are duplicated. It preserves duplicate evidence and does not guess or silently select a rate.
+- Author evidence remains **265 passed**, exit 0. Independent A5 `/root/a5_cycle280` remains bound to the unchanged exact tree: **PASS**, no findings; seeded dry-run/apply no-mutation probe passed.
+- Exact-head CI [run 38858876457 / job 116836388534](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38858876457/job/116836388534) completed **success** (push event, 34s). Closure receipt: [comment 6209860846](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256#issuecomment-6209860846).
+- PAY-6 is closed as a bounded verified block, not full #245/#256 acceptance or legal/source completeness. The 21 duplicate codes still require immutable official-source reconciliation before admission; a lawful populated synchronized NTM snapshot remains unavailable.
+- A6 `core-s1-6415f443120f-r9-g106` is unchanged and not sent. No merge, deploy, production write, enforcement change, destructive migration, force push, branch deletion, permission/secret change or other protected action occurred.
+- Durable evidence is `.ai/orchestration/evidence/cycle281_pay6_ci_closure.json`. Next: reconcile the 21 duplicate ETT codes against immutable official sources and effective dates; keep ambiguous rows quarantined.
+
+## 2026-10-16 — PAY-7 verified ETT chapter 29 contour closed on exact-head CI
+
+- Draft [PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256) publishes exact head `69cbffcb4a9040d56e66ecc6fe039bf0aa3a6a7b`, tree `275c7314add4f19e81de62f1e0cf6a91736263a4`; local author commit `83fab8912ffb241b06b9be973473f3491b9d8911` has the same tree. The A5-rejected intermediate `d6972bb2...` is superseded.
+- The current official EEC ETT index and group-29 PDF dated 11.07.2026 confirm `2901100001=3%`, `2902200000=3%`, `2902300000=3%`, `2902410000=3%`, and `2921410000=5%`.
+- A small correction overlay replaces only those five ambiguous duplicate contours. It is bound to base revision `ett:2026-06-18`, the official base URL, exact two-row rate sets, and `valid_from=2026-01-01` / open end. Future revisions or altered provenance/scope remain unchanged and fail closed.
+- A0 verification: targeted **70 passed** and expanded import-duty/payment profile **211 passed**, exit 0; JSON, `py_compile`, and `git diff --check` exited 0.
+- Fresh independent A5 `/root/a5_cycle282`: **PASS, no findings** on the exact tree; targeted **70 passed**, adjacent PAY **55 passed**, plus future-revision and tampered-provenance no-apply controls.
+- Exact-head CI [run 38871664388 / job 116876936362](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38871664388/job/116876936362): **success**. Receipt: [comment 6211068815](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256#issuecomment-6211068815).
+- This is a bounded reconciliation, not full import acceptance: **16** exact-HS duplicate contours remain quarantined, so ingest still returns manual review before any rate write. Full #245/#256 acceptance and legal/source completeness remain NOT PASS; a lawful populated synchronized NTM snapshot remains unavailable.
+- A6 `core-s1-6415f443120f-r9-g106` is unchanged and not sent. No merge, deploy, production write/flag, destructive migration, force push, branch deletion, permission/secret change or other protected action occurred.
+- Durable evidence is `.ai/orchestration/evidence/cycle282_pay7_chapter29.json`. Next: reconcile the next remaining duplicate ETT contour against the current official chapter source while retaining exact-base binding and fail-closed admission.
+
+## 2026-10-16 — PAY-8 current ETT snapshot quarantined by legal applicability
+
+- Draft [PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256) publishes exact head `af40f10f1e286adcde6914af67ef92b90d743c11`, tree `a867b3d5b6021fed775375ce74a05a352419b7a7`; local author commit `2738ad02eb728c1233a3b3bad43dda261dd921da` has the same tree.
+- The official current EEC chapter-27 PDF confirms the 15 reconciled current-snapshot rates. This does **not** establish their historical effective intervals.
+- Fresh primary-act verification also corrected PAY-7's legal boundary: Council Decision No. 6 dated 28.01.2026 took effect 07.02.2026 and sets aniline code 2921410000 to 0% through 31.12.2027. The prior chapter-29 snapshot overlay did not model that interval.
+- The chapter-27 and chapter-29 correction bundles now require explicit `current_snapshot_only_historical_intervals_unverified` metadata and always emit independent applicability blockers after a successful reconciliation. Removing the remaining `8511100001` duplicate still cannot open apply.
+- Author verification: expanded import-duty/payment profile **212 passed**, exit 0; JSON, `py_compile`, and `git diff --check` exited 0.
+- Fresh independent A5 `/root/a5_cycle283`: **PASS, no findings** on the exact remote tree; targeted **78 passed**, expanded **279 passed**. Disposable apply and an isolation probe both returned manual review with zero `HsRate/SourceStatus/SyncLog` writes.
+- Exact-head CI [run 38878463031 / job 116899123337](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38878463031/job/116899123337): **success**. Receipt: [comment 6212133879](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256#issuecomment-6212133879).
+- This closes a bounded fail-closed safety block, not import acceptance. Remaining blockers: date-aware Decision 6 modeling; primary-act historical intervals for chapter 27; duplicate `8511100001`; full #245/#256 acceptance; lawful populated synchronized NTM snapshot.
+- A6 `core-s1-6415f443120f-r9-g106` is unchanged and not sent. No merge, deploy, production write/flag, destructive migration, force push, branch deletion, permission/secret change or other protected action occurred.
+- Durable evidence: `.ai/orchestration/evidence/cycle283_pay8_chapter27_quarantine.json`; TASK_BOARD revision 817.
+- Next safe boundary: first perform a read-only inventory of the existing Neon project/branch/schema and prove a non-production persistent-staging boundary with sentinel/no-mutation controls. Separately implement date-aware tariff applicability and verify historical intervals only from primary acts.
+
+## 2026-10-16 — Staging refresh dry-run made zero-write; durable storage unavailable
+
+- Draft [PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256) publishes exact head `38a475d20f44e9624435ea0089def0b16b9e1bd5`, tree `a5ec80034901d5a6d4a12f4e978e495e72721b4c`; local author commit `ef32b8501414a055d190b1e401d2e29589d3ae6d` has the same tree.
+- Reproduced and fixed the staging prerequisite defect: `run_full_data_refresh(dry_run=True)` no longer calls the mutating CBR updater or its fallback/provenance writes. Stale/missing rates are reported as pending apply; a database-read failure is now `partial_error`. Non-dry mode still invokes the updater.
+- Author focused/adjacent command: **56 passed**, exit 0. Fresh independent A5 `/root/a5_cycle284`: **PASS, no findings**; focused **19 passed**, adjacent **107 passed + 31 subtests**. Actual failing-session, missing/empty/sentinel SQLite, byte/logical no-mutation, no-network and non-dry controls passed.
+- Exact-head CI [run 38884269859 / job 116918116968](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38884269859/job/116918116968): **success**. PR receipt: [comment 6213048689](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256#issuecomment-6213048689). Coordination receipt: [comment 6213054948](https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/257#issuecomment-6213054948).
+- Persistent staging load remains **CAPABILITY_BLOCKED**: no database/object-storage configuration is present, no durable mount exists, the writable overlay reports `fsync=volatile`, and the already-recorded connected Neon inventory is empty. Temporary SQLite is not durability.
+- Minimum missing capability: an existing authorized non-production Postgres namespace or SQLite on a proven durable volume, plus durable immutable-original storage. No new resource, secret or permission was created.
+- Full #245/#256 acceptance and legal/source completeness remain NOT PASS. A6 `core-s1-6415f443120f-r9-g106` is unchanged and not sent. No protected action occurred.
+- Durable evidence: `.ai/orchestration/evidence/cycle284_staging_dry_run_safety.json`; TASK_BOARD revision 818.
+- Next: once durable storage is connected, run one bounded raw-first staging load with source IDs, hashes and row counts. Continue independent product work meanwhile; do not wait on staging infrastructure.
+
+# 2026-10-16 — First persistent raw-first staging ingest completed
+
+- The owner-provided free Neon staging boundary was re-read before writing: project `red-meadow-53765518`, branch `br-weathered-frost-ba9jri3c`, database `tariff_staging`, private bucket `official-originals`. No production resource, secret, permission, or paid resource was created or changed.
+- The retained official EEC ETT chapter-29 PDF was uploaded under immutable source/date/SHA addressing and read back byte-for-byte: 957,135 bytes, 49 pages, SHA-256 `418666f5fc61db171a9d0bbcf068753504cd29ff04f0f4ac62d4e1147980b51a`.
+- A new isolated `tariff_ingest` schema stores source manifests, ingest runs, and raw collected rows. The first bounded run saved 20 exact 10-digit chapter-29 rows as `COLLECTED_UNVERIFIED`; reread is 20 total / 20 unique / 20 unverified / 0 normalized / 0 rejected, cursor `2902700000` at ordinal 20. Replaying the same transaction did not increase counts.
+- Independent A5 correctly rejected the first serialization because the Cyrillic fields were mojibake. A0 repaired the same staging rows using explicit UTF-8 extraction without deleting data; a repeated upsert and database hash reread show 20/20 `sha256(raw_line)` matches and zero mojibake markers. The final A5 disposition is bound in `.ai/orchestration/evidence/cycle285_first_persistent_staging_ingest.json`.
+- Product code did not change. Draft PR #256 remains at `38a475d20f44e9624435ea0089def0b16b9e1bd5`, tree `a5ec80034901d5a6d4a12f4e978e495e72721b4c`, with successful exact-head CI run 38884269859 / job 116918116968.
+- This proves durable raw collection only. The rows are not normalized, legally admitted, or usable for tariff totals; a populated synchronized NTM snapshot and full #245/#256 acceptance remain NOT PASS. A6 `core-s1-6415f443120f-r9-g106` is unchanged and not sent.
+- Next: turn this bounded path into the reusable loader with explicit UTF-8 regression coverage, then resume raw collection in small atomic chunks while preserving separate fail-closed normalization/applicability gates.
+
+# 2026-10-16 — Reusable UTF-8-safe staging loader and ordinal 21–220 ingest
+
+- Draft [PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256) publishes exact head `0320a7d268b33413c48dffc963cde6b0ec051ab1`, tree `f5fc479d8ef6696880dcc28614c8a3e3da35e648`. The three-file loader keeps exact UTF-8 `raw_line`, deterministic SHA-256, duplicate evidence and one-based bounded resume; it performs no normalization or legal admission.
+- A5 rejected the first candidate because Unicode `\\d` accepted non-ASCII digits. The repaired exact head uses ASCII `[0-9]` and has a dedicated regression. A0 author run: **11 tests OK**, exit 0. Real PDF probe: **533 raw / 533 unique**, batch 21–220 = 200, cursor 221, exit 0.
+- The same immutable historical chapter-29 source was resumed from ordinal 21. Staging grew from 20 to **220** rows and from one to two ingest runs. Replay of the exact batch kept counts unchanged. Reread: 220 unique codes, 220 `COLLECTED_UNVERIFIED`, 220/220 UTF-8 row hashes, zero duplicate groups and zero mojibake markers; normalization/rejection remain 0/0.
+- Fresh independent A5 `/root/a5_cycle286`: **PASS, no findings** after repair; 11/11 tests, Arabic-Indic/fullwidth adversarial rejection, real-PDF batch, and fresh Neon terminal reread all passed. Exact-head CI [run 38898431622 / job 116964443470](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/38898431622/job/116964443470): **success**.
+- The retained 2024 PDF remains historical `COLLECTED_UNVERIFIED`; it is not called current or legally admitted, and rows cannot drive totals. Full #245/#256 acceptance and a populated synchronized NTM snapshot remain NOT PASS. A6 `core-s1-6415f443120f-r9-g106` is unchanged and not sent; no protected action occurred.
+- Durable evidence: `.ai/orchestration/evidence/cycle286_resumable_staging_ingest.json`. Next: resume at ordinal 221 with the same atomic idempotent path; in parallel, populate current primary-source SGR/NTM data without weakening source/applicability gates.
+
+# 2026-10-16 — First current NSI-1995 SGR raw page persisted
+
+- The live official EEC NSI registry [dictionary 1995](https://nsi.eaeunion.org/portal/1995) reported **778,350** rows at capture. Its first 100-row API page was stored in private non-production object storage and read back byte-for-byte: **436,141 bytes**, SHA-256 `c2dea342fb16b49c0f5f96ccf6e3a9e247f406ba49af93cf6c55d6e8d81bd307`.
+- Isolated `tariff_ingest.sgr_collected_rows` contains **100 rows / 100 unique SGR / 100 unique source IDs / 100 unique canonical row hashes**, ordinals 1–100. Manifest and run counts are 1/1; replay did not grow them. Cursor is `next_offset=100`, `complete=false`; all rows remain `COLLECTED_UNVERIFIED`, normalized/rejected 0/0, legal admission false.
+- A0's initial aggregate metadata was wrong because a shell argument transport changed the intended byte sequence. Before checkpoint it was corrected from independent object and DB rereads to `aa338ee1ed738037482e39d850293b65b06b6ef25db6fe3f868406f27f1a9605`; the prior value and reason remain in run metadata as an audit trail.
+- Fresh independent A5 `/root/a5_cycle289`: **PASS, no findings**. It recomputed all 100 raw hashes and the ordered aggregate, verified no ordinal gaps or malformed/empty identifiers, and confirmed isolation from ETT and any normalization/admission table. Its tuple digest is `78575eefa74a3f7de0f63bcfe6e0bf5981bce51e357defeb123d40f2840298f8`.
+- Existing draft PR #258 remains unchanged at exact HEAD `7f7f4938d6145979d45fddd5b04cdede83ca6e49`, tree `91124ff54a054772168a84725845dd78659adcce`; exact-head CI run `38488698821` / job `115608493434` is `success`. Its recorded focused provenance/pagination/status suite is 40 passed and prior independent A5 is 160 passed.
+- During A5 the same live registry total had already grown to **778,404** and current page bytes changed. Therefore this result is explicitly one timestamped raw page, not a complete synchronized snapshot. Scaling requires drift-safe page manifests, overlap/dedupe and terminal total reconciliation; no row may enter normalization, legal admission or enforcement before those separate gates pass.
+- Durable evidence: `.ai/orchestration/evidence/cycle289_sgr_nsi1995_first_raw_page.json`. Full #245/#258 acceptance and a populated synchronized NTM snapshot remain NOT PASS. A6 is unchanged/not sent; no protected action occurred.
+
+# 2026-10-16 — NSI-1995 resumed pagination now fails closed on live drift
+
+- Draft [PR #258](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/258) publishes exact head `c59af35da7dde2140d911e2003a4a52fb0611507`, tree `2fee4bb388d1b2db69b2e49ed41d9f4dacea08d9`; local equivalent commit `3a5b93db4ef6616fc42530fccd8d93c2a4cca1f2` has the same tree.
+- Resumed NSI-1995 page acquisition now binds a trailing overlap digest, records immutable canonical page-manifest fields, deduplicates exact identities while advancing by source positions, records total drift and requires exact terminal-total reconciliation. Stable-total overshoot and premature empty pages fail closed.
+- Author verification: focused **31 passed**, expanded **246 passed + 6 subtests**, `py_compile` and `git diff --check` exit 0.
+- Independent A5 first found a real stable-total overshoot defect. The exact tree was repaired; A5 re-review is **PASS, no findings**, with focused **31 passed** and adjacent **113 passed**.
+- A live read-only continuation probe at logical offset 100 used 20 stored trailing rows and overlap SHA-256 `cf53968e85eb2b4966928ff4370cdf9808a70a73c74abc9dee47c6ebaa31608c`. The current official page did not match: the command exited 1 with `NSI SGR overlap mismatch`, accepted zero rows and performed zero DB writes. The old cursor is unsafe and must not be resumed.
+- Exact-head CI is not yet evidence: no run appeared after the connector ref update, native git authentication is absent, and this executor has no workflow-dispatch capability. The candidate remains incomplete until CI exists and succeeds.
+- No populated synchronized NTM snapshot is available. All prior rows remain `COLLECTED_UNVERIFIED`; no normalization/legal admission/enforcement occurred. A6 is unchanged/not sent; no protected action occurred.
+- Durable evidence: `.ai/orchestration/evidence/cycle290_sgr_nsi1995_drift_guard.json`; TASK_BOARD revision 823. Next: start a new offset-0 acquisition epoch using the guard, or obtain an immutable source-side snapshot/stable-order contract; do not resume the old offset-100 cursor.
+
+# 2026-10-16 — Fresh drift-safe NSI-1995 epoch persisted through offset 200
+
+- Draft PR #258 remains unchanged at exact head `c59af35da7dde2140d911e2003a4a52fb0611507`, tree `2fee4bb388d1b2db69b2e49ed41d9f4dacea08d9`; this cycle changed no product file.
+- A new offset-0 epoch captured two logical 100-row pages. Page two used a 20-row overlap: all 20 rows matched exactly, overlap SHA-256 is `ecc6ac7790bca6a737b2d62d4396579bf925106c4dc12d700cb4d5409ee0132b`. Both manifests observed official total `778404` before and after; drift was false. Cursor is now `next_offset=200`.
+- Four immutable objects (two raw pages and two manifests) were stored in the existing private non-production `official-originals` bucket and each was read back byte-for-byte. The existing isolated `tariff_ingest` schema atomically received four source objects, two runs, and 200 rows. Replay did not grow counts.
+- Reread: 200 rows, 200 unique source IDs, 200 unique row hashes, ordinals 1–200, ordered digest `c39643f99479da5a77bdeb77a09b2891aa5c0e42e3d372a6dafddf43207a92fd`. Every row is `COLLECTED_UNVERIFIED`; normalization, rejection and legal admission remain zero/false.
+- Author targeted command passed **31 tests**, exit 0. Fresh independent A5 `/root/a5_cycle291`: **PASS, no findings**; object/DB tuples matched 200/200, and the adjacent SGR suite passed **190 tests**, exit 0.
+- Exact-head CI is still not observed: the connector ref update emitted no run, while native git authentication and workflow dispatch are unavailable. The candidate is not complete until exact-head CI exists and succeeds.
+- This is a bounded fresh raw epoch, not a populated synchronized NTM snapshot or legal/product acceptance. A6 `core-s1-6415f443120f-r9-g106` is unchanged and not sent; no protected action occurred.
+- Durable evidence: `.ai/orchestration/evidence/cycle291_sgr_nsi1995_fresh_epoch.json`; TASK_BOARD revision 824. Resume only this epoch at offset 200 with trailing overlap SHA-256 `ff8bb4e2aa841dad6296ba01fd970c8e7a27532981b65ec0df92a184f9e81a82`; fail closed on mismatch or total drift.
+
+# 2026-10-16 — Fresh NSI-1995 epoch advanced to offset 300
+
+- Draft PR #258 remains unchanged at exact head `c59af35da7dde2140d911e2003a4a52fb0611507`, tree `2fee4bb388d1b2db69b2e49ed41d9f4dacea08d9`; exact-head CI run 38920906239 / job 117040259865 is `success`.
+- The fresh epoch resumed at logical offset 200 with 20 retained rows. Overlap SHA-256 `ff8bb4e2aa841dad6296ba01fd970c8e7a27532981b65ec0df92a184f9e81a82` matched exactly. The source returned 100 new rows; total stayed `778404` before/after, drift false, cursor `next_offset=300`.
+- Raw page and manifest were stored as two new immutable objects and read back byte-for-byte: page 263,543 bytes / `ee7227c890518b0f13553dcdf39e728bba0f3b888e7445c32281f1401d204728`; manifest 764 bytes / `15cb76d8ac947972e6a662ce4905a7664ad3eec6643699c3cf42dc70d83b5597`.
+- Staging now has six epoch source objects, three runs and 300 rows. Reread: 300 unique source IDs and row hashes, contiguous ordinals 1–300, exact DB/source tuples 300/300, ordered digest `940565c876ca8009afa2f1d4f626c3610613ec83f1e3e9fe4fa4f871d63a04ca`. Identical replay did not grow counts.
+- Every row remains `COLLECTED_UNVERIFIED`; normalized/rejected counts are 0/0 and legal admission is false.
+- Author tests: 31 targeted and 191 expanded passed, exit 0. Fresh independent A5 `/root/a5_cycle291`: PASS/no findings; 31 targeted and 190 adjacent passed, object GETs 2/2 exact, DB/source tuples 300/300.
+- This is bounded raw collection, not a populated synchronized NTM snapshot or full legal/product acceptance. A6 `core-s1-6415f443120f-r9-g106` is unchanged and not sent; no protected action occurred.
+- Evidence: `.ai/orchestration/evidence/cycle293_sgr_nsi1995_offset300.json`; TASK_BOARD revision 825. Resume only this epoch at offset 300 with trailing overlap SHA-256 `81521de0960f94d01a101569b987a2e39f89317c9fc65ab7aac21c0752bcb2eb`; fail closed on mismatch or drift.
+
+# 2026-10-16 — Fresh NSI-1995 epoch advanced to offset 400
+
+- Draft PR #258 remains unchanged at exact head `c59af35da7dde2140d911e2003a4a52fb0611507`, tree `2fee4bb388d1b2db69b2e49ed41d9f4dacea08d9`; exact-head CI run 38920906239 / job 117040259865 remains `success`.
+- The fresh epoch resumed at logical offset 300 with 20 retained rows. Overlap SHA-256 `81521de0960f94d01a101569b987a2e39f89317c9fc65ab7aac21c0752bcb2eb` matched exactly. The source returned 100 new rows; total stayed `778404` before/after, drift false, cursor `next_offset=400`.
+- Raw page and manifest were stored as two new immutable objects and independently read back byte-for-byte: page 267,327 bytes / `01740b8654741f64406c0cd2db014e9612b93b5cd5de5c23097105dded2b60d8`; manifest 764 bytes / `c2cfe8feeded79f282a3dcb440b8d5f0830300f94a79285166af91f859ffe85c`.
+- Staging now has eight epoch source objects, four runs and 400 rows. Reread: 400 unique source IDs and row hashes, contiguous ordinals 1–400, exact DB/source tuples 400/400, ordered digest `d4aaf2858b7e16b2f0418811740833c86d14ed2e10ddfdcd45b29d32cf240bc1`. Exact replay did not grow counts.
+- Every row remains `COLLECTED_UNVERIFIED`; normalized/rejected counts are 0/0 and legal admission is false.
+- Author tests: 31 targeted and 191 expanded passed, exit 0. Independent A5 `/root/a5_cycle291`: PASS/no findings; 31 targeted and 190 adjacent passed, fresh object GETs 2/2 exact, DB/source tuples 400/400.
+- This is bounded raw collection, not a populated synchronized NTM snapshot or full legal/product acceptance. A6 `core-s1-6415f443120f-r9-g106` is unchanged and not sent; no protected action occurred.
+- Evidence: `.ai/orchestration/evidence/cycle294_sgr_nsi1995_offset400.json`; TASK_BOARD revision 826. Resume only this epoch at offset 400 with trailing overlap SHA-256 `5201d5cefe7907df7759195b2013cd905efc99d8c4990c799932fce49bb19f13`; fail closed on mismatch or drift.
+
+# 2026-10-16 — Offset 400 continuation frozen on verified source drift
+
+- Draft PR #258 remains unchanged at exact head `c59af35da7dde2140d911e2003a4a52fb0611507`, tree `2fee4bb388d1b2db69b2e49ed41d9f4dacea08d9`; exact-head CI run 38920906239 / job 117040259865 remains `success`.
+- The guarded offset-400 capture exited 1 before returning rows or creating artifacts: `NSI SGR overlap mismatch`. Expected overlap SHA-256 was `5201d5cefe7907df7759195b2013cd905efc99d8c4990c799932fce49bb19f13`; a separate read-only fetch computed actual `5cbf0cbb2d70ed1951d97eb924ee0ea5ee47b0c2973c27b740644be892fbc927`.
+- The official total is now 778429, up 25 from the frozen epoch total 778404. The old epoch cannot safely resume and remains frozen at 400 rows.
+- No object or database write occurred. Staging reread remains eight epoch source objects, four runs, 400 rows / 400 source IDs / 400 row hashes, all `COLLECTED_UNVERIFIED`; normalization/rejection 0/0 and legal admission false.
+- Author focused tests: 31 passed, exit 0. Independent A5 `/root/a5_cycle291`: PASS/no findings; guarded execution independently exited 1 before artifacts, current drift was reproduced, adjacent SGR suite 190 passed, and staging remained 400/400.
+- This is a verified fail-closed source blocker, not a synchronized snapshot or legal/product acceptance. A6 `core-s1-6415f443120f-r9-g106` is unchanged and not sent; no protected action occurred.
+- Evidence: `.ai/orchestration/evidence/cycle295_sgr_nsi1995_offset400_drift.json`; TASK_BOARD revision 827. Do not resume the frozen epoch; start a new offset-0 epoch under the existing guard or obtain an immutable source-side snapshot/stable-order contract.
+
+# 2026-10-16 — New NSI-1995 epoch restarted and advanced to offset 200
+
+- Draft PR #258 remains unchanged at exact head `c59af35da7dde2140d911e2003a4a52fb0611507`, tree `2fee4bb388d1b2db69b2e49ed41d9f4dacea08d9`; exact-head CI run 38920906239 / job 117040259865 remains `success`.
+- A new offset-0 epoch replaced unsafe continuation of the frozen 400-row epoch. Two logical 100-row pages observed official total `778429` before and after; drift was false. Page two verified all 20 retained rows with overlap SHA-256 `c179aeb069a32fd875774710646d6057a0d2d361c84e5ba020b50c4b54f743b9`.
+- Four immutable objects were stored in the existing private non-production bucket and read back byte-for-byte: page hashes `b7b6b40ad147499f07671e6a967d47403cc40c5c5b0b11d66e3fb2d927a10b54` / `4eaf63d5a4b1dbc413c7d6627aa8d75256a9c1c3e513a2760227499fa0c66987`, manifest hashes `662718957324a37e32b4a77afa5c3ab4e04baa565cf013810bc1ee0a3bfef4ad` / `7b5c8244d3a56ef406827f953179735c58309e79f8397af349fb70c8f78287ef`.
+- The isolated `tariff_ingest` schema atomically received four source objects, two runs and 200 rows. Reread and replay: 200 unique source IDs and row hashes, ordinals 1–200, ordered digest `8996a5a9480c3f832bcb386ab767dc216b49914b87ad92c64c565361e95ce7d9`; counts stayed 4/2/200. The frozen prior epoch remains exactly 400 rows/eight objects.
+- Every new row remains `COLLECTED_UNVERIFIED`; normalization/rejection are 0/0 and legal admission is false.
+- Author tests: 31 targeted and 191 expanded passed, exit 0. Independent A5 `/root/a5_cycle291`: PASS/no findings; 31 targeted and 190 adjacent passed, fresh object GETs 4/4 exact, DB/source tuples 200/200, old epoch unchanged.
+- This is bounded raw collection, not a populated synchronized NTM snapshot or full legal/product acceptance. A6 `core-s1-6415f443120f-r9-g106` is unchanged and not sent; no protected action occurred.
+- Evidence: `.ai/orchestration/evidence/cycle296_sgr_nsi1995_new_epoch.json`; TASK_BOARD revision 828. Resume only epoch cycle296 at offset 200 with trailing overlap SHA-256 `a6bb8b1a5eaddb3ff5205bded5e8621d3e58995b2a802ba2b6e13ea1386ef799`; fail closed on mismatch or total drift.
+
+# 2026-10-16 — New NSI-1995 epoch advanced to offset 300
+
+- Draft PR #258 remains unchanged at exact head `c59af35da7dde2140d911e2003a4a52fb0611507`, tree `2fee4bb388d1b2db69b2e49ed41d9f4dacea08d9`; exact-head CI run 38920906239 / job 117040259865 remains `success`.
+- Epoch cycle296 resumed at logical offset 200 with 20 retained rows. Overlap SHA-256 `a6bb8b1a5eaddb3ff5205bded5e8621d3e58995b2a802ba2b6e13ea1386ef799` matched exactly. The source returned 100 new rows; total stayed `778429` before/after, drift false, cursor `next_offset=300`.
+- Raw page and manifest were stored as two immutable objects and read back byte-for-byte: page 259,093 bytes / `09c1cc294c391f59f921b8a57fca11e6fd5cba5e5d817a442dc579d5bbfe774e`; manifest 764 bytes / `510fa29daeff08d5db675c1437011be04b80d815f6f8e05be3c8dcc858a38eb0`.
+- Staging now has six epoch source objects, three runs and 300 rows. Reread: 300 unique source IDs and row hashes, ordinals 1–300, exact DB/source tuples 300/300, ordered digest `585e44a66240a911119f692a90b8cde140420848db9b5429a5d61dab860d3d8b`. Exact replay did not grow counts; the frozen prior epoch remains 400 rows/eight objects.
+- Every new row remains `COLLECTED_UNVERIFIED`; normalized/rejected counts are 0/0 and legal admission is false.
+- Author tests: 31 targeted and 191 expanded passed, exit 0. Independent A5 `/root/a5_cycle291`: PASS/no findings; 31 targeted and 190 adjacent passed, fresh object GETs 2/2 exact, DB/source tuples 300/300.
+- This is bounded raw collection, not a populated synchronized NTM snapshot or full legal/product acceptance. A6 `core-s1-6415f443120f-r9-g106` is unchanged and not sent; no protected action occurred.
+- Evidence: `.ai/orchestration/evidence/cycle297_sgr_nsi1995_offset300.json`; TASK_BOARD revision 829. Resume only epoch cycle296 at offset 300 with trailing overlap SHA-256 `483005c91215f03976ba85335194f9e69ed06d7b06c5c46fdc4bbae80f5afade`; fail closed on mismatch or total drift.
+
+# 2026-10-16 — New NSI-1995 epoch advanced to offset 400
+
+- Draft PR #258 remains unchanged at exact head `c59af35da7dde2140d911e2003a4a52fb0611507`, tree `2fee4bb388d1b2db69b2e49ed41d9f4dacea08d9`; exact-head CI run 38920906239 / job 117040259865 remains `success`.
+- Epoch cycle296 resumed at logical offset 300 with 20 retained rows. Overlap SHA-256 `483005c91215f03976ba85335194f9e69ed06d7b06c5c46fdc4bbae80f5afade` matched exactly. The source returned 100 new rows; total stayed `778429` before/after, drift false, cursor `next_offset=400`.
+- Raw page and manifest were stored as two immutable objects and read back byte-for-byte: page 265,376 bytes / `acf6b8e8ff843a68550005b862eac6e59c7ee1a275812937fdc4077f59cf6fcd`; manifest 764 bytes / `a4ed6571c0beb0abbfa941a2ba329d19a39a35b923b119ea66be2aacfccef4ec`.
+- Staging now has eight epoch source objects, four runs and 400 rows. Reread: 400 unique source IDs and row hashes, ordinals 1–400, exact DB/source tuples 400/400, ordered digest `e0e96d16ad67ede14c37d610b9e04f31f00afa62fab0b891f58cd29d2fab7bef`. Exact replay did not grow counts; the frozen prior epoch remains 400 rows/eight objects.
+- Every new row remains `COLLECTED_UNVERIFIED`; normalized/rejected counts are 0/0 and legal admission is false.
+- Author tests: 31 targeted and 191 expanded passed, exit 0. Independent A5 `/root/a5_cycle291`: PASS/no findings; 31 targeted and 190 adjacent passed, fresh object GETs 2/2 exact, DB/source tuples 400/400.
+- This is bounded raw collection, not a populated synchronized NTM snapshot or full legal/product acceptance. A6 `core-s1-6415f443120f-r9-g106` is unchanged and not sent; no protected action occurred.
+- Evidence: `.ai/orchestration/evidence/cycle298_sgr_nsi1995_offset400.json`; TASK_BOARD revision 830. Resume only epoch cycle296 at offset 400 with trailing overlap SHA-256 `5cbf0cbb2d70ed1951d97eb924ee0ea5ee47b0c2973c27b740644be892fbc927`; fail closed on mismatch or total drift.
+
+# 2026-10-16 — New NSI-1995 epoch advanced to offset 500
+
+- Draft PR #258 remains unchanged at exact head `c59af35da7dde2140d911e2003a4a52fb0611507`, tree `2fee4bb388d1b2db69b2e49ed41d9f4dacea08d9`; exact-head CI run 38920906239 / job 117040259865 remains `success`.
+- Epoch cycle296 resumed at logical offset 400 with 20 retained rows. Overlap SHA-256 `5cbf0cbb2d70ed1951d97eb924ee0ea5ee47b0c2973c27b740644be892fbc927` matched exactly. The source returned 100 new rows; total stayed `778429` before/after, drift false, cursor `next_offset=500`.
+- Raw page and manifest were stored as two immutable objects and read back byte-for-byte: page 263,670 bytes / `2d65fba6a188d252a71e4d2237c5d101a837566ab42f5bff7e393ace25aad5f7`; manifest 764 bytes / `11a3174d9af36112f38273eb4a5601dd34cd101d3f8fd655a5b2f2ed9174b33d`.
+- Staging now has ten epoch source objects, five runs and 500 rows. Reread: 500 unique source IDs and row hashes, ordinals 1–500, exact DB/source tuples 500/500, ordered digest `fdf313e4010938a65dcddf6bd4819ce6cb010f33be8326c70d4571f5b414979a`, tuple digest `c564f59ef0dbc25c5045d09a05f7f952b1765ec3b3e075f4b3305a6c19d86b05`. Exact replay did not grow counts; the frozen prior epoch remains 400 rows/eight objects.
+- Every new row remains `COLLECTED_UNVERIFIED`; normalized/rejected counts are 0/0 and legal admission is false.
+- Author tests: 31 targeted and 191 expanded passed, exit 0. Independent A5 `/root/a5_cycle299`: PASS/no findings; 31 targeted and 191 adjacent passed, fresh object GETs 2/2 exact, DB/source tuples 500/500, frozen epoch291 unchanged.
+- This is bounded raw collection, not a populated synchronized NTM snapshot or full legal/product acceptance. A6 `core-s1-6415f443120f-r9-g106` is unchanged and not sent; no protected action occurred.
+- Evidence: `.ai/orchestration/evidence/cycle299_sgr_nsi1995_offset500.json`; TASK_BOARD revision 831. Resume only epoch cycle296 at offset 500 with trailing overlap SHA-256 `36ae7ea1f7fc9f5375fb0cf00831b586b996861865a17cdec6eadf0004fd072e`; fail closed on mismatch or total drift.
+
+# 2026-10-16 — New NSI-1995 epoch advanced to offset 600
+
+- Draft PR #258 remains unchanged at exact head `c59af35da7dde2140d911e2003a4a52fb0611507`, tree `2fee4bb388d1b2db69b2e49ed41d9f4dacea08d9`; exact-head CI run 38920906239 / job 117040259865 remains `success`.
+- Epoch cycle296 resumed at logical offset 500 with 20 retained rows. Overlap SHA-256 `36ae7ea1f7fc9f5375fb0cf00831b586b996861865a17cdec6eadf0004fd072e` matched exactly. The source returned 100 new rows; total stayed `778429` before/after, drift false, cursor `next_offset=600`.
+- Raw page and manifest were stored as two immutable objects and read back byte-for-byte: page 262,622 bytes / `a9853fb1d8f0d0fcd79af49457a6566b84c81fb1a9d4aadba1f3f2c851b0e018`; manifest 764 bytes / `a83ab37b77c1ddc001b3464ae01a1b382d30015e4c7dea4ab3ce7f7d1d2ee044`.
+- Staging now has twelve epoch source objects, six runs and 600 rows. Reread: 600 unique source IDs and row hashes, ordinals 1–600, exact DB/source tuples 600/600, ordered digest `a61bca12b16fd0a4a9c3e5f2f8cc310d661b3d12319667e704ef65e72ea331d0`, tuple digest `6f9862c26088481d8c796e399275444724ffe4482f66046ad343d1bfb3a12f45`. Exact replay did not grow counts; frozen epoch291 remains 400 rows/eight objects.
+- Every new row remains `COLLECTED_UNVERIFIED`; normalized/rejected counts are 0/0 and legal admission is false.
+- Author tests: 31 targeted and 191 expanded passed, exit 0. Independent A5 `/root/a5_cycle300`: PASS/no findings; 31 targeted and 191 adjacent passed, fresh object GETs 2/2 exact, DB/source tuples 600/600, frozen epoch291 unchanged.
+- This is bounded raw collection, not a populated synchronized NTM snapshot or full legal/product acceptance. A6 `core-s1-6415f443120f-r9-g106` is unchanged and not sent; no protected action occurred.
+- Evidence: `.ai/orchestration/evidence/cycle300_sgr_nsi1995_offset600.json`; TASK_BOARD revision 832. Resume only epoch cycle296 at offset 600 with trailing overlap SHA-256 `096beef2d01d094f2275ae7d7a6791bb23428f1f5293744e4c7e10011c69b565`; fail closed on mismatch or total drift.
+
+# 2026-10-17 — New NSI-1995 epoch advanced to offset 700
+
+- Draft PR #258 remains unchanged at exact head `c59af35da7dde2140d911e2003a4a52fb0611507`, tree `2fee4bb388d1b2db69b2e49ed41d9f4dacea08d9`; exact-head CI run 38920906239 / job 117040259865 remains `success`.
+- Epoch cycle296 resumed at logical offset 600 with 20 retained rows. Overlap SHA-256 `096beef2d01d094f2275ae7d7a6791bb23428f1f5293744e4c7e10011c69b565` matched exactly. The source returned 100 new rows; total stayed `778429` before/after, drift false, cursor `next_offset=700`.
+- Raw page and manifest were stored as two immutable objects and independently read back byte-for-byte: page 257,716 bytes / `2e0e3d85aed3040e38f0c89c66c2ff503b93b5a2ef50ac0f040bda258c5d119c`; manifest 764 bytes / `55ffe33426152aafb0047ec6dfdb79e7da8cf9b2114fe139ef11566270db79a2`.
+- Staging now has fourteen epoch source objects, seven runs and 700 rows. Reread: 700 unique source IDs and row hashes, ordinals 1–700, exact DB/source tuples 700/700, ordered digest `657ada3d1fb2f442d115da61609ba91d0b2635e1f334fe29d651528a4690eb57`, tuple digest `70f82d5754fc128a649c52145737d7af74f58e323c874351a863148c57307a7e`. Exact replay did not grow counts; frozen epoch291 remains 400 rows/eight objects.
+- Every new row remains `COLLECTED_UNVERIFIED`; normalized/rejected counts are 0/0 and legal admission is false.
+- Author tests: 31 targeted and 191 expanded passed, exit 0. Independent A5 `/root/a5_cycle301`: PASS/no findings; 31 targeted and 191 adjacent passed, fresh object GETs 2/2 exact, DB/source tuples and both digests matched, frozen epoch291 unchanged.
+- This is bounded raw collection, not a populated synchronized NTM snapshot or full legal/product acceptance. A6 `core-s1-6415f443120f-r9-g106` is unchanged and not sent; no protected action occurred.
+- Evidence: `.ai/orchestration/evidence/cycle301_sgr_nsi1995_offset700.json`; TASK_BOARD revision 833. Resume only epoch cycle296 at offset 700 with trailing overlap SHA-256 `3c3e985cadb817e4a8e1aaf49fe4e0bf99a79bcbafdc1870573e05848288f2d6`; fail closed on mismatch or total drift.
+
+# 2026-10-17 — New NSI-1995 epoch advanced to offset 800
+
+- Draft PR #258 remains unchanged at exact head `c59af35da7dde2140d911e2003a4a52fb0611507`, tree `2fee4bb388d1b2db69b2e49ed41d9f4dacea08d9`; exact-head CI run 38920906239 / job 117040259865 remains `success`.
+- Epoch cycle296 resumed at logical offset 700 with 20 retained rows. Overlap SHA-256 `3c3e985cadb817e4a8e1aaf49fe4e0bf99a79bcbafdc1870573e05848288f2d6` matched exactly. The source returned 100 new rows; total stayed `778429` before/after, drift false, cursor `next_offset=800`.
+- Raw page and manifest were stored as two immutable objects and independently read back byte-for-byte: page 265,868 bytes / `344af155706387545d9e468975bdf9bcc7236eb6f801f8ea99a5618b053b016c`; manifest 764 bytes / `648d7a32a2cdf54fe073b3ab16523c43db34be49c91076d93768fc6eb2065207`.
+- Staging now has sixteen epoch source objects, eight runs and 800 rows. Reread: 800 unique source IDs and row hashes, ordinals 1–800, exact DB/source tuples 800/800, ordered digest `b6e62438fdb3e9f9e443beaed4c74c718fca2232d17032f37860c037258baa0f`, tuple digest `6eb060491d851f6e6e63dfe39a5e2c26f0bc359f8eb7ad353282db1890361283`. Exact replay did not grow counts; frozen epoch291 remains 400 rows/eight objects.
+- Every new row remains `COLLECTED_UNVERIFIED`; normalized/rejected counts are 0/0 and legal admission is false.
+- Author tests: 31 targeted and 191 expanded passed, exit 0. Independent A5 `/root/a5_cycle302`: PASS/no findings; 31 targeted and 191 adjacent passed, fresh object GETs 2/2 exact, DB/source tuples and both digests matched, frozen epoch291 unchanged.
+- This is bounded raw collection, not a populated synchronized NTM snapshot or full legal/product acceptance. A6 `core-s1-6415f443120f-r9-g106` is unchanged and not sent; no protected action occurred.
+- Evidence: `.ai/orchestration/evidence/cycle302_sgr_nsi1995_offset800.json`; TASK_BOARD revision 834. Resume only epoch cycle296 at offset 800 with trailing overlap SHA-256 `1beee9a372c456aa5287c8d7b1b713bf2d49e31ab764aa370b5328524a3f9356`; fail closed on mismatch or total drift.
+
+# 2026-10-17 — State board recovered and NSI-1995 epoch advanced to offset 900
+
+- The cycle302 state checkpoint had accidentally stored a truncated TASK_BOARD command rendering. Cycle303 detected the invalid JSON before using the board, restored the complete revision 834 byte-for-byte, and published repair commit `dde61d97ea59901393538b800fd3a426326467c7` / board blob `21b1cc3929fe5b6679304897cc09e6a3820c3e01`. Independent A5 verified the repaired remote/local blob.
+- Draft PR #258 remains unchanged at exact head `c59af35da7dde2140d911e2003a4a52fb0611507`, tree `2fee4bb388d1b2db69b2e49ed41d9f4dacea08d9`; exact-head CI run 38920906239 / job 117040259865 remains `success`.
+- Epoch cycle296 resumed at logical offset 800 with 20 retained rows. Overlap SHA-256 `1beee9a372c456aa5287c8d7b1b713bf2d49e31ab764aa370b5328524a3f9356` matched exactly. The source returned 100 new rows; total stayed `778429` before/after, drift false, cursor `next_offset=900`.
+- Raw page and manifest were stored as two immutable objects and independently read back byte-for-byte: page 275,242 bytes / `cf3f80ec0d16a2882e50447000d57b80b07783b28ab0a1e06e2e50aa0790eabc`; manifest 764 bytes / `905d6daecafce8757ac65043e9090d3a1322e5b394db965755081ff57aa9ee24`.
+- Staging now has eighteen epoch source objects, nine runs and 900 rows. Reread: 900 unique source IDs and row hashes, ordinals 1–900, exact DB/source tuples 900/900, ordered digest `824e0b85b1fc7fb5e6553abefe93fba6ef2b63ed1b3861f1c0aef57475bf207f`, tuple digest `5b79652f871f922a81e007bd7c62e586b7b164c85cece6285b650a31e294fc1c`. Exact replay did not grow counts; frozen epoch291 remains 400 rows/eight objects.
+- Every new row remains `COLLECTED_UNVERIFIED`; normalized/rejected counts are 0/0 and legal admission is false.
+- Author tests: 31 targeted and 191 expanded passed, exit 0. Independent A5 `/root/a5_cycle303`: PASS/no findings; 31 targeted and 191 adjacent passed, fresh object GETs 2/2 exact, DB/source tuples and both digests matched, frozen epoch291 unchanged.
+- This is bounded raw collection, not a populated synchronized NTM snapshot or full legal/product acceptance. A6 `core-s1-6415f443120f-r9-g106` is unchanged and not sent; no protected action occurred.
+- Evidence: `.ai/orchestration/evidence/cycle303_sgr_nsi1995_offset900.json`; TASK_BOARD revision 835. Resume only epoch cycle296 at offset 900 with trailing overlap SHA-256 `3d6bb504249e781666eb8526f0220af7e9f9f57617fcf421a756bae43457343e`; fail closed on mismatch or total drift.
+
+# 2026-10-17 — New NSI-1995 epoch advanced to offset 1000
+
+- Draft PR #258 remains unchanged at exact head `c59af35da7dde2140d911e2003a4a52fb0611507`, tree `2fee4bb388d1b2db69b2e49ed41d9f4dacea08d9`; exact-head CI run 38920906239 / job 117040259865 remains `success`.
+- Epoch cycle296 resumed at logical offset 900 with 20 retained rows. Overlap SHA-256 `3d6bb504249e781666eb8526f0220af7e9f9f57617fcf421a756bae43457343e` matched exactly. The source returned 100 new rows; total stayed `778429` before/after, drift false, cursor `next_offset=1000`.
+- Raw page and manifest were stored as two immutable objects and independently read back byte-for-byte: page 271,944 bytes / `5387acb89335cc409e575db2090438c71b13b23ac8b09dbcbb81b4d9fc8b4752`; manifest 765 bytes / `cc7e4f6142f568100b4193b95cca332b15f9b1edb8c0b7a5fa6ce89e792fa552`.
+- Staging now has twenty epoch source objects, ten runs and 1000 rows. Reread: 1000 unique source IDs and row hashes, ordinals 1–1000, ordered digest `9e06f02c5b05db7c016a5b825e68cbcda0a3a10de6edddda249c20d7e68d4f8d`. Exact replay did not grow counts; frozen epoch291 remains 400 rows/four runs/eight objects.
+- The new run's initially mistyped epoch-prefixed ID was corrected immediately to `cycle304-eec-nsi-sgr1995-offset900-limit100-overlap20` before publication. Object and row bytes/hashes did not change. Independent A5 confirmed the final identifier and all source-based counts. A scratch-only verifier reports two runs because its diagnostic filter is `run_id LIKE cycle296`; that field is excluded from evidence in favour of the authoritative epoch296 `source_id` count of ten.
+- Every new row remains `COLLECTED_UNVERIFIED`; normalized/rejected counts are 0/0 and legal admission is false.
+- Author tests: 31 targeted and 191 expanded passed, exit 0. Independent A5 `/root/a5_cycle304`: PASS/no findings; 31 targeted and 191 adjacent passed, fresh object GETs 2/2 exact, DB/source 1000/1000 and ordered digest exact, frozen epoch291 unchanged.
+- This is bounded raw collection, not a populated synchronized NTM snapshot or full legal/product acceptance. A6 `core-s1-6415f443120f-r9-g106` is unchanged and not sent; no protected action occurred.
+- Evidence: `.ai/orchestration/evidence/cycle304_sgr_nsi1995_offset1000.json`; TASK_BOARD revision 836. Resume only epoch cycle296 at offset 1000 with trailing overlap SHA-256 `3f5bda5c56d07033bb7616b5849237b960d1706509173b5ce9feb04048b07a36`; fail closed on mismatch or total drift.
+
+# 2026-10-17 — New NSI-1995 epoch advanced to offset 1100
+
+- Draft PR #258 remains unchanged at exact head `c59af35da7dde2140d911e2003a4a52fb0611507`, tree `2fee4bb388d1b2db69b2e49ed41d9f4dacea08d9`; exact-head CI run 38920906239 / job 117040259865 remains `success`.
+- Epoch cycle296 resumed at logical offset 1000 with 20 retained rows. Overlap SHA-256 `3f5bda5c56d07033bb7616b5849237b960d1706509173b5ce9feb04048b07a36` matched exactly. The source returned 100 new rows; total stayed `778429` before/after, drift false, cursor `next_offset=1100`.
+- Raw page and manifest were stored as two immutable objects and independently read back byte-for-byte: page 277,726 bytes / `06793a01f567d542a938f3886db209d0c4bdb255fb8aacd0894f32e6e6665e3e`; manifest 766 bytes / `9575a1fd5e3573f83a6d5ae73c327f763179e997a28ade3a3bf93fbf545c036c`.
+- Staging now has twenty-two epoch source objects, eleven runs and 1100 rows. Reread: 1100 unique source IDs and row hashes, ordinals 1–1100, ordered digest `fde1e7df1121efd0d1bc0ab6452e194bb0e1713e080101fab6d69f89d5b33b65`. Exact replay did not grow counts; frozen epoch291 remains 400 rows/four runs/eight objects.
+- Every new row remains `COLLECTED_UNVERIFIED`; normalized/rejected counts are 0/0 and legal admission is false.
+- Author tests: 31 targeted and 191 expanded passed, exit 0. Independent A5 `/root/a5_cycle305`: PASS/no findings; 31 targeted and 191 adjacent passed, fresh object GETs 2/2 exact, DB/source 1100/1100 and ordered digest exact, frozen epoch291 unchanged.
+- This is bounded raw collection, not a populated synchronized NTM snapshot or full legal/product acceptance. A6 `core-s1-6415f443120f-r9-g106` is unchanged and not sent; no protected action occurred.
+- Evidence: `.ai/orchestration/evidence/cycle305_sgr_nsi1995_offset1100.json`; TASK_BOARD revision 837. Resume only epoch cycle296 at offset 1100 with trailing overlap SHA-256 `3ff84145d4647348b5619ba1dca31615b656a297e1fbb09def79011a321b5353`; fail closed on mismatch or total drift.
+
+# 2026-10-17 — New NSI-1995 epoch advanced to offset 1200
+
+- Draft PR #258 remains unchanged at exact head `c59af35da7dde2140d911e2003a4a52fb0611507`, tree `2fee4bb388d1b2db69b2e49ed41d9f4dacea08d9`; exact-head CI run 38920906239 / job 117040259865 remains `success`.
+- Epoch cycle296 resumed at logical offset 1100 with 20 retained rows. Overlap SHA-256 `3ff84145d4647348b5619ba1dca31615b656a297e1fbb09def79011a321b5353` matched exactly. The source returned 100 new rows; total stayed `778429` before/after, drift false, cursor `next_offset=1200`.
+- Raw page and manifest were stored as two immutable objects and independently read back byte-for-byte: page 260,909 bytes / `5de8e9f678aa69a3fdf8f93533e994a566b2a6e00852b60a7fae17e240786e87`; manifest 767 bytes / `1e8ab99f81751374e836f7b15742867284923856671f138a86dcbb04262496a2`.
+- Staging now has twenty-four epoch source objects, twelve runs and 1200 rows. Reread: 1200 unique source IDs and row hashes, ordinals 1–1200, ordered digest `b912ad2d636beb4b91c797b37d56bdaa1302c6713a34af885a1d82d64dfc98ab`. Exact replay did not grow counts; frozen epoch291 remains 400 rows/four runs/eight objects.
+- Every new row remains `COLLECTED_UNVERIFIED`; normalized/rejected counts are 0/0 and legal admission is false.
+- Author tests: 31 targeted and 191 expanded passed, exit 0. Independent A5 `/root/a5_cycle306`: PASS/no findings; 31 targeted and 191 adjacent passed, fresh object GETs 2/2 exact, DB/source 1200/1200 and ordered digest exact, frozen epoch291 unchanged.
+- This is bounded raw collection, not a populated synchronized NTM snapshot or full legal/product acceptance. A6 `core-s1-6415f443120f-r9-g106` is unchanged and not sent; no protected action occurred.
+- Evidence: `.ai/orchestration/evidence/cycle306_sgr_nsi1995_offset1200.json`; TASK_BOARD revision 838. Resume only epoch cycle296 at offset 1200 with trailing overlap SHA-256 `475eeb4493f5f6d5bb98b48ecba406d5aa367f6d2a031b57226ab8ecf47a594b`; fail closed on mismatch or total drift.
+
+# 2026-10-17 — New NSI-1995 epoch advanced to offset 1300
+
+- Draft PR #258 remains unchanged at exact head `c59af35da7dde2140d911e2003a4a52fb0611507`, tree `2fee4bb388d1b2db69b2e49ed41d9f4dacea08d9`; exact-head CI run 38920906239 / job 117040259865 remains `success`.
+- Epoch cycle296 resumed at logical offset 1200 with 20 retained rows. Overlap SHA-256 `475eeb4493f5f6d5bb98b48ecba406d5aa367f6d2a031b57226ab8ecf47a594b` matched exactly. The source returned 100 new rows; total stayed `778429` before/after, drift false, cursor `next_offset=1300`.
+- Raw page and manifest were stored as two immutable objects and independently read back byte-for-byte: page 271,174 bytes / `3b617996a7f4b35a0e37c78a045622ecd4d946c5cf275ec2ec90f9eb124831fc`; manifest 767 bytes / `cac4943d2aeed6f28f08e674011198e8de2721a9157886f69155a1a53f66d606`.
+- Staging now has twenty-six epoch source objects, thirteen runs and 1300 rows. Reread: 1300 unique source IDs and row hashes, ordinals 1–1300, ordered digest `990bc5323c1e739bcac36173022f6fb3f55dfda67becf0031d600f38ace519a3`. Exact replay did not grow counts; frozen epoch291 remains 400 rows/four runs/eight objects.
+- Every new row remains `COLLECTED_UNVERIFIED`; normalized/rejected counts are 0/0 and legal admission is false.
+- Author tests: 31 targeted and 191 expanded passed, exit 0. Independent A5 `/root/a5_cycle307`: PASS/no findings; 31 targeted and 191 adjacent passed, fresh object GETs 2/2 exact, DB/source 1300/1300, new-slice identity/hash digest exact, frozen epoch291 unchanged.
+- This is bounded raw collection, not a populated synchronized NTM snapshot or full legal/product acceptance. A6 `core-s1-6415f443120f-r9-g106` is unchanged and not sent; no protected action occurred.
+- Evidence: `.ai/orchestration/evidence/cycle307_sgr_nsi1995_offset1300.json`; TASK_BOARD revision 839. Resume only epoch cycle296 at offset 1300 with trailing overlap SHA-256 `a4a29e2a311ece8d85472d01e5a4339fef31e174ac36a0dd7df873701717c029`; fail closed on mismatch or total drift.
+
+# 2026-10-17 — New NSI-1995 epoch advanced to offset 1400
+
+- Draft PR #258 remains unchanged at exact head `c59af35da7dde2140d911e2003a4a52fb0611507`, tree `2fee4bb388d1b2db69b2e49ed41d9f4dacea08d9`; exact-head CI run 38920906239 / job 117040259865 remains `success`.
+- Epoch cycle296 resumed at logical offset 1300 with 20 retained rows. Overlap SHA-256 `a4a29e2a311ece8d85472d01e5a4339fef31e174ac36a0dd7df873701717c029` matched exactly. The source returned 100 new rows; total stayed `778429` before/after, drift false, cursor `next_offset=1400`.
+- Raw page and manifest were stored as two immutable objects and independently read back byte-for-byte: page 256,067 bytes / `483cd5d45f0e17469bfd326e478a668bd0c0f986da15b250a612df64ff97d7fd`; manifest 767 bytes / `964525fd71a7e4f772556172c2e9ea0f7961adcc6ee9c9531eb43a9fdf80840e`.
+- Staging now has twenty-eight epoch source objects, fourteen runs and 1400 rows. Reread: 1400 unique source IDs and row hashes, ordinals 1–1400, ordered digest `565fcb938d44c95ac251b705da5862ab2ed693178f24b489d9f740a0f1ffe3a7`. Exact replay did not grow counts; frozen epoch291 remains 400 rows/four runs/eight objects.
+- Every new row remains `COLLECTED_UNVERIFIED`; normalized/rejected counts are 0/0 and legal admission is false.
+- Author tests: 31 targeted and 190 expanded passed, exit 0. Independent A5 `/root/a5_cycle308`: PASS/no findings; 31 targeted and 190 adjacent passed, fresh object GETs 2/2 exact, DB/source 1400/1400 and all epoch/new-slice digests exact, frozen epoch291 unchanged.
+- This is bounded raw collection, not a populated synchronized NTM snapshot or full legal/product acceptance. A6 `core-s1-6415f443120f-r9-g106` is unchanged and not sent; no protected action occurred.
+- Evidence: `.ai/orchestration/evidence/cycle308_sgr_nsi1995_offset1400.json`; TASK_BOARD revision 840. Resume only epoch cycle296 at offset 1400 with trailing overlap SHA-256 `131853a3bc44c47eb29dca0a73d633ac3a6a50d73c3fb32c3b2c7313331aaf37`; fail closed on mismatch or total drift.
+
+# 2026-10-17 — New NSI-1995 epoch advanced to offset 1500
+
+- Draft PR #258 remains unchanged at exact head `c59af35da7dde2140d911e2003a4a52fb0611507`, tree `2fee4bb388d1b2db69b2e49ed41d9f4dacea08d9`; exact-head CI run 38920906239 / job 117040259865 remains `success`.
+- Epoch cycle296 resumed at logical offset 1400 with 20 retained rows. Overlap SHA-256 `131853a3bc44c47eb29dca0a73d633ac3a6a50d73c3fb32c3b2c7313331aaf37` matched exactly. The source returned 100 new rows; total stayed `778429` before/after, drift false, cursor `next_offset=1500`.
+- Raw page and manifest were stored as two immutable objects and independently read back byte-for-byte: page 262,166 bytes / `69cfc7bcb8db12505ccfdc28df3b13fe62cfc02b5702a0190df2eef52cb17e8b`; manifest 767 bytes / `baa571f726e40fec8349c05960a4c59a129c7b252ab8eef4b4462baf80a8563f`.
+- Staging now has thirty epoch source objects, fifteen runs and 1500 rows. Reread: 1500 unique source IDs and row hashes, ordinals 1–1500, ordered digest `a8525497a62c809cd9f2621246c8dac2379b013ae91de913a46a16462f045e52`. Exact replay did not grow counts; frozen epoch291 remains 400 rows/four runs/eight objects.
+- Every new row remains `COLLECTED_UNVERIFIED`; normalized/rejected counts are 0/0 and legal admission is false.
+- Author tests: 31 targeted and 190 expanded passed, exit 0. Independent A5 `/root/a5_cycle309`: PASS/no findings; 31 targeted and 190 adjacent passed, fresh object GETs 2/2 exact, DB/source 1500/1500 and all epoch/new-slice digests exact, frozen epoch291 unchanged.
+- This is bounded raw collection, not a populated synchronized NTM snapshot or full legal/product acceptance. A6 `core-s1-6415f443120f-r9-g106` is unchanged and not sent; no protected action occurred.
+- Evidence: `.ai/orchestration/evidence/cycle309_sgr_nsi1995_offset1500.json`; TASK_BOARD revision 841. Resume only epoch cycle296 at offset 1500 with trailing overlap SHA-256 `b89a6260bb88616cd679c51863243770128b70117b57cc12b74388c12ac96672`; fail closed on mismatch or total drift.
+
+# 2026-10-17 — New NSI-1995 epoch advanced to offset 1600
+
+- Draft PR #258 remains unchanged at exact head `c59af35da7dde2140d911e2003a4a52fb0611507`, tree `2fee4bb388d1b2db69b2e49ed41d9f4dacea08d9`; exact-head CI run 38920906239 / job 117040259865 remains `success`.
+- Epoch cycle296 resumed at logical offset 1500 with 20 retained rows. Overlap SHA-256 `b89a6260bb88616cd679c51863243770128b70117b57cc12b74388c12ac96672` matched exactly. The source returned 100 new rows; total stayed `778429` before/after, drift false, cursor `next_offset=1600`.
+- Raw page and manifest were stored as two immutable objects and independently read back byte-for-byte: page 256,102 bytes / `3fc33863ad797299f8491339b2d314a3c900033bc2a81e77c5b6befe4032d25f`; manifest 767 bytes / `f75b2feba9f16a887d7bcfe4a98a56585abc484399541052f64b7ca1aa4574df`.
+- Staging now has thirty-two epoch source objects, sixteen runs and 1600 rows. Reread: 1600 unique source IDs and row hashes, ordinals 1–1600, ordered digest `59ff4d1a997be113686edcf612b947195ffafcebdbe57b40bba04904e79fc87c`. Exact replay did not grow counts; frozen epoch291 remains 400 rows/four runs/eight objects.
+- Every new row remains `COLLECTED_UNVERIFIED`; normalized/rejected counts are 0/0 and legal admission is false.
+- Author tests: 31 targeted and 190 expanded passed, exit 0. Independent A5 `/root/a5_cycle310`: PASS/no findings; 31 targeted and 190 adjacent passed, fresh object GETs 2/2 exact, DB/source 1600/1600 and all epoch/new-slice digests exact, frozen epoch291 unchanged.
+- This is bounded raw collection, not a populated synchronized NTM snapshot or full legal/product acceptance. A6 `core-s1-6415f443120f-r9-g106` is unchanged and not sent; no protected action occurred.
+- Evidence: `.ai/orchestration/evidence/cycle310_sgr_nsi1995_offset1600.json`; TASK_BOARD revision 842. Resume only epoch cycle296 at offset 1600 with trailing overlap SHA-256 `bc7484095845589c15daade1a64e01087d85ce4005044a6b0c7dae1b20a54916`; fail closed on mismatch or total drift.
+
+# 2026-10-17 — New NSI-1995 epoch advanced to offset 1700
+
+- Draft PR #258 remains unchanged at exact head `c59af35da7dde2140d911e2003a4a52fb0611507`, tree `2fee4bb388d1b2db69b2e49ed41d9f4dacea08d9`; exact-head CI run 38920906239 / job 117040259865 remains `success`.
+- Epoch cycle296 resumed at logical offset 1600 with 20 retained rows. Overlap SHA-256 `bc7484095845589c15daade1a64e01087d85ce4005044a6b0c7dae1b20a54916` matched exactly. The source returned 100 new rows; total stayed `778429` before/after, drift false, cursor `next_offset=1700`.
+- Raw page and manifest were stored as two immutable objects and independently read back byte-for-byte: page 255,134 bytes / `956541e36705385f2614da331cf8314e9deea21c936aa6911d1628410db1a682`; manifest 767 bytes / `ca807057a36f1178570cd3af9d02dbe0df72e45a954840ff8642876a014c41a5`.
+- Staging now has thirty-four epoch source objects, seventeen runs and 1700 rows. Reread: 1700 unique source IDs and row hashes, ordinals 1–1700, ordered digest `80ac9dba30de353006581e805d827deffde4ed1d84c8a976a18a769e745b5819`. Exact replay did not grow counts; frozen epoch291 remains 400 rows/four runs/eight objects.
+- Every new row remains `COLLECTED_UNVERIFIED`; normalized/rejected counts are 0/0 and legal admission is false.
+- Author tests: 31 targeted and 190 expanded passed, exit 0. Independent A5 `/root/a5_cycle311`: PASS/no findings; 31 targeted, 190 adjacent and four explicit fail-closed cases passed; fresh object GETs 2/2 exact, DB/source 1700/1700 and all epoch/new-slice digests exact, frozen epoch291 unchanged.
+- This is bounded raw collection, not a populated synchronized NTM snapshot or full legal/product acceptance. A6 `core-s1-6415f443120f-r9-g106` is unchanged and not sent; no protected action occurred.
+- Evidence: `.ai/orchestration/evidence/cycle311_sgr_nsi1995_offset1700.json`; TASK_BOARD revision 843. Resume only epoch cycle296 at offset 1700 with trailing overlap SHA-256 `bada32a6c993662ef1abeda63f2396398d541f44736547aabda7938a05ab24fe`; fail closed on mismatch or total drift.
+
+# 2026-10-17 — New NSI-1995 epoch advanced to offset 1800
+
+- Draft PR #258 remains unchanged at exact head `c59af35da7dde2140d911e2003a4a52fb0611507`, tree `2fee4bb388d1b2db69b2e49ed41d9f4dacea08d9`; exact-head CI run 38920906239 / job 117040259865 remains `success`.
+- Epoch cycle296 resumed at logical offset 1700 with 20 retained rows. Overlap SHA-256 `bada32a6c993662ef1abeda63f2396398d541f44736547aabda7938a05ab24fe` matched exactly. The source returned 100 new rows; total stayed `778429` before/after, drift false, cursor `next_offset=1800`.
+- Raw page and manifest were stored as two immutable objects and independently read back byte-for-byte: page 257,588 bytes / `3b4f2a312841cefd605cd830a4fa81965762dde86785ea8a8f6cc8af6e86ce36`; manifest 767 bytes / `003d76261d9efc93d96c4377934d03218f69430b81e3006b2bff8406172475ed`.
+- Staging now has thirty-six epoch source objects, eighteen runs and 1800 rows. Reread: 1800 unique source IDs and row hashes, ordinals 1–1800, ordered digest `d5683d073bdacbc733bb4c131fa4b4e3c46b093ef26c9d83d03f2d5a1adce194`. Exact replay did not grow counts; frozen epoch291 remains 400 rows/four runs/eight objects.
+- Every new row remains `COLLECTED_UNVERIFIED`; normalized/rejected counts are 0/0 and legal admission is false.
+- Author tests: 31 targeted and 190 expanded passed, exit 0. Independent A5 `/root/a5_cycle312`: PASS/no findings; 31 targeted, 190 adjacent and four explicit fail-closed cases passed; fresh object GETs 2/2 exact, DB/source 1800/1800 and all epoch/new-slice digests exact, frozen epoch291 unchanged.
+- This is bounded raw collection, not a populated synchronized NTM snapshot or full legal/product acceptance. A6 `core-s1-6415f443120f-r9-g106` is unchanged and not sent; no protected action occurred.
+- Evidence: `.ai/orchestration/evidence/cycle312_sgr_nsi1995_offset1800.json`; TASK_BOARD revision 844. Resume only epoch cycle296 at offset 1800 with trailing overlap SHA-256 `b3675d046407cf027f498cd42df4e29fa4fc6bd02ef8c3c165f065e99164853c`; fail closed on mismatch or total drift.
+
+# 2026-10-17 — New NSI-1995 epoch advanced to offset 1900
+
+- Draft PR #258 remains unchanged at exact head `c59af35da7dde2140d911e2003a4a52fb0611507`, tree `2fee4bb388d1b2db69b2e49ed41d9f4dacea08d9`; exact-head CI run 38920906239 / job 117040259865 remains `success`.
+- Epoch cycle296 resumed at logical offset 1800 with 20 retained rows. Overlap SHA-256 `b3675d046407cf027f498cd42df4e29fa4fc6bd02ef8c3c165f065e99164853c` matched exactly. The source returned 100 new rows; total stayed `778429` before/after, drift false, cursor `next_offset=1900`.
+- Raw page and manifest were stored as two immutable objects and independently read back byte-for-byte: page 243,268 bytes / `c1134210c71fbadb3452dead6f808790bc81fb79397b2e818e84e3e387e20e50`; manifest 767 bytes / `a6423bd92e28582fa17965958a4705e4657b05c81b10548a78513973831537cd`.
+- Staging now has thirty-eight epoch source objects, nineteen runs and 1900 rows. Reread: 1900 unique source IDs and row hashes, ordinals 1–1900, ordered digest `c76d8b39f0098bbb0f969c38561b795d94a85899718ad97663ee6ed1053084e3`. Exact replay did not grow counts; frozen epoch291 remains 400 rows/four runs/eight objects.
+- Every new row remains `COLLECTED_UNVERIFIED`; normalized/rejected counts are 0/0 and legal admission is false.
+- Author tests: 31 targeted and 190 expanded passed, exit 0. Independent A5 `/root/a5_cycle312`: PASS/no findings; 31 targeted, 190 adjacent and four explicit fail-closed cases passed; fresh object GETs 2/2 exact, DB/source 1900/1900 and all epoch/new-slice digests exact, frozen epoch291 unchanged.
+- This is bounded raw collection, not a populated synchronized NTM snapshot or full legal/product acceptance. A6 `core-s1-6415f443120f-r9-g106` is unchanged and not sent; no protected action occurred.
+- Evidence: `.ai/orchestration/evidence/cycle313_sgr_nsi1995_offset1900.json`; TASK_BOARD revision 845. Resume only epoch cycle296 at offset 1900 with trailing overlap SHA-256 `9802310b563399dadb18f4ab2bd7135bf62f1755f649aec673cef6d9da0ef7d6`; fail closed on mismatch or total drift.
+
+# 2026-10-17 — NSI-1995 epoch296 frozen at offset 1900 on live source drift
+
+- Draft PR #258 remains unchanged at exact head `c59af35da7dde2140d911e2003a4a52fb0611507`, tree `2fee4bb388d1b2db69b2e49ed41d9f4dacea08d9`; exact-head CI run 38920906239 / job 117040259865 remains `success`.
+- The guarded offset-1900 capture exited 1 before creating local capture artifacts or performing Object Storage/DB writes: retained overlap `9802310b563399dadb18f4ab2bd7135bf62f1755f649aec673cef6d9da0ef7d6` did not match the live source.
+- Read-only diagnosis returned 120 rows and stable total `778429`, but zero of the retained 20 identities. The live overlap changed again during this cycle: first observed `4e82d9db6013de8af83e7299a8352b8670cc673917ce5c40ca1eab5a0ad7b4d9`, later `eff9c865985508898b69f419927c0b72df43fa5c5fa60889d8b82c95bb8d01a3`. The earlier digest is historical evidence, not current state.
+- Staging reread remained exactly 38 epoch296 objects / 19 runs / 1900 rows, 1900 unique IDs and hashes, ordinals 1–1900, all `COLLECTED_UNVERIFIED`; explicit cycle314 objects/runs/rows are 0/0/0. Frozen epoch291 remains 8 objects / 4 runs / 400 rows.
+- Author tests: 31 targeted and 190 expanded passed, exit 0. Independent A5 `/root/a5_cycle314` returned `FINDING_SOURCE_DRIFT_ADVANCED`; the finding was confirmed and recorded. A5 repeated the current `eff9c865…` overlap twice, verified zero common retained identities, repeated both suites, and confirmed staging was untouched.
+- This is a verified fail-closed source-drift checkpoint, not a populated synchronized NTM snapshot or legal/product acceptance. A6 `core-s1-6415f443120f-r9-g106` is unchanged and not sent; no protected action occurred.
+- Evidence: `.ai/orchestration/evidence/cycle314_sgr_nsi1995_offset1900_drift.json`; TASK_BOARD revision 846. Do not resume frozen epoch296. After the live source stops changing, start a new offset-0 epoch with repeated stable total/page observations under the existing guard, or use an immutable source-side snapshot/stable-order contract.
+
+# 2026-10-17 — Stable NSI-1995 source observed; new epoch315 started at offset 0
+
+- Draft PR #258 remains unchanged at exact head `c59af35da7dde2140d911e2003a4a52fb0611507`, tree `2fee4bb388d1b2db69b2e49ed41d9f4dacea08d9`; exact-head CI run 38920906239 / job 117040259865 is `success`.
+- Three read-only observations returned the identical 120-row page with stable total `778429`, page SHA-256 `0ce3fcb7db387ef20eec751cea66cfe15998b9687b0a02ea77685400e5f51cde`, identity digest `1bf4da932d5b9835c4338dac1d246961c3a676c1df19c57607e1b58dad95e113` and row digest `bd8dfce868f69fcd70e6b636cf7da33518ec9e4697ec565840a45435748f0dc6`.
+- A new, separate epoch `cycle315` was started at logical offset 0. The guarded capture exited 0, accepted 120 rows and advanced to offset 120. Frozen epoch296 was not resumed.
+- Raw page and manifest were stored as two immutable objects and reread byte-for-byte: page 248,001 bytes / `0ce3fcb7db387ef20eec751cea66cfe15998b9687b0a02ea77685400e5f51cde`; manifest 697 bytes / `11a7467a92240473ccd5863f31cde888d4c5f60c1a55e0741d10bafdf86e0adb`.
+- Staging reread is exactly two epoch315 objects, one run and 120 rows; 120 unique source IDs and hashes; ordinals 1–120. Exact replay did not grow counts. Epoch296 remains 38/19/1900 and epoch291 remains 8/4/400.
+- Every row remains `COLLECTED_UNVERIFIED`; normalization is false, normalized count is 0, and legal admission is false.
+- Author tests: 50 targeted and 170 expanded passed, exit 0. Independent A5 `/root/a5_cycle315`: `PASS_NO_FINDINGS`; it repeated the three source observations, both test suites, fresh object GETs and staging/frozen-epoch checks.
+- This is bounded raw collection, not a populated synchronized NTM snapshot or full legal/product acceptance. A6 `core-s1-6415f443120f-r9-g106` is unchanged and not sent; no protected action occurred.
+- Evidence: `.ai/orchestration/evidence/cycle315_sgr_nsi1995_new_epoch_offset120.json`; TASK_BOARD revision 847. Resume only epoch cycle315 at offset 120 with trailing overlap SHA-256 `7bd050cc06e04048537128e955a3d0d4e09f2b0bfbf5cec1a003fe3bd0db9bf1`; fail closed on overlap mismatch or total drift, and do not resume frozen epoch296.
+
+# 2026-10-17 — NSI-1995 epoch315 advanced to offset 220
+
+- Draft PR #258 remains unchanged at exact head `c59af35da7dde2140d911e2003a4a52fb0611507`, tree `2fee4bb388d1b2db69b2e49ed41d9f4dacea08d9`; exact-head CI run 38920906239 / job 117040259865 remains `success`.
+- Epoch315 resumed at logical offset 120 with 20 retained rows. Overlap SHA-256 `7bd050cc06e04048537128e955a3d0d4e09f2b0bfbf5cec1a003fe3bd0db9bf1` matched exactly. The source returned 100 new rows; total stayed `778429`, drift false, cursor `next_offset=220`.
+- Raw page and manifest were stored as two immutable objects and independently read back byte-for-byte: page 259,210 bytes / `c4d6e4fd6a232d70b872bf1fe8a314fbca9bb7d1d491416a1849baee9ab2eb79`; manifest 764 bytes / `5c8720bcb5e1582923cdf3ad13d0ae4dcbbfd210164d1f7723a95cfb8a88e712`.
+- Staging now has four epoch315 source objects, two runs and 220 rows. Reread: 220 unique source IDs and row hashes, ordinals 1–220. Exact replay did not grow counts. Frozen epoch296 remains 38/19/1900 and epoch291 remains 8/4/400.
+- Every row remains `COLLECTED_UNVERIFIED`; normalized/rejected counts are 0/0, normalization is false and legal admission is false.
+- Author tests: 50 targeted and 170 expanded passed, exit 0. Independent A5 `/root/a5_cycle316`: `PASS_NO_FINDINGS`; it repeated a fresh official source read, both test suites, object GETs, exact payload/digests, staging counts and frozen-epoch checks.
+- This is bounded raw collection, not a populated synchronized NTM snapshot or full legal/product acceptance. A6 `core-s1-6415f443120f-r9-g106` is unchanged and not sent; no protected action occurred.
+- Evidence: `.ai/orchestration/evidence/cycle316_sgr_nsi1995_epoch315_offset220.json`; TASK_BOARD revision 848. Resume only epoch315 at offset 220 with trailing overlap SHA-256 `8343f45a7d93b3b37b47906d0427a1900f7ae1bd749deb346fc976222c540482`; fail closed on mismatch or total drift, and never resume frozen epoch296.
+
+# 2026-10-17 — NSI-1995 epoch315 advanced to offset 320
+
+- Draft PR #258 remains unchanged at exact head `c59af35da7dde2140d911e2003a4a52fb0611507`, tree `2fee4bb388d1b2db69b2e49ed41d9f4dacea08d9`; exact-head CI run 38920906239 / job 117040259865 remains `success`.
+- Epoch315 resumed at logical offset 220 with 20 retained rows. Overlap SHA-256 `8343f45a7d93b3b37b47906d0427a1900f7ae1bd749deb346fc976222c540482` matched exactly. The source returned 100 new rows; total stayed `778429`, drift false, cursor `next_offset=320`.
+- Raw page and manifest were stored as two immutable objects and independently read back byte-for-byte: page 262,140 bytes / `85f30b79eebbb2973fa517fefc6fe25c33d72aef5df66166b039b29f02bf068d`; manifest 764 bytes / `897932e03e0c348e3141f86ad0f581bad5b50ba857aa9cb649c68d5c669d7183`.
+- Staging now has six epoch315 source objects, three runs and 320 rows. Reread: 320 unique source IDs and row hashes, ordinals 1–320. Exact replay did not grow counts. Frozen epoch296 remains 38/19/1900 and epoch291 remains 8/4/400.
+- Every row remains `COLLECTED_UNVERIFIED`; normalized/rejected counts are 0/0, normalization is false and legal admission is false.
+- Author tests: 50 targeted and 170 expanded passed, exit 0. Independent A5 `/root/a5_cycle317`: `PASS_NO_FINDINGS`; it repeated a fresh official source read, both test suites, object GETs, exact payload/digests, two staging reads and frozen-epoch checks.
+- This is bounded raw collection, not a populated synchronized NTM snapshot or full legal/product acceptance. A6 `core-s1-6415f443120f-r9-g106` is unchanged and not sent; no protected action occurred.
+- Evidence: `.ai/orchestration/evidence/cycle317_sgr_nsi1995_epoch315_offset320.json`; TASK_BOARD revision 849. Resume only epoch315 at offset 320 with trailing overlap SHA-256 `be53f06069677e32868539b6335c697bfb15e76ecb73a556fabf2d7fad623e3d`; fail closed on mismatch or total drift, and never resume frozen epoch296.
+
+# 2026-10-17 — NSI-1995 epoch315 advanced to offset 420
+
+- Draft PR #258 remains unchanged at exact head `c59af35da7dde2140d911e2003a4a52fb0611507`, tree `2fee4bb388d1b2db69b2e49ed41d9f4dacea08d9`; exact-head CI run 38920906239 / job 117040259865 remains `success`.
 - Epoch315 resumed at logical offset 320 with 20 retained rows. Overlap SHA-256 `be53f06069677e32868539b6335c697bfb15e76ecb73a556fabf2d7fad623e3d` matched exactly. The source returned 100 new rows; total stayed `778429`, drift false, cursor `next_offset=420`.
 - Raw page and manifest were stored as two immutable objects and independently read back byte-for-byte: page 263,152 bytes / `285b1de9c7421c02d37f30b31635a352bdb342d67ef09677f5f177e1f6643fbc`; manifest 764 bytes / `efce294b9d305dca4c4238cd768567236701db7265dd63618dfdf1412470e2f2`.
 - Staging now has eight epoch315 source objects, four runs and 420 rows. Reread: 420 unique source IDs and row hashes, ordinals 1–420. Exact replay did not grow counts. Frozen epoch296 remains 38/19/1900 and epoch291 remains 8/4/400.
