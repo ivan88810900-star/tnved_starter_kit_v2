@@ -400,6 +400,7 @@ def load_checkpoint(
     epoch_id: str,
     dataset: str,
     schema: str | None = DEFAULT_SCHEMA,
+    _validate_history: bool = True,
 ) -> Checkpoint:
     """Read the single CAS checkpoint row for one isolated epoch."""
 
@@ -887,57 +888,58 @@ def load_checkpoint(
             run_validation[capture_run_id] = valid
             return valid
 
-        history_rows = session.execute(
-            select(
-                tables["ingest_runs"].c.run_id.label("capture_run_id"),
-                tables["ingest_runs"].c.source_id.label("capture_run_source_id"),
-                tables["ingest_runs"].c.scope.label("capture_scope"),
-                tables["ingest_runs"].c.status.label("capture_run_status"),
-                tables["ingest_runs"].c.parser_version.label("capture_parser_version"),
-                tables["ingest_runs"].c.raw_count.label("capture_raw_count"),
-                tables["ingest_runs"].c.unique_count.label("capture_unique_count"),
-                tables["ingest_runs"].c.normalized_count.label("capture_normalized_count"),
-                tables["ingest_runs"].c.rejected_count.label("capture_rejected_count"),
-                tables["ingest_runs"].c.resume_cursor.label("capture_resume_cursor"),
+        if _validate_history:
+            history_rows = session.execute(
+                select(
+                    tables["ingest_runs"].c.run_id.label("capture_run_id"),
+                    tables["ingest_runs"].c.source_id.label("capture_run_source_id"),
+                    tables["ingest_runs"].c.scope.label("capture_scope"),
+                    tables["ingest_runs"].c.status.label("capture_run_status"),
+                    tables["ingest_runs"].c.parser_version.label("capture_parser_version"),
+                    tables["ingest_runs"].c.raw_count.label("capture_raw_count"),
+                    tables["ingest_runs"].c.unique_count.label("capture_unique_count"),
+                    tables["ingest_runs"].c.normalized_count.label("capture_normalized_count"),
+                    tables["ingest_runs"].c.rejected_count.label("capture_rejected_count"),
+                    tables["ingest_runs"].c.resume_cursor.label("capture_resume_cursor"),
+                )
+            ).mappings().all()
+            committed_history = [
+                candidate
+                for candidate in history_rows
+                if isinstance(candidate["capture_scope"], dict)
+                and candidate["capture_scope"].get("epoch_id") == canonical_epoch
+                and candidate["capture_scope"].get("dataset") == canonical_dataset
+            ]
+            committed_history.sort(
+                key=lambda candidate: candidate["capture_scope"].get("logical_offset", -1)
             )
-        ).mappings().all()
-        committed_history = [
-            candidate
-            for candidate in history_rows
-            if isinstance(candidate["capture_scope"], dict)
-            and candidate["capture_scope"].get("epoch_id") == canonical_epoch
-            and candidate["capture_scope"].get("dataset") == canonical_dataset
-        ]
-        committed_history.sort(
-            key=lambda candidate: candidate["capture_scope"].get("logical_offset", -1)
-        )
-        history_next_offset = 0
-        history_valid = len(committed_history) == generation
-        for history_index, candidate in enumerate(committed_history):
-            history_scope = candidate["capture_scope"]
-            history_cursor = candidate["capture_resume_cursor"]
-            history_logical = history_scope.get("logical_offset")
+            history_next_offset = 0
+            history_valid = len(committed_history) == generation
+            for history_index, candidate in enumerate(committed_history):
+                history_scope = candidate["capture_scope"]
+                history_cursor = candidate["capture_resume_cursor"]
+                history_logical = history_scope.get("logical_offset")
+                if (
+                    not history_valid
+                    or not isinstance(history_cursor, dict)
+                    or history_logical != history_next_offset
+                    or history_cursor.get("snapshot_id") != snapshot_id
+                    or history_cursor.get("source_total") != source_total
+                    or history_cursor.get("complete") is not (
+                        complete if history_index == generation - 1 else False
+                    )
+                    or not capture_run_is_valid(candidate)
+                ):
+                    history_valid = False
+                    break
+                history_next_offset = history_cursor["next_offset"]
             if (
                 not history_valid
-                or not isinstance(history_cursor, dict)
-                or history_logical != history_next_offset
-                or history_cursor.get("snapshot_id") != snapshot_id
-                or history_cursor.get("source_total") != source_total
-                or history_cursor.get("complete") is not (
-                    complete if history_index == generation - 1 else False
-                )
-                or not capture_run_is_valid(candidate)
+                or history_next_offset != next_offset
+                or not committed_history
+                or committed_history[-1]["capture_run_id"] != run_id
             ):
-                history_valid = False
-                break
-            history_next_offset = history_cursor["next_offset"]
-        if (
-            not history_valid
-            or history_next_offset != next_offset
-            or not committed_history
-            or committed_history[-1]["capture_run_id"] != run_id
-        ):
-            raise StagingIngestError("stored checkpoint history is inconsistent")
+                raise StagingIngestError("stored checkpoint history is inconsistent")
 
         proven_first_captures: set[tuple[str, str]] = set()
         global_by_id = {
@@ -1360,7 +1362,13 @@ def run_bounded_worker(
             break
         with session_factory() as session:
             with session.begin():
-                current = load_checkpoint(session, epoch_id=epoch_id, dataset=dataset, schema=schema)
+                current = load_checkpoint(
+                    session,
+                    epoch_id=epoch_id,
+                    dataset=dataset,
+                    schema=schema,
+                    _validate_history=False,
+                )
                 if current != checkpoint:
                     raise StagingIngestError("checkpoint changed concurrently")
                 result = ingest_page(
