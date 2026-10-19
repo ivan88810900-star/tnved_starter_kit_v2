@@ -2179,7 +2179,7 @@
       "unique_source_pr_count": 29
     }
   },
-  "revision": 876,
+  "revision": 877,
   "runs": [
     {
       "head_sha": null,
@@ -11513,6 +11513,42 @@
     "next_step": "First recheck exact-head CI for 09bd88e3085921733708578cce6e21a70430c0fd and accept only a verified successful run. Then isolate tests/test_rop_coverage_audit.py: on clean exact HEAD it exits 1 with 4 failed because rop_goods_rates is absent and creates a 4,096-byte ambient customs.db; preserve its 97-chapter, subject/not-subject and summary assertions without changing product or normative data."
   },
   "latest_scheduled_product_checkpoint": {
+    "schema_version": 1,
+    "task_id": "TARIFF-PR256-NTM-MEASURES-SESSION-ISOLATION-20261019",
+    "started_at": "2026-10-19T01:47:46Z",
+    "completed_at": "2026-10-19T02:00:40Z",
+    "executor": "/root/scheduled-cycle346-20261019T014746Z",
+    "lease_generation": 346,
+    "pr": 256,
+    "branch": "agent/product-ntm-regressions-v1",
+    "previous_head_sha": "564afdb9005eafc90d85b2dcf9063400feabe77c",
+    "head_sha": "cd7b5970006742324bbe754e5632c58e0ed384eb",
+    "tree_sha": "4ac9e13f500e9425d75041c1a74d86543b9a97e4",
+    "local_author_commit": "25bdbee7ef3c948ff9e5c6fb632a786ba6fcda7c",
+    "status": "IMPLEMENTED_A5_PASS_CI_PASS_NTM_MEASURES_SESSION_ISOLATION",
+    "product_changed": false,
+    "product_code_changed": false,
+    "test_fixture_changed": true,
+    "scope": "order-dependent disposable database isolation for NTM v2 measures enforcement",
+    "finding": "When sanctions_risk_block was imported before the measures-enforcement fixture, its copied default SessionLocal bypassed the in-memory sessionmaker. All 11 assertions passed while the run created ambient customs.db, WAL and SHM.",
+    "fix": "Bind sanctions_risk_block.SessionLocal to the fixture sessionmaker, assert identity explicitly, and enclose create_all, monkeypatching, body and teardown in unconditional engine disposal.",
+    "baseline_reproduction": "exact previous head pre-import wrapper exited 0 with 11 passed but created customs.db 4096, customs.db-wal 0 and customs.db-shm 32768",
+    "author_tests": "focused 12 passed; sanctions/measures in both orders 21 passed each; injected create_all failure disposed the engine; 11 original tests AST-identical; diff check and no-ambient checks passed; all exits 0",
+    "independent_a5": "/root/a5_cycle346 PASS_NO_FINDINGS on exact local tree: parent defect reproduced, focused 12, both sanctions/measures orders 21 each, setup/normal/body lifecycle probes, 11 tests and 19 assertions AST-identical, no ambient SQLite",
+    "a0_validation": "Exact remote head cd7b5970006742324bbe754e5632c58e0ed384eb passed sanctions+measures 21 tests, exit 0 with no ambient SQLite. Guarded pair then identified the next distinct writer at test_ntm_v2_official_sgr_advisory.py::test_official_advisory_flag_off_no_official_source, exit 86 with customs.db/WAL/SHM.",
+    "exact_head_ci": "run 39187682557 / job 117853456045 success",
+    "receipts": {
+      "pr256": null,
+      "issue257": null
+    },
+    "snapshot_status": "BOUNDED_EPOCH315_1020_ROWS_POPULATED_SYNCHRONIZED_NTM_NOT_AVAILABLE",
+    "staging_blocker": "cycle325 offset1120 transfer remains policy-refused after the owner-authorized attempt; no retry or workaround",
+    "a6": "UNCHANGED_NOT_SENT",
+    "protected_actions_performed": false,
+    "evidence": ".ai/orchestration/evidence/cycle346_pr256_ntm_measures_session_isolation.json",
+    "next_step": "On exact PR256 HEAD, isolate test_ntm_v2_official_sgr_advisory.py::test_official_advisory_flag_off_no_official_source: it is clean alone but after the current process import order creates customs.db/WAL/SHM; preserve its 13 advisory assertions and disposable boundaries without retrying the refused SGR transfer."
+  },
+  "previous_scheduled_product_checkpoint_345": {
     "schema_version": 1,
     "task_id": "TARIFF-PR256-NTM-ADVISORY-SESSION-ISOLATION-20261019",
     "started_at": "2026-10-19T00:55:30Z",
