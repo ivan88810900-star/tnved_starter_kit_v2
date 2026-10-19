@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import unittest
+from unittest.mock import patch
 
 from app.services.normative_store import init_db
 from app.services.payment_engine import compute_payments
@@ -16,6 +17,97 @@ try:
     _API_OK = True
 except ImportError:
     _API_OK = False
+
+
+def _complete_payment_result() -> dict:
+    """Engine result with final arithmetic but no trade-remedy coverage."""
+    return {
+        "status": "OK",
+        "customs_value": 100_000.0,
+        "country": "DE",
+        "breakdown": {
+            "duty": 5_000.0,
+            "duty_rate": 5.0,
+            "vat": 23_100.0,
+            "vat_rate": 22.0,
+            "customs_fee": 1_067.0,
+            "excise": 0.0,
+            "antidumping": 0.0,
+            "special_duties_amount": 0.0,
+            "total_payable": 29_167.0,
+        },
+        "auto_detected": {
+            "excise_type": "none",
+            "antidumping_type": "none",
+        },
+        "data_quality": {
+            "match_length": 10,
+            "confidence": "high",
+            "antidumping_status": "n/a",
+        },
+        "payment_review_reasons": [],
+        "special_duties": [],
+        "sources": [],
+        "legal_basis": {},
+    }
+
+
+class PaymentQuoteStatusConsistencyTests(unittest.TestCase):
+    def _patch_complete_engine_without_special_duty_coverage(self):
+        return (
+            patch(
+                "app.services.payment_quote_service.get_rates_map",
+                return_value={"RUB": 1.0},
+            ),
+            patch(
+                "app.services.payment_quote_service.compute_payments",
+                return_value=_complete_payment_result(),
+            ),
+            patch(
+                "app.services.payment_quote_service._special_duties_configured_for_hs",
+                return_value=False,
+            ),
+        )
+
+    def test_unconfigured_special_duty_contour_marks_quote_for_review(self):
+        rates_patch, compute_patch, coverage_patch = (
+            self._patch_complete_engine_without_special_duty_coverage()
+        )
+        with rates_patch, compute_patch, coverage_patch:
+            quote = build_payment_quote(
+                {
+                    "hs_code": "0101210000",
+                    "customs_value": 100_000,
+                    "invoice_currency": "RUB",
+                    "country": "DE",
+                }
+            )
+
+        special = next(item for item in quote.line_items if item.code == "special_duty")
+        self.assertEqual(special.status, "not_configured")
+        self.assertIsNone(quote.total_payable_rub)
+        self.assertEqual(quote.status, "REVIEW_REQUIRED")
+
+    @unittest.skipUnless(_API_OK, "payment quote API tests need FastAPI app")
+    def test_api_never_returns_ok_with_withheld_total(self):
+        rates_patch, compute_patch, coverage_patch = (
+            self._patch_complete_engine_without_special_duty_coverage()
+        )
+        with rates_patch, compute_patch, coverage_patch:
+            response = TestClient(app).post(
+                "/api/payments/quote",
+                json={
+                    "hs_code": "0101210000",
+                    "customs_value": 100_000,
+                    "invoice_currency": "RUB",
+                    "country": "DE",
+                },
+            )
+
+        self.assertEqual(response.status_code, 200)
+        body = response.json()
+        self.assertEqual(body["status"], "REVIEW_REQUIRED")
+        self.assertIsNone(body["total_payable_rub"])
 
 
 class PaymentQuoteServiceTests(unittest.TestCase):
