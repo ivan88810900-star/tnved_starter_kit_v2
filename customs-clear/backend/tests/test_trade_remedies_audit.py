@@ -23,6 +23,12 @@ TRADE_REMEDY_BUNDLES = {
     "special_safeguard": BACKEND_ROOT / "data/raw_normative/eec_special_safeguard.json",
     "countervailing": BACKEND_ROOT / "data/raw_normative/eec_countervailing.json",
 }
+HISTORICAL_BUNDLE_FLOORS = {
+    "anti_dumping": 27,
+    "special_safeguard": 3,
+    "countervailing": 2,
+}
+RETAINED_TEST_ONLY_COUNT = 2
 
 
 def _sha256(path: Path) -> str:
@@ -98,7 +104,15 @@ def _isolated_trade_remedies_database():
     anti_dumping = _bundle_rows(TRADE_REMEDY_BUNDLES["anti_dumping"])
     safeguards = _bundle_rows(TRADE_REMEDY_BUNDLES["special_safeguard"])
     countervailing = _bundle_rows(TRADE_REMEDY_BUNDLES["countervailing"])
-    assert (len(anti_dumping), len(safeguards), len(countervailing)) == (27, 3, 2)
+    bundle_counts = {
+        "anti_dumping": len(anti_dumping),
+        "special_safeguard": len(safeguards),
+        "countervailing": len(countervailing),
+    }
+    assert all(
+        bundle_counts[name] >= minimum
+        for name, minimum in HISTORICAL_BUNDLE_FLOORS.items()
+    ), f"tracked trade-remedy bundle is empty or truncated: {bundle_counts}"
 
     rows = [
         _special_duty_row(
@@ -109,11 +123,11 @@ def _isolated_trade_remedies_database():
         )
         for index, raw in enumerate(anti_dumping)
     ]
-    # PR #170 audited a database with 24 retained official anti-dumping rows
-    # before adding four new measures, while the retained tracked bundle held
-    # 22 rows. Preserve that historical aggregate boundary with two explicitly
-    # test-only retained-row markers; they are never product/source evidence.
-    for index, raw in enumerate(anti_dumping[:2], start=1):
+    # Preserve the two historical retained-row markers explicitly. They are
+    # test-only aggregate-boundary fixtures, never product/source evidence.
+    for index, raw in enumerate(
+        anti_dumping[:RETAINED_TEST_ONLY_COUNT], start=1
+    ):
         retained = _special_duty_row(
             raw,
             row_id=200 + index,
@@ -138,7 +152,7 @@ def _isolated_trade_remedies_database():
         )
         for index, raw in enumerate(countervailing)
     )
-    assert len(rows) == 34
+    assert len(rows) == sum(bundle_counts.values()) + RETAINED_TEST_ONLY_COUNT
 
     with factory() as db:
         db.bulk_insert_mappings(SpecialDuty, rows)
@@ -146,7 +160,7 @@ def _isolated_trade_remedies_database():
 
     monkeypatch.setattr(f"{__name__}.SessionLocal", factory)
     try:
-        yield
+        yield bundle_counts
     finally:
         monkeypatch.undo()
         engine.dispose()
@@ -155,7 +169,8 @@ def _isolated_trade_remedies_database():
 
 class TestTradeRemediesAudit:
     @pytest.fixture(autouse=True)
-    def _db(self):
+    def _db(self, _isolated_trade_remedies_database):
+        self.bundle_counts = _isolated_trade_remedies_database
         self.db = SessionLocal()
         yield
         self.db.close()
@@ -168,7 +183,7 @@ class TestTradeRemediesAudit:
 
     def test_total_special_duties_count(self) -> None:
         total = self.db.execute(text("SELECT COUNT(*) FROM special_duties")).scalar()
-        assert total == 34
+        assert total == sum(self.bundle_counts.values()) + RETAINED_TEST_ONLY_COUNT
 
     def test_new_measures_present(self) -> None:
         foil = self.db.execute(
@@ -238,10 +253,33 @@ class TestTradeRemediesAudit:
             )
         ).fetchall()
         by_type = {r[0]: (r[1], r[2]) for r in rows}
-        assert by_type["anti_dumping"][0] == 29
-        assert by_type["anti_dumping"][1] == 29
-        assert by_type["special_safeguard"][0] == 3
-        assert by_type["countervailing"][0] == 2
+        expected_anti_dumping = (
+            self.bundle_counts["anti_dumping"] + RETAINED_TEST_ONLY_COUNT
+        )
+        assert by_type["anti_dumping"][0] == expected_anti_dumping
+        assert by_type["anti_dumping"][1] == expected_anti_dumping
+        assert (
+            by_type["special_safeguard"][0]
+            == self.bundle_counts["special_safeguard"]
+        )
+        assert (
+            by_type["countervailing"][0]
+            == self.bundle_counts["countervailing"]
+        )
+
+        retained_markers = self.db.execute(
+            text(
+                """
+                SELECT manufacturer_exporter FROM special_duties
+                WHERE source_code = 'EEC_AUDIT_RETAINED_TEST_ONLY'
+                ORDER BY manufacturer_exporter
+                """
+            )
+        ).scalars().all()
+        assert retained_markers == [
+            f"historical-audit-retained-{index}"
+            for index in range(1, RETAINED_TEST_ONLY_COUNT + 1)
+        ]
 
     def test_needs_verification_column_exists(self) -> None:
         row = self.db.execute(
