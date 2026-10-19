@@ -1,0 +1,50 @@
+{
+  "schema_version": 1,
+  "task_id": "TARIFF-PR256-OFFICIAL-SGR-ADVISORY-SESSION-ISOLATION-20261019",
+  "executor": "/root/scheduled-cycle347-20261019T024934Z",
+  "started_at": "2026-10-19T02:49:34Z",
+  "completed_at": "2026-10-19T03:08:06Z",
+  "lease_generation": 347,
+  "repository": "ivan88810900-star/tnved_starter_kit_v2",
+  "pull_request": 256,
+  "branch": "agent/product-ntm-regressions-v1",
+  "previous_head_sha": "cd7b5970006742324bbe754e5632c58e0ed384eb",
+  "head_sha": "fe367f14d9281b25c9f32fbb0328cdb7cd153a9f",
+  "tree_sha": "857299a6c9032b8737e602635ed4848fe8aec200",
+  "local_author_commit": "c5da064e83cb8669acc1e7c031a280d2407c90c6",
+  "changed_paths": ["customs-clear/backend/tests/test_ntm_v2_official_sgr_advisory.py"],
+  "finding": "Collecting the measures-enforcement module pre-imported sanctions_risk_block before the official-SGR fixture patched app.db. The first official test passed but the stale SessionLocal alias created ambient SQLite.",
+  "baseline": {
+    "command": "pytest -q -p watch_customs_db tests/test_ntm_v2_official_sgr_advisory.py tests/test_ntm_v2_measures_enforcement.py",
+    "exit_code": 86,
+    "result": "1 passed; customs.db 4096 bytes, customs.db-wal 0 bytes, customs.db-shm 32768 bytes"
+  },
+  "repair": "The fixture rebinds sanctions_risk_block.SessionLocal to the in-memory sessionmaker, asserts alias identity and encloses create_all, monkeypatching, body and teardown in unconditional engine disposal.",
+  "author": {
+    "identity": "/root/a2_cycle347",
+    "commit": "c5da064e83cb8669acc1e7c031a280d2407c90c6",
+    "tests": ["focused 14 passed", "official-SGR/measures both orders 26 passed each", "official-SGR/sanctions both orders 23 passed each", "setup/normal/body lifecycle 3 passed", "10 original tests and 25 assertions AST-identical; all exits 0"]
+  },
+  "independent_a5": {
+    "identity": "/root/a5_cycle347",
+    "result": "PASS_NO_FINDINGS",
+    "evidence": "parent defect reproduced; focused 14; both measures orders 26 each; both sanctions orders 23 each; lifecycle disposal exactly once; AST parity and no ambient SQLite"
+  },
+  "a0_exact_remote": {
+    "command": "PYTHONPATH=. /tmp/tariff-cycle345-venv/bin/python wrapper preimporting sanctions then pytest -q tests/test_ntm_v2_official_sgr_advisory.py tests/test_ntm_v2_measures_enforcement.py",
+    "exit_code": 0,
+    "result": "26 passed; no customs.db, WAL or SHM",
+    "guarded_broad": "with the nine snapshot-only tests excluded, stopped at test_ntm_v2_official_sgr_import.py::test_official_not_in_production_broker after 56%; next ambient writer confirmed"
+  },
+  "ci": {
+    "run_id": 39192742678,
+    "job_id": 117868875905,
+    "conclusion": "success",
+    "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/39192742678/job/117868875905"
+  },
+  "receipts": {"pr256": null, "issue257": null},
+  "snapshot": {"epoch": 315, "objects": 20, "runs": 10, "rows": 1020, "unique_ids": 1020, "unique_hashes": 1020, "max_ordinal": 1020, "status": "COLLECTED_UNVERIFIED", "populated_synchronized_available": false},
+  "staging_blocker": "The cycle325 offset1120 transfer remains policy-refused; it was not retried or worked around.",
+  "a6": {"request": "core-s1-6415f443120f-r9-g106", "status": "UNCHANGED_NOT_SENT"},
+  "protected_actions_performed": false
+}

@@ -2179,7 +2179,7 @@
       "unique_source_pr_count": 29
     }
   },
-  "revision": 877,
+  "revision": 878,
   "runs": [
     {
       "head_sha": null,
@@ -11513,6 +11513,42 @@
     "next_step": "First recheck exact-head CI for 09bd88e3085921733708578cce6e21a70430c0fd and accept only a verified successful run. Then isolate tests/test_rop_coverage_audit.py: on clean exact HEAD it exits 1 with 4 failed because rop_goods_rates is absent and creates a 4,096-byte ambient customs.db; preserve its 97-chapter, subject/not-subject and summary assertions without changing product or normative data."
   },
   "latest_scheduled_product_checkpoint": {
+    "schema_version": 1,
+    "task_id": "TARIFF-PR256-OFFICIAL-SGR-ADVISORY-SESSION-ISOLATION-20261019",
+    "started_at": "2026-10-19T02:49:34Z",
+    "completed_at": "2026-10-19T03:08:06Z",
+    "executor": "/root/scheduled-cycle347-20261019T024934Z",
+    "lease_generation": 347,
+    "pr": 256,
+    "branch": "agent/product-ntm-regressions-v1",
+    "previous_head_sha": "cd7b5970006742324bbe754e5632c58e0ed384eb",
+    "head_sha": "fe367f14d9281b25c9f32fbb0328cdb7cd153a9f",
+    "tree_sha": "857299a6c9032b8737e602635ed4848fe8aec200",
+    "local_author_commit": "c5da064e83cb8669acc1e7c031a280d2407c90c6",
+    "status": "IMPLEMENTED_A5_PASS_CI_PASS_OFFICIAL_SGR_ADVISORY_SESSION_ISOLATION",
+    "product_changed": false,
+    "product_code_changed": false,
+    "test_fixture_changed": true,
+    "scope": "order-dependent disposable database isolation for official SGR advisory tests",
+    "finding": "Collecting the measures-enforcement module pre-imported sanctions_risk_block before the official-SGR fixture patched app.db. The first official advisory test passed but created ambient customs.db, WAL and SHM through the stale SessionLocal alias.",
+    "fix": "Bind sanctions_risk_block.SessionLocal to the official-SGR fixture sessionmaker, assert alias identity, and enclose create_all, monkeypatching, body and teardown in unconditional engine disposal.",
+    "baseline_reproduction": "exact previous head official-SGR plus measures guarded run stopped after one passing test with exit 86 and customs.db 4096, customs.db-wal 0, customs.db-shm 32768",
+    "author_tests": "focused 14 passed; official-SGR/measures both orders 26 passed each; official-SGR/sanctions both orders 23 passed each; lifecycle setup/normal/body checks passed; 10 original tests and 25 assertions AST-identical; all exits 0",
+    "independent_a5": "/root/a5_cycle347 PASS_NO_FINDINGS on exact local tree: parent defect reproduced, focused 14, both measures orders 26 each, both sanctions orders 23 each, setup/normal/body disposal exactly once, no ambient SQLite",
+    "a0_validation": "Exact remote head fe367f14d9281b25c9f32fbb0328cdb7cd153a9f passed official-SGR+measures 26 tests, exit 0 with no ambient SQLite. Broad guarded run passed the repaired writer, then after excluding nine snapshot-only tests identified test_ntm_v2_official_sgr_import.py::test_official_not_in_production_broker as the next distinct ambient writer.",
+    "exact_head_ci": "run 39192742678 / job 117868875905 success",
+    "receipts": {
+      "pr256": null,
+      "issue257": null
+    },
+    "snapshot_status": "BOUNDED_EPOCH315_1020_ROWS_POPULATED_SYNCHRONIZED_NTM_NOT_AVAILABLE",
+    "staging_blocker": "cycle325 offset1120 transfer remains policy-refused after the owner-authorized attempt; no retry or workaround",
+    "a6": "UNCHANGED_NOT_SENT",
+    "protected_actions_performed": false,
+    "evidence": ".ai/orchestration/evidence/cycle347_pr256_official_sgr_advisory_session_isolation.json",
+    "next_step": "On exact PR256 HEAD, isolate test_ntm_v2_official_sgr_import.py::test_official_not_in_production_broker: guarded broad execution excluding the nine snapshot-only tests reaches it after 56% and creates customs.db/WAL/SHM; preserve official-source isolation and default-off broker assertions."
+  },
+  "previous_scheduled_product_checkpoint_346": {
     "schema_version": 1,
     "task_id": "TARIFF-PR256-NTM-MEASURES-SESSION-ISOLATION-20261019",
     "started_at": "2026-10-19T01:47:46Z",
