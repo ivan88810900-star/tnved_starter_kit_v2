@@ -157,6 +157,67 @@ def test_bounded_worker_commits_two_pages_and_replay_is_idempotent(db) -> None:
         assert session.scalar(select(func.count()).select_from(tables["run_rows"])) == 5
 
 
+@pytest.mark.parametrize("mutation", ["missing-physical-row", "corrupt-global-row"])
+def test_load_checkpoint_rejects_corrupted_prior_committed_page(db, mutation: str) -> None:
+    first = _page(0, [_row(0), _row(1), _row(2)], overlap=0)
+    second = _page(
+        3,
+        [_row(0), _row(1), _row(2), _row(3), _row(4)],
+        overlap=3,
+    )
+    pages = {0: first, 3: second}
+    run_bounded_worker(
+        session_factory=db,
+        page_reader=lambda checkpoint, _budget: pages[checkpoint.next_offset],
+        epoch_id="epoch-history",
+        dataset="NSI-1995",
+        schema=None,
+        limits=WorkerLimits(4, 10, 100_000, 10),
+    )
+
+    tables = staging_tables(MetaData(), schema=None)
+    with db() as session:
+        with session.begin():
+            runs = session.execute(select(tables["ingest_runs"])).mappings().all()
+            first_run_id = next(
+                candidate["run_id"]
+                for candidate in runs
+                if candidate["scope"]["epoch_id"] == "epoch-history"
+                and candidate["scope"]["logical_offset"] == 0
+            )
+            prior_row = session.execute(
+                select(tables["run_rows"]).where(
+                    tables["run_rows"].c.run_id == first_run_id,
+                    tables["run_rows"].c.ordinal == 2,
+                )
+            ).mappings().one()
+            if mutation == "missing-physical-row":
+                session.execute(
+                    tables["run_rows"].delete().where(
+                        tables["run_rows"].c.run_id == first_run_id,
+                        tables["run_rows"].c.ordinal == 2,
+                    )
+                )
+            else:
+                session.execute(
+                    tables["global_records"].update()
+                    .where(
+                        tables["global_records"].c.global_record_id
+                        == prior_row["global_record_id"]
+                    )
+                    .values(raw_json='{"data":{"NUMB_DOC":"CORRUPTED"}}')
+                )
+
+    with db() as session:
+        with pytest.raises(StagingIngestError, match="stored checkpoint history"):
+            load_checkpoint(
+                session,
+                epoch_id="epoch-history",
+                dataset="NSI-1995",
+                schema=None,
+            )
+
+
 def test_replay_requires_the_exact_manifest_cursor_and_source_object(db) -> None:
     original = _page(0, [_row(0)], overlap=0, total=1)
     with db() as session:

@@ -558,46 +558,57 @@ def load_checkpoint(
 
     run_rows = tables["run_rows"]
     global_records = tables["global_records"]
-    physical_rows = session.execute(
-        select(
-            run_rows.c.run_id,
-            run_rows.c.ordinal,
-            run_rows.c.source_id,
-            run_rows.c.global_record_id,
-            run_rows.c.sgr_number,
-            run_rows.c.date_time_from,
-            run_rows.c.date_time_to,
-            run_rows.c.update_datetime,
-            run_rows.c.date_time_updated,
-            run_rows.c.row_sha256,
-            run_rows.c.status,
-            global_records.c.global_record_id.label("bound_global_record_id"),
-            global_records.c.source_record_id.label("global_source_record_id"),
-            global_records.c.source_version_id.label("global_source_version_id"),
-            global_records.c.first_source_id.label("global_first_source_id"),
-            global_records.c.raw_json.label("global_raw_json"),
-            global_records.c.row_sha256.label("global_row_sha256"),
-            global_records.c.status.label("global_status"),
-        )
-        .outerjoin(
-            global_records,
-            global_records.c.global_record_id == run_rows.c.global_record_id,
-        )
-        .where(run_rows.c.run_id == run_id)
-        .order_by(run_rows.c.ordinal)
-    ).mappings().all()
+    def physical_rows_for(expected_run_id: str) -> list[Mapping[str, Any]]:
+        return session.execute(
+            select(
+                run_rows.c.run_id,
+                run_rows.c.ordinal,
+                run_rows.c.source_id,
+                run_rows.c.global_record_id,
+                run_rows.c.sgr_number,
+                run_rows.c.date_time_from,
+                run_rows.c.date_time_to,
+                run_rows.c.update_datetime,
+                run_rows.c.date_time_updated,
+                run_rows.c.row_sha256,
+                run_rows.c.status,
+                global_records.c.global_record_id.label("bound_global_record_id"),
+                global_records.c.source_record_id.label("global_source_record_id"),
+                global_records.c.source_version_id.label("global_source_version_id"),
+                global_records.c.first_source_id.label("global_first_source_id"),
+                global_records.c.raw_json.label("global_raw_json"),
+                global_records.c.row_sha256.label("global_row_sha256"),
+                global_records.c.status.label("global_status"),
+            )
+            .outerjoin(
+                global_records,
+                global_records.c.global_record_id == run_rows.c.global_record_id,
+            )
+            .where(run_rows.c.run_id == expected_run_id)
+            .order_by(run_rows.c.ordinal)
+        ).mappings().all()
+
+    physical_rows = physical_rows_for(run_id)
 
     first_source_ids: set[str] = set()
     first_capture_pairs: set[tuple[str, str]] = set()
 
-    def physical_row_matches(index: int, physical: Mapping[str, Any]) -> bool:
-        ordinal = logical_offset + index + 1
+    def physical_row_matches(
+        index: int,
+        physical: Mapping[str, Any],
+        *,
+        expected_run_id: str = run_id,
+        expected_logical_offset: int = logical_offset,
+        expected_page_source_id: str = page_source_id,
+        collect_first_capture: bool = True,
+    ) -> bool:
+        ordinal = expected_logical_offset + index + 1
         raw_json = physical["global_raw_json"]
         first_source_id = physical["global_first_source_id"]
         if (
-            physical["run_id"] != run_id
+            physical["run_id"] != expected_run_id
             or physical["ordinal"] != ordinal
-            or physical["source_id"] != page_source_id
+            or physical["source_id"] != expected_page_source_id
             or physical["status"] != COLLECTED_UNVERIFIED
             or physical["bound_global_record_id"] != physical["global_record_id"]
             or physical["global_status"] != COLLECTED_UNVERIFIED
@@ -615,8 +626,8 @@ def load_checkpoint(
             expected_physical = _physical_values(
                 item,
                 record=record,
-                run_id=run_id,
-                source_id=page_source_id,
+                run_id=expected_run_id,
+                source_id=expected_page_source_id,
                 ordinal=ordinal,
             )
         except (json.JSONDecodeError, StagingIngestError, TypeError, ValueError):
@@ -648,8 +659,9 @@ def load_checkpoint(
         }
         if stored_record != record or stored_physical != expected_physical:
             return False
-        first_source_ids.add(first_source_id)
-        first_capture_pairs.add((record["global_record_id"], first_source_id))
+        if collect_first_capture:
+            first_source_ids.add(first_source_id)
+            first_capture_pairs.add((record["global_record_id"], first_source_id))
         return True
 
     if len(physical_rows) != raw_count or any(
@@ -787,7 +799,8 @@ def load_checkpoint(
                     and capture["capture_run_source_id"] == capture_page_source
                     and isinstance(capture_raw_count, int)
                     and not isinstance(capture_raw_count, bool)
-                    and capture_raw_count > 0
+                    and capture_raw_count >= 0
+                    and (cursor_total == 0 or capture_raw_count > 0)
                     and capture["capture_unique_count"] == capture_raw_count
                     and capture["capture_normalized_count"] == 0
                     and capture["capture_rejected_count"] == 0
@@ -833,16 +846,7 @@ def load_checkpoint(
                     }
                     capture_page = capture_source_map.get(capture_page_source)
                     capture_manifest = capture_source_map.get(capture_manifest_source)
-                    capture_physical = session.execute(
-                        select(
-                            run_rows.c.ordinal,
-                            run_rows.c.source_id,
-                            run_rows.c.row_sha256,
-                            run_rows.c.status,
-                        )
-                        .where(run_rows.c.run_id == capture_run_id)
-                        .order_by(run_rows.c.ordinal)
-                    ).mappings().all()
+                    capture_physical = physical_rows_for(capture_run_id)
                     valid = (
                         capture_page is not None
                         and capture_manifest is not None
@@ -859,9 +863,14 @@ def load_checkpoint(
                         and capture_manifest["status"] == COLLECTED_UNVERIFIED
                         and len(capture_physical) == capture_raw_count
                         and all(
-                            row["ordinal"] == logical + index + 1
-                            and row["source_id"] == capture_page_source
-                            and row["status"] == COLLECTED_UNVERIFIED
+                            physical_row_matches(
+                                index,
+                                row,
+                                expected_run_id=capture_run_id,
+                                expected_logical_offset=logical,
+                                expected_page_source_id=capture_page_source,
+                                collect_first_capture=False,
+                            )
                             for index, row in enumerate(capture_physical)
                         )
                         and (
@@ -877,6 +886,58 @@ def load_checkpoint(
                     )
             run_validation[capture_run_id] = valid
             return valid
+
+        history_rows = session.execute(
+            select(
+                tables["ingest_runs"].c.run_id.label("capture_run_id"),
+                tables["ingest_runs"].c.source_id.label("capture_run_source_id"),
+                tables["ingest_runs"].c.scope.label("capture_scope"),
+                tables["ingest_runs"].c.status.label("capture_run_status"),
+                tables["ingest_runs"].c.parser_version.label("capture_parser_version"),
+                tables["ingest_runs"].c.raw_count.label("capture_raw_count"),
+                tables["ingest_runs"].c.unique_count.label("capture_unique_count"),
+                tables["ingest_runs"].c.normalized_count.label("capture_normalized_count"),
+                tables["ingest_runs"].c.rejected_count.label("capture_rejected_count"),
+                tables["ingest_runs"].c.resume_cursor.label("capture_resume_cursor"),
+            )
+        ).mappings().all()
+        committed_history = [
+            candidate
+            for candidate in history_rows
+            if isinstance(candidate["capture_scope"], dict)
+            and candidate["capture_scope"].get("epoch_id") == canonical_epoch
+            and candidate["capture_scope"].get("dataset") == canonical_dataset
+        ]
+        committed_history.sort(
+            key=lambda candidate: candidate["capture_scope"].get("logical_offset", -1)
+        )
+        history_next_offset = 0
+        history_valid = len(committed_history) == generation
+        for history_index, candidate in enumerate(committed_history):
+            history_scope = candidate["capture_scope"]
+            history_cursor = candidate["capture_resume_cursor"]
+            history_logical = history_scope.get("logical_offset")
+            if (
+                not history_valid
+                or not isinstance(history_cursor, dict)
+                or history_logical != history_next_offset
+                or history_cursor.get("snapshot_id") != snapshot_id
+                or history_cursor.get("source_total") != source_total
+                or history_cursor.get("complete") is not (
+                    complete if history_index == generation - 1 else False
+                )
+                or not capture_run_is_valid(candidate)
+            ):
+                history_valid = False
+                break
+            history_next_offset = history_cursor["next_offset"]
+        if (
+            not history_valid
+            or history_next_offset != next_offset
+            or not committed_history
+            or committed_history[-1]["capture_run_id"] != run_id
+        ):
+            raise StagingIngestError("stored checkpoint history is inconsistent")
 
         proven_first_captures: set[tuple[str, str]] = set()
         global_by_id = {
