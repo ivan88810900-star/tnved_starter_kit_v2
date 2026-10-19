@@ -5,9 +5,14 @@ from __future__ import annotations
 import re
 
 from ..db import SessionLocal
-from ..models.core import HsRate
+from ..models.core import HsRate, SourceStatus
 from .normative_store import find_rate_for_hs
 from .payment_engine import _find_duty_rule_for_hs
+from .payment_revision_utils import (
+    is_conservative_official_excise_source_url,
+    is_official_excise_revision,
+    is_official_excise_row_marker,
+)
 
 EXCISE_LIKELY_CHAPTERS: frozenset[str] = frozenset({"22", "24", "27", "30", "87"})
 
@@ -34,19 +39,49 @@ def _format_duty_simple(raw: str) -> str:
         return t
 
 
-def resolve_excise_for_hs(hs_code: str) -> tuple[str, float, str]:
-    rate, _ = find_rate_for_hs(hs_code)
-    if rate and (rate.excise_type or "none") not in ("", "none"):
-        return str(rate.excise_type), float(rate.excise_value or 0.0), (rate.excise_basis or "")
+def _excise_provenance_matches_status(rate: HsRate, status: SourceStatus | None) -> bool:
+    """Accept an excise value only when its row proof matches the live source status."""
+    if status is None or status.is_stale or not is_official_excise_revision(status.revision):
+        return False
+    if not is_official_excise_row_marker(
+        excise_source_code=rate.excise_source_code,
+        excise_source_revision=rate.excise_source_revision,
+    ):
+        return False
+    if (rate.excise_source_revision or "").strip() != (status.revision or "").strip():
+        return False
+    row_url = (rate.excise_source_url or "").strip()
+    status_url = (status.source_url or "").strip()
+    if not is_conservative_official_excise_source_url(row_url):
+        return False
+    if not is_conservative_official_excise_source_url(status_url):
+        return False
+    if rate.excise_synced_at is None or status.synced_at is None:
+        return False
+    # Re-checking the same immutable revision can advance SourceStatus without
+    # rewriting already identical rows. A row may therefore be older, never newer.
+    return rate.excise_synced_at <= status.synced_at
 
+
+def resolve_excise_for_hs(hs_code: str) -> tuple[str, float, str]:
     d = _digits(hs_code)
     with SessionLocal() as db:
+        status = db.query(SourceStatus).filter(SourceStatus.source_code == "EEC_EXCISE").first()
+
+        rate, _ = find_rate_for_hs(hs_code)
+        if rate and (rate.excise_type or "none") not in ("", "none"):
+            if not _excise_provenance_matches_status(rate, status):
+                return "needs_review", 0.0, ""
+            return str(rate.excise_type), float(rate.excise_value or 0.0), (rate.excise_basis or "")
+
         for length in (8, 6, 4):
             if len(d) < length:
                 continue
             pref10 = d[:length].ljust(10, "0")
             row = db.query(HsRate).filter(HsRate.hs_code == pref10).first()
             if row and (row.excise_type or "none") not in ("", "none"):
+                if not _excise_provenance_matches_status(row, status):
+                    return "needs_review", 0.0, ""
                 return str(row.excise_type), float(row.excise_value or 0.0), (row.excise_basis or "")
 
     if len(d) >= 2 and d[:2] in EXCISE_LIKELY_CHAPTERS:
