@@ -2179,7 +2179,7 @@
       "unique_source_pr_count": 29
     }
   },
-  "revision": 893,
+  "revision": 894,
   "runs": [
     {
       "head_sha": null,
@@ -6792,6 +6792,44 @@
           "checkpoint": "This state CAS commit is the durable checkpoint; lease release follows separately."
         },
         "next_step": "Reread fresh live heads and active product focus, then audit the next bounded sanctions/risk-management product slice end-to-end; reproduce a concrete defect before editing and preserve fail-closed source boundaries."
+      },
+      "quote_status_consistency_checkpoint_20261019": {
+        "task_id": "TARIFF-PR255-QUOTE-STATUS-CONSISTENCY-20261019",
+        "updated_at": "2026-10-19T20:09:02Z",
+        "executor": "/root/scheduled-cycle364-20261019T195056Z",
+        "lease_generation": 364,
+        "base_pr": 244,
+        "corrective_pr": 255,
+        "parent_sha": "9659b6509d82f6077dfe0f6917af0dc532f6277e",
+        "published_head_sha": "fb6fe113290c77a9a551035bc90cfb3d5b23c3f9",
+        "tree_sha": "b62d4d4ee9a5a0007e6ef97070be6234dd430f98",
+        "local_author_commit": "652f48c40c956e0788424a73ba3ade4de87047ef",
+        "scope": "Align public payment quote status with withheld total when a blocking quote line remains uncertain.",
+        "reproduction": "Parent returned status=OK with total_payable_rub=null and special_duty=not_configured through both service and POST /api/payments/quote.",
+        "result": "Blocking manual_review_required/unknown/not_configured/embargo lines promote the quote to REVIEW_REQUIRED; rates, arithmetic, raw terminal status handling and legal applicability are unchanged.",
+        "author_tests": "Freshly migrated disposable SQLite payment slice: 108 passed plus 35 subtests, exit 0.",
+        "independent_a5": "/root/a5_cycle364 PASS_NO_FINDINGS; focused 49 passed plus 9 subtests, broad payment regression 202 passed plus 35 subtests, diff-check and py_compile exit 0.",
+        "exact_head_ci": {
+          "status": "PASSED",
+          "run_id": 39316493539,
+          "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/39316493539",
+          "jobs": {
+            "payment_regression": 118279756518,
+            "offline_safety": 118279756814
+          }
+        },
+        "limitations": [
+          "One unrestricted mixed-order local run exposed a pre-existing ambient SQLite schema mismatch; the exact candidate passed on a freshly migrated disposable database.",
+          "No full-suite PASS, full #244 acceptance, official-source completeness or legal completeness is claimed.",
+          "The populated synchronized NTM snapshot remains unavailable."
+        ],
+        "receipts": {
+          "pr255": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/255#issuecomment-6276243155",
+          "issue257": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/257#issuecomment-6276243515"
+        },
+        "a6": "UNCHANGED_NOT_SENT",
+        "protected_actions_performed": false,
+        "next_step": "Continue the next unfinished PR #244 payment/source acceptance block from fresh state; keep #245 snapshot-dependent full acceptance explicitly blocked."
       }
     },
     {
@@ -7811,7 +7849,7 @@
       }
     }
   ],
-  "updated_at": "2026-10-19T18:15:19Z",
+  "updated_at": "2026-10-19T20:09:02Z",
   "previous_scheduled_product_checkpoint_174": {
     "updated_at": "2026-10-11T18:04:51.196Z",
     "checked_at": "2026-10-11T18:04:51.196Z",

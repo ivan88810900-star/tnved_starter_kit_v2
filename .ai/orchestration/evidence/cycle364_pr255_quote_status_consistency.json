@@ -1,0 +1,59 @@
+{
+  "schema_version": 1,
+  "task_id": "TARIFF-PR255-QUOTE-STATUS-CONSISTENCY-20261019",
+  "executor": "/root/scheduled-cycle364-20261019T195056Z",
+  "lease_generation": 364,
+  "started_at": "2026-10-19T19:50:56Z",
+  "completed_at": "2026-10-19T20:09:02Z",
+  "repository": "ivan88810900-star/tnved_starter_kit_v2",
+  "base_pr": 244,
+  "corrective_pr": 255,
+  "parent_sha": "9659b6509d82f6077dfe0f6917af0dc532f6277e",
+  "local_author_commit": "652f48c40c956e0788424a73ba3ade4de87047ef",
+  "published_head_sha": "fb6fe113290c77a9a551035bc90cfb3d5b23c3f9",
+  "tree_sha": "b62d4d4ee9a5a0007e6ef97070be6234dd430f98",
+  "changed_files": [
+    "customs-clear/backend/app/services/payment_quote_service.py",
+    "customs-clear/backend/tests/test_payment_quote.py"
+  ],
+  "reproduction": {
+    "status": "REPRODUCED_ON_PARENT",
+    "exit_code": 1,
+    "observed": "status=OK, total_payable_rub=null, special_duty=not_configured"
+  },
+  "fix": "Promote the public quote status to REVIEW_REQUIRED whenever any blocking quote line is manual_review_required, unknown, not_configured or embargo; preserve existing terminal raw statuses and all calculation/legal logic.",
+  "root_verification": {
+    "environment": "fresh Alembic-migrated disposable SQLite database",
+    "result": "108 passed, 35 subtests passed",
+    "exit_code": 0
+  },
+  "independent_a5": {
+    "session": "/root/a5_cycle364",
+    "status": "PASS_NO_FINDINGS",
+    "focused": "49 passed plus 9 subtests",
+    "broad": "202 passed plus 35 subtests",
+    "diff_check_exit_code": 0,
+    "py_compile_exit_code": 0
+  },
+  "exact_head_ci": {
+    "run_id": 39316493539,
+    "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/39316493539",
+    "conclusion": "success",
+    "payment_regression_job_id": 118279756518,
+    "offline_safety_job_id": 118279756814
+  },
+  "receipts": {
+    "pr255": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/255#issuecomment-6276243155",
+    "issue257": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/257#issuecomment-6276243515"
+  },
+  "limitations": [
+    "One unrestricted mixed-order run encountered a pre-existing ambient SQLite schema mismatch; it is not represented as a candidate regression or full-suite pass.",
+    "Full PR #244 acceptance and official-source/legal completeness remain not passed.",
+    "The populated synchronized NTM snapshot remains unavailable."
+  ],
+  "protected_actions_performed": false,
+  "merge_performed": false,
+  "deploy_performed": false,
+  "production_write_performed": false,
+  "a6": "UNCHANGED_NOT_SENT"
+}
