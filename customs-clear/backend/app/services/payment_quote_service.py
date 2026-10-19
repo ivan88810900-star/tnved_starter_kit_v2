@@ -523,9 +523,14 @@ def build_payment_quote(payload: dict[str, Any]) -> PaymentQuoteResponse:
     total_payable: float | None = (
         None if has_uncertain or engine_total is None else float(engine_total)
     )
+    quote_status = (
+        "REVIEW_REQUIRED"
+        if has_uncertain
+        else str(raw.get("status") or "OK")
+    )
 
     return PaymentQuoteResponse(
-        status=str(raw.get("status") or "OK"),
+        status=quote_status,
         hs_code=hs_code,
         country=country,
         description=description,
