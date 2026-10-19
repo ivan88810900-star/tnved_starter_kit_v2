@@ -11538,8 +11538,8 @@
     "a0_validation": "Exact remote head cd7b5970006742324bbe754e5632c58e0ed384eb passed sanctions+measures 21 tests, exit 0 with no ambient SQLite. Guarded pair then identified the next distinct writer at test_ntm_v2_official_sgr_advisory.py::test_official_advisory_flag_off_no_official_source, exit 86 with customs.db/WAL/SHM.",
     "exact_head_ci": "run 39187682557 / job 117853456045 success",
     "receipts": {
-      "pr256": null,
-      "issue257": null
+      "pr256": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256#issuecomment-6258072180",
+      "issue257": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/257#issuecomment-6258074618"
     },
     "snapshot_status": "BOUNDED_EPOCH315_1020_ROWS_POPULATED_SYNCHRONIZED_NTM_NOT_AVAILABLE",
     "staging_blocker": "cycle325 offset1120 transfer remains policy-refused after the owner-authorized attempt; no retry or workaround",
