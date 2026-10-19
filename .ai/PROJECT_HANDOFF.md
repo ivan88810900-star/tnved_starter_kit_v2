@@ -1989,3 +1989,13 @@ CI #255: [offline-safety PASS, run 37771953943](https://github.com/ivan88810900-
 - PR receipt: [PR #255](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/255#issuecomment-6278495595). No merge, deploy, staging/production write, normative-data change, permission/secret change, protected action or A6 dispatch occurred. A6 remains unchanged/not sent.
 - Full #244 acceptance and official-source/legal completeness remain NOT PASS. The populated synchronized NTM snapshot remains unavailable, so full #245 acceptance remains blocked.
 - Evidence: `.ai/orchestration/evidence/cycle366_pr255_excise_display_provenance.json`; TASK_BOARD revision 896. Next continue the next unfinished PR #244 payment/source acceptance block from fresh state while keeping the #245 snapshot blocker explicit.
+
+## Cycle 367 — PR #255 excise registry-domain boundary (2026-10-19 UTC)
+
+- Task `TARIFF-PR255-EXCISE-REGISTRY-DOMAIN-BOUNDARY-20261019`; executor `/root/scheduled-cycle367-20261020T011418MSK`; lease generation 367.
+- Confirmed that the excise registry allowlist admitted `not-eec.eaeunion.org` for registry host `eec.eaeunion.org` because it used an unbounded string suffix check.
+- Draft PR #255 advanced from `db434f8f5f44853450d62803b0102c51220afdea` to exact HEAD `7bb06d8c38f428a21c68385557a2971ca2eda826`, tree `2ef47caa117740d1cbd7ad8f6b974a094061d7e9`. Registry-derived subdomains now require an exact DNS-label boundary; exact host and legitimate subdomains remain accepted. No rate, legal rule, schema or normative data changed.
+- Exact-head CI succeeded: run 39335619116; offline-safety job 118344639029 and payment-regression job 118344639292.
+- Receipts: PR #255 comment 6278859950 and issue #257 comment 6278862956.
+- Independent A5 was not run in this connector-only cycle, so status is IMPLEMENTED / CI PASS / INDEPENDENT QA PENDING; full #244 acceptance is not claimed. The populated synchronized NTM snapshot remains unavailable and full #245 acceptance remains blocked. A6 remains unchanged/not sent.
+- Evidence: `.ai/orchestration/evidence/cycle367_pr255_excise_registry_domain_boundary.json`. TASK_BOARD remains revision 896 because the connector cannot safely round-trip its current >1 MB document in this run.
