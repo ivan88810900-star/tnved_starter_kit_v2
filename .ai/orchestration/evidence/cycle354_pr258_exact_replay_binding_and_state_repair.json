@@ -1,0 +1,72 @@
+{
+  "schema_version": 1,
+  "task_id": "TARIFF-PR258-EXACT-REPLAY-BINDING-20261019",
+  "executor": "/root/scheduled-cycle354-20261019T105432Z",
+  "lease_generation": 354,
+  "started_at": "2026-10-19T10:54:32Z",
+  "completed_at": "2026-10-19T11:12:43Z",
+  "repository": "ivan88810900-star/tnved_starter_kit_v2",
+  "pr": 258,
+  "branch": "agent/nsi-sgr-pagination-v1",
+  "parent_sha": "ed050889a4e114fc274f433380d375627859ca40",
+  "published_head_sha": "d32fd242c97d3d046bd6e090c80909deb433356c",
+  "tree_sha": "e8f1a458666f04a28a1b26f2af667d34d6daf7b4",
+  "local_author_commit": "a7f64f9dde90343ba437497e09cc11f0eb4b7608",
+  "finding": "Deterministic replay accepted a divergent manifest/cursor and initially did not prove exact persisted row identity.",
+  "fix": "Replay verifies exact source objects, run scope and cursor, global rows, physical rows and physical count before returning the committed checkpoint.",
+  "baseline_reproduction": {
+    "result": "FAILED_AS_EXPECTED",
+    "exit_code": 1,
+    "detail": "DID NOT RAISE StagingIngestError on the exact parent"
+  },
+  "author_validation": {
+    "focused": "55 passed, exit 0",
+    "broader": "198 passed, exit 0",
+    "exact_published_head": "198 passed in 8.29s, exit 0",
+    "py_compile_exit_code": 0,
+    "diff_check_exit_code": 0
+  },
+  "independent_a5": {
+    "session": "/root/a5_cycle354",
+    "result": "PASS_NO_FINDINGS",
+    "focused": "55 passed, exit 0",
+    "targeted": "3 passed, exit 0",
+    "adversarial_cases": [
+      "divergent manifest and cursor",
+      "mutated source object",
+      "physical row corruption",
+      "global raw JSON corruption",
+      "same-count delete-and-replace",
+      "extra physical row"
+    ]
+  },
+  "ci": {
+    "head_sha": "d32fd242c97d3d046bd6e090c80909deb433356c",
+    "workflow_runs": [],
+    "statuses": [],
+    "pass_claimed": false
+  },
+  "state_repair": {
+    "corrupt_commit": "d92e5a7137adb7deccb8c75d3da20b9e52f76962",
+    "recovery_base": "df237ea",
+    "local_repair_commit": "576924c69281d48a5e2eb5ceaa1f8badcbc3c9c3",
+    "checks": [
+      "strict UTF-8",
+      "strict JSON",
+      "RECOVERY_DELTA_OK"
+    ],
+    "validator_note": "Current-main validate_board reports the same pre-existing legacy-owner invalid_task_state on untouched revision 882 and repaired state; recovery did not change ownership semantics."
+  },
+  "receipts": {
+    "pr258": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/258#issuecomment-6265875163",
+    "issue257": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/257#issuecomment-6265877792"
+  },
+  "snapshot": {
+    "populated_synchronized_ntm_snapshot": false,
+    "last_verified_epoch315_rows": 1020,
+    "status": "COLLECTED_UNVERIFIED",
+    "blocked_operation": "offset1120/private-object transfer remains policy-refused; no retry or workaround"
+  },
+  "a6": "UNCHANGED_NOT_SENT",
+  "protected_actions_performed": false
+}
