@@ -2179,7 +2179,7 @@
       "unique_source_pr_count": 29
     }
   },
-  "revision": 891,
+  "revision": 892,
   "runs": [
     {
       "head_sha": null,
@@ -7811,7 +7811,7 @@
       }
     }
   ],
-  "updated_at": "2026-10-19T17:05:00Z",
+  "updated_at": "2026-10-19T18:15:19Z",
   "previous_scheduled_product_checkpoint_174": {
     "updated_at": "2026-10-11T18:04:51.196Z",
     "checked_at": "2026-10-11T18:04:51.196Z",
@@ -18407,7 +18407,7 @@
     "evidence": ".ai/orchestration/evidence/cycle359_pr258_checkpoint_history.json",
     "next_step": "Obtain exact-head CI evidence for PR #258; then continue only with lawfully available immutable source bytes or the next independent PR #245/#256 acceptance defect."
   },
-  "latest_scheduled_product_checkpoint": {
+  "previous_scheduled_product_checkpoint_361": {
     "schema_version": 1,
     "task_id": "TARIFF-CI-CLOSURE-20261019",
     "started_at": "2026-10-19T16:57:01Z",
@@ -18451,5 +18451,54 @@
     "protected_actions_performed": false,
     "evidence": ".ai/orchestration/evidence/cycle361_exact_head_ci_closure.json",
     "next_step": "Continue the next independent #245/#256 acceptance defect, or run the separately scoped ETT adapter work only with verified immutable source bytes and a lawful disposable transaction path."
+  },
+  "latest_scheduled_product_checkpoint": {
+    "schema_version": 1,
+    "task_id": "TARIFF-PR258-ETT-ATOMIC-ADAPTER-20261019",
+    "started_at": "2026-10-19T17:55:31Z",
+    "completed_at": "2026-10-19T18:15:19Z",
+    "executor": "/root/scheduled-cycle362-20261019T175531Z",
+    "lease_generation": 362,
+    "pr": 258,
+    "branch": "agent/nsi-sgr-pagination-v1",
+    "previous_head_sha": "152f7c0c757621ca43bcfc56d2620ef317326864",
+    "head_sha": "c2d4a51a52246dbe436d3073a42143aae63f90c5",
+    "tree_sha": "4205cdb7450a6f3f96f0d39713f483d5b237469b",
+    "status": "IMPLEMENTED_A5_PASS_EXACT_HEAD_CI_SUCCESS",
+    "scope": "Add a separate atomic ETT raw-capture adapter against the exact existing staging schema, with fail-closed EEC provenance and deterministic replay.",
+    "source_preflight": {
+      "url": "https://eec.eaeunion.org/upload/files/catr/ett/ru.01_2022_25.04.2022.pdf",
+      "size_bytes": 168285,
+      "pages": 6,
+      "sha256": "7942d2176d8c728dde35f55cc4871ba230fdef721b30d5c191fd444cd55537c9",
+      "exact_10_digit_codes": 86,
+      "unique_codes": 86,
+      "leading_zero_preserved": true
+    },
+    "database_preflight": "Read-only Neon checks confirmed tariff_staging / tariff_ingest existing schema and transaction capability; no staging write was performed.",
+    "implementation": "Caller-owned one-transaction ETT adapter matches the live ett_collected_rows schema exactly; raw lines and page/line provenance are preserved, replay is read-only, corruption fails closed, and unrelated sources remain untouched.",
+    "provenance_policy": "authority EEC and HTTPS hostname eec.eaeunion.org are mandatory; HTTP, foreign/lookalike hosts, userinfo, explicit ports and fragments are rejected.",
+    "author_tests": "90 focused and adjacent tests passed; py_compile and git diff --check exit 0.",
+    "independent_a5": "/root/a5_ett_adapter362 PASS_NO_FINDINGS on exact tree: 90 tests; exact-live-schema 86-row/replay/cursor87 probe; 10-case provenance adversarial probe; PostgreSQL DDL/DML compilation; all exit 0.",
+    "exact_head_ci": {
+      "name": "offline-safety",
+      "status": "completed",
+      "conclusion": "success",
+      "run_id": 39300596387,
+      "job_id": 118224468772,
+      "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/39300596387/job/118224468772"
+    },
+    "receipts": {
+      "pr258_comment_id": 6274081748,
+      "pr258": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/258#issuecomment-6274081748"
+    },
+    "staging_write_attempted": false,
+    "private_object_retry_attempted": false,
+    "normative_admission_performed": false,
+    "a6": "UNCHANGED_NOT_SENT",
+    "protected_actions_performed": false,
+    "snapshot_status": "BOUNDED_EPOCH315_1020_ROWS_POPULATED_SYNCHRONIZED_NTM_NOT_AVAILABLE",
+    "evidence": ".ai/orchestration/evidence/cycle362_pr258_ett_atomic_adapter.json",
+    "next_step": "Prepare and read back the exact public group01 original/extraction/manifest, then execute the single bounded 86-row pilot through this adapter in one caller-owned staging transaction and verify exact replay without duplicates."
   }
 }

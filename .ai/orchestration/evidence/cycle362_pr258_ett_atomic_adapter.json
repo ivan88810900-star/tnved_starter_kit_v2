@@ -1,0 +1,91 @@
+{
+  "schema_version": 1,
+  "task_id": "TARIFF-PR258-ETT-ATOMIC-ADAPTER-20261019",
+  "executor": "/root/scheduled-cycle362-20261019T175531Z",
+  "lease_generation": 362,
+  "started_at": "2026-10-19T17:55:31Z",
+  "completed_at": "2026-10-19T18:15:19Z",
+  "repository": "ivan88810900-star/tnved_starter_kit_v2",
+  "pull_request": 258,
+  "branch": "agent/nsi-sgr-pagination-v1",
+  "previous_head_sha": "152f7c0c757621ca43bcfc56d2620ef317326864",
+  "published_head_sha": "c2d4a51a52246dbe436d3073a42143aae63f90c5",
+  "tree_sha": "4205cdb7450a6f3f96f0d39713f483d5b237469b",
+  "source_preflight": {
+    "url": "https://eec.eaeunion.org/upload/files/catr/ett/ru.01_2022_25.04.2022.pdf",
+    "expected_and_observed_size_bytes": 168285,
+    "expected_and_observed_sha256": "7942d2176d8c728dde35f55cc4871ba230fdef721b30d5c191fd444cd55537c9",
+    "pdf_pages": 6,
+    "exact_10_digit_rows": 86,
+    "unique_10_digit_codes": 86,
+    "leading_zero_codes_preserved": true,
+    "download_exit_code": 0,
+    "extraction_probe_exit_code": 0
+  },
+  "database_preflight": {
+    "project_id": "red-meadow-53765518",
+    "branch_id": "br-weathered-frost-ba9jri3c",
+    "database": "tariff_staging",
+    "schema": "tariff_ingest",
+    "transaction_probe": "read-only two-SELECT transaction completed",
+    "transaction_probe_exit_code": 0,
+    "existing_ett_rows": 533,
+    "existing_group01_rows": 0,
+    "write_performed": false
+  },
+  "implementation": {
+    "service": "customs-clear/backend/app/services/staging_ett_ingest.py",
+    "tests": "customs-clear/backend/tests/test_staging_ett_ingest.py",
+    "transaction_owner": "caller",
+    "status": "COLLECTED_UNVERIFIED",
+    "normalized_count": 0,
+    "verified_count": 0,
+    "admitted_count": 0,
+    "max_rows": 86,
+    "expected_next_ordinal": 87,
+    "live_schema_migration_required": false,
+    "exact_replay_read_only": true,
+    "unrelated_source_preserved": true,
+    "official_provenance_fail_closed": true
+  },
+  "author_and_root_verification": {
+    "command": "/tmp/tariff-cycle345-venv/bin/python -m pytest -q customs-clear/backend/tests/test_staging_ett_ingest.py customs-clear/backend/tests/test_staging_nsi_ingest.py",
+    "result": "90 passed",
+    "exit_code": 0,
+    "py_compile_exit_code": 0,
+    "diff_check_exit_code": 0
+  },
+  "independent_a5": {
+    "executor": "/root/a5_ett_adapter362",
+    "result": "PASS_NO_FINDINGS",
+    "reviewed_tree_sha": "4205cdb7450a6f3f96f0d39713f483d5b237469b",
+    "focused_and_adjacent": "90 passed",
+    "focused_and_adjacent_exit_code": 0,
+    "exact_live_schema_probe": "86 rows, exact replay without mutation, next_ordinal 87",
+    "exact_live_schema_probe_exit_code": 0,
+    "provenance_adversarial_probe": "10 invalid variants rejected; official query URL accepted",
+    "provenance_adversarial_probe_exit_code": 0,
+    "postgresql_compile_probe": "3 DDL and 4 DML/select statements compiled",
+    "postgresql_compile_probe_exit_code": 0
+  },
+  "exact_head_ci": {
+    "head_sha": "c2d4a51a52246dbe436d3073a42143aae63f90c5",
+    "name": "offline-safety",
+    "status": "completed",
+    "conclusion": "success",
+    "run_id": 39300596387,
+    "job_id": 118224468772,
+    "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/39300596387/job/118224468772"
+  },
+  "receipts": {
+    "pr258_comment_id": 6274081748,
+    "pr258": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/258#issuecomment-6274081748"
+  },
+  "staging_write_performed": false,
+  "private_object_retry_attempted": false,
+  "normative_admission_performed": false,
+  "a6": "UNCHANGED_NOT_SENT",
+  "merge_or_deploy_performed": false,
+  "protected_actions_performed": false,
+  "next_step": "Prepare and read back the exact public group01 original/extraction/manifest, then execute the single bounded 86-row pilot through this adapter and verify exact replay without duplicates."
+}
