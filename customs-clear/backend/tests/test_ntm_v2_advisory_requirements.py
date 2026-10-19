@@ -11,6 +11,7 @@ from sqlalchemy.orm import sessionmaker
 from app.db import Base
 from app.models.core import NonTariffRule
 from app.models.ntm_v2 import NtmApplicabilityRuleV2, NtmMeasureV2
+from app.services import sanctions_risk_block
 from app.services.ntm_v2_legacy_rules_import import (
     LEGACY_RULES_IMPORT_APPLICABILITY,
     advisory_reason_for_applicability,
@@ -22,18 +23,22 @@ from app.services.ntm_v2_legacy_rules_import import (
 @pytest.fixture
 def memory_sessionmaker(monkeypatch: pytest.MonkeyPatch):
     engine = create_engine("sqlite:///:memory:")
-    Base.metadata.create_all(
-        engine,
-        tables=[
-            NonTariffRule.__table__,
-            NtmMeasureV2.__table__,
-            NtmApplicabilityRuleV2.__table__,
-        ],
-    )
-    sm = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-    monkeypatch.setattr("app.db.SessionLocal", sm)
-    monkeypatch.setattr("app.services.normative_store.SessionLocal", sm)
-    return sm
+    try:
+        Base.metadata.create_all(
+            engine,
+            tables=[
+                NonTariffRule.__table__,
+                NtmMeasureV2.__table__,
+                NtmApplicabilityRuleV2.__table__,
+            ],
+        )
+        sm = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+        monkeypatch.setattr("app.db.SessionLocal", sm)
+        monkeypatch.setattr("app.services.normative_store.SessionLocal", sm)
+        monkeypatch.setattr(sanctions_risk_block, "SessionLocal", sm)
+        yield sm
+    finally:
+        engine.dispose()
 
 
 @pytest.fixture
@@ -64,6 +69,12 @@ def minimal_ntm_patches(monkeypatch: pytest.MonkeyPatch) -> None:
         "app.services.non_tariff_service.lookup_tr_ts_acts_by_codes",
         lambda _codes: [],
     )
+
+
+def test_memory_sessionmaker_rebinds_preimported_sanctions_alias(
+    memory_sessionmaker: sessionmaker,
+) -> None:
+    assert sanctions_risk_block.SessionLocal is memory_sessionmaker
 
 
 def _import_all_seed_rules(sm: sessionmaker) -> None:
