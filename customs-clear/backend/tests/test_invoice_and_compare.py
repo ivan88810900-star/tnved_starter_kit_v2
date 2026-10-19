@@ -6,6 +6,9 @@ import io
 import unittest
 
 import pandas as pd
+import pytest
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
 
 try:
     from app.services.invoice_batch_service import parse_invoice_file
@@ -14,6 +17,103 @@ try:
     _OK = True
 except ImportError:
     _OK = False
+
+
+@pytest.fixture
+def isolated_scenario_db(tmp_path, monkeypatch: pytest.MonkeyPatch):
+    """Run the scenario calculator against a complete disposable schema.
+
+    The service modules keep local references to ``SessionLocal``.  Patching
+    every reader used by this end-to-end path keeps this test independent of
+    an ambient development database without changing the calculator's
+    fail-closed behaviour when a normative table is genuinely unavailable.
+    """
+    if not _OK:
+        yield
+        return
+
+    from app import db as app_db
+    from app.models.core import (
+        CountryRisk,
+        CustomsCalculationHistory,
+        ExchangeRate,
+        GeoSpecialDuty,
+        HsRate,
+        IngestedDocument,
+        NonTariffRule,
+        NormativeNote,
+        TnvedEntry,
+        TnvedEntryEmbedding,
+        TrTsAct,
+    )
+    from app.models.rop import RopGoodsRate, RopPackagingDefault, RopPackagingRate
+    from app.models.tnved import (
+        Chapter,
+        Commodity,
+        CountryTariffPreference,
+        HsDutyRule,
+        RecyclingFee,
+        Section,
+        SpecialDuty,
+        VatPreference,
+    )
+    from app.services import (
+        exchange_rates,
+        invoice_analyzer,
+        normative_store,
+        payment_engine,
+        rate_display,
+        scenario_compare_service,
+    )
+
+    engine = create_engine(
+        f"sqlite:///{tmp_path / 'scenario.sqlite'}",
+        connect_args={"check_same_thread": False},
+    )
+    tables = [
+        ExchangeRate.__table__,
+        CountryRisk.__table__,
+        GeoSpecialDuty.__table__,
+        HsRate.__table__,
+        HsDutyRule.__table__,
+        CountryTariffPreference.__table__,
+        SpecialDuty.__table__,
+        RecyclingFee.__table__,
+        VatPreference.__table__,
+        NonTariffRule.__table__,
+        TnvedEntry.__table__,
+        NormativeNote.__table__,
+        TrTsAct.__table__,
+        IngestedDocument.__table__,
+        TnvedEntryEmbedding.__table__,
+        CustomsCalculationHistory.__table__,
+        Section.__table__,
+        Chapter.__table__,
+        Commodity.__table__,
+        RopGoodsRate.__table__,
+        RopPackagingDefault.__table__,
+        RopPackagingRate.__table__,
+    ]
+    app_db.Base.metadata.create_all(bind=engine, tables=tables)
+    session_factory = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+    monkeypatch.setattr(app_db, "engine", engine)
+    monkeypatch.setattr(app_db, "SessionLocal", session_factory)
+    monkeypatch.setattr(normative_store, "engine", engine)
+    for module in (
+        exchange_rates,
+        invoice_analyzer,
+        normative_store,
+        payment_engine,
+        rate_display,
+        scenario_compare_service,
+    ):
+        monkeypatch.setattr(module, "SessionLocal", session_factory)
+
+    try:
+        yield
+    finally:
+        engine.dispose()
 
 
 @unittest.skipIf(not _OK, "deps missing")
@@ -41,6 +141,7 @@ class InvoiceBatchTests(unittest.TestCase):
 
 
 @unittest.skipIf(not _OK, "deps missing")
+@pytest.mark.usefixtures("isolated_scenario_db")
 class ScenarioCompareTests(unittest.TestCase):
     def test_compare_two_countries(self) -> None:
         payload = {

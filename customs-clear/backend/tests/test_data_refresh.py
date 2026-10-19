@@ -1,19 +1,25 @@
 """Tests for data refresh workflow — Issue #89."""
 from __future__ import annotations
 
+import asyncio
 import json
+import os
+import sys
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
 from unittest.mock import patch, AsyncMock
 
-import pytest
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
 
+from app.models.core import ExchangeRate
 from app.services.data_refresh_service import (
     STALE_THRESHOLD_DAYS,
     CURRENCY_STALE_HOURS,
     _BUNDLE_DOMAINS,
     _bundle_revision_date,
     check_data_freshness,
+    run_full_data_refresh,
 )
 
 
@@ -82,11 +88,15 @@ class TestDataRefreshScript:
         script = BACKEND_ROOT / "scripts" / "data_refresh.py"
         assert script.is_file()
 
-    def test_script_check_only_mode(self) -> None:
+    def test_script_check_only_mode(self, tmp_path: Path) -> None:
         import subprocess
+        database = tmp_path / "missing-refresh.db"
+        env = os.environ.copy()
+        env["DATABASE_URL"] = f"sqlite:///{database}"
         result = subprocess.run(
-            ["python3", "-m", "scripts.data_refresh", "--check-only", "--json"],
+            [sys.executable, "-m", "scripts.data_refresh", "--check-only", "--json"],
             cwd=str(BACKEND_ROOT),
+            env=env,
             capture_output=True,
             text=True,
             timeout=30,
@@ -95,6 +105,123 @@ class TestDataRefreshScript:
         assert "domains" in data
         assert "currency" in data
         assert "all_fresh" in data
+        assert data["currency"]["reason"] == "db_missing"
+        assert not database.exists()
+
+
+class TestFullRefreshDryRunSafety:
+    def test_dry_run_keeps_sentinel_db_unchanged_on_cbr_error(
+        self, tmp_path: Path
+    ) -> None:
+        """A dry run must not reach the mutating CBR fallback/error path."""
+        database = tmp_path / "dry-run-sentinel.db"
+        test_engine = create_engine(f"sqlite:///{database}")
+        ExchangeRate.__table__.create(test_engine)
+        test_session = sessionmaker(bind=test_engine)
+        sentinel_updated_at = datetime(2026, 1, 2, 3, 4, 5)
+        with test_session() as db:
+            db.add(
+                ExchangeRate(
+                    currency_code="EUR",
+                    rate=123.45,
+                    nominal=1.0,
+                    updated_at=sentinel_updated_at,
+                )
+            )
+            db.commit()
+
+        failing_fetch = AsyncMock(side_effect=RuntimeError("offline sentinel"))
+        with (
+            patch("app.services.data_refresh_service.engine", test_engine),
+            patch("app.services.data_refresh_service.SessionLocal", test_session),
+            patch("app.services.exchange_rates.SessionLocal", test_session),
+            patch("app.services.exchange_rates.fetch_cbr_rates", failing_fetch),
+            patch("app.services.exchange_rates._safe_record_provenance", return_value=None),
+            patch(
+                "app.services.data_refresh_service.refresh_excise_rates",
+                return_value={"domain": "EEC_EXCISE", "status": "ok", "needs_apply": False},
+            ),
+            patch(
+                "app.services.data_refresh_service.refresh_anti_dumping",
+                return_value={
+                    "domain": "EEC_ANTI_DUMPING",
+                    "status": "ok",
+                    "needs_apply": False,
+                },
+            ),
+        ):
+            result = asyncio.run(run_full_data_refresh(dry_run=True))
+
+        failing_fetch.assert_not_awaited()
+        with test_session() as db:
+            rows = db.query(ExchangeRate).all()
+            assert [
+                (row.currency_code, row.rate, row.nominal, row.updated_at)
+                for row in rows
+            ] == [("EUR", 123.45, 1.0, sentinel_updated_at)]
+        assert result["dry_run"] is True
+        assert result["results"][0]["source"] == "read_only_freshness"
+        assert result["results"][0]["updated"] == 0
+
+    def test_non_dry_run_still_invokes_currency_updater(self) -> None:
+        updater = AsyncMock(
+            return_value={"domain": "CBRF", "status": "ok", "source": "CBRF", "updated": 5}
+        )
+        freshness = {
+            "currency": {"is_stale": False, "currencies": 5},
+            "domains": [],
+            "stale_count": 0,
+            "all_fresh": True,
+        }
+        with (
+            patch("app.services.data_refresh_service.refresh_currency_rates", updater),
+            patch("app.services.data_refresh_service.check_data_freshness", return_value=freshness),
+            patch(
+                "app.services.data_refresh_service.refresh_excise_rates",
+                return_value={"domain": "EEC_EXCISE", "status": "ok"},
+            ),
+            patch(
+                "app.services.data_refresh_service.refresh_anti_dumping",
+                return_value={"domain": "EEC_ANTI_DUMPING", "status": "ok"},
+            ),
+        ):
+            result = asyncio.run(run_full_data_refresh(dry_run=False))
+
+        updater.assert_awaited_once_with()
+        assert result["dry_run"] is False
+        assert result["results"][0]["updated"] == 5
+
+    def test_dry_run_surfaces_database_probe_error(self) -> None:
+        freshness = {
+            "currency": {
+                "is_stale": True,
+                "reason": "db_error: sentinel read failure",
+                "currencies": 0,
+            },
+            "domains": [],
+            "stale_count": 1,
+            "all_fresh": False,
+        }
+        updater = AsyncMock()
+        with (
+            patch("app.services.data_refresh_service.refresh_currency_rates", updater),
+            patch("app.services.data_refresh_service.check_data_freshness", return_value=freshness),
+            patch(
+                "app.services.data_refresh_service.refresh_excise_rates",
+                return_value={"domain": "EEC_EXCISE", "status": "ok"},
+            ),
+            patch(
+                "app.services.data_refresh_service.refresh_anti_dumping",
+                return_value={"domain": "EEC_ANTI_DUMPING", "status": "ok"},
+            ),
+        ):
+            result = asyncio.run(run_full_data_refresh(dry_run=True))
+
+        updater.assert_not_awaited()
+        assert result["status"] == "partial_error"
+        assert result["errors_count"] == 1
+        assert result["results"][0]["status"] == "error"
+        assert result["results"][0]["reason"] == "db_error: sentinel read failure"
 
 
 class TestAutoUpdaterIntegration:

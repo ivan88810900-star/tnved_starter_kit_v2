@@ -2,6 +2,25 @@ import React, { useState } from 'react';
 import { api } from '../api/client';
 import { getApiErrorMessage } from '../api/error';
 import { InfoTooltip } from '../components/InfoTooltip';
+import { formatUnsafeExternalUrlEvidence, getSafeExternalUrl } from '../utils/externalUrl';
+
+export function PermitPickerRegistryLink({ value, label }: { value: unknown; label: string }) {
+  const safeUrl = getSafeExternalUrl(value);
+  if (safeUrl) {
+    return (
+      <a href={safeUrl} target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:underline">
+        {label}
+      </a>
+    );
+  }
+
+  const evidence = formatUnsafeExternalUrlEvidence(value);
+  return evidence ? (
+    <span data-testid="unsafe-permit-picker-registry-url-evidence" className="text-slate-500">
+      {label} (ссылка недоступна): <span className="break-all font-mono">{evidence}</span>
+    </span>
+  ) : null;
+}
 
 type SuggestItem = {
   id: string;
@@ -186,14 +205,9 @@ export const PermitPicker: React.FC = () => {
             ) : null}
             {directResult.error && <p className="mt-1 text-red-700">{directResult.error}</p>}
             {directResult.registry_link && (
-              <a
-                href={directResult.registry_link}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mt-2 inline-block text-indigo-600 hover:underline"
-              >
-                Открыть в реестре
-              </a>
+              <div className="mt-2">
+                <PermitPickerRegistryLink value={directResult.registry_link} label="Открыть в реестре" />
+              </div>
             )}
           </div>
         )}
@@ -283,11 +297,7 @@ export const PermitPicker: React.FC = () => {
                   {item.hs_suggest && item.hs_suggest.length > 0 && (
                     <div className="text-[10px] text-slate-500">ТН ВЭД (подсказка): {item.hs_suggest.join(', ')}</div>
                   )}
-                  {item.registry_hint && (
-                    <a href={item.registry_hint} target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:underline">
-                      Реестр ФСА
-                    </a>
-                  )}
+                  {item.registry_hint && <PermitPickerRegistryLink value={item.registry_hint} label="Реестр ФСА" />}
                   {v && v !== 'loading' && Array.isArray(v) && v[0] && (
                     <div className="mt-2 rounded-lg border border-slate-200 bg-slate-50 p-2">
                       <div className="text-[10px] uppercase text-slate-500">Результат проверки</div>
@@ -299,11 +309,7 @@ export const PermitPicker: React.FC = () => {
                       {v[0].raw?.spa_shell && v[0].raw?.note && (
                         <div className="text-[11px] text-amber-700">{v[0].raw.note}</div>
                       )}
-                      {v[0].registry_link && (
-                        <a href={v[0].registry_link} className="text-indigo-600 hover:underline" target="_blank" rel="noreferrer">
-                          Карточка
-                        </a>
-                      )}
+                      {v[0].registry_link && <PermitPickerRegistryLink value={v[0].registry_link} label="Карточка" />}
                     </div>
                   )}
                 </div>

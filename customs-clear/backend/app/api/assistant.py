@@ -134,6 +134,8 @@ class AssistantCurrentContext(BaseModel):
     hs_code: Optional[str] = None
     product_name: Optional[str] = None
     origin_country: Optional[str] = None
+    destination_country: Optional[str] = None
+    counterparty_name: Optional[str] = None
     total_payable: Optional[float] = None
     non_tariff_measures: List[AssistantNonTariffMeasureContext] = Field(default_factory=list)
 

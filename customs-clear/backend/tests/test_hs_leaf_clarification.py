@@ -1,13 +1,63 @@
 """Group HS header clarification — Issue group codes UX."""
 from __future__ import annotations
 
+import pytest
 from fastapi.testclient import TestClient
 
 from app.main import app
+from app.models.core import HsRate
 from app.services.normative_store import find_suggested_leaf_codes, is_leaf_hs_code
 
 
+pytest_plugins = ("tests.classification_inventory_fixture",)
+pytestmark = pytest.mark.usefixtures("classification_inventory_session_local")
+
+
 client = TestClient(app)
+
+
+@pytest.fixture(autouse=True)
+def hs_leaf_catalog(
+    classification_inventory_session_local,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Install the small legacy rate sample in the disposable catalogue only."""
+    from app.services import (
+        calculation_history_service,
+        exchange_rates,
+        payment_engine,
+        rate_display,
+    )
+
+    factory = classification_inventory_session_local
+    monkeypatch.setattr(exchange_rates, "SessionLocal", factory)
+    monkeypatch.setattr(payment_engine, "SessionLocal", factory)
+    monkeypatch.setattr(calculation_history_service, "SessionLocal", factory)
+    monkeypatch.setattr(rate_display, "SessionLocal", factory)
+
+    sample = {
+        "8703231100": "15",
+        "8471300000": "0",
+        "8517110000": "0",
+    }
+    with factory() as db:
+        existing = {
+            code
+            for (code,) in db.query(HsRate.hs_code)
+            .filter(HsRate.hs_code.in_(sample))
+            .all()
+        }
+        for code, duty_rate in sample.items():
+            if code not in existing:
+                db.add(
+                    HsRate(
+                        hs_code=code,
+                        hs_prefix=code,
+                        duty_rate=duty_rate,
+                        source_revision="test:hs-leaf-clarification",
+                    )
+                )
+        db.commit()
 
 
 class TestIsLeafHsCode:

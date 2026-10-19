@@ -9,10 +9,14 @@ from __future__ import annotations
 import re
 import unittest
 
+import pytest
+
+pytest_plugins = ("tests.classification_inventory_fixture",)
+pytestmark = pytest.mark.usefixtures("classification_inventory_session_local")
+
 try:
-    from app.db import SessionLocal
+    from app import db as app_db
     from app.models.tnved import Commodity
-    from app.services.normative_store import init_db
     from app.services.tnved_tree import (
         build_tree,
         collect_chapter_notes,
@@ -102,11 +106,14 @@ def _content_fingerprint(node: dict) -> tuple:
 class CanonicalTnvedModelTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
-        init_db()
         cls.parser = TreeParser()
         cls.builder = TreeBuilder()
-        with SessionLocal() as db:
-            cls.parsed = cls.parser.parse(db)
+        cls.parsed = None
+
+    def setUp(self) -> None:
+        if self.__class__.parsed is None:
+            with app_db.SessionLocal() as db:
+                self.__class__.parsed = self.parser.parse(db)
 
     # -- stable_id ---------------------------------------------------------
 
@@ -178,7 +185,7 @@ class CanonicalTnvedModelTests(unittest.TestCase):
         serializer = TreeSerializer()
         roots = self.builder.build(self.parsed)
         heading_map = {n.code: n for n in roots if n.code}
-        with SessionLocal() as db:
+        with app_db.SessionLocal() as db:
             chapter_notes = collect_chapter_notes(db)
             for code in _SAMPLE_HEADINGS:
                 rows = (
@@ -204,7 +211,7 @@ class CanonicalTnvedModelTests(unittest.TestCase):
         serializer = TreeSerializer()
         roots = self.builder.build(self.parsed)
         heading_map = {n.code: n for n in roots if n.code}
-        with SessionLocal() as db:
+        with app_db.SessionLocal() as db:
             chapter_notes = collect_chapter_notes(db)
             for code in _EDGE_HEADINGS:
                 rows = (
@@ -230,7 +237,7 @@ class CanonicalTnvedModelTests(unittest.TestCase):
         serializer = TreeSerializer()
         roots = self.builder.build(self.parsed)
         v2_map = {n.code: serializer.to_legacy_dict(n) for n in roots if n.code}
-        with SessionLocal() as db:
+        with app_db.SessionLocal() as db:
             rows = (
                 exclude_obsolete_reserved(db.query(Commodity).order_by(Commodity.code.asc()))
                 .all()
@@ -528,7 +535,7 @@ class CanonicalTnvedModelTests(unittest.TestCase):
         v2_map = {
             n.code: serializer.to_legacy_dict(n) for n in model.roots if n.code
         }
-        with SessionLocal() as db:
+        with app_db.SessionLocal() as db:
             rows = (
                 exclude_obsolete_reserved(db.query(Commodity).order_by(Commodity.code.asc())).all()
             )

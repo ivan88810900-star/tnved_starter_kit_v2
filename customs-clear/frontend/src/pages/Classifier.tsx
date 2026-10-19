@@ -24,6 +24,9 @@ function userVisibleClassifierNote(note?: string): string | null {
 type ClassifyResult = {
   status: string;
   query?: string;
+  manual_review_required?: boolean;
+  web_search_attempted?: boolean;
+  web_search_status?: 'not_needed' | 'confirmed' | 'unavailable' | string;
   results: {
     code?: string;
     hs_code?: string;
@@ -58,10 +61,20 @@ function resultCode(r: ClassifyResult['results'][0]): string {
   return (r.code || r.hs_code || '').trim();
 }
 
-function ClassifyResults({ result }: { result: ClassifyResult }) {
+export function ClassifyResults({ result }: { result: ClassifyResult }) {
+  const manualReview = result.manual_review_required || result.status === 'MANUAL_REVIEW';
   return (
     <div className="space-y-3 text-xs">
-      {userVisibleClassifierNote(result.note) && (
+      {manualReview ? (
+        <div
+          data-testid="classifier-manual-review"
+          className="rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-amber-900"
+        >
+          <strong>Требуется ручная проверка.</strong>{' '}
+          Поиск не дал подтверждённых характеристик; варианты кода предварительные и не являются рекомендацией.
+        </div>
+      ) : null}
+      {!manualReview && userVisibleClassifierNote(result.note) && (
         <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-amber-800">
           {userVisibleClassifierNote(result.note)}
         </div>
@@ -70,7 +83,7 @@ function ClassifyResults({ result }: { result: ClassifyResult }) {
         <div key={resultCode(r) || i} className="cc-card-soft space-y-1.5 p-3">
           <div className="flex items-center justify-between gap-2">
             <div className="font-mono text-sm text-indigo-700">{resultCode(r) || '—'}</div>
-            {r.recommended ? <span className="cc-badge-ok">Рекомендуется</span> : null}
+            {r.recommended && !manualReview ? <span className="cc-badge-ok">Рекомендуется</span> : null}
           </div>
           {r.name ? <div className="text-slate-800">{r.name}</div> : null}
           <div className="flex flex-wrap gap-2 text-[11px] text-slate-700">

@@ -2,10 +2,73 @@
 from __future__ import annotations
 
 import pytest
+import sys
 from sqlalchemy import text
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy.pool import StaticPool
 
+from app import db as app_db
+from app.db import Base
 from app.db import SessionLocal
+from app.models.core import HsRate
+from app.models.tnved import Commodity, CountryTariffPreference, HsDutyRule, SpecialDuty, VatPreference
+from app.services import normative_store, payment_engine, rate_display
 from app.services.normative_store import get_tariff_preference
+from scripts import seed_tariff_preferences
+
+
+@pytest.fixture(scope="module", autouse=True)
+def isolated_tariff_preference_db():
+    """Exercise the checked-in preference seed without relying on customs.db."""
+    engine = create_engine(
+        "sqlite:///:memory:",
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+    )
+    Base.metadata.create_all(
+        bind=engine,
+        tables=[
+            Commodity.__table__,
+            CountryTariffPreference.__table__,
+            HsDutyRule.__table__,
+            HsRate.__table__,
+            SpecialDuty.__table__,
+            VatPreference.__table__,
+        ],
+    )
+    factory = sessionmaker(bind=engine, autocommit=False, autoflush=False)
+    patches = pytest.MonkeyPatch()
+    patches.setattr(sys.modules[__name__], "SessionLocal", factory)
+    patches.setattr(app_db, "SessionLocal", factory)
+    patches.setattr(normative_store, "SessionLocal", factory)
+    patches.setattr(payment_engine, "SessionLocal", factory)
+    patches.setattr(rate_display, "SessionLocal", factory)
+    patches.setattr(seed_tariff_preferences, "engine", engine)
+    patches.setattr(seed_tariff_preferences, "SessionLocal", factory)
+    patches.setattr(seed_tariff_preferences, "DRY_RUN", False)
+    patches.setattr(payment_engine, "get_country_risk_by_iso", lambda _country: None)
+    patches.setattr(payment_engine, "find_geo_embargo_match", lambda *_args, **_kwargs: None)
+    patches.setattr(payment_engine, "find_geo_duty_override_row", lambda *_args, **_kwargs: None)
+    patches.setattr(payment_engine, "get_recycling_fee", lambda *_args, **_kwargs: [])
+    patches.setattr(payment_engine, "get_integrated_data_stats", lambda: {"hs_rates_count": 2})
+    patches.setattr(payment_engine, "get_tnved_context_for_hs", lambda _hs: {})
+
+    with factory() as db:
+        db.add_all(
+            [
+                HsRate(hs_code="8509100000", hs_prefix="8509", duty_rate="10%"),
+                HsRate(hs_code="8509400000", hs_prefix="8509", duty_rate="10%"),
+            ]
+        )
+        db.commit()
+    seed_tariff_preferences.seed()
+
+    try:
+        yield
+    finally:
+        patches.undo()
+        engine.dispose()
 
 
 class TestCountryTariffPreferencesData:

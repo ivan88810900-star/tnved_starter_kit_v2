@@ -3,6 +3,9 @@
 from __future__ import annotations
 
 import json
+import os
+import sys
+import tempfile
 import unittest
 import unittest.mock
 from pathlib import Path
@@ -11,10 +14,12 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
+from app import db as app_db
 from app.db import Base
 from app.main import app
 from app.models.core import ExchangeRate, GeoSpecialDuty, HsRate, SourceStatus, SyncLog, TnvedEntry
 from app.models.tnved import Chapter, Commodity, HsDutyRule, Section, SpecialDuty, VatPreference
+from app.services import normative_store, tnved_fts
 from app.services.normative_store import init_db
 from app.services.payment_data_coverage import (
     diagnose_duty_rates,
@@ -213,6 +218,20 @@ class TestVatBlockedBundles(unittest.TestCase):
         with _BundleFixture(payload) as (root, rel):
             with unittest.mock.patch.object(vi, "_BACKEND_ROOT", root):
                 return run_vat_apply(rel_path=rel)
+
+    def test_rejected_wrong_effective_period_revision_no_mutation(self) -> None:
+        before = _table_counts(self.sm)
+        report = self._run_blocked(
+            _official_vat_bundle_payload(revision="vat:2026-06-18")
+        )
+        after = _table_counts(self.sm)
+        self.assertEqual(report["status"], "manual_review_required")
+        self.assertEqual(
+            report["reason"],
+            "source_verification_rejected_wrong_effective_period",
+        )
+        self.assertFalse(report["db_mutated"])
+        self.assertEqual(before, after)
 
     def test_seed_bundle_revision_blocks_import(self) -> None:
         report = self._run_blocked(_official_vat_bundle_payload(revision="seed-2026-03"))
@@ -971,8 +990,74 @@ class TestVatRevisionValidation(unittest.TestCase):
 class TestVatApi(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
+        cls._temp_dir = tempfile.TemporaryDirectory(prefix="vat-ingestion-api-")
+        cls._engine = None
+        cls.sm = None
+        cls._started_patchers = []
+        cls._original_engine = app_db.engine
+        cls._original_session = app_db.SessionLocal
+        cls.addClassCleanup(cls._cleanup_database)
+
+        database = Path(cls._temp_dir.name) / "vat-ingestion-api.db"
+        database_url = f"sqlite:///{database}"
+        cls._engine = create_engine(
+            database_url,
+            connect_args={"check_same_thread": False},
+        )
+        cls.sm = sessionmaker(bind=cls._engine, autocommit=False, autoflush=False)
+        cls._patchers = (
+            unittest.mock.patch.dict(os.environ, {"DATABASE_URL": database_url}),
+            unittest.mock.patch.object(app_db, "engine", cls._engine),
+            unittest.mock.patch.object(app_db, "SessionLocal", cls.sm),
+            unittest.mock.patch.object(normative_store, "engine", cls._engine),
+            unittest.mock.patch.object(normative_store, "SessionLocal", cls.sm),
+            unittest.mock.patch.object(tnved_fts, "engine", cls._engine),
+            unittest.mock.patch.object(tnved_fts, "_fts_ready", None),
+            unittest.mock.patch("app.services.excise_ingestion.SessionLocal", cls.sm),
+            unittest.mock.patch("app.services.vat_ingestion.SessionLocal", cls.sm),
+            unittest.mock.patch("app.services.import_duty_ingestion.SessionLocal", cls.sm),
+            unittest.mock.patch("app.services.payment_data_coverage.SessionLocal", cls.sm),
+            unittest.mock.patch("app.services.payment_data_normalization.SessionLocal", cls.sm),
+        )
+        for patcher in cls._patchers:
+            patcher.start()
+            cls._started_patchers.append(patcher)
+        cls._patch_preloaded_database_aliases()
         init_db()
         cls.client = TestClient(app)
+
+    @classmethod
+    def _patch_preloaded_database_aliases(cls) -> None:
+        for module_name, module in tuple(sys.modules.items()):
+            if module is None or not module_name.startswith(("app.", "scripts.")):
+                continue
+            for attribute, original, replacement in (
+                ("engine", cls._original_engine, cls._engine),
+                ("SessionLocal", cls._original_session, cls.sm),
+            ):
+                if getattr(module, attribute, None) is original:
+                    patcher = unittest.mock.patch.object(module, attribute, replacement)
+                    patcher.start()
+                    cls._started_patchers.append(patcher)
+
+    @classmethod
+    def _cleanup_database(cls) -> None:
+        try:
+            try:
+                for patcher in reversed(cls._started_patchers):
+                    patcher.stop()
+            finally:
+                for module_name, module in tuple(sys.modules.items()):
+                    if module is None or not module_name.startswith(("app.", "scripts.")):
+                        continue
+                    if cls._engine is not None and getattr(module, "engine", None) is cls._engine:
+                        module.engine = cls._original_engine
+                    if cls.sm is not None and getattr(module, "SessionLocal", None) is cls.sm:
+                        module.SessionLocal = cls._original_session
+        finally:
+            if cls._engine is not None:
+                cls._engine.dispose()
+            cls._temp_dir.cleanup()
 
     def test_dry_run_endpoint(self) -> None:
         r = self.client.post("/api/sources/payment-ingestion/vat/dry-run")

@@ -93,6 +93,9 @@ def validate_official_sgr_dataset(payload: dict[str, Any]) -> dict[str, Any]:
         hs_modes[hs_mode] = hs_modes.get(hs_mode, 0) + 1
 
         hs_scope = normalize_hs_code(str(row.get("hs_scope") or ""))
+        contains = [str(x).strip() for x in (row.get("description_contains_any") or []) if str(x).strip()]
+        requires = [str(x).strip() for x in (row.get("description_requires_any") or []) if str(x).strip()]
+        excludes = [str(x).strip() for x in (row.get("exclude_if_contains_any") or []) if str(x).strip()]
         if hs_mode == "description_only" and hs_scope:
             errors.append(
                 {
@@ -102,9 +105,7 @@ def validate_official_sgr_dataset(payload: dict[str, Any]) -> dict[str, Any]:
                     "message": "при hs_scope_mode=description_only hs_scope должен быть пустым",
                 }
             )
-        if hs_mode in ("prefix", "exact") and not hs_scope and not row.get("description_contains_any") and not row.get(
-            "description_requires_any"
-        ):
+        if not hs_scope and not (contains or requires):
             errors.append(
                 {
                     "code": "empty_rule",
@@ -114,9 +115,6 @@ def validate_official_sgr_dataset(payload: dict[str, Any]) -> dict[str, Any]:
                 }
             )
 
-        contains = [str(x).strip() for x in (row.get("description_contains_any") or []) if str(x).strip()]
-        requires = [str(x).strip() for x in (row.get("description_requires_any") or []) if str(x).strip()]
-        excludes = [str(x).strip() for x in (row.get("exclude_if_contains_any") or []) if str(x).strip()]
         if contains or requires:
             description_based += 1
         elif hs_scope:

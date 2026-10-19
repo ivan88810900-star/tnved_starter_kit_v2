@@ -11,6 +11,7 @@ from sqlalchemy.orm import sessionmaker
 from app.db import Base
 from app.models.ntm_v2 import NtmApplicabilityRuleV2, NtmMeasureV2
 from app.models.tnved import Chapter, Commodity, NonTariffMeasure, Section
+from app.services import sanctions_risk_block
 from app.services.ntm_engine_v2 import (
     get_layer_requirements_v2_legacy_shape,
     get_tr_ts_requirements_v2_legacy_shape,
@@ -40,6 +41,7 @@ def memory_sessionmaker(monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setattr("app.db.SessionLocal", sm)
     monkeypatch.setattr("app.services.normative_store.SessionLocal", sm)
     monkeypatch.setattr("app.services.non_tariff_rules.SessionLocal", sm)
+    monkeypatch.setattr(sanctions_risk_block, "SessionLocal", sm)
     return sm
 
 
@@ -60,10 +62,10 @@ def test_tr_ts_adapter_ignores_legacy_measures(memory_sessionmaker: sessionmaker
     import_tr_ts_catalog_to_ntm_v2()
     _ensure_chapter(memory_sessionmaker, "85")
     with memory_sessionmaker() as s:
-        s.add(Commodity(chapter_id=s.query(Chapter).first().id, code="8517620000", description="t"))
+        s.add(Commodity(chapter_id=s.query(Chapter).first().id, code="8517130000", description="t"))
         s.add(
             NonTariffMeasure(
-                commodity_code="8517620000",
+                commodity_code="8517130000",
                 measure_type="certificate",
                 description="Сертификат соответствия ТР ТС 020/2011",
                 regulatory_act="ТР ТС 020/2011",
@@ -73,7 +75,7 @@ def test_tr_ts_adapter_ignores_legacy_measures(memory_sessionmaker: sessionmaker
         s.commit()
     import_legacy_non_tariff_measures_to_ntm_v2()
 
-    rows = get_tr_ts_requirements_v2_legacy_shape("8517620000", "")
+    rows = get_tr_ts_requirements_v2_legacy_shape("8517130000", "")
     permits = {r["permit_type"] for r in rows}
     assert "СС" not in permits
     assert "СГР" not in permits
@@ -142,6 +144,7 @@ def test_replacement_catalog_no_extra_after_full_import(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """После импорта rules+measures replacement (v2 TR+layers) не добавляет типов на 8517."""
+    assert sanctions_risk_block.SessionLocal is memory_sessionmaker
     monkeypatch.setattr(
         "app.services.non_tariff_service.get_full_ntm_requirements",
         lambda hs, d="": [],

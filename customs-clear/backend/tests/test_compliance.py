@@ -1,7 +1,15 @@
 """Тесты объединённого комплаенс-результата: платежи + нетарифка + документы + риски."""
 import unittest
+import unittest.mock
 
-from app.services.normative_store import init_db
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy.pool import StaticPool
+
+from app.db import Base
+from app.models import HsRate
+from app.models.tnved import Commodity, HsDutyRule, SpecialDuty, VatPreference
+from app.services.normative_store import SEED_RATES
 from app.services.payment_engine import compute_payments
 
 
@@ -10,7 +18,79 @@ class ComplianceLogicTests(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        init_db()
+        cls.engine = create_engine(
+            "sqlite:///:memory:",
+            connect_args={"check_same_thread": False},
+            poolclass=StaticPool,
+        )
+        Base.metadata.create_all(
+            bind=cls.engine,
+            tables=[
+                Commodity.__table__,
+                HsDutyRule.__table__,
+                HsRate.__table__,
+                SpecialDuty.__table__,
+                VatPreference.__table__,
+            ],
+        )
+        cls.SessionLocal = sessionmaker(
+            bind=cls.engine,
+            autocommit=False,
+            autoflush=False,
+        )
+        cls._patchers = [
+            unittest.mock.patch(
+                "app.services.payment_engine.SessionLocal", cls.SessionLocal
+            ),
+            unittest.mock.patch(
+                "app.services.normative_store.SessionLocal", cls.SessionLocal
+            ),
+            unittest.mock.patch(
+                "app.services.rate_display.SessionLocal", cls.SessionLocal
+            ),
+            unittest.mock.patch(
+                "app.services.payment_engine.get_country_risk_by_iso",
+                return_value=None,
+            ),
+            unittest.mock.patch(
+                "app.services.payment_engine.find_geo_embargo_match",
+                return_value=None,
+            ),
+            unittest.mock.patch(
+                "app.services.payment_engine.find_geo_duty_override_row",
+                return_value=None,
+            ),
+            unittest.mock.patch(
+                "app.services.payment_engine.get_tariff_preference",
+                return_value=None,
+            ),
+            unittest.mock.patch(
+                "app.services.payment_engine.get_recycling_fee",
+                return_value=[],
+            ),
+            unittest.mock.patch(
+                "app.services.payment_engine.get_integrated_data_stats",
+                return_value={"hs_rates_count": len(SEED_RATES)},
+            ),
+            unittest.mock.patch(
+                "app.services.payment_engine.get_tnved_context_for_hs",
+                return_value={},
+            ),
+        ]
+        for patcher in cls._patchers:
+            patcher.start()
+        with cls.SessionLocal() as db:
+            db.add_all(
+                HsRate(hs_code=row["hs_prefix"], **row)
+                for row in SEED_RATES
+            )
+            db.commit()
+
+    @classmethod
+    def tearDownClass(cls):
+        for patcher in reversed(cls._patchers):
+            patcher.stop()
+        cls.engine.dispose()
 
     def test_payment_breakdown_has_all_fields(self):
         """Breakdown содержит все обязательные поля."""

@@ -4,14 +4,17 @@ from __future__ import annotations
 import pytest
 from sqlalchemy import text
 
-from app.db import SessionLocal
 from app.services.normative_store import find_classification_rulings
+
+
+pytest_plugins = ("tests.classification_inventory_fixture",)
+pytestmark = pytest.mark.usefixtures("classification_inventory_session_local")
 
 
 class TestClassificationRulingsData:
     @pytest.fixture(autouse=True)
-    def _db(self):
-        self.db = SessionLocal()
+    def _db(self, classification_inventory_session_local):
+        self.db = classification_inventory_session_local()
         yield
         self.db.close()
 

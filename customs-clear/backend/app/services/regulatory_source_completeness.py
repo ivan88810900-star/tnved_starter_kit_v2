@@ -14,6 +14,8 @@ from ..models.tnved import NonTariffMeasure
 from .normative_store import list_source_status, list_sync_log
 from .ntm_v2_import import SOURCE_KIND as LEGACY_TR_TS_SOURCE_KIND
 from .ntm_v2_official_sgr_import import OFFICIAL_SGR_SOURCE_KIND
+from .non_tariff_measures_lookup import admitted_legacy_measure_quality_clause
+from .regulatory_layer import admitted_regulatory_document_clause
 from .regulatory_source_registry import (
     AUTHORITY_LEVEL_LABELS,
     REGULATORY_SOURCE_REGISTRY,
@@ -94,11 +96,16 @@ def _count_db_probe(probe: str | None) -> int | None:
                 .count()
             )
         if probe == "regulatory_documents":
-            return db.query(RegulatoryDocument).count()
+            return (
+                db.query(RegulatoryDocument)
+                .filter(admitted_regulatory_document_clause())
+                .count()
+            )
         if probe == "regulatory_documents_pravo":
             return (
                 db.query(RegulatoryDocument)
                 .filter(RegulatoryDocument.agency == "PRAVO_GOV")
+                .filter(admitted_regulatory_document_clause())
                 .count()
             )
         if probe == "preliminary_decisions_ifcg":
@@ -128,7 +135,7 @@ def _count_db_probe(probe: str | None) -> int | None:
 
             return db.query(RegulatoryAiExtract).count()
         if probe == "non_tariff_measures":
-            return db.query(NonTariffMeasure).count()
+            return db.query(NonTariffMeasure).filter(admitted_legacy_measure_quality_clause()).count()
         if probe == "permits_fsa_usage":
             # Нет отдельной таблицы bulk — маркер «runtime-only»
             return -1

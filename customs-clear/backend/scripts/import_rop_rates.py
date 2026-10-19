@@ -14,6 +14,7 @@ import argparse
 import json
 import re
 import sys
+from collections.abc import Sequence
 from pathlib import Path
 from typing import Any
 
@@ -158,12 +159,12 @@ def _upsert_defaults(session: Session, doc: dict[str, Any], *, dry_run: bool) ->
     return created, updated
 
 
-def main() -> int:
+def main(argv: Sequence[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description="Import ROP rates into DB")
     ap.add_argument("--rates-json", type=Path, default=RATES_JSON)
     ap.add_argument("--defaults-json", type=Path, default=DEFAULTS_JSON)
     ap.add_argument("--dry-run", action="store_true")
-    args = ap.parse_args()
+    args = ap.parse_args(argv)
 
     rates_doc = _load_json(args.rates_json)
     defaults_doc = _load_json(args.defaults_json)

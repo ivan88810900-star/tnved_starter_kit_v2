@@ -143,6 +143,14 @@ async def run_copilot_pipeline(
         )
     elif run_registry_verify and not permit_list:
         pipeline.append({"step": "registry", "skipped": True, "detail": "нет номеров документов"})
+    elif run_registry_verify:
+        pipeline.append(
+            {
+                "step": "registry",
+                "skipped": True,
+                "detail": "нет кода ТН ВЭД — документы не проверялись в ФСА",
+            }
+        )
     else:
         pipeline.append({"step": "registry", "skipped": True, "detail": "выключено — документы не проверялись в ФСА"})
 
@@ -270,9 +278,11 @@ def bundle_for_llm(bundle: Dict[str, Any]) -> Dict[str, Any]:
                     "severity": row.get("severity"),
                     "source": row.get("source"),
                     "source_label": row.get("source_label"),
+                    "authority_level": row.get("authority_level"),
                     "source_url": row.get("source_url"),
                     "match_method": row.get("match_method"),
                     "explanation": str(row.get("explanation") or "")[:420],
+                    "legal_ref": row.get("legal_ref"),
                 }
                 for row in (risk.get("signals") or [])[:10]
                 if isinstance(row, dict)
@@ -283,6 +293,7 @@ def bundle_for_llm(bundle: Dict[str, Any]) -> Dict[str, Any]:
                     "title": row.get("title"),
                     "coverage_status": row.get("coverage_status"),
                     "manual_review_required": bool(row.get("manual_review_required")),
+                    "authority_level": row.get("authority_level"),
                     "source_url": row.get("source_url"),
                 }
                 for row in (risk.get("source_coverage") or [])[:10]

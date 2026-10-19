@@ -116,15 +116,37 @@ def _rule_description_matches(description_match_json: Any, description: str) -> 
     return True
 
 
+def _has_positive_description_gate(description_match_json: Any) -> bool:
+    if not isinstance(description_match_json, dict):
+        return False
+    for key in ("description_contains_any", "description_requires_any", "substrings"):
+        values = description_match_json.get(key)
+        if isinstance(values, list) and any(str(value).strip() for value in values):
+            return True
+    return False
+
+
 def _rule_hs_matches(norm_hs: str, rule: NtmApplicabilityRuleV2) -> bool:
+    mode = (rule.hs_scope_mode or "").strip().lower()
     hp = normalize_hs_code(rule.hs_code)
+    if mode == "description_only":
+        return not hp and _has_positive_description_gate(rule.description_match_json)
+    if mode not in {"prefix", "exact"}:
+        return False
     if not hp:
-        return True
+        # Defense in depth for previously persisted rows: an HS-less rule must
+        # have a positive description basis. Exclusions alone cannot establish
+        # applicability.
+        return _has_positive_description_gate(rule.description_match_json)
+    if mode == "exact":
+        return norm_hs == hp
     return match_hs_prefix(norm_hs, hp)
 
 
 def _rule_and_measure_active(rule: NtmApplicabilityRuleV2, as_of: date) -> bool:
     m = rule.measure
+    if (m.status or "").strip().lower() != "active":
+        return False
     if rule.valid_from is not None and as_of < rule.valid_from:
         return False
     if rule.valid_to is not None and as_of > rule.valid_to:
@@ -146,6 +168,8 @@ def _rule_matches_runtime(
 ) -> bool:
     m = rule.measure
     if not _rule_and_measure_active(rule, as_of):
+        return False
+    if (rule.direction or "").strip().lower() not in {"import", "both"}:
         return False
     if country is not None and rule.country_iso is not None and rule.country_iso != country:
         return False

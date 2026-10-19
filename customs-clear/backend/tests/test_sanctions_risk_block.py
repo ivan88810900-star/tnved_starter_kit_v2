@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import sys
 from pathlib import Path
 
 import pytest
@@ -9,6 +10,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 from app.db import Base
+from app import db as app_db
 from app.models.core import (
     CountryRisk,
     EuSanctionsList,
@@ -34,9 +36,21 @@ def memory_sessionmaker(monkeypatch: pytest.MonkeyPatch):
     ]
     Base.metadata.create_all(engine, tables=tables)
     sm = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    original_session = app_db.SessionLocal
     monkeypatch.setattr("app.db.SessionLocal", sm)
     monkeypatch.setattr("app.services.sanctions_risk_block.SessionLocal", sm)
-    return sm
+    try:
+        yield sm
+    finally:
+        # ``app.main`` is imported by the API test while this fixture is active.
+        # Restore SessionLocal aliases captured by modules imported during that
+        # window, otherwise later test modules keep the disposed in-memory DB.
+        for module_name, module in tuple(sys.modules.items()):
+            if module is None or not (module_name == "app" or module_name.startswith("app.")):
+                continue
+            if getattr(module, "SessionLocal", None) is sm:
+                setattr(module, "SessionLocal", original_session)
+        engine.dispose()
 
 
 def test_missing_sources_yield_manual_review(memory_sessionmaker: sessionmaker) -> None:
@@ -102,6 +116,39 @@ def test_positive_embargo_match(memory_sessionmaker: sessionmaker) -> None:
     assert block.status == "CRITICAL"
 
 
+def test_destination_country_is_checked_for_country_risk(memory_sessionmaker: sessionmaker) -> None:
+    """Страна назначения из публичного API не должна теряться в risk engine."""
+    with memory_sessionmaker() as db:
+        db.add(
+            CountryRisk(
+                iso_code="IR",
+                name_ru="Тестовая риск-юрисдикция",
+                is_unfriendly=True,
+                has_preference=False,
+                required_cert="",
+            )
+        )
+        db.commit()
+        block = build_sanctions_risk_block(
+            hs_code="8509400000",
+            description="Пылесос",
+            country="CN",
+            destination_country="IR",
+            db=db,
+        )
+    assert block.destination_country == "IR"
+    destination_signals = [
+        signal
+        for signal in block.signals
+        if signal.category == "country_restrictions" and signal.legal_ref == "CountryRisk/IR"
+    ]
+    assert len(destination_signals) == 1
+    assert "страна назначения ir" in destination_signals[0].explanation.lower()
+    assert "из данной страны" not in destination_signals[0].explanation.lower()
+    assert block.overall_severity == "high"
+    assert block.status == "CRITICAL"
+
+
 def test_positive_counterparty_ofac_match(memory_sessionmaker: sessionmaker) -> None:
     with memory_sessionmaker() as db:
         load_sanctions_risk_fixture(db)
@@ -112,7 +159,8 @@ def test_positive_counterparty_ofac_match(memory_sessionmaker: sessionmaker) -> 
             counterparty_name="FIXTURE SANCTIONED ENTITY LLC",
             db=db,
         )
-    assert any(s.category == "counterparty_ofac" for s in block.signals)
+    ofac_signals = [s for s in block.signals if s.category == "counterparty_ofac"]
+    assert len(ofac_signals) == 1
     assert block.overall_severity == "high"
 
 

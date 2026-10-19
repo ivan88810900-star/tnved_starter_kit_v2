@@ -185,7 +185,10 @@ def semantic_search_tnved(query: str, top_k: int = 15) -> list[dict[str, Any]]:
         if vec is None or len(vec) != len(qv):
             continue
         s = _cosine_score(qv, vec)
-        if s is None:
+        # A zero or negative cosine is not a positively similar candidate.
+        # Keep the boundary mathematical: a stronger domain threshold would
+        # require separately calibrated evidence for this catalogue.
+        if s is None or s <= 0:
             continue
         scored.append((s, ent, emb_row))
 

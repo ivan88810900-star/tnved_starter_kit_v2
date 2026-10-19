@@ -210,6 +210,9 @@ class SpecialDuty(Base):
     hs_code_prefix: Mapped[str] = mapped_column(String(16), nullable=False)
     # ISO-2 код страны происхождения (например, CN, MY).
     origin_country: Mapped[str] = mapped_column(String(8), nullable=False, default="")
+    # ISO-2 страны назначения. Пусто означает меру без национального среза.
+    # Нужен для мер ЕАЭС с различающимися национальными исключениями/квотами.
+    destination_country: Mapped[str] = mapped_column(String(8), nullable=False, default="")
     # Адвалорная ставка спецпошлины в процентах.
     rate_percent: Mapped[float] = mapped_column(Float, default=0.0)
     # Специфическая ставка (если применима).

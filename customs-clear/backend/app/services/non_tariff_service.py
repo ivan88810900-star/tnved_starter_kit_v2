@@ -174,6 +174,8 @@ async def check_position_non_tariff(
     country: str | None,
     permits: List[Dict[str, str]],
     *,
+    destination_country: str | None = None,
+    counterparty_name: str | None = None,
     skip_registry_verify: bool = False,
     include_effective_requirements_debug: bool = False,
     rules_enforcement_enabled: bool | None = None,
@@ -461,5 +463,7 @@ async def check_position_non_tariff(
         hs_code=hs_code,
         description=description or "",
         country=country,
+        destination_country=destination_country,
+        counterparty_name=counterparty_name,
     ).model_dump()
     return result

@@ -120,6 +120,26 @@ class SemanticSearchSafetyTests(unittest.TestCase):
         self.assertEqual(results[0]["embedding_model"], "model-a")
         self.assertEqual(results[0]["score"], 1.0)
 
+    def test_search_omits_non_positive_candidates_and_ranks_positive_matches(self) -> None:
+        rows = [
+            _row(model="model-a", dim=2, vector=[0.8, 0.6], hs_code="0101000000"),
+            _row(model="model-a", dim=2, vector=[1.0, 1.0], hs_code="0202000000"),
+            _row(model="model-a", dim=2, vector=[0.0, 1.0], hs_code="0303000000"),
+            _row(model="model-a", dim=2, vector=[-1.0, 0.0], hs_code="0404000000"),
+        ]
+
+        with (
+            patch("app.services.embedding_service._embedding_model", return_value="model-a"),
+            patch("app.services.embedding_service.embed_texts_openai", return_value=[[1.0, 0.0]]),
+            patch("app.services.embedding_service.SessionLocal", return_value=_FakeSession(rows)),
+        ):
+            results = semantic_search_tnved("описание товара")
+
+        self.assertEqual(
+            [(item["hs_code"], item["score"]) for item in results],
+            [("0101000000", 0.8), ("0202000000", 0.707107)],
+        )
+
     def test_search_does_not_rank_zero_or_overflowing_stored_norms(self) -> None:
         rows = [
             _row(model="model-a", dim=2, vector=[0.0, 0.0], hs_code="0101000000"),

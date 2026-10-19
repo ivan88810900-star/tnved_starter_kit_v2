@@ -13,7 +13,7 @@ from typing import Any
 
 from loguru import logger
 
-from ..db import SessionLocal
+from ..db import SessionLocal, engine
 from ..models.core import ExchangeRate, SourceStatus
 
 _BACKEND_ROOT = Path(__file__).resolve().parent.parent.parent
@@ -91,6 +91,13 @@ def check_data_freshness() -> dict[str, Any]:
 
 def _check_currency_freshness(now: datetime) -> dict[str, Any]:
     """Check if exchange rates are fresh."""
+    if engine.url.get_backend_name() == "sqlite":
+        database = engine.url.database
+        if database and database != ":memory:" and not Path(database).is_file():
+            # A freshness probe is read-only.  Opening a missing SQLite target
+            # would create an empty database (and WAL files) merely to report
+            # that no rates exist.
+            return {"is_stale": True, "reason": "db_missing", "currencies": 0}
     try:
         with SessionLocal() as db:
             rows = db.query(ExchangeRate).all()
@@ -184,7 +191,26 @@ async def run_full_data_refresh(*, dry_run: bool = True) -> dict[str, Any]:
     """
     results: list[dict[str, Any]] = []
 
-    currency = await refresh_currency_rates()
+    # The currency updater persists both fetched CBR rates and FALLBACK values.
+    # A failed network request therefore mutates the database too, so it must
+    # never be used as a "probe" in dry-run mode.  Read freshness first and
+    # report the pending action without fetching or opening a write path.
+    freshness = check_data_freshness()
+    if dry_run:
+        currency_freshness = freshness["currency"]
+        currency_reason = str(currency_freshness.get("reason", ""))
+        currency = {
+            "domain": "CBRF",
+            "status": "error" if currency_reason.startswith("db_error:") else "ok",
+            "source": "read_only_freshness",
+            "updated": 0,
+            "needs_apply": bool(currency_freshness.get("is_stale", True)),
+        }
+        for key in ("reason", "last_update", "age_hours", "currencies"):
+            if key in currency_freshness:
+                currency[key] = currency_freshness[key]
+    else:
+        currency = await refresh_currency_rates()
     results.append(currency)
 
     excise = refresh_excise_rates()
@@ -193,7 +219,8 @@ async def run_full_data_refresh(*, dry_run: bool = True) -> dict[str, Any]:
     anti_dumping = refresh_anti_dumping()
     results.append(anti_dumping)
 
-    freshness = check_data_freshness()
+    if not dry_run:
+        freshness = check_data_freshness()
 
     errors = [r for r in results if r.get("status") == "error"]
     needs_apply = [r for r in results if r.get("needs_apply")]
