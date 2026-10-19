@@ -1,14 +1,14 @@
 {
   "acquisition_note": "Cycle 292 recovered main e526dfb5a31b01bf6f743da0288b88f916de0c, PR258 exact head c59af35da7dde2140d911e2003a4a52fb0611507, released generation 291, and stale CI status. GitHub now exposes exact-head run 38920906239/job 117040259865 as success.",
-  "expires_at": null,
-  "generation": 356,
-  "holder": null,
+  "expires_at": "2026-10-19T14:50:16.656929Z",
+  "generation": 357,
+  "holder": "/root/scheduled-cycle357-20261019T141632Z",
   "lease_repair": {},
   "release_reason": "Cycle333 honored the exact owner authorization for the 100-record cycle325 SGR transfer, verified red-meadow-53765518/br-weathered-frost-ba9jri3c/tariff_staging and both prepared objects, then stopped on a new Neon presigned-download policy refusal without retry or workaround. Post-refusal read proved no partial write (epoch315 20/10/1020, candidate 0/0). Checkpoint c98981ef0ac0b59cc98b9a8b6b3e73f598fdb29f and issue257/PR258 receipts were reread; A6 unchanged/not sent.",
   "released_by": "/root/scheduled-cycle333-20261018T125155Z",
   "schema_version": 1,
   "serialization_repair": {},
-  "state": "released",
-  "token": null,
-  "updated_at": "2026-10-19T13:43:11.362091+00:00"
+  "state": "active",
+  "token": "772e4e17e7ec415ca8c263d6816f06a8",
+  "updated_at": "2026-10-19T14:20:16.656929Z"
 }
