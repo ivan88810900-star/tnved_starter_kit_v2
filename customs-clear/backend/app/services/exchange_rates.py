@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 from math import isfinite
 import xml.etree.ElementTree as ET
 
@@ -14,6 +14,7 @@ CBR_DAILY_URL = "https://www.cbr.ru/scripts/XML_daily.asp"
 CBRF_SOURCE_CODE = "CBRF"
 CBRF_SOURCE_NAME = "Курсы валют ЦБ РФ (XML daily)"
 TRACKED = ("USD", "EUR", "CNY", "BYN", "KZT")
+CBRF_RATE_STALE_DAYS = 7
 FALLBACK: dict[str, float] = {
     "USD": 92.0,
     "EUR": 100.0,
@@ -267,7 +268,11 @@ def _is_verified_cbrf_status(status: SourceStatus | None) -> bool:
     else:
         synced_at = synced_at.astimezone(timezone.utc)
     now = datetime.now(timezone.utc)
-    return synced_at <= now and source_date <= now.date()
+    source_age = now.date() - source_date
+    return (
+        synced_at <= now
+        and timedelta(0) <= source_age <= timedelta(days=CBRF_RATE_STALE_DAYS)
+    )
 
 
 def get_rates_payload() -> dict[str, object]:
