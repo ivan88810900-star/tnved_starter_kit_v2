@@ -1999,3 +1999,15 @@ CI #255: [offline-safety PASS, run 37771953943](https://github.com/ivan88810900-
 - Receipts: PR #255 comment 6278859950 and issue #257 comment 6278862956.
 - Independent A5 was not run in this connector-only cycle, so status is IMPLEMENTED / CI PASS / INDEPENDENT QA PENDING; full #244 acceptance is not claimed. The populated synchronized NTM snapshot remains unavailable and full #245 acceptance remains blocked. A6 remains unchanged/not sent.
 - Evidence: `.ai/orchestration/evidence/cycle367_pr255_excise_registry_domain_boundary.json`. TASK_BOARD remains revision 896 because the connector cannot safely round-trip its current >1 MB document in this run.
+
+## Cycle 368 — PR #255 official-source URL parser boundary (2026-10-19 UTC)
+
+- Task `TARIFF-PR255-OFFICIAL-URL-PARSER-BOUNDARY-20261019`; executor `/root/scheduled-cycle368-20261019T225250Z`; lease generation 368.
+- Independent A5 first reproduced that `https://evil.example\\@docs.eec.eaeunion.org/excise` passed the Python netloc suffix allowlist although WHATWG/browser parsing resolves an external host. A5 then reproduced a malformed IPv6 authority raising `ValueError` instead of failing closed.
+- Draft PR #255 advanced to exact HEAD `bbeb1eeb97ebf7ee8bd48ca6db0ca65781964aab`, tree `d781472f9571c4693bffb23e81b9ca63db561c35`; local author commit `5fe4f373a5380370d1969e163a0f162bc1953639` has the identical tree. The shared helper now rejects backslashes and userinfo and returns rejection for malformed authorities; exact official hosts and real DNS-label subdomains remain accepted. No rate, legal rule, schema or normative data changed.
+- Author validation passed **123 tests plus 63 subtests**; the freshly migrated workflow-equivalent payment slice passed **274 tests plus 23 subtests**; py_compile/diff-check exited 0.
+- Independent A5 `/root/a5_cycle368` returned `PASS_NO_FINDINGS` after the two findings were repaired: **97 plus 9 subtests** and **136 plus 54 subtests**, four-caller adversarial parser matrix, compile/diff checks, all exit 0.
+- Exact-head CI succeeded: [run 39338841088](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/39338841088), offline-safety job `118355045012` and payment-regression job `118355045331`.
+- Receipts: [PR #255](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/255#issuecomment-6279246775) and [issue #257](https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/257#issuecomment-6279248848).
+- Full #244 acceptance and official-source/legal completeness remain NOT PASS. The populated synchronized NTM snapshot remains unavailable, so full #245 acceptance remains blocked. No merge, deploy, staging/production write, enforcement change, secret/permission change, protected action or A6 dispatch occurred; A6 remains unchanged/not sent.
+- Evidence: `.ai/orchestration/evidence/cycle368_pr255_official_url_parser_boundary.json`; TASK_BOARD revision 897. Next continue the next unfinished PR #244 payment/source acceptance block from fresh state.

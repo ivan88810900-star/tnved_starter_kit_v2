@@ -2179,7 +2179,7 @@
       "unique_source_pr_count": 29
     }
   },
-  "revision": 896,
+  "revision": 897,
   "runs": [
     {
       "head_sha": null,
@@ -6908,6 +6908,45 @@
         "protected_actions_performed": false,
         "evidence": ".ai/orchestration/evidence/cycle366_pr255_excise_display_provenance.json",
         "next_step": "Continue the next unfinished PR #244 payment/source acceptance block from fresh state; keep full #245 acceptance blocked until a lawful populated synchronized NTM snapshot exists."
+      },
+      "official_url_parser_boundary_checkpoint_20261019": {
+        "task_id": "TARIFF-PR255-OFFICIAL-URL-PARSER-BOUNDARY-20261019",
+        "started_at": "2026-10-19T22:52:50Z",
+        "completed_at": "2026-10-19T23:01:49Z",
+        "executor": "/root/scheduled-cycle368-20261019T225250Z",
+        "lease_generation": 368,
+        "base_pr": 244,
+        "corrective_pr": 255,
+        "parent_sha": "7bb06d8c38f428a21c68385557a2971ca2eda826",
+        "published_head_sha": "bbeb1eeb97ebf7ee8bd48ca6db0ca65781964aab",
+        "tree_sha": "d781472f9571c4693bffb23e81b9ca63db561c35",
+        "local_author_commit": "5fe4f373a5380370d1969e163a0f162bc1953639",
+        "scope": "Fail closed on browser/Python official-source URL parser ambiguity and malformed authority across the shared payment source validators.",
+        "reproduction": "A backslash authority passed the Python netloc suffix allowlist while WHATWG/browser parsing resolved an external host; malformed IPv6 authority raised ValueError instead of returning rejection.",
+        "result": "Backslashes and userinfo are rejected and malformed authorities fail closed. Exact official hosts and valid DNS-label subdomains remain accepted for excise and the shared trade-remedy callers.",
+        "author_tests": "Focused/adjacent 123 passed plus 63 subtests; freshly migrated workflow-equivalent payment slice 274 passed plus 23 subtests; py_compile and diff-check exit 0.",
+        "independent_a5": "/root/a5_cycle368 PASS_NO_FINDINGS after two confirmed findings were repaired; 97 plus 9 subtests and 136 plus 54 subtests, four-caller adversarial parser matrix, compile/diff checks all exit 0.",
+        "exact_head_ci": {
+          "status": "PASSED",
+          "run_id": 39338841088,
+          "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/39338841088",
+          "jobs": {
+            "offline_safety": 118355045012,
+            "payment_regression": 118355045331
+          }
+        },
+        "limitations": [
+          "No full-suite PASS, full #244 acceptance, official-source completeness or legal completeness is claimed.",
+          "The populated synchronized NTM snapshot remains unavailable; full #245 acceptance remains blocked."
+        ],
+        "receipts": {
+          "pr255": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/255#issuecomment-6279246775",
+          "issue257": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/257#issuecomment-6279248848"
+        },
+        "a6": "UNCHANGED_NOT_SENT",
+        "protected_actions_performed": false,
+        "evidence": ".ai/orchestration/evidence/cycle368_pr255_official_url_parser_boundary.json",
+        "next_step": "Continue the next unfinished PR #244 payment/source acceptance block from fresh state; keep full #245 acceptance blocked until a lawful populated synchronized NTM snapshot exists."
       }
     },
     {
@@ -7927,7 +7966,7 @@
       }
     }
   ],
-  "updated_at": "2026-10-19T22:11:45Z",
+  "updated_at": "2026-10-19T23:01:49Z",
   "previous_scheduled_product_checkpoint_174": {
     "updated_at": "2026-10-11T18:04:51.196Z",
     "checked_at": "2026-10-11T18:04:51.196Z",
