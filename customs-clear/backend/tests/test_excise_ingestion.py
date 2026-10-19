@@ -25,6 +25,7 @@ from app.services.payment_data_coverage import (
     run_payment_data_coverage_report,
 )
 from app.services.payment_data_normalization import normalize_excise, run_payment_data_normalization_report
+from app.services.payment_revision_utils import is_conservative_official_excise_source_url
 
 try:
     from fastapi.testclient import TestClient
@@ -32,6 +33,30 @@ try:
     _API_OK = True
 except ImportError:
     _API_OK = False
+
+
+class TestExciseSourceUrlValidation(unittest.TestCase):
+    def test_registry_domain_requires_dns_label_boundary(self) -> None:
+        registry_url = "https://eec.eaeunion.org/registry/excise"
+
+        self.assertTrue(
+            is_conservative_official_excise_source_url(
+                "https://eec.eaeunion.org/docs/excise",
+                registry_official_url=registry_url,
+            )
+        )
+        self.assertTrue(
+            is_conservative_official_excise_source_url(
+                "https://docs.eec.eaeunion.org/excise",
+                registry_official_url=registry_url,
+            )
+        )
+        self.assertFalse(
+            is_conservative_official_excise_source_url(
+                "https://not-eec.eaeunion.org/excise",
+                registry_official_url=registry_url,
+            )
+        )
 
 
 _TABLES = [
