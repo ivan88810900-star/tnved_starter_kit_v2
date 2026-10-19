@@ -1,0 +1,48 @@
+{
+  "schema_version": 1,
+  "task_id": "TARIFF-PR256-OFFICIAL-SGR-IMPORT-SESSION-ISOLATION-20261019",
+  "started_at": "2026-10-19T03:55:19Z",
+  "completed_at": "2026-10-19T04:08:22Z",
+  "executor": "/root/scheduled-cycle348-20261019T035519Z",
+  "lease_generation": 348,
+  "pr": 256,
+  "previous_head_sha": "fe367f14d9281b25c9f32fbb0328cdb7cd153a9f",
+  "head_sha": "e523142e88fe739ac1cfd931de435ae04c456c6a",
+  "tree_sha": "1f1a91d406141bc08a2e5dd875870c30fb38e817",
+  "local_author_commit": "4cc77d17abcf20d03a6d66e4023c9760d3e564c4",
+  "product_changed": false,
+  "changed_file": "customs-clear/backend/tests/test_ntm_v2_official_sgr_import.py",
+  "baseline": {
+    "command": "PYTHONPATH=.:watcher python -c preimport sanctions_risk_block then pytest selected official broker test",
+    "exit_code": 86,
+    "result": "1 passed; customs.db 4096 bytes, customs.db-wal 0 bytes, customs.db-shm 32768 bytes"
+  },
+  "repair": "The fixture rebinds sanctions_risk_block.SessionLocal to the in-memory sessionmaker, asserts alias identity, yields under try/finally and always disposes the engine.",
+  "author": {
+    "identity": "/root/a2_cycle348",
+    "commit": "4cc77d17abcf20d03a6d66e4023c9760d3e564c4",
+    "tests": ["focused 25 passed", "four adjacent modules both orders 60 passed each", "setup/create_all/normal/body lifecycle disposal exactly once", "17 original tests and 35 assertions AST-identical; all exits 0"]
+  },
+  "independent_a5": {
+    "identity": "/root/a5_cycle348",
+    "result": "PASS_NO_FINDINGS",
+    "evidence": "parent exit86 reproduced; candidate focused 25; both adjacent orders 60 each; lifecycle exceptions propagated; AST parity and no ambient SQLite"
+  },
+  "a0_exact_published_tree": {
+    "command": "PYTHONPATH=.:watcher pytest selected preimport reproduction then official-import sanctions advisory measures",
+    "exit_code": 0,
+    "result": "1 selected plus 57 adjacent tests passed; no customs.db, WAL or SHM",
+    "guarded_broad": "excluding nine snapshot-only tests, repaired writer passed; next ambient writer test_ntm_v2_rules_enforcement.py::test_enforcement_off_unchanged_baseline after 59%"
+  },
+  "ci": {
+    "run_id": 39197651639,
+    "job_id": 117883776902,
+    "conclusion": "success",
+    "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/39197651639/job/117883776902"
+  },
+  "receipts": {"pr256": null, "issue257": null},
+  "snapshot": {"epoch": 315, "objects": 20, "runs": 10, "rows": 1020, "unique_ids": 1020, "unique_hashes": 1020, "max_ordinal": 1020, "status": "COLLECTED_UNVERIFIED", "populated_synchronized_available": false},
+  "staging_blocker": "The cycle325 offset1120 transfer remains policy-refused; it was not retried or worked around.",
+  "a6": {"request": "core-s1-6415f443120f-r9-g106", "status": "UNCHANGED_NOT_SENT"},
+  "protected_actions_performed": false
+}
