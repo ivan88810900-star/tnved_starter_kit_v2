@@ -2179,7 +2179,7 @@
       "unique_source_pr_count": 29
     }
   },
-  "revision": 875,
+  "revision": 876,
   "runs": [
     {
       "head_sha": null,
@@ -7797,7 +7797,7 @@
       }
     }
   ],
-  "updated_at": "2026-10-19T00:05:10Z",
+  "updated_at": "2026-10-19T01:14:30Z",
   "previous_scheduled_product_checkpoint_174": {
     "updated_at": "2026-10-11T18:04:51.196Z",
     "checked_at": "2026-10-11T18:04:51.196Z",
@@ -11513,6 +11513,42 @@
     "next_step": "First recheck exact-head CI for 09bd88e3085921733708578cce6e21a70430c0fd and accept only a verified successful run. Then isolate tests/test_rop_coverage_audit.py: on clean exact HEAD it exits 1 with 4 failed because rop_goods_rates is absent and creates a 4,096-byte ambient customs.db; preserve its 97-chapter, subject/not-subject and summary assertions without changing product or normative data."
   },
   "latest_scheduled_product_checkpoint": {
+    "schema_version": 1,
+    "task_id": "TARIFF-PR256-NTM-ADVISORY-SESSION-ISOLATION-20261019",
+    "started_at": "2026-10-19T00:55:30Z",
+    "completed_at": "2026-10-19T01:14:30Z",
+    "executor": "/root/scheduled-cycle345-20261019T005530Z",
+    "lease_generation": 345,
+    "pr": 256,
+    "branch": "agent/product-ntm-regressions-v1",
+    "previous_head_sha": "c26339d3a3c47b793d61f8cf22f96599bd2a6242",
+    "head_sha": "564afdb9005eafc90d85b2dcf9063400feabe77c",
+    "tree_sha": "6ca46dfa3644bd500ee7e2e30659c02c9834862f",
+    "local_author_commit": "c2b68c294cf1411c2b1972cf813858f40211536f",
+    "status": "IMPLEMENTED_A5_PASS_CI_PASS_NTM_ADVISORY_SESSION_ISOLATION",
+    "product_changed": false,
+    "product_code_changed": false,
+    "test_fixture_changed": true,
+    "scope": "order-dependent disposable database isolation for NTM v2 advisory requirements",
+    "finding": "When sanctions_risk_block was imported before the advisory fixture, it retained the default SessionLocal alias. The advisory matrix then passed its assertions but created ambient customs.db/WAL/SHM through that stale alias.",
+    "fix": "Bind sanctions_risk_block.SessionLocal to the fixture's in-memory sessionmaker, assert that alias identity explicitly, and dispose the engine for setup, body and teardown paths.",
+    "baseline_reproduction": "exact previous head pre-import wrapper exited 0 with 10 passed but created customs.db 4096, customs.db-wal 0 and customs.db-shm 32768",
+    "author_tests": "focused 11 passed; sanctions/advisory in both orders 20 passed each; injected create_all failure disposed the engine; diff check and no-ambient checks passed; all exits 0",
+    "independent_a5": "/root/a5_cycle345 initially rejected setup-failure cleanup; repaired exact tree PASS_NO_FINDINGS with focused 11, both orders 20 each, lifecycle setup/normal/body probes, 6 original test ASTs unchanged and no ambient SQLite",
+    "a0_validation": "Exact remote head 564afdb9005eafc90d85b2dcf9063400feabe77c passed advisory+sanctions 20 tests, exit 0; guarded broad instrumentation passed the repaired 42% writer and identified the next distinct writer at test_ntm_v2_measures_enforcement.py::test_enforcement_adds_vs at 53%",
+    "exact_head_ci": "run 39184363860 / job 117843550619 success",
+    "receipts": {
+      "pr256": null,
+      "issue257": null
+    },
+    "snapshot_status": "BOUNDED_EPOCH315_1020_ROWS_POPULATED_SYNCHRONIZED_NTM_NOT_AVAILABLE",
+    "staging_blocker": "cycle325 offset1120 transfer remains policy-refused after the owner-authorized attempt; no retry or workaround",
+    "a6": "UNCHANGED_NOT_SENT",
+    "protected_actions_performed": false,
+    "evidence": ".ai/orchestration/evidence/cycle345_pr256_ntm_advisory_session_isolation.json",
+    "next_step": "On exact PR256 HEAD, isolate test_ntm_v2_measures_enforcement.py::test_enforcement_adds_vs: guarded broad execution reaches it at 53% and creates ambient customs.db/WAL/SHM; preserve all enforcement assertions and disposable boundaries without retrying the refused SGR transfer."
+  },
+  "previous_scheduled_product_checkpoint_344": {
     "schema_version": 1,
     "task_id": "TARIFF-PR256-TRADE-REMEDIES-AUDIT-CURRENT-BUNDLE-20261019",
     "started_at": "2026-10-18T23:50:31Z",
