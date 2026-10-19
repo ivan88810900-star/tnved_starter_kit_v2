@@ -254,23 +254,328 @@ def test_replay_rejects_corrupted_materialized_rows(
         with session.begin():
             session.execute(tables[table_name].update().values({column: replacement}))
     with db() as reader:
-        committed = load_checkpoint(
-            reader,
-            epoch_id="epoch-corrupted-replay",
+        with pytest.raises(StagingIngestError, match="stored checkpoint"):
+            load_checkpoint(
+                reader,
+                epoch_id="epoch-corrupted-replay",
+                dataset="NSI-1995",
+                schema=None,
+            )
+
+
+@pytest.mark.parametrize(
+    "checkpoint_mutation",
+    [
+        {"next_offset": 0},
+        {"source_total": 0},
+        {"snapshot_id": ""},
+        {"run_id": "missing-run"},
+        {"trailing_overlap_sha256": "not-a-sha256"},
+        {"generation": 999},
+    ],
+)
+def test_load_checkpoint_rejects_corrupted_checkpoint_binding(
+    db,
+    checkpoint_mutation: dict[str, Any],
+) -> None:
+    page = _page(0, [_row(0)], overlap=0, total=1)
+    run_bounded_worker(
+        session_factory=db,
+        page_reader=lambda _checkpoint, _budget: page,
+        epoch_id="epoch-corrupt-checkpoint",
+        dataset="NSI-1995",
+        schema=None,
+        limits=WorkerLimits(1, 1, 100_000, 10),
+    )
+    tables = staging_tables(MetaData(), schema=None)
+    with db() as session:
+        with session.begin():
+            session.execute(tables["checkpoints"].update().values(**checkpoint_mutation))
+    with db() as session:
+        with pytest.raises(StagingIngestError, match="stored checkpoint"):
+            load_checkpoint(
+                session,
+                epoch_id="epoch-corrupt-checkpoint",
+                dataset="NSI-1995",
+                schema=None,
+            )
+
+
+def test_load_checkpoint_rejects_divergent_run_cursor(db) -> None:
+    page = _page(0, [_row(0)], overlap=0, total=1)
+    run_bounded_worker(
+        session_factory=db,
+        page_reader=lambda _checkpoint, _budget: page,
+        epoch_id="epoch-corrupt-run-cursor",
+        dataset="NSI-1995",
+        schema=None,
+        limits=WorkerLimits(1, 1, 100_000, 10),
+    )
+    tables = staging_tables(MetaData(), schema=None)
+    with db() as session:
+        with session.begin():
+            cursor = dict(
+                session.scalar(select(tables["ingest_runs"].c.resume_cursor))
+            )
+            cursor["next_offset"] = 0
+            session.execute(tables["ingest_runs"].update().values(resume_cursor=cursor))
+    with db() as session:
+        with pytest.raises(StagingIngestError, match="stored checkpoint"):
+            load_checkpoint(
+                session,
+                epoch_id="epoch-corrupt-run-cursor",
+                dataset="NSI-1995",
+                schema=None,
+            )
+
+
+@pytest.mark.parametrize(
+    "run_mutation",
+    ["scope-logical-offset", "scope-page-source", "run-source", "run-raw-count"],
+)
+def test_load_checkpoint_rejects_divergent_run_lineage(db, run_mutation: str) -> None:
+    page = _page(0, [_row(0)], overlap=0, total=1)
+    run_bounded_worker(
+        session_factory=db,
+        page_reader=lambda _checkpoint, _budget: page,
+        epoch_id="epoch-corrupt-run-lineage",
+        dataset="NSI-1995",
+        schema=None,
+        limits=WorkerLimits(1, 1, 100_000, 10),
+    )
+    tables = staging_tables(MetaData(), schema=None)
+    with db() as session:
+        with session.begin():
+            if run_mutation.startswith("scope-"):
+                scope = dict(session.scalar(select(tables["ingest_runs"].c.scope)))
+                if run_mutation == "scope-logical-offset":
+                    scope["logical_offset"] = 999
+                else:
+                    scope["page_source_id"] = "bogus-source"
+                session.execute(tables["ingest_runs"].update().values(scope=scope))
+            elif run_mutation == "run-source":
+                session.execute(
+                    tables["ingest_runs"].update().values(source_id="bogus-source")
+                )
+            else:
+                session.execute(tables["ingest_runs"].update().values(raw_count=999))
+    with db() as session:
+        with pytest.raises(StagingIngestError, match="stored checkpoint"):
+            load_checkpoint(
+                session,
+                epoch_id="epoch-corrupt-run-lineage",
+                dataset="NSI-1995",
+                schema=None,
+            )
+
+
+@pytest.mark.parametrize(
+    "material_mutation",
+    [
+        "physical-status",
+        "physical-global",
+        "physical-sgr",
+        "global-raw",
+        "global-first-source",
+        "global-first-manifest",
+        "ordering-kind",
+        "ordering-contract",
+    ],
+)
+def test_load_checkpoint_rejects_corrupted_material_lineage(
+    db,
+    material_mutation: str,
+) -> None:
+    page = _page(0, [_row(0)], overlap=0, total=1)
+    run_bounded_worker(
+        session_factory=db,
+        page_reader=lambda _checkpoint, _budget: page,
+        epoch_id="epoch-corrupt-material-lineage",
+        dataset="NSI-1995",
+        schema=None,
+        limits=WorkerLimits(1, 1, 100_000, 10),
+    )
+    tables = staging_tables(MetaData(), schema=None)
+    with db() as session:
+        with session.begin():
+            if material_mutation == "physical-status":
+                session.execute(tables["run_rows"].update().values(status="ADMITTED"))
+            elif material_mutation == "physical-global":
+                session.execute(
+                    tables["run_rows"].update().values(global_record_id="f" * 64)
+                )
+            elif material_mutation == "physical-sgr":
+                session.execute(tables["run_rows"].update().values(sgr_number="CORRUPTED"))
+            elif material_mutation == "global-raw":
+                session.execute(
+                    tables["global_records"].update().values(raw_json='{"corrupted":true}')
+                )
+            elif material_mutation == "global-first-source":
+                session.execute(
+                    tables["global_records"].update().values(first_source_id="missing-source")
+                )
+            elif material_mutation == "global-first-manifest":
+                session.execute(
+                    tables["global_records"].update().values(first_source_id="manifest-0")
+                )
+            else:
+                scope = dict(session.scalar(select(tables["ingest_runs"].c.scope)))
+                proof = dict(scope["ordering_proof"])
+                if material_mutation == "ordering-kind":
+                    proof["kind"] = "bogus"
+                else:
+                    proof["cursor_contract"] = "bogus"
+                scope["ordering_proof"] = proof
+                session.execute(tables["ingest_runs"].update().values(scope=scope))
+    with db() as session:
+        with pytest.raises(StagingIngestError, match="stored checkpoint"):
+            load_checkpoint(
+                session,
+                epoch_id="epoch-corrupt-material-lineage",
+                dataset="NSI-1995",
+                schema=None,
+            )
+
+
+@pytest.mark.parametrize(
+    "capture_run_mutation",
+    [
+        "scope-offset",
+        "scope-epoch",
+        "parser",
+        "raw-count",
+        "cursor",
+        "cursor-overlap-count",
+    ],
+)
+def test_load_checkpoint_rejects_corrupted_historical_first_capture_run(
+    db,
+    capture_run_mutation: str,
+) -> None:
+    first = _page(0, [_row(0)], overlap=0, total=1)
+    first = ImmutablePage(
+        page_source=_source("page-first", first.page_bytes, "application/json"),
+        manifest_source=_source("manifest-first", first.manifest_bytes, "application/json"),
+        page_bytes=first.page_bytes,
+        manifest_bytes=first.manifest_bytes,
+    )
+    later = _page(0, [_row(0)], overlap=0, total=1)
+    later = ImmutablePage(
+        page_source=_source("page-later", later.page_bytes, "application/json"),
+        manifest_source=_source("manifest-later", later.manifest_bytes, "application/json"),
+        page_bytes=later.page_bytes,
+        manifest_bytes=later.manifest_bytes,
+    )
+    for epoch_id, page in (("epoch-first", first), ("epoch-later", later)):
+        run_bounded_worker(
+            session_factory=db,
+            page_reader=lambda _checkpoint, _budget, page=page: page,
+            epoch_id=epoch_id,
             dataset="NSI-1995",
             schema=None,
+            limits=WorkerLimits(1, 1, 100_000, 10),
         )
+
+    tables = staging_tables(MetaData(), schema=None)
     with db() as session:
-        with pytest.raises(StagingIngestError, match="conflicting replay"):
-            with session.begin():
-                ingest_page(
-                    session,
-                    page=page,
-                    checkpoint=committed,
-                    epoch_id="epoch-corrupted-replay",
-                    dataset="NSI-1995",
-                    schema=None,
+        with session.begin():
+            first_run = session.execute(
+                select(tables["ingest_runs"]).where(
+                    tables["ingest_runs"].c.source_id == "page-first"
                 )
+            ).mappings().one()
+            predicate = tables["ingest_runs"].c.run_id == first_run["run_id"]
+            if capture_run_mutation.startswith("scope-"):
+                scope = dict(first_run["scope"])
+                if capture_run_mutation == "scope-offset":
+                    scope["logical_offset"] = 999
+                else:
+                    scope["epoch_id"] = "different-epoch"
+                session.execute(tables["ingest_runs"].update().where(predicate).values(scope=scope))
+            elif capture_run_mutation == "parser":
+                session.execute(
+                    tables["ingest_runs"].update().where(predicate).values(parser_version="bogus")
+                )
+            elif capture_run_mutation == "raw-count":
+                session.execute(
+                    tables["ingest_runs"].update().where(predicate).values(raw_count=999)
+                )
+            elif capture_run_mutation == "cursor":
+                cursor = dict(first_run["resume_cursor"])
+                cursor["next_offset"] = 999
+                session.execute(
+                    tables["ingest_runs"].update().where(predicate).values(resume_cursor=cursor)
+                )
+            else:
+                cursor = dict(first_run["resume_cursor"])
+                cursor["trailing_overlap_count"] = 20
+                session.execute(
+                    tables["ingest_runs"].update().where(predicate).values(resume_cursor=cursor)
+                )
+    with db() as session:
+        with pytest.raises(StagingIngestError, match="stored checkpoint"):
+            load_checkpoint(
+                session,
+                epoch_id="epoch-later",
+                dataset="NSI-1995",
+                schema=None,
+            )
+
+
+def test_load_checkpoint_rejects_corrupted_historical_request_offset(db) -> None:
+    first = _page(0, [_row(0), _row(1), _row(2)], overlap=0)
+    second = _page(3, [_row(0), _row(1), _row(2), _row(3), _row(4)], overlap=3)
+    pages = {0: first, 3: second}
+    run_bounded_worker(
+        session_factory=db,
+        page_reader=lambda checkpoint, _budget: pages[checkpoint.next_offset],
+        epoch_id="epoch-first-multipage",
+        dataset="NSI-1995",
+        schema=None,
+        limits=WorkerLimits(2, 5, 100_000, 10),
+    )
+    later = _page(0, [_row(3)], overlap=0, total=1)
+    later = ImmutablePage(
+        page_source=_source("page-later-single", later.page_bytes, "application/json"),
+        manifest_source=_source(
+            "manifest-later-single", later.manifest_bytes, "application/json"
+        ),
+        page_bytes=later.page_bytes,
+        manifest_bytes=later.manifest_bytes,
+    )
+    run_bounded_worker(
+        session_factory=db,
+        page_reader=lambda _checkpoint, _budget: later,
+        epoch_id="epoch-later-single",
+        dataset="NSI-1995",
+        schema=None,
+        limits=WorkerLimits(1, 1, 100_000, 10),
+    )
+
+    tables = staging_tables(MetaData(), schema=None)
+    with db() as session:
+        with session.begin():
+            capture_run = session.execute(
+                select(tables["ingest_runs"]).where(
+                    tables["ingest_runs"].c.source_id == "page-3"
+                )
+            ).mappings().one()
+            scope = dict(capture_run["scope"])
+            scope["request_offset"] = 1
+            session.execute(
+                tables["ingest_runs"]
+                .update()
+                .where(tables["ingest_runs"].c.run_id == capture_run["run_id"])
+                .values(scope=scope)
+            )
+    with db() as session:
+        with pytest.raises(StagingIngestError, match="stored checkpoint"):
+            load_checkpoint(
+                session,
+                epoch_id="epoch-later-single",
+                dataset="NSI-1995",
+                schema=None,
+            )
 
 
 def test_interruption_preserves_first_page_and_resume_continues(db) -> None:

@@ -309,12 +309,16 @@ def _ordering_snapshot(
     if page_source.source_revision != manifest_source.source_revision:
         raise StagingIngestError("page and manifest source revisions differ")
     if kind == "immutable_official_snapshot":
+        if set(proof) != {"kind", "snapshot_id", "immutable", "official"}:
+            raise StagingIngestError("official snapshot proof has unsupported fields")
         if proof.get("immutable") is not True or proof.get("official") is not True:
             raise StagingIngestError("official immutable snapshot proof is not asserted")
         if len(snapshot_id) != 64 or any(ch not in "0123456789abcdef" for ch in snapshot_id):
             raise StagingIngestError("official snapshot id must be its SHA-256")
         return snapshot_id
     if kind == "stable_cursor":
+        if set(proof) != {"kind", "snapshot_id", "sort", "cursor_contract"}:
+            raise StagingIngestError("stable cursor proof has unsupported fields")
         if proof.get("sort") != STABLE_CURSOR_SORT:
             raise StagingIngestError("stable cursor proof has an unsupported exact sort")
         if proof.get("cursor_contract") != STABLE_CURSOR_CONTRACT:
@@ -406,7 +410,8 @@ def load_checkpoint(
     if not canonical_dataset or dataset != canonical_dataset:
         raise ValueError("staging dataset must be nonblank and canonical")
 
-    checkpoints = _table_map(session, schema)["checkpoints"]
+    tables = _table_map(session, schema)
+    checkpoints = tables["checkpoints"]
     row = session.execute(
         select(checkpoints).where(
             checkpoints.c.epoch_id == canonical_epoch,
@@ -415,17 +420,517 @@ def load_checkpoint(
     ).mappings().one_or_none()
     if row is None:
         return Checkpoint()
-    if row["generation"] < 1 or row["next_offset"] < 0:
+    generation = int(row["generation"])
+    next_offset = int(row["next_offset"])
+    overlap_count = int(row["trailing_overlap_count"])
+    overlap_sha = row["trailing_overlap_sha256"]
+    source_total = row["source_total"]
+    snapshot_id = row["snapshot_id"]
+    run_id = row["run_id"]
+    complete = row["complete"] is True
+    if generation < 1 or next_offset < 0:
         raise StagingIngestError("stored checkpoint is malformed")
+    if not isinstance(source_total, int) or source_total < 0 or next_offset > source_total:
+        raise StagingIngestError("stored checkpoint has an invalid source total")
+    if not isinstance(snapshot_id, str) or not snapshot_id.strip() or snapshot_id != snapshot_id.strip():
+        raise StagingIngestError("stored checkpoint has an invalid snapshot id")
+    if not isinstance(run_id, str) or not run_id.strip() or run_id != run_id.strip():
+        raise StagingIngestError("stored checkpoint has an invalid run id")
+    if overlap_count < 0 or overlap_count > 20:
+        raise StagingIngestError("stored checkpoint has an invalid overlap count")
+    if overlap_count == 0:
+        if overlap_sha is not None:
+            raise StagingIngestError("stored checkpoint has an unexpected overlap hash")
+    elif not isinstance(overlap_sha, str) or len(overlap_sha) != 64 or any(
+        ch not in "0123456789abcdef" for ch in overlap_sha
+    ):
+        raise StagingIngestError("stored checkpoint has an invalid overlap hash")
+    if complete and next_offset != source_total:
+        raise StagingIngestError("stored checkpoint completion does not reconcile")
+    if generation > max(1, next_offset):
+        raise StagingIngestError("stored checkpoint generation is impossible")
+
+    run = session.execute(
+        select(tables["ingest_runs"]).where(tables["ingest_runs"].c.run_id == run_id)
+    ).mappings().one_or_none()
+    expected_cursor = {
+        "next_offset": next_offset,
+        "trailing_overlap_sha256": overlap_sha,
+        "trailing_overlap_count": overlap_count,
+        "source_total": source_total,
+        "snapshot_id": snapshot_id,
+        "complete": complete,
+    }
+    scope = run["scope"] if run is not None else None
+    required_scope = {
+        "epoch_id",
+        "dataset",
+        "logical_offset",
+        "request_offset",
+        "page_source_id",
+        "manifest_source_id",
+        "ordering_proof",
+    }
+    logical_offset = scope.get("logical_offset") if isinstance(scope, dict) else None
+    request_offset = scope.get("request_offset") if isinstance(scope, dict) else None
+    page_source_id = scope.get("page_source_id") if isinstance(scope, dict) else None
+    manifest_source_id = scope.get("manifest_source_id") if isinstance(scope, dict) else None
+    ordering_proof = scope.get("ordering_proof") if isinstance(scope, dict) else None
+    raw_count = run["raw_count"] if run is not None else None
+    unique_count = run["unique_count"] if run is not None else None
+    proof_kind = ordering_proof.get("kind") if isinstance(ordering_proof, dict) else None
+    stable_proof_valid = (
+        isinstance(ordering_proof, dict)
+        and set(ordering_proof) == {"kind", "snapshot_id", "sort", "cursor_contract"}
+        and proof_kind == "stable_cursor"
+        and ordering_proof.get("snapshot_id") == snapshot_id
+        and ordering_proof.get("sort") == STABLE_CURSOR_SORT
+        and ordering_proof.get("cursor_contract") == STABLE_CURSOR_CONTRACT
+    )
+    immutable_proof_valid = (
+        isinstance(ordering_proof, dict)
+        and set(ordering_proof) == {"kind", "snapshot_id", "immutable", "official"}
+        and proof_kind == "immutable_official_snapshot"
+        and ordering_proof.get("snapshot_id") == snapshot_id
+        and ordering_proof.get("immutable") is True
+        and ordering_proof.get("official") is True
+        and len(snapshot_id) == 64
+        and all(ch in "0123456789abcdef" for ch in snapshot_id)
+    )
+    if (
+        run is None
+        or run["parser_version"] != PARSER_VERSION
+        or run["status"] != COLLECTED_UNVERIFIED
+        or run["resume_cursor"] != expected_cursor
+        or not isinstance(scope, dict)
+        or set(scope) != required_scope
+        or scope.get("epoch_id") != canonical_epoch
+        or scope.get("dataset") != canonical_dataset
+        or isinstance(logical_offset, bool)
+        or not isinstance(logical_offset, int)
+        or logical_offset < 0
+        or isinstance(request_offset, bool)
+        or not isinstance(request_offset, int)
+        or request_offset < 0
+        or request_offset > logical_offset
+        or not isinstance(page_source_id, str)
+        or not page_source_id.strip()
+        or page_source_id != page_source_id.strip()
+        or not isinstance(manifest_source_id, str)
+        or not manifest_source_id.strip()
+        or manifest_source_id != manifest_source_id.strip()
+        or manifest_source_id == page_source_id
+        or run["source_id"] != page_source_id
+        or isinstance(raw_count, bool)
+        or not isinstance(raw_count, int)
+        or raw_count < 0
+        or unique_count != raw_count
+        or run["normalized_count"] != 0
+        or run["rejected_count"] != 0
+        or logical_offset + raw_count != next_offset
+        or (source_total > 0 and raw_count == 0)
+        or not (stable_proof_valid or immutable_proof_valid)
+    ):
+        raise StagingIngestError("stored checkpoint is not bound to its ingest run")
+
+    source_rows = session.execute(
+        select(tables["source_objects"]).where(
+            tables["source_objects"].c.source_id.in_([page_source_id, manifest_source_id])
+        )
+    ).mappings().all()
+    sources = {source["source_id"]: source for source in source_rows}
+    page_source = sources.get(page_source_id)
+    manifest_source = sources.get(manifest_source_id)
+    if (
+        page_source is None
+        or manifest_source is None
+        or len(sources) != 2
+        or page_source["dataset"] != canonical_dataset
+        or manifest_source["dataset"] != canonical_dataset
+        or page_source["source_revision"] != snapshot_id
+        or manifest_source["source_revision"] != snapshot_id
+        or page_source["authority"] != manifest_source["authority"]
+        or page_source["object_bucket"] != manifest_source["object_bucket"]
+        or page_source["status"] != COLLECTED_UNVERIFIED
+        or manifest_source["status"] != COLLECTED_UNVERIFIED
+    ):
+        raise StagingIngestError("stored checkpoint source lineage is inconsistent")
+
+    run_rows = tables["run_rows"]
+    global_records = tables["global_records"]
+    physical_rows = session.execute(
+        select(
+            run_rows.c.run_id,
+            run_rows.c.ordinal,
+            run_rows.c.source_id,
+            run_rows.c.global_record_id,
+            run_rows.c.sgr_number,
+            run_rows.c.date_time_from,
+            run_rows.c.date_time_to,
+            run_rows.c.update_datetime,
+            run_rows.c.date_time_updated,
+            run_rows.c.row_sha256,
+            run_rows.c.status,
+            global_records.c.global_record_id.label("bound_global_record_id"),
+            global_records.c.source_record_id.label("global_source_record_id"),
+            global_records.c.source_version_id.label("global_source_version_id"),
+            global_records.c.first_source_id.label("global_first_source_id"),
+            global_records.c.raw_json.label("global_raw_json"),
+            global_records.c.row_sha256.label("global_row_sha256"),
+            global_records.c.status.label("global_status"),
+        )
+        .outerjoin(
+            global_records,
+            global_records.c.global_record_id == run_rows.c.global_record_id,
+        )
+        .where(run_rows.c.run_id == run_id)
+        .order_by(run_rows.c.ordinal)
+    ).mappings().all()
+
+    first_source_ids: set[str] = set()
+    first_capture_pairs: set[tuple[str, str]] = set()
+
+    def physical_row_matches(index: int, physical: Mapping[str, Any]) -> bool:
+        ordinal = logical_offset + index + 1
+        raw_json = physical["global_raw_json"]
+        first_source_id = physical["global_first_source_id"]
+        if (
+            physical["run_id"] != run_id
+            or physical["ordinal"] != ordinal
+            or physical["source_id"] != page_source_id
+            or physical["status"] != COLLECTED_UNVERIFIED
+            or physical["bound_global_record_id"] != physical["global_record_id"]
+            or physical["global_status"] != COLLECTED_UNVERIFIED
+            or not isinstance(raw_json, str)
+            or not isinstance(first_source_id, str)
+            or not first_source_id.strip()
+            or first_source_id != first_source_id.strip()
+        ):
+            return False
+        try:
+            item = json.loads(raw_json)
+            if not isinstance(item, dict) or _canonical_json(item) != raw_json:
+                return False
+            record = _record_values(item, first_source_id=first_source_id)
+            expected_physical = _physical_values(
+                item,
+                record=record,
+                run_id=run_id,
+                source_id=page_source_id,
+                ordinal=ordinal,
+            )
+        except (json.JSONDecodeError, StagingIngestError, TypeError, ValueError):
+            return False
+        stored_record = {
+            "global_record_id": physical["bound_global_record_id"],
+            "source_record_id": physical["global_source_record_id"],
+            "source_version_id": physical["global_source_version_id"],
+            "first_source_id": first_source_id,
+            "raw_json": raw_json,
+            "row_sha256": physical["global_row_sha256"],
+            "status": physical["global_status"],
+        }
+        stored_physical = {
+            key: physical[key]
+            for key in (
+                "run_id",
+                "source_id",
+                "ordinal",
+                "global_record_id",
+                "sgr_number",
+                "date_time_from",
+                "date_time_to",
+                "update_datetime",
+                "date_time_updated",
+                "row_sha256",
+                "status",
+            )
+        }
+        if stored_record != record or stored_physical != expected_physical:
+            return False
+        first_source_ids.add(first_source_id)
+        first_capture_pairs.add((record["global_record_id"], first_source_id))
+        return True
+
+    if len(physical_rows) != raw_count or any(
+        not physical_row_matches(index, physical)
+        for index, physical in enumerate(physical_rows)
+    ):
+        raise StagingIngestError("stored checkpoint physical capture is inconsistent")
+    if first_source_ids:
+        first_sources = session.execute(
+            select(tables["source_objects"]).where(
+                tables["source_objects"].c.source_id.in_(first_source_ids)
+            )
+        ).mappings().all()
+        if len(first_sources) != len(first_source_ids) or any(
+            source["dataset"] != canonical_dataset
+            or source["status"] != COLLECTED_UNVERIFIED
+            for source in first_sources
+        ):
+            raise StagingIngestError("stored checkpoint physical capture is inconsistent")
+        capture_rows = session.execute(
+            select(
+                run_rows.c.run_id.label("capture_run_id"),
+                run_rows.c.global_record_id,
+                run_rows.c.source_id,
+                run_rows.c.ordinal.label("capture_ordinal"),
+                run_rows.c.sgr_number.label("capture_sgr_number"),
+                run_rows.c.date_time_from.label("capture_date_time_from"),
+                run_rows.c.date_time_to.label("capture_date_time_to"),
+                run_rows.c.update_datetime.label("capture_update_datetime"),
+                run_rows.c.date_time_updated.label("capture_date_time_updated"),
+                run_rows.c.row_sha256.label("capture_row_sha256"),
+                run_rows.c.status.label("capture_status"),
+                tables["ingest_runs"].c.source_id.label("capture_run_source_id"),
+                tables["ingest_runs"].c.scope.label("capture_scope"),
+                tables["ingest_runs"].c.status.label("capture_run_status"),
+                tables["ingest_runs"].c.parser_version.label("capture_parser_version"),
+                tables["ingest_runs"].c.raw_count.label("capture_raw_count"),
+                tables["ingest_runs"].c.unique_count.label("capture_unique_count"),
+                tables["ingest_runs"].c.normalized_count.label("capture_normalized_count"),
+                tables["ingest_runs"].c.rejected_count.label("capture_rejected_count"),
+                tables["ingest_runs"].c.resume_cursor.label("capture_resume_cursor"),
+            )
+            .join(
+                tables["ingest_runs"],
+                tables["ingest_runs"].c.run_id == run_rows.c.run_id,
+            )
+            .where(
+                run_rows.c.source_id.in_(first_source_ids),
+                run_rows.c.global_record_id.in_(
+                    {global_record_id for global_record_id, _source_id in first_capture_pairs}
+                ),
+            )
+        ).mappings().all()
+        run_validation: dict[str, bool] = {}
+
+        def capture_run_is_valid(capture: Mapping[str, Any]) -> bool:
+            capture_run_id = capture["capture_run_id"]
+            if capture_run_id in run_validation:
+                return run_validation[capture_run_id]
+            scope = capture["capture_scope"]
+            cursor = capture["capture_resume_cursor"]
+            valid = False
+            if isinstance(scope, dict) and isinstance(cursor, dict):
+                logical = scope.get("logical_offset")
+                request = scope.get("request_offset")
+                capture_page_source = scope.get("page_source_id")
+                capture_manifest_source = scope.get("manifest_source_id")
+                proof = scope.get("ordering_proof")
+                capture_raw_count = capture["capture_raw_count"]
+                next_cursor = cursor.get("next_offset")
+                cursor_total = cursor.get("source_total")
+                cursor_overlap_count = cursor.get("trailing_overlap_count")
+                cursor_overlap_sha = cursor.get("trailing_overlap_sha256")
+                cursor_snapshot = cursor.get("snapshot_id")
+                cursor_complete = cursor.get("complete")
+                manifest_overlap = (
+                    logical - request
+                    if isinstance(logical, int)
+                    and not isinstance(logical, bool)
+                    and isinstance(request, int)
+                    and not isinstance(request, bool)
+                    else None
+                )
+                expected_trailing_count = (
+                    min(20, manifest_overlap + capture_raw_count)
+                    if isinstance(manifest_overlap, int)
+                    and isinstance(capture_raw_count, int)
+                    and not isinstance(capture_raw_count, bool)
+                    else None
+                )
+                stable = (
+                    isinstance(proof, dict)
+                    and set(proof) == {"kind", "snapshot_id", "sort", "cursor_contract"}
+                    and proof.get("kind") == "stable_cursor"
+                    and proof.get("snapshot_id") == cursor_snapshot
+                    and proof.get("sort") == STABLE_CURSOR_SORT
+                    and proof.get("cursor_contract") == STABLE_CURSOR_CONTRACT
+                )
+                immutable = (
+                    isinstance(proof, dict)
+                    and set(proof) == {"kind", "snapshot_id", "immutable", "official"}
+                    and proof.get("kind") == "immutable_official_snapshot"
+                    and proof.get("snapshot_id") == cursor_snapshot
+                    and proof.get("immutable") is True
+                    and proof.get("official") is True
+                    and isinstance(cursor_snapshot, str)
+                    and len(cursor_snapshot) == 64
+                    and all(ch in "0123456789abcdef" for ch in cursor_snapshot)
+                )
+                structure_valid = (
+                    set(scope) == required_scope
+                    and isinstance(scope.get("epoch_id"), str)
+                    and bool(scope["epoch_id"].strip())
+                    and scope["epoch_id"] == scope["epoch_id"].strip()
+                    and scope.get("dataset") == canonical_dataset
+                    and isinstance(logical, int)
+                    and not isinstance(logical, bool)
+                    and logical >= 0
+                    and isinstance(request, int)
+                    and not isinstance(request, bool)
+                    and 0 <= request <= logical
+                    and (
+                        (logical == 0 and request == 0 and manifest_overlap == 0)
+                        or (logical > 0 and 1 <= manifest_overlap <= 20)
+                    )
+                    and isinstance(capture_page_source, str)
+                    and bool(capture_page_source.strip())
+                    and capture_page_source == capture_page_source.strip()
+                    and isinstance(capture_manifest_source, str)
+                    and bool(capture_manifest_source.strip())
+                    and capture_manifest_source == capture_manifest_source.strip()
+                    and capture_manifest_source != capture_page_source
+                    and capture["capture_parser_version"] == PARSER_VERSION
+                    and capture["capture_run_status"] == COLLECTED_UNVERIFIED
+                    and capture["capture_run_source_id"] == capture_page_source
+                    and isinstance(capture_raw_count, int)
+                    and not isinstance(capture_raw_count, bool)
+                    and capture_raw_count > 0
+                    and capture["capture_unique_count"] == capture_raw_count
+                    and capture["capture_normalized_count"] == 0
+                    and capture["capture_rejected_count"] == 0
+                    and set(cursor)
+                    == {
+                        "next_offset",
+                        "trailing_overlap_sha256",
+                        "trailing_overlap_count",
+                        "source_total",
+                        "snapshot_id",
+                        "complete",
+                    }
+                    and next_cursor == logical + capture_raw_count
+                    and isinstance(cursor_total, int)
+                    and not isinstance(cursor_total, bool)
+                    and cursor_total >= next_cursor
+                    and isinstance(cursor_complete, bool)
+                    and (not cursor_complete or next_cursor == cursor_total)
+                    and isinstance(cursor_overlap_count, int)
+                    and not isinstance(cursor_overlap_count, bool)
+                    and cursor_overlap_count == expected_trailing_count
+                    and (
+                        (cursor_overlap_count == 0 and cursor_overlap_sha is None)
+                        or (
+                            cursor_overlap_count > 0
+                            and isinstance(cursor_overlap_sha, str)
+                            and len(cursor_overlap_sha) == 64
+                            and all(ch in "0123456789abcdef" for ch in cursor_overlap_sha)
+                        )
+                    )
+                    and (stable or immutable)
+                )
+                if structure_valid:
+                    capture_sources = session.execute(
+                        select(tables["source_objects"]).where(
+                            tables["source_objects"].c.source_id.in_(
+                                [capture_page_source, capture_manifest_source]
+                            )
+                        )
+                    ).mappings().all()
+                    capture_source_map = {
+                        source["source_id"]: source for source in capture_sources
+                    }
+                    capture_page = capture_source_map.get(capture_page_source)
+                    capture_manifest = capture_source_map.get(capture_manifest_source)
+                    capture_physical = session.execute(
+                        select(
+                            run_rows.c.ordinal,
+                            run_rows.c.source_id,
+                            run_rows.c.row_sha256,
+                            run_rows.c.status,
+                        )
+                        .where(run_rows.c.run_id == capture_run_id)
+                        .order_by(run_rows.c.ordinal)
+                    ).mappings().all()
+                    valid = (
+                        capture_page is not None
+                        and capture_manifest is not None
+                        and len(capture_source_map) == 2
+                        and capture_page["dataset"] == canonical_dataset
+                        and capture_manifest["dataset"] == canonical_dataset
+                        and capture_page["source_revision"] == cursor_snapshot
+                        and capture_manifest["source_revision"] == cursor_snapshot
+                        and capture_run_id
+                        == f"{scope['epoch_id']}:{logical}:{capture_page['sha256'][:16]}"
+                        and capture_page["authority"] == capture_manifest["authority"]
+                        and capture_page["object_bucket"] == capture_manifest["object_bucket"]
+                        and capture_page["status"] == COLLECTED_UNVERIFIED
+                        and capture_manifest["status"] == COLLECTED_UNVERIFIED
+                        and len(capture_physical) == capture_raw_count
+                        and all(
+                            row["ordinal"] == logical + index + 1
+                            and row["source_id"] == capture_page_source
+                            and row["status"] == COLLECTED_UNVERIFIED
+                            for index, row in enumerate(capture_physical)
+                        )
+                        and (
+                            logical > 0
+                            or cursor_overlap_sha
+                            == _sha256(
+                                "".join(
+                                    f"{row['row_sha256']}\n"
+                                    for row in capture_physical[-cursor_overlap_count:]
+                                ).encode("ascii")
+                            )
+                        )
+                    )
+            run_validation[capture_run_id] = valid
+            return valid
+
+        proven_first_captures: set[tuple[str, str]] = set()
+        global_by_id = {
+            physical["global_record_id"]: physical for physical in physical_rows
+        }
+        for capture in capture_rows:
+            current = global_by_id.get(capture["global_record_id"])
+            if current is None or not capture_run_is_valid(capture):
+                continue
+            try:
+                item = json.loads(current["global_raw_json"])
+                expected_capture = _physical_values(
+                    item,
+                    record={
+                        "global_record_id": current["bound_global_record_id"],
+                        "row_sha256": current["global_row_sha256"],
+                    },
+                    run_id=capture["capture_run_id"],
+                    source_id=capture["source_id"],
+                    ordinal=capture["capture_ordinal"],
+                )
+            except (json.JSONDecodeError, StagingIngestError, TypeError, ValueError):
+                continue
+            stored_capture = {
+                key: capture[f"capture_{key}"]
+                for key in (
+                    "run_id",
+                    "ordinal",
+                    "sgr_number",
+                    "date_time_from",
+                    "date_time_to",
+                    "update_datetime",
+                    "date_time_updated",
+                    "row_sha256",
+                    "status",
+                )
+            }
+            stored_capture["source_id"] = capture["source_id"]
+            stored_capture["global_record_id"] = capture["global_record_id"]
+            if stored_capture == expected_capture:
+                proven_first_captures.add(
+                    (capture["global_record_id"], capture["source_id"])
+                )
+        if not first_capture_pairs.issubset(proven_first_captures):
+            raise StagingIngestError("stored checkpoint physical capture is inconsistent")
     return Checkpoint(
-        generation=int(row["generation"]),
-        next_offset=int(row["next_offset"]),
-        trailing_overlap_sha256=row["trailing_overlap_sha256"],
-        trailing_overlap_count=int(row["trailing_overlap_count"]),
-        source_total=row["source_total"],
-        snapshot_id=row["snapshot_id"],
-        complete=row["complete"] is True,
-        run_id=row["run_id"],
+        generation=generation,
+        next_offset=next_offset,
+        trailing_overlap_sha256=overlap_sha,
+        trailing_overlap_count=overlap_count,
+        source_total=source_total,
+        snapshot_id=snapshot_id,
+        complete=complete,
+        run_id=run_id,
     )
 
 
