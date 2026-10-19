@@ -7,7 +7,7 @@ import re
 from ..db import SessionLocal
 from ..models.core import HsRate, SourceStatus
 from .normative_store import find_rate_for_hs
-from .payment_engine import _find_duty_rule_for_hs
+from .payment_engine import _duty_rule_source_binding_unverified, _find_duty_rule_for_hs
 from .payment_revision_utils import (
     is_conservative_official_excise_source_url,
     is_official_excise_revision,
@@ -110,6 +110,12 @@ def format_excise_display(excise_type: str, excise_value: float, excise_basis: s
 def format_duty_rule_label(hs_code: str, import_duty: str = "") -> str:
     rule, _ = _find_duty_rule_for_hs(hs_code)
     if rule is not None:
+        # Persisted hs_duty_rules have no immutable official row/revision
+        # identity yet.  The quote engine already withholds their dependent
+        # totals; the catalogue must not present the same provisional rule as
+        # a concrete confirmed rate.
+        if _duty_rule_source_binding_unverified(rule):
+            return "Уточните ставку"
         ad = getattr(rule, "ad_valorem_pct", None)
         spec = getattr(rule, "specific_amount", None)
         cur = (getattr(rule, "specific_currency", None) or "EUR").strip() or "EUR"
@@ -117,6 +123,10 @@ def format_duty_rule_label(hs_code: str, import_duty: str = "") -> str:
         rtype = (getattr(rule, "type", None) or "ad_valorem").lower()
 
         if ad is not None and spec is not None and float(spec) > 0:
+            if rtype == "combined_add":
+                return f"{float(ad):g}% + {float(spec):g} {cur}/{uom}"
+            if rtype == "combined_min":
+                return f"{float(ad):g}%, но не более {float(spec):g} {cur}/{uom}"
             return f"{float(ad):g}%, но не менее {float(spec):g} {cur}/{uom}"
         if rtype == "specific" and spec is not None and float(spec) > 0:
             return f"{float(spec):g} {cur}/{uom}"

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from contextlib import contextmanager
 from datetime import datetime
+from types import SimpleNamespace
 from unittest.mock import patch
 
 from sqlalchemy import create_engine
@@ -12,7 +13,8 @@ from sqlalchemy.pool import StaticPool
 
 from app.db import Base
 from app.models.core import HsRate, SourceStatus
-from app.services.rate_display import format_excise_display, resolve_excise_for_hs
+from app.models.tnved import HsDutyRule
+from app.services.rate_display import format_duty_rule_label, format_excise_display, resolve_excise_for_hs
 
 
 _SYNCED_AT = datetime(2026, 5, 1, 12, 0, 0)
@@ -27,7 +29,10 @@ def _isolated_rate_store():
         connect_args={"check_same_thread": False},
         poolclass=StaticPool,
     )
-    Base.metadata.create_all(engine, tables=[HsRate.__table__, SourceStatus.__table__])
+    Base.metadata.create_all(
+        engine,
+        tables=[HsRate.__table__, SourceStatus.__table__, HsDutyRule.__table__],
+    )
     sm = sessionmaker(bind=engine, autocommit=False, autoflush=False)
     with (
         patch("app.services.rate_display.SessionLocal", sm),
@@ -148,3 +153,46 @@ def test_excise_needs_review_for_alcohol_without_data() -> None:
 def test_excise_empty_for_non_excise_chapter() -> None:
     with _isolated_rate_store():
         assert resolve_excise_for_hs("8517110000") == ("none", 0.0, "")
+
+
+def test_unbound_structured_duty_rule_is_not_rendered_as_confirmed_rate() -> None:
+    with _isolated_rate_store() as sm:
+        with sm() as db:
+            db.add(
+                HsDutyRule(
+                    commodity_code="8501100000",
+                    type="specific",
+                    ad_valorem_pct=None,
+                    specific_amount=2,
+                    specific_currency="EUR",
+                    specific_uom="kg",
+                )
+            )
+            db.commit()
+
+        with patch("app.services.payment_engine.SessionLocal", sm):
+            label = format_duty_rule_label("8501100000", "")
+
+    assert label == "Уточните ставку"
+
+
+def test_combined_duty_display_distinguishes_add_from_max() -> None:
+    add_rule = SimpleNamespace(
+        type="combined_add",
+        ad_valorem_pct=5,
+        specific_amount=2,
+        specific_currency="EUR",
+        specific_uom="kg",
+    )
+    max_rule = SimpleNamespace(
+        type="combined_max",
+        ad_valorem_pct=5,
+        specific_amount=2,
+        specific_currency="EUR",
+        specific_uom="kg",
+    )
+
+    with patch("app.services.rate_display._find_duty_rule_for_hs", return_value=(add_rule, 10)):
+        assert format_duty_rule_label("8501100000", "") == "5% + 2 EUR/kg"
+    with patch("app.services.rate_display._find_duty_rule_for_hs", return_value=(max_rule, 10)):
+        assert format_duty_rule_label("8501100000", "") == "5%, но не менее 2 EUR/kg"
