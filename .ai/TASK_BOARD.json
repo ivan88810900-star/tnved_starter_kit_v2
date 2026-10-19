@@ -2179,7 +2179,7 @@
       "unique_source_pr_count": 29
     }
   },
-  "revision": 895,
+  "revision": 896,
   "runs": [
     {
       "head_sha": null,
@@ -6870,6 +6870,44 @@
         "protected_actions_performed": false,
         "evidence": ".ai/orchestration/evidence/cycle365_pr255_cbr_business_date_freshness.json",
         "next_step": "Continue the next unfinished PR #244 payment/source acceptance block from fresh state; keep the known rate-display fixture isolation failure and #245 snapshot blocker explicit."
+      },
+      "excise_display_provenance_checkpoint_20261019": {
+        "task_id": "TARIFF-PR255-EXCISE-DISPLAY-PROVENANCE-20261019",
+        "started_at": "2026-10-19T21:54:07Z",
+        "completed_at": "2026-10-19T22:11:45Z",
+        "executor": "/root/scheduled-cycle366-20261019T215407Z",
+        "lease_generation": 366,
+        "base_pr": 244,
+        "corrective_pr": 255,
+        "parent_sha": "44e9c1ded7c2949d18f2cd4105aa49d2cd35f745",
+        "published_head_sha": "db434f8f5f44853450d62803b0102c51220afdea",
+        "tree_sha": "b95b52c3c495cb6e6bd411dafb1cfe1ba34c5771",
+        "local_author_commit": "3041fc15a1ddb0216947314e579331e5bfd3b03f",
+        "scope": "Fail closed when UI resolves persisted excise values without exact current official excise provenance.",
+        "reproduction": "A disposable HsRate parent with no excise-specific row proof was rendered as a concrete 45 RUB/litre value.",
+        "result": "Concrete excise display now requires non-stale official EEC_EXCISE status, exact revision binding, conservative official row/status URLs and row time not newer than the status. Unverified values become needs_review with withheld amount. Repeat apply, distinct official URLs and row-only official URLs remain admissible.",
+        "author_tests": "Focused and adjacent 106 passed plus 334 subtests; exact workflow-equivalent payment slice 274 passed plus 23 subtests; offline-safety PASS; all exit 0.",
+        "independent_a5": "/root/a5_cycle366 FINAL PASS on byte-identical tree; 82 passed plus 9 subtests, three end-to-end reproducers and 11-case boundary matrix; no findings.",
+        "exact_head_ci": {
+          "status": "PASSED",
+          "run_id": 39332897826,
+          "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/39332897826",
+          "jobs": {
+            "offline_safety": 118335179533,
+            "payment_regression": 118335179977
+          }
+        },
+        "limitations": [
+          "No full-suite PASS, full #244 acceptance, official-source completeness or legal completeness is claimed.",
+          "The populated synchronized NTM snapshot remains unavailable; full #245 acceptance remains blocked."
+        ],
+        "receipts": {
+          "pr255": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/255#issuecomment-6278495595"
+        },
+        "a6": "UNCHANGED_NOT_SENT",
+        "protected_actions_performed": false,
+        "evidence": ".ai/orchestration/evidence/cycle366_pr255_excise_display_provenance.json",
+        "next_step": "Continue the next unfinished PR #244 payment/source acceptance block from fresh state; keep full #245 acceptance blocked until a lawful populated synchronized NTM snapshot exists."
       }
     },
     {
@@ -7889,7 +7927,7 @@
       }
     }
   ],
-  "updated_at": "2026-10-19T21:08:45Z",
+  "updated_at": "2026-10-19T22:11:45Z",
   "previous_scheduled_product_checkpoint_174": {
     "updated_at": "2026-10-11T18:04:51.196Z",
     "checked_at": "2026-10-11T18:04:51.196Z",

@@ -1,0 +1,45 @@
+{
+  "schema_version": 1,
+  "task_id": "TARIFF-PR255-EXCISE-DISPLAY-PROVENANCE-20261019",
+  "started_at": "2026-10-19T21:54:07Z",
+  "completed_at": "2026-10-19T22:11:45Z",
+  "executor": "/root/scheduled-cycle366-20261019T215407Z",
+  "lease_generation": 366,
+  "repository": "ivan88810900-star/tnved_starter_kit_v2",
+  "pr": 255,
+  "branch": "agent/core-payment-regressions-v1",
+  "parent_sha": "44e9c1ded7c2949d18f2cd4105aa49d2cd35f745",
+  "published_head_sha": "db434f8f5f44853450d62803b0102c51220afdea",
+  "tree_sha": "b95b52c3c495cb6e6bd411dafb1cfe1ba34c5771",
+  "local_author_commit": "3041fc15a1ddb0216947314e579331e5bfd3b03f",
+  "reproduction": {
+    "command": ".venv/bin/python disposable in-memory HsRate/SourceStatus probe against resolve_excise_for_hs('2204101100')",
+    "exit_code": 0,
+    "observed_before": ["fixed", 45.0, "synthetic unverified fixture"]
+  },
+  "author_validation": {
+    "focused_command": ".venv/bin/python -m pytest -q tests/test_rate_display.py tests/test_excise_ingestion.py tests/test_payment_data_normalization.py tests/test_payment_data_coverage.py tests/test_payment_source_admission.py tests/test_automatic_duty_operand_validation.py",
+    "focused_result": "106 passed, 334 subtests passed",
+    "payment_regression_result": "274 passed, 23 subtests passed",
+    "offline_safety": "PASS",
+    "exit_code": 0
+  },
+  "independent_a5": {
+    "session": "/root/a5_cycle366",
+    "status": "FINAL_PASS",
+    "result": "82 passed, 9 subtests passed; three end-to-end reproducers; 11-case boundary matrix; no findings",
+    "exit_code": 0
+  },
+  "exact_head_ci": {
+    "run_id": 39332897826,
+    "run_url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/39332897826",
+    "offline_safety": {"job_id": 118335179533, "conclusion": "success"},
+    "payment_regression": {"job_id": 118335179977, "conclusion": "success"}
+  },
+  "pr_receipt": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/255#issuecomment-6278495595",
+  "snapshot_status": "POPULATED_SYNCHRONIZED_NTM_NOT_AVAILABLE",
+  "full_pr244_acceptance": false,
+  "full_pr245_acceptance": false,
+  "a6": "UNCHANGED_NOT_SENT",
+  "protected_actions_performed": false
+}
