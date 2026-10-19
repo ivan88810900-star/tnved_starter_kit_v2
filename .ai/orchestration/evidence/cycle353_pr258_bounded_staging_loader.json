@@ -1,0 +1,57 @@
+{
+  "schema_version": 1,
+  "task_id": "TARIFF-STAGING-INGEST-20261016",
+  "executor": "/root/scheduled-cycle353-20261019T095058Z",
+  "lease_generation": 353,
+  "started_at": "2026-10-19T09:50:58Z",
+  "completed_at": "2026-10-19T10:37:14Z",
+  "repository": "ivan88810900-star/tnved_starter_kit_v2",
+  "pr": 258,
+  "branch": "agent/nsi-sgr-pagination-v1",
+  "parent_sha": "c59af35da7dde2140d911e2003a4a52fb0611507",
+  "published_head_sha": "ed050889a4e114fc274f433380d375627859ca40",
+  "tree_sha": "08b7140199420cdc5c57a8789472a48aa93ba2c9",
+  "local_author_commit": "726a142d6c0cd3619ab84496ed231a850e716b6c",
+  "status": "IMPLEMENTED_A5_PASS_CI_PENDING",
+  "behavior": {
+    "target": "Explicit caller-supplied staging Session/session_factory and expected database name; no app.db fallback.",
+    "ordering": "Exact id/versionId ascending contract bound to one source revision; raw overlap page retained and verified.",
+    "atomicity": "Source objects, run, global revisions, per-run physical rows and generation/offset CAS checkpoint share one transaction.",
+    "resume": "Overlap hash/count, source total and snapshot must match; drift or concurrent CAS loss rolls back the candidate page while prior pages remain.",
+    "bounds": "Positive page, row, source-byte and elapsed-time bounds; file size is checked before bounded read allocation.",
+    "schema": "Missing additive tables can be created only with explicit --initialize-schema against the already selected staging DB."
+  },
+  "author_validation": {
+    "command": "pytest -q test_staging_nsi_ingest.py test_sync_sgr_registry_nsi_pagination.py test_sync_sgr_registry_nsi_provenance.py plus six adjacent SGR/NTM modules",
+    "result": "211 passed",
+    "exit_code": 0,
+    "published_focused": "52 passed, exit 0",
+    "py_compile_exit_code": 0,
+    "diff_check_exit_code": 0
+  },
+  "independent_a5": {
+    "session": "/root/a5_cycle353",
+    "result": "PASS_NO_FINDINGS",
+    "reviewed_tests": "191 passed, exit 0",
+    "published_identity": "Published head/tree/parent and both refs reread; tree identical to reviewed candidate; focused 52 passed, exit 0"
+  },
+  "ci": {
+    "head_sha": "ed050889a4e114fc274f433380d375627859ca40",
+    "status": "NOT_REGISTERED_OR_OBSERVABLE",
+    "pass_claimed": false
+  },
+  "receipts": {
+    "pr258": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/258#issuecomment-6265278828",
+    "issue257": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/257#issuecomment-6265281636"
+  },
+  "staging": {
+    "write_attempted": false,
+    "last_verified_epoch315_rows": 1020,
+    "status": "COLLECTED_UNVERIFIED",
+    "populated_synchronized_ntm_snapshot": false,
+    "blocked_operation": "offset1120/private-object transfer remains policy-refused; no retry or workaround"
+  },
+  "a6": "UNCHANGED_NOT_SENT",
+  "protected_actions_performed": false,
+  "next_step": "Verify exact-head CI. Then use only a normal permitted controlled runtime with explicit staging session and immutable source objects."
+}
