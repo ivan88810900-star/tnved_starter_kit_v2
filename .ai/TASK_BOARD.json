@@ -11537,7 +11537,10 @@
     "independent_a5": "/root/a5_cycle344 PASS_NO_FINDINGS; focused 5 passed, relevant slice 88 passed, adversarial exact-row/marker/truncation harness passed 3/3 floors; no ambient SQLite sidecars",
     "a0_validation": "Exact remote head c26339d3a3c47b793d61f8cf22f96599bd2a6242 passed the 88-test trade-remedy/payment slice, exit 0; remote tree equals reviewed tree",
     "exact_head_ci": "run 39178952945 / job 117827418339 success",
-    "receipts": {},
+    "receipts": {
+      "pr256": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256#issuecomment-6256858028",
+      "issue257": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/257#issuecomment-6256858214"
+    },
     "snapshot_status": "BOUNDED_EPOCH315_1020_ROWS_POPULATED_SYNCHRONIZED_NTM_NOT_AVAILABLE",
     "staging_blocker": "cycle325 offset1120 transfer remains policy-refused after the owner-authorized attempt; no retry or workaround",
     "a6": "UNCHANGED_NOT_SENT",
