@@ -1,0 +1,58 @@
+{
+  "schema_version": 1,
+  "task_id": "TARIFF-PR256-TRADE-REMEDIES-AUDIT-CURRENT-BUNDLE-20261019",
+  "started_at": "2026-10-18T23:50:31Z",
+  "completed_at": "2026-10-19T00:05:10Z",
+  "executor": "/root/scheduled-cycle344-20261018T235031Z",
+  "lease_generation": 344,
+  "base_sha": "a164023eab4884fbf33f875d342902ada13fd9e2",
+  "head_sha": "c26339d3a3c47b793d61f8cf22f96599bd2a6242",
+  "tree_sha": "eef4fdeb3df314f1a61ffcf9c4642e90d3d675c1",
+  "local_author_commit": "260cfcc95483e464f943e77ba73dc6a41fbc5d11",
+  "changed_files": [
+    "customs-clear/backend/tests/test_trade_remedies_audit.py"
+  ],
+  "baseline_reproduction": {
+    "focused_command": "PYTHONPATH=. /tmp/tariff-cycle320-venv/bin/python -m pytest -q tests/test_trade_remedies_audit.py",
+    "focused_exit_code": 1,
+    "focused_result": "5 setup errors: current bundle counts 37/3/2 did not equal stale hard-coded 27/3/2",
+    "broad_command": "PYTHONPATH=. /tmp/tariff-cycle320-venv/bin/python -m pytest -q tests",
+    "broad_exit_code": 1,
+    "broad_result": "2090 passed, 11 skipped, 211 subtests passed, 15 errors; nine require a populated NTM snapshot, five were this stale audit fixture, and one exposed a separate ambient customs.db creator"
+  },
+  "implementation": "The isolated audit loads every current tracked remedy row, rejects bundle counts below historical floors 27/3/2, derives totals from validated current counts and asserts two exact test-only retained markers. Product code, source bundles and specific rate/date/legal assertions are unchanged.",
+  "author": {
+    "focused": "5 passed, exit 0",
+    "relevant_slice": "48 passed, exit 0",
+    "diff_check": "exit 0",
+    "protected_fingerprints": "unchanged",
+    "ambient_sidecars": "customs.db-wal and customs.db-shm absent"
+  },
+  "a5": {
+    "reviewer": "/root/a5_cycle344",
+    "status": "PASS_NO_FINDINGS",
+    "focused": "5 passed, exit 0",
+    "relevant_slice": "88 passed, exit 0",
+    "adversarial": "42 exact bundle rows plus 2 distinct retained markers loaded; no silent exclusion; all 3 truncation controls rejected",
+    "specific_assertions": "rates, acts, dates, junk-row absence and needs_verification unchanged",
+    "findings_open": []
+  },
+  "a0_validation": {
+    "exact_remote_command": "PYTHONPATH=. /tmp/tariff-cycle320-venv/bin/python -m pytest -q tests/test_trade_remedies_audit.py tests/test_pay2_spark_plugs.py tests/test_pay1_special_safeguard_source_quarantine.py tests/test_pay2_countervailing_source_quarantine.py tests/test_special_duties.py tests/test_payment_quote.py tests/test_official_payment_coverage_audit.py",
+    "exact_remote_result": "88 passed, exit 0",
+    "head_check": "c26339d3a3c47b793d61f8cf22f96599bd2a6242",
+    "tree_check": "remote tree equals eef4fdeb3df314f1a61ffcf9c4642e90d3d675c1"
+  },
+  "ci": {
+    "run_id": 39178952945,
+    "job_id": 117827418339,
+    "name": "offline-safety",
+    "conclusion": "success",
+    "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/39178952945/job/117827418339"
+  },
+  "receipts": {},
+  "snapshot_status": "BOUNDED_EPOCH315_1020_ROWS_POPULATED_SYNCHRONIZED_NTM_NOT_AVAILABLE",
+  "staging_blocker": "cycle325 offset1120 transfer remains policy-refused after the owner-authorized attempt; no retry or workaround",
+  "a6": "UNCHANGED_NOT_SENT",
+  "protected_actions_performed": false
+}

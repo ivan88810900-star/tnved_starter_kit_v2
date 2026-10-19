@@ -2179,7 +2179,7 @@
       "unique_source_pr_count": 29
     }
   },
-  "revision": 874,
+  "revision": 875,
   "runs": [
     {
       "head_sha": null,
@@ -7797,7 +7797,7 @@
       }
     }
   ],
-  "updated_at": "2026-10-18T23:01:54Z",
+  "updated_at": "2026-10-19T00:05:10Z",
   "previous_scheduled_product_checkpoint_174": {
     "updated_at": "2026-10-11T18:04:51.196Z",
     "checked_at": "2026-10-11T18:04:51.196Z",
@@ -11513,6 +11513,39 @@
     "next_step": "First recheck exact-head CI for 09bd88e3085921733708578cce6e21a70430c0fd and accept only a verified successful run. Then isolate tests/test_rop_coverage_audit.py: on clean exact HEAD it exits 1 with 4 failed because rop_goods_rates is absent and creates a 4,096-byte ambient customs.db; preserve its 97-chapter, subject/not-subject and summary assertions without changing product or normative data."
   },
   "latest_scheduled_product_checkpoint": {
+    "schema_version": 1,
+    "task_id": "TARIFF-PR256-TRADE-REMEDIES-AUDIT-CURRENT-BUNDLE-20261019",
+    "started_at": "2026-10-18T23:50:31Z",
+    "completed_at": "2026-10-19T00:05:10Z",
+    "executor": "/root/scheduled-cycle344-20261018T235031Z",
+    "lease_generation": 344,
+    "pr": 256,
+    "branch": "agent/product-ntm-regressions-v1",
+    "previous_head_sha": "a164023eab4884fbf33f875d342902ada13fd9e2",
+    "head_sha": "c26339d3a3c47b793d61f8cf22f96599bd2a6242",
+    "tree_sha": "eef4fdeb3df314f1a61ffcf9c4642e90d3d675c1",
+    "local_author_commit": "260cfcc95483e464f943e77ba73dc6a41fbc5d11",
+    "status": "IMPLEMENTED_A5_PASS_CI_PASS_TRADE_REMEDIES_AUDIT_CURRENT_BUNDLE",
+    "product_changed": false,
+    "product_code_changed": false,
+    "test_fixture_changed": true,
+    "scope": "broad-suite trade-remedies audit fixture aligned with the current tracked anti-dumping, safeguard and countervailing bundles",
+    "finding": "The isolated audit hard-coded the historical bundle counts 27/3/2 and aggregate 34/29, while the tracked anti-dumping bundle now contains 37 non-duplicate scoped rows. The focused audit therefore stopped in setup with five errors and never exercised current remedies.",
+    "fix": "Load every current tracked bundle row, retain explicit historical floors 27/3/2 against empty or truncated bundles, derive aggregate expectations from the validated current counts, and assert exactly two distinguishable test-only retained markers.",
+    "baseline_reproduction": "exact previous head focused audit exit 1: five setup errors because current counts 37/3/2 did not equal hard-coded 27/3/2; broad backend probe reached 2090 passed +211 subtests before 15 environment/fixture errors",
+    "author_tests": "focused 5 passed; trade-remedy/payment slice 48 passed; diff check and protected fingerprint checks passed; all exits 0",
+    "independent_a5": "/root/a5_cycle344 PASS_NO_FINDINGS; focused 5 passed, relevant slice 88 passed, adversarial exact-row/marker/truncation harness passed 3/3 floors; no ambient SQLite sidecars",
+    "a0_validation": "Exact remote head c26339d3a3c47b793d61f8cf22f96599bd2a6242 passed the 88-test trade-remedy/payment slice, exit 0; remote tree equals reviewed tree",
+    "exact_head_ci": "run 39178952945 / job 117827418339 success",
+    "receipts": {},
+    "snapshot_status": "BOUNDED_EPOCH315_1020_ROWS_POPULATED_SYNCHRONIZED_NTM_NOT_AVAILABLE",
+    "staging_blocker": "cycle325 offset1120 transfer remains policy-refused after the owner-authorized attempt; no retry or workaround",
+    "a6": "UNCHANGED_NOT_SENT",
+    "protected_actions_performed": false,
+    "evidence": ".ai/orchestration/evidence/cycle344_pr256_trade_remedies_audit_current_bundle.json",
+    "next_step": "Continue broad-suite isolation: separate populated-snapshot NTM coverage tests from runnable disposable tests and isolate the remaining ambient customs.db creator without retrying the refused SGR transfer."
+  },
+  "previous_scheduled_product_checkpoint_343": {
     "schema_version": 1,
     "task_id": "TARIFF-PR256-SENSITIVE-AUTH-ORDER-ISOLATION-20261018",
     "started_at": "2026-10-18T22:53:28Z",
