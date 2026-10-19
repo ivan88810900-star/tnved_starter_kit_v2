@@ -1,0 +1,68 @@
+{
+  "schema_version": 1,
+  "task_id": "TARIFF-PR256-REGULATORY-MASS-SEED-DB-ISOLATION-20261019",
+  "started_at": "2026-10-19T05:55:34Z",
+  "completed_at": "2026-10-19T06:39:19Z",
+  "executor": "/root/scheduled-cycle351-20261019T055534Z",
+  "lease_generation": 351,
+  "pr": 256,
+  "branch": "agent/product-ntm-regressions-v1",
+  "previous_head_sha": "d425a855efeb429b6b8a17dc948b8a3a0e12351c",
+  "head_sha": "018e51773bd6657f2c82562127db820692b2ab3c",
+  "tree_sha": "f52ee727252f9d75f94c5188fe451fe15c0078d5",
+  "local_author_commit": "eef40b65f9f96ff9fc08130d175aac2df564c295",
+  "change": "test_regulatory_mass_seed now checks that a configured file-backed SQLite database exists before SQLAlchemy inspection can create it; populated and non-empty partial snapshots still run all original coverage assertions",
+  "product_code_changed": false,
+  "normative_data_changed": false,
+  "author_and_a0_validation": {
+    "parent_reproduction": "watcher exit 86 after missing default customs.db was created at the first mass-seed test",
+    "focused": "9 skipped, exit 0, no customs.db/WAL/SHM",
+    "explicit_absent_path": "9 skipped, exit 0, configured path remained absent",
+    "partial_dataset": "two selected original >=5000 assertions failed with one row, expected exit 1",
+    "adjacent_both_orders": "7 passed, 9 skipped, exit 0 in each order, no ambient SQLite",
+    "ast_parity": "all nine original test bodies AST-identical",
+    "exact_remote_head": "7 passed, 9 skipped, exit 0, no ambient SQLite"
+  },
+  "independent_a5": {
+    "identity": "/root/a5_cycle351",
+    "result": "PASS_NO_FINDINGS",
+    "evidence": "independent parent reproduction exit 86; focused/absent/zero-row/partial/non-SQLite/adjacent-order probes passed expected outcomes; nine original tests AST-identical; clean worktree"
+  },
+  "exact_head_ci": {
+    "run_id": 39209690878,
+    "job_id": 117920096847,
+    "conclusion": "success",
+    "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/39209690878/job/117920096847"
+  },
+  "guarded_broad": {
+    "working_directory": "customs-clear/backend",
+    "command": "PYTHONPATH=.:watcher python -m pytest -q -p watch_customs_db all test_*.py except test_ntm_full_sync.py",
+    "result": "the repaired mass-seed module was reached as 9 skips without creating SQLite; watcher stopped after 90% at the next distinct order-dependent writer",
+    "next_writer": "tests/test_source_import.py::SourceImportTests::test_import_xlsx_with_headers",
+    "artifacts": "customs.db 36864 bytes, customs.db-wal 53592 bytes, customs.db-shm 32768 bytes",
+    "artifacts_recovered_to": "/workspace/scratch/fbec4e55bd91/tariff-cycle351/quarantine/broad-backend-root"
+  },
+  "snapshot": {
+    "epoch": 315,
+    "objects": 20,
+    "runs": 10,
+    "rows": 1020,
+    "unique_ids": 1020,
+    "unique_hashes": 1020,
+    "max_ordinal": 1020,
+    "status": "COLLECTED_UNVERIFIED",
+    "populated_synchronized_available": false
+  },
+  "staging_blocker": "cycle325 offset1120 transfer remains policy-refused; no retry or workaround",
+  "a6": {
+    "request": "core-s1-6415f443120f-r9-g106",
+    "status": "UNCHANGED_NOT_SENT"
+  },
+  "protected_actions_performed": false,
+  "receipts": {
+    "pr256": null,
+    "issue257": null
+  },
+  "status": "IMPLEMENTED_A5_PASS_CI_PASS",
+  "next_step": "Reproduce and isolate the order-dependent source-import SQLite writer while preserving the existing source-import endpoint assertions and disposable database boundary."
+}
