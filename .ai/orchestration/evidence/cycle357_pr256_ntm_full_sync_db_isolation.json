@@ -1,0 +1,47 @@
+{
+  "schema_version": 1,
+  "task_id": "TARIFF-PR256-NTM-FULL-SYNC-DB-ISOLATION-20261019",
+  "started_at": "2026-10-19T14:16:32Z",
+  "completed_at": "2026-10-19T14:41:31Z",
+  "executor": "/root/scheduled-cycle357-20261019T141632Z",
+  "lease_generation": 357,
+  "pr": 256,
+  "branch": "agent/product-ntm-regressions-v1",
+  "parent_sha": "524e6da9e77434692a6111b1860628597c0929b4",
+  "head_sha": "6b5b635240b6549eaf55214401c30b268ffcbc0e",
+  "tree_sha": "a06e9aeb12edcfb8af3903df35e3e3e063a1f076",
+  "local_author_commit": "0db07913d24ff731c0c86b3af290b9f6219fe8c1",
+  "changed_files": [
+    "customs-clear/backend/tests/test_ntm_full_sync.py"
+  ],
+  "finding": "The full-sync snapshot-only module fixture connected to an absent file-backed SQLite database before deciding to skip, creating ambient customs.db in the guarded backend order.",
+  "fix": "Check the configured file-backed SQLite path and non_tariff_measures table without creating a missing database; keep all nine original threshold assertions unchanged.",
+  "author": {
+    "parent_watcher": "exit 86; ambient customs.db created at test_total_ntm_entries_above_42000",
+    "focused_adjacent": "9 passed, 9 skipped, exit 0",
+    "partial_snapshot": "one-row database failed the original >=42000 assertion, exit 1",
+    "full_backend_order": "2100 passed, 20 skipped, 211 subtests passed, exit 0",
+    "exact_published_head": "9 passed, 9 skipped, exit 0",
+    "ambient_sqlite_after_candidate_runs": false,
+    "test_body_ast_identical": 9
+  },
+  "independent_a5": {
+    "session": "/root/a5_cycle357",
+    "verdict": "PASS_NO_FINDINGS",
+    "execution": "parent reproduction; missing path and two in-memory controls; partial populated threshold; adjacent inducing order; AST parity; py_compile and diff-check"
+  },
+  "ci": {
+    "commit": "6b5b635240b6549eaf55214401c30b268ffcbc0e",
+    "status": "NOT_OBSERVABLE",
+    "pass_claimed": false
+  },
+  "receipts": {
+    "pr256": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256#issuecomment-6269922628",
+    "issue257": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/257#issuecomment-6269925251"
+  },
+  "snapshot_status": "BOUNDED_EPOCH315_1020_ROWS_POPULATED_SYNCHRONIZED_NTM_NOT_AVAILABLE",
+  "staging_blocker": "offset1120 transfer remains policy-refused; no retry or workaround",
+  "a6": "UNCHANGED_NOT_SENT",
+  "protected_actions_performed": false,
+  "next_step": "Recheck exact-head CI, then continue the guarded backend order scan only when a new distinct writer or failure can be reproduced."
+}

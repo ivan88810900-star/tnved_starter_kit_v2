@@ -1878,3 +1878,16 @@ CI #255: [offline-safety PASS, run 37771953943](https://github.com/ivan88810900-
 - Receipts: [PR #258](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/258#issuecomment-6268608895) and [issue #257](https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/257#issuecomment-6268608484).
 - No staging ingestion, normative admission, merge, deploy, production write, enforcement flag, secret/permission change, destructive action or A6 dispatch occurred. The populated synchronized NTM snapshot remains unavailable; the refused offset1120/private-object transfer was not retried or bypassed.
 - Evidence: `.ai/orchestration/evidence/cycle356_pr258_checkpoint_binding.json`; TASK_BOARD revision 887. Next recheck exact-head CI, then continue PR #258 only with lawfully available immutable source bytes or select the next independent PR #245/#256 acceptance block.
+
+## Cycle 357 — PR #256 NTM full-sync database isolation (2026-10-19 UTC)
+
+- Task `TARIFF-PR256-NTM-FULL-SYNC-DB-ISOLATION-20261019`; executor `/root/scheduled-cycle357-20261019T141632Z`; lease generation 357.
+- Draft PR #256 advanced from `524e6da9e77434692a6111b1860628597c0929b4` to exact head `6b5b635240b6549eaf55214401c30b268ffcbc0e`, tree `a06e9aeb12edcfb8af3903df35e3e3e063a1f076`. Local author commit `0db07913d24ff731c0c86b3af290b9f6219fe8c1` has the identical tree.
+- Guarded parent execution reproduced ambient SQLite creation at `test_ntm_full_sync.py::TestNtmFullCoverage::test_total_ntm_entries_above_42000` and exited 86. The snapshot-only module fixture opened the absent default database before deciding to skip.
+- The one-file fixture repair checks file-backed SQLite existence and table presence without creating the database. All nine original threshold test bodies are AST-identical; a one-row partial snapshot still fails the original >=42,000 assertion.
+- Author focused/adjacent validation passed **9 tests with 9 snapshot-only skips**, exit 0. Guarded full backend order passed **2,100 tests, 20 skips and 211 subtests**, exit 0, with no ambient DB/WAL/SHM. Exact-published-head focused/adjacent validation repeated **9 passed, 9 skipped**, exit 0.
+- Independent A5 `/root/a5_cycle357` returned `PASS_NO_FINDINGS`: parent reproduction, missing and in-memory boundaries, partial populated threshold, adjacent order, AST parity, py_compile and diff-check all passed.
+- Exact-head GitHub Actions for `6b5b635...` was not observable at close; CI PASS is not claimed.
+- Receipts: [PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256#issuecomment-6269922628) and [issue #257](https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/257#issuecomment-6269925251).
+- No staging ingestion, normative admission, merge, deploy, production write, enforcement flag, secret/permission change, destructive action or A6 dispatch occurred. The populated synchronized NTM snapshot remains unavailable; the refused offset1120 transfer was not retried or bypassed.
+- Evidence: `.ai/orchestration/evidence/cycle357_pr256_ntm_full_sync_db_isolation.json`; TASK_BOARD revision 888. Next recheck exact-head CI, then continue the guarded backend order scan only when a new distinct writer/failure can be reproduced.
