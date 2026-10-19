@@ -1,0 +1,43 @@
+{
+  "schema_version": 1,
+  "task_id": "TARIFF-PR255-EXCISE-REGISTRY-DOMAIN-BOUNDARY-20261019",
+  "started_at": "2026-10-19T22:19:32Z",
+  "completed_at": "2026-10-19T22:33:56Z",
+  "executor": "/root/scheduled-cycle367-20261020T011418MSK",
+  "lease_generation": 367,
+  "repository": "ivan88810900-star/tnved_starter_kit_v2",
+  "pr": 255,
+  "branch": "agent/core-payment-regressions-v1",
+  "parent_sha": "db434f8f5f44853450d62803b0102c51220afdea",
+  "published_head_sha": "7bb06d8c38f428a21c68385557a2971ca2eda826",
+  "tree_sha": "2ef47caa117740d1cbd7ad8f6b974a094061d7e9",
+  "defect": "Excise registry allowlist used netloc.endswith(reg_netloc), admitting a lookalike such as not-eec.eaeunion.org for registry host eec.eaeunion.org.",
+  "result": "Registry-derived subdomains now require an exact DNS-label boundary. Exact host and legitimate subdomains remain accepted; lookalikes are rejected.",
+  "scope_limits": [
+    "No rate, legal rule, schema, or normative data changed.",
+    "Independent A5 was unavailable in this connector-only cycle; independent QA remains pending.",
+    "Full PR #244 acceptance and official-source/legal completeness are not claimed.",
+    "The populated synchronized NTM snapshot remains unavailable; full PR #245 acceptance remains blocked."
+  ],
+  "exact_head_ci": {
+    "status": "PASSED",
+    "run_id": 39335619116,
+    "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/39335619116",
+    "jobs": {
+      "offline_safety": {
+        "job_id": 118344639029,
+        "conclusion": "success"
+      },
+      "payment_regression": {
+        "job_id": 118344639292,
+        "conclusion": "success"
+      }
+    }
+  },
+  "receipts": {
+    "pr255": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/255#issuecomment-6278859950",
+    "issue257": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/257#issuecomment-6278862956"
+  },
+  "a6": "UNCHANGED_NOT_SENT",
+  "protected_actions_performed": false
+}
