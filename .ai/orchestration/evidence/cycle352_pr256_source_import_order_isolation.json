@@ -1,0 +1,51 @@
+{
+  "schema_version": 1,
+  "task_id": "TARIFF-PR256-SOURCE-IMPORT-ORDER-ISOLATION-20261019",
+  "started_at": "2026-10-19T08:55:31Z",
+  "completed_at": "2026-10-19T09:41:50Z",
+  "executor": "/root/scheduled-cycle352-20261019T085531Z",
+  "lease_generation": 352,
+  "pr": 256,
+  "branch": "agent/product-ntm-regressions-v1",
+  "parent_sha": "018e51773bd6657f2c82562127db820692b2ab3c",
+  "head_sha": "524e6da9e77434692a6111b1860628597c0929b4",
+  "tree_sha": "e08dd431c3e7a4a74b9fbd2407f139222b7f10c0",
+  "local_author_commit": "53d1c3b7ab5cc72644d5401ac1c4949a8475f4f9",
+  "changed_files": [
+    "customs-clear/backend/tests/test_source_import.py"
+  ],
+  "finding": "A stale scripts.seed_declaration_documents.engine alias created ambient SQLite during source-import init after the inducing import order.",
+  "author": {
+    "focused": "3 passed, exit 0",
+    "inducing_order": "155 passed + 37 subtests, exit 0",
+    "fault_injection": "early import and body failure cleanup PASS",
+    "ambient_sqlite": false
+  },
+  "independent_a5": {
+    "session": "/root/a5_cycle352",
+    "verdict": "PASS_NO_FINDINGS",
+    "execution": "focused 3; inducing 155 + 37 subtests; both declaration-document and classify-security orders; early import/init/body cleanup; AST parity and one-file clean diff",
+    "findings": []
+  },
+  "exact_remote": {
+    "inducing_order": "155 passed + 37 subtests, exit 0",
+    "remaining_modules_137_160": "198 passed + 31 subtests, exit 0",
+    "ambient_sqlite": false
+  },
+  "ci": {
+    "workflow": "Tariff agent safety",
+    "run_id": 39231267646,
+    "job_id": 117989525696,
+    "conclusion": "success",
+    "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/39231267646/job/117989525696"
+  },
+  "receipts": {
+    "pr256": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256#issuecomment-6264286407",
+    "issue257": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/257#issuecomment-6264289011"
+  },
+  "snapshot_status": "BOUNDED_EPOCH315_1020_ROWS_POPULATED_SYNCHRONIZED_NTM_NOT_AVAILABLE",
+  "staging_blocker": "offset1120 transfer remains policy-refused; no retry or workaround",
+  "a6": "UNCHANGED_NOT_SENT",
+  "protected_actions_performed": false,
+  "next_step": "Run the guarded broader backend order scan on this exact head and reproduce the next distinct writer/failure without weakening snapshot-only gates."
+}

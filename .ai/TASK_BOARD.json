@@ -2179,7 +2179,7 @@
       "unique_source_pr_count": 29
     }
   },
-  "revision": 881,
+  "revision": 882,
   "runs": [
     {
       "head_sha": null,
@@ -7797,7 +7797,7 @@
       }
     }
   ],
-  "updated_at": "2026-10-19T06:39:19Z",
+  "updated_at": "2026-10-19T09:41:50Z",
   "previous_scheduled_product_checkpoint_174": {
     "updated_at": "2026-10-11T18:04:51.196Z",
     "checked_at": "2026-10-11T18:04:51.196Z",
@@ -11514,37 +11514,38 @@
   },
   "latest_scheduled_product_checkpoint": {
     "schema_version": 1,
-    "task_id": "TARIFF-PR256-RULES-ENFORCEMENT-RUNTIME-QA-20261019",
-    "started_at": "2026-10-19T04:50:25Z",
-    "completed_at": "2026-10-19T04:59:58Z",
-    "executor": "/root/scheduled-cycle350-20261019T045025Z",
-    "lease_generation": 350,
+    "task_id": "TARIFF-PR256-SOURCE-IMPORT-ORDER-ISOLATION-20261019",
+    "started_at": "2026-10-19T08:55:31Z",
+    "completed_at": "2026-10-19T09:41:50Z",
+    "executor": "/root/scheduled-cycle352-20261019T085531Z",
+    "lease_generation": 352,
     "pr": 256,
     "branch": "agent/product-ntm-regressions-v1",
-    "previous_head_sha": "e523142e88fe739ac1cfd931de435ae04c456c6a",
-    "head_sha": "d425a855efeb429b6b8a17dc948b8a3a0e12351c",
-    "tree_sha": "d787f5992033801576aa5b51bafb36a1b944c7bd",
-    "status": "IMPLEMENTED_A5_PASS_CI_PASS_RUNTIME_QA_COMPLETE",
-    "product_changed_this_cycle": false,
+    "previous_head_sha": "018e51773bd6657f2c82562127db820692b2ab3c",
+    "head_sha": "524e6da9e77434692a6111b1860628597c0929b4",
+    "tree_sha": "e08dd431c3e7a4a74b9fbd2407f139222b7f10c0",
+    "local_author_commit": "53d1c3b7ab5cc72644d5401ac1c4949a8475f4f9",
+    "status": "IMPLEMENTED_A5_PASS_CI_PASS_SOURCE_IMPORT_ORDER_ISOLATION",
+    "product_changed": false,
     "product_code_changed": false,
     "test_fixture_changed": true,
-    "scope": "native runtime completion of the rules-enforcement disposable-session isolation published in cycle349",
-    "finding": "Cycle349 published the fixture repair and exact-head safety CI but correctly left backend runtime QA pending because that connector-only executor had no checkout or native independent session.",
-    "fix": "The published one-file fixture change rebinds the pre-imported sanctions_risk_block.SessionLocal alias to the in-memory sessionmaker, asserts identity and always disposes the engine; no additional product change was made in cycle350.",
-    "author_tests": "exact head focused 14 passed; sanctions/advisory/measures/rules in both orders 46 passed each; setup/normal/body lifecycle disposal exactly once; 11 pre-existing tests AST-identical; all exits 0 and no ambient SQLite",
-    "independent_a5": "/root/a5_cycle350 PASS_NO_FINDINGS: independently reproduced the parent alias defect; exact-head focused 14 and both adjacent orders 46 each; lifecycle, AST and diff checks passed; clean worktree and no ambient SQLite",
-    "a0_validation": "Guarded broad execution excluding the nine snapshot-only tests passed the repaired rules-enforcement writer and found the next distinct ambient writer after 80% at tests/test_regulatory_mass_seed.py::TestMassRegulatoryDocuments::test_total_documents_exceeds_5000; artifacts were quarantined recoverably.",
-    "exact_head_ci": "run 39199020863 / job 117887898101 success",
+    "scope": "order-dependent source-import disposable SQLite isolation",
+    "finding": "After the inducing import order, SourceImportTests.setUpClass reached normative_store.init_db and an Alembic declaration-document seed through a stale scripts.seed_declaration_documents.engine alias, creating ambient customs.db/WAL/SHM.",
+    "fix": "Delay runtime imports until after DATABASE_URL isolation, rebind every loaded app.* and scripts.* engine/session alias identical to the original defaults, explicitly bind the seed and source-import callbacks, and guarantee cleanup across early import, init and test-body failures.",
+    "author_tests": "focused 3 passed; inducing order 155 passed + 37 subtests; early-import and body-failure cleanup PASS; all exits 0 and no ambient SQLite",
+    "independent_a5": "/root/a5_cycle352 PASS_NO_FINDINGS: focused 3; inducing 155 + 37 subtests; declaration-document and classify-security direct/reverse controls; early import/init/body cleanup; AST parity, one-file scope and clean diff",
+    "a0_validation": "Exact remote tree repeated the inducing order at 155 passed + 37 subtests and the remaining modules 137-160 at 198 passed + 31 subtests; both exit 0 with no ambient DB/WAL/SHM.",
+    "exact_head_ci": "run 39231267646 / job 117989525696 success",
     "receipts": {
-      "pr256": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256#issuecomment-6260055435",
-      "issue257": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/257#issuecomment-6260055637"
+      "pr256": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256#issuecomment-6264286407",
+      "issue257": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/257#issuecomment-6264289011"
     },
     "snapshot_status": "BOUNDED_EPOCH315_1020_ROWS_POPULATED_SYNCHRONIZED_NTM_NOT_AVAILABLE",
     "staging_blocker": "cycle325 offset1120 transfer remains policy-refused after the owner-authorized attempt; no retry or workaround",
     "a6": "UNCHANGED_NOT_SENT",
     "protected_actions_performed": false,
-    "evidence": ".ai/orchestration/evidence/cycle350_pr256_rules_enforcement_runtime_qa.json",
-    "next_step": "On exact PR256 HEAD, isolate tests/test_regulatory_mass_seed.py::TestMassRegulatoryDocuments::test_total_documents_exceeds_5000 while preserving the >5000-document audit and disposable database boundary."
+    "evidence": ".ai/orchestration/evidence/cycle352_pr256_source_import_order_isolation.json",
+    "next_step": "Run the guarded broader backend order scan on exact PR256 head to identify and reproduce the next distinct writer or failure; keep snapshot-only gates intact."
   },
   "previous_scheduled_product_checkpoint_348": {
     "schema_version": 1,
