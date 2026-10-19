@@ -57,6 +57,24 @@ class TestExciseSourceUrlValidation(unittest.TestCase):
                 registry_official_url=registry_url,
             )
         )
+        self.assertFalse(
+            is_conservative_official_excise_source_url(
+                "https://evil.example\\@docs.eec.eaeunion.org/excise",
+                registry_official_url=registry_url,
+            )
+        )
+        self.assertFalse(
+            is_conservative_official_excise_source_url(
+                "https://evil.example@docs.eec.eaeunion.org/excise",
+                registry_official_url=registry_url,
+            )
+        )
+        self.assertFalse(
+            is_conservative_official_excise_source_url(
+                "https://[eec.eaeunion.org/excise",
+                registry_official_url=registry_url,
+            )
+        )
 
 
 _TABLES = [

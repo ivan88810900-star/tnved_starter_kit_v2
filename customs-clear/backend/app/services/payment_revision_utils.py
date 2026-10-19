@@ -233,7 +233,20 @@ def is_import_duty_bundle_path(rel_path: str) -> bool:
 
 
 def _url_netloc(url: str) -> str:
-    return urlparse(url.strip()).netloc.lower()
+    raw = url.strip()
+    # Browsers treat backslashes as path separators for special schemes while
+    # urllib keeps them in netloc.  Never make an allowlist decision on that
+    # parser disagreement, and official source URLs must not carry userinfo.
+    if "\\" in raw:
+        return ""
+    try:
+        parsed = urlparse(raw)
+        has_userinfo = parsed.username is not None or parsed.password is not None
+    except (ValueError, UnicodeError):
+        return ""
+    if has_userinfo:
+        return ""
+    return parsed.netloc.lower()
 
 
 def is_conservative_official_excise_source_url(
