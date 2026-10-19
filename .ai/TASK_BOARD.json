@@ -2179,7 +2179,7 @@
       "unique_source_pr_count": 29
     }
   },
-  "revision": 889,
+  "revision": 890,
   "runs": [
     {
       "head_sha": null,
@@ -7811,7 +7811,7 @@
       }
     }
   ],
-  "updated_at": "2026-10-19T14:59:46Z",
+  "updated_at": "2026-10-19T16:15:57Z",
   "previous_scheduled_product_checkpoint_174": {
     "updated_at": "2026-10-11T18:04:51.196Z",
     "checked_at": "2026-10-11T18:04:51.196Z",
@@ -11577,7 +11577,7 @@
     "evidence": ".ai/orchestration/evidence/cycle355_pr258_elapsed_limit.json",
     "next_step": "Recheck exact-head CI. Continue PR #258 only with lawfully available immutable source bytes; otherwise select the next independent PR #245/#256 acceptance block."
   },
-  "latest_scheduled_product_checkpoint": {
+  "previous_scheduled_product_checkpoint_356": {
     "schema_version": 1,
     "task_id": "TARIFF-PR258-CHECKPOINT-BINDING-20261019",
     "executor": "/root/scheduled-cycle356-20261019T131131Z",
@@ -18374,5 +18374,37 @@
     "protected_actions_performed": false,
     "evidence": ".ai/orchestration/evidence/cycle358_tnved_recovery_readback_blocked.json",
     "next_step": "Use only a platform-allowed read path for the exact private object, verify outer and embedded hashes, then build the separate disposable SQLite, adapter and manifest."
+  },
+  "latest_scheduled_product_checkpoint": {
+    "schema_version": 1,
+    "task_id": "TARIFF-PR258-CHECKPOINT-HISTORY-20261019",
+    "started_at": "2026-10-19T15:54:42Z",
+    "completed_at": "2026-10-19T16:15:57Z",
+    "executor": "/root/scheduled-cycle359-20261019T155442Z",
+    "lease_generation": 359,
+    "pr": 258,
+    "branch": "agent/nsi-sgr-pagination-v1",
+    "previous_head_sha": "b53b631ebc9a033cb4f76005e00e07cf594c5839",
+    "head_sha": "152f7c0c757621ca43bcfc56d2620ef317326864",
+    "tree_sha": "1bbef44f3ea4ca0cc2842fe0308811ec6282bf1e",
+    "status": "IMPLEMENTED_A5_PASS_CI_NOT_OBSERVABLE",
+    "scope": "complete committed staging checkpoint history validation",
+    "finding": "load_checkpoint accepted a checkpoint after deletion or corruption of an earlier committed page because only the latest physical page and selected first-capture history were validated.",
+    "fix": "Validate every scoped run in exact cursor order, all historical physical/global material, exact page and manifest SHA/size bindings, and strict one-run cardinality for a valid empty snapshot; keep repeated in-transaction CAS checks bounded after one full worker-entry validation.",
+    "author_tests": "exact published head: 179 passed; py_compile and git diff --check exit 0",
+    "independent_a5": "/root/a5_cycle359 PASS_NO_FINDINGS: 59 focused + 220 adjacent passed; mutation matrix rejected prior-page material corruption, source/manifest corruption, history gaps/extras and empty extra-run; SQLite/PostgreSQL compilation passed",
+    "performance": "50 pages / 500 rows ingest 2.757s; one full history validation 0.067s",
+    "exact_head_ci": "pull_request workflow runs not observable ([]); PASS not claimed",
+    "receipts": {
+      "pr258": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/258#issuecomment-6271784544",
+      "issue257": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/257#issuecomment-6271787886"
+    },
+    "snapshot_status": "BOUNDED_EPOCH315_1020_ROWS_POPULATED_SYNCHRONIZED_NTM_NOT_AVAILABLE",
+    "staging_write_attempted": false,
+    "private_object_retry_attempted": false,
+    "a6": "UNCHANGED_NOT_SENT",
+    "protected_actions_performed": false,
+    "evidence": ".ai/orchestration/evidence/cycle359_pr258_checkpoint_history.json",
+    "next_step": "Obtain exact-head CI evidence for PR #258; then continue only with lawfully available immutable source bytes or the next independent PR #245/#256 acceptance defect."
   }
 }

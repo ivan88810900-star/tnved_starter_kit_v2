@@ -1,0 +1,56 @@
+{
+  "schema_version": 1,
+  "task_id": "TARIFF-PR258-CHECKPOINT-HISTORY-20261019",
+  "executor": "/root/scheduled-cycle359-20261019T155442Z",
+  "lease_generation": 359,
+  "started_at": "2026-10-19T15:54:42Z",
+  "completed_at": "2026-10-19T16:15:57Z",
+  "repository": "ivan88810900-star/tnved_starter_kit_v2",
+  "pr": 258,
+  "branch": "agent/nsi-sgr-pagination-v1",
+  "parent_sha": "b53b631ebc9a033cb4f76005e00e07cf594c5839",
+  "published_head_sha": "152f7c0c757621ca43bcfc56d2620ef317326864",
+  "tree_sha": "1bbef44f3ea4ca0cc2842fe0308811ec6282bf1e",
+  "reproduction": {
+    "environment": "disposable SQLite",
+    "result": "checkpoint accepted after deleting a physical row from an earlier committed page",
+    "exit_code": 0
+  },
+  "implementation": {
+    "files": [
+      "customs-clear/backend/app/services/staging_nsi_ingest.py",
+      "customs-clear/backend/tests/test_staging_nsi_ingest.py"
+    ],
+    "behavior": "full scoped run-chain, cursor, physical/global material and source SHA/size validation; strict empty-history cardinality; bounded repeated CAS rechecks"
+  },
+  "author_validation": {
+    "command": "python -m pytest -q tests/test_staging_nsi_ingest.py tests/test_sync_sgr_registry_nsi_pagination.py tests/test_sync_sgr_registry_nsi_provenance.py tests/test_ntm_v2_official_sgr_advisory.py tests/test_ntm_v2_official_sgr_dataset_validation.py tests/test_ntm_v2_official_sgr_import.py",
+    "result": "179 passed",
+    "exit_code": 0,
+    "compile_and_diff_exit_code": 0
+  },
+  "independent_a5": {
+    "session": "/root/a5_cycle359",
+    "result": "PASS_NO_FINDINGS",
+    "focused": "59 passed",
+    "adjacent": "220 passed",
+    "exit_code": 0,
+    "adversarial": "valid multi-page and empty histories accepted; empty/source/manifest/material corruption, gap, extra and empty extra-run rejected",
+    "performance": "50 pages/500 rows ingest 2.757s; full history validation 0.067s",
+    "portability": "all five staging table DDL definitions compiled for SQLite and PostgreSQL"
+  },
+  "ci": {
+    "head_sha": "152f7c0c757621ca43bcfc56d2620ef317326864",
+    "workflow_runs": [],
+    "pass_claimed": false
+  },
+  "receipts": {
+    "pr258": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/258#issuecomment-6271784544",
+    "issue257": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/257#issuecomment-6271787886"
+  },
+  "protected_actions_performed": false,
+  "staging_write_attempted": false,
+  "private_object_retry_attempted": false,
+  "a6": "UNCHANGED_NOT_SENT",
+  "snapshot_status": "BOUNDED_EPOCH315_1020_ROWS_POPULATED_SYNCHRONIZED_NTM_NOT_AVAILABLE"
+}

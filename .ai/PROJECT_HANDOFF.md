@@ -1902,3 +1902,15 @@ CI #255: [offline-safety PASS, run 37771953943](https://github.com/ivan88810900-
 - Independent A5 `/root/a5_cycle358` returned `PASS_NO_FINDINGS`: it independently confirmed the private bucket and exact object metadata plus the absence of any local transfer artifact, without presigning, retrying or accessing another path.
 - Receipt: [issue #257](https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/257#issuecomment-6270316766).
 - Evidence: `.ai/orchestration/evidence/cycle358_tnved_recovery_readback_blocked.json`; TASK_BOARD revision 889. Next use only a platform-allowed read path for this exact private object, verify outer and embedded hashes, then build the separate disposable SQLite/adaptor/manifest. Unrelated safe product work may continue while this transfer remains blocked.
+
+## Cycle 359 — PR #258 complete checkpoint-history integrity (2026-10-19 UTC)
+
+- Task `TARIFF-PR258-CHECKPOINT-HISTORY-20261019`; executor `/root/scheduled-cycle359-20261019T155442Z`; lease generation 359.
+- Draft PR #258 advanced from `b53b631ebc9a033cb4f76005e00e07cf594c5839` to exact head `152f7c0c757621ca43bcfc56d2620ef317326864`, tree `1bbef44f3ea4ca0cc2842fe0308811ec6282bf1e`.
+- A disposable two-page reproduction proved `load_checkpoint` accepted deletion of a physical row from an earlier committed page. The final repair validates every scoped run in exact cursor order, every historical physical/global row, immutable page and manifest SHA/size bindings, and strict one-run cardinality for a valid empty snapshot. Repeated transaction-local CAS checks remain bounded after one full worker-entry validation.
+- Exact-published-head author validation passed **179 tests**, exit 0; `py_compile` and `git diff --check` exited 0.
+- Independent A5 `/root/a5_cycle359` returned `PASS_NO_FINDINGS`: **59 focused + 220 adjacent tests** passed, exit 0; valid three-page/empty histories passed and prior-page deletion/global corruption, page/manifest mutation, history gap/extra and empty extra-run were rejected. SQLite/PostgreSQL compilation passed. Benchmark: 50 pages/500 rows in 2.757s; one full-history validation in 0.067s.
+- Exact-head pull-request workflow runs were not observable (`[]`), so CI PASS is not claimed.
+- Receipts: [PR #258](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/258#issuecomment-6271784544) and [issue #257](https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/257#issuecomment-6271787886).
+- No staging ingestion, private-object retry, normative admission, merge, deploy, production write, protected action or A6 dispatch occurred. The lawful populated synchronized NTM snapshot remains unavailable; full #245 acceptance remains NOT PASS.
+- Evidence: `.ai/orchestration/evidence/cycle359_pr258_checkpoint_history.json`; TASK_BOARD revision 890. Next obtain exact-head CI evidence for #258, then continue only with lawfully available immutable source bytes or the next independent #245/#256 acceptance defect.
