@@ -157,6 +157,122 @@ def test_bounded_worker_commits_two_pages_and_replay_is_idempotent(db) -> None:
         assert session.scalar(select(func.count()).select_from(tables["run_rows"])) == 5
 
 
+def test_replay_requires_the_exact_manifest_cursor_and_source_object(db) -> None:
+    original = _page(0, [_row(0)], overlap=0, total=1)
+    with db() as session:
+        with session.begin():
+            ingest_page(
+                session,
+                page=original,
+                checkpoint=Checkpoint(),
+                epoch_id="epoch-replay",
+                dataset="NSI-1995",
+                schema=None,
+            )
+
+    manifest = json.loads(original.manifest_bytes)
+    manifest["terminal_total_reconciled"] = False
+    manifest_bytes = _canonical(manifest)
+    divergent = ImmutablePage(
+        page_source=original.page_source,
+        manifest_source=_source("manifest-0-divergent", manifest_bytes, "application/json"),
+        page_bytes=original.page_bytes,
+        manifest_bytes=manifest_bytes,
+    )
+    with db() as reader:
+        committed = load_checkpoint(
+            reader,
+            epoch_id="epoch-replay",
+            dataset="NSI-1995",
+            schema=None,
+        )
+    with db() as session:
+        with session.begin():
+            exact_replay = ingest_page(
+                session,
+                page=original,
+                checkpoint=committed,
+                epoch_id="epoch-replay",
+                dataset="NSI-1995",
+                schema=None,
+            )
+    assert exact_replay.replayed is True
+    assert exact_replay.next_checkpoint == committed
+
+    with db() as session:
+        with pytest.raises(StagingIngestError, match="conflicting deterministic run_id"):
+            with session.begin():
+                ingest_page(
+                    session,
+                    page=divergent,
+                    checkpoint=committed,
+                    epoch_id="epoch-replay",
+                    dataset="NSI-1995",
+                    schema=None,
+                )
+
+    tables = staging_tables(MetaData(), schema=None)
+    with db() as session:
+        assert session.scalar(select(func.count()).select_from(tables["source_objects"])) == 2
+        assert session.scalar(select(func.count()).select_from(tables["ingest_runs"])) == 1
+        assert session.scalar(select(func.count()).select_from(tables["run_rows"])) == 1
+        assert load_checkpoint(
+            session,
+            epoch_id="epoch-replay",
+            dataset="NSI-1995",
+            schema=None,
+        ).complete is True
+
+
+@pytest.mark.parametrize(
+    ("table_name", "column", "replacement"),
+    [
+        ("run_rows", "sgr_number", "CORRUPTED"),
+        ("global_records", "raw_json", '{"corrupted":true}'),
+    ],
+)
+def test_replay_rejects_corrupted_materialized_rows(
+    db,
+    table_name: str,
+    column: str,
+    replacement: str,
+) -> None:
+    page = _page(0, [_row(0)], overlap=0, total=1)
+    with db() as session:
+        with session.begin():
+            ingest_page(
+                session,
+                page=page,
+                checkpoint=Checkpoint(),
+                epoch_id="epoch-corrupted-replay",
+                dataset="NSI-1995",
+                schema=None,
+            )
+
+    tables = staging_tables(MetaData(), schema=None)
+    with db() as session:
+        with session.begin():
+            session.execute(tables[table_name].update().values({column: replacement}))
+    with db() as reader:
+        committed = load_checkpoint(
+            reader,
+            epoch_id="epoch-corrupted-replay",
+            dataset="NSI-1995",
+            schema=None,
+        )
+    with db() as session:
+        with pytest.raises(StagingIngestError, match="conflicting replay"):
+            with session.begin():
+                ingest_page(
+                    session,
+                    page=page,
+                    checkpoint=committed,
+                    epoch_id="epoch-corrupted-replay",
+                    dataset="NSI-1995",
+                    schema=None,
+                )
+
+
 def test_interruption_preserves_first_page_and_resume_continues(db) -> None:
     first = _page(0, [_row(0), _row(1), _row(2)], overlap=0)
     second = _page(3, [_row(0), _row(1), _row(2), _row(3), _row(4)], overlap=3)

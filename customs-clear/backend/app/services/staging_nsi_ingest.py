@@ -537,16 +537,100 @@ def ingest_page(
     if str(manifest.get("page_sha256") or "") != _sha256(_canonical_json(payload).encode("utf-8")):
         raise StagingIngestError("manifest page checksum mismatch")
 
+    trailing_count = min(20, len(payload))
+    trailing_overlap_sha256 = _overlap_sha256(payload[-trailing_count:]) if trailing_count else None
+    complete = (
+        manifest.get("terminal_total_reconciled") is True
+        and next_offset == total_after
+        and total_before == total_after
+    )
+    cursor = {
+        "next_offset": next_offset,
+        "trailing_overlap_sha256": trailing_overlap_sha256,
+        "trailing_overlap_count": trailing_count,
+        "source_total": total_after,
+        "snapshot_id": snapshot_id,
+        "complete": complete,
+    }
+    scope = {
+        "epoch_id": epoch_id,
+        "dataset": dataset,
+        "logical_offset": logical_offset,
+        "request_offset": request_offset,
+        "page_source_id": page.page_source.source_id,
+        "manifest_source_id": page.manifest_source.source_id,
+        "ordering_proof": manifest["ordering_proof"],
+    }
     run_id = f"{epoch_id}:{logical_offset}:{page.page_source.sha256[:16]}"
+    new_payload = payload[overlap_count:]
+    if len(new_payload) != source_advance:
+        raise StagingIngestError("page new-row slice is inconsistent")
+    seen: dict[str, str] = {}
+    global_values: list[dict[str, Any]] = []
+    physical_values: list[dict[str, Any]] = []
+    for index, item in enumerate(new_payload):
+        record = _record_values(item, first_source_id=page.page_source.source_id)
+        global_id = str(record["global_record_id"])
+        if global_id in seen:
+            raise StagingIngestError(
+                f"duplicate global source ID/version in page: {record['source_record_id']}"
+            )
+        seen[global_id] = str(record["row_sha256"])
+        global_values.append(record)
+        physical_values.append(
+            _physical_values(
+                item,
+                record=record,
+                run_id=run_id,
+                source_id=page.page_source.source_id,
+                ordinal=logical_offset + index + 1,
+            )
+        )
+
     tables = _table_map(session, schema)
     runs = tables["ingest_runs"]
     existing_run = session.execute(select(runs).where(runs.c.run_id == run_id)).mappings().one_or_none()
     if existing_run is not None:
-        cursor = existing_run["resume_cursor"]
-        if existing_run["source_id"] != page.page_source.source_id or not isinstance(cursor, dict):
+        stored_cursor = existing_run["resume_cursor"]
+        expected_run = {
+            "source_id": page.page_source.source_id,
+            "scope": scope,
+            "parser_version": PARSER_VERSION,
+            "status": COLLECTED_UNVERIFIED,
+            "raw_count": len(physical_values),
+            "unique_count": len(seen),
+            "normalized_count": 0,
+            "rejected_count": 0,
+            "resume_cursor": cursor,
+        }
+        if not isinstance(stored_cursor, dict) or any(
+            existing_run[name] != expected for name, expected in expected_run.items()
+        ):
             raise StagingIngestError("conflicting deterministic run_id")
+        for source in (page.page_source, page.manifest_source):
+            _assert_exact_existing(
+                session,
+                tables["source_objects"],
+                ["source_id"],
+                _source_values(source),
+            )
+        for values in global_values:
+            _assert_exact_existing(
+                session,
+                tables["global_records"],
+                ["global_record_id"],
+                values,
+                ignored_columns=["first_source_id"],
+            )
+        for values in physical_values:
+            _assert_exact_existing(
+                session,
+                tables["run_rows"],
+                ["run_id", "row_sha256"],
+                values,
+            )
         committed = load_checkpoint(session, epoch_id=epoch_id, dataset=dataset, schema=schema)
-        if committed.generation == 0 or committed.next_offset < int(cursor["next_offset"]):
+        if committed.generation == 0 or committed.next_offset < int(stored_cursor["next_offset"]):
             raise StagingIngestError("run exists without its committed checkpoint")
         run_rows = tables["run_rows"]
         physical_count = int(
@@ -555,6 +639,8 @@ def ingest_page(
             )
             or 0
         )
+        if physical_count != len(physical_values):
+            raise StagingIngestError("run exists with an incomplete physical capture")
         return PageResult(
             run_id=run_id,
             next_checkpoint=committed,
@@ -582,61 +668,12 @@ def ingest_page(
     elif overlap_count or request_offset:
         raise StagingIngestError("initial page cannot contain resume overlap")
 
-    new_payload = payload[overlap_count:]
-    if len(new_payload) != source_advance:
-        raise StagingIngestError("page new-row slice is inconsistent")
-    seen: dict[str, str] = {}
-    global_values: list[dict[str, Any]] = []
-    physical_values: list[dict[str, Any]] = []
-    for index, item in enumerate(new_payload):
-        record = _record_values(item, first_source_id=page.page_source.source_id)
-        global_id = str(record["global_record_id"])
-        if global_id in seen:
-            raise StagingIngestError(
-                f"duplicate global source ID/version in page: {record['source_record_id']}"
-            )
-        seen[global_id] = str(record["row_sha256"])
-        global_values.append(record)
-        physical_values.append(
-            _physical_values(
-                item,
-                record=record,
-                run_id=run_id,
-                source_id=page.page_source.source_id,
-                ordinal=logical_offset + index + 1,
-            )
-        )
-
     for source in (page.page_source, page.manifest_source):
         values = _source_values(source)
         _insert_ignore(session, tables["source_objects"], values)
         _assert_exact_existing(session, tables["source_objects"], ["source_id"], values)
 
-    trailing_count = min(20, len(payload))
-    trailing_overlap_sha256 = _overlap_sha256(payload[-trailing_count:]) if trailing_count else None
-    complete = (
-        manifest.get("terminal_total_reconciled") is True
-        and next_offset == total_after
-        and total_before == total_after
-    )
-    cursor = {
-        "next_offset": next_offset,
-        "trailing_overlap_sha256": trailing_overlap_sha256,
-        "trailing_overlap_count": trailing_count,
-        "source_total": total_after,
-        "snapshot_id": snapshot_id,
-        "complete": complete,
-    }
     timestamp = now or datetime.now(timezone.utc)
-    scope = {
-        "epoch_id": epoch_id,
-        "dataset": dataset,
-        "logical_offset": logical_offset,
-        "request_offset": request_offset,
-        "page_source_id": page.page_source.source_id,
-        "manifest_source_id": page.manifest_source.source_id,
-        "ordering_proof": manifest["ordering_proof"],
-    }
     run_values = {
         "run_id": run_id,
         "source_id": page.page_source.source_id,
