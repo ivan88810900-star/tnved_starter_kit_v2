@@ -670,3 +670,29 @@ class SgrCertificate(Base):
     recipient: Mapped[str] = mapped_column(String(512), default="")
     status: Mapped[str] = mapped_column(String(128), default="", index=True)
     issue_date: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    doc_norm: Mapped[str] = mapped_column(Text, default="")
+    doc_usearea: Mapped[str] = mapped_column(Text, default="")
+    source_raw_sha256: Mapped[Optional[str]] = mapped_column(
+        String(64),
+        ForeignKey("sgr_registry_raw_revisions.raw_sha256"),
+        nullable=True,
+        index=True,
+    )
+
+
+class SgrRegistryRawRevision(Base):
+    """Immutable source revision of one official NSI-1995 registry element."""
+
+    __tablename__ = "sgr_registry_raw_revisions"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    sgr_number: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
+    source_record_id: Mapped[str] = mapped_column(String(128), nullable=False, default="", index=True)
+    source_version_id: Mapped[Optional[str]] = mapped_column(String(128), nullable=True)
+    date_time_from: Mapped[str] = mapped_column(String(64), nullable=False, default="")
+    date_time_to: Mapped[str] = mapped_column(String(64), nullable=False, default="")
+    update_datetime: Mapped[str] = mapped_column(String(64), nullable=False, default="")
+    date_time_updated: Mapped[str] = mapped_column(String(64), nullable=False, default="")
+    raw_json: Mapped[str] = mapped_column(Text, nullable=False)
+    raw_sha256: Mapped[str] = mapped_column(String(64), nullable=False, unique=True, index=True)
+    captured_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now_naive)

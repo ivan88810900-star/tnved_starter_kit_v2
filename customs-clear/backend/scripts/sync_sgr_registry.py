@@ -25,6 +25,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import hashlib
 import io
 import json
 import os
@@ -40,11 +41,12 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
 from loguru import logger
+from sqlalchemy.dialects.postgresql import insert as postgresql_insert
 from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 from sqlalchemy.orm import Session
 
 from app.db import SessionLocal
-from app.models.core import SgrCertificate
+from app.models.core import SgrCertificate, SgrRegistryRawRevision
 from app.services.normative_store import append_sync_log, init_db
 from app.services.preview_cache_revision import bump_preview_cache_revision
 from app.services.registry_sync_http import registry_http_get, registry_http_get_text
@@ -54,6 +56,13 @@ UA = {"User-Agent": "customs-clear-sgr-sync/1.0"}
 DEFAULT_SGR_ODATA_LIST_TITLE = "Единый реестр свидетельств о государственной регистрации"
 NSI_BASE_API = "https://nsi.eaeunion.org/portal/api"
 NSI_SGR_CODE = "1995"
+NSI_SGR_MAX_BATCH_SIZE = 1500
+NSI_SGR_PAGE_MANIFEST_SCHEMA_VERSION = 1
+NSI_SGR_STABLE_CURSOR_CONTRACT = "nsi-1995-id-version-offset-overlap-v1"
+NSI_SGR_STABLE_SORT = [
+    {"field": "id", "direction": "asc"},
+    {"field": "versionId", "direction": "asc"},
+]
 
 
 def _parse_dt(val: str | None) -> datetime | None:
@@ -129,6 +138,59 @@ def _is_sqlite(db: Session) -> bool:
     return db.bind.dialect.name == "sqlite"
 
 
+def _canonical_json(value: Any) -> str:
+    return json.dumps(
+        value,
+        ensure_ascii=False,
+        sort_keys=True,
+        separators=(",", ":"),
+        allow_nan=False,
+    )
+
+
+def _source_value_text(value: Any) -> str:
+    if value is None:
+        return ""
+    if isinstance(value, str):
+        return value
+    if isinstance(value, (dict, list)):
+        return _canonical_json(value)
+    return str(value)
+
+
+def _insert_nsi_raw_revision(db: Session, row: dict[str, Any]) -> None:
+    raw_sha256 = str(row.get("_nsi_raw_sha256") or "")
+    if not raw_sha256:
+        return
+    payload = {
+        "sgr_number": row["sgr_number"],
+        "source_record_id": row.get("_nsi_source_record_id") or "",
+        "source_version_id": row.get("_nsi_source_version_id"),
+        "date_time_from": row.get("_nsi_date_time_from") or "",
+        "date_time_to": row.get("_nsi_date_time_to") or "",
+        "update_datetime": row.get("_nsi_update_datetime") or "",
+        "date_time_updated": row.get("_nsi_date_time_updated") or "",
+        "raw_json": row["_nsi_raw_json"],
+        "raw_sha256": raw_sha256,
+    }
+    if _is_sqlite(db):
+        stmt = sqlite_insert(SgrRegistryRawRevision.__table__).values(**payload)
+        db.execute(stmt.on_conflict_do_nothing(index_elements=["raw_sha256"]))
+        return
+    if db.bind.dialect.name == "postgresql":
+        stmt = postgresql_insert(SgrRegistryRawRevision.__table__).values(**payload)
+        db.execute(stmt.on_conflict_do_nothing(index_elements=["raw_sha256"]))
+        return
+    exists = (
+        db.query(SgrRegistryRawRevision.id)
+        .filter(SgrRegistryRawRevision.raw_sha256 == raw_sha256)
+        .first()
+    )
+    if not exists:
+        db.add(SgrRegistryRawRevision(**payload))
+        db.flush()
+
+
 def upsert_sgr(db: Session, row: dict[str, Any]) -> None:
     num = row["sgr_number"]
     payload = {
@@ -140,6 +202,15 @@ def upsert_sgr(db: Session, row: dict[str, Any]) -> None:
         "status": row.get("status") or "",
         "issue_date": row.get("issue_date"),
     }
+    provenance_update: dict[str, Any] = {}
+    if row.get("_nsi_raw_sha256"):
+        _insert_nsi_raw_revision(db, row)
+        provenance_update = {
+            "doc_norm": row.get("doc_norm") or "",
+            "doc_usearea": row.get("doc_usearea") or "",
+            "source_raw_sha256": row["_nsi_raw_sha256"],
+        }
+        payload.update(provenance_update)
     if _is_sqlite(db):
         stmt = sqlite_insert(SgrCertificate.__table__).values(**payload)
         stmt = stmt.on_conflict_do_update(
@@ -151,6 +222,7 @@ def upsert_sgr(db: Session, row: dict[str, Any]) -> None:
                 "recipient": stmt.excluded.recipient,
                 "status": stmt.excluded.status,
                 "issue_date": stmt.excluded.issue_date,
+                **{key: getattr(stmt.excluded, key) for key in provenance_update},
             },
         )
         db.execute(stmt)
@@ -164,6 +236,10 @@ def upsert_sgr(db: Session, row: dict[str, Any]) -> None:
         obj.status = row.get("status") or obj.status
         if row.get("issue_date") is not None:
             obj.issue_date = row["issue_date"]
+        if provenance_update:
+            obj.doc_norm = provenance_update["doc_norm"]
+            obj.doc_usearea = provenance_update["doc_usearea"]
+            obj.source_raw_sha256 = provenance_update["source_raw_sha256"]
     else:
         db.add(SgrCertificate(**payload))
 
@@ -247,14 +323,219 @@ def _nsi_sgr_total(*, code: str, date_iso: str, proxy: str = "") -> int:
     url = f"{NSI_BASE_API}/dictionaries/{code}/get-list-data-total"
     payload = {"date": date_iso, "filter": [{"code": "searchText", "value": "", "conditionType": "like"}]}
     data = _http_post_json(url, payload, proxy=proxy)
-    if isinstance(data, dict):
-        for k in ("byFilterCount", "totalCount", "count"):
-            if k in data:
-                try:
-                    return max(0, int(data.get(k) or 0))
-                except Exception:
-                    continue
-    return 0
+    if not isinstance(data, dict):
+        raise RuntimeError("NSI SGR total response has unsupported shape")
+    for k in ("byFilterCount", "totalCount", "count"):
+        if k not in data:
+            continue
+        raw = data.get(k)
+        try:
+            if isinstance(raw, bool):
+                raise ValueError("boolean is not a row count")
+            total = int(raw)
+            if isinstance(raw, float) and not raw.is_integer():
+                raise ValueError("fractional row count")
+        except (TypeError, ValueError) as exc:
+            raise RuntimeError(f"NSI SGR total field {k!r} is malformed") from exc
+        if total < 0:
+            raise RuntimeError(f"NSI SGR total field {k!r} is negative")
+        return total
+    raise RuntimeError("NSI SGR total response has no supported count field")
+
+
+def _nsi_page_rows(data: Any, *, offset: int, requested_limit: int) -> list[dict[str, Any]]:
+    if isinstance(data, list):
+        rows = data
+    elif isinstance(data, dict):
+        supported_keys = ("records", "content", "result", "data")
+        page_key = next((key for key in supported_keys if key in data), None)
+        if page_key is None:
+            raise RuntimeError(f"NSI SGR page at offset {offset} has unsupported shape")
+        rows = data.get(page_key)
+    else:
+        raise RuntimeError(f"NSI SGR page at offset {offset} has unsupported shape")
+    if not isinstance(rows, list):
+        raise RuntimeError(f"NSI SGR page at offset {offset} is not a list")
+    if len(rows) > requested_limit:
+        raise RuntimeError(
+            f"NSI SGR page at offset {offset} exceeds requested limit {requested_limit}"
+        )
+    if not all(isinstance(row, dict) for row in rows):
+        raise RuntimeError(f"NSI SGR page at offset {offset} contains a non-object row")
+    return rows
+
+
+def _nsi_row_sha256(item: dict[str, Any]) -> str:
+    return hashlib.sha256(_canonical_json(item).encode("utf-8")).hexdigest()
+
+
+def _nsi_overlap_sha256(items: list[dict[str, Any]]) -> str:
+    row_hashes = [_nsi_row_sha256(item) for item in items]
+    payload = ("\n".join(row_hashes) + "\n").encode("ascii") if row_hashes else b""
+    return hashlib.sha256(payload).hexdigest()
+
+
+def _nsi_source_identity(item: dict[str, Any]) -> str:
+    source_id = _source_value_text(item.get("id")).strip()
+    return f"id:{source_id}" if source_id else f"sha256:{_nsi_row_sha256(item)}"
+
+
+def fetch_nsi_sgr_drift_safe_page(
+    *,
+    code: str,
+    date_iso: str,
+    offset: int,
+    limit: int,
+    source_snapshot_id: str,
+    overlap_rows: int = 0,
+    expected_overlap_sha256: str | None = None,
+    proxy: str = "",
+) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    """Fetch one resumable NSI page and return an immutable manifest.
+
+    ``offset`` is the first not-yet-collected logical row.  A resumed request
+    re-reads ``overlap_rows`` immediately preceding rows.  The caller must retain
+    the prior trailing overlap digest and pass it as ``expected_overlap_sha256``;
+    a mismatch fails closed before any new rows are returned.  A changing total
+    is retained in the manifest and prevents terminal reconciliation, but does
+    not discard the immutable page evidence.
+    """
+    logical_offset = int(offset)
+    requested_new = int(limit)
+    requested_overlap = int(overlap_rows)
+    if logical_offset < 0:
+        raise ValueError("NSI SGR offset must be non-negative")
+    if requested_new <= 0:
+        raise ValueError("NSI SGR page limit must be positive")
+    if requested_overlap < 0 or requested_overlap > logical_offset:
+        raise ValueError("NSI SGR overlap must be between zero and offset")
+    if logical_offset and requested_overlap == 0:
+        raise ValueError("NSI SGR resumed page requires a positive overlap")
+    if requested_overlap and not expected_overlap_sha256:
+        raise ValueError("NSI SGR resumed page requires expected overlap SHA-256")
+    snapshot_id = str(source_snapshot_id or "").strip()
+    if not snapshot_id:
+        raise ValueError("NSI SGR stable cursor requires a source snapshot id")
+
+    request_offset = logical_offset - requested_overlap
+    request_limit = min(
+        NSI_SGR_MAX_BATCH_SIZE,
+        requested_overlap + requested_new,
+    )
+    if request_limit <= requested_overlap:
+        raise ValueError("NSI SGR page limit leaves no room for new rows")
+
+    total_before = _nsi_sgr_total(code=code, date_iso=date_iso, proxy=proxy)
+    url = f"{NSI_BASE_API}/dictionaries/{code}/get-list-data"
+    payload = {
+        "date": date_iso,
+        "offset": request_offset,
+        "limit": request_limit,
+        "filter": [{"code": "searchText", "value": "", "conditionType": "like"}],
+        "sort": NSI_SGR_STABLE_SORT,
+    }
+    page = _nsi_page_rows(
+        _http_post_json(url, payload, proxy=proxy),
+        offset=request_offset,
+        requested_limit=request_limit,
+    )
+    if not page and request_offset < total_before:
+        raise RuntimeError(
+            f"NSI SGR pagination exhausted at offset {request_offset} "
+            f"before observed total {total_before}"
+        )
+    if requested_overlap and len(page) < requested_overlap:
+        raise RuntimeError(
+            f"NSI SGR page at offset {request_offset} returned fewer than "
+            f"the required {requested_overlap} overlap rows"
+        )
+
+    stable_keys: list[tuple[str, str]] = []
+    for item in page:
+        source_id = _source_value_text(item.get("id")).strip()
+        if not source_id:
+            raise RuntimeError("NSI SGR stable cursor row has no source id")
+        stable_keys.append((source_id, _source_value_text(item.get("versionId")).strip()))
+    if any(left >= right for left, right in zip(stable_keys, stable_keys[1:])):
+        raise RuntimeError("NSI SGR stable cursor response is not strictly ordered")
+
+    overlap = page[:requested_overlap]
+    overlap_sha256 = _nsi_overlap_sha256(overlap)
+    if expected_overlap_sha256 and overlap_sha256 != expected_overlap_sha256:
+        raise RuntimeError(
+            "NSI SGR overlap mismatch: source ordering or row content drifted"
+        )
+
+    unique_page: list[dict[str, Any]] = []
+    identity_hashes: dict[str, str] = {}
+    for item in page:
+        identity = _nsi_source_identity(item)
+        row_sha256 = _nsi_row_sha256(item)
+        previous = identity_hashes.get(identity)
+        if previous is not None:
+            if previous != row_sha256:
+                raise RuntimeError(
+                    f"NSI SGR page contains conflicting revisions for {identity}"
+                )
+            continue
+        identity_hashes[identity] = row_sha256
+        unique_page.append(item)
+
+    overlap_identities = {_nsi_source_identity(item) for item in overlap}
+    new_rows = [
+        item for item in unique_page
+        if _nsi_source_identity(item) not in overlap_identities
+    ]
+    total_after = _nsi_sgr_total(code=code, date_iso=date_iso, proxy=proxy)
+    page_sha256 = hashlib.sha256(_canonical_json(page).encode("utf-8")).hexdigest()
+    source_advance = max(0, len(page) - requested_overlap)
+    next_offset = logical_offset + source_advance
+    if total_before == total_after and request_offset + len(page) > total_after:
+        raise RuntimeError(
+            "NSI SGR page exceeds the stable official total: "
+            f"offset {request_offset} + returned {len(page)} > total {total_after}"
+        )
+    terminal_candidate = next_offset >= total_after
+    terminal_total_reconciled = (
+        terminal_candidate
+        and total_before == total_after
+        and request_offset + len(page) == total_after
+    )
+    manifest = {
+        "schema_version": NSI_SGR_PAGE_MANIFEST_SCHEMA_VERSION,
+        "dictionary_code": code,
+        "date": date_iso,
+        "logical_offset": logical_offset,
+        "request_offset": request_offset,
+        "request_limit": request_limit,
+        "returned_count": len(page),
+        "unique_page_count": len(unique_page),
+        "overlap_count": len(overlap),
+        "overlap_sha256": overlap_sha256,
+        "expected_overlap_sha256": expected_overlap_sha256,
+        "new_count": len(new_rows),
+        "source_advance": source_advance,
+        "next_offset": next_offset,
+        "page_sha256": page_sha256,
+        "first_identity": _nsi_source_identity(page[0]) if page else None,
+        "last_identity": _nsi_source_identity(page[-1]) if page else None,
+        "total_before": total_before,
+        "total_after": total_after,
+        "total_drift": total_after - total_before,
+        "drift_detected": total_before != total_after,
+        "terminal_candidate": terminal_candidate,
+        "terminal_total_reconciled": terminal_total_reconciled,
+        "ordering_proof": {
+            "kind": "stable_cursor",
+            "snapshot_id": snapshot_id,
+            "sort": NSI_SGR_STABLE_SORT,
+            "cursor_contract": NSI_SGR_STABLE_CURSOR_CONTRACT,
+        },
+    }
+    # Return the exact raw page, including the resume overlap.  The staging
+    # loader verifies and removes that overlap atomically; returning only the
+    # deduplicated application rows would make the manifest unverifiable.
+    return page, manifest
 
 
 def _nsi_sgr_rows(
@@ -264,15 +545,17 @@ def _nsi_sgr_rows(
     proxy: str = "",
     max_rows: int = 0,
     batch_size: int = 500,
-) -> list[dict[str, Any]]:
+) -> tuple[list[dict[str, Any]], int, bool]:
     total = _nsi_sgr_total(code=code, date_iso=date_iso, proxy=proxy)
-    if total <= 0:
-        return []
-    target = min(total, int(max_rows)) if int(max_rows) > 0 else total
+    requested_max = int(max_rows)
+    target = min(total, requested_max) if requested_max > 0 else total
+    is_partial = requested_max > 0 and requested_max < total
+    if target == 0:
+        return [], total, is_partial
     url = f"{NSI_BASE_API}/dictionaries/{code}/get-list-data"
     out: list[dict[str, Any]] = []
     offset = 0
-    step = max(1, min(2000, int(batch_size)))
+    step = max(1, min(NSI_SGR_MAX_BATCH_SIZE, int(batch_size)))
     while offset < target:
         payload = {
             "date": date_iso,
@@ -282,21 +565,18 @@ def _nsi_sgr_rows(
             "sort": [],
         }
         data = _http_post_json(url, payload, proxy=proxy)
-        if isinstance(data, list):
-            rows = data
-        elif isinstance(data, dict):
-            rows = data.get("records") or data.get("content") or data.get("result") or data.get("data") or []
-        else:
-            rows = []
-        if not isinstance(rows, list) or not rows:
-            break
-        for r in rows:
-            if isinstance(r, dict):
-                out.append(r)
+        rows = _nsi_page_rows(data, offset=offset, requested_limit=payload["limit"])
+        if not rows:
+            raise RuntimeError(
+                f"NSI SGR pagination exhausted at offset {offset} before target {target}"
+            )
+        out.extend(rows)
         offset += len(rows)
-        if len(rows) < payload["limit"]:
-            break
-    return out
+        # A short page is not proof of exhaustion: the NSI endpoint can return
+        # uneven page sizes. Continue from the actual row count until target.
+    if len(out) != target:
+        raise RuntimeError(f"NSI SGR fetched {len(out)} rows, expected {target}")
+    return out, total, is_partial
 
 
 def _row_from_nsi_dict(item: dict[str, Any]) -> dict[str, Any] | None:
@@ -312,6 +592,9 @@ def _row_from_nsi_dict(item: dict[str, Any]) -> dict[str, Any] | None:
         if isinstance(status_raw, dict)
         else str(status_raw or "").strip()
     )
+    raw_json = _canonical_json(item)
+    raw_sha256 = hashlib.sha256(raw_json.encode("utf-8")).hexdigest()
+    version_id = item.get("versionId")
     return {
         "sgr_number": num[:128],
         "product_name": str(data.get("NAME_PROD") or "")[:16000],
@@ -320,6 +603,18 @@ def _row_from_nsi_dict(item: dict[str, Any]) -> dict[str, Any] | None:
         "recipient": str(data.get("FIRMGET_NAME") or "")[:512],
         "status": status[:128],
         "issue_date": _parse_dt(str(data.get("DATE_DOC") or "")),
+        "doc_norm": _source_value_text(data.get("DOC_NORM")),
+        "doc_usearea": _source_value_text(data.get("DOC_USEAREA")),
+        "_nsi_source_record_id": _source_value_text(item.get("id"))[:128],
+        "_nsi_source_version_id": (
+            _source_value_text(version_id)[:128] if version_id is not None else None
+        ),
+        "_nsi_date_time_from": _source_value_text(item.get("dateTimeFrom"))[:64],
+        "_nsi_date_time_to": _source_value_text(item.get("dateTimeTo"))[:64],
+        "_nsi_update_datetime": _source_value_text(item.get("updateDateTime"))[:64],
+        "_nsi_date_time_updated": _source_value_text(item.get("dateTimeUpdated"))[:64],
+        "_nsi_raw_json": raw_json,
+        "_nsi_raw_sha256": raw_sha256,
     }
 
 
@@ -331,14 +626,25 @@ def sync_from_nsi(
     proxy: str = "",
     max_rows: int = 0,
 ) -> tuple[int, str]:
-    rows = _nsi_sgr_rows(code=code, date_iso=date_iso, proxy=proxy, max_rows=max_rows)
-    n = 0
-    for item in rows:
+    rows, official_total, is_partial = _nsi_sgr_rows(
+        code=code,
+        date_iso=date_iso,
+        proxy=proxy,
+        max_rows=max_rows,
+    )
+    parsed_rows: list[dict[str, Any]] = []
+    for index, item in enumerate(rows):
         row = _row_from_nsi_dict(item)
         if not row:
-            continue
+            raise RuntimeError(f"NSI SGR row {index} is malformed or has no NUMB_DOC")
+        parsed_rows.append(row)
+
+    n = 0
+    for row in parsed_rows:
         upsert_sgr(db, row)
         n += 1
+    if is_partial:
+        return n, f"nsi_partial:max_rows={len(rows)};official_total={official_total}"
     return n, "nsi_ok"
 
 
@@ -450,6 +756,23 @@ def demo_seed(db: Session) -> int:
     for row in rows:
         upsert_sgr(db, row)
     return len(rows)
+
+
+def _sgr_sync_log_status(
+    *,
+    total: int,
+    note_parts: list[str],
+    http_failed: bool,
+    demo_seed_enabled: bool,
+) -> str:
+    if http_failed:
+        return "error"
+    nsi_messages = [part.removeprefix("auto_nsi:") for part in note_parts]
+    if any(message.startswith("nsi_partial:") for message in nsi_messages):
+        return "partial"
+    if total or demo_seed_enabled or "nsi_ok" in nsi_messages:
+        return "ok"
+    return "partial"
 
 
 def main() -> int:
@@ -579,7 +902,12 @@ def main() -> int:
         _save_checkpoint(cp)
 
     note = "; ".join(note_parts) or "ok"
-    log_status = "error" if http_failed else ("ok" if total or args.demo_seed else "partial")
+    log_status = _sgr_sync_log_status(
+        total=total,
+        note_parts=note_parts,
+        http_failed=http_failed,
+        demo_seed_enabled=args.demo_seed,
+    )
     append_sync_log(
         "sgr_registry",
         log_status,
