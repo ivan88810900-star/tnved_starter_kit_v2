@@ -2179,7 +2179,7 @@
       "unique_source_pr_count": 29
     }
   },
-  "revision": 885,
+  "revision": 886,
   "runs": [
     {
       "head_sha": null,
@@ -11527,6 +11527,57 @@
     "next_step": "First recheck exact-head CI for 09bd88e3085921733708578cce6e21a70430c0fd and accept only a verified successful run. Then isolate tests/test_rop_coverage_audit.py: on clean exact HEAD it exits 1 with 4 failed because rop_goods_rates is absent and creates a 4,096-byte ambient customs.db; preserve its 97-chapter, subject/not-subject and summary assertions without changing product or normative data."
   },
   "latest_scheduled_product_checkpoint": {
+    "schema_version": 1,
+    "task_id": "TARIFF-PR258-ELAPSED-LIMIT-20261019",
+    "executor": "/root/scheduled-cycle355-20261019T115212Z",
+    "lease_generation": 355,
+    "started_at": "2026-10-19T11:52:12Z",
+    "completed_at": "2026-10-19T12:01:41Z",
+    "repository": "ivan88810900-star/tnved_starter_kit_v2",
+    "pr": 258,
+    "branch": "agent/nsi-sgr-pagination-v1",
+    "parent_sha": "d32fd242c97d3d046bd6e090c80909deb433356c",
+    "published_head_sha": "8f3472eae5bd080c854d727358aaddcc20157653",
+    "tree_sha": "206448e5265585852b680d605d095dc7caf3aa5c",
+    "local_author_commit": "105cc24d2408cb0bf40fe69918cd9796306ba7bf",
+    "status": "IMPLEMENTED_A5_PASS_CI_NOT_OBSERVABLE",
+    "finding": "The worker checked max_seconds only before source access, so a source read or in-transaction ingest crossing the deadline could still commit. NaN also bypassed every elapsed comparison.",
+    "fix": "Recheck elapsed time after source read and before transaction commit; reject non-finite max_seconds before session or source access.",
+    "baseline_reproduction": "Two exact-parent regressions failed, exit 1: post-read expiry committed one page, and in-transaction expiry did not raise.",
+    "author_validation": {
+      "broader": "202 passed, exit 0",
+      "exact_published_head": "202 passed, exit 0",
+      "compile_and_diff": "exit 0"
+    },
+    "independent_a5": {
+      "session": "/root/a5_cycle354",
+      "initial_finding": "P2 NaN fail-open deadline bypass",
+      "final_result": "PASS_NO_FINDINGS",
+      "tests": "59 focused/adjacent, exit 0",
+      "adversarial": "NaN/+inf/-inf rejected before access; second-page post-read expiry preserved page 1; in-transaction expiry rolled page 2 back"
+    },
+    "ci": {
+      "head_sha": "8f3472eae5bd080c854d727358aaddcc20157653",
+      "status": "NOT_REGISTERED_OR_OBSERVABLE",
+      "pass_claimed": false
+    },
+    "receipts": {
+      "pr258": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/258#issuecomment-6266723211",
+      "issue257": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/257#issuecomment-6266726613"
+    },
+    "staging": {
+      "write_attempted": false,
+      "last_verified_epoch315_rows": 1020,
+      "status": "COLLECTED_UNVERIFIED",
+      "populated_synchronized_ntm_snapshot": false,
+      "blocked_operation": "offset1120/private-object transfer remains policy-refused; no retry or workaround"
+    },
+    "a6": "UNCHANGED_NOT_SENT",
+    "protected_actions_performed": false,
+    "evidence": ".ai/orchestration/evidence/cycle355_pr258_elapsed_limit.json",
+    "next_step": "Recheck exact-head CI. Continue PR #258 only with lawfully available immutable source bytes; otherwise select the next independent PR #245/#256 acceptance block."
+  },
+  "previous_scheduled_product_checkpoint_354": {
     "schema_version": 1,
     "task_id": "TARIFF-PR258-EXACT-REPLAY-BINDING-20261019",
     "executor": "/root/scheduled-cycle354-20261019T105432Z",

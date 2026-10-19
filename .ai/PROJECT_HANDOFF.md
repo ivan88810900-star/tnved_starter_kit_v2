@@ -1854,3 +1854,15 @@ CI #255: [offline-safety PASS, run 37771953943](https://github.com/ivan88810900-
 - Receipts: [PR #258](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/258#issuecomment-6265875163) and [issue #257](https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/257#issuecomment-6265877792).
 - No staging ingestion, normative admission, merge, deploy, production write, enforcement flag, secret/permission change, destructive action or A6 dispatch occurred. The populated synchronized NTM snapshot remains unavailable; the offset1120/private-object transfer remains policy-refused and was not retried or bypassed.
 - Evidence: `.ai/orchestration/evidence/cycle354_pr258_exact_replay_binding_and_state_repair.json`; TASK_BOARD revision 885. Next recheck exact-head CI, then continue PR #258 only with lawfully available immutable source bytes or select the next independent PR #245/#256 acceptance block from current state.
+
+## Cycle 355 — enforce bounded-worker elapsed deadline (2026-10-19 UTC)
+
+- Task `TARIFF-PR258-ELAPSED-LIMIT-20261019`; executor `/root/scheduled-cycle355-20261019T115212Z`; lease generation 355.
+- Draft PR #258 advanced from `d32fd242c97d3d046bd6e090c80909deb433356c` to exact head `8f3472eae5bd080c854d727358aaddcc20157653`, tree `206448e5265585852b680d605d095dc7caf3aa5c`. Local author commit `105cc24d2408cb0bf40fe69918cd9796306ba7bf` has the identical tree.
+- Exact-parent regressions proved that a page crossing `max_seconds` during source reading or inside the transaction still committed. The fix checks elapsed time after reading and before commit; expired in-transaction work rolls back. Non-finite `NaN/±inf` limits fail before session/source access.
+- Author broader validation and exact-published-head validation each passed 202 tests, exit 0.
+- Independent A5 first found the NaN fail-open bypass. After repair, a fresh review returned `PASS_NO_FINDINGS`: 59 focused/adjacent tests, exit 0, plus independent second-page preservation and rollback probes.
+- Exact-head GitHub workflow runs/statuses were not observable at close; CI PASS is not claimed.
+- Receipts: [PR #258](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/258#issuecomment-6266723211) and [issue #257](https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/257#issuecomment-6266726613).
+- No staging ingestion, normative admission, merge, deploy, production write, enforcement flag, secret/permission change, destructive action or A6 dispatch occurred. The populated synchronized NTM snapshot remains unavailable; the refused offset1120/private-object transfer was not retried or bypassed.
+- Evidence: `.ai/orchestration/evidence/cycle355_pr258_elapsed_limit.json`; TASK_BOARD revision 886. Next recheck exact-head CI, then continue PR #258 only with lawfully available immutable source bytes or select the next independent PR #245/#256 acceptance block.
