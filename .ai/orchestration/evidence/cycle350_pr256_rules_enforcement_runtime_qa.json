@@ -29,6 +29,10 @@
     "conclusion": "success",
     "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/39199020863/job/117887898101"
   },
+  "receipts": {
+    "pr256": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256#issuecomment-6260055435",
+    "issue257": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/257#issuecomment-6260055637"
+  },
   "guarded_broad": {
     "command": "PYTHONPATH=.:watcher python -m pytest -q -p watch_customs_db tests --ignore=tests/test_ntm_full_sync.py",
     "result": "repaired rules-enforcement writer passed; next distinct writer found after 80%",

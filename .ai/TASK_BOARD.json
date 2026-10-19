@@ -11535,6 +11535,10 @@
     "independent_a5": "/root/a5_cycle350 PASS_NO_FINDINGS: independently reproduced the parent alias defect; exact-head focused 14 and both adjacent orders 46 each; lifecycle, AST and diff checks passed; clean worktree and no ambient SQLite",
     "a0_validation": "Guarded broad execution excluding the nine snapshot-only tests passed the repaired rules-enforcement writer and found the next distinct ambient writer after 80% at tests/test_regulatory_mass_seed.py::TestMassRegulatoryDocuments::test_total_documents_exceeds_5000; artifacts were quarantined recoverably.",
     "exact_head_ci": "run 39199020863 / job 117887898101 success",
+    "receipts": {
+      "pr256": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256#issuecomment-6260055435",
+      "issue257": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/257#issuecomment-6260055637"
+    },
     "snapshot_status": "BOUNDED_EPOCH315_1020_ROWS_POPULATED_SYNCHRONIZED_NTM_NOT_AVAILABLE",
     "staging_blocker": "cycle325 offset1120 transfer remains policy-refused after the owner-authorized attempt; no retry or workaround",
     "a6": "UNCHANGED_NOT_SENT",
