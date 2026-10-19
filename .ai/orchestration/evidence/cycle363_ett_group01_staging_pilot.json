@@ -1,0 +1,103 @@
+{
+  "schema_version": 1,
+  "task_id": "TARIFF-ETT-GROUP01-PILOT-20261019",
+  "executor": "/root/scheduled-cycle363-20261019T185247Z",
+  "lease_generation": 363,
+  "started_at": "2026-10-19T18:50:48Z",
+  "completed_at": "2026-10-19T19:19:08Z",
+  "repository": "ivan88810900-star/tnved_starter_kit_v2",
+  "pull_request": 258,
+  "product_head_sha": "c2d4a51a52246dbe436d3073a42143aae63f90c5",
+  "product_tree_sha": "4205cdb7450a6f3f96f0d39713f483d5b237469b",
+  "product_code_changed": false,
+  "source": {
+    "url": "https://eec.eaeunion.org/upload/files/catr/ett/ru.01_2022_25.04.2022.pdf",
+    "size_bytes": 168285,
+    "pages": 6,
+    "sha256": "7942d2176d8c728dde35f55cc4871ba230fdef721b30d5c191fd444cd55537c9"
+  },
+  "object_storage": {
+    "project_id": "red-meadow-53765518",
+    "branch_id": "br-weathered-frost-ba9jri3c",
+    "bucket": "official-originals",
+    "prefix": "ett/2026-10-19/group01/7942d2176d8c728dde35f55cc4871ba230fdef721b30d5c191fd444cd55537c9/",
+    "objects": {
+      "original.pdf": {"size_bytes": 168285, "sha256": "7942d2176d8c728dde35f55cc4871ba230fdef721b30d5c191fd444cd55537c9"},
+      "extraction.json": {"size_bytes": 21525, "sha256": "74381d77621708e4192b798312c533e381600d11393fbb6aace4c03f856e0370"},
+      "manifest.json": {"size_bytes": 951, "sha256": "857f325e35614eeb3480c3d00faccc09290c5051af36ee2308451d8685b6d39e"}
+    },
+    "fresh_readback_verified": true
+  },
+  "extraction": {
+    "independent_a3": "/root/a3_ett_pilot363",
+    "rows": 86,
+    "unique_codes": 86,
+    "first_code": "0101210000",
+    "last_code": "0106900090",
+    "page_counts": [5, 18, 14, 16, 17, 16],
+    "duty_text_counts": {"0": 30, "5": 51, "5 63С)": 5},
+    "superscript_marker_interpreted": false,
+    "status": "COLLECTED_UNVERIFIED"
+  },
+  "adapter_validation": {
+    "run_id": "ett:7f9e9e3689229d647fe6f7954628e28c24ab98cc1e1afa4ce63baf6e8ecfe0a4",
+    "local_exact_first_replayed": false,
+    "local_exact_second_replayed": true,
+    "local_replay_updated_at_unchanged": true,
+    "direct_remote_transport": "BLOCKED_BEFORE_SQL_BY_RUNTIME_DNS_PERIMETER",
+    "remote_write_transport": "AUTHORIZED_NEON_CONNECTOR_SINGLE_ATOMIC_TRANSACTION",
+    "direct_remote_adapter_invocation_claimed": false
+  },
+  "staging_result": {
+    "database": "tariff_staging",
+    "schema": "tariff_ingest",
+    "before": {"source_objects": 68, "ingest_runs": 37, "ett_rows": 533},
+    "after": {"source_objects": 69, "ingest_runs": 38, "ett_rows": 619},
+    "target_source_objects": 1,
+    "target_runs": 1,
+    "target_rows": 86,
+    "distinct_codes": 86,
+    "ordinal_min": 1,
+    "ordinal_max": 86,
+    "resume_cursor": {"next_ordinal": 87, "raw_count": 86, "complete": true},
+    "normalized_count": 0,
+    "verified_count": 0,
+    "admitted_count": 0,
+    "duplicate_codes": 0,
+    "non_unverified_rows": 0
+  },
+  "a5_finding_and_repair": {
+    "initial_finding": "SQLite removed tzinfo and the pilot serializer interpreted naive UTC values in a host-local timezone, shifting source/run timestamps by +7 hours.",
+    "repair": "One exact CAS-like staging transaction changed only captured_at on the target source and started_at/completed_at/updated_at on the target run; no objects or collected rows changed.",
+    "source_captured_at": "2026-10-19T19:02:10Z",
+    "run_timestamp": "2026-10-19T19:09:05.112418Z",
+    "serializer_fix": "Restore UTC explicitly for SQLite-naive values before JSON serialization.",
+    "independent_a5": "/root/a5_ett_pilot363 FINAL PASS after fresh object/DB/payload/timestamp readback"
+  },
+  "verification": {
+    "command": ".venv363/bin/python -m pytest -q customs-clear/backend/tests/test_staging_ett_ingest.py customs-clear/backend/tests/test_staging_nsi_ingest.py",
+    "result": "90 passed",
+    "exit_code": 0,
+    "exact_head_ci": {
+      "head_sha": "c2d4a51a52246dbe436d3073a42143aae63f90c5",
+      "name": "offline-safety",
+      "conclusion": "success",
+      "run_id": 39300596387,
+      "job_id": 118224468772,
+      "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/39300596387/job/118224468772"
+    }
+  },
+  "receipts": {
+    "pr258_comment_id": 6275311920,
+    "pr258": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/258#issuecomment-6275311920",
+    "issue257_comment_id": 6275312304,
+    "issue257": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/257#issuecomment-6275312304"
+  },
+  "normative_admission_performed": false,
+  "production_write_performed": false,
+  "merge_or_deploy_performed": false,
+  "a6": "UNCHANGED_NOT_SENT",
+  "snapshot_status": "BOUNDED_EPOCH315_1020_ROWS_POPULATED_SYNCHRONIZED_NTM_NOT_AVAILABLE",
+  "protected_actions_performed": false,
+  "next_step": "Return to the next unfinished live-board product block, with PR #244 quote/backend/DB/API acceptance ahead of #245; keep group01 raw staging separate from any legal admission."
+}
