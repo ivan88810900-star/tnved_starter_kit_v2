@@ -261,7 +261,7 @@ def is_conservative_official_excise_source_url(
         reg_netloc = _url_netloc(registry_official_url)
         if reg_netloc and netloc == reg_netloc:
             return True
-        if reg_netloc and netloc.endswith(reg_netloc):
+        if reg_netloc and netloc.endswith("." + reg_netloc):
             return True
     return False
 
