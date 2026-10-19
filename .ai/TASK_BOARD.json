@@ -2179,7 +2179,7 @@
       "unique_source_pr_count": 29
     }
   },
-  "revision": 890,
+  "revision": 891,
   "runs": [
     {
       "head_sha": null,
@@ -7811,7 +7811,7 @@
       }
     }
   ],
-  "updated_at": "2026-10-19T16:15:57Z",
+  "updated_at": "2026-10-19T17:05:00Z",
   "previous_scheduled_product_checkpoint_174": {
     "updated_at": "2026-10-11T18:04:51.196Z",
     "checked_at": "2026-10-11T18:04:51.196Z",
@@ -18375,7 +18375,7 @@
     "evidence": ".ai/orchestration/evidence/cycle358_tnved_recovery_readback_blocked.json",
     "next_step": "Use only a platform-allowed read path for the exact private object, verify outer and embedded hashes, then build the separate disposable SQLite, adapter and manifest."
   },
-  "latest_scheduled_product_checkpoint": {
+  "previous_scheduled_product_checkpoint_359": {
     "schema_version": 1,
     "task_id": "TARIFF-PR258-CHECKPOINT-HISTORY-20261019",
     "started_at": "2026-10-19T15:54:42Z",
@@ -18406,5 +18406,50 @@
     "protected_actions_performed": false,
     "evidence": ".ai/orchestration/evidence/cycle359_pr258_checkpoint_history.json",
     "next_step": "Obtain exact-head CI evidence for PR #258; then continue only with lawfully available immutable source bytes or the next independent PR #245/#256 acceptance defect."
+  },
+  "latest_scheduled_product_checkpoint": {
+    "schema_version": 1,
+    "task_id": "TARIFF-CI-CLOSURE-20261019",
+    "started_at": "2026-10-19T16:57:01Z",
+    "completed_at": "2026-10-19T17:05:00Z",
+    "executor": "/root/scheduled-cycle361-20261019T165701Z",
+    "lease_generation": 361,
+    "status": "EXACT_HEAD_CI_PASS_VERIFIED",
+    "scope": "Close pending exact-head CI evidence for PR #258 and PR #256 using direct commit check-runs verification.",
+    "checks": [
+      {
+        "pr": 258,
+        "head_sha": "152f7c0c757621ca43bcfc56d2620ef317326864",
+        "name": "offline-safety",
+        "status": "completed",
+        "conclusion": "success",
+        "run_id": 39283783712,
+        "job_id": 118163936031,
+        "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/39283783712/job/118163936031"
+      },
+      {
+        "pr": 256,
+        "head_sha": "6b5b635240b6549eaf55214401c30b268ffcbc0e",
+        "name": "offline-safety",
+        "status": "completed",
+        "conclusion": "success",
+        "run_id": 39270921030,
+        "job_id": 118122669592,
+        "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/39270921030/job/118122669592"
+      }
+    ],
+    "receipts": {
+      "pr258": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/258#issuecomment-6272709500",
+      "pr256": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256#issuecomment-6272709943",
+      "issue257": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/257#issuecomment-6272710478"
+    },
+    "product_or_test_data_mutation": false,
+    "private_object_retry_attempted": false,
+    "staging_or_production_write": false,
+    "snapshot_status": "BOUNDED_EPOCH315_1020_ROWS_POPULATED_SYNCHRONIZED_NTM_NOT_AVAILABLE",
+    "a6": "UNCHANGED_NOT_SENT",
+    "protected_actions_performed": false,
+    "evidence": ".ai/orchestration/evidence/cycle361_exact_head_ci_closure.json",
+    "next_step": "Continue the next independent #245/#256 acceptance defect, or run the separately scoped ETT adapter work only with verified immutable source bytes and a lawful disposable transaction path."
   }
 }

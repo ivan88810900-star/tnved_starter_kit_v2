@@ -1914,3 +1914,13 @@ CI #255: [offline-safety PASS, run 37771953943](https://github.com/ivan88810900-
 - Receipts: [PR #258](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/258#issuecomment-6271784544) and [issue #257](https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/257#issuecomment-6271787886).
 - No staging ingestion, private-object retry, normative admission, merge, deploy, production write, protected action or A6 dispatch occurred. The lawful populated synchronized NTM snapshot remains unavailable; full #245 acceptance remains NOT PASS.
 - Evidence: `.ai/orchestration/evidence/cycle359_pr258_checkpoint_history.json`; TASK_BOARD revision 890. Next obtain exact-head CI evidence for #258, then continue only with lawfully available immutable source bytes or the next independent #245/#256 acceptance defect.
+
+## Cycle 361 — exact-head CI closure for PR #258 and PR #256 (2026-10-19 UTC)
+
+- Task `TARIFF-CI-CLOSURE-20261019`; executor `/root/scheduled-cycle361-20261019T165701Z`; lease generation 361.
+- Fresh exact-SHA check-runs verification found the push checks that the earlier pull-request-only query missed.
+- PR #258 exact head `152f7c0c757621ca43bcfc56d2620ef317326864`: `offline-safety` completed `success`, [run 39283783712 / job 118163936031](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/39283783712/job/118163936031).
+- PR #256 exact head `6b5b635240b6549eaf55214401c30b268ffcbc0e`: `offline-safety` completed `success`, [run 39270921030 / job 118122669592](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/39270921030/job/118122669592).
+- Durable receipts: [PR #258](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/258#issuecomment-6272709500), [PR #256](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/256#issuecomment-6272709943), and [issue #257](https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/257#issuecomment-6272710478).
+- This was a read-only CI-evidence closure: no product/test-data mutation, private-object retry, staging/production write, merge, deploy, protected action or A6 dispatch occurred. The populated synchronized NTM snapshot remains unavailable; full #245/#256 acceptance and legal/source completeness remain NOT PASS.
+- Evidence: `.ai/orchestration/evidence/cycle361_exact_head_ci_closure.json`; TASK_BOARD revision 891. Next continue the next independent #245/#256 acceptance defect, or run the separate ETT adapter scope only when immutable source bytes and a lawful disposable transaction path are verified.
