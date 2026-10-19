@@ -1,0 +1,50 @@
+{
+  "schema_version": 1,
+  "task_id": "TARIFF-PR258-CHECKPOINT-BINDING-20261019",
+  "executor": "/root/scheduled-cycle356-20261019T131131Z",
+  "lease_generation": 356,
+  "started_at": "2026-10-19T13:11:31Z",
+  "completed_at": "2026-10-19T13:39:29Z",
+  "product": {
+    "pr": 258,
+    "branch": "agent/nsi-sgr-pagination-v1",
+    "parent_sha": "8f3472eae5bd080c854d727358aaddcc20157653",
+    "published_head_sha": "b53b631ebc9a033cb4f76005e00e07cf594c5839",
+    "tree_sha": "1ca8acef62c5d4147a9444ffd5b2252a850bd877",
+    "local_author_commit": "425e4bde9174688d089e497f8f63c0a1e37a9a2c"
+  },
+  "implementation": {
+    "finding": "Persisted checkpoint recovery accepted material and provenance corruption because run, global row, physical row and historical first-capture binding were incomplete.",
+    "fix": "Exact fail-closed validation of checkpoint/run/scope/cursor, ordering proof, source lineage, canonical global JSON, derived physical material and historical first-capture run arithmetic and rows.",
+    "files": [
+      "customs-clear/backend/app/services/staging_nsi_ingest.py",
+      "customs-clear/backend/tests/test_staging_nsi_ingest.py"
+    ]
+  },
+  "verification": {
+    "author_broader": "228 passed, exit 0",
+    "exact_published_head": "228 passed, exit 0",
+    "py_compile": "exit 0",
+    "diff_check": "exit 0",
+    "independent_a5": {
+      "session": "/root/a5_cycle354",
+      "result": "PASS_NO_FINDINGS",
+      "tests": "85 focused/adjacent, exit 0",
+      "database_and_compile": "adversarial disposable SQLite cases and SQLite/PostgreSQL query compilation passed"
+    },
+    "ci": {
+      "head_sha": "b53b631ebc9a033cb4f76005e00e07cf594c5839",
+      "workflow_runs": [],
+      "statuses": [],
+      "pass_claimed": false
+    }
+  },
+  "receipts": {
+    "pr258_comment_id": 6268608895,
+    "issue257_comment_id": 6268608484
+  },
+  "staging_write_attempted": false,
+  "populated_synchronized_ntm_snapshot": false,
+  "a6": "UNCHANGED_NOT_SENT",
+  "protected_actions_performed": false
+}

@@ -2179,7 +2179,7 @@
       "unique_source_pr_count": 29
     }
   },
-  "revision": 886,
+  "revision": 887,
   "runs": [
     {
       "head_sha": null,
@@ -7811,7 +7811,7 @@
       }
     }
   ],
-  "updated_at": "2026-10-19T11:05:00Z",
+  "updated_at": "2026-10-19T13:39:29Z",
   "previous_scheduled_product_checkpoint_174": {
     "updated_at": "2026-10-11T18:04:51.196Z",
     "checked_at": "2026-10-11T18:04:51.196Z",
@@ -11526,7 +11526,7 @@
     },
     "next_step": "First recheck exact-head CI for 09bd88e3085921733708578cce6e21a70430c0fd and accept only a verified successful run. Then isolate tests/test_rop_coverage_audit.py: on clean exact HEAD it exits 1 with 4 failed because rop_goods_rates is absent and creates a 4,096-byte ambient customs.db; preserve its 97-chapter, subject/not-subject and summary assertions without changing product or normative data."
   },
-  "latest_scheduled_product_checkpoint": {
+  "previous_scheduled_product_checkpoint_355": {
     "schema_version": 1,
     "task_id": "TARIFF-PR258-ELAPSED-LIMIT-20261019",
     "executor": "/root/scheduled-cycle355-20261019T115212Z",
@@ -11575,6 +11575,56 @@
     "a6": "UNCHANGED_NOT_SENT",
     "protected_actions_performed": false,
     "evidence": ".ai/orchestration/evidence/cycle355_pr258_elapsed_limit.json",
+    "next_step": "Recheck exact-head CI. Continue PR #258 only with lawfully available immutable source bytes; otherwise select the next independent PR #245/#256 acceptance block."
+  },
+  "latest_scheduled_product_checkpoint": {
+    "schema_version": 1,
+    "task_id": "TARIFF-PR258-CHECKPOINT-BINDING-20261019",
+    "executor": "/root/scheduled-cycle356-20261019T131131Z",
+    "lease_generation": 356,
+    "started_at": "2026-10-19T13:11:31Z",
+    "completed_at": "2026-10-19T13:39:29Z",
+    "repository": "ivan88810900-star/tnved_starter_kit_v2",
+    "pr": 258,
+    "branch": "agent/nsi-sgr-pagination-v1",
+    "parent_sha": "8f3472eae5bd080c854d727358aaddcc20157653",
+    "published_head_sha": "b53b631ebc9a033cb4f76005e00e07cf594c5839",
+    "tree_sha": "1ca8acef62c5d4147a9444ffd5b2252a850bd877",
+    "local_author_commit": "425e4bde9174688d089e497f8f63c0a1e37a9a2c",
+    "status": "IMPLEMENTED_A5_PASS_CI_NOT_OBSERVABLE",
+    "finding": "load_checkpoint trusted a persisted checkpoint after only partial binding to its run, source lineage, global raw material and historical first-capture proof.",
+    "fix": "Fail closed unless checkpoint/run/scope/cursor arithmetic, ordering proof, page and manifest sources, canonical global JSON, derived physical rows and the complete historical first-capture run contract all reconcile exactly.",
+    "author_validation": {
+      "broader": "228 passed, exit 0",
+      "exact_published_head": "228 passed, exit 0",
+      "compile_and_diff": "exit 0"
+    },
+    "independent_a5": {
+      "session": "/root/a5_cycle354",
+      "intermediate_findings": "P1 raw/derived hash gap; manifest-as-first-source gap; incomplete historical run contract; impossible overlap/request arithmetic",
+      "final_result": "PASS_NO_FINDINGS",
+      "tests": "85 focused/adjacent, exit 0",
+      "adversarial": "all prior material, source, run, cursor and multipage first-source mutations rejected; valid stable, immutable, zero-total and multipage paths passed; SQLite/PostgreSQL query compilation passed"
+    },
+    "ci": {
+      "head_sha": "b53b631ebc9a033cb4f76005e00e07cf594c5839",
+      "status": "NOT_REGISTERED_OR_OBSERVABLE",
+      "pass_claimed": false
+    },
+    "receipts": {
+      "pr258": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/258#issuecomment-6268608895",
+      "issue257": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/257#issuecomment-6268608484"
+    },
+    "staging": {
+      "write_attempted": false,
+      "last_verified_epoch315_rows": 1020,
+      "status": "COLLECTED_UNVERIFIED",
+      "populated_synchronized_ntm_snapshot": false,
+      "blocked_operation": "offset1120/private-object transfer remains policy-refused; no retry or workaround"
+    },
+    "a6": "UNCHANGED_NOT_SENT",
+    "protected_actions_performed": false,
+    "evidence": ".ai/orchestration/evidence/cycle356_pr258_checkpoint_binding.json",
     "next_step": "Recheck exact-head CI. Continue PR #258 only with lawfully available immutable source bytes; otherwise select the next independent PR #245/#256 acceptance block."
   },
   "previous_scheduled_product_checkpoint_354": {
