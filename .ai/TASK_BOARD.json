@@ -2179,7 +2179,7 @@
       "unique_source_pr_count": 29
     }
   },
-  "revision": 879,
+  "revision": 880,
   "runs": [
     {
       "head_sha": null,
@@ -7797,7 +7797,7 @@
       }
     }
   ],
-  "updated_at": "2026-10-19T01:14:30Z",
+  "updated_at": "2026-10-19T04:59:58Z",
   "previous_scheduled_product_checkpoint_174": {
     "updated_at": "2026-10-11T18:04:51.196Z",
     "checked_at": "2026-10-11T18:04:51.196Z",
@@ -11513,6 +11513,36 @@
     "next_step": "First recheck exact-head CI for 09bd88e3085921733708578cce6e21a70430c0fd and accept only a verified successful run. Then isolate tests/test_rop_coverage_audit.py: on clean exact HEAD it exits 1 with 4 failed because rop_goods_rates is absent and creates a 4,096-byte ambient customs.db; preserve its 97-chapter, subject/not-subject and summary assertions without changing product or normative data."
   },
   "latest_scheduled_product_checkpoint": {
+    "schema_version": 1,
+    "task_id": "TARIFF-PR256-RULES-ENFORCEMENT-RUNTIME-QA-20261019",
+    "started_at": "2026-10-19T04:50:25Z",
+    "completed_at": "2026-10-19T04:59:58Z",
+    "executor": "/root/scheduled-cycle350-20261019T045025Z",
+    "lease_generation": 350,
+    "pr": 256,
+    "branch": "agent/product-ntm-regressions-v1",
+    "previous_head_sha": "e523142e88fe739ac1cfd931de435ae04c456c6a",
+    "head_sha": "d425a855efeb429b6b8a17dc948b8a3a0e12351c",
+    "tree_sha": "d787f5992033801576aa5b51bafb36a1b944c7bd",
+    "status": "IMPLEMENTED_A5_PASS_CI_PASS_RUNTIME_QA_COMPLETE",
+    "product_changed_this_cycle": false,
+    "product_code_changed": false,
+    "test_fixture_changed": true,
+    "scope": "native runtime completion of the rules-enforcement disposable-session isolation published in cycle349",
+    "finding": "Cycle349 published the fixture repair and exact-head safety CI but correctly left backend runtime QA pending because that connector-only executor had no checkout or native independent session.",
+    "fix": "The published one-file fixture change rebinds the pre-imported sanctions_risk_block.SessionLocal alias to the in-memory sessionmaker, asserts identity and always disposes the engine; no additional product change was made in cycle350.",
+    "author_tests": "exact head focused 14 passed; sanctions/advisory/measures/rules in both orders 46 passed each; setup/normal/body lifecycle disposal exactly once; 11 pre-existing tests AST-identical; all exits 0 and no ambient SQLite",
+    "independent_a5": "/root/a5_cycle350 PASS_NO_FINDINGS: independently reproduced the parent alias defect; exact-head focused 14 and both adjacent orders 46 each; lifecycle, AST and diff checks passed; clean worktree and no ambient SQLite",
+    "a0_validation": "Guarded broad execution excluding the nine snapshot-only tests passed the repaired rules-enforcement writer and found the next distinct ambient writer after 80% at tests/test_regulatory_mass_seed.py::TestMassRegulatoryDocuments::test_total_documents_exceeds_5000; artifacts were quarantined recoverably.",
+    "exact_head_ci": "run 39199020863 / job 117887898101 success",
+    "snapshot_status": "BOUNDED_EPOCH315_1020_ROWS_POPULATED_SYNCHRONIZED_NTM_NOT_AVAILABLE",
+    "staging_blocker": "cycle325 offset1120 transfer remains policy-refused after the owner-authorized attempt; no retry or workaround",
+    "a6": "UNCHANGED_NOT_SENT",
+    "protected_actions_performed": false,
+    "evidence": ".ai/orchestration/evidence/cycle350_pr256_rules_enforcement_runtime_qa.json",
+    "next_step": "On exact PR256 HEAD, isolate tests/test_regulatory_mass_seed.py::TestMassRegulatoryDocuments::test_total_documents_exceeds_5000 while preserving the >5000-document audit and disposable database boundary."
+  },
+  "previous_scheduled_product_checkpoint_348": {
     "schema_version": 1,
     "task_id": "TARIFF-PR256-OFFICIAL-SGR-IMPORT-SESSION-ISOLATION-20261019",
     "started_at": "2026-10-19T03:55:19Z",

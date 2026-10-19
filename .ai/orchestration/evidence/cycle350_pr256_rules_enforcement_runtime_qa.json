@@ -1,0 +1,58 @@
+{
+  "schema_version": 1,
+  "task_id": "TARIFF-PR256-RULES-ENFORCEMENT-RUNTIME-QA-20261019",
+  "started_at": "2026-10-19T04:50:25Z",
+  "completed_at": "2026-10-19T04:59:58Z",
+  "executor": "/root/scheduled-cycle350-20261019T045025Z",
+  "lease_generation": 350,
+  "pr": 256,
+  "branch": "agent/product-ntm-regressions-v1",
+  "head_sha": "d425a855efeb429b6b8a17dc948b8a3a0e12351c",
+  "tree_sha": "d787f5992033801576aa5b51bafb36a1b944c7bd",
+  "implementation_evidence": ".ai/orchestration/evidence/cycle349_pr256_rules_enforcement_session_isolation.json",
+  "product_changed_this_cycle": false,
+  "runtime_qa": {
+    "focused": "14 passed, exit 0, no customs.db/WAL/SHM",
+    "adjacent_forward": "sanctions/advisory/measures/rules: 46 passed, exit 0, no ambient SQLite",
+    "adjacent_reverse": "rules/measures/advisory/sanctions: 46 passed, exit 0, no ambient SQLite",
+    "lifecycle": "setup failure, normal completion and body failure each propagated correctly and disposed the engine exactly once; exit 0",
+    "ast_parity": "all 11 pre-existing test functions AST-identical; one alias-rebinding regression test added; exit 0"
+  },
+  "independent_a5": {
+    "identity": "/root/a5_cycle350",
+    "result": "PASS_NO_FINDINGS",
+    "evidence": "focused 14; adjacent both orders 46 each; parent defect independently reproduced; setup/normal/body disposal exactly once; 11 existing tests AST-identical; git diff --check exit 0; clean worktree and no ambient SQLite"
+  },
+  "exact_head_ci": {
+    "run_id": 39199020863,
+    "job_id": 117887898101,
+    "conclusion": "success",
+    "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/39199020863/job/117887898101"
+  },
+  "guarded_broad": {
+    "command": "PYTHONPATH=.:watcher python -m pytest -q -p watch_customs_db tests --ignore=tests/test_ntm_full_sync.py",
+    "result": "repaired rules-enforcement writer passed; next distinct writer found after 80%",
+    "next_writer": "tests/test_regulatory_mass_seed.py::TestMassRegulatoryDocuments::test_total_documents_exceeds_5000",
+    "artifacts": "customs.db 4096 bytes, customs.db-wal 0 bytes, customs.db-shm 32768 bytes",
+    "artifacts_recovered_to": "/workspace/scratch/fbec4e55bd91/tariff-cycle350/quarantine/regulatory_mass_seed"
+  },
+  "snapshot": {
+    "epoch": 315,
+    "objects": 20,
+    "runs": 10,
+    "rows": 1020,
+    "unique_ids": 1020,
+    "unique_hashes": 1020,
+    "max_ordinal": 1020,
+    "status": "COLLECTED_UNVERIFIED",
+    "populated_synchronized_available": false
+  },
+  "staging_blocker": "cycle325 offset1120 transfer remains policy-refused; no retry or workaround",
+  "a6": {
+    "request": "core-s1-6415f443120f-r9-g106",
+    "status": "UNCHANGED_NOT_SENT"
+  },
+  "protected_actions_performed": false,
+  "status": "IMPLEMENTED_A5_PASS_CI_PASS_RUNTIME_QA_COMPLETE",
+  "next_step": "On exact PR256 HEAD, isolate test_regulatory_mass_seed.py::TestMassRegulatoryDocuments::test_total_documents_exceeds_5000 while preserving the >5000-document audit and disposable database boundary."
+}
