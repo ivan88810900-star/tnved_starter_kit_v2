@@ -18490,7 +18490,9 @@
     },
     "receipts": {
       "pr258_comment_id": 6274081748,
-      "pr258": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/258#issuecomment-6274081748"
+      "pr258": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/258#issuecomment-6274081748",
+      "issue257_comment_id": 6274127988,
+      "issue257": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/257#issuecomment-6274127988"
     },
     "staging_write_attempted": false,
     "private_object_retry_attempted": false,
