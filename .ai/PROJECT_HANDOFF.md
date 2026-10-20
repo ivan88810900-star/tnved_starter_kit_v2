@@ -2159,3 +2159,16 @@ CI #255: [offline-safety PASS, run 37771953943](https://github.com/ivan88810900-
 - Receipts: [PR #255](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/255#issuecomment-6293883449) and [issue #257](https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/257#issuecomment-6293883869).
 - No new owner approval appeared for the remaining 10,514 external structural rows, so Neon was not contacted or retried. No merge, deploy, production/staging DB write, normative data change, protected action or A6 dispatch occurred.
 - Evidence: `.ai/orchestration/evidence/cycle381_pr255_quote_special_duty_scope.json`; TASK_BOARD revision 909. Next continue coherent #244 source acceptance and fixture cleanup from fresh state.
+
+
+## Cycle 382 — PR #255 compliance special-duty scope auditability (2026-10-20 UTC)
+
+- Task `TARIFF-PR255-COMPLIANCE-SCOPE-AUDIT-20261020`; executor `/root/scheduled-cycle382-20261020T155108Z`; lease generation 382.
+- Workspace maintenance removed prior checkout contents. A full current candidate checkout was restored and verified at `b362839e`; terminal, Git, Python and dependencies were functional. Direct git push lacked interactive credentials, so the authorized GitHub connector published by expected-head CAS.
+- Draft PR #255 advanced to exact head `5ff8f780a14a3d3690ac8a0d9e10adc753e12fcc`, tree `f2f4ea757907f83b36080f434f94063d9bbb6de1`; local author commit `9775e7e33188b89c89409760c714e4250b8996a9` has the identical tree.
+- Compliance now returns the manufacturer fact used by exact special-duty scope matching and retains it in opt-in calculation history. Exact manufacturer/product facts resolve the scoped 7,000 RUB measure; missing manufacturer remains fail-closed with `special_duty_scope_unresolved`, REVIEW_REQUIRED/WARNING and withheld total. No rates, arithmetic or legal applicability rules changed.
+- Author targeted API/DB tests passed **2 tests**, exit 0. Independent A5 `/root/a5_cycle378` returned PASS with no findings and independently reran both tests against disposable SQLite.
+- Exact-head CI [run 39454112923](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/39454112923) succeeded: payment-regression job `118736328390` and offline-safety job `118736328797`.
+- Receipts: [PR #255](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/255#issuecomment-6295347868) and [issue #257](https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/257#issuecomment-6295348300).
+- No owner approval appeared for the remaining 10,514 external structural rows, so Neon was not contacted. No merge, deploy, production/staging DB write, normative data change, protected action or A6 dispatch occurred.
+- Evidence: `.ai/orchestration/evidence/cycle382_pr255_compliance_scope_audit.json`; TASK_BOARD revision 910. Next continue coherent #244 source acceptance and fixture cleanup from fresh state.
