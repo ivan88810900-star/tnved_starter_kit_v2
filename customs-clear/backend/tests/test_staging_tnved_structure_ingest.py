@@ -85,6 +85,7 @@ def test_hash_and_incomplete_state_fail_closed(tmp_path: Path) -> None:
         {"path_json": "not-json"},
         {"source_url": "https://evil.example/a.pdf"},
         {"row_sha256": "0" * 64},
+        {"parent_hs": "02"},
     ],
 )
 def test_public_ingest_boundary_rejects_forged_rows(tmp_path: Path, change: dict) -> None:

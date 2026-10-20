@@ -115,22 +115,27 @@ def _same(actual: Any, expected: Any) -> bool:
 
 
 def _validate_artifact(artifact: StructureArtifact) -> None:
+    if not isinstance(artifact, StructureArtifact):
+        raise StructureIngestError("artifact must use the validated structure contract")
     if not _SHA256_RE.fullmatch(artifact.sha256) or not _SHA256_RE.fullmatch(artifact.logical_sha256):
         raise StructureIngestError("artifact hashes must be canonical SHA-256")
-    if artifact.size_bytes < 1 or artifact.source_count < 1 or artifact.edition_count < 1 or artifact.entry_count < 1:
+    counts = (artifact.size_bytes, artifact.source_count, artifact.edition_count, artifact.entry_count)
+    if any(isinstance(value, bool) or not isinstance(value, int) or value < 1 for value in counts):
         raise StructureIngestError("artifact counts and size must be positive")
     if not artifact.catalog_id or artifact.catalog_id != artifact.catalog_id.strip():
         raise StructureIngestError("artifact catalog_id must be canonical")
-    if artifact.generated_at_source.utcoffset() is None:
+    if not isinstance(artifact.generated_at_source, datetime) or artifact.generated_at_source.utcoffset() is None:
         raise StructureIngestError("artifact generated_at_source must be timezone-aware")
 
 
 def _validate_row(row: StructureRow) -> None:
-    if row.ordinal < 1 or not _HS_RE.fullmatch(row.hs_code):
+    if not isinstance(row, StructureRow):
+        raise StructureIngestError("row must use the validated structure contract")
+    if isinstance(row.ordinal, bool) or not isinstance(row.ordinal, int) or row.ordinal < 1 or not isinstance(row.hs_code, str) or not _HS_RE.fullmatch(row.hs_code):
         raise StructureIngestError("structure row ordinal and HS code must be canonical")
     if row.parent_hs and (not _HS_RE.fullmatch(row.parent_hs) or len(row.parent_hs) >= len(row.hs_code)):
         raise StructureIngestError("structure row parent is invalid")
-    if row.level != len(row.hs_code):
+    if isinstance(row.level, bool) or not isinstance(row.level, int) or row.level != len(row.hs_code):
         raise StructureIngestError("structure row level does not match HS length")
     if not row.title or row.title != row.title.strip():
         raise StructureIngestError("structure row title must be canonical")
@@ -262,8 +267,10 @@ def read_accepted_sqlite(path: Path, *, expected_sha256: str, expected_logical_s
 
 def ingest_structure(session: Session, *, artifact: StructureArtifact, rows: Sequence[StructureRow], schema: str | None = DEFAULT_SCHEMA, initialize_schema: bool = False, now: datetime) -> StructureIngestResult:
     _validate_artifact(artifact)
-    if now.utcoffset() is None:
+    if not isinstance(now, datetime) or now.utcoffset() is None:
         raise StructureIngestError("ingest time must be timezone-aware")
+    if not isinstance(rows, Sequence) or isinstance(rows, (str, bytes)):
+        raise StructureIngestError("rows must be a bounded sequence")
     if artifact.entry_count != len(rows) or not rows:
         raise StructureIngestError("artifact entry count mismatch")
     for row in rows:
@@ -272,6 +279,9 @@ def ingest_structure(session: Session, *, artifact: StructureArtifact, rows: Seq
         raise StructureIngestError("row ordinals must be contiguous from 1")
     if len({row.hs_code for row in rows}) != len(rows) or len({row.row_sha256 for row in rows}) != len(rows):
         raise StructureIngestError("rows must have unique codes and hashes")
+    codes = {row.hs_code for row in rows}
+    if any(row.parent_hs and row.parent_hs not in codes for row in rows):
+        raise StructureIngestError("row parent is missing from the same artifact")
     metadata = MetaData()
     tables = staging_tables(metadata, schema=schema)
     if initialize_schema:
