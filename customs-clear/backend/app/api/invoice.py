@@ -6,7 +6,7 @@ from pathlib import Path
 
 from fastapi import APIRouter, BackgroundTasks, Depends, File, Form, HTTPException, Query, UploadFile
 from fastapi.responses import FileResponse, Response
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 from ..security import require_authenticated_user
 from ..services.invoice_batch_service import (
@@ -36,11 +36,31 @@ class InvoiceLineIn(BaseModel):
     weight_net_kg: float | None = None
     country_of_origin: str = ""
 
+    @field_validator(
+        "quantity",
+        "unit_price",
+        "weight_gross_kg",
+        "weight_net_kg",
+        mode="before",
+    )
+    @classmethod
+    def reject_boolean_economic_inputs(cls, value):
+        if isinstance(value, bool):
+            raise ValueError("значение должно быть числом, а не boolean")
+        return value
+
 
 class InvoiceBatchRequest(BaseModel):
     lines: list[InvoiceLineIn] = Field(..., min_length=1, max_length=500)
     auto_classify: bool = True
     calendar_year: int | None = None
+
+    @field_validator("calendar_year", mode="before")
+    @classmethod
+    def reject_boolean_calendar_year(cls, value):
+        if isinstance(value, bool):
+            raise ValueError("значение должно быть целым числом, а не boolean")
+        return value
 
 
 @router.get("/template")

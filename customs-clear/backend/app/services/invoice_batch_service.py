@@ -58,6 +58,11 @@ def _cell(row: dict[str, Any], colmap: dict[str, str], field: str, default: Any 
     return val
 
 
+def _is_boolean_number(value: Any) -> bool:
+    """Recognise Python and pandas/numpy booleans before numeric coercion."""
+    return pd.api.types.is_bool(value)
+
+
 def parse_invoice_file(content: bytes, filename: str) -> list[dict[str, Any]]:
     """Парсинг xlsx/xls/csv в список позиций."""
     name = (filename or "").lower()
@@ -82,6 +87,16 @@ def parse_invoice_file(content: bytes, filename: str) -> list[dict[str, Any]]:
         manufacturer = str(_cell(row, colmap, "manufacturer", "") or "").strip()
         qty = _cell(row, colmap, "quantity", 1)
         price = _cell(row, colmap, "unit_price", 0)
+        gross = _cell(row, colmap, "weight_gross_kg")
+        net = _cell(row, colmap, "weight_net_kg")
+        for field, value in (
+            ("quantity", qty),
+            ("unit_price", price),
+            ("weight_gross_kg", gross),
+            ("weight_net_kg", net),
+        ):
+            if _is_boolean_number(value):
+                raise ValueError(f"{field}: значение должно быть числом, а не boolean")
         try:
             qty_f = float(qty) if qty is not None else 1.0
             price_f = float(price) if price is not None else 0.0
@@ -95,8 +110,8 @@ def parse_invoice_file(content: bytes, filename: str) -> list[dict[str, Any]]:
                 "unit": str(_cell(row, colmap, "unit", "") or ""),
                 "unit_price": price_f,
                 "currency": str(_cell(row, colmap, "currency", "USD") or "USD").upper(),
-                "weight_gross_kg": _cell(row, colmap, "weight_gross_kg"),
-                "weight_net_kg": _cell(row, colmap, "weight_net_kg"),
+                "weight_gross_kg": gross,
+                "weight_net_kg": net,
                 "country_of_origin": str(_cell(row, colmap, "country_of_origin", "") or "").strip().upper(),
                 "image_url": image_url,
                 "image_base64": image_b64,
@@ -158,6 +173,15 @@ def calculate_line_payments(
     calendar_year: int | None = None,
 ) -> dict[str, Any]:
     """Расчёт всех платежей для одной строки инвойса."""
+    for field in (
+        "quantity",
+        "unit_price",
+        "weight_gross_kg",
+        "weight_net_kg",
+        "engine_volume",
+    ):
+        if _is_boolean_number(line.get(field)):
+            raise ValueError(f"{field}: значение должно быть числом, а не boolean")
     hs = re.sub(r"\D", "", str(line.get("hs_code") or ""))[:10]
     qty = float(line.get("quantity") or 1)
     price = float(line.get("unit_price") or 0)

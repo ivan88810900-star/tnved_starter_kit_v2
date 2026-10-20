@@ -6,7 +6,7 @@ from typing import Any, Dict, List
 
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 from ..services.calculation_history_service import save_calculation_record
 from ..services.non_tariff_service import check_position_non_tariff
@@ -34,6 +34,22 @@ class ComplianceItemIn(BaseModel):
     vat_rate: float | None = None
     excise: float | None = None
     quantity: float | None = None
+
+    @field_validator(
+        "customs_value",
+        "freight",
+        "insurance",
+        "duty_rate",
+        "vat_rate",
+        "excise",
+        "quantity",
+        mode="before",
+    )
+    @classmethod
+    def reject_boolean_economic_inputs(cls, value):
+        if isinstance(value, bool):
+            raise ValueError("значение должно быть числом, а не boolean")
+        return value
 
 
 class ComplianceRequest(BaseModel):
