@@ -8,7 +8,41 @@ from typing import TextIO
 
 
 DEFAULT_SUITE = "tests.test_tnved_recovery_ci"
+MANDATORY_SUBJECT_IDS = (
+    "tests.test_tnved_recovery_ci.TnvedRecoveryOfflineCiTest.test_builder_is_deterministic_integral_and_readable",
+    "tests.test_tnved_recovery_ci.TnvedRecoveryOfflineCiTest.test_builder_rejects_bytes_outside_supplied_pins",
+)
 BACKEND_ROOT = Path(__file__).resolve().parents[1]
+
+
+def _flatten(suite: unittest.TestSuite):
+    for item in suite:
+        if isinstance(item, unittest.TestSuite):
+            yield from _flatten(item)
+        else:
+            yield item
+
+
+def run_required_subjects(
+    available_suite: unittest.TestSuite,
+    *,
+    required_ids: tuple[str, ...] = MANDATORY_SUBJECT_IDS,
+    stream: TextIO = sys.stderr,
+) -> int:
+    """Select and execute only the explicitly mandatory product tests."""
+
+    available = {test.id(): test for test in _flatten(available_suite)}
+    missing = [test_id for test_id in required_ids if test_id not in available]
+    if missing:
+        print(
+            "RECOVERY_GATE_FAILED: missing mandatory subject tests: " + ", ".join(missing),
+            file=stream,
+        )
+        return 2
+    return run_suite(
+        unittest.TestSuite([available[test_id] for test_id in required_ids]),
+        stream=stream,
+    )
 
 
 def run_suite(suite: unittest.TestSuite, *, stream: TextIO = sys.stderr) -> int:
@@ -45,7 +79,7 @@ def main(argv: list[str] | None = None) -> int:
     if str(BACKEND_ROOT) not in sys.path:
         sys.path.insert(0, str(BACKEND_ROOT))
     suite = unittest.defaultTestLoader.loadTestsFromName(args.suite)
-    return run_suite(suite)
+    return run_required_subjects(suite)
 
 
 if __name__ == "__main__":

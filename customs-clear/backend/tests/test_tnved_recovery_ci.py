@@ -183,6 +183,52 @@ class TnvedRecoveryOfflineCiTest(unittest.TestCase):
         self.assertEqual(exit_code, 4)
         self.assertIn("all subject tests skipped", output.getvalue())
 
+    def test_gate_rejects_skipped_builders_even_when_guard_tests_pass(self) -> None:
+        class MixedSuite(unittest.TestCase):
+            def test_guard_one(self) -> None:
+                pass
+
+            def test_guard_two(self) -> None:
+                pass
+
+            @unittest.skip("synthetic missing builder fixture")
+            def test_builder_one(self) -> None:
+                raise AssertionError("skip did not apply")
+
+            @unittest.skip("synthetic missing builder fixture")
+            def test_builder_two(self) -> None:
+                raise AssertionError("skip did not apply")
+
+        suite = unittest.defaultTestLoader.loadTestsFromTestCase(MixedSuite)
+        prefix = f"{MixedSuite.__module__}.{MixedSuite.__qualname__}."
+        output = io.StringIO()
+        exit_code = _gate_runner().run_required_subjects(
+            suite,
+            required_ids=(prefix + "test_builder_one", prefix + "test_builder_two"),
+            stream=output,
+        )
+        self.assertEqual(exit_code, 4)
+        self.assertIn("discovered=2 executed=2 skipped=2", output.getvalue())
+        self.assertIn("all subject tests skipped", output.getvalue())
+
+    def test_gate_rejects_missing_builders_even_when_guard_tests_remain(self) -> None:
+        class GuardOnlySuite(unittest.TestCase):
+            def test_guard_one(self) -> None:
+                pass
+
+            def test_guard_two(self) -> None:
+                pass
+
+        suite = unittest.defaultTestLoader.loadTestsFromTestCase(GuardOnlySuite)
+        output = io.StringIO()
+        exit_code = _gate_runner().run_required_subjects(
+            suite,
+            required_ids=("mandatory.builder.test_one", "mandatory.builder.test_two"),
+            stream=output,
+        )
+        self.assertEqual(exit_code, 2)
+        self.assertIn("missing mandatory subject tests", output.getvalue())
+
     def test_builder_is_deterministic_integral_and_readable(self) -> None:
         builder = _builder()
         with tempfile.TemporaryDirectory() as raw:
