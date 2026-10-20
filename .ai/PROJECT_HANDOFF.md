@@ -1,3 +1,13 @@
+## 2026-10-20 — ROP coverage audit uses a hermetic canonical fixture
+
+- Draft [PR #255](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/255) now publishes exact head `22190f2d4002ea8dad06927affd5ecd8309a34ea`, tree `2f264659882380c88d52646eef1d2565f13d36de`.
+- A clean disposable-DB payment/source tranche reproduced an order-dependent ROP audit failure: **1 failed / 118 passed**. The test module assumed ambient preloaded ROP tables; independent parent-focused reproduction failed all four cases when `rop_goods_rates` was absent.
+- The one-file test fixture now creates its own in-memory SQLite schema and loads the tracked canonical ROP fixture through the real importer. All four original test methods and five assertions are unchanged; product logic, rates, source facts and legal applicability are unchanged.
+- Author verification: focused **4 passed**; expanded payment/source tranche **339 passed** forward and reverse. Independent A5 `/root/a5_cycle385`: **PASS_NO_FINDINGS**, including parent reproduction, 89-test adjacent orders, expanded 339 and ambient-artifact checks.
+- Exact-head CI [run 39471099229](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/39471099229) is `success`; offline-safety job `118795045538` and payment-regression job `118795045605` succeeded.
+- Receipts: [PR #255](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/255#issuecomment-6297663666), [issue #257](https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/257#issuecomment-6297664046). Durable evidence: `.ai/orchestration/evidence/cycle385_pr255_rop_coverage_isolation.json`.
+- No Neon, merge/deploy, staging/production write or A6 call occurred. Full #244 acceptance remains NOT PASS. Next: continue source-by-source payment acceptance and fixture cleanup.
+
 ## 2026-10-20 — Source-currentness tests execute without undeclared asyncio plugin
 
 - Draft [PR #255](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/255) now publishes exact head `675eb20f5b06f2d05257365d754a3536568a96c3`, tree `6b228e1cb61c36033b74c18f6b5a9f4ebfcd87bf`.
