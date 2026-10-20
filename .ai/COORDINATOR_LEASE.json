@@ -1,14 +1,14 @@
 {
   "acquisition_note": "cycle383 bounded PR255 payment defect review",
-  "expires_at": "2026-10-20T19:24:03.310354Z",
+  "expires_at": null,
   "generation": 386,
-  "holder": "/root/scheduled-cycle386-20261020T185403Z",
+  "holder": null,
   "lease_repair": {},
   "release_reason": "cycle383 draft PR261 and state checkpoint completed",
   "released_by": "/root/scheduled-cycle383-20261020T161418Z",
   "schema_version": 1,
   "serialization_repair": {},
-  "state": "active",
-  "token": "e3d09c42a7384a2787566d08af1a0539",
-  "updated_at": "2026-10-20T18:54:03.310354Z"
+  "state": "released",
+  "token": null,
+  "updated_at": "2026-10-20T19:05:08.573987Z"
 }
