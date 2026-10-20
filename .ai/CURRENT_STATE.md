@@ -559,3 +559,14 @@ legacy (сверх structural). Контур по-прежнему **не под
 - TASK_BOARD revision 813 was not changed because its CAS write was rejected at the connector approval boundary; the write was not retried.
 - Next safe step: reconcile the next unresolved stale payment bundle against primary sources while preserving fail-closed admission, applicability, provenance and final-total withholding.
 
+## Cycle 375 checkpoint — TN VED structural recovery exact-head CI closure (2026-10-20)
+
+- Main remains `e526dfbdb5a31b01bf6f743da0288b88f916de0c`; no protected action was performed.
+- Draft PR #260 exact head remains `bc8a24542549725aa7c73ad7160ba41c7a76cc4f`, reviewed tree `4caf1d03f0d718cac7b8d462e66090c423ecb9ee`.
+- Cycle 374 independent A5 remains **PASS, no findings** on the reviewed tree; source-backed tests, five repeated builds, immutable reopen, integrity/FK checks and exhaustive 18,014-node equality remain recorded.
+- Exact-head `Tariff agent safety` workflow run 39400461650 / `offline-safety` job 118553586284 completed successfully; every recorded step passed.
+- The bounded structural recovery block is now **DRAFT PUBLISHED / A5 PASS / EXACT-HEAD CI PASS**. This is not merge readiness for legal or payment use: legal status is unverified, validity dates are unknown, and rates/NTM are absent.
+- Saved artifact hashes remain SQLite `c5959912f7c1a3e8c0329130d511243c9ead4e5ae5501dc7ce7facff2d6bdff4`, logical `be57fc61571bee51817e5a0915918d7f3baa86873c644ce148c613b1b20589e6`, bundle `a30004de21e6c6fd9bb1585a10542076d61b3c577f5d61dc1752827b23b69727`.
+- A6 request `core-s1-6415f443120f-r9-g106` is unchanged and was not sent.
+- Evidence: `.ai/orchestration/evidence/cycle375_tnved_exact_head_ci_closure.json`.
+- Next safe step: verify the saved bundle bytes on the new Mac against the recorded SHA-256 values; do not infer legal dates, rates or NTM completeness from this structure-only snapshot.
