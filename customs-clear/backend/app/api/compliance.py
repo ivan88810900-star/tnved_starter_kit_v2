@@ -134,6 +134,7 @@ async def compliance_check(req: ComplianceRequest) -> JSONResponse:
             {
                 "hs_code": item.hs_code,
                 "description": item.description,
+                "manufacturer": item.manufacturer,
                 "country": item.country,
                 "payment": payment,
                 "non_tariff": non_tariff,
@@ -184,6 +185,7 @@ async def compliance_check(req: ComplianceRequest) -> JSONResponse:
                 {
                     "hs_code": it.hs_code,
                     "description": (it.description or "")[:240],
+                    "manufacturer": (it.manufacturer or "")[:240] or None,
                     "customs_value": it.customs_value,
                     "freight": it.freight,
                     "country": it.country,

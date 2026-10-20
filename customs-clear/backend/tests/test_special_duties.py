@@ -482,6 +482,36 @@ class SpecialDutiesTests(unittest.TestCase):
                     for risk in result["items"][0]["risks"]
                 )
             )
+
+            with patch(
+                "app.api.compliance.check_position_non_tariff",
+                new=AsyncMock(return_value=non_tariff_ok),
+            ):
+                matched_response = client.post(
+                    "/api/compliance/check",
+                    json={
+                        "items": [{
+                            "hs_code": "9996999999",
+                            "description": "ПРОКАТ   ГОРЯЧЕКАТАНЫЙ",
+                            "manufacturer": "  alpha   STEEL co  ",
+                            "country": "ZZ",
+                            "customs_value": 100_000.0,
+                            "quantity": 1.0,
+                            "permits": [],
+                        }],
+                    },
+                )
+            self.assertEqual(matched_response.status_code, 200, matched_response.text)
+            matched = matched_response.json()["items"][0]
+            self.assertEqual(matched["manufacturer"], "  alpha   STEEL co  ")
+            self.assertEqual(
+                matched["payment"]["breakdown"]["special_duties_amount"],
+                7_000.0,
+            )
+            self.assertNotIn(
+                "special_duty_scope_unresolved",
+                matched["payment"]["payment_review_reasons"],
+            )
         finally:
             with SessionLocal() as db:
                 db.query(SpecialDuty).filter(SpecialDuty.regulatory_act == marker).delete()

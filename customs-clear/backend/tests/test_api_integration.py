@@ -225,6 +225,7 @@ class ApiIntegrationTests(unittest.TestCase):
                 "items": [{
                     "hs_code": "8509400000",
                     "description": "Пылесос",
+                    "manufacturer": "Example Appliances Co",
                     "country": "CN",
                     "customs_value": 100_000,
                     "freight": 10_000,
@@ -239,6 +240,16 @@ class ApiIntegrationTests(unittest.TestCase):
         self.assertEqual(h.status_code, 200)
         kinds = [x.get("kind") for x in (h.json().get("items") or [])]
         self.assertIn("compliance", kinds)
+        saved = next(
+            row for row in (h.json().get("items") or [])
+            if row.get("kind") == "compliance"
+        )
+        detail = self.client.get(f"/api/calculator/history/{saved['id']}")
+        self.assertEqual(detail.status_code, 200)
+        self.assertEqual(
+            detail.json()["input_payload"]["items"][0]["manufacturer"],
+            "Example Appliances Co",
+        )
 
     def test_compliance_check_single_item(self):
         r = self.client.post("/api/compliance/check", json={
