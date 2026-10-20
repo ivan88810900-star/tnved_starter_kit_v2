@@ -128,6 +128,32 @@ def _payment_input_number(
     return value
 
 
+def _optional_positive_integer_input(
+    payload: dict[str, Any], key: str, label: str
+) -> int | None:
+    """Admit an optional positive integer without truncating fractions.
+
+    Recycling-fee volume brackets are discrete cubic-centimetre intervals.
+    ``int(raw)`` used to silently turn ``1500.5`` into ``1500`` and could also
+    route negative values into an unrelated generic/electric row.
+    """
+    raw = payload.get(key)
+    if raw is None:
+        return None
+    try:
+        value = None if isinstance(raw, bool) else float(raw)
+    except (TypeError, ValueError, OverflowError):
+        value = None
+    if (
+        value is None
+        or not isfinite(value)
+        or value <= 0
+        or not value.is_integer()
+    ):
+        raise ValueError(f"{label} должен быть конечным положительным целым числом")
+    return int(value)
+
+
 def _validated_payment_result(value: Any, *, label: str) -> float:
     """Fail closed when otherwise valid operands overflow dependent arithmetic."""
     try:
@@ -1431,26 +1457,75 @@ def compute_payments(payload: dict[str, Any]) -> dict[str, Any]:
     if live_animal_review_reason:
         payment_review_reasons.append(str(live_animal_review_reason))
 
-    # Recycling fee (утильсбор) for vehicles (8701-8705, 8711)
+    # Recycling fee (утильсбор) for vehicles (8701-8705, 8711).  Vehicle age
+    # and, for volume-bracketed rows, engine displacement are applicability
+    # operands rather than harmless defaults.  Do not select the first/cheapest
+    # row when either operand is unknown.
     recycling_fee_amount = 0.0
     recycling_fee_meta: dict[str, Any] = {"applied": False}
-    vehicle_is_new = bool(payload.get("vehicle_is_new", True))
-    engine_volume = int(payload["engine_volume"]) if payload.get("engine_volume") is not None else None
-    recycling_matches = get_recycling_fee(hs_code, is_new=vehicle_is_new, engine_volume=engine_volume)
-    if recycling_matches:
-        best = recycling_matches[0]
-        recycling_fee_amount = best["fee_amount"]
-        recycling_fee_meta = {
-            "applied": True,
-            "vehicle_type": best["vehicle_type"],
-            "is_new": best["is_new"],
-            "base_rate": best["base_rate"],
-            "coefficient": best["coefficient"],
-            "fee_amount": best["fee_amount"],
-            "description": best["description"],
-            "legal_ref": best["legal_ref"],
-            "all_matches": len(recycling_matches),
-        }
+    recycling_prefixes = {"8701", "8702", "8703", "8704", "8705", "8711"}
+    is_recycling_vehicle = hs_digits[:4] in recycling_prefixes
+    engine_volume = _optional_positive_integer_input(
+        payload, "engine_volume", "Объём двигателя"
+    )
+    if is_recycling_vehicle:
+        vehicle_age_raw = payload.get("vehicle_is_new")
+        if vehicle_age_raw is None:
+            review_reason = "recycling_fee_vehicle_age_missing"
+            payment_review_reasons.append(review_reason)
+            recycling_fee_meta.update(
+                review_required=True,
+                review_reason=review_reason,
+                message="Для утильсбора требуется явный признак нового или бывшего в употреблении ТС.",
+            )
+        elif not isinstance(vehicle_age_raw, bool):
+            raise ValueError("Признак нового ТС должен быть boolean")
+        else:
+            recycling_matches = get_recycling_fee(
+                hs_code,
+                is_new=vehicle_age_raw,
+                engine_volume=engine_volume,
+            )
+            volume_dependent = any(
+                match.get("engine_volume_from") is not None
+                or match.get("engine_volume_to") is not None
+                for match in recycling_matches
+            )
+            if engine_volume is None and (
+                len(recycling_matches) > 1 or volume_dependent
+            ):
+                review_reason = "recycling_fee_engine_volume_missing"
+                payment_review_reasons.append(review_reason)
+                recycling_fee_meta.update(
+                    review_required=True,
+                    review_reason=review_reason,
+                    is_new=vehicle_age_raw,
+                    candidate_count=len(recycling_matches),
+                    message="Для выбора ставки утильсбора требуется объём двигателя.",
+                )
+            elif not recycling_matches:
+                review_reason = "recycling_fee_rate_missing"
+                payment_review_reasons.append(review_reason)
+                recycling_fee_meta.update(
+                    review_required=True,
+                    review_reason=review_reason,
+                    is_new=vehicle_age_raw,
+                    message="Подтверждённая ставка утильсбора не найдена.",
+                )
+            else:
+                best = recycling_matches[0]
+                recycling_fee_amount = best["fee_amount"]
+                recycling_fee_meta = {
+                    "applied": True,
+                    "vehicle_type": best["vehicle_type"],
+                    "is_new": best["is_new"],
+                    "base_rate": best["base_rate"],
+                    "coefficient": best["coefficient"],
+                    "fee_amount": best["fee_amount"],
+                    "description": best["description"],
+                    "legal_ref": best["legal_ref"],
+                    "all_matches": len(recycling_matches),
+                }
 
     # Customs fee (2026 tariff) — в базу НДС при ввозе не включается (НК РФ)
     customs_fee = calculate_customs_fee(customs_value)

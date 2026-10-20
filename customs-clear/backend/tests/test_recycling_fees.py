@@ -122,6 +122,61 @@ class TestRecyclingFeeInPaymentEngine:
         assert result["breakdown"]["recycling_fee"] == 0.0
         assert result["breakdown"]["total_payable"] is None
 
+    def test_vehicle_age_is_required_before_automatic_fee(self) -> None:
+        result = compute_payments({
+            "hs_code": "8703220000",
+            "customs_value": 1000000,
+            "engine_volume": 1500,
+        })
+        assert result["recycling_fee"]["applied"] is False
+        assert result["recycling_fee"]["review_required"] is True
+        assert result["recycling_fee"]["review_reason"] == "recycling_fee_vehicle_age_missing"
+        assert "recycling_fee_vehicle_age_missing" in result["payment_review_reasons"]
+        assert result["breakdown"]["recycling_fee"] == 0.0
+        assert result["breakdown"]["total_payable"] is None
+
+    def test_volume_bracketed_vehicle_requires_engine_volume(self) -> None:
+        result = compute_payments({
+            "hs_code": "8703220000",
+            "customs_value": 1000000,
+            "vehicle_is_new": True,
+        })
+        assert result["recycling_fee"]["applied"] is False
+        assert result["recycling_fee"]["review_reason"] == "recycling_fee_engine_volume_missing"
+        assert "recycling_fee_engine_volume_missing" in result["payment_review_reasons"]
+        assert result["breakdown"]["recycling_fee"] == 0.0
+        assert result["breakdown"]["total_payable"] is None
+
+    @pytest.mark.parametrize("engine_volume", [-10, 0, 1500.5, True])
+    def test_invalid_engine_volume_is_rejected_without_coercion(self, engine_volume) -> None:
+        with pytest.raises(ValueError, match="Объём двигателя"):
+            compute_payments({
+                "hs_code": "8703220000",
+                "customs_value": 1000000,
+                "vehicle_is_new": True,
+                "engine_volume": engine_volume,
+            })
+
+    def test_unambiguous_generic_vehicle_rate_does_not_require_volume(self) -> None:
+        result = compute_payments({
+            "hs_code": "8701200000",
+            "customs_value": 1000000,
+            "vehicle_is_new": True,
+        })
+        assert result["recycling_fee"]["applied"] is True
+        assert result["recycling_fee"]["vehicle_type"] == "tractor_new"
+        assert result["recycling_fee"]["fee_amount"] == 150000.0
+        assert "recycling_fee_engine_volume_missing" not in result["payment_review_reasons"]
+
+    def test_non_boolean_vehicle_age_is_rejected_without_truthiness(self) -> None:
+        with pytest.raises(ValueError, match="Признак нового ТС"):
+            compute_payments({
+                "hs_code": "8703220000",
+                "customs_value": 1000000,
+                "vehicle_is_new": "false",
+                "engine_volume": 1500,
+            })
+
     def test_embargo_response_has_recycling_fee_field(self) -> None:
         result = compute_payments({
             "hs_code": "8517120000",
