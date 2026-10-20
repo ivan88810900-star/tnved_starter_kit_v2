@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "task_id": "TARIFF-PR255-QUOTE-SPECIAL-DUTY-SCOPE-20261020",
+  "started_at": "2026-10-20T14:49:00Z",
+  "completed_at": "2026-10-20T14:58:30Z",
+  "executor": "/root/scheduled-cycle381-20261020T144900Z",
+  "lease_generation": 381,
+  "pr": 255,
+  "branch": "agent/core-payment-regressions-v1",
+  "previous_head_sha": "b9614bc1cbfca8a35b5d5bd275656d49f2c8478e",
+  "head_sha": "b362839ed4beae8e0beff499902fe7996d1068c4",
+  "tree_sha": "87b182caf37beaf965bd118e83bf649de74c6709",
+  "local_author_commit": "05aa1b81d23cc6e938f221a37427946adf556c03",
+  "status": "DRAFT_PUBLISHED_A5_PASS_EXACT_HEAD_CI_SUCCESS",
+  "implementation": "Payment quote accepts canonical product_description and legacy description, forwards the resolved fact to the existing exact manufacturer/product special-duty scope matcher, and preserves the legacy response field.",
+  "tests": "Focused API/DB regression: 1 passed plus 2 subtests, exit 0; py_compile and git diff --check exit 0.",
+  "a5": "/root/a5_cycle378 PASS on exact tree; no material findings.",
+  "exact_head_ci": "Run 39443361953 success; payment-regression job 118698738307 and offline-safety job 118698738880 success.",
+  "receipts": {
+    "pr255": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/255#issuecomment-6293883449",
+    "issue257": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/257#issuecomment-6293883869"
+  },
+  "external_write_boundary": "No owner approval for remaining 10514 structural rows; Neon not contacted.",
+  "legal_boundary": "No payment arithmetic, rate, normative fixture or legal applicability rule changed. Missing/mismatched scope facts remain fail-closed.",
+  "protected_actions_performed": false,
+  "a6": "UNCHANGED_NOT_SENT",
+  "evidence": ".ai/orchestration/evidence/cycle381_pr255_quote_special_duty_scope.json",
+  "next_step": "Continue coherent PR #244 source-by-source payment acceptance and fixture cleanup from fresh live state."
+}

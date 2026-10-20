@@ -2147,3 +2147,15 @@ CI #255: [offline-safety PASS, run 37771953943](https://github.com/ivan88810900-
 - A broader local pytest command was stopped by platform security after triggering unauthorized Microsoft telemetry egress. It was not retried or bypassed; exact-head GitHub payment CI supplied the required regression receipt.
 - No owner approval appeared for the remaining 10,514 external structural rows, so Neon was not contacted or retried. No merge, deploy, DB write, normative data change, protected action or A6 dispatch occurred.
 - Evidence: `.ai/orchestration/evidence/cycle380_pr255_compliance_payment_review.json`; TASK_BOARD revision 908. Next continue coherent #244 source-by-source payment acceptance and fixture cleanup from fresh state.
+
+
+## Cycle 381 — PR #255 payment quote special-duty scope (2026-10-20 UTC)
+
+- Task `TARIFF-PR255-QUOTE-SPECIAL-DUTY-SCOPE-20261020`; executor `/root/scheduled-cycle381-20261020T144900Z`; lease generation 381.
+- Draft PR #255 advanced by non-force CAS to exact head `b362839ed4beae8e0beff499902fe7996d1068c4`, tree `87b182caf37beaf965bd118e83bf649de74c6709`; local author commit `05aa1b81d23cc6e938f221a37427946adf556c03` has the identical tree.
+- The payment quote API now accepts canonical `product_description` plus legacy `description` and forwards the resolved fact into the existing exact manufacturer/product scope matcher. Missing or mismatched facts remain fail-closed; no rates, arithmetic or legal applicability rules changed.
+- Author API/DB regression passed **1 test plus 2 subtests**, exit 0; py_compile and diff-check passed. Independent A5 `/root/a5_cycle378` returned PASS with no findings.
+- Exact-head CI [run 39443361953](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/39443361953) succeeded: payment-regression job `118698738307` and offline-safety job `118698738880`.
+- Receipts: [PR #255](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/255#issuecomment-6293883449) and [issue #257](https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/257#issuecomment-6293883869).
+- No new owner approval appeared for the remaining 10,514 external structural rows, so Neon was not contacted or retried. No merge, deploy, production/staging DB write, normative data change, protected action or A6 dispatch occurred.
+- Evidence: `.ai/orchestration/evidence/cycle381_pr255_quote_special_duty_scope.json`; TASK_BOARD revision 909. Next continue coherent #244 source acceptance and fixture cleanup from fresh state.
