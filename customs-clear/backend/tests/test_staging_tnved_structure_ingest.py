@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import json
 import sqlite3
+from dataclasses import replace
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -73,3 +74,29 @@ def test_hash_and_incomplete_state_fail_closed(tmp_path: Path) -> None:
         session.execute(tables["artifacts"].insert().values(artifact_sha256=artifact.sha256, logical_sha256=artifact.logical_sha256, size_bytes=artifact.size_bytes, catalog_id=artifact.catalog_id, generated_at_source=artifact.generated_at_source, source_count=artifact.source_count, edition_count=artifact.edition_count, entry_count=artifact.entry_count, status=STATUS))
     with Session(engine) as session, session.begin(), pytest.raises(StructureIngestError, match="incomplete"):
         ingest_structure(session, artifact=artifact, rows=rows, schema=None, now=datetime.now(timezone.utc))
+
+
+@pytest.mark.parametrize(
+    "change",
+    [
+        {"hs_code": "BAD"},
+        {"parent_hs": "010101"},
+        {"level": -1},
+        {"path_json": "not-json"},
+        {"source_url": "https://evil.example/a.pdf"},
+        {"row_sha256": "0" * 64},
+    ],
+)
+def test_public_ingest_boundary_rejects_forged_rows(tmp_path: Path, change: dict) -> None:
+    path = tmp_path / "accepted.sqlite"
+    sha, logical = _fixture(path)
+    artifact, rows = read_accepted_sqlite(path, expected_sha256=sha, expected_logical_sha256=logical)
+    forged = [replace(rows[0], **change), *rows[1:]]
+    engine = create_engine(f"sqlite:///{tmp_path / 'staging.sqlite'}")
+    tables = staging_tables(MetaData(), schema=None)
+    tables["artifacts"].metadata.create_all(engine)
+    with Session(engine) as session, session.begin(), pytest.raises(StructureIngestError):
+        ingest_structure(session, artifact=artifact, rows=forged, schema=None, now=datetime.now(timezone.utc))
+    with Session(engine) as session:
+        assert session.scalar(select(func.count()).select_from(tables["artifacts"])) == 0
+        assert session.scalar(select(func.count()).select_from(tables["rows"])) == 0

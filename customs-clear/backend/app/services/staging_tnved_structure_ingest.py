@@ -19,6 +19,7 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Mapping, Sequence
+from urllib.parse import urlsplit
 
 from sqlalchemy import (
     BigInteger,
@@ -111,6 +112,50 @@ def _same(actual: Any, expected: Any) -> bool:
             tzinfo=expected.tzinfo or timezone.utc
         )
     return actual == expected
+
+
+def _validate_artifact(artifact: StructureArtifact) -> None:
+    if not _SHA256_RE.fullmatch(artifact.sha256) or not _SHA256_RE.fullmatch(artifact.logical_sha256):
+        raise StructureIngestError("artifact hashes must be canonical SHA-256")
+    if artifact.size_bytes < 1 or artifact.source_count < 1 or artifact.edition_count < 1 or artifact.entry_count < 1:
+        raise StructureIngestError("artifact counts and size must be positive")
+    if not artifact.catalog_id or artifact.catalog_id != artifact.catalog_id.strip():
+        raise StructureIngestError("artifact catalog_id must be canonical")
+    if artifact.generated_at_source.utcoffset() is None:
+        raise StructureIngestError("artifact generated_at_source must be timezone-aware")
+
+
+def _validate_row(row: StructureRow) -> None:
+    if row.ordinal < 1 or not _HS_RE.fullmatch(row.hs_code):
+        raise StructureIngestError("structure row ordinal and HS code must be canonical")
+    if row.parent_hs and (not _HS_RE.fullmatch(row.parent_hs) or len(row.parent_hs) >= len(row.hs_code)):
+        raise StructureIngestError("structure row parent is invalid")
+    if row.level != len(row.hs_code):
+        raise StructureIngestError("structure row level does not match HS length")
+    if not row.title or row.title != row.title.strip():
+        raise StructureIngestError("structure row title must be canonical")
+    try:
+        path_value = json.loads(row.path_json)
+    except (TypeError, ValueError) as exc:
+        raise StructureIngestError("structure row path is malformed") from exc
+    if not isinstance(path_value, list) or not path_value or path_value[-1] != row.title or _canonical_json(path_value) != row.path_json:
+        raise StructureIngestError("structure row path is not canonical")
+    if row.chapter != row.hs_code[:2]:
+        raise StructureIngestError("structure row chapter does not match HS code")
+    parsed = urlsplit(row.source_url)
+    if parsed.scheme != "https" or parsed.hostname != "eec.eaeunion.org" or parsed.netloc != "eec.eaeunion.org" or parsed.username is not None or parsed.password is not None or parsed.fragment:
+        raise StructureIngestError("structure row source URL must be credential-free official EEC HTTPS")
+    try:
+        if parsed.port is not None:
+            raise StructureIngestError("structure row source URL must not use an explicit port")
+    except ValueError as exc:
+        raise StructureIngestError("structure row source URL contains an invalid port") from exc
+    if not row.source_revision or row.source_revision != row.source_revision.strip():
+        raise StructureIngestError("structure row source revision must be canonical")
+    payload = {"hs_code": row.hs_code, "parent_hs": row.parent_hs, "level": row.level, "title": row.title, "description": row.path_json, "chapter": row.chapter, "source_url": row.source_url, "source_revision": row.source_revision}
+    expected_hash = _sha256(_canonical_json(payload).encode("utf-8"))
+    if not _SHA256_RE.fullmatch(row.row_sha256) or row.row_sha256 != expected_hash:
+        raise StructureIngestError("structure row SHA-256 mismatch")
 
 
 def staging_tables(metadata: MetaData, *, schema: str | None = DEFAULT_SCHEMA) -> Mapping[str, Table]:
@@ -216,10 +261,13 @@ def read_accepted_sqlite(path: Path, *, expected_sha256: str, expected_logical_s
 
 
 def ingest_structure(session: Session, *, artifact: StructureArtifact, rows: Sequence[StructureRow], schema: str | None = DEFAULT_SCHEMA, initialize_schema: bool = False, now: datetime) -> StructureIngestResult:
+    _validate_artifact(artifact)
     if now.utcoffset() is None:
         raise StructureIngestError("ingest time must be timezone-aware")
     if artifact.entry_count != len(rows) or not rows:
         raise StructureIngestError("artifact entry count mismatch")
+    for row in rows:
+        _validate_row(row)
     if [row.ordinal for row in rows] != list(range(1, len(rows) + 1)):
         raise StructureIngestError("row ordinals must be contiguous from 1")
     if len({row.hs_code for row in rows}) != len(rows) or len({row.row_sha256 for row in rows}) != len(rows):
